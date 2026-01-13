@@ -19,20 +19,14 @@
 const ALLOWED_ORIGINS = [
   'https://willenaenglish.com',
   'https://www.willenaenglish.com',
-  'https://staging.willenaenglish.com',
-  'https://students.willenaenglish.com',
-  'https://teachers.willenaenglish.com',
-  'https://cf.willenaenglish.com',
-  'https://api.willenaenglish.com',
-  'https://api-cf.willenaenglish.com',
   'https://willenaenglish.netlify.app',
   'https://willenaenglish.github.io',
+  // GitHub Pages preview (pages.dev) used for branch previews
   'https://willenaenglish-github-io.pages.dev',
-  'https://staging.willenaenglish-github-io.pages.dev',
+  // Cloudflare Pages deployment
+  'https://cf.willenaenglish.com',
   'http://localhost:8888',
   'http://localhost:9000',
-  'http://127.0.0.1:8888',
-  'http://127.0.0.1:9000',
 ];
 
 // Cache TTL in seconds
@@ -40,22 +34,11 @@ const CACHE_TTL = 300; // 5 minutes
 const SIGNED_URL_EXPIRY = 8 * 60 * 60; // 8 hours (same as Netlify)
 
 function getCorsHeaders(origin) {
-  let allowedOrigin = ALLOWED_ORIGINS[0];
-  if (ALLOWED_ORIGINS.includes(origin)) {
-    allowedOrigin = origin;
-  } else if (origin) {
-    try {
-      const u = new URL(origin);
-      const host = u.hostname.toLowerCase();
-      if (host.endsWith('.pages.dev') || host === 'willenaenglish.com' || host.endsWith('.willenaenglish.com')) {
-        allowedOrigin = origin;
-      }
-    } catch {}
-  }
+  const allowedOrigin = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
   return {
     'Access-Control-Allow-Origin': allowedOrigin,
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization, Cookie',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     'Access-Control-Allow-Credentials': 'true',
   };
 }
@@ -68,96 +51,11 @@ function toKey(word) {
     .replace(/[^a-z0-9_\-]/g, '') + '.mp3';
 }
 
-const UUID_V4_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-
-function normalizeBaseName(s) {
-  return String(s || '')
-    .trim()
-    .toLowerCase()
-    .replace(/\s+/g, '_')
-    .replace(/[^a-z0-9_\-]/g, '');
-}
-
-function toAudioKey(input) {
-  let s = String(input ?? '').trim();
-  if (!s) return '';
-
-  // If caller passed a URL, use the last path segment
-  if (/^https?:\/\//i.test(s)) {
-    try {
-      const u = new URL(s);
-      s = decodeURIComponent(u.pathname.split('/').pop() || '');
-    } catch {
-      // fall through
-    }
-  }
-  s = String(s || '').trim();
-  if (!s) return '';
-
-  // If caller already provided a .mp3 key, keep the extension
-  const mp3Match = s.match(/^(.*)\.mp3$/i);
-  if (mp3Match) {
-    const base = normalizeBaseName(mp3Match[1]);
-    return base ? `${base}.mp3` : '';
-  }
-
-  const lower = s.toLowerCase();
-  // If a bare UUID was provided (common when passing sentence_id), map to sent_<uuid>.mp3
-  if (UUID_V4_RE.test(lower)) {
-    return `sent_${lower}.mp3`;
-  }
-
-  // If sent_<uuid> was provided, normalize to sent_<uuid>.mp3
-  const sentUuid = lower.match(/^sent_([0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})$/i);
-  if (sentUuid) {
-    return `sent_${sentUuid[1].toLowerCase()}.mp3`;
-  }
-
-  const base = normalizeBaseName(s);
-  return base ? `${base}.mp3` : '';
-}
-
-function normalizeRequestEntry(entry) {
-  // Backward compatible: strings behave exactly as before (keyed by the original string)
-  if (typeof entry === 'string') {
-    const token = entry;
-    const key = toAudioKey(entry);
-    if (!key) return null;
-    return { token, key, cachePart: `${token}=>${key}` };
-  }
-
-  // Forward compatible: allow objects so callers can pass { id, eng, sentence_id, audio_key }
-  if (entry && typeof entry === 'object') {
-    const audioKey = entry.audio_key || entry.audioKey || entry.key || entry.audio;
-    const sentenceId = entry.sentence_id || entry.sentenceId || entry.sid;
-    const id = entry.id || entry.word_id || entry.wordId;
-    const eng = entry.eng || entry.word || entry.text || entry.value;
-
-    let token = null;
-    if (typeof id === 'string' && id.trim()) token = id.trim();
-    else if (typeof sentenceId === 'string' && sentenceId.trim()) token = sentenceId.trim();
-    else if (typeof eng === 'string' && eng.trim()) token = eng.trim();
-    else if (typeof audioKey === 'string' && audioKey.trim()) token = audioKey.trim();
-
-    let lookup = null;
-    if (typeof audioKey === 'string' && audioKey.trim()) lookup = audioKey.trim();
-    else if (typeof sentenceId === 'string' && sentenceId.trim()) lookup = `sent_${sentenceId.trim()}`;
-    else if (typeof eng === 'string' && eng.trim()) lookup = eng.trim();
-    else if (typeof token === 'string' && token.trim()) lookup = token.trim();
-
-    const key = toAudioKey(lookup);
-    if (!token || !key) return null;
-    return { token, key, cachePart: `${token}=>${key}` };
-  }
-
-  return null;
-}
-
 /**
  * Generate a cache key for the request
  */
-function getCacheKey(parts) {
-  const sorted = [...parts].sort().join(',');
+function getCacheKey(words) {
+  const sorted = [...words].sort().join(',');
   return `audio-urls:${sorted}`;
 }
 
@@ -183,16 +81,6 @@ export default {
       return this.handleAudioProxy(request, env, filename);
     }
 
-    // Route: /sentence - get_sentence_audio_urls compatibility endpoint
-    // Accepts POST { sentence_ids: ["uuid", ...], plain?: boolean }
-    // Returns { success: true, results: { <uuid>: { exists, url, key } } }
-    if (url.pathname === '/sentence' || url.pathname === '/sentence/') {
-      if (request.method !== 'POST') {
-        return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405, headers: { 'Content-Type': 'application/json', ...corsHeaders } });
-      }
-      return this.handleSentenceAudioUrls(request, env, ctx, requestId, corsHeaders, startTime);
-    }
-
     // Route: POST / - get audio URLs for words
     if (request.method !== 'POST') {
       return new Response(
@@ -203,10 +91,9 @@ export default {
 
     try {
       const body = await request.json();
-      const rawWords = Array.isArray(body.words) ? body.words : [];
-      const entries = rawWords.map(normalizeRequestEntry).filter(Boolean);
+      const words = Array.isArray(body.words) ? body.words : [];
 
-      if (!entries.length) {
+      if (!words.length) {
         return new Response(
           JSON.stringify({ error: 'Missing words' }),
           { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
@@ -214,7 +101,7 @@ export default {
       }
 
       // Log request (visible in wrangler tail / CF dashboard)
-      console.log(`[${requestId}] get_audio_urls: ${entries.length} words from ${origin}`);
+      console.log(`[${requestId}] get_audio_urls: ${words.length} words from ${origin}`);
 
       // Check R2 bucket binding OR a public base for local/dev testing
       const publicBase = env.R2_PUBLIC_BASE || env.R2_PUBLIC_URL || '';
@@ -230,7 +117,7 @@ export default {
 
       // Try to get from cache first (Workers Cache API)
       const cache = caches.default;
-      const cacheKey = new Request(new URL(`/cache/${getCacheKey(entries.map(e => e.cachePart))}`, request.url), { method: 'GET' });
+      const cacheKey = new Request(new URL(`/cache/${getCacheKey(words)}`, request.url), { method: 'GET' });
       
       let cachedResponse = await cache.match(cacheKey);
       if (cachedResponse) {
@@ -252,18 +139,19 @@ export default {
         );
       }
 
-      console.log(`[${requestId}] Cache MISS, checking ${entries.length} files in R2`);
+      console.log(`[${requestId}] Cache MISS, checking ${words.length} files in R2`);
 
       const results = {};
-      const concurrency = Math.min(12, entries.length);
+      const concurrency = Math.min(12, words.length);
       let idx = 0;
       let foundCount = 0;
 
       // Worker function for concurrent processing
       async function processWord() {
-        while (idx < entries.length) {
+        while (idx < words.length) {
           const i = idx++;
-          const { token, key } = entries[i];
+          const word = words[i];
+          const key = toKey(word);
 
           try {
             if (hasR2) {
@@ -274,18 +162,18 @@ export default {
                 // Generate a URL for the audio file
                 // Option 1: Use public bucket URL if configured
                 if (publicBase) {
-                  results[token] = { exists: true, url: `${publicBase.replace(/\/$/, '')}/${key}` };
+                  results[word] = { exists: true, url: `${publicBase.replace(/\/$/, '')}/${key}` };
                 } else {
                   // Option 2: Generate a worker proxy URL
                   // The client will call this URL and we'll stream from R2
                   const workerUrl = new URL(request.url);
-                  results[token] = {
+                  results[word] = {
                     exists: true,
                     url: `${workerUrl.origin}/audio/${encodeURIComponent(key)}`,
                   };
                 }
               } else {
-                results[token] = { exists: false };
+                results[word] = { exists: false };
               }
             } else {
               // No R2 binding in dev; try a public URL HEAD request against R2_PUBLIC_BASE
@@ -294,17 +182,17 @@ export default {
                 const headResp = await fetch(url, { method: 'HEAD' });
                 if (headResp.ok) {
                   foundCount++;
-                  results[token] = { exists: true, url };
+                  results[word] = { exists: true, url };
                 } else {
-                  results[token] = { exists: false };
+                  results[word] = { exists: false };
                 }
               } catch (fe) {
-                results[token] = { exists: false };
+                results[word] = { exists: false };
               }
             }
           } catch (e) {
             // File doesn't exist or error
-            results[token] = { exists: false };
+            results[word] = { exists: false };
           }
         }
       }
@@ -313,7 +201,7 @@ export default {
       await Promise.all(Array.from({ length: concurrency }, () => processWord()));
 
       const duration = Date.now() - startTime;
-      console.log(`[${requestId}] Completed: ${foundCount}/${entries.length} found in ${duration}ms`);
+      console.log(`[${requestId}] Completed: ${foundCount}/${words.length} found in ${duration}ms`);
 
       const responseBody = { results, _timing_ms: duration, _request_id: requestId };
       const response = new Response(
@@ -376,113 +264,6 @@ export default {
     } catch (e) {
       console.error(`Audio proxy error for ${key}: ${e.message}`);
       return new Response('Error fetching audio', { status: 500, headers: corsHeaders });
-    }
-  },
-
-  /**
-   * Handle sentence audio URL requests: POST /sentence
-   * Compatible with Netlify get_sentence_audio_urls
-   * Body: { sentence_ids: ["uuid", ...], plain?: boolean }
-   * Returns: { success: true, results: { <uuid>: { exists, url, key } } }
-   */
-  async handleSentenceAudioUrls(request, env, ctx, requestId, corsHeaders, startTime) {
-    try {
-      const body = await request.json();
-      const ids = Array.isArray(body.sentence_ids) ? body.sentence_ids.filter(x => typeof x === 'string' && x.length) : [];
-      
-      if (!ids.length) {
-        return new Response(
-          JSON.stringify({ error: 'No sentence_ids' }),
-          { status: 400, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-        );
-      }
-
-      const plain = !!body.plain;
-      const publicBase = env.R2_PUBLIC_BASE || env.R2_PUBLIC_URL || '';
-      const hasR2 = !!env.AUDIO_BUCKET;
-
-      if (!hasR2 && !publicBase) {
-        return new Response(
-          JSON.stringify({ error: 'R2 bucket not configured' }),
-          { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-        );
-      }
-
-      console.log(`[${requestId}] get_sentence_audio_urls: ${ids.length} sentence IDs`);
-
-      const results = {};
-      const concurrency = Math.min(8, ids.length);
-      let idx = 0;
-      let foundCount = 0;
-
-      async function processId() {
-        while (idx < ids.length) {
-          const i = idx++;
-          const id = ids[i];
-          const key = `sent_${id}.mp3`;
-
-          try {
-            if (hasR2) {
-              const object = await env.AUDIO_BUCKET.head(key);
-              if (object) {
-                foundCount++;
-                let url;
-                if (plain && publicBase) {
-                  url = `${publicBase.replace(/\/$/, '')}/${key}`;
-                } else if (publicBase) {
-                  url = `${publicBase.replace(/\/$/, '')}/${key}`;
-                } else {
-                  // Use worker proxy URL
-                  url = `${new URL(request.url).origin}/audio/${encodeURIComponent(key)}`;
-                }
-                results[id] = { exists: true, url, key };
-              } else {
-                results[id] = { exists: false };
-              }
-            } else {
-              // Fallback: HEAD request against public URL
-              const url = `${publicBase.replace(/\/$/, '')}/${key}`;
-              try {
-                const headResp = await fetch(url, { method: 'HEAD' });
-                if (headResp.ok) {
-                  foundCount++;
-                  results[id] = { exists: true, url, key };
-                } else {
-                  results[id] = { exists: false };
-                }
-              } catch {
-                results[id] = { exists: false };
-              }
-            }
-          } catch {
-            results[id] = { exists: false };
-          }
-        }
-      }
-
-      await Promise.all(Array.from({ length: concurrency }, () => processId()));
-
-      const duration = Date.now() - startTime;
-      console.log(`[${requestId}] Sentence audio completed: ${foundCount}/${ids.length} found in ${duration}ms`);
-
-      return new Response(
-        JSON.stringify({ success: true, results }),
-        {
-          status: 200,
-          headers: {
-            'Content-Type': 'application/json',
-            'Cache-Control': `public, max-age=${CACHE_TTL}`,
-            'X-Request-Id': requestId,
-            ...corsHeaders,
-          },
-        }
-      );
-    } catch (err) {
-      console.error(`[${requestId}] Sentence audio error: ${err.message}`);
-      return new Response(
-        JSON.stringify({ error: 'get_sentence_audio_urls failed', message: err.message }),
-        { status: 500, headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-      );
     }
   }
 };

@@ -2,9 +2,14 @@
 function cors(event, extra = {}) {
   const ALLOWLIST = new Set([
     'https://www.willenaenglish.com',
-  'https://willenaenglish.com',
+    'https://willenaenglish.com',
     'https://willenaenglish.github.io',
     'https://willenaenglish.netlify.app',
+    // Cloudflare Pages deployments
+    'https://cf.willenaenglish.com',
+    'https://staging.willenaenglish.com',
+    'https://students.willenaenglish.com',
+    'https://api.willenaenglish.com',
     'http://localhost:9000',
     'http://localhost:8888',
   ]);
@@ -27,6 +32,11 @@ function makeCorsHeaders(event, extra = {}) {
     'https://willenaenglish.com',
     'https://willenaenglish.github.io',
     'https://willenaenglish.netlify.app',
+    // Cloudflare Pages deployments
+    'https://cf.willenaenglish.com',
+    'https://staging.willenaenglish.com',
+    'https://students.willenaenglish.com',
+    'https://api.willenaenglish.com',
     'http://localhost:9000',
     'http://localhost:8888',
   ]);
@@ -46,11 +56,16 @@ function makeCorsHeaders(event, extra = {}) {
 function cookie(name, value, event, { maxAge, secure = true, httpOnly = true, sameSite = 'Lax', path = '/' } = {}) {
   const hdrs = event?.headers || {};
   const host = hdrs.host || hdrs.Host || '';
+  const origin = hdrs.origin || hdrs.Origin || '';
   
   let s = `${name}=${encodeURIComponent(value ?? '')}`;
   if (maxAge != null) s += `; Max-Age=${maxAge}`;
   if (path) s += `; Path=${path}`;
-  if (host.endsWith('willenaenglish.com')) s += '; Domain=.willenaenglish.com';
+  // Set domain cookie if request comes FROM willenaenglish.com (check origin) OR is hosted on it
+  // This allows cross-origin cookies to work when site is on Cloudflare and functions on Netlify
+  if (host.endsWith('willenaenglish.com') || origin.includes('willenaenglish.com')) {
+    s += '; Domain=.willenaenglish.com';
+  }
   if (secure) s += '; Secure';
   if (httpOnly) s += '; HttpOnly';
   if (sameSite) s += `; SameSite=${sameSite}`;
@@ -185,8 +200,40 @@ exports.handler = async (event) => {
     if (action === 'login' && event.httpMethod === 'POST') {
       let body;
       try {
-        body = JSON.parse(event.body || '{}');
+        const rawBody = event.body;
+        const bodyType = rawBody === null ? 'null' : typeof rawBody;
+        const preview = bodyType === 'string'
+          ? rawBody.slice(0, 100)
+          : rawBody && bodyType !== 'undefined'
+            ? JSON.stringify(rawBody).slice(0, 100)
+            : '';
+        console.log('[supabase_auth] login: raw body type:', bodyType, 'length:', rawBody?.length || 0, 'preview:', preview || '(empty)');
+
+        if (rawBody === undefined || rawBody === null || rawBody === 'undefined' || rawBody === 'null') {
+          console.error('[supabase_auth] login: body is missing', rawBody);
+          return respond(event, 400, { success: false, error: 'Empty request body' });
+        }
+
+        if (bodyType === 'string' && !rawBody.trim()) {
+          console.error('[supabase_auth] login: body string is empty after trimming');
+          return respond(event, 400, { success: false, error: 'Empty request body' });
+        }
+
+        if (bodyType === 'string') {
+          body = JSON.parse(rawBody);
+        } else if (bodyType === 'object') {
+          body = rawBody;
+        } else {
+          console.error('[supabase_auth] login: unsupported body type', bodyType);
+          return respond(event, 400, { success: false, error: 'Invalid request body' });
+        }
+
+        if (!body || typeof body !== 'object') {
+          console.error('[supabase_auth] login: parsed body is not an object', bodyType);
+          return respond(event, 400, { success: false, error: 'Invalid request body' });
+        }
       } catch (parseErr) {
+        console.error('[supabase_auth] login: JSON parse error:', parseErr.message, 'body preview:', (event.body || '').substring(0, 100));
         return respond(event, 400, { success: false, error: 'Invalid JSON body' });
       }
       const { email, password } = body;
@@ -509,6 +556,129 @@ exports.handler = async (event) => {
         return respond(event, 200, { success: true });
       } catch (e) {
         return respond(event, 500, { success: false, error: 'Internal error' });
+      }
+    }
+
+    // ===== WORKSHEET OPERATIONS =====
+    // list_worksheets action
+    if (action === 'list_worksheets') {
+      const qs = event.queryStringParameters || {};
+      const fieldsParam = qs.fields;
+      const limit = parseInt(qs.limit) || 50;
+      const offset = parseInt(qs.offset) || 0;
+      const idFilter = qs.id;
+      const typeFilter = qs.type;
+      const searchQuery = qs.search;
+      const bookFilter = qs.book;
+
+      let selectClause = fieldsParam || '*';
+      let queryFilters = [];
+      
+      if (idFilter) queryFilters.push(`user_id=eq.${encodeURIComponent(idFilter)}`);
+      if (typeFilter) queryFilters.push(`worksheet_type=eq.${encodeURIComponent(typeFilter)}`);
+      if (searchQuery) {
+        queryFilters.push(`or=(title.ilike.%25${encodeURIComponent(searchQuery)}%25,book.ilike.%25${encodeURIComponent(searchQuery)}%25,unit.ilike.%25${encodeURIComponent(searchQuery)}%25)`);
+      }
+      if (bookFilter) queryFilters.push(`book.ilike.%25${encodeURIComponent(bookFilter)}%25`);
+
+      const filterStr = queryFilters.length > 0 ? '&' + queryFilters.join('&') : '';
+      const queryStr = `select=${encodeURIComponent(selectClause)}${filterStr}&order=created_at.desc&offset=${offset}&limit=${limit}`;
+      
+      try {
+        const { data, error, count } = await supabase
+          .from('worksheets')
+          .select(selectClause, { count: 'exact' });
+        
+        if (error) throw error;
+        
+        // Apply manual filtering if needed (supabase client library may not handle complex filters perfectly)
+        let filtered = data || [];
+        if (idFilter) filtered = filtered.filter(w => w.user_id === idFilter);
+        if (typeFilter) filtered = filtered.filter(w => w.worksheet_type === typeFilter);
+        if (searchQuery) {
+          const sq = searchQuery.toLowerCase();
+          filtered = filtered.filter(w => 
+            (w.title && w.title.toLowerCase().includes(sq)) ||
+            (w.book && w.book.toLowerCase().includes(sq)) ||
+            (w.unit && w.unit.toLowerCase().includes(sq))
+          );
+        }
+        if (bookFilter) {
+          filtered = filtered.filter(w => w.book && w.book.toLowerCase().includes(bookFilter.toLowerCase()));
+        }
+        
+        // Apply pagination and sorting
+        filtered = filtered.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+        const paginatedData = filtered.slice(offset, offset + limit);
+        
+        return respond(event, 200, { success: true, data: paginatedData, totalCount: filtered.length });
+      } catch (e) {
+        return respond(event, 500, { success: false, error: e.message || 'List failed' });
+      }
+    }
+
+    // save_worksheet action
+    if (action === 'save_worksheet' && event.httpMethod === 'POST') {
+      try {
+        const body = JSON.parse(event.body || '{}');
+        
+        // Normalize words to array
+        let words = body.words;
+        if (typeof words === 'string') {
+          words = words.split('\n').map(w => w.trim()).filter(w => w.length > 0);
+        } else if (Array.isArray(words)) {
+          words = words.map(w => typeof w === 'string' ? w.trim() : '').filter(w => w.length > 0);
+        } else {
+          words = [];
+        }
+        body.words = words;
+        
+        // Normalize language_point
+        if (typeof body.language_point === 'string') {
+          body.language_point = body.language_point.trim() ? [body.language_point.trim()] : [];
+        } else if (!Array.isArray(body.language_point)) {
+          body.language_point = [];
+        }
+        
+        // Upsert worksheet
+        if (body.user_id) {
+          // Update existing
+          const { error } = await supabase
+            .from('worksheets')
+            .update(body)
+            .eq('user_id', body.user_id);
+          if (error) throw error;
+        } else {
+          // Insert new
+          const { error } = await supabase
+            .from('worksheets')
+            .insert([body]);
+          if (error) throw error;
+        }
+        
+        return respond(event, 200, { success: true });
+      } catch (e) {
+        return respond(event, 500, { success: false, error: e.message || 'Save failed' });
+      }
+    }
+
+    // delete_worksheet action
+    if (action === 'delete_worksheet' && event.httpMethod === 'POST') {
+      try {
+        const body = JSON.parse(event.body || '{}');
+        const { id } = body;
+        
+        if (!id) return respond(event, 400, { success: false, error: 'Missing worksheet id' });
+        
+        const { error } = await supabase
+          .from('worksheets')
+          .delete()
+          .eq('user_id', id);
+        
+        if (error) throw error;
+        return respond(event, 200, { success: true });
+      } catch (e) {
+        return respond(event, 500, { success: false, error: e.message || 'Delete failed' });
       }
     }
 

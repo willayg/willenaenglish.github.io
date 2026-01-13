@@ -1,11 +1,12 @@
 name = "log-word-attempt"
 main = "src/index.js"
-compatibility_date = "2025-12-18"
+compatibility_date = "2024-01-01"
 
-[vars]
-# Set SKIP_POINTS_TOTAL_CALC = "1" to skip expensive points calc
-# SKIP_POINTS_TOTAL_CALC = "0"
+# KV namespace for leaderboard cache (replaces Redis)
+[[kv_namespaces]]
+binding = "LEADERBOARD_CACHE"
+id = "b1c31b6ddc044390a1aa9158d635e70f"
 
-# Secrets (set via wrangler secret put):
-# - SUPABASE_URL
-# - SUPABASE_SERVICE_KEY
+[dev]
+port = 8788
+local_protocol = "http"

@@ -152,16 +152,20 @@ exports.handler = async (event) => {
 	if (event.httpMethod === 'GET') {
 		const qs = event.queryStringParameters || {}; const id = qs.id;
 		if (!id) return json(400, { success:false, error:'Missing id', version:'v2' });
-		// Auth gate: require valid sb_access
+		// Auth gate: allow valid sb_access OR presence of guest cookie
 		try {
 			const hdrs = event.headers || {}; const cookieHeader = hdrs.cookie || hdrs.Cookie || '';
+			const hasGuest = /(?:^|;\s*)wa_guest_id=/.test(cookieHeader);
 			const m = /(?:^|;\s*)sb_access=([^;]+)/.exec(cookieHeader);
-			if (!m) return json(401, { success:false, error:'Not authenticated', requires_auth:true, version:'v2', stage:'no_cookie' });
-			const token = decodeURIComponent(m[1]);
-			const admin = createClient(SUPABASE_URL, SERVICE_KEY);
-			const { data: userData, error: userErr } = await admin.auth.getUser(token);
-			if (userErr || !userData || !userData.user) {
-				return json(401, { success:false, error:'Not authenticated', requires_auth:true, version:'v2', stage:'invalid_token' });
+			if (!m) {
+				if (!hasGuest) return json(401, { success:false, error:'Not authenticated', requires_auth:true, version:'v2', stage:'no_cookie' });
+			} else {
+				const token = decodeURIComponent(m[1]);
+				const admin = createClient(SUPABASE_URL, SERVICE_KEY);
+				const { data: userData, error: userErr } = await admin.auth.getUser(token);
+				if (userErr || !userData || !userData.user) {
+					if (!hasGuest) return json(401, { success:false, error:'Not authenticated', requires_auth:true, version:'v2', stage:'invalid_token' });
+				}
 			}
 		} catch {
 			return json(401, { success:false, error:'Not authenticated', requires_auth:true, version:'v2', stage:'exception' });

@@ -1,0 +1,21 @@
+{
+  "routes": [
+    {
+      "routePath": "/api/analyze-sentence",
+      "mountPath": "/api",
+      "method": "OPTIONS",
+      "module": [
+        "api/analyze-sentence.js:onRequestOptions"
+      ]
+    },
+    {
+      "routePath": "/api/analyze-sentence",
+      "mountPath": "/api",
+      "method": "POST",
+      "module": [
+        "api/analyze-sentence.js:onRequestPost"
+      ]
+    }
+  ],
+  "baseURL": "/"
+}

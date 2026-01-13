@@ -1,25 +1,24 @@
 /**
  * Cloudflare Worker: supabase-auth
  * 
- * Drop-in replacement for Netlify function supabase_auth.js
+ * Drop-in replacement for the legacy supabase_auth function
  * Uses direct REST calls to Supabase (no SDK required)
  */
 
 const ALLOWED_ORIGINS = [
   'https://willenaenglish.com',
   'https://www.willenaenglish.com',
-  'https://staging.willenaenglish.com',
-  'https://students.willenaenglish.com',
-  'https://teachers.willenaenglish.com',
-  'https://api.willenaenglish.com',
-  'https://api-cf.willenaenglish.com',
   'https://willenaenglish.netlify.app',
   'https://willenaenglish.github.io',
   // GitHub Pages preview (pages.dev) used for branch previews
   'https://willenaenglish-github-io.pages.dev',
-  'https://staging.willenaenglish-github-io.pages.dev',
-  // Cloudflare Pages deployment
+  // Cloudflare Pages deployments
   'https://cf.willenaenglish.com',
+  'https://staging.willenaenglish.com',
+  'https://teachers.willenaenglish.com',
+  'https://students.willenaenglish.com',
+  // API gateway (for internal routing)
+  'https://api.willenaenglish.com',
   'http://localhost:8888',
   'http://localhost:9000',
   'http://127.0.0.1:8888',
@@ -27,22 +26,11 @@ const ALLOWED_ORIGINS = [
 ];
 
 function getCorsHeaders(origin) {
-  let allowed = ALLOWED_ORIGINS[0];
-  if (ALLOWED_ORIGINS.includes(origin)) {
-    allowed = origin;
-  } else if (origin) {
-    try {
-      const u = new URL(origin);
-      const host = u.hostname.toLowerCase();
-      if (host.endsWith('.pages.dev') || host === 'willenaenglish.com' || host.endsWith('.willenaenglish.com')) {
-        allowed = origin;
-      }
-    } catch {}
-  }
+  const allowed = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
   return {
     'Access-Control-Allow-Origin': allowed,
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization, Cookie',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     'Access-Control-Allow-Credentials': 'true',
     'Cache-Control': 'no-store',
   };
@@ -303,13 +291,14 @@ export default {
           makeCookie('sb_refresh', authData.refresh_token || '', cookieOpts),
         ];
         
-        // For local dev, also return tokens in body since cross-origin cookies don't work
-        // between localhost:9000 and 127.0.0.1:8787
-        const responseBody = { success: true, user: authData.user };
-        if (isDev) {
-          responseBody.access_token = authData.access_token;
-          responseBody.refresh_token = authData.refresh_token || '';
-        }
+        // Always return tokens in body so client can store in localStorage as fallback
+        // for browsers that block third-party/cross-site cookies
+        const responseBody = {
+          success: true,
+          user: authData.user,
+          access_token: authData.access_token,
+          refresh_token: authData.refresh_token || '',
+        };
         
         return jsonResponse(responseBody, 200, origin, cookies);
       }
@@ -477,29 +466,8 @@ export default {
       if (action === 'update_profile_avatar' && request.method === 'POST') {
         // CSRF check
         const referer = request.headers.get('Referer') || '';
-        const okOrigin = (() => {
-          if (!origin) return false;
-          if (ALLOWED_ORIGINS.includes(origin)) return true;
-          try {
-            const u = new URL(origin);
-            const host = u.hostname.toLowerCase();
-            return host.endsWith('.pages.dev') || host === 'willenaenglish.com' || host.endsWith('.willenaenglish.com');
-          } catch {
-            return false;
-          }
-        })();
-
-        const okReferer = (() => {
-          if (!referer) return false;
-          if (ALLOWED_ORIGINS.some(p => referer.startsWith(p + '/'))) return true;
-          try {
-            const u = new URL(referer);
-            const host = u.hostname.toLowerCase();
-            return host.endsWith('.pages.dev') || host === 'willenaenglish.com' || host.endsWith('.willenaenglish.com');
-          } catch {
-            return false;
-          }
-        })();
+        const okOrigin = ALLOWED_ORIGINS.includes(origin);
+        const okReferer = ALLOWED_ORIGINS.some(p => referer.startsWith(p + '/'));
         
         if (!okOrigin && !okReferer) {
           return jsonResponse({ success: false, error: 'CSRF check failed' }, 403, origin);
@@ -715,21 +683,150 @@ export default {
         return jsonResponse({ success: true }, 200, origin);
       }
       
+      // ===== WORKSHEET OPERATIONS =====
+      // list_worksheets action
+      if (action === 'list_worksheets') {
+        const params = url.searchParams;
+        const fieldsParam = params.get('fields');
+        const limit = parseInt(params.get('limit')) || 50;
+        const offset = parseInt(params.get('offset')) || 0;
+        const idFilter = params.get('id');
+        const typeFilter = params.get('type');
+        const searchQuery = params.get('search');
+        const bookFilter = params.get('book');
+        
+        // Build select clause
+        let selectClause = fieldsParam || '*';
+        
+        // Build query URL
+        let queryUrl = `${env.SUPABASE_URL}/rest/v1/worksheets?select=${encodeURIComponent(selectClause)}`;
+        
+        // Add filters
+        if (idFilter) {
+          queryUrl += `&user_id=eq.${encodeURIComponent(idFilter)}`;
+        }
+        if (typeFilter) {
+          queryUrl += `&worksheet_type=eq.${encodeURIComponent(typeFilter)}`;
+        }
+        if (searchQuery) {
+          queryUrl += `&or=(title.ilike.%25${encodeURIComponent(searchQuery)}%25,book.ilike.%25${encodeURIComponent(searchQuery)}%25,unit.ilike.%25${encodeURIComponent(searchQuery)}%25)`;
+        }
+        if (bookFilter) {
+          queryUrl += `&book=ilike.%25${encodeURIComponent(bookFilter)}%25`;
+        }
+        
+        // Add pagination and ordering
+        queryUrl += `&order=created_at.desc&offset=${offset}&limit=${limit}`;
+        
+        const resp = await fetch(queryUrl, {
+          headers: {
+            'apikey': env.SUPABASE_SERVICE_KEY,
+            'Authorization': `Bearer ${env.SUPABASE_SERVICE_KEY}`,
+            'Prefer': 'count=exact',
+          },
+        });
+        
+        if (!resp.ok) {
+          const errText = await resp.text();
+          return jsonResponse({ success: false, error: errText }, resp.status, origin);
+        }
+        
+        const data = await resp.json();
+        const totalCount = resp.headers.get('content-range')?.split('/')[1] || data.length;
+        
+        return jsonResponse({ success: true, data, totalCount: parseInt(totalCount) }, 200, origin);
+      }
+      
+      // save_worksheet action
+      if (action === 'save_worksheet') {
+        if (request.method !== 'POST') {
+          return jsonResponse({ success: false, error: 'Method not allowed' }, 405, origin);
+        }
+        
+        const body = await request.json();
+        
+        // Normalize words to array
+        let words = body.words;
+        if (typeof words === 'string') {
+          words = words.split('\n').map(w => w.trim()).filter(w => w.length > 0);
+        } else if (Array.isArray(words)) {
+          words = words.map(w => typeof w === 'string' ? w.trim() : '').filter(w => w.length > 0);
+        } else {
+          words = [];
+        }
+        body.words = words;
+        
+        // Normalize language_point
+        if (typeof body.language_point === 'string') {
+          body.language_point = body.language_point.trim() ? [body.language_point.trim()] : [];
+        } else if (!Array.isArray(body.language_point)) {
+          body.language_point = [];
+        }
+        
+        // Upsert worksheet
+        const resp = await fetch(`${env.SUPABASE_URL}/rest/v1/worksheets`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': env.SUPABASE_SERVICE_KEY,
+            'Authorization': `Bearer ${env.SUPABASE_SERVICE_KEY}`,
+            'Prefer': 'resolution=merge-duplicates',
+          },
+          body: JSON.stringify(body),
+        });
+        
+        if (!resp.ok) {
+          const errText = await resp.text();
+          return jsonResponse({ success: false, error: errText }, resp.status, origin);
+        }
+        
+        return jsonResponse({ success: true }, 200, origin);
+      }
+      
+      // delete_worksheet action
+      if (action === 'delete_worksheet') {
+        if (request.method !== 'POST') {
+          return jsonResponse({ success: false, error: 'Method not allowed' }, 405, origin);
+        }
+        
+        const body = await request.json();
+        const { id } = body;
+        
+        if (!id) {
+          return jsonResponse({ success: false, error: 'Missing worksheet id' }, 400, origin);
+        }
+        
+        const resp = await fetch(`${env.SUPABASE_URL}/rest/v1/worksheets?user_id=eq.${encodeURIComponent(id)}`, {
+          method: 'DELETE',
+          headers: {
+            'apikey': env.SUPABASE_SERVICE_KEY,
+            'Authorization': `Bearer ${env.SUPABASE_SERVICE_KEY}`,
+          },
+        });
+        
+        if (!resp.ok) {
+          const errText = await resp.text();
+          return jsonResponse({ success: false, error: errText }, resp.status, origin);
+        }
+        
+        return jsonResponse({ success: true }, 200, origin);
+      }
+      
       // ===== SET STUDENT PASSWORD (Easy Login flow) =====
       // This is called after verify_student succeeds to set a temporary password
       // so the student can be logged in via username/password flow
       if (action === 'set_student_password' && request.method === 'POST') {
         const body = await request.json();
         const { student_id, password } = body;
-        
+
         if (!student_id || !password) {
           return jsonResponse({ success: false, error: 'Missing student_id or password' }, 400, origin);
         }
-        
+
         if (String(password).length < 6) {
           return jsonResponse({ success: false, error: 'Password too short' }, 400, origin);
         }
-        
+
         // Verify the student exists and is a student role
         const profileResp = await fetch(
           `${env.SUPABASE_URL}/rest/v1/profiles?id=eq.${encodeURIComponent(student_id)}&select=id,role,approved`,
@@ -740,17 +837,17 @@ export default {
             },
           }
         );
-        
+
         const profiles = await profileResp.json();
         if (!profiles || !profiles[0]) {
           return jsonResponse({ success: false, error: 'Student not found' }, 404, origin);
         }
-        
+
         const profile = profiles[0];
         if (profile.role !== 'student') {
           return jsonResponse({ success: false, error: 'Not a student account' }, 403, origin);
         }
-        
+
         // Update password using admin API
         const updateResp = await fetch(`${env.SUPABASE_URL}/auth/v1/admin/users/${student_id}`, {
           method: 'PUT',
@@ -761,16 +858,16 @@ export default {
           },
           body: JSON.stringify({ password }),
         });
-        
+
         if (!updateResp.ok) {
           const errText = await updateResp.text();
           console.error('[set_student_password] Update failed:', updateResp.status, errText);
           return jsonResponse({ success: false, error: 'Password update failed' }, 400, origin);
         }
-        
+
         return jsonResponse({ success: true }, 200, origin);
       }
-      
+
       // ===== ACTION NOT FOUND =====
       return jsonResponse({ success: false, error: 'Action not found' }, 404, origin);
       

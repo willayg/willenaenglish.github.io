@@ -39,23 +39,34 @@ exports.handler = async (event) => {
   }
 
   // Minimal CORS helpers
+  const CORS_ALLOWLIST = new Set([
+    'https://www.willenaenglish.com',
+    'https://willenaenglish.com',
+    'https://willenaenglish.github.io',
+    'https://willenaenglish.netlify.app',
+    'https://cf.willenaenglish.com',
+    'https://staging.willenaenglish.com',
+    'https://students.willenaenglish.com',
+    'https://api.willenaenglish.com',
+    'http://localhost:9000',
+    'http://localhost:8888',
+    'http://127.0.0.1:9000',
+    'http://127.0.0.1:8888',
+  ]);
   function getRequestOrigin(event) {
     const h = (event && event.headers) || {};
     return h.origin || h.Origin || '';
   }
   function makeCorsHeaders(event, extra = {}) {
     const origin = getRequestOrigin(event);
+    const allow = CORS_ALLOWLIST.has(origin) ? origin : 'https://willenaenglish.netlify.app';
     const headers = {
+      'Access-Control-Allow-Origin': allow,
+      'Access-Control-Allow-Credentials': 'true',
       'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type, Authorization',
       ...extra,
     };
-    if (origin) {
-      headers['Access-Control-Allow-Origin'] = origin;
-      headers['Access-Control-Allow-Credentials'] = 'true';
-    } else {
-      headers['Access-Control-Allow-Origin'] = '*';
-    }
     return headers;
   }
 

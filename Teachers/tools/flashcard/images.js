@@ -87,7 +87,8 @@ export class ImageManager {
                     else if (sel.value === 'vectors') imageType = 'vector';
                     else if (sel.value === 'ai') { imageType = 'photo'; extraParams = '&content_type=ai'; }
                 }
-                const url = `/.netlify/functions/pixabay?q=${encodeURIComponent(cleanQuery)}&image_type=${imageType}${extraParams}&safesearch=true&per_page=5`;
+                const apiPath = window.WillenaAPI ? window.WillenaAPI.getApiUrl('/.netlify/functions/pixabay') : '/.netlify/functions/pixabay';
+                const url = `${apiPath}?q=${encodeURIComponent(cleanQuery)}&image_type=${imageType}${extraParams}&safesearch=true&per_page=5`;
                 console.log(`Fetching from: ${url}`);
                 
                 const response = await fetch(url);

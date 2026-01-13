@@ -1,10 +1,29 @@
-// Detect custom domain and route to Netlify
+// Environment-specific API routing (must match js/api-config.js logic)
+// - Netlify (students.willenaenglish.com): relative paths (functions exist natively)  
+// - Cloudflare Pages (staging, cf): use API gateway (api.willenaenglish.com)
+// - GitHub Pages: cross-origin to Netlify
+// - Localhost: relative paths (for local dev)
 const getApiBase = () => {
   const host = typeof window !== 'undefined' ? window.location.hostname : '';
-  if (host === 'willenaenglish.github.io' || host === 'willenaenglish.com' || host === 'www.willenaenglish.com') {
-    return 'https://willenaenglish.netlify.app';
+  
+  // Netlify domain: has /.netlify/functions/ natively
+  if (host === 'students.willenaenglish.com' || host === 'willenaenglish.netlify.app') {
+    return '';
   }
-  return '';
+  // Localhost: relative paths work with netlify dev
+  if (host === 'localhost' || host === '127.0.0.1') {
+    return '';
+  }
+  // Cloudflare Pages (staging, cf, teachers): route through API gateway
+  if (host === 'staging.willenaenglish.com' || host === 'cf.willenaenglish.com' || host === 'teachers.willenaenglish.com' || host.endsWith('.pages.dev')) {
+    return 'https://api.willenaenglish.com';
+  }
+  // GitHub Pages: cross-origin to Netlify
+  if (host === 'willenaenglish.github.io') {
+    return 'https://students.willenaenglish.com';
+  }
+  // Unknown domain: fallback to Netlify
+  return 'https://students.willenaenglish.com';
 };
 const API_BASE = getApiBase();
 const REFRESH_ENDPOINT = `${API_BASE}/.netlify/functions/supabase_auth?action=refresh`;

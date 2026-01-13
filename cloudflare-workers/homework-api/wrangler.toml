@@ -2,13 +2,11 @@ name = "homework-api"
 main = "src/index.js"
 compatibility_date = "2024-01-01"
 
-# Local development - use .dev.vars for secrets
-# Production secrets set via: wrangler secret put SUPABASE_URL
+# Required environment variables (set in Cloudflare Dashboard > Workers > Settings > Variables):
+# - SUPABASE_URL: Your Supabase project URL
+# - SUPABASE_ANON_KEY: Supabase anon/public key (optional)
+# - SUPABASE_SERVICE_KEY: Supabase service role key (secret)
 
-# Environment variables (set these in Cloudflare dashboard or via wrangler)
-# Required:
-#   SUPABASE_URL - Your Supabase project URL
-#   SUPABASE_SERVICE_KEY - Your Supabase service role key (not anon key)
-
-[observability]
-enabled = true
+[dev]
+port = 8789
+local_protocol = "http"

@@ -4,18 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Teacher Dashboard</title>
-    <script>
-      // Teachers auth requires same-origin cookies - redirect to Netlify if on custom domain or GitHub Pages
-      // NOTE: This does NOT redirect staging (.pages.dev) - staging uses its own auth flow
-      (function() {
-        const host = window.location.hostname;
-        if (host === 'willenaenglish.com' || host === 'www.willenaenglish.com' || host === 'willenaenglish.github.io') {
-          const currentPath = window.location.pathname + window.location.search;
-          window.location.href = 'https://willenaenglish.netlify.app' + currentPath;
-        }
-      })();
-    </script>
-    <script src="/js/api-config.js"></script>
+    <script src="/js/api-config.js?v=20260108"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Caveat:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body {
@@ -344,16 +333,21 @@
     <script>
       // Access control: redirect if not logged in or not approved
       (async function() {
-        const userId = localStorage.getItem('userId');
-        if (!userId) {
-          const redirect = encodeURIComponent(location.pathname + location.search);
-          window.location.href = `/Teachers/login.html?redirect=${redirect}`;
-          return;
-        }
         try {
-          const res = await WillenaAPI.fetch(`/.netlify/functions/supabase_proxy_fixed?action=get_profile&user_id=${encodeURIComponent(userId)}`);
-          const result = await res.json();
-          if (!result.success || result.approved !== true) {
+          // Prefer cookie-based auth; do not depend on localStorage for access control.
+          const whoRes = await WillenaAPI.fetch(`/.netlify/functions/supabase_auth?action=whoami&_=${Date.now()}`);
+          const who = await whoRes.json().catch(() => ({}));
+          if (!who || !who.success || !who.user_id) {
+            const redirect = encodeURIComponent(location.pathname + location.search);
+            window.location.href = `/Teachers/login.html?redirect=${redirect}`;
+            return;
+          }
+
+          try { localStorage.setItem('userId', who.user_id); } catch (e) {}
+
+          const res = await WillenaAPI.fetch(`/.netlify/functions/supabase_auth?action=get_profile&user_id=${encodeURIComponent(who.user_id)}&_=${Date.now()}`);
+          const result = await res.json().catch(() => ({}));
+          if (!result || !result.success || result.approved !== true) {
             window.location.href = '/Teachers/profile.html';
             return;
           }
@@ -457,83 +451,86 @@
             </div>
         </div>
     </div>
-<script type="module">
-  import { insertBurgerMenu } from '/Teachers/components/burger-menu.js';
-  // Show username from localStorage (set at login) and load burger menu template
-  document.addEventListener('DOMContentLoaded', async function() {
-    const usernameSpan = document.getElementById('username-display');
-    let username = '';
-    let name = '';
-    let userId = localStorage.getItem('userId');
-    if (userId) {
-      try {
-        const res = await WillenaAPI.fetch(`/.netlify/functions/supabase_proxy_fixed?action=get_profile&user_id=${encodeURIComponent(userId)}`);
-        const result = await res.json();
-        if (result.success) {
-          if (result.username) {
-            username = result.username;
-            localStorage.setItem('username', username);
+    <script type="module">
+      // Show username from localStorage (set at login)
+      document.addEventListener('DOMContentLoaded', async function() {
+        const usernameSpan = document.getElementById('username-display');
+        let username = '';
+        let name = '';
+        let userId = '';
+        try {
+          const whoRes = await WillenaAPI.fetch(`/.netlify/functions/supabase_auth?action=whoami&_=${Date.now()}`);
+          const who = await whoRes.json().catch(() => ({}));
+          if (who && who.success && who.user_id) {
+            userId = who.user_id;
+            try { localStorage.setItem('userId', userId); } catch (e) {}
+          } else {
+            userId = localStorage.getItem('userId') || '';
           }
-          if (result.name) {
-            name = result.name;
-            localStorage.setItem('name', name);
-          }
-          if (result.email) {
-            localStorage.setItem('userEmail', result.email);
-          }
-          if (result.role) {
-            localStorage.setItem('userRole', result.role);
-          }
-          // Always set userId in case it changes
-          if (result.id) {
-            userId = result.id;
-            localStorage.setItem('userId', userId);
-          }
-        }
-      } catch (e) {
-        // fallback below
-      }
-    }
-    if (!username) {
-      // fallback to localStorage/email
-      username = localStorage.getItem('username') || '';
-      if (!username) {
-        const email = localStorage.getItem('userEmail');
-        if (email) {
-          username = email.split('@')[0];
-        }
-      }
-    }
-    if (username) {
-      usernameSpan.textContent = username;
-    }
 
-    // Ensure burger menu template is present, then insert menu
-    async function ensureBurgerMenuTemplate() {
-      if (!document.getElementById('burger-menu-template')) {
-        const resp = await fetch('/Teachers/components/burger-menu.html');
-        const html = await resp.text();
-        const tempDiv = document.createElement('div');
-        tempDiv.innerHTML = html;
-        document.body.appendChild(tempDiv.firstElementChild);
-      }
-    }
-    await ensureBurgerMenuTemplate();
-    insertBurgerMenu('#burger-menu-mount');
-
-    // Update burger menu teacher login link if present
-    setTimeout(() => {
-      const burger = document.querySelector('burger-menu');
-      if (burger && burger.shadowRoot) {
-        const teacherLogin = burger.shadowRoot.querySelector('a[href*="Teachers/index.html"], a[href*="teachers/index.html"]');
-        if (teacherLogin) {
-          teacherLogin.setAttribute('href', '/Teachers/login.html');
-          teacherLogin.textContent = 'Teacher Login';
+          if (userId) {
+            const res = await WillenaAPI.fetch(`/.netlify/functions/supabase_auth?action=get_profile&user_id=${encodeURIComponent(userId)}&_=${Date.now()}`);
+            const result = await res.json().catch(() => ({}));
+            if (result && result.success) {
+              if (result.username) {
+                username = result.username;
+                try { localStorage.setItem('username', username); } catch (e) {}
+              }
+              if (result.name) {
+                name = result.name;
+                try { localStorage.setItem('name', name); } catch (e) {}
+              }
+              if (result.email) {
+                try { localStorage.setItem('userEmail', result.email); } catch (e) {}
+              }
+              if (result.role) {
+                try { localStorage.setItem('userRole', result.role); } catch (e) {}
+              }
+            }
+          }
+        } catch (e) {
+          // fallback below
+        }
+        if (!username) {
+          // fallback to localStorage/email
+          username = localStorage.getItem('username') || '';
+          if (!username) {
+            const email = localStorage.getItem('userEmail');
+            if (email) {
+              username = email.split('@')[0];
+            }
+          }
+        }
+        if (username) {
+          usernameSpan.textContent = username;
+        }
+      });
+      import { insertBurgerMenu } from '/Teachers/components/burger-menu.js?v=20251213b';
+      async function ensureBurgerMenuTemplate() {
+        if (!document.getElementById('burger-menu-template')) {
+          const resp = await fetch('/Teachers/components/burger-menu.html?v=20251213b');
+          const html = await resp.text();
+          const tempDiv = document.createElement('div');
+          tempDiv.innerHTML = html;
+          document.body.appendChild(tempDiv.firstElementChild);
         }
       }
-    }, 500);
-  });
-</script>
+      document.addEventListener('DOMContentLoaded', async function() {
+        await ensureBurgerMenuTemplate();
+        insertBurgerMenu('#burger-menu-mount');
+        // Update burger menu teacher login link if present
+        setTimeout(() => {
+          const burger = document.querySelector('burger-menu');
+          if (burger && burger.shadowRoot) {
+            const teacherLogin = burger.shadowRoot.querySelector('a[href*="Teachers/index.html"], a[href*="teachers/index.html"]');
+            if (teacherLogin) {
+              teacherLogin.setAttribute('href', '/Teachers/login.html');
+              teacherLogin.textContent = 'Teacher Login';
+            }
+          }
+        }, 500);
+      });
+    </script>
     <script>
       // Feedback modal loader for burger menu integration (grid_game style)
       window.showFeedbackModal = function() {

@@ -16,7 +16,8 @@ export async function getPixabayImage(query, next = false) {
   }
   if (!imageCache[query] || next) {
     const page = Math.floor(Math.random() * 5) + 1;
-    const res = await fetch(`/.netlify/functions/pixabay?q=${encodeURIComponent(query)}&image_type=${imageType}&safesearch=true&order=popular&per_page=5&page=${page}`);
+    const apiPath = window.WillenaAPI ? window.WillenaAPI.getApiUrl('/.netlify/functions/pixabay') : '/.netlify/functions/pixabay';
+    const res = await fetch(`${apiPath}?q=${encodeURIComponent(query)}&image_type=${imageType}&safesearch=true&order=popular&per_page=5&page=${page}`);
     const data = await res.json();
     imageCache[query] = { images: data.images || [], index: 0 };
     // Optionally add emoji as last image

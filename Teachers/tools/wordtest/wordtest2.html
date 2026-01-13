@@ -4,7 +4,35 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Word Builder</title>
-    <script src="/js/api-config.js"></script>
+    <script src="/js/api-config.js?v=20260110"></script>
+    <!-- Shared Image Picker Modal (loaded as regular script for inline handlers) -->
+    <script src="/Teachers/tools/shared/image-picker-modal.js?v=20260110"></script>
+    <script>
+      // Ensure the shared image picker can be loaded on demand (even if cached/blocked on first paint)
+      window.ensureSharedImagePicker = window.ensureSharedImagePicker || function () {
+        if (window.SharedImagePicker && typeof window.SharedImagePicker.open === 'function') {
+          return Promise.resolve(window.SharedImagePicker);
+        }
+        if (window.__sharedImagePickerPromise) return window.__sharedImagePickerPromise;
+        window.__sharedImagePickerPromise = new Promise(function (resolve, reject) {
+          var existing = document.querySelector('script[src="/Teachers/tools/shared/image-picker-modal.js"]');
+          if (existing && window.SharedImagePicker && typeof window.SharedImagePicker.open === 'function') {
+            resolve(window.SharedImagePicker);
+            return;
+          }
+          var s = document.createElement('script');
+          s.src = '/Teachers/tools/shared/image-picker-modal.js';
+          s.async = true;
+          s.onload = function () {
+            if (window.SharedImagePicker && typeof window.SharedImagePicker.open === 'function') resolve(window.SharedImagePicker);
+            else reject(new Error('SharedImagePicker not available after load'));
+          };
+          s.onerror = function () { reject(new Error('Failed to load shared image picker script')); };
+          document.head.appendChild(s);
+        });
+        return window.__sharedImagePickerPromise;
+      };
+    </script>
     <!-- Preconnect to Google Fonts for faster loading -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -54,7 +82,7 @@
         return;
       }
       try {
-        const res = await WillenaAPI.fetch('/.netlify/functions/supabase_proxy_fixed?action=get_profile&user_id=' + encodeURIComponent(userId));
+        const res = await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=get_profile&user_id=' + encodeURIComponent(userId));
         const result = await res.json();
         if (!result.success || result.approved !== true) {
           window.location.href = '/Teachers/components/access-denied.html';
@@ -67,7 +95,25 @@
   </script>
     <!-- Load shared burger menu component -->
     <script type="module">
-      import { insertBurgerMenu } from '/Teachers/components/burger-menu.js';
+      // Temporary logout pill for teachers when burger menu fails to load
+      (function(){
+        if (document.getElementById('teacher-logout-pill')) return;
+        function doLogout() {
+          localStorage.removeItem('userId');
+          localStorage.removeItem('userRole');
+          localStorage.removeItem('username');
+          const redirect = encodeURIComponent(location.pathname + location.search);
+          window.location.href = '/Teachers/login.html?redirect=' + redirect;
+        }
+        const btn = document.createElement('button');
+        btn.id = 'teacher-logout-pill';
+        btn.textContent = 'Logout';
+        Object.assign(btn.style, { position:'fixed', top:'12px', right:'12px', zIndex:99999, background:'#e74c3c', color:'#fff', border:'none', padding:'8px 12px', borderRadius:'6px', cursor:'pointer', boxShadow:'0 2px 8px rgba(0,0,0,0.2)' });
+        btn.onclick = doLogout;
+        document.addEventListener('DOMContentLoaded', function(){ if (location.hostname !== 'willenaenglish.netlify.app') document.body.appendChild(btn); });
+      })();
+
+      import { insertBurgerMenu } from '/Teachers/components/burger-menu.js?v=20251213b';
       async function ensureBurgerMenuTemplate() {
         if (!document.getElementById('burger-menu-template')) {
           const resp = await fetch('/Teachers/components/burger-menu.html');
@@ -328,7 +374,7 @@
                   <option value="vectors">Clipart</option>
                 </select>
 
-                <button class="refresh-btn" id="refreshBtn" title="Refresh Preview">↻</button>
+                <button class="refresh-btn" id="refreshBtn" title="Refresh Preview">🔄</button>
                 <select class="test-mode-select" id="testModeSelect" style="margin-left:8px;">
                     <option value="none">Test Mode Off</option>
                     <option value="hide-eng">Hide English</option>
@@ -571,7 +617,7 @@
           };
           
           try {
-            const resp = await WillenaAPI.fetch('/.netlify/functions/supabase_proxy_fixed?feedback', {
+            const resp = await WillenaAPI.fetch('/.netlify/functions/supabase_auth?feedback', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
@@ -597,12 +643,74 @@
       }
     };
     </script>
-    <script type="module" src="wordtest.js"></script>
+    <script type="module" src="wordtest.js?v=20260110c"></script>
     <script>
-    // Improved double-click event for image search based on selected mode
+    // Click event for image search using shared image picker modal
     document.addEventListener('DOMContentLoaded', function() {
       const previewArea = document.getElementById('previewArea');
       if (previewArea) {
+        // Capture-phase handler: ensures any legacy inline onclick handlers never run
+        // (Some older saved templates/HTML had inline window.open() to Pixabay.)
+        previewArea.addEventListener('click', function(e) {
+          // Only take over clicks on image zones
+          const zone = e.target.closest('.image-drop-zone');
+          if (!zone) return;
+          if (e.target && e.target.tagName === 'INPUT') return;
+
+          e.preventDefault();
+          e.stopImmediatePropagation();
+
+          const rawWord = (zone.dataset && zone.dataset.word) ? zone.dataset.word : '';
+          const word = (rawWord || '').trim().split(/\s|,/)[0];
+          if (!word) return;
+
+          const dataIndex = (zone.dataset && zone.dataset.index) ? zone.dataset.index : 0;
+          const pictureModeSelect = document.getElementById('pictureModeSelect');
+          const mode = pictureModeSelect ? pictureModeSelect.value : 'photos';
+          const filterMap = { photos: 'photo', illustrations: 'illustration', vectors: 'vector', ai: 'ai' };
+          const filter = filterMap[mode] || 'all';
+
+          function openPicker() {
+            if (!(window.SharedImagePicker && typeof window.SharedImagePicker.open === 'function')) return;
+            window.SharedImagePicker.open({
+              query: word,
+              filter: filter,
+              context: { word: word, index: dataIndex, targetElement: zone },
+              onSelect: function(imageUrl, ctx) {
+                var target = ctx && ctx.targetElement ? ctx.targetElement : zone;
+                // Persist into module state so it survives resize/rebuilds
+                if (window.wordtestSetSelectedImage) {
+                  try { window.wordtestSetSelectedImage(ctx.word, ctx.index, imageUrl); } catch (ex) {}
+                }
+
+                // Update DOM in-place (ensure only one <img>)
+                var container = target.querySelector('div') || target;
+                try {
+                  container.querySelectorAll('img').forEach(function(n){ n.remove(); });
+                } catch (_) {}
+                var newImg = document.createElement('img');
+                newImg.src = imageUrl;
+                newImg.alt = (ctx && ctx.word) ? ctx.word : 'Image';
+                newImg.style.cssText = 'display:block;width:100%;height:100%;object-fit:cover;';
+                container.appendChild(newImg);
+
+                // Also mirror to savedImageData for compatibility
+                try {
+                  var key = (ctx.word || '').toLowerCase() + '_' + String(ctx.index);
+                  window.savedImageData = window.savedImageData || {};
+                  window.savedImageData[key] = { src: imageUrl, word: ctx.word, index: Number(ctx.index) };
+                } catch (_) {}
+              }
+            });
+          }
+
+          if (window.SharedImagePicker && typeof window.SharedImagePicker.open === 'function') {
+            openPicker();
+          } else if (typeof window.ensureSharedImagePicker === 'function') {
+            window.ensureSharedImagePicker().then(openPicker).catch(function(){});
+          }
+        }, true);
+
         previewArea.addEventListener('click', function(e) {
           // Skip if clicking on input fields (for editing)
           if (e.target.tagName === 'INPUT') return;
@@ -644,20 +752,59 @@
               // Get selected picture mode
               const pictureModeSelect = document.getElementById('pictureModeSelect');
               const mode = pictureModeSelect ? pictureModeSelect.value : 'photos';
+              const filterMap = { photos: 'photo', illustrations: 'illustration', vectors: 'vector', ai: 'ai' };
+              const filter = filterMap[mode] || 'all';
               
-              // Use centralized helper for all modes
-              let url = window.getPixabaySearchUrl ? window.getPixabaySearchUrl(word, mode) : `https://pixabay.com/images/search/${encodeURIComponent(word)}/`;
+              // Find the clicked element's index if it has one
+              const dataIndex = card.dataset?.index || e.target.closest('[data-index]')?.dataset?.index || 0;
               
-              // Calculate left-side position and size (80vh x 25vw)
-              const screenW = window.screen.availWidth || window.innerWidth;
-              const screenH = window.screen.availHeight || window.innerHeight;
-              const width = Math.round(screenW * 0.25);
-              const height = Math.round(screenH * 0.8);
-              const left = 10;
-              const top = Math.round((screenH - height) / 2);
-              const windowFeatures = `width=${width},height=${height},left=${left},top=${top},scrollbars=yes,resizable=yes`;
-              
-              window.open(url, 'ImageSearchWindow', windowFeatures);
+              // Use shared image picker modal
+              if (window.SharedImagePicker && typeof window.SharedImagePicker.open === 'function') {
+                window.SharedImagePicker.open({
+                  query: word,
+                  filter: filter,
+                  context: { word: word, index: dataIndex, targetElement: card },
+                  onSelect: function(imageUrl, ctx) {
+                    // Find the image element to update
+                    let imgEl = ctx.targetElement.querySelector('img');
+                    if (imgEl) {
+                      imgEl.src = imageUrl;
+                    } else {
+                      // Look for image drop zone or container
+                      const zone = ctx.targetElement.closest('.image-drop-zone') || ctx.targetElement.querySelector('.image-drop-zone');
+                      if (zone) {
+                        const innerImg = zone.querySelector('img');
+                        if (innerImg) {
+                          innerImg.src = imageUrl;
+                        } else {
+                          const container = zone.querySelector('div') || zone;
+                          container.innerHTML = '<img src="' + imageUrl + '" style="display:block;width:100%;height:100%;object-fit:cover;" alt="' + ctx.word + '">';
+                        }
+                      }
+                    }
+                    // Trigger preview update if available
+                    if (window.updatePreview) window.updatePreview();
+                  }
+                });
+              } else if (typeof window.ensureSharedImagePicker === 'function') {
+                // Try to load the modal on-demand
+                window.ensureSharedImagePicker().then(function() {
+                  if (window.SharedImagePicker) {
+                    window.SharedImagePicker.open({
+                      query: word,
+                      filter: filter,
+                      context: { word: word, index: dataIndex, targetElement: card },
+                      onSelect: function(imageUrl, ctx) {
+                        let imgEl = ctx.targetElement.querySelector('img');
+                        if (imgEl) {
+                          imgEl.src = imageUrl;
+                        }
+                        if (window.updatePreview) window.updatePreview();
+                      }
+                    });
+                  }
+                });
+              }
             }
           }
         });

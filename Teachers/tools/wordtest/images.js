@@ -56,7 +56,8 @@ async function loadImageAlternatives(word, wordKey, kor = null, currentSettings 
             // Choose image_type from UI if available
             const mode = document.getElementById('pictureModeSelect')?.value || 'photos';
             const imageType = mode === 'illustrations' ? 'illustration' : (mode === 'photos' ? 'photo' : 'all');
-            const url = `/.netlify/functions/pixabay?q=${encodeURIComponent(word)}&image_type=${imageType}&safesearch=true&order=popular&per_page=5`;
+            const apiPath = window.WillenaAPI ? window.WillenaAPI.getApiUrl('/.netlify/functions/pixabay') : '/.netlify/functions/pixabay';
+            const url = `${apiPath}?q=${encodeURIComponent(word)}&image_type=${imageType}&safesearch=true&order=popular&per_page=5`;
             try {
                 const res = await fetch(url, { cache: 'no-store' });
                 if (res.ok) {
@@ -114,6 +115,24 @@ function cycleImage(word, index, updatePreviewCallback) {
         // Fallback to full update if targeted update fails
         updatePreviewCallback();
     }
+}
+
+// Persist a user-selected image so it survives preview rebuilds/resizing
+function setSelectedImage(word, index, imageUrl) {
+    if (!word || typeof imageUrl !== 'string' || !imageUrl) return;
+    const wordKey = `${String(word).toLowerCase()}_${index}`;
+    if (!imageAlternatives[wordKey]) imageAlternatives[wordKey] = [];
+    // Put the chosen image first (keep any existing alternatives after it)
+    imageAlternatives[wordKey] = [
+        imageUrl,
+        ...imageAlternatives[wordKey].filter(a => a !== imageUrl)
+    ];
+    currentImageIndex[wordKey] = 0;
+    // Mirror for save/restore logic
+    try {
+        window.savedImageData = window.savedImageData || {};
+        window.savedImageData[wordKey] = { src: imageUrl, word: word, index: Number(index) };
+    } catch (_) {}
 }
 
 // renderImage is imported from images-utils.js to avoid duplicate declarations
@@ -355,6 +374,7 @@ export {
   loadImageAlternatives,
   addMoreImageAlternatives,
   cycleImage,
+    setSelectedImage,
   renderImage,
   refreshImages,
   refreshImageForWord,

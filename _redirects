@@ -1,20 +1,8 @@
-# Cloudflare Pages / Netlify Redirects
-# NOTE: This file is used by BOTH Cloudflare Pages (staging) and Netlify
-# Rules are processed top-to-bottom, first match wins
+# Netlify _redirects - serve everything from willenaenglish.netlify.app
+# DO NOT redirect to cf.willenaenglish.com - it causes CORS issues with functions
 
-# Preserve Netlify Functions routing (critical - must be first)
+# Preserve Netlify functions
 /.netlify/functions/*       /.netlify/functions/:splat                         200
 
-# Normalize login URLs (relative redirects - work on any domain)
-/login.html                 /students/signin.html                              301
-/students/login.html        /students/signin.html                              301
-
-# Normalize teacher URLs (relative redirects)
-# Note: Teacher login page is login.html (not signin.html)
-/Teachers/index.html        /Teachers/login.html                               301
-/teachers/index.html        /Teachers/login.html                               301
-/teachers/login.html        /Teachers/login.html                               301
-/Teachers/singin.html       /Teachers/login.html                               301
-
-# All other routes - serve files directly (no external redirects)
-# This allows staging to work without redirecting to production
+# Note: Static assets are served automatically by Cloudflare Pages
+# No redirect rules needed for .js, .css, .html, etc.

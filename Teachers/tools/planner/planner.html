@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Willena Lesson Planner</title>
-    <script src="/js/api-config.js"></script>
+    <script src="/js/api-config.js?v=20260108"></script>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <style>
         body {
@@ -294,7 +294,7 @@
         return;
       }
       try {
-        const res = await WillenaAPI.fetch('/.netlify/functions/supabase_proxy_fixed?action=get_profile&user_id=' + encodeURIComponent(userId));
+        const res = await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=get_profile&user_id=' + encodeURIComponent(userId));
         const result = await res.json();
         if (!result.success || result.approved !== true) {
           window.location.href = '/Teachers/components/access-denied.html';
@@ -358,7 +358,7 @@
           const username = localStorage.getItem('username') || localStorage.getItem('name') || '';
           
           try {
-            const resp = await WillenaAPI.fetch('/.netlify/functions/supabase_proxy_fixed?feedback', {
+            const resp = await WillenaAPI.fetch('/.netlify/functions/supabase_auth?feedback', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
@@ -390,7 +390,7 @@
   </script>
     <!-- Load shared burger menu component -->
     <script type="module">
-      import { insertBurgerMenu } from '/Teachers/components/burger-menu.js';
+      import { insertBurgerMenu } from '/Teachers/components/burger-menu.js?v=20251213b';
       async function ensureBurgerMenuTemplate() {
         if (!document.getElementById('burger-menu-template')) {
           const resp = await fetch('/Teachers/components/burger-menu.html');
@@ -515,7 +515,7 @@
                         <label class="form-label">Language</label>
                         <div class="toggle-buttons">
                             <button id="englishMode" class="toggle-btn active">English</button>
-                            <button id="koreanMode" class="toggle-btn inactive">ÌïúÍµ≠Ïñ¥</button>
+                            <button id="koreanMode" class="toggle-btn inactive">?úÍµ≠??/button>
                         </div>
                     </div>
                     
@@ -599,7 +599,7 @@
                 <div class="preview-area">
                     <div id="lessonPlanOutput">
                         <div class="empty-state">
-                            <div class="icon">üìù</div>
+                            <div class="icon">?ìù</div>
                             <h3>Ready to Create Your Lesson Plan</h3>
                             <p>Fill in the details on the left and click generate to create a professional lesson plan with AI assistance.</p>
                         </div>

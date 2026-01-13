@@ -59,9 +59,9 @@
       const password = document.getElementById('password').value;
       const username = document.getElementById('username').value.trim();
       // Use correct Netlify function path for local dev vs production
-      let functionPath = '/.netlify/functions/supabase_proxy_fixed?action=signup';
+      let functionPath = '/.netlify/functions/supabase_auth?action=signup';
       if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-        functionPath = '/.netlify/functions/supabase_proxy_fixed?action=signup';
+        functionPath = '/.netlify/functions/supabase_auth?action=signup';
       }
       try {
         const response = await fetch(functionPath, {

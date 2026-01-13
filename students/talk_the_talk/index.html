@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>Talk the Talk</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css?v=20260104-5">
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <header class="header">
+      <h1>Talk the Talk</h1>
+    </header>
+
+    <!-- Chat Messages Area -->
+    <div class="chat-area" id="chatArea">
+      <!-- Messages will be dynamically added here -->
+    </div>
+
+    <!-- Status Bar -->
+    <div class="status-bar" id="statusBar" hidden>
+      <span class="status-text" id="statusText"></span>
+      <span class="timer" id="timerDisplay"><span id="timerValue">15</span>s</span>
+    </div>
+
+    <!-- Record Button (fixed at bottom) -->
+    <div class="record-container">
+      <button id="recordBtn" class="record-btn" aria-label="Record">
+        <span class="record-icon"></span>
+      </button>
+    </div>
+
+    <!-- Settings Button (fixed bottom-right) -->
+    <button id="settingsBtn" class="settings-btn" aria-label="Settings">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="3"></circle>
+        <path d="M12 1v6m0 6v6m9-9h-6m-6 0H3"></path>
+      </svg>
+    </button>
+
+    <!-- Settings Menu -->
+    <div id="settingsMenu" class="settings-menu" hidden>
+      <div class="settings-header">Language</div>
+      <button class="lang-option" data-lang="en">
+        <span class="lang-flag">🇬🇧</span>
+        <span class="lang-name">English</span>
+        <span class="lang-check" id="checkEn">✓</span>
+      </button>
+      <button class="lang-option" data-lang="ko">
+        <span class="lang-flag">🇰🇷</span>
+        <span class="lang-name">한국어 (Korean)</span>
+        <span class="lang-check" id="checkKo">✓</span>
+      </button>
+    </div>
+  </div>
+
+  <script src="/js/api-config.js"></script>
+  <script src="js/app.js?v=20260110"></script>
+</body>
+</html>

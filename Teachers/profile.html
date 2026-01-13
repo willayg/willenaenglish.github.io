@@ -4,16 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Teacher Profile</title>
-  <script>
-    // Teachers auth requires same-origin cookies - redirect to Netlify if on custom domain
-    (function() {
-      const host = window.location.hostname;
-      if (host === 'willenaenglish.com' || host === 'www.willenaenglish.com' || host === 'willenaenglish.github.io') {
-        const currentPath = window.location.pathname + window.location.search;
-        window.location.href = 'https://willenaenglish.netlify.app' + currentPath;
-      }
-    })();
-  </script>
+  <script src="/js/api-config.js?v=20260108"></script>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Caveat:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     body {
@@ -161,7 +152,7 @@
         };
       }
     });
-    const SUPABASE_PROXY_URL = '/.netlify/functions/supabase_proxy_fixed';
+    const SUPABASE_PROXY_URL = '/.netlify/functions/supabase_auth';
     const profileForm = document.getElementById('profileForm');
     const profileMessage = document.getElementById('profileMessage');
     // Make logo clickable to dashboard (redundant if <a> is present, but ensures for future changes)
@@ -181,7 +172,7 @@ async function ensureUsernameInLocalStorage() {
   if (!userId) return;
   if (!localStorage.getItem('username')) {
     try {
-      const res = await fetch(`/Teachers/components/../.netlify/functions/supabase_proxy_fixed?action=get_profile&user_id=${encodeURIComponent(userId)}`);
+      const res = await fetch(`/Teachers/components/../.netlify/functions/supabase_auth?action=get_profile&user_id=${encodeURIComponent(userId)}`);
       const result = await res.json();
       if (res.ok && result.success && result.username) {
         localStorage.setItem('username', result.username);
@@ -191,8 +182,9 @@ async function ensureUsernameInLocalStorage() {
 }
 ensureUsernameInLocalStorage();
     async function fetchProfile() {
-      // Fetch current profile info from proxy
-      const res = await fetch(`${SUPABASE_PROXY_URL}?action=get_profile&user_id=${encodeURIComponent(userId)}`);
+      // Fetch current profile info from proxy (use WillenaAPI for staging/prod routing)
+      const apiUrl = window.WillenaAPI ? window.WillenaAPI.getApiUrl(`${SUPABASE_PROXY_URL}?action=get_profile&user_id=${encodeURIComponent(userId)}`) : `${SUPABASE_PROXY_URL}?action=get_profile&user_id=${encodeURIComponent(userId)}`;
+      const res = await fetch(apiUrl, { credentials: 'include' });
       const result = await res.json();
       if (res.ok && result.success) {
         document.getElementById('email').value = result.email;
@@ -208,7 +200,7 @@ ensureUsernameInLocalStorage();
         // Show approval status
         const approvalStatus = document.getElementById('approvalStatus');
         if (result.approved === true) {
-          approvalStatus.textContent = 'Status: Approved ✅';
+          approvalStatus.textContent = 'Status: Approved ✓';
           approvalStatus.style.color = '#388e3c';
         } else {
           approvalStatus.textContent = 'Status: Pending Approval ⏳';
@@ -225,10 +217,12 @@ ensureUsernameInLocalStorage();
       const email = document.getElementById('email').value.trim();
       const password = document.getElementById('password').value;
       const username = document.getElementById('username').value.trim();
-      // Update name, email, username and/or password via proxy
-      const res = await fetch(SUPABASE_PROXY_URL + '?action=update_profile', {
+      // Update name, email, username and/or password via proxy (use WillenaAPI for staging/prod routing)
+      const updateUrl = window.WillenaAPI ? window.WillenaAPI.getApiUrl(SUPABASE_PROXY_URL + '?action=update_profile') : SUPABASE_PROXY_URL + '?action=update_profile';
+      const res = await fetch(updateUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ user_id: userId, name, email, password, username })
       });
       const result = await res.json();

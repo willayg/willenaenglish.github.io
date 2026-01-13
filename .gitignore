@@ -9,4 +9,17 @@ Teachers/tools/worksheet-builder-vanilla/References/
 # Ignore local dev variable files used by some workers/tools
 .dev.vars
 
+# Wrangler build artifacts (keep worker source code, ignore builds)
+.wrangler/tmp/
+.wrangler/state/
+**/wrangler/tmp/
+**/wrangler/state/
+cloudflare-workers/**/.wrangler/tmp/
+cloudflare-workers/**/.wrangler/state/
+workers-proxy/.wrangler/tmp/
+workers-proxy/.wrangler/state/
 
+# Temporary worker files
+workers-proxy/cookies.txt
+workers-proxy/*.txt
+scripts/.workers.pids.json

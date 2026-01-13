@@ -48,12 +48,9 @@ exports.handler = async (event) => {
         const key = `sent_${id}.mp3`;
         try {
           await s3.send(new HeadObjectCommand({ Bucket:R2_BUCKET_NAME, Key:key }));
-          let url = null;
-          if (plain && R2_PUBLIC_BASE){
-            url = R2_PUBLIC_BASE.replace(/\/$/,'') + '/' + key;
-          } else {
-            url = await getSignedUrl(s3, new GetObjectCommand({ Bucket:R2_BUCKET_NAME, Key:key }), { expiresIn: 60*60*6 });
-          }
+          // Always use signed URLs for sentence audio to avoid CORS issues
+          // (sentence files live at bucket root, not in /images subfolder)
+          const url = await getSignedUrl(s3, new GetObjectCommand({ Bucket:R2_BUCKET_NAME, Key:key }), { expiresIn: 60*60*6 });
           results[id] = { exists:true, url, key };
         } catch(e){
           results[id] = { exists:false };

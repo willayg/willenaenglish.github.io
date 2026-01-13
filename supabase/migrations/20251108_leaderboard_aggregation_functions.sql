@@ -140,19 +140,9 @@ AS $$
       AND (p.username IS NULL OR LENGTH(p.username) > 1)
   )
   
-  SELECT 
-    ranked.user_id,
-    ranked.name,
-    ranked.username,
-    ranked.avatar,
-    ranked.class,
-    ranked.total_stars,
-    ranked.total_points,
-    ranked.is_self,
-    ranked.rank
-  FROM ranked
-  WHERE ranked.rank <= 5 OR ranked.is_self = true
-  ORDER BY ranked.rank ASC;
+  SELECT * FROM ranked
+  WHERE rank <= 5 OR is_self = true
+  ORDER BY rank ASC;
 $$;
 
 -- ============================================================
@@ -245,19 +235,9 @@ AS $$
       AND (p.username IS NULL OR LENGTH(p.username) > 1)
   )
   
-  SELECT 
-    ranked.user_id,
-    ranked.name,
-    ranked.username,
-    ranked.avatar,
-    ranked.class,
-    ranked.total_stars,
-    ranked.total_points,
-    ranked.is_self,
-    ranked.rank
-  FROM ranked
-  WHERE ranked.rank <= 10 OR ranked.is_self = true
-  ORDER BY ranked.rank ASC;
+  SELECT * FROM ranked
+  WHERE rank <= 10 OR is_self = true
+  ORDER BY rank ASC;
 $$;
 
 -- ============================================================
