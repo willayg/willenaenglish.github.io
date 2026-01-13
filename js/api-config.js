@@ -1,242 +1,135 @@
 /**
- * API Configuration for GitHub Pages + Netlify Functions + Cloudflare Workers
- * VERSION: 2025-12-07-v2 LOCAL_DEV_FIX
+ * API Configuration - Simple and Deterministic
+ * VERSION: 2026-01-08 CACHE_BUST
  * 
- * This file centralizes the API base URL configuration.
- * When hosted on GitHub Pages, API calls go to the Netlify functions domain.
- * When running locally or on Netlify, they use relative paths.
- * 
- * CLOUDFLARE WORKERS MIGRATION:
- * - Set CF_ROLLOUT_PERCENT to gradually shift traffic to Cloudflare Workers
- * - 0 = all Netlify, 100 = all Cloudflare
- * - Shadow mode sends requests to both but uses Netlify response
- * 
- * IMPORTANT: For cross-origin cookie authentication to work:
- * 1. Netlify functions must return proper CORS headers with credentials
- * 2. Cookies must be set with SameSite=None; Secure
- * 3. Fetch requests must include credentials: 'include'
+ * PRODUCTION (willenaenglish.com, www.willenaenglish.com, cf.willenaenglish.com, students.willenaenglish.com, localhost):
+ *   → Relative paths only: /.netlify/functions/<name>
+ *   → Same-origin requests, cookies work automatically
+ *   → NO absolute URLs, NO proxy domains, NO api-cf.*
+ *
+ * GITHUB PAGES (willenaenglish.github.io):
+ *   → Absolute URL to students domain: https://students.willenaenglish.com/.netlify/functions/<name>
+ *   → Cross-origin, requires credentials: 'include'
+ *   → Known cookie-blocking browsers redirected to students domain
  */
 
 (function() {
   'use strict';
 
   // ============================================================
-  // CLOUDFLARE WORKERS MIGRATION CONFIG
+  // CONSTANTS
   // ============================================================
-  
-  // Cloudflare Worker URLs (each worker has its own subdomain)
-  const CF_WORKER_URLS = {
-    get_audio_urls: 'https://get-audio-urls.willena.workers.dev',
+  const GITHUB_PAGES_HOST = 'willenaenglish.github.io';
+  const NETLIFY_BASE = 'https://students.willenaenglish.com';
+  // Cloudflare API Gateway - handles function routing for CF Pages deployments
+  const CF_API_GATEWAY = 'https://api.willenaenglish.com';
+  // Cloudflare worker endpoints - ONLY use on localhost for testing
+  // On production/staging, use relative paths to same-origin /api/* routes
+  const CF_FUNCTIONS = {
     supabase_auth: 'https://supabase-auth.willena.workers.dev',
-    log_word_attempt: 'https://log-word-attempt.willena.workers.dev',
-    homework_api: 'https://homework-api.willena.workers.dev',
-    progress_summary: 'https://progress-summary.willena.workers.dev',
     verify_student: 'https://verify-student.willena.workers.dev',
   };
-  // Back-compat for older code paths that referenced a single base
-  const CF_WORKER_BASE = CF_WORKER_URLS.get_audio_urls;
+  // Only enable workers.dev routing on localhost (for dev testing)
+  // Production/staging use relative /api/* paths (same-origin, no CORS issues)
+  const USE_CF_WORKERS = (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'));
 
-  // Local dev worker ports (Cloudflare Workers via wrangler dev)
-  const LOCAL_WORKER_MAP = {
-    supabase_auth: 'http://127.0.0.1:8787',
-    log_word_attempt: 'http://127.0.0.1:8788',
-    homework_api: 'http://127.0.0.1:8789',
-    progress_summary: 'http://127.0.0.1:8790',
-  };
-  
-  // Rollout percentage: 0-100 (0 = all Netlify, 100 = all Cloudflare)
-  // Change this to gradually shift traffic. Use `setRolloutPercent()` to update at runtime.
-  // Default to 0% (Netlify) but when running on the production custom domain
-  // prefer Cloudflare Workers (they provide proper CORS and parity).
-  let CF_ROLLOUT_PERCENT = 0;
-  
-  // Shadow mode: if true, calls BOTH endpoints but uses Netlify response
-  // Useful for testing parity without affecting users
-  let CF_SHADOW_MODE = false;
-  
-  // Functions that have been migrated to Cloudflare Workers
-  const CF_MIGRATED_FUNCTIONS = {
-    get_audio_urls: CF_WORKER_URLS.get_audio_urls,
-    supabase_auth: CF_WORKER_URLS.supabase_auth,
-    log_word_attempt: CF_WORKER_URLS.log_word_attempt,
-    homework_api: CF_WORKER_URLS.homework_api,
-    progress_summary: CF_WORKER_URLS.progress_summary,
-    verify_student: CF_WORKER_URLS.verify_student,
-  };
+  // Functions that are Netlify-only (not migrated) - these ALWAYS use NETLIFY_FUNCTIONS_URL
+  // even when CF_ROLLOUT_PERCENT is 100
+  const NETLIFY_ONLY_FUNCTIONS = [
+    'verify_student',
+    'set_student_password',
+    'debug_student_data',
+    'openai_proxy',
+    'google_vision_proxy',
+    'supabase_proxy',
+    'supabase_proxy_fixed',
+    'teacher_admin',
+    'test_admin',
+    'eleven_labs_proxy',
+    'translate',
+    'define_word',
+  ];
 
   // ============================================================
-
-  // Detect the current environment
+  // ENVIRONMENT DETECTION (minimal)
+  // ============================================================
   const currentHost = window.location.hostname;
-  
-  // Netlify functions base URL
-  const NETLIFY_FUNCTIONS_URL = 'https://willenaenglish.netlify.app';
-  
-  // Cloudflare API proxy URL (handles CORS properly for all origins)
-  const CF_API_PROXY_URL = 'https://api.willenaenglish.com';
-  
-  // Determine if we're on GitHub Pages or a custom domain pointing to GH Pages
-  const isGitHubPages = currentHost === 'willenaenglish.github.io';
-  const isCustomDomain = currentHost === 'willenaenglish.com' || currentHost === 'www.willenaenglish.com' || currentHost.endsWith('.willenaenglish.com');
+  const isGitHubPages = currentHost === GITHUB_PAGES_HOST;
   const isLocalhost = currentHost === 'localhost' || currentHost === '127.0.0.1';
-  const isNetlify = currentHost.includes('netlify.app') || currentHost.includes('netlify.com');
-  // Detect Cloudflare Pages (staging, preview deployments, etc.)
-  const isCloudflarePages = currentHost.endsWith('.pages.dev');
+  // Detect Cloudflare Pages deployments (staging, cf, teachers, etc.) - these need the API gateway
+  const isCloudflarePages = currentHost === 'staging.willenaenglish.com' || 
+                             currentHost === 'cf.willenaenglish.com' ||
+                             currentHost === 'teachers.willenaenglish.com' ||
+                             currentHost.endsWith('.pages.dev');
+  // Netlify = students.willenaenglish.com (has /.netlify/functions/ natively)
+  const isNetlify = currentHost === 'students.willenaenglish.com' || 
+                    currentHost === 'willenaenglish.netlify.app';
   
-  // For cross-origin requests (GitHub Pages, custom domain, or CF Pages -> Netlify), we need special handling
-  const isCrossOrigin = isGitHubPages || isCustomDomain || isCloudflarePages;
+  // Production = everything except GitHub Pages
+  // On production, we ONLY use relative paths
+  const isProduction = !isGitHubPages;
   
-  // Detect browsers that ALWAYS block third-party cookies (Safari ITP, Samsung Internet, Brave, etc.)
+  // Cross-origin only applies to GitHub Pages
+  const isCrossOrigin = isGitHubPages;
+
+  // ============================================================
+  // API BASE - Environment-specific routing
+  // ============================================================
+  // - Netlify (students.willenaenglish.com): relative paths (functions exist natively)
+  // - Cloudflare Pages (staging, cf): use API gateway (api.willenaenglish.com)
+  // - GitHub Pages: use Netlify absolute URL (cross-origin)
+  // - Localhost: relative paths (for local dev with netlify dev)
+  let API_BASE;
+  if (isNetlify || isLocalhost) {
+    // Netlify or localhost: relative paths work (functions exist locally)
+    API_BASE = '';
+  } else if (isCloudflarePages) {
+    // Cloudflare Pages: route to API gateway which proxies to CF Workers
+    API_BASE = CF_API_GATEWAY;
+  } else if (isGitHubPages) {
+    // GitHub Pages: cross-origin to Netlify
+    API_BASE = NETLIFY_BASE;
+  } else {
+    // Unknown domain (e.g., willenaenglish.com without subdomain): use Netlify
+    API_BASE = NETLIFY_BASE;
+  }
+
+  // ============================================================
+  // COOKIE BLOCKING DETECTION (for GitHub Pages redirect)
+  // ============================================================
   const isKnownCookieBlockingBrowser = (() => {
     const ua = navigator.userAgent || '';
-    // Safari (including iOS Safari) - has Intelligent Tracking Prevention
     const isSafari = /Safari/.test(ua) && !/Chrome|Chromium|Edg|OPR|Opera/.test(ua);
-    // Samsung Internet - has Smart Anti-Tracking
     const isSamsungInternet = /SamsungBrowser/.test(ua);
-    // Brave browser - blocks third-party cookies by default
     const isBrave = typeof navigator.brave !== 'undefined';
-    
     return isSafari || isSamsungInternet || isBrave;
   })();
 
-  // For Chrome/Firefox/Edge in incognito/private mode, we can't detect via UA.
-  // Use a session flag + async test approach for those cases.
-  // This flag gets set by testCrossOriginCookies() if cookies fail.
   let _crossOriginCookiesFailed = false;
-
-  // Synchronous check: known blockers OR previously detected failure
   const isThirdPartyCookiesBlocked = () => isKnownCookieBlockingBrowser || _crossOriginCookiesFailed;
 
-  /**
-   * Async test: call Netlify function to set a test cookie, then call again to verify it's sent back.
-   * Returns true if cross-origin cookies work, false otherwise.
-   * Sets _crossOriginCookiesFailed flag as side effect.
-   */
-  async function testCrossOriginCookies() {
-    if (!isCrossOrigin) return true; // same-origin, cookies always work
-    if (isKnownCookieBlockingBrowser) {
-      _crossOriginCookiesFailed = true;
-      return false;
-    }
-    try {
-      // Use cookie_echo endpoint to check if any auth cookies are present
-      // If user was logged in before, cookies should be sent. If not, that's also fine for this test.
-      // The real test is: after login, do cookies come back on subsequent requests?
-      // For a quick pre-login check, we test if the browser sends ANY cookies to the cross-origin.
-      const resp = await fetch(NETLIFY_FUNCTIONS_URL + '/.netlify/functions/supabase_auth?action=cookie_echo&_t=' + Date.now(), {
-        method: 'GET',
-        credentials: 'include'
-      });
-      const data = await resp.json();
-      // If we get a response, the request worked. The cookie_echo tells us if cookies were received.
-      // For incognito without prior login, hasAccess will be false - that's expected.
-      // The test passes if we got a valid response (cookies CAN be sent, even if none exist yet).
-      // We'll rely on a post-login check for the real validation.
-      return true;
-    } catch (e) {
-      console.warn('[WillenaAPI] Cross-origin cookie test failed:', e.message);
-      _crossOriginCookiesFailed = true;
-      return false;
-    }
-  }
+  // ============================================================
+  // CORE API FUNCTIONS
+  // ============================================================
 
   /**
-   * Quick synchronous check to see if we should redirect immediately.
-   * For unknown browsers (Chrome incognito), we DON'T redirect immediately -
-   * we let them try to login, and if whoami fails right after, then redirect.
-   */
-  const shouldRedirectImmediately = () => isCrossOrigin && isKnownCookieBlockingBrowser;
-  
-  // Set API base URL based on environment
-  let API_BASE = '';
-  
-  if (isGitHubPages) {
-    // On GitHub Pages - use Cloudflare API proxy for proper CORS
-    API_BASE = CF_API_PROXY_URL;
-  } else if (isCloudflarePages) {
-    // On Cloudflare Pages (staging, preview) - use Cloudflare API proxy for proper CORS
-    API_BASE = CF_API_PROXY_URL;
-  } else if (isCustomDomain) {
-    // Custom domain - use Cloudflare API proxy
-    API_BASE = CF_API_PROXY_URL;
-  } else if (isLocalhost) {
-    // Local development - use relative path for local netlify dev (port 8888 or 9000)
-    API_BASE = '';
-  } else if (isNetlify) {
-    // On Netlify - use relative paths
-    API_BASE = '';
-  } else {
-    // Unknown environment - default to Netlify
-    API_BASE = NETLIFY_FUNCTIONS_URL;
-  }
-
-  // If we're running on a cross-origin host (custom domain, GH Pages, or CF Pages),
-  // prefer Cloudflare Workers to avoid CORS issues with Netlify functions.
-  // The CF API proxy handles CORS properly for all allowed origins.
-  if (isCustomDomain || isCloudflarePages || isGitHubPages) {
-    CF_ROLLOUT_PERCENT = 100;
-    CF_SHADOW_MODE = false;
-    console.log('[WillenaAPI] Cross-origin host detected: forcing Cloudflare Worker usage (100% rollout)');
-  }
-
-  // --- Development override for localhost ---
-  // In `netlify dev`, the local Cloudflare workers (wrangler dev on 8787-8790)
-  // may not be running. Keep rollout at 0 by default to avoid connection refused.
-  // If you ARE running wrangler dev locally and want to hit it, call:
-  //   WillenaAPI.setRolloutPercent(100)
-  if (isLocalhost) {
-    // Keep localhost using the default rollout (0%) unless explicitly changed at runtime
-    CF_ROLLOUT_PERCENT = 0;
-    CF_SHADOW_MODE = false;
-    console.log('[WillenaAPI] DEV MODE: CF_ROLLOUT_PERCENT=0 (local workers disabled by default). Use setRolloutPercent(100) to enable.');
-  }
-
-  /**
-   * Check if this request should go to Cloudflare Worker
-   * @param {string} functionName - The function name (e.g., 'get_audio_urls')
-   * @returns {boolean}
-   */
-  function shouldUseCloudflare(functionName) {
-    if (!CF_MIGRATED_FUNCTIONS[functionName]) return false;
-    if (CF_ROLLOUT_PERCENT <= 0) return false;
-    if (CF_ROLLOUT_PERCENT >= 100) return true;
-    return Math.random() * 100 < CF_ROLLOUT_PERCENT;
-  }
-
-  /**
-   * Extract function name from path
-   * @param {string} functionPath 
-   * @returns {string}
-   */
-  function extractFunctionName(functionPath) {
-    const match = functionPath.match(/\/?\.?netlify\/functions\/([^/?]+)/);
-    return match ? match[1] : '';
-  }
-
-  /**
-   * Get the full URL for a Netlify function
-   * @param {string} functionPath - The function path (e.g., '/.netlify/functions/auth')
-   * @returns {string} The full URL
+   * Get the full URL for a Netlify function.
+   * Production: returns relative path (e.g., /.netlify/functions/auth)
+   * GitHub Pages: returns absolute Netlify URL
    */
   function getApiUrl(functionPath) {
-    // Local dev: rewrite to local worker ports ONLY if rollout > 0
-    // Otherwise keep relative paths so netlify dev handles them
-    if (isLocalhost && CF_ROLLOUT_PERCENT > 0) {
-      const fn = extractFunctionName(functionPath);
-      const base = LOCAL_WORKER_MAP[fn];
-      if (base) {
-        // remove the "/.netlify/functions/<name>" prefix and keep query string
-        const pathOnly = functionPath.split('?')[0];
-        const query = functionPath.includes('?') ? functionPath.slice(functionPath.indexOf('?')) : '';
-        const suffix = pathOnly.replace(new RegExp(`^/?\.?netlify/functions/${fn}/?`), '');
-        return base + '/' + suffix + query;
-      }
-    }
-
     // If already a full URL, return as-is
     if (functionPath.startsWith('http://') || functionPath.startsWith('https://')) {
       return functionPath;
     }
+
+    const fn = extractFunctionName(functionPath);
+    if (USE_CF_WORKERS && fn && CF_FUNCTIONS[fn]) {
+      const qIndex = functionPath.indexOf('?');
+      const search = qIndex >= 0 ? functionPath.slice(qIndex) : '';
+      return CF_FUNCTIONS[fn] + search;
+    }
+
     // Ensure path starts with /.netlify/functions/
     if (!functionPath.startsWith('/.netlify/functions/')) {
       if (functionPath.startsWith('/')) {
@@ -249,230 +142,210 @@
   }
 
   /**
-   * Wrapper for fetch that automatically handles credentials for cross-origin requests
-   * AND supports Cloudflare Worker migration
-   * @param {string} functionPath - The function path
-   * @param {RequestInit} options - Fetch options
-   * @returns {Promise<Response>}
+   * Extract function name from path
+   */
+  function extractFunctionName(functionPath) {
+    const match = functionPath.match(/\/?\.?netlify\/functions\/([^\/?]+)/);
+    return match ? match[1] : '';
+  }
+
+  /**
+   * Safe JSON parser for API responses.
+   * BUG FIX: Handles HTML error pages, empty responses, and malformed JSON gracefully.
+   * Returns { success: false, error: string } on parse failure instead of throwing.
+   */
+  async function safeParseJSON(response) {
+    const contentType = response.headers.get('content-type') || '';
+    let responseText;
+    try {
+      responseText = await response.text();
+    } catch (e) {
+      console.error('[WillenaAPI] Failed to read response text:', e);
+      return { success: false, error: 'Failed to read response', _parseError: true };
+    }
+    
+    // Empty response
+    if (!responseText || !responseText.trim()) {
+      console.warn('[WillenaAPI] Empty response body');
+      return { success: false, error: 'Empty response', _parseError: true };
+    }
+    
+    // Non-JSON content type (likely HTML error page)
+    if (!contentType.includes('application/json')) {
+      console.error('[WillenaAPI] Non-JSON response (content-type:', contentType, '), body:', responseText.substring(0, 200));
+      return { success: false, error: 'Server error (non-JSON response)', _parseError: true };
+    }
+    
+    // Try to parse JSON
+    try {
+      return JSON.parse(responseText);
+    } catch (e) {
+      console.error('[WillenaAPI] JSON parse error:', e, 'Body:', responseText.substring(0, 200));
+      return { success: false, error: 'Invalid JSON response', _parseError: true };
+    }
+  }
+
+  /**
+   * Wrapper for fetch that handles credentials.
+   * Does NOT do any fancy routing - just adds credentials: 'include'.
+   * Background fetch failures do NOT trigger logout.
    */
   async function apiFetch(functionPath, options = {}) {
-    // If already a full URL, don't modify it - just fetch with credentials
-    if (functionPath.startsWith('http://') || functionPath.startsWith('https://')) {
-      console.log(`[WillenaAPI] Using provided URL directly: ${functionPath}`);
-      return fetch(functionPath, {
-        ...options,
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-          ...options.headers,
-        },
-      });
-    }
+    const url = getApiUrl(functionPath);
     
-    const functionName = extractFunctionName(functionPath);
-    const useCloudflare = shouldUseCloudflare(functionName);
-    const cfWorkerUrl = CF_MIGRATED_FUNCTIONS[functionName];
-    
-    // Extract query string from original path
-    const queryString = functionPath.includes('?') ? functionPath.slice(functionPath.indexOf('?')) : '';
-    
-    // Determine primary URL
-    let primaryUrl;
-    
-    // LOCAL DEV: use local worker ports only when rollout wants Cloudflare
-    if (isLocalhost && LOCAL_WORKER_MAP[functionName] && useCloudflare) {
-      const base = LOCAL_WORKER_MAP[functionName];
-      primaryUrl = base + '/' + queryString;
-      console.log(`[WillenaAPI] ${functionName}: using local worker ${base}`);
-    } else if (useCloudflare && cfWorkerUrl) {
-      // ALWAYS use the CF API proxy (api.willenaenglish.com) for Cloudflare Workers.
-      // This ensures:
-      // 1. Cookies are set on .willenaenglish.com domain (shared across all subdomains)
-      // 2. CORS headers are consistent
-      // 3. No cookie isolation issues between *.workers.dev subdomains
-      // Direct worker URLs (*.willena.workers.dev) cause cookie sharing failures.
-      primaryUrl = CF_API_PROXY_URL + functionPath;
-      console.log(`[WillenaAPI] ${functionName}: using CF API proxy -> ${primaryUrl}`);
-    } else {
-      primaryUrl = getApiUrl(functionPath);
-    }
-    
-    // Always include credentials for cookie-based auth
     const fetchOptions = {
       ...options,
       credentials: 'include',
     };
     
-    // LOCAL DEV: inject Authorization header when using local workers
-    // Since cross-origin cookies won't work between localhost:9000 and 127.0.0.1:8787
-    if (isLocalhost && CF_ROLLOUT_PERCENT > 0) {
-      const localToken = getLocalToken();
-      if (localToken) {
-        // Inject for ALL auth-requiring functions (not just supabase_auth)
-        const authFunctions = ['supabase_auth', 'supabase-auth', 'homework_api', 'progress_summary', 'log_word_attempt'];
-        if (authFunctions.includes(functionName)) {
-          fetchOptions.headers = {
-            ...fetchOptions.headers,
-            'Authorization': `Bearer ${localToken}`,
-          };
-          console.log(`[WillenaAPI] Injected local token for ${functionName}`);
-        }
-      } else if (['supabase_auth', 'homework_api', 'progress_summary'].includes(functionName)) {
-        console.log(`[WillenaAPI] No local token found for ${functionName}`);
+    // For requests with body, ensure Content-Type is set (case-insensitive check)
+    if (options.body) {
+      const hasContentType = options.headers && 
+        Object.keys(options.headers).some(k => k.toLowerCase() === 'content-type');
+      if (!hasContentType) {
+        fetchOptions.headers = {
+          'Content-Type': 'application/json',
+          ...fetchOptions.headers,
+        };
       }
     }
     
-    // For cross-origin requests with body, ensure Content-Type is set
-    if ((isCrossOrigin || useCloudflare) && options.body && !options.headers?.['Content-Type']) {
-      fetchOptions.headers = {
-        'Content-Type': 'application/json',
-        ...fetchOptions.headers,
-      };
-    }
-    
-    // Shadow mode: call both endpoints, use Netlify response
-    if (CF_SHADOW_MODE && cfWorkerUrl && !useCloudflare) {
-      // Fire shadow request to Cloudflare (don't await)
-      fetch(cfWorkerUrl + queryString, { ...fetchOptions, credentials: 'omit' })
-        .then(r => r.json())
-        .then(data => console.log(`[CF Shadow] ${functionName}:`, data))
-        .catch(e => console.warn(`[CF Shadow Error] ${functionName}:`, e.message));
-    }
-    
-    // Log which endpoint we're using
-    if (cfWorkerUrl) {
-      console.log(`[WillenaAPI] ${functionName}: using ${useCloudflare ? 'Cloudflare Worker' : 'Netlify'} -> ${primaryUrl}`);
-    }
-
-    // Safety: some callers mistakenly call get_audio_urls with GET (no body).
-    // The Cloudflare worker expects POST to `/` with a JSON body. If a
-    // caller forgot to set method, force POST here so the worker receives
-    // the intended verb (prevents a 405 from GET to the worker root).
-    if (functionName === 'get_audio_urls' && !fetchOptions.method) {
-      fetchOptions.method = 'POST';
-      fetchOptions.headers = fetchOptions.headers || {};
-      if (options.body && !fetchOptions.headers['Content-Type']) {
-        fetchOptions.headers['Content-Type'] = 'application/json';
+    // Add Authorization header from localStorage if token exists and no auth header already present
+    // This is a fallback for when cookies fail (e.g., on some browsers/incognito modes)
+    // IMPORTANT: Only send Authorization if we have a valid non-empty token to avoid interfering with cookie-based auth
+    const existingAuth = (fetchOptions.headers && (fetchOptions.headers.Authorization || fetchOptions.headers.authorization));
+    if (!existingAuth) {
+      let localToken = null;
+      try {
+        localToken = localStorage.getItem('sb_access_token') || null;
+      } catch (e) {
+        // localStorage not available or blocked
+      }
+      
+      // Only add Authorization header if we have a valid token that looks like a JWT (contains dots)
+      if (localToken && localToken.includes('.') && localToken.length > 50) {
+        fetchOptions.headers = {
+          ...fetchOptions.headers,
+          'Authorization': `Bearer ${localToken}`
+        };
+        console.log('[WillenaAPI] Added Authorization header from localStorage (token length:', localToken.length + ')');
       }
     }
+
     
-    return fetch(primaryUrl, fetchOptions);
-  }
-
-  // --- Local dev token storage ---
-  // On localhost with local workers, cross-origin cookies don't work between
-  // localhost:9000 (page) and 127.0.0.1:8787 (worker). Use localStorage instead.
-  const LOCAL_TOKEN_KEY = 'sb_local_access';
-  const LOCAL_REFRESH_KEY = 'sb_local_refresh';
-
-  function getLocalToken() {
-    if (!isLocalhost) return null;
-    try { return localStorage.getItem(LOCAL_TOKEN_KEY); } catch { return null; }
-  }
-
-  function setLocalTokens(access, refresh) {
-    if (!isLocalhost) return;
+    // Debug logging for POST requests
+    if (options.method === 'POST' || options.body) {
+      console.log('[WillenaAPI] POST request:', url, 'body:', options.body ? options.body.substring(0, 100) : '(none)');
+    }
+    
     try {
-      if (access) localStorage.setItem(LOCAL_TOKEN_KEY, access);
-      if (refresh) localStorage.setItem(LOCAL_REFRESH_KEY, refresh);
-    } catch {}
+      const res = await fetch(url, fetchOptions);
+      return res;
+    } catch (err) {
+      console.error('[WillenaAPI] Fetch error:', err);
+      throw err;
+    }
   }
 
-  function clearLocalTokens() {
-    try {
-      localStorage.removeItem(LOCAL_TOKEN_KEY);
-      localStorage.removeItem(LOCAL_REFRESH_KEY);
-    } catch {}
+  // ============================================================
+  // GITHUB PAGES HELPERS (redirect to Netlify if cookies blocked)
+  // ============================================================
+  
+  const shouldRedirectImmediately = () => isCrossOrigin && isKnownCookieBlockingBrowser;
+
+  function redirectToNetlifyIfNeeded(pathname) {
+    if (isCrossOrigin && isThirdPartyCookiesBlocked()) {
+      const targetUrl = NETLIFY_BASE + (pathname || window.location.pathname + window.location.search);
+      console.log('[WillenaAPI] Redirecting to Netlify for cookie support:', targetUrl);
+      window.location.replace(targetUrl);
+      return true;
+    }
+    return false;
   }
 
-  // Export to window for global access
+  // ============================================================
+  // EXPORT
+  // ============================================================
   window.WillenaAPI = {
-    BASE_URL: API_BASE,
-    FUNCTIONS_URL: NETLIFY_FUNCTIONS_URL,
-    CF_API_PROXY_URL,
-    CF_WORKER_BASE,
-    CF_WORKER_URLS,
-    CF_ROLLOUT_PERCENT,
-    CF_SHADOW_MODE,
-    CF_MIGRATED_FUNCTIONS,
-    isGitHubPages,
-    isCustomDomain,
-    isCloudflarePages,
-    isLocalhost,
-    isNetlify,
-    isCrossOrigin,
+    // Core API
     getApiUrl,
     fetch: apiFetch,
-    shouldUseCloudflare,
+    safeParseJSON,  // Safe JSON parsing that handles HTML error pages
     
-    // Convenience method to check environment
-    getEnvironment() {
-      if (isLocalhost) return 'local';
-      if (isNetlify) return 'netlify';
-      if (isGitHubPages) return 'github-pages';
-      if (isCloudflarePages) return 'cloudflare-pages';
-      if (isCustomDomain) return 'custom-domain';
-      return 'unknown';
-    },
+    // Environment info (read-only)
+    BASE_URL: API_BASE,
+    FUNCTIONS_URL: NETLIFY_BASE,
+    isGitHubPages,
+    isLocalhost,
+    isProduction,
+    isCrossOrigin,
     
-    // Method to dynamically change rollout percentage (for testing)
-    setRolloutPercent(percent) {
-      console.log(`[WillenaAPI] Rollout changed: ${CF_ROLLOUT_PERCENT}% -> ${percent}%`);
-      CF_ROLLOUT_PERCENT = Number(percent) || 0;
-    },
-
-    // Local dev token storage (for cross-origin worker auth)
-    getLocalToken,
-    setLocalTokens,
-    clearLocalTokens,
-
-    // Check if third-party cookies are likely blocked (sync check)
+    // Cookie detection (for GitHub Pages)
     isThirdPartyCookiesBlocked,
-    
-    // Check if we KNOW for sure cookies are blocked (Safari, Samsung, Brave)
     isKnownCookieBlockingBrowser,
+    markCookiesFailed() { _crossOriginCookiesFailed = true; },
     
-    // Async test for cross-origin cookies
-    testCrossOriginCookies,
-    
-    // Mark cookies as failed (call this after whoami returns 401 right after login)
-    markCookiesFailed() {
-      _crossOriginCookiesFailed = true;
-    },
-
-    // For cross-origin + blocked cookies scenario, redirect to Netlify-hosted version
-    // This ensures cookies work properly for authentication
-    redirectToNetlifyIfNeeded(pathname) {
-      if (isCrossOrigin && isThirdPartyCookiesBlocked()) {
-        const targetUrl = NETLIFY_FUNCTIONS_URL + (pathname || window.location.pathname + window.location.search);
-        console.log('[WillenaAPI] Redirecting to Netlify for cookie support:', targetUrl);
-        window.location.replace(targetUrl);
-        return true;
-      }
-      return false;
-    },
-    
-    // Redirect immediately only for KNOWN cookie-blocking browsers
-    // For unknown (Chrome incognito), we let them try first
+    // Redirect helpers (for GitHub Pages)
     shouldRedirectImmediately,
-
-    // Get the Netlify-hosted URL for the current page (useful for login redirects)
+    redirectToNetlifyIfNeeded,
     getNetlifyUrl(pathname) {
-      return NETLIFY_FUNCTIONS_URL + (pathname || window.location.pathname);
+      return NETLIFY_BASE + (pathname || window.location.pathname);
     },
-
-    // Check if we should show a cookie warning (sync, for known blockers)
     shouldShowCookieWarning() {
       return isCrossOrigin && isKnownCookieBlockingBrowser;
-    }
-  };
+    },
+    
+    // Environment helper
+    getEnvironment() {
+      if (isLocalhost) return 'local';
+      if (isGitHubPages) return 'github-pages';
+      return 'production';
+    },
 
-  // Log configuration in development or staging
-  if (isLocalhost || isGitHubPages || isCloudflarePages) {
+    // Token storage helpers - fallback for when cookies fail
+    // Store access/refresh tokens in localStorage (used when cookies are blocked/not persisting)
+    setLocalTokens(accessToken, refreshToken) {
+      try {
+        if (accessToken) localStorage.setItem('sb_access_token', accessToken);
+        if (refreshToken) localStorage.setItem('sb_refresh_token', refreshToken);
+        console.log('[WillenaAPI] Tokens stored in localStorage');
+      } catch (e) {
+        console.warn('[WillenaAPI] Failed to store tokens in localStorage:', e);
+      }
+    },
+    
+    // Get stored access token from localStorage
+    getLocalAccessToken() {
+      try {
+        return localStorage.getItem('sb_access_token') || null;
+      } catch (e) {
+        console.warn('[WillenaAPI] Failed to read access token from localStorage:', e);
+        return null;
+      }
+    },
+    
+    // Clear stored tokens from localStorage
+    clearLocalTokens() {
+      try {
+        localStorage.removeItem('sb_access_token');
+        localStorage.removeItem('sb_refresh_token');
+        console.log('[WillenaAPI] Tokens cleared from localStorage');
+      } catch (e) {
+        console.warn('[WillenaAPI] Failed to clear tokens from localStorage:', e);
+      }
+    },
+
+    // Legacy compatibility stubs (CF migration disabled)
+    CF_ROLLOUT_PERCENT: 100,
+    CF_SHADOW_MODE: false,
+    shouldUseCloudflare: () => USE_CF_WORKERS,
+    setRolloutPercent: () => {},
+    setFunctionRollout: () => {},
+  };
+  // Log configuration (dev only)
+  if (isLocalhost || isGitHubPages) {
     console.log('[WillenaAPI] Environment:', window.WillenaAPI.getEnvironment());
-    console.log('[WillenaAPI] Base URL:', API_BASE || '(relative)');
-    console.log('[WillenaAPI] Cross-origin mode:', isCrossOrigin);
-    console.log('[WillenaAPI] CF Rollout:', CF_ROLLOUT_PERCENT + '%');
-    console.log('[WillenaAPI] CF Shadow Mode:', CF_SHADOW_MODE);
+    console.log('[WillenaAPI] Base URL:', API_BASE || '(relative/same-origin)');
+    console.log('[WillenaAPI] Cross-origin:', isCrossOrigin);
   }
 })();
