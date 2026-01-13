@@ -1,11 +1,14 @@
 /**
  * API Configuration - Simple and Deterministic
- * VERSION: 2026-01-08 CACHE_BUST
+ * VERSION: 2026-01-13b CACHE_BUST
  * 
- * PRODUCTION (willenaenglish.com, www.willenaenglish.com, cf.willenaenglish.com, students.willenaenglish.com, localhost):
+ * CLOUDFLARE PAGES (students.willenaenglish.com, staging, cf, teachers):
+ *   → All API calls go through https://api.willenaenglish.com
+ *   → API gateway routes to Cloudflare Workers
+ *
+ * NETLIFY (willenaenglish.netlify.app):
  *   → Relative paths only: /.netlify/functions/<name>
  *   → Same-origin requests, cookies work automatically
- *   → NO absolute URLs, NO proxy domains, NO api-cf.*
  *
  * GITHUB PAGES (willenaenglish.github.io):
  *   → Absolute URL to students domain: https://students.willenaenglish.com/.netlify/functions/<name>
