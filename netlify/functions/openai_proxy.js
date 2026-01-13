@@ -4,7 +4,23 @@ const redisCache = require('../../lib/redis_cache');
 const OPENAI_API = process.env.OPENAI_API;
 const OPENAI_CACHE_TTL = Number(process.env.OPENAI_CACHE_TTL_SECONDS || 3600); // default 1 hour
 
+// CORS headers for all responses
+const CORS_HEADERS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+};
+
 exports.handler = async (event) => {
+  // Handle preflight OPTIONS request
+  if (event.httpMethod === 'OPTIONS') {
+    return {
+      statusCode: 200,
+      headers: CORS_HEADERS,
+      body: '',
+    };
+  }
+
   const body = event.body ? JSON.parse(event.body) : {};
 
   // If the frontend sends { prompt, type }, use chat/completions
@@ -29,6 +45,7 @@ exports.handler = async (event) => {
         if (cached) {
           return {
             statusCode: 200,
+            headers: CORS_HEADERS,
             body: JSON.stringify({ result: cached.result, cached: true }),
           };
         }
@@ -62,6 +79,7 @@ exports.handler = async (event) => {
     }
     return {
       statusCode: response.status,
+      headers: CORS_HEADERS,
       body: JSON.stringify({ result }),
     };
   }
@@ -115,6 +133,7 @@ exports.handler = async (event) => {
 
   return {
     statusCode: response.status,
+    headers: CORS_HEADERS,
     body: JSON.stringify({ data }),
   };
 };
