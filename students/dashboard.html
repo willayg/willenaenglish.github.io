@@ -13,7 +13,25 @@
   <base href="/students/">
   <meta name="robots" content="noindex" />
   <!-- API config for Cloudflare -->
-  <script src="/js/api-config.js"></script>
+  <script src="/js/api-config.js?v=20260113c"></script>
+  <!-- HOTFIX: Force API gateway for students.willenaenglish.com (CF Pages deployment) -->
+  <script>
+  (function() {
+    if (window.location.hostname === 'students.willenaenglish.com' && window.WillenaAPI) {
+      const API_GATEWAY = 'https://api.willenaenglish.com';
+      const origGetApiUrl = window.WillenaAPI.getApiUrl;
+      window.WillenaAPI.getApiUrl = function(path) {
+        const url = origGetApiUrl(path);
+        if (url.startsWith('/.netlify/functions/')) {
+          return API_GATEWAY + url;
+        }
+        return url;
+      };
+      window.WillenaAPI.BASE_URL = API_GATEWAY;
+      console.log('[HOTFIX] students.willenaenglish.com API routing fixed');
+    }
+  })();
+  </script>
   <script>
     // EMERGENCY FIX: Redirect to students domain for all authenticated pages
     // Cross-origin cookies don't work - MUST be on students.willenaenglish.com
