@@ -46,8 +46,9 @@
       
       // Wait for api-gateway to patch WillenaAPI before checking auth
       function checkAuth() {
-        if (!window.WillenaAPI || !window.WillenaAPI.fetch) {
-          setTimeout(checkAuth, 50);
+        // Must wait for BOTH WillenaAPI AND the gateway patch
+        if (!window.WillenaAPI || !window.WillenaAPI.fetch || !window.__STUDENTS_GATEWAY_PATCHED) {
+          setTimeout(checkAuth, 20);
           return;
         }
         // Fetch whoami quickly; if unauthorized, redirect before heavy scripts load

@@ -17,9 +17,9 @@
 	  const doc = document; doc.documentElement.style.visibility='hidden';
 	  function show(){ doc.documentElement.style.visibility=''; }
 	  async function check(){
-	    // Wait for WillenaAPI to be ready
-	    if (!window.WillenaAPI || !window.WillenaAPI.fetch) {
-	      setTimeout(check, 50);
+	    // Must wait for BOTH WillenaAPI AND the gateway patch
+	    if (!window.WillenaAPI || !window.WillenaAPI.fetch || !window.__STUDENTS_GATEWAY_PATCHED) {
+	      setTimeout(check, 20);
 	      return;
 	    }
 	    const c = document.cookie||'';

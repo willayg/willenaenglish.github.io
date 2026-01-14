@@ -13,16 +13,19 @@
 
   // Set API gateway immediately, before anything else loads
   window.__STUDENTS_API_GATEWAY = 'https://api.willenaenglish.com';
+  window.__STUDENTS_GATEWAY_PATCHED = false;
 
   // Wait for WillenaAPI to load, then override it
   const maxWaitTime = 5000; // 5 seconds max wait
   const startTime = Date.now();
   
   function patchWillenaAPI() {
+    if (window.__STUDENTS_GATEWAY_PATCHED) return; // Already done
+    
     if (!window.WillenaAPI || !window.WillenaAPI.getApiUrl) {
       if (Date.now() - startTime < maxWaitTime) {
         // WillenaAPI not loaded yet, try again soon
-        setTimeout(patchWillenaAPI, 50);
+        setTimeout(patchWillenaAPI, 10);
         return;
       }
       // Timeout - WillenaAPI didn't load
@@ -48,19 +51,24 @@
 
     // Update BASE_URL to reflect the gateway
     window.WillenaAPI.BASE_URL = window.__STUDENTS_API_GATEWAY;
+    window.__STUDENTS_GATEWAY_PATCHED = true;
     
     console.log('[StudentGateway] ✓ API routing configured for students domain');
     console.log('[StudentGateway] All API calls will use:', window.__STUDENTS_API_GATEWAY);
   }
 
-  // Start patching immediately when the page loads
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', patchWillenaAPI);
-  } else {
-    // DOM already loaded (e.g., if this script is loaded late)
+  // Try patching IMMEDIATELY (synchronous) - api-config.js may have already loaded
+  patchWillenaAPI();
+  
+  // Also keep trying rapidly in case api-config.js loads right after us
+  const rapidPatch = setInterval(() => {
+    if (window.__STUDENTS_GATEWAY_PATCHED) {
+      clearInterval(rapidPatch);
+      return;
+    }
     patchWillenaAPI();
-  }
-
-  // Also try patching if WillenaAPI becomes available later
-  window.addEventListener('load', patchWillenaAPI);
+  }, 5);
+  
+  // Stop rapid polling after 500ms
+  setTimeout(() => clearInterval(rapidPatch), 500);
 })();
