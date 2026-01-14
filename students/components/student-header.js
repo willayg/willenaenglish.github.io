@@ -53,6 +53,8 @@ class StudentHeader extends HTMLElement {
   this._fetchingOverview = false;
   // Mission modal guard so we attempt only once per component lifecycle
   this._missionChecked = false;
+  this._refreshAttempted = false;
+  this._whoamiRetried = false;
   }
 
   attributeChangedCallback() {
@@ -70,6 +72,7 @@ class StudentHeader extends HTMLElement {
   window.addEventListener('points:optimistic-bump', this._onOptimisticBump);
   window.addEventListener('stars:optimistic-bump', this._onStarsBump);
   // Hydrate identity from server session and refresh on focus changes
+  this._refreshSession();
   this._hydrateProfile();
   window.addEventListener('focus', this._onFocus);
     // If points not yet known, fetch once to seed
@@ -115,15 +118,33 @@ class StudentHeader extends HTMLElement {
   _onAuthChanged() {
     // Clear any cached identity so hydrate fetch is authoritative
     try { this._name = null; this._uid = null; this._avatar = null; } catch {}
+    this._refreshSession();
     this._hydrateProfile();
     this._fetchOverview();
+  }
+
+  async _refreshSession() {
+    if (this._refreshAttempted) return;
+    this._refreshAttempted = true;
+    try {
+      await WillenaAPI.fetch(`/.netlify/functions/supabase_auth?action=refresh`, { credentials: 'include', cache: 'no-store' });
+    } catch {
+      // Ignore refresh failures; whoami will handle signed-out state.
+    }
   }
 
   async _hydrateProfile() {
     try {
       const whoRes = await WillenaAPI.fetch(`/.netlify/functions/supabase_auth?action=whoami&_=${Date.now()}`);
       const who = await whoRes.json();
-      if (!who || !who.success || !who.user_id) return;
+      if (!who || !who.success || !who.user_id) {
+        if (!this._whoamiRetried) {
+          this._whoamiRetried = true;
+          await this._refreshSession();
+          return this._hydrateProfile();
+        }
+        return;
+      }
       this._uid = who.user_id;
   // Stash simple role for later gating (teacher/admin)
   try { if (who.role) { localStorage.setItem('user_role', who.role); } } catch {}
