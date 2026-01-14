@@ -43,11 +43,20 @@
       function goLogin(){ try { window.location.replace(loginUrl + '?next=' + encodeURIComponent(here)); } catch { window.location.href = loginUrl; } }
       // Skip gate if already on login (defensive) or if a special flag present
       if (/\/students\/login\.html$/i.test(window.location.pathname)) return;
-      // Fetch whoami quickly; if unauthorized, redirect before heavy scripts load
-      WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=whoami')
-        .then(r => r.ok ? r.json() : null)
-        .then(js => { if (!js || !js.success || !js.user_id) goLogin(); })
-        .catch(() => goLogin());
+      
+      // Wait for api-gateway to patch WillenaAPI before checking auth
+      function checkAuth() {
+        if (!window.WillenaAPI || !window.WillenaAPI.fetch) {
+          setTimeout(checkAuth, 50);
+          return;
+        }
+        // Fetch whoami quickly; if unauthorized, redirect before heavy scripts load
+        WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=whoami')
+          .then(r => r.ok ? r.json() : null)
+          .then(js => { if (!js || !js.success || !js.user_id) goLogin(); })
+          .catch(() => goLogin());
+      }
+      checkAuth();
     })();
   </script>
   <link rel="stylesheet" href="style.css?v=20251115a" />

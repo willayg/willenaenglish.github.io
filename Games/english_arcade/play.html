@@ -17,6 +17,11 @@
 	  const doc = document; doc.documentElement.style.visibility='hidden';
 	  function show(){ doc.documentElement.style.visibility=''; }
 	  async function check(){
+	    // Wait for WillenaAPI to be ready
+	    if (!window.WillenaAPI || !window.WillenaAPI.fetch) {
+	      setTimeout(check, 50);
+	      return;
+	    }
 	    const c = document.cookie||'';
 	    const hasGuest = /(?:^|;\s*)wa_guest_id=/.test(c);
 	    const hasA = /(?:^|;\s*)sb_access=/.test(c);
