@@ -354,6 +354,40 @@ const HomeworkModal = (() => {
     });
   }
 
+  function showDifficultyModeUI(maxStars) {
+    const difficultySection = document.getElementById('hwModalDifficultySection');
+    if (!difficultySection) return;
+
+    difficultySection.style.display = 'block';
+
+    // Add event listeners to radio buttons for live preview
+    const radios = document.querySelectorAll('input[name="hwDifficulty"]');
+    const preview = document.getElementById('hwDifficultyPreview');
+    
+    radios.forEach(radio => {
+      radio.addEventListener('change', () => {
+        updateDifficultyPreview(radio.value, maxStars, preview);
+      });
+    });
+
+    // Show initial preview for default selection (standard)
+    updateDifficultyPreview('standard', maxStars, preview);
+  }
+
+  function updateDifficultyPreview(difficulty, maxStars, previewEl) {
+    const percentages = {
+      easy: 0.25,
+      standard: 0.50,
+      hard: 0.75,
+      hardcore: 1.00
+    };
+
+    const percentage = percentages[difficulty] || 0.5;
+    const starsRequired = Math.round(maxStars * percentage);
+
+    previewEl.textContent = `Max available: ${maxStars} stars | Required to pass: ${starsRequired}+ stars`;
+  }
+
   function selectList(list) {
     selectedList = list;
 
@@ -372,6 +406,19 @@ const HomeworkModal = (() => {
       document.getElementById('hwModalSelectedTitle').textContent = title;
       document.getElementById('hwModalSelectedMeta').textContent = `Level ${list.level} • ${list.type} • ${list.tags.join(', ')}`;
     }
+
+    // Calculate max stars based on list type
+    // Phonics: 4 modes, Vocab: 6 modes, Grammar: 4-6 modes (use default)
+    let maxStars = 30; // default for vocab
+    if (list.type === 'phonics') {
+      maxStars = 20; // 4 modes × 5
+    } else if (list.type === 'grammar') {
+      maxStars = (list.level === 1) ? 20 : 30; // L1 = 4 modes, L2+ = 6 modes (default)
+    }
+    selectedList.max_stars = maxStars;
+
+    // Show/update difficulty mode UI
+    showDifficultyModeUI(maxStars);
 
     // Always update title when a new list is selected unless user has manually edited.
     // Strategy: Track the last auto-filled value on the input element via dataset.
@@ -416,6 +463,20 @@ const HomeworkModal = (() => {
     }
 
     // Build assignment payload
+    const difficultyRadio = document.querySelector('input[name="hwDifficulty"]:checked');
+    const difficulty = difficultyRadio ? difficultyRadio.value : 'standard';
+    
+    // Calculate stars required based on difficulty and max stars
+    const maxStars = selectedList.max_stars || 30;
+    const percentages = {
+      easy: 0.25,
+      standard: 0.50,
+      hard: 0.75,
+      hardcore: 1.00
+    };
+    const percentage = percentages[difficulty] || 0.5;
+    const starsRequired = Math.round(maxStars * percentage);
+
     const assignment = {
       class: selectedClass,
       title: title,
@@ -425,7 +486,10 @@ const HomeworkModal = (() => {
       list_meta: {
         tags: selectedList.tags,
         level: selectedList.level,
-        type: selectedList.type
+        type: selectedList.type,
+        difficulty_mode: difficulty,
+        max_stars: maxStars,
+        stars_required: starsRequired
       },
       start_at: new Date().toISOString(),
       due_at: new Date(dueDate + 'T23:59:59').toISOString(),

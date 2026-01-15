@@ -292,6 +292,29 @@
           <div class="homework-modal-selected-meta" id="hwModalSelectedMeta"></div>
         </div>
 
+        <div id="hwModalDifficultySection" class="homework-modal-section" style="display: none;">
+          <label class="homework-modal-label">Difficulty Mode</label>
+          <div style="display: flex; flex-direction: column; gap: 12px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <input type="radio" id="hwDiffEasy" name="hwDifficulty" value="easy" />
+              <label for="hwDiffEasy" style="margin: 0; font-weight: 500;">Easy (25% of max stars)</label>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <input type="radio" id="hwDiffStandard" name="hwDifficulty" value="standard" checked />
+              <label for="hwDiffStandard" style="margin: 0; font-weight: 500;">Standard (50% of max stars)</label>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <input type="radio" id="hwDiffHard" name="hwDifficulty" value="hard" />
+              <label for="hwDiffHard" style="margin: 0; font-weight: 500;">Hard (75% of max stars)</label>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <input type="radio" id="hwDiffHardcore" name="hwDifficulty" value="hardcore" />
+              <label for="hwDiffHardcore" style="margin: 0; font-weight: 500;">Hardcore (100% of max stars)</label>
+            </div>
+            <div id="hwDifficultyPreview" style="margin-top: 8px; padding: 8px 12px; background: #f0f8f9; border-radius: 6px; font-size: 0.85rem; color: #19777e; font-weight: 500;"></div>
+          </div>
+        </div>
+
         <div class="homework-modal-section">
           <label class="homework-modal-label" for="hwModalTitle">Assignment Title *</label>
           <input 
