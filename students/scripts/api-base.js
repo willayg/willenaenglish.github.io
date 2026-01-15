@@ -23,11 +23,15 @@ export const FN = (name) => {
   if (typeof window !== 'undefined' && window.location.hostname === GITHUB_PAGES_HOST) {
     return `${NETLIFY_BASE}/.netlify/functions/${name}`;
   }
-  // Cloudflare Pages (staging/cf/pages.dev) has no Netlify functions; use the API gateway.
+  // Subdomains and Cloudflare Pages have no Netlify functions; use the API gateway.
   if (typeof window !== 'undefined') {
     const host = window.location.hostname;
-    const isCloudflarePages = host === 'staging.willenaenglish.com' || host === 'cf.willenaenglish.com' || host.endsWith('.pages.dev');
-    if (isCloudflarePages) {
+    const needsCfGateway = host === 'staging.willenaenglish.com' || 
+                           host === 'cf.willenaenglish.com' || 
+                           host === 'students.willenaenglish.com' ||
+                           host === 'teachers.willenaenglish.com' ||
+                           host.endsWith('.pages.dev');
+    if (needsCfGateway) {
       return `${CF_API_GATEWAY}/.netlify/functions/${name}`;
     }
   }
