@@ -12,6 +12,9 @@ const ALLOWED_ORIGINS = [
   'https://willenaenglish.github.io',
   'https://willenaenglish-github-io.pages.dev',
   'https://cf.willenaenglish.com',
+  // Student and Teacher subdomains
+  'https://students.willenaenglish.com',
+  'https://teachers.willenaenglish.com',
   'http://localhost:8888',
   'http://localhost:9000',
   'http://127.0.0.1:8888',
