@@ -450,6 +450,17 @@ export default {
           return jsonResponse({ success: false, error: 'Missing assignment_id' }, 400, origin);
         }
         
+        // Get the authenticated user
+        const authUserId = await getUserIdFromRequest(request, env);
+        if (!authUserId) {
+          return jsonResponse({ success: false, error: 'Not signed in' }, 401, origin);
+        }
+        
+        const authProf = await fetchProfile(env, authUserId);
+        if (!authProf) {
+          return jsonResponse({ success: false, error: 'Profile not found' }, 403, origin);
+        }
+        
         // Fetch assignment
         const assignments = await supabaseSelect(env, 'homework_assignments', `id=eq.${assignmentId}&select=*`);
         if (!assignments || !assignments.length) {
@@ -458,6 +469,12 @@ export default {
         
         const assignment = assignments[0];
         const targetClass = className || assignment.class;
+        
+        // Authorization: only teachers/admins can see all students, students only see their own
+        const isTeacher = ['teacher', 'admin'].includes(String(authProf.role || '').toLowerCase());
+        if (!isTeacher && String(authProf.class || '') !== String(targetClass || '')) {
+          return jsonResponse({ success: false, error: 'Not authorized to view this assignment' }, 403, origin);
+        }
         
         // Determine category heuristically for expected mode counts
         const assignLower = `${assignment.list_key||''} ${assignment.title||''} ${assignment.list_title||''}`.toLowerCase();
@@ -655,13 +672,19 @@ export default {
           };
         });
         
+        // Filter progress based on authorization: students only see their own data
+        let filteredProgress = progress;
+        if (!isTeacher) {
+          filteredProgress = progress.filter(p => p.user_id === authUserId);
+        }
+        
         return jsonResponse({
           success: true,
           assignment_id: assignment.id,
           class: targetClass,
           total_modes: totalModes,
           category,
-          progress,
+          progress: filteredProgress,
         }, 200, origin);
       }
       
