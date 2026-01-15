@@ -521,8 +521,8 @@ export default {
           const s = summary || {};
           let acc = null;
           if (typeof s.accuracy === 'number') acc = s.accuracy;
-          else if (typeof s.score === 'number' && typeof s.total === 'number' && s.total > 0) {
-            acc = s.score / s.total;
+          else if (typeof s.score === 'number' && (typeof s.total === 'number' || typeof s.max === 'number') && (s.total || s.max) > 0) {
+            acc = s.score / (s.total || s.max);
           }
           if (acc !== null) {
             if (acc >= 1) return 5;
