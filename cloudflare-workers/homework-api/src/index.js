@@ -684,6 +684,8 @@ export default {
           class: targetClass,
           total_modes: totalModes,
           category,
+          difficulty_mode: assignment.list_meta?.difficulty_mode || 'full',
+          stars_required: assignment.list_meta?.stars_required || null,
           progress: filteredProgress,
         }, 200, origin);
       }
