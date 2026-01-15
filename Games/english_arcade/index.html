@@ -406,10 +406,11 @@
             let goalMsg = null;
             if (progress < 100) {
               goalMsg = document.createElement('div');
-              goalMsg.style.fontSize = '0.75rem';
-              goalMsg.style.fontWeight = '600';
-              goalMsg.style.color = '#19777e';
+              goalMsg.style.fontSize = '0.95rem';
+              goalMsg.style.fontWeight = '700';
+              goalMsg.style.color = '#22d3ee';
               goalMsg.style.marginTop = '2px';
+              goalMsg.style.textShadow = '0 0 10px rgba(34, 211, 238, 0.5), 0 0 20px rgba(34, 211, 238, 0.25)';
               if (a.stars_required !== null && typeof a.stars_required === 'number') {
                 const currentStars = (typeof a.stars === 'number') ? a.stars : 0;
                 goalMsg.textContent = `Goal: ${a.stars_required}+ stars (${currentStars}/${a.stars_required})`;

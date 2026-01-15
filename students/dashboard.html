@@ -553,10 +553,11 @@
           // Goal message (only for incomplete)
           const progress = typeof a.completion_pct === 'number' ? a.completion_pct : (a.completion || 0);
           const goalMsg = document.createElement('div');
-          goalMsg.style.fontSize = '0.8rem';
-          goalMsg.style.fontWeight = '600';
-          goalMsg.style.color = '#67e2e6';
+          goalMsg.style.fontSize = '1rem';
+          goalMsg.style.fontWeight = '700';
+          goalMsg.style.color = '#22d3ee';
           goalMsg.style.marginTop = '4px';
+          goalMsg.style.textShadow = '0 0 12px rgba(34, 211, 238, 0.6), 0 0 24px rgba(34, 211, 238, 0.3)';
           if (a.stars_required !== null && typeof a.stars_required === 'number') {
             const currentStars = (typeof a.stars === 'number') ? a.stars : 0;
             goalMsg.textContent = `Goal: Get ${a.stars_required}+ stars to pass (${currentStars}/${a.stars_required})`;
