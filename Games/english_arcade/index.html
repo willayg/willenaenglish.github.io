@@ -215,7 +215,12 @@
                 let myRow = null;
                 if (uid) myRow = pj.progress.find(p => String(p.user_id) === String(uid));
                 if (!myRow && pj.progress.length === 1) myRow = pj.progress[0];
-                const completed = myRow ? (typeof myRow.completion === 'number' ? myRow.completion >= 100 : (myRow.completion_pct >= 100)) : false;
+                let completionPct = myRow ? (typeof myRow.completion === 'number' ? myRow.completion : (myRow.completion_pct || 0)) : 0;
+                // If stars_required is set, override completion % to be star-based
+                if (pj.stars_required && myRow && typeof myRow.stars === 'number') {
+                  completionPct = Math.round((myRow.stars / pj.stars_required) * 100);
+                }
+                const completed = completionPct >= 100;
                 if (!completed) incomplete++;
               } else {
                 // If progress unavailable, assume incomplete
