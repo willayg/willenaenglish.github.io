@@ -1,5 +1,5 @@
 // Minimal points client: server-authoritative, single source of truth
-import { FN } from './api-base.js';
+import { FN } from './api-base.js?v=20260115';
 
 const OV_URL = FN('progress_summary') + '?section=overview';
 const COUNT_URL = FN('count_true_attempts');

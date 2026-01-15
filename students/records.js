@@ -1,6 +1,6 @@
 // Reusable client-side tracker for student activity and per-word attempts
 // Works with Netlify function: /.netlify/functions/log_word_attempt
-import { FN } from './scripts/api-base.js';
+import { FN } from './scripts/api-base.js?v=20260115';
 import { scheduleRefresh } from './scripts/points-client.js';
 // Optional shared points helpers (non-breaking):
 // Shared points helpers: standardize optimistic bump and debounced server refresh
