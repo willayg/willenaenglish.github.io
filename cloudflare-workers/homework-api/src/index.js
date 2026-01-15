@@ -535,7 +535,7 @@ export default {
           if (typeof s.stars === 'number') return s.stars;
           // Fallback: some modes (e.g., level_up) record only raw score (points).
           const m = String(modeRaw || '').toLowerCase();
-          if (typeof s.score === 'number' && !Number.isFinite(s.total)) {
+          if (typeof s.score === 'number' && !Number.isFinite(s.total) && !Number.isFinite(s.max)) {
             // Map points to stars with simple thresholds
             const pts = Math.max(0, Math.floor(s.score));
             if (m.includes('level_up')) {
