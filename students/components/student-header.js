@@ -250,6 +250,10 @@ class StudentHeader extends HTMLElement {
                         completionPct = Math.round((studentProgress.modes_attempted / studentProgress.modes_total) * 100);
                       }
                       completionPct = Math.max(0, Math.min(100, completionPct));
+                      // If stars_required is set, override completion % to be star-based
+                      if (pj.stars_required && typeof studentProgress.stars === 'number') {
+                        completionPct = Math.round((studentProgress.stars / pj.stars_required) * 100);
+                      }
                       if (completionPct < 100) incomplete++;
                     } else {
                       // No student row => treat as incomplete
