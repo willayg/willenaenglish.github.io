@@ -314,6 +314,10 @@
                     completionPct = Math.round((studentProgress.modes_attempted / studentProgress.modes_total) * 100);
                   }
                   completionPct = Math.max(0, Math.min(100, completionPct));
+                  // If stars_required is set, override completion % to be star-based
+                  if (prJson.stars_required && typeof studentProgress.stars === 'number') {
+                    completionPct = Math.round((studentProgress.stars / prJson.stars_required) * 100);
+                  }
                   return { ...a, completion_pct: completionPct, stars: studentProgress.stars || 0, accuracy: studentProgress.accuracy_best || 0, teacher_name: a.teacher_name || data.teacher_name || null, stars_required: prJson.stars_required || null };
                 }
               }

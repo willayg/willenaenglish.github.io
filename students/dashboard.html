@@ -736,6 +736,10 @@
                   }
                   // Clamp
                   completionPct = Math.max(0, Math.min(100, completionPct));
+                  // If stars_required is set, override completion % to be star-based
+                  if (progressData.stars_required && typeof studentProgress.stars === 'number') {
+                    completionPct = Math.round((studentProgress.stars / progressData.stars_required) * 100);
+                  }
                   return {
                     ...assignment,
                     completion_pct: completionPct,
