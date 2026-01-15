@@ -354,6 +354,45 @@ const HomeworkModal = (() => {
     });
   }
 
+  function showDifficultyModeUI(maxStars) {
+    const difficultySection = document.getElementById('hwModalDifficultySection');
+    if (!difficultySection) return;
+
+    difficultySection.style.display = 'block';
+
+    // Add event listeners to radio buttons for live preview
+    const radios = document.querySelectorAll('input[name="hwDifficulty"]');
+    const preview = document.getElementById('hwDifficultyPreview');
+    
+    radios.forEach(radio => {
+      radio.addEventListener('change', () => {
+        updateDifficultyPreview(radio.value, maxStars, preview);
+      });
+    });
+
+    // Show initial preview for default selection (full)
+    updateDifficultyPreview('full', maxStars, preview);
+  }
+
+  function updateDifficultyPreview(difficulty, maxStars, previewEl) {
+    if (difficulty === 'full') {
+      previewEl.textContent = 'Complete all modes with at least 1 star each';
+      return;
+    }
+
+    const percentages = {
+      easy: 0.25,
+      standard: 0.50,
+      hard: 0.75,
+      hardcore: 1.00
+    };
+
+    const percentage = percentages[difficulty] || 0.5;
+    const starsRequired = Math.round(maxStars * percentage);
+
+    previewEl.textContent = `Max available: ${maxStars} stars | Required to pass: ${starsRequired}+ stars`;
+  }
+
   function selectList(list) {
     selectedList = list;
 
@@ -372,6 +411,19 @@ const HomeworkModal = (() => {
       document.getElementById('hwModalSelectedTitle').textContent = title;
       document.getElementById('hwModalSelectedMeta').textContent = `Level ${list.level} • ${list.type} • ${list.tags.join(', ')}`;
     }
+
+    // Calculate max stars based on list type
+    // Phonics: 4 modes, Vocab: 6 modes, Grammar: 4-6 modes (use default)
+    let maxStars = 30; // default for vocab
+    if (list.type === 'phonics') {
+      maxStars = 20; // 4 modes × 5
+    } else if (list.type === 'grammar') {
+      maxStars = (list.level === 1) ? 20 : 30; // L1 = 4 modes, L2+ = 6 modes (default)
+    }
+    selectedList.max_stars = maxStars;
+
+    // Show/update difficulty mode UI
+    showDifficultyModeUI(maxStars);
 
     // Always update title when a new list is selected unless user has manually edited.
     // Strategy: Track the last auto-filled value on the input element via dataset.
@@ -416,17 +468,44 @@ const HomeworkModal = (() => {
     }
 
     // Build assignment payload
+    const difficultyRadio = document.querySelector('input[name="hwDifficulty"]:checked');
+    const difficulty = difficultyRadio ? difficultyRadio.value : 'full';
+    
+    // Calculate stars required based on difficulty (only for star-based modes, not full)
+    const maxStars = selectedList.max_stars || 30;
+    let starsRequired = null;
+    
+    if (difficulty !== 'full') {
+      const percentages = {
+        easy: 0.25,
+        standard: 0.50,
+        hard: 0.75,
+        hardcore: 1.00
+      };
+      const percentage = percentages[difficulty] || 0.5;
+      starsRequired = Math.round(maxStars * percentage);
+    }
+
+    const listMeta = {
+      tags: selectedList.tags,
+      level: selectedList.level,
+      type: selectedList.type,
+      difficulty_mode: difficulty,
+      max_stars: maxStars
+    };
+
+    // Only add stars_required if it's a star-based mode (not full)
+    if (starsRequired !== null) {
+      listMeta.stars_required = starsRequired;
+    }
+
     const assignment = {
       class: selectedClass,
       title: title,
       description: description,
       list_key: selectedList.path,
       list_title: getDisplayTitle(selectedList.path, selectedList.level, selectedList.type),
-      list_meta: {
-        tags: selectedList.tags,
-        level: selectedList.level,
-        type: selectedList.type
-      },
+      list_meta: listMeta,
       start_at: new Date().toISOString(),
       due_at: new Date(dueDate + 'T23:59:59').toISOString(),
       goal_type: 'stars',

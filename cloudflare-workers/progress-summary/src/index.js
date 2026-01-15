@@ -14,6 +14,10 @@ const ALLOWED_ORIGINS = [
   'https://willenaenglish-github-io.pages.dev',
   // Cloudflare Pages deployment
   'https://cf.willenaenglish.com',
+  'https://staging.willenaenglish.com',
+  // Student and Teacher subdomains
+  'https://students.willenaenglish.com',
+  'https://teachers.willenaenglish.com',
   'http://localhost:8888',
   'http://localhost:9000',
 ];
@@ -722,6 +726,18 @@ export default {
           success: true,
           user_id: userId,
           sessions: formatted,
+        }, 200, origin, RESPONSE_CACHE_SECONDS);
+      }
+      
+      // ===== CHALLENGING (most missed words) =====
+      // This is a complex aggregation - for now return empty to prevent errors
+      // Full implementation can be migrated later if needed
+      if (section === 'challenging') {
+        return jsonResponse({
+          success: true,
+          user_id: userId,
+          words: [],
+          _note: 'Full challenging analysis is pending migration'
         }, 200, origin, RESPONSE_CACHE_SECONDS);
       }
       

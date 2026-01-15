@@ -4,7 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title data-i18n="Profile">Profile</title>
-  <script src="/js/api-config.js"></script>
+  <!-- Student auth API gateway - MUST load before api-config.js -->
+  <script src="/students/api-gateway.js"></script>
+  <script src="/js/api-config.js?v=20260113c"></script>
   <script>
     // Redirect to Netlify-hosted version if third-party cookies are KNOWN to be blocked
     // This handles Safari, Samsung Internet, and Brave which always block cross-origin cookies
@@ -49,8 +51,8 @@
       }
     }
   </script>
-  <script type="module" src="/students/student_profile.js"></script>
-  <script type="module" src="/students/avatar.js"></script>
+  <script type="module" src="/students/student_profile.js?v=20260115"></script>
+  <script type="module" src="/students/avatar.js?v=20260115"></script>
   <script type="module" src="/students/components/student-header.js"></script>
   <script src="/students/language.js"></script>
   <link rel="stylesheet" href="/students/theme.css">

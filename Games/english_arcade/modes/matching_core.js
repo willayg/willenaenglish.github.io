@@ -39,7 +39,7 @@ export function runMatchingCore({ wordList, gameArea, startGame, listName = null
     const roundPairs = remainingPairs.slice(0, ROUND_SIZE);
     if (roundPairs.length === 0) {
       playSFX('end');
-      endSession(sessionId, { mode: sessionModeKey, summary: { score: Number(score.toFixed(1)), total: 100 } });
+      endSession(sessionId, { mode: sessionModeKey, summary: { score: Number(score.toFixed(1)), total: 100, completed: true }, listName, wordList });
       hideGameProgress();
         const isLivePlay = !!document.getElementById('gameStage');
         gameArea.innerHTML = `<div class="ending-screen" style="padding:40px 18px;text-align:center;">

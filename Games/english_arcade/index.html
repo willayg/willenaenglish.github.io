@@ -3,6 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- API gateway MUST load before api-config for students.willenaenglish.com routing -->
+  <script src="/students/api-gateway.js"></script>
   <script src="/js/api-config.js"></script>
   <base href="/Games/english_arcade/" />
   <title data-i18n="English Arcade">English Arcade</title>
@@ -41,11 +43,21 @@
       function goLogin(){ try { window.location.replace(loginUrl + '?next=' + encodeURIComponent(here)); } catch { window.location.href = loginUrl; } }
       // Skip gate if already on login (defensive) or if a special flag present
       if (/\/students\/login\.html$/i.test(window.location.pathname)) return;
-      // Fetch whoami quickly; if unauthorized, redirect before heavy scripts load
-      WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=whoami')
-        .then(r => r.ok ? r.json() : null)
-        .then(js => { if (!js || !js.success || !js.user_id) goLogin(); })
-        .catch(() => goLogin());
+      
+      // Wait for api-gateway to patch WillenaAPI before checking auth
+      function checkAuth() {
+        // Must wait for BOTH WillenaAPI AND the gateway patch
+        if (!window.WillenaAPI || !window.WillenaAPI.fetch || !window.__STUDENTS_GATEWAY_PATCHED) {
+          setTimeout(checkAuth, 20);
+          return;
+        }
+        // Fetch whoami quickly; if unauthorized, redirect before heavy scripts load
+        WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=whoami')
+          .then(r => r.ok ? r.json() : null)
+          .then(js => { if (!js || !js.success || !js.user_id) goLogin(); })
+          .catch(() => goLogin());
+      }
+      checkAuth();
     })();
   </script>
   <link rel="stylesheet" href="style.css?v=20251115a" />
@@ -122,7 +134,7 @@
 
   <!-- Tiny bootstrap to wire header controls and refresh profile via cookie session -->
   <script type="module">
-  import { initPointsClient } from '/students/scripts/points-client.js';
+  import { initPointsClient } from '/students/scripts/points-client.js?v=20260115';
     const $ = (sel) => document.querySelector(sel);
 
     async function ensureHeaderProfile(){
@@ -203,7 +215,12 @@
                 let myRow = null;
                 if (uid) myRow = pj.progress.find(p => String(p.user_id) === String(uid));
                 if (!myRow && pj.progress.length === 1) myRow = pj.progress[0];
-                const completed = myRow ? (typeof myRow.completion === 'number' ? myRow.completion >= 100 : (myRow.completion_pct >= 100)) : false;
+                let completionPct = myRow ? (typeof myRow.completion === 'number' ? myRow.completion : (myRow.completion_pct || 0)) : 0;
+                // If stars_required is set, override completion % to be star-based
+                if (pj.stars_required && myRow && typeof myRow.stars === 'number') {
+                  completionPct = Math.round((myRow.stars / pj.stars_required) * 100);
+                }
+                const completed = completionPct >= 100;
                 if (!completed) incomplete++;
               } else {
                 // If progress unavailable, assume incomplete
@@ -302,7 +319,11 @@
                     completionPct = Math.round((studentProgress.modes_attempted / studentProgress.modes_total) * 100);
                   }
                   completionPct = Math.max(0, Math.min(100, completionPct));
-                  return { ...a, completion_pct: completionPct, stars: studentProgress.stars || 0, accuracy: studentProgress.accuracy_best || 0, teacher_name: a.teacher_name || data.teacher_name || null };
+                  // If stars_required is set, override completion % to be star-based
+                  if (prJson.stars_required && typeof studentProgress.stars === 'number') {
+                    completionPct = Math.round((studentProgress.stars / prJson.stars_required) * 100);
+                  }
+                  return { ...a, completion_pct: completionPct, stars: studentProgress.stars || 0, accuracy: studentProgress.accuracy_best || 0, teacher_name: a.teacher_name || data.teacher_name || null, stars_required: prJson.stars_required || null };
                 }
               }
             } catch (e) { console.warn('progress fetch failed', a.id, e); }
@@ -381,6 +402,22 @@
             title.textContent = a.title || a.list_title || t('Homework');
             card.appendChild(title);
 
+            // Goal message (for incomplete only, will add later)
+            let goalMsg = null;
+            if (progress < 100) {
+              goalMsg = document.createElement('div');
+              goalMsg.style.fontSize = '0.75rem';
+              goalMsg.style.fontWeight = '600';
+              goalMsg.style.color = '#19777e';
+              goalMsg.style.marginTop = '2px';
+              if (a.stars_required !== null && typeof a.stars_required === 'number') {
+                const currentStars = (typeof a.stars === 'number') ? a.stars : 0;
+                goalMsg.textContent = `Goal: ${a.stars_required}+ stars (${currentStars}/${a.stars_required})`;
+              } else {
+                goalMsg.textContent = 'Goal: Complete all modes';
+              }
+            }
+
             if (progress >= 100) {
               const doneMsg = document.createElement('div');
               doneMsg.style.fontWeight = '700';
@@ -395,6 +432,7 @@
               const starsLabel = document.createElement('span'); starsLabel.style.fontSize='0.85rem'; starsLabel.style.fontWeight='600'; starsLabel.style.color='#b06d00'; starsLabel.textContent=(typeof a.stars==='number'?a.stars:(a.stars||0)) + ' ' + t('Stars Earned');
               starsWrap.appendChild(starsLabel); card.appendChild(starsWrap);
             } else {
+              if (goalMsg) card.appendChild(goalMsg);
               const countdownDiv = document.createElement('div');
               countdownDiv.style.fontSize = '0.75rem';
               countdownDiv.style.color = '#19777e';
