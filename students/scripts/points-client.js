@@ -7,24 +7,29 @@ let refreshing = false;
 let nextTimer = 0;
 let currentPoints = null;
 
-// THROTTLE: Prevent excessive server calls (at most once per 10 seconds)
-const REFRESH_THROTTLE_MS = 10000;
-let lastRefreshTime = 0;
+let optimisticListenerRegistered = false;
 
-export function initPointsClient() {
-	// Listen for optimistic bump events from batch mode
+function registerOptimisticListenerOnce() {
+	if (optimisticListenerRegistered) return;
+	optimisticListenerRegistered = true;
 	window.addEventListener('points:optimistic-bump', (e) => {
 		const delta = e.detail?.delta || 1;
 		optimisticBump(delta);
 	});
 }
 
+// THROTTLE: Prevent excessive server calls (at most once per 10 seconds)
+const REFRESH_THROTTLE_MS = 10000;
+let lastRefreshTime = 0;
+
+export function initPointsClient() {
+	// Idempotent: safe to call multiple times
+	if (typeof window !== 'undefined') registerOptimisticListenerOnce();
+}
+
 // Auto-init: register listener immediately so games don't need to call initPointsClient
 if (typeof window !== 'undefined') {
-	window.addEventListener('points:optimistic-bump', (e) => {
-		const delta = e.detail?.delta || 1;
-		optimisticBump(delta);
-	});
+	registerOptimisticListenerOnce();
 }
 
 export function optimisticBump(delta = 1) {

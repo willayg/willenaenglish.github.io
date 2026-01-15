@@ -181,11 +181,11 @@
 			<div style="text-align:center;color:#19777e;font-weight:700;" data-i18n="Loading game…">Loading game…</div>
 		</div>
 	</div>
-	<script type="module" src="/students/components/student-header.js"></script>
-	<script type="module" src="/students/scripts/points-client.js"></script>
+	<script type="module" src="/students/components/student-header.js?v=20260115"></script>
+	<script type="module" src="/students/scripts/points-client.js?v=20260115"></script>
 	<script type="module" src="play-main.js"></script>
 	<script type="module">
-	import { initPointsClient } from '/students/scripts/points-client.js';
+	import { initPointsClient } from '/students/scripts/points-client.js?v=20260115';
 	async function ensureHeaderProfile(){
 	  try {
 		const res = await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=get_profile_name');
