@@ -370,11 +370,16 @@ const HomeworkModal = (() => {
       });
     });
 
-    // Show initial preview for default selection (standard)
-    updateDifficultyPreview('standard', maxStars, preview);
+    // Show initial preview for default selection (full)
+    updateDifficultyPreview('full', maxStars, preview);
   }
 
   function updateDifficultyPreview(difficulty, maxStars, previewEl) {
+    if (difficulty === 'full') {
+      previewEl.textContent = 'Complete all modes with at least 1 star each';
+      return;
+    }
+
     const percentages = {
       easy: 0.25,
       standard: 0.50,
@@ -464,18 +469,35 @@ const HomeworkModal = (() => {
 
     // Build assignment payload
     const difficultyRadio = document.querySelector('input[name="hwDifficulty"]:checked');
-    const difficulty = difficultyRadio ? difficultyRadio.value : 'standard';
+    const difficulty = difficultyRadio ? difficultyRadio.value : 'full';
     
-    // Calculate stars required based on difficulty and max stars
+    // Calculate stars required based on difficulty (only for star-based modes, not full)
     const maxStars = selectedList.max_stars || 30;
-    const percentages = {
-      easy: 0.25,
-      standard: 0.50,
-      hard: 0.75,
-      hardcore: 1.00
+    let starsRequired = null;
+    
+    if (difficulty !== 'full') {
+      const percentages = {
+        easy: 0.25,
+        standard: 0.50,
+        hard: 0.75,
+        hardcore: 1.00
+      };
+      const percentage = percentages[difficulty] || 0.5;
+      starsRequired = Math.round(maxStars * percentage);
+    }
+
+    const listMeta = {
+      tags: selectedList.tags,
+      level: selectedList.level,
+      type: selectedList.type,
+      difficulty_mode: difficulty,
+      max_stars: maxStars
     };
-    const percentage = percentages[difficulty] || 0.5;
-    const starsRequired = Math.round(maxStars * percentage);
+
+    // Only add stars_required if it's a star-based mode (not full)
+    if (starsRequired !== null) {
+      listMeta.stars_required = starsRequired;
+    }
 
     const assignment = {
       class: selectedClass,
@@ -483,14 +505,7 @@ const HomeworkModal = (() => {
       description: description,
       list_key: selectedList.path,
       list_title: getDisplayTitle(selectedList.path, selectedList.level, selectedList.type),
-      list_meta: {
-        tags: selectedList.tags,
-        level: selectedList.level,
-        type: selectedList.type,
-        difficulty_mode: difficulty,
-        max_stars: maxStars,
-        stars_required: starsRequired
-      },
+      list_meta: listMeta,
       start_at: new Date().toISOString(),
       due_at: new Date(dueDate + 'T23:59:59').toISOString(),
       goal_type: 'stars',
