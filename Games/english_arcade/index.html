@@ -314,7 +314,7 @@
                     completionPct = Math.round((studentProgress.modes_attempted / studentProgress.modes_total) * 100);
                   }
                   completionPct = Math.max(0, Math.min(100, completionPct));
-                  return { ...a, completion_pct: completionPct, stars: studentProgress.stars || 0, accuracy: studentProgress.accuracy_best || 0, teacher_name: a.teacher_name || data.teacher_name || null };
+                  return { ...a, completion_pct: completionPct, stars: studentProgress.stars || 0, accuracy: studentProgress.accuracy_best || 0, teacher_name: a.teacher_name || data.teacher_name || null, stars_required: progressData.stars_required || null };
                 }
               }
             } catch (e) { console.warn('progress fetch failed', a.id, e); }
@@ -393,6 +393,22 @@
             title.textContent = a.title || a.list_title || t('Homework');
             card.appendChild(title);
 
+            // Goal message (for incomplete only, will add later)
+            let goalMsg = null;
+            if (progress < 100) {
+              goalMsg = document.createElement('div');
+              goalMsg.style.fontSize = '0.75rem';
+              goalMsg.style.fontWeight = '600';
+              goalMsg.style.color = '#19777e';
+              goalMsg.style.marginTop = '2px';
+              if (a.stars_required !== null && typeof a.stars_required === 'number') {
+                const currentStars = (typeof a.stars === 'number') ? a.stars : 0;
+                goalMsg.textContent = `Goal: ${a.stars_required}+ stars (${currentStars}/${a.stars_required})`;
+              } else {
+                goalMsg.textContent = 'Goal: Complete all modes';
+              }
+            }
+
             if (progress >= 100) {
               const doneMsg = document.createElement('div');
               doneMsg.style.fontWeight = '700';
@@ -407,6 +423,7 @@
               const starsLabel = document.createElement('span'); starsLabel.style.fontSize='0.85rem'; starsLabel.style.fontWeight='600'; starsLabel.style.color='#b06d00'; starsLabel.textContent=(typeof a.stars==='number'?a.stars:(a.stars||0)) + ' ' + t('Stars Earned');
               starsWrap.appendChild(starsLabel); card.appendChild(starsWrap);
             } else {
+              if (goalMsg) card.appendChild(goalMsg);
               const countdownDiv = document.createElement('div');
               countdownDiv.style.fontSize = '0.75rem';
               countdownDiv.style.color = '#19777e';

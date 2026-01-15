@@ -550,6 +550,20 @@
           title.style.color = '#fff';
           title.textContent = a.title || a.list_title || t('Homework');
 
+          // Goal message (only for incomplete)
+          const progress = typeof a.completion_pct === 'number' ? a.completion_pct : (a.completion || 0);
+          const goalMsg = document.createElement('div');
+          goalMsg.style.fontSize = '0.8rem';
+          goalMsg.style.fontWeight = '600';
+          goalMsg.style.color = '#67e2e6';
+          goalMsg.style.marginTop = '4px';
+          if (a.stars_required !== null && typeof a.stars_required === 'number') {
+            const currentStars = (typeof a.stars === 'number') ? a.stars : 0;
+            goalMsg.textContent = `Goal: Get ${a.stars_required}+ stars to pass (${currentStars}/${a.stars_required})`;
+          } else {
+            goalMsg.textContent = `Goal: Complete all modes`;
+          }
+
           // Countdown calculation
           let countdown = '';
           if (a.due_at) {
@@ -641,6 +655,7 @@
             starsWrap.appendChild(starsLabel);
             li.appendChild(starsWrap);
           } else {
+            li.appendChild(goalMsg);
             li.appendChild(countdownDiv);
             li.appendChild(progressLabel);
             li.appendChild(progressBar);
@@ -726,7 +741,8 @@
                     completion_pct: completionPct,
                     stars: studentProgress.stars || 0,
                     accuracy: studentProgress.accuracy_best || 0,
-                    teacher_name: assignment.teacher_name || data.teacher_name || null
+                    teacher_name: assignment.teacher_name || data.teacher_name || null,
+                    stars_required: progressData.stars_required || null
                   };
                 }
               }
