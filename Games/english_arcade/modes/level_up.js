@@ -126,7 +126,7 @@ export async function runLevelUpMode({ wordList, gameArea, startGame, listName =
   function renderQ() {
     if (idx >= ordered.length) {
       playSFX('end');
-      endSession(sessionId, { mode: 'level_up', summary: { score, total: ordered.length } });
+      endSession(sessionId, { mode: 'level_up', summary: { score, total: ordered.length, completed: true }, listName, wordList: ordered });
       hideGameProgress();
       const isLivePlay = !!document.getElementById('gameStage');
       gameArea.innerHTML = `<div style="padding:40px;text-align:center;">

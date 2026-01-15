@@ -21,7 +21,7 @@ export function runListeningMultiChoice({ wordList, gameArea, startGame, listNam
   function renderQuestion() {
     if (idx >= shuffled.length) {
       playSFX('end');
-      endSession(sessionId, { mode: 'listening_multi_choice', summary: { score, total: shuffled.length } });
+      endSession(sessionId, { mode: 'listening_multi_choice', summary: { score, total: shuffled.length, completed: true }, listName, wordList: shuffled });
       gameArea.innerHTML = `<div style="padding:40px;text-align:center;"><h2 style="color:#41b6beff;">Listening Mode Complete!</h2><div style="font-size:1.3em;margin-bottom:12px;">Score: <span style="color:#19777e;font-weight:700;">${score} / ${shuffled.length}</span></div><button id="playAgainListening" style="font-size:1.05em;padding:12px 26px;border-radius:12px;background:#93cbcf;color:#fff;font-weight:700;border:none;box-shadow:0 2px 8px rgba(60,60,80,0.08);cursor:pointer;">Play Again</button></div>`;
       document.getElementById('playAgainListening').onclick = () => startGame('listening_multi_choice');
       return;
