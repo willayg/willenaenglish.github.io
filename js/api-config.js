@@ -23,7 +23,10 @@
   // CONSTANTS
   // ============================================================
   const GITHUB_PAGES_HOST = 'willenaenglish.github.io';
-  const NETLIFY_BASE = 'https://students.willenaenglish.com';
+  // For Netlify-only functions on CF Pages, route through API gateway (not hardcoded students domain)
+  // Netlify Hosted: use students subdomain directly
+  // CF Pages: all requests route through api.willenaenglish.com
+  const NETLIFY_BASE = 'https://students.willenaenglish.com'; // Fallback for GitHub Pages
   // Cloudflare API Gateway - handles function routing for CF Pages deployments
   const CF_API_GATEWAY = 'https://api.willenaenglish.com';
   // Cloudflare worker endpoints - ONLY use on localhost for testing
@@ -143,9 +146,18 @@
       }
     }
     
-    // Force Netlify-only functions to route to NETLIFY_BASE even on CF Pages
-    if (fn && NETLIFY_ONLY_FUNCTIONS.includes(fn) && isCloudflarePages) {
-      return NETLIFY_BASE + functionPath;
+    // Force Netlify-only functions to route properly:
+    // - CF Pages: use CF API Gateway (which proxies to Netlify)
+    // - GitHub Pages: use NETLIFY_BASE (students subdomain)
+    // - Other: use normal API_BASE
+    if (fn && NETLIFY_ONLY_FUNCTIONS.includes(fn)) {
+      if (isCloudflarePages) {
+        // CF Pages domains must use the API gateway, NOT hardcoded students domain
+        return CF_API_GATEWAY + functionPath;
+      } else if (isCrossOrigin) {
+        // GitHub Pages must use NETLIFY_BASE
+        return NETLIFY_BASE + functionPath;
+      }
     }
     
     return API_BASE + functionPath;
