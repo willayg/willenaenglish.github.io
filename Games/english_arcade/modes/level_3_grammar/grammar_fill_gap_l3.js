@@ -493,16 +493,15 @@ export async function startGrammarFillGapL3({
     const koText = escapeHtml(item.exampleSentenceKo || item.ko || '');
 
     containerEl.innerHTML = `
-      <div class="grammar-fill-gap-l3" style="padding:16px 18px;display:flex;flex-direction:column;height:100vh;font-family:'Poppins',Arial,sans-serif;gap:14px;overflow:hidden;">
+      <div class="grammar-fill-gap-l3" style="padding:16px 18px 80px 18px;display:flex;flex-direction:column;height:100vh;font-family:'Poppins',Arial,sans-serif;gap:20px;overflow:hidden;">
         <div style="font-size:0.85rem;color:#888;text-align:center;flex-shrink:0;">Question ${questionNumber} / ${totalQuestions}</div>
-        <div style="font-size:1.47rem;font-weight:600;color:#21b5c0;text-align:center;flex-shrink:0;line-height:1.3;">${koText}</div>
-        <div style="font-size:1.4rem;font-weight:700;text-align:center;padding:12px;border-radius:12px;border:2px solid #f0f0f0;background:#fff;color:#333;flex-shrink:0;">${escapeHtml(blanked)}</div>
-        <div id="gfg-choices" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;justify-items:center;flex-shrink:0;overflow-y:auto;max-height:40vh;">
+        <div style="font-size:1.47rem;font-weight:600;color:#21b5c0;text-align:center;flex-shrink:0;line-height:1.4;">${koText}</div>
+        <div style="font-size:1.4rem;font-weight:700;text-align:center;padding:16px;border-radius:12px;border:2px solid #f0f0f0;background:#fff;color:#333;flex-shrink:0;">${escapeHtml(blanked)}</div>
+        <div id="gfg-choices" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:14px;justify-items:center;flex-shrink:1;overflow-y:auto;align-content:start;">
           ${choices.map((c) => `<button data-answer="${escapeHtml(c)}" class="gfg-choice-btn" style="flex:1;min-width:clamp(110px,20vw,150px);padding:10px 14px;font-size:1.1rem;font-weight:800;border-radius:20px;border:3px solid #ff6fb0;background:#fff;color:#ff6fb0;cursor:pointer;box-shadow:0 2px 12px rgba(0,0,0,0.06);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(c)}</button>`).join('')}
         </div>
         <div id="gfg-feedback" style="min-height:1.2em;font-weight:700;font-size:1rem;color:#2e7d32;text-align:center;flex-shrink:0;"></div>
-        <div style="flex:1;"></div>
-        <div style="display:flex;justify-content:center;flex-shrink:0;"><button id="gfg-quit" type="button" style="border:none;background:transparent;cursor:pointer;display:flex;align-items:center;gap:8px;padding:4px;"><img src="./assets/Images/icons/quit-game.svg" alt="Quit" style="width:28px;height:28px;"/></button></div>
+        <button id="gfg-quit" type="button" style="position:fixed;bottom:20px;left:50%;transform:translateX(-50%);border:none;background:transparent;cursor:pointer;display:flex;align-items:center;gap:8px;padding:8px 12px;z-index:9999;"><img src="./assets/Images/icons/quit-game.svg" alt="Quit" style="width:32px;height:32px;"/></button>
       </div>`;
 
     const choicesEl = containerEl.querySelector('#gfg-choices');
