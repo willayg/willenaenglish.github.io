@@ -841,6 +841,14 @@ function quitToMenu(reason = 'quit') {
     try { onQuit({ reason }); } catch (err) { console.error('onQuit failed', err); }
   } else {
     try {
+      // Preserve grammar config before returning to mode selector
+      if (current.grammarFile) {
+        window.__WA_LAST_GRAMMAR__ = {
+          grammarFile: current.grammarFile,
+          grammarName: current.grammarName,
+          grammarConfig: current.grammarConfig || {}
+        };
+      }
       if (window.WordArcade?.startGrammarModeSelector) {
         window.WordArcade.startGrammarModeSelector();
       } else if (window.WordArcade?.showGrammarLevelsMenu) {
