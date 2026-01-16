@@ -57,13 +57,10 @@ export async function showGrammarModeSelector({ grammarFile, grammarName, gramma
   const menuBar = document.getElementById('menuBar');
   if (menuBar) {
     menuBar.style.display = 'flex';
-    // Always show Back button
+    // Hide Back button in grammar mode selector - use browser Back instead
     const backBtn = document.getElementById('backBtn');
     if (backBtn) {
-      backBtn.style.display = '';
-      backBtn.onclick = () => {
-        if (onClose) onClose();
-      };
+      backBtn.style.display = 'none';
     }
 
     // Wire up navigation
