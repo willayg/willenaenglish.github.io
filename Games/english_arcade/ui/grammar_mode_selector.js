@@ -57,10 +57,19 @@ export async function showGrammarModeSelector({ grammarFile, grammarName, gramma
   const menuBar = document.getElementById('menuBar');
   if (menuBar) {
     menuBar.style.display = 'flex';
-    // Hide Back button in grammar mode selector - use browser Back instead
+    // Make in-app Back behave exactly like browser Back (HistoryManager handles restore)
     const backBtn = document.getElementById('backBtn');
     if (backBtn) {
-      backBtn.style.display = 'none';
+      backBtn.style.display = '';
+      backBtn.onclick = () => {
+        try {
+          if (window.history && window.history.length > 1) {
+            window.history.back();
+            return;
+          }
+        } catch {}
+        try { if (typeof onClose === 'function') onClose(); } catch {}
+      };
     }
 
     // Wire up navigation

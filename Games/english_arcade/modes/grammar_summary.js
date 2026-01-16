@@ -42,8 +42,14 @@ export function renderGrammarSummary({ gameArea, score = 0, total = 0, ctx } = {
   if (backBtn) {
     backBtn.onclick = () => {
       try {
+        if (window.history && window.history.length > 1) {
+          window.history.back();
+          return;
+        }
+      } catch (e) {}
+      try {
         if (window.WordArcade && typeof window.WordArcade.startGrammarModeSelector === 'function') {
-          window.WordArcade.startGrammarModeSelector();
+          window.WordArcade.startGrammarModeSelector(ctx?.grammar ? ctx.grammar : undefined);
         } else if (window.WordArcade && typeof window.WordArcade.quitToOpening === 'function') {
           window.WordArcade.quitToOpening(true);
         } else if (ctx && ctx.showOpeningButtons) {
