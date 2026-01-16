@@ -1584,10 +1584,21 @@ window.WordArcade = {
   startFilePicker,
   startModeSelector,
   // Grammar helpers
-  startGrammarModeSelector: () => {
+  startGrammarModeSelector: (override) => {
+    // If a mode calls this while we're in-game, prefer browser Back so HistoryManager restores cleanly.
+    // This prevents "mashed" UI states caused by bypassing history restoration.
+    try {
+      const hasUsefulHistory = (window.history && window.history.length > 1);
+      const inGameHash = typeof window.location?.hash === 'string' && /#state-in_game/i.test(window.location.hash);
+      const inGameState = window.history?.state && window.history.state.stateId === 'in_game';
+      if (hasUsefulHistory && (inGameHash || inGameState)) {
+        window.history.back();
+        return;
+      }
+    } catch {}
     try {
       showOpeningButtons(false);
-      const cfg = window.__WA_LAST_GRAMMAR__ || {};
+      const cfg = (override && typeof override === 'object') ? override : (window.__WA_LAST_GRAMMAR__ || {});
       showGrammarModeSelector({
         grammarFile: cfg.grammarFile || 'data/grammar/level1/articles.json',
         grammarName: cfg.grammarName || 'A vs An',

@@ -100,6 +100,13 @@ function detectGrammarType(filePath) {
   if (path.includes('past_vs_future')) return 'past_vs_future';
   if (path.includes('past_vs_present_vs_future') || path.includes('all_tense')) return 'all_tenses';
   if (path.includes('tense_question')) return 'tense_questions';
+  // Will future/questions: sentence-based with "will" patterns
+  if (path.includes('will_future')) return 'will_future';
+  if (path.includes('will_questions')) return 'will_questions';
+  // Modal verbs: have to, want to, like to
+  if (path.includes('have_to')) return 'have_to';
+  if (path.includes('want_to')) return 'want_to';
+  if (path.includes('like_to')) return 'like_to';
   return 'past_irregular';
 }
 

@@ -18,6 +18,13 @@ function detectGrammarType(filePath, data) {
   if (path.includes('past_vs_future')) return 'past_vs_future';
   if (path.includes('past_vs_present_vs_future') || path.includes('all_tense')) return 'all_tenses';
   if (path.includes('tense_question')) return 'tense_questions';
+  // Will future/questions: sentence-based with "will" patterns
+  if (path.includes('will_future')) return 'will_future';
+  if (path.includes('will_questions')) return 'will_questions';
+  // Modal verbs: have to, want to, like to
+  if (path.includes('have_to')) return 'have_to';
+  if (path.includes('want_to')) return 'want_to';
+  if (path.includes('like_to')) return 'like_to';
   // Check data properties for hints
   if (Array.isArray(data) && data.length > 0) {
     const first = data[0];
@@ -173,6 +180,11 @@ export async function startGrammarFillGapL3({
       case 'be_going_to': return 'Fill in the blank with the correct form';
       case 'past_regular': return 'Fill in the blank with the correct verb form';
       case 'past_vs_future': return 'Choose the correct verb form';
+      case 'will_future': return 'Fill in the blank with "will + verb"';
+      case 'will_questions': return 'Fill in the blank with "will"';
+      case 'have_to': return 'Fill in the blank with "have to" or "has to"';
+      case 'want_to': return 'Fill in the blank with "want to" or "wants to"';
+      case 'like_to': return 'Fill in the blank with "like to" or "likes to"';
       case 'all_tenses':
       case 'tense_questions':
       case 'sentence_based':
@@ -337,6 +349,92 @@ export async function startGrammarFillGapL3({
       }
     }
     
+    // Will Future: blank the "will verb" phrase
+    if (grammarType === 'will_future') {
+      const match = sentence.match(/\b(will\s+\w+)/i);
+      if (match) {
+        const willPhrase = match[1];
+        const blanked = sentence.replace(new RegExp(`\\b${willPhrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i'), '_____');
+        // Generate distractors (wrong forms)
+        const verb = willPhrase.replace(/^will\s+/i, '');
+        const distractors = [
+          `is going to ${verb}`,
+          verb + 's',
+          verb + 'ed',
+          `are ${verb}ing`
+        ].filter(d => d.toLowerCase() !== willPhrase.toLowerCase());
+        return {
+          blanked,
+          answer: willPhrase,
+          choices: shuffle([willPhrase, ...distractors]).slice(0, 4)
+        };
+      }
+    }
+    
+    // Will Questions: blank the "Will" at the start
+    if (grammarType === 'will_questions') {
+      const match = sentence.match(/^(Will)\s+/i);
+      if (match) {
+        const willWord = match[1];
+        const blanked = sentence.replace(/^Will\s+/i, '_____ ');
+        const distractors = ['Do', 'Does', 'Did', 'Is', 'Are'];
+        return {
+          blanked,
+          answer: willWord,
+          choices: shuffle([willWord, ...distractors]).slice(0, 4)
+        };
+      }
+    }
+    
+    // Have To: blank the "have to" or "has to" phrase
+    if (grammarType === 'have_to') {
+      const match = sentence.match(/\b(have to|has to)\b/i);
+      if (match) {
+        const haveToPhrase = match[1];
+        const blanked = sentence.replace(new RegExp(`\\b${haveToPhrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i'), '_____');
+        const distractors = ['want to', 'like to', 'need to', 'can'];
+        // Include the other variant
+        const otherVariant = haveToPhrase.toLowerCase() === 'have to' ? 'has to' : 'have to';
+        return {
+          blanked,
+          answer: haveToPhrase,
+          choices: shuffle([haveToPhrase, otherVariant, ...distractors]).slice(0, 4)
+        };
+      }
+    }
+    
+    // Want To: blank the "want to" or "wants to" phrase
+    if (grammarType === 'want_to') {
+      const match = sentence.match(/\b(want to|wants to)\b/i);
+      if (match) {
+        const wantToPhrase = match[1];
+        const blanked = sentence.replace(new RegExp(`\\b${wantToPhrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i'), '_____');
+        const distractors = ['have to', 'like to', 'need to', 'can'];
+        const otherVariant = wantToPhrase.toLowerCase() === 'want to' ? 'wants to' : 'want to';
+        return {
+          blanked,
+          answer: wantToPhrase,
+          choices: shuffle([wantToPhrase, otherVariant, ...distractors]).slice(0, 4)
+        };
+      }
+    }
+    
+    // Like To: blank the "like to" or "likes to" phrase
+    if (grammarType === 'like_to') {
+      const match = sentence.match(/\b(like to|likes to)\b/i);
+      if (match) {
+        const likeToPhrase = match[1];
+        const blanked = sentence.replace(new RegExp(`\\b${likeToPhrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i'), '_____');
+        const distractors = ['have to', 'want to', 'need to', 'can'];
+        const otherVariant = likeToPhrase.toLowerCase() === 'like to' ? 'likes to' : 'like to';
+        return {
+          blanked,
+          answer: likeToPhrase,
+          choices: shuffle([likeToPhrase, otherVariant, ...distractors]).slice(0, 4)
+        };
+      }
+    }
+    
     // Fallback for irregular past or other types
     const pastToken = (item.past || '').trim();
     const baseToken = (item.base || '').trim();
@@ -392,22 +490,18 @@ export async function startGrammarFillGapL3({
 
     const questionNumber = state.index + 1;
     const totalQuestions = state.list.length;
-    const instructionText = getInstructionText();
     const koText = escapeHtml(item.exampleSentenceKo || item.ko || '');
 
     containerEl.innerHTML = `
-      <div class="grammar-fill-gap-l3" style="padding:22px 18px 18px;display:flex;flex-direction:column;min-height:100%;font-family:'Poppins',Arial,sans-serif;">
-        <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;margin-bottom:14px;text-align:center;">
-          <div style="font-size:0.9rem;color:#888;font-weight:600;">${escapeHtml(instructionText)}</div>
+      <div class="grammar-fill-gap-l3" style="padding:20px 18px 90px 18px;display:flex;flex-direction:column;min-height:100vh;font-family:'Poppins',Arial,sans-serif;gap:0;overflow:visible;">
+        <div style="font-size:0.85rem;color:#888;text-align:center;flex-shrink:0;margin-bottom:16px;">Question ${questionNumber} / ${totalQuestions}</div>
+        <div style="font-size:1.47rem;font-weight:600;color:#21b5c0;text-align:center;flex-shrink:0;line-height:1.4;margin-bottom:60px;">${koText}</div>
+        <div style="font-size:1.4rem;font-weight:700;text-align:center;padding:16px;border-radius:12px;border:2px solid #f0f0f0;background:#fff;color:#333;flex-shrink:0;margin-bottom:60px;">${escapeHtml(blanked)}</div>
+        <div id="gfg-choices" style="display:grid;grid-template-columns:repeat(2,1fr);gap:14px;justify-items:stretch;flex-shrink:0;margin-bottom:20px;max-width:500px;margin-left:auto;margin-right:auto;width:100%;">
+          ${choices.map((c) => `<button data-answer="${escapeHtml(c)}" class="gfg-choice-btn" style="padding:12px 16px;font-size:1.1rem;font-weight:800;border-radius:20px;border:3px solid #ff6fb0;background:#fff;color:#ff6fb0;cursor:pointer;box-shadow:0 2px 12px rgba(0,0,0,0.06);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(c)}</button>`).join('')}
         </div>
-        <div style="font-size:1.4rem;font-weight:700;text-align:center;padding:18px;border-radius:12px;border:2px solid #f0f0f0;background:#fff;margin-bottom:8px;color:#333;">${escapeHtml(blanked)}</div>
-        <div style="font-size:1.05rem;font-weight:600;color:#21b5c0;text-align:center;margin-bottom:14px;">${koText}</div>
-        <div id="gfg-choices" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:12px;justify-items:center;">
-          ${choices.map((c) => `<button data-answer="${escapeHtml(c)}" class="gfg-choice-btn" style="flex:1;min-width:clamp(120px,22vw,160px);padding:12px 18px;font-size:1.15rem;font-weight:800;border-radius:20px;border:3px solid #ff6fb0;background:#fff;color:#ff6fb0;cursor:pointer;box-shadow:0 2px 12px rgba(0,0,0,0.06);">${escapeHtml(c)}</button>`).join('')}
-        </div>
-        <div id="gfg-feedback" style="min-height:1.2em;font-weight:700;font-size:1rem;margin-bottom:12px;color:#2e7d32;text-align:center"></div>
-        <div style="margin-top:auto;font-size:0.85rem;color:#888;text-align:center;">Question ${questionNumber} / ${totalQuestions}</div>
-        <div style="display:flex;justify-content:center;margin-top:12px;"><button id="gfg-quit" type="button" style="border:none;background:transparent;cursor:pointer;display:flex;align-items:center;gap:8px;padding:4px;"><img src="./assets/Images/icons/quit-game.svg" alt="Quit" style="width:28px;height:28px;"/></button></div>
+        <div id="gfg-feedback" style="min-height:1.2em;font-weight:700;font-size:1rem;color:#2e7d32;text-align:center;flex-shrink:0;"></div>
+        <button id="gfg-quit" type="button" style="position:fixed;bottom:20px;left:50%;transform:translateX(-50%);border:none;background:transparent;cursor:pointer;display:flex;align-items:center;gap:8px;padding:8px 12px;z-index:9999;"><img src="./assets/Images/icons/quit-game.svg" alt="Quit" style="width:32px;height:32px;"/></button>
       </div>`;
 
     const choicesEl = containerEl.querySelector('#gfg-choices');
@@ -562,9 +656,13 @@ export async function startGrammarFillGapL3({
     const current = state;
     if (!current) return;
     const { onQuit, onComplete, container } = current;
+    // Clean up container and any fixed position elements
     if (container) {
       try { container.innerHTML = ''; } catch {}
     }
+    try {
+      document.querySelectorAll('#gfg-quit, .grammar-fill-gap-l3, button[id*="gfg"]').forEach(el => el.remove());
+    } catch {}
     if (current.sessionId) {
       try {
         // Use grammarFile path for session tracking to match homework assignment list_key
@@ -580,12 +678,30 @@ export async function startGrammarFillGapL3({
     if (typeof onComplete === 'function') {
       try { onComplete({ reason, state: current }); } catch (err) { console.error('onComplete failed', err); }
     }
+
+    // Preserve grammar config before returning to mode selector (regardless of quit wiring)
+    try {
+      if (current.grammarFile) {
+        window.__WA_LAST_GRAMMAR__ = {
+          grammarFile: current.grammarFile,
+          grammarName: current.grammarName,
+          grammarConfig: current.grammarConfig || {}
+        };
+      }
+    } catch {}
+
     if (typeof onQuit === 'function') {
       try { onQuit({ reason }); } catch (err) { console.error('onQuit failed', err); }
     } else {
       try {
-        if (window.WordArcade?.startGrammarModeSelector) {
-          window.WordArcade.startGrammarModeSelector();
+        // Prefer browser Back behavior (HistoryManager restores the correct selector/list)
+        const hasUsefulHistory = (window.history && window.history.length > 1);
+        const inGameHash = typeof window.location?.hash === 'string' && /#state-in_game/i.test(window.location.hash);
+        const inGameState = window.history?.state && window.history.state.stateId === 'in_game';
+        if (hasUsefulHistory && (inGameHash || inGameState)) {
+          window.history.back();
+        } else if (window.WordArcade?.startGrammarModeSelector) {
+          window.WordArcade.startGrammarModeSelector(window.__WA_LAST_GRAMMAR__);
         } else if (window.WordArcade?.showGrammarLevelsMenu) {
           window.WordArcade.showGrammarLevelsMenu();
         } else if (window.WordArcade?.quitToOpening) {
@@ -605,6 +721,10 @@ export async function startGrammarFillGapL3({
 
 export function stopGrammarFillGapL3() {
   if (pendingTimeout) { clearTimeout(pendingTimeout); pendingTimeout = null; }
+  // Clean up any fixed position quit buttons or lingering elements
+  try {
+    document.querySelectorAll('#gfg-quit, .grammar-fill-gap-l3, button[id*="gfg"]').forEach(el => el.remove());
+  } catch {}
   state = null;
 }
 

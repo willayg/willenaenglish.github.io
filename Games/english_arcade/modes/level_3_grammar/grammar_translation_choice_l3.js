@@ -18,6 +18,13 @@ function detectGrammarType(filePath) {
   if (path.includes('past_vs_future')) return 'past_vs_future';
   if (path.includes('past_vs_present_vs_future') || path.includes('all_tense')) return 'all_tenses';
   if (path.includes('tense_question')) return 'tense_questions';
+  // Will future/questions: sentence-based with "will" patterns
+  if (path.includes('will_future')) return 'will_future';
+  if (path.includes('will_questions')) return 'will_questions';
+  // Modal verbs: have to, want to, like to
+  if (path.includes('have_to')) return 'have_to';
+  if (path.includes('want_to')) return 'want_to';
+  if (path.includes('like_to')) return 'like_to';
   return 'past_irregular';
 }
 
@@ -381,6 +388,78 @@ function buildWrongSentences(item, correct, grammarType, allItems = []) {
     } else {
       wrongGrammar = 'Does ' + correct;
       wrongSubject = 'Did ' + correct;
+    }
+  } else if (grammarType === 'will_future') {
+    // Will Future: common mistakes
+    const willMatch = correct.match(/\bwill\s+(\w+)/i);
+    if (willMatch) {
+      const verb = willMatch[1];
+      wrongGrammar = correct.replace(/\bwill\s+(\w+)/i, `will ${verb}ing`); // "will going" error
+      wrongSubject = correct.replace(/\bwill\s+(\w+)/i, `is going to ${verb}`); // Alternative structure
+    } else {
+      wrongGrammar = correct.replace(/\bwill\b/i, 'would');
+      wrongSubject = 'They ' + correct.charAt(0).toLowerCase() + correct.slice(1);
+    }
+  } else if (grammarType === 'will_questions') {
+    // Will Questions: common errors
+    const willQMatch = correct.match(/^(Will)\s+/i);
+    if (willQMatch) {
+      wrongGrammar = correct.replace(/^Will\s+/i, 'Does '); // Wrong auxiliary
+      wrongSubject = correct.replace(/^Will\s+/i, 'Is '); // Wrong auxiliary
+    } else {
+      wrongGrammar = 'Does ' + correct;
+      wrongSubject = 'Did ' + correct;
+    }
+  } else if (grammarType === 'have_to') {
+    // Have To: common mistakes
+    const haveToMatch = correct.match(/\b(have to|has to)\b/i);
+    if (haveToMatch) {
+      const original = haveToMatch[1];
+      // Wrong agreement
+      if (original.toLowerCase() === 'have to') {
+        wrongGrammar = correct.replace(/\bhave to\b/i, 'has to');
+      } else {
+        wrongGrammar = correct.replace(/\bhas to\b/i, 'have to');
+      }
+      // Common error: "must to" instead of "have to"
+      wrongSubject = correct.replace(/\b(have|has) to\b/i, 'must to');
+    } else {
+      wrongGrammar = correct.replace(/\b(have|has)\b/i, 'need');
+      wrongSubject = 'They ' + correct.charAt(0).toLowerCase() + correct.slice(1);
+    }
+  } else if (grammarType === 'want_to') {
+    // Want To: common mistakes
+    const wantToMatch = correct.match(/\b(want to|wants to)\b/i);
+    if (wantToMatch) {
+      const original = wantToMatch[1];
+      // Wrong agreement
+      if (original.toLowerCase() === 'want to') {
+        wrongGrammar = correct.replace(/\bwant to\b/i, 'wants to');
+      } else {
+        wrongGrammar = correct.replace(/\bwants to\b/i, 'want to');
+      }
+      // Common error: "wanna" or missing "to"
+      wrongSubject = correct.replace(/\b(want|wants) to (\w+)/i, '$1 $2');
+    } else {
+      wrongGrammar = 'She wants ' + correct.slice(correct.indexOf(' ') + 1);
+      wrongSubject = 'They ' + correct.charAt(0).toLowerCase() + correct.slice(1);
+    }
+  } else if (grammarType === 'like_to') {
+    // Like To: common mistakes
+    const likeToMatch = correct.match(/\b(like to|likes to)\b/i);
+    if (likeToMatch) {
+      const original = likeToMatch[1];
+      // Wrong agreement
+      if (original.toLowerCase() === 'like to') {
+        wrongGrammar = correct.replace(/\blike to\b/i, 'likes to');
+      } else {
+        wrongGrammar = correct.replace(/\blikes to\b/i, 'like to');
+      }
+      // Common error: gerund instead of infinitive
+      wrongSubject = correct.replace(/\b(like|likes) to (\w+)/i, '$1 $2ing');
+    } else {
+      wrongGrammar = 'She likes ' + correct.slice(correct.indexOf(' ') + 1);
+      wrongSubject = 'They ' + correct.charAt(0).toLowerCase() + correct.slice(1);
     }
   } else {
     // Original past_irregular logic

@@ -254,7 +254,7 @@ function rowTpl(s) {
   const lang = currentLang || 'en';
   const tnames = langMap[lang].toolNames;
   const approved = s.approved ? '<span class="pill yes">Yes</span>' : '<span class="pill no">No</span>';
-  return `<tr data-id="${s.id}" data-username="${s.username}" data-name="${s.name || ''}" data-korean="${s.korean_name || ''}" data-class="${s.class || ''}">
+  return `<tr data-id="${s.id}" data-username="${s.username}" data-name="${s.name || ''}" data-korean="${s.korean_name || ''}" data-class="${s.class || ''}" data-approved="${s.approved ? '1' : '0'}">
     <td>${s.username || ''}</td>
     <td>${s.name || ''}</td>
     <td>${s.korean_name || ''}</td>
@@ -482,7 +482,7 @@ function attachRowHandlers() {
     }
     try {
       if (act === 'approve') {
-        const currentlyApproved = btn.textContent.includes('Unapprove');
+        const currentlyApproved = tr?.dataset?.approved === '1';
         await api('set_approved', { method:'POST', body:{ user_id: uid, approved: !currentlyApproved } });
       } else if (act === 'changeclass') {
         const currentClass = tr?.dataset?.class || '';

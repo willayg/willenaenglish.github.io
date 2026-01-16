@@ -17,6 +17,13 @@ function detectGrammarType(filePath) {
   if (path.includes('past_vs_future')) return 'past_vs_future';
   if (path.includes('past_vs_present_vs_future') || path.includes('all_tense')) return 'all_tenses';
   if (path.includes('tense_question')) return 'tense_questions';
+  // Will future/questions: sentence-based with "will" patterns
+  if (path.includes('will_future')) return 'will_future';
+  if (path.includes('will_questions')) return 'will_questions';
+  // Modal verbs: have to, want to, like to
+  if (path.includes('have_to')) return 'have_to';
+  if (path.includes('want_to')) return 'want_to';
+  if (path.includes('like_to')) return 'like_to';
   return 'past_irregular';
 }
 
@@ -237,6 +244,89 @@ export async function runGrammarFindMistakeL3Mode({ grammarFile, grammarName, gr
         // Remove the auxiliary to make it wrong
         const bad = en.replace(questionMatch[0], '');
         return { bad, wrongToken: '(missing auxiliary)', correctToken: questionMatch[1] };
+      }
+    }
+
+    // Will Future: corrupt "will" sentences
+    if (grammarType === 'will_future') {
+      const willMatch = en.match(/\bwill\s+(\w+)/i);
+      if (willMatch) {
+        const verb = willMatch[1];
+        const variants = [
+          { bad: en.replace(/\bwill\s+\w+/i, `will ${verb}ing`), wrongToken: `will ${verb}ing`, correctToken: willMatch[0] },
+          { bad: en.replace(/\bwill\s+\w+/i, `will to ${verb}`), wrongToken: `will to ${verb}`, correctToken: willMatch[0] },
+          { bad: en.replace(/\bwill\s+\w+/i, `is going to ${verb}`), wrongToken: `is going to ${verb}`, correctToken: willMatch[0] },
+          { bad: en.replace(/\bwill\b/i, 'would'), wrongToken: 'would', correctToken: 'will' }
+        ];
+        return variants[Math.floor(Math.random() * variants.length)];
+      }
+    }
+
+    // Will Questions: corrupt question word
+    if (grammarType === 'will_questions') {
+      const willQMatch = en.match(/^(Will)\s+/i);
+      if (willQMatch) {
+        const variants = [
+          { bad: en.replace(/^Will\s+/i, 'Do '), wrongToken: 'Do', correctToken: 'Will' },
+          { bad: en.replace(/^Will\s+/i, 'Does '), wrongToken: 'Does', correctToken: 'Will' },
+          { bad: en.replace(/^Will\s+/i, 'Is '), wrongToken: 'Is', correctToken: 'Will' },
+          { bad: en.replace(/^Will\s+/i, ''), wrongToken: '(missing Will)', correctToken: 'Will' }
+        ];
+        return variants[Math.floor(Math.random() * variants.length)];
+      }
+    }
+
+    // Have To: corrupt "have to" / "has to"
+    if (grammarType === 'have_to') {
+      const haveToMatch = en.match(/\b(have to|has to)\b/i);
+      if (haveToMatch) {
+        const correct = haveToMatch[1];
+        const variants = [];
+        // Wrong agreement: swap have/has
+        if (correct.toLowerCase() === 'have to') {
+          variants.push({ bad: en.replace(/\bhave to\b/i, 'has to'), wrongToken: 'has to', correctToken: 'have to' });
+        } else {
+          variants.push({ bad: en.replace(/\bhas to\b/i, 'have to'), wrongToken: 'have to', correctToken: 'has to' });
+        }
+        // Common errors
+        variants.push({ bad: en.replace(/\b(have|has) to\b/i, 'must to'), wrongToken: 'must to', correctToken: correct });
+        variants.push({ bad: en.replace(/\b(have|has) to\b/i, 'need'), wrongToken: 'need', correctToken: correct });
+        return variants[Math.floor(Math.random() * variants.length)];
+      }
+    }
+
+    // Want To: corrupt "want to" / "wants to"
+    if (grammarType === 'want_to') {
+      const wantToMatch = en.match(/\b(want to|wants to)\b/i);
+      if (wantToMatch) {
+        const correct = wantToMatch[1];
+        const variants = [];
+        // Wrong agreement: swap want/wants
+        if (correct.toLowerCase() === 'want to') {
+          variants.push({ bad: en.replace(/\bwant to\b/i, 'wants to'), wrongToken: 'wants to', correctToken: 'want to' });
+        } else {
+          variants.push({ bad: en.replace(/\bwants to\b/i, 'want to'), wrongToken: 'want to', correctToken: 'wants to' });
+        }
+        // Common errors
+        variants.push({ bad: en.replace(/\b(want|wants) to\b/i, 'wanna'), wrongToken: 'wanna', correctToken: correct });
+        variants.push({ bad: en.replace(/\b(want|wants) to (\w+)/i, '$1 $2'), wrongToken: '(missing "to")', correctToken: correct });
+        return variants[Math.floor(Math.random() * variants.length)];
+      }
+    }
+
+    // Like To: corrupt "like to" / "likes to"
+    if (grammarType === 'like_to') {
+      const likeToMatch = en.match(/\b(like to|likes to)\b/i);
+      if (likeToMatch) {
+        const correct = likeToMatch[1];
+        const variants = [];
+        if (correct.toLowerCase() === 'like to') {
+          variants.push({ bad: en.replace(/\blike to\b/i, 'likes to'), wrongToken: 'likes to', correctToken: 'like to' });
+        } else {
+          variants.push({ bad: en.replace(/\blikes to\b/i, 'like to'), wrongToken: 'like to', correctToken: 'likes to' });
+        }
+        variants.push({ bad: en.replace(/\b(like|likes) to (\w+)/i, '$1 $2ing'), wrongToken: 'like/likes + -ing', correctToken: correct });
+        return variants[Math.floor(Math.random() * variants.length)];
       }
     }
 

@@ -57,12 +57,18 @@ export async function showGrammarModeSelector({ grammarFile, grammarName, gramma
   const menuBar = document.getElementById('menuBar');
   if (menuBar) {
     menuBar.style.display = 'flex';
-    // Always show Back button
+    // Make in-app Back behave exactly like browser Back (HistoryManager handles restore)
     const backBtn = document.getElementById('backBtn');
     if (backBtn) {
       backBtn.style.display = '';
       backBtn.onclick = () => {
-        if (onClose) onClose();
+        try {
+          if (window.history && window.history.length > 1) {
+            window.history.back();
+            return;
+          }
+        } catch {}
+        try { if (typeof onClose === 'function') onClose(); } catch {}
       };
     }
 

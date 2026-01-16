@@ -35,14 +35,15 @@ export function showGrammarL3Modal({ onChoose, onClose }) {
   ensureGrammarL3ModalStyles();
   const SCROLL_KEY = 'grammarL3Modal_scrollTop';
 
-  // Level 3 grammar lists (only the relevant lists are exposed here)
+  // Level 3 grammar lists - 10 topics open to public
   let level3Lists = [
+    // Past Tense
     {
       id: 'past_simple_irregular',
       label: 'Past Simple (Irregular)',
       emoji: '🦁',
       file: 'data/grammar/level3/past_simple_irregular.json',
-      config: { ruleHint: 'Common irregular past-tense verbs', answerChoices: [] }
+      config: { ruleHint: 'Common irregular past-tense verbs', grammarType: 'past_irregular' }
     },
     {
       id: 'past_simple_regular',
@@ -52,11 +53,19 @@ export function showGrammarL3Modal({ onChoose, onClose }) {
       config: { ruleHint: 'Regular past-tense verbs ending in -ed', grammarType: 'past_simple_regular' }
     },
     {
+      id: 'past_tense_questions',
+      label: 'Past Tense Questions',
+      emoji: '❔',
+      file: 'data/grammar/level3/past_tense_questions.json',
+      config: { ruleHint: 'Questions in past tense', grammarType: 'past_tense_questions' }
+    },
+    // Future Tense
+    {
       id: 'be_going_to_future',
       label: 'Be Going To (Future)',
       emoji: '🚀',
       file: 'data/grammar/level3/be_going_to_future.json',
-      config: { ruleHint: 'Future plans with "be going to"', grammarType: 'be_going_to_future' }
+      config: { ruleHint: 'Future plans with "be going to"', grammarType: 'be_going_to' }
     },
     {
       id: 'be_going_to_questions',
@@ -66,14 +75,45 @@ export function showGrammarL3Modal({ onChoose, onClose }) {
       config: { ruleHint: 'Questions with "be going to"', grammarType: 'be_going_to_questions' }
     },
     {
+      id: 'will_future',
+      label: 'Will (Future)',
+      emoji: '🔮',
+      file: 'data/grammar/level3/will_future.json',
+      config: { ruleHint: 'Future predictions with "will"', grammarType: 'will_future' }
+    },
+    {
+      id: 'will_questions',
+      label: 'Will (Questions)',
+      emoji: '🤔',
+      file: 'data/grammar/level3/will_questions.json',
+      config: { ruleHint: 'Questions with "will"', grammarType: 'will_questions' }
+    },
+    // Mixed Tenses
+    {
       id: 'past_vs_future',
       label: 'Past vs Future',
       emoji: '⏳',
       file: 'data/grammar/level3/past_vs_future.json',
       config: { ruleHint: 'Comparing past and future tenses', grammarType: 'past_vs_future' }
     },
+    // Modal Verbs
+    {
+      id: 'have_to',
+      label: 'Have To (Obligation)',
+      emoji: '📋',
+      file: 'data/grammar/level3/have_to.json',
+      config: { ruleHint: 'Express obligation with "have to"', grammarType: 'have_to' }
+    },
+    {
+      id: 'want_to',
+      label: 'Want To (Desire)',
+      emoji: '💫',
+      file: 'data/grammar/level3/want_to.json',
+      config: { ruleHint: 'Express desire with "want to"', grammarType: 'want_to' }
+  }
   /*
-  {
+  // Additional topics (coming soon)
+  ,{
     id: 'past_vs_present_vs_future_vs_continuous',
     label: 'All Tenses Practice',
     emoji: '🎯',
