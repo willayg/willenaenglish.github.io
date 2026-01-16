@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Willena Grid Game</title>
+    <!-- API gateway for CF Pages routing - MUST load before api-config.js -->
+    <script src="/students/api-gateway.js?v=20260116"></script>
     <script src="/js/api-config.js?v=20260108"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
@@ -747,7 +749,7 @@ document.addEventListener('DOMContentLoaded', function() {
                           </span>
                         </div>
                         <div class="empty-state">
-                            <div class="icon">?Ž¯</div>
+                            <div class="icon">?ï¿½ï¿½</div>
                             <h3>Ready to Create Your Grid Game</h3>
                             <p>Enter vocabulary words and questions, then click "Generate Game" to start playing.</p>
                             <p style="font-size: 0.9rem; margin-top: 16px; opacity: 0.7;">
