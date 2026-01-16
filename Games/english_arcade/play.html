@@ -4,6 +4,8 @@
 	<meta charset="UTF-8" />
 	<meta name="viewport" content="width=device-width,initial-scale=1" />
 	<title>Word Arcade - Live Mode</title>
+	<!-- API gateway MUST load before api-config for students.willenaenglish.com routing -->
+	<script src="/students/api-gateway.js"></script>
 	<script src="/js/api-config.js"></script>
 	<link rel="stylesheet" href="mini.css" />
 	<link rel="stylesheet" href="/students/theme.css" />
@@ -15,6 +17,11 @@
 	  const doc = document; doc.documentElement.style.visibility='hidden';
 	  function show(){ doc.documentElement.style.visibility=''; }
 	  async function check(){
+	    // Must wait for BOTH WillenaAPI AND the gateway patch
+	    if (!window.WillenaAPI || !window.WillenaAPI.fetch || !window.__STUDENTS_GATEWAY_PATCHED) {
+	      setTimeout(check, 20);
+	      return;
+	    }
 	    const c = document.cookie||'';
 	    const hasGuest = /(?:^|;\s*)wa_guest_id=/.test(c);
 	    const hasA = /(?:^|;\s*)sb_access=/.test(c);
@@ -174,11 +181,11 @@
 			<div style="text-align:center;color:#19777e;font-weight:700;" data-i18n="Loading game…">Loading game…</div>
 		</div>
 	</div>
-	<script type="module" src="/students/components/student-header.js"></script>
-	<script type="module" src="/students/scripts/points-client.js"></script>
+	<script type="module" src="/students/components/student-header.js?v=20260115"></script>
+	<script type="module" src="/students/scripts/points-client.js?v=20260115"></script>
 	<script type="module" src="play-main.js"></script>
 	<script type="module">
-	import { initPointsClient } from '/students/scripts/points-client.js';
+	import { initPointsClient } from '/students/scripts/points-client.js?v=20260115';
 	async function ensureHeaderProfile(){
 	  try {
 		const res = await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=get_profile_name');

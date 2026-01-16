@@ -12,8 +12,10 @@
   <link rel="stylesheet" href="/students/theme.css" />
   <base href="/students/">
   <meta name="robots" content="noindex" />
+  <!-- Student auth API gateway - MUST load before api-config.js -->
+  <script src="/students/api-gateway.js"></script>
   <!-- API config for Cloudflare -->
-  <script src="/js/api-config.js"></script>
+  <script src="/js/api-config.js?v=20260113c"></script>
   <script>
     // EMERGENCY FIX: Redirect to students domain for all authenticated pages
     // Cross-origin cookies don't work - MUST be on students.willenaenglish.com
@@ -548,6 +550,20 @@
           title.style.color = '#fff';
           title.textContent = a.title || a.list_title || t('Homework');
 
+          // Goal message (only for incomplete)
+          const progress = typeof a.completion_pct === 'number' ? a.completion_pct : (a.completion || 0);
+          const goalMsg = document.createElement('div');
+          goalMsg.style.fontSize = '0.8rem';
+          goalMsg.style.fontWeight = '600';
+          goalMsg.style.color = '#67e2e6';
+          goalMsg.style.marginTop = '4px';
+          if (a.stars_required !== null && typeof a.stars_required === 'number') {
+            const currentStars = (typeof a.stars === 'number') ? a.stars : 0;
+            goalMsg.textContent = `Goal: Get ${a.stars_required}+ stars to pass (${currentStars}/${a.stars_required})`;
+          } else {
+            goalMsg.textContent = `Goal: Complete all modes`;
+          }
+
           // Countdown calculation
           let countdown = '';
           if (a.due_at) {
@@ -639,6 +655,7 @@
             starsWrap.appendChild(starsLabel);
             li.appendChild(starsWrap);
           } else {
+            li.appendChild(goalMsg);
             li.appendChild(countdownDiv);
             li.appendChild(progressLabel);
             li.appendChild(progressBar);
@@ -719,12 +736,17 @@
                   }
                   // Clamp
                   completionPct = Math.max(0, Math.min(100, completionPct));
+                  // If stars_required is set, override completion % to be star-based
+                  if (progressData.stars_required && typeof studentProgress.stars === 'number') {
+                    completionPct = Math.round((studentProgress.stars / progressData.stars_required) * 100);
+                  }
                   return {
                     ...assignment,
                     completion_pct: completionPct,
                     stars: studentProgress.stars || 0,
                     accuracy: studentProgress.accuracy_best || 0,
-                    teacher_name: assignment.teacher_name || data.teacher_name || null
+                    teacher_name: assignment.teacher_name || data.teacher_name || null,
+                    stars_required: progressData.stars_required || null
                   };
                 }
               }

@@ -1,4 +1,4 @@
-import { FN } from './scripts/api-base.js';
+import { FN } from './scripts/api-base.js?v=20260115';
 
 // Avatar modal: setup open/close, selection, and save to server
 (function(){

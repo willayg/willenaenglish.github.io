@@ -4,6 +4,9 @@
 <meta charset="UTF-8" />
 <title>Live Leaderboard</title>
 <meta name="viewport" content="width=device-width,initial-scale=1" />
+<!-- API gateway MUST load before api-config for students.willenaenglish.com routing -->
+<script src="/students/api-gateway.js"></script>
+<script src="/js/api-config.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800;900&display=swap" rel="stylesheet">
@@ -127,11 +130,9 @@ button { font-family:inherit; font-weight:700; cursor:pointer; }
   async function poll(){
     if (!active || !sessionId) return;
     try {
-      const url = new URL('/.netlify/functions/timer_score', location.origin);
-      url.searchParams.set('session_id', sessionId);
-      url.searchParams.set('best','1');
-      url.searchParams.set('limit','50');
-      const res = await fetch(url.toString(), { cache:'no-store' });
+      // Use WillenaAPI for proper routing on students.willenaenglish.com (Cloudflare Pages)
+      const path = `/.netlify/functions/timer_score?session_id=${encodeURIComponent(sessionId)}&best=1&limit=50`;
+      const res = await WillenaAPI.fetch(path);
       const js = await res.json().catch(()=>null);
       if (js && js.success && Array.isArray(js.leaderboard)) update(js.leaderboard);
       status.textContent = '';

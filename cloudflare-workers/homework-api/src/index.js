@@ -14,6 +14,10 @@ const ALLOWED_ORIGINS = [
   'https://willenaenglish-github-io.pages.dev',
   // Cloudflare Pages deployment
   'https://cf.willenaenglish.com',
+  'https://staging.willenaenglish.com',
+  // Student and Teacher subdomains
+  'https://students.willenaenglish.com',
+  'https://teachers.willenaenglish.com',
   'http://localhost:8888',
   'http://localhost:9000',
 ];
@@ -446,6 +450,17 @@ export default {
           return jsonResponse({ success: false, error: 'Missing assignment_id' }, 400, origin);
         }
         
+        // Get the authenticated user
+        const authUserId = await getUserIdFromRequest(request, env);
+        if (!authUserId) {
+          return jsonResponse({ success: false, error: 'Not signed in' }, 401, origin);
+        }
+        
+        const authProf = await fetchProfile(env, authUserId);
+        if (!authProf) {
+          return jsonResponse({ success: false, error: 'Profile not found' }, 403, origin);
+        }
+        
         // Fetch assignment
         const assignments = await supabaseSelect(env, 'homework_assignments', `id=eq.${assignmentId}&select=*`);
         if (!assignments || !assignments.length) {
@@ -454,6 +469,12 @@ export default {
         
         const assignment = assignments[0];
         const targetClass = className || assignment.class;
+        
+        // Authorization: only teachers/admins can see all students, students only see their own
+        const isTeacher = ['teacher', 'admin'].includes(String(authProf.role || '').toLowerCase());
+        if (!isTeacher && String(authProf.class || '') !== String(targetClass || '')) {
+          return jsonResponse({ success: false, error: 'Not authorized to view this assignment' }, 403, origin);
+        }
         
         // Determine category heuristically for expected mode counts
         const assignLower = `${assignment.list_key||''} ${assignment.title||''} ${assignment.list_title||''}`.toLowerCase();
@@ -517,8 +538,8 @@ export default {
           const s = summary || {};
           let acc = null;
           if (typeof s.accuracy === 'number') acc = s.accuracy;
-          else if (typeof s.score === 'number' && typeof s.total === 'number' && s.total > 0) {
-            acc = s.score / s.total;
+          else if (typeof s.score === 'number' && (typeof s.total === 'number' || typeof s.max === 'number') && (s.total || s.max) > 0) {
+            acc = s.score / (s.total || s.max);
           }
           if (acc !== null) {
             if (acc >= 1) return 5;
@@ -531,7 +552,7 @@ export default {
           if (typeof s.stars === 'number') return s.stars;
           // Fallback: some modes (e.g., level_up) record only raw score (points).
           const m = String(modeRaw || '').toLowerCase();
-          if (typeof s.score === 'number' && !Number.isFinite(s.total)) {
+          if (typeof s.score === 'number' && !Number.isFinite(s.total) && !Number.isFinite(s.max)) {
             // Map points to stars with simple thresholds
             const pts = Math.max(0, Math.floor(s.score));
             if (m.includes('level_up')) {
@@ -651,13 +672,21 @@ export default {
           };
         });
         
+        // Filter progress based on authorization: students only see their own data
+        let filteredProgress = progress;
+        if (!isTeacher) {
+          filteredProgress = progress.filter(p => p.user_id === authUserId);
+        }
+        
         return jsonResponse({
           success: true,
           assignment_id: assignment.id,
           class: targetClass,
           total_modes: totalModes,
           category,
-          progress,
+          difficulty_mode: assignment.list_meta?.difficulty_mode || 'full',
+          stars_required: assignment.list_meta?.stars_required || null,
+          progress: filteredProgress,
         }, 200, origin);
       }
       

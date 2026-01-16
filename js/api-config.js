@@ -59,14 +59,14 @@
   const currentHost = window.location.hostname;
   const isGitHubPages = currentHost === GITHUB_PAGES_HOST;
   const isLocalhost = currentHost === 'localhost' || currentHost === '127.0.0.1';
-  // Detect Cloudflare Pages deployments (staging, cf, teachers, etc.) - these need the API gateway
+  // Detect Cloudflare Pages deployments (staging, cf, teachers, students, etc.) - these need the API gateway
   const isCloudflarePages = currentHost === 'staging.willenaenglish.com' || 
                              currentHost === 'cf.willenaenglish.com' ||
                              currentHost === 'teachers.willenaenglish.com' ||
+                             currentHost === 'students.willenaenglish.com' ||
                              currentHost.endsWith('.pages.dev');
-  // Netlify = students.willenaenglish.com (has /.netlify/functions/ natively)
-  const isNetlify = currentHost === 'students.willenaenglish.com' || 
-                    currentHost === 'willenaenglish.netlify.app';
+  // Netlify = willenaenglish.netlify.app (has /.netlify/functions/ natively)
+  const isNetlify = currentHost === 'willenaenglish.netlify.app';
   
   // Production = everything except GitHub Pages
   // On production, we ONLY use relative paths

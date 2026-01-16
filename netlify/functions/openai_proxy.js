@@ -4,7 +4,44 @@ const redisCache = require('../../lib/redis_cache');
 const OPENAI_API = process.env.OPENAI_API;
 const OPENAI_CACHE_TTL = Number(process.env.OPENAI_CACHE_TTL_SECONDS || 3600); // default 1 hour
 
+// Allowed origins for CORS
+const ALLOWED_ORIGINS = [
+  'https://teachers.willenaenglish.com',
+  'https://students.willenaenglish.com',
+  'https://willenaenglish.com',
+  'https://www.willenaenglish.com',
+  'https://willenaenglish.netlify.app',
+  'https://willenaenglish.github.io',
+  'http://localhost:8888',
+  'http://localhost:9000',
+  'http://127.0.0.1:8888',
+  'http://127.0.0.1:9000',
+];
+
+// Generate CORS headers based on request origin
+function getCorsHeaders(origin) {
+  const allowedOrigin = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+  return {
+    'Access-Control-Allow-Origin': allowedOrigin,
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Credentials': 'true',
+  };
+}
+
 exports.handler = async (event) => {
+  const origin = event.headers.origin || event.headers.Origin || '';
+  const CORS_HEADERS = getCorsHeaders(origin);
+
+  // Handle preflight OPTIONS request
+  if (event.httpMethod === 'OPTIONS') {
+    return {
+      statusCode: 200,
+      headers: CORS_HEADERS,
+      body: '',
+    };
+  }
+
   const body = event.body ? JSON.parse(event.body) : {};
 
   // If the frontend sends { prompt, type }, use chat/completions
@@ -29,6 +66,7 @@ exports.handler = async (event) => {
         if (cached) {
           return {
             statusCode: 200,
+            headers: CORS_HEADERS,
             body: JSON.stringify({ result: cached.result, cached: true }),
           };
         }
@@ -62,6 +100,7 @@ exports.handler = async (event) => {
     }
     return {
       statusCode: response.status,
+      headers: CORS_HEADERS,
       body: JSON.stringify({ result }),
     };
   }
@@ -115,6 +154,7 @@ exports.handler = async (event) => {
 
   return {
     statusCode: response.status,
+    headers: CORS_HEADERS,
     body: JSON.stringify({ data }),
   };
 };

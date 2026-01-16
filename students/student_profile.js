@@ -1,5 +1,5 @@
 
-import { FN } from './scripts/api-base.js';
+import { FN } from './scripts/api-base.js?v=20260115';
 import { initPointsClient } from './scripts/points-client.js';
 
 // Scoreless build: no points display helper
