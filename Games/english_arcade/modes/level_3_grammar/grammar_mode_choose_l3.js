@@ -140,6 +140,12 @@ export async function startGrammarChooseL3({
   const container = document.getElementById(containerId);
   if (!container) return;
 
+  // Clear container and remove any lingering elements from previous modes
+  container.innerHTML = '';
+  try {
+    document.querySelectorAll('#gfg-quit, .grammar-fill-gap-l3, button[id*=\"gfg\"]').forEach(el => el.remove());
+  } catch {}
+
   const resolvedSFX = typeof playSFX === 'function'
     ? playSFX
     : (window.WordArcade && typeof window.WordArcade.playSFX === 'function'

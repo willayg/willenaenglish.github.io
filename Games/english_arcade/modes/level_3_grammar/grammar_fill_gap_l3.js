@@ -656,9 +656,13 @@ export async function startGrammarFillGapL3({
     const current = state;
     if (!current) return;
     const { onQuit, onComplete, container } = current;
+    // Clean up container and any fixed position elements
     if (container) {
       try { container.innerHTML = ''; } catch {}
     }
+    try {
+      document.querySelectorAll('#gfg-quit, .grammar-fill-gap-l3, button[id*="gfg"]').forEach(el => el.remove());
+    } catch {}
     if (current.sessionId) {
       try {
         // Use grammarFile path for session tracking to match homework assignment list_key
@@ -699,6 +703,10 @@ export async function startGrammarFillGapL3({
 
 export function stopGrammarFillGapL3() {
   if (pendingTimeout) { clearTimeout(pendingTimeout); pendingTimeout = null; }
+  // Clean up any fixed position quit buttons or lingering elements
+  try {
+    document.querySelectorAll('#gfg-quit, .grammar-fill-gap-l3, button[id*="gfg"]').forEach(el => el.remove());
+  } catch {}
   state = null;
 }
 
