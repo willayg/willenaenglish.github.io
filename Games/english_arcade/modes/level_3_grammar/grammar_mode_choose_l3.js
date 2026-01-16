@@ -837,20 +837,24 @@ function quitToMenu(reason = 'quit') {
   if (typeof onComplete === 'function') {
     try { onComplete({ reason, state: current }); } catch (err) { console.error('onComplete failed', err); }
   }
+
+  // Preserve grammar config before returning to mode selector (regardless of quit wiring)
+  try {
+    if (current.grammarFile) {
+      window.__WA_LAST_GRAMMAR__ = {
+        grammarFile: current.grammarFile,
+        grammarName: current.grammarName,
+        grammarConfig: current.grammarConfig || {}
+      };
+    }
+  } catch {}
+
   if (typeof onQuit === 'function') {
     try { onQuit({ reason }); } catch (err) { console.error('onQuit failed', err); }
   } else {
     try {
-      // Preserve grammar config before returning to mode selector
-      if (current.grammarFile) {
-        window.__WA_LAST_GRAMMAR__ = {
-          grammarFile: current.grammarFile,
-          grammarName: current.grammarName,
-          grammarConfig: current.grammarConfig || {}
-        };
-      }
       if (window.WordArcade?.startGrammarModeSelector) {
-        window.WordArcade.startGrammarModeSelector();
+        window.WordArcade.startGrammarModeSelector(window.__WA_LAST_GRAMMAR__);
       } else if (window.WordArcade?.showGrammarLevelsMenu) {
         window.WordArcade.showGrammarLevelsMenu();
       } else if (window.WordArcade?.quitToOpening) {

@@ -1584,10 +1584,10 @@ window.WordArcade = {
   startFilePicker,
   startModeSelector,
   // Grammar helpers
-  startGrammarModeSelector: () => {
+  startGrammarModeSelector: (override) => {
     try {
       showOpeningButtons(false);
-      const cfg = window.__WA_LAST_GRAMMAR__ || {};
+      const cfg = (override && typeof override === 'object') ? override : (window.__WA_LAST_GRAMMAR__ || {});
       showGrammarModeSelector({
         grammarFile: cfg.grammarFile || 'data/grammar/level1/articles.json',
         grammarName: cfg.grammarName || 'A vs An',
