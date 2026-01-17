@@ -529,6 +529,11 @@ export async function runGrammarFindMistakeMode({ grammarFile, grammarName, gram
     `;
     quitBtn.onclick = () => {
       try {
+        // Remove button first
+        const btn = document.getElementById('grammarQuitBtn');
+        if (btn) btn.remove();
+      } catch {}
+      try {
         if (window.history && window.history.length > 1) {
           window.history.back();
         } else {

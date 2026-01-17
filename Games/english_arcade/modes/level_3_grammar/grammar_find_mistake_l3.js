@@ -391,6 +391,11 @@ export async function runGrammarFindMistakeL3Mode({ grammarFile, grammarName, gr
     `;
     quitBtn.onclick = () => {
       try {
+        // Remove button first
+        const btn = document.getElementById('grammarQuitBtn');
+        if (btn) btn.remove();
+      } catch {}
+      try {
         if (window.history && window.history.length > 1) {
           window.history.back();
         } else {

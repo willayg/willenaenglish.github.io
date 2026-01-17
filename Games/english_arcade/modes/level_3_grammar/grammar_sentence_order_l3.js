@@ -427,6 +427,11 @@ export async function startGrammarSentenceOrderL3({ containerId = 'gameArea', gr
       quitBtn.innerHTML = '<img src="./assets/Images/icons/quit-game.svg" alt="Quit" style="width:28px;height:28px;" />';
       quitBtn.onclick = () => {
         try {
+          // Remove button first
+          const btn = document.getElementById('grammarL3QuitBtn');
+          if (btn) btn.remove();
+        } catch {}
+        try {
           if (window.history && window.history.length > 1) {
             window.history.back();
           } else {
