@@ -162,28 +162,17 @@ function injectSentenceOrderStyles() {
   .sentence-order-mode #soSubmit.so-floating { position:absolute; top:calc(50% + 50px); left:50%; transform:translate(-50%,-50%) scale(.6); opacity:0; pointer-events:none; font-size:clamp(2.2rem,4vw,3.2rem); padding:30px 68px; border-radius:48px; letter-spacing:.9px; font-weight:800; background:#ff7a1a; color:#fff; border:3px solid #ff7a1a; box-shadow:0 22px 55px -12px rgba(0,0,0,0.4),0 0 0 5px rgba(255,122,26,0.18); backdrop-filter:blur(4px); transition:opacity .45s ease, transform .55s cubic-bezier(.16,.8,.24,1); }
   .sentence-order-mode #soSubmit.so-floating:hover { background:#ff8c3a; border-color:#ff8c3a; }
   .sentence-order-mode #soSubmit.so-floating-visible { opacity:1; transform:translate(-50%,-50%) scale(1); pointer-events:auto; }
-  .sentence-order-mode #soSubmit.so-button-explode { animation:soButtonExplode 1.8s cubic-bezier(.34,.1,.68,-.55) forwards; }
-  .sentence-order-mode #soSubmit.so-button-melt { animation:soButtonMelt 1.3s ease-in forwards; }
-  .sentence-order-mode .so-confetti { position:fixed; width:14px; height:14px; pointer-events:none; border-radius:50%; }
-  .sentence-order-mode .so-confetti.correct { animation:soConfetti 2.8s ease-out forwards; }
-  .sentence-order-mode .so-confetti.wrong { animation:soMelt 1.2s ease-in forwards; }
+  .sentence-order-mode #soSubmit.so-button-explode { animation:soButtonExplode 0.8s cubic-bezier(.68,.55,.265,1.55) forwards; }
+  .sentence-order-mode .so-melt-dot { position:fixed; width:16px; height:16px; background:#c62828; border-radius:50%; pointer-events:none; }
+  .sentence-order-mode .so-melt-dot { animation:soMeltDot 1.5s ease-in forwards; }
   @keyframes soButtonExplode {
-    0% { opacity:1; transform:translate(-50%,-50%) scale(1) rotate(0deg); }
-    100% { opacity:0; transform:translate(-50%,-50%) scale(0) rotate(360deg); filter:blur(12px); }
+    0% { opacity:1; transform:translate(-50%,-50%) scale(1); }
+    50% { transform:translate(-50%,-50%) scale(1.15); }
+    100% { opacity:0; transform:translate(-50%,-50%) scale(0); }
   }
-  @keyframes soButtonMelt {
-    0% { opacity:1; transform:translate(-50%,-50%) scaleY(1) scaleX(1); }
-    50% { opacity:0.8; transform:translate(-50%,-50%) scaleY(0.6) scaleX(1.1); }
-    100% { opacity:0; transform:translate(-50%,-120%) scaleY(0.1) scaleX(1.3); filter:blur(10px); }
-  }
-  @keyframes soConfetti {
-    0% { opacity:1; transform:translate(0,0) rotate(0deg) scale(1); }
-    100% { opacity:0; transform:translate(var(--tx),var(--ty)) rotate(720deg) scale(0.2); }
-  }
-  @keyframes soMelt {
-    0% { opacity:1; transform:translateY(0) scaleX(1) scaleY(1); }
-    50% { opacity:0.9; }
-    100% { opacity:0; transform:translateY(120px) scaleX(0.2) scaleY(0.5); filter:blur(8px); }
+  @keyframes soMeltDot {
+    0% { opacity:1; transform:translate(0,0) scale(1); }
+    100% { opacity:0; transform:translate(var(--tx),var(--ty)) scale(0.2); }
   }
   .cgm-mode-root { display:flex; flex-direction:column; min-height:100vh; }
   @keyframes smFade { 0% { opacity:0;} 100% { opacity:1;} }
@@ -427,6 +416,29 @@ export async function startGrammarSentenceOrderL3({ containerId = 'gameArea', gr
         btn.disabled = false;
       });
     }
+    
+    function createMeltDots(button) {
+      const rect = button.getBoundingClientRect();
+      const count = 12;
+      for (let i = 0; i < count; i++) {
+        const dot = document.createElement('div');
+        dot.className = 'so-melt-dot';
+        document.body.appendChild(dot);
+        
+        dot.style.left = (rect.left + rect.width / 2) + 'px';
+        dot.style.top = (rect.top + rect.height / 2) + 'px';
+        
+        const angle = (i / count) * Math.PI * 2;
+        const distance = 200 + Math.random() * 100;
+        const tx = Math.cos(angle) * distance;
+        const ty = Math.sin(angle) * distance + 150;
+        
+        dot.style.setProperty('--tx', tx + 'px');
+        dot.style.setProperty('--ty', ty + 'px');
+        
+        setTimeout(() => { try { dot.remove(); } catch (e) {} }, 1500);
+      }
+    }
 
     // Render chunk buttons with sm-chip styling
     shuffled.forEach((chunk, idx) => {
@@ -446,11 +458,24 @@ export async function startGrammarSentenceOrderL3({ containerId = 'gameArea', gr
     });
 
     clearBtn.addEventListener('click', () => {
+      // If button text is "Next", advance to next question
+      if (clearBtn.textContent.trim() === 'Next') {
+        state.index += 1;
+        renderRound();
+        return;
+      }
+      // Otherwise reset the current round
       selection.length = 0;
       updateTargetDisplay();
       updateSubmitVisibility();
       enableAllChunks();
       feedbackArea.textContent = '';
+      submitBtn.classList.remove('so-floating-visible');
+      submitBtn.classList.remove('so-button-explode');
+      submitBtn.style.opacity = '1';
+      submitBtn.style.pointerEvents = 'auto';
+      submitBtn.disabled = false;
+      clearBtn.textContent = 'Reset';
     });
 
     updateTargetDisplay();
@@ -496,29 +521,25 @@ export async function startGrammarSentenceOrderL3({ containerId = 'gameArea', gr
         feedbackArea.style.color = '#2e7d32';
         feedbackArea.textContent = '✓ Correct!';
         
-        // Button explodes
+        // Button explodes and advance
         submitBtn.classList.add('so-button-explode');
-        
         playSentenceAudio(item);
         setTimeout(() => {
           state.index += 1;
           renderRound();
-        }, 2800);
+        }, 1000);
       } else {
         feedbackArea.style.color = '#c62828';
-        feedbackArea.textContent = '✗ Try again';
+        feedbackArea.innerHTML = `✗ Correct order: <strong>${escapeHtml(target)}</strong>`;
         
-        // Button melts
-        submitBtn.classList.add('so-button-melt');
+        // Button melts into red dots
+        createMeltDots(submitBtn);
+        submitBtn.style.opacity = '0';
+        submitBtn.style.pointerEvents = 'none';
         
-        setTimeout(() => {
-          feedbackArea.textContent = '';
-          constructEl.classList.remove('sm-correct');
-          submitBtn.classList.remove('so-button-melt');
-          submitBtn.disabled = false;
-          clearBtn.disabled = false;
-          pool.querySelectorAll('.sm-chip').forEach(b => { b.disabled = false; });
-        }, 1500);
+        // Change clear button to "Next"
+        clearBtn.textContent = 'Next';
+        clearBtn.disabled = false;
       }
     });
     
