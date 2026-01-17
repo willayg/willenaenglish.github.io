@@ -42,9 +42,15 @@ export async function showGrammarModeSelector({ grammarFile, grammarName, gramma
 
   // Remove any active game view clutter before rendering selector
   container.innerHTML = '';
+  // CRITICAL: Reset container styles that game modes may have set (e.g., min-height:100dvh)
+  container.style.cssText = '';
   try { document.getElementById('wa-quit-btn')?.remove(); } catch {}
   try { document.getElementById('grammarQuitBtn')?.remove(); } catch {}
   try { document.getElementById('smQuitBtn')?.remove(); } catch {}
+  try { document.getElementById('grammarL3QuitBtn')?.remove(); } catch {}
+  try { document.getElementById('gfg-quit')?.remove(); } catch {}
+  try { document.getElementById('gch-quit')?.remove(); } catch {}
+  try { document.querySelectorAll('.wa-quit-btn').forEach(el => el.remove()); } catch {}
 
   try { window.__WA_IS_GRAMMAR__ = true; window.__WA_LAST_GRAMMAR__ = { grammarFile: currentGrammarFile, grammarName: currentGrammarName, grammarConfig: currentGrammarConfig }; } catch {}
   try {

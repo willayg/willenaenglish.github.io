@@ -408,6 +408,18 @@ export async function startGrammarSentenceOrderL3({ containerId = 'gameArea', gr
         });
       }
     });
+
+    // Add quit button (fixed position at bottom)
+    if (!document.getElementById('grammarL3QuitBtn')) {
+      const quitBtn = document.createElement('button');
+      quitBtn.id = 'grammarL3QuitBtn';
+      quitBtn.type = 'button';
+      quitBtn.className = 'wa-quit-btn';
+      quitBtn.style.cssText = 'position:fixed;bottom:16px;left:50%;transform:translateX(-50%);border:none;background:transparent;cursor:pointer;z-index:9999;padding:8px;';
+      quitBtn.innerHTML = '<img src="./assets/Images/icons/quit-game.svg" alt="Quit" style="width:28px;height:28px;"/>';
+      quitBtn.onclick = () => { quitBtn.remove(); window.history.back(); };
+      document.body.appendChild(quitBtn);
+    }
   }
 
   function finish() {

@@ -206,7 +206,7 @@ export async function runGrammarSentenceUnscramble(ctx) {
   const layoutOverrides = {
     hideTitle: true,
     centerContent: true,
-    showQuitButton: false,
+    showQuitButton: true,
     skipIntro: true,
   };
 

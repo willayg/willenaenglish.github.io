@@ -503,6 +503,18 @@ export async function startGrammarFillGapL3({
         <div id="gfg-feedback" style="min-height:1.2em;font-weight:700;font-size:1rem;color:#2e7d32;text-align:center;flex-shrink:0;"></div>
       </div>`;
 
+    // Add quit button (fixed position at bottom)
+    if (!document.getElementById('gfg-quit')) {
+      const quitBtn = document.createElement('button');
+      quitBtn.id = 'gfg-quit';
+      quitBtn.type = 'button';
+      quitBtn.className = 'wa-quit-btn';
+      quitBtn.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);border:none;background:transparent;cursor:pointer;z-index:9999;padding:8px;';
+      quitBtn.innerHTML = '<img src="./assets/Images/icons/quit-game.svg" alt="Quit" style="width:32px;height:32px;"/>';
+      quitBtn.onclick = () => { quitBtn.remove(); window.history.back(); };
+      document.body.appendChild(quitBtn);
+    }
+
     const choicesEl = containerEl.querySelector('#gfg-choices');
     choicesEl.querySelectorAll('button.gfg-choice-btn').forEach((btn) => {
       btn.addEventListener('click', () => {

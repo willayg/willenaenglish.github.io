@@ -167,9 +167,7 @@ export async function runGrammarTranslationChoiceL3Mode({ grammarFile, grammarNa
       <button id="translationExitBtn" type="button" aria-label="Exit" title="Exit" style="margin-left:auto;margin-right:0;padding:8px 14px;border-radius:12px;border:2px solid #21b5c0;background:#fff;color:#21b5c0;font-weight:800;cursor:pointer;">Exit</button>`;
     container.appendChild(header);
     const exitBtn = header.querySelector('#translationExitBtn');
-    if (exitBtn) exitBtn.addEventListener('click', () => {
-      try { if (window.WordArcade?.startGrammarModeSelector) window.WordArcade.startGrammarModeSelector(); else if (window.WordArcade?.quitToOpening) window.WordArcade.quitToOpening(true); else history.back(); } catch { location.reload(); }
-    });
+    if (exitBtn) exitBtn.addEventListener('click', () => { window.history.back(); });
 
     // Korean sentence (cyan Poppins) shown above instructions
     const koSentence = item.exampleSentenceKo || item.ko || '';

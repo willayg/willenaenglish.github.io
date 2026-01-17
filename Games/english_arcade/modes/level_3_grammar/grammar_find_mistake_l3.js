@@ -383,6 +383,19 @@ export async function runGrammarFindMistakeL3Mode({ grammarFile, grammarName, gr
     const r = rounds[idx];
     container.innerHTML = '';
     container.style.cssText = 'padding:20px;max-width:760px;margin:0 auto;font-family:Poppins,Arial,sans-serif;min-height:100dvh;display:flex;flex-direction:column;';
+    
+    // Add quit button (fixed position at bottom)
+    if (!document.getElementById('grammarQuitBtn')) {
+      const quitBtn = document.createElement('button');
+      quitBtn.id = 'grammarQuitBtn';
+      quitBtn.type = 'button';
+      quitBtn.className = 'wa-quit-btn';
+      quitBtn.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);border:none;background:transparent;cursor:pointer;z-index:9999;padding:8px;';
+      quitBtn.innerHTML = '<img src="./assets/Images/icons/quit-game.svg" alt="Quit" style="width:28px;height:28px;"/>';
+      quitBtn.onclick = () => { quitBtn.remove(); window.history.back(); };
+      document.body.appendChild(quitBtn);
+    }
+    
     const head = document.createElement('div');
     head.style.cssText = 'display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;color:#666';
     head.innerHTML = `<div><b>${grammarName || 'Grammar'}</b></div><div>Q ${idx + 1}/${rounds.length}</div>`;

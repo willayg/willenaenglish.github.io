@@ -460,6 +460,18 @@ export async function startGrammarChooseL3({
         <div style="margin-top:auto;font-size:0.85rem;color:#888;text-align:center;font-family:'Poppins',Arial,sans-serif;">Question ${questionNumber} / ${totalQuestions}</div>
       </div>`;
 
+    // Add quit button (fixed position at bottom)
+    if (!document.getElementById('gch-quit')) {
+      const quitBtn = document.createElement('button');
+      quitBtn.id = 'gch-quit';
+      quitBtn.type = 'button';
+      quitBtn.className = 'wa-quit-btn';
+      quitBtn.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);border:none;background:transparent;cursor:pointer;z-index:9999;padding:8px;';
+      quitBtn.innerHTML = '<img src="./assets/Images/icons/quit-game.svg" alt="Quit" style="width:28px;height:28px;"/>';
+      quitBtn.onclick = () => { quitBtn.remove(); window.history.back(); };
+      document.body.appendChild(quitBtn);
+    }
+
     const choicesEl = containerEl.querySelector('#gch-choices');
     choicesEl.querySelectorAll('button.grammar-choice-btn').forEach((btn) => {
       btn.addEventListener('click', () => {
