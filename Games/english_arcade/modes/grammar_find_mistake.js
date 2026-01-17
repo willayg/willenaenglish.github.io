@@ -528,8 +528,13 @@ export async function runGrammarFindMistakeMode({ grammarFile, grammarName, gram
       <img src="./assets/Images/icons/quit-game.svg" alt="" aria-hidden="true" class="wa-quit-icon" />
     `;
     quitBtn.onclick = () => {
-      // Exit immediately without confirmation per request
-      try { history.back(); } catch { location.reload(); }
+      try {
+        if (window.history && window.history.length > 1) {
+          window.history.back();
+        } else {
+          location.reload();
+        }
+      } catch { location.reload(); }
     };
     document.body.appendChild(quitBtn);
   }

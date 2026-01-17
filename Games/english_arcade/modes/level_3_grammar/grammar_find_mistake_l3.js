@@ -390,26 +390,9 @@ export async function runGrammarFindMistakeL3Mode({ grammarFile, grammarName, gr
       <img src="./assets/Images/icons/quit-game.svg" alt="" aria-hidden="true" class="wa-quit-icon" />
     `;
     quitBtn.onclick = () => {
-      // End partial session and navigate like Level 2
       try {
-        // Use grammarFile path for session tracking to match homework assignment list_key
-        endSession(sessionId, {
-          mode: MODE,
-          summary: { score: correct, total: rounds.length, correct, wrong, points: correct, category: 'grammar', grammarFile, grammarName, level: 3 },
-          listName: grammarFile || grammarName,
-          wordList: rounds.map((r, i) => r.src?.word || `s${i}`),
-          meta: { grammarFile, grammarName, level: 3, quit: true }
-        });
-      } catch {}
-      try {
-        if (window.WordArcade?.startGrammarModeSelector) {
-          window.WordArcade.startGrammarModeSelector();
-        } else if (window.WordArcade?.showGrammarLevelsMenu) {
-          window.WordArcade.showGrammarLevelsMenu();
-        } else if (window.WordArcade?.quitToOpening) {
-          window.WordArcade.quitToOpening(true);
-        } else if (history.length > 1) {
-          history.back();
+        if (window.history && window.history.length > 1) {
+          window.history.back();
         } else {
           location.reload();
         }

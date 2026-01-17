@@ -409,8 +409,7 @@ export async function startGrammarSentenceOrderL3({ containerId = 'gameArea', gr
       }
     });
 
-    // Add a quit/exit button like other modes - bottom center position
-    // Only add if not already present (prevent duplicates on re-render)
+    // Add a quit/exit button - simple browser back only
     if (!document.getElementById('grammarL3QuitBtn')) {
       const quitBtn = document.createElement('button');
       quitBtn.type = 'button';
@@ -426,59 +425,16 @@ export async function startGrammarSentenceOrderL3({ containerId = 'gameArea', gr
       quitBtn.style.zIndex = '1100';
       quitBtn.title = 'Quit';
       quitBtn.innerHTML = '<img src="./assets/Images/icons/quit-game.svg" alt="Quit" style="width:28px;height:28px;" />';
-      quitBtn.onclick = () => quitToMenu('quit');
-      try { document.body.appendChild(quitBtn); } catch {}
-      
-      // Cleanup on page hide (back button navigation)
-      document.addEventListener('visibilitychange', function onVisChange() {
-        if (document.visibilityState === 'hidden') {
-          const btn = document.getElementById('grammarL3QuitBtn');
-          if (btn) btn.remove();
-          document.removeEventListener('visibilitychange', onVisChange);
-        }
-      });
-    }
-
-    function quitToMenu(reason = 'quit') {
-      const current = state;
-      if (!current) return;
-      // Remove quit button
-      try { const qb = document.getElementById('grammarL3QuitBtn'); if (qb) qb.remove(); } catch {}
-      // Partial endSession for quit
-      if (current.sessionId) {
+      quitBtn.onclick = () => {
         try {
-          // Use grammarFile path for session tracking to match homework assignment list_key
-          endSession(current.sessionId, {
-            mode: MODE,
-            summary: { score: current.score, total: current.list.length, correct: current.score, points: current.score, category: 'grammar', grammarFile: current.grammarFile, grammarName: current.grammarName, level: 3 },
-            listName: current.grammarFile || current.grammarName || null,
-            wordList: current.list.map(it => it.past || it.base || it.word || it.en).filter(Boolean),
-            meta: { grammarFile: current.grammarFile, grammarName: current.grammarName, level: 3, quit_reason: reason }
-          });
-        } catch (e) {}
-      }
-      // cleanup
-      try {
-        const btn = document.getElementById('grammarL3QuitBtn');
-        if (btn) btn.remove();
-      } catch {}
-      // Navigate back to grammar selector / previous screen (match other L3 modes)
-      try {
-        if (window.WordArcade?.startGrammarModeSelector) {
-          window.WordArcade.startGrammarModeSelector();
-        } else if (window.WordArcade?.showGrammarLevelsMenu) {
-          window.WordArcade.showGrammarLevelsMenu();
-        } else if (window.WordArcade?.quitToOpening) {
-          window.WordArcade.quitToOpening(true);
-        } else if (history.length > 1) {
-          history.back();
-        } else {
-          location.reload();
-        }
-      } catch (e) {
-        try { location.reload(); } catch {}
-      }
-      if (typeof current.onComplete === 'function') current.onComplete({ reason });
+          if (window.history && window.history.length > 1) {
+            window.history.back();
+          } else {
+            location.reload();
+          }
+        } catch { location.reload(); }
+      };
+      try { document.body.appendChild(quitBtn); } catch {}
     }
   }
 
