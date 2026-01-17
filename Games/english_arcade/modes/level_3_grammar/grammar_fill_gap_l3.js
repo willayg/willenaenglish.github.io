@@ -368,11 +368,12 @@ export async function startGrammarFillGapL3({
         const pastVerb = match[1];
         const base = extractVerbBase(pastVerb);
         const blanked = sentence.replace(new RegExp(`\\b${pastVerb}\\b`, 'i'), '_____');
-        const distractors = generatePastVerbDistractors(base, pastVerb);
+        const allDistractors = generatePastVerbDistractors(base, pastVerb);
+        const distractors = shuffle(allDistractors).slice(0, 3);
         return {
           blanked,
           answer: pastVerb,
-          choices: shuffle([pastVerb, ...distractors]).slice(0, 4)
+          choices: shuffle([pastVerb, ...distractors])
         };
       }
     }
@@ -383,11 +384,12 @@ export async function startGrammarFillGapL3({
       if (match) {
         const fullPhrase = match[0];
         const blanked = sentence.replace(fullPhrase, '_____');
-        const distractors = generateGoingToDistractors(fullPhrase);
+        const allDistractors = generateGoingToDistractors(fullPhrase);
+        const distractors = shuffle(allDistractors).slice(0, 3);
         return {
           blanked,
           answer: fullPhrase,
-          choices: shuffle([fullPhrase, ...distractors]).slice(0, 4)
+          choices: shuffle([fullPhrase, ...distractors])
         };
       }
     }
@@ -402,17 +404,18 @@ export async function startGrammarFillGapL3({
         const verb = willPhrase.replace(/^will\s+/i, '');
         const irregularPasts = { 'go': 'went', 'eat': 'ate', 'come': 'came', 'see': 'saw', 'do': 'did', 'have': 'had', 'make': 'made', 'take': 'took', 'get': 'got', 'buy': 'bought' };
         const pastForm = irregularPasts[verb.toLowerCase()] || verb + 'ed';
-        const distractors = [
+        const allDistractors = [
           `will ${pastForm}`,      // will went, will ate (wrong: double tense)
           `would ${verb}`,          // would go (wrong tense/mood)
           `will ${verb}s`,          // will goes (wrong: conjugated after will)
           verb + 'ing',             // going (wrong: missing will)
           verb + 's'                // goes (wrong: present tense)
         ].filter(d => d.toLowerCase() !== willPhrase.toLowerCase());
+        const distractors = shuffle(allDistractors).slice(0, 3);
         return {
           blanked,
           answer: willPhrase,
-          choices: shuffle([willPhrase, ...distractors]).slice(0, 4)
+          choices: shuffle([willPhrase, ...distractors])
         };
       }
     }
@@ -434,15 +437,15 @@ export async function startGrammarFillGapL3({
           const blanked = sentence.replace(new RegExp(`\\b${verb}\\b`, 'i'), '_____');
           const irregularPasts = { 'go': 'went', 'eat': 'ate', 'come': 'came', 'see': 'saw', 'play': 'played', 'do': 'did' };
           const pastForm = irregularPasts[verb.toLowerCase()] || verb + 'ed';
-          const distractors = [
+          const distractors = shuffle([
             verb + 's',      // goes (wrong after will)
             verb + 'ing',    // going (wrong after will)
             pastForm         // went (wrong after will)
-          ];
+          ]).slice(0, 3);
           return {
             blanked,
             answer: verb,
-            choices: shuffle([verb, ...distractors]).slice(0, 4)
+            choices: shuffle([verb, ...distractors])
           };
         } else if (blankType === 1 && /\b(tomorrow|next week|later|soon)\b/i.test(rest)) {
           // Blank a time expression
@@ -450,22 +453,22 @@ export async function startGrammarFillGapL3({
           if (timeMatch) {
             const timeWord = timeMatch[1];
             const blanked = sentence.replace(new RegExp(`\\b${timeWord}\\b`, 'i'), '_____');
-            const distractors = ['yesterday', 'last week', 'now', 'ago'];
+            const distractors = shuffle(['yesterday', 'last week', 'now', 'ago']).slice(0, 3);
             return {
               blanked,
               answer: timeWord,
-              choices: shuffle([timeWord, ...distractors]).slice(0, 4)
+              choices: shuffle([timeWord, ...distractors])
             };
           }
         }
         
-        // Default: blank the auxiliary
+        // Default: blank the auxiliary - ALWAYS include "Will" as correct answer
         const blanked = sentence.replace(/^Will\s+/i, '_____ ');
-        const distractors = ['Do', 'Does', 'Did', 'Is', 'Are'];
+        const distractors = shuffle(['Do', 'Does', 'Did', 'Is', 'Are']).slice(0, 3);
         return {
           blanked,
           answer: aux,
-          choices: shuffle([aux, ...distractors]).slice(0, 4)
+          choices: shuffle([aux, ...distractors])
         };
       }
     }
@@ -478,13 +481,14 @@ export async function startGrammarFillGapL3({
         const haveToPhrase = match[1];
         const blanked = sentence.replace(new RegExp(`\\b${haveToPhrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i'), '_____');
         // NO "need to" - too similar in meaning
-        const distractors = ['want to', 'like to', 'must to', 'should to', 'going to'];
+        const allDistractors = ['want to', 'like to', 'must to', 'should to', 'going to'];
         // Always include both have to and has to
         const otherVariant = haveToPhrase.toLowerCase() === 'have to' ? 'has to' : 'have to';
+        const distractors = shuffle(allDistractors).slice(0, 2);
         return {
           blanked,
           answer: haveToPhrase,
-          choices: shuffle([haveToPhrase, otherVariant, ...distractors]).slice(0, 4)
+          choices: shuffle([haveToPhrase, otherVariant, ...distractors])
         };
       }
     }
@@ -497,12 +501,13 @@ export async function startGrammarFillGapL3({
         const wantToPhrase = match[1];
         const blanked = sentence.replace(new RegExp(`\\b${wantToPhrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i'), '_____');
         // NO "need to" - too similar in meaning
-        const distractors = ['have to', 'has to', 'like to', 'must to', 'going to'];
+        const allDistractors = ['have to', 'has to', 'like to', 'must to', 'going to'];
         const otherVariant = wantToPhrase.toLowerCase() === 'want to' ? 'wants to' : 'want to';
+        const distractors = shuffle(allDistractors).slice(0, 2);
         return {
           blanked,
           answer: wantToPhrase,
-          choices: shuffle([wantToPhrase, otherVariant, ...distractors]).slice(0, 4)
+          choices: shuffle([wantToPhrase, otherVariant, ...distractors])
         };
       }
     }
@@ -513,12 +518,13 @@ export async function startGrammarFillGapL3({
       if (match) {
         const likeToPhrase = match[1];
         const blanked = sentence.replace(new RegExp(`\\b${likeToPhrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i'), '_____');
-        const distractors = ['have to', 'want to', 'need to', 'can'];
+        const allDistractors = ['have to', 'want to', 'must to', 'going to'];
         const otherVariant = likeToPhrase.toLowerCase() === 'like to' ? 'likes to' : 'like to';
+        const distractors = shuffle(allDistractors).slice(0, 2);
         return {
           blanked,
           answer: likeToPhrase,
-          choices: shuffle([likeToPhrase, otherVariant, ...distractors]).slice(0, 4)
+          choices: shuffle([likeToPhrase, otherVariant, ...distractors])
         };
       }
     }
@@ -536,12 +542,13 @@ export async function startGrammarFillGapL3({
         
         // Blank the base verb after "Did"
         const blanked = sentence.replace(new RegExp(`\\b${baseVerb}\\b`, 'i'), '_____');
-        const distractors = generatePastQuestionDistractors(sentence);
+        const allDistractors = generatePastQuestionDistractors(sentence);
+        const distractors = shuffle(allDistractors).slice(0, 3);
         
         return {
           blanked,
           answer: baseVerb,
-          choices: shuffle([baseVerb, ...distractors]).slice(0, 4)
+          choices: shuffle([baseVerb, ...distractors])
         };
       }
     }
@@ -558,10 +565,14 @@ export async function startGrammarFillGapL3({
       if (baseToken && !choices.includes(baseToken)) {
         choices.push(baseToken);
       }
+      // Ensure answer is always included - slice distractors first
+      if (choices.length > 4) {
+        choices = [pastToken, ...shuffle(choices.slice(1)).slice(0, 3)];
+      }
       return {
         blanked,
         answer: pastToken,
-        choices: shuffle(choices).slice(0, 4)
+        choices: shuffle(choices)
       };
     }
     
@@ -574,7 +585,7 @@ export async function startGrammarFillGapL3({
       return {
         blanked: words.join(' '),
         answer,
-        choices: shuffle([answer, 'is', 'was', 'will']).slice(0, 4)
+        choices: shuffle([answer, 'is', 'was', 'will'])
       };
     }
     

@@ -476,15 +476,17 @@ export async function startGrammarSentenceOrderL3({ containerId = 'gameArea', gr
       // Otherwise reset the current round
       selection.length = 0;
       updateTargetDisplay();
-      updateSubmitVisibility();
       enableAllChunks();
       feedbackArea.textContent = '';
+      // Reset submit button state - clear inline styles that may override CSS
       submitBtn.classList.remove('so-floating-visible');
       submitBtn.classList.remove('so-button-explode');
-      submitBtn.style.opacity = '1';
-      submitBtn.style.pointerEvents = 'auto';
+      submitBtn.style.opacity = '';
+      submitBtn.style.pointerEvents = '';
       submitBtn.disabled = false;
       clearBtn.textContent = 'Reset';
+      // Update visibility AFTER clearing inline styles
+      updateSubmitVisibility();
     });
 
     updateTargetDisplay();
