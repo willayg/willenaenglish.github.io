@@ -853,15 +853,15 @@ function quitToMenu(reason = 'quit') {
     try { onQuit({ reason }); } catch (err) { console.error('onQuit failed', err); }
   } else {
     try {
-      // Return directly to grammar mode selector (preserves current grammar via __WA_LAST_GRAMMAR__)
-      if (window.WordArcade?.startGrammarModeSelector) {
-        window.WordArcade.startGrammarModeSelector(window.__WA_LAST_GRAMMAR__);
+      // Behave exactly like browser Back. HistoryManager restores the correct screen.
+      if (window.history && window.history.length > 1) {
+        window.history.back();
       } else if (window.WordArcade?.showGrammarLevelsMenu) {
         window.WordArcade.showGrammarLevelsMenu();
       } else if (window.WordArcade?.quitToOpening) {
         window.WordArcade.quitToOpening(true);
-      } else if (window.history?.length > 1) {
-        window.history.back();
+      } else if (window.WordArcade?.startGrammarModeSelector) {
+        window.WordArcade.startGrammarModeSelector(window.__WA_LAST_GRAMMAR__);
       } else {
         location.reload();
       }
