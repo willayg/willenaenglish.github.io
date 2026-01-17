@@ -1585,17 +1585,20 @@ window.WordArcade = {
   startModeSelector,
   // Grammar helpers
   startGrammarModeSelector: (override) => {
-    // If a mode calls this while we're in-game, prefer browser Back so HistoryManager restores cleanly.
+    // If called without args from a mode button while in-game, prefer browser Back so HistoryManager restores cleanly.
+    // But if called WITH a config (from quit handler), always show the mode selector - don't back up further.
     // This prevents "mashed" UI states caused by bypassing history restoration.
-    try {
-      const hasUsefulHistory = (window.history && window.history.length > 1);
-      const inGameHash = typeof window.location?.hash === 'string' && /#state-in_game/i.test(window.location.hash);
-      const inGameState = window.history?.state && window.history.state.stateId === 'in_game';
-      if (hasUsefulHistory && (inGameHash || inGameState)) {
-        window.history.back();
-        return;
-      }
-    } catch {}
+    if (!override) {
+      try {
+        const hasUsefulHistory = (window.history && window.history.length > 1);
+        const inGameHash = typeof window.location?.hash === 'string' && /#state-in_game/i.test(window.location.hash);
+        const inGameState = window.history?.state && window.history.state.stateId === 'in_game';
+        if (hasUsefulHistory && (inGameHash || inGameState)) {
+          window.history.back();
+          return;
+        }
+      } catch {}
+    }
     try {
       showOpeningButtons(false);
       const cfg = (override && typeof override === 'object') ? override : (window.__WA_LAST_GRAMMAR__ || {});
