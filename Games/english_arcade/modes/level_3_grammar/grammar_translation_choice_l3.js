@@ -155,7 +155,14 @@ export async function runGrammarTranslationChoiceL3Mode({ grammarFile, grammarNa
     const item = items[idx];
     const correctSentence = deriveCorrectSentence(item);
     const { wrongGrammar, wrongSubject } = buildWrongSentences(item, correctSentence, grammarType, validItems);
-    const options = shuffle([correctSentence, wrongGrammar, wrongSubject]);
+    
+    // Capitalize first letter of all options
+    const capitalizeFirst = (str) => {
+      if (!str || typeof str !== 'string') return str;
+      return str.charAt(0).toUpperCase() + str.slice(1);
+    };
+    
+    const options = shuffle([correctSentence, wrongGrammar, wrongSubject].map(capitalizeFirst));
 
     container.innerHTML = '';
     container.classList.add('translation-mode-root');
@@ -375,17 +382,50 @@ function buildWrongSentences(item, correct, grammarType, allItems = []) {
       wrongSubject = 'They ' + correct.charAt(0).toLowerCase() + correct.slice(1);
     }
   } else if (grammarType === 'tense_questions') {
-    // For questions: common errors
-    // Remove auxiliary, wrong auxiliary, wrong word order
-    const auxMatch = correct.match(/^(Did|Does|Do|Will|Is|Are|Am|Was|Were)\s+/i);
-    if (auxMatch) {
-      const aux = auxMatch[1];
-      const wrongAux = { did: 'does', does: 'did', do: 'does', will: 'did', is: 'are', are: 'is', am: 'is', was: 'were', were: 'was' };
-      wrongGrammar = correct.replace(new RegExp(`^${aux}\\s+`, 'i'), `${wrongAux[aux.toLowerCase()] || 'Does'} `);
-      wrongSubject = correct.replace(new RegExp(`^${aux}\\s+`, 'i'), '');
+    // For questions: multiple error types for better practice
+    const questionMatch = correct.match(/^(Did|Does|Do|Will|Is|Are|Am|Was|Were)\s+(.+?)\s+(\w+)(.*)$/i);
+    if (questionMatch) {
+      const aux = questionMatch[1]; // e.g., "Did"
+      const subject = questionMatch[2]; // e.g., "you"
+      const verb = questionMatch[3]; // e.g., "play"
+      const rest = questionMatch[4]; // remaining part
+      
+      // For "Did" questions specifically:
+      if (aux.toLowerCase() === 'did') {
+        // Wrong grammar 1: Use past tense form of verb (double past marker)
+        // "Did you play" -> "Did you played"
+        const irregulars = {
+          'go': 'went', 'eat': 'ate', 'see': 'saw', 'have': 'had',
+          'do': 'did', 'take': 'took', 'get': 'got', 'make': 'made',
+          'come': 'came', 'win': 'won', 'find': 'found', 'buy': 'bought'
+        };
+        let pastForm = verb + 'ed';
+        if (irregulars[verb.toLowerCase()]) {
+          pastForm = irregulars[verb.toLowerCase()];
+        }
+        wrongGrammar = correct.replace(new RegExp(`\\b${verb}\\b`, 'i'), pastForm);
+        
+        // Wrong subject: Wrong word order
+        // "Did you play" -> "Did play you"
+        wrongSubject = `${aux} ${verb} ${subject}${rest}`;
+      } else {
+        // For other auxiliaries, use generic wrong auxiliary swap
+        const wrongAux = { does: 'do', do: 'does', will: 'did', is: 'are', are: 'is', am: 'is', was: 'were', were: 'was' };
+        wrongGrammar = correct.replace(new RegExp(`^${aux}\\s+`, 'i'), `${wrongAux[aux.toLowerCase()] || 'Does'} `);
+        wrongSubject = correct.replace(new RegExp(`^${aux}\\s+`, 'i'), ''); // Remove auxiliary
+      }
     } else {
-      wrongGrammar = 'Does ' + correct;
-      wrongSubject = 'Did ' + correct;
+      // Fallback for simpler patterns
+      const auxMatch = correct.match(/^(Did|Does|Do|Will|Is|Are|Am|Was|Were)\s+/i);
+      if (auxMatch) {
+        const aux = auxMatch[1];
+        const wrongAux = { did: 'do', does: 'did', do: 'does', will: 'did', is: 'are', are: 'is', am: 'is', was: 'were', were: 'was' };
+        wrongGrammar = correct.replace(new RegExp(`^${aux}\\s+`, 'i'), `${wrongAux[aux.toLowerCase()] || 'Does'} `);
+        wrongSubject = correct.replace(new RegExp(`^${aux}\\s+`, 'i'), ''); // Remove auxiliary
+      } else {
+        wrongGrammar = 'Does ' + correct;
+        wrongSubject = 'Did ' + correct;
+      }
     }
   } else if (grammarType === 'will_future') {
     // Will Future: common mistakes

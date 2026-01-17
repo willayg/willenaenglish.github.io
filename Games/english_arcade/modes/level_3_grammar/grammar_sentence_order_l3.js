@@ -6,6 +6,7 @@
 import { startSession, logAttempt, endSession } from '../../../../students/records.js';
 import { renderGrammarSummary } from '../grammar_summary.js';
 import { FN } from '../../scripts/api-base.js';
+import { openNowLoadingSplash } from '../unscramble_splash.js';
 
 let state = null;
 let activeSentenceAudio = null;
@@ -156,6 +157,20 @@ export async function startGrammarSentenceOrderL3({ containerId = 'gameArea', gr
   const container = document.getElementById(containerId);
   if (!container) return;
 
+  // Show loading splash with Korean text "Unscramble the sentences"
+  let splashController = null;
+  try {
+    splashController = openNowLoadingSplash(document.body, {
+      text: '문장을 순서대로 배열하세요',  // "Unscramble the sentences" in Korean
+      subtitle: grammarName || 'Sentence Order'
+    });
+    if (splashController && splashController.readyPromise) {
+      await splashController.readyPromise;
+    }
+  } catch (e) {
+    console.debug('[SentenceOrderL3] splash display failed', e?.message);
+  }
+
   state = {
     grammarFile: grammarFile || DEFAULT_FILE,
     grammarName: grammarName || null,
@@ -211,6 +226,15 @@ export async function startGrammarSentenceOrderL3({ containerId = 'gameArea', gr
     await hydrateGrammarAudio(state.list);
   } catch (err) {
     console.debug('[sentence_order_l3] Audio hydrate failed', err?.message);
+  }
+  
+  // Hide loading splash before rendering the first round
+  if (splashController && typeof splashController.hide === 'function') {
+    try {
+      splashController.hide();
+    } catch (e) {
+      console.debug('[SentenceOrderL3] splash hide failed', e?.message);
+    }
   }
   
   renderRound();

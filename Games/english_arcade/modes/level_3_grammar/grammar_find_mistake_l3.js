@@ -236,14 +236,72 @@ export async function runGrammarFindMistakeL3Mode({ grammarFile, grammarName, gr
       }
     }
 
-    // For tense_questions: corrupt question structure
+    // For tense_questions: corrupt question structure with multiple error types
     if (grammarType === 'tense_questions') {
-      // Try to corrupt question word order
-      const questionMatch = en.match(/^(Did|Does|Do|Will|Is|Are|Am|Was|Were)\s+/i);
+      // Try to corrupt question structure with various common errors
+      const questionMatch = en.match(/^(Did|Does|Do|Will|Is|Are|Am|Was|Were)\s+(.+?)\s+(\w+)(.*)$/i);
       if (questionMatch) {
-        // Remove the auxiliary to make it wrong
-        const bad = en.replace(questionMatch[0], '');
-        return { bad, wrongToken: '(missing auxiliary)', correctToken: questionMatch[1] };
+        const aux = questionMatch[1]; // e.g., "Did"
+        const subject = questionMatch[2]; // e.g., "you"
+        const verb = questionMatch[3]; // e.g., "play"
+        const rest = questionMatch[4]; // remaining part
+        
+        // Choose a random error type
+        const errorTypes = [];
+        
+        // Error 1: Remove auxiliary (original behavior)
+        errorTypes.push({
+          bad: en.replace(questionMatch[0], `${subject} ${verb}${rest}`),
+          wrongToken: '(missing auxiliary)',
+          correctToken: aux
+        });
+        
+        // Error 2: For "Did" questions, use past tense form of verb (double past marker)
+        if (aux.toLowerCase() === 'did') {
+          const irregulars = {
+            'go': 'went', 'eat': 'ate', 'see': 'saw', 'have': 'had',
+            'do': 'did', 'take': 'took', 'get': 'got', 'make': 'made',
+            'come': 'came', 'win': 'won', 'find': 'found', 'buy': 'bought'
+          };
+          let pastForm = verb + 'ed';
+          if (irregulars[verb.toLowerCase()]) {
+            pastForm = irregulars[verb.toLowerCase()];
+          }
+          if (pastForm !== verb) {
+            errorTypes.push({
+              bad: en.replace(new RegExp(`\\b${verb}\\b`, 'i'), pastForm),
+              wrongToken: pastForm,
+              correctToken: verb
+            });
+          }
+        }
+        
+        // Error 3: Wrong word order (move verb before subject)
+        errorTypes.push({
+          bad: `${aux} ${verb} ${subject}${rest}`,
+          wrongToken: `${verb} ${subject}`,
+          correctToken: `${subject} ${verb}`
+        });
+        
+        // Error 4: Wrong auxiliary (swap Did with Do/Does, etc.)
+        if (aux.toLowerCase() === 'did') {
+          const wrongAux = /\b(he|she|it)\b/i.test(subject) ? 'Does' : 'Do';
+          errorTypes.push({
+            bad: en.replace(/^Did\s+/i, `${wrongAux} `),
+            wrongToken: wrongAux,
+            correctToken: 'Did'
+          });
+        }
+        
+        // Return a random error type
+        return errorTypes[Math.floor(Math.random() * errorTypes.length)];
+      }
+      
+      // Fallback: just remove the auxiliary
+      const simpleMatch = en.match(/^(Did|Does|Do|Will|Is|Are|Am|Was|Were)\s+/i);
+      if (simpleMatch) {
+        const bad = en.replace(simpleMatch[0], '');
+        return { bad, wrongToken: '(missing auxiliary)', correctToken: simpleMatch[1] };
       }
     }
 

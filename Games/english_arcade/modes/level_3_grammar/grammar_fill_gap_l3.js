@@ -248,6 +248,49 @@ export async function startGrammarFillGapL3({
     }
     return Array.from(distractors).filter(d => d !== correct).slice(0, 3);
   }
+  
+  // Generate distractors for past tense questions (Did you _____?)
+  function generatePastQuestionDistractors(sentence) {
+    const distractors = [];
+    
+    // Extract the verb from the question (Did you VERB?)
+    const match = sentence.match(/^Did\s+(?:you|he|she|it|we|they)\s+(\w+)/i);
+    if (match) {
+      const baseVerb = match[1]; // e.g., "play", "eat", "go"
+      
+      // Distractor 1: Past tense form (wrong because "did" already indicates past)
+      const pastForms = ['went', 'ate', 'saw', 'had', 'did', 'was', 'were', 'played', 'talked', 'walked'];
+      let pastForm = baseVerb + 'ed';
+      // Check for common irregulars
+      const irregulars = {
+        'go': 'went', 'eat': 'ate', 'see': 'saw', 'have': 'had', 'do': 'did',
+        'be': 'was', 'take': 'took', 'get': 'got', 'make': 'made', 'come': 'came',
+        'win': 'won', 'find': 'found', 'buy': 'bought', 'think': 'thought'
+      };
+      if (irregulars[baseVerb.toLowerCase()]) {
+        pastForm = irregulars[baseVerb.toLowerCase()];
+      }
+      distractors.push(pastForm);
+      
+      // Distractor 2: Third-person present form (e.g., "plays" instead of "play")
+      let thirdPerson = baseVerb + 's';
+      if (baseVerb.endsWith('y') && baseVerb.length > 1 && !/[aeiou]y$/i.test(baseVerb)) {
+        thirdPerson = baseVerb.slice(0, -1) + 'ies';
+      } else if (baseVerb.endsWith('s') || baseVerb.endsWith('x') || baseVerb.endsWith('ch') || baseVerb.endsWith('sh')) {
+        thirdPerson = baseVerb + 'es';
+      }
+      distractors.push(thirdPerson);
+      
+      // Distractor 3: Present progressive form (e.g., "playing" instead of "play")
+      let progressive = baseVerb + 'ing';
+      if (baseVerb.endsWith('e') && baseVerb.length > 2) {
+        progressive = baseVerb.slice(0, -1) + 'ing';
+      }
+      distractors.push(progressive);
+    }
+    
+    return distractors.filter(Boolean).slice(0, 3);
+  }
 
   // Generate distractors for "be going to" phrase
   function generateGoingToDistractors(correctPhrase) {
@@ -438,6 +481,25 @@ export async function startGrammarFillGapL3({
     // Fallback for irregular past or other types
     const pastToken = (item.past || '').trim();
     const baseToken = (item.base || '').trim();
+    
+    // Special handling for past tense questions (Did you _____?)
+    if (grammarType === 'tense_questions' || /^Did\s+/i.test(sentence)) {
+      const didMatch = sentence.match(/^(Did)\s+(?:you|he|she|it|we|they)\s+(\w+)/i);
+      if (didMatch) {
+        const didWord = didMatch[1]; // "Did"
+        const baseVerb = didMatch[2]; // e.g., "play", "eat"
+        
+        // Blank the base verb after "Did"
+        const blanked = sentence.replace(new RegExp(`\\b${baseVerb}\\b`, 'i'), '_____');
+        const distractors = generatePastQuestionDistractors(sentence);
+        
+        return {
+          blanked,
+          answer: baseVerb,
+          choices: shuffle([baseVerb, ...distractors]).slice(0, 4)
+        };
+      }
+    }
     
     if (pastToken && sentence.toLowerCase().includes(pastToken.toLowerCase())) {
       const re = new RegExp(pastToken.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
