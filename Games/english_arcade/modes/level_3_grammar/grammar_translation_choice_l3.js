@@ -428,25 +428,36 @@ function buildWrongSentences(item, correct, grammarType, allItems = []) {
       }
     }
   } else if (grammarType === 'will_future') {
-    // Will Future: common mistakes
+    // Will Future: common mistakes - NO "going to" (synonymous/technically correct)
     const willMatch = correct.match(/\bwill\s+(\w+)/i);
     if (willMatch) {
       const verb = willMatch[1];
-      wrongGrammar = correct.replace(/\bwill\s+(\w+)/i, `will ${verb}ing`); // "will going" error
-      wrongSubject = correct.replace(/\bwill\s+(\w+)/i, `is going to ${verb}`); // Alternative structure
+      const irregularPasts = { 'go': 'went', 'eat': 'ate', 'come': 'came', 'see': 'saw', 'do': 'did', 'play': 'played', 'start': 'started' };
+      const pastForm = irregularPasts[verb.toLowerCase()] || verb + 'ed';
+      // Wrong: "will goes" (conjugated after will)
+      wrongGrammar = correct.replace(/\bwill\s+(\w+)/i, `will ${verb}s`);
+      // Wrong: "will ate" / "will went" (past tense after will)
+      wrongSubject = correct.replace(/\bwill\s+(\w+)/i, `will ${pastForm}`);
     } else {
-      wrongGrammar = correct.replace(/\bwill\b/i, 'would');
-      wrongSubject = 'They ' + correct.charAt(0).toLowerCase() + correct.slice(1);
+      wrongGrammar = correct.replace(/\bwill\b/i, 'wills');
+      wrongSubject = correct + ' yesterday';
     }
   } else if (grammarType === 'will_questions') {
-    // Will Questions: common errors
-    const willQMatch = correct.match(/^(Will)\s+/i);
+    // Will Questions: mix it up with verb form and word order mistakes
+    const willQMatch = correct.match(/^(Will)\s+(\w+)\s+(\w+)(.*)$/i);
     if (willQMatch) {
-      wrongGrammar = correct.replace(/^Will\s+/i, 'Does '); // Wrong auxiliary
-      wrongSubject = correct.replace(/^Will\s+/i, 'Is '); // Wrong auxiliary
+      const subject = willQMatch[2];
+      const verb = willQMatch[3];
+      const rest = willQMatch[4];
+      const irregularPasts = { 'go': 'went', 'eat': 'ate', 'come': 'came', 'see': 'saw', 'play': 'played', 'be': 'was' };
+      const pastForm = irregularPasts[verb.toLowerCase()] || verb + 'ed';
+      // Wrong verb form: "Will she goes?"
+      wrongGrammar = `Will ${subject} ${verb}s${rest}`;
+      // Wrong word order: "Will goes she?"
+      wrongSubject = `Will ${verb} ${subject}${rest}`;
     } else {
-      wrongGrammar = 'Does ' + correct;
-      wrongSubject = 'Did ' + correct;
+      wrongGrammar = correct.replace(/^Will\s+/i, 'Does '); // Wrong auxiliary
+      wrongSubject = correct.replace(/^Will\s+/i, 'Did '); // Wrong auxiliary
     }
   } else if (grammarType === 'have_to') {
     // Have To: common mistakes

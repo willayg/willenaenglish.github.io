@@ -352,6 +352,7 @@ export async function startGrammarSentenceOrderL3({ containerId = 'gameArea', gr
         <div class="sm-header-right">
           <div class="sm-counter">${state.index + 1} / ${state.list.length}</div>
           <div class="sm-score">${state.score} pts</div>
+          <button id="soExit" class="sm-btn ghost" type="button" style="padding:6px 12px;font-size:.8rem;">Exit</button>
         </div>
       </div>
       <div class="sm-box fade-in">
@@ -375,7 +376,15 @@ export async function startGrammarSentenceOrderL3({ containerId = 'gameArea', gr
     const submitBtn = wrap.querySelector('#soSubmit');
     const feedbackArea = wrap.querySelector('#soFeedback');
     const clearBtn = wrap.querySelector('#soClear');
+    const exitBtn = wrap.querySelector('#soExit');
     const totalChunks = shuffled.length;
+    
+    // Exit button handler
+    if (exitBtn) {
+      exitBtn.addEventListener('click', () => {
+        window.history.back();
+      });
+    }
 
     const selection = [];
 

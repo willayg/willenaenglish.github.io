@@ -305,29 +305,77 @@ export async function runGrammarFindMistakeL3Mode({ grammarFile, grammarName, gr
       }
     }
 
-    // Will Future: corrupt "will" sentences
+    // Will Future: corrupt "will" sentences with actual grammar errors
+    // NEVER use "would" (technically valid), "going to" (synonymous)
     if (grammarType === 'will_future') {
       const willMatch = en.match(/\bwill\s+(\w+)/i);
       if (willMatch) {
         const verb = willMatch[1];
+        const irregularPasts = { 'go': 'went', 'eat': 'ate', 'come': 'came', 'see': 'saw', 'do': 'did', 'have': 'had', 'play': 'played', 'drive': 'drove', 'start': 'started' };
+        const pastForm = irregularPasts[verb.toLowerCase()] || verb + 'ed';
         const variants = [
-          { bad: en.replace(/\bwill\s+\w+/i, `will ${verb}ing`), wrongToken: `will ${verb}ing`, correctToken: willMatch[0] },
-          { bad: en.replace(/\bwill\s+\w+/i, `will to ${verb}`), wrongToken: `will to ${verb}`, correctToken: willMatch[0] },
-          { bad: en.replace(/\bwill\s+\w+/i, `is going to ${verb}`), wrongToken: `is going to ${verb}`, correctToken: willMatch[0] },
-          { bad: en.replace(/\bwill\b/i, 'would'), wrongToken: 'would', correctToken: 'will' }
+          // "will drives" - wrong: conjugated verb after will
+          { bad: en.replace(/\bwill\s+(\w+)/i, `will ${verb}s`), wrongToken: `will ${verb}s`, correctToken: willMatch[0] },
+          // "wills play" - wrong: conjugated will
+          { bad: en.replace(/\bwill\s+/i, 'wills '), wrongToken: 'wills', correctToken: 'will' },
+          // "will ate" / "will went" - wrong: past tense after will
+          { bad: en.replace(/\bwill\s+(\w+)/i, `will ${pastForm}`), wrongToken: `will ${pastForm}`, correctToken: willMatch[0] },
+          // "I didnt will" - wrong: double auxiliary
+          { bad: en.replace(/\bwill\s+(\w+)/i, `didn't will ${verb}`), wrongToken: `didn't will`, correctToken: 'will' }
         ];
+        // Add time conflict error if future time word exists
+        if (/\b(tomorrow|next|later|soon)\b/i.test(en)) {
+          variants.push({ 
+            bad: en.replace(/\b(tomorrow|next week|next month|later|soon)\b/i, 'yesterday'), 
+            wrongToken: 'yesterday', 
+            correctToken: en.match(/\b(tomorrow|next week|next month|later|soon)\b/i)?.[0] || 'tomorrow' 
+          });
+        }
         return variants[Math.floor(Math.random() * variants.length)];
       }
     }
 
-    // Will Questions: corrupt question word
+    // Will Questions: corrupt with actual grammar errors (verb form, word order, time conflicts)
     if (grammarType === 'will_questions') {
-      const willQMatch = en.match(/^(Will)\s+/i);
+      const willQMatch = en.match(/^(Will)\s+(\w+)\s+(\w+)(.*)$/i);
       if (willQMatch) {
+        const aux = willQMatch[1];
+        const subject = willQMatch[2];
+        const verb = willQMatch[3];
+        const rest = willQMatch[4];
+        
+        const irregularPasts = { 'go': 'went', 'eat': 'ate', 'come': 'came', 'see': 'saw', 'play': 'played', 'be': 'was' };
+        const pastForm = irregularPasts[verb.toLowerCase()] || verb + 'ed';
+        
+        const variants = [
+          // Wrong verb form: "Will she goes?"
+          { bad: `Will ${subject} ${verb}s${rest}`, wrongToken: `${verb}s`, correctToken: verb },
+          // Wrong verb form: "Will she went?"
+          { bad: `Will ${subject} ${pastForm}${rest}`, wrongToken: pastForm, correctToken: verb },
+          // Wrong word order: "Will goes she?"
+          { bad: `Will ${verb} ${subject}${rest}`, wrongToken: `${verb} ${subject}`, correctToken: `${subject} ${verb}` },
+          // Double marking: "Will she will go?"
+          { bad: `Will ${subject} will ${verb}${rest}`, wrongToken: 'will will', correctToken: 'Will' }
+        ];
+        
+        // Add time conflict if future time word exists
+        if (/\b(tomorrow|next|later|soon)\b/i.test(rest)) {
+          variants.push({ 
+            bad: en.replace(/\b(tomorrow|next week|next month|later|soon)\b/i, 'yesterday'), 
+            wrongToken: 'yesterday', 
+            correctToken: rest.match(/\b(tomorrow|next week|next month|later|soon)\b/i)?.[0] || 'tomorrow' 
+          });
+        }
+        
+        return variants[Math.floor(Math.random() * variants.length)];
+      }
+      
+      // Fallback for simpler patterns
+      const simpleMatch = en.match(/^(Will)\s+/i);
+      if (simpleMatch) {
         const variants = [
           { bad: en.replace(/^Will\s+/i, 'Do '), wrongToken: 'Do', correctToken: 'Will' },
           { bad: en.replace(/^Will\s+/i, 'Does '), wrongToken: 'Does', correctToken: 'Will' },
-          { bad: en.replace(/^Will\s+/i, 'Is '), wrongToken: 'Is', correctToken: 'Will' },
           { bad: en.replace(/^Will\s+/i, ''), wrongToken: '(missing Will)', correctToken: 'Will' }
         ];
         return variants[Math.floor(Math.random() * variants.length)];
@@ -354,6 +402,7 @@ export async function runGrammarFindMistakeL3Mode({ grammarFile, grammarName, gr
     }
 
     // Want To: corrupt "want to" / "wants to"
+    // NEVER use "wanna" as wrong (too common in colloquial speech)
     if (grammarType === 'want_to') {
       const wantToMatch = en.match(/\b(want to|wants to)\b/i);
       if (wantToMatch) {
@@ -365,9 +414,10 @@ export async function runGrammarFindMistakeL3Mode({ grammarFile, grammarName, gr
         } else {
           variants.push({ bad: en.replace(/\bwants to\b/i, 'want to'), wrongToken: 'want to', correctToken: 'wants to' });
         }
-        // Common errors
-        variants.push({ bad: en.replace(/\b(want|wants) to\b/i, 'wanna'), wrongToken: 'wanna', correctToken: correct });
+        // Missing "to": "She want play" instead of "She wants to play"
         variants.push({ bad: en.replace(/\b(want|wants) to (\w+)/i, '$1 $2'), wrongToken: '(missing "to")', correctToken: correct });
+        // Wrong structure: "want for" instead of "want to"
+        variants.push({ bad: en.replace(/\b(want|wants) to\b/i, '$1 for'), wrongToken: `${correct.split(' ')[0]} for`, correctToken: correct });
         return variants[Math.floor(Math.random() * variants.length)];
       }
     }

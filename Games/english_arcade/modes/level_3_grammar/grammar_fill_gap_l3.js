@@ -398,13 +398,16 @@ export async function startGrammarFillGapL3({
       if (match) {
         const willPhrase = match[1];
         const blanked = sentence.replace(new RegExp(`\\b${willPhrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i'), '_____');
-        // Generate distractors (wrong forms)
+        // Generate distractors - NO "going to" (practically same meaning)
         const verb = willPhrase.replace(/^will\s+/i, '');
+        const irregularPasts = { 'go': 'went', 'eat': 'ate', 'come': 'came', 'see': 'saw', 'do': 'did', 'have': 'had', 'make': 'made', 'take': 'took', 'get': 'got', 'buy': 'bought' };
+        const pastForm = irregularPasts[verb.toLowerCase()] || verb + 'ed';
         const distractors = [
-          `is going to ${verb}`,
-          verb + 's',
-          verb + 'ed',
-          `are ${verb}ing`
+          `will ${pastForm}`,      // will went, will ate (wrong: double tense)
+          `would ${verb}`,          // would go (wrong tense/mood)
+          `will ${verb}s`,          // will goes (wrong: conjugated after will)
+          verb + 'ing',             // going (wrong: missing will)
+          verb + 's'                // goes (wrong: present tense)
         ].filter(d => d.toLowerCase() !== willPhrase.toLowerCase());
         return {
           blanked,
@@ -414,29 +417,69 @@ export async function startGrammarFillGapL3({
       }
     }
     
-    // Will Questions: blank the "Will" at the start
+    // Will Questions: vary what gets blanked - auxiliary OR verb OR time expression
     if (grammarType === 'will_questions') {
-      const match = sentence.match(/^(Will)\s+/i);
-      if (match) {
-        const willWord = match[1];
+      const questionMatch = sentence.match(/^(Will)\s+(\w+)\s+(\w+)(.*)$/i);
+      if (questionMatch) {
+        const aux = questionMatch[1];        // "Will"
+        const subject = questionMatch[2];    // "she"
+        const verb = questionMatch[3];       // "play"
+        const rest = questionMatch[4];       // "tomorrow?"
+        
+        // Randomly choose what to blank
+        const blankType = Math.floor(Math.random() * 3);
+        
+        if (blankType === 0) {
+          // Blank the verb - student chooses correct verb form
+          const blanked = sentence.replace(new RegExp(`\\b${verb}\\b`, 'i'), '_____');
+          const irregularPasts = { 'go': 'went', 'eat': 'ate', 'come': 'came', 'see': 'saw', 'play': 'played', 'do': 'did' };
+          const pastForm = irregularPasts[verb.toLowerCase()] || verb + 'ed';
+          const distractors = [
+            verb + 's',      // goes (wrong after will)
+            verb + 'ing',    // going (wrong after will)
+            pastForm         // went (wrong after will)
+          ];
+          return {
+            blanked,
+            answer: verb,
+            choices: shuffle([verb, ...distractors]).slice(0, 4)
+          };
+        } else if (blankType === 1 && /\b(tomorrow|next week|later|soon)\b/i.test(rest)) {
+          // Blank a time expression
+          const timeMatch = rest.match(/\b(tomorrow|next week|later|soon)\b/i);
+          if (timeMatch) {
+            const timeWord = timeMatch[1];
+            const blanked = sentence.replace(new RegExp(`\\b${timeWord}\\b`, 'i'), '_____');
+            const distractors = ['yesterday', 'last week', 'now', 'ago'];
+            return {
+              blanked,
+              answer: timeWord,
+              choices: shuffle([timeWord, ...distractors]).slice(0, 4)
+            };
+          }
+        }
+        
+        // Default: blank the auxiliary
         const blanked = sentence.replace(/^Will\s+/i, '_____ ');
         const distractors = ['Do', 'Does', 'Did', 'Is', 'Are'];
         return {
           blanked,
-          answer: willWord,
-          choices: shuffle([willWord, ...distractors]).slice(0, 4)
+          answer: aux,
+          choices: shuffle([aux, ...distractors]).slice(0, 4)
         };
       }
     }
     
     // Have To: blank the "have to" or "has to" phrase
+    // NEVER use "need to" as distractor (synonymous)
     if (grammarType === 'have_to') {
       const match = sentence.match(/\b(have to|has to)\b/i);
       if (match) {
         const haveToPhrase = match[1];
         const blanked = sentence.replace(new RegExp(`\\b${haveToPhrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i'), '_____');
-        const distractors = ['want to', 'like to', 'need to', 'can'];
-        // Include the other variant
+        // NO "need to" - too similar in meaning
+        const distractors = ['want to', 'like to', 'must to', 'should to', 'going to'];
+        // Always include both have to and has to
         const otherVariant = haveToPhrase.toLowerCase() === 'have to' ? 'has to' : 'have to';
         return {
           blanked,
@@ -447,12 +490,14 @@ export async function startGrammarFillGapL3({
     }
     
     // Want To: blank the "want to" or "wants to" phrase
+    // NEVER use "need to" as distractor (synonymous)
     if (grammarType === 'want_to') {
       const match = sentence.match(/\b(want to|wants to)\b/i);
       if (match) {
         const wantToPhrase = match[1];
         const blanked = sentence.replace(new RegExp(`\\b${wantToPhrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i'), '_____');
-        const distractors = ['have to', 'like to', 'need to', 'can'];
+        // NO "need to" - too similar in meaning
+        const distractors = ['have to', 'has to', 'like to', 'must to', 'going to'];
         const otherVariant = wantToPhrase.toLowerCase() === 'want to' ? 'wants to' : 'want to';
         return {
           blanked,
