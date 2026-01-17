@@ -501,7 +501,6 @@ export async function startGrammarFillGapL3({
           ${choices.map((c) => `<button data-answer="${escapeHtml(c)}" class="gfg-choice-btn" style="padding:12px 16px;font-size:1.1rem;font-weight:800;border-radius:20px;border:3px solid #ff6fb0;background:#fff;color:#ff6fb0;cursor:pointer;box-shadow:0 2px 12px rgba(0,0,0,0.06);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(c)}</button>`).join('')}
         </div>
         <div id="gfg-feedback" style="min-height:1.2em;font-weight:700;font-size:1rem;color:#2e7d32;text-align:center;flex-shrink:0;"></div>
-        <button id="gfg-quit" type="button" style="position:fixed;bottom:20px;left:50%;transform:translateX(-50%);border:none;background:transparent;cursor:pointer;display:flex;align-items:center;gap:8px;padding:8px 12px;z-index:9999;"><img src="./assets/Images/icons/quit-game.svg" alt="Quit" style="width:32px;height:32px;"/></button>
       </div>`;
 
     const choicesEl = containerEl.querySelector('#gfg-choices');
@@ -513,9 +512,6 @@ export async function startGrammarFillGapL3({
         handleChoice(chosenText, item, containerEl);
       });
     });
-
-    const quitBtn = containerEl.querySelector('#gfg-quit');
-    if (quitBtn) quitBtn.onclick = () => quitToMenu('quit');
   }
 
   function makeChoices(item, answerToken) {
@@ -650,65 +646,6 @@ export async function startGrammarFillGapL3({
     try { document.querySelectorAll('body > .wa-quit-btn, body > [title="Quit"]').forEach(btn => btn.remove()); } catch {}
     renderGrammarSummary({ gameArea: containerEl, score: state.score, total: state.list.length, ctx: { grammarFile: state.grammarFile, grammarName } });
     if (onComplete) onComplete(state);
-  }
-
-  function quitToMenu(reason = 'quit') {
-    const current = state;
-    if (!current) return;
-    const { onQuit, onComplete, container } = current;
-    // Clean up container and any fixed position elements
-    if (container) {
-      try { container.innerHTML = ''; } catch {}
-    }
-    try {
-      document.querySelectorAll('#gfg-quit, .grammar-fill-gap-l3, button[id*="gfg"]').forEach(el => el.remove());
-    } catch {}
-    if (current.sessionId) {
-      try {
-        // Use grammarFile path for session tracking to match homework assignment list_key
-        endSession(current.sessionId, {
-          mode: MODE,
-          summary: { score: current.score, total: current.list.length, correct: current.score, points: current.score, category: 'grammar', grammarFile: current.grammarFile, grammarName: current.grammarName, level: 3 },
-          listName: current.grammarFile || current.grammarName || null,
-          wordList: current.list.map(it => it.word || it.id || it.base || it.past).filter(Boolean),
-          meta: { category: 'grammar', grammarFile: current.grammarFile, grammarName: current.grammarName, level: 3, quit_reason: reason }
-        });
-      } catch {}
-    }
-    if (typeof onComplete === 'function') {
-      try { onComplete({ reason, state: current }); } catch (err) { console.error('onComplete failed', err); }
-    }
-
-    // Preserve grammar config before returning to mode selector (regardless of quit wiring)
-    try {
-      if (current.grammarFile) {
-        window.__WA_LAST_GRAMMAR__ = {
-          grammarFile: current.grammarFile,
-          grammarName: current.grammarName,
-          grammarConfig: current.grammarConfig || {}
-        };
-      }
-    } catch {}
-
-    if (typeof onQuit === 'function') {
-      try { onQuit({ reason }); } catch (err) { console.error('onQuit failed', err); }
-    } else {
-      try {
-        // Behave exactly like browser Back. HistoryManager restores the correct screen.
-        if (window.history && window.history.length > 1) {
-          window.history.back();
-        } else if (window.WordArcade?.startGrammarModeSelector) {
-          window.WordArcade.startGrammarModeSelector(window.__WA_LAST_GRAMMAR__);
-        } else if (window.WordArcade?.showGrammarLevelsMenu) {
-          window.WordArcade.showGrammarLevelsMenu();
-        } else if (window.WordArcade?.quitToOpening) {
-          window.WordArcade.quitToOpening(true);
-        } else {
-          location.reload();
-        }
-      } catch {}
-    }
-    stopGrammarFillGapL3();
   }
 
   // expose stop via closure (not exported) but provide external stop fn below

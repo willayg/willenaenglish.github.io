@@ -458,11 +458,6 @@ export async function startGrammarChooseL3({
         </div>
         <div id="gch-feedback" style="min-height:1.2em;font-weight:700;font-size:1rem;margin-bottom:12px;color:#2e7d32"></div>
         <div style="margin-top:auto;font-size:0.85rem;color:#888;text-align:center;font-family:'Poppins',Arial,sans-serif;">Question ${questionNumber} / ${totalQuestions}</div>
-        <div style="display:flex;justify-content:center;margin-top:12px;">
-          <button id="gch-quit" type="button" class="wa-quit-btn" style="border:none;background:transparent;cursor:pointer;display:flex;align-items:center;gap:8px;padding:4px;">
-            <img src="./assets/Images/icons/quit-game.svg" alt="Quit game" aria-hidden="true" style="width:28px;height:28px;" />
-          </button>
-        </div>
       </div>`;
 
     const choicesEl = containerEl.querySelector('#gch-choices');
@@ -474,11 +469,6 @@ export async function startGrammarChooseL3({
         handleChoice(chosenText, item, containerEl);
       });
     });
-
-    const quitBtn = containerEl.querySelector('#gch-quit');
-    if (quitBtn) {
-      quitBtn.onclick = () => quitToMenu('quit');
-    }
   }
 
   function getDisplayForGrammarType(item, grammarType) {
@@ -812,62 +802,6 @@ export async function startGrammarChooseL3({
 export function stopGrammarChooseL3() {
   if (pendingTimeout) { clearTimeout(pendingTimeout); pendingTimeout = null; }
   state = null;
-}
-
-function quitToMenu(reason = 'quit') {
-  const current = state;
-  if (!current) return;
-  const { onQuit, onComplete, container } = current;
-  if (container) {
-    try { container.innerHTML = ''; } catch {}
-  }
-  // Partial endSession for quit (records progress so stars can update)
-  if (current.sessionId) {
-    try {
-      // Use grammarFile path for session tracking to match homework assignment list_key
-      endSession(current.sessionId, {
-        mode: MODE,
-        summary: { score: current.score, total: current.list.length, correct: current.score, points: current.score, category: 'grammar', grammarFile: current.grammarFile, grammarName: current.grammarName, level: 3 },
-        listName: current.grammarFile || current.grammarName || null,
-        wordList: current.list.map(it => it.word || it.id || it.base || it.past).filter(Boolean),
-        meta: { category: 'grammar', grammarFile: current.grammarFile, grammarName: current.grammarName, level: 3, quit_reason: reason }
-      });
-    } catch {}
-  }
-  if (typeof onComplete === 'function') {
-    try { onComplete({ reason, state: current }); } catch (err) { console.error('onComplete failed', err); }
-  }
-
-  // Preserve grammar config before returning to mode selector (regardless of quit wiring)
-  try {
-    if (current.grammarFile) {
-      window.__WA_LAST_GRAMMAR__ = {
-        grammarFile: current.grammarFile,
-        grammarName: current.grammarName,
-        grammarConfig: current.grammarConfig || {}
-      };
-    }
-  } catch {}
-
-  if (typeof onQuit === 'function') {
-    try { onQuit({ reason }); } catch (err) { console.error('onQuit failed', err); }
-  } else {
-    try {
-      // Behave exactly like browser Back. HistoryManager restores the correct screen.
-      if (window.history && window.history.length > 1) {
-        window.history.back();
-      } else if (window.WordArcade?.showGrammarLevelsMenu) {
-        window.WordArcade.showGrammarLevelsMenu();
-      } else if (window.WordArcade?.quitToOpening) {
-        window.WordArcade.quitToOpening(true);
-      } else if (window.WordArcade?.startGrammarModeSelector) {
-        window.WordArcade.startGrammarModeSelector(window.__WA_LAST_GRAMMAR__);
-      } else {
-        location.reload();
-      }
-    } catch {}
-  }
-  stopGrammarChooseL3();
 }
 
 export default { init: initGrammarChooseL3, start: startGrammarChooseL3, stop: stopGrammarChooseL3 };

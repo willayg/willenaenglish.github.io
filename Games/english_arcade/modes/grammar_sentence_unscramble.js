@@ -206,10 +206,8 @@ export async function runGrammarSentenceUnscramble(ctx) {
   const layoutOverrides = {
     hideTitle: true,
     centerContent: true,
-    showQuitButton: true,
+    showQuitButton: false,
     skipIntro: true,
-    quitButtonId: 'grammarQuitBtn',
-    quitButtonLabel: 'Quit Game',
   };
 
   const forwardedCtx = {
@@ -223,21 +221,6 @@ export async function runGrammarSentenceUnscramble(ctx) {
     // Mount into the main game area so HistoryManager restores are visible
     gameArea: document.getElementById('gameArea') || ctx?.gameArea || document.getElementById('gameStage') || document.body,
     sentenceLayout: { ...(ctx?.sentenceLayout || {}), ...layoutOverrides },
-    onSentenceQuit: () => {
-      try {
-        // Remove quit button first
-        const btn = document.getElementById('grammarQuitBtn') || document.getElementById('smQuitBtn');
-        if (btn) btn.remove();
-      } catch {}
-      try {
-        // Behave exactly like browser Back. HistoryManager restores the correct screen.
-        if (window.history && window.history.length > 1) {
-          window.history.back();
-        } else {
-          location.reload();
-        }
-      } catch { location.reload(); }
-    },
   };
 
   runSentenceMode(forwardedCtx);

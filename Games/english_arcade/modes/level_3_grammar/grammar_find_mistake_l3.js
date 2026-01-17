@@ -378,34 +378,6 @@ export async function runGrammarFindMistakeL3Mode({ grammarFile, grammarName, gr
   const sessionId = startSession({ mode: MODE, listName: grammarFile || grammarName, wordList: rounds.map((r, i) => r.src?.word || `s${i}`), meta: { grammarFile, grammarName, level: 3 } });
   let idx = 0, correct = 0, wrong = 0;
 
-  function addExitButton() {
-    if (document.getElementById('grammarQuitBtn')) return;
-    const quitBtn = document.createElement('button');
-    quitBtn.id = 'grammarQuitBtn';
-    quitBtn.className = 'wa-quit-btn';
-    quitBtn.type = 'button';
-    quitBtn.setAttribute('aria-label', 'Quit game');
-    quitBtn.innerHTML = `
-      <span class="wa-sr-only">Quit Game</span>
-      <img src="./assets/Images/icons/quit-game.svg" alt="" aria-hidden="true" class="wa-quit-icon" />
-    `;
-    quitBtn.onclick = () => {
-      try {
-        // Remove button first
-        const btn = document.getElementById('grammarQuitBtn');
-        if (btn) btn.remove();
-      } catch {}
-      try {
-        if (window.history && window.history.length > 1) {
-          window.history.back();
-        } else {
-          location.reload();
-        }
-      } catch { location.reload(); }
-    };
-    document.body.appendChild(quitBtn);
-  }
-
   function render() {
     if (idx >= rounds.length) return end();
     const r = rounds[idx];
@@ -490,7 +462,6 @@ export async function runGrammarFindMistakeL3Mode({ grammarFile, grammarName, gr
     const footer = container.querySelector('#gm-footer');
     if (footer) { footer.replaceChildren(); footer.appendChild(next); }
     else { container.appendChild(next); }
-    addExitButton();
   }
 
   function end() {

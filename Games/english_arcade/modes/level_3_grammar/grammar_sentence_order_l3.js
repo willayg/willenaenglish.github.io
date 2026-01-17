@@ -408,39 +408,6 @@ export async function startGrammarSentenceOrderL3({ containerId = 'gameArea', gr
         });
       }
     });
-
-    // Add a quit/exit button - simple browser back only
-    if (!document.getElementById('grammarL3QuitBtn')) {
-      const quitBtn = document.createElement('button');
-      quitBtn.type = 'button';
-      quitBtn.id = 'grammarL3QuitBtn';
-      quitBtn.className = 'wa-quit-btn sentence-order-quit';
-      quitBtn.style.position = 'fixed';
-      quitBtn.style.left = '50%';
-      quitBtn.style.transform = 'translateX(-50%)';
-      quitBtn.style.bottom = 'calc(env(safe-area-inset-bottom, 0px) + 16px)';
-      quitBtn.style.background = 'transparent';
-      quitBtn.style.border = 'none';
-      quitBtn.style.cursor = 'pointer';
-      quitBtn.style.zIndex = '1100';
-      quitBtn.title = 'Quit';
-      quitBtn.innerHTML = '<img src="./assets/Images/icons/quit-game.svg" alt="Quit" style="width:28px;height:28px;" />';
-      quitBtn.onclick = () => {
-        try {
-          // Remove button first
-          const btn = document.getElementById('grammarL3QuitBtn');
-          if (btn) btn.remove();
-        } catch {}
-        try {
-          if (window.history && window.history.length > 1) {
-            window.history.back();
-          } else {
-            location.reload();
-          }
-        } catch { location.reload(); }
-      };
-      try { document.body.appendChild(quitBtn); } catch {}
-    }
   }
 
   function finish() {
