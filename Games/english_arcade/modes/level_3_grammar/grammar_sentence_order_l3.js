@@ -7,6 +7,7 @@ import { startSession, logAttempt, endSession } from '../../../../students/recor
 import { renderGrammarSummary } from '../grammar_summary.js';
 import { FN } from '../../scripts/api-base.js';
 import { openNowLoadingSplash } from '../unscramble_splash.js';
+import { playSFX } from '../../sfx.js';
 
 let state = null;
 let activeSentenceAudio = null;
@@ -161,6 +162,18 @@ function injectSentenceOrderStyles() {
   .sentence-order-mode #soSubmit.so-floating { position:absolute; top:calc(50% + 50px); left:50%; transform:translate(-50%,-50%) scale(.6); opacity:0; pointer-events:none; font-size:clamp(2.2rem,4vw,3.2rem); padding:30px 68px; border-radius:48px; letter-spacing:.9px; font-weight:800; background:#ff7a1a; color:#fff; border:3px solid #ff7a1a; box-shadow:0 22px 55px -12px rgba(0,0,0,0.4),0 0 0 5px rgba(255,122,26,0.18); backdrop-filter:blur(4px); transition:opacity .45s ease, transform .55s cubic-bezier(.16,.8,.24,1); }
   .sentence-order-mode #soSubmit.so-floating:hover { background:#ff8c3a; border-color:#ff8c3a; }
   .sentence-order-mode #soSubmit.so-floating-visible { opacity:1; transform:translate(-50%,-50%) scale(1); pointer-events:auto; }
+  .sentence-order-mode .so-confetti { position:fixed; width:12px; height:12px; pointer-events:none; border-radius:50%; }
+  .sentence-order-mode .so-confetti.correct { animation:soConfetti 2.8s ease-out forwards; }
+  .sentence-order-mode .so-confetti.wrong { animation:soMelt 1.2s ease-in forwards; }
+  @keyframes soConfetti {
+    0% { opacity:1; transform:translate(0,0) rotate(0deg) scale(1); }
+    100% { opacity:0; transform:translate(var(--tx),var(--ty)) rotate(720deg) scale(0.2); }
+  }
+  @keyframes soMelt {
+    0% { opacity:1; transform:translateY(0) scaleX(1) scaleY(1); }
+    50% { opacity:0.9; }
+    100% { opacity:0; transform:translateY(120px) scaleX(0.2) scaleY(0.5); filter:blur(8px); }
+  }
   .cgm-mode-root { display:flex; flex-direction:column; min-height:100vh; }
   @keyframes smFade { 0% { opacity:0;} 100% { opacity:1;} }
   `;
@@ -179,26 +192,52 @@ function displayifySentence(s) {
 }
 
 function chunkSentence(sentence) {
-  // Normalize whitespace and split into words
-  const words = String(sentence || '').trim().replace(/\s+/g, ' ').split(' ').filter(Boolean);
+  // Remove punctuation and lowercase for cleaner display
+  const cleanSentence = String(sentence || '')
+    .trim()
+    .replace(/[.!?;:,]/g, '') // Remove punctuation
+    .toLowerCase()
+    .replace(/\s+/g, ' ');
+  
+  const words = cleanSentence.split(' ').filter(Boolean);
   if (!words.length) return [];
-
+  
+  // Less than 3 words: return one chunk per word
+  if (words.length < 3) return words;
+  
+  // 3-5 words: split into 3 chunks
+  if (words.length <= 5) {
+    const chunkSize = Math.ceil(words.length / 3);
+    const chunks = [];
+    for (let i = 0; i < words.length; i += chunkSize) {
+      chunks.push(words.slice(i, i + chunkSize).join(' '));
+    }
+    return chunks;
+  }
+  
+  // 6+ words: try 3-word chunks, but ensure minimum 3 chunks
   const chunks = [];
   let i = 0;
   while (i < words.length) {
     const remaining = words.length - i;
-    // Choose 2 or 3-word chunks; ensure we don't leave a single word at the end
-    let size = remaining <= 3 ? remaining : (Math.random() < 0.4 ? 3 : 2);
-    if (remaining - size === 1) {
-      // Avoid leaving a single word; shift size up or down
-      if (size === 2 && remaining >= 3) size = 3;
-      else if (size === 3 && remaining >= 4) size = 2;
+    let size = 3;
+    
+    // If only 1-2 words left and we have at least one chunk already, add them to current chunk
+    if (remaining < 3 && chunks.length > 0) {
+      const last = chunks.pop();
+      chunks.push((last + ' ' + words.slice(i).join(' ')).trim());
+      break;
     }
-    const piece = words.slice(i, i + size).join(' ');
-    chunks.push(piece);
+    
+    if (remaining <= 3) {
+      size = remaining;
+    }
+    
+    chunks.push(words.slice(i, i + size).join(' '));
     i += size;
   }
-  return chunks;
+  
+  return chunks.length >= 3 ? chunks : words; // Fallback to word-by-word if something goes wrong
 }
 
 export async function startGrammarSentenceOrderL3({ containerId = 'gameArea', grammarFile, grammarName, grammarConfig, onQuit, onComplete, playSFX } = {}) {
@@ -428,29 +467,74 @@ export async function startGrammarSentenceOrderL3({ containerId = 'gameArea', gr
         console.debug('[SentenceOrderL3] logAttempt failed', e?.message);
       }
 
-      // Show feedback
+      // Play SFX immediately
+      try {
+        if (typeof playSFX === 'function') playSFX(isCorrect ? 'correct' : 'wrong');
+      } catch (e) { 
+        console.debug('[SentenceOrderL3] SFX failed', e?.message); 
+      }
+
+      // Disable interactions during feedback
       submitBtn.disabled = true;
       pool.querySelectorAll('.sm-chip').forEach(b => { b.disabled = true; });
+      clearBtn.disabled = true;
 
       if (isCorrect) {
         constructEl.classList.add('sm-correct');
         feedbackArea.style.color = '#2e7d32';
         feedbackArea.textContent = '✓ Correct!';
+        
+        // Create confetti animation
+        createConfetti(wrap, true);
+        
         playSentenceAudio(item);
         setTimeout(() => {
           state.index += 1;
           renderRound();
-        }, 2000);
+        }, 2800);
       } else {
         feedbackArea.style.color = '#c62828';
         feedbackArea.textContent = '✗ Try again';
+        
+        // Create melting animation
+        createConfetti(wrap, false);
+        
         setTimeout(() => {
           feedbackArea.textContent = '';
+          constructEl.classList.remove('sm-correct');
           submitBtn.disabled = false;
+          clearBtn.disabled = false;
           pool.querySelectorAll('.sm-chip').forEach(b => { b.disabled = false; });
         }, 1500);
       }
     });
+    
+    function createConfetti(container, isCorrect) {
+      const count = isCorrect ? 35 : 18;
+      for (let i = 0; i < count; i++) {
+        const confetti = document.createElement('div');
+        confetti.className = `so-confetti ${isCorrect ? 'correct' : 'wrong'}`;
+        
+        if (isCorrect) {
+          // Confetti burst: use random colors
+          confetti.style.background = ['#ff7a1a', '#ff6fb0', '#21b5c0', '#ffd54f'][Math.floor(Math.random() * 4)];
+          confetti.style.left = Math.random() * 100 + 'vw';
+          confetti.style.top = Math.random() * 100 + 'vh';
+          const tx = (Math.random() - 0.5) * 500;
+          const ty = (Math.random() - 0.5) * 500 + 300;
+          confetti.style.setProperty('--tx', tx + 'px');
+          confetti.style.setProperty('--ty', ty + 'px');
+        } else {
+          // Red melt particles
+          confetti.style.background = '#c62828';
+          confetti.style.left = Math.random() * 100 + 'vw';
+          confetti.style.top = (Math.random() * 35 + 15) + 'vh';
+        }
+        
+        container.appendChild(confetti);
+        setTimeout(() => { try { confetti.remove(); } catch (e) {} }, isCorrect ? 3000 : 1300);
+      }
+    }
   }
 
   function finish() {
