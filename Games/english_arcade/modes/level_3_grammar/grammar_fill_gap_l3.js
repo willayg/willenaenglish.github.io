@@ -694,13 +694,8 @@ export async function startGrammarFillGapL3({
       try { onQuit({ reason }); } catch (err) { console.error('onQuit failed', err); }
     } else {
       try {
-        // Prefer browser Back behavior (HistoryManager restores the correct selector/list)
-        const hasUsefulHistory = (window.history && window.history.length > 1);
-        const inGameHash = typeof window.location?.hash === 'string' && /#state-in_game/i.test(window.location.hash);
-        const inGameState = window.history?.state && window.history.state.stateId === 'in_game';
-        if (hasUsefulHistory && (inGameHash || inGameState)) {
-          window.history.back();
-        } else if (window.WordArcade?.startGrammarModeSelector) {
+        // Return directly to grammar mode selector (preserves current grammar via __WA_LAST_GRAMMAR__)
+        if (window.WordArcade?.startGrammarModeSelector) {
           window.WordArcade.startGrammarModeSelector(window.__WA_LAST_GRAMMAR__);
         } else if (window.WordArcade?.showGrammarLevelsMenu) {
           window.WordArcade.showGrammarLevelsMenu();

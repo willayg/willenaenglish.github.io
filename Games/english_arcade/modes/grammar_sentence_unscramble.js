@@ -225,13 +225,8 @@ export async function runGrammarSentenceUnscramble(ctx) {
     sentenceLayout: { ...(ctx?.sentenceLayout || {}), ...layoutOverrides },
     onSentenceQuit: () => {
       try {
-        // Prefer browser Back behavior (HistoryManager) when in-game
-        const hasUsefulHistory = (window.history && window.history.length > 1);
-        const inGameHash = typeof window.location?.hash === 'string' && /#state-in_game/i.test(window.location.hash);
-        const inGameState = window.history?.state && window.history.state.stateId === 'in_game';
-        if (hasUsefulHistory && (inGameHash || inGameState)) {
-          window.history.back();
-        } else if (window.WordArcade?.startGrammarModeSelector) {
+        // Return directly to grammar mode selector
+        if (window.WordArcade?.startGrammarModeSelector) {
           window.WordArcade.startGrammarModeSelector();
         }
       } catch {}
