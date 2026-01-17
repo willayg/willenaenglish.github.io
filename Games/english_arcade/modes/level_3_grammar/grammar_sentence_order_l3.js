@@ -162,9 +162,20 @@ function injectSentenceOrderStyles() {
   .sentence-order-mode #soSubmit.so-floating { position:absolute; top:calc(50% + 50px); left:50%; transform:translate(-50%,-50%) scale(.6); opacity:0; pointer-events:none; font-size:clamp(2.2rem,4vw,3.2rem); padding:30px 68px; border-radius:48px; letter-spacing:.9px; font-weight:800; background:#ff7a1a; color:#fff; border:3px solid #ff7a1a; box-shadow:0 22px 55px -12px rgba(0,0,0,0.4),0 0 0 5px rgba(255,122,26,0.18); backdrop-filter:blur(4px); transition:opacity .45s ease, transform .55s cubic-bezier(.16,.8,.24,1); }
   .sentence-order-mode #soSubmit.so-floating:hover { background:#ff8c3a; border-color:#ff8c3a; }
   .sentence-order-mode #soSubmit.so-floating-visible { opacity:1; transform:translate(-50%,-50%) scale(1); pointer-events:auto; }
-  .sentence-order-mode .so-confetti { position:fixed; width:12px; height:12px; pointer-events:none; border-radius:50%; }
+  .sentence-order-mode #soSubmit.so-button-explode { animation:soButtonExplode 1.8s cubic-bezier(.34,.1,.68,-.55) forwards; }
+  .sentence-order-mode #soSubmit.so-button-melt { animation:soButtonMelt 1.3s ease-in forwards; }
+  .sentence-order-mode .so-confetti { position:fixed; width:14px; height:14px; pointer-events:none; border-radius:50%; }
   .sentence-order-mode .so-confetti.correct { animation:soConfetti 2.8s ease-out forwards; }
   .sentence-order-mode .so-confetti.wrong { animation:soMelt 1.2s ease-in forwards; }
+  @keyframes soButtonExplode {
+    0% { opacity:1; transform:translate(-50%,-50%) scale(1) rotate(0deg); }
+    100% { opacity:0; transform:translate(-50%,-50%) scale(0) rotate(360deg); filter:blur(12px); }
+  }
+  @keyframes soButtonMelt {
+    0% { opacity:1; transform:translate(-50%,-50%) scaleY(1) scaleX(1); }
+    50% { opacity:0.8; transform:translate(-50%,-50%) scaleY(0.6) scaleX(1.1); }
+    100% { opacity:0; transform:translate(-50%,-120%) scaleY(0.1) scaleX(1.3); filter:blur(10px); }
+  }
   @keyframes soConfetti {
     0% { opacity:1; transform:translate(0,0) rotate(0deg) scale(1); }
     100% { opacity:0; transform:translate(var(--tx),var(--ty)) rotate(720deg) scale(0.2); }
@@ -202,10 +213,10 @@ function chunkSentence(sentence) {
   const words = cleanSentence.split(' ').filter(Boolean);
   if (!words.length) return [];
   
-  // Less than 3 words: return one chunk per word
+  // Less than 3 words: return as-is (single-word or multi-word chunks are OK for short sentences)
   if (words.length < 3) return words;
   
-  // 3-5 words: split into 3 chunks
+  // 3-5 words: split into chunks, allow single words
   if (words.length <= 5) {
     const chunkSize = Math.ceil(words.length / 3);
     const chunks = [];
@@ -215,22 +226,23 @@ function chunkSentence(sentence) {
     return chunks;
   }
   
-  // 6+ words: try 3-word chunks, but ensure minimum 3 chunks
+  // 6+ words: use 2-3 word chunks to avoid single-word pieces
   const chunks = [];
   let i = 0;
   while (i < words.length) {
     const remaining = words.length - i;
-    let size = 3;
+    let size = 2; // Default 2-word chunks for longer sentences
     
-    // If only 1-2 words left and we have at least one chunk already, add them to current chunk
-    if (remaining < 3 && chunks.length > 0) {
-      const last = chunks.pop();
-      chunks.push((last + ' ' + words.slice(i).join(' ')).trim());
-      break;
+    // Use 3-word chunks when we have plenty of words left
+    if (remaining >= 5) {
+      size = 3;
     }
     
-    if (remaining <= 3) {
-      size = remaining;
+    // If only 1 word left, merge with previous chunk
+    if (remaining === 1 && chunks.length > 0) {
+      const last = chunks.pop();
+      chunks.push((last + ' ' + words[i]).trim());
+      break;
     }
     
     chunks.push(words.slice(i, i + size).join(' '));
@@ -484,8 +496,8 @@ export async function startGrammarSentenceOrderL3({ containerId = 'gameArea', gr
         feedbackArea.style.color = '#2e7d32';
         feedbackArea.textContent = '✓ Correct!';
         
-        // Create confetti animation
-        createConfetti(wrap, true);
+        // Button explodes
+        submitBtn.classList.add('so-button-explode');
         
         playSentenceAudio(item);
         setTimeout(() => {
@@ -496,12 +508,13 @@ export async function startGrammarSentenceOrderL3({ containerId = 'gameArea', gr
         feedbackArea.style.color = '#c62828';
         feedbackArea.textContent = '✗ Try again';
         
-        // Create melting animation
-        createConfetti(wrap, false);
+        // Button melts
+        submitBtn.classList.add('so-button-melt');
         
         setTimeout(() => {
           feedbackArea.textContent = '';
           constructEl.classList.remove('sm-correct');
+          submitBtn.classList.remove('so-button-melt');
           submitBtn.disabled = false;
           clearBtn.disabled = false;
           pool.querySelectorAll('.sm-chip').forEach(b => { b.disabled = false; });
@@ -509,32 +522,7 @@ export async function startGrammarSentenceOrderL3({ containerId = 'gameArea', gr
       }
     });
     
-    function createConfetti(container, isCorrect) {
-      const count = isCorrect ? 35 : 18;
-      for (let i = 0; i < count; i++) {
-        const confetti = document.createElement('div');
-        confetti.className = `so-confetti ${isCorrect ? 'correct' : 'wrong'}`;
-        
-        if (isCorrect) {
-          // Confetti burst: use random colors
-          confetti.style.background = ['#ff7a1a', '#ff6fb0', '#21b5c0', '#ffd54f'][Math.floor(Math.random() * 4)];
-          confetti.style.left = Math.random() * 100 + 'vw';
-          confetti.style.top = Math.random() * 100 + 'vh';
-          const tx = (Math.random() - 0.5) * 500;
-          const ty = (Math.random() - 0.5) * 500 + 300;
-          confetti.style.setProperty('--tx', tx + 'px');
-          confetti.style.setProperty('--ty', ty + 'px');
-        } else {
-          // Red melt particles
-          confetti.style.background = '#c62828';
-          confetti.style.left = Math.random() * 100 + 'vw';
-          confetti.style.top = (Math.random() * 35 + 15) + 'vh';
-        }
-        
-        container.appendChild(confetti);
-        setTimeout(() => { try { confetti.remove(); } catch (e) {} }, isCorrect ? 3000 : 1300);
-      }
-    }
+    
   }
 
   function finish() {
