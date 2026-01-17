@@ -233,48 +233,19 @@ export function run(ctx){
   })();
 
   function exitToMenu() {
-    // Always try browser back first if possible
-    if (window.history && window.history.length > 1) {
-      window.history.back();
-      // Give browser a moment to navigate, but if it doesn't, fallback after a short delay
-      setTimeout(() => {
-        if (document.visibilityState === 'visible') {
-          fallbackQuit();
-        }
-      }, 500);
-      return;
-    }
-    fallbackQuit();
-  }
-
-  function fallbackQuit() {
-    // Always make sure quit button is visible if present
-    const quitBtn = document.getElementById('wa-quit-btn') || document.getElementById('smQuitBtn') || document.getElementById('grammarQuitBtn');
-    if (quitBtn) quitBtn.style.display = '';
-    if (typeof ctx?.onSummaryExit === 'function') {
-      ctx.onSummaryExit();
-      return;
-    }
-    if (onSentenceQuit) {
-      onSentenceQuit();
-      return;
-    }
-    if (ctx?.sessionMode && String(ctx.sessionMode).startsWith('grammar_') && window.WordArcade?.startGrammarModeSelector) {
-      window.WordArcade.startGrammarModeSelector();
-      return;
-    }
-    if (window.WordArcade?.startModeSelector) {
-      window.WordArcade.startModeSelector();
-      return;
-    }
-    if (window.WordArcade?.quitToOpening) {
-      window.WordArcade.quitToOpening(true);
-      return;
-    }
-    if (typeof ctx?.showOpeningButtons === 'function') {
-      ctx.showOpeningButtons(true);
-      return;
-    }
+    try {
+      // Remove quit button first
+      const quitBtn = document.getElementById('wa-quit-btn') || document.getElementById('smQuitBtn') || document.getElementById('grammarQuitBtn');
+      if (quitBtn) quitBtn.remove();
+    } catch {}
+    try {
+      // Behave exactly like browser Back. HistoryManager restores the correct screen.
+      if (window.history && window.history.length > 1) {
+        window.history.back();
+      } else {
+        location.reload();
+      }
+    } catch { location.reload(); }
   }
 
   function startUnscramble(){

@@ -225,22 +225,18 @@ export async function runGrammarSentenceUnscramble(ctx) {
     sentenceLayout: { ...(ctx?.sentenceLayout || {}), ...layoutOverrides },
     onSentenceQuit: () => {
       try {
+        // Remove quit button first
+        const btn = document.getElementById('grammarQuitBtn') || document.getElementById('smQuitBtn');
+        if (btn) btn.remove();
+      } catch {}
+      try {
         // Behave exactly like browser Back. HistoryManager restores the correct screen.
         if (window.history && window.history.length > 1) {
           window.history.back();
-          return;
+        } else {
+          location.reload();
         }
-        if (window.WordArcade?.startGrammarModeSelector) {
-          window.WordArcade.startGrammarModeSelector();
-          return;
-        }
-      } catch {}
-  // Hide the splash/modal only when the game mode has ended and the
-  // quit action is performed.
-  try { if (splashController && typeof splashController.hide === 'function') splashController.hide(); } catch (e) {}
-  // Play final SFX to indicate end of mode
-  try { playSFX('end'); } catch (e) {}
-  showOpeningButtons?.(true);
+      } catch { location.reload(); }
     },
   };
 
