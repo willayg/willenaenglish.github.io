@@ -369,7 +369,8 @@ export async function showGrammarModeSelector({ grammarFile, grammarName, gramma
   });
 
   // After rendering buttons, fetch session history to compute stars per mode
-  (async () => {
+  // Define as named function so we can re-run after session completes
+  const refreshStars = async () => {
     try {
       // Fetch sessions (try list-scoped first for speed)
       const makeUrl = (scoped) => {
@@ -535,7 +536,31 @@ export async function showGrammarModeSelector({ grammarFile, grammarName, gramma
     } catch (e) {
       console.warn('[GrammarModeSelector] Error loading stars:', e);
     }
-  })();
+  };
+  
+  // Initial star load
+  refreshStars();
+  
+  // Listen for session completion and refresh stars after a short delay
+  // (allows backend to process the new session data)
+  const onSessionEnded = () => {
+    setTimeout(() => {
+      refreshStars();
+      console.debug('[GrammarModeSelector] Stars refreshed after session ended');
+    }, 800); // 800ms delay for backend processing
+  };
+  window.addEventListener('wa:session-ended', onSessionEnded);
+  
+  // Clean up event listener when mode selector is replaced
+  // Use MutationObserver to detect when modeSelectDiv is removed from DOM
+  const cleanupObserver = new MutationObserver((mutations) => {
+    if (!document.body.contains(modeSelectDiv)) {
+      window.removeEventListener('wa:session-ended', onSessionEnded);
+      cleanupObserver.disconnect();
+      console.debug('[GrammarModeSelector] Cleaned up session listener');
+    }
+  });
+  cleanupObserver.observe(document.body, { childList: true, subtree: true });
 
   // Add Change Level button (below modes)
   const changeLevelBtn = document.createElement('button');

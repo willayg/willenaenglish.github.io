@@ -616,7 +616,7 @@ export async function startGrammarFillGapL3({
         <div style="font-size:1.47rem;font-weight:600;color:#21b5c0;text-align:center;flex-shrink:0;line-height:1.4;margin-bottom:60px;">${koText}</div>
         <div style="font-size:1.4rem;font-weight:700;text-align:center;padding:16px;border-radius:12px;border:2px solid #f0f0f0;background:#fff;color:#333;flex-shrink:0;margin-bottom:60px;">${escapeHtml(blanked)}</div>
         <div id="gfg-choices" style="display:grid;grid-template-columns:repeat(2,1fr);gap:14px;justify-items:stretch;flex-shrink:0;margin-bottom:20px;max-width:500px;margin-left:auto;margin-right:auto;width:100%;">
-          ${choices.map((c) => `<button data-answer="${escapeHtml(c)}" class="gfg-choice-btn" style="padding:12px 16px;font-size:1.1rem;font-weight:800;border-radius:20px;border:3px solid #ff6fb0;background:#fff;color:#ff6fb0;cursor:pointer;box-shadow:0 2px 12px rgba(0,0,0,0.06);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(c)}</button>`).join('')}
+          ${choices.map((c) => `<button data-answer="${escapeHtml(c)}" class="gfg-choice-btn" style="padding:12px 8px;font-size:1.1rem;font-weight:800;border-radius:20px;border:3px solid #ff6fb0;background:#fff;color:#ff6fb0;cursor:pointer;box-shadow:0 2px 12px rgba(0,0,0,0.06);white-space:normal;word-wrap:break-word;overflow-wrap:break-word;text-align:center;min-height:48px;display:flex;align-items:center;justify-content:center;">${escapeHtml(c)}</button>`).join('')}
         </div>
         <div id="gfg-feedback" style="min-height:1.2em;font-weight:700;font-size:1rem;color:#2e7d32;text-align:center;flex-shrink:0;"></div>
       </div>`;
