@@ -225,17 +225,22 @@ export async function runGrammarSentenceUnscramble(ctx) {
     sentenceLayout: { ...(ctx?.sentenceLayout || {}), ...layoutOverrides },
     onSentenceQuit: () => {
       try {
-        if (window.WordArcade?.startGrammarModeSelector) {
+        // Prefer browser Back behavior (HistoryManager) when in-game
+        const hasUsefulHistory = (window.history && window.history.length > 1);
+        const inGameHash = typeof window.location?.hash === 'string' && /#state-in_game/i.test(window.location.hash);
+        const inGameState = window.history?.state && window.history.state.stateId === 'in_game';
+        if (hasUsefulHistory && (inGameHash || inGameState)) {
+          window.history.back();
+        } else if (window.WordArcade?.startGrammarModeSelector) {
           window.WordArcade.startGrammarModeSelector();
-          return;
         }
       } catch {}
-  // Hide the splash/modal only when the game mode has ended and the
-  // quit action is performed.
-  try { if (splashController && typeof splashController.hide === 'function') splashController.hide(); } catch (e) {}
-  // Play final SFX to indicate end of mode
-  try { playSFX('end'); } catch (e) {}
-  showOpeningButtons?.(true);
+      // Hide the splash/modal only when the game mode has ended and the
+      // quit action is performed.
+      try { if (splashController && typeof splashController.hide === 'function') splashController.hide(); } catch (e) {}
+      // Play final SFX to indicate end of mode
+      try { playSFX('end'); } catch (e) {}
+      showOpeningButtons?.(true);
     },
   };
 
