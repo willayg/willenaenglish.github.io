@@ -6,7 +6,8 @@
     "ko": "빨간 불에서 멈춰야 해요.",
     "exampleSentence": "You must stop at the red light to be safe.",
     "exampleSentenceKo": "안전하려면 빨간 불에서 멈춰야 해요.",
-    "emoji": "🚦"
+    "emoji": "🚦",
+    "detractors": ["must to", "musted", "musts"]
   },
   {
     "id": "modal_verbs_intermediate_2",
@@ -15,7 +16,8 @@
     "ko": "야채를 먹어야 해요.",
     "exampleSentence": "You should eat vegetables every day.",
     "exampleSentenceKo": "매일 야채를 먹어야 해요.",
-    "emoji": "🥦"
+    "emoji": "🥦",
+    "detractors": ["should to", "shoulds", "shoulded"]
   },
   {
     "id": "modal_verbs_intermediate_3",
@@ -24,7 +26,8 @@
     "ko": "내일 비가 올지도 몰라요.",
     "exampleSentence": "Take an umbrella because it might rain tomorrow.",
     "exampleSentenceKo": "우산을 챙기세요. 내일 비가 올지도 몰라요.",
-    "emoji": "🌧️"
+    "emoji": "🌧️",
+    "detractors": ["might to", "mights", "mighted"]
   },
   {
     "id": "modal_verbs_intermediate_4",
@@ -33,7 +36,8 @@
     "ko": "도와주실래요?",
     "exampleSentence": "Could you help me with this box?",
     "exampleSentenceKo": "이 상자를 도와주실래요?",
-    "emoji": "🙏"
+    "emoji": "🙏",
+    "detractors": ["Can you to", "Could you to", "Coulds you"]
   },
   {
     "id": "modal_verbs_intermediate_5",
@@ -42,7 +46,8 @@
     "ko": "차 드시겠어요?",
     "exampleSentence": "Would you like some tea with your snack?",
     "exampleSentenceKo": "간식과 함께 차 드시겠어요?",
-    "emoji": "🍵"
+    "emoji": "🍵",
+    "detractors": ["Would you to like", "Woulds you", "Will you liked"]
   },
   {
     "id": "modal_verbs_intermediate_6",
@@ -51,7 +56,8 @@
     "ko": "들어가도 될까요?",
     "exampleSentence": "May I come in and talk to you?",
     "exampleSentenceKo": "들어가서 이야기해도 될까요?",
-    "emoji": "🚪"
+    "emoji": "🚪",
+    "detractors": ["May I to", "Mays I", "Mayed I"]
   },
   {
     "id": "modal_verbs_intermediate_7",
@@ -60,7 +66,8 @@
     "ko": "사과해야 해요.",
     "exampleSentence": "You ought to apologize for what you said.",
     "exampleSentenceKo": "당신이 한 말에 대해 사과해야 해요.",
-    "emoji": "🙇"
+    "emoji": "🙇",
+    "detractors": ["ought", "oughts to", "oughted to"]
   },
   {
     "id": "modal_verbs_intermediate_8",
@@ -69,7 +76,8 @@
     "ko": "지금 공부하는 게 좋겠어요.",
     "exampleSentence": "You had better study now if you want to pass.",
     "exampleSentenceKo": "합격하려면 지금 공부하는 게 좋겠어요.",
-    "emoji": "📚"
+    "emoji": "📚",
+    "detractors": ["have better", "has better", "had better to"]
   },
   {
     "id": "modal_verbs_intermediate_9",
@@ -78,7 +86,8 @@
     "ko": "전시품을 만지면 안 돼요.",
     "exampleSentence": "You mustn't touch the exhibits at the museum.",
     "exampleSentenceKo": "박물관에서 전시품을 만지면 안 돼요.",
-    "emoji": "🏛️"
+    "emoji": "🏛️",
+    "detractors": ["mustn't to", "don't must", "not must"]
   },
   {
     "id": "modal_verbs_intermediate_10",
@@ -87,7 +96,8 @@
     "ko": "일찍 올 필요 없어요.",
     "exampleSentence": "You needn't come early for the meeting.",
     "exampleSentenceKo": "회의에 일찍 올 필요 없어요.",
-    "emoji": "🕒"
+    "emoji": "🕒",
+    "detractors": ["needn't to", "don't need", "needs not"]
   },
   {
     "id": "modal_verbs_intermediate_11",
@@ -96,7 +106,8 @@
     "ko": "학생들이 휴대폰을 사용해도 되나요?",
     "exampleSentence": "Are students allowed to use phones during breaks?",
     "exampleSentenceKo": "쉬는 시간에 학생들이 휴대폰을 사용해도 되나요?",
-    "emoji": "📱"
+    "emoji": "📱",
+    "detractors": ["Is students allowed", "Do students allowed", "Are students allow"]
   },
   {
     "id": "modal_verbs_intermediate_12",
@@ -105,6 +116,7 @@
     "ko": "미리 말했을 수도 있어요.",
     "exampleSentence": "I could have told you earlier if you'd asked.",
     "exampleSentenceKo": "물어보셨다면 미리 말했을 수도 있어요.",
-    "emoji": "💭"
+    "emoji": "💭",
+    "detractors": ["could had told", "could have tell", "could of told"]
   }
 ]

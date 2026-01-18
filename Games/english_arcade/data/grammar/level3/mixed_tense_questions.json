@@ -6,7 +6,8 @@
     "ko": "아침 먹었어요? 지금 먹고 있어요? 나중에 점심 먹을 거예요?",
     "exampleSentence": "Past, Present Continuous, Future.",
     "exampleSentenceKo": "아침 먹었어요? 지금 먹고 있어요? 나중에 점심 먹을 거예요?",
-    "emoji": "🍳🍽️"
+    "emoji": "🍳🍽️",
+    "detractors": ["Do you eat", "Does you ate", "Did you eating"]
   },
   {
     "id": "mixed_tense_questions_2",
@@ -15,7 +16,8 @@
     "ko": "그녀는 어젯밤에 공부했어요? 지금 공부하고 있어요? 내일 공부할 거예요?",
     "exampleSentence": "Mixed tense questions.",
     "exampleSentenceKo": "그녀는 어젯밤에 공부했어요? 지금 공부하고 있어요? 내일 공부할 거예요?",
-    "emoji": "📚"
+    "emoji": "📚",
+    "detractors": ["Does she studied", "Did she studied", "Do she study"]
   },
   {
     "id": "mixed_tense_questions_3",
@@ -24,7 +26,8 @@
     "ko": "우리는 박물관에 갔어요? 지금 방문하고 있어요? 다음 주에 방문할 거예요?",
     "exampleSentence": "Mixed tense questions.",
     "exampleSentenceKo": "우리는 박물관에 갔어요? 지금 방문하고 있어요? 다음 주에 방문할 거예요?",
-    "emoji": "🏛️"
+    "emoji": "🏛️",
+    "detractors": ["Do we visited", "Did we visited", "Does we visit"]
   },
   {
     "id": "mixed_tense_questions_4",
@@ -33,7 +36,8 @@
     "ko": "그는 피자 먹었어요? 지금 먹고 있어요? 내일 피자 먹을 거예요?",
     "exampleSentence": "Mixed tense questions.",
     "exampleSentenceKo": "그는 피자 먹었어요? 지금 먹고 있어요? 내일 피자 먹을 거예요?",
-    "emoji": "🍕"
+    "emoji": "🍕",
+    "detractors": ["Does he ate", "Did he ate", "Do he eat"]
   },
   {
     "id": "mixed_tense_questions_5",
@@ -42,7 +46,8 @@
     "ko": "그들은 작년에 여행했어요? 지금 여행하고 있어요? 내년에 여행할 거예요?",
     "exampleSentence": "Mixed tense questions.",
     "exampleSentenceKo": "그들은 작년에 여행했어요? 지금 여행하고 있어요? 내년에 여행할 거예요?",
-    "emoji": "✈️"
+    "emoji": "✈️",
+    "detractors": ["Do they traveled", "Did they traveled", "Does they travel"]
   },
   {
     "id": "mixed_tense_questions_6",
@@ -51,7 +56,8 @@
     "ko": "지난 학기에 영어 배웠어요? 지금 배우고 있어요? 다음 학기에 더 배울 거예요?",
     "exampleSentence": "Mixed tense questions.",
     "exampleSentenceKo": "지난 학기에 영어 배웠어요? 지금 배우고 있어요? 다음 학기에 더 배울 거예요?",
-    "emoji": "🇬🇧"
+    "emoji": "🇬🇧",
+    "detractors": ["Do you learned", "Did you learned", "Does you learn"]
   },
   {
     "id": "mixed_tense_questions_7",
@@ -60,7 +66,8 @@
     "ko": "그녀가 전화했어요? 지금 전화하고 있어요? 나중에 전화할 거예요?",
     "exampleSentence": "Mixed tense questions.",
     "exampleSentenceKo": "그녀가 전화했어요? 지금 전화하고 있어요? 나중에 전화할 거예요?",
-    "emoji": "📞"
+    "emoji": "📞",
+    "detractors": ["Does she called", "Did she called", "Do she call"]
   },
   {
     "id": "mixed_tense_questions_8",
@@ -69,7 +76,8 @@
     "ko": "숙제 끝냈어요? 지금 하고 있어요? 나중에 끝낼 거예요?",
     "exampleSentence": "Mixed tense questions.",
     "exampleSentenceKo": "숙제 끝냈어요? 지금 하고 있어요? 나중에 끝낼 거예요?",
-    "emoji": "📒"
+    "emoji": "📒",
+    "detractors": ["Do we finished", "Did we finished", "Does we finish"]
   },
   {
     "id": "mixed_tense_questions_9",
@@ -78,7 +86,8 @@
     "ko": "그가 장난감을 부쉈어요? 지금 고치고 있어요? 내일 고칠 거예요?",
     "exampleSentence": "Mixed tense questions.",
     "exampleSentenceKo": "그가 장난감을 부쉈어요? 지금 고치고 있어요? 내일 고칠 거예요?",
-    "emoji": "🧸🔧"
+    "emoji": "🧸🔧",
+    "detractors": ["Does he breaked", "Did he breaked", "Do he break"]
   },
   {
     "id": "mixed_tense_questions_10",
@@ -87,7 +96,8 @@
     "ko": "그들은 게임 했어요? 지금 플레이하고 있어요? 나중에 할 거예요?",
     "exampleSentence": "Mixed tense questions.",
     "exampleSentenceKo": "그들은 게임 했어요? 지금 플레이하고 있어요? 나중에 할 거예요?",
-    "emoji": "🎮"
+    "emoji": "🎮",
+    "detractors": ["Do they played", "Did they played", "Does they play"]
   },
   {
     "id": "mixed_tense_questions_11",
@@ -96,7 +106,8 @@
     "ko": "할머니 방문했어요? 지금 방문하고 있어요? 다음 주에 방문할 거예요?",
     "exampleSentence": "Mixed tense questions.",
     "exampleSentenceKo": "할머니 방문했어요? 지금 방문하고 있어요? 다음 주에 방문할 거예요?",
-    "emoji": "👵"
+    "emoji": "👵",
+    "detractors": ["Do you visited", "Did you visited", "Does you visit"]
   },
   {
     "id": "mixed_tense_questions_12",
@@ -105,7 +116,8 @@
     "ko": "그녀는 쿠키를 구웠어요? 지금 굽고 있어요? 다시 구울 거예요?",
     "exampleSentence": "Mixed tense questions.",
     "exampleSentenceKo": "그녀는 쿠키를 구웠어요? 지금 굽고 있어요? 다시 구울 거예요?",
-    "emoji": "🍪"
+    "emoji": "🍪",
+    "detractors": ["Does she baked", "Did she baked", "Do she bake"]
   },
   {
     "id": "mixed_tense_questions_13",
@@ -114,7 +126,8 @@
     "ko": "그는 프로젝트를 끝냈어요? 지금 작업 중이에요? 내일 끝낼 거예요?",
     "exampleSentence": "Mixed tense questions.",
     "exampleSentenceKo": "그는 프로젝트를 끝냈어요? 지금 작업 중이에요? 내일 끝낼 거예요?",
-    "emoji": "📁"
+    "emoji": "📁",
+    "detractors": ["Does he finished", "Did he finished", "Do he finish"]
   },
   {
     "id": "mixed_tense_questions_14",
@@ -123,7 +136,8 @@
     "ko": "그들은 표를 샀어요? 지금 구매하고 있어요? 나중에 더 살 건가요?",
     "exampleSentence": "Mixed tense questions.",
     "exampleSentenceKo": "그들은 표를 샀어요? 지금 구매하고 있어요? 나중에 더 살 건가요?",
-    "emoji": "🎫"
+    "emoji": "🎫",
+    "detractors": ["Do they buyed", "Did they buyed", "Does they buy"]
   },
   {
     "id": "mixed_tense_questions_15",
@@ -132,6 +146,7 @@
     "ko": "집 청소했어요? 지금 청소하고 있어요? 다시 청소할 거예요?",
     "exampleSentence": "Mixed tense questions.",
     "exampleSentenceKo": "집 청소했어요? 지금 청소하고 있어요? 다시 청소할 거예요?",
-    "emoji": "🧹"
+    "emoji": "🧹",
+    "detractors": ["Do you cleaned", "Did you cleaned", "Does you clean"]
   }
 ]

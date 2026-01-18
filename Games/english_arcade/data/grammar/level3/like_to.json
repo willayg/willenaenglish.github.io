@@ -6,7 +6,8 @@
     "ko": "나는 책 읽는 것을 좋아해요.",
     "exampleSentence": "I like to read books before bed.",
     "exampleSentenceKo": "나는 책 읽는 것을 좋아해요.",
-    "emoji": "📚"
+    "emoji": "📚",
+    "detractors": ["likes to", "liked to", "liking to"]
   },
   {
     "id": "like_to_2",
@@ -15,7 +16,8 @@
     "ko": "그녀는 축구를 좋아해요.",
     "exampleSentence": "She likes to play soccer on weekends.",
     "exampleSentenceKo": "그녀는 축구를 좋아해요.",
-    "emoji": "⚽"
+    "emoji": "⚽",
+    "detractors": ["like to", "liking to", "liked to"]
   },
   {
     "id": "like_to_3",
@@ -24,7 +26,8 @@
     "ko": "우리는 피자 먹는 것을 좋아해요.",
     "exampleSentence": "We like to eat pizza on Fridays.",
     "exampleSentenceKo": "우리는 피자 먹는 것을 좋아해요.",
-    "emoji": "🍕"
+    "emoji": "🍕",
+    "detractors": ["likes to", "liked to", "liking to"]
   },
   {
     "id": "like_to_4",
@@ -33,7 +36,8 @@
     "ko": "그는 수영하는 것을 좋아해요.",
     "exampleSentence": "He likes to swim in summer.",
     "exampleSentenceKo": "그는 수영하는 것을 좋아해요.",
-    "emoji": "🏊"
+    "emoji": "🏊",
+    "detractors": ["like to", "liking to", "liked to"]
   },
   {
     "id": "like_to_5",
@@ -42,7 +46,8 @@
     "ko": "그들은 노래 부르는 것을 좋아해요.",
     "exampleSentence": "They like to sing songs together.",
     "exampleSentenceKo": "그들은 노래 부르는 것을 좋아해요.",
-    "emoji": "🎤"
+    "emoji": "🎤",
+    "detractors": ["likes to", "liked to", "liking to"]
   },
   {
     "id": "like_to_6",
@@ -51,7 +56,8 @@
     "ko": "나는 그림 그리는 것을 좋아해요.",
     "exampleSentence": "I like to draw pictures in art class.",
     "exampleSentenceKo": "나는 그림 그리는 것을 좋아해요.",
-    "emoji": "🎨"
+    "emoji": "🎨",
+    "detractors": ["likes to", "liked to", "liking to"]
   },
   {
     "id": "like_to_7",
@@ -60,7 +66,8 @@
     "ko": "너는 게임하는 것을 좋아해요.",
     "exampleSentence": "You like to play games after school.",
     "exampleSentenceKo": "너는 게임하는 것을 좋아해요.",
-    "emoji": "🎮"
+    "emoji": "🎮",
+    "detractors": ["likes to", "liked to", "liking to"]
   },
   {
     "id": "like_to_8",
@@ -69,7 +76,8 @@
     "ko": "그녀는 음악 듣는 것을 좋아해요.",
     "exampleSentence": "She likes to listen to music when studying.",
     "exampleSentenceKo": "그녀는 음악 듣는 것을 좋아해요.",
-    "emoji": "🎧"
+    "emoji": "🎧",
+    "detractors": ["like to", "liking to", "liked to"]
   },
   {
     "id": "like_to_9",
@@ -78,7 +86,8 @@
     "ko": "우리는 공원에 가는 것을 좋아해요.",
     "exampleSentence": "We like to go to the park on sunny days.",
     "exampleSentenceKo": "우리는 공원에 가는 것을 좋아해요.",
-    "emoji": "🌳"
+    "emoji": "🌳",
+    "detractors": ["likes to", "liked to", "liking to"]
   },
   {
     "id": "like_to_10",
@@ -87,7 +96,8 @@
     "ko": "그는 블록으로 만드는 것을 좋아해요.",
     "exampleSentence": "He likes to build with blocks at home.",
     "exampleSentenceKo": "그는 블록으로 만드는 것을 좋아해요.",
-    "emoji": "🧱"
+    "emoji": "🧱",
+    "detractors": ["like to", "liking to", "liked to"]
   },
   {
     "id": "like_to_11",
@@ -96,7 +106,8 @@
     "ko": "당신은 다른 사람을 돕는 것을 좋아해요.",
     "exampleSentence": "You like to help others at school.",
     "exampleSentenceKo": "당신은 다른 사람을 돕는 것을 좋아해요.",
-    "emoji": "🤝"
+    "emoji": "🤝",
+    "detractors": ["likes to", "liked to", "liking to"]
   },
   {
     "id": "like_to_12",
@@ -105,7 +116,8 @@
     "ko": "그녀는 자전거 타는 것을 좋아해요.",
     "exampleSentence": "She likes to ride a bike in the park.",
     "exampleSentenceKo": "그녀는 자전거 타는 것을 좋아해요.",
-    "emoji": "🚲"
+    "emoji": "🚲",
+    "detractors": ["like to", "liking to", "liked to"]
   },
   {
     "id": "like_to_13",
@@ -114,7 +126,8 @@
     "ko": "그들은 영화 보는 것을 좋아해요.",
     "exampleSentence": "They like to watch movies on weekends.",
     "exampleSentenceKo": "그들은 영화 보는 것을 좋아해요.",
-    "emoji": "🎬"
+    "emoji": "🎬",
+    "detractors": ["likes to", "liked to", "liking to"]
   },
   {
     "id": "like_to_14",
@@ -123,7 +136,8 @@
     "ko": "나는 스티커 모으는 것을 좋아해요.",
     "exampleSentence": "I like to collect stickers at school.",
     "exampleSentenceKo": "나는 스티커 모으는 것을 좋아해요.",
-    "emoji": "📎"
+    "emoji": "📎",
+    "detractors": ["likes to", "liked to", "liking to"]
   },
   {
     "id": "like_to_15",
@@ -132,6 +146,7 @@
     "ko": "우리는 꽃을 심는 것을 좋아해요.",
     "exampleSentence": "We like to plant flowers in the spring.",
     "exampleSentenceKo": "우리는 꽃을 심는 것을 좋아해요.",
-    "emoji": "🌷"
+    "emoji": "🌷",
+    "detractors": ["likes to", "liked to", "liking to"]
   }
 ]

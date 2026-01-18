@@ -35,9 +35,9 @@ export function showGrammarL3Modal({ onChoose, onClose }) {
   ensureGrammarL3ModalStyles();
   const SCROLL_KEY = 'grammarL3Modal_scrollTop';
 
-  // Level 3 grammar lists - 10 topics open to public
+  // Level 3 grammar lists - 21 topics
   let level3Lists = [
-    // Past Tense
+    // === PAST TENSE ===
     {
       id: 'past_simple_irregular',
       label: 'Past Simple (Irregular)',
@@ -59,7 +59,7 @@ export function showGrammarL3Modal({ onChoose, onClose }) {
       file: 'data/grammar/level3/past_tense_questions.json',
       config: { ruleHint: 'Questions in past tense', grammarType: 'past_tense_questions' }
     },
-    // Future Tense
+    // === FUTURE TENSE ===
     {
       id: 'be_going_to_future',
       label: 'Be Going To (Future)',
@@ -88,7 +88,7 @@ export function showGrammarL3Modal({ onChoose, onClose }) {
       file: 'data/grammar/level3/will_questions.json',
       config: { ruleHint: 'Questions with "will"', grammarType: 'will_questions' }
     },
-    // Mixed Tenses
+    // === MIXED TENSES ===
     {
       id: 'past_vs_future',
       label: 'Past vs Future',
@@ -96,7 +96,7 @@ export function showGrammarL3Modal({ onChoose, onClose }) {
       file: 'data/grammar/level3/past_vs_future.json',
       config: { ruleHint: 'Comparing past and future tenses', grammarType: 'past_vs_future' }
     },
-    // Modal Verbs
+    // === MODAL VERBS & EXPRESSIONS ===
     {
       id: 'have_to',
       label: 'Have To (Obligation)',
@@ -110,18 +110,91 @@ export function showGrammarL3Modal({ onChoose, onClose }) {
       emoji: '💫',
       file: 'data/grammar/level3/want_to.json',
       config: { ruleHint: 'Express desire with "want to"', grammarType: 'want_to' }
-  }
-  /*
-  // Additional topics (coming soon)
-  ,{
-    id: 'past_vs_present_vs_future_vs_continuous',
-    label: 'All Tenses Practice',
-    emoji: '🎯',
-    file: 'data/grammar/level3/past_vs_present_vs_future_vs_continuous.json',
-    config: { ruleHint: 'Past, present, future, and continuous tenses', grammarType: 'all_tenses' }
-  }
-  */
-];
+    },
+    {
+      id: 'like_to',
+      label: 'Like To (Preference)',
+      emoji: '💕',
+      file: 'data/grammar/level3/like_to.json',
+      config: { ruleHint: 'Express preferences with "like to"', grammarType: 'like_to' }
+    },
+    {
+      id: 'like_to_vs_want_to_vs_have_to',
+      label: 'Like vs Want vs Have To',
+      emoji: '🎭',
+      file: 'data/grammar/level3/like_to_vs_want_to_vs_have_to.json',
+      config: { ruleHint: 'Compare like to, want to, and have to', grammarType: 'modal_comparison' }
+    },
+    {
+      id: 'modal_verbs_intermediate',
+      label: 'Modal Verbs (Must, Should, May)',
+      emoji: '🎯',
+      file: 'data/grammar/level3/modal_verbs_intermediate.json',
+      config: { ruleHint: 'Must, should, may, might, could, would', grammarType: 'modal_verbs' }
+    },
+    // === IMPERATIVES & SUGGESTIONS ===
+    {
+      id: 'imperatives_suggestions',
+      label: 'Imperatives & Suggestions',
+      emoji: '📢',
+      file: 'data/grammar/level3/imperatives_suggestions.json',
+      config: { ruleHint: "Commands and suggestions: Let's, Please, Don't", grammarType: 'imperatives' }
+    },
+    // === PREPOSITIONS ===
+    {
+      id: 'prepositions_direction',
+      label: 'Prepositions of Direction',
+      emoji: '🧭',
+      file: 'data/grammar/level3/prepositions_direction.json',
+      config: { ruleHint: 'Up, down, through, across, around, along', grammarType: 'prepositions_direction' }
+    },
+    // === ADJECTIVES ===
+    {
+      id: 'adjectives_people',
+      label: 'Adjectives (People)',
+      emoji: '👤',
+      file: 'data/grammar/level3/adjectives_people.json',
+      config: { ruleHint: 'Describing personality and character', grammarType: 'adjectives_people' }
+    },
+    {
+      id: 'adjectives_world',
+      label: 'Adjectives (Places & Things)',
+      emoji: '🌍',
+      file: 'data/grammar/level3/adjectives_world.json',
+      config: { ruleHint: 'Describing places and the world', grammarType: 'adjectives_world' }
+    },
+    // === COMPARATIVES & SUPERLATIVES ===
+    {
+      id: 'short_comparatives',
+      label: 'Comparatives (-er than)',
+      emoji: '📊',
+      file: 'data/grammar/level3/short_comparatives.json',
+      config: { ruleHint: 'Comparing two things: bigger, faster, better', grammarType: 'comparatives' }
+    },
+    {
+      id: 'short_superlatives',
+      label: 'Superlatives (the -est)',
+      emoji: '🏆',
+      file: 'data/grammar/level3/short_superlatives.json',
+      config: { ruleHint: 'The most of all: biggest, fastest, best', grammarType: 'superlatives' }
+    },
+    // === QUANTIFIERS ===
+    {
+      id: 'a_few_vs_a_little',
+      label: 'A Few vs A Little',
+      emoji: '🔢',
+      file: 'data/grammar/level3/a_few_vs_a_little.json',
+      config: { ruleHint: 'Countable vs uncountable nouns', grammarType: 'quantifiers' }
+    },
+    // === MIXED TENSE QUESTIONS ===
+    {
+      id: 'mixed_tense_questions',
+      label: 'Mixed Tense Questions',
+      emoji: '🤷',
+      file: 'data/grammar/level3/mixed_tense_questions.json',
+      config: { ruleHint: 'Questions in past, present, and future', grammarType: 'mixed_questions' }
+    }
+  ];
   let modal = document.getElementById('grammarL3Modal');
   if (!modal) {
     modal = document.createElement('div');
