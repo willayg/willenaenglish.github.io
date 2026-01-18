@@ -17,6 +17,7 @@ function detectGrammarType(filePath, data) {
   if (path.includes('past_simple_regular')) return 'past_regular';
   if (path.includes('past_vs_future')) return 'past_vs_future';
   if (path.includes('past_vs_present_vs_future') || path.includes('all_tense')) return 'all_tenses';
+  if (path.includes('mixed_tense_question')) return 'mixed_tense_questions';
   if (path.includes('tense_question')) return 'tense_questions';
   // Will future/questions: sentence-based with "will" patterns
   if (path.includes('will_future')) return 'will_future';
@@ -24,12 +25,26 @@ function detectGrammarType(filePath, data) {
   // Modal verbs: have to, want to, like to
   if (path.includes('have_to')) return 'have_to';
   if (path.includes('want_to')) return 'want_to';
+  if (path.includes('like_to_vs_want_to')) return 'like_to_vs_want_to_vs_have_to';
   if (path.includes('like_to')) return 'like_to';
+  // Quantifiers and adjectives
+  if (path.includes('a_few_vs_a_little')) return 'a_few_vs_a_little';
+  if (path.includes('adjectives_people')) return 'adjectives_people';
+  if (path.includes('adjectives_world')) return 'adjectives_world';
+  if (path.includes('short_comparatives')) return 'short_comparatives';
+  if (path.includes('short_superlatives')) return 'short_superlatives';
+  // Modals and advanced
+  if (path.includes('modal_verbs_intermediate')) return 'modal_verbs_intermediate';
+  if (path.includes('modal_verbs_advanced')) return 'modal_verbs_advanced';
+  if (path.includes('imperatives_suggestions')) return 'imperatives_suggestions';
+  if (path.includes('prepositions_direction')) return 'prepositions_direction';
   // Check data properties for hints
   if (Array.isArray(data) && data.length > 0) {
     const first = data[0];
+    // If item has target and detractors, use detractor-based mode
+    if (first.target && first.detractors) return 'target_based';
     if (first.structure && first.tense) return 'sentence_based';
-    if (first.detractors) return 'past_irregular';
+    if (first.detractors) return 'detractor_based';
   }
   return 'past_irregular';
 }
@@ -529,6 +544,156 @@ export async function startGrammarFillGapL3({
       }
     }
     
+    // ========================================
+    // TARGET-BASED GRAMMAR TYPES (use target + detractors from JSON)
+    // These include: a_few_vs_a_little, adjectives_people, adjectives_world,
+    // short_comparatives, short_superlatives, modal_verbs, imperatives, prepositions, etc.
+    // ========================================
+    
+    // Check if item has "target" field - use it directly
+    if (item.target && Array.isArray(item.detractors) && item.detractors.length > 0) {
+      const targetPhrase = item.target.trim();
+      // Try to find and blank the target phrase in the sentence
+      const regex = new RegExp(`\\b${targetPhrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
+      if (regex.test(sentence)) {
+        const blanked = sentence.replace(regex, '_____');
+        const choices = [targetPhrase, ...item.detractors.filter(d => d && d.trim())];
+        // Limit to 4 choices max
+        const finalChoices = choices.length > 4 ? [targetPhrase, ...shuffle(choices.slice(1)).slice(0, 3)] : choices;
+        return {
+          blanked,
+          answer: targetPhrase,
+          choices: shuffle(finalChoices)
+        };
+      }
+    }
+    
+    // Check if item has "base" field with detractors - adjectives, verbs, etc.
+    if (item.base && Array.isArray(item.detractors) && item.detractors.length > 0) {
+      const baseWord = item.base.trim();
+      // Try to find and blank the base word in the sentence
+      const regex = new RegExp(`\\b${baseWord.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
+      if (regex.test(sentence)) {
+        const blanked = sentence.replace(regex, '_____');
+        const choices = [baseWord, ...item.detractors.filter(d => d && d.trim())];
+        const finalChoices = choices.length > 4 ? [baseWord, ...shuffle(choices.slice(1)).slice(0, 3)] : choices;
+        return {
+          blanked,
+          answer: baseWord,
+          choices: shuffle(finalChoices)
+        };
+      }
+    }
+    
+    // Mixed Tense Questions: Handle "Did/Is/Will" questions with detractors
+    if (grammarType === 'mixed_tense_questions' && Array.isArray(item.detractors)) {
+      // Find the auxiliary or main verb structure to blank
+      const didMatch = sentence.match(/^(Did)\s+(you|he|she|it|we|they)\s+(\w+)/i);
+      const isMatch = sentence.match(/^(Is|Are|Am)\s+(you|he|she|it|we|they)\s+(\w+ing)/i);
+      const willMatch = sentence.match(/^(Will)\s+(you|he|she|it|we|they)\s+(\w+)/i);
+      
+      if (didMatch) {
+        const fullPhrase = `${didMatch[1]} ${didMatch[2]} ${didMatch[3]}`;
+        const blanked = sentence.replace(fullPhrase, '_____');
+        const choices = [fullPhrase, ...item.detractors.filter(d => d && d.trim())];
+        const finalChoices = choices.length > 4 ? [fullPhrase, ...shuffle(choices.slice(1)).slice(0, 3)] : choices;
+        return { blanked, answer: fullPhrase, choices: shuffle(finalChoices) };
+      }
+      // For mixed tense, blank the opening auxiliary pattern
+      const auxMatch = sentence.match(/^(Did|Does|Do|Is|Are|Am|Will)\s+/i);
+      if (auxMatch) {
+        const aux = auxMatch[1];
+        const blanked = sentence.replace(new RegExp(`^${aux}\\s+`, 'i'), '_____ ');
+        const choices = [aux, ...item.detractors.filter(d => d && d.trim()).slice(0, 3)];
+        return { blanked, answer: aux, choices: shuffle(choices) };
+      }
+    }
+    
+    // Like to vs Want to vs Have to: blank the modal phrase
+    if (grammarType === 'like_to_vs_want_to_vs_have_to') {
+      const match = sentence.match(/\b(like to|likes to|want to|wants to|have to|has to)\b/i);
+      if (match && Array.isArray(item.detractors)) {
+        const phrase = match[1];
+        const blanked = sentence.replace(new RegExp(`\\b${phrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i'), '_____');
+        const choices = [phrase, ...item.detractors.filter(d => d && d.trim())];
+        const finalChoices = choices.length > 4 ? [phrase, ...shuffle(choices.slice(1)).slice(0, 3)] : choices;
+        return { blanked, answer: phrase, choices: shuffle(finalChoices) };
+      }
+    }
+    
+    // Modal verbs intermediate/advanced: blank the modal (can, should, must, etc.)
+    if (grammarType === 'modal_verbs_intermediate' || grammarType === 'modal_verbs_advanced') {
+      const match = sentence.match(/\b(can|could|should|must|may|might|would|will)\b/i);
+      if (match && Array.isArray(item.detractors)) {
+        const modal = match[1];
+        const blanked = sentence.replace(new RegExp(`\\b${modal}\\b`, 'i'), '_____');
+        const choices = [modal, ...item.detractors.filter(d => d && d.trim())];
+        const finalChoices = choices.length > 4 ? [modal, ...shuffle(choices.slice(1)).slice(0, 3)] : choices;
+        return { blanked, answer: modal, choices: shuffle(finalChoices) };
+      }
+    }
+    
+    // Imperatives and suggestions: blank the verb or key phrase
+    if (grammarType === 'imperatives_suggestions') {
+      // Try to use target or detractors if available
+      if (item.base && Array.isArray(item.detractors)) {
+        const verb = item.base.trim();
+        const regex = new RegExp(`\\b${verb.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
+        if (regex.test(sentence)) {
+          const blanked = sentence.replace(regex, '_____');
+          const choices = [verb, ...item.detractors.filter(d => d && d.trim())];
+          const finalChoices = choices.length > 4 ? [verb, ...shuffle(choices.slice(1)).slice(0, 3)] : choices;
+          return { blanked, answer: verb, choices: shuffle(finalChoices) };
+        }
+      }
+    }
+    
+    // Prepositions direction: blank the preposition
+    if (grammarType === 'prepositions_direction') {
+      const match = sentence.match(/\b(to|from|into|onto|toward|towards|through|across|along|over|under|up|down|in|out|at|on|by)\b/i);
+      if (match && Array.isArray(item.detractors)) {
+        const prep = match[1];
+        const blanked = sentence.replace(new RegExp(`\\b${prep}\\b`, 'i'), '_____');
+        const choices = [prep, ...item.detractors.filter(d => d && d.trim())];
+        const finalChoices = choices.length > 4 ? [prep, ...shuffle(choices.slice(1)).slice(0, 3)] : choices;
+        return { blanked, answer: prep, choices: shuffle(finalChoices) };
+      }
+    }
+    
+    // Short comparatives/superlatives: blank the comparative/superlative form
+    if (grammarType === 'short_comparatives' || grammarType === 'short_superlatives') {
+      if (item.base && Array.isArray(item.detractors)) {
+        const targetWord = item.base.trim();
+        const regex = new RegExp(`\\b${targetWord.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
+        if (regex.test(sentence)) {
+          const blanked = sentence.replace(regex, '_____');
+          const choices = [targetWord, ...item.detractors.filter(d => d && d.trim())];
+          const finalChoices = choices.length > 4 ? [targetWord, ...shuffle(choices.slice(1)).slice(0, 3)] : choices;
+          return { blanked, answer: targetWord, choices: shuffle(finalChoices) };
+        }
+      }
+    }
+    
+    // General fallback for any item with detractors
+    if (Array.isArray(item.detractors) && item.detractors.length > 0) {
+      // Try to find the word/base/target in the sentence
+      const possibleTargets = [item.target, item.base, item.word, item.past].filter(t => t && t.trim());
+      for (const target of possibleTargets) {
+        const targetWord = target.trim();
+        const regex = new RegExp(`\\b${targetWord.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
+        if (regex.test(sentence)) {
+          const blanked = sentence.replace(regex, '_____');
+          const choices = [targetWord, ...item.detractors.filter(d => d && d.trim())];
+          const finalChoices = choices.length > 4 ? [targetWord, ...shuffle(choices.slice(1)).slice(0, 3)] : choices;
+          return { blanked, answer: targetWord, choices: shuffle(finalChoices) };
+        }
+      }
+    }
+    
+    // ========================================
+    // END TARGET-BASED GRAMMAR TYPES
+    // ========================================
+    
     // Fallback for irregular past or other types
     const pastToken = (item.past || '').trim();
     const baseToken = (item.base || '').trim();
@@ -576,16 +741,57 @@ export async function startGrammarFillGapL3({
       };
     }
     
-    // Last resort: blank some word
+    // Last resort: blank some word - try to pick a meaningful word and generate contextual distractors
     const words = sentence.split(/\s+/);
     if (words.length > 2) {
-      const targetIdx = Math.floor(words.length / 2);
-      const answer = words[targetIdx];
+      // Try to find a meaningful word (verb, noun, adjective) to blank
+      // Avoid blanking articles, prepositions, pronouns
+      const skipWords = new Set(['a', 'an', 'the', 'is', 'are', 'am', 'was', 'were', 'i', 'you', 'he', 'she', 'it', 'we', 'they', 'my', 'your', 'his', 'her', 'its', 'our', 'their', 'to', 'in', 'on', 'at', 'by', 'for', 'of', 'and', 'or', 'but', 'so', 'if', 'do', 'does', 'did']);
+      
+      // Find a good word to blank (preferably longer, not in skip list)
+      let targetIdx = Math.floor(words.length / 2);
+      for (let i = 1; i < words.length - 1; i++) {
+        const word = words[i].toLowerCase().replace(/[^a-z]/g, '');
+        if (word.length >= 4 && !skipWords.has(word)) {
+          targetIdx = i;
+          break;
+        }
+      }
+      
+      const answer = words[targetIdx].replace(/[.,!?;:]$/, ''); // Remove trailing punctuation from answer
       words[targetIdx] = '_____';
+      
+      // Generate smarter distractors based on context
+      let distractors = [];
+      const answerLower = answer.toLowerCase();
+      
+      // If it looks like a verb ending in -ing
+      if (answerLower.endsWith('ing')) {
+        const base = answerLower.slice(0, -3);
+        distractors = [base + 'ed', base + 's', base];
+      }
+      // If it looks like a past tense verb (-ed)
+      else if (answerLower.endsWith('ed')) {
+        const base = answerLower.slice(0, -2);
+        distractors = [base + 'ing', base + 's', base];
+      }
+      // If it looks like a plural noun or 3rd person verb (-s)
+      else if (answerLower.endsWith('s') && answerLower.length > 3) {
+        const base = answerLower.slice(0, -1);
+        distractors = [base + 'ed', base + 'ing', base];
+      }
+      // Default: try common confusions
+      else {
+        distractors = [answerLower + 'ed', answerLower + 's', answerLower + 'ing'];
+      }
+      
+      // Filter out invalid distractors that are same as answer
+      distractors = distractors.filter(d => d.toLowerCase() !== answerLower).slice(0, 3);
+      
       return {
         blanked: words.join(' '),
         answer,
-        choices: shuffle([answer, 'is', 'was', 'will'])
+        choices: shuffle([answer, ...distractors])
       };
     }
     
