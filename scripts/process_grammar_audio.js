@@ -81,13 +81,20 @@ function normalizeKey(value) {
 async function detectFunctionsBase() {
 	for (const base of functionBases) {
 		try {
-			const ping = await fetch(base + '/diag_env', { timeout: 3000 });
-			if (ping.ok) return base;
+			const controller = new AbortController();
+			const timeoutId = setTimeout(() => controller.abort(), 3000);
+			const ping = await fetch(base + '/diag_env', { signal: controller.signal });
+			clearTimeout(timeoutId);
+			if (ping.ok) {
+				console.log(`[INFO] Detected functions base: ${base}`);
+				return base;
+			}
 		} catch (err) {
-			// ignore
+			// ignore and try next
 		}
 	}
-	return functionBases[functionBases.length - 1];
+	console.log('[WARN] Could not detect functions base, using default');
+	return 'http://localhost:9000/.netlify/functions';
 }
 
 function listGrammarFiles(dir) {
