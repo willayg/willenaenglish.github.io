@@ -448,9 +448,9 @@ export async function showGrammarModeSelector({ grammarFile, grammarName, gramma
           return c === target || ck === targetKey || (fileBasename && (ck === fileBasename || cFile === fileBasename)) || substringMatch;
         });
 
-        // If we have a target and no match, skip this session
-        // Be more lenient: if no list candidates at all, include the session if it's grammar-related
-        if (target && !matchesTarget && listCandidates.length > 0) return;
+        // STRICT matching: Only include session if it matches the target list
+        // Skip sessions that don't have proper list tracking OR don't match
+        if (!matchesTarget) return;
 
         const modeKey = canon(session.mode);
         const category = canon(summary?.category || session.category);
