@@ -387,8 +387,9 @@ export async function showGrammarModeSelector({ grammarFile, grammarName, gramma
       const canonKey = (s) => canon(s).replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
       const target = canon(currentGrammarName);
       const targetKey = canonKey(currentGrammarName);
-      // Also extract just the file basename if grammarFile is available
+      // Prefer exact file-based matching when grammarFile is known
       const fileBasename = currentGrammarFile ? canonKey(currentGrammarFile.split('/').pop().replace(/\.json$/i, '')) : '';
+      const filePathKey = currentGrammarFile ? canonKey(currentGrammarFile) : '';
       const bestByMode = {};
 
       // Debug: log target matching info for Level 3
@@ -430,9 +431,9 @@ export async function showGrammarModeSelector({ grammarFile, grammarName, gramma
           const ck = canonKey(candidate);
           // Also extract file basename from paths
           const cFile = candidate && candidate.includes('/') ? canonKey(candidate.split('/').pop().replace(/\.json$/i, '')) : '';
-          // Check for substring match as well (more lenient for grammar lists)
-          const substringMatch = fileBasename && (ck.includes(fileBasename) || fileBasename.includes(ck) || cFile.includes(fileBasename) || fileBasename.includes(cFile));
-          return c === target || ck === targetKey || (fileBasename && (ck === fileBasename || cFile === fileBasename)) || substringMatch;
+          const isFileMatch = (fileBasename && (ck === fileBasename || cFile === fileBasename)) || (filePathKey && ck === filePathKey);
+          const isNameMatch = !fileBasename && (c === target || ck === targetKey);
+          return isFileMatch || isNameMatch;
         });
 
         // If we have a target and no match, skip this session
