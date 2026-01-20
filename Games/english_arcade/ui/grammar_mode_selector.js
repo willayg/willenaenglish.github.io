@@ -448,6 +448,7 @@ export async function showGrammarModeSelector({ grammarFile, grammarName, gramma
         }
 
         // Check if any candidate matches target (using both exact and canonical key matching)
+        let matchReason = null;
         const matchesTarget = listCandidates.some(candidate => {
           const c = canon(candidate);
           const ck = canonKey(candidate);
@@ -455,7 +456,11 @@ export async function showGrammarModeSelector({ grammarFile, grammarName, gramma
           const cFile = candidate && candidate.includes('/') ? canonKey(candidate.split('/').pop().replace(/\.json$/i, '')) : '';
           const isFileMatch = (fileBasename && (ck === fileBasename || cFile === fileBasename)) || (filePathKey && ck === filePathKey);
           const isNameMatch = !fileBasename && (c === target || ck === targetKey);
-          return isFileMatch || isNameMatch;
+          const matched = isFileMatch || isNameMatch;
+          if (matched && isLevel3Grammar) {
+            matchReason = { candidate, c, ck, cFile, isFileMatch, isNameMatch, target, targetKey, fileBasename, filePathKey };
+          }
+          return matched;
         });
 
         // STRICT matching: Only include session if it matches the target list
@@ -468,7 +473,7 @@ export async function showGrammarModeSelector({ grammarFile, grammarName, gramma
         }
 
         if (isLevel3Grammar) {
-          console.debug('[GrammarModeSelector L3] Session MATCHED:', { mode: session.mode, listCandidates, matched: true });
+          console.warn('[GrammarModeSelector L3] Session MATCHED:', { mode: session.mode, sessionId: session.session_id, listCandidates, matchReason });
         }
 
         const modeKey = canon(session.mode);
