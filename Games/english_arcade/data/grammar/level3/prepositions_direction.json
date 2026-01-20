@@ -5,8 +5,9 @@
     "en": "Walk around the park.",
     "ko": "공원을 돌아 걸으세요.",
     "exampleSentence": "Walk around the park with friends.",
-    "exampleSentenceKo": "공원을 돌아 걸으세요.",
-    "emoji": "🚶‍♂️🌳"
+    "exampleSentenceKo": "친구들과 함께 공원을 돌아 걸으세요.",
+    "emoji": "🚶‍♂️🌳",
+    "detractors": ["through", "under", "into"]
   },
   {
     "id": "prepositions_direction_2",
@@ -14,8 +15,9 @@
     "en": "Go up the stairs.",
     "ko": "계단을 올라가세요.",
     "exampleSentence": "Go up the stairs to the second floor.",
-    "exampleSentenceKo": "계단을 올라가세요.",
-    "emoji": "⬆️"
+    "exampleSentenceKo": "2층에 가기 위해 계단을 올라가세요.",
+    "emoji": "⬆️",
+    "detractors": ["around", "through", "past"]
   },
   {
     "id": "prepositions_direction_3",
@@ -23,8 +25,9 @@
     "en": "Come down quickly.",
     "ko": "빨리 내려오세요.",
     "exampleSentence": "Come down quickly for lunch.",
-    "exampleSentenceKo": "빨리 내려오세요.",
-    "emoji": "⬇️"
+    "exampleSentenceKo": "점심을 위해 빨리 내려오세요.",
+    "emoji": "⬇️",
+    "detractors": ["up", "across", "through"]
   },
   {
     "id": "prepositions_direction_4",
@@ -32,8 +35,9 @@
     "en": "Go through the door.",
     "ko": "문을 통과하세요.",
     "exampleSentence": "Go through the door to the classroom.",
-    "exampleSentenceKo": "문을 통과하세요.",
-    "emoji": "🚪"
+    "exampleSentenceKo": "교실에 가기 위해 문을 통과하세요.",
+    "emoji": "🚪",
+    "detractors": ["around", "over", "under"]
   },
   {
     "id": "prepositions_direction_5",
@@ -41,8 +45,9 @@
     "en": "Run across the bridge.",
     "ko": "다리를 가로질러 뛰세요.",
     "exampleSentence": "Run across the bridge to the park.",
-    "exampleSentenceKo": "다리를 가로질러 뛰세요.",
-    "emoji": "🌉"
+    "exampleSentenceKo": "공원에 가기 위해 다리를 가로질러 뛰세요.",
+    "emoji": "🌉",
+    "detractors": ["around", "through", "along"]
   },
   {
     "id": "prepositions_direction_6",
@@ -50,8 +55,9 @@
     "en": "Walk past the store.",
     "ko": "가게를 지나서 걸으세요.",
     "exampleSentence": "Walk past the store to get to school.",
-    "exampleSentenceKo": "가게를 지나서 걸으세요.",
-    "emoji": "🏪"
+    "exampleSentenceKo": "학교에 가기 위해 가게를 지나서 걸으세요.",
+    "emoji": "🏪",
+    "detractors": ["into", "under", "through"]
   },
   {
     "id": "prepositions_direction_7",
@@ -59,8 +65,9 @@
     "en": "Go under the bridge.",
     "ko": "다리 아래로 가세요.",
     "exampleSentence": "Go under the bridge to reach the river.",
-    "exampleSentenceKo": "다리 아래로 가세요.",
-    "emoji": "🌊"
+    "exampleSentenceKo": "강에 도달하기 위해 다리 아래로 가세요.",
+    "emoji": "🌊",
+    "detractors": ["over", "around", "through"]
   },
   {
     "id": "prepositions_direction_8",
@@ -68,8 +75,9 @@
     "en": "Climb up the hill.",
     "ko": "언덕을 올라가세요.",
     "exampleSentence": "Climb up the hill to see the view.",
-    "exampleSentenceKo": "언덕을 올라가세요.",
-    "emoji": "⛰️"
+    "exampleSentenceKo": "경치를 보기 위해 언덕을 올라가세요.",
+    "emoji": "⛰️",
+    "detractors": ["down", "through", "past"]
   },
   {
     "id": "prepositions_direction_9",
@@ -77,8 +85,9 @@
     "en": "Jump over the puddle.",
     "ko": "물웅덩이를 뛰어 넘으세요.",
     "exampleSentence": "Jump over the puddle so your shoes don't get wet.",
-    "exampleSentenceKo": "물웅덩이를 뛰어 넘으세요.",
-    "emoji": "💦"
+    "exampleSentenceKo": "신발이 젖지 않도록 물웅덩이를 뛰어 넘으세요.",
+    "emoji": "💦",
+    "detractors": ["under", "into", "through"]
   },
   {
     "id": "prepositions_direction_10",
@@ -86,8 +95,9 @@
     "en": "Walk along the river.",
     "ko": "강을 따라 걸으세요.",
     "exampleSentence": "Walk along the river in the evening.",
-    "exampleSentenceKo": "강을 따라 걸으세요.",
-    "emoji": "🚶‍♀️🌊"
+    "exampleSentenceKo": "저녁에 강을 따라 걸으세요.",
+    "emoji": "🚶‍♀️🌊",
+    "detractors": ["across", "through", "over"]
   },
   {
     "id": "prepositions_direction_11",
@@ -95,8 +105,9 @@
     "en": "Turn left at the corner.",
     "ko": "모퉁이에서 왼쪽으로 도세요.",
     "exampleSentence": "Turn left at the corner to reach the park.",
-    "exampleSentenceKo": "모퉁이에서 왼쪽으로 도세요.",
-    "emoji": "↩️"
+    "exampleSentenceKo": "공원에 가기 위해 모퉁이에서 왼쪽으로 도세요.",
+    "emoji": "↩️",
+    "detractors": ["in", "through", "on"]
   },
   {
     "id": "prepositions_direction_12",
@@ -104,8 +115,9 @@
     "en": "Go towards the school.",
     "ko": "학교 쪽으로 가세요.",
     "exampleSentence": "Go towards the school to find the gym.",
-    "exampleSentenceKo": "학교 쪽으로 가세요.",
-    "emoji": "🏫"
+    "exampleSentenceKo": "체육관을 찾기 위해 학교 쪽으로 가세요.",
+    "emoji": "🏫",
+    "detractors": ["away from", "around", "past"]
   },
   {
     "id": "prepositions_direction_13",
@@ -113,8 +125,9 @@
     "en": "Head back home.",
     "ko": "집으로 돌아가세요.",
     "exampleSentence": "Head back home after practice.",
-    "exampleSentenceKo": "집으로 돌아가세요.",
-    "emoji": "🏠"
+    "exampleSentenceKo": "연습 후에 집으로 돌아가세요.",
+    "emoji": "🏠",
+    "detractors": ["forward", "around", "through"]
   },
   {
     "id": "prepositions_direction_14",
@@ -122,8 +135,9 @@
     "en": "Step into the room.",
     "ko": "방에 들어가세요.",
     "exampleSentence": "Step into the room carefully.",
-    "exampleSentenceKo": "방에 들어가세요.",
-    "emoji": "🚪"
+    "exampleSentenceKo": "방에 조심스럽게 들어가세요.",
+    "emoji": "🚪",
+    "detractors": ["out of", "around", "past"]
   },
   {
     "id": "prepositions_direction_15",
@@ -131,7 +145,8 @@
     "en": "Walk around the block.",
     "ko": "블록을 한 바퀴 걸어요.",
     "exampleSentence": "Walk around the block for exercise.",
-    "exampleSentenceKo": "블록을 한 바퀴 걸어요.",
-    "emoji": "🚶"
+    "exampleSentenceKo": "운동하기 위해 블록을 한 바퀴 걸어요.",
+    "emoji": "🚶",
+    "detractors": ["through", "into", "over"]
   }
 ]

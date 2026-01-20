@@ -400,8 +400,9 @@ export async function showGrammarModeSelector({ grammarFile, grammarName, gramma
       const canonKey = (s) => canon(s).replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
       const target = canon(currentGrammarName);
       const targetKey = canonKey(currentGrammarName);
-      // Also extract just the file basename if grammarFile is available
+      // Prefer exact file-based matching when grammarFile is known
       const fileBasename = currentGrammarFile ? canonKey(currentGrammarFile.split('/').pop().replace(/\.json$/i, '')) : '';
+      const filePathKey = currentGrammarFile ? canonKey(currentGrammarFile) : '';
       const bestByMode = {};
 
       // Debug: log target matching info for Level 3
@@ -437,6 +438,15 @@ export async function showGrammarModeSelector({ grammarFile, grammarName, gramma
           if (meta.grammarFile) listCandidates.push(meta.grammarFile);
         }
 
+        // CRITICAL FIX: If session has NO list tracking at all, skip it entirely
+        // This prevents old sessions from being counted for ALL lists
+        if (listCandidates.length === 0) {
+          if (isLevel3Grammar) {
+            console.debug('[GrammarModeSelector L3] Skipping session with no list tracking:', session.mode);
+          }
+          return;
+        }
+
         // Check if any candidate matches target (using both exact and canonical key matching)
         let matchReason = null;
         const matchesTarget = listCandidates.some(candidate => {
@@ -465,9 +475,6 @@ export async function showGrammarModeSelector({ grammarFile, grammarName, gramma
         if (isLevel3Grammar) {
           console.warn('[GrammarModeSelector L3] Session MATCHED:', { mode: session.mode, sessionId: session.session_id, listCandidates, matchReason });
         }
-          console.warn('[GrammarModeSelector L3] Session MATCHED:', { mode: session.mode, sessionId: session.session_id, listCandidates, matchReason });
-        }
->>>>>>> 6b35abf7 (Add detailed match logging for debugging)
 
         const modeKey = canon(session.mode);
         const category = canon(summary?.category || session.category);

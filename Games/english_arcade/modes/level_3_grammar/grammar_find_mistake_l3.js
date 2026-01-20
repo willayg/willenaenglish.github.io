@@ -16,6 +16,7 @@ function detectGrammarType(filePath) {
   if (path.includes('past_simple_regular')) return 'past_regular';
   if (path.includes('past_vs_future')) return 'past_vs_future';
   if (path.includes('past_vs_present_vs_future') || path.includes('all_tense')) return 'all_tenses';
+  if (path.includes('mixed_tense_question')) return 'mixed_tense_questions';
   if (path.includes('tense_question')) return 'tense_questions';
   // Will future/questions: sentence-based with "will" patterns
   if (path.includes('will_future')) return 'will_future';
@@ -23,7 +24,18 @@ function detectGrammarType(filePath) {
   // Modal verbs: have to, want to, like to
   if (path.includes('have_to')) return 'have_to';
   if (path.includes('want_to')) return 'want_to';
+  if (path.includes('like_to_vs_want_to')) return 'like_to_vs_want_to_vs_have_to';
   if (path.includes('like_to')) return 'like_to';
+  // Quantifiers and adjectives
+  if (path.includes('a_few_vs_a_little')) return 'a_few_vs_a_little';
+  if (path.includes('adjectives_people')) return 'adjectives';
+  if (path.includes('adjectives_world')) return 'adjectives';
+  if (path.includes('short_comparatives')) return 'comparatives';
+  if (path.includes('short_superlatives')) return 'superlatives';
+  // Modals and advanced
+  if (path.includes('modal_verbs')) return 'modal_verbs';
+  if (path.includes('imperatives_suggestions')) return 'imperatives';
+  if (path.includes('prepositions_direction')) return 'prepositions';
   return 'past_irregular';
 }
 
@@ -112,7 +124,135 @@ export async function runGrammarFindMistakeL3Mode({ grammarFile, grammarName, gr
     }
 
     // For past_irregular with detractors, use original logic
+    // But skip for adjectives/comparatives/superlatives - they need special handling
     const hasDetractors = item && Array.isArray(item.detractors) && item.detractors.length > 0;
+    
+    // For ADJECTIVES: Create actual grammar mistakes (not just swapping to detractors)
+    if (grammarType === 'adjectives' || grammarType === 'comparatives' || grammarType === 'superlatives') {
+      const baseAdj = (item.base || item.word || '').trim();
+      if (baseAdj && new RegExp(`\\b${escapeRegExp(baseAdj)}\\b`, 'i').test(en)) {
+        const variants = [];
+        
+        // Error 1: Use adverb form instead of adjective (e.g., "The city is beautifully" instead of "beautiful")
+        if (baseAdj.endsWith('y')) {
+          const adverb = baseAdj.slice(0, -1) + 'ily';
+          variants.push({ bad: en.replace(new RegExp(`\\b${escapeRegExp(baseAdj)}\\b`, 'i'), adverb), wrongToken: adverb, correctToken: baseAdj });
+        } else if (!baseAdj.endsWith('ly')) {
+          const adverb = baseAdj + 'ly';
+          variants.push({ bad: en.replace(new RegExp(`\\b${escapeRegExp(baseAdj)}\\b`, 'i'), adverb), wrongToken: adverb, correctToken: baseAdj });
+        }
+        
+        // Error 2: Double comparative (e.g., "more bigger" or "more moderner")
+        if (baseAdj.length <= 6 && !baseAdj.endsWith('er')) {
+          const wrongComp = 'more ' + baseAdj + 'er';
+          variants.push({ bad: en.replace(new RegExp(`\\b${escapeRegExp(baseAdj)}\\b`, 'i'), wrongComp), wrongToken: wrongComp, correctToken: baseAdj });
+        }
+        
+        // Error 3: Wrong form - add -er to long adjective (e.g., "beautifuler")
+        if (baseAdj.length > 5 && !baseAdj.endsWith('er')) {
+          const wrongForm = baseAdj + 'er';
+          variants.push({ bad: en.replace(new RegExp(`\\b${escapeRegExp(baseAdj)}\\b`, 'i'), wrongForm), wrongToken: wrongForm, correctToken: baseAdj });
+        }
+        
+        // Error 4: Missing adjective entirely - use noun form if in detractors
+        const nounForm = item.detractors?.find(d => !d.includes(' ') && !d.endsWith('ly') && !d.endsWith('er') && !d.endsWith('est'));
+        if (nounForm) {
+          // Only use if it seems like a noun (not another adjective)
+          const hasNounEnding = /(?:ness|ity|ty|tion|ment)$/i.test(nounForm);
+          if (hasNounEnding || nounForm !== baseAdj) {
+            variants.push({ bad: en.replace(new RegExp(`\\b${escapeRegExp(baseAdj)}\\b`, 'i'), nounForm), wrongToken: nounForm, correctToken: baseAdj });
+          }
+        }
+        
+        if (variants.length) {
+          return variants[Math.floor(Math.random() * variants.length)];
+        }
+      }
+    }
+    
+    // For a_few_vs_a_little: swap countable/uncountable usage
+    if (grammarType === 'a_few_vs_a_little') {
+      const target = (item.target || '').trim();
+      if (target && new RegExp(`\\b${escapeRegExp(target)}\\b`, 'i').test(en)) {
+        // Find the appropriate wrong form
+        const swaps = {
+          'a few': 'a little',
+          'a little': 'a few',
+          'few': 'little',
+          'little': 'few'
+        };
+        const wrong = swaps[target.toLowerCase()];
+        if (wrong) {
+          const bad = en.replace(new RegExp(`\\b${escapeRegExp(target)}\\b`, 'i'), wrong);
+          return { bad, wrongToken: wrong, correctToken: target };
+        }
+      }
+    }
+    
+    // For modal_verbs: swap modals or add common errors
+    if (grammarType === 'modal_verbs') {
+      const modalMatch = en.match(/\b(can|could|should|must|may|might|would|will)\b/i);
+      if (modalMatch) {
+        const correct = modalMatch[1];
+        const variants = [];
+        // Add "to" after modal (common error: "must to go")
+        variants.push({ bad: en.replace(new RegExp(`\\b${correct}\\s+`, 'i'), `${correct} to `), wrongToken: `${correct} to`, correctToken: correct });
+        // Use base verb instead of modal (e.g., "I go" instead of "I can go")
+        variants.push({ bad: en.replace(new RegExp(`\\b${correct}\\s+`, 'i'), ''), wrongToken: '(missing modal)', correctToken: correct });
+        return variants[Math.floor(Math.random() * variants.length)];
+      }
+    }
+    
+    // For prepositions: swap with wrong preposition
+    if (grammarType === 'prepositions') {
+      // Use detractors if available (they are other prepositions)
+      if (item.detractors && item.detractors.length > 0) {
+        // Find the preposition in the sentence
+        const prepMatch = en.match(/\b(to|from|into|onto|toward|towards|through|across|along|over|under|up|down|in|out|at|on|by|back|past)\b/i);
+        if (prepMatch) {
+          const correct = prepMatch[1];
+          const wrong = item.detractors[Math.floor(Math.random() * item.detractors.length)];
+          const bad = en.replace(new RegExp(`\\b${escapeRegExp(correct)}\\b`, 'i'), wrong);
+          return { bad, wrongToken: wrong, correctToken: correct };
+        }
+      }
+      // Fallback: swap with generic wrong preposition list
+      const prepMatch = en.match(/\b(to|from|into|onto|toward|towards|through|across|along|over|under|up|down|in|out|at|on|by|back|past)\b/i);
+      if (prepMatch) {
+        const correct = prepMatch[1];
+        const wrongPreps = ['to', 'from', 'in', 'on', 'at', 'by', 'through', 'across', 'under', 'over', 'into', 'past'].filter(p => p !== correct.toLowerCase());
+        const wrong = wrongPreps[Math.floor(Math.random() * wrongPreps.length)];
+        const bad = en.replace(new RegExp(`\\b${escapeRegExp(correct)}\\b`, 'i'), wrong);
+        return { bad, wrongToken: wrong, correctToken: correct };
+      }
+    }
+    
+    // For mixed_tense_questions: use wrong auxiliary
+    if (grammarType === 'mixed_tense_questions') {
+      const auxMatch = en.match(/^(Did|Do|Does|Will)\s+/i);
+      if (auxMatch) {
+        const correct = auxMatch[1];
+        const wrongAux = { 'Did': 'Do', 'Do': 'Did', 'Does': 'Did', 'Will': 'Do' };
+        const wrong = wrongAux[correct] || 'Do';
+        const bad = en.replace(new RegExp(`^${correct}\\s+`, 'i'), `${wrong} `);
+        return { bad, wrongToken: wrong, correctToken: correct };
+      }
+    }
+    
+    // For like_to_vs_want_to_vs_have_to: swap the modal phrase
+    if (grammarType === 'like_to_vs_want_to_vs_have_to') {
+      const phraseMatch = en.match(/\b(like to|likes to|want to|wants to|have to|has to)\b/i);
+      if (phraseMatch) {
+        const correct = phraseMatch[1];
+        // Swap to a different phrase
+        const alternatives = ['like to', 'want to', 'have to'].filter(p => !correct.toLowerCase().includes(p.split(' ')[0]));
+        const wrong = alternatives[Math.floor(Math.random() * alternatives.length)] || 'must to';
+        const bad = en.replace(new RegExp(`\\b${escapeRegExp(correct)}\\b`, 'i'), wrong);
+        return { bad, wrongToken: wrong, correctToken: correct };
+      }
+    }
+    
+    // Default detractor-based corruption for other types with detractors
     if (hasDetractors) {
       const past = (item.past || item.word || '').trim();
       const base = (item.base || '').trim();
@@ -468,7 +608,18 @@ export async function runGrammarFindMistakeL3Mode({ grammarFile, grammarName, gr
         }
       }
     }
-    return { bad: en + '!', wrongToken: '!', correctToken: '' };
+    
+    // Final fallback: try to use detractors from the item
+    if (item.detractors && item.detractors.length > 0 && item.word) {
+      const detractor = item.detractors[Math.floor(Math.random() * item.detractors.length)];
+      if (detractor) {
+        const bad = en.replace(new RegExp(`\\b${escapeRegExp(item.word)}\\b`, 'i'), detractor);
+        return { bad, wrongToken: detractor, correctToken: item.word };
+      }
+    }
+    
+    // Ultimate fallback: subject-verb agreement issue
+    return { bad: en.replace(/\s+is\s+/, ' are ').replace(/\s+are\s+/, ' is '), wrongToken: 'wrong verb', correctToken: 'correct verb' };
   }
 
   const total = Math.min(14, base.length);
