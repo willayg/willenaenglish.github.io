@@ -7,7 +7,7 @@
     "exampleSentence": "I have a few apples in my bag.",
     "exampleSentenceKo": "저는 사과가 몇 개 있어요.",
     "target": "a few",
-    "detractors": ["a little", "few", "little"],
+    "detractors": ["a little", "a lot of", "few"],
     "emoji": "🍎"
   },
   {
@@ -18,7 +18,7 @@
     "exampleSentence": "There is a little milk left in the bottle.",
     "exampleSentenceKo": "저는 우유가 조금 있어요.",
     "target": "a little",
-    "detractors": ["a few", "few", "little"],
+    "detractors": ["a few", "a lot of", "few"],
     "emoji": "🥛"
   },
   {
@@ -29,7 +29,7 @@
     "exampleSentence": "A few students stayed after class to ask questions.",
     "exampleSentenceKo": "몇몇 학생들이 수업에 왔어요.",
     "target": "a few",
-    "detractors": ["a little", "few", "little"],
+    "detractors": ["a little", "a lot of", "few"],
     "emoji": "👩‍🎓"
   },
   {
@@ -40,7 +40,7 @@
     "exampleSentence": "She put a little sugar in her tea.",
     "exampleSentenceKo": "차에 설탕을 조금 넣으세요.",
     "target": "a little",
-    "detractors": ["a few", "few", "little"],
+    "detractors": ["a few", "a lot of", "few"],
     "emoji": "🍯"
   },
   {
@@ -51,7 +51,7 @@
     "exampleSentence": "I bought a few books at the store yesterday.",
     "exampleSentenceKo": "저는 책을 몇 권 샀어요.",
     "target": "a few",
-    "detractors": ["a little", "few", "little"],
+    "detractors": ["a little", "a lot of", "few"],
     "emoji": "📚"
   },
   {
@@ -62,7 +62,7 @@
     "exampleSentence": "Please give me a little water to drink.",
     "exampleSentenceKo": "물 조금 주세요.",
     "target": "a little",
-    "detractors": ["a few", "few", "little"],
+    "detractors": ["a few", "a lot of", "few"],
     "emoji": "💧"
   },
   {
@@ -73,7 +73,7 @@
     "exampleSentence": "She has a few friends at school.",
     "exampleSentenceKo": "그녀는 학교에 친구가 몇 명 있어요.",
     "target": "a few",
-    "detractors": ["a little", "few", "little"],
+    "detractors": ["a little", "a lot of", "few"],
     "emoji": "👫"
   },
   {
@@ -84,7 +84,7 @@
     "exampleSentence": "We have a little time left before the bus comes.",
     "exampleSentenceKo": "시간이 조금 남았어요.",
     "target": "a little",
-    "detractors": ["a few", "few", "little"],
+    "detractors": ["a few", "a lot of", "few"],
     "emoji": "⏰"
   },
   {
@@ -95,7 +95,7 @@
     "exampleSentence": "There are a few cookies left in the jar.",
     "exampleSentenceKo": "쿠키가 몇 개 남았어요.",
     "target": "a few",
-    "detractors": ["a little", "few", "little"],
+    "detractors": ["a little", "a lot of", "few"],
     "emoji": "🍪"
   },
   {
@@ -106,7 +106,7 @@
     "exampleSentence": "I have a little money saved for a new game.",
     "exampleSentenceKo": "저는 돈이 조금 저축되어 있어요.",
     "target": "a little",
-    "detractors": ["a few", "few", "little"],
+    "detractors": ["a few", "a lot of", "few"],
     "emoji": "💰"
   },
   {
@@ -117,7 +117,7 @@
     "exampleSentence": "I have a few questions about the homework.",
     "exampleSentenceKo": "저는 질문이 몇 개 있어요.",
     "target": "a few",
-    "detractors": ["a little", "few", "little"],
+    "detractors": ["a little", "a lot of", "few"],
     "emoji": "❓"
   },
   {
@@ -128,7 +128,7 @@
     "exampleSentence": "I need a little help with this problem.",
     "exampleSentenceKo": "저는 도움이 조금 필요해요.",
     "target": "a little",
-    "detractors": ["a few", "few", "little"],
+    "detractors": ["a few", "a lot of", "few"],
     "emoji": "🙋"
   },
   {
@@ -139,7 +139,7 @@
     "exampleSentence": "He has a few toys in his room.",
     "exampleSentenceKo": "그는 장난감이 몇 개 있어요.",
     "target": "a few",
-    "detractors": ["a little", "few", "little"],
+    "detractors": ["a little", "a lot of", "few"],
     "emoji": "🧸"
   },
   {
@@ -150,7 +150,7 @@
     "exampleSentence": "Please have a little patience while I finish.",
     "exampleSentenceKo": "조금만 인내심을 가져주세요.",
     "target": "a little",
-    "detractors": ["a few", "few", "little"],
+    "detractors": ["a few", "a lot of", "few"],
     "emoji": "🕊️"
   },
   {
@@ -161,7 +161,62 @@
     "exampleSentence": "Wait a few minutes for the food to be ready.",
     "exampleSentenceKo": "몇 분만 기다리세요.",
     "target": "a few",
-    "detractors": ["a little", "few", "little"],
+    "detractors": ["a little", "a lot of", "few"],
     "emoji": "⏱️"
+  },
+  {
+    "id": "a_few_vs_a_little_16",
+    "word": "a_lot_of_homework",
+    "en": "I have a lot of homework.",
+    "ko": "저는 숙제가 많아요.",
+    "exampleSentence": "I have a lot of homework to finish tonight.",
+    "exampleSentenceKo": "저는 숙제가 많아요.",
+    "target": "a lot of",
+    "detractors": ["a few", "a little", "few"],
+    "emoji": "📝"
+  },
+  {
+    "id": "a_few_vs_a_little_17",
+    "word": "a_lot_of_friends",
+    "en": "She has a lot of friends.",
+    "ko": "그녀는 친구가 많아요.",
+    "exampleSentence": "She has a lot of friends at school.",
+    "exampleSentenceKo": "그녀는 친구가 많아요.",
+    "target": "a lot of",
+    "detractors": ["a few", "a little", "few"],
+    "emoji": "👨‍👩‍👧‍👦"
+  },
+  {
+    "id": "a_few_vs_a_little_18",
+    "word": "a_lot_of_water",
+    "en": "Drink a lot of water.",
+    "ko": "물을 많이 마시세요.",
+    "exampleSentence": "Drink a lot of water when it's hot outside.",
+    "exampleSentenceKo": "물을 많이 마시세요.",
+    "target": "a lot of",
+    "detractors": ["a few", "a little", "few"],
+    "emoji": "🚰"
+  },
+  {
+    "id": "a_few_vs_a_little_19",
+    "word": "a_lot_of_toys",
+    "en": "He has a lot of toys.",
+    "ko": "그는 장난감이 많아요.",
+    "exampleSentence": "He has a lot of toys in his bedroom.",
+    "exampleSentenceKo": "그는 장난감이 많아요.",
+    "target": "a lot of",
+    "detractors": ["a few", "a little", "few"],
+    "emoji": "🎮"
+  },
+  {
+    "id": "a_few_vs_a_little_20",
+    "word": "a_lot_of_time",
+    "en": "We have a lot of time.",
+    "ko": "우리는 시간이 많아요.",
+    "exampleSentence": "We have a lot of time before the movie starts.",
+    "exampleSentenceKo": "우리는 시간이 많아요.",
+    "target": "a lot of",
+    "detractors": ["a few", "a little", "few"],
+    "emoji": "⏰"
   }
 ]

@@ -609,7 +609,7 @@ h1 {
 .wa-quit-btn:hover,
 #grammarQuitBtn:hover,
 #smQuitBtn:hover {
-  transform: translateY(-2px) !important;
+  /* Removed translateY to prevent button from "running away" on hover */
   box-shadow: 0 16px 32px -14px rgba(25, 119, 126, 0.55) !important;
   border-color: rgba(57, 213, 218, 0.92) !important;
 }

@@ -437,6 +437,15 @@ export async function showGrammarModeSelector({ grammarFile, grammarName, gramma
           if (meta.grammarFile) listCandidates.push(meta.grammarFile);
         }
 
+        // CRITICAL FIX: If session has NO list tracking at all, skip it entirely
+        // This prevents old sessions from being counted for ALL lists
+        if (listCandidates.length === 0) {
+          if (isLevel3Grammar) {
+            console.debug('[GrammarModeSelector L3] Skipping session with no list tracking:', session.mode);
+          }
+          return;
+        }
+
         // Check if any candidate matches target (using both exact and canonical key matching)
         const matchesTarget = listCandidates.some(candidate => {
           const c = canon(candidate);
@@ -449,8 +458,17 @@ export async function showGrammarModeSelector({ grammarFile, grammarName, gramma
         });
 
         // STRICT matching: Only include session if it matches the target list
-        // Skip sessions that don't have proper list tracking OR don't match
-        if (!matchesTarget) return;
+        // Skip sessions that don't match
+        if (!matchesTarget) {
+          if (isLevel3Grammar) {
+            console.debug('[GrammarModeSelector L3] Session does not match target:', { mode: session.mode, listCandidates, target, targetKey, fileBasename });
+          }
+          return;
+        }
+
+        if (isLevel3Grammar) {
+          console.debug('[GrammarModeSelector L3] Session MATCHED:', { mode: session.mode, listCandidates, matched: true });
+        }
 
         const modeKey = canon(session.mode);
         const category = canon(summary?.category || session.category);

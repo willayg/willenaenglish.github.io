@@ -7,7 +7,7 @@
     "exampleSentence": "This city is beautiful at night with all the lights.",
     "exampleSentenceKo": "이 도시는 아름다워요.",
     "base": "beautiful",
-    "detractors": ["beautifully", "beauty", "ugly"],
+    "detractors": ["pretty", "lovely", "nice"],
     "emoji": "🌆"
   },
   {
@@ -18,7 +18,7 @@
     "exampleSentence": "The street is noisy at night with cars and people.",
     "exampleSentenceKo": "그 거리는 밤에 시끄러워요.",
     "base": "noisy",
-    "detractors": ["noise", "noisier", "quiet"],
+    "detractors": ["loud", "quiet", "silent"],
     "emoji": "🔊"
   },
   {
@@ -29,7 +29,7 @@
     "exampleSentence": "The library is quiet and perfect for studying.",
     "exampleSentenceKo": "도서관은 조용해요.",
     "base": "quiet",
-    "detractors": ["quietly", "quieter", "noisy"],
+    "detractors": ["silent", "calm", "peaceful"],
     "emoji": "🤫"
   },
   {
@@ -40,7 +40,7 @@
     "exampleSentence": "The kitchen is clean after we washed everything.",
     "exampleSentenceKo": "부엌은 깨끗해요.",
     "base": "clean",
-    "detractors": ["cleaner", "cleanly", "dirty"],
+    "detractors": ["tidy", "neat", "dirty"],
     "emoji": "🧼"
   },
   {
@@ -51,7 +51,7 @@
     "exampleSentence": "The room is dirty and needs to be cleaned.",
     "exampleSentenceKo": "그 방은 더러워요.",
     "base": "dirty",
-    "detractors": ["dirtier", "dirt", "clean"],
+    "detractors": ["messy", "clean", "tidy"],
     "emoji": "🗑️"
   },
   {
@@ -62,7 +62,7 @@
     "exampleSentence": "The market is crowded on weekends with many shoppers.",
     "exampleSentenceKo": "시장은 주말에 붐벼요.",
     "base": "crowded",
-    "detractors": ["crowd", "more crowded", "empty"],
+    "detractors": ["busy", "full", "empty"],
     "emoji": "🛍️"
   },
   {
@@ -73,7 +73,7 @@
     "exampleSentence": "The hall is very spacious for big events.",
     "exampleSentenceKo": "그 홀은 매우 넓어요.",
     "base": "spacious",
-    "detractors": ["space", "more spacious", "cramped"],
+    "detractors": ["big", "large", "small"],
     "emoji": "🏟️"
   },
   {
@@ -84,7 +84,7 @@
     "exampleSentence": "The museum looks modern with its glass walls.",
     "exampleSentenceKo": "그 박물관은 현대적으로 보여요.",
     "base": "modern",
-    "detractors": ["more modern", "modernly", "old"],
+    "detractors": ["new", "old", "ancient"],
     "emoji": "🏛️"
   },
   {
@@ -95,7 +95,7 @@
     "exampleSentence": "The temple is ancient and over 1000 years old.",
     "exampleSentenceKo": "그 사원은 오래됐어요.",
     "base": "ancient",
-    "detractors": ["anciently", "more ancient", "new"],
+    "detractors": ["old", "modern", "historic"],
     "emoji": "🕍"
   },
   {
@@ -106,7 +106,7 @@
     "exampleSentence": "The garden is colorful in spring with many flowers.",
     "exampleSentenceKo": "정원은 봄에 다채로워요.",
     "base": "colorful",
-    "detractors": ["color", "more colorful", "dull"],
+    "detractors": ["bright", "pretty", "dull"],
     "emoji": "🌸"
   },
   {
@@ -117,7 +117,7 @@
     "exampleSentence": "The room is bright in the morning with sunlight.",
     "exampleSentenceKo": "방은 아침에 밝아요.",
     "base": "bright",
-    "detractors": ["brighter", "brightly", "dark"],
+    "detractors": ["dark", "sunny", "light"],
     "emoji": "☀️"
   },
   {
@@ -128,7 +128,7 @@
     "exampleSentence": "The cave is very dark and you need a flashlight.",
     "exampleSentenceKo": "동굴은 매우 어두워요.",
     "base": "dark",
-    "detractors": ["darker", "darkly", "bright"],
+    "detractors": ["bright", "black", "dim"],
     "emoji": "🌑"
   },
   {
@@ -139,7 +139,7 @@
     "exampleSentence": "The road can be dangerous when it rains.",
     "exampleSentenceKo": "그 길은 위험할 수 있어요.",
     "base": "dangerous",
-    "detractors": ["danger", "dangerously", "safe"],
+    "detractors": ["safe", "risky", "scary"],
     "emoji": "⚠️"
   },
   {
@@ -150,7 +150,7 @@
     "exampleSentence": "The village is peaceful with no loud noises.",
     "exampleSentenceKo": "마을은 평화로워요.",
     "base": "peaceful",
-    "detractors": ["peace", "peacefully", "chaotic"],
+    "detractors": ["quiet", "calm", "noisy"],
     "emoji": "🌿"
   },
   {
@@ -161,7 +161,7 @@
     "exampleSentence": "The water there is very cold even in summer.",
     "exampleSentenceKo": "거기 물은 매우 차가워요.",
     "base": "cold",
-    "detractors": ["colder", "coldly", "warm"],
+    "detractors": ["cool", "hot", "warm"],
     "emoji": "🥶"
   }
 ]

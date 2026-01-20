@@ -7,7 +7,7 @@
     "exampleSentence": "She is very friendly to everyone she meets.",
     "exampleSentenceKo": "그녀는 매우 친절해요.",
     "base": "friendly",
-    "detractors": ["friend", "friendlier", "unfriendly"],
+    "detractors": ["kind", "polite", "helpful"],
     "emoji": "😊"
   },
   {
@@ -18,7 +18,7 @@
     "exampleSentence": "He is smart and quick at solving puzzles.",
     "exampleSentenceKo": "그는 똑똑하고 빨라요.",
     "base": "smart",
-    "detractors": ["smarter", "smartly", "dumb"],
+    "detractors": ["clever", "wise", "bright"],
     "emoji": "🧠"
   },
   {
@@ -29,7 +29,7 @@
     "exampleSentence": "My friend is very funny and makes everyone laugh.",
     "exampleSentenceKo": "내 친구는 매우 재미있어요.",
     "base": "funny",
-    "detractors": ["fun", "funnier", "boring"],
+    "detractors": ["silly", "strange", "weird"],
     "emoji": "😂"
   },
   {
@@ -40,7 +40,7 @@
     "exampleSentence": "She is taller than her sister by ten centimeters.",
     "exampleSentenceKo": "그녀는 언니보다 키가 커요.",
     "base": "tall",
-    "detractors": ["taller", "tallest", "short"],
+    "detractors": ["short", "big", "thin"],
     "emoji": "📏"
   },
   {
@@ -51,7 +51,7 @@
     "exampleSentence": "He is kind to everyone at school.",
     "exampleSentenceKo": "그는 모두에게 친절해요.",
     "base": "kind",
-    "detractors": ["kinder", "kindly", "unkind"],
+    "detractors": ["nice", "gentle", "caring"],
     "emoji": "💖"
   },
   {
@@ -62,7 +62,7 @@
     "exampleSentence": "He feels shy in new places but opens up later.",
     "exampleSentenceKo": "그는 새로운 곳에서 수줍어해요.",
     "base": "shy",
-    "detractors": ["shyer", "shyly", "outgoing"],
+    "detractors": ["quiet", "nervous", "scared"],
     "emoji": "😳"
   },
   {
@@ -73,7 +73,7 @@
     "exampleSentence": "The firefighter is brave and saves many lives.",
     "exampleSentenceKo": "그 소방관은 용감해요.",
     "base": "brave",
-    "detractors": ["braver", "bravely", "scared"],
+    "detractors": ["strong", "bold", "fearless"],
     "emoji": "🦸"
   },
   {
@@ -84,7 +84,7 @@
     "exampleSentence": "She is polite at school and respects her teachers.",
     "exampleSentenceKo": "그녀는 학교에서 예의 바라요.",
     "base": "polite",
-    "detractors": ["politer", "politely", "rude"],
+    "detractors": ["nice", "kind", "friendly"],
     "emoji": "🙏"
   },
   {
@@ -95,7 +95,7 @@
     "exampleSentence": "The man was rude to the clerk at the store.",
     "exampleSentenceKo": "그 남자는 점원에게 무례했어요.",
     "base": "rude",
-    "detractors": ["ruder", "rudely", "polite"],
+    "detractors": ["mean", "unkind", "angry"],
     "emoji": "😤"
   },
   {
@@ -106,7 +106,7 @@
     "exampleSentence": "She is creative and draws beautiful pictures.",
     "exampleSentenceKo": "그녀는 창의적이고 그림을 잘 그려요.",
     "base": "creative",
-    "detractors": ["create", "creatively", "uncreative"],
+    "detractors": ["clever", "artistic", "talented"],
     "emoji": "🎨"
   },
   {
@@ -117,7 +117,7 @@
     "exampleSentence": "He is lazy about cleaning his room on weekends.",
     "exampleSentenceKo": "그는 방 청소하는 것이 게을러요.",
     "base": "lazy",
-    "detractors": ["lazier", "lazily", "hardworking"],
+    "detractors": ["tired", "slow", "bored"],
     "emoji": "😴"
   },
   {
@@ -128,7 +128,7 @@
     "exampleSentence": "She is hardworking and studies late every night.",
     "exampleSentenceKo": "그녀는 근면하고 늦게까지 공부해요.",
     "base": "hardworking",
-    "detractors": ["hard", "work", "lazy"],
+    "detractors": ["busy", "active", "tired"],
     "emoji": "📚"
   },
   {
@@ -139,7 +139,7 @@
     "exampleSentence": "He is honest and always tells the truth.",
     "exampleSentenceKo": "그는 정직하고 진실을 말해요.",
     "base": "honest",
-    "detractors": ["honestly", "dishonest", "honesty"],
+    "detractors": ["kind", "good", "fair"],
     "emoji": "🤝"
   },
   {
@@ -150,7 +150,7 @@
     "exampleSentence": "She is patient with young children at the daycare.",
     "exampleSentenceKo": "그녀는 어린 아이들에게 참을성 있어요.",
     "base": "patient",
-    "detractors": ["patiently", "impatient", "patience"],
+    "detractors": ["calm", "kind", "gentle"],
     "emoji": "🕊️"
   },
   {
@@ -161,7 +161,7 @@
     "exampleSentence": "He is generous and shares his toys with friends.",
     "exampleSentenceKo": "그는 너그럽고 장난감을 나눠요.",
     "base": "generous",
-    "detractors": ["generously", "selfish", "generosity"],
+    "detractors": ["kind", "helpful", "nice"],
     "emoji": "🎁"
   }
 ]

@@ -7,7 +7,8 @@
     "exampleSentence": "You must stop at the red light to be safe.",
     "exampleSentenceKo": "안전하려면 빨간 불에서 멈춰야 해요.",
     "emoji": "🚦",
-    "detractors": ["must to", "musted", "musts"]
+    "target": "must",
+    "detractors": ["should", "could", "may"]
   },
   {
     "id": "modal_verbs_intermediate_2",
@@ -17,7 +18,8 @@
     "exampleSentence": "You should eat vegetables every day.",
     "exampleSentenceKo": "매일 야채를 먹어야 해요.",
     "emoji": "🥦",
-    "detractors": ["should to", "shoulds", "shoulded"]
+    "target": "should",
+    "detractors": ["must", "could", "might"]
   },
   {
     "id": "modal_verbs_intermediate_3",
@@ -27,7 +29,8 @@
     "exampleSentence": "Take an umbrella because it might rain tomorrow.",
     "exampleSentenceKo": "우산을 챙기세요. 내일 비가 올지도 몰라요.",
     "emoji": "🌧️",
-    "detractors": ["might to", "mights", "mighted"]
+    "target": "might",
+    "detractors": ["will", "could", "should"]
   },
   {
     "id": "modal_verbs_intermediate_4",
@@ -37,7 +40,8 @@
     "exampleSentence": "Could you help me with this box?",
     "exampleSentenceKo": "이 상자를 도와주실래요?",
     "emoji": "🙏",
-    "detractors": ["Can you to", "Could you to", "Coulds you"]
+    "target": "Could",
+    "detractors": ["Should", "Must", "May"]
   },
   {
     "id": "modal_verbs_intermediate_5",
@@ -47,7 +51,8 @@
     "exampleSentence": "Would you like some tea with your snack?",
     "exampleSentenceKo": "간식과 함께 차 드시겠어요?",
     "emoji": "🍵",
-    "detractors": ["Would you to like", "Woulds you", "Will you liked"]
+    "target": "Would",
+    "detractors": ["Could", "Should", "Can"]
   },
   {
     "id": "modal_verbs_intermediate_6",
@@ -57,7 +62,8 @@
     "exampleSentence": "May I come in and talk to you?",
     "exampleSentenceKo": "들어가서 이야기해도 될까요?",
     "emoji": "🚪",
-    "detractors": ["May I to", "Mays I", "Mayed I"]
+    "target": "May",
+    "detractors": ["Can", "Could", "Must"]
   },
   {
     "id": "modal_verbs_intermediate_7",
@@ -67,7 +73,8 @@
     "exampleSentence": "You ought to apologize for what you said.",
     "exampleSentenceKo": "당신이 한 말에 대해 사과해야 해요.",
     "emoji": "🙇",
-    "detractors": ["ought", "oughts to", "oughted to"]
+    "target": "ought to",
+    "detractors": ["should", "must", "have to"]
   },
   {
     "id": "modal_verbs_intermediate_8",
@@ -77,7 +84,8 @@
     "exampleSentence": "You had better study now if you want to pass.",
     "exampleSentenceKo": "합격하려면 지금 공부하는 게 좋겠어요.",
     "emoji": "📚",
-    "detractors": ["have better", "has better", "had better to"]
+    "target": "had better",
+    "detractors": ["should", "must", "ought to"]
   },
   {
     "id": "modal_verbs_intermediate_9",
@@ -87,7 +95,8 @@
     "exampleSentence": "You mustn't touch the exhibits at the museum.",
     "exampleSentenceKo": "박물관에서 전시품을 만지면 안 돼요.",
     "emoji": "🏛️",
-    "detractors": ["mustn't to", "don't must", "not must"]
+    "target": "mustn't",
+    "detractors": ["shouldn't", "can't", "won't"]
   },
   {
     "id": "modal_verbs_intermediate_10",
@@ -97,7 +106,8 @@
     "exampleSentence": "You needn't come early for the meeting.",
     "exampleSentenceKo": "회의에 일찍 올 필요 없어요.",
     "emoji": "🕒",
-    "detractors": ["needn't to", "don't need", "needs not"]
+    "target": "needn't",
+    "detractors": ["mustn't", "shouldn't", "can't"]
   },
   {
     "id": "modal_verbs_intermediate_11",
@@ -107,7 +117,8 @@
     "exampleSentence": "Are students allowed to use phones during breaks?",
     "exampleSentenceKo": "쉬는 시간에 학생들이 휴대폰을 사용해도 되나요?",
     "emoji": "📱",
-    "detractors": ["Is students allowed", "Do students allowed", "Are students allow"]
+    "target": "allowed",
+    "detractors": ["permitted", "supposed", "required"]
   },
   {
     "id": "modal_verbs_intermediate_12",
@@ -117,6 +128,7 @@
     "exampleSentence": "I could have told you earlier if you'd asked.",
     "exampleSentenceKo": "물어보셨다면 미리 말했을 수도 있어요.",
     "emoji": "💭",
-    "detractors": ["could had told", "could have tell", "could of told"]
+    "target": "could have",
+    "detractors": ["should have", "would have", "might have"]
   }
 ]

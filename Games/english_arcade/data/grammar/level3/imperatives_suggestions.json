@@ -1,4 +1,4 @@
-[
+﻿[
   {
     "id": "imperatives_suggestions_1",
     "word": "lets_play_soccer",
@@ -7,7 +7,8 @@
     "exampleSentence": "Let's play soccer after school.",
     "exampleSentenceKo": "축구하자!",
     "emoji": "⚽",
-    "detractors": ["Lets to play", "Let us to play", "Let's playing"]
+    "target": "Let's play",
+    "detractors": ["You play", "He plays", "Playing"]
   },
   {
     "id": "imperatives_suggestions_2",
@@ -17,7 +18,8 @@
     "exampleSentence": "Please sit down in your seat.",
     "exampleSentenceKo": "앉아 주세요.",
     "emoji": "🪑",
-    "detractors": ["Please to sit", "Please sits", "Please sitting"]
+    "target": "sit",
+    "detractors": ["sits", "sat", "sitting"]
   },
   {
     "id": "imperatives_suggestions_3",
@@ -27,7 +29,8 @@
     "exampleSentence": "Don't run in the hallway.",
     "exampleSentenceKo": "뛰지 마세요!",
     "emoji": "🚫🏃",
-    "detractors": ["Don't to run", "Not run", "Don't running"]
+    "target": "Don't run",
+    "detractors": ["Not running", "He runs", "You running"]
   },
   {
     "id": "imperatives_suggestions_4",
@@ -37,7 +40,8 @@
     "exampleSentence": "Help your friend with the homework.",
     "exampleSentenceKo": "친구를 도와주세요.",
     "emoji": "🤝",
-    "detractors": ["Helps your friend", "To help your friend", "Helping your friend"]
+    "target": "Help",
+    "detractors": ["Helps", "Helped", "Helping"]
   },
   {
     "id": "imperatives_suggestions_5",
@@ -47,7 +51,8 @@
     "exampleSentence": "Try the puzzle again.",
     "exampleSentenceKo": "다시 해 보세요.",
     "emoji": "🧩",
-    "detractors": ["Tries again", "To try again", "Trying again"]
+    "target": "Try",
+    "detractors": ["Tries", "Tried", "Trying"]
   },
   {
     "id": "imperatives_suggestions_6",
@@ -57,7 +62,8 @@
     "exampleSentence": "Be quiet in the library.",
     "exampleSentenceKo": "조용히 하세요.",
     "emoji": "🤫",
-    "detractors": ["Is quiet", "Being quiet", "To be quiet"]
+    "target": "Be",
+    "detractors": ["Is", "Being", "Was"]
   },
   {
     "id": "imperatives_suggestions_7",
@@ -67,7 +73,8 @@
     "exampleSentence": "Don't forget the rules of the game.",
     "exampleSentenceKo": "규칙을 잊지 마세요.",
     "emoji": "📏",
-    "detractors": ["Don't to forget", "Not forget", "Don't forgetting"]
+    "target": "Don't forget",
+    "detractors": ["Not forgetting", "He forgets", "You forgot"]
   },
   {
     "id": "imperatives_suggestions_8",
@@ -77,7 +84,8 @@
     "exampleSentence": "Let's go home now.",
     "exampleSentenceKo": "집에 가자.",
     "emoji": "🏠",
-    "detractors": ["Let's to go", "Lets going", "Let us to go"]
+    "target": "Let's go",
+    "detractors": ["You go", "He goes", "Going"]
   },
   {
     "id": "imperatives_suggestions_9",
@@ -87,7 +95,8 @@
     "exampleSentence": "Please wash your hands before dinner.",
     "exampleSentenceKo": "손을 씻어 주세요.",
     "emoji": "🧼",
-    "detractors": ["Please to wash", "Please washes", "Please washing"]
+    "target": "wash",
+    "detractors": ["washes", "washed", "washing"]
   },
   {
     "id": "imperatives_suggestions_10",
@@ -97,7 +106,8 @@
     "exampleSentence": "Don't eat in the library to keep it clean.",
     "exampleSentenceKo": "도서관에서 먹지 마세요.",
     "emoji": "🚫🍽️",
-    "detractors": ["Don't to eat", "Not eat", "Don't eating"]
+    "target": "Don't eat",
+    "detractors": ["Not eating", "He eats", "You ate"]
   },
   {
     "id": "imperatives_suggestions_11",
@@ -107,7 +117,8 @@
     "exampleSentence": "Come here and show me your drawing.",
     "exampleSentenceKo": "여기로 오세요.",
     "emoji": "👉",
-    "detractors": ["Comes here", "To come here", "Coming here"]
+    "target": "Come",
+    "detractors": ["Comes", "Came", "Coming"]
   },
   {
     "id": "imperatives_suggestions_12",
@@ -117,7 +128,8 @@
     "exampleSentence": "Wait for me at the gate.",
     "exampleSentenceKo": "기다려 주세요.",
     "emoji": "⏳",
-    "detractors": ["Waits for me", "To wait for me", "Waiting for me"]
+    "target": "Wait",
+    "detractors": ["Waits", "Waited", "Waiting"]
   },
   {
     "id": "imperatives_suggestions_13",
@@ -127,7 +139,8 @@
     "exampleSentence": "Stop that or you will get hurt.",
     "exampleSentenceKo": "그만해.",
     "emoji": "✋",
-    "detractors": ["Stops that", "To stop that", "Stopping that"]
+    "target": "Stop",
+    "detractors": ["Stops", "Stopped", "Stopping"]
   },
   {
     "id": "imperatives_suggestions_14",
@@ -137,7 +150,8 @@
     "exampleSentence": "Take a break during your study.",
     "exampleSentenceKo": "잠깐 쉬세요.",
     "emoji": "🛌",
-    "detractors": ["Takes a break", "To take a break", "Taking a break"]
+    "target": "Take",
+    "detractors": ["Takes", "Took", "Taking"]
   },
   {
     "id": "imperatives_suggestions_15",
@@ -147,6 +161,7 @@
     "exampleSentence": "Read this aloud for practice.",
     "exampleSentenceKo": "이거 큰 소리로 읽어 보세요.",
     "emoji": "📣",
-    "detractors": ["Reads this aloud", "To read this aloud", "Reading this aloud"]
+    "target": "Read",
+    "detractors": ["Reads", "Reading", "Readed"]
   }
 ]
