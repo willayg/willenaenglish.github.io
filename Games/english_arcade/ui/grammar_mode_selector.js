@@ -438,19 +438,36 @@ export async function showGrammarModeSelector({ grammarFile, grammarName, gramma
         }
 
         // Check if any candidate matches target (using both exact and canonical key matching)
+        let matchReason = null;
         const matchesTarget = listCandidates.some(candidate => {
           const c = canon(candidate);
           const ck = canonKey(candidate);
           // Also extract file basename from paths
           const cFile = candidate && candidate.includes('/') ? canonKey(candidate.split('/').pop().replace(/\.json$/i, '')) : '';
-          // Check for substring match as well (more lenient for grammar lists)
-          const substringMatch = fileBasename && (ck.includes(fileBasename) || fileBasename.includes(ck) || cFile.includes(fileBasename) || fileBasename.includes(cFile));
-          return c === target || ck === targetKey || (fileBasename && (ck === fileBasename || cFile === fileBasename)) || substringMatch;
+          const isFileMatch = (fileBasename && (ck === fileBasename || cFile === fileBasename)) || (filePathKey && ck === filePathKey);
+          const isNameMatch = !fileBasename && (c === target || ck === targetKey);
+          const matched = isFileMatch || isNameMatch;
+          if (matched && isLevel3Grammar) {
+            matchReason = { candidate, c, ck, cFile, isFileMatch, isNameMatch, target, targetKey, fileBasename, filePathKey };
+          }
+          return matched;
         });
 
-        // If we have a target and no match, skip this session
-        // Be more lenient: if no list candidates at all, include the session if it's grammar-related
-        if (target && !matchesTarget && listCandidates.length > 0) return;
+        // STRICT matching: Only include session if it matches the target list
+        // Skip sessions that don't match
+        if (!matchesTarget) {
+          if (isLevel3Grammar) {
+            console.debug('[GrammarModeSelector L3] Session does not match target:', { mode: session.mode, listCandidates, target, targetKey, fileBasename });
+          }
+          return;
+        }
+
+        if (isLevel3Grammar) {
+          console.warn('[GrammarModeSelector L3] Session MATCHED:', { mode: session.mode, sessionId: session.session_id, listCandidates, matchReason });
+        }
+          console.warn('[GrammarModeSelector L3] Session MATCHED:', { mode: session.mode, sessionId: session.session_id, listCandidates, matchReason });
+        }
+>>>>>>> 6b35abf7 (Add detailed match logging for debugging)
 
         const modeKey = canon(session.mode);
         const category = canon(summary?.category || session.category);
