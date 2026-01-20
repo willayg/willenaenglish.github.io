@@ -5,7 +5,7 @@
     "en": "I will call you tomorrow.",
     "ko": "내일 전화할게요.",
     "exampleSentence": "I will call you tomorrow after lunch.",
-    "exampleSentenceKo": "내일 전화할게요.",
+    "exampleSentenceKo": "내일 점심 후에 전화할게요.",
     "emoji": "📞"
   },
   {
@@ -14,7 +14,7 @@
     "en": "She will help us with the homework.",
     "ko": "그녀가 숙제를 도와줄 거예요.",
     "exampleSentence": "She will help us with our homework.",
-    "exampleSentenceKo": "그녀가 숙제를 도와줄 거예요.",
+    "exampleSentenceKo": "그녀가 우리 숫공를 도와줄 거예요.",
     "emoji": "🤝"
   },
   {
@@ -95,7 +95,7 @@
     "en": "I will answer your question later.",
     "ko": "나중에 질문에 답할게요.",
     "exampleSentence": "I will answer your question after class.",
-    "exampleSentenceKo": "나중에 질문에 답할게요.",
+    "exampleSentenceKo": "완료 후 단른 시간 내 질문에 답할게요.",
     "emoji": "❓"
   },
   {

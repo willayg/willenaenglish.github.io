@@ -584,7 +584,8 @@ h1 {
 #wa-quit-btn,
 .wa-quit-btn,
 #grammarQuitBtn,
-#smQuitBtn {
+#smQuitBtn,
+#gfg-quit {
   position: fixed !important;
   right: clamp(12px, 3vw, 24px) !important;
   bottom: calc(env(safe-area-inset-bottom, 0px) + clamp(12px, 3vw, 24px)) !important;
@@ -605,13 +606,26 @@ h1 {
   -webkit-backdrop-filter: blur(8px) !important;
 }
 
+/* For centered quit buttons, explicitly preserve the centering transform */
+#gfg-quit {
+  left: 50% !important;
+  right: auto !important;
+  transform: translateX(-50%) !important;
+}
+
 #wa-quit-btn:hover,
 .wa-quit-btn:hover,
 #grammarQuitBtn:hover,
-#smQuitBtn:hover {
-  /* Removed translateY to prevent button from "running away" on hover */
+#smQuitBtn:hover,
+#gfg-quit:hover {
+  /* Preserve horizontal centering but prevent vertical movement */
   box-shadow: 0 16px 32px -14px rgba(25, 119, 126, 0.55) !important;
   border-color: rgba(57, 213, 218, 0.92) !important;
+}
+
+/* Specifically for centered quit buttons - maintain centering on hover */
+#gfg-quit:hover {
+  transform: translateX(-50%) !important;
 }
 
 #wa-quit-btn:active,

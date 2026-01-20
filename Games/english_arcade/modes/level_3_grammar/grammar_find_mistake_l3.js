@@ -205,10 +205,22 @@ export async function runGrammarFindMistakeL3Mode({ grammarFile, grammarName, gr
     
     // For prepositions: swap with wrong preposition
     if (grammarType === 'prepositions') {
-      const prepMatch = en.match(/\b(to|from|into|onto|toward|towards|through|across|along|over|under|up|down|in|out|at|on|by)\b/i);
+      // Use detractors if available (they are other prepositions)
+      if (item.detractors && item.detractors.length > 0) {
+        // Find the preposition in the sentence
+        const prepMatch = en.match(/\b(to|from|into|onto|toward|towards|through|across|along|over|under|up|down|in|out|at|on|by|back|past)\b/i);
+        if (prepMatch) {
+          const correct = prepMatch[1];
+          const wrong = item.detractors[Math.floor(Math.random() * item.detractors.length)];
+          const bad = en.replace(new RegExp(`\\b${escapeRegExp(correct)}\\b`, 'i'), wrong);
+          return { bad, wrongToken: wrong, correctToken: correct };
+        }
+      }
+      // Fallback: swap with generic wrong preposition list
+      const prepMatch = en.match(/\b(to|from|into|onto|toward|towards|through|across|along|over|under|up|down|in|out|at|on|by|back|past)\b/i);
       if (prepMatch) {
         const correct = prepMatch[1];
-        const wrongPreps = ['to', 'from', 'in', 'on', 'at', 'by', 'for', 'of'].filter(p => p !== correct.toLowerCase());
+        const wrongPreps = ['to', 'from', 'in', 'on', 'at', 'by', 'through', 'across', 'under', 'over', 'into', 'past'].filter(p => p !== correct.toLowerCase());
         const wrong = wrongPreps[Math.floor(Math.random() * wrongPreps.length)];
         const bad = en.replace(new RegExp(`\\b${escapeRegExp(correct)}\\b`, 'i'), wrong);
         return { bad, wrongToken: wrong, correctToken: correct };
@@ -596,7 +608,18 @@ export async function runGrammarFindMistakeL3Mode({ grammarFile, grammarName, gr
         }
       }
     }
-    return { bad: en + '!', wrongToken: '!', correctToken: '' };
+    
+    // Final fallback: try to use detractors from the item
+    if (item.detractors && item.detractors.length > 0 && item.word) {
+      const detractor = item.detractors[Math.floor(Math.random() * item.detractors.length)];
+      if (detractor) {
+        const bad = en.replace(new RegExp(`\\b${escapeRegExp(item.word)}\\b`, 'i'), detractor);
+        return { bad, wrongToken: detractor, correctToken: item.word };
+      }
+    }
+    
+    // Ultimate fallback: subject-verb agreement issue
+    return { bad: en.replace(/\s+is\s+/, ' are ').replace(/\s+are\s+/, ' is '), wrongToken: 'wrong verb', correctToken: 'correct verb' };
   }
 
   const total = Math.min(14, base.length);
