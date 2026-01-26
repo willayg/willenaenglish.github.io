@@ -676,8 +676,27 @@ async function assignmentProgress(event) {
       grammarLevel = parseInt(levelMatch[1], 10);
     }
     
-    // Level 1 grammar has 4 modes; Level 2+ has 6 modes
+    // Start with base modes for grammar level
     totalModes = grammarLevel === 1 ? 4 : 6;
+    
+    // Check for special grammar list types that have fewer modes
+    // Preposition lists (Level 2) have only 4 modes (fill_gap, unscramble, find_mistake, translation)
+    const isPrepositionList = /prepositions_/i.test(listKeyPath);
+    if (grammarLevel === 2 && isPrepositionList) {
+      totalModes = 4;
+    }
+    
+    // WH micro lists (WH Who & What, WH Where/When/What Time, WH How/Why/Which) have 4 modes
+    const isWhMicroList = /wh_who_what|wh_where_when_whattime|wh_how_why_which/i.test(listKeyPath);
+    if (isWhMicroList) {
+      totalModes = 4;
+    }
+    
+    // WH Questions list (present_simple_questions_wh) has 5 modes (no sorting)
+    const isWhQuestionsList = /present_simple_questions_wh/i.test(listKeyPath);
+    if (isWhQuestionsList) {
+      totalModes = 5;
+    }
   } else {
     // Vocab: 6 modes
     totalModes = 6;
