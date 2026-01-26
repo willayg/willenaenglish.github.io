@@ -571,20 +571,67 @@ export default {
         const listKeyLast = (assignment.list_key || '').split('/').pop();
         const coreName = listKeyLast.replace(/\.json$/, '').toLowerCase();
         
-        // Extract tokens from filename for display-name matching (e.g., "phonics-blends-dr-fl-fr" -> ["blends", "dr", "fl", "fr"])
-        const tokens = coreName.split(/[-_]+/).filter(t => t.length >= 2 && !/^(phonics|sample|wordlists|level\d?)$/.test(t));
+        // Create multiple matching patterns for flexibility
+        // 1. coreName with underscores: "prepositions_next_to_behind_infront"
+        // 2. coreName with spaces: "prepositions next to behind infront"
+        // 3. Assignment title (display name): "Prepositions Next To Behind Infront"
+        const coreNameSpaces = coreName.replace(/_/g, ' ');
+        const assignmentTitle = (assignment.title || '').toLowerCase();
+        const listTitle = (assignment.list_title || '').toLowerCase();
+        
+        // Extract tokens from filename for display-name matching
+        // e.g., "prepositions_next_to_behind_infront" -> ["prepositions", "next", "behind", "infront"]
+        const tokens = coreName.split(/[-_]+/).filter(t => t.length >= 2 && !/^(phonics|sample|wordlists|level\d?|grammar|data|games|english|arcade)$/.test(t));
+        
+        // Normalize function to strip common variations
+        const normalize = (s) => (s || '').toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+        const normalizedCoreName = normalize(coreName);
+        const normalizedTitle = normalize(assignmentTitle);
         
         const filteredSessions = (sessions || []).filter(sess => {
           const listName = (sess.list_name || '').toLowerCase();
-          // Direct match on list_key or filename
+          const normalizedListName = normalize(listName);
+          
+          // Direct match on list_key or filename (most specific)
           if (listName.includes(coreName) || listName.includes(listKeyLast.toLowerCase())) {
             return true;
           }
-          // Token-based match for display names (e.g., "Blend Dr Fl Fr")
+          
+          // Match full assignment list_key path
+          if (listName.includes((assignment.list_key || '').toLowerCase())) {
+            return true;
+          }
+          
+          // Match coreName with spaces (display name stored in session)
+          if (listName.includes(coreNameSpaces)) {
+            return true;
+          }
+          
+          // Match against assignment title
+          if (assignmentTitle && listName.includes(assignmentTitle)) {
+            return true;
+          }
+          
+          // Match against list_title
+          if (listTitle && listName.includes(listTitle)) {
+            return true;
+          }
+          
+          // Normalized comparison (handles underscore/space/hyphen variations)
+          if (normalizedListName.includes(normalizedCoreName) || normalizedCoreName.includes(normalizedListName)) {
+            return true;
+          }
+          if (normalizedTitle && normalizedListName.includes(normalizedTitle)) {
+            return true;
+          }
+          
+          // Token-based match for display names (e.g., "Prepositions Next To Behind Infront")
+          // Require majority of significant tokens to match
           if (tokens.length >= 2) {
             const matchCount = tokens.filter(t => listName.includes(t)).length;
-            if (matchCount >= Math.min(2, tokens.length)) return true;
+            if (matchCount >= Math.ceil(tokens.length * 0.6)) return true;
           }
+          
           return false;
         });
         
