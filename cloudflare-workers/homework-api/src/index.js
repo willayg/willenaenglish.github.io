@@ -579,26 +579,39 @@ export default {
         const assignmentTitle = (assignment.title || '').toLowerCase();
         const listTitle = (assignment.list_title || '').toLowerCase();
         
+        // Handle path variations - homework stores "Games/english_arcade/data/grammar/level2/..."
+        // but sessions may store just "data/grammar/level2/..." or the full path
+        const listKeyFull = (assignment.list_key || '').toLowerCase();
+        const listKeyWithoutPrefix = listKeyFull.replace(/^games\/english_arcade\//i, '');
+        
         // Extract tokens from filename for display-name matching
         // e.g., "prepositions_next_to_behind_infront" -> ["prepositions", "next", "behind", "infront"]
-        const tokens = coreName.split(/[-_]+/).filter(t => t.length >= 2 && !/^(phonics|sample|wordlists|level\d?|grammar|data|games|english|arcade)$/.test(t));
+        const tokens = coreName.split(/[-_]+/).filter(t => t.length >= 2 && !/^(phonics|sample|wordlists|level\d?|grammar|data|games|english|arcade|json)$/.test(t));
         
         // Normalize function to strip common variations
         const normalize = (s) => (s || '').toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
         const normalizedCoreName = normalize(coreName);
         const normalizedTitle = normalize(assignmentTitle);
         
+        // Debug: collect unique list_names from sessions
+        const uniqueListNames = [...new Set((sessions || []).map(s => s.list_name))];
+        
         const filteredSessions = (sessions || []).filter(sess => {
           const listName = (sess.list_name || '').toLowerCase();
           const normalizedListName = normalize(listName);
           
-          // Direct match on list_key or filename (most specific)
-          if (listName.includes(coreName) || listName.includes(listKeyLast.toLowerCase())) {
+          // Direct match on coreName (filename without extension)
+          if (listName.includes(coreName)) {
             return true;
           }
           
-          // Match full assignment list_key path
-          if (listName.includes((assignment.list_key || '').toLowerCase())) {
+          // Match full assignment list_key path (with or without prefix)
+          if (listName.includes(listKeyFull) || listName.includes(listKeyWithoutPrefix)) {
+            return true;
+          }
+          
+          // Match if session list_name contains or is contained by the list_key variants
+          if (listKeyFull.includes(listName) || listKeyWithoutPrefix.includes(listName)) {
             return true;
           }
           
@@ -629,11 +642,29 @@ export default {
           // Require majority of significant tokens to match
           if (tokens.length >= 2) {
             const matchCount = tokens.filter(t => listName.includes(t)).length;
-            if (matchCount >= Math.ceil(tokens.length * 0.6)) return true;
+            if (matchCount >= Math.ceil(tokens.length * 0.5)) return true;
+          }
+          
+          // Also try matching tokens against normalized list name
+          if (tokens.length >= 2) {
+            const matchCount = tokens.filter(t => normalizedListName.includes(t)).length;
+            if (matchCount >= Math.ceil(tokens.length * 0.5)) return true;
           }
           
           return false;
         });
+        
+        // Debug info for troubleshooting
+        const debugInfo = {
+          list_key: assignment.list_key,
+          listKeyWithoutPrefix,
+          coreName,
+          coreNameSpaces,
+          tokens,
+          totalSessions: (sessions || []).length,
+          matchedSessions: filteredSessions.length,
+          sampleListNames: uniqueListNames.slice(0, 30),
+        };
         
         filteredSessions.forEach(sess => {
           const row = byStudent.get(sess.user_id);
@@ -753,6 +784,7 @@ export default {
           difficulty_mode: assignment.list_meta?.difficulty_mode || 'full',
           stars_required: assignment.list_meta?.stars_required || null,
           progress: filteredProgress,
+          _debug: debugInfo,
         }, 200, origin);
       }
       
