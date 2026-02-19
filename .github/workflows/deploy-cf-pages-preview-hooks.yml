@@ -1,0 +1,60 @@
+name: Trigger Cloudflare Pages preview deploy hooks
+
+on:
+  push:
+    branches:
+      - teachers
+      - students
+      - staging
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: "Branch to trigger (teachers|students)"
+        required: true
+        default: "teachers"
+
+jobs:
+  trigger:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Resolve target branch
+        id: branch
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "value=${{ inputs.branch }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "value=${{ github.ref_name }}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Trigger deploy hook (teachers)
+        if: steps.branch.outputs.value == 'teachers'
+        env:
+          CF_PAGES_TEACHERS_HOOK: ${{ secrets.CF_PAGES_TEACHERS_HOOK }}
+        run: |
+          if [ -z "$CF_PAGES_TEACHERS_HOOK" ]; then
+            echo "Missing secret CF_PAGES_TEACHERS_HOOK" >&2
+            exit 1
+          fi
+          curl -fsS -X POST "$CF_PAGES_TEACHERS_HOOK"
+
+      - name: Trigger deploy hook (students)
+        if: steps.branch.outputs.value == 'students'
+        env:
+          CF_PAGES_STUDENTS_HOOK: ${{ secrets.CF_PAGES_STUDENTS_HOOK }}
+        run: |
+          if [ -z "$CF_PAGES_STUDENTS_HOOK" ]; then
+            echo "Missing secret CF_PAGES_STUDENTS_HOOK" >&2
+            exit 1
+          fi
+          curl -fsS -X POST "$CF_PAGES_STUDENTS_HOOK"
+
+      - name: Trigger deploy hook (staging)
+        if: steps.branch.outputs.value == 'staging'
+        env:
+          CF_PAGES_STAGING_HOOK: ${{ secrets.CF_PAGES_STAGING_HOOK }}
+        run: |
+          if [ -z "$CF_PAGES_STAGING_HOOK" ]; then
+            echo "Missing secret CF_PAGES_STAGING_HOOK" >&2
+            exit 1
+          fi
+          curl -fsS -X POST "$CF_PAGES_STAGING_HOOK"
