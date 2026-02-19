@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Reading Worksheet Generator</title>
-    <script src="/js/api-config.js"></script>
+    <script src="/js/api-config.js?v=20260108"></script>
     <link rel="stylesheet" href="../tests/style.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Caveat:wght@400;500;600;700&display=swap" rel="stylesheet">
         <style>
@@ -25,7 +25,7 @@
         return;
       }
       try {
-        const res = await WillenaAPI.fetch('/.netlify/functions/supabase_proxy_fixed?action=get_profile&user_id=' + encodeURIComponent(userId));
+        const res = await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=get_profile&user_id=' + encodeURIComponent(userId));
         const result = await res.json();
         if (!result.success || result.approved !== true) {
           window.location.href = '/Teachers/components/access-denied.html';
@@ -56,10 +56,10 @@
                 document.addEventListener('DOMContentLoaded', function(){ if (location.hostname !== 'willenaenglish.netlify.app') document.body.appendChild(btn); });
             })();
 
-    import { insertBurgerMenu } from '/Teachers/components/burger-menu.js?v=20251213b';
+    import { insertBurgerMenu } from '/components/burger-menu.js?v=20260219';
       async function ensureBurgerMenuTemplate() {
         if (!document.getElementById('burger-menu-template')) {
-          const resp = await fetch('/Teachers/components/burger-menu.html');
+                const resp = await fetch('/components/burger-menu.html?v=20260219');
           const html = await resp.text();
           const tempDiv = document.createElement('div');
           tempDiv.innerHTML = html;
@@ -130,7 +130,7 @@
             // If no username, try to fetch it from profile
             if (!username) {
                 try {
-                    const res = await fetch(`/.netlify/functions/supabase_proxy_fixed?action=get_profile&user_id=${encodeURIComponent(user_id)}`);
+                    const res = await fetch(`/.netlify/functions/supabase_auth?action=get_profile&user_id=${encodeURIComponent(user_id)}`);
                     const result = await res.json();
                     if (result.success && result.username) {
                         username = result.username;
@@ -200,7 +200,7 @@
       };
       
       try {
-        const resp = await WillenaAPI.fetch('/.netlify/functions/supabase_proxy_fixed?feedback', {
+        const resp = await WillenaAPI.fetch('/.netlify/functions/supabase_auth?feedback', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -332,7 +332,7 @@
                     </select>
                 </div>
 
-                <button class="refresh-btn" id="refreshBtn" title="Refresh Preview">↻</button>
+                <button class="refresh-btn" id="refreshBtn" title="Refresh Preview">??/button>
                 
                 <select class="test-mode-select" id="testModeSelect">
                     <option value="none">Test Mode Off</option>

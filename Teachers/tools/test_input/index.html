@@ -7,7 +7,6 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="preload" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
-  <script src="/js/api-config.js?v=20260219"></script>
   <link rel="stylesheet" href="/Teachers/tools/wordtest/style.css?v=20251015-rc1" />
   <link rel="stylesheet" href="./report-card.css?v=20251015-rc4" />
   <style>
@@ -145,10 +144,10 @@
   </div>
 
   <script type="module">
-    import { insertBurgerMenu } from '/Teachers/components/burger-menu.js?v=20251213b';
+    import { insertBurgerMenu } from '/components/burger-menu.js?v=20260219';
     async function ensureBurgerMenuTemplate() {
       if (!document.getElementById('burger-menu-template')) {
-        const resp = await fetch('/Teachers/components/burger-menu.html');
+        const resp = await fetch('/components/burger-menu.html?v=20260219');
         const html = await resp.text();
         const tempDiv = document.createElement('div');
         tempDiv.innerHTML = html;
@@ -158,7 +157,7 @@
     await ensureBurgerMenuTemplate();
     insertBurgerMenu('#burger-menu-mount');
   </script>
-  <script type="module" src="./test_input.js?v=20260219"></script>
+  <script type="module" src="./test_input.js?v=20251015-rc3"></script>
   <style>
     /* Selection styling */
     td.cell-selected { outline:2px solid #60a5fa; background:#eff6ff; }
@@ -198,7 +197,7 @@
         <strong style="flex:1;">Load Test</strong>
         <button id="loadCloseBtn" class="clear-btn">Close</button>
       </div>
-      <input id="loadSearch" class="input-field" placeholder="Search by name, date, or class…" />
+      <input id="loadSearch" class="input-field" placeholder="Search by name, date, or class?? />
       <div id="loadList" style="display:grid; grid-template-columns:1fr; gap:8px;">
         <!-- populated by script -->
       </div>
@@ -234,7 +233,7 @@
       <div id="importBusy" style="display:none; position:absolute; inset:0; background:rgba(255,255,255,0.75); border-radius:16px; align-items:center; justify-content:center;">
         <div style="display:flex; flex-direction:column; align-items:center; gap:8px;">
           <div style="width:36px; height:36px; border-radius:50%; border:3px solid #93c5fd; border-top-color:#2563eb; animation: spin 0.8s linear infinite;"></div>
-          <div class="note">Importing…</div>
+          <div class="note">Importing??/div>
         </div>
       </div>
     </div>

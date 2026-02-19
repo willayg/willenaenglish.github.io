@@ -29,13 +29,20 @@ export function insertBurgerMenu(targetSelector = 'body') {
       <div class="burger-menu">
         <button class="burger-btn">☰ Menu</button>
         <div class="burger-dropdown">
+          <a href="/Teachers/index.html">Teachers Home</a>
           <a href="/Teachers/tools/manage_students.html">Manage Students</a>
           <a href="/Teachers/tools/student_tracker/student_tracker.html">Student Tracker</a>
-          <a href="/Teachers/tools/wordlists.html">Wordlists</a>
-          <a href="/Teachers/tools/homework.html">Homework</a>
-          <a href="/Teachers/tools/leaderboard.html">Leaderboard</a>
+          <a href="/Teachers/tools/planner/planner.html">Planner</a>
+          <a href="/Teachers/tools/survey_builder/survey_builder.html">Survey Builder</a>
+          <a href="/Teachers/tools/reading/reading.html">Reading</a>
+          <a href="/Teachers/tools/flashcard/flashcard.html">Flashcards</a>
+          <a href="/Teachers/tools/grid_game/grid_game.html">Grid Game</a>
+          <a href="/Teachers/tools/puzzles/wordsearch.html">Word Search</a>
+          <a href="/Teachers/tools/wordtest/wordtest2.html">Word Test</a>
+          <a href="/Teachers/tools/worksheet-builder-vanilla/index.html">Worksheet Builder</a>
+          <a href="/Teachers/tools/test_input/index.html">Test Input</a>
           <a href="#" id="feedbackMenuBtn">Feedback</a>
-          <a href="/Teachers/login.html">Logout</a>
+          <a href="/Teachers/login.html">Login</a>
         </div>
       </div>
     `;
@@ -48,12 +55,13 @@ export function insertBurgerMenu(targetSelector = 'body') {
   wrapper.appendChild(node);
 
   // Insert at the top of the target element
-  const target = document.querySelector(targetSelector);
+  const target = document.querySelector(targetSelector) || document.body;
   if (target) target.insertBefore(wrapper, target.firstChild);
 
   // Dropdown logic
   const burgerBtn = wrapper.querySelector('.burger-btn');
   const dropdown = wrapper.querySelector('.burger-dropdown');
+  if (!burgerBtn || !dropdown) return;
   burgerBtn.onclick = () => {
     dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
   };
@@ -62,7 +70,9 @@ export function insertBurgerMenu(targetSelector = 'body') {
   });
 
   // Feedback modal logic (optional: trigger your feedback modal here)
-  wrapper.querySelector('#feedbackMenuBtn').onclick = (e) => {
+  const feedbackBtn = wrapper.querySelector('#feedbackMenuBtn');
+  if (!feedbackBtn) return;
+  feedbackBtn.onclick = (e) => {
     e.preventDefault();
     if (window.showFeedbackModal) window.showFeedbackModal();
     else alert('Feedback modal not implemented!');

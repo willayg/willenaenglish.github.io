@@ -4,15 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Willena Grid Game</title>
-    <script src="/js/api-config.js"></script>
+    <script src="/js/api-config.js?v=20260108"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <!-- Load shared burger menu component -->
     <script type="module">
-      import { insertBurgerMenu } from '/Teachers/components/burger-menu.js?v=20251213b';
+      import { insertBurgerMenu } from '/components/burger-menu.js?v=20260219';
       async function ensureBurgerMenuTemplate() {
         if (!document.getElementById('burger-menu-template')) {
-          const resp = await fetch('/Teachers/components/burger-menu.html');
+          const resp = await fetch('/components/burger-menu.html?v=20260219');
           const html = await resp.text();
           const tempDiv = document.createElement('div');
           tempDiv.innerHTML = html;
@@ -500,7 +500,7 @@
         return;
       }
       try {
-        const res = await WillenaAPI.fetch('/.netlify/functions/supabase_proxy_fixed?action=get_profile&user_id=' + encodeURIComponent(userId));
+        const res = await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=get_profile&user_id=' + encodeURIComponent(userId));
         const result = await res.json();
         if (!result.success || result.approved !== true) {
           window.location.href = '/Teachers/components/access-denied.html';
@@ -645,7 +645,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
                 <!-- Color scheme removed -->
     <!-- Color scheme logic removed -->
-                <button class="refresh-btn" id="refreshPreviewBtn" title="Refresh Preview" style="margin-left:12px;">↻</button>
+                <button class="refresh-btn" id="refreshPreviewBtn" title="Refresh Preview" style="margin-left:12px;">??/button>
             </div>
             <div class="main-content">
                 <!-- Sidebar Controls -->
@@ -747,14 +747,14 @@ document.addEventListener('DOMContentLoaded', function() {
                           </span>
                         </div>
                         <div class="empty-state">
-                            <div class="icon">🎯</div>
+                            <div class="icon">?��</div>
                             <h3>Ready to Create Your Grid Game</h3>
                             <p>Enter vocabulary words and questions, then click "Generate Game" to start playing.</p>
                             <p style="font-size: 0.9rem; margin-top: 16px; opacity: 0.7;">
                                 <strong>How to play:</strong><br>
-                                • Click squares to reveal questions<br>
-                                • Right-click to assign team colors<br>
-                                • Use fullscreen mode for classroom projection
+                                ??Click squares to reveal questions<br>
+                                ??Right-click to assign team colors<br>
+                                ??Use fullscreen mode for classroom projection
                             </p>
                         </div>
                     </div>
@@ -1109,7 +1109,7 @@ window.showFeedbackModal = function() {
         username: localStorage.getItem('username') || localStorage.getItem('name') || ''
       };
       try {
-        const resp = await WillenaAPI.fetch('/.netlify/functions/supabase_proxy_fixed?feedback', {
+        const resp = await WillenaAPI.fetch('/.netlify/functions/supabase_auth?feedback', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({

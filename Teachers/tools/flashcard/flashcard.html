@@ -4,7 +4,35 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Flashcard Generator</title>
-    <script src="/js/api-config.js"></script>
+    <script src="/js/api-config.js?v=20260110"></script>
+    <!-- Shared Image Picker Modal (loaded as regular script for inline handlers) -->
+    <script src="/Teachers/tools/shared/image-picker-modal.js?v=20260110"></script>
+        <script>
+            // Ensure the shared image picker can be loaded on demand
+            window.ensureSharedImagePicker = window.ensureSharedImagePicker || function () {
+                if (window.SharedImagePicker && typeof window.SharedImagePicker.open === 'function') {
+                    return Promise.resolve(window.SharedImagePicker);
+                }
+                if (window.__sharedImagePickerPromise) return window.__sharedImagePickerPromise;
+                window.__sharedImagePickerPromise = new Promise(function (resolve, reject) {
+                    var existing = document.querySelector('script[src="/Teachers/tools/shared/image-picker-modal.js"]');
+                    if (existing && window.SharedImagePicker && typeof window.SharedImagePicker.open === 'function') {
+                        resolve(window.SharedImagePicker);
+                        return;
+                    }
+                    var s = document.createElement('script');
+                    s.src = '/Teachers/tools/shared/image-picker-modal.js';
+                    s.async = true;
+                    s.onload = function () {
+                        if (window.SharedImagePicker && typeof window.SharedImagePicker.open === 'function') resolve(window.SharedImagePicker);
+                        else reject(new Error('SharedImagePicker not available after load'));
+                    };
+                    s.onerror = function () { reject(new Error('Failed to load shared image picker script')); };
+                    document.head.appendChild(s);
+                });
+                return window.__sharedImagePickerPromise;
+            };
+        </script>
     <link rel="stylesheet" href="style.css">
     <style>
     /* Ensure the preview area fills the viewport for 1x2-portrait */
@@ -23,10 +51,10 @@
 <body>
     <!-- Load shared burger menu component -->
     <script type="module">
-    import { insertBurgerMenu } from '/Teachers/components/burger-menu.js?v=20251213b';
+    import { insertBurgerMenu } from '/components/burger-menu.js?v=20260219';
       async function ensureBurgerMenuTemplate() {
         if (!document.getElementById('burger-menu-template')) {
-          const resp = await fetch('/Teachers/components/burger-menu.html');
+                const resp = await fetch('/components/burger-menu.html?v=20260219');
           const html = await resp.text();
           const tempDiv = document.createElement('div');
           tempDiv.innerHTML = html;
@@ -505,56 +533,97 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    // Image search single-click handler (Pixabay)
+    // Image search single-click handler using shared image picker modal
     function attachImageSearchClick() {
         const grid = document.getElementById('flashcardGrid');
         if (!grid) { console.log('Grid not found for click attachment'); return; }
         if (window._imageSearchClickHandler) {
             grid.removeEventListener('click', window._imageSearchClickHandler, true);
         }
-        // Map dropdown to correct Pixabay URL path
-        function getPixabayUrl(word, mode) {
-            const encoded = encodeURIComponent(word);
-            if (mode === 'illustrations') return `https://pixabay.com/illustrations/search/${encoded}/`;
-            if (mode === 'vectors') return `https://pixabay.com/vectors/search/${encoded}/`;
-            if (mode === 'ai') return `https://pixabay.com/images/search/${encoded}/?content_type=ai`;
-            return `https://pixabay.com/images/search/${encoded}/`;
+        // Map dropdown mode to SharedImagePicker filter
+        function getModeFilter(mode) {
+            const filterMap = { photos: 'photo', illustrations: 'illustration', vectors: 'vector', ai: 'ai' };
+            return filterMap[mode] || 'all';
         }
-            window._imageSearchClickHandler = function(e) {
-                if (e.target.isContentEditable) return;
-                if (['INPUT','TEXTAREA','BUTTON','SELECT','LABEL'].includes(e.target.tagName)) return;
-                let card = e.target.closest('.flashcard');
-                if (!card) return;
-                if ((e.target.classList.contains('flashcard-word') || e.target.classList.contains('flashcard-korean')) && !e.ctrlKey) return; // protect editing clicks
-                const cardId = card.id;
-                const index = cardId && cardId.startsWith('flashcard-') ? parseInt(cardId.split('-')[1],10) : null;
-                let word = '';
-                if (index !== null && window.flashcards && window.flashcards[index]) {
-                    word = window.flashcards[index].english || '';
-                }
-                if (!word) {
-                    const lines = card.textContent.split('\n').map(l=>l.trim()).filter(Boolean);
-                    if (lines.length) word = lines[0];
-                }
-                if (!word) return;
+        window._imageSearchClickHandler = function(e) {
+            if (e.target.isContentEditable) return;
+            if (['INPUT','TEXTAREA','BUTTON','SELECT','LABEL'].includes(e.target.tagName)) return;
+            let card = e.target.closest('.flashcard');
+            if (!card) return;
+            if ((e.target.classList.contains('flashcard-word') || e.target.classList.contains('flashcard-korean')) && !e.ctrlKey) return; // protect editing clicks
+            const cardId = card.id;
+            const index = cardId && cardId.startsWith('flashcard-') ? parseInt(cardId.split('-')[1],10) : null;
+            let word = '';
+            if (index !== null && window.flashcards && window.flashcards[index]) {
+                word = window.flashcards[index].english || '';
+            }
+            if (!word) {
+                const lines = card.textContent.split('\n').map(l=>l.trim()).filter(Boolean);
+                if (lines.length) word = lines[0];
+            }
+            if (!word) return;
+            
             const modeSel = document.getElementById('imageTypeSelect');
             const mode = modeSel ? modeSel.value : 'photos';
-            const url = getPixabayUrl(word, mode);
-                try {
-                    const features = 'width=400,height=720,scrollbars=yes,resizable=yes,top=20,left=0';
-                    if (window.imageSearchWindow && !window.imageSearchWindow.closed) {
-                        window.imageSearchWindow.location.href = url;
-                        window.imageSearchWindow.focus();
-                        try { window.imageSearchWindow.resizeTo(400, 720); window.imageSearchWindow.moveTo(0, 20); } catch(_) {}
-                    } else {
-                        window.imageSearchWindow = window.open(url, 'PixabaySearchWindow', features);
+            
+            function openPicker() {
+                const picker = window.SharedImagePicker;
+                if (!picker || typeof picker.open !== 'function') return false;
+                picker.open({
+                    query: word,
+                    filter: getModeFilter(mode),
+                    context: { word: word, index: index, cardId: cardId },
+                    onSelect: function(imageUrl, ctx) {
+                        // Update flashcard image
+                        const targetCard = document.getElementById(ctx.cardId);
+                        if (targetCard) {
+                            // Try multiple selectors - flashcards use .flashcard-imagebox or img.flashcard-image
+                            let imgEl = targetCard.querySelector('img.flashcard-image') || targetCard.querySelector('.flashcard-imagebox img') || targetCard.querySelector('img');
+                            if (imgEl) {
+                                imgEl.src = imageUrl;
+                                imgEl.style.objectFit = 'cover';
+                            } else {
+                                // Find or create the image container
+                                let imgContainer = targetCard.querySelector('.flashcard-imagebox');
+                                if (!imgContainer) {
+                                    imgContainer = document.createElement('div');
+                                    imgContainer.className = 'flashcard-imagebox';
+                                    imgContainer.style.cssText = 'width:80%;aspect-ratio:1.414/1;background:#f8f8f8;display:flex;align-items:center;justify-content:center;border-radius:12px;margin-bottom:20px;overflow:hidden;';
+                                    targetCard.insertBefore(imgContainer, targetCard.firstChild);
+                                }
+                                imgContainer.innerHTML = '<img src="' + imageUrl + '" alt="' + ctx.word + '" class="flashcard-image" style="width:100%;height:100%;object-fit:cover;">';
+                            }
+                        }
+                        // Also update the flashcards data array
+                        if (ctx.index !== null && window.flashcards && window.flashcards[ctx.index]) {
+                            window.flashcards[ctx.index].image = imageUrl;
+                        }
                     }
-                } catch(err){
-                    window.imageSearchWindow = window.open(url, 'PixabaySearchWindow', features);
+                });
+                return true;
+            }
+
+            // Try using shared image picker modal (load it on-demand if needed)
+            try {
+                if (openPicker()) return;
+                if (typeof window.ensureSharedImagePicker === 'function') {
+                    window.ensureSharedImagePicker().then(function(){ openPicker(); }).catch(function(){});
+                    return;
                 }
+            } catch (e) {}
+
+            {
+                // Fallback: open Pixabay in new window
+                const encoded = encodeURIComponent(word);
+                let url = 'https://pixabay.com/images/search/' + encoded + '/';
+                if (mode === 'illustrations') url = 'https://pixabay.com/illustrations/search/' + encoded + '/';
+                if (mode === 'vectors') url = 'https://pixabay.com/vectors/search/' + encoded + '/';
+                if (mode === 'ai') url = 'https://pixabay.com/images/search/' + encoded + '/?content_type=ai';
+                window.open(url, 'PixabaySearchWindow', 'width=400,height=720,scrollbars=yes,resizable=yes,top=20,left=0');
+            }
         };
         grid.addEventListener('click', window._imageSearchClickHandler, true);
-        console.log('Single-click Pixabay handler attached to grid');
+        console.log('Single-click image picker handler attached to grid');
     }
     
     // Apply the comprehensive patch
@@ -1102,7 +1171,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 // If no username, try to fetch it from profile
                 if (!username) {
                     try {
-                        const res = await fetch(`/.netlify/functions/supabase_proxy_fixed?action=get_profile&user_id=${encodeURIComponent(user_id)}`);
+                        const res = await fetch(`/.netlify/functions/supabase_auth?action=get_profile&user_id=${encodeURIComponent(user_id)}`);
                         const result = await res.json();
                         if (result.success && result.username) {
                             username = result.username;
