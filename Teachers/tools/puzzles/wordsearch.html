@@ -4,16 +4,16 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Wordsearch Generator</title>
-  <script src="/js/api-config.js"></script>
+  <script src="/js/api-config.js?v=20260108"></script>
   <link rel="stylesheet" href="../tests/style.css" />
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Caveat:wght@400;500;600;700&family=Dancing+Script:wght@400;700&family=Pacifico&family=Nanum+Pen+Script&display=swap" rel="stylesheet" />
 
   <!-- Shared burger menu component -->
   <script type="module">
-    import { insertBurgerMenu } from '/Teachers/components/burger-menu.js?v=20251213b';
+    import { insertBurgerMenu } from '/components/burger-menu.js?v=20260219';
     async function ensureBurgerMenuTemplate() {
       if (!document.getElementById('burger-menu-template')) {
-        const resp = await fetch('/Teachers/components/burger-menu.html');
+        const resp = await fetch('/components/burger-menu.html?v=20260219');
         const html = await resp.text();
         const tempDiv = document.createElement('div');
         tempDiv.innerHTML = html;
@@ -116,7 +116,7 @@
       const userId = localStorage.getItem('userId');
       if (!userId) { location.href = '/Teachers/login.html'; return; }
       try {
-        const res = await WillenaAPI.fetch('/.netlify/functions/supabase_proxy_fixed?action=get_profile&user_id=' + encodeURIComponent(userId));
+        const res = await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=get_profile&user_id=' + encodeURIComponent(userId));
         const result = await res.json();
         if (!result.success || result.approved !== true) { location.href = '/Teachers/components/access-denied.html'; }
       } catch { location.href = '/Teachers/login.html'; }
@@ -182,7 +182,7 @@
           <input type="range" class="toolbar-slider" id="wordsearchPositionSlider" min="-50" max="50" step="5" value="0" />
           <span id="wordsearchPositionValue" style="font-size:12px;color:#666;min-width:35px;">0px</span>
         </div>
-        <button class="refresh-btn" id="refreshBtn" title="Refresh Preview">↻</button>
+        <button class="refresh-btn" id="refreshBtn" title="Refresh Preview">??/button>
         <button class="layout-btn" id="highlightAnswers">Show Answers</button>
       </div>
 
@@ -203,7 +203,7 @@
             <small style="color:#666;font-size:12px;display:block;">Enter a category to generate words automatically</small>
           </div>
           <div class="input-group">
-            <span id="toggleExtractWordsDropdown" style="display:block;width:100%;text-align:left;margin-bottom:6px;cursor:pointer;color:#3b3b8f;font-weight:500;font-size:15px;padding:4px 0;user-select:none;">▸ Extract Words from Text</span>
+            <span id="toggleExtractWordsDropdown" style="display:block;width:100%;text-align:left;margin-bottom:6px;cursor:pointer;color:#3b3b8f;font-weight:500;font-size:15px;padding:4px 0;user-select:none;">??Extract Words from Text</span>
             <div id="extractWordsDropdown" style="display:none;margin-top:0;">
               <label style="margin-bottom:4px;">Extract Words from Text</label>
               <textarea class="textarea-field" id="passageInput" placeholder="Paste text here to extract difficult words..." rows="4"></textarea>
@@ -250,7 +250,7 @@
         toggleBtn.addEventListener('click', function () {
           const isOpen = dropdown.style.display === 'block';
           dropdown.style.display = isOpen ? 'none' : 'block';
-          toggleBtn.innerHTML = (isOpen ? '▸' : '▾') + ' Extract Words from Text';
+          toggleBtn.innerHTML = (isOpen ? '?? : '??) + ' Extract Words from Text';
         });
         toggleBtn.addEventListener('mouseover', () => (toggleBtn.style.textDecoration = 'underline'));
         toggleBtn.addEventListener('mouseout', () => (toggleBtn.style.textDecoration = 'none'));
@@ -316,7 +316,7 @@
             username: localStorage.getItem('username') || localStorage.getItem('name') || ''
           };
           try {
-            const resp = await WillenaAPI.fetch('/.netlify/functions/supabase_proxy_fixed?feedback', {
+            const resp = await WillenaAPI.fetch('/.netlify/functions/supabase_auth?feedback', {
               method: 'POST', headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ action: 'insert_feedback', data: payload })
             });
