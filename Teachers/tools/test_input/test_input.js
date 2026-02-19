@@ -4,6 +4,14 @@
 const API = '/.netlify/functions/test_admin';
 const STUDENT_API = '/.netlify/functions/teacher_admin';
 
+// Use WillenaAPI.fetch for proper URL routing (Cloudflare Pages → api gateway) and auth headers
+function apiFetch(url, opts = {}) {
+  if (typeof WillenaAPI !== 'undefined' && WillenaAPI.fetch) {
+    return WillenaAPI.fetch(url, opts);
+  }
+  return fetch(url, { ...opts, credentials: 'include' });
+}
+
 // Default columns for the sample provided (no hard-coded maxima; show 0 in UI when unset)
 const DEFAULT_COLUMNS = [
   { key: 'phonics', label: 'Phonics (P)', type: 'number' },
@@ -546,10 +554,8 @@ async function handleImportConfirm() {
   // Prefetch global students with a higher limit to avoid 100-row cap
   let allStudents = [];
   try {
-    const url = new URL(`${STUDENT_API}`, location.origin);
-    url.searchParams.set('action', 'list_students');
-    url.searchParams.set('limit', '500');
-    const sRes = await fetch(url.toString(), { credentials: 'include', cache: 'no-store' });
+    const params = new URLSearchParams({ action: 'list_students', limit: '500' });
+    const sRes = await apiFetch(`${STUDENT_API}?${params.toString()}`, { cache: 'no-store' });
     const sData = await sRes.json();
     if (sRes.ok && sData.success && Array.isArray(sData.students)) allStudents = sData.students;
   } catch {}
@@ -1343,7 +1349,7 @@ colMenu.addEventListener('click', (e)=>{
 // Load tests and group by name+date so only one option is shown per group
 async function loadTests() {
   const params = new URLSearchParams({ action:'list_tests' });
-  const res = await fetch(`${API}?${params.toString()}`, { credentials:'include', cache:'no-store' });
+  const res = await apiFetch(`${API}?${params.toString()}`, { cache:'no-store' });
   const data = await res.json();
   const arr = (data.tests || []).slice();
   // newest first
@@ -1376,7 +1382,7 @@ if (testMonthFilter) testMonthFilter.addEventListener('change', loadTests);
 
 async function loadTestById(id) {
   if (!id) return;
-  const res = await fetch(`${API}?action=get_test&test_id=${encodeURIComponent(id)}`, { credentials:'include', cache:'no-store' });
+  const res = await apiFetch(`${API}?action=get_test&test_id=${encodeURIComponent(id)}`, { cache:'no-store' });
   const data = await res.json();
   if (!data?.success) { msg.style.color='#b91c1c'; msg.textContent=data.error||'Load failed'; return; }
   currentTest = data.test;
@@ -1410,7 +1416,7 @@ async function loadTestById(id) {
   } else {
     try {
       const url = `${STUDENT_API}?action=list_students&class=${encodeURIComponent(currentTest.class||'')}`;
-      const sRes = await fetch(url, { credentials:'include', cache:'no-store' });
+      const sRes = await apiFetch(url, { cache:'no-store' });
       const sData = await sRes.json();
       if (sRes.ok && sData.success) students = sortStudents(sData.students || []); else students = [];
     } catch { students = []; }
@@ -1694,7 +1700,7 @@ async function propagateGroupTermRange(term_from, term_to) {
   for (const it of group.items) {
     try {
       // Fetch current columns for each class test, then update carrier fields
-      const resp = await fetch(`${API}?action=get_test&test_id=${encodeURIComponent(it.id)}`, { credentials:'include', cache:'no-store' });
+      const resp = await apiFetch(`${API}?action=get_test&test_id=${encodeURIComponent(it.id)}`, { cache:'no-store' });
       const data = await resp.json();
       if (!data?.success) continue;
       const cols = Array.isArray(data.test?.columns) ? JSON.parse(JSON.stringify(data.test.columns)) : [];
@@ -1709,7 +1715,7 @@ async function propagateGroupTermRange(term_from, term_to) {
 // API helpers and student loading (restored)
 async function api(action, body, method = 'POST') {
   const url = `${API}?action=${encodeURIComponent(action)}`;
-  const res = await fetch(url, { method, credentials:'include', headers:{ 'Content-Type':'application/json' }, body: body ? JSON.stringify(body) : undefined, cache:'no-store' });
+  const res = await apiFetch(url, { method, headers:{ 'Content-Type':'application/json' }, body: body ? JSON.stringify(body) : undefined, cache:'no-store' });
   const data = await res.json().catch(()=>({}));
   if (!res.ok || data.success === false) throw new Error(data.error || `HTTP ${res.status}`);
   return data;
@@ -1722,7 +1728,7 @@ async function listStudents() {
   if (q) params.set('search', q);
   if (klass) params.set('class', klass);
   const url = `${STUDENT_API}?${params.toString()}`;
-  const res = await fetch(url, { credentials:'include', cache:'no-store' });
+  const res = await apiFetch(url, { cache:'no-store' });
   const data = await res.json();
   if (!res.ok || !data.success) throw new Error(data.error || 'Failed to load students');
   students = data.students || [];
@@ -1792,7 +1798,7 @@ function uniqueClassesFromStudents(all) {
 async function populateTestClassFilter() {
   if (!testClassFilter) return;
   try {
-    const res = await fetch(`${STUDENT_API}?action=list_students`, { credentials:'include', cache:'no-store' });
+    const res = await apiFetch(`${STUDENT_API}?action=list_students`, { cache:'no-store' });
     const data = await res.json();
     if (res.ok && data.success) {
       const classes = uniqueClassesFromStudents(data.students||[]);
@@ -1944,7 +1950,7 @@ async function openCampaignModal() {
   // populate classes by querying all students once
   let all = [];
   try {
-    const res = await fetch(`${STUDENT_API}?action=list_students`, { credentials:'include', cache:'no-store' });
+    const res = await apiFetch(`${STUDENT_API}?action=list_students`, { cache:'no-store' });
     const data = await res.json();
     if (res.ok && data.success) all = data.students || [];
   } catch {}
@@ -2318,7 +2324,7 @@ if (typeof termTo !== 'undefined' && termTo) {
     const students = visibleStudents();
     console.log('[RC] Rendering cards for', students.length, 'students');
     rcStatus.textContent = `Rendering ${students.length} report card${students.length===1?'':'s'}…`;
-  const activeClass = (testClassFilter && testClassFilter.value) || currentTest.class || '';
+  const activeClass = (testClassFilter && testClassFilter.value) || (currentTest && currentTest.class) || '';
   const notes = (classComments.get(activeClass) || document.getElementById('classComment')?.value || '').trim();
     const cards = students.map(s => renderCard({ student:s, test, notes }));
     cardsContainer.innerHTML = cards.join('');
