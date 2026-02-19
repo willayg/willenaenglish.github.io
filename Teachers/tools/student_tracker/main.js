@@ -32,7 +32,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Fetch and inject burger menu template if not already present
   if (!document.getElementById('burger-menu-template')) {
     try {
-      const resp = await fetch('/components/burger-menu.html');
+      const resp = await fetch('/components/burger-menu.html?v=20260219');
       const html = await resp.text();
       const tempDiv = document.createElement('div');
       tempDiv.innerHTML = html;
@@ -685,12 +685,12 @@ function renderStudentDetails(d){
           <div class="label">Accuracy</div>
         </div>
         <div class="stat-card">
-          <div class="icon">‚≠?/div>
+          <div class="icon">ÔøΩ?/div>
           <div class="val">${t.stars||0}</div>
           <div class="label">Stars earned</div>
         </div>
         <div class="stat-card">
-          <div class="icon">?èÜ</div>
+          <div class="icon">?ÔøΩÔøΩ</div>
           <div class="val">${t.points||0}</div>
           <div class="label">Points</div>
         </div>
@@ -1245,7 +1245,7 @@ function renderAssignmentsList(assignments, showEnded, className, displayName) {
     const actionButton = a.active 
       ? `<button type="button" class="ghost hw-end-btn" data-assignment-id="${a.id}" style="flex: 1; padding: 4px 6px; font-size: 0.7rem;">End</button>`
       : `<button type="button" class="ghost hw-delete-btn" data-assignment-id="${a.id}" style="flex: 1; padding: 4px 6px; font-size: 0.7rem; color: #dc2626; border-color: #dc2626;">Delete</button>`;
-    const linkButton = `<button type="button" class="ghost hw-link-btn" data-assignment-id="${a.id}" title="Retroactively link sessions that may have been played without homework tracking" style="flex: 1; padding: 4px 6px; font-size: 0.65rem; color: #6366f1; border-color: #6366f1;">?îó Link</button>`;
+    const linkButton = `<button type="button" class="ghost hw-link-btn" data-assignment-id="${a.id}" title="Retroactively link sessions that may have been played without homework tracking" style="flex: 1; padding: 4px 6px; font-size: 0.65rem; color: #6366f1; border-color: #6366f1;">?ÔøΩÔøΩ Link</button>`;
     return `<div class="hw-assignment-card ${endedClass}" data-assignment-id="${a.id}" style="padding:10px 12px; border: 2px solid #22d3ee; border-radius: 8px; box-shadow: 0 2px 8px rgba(34,211,238,0.08), 0 1px 3px rgba(0,0,0,.04); cursor: pointer; transition: box-shadow 0.18s, transform 0.18s, border-color 0.18s;">
       <div style="font-weight: 600; font-size: 0.9rem; color: #1f2937; margin-bottom: 6px;">${a.title || 'Untitled'}</div>
       <div style="font-size: 0.7rem; color: #999;">Due: ${dueDate ? dueDate.toLocaleDateString() : '??} <span style="margin-left:8px; color:#19777e; font-weight:500;">${countdown}</span></div>
@@ -1574,7 +1574,7 @@ function initHomeworkShell() {
       if (!selected) {
         const subtitle = document.getElementById('homeworkStudentsSubtitle');
         if (subtitle && subtitle.textContent) {
-          const match = subtitle.textContent.match(/^(.+?)\s*[?¢¬?\s*Homework/i);
+          const match = subtitle.textContent.match(/^(.+?)\s*[?ÔøΩÔøΩ?\s*Homework/i);
           if (match && match[1]) {
             const displayName = match[1].trim();
             // Find the class item to get the actual class name
@@ -1747,7 +1747,7 @@ async function loadHomeworkStudentProgress(className, assignmentId) {
       <td><a href="#" class="hw-student-link" data-user-id="${r.user_id}">${r.name || 'Unknown'}</a></td>
       <td>${r.korean_name || '??}</td>
       <td>${r.status}<br><small>${r.__computed_completion || 0}% (${r.__computed_modes_attempted||0}/${r.__computed_total_modes||totalModes} modes)</small></td>
-      <td class="num">${r.stars || 0}‚≠?/td>
+      <td class="num">${r.stars || 0}ÔøΩ?/td>
       <td class="num">${capAcc(r.accuracy_overall != null ? r.accuracy_overall : (r.accuracy_best||0))}%</td>
     </tr>`).join('');
     // Bind modal open for entire row

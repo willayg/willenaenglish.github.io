@@ -281,7 +281,29 @@
       <!-- ...existing code... -->
     </div>
   </div>
-  <script src="../components/burger-menu.js?v=20251213b"></script>
+  <script>
+    (function () {
+      const v = '20260219';
+      async function ensureBurgerMenuTemplate() {
+        if (!document.getElementById('burger-menu-template')) {
+          const resp = await fetch(`/components/burger-menu.html?v=${v}`);
+          const html = await resp.text();
+          const tempDiv = document.createElement('div');
+          tempDiv.innerHTML = html;
+          document.body.appendChild(tempDiv.firstElementChild);
+        }
+      }
+      (async () => {
+        try {
+          const mod = await import(`/components/burger-menu.js?v=${v}`);
+          await ensureBurgerMenuTemplate();
+          if (mod && mod.insertBurgerMenu) mod.insertBurgerMenu();
+        } catch (e) {
+          console.error('Burger menu init failed', e);
+        }
+      })();
+    })();
+  </script>
   <script src="left-toolbar.js"></script>
   <!-- Border modal logic -->
   <script src="js/border-modal.js"></script>

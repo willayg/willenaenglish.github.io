@@ -393,7 +393,7 @@
       import { insertBurgerMenu } from '/components/burger-menu.js?v=20260219';
       async function ensureBurgerMenuTemplate() {
         if (!document.getElementById('burger-menu-template')) {
-          const resp = await fetch('/components/burger-menu.html');
+          const resp = await fetch('/components/burger-menu.html?v=20260219');
           const html = await resp.text();
           const tempDiv = document.createElement('div');
           tempDiv.innerHTML = html;
@@ -515,7 +515,7 @@
                         <label class="form-label">Language</label>
                         <div class="toggle-buttons">
                             <button id="englishMode" class="toggle-btn active">English</button>
-                            <button id="koreanMode" class="toggle-btn inactive">?úÍµ≠??/button>
+                            <button id="koreanMode" class="toggle-btn inactive">?ÔøΩÍµ≠??/button>
                         </div>
                     </div>
                     
@@ -599,7 +599,7 @@
                 <div class="preview-area">
                     <div id="lessonPlanOutput">
                         <div class="empty-state">
-                            <div class="icon">?ìù</div>
+                            <div class="icon">?ÔøΩÔøΩ</div>
                             <h3>Ready to Create Your Lesson Plan</h3>
                             <p>Fill in the details on the left and click generate to create a professional lesson plan with AI assistance.</p>
                         </div>
