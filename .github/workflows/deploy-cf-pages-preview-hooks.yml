@@ -5,6 +5,7 @@ on:
     branches:
       - teachers
       - students
+      - staging
   workflow_dispatch:
     inputs:
       branch:
@@ -46,3 +47,14 @@ jobs:
             exit 1
           fi
           curl -fsS -X POST "$CF_PAGES_STUDENTS_HOOK"
+
+      - name: Trigger deploy hook (staging)
+        if: steps.branch.outputs.value == 'staging'
+        env:
+          CF_PAGES_STAGING_HOOK: ${{ secrets.CF_PAGES_STAGING_HOOK }}
+        run: |
+          if [ -z "$CF_PAGES_STAGING_HOOK" ]; then
+            echo "Missing secret CF_PAGES_STAGING_HOOK" >&2
+            exit 1
+          fi
+          curl -fsS -X POST "$CF_PAGES_STAGING_HOOK"
