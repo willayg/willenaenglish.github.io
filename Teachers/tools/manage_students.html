@@ -107,7 +107,7 @@
           <button type="button" id="openSingleAddModal" class="chip-action">Add Student</button>
           <button type="button" id="openRenameClassModal" class="chip-action">Move Class Up</button>
           <button type="button" id="openTestInput" class="chip-action">Test Input</button>
-          <button type="button" id="langToggleBtn" class="chip-action">한국어 | English</button>
+          <button type="button" id="langToggleBtn" class="chip-action">?�국??| English</button>
         </div>
       </section>
 
@@ -173,8 +173,8 @@
   <div id="rosterUploadModalBg" style="display:none; position:fixed; left:0; top:0; width:100vw; height:100vh; background:rgba(30,41,59,0.18); z-index:9999; align-items:center; justify-content:center;">
     <div id="rosterUploadModal" style="background:#fff; border-radius:18px; box-shadow:0 8px 32px rgba(30,41,59,0.18); max-width:920px; width:96vw; margin:auto; padding:24px; display:flex; flex-direction:column; gap:14px;">
       <h2 style="margin:0; color:#19777e; font-size:1.18em; font-weight:800;">Upload Class Rosters</h2>
-      <p style="margin:0; font-size:0.95em; color:#334155;">Paste your tab-delimited export for a single class. The first non-empty line should contain the class header (e.g., "9.4 MIT" or "Brown ?�기�?"). Columns like Korean Name and Phone should be in the first two columns as in your export.</p>
-      <textarea id="rosterUploadText" rows="12" class="textarea-field" style="width:100%;" placeholder="9.4 MIT\n강규??t010-3646-1347\t...\tHenry\t?�계초\t�?\t...\tWashington\t9.4 MIT\t?�원??n..."></textarea>
+      <p style="margin:0; font-size:0.95em; color:#334155;">Paste your tab-delimited export for a single class. The first non-empty line should contain the class header (e.g., "9.4 MIT" or "Brown ?�기�?"). Columns like Korean Name and Phone should be in the first two columns as in your export.</p>
+      <textarea id="rosterUploadText" rows="12" class="textarea-field" style="width:100%;" placeholder="9.4 MIT\n강규??t010-3646-1347\t...\tHenry\t?�계�?t�?\t...\tWashington\t9.4 MIT\t?�원??n..."></textarea>
       <div style="display:flex; gap:10px; align-items:center; justify-content:space-between;">
         <div id="rosterPreviewStats" style="font-size:12px; color:#475569;"></div>
         <div style="display:flex; gap:10px; align-items:center;">
@@ -212,7 +212,7 @@
       </div>
       <div class="input-group">
         <label for="singleSchool">School</label>
-        <input id="singleSchool" class="input-field" placeholder="e.g. ?�계초" />
+        <input id="singleSchool" class="input-field" placeholder="e.g. ?�계�? />
       </div>
       <div class="input-group">
         <label for="singlePhone">Phone</label>
@@ -240,7 +240,7 @@
       <h2 style="margin-bottom:8px; color:#19777e; font-size:1.18em; font-weight:800;">Add All Students</h2>
       <p style="margin:0; font-size:0.95em; color:#334155;">Paste the full list including class headers (e.g., "NewYork 기초2 ...") and the table rows. I'll parse School, Grade, Korean Name, English Name, and Phone, and assign the class from each header.</p>
       <label for="addAllText">Paste roster text</label>
-      <textarea id="addAllText" rows="14" class="textarea-field" style="width:100%;" placeholder="Brown ?�기�? (??�? 2:00~3:10\nNo.\tSchool\tGrade\tName\t?�어?�름\tPhone\n1\t?�계초\t1\t?�서??tLily\t010-3129-1248\n..."></textarea>
+      <textarea id="addAllText" rows="14" class="textarea-field" style="width:100%;" placeholder="Brown ?�기�? (??�? 2:00~3:10\nNo.\tSchool\tGrade\tName\t?�어?�름\tPhone\n1\t?�계�?t1\t?�서??tLily\t010-3129-1248\n..."></textarea>
       <div style="display:flex; gap:10px; justify-content:space-between; align-items:center;">
         <div id="addAllStats" style="font-size:12px; color:#475569;"></div>
         <div style="display:flex; gap:10px;">
@@ -325,10 +325,10 @@
   
   <!-- Burger menu insertion (same pattern used across tools) -->
   <script type="module">
-    import { insertBurgerMenu } from '/Teachers/components/burger-menu.js?v=20251213b';
+    import { insertBurgerMenu } from '/components/burger-menu.js?v=20260219';
     async function ensureBurgerMenuTemplate() {
       if (!document.getElementById('burger-menu-template')) {
-        const resp = await fetch('/Teachers/components/burger-menu.html');
+        const resp = await fetch('/components/burger-menu.html');
         const html = await resp.text();
         const tempDiv = document.createElement('div');
         tempDiv.innerHTML = html;

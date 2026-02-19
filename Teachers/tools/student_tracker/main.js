@@ -32,7 +32,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Fetch and inject burger menu template if not already present
   if (!document.getElementById('burger-menu-template')) {
     try {
-      const resp = await fetch('/Teachers/components/burger-menu.html');
+      const resp = await fetch('/components/burger-menu.html');
       const html = await resp.text();
       const tempDiv = document.createElement('div');
       tempDiv.innerHTML = html;
@@ -87,11 +87,11 @@ const API = {
   classes: () => fetchJsonWithLog(`${FN('progress_teacher_summary')}?action=classes_list`, 'classes_list'),
   leaderboard: (cls, tf) => fetchJsonWithLog(
     `${FN('progress_teacher_summary')}?action=leaderboard&class=${encodeURIComponent(cls)}&timeframe=${encodeURIComponent(tf)}`,
-    `leaderboard (${cls} • ${tf})`
+    `leaderboard (${cls} ??${tf})`
   ),
   student: (uid, tf) => fetchJsonWithLog(
     `${FN('progress_teacher_summary')}?action=student_details&user_id=${encodeURIComponent(uid)}&timeframe=${encodeURIComponent(tf)}`,
-    `student_details (${uid} • ${tf})`
+    `student_details (${uid} ??${tf})`
   ),
   toggleClassVisibility: (cls, hidden) => fetchJsonWithLog(
     `${FN('progress_teacher_summary')}?action=toggle_class_visibility&class=${encodeURIComponent(cls)}&hidden=${hidden}`,
@@ -287,9 +287,9 @@ function friendlyListName(name){
 }
 
 function formatDateLabel(iso){
-  if (!iso) return '—';
+  if (!iso) return '??;
   const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return '—';
+  if (Number.isNaN(d.getTime())) return '??;
   const opts = { month: 'short', day: 'numeric' };
   if (d.getFullYear() !== new Date().getFullYear()) opts.year = 'numeric';
   return d.toLocaleDateString(undefined, opts);
@@ -374,7 +374,7 @@ function renderLeaderboard(list){
     <tr data-uid="${r.user_id}">
       <td class="rank">${r.rank||''}</td>
       <td><a class="clickable" data-action="student" data-uid="${r.user_id}">${r.name||'Unknown'}</a></td>
-      <td>${r.korean_name||'—'}</td>
+      <td>${r.korean_name||'??}</td>
       <td class="num">${stars}</td>
       <td class="num">${points}</td>
       <td class="num">${superScore}</td>
@@ -637,7 +637,7 @@ function renderDailyActivityChart() {
 function renderStudentDetails(d){
   const name = d.student?.name || 'Student';
   const cls = d.student?.class || '';
-  studentTitle.textContent = `${name}${cls? ' • ' + cls : ''}`;
+  studentTitle.textContent = `${name}${cls? ' ??' + cls : ''}`;
   const t = d.totals || { attempts:0, correct:0, accuracy:0, points:0, stars:0 };
   const sessionsCount = (d.sessions && d.sessions.count) || 0;
   const lists = d.lists || [];
@@ -685,12 +685,12 @@ function renderStudentDetails(d){
           <div class="label">Accuracy</div>
         </div>
         <div class="stat-card">
-          <div class="icon">⭐</div>
+          <div class="icon">�?/div>
           <div class="val">${t.stars||0}</div>
           <div class="label">Stars earned</div>
         </div>
         <div class="stat-card">
-          <div class="icon">🏆</div>
+          <div class="icon">?��</div>
           <div class="val">${t.points||0}</div>
           <div class="label">Points</div>
         </div>
@@ -796,7 +796,7 @@ function renderStudentDetails(d){
       const renderGameCards = (games) => {
         return games.map((game, idx) => {
           const bestStars = Math.min(game.bestStars || 0, 5);
-          const lastPlayed = game.last_played ? formatDateLabel(game.last_played) : '—';
+          const lastPlayed = game.last_played ? formatDateLabel(game.last_played) : '??;
           const listSizeLabel = game.totalSize ? `${game.totalSize} words` : null;
           const chartId = `gameChart${idx}`;
           const modeCharts = Array.from(game.modes.values()).sort((a,b)=> (b.stars - a.stars) || ((b.attempts||0) - (a.attempts||0)));
@@ -834,7 +834,7 @@ function renderStudentDetails(d){
               <div class="game-chart mode">
                 <canvas id="${modeId}" width="140" height="140" data-percent="${percent}"></canvas>
                 <div class="chart-caption">${friendlyModeName(mode.mode)}</div>
-                <div class="mode-caption">${metaBits.join(' • ')}</div>
+                <div class="mode-caption">${metaBits.join(' ??')}</div>
               </div>
             `;
           }).join('');
@@ -846,7 +846,7 @@ function renderStudentDetails(d){
               <div class="game-header">
                 <div>
                   <div class="game-name">${friendlyListName(game.name)}</div>
-                  <div class="game-meta">${metaLine.join(' • ')}</div>
+                  <div class="game-meta">${metaLine.join(' ??')}</div>
                 </div>
               </div>
               <div class="game-charts">
@@ -972,15 +972,15 @@ async function requireUserRole(){
 // Data loading functions
 async function loadClasses(){
   if (!classSel) { console.error('classSel not found'); return; }
-  classSel.innerHTML = '<option value="">Loading…</option>';
-  setStatus('Loading classes…');
+  classSel.innerHTML = '<option value="">Loading??/option>';
+  setStatus('Loading classes??);
   try{
     await requireUserRole();
     const js = await API.classes();
     const classesRaw = (js && js.success && Array.isArray(js.classes)) ? js.classes : [];
     const normalized = filterClassesForRole(classesRaw.map(normalizeClassRecord));
     if (!normalized.length) { classSel.innerHTML = '<option value="">No classes</option>'; setStatus('No student classes found'); return; }
-    classSel.innerHTML = '<option value="">Choose class…</option>' + normalized.map(c => `<option value="${c.name}">${c.display}</option>`).join('');
+    classSel.innerHTML = '<option value="">Choose class??/option>' + normalized.map(c => `<option value="${c.name}">${c.display}</option>`).join('');
     setStatus(`Loaded ${normalized.length} class${normalized.length === 1 ? '' : 'es'}`);
     scheduleLeaderboardPrefetch(normalized);
   } catch(e){ classSel.innerHTML = '<option value="">Error loading</option>'; setStatus('Failed to load classes', 'error'); }
@@ -992,13 +992,13 @@ async function loadLeaderboard(){
   const apiClass = backendClassName(selected);
   const leaderboardTitle = document.getElementById('leaderboardTitle');
   if (leaderboardTitle) leaderboardTitle.textContent = `${displayClassName(selected)} Leaderboard`;
-  lbBody.innerHTML = '<tr><td colspan="7" class="empty">Loading…</td></tr>';
-  setStatus(`Loading ${displayClassName(selected)} (${tf})…`);
+  lbBody.innerHTML = '<tr><td colspan="7" class="empty">Loading??/td></tr>';
+  setStatus(`Loading ${displayClassName(selected)} (${tf})??);
   const cached = cacheGetLeaderboard(apiClass, tf);
   if (cached) {
     rawLeaderboard = cached;
     renderLeaderboard(rawLeaderboard);
-    setStatus('Showing cached leaderboard… updating');
+    setStatus('Showing cached leaderboard??updating');
   }
   try{
     const js = await API.leaderboard(apiClass, tf);
@@ -1020,15 +1020,15 @@ async function loadStudent(uid){
   const tf = timeSel.value || 'month';
   ensureStudentTabs();
   const tabOverview = $('#tab-overview');
-  if (tabOverview) tabOverview.innerHTML = '<div class="empty">Loading…</div>';
+  if (tabOverview) tabOverview.innerHTML = '<div class="empty">Loading??/div>';
   const tabGames = $('#tab-games');
-  if (tabGames) tabGames.innerHTML = '<div class="empty">Loading games…</div>';
+  if (tabGames) tabGames.innerHTML = '<div class="empty">Loading games??/div>';
   switchTab('overview');
-  setStatus('Loading student details…');
+  setStatus('Loading student details??);
   const cached = cacheGetStudentDetails(uid, tf);
   if (cached && cached.success) {
     renderStudentDetails(cached);
-    setStatus('Showing cached student details… updating');
+    setStatus('Showing cached student details??updating');
   }
   try{
     const js = await API.student(uid, tf);
@@ -1129,7 +1129,7 @@ function renderHomeworkClasses(displayClasses) {
       item.classList.add('active');
       const hwStudentsSubtitle = document.getElementById('homeworkStudentsSubtitle');
       const hwAssignmentMeta = document.getElementById('homeworkAssignmentMeta');
-      if (hwStudentsSubtitle) hwStudentsSubtitle.textContent = `${displayName} • Homework`;
+      if (hwStudentsSubtitle) hwStudentsSubtitle.textContent = `${displayName} ??Homework`;
       if (hwAssignmentMeta) hwAssignmentMeta.textContent = `Homework overview for ${displayName}.`;
       
       // Store selected class globally for modal
@@ -1245,10 +1245,10 @@ function renderAssignmentsList(assignments, showEnded, className, displayName) {
     const actionButton = a.active 
       ? `<button type="button" class="ghost hw-end-btn" data-assignment-id="${a.id}" style="flex: 1; padding: 4px 6px; font-size: 0.7rem;">End</button>`
       : `<button type="button" class="ghost hw-delete-btn" data-assignment-id="${a.id}" style="flex: 1; padding: 4px 6px; font-size: 0.7rem; color: #dc2626; border-color: #dc2626;">Delete</button>`;
-    const linkButton = `<button type="button" class="ghost hw-link-btn" data-assignment-id="${a.id}" title="Retroactively link sessions that may have been played without homework tracking" style="flex: 1; padding: 4px 6px; font-size: 0.65rem; color: #6366f1; border-color: #6366f1;">🔗 Link</button>`;
+    const linkButton = `<button type="button" class="ghost hw-link-btn" data-assignment-id="${a.id}" title="Retroactively link sessions that may have been played without homework tracking" style="flex: 1; padding: 4px 6px; font-size: 0.65rem; color: #6366f1; border-color: #6366f1;">?�� Link</button>`;
     return `<div class="hw-assignment-card ${endedClass}" data-assignment-id="${a.id}" style="padding:10px 12px; border: 2px solid #22d3ee; border-radius: 8px; box-shadow: 0 2px 8px rgba(34,211,238,0.08), 0 1px 3px rgba(0,0,0,.04); cursor: pointer; transition: box-shadow 0.18s, transform 0.18s, border-color 0.18s;">
       <div style="font-weight: 600; font-size: 0.9rem; color: #1f2937; margin-bottom: 6px;">${a.title || 'Untitled'}</div>
-      <div style="font-size: 0.7rem; color: #999;">Due: ${dueDate ? dueDate.toLocaleDateString() : '—'} <span style="margin-left:8px; color:#19777e; font-weight:500;">${countdown}</span></div>
+      <div style="font-size: 0.7rem; color: #999;">Due: ${dueDate ? dueDate.toLocaleDateString() : '??} <span style="margin-left:8px; color:#19777e; font-weight:500;">${countdown}</span></div>
       <div style="display: flex; gap: 4px; margin-top: 8px;">
         ${actionButton}
         ${linkButton}
@@ -1376,7 +1376,7 @@ function renderAssignmentsList(assignments, showEnded, className, displayName) {
       if (!id) return;
       
       const originalText = btn.textContent;
-      btn.textContent = '⏳ Linking...';
+      btn.textContent = '??Linking...';
       btn.disabled = true;
       
       try {
@@ -1389,7 +1389,7 @@ function renderAssignmentsList(assignments, showEnded, className, displayName) {
         const totalFound = js.total_found || 0;
         
         if (linked > 0) {
-          btn.textContent = `✅ ${linked} linked!`;
+          btn.textContent = `??${linked} linked!`;
           btn.style.color = '#22c55e';
           btn.style.borderColor = '#22c55e';
           // Refresh the progress view to show updated data
@@ -1397,7 +1397,7 @@ function renderAssignmentsList(assignments, showEnded, className, displayName) {
             loadHomeworkStudentProgress(className, id);
           }, 500);
         } else if (totalFound > 0 && alreadyLinked === totalFound) {
-          btn.textContent = '✅ All linked';
+          btn.textContent = '??All linked';
           btn.style.color = '#22c55e';
           btn.style.borderColor = '#22c55e';
         } else {
@@ -1412,7 +1412,7 @@ function renderAssignmentsList(assignments, showEnded, className, displayName) {
           btn.disabled = false;
         }, 3000);
       } catch (err) {
-        btn.textContent = '❌ Error';
+        btn.textContent = '??Error';
         btn.style.color = '#dc2626';
         btn.style.borderColor = '#dc2626';
         console.error('Link sessions error:', err);
@@ -1478,7 +1478,7 @@ window.loadHomeworkForClass = loadHomeworkForClass;
 async function loadClassStats(classNameRaw, displayName){
   const statsContent = $('#classStatsContent');
   const statsTitle = $('#classStatsTitle');
-  statsTitle.textContent = `${displayName || displayClassName(classNameRaw)} • Top Students`;
+  statsTitle.textContent = `${displayName || displayClassName(classNameRaw)} ??Top Students`;
   statsContent.innerHTML = '<div style="text-align:center; padding:1.25rem; color:#6b7280;">Loading...</div>';
   
   try{
@@ -1505,7 +1505,7 @@ async function loadClassStats(classNameRaw, displayName){
           return `
             <div class="student-rank-card" data-rank="${rank}">
               <div class="name">${student.name || 'Unknown'}</div>
-              <div class="korean-name">${student.korean_name || '—'}</div>
+              <div class="korean-name">${student.korean_name || '??}</div>
               <div class="stats-row">
                 <div class="stat-item">
                   <div class="stat-label">Super Score</div>
@@ -1570,11 +1570,11 @@ function initHomeworkShell() {
         }
       }
       
-      // Fallback 2: extract class from subtitle text (e.g., "Chicago • Homework")
+      // Fallback 2: extract class from subtitle text (e.g., "Chicago ??Homework")
       if (!selected) {
         const subtitle = document.getElementById('homeworkStudentsSubtitle');
         if (subtitle && subtitle.textContent) {
-          const match = subtitle.textContent.match(/^(.+?)\s*[•·]\s*Homework/i);
+          const match = subtitle.textContent.match(/^(.+?)\s*[?��?\s*Homework/i);
           if (match && match[1]) {
             const displayName = match[1].trim();
             // Find the class item to get the actual class name
@@ -1610,7 +1610,7 @@ async function loadHomeworkStudentProgress(className, assignmentId) {
   const table = document.getElementById('homeworkStudentsTable');
   if (!table) return;
   const tbody = table.querySelector('tbody');
-  if (tbody) tbody.innerHTML = '<tr><td colspan="5" class="empty">Loading progress…</td></tr>';
+  if (tbody) tbody.innerHTML = '<tr><td colspan="5" class="empty">Loading progress??/td></tr>';
   try {
     const resp = await WillenaAPI.fetch(`/.netlify/functions/homework_api?action=assignment_progress&class=${encodeURIComponent(className)}&assignment_id=${encodeURIComponent(assignmentId)}`);
     const js = await resp.json();
@@ -1745,9 +1745,9 @@ async function loadHomeworkStudentProgress(className, assignmentId) {
     const capAcc = v => Math.min(100, Math.max(0, Math.round(Number(v) || 0)));
     if (tbody) tbody.innerHTML = rows.map(r => `<tr data-user-id="${r.user_id}" class="hw-progress-row">
       <td><a href="#" class="hw-student-link" data-user-id="${r.user_id}">${r.name || 'Unknown'}</a></td>
-      <td>${r.korean_name || '—'}</td>
+      <td>${r.korean_name || '??}</td>
       <td>${r.status}<br><small>${r.__computed_completion || 0}% (${r.__computed_modes_attempted||0}/${r.__computed_total_modes||totalModes} modes)</small></td>
-      <td class="num">${r.stars || 0}⭐</td>
+      <td class="num">${r.stars || 0}�?/td>
       <td class="num">${capAcc(r.accuracy_overall != null ? r.accuracy_overall : (r.accuracy_best||0))}%</td>
     </tr>`).join('');
     // Bind modal open for entire row
@@ -1771,7 +1771,7 @@ function showHomeworkStudentModal(row, totalModes, assignmentId) {
   const title = document.getElementById('hwStudentTitle');
   const meta = document.getElementById('hwStudentMeta');
   const modesWrap = document.getElementById('hwStudentModes');
-  if (title) title.textContent = `${row.name || 'Student'} • Homework Details`;
+  if (title) title.textContent = `${row.name || 'Student'} ??Homework Details`;
   // Prefer computed values when available (fallbacks injected earlier)
   const displayCompletion = (row.__computed_completion != null) ? row.__computed_completion : (row.completion || 0);
   const displayModesAttempted = (row.__computed_modes_attempted != null) ? row.__computed_modes_attempted : ((row.modes || []).length || 0);
@@ -1792,7 +1792,7 @@ function showHomeworkStudentModal(row, totalModes, assignmentId) {
   const capAcc = v => Math.min(100, Math.max(0, Math.round(Number(v) || 0)));
   const overallAcc = capAcc(row.accuracy_overall != null ? row.accuracy_overall : (row.accuracy_best||0));
   const bestAcc = capAcc(row.accuracy_best||0);
-  if (meta) meta.textContent = `Completion: ${displayCompletion}% • Stars: ${row.stars || 0} • Overall Accuracy: ${overallAcc}% (Best: ${bestAcc}%) • Modes attempted: ${displayModesAttempted}/${displayTotalModes}${totalWasComputed ? ' (computed)' : ''}`;
+  if (meta) meta.textContent = `Completion: ${displayCompletion}% ??Stars: ${row.stars || 0} ??Overall Accuracy: ${overallAcc}% (Best: ${bestAcc}%) ??Modes attempted: ${displayModesAttempted}/${displayTotalModes}${totalWasComputed ? ' (computed)' : ''}`;
   if (modesWrap) {
     modesWrap.innerHTML = (row.modes||[]).map(m => {
       const acc = capAcc(m.bestAccuracy || m.accuracy_best || m.accuracy || 0);
