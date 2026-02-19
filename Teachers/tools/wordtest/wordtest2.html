@@ -116,7 +116,7 @@
       import { insertBurgerMenu } from '/components/burger-menu.js?v=20260219';
       async function ensureBurgerMenuTemplate() {
         if (!document.getElementById('burger-menu-template')) {
-          const resp = await fetch('/components/burger-menu.html');
+          const resp = await fetch('/components/burger-menu.html?v=20260219');
           const html = await resp.text();
           const tempDiv = document.createElement('div');
           tempDiv.innerHTML = html;
@@ -374,7 +374,7 @@
                   <option value="vectors">Clipart</option>
                 </select>
 
-                <button class="refresh-btn" id="refreshBtn" title="Refresh Preview">?”„</button>
+                <button class="refresh-btn" id="refreshBtn" title="Refresh Preview">?ï¿½ï¿½</button>
                 <select class="test-mode-select" id="testModeSelect" style="margin-left:8px;">
                     <option value="none">Test Mode Off</option>
                     <option value="hide-eng">Hide English</option>
