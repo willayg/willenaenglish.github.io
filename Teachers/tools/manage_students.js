@@ -22,14 +22,15 @@ const langMap = {
     class: 'Class (optional)',
     approved: 'Approved',
     createBtn: 'Add Student',
-    bulkClass: 'Class',
-    bulkList: 'Paste Korean name and English name (one per line, tab/comma separated)',
+    bulkClass: '① Class Name',
+    bulkList: '② Student List (one per line: Korean name, English name)',
     bulkSubmit: 'Add Students',
     editStudent: 'Edit Student',
     editName: "Name",
     editUsername: "Username",
     editKoreanName: "Korean Name",
     editClass: "Class",
+    editGrade: "Grade",
     editSubmit: "Update",
     moveClassModal: "Move Class Up",
     selectCurrentClass: "Select Current Class",
@@ -47,7 +48,8 @@ const langMap = {
     addAllUpload: 'Upload'
     ,
     school: 'School',
-    phone: 'Phone'
+    phone: 'Phone',
+    grade: 'Grade'
   },
   ko: {
     toolNames: {
@@ -69,14 +71,15 @@ const langMap = {
     class: '반 (선택)',
     approved: '승인됨',
     createBtn: '학생 추가',
-    bulkClass: '반',
-    bulkList: '한국 이름과 영어 이름을 붙여넣기 (한 줄에 하나씩, 탭/쉼표 구분)',
+    bulkClass: '① 반 이름',
+    bulkList: '② 학생 목록 (한 줄에: 한국 이름, 영어 이름)',
     bulkSubmit: '학생 추가',
     editStudent: '학생 정보 수정',
     editName: "이름",
     editUsername: "아이디",
     editKoreanName: "한국 이름",
     editClass: "반",
+    editGrade: "학년",
     editSubmit: "수정",
     moveClassModal: "반 이동",
     selectCurrentClass: "현재 반 선택",
@@ -94,7 +97,8 @@ const langMap = {
     addAllUpload: '업로드'
     ,
     school: '학교',
-    phone: '전화번호'
+    phone: '전화번호',
+    grade: '학년'
   }
 };
 
@@ -110,6 +114,7 @@ function setLanguage(lang) {
   const l6 = document.querySelector('label[for="newApproved"]'); if (l6) l6.textContent = langMap[lang].approved;
   const sl = document.querySelector('label[for="singleSchool"]'); if (sl) sl.textContent = langMap[lang].school;
   const pl = document.querySelector('label[for="singlePhone"]'); if (pl) pl.textContent = langMap[lang].phone;
+  const sgl = document.querySelector('label[for="singleGrade"]'); if (sgl) sgl.textContent = langMap[lang].grade;
   document.getElementById('search').placeholder = langMap[lang].search;
   document.getElementById('refreshBtn').textContent = langMap[lang].refresh;
   document.querySelector('label[for="classFilter"]').textContent = langMap[lang].classLabel;
@@ -125,6 +130,7 @@ function setLanguage(lang) {
   const el2 = document.querySelector('label[for="editUsername"]'); if (el2) el2.textContent = langMap[lang].editUsername;
   const el3 = document.querySelector('label[for="editKoreanName"]'); if (el3) el3.textContent = langMap[lang].editKoreanName;
   const el4 = document.querySelector('label[for="editClass"]'); if (el4) el4.textContent = langMap[lang].editClass;
+  const el4g = document.querySelector('label[for="editGrade"]'); if (el4g) el4g.textContent = langMap[lang].editGrade;
   document.getElementById('editSubmit').textContent = langMap[lang].editSubmit;
   document.getElementById('editCancel').textContent = langMap[lang].cancel;
   // Move Class Up Modal
@@ -254,7 +260,7 @@ function rowTpl(s) {
   const lang = currentLang || 'en';
   const tnames = langMap[lang].toolNames;
   const approved = s.approved ? '<span class="pill yes">Yes</span>' : '<span class="pill no">No</span>';
-  return `<tr data-id="${s.id}" data-username="${s.username}" data-name="${s.name || ''}" data-korean="${s.korean_name || ''}" data-class="${s.class || ''}" data-approved="${s.approved ? '1' : '0'}">
+  return `<tr data-id="${s.id}" data-username="${s.username}" data-name="${s.name || ''}" data-korean="${s.korean_name || ''}" data-class="${s.class || ''}" data-grade="${s.grade || ''}" data-approved="${s.approved ? '1' : '0'}">
     <td>${s.username || ''}</td>
     <td>${s.name || ''}</td>
     <td>${s.korean_name || ''}</td>
@@ -331,6 +337,7 @@ const editName = document.getElementById('editName');
 const editUsername = document.getElementById('editUsername');
 const editKoreanName = document.getElementById('editKoreanName');
 const editClass = document.getElementById('editClass');
+const editGrade = document.getElementById('editGrade');
 const editCancel = document.getElementById('editCancel');
 const editSubmit = document.getElementById('editSubmit');
 const editMsg = document.getElementById('editMsg');
@@ -342,6 +349,7 @@ function showEditModal(student) {
   editUsername.value = student.username || '';
   editKoreanName.value = student.korean_name || '';
   editClass.value = student.class || '';
+  if (editGrade) editGrade.value = student.grade || '';
   editMsg.textContent = '';
   editModalBg.style.display = 'flex';
 }
@@ -358,9 +366,10 @@ if (editSubmit) editSubmit.onclick = async function() {
   const username = editUsername.value.trim();
   const korean_name = editKoreanName.value.trim();
   const className = editClass.value.trim();
+  const grade = editGrade ? editGrade.value.trim() : '';
   if (!username) { editMsg.textContent = 'Username required.'; return; }
   try {
-    await api('update_student', { method:'POST', body: { user_id: editingId, name, username, korean_name, class: className } });
+    await api('update_student', { method:'POST', body: { user_id: editingId, name, username, korean_name, class: className, grade: grade || null } });
     hideEditModal();
     await populateClassFilter();
   await refresh(true);
@@ -385,57 +394,70 @@ async function refresh(force = false) {
   let url = `${API}?action=list_students&search=${encodeURIComponent(q)}`;
   if (classVal) url += `&class=${encodeURIComponent(classVal)}`;
   let data;
-  // Render cached data immediately if available (optimistic / instant feel)
+  let renderedFromCache = false;
+
+  // When forced (after a mutation), invalidate stale in-memory data so we always hit the server
+  if (force) {
+    ALL_STUDENTS = null;
+    try { sessionStorage.removeItem(cacheKeyAll()); } catch(e) {}
+  }
+
+  // If NOT forced, try local cache for instant response
+  if (!force) {
+    try {
+      const cached = classVal ? cacheGetClassData(classVal, 30000) : null;
+      if (cached && Array.isArray(cached)) {
+        el('rows').innerHTML = cached.map(rowTpl).join('') || '<tr><td colspan="9">No students found</td></tr>';
+        renderedFromCache = true;
+      }
+    } catch (e) { }
+    try {
+      const cachedAll = ALL_STUDENTS || cacheGetAll();
+      if (cachedAll && Array.isArray(cachedAll) && cachedAll.length <= MAX_ALL_CACHE_SIZE) {
+        ALL_STUDENTS = cachedAll;
+      }
+      if (ALL_STUDENTS && Array.isArray(ALL_STUDENTS) && ALL_STUDENTS.length <= MAX_ALL_CACHE_SIZE) {
+        const ql = q.toLowerCase();
+        let students = ALL_STUDENTS.filter(s => {
+          if (classVal && String(s.class || '') !== String(classVal)) return false;
+          if (!ql) return true;
+          const uname = String(s.username || '').toLowerCase();
+          const name = String(s.name || '').toLowerCase();
+          return uname.includes(ql) || name.includes(ql);
+        });
+        try { if (classVal) cacheSetClassData(classVal, students); } catch(e) {}
+        el('rows').innerHTML = (students.map(rowTpl).join('')) || '<tr><td colspan="9">No students found</td></tr>';
+        return; // local data is fresh enough
+      }
+    } catch(e) {}
+  }
+
+  // Network fetch (always reached when force=true, or when no local cache)
   try {
-    const cached = classVal ? cacheGetClassData(classVal, 30000) : null;
-    if (cached && Array.isArray(cached)) {
-      const rows = cached.map(rowTpl).join('');
-      el('rows').innerHTML = rows || '<tr><td colspan="8">No students found</td></tr>';
-    }
-  } catch (e) { }
-  // If we have the full list cached in-memory or sessionStorage and dataset is reasonable,
-  // do local filtering and avoid a network fetch for instant response.
-  try {
-    const cachedAll = ALL_STUDENTS || cacheGetAll();
-    if (cachedAll && Array.isArray(cachedAll) && cachedAll.length <= MAX_ALL_CACHE_SIZE) {
-      ALL_STUDENTS = cachedAll;
-    }
-    if (ALL_STUDENTS && Array.isArray(ALL_STUDENTS) && ALL_STUDENTS.length <= MAX_ALL_CACHE_SIZE) {
-      // local filter
-      const ql = q.toLowerCase();
-      let students = ALL_STUDENTS.filter(s => {
-        if (classVal && String(s.class || '') !== String(classVal)) return false;
-        if (!ql) return true;
-        const uname = String(s.username || '').toLowerCase();
-        const name = String(s.name || '').toLowerCase();
-        return uname.includes(ql) || name.includes(ql);
-      });
-      try { if (classVal) cacheSetClassData(classVal, students); } catch(e) {}
-      el('rows').innerHTML = (students.map(rowTpl).join('')) || '<tr><td colspan="8">No students found</td></tr>';
-      // We have the full student list locally — use client-side filtering only.
-      // Do not perform per-class or background network fetches unless caller explicitly forces a server refresh.
-      if (!force) return;
-    }
-  } catch(e) {}
-  try {
-    const res = await fetch(url, { credentials:'include', cache:'no-store' });
+    const res = await WillenaAPI.fetch(url);
     data = await res.json().catch(() => ({}));
     if (!res.ok || data.success === false) throw new Error(data.error || `HTTP ${res.status}`);
   } catch (err) {
-    const msg = (err.message || '').toLowerCase().includes('not signed in') || (err.message || '').includes('401')
-      ? 'Not signed in. Please log in as a teacher and refresh.'
-      : (err.message || 'Failed to load students.');
-    const listMsg = el('listMsg'); if (listMsg) listMsg.textContent = msg;
-    el('rows').innerHTML = '<tr><td colspan="6">' + msg + '</td></tr>';
+    // Only overwrite the table if we haven't already rendered from cache
+    if (!renderedFromCache) {
+      const msg = (err.message || '').toLowerCase().includes('not signed in') || (err.message || '').includes('401')
+        ? 'Not signed in. Please log in as a teacher and refresh.'
+        : (err.message || 'Failed to load students.');
+      const listMsg = el('listMsg'); if (listMsg) listMsg.textContent = msg;
+      el('rows').innerHTML = '<tr><td colspan="9">' + msg + '</td></tr>';
+    }
     return;
   }
   const listMsg = el('listMsg'); if (listMsg) listMsg.textContent = '';
   let students = data.students || [];
+  // Update the full in-memory cache when the fetch was unfiltered
+  if (!q && !classVal) {
+    ALL_STUDENTS = students;
+    try { cacheSetAll(students); } catch(e) {}
+  }
   if (classVal) students = students.filter(s => s.class === classVal);
-  // update client cache for this class
   try { if (classVal) cacheSetClassData(classVal, students); } catch(e) {}
-  const rows = students.map(rowTpl).join('');
-  el('rows').innerHTML = rows || '<tr><td colspan="8">No students found</td></tr>';
+  el('rows').innerHTML = (students.map(rowTpl).join('')) || '<tr><td colspan="9">No students found</td></tr>';
 }
 
 async function createStudentLegacy() {
@@ -475,8 +497,9 @@ function attachRowHandlers() {
         id: uid,
         name: tr?.dataset?.name,
         username: tr?.dataset?.username,
-  korean_name: tr?.dataset?.korean,
-  class: tr?.dataset?.class
+        korean_name: tr?.dataset?.korean,
+        class: tr?.dataset?.class,
+        grade: tr?.dataset?.grade
       });
       return;
     }
@@ -870,6 +893,7 @@ const singleName = document.getElementById('singleName');
 const singleKoreanName = document.getElementById('singleKoreanName');
 const singleSchool = document.getElementById('singleSchool');
 const singlePhone = document.getElementById('singlePhone');
+const singleGrade = document.getElementById('singleGrade');
 const singleClass = document.getElementById('singleClass');
 const singleApproved = document.getElementById('singleApproved');
 const singleAddMsg = document.getElementById('singleAddMsg');
@@ -882,6 +906,7 @@ function showSingleAddModal() {
   singleKoreanName.value = '';
   if (singleSchool) singleSchool.value = '';
   if (singlePhone) singlePhone.value = '';
+  if (singleGrade) singleGrade.value = '';
   singleClass.value = '';
   if (singleAddModalBg) singleAddModalBg.style.display = 'flex';
 }
@@ -898,6 +923,7 @@ async function createStudentSingle() {
   const name = singleName.value.trim();
   const koreanName = singleKoreanName.value.trim();
   const klass = singleClass.value.trim();
+  const grade = singleGrade ? singleGrade.value.trim() : '';
   const school = singleSchool ? singleSchool.value.trim() : '';
   const phoneRaw = singlePhone ? singlePhone.value.trim() : '';
   const phone = formatPhoneForStorage(phoneRaw);
@@ -905,7 +931,7 @@ async function createStudentSingle() {
   singleAddMsg.textContent = '';
   if (!username || !password) { singleAddMsg.textContent = 'Username and password are required.'; return; }
   try {
-    await api('create_student', { method:'POST', body:{ username, password, name, korean_name: koreanName, class: klass, approved, school: school || null, phone: phone || null } });
+    await api('create_student', { method:'POST', body:{ username, password, name, korean_name: koreanName, class: klass, approved, school: school || null, phone: phone || null, grade: grade || null } });
     hideSingleAddModal();
     await populateClassFilter();
     await refresh(true);
