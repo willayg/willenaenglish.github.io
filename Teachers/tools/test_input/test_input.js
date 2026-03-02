@@ -1348,33 +1348,51 @@ colMenu.addEventListener('click', (e)=>{
 
 // Load tests and group by name+date so only one option is shown per group
 async function loadTests() {
-  const params = new URLSearchParams({ action:'list_tests' });
-  const res = await apiFetch(`${API}?${params.toString()}`, { cache:'no-store' });
-  const data = await res.json();
-  const arr = (data.tests || []).slice();
-  // newest first
-  arr.sort((a,b)=> (new Date(b.created_at||0)) - (new Date(a.created_at||0)));
-  const map = new Map();
-  for (const t of arr) {
-    const key = `${t.name||''}||${t.date||''}`;
-    if (!map.has(key)) map.set(key, { name: t.name||'', date: t.date||'', items: [] });
-    map.get(key).items.push({ id: t.id, class: t.class||'' });
-  }
-  testGroups = Object.fromEntries(map.entries());
-  // If legacy dropdown exists, populate it (not visible in new UI)
-  if (testPicker) {
-    const opts = ['<option value="">Load Test…</option>'];
-    for (const [key, g] of map.entries()) {
-      const label = `${g.name}${g.date?` ${g.date}`:''}`;
-      opts.push(`<option value="${key}">${label}</option>`);
+  try {
+    const params = new URLSearchParams({ action:'list_tests' });
+    const res = await apiFetch(`${API}?${params.toString()}`, { cache:'no-store' });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || !data?.success) {
+      throw new Error(data?.error || `Failed to load tests (${res.status})`);
     }
-    testPicker.innerHTML = opts.join('');
-  }
-  // Also (re)build the modal list if it's open
-  if (loadModalBg && loadModalBg.style.display === 'flex') buildLoadList();
-  if (testClassFilter) {
-    testClassFilter.disabled = true;
-    testClassFilter.innerHTML = '<option value="">Class…</option>';
+    const arr = (data.tests || []).slice();
+    // newest first
+    arr.sort((a,b)=> (new Date(b.created_at||0)) - (new Date(a.created_at||0)));
+    const map = new Map();
+    for (const t of arr) {
+      const key = `${t.name||''}||${t.date||''}`;
+      if (!map.has(key)) map.set(key, { name: t.name||'', date: t.date||'', items: [] });
+      map.get(key).items.push({ id: t.id, class: t.class||'' });
+    }
+    testGroups = Object.fromEntries(map.entries());
+    // If legacy dropdown exists, populate it (not visible in new UI)
+    if (testPicker) {
+      const opts = ['<option value="">Load Test…</option>'];
+      for (const [key, g] of map.entries()) {
+        const label = `${g.name}${g.date?` ${g.date}`:''}`;
+        opts.push(`<option value="${key}">${label}</option>`);
+      }
+      testPicker.innerHTML = opts.join('');
+    }
+    // Also (re)build the modal list if it's open
+    if (loadModalBg && loadModalBg.style.display === 'flex') buildLoadList(loadSearch ? (loadSearch.value || '') : '');
+    if (testClassFilter) {
+      testClassFilter.disabled = true;
+      testClassFilter.innerHTML = '<option value="">Class…</option>';
+    }
+    if (loadMsg) {
+      const n = arr.length;
+      loadMsg.style.color = '#64748b';
+      loadMsg.textContent = n ? `Loaded ${n} test item${n===1?'':'s'}.` : 'No tests found.';
+    }
+  } catch (e) {
+    testGroups = {};
+    if (testPicker) testPicker.innerHTML = '<option value="">Load Test…</option>';
+    if (loadModalBg && loadModalBg.style.display === 'flex') buildLoadList('');
+    if (loadMsg) {
+      loadMsg.style.color = '#b91c1c';
+      loadMsg.textContent = e?.message || 'Failed to load tests.';
+    }
   }
 }
 
@@ -1841,10 +1859,11 @@ function buildLoadList(filter='') {
   `).join('');
 }
 
-function openLoadModal() {
+async function openLoadModal() {
   if (!loadModalBg) return;
   loadMsg.textContent = '';
   loadSearch.value = '';
+  await loadTests();
   buildLoadList('');
   loadModalBg.style.display = 'flex';
 }

@@ -68,6 +68,10 @@
     .pill { padding:2px 8px; border-radius:999px; font-weight:700; font-size:12px; display:inline-block; }
     .pill.meta { background:#eef2ff; color:#3730a3; border:1px solid #c7d2fe; }
     .note { color:#64748b; font-size:12px; }
+    /* Keep burger menu inside header on this page (avoid floating over top action buttons) */
+    #burger-menu-mount { position: relative; z-index: 2; }
+    #burger-menu-mount .burger-menu { position: static !important; top: auto !important; right: auto !important; }
+    #burger-menu-mount .burger-dropdown { top: calc(100% + 8px) !important; right: 0 !important; z-index: 1200; }
   </style>
 </head>
 <body>
@@ -158,7 +162,7 @@
     await ensureBurgerMenuTemplate();
     insertBurgerMenu('#burger-menu-mount');
   </script>
-  <script type="module" src="./test_input.js?v=20260219"></script>
+  <script type="module" src="./test_input.js?v=20260302b"></script>
   <style>
     /* Selection styling */
     td.cell-selected { outline:2px solid #60a5fa; background:#eff6ff; }
