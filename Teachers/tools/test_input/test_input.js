@@ -1787,10 +1787,14 @@ async function populateClassFilter() { /* no-op: left class filter removed */ }
       who = await whoResp.json().catch(()=>({}));
       if (!whoResp.ok || !who?.success) throw new Error('not signed in');
     }
+    const roleResp = await WillenaAPI.fetch(`/.netlify/functions/supabase_auth?action=get_role&user_id=${encodeURIComponent(who.user_id)}`);
+    const roleData = await roleResp.json().catch(()=>({}));
+    const role = String(roleData?.role || '').toLowerCase();
+    if (!roleResp.ok || !['teacher','admin'].includes(role)) throw new Error('forbidden');
   } catch {
     msg.style.color = '#b91c1c';
     const redirect = encodeURIComponent(location.pathname + location.search);
-    msg.innerHTML = `Not signed in. <a href="/Teachers/login.html?redirect=${redirect}" style="color:#2563eb; text-decoration:underline;">Sign in</a> and return.`;
+    msg.innerHTML = `Teacher access only. <a href="/Teachers/login.html?redirect=${redirect}" style="color:#2563eb; text-decoration:underline;">Sign in</a> with a teacher/admin account.`;
     return;
   }
   await populateClassFilter();
