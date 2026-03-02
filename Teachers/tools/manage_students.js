@@ -954,7 +954,10 @@ if (bulkSubmit) bulkSubmit.onclick = async function() {
   const items = parseBulkSheet(bulkList.value);
   if (!items.length) { bulkMsg.textContent = 'Paste at least one table row.'; return; }
 
-  // Build phone->student map for matching existing users (move/update by phone)
+  // Rebuilt matching policy (non-destructive):
+  // - Only update when phone + Korean name matches EXACTLY one existing account
+  // - If ambiguous or repeated in current paste, CREATE new account
+  // - Shared phone numbers across siblings are expected and supported
   let existing = [];
   try {
     const res = await WillenaAPI.fetch('/.netlify/functions/teacher_admin?action=list_students');
@@ -966,14 +969,53 @@ if (bulkSubmit) bulkSubmit.onclick = async function() {
     return;
   }
 
-  const byPhone = new Map();
+  const normK = (v) => String(v || '').trim().replace(/\s+/g, '');
+  const strictKey = (phoneDigits, koreanName) => {
+    if (!phoneDigits || !koreanName) return '';
+    return `${phoneDigits}|${normK(koreanName)}`;
+  };
+
+  // Existing strict-key map: phone + Korean name -> accounts[]
+  const byStrict = new Map();
+  const usernamesTaken = new Set();
   for (const s of existing) {
+    const uname = String(s.username || '').trim().toLowerCase();
+    if (uname) usernamesTaken.add(uname);
+
     const digits = normalizePhone(s.phone);
-    if (!digits) continue;
-    if (!byPhone.has(digits)) byPhone.set(digits, s);
+    const ko = String(s.korean_name || '').trim();
+    const key = strictKey(digits, ko);
+    if (!key) continue;
+    if (!byStrict.has(key)) byStrict.set(key, []);
+    byStrict.get(key).push(s);
   }
 
-  const seenPhones = new Set();
+  // Count strict keys in pasted rows to avoid updating when duplicated in this batch
+  const strictCountInPaste = new Map();
+  for (const it of items) {
+    const d = normalizePhone(it.phone);
+    const k = strictKey(d, it.korean_name);
+    if (!k) continue;
+    strictCountInPaste.set(k, (strictCountInPaste.get(k) || 0) + 1);
+  }
+
+  function uniqueUsername(preferredBase, fallbackDigits, rowIndex) {
+    const baseRaw = String(preferredBase || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+    const base = baseRaw || `student${String(fallbackDigits || '').slice(-4) || String(1000 + rowIndex)}`;
+    let cand = base;
+    let i = 2;
+    while (usernamesTaken.has(cand.toLowerCase())) {
+      cand = `${base}${i}`;
+      i++;
+      if (i > 250) {
+        cand = `${base}${Date.now().toString().slice(-5)}`;
+        break;
+      }
+    }
+    usernamesTaken.add(cand.toLowerCase());
+    return cand;
+  }
+
   let updated = 0;
   let created = 0;
   let skipped = 0;
@@ -983,20 +1025,26 @@ if (bulkSubmit) bulkSubmit.onclick = async function() {
   bulkMsg.style.color = '#475569';
   bulkMsg.textContent = `Uploading ${items.length} rows...`;
 
-  for (const it of items) {
+  for (let idx = 0; idx < items.length; idx++) {
+    const it = items[idx];
     try {
       const phoneDigits = normalizePhone(it.phone);
       const formattedPhone = formatPhoneForStorage(it.phone);
-      if (phoneDigits && seenPhones.has(phoneDigits)) { skipped++; continue; }
-      if (phoneDigits) seenPhones.add(phoneDigits);
 
       const patchSchool = (it.school || '').trim();
       const patchGrade = (it.grade || '').trim();
       const patchKo = (it.korean_name || '').trim();
       const patchEn = (it.english_name || '').trim();
 
-      const found = phoneDigits ? byPhone.get(phoneDigits) : null;
-      if (found) {
+      if (!patchKo && !patchEn && !phoneDigits) { skipped++; continue; }
+
+      const key = strictKey(phoneDigits, patchKo);
+      const matches = key ? (byStrict.get(key) || []) : [];
+      const appearsMultipleInPaste = key ? ((strictCountInPaste.get(key) || 0) > 1) : false;
+      const canUpdate = !!key && !appearsMultipleInPaste && matches.length === 1;
+
+      if (canUpdate) {
+        const found = matches[0];
         const patch = { user_id: found.id, class: classVal };
         if (patchSchool) patch.school = patchSchool;
         if (patchGrade) patch.grade = patchGrade;
@@ -1006,14 +1054,12 @@ if (bulkSubmit) bulkSubmit.onclick = async function() {
         await api('update_student', { method:'POST', body: patch });
         updated++;
       } else {
-        // Creating new student requires an English name (used for username generation)
-        if (!patchEn) { skipped++; continue; }
-        const username = usernameFrom(patchEn, formattedPhone || it.phone);
-        if (!username) { skipped++; continue; }
+        // Create NEW account (safe path for siblings/shared phones)
+        const username = uniqueUsername(usernameFrom(patchEn, formattedPhone || it.phone), phoneDigits, idx + 1);
         const payload = {
           username,
           password: username,
-          name: patchEn,
+          name: patchEn || patchKo || username,
           korean_name: patchKo || '',
           class: classVal,
           approved: true,
@@ -1021,7 +1067,26 @@ if (bulkSubmit) bulkSubmit.onclick = async function() {
           grade: patchGrade || null,
           phone: formattedPhone || null
         };
-        await api('create_student', { method:'POST', body: payload });
+
+        // Retry on username collisions
+        let ok = false;
+        let attempt = 0;
+        while (!ok && attempt < 5) {
+          attempt++;
+          try {
+            await api('create_student', { method:'POST', body: payload });
+            ok = true;
+          } catch (err) {
+            const msg = String(err?.message || '').toLowerCase();
+            if (msg.includes('duplicate') || msg.includes('already') || msg.includes('unique')) {
+              payload.username = uniqueUsername(`${username}${attempt}`, phoneDigits, idx + 1);
+              payload.password = payload.username;
+              continue;
+            }
+            throw err;
+          }
+        }
+        if (!ok) throw new Error('Could not create account (username collision).');
         created++;
       }
     } catch (e) {
