@@ -947,11 +947,13 @@ if (bulkList) {
 }
 
 if (bulkSubmit) bulkSubmit.onclick = async function() {
+  console.log('[BulkAdd] === v20260302a handler start ===');
   bulkMsg.textContent = '';
   const classVal = bulkClass.value.trim();
   if (!classVal) { bulkMsg.textContent = 'Class is required.'; return; }
 
   const items = parseBulkSheet(bulkList.value);
+  console.log('[BulkAdd] parsed items:', JSON.stringify(items));
   if (!items.length) { bulkMsg.textContent = 'Paste at least one table row.'; return; }
 
   // Rebuilt matching policy (non-destructive):
@@ -1036,12 +1038,14 @@ if (bulkSubmit) bulkSubmit.onclick = async function() {
       const patchKo = (it.korean_name || '').trim();
       const patchEn = (it.english_name || '').trim();
 
-      if (!patchKo && !patchEn && !phoneDigits) { skipped++; continue; }
+      if (!patchKo && !patchEn && !phoneDigits) { console.log(`[BulkAdd] SKIP row ${idx}: empty patchKo/patchEn/phoneDigits`); skipped++; continue; }
 
       const key = strictKey(phoneDigits, patchKo);
       const matches = key ? (byStrict.get(key) || []) : [];
       const appearsMultipleInPaste = key ? ((strictCountInPaste.get(key) || 0) > 1) : false;
       const canUpdate = !!key && !appearsMultipleInPaste && matches.length === 1;
+
+      console.log(`[BulkAdd] row ${idx}: key="${key}" matches=${matches.length} multiInPaste=${appearsMultipleInPaste} canUpdate=${canUpdate}`);
 
       if (canUpdate) {
         const found = matches[0];
@@ -1052,10 +1056,12 @@ if (bulkSubmit) bulkSubmit.onclick = async function() {
         if (patchEn) patch.name = patchEn;
         if (formattedPhone) patch.phone = formattedPhone;
         await api('update_student', { method:'POST', body: patch });
+        console.log(`[BulkAdd] row ${idx}: UPDATED id=${found.id}`);
         updated++;
       } else {
         // Create NEW account (safe path for siblings/shared phones)
         const username = uniqueUsername(usernameFrom(patchEn, formattedPhone || it.phone), phoneDigits, idx + 1);
+        console.log(`[BulkAdd] row ${idx}: CREATING new user="${username}"`);
         const payload = {
           username,
           password: username,
