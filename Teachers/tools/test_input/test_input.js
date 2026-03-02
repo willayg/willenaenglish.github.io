@@ -23,7 +23,8 @@ const DEFAULT_COLUMNS = [
   { key: 'reading', label: 'Reading (R)', type: 'number' },
   { key: 'speaking', label: 'Speaking (S)', type: 'number' },
   { key: 'total', label: 'Total', type: 'computed-total' },
-  { key: 'final_est', label: 'Final Score Est', type: 'computed-percent' }
+  { key: 'final_est', label: 'Final Score Est', type: 'computed-percent' },
+  { key: 'avg_percent', label: 'Avg % (Skills)', type: 'computed-avg-percent' }
 ];
 
 // Fixed class ordering (case-insensitive); unspecified classes fall back after these in alpha order
@@ -227,7 +228,8 @@ const HEADER_MAP = [
   { re: /write\b|\bw\b/i, key: 'write', label: 'Write (W)', type: 'number' },
   { re: /read|\br\b/i, key: 'reading', label: 'Reading (R)', type: 'number' },
   { re: /speak|\bs\b/i, key: 'speaking', label: 'Speaking (S)', type: 'number' },
-  { re: /final|estimate|percent/i, key: 'final_est', label: 'Final Score Est', type: 'computed-percent' }
+  { re: /final|estimate|percent/i, key: 'final_est', label: 'Final Score Est', type: 'computed-percent' },
+  { re: /avg|average/i, key: 'avg_percent', label: 'Avg % (Skills)', type: 'computed-avg-percent' }
 ];
 const IGNORE_TOTAL_RE = /total|sum|final|estimate|percent/i;
 
@@ -305,6 +307,7 @@ function buildColumnDefsFromHeaderCols(headerCols) {
   if (cols.some(c => c.type === 'number')) {
     if (!cols.some(c => c.type === 'computed-total')) cols.push({ key: 'total', label: 'Total', type: 'computed-total' });
     if (!cols.some(c => c.key === 'final_est')) cols.push({ key: 'final_est', label: 'Final Score Est', type: 'computed-percent' });
+    if (!cols.some(c => c.key === 'avg_percent')) cols.push({ key: 'avg_percent', label: 'Avg % (Skills)', type: 'computed-avg-percent' });
   }
   return { cols: (cols.length ? cols : DEFAULT_COLUMNS.slice()), indexToDef };
 }
@@ -437,6 +440,7 @@ function parsePastedTable(text) {
     // derived
     data.total = computeTotal(data, cols);
     data.final_est = computePercent(data, cols);
+    data.avg_percent = computeAveragePercent(data, cols);
 
     // Skip obvious header repeats
     if (/name/i.test(name)) continue;
@@ -608,6 +612,7 @@ async function handleImportConfirm() {
         // Recompute derived for consistency
         data.total = computeTotal(data, classCols);
         data.final_est = computePercent(data, classCols);
+        data.avg_percent = computeAveragePercent(data, classCols);
         return { user_id: user.id || null, data: { ...data, ...snapshot }, _meta: r.meta };
       });
       const matched = entries.filter(e => !!e.user_id).map(({_meta, ...rest}) => rest);
@@ -698,6 +703,24 @@ function computePercent(data, columns) {
   return Math.round((t / max) * 1000) / 10; // 1 decimal place
 }
 
+function computeAveragePercent(data, columns) {
+  const numericCols = (columns || []).filter(c => c.type === 'number' && Number(c.max) > 0);
+  if (!numericCols.length) return 0;
+  let sumPct = 0;
+  let count = 0;
+  for (const c of numericCols) {
+    const max = Number(c.max);
+    if (!Number.isFinite(max) || max <= 0) continue;
+    let score = Number(data[c.key]);
+    if (!Number.isFinite(score)) score = 0;
+    score = Math.max(0, Math.min(score, max));
+    sumPct += (score / max) * 100;
+    count++;
+  }
+  if (!count) return 0;
+  return Math.round((sumPct / count) * 10) / 10;
+}
+
 function columnsFor(test) {
   return (test?.columns && Array.isArray(test.columns) && test.columns.length)
     ? test.columns
@@ -718,7 +741,7 @@ function renderFoot(cols) {
       return `<td class="max-cell" data-col="${i}" contenteditable="true">${display}</td>`;
     }
     if (c.type === 'computed-total') return `<td class="max-sum">${sumMax(cols)}</td>`;
-    if (c.type === 'computed-percent') return `<td class="max-100">100.00</td>`;
+    if (c.type === 'computed-percent' || c.type === 'computed-avg-percent') return `<td class="max-100">100.00</td>`;
     return '<td></td>';
   }).join('');
   gridFoot.innerHTML = `<tr class="sum-row"><td class="id-col"></td><td class="id-col"></td><td class="id-col"></td>${maxCells}</tr>`;
@@ -749,10 +772,11 @@ function setCellValue(r, key, val, cols) {
   }
   r.data[key] = out;
   // Recompute derived fields
-  const totalCol = cols.find(c=>c.type==='computed-total');
-  const pctCol = cols.find(c=>c.type==='computed-percent');
-  if (totalCol) r.data[totalCol.key] = computeTotal(r.data, cols);
-  if (pctCol) r.data[pctCol.key] = computePercent(r.data, cols);
+  for (const c of cols) {
+    if (c.type === 'computed-total') r.data[c.key] = computeTotal(r.data, cols);
+    if (c.type === 'computed-percent') r.data[c.key] = computePercent(r.data, cols);
+    if (c.type === 'computed-avg-percent') r.data[c.key] = computeAveragePercent(r.data, cols);
+  }
   // mark row as dirty for autosave
   markDirtyByRow(r);
 }
@@ -777,7 +801,7 @@ function renderBody(cols) {
       ].join('');
       const dynTds = cols.map((c, cIdx)=>{
         const val = cellValue(r, c.key);
-        if (c.type === 'computed-total' || c.type === 'computed-percent') {
+        if (c.type === 'computed-total' || c.type === 'computed-percent' || c.type === 'computed-avg-percent') {
           const ce = computedLocked ? '' : ' contenteditable=\"true\"';
           return `<td data-row=\"${idx}\" data-col=\"${cIdx}\" data-uid=\"${s.id}\" data-key=\"${c.key}\"${ce}>${val!==''?val:''}</td>`;
         }
@@ -813,16 +837,10 @@ function onCellInput(e) {
   setCellValue(r, key, td.textContent, activeColumns());
   // Update computed cells
   const cols = activeColumns();
-  const totalCol = cols.find(c=>c.type==='computed-total');
-  const pctCol = cols.find(c=>c.type==='computed-percent');
-  if (totalCol) {
-    const cell = gridBody.querySelector(`td[data-uid="${uid}"][data-key="${totalCol.key}"]`);
-    if (cell) cell.textContent = r.data[totalCol.key] ?? '';
-  }
-  if (pctCol) {
-    const cell = gridBody.querySelector(`td[data-uid="${uid}"][data-key="${pctCol.key}"]`);
-    if (cell) cell.textContent = r.data[pctCol.key] ?? '';
-  }
+  cols.filter(c => c.type && String(c.type).startsWith('computed')).forEach(c => {
+    const cell = gridBody.querySelector(`td[data-uid="${uid}"][data-key="${c.key}"]`);
+    if (cell) cell.textContent = r.data[c.key] ?? '';
+  });
 }
 
 function onCellKeydown(e) {
@@ -952,7 +970,7 @@ function pasteTextIntoBodySelection(text, targetCell) {
     for (let cOff=0; cOff<parts.length; cOff++) {
       const cIdx = startColIdx + cOff; if (cIdx > endColLimit) break;
       const col = cols[cIdx]; if (!col) break;
-      if (col.type === 'computed-total' || col.type === 'computed-percent') continue;
+      if (col.type === 'computed-total' || col.type === 'computed-percent' || col.type === 'computed-avg-percent') continue;
       const r = ensureRow(s.id);
       setCellValue(r, col.key, parts[cOff], cols);
     }
@@ -1136,7 +1154,7 @@ function copySelectionToClipboard() {
       let val = '';
       if (col.type === 'number') val = col.max ?? '';
       if (col.type === 'computed-total') val = String(sumMax(cols));
-      if (col.type === 'computed-percent') val = '100.00';
+      if (col.type === 'computed-percent' || col.type === 'computed-avg-percent') val = '100.00';
       arr.push(val);
     }
     navigator.clipboard.writeText(arr.join('\t')).catch(()=>{});
@@ -1275,12 +1293,14 @@ function applyMaxEdit(cell) {
   else currentTest.columns = cols;
   // Recompute derived
   const tCols = activeColumns();
-  const totalCol = tCols.find(c=>c.type==='computed-total');
-  const pctCol = tCols.find(c=>c.type==='computed-percent');
-  if (totalCol || pctCol) {
+  const computedCols = tCols.filter(c=> c.type && String(c.type).startsWith('computed'));
+  if (computedCols.length) {
     for (const r of rows) {
-      if (totalCol) r.data[totalCol.key] = computeTotal(r.data, tCols);
-      if (pctCol) r.data[pctCol.key] = computePercent(r.data, tCols);
+      for (const c of computedCols) {
+        if (c.type === 'computed-total') r.data[c.key] = computeTotal(r.data, tCols);
+        if (c.type === 'computed-percent') r.data[c.key] = computePercent(r.data, tCols);
+        if (c.type === 'computed-avg-percent') r.data[c.key] = computeAveragePercent(r.data, tCols);
+      }
     }
   }
   refreshGrid();
@@ -2120,6 +2140,7 @@ if (typeof termTo !== 'undefined' && termTo) {
   const cardsWrap = document.getElementById('rcCardsWrap');
   const cardsContainer = document.getElementById('rcCardsContainer');
   const rcStatus = document.getElementById('rcStatus');
+  const rcTotalMode = document.getElementById('rcTotalMode');
   if (!openBtn || !modalBg) return;
 
   function esc(s=''){ return String(s).replace(/[&<>"'`]/g, m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;","`":"&#96;"}[m]||m)); }
@@ -2202,7 +2223,7 @@ if (typeof termTo !== 'undefined' && termTo) {
     return col.label || col.key;
   }
 
-  function renderCard({ student, test, notes }) {
+  function renderCard({ student, test, notes, totalMode }) {
     const cols = Array.isArray(test.columns) ? test.columns : [];
     const numberCols = cols.filter(c=>c.type==='number');
 
@@ -2217,7 +2238,12 @@ if (typeof termTo !== 'undefined' && termTo) {
       scores.push({ label: getKoreanLabel(c), score:val, max, pct: barsPercent(val, max) });
     }
   const percent = (m>0) ? Math.round((t/m)*1000)/10 : null;
+  const avgPercent = computeAveragePercent(student.data || {}, cols);
   const totalSum = `${formatNumber(t)}/${formatNumber(m)}`;
+  const useAverageMode = totalMode === 'average';
+  const shownPercent = useAverageMode ? avgPercent : percent;
+  const totalLabel = useAverageMode ? 'Average' : 'Total';
+  const totalSumHtml = useAverageMode ? '' : `<div class="rc-total-sum">${totalSum}</div>`;
 
     // Library grades (text) if available
     const libReading = student.data['lib_reading'] || student.data['LIB_READING'] || '';
@@ -2294,9 +2320,9 @@ if (typeof termTo !== 'undefined' && termTo) {
           <div>
             ${skillRows}
             <div class="rc-total-wrap">
-              <div class="rc-total-label">Total</div>
-              <div class="rc-total">${formatPercent(percent)}</div>
-              <div class="rc-total-sum">${totalSum}</div>
+              <div class="rc-total-label">${totalLabel}</div>
+              <div class="rc-total">${formatPercent(shownPercent)}</div>
+              ${totalSumHtml}
             </div>
           </div>
 
@@ -2341,11 +2367,12 @@ if (typeof termTo !== 'undefined' && termTo) {
     })();
     const test = currentTestMeta();
     const students = visibleStudents();
+    const totalMode = (rcTotalMode && rcTotalMode.value === 'average') ? 'average' : 'weighted';
     console.log('[RC] Rendering cards for', students.length, 'students');
     rcStatus.textContent = `Rendering ${students.length} report card${students.length===1?'':'s'}…`;
   const activeClass = (testClassFilter && testClassFilter.value) || (currentTest && currentTest.class) || '';
   const notes = (classComments.get(activeClass) || document.getElementById('classComment')?.value || '').trim();
-    const cards = students.map(s => renderCard({ student:s, test, notes }));
+    const cards = students.map(s => renderCard({ student:s, test, notes, totalMode }));
     cardsContainer.innerHTML = cards.join('');
     modalBg.style.display = 'flex';
     rcStatus.textContent = `Ready. ${students.length} card${students.length===1?'':'s'}.`;
@@ -2353,6 +2380,9 @@ if (typeof termTo !== 'undefined' && termTo) {
 
   function closeModal() { modalBg.style.display = 'none'; }
   openBtn.addEventListener('click', openModal);
+  rcTotalMode?.addEventListener('change', ()=>{
+    if (modalBg.style.display === 'flex') openModal();
+  });
   closeBtn?.addEventListener('click', closeModal);
   modalBg.addEventListener('click', (e)=>{ if (e.target === modalBg) closeModal(); });
 
