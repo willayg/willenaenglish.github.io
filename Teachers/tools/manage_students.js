@@ -39,6 +39,7 @@ const langMap = {
     cancel: "Cancel",
     search: "Search by username or name",
     refresh: "Refresh",
+    exportCsv: "Export CSV",
     classLabel: "Class:",
   tableHeaders: ["Username", "Name", "Korean Name", "Class", "Grade", "School", "Phone", "Approved", "Tools"],
     addAll: 'Add All',
@@ -88,6 +89,7 @@ const langMap = {
     cancel: "취소",
     search: "아이디 또는 이름으로 검색",
     refresh: "새로고침",
+    exportCsv: "CSV 내보내기",
     classLabel: "반:",
   tableHeaders: ["아이디", "이름", "한국 이름", "반", "학년", "학교", "전화번호", "승인됨", "도구"],
     addAll: '전체 추가',
@@ -117,6 +119,7 @@ function setLanguage(lang) {
   const sgl = document.querySelector('label[for="singleGrade"]'); if (sgl) sgl.textContent = langMap[lang].grade;
   document.getElementById('search').placeholder = langMap[lang].search;
   document.getElementById('refreshBtn').textContent = langMap[lang].refresh;
+  const exportBtn = document.getElementById('exportStudentsBtn'); if (exportBtn) exportBtn.textContent = langMap[lang].exportCsv;
   document.querySelector('label[for="classFilter"]').textContent = langMap[lang].classLabel;
   // Bulk Insert Modal
   const bh2 = document.querySelector('#bulkModal h2'); if (bh2) bh2.textContent = langMap[lang].addFullClass;
@@ -356,6 +359,55 @@ function renderStudentRows(students) {
   el('rows').innerHTML = (rows.map(rowTpl).join('')) || '<tr><td colspan="9">No students found</td></tr>';
 }
 
+function csvEscape(value) {
+  const s = value == null ? '' : String(value);
+  return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+}
+
+function exportVisibleStudentsCsv() {
+  const rows = applyStudentSort(CURRENT_VIEW_STUDENTS || []);
+  const listMsg = el('listMsg');
+  if (!rows.length) {
+    if (listMsg) {
+      listMsg.style.color = '#b45309';
+      listMsg.textContent = 'No students to export.';
+    }
+    return;
+  }
+
+  const headers = ['Username', 'Name', 'Korean Name', 'Class', 'Grade', 'School', 'Phone', 'Approved'];
+  const lines = [headers.join(',')];
+  for (const s of rows) {
+    const row = [
+      s.username || '',
+      s.name || '',
+      s.korean_name || '',
+      s.class || '',
+      s.grade || '',
+      s.school || '',
+      s.phone || '',
+      s.approved ? 'Yes' : 'No'
+    ];
+    lines.push(row.map(csvEscape).join(','));
+  }
+
+  const classVal = (el('classFilter')?.value || 'all').replace(/[^a-z0-9_-]/gi, '_');
+  const stamp = new Date().toISOString().slice(0, 10);
+  const blob = new Blob(['\uFEFF' + lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `students_${classVal}_${stamp}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(a.href);
+
+  if (listMsg) {
+    listMsg.style.color = '#065f46';
+    listMsg.textContent = `Exported ${rows.length} student${rows.length === 1 ? '' : 's'}.`;
+  }
+}
+
 // Prefetch class student lists (background warming). Limits to a few classes to avoid burst.
 async function prefetchClassList(cls) {
   if (!cls) return null;
@@ -573,6 +625,8 @@ function attachRowHandlers() {
 function wire() {
   el('refreshBtn').addEventListener('click', ()=>refresh(true));
   el('search').addEventListener('input', () => { clearTimeout(wire._t); wire._t = setTimeout(refresh, 300); });
+  const exportBtn = el('exportStudentsBtn');
+  if (exportBtn) exportBtn.addEventListener('click', exportVisibleStudentsCsv);
   const classFilter = el('classFilter');
   if (classFilter) classFilter.addEventListener('change', refresh);
   const tableHead = document.querySelector('.worksheet-preview thead');
