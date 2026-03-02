@@ -260,7 +260,7 @@ function rowTpl(s) {
   const lang = currentLang || 'en';
   const tnames = langMap[lang].toolNames;
   const approved = s.approved ? '<span class="pill yes">Yes</span>' : '<span class="pill no">No</span>';
-  return `<tr data-id="${s.id}" data-username="${s.username}" data-name="${s.name || ''}" data-korean="${s.korean_name || ''}" data-class="${s.class || ''}" data-grade="${s.grade || ''}" data-approved="${s.approved ? '1' : '0'}">
+  return `<tr data-id="${s.id}" data-username="${s.username}" data-name="${s.name || ''}" data-korean="${s.korean_name || ''}" data-class="${s.class || ''}" data-grade="${s.grade || ''}" data-school="${s.school || ''}" data-approved="${s.approved ? '1' : '0'}">
     <td>${s.username || ''}</td>
     <td>${s.name || ''}</td>
     <td>${s.korean_name || ''}</td>
@@ -315,6 +315,46 @@ function cacheGetAll(maxAgeMs = 60000) {
 // In-memory copy for fast filtering during the session
 let ALL_STUDENTS = null;
 const MAX_ALL_CACHE_SIZE = 3000; // only use full-client cache if dataset isn't enormous
+let CURRENT_VIEW_STUDENTS = [];
+const SORT_STATE = { key: '', dir: 'asc' };
+
+function sortValueForKey(student, key) {
+  if (key === 'approved') return student?.approved ? '1' : '0';
+  return String(student?.[key] ?? '').trim().toLowerCase();
+}
+
+function applyStudentSort(students) {
+  const list = Array.isArray(students) ? [...students] : [];
+  if (!SORT_STATE.key) return list;
+  const key = SORT_STATE.key;
+  const dir = SORT_STATE.dir === 'desc' ? -1 : 1;
+  return list.sort((a, b) => {
+    const av = sortValueForKey(a, key);
+    const bv = sortValueForKey(b, key);
+    if (av < bv) return -1 * dir;
+    if (av > bv) return 1 * dir;
+    return String(a?.username || '').localeCompare(String(b?.username || ''));
+  });
+}
+
+function updateSortHeaderUI() {
+  const ths = document.querySelectorAll('th[data-sort]');
+  ths.forEach((th) => {
+    const key = th.dataset.sort;
+    const label = th.dataset.label || th.textContent || '';
+    if (SORT_STATE.key === key) {
+      th.textContent = `${label} ${SORT_STATE.dir === 'asc' ? '▲' : '▼'}`;
+    } else {
+      th.textContent = label;
+    }
+  });
+}
+
+function renderStudentRows(students) {
+  CURRENT_VIEW_STUDENTS = Array.isArray(students) ? [...students] : [];
+  const rows = applyStudentSort(CURRENT_VIEW_STUDENTS);
+  el('rows').innerHTML = (rows.map(rowTpl).join('')) || '<tr><td colspan="9">No students found</td></tr>';
+}
 
 // Prefetch class student lists (background warming). Limits to a few classes to avoid burst.
 async function prefetchClassList(cls) {
@@ -338,6 +378,7 @@ const editUsername = document.getElementById('editUsername');
 const editKoreanName = document.getElementById('editKoreanName');
 const editClass = document.getElementById('editClass');
 const editGrade = document.getElementById('editGrade');
+const editSchool = document.getElementById('editSchool');
 const editCancel = document.getElementById('editCancel');
 const editSubmit = document.getElementById('editSubmit');
 const editMsg = document.getElementById('editMsg');
@@ -350,6 +391,7 @@ function showEditModal(student) {
   editKoreanName.value = student.korean_name || '';
   editClass.value = student.class || '';
   if (editGrade) editGrade.value = student.grade || '';
+  if (editSchool) editSchool.value = student.school || '';
   editMsg.textContent = '';
   editModalBg.style.display = 'flex';
 }
@@ -367,9 +409,10 @@ if (editSubmit) editSubmit.onclick = async function() {
   const korean_name = editKoreanName.value.trim();
   const className = editClass.value.trim();
   const grade = editGrade ? editGrade.value.trim() : '';
+  const school = editSchool ? editSchool.value.trim() : '';
   if (!username) { editMsg.textContent = 'Username required.'; return; }
   try {
-    await api('update_student', { method:'POST', body: { user_id: editingId, name, username, korean_name, class: className, grade: grade || null } });
+    await api('update_student', { method:'POST', body: { user_id: editingId, name, username, korean_name, class: className, grade: grade || null, school: school || null } });
     hideEditModal();
     await populateClassFilter();
   await refresh(true);
@@ -407,7 +450,7 @@ async function refresh(force = false) {
     try {
       const cached = classVal ? cacheGetClassData(classVal, 30000) : null;
       if (cached && Array.isArray(cached)) {
-        el('rows').innerHTML = cached.map(rowTpl).join('') || '<tr><td colspan="9">No students found</td></tr>';
+        renderStudentRows(cached);
         renderedFromCache = true;
       }
     } catch (e) { }
@@ -426,7 +469,7 @@ async function refresh(force = false) {
           return uname.includes(ql) || name.includes(ql);
         });
         try { if (classVal) cacheSetClassData(classVal, students); } catch(e) {}
-        el('rows').innerHTML = (students.map(rowTpl).join('')) || '<tr><td colspan="9">No students found</td></tr>';
+        renderStudentRows(students);
         return; // local data is fresh enough
       }
     } catch(e) {}
@@ -457,7 +500,7 @@ async function refresh(force = false) {
   }
   if (classVal) students = students.filter(s => s.class === classVal);
   try { if (classVal) cacheSetClassData(classVal, students); } catch(e) {}
-  el('rows').innerHTML = (students.map(rowTpl).join('')) || '<tr><td colspan="9">No students found</td></tr>';
+  renderStudentRows(students);
 }
 
 async function createStudentLegacy() {
@@ -499,7 +542,8 @@ function attachRowHandlers() {
         username: tr?.dataset?.username,
         korean_name: tr?.dataset?.korean,
         class: tr?.dataset?.class,
-        grade: tr?.dataset?.grade
+        grade: tr?.dataset?.grade,
+        school: tr?.dataset?.school
       });
       return;
     }
@@ -531,6 +575,24 @@ function wire() {
   el('search').addEventListener('input', () => { clearTimeout(wire._t); wire._t = setTimeout(refresh, 300); });
   const classFilter = el('classFilter');
   if (classFilter) classFilter.addEventListener('change', refresh);
+  const tableHead = document.querySelector('.worksheet-preview thead');
+  if (tableHead) {
+    tableHead.addEventListener('click', (e) => {
+      const th = e.target.closest('th[data-sort]');
+      if (!th) return;
+      const key = th.dataset.sort;
+      if (!key) return;
+      if (SORT_STATE.key === key) {
+        SORT_STATE.dir = SORT_STATE.dir === 'asc' ? 'desc' : 'asc';
+      } else {
+        SORT_STATE.key = key;
+        SORT_STATE.dir = 'asc';
+      }
+      updateSortHeaderUI();
+      renderStudentRows(CURRENT_VIEW_STUDENTS);
+    });
+  }
+  updateSortHeaderUI();
   const testBtn = document.getElementById('openTestInput');
   if (testBtn) testBtn.addEventListener('click', ()=>{
     const klass = el('classFilter')?.value || '';
