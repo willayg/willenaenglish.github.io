@@ -817,30 +817,60 @@ function escapeHtml(s) {
 }
 
 // Parse tab-delimited rows copied from Google Sheets.
-// Expected columns: No. | School | Grade | Name (Korean) | English Name | Phone
+// Supports pastes with or without the leading "No." column.
+// Expected columns (either):
+//  - No. | School | Grade | Name | English Name | Phone
+//  - School | Grade | Name | English Name | Phone
 function parseBulkSheet(text) {
   const lines = String(text || '').split(/\r?\n/);
   const items = [];
-  for (const raw of lines) {
+
+  for (let i = 0; i < lines.length; i++) {
+    const raw = lines[i];
     const line = String(raw || '').trimEnd();
     if (!line.trim()) continue;
     const cols = line.split(/\t/).map(c => c.trim());
 
-    // Skip header rows
+    // Skip header rows (English/Korean)
     const c0 = (cols[0] || '').toLowerCase().replace(/\./g, '');
     const c1 = (cols[1] || '').toLowerCase();
     if (c0 === 'no' || c0 === '#' || c0 === '번호' || c1 === 'school' || c1 === '학교') continue;
+    if (c0 === 'school' || c0 === '학교') continue;
 
-    // Google Sheets copy may include extra columns; we only care about first 6.
-    const school = cols[1] || '';
-    const grade = cols[2] || '';
-    const korean_name = cols[3] || '';
-    const name = cols[4] || '';
-    const phone = cols[5] || '';
+    // Detect whether first column is a row number
+    const firstIsNo = /^\d{1,4}$/.test(cols[0] || '');
+    const offset = firstIsNo ? 1 : 0;
 
-    // Basic guard: require at least English name OR phone OR Korean name to consider it
-    if (!school && !grade && !korean_name && !name && !phone) continue;
-    items.push({ school, grade, korean_name, name, phone });
+    const school = (cols[offset + 0] || '').trim();
+    const grade = (cols[offset + 1] || '').trim();
+    const korean_name = (cols[offset + 2] || '').trim();
+    const english_name = (cols[offset + 3] || '').trim();
+    const phone = (cols[offset + 4] || '').trim();
+
+    // If the row is shorter than expected, try a heuristic fallback:
+    // find the phone-like field and an ASCII (english) name field.
+    let finalSchool = school;
+    let finalGrade = grade;
+    let finalKo = korean_name;
+    let finalEn = english_name;
+    let finalPhone = phone;
+
+    if (!finalPhone || !/\d/.test(finalPhone) || (!finalEn && cols.length >= 3)) {
+      // Attempt to locate phone by digits
+      const phoneIdx = cols.findIndex(c => /\d{2,}/.test(c));
+      if (phoneIdx >= 0) finalPhone = cols[phoneIdx];
+      // Attempt to locate English name by ASCII letters
+      const enIdx = cols.findIndex(c => /^[A-Za-z][A-Za-z\s\-']*$/.test(c));
+      if (enIdx >= 0) finalEn = cols[enIdx];
+      // If we found enIdx and phoneIdx, guess korean name is immediately before english
+      if (!finalKo && enIdx > 0) finalKo = cols[enIdx - 1] || '';
+      // Try to keep school/grade from earliest columns
+      if (!finalSchool) finalSchool = cols[0] || '';
+      if (!finalGrade && cols.length > 1) finalGrade = cols[1] || '';
+    }
+
+    if (!finalSchool && !finalGrade && !finalKo && !finalEn && !finalPhone) continue;
+    items.push({ row: i + 1, school: finalSchool, grade: finalGrade, korean_name: finalKo, english_name: finalEn, phone: finalPhone });
   }
   return items;
 }
@@ -864,15 +894,20 @@ function renderBulkPreview(items) {
     '<th style="text-align:left; padding:6px; border-bottom:1px solid #e5e7eb;">Name</th>',
     '<th style="text-align:left; padding:6px; border-bottom:1px solid #e5e7eb;">English</th>',
     '<th style="text-align:left; padding:6px; border-bottom:1px solid #e5e7eb;">Phone</th>',
+    '<th style="text-align:left; padding:6px; border-bottom:1px solid #e5e7eb;">Notes</th>',
     '</tr></thead><tbody>'
   ];
   for (const r of rows) {
+    const notes = [];
+    if (!r.english_name) notes.push('missing English Name');
+    if (!r.phone || !/\d/.test(r.phone)) notes.push('missing Phone');
     html.push('<tr>');
     html.push(`<td style="padding:6px; border-bottom:1px solid #f1f5f9;">${escapeHtml(r.school)}</td>`);
     html.push(`<td style="padding:6px; border-bottom:1px solid #f1f5f9;">${escapeHtml(r.grade)}</td>`);
     html.push(`<td style="padding:6px; border-bottom:1px solid #f1f5f9;">${escapeHtml(r.korean_name)}</td>`);
-    html.push(`<td style="padding:6px; border-bottom:1px solid #f1f5f9;">${escapeHtml(r.name)}</td>`);
+    html.push(`<td style="padding:6px; border-bottom:1px solid #f1f5f9;">${escapeHtml(r.english_name)}</td>`);
     html.push(`<td style="padding:6px; border-bottom:1px solid #f1f5f9;">${escapeHtml(r.phone)}</td>`);
+    html.push(`<td style="padding:6px; border-bottom:1px solid #f1f5f9; color:${notes.length ? '#b45309' : '#64748b'};">${escapeHtml(notes.join(', '))}</td>`);
     html.push('</tr>');
   }
   html.push('</tbody></table>');
@@ -958,7 +993,7 @@ if (bulkSubmit) bulkSubmit.onclick = async function() {
       const patchSchool = (it.school || '').trim();
       const patchGrade = (it.grade || '').trim();
       const patchKo = (it.korean_name || '').trim();
-      const patchEn = (it.name || '').trim();
+      const patchEn = (it.english_name || '').trim();
 
       const found = phoneDigits ? byPhone.get(phoneDigits) : null;
       if (found) {
@@ -974,6 +1009,7 @@ if (bulkSubmit) bulkSubmit.onclick = async function() {
         // Creating new student requires an English name (used for username generation)
         if (!patchEn) { skipped++; continue; }
         const username = usernameFrom(patchEn, formattedPhone || it.phone);
+        if (!username) { skipped++; continue; }
         const payload = {
           username,
           password: username,
