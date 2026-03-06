@@ -92,6 +92,7 @@
         </div>
         <div class="ta-right">
           <button id="openReportCardsBtn" class="btn-link" title="Open report cards">Report Cards</button>
+          <button id="openAddStudentsBtn" class="btn-link" title="Add students to the current class">Add Students</button>
           <button id="openLoadBtn" class="btn-link">Load Test</button>
           <button id="saveBtn" class="btn-link" title="Save (Ctrl+S)">Save</button>
         </div>
@@ -162,7 +163,7 @@
     await ensureBurgerMenuTemplate();
     insertBurgerMenu('#burger-menu-mount');
   </script>
-  <script type="module" src="./test_input.js?v=20260302d"></script>
+  <script type="module" src="./test_input.js?v=20260306a"></script>
   <style>
     /* Selection styling */
     td.cell-selected { outline:2px solid #60a5fa; background:#eff6ff; }
@@ -241,6 +242,48 @@
           <div class="note">Importing...</div>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- Add Students Modal -->
+  <div id="addStudentsModalBg" style="display:none; position:fixed; inset:0; background:rgba(15,23,42,0.35); z-index:3002; align-items:center; justify-content:center;">
+    <div style="background:#fff; width:min(96vw, 1100px); max-height:90vh; overflow:auto; border-radius:16px; box-shadow:0 10px 30px rgba(0,0,0,0.2); padding:16px; display:flex; flex-direction:column; gap:12px;">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <strong style="flex:1;">Add Students</strong>
+        <button id="addStudentsCloseBtn" class="clear-btn" type="button">Close</button>
+      </div>
+      <div style="display:flex; gap:10px; align-items:end; flex-wrap:wrap;">
+        <div style="min-width:220px; flex:0 0 220px;">
+          <label for="addStudentsClass" class="note" style="display:block; font-weight:600; margin-bottom:4px;">Class</label>
+          <input id="addStudentsClass" class="input-field" placeholder="Brown" />
+        </div>
+        <div class="note" style="flex:1 1 260px;">Create student accounts here, then they will appear as new rows for the selected class test.</div>
+      </div>
+      <div style="overflow:auto; border:1px solid #e5e7eb; border-radius:10px;">
+        <table style="width:100%; border-collapse:separate; border-spacing:0; min-width:900px;">
+          <thead>
+            <tr style="background:#f8fafc;">
+              <th style="padding:10px; border-bottom:1px solid #e5e7eb; text-align:left;">Username</th>
+              <th style="padding:10px; border-bottom:1px solid #e5e7eb; text-align:left;">Password</th>
+              <th style="padding:10px; border-bottom:1px solid #e5e7eb; text-align:left;">English Name</th>
+              <th style="padding:10px; border-bottom:1px solid #e5e7eb; text-align:left;">Korean Name</th>
+              <th style="padding:10px; border-bottom:1px solid #e5e7eb; text-align:left;">Grade</th>
+              <th style="padding:10px; border-bottom:1px solid #e5e7eb; text-align:left;">School</th>
+              <th style="padding:10px; border-bottom:1px solid #e5e7eb; text-align:left;">Phone</th>
+              <th style="padding:10px; border-bottom:1px solid #e5e7eb; text-align:center; width:90px;">Remove</th>
+            </tr>
+          </thead>
+          <tbody id="addStudentsRows"></tbody>
+        </table>
+      </div>
+      <div style="display:flex; gap:8px; justify-content:space-between; align-items:center; flex-wrap:wrap;">
+        <button id="addStudentsAddRow" class="layout-btn" type="button">Add Row</button>
+        <div style="display:flex; gap:8px; align-items:center;">
+          <button id="addStudentsCancel" class="clear-btn" type="button">Cancel</button>
+          <button id="addStudentsSubmit" class="extract-btn" type="button">Create Students</button>
+        </div>
+      </div>
+      <div id="addStudentsMsg" class="note"></div>
     </div>
   </div>
 
