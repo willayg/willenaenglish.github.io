@@ -101,16 +101,7 @@ const importConfirm = document.getElementById('importConfirm');
 const importMsg = document.getElementById('importMsg');
 const strictTsvSwitch = document.getElementById('strictTsvSwitch');
 const importBusy = document.getElementById('importBusy');
-// Add students modal elements
 const openAddStudentsBtn = document.getElementById('openAddStudentsBtn');
-const addStudentsModalBg = document.getElementById('addStudentsModalBg');
-const addStudentsCloseBtn = document.getElementById('addStudentsCloseBtn');
-const addStudentsClass = document.getElementById('addStudentsClass');
-const addStudentsRows = document.getElementById('addStudentsRows');
-const addStudentsAddRow = document.getElementById('addStudentsAddRow');
-const addStudentsCancel = document.getElementById('addStudentsCancel');
-const addStudentsSubmit = document.getElementById('addStudentsSubmit');
-const addStudentsMsg = document.getElementById('addStudentsMsg');
 // Grouped test picker state
 let testGroups = {}; // key `${name}||${date}` -> { name, date, items: [{ id, class }] }
 let activeTestGroupKey = null;
@@ -137,7 +128,6 @@ let metaTimer = null;
 // Per-class comments (not persisted server-side yet; stored in test metadata via a special column on save)
 const classComments = new Map(); // key: class or '' -> comment text
 let commentSaveTimer = null;
-let addStudentsDrafts = [];
 
 // Stable alphabetical sort for students (by name, then korean_name, then username, then id)
 function sortStudents(arr) {
@@ -158,16 +148,6 @@ function sortStudents(arr) {
   });
 }
 
-function escapeHtml(value) {
-  return String(value ?? '').replace(/[&<>"']/g, (ch) => ({
-    '&': '&amp;',
-    '<': '&lt;',
-    '>': '&gt;',
-    '"': '&quot;',
-    "'": '&#39;'
-  }[ch] || ch));
-}
-
 function activeClassValue() {
   return String((testClassFilter && testClassFilter.value) || (currentTest && currentTest.class) || '').trim();
 }
@@ -176,48 +156,58 @@ function classesMatch(a, b) {
   return String(a || '').trim().toLowerCase() === String(b || '').trim().toLowerCase();
 }
 
-function makeBlankStudentDraft() {
-  return { username: '', password: '', name: '', korean_name: '', grade: '', school: '', phone: '' };
+function isManualStudentId(id) {
+  return String(id || '').startsWith('manual:');
 }
 
-function draftHasAnyValue(draft) {
-  return Object.values(draft || {}).some(v => String(v || '').trim() !== '');
+function isManualStudent(student) {
+  return !!student && isManualStudentId(student.id);
 }
 
-function resetAddStudentsDrafts(count = 3) {
-  addStudentsDrafts = Array.from({ length: count }, () => makeBlankStudentDraft());
-  renderAddStudentsDrafts();
+function makeManualStudent(partial = {}) {
+  return {
+    id: partial.id || `manual:${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`,
+    username: '',
+    name: String(partial.name || ''),
+    korean_name: String(partial.korean_name || ''),
+    class: String(partial.class || activeClassValue() || ''),
+    manual: true
+  };
 }
 
-function renderAddStudentsDrafts() {
-  if (!addStudentsRows) return;
-  addStudentsRows.innerHTML = addStudentsDrafts.map((draft, idx) => `
-    <tr data-row="${idx}">
-      <td style="padding:8px; border-bottom:1px solid #e5e7eb;"><input data-field="username" class="input-field" style="min-width:120px;" value="${escapeHtml(draft.username)}" placeholder="username" autocomplete="off" /></td>
-      <td style="padding:8px; border-bottom:1px solid #e5e7eb;"><input data-field="password" class="input-field" style="min-width:120px;" value="${escapeHtml(draft.password)}" placeholder="password" autocomplete="new-password" /></td>
-      <td style="padding:8px; border-bottom:1px solid #e5e7eb;"><input data-field="name" class="input-field" value="${escapeHtml(draft.name)}" placeholder="Ellie" /></td>
-      <td style="padding:8px; border-bottom:1px solid #e5e7eb;"><input data-field="korean_name" class="input-field" value="${escapeHtml(draft.korean_name)}" placeholder="엘리" /></td>
-      <td style="padding:8px; border-bottom:1px solid #e5e7eb;"><input data-field="grade" class="input-field" value="${escapeHtml(draft.grade)}" placeholder="3" /></td>
-      <td style="padding:8px; border-bottom:1px solid #e5e7eb;"><input data-field="school" class="input-field" value="${escapeHtml(draft.school)}" placeholder="School" /></td>
-      <td style="padding:8px; border-bottom:1px solid #e5e7eb;"><input data-field="phone" class="input-field" value="${escapeHtml(draft.phone)}" placeholder="010-1234-5678" /></td>
-      <td style="padding:8px; border-bottom:1px solid #e5e7eb; text-align:center;"><button type="button" data-remove-row="${idx}" class="clear-btn" style="padding:6px 10px;">×</button></td>
-    </tr>
-  `).join('');
+function manualRowHasContent(item) {
+  if (!item) return false;
+  const metaHasValue = ['name', 'korean_name', 'class'].some((key) => String(item[key] || '').trim() !== '');
+  const dataHasValue = Object.values(item.data || {}).some((value) => String(value ?? '').trim() !== '');
+  return metaHasValue || dataHasValue;
 }
 
-function openAddStudentsModal() {
-  if (!addStudentsModalBg) return;
-  if (addStudentsClass) addStudentsClass.value = activeClassValue();
-  if (addStudentsMsg) {
-    addStudentsMsg.style.color = '#64748b';
-    addStudentsMsg.textContent = 'Enter one or more students, then create them for this class.';
-  }
-  resetAddStudentsDrafts();
-  addStudentsModalBg.style.display = 'flex';
+function getManualRowsFromColumns(test) {
+  const carrier = getMetaCarrierColumn(columnsFor(test));
+  const raw = Array.isArray(carrier?._manualRows) ? carrier._manualRows : [];
+  return raw.map((item) => ({
+    id: String(item?.id || '').trim() || makeManualStudent().id,
+    name: String(item?.name || ''),
+    korean_name: String(item?.korean_name || ''),
+    class: String(item?.class || test?.class || ''),
+    data: { ...(item?.data || {}) }
+  })).filter(manualRowHasContent);
 }
 
-function closeAddStudentsModal() {
-  if (addStudentsModalBg) addStudentsModalBg.style.display = 'none';
+function getPersistableManualRows() {
+  return students
+    .filter(isManualStudent)
+    .map((student) => {
+      const row = rows.find((item) => item.user_id === student.id);
+      return {
+        id: student.id,
+        name: String(student.name || ''),
+        korean_name: String(student.korean_name || ''),
+        class: String(student.class || ''),
+        data: { ...(row?.data || {}) }
+      };
+    })
+    .filter(manualRowHasContent);
 }
 
 async function fetchStudentsByClass(klass = '') {
@@ -242,117 +232,38 @@ function studentsFromEntries(entries, fallbackClass = '') {
   }));
 }
 
-function mergeStudentsForGrid(entryStudents, rosterStudents) {
+function mergeStudentsForGrid(...studentLists) {
   const merged = [];
   const seen = new Set();
-  for (const student of (entryStudents || [])) {
-    if (!student?.id || seen.has(student.id)) continue;
-    seen.add(student.id);
-    merged.push(student);
-  }
-  for (const student of (rosterStudents || [])) {
-    if (!student?.id || seen.has(student.id)) continue;
-    seen.add(student.id);
-    merged.push(student);
+  for (const list of studentLists) {
+    for (const student of (list || [])) {
+      if (!student?.id || seen.has(student.id)) continue;
+      seen.add(student.id);
+      merged.push(student);
+    }
   }
   return sortStudents(merged);
 }
 
-async function submitAddStudents() {
-  if (!addStudentsSubmit) return;
-  const klass = String(addStudentsClass?.value || '').trim();
-  const filledDrafts = addStudentsDrafts.filter(draftHasAnyValue);
+function addManualRow() {
+  const klass = activeClassValue();
   if (!klass) {
-    if (addStudentsMsg) {
-      addStudentsMsg.style.color = '#b91c1c';
-      addStudentsMsg.textContent = 'Enter a class before creating students.';
-    }
+    msg.style.color = '#b91c1c';
+    msg.textContent = 'Load a class test first, then add a row.';
     return;
   }
-  if (!filledDrafts.length) {
-    if (addStudentsMsg) {
-      addStudentsMsg.style.color = '#b91c1c';
-      addStudentsMsg.textContent = 'Add at least one student row first.';
-    }
-    return;
+  if (search && search.value) search.value = '';
+  const manualStudent = makeManualStudent({ class: klass });
+  students = [...students, manualStudent];
+  ensureRow(manualStudent.id);
+  refreshGrid();
+  const firstManualCell = gridBody.querySelector(`td[data-uid="${manualStudent.id}"][data-manual-field="name"]`);
+  if (firstManualCell) {
+    firstManualCell.focus();
+    try { placeCaretAtEnd(firstManualCell); } catch {}
   }
-
-  const failedDrafts = [];
-  const failureMessages = [];
-  let createdCount = 0;
-  addStudentsSubmit.disabled = true;
-  if (addStudentsAddRow) addStudentsAddRow.disabled = true;
-  if (addStudentsCancel) addStudentsCancel.disabled = true;
-  if (addStudentsMsg) {
-    addStudentsMsg.style.color = '#334155';
-    addStudentsMsg.textContent = 'Creating students…';
-  }
-
-  for (let i = 0; i < filledDrafts.length; i++) {
-    const draft = filledDrafts[i];
-    const username = String(draft.username || '').trim().toLowerCase();
-    const password = String(draft.password || '');
-    if (!username || !password) {
-      failedDrafts.push({ ...draft });
-      failureMessages.push(`Row ${i + 1}: username and password are required.`);
-      continue;
-    }
-    try {
-      const payload = {
-        username,
-        password,
-        name: String(draft.name || '').trim() || username,
-        korean_name: String(draft.korean_name || '').trim() || null,
-        class: klass,
-        approved: true,
-        grade: String(draft.grade || '').trim() || null,
-        school: String(draft.school || '').trim() || null,
-        phone: String(draft.phone || '').trim() || null
-      };
-      const res = await apiFetch(`${STUDENT_API}?action=create_student`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-        cache: 'no-store'
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok || data?.success === false) {
-        throw new Error(data?.error || `Request failed: ${res.status}`);
-      }
-      createdCount += 1;
-    } catch (error) {
-      failedDrafts.push({ ...draft });
-      failureMessages.push(`Row ${i + 1}: ${error?.message || 'Failed to create student.'}`);
-    }
-  }
-
-  if (currentTest?.id && classesMatch(klass, activeClassValue())) {
-    await loadTestById(currentTest.id);
-  } else if (!currentTest?.id) {
-    await populateTestClassFilter();
-  }
-
-  addStudentsSubmit.disabled = false;
-  if (addStudentsAddRow) addStudentsAddRow.disabled = false;
-  if (addStudentsCancel) addStudentsCancel.disabled = false;
-
-  if (!failedDrafts.length) {
-    closeAddStudentsModal();
-    msg.style.color = '#065f46';
-    msg.textContent = `Added ${createdCount} student${createdCount === 1 ? '' : 's'} to ${klass}.`;
-    return;
-  }
-
-  addStudentsDrafts = failedDrafts.length ? failedDrafts : [makeBlankStudentDraft()];
-  renderAddStudentsDrafts();
-  if (addStudentsMsg) {
-    addStudentsMsg.style.color = createdCount ? '#b45309' : '#b91c1c';
-    addStudentsMsg.textContent = `${createdCount ? `Created ${createdCount}. ` : ''}${failureMessages.join(' ')}`;
-  }
-  if (createdCount) {
-    msg.style.color = '#065f46';
-    msg.textContent = `Added ${createdCount} student${createdCount === 1 ? '' : 's'} to ${klass}.`;
-  }
+  msg.style.color = '#065f46';
+  msg.textContent = `Added a manual row to ${klass}. Type directly into the row to fill it in.`;
 }
 
 // --- Lightweight metadata carrier for class comments ---
@@ -387,6 +298,7 @@ function loadCommentsFromColumns(test) {
       if (!classComments.has(k)) classComments.set(k, String(v || ''));
     }
   }
+  test._manualRows = getManualRowsFromColumns(test);
 }
 function persistCommentsToColumns(test) {
   const cols = columnsFor(test);
@@ -402,6 +314,8 @@ function persistCommentsToColumns(test) {
     if (tf) carrier._term_from = tf; else if (carrier._term_from) delete carrier._term_from;
     if (tt) carrier._term_to = tt; else if (carrier._term_to) delete carrier._term_to;
   } catch {}
+  const manualRows = getPersistableManualRows();
+  if (manualRows.length) carrier._manualRows = manualRows; else if (carrier._manualRows) delete carrier._manualRows;
   if (carrier._classComments) delete carrier._classComments; // stop writing legacy structure
   if (test && test.columns && test.columns !== cols) test.columns = cols;
   return cols;
@@ -1002,10 +916,17 @@ function renderBody(cols) {
     })
     .map((s, idx)=>{
       const r = ensureRow(s.id);
+      const manual = isManualStudent(s);
       const idTds = [
-        `<td class=\"id-col\">${s.name||''}</td>`,
-        `<td class=\"id-col\">${s.korean_name||''}</td>`,
-        `<td class=\"id-col\">${s.class||''}</td>`
+        manual
+          ? `<td class=\"id-col\" contenteditable=\"true\" data-uid=\"${s.id}\" data-manual-field=\"name\">${s.name||''}</td>`
+          : `<td class=\"id-col\">${s.name||''}</td>`,
+        manual
+          ? `<td class=\"id-col\" contenteditable=\"true\" data-uid=\"${s.id}\" data-manual-field=\"korean_name\">${s.korean_name||''}</td>`
+          : `<td class=\"id-col\">${s.korean_name||''}</td>`,
+        manual
+          ? `<td class=\"id-col\" contenteditable=\"true\" data-uid=\"${s.id}\" data-manual-field=\"class\">${s.class||''}</td>`
+          : `<td class=\"id-col\">${s.class||''}</td>`
       ].join('');
       const dynTds = cols.map((c, cIdx)=>{
         const val = cellValue(r, c.key);
@@ -1040,6 +961,15 @@ function refreshGrid() {
 function onCellInput(e) {
   const td = e.target.closest('td[contenteditable="true"]');
   if (!td) return;
+  const manualField = td.dataset.manualField;
+  if (manualField) {
+    const uid = td.dataset.uid;
+    const student = students.find((item) => item.id === uid);
+    if (!student) return;
+    student[manualField] = td.textContent.trim();
+    markDirtyByRow(ensureRow(uid));
+    return;
+  }
   const uid = td.dataset.uid; const key = td.dataset.key;
   const r = ensureRow(uid);
   setCellValue(r, key, td.textContent, activeColumns());
@@ -1153,6 +1083,7 @@ function placeCaretAtEnd(el) {
 function onGridPaste(e) {
   const target = e.target.closest('td[contenteditable=\"true\"]');
   if (!target) return;
+  if (target.dataset.manualField) return;
   e.preventDefault();
   const text = (e.clipboardData || window.clipboardData).getData('text');
   pasteTextIntoBodySelection(text, target);
@@ -1652,8 +1583,11 @@ async function loadTestById(id) {
   }
   rows = entries.map(e=>({ user_id: e.user_id, data: e.data || {} }));
   const entryStudents = studentsFromEntries(entries, currentTest.class || '');
+  const manualRows = Array.isArray(currentTest._manualRows) ? currentTest._manualRows : [];
+  rows.push(...manualRows.map((row) => ({ user_id: row.id, data: row.data || {} })));
+  const manualStudents = manualRows.map((row) => makeManualStudent(row));
   const rosterStudents = (!entries.length || currentTest.class) ? await fetchStudentsByClass(currentTest.class || '') : [];
-  students = entries.length ? mergeStudentsForGrid(entryStudents, rosterStudents) : rosterStudents;
+  students = mergeStudentsForGrid(entryStudents, rosterStudents, manualStudents);
   testMeta.textContent = `${currentTest.name} — ${students.length} students`;
   // Restore class comment for the active class key
   const activeClass = currentTest.class || '';
@@ -1749,7 +1683,7 @@ async function saveCurrent() {
   // Build entries using snapshot identity to preserve historical class/name
   const targetClass = (testClassFilter && testClassFilter.value) || currentTest.class || '';
   const entries = students
-    .filter(s=> !targetClass || String(s.class||'').toLowerCase() === String(targetClass).toLowerCase())
+    .filter(s=> !isManualStudent(s) && (!targetClass || String(s.class||'').toLowerCase() === String(targetClass).toLowerCase()))
     .map(s=>{
     const r = ensureRow(s.id);
     const data = { ...r.data,
@@ -1761,7 +1695,8 @@ async function saveCurrent() {
     };
     return { user_id: s.id, data };
   });
-  const res = await api('upsert_entries', { test_id: currentTest.id, entries });
+  let res = null;
+  if (entries.length) res = await api('upsert_entries', { test_id: currentTest.id, entries });
   msg.style.color = '#065f46';
   const t = new Date();
   const hh = String(t.getHours()).padStart(2,'0');
@@ -1809,7 +1744,9 @@ async function runAutosave() {
     return;
   }
   const changedIds = Array.from(dirty.keys());
-  const entries = changedIds.map(uid => {
+  const realIds = changedIds.filter((uid) => !isManualStudentId(uid));
+  const hasManualChanges = realIds.length !== changedIds.length;
+  const entries = realIds.map(uid => {
     const s = students.find(x=>x.id===uid) || {}; // fallback
     const r = ensureRow(uid);
     const data = { ...r.data,
@@ -1824,7 +1761,8 @@ async function runAutosave() {
   try {
     msg.style.color = '#334155';
     msg.textContent = 'Saving…';
-    const res = await api('upsert_entries', { test_id: currentTest.id, entries });
+    if (hasManualChanges) await saveTestMeta({ silent: true });
+    const res = entries.length ? await api('upsert_entries', { test_id: currentTest.id, entries }) : null;
     changedIds.forEach(id=> dirty.delete(id));
     const t = new Date();
     const hh = String(t.getHours()).padStart(2,'0');
@@ -1849,7 +1787,7 @@ function getDesiredTestDate() {
 }
 
 // Persist test metadata (columns/name/date/class) when available
-async function saveTestMeta(opts={ captureActive: true }) {
+async function saveTestMeta(opts={ captureActive: true, silent: false }) {
   if (!currentTest || !currentTest.id) return;
   const prevName = currentTest.name || '';
   const prevTf = currentTest.term_from || '';
@@ -1868,7 +1806,14 @@ async function saveTestMeta(opts={ captureActive: true }) {
     term_from: tf || null,
     term_to: tt || null
   };
-  try { const upd = await api('update_test', up); currentTest = upd.test || currentTest; msg.style.color = '#0369a1'; msg.textContent = 'Updated test settings.'; } catch {}
+  try {
+    const upd = await api('update_test', up);
+    currentTest = upd.test || currentTest;
+    if (!opts.silent) {
+      msg.style.color = '#0369a1';
+      msg.textContent = 'Updated test settings.';
+    }
+  } catch {}
   // Ensure in-memory fields reflect the UI (backend may ignore top-level fields)
   currentTest.term_from = tf; currentTest.term_to = tt;
 
@@ -2306,37 +2251,8 @@ function exportCsv() {
 }
 if (exportCsvBtn) exportCsvBtn.addEventListener('click', exportCsv);
 
-// Add students modal wiring
-if (openAddStudentsBtn) openAddStudentsBtn.addEventListener('click', openAddStudentsModal);
-if (addStudentsCloseBtn) addStudentsCloseBtn.addEventListener('click', closeAddStudentsModal);
-if (addStudentsCancel) addStudentsCancel.addEventListener('click', closeAddStudentsModal);
-if (addStudentsModalBg) addStudentsModalBg.addEventListener('click', (e)=>{ if (e.target === addStudentsModalBg) closeAddStudentsModal(); });
-if (addStudentsAddRow) addStudentsAddRow.addEventListener('click', ()=>{
-  addStudentsDrafts.push(makeBlankStudentDraft());
-  renderAddStudentsDrafts();
-  const lastInput = addStudentsRows?.querySelector(`tr[data-row="${addStudentsDrafts.length - 1}"] input[data-field="username"]`);
-  if (lastInput) lastInput.focus();
-});
-if (addStudentsRows) addStudentsRows.addEventListener('input', (e)=>{
-  const input = e.target.closest('input[data-field]');
-  if (!input) return;
-  const tr = input.closest('tr[data-row]');
-  if (!tr) return;
-  const idx = Number(tr.getAttribute('data-row'));
-  const field = input.getAttribute('data-field');
-  if (!Number.isInteger(idx) || idx < 0 || !field || !addStudentsDrafts[idx]) return;
-  addStudentsDrafts[idx][field] = input.value;
-});
-if (addStudentsRows) addStudentsRows.addEventListener('click', (e)=>{
-  const btn = e.target.closest('button[data-remove-row]');
-  if (!btn) return;
-  const idx = Number(btn.getAttribute('data-remove-row'));
-  if (!Number.isInteger(idx) || idx < 0) return;
-  addStudentsDrafts.splice(idx, 1);
-  if (!addStudentsDrafts.length) addStudentsDrafts.push(makeBlankStudentDraft());
-  renderAddStudentsDrafts();
-});
-if (addStudentsSubmit) addStudentsSubmit.addEventListener('click', submitAddStudents);
+// Manual row wiring
+if (openAddStudentsBtn) openAddStudentsBtn.addEventListener('click', addManualRow);
 
 // Import modal wiring
 if (importTableBtn) importTableBtn.addEventListener('click', openImportModal);
