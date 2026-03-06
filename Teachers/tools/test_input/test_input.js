@@ -1625,8 +1625,12 @@ async function loadTestById(id) {
   const manualRows = Array.isArray(currentTest._manualRows) ? currentTest._manualRows : [];
   rows.push(...manualRows.map((row) => ({ user_id: row.id, data: row.data || {} })));
   const manualStudents = manualRows.map((row) => makeManualStudent(row));
-  const rosterStudents = (!entries.length || currentTest.class) ? await fetchStudentsByClass(currentTest.class || '') : [];
-  students = mergeStudentsForGrid(entryStudents, rosterStudents, manualStudents);
+  if (entries.length) {
+    students = mergeStudentsForGrid(entryStudents, manualStudents);
+  } else {
+    const rosterStudents = currentTest.class ? await fetchStudentsByClass(currentTest.class || '') : [];
+    students = mergeStudentsForGrid(rosterStudents, manualStudents);
+  }
   testMeta.textContent = `${currentTest.name} — ${students.length} students`;
   // Restore class comment for the active class key
   const activeClass = currentTest.class || '';
