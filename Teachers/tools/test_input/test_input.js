@@ -101,7 +101,8 @@ const importConfirm = document.getElementById('importConfirm');
 const importMsg = document.getElementById('importMsg');
 const strictTsvSwitch = document.getElementById('strictTsvSwitch');
 const importBusy = document.getElementById('importBusy');
-const openAddStudentsBtn = document.getElementById('openAddStudentsBtn');
+const addRowBtn = document.getElementById('addRowBtn');
+const deleteRowBtn = document.getElementById('deleteRowBtn');
 // Grouped test picker state
 let testGroups = {}; // key `${name}||${date}` -> { name, date, items: [{ id, class }] }
 let activeTestGroupKey = null;
@@ -264,6 +265,44 @@ function addManualRow() {
   }
   msg.style.color = '#065f46';
   msg.textContent = `Added a manual row to ${klass}. Type directly into the row to fill it in.`;
+}
+
+function selectedRowUid() {
+  if (selection && selection.kind === 'body') {
+    const rowIndex = Math.min(selection.startRow, selection.endRow);
+    const filteredStudents = students.filter((s) => {
+      const filterClass = activeClassValue();
+      if (filterClass && String(s.class || '').toLowerCase() !== String(filterClass).toLowerCase()) return false;
+      const q = search.value.trim().toLowerCase();
+      if (!q) return true;
+      return (s.name || '').toLowerCase().includes(q) || (s.korean_name || '').includes(q);
+    });
+    return filteredStudents[rowIndex]?.id || null;
+  }
+  const focused = document.activeElement?.closest?.('td[data-uid]');
+  return focused?.dataset?.uid || null;
+}
+
+async function deleteManualRow() {
+  const uid = selectedRowUid();
+  if (!uid) {
+    msg.style.color = '#b91c1c';
+    msg.textContent = 'Select a manual row first.';
+    return;
+  }
+  const student = students.find((item) => item.id === uid);
+  if (!isManualStudent(student)) {
+    msg.style.color = '#b91c1c';
+    msg.textContent = 'Only manual rows can be deleted.';
+    return;
+  }
+  students = students.filter((item) => item.id !== uid);
+  rows = rows.filter((item) => item.user_id !== uid);
+  if (selection && selection.kind === 'body') selection = null;
+  refreshGrid();
+  if (currentTest?.id) await saveTestMeta({ silent: true });
+  msg.style.color = '#065f46';
+  msg.textContent = 'Manual row deleted.';
 }
 
 // --- Lightweight metadata carrier for class comments ---
@@ -2252,7 +2291,18 @@ function exportCsv() {
 if (exportCsvBtn) exportCsvBtn.addEventListener('click', exportCsv);
 
 // Manual row wiring
-if (openAddStudentsBtn) openAddStudentsBtn.addEventListener('click', addManualRow);
+if (addRowBtn) addRowBtn.addEventListener('click', (e)=>{
+  e.preventDefault();
+  addManualRow();
+  const details = addRowBtn.closest('details');
+  if (details) details.open = false;
+});
+if (deleteRowBtn) deleteRowBtn.addEventListener('click', async (e)=>{
+  e.preventDefault();
+  await deleteManualRow();
+  const details = deleteRowBtn.closest('details');
+  if (details) details.open = false;
+});
 
 // Import modal wiring
 if (importTableBtn) importTableBtn.addEventListener('click', openImportModal);
