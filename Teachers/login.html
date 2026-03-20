@@ -342,11 +342,16 @@
           getUserRole(user.id),
           getProfileId(user.id)
         ]);
+
+        const normalizedRole = String(role || '').toLowerCase();
+        if (!['teacher', 'admin'].includes(normalizedRole)) {
+          throw new Error('Teacher access only. Please use the student login page.');
+        }
         
         // Store user data
         localStorage.setItem('userId', user.id);
         localStorage.setItem('profile_id', profileId);
-        localStorage.setItem('userRole', role);
+        localStorage.setItem('userRole', normalizedRole);
         
         showMessage(`Welcome back! Redirecting...`, 'success');
         

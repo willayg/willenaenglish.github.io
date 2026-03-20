@@ -4,6 +4,14 @@
 const API = '/.netlify/functions/test_admin';
 const STUDENT_API = '/.netlify/functions/teacher_admin';
 
+// Use WillenaAPI.fetch for proper URL routing (Cloudflare Pages → api gateway) and auth headers
+function apiFetch(url, opts = {}) {
+  if (typeof WillenaAPI !== 'undefined' && WillenaAPI.fetch) {
+    return WillenaAPI.fetch(url, opts);
+  }
+  return fetch(url, { ...opts, credentials: 'include' });
+}
+
 // Default columns for the sample provided (no hard-coded maxima; show 0 in UI when unset)
 const DEFAULT_COLUMNS = [
   { key: 'phonics', label: 'Phonics (P)', type: 'number' },
@@ -15,7 +23,8 @@ const DEFAULT_COLUMNS = [
   { key: 'reading', label: 'Reading (R)', type: 'number' },
   { key: 'speaking', label: 'Speaking (S)', type: 'number' },
   { key: 'total', label: 'Total', type: 'computed-total' },
-  { key: 'final_est', label: 'Final Score Est', type: 'computed-percent' }
+  { key: 'final_est', label: 'Final Score Est', type: 'computed-percent' },
+  { key: 'avg_percent', label: 'Avg % (Skills)', type: 'computed-avg-percent' }
 ];
 
 // Fixed class ordering (case-insensitive); unspecified classes fall back after these in alpha order
@@ -92,6 +101,8 @@ const importConfirm = document.getElementById('importConfirm');
 const importMsg = document.getElementById('importMsg');
 const strictTsvSwitch = document.getElementById('strictTsvSwitch');
 const importBusy = document.getElementById('importBusy');
+const addRowBtn = document.getElementById('addRowBtn');
+const deleteRowBtn = document.getElementById('deleteRowBtn');
 // Grouped test picker state
 let testGroups = {}; // key `${name}||${date}` -> { name, date, items: [{ id, class }] }
 let activeTestGroupKey = null;
@@ -138,6 +149,162 @@ function sortStudents(arr) {
   });
 }
 
+function activeClassValue() {
+  return String((testClassFilter && testClassFilter.value) || (currentTest && currentTest.class) || '').trim();
+}
+
+function classesMatch(a, b) {
+  return String(a || '').trim().toLowerCase() === String(b || '').trim().toLowerCase();
+}
+
+function isManualStudentId(id) {
+  return String(id || '').startsWith('manual:');
+}
+
+function isManualStudent(student) {
+  return !!student && isManualStudentId(student.id);
+}
+
+function makeManualStudent(partial = {}) {
+  return {
+    id: partial.id || `manual:${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`,
+    username: '',
+    name: String(partial.name || ''),
+    korean_name: String(partial.korean_name || ''),
+    class: String(partial.class || activeClassValue() || ''),
+    manual: true
+  };
+}
+
+function manualRowHasContent(item) {
+  if (!item) return false;
+  const metaHasValue = ['name', 'korean_name', 'class'].some((key) => String(item[key] || '').trim() !== '');
+  const dataHasValue = Object.values(item.data || {}).some((value) => String(value ?? '').trim() !== '');
+  return metaHasValue || dataHasValue;
+}
+
+function getManualRowsFromColumns(test) {
+  const carrier = getMetaCarrierColumn(columnsFor(test));
+  const raw = Array.isArray(carrier?._manualRows) ? carrier._manualRows : [];
+  return raw.map((item) => ({
+    id: String(item?.id || '').trim() || makeManualStudent().id,
+    name: String(item?.name || ''),
+    korean_name: String(item?.korean_name || ''),
+    class: String(item?.class || test?.class || ''),
+    data: { ...(item?.data || {}) }
+  })).filter(manualRowHasContent);
+}
+
+function getPersistableManualRows() {
+  return students
+    .filter(isManualStudent)
+    .map((student) => {
+      const row = rows.find((item) => item.user_id === student.id);
+      return {
+        id: student.id,
+        name: String(student.name || ''),
+        korean_name: String(student.korean_name || ''),
+        class: String(student.class || ''),
+        data: { ...(row?.data || {}) }
+      };
+    })
+    .filter(manualRowHasContent);
+}
+
+async function fetchStudentsByClass(klass = '') {
+  try {
+    const url = `${STUDENT_API}?action=list_students${klass ? `&class=${encodeURIComponent(klass)}` : ''}`;
+    const res = await apiFetch(url, { cache: 'no-store' });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || !data?.success) return [];
+    return sortStudents(data.students || []);
+  } catch {
+    return [];
+  }
+}
+
+function studentsFromEntries(entries, fallbackClass = '') {
+  return (entries || []).map(e => ({
+    id: e.user_id,
+    username: e.data?.__snap_username || '',
+    name: e.data?.__snap_name || '',
+    korean_name: e.data?.__snap_korean || '',
+    class: e.data?.__snap_class || fallbackClass || ''
+  }));
+}
+
+function mergeStudentsForGrid(...studentLists) {
+  const merged = [];
+  const seen = new Set();
+  for (const list of studentLists) {
+    for (const student of (list || [])) {
+      if (!student?.id || seen.has(student.id)) continue;
+      seen.add(student.id);
+      merged.push(student);
+    }
+  }
+  return sortStudents(merged);
+}
+
+function addManualRow() {
+  const klass = activeClassValue();
+  if (!klass) {
+    msg.style.color = '#b91c1c';
+    msg.textContent = 'Load a class test first, then add a row.';
+    return;
+  }
+  if (search && search.value) search.value = '';
+  const manualStudent = makeManualStudent({ class: klass });
+  students = [...students, manualStudent];
+  ensureRow(manualStudent.id);
+  refreshGrid();
+  const firstManualCell = gridBody.querySelector(`td[data-uid="${manualStudent.id}"][data-manual-field="name"]`);
+  if (firstManualCell) {
+    firstManualCell.focus();
+    try { placeCaretAtEnd(firstManualCell); } catch {}
+  }
+  msg.style.color = '#065f46';
+  msg.textContent = `Added a manual row to ${klass}. Type directly into the row to fill it in.`;
+}
+
+function selectedRowUid() {
+  if (selection && selection.kind === 'body') {
+    const rowIndex = Math.min(selection.startRow, selection.endRow);
+    const filteredStudents = students.filter((s) => {
+      const filterClass = activeClassValue();
+      if (filterClass && String(s.class || '').toLowerCase() !== String(filterClass).toLowerCase()) return false;
+      const q = search.value.trim().toLowerCase();
+      if (!q) return true;
+      return (s.name || '').toLowerCase().includes(q) || (s.korean_name || '').includes(q);
+    });
+    return filteredStudents[rowIndex]?.id || null;
+  }
+  const focused = document.activeElement?.closest?.('td[data-uid]');
+  return focused?.dataset?.uid || null;
+}
+
+async function deleteManualRow() {
+  const uid = selectedRowUid();
+  if (!uid) {
+    msg.style.color = '#b91c1c';
+    msg.textContent = 'Select a manual row first.';
+    return;
+  }
+  const student = students.find((item) => item.id === uid);
+  if (!isManualStudent(student)) {
+    msg.style.color = '#b91c1c';
+    msg.textContent = 'Only manual rows can be deleted.';
+    return;
+  }
+  students = students.filter((item) => item.id !== uid);
+  rows = rows.filter((item) => item.user_id !== uid);
+  if (selection && selection.kind === 'body') selection = null;
+  refreshGrid();
+  if (currentTest?.id) await saveTestMeta({ silent: true });
+  msg.style.color = '#065f46';
+  msg.textContent = 'Manual row deleted.';
+}
+
 // --- Lightweight metadata carrier for class comments ---
 // We persist class comments inside the test.columns array on one existing column object
 // (prefer the computed-total column). We attach a plain object property `_classComments`
@@ -170,6 +337,7 @@ function loadCommentsFromColumns(test) {
       if (!classComments.has(k)) classComments.set(k, String(v || ''));
     }
   }
+  test._manualRows = getManualRowsFromColumns(test);
 }
 function persistCommentsToColumns(test) {
   const cols = columnsFor(test);
@@ -185,6 +353,8 @@ function persistCommentsToColumns(test) {
     if (tf) carrier._term_from = tf; else if (carrier._term_from) delete carrier._term_from;
     if (tt) carrier._term_to = tt; else if (carrier._term_to) delete carrier._term_to;
   } catch {}
+  const manualRows = getPersistableManualRows();
+  if (manualRows.length) carrier._manualRows = manualRows; else if (carrier._manualRows) delete carrier._manualRows;
   if (carrier._classComments) delete carrier._classComments; // stop writing legacy structure
   if (test && test.columns && test.columns !== cols) test.columns = cols;
   return cols;
@@ -219,7 +389,8 @@ const HEADER_MAP = [
   { re: /write\b|\bw\b/i, key: 'write', label: 'Write (W)', type: 'number' },
   { re: /read|\br\b/i, key: 'reading', label: 'Reading (R)', type: 'number' },
   { re: /speak|\bs\b/i, key: 'speaking', label: 'Speaking (S)', type: 'number' },
-  { re: /final|estimate|percent/i, key: 'final_est', label: 'Final Score Est', type: 'computed-percent' }
+  { re: /final|estimate|percent/i, key: 'final_est', label: 'Final Score Est', type: 'computed-percent' },
+  { re: /avg|average/i, key: 'avg_percent', label: 'Avg % (Skills)', type: 'computed-avg-percent' }
 ];
 const IGNORE_TOTAL_RE = /total|sum|final|estimate|percent/i;
 
@@ -297,6 +468,7 @@ function buildColumnDefsFromHeaderCols(headerCols) {
   if (cols.some(c => c.type === 'number')) {
     if (!cols.some(c => c.type === 'computed-total')) cols.push({ key: 'total', label: 'Total', type: 'computed-total' });
     if (!cols.some(c => c.key === 'final_est')) cols.push({ key: 'final_est', label: 'Final Score Est', type: 'computed-percent' });
+    if (!cols.some(c => c.key === 'avg_percent')) cols.push({ key: 'avg_percent', label: 'Avg % (Skills)', type: 'computed-avg-percent' });
   }
   return { cols: (cols.length ? cols : DEFAULT_COLUMNS.slice()), indexToDef };
 }
@@ -429,6 +601,7 @@ function parsePastedTable(text) {
     // derived
     data.total = computeTotal(data, cols);
     data.final_est = computePercent(data, cols);
+    data.avg_percent = computeAveragePercent(data, cols);
 
     // Skip obvious header repeats
     if (/name/i.test(name)) continue;
@@ -546,10 +719,8 @@ async function handleImportConfirm() {
   // Prefetch global students with a higher limit to avoid 100-row cap
   let allStudents = [];
   try {
-    const url = new URL(`${STUDENT_API}`, location.origin);
-    url.searchParams.set('action', 'list_students');
-    url.searchParams.set('limit', '500');
-    const sRes = await fetch(url.toString(), { credentials: 'include', cache: 'no-store' });
+    const params = new URLSearchParams({ action: 'list_students', limit: '500' });
+    const sRes = await apiFetch(`${STUDENT_API}?${params.toString()}`, { cache: 'no-store' });
     const sData = await sRes.json();
     if (sRes.ok && sData.success && Array.isArray(sData.students)) allStudents = sData.students;
   } catch {}
@@ -602,6 +773,7 @@ async function handleImportConfirm() {
         // Recompute derived for consistency
         data.total = computeTotal(data, classCols);
         data.final_est = computePercent(data, classCols);
+        data.avg_percent = computeAveragePercent(data, classCols);
         return { user_id: user.id || null, data: { ...data, ...snapshot }, _meta: r.meta };
       });
       const matched = entries.filter(e => !!e.user_id).map(({_meta, ...rest}) => rest);
@@ -692,6 +864,24 @@ function computePercent(data, columns) {
   return Math.round((t / max) * 1000) / 10; // 1 decimal place
 }
 
+function computeAveragePercent(data, columns) {
+  const numericCols = (columns || []).filter(c => c.type === 'number' && Number(c.max) > 0);
+  if (!numericCols.length) return 0;
+  let sumPct = 0;
+  let count = 0;
+  for (const c of numericCols) {
+    const max = Number(c.max);
+    if (!Number.isFinite(max) || max <= 0) continue;
+    let score = Number(data[c.key]);
+    if (!Number.isFinite(score)) score = 0;
+    score = Math.max(0, Math.min(score, max));
+    sumPct += (score / max) * 100;
+    count++;
+  }
+  if (!count) return 0;
+  return Math.round((sumPct / count) * 10) / 10;
+}
+
 function columnsFor(test) {
   return (test?.columns && Array.isArray(test.columns) && test.columns.length)
     ? test.columns
@@ -712,7 +902,7 @@ function renderFoot(cols) {
       return `<td class="max-cell" data-col="${i}" contenteditable="true">${display}</td>`;
     }
     if (c.type === 'computed-total') return `<td class="max-sum">${sumMax(cols)}</td>`;
-    if (c.type === 'computed-percent') return `<td class="max-100">100.00</td>`;
+    if (c.type === 'computed-percent' || c.type === 'computed-avg-percent') return `<td class="max-100">100.00</td>`;
     return '<td></td>';
   }).join('');
   gridFoot.innerHTML = `<tr class="sum-row"><td class="id-col"></td><td class="id-col"></td><td class="id-col"></td>${maxCells}</tr>`;
@@ -743,10 +933,11 @@ function setCellValue(r, key, val, cols) {
   }
   r.data[key] = out;
   // Recompute derived fields
-  const totalCol = cols.find(c=>c.type==='computed-total');
-  const pctCol = cols.find(c=>c.type==='computed-percent');
-  if (totalCol) r.data[totalCol.key] = computeTotal(r.data, cols);
-  if (pctCol) r.data[pctCol.key] = computePercent(r.data, cols);
+  for (const c of cols) {
+    if (c.type === 'computed-total') r.data[c.key] = computeTotal(r.data, cols);
+    if (c.type === 'computed-percent') r.data[c.key] = computePercent(r.data, cols);
+    if (c.type === 'computed-avg-percent') r.data[c.key] = computeAveragePercent(r.data, cols);
+  }
   // mark row as dirty for autosave
   markDirtyByRow(r);
 }
@@ -764,14 +955,21 @@ function renderBody(cols) {
     })
     .map((s, idx)=>{
       const r = ensureRow(s.id);
+      const manual = isManualStudent(s);
       const idTds = [
-        `<td class=\"id-col\">${s.name||''}</td>`,
-        `<td class=\"id-col\">${s.korean_name||''}</td>`,
-        `<td class=\"id-col\">${s.class||''}</td>`
+        manual
+          ? `<td class=\"id-col\" contenteditable=\"true\" data-uid=\"${s.id}\" data-manual-field=\"name\">${s.name||''}</td>`
+          : `<td class=\"id-col\">${s.name||''}</td>`,
+        manual
+          ? `<td class=\"id-col\" contenteditable=\"true\" data-uid=\"${s.id}\" data-manual-field=\"korean_name\">${s.korean_name||''}</td>`
+          : `<td class=\"id-col\">${s.korean_name||''}</td>`,
+        manual
+          ? `<td class=\"id-col\" contenteditable=\"true\" data-uid=\"${s.id}\" data-manual-field=\"class\">${s.class||''}</td>`
+          : `<td class=\"id-col\">${s.class||''}</td>`
       ].join('');
       const dynTds = cols.map((c, cIdx)=>{
         const val = cellValue(r, c.key);
-        if (c.type === 'computed-total' || c.type === 'computed-percent') {
+        if (c.type === 'computed-total' || c.type === 'computed-percent' || c.type === 'computed-avg-percent') {
           const ce = computedLocked ? '' : ' contenteditable=\"true\"';
           return `<td data-row=\"${idx}\" data-col=\"${cIdx}\" data-uid=\"${s.id}\" data-key=\"${c.key}\"${ce}>${val!==''?val:''}</td>`;
         }
@@ -802,21 +1000,24 @@ function refreshGrid() {
 function onCellInput(e) {
   const td = e.target.closest('td[contenteditable="true"]');
   if (!td) return;
+  const manualField = td.dataset.manualField;
+  if (manualField) {
+    const uid = td.dataset.uid;
+    const student = students.find((item) => item.id === uid);
+    if (!student) return;
+    student[manualField] = td.textContent.trim();
+    markDirtyByRow(ensureRow(uid));
+    return;
+  }
   const uid = td.dataset.uid; const key = td.dataset.key;
   const r = ensureRow(uid);
   setCellValue(r, key, td.textContent, activeColumns());
   // Update computed cells
   const cols = activeColumns();
-  const totalCol = cols.find(c=>c.type==='computed-total');
-  const pctCol = cols.find(c=>c.type==='computed-percent');
-  if (totalCol) {
-    const cell = gridBody.querySelector(`td[data-uid="${uid}"][data-key="${totalCol.key}"]`);
-    if (cell) cell.textContent = r.data[totalCol.key] ?? '';
-  }
-  if (pctCol) {
-    const cell = gridBody.querySelector(`td[data-uid="${uid}"][data-key="${pctCol.key}"]`);
-    if (cell) cell.textContent = r.data[pctCol.key] ?? '';
-  }
+  cols.filter(c => c.type && String(c.type).startsWith('computed')).forEach(c => {
+    const cell = gridBody.querySelector(`td[data-uid="${uid}"][data-key="${c.key}"]`);
+    if (cell) cell.textContent = r.data[c.key] ?? '';
+  });
 }
 
 function onCellKeydown(e) {
@@ -921,6 +1122,7 @@ function placeCaretAtEnd(el) {
 function onGridPaste(e) {
   const target = e.target.closest('td[contenteditable=\"true\"]');
   if (!target) return;
+  if (target.dataset.manualField) return;
   e.preventDefault();
   const text = (e.clipboardData || window.clipboardData).getData('text');
   pasteTextIntoBodySelection(text, target);
@@ -946,7 +1148,7 @@ function pasteTextIntoBodySelection(text, targetCell) {
     for (let cOff=0; cOff<parts.length; cOff++) {
       const cIdx = startColIdx + cOff; if (cIdx > endColLimit) break;
       const col = cols[cIdx]; if (!col) break;
-      if (col.type === 'computed-total' || col.type === 'computed-percent') continue;
+      if (col.type === 'computed-total' || col.type === 'computed-percent' || col.type === 'computed-avg-percent') continue;
       const r = ensureRow(s.id);
       setCellValue(r, col.key, parts[cOff], cols);
     }
@@ -1130,7 +1332,7 @@ function copySelectionToClipboard() {
       let val = '';
       if (col.type === 'number') val = col.max ?? '';
       if (col.type === 'computed-total') val = String(sumMax(cols));
-      if (col.type === 'computed-percent') val = '100.00';
+      if (col.type === 'computed-percent' || col.type === 'computed-avg-percent') val = '100.00';
       arr.push(val);
     }
     navigator.clipboard.writeText(arr.join('\t')).catch(()=>{});
@@ -1269,12 +1471,14 @@ function applyMaxEdit(cell) {
   else currentTest.columns = cols;
   // Recompute derived
   const tCols = activeColumns();
-  const totalCol = tCols.find(c=>c.type==='computed-total');
-  const pctCol = tCols.find(c=>c.type==='computed-percent');
-  if (totalCol || pctCol) {
+  const computedCols = tCols.filter(c=> c.type && String(c.type).startsWith('computed'));
+  if (computedCols.length) {
     for (const r of rows) {
-      if (totalCol) r.data[totalCol.key] = computeTotal(r.data, tCols);
-      if (pctCol) r.data[pctCol.key] = computePercent(r.data, tCols);
+      for (const c of computedCols) {
+        if (c.type === 'computed-total') r.data[c.key] = computeTotal(r.data, tCols);
+        if (c.type === 'computed-percent') r.data[c.key] = computePercent(r.data, tCols);
+        if (c.type === 'computed-avg-percent') r.data[c.key] = computeAveragePercent(r.data, tCols);
+      }
     }
   }
   refreshGrid();
@@ -1342,33 +1546,51 @@ colMenu.addEventListener('click', (e)=>{
 
 // Load tests and group by name+date so only one option is shown per group
 async function loadTests() {
-  const params = new URLSearchParams({ action:'list_tests' });
-  const res = await fetch(`${API}?${params.toString()}`, { credentials:'include', cache:'no-store' });
-  const data = await res.json();
-  const arr = (data.tests || []).slice();
-  // newest first
-  arr.sort((a,b)=> (new Date(b.created_at||0)) - (new Date(a.created_at||0)));
-  const map = new Map();
-  for (const t of arr) {
-    const key = `${t.name||''}||${t.date||''}`;
-    if (!map.has(key)) map.set(key, { name: t.name||'', date: t.date||'', items: [] });
-    map.get(key).items.push({ id: t.id, class: t.class||'' });
-  }
-  testGroups = Object.fromEntries(map.entries());
-  // If legacy dropdown exists, populate it (not visible in new UI)
-  if (testPicker) {
-    const opts = ['<option value="">Load Test…</option>'];
-    for (const [key, g] of map.entries()) {
-      const label = `${g.name}${g.date?` ${g.date}`:''}`;
-      opts.push(`<option value="${key}">${label}</option>`);
+  try {
+    const params = new URLSearchParams({ action:'list_tests' });
+    const res = await apiFetch(`${API}?${params.toString()}`, { cache:'no-store' });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || !data?.success) {
+      throw new Error(data?.error || `Failed to load tests (${res.status})`);
     }
-    testPicker.innerHTML = opts.join('');
-  }
-  // Also (re)build the modal list if it's open
-  if (loadModalBg && loadModalBg.style.display === 'flex') buildLoadList();
-  if (testClassFilter) {
-    testClassFilter.disabled = true;
-    testClassFilter.innerHTML = '<option value="">Class…</option>';
+    const arr = (data.tests || []).slice();
+    // newest first
+    arr.sort((a,b)=> (new Date(b.created_at||0)) - (new Date(a.created_at||0)));
+    const map = new Map();
+    for (const t of arr) {
+      const key = `${t.name||''}||${t.date||''}`;
+      if (!map.has(key)) map.set(key, { name: t.name||'', date: t.date||'', items: [] });
+      map.get(key).items.push({ id: t.id, class: t.class||'' });
+    }
+    testGroups = Object.fromEntries(map.entries());
+    // If legacy dropdown exists, populate it (not visible in new UI)
+    if (testPicker) {
+      const opts = ['<option value="">Load Test…</option>'];
+      for (const [key, g] of map.entries()) {
+        const label = `${g.name}${g.date?` ${g.date}`:''}`;
+        opts.push(`<option value="${key}">${label}</option>`);
+      }
+      testPicker.innerHTML = opts.join('');
+    }
+    // Also (re)build the modal list if it's open
+    if (loadModalBg && loadModalBg.style.display === 'flex') buildLoadList(loadSearch ? (loadSearch.value || '') : '');
+    if (testClassFilter) {
+      testClassFilter.disabled = true;
+      testClassFilter.innerHTML = '<option value="">Class…</option>';
+    }
+    if (loadMsg) {
+      const n = arr.length;
+      loadMsg.style.color = '#64748b';
+      loadMsg.textContent = n ? `Loaded ${n} test item${n===1?'':'s'}.` : 'No tests found.';
+    }
+  } catch (e) {
+    testGroups = {};
+    if (testPicker) testPicker.innerHTML = '<option value="">Load Test…</option>';
+    if (loadModalBg && loadModalBg.style.display === 'flex') buildLoadList('');
+    if (loadMsg) {
+      loadMsg.style.color = '#b91c1c';
+      loadMsg.textContent = e?.message || 'Failed to load tests.';
+    }
   }
 }
 
@@ -1376,7 +1598,7 @@ if (testMonthFilter) testMonthFilter.addEventListener('change', loadTests);
 
 async function loadTestById(id) {
   if (!id) return;
-  const res = await fetch(`${API}?action=get_test&test_id=${encodeURIComponent(id)}`, { credentials:'include', cache:'no-store' });
+  const res = await apiFetch(`${API}?action=get_test&test_id=${encodeURIComponent(id)}`, { cache:'no-store' });
   const data = await res.json();
   if (!data?.success) { msg.style.color='#b91c1c'; msg.textContent=data.error||'Load failed'; return; }
   currentTest = data.test;
@@ -1399,21 +1621,15 @@ async function loadTestById(id) {
     }
   }
   rows = entries.map(e=>({ user_id: e.user_id, data: e.data || {} }));
-  if (entries.length > 0) {
-    students = sortStudents(entries.map(e => ({
-      id: e.user_id,
-      username: e.data?.__snap_username || '',
-      name: e.data?.__snap_name || '',
-      korean_name: e.data?.__snap_korean || '',
-      class: e.data?.__snap_class || (currentTest.class || '')
-    })));
+  const entryStudents = studentsFromEntries(entries, currentTest.class || '');
+  const manualRows = Array.isArray(currentTest._manualRows) ? currentTest._manualRows : [];
+  rows.push(...manualRows.map((row) => ({ user_id: row.id, data: row.data || {} })));
+  const manualStudents = manualRows.map((row) => makeManualStudent(row));
+  if (entries.length) {
+    students = mergeStudentsForGrid(entryStudents, manualStudents);
   } else {
-    try {
-      const url = `${STUDENT_API}?action=list_students&class=${encodeURIComponent(currentTest.class||'')}`;
-      const sRes = await fetch(url, { credentials:'include', cache:'no-store' });
-      const sData = await sRes.json();
-      if (sRes.ok && sData.success) students = sortStudents(sData.students || []); else students = [];
-    } catch { students = []; }
+    const rosterStudents = currentTest.class ? await fetchStudentsByClass(currentTest.class || '') : [];
+    students = mergeStudentsForGrid(rosterStudents, manualStudents);
   }
   testMeta.textContent = `${currentTest.name} — ${students.length} students`;
   // Restore class comment for the active class key
@@ -1510,7 +1726,7 @@ async function saveCurrent() {
   // Build entries using snapshot identity to preserve historical class/name
   const targetClass = (testClassFilter && testClassFilter.value) || currentTest.class || '';
   const entries = students
-    .filter(s=> !targetClass || String(s.class||'').toLowerCase() === String(targetClass).toLowerCase())
+    .filter(s=> !isManualStudent(s) && (!targetClass || String(s.class||'').toLowerCase() === String(targetClass).toLowerCase()))
     .map(s=>{
     const r = ensureRow(s.id);
     const data = { ...r.data,
@@ -1522,7 +1738,8 @@ async function saveCurrent() {
     };
     return { user_id: s.id, data };
   });
-  const res = await api('upsert_entries', { test_id: currentTest.id, entries });
+  let res = null;
+  if (entries.length) res = await api('upsert_entries', { test_id: currentTest.id, entries });
   msg.style.color = '#065f46';
   const t = new Date();
   const hh = String(t.getHours()).padStart(2,'0');
@@ -1570,7 +1787,9 @@ async function runAutosave() {
     return;
   }
   const changedIds = Array.from(dirty.keys());
-  const entries = changedIds.map(uid => {
+  const realIds = changedIds.filter((uid) => !isManualStudentId(uid));
+  const hasManualChanges = realIds.length !== changedIds.length;
+  const entries = realIds.map(uid => {
     const s = students.find(x=>x.id===uid) || {}; // fallback
     const r = ensureRow(uid);
     const data = { ...r.data,
@@ -1585,7 +1804,8 @@ async function runAutosave() {
   try {
     msg.style.color = '#334155';
     msg.textContent = 'Saving…';
-    const res = await api('upsert_entries', { test_id: currentTest.id, entries });
+    if (hasManualChanges) await saveTestMeta({ silent: true });
+    const res = entries.length ? await api('upsert_entries', { test_id: currentTest.id, entries }) : null;
     changedIds.forEach(id=> dirty.delete(id));
     const t = new Date();
     const hh = String(t.getHours()).padStart(2,'0');
@@ -1610,7 +1830,7 @@ function getDesiredTestDate() {
 }
 
 // Persist test metadata (columns/name/date/class) when available
-async function saveTestMeta(opts={ captureActive: true }) {
+async function saveTestMeta(opts={ captureActive: true, silent: false }) {
   if (!currentTest || !currentTest.id) return;
   const prevName = currentTest.name || '';
   const prevTf = currentTest.term_from || '';
@@ -1629,7 +1849,14 @@ async function saveTestMeta(opts={ captureActive: true }) {
     term_from: tf || null,
     term_to: tt || null
   };
-  try { const upd = await api('update_test', up); currentTest = upd.test || currentTest; msg.style.color = '#0369a1'; msg.textContent = 'Updated test settings.'; } catch {}
+  try {
+    const upd = await api('update_test', up);
+    currentTest = upd.test || currentTest;
+    if (!opts.silent) {
+      msg.style.color = '#0369a1';
+      msg.textContent = 'Updated test settings.';
+    }
+  } catch {}
   // Ensure in-memory fields reflect the UI (backend may ignore top-level fields)
   currentTest.term_from = tf; currentTest.term_to = tt;
 
@@ -1694,7 +1921,7 @@ async function propagateGroupTermRange(term_from, term_to) {
   for (const it of group.items) {
     try {
       // Fetch current columns for each class test, then update carrier fields
-      const resp = await fetch(`${API}?action=get_test&test_id=${encodeURIComponent(it.id)}`, { credentials:'include', cache:'no-store' });
+      const resp = await apiFetch(`${API}?action=get_test&test_id=${encodeURIComponent(it.id)}`, { cache:'no-store' });
       const data = await resp.json();
       if (!data?.success) continue;
       const cols = Array.isArray(data.test?.columns) ? JSON.parse(JSON.stringify(data.test.columns)) : [];
@@ -1709,7 +1936,7 @@ async function propagateGroupTermRange(term_from, term_to) {
 // API helpers and student loading (restored)
 async function api(action, body, method = 'POST') {
   const url = `${API}?action=${encodeURIComponent(action)}`;
-  const res = await fetch(url, { method, credentials:'include', headers:{ 'Content-Type':'application/json' }, body: body ? JSON.stringify(body) : undefined, cache:'no-store' });
+  const res = await apiFetch(url, { method, headers:{ 'Content-Type':'application/json' }, body: body ? JSON.stringify(body) : undefined, cache:'no-store' });
   const data = await res.json().catch(()=>({}));
   if (!res.ok || data.success === false) throw new Error(data.error || `HTTP ${res.status}`);
   return data;
@@ -1722,7 +1949,7 @@ async function listStudents() {
   if (q) params.set('search', q);
   if (klass) params.set('class', klass);
   const url = `${STUDENT_API}?${params.toString()}`;
-  const res = await fetch(url, { credentials:'include', cache:'no-store' });
+  const res = await apiFetch(url, { cache:'no-store' });
   const data = await res.json();
   if (!res.ok || !data.success) throw new Error(data.error || 'Failed to load students');
   students = data.students || [];
@@ -1743,10 +1970,14 @@ async function populateClassFilter() { /* no-op: left class filter removed */ }
       who = await whoResp.json().catch(()=>({}));
       if (!whoResp.ok || !who?.success) throw new Error('not signed in');
     }
+    const roleResp = await WillenaAPI.fetch(`/.netlify/functions/supabase_auth?action=get_role&user_id=${encodeURIComponent(who.user_id)}`);
+    const roleData = await roleResp.json().catch(()=>({}));
+    const role = String(roleData?.role || '').toLowerCase();
+    if (!roleResp.ok || !['teacher','admin'].includes(role)) throw new Error('forbidden');
   } catch {
     msg.style.color = '#b91c1c';
     const redirect = encodeURIComponent(location.pathname + location.search);
-    msg.innerHTML = `Not signed in. <a href="/Teachers/login.html?redirect=${redirect}" style="color:#2563eb; text-decoration:underline;">Sign in</a> and return.`;
+    msg.innerHTML = `Teacher access only. <a href="/Teachers/login.html?redirect=${redirect}" style="color:#2563eb; text-decoration:underline;">Sign in</a> with a teacher/admin account.`;
     return;
   }
   await populateClassFilter();
@@ -1792,7 +2023,7 @@ function uniqueClassesFromStudents(all) {
 async function populateTestClassFilter() {
   if (!testClassFilter) return;
   try {
-    const res = await fetch(`${STUDENT_API}?action=list_students`, { credentials:'include', cache:'no-store' });
+    const res = await apiFetch(`${STUDENT_API}?action=list_students`, { cache:'no-store' });
     const data = await res.json();
     if (res.ok && data.success) {
       const classes = uniqueClassesFromStudents(data.students||[]);
@@ -1835,10 +2066,11 @@ function buildLoadList(filter='') {
   `).join('');
 }
 
-function openLoadModal() {
+async function openLoadModal() {
   if (!loadModalBg) return;
   loadMsg.textContent = '';
   loadSearch.value = '';
+  await loadTests();
   buildLoadList('');
   loadModalBg.style.display = 'flex';
 }
@@ -1944,7 +2176,7 @@ async function openCampaignModal() {
   // populate classes by querying all students once
   let all = [];
   try {
-    const res = await fetch(`${STUDENT_API}?action=list_students`, { credentials:'include', cache:'no-store' });
+    const res = await apiFetch(`${STUDENT_API}?action=list_students`, { cache:'no-store' });
     const data = await res.json();
     if (res.ok && data.success) all = data.students || [];
   } catch {}
@@ -2062,6 +2294,20 @@ function exportCsv() {
 }
 if (exportCsvBtn) exportCsvBtn.addEventListener('click', exportCsv);
 
+// Manual row wiring
+if (addRowBtn) addRowBtn.addEventListener('click', (e)=>{
+  e.preventDefault();
+  addManualRow();
+  const details = addRowBtn.closest('details');
+  if (details) details.open = false;
+});
+if (deleteRowBtn) deleteRowBtn.addEventListener('click', async (e)=>{
+  e.preventDefault();
+  await deleteManualRow();
+  const details = deleteRowBtn.closest('details');
+  if (details) details.open = false;
+});
+
 // Import modal wiring
 if (importTableBtn) importTableBtn.addEventListener('click', openImportModal);
 if (importCancel) importCancel.addEventListener('click', closeImportModal);
@@ -2095,6 +2341,7 @@ if (typeof termTo !== 'undefined' && termTo) {
   const cardsWrap = document.getElementById('rcCardsWrap');
   const cardsContainer = document.getElementById('rcCardsContainer');
   const rcStatus = document.getElementById('rcStatus');
+  const rcTotalMode = document.getElementById('rcTotalMode');
   if (!openBtn || !modalBg) return;
 
   function esc(s=''){ return String(s).replace(/[&<>"'`]/g, m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;","`":"&#96;"}[m]||m)); }
@@ -2177,7 +2424,7 @@ if (typeof termTo !== 'undefined' && termTo) {
     return col.label || col.key;
   }
 
-  function renderCard({ student, test, notes }) {
+  function renderCard({ student, test, notes, totalMode }) {
     const cols = Array.isArray(test.columns) ? test.columns : [];
     const numberCols = cols.filter(c=>c.type==='number');
 
@@ -2192,7 +2439,12 @@ if (typeof termTo !== 'undefined' && termTo) {
       scores.push({ label: getKoreanLabel(c), score:val, max, pct: barsPercent(val, max) });
     }
   const percent = (m>0) ? Math.round((t/m)*1000)/10 : null;
+  const avgPercent = computeAveragePercent(student.data || {}, cols);
   const totalSum = `${formatNumber(t)}/${formatNumber(m)}`;
+  const useAverageMode = totalMode === 'average';
+  const shownPercent = useAverageMode ? avgPercent : percent;
+  const totalLabel = useAverageMode ? 'Average' : 'Total';
+  const totalSumHtml = useAverageMode ? '' : `<div class="rc-total-sum">${totalSum}</div>`;
 
     // Library grades (text) if available
     const libReading = student.data['lib_reading'] || student.data['LIB_READING'] || '';
@@ -2269,9 +2521,9 @@ if (typeof termTo !== 'undefined' && termTo) {
           <div>
             ${skillRows}
             <div class="rc-total-wrap">
-              <div class="rc-total-label">Total</div>
-              <div class="rc-total">${formatPercent(percent)}</div>
-              <div class="rc-total-sum">${totalSum}</div>
+              <div class="rc-total-label">${totalLabel}</div>
+              <div class="rc-total">${formatPercent(shownPercent)}</div>
+              ${totalSumHtml}
             </div>
           </div>
 
@@ -2316,11 +2568,12 @@ if (typeof termTo !== 'undefined' && termTo) {
     })();
     const test = currentTestMeta();
     const students = visibleStudents();
+    const totalMode = (rcTotalMode && rcTotalMode.value === 'average') ? 'average' : 'weighted';
     console.log('[RC] Rendering cards for', students.length, 'students');
     rcStatus.textContent = `Rendering ${students.length} report card${students.length===1?'':'s'}…`;
-  const activeClass = (testClassFilter && testClassFilter.value) || currentTest.class || '';
+  const activeClass = (testClassFilter && testClassFilter.value) || (currentTest && currentTest.class) || '';
   const notes = (classComments.get(activeClass) || document.getElementById('classComment')?.value || '').trim();
-    const cards = students.map(s => renderCard({ student:s, test, notes }));
+    const cards = students.map(s => renderCard({ student:s, test, notes, totalMode }));
     cardsContainer.innerHTML = cards.join('');
     modalBg.style.display = 'flex';
     rcStatus.textContent = `Ready. ${students.length} card${students.length===1?'':'s'}.`;
@@ -2328,6 +2581,9 @@ if (typeof termTo !== 'undefined' && termTo) {
 
   function closeModal() { modalBg.style.display = 'none'; }
   openBtn.addEventListener('click', openModal);
+  rcTotalMode?.addEventListener('change', ()=>{
+    if (modalBg.style.display === 'flex') openModal();
+  });
   closeBtn?.addEventListener('click', closeModal);
   modalBg.addEventListener('click', (e)=>{ if (e.target === modalBg) closeModal(); });
 

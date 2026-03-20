@@ -22,14 +22,15 @@ const langMap = {
     class: 'Class (optional)',
     approved: 'Approved',
     createBtn: 'Add Student',
-    bulkClass: 'Class',
-    bulkList: 'Paste Korean name and English name (one per line, tab/comma separated)',
+    bulkClass: 'Class Name',
+    bulkList: 'Paste Table (copy from Sheets)',
     bulkSubmit: 'Add Students',
     editStudent: 'Edit Student',
     editName: "Name",
     editUsername: "Username",
     editKoreanName: "Korean Name",
     editClass: "Class",
+    editGrade: "Grade",
     editSubmit: "Update",
     moveClassModal: "Move Class Up",
     selectCurrentClass: "Select Current Class",
@@ -38,6 +39,7 @@ const langMap = {
     cancel: "Cancel",
     search: "Search by username or name",
     refresh: "Refresh",
+    exportCsv: "Export CSV",
     classLabel: "Class:",
   tableHeaders: ["Username", "Name", "Korean Name", "Class", "Grade", "School", "Phone", "Approved", "Tools"],
     addAll: 'Add All',
@@ -47,7 +49,8 @@ const langMap = {
     addAllUpload: 'Upload'
     ,
     school: 'School',
-    phone: 'Phone'
+    phone: 'Phone',
+    grade: 'Grade'
   },
   ko: {
     toolNames: {
@@ -69,14 +72,15 @@ const langMap = {
     class: '반 (선택)',
     approved: '승인됨',
     createBtn: '학생 추가',
-    bulkClass: '반',
-    bulkList: '한국 이름과 영어 이름을 붙여넣기 (한 줄에 하나씩, 탭/쉼표 구분)',
+    bulkClass: '반 이름',
+    bulkList: '표 붙여넣기 (시트에서 복사)',
     bulkSubmit: '학생 추가',
     editStudent: '학생 정보 수정',
     editName: "이름",
     editUsername: "아이디",
     editKoreanName: "한국 이름",
     editClass: "반",
+    editGrade: "학년",
     editSubmit: "수정",
     moveClassModal: "반 이동",
     selectCurrentClass: "현재 반 선택",
@@ -85,6 +89,7 @@ const langMap = {
     cancel: "취소",
     search: "아이디 또는 이름으로 검색",
     refresh: "새로고침",
+    exportCsv: "CSV 내보내기",
     classLabel: "반:",
   tableHeaders: ["아이디", "이름", "한국 이름", "반", "학년", "학교", "전화번호", "승인됨", "도구"],
     addAll: '전체 추가',
@@ -94,7 +99,8 @@ const langMap = {
     addAllUpload: '업로드'
     ,
     school: '학교',
-    phone: '전화번호'
+    phone: '전화번호',
+    grade: '학년'
   }
 };
 
@@ -110,8 +116,10 @@ function setLanguage(lang) {
   const l6 = document.querySelector('label[for="newApproved"]'); if (l6) l6.textContent = langMap[lang].approved;
   const sl = document.querySelector('label[for="singleSchool"]'); if (sl) sl.textContent = langMap[lang].school;
   const pl = document.querySelector('label[for="singlePhone"]'); if (pl) pl.textContent = langMap[lang].phone;
+  const sgl = document.querySelector('label[for="singleGrade"]'); if (sgl) sgl.textContent = langMap[lang].grade;
   document.getElementById('search').placeholder = langMap[lang].search;
   document.getElementById('refreshBtn').textContent = langMap[lang].refresh;
+  const exportBtn = document.getElementById('exportStudentsBtn'); if (exportBtn) exportBtn.textContent = langMap[lang].exportCsv;
   document.querySelector('label[for="classFilter"]').textContent = langMap[lang].classLabel;
   // Bulk Insert Modal
   const bh2 = document.querySelector('#bulkModal h2'); if (bh2) bh2.textContent = langMap[lang].addFullClass;
@@ -125,6 +133,7 @@ function setLanguage(lang) {
   const el2 = document.querySelector('label[for="editUsername"]'); if (el2) el2.textContent = langMap[lang].editUsername;
   const el3 = document.querySelector('label[for="editKoreanName"]'); if (el3) el3.textContent = langMap[lang].editKoreanName;
   const el4 = document.querySelector('label[for="editClass"]'); if (el4) el4.textContent = langMap[lang].editClass;
+  const el4g = document.querySelector('label[for="editGrade"]'); if (el4g) el4g.textContent = langMap[lang].editGrade;
   document.getElementById('editSubmit').textContent = langMap[lang].editSubmit;
   document.getElementById('editCancel').textContent = langMap[lang].cancel;
   // Move Class Up Modal
@@ -176,9 +185,9 @@ let IS_ADMIN = false; // set after role check
 async function api(action, opts = {}) {
   const method = opts.method || (opts.body ? 'POST' : 'GET');
   const url = `${API}?action=${encodeURIComponent(action)}`;
-  const res = await fetch(url, {
+  // Use WillenaAPI.fetch for proper routing on CF Pages deployments
+  const res = await WillenaAPI.fetch(url, {
     method,
-    credentials: 'include',
     headers: { 'Content-Type': 'application/json' },
     body: opts.body ? JSON.stringify(opts.body) : undefined,
     cache: 'no-store'
@@ -254,7 +263,7 @@ function rowTpl(s) {
   const lang = currentLang || 'en';
   const tnames = langMap[lang].toolNames;
   const approved = s.approved ? '<span class="pill yes">Yes</span>' : '<span class="pill no">No</span>';
-  return `<tr data-id="${s.id}" data-username="${s.username}" data-name="${s.name || ''}" data-korean="${s.korean_name || ''}" data-class="${s.class || ''}" data-approved="${s.approved ? '1' : '0'}">
+  return `<tr data-id="${s.id}" data-username="${s.username}" data-name="${s.name || ''}" data-korean="${s.korean_name || ''}" data-class="${s.class || ''}" data-grade="${s.grade || ''}" data-school="${s.school || ''}" data-approved="${s.approved ? '1' : '0'}">
     <td>${s.username || ''}</td>
     <td>${s.name || ''}</td>
     <td>${s.korean_name || ''}</td>
@@ -309,6 +318,95 @@ function cacheGetAll(maxAgeMs = 60000) {
 // In-memory copy for fast filtering during the session
 let ALL_STUDENTS = null;
 const MAX_ALL_CACHE_SIZE = 3000; // only use full-client cache if dataset isn't enormous
+let CURRENT_VIEW_STUDENTS = [];
+const SORT_STATE = { key: '', dir: 'asc' };
+
+function sortValueForKey(student, key) {
+  if (key === 'approved') return student?.approved ? '1' : '0';
+  return String(student?.[key] ?? '').trim().toLowerCase();
+}
+
+function applyStudentSort(students) {
+  const list = Array.isArray(students) ? [...students] : [];
+  if (!SORT_STATE.key) return list;
+  const key = SORT_STATE.key;
+  const dir = SORT_STATE.dir === 'desc' ? -1 : 1;
+  return list.sort((a, b) => {
+    const av = sortValueForKey(a, key);
+    const bv = sortValueForKey(b, key);
+    if (av < bv) return -1 * dir;
+    if (av > bv) return 1 * dir;
+    return String(a?.username || '').localeCompare(String(b?.username || ''));
+  });
+}
+
+function updateSortHeaderUI() {
+  const ths = document.querySelectorAll('th[data-sort]');
+  ths.forEach((th) => {
+    const key = th.dataset.sort;
+    const label = th.dataset.label || th.textContent || '';
+    if (SORT_STATE.key === key) {
+      th.textContent = `${label} ${SORT_STATE.dir === 'asc' ? '▲' : '▼'}`;
+    } else {
+      th.textContent = label;
+    }
+  });
+}
+
+function renderStudentRows(students) {
+  CURRENT_VIEW_STUDENTS = Array.isArray(students) ? [...students] : [];
+  const rows = applyStudentSort(CURRENT_VIEW_STUDENTS);
+  el('rows').innerHTML = (rows.map(rowTpl).join('')) || '<tr><td colspan="9">No students found</td></tr>';
+}
+
+function csvEscape(value) {
+  const s = value == null ? '' : String(value);
+  return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+}
+
+function exportVisibleStudentsCsv() {
+  const rows = applyStudentSort(CURRENT_VIEW_STUDENTS || []);
+  const listMsg = el('listMsg');
+  if (!rows.length) {
+    if (listMsg) {
+      listMsg.style.color = '#b45309';
+      listMsg.textContent = 'No students to export.';
+    }
+    return;
+  }
+
+  const headers = ['Username', 'Name', 'Korean Name', 'Class', 'Grade', 'School', 'Phone', 'Approved'];
+  const lines = [headers.join(',')];
+  for (const s of rows) {
+    const row = [
+      s.username || '',
+      s.name || '',
+      s.korean_name || '',
+      s.class || '',
+      s.grade || '',
+      s.school || '',
+      s.phone || '',
+      s.approved ? 'Yes' : 'No'
+    ];
+    lines.push(row.map(csvEscape).join(','));
+  }
+
+  const classVal = (el('classFilter')?.value || 'all').replace(/[^a-z0-9_-]/gi, '_');
+  const stamp = new Date().toISOString().slice(0, 10);
+  const blob = new Blob(['\uFEFF' + lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `students_${classVal}_${stamp}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(a.href);
+
+  if (listMsg) {
+    listMsg.style.color = '#065f46';
+    listMsg.textContent = `Exported ${rows.length} student${rows.length === 1 ? '' : 's'}.`;
+  }
+}
 
 // Prefetch class student lists (background warming). Limits to a few classes to avoid burst.
 async function prefetchClassList(cls) {
@@ -331,6 +429,8 @@ const editName = document.getElementById('editName');
 const editUsername = document.getElementById('editUsername');
 const editKoreanName = document.getElementById('editKoreanName');
 const editClass = document.getElementById('editClass');
+const editGrade = document.getElementById('editGrade');
+const editSchool = document.getElementById('editSchool');
 const editCancel = document.getElementById('editCancel');
 const editSubmit = document.getElementById('editSubmit');
 const editMsg = document.getElementById('editMsg');
@@ -342,6 +442,8 @@ function showEditModal(student) {
   editUsername.value = student.username || '';
   editKoreanName.value = student.korean_name || '';
   editClass.value = student.class || '';
+  if (editGrade) editGrade.value = student.grade || '';
+  if (editSchool) editSchool.value = student.school || '';
   editMsg.textContent = '';
   editModalBg.style.display = 'flex';
 }
@@ -358,9 +460,11 @@ if (editSubmit) editSubmit.onclick = async function() {
   const username = editUsername.value.trim();
   const korean_name = editKoreanName.value.trim();
   const className = editClass.value.trim();
+  const grade = editGrade ? editGrade.value.trim() : '';
+  const school = editSchool ? editSchool.value.trim() : '';
   if (!username) { editMsg.textContent = 'Username required.'; return; }
   try {
-    await api('update_student', { method:'POST', body: { user_id: editingId, name, username, korean_name, class: className } });
+    await api('update_student', { method:'POST', body: { user_id: editingId, name, username, korean_name, class: className, grade: grade || null, school: school || null } });
     hideEditModal();
     await populateClassFilter();
   await refresh(true);
@@ -385,57 +489,70 @@ async function refresh(force = false) {
   let url = `${API}?action=list_students&search=${encodeURIComponent(q)}`;
   if (classVal) url += `&class=${encodeURIComponent(classVal)}`;
   let data;
-  // Render cached data immediately if available (optimistic / instant feel)
+  let renderedFromCache = false;
+
+  // When forced (after a mutation), invalidate stale in-memory data so we always hit the server
+  if (force) {
+    ALL_STUDENTS = null;
+    try { sessionStorage.removeItem(cacheKeyAll()); } catch(e) {}
+  }
+
+  // If NOT forced, try local cache for instant response
+  if (!force) {
+    try {
+      const cached = classVal ? cacheGetClassData(classVal, 30000) : null;
+      if (cached && Array.isArray(cached)) {
+        renderStudentRows(cached);
+        renderedFromCache = true;
+      }
+    } catch (e) { }
+    try {
+      const cachedAll = ALL_STUDENTS || cacheGetAll();
+      if (cachedAll && Array.isArray(cachedAll) && cachedAll.length <= MAX_ALL_CACHE_SIZE) {
+        ALL_STUDENTS = cachedAll;
+      }
+      if (ALL_STUDENTS && Array.isArray(ALL_STUDENTS) && ALL_STUDENTS.length <= MAX_ALL_CACHE_SIZE) {
+        const ql = q.toLowerCase();
+        let students = ALL_STUDENTS.filter(s => {
+          if (classVal && String(s.class || '') !== String(classVal)) return false;
+          if (!ql) return true;
+          const uname = String(s.username || '').toLowerCase();
+          const name = String(s.name || '').toLowerCase();
+          return uname.includes(ql) || name.includes(ql);
+        });
+        try { if (classVal) cacheSetClassData(classVal, students); } catch(e) {}
+        renderStudentRows(students);
+        return; // local data is fresh enough
+      }
+    } catch(e) {}
+  }
+
+  // Network fetch (always reached when force=true, or when no local cache)
   try {
-    const cached = classVal ? cacheGetClassData(classVal, 30000) : null;
-    if (cached && Array.isArray(cached)) {
-      const rows = cached.map(rowTpl).join('');
-      el('rows').innerHTML = rows || '<tr><td colspan="8">No students found</td></tr>';
-    }
-  } catch (e) { }
-  // If we have the full list cached in-memory or sessionStorage and dataset is reasonable,
-  // do local filtering and avoid a network fetch for instant response.
-  try {
-    const cachedAll = ALL_STUDENTS || cacheGetAll();
-    if (cachedAll && Array.isArray(cachedAll) && cachedAll.length <= MAX_ALL_CACHE_SIZE) {
-      ALL_STUDENTS = cachedAll;
-    }
-    if (ALL_STUDENTS && Array.isArray(ALL_STUDENTS) && ALL_STUDENTS.length <= MAX_ALL_CACHE_SIZE) {
-      // local filter
-      const ql = q.toLowerCase();
-      let students = ALL_STUDENTS.filter(s => {
-        if (classVal && String(s.class || '') !== String(classVal)) return false;
-        if (!ql) return true;
-        const uname = String(s.username || '').toLowerCase();
-        const name = String(s.name || '').toLowerCase();
-        return uname.includes(ql) || name.includes(ql);
-      });
-      try { if (classVal) cacheSetClassData(classVal, students); } catch(e) {}
-      el('rows').innerHTML = (students.map(rowTpl).join('')) || '<tr><td colspan="8">No students found</td></tr>';
-      // We have the full student list locally — use client-side filtering only.
-      // Do not perform per-class or background network fetches unless caller explicitly forces a server refresh.
-      if (!force) return;
-    }
-  } catch(e) {}
-  try {
-    const res = await fetch(url, { credentials:'include', cache:'no-store' });
+    const res = await WillenaAPI.fetch(url);
     data = await res.json().catch(() => ({}));
     if (!res.ok || data.success === false) throw new Error(data.error || `HTTP ${res.status}`);
   } catch (err) {
-    const msg = (err.message || '').toLowerCase().includes('not signed in') || (err.message || '').includes('401')
-      ? 'Not signed in. Please log in as a teacher and refresh.'
-      : (err.message || 'Failed to load students.');
-    const listMsg = el('listMsg'); if (listMsg) listMsg.textContent = msg;
-    el('rows').innerHTML = '<tr><td colspan="6">' + msg + '</td></tr>';
+    // Only overwrite the table if we haven't already rendered from cache
+    if (!renderedFromCache) {
+      const msg = (err.message || '').toLowerCase().includes('not signed in') || (err.message || '').includes('401')
+        ? 'Not signed in. Please log in as a teacher and refresh.'
+        : (err.message || 'Failed to load students.');
+      const listMsg = el('listMsg'); if (listMsg) listMsg.textContent = msg;
+      el('rows').innerHTML = '<tr><td colspan="9">' + msg + '</td></tr>';
+    }
     return;
   }
   const listMsg = el('listMsg'); if (listMsg) listMsg.textContent = '';
   let students = data.students || [];
+  // Update the full in-memory cache when the fetch was unfiltered
+  if (!q && !classVal) {
+    ALL_STUDENTS = students;
+    try { cacheSetAll(students); } catch(e) {}
+  }
   if (classVal) students = students.filter(s => s.class === classVal);
-  // update client cache for this class
   try { if (classVal) cacheSetClassData(classVal, students); } catch(e) {}
-  const rows = students.map(rowTpl).join('');
-  el('rows').innerHTML = rows || '<tr><td colspan="8">No students found</td></tr>';
+  renderStudentRows(students);
 }
 
 async function createStudentLegacy() {
@@ -475,8 +592,10 @@ function attachRowHandlers() {
         id: uid,
         name: tr?.dataset?.name,
         username: tr?.dataset?.username,
-  korean_name: tr?.dataset?.korean,
-  class: tr?.dataset?.class
+        korean_name: tr?.dataset?.korean,
+        class: tr?.dataset?.class,
+        grade: tr?.dataset?.grade,
+        school: tr?.dataset?.school
       });
       return;
     }
@@ -506,8 +625,28 @@ function attachRowHandlers() {
 function wire() {
   el('refreshBtn').addEventListener('click', ()=>refresh(true));
   el('search').addEventListener('input', () => { clearTimeout(wire._t); wire._t = setTimeout(refresh, 300); });
+  const exportBtn = el('exportStudentsBtn');
+  if (exportBtn) exportBtn.addEventListener('click', exportVisibleStudentsCsv);
   const classFilter = el('classFilter');
   if (classFilter) classFilter.addEventListener('change', refresh);
+  const tableHead = document.querySelector('.worksheet-preview thead');
+  if (tableHead) {
+    tableHead.addEventListener('click', (e) => {
+      const th = e.target.closest('th[data-sort]');
+      if (!th) return;
+      const key = th.dataset.sort;
+      if (!key) return;
+      if (SORT_STATE.key === key) {
+        SORT_STATE.dir = SORT_STATE.dir === 'asc' ? 'desc' : 'asc';
+      } else {
+        SORT_STATE.key = key;
+        SORT_STATE.dir = 'asc';
+      }
+      updateSortHeaderUI();
+      renderStudentRows(CURRENT_VIEW_STUDENTS);
+    });
+  }
+  updateSortHeaderUI();
   const testBtn = document.getElementById('openTestInput');
   if (testBtn) testBtn.addEventListener('click', ()=>{
     const klass = el('classFilter')?.value || '';
@@ -781,10 +920,122 @@ const bulkSubmit = document.getElementById('bulkSubmit');
 const bulkList = document.getElementById('bulkList');
 const bulkClass = document.getElementById('bulkClass');
 const bulkMsg = document.getElementById('bulkMsg');
+const bulkStats = document.getElementById('bulkStats');
+const bulkPreview = document.getElementById('bulkPreview');
+
+function escapeHtml(s) {
+  return String(s ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+// Parse tab-delimited rows copied from Google Sheets.
+// Supports pastes with or without the leading "No." column.
+// Expected columns (either):
+//  - No. | School | Grade | Name | English Name | Phone
+//  - School | Grade | Name | English Name | Phone
+function parseBulkSheet(text) {
+  const lines = String(text || '').split(/\r?\n/);
+  const items = [];
+
+  for (let i = 0; i < lines.length; i++) {
+    const raw = lines[i];
+    const line = String(raw || '').trimEnd();
+    if (!line.trim()) continue;
+    const cols = line.split(/\t/).map(c => c.trim());
+
+    // Skip header rows (English/Korean)
+    const c0 = (cols[0] || '').toLowerCase().replace(/\./g, '');
+    const c1 = (cols[1] || '').toLowerCase();
+    if (c0 === 'no' || c0 === '#' || c0 === '번호' || c1 === 'school' || c1 === '학교') continue;
+    if (c0 === 'school' || c0 === '학교') continue;
+
+    // Detect whether first column is a row number
+    const firstIsNo = /^\d{1,4}$/.test(cols[0] || '');
+    const offset = firstIsNo ? 1 : 0;
+
+    const school = (cols[offset + 0] || '').trim();
+    const grade = (cols[offset + 1] || '').trim();
+    const korean_name = (cols[offset + 2] || '').trim();
+    const english_name = (cols[offset + 3] || '').trim();
+    const phone = (cols[offset + 4] || '').trim();
+
+    // If the row is shorter than expected, try a heuristic fallback:
+    // find the phone-like field and an ASCII (english) name field.
+    let finalSchool = school;
+    let finalGrade = grade;
+    let finalKo = korean_name;
+    let finalEn = english_name;
+    let finalPhone = phone;
+
+    if (!finalPhone || !/\d/.test(finalPhone) || (!finalEn && cols.length >= 3)) {
+      // Attempt to locate phone by digits
+      const phoneIdx = cols.findIndex(c => /\d{2,}/.test(c));
+      if (phoneIdx >= 0) finalPhone = cols[phoneIdx];
+      // Attempt to locate English name by ASCII letters
+      const enIdx = cols.findIndex(c => /^[A-Za-z][A-Za-z\s\-']*$/.test(c));
+      if (enIdx >= 0) finalEn = cols[enIdx];
+      // If we found enIdx and phoneIdx, guess korean name is immediately before english
+      if (!finalKo && enIdx > 0) finalKo = cols[enIdx - 1] || '';
+      // Try to keep school/grade from earliest columns
+      if (!finalSchool) finalSchool = cols[0] || '';
+      if (!finalGrade && cols.length > 1) finalGrade = cols[1] || '';
+    }
+
+    if (!finalSchool && !finalGrade && !finalKo && !finalEn && !finalPhone) continue;
+    items.push({ row: i + 1, school: finalSchool, grade: finalGrade, korean_name: finalKo, english_name: finalEn, phone: finalPhone });
+  }
+  return items;
+}
+
+function renderBulkPreview(items) {
+  if (!bulkStats || !bulkPreview) return;
+  const maxRows = 12;
+  const rows = (items || []).slice(0, maxRows);
+  bulkStats.textContent = items?.length ? `Detected ${items.length} rows. Showing first ${Math.min(maxRows, items.length)}.` : '';
+  if (!rows.length) {
+    bulkPreview.style.display = 'none';
+    bulkPreview.innerHTML = '';
+    return;
+  }
+
+  const html = [
+    '<table style="width:100%; border-collapse:collapse; font-size:12.5px;">',
+    '<thead><tr>',
+    '<th style="text-align:left; padding:6px; border-bottom:1px solid #e5e7eb;">School</th>',
+    '<th style="text-align:left; padding:6px; border-bottom:1px solid #e5e7eb;">Grade</th>',
+    '<th style="text-align:left; padding:6px; border-bottom:1px solid #e5e7eb;">Name</th>',
+    '<th style="text-align:left; padding:6px; border-bottom:1px solid #e5e7eb;">English</th>',
+    '<th style="text-align:left; padding:6px; border-bottom:1px solid #e5e7eb;">Phone</th>',
+    '<th style="text-align:left; padding:6px; border-bottom:1px solid #e5e7eb;">Notes</th>',
+    '</tr></thead><tbody>'
+  ];
+  for (const r of rows) {
+    const notes = [];
+    if (!r.english_name) notes.push('missing English Name');
+    if (!r.phone || !/\d/.test(r.phone)) notes.push('missing Phone');
+    html.push('<tr>');
+    html.push(`<td style="padding:6px; border-bottom:1px solid #f1f5f9;">${escapeHtml(r.school)}</td>`);
+    html.push(`<td style="padding:6px; border-bottom:1px solid #f1f5f9;">${escapeHtml(r.grade)}</td>`);
+    html.push(`<td style="padding:6px; border-bottom:1px solid #f1f5f9;">${escapeHtml(r.korean_name)}</td>`);
+    html.push(`<td style="padding:6px; border-bottom:1px solid #f1f5f9;">${escapeHtml(r.english_name)}</td>`);
+    html.push(`<td style="padding:6px; border-bottom:1px solid #f1f5f9;">${escapeHtml(r.phone)}</td>`);
+    html.push(`<td style="padding:6px; border-bottom:1px solid #f1f5f9; color:${notes.length ? '#b45309' : '#64748b'};">${escapeHtml(notes.join(', '))}</td>`);
+    html.push('</tr>');
+  }
+  html.push('</tbody></table>');
+  bulkPreview.innerHTML = html.join('');
+  bulkPreview.style.display = 'block';
+}
 
 function showBulkModal() {
   bulkModalBg.style.display = 'flex';
   bulkMsg.textContent = '';
+  if (bulkStats) bulkStats.textContent = '';
+  if (bulkPreview) { bulkPreview.style.display = 'none'; bulkPreview.innerHTML = ''; }
   bulkList.value = '';
   bulkClass.value = '';
 }
@@ -795,35 +1046,188 @@ if (openBulkModal) openBulkModal.onclick = showBulkModal;
 if (bulkCancel) bulkCancel.onclick = hideBulkModal;
 if (bulkModalBg) bulkModalBg.onclick = (e) => { if (e.target === bulkModalBg) hideBulkModal(); };
 
+// Live preview for paste
+if (bulkList) {
+  bulkList.addEventListener('input', () => {
+    clearTimeout(bulkList._t);
+    bulkList._t = setTimeout(() => {
+      try {
+        const items = parseBulkSheet(bulkList.value);
+        renderBulkPreview(items);
+      } catch (e) {
+        if (bulkStats) bulkStats.textContent = '';
+        if (bulkPreview) { bulkPreview.style.display = 'none'; bulkPreview.innerHTML = ''; }
+      }
+    }, 200);
+  });
+}
+
 if (bulkSubmit) bulkSubmit.onclick = async function() {
+  console.log('[BulkAdd] === v20260302a handler start ===');
   bulkMsg.textContent = '';
   const classVal = bulkClass.value.trim();
-  const lines = bulkList.value.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
   if (!classVal) { bulkMsg.textContent = 'Class is required.'; return; }
-  if (!lines.length) { bulkMsg.textContent = 'Paste at least one name.'; return; }
-  // Parse lines: "Korean name, English name" or "Korean name\tEnglish name"
-  const students = lines.map(line => {
-    let [korean, name] = line.split(/[,\t]/).map(s => s.trim());
-    if (!name) return null;
-    // Username: lowercased, no spaces, only letters/numbers from English name
-    const username = name.toLowerCase().replace(/[^a-z0-9]/g, '');
-    // Password: same as username (can be changed later)
-    return { username, password: username, name, korean_name: korean || '', class: classVal, approved: true };
-  }).filter(Boolean);
-  if (!students.length) { bulkMsg.textContent = 'No valid names found.'; return; }
-  bulkSubmit.disabled = true;
+
+  const items = parseBulkSheet(bulkList.value);
+  console.log('[BulkAdd] parsed items:', JSON.stringify(items));
+  if (!items.length) { bulkMsg.textContent = 'Paste at least one table row.'; return; }
+
+  // Rebuilt matching policy (non-destructive):
+  // - Only update when phone + Korean name matches EXACTLY one existing account
+  // - If ambiguous or repeated in current paste, CREATE new account
+  // - Shared phone numbers across siblings are expected and supported
+  let existing = [];
+  try {
+    const res = await WillenaAPI.fetch('/.netlify/functions/teacher_admin?action=list_students');
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || data.success === false) throw new Error(data.error || `HTTP ${res.status}`);
+    existing = Array.isArray(data.students) ? data.students : [];
+  } catch (e) {
+    bulkMsg.textContent = e.message || 'Failed to load current students for matching.';
+    return;
+  }
+
+  const normK = (v) => String(v || '').trim().replace(/\s+/g, '');
+  const strictKey = (phoneDigits, koreanName) => {
+    if (!phoneDigits || !koreanName) return '';
+    return `${phoneDigits}|${normK(koreanName)}`;
+  };
+
+  // Existing strict-key map: phone + Korean name -> accounts[]
+  const byStrict = new Map();
+  const usernamesTaken = new Set();
+  for (const s of existing) {
+    const uname = String(s.username || '').trim().toLowerCase();
+    if (uname) usernamesTaken.add(uname);
+
+    const digits = normalizePhone(s.phone);
+    const ko = String(s.korean_name || '').trim();
+    const key = strictKey(digits, ko);
+    if (!key) continue;
+    if (!byStrict.has(key)) byStrict.set(key, []);
+    byStrict.get(key).push(s);
+  }
+
+  // Count strict keys in pasted rows to avoid updating when duplicated in this batch
+  const strictCountInPaste = new Map();
+  for (const it of items) {
+    const d = normalizePhone(it.phone);
+    const k = strictKey(d, it.korean_name);
+    if (!k) continue;
+    strictCountInPaste.set(k, (strictCountInPaste.get(k) || 0) + 1);
+  }
+
+  function uniqueUsername(preferredBase, fallbackDigits, rowIndex) {
+    const baseRaw = String(preferredBase || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+    const base = baseRaw || `student${String(fallbackDigits || '').slice(-4) || String(1000 + rowIndex)}`;
+    let cand = base;
+    let i = 2;
+    while (usernamesTaken.has(cand.toLowerCase())) {
+      cand = `${base}${i}`;
+      i++;
+      if (i > 250) {
+        cand = `${base}${Date.now().toString().slice(-5)}`;
+        break;
+      }
+    }
+    usernamesTaken.add(cand.toLowerCase());
+    return cand;
+  }
+
+  let updated = 0;
+  let created = 0;
+  let skipped = 0;
   let errors = 0;
-  for (const s of students) {
+
+  bulkSubmit.disabled = true;
+  bulkMsg.style.color = '#475569';
+  bulkMsg.textContent = `Uploading ${items.length} rows...`;
+
+  for (let idx = 0; idx < items.length; idx++) {
+    const it = items[idx];
     try {
-      await api('create_student', { method:'POST', body: s });
+      const phoneDigits = normalizePhone(it.phone);
+      const formattedPhone = formatPhoneForStorage(it.phone);
+
+      const patchSchool = (it.school || '').trim();
+      const patchGrade = (it.grade || '').trim();
+      const patchKo = (it.korean_name || '').trim();
+      const patchEn = (it.english_name || '').trim();
+
+      if (!patchKo && !patchEn && !phoneDigits) { console.log(`[BulkAdd] SKIP row ${idx}: empty patchKo/patchEn/phoneDigits`); skipped++; continue; }
+
+      const key = strictKey(phoneDigits, patchKo);
+      const matches = key ? (byStrict.get(key) || []) : [];
+      const appearsMultipleInPaste = key ? ((strictCountInPaste.get(key) || 0) > 1) : false;
+      const canUpdate = !!key && !appearsMultipleInPaste && matches.length === 1;
+
+      console.log(`[BulkAdd] row ${idx}: key="${key}" matches=${matches.length} multiInPaste=${appearsMultipleInPaste} canUpdate=${canUpdate}`);
+
+      if (canUpdate) {
+        const found = matches[0];
+        const patch = { user_id: found.id, class: classVal };
+        if (patchSchool) patch.school = patchSchool;
+        if (patchGrade) patch.grade = patchGrade;
+        if (patchKo) patch.korean_name = patchKo;
+        if (patchEn) patch.name = patchEn;
+        if (formattedPhone) patch.phone = formattedPhone;
+        await api('update_student', { method:'POST', body: patch });
+        console.log(`[BulkAdd] row ${idx}: UPDATED id=${found.id}`);
+        updated++;
+      } else {
+        // Create NEW account (safe path for siblings/shared phones)
+        const username = uniqueUsername(usernameFrom(patchEn, formattedPhone || it.phone), phoneDigits, idx + 1);
+        console.log(`[BulkAdd] row ${idx}: CREATING new user="${username}"`);
+        const payload = {
+          username,
+          password: username,
+          name: patchEn || patchKo || username,
+          korean_name: patchKo || '',
+          class: classVal,
+          approved: true,
+          school: patchSchool || null,
+          grade: patchGrade || null,
+          phone: formattedPhone || null
+        };
+
+        // Retry on username collisions
+        let ok = false;
+        let attempt = 0;
+        while (!ok && attempt < 5) {
+          attempt++;
+          try {
+            await api('create_student', { method:'POST', body: payload });
+            ok = true;
+          } catch (err) {
+            const msg = String(err?.message || '').toLowerCase();
+            if (msg.includes('duplicate') || msg.includes('already') || msg.includes('unique')) {
+              payload.username = uniqueUsername(`${username}${attempt}`, phoneDigits, idx + 1);
+              payload.password = payload.username;
+              continue;
+            }
+            throw err;
+          }
+        }
+        if (!ok) throw new Error('Could not create account (username collision).');
+        created++;
+      }
     } catch (e) {
       errors++;
     }
   }
+
   bulkSubmit.disabled = false;
-  if (errors) bulkMsg.textContent = `${errors} failed (likely duplicate usernames)`;
-  else hideBulkModal();
-  await refresh(true);
+  bulkMsg.style.color = errors ? '#a11' : '#065f46';
+  bulkMsg.textContent = `Done. Updated ${updated}, Created ${created}${skipped ? `, Skipped ${skipped}` : ''}${errors ? `, Errors ${errors}` : ''}`;
+
+  try {
+    await populateClassFilter();
+    await refresh(true);
+  } catch {}
+
+  if (!errors) {
+    setTimeout(() => { try { hideBulkModal(); } catch {} }, 650);
+  }
 }
 
 // Populate class filter after auth
@@ -870,6 +1274,7 @@ const singleName = document.getElementById('singleName');
 const singleKoreanName = document.getElementById('singleKoreanName');
 const singleSchool = document.getElementById('singleSchool');
 const singlePhone = document.getElementById('singlePhone');
+const singleGrade = document.getElementById('singleGrade');
 const singleClass = document.getElementById('singleClass');
 const singleApproved = document.getElementById('singleApproved');
 const singleAddMsg = document.getElementById('singleAddMsg');
@@ -882,6 +1287,7 @@ function showSingleAddModal() {
   singleKoreanName.value = '';
   if (singleSchool) singleSchool.value = '';
   if (singlePhone) singlePhone.value = '';
+  if (singleGrade) singleGrade.value = '';
   singleClass.value = '';
   if (singleAddModalBg) singleAddModalBg.style.display = 'flex';
 }
@@ -898,6 +1304,7 @@ async function createStudentSingle() {
   const name = singleName.value.trim();
   const koreanName = singleKoreanName.value.trim();
   const klass = singleClass.value.trim();
+  const grade = singleGrade ? singleGrade.value.trim() : '';
   const school = singleSchool ? singleSchool.value.trim() : '';
   const phoneRaw = singlePhone ? singlePhone.value.trim() : '';
   const phone = formatPhoneForStorage(phoneRaw);
@@ -905,7 +1312,7 @@ async function createStudentSingle() {
   singleAddMsg.textContent = '';
   if (!username || !password) { singleAddMsg.textContent = 'Username and password are required.'; return; }
   try {
-    await api('create_student', { method:'POST', body:{ username, password, name, korean_name: koreanName, class: klass, approved, school: school || null, phone: phone || null } });
+    await api('create_student', { method:'POST', body:{ username, password, name, korean_name: koreanName, class: klass, approved, school: school || null, phone: phone || null, grade: grade || null } });
     hideSingleAddModal();
     await populateClassFilter();
     await refresh(true);
