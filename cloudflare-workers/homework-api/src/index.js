@@ -113,6 +113,24 @@ async function fetchProfile(env, userId, fields = 'id,role,approved,class,name,k
   return data && data[0] ? data[0] : null;
 }
 
+function getAssignmentTargetStudentIds(assignment) {
+  const ids = new Set();
+  const meta = assignment?.list_meta || {};
+  if (Array.isArray(meta.target_student_ids)) {
+    meta.target_student_ids.forEach((value) => {
+      const id = String(value || '').trim();
+      if (id) ids.add(id);
+    });
+  }
+  if (Array.isArray(meta.target_students)) {
+    meta.target_students.forEach((entry) => {
+      const id = String(entry?.id || '').trim();
+      if (id) ids.add(id);
+    });
+  }
+  return Array.from(ids);
+}
+
 // Generate run token
 function generateRunToken(assignmentId) {
   const t = Date.now().toString(36);
@@ -368,6 +386,11 @@ export default {
         if (String(assignment.class || '') !== String(prof.class || '')) {
           return jsonResponse({ success: false, error: 'Not assigned to this class' }, 403, origin);
         }
+
+        const targetStudentIds = getAssignmentTargetStudentIds(assignment);
+        if (targetStudentIds.length && !targetStudentIds.includes(authUserId)) {
+          return jsonResponse({ success: false, error: 'Not assigned to this student' }, 403, origin);
+        }
         
         const tokens = Array.isArray(assignment.list_meta?.run_tokens)
           ? assignment.list_meta.run_tokens.map(r => r?.token).filter(Boolean)
@@ -399,12 +422,16 @@ export default {
             'homework_assignments',
             `class=eq.${encodeURIComponent(prof.class)}&active=eq.true&start_at=lte.${nowIso}&order=due_at.asc&select=*`
           );
+          const assignmentsForStudent = (data || []).filter((assignment) => {
+            const targetStudentIds = getAssignmentTargetStudentIds(assignment);
+            return !targetStudentIds.length || targetStudentIds.includes(authUserId);
+          });
           
           return jsonResponse({
             success: true,
             class: prof.class,
             student_name: prof.name || prof.korean_name || null,
-            assignments: data || [],
+            assignments: assignmentsForStudent,
           }, 200, origin);
         }
         
@@ -497,10 +524,14 @@ export default {
         
         const assignment = assignments[0];
         const targetClass = className || assignment.class;
+        const targetStudentIds = getAssignmentTargetStudentIds(assignment);
         
         // Authorization: only teachers/admins can see all students, students only see their own
         const isTeacher = ['teacher', 'admin'].includes(String(authProf.role || '').toLowerCase());
         if (!isTeacher && String(authProf.class || '') !== String(targetClass || '')) {
+          return jsonResponse({ success: false, error: 'Not authorized to view this assignment' }, 403, origin);
+        }
+        if (!isTeacher && targetStudentIds.length && !targetStudentIds.includes(authUserId)) {
           return jsonResponse({ success: false, error: 'Not authorized to view this assignment' }, 403, origin);
         }
         
@@ -519,7 +550,9 @@ export default {
         const students = await supabaseSelect(
           env,
           'profiles',
-          `class=eq.${encodeURIComponent(targetClass)}&select=id,name,korean_name`
+          targetStudentIds.length
+            ? `class=eq.${encodeURIComponent(targetClass)}&id=in.(${targetStudentIds.join(',')})&select=id,name,korean_name`
+            : `class=eq.${encodeURIComponent(targetClass)}&select=id,name,korean_name`
         );
         
         if (!students || !students.length) {

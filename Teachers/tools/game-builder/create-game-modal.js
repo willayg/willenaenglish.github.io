@@ -23,6 +23,9 @@ import { getCurrentGameId, setCurrentGameId } from './state/game-state.js';
 let currentPanel = 'start'; // 'start' | 'live' | 'homework'
 let selectedLiveMode = null; // will hold e.g., 'multi_choice_eng_to_kor'
 let buildPayloadRef = null; // reference to builder's payload function (captured in init)
+let homeworkClassesLoaded = false;
+let homeworkClasses = [];
+const homeworkStudentsByClass = new Map();
 
 // Elements (legacy references retained for homework form reuse)
 const el = {
@@ -35,6 +38,8 @@ const el = {
   // Form inputs
   title: document.getElementById('gameTitle'),
   cls: document.getElementById('gameClass'),
+  student: document.getElementById('gameStudentTarget'),
+  studentHelp: document.getElementById('gameStudentHelp'),
   dateDue: document.getElementById('gameDateDue'),
   book: document.getElementById('gameBook'),
   unit: document.getElementById('gameUnit'),
@@ -50,6 +55,147 @@ const el = {
 };
 
 let gameImageUrl = '';
+
+function normalizeHomeworkClassRecord(record) {
+  const rawName = typeof record === 'string'
+    ? record
+    : record?.name || record?.class || record?.display || '';
+  const name = String(rawName || '').trim();
+  if (!name) return null;
+  const display = String(record?.display || name).trim() || name;
+  return {
+    name,
+    display,
+    hidden: !!record?.hidden,
+  };
+}
+
+function getHomeworkApiUrl(path) {
+  return window.WillenaAPI ? window.WillenaAPI.getApiUrl(path) : path;
+}
+
+function setHomeworkStudentHelp(text) {
+  if (el.studentHelp) el.studentHelp.textContent = text || '';
+}
+
+function populateHomeworkClassOptions(selectedClass = '') {
+  if (!el.cls) return;
+  const options = [
+    { value: '', label: 'Select a class' },
+    ...homeworkClasses.map(cls => ({ value: cls.name, label: cls.display || cls.name })),
+  ];
+  el.cls.innerHTML = '';
+  options.forEach(({ value, label }) => {
+    const option = document.createElement('option');
+    option.value = value;
+    option.textContent = label;
+    el.cls.appendChild(option);
+  });
+  el.cls.value = selectedClass || '';
+}
+
+function populateHomeworkStudentOptions(students = [], selectedStudentId = '') {
+  if (!el.student) return;
+  el.student.innerHTML = '';
+
+  const classOption = document.createElement('option');
+  classOption.value = '';
+  classOption.textContent = 'Entire class';
+  el.student.appendChild(classOption);
+
+  students.forEach((student) => {
+    const option = document.createElement('option');
+    option.value = student.id;
+    const englishName = String(student.name || '').trim();
+    const koreanName = String(student.korean_name || '').trim();
+    const username = String(student.username || '').trim();
+    option.textContent = [englishName, koreanName].filter(Boolean).join(' / ') || username || 'Unnamed student';
+    el.student.appendChild(option);
+  });
+
+  el.student.value = selectedStudentId || '';
+  el.student.disabled = !students.length;
+  setHomeworkStudentHelp(students.length ? 'Optional: leave as Entire class to assign to everyone.' : 'No students found for this class yet.');
+}
+
+async function loadHomeworkClasses() {
+  if (homeworkClassesLoaded) return homeworkClasses;
+  const resp = await fetch(getHomeworkApiUrl('/.netlify/functions/progress_teacher_summary?action=classes_list'), {
+    credentials: 'include',
+    cache: 'no-store'
+  });
+  const json = await resp.json().catch(() => ({}));
+  if (!resp.ok || !json?.success || !Array.isArray(json.classes)) {
+    throw new Error(json?.error || `Failed to load classes (${resp.status})`);
+  }
+  homeworkClasses = json.classes
+    .map(normalizeHomeworkClassRecord)
+    .filter(Boolean)
+    .filter(cls => !cls.hidden);
+  homeworkClassesLoaded = true;
+  return homeworkClasses;
+}
+
+async function loadStudentsForHomeworkClass(className, selectedStudentId = '') {
+  if (!el.student) return [];
+  if (!className) {
+    populateHomeworkStudentOptions([], '');
+    return [];
+  }
+
+  el.student.disabled = true;
+  setHomeworkStudentHelp('Loading students...');
+
+  if (!homeworkStudentsByClass.has(className)) {
+    const resp = await fetch(getHomeworkApiUrl(`/.netlify/functions/teacher_admin?action=list_students&class=${encodeURIComponent(className)}`), {
+      credentials: 'include',
+      cache: 'no-store'
+    });
+    const json = await resp.json().catch(() => ({}));
+    if (!resp.ok || !json?.success || !Array.isArray(json.students)) {
+      throw new Error(json?.error || `Failed to load students (${resp.status})`);
+    }
+    const students = json.students
+      .filter(student => String(student.class || '') === String(className || ''))
+      .sort((left, right) => {
+        const leftLabel = `${left.name || ''} ${left.korean_name || ''} ${left.username || ''}`.trim().toLowerCase();
+        const rightLabel = `${right.name || ''} ${right.korean_name || ''} ${right.username || ''}`.trim().toLowerCase();
+        return leftLabel.localeCompare(rightLabel);
+      });
+    homeworkStudentsByClass.set(className, students);
+  }
+
+  const students = homeworkStudentsByClass.get(className) || [];
+  populateHomeworkStudentOptions(students, selectedStudentId);
+  return students;
+}
+
+async function primeHomeworkRecipients(selectedClass = '', selectedStudentId = '') {
+  if (!el.cls || !el.student) return;
+  el.cls.disabled = true;
+  el.student.disabled = true;
+  setHomeworkStudentHelp('Loading classes...');
+  try {
+    await loadHomeworkClasses();
+    populateHomeworkClassOptions(selectedClass);
+    el.cls.disabled = false;
+    await loadStudentsForHomeworkClass(selectedClass, selectedStudentId);
+  } catch (err) {
+    console.error('Failed to load homework recipients', err);
+    populateHomeworkClassOptions(selectedClass);
+    populateHomeworkStudentOptions([], '');
+    setHomeworkStudentHelp('Could not load classes automatically. Refresh and try again.');
+    el.cls.disabled = false;
+  }
+}
+
+function getSelectedHomeworkStudent() {
+  const className = String(el.cls?.value || '').trim();
+  const studentId = String(el.student?.value || '').trim();
+  if (!className || !studentId) return null;
+  const roster = homeworkStudentsByClass.get(className) || [];
+  return roster.find(student => String(student.id) === studentId) || null;
+}
 
 // -------------------------------------------------------------
 // Sentence ID Upgrader (Additive, Safe Fallback)
@@ -258,7 +404,16 @@ function ensurePanels() {
         </div>
         <div>
           <label style="font-weight:600;font-size:.8rem;">Class</label>
-          <input id="gameClass" class="input" placeholder="e.g., Grade 3A" />
+          <select id="gameClass" class="input">
+            <option value="">Select a class</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-weight:600;font-size:.8rem;">Assign To</label>
+          <select id="gameStudentTarget" class="input">
+            <option value="">Entire class</option>
+          </select>
+          <div id="gameStudentHelp" class="cgm-help-text">Optional: leave as Entire class to assign to everyone.</div>
         </div>
         <div>
           <label style="font-weight:600;font-size:.8rem;">Date Due</label>
@@ -299,6 +454,8 @@ function ensurePanels() {
     el.liveGrid = live.querySelector('#cgmLiveGrid');
     el.title = hw.querySelector('#gameTitle');
     el.cls = hw.querySelector('#gameClass');
+    el.student = hw.querySelector('#gameStudentTarget');
+    el.studentHelp = hw.querySelector('#gameStudentHelp');
     el.dateDue = hw.querySelector('#gameDateDue');
     el.book = hw.querySelector('#gameBook');
     el.unit = hw.querySelector('#gameUnit');
@@ -456,12 +613,14 @@ export function openCreateGameModal(options = {}) {
   if (el.title) el.title.value = el.titleInput?.value || '';
   // Reset homework fields
   if (el.cls) el.cls.value = '';
+  if (el.student) el.student.value = '';
   if (el.dateDue) el.dateDue.value = '';
   if (el.desc) el.desc.value = '';
   const imgInZone = el.imageZone?.querySelector('img');
   gameImageUrl = imgInZone?.getAttribute('src') || '';
   setStatus('');
   updateGameImageDisplay();
+  primeHomeworkRecipients('', '');
   // Update live modes availability based on current word list (e.g., require pictures for picture modes)
   try { updateLiveTilesAvailability(); } catch {}
   el.modal.style.display = 'flex';
@@ -580,6 +739,19 @@ export function initCreateGameModal(buildPayload) {
   if (el.close) el.close.onclick = closeModal;
   if (el.cancel) el.cancel.onclick = closeModal;
 
+  if (el.cls && !el.cls._homeworkBound) {
+    el.cls._homeworkBound = true;
+    el.cls.addEventListener('change', async () => {
+      try {
+        await loadStudentsForHomeworkClass(String(el.cls?.value || '').trim(), '');
+      } catch (err) {
+        console.error('Failed to update student list for class', err);
+        populateHomeworkStudentOptions([], '');
+        setHomeworkStudentHelp('Could not load students for this class.');
+      }
+    });
+  }
+
   // Pre-build panels and tiles for faster modal opening
   ensurePanels();
   buildLiveTiles();
@@ -609,6 +781,7 @@ export function initCreateGameModal(buildPayload) {
       data.title = el.title?.value?.trim() || data.title || 'Untitled Game';
       data.gameTitle = el.title?.value?.trim() || 'Untitled Game';
       data.gameClass = el.cls?.value?.trim() || '';
+      const selectedStudent = getSelectedHomeworkStudent();
       data.gameDateDue = el.dateDue?.value || '';
       data.gameBook = el.book?.value?.trim() || '';
       data.gameUnit = el.unit?.value?.trim() || '';
@@ -662,7 +835,14 @@ export function initCreateGameModal(buildPayload) {
             max_stars: 30,
             type: 'saved_game',
             book: data.gameBook || '',
-            unit: data.gameUnit || ''
+            unit: data.gameUnit || '',
+            target_student_ids: selectedStudent ? [selectedStudent.id] : [],
+            target_students: selectedStudent ? [{
+              id: selectedStudent.id,
+              name: selectedStudent.name || '',
+              korean_name: selectedStudent.korean_name || '',
+              username: selectedStudent.username || ''
+            }] : []
           },
           start_at: new Date().toISOString(),
           due_at: new Date(data.gameDateDue + 'T23:59:59').toISOString(),
@@ -682,7 +862,10 @@ export function initCreateGameModal(buildPayload) {
         }
 
         setStatus('Homework assigned.');
-        alert(`Homework assigned.\n\nTitle: ${data.gameTitle}\nClass: ${data.gameClass}\nDue: ${data.gameDateDue}`);
+        const targetLabel = selectedStudent
+          ? `${selectedStudent.name || selectedStudent.username || 'Selected student'} (${data.gameClass})`
+          : data.gameClass;
+        alert(`Homework assigned.\n\nTitle: ${data.gameTitle}\nTarget: ${targetLabel}\nDue: ${data.gameDateDue}`);
         closeModal();
       } catch (err) { console.error(err); setStatus('Save error'); alert(err?.message || 'Save error'); }
       finally { el.save.disabled = false; setStatus(''); }

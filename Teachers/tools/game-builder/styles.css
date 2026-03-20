@@ -404,6 +404,7 @@ body { margin:0; background: var(--bg); font-family: Poppins, system-ui, -apple-
 /* Homework form layout reuse - wrap existing inputs */
 .cgm-home-form { display:grid; grid-template-columns:1fr 1fr; gap:16px; max-width:840px; margin:0 auto; }
 .cgm-home-form .wide { grid-column:1 / span 2; }
+.cgm-help-text { margin-top:6px; font-size:.72rem; color:#64748b; }
 .cgm-home-actions { margin-top:24px; display:flex; gap:12px; justify-content:flex-end; }
 .cgm-hint { font-size:.75rem; color:#64748b; margin-top:6px; }
 

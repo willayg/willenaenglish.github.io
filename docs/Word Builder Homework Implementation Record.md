@@ -94,6 +94,27 @@ Changes made:
 
 This aligns the outer app shell with the current Word Builder setup and removes the older separate logout/menu treatment.
 
+### 8. Added class and individual-student assignment targeting in Game Builder
+
+Updated the Game Builder homework modal so it follows the same underlying homework assignment flow as Student Tracker, but now supports choosing:
+
+- a whole class
+- a single student inside that class
+
+Updated files:
+
+- `Teachers/tools/game-builder/create-game-modal.js`
+- `Teachers/tools/game-builder/styles.css`
+- `cloudflare-workers/homework-api/src/index.js`
+
+Changes made:
+
+- replaced the free-text class field in the Game Builder homework modal with a real class selector populated from `progress_teacher_summary?action=classes_list`
+- added a student selector populated from `teacher_admin?action=list_students&class=...`
+- stored optional student targeting in `list_meta.target_student_ids` and `list_meta.target_students`
+- updated the homework worker so student dashboard assignment listing only returns targeted assignments to the intended student
+- updated run-token lookup and assignment progress so individual-student assignments still track correctly through the existing homework API flow
+
 ## Changes Made
 
 ### 1. Expanded homework session matching in the Cloudflare Worker
