@@ -567,23 +567,61 @@ export default {
           return 0;
         }
         
-        // Filter sessions by list name matching
+        // Filter sessions by list name matching.
+        // The stored assignment list_key and the recorded session list_name are not always
+        // formatted the same way, so match across path, title, and normalized token variants.
         const listKeyLast = (assignment.list_key || '').split('/').pop();
         const coreName = listKeyLast.replace(/\.json$/, '').toLowerCase();
-        
-        // Extract tokens from filename for display-name matching (e.g., "phonics-blends-dr-fl-fr" -> ["blends", "dr", "fl", "fr"])
-        const tokens = coreName.split(/[-_]+/).filter(t => t.length >= 2 && !/^(phonics|sample|wordlists|level\d?)$/.test(t));
-        
+        const coreNameSpaces = coreName.replace(/_/g, ' ');
+        const assignmentTitle = (assignment.title || '').toLowerCase();
+        const listTitle = (assignment.list_title || '').toLowerCase();
+        const listKeyFull = (assignment.list_key || '').toLowerCase();
+        const listKeyWithoutPrefix = listKeyFull.replace(/^games\/english_arcade\//i, '');
+        const tokens = coreName.split(/[-_]+/).filter(t => t.length >= 2 && !/^(phonics|sample|wordlists|level\d?|grammar|data|games|english|arcade|json)$/.test(t));
+        const normalize = (value) => String(value || '')
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, '_')
+          .replace(/^_+|_+$/g, '');
+        const normalizedCoreName = normalize(coreName);
+        const normalizedTitle = normalize(assignmentTitle);
+
         const filteredSessions = (sessions || []).filter(sess => {
           const listName = (sess.list_name || '').toLowerCase();
-          // Direct match on list_key or filename
-          if (listName.includes(coreName) || listName.includes(listKeyLast.toLowerCase())) {
+          const normalizedListName = normalize(listName);
+
+          if (listName.includes(coreName)) {
             return true;
           }
-          // Token-based match for display names (e.g., "Blend Dr Fl Fr")
+          if (listName.includes(listKeyFull) || listName.includes(listKeyWithoutPrefix)) {
+            return true;
+          }
+          if (listKeyFull.includes(listName) || listKeyWithoutPrefix.includes(listName)) {
+            return true;
+          }
+          if (listName.includes(coreNameSpaces)) {
+            return true;
+          }
+          if (assignmentTitle && listName.includes(assignmentTitle)) {
+            return true;
+          }
+          if (listTitle && listName.includes(listTitle)) {
+            return true;
+          }
+          if (normalizedListName.includes(normalizedCoreName) || normalizedCoreName.includes(normalizedListName)) {
+            return true;
+          }
+          if (normalizedTitle && normalizedListName.includes(normalizedTitle)) {
+            return true;
+          }
           if (tokens.length >= 2) {
-            const matchCount = tokens.filter(t => listName.includes(t)).length;
-            if (matchCount >= Math.min(2, tokens.length)) return true;
+            const rawTokenMatches = tokens.filter(t => listName.includes(t)).length;
+            if (rawTokenMatches >= Math.ceil(tokens.length * 0.5)) {
+              return true;
+            }
+            const normalizedTokenMatches = tokens.filter(t => normalizedListName.includes(t)).length;
+            if (normalizedTokenMatches >= Math.ceil(tokens.length * 0.5)) {
+              return true;
+            }
           }
           return false;
         });
@@ -629,8 +667,24 @@ export default {
             grammarLevel = parseInt(levelMatch[1], 10);
           }
           
-          // Level 1 grammar has 4 modes; Level 2+ has 6 modes
+          // Start with the base grammar mode count from the level.
           totalModes = grammarLevel === 1 ? 4 : 6;
+
+          // Some grammar lists intentionally expose fewer modes than the default.
+          const isPrepositionList = /prepositions_/i.test(listKeyPath);
+          if (grammarLevel === 2 && isPrepositionList) {
+            totalModes = 4;
+          }
+
+          const isWhMicroList = /wh_who_what|wh_where_when_whattime|wh_how_why_which/i.test(listKeyPath);
+          if (isWhMicroList) {
+            totalModes = 4;
+          }
+
+          const isWhQuestionsList = /present_simple_questions_wh/i.test(listKeyPath);
+          if (isWhQuestionsList) {
+            totalModes = 5;
+          }
         } else {
           // Vocab: 6 modes
           totalModes = 6;
