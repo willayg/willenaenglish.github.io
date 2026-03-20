@@ -616,7 +616,11 @@
 
           // Card click launches homework
           li.addEventListener('click', () => {
-            if (a.list_key) {
+            const sourceType = String(a?.list_meta?.source_type || '').toLowerCase();
+            const gameId = a?.list_meta?.game_id || '';
+            if (sourceType === 'saved_game' && gameId) {
+              window.location.href = `/Games/english_arcade/index.html?hw=${encodeURIComponent(a.id)}&open=saved&id=${encodeURIComponent(gameId)}&autostart=1`;
+            } else if (a.list_key) {
               window.location.href = `/Games/english_arcade/index.html?hw=${encodeURIComponent(a.id)}&list=${encodeURIComponent(a.list_key)}&autostart=1`;
             } else if (a.list_title) {
               window.location.href = `/Games/english_arcade/index.html?list=${encodeURIComponent(a.list_title)}&autostart=1`;

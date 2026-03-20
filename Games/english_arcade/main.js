@@ -1535,7 +1535,7 @@ window.addEventListener('DOMContentLoaded', () => {
   try {
     const params = new URLSearchParams(window.location.search);
     const open = (params.get('open') || '').toLowerCase();
-    const id = params.get('id');
+    const id = params.get('id') || params.get('game_id');
     if (open === 'saved' && id) {
       openSavedGameById(id);
     }

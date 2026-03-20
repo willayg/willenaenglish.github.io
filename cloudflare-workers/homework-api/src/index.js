@@ -236,8 +236,15 @@ export default {
           class: className, title, description, list_key, list_title,
           list_meta, start_at, due_at, goal_type, goal_value,
         } = body;
-        
-        if (!className || !title || !list_key || !due_at) {
+        const sourceMeta = list_meta && typeof list_meta === 'object' ? { ...list_meta } : {};
+        const isSavedGameAssignment = String(sourceMeta.source_type || '').toLowerCase() === 'saved_game' || !!sourceMeta.game_id;
+        const effectiveListKey = list_key || (isSavedGameAssignment && sourceMeta.game_id ? `saved_game:${sourceMeta.game_id}` : '');
+
+        if (isSavedGameAssignment && !sourceMeta.game_id) {
+          return jsonResponse({ success: false, error: 'Custom saved-game homework requires list_meta.game_id' }, 400, origin);
+        }
+
+        if (!className || !title || !effectiveListKey || !due_at) {
           return jsonResponse({
             success: false,
             error: 'Missing required fields: class, title, list_key, due_at',
@@ -248,9 +255,9 @@ export default {
           class: className,
           title,
           description: description || null,
-          list_key,
+          list_key: effectiveListKey,
           list_title: list_title || null,
-          list_meta: list_meta || {},
+          list_meta: sourceMeta,
           start_at: start_at || new Date().toISOString(),
           due_at,
           goal_type: goal_type || 'stars',
@@ -260,7 +267,28 @@ export default {
         };
         
         const data = await supabaseInsert(env, 'homework_assignments', insertData);
-        return jsonResponse({ success: true, assignment: data[0] }, 200, origin);
+        let assignment = data[0];
+        let runToken = null;
+
+        const existingTokens = Array.isArray(assignment?.list_meta?.run_tokens)
+          ? assignment.list_meta.run_tokens.map(entry => entry?.token).filter(Boolean)
+          : [];
+
+        if (!existingTokens.length && assignment?.id) {
+          runToken = generateRunToken(assignment.id);
+          const updatedMeta = {
+            ...(assignment.list_meta || {}),
+            run_tokens: [{ token: runToken, created_at: new Date().toISOString(), auto: true }],
+          };
+          const updatedRows = await supabaseUpdate(env, 'homework_assignments', `id=eq.${assignment.id}`, { list_meta: updatedMeta });
+          if (Array.isArray(updatedRows) && updatedRows[0]) {
+            assignment = updatedRows[0];
+          } else {
+            assignment = { ...assignment, list_meta: updatedMeta };
+          }
+        }
+
+        return jsonResponse({ success: true, assignment, run_token: runToken }, 200, origin);
       }
       
       // ===== CREATE RUN TOKEN =====
@@ -567,64 +595,82 @@ export default {
           return 0;
         }
         
-        // Filter sessions by list name matching.
-        // The stored assignment list_key and the recorded session list_name are not always
-        // formatted the same way, so match across path, title, and normalized token variants.
-        const listKeyLast = (assignment.list_key || '').split('/').pop();
-        const coreName = listKeyLast.replace(/\.json$/, '').toLowerCase();
-        const coreNameSpaces = coreName.replace(/_/g, ' ');
-        const assignmentTitle = (assignment.title || '').toLowerCase();
-        const listTitle = (assignment.list_title || '').toLowerCase();
-        const listKeyFull = (assignment.list_key || '').toLowerCase();
-        const listKeyWithoutPrefix = listKeyFull.replace(/^games\/english_arcade\//i, '');
-        const tokens = coreName.split(/[-_]+/).filter(t => t.length >= 2 && !/^(phonics|sample|wordlists|level\d?|grammar|data|games|english|arcade|json)$/.test(t));
-        const normalize = (value) => String(value || '')
-          .toLowerCase()
-          .replace(/[^a-z0-9]+/g, '_')
-          .replace(/^_+|_+$/g, '');
-        const normalizedCoreName = normalize(coreName);
-        const normalizedTitle = normalize(assignmentTitle);
+        const requestRunToken = url.searchParams.get('run_token') || null;
+        const assignmentRunTokens = Array.isArray(assignment.list_meta?.run_tokens)
+          ? assignment.list_meta.run_tokens.map(entry => entry?.token).filter(Boolean)
+          : [];
+        const isSavedGameAssignment = String(assignment.list_meta?.source_type || '').toLowerCase() === 'saved_game'
+          || !!assignment.list_meta?.game_id
+          || /^saved_game:/i.test(String(assignment.list_key || ''));
 
-        const filteredSessions = (sessions || []).filter(sess => {
-          const listName = (sess.list_name || '').toLowerCase();
-          const normalizedListName = normalize(listName);
+        let filteredSessions = [];
+        if (isSavedGameAssignment) {
+          const validTokens = [requestRunToken, ...assignmentRunTokens].filter(Boolean);
+          filteredSessions = (sessions || []).filter(sess => {
+            const summary = parseSummary(sess.summary);
+            const token = summary && summary.assignment_run;
+            return !!token && validTokens.includes(token);
+          });
+        } else {
+          // Filter sessions by list name matching.
+          // The stored assignment list_key and the recorded session list_name are not always
+          // formatted the same way, so match across path, title, and normalized token variants.
+          const listKeyLast = (assignment.list_key || '').split('/').pop();
+          const coreName = listKeyLast.replace(/\.json$/, '').toLowerCase();
+          const coreNameSpaces = coreName.replace(/_/g, ' ');
+          const assignmentTitle = (assignment.title || '').toLowerCase();
+          const listTitle = (assignment.list_title || '').toLowerCase();
+          const listKeyFull = (assignment.list_key || '').toLowerCase();
+          const listKeyWithoutPrefix = listKeyFull.replace(/^games\/english_arcade\//i, '');
+          const tokens = coreName.split(/[-_]+/).filter(t => t.length >= 2 && !/^(phonics|sample|wordlists|level\d?|grammar|data|games|english|arcade|json)$/.test(t));
+          const normalize = (value) => String(value || '')
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, '_')
+            .replace(/^_+|_+$/g, '');
+          const normalizedCoreName = normalize(coreName);
+          const normalizedTitle = normalize(assignmentTitle);
 
-          if (listName.includes(coreName)) {
-            return true;
-          }
-          if (listName.includes(listKeyFull) || listName.includes(listKeyWithoutPrefix)) {
-            return true;
-          }
-          if (listKeyFull.includes(listName) || listKeyWithoutPrefix.includes(listName)) {
-            return true;
-          }
-          if (listName.includes(coreNameSpaces)) {
-            return true;
-          }
-          if (assignmentTitle && listName.includes(assignmentTitle)) {
-            return true;
-          }
-          if (listTitle && listName.includes(listTitle)) {
-            return true;
-          }
-          if (normalizedListName.includes(normalizedCoreName) || normalizedCoreName.includes(normalizedListName)) {
-            return true;
-          }
-          if (normalizedTitle && normalizedListName.includes(normalizedTitle)) {
-            return true;
-          }
-          if (tokens.length >= 2) {
-            const rawTokenMatches = tokens.filter(t => listName.includes(t)).length;
-            if (rawTokenMatches >= Math.ceil(tokens.length * 0.5)) {
+          filteredSessions = (sessions || []).filter(sess => {
+            const listName = (sess.list_name || '').toLowerCase();
+            const normalizedListName = normalize(listName);
+
+            if (listName.includes(coreName)) {
               return true;
             }
-            const normalizedTokenMatches = tokens.filter(t => normalizedListName.includes(t)).length;
-            if (normalizedTokenMatches >= Math.ceil(tokens.length * 0.5)) {
+            if (listName.includes(listKeyFull) || listName.includes(listKeyWithoutPrefix)) {
               return true;
             }
-          }
-          return false;
-        });
+            if (listKeyFull.includes(listName) || listKeyWithoutPrefix.includes(listName)) {
+              return true;
+            }
+            if (listName.includes(coreNameSpaces)) {
+              return true;
+            }
+            if (assignmentTitle && listName.includes(assignmentTitle)) {
+              return true;
+            }
+            if (listTitle && listName.includes(listTitle)) {
+              return true;
+            }
+            if (normalizedListName.includes(normalizedCoreName) || normalizedCoreName.includes(normalizedListName)) {
+              return true;
+            }
+            if (normalizedTitle && normalizedListName.includes(normalizedTitle)) {
+              return true;
+            }
+            if (tokens.length >= 2) {
+              const rawTokenMatches = tokens.filter(t => listName.includes(t)).length;
+              if (rawTokenMatches >= Math.ceil(tokens.length * 0.5)) {
+                return true;
+              }
+              const normalizedTokenMatches = tokens.filter(t => normalizedListName.includes(t)).length;
+              if (normalizedTokenMatches >= Math.ceil(tokens.length * 0.5)) {
+                return true;
+              }
+            }
+            return false;
+          });
+        }
         
         filteredSessions.forEach(sess => {
           const row = byStudent.get(sess.user_id);

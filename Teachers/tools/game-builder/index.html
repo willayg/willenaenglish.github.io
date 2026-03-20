@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Game Builder</title>
   <link rel="icon" href="../../../Assets/Images/Logo.png" />
+  <script src="/students/api-gateway.js?v=20260116"></script>
+  <script src="/js/api-config.js?v=20260110"></script>
   <link rel="stylesheet" href="styles.css" />
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet" />
   <!-- Auth guard: redirect unauthenticated users to login with return path -->
@@ -37,6 +39,22 @@
     /* Small inline fixes for drop-zone visuals */
     .drop-zone.dragover { border-color: #48bb78 !important; background: #e6fffb !important; }
   </style>
+  <script type="module">
+    import { insertBurgerMenu } from '/components/burger-menu.js?v=20260219';
+    async function ensureBurgerMenuTemplate() {
+      if (!document.getElementById('burger-menu-template')) {
+        const resp = await fetch('/components/burger-menu.html?v=20260219');
+        const html = await resp.text();
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = html;
+        document.body.appendChild(tempDiv.firstElementChild);
+      }
+    }
+    document.addEventListener('DOMContentLoaded', async function() {
+      await ensureBurgerMenuTemplate();
+      insertBurgerMenu('#burger-menu-mount');
+    });
+  </script>
 </head>
 <body>
   <div class="container">
@@ -45,14 +63,7 @@
       <div class="header">
         <div class="logo"><img src="../../../Assets/Images/Logo.png" alt="Willena" class="logo-img" /></div>
         <h1>Game Builder</h1>
-        <button id="burger-toggle" class="burger">☰</button>
-        <ul id="burger-menu" class="burger-menu" style="display:none;">
-          <li><a href="/index.html">Home</a></li>
-          <li><a href="/Teachers/index.html">Dashboard</a></li>
-          <li><a href="/Teachers/profile.html">Profile</a></li>
-          <li><a href="/Teachers/tools/worksheet-builder-vanilla/index.html">Mint Sheet</a></li>
-          <li><a href="/Teachers/login.html">Logout</a></li>
-        </ul>
+        <div id="burger-menu-mount" class="burger-menu-dark" style="margin-left:auto;"></div>
       </div>
 
       <!-- Top menubar: Load | Load from Worksheet | Create Game | Save -->

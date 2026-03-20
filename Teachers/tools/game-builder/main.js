@@ -1290,6 +1290,14 @@ initMintAiListBuilder({
 // Initialize Create Game modal
 initCreateGameModal(buildPayload);
 
+try {
+  const shouldOpenHomework = localStorage.getItem('gameBuilderOpenHomeworkAssignment');
+  if (shouldOpenHomework === '1') {
+    localStorage.removeItem('gameBuilderOpenHomeworkAssignment');
+    setTimeout(() => openCreateGameModal({ panel: 'homework' }), 180);
+  }
+} catch {}
+
 // --- Prefetch & Warm-Up -------------------------------------------------------
 // After main UI is stable, warm the list endpoint so first manual open is instant.
 if(!window.__gbPrefetchScheduled){

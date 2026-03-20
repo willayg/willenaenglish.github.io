@@ -15,6 +15,7 @@
 // -------------------------------------------------------------
 
 import { preprocessTTS } from '../../../Games/english_arcade/tts.js';
+import { getCurrentGameId, setCurrentGameId } from './state/game-state.js';
 
 // -------------------------------------------------------------
 // State & Utility
@@ -448,9 +449,9 @@ function updateLiveTilesAvailability() {
 }
 
 
-export function openCreateGameModal() {
+export function openCreateGameModal(options = {}) {
   if (!el.modal) return;
-  showPanel('start');
+  showPanel(options.panel === 'homework' ? 'homework' : 'start');
   // Prefill title from builder main input
   if (el.title) el.title.value = el.titleInput?.value || '';
   // Reset homework fields
@@ -605,6 +606,7 @@ export function initCreateGameModal(buildPayload) {
       // Build payload from external builder function
       const data = buildPayload();
       data.modes = data.modes && data.modes.length ? data.modes : ['multi_choice_eng_to_kor'];
+      data.title = el.title?.value?.trim() || data.title || 'Untitled Game';
       data.gameTitle = el.title?.value?.trim() || 'Untitled Game';
       data.gameClass = el.cls?.value?.trim() || '';
       data.gameDateDue = el.dateDue?.value || '';
@@ -615,6 +617,8 @@ export function initCreateGameModal(buildPayload) {
       data.class = data.gameClass; data.book = data.gameBook; data.unit = data.gameUnit;
       try { const uid = localStorage.getItem('user_id') || sessionStorage.getItem('user_id') || localStorage.getItem('id') || sessionStorage.getItem('id'); if (uid) data.created_by = uid; } catch {}
       if (!data.title || !Array.isArray(data.words) || !data.words.length) { alert('Need title and at least one word.'); return; }
+      if (!data.gameClass) { alert('Class is required.'); return; }
+      if (!data.gameDateDue) { alert('Due date is required.'); return; }
       try {
         el.save.disabled = true;
         setStatus('Linking sentences...');
@@ -624,12 +628,63 @@ export function initCreateGameModal(buildPayload) {
         await ensureAudioForWords(english);
       } catch {}
       try {
-        setStatus('Saving assignment...');
-        const res = await WillenaAPI.fetch('/.netlify/functions/supabase_proxy_fixed', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action:'insert_game_data', data }) });
-        const js = await res.json();
-        if (js?.success) { setStatus('Saved.'); alert('Homework assignment saved.'); closeModal(); }
-        else { setStatus('Save failed'); alert('Save failed: ' + (js?.error || 'Unknown error')); }
-      } catch (err) { console.error(err); setStatus('Save error'); alert('Save error'); }
+        const existingId = getCurrentGameId();
+        const saveAction = existingId ? 'update_game_data' : 'insert_game_data';
+        const saveBody = existingId ? { action: saveAction, id: existingId, data } : { action: saveAction, data };
+        setStatus('Saving custom game...');
+        const saveRes = await WillenaAPI.fetch('/.netlify/functions/supabase_proxy_fixed', {
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body: JSON.stringify(saveBody)
+        });
+        const saveJson = await saveRes.json().catch(() => ({}));
+        if (!saveRes.ok || !saveJson?.success) {
+          throw new Error(saveJson?.error || `Failed to save custom game (${saveRes.status})`);
+        }
+
+        const gameId = existingId || saveJson?.id;
+        if (!gameId) {
+          throw new Error('Custom game saved without an id.');
+        }
+        setCurrentGameId(gameId);
+
+        const assignment = {
+          class: data.gameClass,
+          title: data.gameTitle,
+          description: data.gameDescription,
+          list_key: `saved_game:${gameId}`,
+          list_title: data.gameTitle,
+          list_meta: {
+            source_type: 'saved_game',
+            game_id: gameId,
+            modes_total: 6,
+            difficulty_mode: 'full',
+            max_stars: 30,
+            type: 'saved_game',
+            book: data.gameBook || '',
+            unit: data.gameUnit || ''
+          },
+          start_at: new Date().toISOString(),
+          due_at: new Date(data.gameDateDue + 'T23:59:59').toISOString(),
+          goal_type: 'stars',
+          goal_value: 5
+        };
+
+        setStatus('Creating homework assignment...');
+        const hwRes = await WillenaAPI.fetch('/.netlify/functions/homework_api?action=create_assignment', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(assignment)
+        });
+        const hwJson = await hwRes.json().catch(() => ({}));
+        if (!hwRes.ok || !hwJson?.success) {
+          throw new Error(hwJson?.error || `Failed to create homework assignment (${hwRes.status})`);
+        }
+
+        setStatus('Homework assigned.');
+        alert(`Homework assigned.\n\nTitle: ${data.gameTitle}\nClass: ${data.gameClass}\nDue: ${data.gameDateDue}`);
+        closeModal();
+      } catch (err) { console.error(err); setStatus('Save error'); alert(err?.message || 'Save error'); }
       finally { el.save.disabled = false; setStatus(''); }
     };
   };

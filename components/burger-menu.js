@@ -42,7 +42,7 @@ export function insertBurgerMenu(targetSelector = 'body') {
           <a href="/Teachers/tools/worksheet-builder-vanilla/index.html">Worksheet Builder</a>
           <a href="/Teachers/tools/test_input/index.html">Test Input</a>
           <a href="#" id="feedbackMenuBtn">Feedback</a>
-          <a href="/Teachers/login.html">Login</a>
+          <button type="button" id="logoutMenuBtn" style="display:block;width:100%;text-align:left;padding:12px 16px;background:#fff;border:none;border-top:1px solid #eee;color:#333;cursor:pointer;font:inherit;">Logout</button>
         </div>
       </div>
     `;
@@ -71,13 +71,31 @@ export function insertBurgerMenu(targetSelector = 'body') {
 
   // Feedback modal logic (optional: trigger your feedback modal here)
   const feedbackBtn = wrapper.querySelector('#feedbackMenuBtn');
-  if (!feedbackBtn) return;
-  feedbackBtn.onclick = (e) => {
-    e.preventDefault();
-    if (window.showFeedbackModal) window.showFeedbackModal();
-    else alert('Feedback modal not implemented!');
-    dropdown.style.display = 'none';
-  };
+  if (feedbackBtn) {
+    feedbackBtn.onclick = (e) => {
+      e.preventDefault();
+      if (window.showFeedbackModal) window.showFeedbackModal();
+      else alert('Feedback modal not implemented!');
+      dropdown.style.display = 'none';
+    };
+  }
+
+  const logoutBtn = wrapper.querySelector('#logoutMenuBtn');
+  if (logoutBtn) {
+    logoutBtn.onclick = async () => {
+      try {
+        localStorage.removeItem('userId');
+        localStorage.removeItem('userRole');
+        localStorage.removeItem('username');
+        localStorage.removeItem('userEmail');
+      } catch {}
+      try { await window.WillenaAPI?.fetch?.('/.netlify/functions/supabase_auth?action=logout', { method: 'POST' }); } catch {}
+      const redirect = encodeURIComponent(location.pathname + location.search);
+      window.location.href = '/Teachers/login.html?redirect=' + redirect;
+    };
+  }
+
+  if (!feedbackBtn && !logoutBtn) return;
 }
 
 // If not using modules, you can expose insertBurgerMenu globally:

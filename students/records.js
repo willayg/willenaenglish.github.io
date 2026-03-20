@@ -100,6 +100,14 @@ function readAssignmentRunFromURL() {
   } catch (e) { return null; }
 }
 
+function readHomeworkAssignmentIdFromURL() {
+  try {
+    const p = typeof location !== 'undefined' ? new URLSearchParams(location.search) : null;
+    if (!p) return null;
+    return p.get('hw') || p.get('assignment_id') || p.get('assignmentId') || null;
+  } catch (e) { return null; }
+}
+
 function getStoredAssignmentRun() {
   try {
     // prefer in-memory global if teacher UI set it
@@ -227,8 +235,12 @@ export function startSession({ mode, wordList = [], listName = null, meta = {} }
   // one for this list from the homework API and re-upsert the session to attach it.
   (async () => {
     try {
-      if (!getAssignmentRun() && listName) {
-        const api = FN('homework_api') + `?action=get_run_token&list_key=${encodeURIComponent(listName)}`;
+      if (!getAssignmentRun()) {
+        const assignmentId = readHomeworkAssignmentIdFromURL();
+        const api = assignmentId
+          ? FN('homework_api') + `?action=get_run_token&assignment_id=${encodeURIComponent(assignmentId)}`
+          : (listName ? FN('homework_api') + `?action=get_run_token&list_key=${encodeURIComponent(listName)}` : null);
+        if (!api) return;
         const res = await fetch(api, { credentials: 'include', cache: 'no-store' });
         if (res.ok) {
           const js = await res.json().catch(() => null);
