@@ -282,6 +282,32 @@ body { margin:0; background: linear-gradient(135deg, #6b6b6b 0%, #696969 100%); 
 .save-progress-wrap.error .save-progress-fill {
   background: linear-gradient(90deg, #f87171 0%, #fca5a5 100%);
 }
+
+.save-center-toast {
+  position: fixed;
+  left: 50%;
+  top: 88px;
+  transform: translateX(-50%) translateY(-8px);
+  z-index: 2100;
+  padding: 10px 16px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  box-shadow: 0 8px 20px rgba(2, 8, 23, 0.18);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  background: #0f766e;
+  color: #fff;
+}
+.save-center-toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+.save-center-toast.info { background: #0f766e; }
+.save-center-toast.success { background: #16a34a; }
+.save-center-toast.error { background: #dc2626; }
 .edit-menu {
   display: flex;
   align-items: center;

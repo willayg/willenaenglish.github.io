@@ -128,7 +128,11 @@ export async function handleSaveAsConfirm(titleEl, buildPayload, getCurrentGameI
       titleEl.value = title;
       cacheCurrentGame(title);
       if (saveModalEl) saveModalEl.style.display = 'none';
-      showTinyToast('Saved', { ms: 500 });
+      if (typeof window.showSaveCenterMessage === 'function') {
+        window.showSaveCenterMessage('Saved', { variant: 'success', ms: 1400 });
+      } else {
+        showTinyToast('Saved', { ms: 500 });
+      }
     } else {
       if (saveModalStatusEl) saveModalStatusEl.textContent = result.error || 'Save failed';
     }

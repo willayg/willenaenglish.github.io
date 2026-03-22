@@ -73,7 +73,7 @@ import {
   handleSaveAsConfirm,
   showFileModal as showFileModalUI,
   hideFileModal as hideFileModalUI
-} from './ui/modals.js';
+} from './ui/modals.js?v=20260322x';
 import {
   handleQuickSave,
   handlePreview,
@@ -83,7 +83,7 @@ import {
   handleGetTranslations,
   handleGenerateDefinitions,
   handleGenerateExamples
-} from './ui/event-handlers.js?v=20260322w';
+} from './ui/event-handlers.js?v=20260322x';
 import { ENDPOINTS, STORAGE_KEYS, ACTIONS, DEFAULTS, TOAST_DURATION } from './constants.js';
 import { initFileListModal } from './ui/file-list.js?v=20260322p';
 import { loadWorksheetIntoBuilder } from './services/worksheet-service.js';
@@ -135,6 +135,36 @@ if (editListModalClose) editListModalClose.onclick = () => hideEditListModalUI(e
 if (editListCancel) editListCancel.onclick = () => hideEditListModalUI(editListModal);
 if (editListSave) editListSave.onclick = () => {
   handleEditListSave(editListRaw, newRow, saveState, setList, render, toast, () => hideEditListModalUI(editListModal));
+};
+
+let __saveToastTimer = null;
+window.showSaveCenterMessage = function(message = '', opts = {}) {
+  const toastEl = document.getElementById('saveCenterToast');
+  if (!toastEl) return;
+  const { variant = 'info', ms = 0 } = opts || {};
+  if (__saveToastTimer) {
+    clearTimeout(__saveToastTimer);
+    __saveToastTimer = null;
+  }
+  toastEl.textContent = String(message || '');
+  toastEl.classList.remove('info', 'success', 'error');
+  toastEl.classList.add(variant === 'error' ? 'error' : (variant === 'success' ? 'success' : 'info'));
+  toastEl.classList.add('show');
+  if (ms > 0) {
+    __saveToastTimer = setTimeout(() => {
+      toastEl.classList.remove('show');
+      __saveToastTimer = null;
+    }, ms);
+  }
+};
+window.hideSaveCenterMessage = function() {
+  const toastEl = document.getElementById('saveCenterToast');
+  if (!toastEl) return;
+  if (__saveToastTimer) {
+    clearTimeout(__saveToastTimer);
+    __saveToastTimer = null;
+  }
+  toastEl.classList.remove('show');
 };
 
 const getTranslationsLink = document.getElementById('getTranslationsLink');

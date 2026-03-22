@@ -66,6 +66,9 @@ export async function handleQuickSave(ev, buildPayload, getCurrentGameId, setCur
   
   try {
     // Stage 1: Upload images
+    if (!silent && typeof window.showSaveCenterMessage === 'function') {
+      window.showSaveCenterMessage('Saving…', { variant: 'info' });
+    }
     if (!silent) showSaveProgress(15, 'Uploading images…');
     await prepareAndUploadImagesIfNeeded(payload, currentGameId, { force: !!(ev && ev.shiftKey) });
 
@@ -79,6 +82,9 @@ export async function handleQuickSave(ev, buildPayload, getCurrentGameId, setCur
     if (js?.success) {
       if (!silent) {
         showSaveProgress(100, js?.savedAsCopy ? '✓ Saved as new copy' : '✓ Saved!', 'done');
+        if (typeof window.showSaveCenterMessage === 'function') {
+          window.showSaveCenterMessage(js?.savedAsCopy ? 'Saved as new copy' : 'Saved', { variant: 'success', ms: 1400 });
+        }
         hideSaveProgress(1400);
       }
       // Fire-and-forget ensure missing audio (non-force) after successful save
@@ -95,6 +101,9 @@ export async function handleQuickSave(ev, buildPayload, getCurrentGameId, setCur
     } else {
       if (!silent) {
         showSaveProgress(100, '✗ ' + (js?.error || 'Save failed'), 'error');
+        if (typeof window.showSaveCenterMessage === 'function') {
+          window.showSaveCenterMessage(js?.error || 'Save failed', { variant: 'error', ms: 3000 });
+        }
         hideSaveProgress(3000);
       }
       return { success: false, error: js?.error || 'Save failed' };
@@ -103,6 +112,9 @@ export async function handleQuickSave(ev, buildPayload, getCurrentGameId, setCur
     console.error(e);
     if (!silent) {
       showSaveProgress(100, '✗ Save error', 'error');
+      if (typeof window.showSaveCenterMessage === 'function') {
+        window.showSaveCenterMessage('Save error', { variant: 'error', ms: 3000 });
+      }
       hideSaveProgress(3000);
     }
     return { success: false, error: e?.message || 'Save error' };
