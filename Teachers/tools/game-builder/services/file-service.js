@@ -243,17 +243,30 @@ export async function prepareAndUploadImagesIfNeeded(payload, gameId, opts = {})
         let js = null;
         try { js = await res.json(); } catch (e) { console.warn('[ImageUpload] bad JSON', e); }
         if (js) {
+          // Server may return relative image_proxy URLs when R2_PUBLIC_BASE env
+          // is missing. Convert them to absolute R2 public URLs client-side so
+          // the stored URLs work from any origin (staging, production, etc.).
+          const fixProxyUrl = (url) => {
+            if (!url) return url;
+            const m = url.match(/^\/?\.netlify\/functions\/image_proxy\?key=(.+)/);
+            if (m) {
+              const key = decodeURIComponent(m[1]);
+              const base = (window.R2_PUBLIC_BASE || '').replace(/\/+$/, '');
+              if (base) return `${base}/${key}`;
+            }
+            return url;
+          };
           if (Array.isArray(js.words)) {
             for (const w of js.words) {
               if (w && typeof w.index === 'number' && w.url && payload.words[w.index]) {
-                payload.words[w.index].image_url = w.url;
-                console.debug('[ImageUpload] word', w.index, w.url.substring(0,60));
+                payload.words[w.index].image_url = fixProxyUrl(w.url);
+                console.debug('[ImageUpload] word', w.index, payload.words[w.index].image_url.substring(0,80));
               }
             }
           }
           if (js.cover && js.cover.url) {
-            payload.gameImage = js.cover.url;
-            console.debug('[ImageUpload] cover', js.cover.url.substring(0,60));
+            payload.gameImage = fixProxyUrl(js.cover.url);
+            console.debug('[ImageUpload] cover', payload.gameImage.substring(0,80));
           }
         }
       }
@@ -367,13 +380,31 @@ export async function loadGameData(id) {
       return { success: false, error: 'Game has no words' };
     }
     
+    // Normalize image URLs: convert relative image_proxy URLs to absolute R2 public URLs
+    const r2Base = (window.R2_PUBLIC_BASE || '').replace(/\/+$/, '');
+    if (r2Base) {
+      for (const w of words) {
+        if (!w || !w.image_url) continue;
+        const pm = String(w.image_url).match(/^\/?\.netlify\/functions\/image_proxy\?key=(.+)/);
+        if (pm && pm[1]) {
+          w.image_url = `${r2Base}/${decodeURIComponent(pm[1])}`;
+        }
+      }
+    }
+    
+    let gameImg = row.gameImage || row.game_image || '';
+    if (r2Base && gameImg) {
+      const cm = String(gameImg).match(/^\/?\.netlify\/functions\/image_proxy\?key=(.+)/);
+      if (cm && cm[1]) gameImg = `${r2Base}/${decodeURIComponent(cm[1])}`;
+    }
+
     return {
       success: true,
       game: {
         id: row.id || id,
         title: row.title || 'Untitled Game',
         words: words,
-        gameImage: row.gameImage || row.game_image || '',
+        gameImage: gameImg,
         // Best-effort extraction of image folder for older records that predate image_folder persistence
         image_folder: (() => {
           if (row.image_folder && typeof row.image_folder === 'string') return row.image_folder;

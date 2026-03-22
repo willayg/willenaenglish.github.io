@@ -36,7 +36,7 @@ import {
   findGameByTitle,
   generateIncrementedTitle,
   showTitleConflictModal
-} from './services/file-service.js?v=20260322v';
+} from './services/file-service.js?v=20260322w';
 import {
   getList,
   setList,
@@ -324,6 +324,12 @@ function render() {
       const base = window.R2_PUBLIC_BASE.replace(/\/$/, '');
       for (const w of list) {
         if (!w || !w.image_url) continue;
+        // Convert relative image_proxy URLs to absolute R2 public URLs
+        const proxyMatch = String(w.image_url).match(/^\/?\.netlify\/functions\/image_proxy\?key=(.+)/);
+        if (proxyMatch && proxyMatch[1]) {
+          const key = decodeURIComponent(proxyMatch[1]);
+          w.image_url = `${base}/${key}`;
+        }
         const pixProxy = String(w.image_url).match(/\/\.netlify\/functions\/pixabay_image_proxy\?url=([^&]+)/i);
         if (pixProxy && pixProxy[1]) {
           try { w.image_url = decodeURIComponent(pixProxy[1]); } catch {}
@@ -339,6 +345,11 @@ function render() {
         }
       }
       // Also check game cover image
+      // Convert relative image_proxy cover URL to absolute R2 public URL
+      const coverProxyMatch = String(gameImage || '').match(/^\/?\.netlify\/functions\/image_proxy\?key=(.+)/);
+      if (coverProxyMatch && coverProxyMatch[1]) {
+        gameImage = `${base}/${decodeURIComponent(coverProxyMatch[1])}`;
+      }
       const gamePixProxy = String(gameImage || '').match(/\/\.netlify\/functions\/pixabay_image_proxy\?url=([^&]+)/i);
       if (gamePixProxy && gamePixProxy[1]) {
         try { gameImage = decodeURIComponent(gamePixProxy[1]); } catch {}
