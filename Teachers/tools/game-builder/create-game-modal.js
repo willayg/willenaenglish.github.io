@@ -58,6 +58,10 @@ const el = {
 };
 
 let gameImageUrl = '';
+let gameImageManuallySelected = false;
+let autoImageRequestInFlight = false;
+let autoImageDebounceTimer = null;
+let autoImageLastQuery = '';
 
 const HOMEWORK_DIFFICULTY_PERCENTAGES = {
   easy: 0.25,
@@ -811,16 +815,56 @@ export function openCreateGameModal(options = {}) {
   }
   const imgInZone = el.imageZone?.querySelector('img');
   gameImageUrl = imgInZone?.getAttribute('src') || '';
+  gameImageManuallySelected = !!gameImageUrl;
+  autoImageLastQuery = '';
   setStatus('');
   updateGameImageDisplay();
   primeHomeworkRecipients([], '');
   // Update live modes availability based on current word list (e.g., require pictures for picture modes)
   try { updateLiveTilesAvailability(); } catch {}
   el.modal.style.display = 'flex';
+  if (!gameImageUrl) {
+    scheduleAutoGameImage(120);
+  }
 }
 
 function closeModal() { if (el.modal) el.modal.style.display = 'none'; }
 function setStatus(t) { if (el.status) el.status.textContent = t || ''; }
+
+function canAutoGenerateGameImage() {
+  return !gameImageManuallySelected && !gameImageUrl;
+}
+
+async function maybeAutoGenerateGameImage(force = false) {
+  const term = String(el.title?.value || '').trim();
+  if (!term || term.length < 2) return;
+  if (!force && !canAutoGenerateGameImage()) return;
+  if (autoImageRequestInFlight) return;
+  if (!force && autoImageLastQuery === term.toLowerCase()) return;
+
+  autoImageRequestInFlight = true;
+  autoImageLastQuery = term.toLowerCase();
+  const priorStatus = String(el.status?.textContent || '');
+
+  try {
+    setStatus('Generating game image...');
+    await searchGameImage(term);
+  } catch (e) {
+    console.warn('[create-game-modal] auto image generation failed', e?.message || e);
+  } finally {
+    autoImageRequestInFlight = false;
+    if ((el.status?.textContent || '').startsWith('Generating game image')) {
+      setStatus(priorStatus);
+    }
+  }
+}
+
+function scheduleAutoGameImage(ms = 380) {
+  if (autoImageDebounceTimer) clearTimeout(autoImageDebounceTimer);
+  autoImageDebounceTimer = setTimeout(() => {
+    maybeAutoGenerateGameImage(false);
+  }, ms);
+}
 
 function updateGameImageDisplay() {
   if (!el.imageZone) return;
@@ -956,6 +1000,20 @@ export function initCreateGameModal(buildPayload) {
       radio.addEventListener('change', () => updateHomeworkDifficultyPreview(30, 6));
     });
     updateHomeworkDifficultyPreview(30, 6);
+  }
+
+  if (el.title && !el.title._autoImageBound) {
+    el.title._autoImageBound = true;
+    el.title.addEventListener('input', () => {
+      if (!gameImageManuallySelected && !gameImageUrl) {
+        scheduleAutoGameImage(420);
+      }
+    });
+    el.title.addEventListener('blur', () => {
+      if (!gameImageManuallySelected && !gameImageUrl) {
+        maybeAutoGenerateGameImage(false);
+      }
+    });
   }
 
   // Delegate clicks inside modal for navigation & actions
@@ -1138,6 +1196,7 @@ export function initCreateGameModal(buildPayload) {
       openPixabayImagePicker({
         defaultQuery: term,
         onSelect: (src) => {
+          gameImageManuallySelected = true;
           gameImageUrl = src;
           updateGameImageDisplay();
         }
