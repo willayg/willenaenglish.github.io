@@ -1,7 +1,7 @@
 // Event handlers - Wire toolbar buttons and UI actions
 import { showTinyToast, ensureLoadingOverlay } from '../utils/dom-helpers.js';
 import { DEFAULTS } from '../constants.js';
-import { generateDefinition, generateExample } from '../services/ai-service.js?v=20260322n';
+import { generateDefinition, generateExample } from '../services/ai-service.js?v=20260322p';
 import { openSaveAsModal, handleSaveAsConfirm, showFileModal } from './modals.js';
 import { ensureAudioForWordsAndSentences } from '../services/audio-service.js';
 import { prepareAndUploadImagesIfNeeded, saveGameData } from '../services/file-service.js?v=20260322w';
@@ -226,7 +226,7 @@ export async function handleGenerateDefinitions(getList, setList, render, toast)
   
   try {
     for (const w of missing) {
-      const def = await generateDefinition(w.eng);
+      const def = await generateDefinition(w.eng, w.kor || '');
       if (def) w.definition = def;
     }
     setList([...list]);

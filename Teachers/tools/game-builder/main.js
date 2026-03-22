@@ -16,7 +16,7 @@ import { initCreateGameModal, openCreateGameModal } from './create-game-modal.js
 import { showTinyToast, ensureLoadingOverlay, buildSkeletonHTML } from './utils/dom-helpers.js';
 import { fetchJSONSafe, timedJSONFetch, recordPerfSample, isLocalHost } from './utils/network.js';
 import { escapeRegExp, cleanDefinitionResponse, normalizeForKey, capitalize, ensurePunctuation } from './utils/validation.js';
-import { generateExample, generateDefinition } from './services/ai-service.js?v=20260322n';
+import { generateExample, generateDefinition } from './services/ai-service.js?v=20260322p';
 import { 
   preferredVoice, 
   checkExistingAudioKeys, 
@@ -83,7 +83,7 @@ import {
   handleGetTranslations,
   handleGenerateDefinitions,
   handleGenerateExamples
-} from './ui/event-handlers.js?v=20260322x';
+} from './ui/event-handlers.js?v=20260322y';
 import { ENDPOINTS, STORAGE_KEYS, ACTIONS, DEFAULTS, TOAST_DURATION } from './constants.js';
 import { initFileListModal } from './ui/file-list.js?v=20260322p';
 import { loadWorksheetIntoBuilder } from './services/worksheet-service.js';
