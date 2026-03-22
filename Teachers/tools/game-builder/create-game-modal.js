@@ -821,13 +821,18 @@ export function initCreateGameModal(buildPayload) {
         }
         setCurrentGameId(gameId);
 
-        const assignment = {
-          class: data.gameClass,
+        const helper = window.TeacherHomeworkAssignment;
+        if (!helper || typeof helper.buildAssignmentPayload !== 'function' || typeof helper.createAssignment !== 'function') {
+          throw new Error('Homework helper is unavailable. Please refresh and try again.');
+        }
+
+        const assignment = helper.buildAssignmentPayload({
+          className: data.gameClass,
           title: data.gameTitle,
           description: data.gameDescription,
-          list_key: `saved_game:${gameId}`,
-          list_title: data.gameTitle,
-          list_meta: {
+          listKey: `saved_game:${gameId}`,
+          listTitle: data.gameTitle,
+          listMeta: {
             source_type: 'saved_game',
             game_id: gameId,
             modes_total: 6,
@@ -844,22 +849,14 @@ export function initCreateGameModal(buildPayload) {
               username: selectedStudent.username || ''
             }] : []
           },
-          start_at: new Date().toISOString(),
-          due_at: new Date(data.gameDateDue + 'T23:59:59').toISOString(),
-          goal_type: 'stars',
-          goal_value: 5
-        };
+          dueDate: data.gameDateDue,
+          startAt: new Date().toISOString(),
+          goalType: 'stars',
+          goalValue: 5
+        });
 
         setStatus('Creating homework assignment...');
-        const hwRes = await WillenaAPI.fetch('/.netlify/functions/homework_api?action=create_assignment', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(assignment)
-        });
-        const hwJson = await hwRes.json().catch(() => ({}));
-        if (!hwRes.ok || !hwJson?.success) {
-          throw new Error(hwJson?.error || `Failed to create homework assignment (${hwRes.status})`);
-        }
+        await helper.createAssignment(assignment);
 
         setStatus('Homework assigned.');
         const targetLabel = selectedStudent
