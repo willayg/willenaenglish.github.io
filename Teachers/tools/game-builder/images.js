@@ -21,7 +21,8 @@ function proxifyPixabayUrl(src) {
     const u = new URL(src);
     const host = u.hostname.toLowerCase();
     if (host === 'cdn.pixabay.com' || host.endsWith('.pixabay.com') || host === 'pixabay.com') {
-      return getApiPath('/.netlify/functions/pixabay_image_proxy?url=' + encodeURIComponent(src));
+      const base = (window.WillenaAPI && window.WillenaAPI.FUNCTIONS_URL) || 'https://students.willenaenglish.com';
+      return base.replace(/\/$/, '') + '/.netlify/functions/pixabay_image_proxy?url=' + encodeURIComponent(src);
     }
   } catch {}
   return src;
