@@ -1,4 +1,5 @@
 import { playSFX } from '../sfx.js';
+import { playTTSVariant } from '../tts.js';
 import { startSession, logAttempt, endSession } from '../../../students/records.js';
 import { showGameProgress, updateGameProgress, hideGameProgress } from '../main.js';
 
@@ -75,22 +76,32 @@ export function runSpellingMode({ wordList, gameArea, listName = null }) {
     }, 650);
   }, 1000);
 
+  function getKoreanMeaning(entry) {
+    if (!entry || typeof entry !== 'object') return '한국어 뜻을 준비 중이에요';
+    const candidates = [
+      entry.kor,
+      entry.ko,
+      entry.korean,
+      entry.korean_meaning,
+      entry.koreanMeaning,
+      entry.meaning_ko,
+      entry.translation_ko,
+      entry.kr,
+      entry.def_ko,
+      entry.exampleSentenceKo,
+    ];
+    for (const value of candidates) {
+      const normalized = String(value || '').trim();
+      if (normalized) return normalized;
+    }
+    return '한국어 뜻을 준비 중이에요';
+  }
+
   function makeLetterTilesFor(word) {
     const clean = String(word || '').trim().toLowerCase();
     const base = clean.split('');
-    // Build distractors: choose 2 letters not in the word (avoid duplicates)
-    const alphabet = 'abcdefghijklmnopqrstuvwxyz'.split('');
-    const inWordSet = new Set(base);
-    const pool = alphabet.filter(ch => !inWordSet.has(ch));
-    const distractorCount = 2;
-    const distractors = [];
-    while (distractors.length < distractorCount && pool.length) {
-      const pick = pool.splice(Math.floor(Math.random() * pool.length), 1)[0];
-      distractors.push(pick);
-    }
-    // Create tile objects with ids, including duplicates from base letters
+    // Create tile objects using only letters from the target word
     const tiles = base.map((ch, i) => ({ id: 'b' + i, ch }));
-    distractors.forEach((ch, i) => tiles.push({ id: 'd' + i, ch }));
     // Shuffle
     for (let i = tiles.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
@@ -128,7 +139,7 @@ export function runSpellingMode({ wordList, gameArea, listName = null }) {
 
   const current = ordered[idx];
     const correct = String(current.eng || '').trim();
-    const tiles = makeLetterTilesFor(correct.toLowerCase());
+  const koreanPrompt = getKoreanMeaning(current);
     const usedStack = []; // stack of tile ids used in order
     let locked = false;
 
@@ -179,20 +190,8 @@ export function runSpellingMode({ wordList, gameArea, listName = null }) {
     const tileSize = fromBuilder ? 62 : 56;
     const tileRadius = fromBuilder ? 14 : 12;
     const fontScale = fromBuilder ? 1.15 : 1.0;
-    // Only show tiles for non-space characters
-    const tileChars = correct.replace(/ /g, '').split('');
-    const tileObjs = tileChars.map((ch, i) => ({ id: 'b' + i, ch }));
-    // Add distractors as before
-    const alphabet = 'abcdefghijklmnopqrstuvwxyz'.split('');
-    const inWordSet = new Set(tileChars);
-    const pool = alphabet.filter(ch => !inWordSet.has(ch));
-    const distractorCount = 2;
-    const distractors = [];
-    while (distractors.length < distractorCount && pool.length) {
-      const pick = pool.splice(Math.floor(Math.random() * pool.length), 1)[0];
-      distractors.push(pick);
-    }
-    distractors.forEach((ch, i) => tileObjs.push({ id: 'd' + i, ch }));
+    // Only show tiles for letters in the target word (no distractors)
+    const tileObjs = makeLetterTilesFor(correct.replace(/ /g, '').toLowerCase());
     // Shuffle
     for (let i = tileObjs.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
@@ -201,7 +200,7 @@ export function runSpellingMode({ wordList, gameArea, listName = null }) {
 
     const innerHTML = `
       <div class="tap-spell ${fromBuilder ? 'from-builder' : ''}" style="max-width:${fromBuilder ? '600px' : (isLivePlayContext() ? dynamicContainerWidth + 'px' : '520px')};margin:0 auto;">
-        <div id="korPrompt" style="margin-bottom:62px;text-align:center;font-size:${fromBuilder ? '1.35em' : '1.25em'};color:#19777e;font-weight:800;">${current.kor || ''}</div>
+        <div id="korPrompt" style="margin-bottom:62px;text-align:center;font-size:${fromBuilder ? '1.35em' : '1.25em'};color:#19777e;font-weight:800;">${koreanPrompt}</div>
         <div id="letterSlots" style="margin:8px 0 12px 0;">
           ${renderSlotRows()}
         </div>
@@ -217,6 +216,11 @@ export function runSpellingMode({ wordList, gameArea, listName = null }) {
     } else {
       gameArea.innerHTML = innerHTML;
     }
+
+    // Always provide English sound cue for the current word in spelling mode.
+    try {
+      if (correct) setTimeout(() => playTTSVariant(correct), 120);
+    } catch {}
 
     // Live resizing: re-render slots if container width changes significantly (>=8px diff)
     if (live) {

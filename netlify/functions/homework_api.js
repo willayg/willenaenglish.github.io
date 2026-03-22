@@ -383,6 +383,19 @@ function normalizeListIdentifier(value) {
     .replace(/\s+/g, ' ');
 }
 
+function parseAssignmentMeta(rawMeta) {
+  if (!rawMeta) return {};
+  if (typeof rawMeta === 'string') {
+    try {
+      const parsed = JSON.parse(rawMeta);
+      return parsed && typeof parsed === 'object' ? parsed : {};
+    } catch {
+      return {};
+    }
+  }
+  return (rawMeta && typeof rawMeta === 'object') ? rawMeta : {};
+}
+
 async function assignmentProgress(event) {
   // Returns per-student progress for a given assignment id
   const assignmentId = event.queryStringParameters?.assignment_id || event.queryStringParameters?.id || null;
@@ -391,6 +404,7 @@ async function assignmentProgress(event) {
   // Fetch assignment
   let { data: assignment, error: aErr } = await supabase.from('homework_assignments').select('*').eq('id', assignmentId).single();
   if (aErr || !assignment) return _json(404,{ success:false, error:'Assignment not found' });
+  assignment.list_meta = parseAssignmentMeta(assignment.list_meta);
 
   // Auto-create run token if assignment has none (backfill for older assignments)
   let assignmentRunTokens = Array.isArray(assignment.list_meta?.run_tokens)
@@ -856,7 +870,29 @@ async function getRunTokenForStudent(event) {
     return _json(403, { success: false, error: 'Not assigned to this class' });
   }
 
-  const tokens = Array.isArray(assignment.list_meta?.run_tokens) ? assignment.list_meta.run_tokens.map(r => r?.token).filter(Boolean) : [];
+  const listMeta = parseAssignmentMeta(assignment.list_meta);
+  let tokens = Array.isArray(listMeta?.run_tokens) ? listMeta.run_tokens.map(r => r?.token).filter(Boolean) : [];
+
+  // Backfill token here as well so student session_start can always get a token
+  // before assignment_progress is requested.
+  if (!tokens.length) {
+    const autoToken = `run_student_${assignment.id}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+    const updatedMeta = {
+      ...listMeta,
+      run_tokens: [{ token: autoToken, created_at: new Date().toISOString(), auto: true, backfilled: true }]
+    };
+    const { data: upd, error: updErr } = await supabase
+      .from('homework_assignments')
+      .update({ list_meta: updatedMeta })
+      .eq('id', assignment.id)
+      .select('id, list_meta')
+      .single();
+    if (!updErr && upd) {
+      tokens = [autoToken];
+      console.log(`[getRunTokenForStudent] Backfilled run_token for assignment ${assignment.id}: ${autoToken}`);
+    }
+  }
+
   return _json(200, { success: true, assignment_id: assignment.id, tokens });
 }
 
