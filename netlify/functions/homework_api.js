@@ -712,13 +712,19 @@ async function assignmentProgress(event) {
     totalModes = 6;
   }
   // Allow override from assignment meta if explicitly set
-  const metaModes = assignment.list_meta?.modes_total || assignment.list_meta?.total_modes || assignment.list_meta?.mode_count;
-  const forcedMode = String(assignment.list_meta?.forced_mode || assignment.list_meta?.mode || '').toLowerCase();
-  if (Number.isFinite(metaModes) && metaModes > 0 && metaModes <= 10) {
+  const metaModesRaw = assignment.list_meta?.modes_total ?? assignment.list_meta?.total_modes ?? assignment.list_meta?.mode_count;
+  const metaModes = Number(metaModesRaw);
+  const difficultyMode = String(assignment.list_meta?.difficulty_mode || '').toLowerCase();
+  const forcedMode = String(assignment.list_meta?.forced_mode || assignment.list_meta?.mode || assignment.list_meta?.difficulty_mode || '').toLowerCase();
+  const isSpellingOnlyAssignment = forcedMode === 'spelling' || difficultyMode === 'spelling' || metaModes === 1;
+
+  if (isSpellingOnlyAssignment) {
+    totalModes = 1;
+  } else if (Number.isFinite(metaModes) && metaModes > 0 && metaModes <= 10) {
     // Only override if category matches expected range
     if (category === 'phonics' && metaModes <= 4) totalModes = metaModes;
     else if (category === 'grammar' && metaModes >= 4 && metaModes <= 6) totalModes = metaModes;
-    else if (category === 'vocab' && ((metaModes >= 4 && metaModes <= 8) || (metaModes === 1 && forcedMode === 'spelling'))) totalModes = metaModes;
+    else if (category === 'vocab' && (metaModes >= 4 && metaModes <= 8)) totalModes = metaModes;
   }
   console.log(`[assignmentProgress] category=${category}, totalModes=${totalModes} for assignment ${assignment.id} (${assignment.title})`);
   
@@ -728,8 +734,14 @@ async function assignmentProgress(event) {
     const bestAccuracy = rawModesArr.reduce((best,m)=> Math.max(best, m.bestAccuracy||0), 0);
     const overallAccuracy = (r._total && r._total > 0) ? Math.round((r._score / r._total) * 100) : 0;
     // Only count modes where the student achieved at least 1 star toward homework completion
-    // Requirement: a level is complete when the student has earned >=1 star in every mode
-    const countedModesArr = rawModesArr.filter(m => m.bestStars >= 1);
+    // Requirement: a level is complete when the student has earned >=1 star in every required mode
+    const spellingModeMatched = rawModesArr.some(m => {
+      const modeName = String(m.mode || '').toLowerCase();
+      return m.bestStars >= 1 && (modeName === 'spelling' || modeName === 'listen_and_spell');
+    });
+    const countedModesArr = isSpellingOnlyAssignment
+      ? (spellingModeMatched ? [{ mode: 'spelling', bestStars: 1 }] : [])
+      : rawModesArr.filter(m => m.bestStars >= 1);
     const distinctModesAttempted = countedModesArr.length;
     const completionPercent = totalModes > 0 ? Math.round((distinctModesAttempted / totalModes) * 100) : 0;
     return {

@@ -78,6 +78,58 @@
     @keyframes wa-spin {
       to { transform: rotate(360deg); }
     }
+    .wa-hw-done-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(9, 20, 31, 0.5);
+      backdrop-filter: blur(2px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10020;
+      padding: 20px;
+    }
+    .wa-hw-done-card {
+      width: min(640px, 94vw);
+      border-radius: 26px;
+      padding: 34px 22px 20px;
+      text-align: center;
+      background: linear-gradient(160deg, #ffffff 0%, #f0fdff 100%);
+      border: 3px solid #22d3ee;
+      box-shadow: 0 22px 54px rgba(25, 119, 126, 0.24);
+      animation: wa-hw-pop 260ms ease-out;
+    }
+    .wa-hw-done-title {
+      margin: 0;
+      color: #0f3f44;
+      font-size: clamp(1.8rem, 5.2vw, 3rem);
+      line-height: 1.12;
+      letter-spacing: 0.2px;
+      font-weight: 800;
+    }
+    .wa-hw-done-sub {
+      margin: 14px 0 0;
+      color: #4c6170;
+      font-size: clamp(0.9rem, 2.4vw, 1.05rem);
+      line-height: 1.35;
+      font-weight: 600;
+    }
+    .wa-hw-done-ok {
+      margin-top: 20px;
+      border: none;
+      border-radius: 14px;
+      padding: 11px 20px;
+      background: #19777e;
+      color: #fff;
+      font-weight: 700;
+      font-size: 0.95rem;
+      cursor: pointer;
+      box-shadow: 0 8px 18px rgba(25, 119, 126, 0.24);
+    }
+    @keyframes wa-hw-pop {
+      from { transform: scale(0.94); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
   </style>
   <script>
     (function() {
@@ -227,8 +279,133 @@
       const autostart = urlParams.get('autostart');
       const listParam = urlParams.get('list');
       const hwParam = urlParams.get('hw');
-        const modeParam = urlParams.get('mode');
+      const modeParam = urlParams.get('mode');
   const isGrammarParam = urlParams.get('grammar'); // optional override
+      const homeworkDoneModalKey = hwParam ? `wa_hw_done_modal_${hwParam}` : null;
+
+      let currentUserIdCache = null;
+      let homeworkCompletionBaseline = null;
+      let homeworkDoneModalVisible = false;
+
+      async function getCurrentUserIdCached() {
+        if (currentUserIdCache) return currentUserIdCache;
+        try {
+          const whoRes = await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=whoami');
+          const whoJson = await whoRes.json().catch(() => ({}));
+          if (whoRes.ok && whoJson.success && whoJson.user_id) {
+            currentUserIdCache = whoJson.user_id;
+            return currentUserIdCache;
+          }
+        } catch {}
+        return null;
+      }
+
+      function computeCompletionPercent(studentProgress) {
+        if (!studentProgress || typeof studentProgress !== 'object') return 0;
+        let completionPct = 0;
+        if (typeof studentProgress.completion === 'number') completionPct = studentProgress.completion;
+        else if (typeof studentProgress.completion_pct === 'number') completionPct = studentProgress.completion_pct;
+        else if (typeof studentProgress.modes_attempted === 'number' && typeof studentProgress.modes_total === 'number' && studentProgress.modes_total > 0) {
+          completionPct = Math.round((studentProgress.modes_attempted / studentProgress.modes_total) * 100);
+        }
+        return Math.max(0, Math.min(100, completionPct));
+      }
+
+      async function fetchHomeworkCompletionPct(assignmentId) {
+        if (!assignmentId) return null;
+        try {
+          const prRes = await WillenaAPI.fetch(`/.netlify/functions/homework_api?action=assignment_progress&assignment_id=${encodeURIComponent(assignmentId)}`);
+          const prJson = await prRes.json().catch(() => ({}));
+          if (!prRes.ok || !prJson.success || !Array.isArray(prJson.progress)) return null;
+
+          const uid = await getCurrentUserIdCached();
+          let studentProgress = null;
+          if (uid) studentProgress = prJson.progress.find(p => String(p.user_id) === String(uid)) || null;
+          if (!studentProgress && prJson.progress.length === 1) studentProgress = prJson.progress[0];
+          if (!studentProgress) return null;
+
+          return computeCompletionPercent(studentProgress);
+        } catch {
+          return null;
+        }
+      }
+
+      function showHomeworkDoneModal() {
+        if (homeworkDoneModalVisible) return;
+        if (document.getElementById('waHomeworkDoneModal')) return;
+
+        homeworkDoneModalVisible = true;
+        const modal = document.createElement('div');
+        modal.id = 'waHomeworkDoneModal';
+        modal.className = 'wa-hw-done-modal';
+        modal.innerHTML = `
+          <div class="wa-hw-done-card" role="dialog" aria-modal="true" aria-labelledby="waHwDoneTitle">
+            <h2 id="waHwDoneTitle" class="wa-hw-done-title">You've finished your homework! Nice Job!</h2>
+            <p class="wa-hw-done-sub">숙제를 완료했어요! 정말 잘했어요!</p>
+            <button type="button" class="wa-hw-done-ok" id="waHwDoneOkBtn">Awesome!</button>
+          </div>
+        `;
+
+        const closeModal = () => {
+          try { modal.remove(); } catch {}
+          homeworkDoneModalVisible = false;
+        };
+
+        modal.addEventListener('click', (e) => {
+          if (e.target === modal) closeModal();
+        });
+
+        document.body.appendChild(modal);
+        document.getElementById('waHwDoneOkBtn')?.addEventListener('click', closeModal);
+
+        try {
+          const badgeSfx = new Audio('./assets/audio/badge6.mp3');
+          badgeSfx.volume = 0.78;
+          badgeSfx.play().catch(() => {});
+          setTimeout(() => {
+            const praiseSfx = new Audio('./assets/audio/great_work.mp3');
+            praiseSfx.volume = 0.9;
+            praiseSfx.play().catch(() => {});
+          }, 220);
+        } catch {}
+      }
+
+      async function maybeCelebrateHomeworkCompletion() {
+        if (!hwParam) return;
+        if (homeworkDoneModalKey && sessionStorage.getItem(homeworkDoneModalKey)) return;
+
+        let completionPct = null;
+        for (let attempt = 0; attempt < 4; attempt += 1) {
+          completionPct = await fetchHomeworkCompletionPct(hwParam);
+          if (typeof completionPct === 'number' && completionPct >= 100) break;
+          if (attempt < 3) {
+            await new Promise(resolve => setTimeout(resolve, 700));
+          }
+        }
+        if (typeof completionPct !== 'number') return;
+
+        if (homeworkCompletionBaseline == null) {
+          homeworkCompletionBaseline = completionPct;
+          return;
+        }
+
+        if (homeworkCompletionBaseline < 100 && completionPct >= 100) {
+          showHomeworkDoneModal();
+          try {
+            if (homeworkDoneModalKey) sessionStorage.setItem(homeworkDoneModalKey, '1');
+          } catch {}
+        }
+        homeworkCompletionBaseline = Math.max(homeworkCompletionBaseline, completionPct);
+      }
+
+      if (hwParam) {
+        maybeCelebrateHomeworkCompletion();
+        window.addEventListener('wa:session-ended', () => {
+          setTimeout(() => {
+            maybeCelebrateHomeworkCompletion();
+          }, 500);
+        });
+      }
 
       if (tabWordArcade) {
         tabWordArcade.addEventListener('click', (e) => {
