@@ -643,6 +643,13 @@
       }
 
   async function autostartHomework(listKey, hwId, displayName) {
+        const savedGameMatch = String(listKey || '').match(/^saved_game:(.+)$/i);
+        if (savedGameMatch && savedGameMatch[1]) {
+          const gameId = String(savedGameMatch[1]).trim();
+          const target = `${window.location.pathname}?hw=${encodeURIComponent(hwId || '')}&open=saved&id=${encodeURIComponent(gameId)}&autostart=1`;
+          window.location.href = target;
+          return;
+        }
         // Normalize leading path prefix if homework stored full project path
         // e.g. "Games/english_arcade/sample-wordlists-level2/Adjectives1.json" -> "sample-wordlists-level2/Adjectives1.json"
         if (/^Games\/english_arcade\//.test(listKey)) {
