@@ -460,8 +460,16 @@
                 if (uid) myRow = pj.progress.find(p => String(p.user_id) === String(uid));
                 if (!myRow && pj.progress.length === 1) myRow = pj.progress[0];
                 let completionPct = myRow ? (typeof myRow.completion === 'number' ? myRow.completion : (myRow.completion_pct || 0)) : 0;
-                // If stars_required is set, override completion % to be star-based
-                if (pj.stars_required && myRow && typeof myRow.stars === 'number') {
+                let listMetaForBadge = a?.list_meta;
+                if (typeof listMetaForBadge === 'string') {
+                  try { listMetaForBadge = JSON.parse(listMetaForBadge); } catch { listMetaForBadge = {}; }
+                }
+                if (!listMetaForBadge || typeof listMetaForBadge !== 'object') listMetaForBadge = {};
+                const badgeForcedMode = String(listMetaForBadge.forced_mode || listMetaForBadge.mode || listMetaForBadge.difficulty_mode || '').trim().toLowerCase();
+                const badgeModesTotal = Number(listMetaForBadge.modes_total ?? listMetaForBadge.total_modes ?? listMetaForBadge.mode_count ?? 0);
+                const isSpellingOnlyAssignment = !!pj.is_spelling_only || badgeForcedMode === 'spelling' || badgeModesTotal === 1;
+                // If stars_required is set, override completion % to be star-based (except spelling-only assignments)
+                if (!isSpellingOnlyAssignment && pj.stars_required && myRow && typeof myRow.stars === 'number') {
                   completionPct = Math.round((myRow.stars / pj.stars_required) * 100);
                 }
                 const completed = completionPct >= 100;
@@ -563,8 +571,16 @@
                     completionPct = Math.round((studentProgress.modes_attempted / studentProgress.modes_total) * 100);
                   }
                   completionPct = Math.max(0, Math.min(100, completionPct));
-                  // If stars_required is set, override completion % to be star-based
-                  if (prJson.stars_required && typeof studentProgress.stars === 'number') {
+                  let listMetaForProgress = a?.list_meta;
+                  if (typeof listMetaForProgress === 'string') {
+                    try { listMetaForProgress = JSON.parse(listMetaForProgress); } catch { listMetaForProgress = {}; }
+                  }
+                  if (!listMetaForProgress || typeof listMetaForProgress !== 'object') listMetaForProgress = {};
+                  const progressForcedMode = String(listMetaForProgress.forced_mode || listMetaForProgress.mode || listMetaForProgress.difficulty_mode || '').trim().toLowerCase();
+                  const progressModesTotal = Number(listMetaForProgress.modes_total ?? listMetaForProgress.total_modes ?? listMetaForProgress.mode_count ?? 0);
+                  const isSpellingOnlyAssignment = !!prJson.is_spelling_only || progressForcedMode === 'spelling' || progressModesTotal === 1;
+                  // If stars_required is set, override completion % to be star-based (except spelling-only assignments)
+                  if (!isSpellingOnlyAssignment && prJson.stars_required && typeof studentProgress.stars === 'number') {
                     completionPct = Math.round((studentProgress.stars / prJson.stars_required) * 100);
                   }
                   return { ...a, completion_pct: completionPct, stars: studentProgress.stars || 0, accuracy: studentProgress.accuracy_best || 0, teacher_name: a.teacher_name || data.teacher_name || null, stars_required: prJson.stars_required || null };
