@@ -757,11 +757,12 @@ async function searchGameImage(term) {
 // -------------------------------------------------------------
 const isLocal = () => typeof window !== 'undefined' && /localhost|127\.0\.0\.1/i.test(window.location.hostname);
 function preferredVoice() { try { const id = localStorage.getItem('ttsVoiceId'); return id && id.trim() ? id.trim() : null; } catch { return null; } }
+function getApiPath(path) { try { return window.WillenaAPI?.getApiUrl ? window.WillenaAPI.getApiUrl(path) : path; } catch { return path; } }
 
 async function checkExistingAudio(words) {
   const endpoints = isLocal()
-    ? ['http://localhost:9000/.netlify/functions/get_audio_urls', '/.netlify/functions/get_audio_urls']
-    : ['/.netlify/functions/get_audio_urls'];
+    ? ['http://localhost:9000/.netlify/functions/get_audio_urls', getApiPath('/.netlify/functions/get_audio_urls')]
+    : [getApiPath('/.netlify/functions/get_audio_urls')];
   let lastErr = null;
   for (const url of endpoints) {
     try {
@@ -777,8 +778,8 @@ async function checkExistingAudio(words) {
 
 async function callTTS(payload) {
   const endpoints = isLocal()
-    ? ['http://localhost:9000/.netlify/functions/eleven_labs_proxy', '/.netlify/functions/eleven_labs_proxy']
-    : ['/.netlify/functions/eleven_labs_proxy'];
+    ? ['http://localhost:9000/.netlify/functions/eleven_labs_proxy', getApiPath('/.netlify/functions/eleven_labs_proxy')]
+    : [getApiPath('/.netlify/functions/eleven_labs_proxy')];
   for (const url of endpoints) {
     try {
       const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
@@ -790,8 +791,8 @@ async function callTTS(payload) {
 
 async function uploadAudio(word, audioBase64) {
   const endpoints = isLocal()
-    ? ['http://localhost:9000/.netlify/functions/upload_audio', '/.netlify/functions/upload_audio']
-    : ['/.netlify/functions/upload_audio'];
+    ? ['http://localhost:9000/.netlify/functions/upload_audio', getApiPath('/.netlify/functions/upload_audio')]
+    : [getApiPath('/.netlify/functions/upload_audio')];
   for (const url of endpoints) {
     try {
       const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ word, fileDataBase64: audioBase64 }) });
@@ -904,9 +905,10 @@ export function initCreateGameModal(buildPayload) {
         const saveAction = existingId ? 'update_game_data' : 'insert_game_data';
         const saveBody = existingId ? { action: saveAction, id: existingId, data } : { action: saveAction, data };
         setStatus('Saving custom game...');
-        const saveRes = await WillenaAPI.fetch('/.netlify/functions/supabase_proxy_fixed', {
+        const saveRes = await fetch(getApiPath('/.netlify/functions/supabase_proxy_fixed'), {
           method:'POST',
           headers:{'Content-Type':'application/json'},
+          credentials: 'include',
           body: JSON.stringify(saveBody)
         });
         const saveJson = await saveRes.json().catch(() => ({}));
