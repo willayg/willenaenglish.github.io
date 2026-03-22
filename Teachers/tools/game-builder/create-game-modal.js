@@ -869,7 +869,7 @@ function scheduleAutoGameImage(ms = 380) {
 function updateGameImageDisplay() {
   if (!el.imageZone) return;
   if (gameImageUrl) {
-    el.imageZone.innerHTML = `<img src="${gameImageUrl}" alt="Game Image" style="width:100%;height:100%;object-fit:cover;border-radius:6px;" />`;
+    el.imageZone.innerHTML = `<img src="${gameImageUrl}" alt="Game Image" style="width:100%;height:100%;object-fit:contain;border-radius:6px;background:#f8fafc;" />`;
   } else {
     el.imageZone.innerHTML = '<span class="hint">No image selected</span>';
   }
