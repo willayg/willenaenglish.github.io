@@ -495,6 +495,40 @@ export default {
         await supabaseDelete(env, 'homework_assignments', `id=eq.${assignmentId}`);
         return jsonResponse({ success: true }, 200, origin);
       }
+
+      // ===== UPDATE ASSIGNMENT META =====
+      if (action === 'update_assignment_meta') {
+        const authUserId = await getUserIdFromRequest(request, env);
+        if (!authUserId) {
+          return jsonResponse({ success: false, error: 'Not signed in' }, 401, origin);
+        }
+
+        const prof = await fetchProfile(env, authUserId);
+        if (!prof || !['teacher', 'admin'].includes(String(prof.role || '').toLowerCase())) {
+          return jsonResponse({ success: false, error: 'Only teachers can update assignments' }, 403, origin);
+        }
+
+        const body = await request.json();
+        const uaId = body.assignment_id || url.searchParams.get('assignment_id');
+        if (!uaId) {
+          return jsonResponse({ success: false, error: 'Missing assignment_id' }, 400, origin);
+        }
+
+        const existing = await supabaseSelect(env, 'homework_assignments', `id=eq.${uaId}&select=*`);
+        if (!existing || !existing.length) {
+          return jsonResponse({ success: false, error: 'Assignment not found' }, 404, origin);
+        }
+
+        const existingMeta = existing[0].list_meta || {};
+        const mergedMeta = { ...existingMeta, ...(body.list_meta || {}) };
+        const updateFields = { list_meta: mergedMeta };
+        if (body.goal_value !== undefined) updateFields.goal_value = body.goal_value;
+        if (body.goal_type !== undefined) updateFields.goal_type = body.goal_type;
+
+        const updated = await supabaseUpdate(env, 'homework_assignments', `id=eq.${uaId}`, updateFields);
+        console.log(`[homework-api] Updated assignment ${uaId} meta:`, JSON.stringify(updateFields));
+        return jsonResponse({ success: true, assignment: updated?.[0] || null }, 200, origin);
+      }
       
       // ===== ASSIGNMENT PROGRESS =====
       if (action === 'assignment_progress') {
@@ -769,8 +803,48 @@ export default {
           totalModes = 6;
         }
         // Allow override from assignment meta if explicitly set
-        const metaModes = assignment.list_meta?.modes_total || assignment.list_meta?.total_modes || assignment.list_meta?.mode_count;
-        if (Number.isFinite(metaModes) && metaModes > 0 && metaModes <= 10) {
+        const metaModesRaw = assignment.list_meta?.modes_total ?? assignment.list_meta?.total_modes ?? assignment.list_meta?.mode_count;
+        const metaModes = Number(metaModesRaw);
+        const difficultyMode = String(assignment.list_meta?.difficulty_mode || '').toLowerCase();
+        const forcedMode = String(assignment.list_meta?.forced_mode || assignment.list_meta?.mode || assignment.list_meta?.difficulty_mode || '').toLowerCase();
+
+        // Multi-signal spelling-only detection:
+        // 1. Metadata: forced_mode/difficulty_mode === 'spelling' or modes_total === 1
+        // 2. Goal value: goal_value === 1  (set by Game Builder for spelling-only)
+        // 3. Client hint: frontend passes spelling_only=1 URL param
+        // 4. Session inference: if ALL sessions are spelling/listen_and_spell modes
+        const clientHintSpellingOnly = url.searchParams.get('spelling_only') === '1';
+        const goalValueHint = Number(assignment.goal_value) === 1;
+        let isSpellingOnlyAssignment = forcedMode === 'spelling' || difficultyMode === 'spelling' || metaModes === 1 || goalValueHint || clientHintSpellingOnly;
+
+        // Session-based fallback: if metadata didn't flag it, check actual session data
+        if (!isSpellingOnlyAssignment && filteredSessions.length > 0) {
+          const allSpelling = filteredSessions.every(s => {
+            const m = String(s.mode || '').toLowerCase();
+            return m === 'spelling' || m === 'listen_and_spell' || m === 'spell';
+          });
+          if (allSpelling) {
+            isSpellingOnlyAssignment = true;
+            console.log(`[homework-api] Session-inferred spelling-only for assignment ${assignment.id}`);
+          }
+        }
+
+        console.log(`[homework-api] spelling-only detection for ${assignment.id} (${assignment.title}):`, JSON.stringify({
+          forcedMode, difficultyMode, metaModes, goalValueHint, clientHintSpellingOnly, isSpellingOnlyAssignment,
+          goal_value: assignment.goal_value, goal_type: assignment.goal_type,
+        }));
+
+        if (isSpellingOnlyAssignment) {
+          totalModes = 1;
+          // Auto-heal: backfill forced_mode into list_meta so future calls work without hints
+          if (!assignment.list_meta?.forced_mode || assignment.list_meta.forced_mode !== 'spelling') {
+            try {
+              const healedMeta = { ...(assignment.list_meta || {}), forced_mode: 'spelling', modes_total: 1, difficulty_mode: 'spelling' };
+              await supabaseUpdate(env, 'homework_assignments', `id=eq.${assignment.id}`, { list_meta: healedMeta });
+              console.log(`[homework-api] Auto-healed list_meta for assignment ${assignment.id}: added forced_mode:spelling`);
+            } catch (e) { console.warn('[homework-api] Auto-heal failed:', e.message); }
+          }
+        } else if (Number.isFinite(metaModes) && metaModes > 0 && metaModes <= 10) {
           if (category === 'phonics' && metaModes <= 4) totalModes = metaModes;
           else if (category === 'grammar' && metaModes >= 4 && metaModes <= 6) totalModes = metaModes;
           else if (category === 'vocab' && metaModes >= 4 && metaModes <= 8) totalModes = metaModes;
@@ -784,8 +858,19 @@ export default {
           }));
           
           const starsEarned = modesArr.reduce((sum, m) => sum + (m.bestStars || 0), 0);
-          // Only count modes where student achieved at least 1 star toward homework completion
-          const modesAttempted = modesArr.filter(m => m.bestStars >= 1).length;
+
+          // For spelling-only: check if student completed any spelling mode with >=1 star
+          let modesAttempted;
+          if (isSpellingOnlyAssignment) {
+            const spellingDone = modesArr.some(m => {
+              const mn = String(m.mode || '').toLowerCase();
+              return m.bestStars >= 1 && (mn === 'spelling' || mn === 'listen_and_spell' || mn === 'spell');
+            });
+            modesAttempted = spellingDone ? 1 : 0;
+          } else {
+            // Only count modes where student achieved at least 1 star toward homework completion
+            modesAttempted = modesArr.filter(m => m.bestStars >= 1).length;
+          }
           const completionPercent = totalModes > 0 ? Math.round((modesAttempted / totalModes) * 100) : 0;
           
           return {
@@ -813,12 +898,16 @@ export default {
         
         return jsonResponse({
           success: true,
+          _v: 'cf-hw-api-v2-spelling-fix',
           assignment_id: assignment.id,
           class: targetClass,
           total_modes: totalModes,
           category,
+          is_spelling_only: isSpellingOnlyAssignment,
           difficulty_mode: assignment.list_meta?.difficulty_mode || 'full',
           stars_required: assignment.list_meta?.stars_required || null,
+          goal_type: assignment.goal_type || null,
+          goal_value: assignment.goal_value || null,
           progress: filteredProgress,
         }, 200, origin);
       }
