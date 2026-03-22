@@ -914,9 +914,12 @@ export function initCreateGameModal(buildPayload) {
           throw new Error(saveJson?.error || `Failed to save custom game (${saveRes.status})`);
         }
 
-        const gameId = existingId || saveJson?.id;
+        const gameId = existingId
+          || saveJson?.id
+          || saveJson?.data?.id
+          || (Array.isArray(saveJson?.data) ? saveJson.data[0]?.id : null);
         if (!gameId) {
-          throw new Error('Custom game saved without an id.');
+          throw new Error(`Custom game saved without an id. Response: ${JSON.stringify(saveJson).slice(0, 200)}`);
         }
         setCurrentGameId(gameId);
 
