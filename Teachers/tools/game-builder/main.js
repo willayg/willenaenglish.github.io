@@ -36,7 +36,7 @@ import {
   findGameByTitle,
   generateIncrementedTitle,
   showTitleConflictModal
-} from './services/file-service.js?v=20260322n';
+} from './services/file-service.js?v=20260322v';
 import {
   getList,
   setList,
@@ -83,7 +83,7 @@ import {
   handleGetTranslations,
   handleGenerateDefinitions,
   handleGenerateExamples
-} from './ui/event-handlers.js?v=20260322n';
+} from './ui/event-handlers.js?v=20260322v';
 import { ENDPOINTS, STORAGE_KEYS, ACTIONS, DEFAULTS, TOAST_DURATION } from './constants.js';
 import { initFileListModal } from './ui/file-list.js?v=20260322p';
 import { loadWorksheetIntoBuilder } from './services/worksheet-service.js';
@@ -245,6 +245,13 @@ if (addWordLink) {
     e.preventDefault();
     handleAddWord(saveState, getList, setList, newRow, render);
     markDirty();
+  };
+}
+if (loadWorksheetsLink) {
+  loadWorksheetsLink.onclick = (e) => {
+    e.preventDefault();
+    const url = '/Teachers/worksheet_manager.html?mode=load&type=wordtest&vocab_only=1&require_words=1';
+    window.open(url, 'worksheetManagerWordtest', 'width=1280,height=860,resizable=yes,scrollbars=yes');
   };
 }
 // Get Translations button wiring

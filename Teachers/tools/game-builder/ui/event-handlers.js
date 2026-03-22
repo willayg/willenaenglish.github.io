@@ -44,7 +44,7 @@ export async function handleQuickSave(ev, buildPayload, getCurrentGameId, setCur
     }
     
     if (js?.success) {
-      if (!silent) showTinyToast('Saved', { ms: 500 });
+      if (!silent) showTinyToast(js?.savedAsCopy ? 'Saved as new copy (owner mismatch)' : 'Saved', { ms: 900 });
       // Fire-and-forget ensure missing audio (non-force) after successful save
       try {
         const words = (payload.words || []).map(w => w.eng).filter(Boolean);
@@ -55,7 +55,7 @@ export async function handleQuickSave(ev, buildPayload, getCurrentGameId, setCur
             .catch(e => console.debug('[quickSave][audio] skipped', e?.message));
         }, 50);
       } catch (e) { console.debug('[quickSave][audio] init error', e?.message); }
-      return { success: true, id: js?.id || currentGameId };
+      return { success: true, id: js?.id || currentGameId, savedAsCopy: !!js?.savedAsCopy };
     } else {
       if (!silent) showTinyToast(js?.error || 'Save failed', { variant: 'error', ms: 3000 });
       return { success: false, error: js?.error || 'Save failed' };

@@ -299,12 +299,24 @@ export async function saveGameData(payload, existingId = null) {
     });
 
     let savedId = existingId || null;
+    let savedAsCopy = false;
+
+    if (existingId && !js?.success && /not owner|forbidden/i.test(String(js?.error || ''))) {
+      js = await fetchJSONSafe('/.netlify/functions/supabase_proxy_fixed', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ action: 'insert_game_data', data: payload })
+      });
+      savedId = null;
+      savedAsCopy = !!js?.success;
+    }
 
     const responseId = js?.id || js?.data?.id || (Array.isArray(js?.data) ? js.data[0]?.id : null) || null;
     if (responseId) savedId = responseId;
     
     if (js?.success) {
-      return { success: true, id: savedId };
+      return { success: true, id: savedId, savedAsCopy };
     } else {
       return { success: false, error: js?.error || 'Save failed' };
     }
