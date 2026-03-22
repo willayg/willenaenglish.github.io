@@ -12,7 +12,7 @@ import {
   escapeHtml
 } from './images.js';
 import { initMintAiListBuilder } from './MintAi-list-builder.js';
-import { initCreateGameModal, openCreateGameModal } from './create-game-modal.js?v=20260322c';
+import { initCreateGameModal, openCreateGameModal } from './create-game-modal.js?v=20260322d';
 import { showTinyToast, ensureLoadingOverlay, buildSkeletonHTML } from './utils/dom-helpers.js';
 import { fetchJSONSafe, timedJSONFetch, recordPerfSample, isLocalHost } from './utils/network.js';
 import { escapeRegExp, cleanDefinitionResponse, normalizeForKey, capitalize, ensurePunctuation } from './utils/validation.js';
@@ -87,6 +87,16 @@ import {
 import { ENDPOINTS, STORAGE_KEYS, ACTIONS, DEFAULTS, TOAST_DURATION } from './constants.js';
 import { initFileListModal } from './ui/file-list.js';
 import { loadWorksheetIntoBuilder } from './services/worksheet-service.js';
+
+function getExampleText(word) {
+  if (!word || typeof word !== 'object') return '';
+  return word.example
+    || word.example_sentence
+    || word.exampleSentence
+    || word.sentence
+    || word.legacy_sentence
+    || '';
+}
 
 // Early toast shim: ensures calls before actual toast util wiring don't throw
 const toast = (function(){
@@ -402,7 +412,7 @@ function bindRowEvents(){
           kor: (w && (w.kor || w.kr || w.translation)) || (typeof w === 'string' ? String(w).split(/[,|]/)[1]?.trim() : ''),
           image_url: (w && (w.image_url || w.image)) || '',
           definition: (w && w.definition) || '',
-          example: (w && (w.example || w.example_sentence)) || ''
+          example: getExampleText(w)
         })).filter(r => r.eng);
       }
       // If not, try to parse wordList
@@ -421,7 +431,7 @@ function bindRowEvents(){
                 kor: w.kor || w.kr || w.translation || '',
                 image_url: w.image_url || w.image || '',
                 definition: w.definition || '',
-                example: w.example || w.example_sentence || ''
+                example: getExampleText(w)
               });
             }).filter(r => r.eng);
           }
@@ -454,7 +464,7 @@ function bindRowEvents(){
           kor: w.kor || w.kr || w.translation || '',
           image_url: w.image_url || w.image || '',
           definition: w.definition || '',
-          example: w.example || w.example_sentence || ''
+          example: getExampleText(w)
         });
       }).filter(r => r.eng);
     } else if (typeof raw === 'string') {
@@ -563,6 +573,25 @@ async function generateExamplesForMissing() {
     if (!w) continue;
     if (w.example && w.example.trim()) continue;
     await generateExampleForRow(i);
+  }
+}
+
+let examplesAutofillInFlight = false;
+async function maybeAutofillMissingExamples(reason = '') {
+  try {
+    if (!enableExamplesEl || !enableExamplesEl.checked) return;
+    if (examplesAutofillInFlight) return;
+    const list = getList();
+    const missing = list.filter((w) => w && w.eng && !(w.example && String(w.example).trim()));
+    if (!missing.length) return;
+    examplesAutofillInFlight = true;
+    if (statusEl) statusEl.textContent = `Generating examples (${missing.length})...`;
+    await generateExamplesForMissing();
+  } catch (e) {
+    console.warn('[game-builder] example autofill failed', reason, e);
+  } finally {
+    examplesAutofillInFlight = false;
+    if (statusEl && /^Generating examples/.test(statusEl.textContent || '')) statusEl.textContent = '';
   }
 }
 
@@ -1109,12 +1138,13 @@ function paintFileList(initialRows, { cached, initial, uniqueCount }) {
           kor: w.kor || w.kr || w.translation || '',
           image_url: w.image_url || w.image || w.img || w.img_url || w.picture || '',
           definition: w.definition || w.def || w.meaning || '',
-          example: w.example || w.example_sentence || w.sentence || ''
+          example: getExampleText(w)
         });
       }).filter(Boolean);
       setList(mapped);
       if (titleEl) titleEl.value = row.title || 'Untitled Game';
       render();
+      maybeAutofillMissingExamples('openGameData');
       toast(mapped.length ? 'Game loaded' : 'Loaded (empty)');
       fileModal.style.display = 'none';
       cacheCurrentGame();

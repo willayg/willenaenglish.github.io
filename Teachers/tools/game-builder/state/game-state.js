@@ -60,7 +60,7 @@ export function newRow(data = {}) {
     kor: data.kor || '',
     image_url: data.image_url || '',
     definition: data.definition || '',
-    example: data.example || data.example_sentence || ''
+    example: data.example || data.example_sentence || data.exampleSentence || data.sentence || data.legacy_sentence || ''
   };
 }
 
@@ -221,7 +221,7 @@ export function parseWords(words) {
       kor: w.kor || w.kr || w.translation || '',
       image_url: w.image_url || w.image || w.img || w.img_url || w.picture || '',
       definition: w.definition || w.def || w.meaning || '',
-      example: w.example || w.example_sentence || w.sentence || ''
+      example: w.example || w.example_sentence || w.exampleSentence || w.sentence || w.legacy_sentence || ''
     });
   }).filter(Boolean);
 }
