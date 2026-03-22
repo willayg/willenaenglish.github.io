@@ -8,7 +8,7 @@
   <script src="/students/api-gateway.js?v=20260116"></script>
   <script src="/js/api-config.js?v=20260322p"></script>
   <script src="/Teachers/tools/shared/homework-assignment.js?v=20260322a"></script>
-  <link rel="stylesheet" href="styles.css?v=20260322n" />
+  <link rel="stylesheet" href="styles.css?v=20260322o" />
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet" />
   <!-- Auth guard: redirect unauthenticated users to login with return path -->
   <script>
@@ -77,7 +77,13 @@
           <span class="dot">•</span>
           <a id="loadWorksheetsLink" class="link">Load from Worksheet</a>
         </div>
-        <div class="toolbar-right">
+      <!-- Save progress bar (appears below toolbar during save) -->
+      <div id="saveProgressWrap" class="save-progress-wrap">
+        <div class="save-progress-bar">
+          <div id="saveProgressFill" class="save-progress-fill"></div>
+          <div id="saveProgressText" class="save-progress-text"></div>
+        </div>
+      </div>        <div class="toolbar-right">
           <a id="createGameLink" class="link">Create Game</a>
           <span class="dot">•</span>
           <a id="clearAllGameData" class="link danger" title="Clear all current words and settings (cannot be undone)">Clear All</a>

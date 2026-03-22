@@ -4,7 +4,35 @@ import { DEFAULTS } from '../constants.js';
 import { generateDefinition, generateExample } from '../services/ai-service.js?v=20260322n';
 import { openSaveAsModal, handleSaveAsConfirm, showFileModal } from './modals.js';
 import { ensureAudioForWordsAndSentences } from '../services/audio-service.js';
-import { prepareAndUploadImagesIfNeeded, saveGameData } from '../services/file-service.js?v=20260322n';
+import { prepareAndUploadImagesIfNeeded, saveGameData } from '../services/file-service.js?v=20260322w';
+
+/**
+ * Save progress bar helpers
+ */
+function getSaveProgressEls() {
+  return {
+    wrap: document.getElementById('saveProgressWrap'),
+    fill: document.getElementById('saveProgressFill'),
+    text: document.getElementById('saveProgressText')
+  };
+}
+function showSaveProgress(pct, label, variant = '') {
+  const { wrap, fill, text } = getSaveProgressEls();
+  if (!wrap) return;
+  wrap.classList.add('active');
+  wrap.classList.remove('done', 'error');
+  if (variant) wrap.classList.add(variant);
+  fill.style.width = `${Math.min(100, Math.max(0, pct))}%`;
+  text.textContent = label || '';
+}
+function hideSaveProgress(delay = 1200) {
+  const { wrap, fill } = getSaveProgressEls();
+  if (!wrap) return;
+  setTimeout(() => {
+    wrap.classList.remove('active', 'done', 'error');
+    fill.style.width = '0%';
+  }, delay);
+}
 
 /**
  * Quick save handler (silent overwrite if ID exists, else open Save As)
@@ -37,14 +65,22 @@ export async function handleQuickSave(ev, buildPayload, getCurrentGameId, setCur
   if (saveLink) saveLink.classList.add('disabled');
   
   try {
+    // Stage 1: Upload images
+    if (!silent) showSaveProgress(15, 'Uploading images…');
     await prepareAndUploadImagesIfNeeded(payload, currentGameId, { force: !!(ev && ev.shiftKey) });
+
+    // Stage 2: Saving to database
+    if (!silent) showSaveProgress(55, 'Saving to database…');
     const js = await saveGameData(payload, currentGameId);
     if (js?.success && js?.id && typeof setCurrentGameId === 'function' && js.id !== currentGameId) {
       setCurrentGameId(js.id);
     }
     
     if (js?.success) {
-      if (!silent) showTinyToast(js?.savedAsCopy ? 'Saved as new copy (owner mismatch)' : 'Saved', { ms: 900 });
+      if (!silent) {
+        showSaveProgress(100, js?.savedAsCopy ? '✓ Saved as new copy' : '✓ Saved!', 'done');
+        hideSaveProgress(1400);
+      }
       // Fire-and-forget ensure missing audio (non-force) after successful save
       try {
         const words = (payload.words || []).map(w => w.eng).filter(Boolean);
@@ -57,12 +93,18 @@ export async function handleQuickSave(ev, buildPayload, getCurrentGameId, setCur
       } catch (e) { console.debug('[quickSave][audio] init error', e?.message); }
       return { success: true, id: js?.id || currentGameId, savedAsCopy: !!js?.savedAsCopy };
     } else {
-      if (!silent) showTinyToast(js?.error || 'Save failed', { variant: 'error', ms: 3000 });
+      if (!silent) {
+        showSaveProgress(100, '✗ ' + (js?.error || 'Save failed'), 'error');
+        hideSaveProgress(3000);
+      }
       return { success: false, error: js?.error || 'Save failed' };
     }
   } catch (e) {
     console.error(e);
-    if (!silent) showTinyToast('Save error', { variant: 'error', ms: 3000 });
+    if (!silent) {
+      showSaveProgress(100, '✗ Save error', 'error');
+      hideSaveProgress(3000);
+    }
     return { success: false, error: e?.message || 'Save error' };
   } finally {
     if (saveLink) saveLink.classList.remove('disabled');
