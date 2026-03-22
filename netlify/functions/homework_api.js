@@ -302,8 +302,37 @@ async function createAssignment(event) {
   return _json(200, { success: true, assignment: data, run_token: autoToken });
 }
 
+async function autoExpireAssignmentsPastGrace({ className = null } = {}) {
+  const now = new Date();
+  const cutoff = new Date(now.getTime() - (24 * 60 * 60 * 1000)).toISOString();
+  let query = supabase
+    .from('homework_assignments')
+    .update({ active: false, ended_at: now.toISOString() })
+    .eq('active', true)
+    .lte('due_at', cutoff);
+
+  if (className) {
+    query = query.eq('class', className);
+  }
+
+  const { data, error } = await query.select('id');
+  if (error) {
+    console.error('autoExpireAssignmentsPastGrace error:', {
+      message: error.message,
+      details: error.details,
+      hint: error.hint,
+      code: error.code
+    });
+    return { expiredCount: 0, error };
+  }
+
+  return { expiredCount: Array.isArray(data) ? data.length : 0, error: null };
+}
+
 async function listAssignments(event) {
   const className = event.queryStringParameters?.class || null;
+
+  await autoExpireAssignmentsPastGrace({ className });
 
   let query = supabase
     .from('homework_assignments')
@@ -684,11 +713,12 @@ async function assignmentProgress(event) {
   }
   // Allow override from assignment meta if explicitly set
   const metaModes = assignment.list_meta?.modes_total || assignment.list_meta?.total_modes || assignment.list_meta?.mode_count;
+  const forcedMode = String(assignment.list_meta?.forced_mode || assignment.list_meta?.mode || '').toLowerCase();
   if (Number.isFinite(metaModes) && metaModes > 0 && metaModes <= 10) {
     // Only override if category matches expected range
     if (category === 'phonics' && metaModes <= 4) totalModes = metaModes;
     else if (category === 'grammar' && metaModes >= 4 && metaModes <= 6) totalModes = metaModes;
-    else if (category === 'vocab' && metaModes >= 4 && metaModes <= 8) totalModes = metaModes;
+    else if (category === 'vocab' && ((metaModes >= 4 && metaModes <= 8) || (metaModes === 1 && forcedMode === 'spelling'))) totalModes = metaModes;
   }
   console.log(`[assignmentProgress] category=${category}, totalModes=${totalModes} for assignment ${assignment.id} (${assignment.title})`);
   
@@ -745,6 +775,8 @@ async function listAssignmentsForStudent(event) {
   }
 
   const nowIso = new Date().toISOString();
+
+  await autoExpireAssignmentsPastGrace({ className: prof.class });
 
   const { data, error } = await supabase
     .from('homework_assignments')

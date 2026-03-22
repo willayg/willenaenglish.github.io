@@ -562,7 +562,7 @@ async function processWordlist(data) {
   }
 }
 
-async function loadSampleWordlistByFilename(filename, { force = false, listName = null } = {}) {
+async function loadSampleWordlistByFilename(filename, { force = false, listName = null, mode = null } = {}) {
   try {
     if (!filename) throw new Error('No filename');
     // optional filename safety - allow slashes for subfolders
@@ -616,6 +616,10 @@ async function loadSampleWordlistByFilename(filename, { force = false, listName 
     }
     if (!loaded) throw new Error(`Failed to fetch ${filename}${lastErr ? ': ' + lastErr.message : ''}`);
     await processWordlist(loaded);
+    if (mode && modeLoaders[mode]) {
+      currentMode = mode;
+      await startGame(mode);
+    }
   } catch (err) {
     inlineToast('Error loading sample word list: ' + err.message);
   }
@@ -966,7 +970,7 @@ async function openSavedGamesModal(underlyingState = 'opening_menu') {
   });
 }
 
-async function openSavedGameById(id) {
+async function openSavedGameById(id, { mode = null } = {}) {
   try {
   const js = await fetchJSON(`${FN('supabase_proxy_fixed')}?get=game_data&id=${encodeURIComponent(id)}`);
     const row = js?.data || js;
@@ -1048,6 +1052,10 @@ async function openSavedGameById(id) {
       img: w.img?.substring(0,60)
     })));
     await processWordlist(mapped);
+    if (mode && modeLoaders[mode]) {
+      currentMode = mode;
+      await startGame(mode);
+    }
   } catch (e) {
   if (e.code === 'NOT_AUTH' || /Not signed in/i.test(e.message)) {
       inlineToast('Please sign in to open saved games.');
@@ -1564,8 +1572,9 @@ window.addEventListener('DOMContentLoaded', () => {
     const params = new URLSearchParams(window.location.search);
     const open = (params.get('open') || '').toLowerCase();
     const id = params.get('id') || params.get('game_id');
+    const mode = (params.get('mode') || '').trim();
     if (open === 'saved' && id) {
-      openSavedGameById(id);
+      openSavedGameById(id, { mode });
     }
   } catch {}
 

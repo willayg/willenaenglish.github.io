@@ -124,7 +124,7 @@
   <script src="/students/language.js"></script>
   <script src="/students/theme.js"></script>
   <!-- Game app -->
-  <script type="module" src="main.js?v=20251214a"></script>
+  <script type="module" src="main.js?v=20251214b"></script>
 </head>
 <body class="word-arcade">
   <div id="waAutostartOverlay" aria-live="polite" aria-busy="true">
@@ -227,6 +227,7 @@
       const autostart = urlParams.get('autostart');
       const listParam = urlParams.get('list');
       const hwParam = urlParams.get('hw');
+        const modeParam = urlParams.get('mode');
   const isGrammarParam = urlParams.get('grammar'); // optional override
 
       if (tabWordArcade) {
@@ -524,9 +525,11 @@
               const gameId = String(explicitGameId || (listKeySavedMatch && listKeySavedMatch[1]) || '').trim();
               const isSavedGameHomework = sourceType === 'saved_game' || metaType === 'saved_game' || !!listKeySavedMatch;
               const hwId = a.id;
+              const forcedModeRaw = String(listMeta.forced_mode || listMeta.mode || listMeta.difficulty_mode || '').trim().toLowerCase();
+              const forcedMode = forcedModeRaw === 'spelling' ? 'spelling' : '';
 
               if (isSavedGameHomework && gameId) {
-                const savedUrl = `${window.location.pathname}?hw=${encodeURIComponent(hwId || '')}&open=saved&id=${encodeURIComponent(gameId)}&autostart=1`;
+                const savedUrl = `${window.location.pathname}?hw=${encodeURIComponent(hwId || '')}&open=saved&id=${encodeURIComponent(gameId)}&autostart=1${forcedMode ? `&mode=${encodeURIComponent(forcedMode)}` : ''}`;
                 window.location.href = savedUrl;
                 return;
               }
@@ -542,11 +545,11 @@
 
               // Autostart the homework and prefer the teacher-assigned title when available
               try {
-                await autostartHomework(listKey, hwId, a.title || a.list_title || listMeta.title || null);
+                await autostartHomework(listKey, hwId, a.title || a.list_title || listMeta.title || null, forcedMode || null);
               } catch (err) {
                 console.error('autostartHomework failed', err);
                 // Fallback: navigate to autostart URL
-                const url = `${window.location.pathname}?hw=${encodeURIComponent(hwId || '')}&list=${encodeURIComponent(listKey)}&autostart=1`;
+                const url = `${window.location.pathname}?hw=${encodeURIComponent(hwId || '')}&list=${encodeURIComponent(listKey)}&autostart=1${forcedMode ? `&mode=${encodeURIComponent(forcedMode)}` : ''}`;
                 window.location.href = url;
               }
             });
@@ -729,11 +732,11 @@
         return k.includes('grammar_') || k.includes('/grammar/') || k.includes('present_simple') || k.includes('questions_') || k.includes('prepositions_');
       }
 
-  async function autostartHomework(listKey, hwId, displayName) {
+  async function autostartHomework(listKey, hwId, displayName, preferredMode = null) {
         const savedGameMatch = String(listKey || '').match(/^saved_game:(.+)$/i);
         if (savedGameMatch && savedGameMatch[1]) {
           const gameId = String(savedGameMatch[1]).trim();
-          const target = `${window.location.pathname}?hw=${encodeURIComponent(hwId || '')}&open=saved&id=${encodeURIComponent(gameId)}&autostart=1`;
+          const target = `${window.location.pathname}?hw=${encodeURIComponent(hwId || '')}&open=saved&id=${encodeURIComponent(gameId)}&autostart=1${preferredMode ? `&mode=${encodeURIComponent(preferredMode)}` : ''}`;
           window.location.href = target;
           return;
         }
@@ -753,12 +756,12 @@
           try {
             // Prefer existing phonics loader for proper audio preload & session state
             if (window.WordArcade?.loadPhonicsGame) {
-              window.WordArcade.loadPhonicsGame({ listFile: listKey, listName: displayName || listKey });
+              window.WordArcade.loadPhonicsGame({ listFile: listKey, listName: displayName || listKey, mode: preferredMode || null });
               return;
             }
             // Fallback: treat as sample list (will not show phonics-specific modes but still playable)
             if (window.WordArcade?.loadSampleWordlistByFilename) {
-              window.WordArcade.loadSampleWordlistByFilename(listKey, { force: true, listName: displayName || listKey });
+              window.WordArcade.loadSampleWordlistByFilename(listKey, { force: true, listName: displayName || listKey, mode: preferredMode || null });
               return;
             }
           } catch (e) {
@@ -802,7 +805,7 @@
           // Vocab / word list
           try {
             if (window.WordArcade?.loadSampleWordlistByFilename) {
-              window.WordArcade.loadSampleWordlistByFilename(listKey, { force: true, listName: listKey });
+              window.WordArcade.loadSampleWordlistByFilename(listKey, { force: true, listName: listKey, mode: preferredMode || null });
             } else if (window.WordArcade?.loadHomeworkList) {
               window.WordArcade.loadHomeworkList({ listKey, hwId });
             } else {
@@ -822,13 +825,13 @@
       // If autostart provided: directly load list instead of showing homework list menu first
       if (autostart === '1' && listParam) {
         // Attempt direct autostart without opening homework tab menu
-        autostartHomework(listParam, hwParam).catch(err => {
+        autostartHomework(listParam, hwParam, null, modeParam).catch(err => {
           console.error('Autostart failed', err);
           // Friendly fallback: show opening buttons + inline notice
           try { window.WordArcade?.quitToOpening?.(); } catch {}
           const ga = document.getElementById('gameArea');
           if (ga) ga.innerHTML = `<div style="padding:22px;text-align:center;color:#e53e3e;font-weight:600;">Couldn't load homework list.<br><small>${(err && err.message) || 'Unknown error'}</small><br><br><button id='retryAutostart' style='background:#19777e;color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;'>Retry</button></div>`;
-          document.getElementById('retryAutostart')?.addEventListener('click', () => { ga.innerHTML=''; autostartHomework(listParam, hwParam); });
+          document.getElementById('retryAutostart')?.addEventListener('click', () => { ga.innerHTML=''; autostartHomework(listParam, hwParam, null, modeParam); });
         });
       }
 

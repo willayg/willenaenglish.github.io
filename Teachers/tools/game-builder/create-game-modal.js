@@ -67,8 +67,16 @@ const HOMEWORK_DIFFICULTY_PERCENTAGES = {
   easy: 0.25,
   standard: 0.50,
   hard: 0.75,
-  hardcore: 1.00,
 };
+
+function setHomeworkClassLoadingState(loading, text = 'Loading classes...') {
+  if (!el.panelHomework) return;
+  const loadingEl = el.panelHomework.querySelector('#gameClassLoading');
+  if (!loadingEl) return;
+  const labelEl = loadingEl.querySelector('.cgm-class-loading-text');
+  if (labelEl) labelEl.textContent = text;
+  loadingEl.classList.toggle('active', !!loading);
+}
 
 function getSelectedHomeworkDifficulty() {
   if (!el.panelHomework) return 'full';
@@ -78,6 +86,18 @@ function getSelectedHomeworkDifficulty() {
 
 function getHomeworkDifficultyConfig(difficultyMode, maxStars = 30, modesTotal = 6) {
   const mode = String(difficultyMode || 'full').trim().toLowerCase();
+  if (mode === 'spelling') {
+    return {
+      difficulty_mode: 'spelling',
+      requires_all_modes: true,
+      modes_required: 1,
+      required_stars: null,
+      goal_value: 1,
+      max_stars: 5,
+      modes_total: 1,
+      forced_mode: 'spelling',
+    };
+  }
   if (mode === 'full') {
     return {
       difficulty_mode: 'full',
@@ -85,6 +105,9 @@ function getHomeworkDifficultyConfig(difficultyMode, maxStars = 30, modesTotal =
       modes_required: modesTotal,
       required_stars: null,
       goal_value: 5,
+      max_stars: maxStars,
+      modes_total: modesTotal,
+      forced_mode: null,
     };
   }
   const percentage = HOMEWORK_DIFFICULTY_PERCENTAGES[mode] ?? 0.5;
@@ -95,6 +118,9 @@ function getHomeworkDifficultyConfig(difficultyMode, maxStars = 30, modesTotal =
     modes_required: null,
     required_stars: requiredStars,
     goal_value: requiredStars,
+    max_stars: maxStars,
+    modes_total: modesTotal,
+    forced_mode: null,
   };
 }
 
@@ -103,6 +129,10 @@ function updateHomeworkDifficultyPreview(maxStars = 30, modesTotal = 6) {
   const preview = el.panelHomework.querySelector('#gameDifficultyPreview');
   if (!preview) return;
   const mode = getSelectedHomeworkDifficulty();
+  if (mode === 'spelling') {
+    preview.textContent = 'Spelling only: complete the Spelling mode with at least 1 star.';
+    return;
+  }
   if (mode === 'full') {
     preview.textContent = `Complete all ${modesTotal} modes with at least 1 star each.`;
     return;
@@ -323,18 +353,22 @@ async function primeHomeworkRecipients(selectedClasses = [], selectedStudentId =
   if (!el.cls || !el.student) return;
   el.cls.disabled = true;
   el.student.disabled = true;
+  el.cls.innerHTML = '<option value="" disabled selected>Loading classes...</option>';
+  setHomeworkClassLoadingState(true);
   setHomeworkStudentHelp('Loading classes...');
   try {
     await loadHomeworkClasses();
     populateHomeworkClassOptions(selectedClasses);
     el.cls.disabled = false;
     await updateStudentSelectorForClassSelection(selectedStudentId);
+    setHomeworkClassLoadingState(false);
   } catch (err) {
     console.error('Failed to load homework recipients', err);
     populateHomeworkClassOptions(selectedClasses);
     populateHomeworkStudentOptions([], '');
     setHomeworkStudentHelp('Could not load classes automatically. Refresh and try again.');
     el.cls.disabled = false;
+    setHomeworkClassLoadingState(false, 'Could not load classes');
   }
 }
 
@@ -581,6 +615,10 @@ function ensurePanels() {
           <select id="gameClass" class="input" multiple size="8">
             <option value="" disabled>Select one or more classes</option>
           </select>
+          <div id="gameClassLoading" class="cgm-class-loading" aria-live="polite">
+            <span class="cgm-spinner-sm" aria-hidden="true"></span>
+            <span class="cgm-class-loading-text">Loading classes...</span>
+          </div>
           <div class="cgm-help-text">Tip: Ctrl/Cmd + click to select multiple classes.</div>
         </div>
         <div class="cgm-field">
@@ -601,7 +639,7 @@ function ensurePanels() {
             <label class="cgm-difficulty-item"><input type="radio" name="gameDifficulty" value="easy" /> Easy</label>
             <label class="cgm-difficulty-item"><input type="radio" name="gameDifficulty" value="standard" /> Standard</label>
             <label class="cgm-difficulty-item"><input type="radio" name="gameDifficulty" value="hard" /> Hard</label>
-            <label class="cgm-difficulty-item"><input type="radio" name="gameDifficulty" value="hardcore" /> Hardcore</label>
+            <label class="cgm-difficulty-item"><input type="radio" name="gameDifficulty" value="spelling" /> Spelling</label>
           </div>
           <div id="gameDifficultyPreview" class="cgm-help-text">Complete all 6 modes with at least 1 star each.</div>
         </div>
@@ -1132,12 +1170,13 @@ export function initCreateGameModal(buildPayload) {
             listMeta: {
               source_type: 'saved_game',
               game_id: gameId,
-              modes_total: 6,
+              modes_total: difficultyCfg.modes_total,
               difficulty_mode: difficultyCfg.difficulty_mode,
               difficulty_requires_all_modes: difficultyCfg.requires_all_modes,
               difficulty_modes_required: difficultyCfg.modes_required,
               difficulty_required_stars: difficultyCfg.required_stars,
-              max_stars: 30,
+              max_stars: difficultyCfg.max_stars,
+              forced_mode: difficultyCfg.forced_mode,
               type: 'saved_game',
               book: data.gameBook || '',
               unit: data.gameUnit || '',
