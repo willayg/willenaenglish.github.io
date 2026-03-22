@@ -108,6 +108,29 @@ function readHomeworkAssignmentIdFromURL() {
   } catch (e) { return null; }
 }
 
+function getStoredHomeworkAssignmentId() {
+  try {
+    if (typeof sessionStorage !== 'undefined') return sessionStorage.getItem('wa_homework_assignment_id');
+  } catch (e) {}
+  return null;
+}
+
+function persistHomeworkAssignmentId(assignmentId) {
+  try {
+    if (!assignmentId) return;
+    if (typeof sessionStorage !== 'undefined') sessionStorage.setItem('wa_homework_assignment_id', String(assignmentId));
+  } catch (e) {}
+}
+
+function getHomeworkAssignmentId() {
+  const fromURL = readHomeworkAssignmentIdFromURL();
+  if (fromURL) {
+    persistHomeworkAssignmentId(fromURL);
+    return fromURL;
+  }
+  return getStoredHomeworkAssignmentId() || null;
+}
+
 function getStoredAssignmentRun() {
   try {
     // prefer in-memory global if teacher UI set it
@@ -150,6 +173,15 @@ try {
   if (_ar) {
     persistAssignmentRun(_ar);
     try { console.debug('[records] assignment_run token captured:', _ar); } catch (e) {}
+  }
+} catch (e) {}
+
+// On module load, capture homework assignment id from URL so it survives history URL rewrites.
+try {
+  const _hw = readHomeworkAssignmentIdFromURL();
+  if (_hw) {
+    persistHomeworkAssignmentId(_hw);
+    try { console.debug('[records] homework assignment id captured:', _hw); } catch (e) {}
   }
 } catch (e) {}
 
@@ -236,7 +268,7 @@ export function startSession({ mode, wordList = [], listName = null, meta = {} }
   (async () => {
     try {
       if (!getAssignmentRun()) {
-        const assignmentId = readHomeworkAssignmentIdFromURL();
+        const assignmentId = getHomeworkAssignmentId();
         const api = assignmentId
           ? FN('homework_api') + `?action=get_run_token&assignment_id=${encodeURIComponent(assignmentId)}`
           : (listName ? FN('homework_api') + `?action=get_run_token&list_key=${encodeURIComponent(listName)}` : null);
