@@ -78,20 +78,33 @@ function setHomeworkStudentHelp(text) {
   if (el.studentHelp) el.studentHelp.textContent = text || '';
 }
 
-function populateHomeworkClassOptions(selectedClass = '') {
+function normalizeHomeworkClassValue(value) {
+  const raw = String(value || '').trim().toLowerCase();
+  if (!raw) return '';
+  if (raw === 'ny') return 'new york';
+  return raw.replace(/\s+/g, ' ');
+}
+
+function populateHomeworkClassOptions(selectedClasses = []) {
   if (!el.cls) return;
+  const selectedSet = new Set(
+    (Array.isArray(selectedClasses) ? selectedClasses : [selectedClasses])
+      .map(value => String(value || '').trim())
+      .filter(Boolean)
+  );
   const options = [
-    { value: '', label: 'Select a class' },
+    { value: '', label: 'Select one or more classes', disabled: true },
     ...homeworkClasses.map(cls => ({ value: cls.name, label: cls.display || cls.name })),
   ];
   el.cls.innerHTML = '';
-  options.forEach(({ value, label }) => {
+  options.forEach(({ value, label, disabled }) => {
     const option = document.createElement('option');
     option.value = value;
-    option.textContent = label;
+    option.textContent = disabled ? label : `${label}${homeworkClasses.find(c => c.name === value)?.hidden ? ' (hidden)' : ''}`;
+    if (disabled) option.disabled = true;
+    if (selectedSet.has(value)) option.selected = true;
     el.cls.appendChild(option);
   });
-  el.cls.value = selectedClass || '';
 }
 
 function populateHomeworkStudentOptions(students = [], selectedStudentId = '') {
@@ -120,20 +133,70 @@ function populateHomeworkStudentOptions(students = [], selectedStudentId = '') {
 
 async function loadHomeworkClasses() {
   if (homeworkClassesLoaded) return homeworkClasses;
-  const resp = await fetch(getHomeworkApiUrl('/.netlify/functions/progress_teacher_summary?action=classes_list'), {
-    credentials: 'include',
-    cache: 'no-store'
-  });
-  const json = await resp.json().catch(() => ({}));
-  if (!resp.ok || !json?.success || !Array.isArray(json.classes)) {
-    throw new Error(json?.error || `Failed to load classes (${resp.status})`);
+  const classesByKey = new Map();
+  const addClass = (record, prefer = false) => {
+    const normalized = normalizeHomeworkClassRecord(record);
+    if (!normalized) return;
+    const key = normalized.name.toLowerCase();
+    if (!classesByKey.has(key) || prefer) {
+      classesByKey.set(key, normalized);
+    }
+  };
+
+  let teacherAdminError = null;
+  try {
+    const studentResp = await fetch(getHomeworkApiUrl('/.netlify/functions/teacher_admin?action=list_students&limit=1000'), {
+      credentials: 'include',
+      cache: 'no-store'
+    });
+    const studentJson = await studentResp.json().catch(() => ({}));
+    if (studentResp.ok && studentJson?.success && Array.isArray(studentJson.students)) {
+      studentJson.students.forEach((student) => {
+        const rawClass = String(student?.class || '').trim();
+        if (rawClass) addClass({ name: rawClass, display: rawClass }, true);
+      });
+    } else {
+      teacherAdminError = studentJson?.error || `Failed to load student classes (${studentResp.status})`;
+    }
+  } catch (err) {
+    teacherAdminError = err?.message || String(err);
   }
-  homeworkClasses = json.classes
-    .map(normalizeHomeworkClassRecord)
-    .filter(Boolean)
-    .filter(cls => !cls.hidden);
+
+  try {
+    const resp = await fetch(getHomeworkApiUrl('/.netlify/functions/progress_teacher_summary?action=classes_list'), {
+      credentials: 'include',
+      cache: 'no-store'
+    });
+    const json = await resp.json().catch(() => ({}));
+    if (resp.ok && json?.success && Array.isArray(json.classes)) {
+      json.classes.forEach((cls) => addClass(cls));
+    }
+  } catch (err) {
+    console.warn('Failed to merge progress class list', err);
+  }
+
+  homeworkClasses = Array.from(classesByKey.values()).sort((left, right) => {
+    const a = String(left.display || left.name || '').toLowerCase();
+    const b = String(right.display || right.name || '').toLowerCase();
+    return a.localeCompare(b);
+  });
+
+  if (!homeworkClasses.length) {
+    throw new Error(teacherAdminError || 'Failed to load classes.');
+  }
+
   homeworkClassesLoaded = true;
   return homeworkClasses;
+}
+
+function getSelectedHomeworkClasses() {
+  if (!el.cls) return [];
+  const selected = Array.from(el.cls.selectedOptions || [])
+    .map((option) => String(option.value || '').trim())
+    .filter(Boolean);
+  if (selected.length) return Array.from(new Set(selected));
+  const fallback = String(el.cls.value || '').trim();
+  return fallback ? [fallback] : [];
 }
 
 async function loadStudentsForHomeworkClass(className, selectedStudentId = '') {
@@ -147,7 +210,7 @@ async function loadStudentsForHomeworkClass(className, selectedStudentId = '') {
   setHomeworkStudentHelp('Loading students...');
 
   if (!homeworkStudentsByClass.has(className)) {
-    const resp = await fetch(getHomeworkApiUrl(`/.netlify/functions/teacher_admin?action=list_students&class=${encodeURIComponent(className)}`), {
+    const resp = await fetch(getHomeworkApiUrl(`/.netlify/functions/teacher_admin?action=list_students&class=${encodeURIComponent(className)}&limit=1000`), {
       credentials: 'include',
       cache: 'no-store'
     });
@@ -155,8 +218,22 @@ async function loadStudentsForHomeworkClass(className, selectedStudentId = '') {
     if (!resp.ok || !json?.success || !Array.isArray(json.students)) {
       throw new Error(json?.error || `Failed to load students (${resp.status})`);
     }
-    const students = json.students
-      .filter(student => String(student.class || '') === String(className || ''))
+
+    let rawStudents = json.students;
+    if (!rawStudents.length) {
+      const fallbackResp = await fetch(getHomeworkApiUrl('/.netlify/functions/teacher_admin?action=list_students&limit=1000'), {
+        credentials: 'include',
+        cache: 'no-store'
+      });
+      const fallbackJson = await fallbackResp.json().catch(() => ({}));
+      if (fallbackResp.ok && fallbackJson?.success && Array.isArray(fallbackJson.students)) {
+        rawStudents = fallbackJson.students;
+      }
+    }
+
+    const wantedClass = normalizeHomeworkClassValue(className);
+    const students = rawStudents
+      .filter(student => normalizeHomeworkClassValue(student.class) === wantedClass)
       .sort((left, right) => {
         const leftLabel = `${left.name || ''} ${left.korean_name || ''} ${left.username || ''}`.trim().toLowerCase();
         const rightLabel = `${right.name || ''} ${right.korean_name || ''} ${right.username || ''}`.trim().toLowerCase();
@@ -170,19 +247,36 @@ async function loadStudentsForHomeworkClass(className, selectedStudentId = '') {
   return students;
 }
 
-async function primeHomeworkRecipients(selectedClass = '', selectedStudentId = '') {
+async function updateStudentSelectorForClassSelection(selectedStudentId = '') {
+  const selectedClasses = getSelectedHomeworkClasses();
+  if (!selectedClasses.length) {
+    populateHomeworkStudentOptions([], '');
+    if (el.student) el.student.disabled = true;
+    setHomeworkStudentHelp('Select a class to assign to students or leave as whole class.');
+    return;
+  }
+  if (selectedClasses.length > 1) {
+    populateHomeworkStudentOptions([], '');
+    if (el.student) el.student.disabled = true;
+    setHomeworkStudentHelp('Individual student assignment is available when exactly one class is selected.');
+    return;
+  }
+  await loadStudentsForHomeworkClass(selectedClasses[0], selectedStudentId);
+}
+
+async function primeHomeworkRecipients(selectedClasses = [], selectedStudentId = '') {
   if (!el.cls || !el.student) return;
   el.cls.disabled = true;
   el.student.disabled = true;
   setHomeworkStudentHelp('Loading classes...');
   try {
     await loadHomeworkClasses();
-    populateHomeworkClassOptions(selectedClass);
+    populateHomeworkClassOptions(selectedClasses);
     el.cls.disabled = false;
-    await loadStudentsForHomeworkClass(selectedClass, selectedStudentId);
+    await updateStudentSelectorForClassSelection(selectedStudentId);
   } catch (err) {
     console.error('Failed to load homework recipients', err);
-    populateHomeworkClassOptions(selectedClass);
+    populateHomeworkClassOptions(selectedClasses);
     populateHomeworkStudentOptions([], '');
     setHomeworkStudentHelp('Could not load classes automatically. Refresh and try again.');
     el.cls.disabled = false;
@@ -190,7 +284,8 @@ async function primeHomeworkRecipients(selectedClass = '', selectedStudentId = '
 }
 
 function getSelectedHomeworkStudent() {
-  const className = String(el.cls?.value || '').trim();
+  const selectedClasses = getSelectedHomeworkClasses();
+  const className = selectedClasses.length === 1 ? selectedClasses[0] : '';
   const studentId = String(el.student?.value || '').trim();
   if (!className || !studentId) return null;
   const roster = homeworkStudentsByClass.get(className) || [];
@@ -403,10 +498,11 @@ function ensurePanels() {
           <input id="gameTitle" class="input" placeholder="Enter game title" />
         </div>
         <div>
-          <label style="font-weight:600;font-size:.8rem;">Class</label>
-          <select id="gameClass" class="input">
-            <option value="">Select a class</option>
+          <label style="font-weight:600;font-size:.8rem;">Class(es)</label>
+          <select id="gameClass" class="input" multiple size="8">
+            <option value="" disabled>Select one or more classes</option>
           </select>
+          <div class="cgm-help-text">Tip: Ctrl/Cmd + click to select multiple classes.</div>
         </div>
         <div>
           <label style="font-weight:600;font-size:.8rem;">Assign To</label>
@@ -612,7 +708,9 @@ export function openCreateGameModal(options = {}) {
   // Prefill title from builder main input
   if (el.title) el.title.value = el.titleInput?.value || '';
   // Reset homework fields
-  if (el.cls) el.cls.value = '';
+  if (el.cls) {
+    Array.from(el.cls.options || []).forEach((option) => { option.selected = false; });
+  }
   if (el.student) el.student.value = '';
   if (el.dateDue) el.dateDue.value = '';
   if (el.desc) el.desc.value = '';
@@ -620,7 +718,7 @@ export function openCreateGameModal(options = {}) {
   gameImageUrl = imgInZone?.getAttribute('src') || '';
   setStatus('');
   updateGameImageDisplay();
-  primeHomeworkRecipients('', '');
+  primeHomeworkRecipients([], '');
   // Update live modes availability based on current word list (e.g., require pictures for picture modes)
   try { updateLiveTilesAvailability(); } catch {}
   el.modal.style.display = 'flex';
@@ -739,11 +837,15 @@ export function initCreateGameModal(buildPayload) {
   if (el.close) el.close.onclick = closeModal;
   if (el.cancel) el.cancel.onclick = closeModal;
 
+  // Pre-build panels and tiles for faster modal opening
+  ensurePanels();
+  buildLiveTiles();
+
   if (el.cls && !el.cls._homeworkBound) {
     el.cls._homeworkBound = true;
     el.cls.addEventListener('change', async () => {
       try {
-        await loadStudentsForHomeworkClass(String(el.cls?.value || '').trim(), '');
+        await updateStudentSelectorForClassSelection('');
       } catch (err) {
         console.error('Failed to update student list for class', err);
         populateHomeworkStudentOptions([], '');
@@ -751,10 +853,6 @@ export function initCreateGameModal(buildPayload) {
       }
     });
   }
-
-  // Pre-build panels and tiles for faster modal opening
-  ensurePanels();
-  buildLiveTiles();
 
   // Delegate clicks inside modal for navigation & actions
   document.addEventListener('click', (e) => {
@@ -780,7 +878,8 @@ export function initCreateGameModal(buildPayload) {
       data.modes = data.modes && data.modes.length ? data.modes : ['multi_choice_eng_to_kor'];
       data.title = el.title?.value?.trim() || data.title || 'Untitled Game';
       data.gameTitle = el.title?.value?.trim() || 'Untitled Game';
-      data.gameClass = el.cls?.value?.trim() || '';
+      const selectedClasses = getSelectedHomeworkClasses();
+      data.gameClass = selectedClasses[0] || '';
       const selectedStudent = getSelectedHomeworkStudent();
       data.gameDateDue = el.dateDue?.value || '';
       data.gameBook = el.book?.value?.trim() || '';
@@ -790,7 +889,7 @@ export function initCreateGameModal(buildPayload) {
       data.class = data.gameClass; data.book = data.gameBook; data.unit = data.gameUnit;
       try { const uid = localStorage.getItem('user_id') || sessionStorage.getItem('user_id') || localStorage.getItem('id') || sessionStorage.getItem('id'); if (uid) data.created_by = uid; } catch {}
       if (!data.title || !Array.isArray(data.words) || !data.words.length) { alert('Need title and at least one word.'); return; }
-      if (!data.gameClass) { alert('Class is required.'); return; }
+      if (!selectedClasses.length) { alert('At least one class is required.'); return; }
       if (!data.gameDateDue) { alert('Due date is required.'); return; }
       try {
         el.save.disabled = true;
@@ -826,43 +925,62 @@ export function initCreateGameModal(buildPayload) {
           throw new Error('Homework helper is unavailable. Please refresh and try again.');
         }
 
-        const assignment = helper.buildAssignmentPayload({
-          className: data.gameClass,
-          title: data.gameTitle,
-          description: data.gameDescription,
-          listKey: `saved_game:${gameId}`,
-          listTitle: data.gameTitle,
-          listMeta: {
-            source_type: 'saved_game',
-            game_id: gameId,
-            modes_total: 6,
-            difficulty_mode: 'full',
-            max_stars: 30,
-            type: 'saved_game',
-            book: data.gameBook || '',
-            unit: data.gameUnit || '',
-            target_student_ids: selectedStudent ? [selectedStudent.id] : [],
-            target_students: selectedStudent ? [{
-              id: selectedStudent.id,
-              name: selectedStudent.name || '',
-              korean_name: selectedStudent.korean_name || '',
-              username: selectedStudent.username || ''
-            }] : []
-          },
-          dueDate: data.gameDateDue,
-          startAt: new Date().toISOString(),
-          goalType: 'stars',
-          goalValue: 5
+        const classAssignments = selectedClasses.map((className) => {
+          const includeStudentTarget = selectedStudent && selectedClasses.length === 1;
+          return helper.buildAssignmentPayload({
+            className,
+            title: data.gameTitle,
+            description: data.gameDescription,
+            listKey: `saved_game:${gameId}`,
+            listTitle: data.gameTitle,
+            listMeta: {
+              source_type: 'saved_game',
+              game_id: gameId,
+              modes_total: 6,
+              difficulty_mode: 'full',
+              max_stars: 30,
+              type: 'saved_game',
+              book: data.gameBook || '',
+              unit: data.gameUnit || '',
+              target_student_ids: includeStudentTarget ? [selectedStudent.id] : [],
+              target_students: includeStudentTarget ? [{
+                id: selectedStudent.id,
+                name: selectedStudent.name || '',
+                korean_name: selectedStudent.korean_name || '',
+                username: selectedStudent.username || ''
+              }] : []
+            },
+            dueDate: data.gameDateDue,
+            startAt: new Date().toISOString(),
+            goalType: 'stars',
+            goalValue: 5
+          });
         });
 
         setStatus('Creating homework assignment...');
-        await helper.createAssignment(assignment);
+        const createdClasses = [];
+        const failedClasses = [];
+        for (const assignment of classAssignments) {
+          try {
+            await helper.createAssignment(assignment);
+            createdClasses.push(assignment.class);
+          } catch (err) {
+            failedClasses.push(`${assignment.class}: ${err?.message || 'Unknown error'}`);
+          }
+        }
+
+        if (!createdClasses.length) {
+          throw new Error(failedClasses.join('\n') || 'Failed to create homework assignments.');
+        }
 
         setStatus('Homework assigned.');
         const targetLabel = selectedStudent
-          ? `${selectedStudent.name || selectedStudent.username || 'Selected student'} (${data.gameClass})`
-          : data.gameClass;
-        alert(`Homework assigned.\n\nTitle: ${data.gameTitle}\nTarget: ${targetLabel}\nDue: ${data.gameDateDue}`);
+          ? `${selectedStudent.name || selectedStudent.username || 'Selected student'} (${createdClasses[0]})`
+          : (createdClasses.length === 1 ? createdClasses[0] : `${createdClasses.length} classes`);
+        const partialNote = failedClasses.length
+          ? `\n\nSome classes failed:\n${failedClasses.join('\n')}`
+          : '';
+        alert(`Homework assigned.\n\nTitle: ${data.gameTitle}\nTarget: ${targetLabel}\nDue: ${data.gameDateDue}${partialNote}`);
         closeModal();
       } catch (err) { console.error(err); setStatus('Save error'); alert(err?.message || 'Save error'); }
       finally { el.save.disabled = false; setStatus(''); }
