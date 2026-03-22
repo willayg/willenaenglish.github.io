@@ -85,7 +85,7 @@ import {
   handleGenerateExamples
 } from './ui/event-handlers.js?v=20260322n';
 import { ENDPOINTS, STORAGE_KEYS, ACTIONS, DEFAULTS, TOAST_DURATION } from './constants.js';
-import { initFileListModal } from './ui/file-list.js';
+import { initFileListModal } from './ui/file-list.js?v=20260322p';
 import { loadWorksheetIntoBuilder } from './services/worksheet-service.js';
 
 function getExampleText(word) {

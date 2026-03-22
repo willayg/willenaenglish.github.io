@@ -41,6 +41,13 @@ async function populateFileList({ fileListEl, titleEl, toast, render }) {
 async function fetchAndPaint({ fileListEl, titleEl, toast, render, silent }) {
   try {
     const qs = new URLSearchParams({ limit:'40', offset:'0', unique:'1', names:'0', page_pull:'40' });
+    const uid = getCurrentUserId();
+    if (!fileListAllMode && uid) {
+      qs.set('created_by', uid);
+      qs.set('include_null', '1');
+    } else if (fileListAllMode) {
+      qs.set('all', '1');
+    }
     const res = await WillenaAPI.fetch('/.netlify/functions/list_game_data_unique?' + qs.toString());
     if(!res.ok) throw new Error('list status '+res.status);
     const js = await res.json();
@@ -97,7 +104,11 @@ function paintFileList(rows, { fileListEl, titleEl, toast, render, cached, initi
   }
   searchInput.oninput = applyFilters;
   creatorFilter.onchange = applyFilters;
-  creatorScope.onchange = () => { fileListAllMode = creatorScope.value === 'all'; applyFilters(); };
+  creatorScope.onchange = async () => {
+    fileListAllMode = creatorScope.value === 'all';
+    fileListEl.innerHTML = buildSkeletonHTML(8);
+    await fetchAndPaint({ fileListEl, titleEl, toast, render, silent:false });
+  };
   applyFilters();
 }
 
