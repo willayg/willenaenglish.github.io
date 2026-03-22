@@ -59,6 +59,54 @@ const el = {
 
 let gameImageUrl = '';
 
+const HOMEWORK_DIFFICULTY_PERCENTAGES = {
+  easy: 0.25,
+  standard: 0.50,
+  hard: 0.75,
+  hardcore: 1.00,
+};
+
+function getSelectedHomeworkDifficulty() {
+  if (!el.panelHomework) return 'full';
+  const checked = el.panelHomework.querySelector('input[name="gameDifficulty"]:checked');
+  return checked?.value || 'full';
+}
+
+function getHomeworkDifficultyConfig(difficultyMode, maxStars = 30, modesTotal = 6) {
+  const mode = String(difficultyMode || 'full').trim().toLowerCase();
+  if (mode === 'full') {
+    return {
+      difficulty_mode: 'full',
+      requires_all_modes: true,
+      modes_required: modesTotal,
+      required_stars: null,
+      goal_value: 5,
+    };
+  }
+  const percentage = HOMEWORK_DIFFICULTY_PERCENTAGES[mode] ?? 0.5;
+  const requiredStars = Math.max(1, Math.round(maxStars * percentage));
+  return {
+    difficulty_mode: mode,
+    requires_all_modes: false,
+    modes_required: null,
+    required_stars: requiredStars,
+    goal_value: requiredStars,
+  };
+}
+
+function updateHomeworkDifficultyPreview(maxStars = 30, modesTotal = 6) {
+  if (!el.panelHomework) return;
+  const preview = el.panelHomework.querySelector('#gameDifficultyPreview');
+  if (!preview) return;
+  const mode = getSelectedHomeworkDifficulty();
+  if (mode === 'full') {
+    preview.textContent = `Complete all ${modesTotal} modes with at least 1 star each.`;
+    return;
+  }
+  const cfg = getHomeworkDifficultyConfig(mode, maxStars, modesTotal);
+  preview.textContent = `Max available: ${maxStars} stars | Required to pass: ${cfg.required_stars}+ stars`;
+}
+
 function normalizeHomeworkClassRecord(record) {
   const rawName = typeof record === 'string'
     ? record
@@ -542,6 +590,17 @@ function ensurePanels() {
           <label>Date Due</label>
           <input id="gameDateDue" type="date" class="input" />
         </div>
+        <div class="cgm-field wide">
+          <label>Difficulty Mode</label>
+          <div class="cgm-difficulty-grid">
+            <label class="cgm-difficulty-item"><input type="radio" name="gameDifficulty" value="full" checked /> Full Mode</label>
+            <label class="cgm-difficulty-item"><input type="radio" name="gameDifficulty" value="easy" /> Easy</label>
+            <label class="cgm-difficulty-item"><input type="radio" name="gameDifficulty" value="standard" /> Standard</label>
+            <label class="cgm-difficulty-item"><input type="radio" name="gameDifficulty" value="hard" /> Hard</label>
+            <label class="cgm-difficulty-item"><input type="radio" name="gameDifficulty" value="hardcore" /> Hardcore</label>
+          </div>
+          <div id="gameDifficultyPreview" class="cgm-help-text">Complete all 6 modes with at least 1 star each.</div>
+        </div>
         <div class="cgm-field">
           <label>Book</label>
           <input id="gameBook" class="input" placeholder="English Book 1" />
@@ -745,6 +804,11 @@ export function openCreateGameModal(options = {}) {
   if (el.student) el.student.value = '';
   if (el.dateDue) el.dateDue.value = '';
   if (el.desc) el.desc.value = '';
+  if (el.panelHomework) {
+    const fullRadio = el.panelHomework.querySelector('input[name="gameDifficulty"][value="full"]');
+    if (fullRadio) fullRadio.checked = true;
+    updateHomeworkDifficultyPreview(30, 6);
+  }
   const imgInZone = el.imageZone?.querySelector('img');
   gameImageUrl = imgInZone?.getAttribute('src') || '';
   setStatus('');
@@ -886,6 +950,14 @@ export function initCreateGameModal(buildPayload) {
     });
   }
 
+  if (el.panelHomework && !el.panelHomework._difficultyBound) {
+    el.panelHomework._difficultyBound = true;
+    el.panelHomework.querySelectorAll('input[name="gameDifficulty"]').forEach((radio) => {
+      radio.addEventListener('change', () => updateHomeworkDifficultyPreview(30, 6));
+    });
+    updateHomeworkDifficultyPreview(30, 6);
+  }
+
   // Delegate clicks inside modal for navigation & actions
   document.addEventListener('click', (e) => {
     if (!el.modal || el.modal.style.display !== 'flex') return;
@@ -991,6 +1063,8 @@ export function initCreateGameModal(buildPayload) {
 
         const classAssignments = selectedClasses.map((className) => {
           const includeStudentTarget = selectedStudent && selectedClasses.length === 1;
+          const difficultyMode = getSelectedHomeworkDifficulty();
+          const difficultyCfg = getHomeworkDifficultyConfig(difficultyMode, 30, 6);
           return helper.buildAssignmentPayload({
             className,
             title: data.gameTitle,
@@ -1001,7 +1075,10 @@ export function initCreateGameModal(buildPayload) {
               source_type: 'saved_game',
               game_id: gameId,
               modes_total: 6,
-              difficulty_mode: 'full',
+              difficulty_mode: difficultyCfg.difficulty_mode,
+              difficulty_requires_all_modes: difficultyCfg.requires_all_modes,
+              difficulty_modes_required: difficultyCfg.modes_required,
+              difficulty_required_stars: difficultyCfg.required_stars,
               max_stars: 30,
               type: 'saved_game',
               book: data.gameBook || '',
@@ -1017,7 +1094,7 @@ export function initCreateGameModal(buildPayload) {
             dueDate: data.gameDateDue,
             startAt: new Date().toISOString(),
             goalType: 'stars',
-            goalValue: 5
+            goalValue: difficultyCfg.goal_value
           });
         });
 
@@ -1044,7 +1121,7 @@ export function initCreateGameModal(buildPayload) {
         const partialNote = failedClasses.length
           ? `\n\nSome classes failed:\n${failedClasses.join('\n')}`
           : '';
-        alert(`Homework assigned.\n\nTitle: ${data.gameTitle}\nTarget: ${targetLabel}\nDue: ${data.gameDateDue}${partialNote}`);
+        alert(`Homework assigned.\n\nTitle: ${data.gameTitle}\nTarget: ${targetLabel}\nDifficulty: ${getSelectedHomeworkDifficulty()}\nDue: ${data.gameDateDue}${partialNote}`);
         closeModal();
       } catch (err) { console.error(err); setStatus('Save error'); alert(err?.message || 'Save error'); }
       finally { el.save.disabled = false; setStatus(''); }
