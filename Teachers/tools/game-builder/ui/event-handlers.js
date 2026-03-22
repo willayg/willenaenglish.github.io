@@ -1,32 +1,35 @@
 // Event handlers - Wire toolbar buttons and UI actions
 import { showTinyToast, ensureLoadingOverlay } from '../utils/dom-helpers.js';
-import { fetchJSONSafe } from '../utils/network.js';
-import { ENDPOINTS, DEFAULTS } from '../constants.js';
+import { DEFAULTS } from '../constants.js';
 import { generateDefinition, generateExample } from '../services/ai-service.js';
 import { openSaveAsModal, handleSaveAsConfirm, showFileModal } from './modals.js';
 import { ensureAudioForWordsAndSentences } from '../services/audio-service.js';
-import { prepareAndUploadImagesIfNeeded } from '../services/file-service.js';
+import { prepareAndUploadImagesIfNeeded, saveGameData } from '../services/file-service.js';
 
 /**
  * Quick save handler (silent overwrite if ID exists, else open Save As)
  */
-export async function handleQuickSave(ev, buildPayload, getCurrentGameId, titleEl, toast) {
+export async function handleQuickSave(ev, buildPayload, getCurrentGameId, setCurrentGameId, titleEl, toast, options = {}) {
+  const { silent = false } = options || {};
   const title = titleEl.value || DEFAULTS.TITLE;
   const gameImage = document.getElementById('gameImageZone').querySelector('img')?.src || '';
   const payload = buildPayload(title, gameImage);
   const currentGameId = getCurrentGameId();
   
   if (!payload.title || payload.words.length === 0) {
-    toast('Need title and at least 1 word');
-    return;
+    if (!silent) toast('Need title and at least 1 word');
+    return { success: false, error: 'Need title and at least 1 word' };
   }
   
   // First-time save -> open modal
   if (!currentGameId) {
+    if (silent) {
+      return { success: false, requiresInitialSave: true, error: 'No current file id' };
+    }
     const saveModalEl = document.getElementById('saveModal');
     const saveModalStatusEl = document.getElementById('saveModalStatus');
     openSaveAsModal(titleEl, saveModalEl, saveModalStatusEl);
-    return;
+    return { success: false, requiresInitialSave: true };
   }
   
   // Otherwise overwrite
@@ -35,16 +38,13 @@ export async function handleQuickSave(ev, buildPayload, getCurrentGameId, titleE
   
   try {
     await prepareAndUploadImagesIfNeeded(payload, currentGameId, { force: !!(ev && ev.shiftKey) });
-    const body = { action: 'update_game_data', id: currentGameId, data: payload };
-    const js = await fetchJSONSafe(ENDPOINTS.SUPABASE_PROXY, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify(body)
-    });
+    const js = await saveGameData(payload, currentGameId);
+    if (js?.success && js?.id && typeof setCurrentGameId === 'function' && js.id !== currentGameId) {
+      setCurrentGameId(js.id);
+    }
     
     if (js?.success) {
-      showTinyToast('Saved', { ms: 500 });
+      if (!silent) showTinyToast('Saved', { ms: 500 });
       // Fire-and-forget ensure missing audio (non-force) after successful save
       try {
         const words = (payload.words || []).map(w => w.eng).filter(Boolean);
@@ -55,12 +55,15 @@ export async function handleQuickSave(ev, buildPayload, getCurrentGameId, titleE
             .catch(e => console.debug('[quickSave][audio] skipped', e?.message));
         }, 50);
       } catch (e) { console.debug('[quickSave][audio] init error', e?.message); }
+      return { success: true, id: js?.id || currentGameId };
     } else {
-      showTinyToast(js?.error || 'Save failed', { variant: 'error', ms: 3000 });
+      if (!silent) showTinyToast(js?.error || 'Save failed', { variant: 'error', ms: 3000 });
+      return { success: false, error: js?.error || 'Save failed' };
     }
   } catch (e) {
     console.error(e);
-    showTinyToast('Save error', { variant: 'error', ms: 3000 });
+    if (!silent) showTinyToast('Save error', { variant: 'error', ms: 3000 });
+    return { success: false, error: e?.message || 'Save error' };
   } finally {
     if (saveLink) saveLink.classList.remove('disabled');
   }

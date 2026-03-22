@@ -10,9 +10,9 @@ import {
   setupImageDropZone, 
   generateImageDropZoneHTML,
   escapeHtml
-} from './images.js?v=20260322k';
+} from './images.js?v=20260322l';
 import { initMintAiListBuilder } from './MintAi-list-builder.js';
-import { initCreateGameModal, openCreateGameModal } from './create-game-modal.js?v=20260322k';
+import { initCreateGameModal, openCreateGameModal } from './create-game-modal.js?v=20260322l';
 import { showTinyToast, ensureLoadingOverlay, buildSkeletonHTML } from './utils/dom-helpers.js';
 import { fetchJSONSafe, timedJSONFetch, recordPerfSample, isLocalHost } from './utils/network.js';
 import { escapeRegExp, cleanDefinitionResponse, normalizeForKey, capitalize, ensurePunctuation } from './utils/validation.js';
@@ -146,6 +146,24 @@ const fileModal = document.getElementById('fileModal');
 const fileList = document.getElementById('fileList');
 const fileModalClose = document.getElementById('fileModalClose');
 
+let hasUnsavedChanges = false;
+let autosaveInFlight = false;
+let lastAutosaveTs = 0;
+const AUTOSAVE_INTERVAL_MS = 12000;
+
+function markDirty() {
+  hasUnsavedChanges = true;
+  if (!autosaveInFlight && statusEl) statusEl.textContent = 'Unsaved changes';
+}
+
+try { window.__gameBuilderMarkDirty = markDirty; } catch {}
+
+function markSaved(message = 'All changes saved') {
+  hasUnsavedChanges = false;
+  lastAutosaveTs = Date.now();
+  if (statusEl) statusEl.textContent = message;
+}
+
 // State now managed by state/game-state.js module
 // Access via getList(), setList(), getCurrentGameId(), setCurrentGameId()
 let loadingImages; // from image system
@@ -199,6 +217,7 @@ clearAllBtn.addEventListener('click', () => {
   try { sessionStorage.removeItem('gb_image_folder_v1'); } catch {}
   // Clear any image placeholders referencing past session (basic rerender)
   render();
+  markSaved('Cleared');
   toast('All game builder data cleared');
 });
 
@@ -225,13 +244,14 @@ if (addWordLink) {
   addWordLink.onclick = (e) => {
     e.preventDefault();
     handleAddWord(saveState, getList, setList, newRow, render);
+    markDirty();
   };
 }
 // Get Translations button wiring
 if (getTranslationsLink) {
   getTranslationsLink.onclick = (e) => {
     e.preventDefault();
-    handleGetTranslations(getList, setList, render, toast);
+    handleGetTranslations(getList, setList, render, toast).then(() => markDirty());
   };
 }
 // NOTE: Re-upload button removed; images now auto-processed during every Save / Save As.
@@ -355,7 +375,10 @@ function bindRowEvents(){
     el.addEventListener('input', () => {
       const idx = parseInt(el.dataset.idx,10);
       const field = el.dataset.field;
-      if(list[idx]) list[idx][field] = el.value;
+      if(list[idx]) {
+        list[idx][field] = el.value;
+        markDirty();
+      }
     });
     el.addEventListener('focus', () => { originalValue = el.value; });
     el.addEventListener('blur', () => {
@@ -368,13 +391,14 @@ function bindRowEvents(){
       const idx = parseInt(btn.dataset.idx,10);
       saveState();
       list.splice(idx,1);
+      markDirty();
       render();
     };
   });
   // Drop zones
   rowsEl.querySelectorAll('.drop-zone').forEach(zone => {
     const idx = parseInt(zone.dataset.idx,10);
-    setupImageDropZone(zone, idx, list, render, escapeHtml, saveState);
+    setupImageDropZone(zone, idx, list, render, escapeHtml, saveState, markDirty);
   });
   // Refresh definition/example buttons
   rowsEl.querySelectorAll('[data-action="refresh-def"]').forEach(btn => {
@@ -522,7 +546,38 @@ function applyWorksheetImages(rows, imagesField, originalWords) {
 }
 
 // Quick Save (silent): overwrite if currentGameId, else open Save As modal
-saveLink.onclick = (ev) => handleQuickSave(ev, buildPayload, getCurrentGameId, titleEl, toast);
+saveLink.onclick = async (ev) => {
+  const result = await handleQuickSave(ev, buildPayload, getCurrentGameId, setCurrentGameId, titleEl, toast, { silent: false });
+  if (result?.success) markSaved('Saved');
+};
+
+if (titleEl && !titleEl._dirtyBound) {
+  titleEl._dirtyBound = true;
+  titleEl.addEventListener('input', () => markDirty());
+}
+
+setInterval(async () => {
+  if (autosaveInFlight) return;
+  if (!hasUnsavedChanges) return;
+  const currentId = getCurrentGameId();
+  if (!currentId) {
+    if (statusEl) statusEl.textContent = 'Unsaved changes (Save As once to enable autosave)';
+    return;
+  }
+  autosaveInFlight = true;
+  if (statusEl) statusEl.textContent = 'Autosaving…';
+  try {
+    const result = await handleQuickSave(null, buildPayload, getCurrentGameId, setCurrentGameId, titleEl, toast, { silent: true });
+    if (result?.success) {
+      markSaved(`Autosaved ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`);
+    }
+  } catch (e) {
+    console.warn('[autosave] failed', e?.message || e);
+    if (statusEl) statusEl.textContent = 'Autosave failed (will retry)';
+  } finally {
+    autosaveInFlight = false;
+  }
+}, AUTOSAVE_INTERVAL_MS);
 
 // Basic burger menu toggle
 (function setupBurger() {
@@ -534,6 +589,7 @@ saveLink.onclick = (ev) => handleQuickSave(ev, buildPayload, getCurrentGameId, t
 // Auto behaviors for toggles
 enableDefinitionsEl.addEventListener('change', async () => {
   render(); // Always re-render to hide/show definitions
+  markDirty();
   if (enableDefinitionsEl.checked) {
     await generateDefinitionsForMissing();
   }
@@ -541,6 +597,7 @@ enableDefinitionsEl.addEventListener('change', async () => {
 
 enableExamplesEl.addEventListener('change', async () => {
   render(); // Always re-render to hide/show examples
+  markDirty();
   if (enableExamplesEl.checked) {
     await generateExamplesForMissing();
   }
@@ -548,6 +605,7 @@ enableExamplesEl.addEventListener('change', async () => {
 
 enablePicturesEl.addEventListener('change', async () => {
   render(); // Always re-render to hide/show images
+  markDirty();
   if (enablePicturesEl.checked) {
     const list = getList();
     await loadImagesForMissingOnly(list, loadingImages, render);
@@ -605,6 +663,7 @@ async function generateExampleForRow(idx, force = false) {
   const example = await generateExample(w.eng);
   if (example) {
     w.example = example;
+    markDirty();
     render();
   }
 }
@@ -617,6 +676,7 @@ async function generateDefinitionForRow(idx) {
   const definition = await generateDefinition(w.eng, w.kor || '');
   if (definition) {
     w.definition = definition;
+    markDirty();
     render();
   }
 }
@@ -1144,6 +1204,7 @@ function paintFileList(initialRows, { cached, initial, uniqueCount }) {
       setList(mapped);
       if (titleEl) titleEl.value = row.title || 'Untitled Game';
       render();
+      markSaved('Game loaded');
       maybeAutofillMissingExamples('openGameData');
       toast(mapped.length ? 'Game loaded' : 'Loaded (empty)');
       fileModal.style.display = 'none';

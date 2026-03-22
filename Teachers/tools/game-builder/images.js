@@ -196,6 +196,7 @@ async function loadGalleryPage(page, replace){
 function selectGalleryImage(src){
   if (typeof galleryState.onSelect === 'function') {
     try { galleryState.onSelect(src); } catch (e) { console.warn('pixabay picker callback failed', e); }
+    try { if (typeof window.__gameBuilderMarkDirty === 'function') window.__gameBuilderMarkDirty(); } catch {}
     closeGallery();
     return;
   }
@@ -204,6 +205,7 @@ function selectGalleryImage(src){
       const list = window.__gameBuilderList();
       if(Array.isArray(list) && list[galleryState.targetIndex]){
         list[galleryState.targetIndex].image_url = src;
+        try { if (typeof window.__gameBuilderMarkDirty === 'function') window.__gameBuilderMarkDirty(); } catch {}
         if(typeof window.__gameBuilderRender==='function') window.__gameBuilderRender();
       }
     }
@@ -353,7 +355,7 @@ export async function loadImagesForMissingOnly(list, loadingImagesSet, renderCal
 }
 
 // Setup drag and drop for image zones
-export function setupImageDropZone(zone, idx, list, renderCallback, escapeHtml, saveStateCallback = null) {
+export function setupImageDropZone(zone, idx, list, renderCallback, escapeHtml, saveStateCallback = null, onChangeCallback = null) {
   // Expose accessors for gallery
   if(!window.__gameBuilderList) window.__gameBuilderList = () => list;
   if(!window.__gameBuilderRender) window.__gameBuilderRender = () => renderCallback();
@@ -391,6 +393,7 @@ export function setupImageDropZone(zone, idx, list, renderCallback, escapeHtml, 
         reader.onload = function(ev) {
           list[idx].image_url = ev.target.result;
           console.log(`Dropped file image for "${list[idx].eng}"`);
+          if (onChangeCallback) onChangeCallback();
           renderCallback();
         };
         reader.readAsDataURL(file);
@@ -403,6 +406,7 @@ export function setupImageDropZone(zone, idx, list, renderCallback, escapeHtml, 
     if (text && /^https?:\/\//i.test(text.trim())) {
       list[idx].image_url = text.trim();
       console.log(`Dropped URL image for "${list[idx].eng}":`, text.trim());
+      if (onChangeCallback) onChangeCallback();
       renderCallback();
     }
   });
