@@ -449,12 +449,15 @@
             card.addEventListener('click', async () => {
               const listKey = a.list_key || a.list_title || '';
               const sourceType = String(a?.list_meta?.source_type || '').toLowerCase();
-              const gameId = String(a?.list_meta?.game_id || '').trim();
+              const metaType = String(a?.list_meta?.type || '').toLowerCase();
+              const listKeySavedMatch = String(listKey || '').match(/^saved_game:(.+)$/i);
+              const gameId = String(a?.list_meta?.game_id || (listKeySavedMatch && listKeySavedMatch[1]) || '').trim();
+              const isSavedGameHomework = sourceType === 'saved_game' || metaType === 'saved_game' || !!listKeySavedMatch;
               // Switch back to main arcade tab
               tabWordArcade?.classList.add('active');
               tabGrammarArcade.classList.remove('active');
               const hwId = a.id;
-              if (sourceType === 'saved_game' && gameId) {
+              if (isSavedGameHomework && gameId) {
                 const savedUrl = `${window.location.pathname}?hw=${encodeURIComponent(hwId || '')}&open=saved&id=${encodeURIComponent(gameId)}&autostart=1`;
                 window.location.href = savedUrl;
                 return;
