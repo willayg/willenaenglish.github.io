@@ -10,7 +10,7 @@ import {
   setupImageDropZone, 
   generateImageDropZoneHTML,
   escapeHtml
-} from './images.js?v=20260322n';
+} from './images.js?v=20260322r';
 import { initMintAiListBuilder } from './MintAi-list-builder.js?v=20260322n';
 import { initCreateGameModal, openCreateGameModal } from './create-game-modal.js?v=20260322n';
 import { showTinyToast, ensureLoadingOverlay, buildSkeletonHTML } from './utils/dom-helpers.js';
@@ -290,6 +290,7 @@ initFileListModal({
 function render() {
   const list = getList();
   rowsEl.innerHTML = '';
+  let gameImage = document.getElementById('gameImageZone')?.querySelector('img')?.src || '';
   // If we don't have a real public base (placeholder) rewrite any direct R2 API endpoints to proxy form for visibility
   try {
     const placeholder = !window.R2_PUBLIC_BASE || /your-r2-public-domain/i.test(window.R2_PUBLIC_BASE);
@@ -316,6 +317,9 @@ function render() {
       const base = window.R2_PUBLIC_BASE.replace(/\/$/, '');
       for (const w of list) {
         if (!w || !w.image_url) continue;
+        if (/^https?:\/\/(?:cdn\.)?pixabay\.com\//i.test(w.image_url)) {
+          w.image_url = '/.netlify/functions/pixabay_image_proxy?url=' + encodeURIComponent(w.image_url);
+        }
         // Strip /images/ from absolute R2 URLs (bucket name shouldn't be in public URL path)
         if (w.image_url.startsWith(base + '/images/words/')) {
           w.image_url = base + '/' + w.image_url.substring((base + '/images/').length);
@@ -327,6 +331,9 @@ function render() {
         }
       }
       // Also check game cover image
+      if (/^https?:\/\/(?:cdn\.)?pixabay\.com\//i.test(gameImage)) {
+        gameImage = '/.netlify/functions/pixabay_image_proxy?url=' + encodeURIComponent(gameImage);
+      }
       if (gameImage && typeof gameImage === 'string' && gameImage.startsWith(base + '/images/cover/')) {
         gameImage = base + '/' + gameImage.substring((base + '/images/').length);
         console.log('[builder] Stripped /images/ from gameImage:', gameImage.substring(0, 80));

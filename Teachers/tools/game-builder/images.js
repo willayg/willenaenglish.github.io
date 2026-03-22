@@ -13,6 +13,20 @@ export function escapeHtml(s) {
 let loadingImages = new Set();
 let galleryState = { open:false, targetIndex:null, query:'', page:1, perPage:12, results:[], busy:false, lastFetchTs:0, filter:'all', onSelect:null };
 
+function proxifyPixabayUrl(src) {
+  if (!src || typeof src !== 'string') return src;
+  if (/\/\.netlify\/functions\/pixabay_image_proxy\?url=/i.test(src)) return src;
+  if (!/^https?:\/\//i.test(src)) return src;
+  try {
+    const u = new URL(src);
+    const host = u.hostname.toLowerCase();
+    if (host === 'cdn.pixabay.com' || host.endsWith('.pixabay.com') || host === 'pixabay.com') {
+      return '/.netlify/functions/pixabay_image_proxy?url=' + encodeURIComponent(src);
+    }
+  } catch {}
+  return src;
+}
+
 function getApiPath(path) {
   try {
     return window.WillenaAPI?.getApiUrl ? window.WillenaAPI.getApiUrl(path) : path;
@@ -179,7 +193,7 @@ async function loadGalleryPage(page, replace){
         img.decoding='async';
         img.loading='lazy';
         img.referrerPolicy='no-referrer';
-        img.src=src;
+        img.src=proxifyPixabayUrl(src);
         div.appendChild(img);
         img.onerror=()=> { div.classList.add('err'); };
         div.addEventListener('click', ()=> selectGalleryImage(src));
@@ -204,7 +218,7 @@ function selectGalleryImage(src){
     if(window.__gameBuilderList){
       const list = window.__gameBuilderList();
       if(Array.isArray(list) && list[galleryState.targetIndex]){
-        list[galleryState.targetIndex].image_url = src;
+        list[galleryState.targetIndex].image_url = proxifyPixabayUrl(src);
         try { if (typeof window.__gameBuilderMarkDirty === 'function') window.__gameBuilderMarkDirty(); } catch {}
         if(typeof window.__gameBuilderRender==='function') window.__gameBuilderRender();
       }
@@ -331,7 +345,7 @@ export async function loadImageForRow(list, idx, loadingImagesSet, renderCallbac
     const js = await res.json();
     const img = js?.images?.[0];
     if (img) {
-      list[idx].image_url = img;
+      list[idx].image_url = proxifyPixabayUrl(img);
       console.log(`Loaded new image for "${term}":`, img);
     }
   } catch (e) {
