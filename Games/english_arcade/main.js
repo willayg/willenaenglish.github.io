@@ -323,6 +323,7 @@ function clearCurrentGameState({ keepWordList = false } = {}) {
 }
 
 function quitToOpening(fully = false) {
+  setAutostartLoadingVisible(false);
   clearCurrentGameState({ keepWordList: !fully });
   // Render the real opening menu (restore original buttons and wire events)
   renderOpeningMenu();
@@ -342,7 +343,20 @@ function showOpeningButtons(visible) {
   if (btns) btns.style.display = visible ? '' : 'none';
 }
 
+function setAutostartLoadingVisible(visible, message = 'Loading homework…', subtitle = 'Preparing your game') {
+  const overlay = document.getElementById('waAutostartOverlay');
+  if (!overlay) return;
+  const titleEl = overlay.querySelector('.wa-title');
+  const subtitleEl = overlay.querySelector('.wa-subtitle');
+  if (titleEl) titleEl.textContent = message;
+  if (subtitleEl) subtitleEl.textContent = subtitle;
+  overlay.style.display = visible ? 'flex' : 'none';
+  document.documentElement.classList.toggle('wa-autostart-pending', !!visible);
+  try { window.__WA_AUTOSTART_PENDING__ = !!visible; } catch {}
+}
+
 function showProgress(message, progress = 0) {
+  setAutostartLoadingVisible(false);
   showOpeningButtons(false);
   gameArea.innerHTML = `<div style="text-align:center;padding:40px;font-family:Arial,sans-serif;">
     <h3 style="margin-bottom:20px;color:#333;">${message}</h3>
@@ -367,6 +381,7 @@ function showGameStart(callback) {
 }
 
 function showInlineError(text, onRetry) {
+  setAutostartLoadingVisible(false);
   gameArea.innerHTML = `<div style="text-align:center;padding:40px;font-family:Arial,sans-serif;">
     <h3 style="margin-bottom:14px;color:#e53e3e;">We couldn't prepare all audio</h3>
     <div style="color:#555;margin-bottom:16px;">${text}</div>
@@ -607,6 +622,7 @@ async function loadSampleWordlistByFilename(filename, { force = false, listName 
 }
 
 function startModeSelector() {
+  setAutostartLoadingVisible(false);
   showOpeningButtons(false);
   // Ensure we have any cached state back in memory for UI headers
   restoreSessionStateIfEmpty();
@@ -873,6 +889,7 @@ async function loadGrammarGame({ grammarFile, grammarName, grammarConfig }) {
 }
 
 export async function startGame(mode = 'meaning') {
+  setAutostartLoadingVisible(false);
   showOpeningButtons(false);
   if (!wordList.length) { showOpeningButtons(true); gameArea.innerHTML = ''; return; }
   // Clear any previous mode (when switching)

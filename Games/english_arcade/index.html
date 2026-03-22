@@ -34,7 +34,63 @@
     body { font: 14px/1.4 system-ui, Segoe UI, Arial, sans-serif; background:#f5f7fa; color:var(--ink); }
     /* Force consistent header height to prevent jumpiness */
     student-header::part(name) { font-size: 16px; line-height: 1.2; }
+    html.wa-autostart-pending #openingButtons { display: none !important; }
+    html.wa-autostart-pending #waAutostartOverlay { display: flex; }
+    #waAutostartOverlay {
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: rgba(245, 247, 250, 0.96);
+      z-index: 9998;
+      padding: 24px;
+    }
+    #waAutostartOverlay .wa-autostart-card {
+      min-width: 220px;
+      max-width: 320px;
+      background: #fff;
+      border: 2px solid #93cbcf;
+      border-radius: 18px;
+      box-shadow: 0 12px 36px rgba(25,119,126,0.14);
+      padding: 24px 22px;
+      text-align: center;
+    }
+    #waAutostartOverlay .wa-spinner {
+      width: 42px;
+      height: 42px;
+      margin: 0 auto 14px;
+      border-radius: 50%;
+      border: 4px solid rgba(147, 203, 207, 0.35);
+      border-top-color: #19777e;
+      animation: wa-spin 0.9s linear infinite;
+    }
+    #waAutostartOverlay .wa-title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #19777e;
+      margin-bottom: 6px;
+    }
+    #waAutostartOverlay .wa-subtitle {
+      font-size: 0.86rem;
+      color: #5b6670;
+    }
+    @keyframes wa-spin {
+      to { transform: rotate(360deg); }
+    }
   </style>
+  <script>
+    (function() {
+      try {
+        const params = new URLSearchParams(window.location.search);
+        const shouldShowLaunchOverlay = params.get('autostart') === '1' || (params.get('open') || '').toLowerCase() === 'saved';
+        window.__WA_AUTOSTART_PENDING__ = shouldShowLaunchOverlay;
+        if (shouldShowLaunchOverlay) {
+          document.documentElement.classList.add('wa-autostart-pending');
+        }
+      } catch {}
+    })();
+  </script>
   <script>
     // Early auth gate: redirect to student login if no valid whoami
     (function(){
@@ -71,6 +127,13 @@
   <script type="module" src="main.js?v=20251214a"></script>
 </head>
 <body class="word-arcade">
+  <div id="waAutostartOverlay" aria-live="polite" aria-busy="true">
+    <div class="wa-autostart-card">
+      <div class="wa-spinner" aria-hidden="true"></div>
+      <div class="wa-title">Loading homework…</div>
+      <div class="wa-subtitle">Preparing your game</div>
+    </div>
+  </div>
   <student-header title="" show-home="false" home-href="/students/dashboard.html" home-label="Home" data-i18n="Home">
   <img slot="actions" src="assets/Images/icons/english-arcade.svg" alt="English Arcade" style="height:4em;max-height:4.5em;display:block;" />
   <a slot="menu-item" id="tabWordArcade" class="wa-menu-btn wa-tab active" href="#" data-i18n="English Arcade">English Arcade</a>
