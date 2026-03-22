@@ -447,29 +447,43 @@
               const teacher = document.createElement('div'); teacher.style.fontSize='0.7rem'; teacher.style.color='#555'; teacher.textContent=t('Teacher') + ': ' + a.teacher_name; card.appendChild(teacher);
             }
             card.addEventListener('click', async () => {
-              const listKey = a.list_key || a.list_title || '';
-              const sourceType = String(a?.list_meta?.source_type || '').toLowerCase();
-              const metaType = String(a?.list_meta?.type || '').toLowerCase();
+              let listMeta = a?.list_meta;
+              if (typeof listMeta === 'string') {
+                try { listMeta = JSON.parse(listMeta); } catch { listMeta = {}; }
+              }
+              if (!listMeta || typeof listMeta !== 'object') listMeta = {};
+
+              const listKey = a.list_key || a.list || a.wordlist_key || listMeta.list_key || listMeta.filename || a.list_title || '';
+              const sourceType = String(listMeta.source_type || '').toLowerCase();
+              const metaType = String(listMeta.type || '').toLowerCase();
               const listKeySavedMatch = String(listKey || '').match(/^saved_game:(.+)$/i);
-              const gameId = String(a?.list_meta?.game_id || (listKeySavedMatch && listKeySavedMatch[1]) || '').trim();
+              const explicitGameId = a?.game_id || listMeta.game_id || listMeta.id || '';
+              const gameId = String(explicitGameId || (listKeySavedMatch && listKeySavedMatch[1]) || '').trim();
               const isSavedGameHomework = sourceType === 'saved_game' || metaType === 'saved_game' || !!listKeySavedMatch;
-              // Switch back to main arcade tab
-              tabWordArcade?.classList.add('active');
-              tabGrammarArcade.classList.remove('active');
               const hwId = a.id;
+
               if (isSavedGameHomework && gameId) {
                 const savedUrl = `${window.location.pathname}?hw=${encodeURIComponent(hwId || '')}&open=saved&id=${encodeURIComponent(gameId)}&autostart=1`;
                 window.location.href = savedUrl;
                 return;
               }
-              if (!listKey) return;
+
+              if (!listKey) {
+                console.warn('Homework card missing launch key', a);
+                return;
+              }
+
+              // Switch back to main arcade tab only when we have a launch target
+              tabWordArcade?.classList.add('active');
+              tabGrammarArcade.classList.remove('active');
+
               // Autostart the homework and prefer the teacher-assigned title when available
               try {
-                await autostartHomework(listKey, hwId, a.title || a.list_title || null);
+                await autostartHomework(listKey, hwId, a.title || a.list_title || listMeta.title || null);
               } catch (err) {
                 console.error('autostartHomework failed', err);
                 // Fallback: navigate to autostart URL
-                const url = `${window.location.pathname}?hw=${encodeURIComponent(hwId)}&list=${encodeURIComponent(listKey)}&autostart=1`;
+                const url = `${window.location.pathname}?hw=${encodeURIComponent(hwId || '')}&list=${encodeURIComponent(listKey)}&autostart=1`;
                 window.location.href = url;
               }
             });
