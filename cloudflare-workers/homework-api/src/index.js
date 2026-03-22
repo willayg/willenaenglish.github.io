@@ -670,6 +670,17 @@ export default {
           || !!assignment.list_meta?.game_id
           || /^saved_game:/i.test(String(assignment.list_key || ''));
 
+        console.log(`[homework-api] session matching for ${assignment.id}: isSavedGame=${isSavedGameAssignment}, totalSessions=${(sessions||[]).length}, validTokens=[${[requestRunToken, ...assignmentRunTokens].filter(Boolean).join(',')}], list_key=${assignment.list_key}`);
+
+        // Log a sample of session summaries to see if assignment_run tokens exist
+        if (isSavedGameAssignment && sessions && sessions.length > 0) {
+          const sampleSessions = sessions.slice(0, 5).map(s => {
+            const sum = parseSummary(s.summary);
+            return { user_id: s.user_id, mode: s.mode, list_name: s.list_name, assignment_run: sum?.assignment_run || 'NONE' };
+          });
+          console.log(`[homework-api] sample sessions:`, JSON.stringify(sampleSessions));
+        }
+
         let filteredSessions = [];
         if (isSavedGameAssignment) {
           const validTokens = [requestRunToken, ...assignmentRunTokens].filter(Boolean);
@@ -678,6 +689,30 @@ export default {
             const token = summary && summary.assignment_run;
             return !!token && validTokens.includes(token);
           });
+          // FALLBACK: If run-token matching fails for saved game, try list_name matching too
+          if (filteredSessions.length === 0 && sessions && sessions.length > 0) {
+            console.log(`[homework-api] run-token match failed for saved game ${assignment.id}, trying list_name fallback`);
+            const listKeyLast = (assignment.list_key || '').split('/').pop();
+            const coreName = listKeyLast.replace(/\.json$/, '').replace(/^saved_game:/i, '').toLowerCase();
+            const assignmentTitle = (assignment.title || '').toLowerCase();
+            const listTitle = (assignment.list_title || '').toLowerCase();
+            const gameName = String(assignment.list_meta?.title || assignment.list_meta?.game_name || '').toLowerCase();
+            const normalize = (v) => String(v || '').toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+            const normalizedCoreName = normalize(coreName);
+            const normalizedTitle = normalize(assignmentTitle);
+            const normalizedGameName = normalize(gameName);
+
+            filteredSessions = (sessions || []).filter(sess => {
+              const ln = (sess.list_name || '').toLowerCase();
+              const nln = normalize(ln);
+              if (coreName && (ln.includes(coreName) || nln.includes(normalizedCoreName))) return true;
+              if (assignmentTitle && (ln.includes(assignmentTitle) || nln.includes(normalizedTitle))) return true;
+              if (listTitle && ln.includes(listTitle)) return true;
+              if (gameName && (ln.includes(gameName) || nln.includes(normalizedGameName))) return true;
+              return false;
+            });
+            console.log(`[homework-api] list_name fallback found ${filteredSessions.length} sessions`);
+          }
         } else {
           // Filter sessions by list name matching.
           // The stored assignment list_key and the recorded session list_name are not always
@@ -898,7 +933,7 @@ export default {
         
         return jsonResponse({
           success: true,
-          _v: 'cf-hw-api-v2-spelling-fix',
+          _v: 'cf-hw-api-v3-fallback',
           assignment_id: assignment.id,
           class: targetClass,
           total_modes: totalModes,
@@ -909,6 +944,18 @@ export default {
           goal_type: assignment.goal_type || null,
           goal_value: assignment.goal_value || null,
           progress: filteredProgress,
+          _debug: {
+            total_sessions_fetched: (sessions || []).length,
+            filtered_sessions_count: filteredSessions.length,
+            is_saved_game: isSavedGameAssignment,
+            run_tokens_on_assignment: (assignmentRunTokens || []).length,
+            request_run_token: requestRunToken || null,
+            list_key: assignment.list_key,
+            forced_mode: forcedMode,
+            meta_modes: metaModes,
+            goal_value: assignment.goal_value,
+            sample_session_modes: filteredSessions.slice(0, 5).map(s => s.mode),
+          },
         }, 200, origin);
       }
       

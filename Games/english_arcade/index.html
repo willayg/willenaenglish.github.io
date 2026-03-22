@@ -325,6 +325,7 @@
           } catch {}
           const prRes = await WillenaAPI.fetch(`/.netlify/functions/homework_api?action=assignment_progress&assignment_id=${encodeURIComponent(assignmentId)}${spHint}`);
           const prJson = await prRes.json().catch(() => ({}));
+          console.log('[HW Progress] API response:', JSON.stringify(prJson._debug || {}), 'progress:', JSON.stringify((prJson.progress || []).map(p => ({uid: p.user_id, completion: p.completion, modes: p.modes_attempted + '/' + p.modes_total, modes_list: p.modes}))));
           if (!prRes.ok || !prJson.success || !Array.isArray(prJson.progress)) return null;
 
           const uid = await getCurrentUserIdCached();
