@@ -402,11 +402,18 @@ body { margin:0; background: var(--bg); font-family: Poppins, system-ui, -apple-
 .cgm-back-btn:hover { background:#eef6f9; }
 
 /* Homework form layout reuse - wrap existing inputs */
-.cgm-home-form { display:grid; grid-template-columns:1fr 1fr; gap:16px; max-width:840px; margin:0 auto; }
+.cgm-home-form { display:grid; grid-template-columns:1fr 1fr; gap:16px 18px; max-width:860px; margin:0 auto; align-items:start; }
 .cgm-home-form .wide { grid-column:1 / span 2; }
+.cgm-field { display:flex; flex-direction:column; gap:6px; }
+.cgm-field > label { font-size:.8rem; font-weight:700; color:#334155; line-height:1.2; letter-spacing:.2px; }
+.cgm-home-form .input { width:100%; min-width:0; }
 .cgm-help-text { margin-top:6px; font-size:.72rem; color:#64748b; }
 .cgm-home-actions { margin-top:24px; display:flex; gap:12px; justify-content:flex-end; }
 .cgm-hint { font-size:.75rem; color:#64748b; margin-top:6px; }
+.cgm-image-wrap { display:flex; align-items:flex-start; gap:14px; flex-wrap:wrap; }
+.cgm-image-zone { width:220px; height:220px; min-height:220px; aspect-ratio:1/1; border-radius:12px; }
+.cgm-image-zone .hint { right:auto; left:50%; bottom:10px; transform:translateX(-50%); text-align:center; white-space:nowrap; }
+.cgm-image-pick-btn { align-self:flex-start; min-width:120px; }
 
 @media (max-width: 1100px) {
   .cgm-live-grid { grid-template-columns:repeat(3, 1fr); }
@@ -419,6 +426,7 @@ body { margin:0; background: var(--bg); font-family: Poppins, system-ui, -apple-
   .cgm-choice-btn { padding:26px 18px; font-size:1.05rem; }
   .cgm-home-form { grid-template-columns:1fr; }
   .cgm-home-form .wide { grid-column:1; }
+  .cgm-image-zone { width:100%; max-width:260px; height:auto; min-height:220px; }
   .cgm-mode-tile { max-width:300px; max-height:300px; min-width:200px; min-height:200px; font-size:1.1rem; }
 }
 

@@ -11,7 +11,15 @@ export function escapeHtml(s) {
 
 // Global state
 let loadingImages = new Set();
-let galleryState = { open:false, targetIndex:null, query:'', page:1, perPage:12, results:[], busy:false, lastFetchTs:0, filter:'all' };
+let galleryState = { open:false, targetIndex:null, query:'', page:1, perPage:12, results:[], busy:false, lastFetchTs:0, filter:'all', onSelect:null };
+
+function getApiPath(path) {
+  try {
+    return window.WillenaAPI?.getApiUrl ? window.WillenaAPI.getApiUrl(path) : path;
+  } catch {
+    return path;
+  }
+}
 
 function ensureGalleryElements(){
   if(document.getElementById('pixabayGalleryModal')) return;
@@ -64,7 +72,7 @@ function ensureGalleryElements(){
 
 function openGallery(index, defaultQuery){
   ensureGalleryElements();
-  galleryState.open=true; galleryState.targetIndex=index; galleryState.page=1; galleryState.results=[]; galleryState.query=defaultQuery||'';
+  galleryState.open=true; galleryState.targetIndex=index; galleryState.page=1; galleryState.results=[]; galleryState.query=defaultQuery||''; galleryState.onSelect=null;
   const modal = document.getElementById('pixabayGalleryModal');
   modal.style.display='flex';
   const input = modal.querySelector('#pgSearch'); if(input){ input.value=galleryState.query; setTimeout(()=> input.focus(),50); }
@@ -74,7 +82,30 @@ function openGallery(index, defaultQuery){
   }
 }
 function closeGallery(){
-  galleryState.open=false; galleryState.targetIndex=null; const modal=document.getElementById('pixabayGalleryModal'); if(modal) modal.style.display='none';
+  galleryState.open=false; galleryState.targetIndex=null; galleryState.onSelect=null; const modal=document.getElementById('pixabayGalleryModal'); if(modal) modal.style.display='none';
+}
+
+export function openPixabayImagePicker({ defaultQuery = '', onSelect } = {}) {
+  ensureGalleryElements();
+  galleryState.open = true;
+  galleryState.targetIndex = null;
+  galleryState.page = 1;
+  galleryState.results = [];
+  galleryState.query = defaultQuery || '';
+  galleryState.onSelect = (typeof onSelect === 'function') ? onSelect : null;
+  const modal = document.getElementById('pixabayGalleryModal');
+  modal.style.display = 'flex';
+  const input = modal.querySelector('#pgSearch');
+  if (input) {
+    input.value = galleryState.query;
+    setTimeout(() => input.focus(), 50);
+  }
+  if (galleryState.query) {
+    startGallerySearch();
+  } else {
+    const results = document.getElementById('pgResults');
+    if (results) results.innerHTML = '<div class="empty">Type a search term (English) and press Enter.</div>';
+  }
 }
 
 function startGallerySearch(){
@@ -94,7 +125,8 @@ async function loadGalleryPage(page, replace){
   const skCount = page===1 ? 12 : 6;
   for(let i=0;i<skCount;i++){ const ph=document.createElement('div'); ph.className='pg-item loading'; grid.appendChild(ph); }
   try {
-    const url = new URL('/.netlify/functions/pixabay', window.location.origin);
+    const apiPath = getApiPath('/.netlify/functions/pixabay');
+    const url = new URL(apiPath, window.location.origin);
     url.searchParams.set('q', galleryState.query);
     url.searchParams.set('per_page', galleryState.perPage);
     url.searchParams.set('page', page);
@@ -141,6 +173,11 @@ async function loadGalleryPage(page, replace){
 }
 
 function selectGalleryImage(src){
+  if (typeof galleryState.onSelect === 'function') {
+    try { galleryState.onSelect(src); } catch (e) { console.warn('pixabay picker callback failed', e); }
+    closeGallery();
+    return;
+  }
   if(galleryState.targetIndex==null) return; try {
     if(window.__gameBuilderList){
       const list = window.__gameBuilderList();

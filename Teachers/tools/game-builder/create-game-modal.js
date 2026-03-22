@@ -17,6 +17,7 @@
 import { preprocessTTS } from '../../../Games/english_arcade/tts.js';
 import { getCurrentGameId, setCurrentGameId } from './state/game-state.js';
 import { ensureAudioForWordsAndSentences } from './services/audio-service.js';
+import { openPixabayImagePicker } from './images.js';
 
 // -------------------------------------------------------------
 // State & Utility
@@ -46,6 +47,7 @@ const el = {
   unit: document.getElementById('gameUnit'),
   desc: document.getElementById('gameDescription'),
   imageZone: document.getElementById('gameImageZone'),
+  imagePick: document.getElementById('gameImagePick'),
   status: document.getElementById('createGameStatus'),
   titleInput: document.getElementById('titleInput'),
   // Panel containers (will be created if not present)
@@ -518,43 +520,46 @@ function ensurePanels() {
         <div style="flex:1;"></div>
       </div>
       <form class="cgm-home-form" id="cgmHomeworkForm" autocomplete="off">
-        <div class="wide">
-          <label style="font-weight:600;font-size:.8rem;letter-spacing:.5px;">Game Title</label>
+        <div class="cgm-field wide">
+          <label>Game Title</label>
           <input id="gameTitle" class="input" placeholder="Enter game title" />
         </div>
-        <div>
-          <label style="font-weight:600;font-size:.8rem;">Class(es)</label>
+        <div class="cgm-field">
+          <label>Class(es)</label>
           <select id="gameClass" class="input" multiple size="8">
             <option value="" disabled>Select one or more classes</option>
           </select>
           <div class="cgm-help-text">Tip: Ctrl/Cmd + click to select multiple classes.</div>
         </div>
-        <div>
-          <label style="font-weight:600;font-size:.8rem;">Assign To</label>
+        <div class="cgm-field">
+          <label>Assign To</label>
           <select id="gameStudentTarget" class="input">
             <option value="">Entire class</option>
           </select>
           <div id="gameStudentHelp" class="cgm-help-text">Optional: leave as Entire class to assign to everyone.</div>
         </div>
-        <div>
-          <label style="font-weight:600;font-size:.8rem;">Date Due</label>
+        <div class="cgm-field">
+          <label>Date Due</label>
           <input id="gameDateDue" type="date" class="input" />
         </div>
-        <div>
-          <label style="font-weight:600;font-size:.8rem;">Book</label>
-            <input id="gameBook" class="input" placeholder="English Book 1" />
+        <div class="cgm-field">
+          <label>Book</label>
+          <input id="gameBook" class="input" placeholder="English Book 1" />
         </div>
-        <div>
-          <label style="font-weight:600;font-size:.8rem;">Unit</label>
-            <input id="gameUnit" class="input" placeholder="Unit 3" />
+        <div class="cgm-field">
+          <label>Unit</label>
+          <input id="gameUnit" class="input" placeholder="Unit 3" />
         </div>
-        <div class="wide">
-          <label style="font-weight:600;font-size:.8rem;">Description (optional)</label>
+        <div class="cgm-field wide">
+          <label>Description (optional)</label>
           <textarea id="gameDescription" class="input" style="min-height:70px;resize:vertical;" placeholder="Brief description"></textarea>
         </div>
-        <div class="wide">
-          <label style="font-weight:600;font-size:.8rem;">Game Image</label>
-          <div id="gameImageZone" class="drop-zone"><span class="hint">Click to search • Drag image here</span></div>
+        <div class="cgm-field wide">
+          <label>Game Image</label>
+          <div class="cgm-image-wrap">
+            <div id="gameImageZone" class="drop-zone cgm-image-zone"><span class="hint">No image selected</span></div>
+            <button type="button" id="gameImagePick" class="btn cgm-image-pick-btn">Select image</button>
+          </div>
         </div>
         <div class="cgm-home-actions wide">
           <span id="createGameStatus" style="flex:1;color:#64748b;font-size:.8rem;align-self:center;"></span>
@@ -582,6 +587,7 @@ function ensurePanels() {
     el.unit = hw.querySelector('#gameUnit');
     el.desc = hw.querySelector('#gameDescription');
     el.imageZone = hw.querySelector('#gameImageZone');
+    el.imagePick = hw.querySelector('#gameImagePick');
     el.status = hw.querySelector('#createGameStatus');
     el.save = hw.querySelector('#createGameSave');
     el.cancel = hw.querySelector('#createGameCancel');
@@ -757,7 +763,7 @@ function updateGameImageDisplay() {
   if (gameImageUrl) {
     el.imageZone.innerHTML = `<img src="${gameImageUrl}" alt="Game Image" style="width:100%;height:100%;object-fit:cover;border-radius:6px;" />`;
   } else {
-    el.imageZone.innerHTML = '<span class="hint">Click to search • Drag image here</span>';
+    el.imageZone.innerHTML = '<span class="hint">No image selected</span>';
   }
 }
 
@@ -1050,28 +1056,21 @@ export function initCreateGameModal(buildPayload) {
     if (!el.imageZone) return;
     if (el.imageZone._bound) return;
     el.imageZone._bound = true;
-    el.imageZone.addEventListener('click', () => {
+    const openPicker = () => {
       const term = el.title?.value?.trim() || 'education game';
-      const url = `https://pixabay.com/images/search/${encodeURIComponent(term)}/`;
-      window.open(url, 'pixabayGameSearch', 'width=900,height=700');
-    });
-    if (el.title) el.title.addEventListener('blur', () => { const t = el.title.value?.trim(); if (t && !gameImageUrl) searchGameImage(t); });
-    el.imageZone.addEventListener('dragover', (ev) => { ev.preventDefault(); el.imageZone.classList.add('dragover'); });
-    el.imageZone.addEventListener('dragleave', () => { el.imageZone.classList.remove('dragover'); });
-    el.imageZone.addEventListener('drop', (ev) => {
-      ev.preventDefault(); el.imageZone.classList.remove('dragover');
-      const files = Array.from(ev.dataTransfer.files || []);
-      if (files.length) {
-        const file = files[0];
-        if (file.type && file.type.startsWith('image/')) {
-          const r = new FileReader();
-          r.onload = (e2) => { gameImageUrl = e2.target.result; updateGameImageDisplay(); };
-          r.readAsDataURL(file); return;
+      openPixabayImagePicker({
+        defaultQuery: term,
+        onSelect: (src) => {
+          gameImageUrl = src;
+          updateGameImageDisplay();
         }
-      }
-      const text = ev.dataTransfer.getData('text/uri-list') || ev.dataTransfer.getData('text/plain');
-      if (text && /^https?:\/\//i.test(text.trim())) { gameImageUrl = text.trim(); updateGameImageDisplay(); }
-    });
+      });
+    };
+    el.imageZone.addEventListener('click', openPicker);
+    if (el.imagePick && !el.imagePick._bound) {
+      el.imagePick._bound = true;
+      el.imagePick.addEventListener('click', openPicker);
+    }
   };
 
   // Mutation observer to attach handlers once panels built (openCreateGameModal triggers ensurePanels)
