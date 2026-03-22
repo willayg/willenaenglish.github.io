@@ -1,7 +1,7 @@
 // Simplified Mint AI List Builder module
 // Encapsulates AI modal wiring, preview, generate, and insert behavior.
 
-import { escapeHtml, hasValidImageUrl, loadImageForRow } from './images.js';
+import { escapeHtml, hasValidImageUrl, loadImageForRow } from './images.js?v=20260322n';
 
 const AI_PREVIEW_PLACEHOLDER = 'Paste or edit here, one pair per line: English, Korean';
 

@@ -10,13 +10,13 @@ import {
   setupImageDropZone, 
   generateImageDropZoneHTML,
   escapeHtml
-} from './images.js?v=20260322m';
-import { initMintAiListBuilder } from './MintAi-list-builder.js';
-import { initCreateGameModal, openCreateGameModal } from './create-game-modal.js?v=20260322m';
+} from './images.js?v=20260322n';
+import { initMintAiListBuilder } from './MintAi-list-builder.js?v=20260322n';
+import { initCreateGameModal, openCreateGameModal } from './create-game-modal.js?v=20260322n';
 import { showTinyToast, ensureLoadingOverlay, buildSkeletonHTML } from './utils/dom-helpers.js';
 import { fetchJSONSafe, timedJSONFetch, recordPerfSample, isLocalHost } from './utils/network.js';
 import { escapeRegExp, cleanDefinitionResponse, normalizeForKey, capitalize, ensurePunctuation } from './utils/validation.js';
-import { generateExample, generateDefinition } from './services/ai-service.js';
+import { generateExample, generateDefinition } from './services/ai-service.js?v=20260322n';
 import { 
   preferredVoice, 
   checkExistingAudioKeys, 
@@ -36,7 +36,7 @@ import {
   findGameByTitle,
   generateIncrementedTitle,
   showTitleConflictModal
-} from './services/file-service.js';
+} from './services/file-service.js?v=20260322n';
 import {
   getList,
   setList,
@@ -83,7 +83,7 @@ import {
   handleGetTranslations,
   handleGenerateDefinitions,
   handleGenerateExamples
-} from './ui/event-handlers.js';
+} from './ui/event-handlers.js?v=20260322n';
 import { ENDPOINTS, STORAGE_KEYS, ACTIONS, DEFAULTS, TOAST_DURATION } from './constants.js';
 import { initFileListModal } from './ui/file-list.js';
 import { loadWorksheetIntoBuilder } from './services/worksheet-service.js';

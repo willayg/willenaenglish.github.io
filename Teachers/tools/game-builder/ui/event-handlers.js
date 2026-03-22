@@ -1,10 +1,10 @@
 // Event handlers - Wire toolbar buttons and UI actions
 import { showTinyToast, ensureLoadingOverlay } from '../utils/dom-helpers.js';
 import { DEFAULTS } from '../constants.js';
-import { generateDefinition, generateExample } from '../services/ai-service.js';
+import { generateDefinition, generateExample } from '../services/ai-service.js?v=20260322n';
 import { openSaveAsModal, handleSaveAsConfirm, showFileModal } from './modals.js';
 import { ensureAudioForWordsAndSentences } from '../services/audio-service.js';
-import { prepareAndUploadImagesIfNeeded, saveGameData } from '../services/file-service.js';
+import { prepareAndUploadImagesIfNeeded, saveGameData } from '../services/file-service.js?v=20260322n';
 
 /**
  * Quick save handler (silent overwrite if ID exists, else open Save As)
