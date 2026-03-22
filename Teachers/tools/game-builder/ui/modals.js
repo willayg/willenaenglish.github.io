@@ -92,11 +92,18 @@ export async function handleSaveAsConfirm(titleEl, buildPayload, getCurrentGameI
     // Audio generation
     const regenCheckbox = document.getElementById('regenerateAudioCheckbox');
     const shouldRegenerateAudio = !!regenCheckbox?.checked;
-    // Build examples map (word -> example) if examples exist
+    // Build examples map (word -> sentence) from all supported fields
     const examplesMap = Object.fromEntries(
       (payload.words || [])
-        .filter(w => w.eng && w.example)
-        .map(w => [w.eng, w.example])
+        .filter(w => w && w.eng)
+        .map(w => {
+          const sentenceFromArray = Array.isArray(w.sentences) && w.sentences.length
+            ? (w.sentences.find(s => typeof s?.text === 'string' && s.text.trim())?.text || '')
+            : '';
+          const sentence = String(w.example || w.legacy_sentence || sentenceFromArray || '').trim();
+          return [w.eng, sentence];
+        })
+        .filter(([, sentence]) => !!sentence)
     );
     if (saveModalStatusEl) saveModalStatusEl.textContent = shouldRegenerateAudio ? 'Generating audio (force)...' : 'Ensuring audio...';
     try {
@@ -127,7 +134,7 @@ export async function handleSaveAsConfirm(titleEl, buildPayload, getCurrentGameI
     }
   } catch (e) {
     console.error('[saveAs]', e);
-    if (saveModalStatusEl) saveModalStatusEl.textContent = 'Save error';
+    if (saveModalStatusEl) saveModalStatusEl.textContent = e?.message ? `Save error: ${e.message}` : 'Save error';
   }
 }
 

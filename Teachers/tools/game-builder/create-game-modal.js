@@ -16,6 +16,7 @@
 
 import { preprocessTTS } from '../../../Games/english_arcade/tts.js';
 import { getCurrentGameId, setCurrentGameId } from './state/game-state.js';
+import { ensureAudioForWordsAndSentences } from './services/audio-service.js';
 
 // -------------------------------------------------------------
 // State & Utility
@@ -304,7 +305,7 @@ function getSelectedHomeworkStudent() {
 //  4. Mutates word objects in-place adding: sentences:[{id}], primary_sentence_id: id.
 // Fallback: if backend or network fails, silently keep legacy_sentence only (runtime still works via fallback).
 // NOTE: Removal of legacy_sentence keys will happen in a later cleanup phase when metrics show near-zero fallback usage.
-async function ensureSentenceIds(wordObjs){
+async function ensureSentenceIds(wordObjs, opts = {}){
   try {
     if(!Array.isArray(wordObjs) || !wordObjs.length) return { inserted:0, reused:0 };
     const targets = wordObjs.filter(w=> !w.primary_sentence_id && !Array.isArray(w.sentences) && (w.legacy_sentence || w.example));
@@ -314,18 +315,11 @@ async function ensureSentenceIds(wordObjs){
     const map = new Map();
     targets.forEach(w=>{ const raw = w.legacy_sentence || w.example || ''; if(raw && raw.split(/\s+/).length>=3){ const n = norm(raw); if(n && !map.has(n)) map.set(n,{ text:n, words:[w.eng].filter(Boolean) }); }});
     if(!map.size) return { inserted:0, reused:0 };
-    // Call dedicated Netlify function (bypasses generic proxy which doesn't route this action)
-  const payload = { action:'upsert_sentences_batch', sentences: Array.from(map.values()) }; 
-  if(opts.skipAudio) payload.skip_audio = true;
-    let endpoint = '/.netlify/functions/upsert_sentences_batch';
-    try {
-      if (window && window.location && window.location.hostname === 'localhost') {
-        // Support both netlify dev (8888) and functions:serve (netlify dev rewrites) without change
-        const payload = { action:'upsert_sentences_batch', sentences: Array.from(map.values()) };
-        if(opts.skipAudio) payload.skip_audio = true;
-      }
-    } catch {}
-    const res = await fetch(endpoint, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+    // Call dedicated sentence batch function through environment-aware API routing
+    const payload = { action:'upsert_sentences_batch', sentences: Array.from(map.values()) };
+    if (opts.skipAudio) payload.skip_audio = true;
+    const endpoint = getApiPath('/.netlify/functions/upsert_sentences_batch');
+    const res = await fetch(endpoint, { method:'POST', headers:{'Content-Type':'application/json'}, credentials:'include', body: JSON.stringify(payload) });
     const js = await res.json().catch(()=>null);
     if(js && js.audio){
       console.debug('[SentenceUpgrade][modal][audio] summary', js.audio);
@@ -361,10 +355,11 @@ async function ensureSentenceIds(wordObjs){
         if(needAudio.length){
           // Background trigger (no await) to generate audio later without blocking UI
           const triggerPayload = { action:'upsert_sentences_batch', sentences: needAudio.map(w=> ({ text: w.legacy_sentence || w.example || '' })), skip_audio:false };
-          WillenaAPI.fetch('/.netlify/functions/upsert_sentences_batch', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(triggerPayload) }).catch(()=>{});
+          fetch(getApiPath('/.netlify/functions/upsert_sentences_batch'), { method:'POST', headers:{'Content-Type':'application/json'}, credentials:'include', body: JSON.stringify(triggerPayload) }).catch(()=>{});
         }
       } catch{}
     }
+    return { inserted: applied, reused: 0 };
   } catch(e){ console.debug('[SentenceUpgrade] ensureSentenceIds failed', e?.message); return { inserted:0, error:true }; }
 }
 
@@ -897,21 +892,48 @@ export function initCreateGameModal(buildPayload) {
         setStatus('Linking sentences...');
         await ensureSentenceIds(data.words); // safe upgrade (silent fallback)
         const english = data.words.map(w => w.eng).filter(Boolean);
+        const examplesMap = Object.fromEntries(
+          (data.words || [])
+            .filter(w => w && w.eng)
+            .map(w => {
+              const sentenceFromArray = Array.isArray(w.sentences) && w.sentences.length
+                ? (w.sentences.find(s => typeof s?.text === 'string' && s.text.trim())?.text || '')
+                : '';
+              const sentence = (w.example || w.legacy_sentence || sentenceFromArray || '').toString().trim();
+              return [w.eng, sentence];
+            })
+            .filter(([, text]) => !!text)
+        );
         setStatus('Ensuring audio...');
-        await ensureAudioForWords(english);
+        await ensureAudioForWordsAndSentences(english, examplesMap, {
+          force: false,
+          onInit: (total) => setStatus(`Ensuring audio (0/${total})...`),
+          onProgress: (done, total) => setStatus(`Ensuring audio (${done}/${total})...`),
+          onDone: () => setStatus('Audio ready. Saving custom game...')
+        });
       } catch {}
       try {
         const existingId = getCurrentGameId();
         const saveAction = existingId ? 'update_game_data' : 'insert_game_data';
         const saveBody = existingId ? { action: saveAction, id: existingId, data } : { action: saveAction, data };
         setStatus('Saving custom game...');
-        const saveRes = await fetch(getApiPath('/.netlify/functions/supabase_proxy_fixed'), {
+        let saveRes = await fetch(getApiPath('/.netlify/functions/supabase_proxy_fixed'), {
           method:'POST',
           headers:{'Content-Type':'application/json'},
           credentials: 'include',
           body: JSON.stringify(saveBody)
         });
-        const saveJson = await saveRes.json().catch(() => ({}));
+        let saveJson = await saveRes.json().catch(() => ({}));
+        if (!saveRes.ok && existingId && /not owner|forbidden/i.test(String(saveJson?.error || ''))) {
+          const insertBody = { action: 'insert_game_data', data };
+          saveRes = await fetch(getApiPath('/.netlify/functions/supabase_proxy_fixed'), {
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            credentials: 'include',
+            body: JSON.stringify(insertBody)
+          });
+          saveJson = await saveRes.json().catch(() => ({}));
+        }
         if (!saveRes.ok || !saveJson?.success) {
           throw new Error(saveJson?.error || `Failed to save custom game (${saveRes.status})`);
         }

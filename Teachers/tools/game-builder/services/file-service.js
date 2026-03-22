@@ -280,7 +280,7 @@ export async function saveGameData(payload, existingId = null) {
     const uid = getCurrentUserId();
     if (uid) payload.created_by = uid;
     
-    let action = existingId ? 'update_game_data' : 'insert_game_data';
+    const action = existingId ? 'update_game_data' : 'insert_game_data';
     let postBody = { action, data: payload };
     if (existingId) {
       postBody.id = existingId;
@@ -291,12 +291,22 @@ export async function saveGameData(payload, existingId = null) {
       img: (w.image_url || '').slice(0, 80)
     })));
     
-    const js = await fetchJSONSafe('/.netlify/functions/supabase_proxy_fixed', {
+    let js = await fetchJSONSafe('/.netlify/functions/supabase_proxy_fixed', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
       body: JSON.stringify(postBody)
     });
+
+    // If trying to update a game owned by another teacher, transparently save a new copy instead.
+    if (existingId && !js?.success && /not owner|forbidden/i.test(String(js?.error || ''))) {
+      js = await fetchJSONSafe('/.netlify/functions/supabase_proxy_fixed', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ action: 'insert_game_data', data: payload })
+      });
+    }
     
     if (js?.success) {
       return { success: true, id: existingId || js.id };
