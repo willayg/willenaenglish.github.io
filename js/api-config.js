@@ -127,6 +127,9 @@
     }
 
     const fn = extractFunctionName(functionPath);
+    if (isCloudflarePages && fn && NETLIFY_ONLY_FUNCTIONS.includes(fn)) {
+      return NETLIFY_BASE + (functionPath.startsWith('/') ? functionPath : ('/' + functionPath));
+    }
     if (USE_CF_WORKERS && fn && CF_FUNCTIONS[fn]) {
       const qIndex = functionPath.indexOf('?');
       const search = qIndex >= 0 ? functionPath.slice(qIndex) : '';
