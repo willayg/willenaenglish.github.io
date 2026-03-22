@@ -448,11 +448,18 @@
             }
             card.addEventListener('click', async () => {
               const listKey = a.list_key || a.list_title || '';
-              if (!listKey) return;
+              const sourceType = String(a?.list_meta?.source_type || '').toLowerCase();
+              const gameId = String(a?.list_meta?.game_id || '').trim();
               // Switch back to main arcade tab
               tabWordArcade?.classList.add('active');
               tabGrammarArcade.classList.remove('active');
               const hwId = a.id;
+              if (sourceType === 'saved_game' && gameId) {
+                const savedUrl = `${window.location.pathname}?hw=${encodeURIComponent(hwId || '')}&open=saved&id=${encodeURIComponent(gameId)}&autostart=1`;
+                window.location.href = savedUrl;
+                return;
+              }
+              if (!listKey) return;
               // Autostart the homework and prefer the teacher-assigned title when available
               try {
                 await autostartHomework(listKey, hwId, a.title || a.list_title || null);
