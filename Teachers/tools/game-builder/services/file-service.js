@@ -305,7 +305,7 @@ export async function saveGameData(payload, existingId = null) {
     }
   } catch (e) {
     console.error('[saveGameData] Error:', e);
-    return { success: false, error: 'Save error' };
+    return { success: false, error: e?.message || 'Save error' };
   }
 }
 

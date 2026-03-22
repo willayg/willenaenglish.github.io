@@ -12,7 +12,7 @@ import {
   escapeHtml
 } from './images.js';
 import { initMintAiListBuilder } from './MintAi-list-builder.js';
-import { initCreateGameModal, openCreateGameModal } from './create-game-modal.js';
+import { initCreateGameModal, openCreateGameModal } from './create-game-modal.js?v=20260322c';
 import { showTinyToast, ensureLoadingOverlay, buildSkeletonHTML } from './utils/dom-helpers.js';
 import { fetchJSONSafe, timedJSONFetch, recordPerfSample, isLocalHost } from './utils/network.js';
 import { escapeRegExp, cleanDefinitionResponse, normalizeForKey, capitalize, ensurePunctuation } from './utils/validation.js';
@@ -616,6 +616,7 @@ window.addEventListener('click', (e) => { if (e.target === fileModal) fileModal.
 // Save modal
 const saveModal = document.getElementById('saveModal');
 const saveModalClose = document.getElementById('saveModalClose');
+const saveModalStatus = document.getElementById('saveModalStatus');
 saveModalClose.onclick = () => { saveModal.style.display = 'none'; };
 window.addEventListener('click', (e) => { if (e.target === saveModal) saveModal.style.display = 'none'; });
 
