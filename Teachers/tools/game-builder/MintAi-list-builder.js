@@ -11,8 +11,10 @@ export function initMintAiListBuilder({
   render,
   enablePicturesEl,
   enableDefinitionsEl,
+  enableExamplesEl,
   loadingImages,
-  generateDefinitionForRow
+  generateDefinitionForRow,
+  generateExampleForRow
 }) {
   // Elements
   const aiLink = document.getElementById('aiListBuilderLink');
@@ -168,6 +170,12 @@ export function initMintAiListBuilder({
     if (enableDefinitionsEl.checked) {
       for (let i = range.from; i <= range.to; i++) {
         await generateDefinitionForRow(i);
+      }
+    }
+    // Auto-load examples for the newly inserted range
+    if (enableExamplesEl && enableExamplesEl.checked && typeof generateExampleForRow === 'function') {
+      for (let i = range.from; i <= range.to; i++) {
+        await generateExampleForRow(i);
       }
     }
   };

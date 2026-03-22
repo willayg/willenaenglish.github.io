@@ -300,17 +300,6 @@ export async function saveGameData(payload, existingId = null) {
 
     let savedId = existingId || null;
 
-    // If trying to update a game owned by another teacher, transparently save a new copy instead.
-    if (existingId && !js?.success && /not owner|forbidden/i.test(String(js?.error || ''))) {
-      js = await fetchJSONSafe('/.netlify/functions/supabase_proxy_fixed', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ action: 'insert_game_data', data: payload })
-      });
-      savedId = null;
-    }
-
     const responseId = js?.id || js?.data?.id || (Array.isArray(js?.data) ? js.data[0]?.id : null) || null;
     if (responseId) savedId = responseId;
     

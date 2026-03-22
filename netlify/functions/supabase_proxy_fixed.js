@@ -884,25 +884,21 @@ exports.handler = async (event) => {
           }
           return { statusCode: 200, body: JSON.stringify({ success: true, data }) };
         } else if (body.action === 'update_game_data' && body.id && body.data) {
-          // Ownership enforcement with enhanced diagnostics
+          // Ownership check removed per teacher request – any authenticated user may update any game.
+          // Auth is still required to prevent anonymous writes.
           let requesterId = getUserIdFromCookie(event);
           if (!requesterId) {
             const user = await getUserFromCookie(supabase, event); requesterId = user && user.id;
           }
-          // Local dev fallback: allow supplied created_by in body.data ONLY when no requesterId and running locally
           if (!requesterId && isLocalDev(event) && body.data && body.data.created_by) {
-            console.log('[update_game_data][dev-fallback] using payload.created_by', body.data.created_by);
             requesterId = body.data.created_by;
           }
           if (!requesterId) {
-            console.log('[update_game_data][auth-fail] cookies present?', Object.keys(parseCookies((event.headers && (event.headers.Cookie||event.headers.cookie))||'')).join(','));
             return { statusCode: 401, body: JSON.stringify({ success:false, error:'Not authenticated' }) };
           }
-          const { data: existing, error: exErr } = await supabase.from('game_data').select('created_by').eq('id', body.id).single();
+          // Verify the record exists (but do NOT enforce ownership)
+          const { data: existing, error: exErr } = await supabase.from('game_data').select('id').eq('id', body.id).single();
           if (exErr || !existing) return { statusCode: 404, body: JSON.stringify({ success:false, error:'Game not found' }) };
-          if (existing.created_by && existing.created_by !== requesterId) {
-            return { statusCode: 403, body: JSON.stringify({ success:false, error:'Forbidden: not owner' }) };
-          }
           const gd = body.data;
           if (!Array.isArray(gd.words)) gd.words = [];
             let derivedImage = null;

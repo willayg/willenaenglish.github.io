@@ -10,9 +10,9 @@ import {
   setupImageDropZone, 
   generateImageDropZoneHTML,
   escapeHtml
-} from './images.js?v=20260322l';
+} from './images.js?v=20260322m';
 import { initMintAiListBuilder } from './MintAi-list-builder.js';
-import { initCreateGameModal, openCreateGameModal } from './create-game-modal.js?v=20260322l';
+import { initCreateGameModal, openCreateGameModal } from './create-game-modal.js?v=20260322m';
 import { showTinyToast, ensureLoadingOverlay, buildSkeletonHTML } from './utils/dom-helpers.js';
 import { fetchJSONSafe, timedJSONFetch, recordPerfSample, isLocalHost } from './utils/network.js';
 import { escapeRegExp, cleanDefinitionResponse, normalizeForKey, capitalize, ensurePunctuation } from './utils/validation.js';
@@ -1368,15 +1368,17 @@ initMintAiListBuilder({
   addItems: (items) => {
     saveState();
     const start = list.length;
-    items.forEach(it => list.push({ eng: it.eng, kor: it.kor, image_url: '', definition: '' }));
+    items.forEach(it => list.push({ eng: it.eng, kor: it.kor, image_url: '', definition: '', example: '' }));
     render();
     return { from: start, to: list.length - 1 };
   },
   render,
   enablePicturesEl,
   enableDefinitionsEl,
+  enableExamplesEl,
   loadingImages,
-  generateDefinitionForRow
+  generateDefinitionForRow,
+  generateExampleForRow
 });
 
 // Initialize Create Game modal
