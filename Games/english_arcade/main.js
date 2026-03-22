@@ -1006,10 +1006,21 @@ async function openSavedGameById(id) {
       const eng = w.eng || w.en || w.word || '';
       const kor = w.kor || w.kr || w.translation || '';
       const def = w.def || w.definition || w.gloss || w.meaning || '';
+      const example = w.example || w.ex || w.example_sentence || w.sentence_example || '';
+      const legacySentence = w.legacy_sentence || w.sentence || example || '';
+      const sentenceArray = Array.isArray(w.sentences) ? w.sentences : [];
+      const primarySentenceId = w.primary_sentence_id || null;
       const rawImg = w.image_url || w.image || w.img || w.img_url || w.picture || '';
       const img = (typeof rawImg === 'string') ? rawImg.trim() : '';
       const out = { eng: String(eng).trim(), kor: String(kor).trim() };
-      if (def && String(def).trim()) out.def = String(def).trim();
+      if (def && String(def).trim()) {
+        out.def = String(def).trim();
+        out.definition = String(def).trim();
+      }
+      if (example && String(example).trim()) out.example = String(example).trim();
+      if (legacySentence && String(legacySentence).trim()) out.legacy_sentence = String(legacySentence).trim();
+      if (sentenceArray.length) out.sentences = sentenceArray;
+      if (primarySentenceId) out.primary_sentence_id = primarySentenceId;
       // Preserve image in ALL field variants so normalizeWordImages can find and process it
       if (img && img.toLowerCase() !== 'null' && img.toLowerCase() !== 'undefined') {
         out.image_url = img;

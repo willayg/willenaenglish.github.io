@@ -12,7 +12,7 @@ import {
   escapeHtml
 } from './images.js';
 import { initMintAiListBuilder } from './MintAi-list-builder.js';
-import { initCreateGameModal, openCreateGameModal } from './create-game-modal.js?v=20260322e';
+import { initCreateGameModal, openCreateGameModal } from './create-game-modal.js?v=20260322h';
 import { showTinyToast, ensureLoadingOverlay, buildSkeletonHTML } from './utils/dom-helpers.js';
 import { fetchJSONSafe, timedJSONFetch, recordPerfSample, isLocalHost } from './utils/network.js';
 import { escapeRegExp, cleanDefinitionResponse, normalizeForKey, capitalize, ensurePunctuation } from './utils/validation.js';

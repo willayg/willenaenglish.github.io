@@ -293,6 +293,36 @@ function getSelectedHomeworkStudent() {
   return roster.find(student => String(student.id) === studentId) || null;
 }
 
+function fallbackExampleSentenceForWord(wordObj) {
+  const eng = String(wordObj?.eng || '').trim();
+  if (!eng) return '';
+  if (/ing$/i.test(eng)) return `They are ${eng}.`;
+  if (eng.includes(' ')) return `I can use ${eng}.`;
+  const article = /^[aeiou]/i.test(eng) ? 'an' : 'a';
+  return `This is ${article} ${eng}.`;
+}
+
+function ensureExamplesPresent(words = []) {
+  if (!Array.isArray(words)) return;
+  words.forEach((wordObj) => {
+    if (!wordObj || !wordObj.eng) return;
+    const sentenceFromArray = Array.isArray(wordObj.sentences) && wordObj.sentences.length
+      ? (wordObj.sentences.find(s => typeof s?.text === 'string' && s.text.trim())?.text || '')
+      : '';
+    const existingSentence = String(wordObj.example || wordObj.legacy_sentence || sentenceFromArray || '').trim();
+    if (existingSentence) {
+      if (!wordObj.example) wordObj.example = existingSentence;
+      if (!wordObj.legacy_sentence) wordObj.legacy_sentence = existingSentence;
+      return;
+    }
+    const fallback = fallbackExampleSentenceForWord(wordObj);
+    if (fallback) {
+      wordObj.example = fallback;
+      wordObj.legacy_sentence = fallback;
+    }
+  });
+}
+
 // -------------------------------------------------------------
 // Sentence ID Upgrader (Additive, Safe Fallback)
 // -------------------------------------------------------------
@@ -889,6 +919,7 @@ export function initCreateGameModal(buildPayload) {
       if (!data.gameDateDue) { alert('Due date is required.'); return; }
       try {
         el.save.disabled = true;
+        ensureExamplesPresent(data.words);
         setStatus('Linking sentences...');
         await ensureSentenceIds(data.words); // safe upgrade (silent fallback)
         const english = data.words.map(w => w.eng).filter(Boolean);
