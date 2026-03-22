@@ -77,6 +77,9 @@ exports.handler = async (event) => {
     if (action === 'delete_assignment') {
       return await deleteAssignment(event);
     }
+    if (action === 'update_assignment_meta') {
+      return await updateAssignmentMeta(event);
+    }
     if (action === 'link_sessions') {
       return await linkSessionsToAssignment(event);
     }
@@ -300,6 +303,53 @@ async function createAssignment(event) {
 
   console.log(`[homework_api] Created assignment ${data.id} with auto run_token: ${autoToken}`);
   return _json(200, { success: true, assignment: data, run_token: autoToken });
+}
+
+// Allow teachers to update an existing assignment's list_meta (e.g. set forced_mode)
+async function updateAssignmentMeta(event) {
+  const authUserId = await getUserIdFromCookie(event);
+  if (!authUserId) return _json(401, { success: false, error: 'Not signed in' });
+
+  const { data: prof } = await supabase
+    .from('profiles')
+    .select('id, role, approved, class')
+    .eq('id', authUserId)
+    .single();
+
+  if (!prof || !['teacher', 'admin'].includes(String(prof.role || '').toLowerCase())) {
+    return _json(403, { success: false, error: 'Only teachers can update assignments' });
+  }
+
+  let body;
+  try { body = JSON.parse(event.body || '{}'); }
+  catch { return _json(400, { success: false, error: 'Invalid JSON body' }); }
+
+  const assignmentId = body.assignment_id || event.queryStringParameters?.assignment_id;
+  if (!assignmentId) return _json(400, { success: false, error: 'Missing assignment_id' });
+
+  const { data: assignment, error: aErr } = await supabase.from('homework_assignments').select('*').eq('id', assignmentId).single();
+  if (aErr || !assignment) return _json(404, { success: false, error: 'Assignment not found' });
+
+  // Merge new meta fields into existing list_meta
+  const existingMeta = parseAssignmentMeta(assignment.list_meta);
+  const mergedMeta = { ...existingMeta, ...(body.list_meta || {}) };
+
+  // Also allow updating goal_value directly
+  const updateFields = { list_meta: mergedMeta };
+  if (body.goal_value !== undefined) updateFields.goal_value = body.goal_value;
+  if (body.goal_type !== undefined) updateFields.goal_type = body.goal_type;
+
+  const { data: updated, error: uErr } = await supabase
+    .from('homework_assignments')
+    .update(updateFields)
+    .eq('id', assignmentId)
+    .select()
+    .single();
+
+  if (uErr) return _json(500, { success: false, error: 'Update failed: ' + (uErr.message || uErr.code) });
+
+  console.log(`[updateAssignmentMeta] Updated assignment ${assignmentId}:`, JSON.stringify(updateFields));
+  return _json(200, { success: true, assignment: updated });
 }
 
 async function autoExpireAssignmentsPastGrace({ className = null } = {}) {
@@ -735,9 +785,23 @@ async function assignmentProgress(event) {
   // 1. Metadata: forced_mode/difficulty_mode === 'spelling' or modes_total === 1
   // 2. Goal value: goal_value === 1 strongly indicates spelling-only (new assignments)
   // 3. Client hint: frontend passes spelling_only=1 when it detects spelling-only locally
+  // 4. Session-based: if ALL sessions for this assignment are spelling/listen_and_spell only
   const clientHintSpellingOnly = String(event.queryStringParameters?.spelling_only || '').trim() === '1';
   const goalValueHint = Number(assignment.goal_value) === 1;
-  const isSpellingOnlyAssignment = forcedMode === 'spelling' || difficultyMode === 'spelling' || metaModes === 1 || goalValueHint || clientHintSpellingOnly;
+  let isSpellingOnlyAssignment = forcedMode === 'spelling' || difficultyMode === 'spelling' || metaModes === 1 || goalValueHint || clientHintSpellingOnly;
+
+  // Session-based fallback: if no metadata signals fired, check actual session data
+  // If every session mode is spelling/listen_and_spell, infer spelling-only
+  if (!isSpellingOnlyAssignment && sessions.length > 0) {
+    const allSpelling = sessions.every(s => {
+      const m = String(s.mode || '').toLowerCase();
+      return m === 'spelling' || m === 'listen_and_spell' || m === 'spell';
+    });
+    if (allSpelling) {
+      isSpellingOnlyAssignment = true;
+      console.log(`[assignmentProgress] Session-inferred spelling-only for assignment ${assignment.id} (all ${sessions.length} sessions are spelling)`);
+    }
+  }
 
   // Diagnostic logging — shows exactly what the detection sees
   console.log(`[assignmentProgress] spelling-only detection for assignment ${assignment.id} (${assignment.title}):`, JSON.stringify({

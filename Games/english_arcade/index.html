@@ -711,6 +711,22 @@
               }
             }
 
+            // Debug overlay (visible via ?hwdebug=1 in URL, or always in console)
+            const showDebug = new URLSearchParams(window.location.search).has('hwdebug');
+            if (showDebug) {
+              const dbg = document.createElement('div');
+              dbg.style.fontSize = '0.6rem';
+              dbg.style.color = '#999';
+              dbg.style.fontFamily = 'monospace';
+              dbg.style.marginTop = '4px';
+              dbg.style.padding = '4px';
+              dbg.style.background = '#f8f8f8';
+              dbg.style.borderRadius = '4px';
+              dbg.style.wordBreak = 'break-all';
+              dbg.textContent = `id:${a.id} | progress:${Math.round(progress)}% | goal_v:${a.goal_value ?? '?'} | meta.forced_mode:${listMetaForGoal.forced_mode ?? 'none'} | meta.modes_total:${listMetaForGoal.modes_total ?? '?'} | meta.difficulty_mode:${listMetaForGoal.difficulty_mode ?? 'none'}`;
+              card.appendChild(dbg);
+            }
+
             if (progress >= 100) {
               const doneMsg = document.createElement('div');
               doneMsg.style.fontWeight = '700';
