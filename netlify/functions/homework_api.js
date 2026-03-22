@@ -730,10 +730,34 @@ async function assignmentProgress(event) {
   const metaModes = Number(metaModesRaw);
   const difficultyMode = String(assignment.list_meta?.difficulty_mode || '').toLowerCase();
   const forcedMode = String(assignment.list_meta?.forced_mode || assignment.list_meta?.mode || assignment.list_meta?.difficulty_mode || '').toLowerCase();
-  const isSpellingOnlyAssignment = forcedMode === 'spelling' || difficultyMode === 'spelling' || metaModes === 1;
+
+  // Multiple-signal spelling-only detection:
+  // 1. Metadata: forced_mode/difficulty_mode === 'spelling' or modes_total === 1
+  // 2. Goal value: goal_value === 1 strongly indicates spelling-only (new assignments)
+  // 3. Client hint: frontend passes spelling_only=1 when it detects spelling-only locally
+  const clientHintSpellingOnly = String(event.queryStringParameters?.spelling_only || '').trim() === '1';
+  const goalValueHint = Number(assignment.goal_value) === 1;
+  const isSpellingOnlyAssignment = forcedMode === 'spelling' || difficultyMode === 'spelling' || metaModes === 1 || goalValueHint || clientHintSpellingOnly;
+
+  // Diagnostic logging — shows exactly what the detection sees
+  console.log(`[assignmentProgress] spelling-only detection for assignment ${assignment.id} (${assignment.title}):`, JSON.stringify({
+    forcedMode, difficultyMode, metaModes, goalValueHint, clientHintSpellingOnly, isSpellingOnlyAssignment,
+    raw_list_meta: assignment.list_meta,
+    goal_type: assignment.goal_type,
+    goal_value: assignment.goal_value,
+  }));
 
   if (isSpellingOnlyAssignment) {
     totalModes = 1;
+    // Auto-heal: backfill forced_mode into list_meta if missing, so future calls work without hints
+    if (!assignment.list_meta?.forced_mode || assignment.list_meta.forced_mode !== 'spelling') {
+      try {
+        const healedMeta = { ...(assignment.list_meta || {}), forced_mode: 'spelling', modes_total: 1, difficulty_mode: 'spelling' };
+        await supabase.from('homework_assignments').update({ list_meta: healedMeta }).eq('id', assignment.id);
+        assignment.list_meta = healedMeta;
+        console.log(`[assignmentProgress] Auto-healed list_meta for assignment ${assignment.id}: added forced_mode:spelling`);
+      } catch (e) { console.warn('[assignmentProgress] Auto-heal failed:', e.message); }
+    }
   } else if (Number.isFinite(metaModes) && metaModes > 0 && metaModes <= 10) {
     // Only override if category matches expected range
     if (category === 'phonics' && metaModes <= 4) totalModes = metaModes;
@@ -774,7 +798,19 @@ async function assignmentProgress(event) {
       category
     };
   });
-  return _json(200,{ success:true, assignment_id: assignment.id, class: targetClass, total_modes: totalModes, category, is_spelling_only: isSpellingOnlyAssignment, progress });
+  return _json(200,{
+    success:true,
+    _v: 'hw-api-v4-spelling-fix',
+    assignment_id: assignment.id,
+    class: targetClass,
+    total_modes: totalModes,
+    category,
+    is_spelling_only: isSpellingOnlyAssignment,
+    goal_type: assignment.goal_type || null,
+    goal_value: assignment.goal_value || null,
+    _debug_meta: { forcedMode, difficultyMode, metaModes, goalValueHint, clientHintSpellingOnly },
+    progress
+  });
 }
 
 async function getProfileForEvent(event) {
