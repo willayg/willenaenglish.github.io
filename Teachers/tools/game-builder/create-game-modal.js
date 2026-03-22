@@ -662,11 +662,6 @@ function ensurePanels() {
             <button type="button" id="gameImagePick" class="btn cgm-image-pick-btn">Select image</button>
           </div>
         </div>
-        <div class="cgm-home-actions wide">
-          <span id="createGameStatus" style="flex:1;color:#64748b;font-size:.8rem;align-self:center;"></span>
-          <button type="button" id="createGameSave" class="btn primary">Save Assignment</button>
-          <button type="button" id="createGameCancel" class="btn">Cancel</button>
-        </div>
       </form>
     `;
 
@@ -689,9 +684,6 @@ function ensurePanels() {
     el.desc = hw.querySelector('#gameDescription');
     el.imageZone = hw.querySelector('#gameImageZone');
     el.imagePick = hw.querySelector('#gameImagePick');
-    el.status = hw.querySelector('#createGameStatus');
-    el.save = hw.querySelector('#createGameSave');
-    el.cancel = hw.querySelector('#createGameCancel');
   }
 }
 
@@ -702,6 +694,8 @@ function showPanel(name) {
   if (name === 'start' && el.panelStart) el.panelStart.classList.add('active');
   if (name === 'live' && el.panelLive) el.panelLive.classList.add('active');
   if (name === 'homework' && el.panelHomework) el.panelHomework.classList.add('active');
+  const footer = el.modal?.querySelector('.cgm-homework-footer');
+  if (footer) footer.style.display = name === 'homework' ? 'flex' : 'none';
 }
 
 // Build live mode tiles (grouped horizontally: Full Games vs Mini Games)

@@ -114,6 +114,16 @@ export function clearAllState() {
 export function buildPayload(title = '', gameImageUrl = '') {
   // Helper: Generate fallback sentence for word
   const vowels = /^[aeiou]/i;
+
+  function sanitizeDefinitionText(text) {
+    return String(text || '')
+      .replace(/^(here\s+is\s+a\s+kid-?friendly\s+definition\s+for\s*:?\s*)/i, '')
+      .replace(/^(here\s+is\s+a\s+concise\s+definition\s+for\s+[^:]+:\s*)/i, '')
+      .replace(/^(kid-?friendly\s+definition\s*:\s*)/i, '')
+      .replace(/^(definition\s*:\s*)/i, '')
+      .replace(/^"+|"+$/g, '')
+      .trim();
+  }
   
   function fallbackSentence(w) {
     const eng = (w.eng || '').trim();
@@ -160,7 +170,7 @@ export function buildPayload(title = '', gameImageUrl = '') {
       eng: w.eng || '',
       kor: w.kor || '',
       image_url: w.image_url || '',
-      definition: w.definition || '',
+      definition: sanitizeDefinitionText(w.definition || ''),
       example: w.example || '',
       legacy_sentence: chooseLegacySentence(w)
     }))
@@ -220,7 +230,11 @@ export function parseWords(words) {
       eng: w.eng || w.en || w.word || '',
       kor: w.kor || w.kr || w.translation || '',
       image_url: w.image_url || w.image || w.img || w.img_url || w.picture || '',
-      definition: w.definition || w.def || w.meaning || '',
+      definition: String(w.definition || w.def || w.meaning || '')
+        .replace(/^(here\s+is\s+a\s+kid-?friendly\s+definition\s+for\s*:?\s*)/i, '')
+        .replace(/^(kid-?friendly\s+definition\s*:\s*)/i, '')
+        .replace(/^"+|"+$/g, '')
+        .trim(),
       example: w.example || w.example_sentence || w.exampleSentence || w.sentence || w.legacy_sentence || ''
     });
   }).filter(Boolean);

@@ -494,17 +494,9 @@ body { margin:0; background: linear-gradient(135deg, #6b6b6b 0%, #696969 100%); 
 .cgm-difficulty-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px 12px; margin-top:2px; }
 .cgm-difficulty-item { display:flex; align-items:center; gap:8px; font-size:.8rem; color:#334155; background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:8px 10px; }
 .cgm-difficulty-item input { margin:0; }
-.cgm-home-actions {
-  position: sticky;
-  bottom: 0;
-  z-index: 12;
-  margin-top: 14px;
-  padding: 12px 0 6px;
+.cgm-homework-footer {
   border-top: 1px solid #dbe4ea;
   background: #fff;
-  display: flex;
-  gap: 12px;
-  justify-content: flex-end;
 }
 .cgm-hint { font-size:.75rem; color:#64748b; margin-top:6px; }
 .cgm-image-wrap { display:flex; align-items:flex-start; gap:14px; flex-wrap:wrap; }

@@ -774,7 +774,7 @@ async function assignmentProgress(event) {
       category
     };
   });
-  return _json(200,{ success:true, assignment_id: assignment.id, class: targetClass, total_modes: totalModes, category, progress });
+  return _json(200,{ success:true, assignment_id: assignment.id, class: targetClass, total_modes: totalModes, category, is_spelling_only: isSpellingOnlyAssignment, progress });
 }
 
 async function getProfileForEvent(event) {
@@ -820,7 +820,8 @@ async function listAssignmentsForStudent(event) {
   // Map teacher name for convenience on each assignment
   const assignments = (data || []).map(a => ({
     ...a,
-    teacher_name: a.profiles?.name || null
+      teacher_name: a.profiles?.name || null,
+      list_meta: parseAssignmentMeta(a.list_meta),
   }));
 
   return _json(200, {

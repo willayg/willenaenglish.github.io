@@ -281,6 +281,9 @@
       const hwParam = urlParams.get('hw');
       const modeParam = urlParams.get('mode');
   const isGrammarParam = urlParams.get('grammar'); // optional override
+      try {
+        if (hwParam) sessionStorage.setItem('wa_homework_assignment_id', String(hwParam));
+      } catch {}
       const homeworkDoneModalKey = hwParam ? `wa_hw_done_modal_${hwParam}` : null;
 
       let currentUserIdCache = null;
@@ -646,12 +649,23 @@
             // Goal message (for incomplete only, will add later)
             let goalMsg = null;
             if (progress < 100) {
+              let listMetaForGoal = a?.list_meta;
+              if (typeof listMetaForGoal === 'string') {
+                try { listMetaForGoal = JSON.parse(listMetaForGoal); } catch { listMetaForGoal = {}; }
+              }
+              if (!listMetaForGoal || typeof listMetaForGoal !== 'object') listMetaForGoal = {};
+              const goalForcedMode = String(listMetaForGoal.forced_mode || listMetaForGoal.mode || listMetaForGoal.difficulty_mode || '').trim().toLowerCase();
+              const goalModesTotal = Number(listMetaForGoal.modes_total ?? listMetaForGoal.total_modes ?? listMetaForGoal.mode_count ?? 0);
+              const isSpellingOnlyGoal = goalForcedMode === 'spelling' || goalModesTotal === 1;
+
               goalMsg = document.createElement('div');
               goalMsg.style.fontSize = '0.75rem';
               goalMsg.style.fontWeight = '600';
               goalMsg.style.color = '#19777e';
               goalMsg.style.marginTop = '2px';
-              if (a.stars_required !== null && typeof a.stars_required === 'number') {
+              if (isSpellingOnlyGoal) {
+                goalMsg.textContent = 'Goal: Complete spelling mode';
+              } else if (a.stars_required !== null && typeof a.stars_required === 'number') {
                 const currentStars = (typeof a.stars === 'number') ? a.stars : 0;
                 goalMsg.textContent = `Goal: ${a.stars_required}+ stars (${currentStars}/${a.stars_required})`;
               } else {

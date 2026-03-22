@@ -732,7 +732,8 @@ async function generateDefinitionForRow(idx) {
   
   const definition = await generateDefinition(w.eng, w.kor || '');
   if (definition) {
-    w.definition = definition;
+    const cleaned = ensurePunctuation(cleanDefinitionResponse(definition));
+    w.definition = cleaned;
     markDirty();
     render();
   }
