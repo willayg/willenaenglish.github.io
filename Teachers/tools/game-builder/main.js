@@ -10,7 +10,7 @@ import {
   setupImageDropZone, 
   generateImageDropZoneHTML,
   escapeHtml
-} from './images.js?v=20260322t';
+} from './images.js?v=20260322u';
 import { initMintAiListBuilder } from './MintAi-list-builder.js?v=20260322n';
 import { initCreateGameModal, openCreateGameModal } from './create-game-modal.js?v=20260322n';
 import { showTinyToast, ensureLoadingOverlay, buildSkeletonHTML } from './utils/dom-helpers.js';
@@ -317,9 +317,9 @@ function render() {
       const base = window.R2_PUBLIC_BASE.replace(/\/$/, '');
       for (const w of list) {
         if (!w || !w.image_url) continue;
-        if (/^https?:\/\/(?:cdn\.)?pixabay\.com\//i.test(w.image_url)) {
-          const fnBase = (window.WillenaAPI && window.WillenaAPI.FUNCTIONS_URL) || 'https://students.willenaenglish.com';
-          w.image_url = fnBase.replace(/\/$/, '') + '/.netlify/functions/pixabay_image_proxy?url=' + encodeURIComponent(w.image_url);
+        const pixProxy = String(w.image_url).match(/\/\.netlify\/functions\/pixabay_image_proxy\?url=([^&]+)/i);
+        if (pixProxy && pixProxy[1]) {
+          try { w.image_url = decodeURIComponent(pixProxy[1]); } catch {}
         }
         // Strip /images/ from absolute R2 URLs (bucket name shouldn't be in public URL path)
         if (w.image_url.startsWith(base + '/images/words/')) {
@@ -332,9 +332,9 @@ function render() {
         }
       }
       // Also check game cover image
-      if (/^https?:\/\/(?:cdn\.)?pixabay\.com\//i.test(gameImage)) {
-        const fnBase = (window.WillenaAPI && window.WillenaAPI.FUNCTIONS_URL) || 'https://students.willenaenglish.com';
-        gameImage = fnBase.replace(/\/$/, '') + '/.netlify/functions/pixabay_image_proxy?url=' + encodeURIComponent(gameImage);
+      const gamePixProxy = String(gameImage || '').match(/\/\.netlify\/functions\/pixabay_image_proxy\?url=([^&]+)/i);
+      if (gamePixProxy && gamePixProxy[1]) {
+        try { gameImage = decodeURIComponent(gamePixProxy[1]); } catch {}
       }
       if (gameImage && typeof gameImage === 'string' && gameImage.startsWith(base + '/images/cover/')) {
         gameImage = base + '/' + gameImage.substring((base + '/images/').length);

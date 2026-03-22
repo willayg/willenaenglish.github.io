@@ -15,14 +15,16 @@ let galleryState = { open:false, targetIndex:null, query:'', page:1, perPage:12,
 
 function proxifyPixabayUrl(src) {
   if (!src || typeof src !== 'string') return src;
-  if (/\/\.netlify\/functions\/pixabay_image_proxy\?url=/i.test(src)) return src;
+  const legacy = src.match(/\/\.netlify\/functions\/pixabay_image_proxy\?url=([^&]+)/i);
+  if (legacy && legacy[1]) {
+    try { return decodeURIComponent(legacy[1]); } catch { return src; }
+  }
   if (!/^https?:\/\//i.test(src)) return src;
   try {
     const u = new URL(src);
     const host = u.hostname.toLowerCase();
     if (host === 'cdn.pixabay.com' || host.endsWith('.pixabay.com') || host === 'pixabay.com') {
-      const base = (window.WillenaAPI && window.WillenaAPI.FUNCTIONS_URL) || 'https://students.willenaenglish.com';
-      return base.replace(/\/$/, '') + '/.netlify/functions/pixabay_image_proxy?url=' + encodeURIComponent(src);
+      return src;
     }
   } catch {}
   return src;
