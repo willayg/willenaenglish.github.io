@@ -125,41 +125,62 @@ async function loadGalleryPage(page, replace){
   const skCount = page===1 ? 12 : 6;
   for(let i=0;i<skCount;i++){ const ph=document.createElement('div'); ph.className='pg-item loading'; grid.appendChild(ph); }
   try {
-    const apiPath = getApiPath('/.netlify/functions/pixabay');
-    const url = new URL(apiPath, window.location.origin);
-    url.searchParams.set('q', galleryState.query);
-    url.searchParams.set('per_page', galleryState.perPage);
-    url.searchParams.set('page', page);
+    const query = new URLSearchParams();
+    query.set('q', galleryState.query);
+    query.set('per_page', galleryState.perPage);
+    query.set('page', page);
     // Apply filter mappings
     switch(galleryState.filter){
       case 'photo':
-        url.searchParams.set('image_type','photo');
+        query.set('image_type','photo');
         break;
       case 'illustration':
-        url.searchParams.set('image_type','illustration');
+        query.set('image_type','illustration');
         break;
       case 'clip': // vector graphics
-        url.searchParams.set('image_type','vector');
+        query.set('image_type','vector');
         break;
       case 'ai':
         // Force illustrations + AI content for better AI coverage (Pixabay surfaces AI mainly under illustrations)
-        url.searchParams.set('image_type','illustration');
-        url.searchParams.set('content_type','ai');
+        query.set('image_type','illustration');
+        query.set('content_type','ai');
         break;
       case 'all':
       default:
-        url.searchParams.set('image_type','all');
+        query.set('image_type','all');
     }
-    const res = await fetch(url.toString());
+
+    const apiEndpoint = '/.netlify/functions/pixabay?' + query.toString();
+    let res = null;
+    try {
+      if (window.WillenaAPI?.fetch) {
+        res = await window.WillenaAPI.fetch(apiEndpoint, { method: 'GET' });
+      }
+    } catch {}
+    if (!res) {
+      const directUrl = new URL(getApiPath('/.netlify/functions/pixabay'), window.location.origin);
+      query.forEach((v, k) => directUrl.searchParams.set(k, v));
+      res = await fetch(directUrl.toString(), { method: 'GET', credentials: 'include' });
+    }
+
     if(!res.ok){ throw new Error('HTTP '+res.status); }
-    const js = await res.json();
-    const imgs = Array.isArray(js.images) ? js.images : [];
+    const js = await res.json().catch(() => ({}));
+    const imgs = Array.from(new Set((
+      (Array.isArray(js.images) ? js.images : [])
+        .concat(Array.isArray(js.hits) ? js.hits.map(h => h?.webformatURL || h?.largeImageURL || h?.previewURL).filter(Boolean) : [])
+    ).filter(src => typeof src === 'string' && /^https?:\/\//i.test(src))));
     if(replace) grid.innerHTML=''; else grid.querySelectorAll('.pg-item.loading').forEach(n=> n.remove());
     if(!imgs.length && page===1){ grid.innerHTML='<div class="empty">No results.</div>'; moreBtn.style.display='none'; }
     else {
       imgs.forEach(src=> {
         const div=document.createElement('div'); div.className='pg-item';
-        const img=document.createElement('img'); img.alt=galleryState.query; img.decoding='async'; img.loading='lazy'; img.src=src; div.appendChild(img);
+        const img=document.createElement('img');
+        img.alt=galleryState.query;
+        img.decoding='async';
+        img.loading='lazy';
+        img.referrerPolicy='no-referrer';
+        img.src=src;
+        div.appendChild(img);
         img.onerror=()=> { div.classList.add('err'); };
         div.addEventListener('click', ()=> selectGalleryImage(src));
         grid.appendChild(div);
