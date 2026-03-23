@@ -157,8 +157,9 @@ async function enrichSentenceAudioIDAware(items){
       }
     } catch(e){ console.debug('[SentenceMode] sentence id audio signed fetch failed', e?.message); }
   }
-  // 2c. If still missing and we know the word and have a public base, try direct <word>_sentence.mp3
-  const needWordBase = items.filter(it=> !it.sentenceAudioUrl && it.eng && hasBase);
+  // 2c. If still missing and we know the word and have a public base, try direct <word>_sentence.mp3.
+  // Only use this legacy word-key fallback when sentence_id is missing to avoid cross-list collisions.
+  const needWordBase = items.filter(it=> !it.sentenceAudioUrl && !it.sentence_id && it.eng && hasBase);
   if (needWordBase.length){
     needWordBase.forEach(it=>{
       const key = `${normWord(it.eng)}_sentence.mp3`;
@@ -167,8 +168,9 @@ async function enrichSentenceAudioIDAware(items){
       it.audio_key = it.audio_key || `${normWord(it.eng)}_sentence`;
     });
   }
-  // 3. Collect which still lack URL and have eng for legacy lambda
-  const legacyNeed = items.filter(it=> !it.sentenceAudioUrl && it.eng);
+  // 3. Collect which still lack URL and have eng for legacy lambda.
+  // Keep this for backward compatibility only when sentence_id is missing.
+  const legacyNeed = items.filter(it=> !it.sentenceAudioUrl && !it.sentence_id && it.eng);
   if (!legacyNeed.length) return;
   try {
     const keys = Array.from(new Set(legacyNeed.flatMap(i=> {

@@ -155,6 +155,30 @@ export async function ensureSentenceIdsBuilder(wordObjs) {
   }
 }
 
+function modeNeedsSentenceIds(mode) {
+  return /sentence/i.test(String(mode || ''));
+}
+
+function payloadNeedsSentenceIds(payload) {
+  const modes = Array.isArray(payload?.modes) ? payload.modes : [];
+  if (modes.some(modeNeedsSentenceIds)) return true;
+  return modeNeedsSentenceIds(payload?.mode);
+}
+
+function unresolvedSentenceLinks(words = []) {
+  if (!Array.isArray(words)) return [];
+  return words.filter((w) => {
+    if (!w || typeof w !== 'object') return false;
+    const sentenceFromArray = Array.isArray(w.sentences) && w.sentences.length
+      ? (w.sentences.find(s => typeof s?.text === 'string' && s.text.trim())?.text || '')
+      : '';
+    const hasSentence = String(w.sentence || w.legacy_sentence || w.example || sentenceFromArray || '').trim().split(/\s+/).length >= 3;
+    if (!hasSentence) return false;
+    const nestedId = Array.isArray(w.sentences) && w.sentences.some(s => s && s.id);
+    return !w.primary_sentence_id && !nestedId;
+  });
+}
+
 /**
  * Prepare and upload images to R2 if needed
  * @param {Object} payload - Game payload with words and gameImage
@@ -292,6 +316,18 @@ export async function saveGameData(payload, existingId = null) {
     // Ensure created_by is attached
     const uid = getCurrentUserId();
     if (uid) payload.created_by = uid;
+
+    if (payloadNeedsSentenceIds(payload) && Array.isArray(payload.words) && payload.words.length) {
+      await ensureSentenceIdsBuilder(payload.words);
+      const unresolved = unresolvedSentenceLinks(payload.words);
+      if (unresolved.length) {
+        const sample = unresolved.slice(0, 5).map(w => w.eng).filter(Boolean).join(', ');
+        return {
+          success: false,
+          error: `Could not link all sentence IDs yet (${unresolved.length}${sample ? `: ${sample}` : ''})`
+        };
+      }
+    }
     
     const action = existingId ? 'update_game_data' : 'insert_game_data';
     let postBody = { action, data: payload };

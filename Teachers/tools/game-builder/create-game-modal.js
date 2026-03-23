@@ -481,6 +481,29 @@ async function ensureSentenceIds(wordObjs, opts = {}){
   } catch(e){ console.debug('[SentenceUpgrade] ensureSentenceIds failed', e?.message); return { inserted:0, error:true }; }
 }
 
+function modeNeedsSentenceIds(mode) {
+  return /sentence/i.test(String(mode || ''));
+}
+
+function listNeedsSentenceIds(modes = []) {
+  if (!Array.isArray(modes) || !modes.length) return false;
+  return modes.some(modeNeedsSentenceIds);
+}
+
+function unresolvedSentenceLinks(words = []) {
+  if (!Array.isArray(words)) return [];
+  return words.filter((w) => {
+    if (!w || typeof w !== 'object') return false;
+    const sentenceFromArray = Array.isArray(w.sentences) && w.sentences.length
+      ? (w.sentences.find(s => typeof s?.text === 'string' && s.text.trim())?.text || '')
+      : '';
+    const hasSentence = String(w.sentence || w.legacy_sentence || w.example || sentenceFromArray || '').trim().split(/\s+/).length >= 3;
+    if (!hasSentence) return false;
+    const nestedId = Array.isArray(w.sentences) && w.sentences.some(s => s && s.id);
+    return !w.primary_sentence_id && !nestedId;
+  });
+}
+
 // -------------------------------------------------------------
 // Time Battle Settings (duration configuration before launch)
 // -------------------------------------------------------------
@@ -1090,6 +1113,16 @@ export function initCreateGameModal(buildPayload) {
         ensureExamplesPresent(data.words);
         setStatus('Linking sentences...');
         await ensureSentenceIds(data.words); // safe upgrade (silent fallback)
+        const needsSentenceIds = listNeedsSentenceIds(data.modes);
+        if (needsSentenceIds) {
+          const unresolved = unresolvedSentenceLinks(data.words);
+          if (unresolved.length) {
+            const sample = unresolved.slice(0, 5).map(w => w.eng).filter(Boolean).join(', ');
+            setStatus('Sentence linking incomplete');
+            alert(`Could not link all sentence IDs yet. Please try again.\n\nUnlinked words: ${unresolved.length}${sample ? `\nExamples: ${sample}` : ''}`);
+            return;
+          }
+        }
         const english = data.words.map(w => w.eng).filter(Boolean);
         const examplesMap = Object.fromEntries(
           (data.words || [])
@@ -1570,15 +1603,26 @@ async function launchLiveMode() {
   if (!buildPayloadRef) { alert('Live launch not ready: missing payload builder.'); return; }
   const data = buildPayloadRef();
   if (!data || !Array.isArray(data.words) || !data.words.length) { alert('No words found. Please add words first.'); return; }
-  // Fast path: background sentence linking (skip audio) so UI is not blocked
-  try {
-    const total = data.words.length;
-    const withIds = data.words.filter(w=> w && (w.primary_sentence_id || (Array.isArray(w.sentences) && w.sentences.length))).length;
-    if (withIds < total) {
-      setStatus('Linking sentences…');
-      (async ()=>{ try { await ensureSentenceIds(data.words, { skipAudio:true }); } catch(e){ console.debug('[liveLaunch] bg sentence link failed', e?.message); } })();
+  const needsSentenceIds = modeNeedsSentenceIds(selectedLiveMode);
+  if (needsSentenceIds) {
+    try {
+      ensureExamplesPresent(data.words);
+      setStatus('Linking sentences...');
+      await ensureSentenceIds(data.words, { skipAudio:true });
+      const unresolved = unresolvedSentenceLinks(data.words);
+      if (unresolved.length) {
+        const sample = unresolved.slice(0, 5).map(w => w.eng).filter(Boolean).join(', ');
+        setStatus('Sentence linking incomplete');
+        alert(`Could not link all sentence IDs for this live game yet. Please try again.\n\nUnlinked words: ${unresolved.length}${sample ? `\nExamples: ${sample}` : ''}`);
+        return;
+      }
+    } catch (e) {
+      console.debug('[liveLaunch] sentence linking failed', e?.message);
+      setStatus('Sentence linking failed');
+      alert('Could not link sentence IDs right now. Please try again in a moment.');
+      return;
     }
-  } catch {}
+  }
   setStatus('Creating live game...');
   showLoading('Creating live game...');
   let id = null;
