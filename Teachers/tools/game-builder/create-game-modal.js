@@ -436,6 +436,7 @@ async function ensureSentenceIds(wordObjs, opts = {}){
     // Call dedicated sentence batch function through environment-aware API routing
     const payload = { action:'upsert_sentences_batch', sentences: Array.from(map.values()) };
     if (opts.skipAudio) payload.skip_audio = true;
+    if (opts.forceNewIds) payload.force_new_ids = true;
     const endpoint = getApiPath('/.netlify/functions/upsert_sentences_batch');
     const res = await fetch(endpoint, { method:'POST', headers:{'Content-Type':'application/json'}, credentials:'include', body: JSON.stringify(payload) });
     const js = await res.json().catch(()=>null);
@@ -1112,7 +1113,7 @@ export function initCreateGameModal(buildPayload) {
         el.save.disabled = true;
         ensureExamplesPresent(data.words);
         setStatus('Linking sentences...');
-        await ensureSentenceIds(data.words); // safe upgrade (silent fallback)
+        await ensureSentenceIds(data.words, { forceNewIds: true });
         const needsSentenceIds = listNeedsSentenceIds(data.modes);
         if (needsSentenceIds) {
           const unresolved = unresolvedSentenceLinks(data.words);
@@ -1608,7 +1609,7 @@ async function launchLiveMode() {
     try {
       ensureExamplesPresent(data.words);
       setStatus('Linking sentences...');
-      await ensureSentenceIds(data.words, { skipAudio:true });
+      await ensureSentenceIds(data.words, { skipAudio:true, forceNewIds:true });
       const unresolved = unresolvedSentenceLinks(data.words);
       if (unresolved.length) {
         const sample = unresolved.slice(0, 5).map(w => w.eng).filter(Boolean).join(', ');

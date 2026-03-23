@@ -72,7 +72,7 @@ export function getCurrentUserId() {
  * @param {Array} wordObjs - Array of word objects
  * @returns {Promise<Object>} {inserted: number}
  */
-export async function ensureSentenceIdsBuilder(wordObjs) {
+export async function ensureSentenceIdsBuilder(wordObjs, opts = {}) {
   try {
     if (!Array.isArray(wordObjs) || !wordObjs.length) return { inserted: 0 };
     
@@ -102,6 +102,7 @@ export async function ensureSentenceIdsBuilder(wordObjs) {
       action: 'upsert_sentences_batch',
       sentences: Array.from(map.values())
     };
+    if (opts.forceNewIds) payload.force_new_ids = true;
     
     const res = await WillenaAPI.fetch('/.netlify/functions/upsert_sentences_batch', {
       method: 'POST',
@@ -318,7 +319,7 @@ export async function saveGameData(payload, existingId = null) {
     if (uid) payload.created_by = uid;
 
     if (payloadNeedsSentenceIds(payload) && Array.isArray(payload.words) && payload.words.length) {
-      await ensureSentenceIdsBuilder(payload.words);
+      await ensureSentenceIdsBuilder(payload.words, { forceNewIds: true });
       const unresolved = unresolvedSentenceLinks(payload.words);
       if (unresolved.length) {
         const sample = unresolved.slice(0, 5).map(w => w.eng).filter(Boolean).join(', ');
