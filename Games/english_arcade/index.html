@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <!-- API gateway MUST load before api-config for students.willenaenglish.com routing -->
-  <script src="/students/api-gateway.js"></script>
+  <script src="/students/api-gateway.js?v=20260323a"></script>
   <script src="/js/api-config.js"></script>
   <base href="/Games/english_arcade/" />
   <title data-i18n="English Arcade">English Arcade</title>
@@ -154,8 +154,10 @@
       
       // Wait for api-gateway to patch WillenaAPI before checking auth
       function checkAuth() {
-        // Must wait for BOTH WillenaAPI AND the gateway patch
-        if (!window.WillenaAPI || !window.WillenaAPI.fetch || !window.__STUDENTS_GATEWAY_PATCHED) {
+        // Must wait for WillenaAPI and gateway patch readiness.
+        // Accept both legacy and current gateway-ready flags for compatibility.
+        const gatewayReady = !!(window.__STUDENTS_GATEWAY_PATCHED || window.__CF_GATEWAY_PATCHED);
+        if (!window.WillenaAPI || !window.WillenaAPI.fetch || !gatewayReady) {
           setTimeout(checkAuth, 20);
           return;
         }
