@@ -22,6 +22,9 @@
 
   // If NOT on CF Pages, do nothing - let api-config.js handle it
   if (!isCFPages) {
+    // Backward compatibility: some pages still wait on this flag.
+    // Mark ready on non-CF domains so auth gates do not deadlock.
+    window.__STUDENTS_GATEWAY_PATCHED = true;
     console.log('[CFGateway] Not a CF Pages domain, skipping gateway patch');
     return;
   }
@@ -29,6 +32,8 @@
   // Set API gateway immediately, before anything else loads
   window.__CF_API_GATEWAY = 'https://api.willenaenglish.com';
   window.__CF_GATEWAY_PATCHED = false;
+  // Backward compatibility alias used by legacy auth gates
+  window.__STUDENTS_GATEWAY_PATCHED = false;
 
   // Wait for WillenaAPI to load, then override it
   const maxWaitTime = 5000; // 5 seconds max wait
@@ -67,6 +72,8 @@
     // Update BASE_URL to reflect the gateway
     window.WillenaAPI.BASE_URL = window.__CF_API_GATEWAY;
     window.__CF_GATEWAY_PATCHED = true;
+    // Keep legacy flag in sync for older pages (play.html/index.html)
+    window.__STUDENTS_GATEWAY_PATCHED = true;
     
     console.log('[CFGateway] ✓ API routing configured for CF Pages domain:', host);
     console.log('[CFGateway] All API calls will use:', window.__CF_API_GATEWAY);
