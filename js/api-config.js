@@ -36,8 +36,11 @@
   // Production/staging use relative /api/* paths (same-origin, no CORS issues)
   const USE_CF_WORKERS = (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'));
 
-  // Functions that are Netlify-only (not migrated) - these ALWAYS use NETLIFY_FUNCTIONS_URL
-  // even when CF_ROLLOUT_PERCENT is 100
+  // Functions that are Netlify-only (not migrated).
+  // NOTE: Direct browser calls from Cloudflare Pages -> students.willenaenglish.com
+  // can hit strict CORS when credentials are included. Keep direct routing disabled
+  // on CF Pages by default; let the API gateway proxy these server-side.
+  const ALLOW_DIRECT_NETLIFY_ON_CF = false;
   const NETLIFY_ONLY_FUNCTIONS = [
     'verify_student',
     'set_student_password',
@@ -144,11 +147,11 @@
       return CF_FUNCTIONS[fn] + search;
     }
 
-    // Some functions still exist only on Netlify. On Cloudflare Pages, route those
-    // directly to the Netlify origin instead of the API gateway so sentence/audio
-    // features use the real service env + R2-backed functions.
+    // Some functions still exist only on Netlify.
+    // On CF Pages, default to gateway proxying to avoid browser CORS issues.
+    // Direct browser routing can be re-enabled with ALLOW_DIRECT_NETLIFY_ON_CF.
     if (isCloudflarePages && fn && NETLIFY_ONLY_FUNCTIONS.includes(fn)) {
-      return NETLIFY_BASE + functionPath;
+      return ALLOW_DIRECT_NETLIFY_ON_CF ? (NETLIFY_BASE + functionPath) : (CF_API_GATEWAY + functionPath);
     }
 
     return API_BASE + functionPath;
@@ -210,6 +213,20 @@
       ...options,
       credentials: 'include',
     };
+
+    // Safety: if any call still targets students.willenaenglish.com cross-origin,
+    // do NOT send credentials from browser (wildcard ACAO + credentials is blocked).
+    const isDirectStudentsFunction = /^https:\/\/students\.willenaenglish\.com\/\.netlify\/functions\//i.test(url);
+    const isCrossOriginToStudents = isDirectStudentsFunction && (window.location.origin !== 'https://students.willenaenglish.com');
+    if (isCrossOriginToStudents) {
+      fetchOptions.credentials = 'omit';
+      const headers = { ...(fetchOptions.headers || {}) };
+      Object.keys(headers).forEach((k) => {
+        if (k.toLowerCase() === 'authorization') delete headers[k];
+      });
+      fetchOptions.headers = headers;
+      console.warn('[WillenaAPI] Cross-origin direct students call detected; forcing credentials=omit for CORS:', url);
+    }
     
     // For requests with body, ensure Content-Type is set (case-insensitive check)
     if (options.body) {
@@ -236,7 +253,7 @@
       }
       
       // Only add Authorization header if we have a valid token that looks like a JWT (contains dots)
-      if (localToken && localToken.includes('.') && localToken.length > 50) {
+      if (!isCrossOriginToStudents && localToken && localToken.includes('.') && localToken.length > 50) {
         fetchOptions.headers = {
           ...fetchOptions.headers,
           'Authorization': `Bearer ${localToken}`
