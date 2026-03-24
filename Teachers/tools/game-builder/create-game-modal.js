@@ -428,6 +428,7 @@ async function ensureSentenceIds(wordObjs, opts = {}){
     if(!Array.isArray(wordObjs) || !wordObjs.length) return { inserted:0, reused:0 };
     // Build unique normalized sentence list
     const norm = s=> (s||'').trim().replace(/\s+/g,' ');
+    const normKey = s => norm(s).toLowerCase();
     const targets = wordObjs.filter(w => {
       const currentText = norm(w.example || w.legacy_sentence || '');
       if (!currentText || currentText.split(/\s+/).length < 3) return false;
@@ -436,7 +437,7 @@ async function ensureSentenceIds(wordObjs, opts = {}){
       // Case 2: Identity exists but text was changed by the teacher
       if (Array.isArray(w.sentences) && w.sentences.length) {
         const persistedText = norm((w.sentences.find(s => s && typeof s === 'object' && s.text) || {}).text || '');
-        if (persistedText && persistedText !== currentText) {
+        if (persistedText && normKey(persistedText) !== normKey(currentText)) {
           delete w.primary_sentence_id; w.sentences = [];
           return true;
         }
@@ -445,7 +446,7 @@ async function ensureSentenceIds(wordObjs, opts = {}){
     });
     if(!targets.length) return { inserted:0, reused:0 };
     const map = new Map();
-    targets.forEach(w=>{ const raw = w.legacy_sentence || w.example || ''; if(raw && raw.split(/\s+/).length>=3){ const n = norm(raw); if(n && !map.has(n)) map.set(n,{ text:n, words:[w.eng].filter(Boolean) }); }});
+    targets.forEach(w=>{ const raw = w.legacy_sentence || w.example || ''; if(raw && raw.split(/\s+/).length>=3){ const key = normKey(raw); const n = norm(raw); if(key && !map.has(key)) map.set(key,{ text:n, words:[w.eng].filter(Boolean) }); }});
     if(!map.size) return { inserted:0, reused:0 };
     // Call dedicated sentence batch function through environment-aware API routing
     const payload = { action:'upsert_sentences_batch', sentences: Array.from(map.values()) };
@@ -467,11 +468,11 @@ async function ensureSentenceIds(wordObjs, opts = {}){
       console.debug('[SentenceUpgrade] Sentence batch failed or empty', { status: res.status, ok: res.ok, body: js });
       return { inserted:0, reused:0, backend:false };
     }
-  const byText = new Map(js.sentences.map(r=>[norm(r.text), r])); // r may include audio_key later
+  const byText = new Map(js.sentences.map(r=>[normKey(r.text), r])); // case-insensitive matching
     let applied=0; let missed=0;
     targets.forEach(w=>{
       const raw = w.legacy_sentence || w.example || '';
-      const rec = byText.get(norm(raw));
+      const rec = byText.get(normKey(raw));
       if(rec && rec.id){
         // Preserve text + audio_key (if backend populated it)
         const sentObj = { id: rec.id, text: rec.text };

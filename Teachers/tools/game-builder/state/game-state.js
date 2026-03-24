@@ -244,7 +244,8 @@ export function buildPayload(title = '', gameImageUrl = '') {
       // identity and audio for the *new* sentence text.
       const rawExample = normalizeSentenceText(w?.example);
       const persistedPrimaryText = primarySentence?.text ? normalizeSentenceText(primarySentence.text) : '';
-      const sentenceIdentityStale = rawExample && persistedPrimaryText && rawExample !== persistedPrimaryText;
+      const sentenceIdentityStale = rawExample && persistedPrimaryText
+        && rawExample.toLowerCase() !== persistedPrimaryText.toLowerCase();
       if (sentenceIdentityStale) {
         sentences = [];
         primarySentence = null;

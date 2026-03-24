@@ -86,7 +86,9 @@ export async function handleSaveAsConfirm(titleEl, buildPayload, getCurrentGameI
       return;
     }
     
-    await ensureSentenceIdsBuilder(payload.words || []);
+    const sentResult = await ensureSentenceIdsBuilder(payload.words || []);
+    console.log('[saveAs] ensureSentenceIdsBuilder result:', sentResult,
+      'words with sentence IDs:', (payload.words || []).filter(w => w.primary_sentence_id).length, '/', (payload.words || []).length);
 
     // Prepare images before save
     await prepareAndUploadImagesIfNeeded(payload, currentGameId, { force: false });

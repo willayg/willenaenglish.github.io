@@ -65,7 +65,9 @@ export async function handleQuickSave(ev, buildPayload, getCurrentGameId, setCur
   if (saveLink) saveLink.classList.add('disabled');
   
   try {
-    await ensureSentenceIdsBuilder(payload.words || []);
+    const sentResult = await ensureSentenceIdsBuilder(payload.words || []);
+    console.log('[quickSave] ensureSentenceIdsBuilder result:', sentResult,
+      'words with sentence IDs:', (payload.words || []).filter(w => w.primary_sentence_id).length, '/', (payload.words || []).length);
 
     // Stage 1: Upload images
     if (!silent && typeof window.showSaveCenterMessage === 'function') {
