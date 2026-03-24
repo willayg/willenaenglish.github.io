@@ -163,6 +163,7 @@ async function enrichSentenceAudioIDAware(items){
       || raw.includes(`/${word}_sentence.mp3`)
       || raw.includes(`/${word}_sentence?`);
   };
+  const isLocalSentenceId = (id) => /^local_/i.test(String(id || '').trim());
     // 1. If any have audio_key try to form a usable URL. IMPORTANT: previously we blindly used the raw key
     //    which produced a relative path (404) when no bucket base was defined, blocking fallback because
     //    playSentenceAudio saw a URL and returned early. Now: only set sentenceAudioUrl if we are confident
@@ -197,20 +198,59 @@ async function enrichSentenceAudioIDAware(items){
   // This is safe for both persisted and runtime-resolved sentence IDs because if no
   // sentence-specific audio exists, we still fall through to the legacy word fallback.
   const stillMissing = items.filter(it=> !it.sentenceAudioUrl && it.sentence_id);
-  if (stillMissing.length){
+  const signedEligible = stillMissing.filter(it => !isLocalSentenceId(it.sentence_id));
+  if (signedEligible.length){
     try {
-      const uniqueIds = Array.from(new Set(stillMissing.map(it=> it.sentence_id)));
+      const uniqueIds = Array.from(new Set(signedEligible.map(it=> it.sentence_id)));
       const r = await WillenaAPI.fetch('/.netlify/functions/get_sentence_audio_urls', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ sentence_ids: uniqueIds }) });
       if (r.ok){
         const data = await r.json().catch(()=>null);
         if(data && data.success && data.results){
-          stillMissing.forEach(it=>{
+          signedEligible.forEach(it=>{
             const rec = data.results[it.sentence_id];
             if(rec && rec.exists && rec.url){ it.sentenceAudioUrl = rec.url; it.audio_key = rec.key || it.audio_key; }
           });
         }
       }
     } catch(e){ console.debug('[SentenceMode] sentence id audio signed fetch failed', e?.message); }
+  }
+  // 2c) local_* IDs / key-only fallback through get_audio_urls (key lookup).
+  const keyLookupNeed = items.filter(it => !it.sentenceAudioUrl && (it.audio_key || it.sentence_id));
+  if (keyLookupNeed.length) {
+    try {
+      const keys = Array.from(new Set(keyLookupNeed.flatMap(it => {
+        const k = String(it.audio_key || '').trim();
+        if (k) {
+          const noExt = k.replace(/\.mp3$/i, '');
+          return [k, noExt];
+        }
+        if (isLocalSentenceId(it.sentence_id)) {
+          return [`sent_${it.sentence_id}.mp3`, `sent_${it.sentence_id}`];
+        }
+        return [];
+      }).filter(Boolean)));
+      if (keys.length) {
+        const r = await WillenaAPI.fetch('/.netlify/functions/get_audio_urls', {
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ words: keys })
+        });
+        if (r.ok) {
+          const data = await r.json().catch(()=>null);
+          const map = data?.results || {};
+          keyLookupNeed.forEach(it => {
+            const k = String(it.audio_key || '').trim();
+            const noExt = k ? k.replace(/\.mp3$/i, '') : '';
+            const fallback1 = it.sentence_id ? `sent_${it.sentence_id}.mp3` : '';
+            const fallback2 = it.sentence_id ? `sent_${it.sentence_id}` : '';
+            const rec = (k && map[k]) || (noExt && map[noExt]) || (fallback1 && map[fallback1]) || (fallback2 && map[fallback2]);
+            if (rec && rec.exists && rec.url) it.sentenceAudioUrl = rec.url;
+          });
+        }
+      }
+    } catch (e) {
+      console.debug('[SentenceMode] key lookup failed', e?.message);
+    }
   }
   // ── Legacy word_sentence.mp3 fallback REMOVED (2026-03-24) ──────────
   // Steps 2c & 3 previously fell back to <word>_sentence.mp3 / get_audio_urls.
