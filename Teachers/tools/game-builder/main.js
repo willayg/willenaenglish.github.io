@@ -28,6 +28,7 @@ import {
 import { 
   getCurrentUserId,
   ensureSentenceIdsBuilder,
+  ensureSentenceAudioBuilder,
   prepareAndUploadImagesIfNeeded,
   saveGameData,
   loadGameData,
@@ -88,7 +89,7 @@ import { ENDPOINTS, STORAGE_KEYS, ACTIONS, DEFAULTS, TOAST_DURATION } from './co
 import { initFileListModal } from './ui/file-list.js?v=20260322p';
 import { loadWorksheetIntoBuilder } from './services/worksheet-service.js';
 
-const GB_BUILD_STAMP = 'GB_BUILD 20260324e · commit 026f0aad';
+const GB_BUILD_STAMP = 'GB_BUILD 20260324g · save-sentences';
 
 function injectBuilderBuildStamp() {
   try {
@@ -568,6 +569,10 @@ function bindRowEvents(){
   rowsEl.querySelectorAll('[data-action="refresh-example"]').forEach(btn => {
     btn.onclick = async () => { const idx = parseInt(btn.dataset.idx,10); await generateExampleForRow(idx, true); };
   });
+  // Play sentence audio preview buttons
+  rowsEl.querySelectorAll('[data-action="play-sentence"]').forEach(btn => {
+    btn.onclick = () => playSentencePreview(btn, parseInt(btn.dataset.idx, 10));
+  });
 }
 
 // Import list from Word Builder (wordtest) via localStorage if present
@@ -706,11 +711,213 @@ function applyWorksheetImages(rows, imagesField, originalWords) {
   applyWorksheetImagesFromModule(rows, imagesField, originalWords);
 }
 
+// ── Play Sentence Preview ─────────────────────────────────────────────
+// Plays the sentence audio for a word row: tries sent_<id>.mp3 first,
+// then generates on-the-fly via ElevenLabs TTS, falling back to browser TTS.
+let _previewAudio = null;
+async function playSentencePreview(btn, idx) {
+  const list = getList();
+  const word = list[idx];
+  if (!word) return;
+  const sentence = (word.example || word.legacy_sentence || '').trim();
+  if (!sentence) { toast('No sentence to play'); return; }
+
+  // Stop any currently playing preview
+  if (_previewAudio) { try { _previewAudio.pause(); _previewAudio = null; } catch {} }
+  // Reset all play buttons
+  document.querySelectorAll('.play-sentence-btn').forEach(b => {
+    b.classList.remove('playing', 'error');
+    b.querySelector('.play-icon').textContent = '▶';
+  });
+
+  btn.classList.add('playing');
+  btn.querySelector('.play-icon').textContent = '⏳';
+
+  try {
+    // 1) Try sent_<id>.mp3 if word has a sentence ID
+    const sid = word.primary_sentence_id;
+    if (sid) {
+      try {
+        const doFetch = (typeof WillenaAPI !== 'undefined' && WillenaAPI.fetch) ? WillenaAPI.fetch.bind(WillenaAPI) : (u, o) => fetch(u, { ...o, credentials: 'include' });
+        const r = await doFetch('/.netlify/functions/get_sentence_audio_urls', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sentence_ids: [sid] }) });
+        if (r.ok) {
+          const data = await r.json().catch(() => null);
+          if (data?.success && data.results?.[sid]?.exists && data.results[sid].url) {
+            const url = data.results[sid].url;
+            await playAudioUrl(url, btn);
+            return;
+          }
+        }
+      } catch (e) { console.debug('[playSentencePreview] signed URL failed, trying TTS', e?.message); }
+    }
+
+    // 2) Generate audio on-the-fly via ElevenLabs
+    btn.querySelector('.play-icon').textContent = '🔄';
+    try {
+      const voice = preferredVoice();
+      const ttsResult = await callTTSProxy({ text: sentence, voice_id: voice, model_id: 'eleven_turbo_v2_5' });
+      if (ttsResult?.audio) {
+        const audioSrc = `data:audio/mpeg;base64,${ttsResult.audio}`;
+        await playAudioUrl(audioSrc, btn);
+        return;
+      }
+    } catch (e) { console.debug('[playSentencePreview] ElevenLabs failed, using browser TTS', e?.message); }
+
+    // 3) Last resort: browser TTS
+    btn.querySelector('.play-icon').textContent = '🗣️';
+    const utterance = new SpeechSynthesisUtterance(sentence);
+    utterance.lang = 'en-US';
+    utterance.rate = 0.9;
+    utterance.onend = () => { btn.classList.remove('playing'); btn.querySelector('.play-icon').textContent = '▶'; };
+    utterance.onerror = () => { btn.classList.remove('playing'); btn.classList.add('error'); btn.querySelector('.play-icon').textContent = '✗'; setTimeout(() => { btn.classList.remove('error'); btn.querySelector('.play-icon').textContent = '▶'; }, 2000); };
+    speechSynthesis.speak(utterance);
+  } catch (e) {
+    console.error('[playSentencePreview]', e);
+    btn.classList.remove('playing');
+    btn.classList.add('error');
+    btn.querySelector('.play-icon').textContent = '✗';
+    setTimeout(() => { btn.classList.remove('error'); btn.querySelector('.play-icon').textContent = '▶'; }, 2000);
+  }
+}
+
+function playAudioUrl(url, btn) {
+  return new Promise((resolve) => {
+    const a = new Audio(url);
+    _previewAudio = a;
+    btn.querySelector('.play-icon').textContent = '🔊';
+    a.onended = () => { _previewAudio = null; btn.classList.remove('playing'); btn.querySelector('.play-icon').textContent = '▶'; resolve(); };
+    a.onerror = () => { _previewAudio = null; btn.classList.remove('playing'); btn.classList.add('error'); btn.querySelector('.play-icon').textContent = '✗'; setTimeout(() => { btn.classList.remove('error'); btn.querySelector('.play-icon').textContent = '▶'; }, 2000); resolve(); };
+    a.play().catch(() => { a.onerror(); });
+  });
+}
+
+// ── Save Sentences Handler ────────────────────────────────────────────
+// Forces re-generation of sentence IDs and audio for ALL words with sentences.
+// This is the "🔊 Save Sentences" toolbar button.
+async function handleSaveSentences() {
+  const link = document.getElementById('saveSentencesLink');
+  if (!link || link.classList.contains('working')) return;
+  link.classList.add('working');
+  const origText = link.textContent;
+  link.textContent = '⏳ Working…';
+
+  const list = getList();
+  if (!list.length) { toast('No words to process'); link.classList.remove('working'); link.textContent = origText; return; }
+
+  const currentGameId = getCurrentGameId();
+  if (!currentGameId) { toast('Save the game first before generating sentence audio'); link.classList.remove('working'); link.textContent = origText; return; }
+
+  try {
+    // Step 1: Save first (ensures data is fresh)
+    link.textContent = '⏳ Saving…';
+    const title = titleEl.value || 'Untitled';
+    const gameImage = document.getElementById('gameImageZone').querySelector('img')?.src || '';
+    const payload = buildPayload(title, gameImage);
+
+    // Step 2: Force sentence ID resolution (clears existing to get fresh IDs)
+    link.textContent = '⏳ Resolving sentences…';
+    // Clear all existing sentence IDs to force fresh resolution
+    for (const w of payload.words) {
+      delete w.primary_sentence_id;
+      if (Array.isArray(w.sentences)) w.sentences = [];
+    }
+    const idResult = await ensureSentenceIdsBuilder(payload.words, { forceNewIds: true });
+    console.log('[SaveSentences] ID resolution:', idResult);
+
+    const withIds = payload.words.filter(w => w.primary_sentence_id);
+    if (!withIds.length) {
+      toast('⚠️ Backend returned no sentence IDs. Check server logs.');
+      link.classList.remove('working');
+      link.textContent = origText;
+      return;
+    }
+    link.textContent = `⏳ Generating audio (0/${withIds.length})…`;
+
+    // Step 3: Force regenerate ALL sentence audio (skip existence check)
+    const voice = preferredVoice();
+    let generated = 0, failed = 0;
+    const concurrency = 2;
+    let queueIdx = 0;
+    const tasks = withIds.map(w => {
+      const sid = w.primary_sentence_id;
+      const sentObj = Array.isArray(w.sentences) && w.sentences.find(s => s?.id === sid);
+      const text = (sentObj?.text || w.example || '').trim();
+      return { sid, text, eng: w.eng, word: w };
+    }).filter(t => t.text && t.text.split(/\s+/).length >= 3);
+
+    async function worker() {
+      while (queueIdx < tasks.length) {
+        const i = queueIdx++;
+        const t = tasks[i];
+        const key = `sent_${t.sid}`;
+        try {
+          const ttsResult = await callTTSProxy({ text: t.text, voice_id: voice, model_id: 'eleven_turbo_v2_5' });
+          if (ttsResult?.audio) {
+            await uploadAudioFile(key, ttsResult.audio);
+            generated++;
+            // Update audio_key on word
+            if (Array.isArray(t.word.sentences)) {
+              const s = t.word.sentences.find(x => x?.id === t.sid);
+              if (s) s.audio_key = `${key}.mp3`;
+            }
+            console.log('[SaveSentences] ✓', t.eng, '→', key);
+          } else {
+            failed++;
+            console.warn('[SaveSentences] No audio returned for', t.eng);
+          }
+        } catch (e) {
+          failed++;
+          console.warn('[SaveSentences] Failed:', t.eng, e?.message);
+        }
+        link.textContent = `⏳ Audio ${generated + failed}/${tasks.length}…`;
+      }
+    }
+    await Promise.all(Array.from({ length: Math.min(concurrency, tasks.length) }, () => worker()));
+
+    // Step 4: Copy sentence IDs back to the live list
+    const liveList = getList();
+    for (const pw of payload.words) {
+      const live = liveList.find(l => l.eng === pw.eng);
+      if (live && pw.primary_sentence_id) {
+        live.primary_sentence_id = pw.primary_sentence_id;
+        live.sentences = pw.sentences;
+      }
+    }
+
+    // Step 5: Save again with updated sentence IDs and audio keys
+    link.textContent = '⏳ Saving…';
+    const finalPayload = buildPayload(title, gameImage);
+    const saveResult = await saveGameData(finalPayload, currentGameId);
+
+    if (saveResult?.success) {
+      const msg = `✓ ${generated} sentence${generated !== 1 ? 's' : ''} generated` + (failed ? `, ${failed} failed` : '');
+      toast(msg);
+      if (typeof window.showSaveCenterMessage === 'function') {
+        window.showSaveCenterMessage(msg, { variant: 'success', ms: 3000 });
+      }
+    } else {
+      toast('Audio generated but save failed: ' + (saveResult?.error || 'unknown'));
+    }
+  } catch (e) {
+    console.error('[SaveSentences]', e);
+    toast('Error: ' + (e?.message || 'unknown'));
+  } finally {
+    link.classList.remove('working');
+    link.textContent = origText;
+  }
+}
+
 // Quick Save (silent): overwrite if currentGameId, else open Save As modal
 saveLink.onclick = async (ev) => {
   const result = await handleQuickSave(ev, buildPayload, getCurrentGameId, setCurrentGameId, titleEl, toast, { silent: false });
   if (result?.success) markSaved('Saved');
 };
+
+// Save Sentences: force regenerate all sentence audio
+const saveSentencesLink = document.getElementById('saveSentencesLink');
+if (saveSentencesLink) {
+  saveSentencesLink.onclick = () => handleSaveSentences();
+}
 
 if (titleEl && !titleEl._dirtyBound) {
   titleEl._dirtyBound = true;

@@ -63,10 +63,25 @@ body { margin:0; background: linear-gradient(135deg, #6b6b6b 0%, #696969 100%); 
 .link.primary { color: #fff; background: var(--primary); padding: 6px 10px; border-radius: 6px; }
 .link.danger { color:#fff; background:#d9534f; padding:6px 10px; border-radius:6px; border:1px solid #d9534f; font-size:13px; }
 .link.danger:hover { text-decoration:none; filter:brightness(0.9); }
+.link.accent { color:#fff; background:linear-gradient(135deg,#19777e,#2da8b0); padding:6px 12px; border-radius:8px; font-size:12px; font-weight:700; letter-spacing:.3px; border:1px solid #19777e; box-shadow:0 2px 8px rgba(25,119,126,.18); transition:transform .2s,box-shadow .2s; }
+.link.accent:hover { text-decoration:none; transform:translateY(-1px); box-shadow:0 4px 14px rgba(25,119,126,.28); filter:brightness(1.08); }
+.link.accent:active { transform:scale(.96); }
+.link.accent.working { opacity:.7; pointer-events:none; animation:accentPulse 1.2s ease infinite; }
+@keyframes accentPulse { 0%,100%{opacity:.7;} 50%{opacity:1;} }
 .dot { color:#9aa3af; margin: 0 4px; font-size:10px; }
 .btn.small { padding:4px 8px; font-size: 12px; }
 .btn.icon { display:inline-flex; align-items:center; gap:6px; }
 .btn:disabled { opacity: 0.6; cursor:not-allowed; }
+
+/* Example sentence button group */
+.ex-btn-group { display:flex; flex-direction:column; gap:4px; flex-shrink:0; }
+.play-sentence-btn { background:linear-gradient(135deg,#19777e,#2da8b0) !important; color:#fff !important; border:none !important; border-radius:8px !important; width:28px; height:28px; display:inline-flex !important; align-items:center; justify-content:center; cursor:pointer; box-shadow:0 2px 6px rgba(25,119,126,.22); transition:transform .2s,box-shadow .2s; padding:0 !important; }
+.play-sentence-btn:hover { transform:scale(1.12); box-shadow:0 4px 12px rgba(25,119,126,.35); }
+.play-sentence-btn:active { transform:scale(.92); }
+.play-sentence-btn .play-icon { font-size:12px; line-height:1; margin-left:1px; }
+.play-sentence-btn.playing { background:linear-gradient(135deg,#f59e0b,#f97316) !important; animation:playPulse .9s ease infinite; }
+.play-sentence-btn.error { background:#d9534f !important; }
+@keyframes playPulse { 0%,100%{transform:scale(1);} 50%{transform:scale(1.08);} }
 .table-wrap { padding: 12px 14px; }
 .grid { width: 100%; border-collapse: collapse; }
 .grid th, .grid td { border-bottom: 1px solid var(--border); padding:8px; vertical-align: top; }
