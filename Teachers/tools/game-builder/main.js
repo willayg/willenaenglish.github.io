@@ -128,6 +128,70 @@ if (typeof document !== 'undefined') {
   }
 }
 
+function applyBuilderRoutingHotfix() {
+  try {
+    if (window.__GB_ROUTING_HOTFIX_APPLIED) return true;
+    const host = window.location.hostname || '';
+    const isCFPages = host === 'staging.willenaenglish.com'
+      || host === 'teachers.willenaenglish.com'
+      || host === 'students.willenaenglish.com'
+      || host === 'cf.willenaenglish.com'
+      || host.endsWith('.pages.dev');
+    if (!isCFPages) return true;
+    if (!window.WillenaAPI || typeof window.WillenaAPI.fetch !== 'function') return false;
+
+    const CF_GATEWAY = 'https://api.willenaenglish.com';
+    const FORCE_GATEWAY_FUNCTIONS = new Set([
+      'openai_proxy',
+      'eleven_labs_proxy',
+      'upsert_sentences_batch',
+      'get_sentence_audio_urls',
+      'supabase_proxy_fixed'
+    ]);
+
+    const extractFn = (value) => {
+      const s = String(value || '');
+      const m = s.match(/\/\.netlify\/functions\/([^\/?#]+)/);
+      return m ? m[1] : '';
+    };
+
+    const toGatewayUrl = (value) => {
+      const s = String(value || '');
+      const fn = extractFn(s);
+      if (!fn) return s;
+      const qIndex = s.indexOf('?');
+      const search = qIndex >= 0 ? s.slice(qIndex) : '';
+      return `${CF_GATEWAY}/.netlify/functions/${fn}${search}`;
+    };
+
+    const origFetch = window.WillenaAPI.fetch.bind(window.WillenaAPI);
+    window.WillenaAPI.fetch = function(functionPath, options = {}) {
+      const fn = extractFn(functionPath);
+      if (fn && FORCE_GATEWAY_FUNCTIONS.has(fn)) {
+        const routed = toGatewayUrl(functionPath);
+        console.warn('[GameBuilder][RoutingHotfix] forcing gateway for', fn, '->', routed);
+        return origFetch(routed, options);
+      }
+      return origFetch(functionPath, options);
+    };
+
+    window.__GB_ROUTING_HOTFIX_APPLIED = true;
+    console.log('[GameBuilder][RoutingHotfix] Applied for CF Pages host:', host);
+    return true;
+  } catch (e) {
+    console.warn('[GameBuilder][RoutingHotfix] Failed:', e?.message);
+    return false;
+  }
+}
+
+if (!applyBuilderRoutingHotfix()) {
+  let retries = 0;
+  const timer = setInterval(() => {
+    retries++;
+    if (applyBuilderRoutingHotfix() || retries >= 40) clearInterval(timer);
+  }, 50);
+}
+
 function getExampleText(word) {
   if (!word || typeof word !== 'object') return '';
   return word.example
