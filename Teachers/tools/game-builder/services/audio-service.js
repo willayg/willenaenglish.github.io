@@ -173,7 +173,7 @@ export async function ensureAudioForWordsAndSentences(wordsList, examplesMap, op
     if (k) originalByKey[k] = String(orig);
   });
   
-  const { maxWorkers = 3, onInit, onProgress, onDone, force = false } = opts || {};
+  const { maxWorkers = 3, onInit, onProgress, onDone, force = false, skipSentenceAudio = false } = opts || {};
   
   if (!words.length && (!examplesMap || Object.keys(examplesMap).length === 0)) {
     if (typeof onInit === 'function') onInit(0);
@@ -183,7 +183,7 @@ export async function ensureAudioForWordsAndSentences(wordsList, examplesMap, op
   
   // 1) Prepare keys
   const wordKeys = words.slice();
-  const sentenceKeys = words.map(w => `${w}_sentence`);
+  const sentenceKeys = skipSentenceAudio ? [] : words.map(w => `${w}_sentence`);
   
   let missingWordKeys = wordKeys.slice();
   let missingSentenceKeys = sentenceKeys.slice();

@@ -8,6 +8,57 @@ let undoStack = [];
 let redoStack = [];
 const MAX_UNDO_STACK = 50;
 
+function normalizeSentenceText(value) {
+  return String(value || '').trim().replace(/\s+/g, ' ');
+}
+
+function normalizeSentenceEntries(entries) {
+  if (!Array.isArray(entries) || !entries.length) return [];
+  const out = [];
+  const seen = new Set();
+
+  for (const entry of entries) {
+    if (!entry) continue;
+
+    let normalized = null;
+    if (typeof entry === 'string') {
+      const text = normalizeSentenceText(entry);
+      if (text) normalized = { text };
+    } else if (typeof entry === 'object') {
+      const text = normalizeSentenceText(
+        entry.text || entry.sentence || entry.example || entry.example_sentence || ''
+      );
+      const id = typeof entry.id === 'string' && entry.id.trim() ? entry.id.trim() : '';
+      if (!text && !id) continue;
+      normalized = {};
+      if (id) normalized.id = id;
+      if (text) normalized.text = text;
+      if (entry.audio_key) normalized.audio_key = String(entry.audio_key).trim();
+      if (entry.weight != null && entry.weight !== '') normalized.weight = entry.weight;
+      const ko = entry.ko || entry.kor || entry.korean || entry.translation_ko || '';
+      if (typeof ko === 'string' && ko.trim()) normalized.ko = ko.trim();
+    }
+
+    if (!normalized) continue;
+    const dedupeKey = normalized.id || normalized.text;
+    if (!dedupeKey || seen.has(dedupeKey)) continue;
+    seen.add(dedupeKey);
+    out.push(normalized);
+  }
+
+  return out;
+}
+
+function pickPrimarySentenceEntry(word, sentenceEntries = normalizeSentenceEntries(word?.sentences)) {
+  if (!sentenceEntries.length) return null;
+  const preferredId = (word?.primary_sentence_id || word?.sentence_id || '').toString().trim();
+  if (preferredId) {
+    const byId = sentenceEntries.find(entry => entry && entry.id === preferredId);
+    if (byId) return byId;
+  }
+  return sentenceEntries.slice().sort((a, b) => (Number(b?.weight || 1) - Number(a?.weight || 1)))[0] || sentenceEntries[0] || null;
+}
+
 /**
  * Get current word list
  * @returns {Array} Current list
@@ -55,12 +106,22 @@ export function setCurrentGameId(id) {
  * @returns {Object} Complete word object
  */
 export function newRow(data = {}) {
+  const example = data.example || data.example_sentence || data.exampleSentence || data.sentence || data.legacy_sentence || '';
+  const legacySentence = normalizeSentenceText(data.legacy_sentence || data.sentence || example);
+  const sentences = normalizeSentenceEntries(data.sentences);
+  const primarySentenceId = (data.primary_sentence_id || data.sentence_id || '').toString().trim();
+
   return {
     eng: data.eng || '',
     kor: data.kor || '',
     image_url: data.image_url || '',
     definition: data.definition || '',
-    example: data.example || data.example_sentence || data.exampleSentence || data.sentence || data.legacy_sentence || ''
+    example,
+    legacy_sentence: legacySentence,
+    ...(sentences.length ? { sentences } : {}),
+    ...(primarySentenceId ? { primary_sentence_id: primarySentenceId } : {}),
+    ...(data.sentence_mp3 ? { sentence_mp3: data.sentence_mp3 } : {}),
+    ...(data.sentence_audio ? { sentence_audio: data.sentence_audio } : {})
   };
 }
 
@@ -138,6 +199,11 @@ export function buildPayload(title = '', gameImageUrl = '') {
   }
   
   function chooseLegacySentence(w) {
+    const chosenSentence = pickPrimarySentenceEntry(w)?.text;
+    if (chosenSentence && /\w+\s+\w+\s+\w+/.test(chosenSentence)) {
+      return chosenSentence.trim();
+    }
+
     // 1. Pre-existing legacy_sentence (if user loaded an older game)
     if (w.legacy_sentence && /\w+\s+\w+\s+\w+/.test(w.legacy_sentence)) {
       return w.legacy_sentence.trim();
@@ -166,14 +232,26 @@ export function buildPayload(title = '', gameImageUrl = '') {
   return {
     title: title || 'Untitled Game',
     gameImage: gameImageUrl || '',
-    words: list.map(w => ({
-      eng: w.eng || '',
-      kor: w.kor || '',
-      image_url: w.image_url || '',
-      definition: sanitizeDefinitionText(w.definition || ''),
-      example: w.example || '',
-      legacy_sentence: chooseLegacySentence(w)
-    }))
+    words: list.map(w => {
+      const sentences = normalizeSentenceEntries(w?.sentences);
+      const primarySentence = pickPrimarySentenceEntry(w, sentences);
+      const primarySentenceId = (w?.primary_sentence_id || primarySentence?.id || '').toString().trim();
+      const legacySentence = chooseLegacySentence({ ...w, sentences, primary_sentence_id: primarySentenceId || w?.primary_sentence_id });
+      const example = normalizeSentenceText(w?.example || primarySentence?.text || legacySentence);
+      const out = {
+        eng: w.eng || '',
+        kor: w.kor || '',
+        image_url: w.image_url || '',
+        definition: sanitizeDefinitionText(w.definition || ''),
+        example,
+        legacy_sentence: legacySentence
+      };
+      if (sentences.length) out.sentences = sentences;
+      if (primarySentenceId) out.primary_sentence_id = primarySentenceId;
+      if (w?.sentence_mp3) out.sentence_mp3 = w.sentence_mp3;
+      if (w?.sentence_audio) out.sentence_audio = w.sentence_audio;
+      return out;
+    })
   };
 }
 
@@ -235,7 +313,12 @@ export function parseWords(words) {
         .replace(/^(kid-?friendly\s+definition\s*:\s*)/i, '')
         .replace(/^"+|"+$/g, '')
         .trim(),
-      example: w.example || w.example_sentence || w.exampleSentence || w.sentence || w.legacy_sentence || ''
+      example: w.example || w.example_sentence || w.exampleSentence || w.sentence || w.legacy_sentence || '',
+      legacy_sentence: w.legacy_sentence || w.sentence || w.example || '',
+      sentences: Array.isArray(w.sentences) ? w.sentences : [],
+      primary_sentence_id: w.primary_sentence_id || w.sentence_id || '',
+      sentence_mp3: w.sentence_mp3 || '',
+      sentence_audio: w.sentence_audio || ''
     });
   }).filter(Boolean);
 }

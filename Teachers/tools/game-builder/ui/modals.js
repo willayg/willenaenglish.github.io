@@ -1,6 +1,6 @@
 // Modal management - Open/close/save handlers for all modals
 import { showTinyToast } from '../utils/dom-helpers.js';
-import { getCurrentUserId, saveGameData, findGameByTitle, showTitleConflictModal } from '../services/file-service.js';
+import { getCurrentUserId, ensureSentenceIdsBuilder, saveGameData, findGameByTitle, showTitleConflictModal } from '../services/file-service.js';
 import { ensureRegenerateAudioCheckbox, ensureAudioForWordsAndSentences } from '../services/audio-service.js';
 import { prepareAndUploadImagesIfNeeded } from '../services/file-service.js';
 import { fetchJSONSafe } from '../utils/network.js';
@@ -86,6 +86,8 @@ export async function handleSaveAsConfirm(titleEl, buildPayload, getCurrentGameI
       return;
     }
     
+    await ensureSentenceIdsBuilder(payload.words || []);
+
     // Prepare images before save
     await prepareAndUploadImagesIfNeeded(payload, currentGameId, { force: false });
     
@@ -112,6 +114,7 @@ export async function handleSaveAsConfirm(titleEl, buildPayload, getCurrentGameI
         examplesMap,
         {
           force: shouldRegenerateAudio,
+          skipSentenceAudio: true,
           onInit: (total) => { if (saveModalStatusEl) saveModalStatusEl.textContent = (shouldRegenerateAudio? 'Generating':'Ensuring') + ` audio (0/${total})...`; },
           onProgress: (done, total) => { if (saveModalStatusEl) saveModalStatusEl.textContent = (shouldRegenerateAudio? 'Generating':'Ensuring') + ` audio (${done}/${total})...`; },
           onDone: () => { if (saveModalStatusEl) saveModalStatusEl.textContent = 'Audio ready. Saving...'; }

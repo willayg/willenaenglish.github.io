@@ -4,7 +4,7 @@ import { DEFAULTS } from '../constants.js';
 import { generateDefinition, generateExample } from '../services/ai-service.js?v=20260322p';
 import { openSaveAsModal, handleSaveAsConfirm, showFileModal } from './modals.js';
 import { ensureAudioForWordsAndSentences } from '../services/audio-service.js';
-import { prepareAndUploadImagesIfNeeded, saveGameData } from '../services/file-service.js?v=20260322w';
+import { ensureSentenceIdsBuilder, prepareAndUploadImagesIfNeeded, saveGameData } from '../services/file-service.js?v=20260322w';
 
 /**
  * Save progress bar helpers
@@ -65,6 +65,8 @@ export async function handleQuickSave(ev, buildPayload, getCurrentGameId, setCur
   if (saveLink) saveLink.classList.add('disabled');
   
   try {
+    await ensureSentenceIdsBuilder(payload.words || []);
+
     // Stage 1: Upload images
     if (!silent && typeof window.showSaveCenterMessage === 'function') {
       window.showSaveCenterMessage('Saving…', { variant: 'info' });
@@ -93,7 +95,7 @@ export async function handleQuickSave(ev, buildPayload, getCurrentGameId, setCur
         const examplesMap = Object.fromEntries((payload.words || []).filter(w => w.eng && w.example).map(w => [w.eng, w.example]));
         // slight delay to keep UI responsive
         setTimeout(() => {
-          ensureAudioForWordsAndSentences(words, examplesMap, { force: false })
+          ensureAudioForWordsAndSentences(words, examplesMap, { force: false, skipSentenceAudio: true })
             .catch(e => console.debug('[quickSave][audio] skipped', e?.message));
         }, 50);
       } catch (e) { console.debug('[quickSave][audio] init error', e?.message); }

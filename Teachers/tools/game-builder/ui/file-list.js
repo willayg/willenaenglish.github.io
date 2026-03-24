@@ -158,7 +158,12 @@ async function openGame(idListKey, listSnapshot, { titleEl, render }) {
         kor: w.kor || w.kr || w.translation || '',
         image_url: w.image_url || w.image || w.img || w.img_url || w.picture || '',
         definition: w.definition || w.def || w.meaning || '',
-        example: w.example || w.example_sentence || w.sentence || ''
+        example: w.example || w.example_sentence || w.sentence || '',
+        legacy_sentence: w.legacy_sentence || w.sentence || w.example || '',
+        sentences: Array.isArray(w.sentences) ? w.sentences : [],
+        primary_sentence_id: w.primary_sentence_id || w.sentence_id || '',
+        sentence_mp3: w.sentence_mp3 || '',
+        sentence_audio: w.sentence_audio || ''
       });
     }).filter(Boolean);
     setList(mapped);

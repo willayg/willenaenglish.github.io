@@ -100,6 +100,40 @@ function normalizeWordsToSentenceItems(list){
   }).filter(Boolean);
 }
 
+async function resolveSentenceIdsIfMissing(items){
+  if (!Array.isArray(items) || !items.length) return;
+  const need = items.filter(it => !it.sentence_id && it.sentence && typeof it.sentence === 'string');
+  if (!need.length) return;
+  const byText = new Map();
+  need.forEach(it => {
+    const text = it.sentence.trim().replace(/\s+/g,' ');
+    if (!byText.has(text)) byText.set(text, new Set());
+    if (it.eng) byText.get(text).add(String(it.eng));
+  });
+  const payload = {
+    action: 'upsert_sentences_batch',
+    sentences: Array.from(byText.entries()).map(([text, wordsSet]) => ({ text, words: Array.from(wordsSet) }))
+  };
+  try {
+    const r = await WillenaAPI.fetch('/.netlify/functions/upsert_sentences_batch', { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify(payload) });
+    if (!r.ok) throw new Error('upsert_sentences_batch HTTP ' + r.status);
+    const js = await r.json().catch(()=>null);
+    if (!js || !js.success || !Array.isArray(js.sentences)) return;
+    const byTextResolved = new Map(js.sentences.map(s => [s.text, s]));
+    items.forEach(it => {
+      if (it.sentence_id) return;
+      const key = it.sentence && it.sentence.trim().replace(/\s+/g,' ');
+      const rec = key ? byTextResolved.get(key) : null;
+      if (rec?.id) {
+        it.sentence_id = rec.id;
+        if (rec.audio_key && !it.audio_key) it.audio_key = rec.audio_key;
+      }
+    });
+  } catch (e) {
+    console.debug('[SentenceMode] sentence id resolve error', e?.message);
+  }
+}
+
 // Fetch audio URLs with multi-tier fallback: audio_key -> sent_<id>.mp3 -> direct <eng>_sentence.mp3 via R2 base -> legacy get_audio_urls lambda.
 async function enrichSentenceAudioIDAware(items){
   if (!items || !items.length) return;
@@ -220,7 +254,21 @@ export function run(ctx){
     }, 700);
   }
 
-  enrichSentenceAudioIDAware(items).finally(()=>{
+  (async () => {
+    try {
+      const needsIdResolution = items.some(it => !it.sentence_id && it.sentence);
+      if (needsIdResolution) {
+        await resolveSentenceIdsIfMissing(items);
+      }
+    } catch (e) {
+      console.debug('[SentenceMode] resolveSentenceIdsIfMissing failed', e?.message);
+    }
+    try {
+      await enrichSentenceAudioIDAware(items);
+    } catch (e) {
+      console.debug('[SentenceMode] enrichSentenceAudio failed', e?.message);
+    }
+  })().finally(()=>{
     // Optional override via query param during testing
     try {
       const params = new URLSearchParams(location.search);

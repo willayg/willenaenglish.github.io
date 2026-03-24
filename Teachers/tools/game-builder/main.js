@@ -1256,7 +1256,12 @@ function paintFileList(initialRows, { cached, initial, uniqueCount }) {
           kor: w.kor || w.kr || w.translation || '',
           image_url: w.image_url || w.image || w.img || w.img_url || w.picture || '',
           definition: w.definition || w.def || w.meaning || '',
-          example: getExampleText(w)
+          example: getExampleText(w),
+          legacy_sentence: w.legacy_sentence || w.sentence || getExampleText(w),
+          sentences: Array.isArray(w.sentences) ? w.sentences : [],
+          primary_sentence_id: w.primary_sentence_id || w.sentence_id || '',
+          sentence_mp3: w.sentence_mp3 || '',
+          sentence_audio: w.sentence_audio || ''
         });
       }).filter(Boolean);
       setList(mapped);

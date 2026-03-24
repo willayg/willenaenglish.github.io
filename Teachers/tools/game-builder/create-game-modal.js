@@ -426,7 +426,7 @@ function ensureExamplesPresent(words = []) {
 async function ensureSentenceIds(wordObjs, opts = {}){
   try {
     if(!Array.isArray(wordObjs) || !wordObjs.length) return { inserted:0, reused:0 };
-    const targets = wordObjs.filter(w=> !w.primary_sentence_id && !Array.isArray(w.sentences) && (w.legacy_sentence || w.example));
+    const targets = wordObjs.filter(w=> !w.primary_sentence_id && !(Array.isArray(w.sentences) && w.sentences.length) && (w.legacy_sentence || w.example));
     if(!targets.length) return { inserted:0, reused:0 };
     // Build unique normalized sentence list
     const norm = s=> (s||'').trim().replace(/\s+/g,' ');
@@ -1140,6 +1140,7 @@ export function initCreateGameModal(buildPayload) {
         setStatus('Ensuring audio...');
         await ensureAudioForWordsAndSentences(english, examplesMap, {
           force: false,
+          skipSentenceAudio: true,
           onInit: (total) => setStatus(`Ensuring audio (0/${total})...`),
           onProgress: (done, total) => setStatus(`Ensuring audio (${done}/${total})...`),
           onDone: () => setStatus('Audio ready. Saving custom game...')

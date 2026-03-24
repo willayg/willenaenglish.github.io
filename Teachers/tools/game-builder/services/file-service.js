@@ -79,7 +79,7 @@ export async function ensureSentenceIdsBuilder(wordObjs, opts = {}) {
     const norm = s => (s || '').trim().replace(/\s+/g, ' ');
     const targets = wordObjs.filter(w =>
       !w.primary_sentence_id &&
-      !Array.isArray(w.sentences) &&
+      !(Array.isArray(w.sentences) && w.sentences.length) &&
       (w.legacy_sentence || w.example)
     );
     

@@ -216,7 +216,7 @@ export function run(ctx){
   }
 
   // Preflight: resolve sentence_ids server-side (fast, idempotent) so audio can be disambiguated per sentence.
-  // This uses the existing Netlify function upsert_sentences_batch with skip_audio=true (no generation at runtime).
+  // Legacy items without IDs also get sentence-specific audio generated server-side when needed.
   // Show intro immediately (non-blocking), fetch audio in background
   showIntroThenStart();
   
@@ -540,7 +540,6 @@ async function resolveSentenceIdsIfMissing(items){
   });
   const payload = {
     action: 'upsert_sentences_batch',
-    skip_audio: true,
     sentences: Array.from(byText.entries()).map(([text, wordsSet]) => ({ text, words: Array.from(wordsSet) }))
   };
   try {
@@ -548,13 +547,16 @@ async function resolveSentenceIdsIfMissing(items){
     if (!r.ok) { throw new Error('upsert_sentences_batch HTTP '+r.status); }
     const js = await r.json();
     if (!js || !js.success || !Array.isArray(js.sentences)) return;
-    const idByText = new Map(js.sentences.map(s => [s.text, s.id]));
+    const byTextResolved = new Map(js.sentences.map(s => [s.text, s]));
     // Attach ids back to items; if item already had a chosen nested sentence, prefer that id.
     items.forEach(it => {
       if (it.sentence_id) return;
       const key = it.sentence && it.sentence.trim().replace(/\s+/g,' ');
-      const id = key ? idByText.get(key) : null;
-      if (id) it.sentence_id = id;
+      const rec = key ? byTextResolved.get(key) : null;
+      if (rec?.id) {
+        it.sentence_id = rec.id;
+        if (rec.audio_key && !it.audio_key) it.audio_key = rec.audio_key;
+      }
     });
   } catch(e){
     console.debug('[WordSentenceMode] sentence id resolve error', e?.message);
