@@ -4,6 +4,21 @@ import { fetchJSONSafe } from '../utils/network.js';
 import { escapeHtml } from '../utils/dom-helpers.js';
 import { callTTSProxy, uploadAudioFile, preferredVoice } from './audio-service.js';
 
+function normalizeSentenceText(value) {
+  return String(value || '').trim().replace(/\s+/g, ' ');
+}
+
+function makeLocalSentenceId(text) {
+  const normalized = normalizeSentenceText(text).toLowerCase();
+  let hash = 5381;
+  for (let i = 0; i < normalized.length; i++) {
+    hash = ((hash << 5) + hash) + normalized.charCodeAt(i);
+    hash = hash | 0;
+  }
+  const hex = (hash >>> 0).toString(16).padStart(8, '0');
+  return `local_${hex}`;
+}
+
 /**
  * Get current user ID from various storage locations
  * @returns {string} User ID or empty string
@@ -151,13 +166,32 @@ export async function ensureSentenceIdsBuilder(wordObjs, opts = {}) {
     
     if (!js || !js.success || !Array.isArray(js.sentences)) {
       console.warn('[SentenceUpgrade][builder] batch FAILED', { status: res.status, ok: res.ok, body: js });
-      return { inserted: 0, backend: false };
+      // Client-only fallback: still assign deterministic local sentence IDs
+      // so sentence audio generation can proceed without backend sentence rows.
+      const byLocalText = new Map();
+      let fallbackApplied = 0;
+      for (const w of targets) {
+        const raw = normalizeSentenceText(w.legacy_sentence || w.example || '');
+        if (!raw || raw.split(/\s+/).length < 3) continue;
+        const key = normKey(raw);
+        let localId = byLocalText.get(key);
+        if (!localId) {
+          localId = makeLocalSentenceId(raw);
+          byLocalText.set(key, localId);
+        }
+        w.primary_sentence_id = localId;
+        w.sentences = [{ id: localId, text: raw, audio_key: `sent_${localId}.mp3` }];
+        fallbackApplied++;
+      }
+      console.warn('[SentenceUpgrade][builder] applied LOCAL fallback IDs:', fallbackApplied, '/', targets.length);
+      return { inserted: fallbackApplied, backend: false, localFallback: true };
     }
     
     console.log('[SentenceUpgrade][builder] backend returned', js.sentences.length, 'sentences');
     
     // Build case-insensitive text map for reliable matching
     const byText = new Map(js.sentences.map(r => [normKey(r.text), r]));
+    const byLocalText = new Map();
     let applied = 0;
     
     for (const w of targets) {
@@ -170,7 +204,15 @@ export async function ensureSentenceIdsBuilder(wordObjs, opts = {}) {
         w.primary_sentence_id = rec.id;
         applied++;
       } else {
-        console.warn('[SentenceUpgrade][builder] NO MATCH for word:', w.eng, 'sentence:', raw.substring(0, 60));
+        let localId = byLocalText.get(normKey(raw));
+        if (!localId) {
+          localId = makeLocalSentenceId(raw);
+          byLocalText.set(normKey(raw), localId);
+        }
+        w.sentences = [{ id: localId, text: normalizeSentenceText(raw), audio_key: `sent_${localId}.mp3` }];
+        w.primary_sentence_id = localId;
+        applied++;
+        console.warn('[SentenceUpgrade][builder] NO MATCH from backend, used LOCAL ID for word:', w.eng, 'sid:', localId);
       }
     }
     

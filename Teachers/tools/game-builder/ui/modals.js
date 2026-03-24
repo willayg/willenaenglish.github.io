@@ -1,8 +1,8 @@
 // Modal management - Open/close/save handlers for all modals
 import { showTinyToast } from '../utils/dom-helpers.js';
-import { getCurrentUserId, ensureSentenceIdsBuilder, saveGameData, findGameByTitle, showTitleConflictModal } from '../services/file-service.js';
+import { getCurrentUserId, ensureSentenceIdsBuilder, saveGameData, findGameByTitle, showTitleConflictModal } from '../services/file-service.js?v=20260325a';
 import { ensureRegenerateAudioCheckbox, ensureAudioForWordsAndSentences } from '../services/audio-service.js';
-import { prepareAndUploadImagesIfNeeded } from '../services/file-service.js';
+import { prepareAndUploadImagesIfNeeded } from '../services/file-service.js?v=20260325a';
 import { fetchJSONSafe } from '../utils/network.js';
 import { ENDPOINTS } from '../constants.js';
 

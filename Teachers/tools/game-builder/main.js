@@ -37,7 +37,7 @@ import {
   findGameByTitle,
   generateIncrementedTitle,
   showTitleConflictModal
-} from './services/file-service.js?v=20260322w';
+} from './services/file-service.js?v=20260325a';
 import {
   getList,
   setList,
@@ -89,7 +89,7 @@ import { ENDPOINTS, STORAGE_KEYS, ACTIONS, DEFAULTS, TOAST_DURATION } from './co
 import { initFileListModal } from './ui/file-list.js?v=20260322p';
 import { loadWorksheetIntoBuilder } from './services/worksheet-service.js';
 
-const GB_BUILD_STAMP = 'GB_BUILD 20260324g · save-sentences';
+const GB_BUILD_STAMP = 'GB_BUILD 20260325a · local-sentence-fallback';
 
 function injectBuilderBuildStamp() {
   try {
@@ -826,7 +826,7 @@ async function handleSaveSentences() {
 
     const withIds = payload.words.filter(w => w.primary_sentence_id);
     if (!withIds.length) {
-      toast('⚠️ Backend returned no sentence IDs. Check server logs.');
+      toast('⚠️ No sentence IDs available for these rows (check sentence text length).');
       link.classList.remove('working');
       link.textContent = origText;
       return;
