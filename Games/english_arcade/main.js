@@ -1040,6 +1040,14 @@ async function openSavedGameById(id, { mode = null } = {}) {
     }
     try { window.__WA_IS_PHONICS__ = false; } catch {}
     currentListName = row.title || 'Saved Game';
+    console.log('[WordArcade] Saved game sentence meta:', mapped.slice(0, 5).map(w => ({
+      eng: w.eng,
+      primary_sentence_id: w.primary_sentence_id || null,
+      sentence_count: Array.isArray(w.sentences) ? w.sentences.length : 0,
+      sentence_text: Array.isArray(w.sentences) && w.sentences[0] ? w.sentences[0].text || null : null,
+      sentence_audio_key: Array.isArray(w.sentences) && w.sentences[0] ? w.sentences[0].audio_key || null : null,
+      legacy_sentence: w.legacy_sentence || null
+    })));
     console.log('[WordArcade] Before normalization, sample words:', mapped.slice(0,3).map(w => ({
       eng: w.eng,
       image_url: w.image_url?.substring(0,60),

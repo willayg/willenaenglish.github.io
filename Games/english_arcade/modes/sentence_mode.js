@@ -179,8 +179,10 @@ async function enrichSentenceAudioIDAware(items){
   if (needHeuristic.length && hasBase){
     needHeuristic.forEach(it=>{ it.sentenceAudioUrl = `${baseClean}/sent_${it.sentence_id}.mp3`; });
   }
-  // 2b. If still missing and we DO have *persisted* sentence_ids, try signed URL function (no base set scenario)
-  const stillMissing = items.filter(it=> !it.sentenceAudioUrl && it.sentence_id && it._hasPersistedSentenceIdentity);
+  // 2b. If still missing and we DO have sentence_ids, try the signed URL function.
+  // This is safe for both persisted and runtime-resolved sentence IDs because if no
+  // sentence-specific audio exists, we still fall through to the legacy word fallback.
+  const stillMissing = items.filter(it=> !it.sentenceAudioUrl && it.sentence_id);
   if (stillMissing.length){
     try {
       const uniqueIds = Array.from(new Set(stillMissing.map(it=> it.sentence_id)));

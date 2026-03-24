@@ -49,6 +49,8 @@
     'teacher_admin',
     'test_admin',
     'eleven_labs_proxy',
+    'upsert_sentences_batch',
+    'get_sentence_audio_urls',
     'translate',
     'define_word',
   ];
@@ -126,14 +128,7 @@
       return functionPath;
     }
 
-    const fn = extractFunctionName(functionPath);
-    if (USE_CF_WORKERS && fn && CF_FUNCTIONS[fn]) {
-      const qIndex = functionPath.indexOf('?');
-      const search = qIndex >= 0 ? functionPath.slice(qIndex) : '';
-      return CF_FUNCTIONS[fn] + search;
-    }
-
-    // Ensure path starts with /.netlify/functions/
+    // Ensure path starts with /.netlify/functions/ before applying routing rules.
     if (!functionPath.startsWith('/.netlify/functions/')) {
       if (functionPath.startsWith('/')) {
         functionPath = '/.netlify/functions' + functionPath;
@@ -141,6 +136,21 @@
         functionPath = '/.netlify/functions/' + functionPath;
       }
     }
+
+    const fn = extractFunctionName(functionPath);
+    if (USE_CF_WORKERS && fn && CF_FUNCTIONS[fn]) {
+      const qIndex = functionPath.indexOf('?');
+      const search = qIndex >= 0 ? functionPath.slice(qIndex) : '';
+      return CF_FUNCTIONS[fn] + search;
+    }
+
+    // Some functions still exist only on Netlify. On Cloudflare Pages, route those
+    // directly to the Netlify origin instead of the API gateway so sentence/audio
+    // features use the real service env + R2-backed functions.
+    if (isCloudflarePages && fn && NETLIFY_ONLY_FUNCTIONS.includes(fn)) {
+      return NETLIFY_BASE + functionPath;
+    }
+
     return API_BASE + functionPath;
   }
 

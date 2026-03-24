@@ -118,8 +118,9 @@ async function enrichSentenceAudioIDAware(items){
   if (needHeuristic.length && hasBase){
     needHeuristic.forEach(it=>{ it.sentenceAudioUrl = `${baseClean}/sent_${it.sentence_id}.mp3`; });
   }
-  // 2b) Signed URL fetch for *persisted* sentence_ids
-  const stillMissing = items.filter(it=> !it.sentenceAudioUrl && it.sentence_id && it._hasPersistedSentenceIdentity);
+  // 2b) Signed URL fetch for any sentence_ids.
+  // If no sentence-specific audio exists, later legacy word fallback still runs.
+  const stillMissing = items.filter(it=> !it.sentenceAudioUrl && it.sentence_id);
   if (stillMissing.length){
     try {
       const uniqueIds = Array.from(new Set(stillMissing.map(it=> it.sentence_id)));
