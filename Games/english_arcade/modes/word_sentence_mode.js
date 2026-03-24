@@ -15,6 +15,10 @@ function normalizeWordsToSentenceItems(list){
   return (list||[]).map(raw=>{
     if(!raw || typeof raw!== 'object') return null;
     const item = { ...raw };
+    item._hasPersistedSentenceIdentity = !!(
+      item.primary_sentence_id
+      || (Array.isArray(item.sentences) && item.sentences.some(s => s && typeof s === 'object' && s.id))
+    );
     // Legacy compatibility
     if (!item.sentence && item.legacy_sentence) item.sentence = item.legacy_sentence;
     // Additional compatibility: pull from common example fields
@@ -131,8 +135,8 @@ async function enrichSentenceAudioIDAware(items){
     } catch(e){ console.debug('[WordSentenceMode] signed fetch failed', e?.message); }
   }
   // 2c) Direct <word>_sentence.mp3 via base.
-  // Only use this legacy word-key fallback when sentence_id is missing to avoid cross-list collisions.
-  const needWordBase = items.filter(it=> !it.sentenceAudioUrl && !it.sentence_id && it.eng && hasBase);
+  // Allow this for legacy/default lists that were resolved at runtime but do not have persisted sentence identity.
+  const needWordBase = items.filter(it=> !it.sentenceAudioUrl && it.eng && hasBase && (!it.sentence_id || !it._hasPersistedSentenceIdentity));
   if (needWordBase.length){
     needWordBase.forEach(it=>{
       const key = `${normWord(it.eng)}_sentence.mp3`;
@@ -141,8 +145,8 @@ async function enrichSentenceAudioIDAware(items){
     });
   }
   // 3) Legacy lambda fallback: try WORD_SENTENCE and word_sentence.
-  // Keep this for backward compatibility only when sentence_id is missing.
-  const legacyNeed = items.filter(it=> !it.sentenceAudioUrl && !it.sentence_id && it.eng);
+  // Keep this for backward compatibility for lists without persisted sentence identity.
+  const legacyNeed = items.filter(it=> !it.sentenceAudioUrl && it.eng && (!it.sentence_id || !it._hasPersistedSentenceIdentity));
   if (legacyNeed.length){
     try {
       // Fix #3: Optimize batching - only request unique words, not every variant
