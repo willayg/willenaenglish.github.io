@@ -233,10 +233,27 @@ export function buildPayload(title = '', gameImageUrl = '') {
     title: title || 'Untitled Game',
     gameImage: gameImageUrl || '',
     words: list.map(w => {
-      const sentences = normalizeSentenceEntries(w?.sentences);
-      const primarySentence = pickPrimarySentenceEntry(w, sentences);
-      const primarySentenceId = (w?.primary_sentence_id || primarySentence?.id || '').toString().trim();
-      const legacySentence = chooseLegacySentence({ ...w, sentences, primary_sentence_id: primarySentenceId || w?.primary_sentence_id });
+      let sentences = normalizeSentenceEntries(w?.sentences);
+      let primarySentence = pickPrimarySentenceEntry(w, sentences);
+      let primarySentenceId = (w?.primary_sentence_id || primarySentence?.id || '').toString().trim();
+
+      // --- Stale sentence identity detection ---
+      // If the teacher edited the example text so it no longer matches the
+      // persisted primary sentence text, the old sentence ID / audio_key are
+      // stale. Clear them so ensureSentenceIdsBuilder() will create fresh
+      // identity and audio for the *new* sentence text.
+      const rawExample = normalizeSentenceText(w?.example);
+      const persistedPrimaryText = primarySentence?.text ? normalizeSentenceText(primarySentence.text) : '';
+      const sentenceIdentityStale = rawExample && persistedPrimaryText && rawExample !== persistedPrimaryText;
+      if (sentenceIdentityStale) {
+        sentences = [];
+        primarySentence = null;
+        primarySentenceId = '';
+      }
+
+      const legacySentence = sentenceIdentityStale
+        ? rawExample
+        : chooseLegacySentence({ ...w, sentences, primary_sentence_id: primarySentenceId || w?.primary_sentence_id });
       const example = normalizeSentenceText(w?.example || primarySentence?.text || legacySentence);
       const out = {
         eng: w.eng || '',
@@ -248,8 +265,8 @@ export function buildPayload(title = '', gameImageUrl = '') {
       };
       if (sentences.length) out.sentences = sentences;
       if (primarySentenceId) out.primary_sentence_id = primarySentenceId;
-      if (w?.sentence_mp3) out.sentence_mp3 = w.sentence_mp3;
-      if (w?.sentence_audio) out.sentence_audio = w.sentence_audio;
+      if (w?.sentence_mp3 && !sentenceIdentityStale) out.sentence_mp3 = w.sentence_mp3;
+      if (w?.sentence_audio && !sentenceIdentityStale) out.sentence_audio = w.sentence_audio;
       return out;
     })
   };

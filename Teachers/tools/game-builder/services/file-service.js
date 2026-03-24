@@ -77,11 +77,28 @@ export async function ensureSentenceIdsBuilder(wordObjs, opts = {}) {
     if (!Array.isArray(wordObjs) || !wordObjs.length) return { inserted: 0 };
     
     const norm = s => (s || '').trim().replace(/\s+/g, ' ');
-    const targets = wordObjs.filter(w =>
-      !w.primary_sentence_id &&
-      !(Array.isArray(w.sentences) && w.sentences.length) &&
-      (w.legacy_sentence || w.example)
-    );
+    const targets = wordObjs.filter(w => {
+      const currentText = norm(w.example || w.legacy_sentence || '');
+      if (!currentText || currentText.split(/\s+/).length < 3) return false;
+
+      // Case 1: No sentence identity yet — needs processing
+      if (!w.primary_sentence_id && !(Array.isArray(w.sentences) && w.sentences.length)) return true;
+
+      // Case 2: Has identity but the text has CHANGED (teacher edited sentence)
+      if (Array.isArray(w.sentences) && w.sentences.length) {
+        const persistedText = norm(
+          (w.sentences.find(s => s && typeof s === 'object' && s.text) || {}).text || ''
+        );
+        if (persistedText && persistedText !== currentText) {
+          // Clear stale identity so backend creates a fresh sentence row + audio
+          delete w.primary_sentence_id;
+          w.sentences = [];
+          return true;
+        }
+      }
+
+      return false;
+    });
     
     if (!targets.length) return { inserted: 0 };
     

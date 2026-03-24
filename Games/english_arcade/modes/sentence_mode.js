@@ -173,13 +173,14 @@ async function enrichSentenceAudioIDAware(items){
         it._pendingKeyOnly = true;
       }
     });
-  // 2. Try heuristic sent_<id>.mp3 if sentence_id present and no url yet
-  const needHeuristic = items.filter(it=> !it.sentenceAudioUrl && it.sentence_id);
+  // 2. Try heuristic sent_<id>.mp3 ONLY for items with *persisted* sentence identity (teacher-saved games).
+  //    Runtime-resolved IDs (default lists) skip this so they can fall through to legacy word_sentence.mp3.
+  const needHeuristic = items.filter(it=> !it.sentenceAudioUrl && it.sentence_id && it._hasPersistedSentenceIdentity);
   if (needHeuristic.length && hasBase){
     needHeuristic.forEach(it=>{ it.sentenceAudioUrl = `${baseClean}/sent_${it.sentence_id}.mp3`; });
   }
-  // 2b. If still missing and we DO have sentence_ids, try signed URL function (no base set scenario)
-  const stillMissing = items.filter(it=> !it.sentenceAudioUrl && it.sentence_id);
+  // 2b. If still missing and we DO have *persisted* sentence_ids, try signed URL function (no base set scenario)
+  const stillMissing = items.filter(it=> !it.sentenceAudioUrl && it.sentence_id && it._hasPersistedSentenceIdentity);
   if (stillMissing.length){
     try {
       const uniqueIds = Array.from(new Set(stillMissing.map(it=> it.sentence_id)));

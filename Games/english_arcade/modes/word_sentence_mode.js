@@ -112,13 +112,14 @@ async function enrichSentenceAudioIDAware(items){
     }
     if (hasBase){ it.sentenceAudioUrl = baseClean + '/' + key; }
   });
-  // 2) Heuristic by sentence_id
-  const needHeuristic = items.filter(it=> !it.sentenceAudioUrl && it.sentence_id);
+  // 2) Heuristic by sentence_id — ONLY for *persisted* sentence identity (teacher-saved games).
+  //    Runtime-resolved IDs (default lists) skip this so they fall through to legacy word_sentence.mp3.
+  const needHeuristic = items.filter(it=> !it.sentenceAudioUrl && it.sentence_id && it._hasPersistedSentenceIdentity);
   if (needHeuristic.length && hasBase){
     needHeuristic.forEach(it=>{ it.sentenceAudioUrl = `${baseClean}/sent_${it.sentence_id}.mp3`; });
   }
-  // 2b) Signed URL fetch for sentence_ids
-  const stillMissing = items.filter(it=> !it.sentenceAudioUrl && it.sentence_id);
+  // 2b) Signed URL fetch for *persisted* sentence_ids
+  const stillMissing = items.filter(it=> !it.sentenceAudioUrl && it.sentence_id && it._hasPersistedSentenceIdentity);
   if (stillMissing.length){
     try {
       const uniqueIds = Array.from(new Set(stillMissing.map(it=> it.sentence_id)));
