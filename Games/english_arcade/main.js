@@ -31,7 +31,7 @@ import { progressCache } from './utils/progress-cache.js?v=20251214a';
 import { LEVEL1_LISTS, LEVEL2_LISTS, LEVEL3_LISTS, LEVEL4_LISTS, PHONICS_LISTS } from './utils/level-lists.js?v=20251214a';
 import { prefetchAllProgress, loadStarCounts } from './utils/progress-data-service.js?v=20251214a';
 
-const EA_BUILD_STAMP = 'EA_BUILD 20260325a · local-id-audio-fix';
+const EA_BUILD_STAMP = 'EA_BUILD 20260325b · local-id-preload-fix';
 
 function injectBuildStamp() {
   try {
@@ -558,6 +558,7 @@ async function preloadSentenceAudio(list) {
   if (!hasSentence.length) return;
 
   const norm = s => (s || '').trim().replace(/\s+/g, ' ');
+  const isLocalSentenceId = (id) => /^local_/i.test(String(id || '').trim());
 
   // 2) Resolve sentence IDs for words that are missing them
   const needIds = hasSentence.filter(w => !w.primary_sentence_id && !(Array.isArray(w.sentences) && w.sentences.some(s => s?.id)));
@@ -603,46 +604,105 @@ async function preloadSentenceAudio(list) {
     }
   }
 
-  // 3) Collect all sentence IDs and fetch signed audio URLs
+  // 3) Collect all sentence IDs and fetch signed audio URLs (backend IDs only)
   const idSet = new Set();
+  const localIdSet = new Set();
   for (const w of hasSentence) {
     const sid = w.primary_sentence_id;
-    if (sid) idSet.add(sid);
-    if (Array.isArray(w.sentences)) {
-      for (const s of w.sentences) { if (s?.id) idSet.add(s.id); }
+    if (sid) {
+      if (isLocalSentenceId(sid)) localIdSet.add(String(sid));
+      else idSet.add(sid);
     }
-  }
-  if (!idSet.size) return;
-
-  try {
-    const ids = Array.from(idSet);
-    const r = await apiFetch('/.netlify/functions/get_sentence_audio_urls', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ sentence_ids: ids })
-    });
-    if (!r.ok) return;
-    const data = await r.json().catch(() => null);
-    if (!data?.success || !data.results) return;
-
-    let resolved = 0;
-    for (const w of hasSentence) {
-      const sid = w.primary_sentence_id;
-      if (!sid) continue;
-      const rec = data.results[sid];
-      if (rec?.exists && rec.url) {
-        w.sentenceAudioUrl = rec.url;
-        if (rec.key) {
-          const sObj = Array.isArray(w.sentences) && w.sentences.find(s => s?.id === sid);
-          if (sObj) sObj.audio_key = rec.key;
-        }
-        resolved++;
+    if (Array.isArray(w.sentences)) {
+      for (const s of w.sentences) {
+        if (!s?.id) continue;
+        if (isLocalSentenceId(s.id)) localIdSet.add(String(s.id));
+        else idSet.add(s.id);
       }
     }
-    console.log('[preloadSentenceAudio] Resolved', resolved, 'of', idSet.size, 'sentence audio URLs');
-  } catch (e) {
-    console.debug('[preloadSentenceAudio] audio URL fetch failed', e?.message);
   }
+  if (!idSet.size && !localIdSet.size) return;
+
+  let resolved = 0;
+  if (idSet.size) {
+    try {
+      const ids = Array.from(idSet);
+      const r = await apiFetch('/.netlify/functions/get_sentence_audio_urls', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sentence_ids: ids })
+      });
+      if (r.ok) {
+        const data = await r.json().catch(() => null);
+        if (data?.success && data.results) {
+          for (const w of hasSentence) {
+            const sid = w.primary_sentence_id;
+            if (!sid || isLocalSentenceId(sid)) continue;
+            const rec = data.results[sid];
+            if (rec?.exists && rec.url) {
+              w.sentenceAudioUrl = rec.url;
+              if (rec.key) {
+                const sObj = Array.isArray(w.sentences) && w.sentences.find(s => s?.id === sid);
+                if (sObj) sObj.audio_key = rec.key;
+              }
+              resolved++;
+            }
+          }
+        }
+      }
+    } catch (e) {
+      console.debug('[preloadSentenceAudio] signed URL fetch failed', e?.message);
+    }
+  }
+
+  // 3b) local_* IDs / key-only fallback: resolve through get_audio_urls with keys.
+  try {
+    const keyCandidates = new Set();
+    for (const w of hasSentence) {
+      if (w.sentenceAudioUrl) continue;
+      const sid = String(w.primary_sentence_id || '').trim();
+      const sentObj = Array.isArray(w.sentences) ? w.sentences.find(s => s?.id === w.primary_sentence_id) : null;
+      const audioKey = String(sentObj?.audio_key || w.audio_key || '').trim();
+      if (audioKey) {
+        keyCandidates.add(audioKey);
+        keyCandidates.add(audioKey.replace(/\.mp3$/i, ''));
+      }
+      if (sid && isLocalSentenceId(sid)) {
+        keyCandidates.add(`sent_${sid}.mp3`);
+        keyCandidates.add(`sent_${sid}`);
+      }
+    }
+
+    if (keyCandidates.size) {
+      const r = await apiFetch('/.netlify/functions/get_audio_urls', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ words: Array.from(keyCandidates) })
+      });
+      if (r.ok) {
+        const data = await r.json().catch(() => null);
+        const map = data?.results || {};
+        for (const w of hasSentence) {
+          if (w.sentenceAudioUrl) continue;
+          const sid = String(w.primary_sentence_id || '').trim();
+          const sentObj = Array.isArray(w.sentences) ? w.sentences.find(s => s?.id === w.primary_sentence_id) : null;
+          const audioKey = String(sentObj?.audio_key || w.audio_key || '').trim();
+          const audioKeyNoExt = audioKey ? audioKey.replace(/\.mp3$/i, '') : '';
+          const fallback1 = sid ? `sent_${sid}.mp3` : '';
+          const fallback2 = sid ? `sent_${sid}` : '';
+          const rec = (audioKey && map[audioKey]) || (audioKeyNoExt && map[audioKeyNoExt]) || (fallback1 && map[fallback1]) || (fallback2 && map[fallback2]);
+          if (rec?.exists && rec.url) {
+            w.sentenceAudioUrl = rec.url;
+            resolved++;
+          }
+        }
+      }
+    }
+  } catch (e) {
+    console.debug('[preloadSentenceAudio] key lookup failed', e?.message);
+  }
+
+  console.log('[preloadSentenceAudio] Resolved', resolved, 'sentence audio URLs (backend ids:', idSet.size, 'local ids:', localIdSet.size, ')');
 }
 
 async function processWordlist(data) {
