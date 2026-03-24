@@ -108,6 +108,7 @@ async function resolveSentenceIdsIfMissing(items){
   if (!Array.isArray(items) || !items.length) return;
   const need = items.filter(it => !it.sentence_id && it.sentence && typeof it.sentence === 'string');
   if (!need.length) return;
+  const normKey = (s) => String(s || '').trim().replace(/\s+/g,' ').toLowerCase();
   const byText = new Map();
   need.forEach(it => {
     const text = it.sentence.trim().replace(/\s+/g,' ');
@@ -123,11 +124,11 @@ async function resolveSentenceIdsIfMissing(items){
     if (!r.ok) throw new Error('upsert_sentences_batch HTTP ' + r.status);
     const js = await r.json().catch(()=>null);
     if (!js || !js.success || !Array.isArray(js.sentences)) return;
-    const byTextResolved = new Map(js.sentences.map(s => [s.text, s]));
+    const byTextResolved = new Map(js.sentences.map(s => [normKey(s.text), s]));
     items.forEach(it => {
       if (it.sentence_id) return;
       const key = it.sentence && it.sentence.trim().replace(/\s+/g,' ');
-      const rec = key ? byTextResolved.get(key) : null;
+      const rec = key ? byTextResolved.get(normKey(key)) : null;
       if (rec?.id) {
         it.sentence_id = rec.id;
         if (rec.audio_key && !it.audio_key) it.audio_key = rec.audio_key;
@@ -152,6 +153,16 @@ async function enrichSentenceAudioIDAware(items){
     .toLowerCase()
     .replace(/\s+/g,'_')
     .replace(/[^a-z0-9_\-]/g,'');
+  const isLegacyWordSentenceKey = (value, it) => {
+    const raw = String(value || '').trim().toLowerCase();
+    if (!raw) return false;
+    const word = normWord(it?.eng || '');
+    if (!word) return /_sentence(\.mp3)?(?:$|[?#])/i.test(raw);
+    return raw.endsWith(`${word}_sentence.mp3`)
+      || raw.endsWith(`${word}_sentence`)
+      || raw.includes(`/${word}_sentence.mp3`)
+      || raw.includes(`/${word}_sentence?`);
+  };
     // 1. If any have audio_key try to form a usable URL. IMPORTANT: previously we blindly used the raw key
     //    which produced a relative path (404) when no bucket base was defined, blocking fallback because
     //    playSentenceAudio saw a URL and returned early. Now: only set sentenceAudioUrl if we are confident
@@ -160,6 +171,9 @@ async function enrichSentenceAudioIDAware(items){
     items.forEach(it=>{
       if(!it || !it.audio_key) return;
       const key = String(it.audio_key).trim();
+      if (it.sentence_id && isLegacyWordSentenceKey(key, it)) {
+        return;
+      }
       if(/^https?:/i.test(key)){
         it.sentenceAudioUrl = key;
         return;

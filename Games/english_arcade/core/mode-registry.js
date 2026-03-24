@@ -65,7 +65,7 @@ export const modeRegistry = {
 		return { run: (ctx) => mod.run(ctx) };
 	},
 	'full_sentence_mode': async () => {
-		const mod = await import('../modes/sentence_mode.js');
+		const mod = await import('../modes/sentence_mode.js?v=20260324c');
 		return { run: (ctx) => mod.run(ctx) };
 	},
 };

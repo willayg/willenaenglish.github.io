@@ -102,11 +102,22 @@ async function enrichSentenceAudioIDAware(items){
     .toLowerCase()
     .replace(/\s+/g,'_')
     .replace(/[^a-z0-9_\-]/g,'');
+  const isLegacyWordSentenceKey = (value, it) => {
+    const raw = String(value || '').trim().toLowerCase();
+    if (!raw) return false;
+    const word = normWord(it?.eng || '');
+    if (!word) return /_sentence(\.mp3)?(?:$|[?#])/i.test(raw);
+    return raw.endsWith(`${word}_sentence.mp3`)
+      || raw.endsWith(`${word}_sentence`)
+      || raw.includes(`/${word}_sentence.mp3`)
+      || raw.includes(`/${word}_sentence?`);
+  };
   // 1) Use explicit audio_key when absolute or build with base
   items.forEach(it=>{
     if(!it || it.sentenceAudioUrl) return;
     if(!it.audio_key) return;
     const key = String(it.audio_key).trim();
+    if (it.sentence_id && isLegacyWordSentenceKey(key, it)) return;
     if(/^https?:/i.test(key)){
       it.sentenceAudioUrl = key; return;
     }
@@ -231,8 +242,7 @@ export function run(ctx){
   // Background audio enrichment (non-blocking) - doesn't wait for intro
   (async () => {
     try {
-      // Fix #2: Skip ID resolution if audio_keys are already present (faster for grammar data)
-      const needsIdResolution = items.some(it => !it.sentence_id && !it.audio_key && it.sentence);
+      const needsIdResolution = items.some(it => !it.sentence_id && it.sentence);
       if (needsIdResolution) {
         await resolveSentenceIdsIfMissing(items);
       }
@@ -539,6 +549,7 @@ async function resolveSentenceIdsIfMissing(items){
   if (!Array.isArray(items) || !items.length) return;
   const need = items.filter(it => !it.sentence_id && it.sentence && typeof it.sentence === 'string');
   if (!need.length) return;
+  const normKey = (s) => String(s || '').trim().replace(/\s+/g,' ').toLowerCase();
   // Build unique list of texts; include word link to help future analytics (word_sentences join).
   const byText = new Map();
   need.forEach(it => {
@@ -555,12 +566,12 @@ async function resolveSentenceIdsIfMissing(items){
     if (!r.ok) { throw new Error('upsert_sentences_batch HTTP '+r.status); }
     const js = await r.json();
     if (!js || !js.success || !Array.isArray(js.sentences)) return;
-    const byTextResolved = new Map(js.sentences.map(s => [s.text, s]));
+    const byTextResolved = new Map(js.sentences.map(s => [normKey(s.text), s]));
     // Attach ids back to items; if item already had a chosen nested sentence, prefer that id.
     items.forEach(it => {
       if (it.sentence_id) return;
       const key = it.sentence && it.sentence.trim().replace(/\s+/g,' ');
-      const rec = key ? byTextResolved.get(key) : null;
+      const rec = key ? byTextResolved.get(normKey(key)) : null;
       if (rec?.id) {
         it.sentence_id = rec.id;
         if (rec.audio_key && !it.audio_key) it.audio_key = rec.audio_key;
