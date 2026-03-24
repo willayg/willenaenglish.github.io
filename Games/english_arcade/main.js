@@ -31,6 +31,46 @@ import { progressCache } from './utils/progress-cache.js?v=20251214a';
 import { LEVEL1_LISTS, LEVEL2_LISTS, LEVEL3_LISTS, LEVEL4_LISTS, PHONICS_LISTS } from './utils/level-lists.js?v=20251214a';
 import { prefetchAllProgress, loadStarCounts } from './utils/progress-data-service.js?v=20251214a';
 
+const EA_BUILD_STAMP = 'EA_BUILD 20260324d · commit 156395b0';
+
+function injectBuildStamp() {
+  try {
+    if (typeof window !== 'undefined') {
+      window.__EA_BUILD_STAMP = EA_BUILD_STAMP;
+      console.log('[EnglishArcade][BuildStamp]', EA_BUILD_STAMP, location.hostname);
+    }
+    if (typeof document === 'undefined') return;
+    if (document.getElementById('eaBuildStamp')) return;
+    const badge = document.createElement('div');
+    badge.id = 'eaBuildStamp';
+    badge.textContent = EA_BUILD_STAMP;
+    badge.style.cssText = [
+      'position:fixed',
+      'right:8px',
+      'bottom:8px',
+      'z-index:99999',
+      'font:600 10px/1.2 system-ui,-apple-system,Segoe UI,Arial,sans-serif',
+      'letter-spacing:.2px',
+      'color:#0f172a',
+      'background:rgba(255,255,255,.92)',
+      'border:1px solid rgba(148,163,184,.9)',
+      'border-radius:8px',
+      'padding:4px 6px',
+      'pointer-events:none',
+      'box-shadow:0 1px 4px rgba(2,6,23,.15)'
+    ].join(';');
+    document.body.appendChild(badge);
+  } catch {}
+}
+
+if (typeof document !== 'undefined') {
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', injectBuildStamp, { once: true });
+  } else {
+    injectBuildStamp();
+  }
+}
+
 // -----------------------------
 // Auth redirect helper
 // -----------------------------
