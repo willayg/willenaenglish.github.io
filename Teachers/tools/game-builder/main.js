@@ -88,6 +88,46 @@ import { ENDPOINTS, STORAGE_KEYS, ACTIONS, DEFAULTS, TOAST_DURATION } from './co
 import { initFileListModal } from './ui/file-list.js?v=20260322p';
 import { loadWorksheetIntoBuilder } from './services/worksheet-service.js';
 
+const GB_BUILD_STAMP = 'GB_BUILD 20260324e · commit 026f0aad';
+
+function injectBuilderBuildStamp() {
+  try {
+    if (typeof window !== 'undefined') {
+      window.__GB_BUILD_STAMP = GB_BUILD_STAMP;
+      console.log('[GameBuilder][BuildStamp]', GB_BUILD_STAMP, location.hostname);
+    }
+    if (typeof document === 'undefined') return;
+    if (document.getElementById('gbBuildStamp')) return;
+    const badge = document.createElement('div');
+    badge.id = 'gbBuildStamp';
+    badge.textContent = GB_BUILD_STAMP;
+    badge.style.cssText = [
+      'position:fixed',
+      'right:8px',
+      'bottom:8px',
+      'z-index:99999',
+      'font:600 10px/1.2 system-ui,-apple-system,Segoe UI,Arial,sans-serif',
+      'letter-spacing:.2px',
+      'color:#0f172a',
+      'background:rgba(255,255,255,.92)',
+      'border:1px solid rgba(148,163,184,.9)',
+      'border-radius:8px',
+      'padding:4px 6px',
+      'pointer-events:none',
+      'box-shadow:0 1px 4px rgba(2,6,23,.15)'
+    ].join(';');
+    document.body.appendChild(badge);
+  } catch {}
+}
+
+if (typeof document !== 'undefined') {
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', injectBuilderBuildStamp, { once: true });
+  } else {
+    injectBuilderBuildStamp();
+  }
+}
+
 function getExampleText(word) {
   if (!word || typeof word !== 'object') return '';
   return word.example

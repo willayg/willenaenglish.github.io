@@ -12,6 +12,30 @@
 (function() {
   'use strict';
 
+  const NETLIFY_ORIGIN = 'https://students.willenaenglish.com';
+  const NETLIFY_ONLY_FUNCTIONS = new Set([
+    'verify_student',
+    'set_student_password',
+    'debug_student_data',
+    'openai_proxy',
+    'google_vision_proxy',
+    'supabase_proxy',
+    'supabase_proxy_fixed',
+    'teacher_admin',
+    'test_admin',
+    'eleven_labs_proxy',
+    'upsert_sentences_batch',
+    'get_sentence_audio_urls',
+    'translate',
+    'define_word'
+  ]);
+
+  function extractFunctionName(input) {
+    const s = String(input || '');
+    const m = s.match(/\/\.netlify\/functions\/([^\/?#]+)/);
+    return m ? m[1] : '';
+  }
+
   // Detect if we're on a CF Pages domain
   const host = typeof window !== 'undefined' ? window.location.hostname : '';
   const isCFPages = host === 'staging.willenaenglish.com' ||
@@ -58,6 +82,16 @@
     
     window.WillenaAPI.getApiUrl = function(path) {
       const url = origGetApiUrl(path);
+      const fn = extractFunctionName(path) || extractFunctionName(url);
+
+      // HARD BYPASS: Netlify-only functions must always hit Netlify origin.
+      // This protects sentence/audio functions even when older api-config.js
+      // or stale CDN assets return relative function paths.
+      if (fn && NETLIFY_ONLY_FUNCTIONS.has(fn)) {
+        if (/^https?:\/\//i.test(url)) return url;
+        if (url.startsWith('/.netlify/functions/')) return NETLIFY_ORIGIN + url;
+        if (String(path || '').startsWith('/.netlify/functions/')) return NETLIFY_ORIGIN + String(path);
+      }
       
       // If it's a relative netlify path, prepend the CF gateway
       if (url.startsWith('/.netlify/functions/')) {
