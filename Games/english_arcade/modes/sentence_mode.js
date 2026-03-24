@@ -212,42 +212,15 @@ async function enrichSentenceAudioIDAware(items){
       }
     } catch(e){ console.debug('[SentenceMode] sentence id audio signed fetch failed', e?.message); }
   }
-  // 2c. If still missing, NO sentence_id, and we know the word and have a public base, try direct <word>_sentence.mp3.
-  // ONLY for items with NO sentence_id at all — if a sentence_id exists, the legacy word-based
-  // audio (e.g. cat_sentence.mp3) may contain a DIFFERENT sentence, so we must skip it.
-  const needWordBase = items.filter(it=> !it.sentenceAudioUrl && it.eng && hasBase && !it.sentence_id);
-  if (needWordBase.length){
-    needWordBase.forEach(it=>{
-      const key = `${normWord(it.eng)}_sentence.mp3`;
-      it.sentenceAudioUrl = `${baseClean}/${key}`;
-      // Keep audio_key for potential diagnostics; actual existence will be validated by Audio.onerror
-      it.audio_key = it.audio_key || `${normWord(it.eng)}_sentence`;
-    });
-  }
-  // 3. Collect which still lack URL and have eng for legacy lambda.
-  // ONLY for items with NO sentence_id — legacy word-based audio plays a generic sentence,
-  // which is wrong when a specific sentence_id-based sentence has been assigned.
-  const legacyNeed = items.filter(it=> !it.sentenceAudioUrl && it.eng && !it.sentence_id);
-  if (!legacyNeed.length) return;
-  try {
-    const keys = Array.from(new Set(legacyNeed.flatMap(i=> {
-      const upper = `${i.eng}_SENTENCE`;
-      const lowerSnake = `${normWord(i.eng)}_sentence`;
-      return [upper, lowerSnake];
-    })));
-    const r = await WillenaAPI.fetch('/.netlify/functions/get_audio_urls', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ words: keys }) });
-    if (r.ok){
-      const data = await r.json();
-      if (data && data.results){
-        legacyNeed.forEach(it=>{
-          const kUpper = `${it.eng}_SENTENCE`;
-          const kLowerSnake = `${normWord(it.eng)}_sentence`;
-          const rec = data.results[kUpper] || data.results[kLowerSnake] || data.results[kUpper.toLowerCase()] || data.results[kUpper.toUpperCase()];
-          if (rec && rec.exists && rec.url){ it.sentenceAudioUrl = rec.url; }
-        });
-      }
-    }
-  } catch(e){ console.debug('[SentenceMode] legacy audio fetch failed', e?.message); }
+  // ── Legacy word_sentence.mp3 fallback REMOVED (2026-03-24) ──────────
+  // Steps 2c & 3 previously fell back to <word>_sentence.mp3 / get_audio_urls.
+  // That audio often contained a DIFFERENT sentence than the one on screen.
+  // Now: if no sent_<id>.mp3 exists, playSentenceAudio() falls through to TTS.
+  const noAudioCount = items.filter(it => !it.sentenceAudioUrl).length;
+  console.log('[SentenceMode][enrichAudio] done.',
+    `${items.length} items, ${items.length - noAudioCount} have audio URL, ${noAudioCount} will use TTS fallback.`,
+    items.map(it => ({ eng: it.eng, sid: it.sentence_id||'NONE', url: it.sentenceAudioUrl ? 'YES' : 'TTS' }))
+  );
 }
 
 export function run(ctx){

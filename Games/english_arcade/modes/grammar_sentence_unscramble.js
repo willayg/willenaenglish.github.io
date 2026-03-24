@@ -2,7 +2,7 @@
 // Reuses the core sentence mode engine but feeds it grammar example sentences
 // and logs under a dedicated grammar mode name for progress tracking.
 
-import { run as runSentenceMode } from './word_sentence_mode.js?v=20260324c';
+import { run as runSentenceMode } from './word_sentence_mode.js?v=20260324e';
 import { openNowLoadingSplash } from './unscramble_splash.js';
 import { playSFX } from '../sfx.js';
 import { FN } from '../scripts/api-base.js';

@@ -147,43 +147,16 @@ async function enrichSentenceAudioIDAware(items){
       }
     } catch(e){ console.debug('[WordSentenceMode] signed fetch failed', e?.message); }
   }
-  // 2c) Direct <word>_sentence.mp3 via base.
-  // ONLY for items with NO sentence_id — if a sentence_id exists, the legacy word-based
-  // audio (e.g. cat_sentence.mp3) may contain a DIFFERENT sentence text.
-  const needWordBase = items.filter(it=> !it.sentenceAudioUrl && it.eng && hasBase && !it.sentence_id);
-  if (needWordBase.length){
-    needWordBase.forEach(it=>{
-      const key = `${normWord(it.eng)}_sentence.mp3`;
-      it.sentenceAudioUrl = `${baseClean}/${key}`;
-      it.audio_key = it.audio_key || `${normWord(it.eng)}_sentence`;
-    });
-  }
-  // 3) Legacy lambda fallback: try WORD_SENTENCE and word_sentence.
-  // ONLY for items with NO sentence_id — legacy word-based audio contains a generic
-  // sentence which is wrong when a specific sentence has been assigned.
-  const legacyNeed = items.filter(it=> !it.sentenceAudioUrl && it.eng && !it.sentence_id);
-  if (legacyNeed.length){
-    try {
-      // Fix #3: Optimize batching - only request unique words, not every variant
-      const uniqueWords = Array.from(new Set(legacyNeed.map(i=> i.eng)));
-      const keys = uniqueWords.flatMap(word => [
-        `${word}_SENTENCE`,
-        `${normWord(word)}_sentence`
-      ]);
-      const r = await WillenaAPI.fetch('/.netlify/functions/get_audio_urls', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ words: keys }) });
-      if (r.ok){
-        const data = await r.json();
-        if (data && data.results){
-          legacyNeed.forEach(it=>{
-            const kUpper = `${it.eng}_SENTENCE`;
-            const kLowerSnake = `${normWord(it.eng)}_sentence`;
-            const rec = data.results[kUpper] || data.results[kLowerSnake] || data.results[kUpper.toLowerCase()] || data.results[kUpper.toUpperCase()];
-            if (rec && rec.exists && rec.url){ it.sentenceAudioUrl = rec.url; }
-          });
-        }
-      }
-    } catch(e){ console.debug('[WordSentenceMode] legacy audio fetch failed', e?.message); }
-  }
+  // ── Legacy word_sentence.mp3 fallback REMOVED (2026-03-24) ──────────
+  // Steps 2c & 3 previously fell back to <word>_sentence.mp3 / get_audio_urls.
+  // That audio often contained a DIFFERENT sentence than the one on screen.
+  // Now: if no sent_<id>.mp3 exists, playSentenceAudio() falls through to TTS
+  // which always speaks the correct sentence text.
+  const noAudioCount = items.filter(it => !it.sentenceAudioUrl).length;
+  console.log('[WordSentenceMode][enrichAudio] done.',
+    `${items.length} items, ${items.length - noAudioCount} have audio URL, ${noAudioCount} will use TTS fallback.`,
+    items.map(it => ({ eng: it.eng, sid: it.sentence_id||'NONE', url: it.sentenceAudioUrl ? 'YES' : 'TTS' }))
+  );
 }
 
 export function run(ctx){
@@ -505,6 +478,9 @@ export function run(ctx){
 
   function playSentenceAudio(item){
     if (playSentenceAudio.isPlaying) return;
+    console.log('[WordSentenceMode][playAudio]', item.eng, '→',
+      item.sentenceAudioUrl ? item.sentenceAudioUrl.slice(-60) : 'NO URL → TTS fallback',
+      { sentence_id: item.sentence_id || 'NONE', audio_key: item.audio_key || 'NONE' });
     if (item.sentenceAudioUrl){
       try {
         const a = new Audio(item.sentenceAudioUrl);
@@ -562,12 +538,18 @@ async function resolveSentenceIdsIfMissing(items){
     sentences: Array.from(byText.entries()).map(([text, wordsSet]) => ({ text, words: Array.from(wordsSet) }))
   };
   try {
+    console.log('[WordSentenceMode][resolveIds] calling upsert_sentences_batch with', payload.sentences.length, 'sentences');
     const r = await WillenaAPI.fetch('/.netlify/functions/upsert_sentences_batch', { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify(payload) });
-    if (!r.ok) { throw new Error('upsert_sentences_batch HTTP '+r.status); }
+    if (!r.ok) { console.warn('[WordSentenceMode][resolveIds] HTTP', r.status); throw new Error('upsert_sentences_batch HTTP '+r.status); }
     const js = await r.json();
-    if (!js || !js.success || !Array.isArray(js.sentences)) return;
+    console.log('[WordSentenceMode][resolveIds] response:', JSON.stringify(js).slice(0, 500));
+    if (!js || !js.success || !Array.isArray(js.sentences)) {
+      console.warn('[WordSentenceMode][resolveIds] bad response shape — success:', js?.success, 'sentences:', js?.sentences);
+      return;
+    }
     const byTextResolved = new Map(js.sentences.map(s => [normKey(s.text), s]));
     // Attach ids back to items; if item already had a chosen nested sentence, prefer that id.
+    let assigned = 0;
     items.forEach(it => {
       if (it.sentence_id) return;
       const key = it.sentence && it.sentence.trim().replace(/\s+/g,' ');
@@ -575,10 +557,12 @@ async function resolveSentenceIdsIfMissing(items){
       if (rec?.id) {
         it.sentence_id = rec.id;
         if (rec.audio_key && !it.audio_key) it.audio_key = rec.audio_key;
+        assigned++;
       }
     });
+    console.log('[WordSentenceMode][resolveIds] assigned', assigned, 'sentence IDs out of', items.length, 'items');
   } catch(e){
-    console.debug('[WordSentenceMode] sentence id resolve error', e?.message);
+    console.warn('[WordSentenceMode][resolveIds] error:', e?.message);
   }
 }
 

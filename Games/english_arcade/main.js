@@ -31,7 +31,7 @@ import { progressCache } from './utils/progress-cache.js?v=20251214a';
 import { LEVEL1_LISTS, LEVEL2_LISTS, LEVEL3_LISTS, LEVEL4_LISTS, PHONICS_LISTS } from './utils/level-lists.js?v=20251214a';
 import { prefetchAllProgress, loadStarCounts } from './utils/progress-data-service.js?v=20251214a';
 
-const EA_BUILD_STAMP = 'EA_BUILD 20260324d · commit 156395b0';
+const EA_BUILD_STAMP = 'EA_BUILD 20260324e · no-legacy-audio';
 
 function injectBuildStamp() {
   try {
@@ -820,7 +820,7 @@ function startFilePicker() {
 // -----------------------------
 const modeLoaders = {
   meaning:        () => import('./modes/meaning.js').then(m => m.runMeaningMode),
-  sentence:       () => import('./modes/word_sentence_mode.js?v=20260324c').then(m => m.run),
+  sentence:       () => import('./modes/word_sentence_mode.js?v=20260324e').then(m => m.run),
   spelling:       () => import('./modes/spelling.js').then(m => m.runSpellingMode),
   listening:      () => import('./modes/listening.js').then(m => m.runListeningMode),
   picture:        () => import('./modes/picture.js').then(m => m.runPictureMode),
