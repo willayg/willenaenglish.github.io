@@ -492,6 +492,119 @@ async function fetchChallengingWords(opts = {}) {
   return cleaned;
 }
 
+// ---------------------------------------------------------------------------
+// Background sentence audio preload
+// ---------------------------------------------------------------------------
+// Resolves sentence IDs (if missing) and fetches signed audio URLs for all
+// words that have sentences.  Mutates the word objects in-place so that when
+// sentence mode starts, enrichSentenceAudioIDAware finds the URLs pre-populated
+// and skips its own network calls — making the mode start nearly instant.
+async function preloadSentenceAudio(list) {
+  if (!Array.isArray(list) || !list.length) return;
+
+  // Use WillenaAPI.fetch for correct routing (Netlify-only functions); fall back to raw fetch
+  const apiFetch = (typeof window !== 'undefined' && window.WillenaAPI && window.WillenaAPI.fetch)
+    ? window.WillenaAPI.fetch.bind(window.WillenaAPI)
+    : (url, init) => fetch(url, { ...init, credentials: 'include' });
+
+  // 1) Collect words that have a sentence (example / legacy_sentence / sentences[])
+  const hasSentence = list.filter(w => {
+    if (!w) return false;
+    if (w.primary_sentence_id) return true;
+    if (Array.isArray(w.sentences) && w.sentences.length) return true;
+    const text = w.example || w.legacy_sentence || '';
+    return typeof text === 'string' && text.trim().split(/\s+/).length >= 3;
+  });
+  if (!hasSentence.length) return;
+
+  const norm = s => (s || '').trim().replace(/\s+/g, ' ');
+
+  // 2) Resolve sentence IDs for words that are missing them
+  const needIds = hasSentence.filter(w => !w.primary_sentence_id && !(Array.isArray(w.sentences) && w.sentences.some(s => s?.id)));
+  if (needIds.length) {
+    const byText = new Map();
+    for (const w of needIds) {
+      const text = norm(w.example || w.legacy_sentence || '');
+      if (!text || text.split(/\s+/).length < 3) continue;
+      if (!byText.has(text)) byText.set(text, new Set());
+      if (w.eng) byText.get(text).add(String(w.eng));
+    }
+    if (byText.size) {
+      try {
+        const payload = {
+          action: 'upsert_sentences_batch',
+          sentences: Array.from(byText.entries()).map(([text, ws]) => ({ text, words: Array.from(ws) }))
+        };
+        const r = await apiFetch('/.netlify/functions/upsert_sentences_batch', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        if (r.ok) {
+          const js = await r.json().catch(() => null);
+          if (js?.success && Array.isArray(js.sentences)) {
+            const byTextResolved = new Map(js.sentences.map(s => [norm(s.text).toLowerCase(), s]));
+            for (const w of needIds) {
+              const text = norm(w.example || w.legacy_sentence || '');
+              const rec = byTextResolved.get(text.toLowerCase());
+              if (rec?.id) {
+                const sentObj = { id: rec.id, text: rec.text };
+                if (rec.audio_key) sentObj.audio_key = rec.audio_key;
+                w.sentences = w.sentences || [];
+                if (!w.sentences.some(s => s?.id === rec.id)) w.sentences.push(sentObj);
+                if (!w.primary_sentence_id) w.primary_sentence_id = rec.id;
+              }
+            }
+          }
+        }
+      } catch (e) {
+        console.debug('[preloadSentenceAudio] upsert failed', e?.message);
+      }
+    }
+  }
+
+  // 3) Collect all sentence IDs and fetch signed audio URLs
+  const idSet = new Set();
+  for (const w of hasSentence) {
+    const sid = w.primary_sentence_id;
+    if (sid) idSet.add(sid);
+    if (Array.isArray(w.sentences)) {
+      for (const s of w.sentences) { if (s?.id) idSet.add(s.id); }
+    }
+  }
+  if (!idSet.size) return;
+
+  try {
+    const ids = Array.from(idSet);
+    const r = await apiFetch('/.netlify/functions/get_sentence_audio_urls', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sentence_ids: ids })
+    });
+    if (!r.ok) return;
+    const data = await r.json().catch(() => null);
+    if (!data?.success || !data.results) return;
+
+    let resolved = 0;
+    for (const w of hasSentence) {
+      const sid = w.primary_sentence_id;
+      if (!sid) continue;
+      const rec = data.results[sid];
+      if (rec?.exists && rec.url) {
+        w.sentenceAudioUrl = rec.url;
+        if (rec.key) {
+          const sObj = Array.isArray(w.sentences) && w.sentences.find(s => s?.id === sid);
+          if (sObj) sObj.audio_key = rec.key;
+        }
+        resolved++;
+      }
+    }
+    console.log('[preloadSentenceAudio] Resolved', resolved, 'of', idSet.size, 'sentence audio URLs');
+  } catch (e) {
+    console.debug('[preloadSentenceAudio] audio URL fetch failed', e?.message);
+  }
+}
+
 async function processWordlist(data) {
   try {
     const myEpoch = __navEpoch;
@@ -509,6 +622,14 @@ async function processWordlist(data) {
     showProgress('Preparing audio files...', 0);
     let preloadError = null;
     let preloadSummary = null;
+
+    // Start sentence audio preload in background (non-blocking).
+    // This resolves sentence IDs and fetches signed audio URLs so that
+    // sentence mode can start instantly without additional API calls.
+    const sentencePreload = preloadSentenceAudio(wordList).catch(e => {
+      console.debug('[WordArcade] sentence preload error (non-fatal)', e?.message);
+    });
+
     try {
       preloadSummary = await preloadAllAudio(wordList, ({ phase, word, progress }) => {
         const phaseText = phase === 'checking' ? 'Checking existing files' : phase === 'generating' ? 'Generating missing audio' : 'Loading audio files';
@@ -519,6 +640,9 @@ async function processWordlist(data) {
       preloadError = err;
       console.warn('[WordArcade] Audio preload partial failure – continuing anyway.', err);
     }
+
+    // Give sentence preload a short extra window to finish (non-blocking fallback)
+    try { await Promise.race([sentencePreload, new Promise(r => setTimeout(r, 3000))]); } catch {}
 
     // If navigation changed (user pressed Back), bail out quietly
     if (myEpoch !== __navEpoch) return;

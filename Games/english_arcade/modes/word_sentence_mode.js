@@ -137,8 +137,9 @@ async function enrichSentenceAudioIDAware(items){
     } catch(e){ console.debug('[WordSentenceMode] signed fetch failed', e?.message); }
   }
   // 2c) Direct <word>_sentence.mp3 via base.
-  // Allow this for legacy/default lists that were resolved at runtime but do not have persisted sentence identity.
-  const needWordBase = items.filter(it=> !it.sentenceAudioUrl && it.eng && hasBase && (!it.sentence_id || !it._hasPersistedSentenceIdentity));
+  // ONLY for items with NO sentence_id — if a sentence_id exists, the legacy word-based
+  // audio (e.g. cat_sentence.mp3) may contain a DIFFERENT sentence text.
+  const needWordBase = items.filter(it=> !it.sentenceAudioUrl && it.eng && hasBase && !it.sentence_id);
   if (needWordBase.length){
     needWordBase.forEach(it=>{
       const key = `${normWord(it.eng)}_sentence.mp3`;
@@ -147,8 +148,9 @@ async function enrichSentenceAudioIDAware(items){
     });
   }
   // 3) Legacy lambda fallback: try WORD_SENTENCE and word_sentence.
-  // Keep this for backward compatibility for lists without persisted sentence identity.
-  const legacyNeed = items.filter(it=> !it.sentenceAudioUrl && it.eng && (!it.sentence_id || !it._hasPersistedSentenceIdentity));
+  // ONLY for items with NO sentence_id — legacy word-based audio contains a generic
+  // sentence which is wrong when a specific sentence has been assigned.
+  const legacyNeed = items.filter(it=> !it.sentenceAudioUrl && it.eng && !it.sentence_id);
   if (legacyNeed.length){
     try {
       // Fix #3: Optimize batching - only request unique words, not every variant

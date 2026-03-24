@@ -2,6 +2,7 @@
 import { fetchJSONSafe } from '../utils/network.js';
 // escapeHtml lives in dom-helpers (not validation)
 import { escapeHtml } from '../utils/dom-helpers.js';
+import { callTTSProxy, uploadAudioFile, preferredVoice } from './audio-service.js';
 
 /**
  * Get current user ID from various storage locations
@@ -183,6 +184,137 @@ export async function ensureSentenceIdsBuilder(wordObjs, opts = {}) {
   }
 }
 
+/**
+ * Ensure sent_<id>.mp3 audio files exist in R2 for all words with sentence IDs.
+ * The backend upsert_sentences_batch tries to generate audio server-side, but
+ * internal function-to-function calls can fail silently. This client-side
+ * fallback checks each sentence and generates+uploads any missing audio.
+ * @param {Array} wordObjs - Array of word objects (after ensureSentenceIdsBuilder)
+ * @returns {Promise<{checked: number, generated: number, failed: number}>}
+ */
+export async function ensureSentenceAudioBuilder(wordObjs) {
+  const result = { checked: 0, generated: 0, failed: 0 };
+  try {
+    if (!Array.isArray(wordObjs) || !wordObjs.length) return result;
+
+    // Collect unique sentence IDs and their text
+    const sentenceMap = new Map(); // id -> { text, words: [...] }
+    for (const w of wordObjs) {
+      const sid = w.primary_sentence_id;
+      if (!sid) continue;
+      const sentObj = Array.isArray(w.sentences) && w.sentences.find(s => s && s.id === sid);
+      const text = (sentObj && sentObj.text) || w.example || w.legacy_sentence || '';
+      if (!text || text.trim().split(/\s+/).length < 3) continue;
+      if (sentenceMap.has(sid)) {
+        sentenceMap.get(sid).words.push(w.eng);
+      } else {
+        sentenceMap.set(sid, { text: text.trim(), audioKey: sentObj?.audio_key || null, words: [w.eng] });
+      }
+    }
+
+    if (!sentenceMap.size) {
+      console.log('[SentenceAudio][builder] No sentence IDs to check');
+      return result;
+    }
+
+    console.log('[SentenceAudio][builder] Checking audio for', sentenceMap.size, 'unique sentences');
+
+    // Check which sent_<id>.mp3 files already exist via get_sentence_audio_urls
+    const ids = Array.from(sentenceMap.keys());
+    let existingResults = {};
+    try {
+      const doFetch = (typeof WillenaAPI !== 'undefined' && WillenaAPI.fetch)
+        ? WillenaAPI.fetch.bind(WillenaAPI)
+        : (url, init) => fetch(url, { ...init, credentials: 'include' });
+      const r = await doFetch('/.netlify/functions/get_sentence_audio_urls', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sentence_ids: ids })
+      });
+      if (r.ok) {
+        const data = await r.json().catch(() => null);
+        if (data && data.success && data.results) existingResults = data.results;
+      }
+    } catch (e) {
+      console.warn('[SentenceAudio][builder] check failed, generating all', e?.message);
+    }
+
+    // Find which sentences need audio generated
+    const needGeneration = [];
+    for (const [sid, info] of sentenceMap) {
+      result.checked++;
+      const rec = existingResults[sid];
+      if (rec && rec.exists) {
+        // Audio already exists — update audio_key on word objects if missing
+        if (rec.key) {
+          for (const w of wordObjs) {
+            if (w.primary_sentence_id === sid && Array.isArray(w.sentences)) {
+              const s = w.sentences.find(x => x && x.id === sid);
+              if (s && !s.audio_key) s.audio_key = rec.key;
+            }
+          }
+        }
+        continue;
+      }
+      needGeneration.push({ id: sid, text: info.text });
+    }
+
+    if (!needGeneration.length) {
+      console.log('[SentenceAudio][builder] All', result.checked, 'sentences already have audio');
+      return result;
+    }
+
+    console.log('[SentenceAudio][builder] Generating audio for', needGeneration.length, 'sentences');
+
+    // Generate and upload in small batches (concurrency 2)
+    const voice = preferredVoice();
+    const workers = 2;
+    let idx = 0;
+
+    async function worker() {
+      while (idx < needGeneration.length) {
+        const i = idx++;
+        const sent = needGeneration[i];
+        const key = `sent_${sent.id}`;
+        try {
+          const ttsResult = await callTTSProxy({
+            text: sent.text,
+            voice_id: voice,
+            model_id: 'eleven_turbo_v2_5'
+          });
+          if (ttsResult && ttsResult.audio) {
+            await uploadAudioFile(key, ttsResult.audio);
+            result.generated++;
+            // Update audio_key on word objects
+            const audioKey = `${key}.mp3`;
+            for (const w of wordObjs) {
+              if (w.primary_sentence_id === sent.id && Array.isArray(w.sentences)) {
+                const s = w.sentences.find(x => x && x.id === sent.id);
+                if (s) s.audio_key = audioKey;
+              }
+            }
+            console.log('[SentenceAudio][builder] ✓ generated', key, '-', sent.text.substring(0, 50));
+          } else {
+            result.failed++;
+            console.warn('[SentenceAudio][builder] TTS returned no audio for', sent.id);
+          }
+        } catch (e) {
+          result.failed++;
+          console.warn('[SentenceAudio][builder] failed for', sent.id, e?.message);
+        }
+      }
+    }
+
+    await Promise.all(Array.from({ length: Math.min(workers, needGeneration.length) }, () => worker()));
+
+    console.log('[SentenceAudio][builder] Done:', result);
+    return result;
+  } catch (e) {
+    console.warn('[SentenceAudio][builder] ERROR:', e?.message);
+    return result;
+  }
+}
+
 function modeNeedsSentenceIds(mode) {
   return /sentence/i.test(String(mode || ''));
 }
@@ -356,6 +488,19 @@ export async function saveGameData(payload, existingId = null) {
       if (needIds) {
         console.log('[saveGameData] Running safety-net ensureSentenceIdsBuilder…');
         await ensureSentenceIdsBuilder(payload.words);
+      }
+
+      // Ensure sent_<id>.mp3 audio files exist for every sentence.
+      // The server-side upsert_sentences_batch tries to generate them, but its
+      // internal ElevenLabs call can fail silently.  This client-side fallback
+      // checks R2 and generates + uploads any missing sentence audio.
+      try {
+        const audioResult = await ensureSentenceAudioBuilder(payload.words);
+        if (audioResult.generated > 0) {
+          console.log('[saveGameData] Generated', audioResult.generated, 'sentence audio files client-side');
+        }
+      } catch (e) {
+        console.warn('[saveGameData] ensureSentenceAudioBuilder failed (non-fatal)', e?.message);
       }
     }
     
