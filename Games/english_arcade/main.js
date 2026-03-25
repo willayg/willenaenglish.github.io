@@ -31,7 +31,7 @@ import { progressCache } from './utils/progress-cache.js?v=20251214a';
 import { LEVEL1_LISTS, LEVEL2_LISTS, LEVEL3_LISTS, LEVEL4_LISTS, PHONICS_LISTS } from './utils/level-lists.js?v=20251214a';
 import { prefetchAllProgress, loadStarCounts } from './utils/progress-data-service.js?v=20251214a';
 
-const EA_BUILD_STAMP = 'EA_BUILD 20260325d · sentence-id-r2-lookup-fix';
+const EA_BUILD_STAMP = 'EA_BUILD 20260325e · sentence-routing-fix';
 
 function injectBuildStamp() {
   try {
@@ -69,6 +69,72 @@ if (typeof document !== 'undefined') {
   } else {
     injectBuildStamp();
   }
+}
+
+function applyArcadeRoutingHotfix() {
+  try {
+    if (window.__EA_ROUTING_HOTFIX_APPLIED) return true;
+    const host = window.location.hostname || '';
+    const isCFPages = host === 'staging.willenaenglish.com'
+      || host === 'students.willenaenglish.com'
+      || host === 'teachers.willenaenglish.com'
+      || host === 'cf.willenaenglish.com'
+      || host.endsWith('.pages.dev');
+    if (!isCFPages) return true;
+    if (!window.WillenaAPI || typeof window.WillenaAPI.fetch !== 'function' || typeof window.WillenaAPI.getApiUrl !== 'function') return false;
+
+    const CF_GATEWAY = 'https://api.willenaenglish.com';
+    const FORCE_GATEWAY_FUNCTIONS = new Set(['upsert_sentences_batch', 'get_sentence_audio_urls']);
+
+    const extractFn = (value) => {
+      const s = String(value || '');
+      const m = s.match(/\/\.netlify\/functions\/([^\/?#]+)/);
+      return m ? m[1] : '';
+    };
+
+    const toGatewayUrl = (value) => {
+      const s = String(value || '');
+      const fn = extractFn(s);
+      if (!fn) return s;
+      const qIndex = s.indexOf('?');
+      const search = qIndex >= 0 ? s.slice(qIndex) : '';
+      return `${CF_GATEWAY}/.netlify/functions/${fn}${search}`;
+    };
+
+    const origGetApiUrl = window.WillenaAPI.getApiUrl.bind(window.WillenaAPI);
+    window.WillenaAPI.getApiUrl = function(functionPath) {
+      const resolved = origGetApiUrl(functionPath);
+      const fn = extractFn(functionPath) || extractFn(resolved);
+      if (fn && FORCE_GATEWAY_FUNCTIONS.has(fn)) return toGatewayUrl(resolved || functionPath);
+      return resolved;
+    };
+
+    const origFetch = window.WillenaAPI.fetch.bind(window.WillenaAPI);
+    window.WillenaAPI.fetch = function(functionPath, options = {}) {
+      const fn = extractFn(functionPath);
+      if (fn && FORCE_GATEWAY_FUNCTIONS.has(fn)) {
+        const routed = toGatewayUrl(functionPath);
+        console.warn('[EnglishArcade][RoutingHotfix] forcing gateway for', fn, '->', routed);
+        return origFetch(routed, options);
+      }
+      return origFetch(functionPath, options);
+    };
+
+    window.__EA_ROUTING_HOTFIX_APPLIED = true;
+    console.log('[EnglishArcade][RoutingHotfix] Applied for CF Pages host:', host);
+    return true;
+  } catch (e) {
+    console.warn('[EnglishArcade][RoutingHotfix] Failed:', e?.message);
+    return false;
+  }
+}
+
+if (!applyArcadeRoutingHotfix()) {
+  let retries = 0;
+  const timer = setInterval(() => {
+    retries++;
+    if (applyArcadeRoutingHotfix() || retries >= 40) clearInterval(timer);
+  }, 50);
 }
 
 // -----------------------------
@@ -880,7 +946,7 @@ function startFilePicker() {
 // -----------------------------
 const modeLoaders = {
   meaning:        () => import('./modes/meaning.js').then(m => m.runMeaningMode),
-  sentence:       () => import('./modes/word_sentence_mode.js?v=20260325c').then(m => m.run),
+  sentence:       () => import('./modes/word_sentence_mode.js?v=20260325d').then(m => m.run),
   spelling:       () => import('./modes/spelling.js').then(m => m.runSpellingMode),
   listening:      () => import('./modes/listening.js').then(m => m.runListeningMode),
   picture:        () => import('./modes/picture.js').then(m => m.runPictureMode),

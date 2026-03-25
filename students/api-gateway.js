@@ -24,10 +24,12 @@
     'teacher_admin',
     'test_admin',
     'eleven_labs_proxy',
-    'upsert_sentences_batch',
-    'get_sentence_audio_urls',
     'translate',
     'define_word'
+  ]);
+  const FORCE_GATEWAY_FUNCTIONS = new Set([
+    'upsert_sentences_batch',
+    'get_sentence_audio_urls'
   ]);
 
   function extractFunctionName(input) {
@@ -83,6 +85,18 @@
     window.WillenaAPI.getApiUrl = function(path) {
       const url = origGetApiUrl(path);
       const fn = extractFunctionName(path) || extractFunctionName(url);
+
+      // Sentence identity/audio requests must stay on the gateway for CF Pages.
+      // Direct students-domain routing can land on the wrong backend path on staging.
+      if (fn && FORCE_GATEWAY_FUNCTIONS.has(fn)) {
+        if (/^https?:\/\//i.test(url)) {
+          if (/^https:\/\/api\.willenaenglish\.com\//i.test(url)) return url;
+          const relative = url.match(/\/\.netlify\/functions\/.*$/i)?.[0];
+          if (relative) return window.__CF_API_GATEWAY + relative;
+        }
+        if (url.startsWith('/.netlify/functions/')) return window.__CF_API_GATEWAY + url;
+        if (String(path || '').startsWith('/.netlify/functions/')) return window.__CF_API_GATEWAY + String(path);
+      }
 
       // HARD BYPASS: Netlify-only functions must always hit Netlify origin.
       // This protects sentence/audio functions even when older api-config.js
