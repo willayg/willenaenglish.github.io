@@ -31,7 +31,7 @@ import { progressCache } from './utils/progress-cache.js?v=20251214a';
 import { LEVEL1_LISTS, LEVEL2_LISTS, LEVEL3_LISTS, LEVEL4_LISTS, PHONICS_LISTS } from './utils/level-lists.js?v=20251214a';
 import { prefetchAllProgress, loadStarCounts } from './utils/progress-data-service.js?v=20251214a';
 
-const EA_BUILD_STAMP = 'EA_BUILD 20260325e · sentence-routing-fix';
+const EA_BUILD_STAMP = 'EA_BUILD 20260326a · sentence-routing-fix';
 
 function injectBuildStamp() {
   try {
@@ -69,72 +69,6 @@ if (typeof document !== 'undefined') {
   } else {
     injectBuildStamp();
   }
-}
-
-function applyArcadeRoutingHotfix() {
-  try {
-    if (window.__EA_ROUTING_HOTFIX_APPLIED) return true;
-    const host = window.location.hostname || '';
-    const isCFPages = host === 'staging.willenaenglish.com'
-      || host === 'students.willenaenglish.com'
-      || host === 'teachers.willenaenglish.com'
-      || host === 'cf.willenaenglish.com'
-      || host.endsWith('.pages.dev');
-    if (!isCFPages) return true;
-    if (!window.WillenaAPI || typeof window.WillenaAPI.fetch !== 'function' || typeof window.WillenaAPI.getApiUrl !== 'function') return false;
-
-    const CF_GATEWAY = 'https://api.willenaenglish.com';
-    const FORCE_GATEWAY_FUNCTIONS = new Set(['upsert_sentences_batch', 'get_sentence_audio_urls']);
-
-    const extractFn = (value) => {
-      const s = String(value || '');
-      const m = s.match(/\/\.netlify\/functions\/([^\/?#]+)/);
-      return m ? m[1] : '';
-    };
-
-    const toGatewayUrl = (value) => {
-      const s = String(value || '');
-      const fn = extractFn(s);
-      if (!fn) return s;
-      const qIndex = s.indexOf('?');
-      const search = qIndex >= 0 ? s.slice(qIndex) : '';
-      return `${CF_GATEWAY}/.netlify/functions/${fn}${search}`;
-    };
-
-    const origGetApiUrl = window.WillenaAPI.getApiUrl.bind(window.WillenaAPI);
-    window.WillenaAPI.getApiUrl = function(functionPath) {
-      const resolved = origGetApiUrl(functionPath);
-      const fn = extractFn(functionPath) || extractFn(resolved);
-      if (fn && FORCE_GATEWAY_FUNCTIONS.has(fn)) return toGatewayUrl(resolved || functionPath);
-      return resolved;
-    };
-
-    const origFetch = window.WillenaAPI.fetch.bind(window.WillenaAPI);
-    window.WillenaAPI.fetch = function(functionPath, options = {}) {
-      const fn = extractFn(functionPath);
-      if (fn && FORCE_GATEWAY_FUNCTIONS.has(fn)) {
-        const routed = toGatewayUrl(functionPath);
-        console.warn('[EnglishArcade][RoutingHotfix] forcing gateway for', fn, '->', routed);
-        return origFetch(routed, options);
-      }
-      return origFetch(functionPath, options);
-    };
-
-    window.__EA_ROUTING_HOTFIX_APPLIED = true;
-    console.log('[EnglishArcade][RoutingHotfix] Applied for CF Pages host:', host);
-    return true;
-  } catch (e) {
-    console.warn('[EnglishArcade][RoutingHotfix] Failed:', e?.message);
-    return false;
-  }
-}
-
-if (!applyArcadeRoutingHotfix()) {
-  let retries = 0;
-  const timer = setInterval(() => {
-    retries++;
-    if (applyArcadeRoutingHotfix() || retries >= 40) clearInterval(timer);
-  }, 50);
 }
 
 // -----------------------------
@@ -673,37 +607,35 @@ async function preloadSentenceAudio(list) {
   // 3) Collect all sentence IDs and fetch signed audio URLs (backend IDs only)
   const idSet = new Set();
   const localIdSet = new Set();
+  // Collect ALL sentence IDs (including local_* which have valid sent_<id>.mp3 in R2)
+  const allIds = new Set();
   for (const w of hasSentence) {
     const sid = w.primary_sentence_id;
-    if (sid) {
-      if (isLocalSentenceId(sid)) localIdSet.add(String(sid));
-      else idSet.add(sid);
-    }
+    if (sid) allIds.add(String(sid));
     if (Array.isArray(w.sentences)) {
       for (const s of w.sentences) {
-        if (!s?.id) continue;
-        if (isLocalSentenceId(s.id)) localIdSet.add(String(s.id));
-        else idSet.add(s.id);
+        if (s?.id) allIds.add(String(s.id));
       }
     }
   }
-  if (!idSet.size && !localIdSet.size) return;
+  if (!allIds.size) return;
 
   let resolved = 0;
-  if (idSet.size) {
-    try {
-      const ids = Array.from(idSet);
-      const r = await apiFetch('/.netlify/functions/get_sentence_audio_urls', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sentence_ids: ids })
-      });
-      if (r.ok) {
+  // Fetch signed URLs for all sentence IDs via the Netlify function
+  // (routed through api.willenaenglish.com gateway which falls through to Netlify)
+  try {
+    const ids = Array.from(allIds);
+    const r = await apiFetch('/.netlify/functions/get_sentence_audio_urls', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sentence_ids: ids })
+    });
+    if (r.ok) {
         const data = await r.json().catch(() => null);
         if (data?.success && data.results) {
           for (const w of hasSentence) {
             const sid = w.primary_sentence_id;
-            if (!sid || isLocalSentenceId(sid)) continue;
+            if (!sid) continue;
             const rec = data.results[sid];
             if (rec?.exists && rec.url) {
               w.sentenceAudioUrl = rec.url;
@@ -719,7 +651,6 @@ async function preloadSentenceAudio(list) {
     } catch (e) {
       console.debug('[preloadSentenceAudio] signed URL fetch failed', e?.message);
     }
-  }
 
   // 3b) local_* IDs / key-only fallback: resolve through get_audio_urls with keys.
   try {
@@ -768,7 +699,7 @@ async function preloadSentenceAudio(list) {
     console.debug('[preloadSentenceAudio] key lookup failed', e?.message);
   }
 
-  console.log('[preloadSentenceAudio] Resolved', resolved, 'sentence audio URLs (backend ids:', idSet.size, 'local ids:', localIdSet.size, ')');
+  console.log('[preloadSentenceAudio] Resolved', resolved, 'sentence audio URLs out of', allIds.size, 'sentence IDs');
 }
 
 async function processWordlist(data) {
@@ -946,7 +877,7 @@ function startFilePicker() {
 // -----------------------------
 const modeLoaders = {
   meaning:        () => import('./modes/meaning.js').then(m => m.runMeaningMode),
-  sentence:       () => import('./modes/word_sentence_mode.js?v=20260325d').then(m => m.run),
+  sentence:       () => import('./modes/word_sentence_mode.js?v=20260326a').then(m => m.run),
   spelling:       () => import('./modes/spelling.js').then(m => m.runSpellingMode),
   listening:      () => import('./modes/listening.js').then(m => m.runListeningMode),
   picture:        () => import('./modes/picture.js').then(m => m.runPictureMode),

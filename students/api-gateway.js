@@ -27,6 +27,10 @@
     'translate',
     'define_word'
   ]);
+  // These Netlify-only functions MUST route through api.willenaenglish.com
+  // (not students.willenaenglish.com which is a CF Pages domain and can't serve
+  // .netlify/functions). The gateway proxy at api falls through to
+  // willenaenglish.netlify.app where the real functions live.
   const FORCE_GATEWAY_FUNCTIONS = new Set([
     'upsert_sentences_batch',
     'get_sentence_audio_urls'
@@ -86,21 +90,23 @@
       const url = origGetApiUrl(path);
       const fn = extractFunctionName(path) || extractFunctionName(url);
 
-      // Sentence identity/audio requests must stay on the gateway for CF Pages.
-      // Direct students-domain routing can land on the wrong backend path on staging.
+      // Force sentence functions through the CF API gateway which proxies
+      // to willenaenglish.netlify.app. Direct NETLIFY_ORIGIN (students.*)
+      // is a CF Pages domain and cannot serve .netlify/functions.
       if (fn && FORCE_GATEWAY_FUNCTIONS.has(fn)) {
+        const gateway = window.__CF_API_GATEWAY || 'https://api.willenaenglish.com';
         if (/^https?:\/\//i.test(url)) {
-          if (/^https:\/\/api\.willenaenglish\.com\//i.test(url)) return url;
-          const relative = url.match(/\/\.netlify\/functions\/.*$/i)?.[0];
-          if (relative) return window.__CF_API_GATEWAY + relative;
+          // Already absolute — rewrite to gateway
+          const fnPath = '/.netlify/functions/' + fn;
+          const qIndex = url.indexOf('?');
+          return gateway + fnPath + (qIndex >= 0 ? url.slice(qIndex) : '');
         }
-        if (url.startsWith('/.netlify/functions/')) return window.__CF_API_GATEWAY + url;
-        if (String(path || '').startsWith('/.netlify/functions/')) return window.__CF_API_GATEWAY + String(path);
+        if (url.startsWith('/.netlify/functions/')) return gateway + url;
+        if (String(path || '').startsWith('/.netlify/functions/')) return gateway + String(path);
+        return gateway + '/.netlify/functions/' + fn;
       }
 
       // HARD BYPASS: Netlify-only functions must always hit Netlify origin.
-      // This protects sentence/audio functions even when older api-config.js
-      // or stale CDN assets return relative function paths.
       if (fn && NETLIFY_ONLY_FUNCTIONS.has(fn)) {
         if (/^https?:\/\//i.test(url)) return url;
         if (url.startsWith('/.netlify/functions/')) return NETLIFY_ORIGIN + url;

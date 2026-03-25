@@ -89,7 +89,7 @@ import { ENDPOINTS, STORAGE_KEYS, ACTIONS, DEFAULTS, TOAST_DURATION } from './co
 import { initFileListModal } from './ui/file-list.js?v=20260322p';
 import { loadWorksheetIntoBuilder } from './services/worksheet-service.js';
 
-const GB_BUILD_STAMP = 'GB_BUILD 20260325b · sentence-r2-preview-fix';
+const GB_BUILD_STAMP = 'GB_BUILD 20260325a · local-sentence-fallback';
 
 function injectBuilderBuildStamp() {
   try {
@@ -715,29 +715,6 @@ function applyWorksheetImages(rows, imagesField, originalWords) {
 // Plays the sentence audio for a word row: tries sent_<id>.mp3 first,
 // then generates on-the-fly via ElevenLabs TTS, falling back to browser TTS.
 let _previewAudio = null;
-function getSentencePreviewMeta(word) {
-  const sentences = Array.isArray(word?.sentences) ? word.sentences.filter(Boolean) : [];
-  const preferredId = String(word?.primary_sentence_id || word?.sentence_id || '').trim();
-  const preferredSentence = preferredId
-    ? (sentences.find(s => String(s?.id || '').trim() === preferredId) || null)
-    : (sentences.find(s => s?.id || s?.audio_key || s?.text) || null);
-  const sentenceId = String(preferredId || preferredSentence?.id || '').trim();
-  const explicitAudio = String(
-    word?.sentence_audio
-    || word?.sentence_mp3
-    || preferredSentence?.audio_key
-    || ''
-  ).trim();
-  const directUrl = /^https?:/i.test(explicitAudio) ? explicitAudio : '';
-  const audioKeys = Array.from(new Set([
-    explicitAudio,
-    explicitAudio ? explicitAudio.replace(/\.mp3$/i, '') : '',
-    sentenceId ? `sent_${sentenceId}.mp3` : '',
-    sentenceId ? `sent_${sentenceId}` : ''
-  ].filter(Boolean)));
-  return { sentenceId, audioKeys, directUrl };
-}
-
 async function playSentencePreview(btn, idx) {
   const list = getList();
   const word = list[idx];
@@ -757,78 +734,44 @@ async function playSentencePreview(btn, idx) {
   btn.querySelector('.play-icon').textContent = '⏳';
 
   try {
-    const doFetch = (typeof WillenaAPI !== 'undefined' && WillenaAPI.fetch)
-      ? WillenaAPI.fetch.bind(WillenaAPI)
-      : (u, o) => fetch(u, { ...o, credentials: 'include' });
-    const { sentenceId, audioKeys, directUrl } = getSentencePreviewMeta(word);
-
-    if (word.__sentencePreviewUrl && /^https?:/i.test(word.__sentencePreviewUrl)) {
+    // 0) If we already resolved a URL for this word, reuse it instantly
+    if (word.__sentencePreviewUrl) {
       await playAudioUrl(word.__sentencePreviewUrl, btn);
       return;
     }
 
-    if (directUrl) {
-      word.__sentencePreviewUrl = directUrl;
-      await playAudioUrl(directUrl, btn);
-      return;
-    }
-
-    // 1) Try sent_<id>.mp3 first, including local fallback IDs.
-    if (sentenceId) {
+    // 1) Try sent_<id>.mp3 if word has a sentence ID
+    const sid = word.primary_sentence_id;
+    if (sid) {
       try {
-        const r = await doFetch('/.netlify/functions/get_sentence_audio_urls', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ sentence_ids: [sentenceId] })
-        });
+        const doFetch = (typeof WillenaAPI !== 'undefined' && WillenaAPI.fetch) ? WillenaAPI.fetch.bind(WillenaAPI) : (u, o) => fetch(u, { ...o, credentials: 'include' });
+        const r = await doFetch('/.netlify/functions/get_sentence_audio_urls', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sentence_ids: [sid] }) });
         if (r.ok) {
           const data = await r.json().catch(() => null);
-          if (data?.success && data.results?.[sentenceId]?.exists && data.results[sentenceId].url) {
-            const url = data.results[sentenceId].url;
+          if (data?.success && data.results?.[sid]?.exists && data.results[sid].url) {
+            const url = data.results[sid].url;
             word.__sentencePreviewUrl = url;
             await playAudioUrl(url, btn);
             return;
           }
         }
-      } catch (e) { console.debug('[playSentencePreview] signed URL failed, trying audio key lookup', e?.message); }
+      } catch (e) { console.debug('[playSentencePreview] signed URL failed, trying TTS', e?.message); }
     }
 
-    // 2) Resolve audio_key or sent_<id> key through R2 before hitting TTS.
-    if (audioKeys.length) {
-      try {
-        const r = await doFetch('/.netlify/functions/get_audio_urls', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ words: audioKeys })
-        });
-        if (r.ok) {
-          const data = await r.json().catch(() => null);
-          const results = data?.results || {};
-          const resolved = audioKeys
-            .map(key => results[key])
-            .find(rec => rec?.exists && rec?.url);
-          if (resolved?.url) {
-            word.__sentencePreviewUrl = resolved.url;
-            await playAudioUrl(resolved.url, btn);
-            return;
-          }
-        }
-      } catch (e) { console.debug('[playSentencePreview] audio key lookup failed, trying TTS', e?.message); }
-    }
-
-    // 3) Generate audio on-the-fly via ElevenLabs only if no saved R2 audio was found.
+    // 2) Generate audio on-the-fly via ElevenLabs (cache the result)
     btn.querySelector('.play-icon').textContent = '🔄';
     try {
       const voice = preferredVoice();
       const ttsResult = await callTTSProxy({ text: sentence, voice_id: voice, model_id: 'eleven_turbo_v2_5' });
       if (ttsResult?.audio) {
         const audioSrc = `data:audio/mpeg;base64,${ttsResult.audio}`;
+        word.__sentencePreviewUrl = audioSrc;
         await playAudioUrl(audioSrc, btn);
         return;
       }
     } catch (e) { console.debug('[playSentencePreview] ElevenLabs failed, using browser TTS', e?.message); }
 
-    // 4) Last resort: browser TTS
+    // 3) Last resort: browser TTS
     btn.querySelector('.play-icon').textContent = '🗣️';
     const utterance = new SpeechSynthesisUtterance(sentence);
     utterance.lang = 'en-US';
