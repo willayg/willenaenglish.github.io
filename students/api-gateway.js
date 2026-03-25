@@ -13,6 +13,7 @@
   'use strict';
 
   const NETLIFY_ORIGIN = 'https://students.willenaenglish.com';
+  const SENTENCE_GATEWAY = 'https://willena-proxy.willena.workers.dev';
   const NETLIFY_ONLY_FUNCTIONS = new Set([
     'verify_student',
     'set_student_password',
@@ -94,7 +95,7 @@
       // to willenaenglish.netlify.app. Direct NETLIFY_ORIGIN (students.*)
       // is a CF Pages domain and cannot serve .netlify/functions.
       if (fn && FORCE_GATEWAY_FUNCTIONS.has(fn)) {
-        const gateway = window.__CF_API_GATEWAY || 'https://api.willenaenglish.com';
+        const gateway = SENTENCE_GATEWAY;
         if (/^https?:\/\//i.test(url)) {
           // Already absolute — rewrite to gateway
           const fnPath = '/.netlify/functions/' + fn;

@@ -31,7 +31,7 @@ import { progressCache } from './utils/progress-cache.js?v=20251214a';
 import { LEVEL1_LISTS, LEVEL2_LISTS, LEVEL3_LISTS, LEVEL4_LISTS, PHONICS_LISTS } from './utils/level-lists.js?v=20251214a';
 import { prefetchAllProgress, loadStarCounts } from './utils/progress-data-service.js?v=20251214a';
 
-const EA_BUILD_STAMP = 'EA_BUILD 20260326a · sentence-routing-fix';
+const EA_BUILD_STAMP = 'EA_BUILD 20260326b · sentence-workersdev-route';
 
 function injectBuildStamp() {
   try {

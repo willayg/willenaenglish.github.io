@@ -1,6 +1,11 @@
 name = "willena-proxy"
 main = "src/index.js"
 compatibility_date = "2025-12-08"
+workers_dev = true
+
+[[routes]]
+pattern = "api.willenaenglish.com/*"
+zone_name = "willenaenglish.com"
 
 # Service bindings to route requests to other CF Workers
 # These allow calling other workers without going through the network
