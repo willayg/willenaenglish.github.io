@@ -8,6 +8,45 @@
 
 import { startSession, logAttempt, endSession } from '../../../students/records.js';
 
+function normalizeSentenceText(value) {
+  return String(value || '').trim().replace(/\s+/g, ' ');
+}
+
+function makeLocalSentenceId(text) {
+  const normalized = normalizeSentenceText(text).toLowerCase();
+  let hash = 5381;
+  for (let i = 0; i < normalized.length; i++) {
+    hash = ((hash << 5) + hash) + normalized.charCodeAt(i);
+    hash |= 0;
+  }
+  const hex = (hash >>> 0).toString(16).padStart(8, '0');
+  return `local_${hex}`;
+}
+
+function applyLocalSentenceIds(items) {
+  const byText = new Map();
+  let assigned = 0;
+  (items || []).forEach((item) => {
+    if (!item || item.sentence_id || !item.sentence) return;
+    const text = normalizeSentenceText(item.sentence);
+    if (!text || text.split(/\s+/).length < 3) return;
+    const key = text.toLowerCase();
+    let localId = byText.get(key);
+    if (!localId) {
+      localId = makeLocalSentenceId(text);
+      byText.set(key, localId);
+    }
+    item.sentence_id = localId;
+    if (!item.primary_sentence_id) item.primary_sentence_id = localId;
+    if (!item.audio_key) item.audio_key = `sent_${localId}.mp3`;
+    if (!Array.isArray(item.sentences) || !item.sentences.some(s => s && s.id === localId)) {
+      item.sentences = [{ id: localId, text, audio_key: item.audio_key }];
+    }
+    assigned++;
+  });
+  return assigned;
+}
+
 // Normalize incoming word objects to a unified sentence item structure.
 // Accepts legacy shape: { eng, sentence }
 // Extended to pull sentence text from common example fields (ex, example, etc.).
@@ -85,6 +124,8 @@ function normalizeWordsToSentenceItems(list){
         }
       }
     }
+    if (!item.sentence_id && item.primary_sentence_id) item.sentence_id = item.primary_sentence_id;
+    if (item.sentence_id && !item.audio_key) item.audio_key = `sent_${item.sentence_id}.mp3`;
     return item;
   }).filter(Boolean);
 }
@@ -112,7 +153,6 @@ async function enrichSentenceAudioIDAware(items){
       || raw.includes(`/${word}_sentence.mp3`)
       || raw.includes(`/${word}_sentence?`);
   };
-  const isLocalSentenceId = (id) => /^local_/i.test(String(id || '').trim());
   // 1) Use explicit audio_key when absolute or build with base
   items.forEach(it=>{
     if(!it || it.sentenceAudioUrl) return;
@@ -131,17 +171,16 @@ async function enrichSentenceAudioIDAware(items){
     needHeuristic.forEach(it=>{ it.sentenceAudioUrl = `${baseClean}/sent_${it.sentence_id}.mp3`; });
   }
   // 2b) Signed URL fetch for any sentence_ids.
-  // If no sentence-specific audio exists, later legacy word fallback still runs.
+  // This works for backend IDs and local fallback IDs because the object key is still sent_<id>.mp3.
   const stillMissing = items.filter(it=> !it.sentenceAudioUrl && it.sentence_id);
-  const signedEligible = stillMissing.filter(it => !isLocalSentenceId(it.sentence_id));
-  if (signedEligible.length){
+  if (stillMissing.length){
     try {
-      const uniqueIds = Array.from(new Set(signedEligible.map(it=> it.sentence_id)));
+      const uniqueIds = Array.from(new Set(stillMissing.map(it=> it.sentence_id)));
       const r = await WillenaAPI.fetch('/.netlify/functions/get_sentence_audio_urls', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ sentence_ids: uniqueIds }) });
       if (r.ok){
         const data = await r.json().catch(()=>null);
         if(data && data.success && data.results){
-          signedEligible.forEach(it=>{
+          stillMissing.forEach(it=>{
             const rec = data.results[it.sentence_id];
             if(rec && rec.exists && rec.url){ it.sentenceAudioUrl = rec.url; it.audio_key = rec.key || it.audio_key; }
           });
@@ -149,8 +188,7 @@ async function enrichSentenceAudioIDAware(items){
       }
     } catch(e){ console.debug('[WordSentenceMode] signed fetch failed', e?.message); }
   }
-  // 2c) For local_* sentence IDs (or key-only cases), resolve via get_audio_urls using audio_key.
-  // This avoids 400s from get_sentence_audio_urls, which expects backend sentence IDs.
+  // 2c) For any remaining key-only cases, resolve via get_audio_urls using audio_key.
   const keyLookupNeed = items.filter(it => !it.sentenceAudioUrl && (it.audio_key || it.sentence_id));
   if (keyLookupNeed.length) {
     try {
@@ -160,10 +198,7 @@ async function enrichSentenceAudioIDAware(items){
           const noExt = k.replace(/\.mp3$/i, '');
           return [k, noExt];
         }
-        if (isLocalSentenceId(it.sentence_id)) {
-          return [`sent_${it.sentence_id}.mp3`, `sent_${it.sentence_id}`];
-        }
-        return [];
+        return it.sentence_id ? [`sent_${it.sentence_id}.mp3`, `sent_${it.sentence_id}`] : [];
       }).filter(Boolean)));
       if (keys.length) {
         const r = await WillenaAPI.fetch('/.netlify/functions/get_audio_urls', {
@@ -219,10 +254,14 @@ export function run(ctx){
   let totalPoints = 0;
   let sessionId = null;
 
-  // Splash then start
-  function showIntroThenStart(){
+  // Splash then start after sentence audio enrichment finishes.
+  function showIntroThenStart(audioReadyPromise){
     if (layout.skipIntro) {
-      try { startUnscramble(); } catch(e){ console.error('[WordSentenceMode] start failed', e); root.innerHTML = renderErrorBox('Could not start sentence mode.'); }
+      Promise.resolve(audioReadyPromise)
+        .catch((e) => { console.debug('[WordSentenceMode] audio preflight failed', e?.message); })
+        .finally(() => {
+          try { startUnscramble(); } catch(e){ console.error('[WordSentenceMode] start failed', e); root.innerHTML = renderErrorBox('Could not start sentence mode.'); }
+        });
       return;
     }
     const introTitle = layout.hideTitle ? '' : (layout.customTitle || 'Sentence Unscramble');
@@ -241,20 +280,19 @@ export function run(ctx){
       style.textContent = '@keyframes wsLoadingSpin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }';
       document.head.appendChild(style);
     }
-    setTimeout(()=>{
+    Promise.allSettled([
+      Promise.resolve(audioReadyPromise),
+      new Promise((resolve) => setTimeout(resolve, 700))
+    ]).then(() => {
       const intro = document.getElementById('wsIntro');
       if (intro) intro.style.opacity = '0';
       setTimeout(()=>{ try { startUnscramble(); } catch(e){ console.error('[WordSentenceMode] start failed', e); root.innerHTML = renderErrorBox('Could not start sentence mode.'); } }, 600);
-    }, 700);
+    });
   }
 
   // Preflight: resolve sentence_ids server-side (fast, idempotent) so audio can be disambiguated per sentence.
   // Legacy items without IDs also get sentence-specific audio generated server-side when needed.
-  // Show intro immediately (non-blocking), fetch audio in background
-  showIntroThenStart();
-  
-  // Background audio enrichment (non-blocking) - doesn't wait for intro
-  (async () => {
+  const sentenceAudioReady = (async () => {
     try {
       const needsIdResolution = items.some(it => !it.sentence_id && it.sentence);
       if (needsIdResolution) {
@@ -265,6 +303,8 @@ export function run(ctx){
       await enrichSentenceAudioIDAware(items);
     } catch(e){ console.debug('[WordSentenceMode] enrichSentenceAudio failed', e?.message); }
   })();
+
+  showIntroThenStart(sentenceAudioReady);
 
   function exitToMenu() {
     try {
@@ -566,11 +606,11 @@ async function resolveSentenceIdsIfMissing(items){
   if (!Array.isArray(items) || !items.length) return;
   const need = items.filter(it => !it.sentence_id && it.sentence && typeof it.sentence === 'string');
   if (!need.length) return;
-  const normKey = (s) => String(s || '').trim().replace(/\s+/g,' ').toLowerCase();
+  const normKey = (s) => normalizeSentenceText(s).toLowerCase();
   // Build unique list of texts; include word link to help future analytics (word_sentences join).
   const byText = new Map();
   need.forEach(it => {
-    const text = it.sentence.trim().replace(/\s+/g,' ');
+    const text = normalizeSentenceText(it.sentence);
     if (!byText.has(text)) byText.set(text, new Set());
     if (it.eng) byText.get(text).add(String(it.eng));
   });
@@ -586,6 +626,8 @@ async function resolveSentenceIdsIfMissing(items){
     console.log('[WordSentenceMode][resolveIds] response:', JSON.stringify(js).slice(0, 500));
     if (!js || !js.success || !Array.isArray(js.sentences)) {
       console.warn('[WordSentenceMode][resolveIds] bad response shape — success:', js?.success, 'sentences:', js?.sentences);
+      const assignedLocal = applyLocalSentenceIds(need);
+      console.log('[WordSentenceMode][resolveIds] local fallback assigned', assignedLocal, 'sentence IDs');
       return;
     }
     const byTextResolved = new Map(js.sentences.map(s => [normKey(s.text), s]));
@@ -597,13 +639,21 @@ async function resolveSentenceIdsIfMissing(items){
       const rec = key ? byTextResolved.get(normKey(key)) : null;
       if (rec?.id) {
         it.sentence_id = rec.id;
+        if (!it.primary_sentence_id) it.primary_sentence_id = rec.id;
         if (rec.audio_key && !it.audio_key) it.audio_key = rec.audio_key;
         assigned++;
       }
     });
+    const unresolved = need.filter(it => !it.sentence_id);
+    if (unresolved.length) {
+      const assignedLocal = applyLocalSentenceIds(unresolved);
+      console.log('[WordSentenceMode][resolveIds] local fallback assigned', assignedLocal, 'sentence IDs after partial backend resolution');
+    }
     console.log('[WordSentenceMode][resolveIds] assigned', assigned, 'sentence IDs out of', items.length, 'items');
   } catch(e){
     console.warn('[WordSentenceMode][resolveIds] error:', e?.message);
+    const assignedLocal = applyLocalSentenceIds(need);
+    console.log('[WordSentenceMode][resolveIds] local fallback assigned', assignedLocal, 'sentence IDs after error');
   }
 }
 
