@@ -1236,8 +1236,17 @@ async function openSavedGameById(id, { mode = null } = {}) {
       const def = w.def || w.definition || w.gloss || w.meaning || '';
       const example = w.example || w.ex || w.example_sentence || w.sentence_example || '';
       const legacySentence = w.legacy_sentence || w.sentence || example || '';
-      const sentenceArray = Array.isArray(w.sentences) ? w.sentences : [];
-      const primarySentenceId = w.primary_sentence_id || null;
+      const sentenceArray = Array.isArray(w.sentences)
+        ? w.sentences.map(s => ({
+            ...s,
+            id: s?.id || s?.sentence_id || null,
+            audio_key: s?.audio_key || s?.audioKey || null
+          })).filter(s => s.id)
+        : [];
+      const primarySentenceId = w.primary_sentence_id || w.sentence_id || null;
+      const sentenceMp3 = w.sentence_mp3 || '';
+      const sentenceAudio = w.sentence_audio || '';
+      const sentenceAudioKey = w.audio_key || '';
       const rawImg = w.image_url || w.image || w.img || w.img_url || w.picture || '';
       const img = (typeof rawImg === 'string') ? rawImg.trim() : '';
       const out = { eng: String(eng).trim(), kor: String(kor).trim() };
@@ -1249,6 +1258,10 @@ async function openSavedGameById(id, { mode = null } = {}) {
       if (legacySentence && String(legacySentence).trim()) out.legacy_sentence = String(legacySentence).trim();
       if (sentenceArray.length) out.sentences = sentenceArray;
       if (primarySentenceId) out.primary_sentence_id = primarySentenceId;
+      if (primarySentenceId) out.sentence_id = primarySentenceId;
+      if (sentenceMp3 && String(sentenceMp3).trim()) out.sentence_mp3 = String(sentenceMp3).trim();
+      if (sentenceAudio && String(sentenceAudio).trim()) out.sentence_audio = String(sentenceAudio).trim();
+      if (sentenceAudioKey && String(sentenceAudioKey).trim()) out.audio_key = String(sentenceAudioKey).trim();
       // Preserve image in ALL field variants so normalizeWordImages can find and process it
       if (img && img.toLowerCase() !== 'null' && img.toLowerCase() !== 'undefined') {
         out.image_url = img;
