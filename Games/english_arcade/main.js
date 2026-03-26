@@ -2003,6 +2003,7 @@ window.WordArcade = {
   loadSampleWordlistByFilename,
   showLevelsMenu,
   showGrammarLevelsMenu,
+  startReviewFromWords,
   __abortInFlight,
   historyManager, // Expose for debugging
   progressCache, // Expose cache for debugging
@@ -2107,4 +2108,53 @@ function startNewReviewCombined(chosenWords) {
       setTimeout(() => { quitToOpening(true); }, 400);
     }
   });
+}
+
+function normalizeReviewSeedWords(words) {
+  if (!Array.isArray(words)) return [];
+  const seen = new Set();
+  const out = [];
+  for (const raw of words) {
+    if (!raw || typeof raw !== 'object') continue;
+    const eng = String(raw.eng || raw.word || '').trim();
+    const kor = String(raw.kor || raw.word_kr || '').trim();
+    if (!eng || !kor) continue;
+    const key = `${eng.toLowerCase()}|${kor.toLowerCase()}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push({ eng, kor, def: raw.def || raw.definition || '' });
+  }
+  return out;
+}
+
+function startReviewFromWords(words, { skipSelection = false } = {}) {
+  const normalized = normalizeReviewSeedWords(words);
+  if (!normalized.length) {
+    inlineToast('No wrong words to practice yet.');
+    return false;
+  }
+
+  const capped = normalized.slice(0, 15);
+  if (skipSelection) {
+    try { startNewReviewCombined(capped); return true; } catch (e) {
+      console.error('startReviewFromWords failed', e);
+      inlineToast('Could not start review.');
+      return false;
+    }
+  }
+
+  const max = Math.min(15, capped.length);
+  const min = Math.min(3, max);
+  showReviewSelectionModal(capped, {
+    min,
+    max,
+    onStart: (chosen) => {
+      try { startNewReviewCombined(chosen); } catch (e) {
+        console.error('Review start failed', e);
+        inlineToast('Could not start review.');
+      }
+    },
+    onCancel: () => {}
+  });
+  return true;
 }

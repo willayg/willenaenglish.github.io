@@ -55,6 +55,7 @@ export function runListenAndSpellMode({ wordList, gameArea, playTTS, playTTSVari
   ensureLiveListenStyles();
   let score = 0;
   let idx = 0;
+  const wrongWordMap = new Map();
   const ordered = [...wordList].sort(() => Math.random() - 0.5);
   const sessionId = startSession({ mode: 'listen_and_spell', wordList, listName });
 
@@ -89,7 +90,13 @@ export function runListenAndSpellMode({ wordList, gameArea, playTTS, playTTSVari
   function renderQuestion() {
     if (idx >= ordered.length) {
       playSFX('end');
-  endSession(sessionId, { mode: 'listen_and_spell', summary: { score, total: ordered.length * 2, completed: true }, listName, wordList: ordered });
+      const wrongWords = Array.from(wrongWordMap.values());
+      endSession(sessionId, {
+        mode: 'listen_and_spell',
+        summary: { score, total: ordered.length * 2, completed: true, wrong_words: wrongWords, wrong_count: wrongWords.length },
+        listName,
+        wordList: ordered
+      });
       hideGameProgress();
       gameArea.innerHTML = `<div class="ending-screen" style="padding:40px 18px;text-align:center;">
         <h2 style="color:#f59e0b;font-size:2em;margin-bottom:18px;">Listening Game Over!</h2>
@@ -109,6 +116,18 @@ export function runListenAndSpellMode({ wordList, gameArea, playTTS, playTTSVari
             runListenAndSpellMode({ wordList: wordList.sort(() => Math.random() - 0.5), gameArea, playTTS, playTTSVariant, preprocessTTS, startGame, listName });
           }
         };
+      }
+
+      // Prompt students to immediately practice wrong words using Review flow.
+        if (!isReview && wrongWords.length && window.WordArcade && typeof window.WordArcade.startReviewFromWords === 'function') {
+        setTimeout(() => {
+          const shouldPractice = window.confirm(`You missed ${wrongWords.length} word${wrongWords.length > 1 ? 's' : ''}. Practice them now?`);
+          if (shouldPractice) {
+            try { window.WordArcade.startReviewFromWords(wrongWords, { skipSelection: true }); } catch (e) {
+              console.warn('Failed to start wrong-word review:', e);
+            }
+          }
+        }, 260);
       }
       return;
     }
@@ -296,6 +315,14 @@ export function runListenAndSpellMode({ wordList, gameArea, playTTS, playTTSVari
         basePoints = 1; feedback.textContent = 'Close! +1'; feedback.style.color = '#f59e0b'; playSFX('kindaRight');
       } else {
         basePoints = 0; feedback.textContent = 'Oops!'; feedback.style.color = '#e53e3e'; playSFX('wrong');
+        const key = String(current.eng || '').trim().toLowerCase();
+        if (key && !wrongWordMap.has(key)) {
+          wrongWordMap.set(key, {
+            eng: String(current.eng || '').trim(),
+            kor: String(koreanPrompt || '').trim(),
+            def: String(current.def || current.definition || '').trim()
+          });
+        }
       }
       const points = basePoints > 0 ? (isReview ? 3 : basePoints) : 0;
       // Log attempt
