@@ -38,6 +38,46 @@ function ensureLiveSpellStyles() {
   document.head.appendChild(style);
 }
 
+function askPracticeWrongWordsModal(wrongCount) {
+  return new Promise((resolve) => {
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:10050;display:flex;align-items:center;justify-content:center;padding:16px;';
+    const modal = document.createElement('div');
+    modal.style.cssText = 'width:min(460px,calc(100vw - 32px));background:#fff;border-radius:18px;border:2px solid #21b3be;box-shadow:0 18px 46px rgba(0,0,0,.28);padding:18px 18px 16px;font-family:system-ui,-apple-system,Segoe UI,Arial,sans-serif;';
+    modal.innerHTML = `
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+        <h3 style="margin:0;font-size:1.08rem;color:#0f766e;font-weight:900;">Review Wrong Words?</h3>
+        <span style="font-size:1.35rem;line-height:1;">✨</span>
+      </div>
+      <div style="margin-top:10px;color:#334155;font-size:.95rem;line-height:1.5;">
+        You missed <strong>${wrongCount}</strong> word${wrongCount > 1 ? 's' : ''}.<br>
+        틀린 단어를 바로 복습할까요?
+      </div>
+      <div style="margin-top:10px;background:#ecfeff;border:1px solid #99f6e4;color:#0f766e;border-radius:12px;padding:10px 12px;font-size:.92rem;font-weight:700;line-height:1.4;">
+        Practice now for <strong>triple points</strong>.<br>
+        지금 복습하면 <strong>3배 포인트</strong>를 받을 수 있어요.
+      </div>
+      <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:14px;">
+        <button id="waPracticeLaterBtn" style="appearance:none;border:1px solid #cbd5e1;background:#fff;color:#475569;border-radius:10px;padding:9px 12px;font-weight:700;cursor:pointer;">Later / 나중에</button>
+        <button id="waPracticeNowBtn" style="appearance:none;border:none;background:#14b8a6;color:#fff;border-radius:10px;padding:9px 14px;font-weight:800;cursor:pointer;">Practice Now / 지금 복습</button>
+      </div>
+    `;
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+
+    const cleanup = (result) => {
+      try { overlay.remove(); } catch {}
+      resolve(result);
+    };
+
+    const nowBtn = modal.querySelector('#waPracticeNowBtn');
+    const laterBtn = modal.querySelector('#waPracticeLaterBtn');
+    if (nowBtn) nowBtn.addEventListener('click', () => cleanup(true));
+    if (laterBtn) laterBtn.addEventListener('click', () => cleanup(false));
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) cleanup(false); });
+  });
+}
+
 // Spelling mode (Tap-to-Spell with Korean prompt)
 export function runSpellingMode({ wordList, gameArea, listName = null }) {
   // Defensive logging to help diagnose why the spelling UI might be blank
@@ -144,8 +184,8 @@ export function runSpellingMode({ wordList, gameArea, listName = null }) {
 
         // Prompt students to immediately practice wrong words using Review flow.
       if (!isReview && wrongWords.length && window.WordArcade && typeof window.WordArcade.startReviewFromWords === 'function') {
-        setTimeout(() => {
-          const shouldPractice = window.confirm(`You missed ${wrongWords.length} word${wrongWords.length > 1 ? 's' : ''}. Practice them now?`);
+        setTimeout(async () => {
+          const shouldPractice = await askPracticeWrongWordsModal(wrongWords.length);
           if (shouldPractice) {
             try { window.WordArcade.startReviewFromWords(wrongWords, { skipSelection: true }); } catch (e) {
               console.warn('Failed to start wrong-word review:', e);
