@@ -249,6 +249,20 @@ let currentMode = null;
 let currentListName = null;
 let currentPreloadAbort = null; // for abortable audio preload
 let activeModeCleanup = null; // optional cleanup function returned by mode runners
+let pendingAutostartMode = null; // mode to start immediately after preload splash
+
+function readAutostartModeFromURL() {
+  try {
+    const params = new URLSearchParams(window.location.search || '');
+    const isAutostart = params.get('autostart') === '1' || String(params.get('open') || '').toLowerCase() === 'saved';
+    if (!isAutostart) return null;
+    const mode = String(params.get('mode') || '').trim().toLowerCase();
+    if (!mode) return null;
+    return modeLoaders && modeLoaders[mode] ? mode : null;
+  } catch {
+    return null;
+  }
+}
 
 // Navigation cancellation epoch: bump this to cancel any in-flight async flows
 let __navEpoch = 0;
@@ -259,6 +273,7 @@ let __pendingSplashTimeout = null;
 function __abortInFlight() {
   // Increment epoch so pending async continuations bail out
   __navEpoch++;
+  pendingAutostartMode = null;
   // Cancel pending splash screen timeout
   if (__pendingSplashTimeout) {
     clearTimeout(__pendingSplashTimeout);
@@ -807,6 +822,11 @@ async function processWordlist(data) {
     showGameStart(() => {
       // If navigation changed during the splash delay, bail out
       if (myEpoch !== __navEpoch) return;
+      const forcedMode =
+        (pendingAutostartMode && modeLoaders[pendingAutostartMode])
+          ? pendingAutostartMode
+          : readAutostartModeFromURL();
+      pendingAutostartMode = null;
       if (preloadSummary && preloadSummary.missing && preloadSummary.missing.length) {
         inlineToast(`Audio unavailable for ${preloadSummary.missing.length} word${preloadSummary.missing.length>1?'s':''}. These will be skipped in audio modes.`);
         window.__WA_MISSING_AUDIO = new Set(preloadSummary.missing.map(w => String(w).trim().toLowerCase()));
@@ -815,6 +835,12 @@ async function processWordlist(data) {
       }
       // Persist again in case we force-cleared earlier
       try { saveSessionState(); } catch {}
+      if (forcedMode) {
+        try { window.__WA_BLOCK_SELECTOR_UNTIL__ = Date.now() + 4500; } catch {}
+        currentMode = forcedMode;
+        startGame(forcedMode);
+        return;
+      }
       startModeSelector();
       // One-time deferred re-render if header/title or stats didn't populate yet
       // (only needed for edge case where list name wasn't set before audio preload finished)
@@ -836,6 +862,7 @@ async function processWordlist(data) {
     });
 
   } catch (err) {
+    pendingAutostartMode = null;
     if (err?.name === 'AbortError') return;
     console.error('Error processing word list (fatal):', err);
     const msg = err.message || 'Unknown error';
@@ -896,17 +923,22 @@ async function loadSampleWordlistByFilename(filename, { force = false, listName 
       } catch (e) { lastErr = e; }
     }
     if (!loaded) throw new Error(`Failed to fetch ${filename}${lastErr ? ': ' + lastErr.message : ''}`);
+    pendingAutostartMode = (mode && modeLoaders[mode]) ? mode : null;
     await processWordlist(loaded);
-    if (mode && modeLoaders[mode]) {
-      currentMode = mode;
-      await startGame(mode);
-    }
   } catch (err) {
+    pendingAutostartMode = null;
     inlineToast('Error loading sample word list: ' + err.message);
   }
 }
 
 function startModeSelector() {
+  try {
+    const blockUntil = Number(window.__WA_BLOCK_SELECTOR_UNTIL__ || 0);
+    if (blockUntil && Date.now() < blockUntil) {
+      console.log('[WordArcade] startModeSelector ignored during forced autostart guard window');
+      return;
+    }
+  } catch {}
   setAutostartLoadingVisible(false);
   showOpeningButtons(false);
   // Ensure we have any cached state back in memory for UI headers
@@ -1061,11 +1093,11 @@ async function loadPhonicsGame({ listFile, mode, listName }) {
     currentListName = listName || 'Phonics List';
     console.log('[loadPhonicsGame] Set currentListName to:', currentListName);
     // Use the standard processing pipeline so we normalize, preload audio, and SAVE session state
+    pendingAutostartMode = (mode && modeLoaders[mode]) ? mode : null;
     await processWordlist(Array.isArray(wordData) ? wordData : []);
     console.log('[loadPhonicsGame] processWordlist complete, currentListName is now:', currentListName);
-    // If a mode was preselected, jump straight in; otherwise the processor already opened the mode selector
-    if (mode) { currentMode = mode; startGame(mode); }
   } catch (error) {
+    pendingAutostartMode = null;
     console.error('Error loading phonics list:', error);
     inlineToast(`Error loading list: ${error.message}`);
     showOpeningButtons(true);
@@ -1353,12 +1385,10 @@ async function openSavedGameById(id, { mode = null } = {}) {
       image_url: w.image_url?.substring(0,60),
       img: w.img?.substring(0,60)
     })));
+    pendingAutostartMode = (mode && modeLoaders[mode]) ? mode : null;
     await processWordlist(mapped);
-    if (mode && modeLoaders[mode]) {
-      currentMode = mode;
-      await startGame(mode);
-    }
   } catch (e) {
+    pendingAutostartMode = null;
   if (e.code === 'NOT_AUTH' || /Not signed in/i.test(e.message)) {
       inlineToast('Please sign in to open saved games.');
       return;
