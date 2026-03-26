@@ -138,6 +138,21 @@ function generateRunToken(assignmentId) {
   return `run_${assignmentId}_${t}_${rand}`;
 }
 
+function normalizeWordKey(value) {
+  return String(value || '')
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function parseJsonMaybe(value) {
+  if (!value) return null;
+  if (typeof value === 'object') return value;
+  try { return JSON.parse(value); } catch { return null; }
+}
+
 // Supabase REST helpers
 async function supabaseSelect(env, table, query, options = {}) {
   let url = `${env.SUPABASE_URL}/rest/v1/${table}?${query}`;
@@ -663,6 +678,7 @@ export default {
         }
         
         const requestRunToken = url.searchParams.get('run_token') || null;
+        const isWrongWordsGoal = String(assignment.goal_type || '').toLowerCase() === 'wrong_words_fixed';
         const assignmentRunTokens = Array.isArray(assignment.list_meta?.run_tokens)
           ? assignment.list_meta.run_tokens.map(entry => entry?.token).filter(Boolean)
           : [];
@@ -852,6 +868,11 @@ export default {
         const goalValueHint = Number(assignment.goal_value) === 1;
         let isSpellingOnlyAssignment = forcedMode === 'spelling' || difficultyMode === 'spelling' || metaModes === 1 || goalValueHint || clientHintSpellingOnly;
 
+        // wrong_words_fixed is fundamentally a spelling/review completion flow.
+        if (isWrongWordsGoal) {
+          isSpellingOnlyAssignment = true;
+        }
+
         // Session-based fallback: if metadata didn't flag it, check actual session data
         if (!isSpellingOnlyAssignment && filteredSessions.length > 0) {
           const allSpelling = filteredSessions.every(s => {
@@ -885,6 +906,21 @@ export default {
           else if (category === 'vocab' && metaModes >= 4 && metaModes <= 8) totalModes = metaModes;
         }
         
+        // For wrong_words_fixed goal, collect correct attempts keyed by assignment_run token.
+        // We keep this query broad (class students + assignment date window) and filter in JS.
+        let attemptsForWrongWordFix = [];
+        if (isWrongWordsGoal) {
+          try {
+            const assignmentStart = assignment.start_at || new Date(Date.now() - 1000 * 60 * 60 * 24 * 30).toISOString();
+            const attemptsQuery = `user_id=in.(${studentIds.join(',')})&created_at=gte.${encodeURIComponent(assignmentStart)}&select=user_id,word,is_correct,mode,extra,created_at`;
+            const attemptsRows = await supabaseSelect(env, 'progress_attempts', attemptsQuery);
+            attemptsForWrongWordFix = Array.isArray(attemptsRows) ? attemptsRows : [];
+          } catch (e) {
+            console.warn('[homework-api] failed loading attempts for wrong_words_fixed:', e.message);
+            attemptsForWrongWordFix = [];
+          }
+        }
+
         const progress = Array.from(byStudent.values()).map(r => {
           const modesArr = Object.entries(r.modes).map(([mode, v]) => ({
             mode,
@@ -906,7 +942,81 @@ export default {
             // Only count modes where student achieved at least 1 star toward homework completion
             modesAttempted = modesArr.filter(m => m.bestStars >= 1).length;
           }
-          const completionPercent = totalModes > 0 ? Math.round((modesAttempted / totalModes) * 100) : 0;
+          let completionPercent = totalModes > 0 ? Math.round((modesAttempted / totalModes) * 100) : 0;
+
+          // New goal type: homework completion based on fixing enough wrong words.
+          // Baseline = unique wrong words captured in spelling/listen_and_spell session summaries.
+          // Fixed = baseline words answered correctly in later assignment-linked attempts.
+          let wrongWordsTotal = null;
+          let wrongWordsFixed = null;
+          let wrongWordsRawPct = null;
+          let wrongWordsTargetPct = null;
+          if (isWrongWordsGoal) {
+            const runTokensForStudent = new Set();
+            filteredSessions.forEach(sess => {
+              if (sess.user_id !== r.user_id) return;
+              const summary = parseSummary(sess.summary);
+              const tok = summary && summary.assignment_run;
+              if (tok) runTokensForStudent.add(tok);
+            });
+
+            // If no run token was found in sessions, allow assignment-level tokens as fallback.
+            if (runTokensForStudent.size === 0) {
+              assignmentRunTokens.forEach(tok => { if (tok) runTokensForStudent.add(tok); });
+              if (requestRunToken) runTokensForStudent.add(requestRunToken);
+            }
+
+            const baseline = new Set();
+            filteredSessions.forEach(sess => {
+              if (sess.user_id !== r.user_id) return;
+              const summary = parseSummary(sess.summary) || {};
+              const wrongWords = Array.isArray(summary.wrong_words) ? summary.wrong_words : [];
+              wrongWords.forEach(item => {
+                const word = normalizeWordKey(item?.eng || item?.word || item);
+                if (word) baseline.add(word);
+              });
+            });
+
+            const fixed = new Set();
+            const allowedPracticeModes = new Set(['spelling', 'listen_and_spell', 'review_mc', 'review_spell']);
+            attemptsForWrongWordFix.forEach(att => {
+              if (!att || att.user_id !== r.user_id) return;
+              if (!att.is_correct) return;
+              const modeName = String(att.mode || '').toLowerCase();
+              if (!allowedPracticeModes.has(modeName)) return;
+              const extra = parseJsonMaybe(att.extra) || {};
+              const token = extra.assignment_run;
+              if (runTokensForStudent.size > 0 && (!token || !runTokensForStudent.has(token))) return;
+              const key = normalizeWordKey(att.word);
+              if (!key) return;
+              if (baseline.has(key)) fixed.add(key);
+            });
+
+            wrongWordsTotal = baseline.size;
+            wrongWordsFixed = fixed.size;
+            wrongWordsRawPct = wrongWordsTotal > 0 ? Math.round((wrongWordsFixed / wrongWordsTotal) * 100) : 0;
+
+            // goal_value is treated as target percent.
+            // Accept 0..1 as ratio (e.g. 0.7) and 1..100 as percent.
+            const gv = Number(assignment.goal_value);
+            if (Number.isFinite(gv) && gv > 0 && gv <= 1) wrongWordsTargetPct = Math.round(gv * 100);
+            else if (Number.isFinite(gv) && gv > 1) wrongWordsTargetPct = Math.round(gv);
+            else wrongWordsTargetPct = 70;
+            wrongWordsTargetPct = Math.max(1, Math.min(100, wrongWordsTargetPct));
+
+            // Keep dashboard semantics: 100% means goal reached.
+            // If baseline is 0 and student has started sessions, treat as complete.
+            const studentHasSessions = filteredSessions.some(sess => sess.user_id === r.user_id);
+            if (wrongWordsTotal === 0) {
+              completionPercent = studentHasSessions ? 100 : 0;
+            } else {
+              completionPercent = Math.max(0, Math.min(100, Math.round((wrongWordsRawPct / wrongWordsTargetPct) * 100)));
+            }
+
+            // Override mode-based completion counters for this goal type.
+            modesAttempted = completionPercent >= 100 ? 1 : 0;
+            totalModes = 1;
+          }
           
           return {
             user_id: r.user_id,
@@ -918,6 +1028,10 @@ export default {
             modes_total: totalModes,
             modes: modesArr,
             category,
+            wrong_words_total: wrongWordsTotal,
+            wrong_words_fixed: wrongWordsFixed,
+            wrong_words_fix_pct: wrongWordsRawPct,
+            wrong_words_target_pct: wrongWordsTargetPct,
             // A homework is considered completed only when every mode has at least 1 star
             status: assignment.active
               ? (completionPercent >= 100 ? 'Completed' : 'In Progress')
@@ -939,6 +1053,7 @@ export default {
           total_modes: totalModes,
           category,
           is_spelling_only: isSpellingOnlyAssignment,
+          is_wrong_words_goal: isWrongWordsGoal,
           difficulty_mode: assignment.list_meta?.difficulty_mode || 'full',
           stars_required: assignment.list_meta?.stars_required || null,
           goal_type: assignment.goal_type || null,
