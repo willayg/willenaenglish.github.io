@@ -55,6 +55,15 @@ Acceptance criteria:
 
 ## Phase 2: Game Builder Save/Load Reliability
 
+### Phase 2 Status (2026-03-28)
+- 4) Fix save race conditions and duplicate saves: Solved.
+- 5) Fix sentence fallback ID collision behavior: Solved.
+- 6) Improve title conflict and save-as checks: Solved.
+- 7) Sync uploaded image URLs back to canonical in-memory state: Solved.
+- 7b) Fix Game Builder save ownership (`created_by`) so `My Games` is accurate: Open.
+  - Temporary product decision: default Saved Games filter is now `All Users`.
+  - Follow-up still needed: make `My Games` reliably show only the signed-in teacher's saved games.
+
 ### 4) Fix save race conditions and duplicate saves
 Observed risk:
 - Rapid save interactions can cause duplicate inserts or repeated save modal prompts.
@@ -121,6 +130,9 @@ Acceptance criteria:
 ### 7b) Fix Game Builder save ownership (`created_by`) so `My Games` is accurate
 Observed risk:
 - Some saved games are inserted without the correct `created_by`, so they appear under `All Users` and not reliably under `My Games`.
+
+Status:
+- Open.
 
 Implementation:
 - Ensure save flow resolves authenticated teacher id via cookie-based whoami fallback before insert.
