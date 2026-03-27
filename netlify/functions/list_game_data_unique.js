@@ -23,6 +23,7 @@ exports.handler = async (event) => {
     const offset = Number(qs.offset) >= 0 ? Number(qs.offset) : 0; // For future paging (keyset later)
     const createdBy = (qs.created_by || '').trim();
     const createdByAny = String(qs.created_by_any || '').split(',').map(s => s.trim()).filter(Boolean);
+    const creatorNameAny = String(qs.creator_name_any || '').split(',').map(s => s.trim()).filter(Boolean);
     const listAll = String(qs.all || '0') === '1';
     const uniqueMode = String(qs.unique || '1') !== '0'; // default unique
     const includeNull = String(qs.include_null || '0') === '1';
@@ -40,6 +41,19 @@ exports.handler = async (event) => {
     }
     const supabase = createClient(SUPABASE_URL, SERVICE_KEY);
 
+    let resolvedCreatedByAny = createdByAny.slice();
+    if (creatorNameAny.length) {
+      const profileIds = new Set();
+      for (const rawName of creatorNameAny.slice(0, 10)) {
+        if (!rawName) continue;
+        const byName = await supabase.from('profiles').select('id').eq('name', rawName).limit(20);
+        const byUsername = await supabase.from('profiles').select('id').eq('username', rawName).limit(20);
+        (byName.data || []).forEach(row => row?.id && profileIds.add(row.id));
+        (byUsername.data || []).forEach(row => row?.id && profileIds.add(row.id));
+      }
+      resolvedCreatedByAny = Array.from(profileIds);
+    }
+
   // Fetch recent rows (cap PAGE_PULL) then dedupe newest per lowercase title.
     let rawRows = null; let rawErr = null;
     try {
@@ -51,8 +65,8 @@ exports.handler = async (event) => {
       let query = supabase.from('game_data').select(baseSelect).order('created_at', { ascending: false }).limit(PAGE_PULL);
       if (listAll) {
         // no filter; show all users (later we could restrict to admin)
-      } else if (createdByAny.length) {
-        query = query.in('created_by', createdByAny.slice(0, 20));
+      } else if (resolvedCreatedByAny.length) {
+        query = query.in('created_by', resolvedCreatedByAny.slice(0, 50));
       } else if (createdBy) {
         query = query.eq('created_by', createdBy);
       } else if (!createdBy && !includeNull) {
@@ -78,7 +92,7 @@ exports.handler = async (event) => {
         // Retry with minimal select
         console.log('[list_game_data_unique] retrying with minimal select due to error:', rawErr.message);
         let q2 = supabase.from('game_data').select('id, title, created_at, created_by');
-        if (createdByAny.length) q2 = q2.in('created_by', createdByAny.slice(0, 20));
+        if (resolvedCreatedByAny.length) q2 = q2.in('created_by', resolvedCreatedByAny.slice(0, 50));
         else if (createdBy) q2 = q2.eq('created_by', createdBy);
         else q2 = q2.is('created_by', null);
         const retry = await q2.order('created_at', { ascending: false }).limit(PAGE_PULL);
@@ -90,7 +104,7 @@ exports.handler = async (event) => {
     if (rawErr) {
       return { statusCode: 500, headers: cors(event), body: JSON.stringify({ error: rawErr.message }) };
     }
-  console.log('[list_game_data_unique] pulled rows:', (rawRows||[]).length, 'user:', createdBy || '(none)', 'userAny:', createdByAny.join('|') || '(none)', 'includeNull:', includeNull, 'all:', listAll);
+  console.log('[list_game_data_unique] pulled rows:', (rawRows||[]).length, 'user:', createdBy || '(none)', 'userAny:', resolvedCreatedByAny.join('|') || '(none)', 'creatorNameAny:', creatorNameAny.join('|') || '(none)', 'includeNull:', includeNull, 'all:', listAll);
     let working = rawRows || [];
     if (uniqueMode) {
       const byTitle = new Map();
@@ -158,11 +172,11 @@ exports.handler = async (event) => {
         } else {
           rows.forEach(r => { r.creator_name = r.creator_id ? 'Unknown' : 'System'; });
         }
-      } else if((createdBy || createdByAny.length) && rows.length){
+      } else if((createdBy || resolvedCreatedByAny.length) && rows.length){
         const { data: prof } = await supabase
           .from('profiles')
           .select('id, username, name')
-          .eq('id', createdBy || createdByAny[0])
+          .eq('id', createdBy || resolvedCreatedByAny[0])
           .single();
         const display = prof ? (prof.name || prof.username || prof.id) : null;
         rows.forEach(r => { r.creator_name = r.created_by ? (display || 'Unknown') : 'System'; });

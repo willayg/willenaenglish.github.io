@@ -10,6 +10,10 @@ let fileListAllMode = false;
 let fileListCache = null; // { ts, rows, uniqueCount, key }
 const SESSION_CACHE_MAX_AGE_MS = 180000;
 const IMAGE_BATCH_SIZE = 10;
+const FILE_PAGE_SIZE = 10;
+const FILE_PAGE_PULL = 30;
+let fileListOffset = 0;
+let fileListHasMore = false;
 
 let currentUserProfile = { name: '', username: '' };
 let profileInFlight = null;
@@ -92,6 +96,7 @@ export function initFileListModal({ fileModal, fileListEl, openLink, fileModalCl
 
 async function populateFileList() {
   await resolveCurrentUserProfile();
+  fileListOffset = 0;
   const modeKey = fileListAllMode ? 'all' : 'mine';
   const userKey = currentUserNameCandidates().join('|');
   const cacheKey = `${modeKey}:${userKey}`;
@@ -102,32 +107,42 @@ async function populateFileList() {
   if (useCache) {
     fileListRows = fileListCache.rows.slice();
     fileListUniqueCount = fileListCache.uniqueCount;
+    fileListHasMore = fileListRows.length < fileListUniqueCount;
     paintFileList(fileListRows, { cached: true, uniqueCount: fileListUniqueCount });
     fetchAndPaint({ silent: true });
     return;
   }
 
-  await fetchAndPaint({ silent: false });
+  await fetchAndPaint({ silent: false, reset: true });
 }
 
-async function fetchAndPaint({ silent }) {
+async function fetchAndPaint({ silent, reset = false }) {
   try {
     await resolveCurrentUserProfile();
     const qs = new URLSearchParams({
-      limit: '120',
-      offset: '0',
+      limit: String(FILE_PAGE_SIZE),
+      offset: String(fileListOffset),
       unique: '1',
       names: '1',
-      page_pull: '120',
-      all: '1'
+      page_pull: String(FILE_PAGE_PULL)
     });
+
+    if (fileListAllMode) {
+      qs.set('all', '1');
+    } else {
+      const names = currentUserNameCandidates();
+      if (!names.length) throw new Error('Unable to resolve current user');
+      qs.set('creator_name_any', names.join(','));
+    }
 
     const res = await WillenaAPI.fetch('/.netlify/functions/list_game_data_unique?' + qs.toString());
     if (!res.ok) throw new Error('list status ' + res.status);
 
     const js = await res.json().catch(() => null);
-    fileListRows = Array.isArray(js?.data) ? js.data : [];
+    const incomingRows = Array.isArray(js?.data) ? js.data : [];
+    fileListRows = reset ? incomingRows : fileListRows.concat(incomingRows);
     fileListUniqueCount = js?.unique_count || js?.uniqueCount || fileListRows.length;
+    fileListHasMore = fileListRows.length < fileListUniqueCount;
 
     const modeKey = fileListAllMode ? 'all' : 'mine';
     const userKey = currentUserNameCandidates().join('|');
@@ -168,6 +183,7 @@ function paintFileList(rows, { cached, uniqueCount }) {
       </label>
     </div>
     <div id="gameGrid" class="saved-games-grid"></div>
+    <div id="fileListLoadMoreWrap" style="margin-top:12px;display:flex;justify-content:center;"></div>
     <div id="fileListMeta" style="margin-top:8px;font-size:11px;color:#64748b;"></div>`;
 
   ensureMaterialIcons();
@@ -177,6 +193,7 @@ function paintFileList(rows, { cached, uniqueCount }) {
   const creatorFilter = document.getElementById('creatorFilter');
   const creatorScope = document.getElementById('creatorScope');
   const imagesToggle = document.getElementById('savedGamesImagesToggle');
+  const loadMoreWrap = document.getElementById('fileListLoadMoreWrap');
   const meta = document.getElementById('fileListMeta');
 
   function applyFilters() {
@@ -191,6 +208,21 @@ function paintFileList(rows, { cached, uniqueCount }) {
     });
 
     renderList(filtered, grid);
+
+    if (loadMoreWrap) {
+      loadMoreWrap.innerHTML = fileListHasMore
+        ? '<button id="savedGamesLoadMore" class="btn">Load More</button>'
+        : '';
+      const loadMoreBtn = document.getElementById('savedGamesLoadMore');
+      if (loadMoreBtn) {
+        loadMoreBtn.onclick = async () => {
+          loadMoreBtn.disabled = true;
+          loadMoreBtn.textContent = 'Loading...';
+          fileListOffset += FILE_PAGE_SIZE;
+          await fetchAndPaint({ silent: false, reset: false });
+        };
+      }
+    }
 
     if (meta) {
       meta.textContent = `${filtered.length} shown${filtered.length < rows.length ? ' / ' + rows.length : ''} • ${uniqueCount} unique • Signed in as ${signedInAs}` + (cached ? ' (cache)' : '');
