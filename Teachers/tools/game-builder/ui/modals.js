@@ -156,6 +156,9 @@ export async function handleSaveAsConfirm(titleEl, buildPayload, getCurrentGameI
       setCurrentGameId(result.id);
       titleEl.value = resolvedTitle;
       cacheCurrentGame(resolvedTitle);
+      if (typeof window !== 'undefined' && typeof window.__gbInvalidateFileListCache === 'function') {
+        window.__gbInvalidateFileListCache();
+      }
       if (saveModalEl) saveModalEl.style.display = 'none';
       if (typeof window.showSaveCenterMessage === 'function') {
         window.showSaveCenterMessage('Saved', { variant: 'success', ms: 1400 });

@@ -12,6 +12,39 @@ let fileListAllMode = false;
 let selectedGameIds = new Set();
 let fileListCache = null; // { ts, rows, uniqueCount }
 const SESSION_CACHE_MAX_AGE_MS = 180000;
+let currentUidCache = '';
+let whoAmIInFlight = null;
+
+async function resolveCurrentUserIdFresh() {
+  if (currentUidCache) return currentUidCache;
+  const local = getCurrentUserId();
+  if (local) {
+    currentUidCache = local;
+    return local;
+  }
+  if (whoAmIInFlight) return whoAmIInFlight;
+  whoAmIInFlight = (async () => {
+    try {
+      const res = await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=whoami&_=' + Date.now(), { cache: 'no-store' });
+      if (!res || !res.ok) return '';
+      const js = await res.json().catch(() => null);
+      const uid = String(js?.user_id || '').trim();
+      if (uid) {
+        currentUidCache = uid;
+        try { localStorage.setItem('user_id', uid); } catch {}
+        try { localStorage.setItem('userId', uid); } catch {}
+        try { sessionStorage.setItem('user_id', uid); } catch {}
+        try { sessionStorage.setItem('userId', uid); } catch {}
+      }
+      return uid;
+    } catch {
+      return '';
+    } finally {
+      whoAmIInFlight = null;
+    }
+  })();
+  return whoAmIInFlight;
+}
 
 export function initFileListModal({ fileModal, fileListEl, openLink, fileModalClose, titleEl, toast, render }) {
   if (!fileModal || !fileListEl || !openLink) return;
@@ -40,13 +73,14 @@ async function populateFileList({ fileListEl, titleEl, toast, render }) {
 
 async function fetchAndPaint({ fileListEl, titleEl, toast, render, silent }) {
   try {
-    const qs = new URLSearchParams({ limit:'40', offset:'0', unique:'1', names:'0', page_pull:'40' });
-    const uid = getCurrentUserId();
+    const qs = new URLSearchParams({ limit:'40', offset:'0', unique:'1', names:'1', page_pull:'40' });
+    const uid = await resolveCurrentUserIdFresh();
     if (!fileListAllMode && uid) {
       qs.set('created_by', uid);
-      qs.set('include_null', '1');
     } else if (fileListAllMode) {
       qs.set('all', '1');
+    } else {
+      throw new Error('Authentication required');
     }
     const res = await WillenaAPI.fetch('/.netlify/functions/list_game_data_unique?' + qs.toString());
     if(!res.ok) throw new Error('list status '+res.status);
@@ -94,7 +128,7 @@ function paintFileList(rows, { fileListEl, titleEl, toast, render, cached, initi
       if(q && !(r.title||'').toLowerCase().includes(q)) return false;
       if(creatorSel && (r.creator_name||'Unknown') !== creatorSel) return false;
       if(!fileListAllMode) {
-        const uid = getCurrentUserId();
+        const uid = currentUidCache || getCurrentUserId();
         if (r.created_by && uid && r.created_by !== uid) return false;
       }
       return true;
@@ -114,7 +148,7 @@ function paintFileList(rows, { fileListEl, titleEl, toast, render, cached, initi
 
 function renderList(list, grid){
   const frag = document.createDocumentFragment();
-  const currentUid = getCurrentUserId();
+  const currentUid = currentUidCache || getCurrentUserId();
   list.forEach(r => {
     const div = document.createElement('div');
     div.className = 'game-card new-style';

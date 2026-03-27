@@ -286,6 +286,42 @@ let autosaveInFlight = false;
 let lastAutosaveTs = 0;
 const AUTOSAVE_INTERVAL_MS = 12000;
 
+let __gbWhoAmIInFlight = null;
+function invalidateSavedGamesCache() {
+  try { sessionStorage.removeItem('gb_file_list_cache_v1'); } catch {}
+  try { localStorage.removeItem('gb_file_list_cache_v2'); } catch {}
+}
+if (typeof window !== 'undefined') {
+  window.__gbInvalidateFileListCache = invalidateSavedGamesCache;
+}
+
+async function resolveCurrentUserIdFresh() {
+  const cached = getCurrentUserId();
+  if (cached) return cached;
+  if (__gbWhoAmIInFlight) return __gbWhoAmIInFlight;
+
+  __gbWhoAmIInFlight = (async () => {
+    try {
+      const res = await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=whoami&_=' + Date.now(), { cache: 'no-store' });
+      if (!res || !res.ok) return '';
+      const js = await res.json().catch(() => null);
+      const uid = String(js?.user_id || '').trim();
+      if (!uid) return '';
+      try { localStorage.setItem('user_id', uid); } catch {}
+      try { localStorage.setItem('userId', uid); } catch {}
+      try { sessionStorage.setItem('user_id', uid); } catch {}
+      try { sessionStorage.setItem('userId', uid); } catch {}
+      return uid;
+    } catch {
+      return '';
+    } finally {
+      __gbWhoAmIInFlight = null;
+    }
+  })();
+
+  return __gbWhoAmIInFlight;
+}
+
 function markDirty() {
   hasUnsavedChanges = true;
   if (!autosaveInFlight && statusEl) statusEl.textContent = 'Unsaved changes';
@@ -306,15 +342,10 @@ let loadingImages; // from image system
 (async function bootstrapUserId(){
   try {
     // Skip if already present
-    const existing = localStorage.getItem('user_id') || localStorage.getItem('id') || sessionStorage.getItem('user_id');
+    const existing = localStorage.getItem('user_id') || localStorage.getItem('userId') || localStorage.getItem('id') || sessionStorage.getItem('user_id') || sessionStorage.getItem('userId');
     if(existing && existing.trim()) return;
-    const res = await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=whoami');
-    if(!res.ok) return; // silent fail
-    const js = await res.json().catch(()=>null);
-    if(js && js.success && js.user_id){
-      try { localStorage.setItem('user_id', js.user_id); } catch {}
-      console.debug('[whoami/bootstrap] stored user_id', js.user_id);
-    }
+    const uid = await resolveCurrentUserIdFresh();
+    if(uid) console.debug('[whoami/bootstrap] stored user id', uid);
   } catch(e){ console.debug('[whoami/bootstrap] failed', e?.message); }
 })();
 // Disabled: prior auto session restore removed intentionally (user wants clean slate on refresh)
@@ -924,7 +955,10 @@ async function handleSaveSentences() {
 // Quick Save (silent): overwrite if currentGameId, else open Save As modal
 saveLink.onclick = async (ev) => {
   const result = await handleQuickSave(ev, buildPayload, getCurrentGameId, setCurrentGameId, titleEl, toast, { silent: false, onImagesSynced: render });
-  if (result?.success) markSaved('Saved');
+  if (result?.success) {
+    invalidateSavedGamesCache();
+    markSaved('Saved');
+  }
 };
 
 // Save Sentences: force regenerate all sentence audio
@@ -1360,7 +1394,7 @@ async function populateFileList() {
   fileListOffset = 0;
   fileListRows = [];
   fileListUniqueCount = 0;
-  fileListUid = getCurrentUserId();
+  fileListUid = await resolveCurrentUserIdFresh();
   fileListAllMode = false; // reset to user scope on explicit populate
   // Attempt session cache reuse
   try {
@@ -1402,14 +1436,24 @@ async function populateFileList() {
 async function loadFileListPage(isInitial) {
   if (fileListLoading) return;
   fileListLoading = true;
-  const uid = fileListUid;
-  // When no uid, still attempt to fetch system (NULL created_by) rows
-  const baseUrl = '/.netlify/functions/list_game_data_unique?limit=' + LOAD_LIMIT + '&offset=' + fileListOffset + '&page_pull=' + (LOAD_LIMIT*4) + '&names=0';
+  let uid = fileListUid;
+  if (!fileListAllMode && !uid) {
+    uid = await resolveCurrentUserIdFresh();
+    fileListUid = uid;
+  }
+  const baseUrl = '/.netlify/functions/list_game_data_unique?limit=' + LOAD_LIMIT + '&offset=' + fileListOffset + '&page_pull=' + (LOAD_LIMIT*4) + '&names=1';
   let url;
   if (fileListAllMode) {
     url = baseUrl + '&all=1&unique=0';
   } else {
-    url = uid ? (baseUrl + '&created_by=' + encodeURIComponent(uid) + '&include_null=1') : (baseUrl + '&include_null=1');
+    if (!uid) {
+      fileList.innerHTML = '<div class="status">Sign in again to load My Games. <button id="retryListBtn" class="btn">Retry</button></div>';
+      const retryAuth = document.getElementById('retryListBtn');
+      if (retryAuth) retryAuth.onclick = () => { fileListLoading = false; loadFileListPage(isInitial); };
+      fileListLoading = false;
+      return;
+    }
+    url = baseUrl + '&created_by=' + encodeURIComponent(uid);
   }
   // Timeout guard (8s)
   const ac = typeof AbortController !== 'undefined' ? new AbortController() : null;
@@ -1631,7 +1675,7 @@ function paintFileList(initialRows, { cached, initial, uniqueCount }) {
 
   function renderList(list) {
     const frag = document.createDocumentFragment();
-    const currentUid = getCurrentUserId();
+    const currentUid = fileListUid || getCurrentUserId();
     list.forEach(r => {
       const div = document.createElement('div');
       div.className = 'game-card new-style';
