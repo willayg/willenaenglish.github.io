@@ -558,7 +558,23 @@ export async function prepareAndUploadImagesIfNeeded(payload, gameId, opts = {})
 export async function saveGameData(payload, existingId = null) {
   try {
     // Ensure created_by is attached
-    const uid = getCurrentUserId();
+    let uid = getCurrentUserId();
+    if (!uid && typeof WillenaAPI !== 'undefined' && typeof WillenaAPI.fetch === 'function') {
+      try {
+        const whoRes = await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=whoami&_=' + Date.now(), { cache: 'no-store' });
+        if (whoRes && whoRes.ok) {
+          const who = await whoRes.json().catch(() => null);
+          const resolved = who?.user_id || who?.id || '';
+          if (resolved) {
+            uid = String(resolved).trim();
+            try { localStorage.setItem('user_id', uid); } catch {}
+            try { sessionStorage.setItem('user_id', uid); } catch {}
+          }
+        }
+      } catch (e) {
+        console.warn('[saveGameData] whoami fallback failed:', e?.message || e);
+      }
+    }
     if (uid) payload.created_by = uid;
 
     // Always ensure sentence IDs for every word before saving.

@@ -147,8 +147,7 @@ function applyBuilderRoutingHotfix() {
       'openai_proxy',
       'eleven_labs_proxy',
       'upsert_sentences_batch',
-      'get_sentence_audio_urls',
-      'supabase_proxy_fixed'
+      'get_sentence_audio_urls'
     ]);
 
     const extractFn = (value) => {
@@ -309,7 +308,7 @@ let loadingImages; // from image system
     // Skip if already present
     const existing = localStorage.getItem('user_id') || localStorage.getItem('id') || sessionStorage.getItem('user_id');
     if(existing && existing.trim()) return;
-    const res = await WillenaAPI.fetch('/.netlify/functions/supabase_proxy_fixed?action=whoami');
+    const res = await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=whoami');
     if(!res.ok) return; // silent fail
     const js = await res.json().catch(()=>null);
     if(js && js.success && js.user_id){

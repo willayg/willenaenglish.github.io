@@ -857,12 +857,16 @@ exports.handler = async (event) => {
         const body = JSON.parse(event.body || '{}');
   if (body.action === 'insert_game_data' && body.data) {
           const gd = body.data;
+          const localDev = isLocalDev(event);
           let requesterId = getUserIdFromCookie(event);
           if (!requesterId) {
             const user = await getUserFromCookie(supabase, event); requesterId = user && user.id;
           }
-          if (!requesterId && isLocalDev(event) && gd && gd.created_by) {
+          if (!requesterId && localDev && gd && gd.created_by) {
             requesterId = gd.created_by;
+          }
+          if (!requesterId) {
+            return { statusCode: 401, body: JSON.stringify({ success: false, error: 'Not authenticated' }) };
           }
           // Normalize words shape
           if (!Array.isArray(gd.words)) gd.words = [];
@@ -880,7 +884,7 @@ exports.handler = async (event) => {
             class: gd.class || gd.gameClass || null,
             book: gd.book || gd.gameBook || null,
             unit: gd.unit || gd.gameUnit || null,
-            created_by: requesterId || gd.created_by || gd.created_by_id || gd.user_id || gd.profile_id || null,
+            created_by: requesterId,
             tags: Array.isArray(gd.tags) ? gd.tags : null,
             visibility: gd.visibility || undefined,
             game_image: derivedImage || null,
