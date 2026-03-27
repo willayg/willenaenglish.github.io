@@ -363,8 +363,10 @@ body { margin:0; background: linear-gradient(135deg, #6b6b6b 0%, #696969 100%); 
 
 .word-table .def-textarea,
 .word-table .ex-textarea {
-  padding-top: 18px;
-  padding-bottom: 18px;
+  min-height: 70px;
+  line-height: 1.45;
+  padding-top: 20px;
+  padding-bottom: 20px;
 }
 
 /* Example sentence box: switch from warm/yellow-ish tint to very light cyan */

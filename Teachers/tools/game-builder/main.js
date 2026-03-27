@@ -37,7 +37,7 @@ import {
   findGameByTitle,
   generateIncrementedTitle,
   showTitleConflictModal
-} from './services/file-service.js?v=20260328d';
+} from './services/file-service.js?v=20260328e';
 import {
   getList,
   setList,
@@ -51,7 +51,7 @@ import {
   buildPayload,
   cacheCurrentGame,
   parseWords
-} from './state/game-state.js?v=20260328d';
+} from './state/game-state.js?v=20260328e';
 // Legacy global bridge: some pre-refactor modules and inline code still expect
 // window.list / window.currentGameId to exist. Keep them synchronized with the
 // state module without changing existing references.
@@ -64,7 +64,7 @@ if (!('currentGameId' in window)) Object.defineProperty(window, 'currentGameId',
   set(v) { setCurrentGameId(v); }
 });
 // Phase 3: Render & UI extraction
-import { buildRowHTML, applyTableToggles } from './render/row-html.js';
+import { buildRowHTML, applyTableToggles } from './render/row-html.js?v=20260328e';
 import { ensureMaterialIcons, buildGameCardHTML, buildFileListHTML } from './render/file-grid.js';
 import { 
   showEditListModal as showEditListModalUI, 
@@ -74,7 +74,7 @@ import {
   handleSaveAsConfirm,
   showFileModal as showFileModalUI,
   hideFileModal as hideFileModalUI
-} from './ui/modals.js?v=20260328d';
+} from './ui/modals.js?v=20260328e';
 import {
   handleQuickSave,
   isQuickSaveInFlight,
@@ -85,12 +85,12 @@ import {
   handleGetTranslations,
   handleGenerateDefinitions,
   handleGenerateExamples
-} from './ui/event-handlers.js?v=20260328d';
+} from './ui/event-handlers.js?v=20260328e';
 import { ENDPOINTS, STORAGE_KEYS, ACTIONS, DEFAULTS, TOAST_DURATION } from './constants.js';
-import { initFileListModal } from './ui/file-list.js?v=20260328d';
-import { loadWorksheetIntoBuilder } from './services/worksheet-service.js?v=20260328d';
+import { initFileListModal } from './ui/file-list.js?v=20260328e';
+import { loadWorksheetIntoBuilder } from './services/worksheet-service.js?v=20260328e';
 
-const GB_BUILD_STAMP = 'GB_BUILD 20260328d · my-games-filter-fix';
+const GB_BUILD_STAMP = 'GB_BUILD 20260328e · my-games-fallback-fix';
 
 function injectBuilderBuildStamp() {
   try {

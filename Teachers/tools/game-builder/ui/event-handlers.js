@@ -4,8 +4,8 @@ import { DEFAULTS } from '../constants.js';
 import { generateDefinition, generateExample } from '../services/ai-service.js?v=20260322p';
 import { openSaveAsModal, handleSaveAsConfirm, showFileModal } from './modals.js';
 import { ensureAudioForWordsAndSentences } from '../services/audio-service.js';
-import { ensureSentenceIdsBuilder, prepareAndUploadImagesIfNeeded, saveGameData } from '../services/file-service.js?v=20260328d';
-import { syncImagesFromPayload } from '../state/game-state.js?v=20260328d';
+import { ensureSentenceIdsBuilder, prepareAndUploadImagesIfNeeded, saveGameData } from '../services/file-service.js?v=20260328e';
+import { syncImagesFromPayload } from '../state/game-state.js?v=20260328e';
 
 let isSaving = false;
 let firstSaveCompletionPromise = null;

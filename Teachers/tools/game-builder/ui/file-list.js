@@ -2,8 +2,8 @@
 import { ensureLoadingOverlay, buildSkeletonHTML, showTinyToast } from '../utils/dom-helpers.js';
 import { getCurrentUserId, deleteGameData as deleteGameSvc, loadGameData as loadGameDataSvc } from '../services/file-service.js';
 import { ensureMaterialIcons, buildGameCardHTML } from '../render/file-grid.js';
-import { getList, setList, saveState, newRow, setCurrentGameId } from '../state/game-state.js?v=20260328d';
-import { cacheCurrentGame } from '../state/game-state.js?v=20260328d';
+import { getList, setList, saveState, newRow, setCurrentGameId } from '../state/game-state.js?v=20260328e';
+import { cacheCurrentGame } from '../state/game-state.js?v=20260328e';
 
 // Internal state for modal
 let fileListRows = [];
@@ -15,6 +15,8 @@ const SESSION_CACHE_MAX_AGE_MS = 180000;
 let currentUidCache = '';
 let whoAmIInFlight = null;
 let ownerCandidates = [];
+let ownerNameCandidates = [];
+let whoAmINameInFlight = null;
 
 function isLikelyUuid(value) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(value || '').trim());
@@ -60,6 +62,40 @@ async function resolveCurrentUserIdFresh() {
   return whoAmIInFlight;
 }
 
+function normalizeName(value) {
+  return String(value || '').trim().toLowerCase();
+}
+
+async function resolveCurrentUserNamesFresh() {
+  if (ownerNameCandidates.length) return ownerNameCandidates;
+  if (whoAmINameInFlight) return whoAmINameInFlight;
+  whoAmINameInFlight = (async () => {
+    try {
+      const res = await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=get_profile_name&_=' + Date.now(), { cache: 'no-store' });
+      if (!res || !res.ok) return ownerNameCandidates;
+      const js = await res.json().catch(() => null);
+      const vals = [js?.name, js?.username].map(normalizeName).filter(Boolean);
+      ownerNameCandidates = Array.from(new Set(vals));
+      return ownerNameCandidates;
+    } catch {
+      return ownerNameCandidates;
+    } finally {
+      whoAmINameInFlight = null;
+    }
+  })();
+  return whoAmINameInFlight;
+}
+
+function isOwnedRow(row) {
+  if (!row) return false;
+  const ownerSet = new Set(ownerCandidates || []);
+  const byId = !!row.created_by && ownerSet.has(String(row.created_by));
+  const creatorName = normalizeName(row.creator_name);
+  if (creatorName === 'system') return false;
+  const byName = !!creatorName && (ownerNameCandidates || []).includes(creatorName);
+  return byId || byName;
+}
+
 export function initFileListModal({ fileModal, fileListEl, openLink, fileModalClose, titleEl, toast, render }) {
   if (!fileModal || !fileListEl || !openLink) return;
 
@@ -94,6 +130,7 @@ async function fetchAndPaint({ fileListEl, titleEl, toast, render, silent, uid: 
   try {
     const qs = new URLSearchParams({ limit:'40', offset:'0', unique:'1', names:'1', page_pull:'40' });
     const uid = uidIn || await resolveCurrentUserIdFresh();
+    await resolveCurrentUserNamesFresh();
     const candidateIds = collectOwnerIdCandidates(uid);
     ownerCandidates = candidateIds;
     if (!fileListAllMode && candidateIds.length) {
@@ -108,6 +145,26 @@ async function fetchAndPaint({ fileListEl, titleEl, toast, render, silent, uid: 
     const js = await res.json();
     fileListRows = Array.isArray(js.data)? js.data: [];
     fileListUniqueCount = js.unique_count || js.uniqueCount || 0;
+
+    if (!fileListAllMode) {
+      const ownedNow = fileListRows.filter(isOwnedRow);
+      if (!ownedNow.length) {
+        try {
+          const fallbackQs = new URLSearchParams({ limit:'120', offset:'0', unique:'1', names:'1', page_pull:'120', all:'1' });
+          const fallbackRes = await WillenaAPI.fetch('/.netlify/functions/list_game_data_unique?' + fallbackQs.toString());
+          if (fallbackRes && fallbackRes.ok) {
+            const fallbackJs = await fallbackRes.json().catch(() => null);
+            const fallbackRows = Array.isArray(fallbackJs?.data) ? fallbackJs.data : [];
+            const filtered = fallbackRows.filter(isOwnedRow);
+            if (filtered.length) {
+              fileListRows = filtered;
+              fileListUniqueCount = filtered.length;
+            }
+          }
+        } catch {}
+      }
+    }
+
     const modeKey = fileListAllMode ? 'all' : 'mine';
     fileListCache = { ts:Date.now(), rows:fileListRows.slice(), uniqueCount:fileListUniqueCount, key: `${modeKey}:${uid || ''}` };
     paintFileList(fileListRows, { fileListEl, titleEl, toast, render, cached:false, initial:true, uniqueCount:fileListUniqueCount });
@@ -150,9 +207,7 @@ function paintFileList(rows, { fileListEl, titleEl, toast, render, cached, initi
       if(q && !(r.title||'').toLowerCase().includes(q)) return false;
       if(creatorSel && (r.creator_name||'Unknown') !== creatorSel) return false;
       if(!fileListAllMode) {
-        const ownerSet = new Set(ownerCandidates || []);
-        if (!r.created_by) return false;
-        if (!ownerSet.has(String(r.created_by))) return false;
+        if (!isOwnedRow(r)) return false;
       }
       return true;
     });
@@ -176,7 +231,7 @@ function renderList(list, grid){
   list.forEach(r => {
     const div = document.createElement('div');
     div.className = 'game-card new-style';
-    const owned = !!r.created_by && ownerSet.has(String(r.created_by));
+    const owned = isOwnedRow(r);
     div.innerHTML = buildGameCardHTML(r, owned, false, currentUid);
     frag.appendChild(div);
   });

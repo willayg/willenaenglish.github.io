@@ -27,7 +27,7 @@ export function buildRowHTML(word, index, isLoading) {
       </div>
     </td>
     <td>
-      <div style="display:flex; gap:8px; align-items:flex-start;">
+      <div style="display:flex; gap:8px; align-items:center;">
         <textarea class="row-input ex-textarea" data-field="example" data-idx="${index}" rows="3" placeholder="Example sentence (auto)">${escapeHtml(word.example || '')}</textarea>
         <div class="ex-btn-group">
           <button class="btn small refresh-btn" data-action="refresh-example" data-idx="${index}" title="Regenerate example">↻</button>
