@@ -74,7 +74,7 @@ import {
   handleSaveAsConfirm,
   showFileModal as showFileModalUI,
   hideFileModal as hideFileModalUI
-} from './ui/modals.js?v=20260322x';
+} from './ui/modals.js?v=20260328a';
 import {
   handleQuickSave,
   isQuickSaveInFlight,
@@ -85,9 +85,9 @@ import {
   handleGetTranslations,
   handleGenerateDefinitions,
   handleGenerateExamples
-} from './ui/event-handlers.js?v=20260322y';
+} from './ui/event-handlers.js?v=20260328a';
 import { ENDPOINTS, STORAGE_KEYS, ACTIONS, DEFAULTS, TOAST_DURATION } from './constants.js';
-import { initFileListModal } from './ui/file-list.js?v=20260322p';
+import { initFileListModal } from './ui/file-list.js?v=20260328a';
 import { loadWorksheetIntoBuilder } from './services/worksheet-service.js';
 
 const GB_BUILD_STAMP = 'GB_BUILD 20260328a · owner-fix-probe';
