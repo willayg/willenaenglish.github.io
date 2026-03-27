@@ -87,10 +87,10 @@ import {
   handleGenerateExamples
 } from './ui/event-handlers.js?v=20260328e';
 import { ENDPOINTS, STORAGE_KEYS, ACTIONS, DEFAULTS, TOAST_DURATION } from './constants.js';
-import { initFileListModal } from './ui/file-list.js?v=20260328g';
+import { initFileListModal } from './ui/file-list.js?v=20260328h';
 import { loadWorksheetIntoBuilder } from './services/worksheet-service.js?v=20260328e';
 
-const GB_BUILD_STAMP = 'GB_BUILD 20260328g · legacy-filelist-disabled';
+const GB_BUILD_STAMP = 'GB_BUILD 20260328h · image-batch-and-close-fix';
 
 function injectBuilderBuildStamp() {
   try {

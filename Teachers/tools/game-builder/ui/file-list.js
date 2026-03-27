@@ -9,11 +9,15 @@ let fileListUniqueCount = 0;
 let fileListAllMode = false;
 let fileListCache = null; // { ts, rows, uniqueCount, key }
 const SESSION_CACHE_MAX_AGE_MS = 180000;
+const IMAGE_BATCH_SIZE = 10;
 
 let currentUserProfile = { name: '', username: '' };
 let profileInFlight = null;
+let imagesEnabled = true;
+let activeImageBatchToken = 0;
 
 let modalContext = {
+  fileModal: null,
   fileListEl: null,
   titleEl: null,
   toast: (msg) => showTinyToast(msg || ''),
@@ -66,6 +70,7 @@ export function initFileListModal({ fileModal, fileListEl, openLink, fileModalCl
   if (!fileModal || !fileListEl || !openLink) return;
 
   modalContext = {
+    fileModal,
     fileListEl,
     titleEl,
     toast: typeof toast === 'function' ? toast : (msg) => showTinyToast(msg || ''),
@@ -157,6 +162,10 @@ function paintFileList(rows, { cached, uniqueCount }) {
         <option value="">All Creators</option>
         ${creators.map(c => `<option value="${c}">${c}</option>`).join('')}
       </select>
+      <label class="saved-games-image-toggle" for="savedGamesImagesToggle">
+        <input type="checkbox" id="savedGamesImagesToggle" ${imagesEnabled ? 'checked' : ''} />
+        <span>Images</span>
+      </label>
     </div>
     <div id="gameGrid" class="saved-games-grid"></div>
     <div id="fileListMeta" style="margin-top:8px;font-size:11px;color:#64748b;"></div>`;
@@ -167,6 +176,7 @@ function paintFileList(rows, { cached, uniqueCount }) {
   const searchInput = document.getElementById('gameSearch');
   const creatorFilter = document.getElementById('creatorFilter');
   const creatorScope = document.getElementById('creatorScope');
+  const imagesToggle = document.getElementById('savedGamesImagesToggle');
   const meta = document.getElementById('fileListMeta');
 
   function applyFilters() {
@@ -194,6 +204,10 @@ function paintFileList(rows, { cached, uniqueCount }) {
     fileListEl.innerHTML = buildSkeletonHTML(8);
     await populateFileList();
   };
+  imagesToggle.onchange = () => {
+    imagesEnabled = !!imagesToggle.checked;
+    applyFilters();
+  };
 
   applyFilters();
 }
@@ -209,6 +223,7 @@ function renderList(list, grid) {
   });
 
   grid.replaceChildren(frag);
+  scheduleImageLoading(grid);
 
   grid.querySelectorAll('[data-open]').forEach(el => {
     el.onclick = () => openGame(rId(el));
@@ -217,6 +232,81 @@ function renderList(list, grid) {
   grid.querySelectorAll('[data-del]').forEach(el => {
     el.onclick = () => ownedGuard(el, () => deleteGame(rId(el)));
   });
+}
+
+function scheduleImageLoading(grid) {
+  activeImageBatchToken += 1;
+  const token = activeImageBatchToken;
+  const wraps = Array.from(grid.querySelectorAll('.thumb-wrap.lazy'));
+
+  if (!imagesEnabled) {
+    wraps.forEach(wrap => {
+      wrap.classList.add('no-image');
+      wrap.classList.remove('loaded', 'error');
+    });
+    return;
+  }
+
+  wraps.forEach(wrap => {
+    wrap.classList.remove('no-image');
+  });
+
+  let nextIndex = 0;
+  let pumping = false;
+
+  const loadThumb = (wrap) => new Promise((resolve) => {
+    const img = wrap.querySelector('img');
+    const actual = wrap.getAttribute('data-thumb');
+    if (!img || !actual) {
+      wrap.classList.add('no-image');
+      resolve();
+      return;
+    }
+    if (wrap.dataset.loaded === '1' || wrap.classList.contains('loaded')) {
+      resolve();
+      return;
+    }
+    img.onload = () => {
+      wrap.dataset.loaded = '1';
+      wrap.classList.add('loaded');
+      resolve();
+    };
+    img.onerror = () => {
+      wrap.classList.add('error');
+      resolve();
+    };
+    img.src = actual;
+  });
+
+  const pump = async () => {
+    if (pumping || token !== activeImageBatchToken) return;
+    pumping = true;
+    try {
+      const batch = wraps.slice(nextIndex, nextIndex + IMAGE_BATCH_SIZE);
+      nextIndex += batch.length;
+      await Promise.all(batch.map(loadThumb));
+    } finally {
+      pumping = false;
+    }
+  };
+
+  const maybePumpMore = () => {
+    if (token !== activeImageBatchToken) return;
+    if (nextIndex >= wraps.length) return;
+    const container = modalContext.fileListEl;
+    if (!container) return;
+    const nearBottom = (container.scrollTop + container.clientHeight) >= (container.scrollHeight - 240);
+    if (nearBottom) {
+      pump();
+    }
+  };
+
+  void pump();
+  const container = modalContext.fileListEl;
+  if (!container) return;
+  const onScroll = () => maybePumpMore();
+  container.onscroll = onScroll;
+  setTimeout(() => maybePumpMore(), 120);
 }
 
 function rId(el) { return el.getAttribute('data-open') || el.getAttribute('data-del'); }
@@ -264,6 +354,7 @@ async function openGame(idListKey) {
     setList(mapped);
     if (modalContext.titleEl) modalContext.titleEl.value = row.title || 'Untitled Game';
     modalContext.render();
+    if (modalContext.fileModal) modalContext.fileModal.style.display = 'none';
     showTinyToast(mapped.length ? 'Game loaded' : 'Loaded (empty)', { ms: 1300 });
     cacheCurrentGame(modalContext.titleEl?.value || '');
   } catch (e) {
