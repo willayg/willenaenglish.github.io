@@ -37,7 +37,7 @@ import {
   findGameByTitle,
   generateIncrementedTitle,
   showTitleConflictModal
-} from './services/file-service.js?v=20260325a';
+} from './services/file-service.js?v=20260328c';
 import {
   getList,
   setList,
@@ -51,7 +51,7 @@ import {
   buildPayload,
   cacheCurrentGame,
   parseWords
-} from './state/game-state.js';
+} from './state/game-state.js?v=20260328c';
 // Legacy global bridge: some pre-refactor modules and inline code still expect
 // window.list / window.currentGameId to exist. Keep them synchronized with the
 // state module without changing existing references.
@@ -74,7 +74,7 @@ import {
   handleSaveAsConfirm,
   showFileModal as showFileModalUI,
   hideFileModal as hideFileModalUI
-} from './ui/modals.js?v=20260328b';
+} from './ui/modals.js?v=20260328c';
 import {
   handleQuickSave,
   isQuickSaveInFlight,
@@ -85,12 +85,12 @@ import {
   handleGetTranslations,
   handleGenerateDefinitions,
   handleGenerateExamples
-} from './ui/event-handlers.js?v=20260328b';
+} from './ui/event-handlers.js?v=20260328c';
 import { ENDPOINTS, STORAGE_KEYS, ACTIONS, DEFAULTS, TOAST_DURATION } from './constants.js';
-import { initFileListModal } from './ui/file-list.js?v=20260328b';
-import { loadWorksheetIntoBuilder } from './services/worksheet-service.js';
+import { initFileListModal } from './ui/file-list.js?v=20260328c';
+import { loadWorksheetIntoBuilder } from './services/worksheet-service.js?v=20260328c';
 
-const GB_BUILD_STAMP = 'GB_BUILD 20260328b · syntax-fix';
+const GB_BUILD_STAMP = 'GB_BUILD 20260328c · module-cache-fix';
 
 function injectBuilderBuildStamp() {
   try {

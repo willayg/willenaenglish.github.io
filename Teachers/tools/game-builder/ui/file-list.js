@@ -2,8 +2,8 @@
 import { ensureLoadingOverlay, buildSkeletonHTML, showTinyToast } from '../utils/dom-helpers.js';
 import { getCurrentUserId, deleteGameData as deleteGameSvc, loadGameData as loadGameDataSvc } from '../services/file-service.js';
 import { ensureMaterialIcons, buildGameCardHTML } from '../render/file-grid.js';
-import { getList, setList, saveState, newRow, setCurrentGameId } from '../state/game-state.js';
-import { cacheCurrentGame } from '../state/game-state.js';
+import { getList, setList, saveState, newRow, setCurrentGameId } from '../state/game-state.js?v=20260328c';
+import { cacheCurrentGame } from '../state/game-state.js?v=20260328c';
 
 // Internal state for modal
 let fileListRows = [];
