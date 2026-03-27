@@ -90,7 +90,7 @@ import { ENDPOINTS, STORAGE_KEYS, ACTIONS, DEFAULTS, TOAST_DURATION } from './co
 import { initFileListModal } from './ui/file-list.js?v=20260322p';
 import { loadWorksheetIntoBuilder } from './services/worksheet-service.js';
 
-const GB_BUILD_STAMP = 'GB_BUILD 20260326b · sentence-workersdev-route';
+const GB_BUILD_STAMP = 'GB_BUILD 20260328a · owner-fix-probe';
 
 function injectBuilderBuildStamp() {
   try {
