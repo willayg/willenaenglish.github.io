@@ -322,6 +322,7 @@ function renderList(list, grid) {
   });
 
   grid.replaceChildren(frag);
+  normalizeCardControls(grid);
   scheduleImageLoading(grid);
 
   grid.querySelectorAll('[data-select-id]').forEach(el => {
@@ -353,6 +354,40 @@ function renderList(list, grid) {
       const id = openEl ? openEl.getAttribute('data-open') : '';
       if (id) openGame(id);
     };
+  });
+}
+
+function normalizeCardControls(grid) {
+  if (!grid) return;
+
+  // Remove legacy per-card delete controls if old markup appears.
+  grid.querySelectorAll('.del-btn,[data-del]').forEach(el => el.remove());
+
+  // Ensure every card has a checkbox selector for batch delete.
+  grid.querySelectorAll('.game-card').forEach(card => {
+    const hasSelector = !!card.querySelector('input[type="checkbox"][data-select-id]');
+    if (hasSelector) return;
+
+    const openEl = card.querySelector('[data-open]');
+    const id = openEl ? openEl.getAttribute('data-open') : '';
+    if (!id) return;
+
+    const anchor = document.createElement('label');
+    anchor.className = 'card-check-anchor';
+    anchor.title = 'Select for delete';
+
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.setAttribute('data-select-id', id);
+
+    const text = document.createElement('span');
+    text.textContent = 'Select';
+
+    anchor.appendChild(cb);
+    anchor.appendChild(text);
+
+    const thumb = card.querySelector('.thumb-wrap') || card;
+    thumb.appendChild(anchor);
   });
 }
 

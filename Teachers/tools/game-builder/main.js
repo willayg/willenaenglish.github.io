@@ -65,7 +65,7 @@ if (!('currentGameId' in window)) Object.defineProperty(window, 'currentGameId',
 });
 // Phase 3: Render & UI extraction
 import { buildRowHTML, applyTableToggles } from './render/row-html.js?v=20260328e';
-import { ensureMaterialIcons, buildGameCardHTML, buildFileListHTML } from './render/file-grid.js?v=20260328l';
+import { ensureMaterialIcons, buildGameCardHTML, buildFileListHTML } from './render/file-grid.js?v=20260328m';
 import { 
   showEditListModal as showEditListModalUI, 
   hideEditListModal as hideEditListModalUI,
@@ -87,10 +87,10 @@ import {
   handleGenerateExamples
 } from './ui/event-handlers.js?v=20260328e';
 import { ENDPOINTS, STORAGE_KEYS, ACTIONS, DEFAULTS, TOAST_DURATION } from './constants.js';
-import { initFileListModal } from './ui/file-list.js?v=20260328l';
+import { initFileListModal } from './ui/file-list.js?v=20260328m';
 import { loadWorksheetIntoBuilder } from './services/worksheet-service.js?v=20260328e';
 
-const GB_BUILD_STAMP = 'GB_BUILD 20260328l · checkbox-delete-and-card-open';
+const GB_BUILD_STAMP = 'GB_BUILD 20260328m · force-checkbox-no-trash';
 
 function injectBuilderBuildStamp() {
   try {
