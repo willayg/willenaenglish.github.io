@@ -663,6 +663,20 @@ body { margin:0; background: linear-gradient(135deg, #6b6b6b 0%, #696969 100%); 
 .game-card.new-style .g-title:hover { text-decoration:underline; }
 .game-card.new-style .g-meta-row { display:flex; align-items:center; justify-content:space-between; gap:6px; margin-top:2px; }
 .game-card.new-style .g-date, .game-card.new-style .g-creator { margin:0; font-size:11px; color:#64748b; line-height:1.1; }
+.game-card.new-style .card-select-wrap {
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  font-size:11px;
+  color:#475569;
+  background:#f8fafc;
+  border:1px solid #cbd5e1;
+  border-radius:999px;
+  padding:4px 8px;
+  user-select:none;
+}
+.game-card.new-style .card-select-wrap input { margin:0; }
+.game-card.new-style .card-select-wrap input:disabled + span { opacity:.45; }
 /* Delete button now sits bottom-right inside body */
 .game-card.new-style .del-btn { position:absolute; bottom:8px; right:8px; background:rgba(255,255,255,0.92); border:none; border-radius:10px; width:32px; height:32px; display:flex; align-items:center; justify-content:center; box-shadow:0 1px 4px rgba(0,0,0,0.28); cursor:pointer; transition:background .18s, transform .18s; }
 .game-card.new-style .del-btn:hover { background:#f87171; transform:translateY(-2px); }

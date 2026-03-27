@@ -20,6 +20,7 @@ let profileInFlight = null;
 let imagesEnabled = true;
 let activeImageBatchToken = 0;
 let warmCacheStarted = false;
+let selectedGameIds = new Set();
 
 let modalContext = {
   fileModal: null,
@@ -199,6 +200,7 @@ function paintFileList(rows, { cached, uniqueCount }) {
         <input type="checkbox" id="savedGamesImagesToggle" ${imagesEnabled ? 'checked' : ''} />
         <span>Images</span>
       </label>
+      <button id="deleteSelectedGamesBtn" class="btn" style="background:#dc2626;color:#fff;border-color:#dc2626;" disabled>Delete Selected (0)</button>
     </div>
     <div id="gameGrid" class="saved-games-grid"></div>
     <div id="fileListLoadMoreWrap" style="margin-top:12px;display:flex;justify-content:center;"></div>
@@ -211,8 +213,54 @@ function paintFileList(rows, { cached, uniqueCount }) {
   const creatorFilter = document.getElementById('creatorFilter');
   const creatorScope = document.getElementById('creatorScope');
   const imagesToggle = document.getElementById('savedGamesImagesToggle');
+  const deleteSelectedBtn = document.getElementById('deleteSelectedGamesBtn');
   const loadMoreWrap = document.getElementById('fileListLoadMoreWrap');
   const meta = document.getElementById('fileListMeta');
+
+  const updateDeleteSelectedButton = () => {
+    const deletableIds = Array.from(selectedGameIds).filter(id => {
+      const row = fileListRows.find(r => r && r.id === id);
+      return row && isMyGameRow(row);
+    });
+    const count = deletableIds.length;
+    if (deleteSelectedBtn) {
+      deleteSelectedBtn.disabled = count === 0;
+      deleteSelectedBtn.textContent = `Delete Selected (${count})`;
+    }
+    return deletableIds;
+  };
+
+  if (deleteSelectedBtn) {
+    deleteSelectedBtn.onclick = async () => {
+      const ids = updateDeleteSelectedButton();
+      if (!ids.length) return;
+      const ok = confirm(`Delete ${ids.length} selected game${ids.length === 1 ? '' : 's'}?`);
+      if (!ok) return;
+      let deleted = 0;
+      for (const id of ids) {
+        try {
+          const res = await WillenaAPI.fetch('/.netlify/functions/supabase_proxy_fixed', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'delete_game_data', id })
+          });
+          const js = await res.json().catch(() => null);
+          if (js?.success) {
+            deleted++;
+            selectedGameIds.delete(id);
+            fileListRows = fileListRows.filter(r => r.id !== id);
+          }
+        } catch (e) {
+          console.warn('[file-list] batch delete error', id, e);
+        }
+      }
+      if (deleted) {
+        fileListUniqueCount = Math.max(0, fileListUniqueCount - deleted);
+        paintFileList(fileListRows, { cached: false, uniqueCount: fileListUniqueCount });
+        modalContext.toast(`Deleted ${deleted}`);
+      }
+    };
+  }
 
   function applyFilters() {
     const q = normalizeText(searchInput.value);
@@ -226,6 +274,7 @@ function paintFileList(rows, { cached, uniqueCount }) {
     });
 
     renderList(filtered, grid);
+    updateDeleteSelectedButton();
 
     if (loadMoreWrap) {
       loadMoreWrap.innerHTML = fileListHasMore
@@ -275,12 +324,35 @@ function renderList(list, grid) {
   grid.replaceChildren(frag);
   scheduleImageLoading(grid);
 
-  grid.querySelectorAll('[data-open]').forEach(el => {
-    el.onclick = () => openGame(rId(el));
+  grid.querySelectorAll('[data-select-id]').forEach(el => {
+    const id = el.getAttribute('data-select-id');
+    if (id && selectedGameIds.has(id)) el.checked = true;
+    el.onclick = (e) => e.stopPropagation();
+    el.onchange = (e) => {
+      e.stopPropagation();
+      const targetId = el.getAttribute('data-select-id');
+      if (!targetId) return;
+      if (el.checked) selectedGameIds.add(targetId);
+      else selectedGameIds.delete(targetId);
+      const btn = document.getElementById('deleteSelectedGamesBtn');
+      if (btn) {
+        const count = Array.from(selectedGameIds).filter(x => {
+          const row = fileListRows.find(r => r && r.id === x);
+          return row && isMyGameRow(row);
+        }).length;
+        btn.disabled = count === 0;
+        btn.textContent = `Delete Selected (${count})`;
+      }
+    };
   });
 
-  grid.querySelectorAll('[data-del]').forEach(el => {
-    el.onclick = () => ownedGuard(el, () => deleteGame(rId(el)));
+  grid.querySelectorAll('.game-card').forEach(card => {
+    card.onclick = (e) => {
+      if (e.target && e.target.closest('[data-select-id]')) return;
+      const openEl = card.querySelector('[data-open]');
+      const id = openEl ? openEl.getAttribute('data-open') : '';
+      if (id) openGame(id);
+    };
   });
 }
 
