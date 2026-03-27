@@ -87,10 +87,10 @@ import {
   handleGenerateExamples
 } from './ui/event-handlers.js?v=20260328e';
 import { ENDPOINTS, STORAGE_KEYS, ACTIONS, DEFAULTS, TOAST_DURATION } from './constants.js';
-import { initFileListModal } from './ui/file-list.js?v=20260328e';
+import { initFileListModal } from './ui/file-list.js?v=20260328f';
 import { loadWorksheetIntoBuilder } from './services/worksheet-service.js?v=20260328e';
 
-const GB_BUILD_STAMP = 'GB_BUILD 20260328e · my-games-fallback-fix';
+const GB_BUILD_STAMP = 'GB_BUILD 20260328f · name-filter-simplified';
 
 function injectBuilderBuildStamp() {
   try {

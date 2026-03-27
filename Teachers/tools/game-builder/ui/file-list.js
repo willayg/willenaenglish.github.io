@@ -1,183 +1,151 @@
 // Saved games modal: listing, filtering, pagination, open/delete logic
 import { ensureLoadingOverlay, buildSkeletonHTML, showTinyToast } from '../utils/dom-helpers.js';
-import { getCurrentUserId, deleteGameData as deleteGameSvc, loadGameData as loadGameDataSvc } from '../services/file-service.js';
 import { ensureMaterialIcons, buildGameCardHTML } from '../render/file-grid.js';
-import { getList, setList, saveState, newRow, setCurrentGameId } from '../state/game-state.js?v=20260328e';
+import { setList, saveState, newRow, setCurrentGameId } from '../state/game-state.js?v=20260328e';
 import { cacheCurrentGame } from '../state/game-state.js?v=20260328e';
 
-// Internal state for modal
 let fileListRows = [];
 let fileListUniqueCount = 0;
 let fileListAllMode = false;
-let selectedGameIds = new Set();
 let fileListCache = null; // { ts, rows, uniqueCount, key }
 const SESSION_CACHE_MAX_AGE_MS = 180000;
-let currentUidCache = '';
-let whoAmIInFlight = null;
-let ownerCandidates = [];
-let ownerNameCandidates = [];
-let whoAmINameInFlight = null;
 
-function isLikelyUuid(value) {
-  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(value || '').trim());
-}
+let currentUserProfile = { name: '', username: '' };
+let profileInFlight = null;
 
-function collectOwnerIdCandidates(primary = '') {
-  const out = new Set();
-  const add = (v) => {
-    const s = String(v || '').trim();
-    if (s && isLikelyUuid(s)) out.add(s);
-  };
-  add(primary);
-  add(currentUidCache);
-  return Array.from(out);
-}
+let modalContext = {
+  fileListEl: null,
+  titleEl: null,
+  toast: (msg) => showTinyToast(msg || ''),
+  render: () => {}
+};
 
-async function resolveCurrentUserIdFresh() {
-  if (currentUidCache) return currentUidCache;
-  const local = getCurrentUserId();
-  if (local) {
-    currentUidCache = local;
-    ownerCandidates = collectOwnerIdCandidates(local);
-    return local;
-  }
-  if (whoAmIInFlight) return whoAmIInFlight;
-  whoAmIInFlight = (async () => {
-    try {
-      const res = await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=whoami&_=' + Date.now(), { cache: 'no-store' });
-      if (!res || !res.ok) return '';
-      const js = await res.json().catch(() => null);
-      const uid = String(js?.user_id || '').trim();
-      if (uid) {
-        currentUidCache = uid;
-        ownerCandidates = collectOwnerIdCandidates(uid);
-      }
-      return uid;
-    } catch {
-      return '';
-    } finally {
-      whoAmIInFlight = null;
-    }
-  })();
-  return whoAmIInFlight;
-}
-
-function normalizeName(value) {
+function normalizeText(value) {
   return String(value || '').trim().toLowerCase();
 }
 
-async function resolveCurrentUserNamesFresh() {
-  if (ownerNameCandidates.length) return ownerNameCandidates;
-  if (whoAmINameInFlight) return whoAmINameInFlight;
-  whoAmINameInFlight = (async () => {
-    try {
-      const res = await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=get_profile_name&_=' + Date.now(), { cache: 'no-store' });
-      if (!res || !res.ok) return ownerNameCandidates;
-      const js = await res.json().catch(() => null);
-      const vals = [js?.name, js?.username].map(normalizeName).filter(Boolean);
-      ownerNameCandidates = Array.from(new Set(vals));
-      return ownerNameCandidates;
-    } catch {
-      return ownerNameCandidates;
-    } finally {
-      whoAmINameInFlight = null;
-    }
-  })();
-  return whoAmINameInFlight;
+function currentUserNameCandidates() {
+  const vals = [currentUserProfile.name, currentUserProfile.username]
+    .map(normalizeText)
+    .filter(Boolean);
+  return Array.from(new Set(vals));
 }
 
-function isOwnedRow(row) {
+function isMyGameRow(row) {
   if (!row) return false;
-  const ownerSet = new Set(ownerCandidates || []);
-  const byId = !!row.created_by && ownerSet.has(String(row.created_by));
-  const creatorName = normalizeName(row.creator_name);
-  if (creatorName === 'system') return false;
-  const byName = !!creatorName && (ownerNameCandidates || []).includes(creatorName);
-  return byId || byName;
+  const creator = normalizeText(row.creator_name);
+  if (!creator || creator === 'system' || creator === 'unknown') return false;
+  const mine = currentUserNameCandidates();
+  if (!mine.length) return false;
+  return mine.includes(creator);
+}
+
+async function resolveCurrentUserProfile() {
+  if (currentUserNameCandidates().length) return currentUserProfile;
+  if (profileInFlight) return profileInFlight;
+  profileInFlight = (async () => {
+    try {
+      const res = await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=get_profile_name&_=' + Date.now(), { cache: 'no-store' });
+      if (!res || !res.ok) return currentUserProfile;
+      const js = await res.json().catch(() => null);
+      currentUserProfile = {
+        name: String(js?.name || '').trim(),
+        username: String(js?.username || '').trim()
+      };
+      return currentUserProfile;
+    } catch {
+      return currentUserProfile;
+    } finally {
+      profileInFlight = null;
+    }
+  })();
+  return profileInFlight;
 }
 
 export function initFileListModal({ fileModal, fileListEl, openLink, fileModalClose, titleEl, toast, render }) {
   if (!fileModal || !fileListEl || !openLink) return;
 
+  modalContext = {
+    fileListEl,
+    titleEl,
+    toast: typeof toast === 'function' ? toast : (msg) => showTinyToast(msg || ''),
+    render: typeof render === 'function' ? render : (() => {})
+  };
+
+  if (typeof window !== 'undefined') {
+    window.__gbInvalidateFileListCache = () => { fileListCache = null; };
+  }
+
   openLink.onclick = () => {
     fileModal.style.display = 'flex';
     fileListEl.innerHTML = buildSkeletonHTML(8);
-    populateFileList({ fileListEl, titleEl, toast, render });
+    populateFileList();
   };
   fileModalClose && (fileModalClose.onclick = () => fileModal.style.display = 'none');
-  window.addEventListener('click', (e)=> { if (e.target === fileModal) fileModal.style.display = 'none'; });
+  window.addEventListener('click', (e) => { if (e.target === fileModal) fileModal.style.display = 'none'; });
 }
 
-async function populateFileList({ fileListEl, titleEl, toast, render }) {
-  const uid = await resolveCurrentUserIdFresh();
+async function populateFileList() {
+  await resolveCurrentUserProfile();
   const modeKey = fileListAllMode ? 'all' : 'mine';
-  const cacheKey = `${modeKey}:${uid || ''}`;
+  const userKey = currentUserNameCandidates().join('|');
+  const cacheKey = `${modeKey}:${userKey}`;
   const useCache = fileListCache
     && fileListCache.key === cacheKey
     && (Date.now() - fileListCache.ts) < SESSION_CACHE_MAX_AGE_MS;
+
   if (useCache) {
     fileListRows = fileListCache.rows.slice();
     fileListUniqueCount = fileListCache.uniqueCount;
-    paintFileList(fileListRows, { fileListEl, titleEl, toast, render, cached:true, initial:true, uniqueCount:fileListUniqueCount });
-    // async refresh in background
-    fetchAndPaint({ fileListEl, titleEl, toast, render, silent:true });
+    paintFileList(fileListRows, { cached: true, uniqueCount: fileListUniqueCount });
+    fetchAndPaint({ silent: true });
     return;
   }
-  await fetchAndPaint({ fileListEl, titleEl, toast, render, uid });
+
+  await fetchAndPaint({ silent: false });
 }
 
-async function fetchAndPaint({ fileListEl, titleEl, toast, render, silent, uid: uidIn }) {
+async function fetchAndPaint({ silent }) {
   try {
-    const qs = new URLSearchParams({ limit:'40', offset:'0', unique:'1', names:'1', page_pull:'40' });
-    const uid = uidIn || await resolveCurrentUserIdFresh();
-    await resolveCurrentUserNamesFresh();
-    const candidateIds = collectOwnerIdCandidates(uid);
-    ownerCandidates = candidateIds;
-    if (!fileListAllMode && candidateIds.length) {
-      qs.set('created_by_any', candidateIds.join(','));
-    } else if (fileListAllMode) {
-      qs.set('all', '1');
-    } else {
-      throw new Error('Authentication required');
-    }
-    const res = await WillenaAPI.fetch('/.netlify/functions/list_game_data_unique?' + qs.toString());
-    if(!res.ok) throw new Error('list status '+res.status);
-    const js = await res.json();
-    fileListRows = Array.isArray(js.data)? js.data: [];
-    fileListUniqueCount = js.unique_count || js.uniqueCount || 0;
+    await resolveCurrentUserProfile();
+    const qs = new URLSearchParams({
+      limit: '120',
+      offset: '0',
+      unique: '1',
+      names: '1',
+      page_pull: '120',
+      all: '1'
+    });
 
-    if (!fileListAllMode) {
-      const ownedNow = fileListRows.filter(isOwnedRow);
-      if (!ownedNow.length) {
-        try {
-          const fallbackQs = new URLSearchParams({ limit:'120', offset:'0', unique:'1', names:'1', page_pull:'120', all:'1' });
-          const fallbackRes = await WillenaAPI.fetch('/.netlify/functions/list_game_data_unique?' + fallbackQs.toString());
-          if (fallbackRes && fallbackRes.ok) {
-            const fallbackJs = await fallbackRes.json().catch(() => null);
-            const fallbackRows = Array.isArray(fallbackJs?.data) ? fallbackJs.data : [];
-            const filtered = fallbackRows.filter(isOwnedRow);
-            if (filtered.length) {
-              fileListRows = filtered;
-              fileListUniqueCount = filtered.length;
-            }
-          }
-        } catch {}
-      }
-    }
+    const res = await WillenaAPI.fetch('/.netlify/functions/list_game_data_unique?' + qs.toString());
+    if (!res.ok) throw new Error('list status ' + res.status);
+
+    const js = await res.json().catch(() => null);
+    fileListRows = Array.isArray(js?.data) ? js.data : [];
+    fileListUniqueCount = js?.unique_count || js?.uniqueCount || fileListRows.length;
 
     const modeKey = fileListAllMode ? 'all' : 'mine';
-    fileListCache = { ts:Date.now(), rows:fileListRows.slice(), uniqueCount:fileListUniqueCount, key: `${modeKey}:${uid || ''}` };
-    paintFileList(fileListRows, { fileListEl, titleEl, toast, render, cached:false, initial:true, uniqueCount:fileListUniqueCount });
-  } catch(e){
+    const userKey = currentUserNameCandidates().join('|');
+    fileListCache = { ts: Date.now(), rows: fileListRows.slice(), uniqueCount: fileListUniqueCount, key: `${modeKey}:${userKey}` };
+
+    paintFileList(fileListRows, { cached: false, uniqueCount: fileListUniqueCount });
+  } catch (e) {
     console.warn('[file-list] load error', e);
-    if(!silent) fileListEl.innerHTML = `<p style="padding:12px;color:#b91c1c;">Error loading games (${e.message}). <button id="retryFileList">Retry</button></p>`;
-    const retry = document.getElementById('retryFileList');
-    retry && (retry.onclick = ()=> fetchAndPaint({ fileListEl, titleEl, toast, render }));
+    if (!silent && modalContext.fileListEl) {
+      modalContext.fileListEl.innerHTML = `<p style="padding:12px;color:#b91c1c;">Error loading games (${e.message}). <button id="retryFileList">Retry</button></p>`;
+      const retry = document.getElementById('retryFileList');
+      retry && (retry.onclick = () => fetchAndPaint({ silent: false }));
+    }
   }
 }
 
-function paintFileList(rows, { fileListEl, titleEl, toast, render, cached, initial, uniqueCount }) {
-  const creators = [...new Set(rows.map(r => r.creator_name || 'Unknown'))].sort();
+function paintFileList(rows, { cached, uniqueCount }) {
+  const fileListEl = modalContext.fileListEl;
+  if (!fileListEl) return;
+
+  const creators = [...new Set(rows.map(r => String(r?.creator_name || 'Unknown')))].sort();
+  const signedInAs = currentUserProfile.name || currentUserProfile.username || 'Unknown User';
+
   fileListEl.innerHTML = `
     <div style="margin-bottom: 12px; display: flex; gap: 8px;">
       <input type="text" id="gameSearch" placeholder="Search games by title..." style="flex:1;padding:8px;border:1px solid #ccc;border-radius:4px;" />
@@ -194,6 +162,7 @@ function paintFileList(rows, { fileListEl, titleEl, toast, render, cached, initi
     <div id="fileListMeta" style="margin-top:8px;font-size:11px;color:#64748b;"></div>`;
 
   ensureMaterialIcons();
+
   const grid = document.getElementById('gameGrid');
   const searchInput = document.getElementById('gameSearch');
   const creatorFilter = document.getElementById('creatorFilter');
@@ -201,70 +170,82 @@ function paintFileList(rows, { fileListEl, titleEl, toast, render, cached, initi
   const meta = document.getElementById('fileListMeta');
 
   function applyFilters() {
-    const q = (searchInput.value||'').trim().toLowerCase();
+    const q = normalizeText(searchInput.value);
     const creatorSel = creatorFilter.value;
     const filtered = rows.filter(r => {
-      if(q && !(r.title||'').toLowerCase().includes(q)) return false;
-      if(creatorSel && (r.creator_name||'Unknown') !== creatorSel) return false;
-      if(!fileListAllMode) {
-        if (!isOwnedRow(r)) return false;
-      }
+      const title = normalizeText(r?.title);
+      if (q && !title.includes(q)) return false;
+      if (creatorSel && String(r?.creator_name || 'Unknown') !== creatorSel) return false;
+      if (!fileListAllMode && !isMyGameRow(r)) return false;
       return true;
     });
+
     renderList(filtered, grid);
-    if(meta) meta.textContent = `${filtered.length} shown${filtered.length<rows.length? ' / '+rows.length:''} • ${uniqueCount} unique` + (cached? ' (cache)':'' );
+
+    if (meta) {
+      meta.textContent = `${filtered.length} shown${filtered.length < rows.length ? ' / ' + rows.length : ''} • ${uniqueCount} unique • Signed in as ${signedInAs}` + (cached ? ' (cache)' : '');
+    }
   }
+
   searchInput.oninput = applyFilters;
   creatorFilter.onchange = applyFilters;
   creatorScope.onchange = async () => {
     fileListAllMode = creatorScope.value === 'all';
     fileListEl.innerHTML = buildSkeletonHTML(8);
-    await fetchAndPaint({ fileListEl, titleEl, toast, render, silent:false });
+    await populateFileList();
   };
+
   applyFilters();
 }
 
-function renderList(list, grid){
+function renderList(list, grid) {
   const frag = document.createDocumentFragment();
-  const currentUid = currentUidCache || getCurrentUserId();
-  const ownerSet = new Set(ownerCandidates || []);
   list.forEach(r => {
     const div = document.createElement('div');
     div.className = 'game-card new-style';
-    const owned = isOwnedRow(r);
-    div.innerHTML = buildGameCardHTML(r, owned, false, currentUid);
+    const owned = isMyGameRow(r);
+    div.innerHTML = buildGameCardHTML(r, owned, false, currentUserProfile.username || currentUserProfile.name || '');
     frag.appendChild(div);
   });
+
   grid.replaceChildren(frag);
+
   grid.querySelectorAll('[data-open]').forEach(el => {
-    el.onclick = () => openGame(rId(el), list, { titleEl, render });
+    el.onclick = () => openGame(rId(el));
   });
+
   grid.querySelectorAll('[data-del]').forEach(el => {
-    el.onclick = () => ownedGuard(el, () => deleteGame(rId(el), { toast, render }));
+    el.onclick = () => ownedGuard(el, () => deleteGame(rId(el)));
   });
 }
 
-function rId(el){ return el.getAttribute('data-open') || el.getAttribute('data-del'); }
-function ownedGuard(el, fn){ if(el.hasAttribute('disabled')) return; fn(); }
+function rId(el) { return el.getAttribute('data-open') || el.getAttribute('data-del'); }
+function ownedGuard(el, fn) { if (el.hasAttribute('disabled')) return; fn(); }
 
-async function openGame(idListKey, listSnapshot, { titleEl, render }) {
-  const overlay = ensureLoadingOverlay(); overlay.show('Loading game…');
+async function openGame(idListKey) {
+  const overlay = ensureLoadingOverlay();
+  overlay.show('Loading game...');
   try {
     const res = await WillenaAPI.fetch('/.netlify/functions/supabase_proxy_fixed?get=game_data&id=' + encodeURIComponent(idListKey));
-    if(!res.ok) throw new Error('open status '+res.status);
-    const js = await res.json();
+    if (!res.ok) throw new Error('open status ' + res.status);
+    const js = await res.json().catch(() => null);
     const row = js && js.data ? js.data : js;
-    if(!row) throw new Error('no row');
+    if (!row) throw new Error('no row');
+
     setCurrentGameId(row.id || idListKey || null);
+
     let words = row.words;
     if (typeof words === 'string') { try { words = JSON.parse(words); } catch {} }
     if (!Array.isArray(words)) words = [];
+
     saveState();
     const mapped = words.map(w => {
-      if(!w) return null;
-      if(typeof w === 'string'){
-        const parts = w.split(/[,|]/); const eng=(parts[0]||'').trim(); const kor=(parts[1]||'').trim();
-        return eng? newRow({eng, kor}): null;
+      if (!w) return null;
+      if (typeof w === 'string') {
+        const parts = w.split(/[,|]/);
+        const eng = (parts[0] || '').trim();
+        const kor = (parts[1] || '').trim();
+        return eng ? newRow({ eng, kor }) : null;
       }
       return newRow({
         eng: w.eng || w.en || w.word || '',
@@ -279,24 +260,40 @@ async function openGame(idListKey, listSnapshot, { titleEl, render }) {
         sentence_audio: w.sentence_audio || ''
       });
     }).filter(Boolean);
+
     setList(mapped);
-    if(titleEl) titleEl.value = row.title || 'Untitled Game';
-    render();
-    showTinyToast(mapped.length? 'Game loaded':'Loaded (empty)', { ms:1300 });
-    cacheCurrentGame(titleEl?.value||'');
-  } catch(e){ console.warn('[file-list] open error', e); showTinyToast('Open failed', { variant:'error'}); }
-  finally { overlay.hide(); }
+    if (modalContext.titleEl) modalContext.titleEl.value = row.title || 'Untitled Game';
+    modalContext.render();
+    showTinyToast(mapped.length ? 'Game loaded' : 'Loaded (empty)', { ms: 1300 });
+    cacheCurrentGame(modalContext.titleEl?.value || '');
+  } catch (e) {
+    console.warn('[file-list] open error', e);
+    showTinyToast('Open failed', { variant: 'error' });
+  } finally {
+    overlay.hide();
+  }
 }
 
-async function deleteGame(id, { toast, render }) {
+async function deleteGame(id) {
   try {
-    const ok = confirm('Delete this game?'); if(!ok) return;
-    const res = await WillenaAPI.fetch('/.netlify/functions/supabase_proxy_fixed', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action:'delete_game_data', id }) });
-    const js = await res.json();
-    if(js?.success){
-      fileListRows = fileListRows.filter(r=> r.id !== id);
-      paintFileList(fileListRows, { fileListEl: document.getElementById('fileList'), titleEl, toast, render, cached:false, initial:false, uniqueCount:fileListUniqueCount });
-      toast('Deleted');
-    } else toast(js?.error||'Delete failed');
-  } catch(e){ console.warn(e); toast('Delete error'); }
+    const ok = confirm('Delete this game?');
+    if (!ok) return;
+
+    const res = await WillenaAPI.fetch('/.netlify/functions/supabase_proxy_fixed', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'delete_game_data', id })
+    });
+    const js = await res.json().catch(() => null);
+    if (js?.success) {
+      fileListRows = fileListRows.filter(r => r.id !== id);
+      paintFileList(fileListRows, { cached: false, uniqueCount: fileListUniqueCount });
+      modalContext.toast('Deleted');
+    } else {
+      modalContext.toast(js?.error || 'Delete failed');
+    }
+  } catch (e) {
+    console.warn(e);
+    modalContext.toast('Delete error');
+  }
 }
