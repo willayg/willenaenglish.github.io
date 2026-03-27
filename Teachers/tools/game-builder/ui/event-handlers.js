@@ -5,6 +5,26 @@ import { generateDefinition, generateExample } from '../services/ai-service.js?v
 import { openSaveAsModal, handleSaveAsConfirm, showFileModal } from './modals.js';
 import { ensureAudioForWordsAndSentences } from '../services/audio-service.js';
 import { ensureSentenceIdsBuilder, prepareAndUploadImagesIfNeeded, saveGameData } from '../services/file-service.js?v=20260325a';
+import { syncImagesFromPayload } from '../state/game-state.js';
+
+let isSaving = false;
+let firstSaveCompletionPromise = null;
+
+export function isQuickSaveInFlight() {
+  return isSaving || !!firstSaveCompletionPromise;
+}
+
+export function setFirstSaveCompletionPromise(promise) {
+  if (!promise || typeof promise.finally !== 'function') return;
+  firstSaveCompletionPromise = promise;
+  promise.finally(() => {
+    if (firstSaveCompletionPromise === promise) firstSaveCompletionPromise = null;
+  });
+}
+
+if (typeof window !== 'undefined') {
+  window.__gbSetFirstSaveCompletionPromise = setFirstSaveCompletionPromise;
+}
 
 /**
  * Save progress bar helpers
@@ -38,7 +58,17 @@ function hideSaveProgress(delay = 1200) {
  * Quick save handler (silent overwrite if ID exists, else open Save As)
  */
 export async function handleQuickSave(ev, buildPayload, getCurrentGameId, setCurrentGameId, titleEl, toast, options = {}) {
-  const { silent = false } = options || {};
+  const { silent = false, onImagesSynced = null } = options || {};
+  if (firstSaveCompletionPromise) {
+    if (!silent) toast('Finishing first save...');
+    try { await firstSaveCompletionPromise; } catch {}
+  }
+  if (isSaving) {
+    if (!silent) toast('Save already in progress');
+    return { success: false, inFlight: true, error: 'Save already in progress' };
+  }
+
+  isSaving = true;
   const title = titleEl.value || DEFAULTS.TITLE;
   const gameImage = document.getElementById('gameImageZone').querySelector('img')?.src || '';
   const payload = buildPayload(title, gameImage);
@@ -75,6 +105,8 @@ export async function handleQuickSave(ev, buildPayload, getCurrentGameId, setCur
     }
     if (!silent) showSaveProgress(15, 'Uploading images…');
     await prepareAndUploadImagesIfNeeded(payload, currentGameId, { force: !!(ev && ev.shiftKey) });
+    syncImagesFromPayload(payload);
+    if (typeof onImagesSynced === 'function') onImagesSynced();
 
     // Stage 2: Saving to database
     if (!silent) showSaveProgress(55, 'Saving to database…');
@@ -123,6 +155,7 @@ export async function handleQuickSave(ev, buildPayload, getCurrentGameId, setCur
     }
     return { success: false, error: e?.message || 'Save error' };
   } finally {
+    isSaving = false;
     if (saveLink) saveLink.classList.remove('disabled');
   }
 }

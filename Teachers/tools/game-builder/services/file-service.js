@@ -19,6 +19,21 @@ function makeLocalSentenceId(text) {
   return `local_${hex}`;
 }
 
+function createLocalIdAllocator() {
+  const usedIds = new Map();
+  return function allocate(text) {
+    const normalized = normalizeSentenceText(text).toLowerCase();
+    const baseId = makeLocalSentenceId(normalized);
+    let candidate = baseId;
+    let suffix = 1;
+    while (usedIds.has(candidate) && usedIds.get(candidate) !== normalized) {
+      candidate = `${baseId}_${suffix++}`;
+    }
+    usedIds.set(candidate, normalized);
+    return candidate;
+  };
+}
+
 /**
  * Get current user ID from various storage locations
  * @returns {string} User ID or empty string
@@ -149,13 +164,17 @@ export async function ensureSentenceIdsBuilder(wordObjs, opts = {}) {
       ? WillenaAPI.fetch.bind(WillenaAPI)
       : (url, init) => fetch(url, { ...init, credentials: 'include' });
     
-    const res = await doFetch('/.netlify/functions/upsert_sentences_batch', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-    
-    const js = await res.json().catch(() => null);
+    const postBatch = async () => {
+      const res = await doFetch('/.netlify/functions/upsert_sentences_batch', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const js = await res.json().catch(() => null);
+      return { res, js };
+    };
+
+    let { res, js } = await postBatch();
     
     if (js && js.audio) {
       console.log('[SentenceUpgrade][builder][audio] summary', js.audio);
@@ -165,9 +184,31 @@ export async function ensureSentenceIdsBuilder(wordObjs, opts = {}) {
     }
     
     if (!js || !js.success || !Array.isArray(js.sentences)) {
-      console.warn('[SentenceUpgrade][builder] batch FAILED', { status: res.status, ok: res.ok, body: js });
+      console.warn('[SentenceUpgrade][builder] batch FAILED (attempt 1)', { status: res.status, ok: res.ok, body: js });
+
+      // Retry a couple of times before falling back to local IDs.
+      for (let attempt = 2; attempt <= 3; attempt++) {
+        const delayMs = attempt === 2 ? 250 : 600;
+        await new Promise(resolve => setTimeout(resolve, delayMs));
+        try {
+          const retried = await postBatch();
+          res = retried.res;
+          js = retried.js;
+          if (js && js.success && Array.isArray(js.sentences)) {
+            console.log(`[SentenceUpgrade][builder] batch recovered on retry ${attempt}`);
+            break;
+          }
+          console.warn(`[SentenceUpgrade][builder] batch FAILED (attempt ${attempt})`, { status: res.status, ok: res.ok, body: js });
+        } catch (retryErr) {
+          console.warn(`[SentenceUpgrade][builder] retry ${attempt} error`, retryErr?.message);
+        }
+      }
+    }
+
+    if (!js || !js.success || !Array.isArray(js.sentences)) {
       // Client-only fallback: still assign deterministic local sentence IDs
       // so sentence audio generation can proceed without backend sentence rows.
+      const allocLocalId = createLocalIdAllocator();
       const byLocalText = new Map();
       let fallbackApplied = 0;
       for (const w of targets) {
@@ -176,14 +217,14 @@ export async function ensureSentenceIdsBuilder(wordObjs, opts = {}) {
         const key = normKey(raw);
         let localId = byLocalText.get(key);
         if (!localId) {
-          localId = makeLocalSentenceId(raw);
+          localId = allocLocalId(raw);
           byLocalText.set(key, localId);
         }
         w.primary_sentence_id = localId;
         w.sentences = [{ id: localId, text: raw, audio_key: `sent_${localId}.mp3` }];
         fallbackApplied++;
       }
-      console.warn('[SentenceUpgrade][builder] applied LOCAL fallback IDs:', fallbackApplied, '/', targets.length);
+      console.warn('[SentenceUpgrade][builder] applied LOCAL fallback IDs:', fallbackApplied, '/', targets.length, '(after retries)');
       return { inserted: fallbackApplied, backend: false, localFallback: true };
     }
     
@@ -191,6 +232,7 @@ export async function ensureSentenceIdsBuilder(wordObjs, opts = {}) {
     
     // Build case-insensitive text map for reliable matching
     const byText = new Map(js.sentences.map(r => [normKey(r.text), r]));
+    const allocLocalId = createLocalIdAllocator();
     const byLocalText = new Map();
     let applied = 0;
     
@@ -206,7 +248,7 @@ export async function ensureSentenceIdsBuilder(wordObjs, opts = {}) {
       } else {
         let localId = byLocalText.get(normKey(raw));
         if (!localId) {
-          localId = makeLocalSentenceId(raw);
+          localId = allocLocalId(raw);
           byLocalText.set(normKey(raw), localId);
         }
         w.sentences = [{ id: localId, text: normalizeSentenceText(raw), audio_key: `sent_${localId}.mp3` }];
@@ -762,14 +804,25 @@ export async function listGameData(opts = {}) {
 export async function findGameByTitle(title) {
   try {
     const currentUid = getCurrentUserId();
-    const result = await listGameData({ limit: 50, offset: 0, created_by: currentUid });
-    
-    if (result.success && Array.isArray(result.data)) {
-      return result.data.find(r =>
-        r.title && r.title.trim().toLowerCase() === title.trim().toLowerCase()
-      ) || null;
+    const targetTitle = title.trim().toLowerCase();
+    const limit = 100;
+    let offset = 0;
+    let page = 0;
+
+    while (page < 20) {
+      const result = await listGameData({ limit, offset, created_by: currentUid });
+      if (!result.success || !Array.isArray(result.data) || !result.data.length) break;
+
+      const found = result.data.find(r =>
+        r.title && r.title.trim().toLowerCase() === targetTitle
+      );
+      if (found) return found;
+
+      if (result.data.length < limit) break;
+      offset += limit;
+      page += 1;
     }
-    
+
     return null;
   } catch (e) {
     console.warn('[findGameByTitle] Error:', e);
@@ -786,11 +839,23 @@ export async function generateIncrementedTitle(baseTitle) {
   try {
     const base = baseTitle.replace(/\s*\(\d+\)$/, '').trim();
     const currentUid = getCurrentUserId();
-    const result = await listGameData({ limit: 200, offset: 0, created_by: currentUid });
-    
-    if (!result.success) return `${base} (2)`;
-    
-    const titlesLower = new Set((result.data || []).map(r => (r.title || '').toLowerCase()));
+    const titlesLower = new Set();
+    const limit = 100;
+    let offset = 0;
+    let page = 0;
+
+    while (page < 20) {
+      const result = await listGameData({ limit, offset, created_by: currentUid });
+      if (!result.success) break;
+      const rows = Array.isArray(result.data) ? result.data : [];
+      rows.forEach(r => titlesLower.add((r.title || '').toLowerCase()));
+      if (rows.length < limit) break;
+      offset += limit;
+      page += 1;
+    }
+
+    if (!titlesLower.size) return `${base} (2)`;
+
     let n = 2;
     let newTitle = `${base} (${n})`;
     

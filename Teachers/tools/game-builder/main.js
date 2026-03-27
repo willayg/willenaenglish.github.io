@@ -77,6 +77,7 @@ import {
 } from './ui/modals.js?v=20260322x';
 import {
   handleQuickSave,
+  isQuickSaveInFlight,
   handlePreview,
   handleAddWord,
   handleUndo,
@@ -400,6 +401,12 @@ if (getTranslationsLink) {
 
 // Undo/Redo keyboard shortcuts
 document.addEventListener('keydown', (e) => {
+  if ((e.ctrlKey || e.metaKey) && String(e.key || '').toLowerCase() === 's') {
+    e.preventDefault();
+    if (isQuickSaveInFlight()) return;
+    saveLink?.click();
+    return;
+  }
   if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) { 
     e.preventDefault(); 
     if (undoState()) {
@@ -917,7 +924,7 @@ async function handleSaveSentences() {
 
 // Quick Save (silent): overwrite if currentGameId, else open Save As modal
 saveLink.onclick = async (ev) => {
-  const result = await handleQuickSave(ev, buildPayload, getCurrentGameId, setCurrentGameId, titleEl, toast, { silent: false });
+  const result = await handleQuickSave(ev, buildPayload, getCurrentGameId, setCurrentGameId, titleEl, toast, { silent: false, onImagesSynced: render });
   if (result?.success) markSaved('Saved');
 };
 
@@ -943,7 +950,7 @@ setInterval(async () => {
   autosaveInFlight = true;
   if (statusEl) statusEl.textContent = 'Autosaving…';
   try {
-    const result = await handleQuickSave(null, buildPayload, getCurrentGameId, setCurrentGameId, titleEl, toast, { silent: true });
+    const result = await handleQuickSave(null, buildPayload, getCurrentGameId, setCurrentGameId, titleEl, toast, { silent: true, onImagesSynced: render });
     if (result?.success) {
       markSaved(`Autosaved ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`);
     }

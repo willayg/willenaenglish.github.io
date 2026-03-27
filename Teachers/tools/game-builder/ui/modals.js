@@ -1,10 +1,13 @@
 // Modal management - Open/close/save handlers for all modals
 import { showTinyToast } from '../utils/dom-helpers.js';
-import { getCurrentUserId, ensureSentenceIdsBuilder, saveGameData, findGameByTitle, showTitleConflictModal } from '../services/file-service.js?v=20260325a';
+import { getCurrentUserId, ensureSentenceIdsBuilder, saveGameData, findGameByTitle, showTitleConflictModal, generateIncrementedTitle } from '../services/file-service.js?v=20260325a';
 import { ensureRegenerateAudioCheckbox, ensureAudioForWordsAndSentences } from '../services/audio-service.js';
 import { prepareAndUploadImagesIfNeeded } from '../services/file-service.js?v=20260325a';
 import { fetchJSONSafe } from '../utils/network.js';
 import { ENDPOINTS } from '../constants.js';
+import { syncImagesFromPayload } from '../state/game-state.js';
+
+let saveAsInFlight = false;
 
 /**
  * Show edit list modal
@@ -59,6 +62,10 @@ export function openSaveAsModal(titleEl, saveModalEl, saveModalStatusEl) {
  * Handle Save As modal confirm
  */
 export async function handleSaveAsConfirm(titleEl, buildPayload, getCurrentGameId, setCurrentGameId, toast, cacheCurrentGame, saveModalEl, saveModalStatusEl) {
+  if (saveAsInFlight) {
+    if (saveModalStatusEl) saveModalStatusEl.textContent = 'Save already in progress...';
+    return;
+  }
   const titleField = document.getElementById('saveGameTitle');
   const title = (titleField?.value || '').trim();
   if (!title) {
@@ -75,15 +82,31 @@ export async function handleSaveAsConfirm(titleEl, buildPayload, getCurrentGameI
   }
   
   if (saveModalStatusEl) saveModalStatusEl.textContent = 'Saving...';
-  
-  try {
+  saveAsInFlight = true;
+  const firstSave = !getCurrentGameId();
+
+  const operation = (async () => {
     const currentGameId = getCurrentGameId();
+    let targetGameId = currentGameId;
+    let resolvedTitle = title;
     // Check for title conflict before saving
     const conflict = await findGameByTitle(title);
     if (conflict && conflict.id !== currentGameId) {
-      if (saveModalEl) saveModalEl.style.display = 'none';
-      await showTitleConflictModal(title, payload, setCurrentGameId, cacheCurrentGame);
-      return;
+      const choice = await showTitleConflictModal(title);
+      if (choice === 'cancel') {
+        if (saveModalStatusEl) saveModalStatusEl.textContent = 'Save cancelled';
+        return;
+      }
+      if (choice === 'overwrite') {
+        targetGameId = conflict.id;
+        if (saveModalStatusEl) saveModalStatusEl.textContent = 'Overwriting existing game...';
+      }
+      if (choice === 'increment') {
+        resolvedTitle = await generateIncrementedTitle(title);
+        payload.title = resolvedTitle;
+        if (titleField) titleField.value = resolvedTitle;
+        if (saveModalStatusEl) saveModalStatusEl.textContent = `Saving as ${resolvedTitle}...`;
+      }
     }
     
     const sentResult = await ensureSentenceIdsBuilder(payload.words || []);
@@ -91,7 +114,8 @@ export async function handleSaveAsConfirm(titleEl, buildPayload, getCurrentGameI
       'words with sentence IDs:', (payload.words || []).filter(w => w.primary_sentence_id).length, '/', (payload.words || []).length);
 
     // Prepare images before save
-    await prepareAndUploadImagesIfNeeded(payload, currentGameId, { force: false });
+    await prepareAndUploadImagesIfNeeded(payload, targetGameId, { force: false });
+    syncImagesFromPayload(payload);
     
     // Audio generation
     const regenCheckbox = document.getElementById('regenerateAudioCheckbox');
@@ -127,11 +151,11 @@ export async function handleSaveAsConfirm(titleEl, buildPayload, getCurrentGameI
       if (saveModalStatusEl) saveModalStatusEl.textContent = 'Audio step failed, continuing save...';
     }
     
-    const result = await saveGameData(payload, currentGameId);
+    const result = await saveGameData(payload, targetGameId);
     if (result.success) {
       setCurrentGameId(result.id);
-      titleEl.value = title;
-      cacheCurrentGame(title);
+      titleEl.value = resolvedTitle;
+      cacheCurrentGame(resolvedTitle);
       if (saveModalEl) saveModalEl.style.display = 'none';
       if (typeof window.showSaveCenterMessage === 'function') {
         window.showSaveCenterMessage('Saved', { variant: 'success', ms: 1400 });
@@ -144,7 +168,15 @@ export async function handleSaveAsConfirm(titleEl, buildPayload, getCurrentGameI
   } catch (e) {
     console.error('[saveAs]', e);
     if (saveModalStatusEl) saveModalStatusEl.textContent = e?.message ? `Save error: ${e.message}` : 'Save error';
+  } finally {
+    saveAsInFlight = false;
   }
+  })();
+
+  if (firstSave && typeof window !== 'undefined' && typeof window.__gbSetFirstSaveCompletionPromise === 'function') {
+    window.__gbSetFirstSaveCompletionPromise(operation);
+  }
+  await operation;
 }
 
 /**

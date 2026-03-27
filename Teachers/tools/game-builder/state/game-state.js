@@ -289,6 +289,35 @@ export function cacheCurrentGame(title = '') {
 }
 
 /**
+ * Sync uploaded image URLs from a prepared payload back into canonical in-memory state.
+ * This keeps UI state consistent after upload-images rewrites URLs.
+ * @param {Object} payload - Payload returned/mutated by prepareAndUploadImagesIfNeeded
+ */
+export function syncImagesFromPayload(payload) {
+  try {
+    if (!payload || !Array.isArray(payload.words) || !Array.isArray(list)) return;
+
+    const count = Math.min(list.length, payload.words.length);
+    for (let i = 0; i < count; i++) {
+      const src = payload.words[i];
+      const target = list[i];
+      if (!src || !target) continue;
+      if (typeof src.image_url === 'string' && src.image_url) {
+        target.image_url = src.image_url;
+      }
+    }
+
+    if (typeof payload.gameImage === 'string' && payload.gameImage) {
+      const zone = document.getElementById('gameImageZone');
+      const img = zone && zone.querySelector ? zone.querySelector('img') : null;
+      if (img) img.src = payload.gameImage;
+    }
+  } catch (e) {
+    console.warn('[syncImagesFromPayload] failed:', e?.message || e);
+  }
+}
+
+/**
  * Parse word data from various formats
  * @param {*} words - Words in various formats
  * @returns {Array} Normalized word array
