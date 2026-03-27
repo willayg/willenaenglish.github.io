@@ -42,12 +42,13 @@ exports.handler = async (event) => {
     const supabase = createClient(SUPABASE_URL, SERVICE_KEY);
 
     let resolvedCreatedByAny = createdByAny.slice();
+    const requestedCreatorNames = creatorNameAny.length > 0;
     if (creatorNameAny.length) {
       const profileIds = new Set();
       for (const rawName of creatorNameAny.slice(0, 10)) {
         if (!rawName) continue;
-        const byName = await supabase.from('profiles').select('id').eq('name', rawName).limit(20);
-        const byUsername = await supabase.from('profiles').select('id').eq('username', rawName).limit(20);
+        const byName = await supabase.from('profiles').select('id').ilike('name', rawName).limit(20);
+        const byUsername = await supabase.from('profiles').select('id').ilike('username', rawName).limit(20);
         (byName.data || []).forEach(row => row?.id && profileIds.add(row.id));
         (byUsername.data || []).forEach(row => row?.id && profileIds.add(row.id));
       }
@@ -57,6 +58,9 @@ exports.handler = async (event) => {
   // Fetch recent rows (cap PAGE_PULL) then dedupe newest per lowercase title.
     let rawRows = null; let rawErr = null;
     try {
+      if (requestedCreatorNames && !resolvedCreatedByAny.length) {
+        rawRows = [];
+      }
       // Build base query
       // When headOnly, we do not need image fields (saves JSON path extraction cost)
       const baseSelect = headOnly
