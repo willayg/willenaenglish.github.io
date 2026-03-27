@@ -2,37 +2,32 @@
 import { ensureLoadingOverlay, buildSkeletonHTML, showTinyToast } from '../utils/dom-helpers.js';
 import { getCurrentUserId, deleteGameData as deleteGameSvc, loadGameData as loadGameDataSvc } from '../services/file-service.js';
 import { ensureMaterialIcons, buildGameCardHTML } from '../render/file-grid.js';
-import { getList, setList, saveState, newRow, setCurrentGameId } from '../state/game-state.js?v=20260328c';
-import { cacheCurrentGame } from '../state/game-state.js?v=20260328c';
+import { getList, setList, saveState, newRow, setCurrentGameId } from '../state/game-state.js?v=20260328d';
+import { cacheCurrentGame } from '../state/game-state.js?v=20260328d';
 
 // Internal state for modal
 let fileListRows = [];
 let fileListUniqueCount = 0;
 let fileListAllMode = false;
 let selectedGameIds = new Set();
-let fileListCache = null; // { ts, rows, uniqueCount }
+let fileListCache = null; // { ts, rows, uniqueCount, key }
 const SESSION_CACHE_MAX_AGE_MS = 180000;
 let currentUidCache = '';
 let whoAmIInFlight = null;
 let ownerCandidates = [];
 
+function isLikelyUuid(value) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(value || '').trim());
+}
+
 function collectOwnerIdCandidates(primary = '') {
   const out = new Set();
   const add = (v) => {
     const s = String(v || '').trim();
-    if (s) out.add(s);
+    if (s && isLikelyUuid(s)) out.add(s);
   };
   add(primary);
-  try {
-    add(localStorage.getItem('user_id'));
-    add(localStorage.getItem('userId'));
-    add(localStorage.getItem('id'));
-    add(localStorage.getItem('profile_id'));
-    add(sessionStorage.getItem('user_id'));
-    add(sessionStorage.getItem('userId'));
-    add(sessionStorage.getItem('id'));
-    add(sessionStorage.getItem('profile_id'));
-  } catch {}
+  add(currentUidCache);
   return Array.from(out);
 }
 
@@ -54,10 +49,6 @@ async function resolveCurrentUserIdFresh() {
       if (uid) {
         currentUidCache = uid;
         ownerCandidates = collectOwnerIdCandidates(uid);
-        try { localStorage.setItem('user_id', uid); } catch {}
-        try { localStorage.setItem('userId', uid); } catch {}
-        try { sessionStorage.setItem('user_id', uid); } catch {}
-        try { sessionStorage.setItem('userId', uid); } catch {}
       }
       return uid;
     } catch {
@@ -82,7 +73,12 @@ export function initFileListModal({ fileModal, fileListEl, openLink, fileModalCl
 }
 
 async function populateFileList({ fileListEl, titleEl, toast, render }) {
-  const useCache = fileListCache && (Date.now() - fileListCache.ts) < SESSION_CACHE_MAX_AGE_MS;
+  const uid = await resolveCurrentUserIdFresh();
+  const modeKey = fileListAllMode ? 'all' : 'mine';
+  const cacheKey = `${modeKey}:${uid || ''}`;
+  const useCache = fileListCache
+    && fileListCache.key === cacheKey
+    && (Date.now() - fileListCache.ts) < SESSION_CACHE_MAX_AGE_MS;
   if (useCache) {
     fileListRows = fileListCache.rows.slice();
     fileListUniqueCount = fileListCache.uniqueCount;
@@ -91,13 +87,13 @@ async function populateFileList({ fileListEl, titleEl, toast, render }) {
     fetchAndPaint({ fileListEl, titleEl, toast, render, silent:true });
     return;
   }
-  await fetchAndPaint({ fileListEl, titleEl, toast, render });
+  await fetchAndPaint({ fileListEl, titleEl, toast, render, uid });
 }
 
-async function fetchAndPaint({ fileListEl, titleEl, toast, render, silent }) {
+async function fetchAndPaint({ fileListEl, titleEl, toast, render, silent, uid: uidIn }) {
   try {
     const qs = new URLSearchParams({ limit:'40', offset:'0', unique:'1', names:'1', page_pull:'40' });
-    const uid = await resolveCurrentUserIdFresh();
+    const uid = uidIn || await resolveCurrentUserIdFresh();
     const candidateIds = collectOwnerIdCandidates(uid);
     ownerCandidates = candidateIds;
     if (!fileListAllMode && candidateIds.length) {
@@ -112,7 +108,8 @@ async function fetchAndPaint({ fileListEl, titleEl, toast, render, silent }) {
     const js = await res.json();
     fileListRows = Array.isArray(js.data)? js.data: [];
     fileListUniqueCount = js.unique_count || js.uniqueCount || 0;
-    fileListCache = { ts:Date.now(), rows:fileListRows.slice(), uniqueCount:fileListUniqueCount };
+    const modeKey = fileListAllMode ? 'all' : 'mine';
+    fileListCache = { ts:Date.now(), rows:fileListRows.slice(), uniqueCount:fileListUniqueCount, key: `${modeKey}:${uid || ''}` };
     paintFileList(fileListRows, { fileListEl, titleEl, toast, render, cached:false, initial:true, uniqueCount:fileListUniqueCount });
   } catch(e){
     console.warn('[file-list] load error', e);
@@ -154,7 +151,8 @@ function paintFileList(rows, { fileListEl, titleEl, toast, render, cached, initi
       if(creatorSel && (r.creator_name||'Unknown') !== creatorSel) return false;
       if(!fileListAllMode) {
         const ownerSet = new Set(ownerCandidates || []);
-        if (r.created_by && !ownerSet.has(String(r.created_by))) return false;
+        if (!r.created_by) return false;
+        if (!ownerSet.has(String(r.created_by))) return false;
       }
       return true;
     });
@@ -178,7 +176,7 @@ function renderList(list, grid){
   list.forEach(r => {
     const div = document.createElement('div');
     div.className = 'game-card new-style';
-    const owned = !r.created_by || ownerSet.has(String(r.created_by));
+    const owned = !!r.created_by && ownerSet.has(String(r.created_by));
     div.innerHTML = buildGameCardHTML(r, owned, false, currentUid);
     frag.appendChild(div);
   });

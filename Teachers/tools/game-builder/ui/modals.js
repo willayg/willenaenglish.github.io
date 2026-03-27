@@ -1,11 +1,11 @@
 // Modal management - Open/close/save handlers for all modals
 import { showTinyToast } from '../utils/dom-helpers.js';
-import { getCurrentUserId, ensureSentenceIdsBuilder, saveGameData, findGameByTitle, showTitleConflictModal, generateIncrementedTitle } from '../services/file-service.js?v=20260328c';
+import { getCurrentUserId, ensureSentenceIdsBuilder, saveGameData, findGameByTitle, showTitleConflictModal, generateIncrementedTitle } from '../services/file-service.js?v=20260328d';
 import { ensureRegenerateAudioCheckbox, ensureAudioForWordsAndSentences } from '../services/audio-service.js';
-import { prepareAndUploadImagesIfNeeded } from '../services/file-service.js?v=20260328c';
+import { prepareAndUploadImagesIfNeeded } from '../services/file-service.js?v=20260328d';
 import { fetchJSONSafe } from '../utils/network.js';
 import { ENDPOINTS } from '../constants.js';
-import { syncImagesFromPayload } from '../state/game-state.js?v=20260328c';
+import { syncImagesFromPayload } from '../state/game-state.js?v=20260328d';
 
 let saveAsInFlight = false;
 

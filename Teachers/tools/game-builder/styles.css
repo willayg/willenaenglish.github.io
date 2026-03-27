@@ -354,6 +354,19 @@ body { margin:0; background: linear-gradient(135deg, #6b6b6b 0%, #696969 100%); 
   text-align: center;
 }
 
+/* Vertically center definition/example controls and text area content zone */
+.word-table td:nth-child(5) > div,
+.word-table td:nth-child(6) > div {
+  min-height: 72px;
+  align-items: center !important;
+}
+
+.word-table .def-textarea,
+.word-table .ex-textarea {
+  padding-top: 18px;
+  padding-bottom: 18px;
+}
+
 /* Example sentence box: switch from warm/yellow-ish tint to very light cyan */
 .word-table textarea[data-field="example"],
 .word-table .row-input[data-field="example"] {
