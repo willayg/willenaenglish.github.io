@@ -87,10 +87,10 @@ import {
   handleGenerateExamples
 } from './ui/event-handlers.js?v=20260328e';
 import { ENDPOINTS, STORAGE_KEYS, ACTIONS, DEFAULTS, TOAST_DURATION } from './constants.js';
-import { initFileListModal } from './ui/file-list.js?v=20260328f';
+import { initFileListModal } from './ui/file-list.js?v=20260328g';
 import { loadWorksheetIntoBuilder } from './services/worksheet-service.js?v=20260328e';
 
-const GB_BUILD_STAMP = 'GB_BUILD 20260328f · name-filter-simplified';
+const GB_BUILD_STAMP = 'GB_BUILD 20260328g · legacy-filelist-disabled';
 
 function injectBuilderBuildStamp() {
   try {
@@ -1126,6 +1126,8 @@ async function loadPicturesForMissing() {
   await loadImagesForMissingOnly(list, loadingImages, render);
 }
 
+// Legacy Saved Games code is disabled. The active implementation lives in ui/file-list.js.
+if (false) {
 // File modal: list previously saved game_data and open
 openLink.onclick = () => {
   // Show modal immediately with skeleton for instant feedback
@@ -1867,3 +1869,4 @@ if(!window.__gbPrefetchScheduled){
   });
 }
 // -----------------------------------------------------------------------------
+}
