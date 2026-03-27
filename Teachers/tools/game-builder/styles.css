@@ -338,6 +338,27 @@ body { margin:0; background: linear-gradient(135deg, #6b6b6b 0%, #696969 100%); 
 
 /* Tweak cells to line up with edit-menu columns */
 .word-table { width: 100%; }
+
+/* Grid text styling updates (requested): Poppins + centered text */
+.word-table th,
+.word-table td,
+.word-table .row-input,
+.word-table textarea.row-input,
+.word-table input.row-input {
+  font-family: 'Poppins', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif !important;
+  text-align: center;
+}
+
+/* Keep textarea content centered horizontally for definition/example fields */
+.word-table textarea.row-input {
+  text-align: center;
+}
+
+/* Example sentence box: switch from warm/yellow-ish tint to very light cyan */
+.word-table textarea[data-field="example"],
+.word-table .row-input[data-field="example"] {
+  background: #f3feff !important;
+}
 .word-table td:nth-child(1) { width: 36px; }
 .word-table td:nth-child(2) { width: 140px; }
 .word-table td:nth-child(3) { width: 140px; }

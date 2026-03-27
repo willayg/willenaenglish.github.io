@@ -14,12 +14,34 @@ let fileListCache = null; // { ts, rows, uniqueCount }
 const SESSION_CACHE_MAX_AGE_MS = 180000;
 let currentUidCache = '';
 let whoAmIInFlight = null;
+let ownerCandidates = [];
+
+function collectOwnerIdCandidates(primary = '') {
+  const out = new Set();
+  const add = (v) => {
+    const s = String(v || '').trim();
+    if (s) out.add(s);
+  };
+  add(primary);
+  try {
+    add(localStorage.getItem('user_id'));
+    add(localStorage.getItem('userId'));
+    add(localStorage.getItem('id'));
+    add(localStorage.getItem('profile_id'));
+    add(sessionStorage.getItem('user_id'));
+    add(sessionStorage.getItem('userId'));
+    add(sessionStorage.getItem('id'));
+    add(sessionStorage.getItem('profile_id'));
+  } catch {}
+  return Array.from(out);
+}
 
 async function resolveCurrentUserIdFresh() {
   if (currentUidCache) return currentUidCache;
   const local = getCurrentUserId();
   if (local) {
     currentUidCache = local;
+    ownerCandidates = collectOwnerIdCandidates(local);
     return local;
   }
   if (whoAmIInFlight) return whoAmIInFlight;
@@ -31,6 +53,7 @@ async function resolveCurrentUserIdFresh() {
       const uid = String(js?.user_id || '').trim();
       if (uid) {
         currentUidCache = uid;
+        ownerCandidates = collectOwnerIdCandidates(uid);
         try { localStorage.setItem('user_id', uid); } catch {}
         try { localStorage.setItem('userId', uid); } catch {}
         try { sessionStorage.setItem('user_id', uid); } catch {}
@@ -75,8 +98,10 @@ async function fetchAndPaint({ fileListEl, titleEl, toast, render, silent }) {
   try {
     const qs = new URLSearchParams({ limit:'40', offset:'0', unique:'1', names:'1', page_pull:'40' });
     const uid = await resolveCurrentUserIdFresh();
-    if (!fileListAllMode && uid) {
-      qs.set('created_by', uid);
+    const candidateIds = collectOwnerIdCandidates(uid);
+    ownerCandidates = candidateIds;
+    if (!fileListAllMode && candidateIds.length) {
+      qs.set('created_by_any', candidateIds.join(','));
     } else if (fileListAllMode) {
       qs.set('all', '1');
     } else {
@@ -128,8 +153,8 @@ function paintFileList(rows, { fileListEl, titleEl, toast, render, cached, initi
       if(q && !(r.title||'').toLowerCase().includes(q)) return false;
       if(creatorSel && (r.creator_name||'Unknown') !== creatorSel) return false;
       if(!fileListAllMode) {
-        const uid = currentUidCache || getCurrentUserId();
-        if (r.created_by && uid && r.created_by !== uid) return false;
+        const ownerSet = new Set(ownerCandidates || []);
+        if (r.created_by && !ownerSet.has(String(r.created_by))) return false;
       }
       return true;
     });
@@ -149,10 +174,11 @@ function paintFileList(rows, { fileListEl, titleEl, toast, render, cached, initi
 function renderList(list, grid){
   const frag = document.createDocumentFragment();
   const currentUid = currentUidCache || getCurrentUserId();
+  const ownerSet = new Set(ownerCandidates || []);
   list.forEach(r => {
     const div = document.createElement('div');
     div.className = 'game-card new-style';
-    const owned = !r.created_by || r.created_by === currentUid;
+    const owned = !r.created_by || ownerSet.has(String(r.created_by));
     div.innerHTML = buildGameCardHTML(r, owned, false, currentUid);
     frag.appendChild(div);
   });

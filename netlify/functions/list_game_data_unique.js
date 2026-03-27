@@ -22,6 +22,7 @@ exports.handler = async (event) => {
     const limit = Math.min(Number(qs.limit) > 0 ? Number(qs.limit) : 10, 50);
     const offset = Number(qs.offset) >= 0 ? Number(qs.offset) : 0; // For future paging (keyset later)
     const createdBy = (qs.created_by || '').trim();
+    const createdByAny = String(qs.created_by_any || '').split(',').map(s => s.trim()).filter(Boolean);
     const listAll = String(qs.all || '0') === '1';
     const uniqueMode = String(qs.unique || '1') !== '0'; // default unique
     const includeNull = String(qs.include_null || '0') === '1';
@@ -50,6 +51,8 @@ exports.handler = async (event) => {
       let query = supabase.from('game_data').select(baseSelect).order('created_at', { ascending: false }).limit(PAGE_PULL);
       if (listAll) {
         // no filter; show all users (later we could restrict to admin)
+      } else if (createdByAny.length) {
+        query = query.in('created_by', createdByAny.slice(0, 20));
       } else if (createdBy) {
         query = query.eq('created_by', createdBy);
       } else if (!createdBy && !includeNull) {
@@ -75,7 +78,9 @@ exports.handler = async (event) => {
         // Retry with minimal select
         console.log('[list_game_data_unique] retrying with minimal select due to error:', rawErr.message);
         let q2 = supabase.from('game_data').select('id, title, created_at, created_by');
-        if (createdBy) q2 = q2.eq('created_by', createdBy); else q2 = q2.is('created_by', null);
+        if (createdByAny.length) q2 = q2.in('created_by', createdByAny.slice(0, 20));
+        else if (createdBy) q2 = q2.eq('created_by', createdBy);
+        else q2 = q2.is('created_by', null);
         const retry = await q2.order('created_at', { ascending: false }).limit(PAGE_PULL);
         rawRows = retry.data; rawErr = retry.error;
       }
@@ -85,7 +90,7 @@ exports.handler = async (event) => {
     if (rawErr) {
       return { statusCode: 500, headers: cors(event), body: JSON.stringify({ error: rawErr.message }) };
     }
-  console.log('[list_game_data_unique] pulled rows:', (rawRows||[]).length, 'user:', createdBy || '(none)', 'includeNull:', includeNull, 'all:', listAll);
+  console.log('[list_game_data_unique] pulled rows:', (rawRows||[]).length, 'user:', createdBy || '(none)', 'userAny:', createdByAny.join('|') || '(none)', 'includeNull:', includeNull, 'all:', listAll);
     let working = rawRows || [];
     if (uniqueMode) {
       const byTitle = new Map();
@@ -153,11 +158,11 @@ exports.handler = async (event) => {
         } else {
           rows.forEach(r => { r.creator_name = r.creator_id ? 'Unknown' : 'System'; });
         }
-      } else if(createdBy && rows.length){
+      } else if((createdBy || createdByAny.length) && rows.length){
         const { data: prof } = await supabase
           .from('profiles')
           .select('id, username, name')
-          .eq('id', createdBy)
+          .eq('id', createdBy || createdByAny[0])
           .single();
         const display = prof ? (prof.name || prof.username || prof.id) : null;
         rows.forEach(r => { r.creator_name = r.created_by ? (display || 'Unknown') : 'System'; });

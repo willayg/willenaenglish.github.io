@@ -295,6 +295,26 @@ if (typeof window !== 'undefined') {
   window.__gbInvalidateFileListCache = invalidateSavedGamesCache;
 }
 
+function collectOwnerIdCandidates(primary = '') {
+  const out = new Set();
+  const add = (v) => {
+    const s = String(v || '').trim();
+    if (s) out.add(s);
+  };
+  add(primary);
+  try {
+    add(localStorage.getItem('user_id'));
+    add(localStorage.getItem('userId'));
+    add(localStorage.getItem('id'));
+    add(localStorage.getItem('profile_id'));
+    add(sessionStorage.getItem('user_id'));
+    add(sessionStorage.getItem('userId'));
+    add(sessionStorage.getItem('id'));
+    add(sessionStorage.getItem('profile_id'));
+  } catch {}
+  return Array.from(out);
+}
+
 async function resolveCurrentUserIdFresh() {
   const cached = getCurrentUserId();
   if (cached) return cached;
@@ -1149,6 +1169,7 @@ let fileListOffset = 0;
 let fileListRows = [];
 let fileListUniqueCount = 0;
 let fileListUid = '';
+let fileListUidCandidates = [];
 let fileListAllMode = false; // when true, show all users' games
 const LOAD_LIMIT = 10;
 // --- Saved games modal caching & skeleton ---
@@ -1395,6 +1416,7 @@ async function populateFileList() {
   fileListRows = [];
   fileListUniqueCount = 0;
   fileListUid = await resolveCurrentUserIdFresh();
+  fileListUidCandidates = collectOwnerIdCandidates(fileListUid);
   fileListAllMode = false; // reset to user scope on explicit populate
   // Attempt session cache reuse
   try {
@@ -1440,20 +1462,23 @@ async function loadFileListPage(isInitial) {
   if (!fileListAllMode && !uid) {
     uid = await resolveCurrentUserIdFresh();
     fileListUid = uid;
+    fileListUidCandidates = collectOwnerIdCandidates(uid);
   }
   const baseUrl = '/.netlify/functions/list_game_data_unique?limit=' + LOAD_LIMIT + '&offset=' + fileListOffset + '&page_pull=' + (LOAD_LIMIT*4) + '&names=1';
   let url;
   if (fileListAllMode) {
     url = baseUrl + '&all=1&unique=0';
   } else {
-    if (!uid) {
+    const candidateIds = collectOwnerIdCandidates(uid);
+    fileListUidCandidates = candidateIds;
+    if (!candidateIds.length) {
       fileList.innerHTML = '<div class="status">Sign in again to load My Games. <button id="retryListBtn" class="btn">Retry</button></div>';
       const retryAuth = document.getElementById('retryListBtn');
       if (retryAuth) retryAuth.onclick = () => { fileListLoading = false; loadFileListPage(isInitial); };
       fileListLoading = false;
       return;
     }
-    url = baseUrl + '&created_by=' + encodeURIComponent(uid);
+    url = baseUrl + '&created_by_any=' + encodeURIComponent(candidateIds.join(','));
   }
   // Timeout guard (8s)
   const ac = typeof AbortController !== 'undefined' ? new AbortController() : null;
@@ -1676,11 +1701,12 @@ function paintFileList(initialRows, { cached, initial, uniqueCount }) {
   function renderList(list) {
     const frag = document.createDocumentFragment();
     const currentUid = fileListUid || getCurrentUserId();
+    const ownerSet = new Set(fileListUidCandidates || []);
     list.forEach(r => {
       const div = document.createElement('div');
       div.className = 'game-card new-style';
       if(selectedGameIds.has(r.id)) div.classList.add('selected');
-      const owned = !r.created_by || r.created_by === currentUid;
+      const owned = !r.created_by || ownerSet.has(String(r.created_by));
       const isSelected = selectedGameIds.has(r.id);
       div.innerHTML = buildGameCardHTML(r, owned, isSelected, currentUid);
       frag.appendChild(div);
