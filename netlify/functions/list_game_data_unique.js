@@ -9,6 +9,22 @@
 //  - Supports mixing user-owned rows and system (NULL created_by) via include_null=1
 // Response shape: { data:[...], unique_count, total_count, limit, offset, ms }
 
+let _supabaseClientPromise = null;
+
+async function getSupabaseClient() {
+  if (_supabaseClientPromise) return _supabaseClientPromise;
+  _supabaseClientPromise = (async () => {
+    const { createClient } = await import('@supabase/supabase-js');
+    const SUPABASE_URL = process.env.SUPABASE_URL;
+    const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    if (!SUPABASE_URL || !SERVICE_KEY) {
+      throw new Error('Server misconfigured');
+    }
+    return createClient(SUPABASE_URL, SERVICE_KEY);
+  })();
+  return _supabaseClientPromise;
+}
+
 exports.handler = async (event) => {
   const startTs = Date.now();
   try {
@@ -33,13 +49,12 @@ exports.handler = async (event) => {
     const reqPagePull = Number(qs.page_pull);
     const PAGE_PULL = Math.min(Math.max(isFinite(reqPagePull) && reqPagePull > 0 ? reqPagePull : 90, 20), 200);
 
-    const { createClient } = await import('@supabase/supabase-js');
-    const SUPABASE_URL = process.env.SUPABASE_URL;
-    const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
-    if (!SUPABASE_URL || !SERVICE_KEY) {
-      return { statusCode: 500, headers: cors(event), body: JSON.stringify({ error: 'Server misconfigured' }) };
+    let supabase;
+    try {
+      supabase = await getSupabaseClient();
+    } catch (e) {
+      return { statusCode: 500, headers: cors(event), body: JSON.stringify({ error: e.message || 'Server misconfigured' }) };
     }
-    const supabase = createClient(SUPABASE_URL, SERVICE_KEY);
 
     let resolvedCreatedByAny = createdByAny.slice();
     const requestedCreatorNames = creatorNameAny.length > 0;

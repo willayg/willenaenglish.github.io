@@ -19,6 +19,7 @@ let currentUserProfile = { name: '', username: '' };
 let profileInFlight = null;
 let imagesEnabled = true;
 let activeImageBatchToken = 0;
+let warmCacheStarted = false;
 
 let modalContext = {
   fileModal: null,
@@ -85,6 +86,14 @@ export function initFileListModal({ fileModal, fileListEl, openLink, fileModalCl
     window.__gbInvalidateFileListCache = () => { fileListCache = null; };
   }
 
+  // Warm the first page in the background so first modal open is much faster.
+  if (!warmCacheStarted) {
+    warmCacheStarted = true;
+    setTimeout(() => {
+      fetchAndPaint({ silent: true, reset: true, renderNow: false }).catch(() => {});
+    }, 900);
+  }
+
   openLink.onclick = () => {
     fileModal.style.display = 'flex';
     fileListEl.innerHTML = buildSkeletonHTML(8);
@@ -95,7 +104,12 @@ export function initFileListModal({ fileModal, fileListEl, openLink, fileModalCl
 }
 
 async function populateFileList() {
-  await resolveCurrentUserProfile();
+  if (!fileListAllMode) {
+    await resolveCurrentUserProfile();
+  } else {
+    // Resolve profile in parallel for metadata text, but do not block list fetch.
+    resolveCurrentUserProfile().catch(() => {});
+  }
   fileListOffset = 0;
   const modeKey = fileListAllMode ? 'all' : 'mine';
   const userKey = currentUserNameCandidates().join('|');
@@ -113,12 +127,14 @@ async function populateFileList() {
     return;
   }
 
-  await fetchAndPaint({ silent: false, reset: true });
+  await fetchAndPaint({ silent: false, reset: true, renderNow: true });
 }
 
-async function fetchAndPaint({ silent, reset = false }) {
+async function fetchAndPaint({ silent, reset = false, renderNow = true }) {
   try {
-    await resolveCurrentUserProfile();
+    if (!fileListAllMode) {
+      await resolveCurrentUserProfile();
+    }
     const qs = new URLSearchParams({
       limit: String(FILE_PAGE_SIZE),
       offset: String(fileListOffset),
@@ -148,7 +164,9 @@ async function fetchAndPaint({ silent, reset = false }) {
     const userKey = currentUserNameCandidates().join('|');
     fileListCache = { ts: Date.now(), rows: fileListRows.slice(), uniqueCount: fileListUniqueCount, key: `${modeKey}:${userKey}` };
 
-    paintFileList(fileListRows, { cached: false, uniqueCount: fileListUniqueCount });
+    if (renderNow && modalContext.fileListEl && modalContext.fileListEl.offsetParent !== null) {
+      paintFileList(fileListRows, { cached: false, uniqueCount: fileListUniqueCount });
+    }
   } catch (e) {
     console.warn('[file-list] load error', e);
     if (!silent && modalContext.fileListEl) {
@@ -164,7 +182,7 @@ function paintFileList(rows, { cached, uniqueCount }) {
   if (!fileListEl) return;
 
   const creators = [...new Set(rows.map(r => String(r?.creator_name || 'Unknown')))].sort();
-  const signedInAs = currentUserProfile.name || currentUserProfile.username || 'Unknown User';
+  const signedInAs = currentUserProfile.name || currentUserProfile.username || 'User';
 
   fileListEl.innerHTML = `
     <div style="margin-bottom: 12px; display: flex; gap: 8px;">

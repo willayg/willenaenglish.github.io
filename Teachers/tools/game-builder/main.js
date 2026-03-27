@@ -87,10 +87,10 @@ import {
   handleGenerateExamples
 } from './ui/event-handlers.js?v=20260328e';
 import { ENDPOINTS, STORAGE_KEYS, ACTIONS, DEFAULTS, TOAST_DURATION } from './constants.js';
-import { initFileListModal } from './ui/file-list.js?v=20260328j';
+import { initFileListModal } from './ui/file-list.js?v=20260328k';
 import { loadWorksheetIntoBuilder } from './services/worksheet-service.js?v=20260328e';
 
-const GB_BUILD_STAMP = 'GB_BUILD 20260328j · all-users-default';
+const GB_BUILD_STAMP = 'GB_BUILD 20260328k · faster-modal-open';
 
 function injectBuilderBuildStamp() {
   try {
