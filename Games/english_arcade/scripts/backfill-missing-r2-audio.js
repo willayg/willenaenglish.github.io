@@ -34,7 +34,8 @@ function parseArgs(argv) {
     lookupAudioBaseUrl: process.env.EA_AUDIT_AUDIO_BASE_URL || 'https://api.willenaenglish.com',
     lookupSentenceBaseUrl: process.env.EA_AUDIT_SENTENCE_BASE_URL || 'https://willena-proxy.willena.workers.dev',
     // Generation/upload endpoint (Netlify-hosted functions with Eleven/R2 env)
-    generateBaseUrl: process.env.EA_BACKFILL_BASE_URL || 'https://staging.willenaenglish.com'
+    generateBaseUrl: process.env.EA_BACKFILL_BASE_URL || 'https://staging.willenaenglish.com',
+    timeoutMs: Number(process.env.EA_BACKFILL_TIMEOUT_MS || 45000)
   };
 
   for (let i = 2; i < argv.length; i++) {
@@ -49,6 +50,10 @@ function parseArgs(argv) {
     else if (a === '--lookup-audio-base-url' && argv[i + 1]) args.lookupAudioBaseUrl = String(argv[++i]).trim();
     else if (a === '--lookup-sentence-base-url' && argv[i + 1]) args.lookupSentenceBaseUrl = String(argv[++i]).trim();
     else if (a === '--generate-base-url' && argv[i + 1]) args.generateBaseUrl = String(argv[++i]).trim();
+    else if (a === '--timeout-ms' && argv[i + 1]) {
+      const n = Number(argv[++i]);
+      if (Number.isFinite(n) && n > 0) args.timeoutMs = Math.floor(n);
+    }
   }
 
   if (!['sentence', 'word', 'all'].includes(args.mode)) {
@@ -67,17 +72,32 @@ async function readJson(absPath) {
   return JSON.parse(raw);
 }
 
-async function postJson(url, body) {
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body)
-  });
-  const txt = await res.text().catch(() => '');
-  let js = null;
-  try { js = txt ? JSON.parse(txt) : null; } catch { js = null; }
-  if (!res.ok) throw new Error(`HTTP ${res.status} ${url} ${(txt || '').slice(0, 220)}`);
-  return js;
+async function postJson(url, body, timeoutMs = 45000) {
+  let lastErr = null;
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    try {
+      const init = {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      };
+      if (typeof AbortSignal !== 'undefined' && typeof AbortSignal.timeout === 'function') {
+        init.signal = AbortSignal.timeout(timeoutMs);
+      }
+      const res = await fetch(url, init);
+      const txt = await res.text().catch(() => '');
+      let js = null;
+      try { js = txt ? JSON.parse(txt) : null; } catch { js = null; }
+      if (!res.ok) throw new Error(`HTTP ${res.status} ${url} ${(txt || '').slice(0, 220)}`);
+      return js;
+    } catch (e) {
+      lastErr = e;
+      if (attempt < 2) {
+        await new Promise(r => setTimeout(r, 600));
+      }
+    }
+  }
+  throw lastErr;
 }
 
 function getSentenceTextFromItem(item, targetSid) {
@@ -120,24 +140,24 @@ async function verifySentenceExists(args, sentenceId) {
   const isLocal = /^local_/i.test(String(sentenceId || '').trim());
   if (isLocal) {
     const keys = [`sent_${sentenceId}.mp3`, `sent_${sentenceId}`];
-    const js = await postJson(`${args.lookupAudioBaseUrl}/.netlify/functions/get_audio_urls`, { words: keys });
+    const js = await postJson(`${args.lookupAudioBaseUrl}/.netlify/functions/get_audio_urls`, { words: keys }, args.timeoutMs);
     const map = (js && js.results) || {};
     const hit = map[keys[0]] || map[keys[1]];
     return !!(hit && hit.exists);
   }
-  const js = await postJson(`${args.lookupSentenceBaseUrl}/.netlify/functions/get_sentence_audio_urls`, { sentence_ids: [sentenceId] });
+  const js = await postJson(`${args.lookupSentenceBaseUrl}/.netlify/functions/get_sentence_audio_urls`, { sentence_ids: [sentenceId] }, args.timeoutMs);
   const rec = js && js.results ? js.results[sentenceId] : null;
   return !!(rec && rec.exists);
 }
 
 async function verifyWordExists(args, wordKey) {
-  const js = await postJson(`${args.lookupAudioBaseUrl}/.netlify/functions/get_audio_urls`, { words: [wordKey] });
+  const js = await postJson(`${args.lookupAudioBaseUrl}/.netlify/functions/get_audio_urls`, { words: [wordKey] }, args.timeoutMs);
   const rec = js && js.results ? js.results[wordKey] : null;
   return !!(rec && rec.exists);
 }
 
 async function synthesizeText(args, text) {
-  const js = await postJson(`${args.generateBaseUrl}/.netlify/functions/eleven_labs_proxy`, { text });
+  const js = await postJson(`${args.generateBaseUrl}/.netlify/functions/eleven_labs_proxy`, { text }, args.timeoutMs);
   if (!js || !js.audio) throw new Error('eleven_labs_proxy missing audio field');
   return js.audio;
 }
@@ -146,7 +166,7 @@ async function uploadKey(args, keyBase, base64Audio) {
   return postJson(`${args.generateBaseUrl}/.netlify/functions/upload_audio`, {
     word: keyBase,
     fileDataBase64: base64Audio
-  });
+  }, args.timeoutMs);
 }
 
 async function backfillSentences(args, report) {
