@@ -424,12 +424,15 @@ body { margin:0; background: linear-gradient(135deg, #6b6b6b 0%, #696969 100%); 
 .mint-ai-section-divider { height:1px; background:#93cbcf; margin:4px 0 8px 0; }
 .mint-ai-subtitle { font-size:1.05em; font-weight:700; color:#045c63; margin:0 0 2px 0; }
 .mint-ai-hint { font-size:0.8em; color:#64748b; margin:0 0 6px 0; }
+.mint-ai-inline-toggle { display:inline-flex; align-items:center; gap:6px; margin-left:2px; }
+.mint-ai-inline-toggle input[type="checkbox"] { margin:0; }
 .mint-ai-preview .sent-item { padding:4px 0; border-bottom:1px solid #e8ecef; }
 .mint-ai-preview .sent-item:last-child { border-bottom:none; }
 .mint-ai-preview .sent-eng { font-weight:600; color:#1a1a1a; }
 .mint-ai-preview .sent-kor { color:#5a6a7a; font-size:0.92em; }
-.mint-ai-preview .sent-ex { color:#0c5b69; font-style:italic; font-size:0.92em; }
-.mint-ai-preview .sent-ex-kor { color:#7a8a9a; font-size:0.85em; }
+.mint-ai-preview .sent-example-stack { display:flex; flex-direction:column; gap:2px; margin-top:2px; }
+.mint-ai-preview .sent-ex-en { color:#0c5b69; font-size:0.92em; line-height:1.35; }
+.mint-ai-preview .sent-ex-ko { color:#5f6f83; font-size:0.88em; line-height:1.35; }
 
 @media (max-width: 900px) {
   .mint-ai-card { flex-direction:column; min-height:auto; }

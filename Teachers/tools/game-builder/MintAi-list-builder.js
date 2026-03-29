@@ -226,6 +226,7 @@ export function initMintAiListBuilder({
   const sentPatternExamples = document.getElementById('mintAiPatternExamples');
   const sentDiff = document.getElementById('mintAiSentDifficulty');
   const sentGenerateBtn = document.getElementById('mintAiSentGenerate');
+  const sentIncludeKorToggle = document.getElementById('mintAiIncludeSentenceKor');
 
   // Sentence mode toggle
   let sentenceMode = 'auto'; // 'auto' | 'pattern'
@@ -311,16 +312,38 @@ export function initMintAiListBuilder({
     const items = wordPairs.length ? wordPairs : parseLinesToPairs(aiWordlist.value);
     if (!items.length) { aiPreview.textContent = AI_PREVIEW_PLACEHOLDER; return; }
 
+    const includeKor = sentIncludeKorToggle ? !!sentIncludeKorToggle.checked : true;
+
     aiPreview.innerHTML = items.map((w, i) => {
       const sd = sentenceData[i] || {};
       const ex = sd.example || '';
       const exKor = sd.ex_kor || '';
       return `<div class="sent-item" data-idx="${i}">
         <div class="sent-eng">${escapeHtml(w.eng)}${w.kor ? ' <span class="sent-kor">(' + escapeHtml(w.kor) + ')</span>' : ''}</div>
-        ${ex ? '<div class="sent-ex">' + escapeHtml(ex) + '</div>' : ''}
-        ${exKor ? '<div class="sent-ex-kor">' + escapeHtml(exKor) + '</div>' : ''}
+        ${(ex || (includeKor && exKor)) ? `<div class="sent-example-stack">
+          ${ex ? '<div class="sent-ex-en">' + escapeHtml(ex) + '</div>' : ''}
+          ${(includeKor && exKor) ? '<div class="sent-ex-ko">' + escapeHtml(exKor) + '</div>' : ''}
+        </div>` : ''}
       </div>`;
     }).join('');
+  }
+
+  async function ensureKoreanSentenceTranslations(items) {
+    const missingRows = items
+      .map((row, idx) => ({ ...row, idx }))
+      .filter(row => row.example && !String(row.ex_kor || '').trim());
+
+    if (!missingRows.length) return items;
+
+    const trPrompt = buildMissingSentenceTranslationPrompt(missingRows);
+    const trRaw = await fetchOpenAiText(trPrompt);
+    const translations = parseTranslationArray(trRaw, missingRows.length);
+    for (let i = 0; i < missingRows.length; i++) {
+      const target = items[missingRows[i].idx];
+      const ko = String(translations[i] || '').trim();
+      if (target && ko) target.ex_kor = ko;
+    }
+    return items;
   }
 
   /** Show sentence section after words are available */
@@ -407,23 +430,10 @@ export function initMintAiListBuilder({
       sentenceData = parseSentenceOutput(raw, wordPairs);
 
       // Fallback: if model omitted Korean sentence translations, fill missing ex_kor in one batch call.
-      const missingRows = sentenceData
-        .map((row, idx) => ({ ...row, idx }))
-        .filter(row => row.example && !String(row.ex_kor || '').trim());
-
-      if (missingRows.length) {
-        try {
-          const trPrompt = buildMissingSentenceTranslationPrompt(missingRows);
-          const trRaw = await fetchOpenAiText(trPrompt);
-          const translations = parseTranslationArray(trRaw, missingRows.length);
-          for (let i = 0; i < missingRows.length; i++) {
-            const target = sentenceData[missingRows[i].idx];
-            const ko = String(translations[i] || '').trim();
-            if (target && ko) target.ex_kor = ko;
-          }
-        } catch (trErr) {
-          console.warn('[MintAI] sentence translation fallback failed:', trErr?.message || trErr);
-        }
+      try {
+        sentenceData = await ensureKoreanSentenceTranslations(sentenceData);
+      } catch (trErr) {
+        console.warn('[MintAI] sentence translation fallback failed:', trErr?.message || trErr);
       }
 
       renderSentencePreview(wordPairs);
@@ -435,18 +445,33 @@ export function initMintAiListBuilder({
 
   if (aiClearBtn) aiClearBtn.onclick = () => { aiWordlist.value = ''; sentenceData = []; renderAiPreviewFromWordlist(); };
 
+  if (sentIncludeKorToggle) {
+    sentIncludeKorToggle.addEventListener('change', () => {
+      renderSentencePreview(parseLinesToPairs(aiWordlist.value));
+    });
+  }
+
   if (aiInsertBtn) aiInsertBtn.onclick = async () => {
     const sourceText = (aiWordlist?.value || '').trim();
     const items = parseLinesToPairs(sourceText);
     if (!items.length) return;
 
+    const includeKor = sentIncludeKorToggle ? !!sentIncludeKorToggle.checked : true;
+
     // Merge sentence data into items if available
     if (sentenceData.length) {
+      if (includeKor) {
+        try {
+          sentenceData = await ensureKoreanSentenceTranslations(sentenceData);
+        } catch (e) {
+          console.warn('[MintAI] insert-time sentence translation fallback failed:', e?.message || e);
+        }
+      }
       for (let i = 0; i < items.length; i++) {
         const sd = sentenceData[i];
         if (sd) {
           if (sd.example) items[i].example = sd.example;
-          if (sd.ex_kor) items[i].ex_kor = sd.ex_kor;
+          if (includeKor && sd.ex_kor) items[i].ex_kor = sd.ex_kor;
         }
       }
     }
