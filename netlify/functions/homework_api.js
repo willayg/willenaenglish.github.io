@@ -354,19 +354,18 @@ async function updateAssignmentMeta(event) {
 
 async function autoExpireAssignmentsPastGrace({ className = null } = {}) {
   const now = new Date();
-  // Auto-end only after a 2-day grace window past due_at.
-  const cutoff = new Date(now.getTime() - (2 * 24 * 60 * 60 * 1000)).toISOString();
+  const nowMs = now.getTime();
+  const graceMs = 2 * 24 * 60 * 60 * 1000;
   let query = supabase
     .from('homework_assignments')
-    .update({ active: false })
     .eq('active', true)
-    .lte('due_at', cutoff);
+    .select('id, due_at');
 
   if (className) {
     query = query.eq('class', className);
   }
 
-  const { data, error } = await query.select('id');
+  const { data, error } = await query;
   if (error) {
     console.error('autoExpireAssignmentsPastGrace error:', {
       message: error.message,
@@ -377,7 +376,36 @@ async function autoExpireAssignmentsPastGrace({ className = null } = {}) {
     return { expiredCount: 0, error };
   }
 
-  return { expiredCount: Array.isArray(data) ? data.length : 0, error: null };
+  const overdueIds = (Array.isArray(data) ? data : [])
+    .filter((row) => {
+      const dueMs = Date.parse(String(row?.due_at || ''));
+      if (!Number.isFinite(dueMs)) return false;
+      return (nowMs - dueMs) > graceMs;
+    })
+    .map((row) => row.id)
+    .filter(Boolean);
+
+  if (!overdueIds.length) {
+    return { expiredCount: 0, error: null };
+  }
+
+  const { data: updated, error: updateErr } = await supabase
+    .from('homework_assignments')
+    .update({ active: false })
+    .in('id', overdueIds)
+    .select('id');
+
+  if (updateErr) {
+    console.error('autoExpireAssignmentsPastGrace update error:', {
+      message: updateErr.message,
+      details: updateErr.details,
+      hint: updateErr.hint,
+      code: updateErr.code
+    });
+    return { expiredCount: 0, error: updateErr };
+  }
+
+  return { expiredCount: Array.isArray(updated) ? updated.length : overdueIds.length, error: null };
 }
 
 async function listAssignments(event) {
