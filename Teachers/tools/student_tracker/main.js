@@ -272,6 +272,16 @@ let sortDirection = 'asc'; // 'asc' or 'desc'
 let classTrackerSelectedClass = null;
 let classesWithActiveHomework = new Set();
 
+function isAssignmentEffectivelyActive(assignment, now = new Date()) {
+  if (!assignment || !assignment.active) return false;
+  const dueRaw = assignment.due_at;
+  if (!dueRaw) return true;
+  const dueDate = new Date(dueRaw);
+  if (!Number.isFinite(dueDate.getTime())) return true;
+  const graceMs = 2 * 24 * 60 * 60 * 1000;
+  return (now.getTime() - dueDate.getTime()) <= graceMs;
+}
+
 // Chart instances
 let accuracyChartInstance = null;
 let modeSessionsChartInstance = null;
@@ -1174,7 +1184,7 @@ async function refreshHomeworkActiveStates() {
     if (!data || data.success !== true) throw new Error(data?.error || 'Unexpected response');
     const newSet = new Set();
     (Array.isArray(data.assignments) ? data.assignments : []).forEach(assign => {
-      if (assign && assign.active) {
+      if (isAssignmentEffectivelyActive(assign)) {
         const key = canonicalClassKey(assign.class || assign.class_name || assign.className);
         if (key) newSet.add(key);
       }
@@ -1221,8 +1231,11 @@ async function loadHomeworkForClass(className, displayName) {
 function renderAssignmentsList(assignments, showEnded, className, displayName) {
   const assignmentList = document.getElementById('assignmentList');
   if (!assignmentList) return;
-  
-  const filtered = showEnded ? assignments.filter(a => !a.active) : assignments.filter(a => a.active);
+
+  const now = new Date();
+  const filtered = showEnded
+    ? assignments.filter(a => !isAssignmentEffectivelyActive(a, now))
+    : assignments.filter(a => isAssignmentEffectivelyActive(a, now));
   
   if (!filtered.length) {
     assignmentList.innerHTML = `<div class="empty" style="padding:16px; text-align:center; color:#6b7280;">No ${showEnded ? 'ended' : 'active'} assignments.</div>`;
@@ -1247,8 +1260,9 @@ function renderAssignmentsList(assignments, showEnded, className, displayName) {
         countdown = 'Past due';
       }
     }
-    const endedClass = a.active ? '' : 'ended';
-    const actionButton = a.active 
+    const effectiveActive = isAssignmentEffectivelyActive(a, now);
+    const endedClass = effectiveActive ? '' : 'ended';
+    const actionButton = effectiveActive
       ? `<button type="button" class="ghost hw-end-btn" data-assignment-id="${a.id}" style="flex: 1; padding: 4px 6px; font-size: 0.7rem;">End</button>`
       : `<button type="button" class="ghost hw-delete-btn" data-assignment-id="${a.id}" style="flex: 1; padding: 4px 6px; font-size: 0.7rem; color: #dc2626; border-color: #dc2626;">Delete</button>`;
     return `<div class="hw-assignment-card ${endedClass}" data-assignment-id="${a.id}" style="padding:10px 12px; border: 2px solid #22d3ee; border-radius: 8px; box-shadow: 0 2px 8px rgba(34,211,238,0.08), 0 1px 3px rgba(0,0,0,.04); cursor: pointer; transition: box-shadow 0.18s, transform 0.18s, border-color 0.18s;">
