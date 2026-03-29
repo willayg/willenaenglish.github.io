@@ -64,7 +64,7 @@ if (!('currentGameId' in window)) Object.defineProperty(window, 'currentGameId',
   set(v) { setCurrentGameId(v); }
 });
 // Phase 3: Render & UI extraction
-import { buildRowHTML, applyTableToggles } from './render/row-html.js?v=20260328e';
+import { buildRowHTML, applyTableToggles } from './render/row-html.js?v=20260329a';
 import { ensureMaterialIcons, buildGameCardHTML, buildFileListHTML } from './render/file-grid.js?v=20260328m';
 import { 
   showEditListModal as showEditListModalUI, 
@@ -90,7 +90,7 @@ import { ENDPOINTS, STORAGE_KEYS, ACTIONS, DEFAULTS, TOAST_DURATION } from './co
 import { initFileListModal } from './ui/file-list.js?v=20260329a';
 import { loadWorksheetIntoBuilder } from './services/worksheet-service.js?v=20260328e';
 
-const GB_BUILD_STAMP = 'GB_BUILD 20260329j - builder-korean-sentence-toggle';
+const GB_BUILD_STAMP = 'GB_BUILD 20260329k - builder-korean-sentence-row-cachefix';
 
 function isStagingLikeHost(host) {
   const h = String(host || '').toLowerCase();
