@@ -63,6 +63,123 @@
     .hw-notif-meta { font-size: 11px; color: #6b7280; margin-top: 1px; }
     .hw-notif-stars { font-size: 12px; flex-shrink: 0; color: #f59e0b; letter-spacing: -1px; }
     .hw-notif-time { font-size: 11px; color: #9ca3af; flex-shrink: 0; white-space: nowrap; }
+    .hw-notif-footer { display: flex; gap: 8px; padding: 10px 14px 14px; border-top: 1px solid #eef2f7; background: #fafafa; }
+    .hw-notif-footer-btn,
+    .hw-notif-footer-link {
+      flex: 1;
+      text-align: center;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 9px 10px;
+      text-decoration: none;
+      border: 1px solid #cfe7ea;
+      background: #ffffff;
+      color: #19777e;
+      cursor: pointer;
+    }
+    .hw-notif-footer-btn:hover,
+    .hw-notif-footer-link:hover { background: #eefbfc; }
+
+    .hw-status-modal-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.45);
+      z-index: 10020;
+      padding: 24px;
+      align-items: center;
+      justify-content: center;
+    }
+    .hw-status-modal {
+      width: min(860px, 100%);
+      max-height: min(82vh, 760px);
+      overflow: hidden;
+      background: #ffffff;
+      border-radius: 16px;
+      box-shadow: 0 20px 48px rgba(0,0,0,0.22);
+      display: flex;
+      flex-direction: column;
+    }
+    .hw-status-modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 16px 18px;
+      border-bottom: 1px solid #e5e7eb;
+      background: #f8fafc;
+    }
+    .hw-status-modal-title { font-size: 16px; font-weight: 700; color: #111827; margin: 0; }
+    .hw-status-modal-close {
+      border: none;
+      background: transparent;
+      font-size: 24px;
+      line-height: 1;
+      cursor: pointer;
+      color: #64748b;
+      padding: 0;
+    }
+    .hw-status-modal-body {
+      padding: 16px 18px 20px;
+      overflow: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      background: #f8fafc;
+    }
+    .hw-status-loading,
+    .hw-status-empty {
+      padding: 28px 16px;
+      text-align: center;
+      color: #64748b;
+      background: #ffffff;
+      border-radius: 12px;
+      border: 1px solid #e5e7eb;
+    }
+    .hw-status-card {
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
+      border-radius: 14px;
+      overflow: hidden;
+    }
+    .hw-status-card-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: flex-start;
+      padding: 14px 16px;
+      border-bottom: 1px solid #eef2f7;
+    }
+    .hw-status-card-title { margin: 0; font-size: 15px; font-weight: 700; color: #111827; }
+    .hw-status-card-meta { margin-top: 4px; font-size: 12px; color: #64748b; }
+    .hw-status-card-counts { text-align: right; font-size: 12px; color: #334155; }
+    .hw-status-card-counts strong { display: block; font-size: 15px; color: #0f766e; }
+    .hw-status-lists { display: grid; grid-template-columns: 1fr 1fr; gap: 0; }
+    .hw-status-list { padding: 14px 16px; }
+    .hw-status-list + .hw-status-list { border-left: 1px solid #eef2f7; }
+    .hw-status-list h4 { margin: 0 0 10px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; }
+    .hw-status-person { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 7px 0; border-bottom: 1px solid #f1f5f9; }
+    .hw-status-person:last-child { border-bottom: none; }
+    .hw-status-person-name { font-size: 13px; font-weight: 600; color: #111827; }
+    .hw-status-person-meta { font-size: 11px; color: #64748b; margin-top: 2px; }
+    .hw-status-done-badge,
+    .hw-status-pending-badge {
+      flex-shrink: 0;
+      border-radius: 999px;
+      padding: 4px 8px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .hw-status-done-badge { background: #dcfce7; color: #166534; }
+    .hw-status-pending-badge { background: #fee2e2; color: #991b1b; }
+
+    @media (max-width: 700px) {
+      .hw-status-modal-backdrop { padding: 12px; }
+      .hw-status-lists { grid-template-columns: 1fr; }
+      .hw-status-list + .hw-status-list { border-left: none; border-top: 1px solid #eef2f7; }
+      .hw-notif-footer { flex-direction: column; }
+    }
   </style>
 
   <div class="burger-menu">
@@ -78,6 +195,22 @@
         </div>
         <div class="hw-notif-body">
           <div class="hw-notif-loading">Loading…</div>
+        </div>
+        <div class="hw-notif-footer">
+          <button type="button" class="hw-notif-footer-btn" id="hwNotifStatusBtn">Active Homework</button>
+          <a class="hw-notif-footer-link" href="/Teachers/tools/student_tracker/student_tracker.html?tab=homework">Open Tracker</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="hw-status-modal-backdrop" id="hwStatusModalBackdrop" aria-hidden="true">
+      <div class="hw-status-modal" role="dialog" aria-modal="true" aria-label="Active homework status">
+        <div class="hw-status-modal-header">
+          <h3 class="hw-status-modal-title">Active Homework</h3>
+          <button type="button" class="hw-status-modal-close" id="hwStatusModalClose" aria-label="Close">×</button>
+        </div>
+        <div class="hw-status-modal-body" id="hwStatusModalBody">
+          <div class="hw-status-loading">Loading active homework…</div>
         </div>
       </div>
     </div>

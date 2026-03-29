@@ -86,6 +86,9 @@ exports.handler = async (event) => {
     if (action === 'teacher_notifications') {
       return await teacherNotifications(event);
     }
+    if (action === 'teacher_homework_status') {
+      return await teacherHomeworkStatus(event);
+    }
     return _json(400, { success: false, error: 'Invalid action' });
   } catch (err) {
     console.error('homework_api error:', err);
@@ -476,6 +479,24 @@ function parseAssignmentMeta(rawMeta) {
     }
   }
   return (rawMeta && typeof rawMeta === 'object') ? rawMeta : {};
+}
+
+function getAssignmentTargetStudentIds(rawMeta) {
+  const meta = parseAssignmentMeta(rawMeta);
+  const ids = new Set();
+  if (Array.isArray(meta.target_student_ids)) {
+    meta.target_student_ids.forEach((value) => {
+      const id = String(value || '').trim();
+      if (id) ids.add(id);
+    });
+  }
+  if (Array.isArray(meta.target_students)) {
+    meta.target_students.forEach((entry) => {
+      const id = String(entry?.id || '').trim();
+      if (id) ids.add(id);
+    });
+  }
+  return Array.from(ids);
 }
 
 async function assignmentProgress(event) {
@@ -1376,4 +1397,166 @@ async function teacherNotifications(event) {
     since,
     notifications,
   });
+}
+
+async function teacherHomeworkStatus(event) {
+  const authUserId = await getUserIdFromCookie(event);
+  if (!authUserId) return _json(401, { success: false, error: 'Not signed in' });
+
+  const { data: prof, error: profErr } = await supabase
+    .from('profiles')
+    .select('id, role, approved')
+    .eq('id', authUserId)
+    .single();
+  if (profErr || !prof) return _json(403, { success: false, error: 'Profile not found' });
+  if (!['teacher', 'admin'].includes(String(prof.role || '').toLowerCase())) {
+    return _json(403, { success: false, error: 'Only teachers can view homework status' });
+  }
+
+  const { data: assignments, error: aErr } = await supabase
+    .from('homework_assignments')
+    .select('id, title, class, due_at, list_meta, active, created_at')
+    .eq('created_by', authUserId)
+    .eq('active', true)
+    .order('due_at', { ascending: true });
+
+  if (aErr) {
+    console.error('[teacher_homework_status] assignments fetch error:', aErr.message);
+    return _json(500, { success: false, error: 'Failed to fetch assignments' });
+  }
+
+  if (!assignments || !assignments.length) {
+    return _json(200, { success: true, assignments: [] });
+  }
+
+  const classes = [...new Set(assignments.map((a) => String(a.class || '').trim()).filter(Boolean))];
+  const { data: classProfiles, error: pErr } = await supabase
+    .from('profiles')
+    .select('id, name, korean_name, class, role')
+    .in('class', classes)
+    .in('role', ['student', 'Student']);
+
+  if (pErr) {
+    console.error('[teacher_homework_status] profiles fetch error:', pErr.message);
+    return _json(500, { success: false, error: 'Failed to fetch student roster' });
+  }
+
+  const studentsByClass = new Map();
+  const studentsById = new Map();
+  (classProfiles || []).forEach((student) => {
+    if (!studentsByClass.has(student.class)) studentsByClass.set(student.class, []);
+    studentsByClass.get(student.class).push(student);
+    studentsById.set(student.id, student);
+  });
+
+  const allStudentIds = [...studentsById.keys()];
+  const tokenToAssignment = new Map();
+  assignments.forEach((assignment) => {
+    const meta = parseAssignmentMeta(assignment.list_meta);
+    const tokens = Array.isArray(meta.run_tokens)
+      ? meta.run_tokens.map((entry) => entry?.token).filter(Boolean)
+      : [];
+    tokens.forEach((token) => tokenToAssignment.set(token, assignment));
+  });
+
+  const completionMap = new Map();
+  if (allStudentIds.length && tokenToAssignment.size) {
+    const { data: sessions, error: sErr } = await supabase
+      .from('progress_sessions')
+      .select('user_id, mode, summary, ended_at')
+      .in('user_id', allStudentIds)
+      .not('ended_at', 'is', null)
+      .order('ended_at', { ascending: false })
+      .limit(2000);
+
+    if (sErr) {
+      console.error('[teacher_homework_status] sessions fetch error:', sErr.message);
+      return _json(500, { success: false, error: 'Failed to fetch homework completion status' });
+    }
+
+    (sessions || []).forEach((sess) => {
+      let summary = sess.summary;
+      if (typeof summary === 'string') {
+        try { summary = JSON.parse(summary); } catch { summary = {}; }
+      }
+      summary = summary || {};
+      const token = summary.assignment_run;
+      if (!token) return;
+
+      const assignment = tokenToAssignment.get(token);
+      if (!assignment) return;
+
+      let stars = 0;
+      if (typeof summary.stars === 'number') {
+        stars = summary.stars;
+      } else {
+        let acc = null;
+        if (typeof summary.accuracy === 'number') acc = summary.accuracy;
+        else if (typeof summary.score === 'number' && typeof summary.total === 'number' && summary.total > 0) acc = summary.score / summary.total;
+        if (acc !== null) {
+          if (acc >= 1) stars = 5;
+          else if (acc >= 0.95) stars = 4;
+          else if (acc >= 0.90) stars = 3;
+          else if (acc >= 0.80) stars = 2;
+          else if (acc >= 0.60) stars = 1;
+        }
+      }
+      if (stars < 1) return;
+
+      const key = `${assignment.id}__${sess.user_id}`;
+      const existing = completionMap.get(key);
+      if (!existing || new Date(sess.ended_at) > new Date(existing.completed_at)) {
+        completionMap.set(key, {
+          user_id: sess.user_id,
+          completed_at: sess.ended_at,
+          stars,
+          mode: sess.mode,
+        });
+      }
+    });
+  }
+
+  const assignmentStatus = assignments.map((assignment) => {
+    const targetIds = getAssignmentTargetStudentIds(assignment.list_meta);
+    let roster = (studentsByClass.get(assignment.class) || []).slice();
+    if (targetIds.length) {
+      roster = targetIds
+        .map((id) => studentsById.get(id) || roster.find((student) => student.id === id))
+        .filter(Boolean);
+    }
+
+    const done = [];
+    const pending = [];
+    roster.forEach((student) => {
+      const status = completionMap.get(`${assignment.id}__${student.id}`);
+      const entry = {
+        user_id: student.id,
+        name: student.name || null,
+        korean_name: student.korean_name || null,
+      };
+      if (status) {
+        done.push({ ...entry, completed_at: status.completed_at, stars: status.stars, mode: status.mode });
+      } else {
+        pending.push(entry);
+      }
+    });
+
+    done.sort((a, b) => new Date(b.completed_at) - new Date(a.completed_at));
+    pending.sort((a, b) => String(a.name || a.korean_name || '').localeCompare(String(b.name || b.korean_name || '')));
+
+    return {
+      assignment_id: assignment.id,
+      assignment_title: assignment.title,
+      class: assignment.class,
+      due_at: assignment.due_at,
+      created_at: assignment.created_at,
+      completed_count: done.length,
+      pending_count: pending.length,
+      total_count: roster.length,
+      done,
+      pending,
+    };
+  });
+
+  return _json(200, { success: true, assignments: assignmentStatus });
 }

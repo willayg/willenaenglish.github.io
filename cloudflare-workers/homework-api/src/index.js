@@ -1298,6 +1298,144 @@ export default {
           notifications,
         }, 200, origin);
       }
+
+      if (action === 'teacher_homework_status') {
+        const authUserId = await getUserIdFromRequest(request, env);
+        if (!authUserId) {
+          return jsonResponse({ success: false, error: 'Not signed in' }, 401, origin);
+        }
+
+        const prof = await fetchProfile(env, authUserId, 'id,role,approved');
+        if (!prof) {
+          return jsonResponse({ success: false, error: 'Profile not found' }, 403, origin);
+        }
+        if (!['teacher', 'admin'].includes(String(prof.role || '').toLowerCase())) {
+          return jsonResponse({ success: false, error: 'Only teachers can view homework status' }, 403, origin);
+        }
+
+        const assignments = await supabaseSelect(
+          env,
+          'homework_assignments',
+          `created_by=eq.${encodeURIComponent(authUserId)}&active=eq.true&select=id,title,class,due_at,list_meta,active,created_at&order=due_at.asc`
+        );
+
+        if (!Array.isArray(assignments) || !assignments.length) {
+          return jsonResponse({ success: true, assignments: [] }, 200, origin);
+        }
+
+        const classes = [...new Set(assignments.map((a) => String(a.class || '').trim()).filter(Boolean))];
+        const classProfiles = classes.length
+          ? await supabaseSelect(
+              env,
+              'profiles',
+              `class=in.(${classes.map((name) => encodeURIComponent(name)).join(',')})&role=in.(student,Student)&select=id,name,korean_name,class,role`
+            )
+          : [];
+
+        const studentsByClass = new Map();
+        const studentsById = new Map();
+        (Array.isArray(classProfiles) ? classProfiles : []).forEach((student) => {
+          if (!studentsByClass.has(student.class)) studentsByClass.set(student.class, []);
+          studentsByClass.get(student.class).push(student);
+          studentsById.set(student.id, student);
+        });
+
+        const tokenToAssignment = new Map();
+        assignments.forEach((assignment) => {
+          const meta = parseJsonMaybe(assignment?.list_meta) || assignment?.list_meta || {};
+          const tokens = Array.isArray(meta?.run_tokens)
+            ? meta.run_tokens.map((entry) => entry?.token).filter(Boolean)
+            : [];
+          tokens.forEach((token) => tokenToAssignment.set(token, assignment));
+        });
+
+        const completionMap = new Map();
+        const allStudentIds = [...studentsById.keys()];
+        if (allStudentIds.length && tokenToAssignment.size) {
+          const sessions = await supabaseSelect(
+            env,
+            'progress_sessions',
+            `user_id=in.(${allStudentIds.join(',')})&ended_at=not.is.null&select=user_id,mode,summary,ended_at&order=ended_at.desc&limit=2000`
+          );
+
+          (Array.isArray(sessions) ? sessions : []).forEach((sess) => {
+            const summary = parseJsonMaybe(sess?.summary) || sess?.summary || {};
+            const token = summary?.assignment_run;
+            if (!token) return;
+
+            const assignment = tokenToAssignment.get(token);
+            if (!assignment) return;
+
+            let stars = 0;
+            if (typeof summary.stars === 'number') {
+              stars = summary.stars;
+            } else {
+              let acc = null;
+              if (typeof summary.accuracy === 'number') acc = summary.accuracy;
+              else if (typeof summary.score === 'number' && typeof summary.total === 'number' && summary.total > 0) acc = summary.score / summary.total;
+              if (acc !== null) {
+                if (acc >= 1) stars = 5;
+                else if (acc >= 0.95) stars = 4;
+                else if (acc >= 0.9) stars = 3;
+                else if (acc >= 0.8) stars = 2;
+                else if (acc >= 0.6) stars = 1;
+              }
+            }
+            if (stars < 1) return;
+
+            const key = `${assignment.id}__${sess.user_id}`;
+            const existing = completionMap.get(key);
+            if (!existing || new Date(sess.ended_at) > new Date(existing.completed_at)) {
+              completionMap.set(key, {
+                user_id: sess.user_id,
+                completed_at: sess.ended_at,
+                stars,
+                mode: sess.mode,
+              });
+            }
+          });
+        }
+
+        const assignmentStatus = assignments.map((assignment) => {
+          const meta = parseJsonMaybe(assignment?.list_meta) || assignment?.list_meta || {};
+          const targetIds = getAssignmentTargetStudentIds({ list_meta: meta });
+          let roster = (studentsByClass.get(assignment.class) || []).slice();
+          if (targetIds.length) {
+            roster = targetIds.map((id) => studentsById.get(id)).filter(Boolean);
+          }
+
+          const done = [];
+          const pending = [];
+          roster.forEach((student) => {
+            const status = completionMap.get(`${assignment.id}__${student.id}`);
+            const entry = {
+              user_id: student.id,
+              name: student.name || null,
+              korean_name: student.korean_name || null,
+            };
+            if (status) done.push({ ...entry, completed_at: status.completed_at, stars: status.stars, mode: status.mode });
+            else pending.push(entry);
+          });
+
+          done.sort((a, b) => new Date(b.completed_at) - new Date(a.completed_at));
+          pending.sort((a, b) => String(a.name || a.korean_name || '').localeCompare(String(b.name || b.korean_name || '')));
+
+          return {
+            assignment_id: assignment.id,
+            assignment_title: assignment.title,
+            class: assignment.class,
+            due_at: assignment.due_at,
+            created_at: assignment.created_at,
+            completed_count: done.length,
+            pending_count: pending.length,
+            total_count: roster.length,
+            done,
+            pending,
+          };
+        });
+
+        return jsonResponse({ success: true, assignments: assignmentStatus }, 200, origin);
+      }
       
       return jsonResponse({ success: false, error: 'Invalid action' }, 400, origin);
       
