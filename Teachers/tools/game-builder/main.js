@@ -90,7 +90,7 @@ import { ENDPOINTS, STORAGE_KEYS, ACTIONS, DEFAULTS, TOAST_DURATION } from './co
 import { initFileListModal } from './ui/file-list.js?v=20260328m';
 import { loadWorksheetIntoBuilder } from './services/worksheet-service.js?v=20260328e';
 
-const GB_BUILD_STAMP = 'GB_BUILD 20260329b - resilient-ai-modal-init';
+const GB_BUILD_STAMP = 'GB_BUILD 20260329e - save-modal-live-bindings';
 
 function isStagingLikeHost(host) {
   const h = String(host || '').toLowerCase();
@@ -236,6 +236,10 @@ const loadWorksheetsLink = document.getElementById('loadWorksheetsLink');
 const openLink = document.getElementById('openLink');
 const saveLink = document.getElementById('saveLink'); // new quick Save (silent overwrite)
 const saveAsLink = document.getElementById('saveAsLink');
+const saveModal = document.getElementById('saveModal');
+const saveModalClose = document.getElementById('saveModalClose');
+const saveModalStatus = document.getElementById('saveModalStatus');
+const confirmSave = document.getElementById('confirmSave');
 const previewBtn = document.getElementById('previewBtn');
 const createGameLink = document.getElementById('createGameLink');
 // Re-upload Images link removed (logic now auto-handled on save)
@@ -252,6 +256,45 @@ if (editListCancel) editListCancel.onclick = () => hideEditListModalUI(editListM
 if (editListSave) editListSave.onclick = () => {
   handleEditListSave(editListRaw, newRow, saveState, setList, render, toast, () => hideEditListModalUI(editListModal));
 };
+
+function closeSaveModal() {
+  if (!saveModal) return;
+  saveModal.style.display = 'none';
+  if (saveModalStatus) saveModalStatus.textContent = '';
+}
+
+if (saveAsLink) {
+  saveAsLink.onclick = (e) => {
+    e.preventDefault();
+    openSaveAsModal(titleEl, saveModal, saveModalStatus);
+  };
+}
+
+if (saveModalClose) saveModalClose.onclick = closeSaveModal;
+if (saveModal) {
+  saveModal.addEventListener('click', (e) => {
+    if (e.target === saveModal) closeSaveModal();
+  });
+}
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && saveModal && saveModal.style.display === 'flex') {
+    closeSaveModal();
+  }
+});
+
+if (confirmSave) {
+  confirmSave.onclick = () => handleSaveAsConfirm(
+    titleEl,
+    buildPayload,
+    getCurrentGameId,
+    setCurrentGameId,
+    toast,
+    cacheCurrentGame,
+    saveModal,
+    saveModalStatus
+  );
+}
 
 let __saveToastTimer = null;
 window.showSaveCenterMessage = function(message = '', opts = {}) {
