@@ -11,7 +11,7 @@ import {
   generateImageDropZoneHTML,
   escapeHtml
 } from './images.js?v=20260322u';
-import { initMintAiListBuilder } from './MintAi-list-builder.js?v=20260329b';
+import { initMintAiListBuilder } from './MintAi-list-builder.js?v=20260329c';
 import { initCreateGameModal, openCreateGameModal } from './create-game-modal.js?v=20260329b';
 import { showTinyToast, ensureLoadingOverlay, buildSkeletonHTML } from './utils/dom-helpers.js';
 import { fetchJSONSafe, timedJSONFetch, recordPerfSample, isLocalHost } from './utils/network.js';
@@ -90,7 +90,7 @@ import { ENDPOINTS, STORAGE_KEYS, ACTIONS, DEFAULTS, TOAST_DURATION } from './co
 import { initFileListModal } from './ui/file-list.js?v=20260329a';
 import { loadWorksheetIntoBuilder } from './services/worksheet-service.js?v=20260328e';
 
-const GB_BUILD_STAMP = 'GB_BUILD 20260329g - autosave-sentence-audio-enforced';
+const GB_BUILD_STAMP = 'GB_BUILD 20260329h - sentence-korean-translation-fallback';
 
 function isStagingLikeHost(host) {
   const h = String(host || '').toLowerCase();

@@ -134,6 +134,60 @@ function parseSentenceOutput(text, words) {
   return matched;
 }
 
+function parseTranslationArray(text, expectedCount) {
+  const raw = String(text || '').trim();
+  if (!raw) return [];
+
+  let jsonCandidate = raw;
+  const codeFenceMatch = raw.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
+  if (codeFenceMatch && codeFenceMatch[1]) {
+    jsonCandidate = codeFenceMatch[1].trim();
+  }
+
+  const firstBracket = jsonCandidate.indexOf('[');
+  const lastBracket = jsonCandidate.lastIndexOf(']');
+  if (firstBracket >= 0 && lastBracket > firstBracket) {
+    jsonCandidate = jsonCandidate.slice(firstBracket, lastBracket + 1);
+  }
+
+  try {
+    const parsed = JSON.parse(jsonCandidate);
+    if (Array.isArray(parsed)) {
+      return parsed
+        .map((entry) => {
+          if (typeof entry === 'string') return entry.trim();
+          if (entry && typeof entry === 'object') {
+            const pick = entry.ko || entry.korean || entry.translation || entry.ex_kor || '';
+            return String(pick || '').trim();
+          }
+          return '';
+        })
+        .filter(Boolean)
+        .slice(0, Math.max(0, Number(expectedCount) || 0));
+    }
+  } catch {}
+
+  return raw
+    .split(/\r?\n/)
+    .map(line => line.replace(/^\s*\d+\s*[).:-]?\s*/, '').trim())
+    .filter(Boolean)
+    .slice(0, Math.max(0, Number(expectedCount) || 0));
+}
+
+function buildMissingSentenceTranslationPrompt(missingRows) {
+  const numbered = missingRows
+    .map((row, idx) => `${idx + 1}. ${row.example}`)
+    .join('\n');
+
+  return [
+    'Translate these English example sentences into natural Korean for ESL students.',
+    'Return ONLY a JSON array of Korean strings in the same order as input.',
+    'No keys, no markdown, no explanation.',
+    '',
+    numbered
+  ].join('\n');
+}
+
 export function initMintAiListBuilder({
   getList,
   addItems, // (items) => {from, to}
@@ -351,6 +405,27 @@ export function initMintAiListBuilder({
       });
       const raw = await fetchOpenAiText(prompt);
       sentenceData = parseSentenceOutput(raw, wordPairs);
+
+      // Fallback: if model omitted Korean sentence translations, fill missing ex_kor in one batch call.
+      const missingRows = sentenceData
+        .map((row, idx) => ({ ...row, idx }))
+        .filter(row => row.example && !String(row.ex_kor || '').trim());
+
+      if (missingRows.length) {
+        try {
+          const trPrompt = buildMissingSentenceTranslationPrompt(missingRows);
+          const trRaw = await fetchOpenAiText(trPrompt);
+          const translations = parseTranslationArray(trRaw, missingRows.length);
+          for (let i = 0; i < missingRows.length; i++) {
+            const target = sentenceData[missingRows[i].idx];
+            const ko = String(translations[i] || '').trim();
+            if (target && ko) target.ex_kor = ko;
+          }
+        } catch (trErr) {
+          console.warn('[MintAI] sentence translation fallback failed:', trErr?.message || trErr);
+        }
+      }
+
       renderSentencePreview(wordPairs);
     } catch (e) {
       console.error('[MintAI] sentence generate failed:', e);
