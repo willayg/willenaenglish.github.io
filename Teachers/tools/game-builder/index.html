@@ -8,7 +8,7 @@
   <script src="/students/api-gateway.js?v=20260329a"></script>
   <script src="/js/api-config.js?v=20260329a"></script>
   <script src="/Teachers/tools/shared/homework-assignment.js?v=20260322a"></script>
-  <link rel="stylesheet" href="styles.css?v=20260329d" />
+  <link rel="stylesheet" href="styles.css?v=20260329e" />
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet" />
   <!-- Auth guard: redirect unauthenticated users to login with return path -->
   <script>
@@ -29,7 +29,7 @@
       } catch(e){ console.warn('[game-builder] auth guard error', e); }
     })();
   </script>
-  <script type="module" src="main.js?v=20260329i"></script>
+  <script type="module" src="main.js?v=20260329j"></script>
   <script>
     // Public base URL for R2-hosted images. IMPORTANT: For Cloudflare public buckets the domain already maps to the bucket.
     // Do NOT append the bucket name again. (Previously we had '/images' here which caused 404s like /images/words/...)
@@ -141,6 +141,13 @@
           <label class="toggle-label">
             <span class="toggle-text">Examples</span>
             <input type="checkbox" id="enableExamples" />
+            <span class="switch" aria-hidden="true"></span>
+          </label>
+        </div>
+        <div class="toggle-defs" style="grid-column: 7; display:flex; justify-content:center;">
+          <label class="toggle-label">
+            <span class="toggle-text">Korean Sentence</span>
+            <input type="checkbox" id="enableSentenceKor" checked />
             <span class="switch" aria-hidden="true"></span>
           </label>
         </div>
@@ -328,10 +335,6 @@
               <option value="medium">Medium</option>
               <option value="hard">Hard</option>
             </select>
-            <label class="mint-ai-inline-toggle" title="Insert Korean sentence translation into each row">
-              <input id="mintAiIncludeSentenceKor" type="checkbox" checked />
-              <span class="toggle-text">Include Korean sentence</span>
-            </label>
             <button id="mintAiSentGenerate" class="mint-ai-btn primary">Generate Sentences</button>
           </div>
         </div>

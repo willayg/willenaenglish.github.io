@@ -27,14 +27,17 @@ export function buildRowHTML(word, index, isLoading) {
       </div>
     </td>
     <td>
-      <div style="display:flex; gap:8px; align-items:center;">
-        <textarea class="row-input ex-textarea" data-field="example" data-idx="${index}" rows="3" placeholder="Example sentence (auto)">${escapeHtml(word.example || '')}</textarea>
-        <div class="ex-btn-group">
-          <button class="btn small refresh-btn" data-action="refresh-example" data-idx="${index}" title="Regenerate example">↻</button>
-          <button class="btn small play-sentence-btn" data-action="play-sentence" data-idx="${index}" title="Preview sentence audio">
-            <span class="play-icon">▶</span>
-          </button>
+      <div class="example-stack-cell">
+        <div style="display:flex; gap:8px; align-items:center;">
+          <textarea class="row-input ex-textarea" data-field="example" data-idx="${index}" rows="3" placeholder="Example sentence (English)">${escapeHtml(word.example || '')}</textarea>
+          <div class="ex-btn-group">
+            <button class="btn small refresh-btn" data-action="refresh-example" data-idx="${index}" title="Regenerate example">↻</button>
+            <button class="btn small play-sentence-btn" data-action="play-sentence" data-idx="${index}" title="Preview sentence audio">
+              <span class="play-icon">▶</span>
+            </button>
+          </div>
         </div>
+        <textarea class="row-input ex-kor-textarea" data-field="ex_kor" data-idx="${index}" rows="2" placeholder="Example sentence (Korean)">${escapeHtml(word.ex_kor || '')}</textarea>
       </div>
     </td>
     <td>
@@ -46,7 +49,7 @@ export function buildRowHTML(word, index, isLoading) {
 /**
  * Apply CSS classes to table based on toggle state
  */
-export function applyTableToggles(enablePicturesEl, enableDefinitionsEl, enableExamplesEl) {
+export function applyTableToggles(enablePicturesEl, enableDefinitionsEl, enableExamplesEl, enableSentenceKorEl) {
   const wordTable = document.querySelector('.word-table');
   if (!wordTable) return;
   
@@ -64,5 +67,10 @@ export function applyTableToggles(enablePicturesEl, enableDefinitionsEl, enableE
     wordTable.classList.add('hide-examples');
   } else {
     wordTable.classList.remove('hide-examples');
+  }
+  if (enableSentenceKorEl && !enableSentenceKorEl.checked) {
+    wordTable.classList.add('hide-example-kor');
+  } else {
+    wordTable.classList.remove('hide-example-kor');
   }
 }

@@ -195,6 +195,7 @@ export function initMintAiListBuilder({
   enablePicturesEl,
   enableDefinitionsEl,
   enableExamplesEl,
+  shouldIncludeSentenceKor,
   loadingImages,
   generateDefinitionForRow,
   generateExampleForRow
@@ -227,6 +228,13 @@ export function initMintAiListBuilder({
   const sentDiff = document.getElementById('mintAiSentDifficulty');
   const sentGenerateBtn = document.getElementById('mintAiSentGenerate');
   const sentIncludeKorToggle = document.getElementById('mintAiIncludeSentenceKor');
+
+  const includeKoreanSentence = () => {
+    if (typeof shouldIncludeSentenceKor === 'function') {
+      try { return !!shouldIncludeSentenceKor(); } catch {}
+    }
+    return sentIncludeKorToggle ? !!sentIncludeKorToggle.checked : true;
+  };
 
   // Sentence mode toggle
   let sentenceMode = 'auto'; // 'auto' | 'pattern'
@@ -312,7 +320,7 @@ export function initMintAiListBuilder({
     const items = wordPairs.length ? wordPairs : parseLinesToPairs(aiWordlist.value);
     if (!items.length) { aiPreview.textContent = AI_PREVIEW_PLACEHOLDER; return; }
 
-    const includeKor = sentIncludeKorToggle ? !!sentIncludeKorToggle.checked : true;
+    const includeKor = includeKoreanSentence();
 
     aiPreview.innerHTML = items.map((w, i) => {
       const sd = sentenceData[i] || {};
@@ -456,7 +464,7 @@ export function initMintAiListBuilder({
     const items = parseLinesToPairs(sourceText);
     if (!items.length) return;
 
-    const includeKor = sentIncludeKorToggle ? !!sentIncludeKorToggle.checked : true;
+    const includeKor = includeKoreanSentence();
 
     // Merge sentence data into items if available
     if (sentenceData.length) {
