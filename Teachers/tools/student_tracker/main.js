@@ -38,7 +38,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Fetch and inject burger menu template if not already present
   if (!document.getElementById('burger-menu-template')) {
     try {
-      const resp = await fetch('/components/burger-menu.html?v=20260219');
+      const resp = await fetch('/components/burger-menu.html?v=20260329b');
       const html = await resp.text();
       const tempDiv = document.createElement('div');
       tempDiv.innerHTML = html;
@@ -322,9 +322,9 @@ function friendlyListName(name){
 }
 
 function formatDateLabel(iso){
-  if (!iso) return '‚Äî';
+  if (!iso) return '??;
   const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return '‚Äî';
+  if (Number.isNaN(d.getTime())) return '??;
   const opts = { month: 'short', day: 'numeric' };
   if (d.getFullYear() !== new Date().getFullYear()) opts.year = 'numeric';
   return d.toLocaleDateString(undefined, opts);
@@ -720,12 +720,12 @@ function renderStudentDetails(d){
           <div class="label">Accuracy</div>
         </div>
         <div class="stat-card">
-          <div class="icon">‚≠ê</div>
+          <div class="icon">‚≠?/div>
           <div class="val">${t.stars||0}</div>
           <div class="label">Stars earned</div>
         </div>
         <div class="stat-card">
-          <div class="icon">üèÜ</div>
+          <div class="icon">?èÜ</div>
           <div class="val">${t.points||0}</div>
           <div class="label">Points</div>
         </div>
@@ -831,7 +831,7 @@ function renderStudentDetails(d){
       const renderGameCards = (games) => {
         return games.map((game, idx) => {
           const bestStars = Math.min(game.bestStars || 0, 5);
-          const lastPlayed = game.last_played ? formatDateLabel(game.last_played) : '‚Äî';
+          const lastPlayed = game.last_played ? formatDateLabel(game.last_played) : '??;
           const listSizeLabel = game.totalSize ? `${game.totalSize} words` : null;
           const chartId = `gameChart${idx}`;
           const modeCharts = Array.from(game.modes.values()).sort((a,b)=> (b.stars - a.stars) || ((b.attempts||0) - (a.attempts||0)));
@@ -1286,7 +1286,7 @@ function renderAssignmentsList(assignments, showEnded, className, displayName) {
       : `<button type="button" class="ghost hw-delete-btn" data-assignment-id="${a.id}" style="flex: 1; padding: 4px 6px; font-size: 0.7rem; color: #dc2626; border-color: #dc2626;">Delete</button>`;
     return `<div class="hw-assignment-card ${endedClass}" data-assignment-id="${a.id}" style="padding:10px 12px; border: 2px solid #22d3ee; border-radius: 8px; box-shadow: 0 2px 8px rgba(34,211,238,0.08), 0 1px 3px rgba(0,0,0,.04); cursor: pointer; transition: box-shadow 0.18s, transform 0.18s, border-color 0.18s;">
       <div style="font-weight: 600; font-size: 0.9rem; color: #1f2937; margin-bottom: 6px;">${a.title || 'Untitled'}</div>
-      <div style="font-size: 0.7rem; color: #999;">Due: ${dueDate ? dueDate.toLocaleDateString() : '‚Äî'} <span style="margin-left:8px; color:#19777e; font-weight:500;">${countdown}</span></div>
+      <div style="font-size: 0.7rem; color: #999;">Due: ${dueDate ? dueDate.toLocaleDateString() : '??} <span style="margin-left:8px; color:#19777e; font-weight:500;">${countdown}</span></div>
       <div style="display: flex; gap: 4px; margin-top: 8px;">
         ${actionButton}
       </div>
@@ -1554,7 +1554,7 @@ function initHomeworkShell() {
       if (!selected) {
         const subtitle = document.getElementById('homeworkStudentsSubtitle');
         if (subtitle && subtitle.textContent) {
-          const match = subtitle.textContent.match(/^(.+?)\s*[-‚Äì‚Äî:]?\s*Homework/i);
+          const match = subtitle.textContent.match(/^(.+?)\s*[-?ì‚Ä?]?\s*Homework/i);
           if (match && match[1]) {
             const displayName = match[1].trim();
             // Find the class item to get the actual class name

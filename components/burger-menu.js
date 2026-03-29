@@ -46,7 +46,7 @@ export function insertBurgerMenu(targetSelector = 'body') {
       </style>
       <div class="burger-menu">
         <div class="hw-notif-wrap">
-          <button class="hw-notif-btn" aria-label="Homework notifications" title="Homework notifications">🔔
+          <button type="button" class="hw-notif-btn" aria-label="Homework notifications" title="Homework notifications" aria-expanded="false">🔔
             <span class="hw-notif-badge" aria-live="polite"></span>
           </button>
           <div class="hw-notif-panel" role="dialog" aria-label="Homework notifications">
@@ -58,7 +58,7 @@ export function insertBurgerMenu(targetSelector = 'body') {
           </div>
         </div>
         <div style="position:relative;">
-          <button class="burger-btn" aria-label="Menu">☰</button>
+          <button type="button" class="burger-btn" aria-label="Menu">☰</button>
           <div class="burger-dropdown">
             <a href="/Teachers/index.html">Teachers Home</a>
             <a href="/Teachers/tools/manage_students.html">Manage Students</a>
@@ -241,6 +241,8 @@ function initNotificationBell(wrapper) {
 
   async function openPanel() {
     panelOpen = true;
+    bellBtn.setAttribute('aria-expanded', 'true');
+    panel.classList.add('open');
     panel.style.display = 'block';
     body.innerHTML = '<div class="hw-notif-loading">Loading…</div>';
     try {
@@ -256,6 +258,8 @@ function initNotificationBell(wrapper) {
 
   function closePanel() {
     panelOpen = false;
+    bellBtn.setAttribute('aria-expanded', 'false');
+    panel.classList.remove('open');
     panel.style.display = 'none';
   }
 
