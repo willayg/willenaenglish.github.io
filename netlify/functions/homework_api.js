@@ -83,6 +83,9 @@ exports.handler = async (event) => {
     if (action === 'link_sessions') {
       return await linkSessionsToAssignment(event);
     }
+    if (action === 'teacher_notifications') {
+      return await teacherNotifications(event);
+    }
     return _json(400, { success: false, error: 'Invalid action' });
   } catch (err) {
     console.error('homework_api error:', err);
@@ -1214,5 +1217,182 @@ async function linkSessionsToAssignment(event) {
     already_linked: sessions.length - sessionsToLink.length,
     errors: errors.length > 0 ? errors : undefined,
     run_token: runToken
+  });
+}
+
+// ─────────────────────────────────────────────────
+// TEACHER NOTIFICATIONS
+// Returns recent homework completions for all active assignments created by this teacher.
+// ?action=teacher_notifications            → full list + count
+// ?action=teacher_notifications&mode=count → just count (lightweight, polled every 60s)
+// ?since=<ISO>                             → only completions after this timestamp
+// ─────────────────────────────────────────────────
+async function teacherNotifications(event) {
+  const authUserId = await getUserIdFromCookie(event);
+  if (!authUserId) return _json(401, { success: false, error: 'Not signed in' });
+
+  const { data: prof, error: profErr } = await supabase
+    .from('profiles')
+    .select('id, role, approved')
+    .eq('id', authUserId)
+    .single();
+  if (profErr || !prof) return _json(403, { success: false, error: 'Profile not found' });
+  if (!['teacher', 'admin'].includes(String(prof.role || '').toLowerCase())) {
+    return _json(403, { success: false, error: 'Only teachers can view notifications' });
+  }
+
+  const isCountOnly = (event.queryStringParameters?.mode || '') === 'count';
+
+  // Default window: 48 hours of completions
+  const defaultSince = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
+  const rawSince = event.queryStringParameters?.since || '';
+  const since = rawSince && !isNaN(Date.parse(rawSince)) ? rawSince : defaultSince;
+
+  // Step 1: Get teacher's active assignments (created by them)
+  const { data: assignments, error: aErr } = await supabase
+    .from('homework_assignments')
+    .select('id, title, class, due_at, list_meta, active')
+    .eq('created_by', authUserId)
+    .eq('active', true);
+
+  if (aErr) {
+    console.error('[teacher_notifications] assignments fetch error:', aErr.message);
+    return _json(500, { success: false, error: 'Failed to fetch assignments' });
+  }
+
+  if (!assignments || !assignments.length) {
+    return _json(200, { success: true, count: 0, notifications: [], since });
+  }
+
+  // Collect all valid run tokens across assignments, mapped back to assignment
+  const tokenToAssignment = new Map();
+  assignments.forEach(a => {
+    const meta = parseAssignmentMeta(a.list_meta);
+    const tokens = Array.isArray(meta.run_tokens)
+      ? meta.run_tokens.map(r => r?.token).filter(Boolean)
+      : [];
+    tokens.forEach(tok => tokenToAssignment.set(tok, a));
+  });
+
+  if (!tokenToAssignment.size) {
+    return _json(200, { success: true, count: 0, notifications: [], since });
+  }
+
+  // Step 2: Fetch recent completed sessions in the time window
+  const { data: sessions, error: sErr } = await supabase
+    .from('progress_sessions')
+    .select('user_id, mode, summary, ended_at')
+    .gte('ended_at', since)
+    .not('ended_at', 'is', null)
+    .order('ended_at', { ascending: false })
+    .limit(500);
+
+  if (sErr) {
+    console.error('[teacher_notifications] sessions fetch error:', sErr.message);
+    return _json(500, { success: false, error: 'Failed to fetch sessions' });
+  }
+
+  // Step 3: Filter sessions by run token, derive stars, deduplicate per student+assignment
+  // We keep the best (highest stars) completion per student per assignment
+  const completionKey = (userId, assignmentId) => `${userId}__${assignmentId}`;
+  const bestCompletion = new Map(); // completionKey → { ...data }
+
+  (sessions || []).forEach(sess => {
+    let summary = sess.summary;
+    if (typeof summary === 'string') { try { summary = JSON.parse(summary); } catch { summary = {}; } }
+    summary = summary || {};
+
+    const token = summary.assignment_run;
+    if (!token) return;
+
+    const assignment = tokenToAssignment.get(token);
+    if (!assignment) return;
+
+    // Derive stars from accuracy
+    let stars = 0;
+    if (typeof summary.stars === 'number') {
+      stars = summary.stars;
+    } else {
+      let acc = null;
+      if (typeof summary.accuracy === 'number') acc = summary.accuracy;
+      else if (typeof summary.score === 'number' && typeof summary.total === 'number' && summary.total > 0) acc = summary.score / summary.total;
+      if (acc !== null) {
+        if (acc >= 1) stars = 5;
+        else if (acc >= 0.95) stars = 4;
+        else if (acc >= 0.90) stars = 3;
+        else if (acc >= 0.80) stars = 2;
+        else if (acc >= 0.60) stars = 1;
+      }
+    }
+
+    // Only count meaningful completions (at least 1 star)
+    if (stars < 1) return;
+
+    const key = completionKey(sess.user_id, assignment.id);
+    const existing = bestCompletion.get(key);
+    if (!existing || stars > existing.stars) {
+      bestCompletion.set(key, {
+        user_id: sess.user_id,
+        assignment_id: assignment.id,
+        assignment_title: assignment.title,
+        class: assignment.class,
+        due_at: assignment.due_at,
+        stars,
+        mode: sess.mode,
+        completed_at: sess.ended_at,
+      });
+    }
+  });
+
+  if (isCountOnly) {
+    return _json(200, { success: true, count: bestCompletion.size, since });
+  }
+
+  // Step 4: Enrich with student names via a single bulk profile fetch
+  const userIds = [...new Set([...bestCompletion.values()].map(c => c.user_id))];
+  let nameMap = new Map();
+  if (userIds.length) {
+    const { data: profiles } = await supabase
+      .from('profiles')
+      .select('id, name, korean_name')
+      .in('id', userIds);
+    (profiles || []).forEach(p => nameMap.set(p.id, { name: p.name, korean_name: p.korean_name }));
+  }
+
+  // Step 5: Group by assignment for the panel UI
+  const byAssignment = new Map();
+  for (const c of bestCompletion.values()) {
+    const profile = nameMap.get(c.user_id) || {};
+    const entry = {
+      user_id: c.user_id,
+      name: profile.name || null,
+      korean_name: profile.korean_name || null,
+      stars: c.stars,
+      mode: c.mode,
+      completed_at: c.completed_at,
+    };
+    if (!byAssignment.has(c.assignment_id)) {
+      byAssignment.set(c.assignment_id, {
+        assignment_id: c.assignment_id,
+        assignment_title: c.assignment_title,
+        class: c.class,
+        due_at: c.due_at,
+        completions: [],
+      });
+    }
+    byAssignment.get(c.assignment_id).completions.push(entry);
+  }
+
+  // Sort each assignment's completions newest first
+  const notifications = [...byAssignment.values()].map(a => ({
+    ...a,
+    completions: a.completions.sort((x, y) => new Date(y.completed_at) - new Date(x.completed_at)),
+  }));
+
+  return _json(200, {
+    success: true,
+    count: bestCompletion.size,
+    since,
+    notifications,
   });
 }
