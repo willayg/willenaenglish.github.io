@@ -131,6 +131,23 @@ function getAssignmentTargetStudentIds(assignment) {
   return Array.from(ids);
 }
 
+function getAssignmentModeMeta(rawMeta) {
+  const meta = parseJsonMaybe(rawMeta) || rawMeta || {};
+  const numberOrNull = (value) => {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : null;
+  };
+
+  return {
+    difficulty_mode: meta.difficulty_mode || null,
+    forced_mode: meta.forced_mode || meta.mode || null,
+    modes_total: numberOrNull(meta.modes_total ?? meta.total_modes ?? meta.mode_count),
+    modes_required: numberOrNull(meta.difficulty_modes_required ?? meta.modes_required),
+    required_stars: numberOrNull(meta.difficulty_required_stars ?? meta.required_stars),
+    max_stars: numberOrNull(meta.max_stars),
+  };
+}
+
 // Generate run token
 function generateRunToken(assignmentId) {
   const t = Date.now().toString(36);
@@ -1398,6 +1415,7 @@ export default {
 
         const assignmentStatus = assignments.map((assignment) => {
           const meta = parseJsonMaybe(assignment?.list_meta) || assignment?.list_meta || {};
+          const modeMeta = getAssignmentModeMeta(meta);
           const targetIds = getAssignmentTargetStudentIds({ list_meta: meta });
           let roster = (studentsByClass.get(assignment.class) || []).slice();
           if (targetIds.length) {
@@ -1426,6 +1444,7 @@ export default {
             class: assignment.class,
             due_at: assignment.due_at,
             created_at: assignment.created_at,
+            ...modeMeta,
             completed_count: done.length,
             pending_count: pending.length,
             total_count: roster.length,

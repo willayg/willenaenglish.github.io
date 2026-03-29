@@ -28,12 +28,12 @@
 }
 * { box-sizing: border-box; }
 html, body { height: 100%; }
-body { margin:0; min-height:100vh; background: var(--bg); font-family: Poppins, system-ui, -apple-system, Segoe UI, Roboto, sans-serif; color: var(--text); }
-.container { width:100%; min-height:100vh; padding:0; }
-.app-card { width:100%; min-height:100vh; background: var(--card); border:none; border-radius: 0; box-shadow:none; overflow: hidden; }
-.header { display:flex; align-items:center; gap:0.75rem; padding:1.125rem 1.5rem; border-bottom:none; position:relative; background:#39384a; color:#fff; box-shadow:0 4px 16px rgba(0,0,0,.15); }
-.header h1 { margin:0; font-size:clamp(1rem, 5vw, 1.4rem); font-weight:600; color:#ffffff; flex:1; min-width:150px; text-align:left; }
-.logo-img { height:clamp(2.5rem, 5vw, 3rem); width:auto; display:block; }
+body { margin:0; background: linear-gradient(135deg, #6b6b6b 0%, #696969 100%); font-family: Poppins, system-ui, -apple-system, Segoe UI, Roboto, sans-serif; color: var(--text); }
+.container { display:flex; align-items: center; justify-content: center; padding: 18px; }
+.app-card { width: 98vw; max-width: 98%; background: var(--card); border:1px solid var(--border); border-radius: 16px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04); overflow: hidden; }
+.header { display:flex; align-items:center; gap: 12px; padding: 5px 18px; border-bottom:1px solid rgba(95,143,155,0.35); position:relative; background: linear-gradient(135deg, #0ea5a3 0%, #9adbe2 100%); min-height: 45px; }
+.header h1 { margin:0; font-size: 1.4rem; font-weight: 700; color: #ffffff; flex:1; text-align:center; }
+.logo-img { height: 50px; width:auto; display:block; }
 .burger { position:absolute; top:12px; right:12px; background:none; border:none; font-size:22px; cursor:pointer; }
 .burger-menu { position:absolute; top:44px; right:12px; background:#eaebf0; list-style:none; padding:8px 0; margin:0; box-shadow:0 2px 8px rgba(60,60,80,0.15); border-radius:4px; z-index:10000; }
 .burger-menu a { display:block; padding:8px 16px; color:#3d3752; text-decoration:none; }
@@ -406,8 +406,7 @@ body { margin:0; min-height:100vh; background: var(--bg); font-family: Poppins, 
 
 /* Mobile */
 @media (max-width: 768px) {
-  .header { padding: 0.95rem 1rem; }
-  .header h1 { font-size: clamp(0.95rem, 4vw, 1.2rem); }
+  .app-card { width: 100%; border-radius: 0; }
   .pastel-toolbar { flex-direction: column; align-items: stretch; gap:8px; }
   .toolbar-left { display:flex; flex-wrap: wrap; gap:8px; }
   .toolbar-right { display:flex; gap:16px; }

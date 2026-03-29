@@ -38,7 +38,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Fetch and inject burger menu template if not already present
   if (!document.getElementById('burger-menu-template')) {
     try {
-      const resp = await fetch('/components/burger-menu.html?v=20260329d');
+      const resp = await fetch('/components/burger-menu.html?v=20260329e');
       const html = await resp.text();
       const tempDiv = document.createElement('div');
       tempDiv.innerHTML = html;

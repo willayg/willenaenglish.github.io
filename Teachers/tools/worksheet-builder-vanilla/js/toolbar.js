@@ -530,7 +530,7 @@
   // Initialize menu systems
   function initializeMenus() {
     // Load and setup burger menu
-    fetch('/components/burger-menu.html?v=20260329d')
+    fetch('/components/burger-menu.html?v=20260329e')
       .then(r => r.text())
       .then(burgerHtml => {
         // Insert the template into the DOM if not already present

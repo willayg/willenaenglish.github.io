@@ -1,8 +1,25 @@
 <template id="burger-menu-template">
   <style>
-    .burger-menu { position: fixed; top: 10px; right: 10px; z-index: 9999; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; display: flex; align-items: center; gap: 8px; }
-    .burger-btn { background: #00c9db; color: white; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer; font-size: 16px; }
-    .burger-btn:hover { background: #00b4c6; }
+    .burger-menu { position: fixed; top: 10px; right: 10px; z-index: 9999; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; display: flex; align-items: stretch; border-radius: 12px; overflow: visible; box-shadow: 0 10px 22px rgba(15, 23, 42, 0.22); }
+    .burger-btn,
+    .hw-notif-btn {
+      width: 42px;
+      height: 38px;
+      border: none;
+      background: linear-gradient(180deg, #19d2df 0%, #00b4c6 100%);
+      color: white;
+      cursor: pointer;
+      font-size: 16px;
+      line-height: 1;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+    }
+    .hw-notif-btn { border-radius: 12px 0 0 12px; }
+    .burger-btn { border-left: 1px solid rgba(255,255,255,0.35); border-radius: 0 12px 12px 0; }
+    .burger-btn:hover,
+    .hw-notif-btn:hover { background: linear-gradient(180deg, #12c0cf 0%, #0293a4 100%); }
     .burger-dropdown { display: none; position: absolute; top: 50px; right: 0; background: white; box-shadow: 0 4px 8px rgba(0,0,0,0.2); border-radius: 5px; min-width: 220px; max-height: 70vh; overflow: auto; }
     .burger-dropdown a { display: block; padding: 12px 16px; text-decoration: none; color: #333; border-bottom: 1px solid #eee; }
     .burger-dropdown a:hover { background: #f1f1f1; }
@@ -10,12 +27,6 @@
 
     /* ── Notification bell ── */
     .hw-notif-wrap { position: relative; }
-    .hw-notif-btn {
-      background: #00c9db; color: white; border: none;
-      padding: 10px 13px; border-radius: 5px; cursor: pointer;
-      font-size: 16px; line-height: 1; position: relative;
-    }
-    .hw-notif-btn:hover { background: #00b4c6; }
     .hw-notif-badge {
       display: none; position: absolute; top: -5px; right: -5px;
       background: #ef4444; color: white; font-size: 11px; font-weight: 700;
@@ -92,12 +103,12 @@
       justify-content: center;
     }
     .hw-status-modal {
-      width: min(860px, 100%);
-      max-height: min(82vh, 760px);
+      width: min(980px, 100%);
+      max-height: min(86vh, 820px);
       overflow: hidden;
       background: #ffffff;
-      border-radius: 16px;
-      box-shadow: 0 20px 48px rgba(0,0,0,0.22);
+      border-radius: 20px;
+      box-shadow: 0 24px 64px rgba(15, 23, 42, 0.3);
       display: flex;
       flex-direction: column;
     }
@@ -110,7 +121,9 @@
       border-bottom: 1px solid #e5e7eb;
       background: #f8fafc;
     }
+    .hw-status-modal-heading { min-width: 0; }
     .hw-status-modal-title { font-size: 16px; font-weight: 700; color: #111827; margin: 0; }
+    .hw-status-modal-subtitle { margin: 4px 0 0; font-size: 12px; color: #64748b; }
     .hw-status-modal-close {
       border: none;
       background: transparent;
@@ -121,12 +134,12 @@
       padding: 0;
     }
     .hw-status-modal-body {
-      padding: 16px 18px 20px;
+      padding: 18px;
       overflow: auto;
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-      background: #f8fafc;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 16px;
+      background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
     }
     .hw-status-loading,
     .hw-status-empty {
@@ -140,8 +153,9 @@
     .hw-status-card {
       background: #ffffff;
       border: 1px solid #e5e7eb;
-      border-radius: 14px;
+      border-radius: 16px;
       overflow: hidden;
+      box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
     }
     .hw-status-card-head {
       display: flex;
@@ -150,15 +164,31 @@
       align-items: flex-start;
       padding: 14px 16px;
       border-bottom: 1px solid #eef2f7;
+      background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
     }
     .hw-status-card-title { margin: 0; font-size: 15px; font-weight: 700; color: #111827; }
     .hw-status-card-meta { margin-top: 4px; font-size: 12px; color: #64748b; }
     .hw-status-card-counts { text-align: right; font-size: 12px; color: #334155; }
     .hw-status-card-counts strong { display: block; font-size: 15px; color: #0f766e; }
-    .hw-status-lists { display: grid; grid-template-columns: 1fr 1fr; gap: 0; }
-    .hw-status-list { padding: 14px 16px; }
+    .hw-status-card-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+    .hw-status-chip {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      padding: 4px 9px;
+      font-size: 11px;
+      font-weight: 700;
+      background: #e0f2fe;
+      color: #0369a1;
+    }
+    .hw-status-chip.mode { background: #ede9fe; color: #6d28d9; }
+    .hw-status-chip.class { background: #dcfce7; color: #166534; }
+    .hw-status-lists { display: grid; grid-template-columns: 1fr 1fr; gap: 0; align-items: start; }
+    .hw-status-list { padding: 14px 16px; min-height: 0; }
     .hw-status-list + .hw-status-list { border-left: 1px solid #eef2f7; }
     .hw-status-list h4 { margin: 0 0 10px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; }
+    .hw-status-list-scroll { max-height: 220px; overflow: auto; padding-right: 4px; }
+    .hw-status-empty-list { padding: 12px 0; font-size: 12px; color: #64748b; }
     .hw-status-person { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 7px 0; border-bottom: 1px solid #f1f5f9; }
     .hw-status-person:last-child { border-bottom: none; }
     .hw-status-person-name { font-size: 13px; font-weight: 600; color: #111827; }
@@ -175,10 +205,13 @@
     .hw-status-pending-badge { background: #fee2e2; color: #991b1b; }
 
     @media (max-width: 700px) {
+      .burger-btn,
+      .hw-notif-btn { width: 40px; height: 36px; }
       .hw-status-modal-backdrop { padding: 12px; }
       .hw-status-lists { grid-template-columns: 1fr; }
       .hw-status-list + .hw-status-list { border-left: none; border-top: 1px solid #eef2f7; }
       .hw-notif-footer { flex-direction: column; }
+      .hw-status-modal-body { grid-template-columns: 1fr; }
     }
   </style>
 
@@ -206,7 +239,10 @@
     <div class="hw-status-modal-backdrop" id="hwStatusModalBackdrop" aria-hidden="true">
       <div class="hw-status-modal" role="dialog" aria-modal="true" aria-label="Active homework status">
         <div class="hw-status-modal-header">
-          <h3 class="hw-status-modal-title">Active Homework</h3>
+          <div class="hw-status-modal-heading">
+            <h3 class="hw-status-modal-title">Active Homework</h3>
+            <p class="hw-status-modal-subtitle">See each assignment, its class, the required mode, and who is done or still pending.</p>
+          </div>
           <button type="button" class="hw-status-modal-close" id="hwStatusModalClose" aria-label="Close">×</button>
         </div>
         <div class="hw-status-modal-body" id="hwStatusModalBody">
@@ -216,7 +252,7 @@
     </div>
 
     <!-- Burger menu -->
-    <div style="position:relative;">
+    <div class="burger-dropdown-wrap" style="position:relative;">
       <button type="button" class="burger-btn" aria-label="Menu">☰</button>
       <div class="burger-dropdown">
         <a href="/Teachers/index.html">Teachers Home</a>
