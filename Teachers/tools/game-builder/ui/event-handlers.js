@@ -240,17 +240,42 @@ export async function handleGetTranslations(getList, setList, render, toast) {
   };
 
   const callTranslatePrompt = async (prompt) => {
-    const res = await fetch(ENDPOINTS.TRANSLATE, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prompt })
-    });
-    if (!res.ok) {
-      throw new Error(`Translate HTTP ${res.status}`);
+    const body = JSON.stringify({ prompt });
+    const attempts = [
+      () => WillenaAPI.fetch(ENDPOINTS.TRANSLATE, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body
+      }),
+      () => fetch('https://willena-proxy.willena.workers.dev/.netlify/functions/openai_proxy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body,
+        credentials: 'include'
+      }),
+      () => fetch('https://api.willenaenglish.com/.netlify/functions/openai_proxy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body,
+        credentials: 'include'
+      })
+    ];
+
+    let lastError = 'Translate failed';
+    for (const call of attempts) {
+      try {
+        const res = await call();
+        const js = await res.json().catch(() => ({}));
+        const text = js?.result || js?.data?.choices?.[0]?.message?.content || '';
+        if (res.ok && String(text || '').trim()) {
+          return String(text || '').trim();
+        }
+        lastError = js?.error || js?.message || `Translate HTTP ${res.status}`;
+      } catch (e) {
+        lastError = e?.message || String(e);
+      }
     }
-    const js = await res.json().catch(() => null);
-    const text = js?.result || js?.data?.choices?.[0]?.message?.content || '';
-    return String(text || '');
+    throw new Error(String(lastError));
   };
 
   try {
