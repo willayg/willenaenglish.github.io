@@ -1146,6 +1146,158 @@ export default {
           },
         }, 200, origin);
       }
+
+      // ===== TEACHER NOTIFICATIONS =====
+      if (action === 'teacher_notifications') {
+        const authUserId = await getUserIdFromRequest(request, env);
+        if (!authUserId) {
+          return jsonResponse({ success: false, error: 'Not signed in' }, 401, origin);
+        }
+
+        const prof = await fetchProfile(env, authUserId, 'id,role,approved');
+        if (!prof) {
+          return jsonResponse({ success: false, error: 'Profile not found' }, 403, origin);
+        }
+        if (!['teacher', 'admin'].includes(String(prof.role || '').toLowerCase())) {
+          return jsonResponse({ success: false, error: 'Only teachers can view notifications' }, 403, origin);
+        }
+
+        const isCountOnly = (url.searchParams.get('mode') || '') === 'count';
+        const defaultSince = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
+        const rawSince = url.searchParams.get('since') || '';
+        const since = rawSince && !isNaN(Date.parse(rawSince)) ? rawSince : defaultSince;
+
+        const assignments = await supabaseSelect(
+          env,
+          'homework_assignments',
+          `created_by=eq.${encodeURIComponent(authUserId)}&active=eq.true&select=id,title,class,due_at,list_meta,active`
+        );
+
+        if (!Array.isArray(assignments) || !assignments.length) {
+          return jsonResponse({ success: true, count: 0, notifications: [], since }, 200, origin);
+        }
+
+        const tokenToAssignment = new Map();
+        assignments.forEach((a) => {
+          const meta = parseJsonMaybe(a?.list_meta) || a?.list_meta || {};
+          const tokens = Array.isArray(meta?.run_tokens)
+            ? meta.run_tokens.map((r) => r?.token).filter(Boolean)
+            : [];
+          tokens.forEach((tok) => tokenToAssignment.set(tok, a));
+        });
+
+        if (!tokenToAssignment.size) {
+          return jsonResponse({ success: true, count: 0, notifications: [], since }, 200, origin);
+        }
+
+        const sessions = await supabaseSelect(
+          env,
+          'progress_sessions',
+          `select=user_id,mode,summary,ended_at&ended_at=not.is.null&ended_at=gte.${encodeURIComponent(since)}&order=ended_at.desc&limit=500`
+        );
+
+        const bestCompletion = new Map();
+        const completionKey = (userId, assignmentId) => `${userId}__${assignmentId}`;
+
+        (Array.isArray(sessions) ? sessions : []).forEach((sess) => {
+          const summary = parseJsonMaybe(sess?.summary) || sess?.summary || {};
+          const token = summary?.assignment_run;
+          if (!token) return;
+
+          const assignment = tokenToAssignment.get(token);
+          if (!assignment) return;
+
+          let stars = 0;
+          if (typeof summary.stars === 'number') {
+            stars = summary.stars;
+          } else {
+            let acc = null;
+            if (typeof summary.accuracy === 'number') {
+              acc = summary.accuracy;
+            } else if (typeof summary.score === 'number' && typeof summary.total === 'number' && summary.total > 0) {
+              acc = summary.score / summary.total;
+            }
+
+            if (acc !== null) {
+              if (acc >= 1) stars = 5;
+              else if (acc >= 0.95) stars = 4;
+              else if (acc >= 0.9) stars = 3;
+              else if (acc >= 0.8) stars = 2;
+              else if (acc >= 0.6) stars = 1;
+            }
+          }
+
+          stars = Math.max(0, Math.min(5, Number(stars) || 0));
+          if (stars < 1) return;
+
+          const key = completionKey(sess.user_id, assignment.id);
+          const existing = bestCompletion.get(key);
+          if (!existing || stars > existing.stars) {
+            bestCompletion.set(key, {
+              user_id: sess.user_id,
+              assignment_id: assignment.id,
+              assignment_title: assignment.title,
+              class: assignment.class,
+              due_at: assignment.due_at,
+              stars,
+              mode: sess.mode,
+              completed_at: sess.ended_at,
+            });
+          }
+        });
+
+        if (isCountOnly) {
+          return jsonResponse({ success: true, count: bestCompletion.size, since }, 200, origin);
+        }
+
+        const userIds = [...new Set([...bestCompletion.values()].map((c) => c.user_id).filter(Boolean))];
+        const nameMap = new Map();
+        if (userIds.length) {
+          const profiles = await supabaseSelect(
+            env,
+            'profiles',
+            `id=in.(${userIds.join(',')})&select=id,name,korean_name`
+          );
+          (Array.isArray(profiles) ? profiles : []).forEach((p) => {
+            nameMap.set(p.id, { name: p.name, korean_name: p.korean_name });
+          });
+        }
+
+        const byAssignment = new Map();
+        for (const c of bestCompletion.values()) {
+          const profile = nameMap.get(c.user_id) || {};
+          const entry = {
+            user_id: c.user_id,
+            name: profile.name || null,
+            korean_name: profile.korean_name || null,
+            stars: c.stars,
+            mode: c.mode,
+            completed_at: c.completed_at,
+          };
+          if (!byAssignment.has(c.assignment_id)) {
+            byAssignment.set(c.assignment_id, {
+              assignment_id: c.assignment_id,
+              assignment_title: c.assignment_title,
+              class: c.class,
+              due_at: c.due_at,
+              completions: [],
+            });
+          }
+          byAssignment.get(c.assignment_id).completions.push(entry);
+        }
+
+        const notifications = [...byAssignment.values()].map((a) => ({
+          ...a,
+          completions: a.completions.sort((x, y) => new Date(y.completed_at) - new Date(x.completed_at)),
+        }));
+
+        return jsonResponse({
+          success: true,
+          count: bestCompletion.size,
+          since,
+          notifications,
+        }, 200, origin);
+      }
       
       return jsonResponse({ success: false, error: 'Invalid action' }, 400, origin);
       

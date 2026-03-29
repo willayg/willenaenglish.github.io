@@ -197,8 +197,13 @@ function initNotificationBell(wrapper) {
       `${API}?action=teacher_notifications&since=${encodeURIComponent(since)}`,
       {}
     );
-    if (!r.ok) throw new Error('fetch failed');
-    const d = await r.json();
+    let d = null;
+    try {
+      d = await r.json();
+    } catch (_) {
+      d = null;
+    }
+    if (!r.ok) throw new Error((d && d.error) ? d.error : 'Fetch failed');
     if (!d.success) throw new Error(d.error || 'error');
     sessionStorage.setItem(CACHE_KEY, JSON.stringify(d.notifications || []));
     sessionStorage.setItem(FETCHED_KEY, String(Date.now()));
