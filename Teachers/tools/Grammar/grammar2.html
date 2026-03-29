@@ -1,4 +1,4 @@
-﻿
+
     <!-- html2pdf.js for PDF export -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <!-- API gateway for CF Pages routing - MUST load before api-config.js -->
@@ -292,10 +292,10 @@
   </script>
     <!-- Load shared burger menu component -->
     <script type="module">
-      import { insertBurgerMenu } from '/components/burger-menu.js?v=20260329c';
+      import { insertBurgerMenu } from '/components/burger-menu.js?v=20260330e';
       async function ensureBurgerMenuTemplate() {
         if (!document.getElementById('burger-menu-template')) {
-          const resp = await fetch('/components/burger-menu.html?v=20260329c');
+          const resp = await fetch('/components/burger-menu.html?v=20260330e');
           const html = await resp.text();
           const tempDiv = document.createElement('div');
           tempDiv.innerHTML = html;
