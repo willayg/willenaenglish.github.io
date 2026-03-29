@@ -61,7 +61,7 @@ function normalizeWordsToSentenceItems(list){
     }
     // Map common Korean translation fields to a unified sentence_kor (for hint display)
     if (!item.sentence_kor){
-      const korCandidates = [item.sentence_kor, item.sentenceKor, item.ex_kor, item.example_kor, item.kor_sentence, item.korean_sentence, item.korean, item.kor, item.ko, item.translation_ko, item.translationKor];
+      const korCandidates = [item.sentence_kor, item.sentenceKor, item.ex_kor, item.example_kor, item.kor_sentence, item.korean_sentence, item.translation_ko, item.translationKor];
       const foundKor = korCandidates.find(v => typeof v === 'string' && v.trim());
       if (foundKor) item.sentence_kor = String(foundKor).trim();
     }
@@ -506,7 +506,7 @@ export function run(ctx){
 
   function getKoreanHint(item){
     if (!item) return '';
-    const cands = [item.sentence_kor, item.sentenceKor, item.ex_kor, item.example_kor, item.kor_sentence, item.korean_sentence, item.korean, item.kor, item.ko];
+    const cands = [item.sentence_kor, item.sentenceKor, item.ex_kor, item.example_kor, item.kor_sentence, item.korean_sentence, item.translation_ko, item.translationKor];
     const chosen = cands.find(v=> typeof v === 'string' && v.trim());
     if (chosen) return String(chosen).trim();
     if (Array.isArray(item.sentences) && item.sentences.length){

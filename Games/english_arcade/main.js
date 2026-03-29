@@ -31,7 +31,7 @@ import { progressCache } from './utils/progress-cache.js?v=20251214a';
 import { LEVEL1_LISTS, LEVEL2_LISTS, LEVEL3_LISTS, LEVEL4_LISTS, PHONICS_LISTS } from './utils/level-lists.js?v=20251214a';
 import { prefetchAllProgress, loadStarCounts } from './utils/progress-data-service.js?v=20251214a';
 
-const EA_BUILD_STAMP = 'EA_BUILD 20260329d · sentence-homework-progress-fix';
+const EA_BUILD_STAMP = 'EA_BUILD 20260329e · sentence-korean-hint-fix';
 
 function isStagingLikeHost(host) {
   const h = String(host || '').toLowerCase();
@@ -1009,8 +1009,8 @@ function startFilePicker() {
 // -----------------------------
 const modeLoaders = {
   meaning:        () => import('./modes/meaning.js').then(m => m.runMeaningMode),
-  sentence:       () => import('./modes/word_sentence_mode.js?v=20260326c').then(m => m.run),
-  full_sentence_mode: () => import('./modes/word_sentence_mode.js?v=20260329a').then(m => (ctx) => m.run({ ...ctx, sessionMode: 'full_sentence_mode' })),
+  sentence:       () => import('./modes/word_sentence_mode.js?v=20260329b').then(m => m.run),
+  full_sentence_mode: () => import('./modes/word_sentence_mode.js?v=20260329b').then(m => (ctx) => m.run({ ...ctx, sessionMode: 'full_sentence_mode' })),
   spelling:       () => import('./modes/spelling.js?v=20260329a').then(m => m.runSpellingMode),
   listening:      () => import('./modes/listening.js').then(m => m.runListeningMode),
   picture:        () => import('./modes/picture.js').then(m => m.runPictureMode),

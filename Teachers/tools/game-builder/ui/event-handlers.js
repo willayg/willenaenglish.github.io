@@ -245,8 +245,12 @@ export async function handleGetTranslations(getList, setList, render, toast) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ prompt })
     });
+    if (!res.ok) {
+      throw new Error(`Translate HTTP ${res.status}`);
+    }
     const js = await res.json().catch(() => null);
-    return js?.result || js?.data?.choices?.[0]?.message?.content || '';
+    const text = js?.result || js?.data?.choices?.[0]?.message?.content || '';
+    return String(text || '');
   };
 
   try {
