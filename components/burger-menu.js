@@ -19,8 +19,9 @@ export function insertBurgerMenu(targetSelector = 'body') {
     fallback.innerHTML = `
       <style>
         .burger-menu { position: fixed; top: 10px; right: 10px; z-index: 9999; display: flex; align-items: stretch; border-radius: 12px; overflow: visible; box-shadow: 0 10px 22px rgba(15, 23, 42, 0.22); }
+        .burger-user-label { display: none; max-width: 140px; padding: 0 12px; background: rgba(255,255,255,0.96); color: #334155; border: 1px solid rgba(15, 23, 42, 0.08); border-right: none; border-radius: 12px 0 0 12px; font-size: 12px; font-weight: 700; align-items: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; box-shadow: 0 10px 22px rgba(15, 23, 42, 0.12); }
         .burger-btn, .hw-notif-btn { width: 42px; height: 38px; border: none; background: linear-gradient(180deg, #19d2df 0%, #00b4c6 100%); color: white; cursor: pointer; font-size: 16px; line-height: 1; display: inline-flex; align-items: center; justify-content: center; padding: 0; }
-        .hw-notif-btn { border-radius: 12px 0 0 12px; }
+        .hw-notif-btn { border-radius: 0; }
         .burger-btn { border-left: 1px solid rgba(255,255,255,0.35); border-radius: 0 12px 12px 0; }
         .burger-btn:hover, .hw-notif-btn:hover { background: linear-gradient(180deg, #12c0cf 0%, #0293a4 100%); }
         .burger-dropdown { display: none; position: absolute; top: 50px; right: 0; background: white; box-shadow: 0 4px 8px rgba(0,0,0,0.2); border-radius: 5px; min-width: 220px; max-height: 70vh; overflow: auto; }
@@ -81,9 +82,10 @@ export function insertBurgerMenu(targetSelector = 'body') {
         .hw-status-done-badge, .hw-status-pending-badge { flex-shrink: 0; border-radius: 999px; padding: 4px 8px; font-size: 11px; font-weight: 700; }
         .hw-status-done-badge { background: #eef2f7; color: #374151; }
         .hw-status-pending-badge { background: #f3f4f6; color: #6b7280; }
-        @media (max-width: 700px) { .burger-btn, .hw-notif-btn { width: 40px; height: 36px; } .hw-status-modal-backdrop { padding: 12px; } .hw-status-lists { grid-template-columns: 1fr; } .hw-status-list + .hw-status-list { border-left: none; border-top: 1px solid #eef2f7; } .hw-notif-footer { flex-direction: column; } .hw-status-toolbar { align-items: stretch; } .hw-status-toolbar-select { width: 100%; } .hw-status-summary { margin-left: 0; width: 100%; white-space: normal; } }
+        @media (max-width: 700px) { .burger-btn, .hw-notif-btn { width: 40px; height: 36px; } .burger-user-label { max-width: 100px; padding: 0 10px; font-size: 11px; } .hw-status-modal-backdrop { padding: 12px; } .hw-status-lists { grid-template-columns: 1fr; } .hw-status-list + .hw-status-list { border-left: none; border-top: 1px solid #eef2f7; } .hw-notif-footer { flex-direction: column; } .hw-status-toolbar { align-items: stretch; } .hw-status-toolbar-select { width: 100%; } .hw-status-summary { margin-left: 0; width: 100%; white-space: normal; } }
       </style>
       <div class="burger-menu">
+        <div class="burger-user-label" id="burgerUserLabel"></div>
         <div class="hw-notif-wrap">
           <button type="button" class="hw-notif-btn" aria-label="Homework notifications" title="Homework notifications" aria-expanded="false">🔔
             <span class="hw-notif-badge" aria-live="polite"></span>
@@ -150,6 +152,7 @@ export function insertBurgerMenu(targetSelector = 'body') {
   // Dropdown logic
   const burgerBtn = wrapper.querySelector('.burger-btn');
   const dropdown = wrapper.querySelector('.burger-dropdown');
+  const userLabel = wrapper.querySelector('#burgerUserLabel');
   if (!burgerBtn || !dropdown) return;
   burgerBtn.onclick = () => {
     dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
@@ -187,7 +190,39 @@ export function insertBurgerMenu(targetSelector = 'body') {
     });
   }
 
+  function getStoredDisplayName() {
+    try {
+      const direct = localStorage.getItem('username') || localStorage.getItem('name') || '';
+      if (direct && String(direct).trim()) return String(direct).trim();
+      const email = localStorage.getItem('userEmail') || '';
+      if (email && String(email).includes('@')) return String(email).split('@')[0];
+    } catch {}
+    return '';
+  }
+
+  async function hydrateTeacherName() {
+    if (!userLabel) return;
+    const cached = getStoredDisplayName();
+    if (cached) {
+      userLabel.textContent = cached;
+      userLabel.style.display = 'flex';
+      return;
+    }
+    try {
+      const api = window.WillenaAPI?.fetch ? window.WillenaAPI.fetch.bind(window.WillenaAPI) : (url, options) => fetch(url, { credentials: 'include', ...options });
+      const res = await api('/.netlify/functions/supabase_auth?action=get_profile_name&_=' + Date.now(), { cache: 'no-store' });
+      const data = await res.json().catch(() => ({}));
+      const name = String(data?.name || data?.profile_name || '').trim();
+      if (res.ok && name) {
+        userLabel.textContent = name;
+        userLabel.style.display = 'flex';
+        try { localStorage.setItem('username', name); } catch {}
+      }
+    } catch {}
+  }
+
   applyAdminVisibility();
+  hydrateTeacherName();
 
   if (logoutBtn) {
     logoutBtn.onclick = async () => {
@@ -314,9 +349,70 @@ function initNotificationBell(wrapper) {
     }
     if (!r.ok) throw new Error((d && d.error) ? d.error : 'Fetch failed');
     if (!d || !d.success) throw new Error((d && d.error) ? d.error : 'Could not load homework status');
-    sessionStorage.setItem(STATUS_CACHE_KEY, JSON.stringify(d.assignments || []));
+
+    const baseAssignments = Array.isArray(d.assignments) ? d.assignments : [];
+    const assignments = await Promise.all(baseAssignments.map(async (assignment) => {
+      try {
+        const progressResp = await apiFetch(`${API}?action=assignment_progress&assignment_id=${encodeURIComponent(assignment.assignment_id)}`, {});
+        const progressData = await progressResp.json().catch(() => null);
+        if (!progressResp.ok || !progressData || !progressData.success || !Array.isArray(progressData.progress)) {
+          return assignment;
+        }
+
+        const rosterMap = new Map();
+        [...(assignment.done || []), ...(assignment.pending || [])].forEach((student) => {
+          rosterMap.set(String(student.user_id), student);
+        });
+
+        const done = [];
+        const pending = [];
+        progressData.progress.forEach((row) => {
+          const id = String(row.user_id || '');
+          if (!id || !rosterMap.has(id)) return;
+          const baseStudent = rosterMap.get(id) || {};
+          const completion = Number(row.completion ?? row.completion_pct ?? 0) || 0;
+          const entry = {
+            user_id: id,
+            name: row.name || baseStudent.name || null,
+            korean_name: row.korean_name || baseStudent.korean_name || null,
+            stars: Number(row.stars || 0) || 0,
+            mode: Array.isArray(row.modes) && row.modes.length ? row.modes[row.modes.length - 1].mode : null,
+            completion,
+            completed_at: baseStudent.completed_at || null,
+          };
+          if (String(row.status || '').toLowerCase() === 'completed' || completion >= 100) done.push(entry);
+          else pending.push(entry);
+          rosterMap.delete(id);
+        });
+
+        rosterMap.forEach((student, id) => {
+          pending.push({
+            user_id: id,
+            name: student.name || null,
+            korean_name: student.korean_name || null,
+            completion: Number(student.completion || 0) || 0,
+          });
+        });
+
+        done.sort((left, right) => String(left.name || left.korean_name || '').localeCompare(String(right.name || right.korean_name || '')));
+        pending.sort((left, right) => String(left.name || left.korean_name || '').localeCompare(String(right.name || right.korean_name || '')));
+
+        return {
+          ...assignment,
+          done,
+          pending,
+          completed_count: done.length,
+          pending_count: pending.length,
+          total_count: done.length + pending.length,
+        };
+      } catch {
+        return assignment;
+      }
+    }));
+
+    sessionStorage.setItem(STATUS_CACHE_KEY, JSON.stringify(assignments));
     sessionStorage.setItem(STATUS_FETCHED_KEY, String(Date.now()));
-    return d.assignments || [];
+    return assignments;
   }
 
   function formatTimeAgo(iso) {

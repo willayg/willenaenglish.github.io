@@ -40,10 +40,10 @@
     .drop-zone.dragover { border-color: #48bb78 !important; background: #e6fffb !important; }
   </style>
   <script type="module">
-    import { insertBurgerMenu } from '/components/burger-menu.js?v=20260330a';
+    import { insertBurgerMenu } from '/components/burger-menu.js?v=20260330b';
     async function ensureBurgerMenuTemplate() {
       if (!document.getElementById('burger-menu-template')) {
-        const resp = await fetch('/components/burger-menu.html?v=20260330a');
+        const resp = await fetch('/components/burger-menu.html?v=20260330b');
         const html = await resp.text();
         const tempDiv = document.createElement('div');
         tempDiv.innerHTML = html;
