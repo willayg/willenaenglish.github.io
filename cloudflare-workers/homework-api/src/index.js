@@ -228,18 +228,32 @@ async function supabaseDelete(env, table, query) {
 }
 
 async function autoExpireAssignmentsPastGrace(env, className = null) {
-  const nowIso = new Date().toISOString();
-  const cutoffIso = new Date(Date.now() - (2 * 24 * 60 * 60 * 1000)).toISOString();
-  let query = `active=eq.true&due_at=lte.${encodeURIComponent(cutoffIso)}`;
+  const now = new Date();
+  const nowMs = now.getTime();
+  const graceMs = 2 * 24 * 60 * 60 * 1000;
+  let query = 'active=eq.true&select=id,due_at';
   if (className) {
-    query += `&class=eq.${encodeURIComponent(className)}`;
+    query = `class=eq.${encodeURIComponent(className)}&` + query;
   }
 
+  const rows = await supabaseSelect(env, 'homework_assignments', query);
+  const overdueIds = (Array.isArray(rows) ? rows : [])
+    .filter((row) => {
+      const dueMs = Date.parse(String(row?.due_at || ''));
+      if (!Number.isFinite(dueMs)) return false;
+      return (nowMs - dueMs) > graceMs;
+    })
+    .map((row) => row.id)
+    .filter(Boolean);
+
+  if (!overdueIds.length) return;
+
+  const idQuery = `id=in.(${overdueIds.join(',')})`;
   try {
-    await supabaseUpdate(env, 'homework_assignments', query, { active: false, ended_at: nowIso });
+    await supabaseUpdate(env, 'homework_assignments', idQuery, { active: false, ended_at: now.toISOString() });
   } catch (err) {
     // Fallback for schemas where ended_at may be unavailable.
-    await supabaseUpdate(env, 'homework_assignments', query, { active: false });
+    await supabaseUpdate(env, 'homework_assignments', idQuery, { active: false });
   }
 }
 

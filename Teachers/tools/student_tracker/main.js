@@ -272,14 +272,33 @@ let sortDirection = 'asc'; // 'asc' or 'desc'
 let classTrackerSelectedClass = null;
 let classesWithActiveHomework = new Set();
 
+function parseDueDateMs(value) {
+  const raw = String(value || '').trim();
+  if (!raw) return NaN;
+  const direct = Date.parse(raw);
+  if (Number.isFinite(direct)) return direct;
+  const dmy = raw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?)?$/);
+  if (dmy) {
+    const day = Number(dmy[1]);
+    const month = Number(dmy[2]);
+    const year = Number(dmy[3]);
+    const hh = Number(dmy[4] || 23);
+    const mm = Number(dmy[5] || 59);
+    const ss = Number(dmy[6] || 59);
+    const dt = new Date(year, month - 1, day, hh, mm, ss);
+    return Number.isFinite(dt.getTime()) ? dt.getTime() : NaN;
+  }
+  return NaN;
+}
+
 function isAssignmentEffectivelyActive(assignment, now = new Date()) {
   if (!assignment || !assignment.active) return false;
   const dueRaw = assignment.due_at;
   if (!dueRaw) return true;
-  const dueDate = new Date(dueRaw);
-  if (!Number.isFinite(dueDate.getTime())) return true;
+  const dueMs = parseDueDateMs(dueRaw);
+  if (!Number.isFinite(dueMs)) return true;
   const graceMs = 2 * 24 * 60 * 60 * 1000;
-  return (now.getTime() - dueDate.getTime()) <= graceMs;
+  return (now.getTime() - dueMs) <= graceMs;
 }
 
 // Chart instances
