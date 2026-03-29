@@ -28,14 +28,16 @@ export function buildRowHTML(word, index, isLoading) {
     </td>
     <td>
       <div class="example-stack-cell">
-        <textarea class="row-input ex-textarea" data-field="example" data-idx="${index}" rows="3" placeholder="Example sentence (English)">${escapeHtml(word.example || '')}</textarea>
-        <div class="example-row-actions">
+        <div class="example-inputs-col">
+          <textarea class="row-input ex-textarea" data-field="example" data-idx="${index}" rows="3" placeholder="Example sentence (English)">${escapeHtml(word.example || '')}</textarea>
+          <textarea class="row-input ex-kor-textarea" data-field="ex_kor" data-idx="${index}" rows="2" placeholder="Example sentence (Korean)">${escapeHtml(word.ex_kor || '')}</textarea>
+        </div>
+        <div class="example-actions-col">
           <button class="btn small refresh-btn" data-action="refresh-example" data-idx="${index}" title="Regenerate example">↻</button>
           <button class="btn small play-sentence-btn" data-action="play-sentence" data-idx="${index}" title="Preview sentence audio">
             <span class="play-icon">▶</span>
           </button>
         </div>
-        <textarea class="row-input ex-kor-textarea" data-field="ex_kor" data-idx="${index}" rows="2" placeholder="Example sentence (Korean)">${escapeHtml(word.ex_kor || '')}</textarea>
       </div>
     </td>
     <td>

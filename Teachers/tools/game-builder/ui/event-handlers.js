@@ -219,42 +219,98 @@ export function handleRedo(redoState, render) {
  */
 export async function handleGetTranslations(getList, setList, render, toast) {
   const list = getList();
-  const targets = list.filter(w => w.eng && !w.kor);
-  if (!targets.length) { toast('No words need translation'); return; }
+  const wordTargets = list.filter(w => w.eng && !w.kor);
+  const sentenceTargets = list.filter(w => w.example && !w.ex_kor);
+  if (!wordTargets.length && !sentenceTargets.length) { toast('No words or sentences need translation'); return; }
   toast('Translating...');
   const overlay = ensureLoadingOverlay();
-  overlay.show('Translating ' + targets.length + ' words...');
-  try {
-    // Build a single prompt asking for a JSON array mapping english->korean
-    const words = targets.map(w => w.eng.trim()).slice(0, 50); // safety cap
-    const prompt = `Provide Korean translations for these English words as compact JSON array of objects with keys eng and kor only. No commentary. Words: ${words.join(', ')}`;
+  overlay.show(`Translating ${wordTargets.length} words and ${sentenceTargets.length} sentences...`);
+
+  const parseJsonArray = (raw) => {
+    const txt = String(raw || '').trim();
+    if (!txt) return null;
+    const match = txt.match(/\[[\s\S]*\]/);
+    const candidate = match ? match[0] : txt;
+    try {
+      const parsed = JSON.parse(candidate);
+      return Array.isArray(parsed) ? parsed : null;
+    } catch {
+      return null;
+    }
+  };
+
+  const callTranslatePrompt = async (prompt) => {
     const res = await fetch(ENDPOINTS.TRANSLATE, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ prompt })
     });
-    const js = await res.json().catch(()=>null);
-    let result = js?.result || js?.data?.choices?.[0]?.message?.content || '';
-    // Attempt to extract JSON
-    let parsed = null;
-    const match = result.match(/\[[\s\S]*\]/);
-    if (match) {
-      try { parsed = JSON.parse(match[0]); } catch {}
-    } else {
-      try { parsed = JSON.parse(result); } catch {}
-    }
-    if (Array.isArray(parsed)) {
-      const map = new Map(parsed.filter(o=>o && o.eng).map(o=>[o.eng.toLowerCase(), o.kor]));
-      for (const w of targets) {
-        const tr = map.get(w.eng.toLowerCase());
-        if (tr && !w.kor) w.kor = tr;
+    const js = await res.json().catch(() => null);
+    return js?.result || js?.data?.choices?.[0]?.message?.content || '';
+  };
+
+  try {
+    let updates = 0;
+
+    if (wordTargets.length) {
+      const words = wordTargets.map(w => w.eng.trim()).slice(0, 60);
+      const prompt = `Provide Korean translations for these English words as compact JSON array of objects with keys eng and kor only. No commentary. Words: ${words.join(', ')}`;
+      const result = await callTranslatePrompt(prompt);
+      const parsed = parseJsonArray(result);
+      if (Array.isArray(parsed)) {
+        const map = new Map(parsed.filter(o => o && o.eng).map(o => [String(o.eng).toLowerCase(), o.kor]));
+        for (const w of wordTargets) {
+          const tr = map.get(String(w.eng || '').toLowerCase());
+          if (tr && !w.kor) {
+            w.kor = tr;
+            updates += 1;
+          }
+        }
+      } else {
+        console.warn('[translate] Could not parse word translation JSON', result);
       }
+    }
+
+    if (sentenceTargets.length) {
+      const capped = sentenceTargets.slice(0, 60);
+      const indexedLines = capped.map((w, i) => `${i + 1}. ${String(w.example || '').trim()}`).join('\n');
+      const prompt = [
+        'Translate the following English sentences to Korean.',
+        'Return ONLY a compact JSON array of objects with keys idx and kor.',
+        'idx is the 1-based sentence number from the list below.',
+        'No markdown. No commentary.',
+        '',
+        indexedLines
+      ].join('\n');
+      const result = await callTranslatePrompt(prompt);
+      const parsed = parseJsonArray(result);
+      if (Array.isArray(parsed)) {
+        const byIdx = new Map();
+        parsed.forEach((o, i) => {
+          if (o && typeof o === 'object' && Number.isFinite(Number(o.idx)) && o.kor) {
+            byIdx.set(Number(o.idx), String(o.kor));
+          } else if (typeof o === 'string' && o.trim()) {
+            byIdx.set(i + 1, o.trim());
+          }
+        });
+        capped.forEach((w, i) => {
+          const tr = byIdx.get(i + 1);
+          if (tr && !w.ex_kor) {
+            w.ex_kor = tr;
+            updates += 1;
+          }
+        });
+      } else {
+        console.warn('[translate] Could not parse sentence translation JSON', result);
+      }
+    }
+
+    if (updates > 0) {
       setList([...list]);
       render();
-      toast('Translated');
+      toast(`Translated ${updates} item${updates === 1 ? '' : 's'}`);
     } else {
-      console.warn('[translate] Could not parse JSON from OpenAI result', result);
-      toast('Translate parse fail');
+      toast('No new translations found');
     }
   } catch (e) {
     console.error(e);
