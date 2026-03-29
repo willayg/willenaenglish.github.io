@@ -178,7 +178,7 @@
   <script src="/students/language.js"></script>
   <script src="/students/theme.js"></script>
   <!-- Game app -->
-  <script type="module" src="main.js?v=20260329b"></script>
+  <script type="module" src="main.js?v=20260329c"></script>
 </head>
 <body class="word-arcade">
   <div id="waAutostartOverlay" aria-live="polite" aria-busy="true">
@@ -425,10 +425,37 @@
 
       if (hwParam) {
         maybeCelebrateHomeworkCompletion();
-        window.addEventListener('wa:session-ended', () => {
+        let pendingHomeworkCelebrateCheck = false;
+        let pendingHomeworkCelebrateTimer = null;
+
+        const runHomeworkCelebrateCheckSoon = (delayMs = 140) => {
           setTimeout(() => {
             maybeCelebrateHomeworkCompletion();
-          }, 500);
+          }, delayMs);
+        };
+
+        window.addEventListener('wa:session-ended', () => {
+          pendingHomeworkCelebrateCheck = true;
+          if (pendingHomeworkCelebrateTimer) {
+            clearTimeout(pendingHomeworkCelebrateTimer);
+            pendingHomeworkCelebrateTimer = null;
+          }
+          // Fallback path: if a mode did not show stars, still run completion check.
+          pendingHomeworkCelebrateTimer = setTimeout(() => {
+            if (!pendingHomeworkCelebrateCheck) return;
+            pendingHomeworkCelebrateCheck = false;
+            runHomeworkCelebrateCheckSoon(120);
+          }, 3600);
+        });
+
+        window.addEventListener('wa:stars-overlay-closed', () => {
+          if (!pendingHomeworkCelebrateCheck) return;
+          pendingHomeworkCelebrateCheck = false;
+          if (pendingHomeworkCelebrateTimer) {
+            clearTimeout(pendingHomeworkCelebrateTimer);
+            pendingHomeworkCelebrateTimer = null;
+          }
+          runHomeworkCelebrateCheckSoon(80);
         });
       }
 

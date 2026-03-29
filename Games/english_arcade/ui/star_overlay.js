@@ -145,10 +145,19 @@
     document.body.appendChild(overlay);
 
     let dismissed = false;
-    function dismiss(){ if (dismissed) return; dismissed = true; removeOverlay(overlay); }
+    function dismiss(reason = 'unknown'){
+      if (dismissed) return;
+      dismissed = true;
+      removeOverlay(overlay);
+      try {
+        window.dispatchEvent(new CustomEvent('wa:stars-overlay-closed', {
+          detail: { reason, correct, total, pct, stars: starCount }
+        }));
+      } catch {}
+    }
 
-    overlay.addEventListener('click', dismiss);
-    window.addEventListener('keydown', dismiss, { once:true });
+    overlay.addEventListener('click', () => dismiss('click'));
+    window.addEventListener('keydown', () => dismiss('keydown'), { once:true });
 
     // Sequential fill animation
     for (let i=0;i<starCount;i++){
@@ -164,7 +173,7 @@
 
   // Auto dismiss after final star animation or after 3s if no stars (was 2s)
   const totalDelay = starCount ? (180 + starCount*260 + 1700) : 2500;
-  setTimeout(dismiss, totalDelay);
+  setTimeout(() => dismiss('timeout'), totalDelay);
 
     return { dismiss };
   }

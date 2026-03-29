@@ -18,7 +18,7 @@ import { showGrammarL1Modal } from './ui/level1_grammar_modal.js?v=20251214a';
 import { showGrammarL2Modal } from './ui/level2_grammar_modal.js?v=20251214a';
 import { showGrammarL3Modal } from './ui/level3_grammar_modal.js?v=20251214a';
 // Ensure star overlay script is loaded once; it attaches window.showRoundStars
-import './ui/star_overlay.js?v=20251214a';
+import './ui/star_overlay.js?v=20260329a';
 import { FN } from './scripts/api-base.js?v=20251214a';
 // Review manager (provenance + enrichment for review attempts)
 // Legacy review manager (kept for rollback) not needed for new flow.
@@ -31,7 +31,7 @@ import { progressCache } from './utils/progress-cache.js?v=20251214a';
 import { LEVEL1_LISTS, LEVEL2_LISTS, LEVEL3_LISTS, LEVEL4_LISTS, PHONICS_LISTS } from './utils/level-lists.js?v=20251214a';
 import { prefetchAllProgress, loadStarCounts } from './utils/progress-data-service.js?v=20251214a';
 
-const EA_BUILD_STAMP = 'EA_BUILD 20260329b · sentence-save-homework-complete-fix';
+const EA_BUILD_STAMP = 'EA_BUILD 20260329c · homework-celebration-after-stars-close';
 
 function isStagingLikeHost(host) {
   const h = String(host || '').toLowerCase();
