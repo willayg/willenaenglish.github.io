@@ -420,6 +420,16 @@ body { margin:0; background: linear-gradient(135deg, #6b6b6b 0%, #696969 100%); 
 .mint-ai-preview-head { font-size:1.06em; font-weight:700; color:#00897b; }
 .mint-ai-preview { flex:1; background:#fff; border-radius:10px; min-height:265px; max-height:530px; padding:15px 17px; box-shadow:0 2px 12px rgba(60,60,80,0.07); border:2px solid #93cbcf; font-size:0.9em; color:#444; overflow-y:auto; }
 .mint-ai-actions { display:flex; gap:10px; justify-content:flex-end; }
+.mint-ai-sentence-section { padding-top:6px; }
+.mint-ai-section-divider { height:1px; background:#93cbcf; margin:4px 0 8px 0; }
+.mint-ai-subtitle { font-size:1.05em; font-weight:700; color:#045c63; margin:0 0 2px 0; }
+.mint-ai-hint { font-size:0.8em; color:#64748b; margin:0 0 6px 0; }
+.mint-ai-preview .sent-item { padding:4px 0; border-bottom:1px solid #e8ecef; }
+.mint-ai-preview .sent-item:last-child { border-bottom:none; }
+.mint-ai-preview .sent-eng { font-weight:600; color:#1a1a1a; }
+.mint-ai-preview .sent-kor { color:#5a6a7a; font-size:0.92em; }
+.mint-ai-preview .sent-ex { color:#0c5b69; font-style:italic; font-size:0.92em; }
+.mint-ai-preview .sent-ex-kor { color:#7a8a9a; font-size:0.85em; }
 
 @media (max-width: 900px) {
   .mint-ai-card { flex-direction:column; min-height:auto; }

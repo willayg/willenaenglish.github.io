@@ -323,7 +323,7 @@
           let spHint = '';
           try {
             const storedMeta = sessionStorage.getItem('wa_hw_forced_mode');
-            if (storedMeta === 'spelling') spHint = '&spelling_only=1';
+            if (storedMeta === 'spelling' || storedMeta === 'full_sentence_mode') spHint = '&spelling_only=1';
           } catch {}
           const prRes = await WillenaAPI.fetch(`/.netlify/functions/homework_api?action=assignment_progress&assignment_id=${encodeURIComponent(assignmentId)}${spHint}`);
           const prJson = await prRes.json().catch(() => ({}));
@@ -467,7 +467,7 @@
               if (!listMetaForBadge || typeof listMetaForBadge !== 'object') listMetaForBadge = {};
               const badgeForcedMode = String(listMetaForBadge.forced_mode || listMetaForBadge.mode || listMetaForBadge.difficulty_mode || '').trim().toLowerCase();
               const badgeModesTotal = Number(listMetaForBadge.modes_total ?? listMetaForBadge.total_modes ?? listMetaForBadge.mode_count ?? 0);
-              const localSpellingOnly = badgeForcedMode === 'spelling' || badgeModesTotal === 1;
+              const localSpellingOnly = badgeForcedMode === 'spelling' || badgeForcedMode === 'full_sentence_mode' || badgeModesTotal === 1;
               const spHint = localSpellingOnly ? '&spelling_only=1' : '';
 
               const pr = await WillenaAPI.fetch(`/.netlify/functions/homework_api?action=assignment_progress&assignment_id=${encodeURIComponent(a.id)}${spHint}`);
@@ -579,7 +579,7 @@
               if (!listMetaForProgress || typeof listMetaForProgress !== 'object') listMetaForProgress = {};
               const progressForcedMode = String(listMetaForProgress.forced_mode || listMetaForProgress.mode || listMetaForProgress.difficulty_mode || '').trim().toLowerCase();
               const progressModesTotal = Number(listMetaForProgress.modes_total ?? listMetaForProgress.total_modes ?? listMetaForProgress.mode_count ?? 0);
-              const localSpellingOnly = progressForcedMode === 'spelling' || progressModesTotal === 1;
+              const localSpellingOnly = progressForcedMode === 'spelling' || progressForcedMode === 'full_sentence_mode' || progressModesTotal === 1;
               const spHint = localSpellingOnly ? '&spelling_only=1' : '';
 
               const prRes = await WillenaAPI.fetch(`/.netlify/functions/homework_api?action=assignment_progress&assignment_id=${encodeURIComponent(a.id)}${spHint}`);
@@ -697,14 +697,16 @@
               if (!listMetaForGoal || typeof listMetaForGoal !== 'object') listMetaForGoal = {};
               const goalForcedMode = String(listMetaForGoal.forced_mode || listMetaForGoal.mode || listMetaForGoal.difficulty_mode || '').trim().toLowerCase();
               const goalModesTotal = Number(listMetaForGoal.modes_total ?? listMetaForGoal.total_modes ?? listMetaForGoal.mode_count ?? 0);
-              const isSpellingOnlyGoal = goalForcedMode === 'spelling' || goalModesTotal === 1;
+              const isSpellingOnlyGoal = goalForcedMode === 'spelling' || goalForcedMode === 'full_sentence_mode' || goalModesTotal === 1;
 
               goalMsg = document.createElement('div');
               goalMsg.style.fontSize = '0.75rem';
               goalMsg.style.fontWeight = '600';
               goalMsg.style.color = '#19777e';
               goalMsg.style.marginTop = '2px';
-              if (isSpellingOnlyGoal) {
+              if (goalForcedMode === 'full_sentence_mode') {
+                goalMsg.textContent = 'Goal: Complete sentence unscramble';
+              } else if (isSpellingOnlyGoal) {
                 goalMsg.textContent = 'Goal: Complete spelling mode';
               } else if (a.stars_required !== null && typeof a.stars_required === 'number') {
                 const currentStars = (typeof a.stars === 'number') ? a.stars : 0;
@@ -774,7 +776,7 @@
               const isSavedGameHomework = sourceType === 'saved_game' || metaType === 'saved_game' || !!listKeySavedMatch;
               const hwId = a.id;
               const forcedModeRaw = String(listMeta.forced_mode || listMeta.mode || listMeta.difficulty_mode || '').trim().toLowerCase();
-              const forcedMode = forcedModeRaw === 'spelling' ? 'spelling' : '';
+              const forcedMode = (forcedModeRaw === 'spelling' || forcedModeRaw === 'full_sentence_mode') ? forcedModeRaw : '';
 
               try {
                 if (hwId) sessionStorage.setItem('wa_homework_assignment_id', String(hwId));

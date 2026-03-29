@@ -303,7 +303,14 @@ function initCriticalBuilderUi() {
       addItems: (items) => {
         saveState();
         const start = list.length;
-        items.forEach(it => list.push({ eng: it.eng, kor: it.kor, image_url: '', definition: '', example: '' }));
+        items.forEach(it => list.push({
+          eng: it.eng || '',
+          kor: it.kor || '',
+          image_url: it.image_url || '',
+          definition: it.definition || '',
+          example: it.example || '',
+          ex_kor: it.ex_kor || ''
+        }));
         render();
         return { from: start, to: list.length - 1 };
       },

@@ -8,7 +8,7 @@
   <script src="/students/api-gateway.js?v=20260329a"></script>
   <script src="/js/api-config.js?v=20260329a"></script>
   <script src="/Teachers/tools/shared/homework-assignment.js?v=20260322a"></script>
-  <link rel="stylesheet" href="styles.css?v=20260329a" />
+  <link rel="stylesheet" href="styles.css?v=20260329b" />
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet" />
   <!-- Auth guard: redirect unauthenticated users to login with return path -->
   <script>
@@ -29,7 +29,7 @@
       } catch(e){ console.warn('[game-builder] auth guard error', e); }
     })();
   </script>
-  <script type="module" src="main.js?v=20260329b"></script>
+  <script type="module" src="main.js?v=20260329c"></script>
   <script>
     // Public base URL for R2-hosted images. IMPORTANT: For Cloudflare public buckets the domain already maps to the bucket.
     // Do NOT append the bucket name again. (Previously we had '/images' here which caused 404s like /images/words/...)
@@ -308,6 +308,29 @@
           <button class="mint-ai-btn" title="Settings" disabled>⚙</button>
         </div>
         <textarea id="mintAiWordlist" class="mint-ai-textarea" placeholder="Enter words here, one per line: English, Korean"></textarea>
+
+        <!-- Sentence Generation Section -->
+        <div id="mintAiSentenceSection" class="mint-ai-sentence-section" style="display:none;">
+          <div class="mint-ai-section-divider"></div>
+          <h3 class="mint-ai-subtitle">Example Sentences</h3>
+          <p class="mint-ai-hint">Add example sentences for each word above.</p>
+          <div class="mint-ai-segmented" style="margin-bottom:6px;">
+            <button id="mintAiSentAuto" class="seg active">Auto Generate</button>
+            <button id="mintAiSentPattern" class="seg">Define Pattern</button>
+          </div>
+          <div id="mintAiPatternInputWrap" style="display:none;">
+            <textarea id="mintAiPatternDesc" class="mint-ai-textarea" style="min-height:55px;" placeholder="Describe the grammar pattern (e.g., 'Present simple tense. Use only have or has as the main verb.')"></textarea>
+            <textarea id="mintAiPatternExamples" class="mint-ai-textarea" style="min-height:40px;" placeholder="Example sentence(s) (e.g., 'She has a bat.')"></textarea>
+          </div>
+          <div class="mint-ai-controls">
+            <select id="mintAiSentDifficulty" class="mint-ai-select">
+              <option value="easy" selected>Easy</option>
+              <option value="medium">Medium</option>
+              <option value="hard">Hard</option>
+            </select>
+            <button id="mintAiSentGenerate" class="mint-ai-btn primary">Generate Sentences</button>
+          </div>
+        </div>
       </div>
       <div class="mint-ai-right">
   <div class="mint-ai-preview-head">Preview</div>

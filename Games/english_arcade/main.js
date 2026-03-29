@@ -1010,6 +1010,7 @@ function startFilePicker() {
 const modeLoaders = {
   meaning:        () => import('./modes/meaning.js').then(m => m.runMeaningMode),
   sentence:       () => import('./modes/word_sentence_mode.js?v=20260326c').then(m => m.run),
+  full_sentence_mode: () => import('./modes/sentence_mode.js?v=20260329a').then(m => m.run),
   spelling:       () => import('./modes/spelling.js').then(m => m.runSpellingMode),
   listening:      () => import('./modes/listening.js').then(m => m.runListeningMode),
   picture:        () => import('./modes/picture.js').then(m => m.runPictureMode),
