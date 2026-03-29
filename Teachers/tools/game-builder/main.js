@@ -90,7 +90,7 @@ import { ENDPOINTS, STORAGE_KEYS, ACTIONS, DEFAULTS, TOAST_DURATION } from './co
 import { initFileListModal } from './ui/file-list.js?v=20260328m';
 import { loadWorksheetIntoBuilder } from './services/worksheet-service.js?v=20260328e';
 
-const GB_BUILD_STAMP = 'GB_BUILD 20260329a · cache-hotfix-ai-modal';
+const GB_BUILD_STAMP = 'GB_BUILD 20260329b - resilient-ai-modal-init';
 
 function isStagingLikeHost(host) {
   const h = String(host || '').toLowerCase();
@@ -292,6 +292,40 @@ const fileModal = document.getElementById('fileModal');
 const fileList = document.getElementById('fileList');
 const fileModalClose = document.getElementById('fileModalClose');
 
+let criticalBuilderUiInitialized = false;
+function initCriticalBuilderUi() {
+  if (criticalBuilderUiInitialized) return;
+  criticalBuilderUiInitialized = true;
+
+  try {
+    initMintAiListBuilder({
+      getList: () => list,
+      addItems: (items) => {
+        saveState();
+        const start = list.length;
+        items.forEach(it => list.push({ eng: it.eng, kor: it.kor, image_url: '', definition: '', example: '' }));
+        render();
+        return { from: start, to: list.length - 1 };
+      },
+      render,
+      enablePicturesEl,
+      enableDefinitionsEl,
+      enableExamplesEl,
+      loadingImages,
+      generateDefinitionForRow,
+      generateExampleForRow
+    });
+  } catch (e) {
+    console.error('[GameBuilder] Mint AI initialization failed', e);
+  }
+
+  try {
+    initCreateGameModal(buildPayload);
+  } catch (e) {
+    console.error('[GameBuilder] Create Game modal initialization failed', e);
+  }
+}
+
 let hasUnsavedChanges = false;
 let autosaveInFlight = false;
 let lastAutosaveTs = 0;
@@ -423,6 +457,9 @@ clearAllBtn.addEventListener('click', () => {
 // Initialize image system
 const imageSystem = initImageSystem();
 loadingImages = imageSystem.loadingImages;
+
+// Initialize critical modals early so they still work even if a later module throws.
+initCriticalBuilderUi();
 
 // Default: enable pictures, definitions, and examples
 if (enablePicturesEl) enablePicturesEl.checked = true;
@@ -1833,27 +1870,8 @@ function paintFileList(initialRows, { cached, initial, uniqueCount }) {
   updateBatchDeleteButton();
 }
 
-// Initialize Mint AI List Builder now that dependencies exist
-initMintAiListBuilder({
-  getList: () => list,
-  addItems: (items) => {
-    saveState();
-    const start = list.length;
-    items.forEach(it => list.push({ eng: it.eng, kor: it.kor, image_url: '', definition: '', example: '' }));
-    render();
-    return { from: start, to: list.length - 1 };
-  },
-  render,
-  enablePicturesEl,
-  enableDefinitionsEl,
-  enableExamplesEl,
-  loadingImages,
-  generateDefinitionForRow,
-  generateExampleForRow
-});
-
-// Initialize Create Game modal
-initCreateGameModal(buildPayload);
+// Re-run guard (no-op if already initialized). Keeps legacy init location safe.
+initCriticalBuilderUi();
 
 try {
   const shouldOpenHomework = localStorage.getItem('gameBuilderOpenHomeworkAssignment');
