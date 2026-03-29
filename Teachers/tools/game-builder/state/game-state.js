@@ -110,6 +110,7 @@ export function newRow(data = {}) {
   const legacySentence = normalizeSentenceText(data.legacy_sentence || data.sentence || example);
   const sentences = normalizeSentenceEntries(data.sentences);
   const primarySentenceId = (data.primary_sentence_id || data.sentence_id || '').toString().trim();
+  const exKor = data.ex_kor || data.exKor || '';
 
   return {
     eng: data.eng || '',
@@ -117,6 +118,7 @@ export function newRow(data = {}) {
     image_url: data.image_url || '',
     definition: data.definition || '',
     example,
+    ex_kor: exKor,
     legacy_sentence: legacySentence,
     ...(sentences.length ? { sentences } : {}),
     ...(primarySentenceId ? { primary_sentence_id: primarySentenceId } : {}),
@@ -256,12 +258,14 @@ export function buildPayload(title = '', gameImageUrl = '') {
         ? rawExample
         : chooseLegacySentence({ ...w, sentences, primary_sentence_id: primarySentenceId || w?.primary_sentence_id });
       const example = normalizeSentenceText(w?.example || primarySentence?.text || legacySentence);
+      const exKor = w.ex_kor || '';
       const out = {
         eng: w.eng || '',
         kor: w.kor || '',
         image_url: w.image_url || '',
         definition: sanitizeDefinitionText(w.definition || ''),
         example,
+        ex_kor: exKor,
         legacy_sentence: legacySentence
       };
       if (sentences.length) out.sentences = sentences;

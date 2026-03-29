@@ -95,6 +95,7 @@ function normalizeWords(list) {
 			kor,
 			// Preserve sentence example if provided (legacy display)
 			sentence: w.sentence || w.example_sentence || w.example || w.legacy_sentence || null,
+			ex_kor: w.ex_kor || w.example_kor || w.sentence_kor || w.korean_sentence || null,
 			legacy_sentence: w.legacy_sentence || null,
 			sentence_mp3: w.sentence_mp3 || null,
 			sentence_audio: w.sentence_audio || null,

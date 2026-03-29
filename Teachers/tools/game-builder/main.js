@@ -11,8 +11,8 @@ import {
   generateImageDropZoneHTML,
   escapeHtml
 } from './images.js?v=20260322u';
-import { initMintAiListBuilder } from './MintAi-list-builder.js?v=20260329a';
-import { initCreateGameModal, openCreateGameModal } from './create-game-modal.js?v=20260329a';
+import { initMintAiListBuilder } from './MintAi-list-builder.js?v=20260329e';
+import { initCreateGameModal, openCreateGameModal } from './create-game-modal.js?v=20260329b';
 import { showTinyToast, ensureLoadingOverlay, buildSkeletonHTML } from './utils/dom-helpers.js';
 import { fetchJSONSafe, timedJSONFetch, recordPerfSample, isLocalHost } from './utils/network.js';
 import { escapeRegExp, cleanDefinitionResponse, normalizeForKey, capitalize, ensurePunctuation } from './utils/validation.js';
@@ -37,7 +37,7 @@ import {
   findGameByTitle,
   generateIncrementedTitle,
   showTitleConflictModal
-} from './services/file-service.js?v=20260328e';
+} from './services/file-service.js?v=20260329a';
 import {
   getList,
   setList,
@@ -64,7 +64,7 @@ if (!('currentGameId' in window)) Object.defineProperty(window, 'currentGameId',
   set(v) { setCurrentGameId(v); }
 });
 // Phase 3: Render & UI extraction
-import { buildRowHTML, applyTableToggles } from './render/row-html.js?v=20260328e';
+import { buildRowHTML, applyTableToggles } from './render/row-html.js?v=20260329h';
 import { ensureMaterialIcons, buildGameCardHTML, buildFileListHTML } from './render/file-grid.js?v=20260328m';
 import { 
   showEditListModal as showEditListModalUI, 
@@ -74,7 +74,7 @@ import {
   handleSaveAsConfirm,
   showFileModal as showFileModalUI,
   hideFileModal as hideFileModalUI
-} from './ui/modals.js?v=20260328e';
+} from './ui/modals.js?v=20260329b';
 import {
   handleQuickSave,
   isQuickSaveInFlight,
@@ -85,12 +85,12 @@ import {
   handleGetTranslations,
   handleGenerateDefinitions,
   handleGenerateExamples
-} from './ui/event-handlers.js?v=20260328e';
+} from './ui/event-handlers.js?v=20260329h';
 import { ENDPOINTS, STORAGE_KEYS, ACTIONS, DEFAULTS, TOAST_DURATION } from './constants.js';
-import { initFileListModal } from './ui/file-list.js?v=20260328m';
+import { initFileListModal } from './ui/file-list.js?v=20260329a';
 import { loadWorksheetIntoBuilder } from './services/worksheet-service.js?v=20260328e';
 
-const GB_BUILD_STAMP = 'GB_BUILD 20260329b - resilient-ai-modal-init';
+const GB_BUILD_STAMP = 'GB_BUILD 20260329r - llm-translation-path-fix';
 
 function isStagingLikeHost(host) {
   const h = String(host || '').toLowerCase();
@@ -155,7 +155,6 @@ function applyBuilderRoutingHotfix() {
 
     const CF_GATEWAY = 'https://willena-proxy.willena.workers.dev';
     const FORCE_GATEWAY_FUNCTIONS = new Set([
-      'openai_proxy',
       'eleven_labs_proxy',
       'upsert_sentences_batch',
       'get_sentence_audio_urls'
@@ -236,6 +235,10 @@ const loadWorksheetsLink = document.getElementById('loadWorksheetsLink');
 const openLink = document.getElementById('openLink');
 const saveLink = document.getElementById('saveLink'); // new quick Save (silent overwrite)
 const saveAsLink = document.getElementById('saveAsLink');
+const saveModal = document.getElementById('saveModal');
+const saveModalClose = document.getElementById('saveModalClose');
+const saveModalStatus = document.getElementById('saveModalStatus');
+const confirmSave = document.getElementById('confirmSave');
 const previewBtn = document.getElementById('previewBtn');
 const createGameLink = document.getElementById('createGameLink');
 // Re-upload Images link removed (logic now auto-handled on save)
@@ -252,6 +255,45 @@ if (editListCancel) editListCancel.onclick = () => hideEditListModalUI(editListM
 if (editListSave) editListSave.onclick = () => {
   handleEditListSave(editListRaw, newRow, saveState, setList, render, toast, () => hideEditListModalUI(editListModal));
 };
+
+function closeSaveModal() {
+  if (!saveModal) return;
+  saveModal.style.display = 'none';
+  if (saveModalStatus) saveModalStatus.textContent = '';
+}
+
+if (saveAsLink) {
+  saveAsLink.onclick = (e) => {
+    e.preventDefault();
+    openSaveAsModal(titleEl, saveModal, saveModalStatus);
+  };
+}
+
+if (saveModalClose) saveModalClose.onclick = closeSaveModal;
+if (saveModal) {
+  saveModal.addEventListener('click', (e) => {
+    if (e.target === saveModal) closeSaveModal();
+  });
+}
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && saveModal && saveModal.style.display === 'flex') {
+    closeSaveModal();
+  }
+});
+
+if (confirmSave) {
+  confirmSave.onclick = () => handleSaveAsConfirm(
+    titleEl,
+    buildPayload,
+    getCurrentGameId,
+    setCurrentGameId,
+    toast,
+    cacheCurrentGame,
+    saveModal,
+    saveModalStatus
+  );
+}
 
 let __saveToastTimer = null;
 window.showSaveCenterMessage = function(message = '', opts = {}) {
@@ -287,6 +329,7 @@ const getTranslationsLink = document.getElementById('getTranslationsLink');
 const enablePicturesEl = document.getElementById('enablePictures');
 const enableDefinitionsEl = document.getElementById('enableDefinitions');
 const enableExamplesEl = document.getElementById('enableExamples');
+const enableSentenceKorEl = document.getElementById('enableSentenceKor');
 const statusEl = document.getElementById('status');
 const fileModal = document.getElementById('fileModal');
 const fileList = document.getElementById('fileList');
@@ -303,7 +346,14 @@ function initCriticalBuilderUi() {
       addItems: (items) => {
         saveState();
         const start = list.length;
-        items.forEach(it => list.push({ eng: it.eng, kor: it.kor, image_url: '', definition: '', example: '' }));
+        items.forEach(it => list.push({
+          eng: it.eng || '',
+          kor: it.kor || '',
+          image_url: it.image_url || '',
+          definition: it.definition || '',
+          example: it.example || '',
+          ex_kor: it.ex_kor || ''
+        }));
         render();
         return { from: start, to: list.length - 1 };
       },
@@ -311,6 +361,7 @@ function initCriticalBuilderUi() {
       enablePicturesEl,
       enableDefinitionsEl,
       enableExamplesEl,
+      shouldIncludeSentenceKor: () => (enableSentenceKorEl ? !!enableSentenceKorEl.checked : true),
       loadingImages,
       generateDefinitionForRow,
       generateExampleForRow
@@ -601,7 +652,7 @@ function render() {
     }
   } catch(e){ console.warn('Image URL rewrite check failed', e); }
   // Apply table toggles
-  applyTableToggles(enablePicturesEl, enableDefinitionsEl, enableExamplesEl);
+  applyTableToggles(enablePicturesEl, enableDefinitionsEl, enableExamplesEl, enableSentenceKorEl);
   
   list.forEach((w, i) => {
     const tr = document.createElement('tr');
@@ -1095,6 +1146,15 @@ enablePicturesEl.addEventListener('change', async () => {
     await loadImagesForMissingOnly(list, loadingImages, render);
   }
 });
+
+if (enableSentenceKorEl) {
+  enableSentenceKorEl.addEventListener('change', async () => {
+    render(); // Show/hide Korean sentence line under example
+    if (enableSentenceKorEl.checked) {
+      markDirty();
+    }
+  });
+}
 
 async function generateDefinitionsForMissing() {
   const list = getList();

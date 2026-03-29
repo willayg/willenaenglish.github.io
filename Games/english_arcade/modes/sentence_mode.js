@@ -579,6 +579,11 @@ export function run(ctx){
   function showBrokenSummary(){
     const pct = items.length ? Math.round((brokenCorrectSentences / items.length) * 100) : 0;
     try { endSession(brokenSessionId, { mode:'broken_sentence_mode', summary:{ total: items.length, correct: brokenCorrectSentences, points: brokenPoints, pct }}); } catch {}
+    try {
+      window.dispatchEvent(new CustomEvent('wa:session-ended', {
+        detail: { summary: { mode: 'broken_sentence_mode', correct: brokenCorrectSentences, total: items.length, points: brokenPoints, pct } }
+      }));
+    } catch {}
     const heading = inBrokenReview ? 'Review Complete' : 'Nice Work!';
     root.innerHTML = `<div style="max-width:520px;margin:40px auto;text-align:center;font-family:Poppins,system-ui;padding:34px 26px 38px;background:linear-gradient(165deg,#ffffff,#f2fbfc);border:2px solid #93cbcf;border-radius:24px;box-shadow:0 8px 28px -4px rgba(8,70,74,0.18);position:relative;">
       <div class="sm-back-link" data-nav="menu" style="position:absolute;left:10px;bottom:6px;">← Back to Sentence Menu</div>
@@ -790,6 +795,11 @@ export function run(ctx){
       // Percentage now based on fully perfect rounds
       const pct = items.length ? Math.round((fbCorrectFull / items.length) * 100) : 0;
       try { endSession(fbSessionId, { mode:'fill_blank_sentence_mode', summary:{ total: items.length, perfect: fbCorrectFull, points: fbPoints, pct }}); } catch {}
+      try {
+        window.dispatchEvent(new CustomEvent('wa:session-ended', {
+          detail: { summary: { mode: 'fill_blank_sentence_mode', perfect: fbCorrectFull, total: items.length, points: fbPoints, pct } }
+        }));
+      } catch {}
       const heading = inFillBlankReview ? 'Review Complete' : 'Fill Gaps Complete';
       root.innerHTML = `<div style="max-width:520px;margin:clamp(20px,5vh,40px) auto;text-align:center;font-family:Poppins,system-ui;padding:clamp(16px,4vw,34px) clamp(14px,5vw,26px) clamp(20px,4vw,38px);background:linear-gradient(165deg,#ffffff,#f2fbfc);border:2px solid #93cbcf;border-radius:24px;box-shadow:0 8px 28px -4px rgba(8,70,74,0.18);position:relative;width:90%;box-sizing:border-box;">
         <div class="sm-back-link" data-nav="menu" style="position:absolute;left:10px;bottom:6px;font-size:0.85rem;">← Back</div>
@@ -970,6 +980,11 @@ export function run(ctx){
 	function showSummary(){
 		const pct = items.length ? Math.round((sentencesCorrect / items.length) * 100) : 0;
 		try { endSession(sessionId, { mode: 'full_sentence_mode', summary: { total: items.length, correct: sentencesCorrect, points: totalPoints, pct } }); } catch {}
+    try {
+      window.dispatchEvent(new CustomEvent('wa:session-ended', {
+        detail: { summary: { mode: 'full_sentence_mode', correct: sentencesCorrect, total: items.length, points: totalPoints, pct } }
+      }));
+    } catch {}
 		const heading = inUnscrambleReview ? 'Review Complete' : 'Great Job!';
 		root.innerHTML = `<div style="max-width:520px;margin:40px auto;text-align:center;font-family:Poppins,system-ui;padding:34px 26px 38px;background:linear-gradient(165deg,#ffffff,#f2fbfc);border:2px solid #93cbcf;border-radius:24px;box-shadow:0 8px 28px -4px rgba(8,70,74,0.18);position:relative;">
 			<div class="sm-back-link" data-nav="menu" style="position:absolute;left:10px;bottom:6px;">← Back to Sentence Menu</div>

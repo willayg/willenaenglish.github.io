@@ -98,6 +98,18 @@ function getHomeworkDifficultyConfig(difficultyMode, maxStars = 30, modesTotal =
       forced_mode: 'spelling',
     };
   }
+  if (mode === 'sentence_unscramble') {
+    return {
+      difficulty_mode: 'sentence_unscramble',
+      requires_all_modes: true,
+      modes_required: 1,
+      required_stars: null,
+      goal_value: 1,
+      max_stars: 5,
+      modes_total: 1,
+      forced_mode: 'full_sentence_mode',
+    };
+  }
   if (mode === 'full') {
     return {
       difficulty_mode: 'full',
@@ -131,6 +143,10 @@ function updateHomeworkDifficultyPreview(maxStars = 30, modesTotal = 6) {
   const mode = getSelectedHomeworkDifficulty();
   if (mode === 'spelling') {
     preview.textContent = 'Spelling only: complete the Spelling mode with at least 1 star.';
+    return;
+  }
+  if (mode === 'sentence_unscramble') {
+    preview.textContent = 'Sentence Unscramble only: unscramble all sentences with at least 1 star.';
     return;
   }
   if (mode === 'full') {
@@ -679,6 +695,7 @@ function ensurePanels() {
             <label class="cgm-difficulty-item"><input type="radio" name="gameDifficulty" value="standard" /> Standard</label>
             <label class="cgm-difficulty-item"><input type="radio" name="gameDifficulty" value="hard" /> Hard</label>
             <label class="cgm-difficulty-item"><input type="radio" name="gameDifficulty" value="spelling" /> Spelling</label>
+            <label class="cgm-difficulty-item"><input type="radio" name="gameDifficulty" value="sentence_unscramble" /> Sentence Unscramble</label>
           </div>
           <div id="gameDifficultyPreview" class="cgm-help-text">Complete all 6 modes with at least 1 star each.</div>
         </div>
@@ -1155,7 +1172,7 @@ export function initCreateGameModal(buildPayload) {
         setStatus('Ensuring audio...');
         await ensureAudioForWordsAndSentences(english, examplesMap, {
           force: false,
-          skipSentenceAudio: true,
+          skipSentenceAudio: false,
           onInit: (total) => setStatus(`Ensuring audio (0/${total})...`),
           onProgress: (done, total) => setStatus(`Ensuring audio (${done}/${total})...`),
           onDone: () => setStatus('Audio ready. Saving custom game...')
