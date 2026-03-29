@@ -5,7 +5,7 @@ import { generateDefinition, generateExample } from '../services/ai-service.js?v
 import { openSaveAsModal, handleSaveAsConfirm, showFileModal } from './modals.js';
 import { ensureAudioForWordsAndSentences } from '../services/audio-service.js';
 import { ensureSentenceIdsBuilder, ensureSentenceAudioBuilder, prepareAndUploadImagesIfNeeded, saveGameData } from '../services/file-service.js?v=20260329a';
-import { syncImagesFromPayload } from '../state/game-state.js?v=20260328e';
+import { syncImagesFromPayload } from '../state/game-state.js?v=20260329f';
 
 let isSaving = false;
 let firstSaveCompletionPromise = null;

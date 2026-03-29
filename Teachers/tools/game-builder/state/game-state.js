@@ -365,6 +365,7 @@ export function parseWords(words) {
         .replace(/^"+|"+$/g, '')
         .trim(),
       example: w.example || w.example_sentence || w.exampleSentence || w.sentence || w.legacy_sentence || '',
+      ex_kor: w.ex_kor || w.exKor || w.example_kor || w.exampleKor || w.sentence_kor || w.korean_sentence || '',
       legacy_sentence: w.legacy_sentence || w.sentence || w.example || '',
       sentences: Array.isArray(w.sentences) ? w.sentences : [],
       primary_sentence_id: w.primary_sentence_id || w.sentence_id || '',

@@ -1,8 +1,8 @@
 // Saved games modal: listing, filtering, pagination, open/delete logic
 import { ensureLoadingOverlay, buildSkeletonHTML, showTinyToast } from '../utils/dom-helpers.js';
 import { ensureMaterialIcons, buildGameCardHTML } from '../render/file-grid.js';
-import { setList, saveState, newRow, setCurrentGameId } from '../state/game-state.js?v=20260328e';
-import { cacheCurrentGame } from '../state/game-state.js?v=20260328e';
+import { setList, saveState, newRow, setCurrentGameId } from '../state/game-state.js?v=20260329f';
+import { cacheCurrentGame } from '../state/game-state.js?v=20260329f';
 
 let fileListRows = [];
 let fileListUniqueCount = 0;
@@ -502,6 +502,7 @@ async function openGame(idListKey) {
         image_url: w.image_url || w.image || w.img || w.img_url || w.picture || '',
         definition: w.definition || w.def || w.meaning || '',
         example: w.example || w.example_sentence || w.sentence || '',
+        ex_kor: w.ex_kor || w.exKor || w.example_kor || w.exampleKor || w.sentence_kor || w.korean_sentence || '',
         legacy_sentence: w.legacy_sentence || w.sentence || w.example || '',
         sentences: Array.isArray(w.sentences) ? w.sentences : [],
         primary_sentence_id: w.primary_sentence_id || w.sentence_id || '',
