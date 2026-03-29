@@ -1,6 +1,6 @@
 // Event handlers - Wire toolbar buttons and UI actions
 import { showTinyToast, ensureLoadingOverlay } from '../utils/dom-helpers.js';
-import { DEFAULTS, ENDPOINTS } from '../constants.js';
+import { DEFAULTS } from '../constants.js';
 import { generateDefinition, generateExample } from '../services/ai-service.js?v=20260322p';
 import { openSaveAsModal, handleSaveAsConfirm, showFileModal } from './modals.js';
 import { ensureAudioForWordsAndSentences } from '../services/audio-service.js';
@@ -226,118 +226,63 @@ export async function handleGetTranslations(getList, setList, render, toast) {
   const overlay = ensureLoadingOverlay();
   overlay.show(`Translating ${wordTargets.length} words and ${sentenceTargets.length} sentences...`);
 
-  const parseJsonArray = (raw) => {
-    const txt = String(raw || '').trim();
-    if (!txt) return null;
-    const match = txt.match(/\[[\s\S]*\]/);
-    const candidate = match ? match[0] : txt;
-    try {
-      const parsed = JSON.parse(candidate);
-      return Array.isArray(parsed) ? parsed : null;
-    } catch {
-      return null;
-    }
-  };
-
-  const callTranslatePrompt = async (prompt) => {
-    const body = JSON.stringify({ prompt });
+  const translateSingle = async (text) => {
+    const q = encodeURIComponent(String(text || '').trim());
+    if (!q) return '';
+    const path = `/.netlify/functions/translate?text=${q}&target=ko`;
     const attempts = [
-      () => WillenaAPI.fetch(ENDPOINTS.TRANSLATE, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body
-      }),
-      () => fetch('https://willena-proxy.willena.workers.dev/.netlify/functions/openai_proxy', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body,
-        credentials: 'include'
-      }),
-      () => fetch('https://api.willenaenglish.com/.netlify/functions/openai_proxy', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body,
-        credentials: 'include'
-      })
+      () => WillenaAPI.fetch(path, { method: 'GET' }),
+      () => fetch(`https://api.willenaenglish.com${path}`, { method: 'GET', credentials: 'include' }),
+      () => fetch(`https://students.willenaenglish.com${path}`, { method: 'GET', credentials: 'omit' })
     ];
-
     let lastError = 'Translate failed';
     for (const call of attempts) {
       try {
         const res = await call();
         const js = await res.json().catch(() => ({}));
-        const text = js?.result || js?.data?.choices?.[0]?.message?.content || '';
-        if (res.ok && String(text || '').trim()) {
-          return String(text || '').trim();
-        }
+        const translated = String(js?.translated || '').trim();
+        if (res.ok && translated) return translated;
         lastError = js?.error || js?.message || `Translate HTTP ${res.status}`;
       } catch (e) {
         lastError = e?.message || String(e);
       }
     }
-    throw new Error(String(lastError));
+    console.warn('[translate] single translate failed:', decodeURIComponent(q), lastError);
+    return '';
   };
 
   try {
     let updates = 0;
+    let failures = 0;
 
     if (wordTargets.length) {
-      const words = wordTargets.map(w => w.eng.trim()).slice(0, 60);
-      const prompt = `Provide Korean translations for these English words as compact JSON array of objects with keys eng and kor only. No commentary. Words: ${words.join(', ')}`;
-      const result = await callTranslatePrompt(prompt);
-      const parsed = parseJsonArray(result);
-      if (Array.isArray(parsed)) {
-        const map = new Map(parsed.filter(o => o && o.eng).map(o => [String(o.eng).toLowerCase(), o.kor]));
-        for (const w of wordTargets) {
-          const tr = map.get(String(w.eng || '').toLowerCase());
-          if (tr && !w.kor) {
-            w.kor = tr;
-            updates += 1;
-          }
+      for (const w of wordTargets.slice(0, 60)) {
+        const tr = await translateSingle(w.eng);
+        if (tr && !w.kor) {
+          w.kor = tr;
+          updates += 1;
+        } else {
+          failures += 1;
         }
-      } else {
-        console.warn('[translate] Could not parse word translation JSON', result);
       }
     }
 
     if (sentenceTargets.length) {
-      const capped = sentenceTargets.slice(0, 60);
-      const indexedLines = capped.map((w, i) => `${i + 1}. ${String(w.example || '').trim()}`).join('\n');
-      const prompt = [
-        'Translate the following English sentences to Korean.',
-        'Return ONLY a compact JSON array of objects with keys idx and kor.',
-        'idx is the 1-based sentence number from the list below.',
-        'No markdown. No commentary.',
-        '',
-        indexedLines
-      ].join('\n');
-      const result = await callTranslatePrompt(prompt);
-      const parsed = parseJsonArray(result);
-      if (Array.isArray(parsed)) {
-        const byIdx = new Map();
-        parsed.forEach((o, i) => {
-          if (o && typeof o === 'object' && Number.isFinite(Number(o.idx)) && o.kor) {
-            byIdx.set(Number(o.idx), String(o.kor));
-          } else if (typeof o === 'string' && o.trim()) {
-            byIdx.set(i + 1, o.trim());
-          }
-        });
-        capped.forEach((w, i) => {
-          const tr = byIdx.get(i + 1);
-          if (tr && !w.ex_kor) {
-            w.ex_kor = tr;
-            updates += 1;
-          }
-        });
-      } else {
-        console.warn('[translate] Could not parse sentence translation JSON', result);
+      for (const w of sentenceTargets.slice(0, 60)) {
+        const tr = await translateSingle(w.example);
+        if (tr && !w.ex_kor) {
+          w.ex_kor = tr;
+          updates += 1;
+        } else {
+          failures += 1;
+        }
       }
     }
 
     if (updates > 0) {
       setList([...list]);
       render();
-      toast(`Translated ${updates} item${updates === 1 ? '' : 's'}`);
+      toast(`Translated ${updates} item${updates === 1 ? '' : 's'}${failures ? ` (${failures} failed)` : ''}`);
     } else {
       toast('No new translations found');
     }

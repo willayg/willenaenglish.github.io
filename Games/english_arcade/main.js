@@ -31,7 +31,7 @@ import { progressCache } from './utils/progress-cache.js?v=20251214a';
 import { LEVEL1_LISTS, LEVEL2_LISTS, LEVEL3_LISTS, LEVEL4_LISTS, PHONICS_LISTS } from './utils/level-lists.js?v=20251214a';
 import { prefetchAllProgress, loadStarCounts } from './utils/progress-data-service.js?v=20251214a';
 
-const EA_BUILD_STAMP = 'EA_BUILD 20260329e · sentence-korean-hint-fix';
+const EA_BUILD_STAMP = 'EA_BUILD 20260329f · exkor-load-mapping-fix';
 
 function isStagingLikeHost(host) {
   const h = String(host || '').toLowerCase();
@@ -1365,6 +1365,7 @@ async function openSavedGameById(id, { mode = null } = {}) {
       const kor = w.kor || w.kr || w.translation || '';
       const def = w.def || w.definition || w.gloss || w.meaning || '';
       const example = w.example || w.ex || w.example_sentence || w.sentence_example || '';
+      const exampleKor = w.ex_kor || w.example_kor || w.sentence_kor || w.korean_sentence || '';
       const legacySentence = w.legacy_sentence || w.sentence || example || '';
       const sentenceArray = Array.isArray(w.sentences)
         ? w.sentences.map(s => ({
@@ -1385,6 +1386,7 @@ async function openSavedGameById(id, { mode = null } = {}) {
         out.definition = String(def).trim();
       }
       if (example && String(example).trim()) out.example = String(example).trim();
+      if (exampleKor && String(exampleKor).trim()) out.ex_kor = String(exampleKor).trim();
       if (legacySentence && String(legacySentence).trim()) out.legacy_sentence = String(legacySentence).trim();
       if (sentenceArray.length) out.sentences = sentenceArray;
       if (primarySentenceId) out.primary_sentence_id = primarySentenceId;
