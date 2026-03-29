@@ -124,9 +124,9 @@ async function enrichSentenceAudioIDAware(items){
     }
     if (hasBase){ it.sentenceAudioUrl = baseClean + '/' + key; }
   });
-  // 2) Heuristic by sentence_id — ONLY for *persisted* sentence identity (teacher-saved games).
-  //    Runtime-resolved IDs (default lists) skip this so they fall through to legacy word_sentence.mp3.
-  const needHeuristic = items.filter(it=> !it.sentenceAudioUrl && it.sentence_id && it._hasPersistedSentenceIdentity);
+  // 2) Heuristic by sentence_id for all items with sentence_id.
+  //    This keeps default lists and builder-created content on the same canonical ID path.
+  const needHeuristic = items.filter(it=> !it.sentenceAudioUrl && it.sentence_id);
   if (needHeuristic.length && hasBase){
     needHeuristic.forEach(it=>{ it.sentenceAudioUrl = `${baseClean}/sent_${it.sentence_id}.mp3`; });
   }

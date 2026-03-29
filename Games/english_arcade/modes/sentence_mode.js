@@ -188,15 +188,15 @@ async function enrichSentenceAudioIDAware(items){
         it._pendingKeyOnly = true;
       }
     });
-  // 2. Try heuristic sent_<id>.mp3 ONLY for items with *persisted* sentence identity (teacher-saved games).
-  //    Runtime-resolved IDs (default lists) skip this so they can fall through to legacy word_sentence.mp3.
-  const needHeuristic = items.filter(it=> !it.sentenceAudioUrl && it.sentence_id && it._hasPersistedSentenceIdentity);
+  // 2. Try heuristic sent_<id>.mp3 for all items with sentence_id.
+  //    This keeps default lists and builder-created content on the same canonical ID path.
+  const needHeuristic = items.filter(it=> !it.sentenceAudioUrl && it.sentence_id);
   if (needHeuristic.length && hasBase){
     needHeuristic.forEach(it=>{ it.sentenceAudioUrl = `${baseClean}/sent_${it.sentence_id}.mp3`; });
   }
   // 2b. If still missing and we DO have sentence_ids, try the signed URL function.
   // This is safe for both persisted and runtime-resolved sentence IDs because if no
-  // sentence-specific audio exists, we still fall through to the legacy word fallback.
+  // sentence-specific audio exists, playback falls back to TTS.
   const stillMissing = items.filter(it=> !it.sentenceAudioUrl && it.sentence_id);
   const signedEligible = stillMissing.filter(it => !isLocalSentenceId(it.sentence_id));
   if (signedEligible.length){
