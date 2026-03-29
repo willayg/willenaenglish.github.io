@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -43,9 +43,12 @@
   
   <!-- Load burger-menu.js to make insertBurgerMenu available globally -->
   <script type="module">
-    import { insertBurgerMenu } from '/components/burger-menu.js?v=20260329b';
+    import { insertBurgerMenu } from '/components/burger-menu.js?v=20260329c';
     // Expose globally for main.js to use
     window.insertBurgerMenu = insertBurgerMenu;
+    document.addEventListener('DOMContentLoaded', () => {
+      try { insertBurgerMenu('#burger-menu-mount'); } catch (_) {}
+    });
   </script>
   
   <header>
