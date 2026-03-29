@@ -226,28 +226,76 @@ export async function handleGetTranslations(getList, setList, render, toast) {
   const overlay = ensureLoadingOverlay();
   overlay.show(`Translating ${wordTargets.length} words and ${sentenceTargets.length} sentences...`);
 
-  const translateSingle = async (text) => {
-    const q = encodeURIComponent(String(text || '').trim());
-    if (!q) return '';
-    const path = `/.netlify/functions/translate?text=${q}&target=ko`;
-    const attempts = [
-      () => WillenaAPI.fetch(path, { method: 'GET' }),
-      () => fetch(`https://api.willenaenglish.com${path}`, { method: 'GET', credentials: 'include' }),
-      () => fetch(`https://students.willenaenglish.com${path}`, { method: 'GET', credentials: 'omit' })
+  const extractAiText = (payload) => {
+    const candidates = [
+      payload?.result,
+      payload?.text,
+      payload?.data?.result,
+      payload?.data?.text,
+      payload?.choices?.[0]?.message?.content,
+      payload?.data?.choices?.[0]?.message?.content
     ];
+    const pick = candidates.find(v => typeof v === 'string' && v.trim());
+    return pick ? pick.trim() : '';
+  };
+
+  const fetchOpenAiText = async (prompt) => {
+    const body = JSON.stringify({ prompt });
+    const attempts = [
+      () => WillenaAPI.fetch('/.netlify/functions/openai_proxy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body
+      }),
+      () => fetch('https://willena-proxy.willena.workers.dev/.netlify/functions/openai_proxy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body,
+        credentials: 'include'
+      }),
+      () => fetch('https://api.willenaenglish.com/.netlify/functions/openai_proxy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body,
+        credentials: 'include'
+      })
+    ];
+
     let lastError = 'Translate failed';
     for (const call of attempts) {
       try {
         const res = await call();
         const js = await res.json().catch(() => ({}));
-        const translated = String(js?.translated || '').trim();
-        if (res.ok && translated) return translated;
+        const text = extractAiText(js);
+        if (res.ok && text) return text;
         lastError = js?.error || js?.message || `Translate HTTP ${res.status}`;
       } catch (e) {
         lastError = e?.message || String(e);
       }
     }
-    console.warn('[translate] single translate failed:', decodeURIComponent(q), lastError);
+    throw new Error(String(lastError));
+  };
+
+  const cleanTranslation = (raw) => String(raw || '')
+    .trim()
+    .replace(/^['"`]+|['"`]+$/g, '')
+    .replace(/^korean\s*[:：-]\s*/i, '')
+    .replace(/^translation\s*[:：-]\s*/i, '')
+    .trim();
+
+  const translateSingle = async (text, kind) => {
+    const source = String(text || '').trim();
+    if (!source) return '';
+    const prompt = kind === 'sentence'
+      ? `Translate this English sentence into natural Korean for a young ESL learner. Return only the Korean translation, with no explanation or quotes. Sentence: ${source}`
+      : `Translate this English word or short phrase into Korean. Return only the Korean translation, with no explanation or quotes. Text: ${source}`;
+    try {
+      const translated = cleanTranslation(await fetchOpenAiText(prompt));
+      if (translated && translated.toLowerCase() !== source.toLowerCase()) return translated;
+      console.warn('[translate] empty or unchanged translation:', source, translated);
+    } catch (e) {
+      console.warn('[translate] single translate failed:', source, e?.message || e);
+    }
     return '';
   };
 
