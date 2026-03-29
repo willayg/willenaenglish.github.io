@@ -362,7 +362,9 @@
         if (target && !/^https?:/i.test(target) && target.startsWith('/')) {
           // Allow only internal paths
         } else {
-          target = '/Teachers/index.html';
+          target = normalizedRole === 'admin'
+            ? '/Teachers/tools/feedback-admin.html'
+            : '/Teachers/index.html';
         }
         setTimeout(() => { window.location.href = target; }, 700);
         

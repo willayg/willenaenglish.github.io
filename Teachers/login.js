@@ -233,7 +233,7 @@ export function getRedirectUrl(role) {
     }
   } catch {}
   if (!target) {
-    if (role === 'admin') target = '/Teachers/components/feedback-admin.html';
+    if (role === 'admin') target = '/Teachers/tools/feedback-admin.html';
     else target = '/Teachers/index.html';
   }
   return target;

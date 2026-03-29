@@ -128,6 +128,7 @@ export function insertBurgerMenu(targetSelector = 'body') {
             <a href="/Teachers/tools/wordtest/wordtest2.html">Word Test</a>
             <a href="/Teachers/tools/worksheet-builder-vanilla/index.html">Worksheet Builder</a>
             <a href="/Teachers/tools/test_input/index.html">Test Input</a>
+            <a href="/Teachers/tools/feedback-admin.html" data-admin-only style="display:none;">Admin Tools</a>
             <a href="#" id="feedbackMenuBtn">Feedback</a>
             <button type="button" id="logoutMenuBtn" style="display:block;width:100%;text-align:left;padding:12px 16px;background:#fff;border:none;border-top:1px solid #eee;color:#333;cursor:pointer;font:inherit;">Logout</button>
           </div>
@@ -169,6 +170,25 @@ export function insertBurgerMenu(targetSelector = 'body') {
   }
 
   const logoutBtn = wrapper.querySelector('#logoutMenuBtn');
+  const adminOnlyLinks = Array.from(wrapper.querySelectorAll('[data-admin-only]'));
+
+  function getStoredRole() {
+    try {
+      return String(localStorage.getItem('userRole') || localStorage.getItem('role') || '').trim().toLowerCase();
+    } catch {
+      return '';
+    }
+  }
+
+  function applyAdminVisibility() {
+    const isAdmin = getStoredRole() === 'admin';
+    adminOnlyLinks.forEach((link) => {
+      link.style.display = isAdmin ? 'block' : 'none';
+    });
+  }
+
+  applyAdminVisibility();
+
   if (logoutBtn) {
     logoutBtn.onclick = async () => {
       try {
