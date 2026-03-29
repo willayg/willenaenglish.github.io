@@ -178,7 +178,7 @@
   <script src="/students/language.js"></script>
   <script src="/students/theme.js"></script>
   <!-- Game app -->
-  <script type="module" src="main.js?v=20260326c"></script>
+  <script type="module" src="main.js?v=20260329a"></script>
 </head>
 <body class="word-arcade">
   <div id="waAutostartOverlay" aria-live="polite" aria-busy="true">
@@ -316,6 +316,19 @@
         return Math.max(0, Math.min(100, completionPct));
       }
 
+      function resolveHomeworkForcedMode(meta) {
+        const m = (meta && typeof meta === 'object') ? meta : {};
+        const forcedRaw = String(m.forced_mode || m.mode || '').trim().toLowerCase();
+        const diffRaw = String(m.difficulty_mode || '').trim().toLowerCase();
+        if (forcedRaw === 'full_sentence_mode' || forcedRaw === 'sentence_unscramble' || diffRaw === 'sentence_unscramble') {
+          return 'full_sentence_mode';
+        }
+        if (forcedRaw === 'spelling' || diffRaw === 'spelling') {
+          return 'spelling';
+        }
+        return '';
+      }
+
       async function fetchHomeworkCompletionPct(assignmentId) {
         if (!assignmentId) return null;
         try {
@@ -323,7 +336,7 @@
           let spHint = '';
           try {
             const storedMeta = sessionStorage.getItem('wa_hw_forced_mode');
-            if (storedMeta === 'spelling' || storedMeta === 'full_sentence_mode') spHint = '&spelling_only=1';
+            if (storedMeta === 'spelling') spHint = '&spelling_only=1';
           } catch {}
           const prRes = await WillenaAPI.fetch(`/.netlify/functions/homework_api?action=assignment_progress&assignment_id=${encodeURIComponent(assignmentId)}${spHint}`);
           const prJson = await prRes.json().catch(() => ({}));
@@ -465,9 +478,9 @@
                 try { listMetaForBadge = JSON.parse(listMetaForBadge); } catch { listMetaForBadge = {}; }
               }
               if (!listMetaForBadge || typeof listMetaForBadge !== 'object') listMetaForBadge = {};
-              const badgeForcedMode = String(listMetaForBadge.forced_mode || listMetaForBadge.mode || listMetaForBadge.difficulty_mode || '').trim().toLowerCase();
+              const badgeForcedMode = resolveHomeworkForcedMode(listMetaForBadge);
               const badgeModesTotal = Number(listMetaForBadge.modes_total ?? listMetaForBadge.total_modes ?? listMetaForBadge.mode_count ?? 0);
-              const localSpellingOnly = badgeForcedMode === 'spelling' || badgeForcedMode === 'full_sentence_mode' || badgeModesTotal === 1;
+              const localSpellingOnly = badgeForcedMode === 'spelling';
               const spHint = localSpellingOnly ? '&spelling_only=1' : '';
 
               const pr = await WillenaAPI.fetch(`/.netlify/functions/homework_api?action=assignment_progress&assignment_id=${encodeURIComponent(a.id)}${spHint}`);
@@ -577,9 +590,9 @@
                 try { listMetaForProgress = JSON.parse(listMetaForProgress); } catch { listMetaForProgress = {}; }
               }
               if (!listMetaForProgress || typeof listMetaForProgress !== 'object') listMetaForProgress = {};
-              const progressForcedMode = String(listMetaForProgress.forced_mode || listMetaForProgress.mode || listMetaForProgress.difficulty_mode || '').trim().toLowerCase();
+              const progressForcedMode = resolveHomeworkForcedMode(listMetaForProgress);
               const progressModesTotal = Number(listMetaForProgress.modes_total ?? listMetaForProgress.total_modes ?? listMetaForProgress.mode_count ?? 0);
-              const localSpellingOnly = progressForcedMode === 'spelling' || progressForcedMode === 'full_sentence_mode' || progressModesTotal === 1;
+              const localSpellingOnly = progressForcedMode === 'spelling';
               const spHint = localSpellingOnly ? '&spelling_only=1' : '';
 
               const prRes = await WillenaAPI.fetch(`/.netlify/functions/homework_api?action=assignment_progress&assignment_id=${encodeURIComponent(a.id)}${spHint}`);
@@ -695,9 +708,9 @@
                 try { listMetaForGoal = JSON.parse(listMetaForGoal); } catch { listMetaForGoal = {}; }
               }
               if (!listMetaForGoal || typeof listMetaForGoal !== 'object') listMetaForGoal = {};
-              const goalForcedMode = String(listMetaForGoal.forced_mode || listMetaForGoal.mode || listMetaForGoal.difficulty_mode || '').trim().toLowerCase();
+              const goalForcedMode = resolveHomeworkForcedMode(listMetaForGoal);
               const goalModesTotal = Number(listMetaForGoal.modes_total ?? listMetaForGoal.total_modes ?? listMetaForGoal.mode_count ?? 0);
-              const isSpellingOnlyGoal = goalForcedMode === 'spelling' || goalForcedMode === 'full_sentence_mode' || goalModesTotal === 1;
+              const isSpellingOnlyGoal = goalForcedMode === 'spelling';
 
               goalMsg = document.createElement('div');
               goalMsg.style.fontSize = '0.75rem';
@@ -775,8 +788,7 @@
               const gameId = String(explicitGameId || (listKeySavedMatch && listKeySavedMatch[1]) || '').trim();
               const isSavedGameHomework = sourceType === 'saved_game' || metaType === 'saved_game' || !!listKeySavedMatch;
               const hwId = a.id;
-              const forcedModeRaw = String(listMeta.forced_mode || listMeta.mode || listMeta.difficulty_mode || '').trim().toLowerCase();
-              const forcedMode = (forcedModeRaw === 'spelling' || forcedModeRaw === 'full_sentence_mode') ? forcedModeRaw : '';
+              const forcedMode = resolveHomeworkForcedMode(listMeta);
 
               try {
                 if (hwId) sessionStorage.setItem('wa_homework_assignment_id', String(hwId));

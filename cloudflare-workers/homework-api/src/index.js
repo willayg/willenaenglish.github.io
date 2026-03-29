@@ -892,14 +892,28 @@ export default {
         const difficultyMode = String(assignment.list_meta?.difficulty_mode || '').toLowerCase();
         const forcedMode = String(assignment.list_meta?.forced_mode || assignment.list_meta?.mode || assignment.list_meta?.difficulty_mode || '').toLowerCase();
 
-        // Multi-signal spelling-only detection:
-        // 1. Metadata: forced_mode/difficulty_mode === 'spelling' or modes_total === 1
-        // 2. Goal value: goal_value === 1  (set by Game Builder for spelling-only)
-        // 3. Client hint: frontend passes spelling_only=1 URL param
-        // 4. Session inference: if ALL sessions are spelling/listen_and_spell modes
         const clientHintSpellingOnly = url.searchParams.get('spelling_only') === '1';
+        const clientHintSentenceOnly = url.searchParams.get('sentence_only') === '1';
         const goalValueHint = Number(assignment.goal_value) === 1;
-        let isSpellingOnlyAssignment = forcedMode === 'spelling' || difficultyMode === 'spelling' || metaModes === 1 || goalValueHint || clientHintSpellingOnly;
+
+        // Sentence-only detection (new): keep sentence assignments out of spelling fallback.
+        const isSentenceOnlyAssignment =
+          forcedMode === 'full_sentence_mode'
+          || forcedMode === 'sentence_unscramble'
+          || difficultyMode === 'sentence_unscramble'
+          || clientHintSentenceOnly;
+
+        // Multi-signal spelling-only detection:
+        // 1. Explicit metadata (forced_mode/difficulty_mode === spelling)
+        // 2. Client hint spelling_only=1
+        // 3. Legacy fallback: mode-count/goal-value indicate one-mode assignment and no sentence marker exists
+        // 4. Session inference: if ALL sessions are spelling/listen_and_spell modes
+        let isSpellingOnlyAssignment = !isSentenceOnlyAssignment && (
+          forcedMode === 'spelling'
+          || difficultyMode === 'spelling'
+          || clientHintSpellingOnly
+          || ((metaModes === 1 || goalValueHint) && !forcedMode && !difficultyMode)
+        );
 
         // wrong_words_fixed is fundamentally a spelling/review completion flow.
         if (isWrongWordsGoal) {
@@ -918,12 +932,22 @@ export default {
           }
         }
 
-        console.log(`[homework-api] spelling-only detection for ${assignment.id} (${assignment.title}):`, JSON.stringify({
-          forcedMode, difficultyMode, metaModes, goalValueHint, clientHintSpellingOnly, isSpellingOnlyAssignment,
+        console.log(`[homework-api] one-mode detection for ${assignment.id} (${assignment.title}):`, JSON.stringify({
+          forcedMode, difficultyMode, metaModes, goalValueHint, clientHintSpellingOnly, clientHintSentenceOnly, isSentenceOnlyAssignment, isSpellingOnlyAssignment,
           goal_value: assignment.goal_value, goal_type: assignment.goal_type,
         }));
 
-        if (isSpellingOnlyAssignment) {
+        if (isSentenceOnlyAssignment) {
+          totalModes = 1;
+          // Auto-heal: preserve sentence-only metadata for future calls.
+          if (assignment.list_meta?.forced_mode !== 'full_sentence_mode' || assignment.list_meta?.difficulty_mode !== 'sentence_unscramble') {
+            try {
+              const healedMeta = { ...(assignment.list_meta || {}), forced_mode: 'full_sentence_mode', modes_total: 1, difficulty_mode: 'sentence_unscramble' };
+              await supabaseUpdate(env, 'homework_assignments', `id=eq.${assignment.id}`, { list_meta: healedMeta });
+              console.log(`[homework-api] Auto-healed list_meta for assignment ${assignment.id}: forced_mode:full_sentence_mode`);
+            } catch (e) { console.warn('[homework-api] Sentence auto-heal failed:', e.message); }
+          }
+        } else if (isSpellingOnlyAssignment) {
           totalModes = 1;
           // Auto-heal: backfill forced_mode into list_meta so future calls work without hints
           if (!assignment.list_meta?.forced_mode || assignment.list_meta.forced_mode !== 'spelling') {
@@ -1086,8 +1110,9 @@ export default {
           total_modes: totalModes,
           category,
           is_spelling_only: isSpellingOnlyAssignment,
+          is_sentence_only: isSentenceOnlyAssignment,
           is_wrong_words_goal: isWrongWordsGoal,
-          difficulty_mode: assignment.list_meta?.difficulty_mode || 'full',
+          difficulty_mode: isSentenceOnlyAssignment ? 'sentence_unscramble' : (assignment.list_meta?.difficulty_mode || 'full'),
           stars_required: assignment.list_meta?.stars_required || null,
           goal_type: assignment.goal_type || null,
           goal_value: assignment.goal_value || null,
@@ -1099,7 +1124,7 @@ export default {
             run_tokens_on_assignment: (assignmentRunTokens || []).length,
             request_run_token: requestRunToken || null,
             list_key: assignment.list_key,
-            forced_mode: forcedMode,
+            forced_mode: isSentenceOnlyAssignment ? 'full_sentence_mode' : forcedMode,
             meta_modes: metaModes,
             goal_value: assignment.goal_value,
             sample_session_modes: filteredSessions.slice(0, 5).map(s => s.mode),
