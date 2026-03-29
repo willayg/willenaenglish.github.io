@@ -354,7 +354,8 @@ async function updateAssignmentMeta(event) {
 
 async function autoExpireAssignmentsPastGrace({ className = null } = {}) {
   const now = new Date();
-  const cutoff = new Date(now.getTime() - (24 * 60 * 60 * 1000)).toISOString();
+  // Auto-end only after a 2-day grace window past due_at.
+  const cutoff = new Date(now.getTime() - (2 * 24 * 60 * 60 * 1000)).toISOString();
   let query = supabase
     .from('homework_assignments')
     .update({ active: false, ended_at: now.toISOString() })
