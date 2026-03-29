@@ -150,6 +150,13 @@ function initNotificationBell(wrapper) {
   let pollTimer   = null;
   let currentCount = 0;
 
+  function apiFetch(url, options = {}) {
+    if (window.WillenaAPI && typeof window.WillenaAPI.fetch === 'function') {
+      return window.WillenaAPI.fetch(url, options);
+    }
+    return fetch(url, { credentials: 'include', ...options });
+  }
+
   function getSince() {
     const stored = sessionStorage.getItem(SEEN_KEY);
     if (stored) return stored;
@@ -166,9 +173,9 @@ function initNotificationBell(wrapper) {
   async function fetchCount() {
     try {
       const since = getSince();
-      const r = await fetch(
+      const r = await apiFetch(
         `${API}?action=teacher_notifications&mode=count&since=${encodeURIComponent(since)}`,
-        { credentials: 'include' }
+        {}
       );
       if (!r.ok) return;
       const d = await r.json();
@@ -186,9 +193,9 @@ function initNotificationBell(wrapper) {
       } catch { /* invalid cache, fall through */ }
     }
     const since = getSince();
-    const r = await fetch(
+    const r = await apiFetch(
       `${API}?action=teacher_notifications&since=${encodeURIComponent(since)}`,
-      { credentials: 'include' }
+      {}
     );
     if (!r.ok) throw new Error('fetch failed');
     const d = await r.json();
@@ -248,8 +255,9 @@ function initNotificationBell(wrapper) {
     try {
       const notifs = await fetchFull();
       renderPanel(notifs);
-    } catch {
-      body.innerHTML = '<div class="hw-notif-empty">Could not load notifications.</div>';
+    } catch (err) {
+      const msg = err && err.message ? htmlEscape(err.message) : 'Could not load notifications.';
+      body.innerHTML = `<div class="hw-notif-empty">${msg}</div>`;
     }
     // Mark seen
     sessionStorage.setItem(SEEN_KEY, new Date().toISOString());
