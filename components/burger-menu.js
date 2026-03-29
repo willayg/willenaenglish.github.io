@@ -380,12 +380,21 @@ function initNotificationBell(wrapper) {
           if (!id) return;
           const baseStudent = rosterMap.get(id) || {};
           const completion = Number(row.completion ?? row.completion_pct ?? 0) || 0;
+          const modesList = Array.isArray(row.modes) ? row.modes : [];
+          const rowModesTotal = Number(row.modes_total);
+          const responseModesTotal = Number(progressData.total_modes);
+          const assignmentModesTotal = Number(assignment.modes_total);
+          const modesTotal = [rowModesTotal, responseModesTotal, assignmentModesTotal].find((value) => Number.isFinite(value) && value > 0) || null;
+          const starsEarned = Number(row.stars || 0) || 0;
+          const starsPossible = Number.isFinite(modesTotal) ? (modesTotal * 5) : null;
           const entry = {
             user_id: id,
             name: row.name || baseStudent.name || null,
             korean_name: row.korean_name || baseStudent.korean_name || null,
-            stars: Number(row.stars || 0) || 0,
-            mode: Array.isArray(row.modes) && row.modes.length ? row.modes[row.modes.length - 1].mode : null,
+            stars: starsEarned,
+            stars_possible: starsPossible,
+            mode: modesList.length ? modesList[modesList.length - 1].mode : null,
+            mode_breakdown: modesList,
             completion,
             completed_at: baseStudent.completed_at || null,
           };
@@ -563,10 +572,36 @@ function initNotificationBell(wrapper) {
     }
     return list.map((person) => {
       const label = htmlEscape(person.name || person.korean_name || person.user_id || 'Student');
-      const modeText = person.mode ? formatModeLabel(person.mode) : '';
-      const sub = person.korean_name && person.korean_name !== person.name
-        ? `<div class="hw-status-person-meta">${htmlEscape(person.korean_name)}</div>`
-        : (type === 'done' && person.completed_at ? `<div class="hw-status-person-meta">${htmlEscape([formatTimeAgo(person.completed_at), renderStars(person.stars), modeText].filter(Boolean).join(' · '))}</div>` : '');
+      const metaLines = [];
+      if (person.korean_name && person.korean_name !== person.name) {
+        metaLines.push(String(person.korean_name));
+      }
+
+      const starsEarned = Number(person.stars || 0) || 0;
+      const starsPossible = Number(person.stars_possible);
+      const progressBits = [];
+      if (Number.isFinite(starsPossible) && starsPossible > 0) progressBits.push(`Stars ${starsEarned}/${starsPossible}`);
+      else if (starsEarned > 0) progressBits.push(`Stars ${starsEarned}`);
+
+      const completion = Number(person.completion);
+      if (Number.isFinite(completion)) progressBits.push(`${Math.max(0, Math.min(100, Math.round(completion)))}% complete`);
+      if (progressBits.length) metaLines.push(progressBits.join(' · '));
+
+      const modeBreakdown = Array.isArray(person.mode_breakdown)
+        ? person.mode_breakdown
+            .filter((modeEntry) => Number.isFinite(Number(modeEntry && modeEntry.bestStars)))
+            .map((modeEntry) => `${formatModeLabel(modeEntry.mode)} ${Math.max(0, Math.min(5, Number(modeEntry.bestStars) || 0))}★`)
+            .filter(Boolean)
+            .join(' · ')
+        : '';
+      if (modeBreakdown) metaLines.push(modeBreakdown);
+
+      if (type === 'done' && person.completed_at) {
+        const modeText = person.mode ? formatModeLabel(person.mode) : '';
+        metaLines.push([formatTimeAgo(person.completed_at), modeText].filter(Boolean).join(' · '));
+      }
+
+      const sub = metaLines.map((line) => `<div class="hw-status-person-meta">${htmlEscape(line)}</div>`).join('');
       const badge = type === 'done'
         ? '<span class="hw-status-done-badge">Done</span>'
         : '<span class="hw-status-pending-badge">Pending</span>';
