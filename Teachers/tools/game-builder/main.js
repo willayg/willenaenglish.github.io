@@ -37,7 +37,7 @@ import {
   findGameByTitle,
   generateIncrementedTitle,
   showTitleConflictModal
-} from './services/file-service.js?v=20260328e';
+} from './services/file-service.js?v=20260329a';
 import {
   getList,
   setList,
@@ -74,7 +74,7 @@ import {
   handleSaveAsConfirm,
   showFileModal as showFileModalUI,
   hideFileModal as hideFileModalUI
-} from './ui/modals.js?v=20260329a';
+} from './ui/modals.js?v=20260329b';
 import {
   handleQuickSave,
   isQuickSaveInFlight,
@@ -85,12 +85,12 @@ import {
   handleGetTranslations,
   handleGenerateDefinitions,
   handleGenerateExamples
-} from './ui/event-handlers.js?v=20260329a';
+} from './ui/event-handlers.js?v=20260329b';
 import { ENDPOINTS, STORAGE_KEYS, ACTIONS, DEFAULTS, TOAST_DURATION } from './constants.js';
 import { initFileListModal } from './ui/file-list.js?v=20260329a';
 import { loadWorksheetIntoBuilder } from './services/worksheet-service.js?v=20260328e';
 
-const GB_BUILD_STAMP = 'GB_BUILD 20260329f - save-audio-filelist-homework-fixes';
+const GB_BUILD_STAMP = 'GB_BUILD 20260329g - autosave-sentence-audio-enforced';
 
 function isStagingLikeHost(host) {
   const h = String(host || '').toLowerCase();

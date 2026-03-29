@@ -4,7 +4,7 @@ import { DEFAULTS } from '../constants.js';
 import { generateDefinition, generateExample } from '../services/ai-service.js?v=20260322p';
 import { openSaveAsModal, handleSaveAsConfirm, showFileModal } from './modals.js';
 import { ensureAudioForWordsAndSentences } from '../services/audio-service.js';
-import { ensureSentenceIdsBuilder, prepareAndUploadImagesIfNeeded, saveGameData } from '../services/file-service.js?v=20260328e';
+import { ensureSentenceIdsBuilder, ensureSentenceAudioBuilder, prepareAndUploadImagesIfNeeded, saveGameData } from '../services/file-service.js?v=20260329a';
 import { syncImagesFromPayload } from '../state/game-state.js?v=20260328e';
 
 let isSaving = false;
@@ -98,6 +98,14 @@ export async function handleQuickSave(ev, buildPayload, getCurrentGameId, setCur
     const sentResult = await ensureSentenceIdsBuilder(payload.words || []);
     console.log('[quickSave] ensureSentenceIdsBuilder result:', sentResult,
       'words with sentence IDs:', (payload.words || []).filter(w => w.primary_sentence_id).length, '/', (payload.words || []).length);
+
+    // Ensure sent_<id>.mp3 exists before save so teachers do not need Save Sentences button.
+    try {
+      const sentenceAudioResult = await ensureSentenceAudioBuilder(payload.words || []);
+      console.log('[quickSave] ensureSentenceAudioBuilder result:', sentenceAudioResult);
+    } catch (e) {
+      console.warn('[quickSave] ensureSentenceAudioBuilder failed (non-fatal):', e?.message || e);
+    }
 
     // Stage 1: Upload images
     if (!silent && typeof window.showSaveCenterMessage === 'function') {
