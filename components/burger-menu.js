@@ -256,7 +256,7 @@ function initNotificationBell(wrapper) {
   const API = '/.netlify/functions/homework_api';
   const CACHE_KEY   = 'hw_notif_data';
   const FETCHED_KEY = 'hw_notif_fetched_at';
-  const STATUS_CACHE_KEY = 'hw_notif_status_data';
+  const STATUS_CACHE_KEY = 'hw_notif_status_data_v2';
   const STATUS_FETCHED_KEY = 'hw_notif_status_fetched_at';
   const SEEN_KEY    = 'hw_notif_last_seen';
   const CACHE_TTL   = 60_000;   // 1 min
@@ -330,10 +330,11 @@ function initNotificationBell(wrapper) {
     return d.notifications || [];
   }
 
-  async function fetchHomeworkStatus() {
+  async function fetchHomeworkStatus(options = {}) {
+    const force = !!(options && options.force);
     const now = Date.now();
     const fetchedAt = parseInt(sessionStorage.getItem(STATUS_FETCHED_KEY) || '0', 10);
-    if (now - fetchedAt < CACHE_TTL) {
+    if (!force && now - fetchedAt < CACHE_TTL) {
       try {
         const cached = JSON.parse(sessionStorage.getItem(STATUS_CACHE_KEY) || 'null');
         if (cached) return cached;
@@ -353,7 +354,15 @@ function initNotificationBell(wrapper) {
     const baseAssignments = Array.isArray(d.assignments) ? d.assignments : [];
     const assignments = await Promise.all(baseAssignments.map(async (assignment) => {
       try {
-        const progressResp = await apiFetch(`${API}?action=assignment_progress&assignment_id=${encodeURIComponent(assignment.assignment_id)}`, {});
+        const progressParams = new URLSearchParams();
+        progressParams.set('action', 'assignment_progress');
+        progressParams.set('assignment_id', String(assignment.assignment_id || ''));
+        if (assignment.class) progressParams.set('class', String(assignment.class));
+        const modeHint = String(assignment.difficulty_mode || assignment.forced_mode || '').toLowerCase();
+        if (modeHint === 'spelling') progressParams.set('spelling_only', '1');
+        if (modeHint === 'sentence_unscramble' || modeHint === 'full_sentence_mode') progressParams.set('sentence_only', '1');
+
+        const progressResp = await apiFetch(`${API}?${progressParams.toString()}`, {});
         const progressData = await progressResp.json().catch(() => null);
         if (!progressResp.ok || !progressData || !progressData.success || !Array.isArray(progressData.progress)) {
           return assignment;
@@ -368,7 +377,7 @@ function initNotificationBell(wrapper) {
         const pending = [];
         progressData.progress.forEach((row) => {
           const id = String(row.user_id || '');
-          if (!id || !rosterMap.has(id)) return;
+          if (!id) return;
           const baseStudent = rosterMap.get(id) || {};
           const completion = Number(row.completion ?? row.completion_pct ?? 0) || 0;
           const entry = {
@@ -382,7 +391,7 @@ function initNotificationBell(wrapper) {
           };
           if (String(row.status || '').toLowerCase() === 'completed' || completion >= 100) done.push(entry);
           else pending.push(entry);
-          rosterMap.delete(id);
+          if (rosterMap.has(id)) rosterMap.delete(id);
         });
 
         rosterMap.forEach((student, id) => {
@@ -685,7 +694,7 @@ function initNotificationBell(wrapper) {
     statusBackdrop.setAttribute('aria-hidden', 'false');
     statusBody.innerHTML = '<div class="hw-status-loading">Loading active homework…</div>';
     try {
-      const assignments = await fetchHomeworkStatus();
+      const assignments = await fetchHomeworkStatus({ force: true });
       renderStatusModal(assignments);
     } catch (err) {
       const msg = err && err.message ? htmlEscape(err.message) : 'Could not load homework status.';

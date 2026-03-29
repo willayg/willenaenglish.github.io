@@ -1,4 +1,4 @@
-﻿// toolbar.js - Toolbar & Controls Management
+// toolbar.js - Toolbar & Controls Management
 
 (function() {
   
@@ -530,7 +530,7 @@
   // Initialize menu systems
   function initializeMenus() {
     // Load and setup burger menu
-    fetch('/components/burger-menu.html?v=20260330b')
+    fetch('/components/burger-menu.html?v=20260330c')
       .then(r => r.text())
       .then(burgerHtml => {
         // Insert the template into the DOM if not already present

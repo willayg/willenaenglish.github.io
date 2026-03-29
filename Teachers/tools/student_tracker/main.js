@@ -1,4 +1,4 @@
-Ôªø// Access control: require teacher login and approval
+// Access control: require teacher login and approval
 let userRole = null;
 let userRoleReadyResolve;
 const userRoleReady = new Promise((resolve) => { userRoleReadyResolve = resolve; });
@@ -38,7 +38,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Fetch and inject burger menu template if not already present
   if (!document.getElementById('burger-menu-template')) {
     try {
-      const resp = await fetch('/components/burger-menu.html?v=20260330b');
+      const resp = await fetch('/components/burger-menu.html?v=20260330c');
       const html = await resp.text();
       const tempDiv = document.createElement('div');
       tempDiv.innerHTML = html;
@@ -720,12 +720,12 @@ function renderStudentDetails(d){
           <div class="label">Accuracy</div>
         </div>
         <div class="stat-card">
-          <div class="icon">‚≠ê</div>
+          <div class="icon">?</div>
           <div class="val">${t.stars||0}</div>
           <div class="label">Stars earned</div>
         </div>
         <div class="stat-card">
-          <div class="icon">üèÜ</div>
+          <div class="icon">??</div>
           <div class="val">${t.points||0}</div>
           <div class="label">Points</div>
         </div>
@@ -869,7 +869,7 @@ function renderStudentDetails(d){
               <div class="game-chart mode">
                 <canvas id="${modeId}" width="140" height="140" data-percent="${percent}"></canvas>
                 <div class="chart-caption">${friendlyModeName(mode.mode)}</div>
-                <div class="mode-caption">${metaBits.join(' ¬∑ ')}</div>
+                <div class="mode-caption">${metaBits.join(' °§ ')}</div>
               </div>
             `;
           }).join('');
@@ -881,7 +881,7 @@ function renderStudentDetails(d){
               <div class="game-header">
                 <div>
                   <div class="game-name">${friendlyListName(game.name)}</div>
-                  <div class="game-meta">${metaLine.join(' ¬∑ ')}</div>
+                  <div class="game-meta">${metaLine.join(' °§ ')}</div>
                 </div>
               </div>
               <div class="game-charts">
@@ -1554,7 +1554,7 @@ function initHomeworkShell() {
       if (!selected) {
         const subtitle = document.getElementById('homeworkStudentsSubtitle');
         if (subtitle && subtitle.textContent) {
-          const match = subtitle.textContent.match(/^(.+?)\s*[-‚Äì‚Äî:]?\s*Homework/i);
+          const match = subtitle.textContent.match(/^(.+?)\s*[-??:]?\s*Homework/i);
           if (match && match[1]) {
             const displayName = match[1].trim();
             // Find the class item to get the actual class name
@@ -1772,7 +1772,7 @@ function showHomeworkStudentModal(row, totalModes, assignmentId) {
   const capAcc = v => Math.min(100, Math.max(0, Math.round(Number(v) || 0)));
   const overallAcc = capAcc(row.accuracy_overall != null ? row.accuracy_overall : (row.accuracy_best||0));
   const bestAcc = capAcc(row.accuracy_best||0);
-  if (meta) meta.textContent = `Completion: ${displayCompletion}% ¬∑ Stars: ${row.stars || 0} ¬∑ Overall Accuracy: ${overallAcc}% (Best: ${bestAcc}%) ¬∑ Modes attempted: ${displayModesAttempted}/${displayTotalModes}${totalWasComputed ? ' (computed)' : ''}`;
+  if (meta) meta.textContent = `Completion: ${displayCompletion}% °§ Stars: ${row.stars || 0} °§ Overall Accuracy: ${overallAcc}% (Best: ${bestAcc}%) °§ Modes attempted: ${displayModesAttempted}/${displayTotalModes}${totalWasComputed ? ' (computed)' : ''}`;
   if (modesWrap) {
     modesWrap.innerHTML = (row.modes||[]).map(m => {
       const acc = capAcc(m.bestAccuracy || m.accuracy_best || m.accuracy || 0);
