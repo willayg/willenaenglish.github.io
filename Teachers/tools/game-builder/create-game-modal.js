@@ -15,6 +15,9 @@
 // -------------------------------------------------------------
 
 import { preprocessTTS } from '../../../Games/english_arcade/tts.js';
+import { getCurrentGameId, setCurrentGameId } from './state/game-state.js?v=20260328e';
+import { ensureAudioForWordsAndSentences } from './services/audio-service.js';
+import { openPixabayImagePicker } from './images.js?v=20260322l';
 
 // -------------------------------------------------------------
 // State & Utility
@@ -22,6 +25,9 @@ import { preprocessTTS } from '../../../Games/english_arcade/tts.js';
 let currentPanel = 'start'; // 'start' | 'live' | 'homework'
 let selectedLiveMode = null; // will hold e.g., 'multi_choice_eng_to_kor'
 let buildPayloadRef = null; // reference to builder's payload function (captured in init)
+let homeworkClassesLoaded = false;
+let homeworkClasses = [];
+const homeworkStudentsByClass = new Map();
 
 // Elements (legacy references retained for homework form reuse)
 const el = {
@@ -34,11 +40,14 @@ const el = {
   // Form inputs
   title: document.getElementById('gameTitle'),
   cls: document.getElementById('gameClass'),
+  student: document.getElementById('gameStudentTarget'),
+  studentHelp: document.getElementById('gameStudentHelp'),
   dateDue: document.getElementById('gameDateDue'),
   book: document.getElementById('gameBook'),
   unit: document.getElementById('gameUnit'),
   desc: document.getElementById('gameDescription'),
   imageZone: document.getElementById('gameImageZone'),
+  imagePick: document.getElementById('gameImagePick'),
   status: document.getElementById('createGameStatus'),
   titleInput: document.getElementById('titleInput'),
   // Panel containers (will be created if not present)
@@ -49,6 +58,358 @@ const el = {
 };
 
 let gameImageUrl = '';
+let gameImageManuallySelected = false;
+let autoImageRequestInFlight = false;
+let autoImageDebounceTimer = null;
+let autoImageLastQuery = '';
+
+const HOMEWORK_DIFFICULTY_PERCENTAGES = {
+  easy: 0.25,
+  standard: 0.50,
+  hard: 0.75,
+};
+
+function setHomeworkClassLoadingState(loading, text = 'Loading classes...') {
+  if (!el.panelHomework) return;
+  const loadingEl = el.panelHomework.querySelector('#gameClassLoading');
+  if (!loadingEl) return;
+  const labelEl = loadingEl.querySelector('.cgm-class-loading-text');
+  if (labelEl) labelEl.textContent = text;
+  loadingEl.classList.toggle('active', !!loading);
+}
+
+function getSelectedHomeworkDifficulty() {
+  if (!el.panelHomework) return 'full';
+  const checked = el.panelHomework.querySelector('input[name="gameDifficulty"]:checked');
+  return checked?.value || 'full';
+}
+
+function getHomeworkDifficultyConfig(difficultyMode, maxStars = 30, modesTotal = 6) {
+  const mode = String(difficultyMode || 'full').trim().toLowerCase();
+  if (mode === 'spelling') {
+    return {
+      difficulty_mode: 'spelling',
+      requires_all_modes: true,
+      modes_required: 1,
+      required_stars: null,
+      goal_value: 1,
+      max_stars: 5,
+      modes_total: 1,
+      forced_mode: 'spelling',
+    };
+  }
+  if (mode === 'full') {
+    return {
+      difficulty_mode: 'full',
+      requires_all_modes: true,
+      modes_required: modesTotal,
+      required_stars: null,
+      goal_value: 5,
+      max_stars: maxStars,
+      modes_total: modesTotal,
+      forced_mode: null,
+    };
+  }
+  const percentage = HOMEWORK_DIFFICULTY_PERCENTAGES[mode] ?? 0.5;
+  const requiredStars = Math.max(1, Math.round(maxStars * percentage));
+  return {
+    difficulty_mode: mode,
+    requires_all_modes: false,
+    modes_required: null,
+    required_stars: requiredStars,
+    goal_value: requiredStars,
+    max_stars: maxStars,
+    modes_total: modesTotal,
+    forced_mode: null,
+  };
+}
+
+function updateHomeworkDifficultyPreview(maxStars = 30, modesTotal = 6) {
+  if (!el.panelHomework) return;
+  const preview = el.panelHomework.querySelector('#gameDifficultyPreview');
+  if (!preview) return;
+  const mode = getSelectedHomeworkDifficulty();
+  if (mode === 'spelling') {
+    preview.textContent = 'Spelling only: complete the Spelling mode with at least 1 star.';
+    return;
+  }
+  if (mode === 'full') {
+    preview.textContent = `Complete all ${modesTotal} modes with at least 1 star each.`;
+    return;
+  }
+  const cfg = getHomeworkDifficultyConfig(mode, maxStars, modesTotal);
+  preview.textContent = `Max available: ${maxStars} stars | Required to pass: ${cfg.required_stars}+ stars`;
+}
+
+function normalizeHomeworkClassRecord(record) {
+  const rawName = typeof record === 'string'
+    ? record
+    : record?.name || record?.class || record?.display || '';
+  const name = String(rawName || '').trim();
+  if (!name) return null;
+  const display = String(record?.display || name).trim() || name;
+  return {
+    name,
+    display,
+    hidden: !!record?.hidden,
+  };
+}
+
+function getHomeworkApiUrl(path) {
+  return window.WillenaAPI ? window.WillenaAPI.getApiUrl(path) : path;
+}
+
+function setHomeworkStudentHelp(text) {
+  if (el.studentHelp) el.studentHelp.textContent = text || '';
+}
+
+function normalizeHomeworkClassValue(value) {
+  const raw = String(value || '').trim().toLowerCase();
+  if (!raw) return '';
+  if (raw === 'ny') return 'new york';
+  return raw.replace(/\s+/g, ' ');
+}
+
+function populateHomeworkClassOptions(selectedClasses = []) {
+  if (!el.cls) return;
+  const selectedSet = new Set(
+    (Array.isArray(selectedClasses) ? selectedClasses : [selectedClasses])
+      .map(value => String(value || '').trim())
+      .filter(Boolean)
+  );
+  const options = [
+    { value: '', label: 'Select one or more classes', disabled: true },
+    ...homeworkClasses.map(cls => ({ value: cls.name, label: cls.display || cls.name })),
+  ];
+  el.cls.innerHTML = '';
+  options.forEach(({ value, label, disabled }) => {
+    const option = document.createElement('option');
+    option.value = value;
+    option.textContent = disabled ? label : `${label}${homeworkClasses.find(c => c.name === value)?.hidden ? ' (hidden)' : ''}`;
+    if (disabled) option.disabled = true;
+    if (selectedSet.has(value)) option.selected = true;
+    el.cls.appendChild(option);
+  });
+}
+
+function populateHomeworkStudentOptions(students = [], selectedStudentId = '') {
+  if (!el.student) return;
+  el.student.innerHTML = '';
+
+  const classOption = document.createElement('option');
+  classOption.value = '';
+  classOption.textContent = 'Entire class';
+  el.student.appendChild(classOption);
+
+  students.forEach((student) => {
+    const option = document.createElement('option');
+    option.value = student.id;
+    const englishName = String(student.name || '').trim();
+    const koreanName = String(student.korean_name || '').trim();
+    const username = String(student.username || '').trim();
+    option.textContent = [englishName, koreanName].filter(Boolean).join(' / ') || username || 'Unnamed student';
+    el.student.appendChild(option);
+  });
+
+  el.student.value = selectedStudentId || '';
+  el.student.disabled = !students.length;
+  setHomeworkStudentHelp(students.length ? 'Optional: leave as Entire class to assign to everyone.' : 'No students found for this class yet.');
+}
+
+async function loadHomeworkClasses() {
+  if (homeworkClassesLoaded) return homeworkClasses;
+  const classesByKey = new Map();
+  const addClass = (record, prefer = false) => {
+    const normalized = normalizeHomeworkClassRecord(record);
+    if (!normalized) return;
+    const key = normalized.name.toLowerCase();
+    if (!classesByKey.has(key) || prefer) {
+      classesByKey.set(key, normalized);
+    }
+  };
+
+  let teacherAdminError = null;
+  try {
+    const studentResp = await fetch(getHomeworkApiUrl('/.netlify/functions/teacher_admin?action=list_students&limit=1000'), {
+      credentials: 'include',
+      cache: 'no-store'
+    });
+    const studentJson = await studentResp.json().catch(() => ({}));
+    if (studentResp.ok && studentJson?.success && Array.isArray(studentJson.students)) {
+      studentJson.students.forEach((student) => {
+        const rawClass = String(student?.class || '').trim();
+        if (rawClass) addClass({ name: rawClass, display: rawClass }, true);
+      });
+    } else {
+      teacherAdminError = studentJson?.error || `Failed to load student classes (${studentResp.status})`;
+    }
+  } catch (err) {
+    teacherAdminError = err?.message || String(err);
+  }
+
+  try {
+    const resp = await fetch(getHomeworkApiUrl('/.netlify/functions/progress_teacher_summary?action=classes_list'), {
+      credentials: 'include',
+      cache: 'no-store'
+    });
+    const json = await resp.json().catch(() => ({}));
+    if (resp.ok && json?.success && Array.isArray(json.classes)) {
+      json.classes.forEach((cls) => addClass(cls));
+    }
+  } catch (err) {
+    console.warn('Failed to merge progress class list', err);
+  }
+
+  homeworkClasses = Array.from(classesByKey.values()).sort((left, right) => {
+    const a = String(left.display || left.name || '').toLowerCase();
+    const b = String(right.display || right.name || '').toLowerCase();
+    return a.localeCompare(b);
+  });
+
+  if (!homeworkClasses.length) {
+    throw new Error(teacherAdminError || 'Failed to load classes.');
+  }
+
+  homeworkClassesLoaded = true;
+  return homeworkClasses;
+}
+
+function getSelectedHomeworkClasses() {
+  if (!el.cls) return [];
+  const selected = Array.from(el.cls.selectedOptions || [])
+    .map((option) => String(option.value || '').trim())
+    .filter(Boolean);
+  if (selected.length) return Array.from(new Set(selected));
+  const fallback = String(el.cls.value || '').trim();
+  return fallback ? [fallback] : [];
+}
+
+async function loadStudentsForHomeworkClass(className, selectedStudentId = '') {
+  if (!el.student) return [];
+  if (!className) {
+    populateHomeworkStudentOptions([], '');
+    return [];
+  }
+
+  el.student.disabled = true;
+  setHomeworkStudentHelp('Loading students...');
+
+  if (!homeworkStudentsByClass.has(className)) {
+    const resp = await fetch(getHomeworkApiUrl(`/.netlify/functions/teacher_admin?action=list_students&class=${encodeURIComponent(className)}&limit=1000`), {
+      credentials: 'include',
+      cache: 'no-store'
+    });
+    const json = await resp.json().catch(() => ({}));
+    if (!resp.ok || !json?.success || !Array.isArray(json.students)) {
+      throw new Error(json?.error || `Failed to load students (${resp.status})`);
+    }
+
+    let rawStudents = json.students;
+    if (!rawStudents.length) {
+      const fallbackResp = await fetch(getHomeworkApiUrl('/.netlify/functions/teacher_admin?action=list_students&limit=1000'), {
+        credentials: 'include',
+        cache: 'no-store'
+      });
+      const fallbackJson = await fallbackResp.json().catch(() => ({}));
+      if (fallbackResp.ok && fallbackJson?.success && Array.isArray(fallbackJson.students)) {
+        rawStudents = fallbackJson.students;
+      }
+    }
+
+    const wantedClass = normalizeHomeworkClassValue(className);
+    const students = rawStudents
+      .filter(student => normalizeHomeworkClassValue(student.class) === wantedClass)
+      .sort((left, right) => {
+        const leftLabel = `${left.name || ''} ${left.korean_name || ''} ${left.username || ''}`.trim().toLowerCase();
+        const rightLabel = `${right.name || ''} ${right.korean_name || ''} ${right.username || ''}`.trim().toLowerCase();
+        return leftLabel.localeCompare(rightLabel);
+      });
+    homeworkStudentsByClass.set(className, students);
+  }
+
+  const students = homeworkStudentsByClass.get(className) || [];
+  populateHomeworkStudentOptions(students, selectedStudentId);
+  return students;
+}
+
+async function updateStudentSelectorForClassSelection(selectedStudentId = '') {
+  const selectedClasses = getSelectedHomeworkClasses();
+  if (!selectedClasses.length) {
+    populateHomeworkStudentOptions([], '');
+    if (el.student) el.student.disabled = true;
+    setHomeworkStudentHelp('Select a class to assign to students or leave as whole class.');
+    return;
+  }
+  if (selectedClasses.length > 1) {
+    populateHomeworkStudentOptions([], '');
+    if (el.student) el.student.disabled = true;
+    setHomeworkStudentHelp('Individual student assignment is available when exactly one class is selected.');
+    return;
+  }
+  await loadStudentsForHomeworkClass(selectedClasses[0], selectedStudentId);
+}
+
+async function primeHomeworkRecipients(selectedClasses = [], selectedStudentId = '') {
+  if (!el.cls || !el.student) return;
+  el.cls.disabled = true;
+  el.student.disabled = true;
+  el.cls.innerHTML = '<option value="" disabled selected>Loading classes...</option>';
+  setHomeworkClassLoadingState(true);
+  setHomeworkStudentHelp('Loading classes...');
+  try {
+    await loadHomeworkClasses();
+    populateHomeworkClassOptions(selectedClasses);
+    el.cls.disabled = false;
+    await updateStudentSelectorForClassSelection(selectedStudentId);
+    setHomeworkClassLoadingState(false);
+  } catch (err) {
+    console.error('Failed to load homework recipients', err);
+    populateHomeworkClassOptions(selectedClasses);
+    populateHomeworkStudentOptions([], '');
+    setHomeworkStudentHelp('Could not load classes automatically. Refresh and try again.');
+    el.cls.disabled = false;
+    setHomeworkClassLoadingState(false, 'Could not load classes');
+  }
+}
+
+function getSelectedHomeworkStudent() {
+  const selectedClasses = getSelectedHomeworkClasses();
+  const className = selectedClasses.length === 1 ? selectedClasses[0] : '';
+  const studentId = String(el.student?.value || '').trim();
+  if (!className || !studentId) return null;
+  const roster = homeworkStudentsByClass.get(className) || [];
+  return roster.find(student => String(student.id) === studentId) || null;
+}
+
+function fallbackExampleSentenceForWord(wordObj) {
+  const eng = String(wordObj?.eng || '').trim();
+  if (!eng) return '';
+  if (/ing$/i.test(eng)) return `They are ${eng}.`;
+  if (eng.includes(' ')) return `I can use ${eng}.`;
+  const article = /^[aeiou]/i.test(eng) ? 'an' : 'a';
+  return `This is ${article} ${eng}.`;
+}
+
+function ensureExamplesPresent(words = []) {
+  if (!Array.isArray(words)) return;
+  words.forEach((wordObj) => {
+    if (!wordObj || !wordObj.eng) return;
+    const sentenceFromArray = Array.isArray(wordObj.sentences) && wordObj.sentences.length
+      ? (wordObj.sentences.find(s => typeof s?.text === 'string' && s.text.trim())?.text || '')
+      : '';
+    const existingSentence = String(wordObj.example || wordObj.legacy_sentence || sentenceFromArray || '').trim();
+    if (existingSentence) {
+      if (!wordObj.example) wordObj.example = existingSentence;
+      if (!wordObj.legacy_sentence) wordObj.legacy_sentence = existingSentence;
+      return;
+    }
+    const fallback = fallbackExampleSentenceForWord(wordObj);
+    if (fallback) {
+      wordObj.example = fallback;
+      wordObj.legacy_sentence = fallback;
+    }
+  });
+}
 
 // -------------------------------------------------------------
 // Sentence ID Upgrader (Additive, Safe Fallback)
@@ -62,28 +423,37 @@ let gameImageUrl = '';
 //  4. Mutates word objects in-place adding: sentences:[{id}], primary_sentence_id: id.
 // Fallback: if backend or network fails, silently keep legacy_sentence only (runtime still works via fallback).
 // NOTE: Removal of legacy_sentence keys will happen in a later cleanup phase when metrics show near-zero fallback usage.
-async function ensureSentenceIds(wordObjs){
+async function ensureSentenceIds(wordObjs, opts = {}){
   try {
     if(!Array.isArray(wordObjs) || !wordObjs.length) return { inserted:0, reused:0 };
-    const targets = wordObjs.filter(w=> !w.primary_sentence_id && !Array.isArray(w.sentences) && (w.legacy_sentence || w.example));
-    if(!targets.length) return { inserted:0, reused:0 };
     // Build unique normalized sentence list
     const norm = s=> (s||'').trim().replace(/\s+/g,' ');
-    const map = new Map();
-    targets.forEach(w=>{ const raw = w.legacy_sentence || w.example || ''; if(raw && raw.split(/\s+/).length>=3){ const n = norm(raw); if(n && !map.has(n)) map.set(n,{ text:n, words:[w.eng].filter(Boolean) }); }});
-    if(!map.size) return { inserted:0, reused:0 };
-    // Call dedicated Netlify function (bypasses generic proxy which doesn't route this action)
-  const payload = { action:'upsert_sentences_batch', sentences: Array.from(map.values()) }; 
-  if(opts.skipAudio) payload.skip_audio = true;
-    let endpoint = '/.netlify/functions/upsert_sentences_batch';
-    try {
-      if (window && window.location && window.location.hostname === 'localhost') {
-        // Support both netlify dev (8888) and functions:serve (netlify dev rewrites) without change
-        const payload = { action:'upsert_sentences_batch', sentences: Array.from(map.values()) };
-        if(opts.skipAudio) payload.skip_audio = true;
+    const normKey = s => norm(s).toLowerCase();
+    const targets = wordObjs.filter(w => {
+      const currentText = norm(w.example || w.legacy_sentence || '');
+      if (!currentText || currentText.split(/\s+/).length < 3) return false;
+      // Case 1: No sentence identity yet
+      if (!w.primary_sentence_id && !(Array.isArray(w.sentences) && w.sentences.length)) return true;
+      // Case 2: Identity exists but text was changed by the teacher
+      if (Array.isArray(w.sentences) && w.sentences.length) {
+        const persistedText = norm((w.sentences.find(s => s && typeof s === 'object' && s.text) || {}).text || '');
+        if (persistedText && normKey(persistedText) !== normKey(currentText)) {
+          delete w.primary_sentence_id; w.sentences = [];
+          return true;
+        }
       }
-    } catch {}
-    const res = await fetch(endpoint, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+      return false;
+    });
+    if(!targets.length) return { inserted:0, reused:0 };
+    const map = new Map();
+    targets.forEach(w=>{ const raw = w.legacy_sentence || w.example || ''; if(raw && raw.split(/\s+/).length>=3){ const key = normKey(raw); const n = norm(raw); if(key && !map.has(key)) map.set(key,{ text:n, words:[w.eng].filter(Boolean) }); }});
+    if(!map.size) return { inserted:0, reused:0 };
+    // Call dedicated sentence batch function through environment-aware API routing
+    const payload = { action:'upsert_sentences_batch', sentences: Array.from(map.values()) };
+    if (opts.skipAudio) payload.skip_audio = true;
+    if (opts.forceNewIds) payload.force_new_ids = true;
+    const endpoint = getApiPath('/.netlify/functions/upsert_sentences_batch');
+    const res = await fetch(endpoint, { method:'POST', headers:{'Content-Type':'application/json'}, credentials:'include', body: JSON.stringify(payload) });
     const js = await res.json().catch(()=>null);
     if(js && js.audio){
       console.debug('[SentenceUpgrade][modal][audio] summary', js.audio);
@@ -98,11 +468,11 @@ async function ensureSentenceIds(wordObjs){
       console.debug('[SentenceUpgrade] Sentence batch failed or empty', { status: res.status, ok: res.ok, body: js });
       return { inserted:0, reused:0, backend:false };
     }
-  const byText = new Map(js.sentences.map(r=>[norm(r.text), r])); // r may include audio_key later
+  const byText = new Map(js.sentences.map(r=>[normKey(r.text), r])); // case-insensitive matching
     let applied=0; let missed=0;
     targets.forEach(w=>{
       const raw = w.legacy_sentence || w.example || '';
-      const rec = byText.get(norm(raw));
+      const rec = byText.get(normKey(raw));
       if(rec && rec.id){
         // Preserve text + audio_key (if backend populated it)
         const sentObj = { id: rec.id, text: rec.text };
@@ -119,11 +489,35 @@ async function ensureSentenceIds(wordObjs){
         if(needAudio.length){
           // Background trigger (no await) to generate audio later without blocking UI
           const triggerPayload = { action:'upsert_sentences_batch', sentences: needAudio.map(w=> ({ text: w.legacy_sentence || w.example || '' })), skip_audio:false };
-          WillenaAPI.fetch('/.netlify/functions/upsert_sentences_batch', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(triggerPayload) }).catch(()=>{});
+          fetch(getApiPath('/.netlify/functions/upsert_sentences_batch'), { method:'POST', headers:{'Content-Type':'application/json'}, credentials:'include', body: JSON.stringify(triggerPayload) }).catch(()=>{});
         }
       } catch{}
     }
+    return { inserted: applied, reused: 0 };
   } catch(e){ console.debug('[SentenceUpgrade] ensureSentenceIds failed', e?.message); return { inserted:0, error:true }; }
+}
+
+function modeNeedsSentenceIds(mode) {
+  return /sentence/i.test(String(mode || ''));
+}
+
+function listNeedsSentenceIds(modes = []) {
+  if (!Array.isArray(modes) || !modes.length) return false;
+  return modes.some(modeNeedsSentenceIds);
+}
+
+function unresolvedSentenceLinks(words = []) {
+  if (!Array.isArray(words)) return [];
+  return words.filter((w) => {
+    if (!w || typeof w !== 'object') return false;
+    const sentenceFromArray = Array.isArray(w.sentences) && w.sentences.length
+      ? (w.sentences.find(s => typeof s?.text === 'string' && s.text.trim())?.text || '')
+      : '';
+    const hasSentence = String(w.sentence || w.legacy_sentence || w.example || sentenceFromArray || '').trim().split(/\s+/).length >= 3;
+    if (!hasSentence) return false;
+    const nestedId = Array.isArray(w.sentences) && w.sentences.some(s => s && s.id);
+    return !w.primary_sentence_id && !nestedId;
+  });
 }
 
 // -------------------------------------------------------------
@@ -251,38 +645,61 @@ function ensurePanels() {
         <div style="flex:1;"></div>
       </div>
       <form class="cgm-home-form" id="cgmHomeworkForm" autocomplete="off">
-        <div class="wide">
-          <label style="font-weight:600;font-size:.8rem;letter-spacing:.5px;">Game Title</label>
+        <div class="cgm-field wide">
+          <label>Game Title</label>
           <input id="gameTitle" class="input" placeholder="Enter game title" />
         </div>
-        <div>
-          <label style="font-weight:600;font-size:.8rem;">Class</label>
-          <input id="gameClass" class="input" placeholder="e.g., Grade 3A" />
+        <div class="cgm-field">
+          <label>Class(es)</label>
+          <select id="gameClass" class="input" multiple size="8">
+            <option value="" disabled>Select one or more classes</option>
+          </select>
+          <div id="gameClassLoading" class="cgm-class-loading" aria-live="polite">
+            <span class="cgm-spinner-sm" aria-hidden="true"></span>
+            <span class="cgm-class-loading-text">Loading classes...</span>
+          </div>
+          <div class="cgm-help-text">Tip: Ctrl/Cmd + click to select multiple classes.</div>
         </div>
-        <div>
-          <label style="font-weight:600;font-size:.8rem;">Date Due</label>
+        <div class="cgm-field">
+          <label>Assign To</label>
+          <select id="gameStudentTarget" class="input">
+            <option value="">Entire class</option>
+          </select>
+          <div id="gameStudentHelp" class="cgm-help-text">Optional: leave as Entire class to assign to everyone.</div>
+        </div>
+        <div class="cgm-field">
+          <label>Date Due</label>
           <input id="gameDateDue" type="date" class="input" />
         </div>
-        <div>
-          <label style="font-weight:600;font-size:.8rem;">Book</label>
-            <input id="gameBook" class="input" placeholder="English Book 1" />
+        <div class="cgm-field wide">
+          <label>Difficulty Mode</label>
+          <div class="cgm-difficulty-grid">
+            <label class="cgm-difficulty-item"><input type="radio" name="gameDifficulty" value="full" checked /> Full Mode</label>
+            <label class="cgm-difficulty-item"><input type="radio" name="gameDifficulty" value="easy" /> Easy</label>
+            <label class="cgm-difficulty-item"><input type="radio" name="gameDifficulty" value="standard" /> Standard</label>
+            <label class="cgm-difficulty-item"><input type="radio" name="gameDifficulty" value="hard" /> Hard</label>
+            <label class="cgm-difficulty-item"><input type="radio" name="gameDifficulty" value="spelling" /> Spelling</label>
+          </div>
+          <div id="gameDifficultyPreview" class="cgm-help-text">Complete all 6 modes with at least 1 star each.</div>
         </div>
-        <div>
-          <label style="font-weight:600;font-size:.8rem;">Unit</label>
-            <input id="gameUnit" class="input" placeholder="Unit 3" />
+        <div class="cgm-field">
+          <label>Book</label>
+          <input id="gameBook" class="input" placeholder="English Book 1" />
         </div>
-        <div class="wide">
-          <label style="font-weight:600;font-size:.8rem;">Description (optional)</label>
+        <div class="cgm-field">
+          <label>Unit</label>
+          <input id="gameUnit" class="input" placeholder="Unit 3" />
+        </div>
+        <div class="cgm-field wide">
+          <label>Description (optional)</label>
           <textarea id="gameDescription" class="input" style="min-height:70px;resize:vertical;" placeholder="Brief description"></textarea>
         </div>
-        <div class="wide">
-          <label style="font-weight:600;font-size:.8rem;">Game Image</label>
-          <div id="gameImageZone" class="drop-zone"><span class="hint">Click to search • Drag image here</span></div>
-        </div>
-        <div class="cgm-home-actions wide">
-          <span id="createGameStatus" style="flex:1;color:#64748b;font-size:.8rem;align-self:center;"></span>
-          <button type="button" id="createGameSave" class="btn primary">Save Assignment</button>
-          <button type="button" id="createGameCancel" class="btn">Cancel</button>
+        <div class="cgm-field wide">
+          <label>Game Image</label>
+          <div class="cgm-image-wrap">
+            <div id="gameImageZone" class="drop-zone cgm-image-zone"><span class="hint">No image selected</span></div>
+            <button type="button" id="gameImagePick" class="btn cgm-image-pick-btn">Select image</button>
+          </div>
         </div>
       </form>
     `;
@@ -298,14 +715,14 @@ function ensurePanels() {
     el.liveGrid = live.querySelector('#cgmLiveGrid');
     el.title = hw.querySelector('#gameTitle');
     el.cls = hw.querySelector('#gameClass');
+    el.student = hw.querySelector('#gameStudentTarget');
+    el.studentHelp = hw.querySelector('#gameStudentHelp');
     el.dateDue = hw.querySelector('#gameDateDue');
     el.book = hw.querySelector('#gameBook');
     el.unit = hw.querySelector('#gameUnit');
     el.desc = hw.querySelector('#gameDescription');
     el.imageZone = hw.querySelector('#gameImageZone');
-    el.status = hw.querySelector('#createGameStatus');
-    el.save = hw.querySelector('#createGameSave');
-    el.cancel = hw.querySelector('#createGameCancel');
+    el.imagePick = hw.querySelector('#gameImagePick');
   }
 }
 
@@ -316,6 +733,8 @@ function showPanel(name) {
   if (name === 'start' && el.panelStart) el.panelStart.classList.add('active');
   if (name === 'live' && el.panelLive) el.panelLive.classList.add('active');
   if (name === 'homework' && el.panelHomework) el.panelHomework.classList.add('active');
+  const footer = el.modal?.querySelector('.cgm-homework-footer');
+  if (footer) footer.style.display = name === 'homework' ? 'flex' : 'none';
 }
 
 // Build live mode tiles (grouped horizontally: Full Games vs Mini Games)
@@ -448,33 +867,82 @@ function updateLiveTilesAvailability() {
 }
 
 
-export function openCreateGameModal() {
+export function openCreateGameModal(options = {}) {
   if (!el.modal) return;
-  showPanel('start');
+  showPanel(options.panel === 'homework' ? 'homework' : 'start');
   // Prefill title from builder main input
   if (el.title) el.title.value = el.titleInput?.value || '';
   // Reset homework fields
-  if (el.cls) el.cls.value = '';
+  if (el.cls) {
+    Array.from(el.cls.options || []).forEach((option) => { option.selected = false; });
+  }
+  if (el.student) el.student.value = '';
   if (el.dateDue) el.dateDue.value = '';
   if (el.desc) el.desc.value = '';
+  if (el.panelHomework) {
+    const fullRadio = el.panelHomework.querySelector('input[name="gameDifficulty"][value="full"]');
+    if (fullRadio) fullRadio.checked = true;
+    updateHomeworkDifficultyPreview(30, 6);
+  }
   const imgInZone = el.imageZone?.querySelector('img');
   gameImageUrl = imgInZone?.getAttribute('src') || '';
+  gameImageManuallySelected = !!gameImageUrl;
+  autoImageLastQuery = '';
   setStatus('');
   updateGameImageDisplay();
+  primeHomeworkRecipients([], '');
   // Update live modes availability based on current word list (e.g., require pictures for picture modes)
   try { updateLiveTilesAvailability(); } catch {}
   el.modal.style.display = 'flex';
+  if (!gameImageUrl) {
+    scheduleAutoGameImage(120);
+  }
 }
 
 function closeModal() { if (el.modal) el.modal.style.display = 'none'; }
 function setStatus(t) { if (el.status) el.status.textContent = t || ''; }
 
+function canAutoGenerateGameImage() {
+  return !gameImageManuallySelected && !gameImageUrl;
+}
+
+async function maybeAutoGenerateGameImage(force = false) {
+  const term = String(el.title?.value || '').trim();
+  if (!term || term.length < 2) return;
+  if (!force && !canAutoGenerateGameImage()) return;
+  if (autoImageRequestInFlight) return;
+  if (!force && autoImageLastQuery === term.toLowerCase()) return;
+
+  autoImageRequestInFlight = true;
+  autoImageLastQuery = term.toLowerCase();
+  const priorStatus = String(el.status?.textContent || '');
+
+  try {
+    setStatus('Generating game image...');
+    await searchGameImage(term);
+  } catch (e) {
+    console.warn('[create-game-modal] auto image generation failed', e?.message || e);
+  } finally {
+    autoImageRequestInFlight = false;
+    if ((el.status?.textContent || '').startsWith('Generating game image')) {
+      setStatus(priorStatus);
+    }
+  }
+}
+
+function scheduleAutoGameImage(ms = 380) {
+  if (autoImageDebounceTimer) clearTimeout(autoImageDebounceTimer);
+  autoImageDebounceTimer = setTimeout(() => {
+    maybeAutoGenerateGameImage(false);
+  }, ms);
+}
+
 function updateGameImageDisplay() {
   if (!el.imageZone) return;
   if (gameImageUrl) {
-    el.imageZone.innerHTML = `<img src="${gameImageUrl}" alt="Game Image" style="width:100%;height:100%;object-fit:cover;border-radius:6px;" />`;
+    el.imageZone.innerHTML = `<img src="${gameImageUrl}" alt="Game Image" style="width:100%;height:100%;object-fit:contain;border-radius:6px;background:#f8fafc;" />`;
   } else {
-    el.imageZone.innerHTML = '<span class="hint">Click to search • Drag image here</span>';
+    el.imageZone.innerHTML = '<span class="hint">No image selected</span>';
   }
 }
 
@@ -499,11 +967,12 @@ async function searchGameImage(term) {
 // -------------------------------------------------------------
 const isLocal = () => typeof window !== 'undefined' && /localhost|127\.0\.0\.1/i.test(window.location.hostname);
 function preferredVoice() { try { const id = localStorage.getItem('ttsVoiceId'); return id && id.trim() ? id.trim() : null; } catch { return null; } }
+function getApiPath(path) { try { return window.WillenaAPI?.getApiUrl ? window.WillenaAPI.getApiUrl(path) : path; } catch { return path; } }
 
 async function checkExistingAudio(words) {
   const endpoints = isLocal()
-    ? ['http://localhost:9000/.netlify/functions/get_audio_urls', '/.netlify/functions/get_audio_urls']
-    : ['/.netlify/functions/get_audio_urls'];
+    ? ['http://localhost:9000/.netlify/functions/get_audio_urls', getApiPath('/.netlify/functions/get_audio_urls')]
+    : [getApiPath('/.netlify/functions/get_audio_urls')];
   let lastErr = null;
   for (const url of endpoints) {
     try {
@@ -519,8 +988,8 @@ async function checkExistingAudio(words) {
 
 async function callTTS(payload) {
   const endpoints = isLocal()
-    ? ['http://localhost:9000/.netlify/functions/eleven_labs_proxy', '/.netlify/functions/eleven_labs_proxy']
-    : ['/.netlify/functions/eleven_labs_proxy'];
+    ? ['http://localhost:9000/.netlify/functions/eleven_labs_proxy', getApiPath('/.netlify/functions/eleven_labs_proxy')]
+    : [getApiPath('/.netlify/functions/eleven_labs_proxy')];
   for (const url of endpoints) {
     try {
       const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
@@ -532,8 +1001,8 @@ async function callTTS(payload) {
 
 async function uploadAudio(word, audioBase64) {
   const endpoints = isLocal()
-    ? ['http://localhost:9000/.netlify/functions/upload_audio', '/.netlify/functions/upload_audio']
-    : ['/.netlify/functions/upload_audio'];
+    ? ['http://localhost:9000/.netlify/functions/upload_audio', getApiPath('/.netlify/functions/upload_audio')]
+    : [getApiPath('/.netlify/functions/upload_audio')];
   for (const url of endpoints) {
     try {
       const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ word, fileDataBase64: audioBase64 }) });
@@ -583,6 +1052,41 @@ export function initCreateGameModal(buildPayload) {
   ensurePanels();
   buildLiveTiles();
 
+  if (el.cls && !el.cls._homeworkBound) {
+    el.cls._homeworkBound = true;
+    el.cls.addEventListener('change', async () => {
+      try {
+        await updateStudentSelectorForClassSelection('');
+      } catch (err) {
+        console.error('Failed to update student list for class', err);
+        populateHomeworkStudentOptions([], '');
+        setHomeworkStudentHelp('Could not load students for this class.');
+      }
+    });
+  }
+
+  if (el.panelHomework && !el.panelHomework._difficultyBound) {
+    el.panelHomework._difficultyBound = true;
+    el.panelHomework.querySelectorAll('input[name="gameDifficulty"]').forEach((radio) => {
+      radio.addEventListener('change', () => updateHomeworkDifficultyPreview(30, 6));
+    });
+    updateHomeworkDifficultyPreview(30, 6);
+  }
+
+  if (el.title && !el.title._autoImageBound) {
+    el.title._autoImageBound = true;
+    el.title.addEventListener('input', () => {
+      if (!gameImageManuallySelected && !gameImageUrl) {
+        scheduleAutoGameImage(420);
+      }
+    });
+    el.title.addEventListener('blur', () => {
+      if (!gameImageManuallySelected && !gameImageUrl) {
+        maybeAutoGenerateGameImage(false);
+      }
+    });
+  }
+
   // Delegate clicks inside modal for navigation & actions
   document.addEventListener('click', (e) => {
     if (!el.modal || el.modal.style.display !== 'flex') return;
@@ -605,8 +1109,11 @@ export function initCreateGameModal(buildPayload) {
       // Build payload from external builder function
       const data = buildPayload();
       data.modes = data.modes && data.modes.length ? data.modes : ['multi_choice_eng_to_kor'];
+      data.title = el.title?.value?.trim() || data.title || 'Untitled Game';
       data.gameTitle = el.title?.value?.trim() || 'Untitled Game';
-      data.gameClass = el.cls?.value?.trim() || '';
+      const selectedClasses = getSelectedHomeworkClasses();
+      data.gameClass = selectedClasses[0] || '';
+      const selectedStudent = getSelectedHomeworkStudent();
       data.gameDateDue = el.dateDue?.value || '';
       data.gameBook = el.book?.value?.trim() || '';
       data.gameUnit = el.unit?.value?.trim() || '';
@@ -615,21 +1122,149 @@ export function initCreateGameModal(buildPayload) {
       data.class = data.gameClass; data.book = data.gameBook; data.unit = data.gameUnit;
       try { const uid = localStorage.getItem('user_id') || sessionStorage.getItem('user_id') || localStorage.getItem('id') || sessionStorage.getItem('id'); if (uid) data.created_by = uid; } catch {}
       if (!data.title || !Array.isArray(data.words) || !data.words.length) { alert('Need title and at least one word.'); return; }
+      if (!selectedClasses.length) { alert('At least one class is required.'); return; }
+      if (!data.gameDateDue) { alert('Due date is required.'); return; }
       try {
         el.save.disabled = true;
+        ensureExamplesPresent(data.words);
         setStatus('Linking sentences...');
-        await ensureSentenceIds(data.words); // safe upgrade (silent fallback)
+        await ensureSentenceIds(data.words, { forceNewIds: true });
+        const needsSentenceIds = listNeedsSentenceIds(data.modes);
+        if (needsSentenceIds) {
+          const unresolved = unresolvedSentenceLinks(data.words);
+          if (unresolved.length) {
+            const sample = unresolved.slice(0, 5).map(w => w.eng).filter(Boolean).join(', ');
+            setStatus('Sentence linking incomplete');
+            alert(`Could not link all sentence IDs yet. Please try again.\n\nUnlinked words: ${unresolved.length}${sample ? `\nExamples: ${sample}` : ''}`);
+            return;
+          }
+        }
         const english = data.words.map(w => w.eng).filter(Boolean);
+        const examplesMap = Object.fromEntries(
+          (data.words || [])
+            .filter(w => w && w.eng)
+            .map(w => {
+              const sentenceFromArray = Array.isArray(w.sentences) && w.sentences.length
+                ? (w.sentences.find(s => typeof s?.text === 'string' && s.text.trim())?.text || '')
+                : '';
+              const sentence = (w.example || w.legacy_sentence || sentenceFromArray || '').toString().trim();
+              return [w.eng, sentence];
+            })
+            .filter(([, text]) => !!text)
+        );
         setStatus('Ensuring audio...');
-        await ensureAudioForWords(english);
+        await ensureAudioForWordsAndSentences(english, examplesMap, {
+          force: false,
+          skipSentenceAudio: true,
+          onInit: (total) => setStatus(`Ensuring audio (0/${total})...`),
+          onProgress: (done, total) => setStatus(`Ensuring audio (${done}/${total})...`),
+          onDone: () => setStatus('Audio ready. Saving custom game...')
+        });
       } catch {}
       try {
-        setStatus('Saving assignment...');
-        const res = await WillenaAPI.fetch('/.netlify/functions/supabase_proxy_fixed', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ action:'insert_game_data', data }) });
-        const js = await res.json();
-        if (js?.success) { setStatus('Saved.'); alert('Homework assignment saved.'); closeModal(); }
-        else { setStatus('Save failed'); alert('Save failed: ' + (js?.error || 'Unknown error')); }
-      } catch (err) { console.error(err); setStatus('Save error'); alert('Save error'); }
+        const existingId = getCurrentGameId();
+        const saveAction = existingId ? 'update_game_data' : 'insert_game_data';
+        const saveBody = existingId ? { action: saveAction, id: existingId, data } : { action: saveAction, data };
+        setStatus('Saving custom game...');
+        let saveRes = await fetch(getApiPath('/.netlify/functions/supabase_proxy_fixed'), {
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          credentials: 'include',
+          body: JSON.stringify(saveBody)
+        });
+        let saveJson = await saveRes.json().catch(() => ({}));
+        if (!saveRes.ok && existingId && /not owner|forbidden/i.test(String(saveJson?.error || ''))) {
+          const insertBody = { action: 'insert_game_data', data };
+          saveRes = await fetch(getApiPath('/.netlify/functions/supabase_proxy_fixed'), {
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            credentials: 'include',
+            body: JSON.stringify(insertBody)
+          });
+          saveJson = await saveRes.json().catch(() => ({}));
+        }
+        if (!saveRes.ok || !saveJson?.success) {
+          throw new Error(saveJson?.error || `Failed to save custom game (${saveRes.status})`);
+        }
+
+        const gameId = existingId
+          || saveJson?.id
+          || saveJson?.data?.id
+          || (Array.isArray(saveJson?.data) ? saveJson.data[0]?.id : null);
+        if (!gameId) {
+          throw new Error(`Custom game saved without an id. Response: ${JSON.stringify(saveJson).slice(0, 200)}`);
+        }
+        setCurrentGameId(gameId);
+
+        const helper = window.TeacherHomeworkAssignment;
+        if (!helper || typeof helper.buildAssignmentPayload !== 'function' || typeof helper.createAssignment !== 'function') {
+          throw new Error('Homework helper is unavailable. Please refresh and try again.');
+        }
+
+        const classAssignments = selectedClasses.map((className) => {
+          const includeStudentTarget = selectedStudent && selectedClasses.length === 1;
+          const difficultyMode = getSelectedHomeworkDifficulty();
+          const difficultyCfg = getHomeworkDifficultyConfig(difficultyMode, 30, 6);
+          return helper.buildAssignmentPayload({
+            className,
+            title: data.gameTitle,
+            description: data.gameDescription,
+            listKey: `saved_game:${gameId}`,
+            listTitle: data.gameTitle,
+            listMeta: {
+              source_type: 'saved_game',
+              game_id: gameId,
+              modes_total: difficultyCfg.modes_total,
+              difficulty_mode: difficultyCfg.difficulty_mode,
+              difficulty_requires_all_modes: difficultyCfg.requires_all_modes,
+              difficulty_modes_required: difficultyCfg.modes_required,
+              difficulty_required_stars: difficultyCfg.required_stars,
+              max_stars: difficultyCfg.max_stars,
+              forced_mode: difficultyCfg.forced_mode,
+              type: 'saved_game',
+              book: data.gameBook || '',
+              unit: data.gameUnit || '',
+              target_student_ids: includeStudentTarget ? [selectedStudent.id] : [],
+              target_students: includeStudentTarget ? [{
+                id: selectedStudent.id,
+                name: selectedStudent.name || '',
+                korean_name: selectedStudent.korean_name || '',
+                username: selectedStudent.username || ''
+              }] : []
+            },
+            dueDate: data.gameDateDue,
+            startAt: new Date().toISOString(),
+            goalType: 'stars',
+            goalValue: difficultyCfg.goal_value
+          });
+        });
+
+        setStatus('Creating homework assignment...');
+        const createdClasses = [];
+        const failedClasses = [];
+        for (const assignment of classAssignments) {
+          try {
+            await helper.createAssignment(assignment);
+            createdClasses.push(assignment.class);
+          } catch (err) {
+            failedClasses.push(`${assignment.class}: ${err?.message || 'Unknown error'}`);
+          }
+        }
+
+        if (!createdClasses.length) {
+          throw new Error(failedClasses.join('\n') || 'Failed to create homework assignments.');
+        }
+
+        setStatus('Homework assigned.');
+        const targetLabel = selectedStudent
+          ? `${selectedStudent.name || selectedStudent.username || 'Selected student'} (${createdClasses[0]})`
+          : (createdClasses.length === 1 ? createdClasses[0] : `${createdClasses.length} classes`);
+        const partialNote = failedClasses.length
+          ? `\n\nSome classes failed:\n${failedClasses.join('\n')}`
+          : '';
+        alert(`Homework assigned.\n\nTitle: ${data.gameTitle}\nTarget: ${targetLabel}\nDifficulty: ${getSelectedHomeworkDifficulty()}\nDue: ${data.gameDateDue}${partialNote}`);
+        closeModal();
+      } catch (err) { console.error(err); setStatus('Save error'); alert(err?.message || 'Save error'); }
       finally { el.save.disabled = false; setStatus(''); }
     };
   };
@@ -639,28 +1274,22 @@ export function initCreateGameModal(buildPayload) {
     if (!el.imageZone) return;
     if (el.imageZone._bound) return;
     el.imageZone._bound = true;
-    el.imageZone.addEventListener('click', () => {
+    const openPicker = () => {
       const term = el.title?.value?.trim() || 'education game';
-      const url = `https://pixabay.com/images/search/${encodeURIComponent(term)}/`;
-      window.open(url, 'pixabayGameSearch', 'width=900,height=700');
-    });
-    if (el.title) el.title.addEventListener('blur', () => { const t = el.title.value?.trim(); if (t && !gameImageUrl) searchGameImage(t); });
-    el.imageZone.addEventListener('dragover', (ev) => { ev.preventDefault(); el.imageZone.classList.add('dragover'); });
-    el.imageZone.addEventListener('dragleave', () => { el.imageZone.classList.remove('dragover'); });
-    el.imageZone.addEventListener('drop', (ev) => {
-      ev.preventDefault(); el.imageZone.classList.remove('dragover');
-      const files = Array.from(ev.dataTransfer.files || []);
-      if (files.length) {
-        const file = files[0];
-        if (file.type && file.type.startsWith('image/')) {
-          const r = new FileReader();
-          r.onload = (e2) => { gameImageUrl = e2.target.result; updateGameImageDisplay(); };
-          r.readAsDataURL(file); return;
+      openPixabayImagePicker({
+        defaultQuery: term,
+        onSelect: (src) => {
+          gameImageManuallySelected = true;
+          gameImageUrl = src;
+          updateGameImageDisplay();
         }
-      }
-      const text = ev.dataTransfer.getData('text/uri-list') || ev.dataTransfer.getData('text/plain');
-      if (text && /^https?:\/\//i.test(text.trim())) { gameImageUrl = text.trim(); updateGameImageDisplay(); }
-    });
+      });
+    };
+    el.imageZone.addEventListener('click', openPicker);
+    if (el.imagePick && !el.imagePick._bound) {
+      el.imagePick._bound = true;
+      el.imagePick.addEventListener('click', openPicker);
+    }
   };
 
   // Mutation observer to attach handlers once panels built (openCreateGameModal triggers ensurePanels)
@@ -991,15 +1620,26 @@ async function launchLiveMode() {
   if (!buildPayloadRef) { alert('Live launch not ready: missing payload builder.'); return; }
   const data = buildPayloadRef();
   if (!data || !Array.isArray(data.words) || !data.words.length) { alert('No words found. Please add words first.'); return; }
-  // Fast path: background sentence linking (skip audio) so UI is not blocked
-  try {
-    const total = data.words.length;
-    const withIds = data.words.filter(w=> w && (w.primary_sentence_id || (Array.isArray(w.sentences) && w.sentences.length))).length;
-    if (withIds < total) {
-      setStatus('Linking sentences…');
-      (async ()=>{ try { await ensureSentenceIds(data.words, { skipAudio:true }); } catch(e){ console.debug('[liveLaunch] bg sentence link failed', e?.message); } })();
+  const needsSentenceIds = modeNeedsSentenceIds(selectedLiveMode);
+  if (needsSentenceIds) {
+    try {
+      ensureExamplesPresent(data.words);
+      setStatus('Linking sentences...');
+      await ensureSentenceIds(data.words, { skipAudio:true, forceNewIds:true });
+      const unresolved = unresolvedSentenceLinks(data.words);
+      if (unresolved.length) {
+        const sample = unresolved.slice(0, 5).map(w => w.eng).filter(Boolean).join(', ');
+        setStatus('Sentence linking incomplete');
+        alert(`Could not link all sentence IDs for this live game yet. Please try again.\n\nUnlinked words: ${unresolved.length}${sample ? `\nExamples: ${sample}` : ''}`);
+        return;
+      }
+    } catch (e) {
+      console.debug('[liveLaunch] sentence linking failed', e?.message);
+      setStatus('Sentence linking failed');
+      alert('Could not link sentence IDs right now. Please try again in a moment.');
+      return;
     }
-  } catch {}
+  }
   setStatus('Creating live game...');
   showLoading('Creating live game...');
   let id = null;

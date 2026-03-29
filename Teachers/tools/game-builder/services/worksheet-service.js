@@ -1,5 +1,5 @@
 // Worksheet import service
-import { newRow, saveState, setList, getList } from '../state/game-state.js';
+import { newRow, saveState, setList, getList } from '../state/game-state.js?v=20260328e';
 import { loadImagesForMissingOnly } from '../images.js';
 import { ensureLoadingOverlay } from '../utils/dom-helpers.js';
 

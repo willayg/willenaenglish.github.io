@@ -32,8 +32,8 @@ jobs:
           CF_PAGES_TEACHERS_HOOK: ${{ secrets.CF_PAGES_TEACHERS_HOOK }}
         run: |
           if [ -z "$CF_PAGES_TEACHERS_HOOK" ]; then
-            echo "Missing secret CF_PAGES_TEACHERS_HOOK" >&2
-            exit 1
+            echo "::warning::Missing secret CF_PAGES_TEACHERS_HOOK - skipping teachers deploy hook"
+            exit 0
           fi
           curl -fsS -X POST "$CF_PAGES_TEACHERS_HOOK"
 
@@ -43,8 +43,8 @@ jobs:
           CF_PAGES_STUDENTS_HOOK: ${{ secrets.CF_PAGES_STUDENTS_HOOK }}
         run: |
           if [ -z "$CF_PAGES_STUDENTS_HOOK" ]; then
-            echo "Missing secret CF_PAGES_STUDENTS_HOOK" >&2
-            exit 1
+            echo "::warning::Missing secret CF_PAGES_STUDENTS_HOOK - skipping students deploy hook"
+            exit 0
           fi
           curl -fsS -X POST "$CF_PAGES_STUDENTS_HOOK"
 
@@ -54,7 +54,7 @@ jobs:
           CF_PAGES_STAGING_HOOK: ${{ secrets.CF_PAGES_STAGING_HOOK }}
         run: |
           if [ -z "$CF_PAGES_STAGING_HOOK" ]; then
-            echo "Missing secret CF_PAGES_STAGING_HOOK" >&2
-            exit 1
+            echo "::warning::Missing secret CF_PAGES_STAGING_HOOK - skipping staging deploy hook"
+            exit 0
           fi
           curl -fsS -X POST "$CF_PAGES_STAGING_HOOK"

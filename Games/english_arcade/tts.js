@@ -566,7 +566,7 @@ export async function playTTSVariant(word, variant = 'default') {
 
 // Sentence ID-aware playback: plays audio by sentence_id (sent_<uuid>.mp3) with legacy fallback
 // This is the proper fix for sentence audio collisions across wordlists
-export async function playSentenceById(sentenceId, fallbackWord = null) {
+export async function playSentenceById(sentenceId, fallbackWord = null, prefetchedUrl = null) {
   if (!sentenceId) {
     // No sentence ID - fall back to legacy word-based lookup
     if (fallbackWord) {
@@ -576,6 +576,10 @@ export async function playSentenceById(sentenceId, fallbackWord = null) {
   }
 
   const key = `sent_${sentenceId}`;
+  const isLocalSentenceId = /^local_/i.test(String(sentenceId || '').trim());
+  const apiFetch = (typeof window !== 'undefined' && window.WillenaAPI && typeof window.WillenaAPI.fetch === 'function')
+    ? window.WillenaAPI.fetch.bind(window.WillenaAPI)
+    : (url, init) => fetch(url, { ...init, credentials: 'include' });
   const now = Date.now();
   const lastAt = _lastPlayAt.get(key) || 0;
   if (now - lastAt < PLAY_COOLDOWN_MS) return;
@@ -604,20 +608,51 @@ export async function playSentenceById(sentenceId, fallbackWord = null) {
     }
   }
 
-  // Try to get URL via get_sentence_audio_urls endpoint
-  try {
-    const url = FN('get_sentence_audio_urls');
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({ sentence_ids: [sentenceId], plain: true })
-    });
+  // Use pre-resolved URL when available (for example from background sentence preload).
+  if (prefetchedUrl && typeof prefetchedUrl === 'string') {
+    try {
+      let audioPromise = _pendingLoads.get(key);
+      if (!audioPromise) {
+        audioPromise = loadAudioElement(prefetchedUrl)
+          .then(a => { audioCache.set(key, a); return a; })
+          .finally(() => _pendingLoads.delete(key));
+        _pendingLoads.set(key, audioPromise);
+      }
+      const audio = await audioPromise;
+      if (_playingKeys.has(key)) return;
+      _playingKeys.add(key);
+      const clear = () => {
+        _playingKeys.delete(key);
+        audio.removeEventListener('ended', clear);
+        audio.removeEventListener('pause', clear);
+        audio.removeEventListener('error', clear);
+      };
+      audio.addEventListener('ended', clear);
+      audio.addEventListener('pause', clear);
+      audio.addEventListener('error', clear);
+      try {
+        await audio.play();
+        return;
+      } catch {
+        clear();
+      }
+    } catch {
+      // Continue to API-based lookup fallback.
+    }
+  }
 
-    if (res.ok) {
-      const data = await res.json();
-      if (data && data.success && data.results) {
-        const info = data.results[sentenceId];
+  if (isLocalSentenceId) {
+    try {
+      const candidates = [`sent_${sentenceId}.mp3`, `sent_${sentenceId}`];
+      const res = await apiFetch('/.netlify/functions/get_audio_urls', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ words: candidates })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const results = data?.results || {};
+        const info = results[candidates[0]] || results[candidates[1]];
         if (info && info.exists && info.url) {
           let audioPromise = _pendingLoads.get(key);
           if (!audioPromise) {
@@ -640,16 +675,62 @@ export async function playSentenceById(sentenceId, fallbackWord = null) {
           audio.addEventListener('error', clear);
           try {
             await audio.play();
-            console.debug('Played sentence audio by ID:', sentenceId);
+            console.debug('Played local sentence audio by key:', candidates[0]);
             return;
           } catch {
             clear();
           }
         }
       }
+    } catch (e) {
+      console.debug('Local sentence audio lookup failed:', e?.message);
     }
-  } catch (e) {
-    console.debug('Sentence ID audio lookup failed:', e?.message);
+  } else {
+    // Try to get URL via get_sentence_audio_urls endpoint
+    try {
+      const res = await apiFetch('/.netlify/functions/get_sentence_audio_urls', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sentence_ids: [sentenceId], plain: true })
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.success && data.results) {
+          const info = data.results[sentenceId];
+          if (info && info.exists && info.url) {
+            let audioPromise = _pendingLoads.get(key);
+            if (!audioPromise) {
+              audioPromise = loadAudioElement(info.url)
+                .then(a => { audioCache.set(key, a); return a; })
+                .finally(() => _pendingLoads.delete(key));
+              _pendingLoads.set(key, audioPromise);
+            }
+            const audio = await audioPromise;
+            if (_playingKeys.has(key)) return;
+            _playingKeys.add(key);
+            const clear = () => {
+              _playingKeys.delete(key);
+              audio.removeEventListener('ended', clear);
+              audio.removeEventListener('pause', clear);
+              audio.removeEventListener('error', clear);
+            };
+            audio.addEventListener('ended', clear);
+            audio.addEventListener('pause', clear);
+            audio.addEventListener('error', clear);
+            try {
+              await audio.play();
+              console.debug('Played sentence audio by ID:', sentenceId);
+              return;
+            } catch {
+              clear();
+            }
+          }
+        }
+      }
+    } catch (e) {
+      console.debug('Sentence ID audio lookup failed:', e?.message);
+    }
   }
 
   // Fallback: try R2 public base directly

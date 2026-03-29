@@ -140,6 +140,12 @@ export async function startGrammarChooseL3({
   const container = document.getElementById(containerId);
   if (!container) return;
 
+  // Clear container and remove any lingering elements from previous modes
+  container.innerHTML = '';
+  try {
+    document.querySelectorAll('#gfg-quit, .grammar-fill-gap-l3, button[id*=\"gfg\"]').forEach(el => el.remove());
+  } catch {}
+
   const resolvedSFX = typeof playSFX === 'function'
     ? playSFX
     : (window.WordArcade && typeof window.WordArcade.playSFX === 'function'
@@ -211,6 +217,13 @@ export async function startGrammarChooseL3({
     if (path.includes('past_simple_regular')) return 'past_simple_regular';
     if (path.includes('past_vs_future')) return 'past_vs_future';
     if (path.includes('past_vs_present_vs_future')) return 'all_tenses';
+    // Will future/questions: sentence-based with "will" patterns
+    if (path.includes('will_future')) return 'will_future';
+    if (path.includes('will_questions')) return 'will_questions';
+    // Modal verbs: have to, want to, like to
+    if (path.includes('have_to')) return 'have_to';
+    if (path.includes('want_to')) return 'want_to';
+    if (path.includes('like_to')) return 'like_to';
     if (item.base && item.past && item.detractors) return 'irregular_past';
     if (item.en && item.ko) return 'sentence_based';
     return 'generic';
@@ -445,12 +458,19 @@ export async function startGrammarChooseL3({
         </div>
         <div id="gch-feedback" style="min-height:1.2em;font-weight:700;font-size:1rem;margin-bottom:12px;color:#2e7d32"></div>
         <div style="margin-top:auto;font-size:0.85rem;color:#888;text-align:center;font-family:'Poppins',Arial,sans-serif;">Question ${questionNumber} / ${totalQuestions}</div>
-        <div style="display:flex;justify-content:center;margin-top:12px;">
-          <button id="gch-quit" type="button" class="wa-quit-btn" style="border:none;background:transparent;cursor:pointer;display:flex;align-items:center;gap:8px;padding:4px;">
-            <img src="./assets/Images/icons/quit-game.svg" alt="Quit game" aria-hidden="true" style="width:28px;height:28px;" />
-          </button>
-        </div>
       </div>`;
+
+    // Add quit button (fixed position at bottom)
+    if (!document.getElementById('gch-quit')) {
+      const quitBtn = document.createElement('button');
+      quitBtn.id = 'gch-quit';
+      quitBtn.type = 'button';
+      quitBtn.className = 'wa-quit-btn';
+      quitBtn.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);border:none;background:transparent;cursor:pointer;z-index:9999;padding:8px;';
+      quitBtn.innerHTML = '<img src="./assets/Images/icons/quit-game.svg" alt="Quit" style="width:28px;height:28px;"/>';
+      quitBtn.onclick = () => { quitBtn.remove(); window.history.back(); };
+      document.body.appendChild(quitBtn);
+    }
 
     const choicesEl = containerEl.querySelector('#gch-choices');
     choicesEl.querySelectorAll('button.grammar-choice-btn').forEach((btn) => {
@@ -461,11 +481,6 @@ export async function startGrammarChooseL3({
         handleChoice(chosenText, item, containerEl);
       });
     });
-
-    const quitBtn = containerEl.querySelector('#gch-quit');
-    if (quitBtn) {
-      quitBtn.onclick = () => quitToMenu('quit');
-    }
   }
 
   function getDisplayForGrammarType(item, grammarType) {
@@ -507,6 +522,31 @@ export async function startGrammarChooseL3({
         return {
           main: escapeHtml(item.ko || item.exampleSentenceKo || ''),
           instruction: 'Match the correct tense.'
+        };
+      case 'will_future':
+        return {
+          main: escapeHtml(item.ko || item.exampleSentenceKo || ''),
+          instruction: 'Choose the correct "will" sentence.'
+        };
+      case 'will_questions':
+        return {
+          main: escapeHtml(item.ko || item.exampleSentenceKo || ''),
+          instruction: 'Choose the correct question with "will".'
+        };
+      case 'have_to':
+        return {
+          main: escapeHtml(item.ko || item.exampleSentenceKo || ''),
+          instruction: 'Choose the correct "have to" sentence.'
+        };
+      case 'want_to':
+        return {
+          main: escapeHtml(item.ko || item.exampleSentenceKo || ''),
+          instruction: 'Choose the correct "want to" sentence.'
+        };
+      case 'like_to':
+        return {
+          main: escapeHtml(item.ko || item.exampleSentenceKo || ''),
+          instruction: 'Choose the correct "like to" sentence.'
         };
       case 'irregular_past':
         return {
@@ -578,6 +618,29 @@ export async function startGrammarChooseL3({
       return shuffle(['yesterday', 'tomorrow']);
     }
 
+    // Will Future, Will Questions, Have To, Want To, Like To: Show Korean, options are English sentences from pool
+    if (['will_future', 'will_questions', 'have_to', 'want_to', 'like_to'].includes(grammarType)) {
+      const correct = sentence;
+      const poolSet = new Set();
+      if (correct) poolSet.add(correct);
+      
+      // Generate distractors from other items in the list
+      for (const other of state.list) {
+        if (other === item) continue;
+        const otherEn = (other.en || other.exampleSentence || '').trim();
+        if (otherEn && otherEn !== correct) poolSet.add(otherEn);
+        if (poolSet.size >= 4) break;
+      }
+      
+      const arr = Array.from(poolSet).filter(Boolean);
+      while (arr.length < 3) arr.push(correct || arr[0] || '');
+      const options = shuffle(arr);
+      if (correct && !options.includes(correct)) {
+        options[options.length - 1] = correct;
+      }
+      return shuffle(options.slice(0, 4));
+    }
+
     // For other sentence-based grammars
     if (['all_tenses', 'sentence_based'].includes(grammarType)) {
       const correct = sentence;
@@ -645,6 +708,11 @@ export async function startGrammarChooseL3({
     // Past vs Future: correct answer is the time word
     if (grammarType === 'past_vs_future') {
       return extractTimeWord(sentence) || 'yesterday';
+    }
+
+    // Will Future, Will Questions, Have To, Want To, Like To: correct is the English sentence
+    if (['will_future', 'will_questions', 'have_to', 'want_to', 'like_to'].includes(grammarType)) {
+      return sentence;
     }
 
     // For other sentence-based grammars
@@ -746,49 +814,6 @@ export async function startGrammarChooseL3({
 export function stopGrammarChooseL3() {
   if (pendingTimeout) { clearTimeout(pendingTimeout); pendingTimeout = null; }
   state = null;
-}
-
-function quitToMenu(reason = 'quit') {
-  const current = state;
-  if (!current) return;
-  const { onQuit, onComplete, container } = current;
-  if (container) {
-    try { container.innerHTML = ''; } catch {}
-  }
-  // Partial endSession for quit (records progress so stars can update)
-  if (current.sessionId) {
-    try {
-      // Use grammarFile path for session tracking to match homework assignment list_key
-      endSession(current.sessionId, {
-        mode: MODE,
-        summary: { score: current.score, total: current.list.length, correct: current.score, points: current.score, category: 'grammar', grammarFile: current.grammarFile, grammarName: current.grammarName, level: 3 },
-        listName: current.grammarFile || current.grammarName || null,
-        wordList: current.list.map(it => it.word || it.id || it.base || it.past).filter(Boolean),
-        meta: { category: 'grammar', grammarFile: current.grammarFile, grammarName: current.grammarName, level: 3, quit_reason: reason }
-      });
-    } catch {}
-  }
-  if (typeof onComplete === 'function') {
-    try { onComplete({ reason, state: current }); } catch (err) { console.error('onComplete failed', err); }
-  }
-  if (typeof onQuit === 'function') {
-    try { onQuit({ reason }); } catch (err) { console.error('onQuit failed', err); }
-  } else {
-    try {
-      if (window.WordArcade?.startGrammarModeSelector) {
-        window.WordArcade.startGrammarModeSelector();
-      } else if (window.WordArcade?.showGrammarLevelsMenu) {
-        window.WordArcade.showGrammarLevelsMenu();
-      } else if (window.WordArcade?.quitToOpening) {
-        window.WordArcade.quitToOpening(true);
-      } else if (window.history?.length > 1) {
-        window.history.back();
-      } else {
-        location.reload();
-      }
-    } catch {}
-  }
-  stopGrammarChooseL3();
 }
 
 export default { init: initGrammarChooseL3, start: startGrammarChooseL3, stop: stopGrammarChooseL3 };

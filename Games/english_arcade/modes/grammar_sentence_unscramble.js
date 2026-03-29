@@ -2,7 +2,7 @@
 // Reuses the core sentence mode engine but feeds it grammar example sentences
 // and logs under a dedicated grammar mode name for progress tracking.
 
-import { run as runSentenceMode } from './word_sentence_mode.js';
+import { run as runSentenceMode } from './word_sentence_mode.js?v=20260325a';
 import { openNowLoadingSplash } from './unscramble_splash.js';
 import { playSFX } from '../sfx.js';
 import { FN } from '../scripts/api-base.js';
@@ -208,8 +208,6 @@ export async function runGrammarSentenceUnscramble(ctx) {
     centerContent: true,
     showQuitButton: true,
     skipIntro: true,
-    quitButtonId: 'grammarQuitBtn',
-    quitButtonLabel: 'Quit Game',
   };
 
   const forwardedCtx = {
@@ -223,20 +221,6 @@ export async function runGrammarSentenceUnscramble(ctx) {
     // Mount into the main game area so HistoryManager restores are visible
     gameArea: document.getElementById('gameArea') || ctx?.gameArea || document.getElementById('gameStage') || document.body,
     sentenceLayout: { ...(ctx?.sentenceLayout || {}), ...layoutOverrides },
-    onSentenceQuit: () => {
-      try {
-        if (window.WordArcade?.startGrammarModeSelector) {
-          window.WordArcade.startGrammarModeSelector();
-          return;
-        }
-      } catch {}
-  // Hide the splash/modal only when the game mode has ended and the
-  // quit action is performed.
-  try { if (splashController && typeof splashController.hide === 'function') splashController.hide(); } catch (e) {}
-  // Play final SFX to indicate end of mode
-  try { playSFX('end'); } catch (e) {}
-  showOpeningButtons?.(true);
-    },
   };
 
   runSentenceMode(forwardedCtx);

@@ -34,6 +34,10 @@ function normalizeWordsToSentenceItems(list){
   return (list||[]).map(raw=>{
     if(!raw || typeof raw!== 'object') return null;
     const item = { ...raw };
+    item._hasPersistedSentenceIdentity = !!(
+      item.primary_sentence_id
+      || (Array.isArray(item.sentences) && item.sentences.some(s => s && typeof s === 'object' && s.id))
+    );
     // Legacy compatibility
     if (!item.sentence && item.legacy_sentence) item.sentence = item.legacy_sentence;
     // Additional compatibility: pull from common example fields
@@ -100,6 +104,41 @@ function normalizeWordsToSentenceItems(list){
   }).filter(Boolean);
 }
 
+async function resolveSentenceIdsIfMissing(items){
+  if (!Array.isArray(items) || !items.length) return;
+  const need = items.filter(it => !it.sentence_id && it.sentence && typeof it.sentence === 'string');
+  if (!need.length) return;
+  const normKey = (s) => String(s || '').trim().replace(/\s+/g,' ').toLowerCase();
+  const byText = new Map();
+  need.forEach(it => {
+    const text = it.sentence.trim().replace(/\s+/g,' ');
+    if (!byText.has(text)) byText.set(text, new Set());
+    if (it.eng) byText.get(text).add(String(it.eng));
+  });
+  const payload = {
+    action: 'upsert_sentences_batch',
+    sentences: Array.from(byText.entries()).map(([text, wordsSet]) => ({ text, words: Array.from(wordsSet) }))
+  };
+  try {
+    const r = await WillenaAPI.fetch('/.netlify/functions/upsert_sentences_batch', { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify(payload) });
+    if (!r.ok) throw new Error('upsert_sentences_batch HTTP ' + r.status);
+    const js = await r.json().catch(()=>null);
+    if (!js || !js.success || !Array.isArray(js.sentences)) return;
+    const byTextResolved = new Map(js.sentences.map(s => [normKey(s.text), s]));
+    items.forEach(it => {
+      if (it.sentence_id) return;
+      const key = it.sentence && it.sentence.trim().replace(/\s+/g,' ');
+      const rec = key ? byTextResolved.get(normKey(key)) : null;
+      if (rec?.id) {
+        it.sentence_id = rec.id;
+        if (rec.audio_key && !it.audio_key) it.audio_key = rec.audio_key;
+      }
+    });
+  } catch (e) {
+    console.debug('[SentenceMode] sentence id resolve error', e?.message);
+  }
+}
+
 // Fetch audio URLs with multi-tier fallback: audio_key -> sent_<id>.mp3 -> direct <eng>_sentence.mp3 via R2 base -> legacy get_audio_urls lambda.
 async function enrichSentenceAudioIDAware(items){
   if (!items || !items.length) return;
@@ -114,6 +153,17 @@ async function enrichSentenceAudioIDAware(items){
     .toLowerCase()
     .replace(/\s+/g,'_')
     .replace(/[^a-z0-9_\-]/g,'');
+  const isLegacyWordSentenceKey = (value, it) => {
+    const raw = String(value || '').trim().toLowerCase();
+    if (!raw) return false;
+    const word = normWord(it?.eng || '');
+    if (!word) return /_sentence(\.mp3)?(?:$|[?#])/i.test(raw);
+    return raw.endsWith(`${word}_sentence.mp3`)
+      || raw.endsWith(`${word}_sentence`)
+      || raw.includes(`/${word}_sentence.mp3`)
+      || raw.includes(`/${word}_sentence?`);
+  };
+  const isLocalSentenceId = (id) => /^local_/i.test(String(id || '').trim());
     // 1. If any have audio_key try to form a usable URL. IMPORTANT: previously we blindly used the raw key
     //    which produced a relative path (404) when no bucket base was defined, blocking fallback because
     //    playSentenceAudio saw a URL and returned early. Now: only set sentenceAudioUrl if we are confident
@@ -122,6 +172,9 @@ async function enrichSentenceAudioIDAware(items){
     items.forEach(it=>{
       if(!it || !it.audio_key) return;
       const key = String(it.audio_key).trim();
+      if (it.sentence_id && isLegacyWordSentenceKey(key, it)) {
+        return;
+      }
       if(/^https?:/i.test(key)){
         it.sentenceAudioUrl = key;
         return;
@@ -135,21 +188,25 @@ async function enrichSentenceAudioIDAware(items){
         it._pendingKeyOnly = true;
       }
     });
-  // 2. Try heuristic sent_<id>.mp3 if sentence_id present and no url yet
+  // 2. Try heuristic sent_<id>.mp3 for all items with sentence_id.
+  //    This keeps default lists and builder-created content on the same canonical ID path.
   const needHeuristic = items.filter(it=> !it.sentenceAudioUrl && it.sentence_id);
   if (needHeuristic.length && hasBase){
     needHeuristic.forEach(it=>{ it.sentenceAudioUrl = `${baseClean}/sent_${it.sentence_id}.mp3`; });
   }
-  // 2b. If still missing and we DO have sentence_ids, try signed URL function (no base set scenario)
+  // 2b. If still missing and we DO have sentence_ids, try the signed URL function.
+  // This is safe for both persisted and runtime-resolved sentence IDs because if no
+  // sentence-specific audio exists, playback falls back to TTS.
   const stillMissing = items.filter(it=> !it.sentenceAudioUrl && it.sentence_id);
-  if (stillMissing.length){
+  const signedEligible = stillMissing.filter(it => !isLocalSentenceId(it.sentence_id));
+  if (signedEligible.length){
     try {
-      const uniqueIds = Array.from(new Set(stillMissing.map(it=> it.sentence_id)));
+      const uniqueIds = Array.from(new Set(signedEligible.map(it=> it.sentence_id)));
       const r = await WillenaAPI.fetch('/.netlify/functions/get_sentence_audio_urls', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ sentence_ids: uniqueIds }) });
       if (r.ok){
         const data = await r.json().catch(()=>null);
         if(data && data.success && data.results){
-          stillMissing.forEach(it=>{
+          signedEligible.forEach(it=>{
             const rec = data.results[it.sentence_id];
             if(rec && rec.exists && rec.url){ it.sentenceAudioUrl = rec.url; it.audio_key = rec.key || it.audio_key; }
           });
@@ -157,38 +214,53 @@ async function enrichSentenceAudioIDAware(items){
       }
     } catch(e){ console.debug('[SentenceMode] sentence id audio signed fetch failed', e?.message); }
   }
-  // 2c. If still missing and we know the word and have a public base, try direct <word>_sentence.mp3
-  const needWordBase = items.filter(it=> !it.sentenceAudioUrl && it.eng && hasBase);
-  if (needWordBase.length){
-    needWordBase.forEach(it=>{
-      const key = `${normWord(it.eng)}_sentence.mp3`;
-      it.sentenceAudioUrl = `${baseClean}/${key}`;
-      // Keep audio_key for potential diagnostics; actual existence will be validated by Audio.onerror
-      it.audio_key = it.audio_key || `${normWord(it.eng)}_sentence`;
-    });
-  }
-  // 3. Collect which still lack URL and have eng for legacy lambda
-  const legacyNeed = items.filter(it=> !it.sentenceAudioUrl && it.eng);
-  if (!legacyNeed.length) return;
-  try {
-    const keys = Array.from(new Set(legacyNeed.flatMap(i=> {
-      const upper = `${i.eng}_SENTENCE`;
-      const lowerSnake = `${normWord(i.eng)}_sentence`;
-      return [upper, lowerSnake];
-    })));
-    const r = await WillenaAPI.fetch('/.netlify/functions/get_audio_urls', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ words: keys }) });
-    if (r.ok){
-      const data = await r.json();
-      if (data && data.results){
-        legacyNeed.forEach(it=>{
-          const kUpper = `${it.eng}_SENTENCE`;
-          const kLowerSnake = `${normWord(it.eng)}_sentence`;
-          const rec = data.results[kUpper] || data.results[kLowerSnake] || data.results[kUpper.toLowerCase()] || data.results[kUpper.toUpperCase()];
-          if (rec && rec.exists && rec.url){ it.sentenceAudioUrl = rec.url; }
+  // 2c) local_* IDs / key-only fallback through get_audio_urls (key lookup).
+  const keyLookupNeed = items.filter(it => !it.sentenceAudioUrl && (it.audio_key || it.sentence_id));
+  if (keyLookupNeed.length) {
+    try {
+      const keys = Array.from(new Set(keyLookupNeed.flatMap(it => {
+        const k = String(it.audio_key || '').trim();
+        if (k) {
+          const noExt = k.replace(/\.mp3$/i, '');
+          return [k, noExt];
+        }
+        if (isLocalSentenceId(it.sentence_id)) {
+          return [`sent_${it.sentence_id}.mp3`, `sent_${it.sentence_id}`];
+        }
+        return [];
+      }).filter(Boolean)));
+      if (keys.length) {
+        const r = await WillenaAPI.fetch('/.netlify/functions/get_audio_urls', {
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ words: keys })
         });
+        if (r.ok) {
+          const data = await r.json().catch(()=>null);
+          const map = data?.results || {};
+          keyLookupNeed.forEach(it => {
+            const k = String(it.audio_key || '').trim();
+            const noExt = k ? k.replace(/\.mp3$/i, '') : '';
+            const fallback1 = it.sentence_id ? `sent_${it.sentence_id}.mp3` : '';
+            const fallback2 = it.sentence_id ? `sent_${it.sentence_id}` : '';
+            const rec = (k && map[k]) || (noExt && map[noExt]) || (fallback1 && map[fallback1]) || (fallback2 && map[fallback2]);
+            if (rec && rec.exists && rec.url) it.sentenceAudioUrl = rec.url;
+          });
+        }
       }
+    } catch (e) {
+      console.debug('[SentenceMode] key lookup failed', e?.message);
     }
-  } catch(e){ console.debug('[SentenceMode] legacy audio fetch failed', e?.message); }
+  }
+  // ── Legacy word_sentence.mp3 fallback REMOVED (2026-03-24) ──────────
+  // Steps 2c & 3 previously fell back to <word>_sentence.mp3 / get_audio_urls.
+  // That audio often contained a DIFFERENT sentence than the one on screen.
+  // Now: if no sent_<id>.mp3 exists, playSentenceAudio() falls through to TTS.
+  const noAudioCount = items.filter(it => !it.sentenceAudioUrl).length;
+  console.log('[SentenceMode][enrichAudio] done.',
+    `${items.length} items, ${items.length - noAudioCount} have audio URL, ${noAudioCount} will use TTS fallback.`,
+    items.map(it => ({ eng: it.eng, sid: it.sentence_id||'NONE', url: it.sentenceAudioUrl ? 'YES' : 'TTS' }))
+  );
 }
 
 export function run(ctx){
@@ -218,7 +290,21 @@ export function run(ctx){
     }, 700);
   }
 
-  enrichSentenceAudioIDAware(items).finally(()=>{
+  (async () => {
+    try {
+      const needsIdResolution = items.some(it => !it.sentence_id && it.sentence);
+      if (needsIdResolution) {
+        await resolveSentenceIdsIfMissing(items);
+      }
+    } catch (e) {
+      console.debug('[SentenceMode] resolveSentenceIdsIfMissing failed', e?.message);
+    }
+    try {
+      await enrichSentenceAudioIDAware(items);
+    } catch (e) {
+      console.debug('[SentenceMode] enrichSentenceAudio failed', e?.message);
+    }
+  })().finally(()=>{
     // Optional override via query param during testing
     try {
       const params = new URLSearchParams(location.search);

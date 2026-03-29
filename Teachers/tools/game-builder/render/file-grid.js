@@ -29,6 +29,10 @@ export function buildGameCardHTML(game, owned, isSelected, currentUid) {
   
   return `
     <div class="thumb-wrap tall lazy" data-id="${game.id}" data-thumb="${imageUrl}">
+      <label class="card-check-anchor" title="${owned ? 'Select for delete' : 'Not owner'}">
+        <input type="checkbox" data-select-id="${game.id}" ${owned ? '' : 'disabled'} />
+        <span>Select</span>
+      </label>
       <div class="img-spinner"></div>
       <img alt="Game Image" src="${placeholder}" loading="lazy" />
     </div>
@@ -39,7 +43,7 @@ export function buildGameCardHTML(game, owned, isSelected, currentUid) {
           <p class="g-creator">${game.creator_name || 'Unknown'}</p>
           <p class="g-date">${when}</p>
         </div>
-        <button class="del-btn" title="${owned?'Delete':'Not owner'}" data-del="${game.id}" ${owned?'':'disabled style="opacity:.35;cursor:not-allowed;"'}><span class="material-icons" style="font-size:19px;">delete</span></button>
+        <span class="card-select-hint">Tap card to open</span>
       </div>
     </div>
   `;

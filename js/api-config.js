@@ -23,10 +23,7 @@
   // CONSTANTS
   // ============================================================
   const GITHUB_PAGES_HOST = 'willenaenglish.github.io';
-  // For Netlify-only functions on CF Pages, route through API gateway (not hardcoded students domain)
-  // Netlify Hosted: use students subdomain directly
-  // CF Pages: all requests route through api.willenaenglish.com
-  const NETLIFY_BASE = 'https://students.willenaenglish.com'; // Fallback for GitHub Pages
+  const NETLIFY_BASE = 'https://students.willenaenglish.com';
   // Cloudflare API Gateway - handles function routing for CF Pages deployments
   const CF_API_GATEWAY = 'https://api.willenaenglish.com';
   // Cloudflare worker endpoints - ONLY use on localhost for testing
@@ -39,8 +36,11 @@
   // Production/staging use relative /api/* paths (same-origin, no CORS issues)
   const USE_CF_WORKERS = (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'));
 
-  // Functions that are Netlify-only (not migrated) - these ALWAYS use NETLIFY_FUNCTIONS_URL
-  // even when CF_ROLLOUT_PERCENT is 100
+  // Functions that are Netlify-only (not migrated).
+  // NOTE: Direct browser calls from Cloudflare Pages -> students.willenaenglish.com
+  // can hit strict CORS when credentials are included. Keep direct routing disabled
+  // on CF Pages by default; let the API gateway proxy these server-side.
+  const ALLOW_DIRECT_NETLIFY_ON_CF = false;
   const NETLIFY_ONLY_FUNCTIONS = [
     'verify_student',
     'set_student_password',
@@ -52,6 +52,8 @@
     'teacher_admin',
     'test_admin',
     'eleven_labs_proxy',
+    'upsert_sentences_batch',
+    'get_sentence_audio_urls',
     'translate',
     'define_word',
   ];
@@ -122,12 +124,20 @@
    * Get the full URL for a Netlify function.
    * Production: returns relative path (e.g., /.netlify/functions/auth)
    * GitHub Pages: returns absolute Netlify URL
-   * Cloudflare Pages: Netlify-only functions route to NETLIFY_BASE, others to CF_API_GATEWAY
    */
   function getApiUrl(functionPath) {
     // If already a full URL, return as-is
     if (functionPath.startsWith('http://') || functionPath.startsWith('https://')) {
       return functionPath;
+    }
+
+    // Ensure path starts with /.netlify/functions/ before applying routing rules.
+    if (!functionPath.startsWith('/.netlify/functions/')) {
+      if (functionPath.startsWith('/')) {
+        functionPath = '/.netlify/functions' + functionPath;
+      } else {
+        functionPath = '/.netlify/functions/' + functionPath;
+      }
     }
 
     const fn = extractFunctionName(functionPath);
@@ -137,29 +147,13 @@
       return CF_FUNCTIONS[fn] + search;
     }
 
-    // Ensure path starts with /.netlify/functions/
-    if (!functionPath.startsWith('/.netlify/functions/')) {
-      if (functionPath.startsWith('/')) {
-        functionPath = '/.netlify/functions' + functionPath;
-      } else {
-        functionPath = '/.netlify/functions/' + functionPath;
-      }
+    // Some functions still exist only on Netlify.
+    // On CF Pages, default to gateway proxying to avoid browser CORS issues.
+    // Direct browser routing can be re-enabled with ALLOW_DIRECT_NETLIFY_ON_CF.
+    if (isCloudflarePages && fn && NETLIFY_ONLY_FUNCTIONS.includes(fn)) {
+      return ALLOW_DIRECT_NETLIFY_ON_CF ? (NETLIFY_BASE + functionPath) : (CF_API_GATEWAY + functionPath);
     }
-    
-    // Force Netlify-only functions to route properly:
-    // - CF Pages: use CF API Gateway (which proxies to Netlify)
-    // - GitHub Pages: use NETLIFY_BASE (students subdomain)
-    // - Other: use normal API_BASE
-    if (fn && NETLIFY_ONLY_FUNCTIONS.includes(fn)) {
-      if (isCloudflarePages) {
-        // CF Pages domains must use the API gateway, NOT hardcoded students domain
-        return CF_API_GATEWAY + functionPath;
-      } else if (isCrossOrigin) {
-        // GitHub Pages must use NETLIFY_BASE
-        return NETLIFY_BASE + functionPath;
-      }
-    }
-    
+
     return API_BASE + functionPath;
   }
 
@@ -219,6 +213,20 @@
       ...options,
       credentials: 'include',
     };
+
+    // Safety: if any call still targets students.willenaenglish.com cross-origin,
+    // do NOT send credentials from browser (wildcard ACAO + credentials is blocked).
+    const isDirectStudentsFunction = /^https:\/\/students\.willenaenglish\.com\/\.netlify\/functions\//i.test(url);
+    const isCrossOriginToStudents = isDirectStudentsFunction && (window.location.origin !== 'https://students.willenaenglish.com');
+    if (isCrossOriginToStudents) {
+      fetchOptions.credentials = 'omit';
+      const headers = { ...(fetchOptions.headers || {}) };
+      Object.keys(headers).forEach((k) => {
+        if (k.toLowerCase() === 'authorization') delete headers[k];
+      });
+      fetchOptions.headers = headers;
+      console.warn('[WillenaAPI] Cross-origin direct students call detected; forcing credentials=omit for CORS:', url);
+    }
     
     // For requests with body, ensure Content-Type is set (case-insensitive check)
     if (options.body) {
@@ -245,7 +253,7 @@
       }
       
       // Only add Authorization header if we have a valid token that looks like a JWT (contains dots)
-      if (localToken && localToken.includes('.') && localToken.length > 50) {
+      if (!isCrossOriginToStudents && localToken && localToken.includes('.') && localToken.length > 50) {
         fetchOptions.headers = {
           ...fetchOptions.headers,
           'Authorization': `Bearer ${localToken}`

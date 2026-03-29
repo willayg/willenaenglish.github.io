@@ -21,6 +21,7 @@
  *  --model MODEL_ID    (override model)
  *  --include file1,file2  (only process specific JSON filenames)
  *  --exclude file1,file2  (skip specific JSON filenames)
+ *  --level level3         (only process files in specific level directory)
  */
 
 const fs = require('fs');
@@ -59,6 +60,7 @@ const EXCLUDE_FILES = (getArg('exclude', '') || '')
 	.split(',')
 	.map(s => s.trim())
 	.filter(Boolean);
+const LEVEL_FILTER = getArg('level', '');
 
 const functionBases = [
 	'http://localhost:9000/.netlify/functions',
@@ -81,13 +83,20 @@ function normalizeKey(value) {
 async function detectFunctionsBase() {
 	for (const base of functionBases) {
 		try {
-			const ping = await fetch(base + '/diag_env', { timeout: 3000 });
-			if (ping.ok) return base;
+			const controller = new AbortController();
+			const timeoutId = setTimeout(() => controller.abort(), 3000);
+			const ping = await fetch(base + '/diag_env', { signal: controller.signal });
+			clearTimeout(timeoutId);
+			if (ping.ok) {
+				console.log(`[INFO] Detected functions base: ${base}`);
+				return base;
+			}
 		} catch (err) {
-			// ignore
+			// ignore and try next
 		}
 	}
-	return functionBases[functionBases.length - 1];
+	console.log('[WARN] Could not detect functions base, using default');
+	return 'http://localhost:9000/.netlify/functions';
 }
 
 function listGrammarFiles(dir) {
@@ -96,6 +105,10 @@ function listGrammarFiles(dir) {
 	for (const entry of entries) {
 		const fullPath = path.join(dir, entry.name);
 		if (entry.isDirectory()) {
+			// Apply level filter if specified
+			if (LEVEL_FILTER && !fullPath.includes(path.sep + LEVEL_FILTER + path.sep) && !fullPath.endsWith(path.sep + LEVEL_FILTER)) {
+				continue;
+			}
 			results.push(...listGrammarFiles(fullPath));
 		} else if (entry.isFile() && entry.name.endsWith('.json')) {
 			if (INCLUDE_FILES.length && !INCLUDE_FILES.includes(entry.name)) continue;

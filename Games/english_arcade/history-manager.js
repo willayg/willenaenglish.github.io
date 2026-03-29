@@ -40,7 +40,8 @@ class HistoryManager {
         timestamp: Date.now(),
         payload: { type: 'opening_menu' },
       };
-      const url = `${window.location.pathname}#state-opening`;
+      const preservedSearch = window.location.search || '';
+      const url = `${window.location.pathname}${preservedSearch}#state-opening`;
       window.history.replaceState(initHistoryData, document.title, url);
     } catch (e) {
       console.warn('[HistoryManager] Failed to seed initial history state:', e);

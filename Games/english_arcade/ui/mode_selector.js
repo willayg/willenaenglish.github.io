@@ -20,6 +20,12 @@ export async function renderModeSelector({ onModeChosen, onWordsClick }) {
     if (backBtn) {
       backBtn.style.display = '';
       backBtn.onclick = () => {
+        try {
+          if (window.history && window.history.length > 1) {
+            window.history.back();
+            return;
+          }
+        } catch {}
         if (window.WordArcade && typeof window.WordArcade.startFilePicker === 'function') {
           window.WordArcade.startFilePicker();
         } else {

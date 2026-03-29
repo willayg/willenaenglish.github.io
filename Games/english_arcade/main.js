@@ -31,6 +31,106 @@ import { progressCache } from './utils/progress-cache.js?v=20251214a';
 import { LEVEL1_LISTS, LEVEL2_LISTS, LEVEL3_LISTS, LEVEL4_LISTS, PHONICS_LISTS } from './utils/level-lists.js?v=20251214a';
 import { prefetchAllProgress, loadStarCounts } from './utils/progress-data-service.js?v=20251214a';
 
+const EA_BUILD_STAMP = 'EA_BUILD 20260326c · sentence-fetch-hotfix';
+
+function applyArcadeRoutingHotfix() {
+  try {
+    if (window.__EA_ROUTING_HOTFIX_APPLIED) return true;
+    const host = window.location.hostname || '';
+    const isCFPages = host === 'staging.willenaenglish.com'
+      || host === 'teachers.willenaenglish.com'
+      || host === 'students.willenaenglish.com'
+      || host === 'cf.willenaenglish.com'
+      || host.endsWith('.pages.dev');
+    if (!isCFPages) return true;
+    if (!window.WillenaAPI || typeof window.WillenaAPI.fetch !== 'function') return false;
+
+    const SENTENCE_GATEWAY = 'https://willena-proxy.willena.workers.dev';
+    const FORCE_SENTENCE_FUNCTIONS = new Set([
+      'upsert_sentences_batch',
+      'get_sentence_audio_urls'
+    ]);
+
+    const extractFn = (value) => {
+      const s = String(value || '');
+      const m = s.match(/\/\.netlify\/functions\/([^\/?#]+)/);
+      return m ? m[1] : '';
+    };
+
+    const toSentenceGatewayUrl = (value) => {
+      const s = String(value || '');
+      const fn = extractFn(s);
+      if (!fn) return s;
+      const qIndex = s.indexOf('?');
+      const search = qIndex >= 0 ? s.slice(qIndex) : '';
+      return `${SENTENCE_GATEWAY}/.netlify/functions/${fn}${search}`;
+    };
+
+    const origFetch = window.WillenaAPI.fetch.bind(window.WillenaAPI);
+    window.WillenaAPI.fetch = function(functionPath, options = {}) {
+      const fn = extractFn(functionPath);
+      if (fn && FORCE_SENTENCE_FUNCTIONS.has(fn)) {
+        const routed = toSentenceGatewayUrl(functionPath);
+        return origFetch(routed, options);
+      }
+      return origFetch(functionPath, options);
+    };
+
+    window.__EA_ROUTING_HOTFIX_APPLIED = true;
+    console.log('[EnglishArcade][RoutingHotfix] Applied for CF Pages host:', host);
+    return true;
+  } catch (e) {
+    console.warn('[EnglishArcade][RoutingHotfix] failed:', e?.message || e);
+    return false;
+  }
+}
+
+function injectBuildStamp() {
+  try {
+    if (typeof window !== 'undefined') {
+      window.__EA_BUILD_STAMP = EA_BUILD_STAMP;
+      console.log('[EnglishArcade][BuildStamp]', EA_BUILD_STAMP, location.hostname);
+    }
+    if (typeof document === 'undefined') return;
+    if (document.getElementById('eaBuildStamp')) return;
+    const badge = document.createElement('div');
+    badge.id = 'eaBuildStamp';
+    badge.textContent = EA_BUILD_STAMP;
+    badge.style.cssText = [
+      'position:fixed',
+      'right:8px',
+      'bottom:8px',
+      'z-index:99999',
+      'font:600 10px/1.2 system-ui,-apple-system,Segoe UI,Arial,sans-serif',
+      'letter-spacing:.2px',
+      'color:#0f172a',
+      'background:rgba(255,255,255,.92)',
+      'border:1px solid rgba(148,163,184,.9)',
+      'border-radius:8px',
+      'padding:4px 6px',
+      'pointer-events:none',
+      'box-shadow:0 1px 4px rgba(2,6,23,.15)'
+    ].join(';');
+    document.body.appendChild(badge);
+  } catch {}
+}
+
+if (typeof document !== 'undefined') {
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', injectBuildStamp, { once: true });
+  } else {
+    injectBuildStamp();
+  }
+}
+
+if (!applyArcadeRoutingHotfix()) {
+  let retries = 0;
+  const timer = setInterval(() => {
+    retries++;
+    if (applyArcadeRoutingHotfix() || retries >= 40) clearInterval(timer);
+  }, 50);
+}
+
 // -----------------------------
 // Auth redirect helper
 // -----------------------------
@@ -149,6 +249,20 @@ let currentMode = null;
 let currentListName = null;
 let currentPreloadAbort = null; // for abortable audio preload
 let activeModeCleanup = null; // optional cleanup function returned by mode runners
+let pendingAutostartMode = null; // mode to start immediately after preload splash
+
+function readAutostartModeFromURL() {
+  try {
+    const params = new URLSearchParams(window.location.search || '');
+    const isAutostart = params.get('autostart') === '1' || String(params.get('open') || '').toLowerCase() === 'saved';
+    if (!isAutostart) return null;
+    const mode = String(params.get('mode') || '').trim().toLowerCase();
+    if (!mode) return null;
+    return modeLoaders && modeLoaders[mode] ? mode : null;
+  } catch {
+    return null;
+  }
+}
 
 // Navigation cancellation epoch: bump this to cancel any in-flight async flows
 let __navEpoch = 0;
@@ -159,6 +273,7 @@ let __pendingSplashTimeout = null;
 function __abortInFlight() {
   // Increment epoch so pending async continuations bail out
   __navEpoch++;
+  pendingAutostartMode = null;
   // Cancel pending splash screen timeout
   if (__pendingSplashTimeout) {
     clearTimeout(__pendingSplashTimeout);
@@ -323,6 +438,7 @@ function clearCurrentGameState({ keepWordList = false } = {}) {
 }
 
 function quitToOpening(fully = false) {
+  setAutostartLoadingVisible(false);
   clearCurrentGameState({ keepWordList: !fully });
   // Render the real opening menu (restore original buttons and wire events)
   renderOpeningMenu();
@@ -342,7 +458,20 @@ function showOpeningButtons(visible) {
   if (btns) btns.style.display = visible ? '' : 'none';
 }
 
+function setAutostartLoadingVisible(visible, message = 'Loading homework…', subtitle = 'Preparing your game') {
+  const overlay = document.getElementById('waAutostartOverlay');
+  if (!overlay) return;
+  const titleEl = overlay.querySelector('.wa-title');
+  const subtitleEl = overlay.querySelector('.wa-subtitle');
+  if (titleEl) titleEl.textContent = message;
+  if (subtitleEl) subtitleEl.textContent = subtitle;
+  overlay.style.display = visible ? 'flex' : 'none';
+  document.documentElement.classList.toggle('wa-autostart-pending', !!visible);
+  try { window.__WA_AUTOSTART_PENDING__ = !!visible; } catch {}
+}
+
 function showProgress(message, progress = 0) {
+  setAutostartLoadingVisible(false);
   showOpeningButtons(false);
   gameArea.innerHTML = `<div style="text-align:center;padding:40px;font-family:Arial,sans-serif;">
     <h3 style="margin-bottom:20px;color:#333;">${message}</h3>
@@ -367,6 +496,7 @@ function showGameStart(callback) {
 }
 
 function showInlineError(text, onRetry) {
+  setAutostartLoadingVisible(false);
   gameArea.innerHTML = `<div style="text-align:center;padding:40px;font-family:Arial,sans-serif;">
     <h3 style="margin-bottom:14px;color:#e53e3e;">We couldn't prepare all audio</h3>
     <div style="color:#555;margin-bottom:16px;">${text}</div>
@@ -477,6 +607,205 @@ async function fetchChallengingWords(opts = {}) {
   return cleaned;
 }
 
+// ---------------------------------------------------------------------------
+// Background sentence audio preload
+// ---------------------------------------------------------------------------
+// Resolves sentence IDs (if missing) and fetches signed audio URLs for all
+// words that have sentences.  Mutates the word objects in-place so that when
+// sentence mode starts, enrichSentenceAudioIDAware finds the URLs pre-populated
+// and skips its own network calls — making the mode start nearly instant.
+async function preloadSentenceAudio(list) {
+  if (!Array.isArray(list) || !list.length) return;
+
+  // Use WillenaAPI.fetch for correct routing (Netlify-only functions); fall back to raw fetch
+  const apiFetch = (typeof window !== 'undefined' && window.WillenaAPI && window.WillenaAPI.fetch)
+    ? window.WillenaAPI.fetch.bind(window.WillenaAPI)
+    : (url, init) => fetch(url, { ...init, credentials: 'include' });
+
+  const getSentenceText = (w) => {
+    if (!w || typeof w !== 'object') return '';
+    const direct = [w.example, w.ex, w.sentence, w.legacy_sentence].find(v => typeof v === 'string' && v.trim());
+    if (direct) return String(direct).trim();
+    if (Array.isArray(w.sentences) && w.sentences.length) {
+      const preferred = (w.primary_sentence_id && w.sentences.find(s => s?.id === w.primary_sentence_id))
+        || w.sentences.find(s => s && typeof s.text === 'string' && s.text.trim())
+        || null;
+      if (preferred && typeof preferred.text === 'string' && preferred.text.trim()) return preferred.text.trim();
+    }
+    return '';
+  };
+
+  // 1) Collect words that have sentence identity or sentence text (default + builder shapes)
+  const hasSentence = list.filter(w => {
+    if (!w) return false;
+    if (w.sentence_id) return true;
+    if (w.primary_sentence_id) return true;
+    if (Array.isArray(w.sentences) && w.sentences.length) return true;
+    const text = getSentenceText(w);
+    return typeof text === 'string' && text.trim().split(/\s+/).length >= 3;
+  });
+  if (!hasSentence.length) return;
+
+  // Normalize sentence_id -> primary_sentence_id so downstream resolution is ID-first.
+  for (const w of hasSentence) {
+    if (!w || typeof w !== 'object') continue;
+    const sid = String(w.primary_sentence_id || w.sentence_id || '').trim();
+    if (!sid) continue;
+    if (!w.primary_sentence_id) w.primary_sentence_id = sid;
+    if (!Array.isArray(w.sentences)) w.sentences = [];
+    if (!w.sentences.some(s => s?.id === sid)) {
+      const text = getSentenceText(w);
+      const sentObj = { id: sid };
+      if (text) sentObj.text = text;
+      w.sentences.push(sentObj);
+    }
+  }
+
+  const norm = s => (s || '').trim().replace(/\s+/g, ' ');
+  const isLocalSentenceId = (id) => /^local_/i.test(String(id || '').trim());
+
+  // 2) Resolve sentence IDs for words that are missing them
+  const needIds = hasSentence.filter(w => !w.primary_sentence_id && !(Array.isArray(w.sentences) && w.sentences.some(s => s?.id)));
+  if (needIds.length) {
+    const byText = new Map();
+    for (const w of needIds) {
+      const text = norm(getSentenceText(w));
+      if (!text || text.split(/\s+/).length < 3) continue;
+      if (!byText.has(text)) byText.set(text, new Set());
+      if (w.eng) byText.get(text).add(String(w.eng));
+    }
+    if (byText.size) {
+      try {
+        const payload = {
+          action: 'upsert_sentences_batch',
+          sentences: Array.from(byText.entries()).map(([text, ws]) => ({ text, words: Array.from(ws) }))
+        };
+        const r = await apiFetch('/.netlify/functions/upsert_sentences_batch', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        if (r.ok) {
+          const js = await r.json().catch(() => null);
+          if (js?.success && Array.isArray(js.sentences)) {
+            const byTextResolved = new Map(js.sentences.map(s => [norm(s.text).toLowerCase(), s]));
+            for (const w of needIds) {
+              const text = norm(getSentenceText(w));
+              const rec = byTextResolved.get(text.toLowerCase());
+              if (rec?.id) {
+                const sentObj = { id: rec.id, text: rec.text };
+                if (rec.audio_key) sentObj.audio_key = rec.audio_key;
+                w.sentences = w.sentences || [];
+                if (!w.sentences.some(s => s?.id === rec.id)) w.sentences.push(sentObj);
+                if (!w.primary_sentence_id) w.primary_sentence_id = rec.id;
+              }
+            }
+          }
+        }
+      } catch (e) {
+        console.debug('[preloadSentenceAudio] upsert failed', e?.message);
+      }
+    }
+  }
+
+  // 3) Collect all sentence IDs and fetch signed audio URLs (backend IDs only)
+  const idSet = new Set();
+  const localIdSet = new Set();
+  // Collect ALL sentence IDs (including local_* which have valid sent_<id>.mp3 in R2)
+  const allIds = new Set();
+  for (const w of hasSentence) {
+    const sid = w.primary_sentence_id;
+    if (sid) allIds.add(String(sid));
+    if (Array.isArray(w.sentences)) {
+      for (const s of w.sentences) {
+        if (s?.id) allIds.add(String(s.id));
+      }
+    }
+  }
+  if (!allIds.size) return;
+
+  let resolved = 0;
+  // Fetch signed URLs for all sentence IDs via the Netlify function
+  // (routed through api.willenaenglish.com gateway which falls through to Netlify)
+  try {
+    const ids = Array.from(allIds);
+    const r = await apiFetch('/.netlify/functions/get_sentence_audio_urls', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sentence_ids: ids })
+    });
+    if (r.ok) {
+        const data = await r.json().catch(() => null);
+        if (data?.success && data.results) {
+          for (const w of hasSentence) {
+            const sid = w.primary_sentence_id;
+            if (!sid) continue;
+            const rec = data.results[sid];
+            if (rec?.exists && rec.url) {
+              w.sentenceAudioUrl = rec.url;
+              if (rec.key) {
+                const sObj = Array.isArray(w.sentences) && w.sentences.find(s => s?.id === sid);
+                if (sObj) sObj.audio_key = rec.key;
+              }
+              resolved++;
+            }
+          }
+        }
+      }
+    } catch (e) {
+      console.debug('[preloadSentenceAudio] signed URL fetch failed', e?.message);
+    }
+
+  // 3b) local_* IDs / key-only fallback: resolve through get_audio_urls with keys.
+  try {
+    const keyCandidates = new Set();
+    for (const w of hasSentence) {
+      if (w.sentenceAudioUrl) continue;
+      const sid = String(w.primary_sentence_id || '').trim();
+      const sentObj = Array.isArray(w.sentences) ? w.sentences.find(s => s?.id === w.primary_sentence_id) : null;
+      const audioKey = String(sentObj?.audio_key || w.audio_key || '').trim();
+      if (audioKey) {
+        keyCandidates.add(audioKey);
+        keyCandidates.add(audioKey.replace(/\.mp3$/i, ''));
+      }
+      if (sid && isLocalSentenceId(sid)) {
+        keyCandidates.add(`sent_${sid}.mp3`);
+        keyCandidates.add(`sent_${sid}`);
+      }
+    }
+
+    if (keyCandidates.size) {
+      const r = await apiFetch('/.netlify/functions/get_audio_urls', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ words: Array.from(keyCandidates) })
+      });
+      if (r.ok) {
+        const data = await r.json().catch(() => null);
+        const map = data?.results || {};
+        for (const w of hasSentence) {
+          if (w.sentenceAudioUrl) continue;
+          const sid = String(w.primary_sentence_id || '').trim();
+          const sentObj = Array.isArray(w.sentences) ? w.sentences.find(s => s?.id === w.primary_sentence_id) : null;
+          const audioKey = String(sentObj?.audio_key || w.audio_key || '').trim();
+          const audioKeyNoExt = audioKey ? audioKey.replace(/\.mp3$/i, '') : '';
+          const fallback1 = sid ? `sent_${sid}.mp3` : '';
+          const fallback2 = sid ? `sent_${sid}` : '';
+          const rec = (audioKey && map[audioKey]) || (audioKeyNoExt && map[audioKeyNoExt]) || (fallback1 && map[fallback1]) || (fallback2 && map[fallback2]);
+          if (rec?.exists && rec.url) {
+            w.sentenceAudioUrl = rec.url;
+            resolved++;
+          }
+        }
+      }
+    }
+  } catch (e) {
+    console.debug('[preloadSentenceAudio] key lookup failed', e?.message);
+  }
+
+  console.log('[preloadSentenceAudio] Resolved', resolved, 'sentence audio URLs out of', allIds.size, 'sentence IDs');
+}
+
 async function processWordlist(data) {
   try {
     const myEpoch = __navEpoch;
@@ -494,6 +823,14 @@ async function processWordlist(data) {
     showProgress('Preparing audio files...', 0);
     let preloadError = null;
     let preloadSummary = null;
+
+    // Start sentence audio preload in background (non-blocking).
+    // This resolves sentence IDs and fetches signed audio URLs so that
+    // sentence mode can start instantly without additional API calls.
+    const sentencePreload = preloadSentenceAudio(wordList).catch(e => {
+      console.debug('[WordArcade] sentence preload error (non-fatal)', e?.message);
+    });
+
     try {
       preloadSummary = await preloadAllAudio(wordList, ({ phase, word, progress }) => {
         const phaseText = phase === 'checking' ? 'Checking existing files' : phase === 'generating' ? 'Generating missing audio' : 'Loading audio files';
@@ -505,12 +842,20 @@ async function processWordlist(data) {
       console.warn('[WordArcade] Audio preload partial failure – continuing anyway.', err);
     }
 
+    // Give sentence preload a short extra window to finish (non-blocking fallback)
+    try { await Promise.race([sentencePreload, new Promise(r => setTimeout(r, 3000))]); } catch {}
+
     // If navigation changed (user pressed Back), bail out quietly
     if (myEpoch !== __navEpoch) return;
 
     showGameStart(() => {
       // If navigation changed during the splash delay, bail out
       if (myEpoch !== __navEpoch) return;
+      const forcedMode =
+        (pendingAutostartMode && modeLoaders[pendingAutostartMode])
+          ? pendingAutostartMode
+          : readAutostartModeFromURL();
+      pendingAutostartMode = null;
       if (preloadSummary && preloadSummary.missing && preloadSummary.missing.length) {
         inlineToast(`Audio unavailable for ${preloadSummary.missing.length} word${preloadSummary.missing.length>1?'s':''}. These will be skipped in audio modes.`);
         window.__WA_MISSING_AUDIO = new Set(preloadSummary.missing.map(w => String(w).trim().toLowerCase()));
@@ -519,6 +864,12 @@ async function processWordlist(data) {
       }
       // Persist again in case we force-cleared earlier
       try { saveSessionState(); } catch {}
+      if (forcedMode) {
+        try { window.__WA_BLOCK_SELECTOR_UNTIL__ = Date.now() + 4500; } catch {}
+        currentMode = forcedMode;
+        startGame(forcedMode);
+        return;
+      }
       startModeSelector();
       // One-time deferred re-render if header/title or stats didn't populate yet
       // (only needed for edge case where list name wasn't set before audio preload finished)
@@ -540,6 +891,7 @@ async function processWordlist(data) {
     });
 
   } catch (err) {
+    pendingAutostartMode = null;
     if (err?.name === 'AbortError') return;
     console.error('Error processing word list (fatal):', err);
     const msg = err.message || 'Unknown error';
@@ -547,7 +899,7 @@ async function processWordlist(data) {
   }
 }
 
-async function loadSampleWordlistByFilename(filename, { force = false, listName = null } = {}) {
+async function loadSampleWordlistByFilename(filename, { force = false, listName = null, mode = null } = {}) {
   try {
     if (!filename) throw new Error('No filename');
     // optional filename safety - allow slashes for subfolders
@@ -600,13 +952,23 @@ async function loadSampleWordlistByFilename(filename, { force = false, listName 
       } catch (e) { lastErr = e; }
     }
     if (!loaded) throw new Error(`Failed to fetch ${filename}${lastErr ? ': ' + lastErr.message : ''}`);
+    pendingAutostartMode = (mode && modeLoaders[mode]) ? mode : null;
     await processWordlist(loaded);
   } catch (err) {
+    pendingAutostartMode = null;
     inlineToast('Error loading sample word list: ' + err.message);
   }
 }
 
 function startModeSelector() {
+  try {
+    const blockUntil = Number(window.__WA_BLOCK_SELECTOR_UNTIL__ || 0);
+    if (blockUntil && Date.now() < blockUntil) {
+      console.log('[WordArcade] startModeSelector ignored during forced autostart guard window');
+      return;
+    }
+  } catch {}
+  setAutostartLoadingVisible(false);
   showOpeningButtons(false);
   // Ensure we have any cached state back in memory for UI headers
   restoreSessionStateIfEmpty();
@@ -636,7 +998,7 @@ function startFilePicker() {
 // -----------------------------
 const modeLoaders = {
   meaning:        () => import('./modes/meaning.js').then(m => m.runMeaningMode),
-  sentence:       () => import('./modes/word_sentence_mode.js').then(m => m.run),
+  sentence:       () => import('./modes/word_sentence_mode.js?v=20260326c').then(m => m.run),
   spelling:       () => import('./modes/spelling.js').then(m => m.runSpellingMode),
   listening:      () => import('./modes/listening.js').then(m => m.runListeningMode),
   picture:        () => import('./modes/picture.js').then(m => m.runPictureMode),
@@ -760,11 +1122,11 @@ async function loadPhonicsGame({ listFile, mode, listName }) {
     currentListName = listName || 'Phonics List';
     console.log('[loadPhonicsGame] Set currentListName to:', currentListName);
     // Use the standard processing pipeline so we normalize, preload audio, and SAVE session state
+    pendingAutostartMode = (mode && modeLoaders[mode]) ? mode : null;
     await processWordlist(Array.isArray(wordData) ? wordData : []);
     console.log('[loadPhonicsGame] processWordlist complete, currentListName is now:', currentListName);
-    // If a mode was preselected, jump straight in; otherwise the processor already opened the mode selector
-    if (mode) { currentMode = mode; startGame(mode); }
   } catch (error) {
+    pendingAutostartMode = null;
     console.error('Error loading phonics list:', error);
     inlineToast(`Error loading list: ${error.message}`);
     showOpeningButtons(true);
@@ -873,6 +1235,7 @@ async function loadGrammarGame({ grammarFile, grammarName, grammarConfig }) {
 }
 
 export async function startGame(mode = 'meaning') {
+  setAutostartLoadingVisible(false);
   showOpeningButtons(false);
   if (!wordList.length) { showOpeningButtons(true); gameArea.innerHTML = ''; return; }
   // Clear any previous mode (when switching)
@@ -949,7 +1312,7 @@ async function openSavedGamesModal(underlyingState = 'opening_menu') {
   });
 }
 
-async function openSavedGameById(id) {
+async function openSavedGameById(id, { mode = null } = {}) {
   try {
   const js = await fetchJSON(`${FN('supabase_proxy_fixed')}?get=game_data&id=${encodeURIComponent(id)}`);
     const row = js?.data || js;
@@ -989,10 +1352,34 @@ async function openSavedGameById(id) {
       const eng = w.eng || w.en || w.word || '';
       const kor = w.kor || w.kr || w.translation || '';
       const def = w.def || w.definition || w.gloss || w.meaning || '';
+      const example = w.example || w.ex || w.example_sentence || w.sentence_example || '';
+      const legacySentence = w.legacy_sentence || w.sentence || example || '';
+      const sentenceArray = Array.isArray(w.sentences)
+        ? w.sentences.map(s => ({
+            ...s,
+            id: s?.id || s?.sentence_id || null,
+            audio_key: s?.audio_key || s?.audioKey || null
+          })).filter(s => s.id)
+        : [];
+      const primarySentenceId = w.primary_sentence_id || w.sentence_id || null;
+      const sentenceMp3 = w.sentence_mp3 || '';
+      const sentenceAudio = w.sentence_audio || '';
+      const sentenceAudioKey = w.audio_key || '';
       const rawImg = w.image_url || w.image || w.img || w.img_url || w.picture || '';
       const img = (typeof rawImg === 'string') ? rawImg.trim() : '';
       const out = { eng: String(eng).trim(), kor: String(kor).trim() };
-      if (def && String(def).trim()) out.def = String(def).trim();
+      if (def && String(def).trim()) {
+        out.def = String(def).trim();
+        out.definition = String(def).trim();
+      }
+      if (example && String(example).trim()) out.example = String(example).trim();
+      if (legacySentence && String(legacySentence).trim()) out.legacy_sentence = String(legacySentence).trim();
+      if (sentenceArray.length) out.sentences = sentenceArray;
+      if (primarySentenceId) out.primary_sentence_id = primarySentenceId;
+      if (primarySentenceId) out.sentence_id = primarySentenceId;
+      if (sentenceMp3 && String(sentenceMp3).trim()) out.sentence_mp3 = String(sentenceMp3).trim();
+      if (sentenceAudio && String(sentenceAudio).trim()) out.sentence_audio = String(sentenceAudio).trim();
+      if (sentenceAudioKey && String(sentenceAudioKey).trim()) out.audio_key = String(sentenceAudioKey).trim();
       // Preserve image in ALL field variants so normalizeWordImages can find and process it
       if (img && img.toLowerCase() !== 'null' && img.toLowerCase() !== 'undefined') {
         out.image_url = img;
@@ -1008,6 +1395,14 @@ async function openSavedGameById(id) {
     }
     try { window.__WA_IS_PHONICS__ = false; } catch {}
     currentListName = row.title || 'Saved Game';
+    console.log('[WordArcade] Saved game sentence meta:', mapped.slice(0, 5).map(w => ({
+      eng: w.eng,
+      primary_sentence_id: w.primary_sentence_id || null,
+      sentence_count: Array.isArray(w.sentences) ? w.sentences.length : 0,
+      sentence_text: Array.isArray(w.sentences) && w.sentences[0] ? w.sentences[0].text || null : null,
+      sentence_audio_key: Array.isArray(w.sentences) && w.sentences[0] ? w.sentences[0].audio_key || null : null,
+      legacy_sentence: w.legacy_sentence || null
+    })));
     console.log('[WordArcade] Before normalization, sample words:', mapped.slice(0,3).map(w => ({
       eng: w.eng,
       image_url: w.image_url?.substring(0,60),
@@ -1019,8 +1414,10 @@ async function openSavedGameById(id) {
       image_url: w.image_url?.substring(0,60),
       img: w.img?.substring(0,60)
     })));
+    pendingAutostartMode = (mode && modeLoaders[mode]) ? mode : null;
     await processWordlist(mapped);
   } catch (e) {
+    pendingAutostartMode = null;
   if (e.code === 'NOT_AUTH' || /Not signed in/i.test(e.message)) {
       inlineToast('Please sign in to open saved games.');
       return;
@@ -1535,9 +1932,10 @@ window.addEventListener('DOMContentLoaded', () => {
   try {
     const params = new URLSearchParams(window.location.search);
     const open = (params.get('open') || '').toLowerCase();
-    const id = params.get('id');
+    const id = params.get('id') || params.get('game_id');
+    const mode = (params.get('mode') || '').trim();
     if (open === 'saved' && id) {
-      openSavedGameById(id);
+      openSavedGameById(id, { mode });
     }
   } catch {}
 
@@ -1584,10 +1982,10 @@ window.WordArcade = {
   startFilePicker,
   startModeSelector,
   // Grammar helpers
-  startGrammarModeSelector: () => {
+  startGrammarModeSelector: (override) => {
     try {
       showOpeningButtons(false);
-      const cfg = window.__WA_LAST_GRAMMAR__ || {};
+      const cfg = (override && typeof override === 'object') ? override : (window.__WA_LAST_GRAMMAR__ || {});
       showGrammarModeSelector({
         grammarFile: cfg.grammarFile || 'data/grammar/level1/articles.json',
         grammarName: cfg.grammarName || 'A vs An',
@@ -1664,6 +2062,7 @@ window.WordArcade = {
   loadSampleWordlistByFilename,
   showLevelsMenu,
   showGrammarLevelsMenu,
+  startReviewFromWords,
   __abortInFlight,
   historyManager, // Expose for debugging
   progressCache, // Expose cache for debugging
@@ -1768,4 +2167,53 @@ function startNewReviewCombined(chosenWords) {
       setTimeout(() => { quitToOpening(true); }, 400);
     }
   });
+}
+
+function normalizeReviewSeedWords(words) {
+  if (!Array.isArray(words)) return [];
+  const seen = new Set();
+  const out = [];
+  for (const raw of words) {
+    if (!raw || typeof raw !== 'object') continue;
+    const eng = String(raw.eng || raw.word || '').trim();
+    const kor = String(raw.kor || raw.word_kr || '').trim();
+    if (!eng || !kor) continue;
+    const key = `${eng.toLowerCase()}|${kor.toLowerCase()}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push({ eng, kor, def: raw.def || raw.definition || '' });
+  }
+  return out;
+}
+
+function startReviewFromWords(words, { skipSelection = false } = {}) {
+  const normalized = normalizeReviewSeedWords(words);
+  if (!normalized.length) {
+    inlineToast('No wrong words to practice yet.');
+    return false;
+  }
+
+  const capped = normalized.slice(0, 15);
+  if (skipSelection) {
+    try { startNewReviewCombined(capped); return true; } catch (e) {
+      console.error('startReviewFromWords failed', e);
+      inlineToast('Could not start review.');
+      return false;
+    }
+  }
+
+  const max = Math.min(15, capped.length);
+  const min = Math.min(3, max);
+  showReviewSelectionModal(capped, {
+    min,
+    max,
+    onStart: (chosen) => {
+      try { startNewReviewCombined(chosen); } catch (e) {
+        console.error('Review start failed', e);
+        inlineToast('Could not start review.');
+      }
+    },
+    onCancel: () => {}
+  });
+  return true;
 }

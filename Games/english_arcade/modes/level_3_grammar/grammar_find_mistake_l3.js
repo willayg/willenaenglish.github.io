@@ -16,7 +16,26 @@ function detectGrammarType(filePath) {
   if (path.includes('past_simple_regular')) return 'past_regular';
   if (path.includes('past_vs_future')) return 'past_vs_future';
   if (path.includes('past_vs_present_vs_future') || path.includes('all_tense')) return 'all_tenses';
+  if (path.includes('mixed_tense_question')) return 'mixed_tense_questions';
   if (path.includes('tense_question')) return 'tense_questions';
+  // Will future/questions: sentence-based with "will" patterns
+  if (path.includes('will_future')) return 'will_future';
+  if (path.includes('will_questions')) return 'will_questions';
+  // Modal verbs: have to, want to, like to
+  if (path.includes('have_to')) return 'have_to';
+  if (path.includes('want_to')) return 'want_to';
+  if (path.includes('like_to_vs_want_to')) return 'like_to_vs_want_to_vs_have_to';
+  if (path.includes('like_to')) return 'like_to';
+  // Quantifiers and adjectives
+  if (path.includes('a_few_vs_a_little')) return 'a_few_vs_a_little';
+  if (path.includes('adjectives_people')) return 'adjectives';
+  if (path.includes('adjectives_world')) return 'adjectives';
+  if (path.includes('short_comparatives')) return 'comparatives';
+  if (path.includes('short_superlatives')) return 'superlatives';
+  // Modals and advanced
+  if (path.includes('modal_verbs')) return 'modal_verbs';
+  if (path.includes('imperatives_suggestions')) return 'imperatives';
+  if (path.includes('prepositions_direction')) return 'prepositions';
   return 'past_irregular';
 }
 
@@ -105,7 +124,135 @@ export async function runGrammarFindMistakeL3Mode({ grammarFile, grammarName, gr
     }
 
     // For past_irregular with detractors, use original logic
+    // But skip for adjectives/comparatives/superlatives - they need special handling
     const hasDetractors = item && Array.isArray(item.detractors) && item.detractors.length > 0;
+    
+    // For ADJECTIVES: Create actual grammar mistakes (not just swapping to detractors)
+    if (grammarType === 'adjectives' || grammarType === 'comparatives' || grammarType === 'superlatives') {
+      const baseAdj = (item.base || item.word || '').trim();
+      if (baseAdj && new RegExp(`\\b${escapeRegExp(baseAdj)}\\b`, 'i').test(en)) {
+        const variants = [];
+        
+        // Error 1: Use adverb form instead of adjective (e.g., "The city is beautifully" instead of "beautiful")
+        if (baseAdj.endsWith('y')) {
+          const adverb = baseAdj.slice(0, -1) + 'ily';
+          variants.push({ bad: en.replace(new RegExp(`\\b${escapeRegExp(baseAdj)}\\b`, 'i'), adverb), wrongToken: adverb, correctToken: baseAdj });
+        } else if (!baseAdj.endsWith('ly')) {
+          const adverb = baseAdj + 'ly';
+          variants.push({ bad: en.replace(new RegExp(`\\b${escapeRegExp(baseAdj)}\\b`, 'i'), adverb), wrongToken: adverb, correctToken: baseAdj });
+        }
+        
+        // Error 2: Double comparative (e.g., "more bigger" or "more moderner")
+        if (baseAdj.length <= 6 && !baseAdj.endsWith('er')) {
+          const wrongComp = 'more ' + baseAdj + 'er';
+          variants.push({ bad: en.replace(new RegExp(`\\b${escapeRegExp(baseAdj)}\\b`, 'i'), wrongComp), wrongToken: wrongComp, correctToken: baseAdj });
+        }
+        
+        // Error 3: Wrong form - add -er to long adjective (e.g., "beautifuler")
+        if (baseAdj.length > 5 && !baseAdj.endsWith('er')) {
+          const wrongForm = baseAdj + 'er';
+          variants.push({ bad: en.replace(new RegExp(`\\b${escapeRegExp(baseAdj)}\\b`, 'i'), wrongForm), wrongToken: wrongForm, correctToken: baseAdj });
+        }
+        
+        // Error 4: Missing adjective entirely - use noun form if in detractors
+        const nounForm = item.detractors?.find(d => !d.includes(' ') && !d.endsWith('ly') && !d.endsWith('er') && !d.endsWith('est'));
+        if (nounForm) {
+          // Only use if it seems like a noun (not another adjective)
+          const hasNounEnding = /(?:ness|ity|ty|tion|ment)$/i.test(nounForm);
+          if (hasNounEnding || nounForm !== baseAdj) {
+            variants.push({ bad: en.replace(new RegExp(`\\b${escapeRegExp(baseAdj)}\\b`, 'i'), nounForm), wrongToken: nounForm, correctToken: baseAdj });
+          }
+        }
+        
+        if (variants.length) {
+          return variants[Math.floor(Math.random() * variants.length)];
+        }
+      }
+    }
+    
+    // For a_few_vs_a_little: swap countable/uncountable usage
+    if (grammarType === 'a_few_vs_a_little') {
+      const target = (item.target || '').trim();
+      if (target && new RegExp(`\\b${escapeRegExp(target)}\\b`, 'i').test(en)) {
+        // Find the appropriate wrong form
+        const swaps = {
+          'a few': 'a little',
+          'a little': 'a few',
+          'few': 'little',
+          'little': 'few'
+        };
+        const wrong = swaps[target.toLowerCase()];
+        if (wrong) {
+          const bad = en.replace(new RegExp(`\\b${escapeRegExp(target)}\\b`, 'i'), wrong);
+          return { bad, wrongToken: wrong, correctToken: target };
+        }
+      }
+    }
+    
+    // For modal_verbs: swap modals or add common errors
+    if (grammarType === 'modal_verbs') {
+      const modalMatch = en.match(/\b(can|could|should|must|may|might|would|will)\b/i);
+      if (modalMatch) {
+        const correct = modalMatch[1];
+        const variants = [];
+        // Add "to" after modal (common error: "must to go")
+        variants.push({ bad: en.replace(new RegExp(`\\b${correct}\\s+`, 'i'), `${correct} to `), wrongToken: `${correct} to`, correctToken: correct });
+        // Use base verb instead of modal (e.g., "I go" instead of "I can go")
+        variants.push({ bad: en.replace(new RegExp(`\\b${correct}\\s+`, 'i'), ''), wrongToken: '(missing modal)', correctToken: correct });
+        return variants[Math.floor(Math.random() * variants.length)];
+      }
+    }
+    
+    // For prepositions: swap with wrong preposition
+    if (grammarType === 'prepositions') {
+      // Use detractors if available (they are other prepositions)
+      if (item.detractors && item.detractors.length > 0) {
+        // Find the preposition in the sentence
+        const prepMatch = en.match(/\b(to|from|into|onto|toward|towards|through|across|along|over|under|up|down|in|out|at|on|by|back|past)\b/i);
+        if (prepMatch) {
+          const correct = prepMatch[1];
+          const wrong = item.detractors[Math.floor(Math.random() * item.detractors.length)];
+          const bad = en.replace(new RegExp(`\\b${escapeRegExp(correct)}\\b`, 'i'), wrong);
+          return { bad, wrongToken: wrong, correctToken: correct };
+        }
+      }
+      // Fallback: swap with generic wrong preposition list
+      const prepMatch = en.match(/\b(to|from|into|onto|toward|towards|through|across|along|over|under|up|down|in|out|at|on|by|back|past)\b/i);
+      if (prepMatch) {
+        const correct = prepMatch[1];
+        const wrongPreps = ['to', 'from', 'in', 'on', 'at', 'by', 'through', 'across', 'under', 'over', 'into', 'past'].filter(p => p !== correct.toLowerCase());
+        const wrong = wrongPreps[Math.floor(Math.random() * wrongPreps.length)];
+        const bad = en.replace(new RegExp(`\\b${escapeRegExp(correct)}\\b`, 'i'), wrong);
+        return { bad, wrongToken: wrong, correctToken: correct };
+      }
+    }
+    
+    // For mixed_tense_questions: use wrong auxiliary
+    if (grammarType === 'mixed_tense_questions') {
+      const auxMatch = en.match(/^(Did|Do|Does|Will)\s+/i);
+      if (auxMatch) {
+        const correct = auxMatch[1];
+        const wrongAux = { 'Did': 'Do', 'Do': 'Did', 'Does': 'Did', 'Will': 'Do' };
+        const wrong = wrongAux[correct] || 'Do';
+        const bad = en.replace(new RegExp(`^${correct}\\s+`, 'i'), `${wrong} `);
+        return { bad, wrongToken: wrong, correctToken: correct };
+      }
+    }
+    
+    // For like_to_vs_want_to_vs_have_to: swap the modal phrase
+    if (grammarType === 'like_to_vs_want_to_vs_have_to') {
+      const phraseMatch = en.match(/\b(like to|likes to|want to|wants to|have to|has to)\b/i);
+      if (phraseMatch) {
+        const correct = phraseMatch[1];
+        // Swap to a different phrase
+        const alternatives = ['like to', 'want to', 'have to'].filter(p => !correct.toLowerCase().includes(p.split(' ')[0]));
+        const wrong = alternatives[Math.floor(Math.random() * alternatives.length)] || 'must to';
+        const bad = en.replace(new RegExp(`\\b${escapeRegExp(correct)}\\b`, 'i'), wrong);
+        return { bad, wrongToken: wrong, correctToken: correct };
+      }
+    }
+    
+    // Default detractor-based corruption for other types with detractors
     if (hasDetractors) {
       const past = (item.past || item.word || '').trim();
       const base = (item.base || '').trim();
@@ -229,14 +376,205 @@ export async function runGrammarFindMistakeL3Mode({ grammarFile, grammarName, gr
       }
     }
 
-    // For tense_questions: corrupt question structure
+    // For tense_questions: corrupt question structure with multiple error types
     if (grammarType === 'tense_questions') {
-      // Try to corrupt question word order
-      const questionMatch = en.match(/^(Did|Does|Do|Will|Is|Are|Am|Was|Were)\s+/i);
+      // Try to corrupt question structure with various common errors
+      const questionMatch = en.match(/^(Did|Does|Do|Will|Is|Are|Am|Was|Were)\s+(.+?)\s+(\w+)(.*)$/i);
       if (questionMatch) {
-        // Remove the auxiliary to make it wrong
-        const bad = en.replace(questionMatch[0], '');
-        return { bad, wrongToken: '(missing auxiliary)', correctToken: questionMatch[1] };
+        const aux = questionMatch[1]; // e.g., "Did"
+        const subject = questionMatch[2]; // e.g., "you"
+        const verb = questionMatch[3]; // e.g., "play"
+        const rest = questionMatch[4]; // remaining part
+        
+        // Choose a random error type
+        const errorTypes = [];
+        
+        // Error 1: Remove auxiliary (original behavior)
+        errorTypes.push({
+          bad: en.replace(questionMatch[0], `${subject} ${verb}${rest}`),
+          wrongToken: '(missing auxiliary)',
+          correctToken: aux
+        });
+        
+        // Error 2: For "Did" questions, use past tense form of verb (double past marker)
+        if (aux.toLowerCase() === 'did') {
+          const irregulars = {
+            'go': 'went', 'eat': 'ate', 'see': 'saw', 'have': 'had',
+            'do': 'did', 'take': 'took', 'get': 'got', 'make': 'made',
+            'come': 'came', 'win': 'won', 'find': 'found', 'buy': 'bought'
+          };
+          let pastForm = verb + 'ed';
+          if (irregulars[verb.toLowerCase()]) {
+            pastForm = irregulars[verb.toLowerCase()];
+          }
+          if (pastForm !== verb) {
+            errorTypes.push({
+              bad: en.replace(new RegExp(`\\b${verb}\\b`, 'i'), pastForm),
+              wrongToken: pastForm,
+              correctToken: verb
+            });
+          }
+        }
+        
+        // Error 3: Wrong word order (move verb before subject)
+        errorTypes.push({
+          bad: `${aux} ${verb} ${subject}${rest}`,
+          wrongToken: `${verb} ${subject}`,
+          correctToken: `${subject} ${verb}`
+        });
+        
+        // Error 4: Wrong auxiliary (swap Did with Do/Does, etc.)
+        if (aux.toLowerCase() === 'did') {
+          const wrongAux = /\b(he|she|it)\b/i.test(subject) ? 'Does' : 'Do';
+          errorTypes.push({
+            bad: en.replace(/^Did\s+/i, `${wrongAux} `),
+            wrongToken: wrongAux,
+            correctToken: 'Did'
+          });
+        }
+        
+        // Return a random error type
+        return errorTypes[Math.floor(Math.random() * errorTypes.length)];
+      }
+      
+      // Fallback: just remove the auxiliary
+      const simpleMatch = en.match(/^(Did|Does|Do|Will|Is|Are|Am|Was|Were)\s+/i);
+      if (simpleMatch) {
+        const bad = en.replace(simpleMatch[0], '');
+        return { bad, wrongToken: '(missing auxiliary)', correctToken: simpleMatch[1] };
+      }
+    }
+
+    // Will Future: corrupt "will" sentences with actual grammar errors
+    // NEVER use "would" (technically valid), "going to" (synonymous)
+    if (grammarType === 'will_future') {
+      const willMatch = en.match(/\bwill\s+(\w+)/i);
+      if (willMatch) {
+        const verb = willMatch[1];
+        const irregularPasts = { 'go': 'went', 'eat': 'ate', 'come': 'came', 'see': 'saw', 'do': 'did', 'have': 'had', 'play': 'played', 'drive': 'drove', 'start': 'started' };
+        const pastForm = irregularPasts[verb.toLowerCase()] || verb + 'ed';
+        const variants = [
+          // "will drives" - wrong: conjugated verb after will
+          { bad: en.replace(/\bwill\s+(\w+)/i, `will ${verb}s`), wrongToken: `will ${verb}s`, correctToken: willMatch[0] },
+          // "wills play" - wrong: conjugated will
+          { bad: en.replace(/\bwill\s+/i, 'wills '), wrongToken: 'wills', correctToken: 'will' },
+          // "will ate" / "will went" - wrong: past tense after will
+          { bad: en.replace(/\bwill\s+(\w+)/i, `will ${pastForm}`), wrongToken: `will ${pastForm}`, correctToken: willMatch[0] },
+          // "I didnt will" - wrong: double auxiliary
+          { bad: en.replace(/\bwill\s+(\w+)/i, `didn't will ${verb}`), wrongToken: `didn't will`, correctToken: 'will' }
+        ];
+        // Add time conflict error if future time word exists
+        if (/\b(tomorrow|next|later|soon)\b/i.test(en)) {
+          variants.push({ 
+            bad: en.replace(/\b(tomorrow|next week|next month|later|soon)\b/i, 'yesterday'), 
+            wrongToken: 'yesterday', 
+            correctToken: en.match(/\b(tomorrow|next week|next month|later|soon)\b/i)?.[0] || 'tomorrow' 
+          });
+        }
+        return variants[Math.floor(Math.random() * variants.length)];
+      }
+    }
+
+    // Will Questions: corrupt with actual grammar errors (verb form, word order, time conflicts)
+    if (grammarType === 'will_questions') {
+      const willQMatch = en.match(/^(Will)\s+(\w+)\s+(\w+)(.*)$/i);
+      if (willQMatch) {
+        const aux = willQMatch[1];
+        const subject = willQMatch[2];
+        const verb = willQMatch[3];
+        const rest = willQMatch[4];
+        
+        const irregularPasts = { 'go': 'went', 'eat': 'ate', 'come': 'came', 'see': 'saw', 'play': 'played', 'be': 'was' };
+        const pastForm = irregularPasts[verb.toLowerCase()] || verb + 'ed';
+        
+        const variants = [
+          // Wrong verb form: "Will she goes?"
+          { bad: `Will ${subject} ${verb}s${rest}`, wrongToken: `${verb}s`, correctToken: verb },
+          // Wrong verb form: "Will she went?"
+          { bad: `Will ${subject} ${pastForm}${rest}`, wrongToken: pastForm, correctToken: verb },
+          // Wrong word order: "Will goes she?"
+          { bad: `Will ${verb} ${subject}${rest}`, wrongToken: `${verb} ${subject}`, correctToken: `${subject} ${verb}` },
+          // Double marking: "Will she will go?"
+          { bad: `Will ${subject} will ${verb}${rest}`, wrongToken: 'will will', correctToken: 'Will' }
+        ];
+        
+        // Add time conflict if future time word exists
+        if (/\b(tomorrow|next|later|soon)\b/i.test(rest)) {
+          variants.push({ 
+            bad: en.replace(/\b(tomorrow|next week|next month|later|soon)\b/i, 'yesterday'), 
+            wrongToken: 'yesterday', 
+            correctToken: rest.match(/\b(tomorrow|next week|next month|later|soon)\b/i)?.[0] || 'tomorrow' 
+          });
+        }
+        
+        return variants[Math.floor(Math.random() * variants.length)];
+      }
+      
+      // Fallback for simpler patterns
+      const simpleMatch = en.match(/^(Will)\s+/i);
+      if (simpleMatch) {
+        const variants = [
+          { bad: en.replace(/^Will\s+/i, 'Do '), wrongToken: 'Do', correctToken: 'Will' },
+          { bad: en.replace(/^Will\s+/i, 'Does '), wrongToken: 'Does', correctToken: 'Will' },
+          { bad: en.replace(/^Will\s+/i, ''), wrongToken: '(missing Will)', correctToken: 'Will' }
+        ];
+        return variants[Math.floor(Math.random() * variants.length)];
+      }
+    }
+
+    // Have To: corrupt "have to" / "has to"
+    if (grammarType === 'have_to') {
+      const haveToMatch = en.match(/\b(have to|has to)\b/i);
+      if (haveToMatch) {
+        const correct = haveToMatch[1];
+        const variants = [];
+        // Wrong agreement: swap have/has
+        if (correct.toLowerCase() === 'have to') {
+          variants.push({ bad: en.replace(/\bhave to\b/i, 'has to'), wrongToken: 'has to', correctToken: 'have to' });
+        } else {
+          variants.push({ bad: en.replace(/\bhas to\b/i, 'have to'), wrongToken: 'have to', correctToken: 'has to' });
+        }
+        // Common errors
+        variants.push({ bad: en.replace(/\b(have|has) to\b/i, 'must to'), wrongToken: 'must to', correctToken: correct });
+        variants.push({ bad: en.replace(/\b(have|has) to\b/i, 'need'), wrongToken: 'need', correctToken: correct });
+        return variants[Math.floor(Math.random() * variants.length)];
+      }
+    }
+
+    // Want To: corrupt "want to" / "wants to"
+    // NEVER use "wanna" as wrong (too common in colloquial speech)
+    if (grammarType === 'want_to') {
+      const wantToMatch = en.match(/\b(want to|wants to)\b/i);
+      if (wantToMatch) {
+        const correct = wantToMatch[1];
+        const variants = [];
+        // Wrong agreement: swap want/wants
+        if (correct.toLowerCase() === 'want to') {
+          variants.push({ bad: en.replace(/\bwant to\b/i, 'wants to'), wrongToken: 'wants to', correctToken: 'want to' });
+        } else {
+          variants.push({ bad: en.replace(/\bwants to\b/i, 'want to'), wrongToken: 'want to', correctToken: 'wants to' });
+        }
+        // Missing "to": "She want play" instead of "She wants to play"
+        variants.push({ bad: en.replace(/\b(want|wants) to (\w+)/i, '$1 $2'), wrongToken: '(missing "to")', correctToken: correct });
+        // Wrong structure: "want for" instead of "want to"
+        variants.push({ bad: en.replace(/\b(want|wants) to\b/i, '$1 for'), wrongToken: `${correct.split(' ')[0]} for`, correctToken: correct });
+        return variants[Math.floor(Math.random() * variants.length)];
+      }
+    }
+
+    // Like To: corrupt "like to" / "likes to"
+    if (grammarType === 'like_to') {
+      const likeToMatch = en.match(/\b(like to|likes to)\b/i);
+      if (likeToMatch) {
+        const correct = likeToMatch[1];
+        const variants = [];
+        if (correct.toLowerCase() === 'like to') {
+          variants.push({ bad: en.replace(/\blike to\b/i, 'likes to'), wrongToken: 'likes to', correctToken: 'like to' });
+        } else {
+          variants.push({ bad: en.replace(/\blikes to\b/i, 'like to'), wrongToken: 'like to', correctToken: 'likes to' });
+        }
+        variants.push({ bad: en.replace(/\b(like|likes) to (\w+)/i, '$1 $2ing'), wrongToken: 'like/likes + -ing', correctToken: correct });
+        return variants[Math.floor(Math.random() * variants.length)];
       }
     }
 
@@ -270,7 +608,18 @@ export async function runGrammarFindMistakeL3Mode({ grammarFile, grammarName, gr
         }
       }
     }
-    return { bad: en + '!', wrongToken: '!', correctToken: '' };
+    
+    // Final fallback: try to use detractors from the item
+    if (item.detractors && item.detractors.length > 0 && item.word) {
+      const detractor = item.detractors[Math.floor(Math.random() * item.detractors.length)];
+      if (detractor) {
+        const bad = en.replace(new RegExp(`\\b${escapeRegExp(item.word)}\\b`, 'i'), detractor);
+        return { bad, wrongToken: detractor, correctToken: item.word };
+      }
+    }
+    
+    // Ultimate fallback: subject-verb agreement issue
+    return { bad: en.replace(/\s+is\s+/, ' are ').replace(/\s+are\s+/, ' is '), wrongToken: 'wrong verb', correctToken: 'correct verb' };
   }
 
   const total = Math.min(14, base.length);
@@ -288,51 +637,24 @@ export async function runGrammarFindMistakeL3Mode({ grammarFile, grammarName, gr
   const sessionId = startSession({ mode: MODE, listName: grammarFile || grammarName, wordList: rounds.map((r, i) => r.src?.word || `s${i}`), meta: { grammarFile, grammarName, level: 3 } });
   let idx = 0, correct = 0, wrong = 0;
 
-  function addExitButton() {
-    if (document.getElementById('grammarQuitBtn')) return;
-    const quitBtn = document.createElement('button');
-    quitBtn.id = 'grammarQuitBtn';
-    quitBtn.className = 'wa-quit-btn';
-    quitBtn.type = 'button';
-    quitBtn.setAttribute('aria-label', 'Quit game');
-    quitBtn.innerHTML = `
-      <span class="wa-sr-only">Quit Game</span>
-      <img src="./assets/Images/icons/quit-game.svg" alt="" aria-hidden="true" class="wa-quit-icon" />
-    `;
-    quitBtn.onclick = () => {
-      // End partial session and navigate like Level 2
-      try {
-        // Use grammarFile path for session tracking to match homework assignment list_key
-        endSession(sessionId, {
-          mode: MODE,
-          summary: { score: correct, total: rounds.length, correct, wrong, points: correct, category: 'grammar', grammarFile, grammarName, level: 3 },
-          listName: grammarFile || grammarName,
-          wordList: rounds.map((r, i) => r.src?.word || `s${i}`),
-          meta: { grammarFile, grammarName, level: 3, quit: true }
-        });
-      } catch {}
-      try {
-        if (window.WordArcade?.startGrammarModeSelector) {
-          window.WordArcade.startGrammarModeSelector();
-        } else if (window.WordArcade?.showGrammarLevelsMenu) {
-          window.WordArcade.showGrammarLevelsMenu();
-        } else if (window.WordArcade?.quitToOpening) {
-          window.WordArcade.quitToOpening(true);
-        } else if (history.length > 1) {
-          history.back();
-        } else {
-          location.reload();
-        }
-      } catch { location.reload(); }
-    };
-    document.body.appendChild(quitBtn);
-  }
-
   function render() {
     if (idx >= rounds.length) return end();
     const r = rounds[idx];
     container.innerHTML = '';
     container.style.cssText = 'padding:20px;max-width:760px;margin:0 auto;font-family:Poppins,Arial,sans-serif;min-height:100dvh;display:flex;flex-direction:column;';
+    
+    // Add quit button (fixed position at bottom)
+    if (!document.getElementById('grammarQuitBtn')) {
+      const quitBtn = document.createElement('button');
+      quitBtn.id = 'grammarQuitBtn';
+      quitBtn.type = 'button';
+      quitBtn.className = 'wa-quit-btn';
+      quitBtn.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);border:none;background:transparent;cursor:pointer;z-index:9999;padding:8px;';
+      quitBtn.innerHTML = '<img src="./assets/Images/icons/quit-game.svg" alt="Quit" style="width:28px;height:28px;"/>';
+      quitBtn.onclick = () => { quitBtn.remove(); window.history.back(); };
+      document.body.appendChild(quitBtn);
+    }
+    
     const head = document.createElement('div');
     head.style.cssText = 'display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;color:#666';
     head.innerHTML = `<div><b>${grammarName || 'Grammar'}</b></div><div>Q ${idx + 1}/${rounds.length}</div>`;
@@ -412,7 +734,6 @@ export async function runGrammarFindMistakeL3Mode({ grammarFile, grammarName, gr
     const footer = container.querySelector('#gm-footer');
     if (footer) { footer.replaceChildren(); footer.appendChild(next); }
     else { container.appendChild(next); }
-    addExitButton();
   }
 
   function end() {

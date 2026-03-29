@@ -42,9 +42,15 @@ export async function showGrammarModeSelector({ grammarFile, grammarName, gramma
 
   // Remove any active game view clutter before rendering selector
   container.innerHTML = '';
+  // CRITICAL: Reset container styles that game modes may have set (e.g., min-height:100dvh)
+  container.style.cssText = '';
   try { document.getElementById('wa-quit-btn')?.remove(); } catch {}
   try { document.getElementById('grammarQuitBtn')?.remove(); } catch {}
   try { document.getElementById('smQuitBtn')?.remove(); } catch {}
+  try { document.getElementById('grammarL3QuitBtn')?.remove(); } catch {}
+  try { document.getElementById('gfg-quit')?.remove(); } catch {}
+  try { document.getElementById('gch-quit')?.remove(); } catch {}
+  try { document.querySelectorAll('.wa-quit-btn').forEach(el => el.remove()); } catch {}
 
   try { window.__WA_IS_GRAMMAR__ = true; window.__WA_LAST_GRAMMAR__ = { grammarFile: currentGrammarFile, grammarName: currentGrammarName, grammarConfig: currentGrammarConfig }; } catch {}
   try {
@@ -57,12 +63,18 @@ export async function showGrammarModeSelector({ grammarFile, grammarName, gramma
   const menuBar = document.getElementById('menuBar');
   if (menuBar) {
     menuBar.style.display = 'flex';
-    // Always show Back button
+    // Make in-app Back behave exactly like browser Back (HistoryManager handles restore)
     const backBtn = document.getElementById('backBtn');
     if (backBtn) {
       backBtn.style.display = '';
       backBtn.onclick = () => {
-        if (onClose) onClose();
+        try {
+          if (window.history && window.history.length > 1) {
+            window.history.back();
+            return;
+          }
+        } catch {}
+        try { if (typeof onClose === 'function') onClose(); } catch {}
       };
     }
 
@@ -357,7 +369,8 @@ export async function showGrammarModeSelector({ grammarFile, grammarName, gramma
   });
 
   // After rendering buttons, fetch session history to compute stars per mode
-  (async () => {
+  // Define as named function so we can re-run after session completes
+  const refreshStars = async () => {
     try {
       // Fetch sessions (try list-scoped first for speed)
       const makeUrl = (scoped) => {
@@ -387,8 +400,9 @@ export async function showGrammarModeSelector({ grammarFile, grammarName, gramma
       const canonKey = (s) => canon(s).replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
       const target = canon(currentGrammarName);
       const targetKey = canonKey(currentGrammarName);
-      // Also extract just the file basename if grammarFile is available
+      // Prefer exact file-based matching when grammarFile is known
       const fileBasename = currentGrammarFile ? canonKey(currentGrammarFile.split('/').pop().replace(/\.json$/i, '')) : '';
+      const filePathKey = currentGrammarFile ? canonKey(currentGrammarFile) : '';
       const bestByMode = {};
 
       // Debug: log target matching info for Level 3
@@ -424,20 +438,43 @@ export async function showGrammarModeSelector({ grammarFile, grammarName, gramma
           if (meta.grammarFile) listCandidates.push(meta.grammarFile);
         }
 
+        // CRITICAL FIX: If session has NO list tracking at all, skip it entirely
+        // This prevents old sessions from being counted for ALL lists
+        if (listCandidates.length === 0) {
+          if (isLevel3Grammar) {
+            console.debug('[GrammarModeSelector L3] Skipping session with no list tracking:', session.mode);
+          }
+          return;
+        }
+
         // Check if any candidate matches target (using both exact and canonical key matching)
+        let matchReason = null;
         const matchesTarget = listCandidates.some(candidate => {
           const c = canon(candidate);
           const ck = canonKey(candidate);
           // Also extract file basename from paths
           const cFile = candidate && candidate.includes('/') ? canonKey(candidate.split('/').pop().replace(/\.json$/i, '')) : '';
-          // Check for substring match as well (more lenient for grammar lists)
-          const substringMatch = fileBasename && (ck.includes(fileBasename) || fileBasename.includes(ck) || cFile.includes(fileBasename) || fileBasename.includes(cFile));
-          return c === target || ck === targetKey || (fileBasename && (ck === fileBasename || cFile === fileBasename)) || substringMatch;
+          const isFileMatch = (fileBasename && (ck === fileBasename || cFile === fileBasename)) || (filePathKey && ck === filePathKey);
+          const isNameMatch = !fileBasename && (c === target || ck === targetKey);
+          const matched = isFileMatch || isNameMatch;
+          if (matched && isLevel3Grammar) {
+            matchReason = { candidate, c, ck, cFile, isFileMatch, isNameMatch, target, targetKey, fileBasename, filePathKey };
+          }
+          return matched;
         });
 
-        // If we have a target and no match, skip this session
-        // Be more lenient: if no list candidates at all, include the session if it's grammar-related
-        if (target && !matchesTarget && listCandidates.length > 0) return;
+        // STRICT matching: Only include session if it matches the target list
+        // Skip sessions that don't match
+        if (!matchesTarget) {
+          if (isLevel3Grammar) {
+            console.debug('[GrammarModeSelector L3] Session does not match target:', { mode: session.mode, listCandidates, target, targetKey, fileBasename });
+          }
+          return;
+        }
+
+        if (isLevel3Grammar) {
+          console.warn('[GrammarModeSelector L3] Session MATCHED:', { mode: session.mode, sessionId: session.session_id, listCandidates, matchReason });
+        }
 
         const modeKey = canon(session.mode);
         const category = canon(summary?.category || session.category);
@@ -523,7 +560,31 @@ export async function showGrammarModeSelector({ grammarFile, grammarName, gramma
     } catch (e) {
       console.warn('[GrammarModeSelector] Error loading stars:', e);
     }
-  })();
+  };
+  
+  // Initial star load
+  refreshStars();
+  
+  // Listen for session completion and refresh stars after a short delay
+  // (allows backend to process the new session data)
+  const onSessionEnded = () => {
+    setTimeout(() => {
+      refreshStars();
+      console.debug('[GrammarModeSelector] Stars refreshed after session ended');
+    }, 800); // 800ms delay for backend processing
+  };
+  window.addEventListener('wa:session-ended', onSessionEnded);
+  
+  // Clean up event listener when mode selector is replaced
+  // Use MutationObserver to detect when modeSelectDiv is removed from DOM
+  const cleanupObserver = new MutationObserver((mutations) => {
+    if (!document.body.contains(modeSelectDiv)) {
+      window.removeEventListener('wa:session-ended', onSessionEnded);
+      cleanupObserver.disconnect();
+      console.debug('[GrammarModeSelector] Cleaned up session listener');
+    }
+  });
+  cleanupObserver.observe(document.body, { childList: true, subtree: true });
 
   // Add Change Level button (below modes)
   const changeLevelBtn = document.createElement('button');

@@ -100,6 +100,37 @@ function readAssignmentRunFromURL() {
   } catch (e) { return null; }
 }
 
+function readHomeworkAssignmentIdFromURL() {
+  try {
+    const p = typeof location !== 'undefined' ? new URLSearchParams(location.search) : null;
+    if (!p) return null;
+    return p.get('hw') || p.get('assignment_id') || p.get('assignmentId') || null;
+  } catch (e) { return null; }
+}
+
+function getStoredHomeworkAssignmentId() {
+  try {
+    if (typeof sessionStorage !== 'undefined') return sessionStorage.getItem('wa_homework_assignment_id');
+  } catch (e) {}
+  return null;
+}
+
+function persistHomeworkAssignmentId(assignmentId) {
+  try {
+    if (!assignmentId) return;
+    if (typeof sessionStorage !== 'undefined') sessionStorage.setItem('wa_homework_assignment_id', String(assignmentId));
+  } catch (e) {}
+}
+
+function getHomeworkAssignmentId() {
+  const fromURL = readHomeworkAssignmentIdFromURL();
+  if (fromURL) {
+    persistHomeworkAssignmentId(fromURL);
+    return fromURL;
+  }
+  return getStoredHomeworkAssignmentId() || null;
+}
+
 function getStoredAssignmentRun() {
   try {
     // prefer in-memory global if teacher UI set it
@@ -142,6 +173,15 @@ try {
   if (_ar) {
     persistAssignmentRun(_ar);
     try { console.debug('[records] assignment_run token captured:', _ar); } catch (e) {}
+  }
+} catch (e) {}
+
+// On module load, capture homework assignment id from URL so it survives history URL rewrites.
+try {
+  const _hw = readHomeworkAssignmentIdFromURL();
+  if (_hw) {
+    persistHomeworkAssignmentId(_hw);
+    try { console.debug('[records] homework assignment id captured:', _hw); } catch (e) {}
   }
 } catch (e) {}
 
@@ -227,8 +267,12 @@ export function startSession({ mode, wordList = [], listName = null, meta = {} }
   // one for this list from the homework API and re-upsert the session to attach it.
   (async () => {
     try {
-      if (!getAssignmentRun() && listName) {
-        const api = FN('homework_api') + `?action=get_run_token&list_key=${encodeURIComponent(listName)}`;
+      if (!getAssignmentRun()) {
+        const assignmentId = getHomeworkAssignmentId();
+        const api = assignmentId
+          ? FN('homework_api') + `?action=get_run_token&assignment_id=${encodeURIComponent(assignmentId)}`
+          : (listName ? FN('homework_api') + `?action=get_run_token&list_key=${encodeURIComponent(listName)}` : null);
+        if (!api) return;
         const res = await fetch(api, { credentials: 'include', cache: 'no-store' });
         if (res.ok) {
           const js = await res.json().catch(() => null);

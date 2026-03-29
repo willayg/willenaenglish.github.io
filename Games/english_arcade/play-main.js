@@ -96,6 +96,8 @@ function normalizeWords(list) {
 			// Preserve sentence example if provided (legacy display)
 			sentence: w.sentence || w.example_sentence || w.example || w.legacy_sentence || null,
 			legacy_sentence: w.legacy_sentence || null,
+			sentence_mp3: w.sentence_mp3 || null,
+			sentence_audio: w.sentence_audio || null,
 			// Preserve multiple image field aliases so picture modes can find one
 			img: w.img || w.image || w.picture || w.image_url || null,
 			image: w.image || null,
@@ -113,12 +115,13 @@ function normalizeWords(list) {
 		// --- Sentence ID Upgrade passthrough ---
 		// Preserve normalized sentence metadata so sentence_mode can resolve R2 audio.
 		if (Array.isArray(w.sentences)) obj.sentences = w.sentences.map(s => ({
-			id: s.id,
+			id: s.id || s.sentence_id,
 			text: s.text,
 			audio_key: s.audio_key || s.audioKey || null,
 			weight: s.weight || null
 		})).filter(s => s.id);
-		if (w.primary_sentence_id) obj.primary_sentence_id = w.primary_sentence_id;
+		if (w.primary_sentence_id || w.sentence_id) obj.primary_sentence_id = w.primary_sentence_id || w.sentence_id;
+		if (w.sentence_id) obj.sentence_id = w.sentence_id;
 		if (w.audio_key) obj.audio_key = w.audio_key; // direct audio key if already set
 		return obj;
 	}).filter(Boolean);

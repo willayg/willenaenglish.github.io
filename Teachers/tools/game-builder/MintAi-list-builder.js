@@ -1,7 +1,7 @@
 // Simplified Mint AI List Builder module
 // Encapsulates AI modal wiring, preview, generate, and insert behavior.
 
-import { escapeHtml, hasValidImageUrl, loadImageForRow } from './images.js';
+import { escapeHtml, hasValidImageUrl, loadImageForRow } from './images.js?v=20260322n';
 
 const AI_PREVIEW_PLACEHOLDER = 'Paste or edit here, one pair per line: English, Korean';
 
@@ -11,8 +11,10 @@ export function initMintAiListBuilder({
   render,
   enablePicturesEl,
   enableDefinitionsEl,
+  enableExamplesEl,
   loadingImages,
-  generateDefinitionForRow
+  generateDefinitionForRow,
+  generateExampleForRow
 }) {
   // Elements
   const aiLink = document.getElementById('aiListBuilderLink');
@@ -168,6 +170,12 @@ export function initMintAiListBuilder({
     if (enableDefinitionsEl.checked) {
       for (let i = range.from; i <= range.to; i++) {
         await generateDefinitionForRow(i);
+      }
+    }
+    // Auto-load examples for the newly inserted range
+    if (enableExamplesEl && enableExamplesEl.checked && typeof generateExampleForRow === 'function') {
+      for (let i = range.from; i <= range.to; i++) {
+        await generateExampleForRow(i);
       }
     }
   };

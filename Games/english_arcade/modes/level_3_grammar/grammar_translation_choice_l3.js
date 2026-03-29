@@ -18,6 +18,13 @@ function detectGrammarType(filePath) {
   if (path.includes('past_vs_future')) return 'past_vs_future';
   if (path.includes('past_vs_present_vs_future') || path.includes('all_tense')) return 'all_tenses';
   if (path.includes('tense_question')) return 'tense_questions';
+  // Will future/questions: sentence-based with "will" patterns
+  if (path.includes('will_future')) return 'will_future';
+  if (path.includes('will_questions')) return 'will_questions';
+  // Modal verbs: have to, want to, like to
+  if (path.includes('have_to')) return 'have_to';
+  if (path.includes('want_to')) return 'want_to';
+  if (path.includes('like_to')) return 'like_to';
   return 'past_irregular';
 }
 
@@ -148,7 +155,14 @@ export async function runGrammarTranslationChoiceL3Mode({ grammarFile, grammarNa
     const item = items[idx];
     const correctSentence = deriveCorrectSentence(item);
     const { wrongGrammar, wrongSubject } = buildWrongSentences(item, correctSentence, grammarType, validItems);
-    const options = shuffle([correctSentence, wrongGrammar, wrongSubject]);
+    
+    // Capitalize first letter of all options
+    const capitalizeFirst = (str) => {
+      if (!str || typeof str !== 'string') return str;
+      return str.charAt(0).toUpperCase() + str.slice(1);
+    };
+    
+    const options = shuffle([correctSentence, wrongGrammar, wrongSubject].map(capitalizeFirst));
 
     container.innerHTML = '';
     container.classList.add('translation-mode-root');
@@ -160,9 +174,7 @@ export async function runGrammarTranslationChoiceL3Mode({ grammarFile, grammarNa
       <button id="translationExitBtn" type="button" aria-label="Exit" title="Exit" style="margin-left:auto;margin-right:0;padding:8px 14px;border-radius:12px;border:2px solid #21b5c0;background:#fff;color:#21b5c0;font-weight:800;cursor:pointer;">Exit</button>`;
     container.appendChild(header);
     const exitBtn = header.querySelector('#translationExitBtn');
-    if (exitBtn) exitBtn.addEventListener('click', () => {
-      try { if (window.WordArcade?.startGrammarModeSelector) window.WordArcade.startGrammarModeSelector(); else if (window.WordArcade?.quitToOpening) window.WordArcade.quitToOpening(true); else history.back(); } catch { location.reload(); }
-    });
+    if (exitBtn) exitBtn.addEventListener('click', () => { window.history.back(); });
 
     // Korean sentence (cyan Poppins) shown above instructions
     const koSentence = item.exampleSentenceKo || item.ko || '';
@@ -370,17 +382,133 @@ function buildWrongSentences(item, correct, grammarType, allItems = []) {
       wrongSubject = 'They ' + correct.charAt(0).toLowerCase() + correct.slice(1);
     }
   } else if (grammarType === 'tense_questions') {
-    // For questions: common errors
-    // Remove auxiliary, wrong auxiliary, wrong word order
-    const auxMatch = correct.match(/^(Did|Does|Do|Will|Is|Are|Am|Was|Were)\s+/i);
-    if (auxMatch) {
-      const aux = auxMatch[1];
-      const wrongAux = { did: 'does', does: 'did', do: 'does', will: 'did', is: 'are', are: 'is', am: 'is', was: 'were', were: 'was' };
-      wrongGrammar = correct.replace(new RegExp(`^${aux}\\s+`, 'i'), `${wrongAux[aux.toLowerCase()] || 'Does'} `);
-      wrongSubject = correct.replace(new RegExp(`^${aux}\\s+`, 'i'), '');
+    // For questions: multiple error types for better practice
+    const questionMatch = correct.match(/^(Did|Does|Do|Will|Is|Are|Am|Was|Were)\s+(.+?)\s+(\w+)(.*)$/i);
+    if (questionMatch) {
+      const aux = questionMatch[1]; // e.g., "Did"
+      const subject = questionMatch[2]; // e.g., "you"
+      const verb = questionMatch[3]; // e.g., "play"
+      const rest = questionMatch[4]; // remaining part
+      
+      // For "Did" questions specifically:
+      if (aux.toLowerCase() === 'did') {
+        // Wrong grammar 1: Use past tense form of verb (double past marker)
+        // "Did you play" -> "Did you played"
+        const irregulars = {
+          'go': 'went', 'eat': 'ate', 'see': 'saw', 'have': 'had',
+          'do': 'did', 'take': 'took', 'get': 'got', 'make': 'made',
+          'come': 'came', 'win': 'won', 'find': 'found', 'buy': 'bought'
+        };
+        let pastForm = verb + 'ed';
+        if (irregulars[verb.toLowerCase()]) {
+          pastForm = irregulars[verb.toLowerCase()];
+        }
+        wrongGrammar = correct.replace(new RegExp(`\\b${verb}\\b`, 'i'), pastForm);
+        
+        // Wrong subject: Wrong word order
+        // "Did you play" -> "Did play you"
+        wrongSubject = `${aux} ${verb} ${subject}${rest}`;
+      } else {
+        // For other auxiliaries, use generic wrong auxiliary swap
+        const wrongAux = { does: 'do', do: 'does', will: 'did', is: 'are', are: 'is', am: 'is', was: 'were', were: 'was' };
+        wrongGrammar = correct.replace(new RegExp(`^${aux}\\s+`, 'i'), `${wrongAux[aux.toLowerCase()] || 'Does'} `);
+        wrongSubject = correct.replace(new RegExp(`^${aux}\\s+`, 'i'), ''); // Remove auxiliary
+      }
     } else {
-      wrongGrammar = 'Does ' + correct;
-      wrongSubject = 'Did ' + correct;
+      // Fallback for simpler patterns
+      const auxMatch = correct.match(/^(Did|Does|Do|Will|Is|Are|Am|Was|Were)\s+/i);
+      if (auxMatch) {
+        const aux = auxMatch[1];
+        const wrongAux = { did: 'do', does: 'did', do: 'does', will: 'did', is: 'are', are: 'is', am: 'is', was: 'were', were: 'was' };
+        wrongGrammar = correct.replace(new RegExp(`^${aux}\\s+`, 'i'), `${wrongAux[aux.toLowerCase()] || 'Does'} `);
+        wrongSubject = correct.replace(new RegExp(`^${aux}\\s+`, 'i'), ''); // Remove auxiliary
+      } else {
+        wrongGrammar = 'Does ' + correct;
+        wrongSubject = 'Did ' + correct;
+      }
+    }
+  } else if (grammarType === 'will_future') {
+    // Will Future: common mistakes - NO "going to" (synonymous/technically correct)
+    const willMatch = correct.match(/\bwill\s+(\w+)/i);
+    if (willMatch) {
+      const verb = willMatch[1];
+      const irregularPasts = { 'go': 'went', 'eat': 'ate', 'come': 'came', 'see': 'saw', 'do': 'did', 'play': 'played', 'start': 'started' };
+      const pastForm = irregularPasts[verb.toLowerCase()] || verb + 'ed';
+      // Wrong: "will goes" (conjugated after will)
+      wrongGrammar = correct.replace(/\bwill\s+(\w+)/i, `will ${verb}s`);
+      // Wrong: "will ate" / "will went" (past tense after will)
+      wrongSubject = correct.replace(/\bwill\s+(\w+)/i, `will ${pastForm}`);
+    } else {
+      wrongGrammar = correct.replace(/\bwill\b/i, 'wills');
+      wrongSubject = correct + ' yesterday';
+    }
+  } else if (grammarType === 'will_questions') {
+    // Will Questions: mix it up with verb form and word order mistakes
+    const willQMatch = correct.match(/^(Will)\s+(\w+)\s+(\w+)(.*)$/i);
+    if (willQMatch) {
+      const subject = willQMatch[2];
+      const verb = willQMatch[3];
+      const rest = willQMatch[4];
+      const irregularPasts = { 'go': 'went', 'eat': 'ate', 'come': 'came', 'see': 'saw', 'play': 'played', 'be': 'was' };
+      const pastForm = irregularPasts[verb.toLowerCase()] || verb + 'ed';
+      // Wrong verb form: "Will she goes?"
+      wrongGrammar = `Will ${subject} ${verb}s${rest}`;
+      // Wrong word order: "Will goes she?"
+      wrongSubject = `Will ${verb} ${subject}${rest}`;
+    } else {
+      wrongGrammar = correct.replace(/^Will\s+/i, 'Does '); // Wrong auxiliary
+      wrongSubject = correct.replace(/^Will\s+/i, 'Did '); // Wrong auxiliary
+    }
+  } else if (grammarType === 'have_to') {
+    // Have To: common mistakes
+    const haveToMatch = correct.match(/\b(have to|has to)\b/i);
+    if (haveToMatch) {
+      const original = haveToMatch[1];
+      // Wrong agreement
+      if (original.toLowerCase() === 'have to') {
+        wrongGrammar = correct.replace(/\bhave to\b/i, 'has to');
+      } else {
+        wrongGrammar = correct.replace(/\bhas to\b/i, 'have to');
+      }
+      // Common error: "must to" instead of "have to"
+      wrongSubject = correct.replace(/\b(have|has) to\b/i, 'must to');
+    } else {
+      wrongGrammar = correct.replace(/\b(have|has)\b/i, 'need');
+      wrongSubject = 'They ' + correct.charAt(0).toLowerCase() + correct.slice(1);
+    }
+  } else if (grammarType === 'want_to') {
+    // Want To: common mistakes
+    const wantToMatch = correct.match(/\b(want to|wants to)\b/i);
+    if (wantToMatch) {
+      const original = wantToMatch[1];
+      // Wrong agreement
+      if (original.toLowerCase() === 'want to') {
+        wrongGrammar = correct.replace(/\bwant to\b/i, 'wants to');
+      } else {
+        wrongGrammar = correct.replace(/\bwants to\b/i, 'want to');
+      }
+      // Common error: "wanna" or missing "to"
+      wrongSubject = correct.replace(/\b(want|wants) to (\w+)/i, '$1 $2');
+    } else {
+      wrongGrammar = 'She wants ' + correct.slice(correct.indexOf(' ') + 1);
+      wrongSubject = 'They ' + correct.charAt(0).toLowerCase() + correct.slice(1);
+    }
+  } else if (grammarType === 'like_to') {
+    // Like To: common mistakes
+    const likeToMatch = correct.match(/\b(like to|likes to)\b/i);
+    if (likeToMatch) {
+      const original = likeToMatch[1];
+      // Wrong agreement
+      if (original.toLowerCase() === 'like to') {
+        wrongGrammar = correct.replace(/\blike to\b/i, 'likes to');
+      } else {
+        wrongGrammar = correct.replace(/\blikes to\b/i, 'like to');
+      }
+      // Common error: gerund instead of infinitive
+      wrongSubject = correct.replace(/\b(like|likes) to (\w+)/i, '$1 $2ing');
+    } else {
+      wrongGrammar = 'She likes ' + correct.slice(correct.indexOf(' ') + 1);
+      wrongSubject = 'They ' + correct.charAt(0).toLowerCase() + correct.slice(1);
     }
   } else {
     // Original past_irregular logic

@@ -11,7 +11,32 @@ export function escapeHtml(s) {
 
 // Global state
 let loadingImages = new Set();
-let galleryState = { open:false, targetIndex:null, query:'', page:1, perPage:12, results:[], busy:false, lastFetchTs:0, filter:'all' };
+let galleryState = { open:false, targetIndex:null, query:'', page:1, perPage:12, results:[], busy:false, lastFetchTs:0, filter:'all', onSelect:null };
+
+function proxifyPixabayUrl(src) {
+  if (!src || typeof src !== 'string') return src;
+  const legacy = src.match(/\/\.netlify\/functions\/pixabay_image_proxy\?url=([^&]+)/i);
+  if (legacy && legacy[1]) {
+    try { return decodeURIComponent(legacy[1]); } catch { return src; }
+  }
+  if (!/^https?:\/\//i.test(src)) return src;
+  try {
+    const u = new URL(src);
+    const host = u.hostname.toLowerCase();
+    if (host === 'cdn.pixabay.com' || host.endsWith('.pixabay.com') || host === 'pixabay.com') {
+      return src;
+    }
+  } catch {}
+  return src;
+}
+
+function getApiPath(path) {
+  try {
+    return window.WillenaAPI?.getApiUrl ? window.WillenaAPI.getApiUrl(path) : path;
+  } catch {
+    return path;
+  }
+}
 
 function ensureGalleryElements(){
   if(document.getElementById('pixabayGalleryModal')) return;
@@ -64,7 +89,7 @@ function ensureGalleryElements(){
 
 function openGallery(index, defaultQuery){
   ensureGalleryElements();
-  galleryState.open=true; galleryState.targetIndex=index; galleryState.page=1; galleryState.results=[]; galleryState.query=defaultQuery||'';
+  galleryState.open=true; galleryState.targetIndex=index; galleryState.page=1; galleryState.results=[]; galleryState.query=defaultQuery||''; galleryState.onSelect=null;
   const modal = document.getElementById('pixabayGalleryModal');
   modal.style.display='flex';
   const input = modal.querySelector('#pgSearch'); if(input){ input.value=galleryState.query; setTimeout(()=> input.focus(),50); }
@@ -74,7 +99,30 @@ function openGallery(index, defaultQuery){
   }
 }
 function closeGallery(){
-  galleryState.open=false; galleryState.targetIndex=null; const modal=document.getElementById('pixabayGalleryModal'); if(modal) modal.style.display='none';
+  galleryState.open=false; galleryState.targetIndex=null; galleryState.onSelect=null; const modal=document.getElementById('pixabayGalleryModal'); if(modal) modal.style.display='none';
+}
+
+export function openPixabayImagePicker({ defaultQuery = '', onSelect } = {}) {
+  ensureGalleryElements();
+  galleryState.open = true;
+  galleryState.targetIndex = null;
+  galleryState.page = 1;
+  galleryState.results = [];
+  galleryState.query = defaultQuery || '';
+  galleryState.onSelect = (typeof onSelect === 'function') ? onSelect : null;
+  const modal = document.getElementById('pixabayGalleryModal');
+  modal.style.display = 'flex';
+  const input = modal.querySelector('#pgSearch');
+  if (input) {
+    input.value = galleryState.query;
+    setTimeout(() => input.focus(), 50);
+  }
+  if (galleryState.query) {
+    startGallerySearch();
+  } else {
+    const results = document.getElementById('pgResults');
+    if (results) results.innerHTML = '<div class="empty">Type a search term (English) and press Enter.</div>';
+  }
 }
 
 function startGallerySearch(){
@@ -94,40 +142,62 @@ async function loadGalleryPage(page, replace){
   const skCount = page===1 ? 12 : 6;
   for(let i=0;i<skCount;i++){ const ph=document.createElement('div'); ph.className='pg-item loading'; grid.appendChild(ph); }
   try {
-    const url = new URL('/.netlify/functions/pixabay', window.location.origin);
-    url.searchParams.set('q', galleryState.query);
-    url.searchParams.set('per_page', galleryState.perPage);
-    url.searchParams.set('page', page);
+    const query = new URLSearchParams();
+    query.set('q', galleryState.query);
+    query.set('per_page', galleryState.perPage);
+    query.set('page', page);
     // Apply filter mappings
     switch(galleryState.filter){
       case 'photo':
-        url.searchParams.set('image_type','photo');
+        query.set('image_type','photo');
         break;
       case 'illustration':
-        url.searchParams.set('image_type','illustration');
+        query.set('image_type','illustration');
         break;
       case 'clip': // vector graphics
-        url.searchParams.set('image_type','vector');
+        query.set('image_type','vector');
         break;
       case 'ai':
         // Force illustrations + AI content for better AI coverage (Pixabay surfaces AI mainly under illustrations)
-        url.searchParams.set('image_type','illustration');
-        url.searchParams.set('content_type','ai');
+        query.set('image_type','illustration');
+        query.set('content_type','ai');
         break;
       case 'all':
       default:
-        url.searchParams.set('image_type','all');
+        query.set('image_type','all');
     }
-    const res = await fetch(url.toString());
+
+    const apiEndpoint = '/.netlify/functions/pixabay?' + query.toString();
+    let res = null;
+    try {
+      if (window.WillenaAPI?.fetch) {
+        res = await window.WillenaAPI.fetch(apiEndpoint, { method: 'GET' });
+      }
+    } catch {}
+    if (!res) {
+      const directUrl = new URL(getApiPath('/.netlify/functions/pixabay'), window.location.origin);
+      query.forEach((v, k) => directUrl.searchParams.set(k, v));
+      res = await fetch(directUrl.toString(), { method: 'GET', credentials: 'include' });
+    }
+
     if(!res.ok){ throw new Error('HTTP '+res.status); }
-    const js = await res.json();
-    const imgs = Array.isArray(js.images) ? js.images : [];
+    const js = await res.json().catch(() => ({}));
+    const imgs = Array.from(new Set((
+      (Array.isArray(js.images) ? js.images : [])
+        .concat(Array.isArray(js.hits) ? js.hits.map(h => h?.webformatURL || h?.largeImageURL || h?.previewURL).filter(Boolean) : [])
+    ).filter(src => typeof src === 'string' && /^https?:\/\//i.test(src))));
     if(replace) grid.innerHTML=''; else grid.querySelectorAll('.pg-item.loading').forEach(n=> n.remove());
     if(!imgs.length && page===1){ grid.innerHTML='<div class="empty">No results.</div>'; moreBtn.style.display='none'; }
     else {
       imgs.forEach(src=> {
         const div=document.createElement('div'); div.className='pg-item';
-        const img=document.createElement('img'); img.alt=galleryState.query; img.decoding='async'; img.loading='lazy'; img.src=src; div.appendChild(img);
+        const img=document.createElement('img');
+        img.alt=galleryState.query;
+        img.decoding='async';
+        img.loading='lazy';
+        img.referrerPolicy='no-referrer';
+        img.src=proxifyPixabayUrl(src);
+        div.appendChild(img);
         img.onerror=()=> { div.classList.add('err'); };
         div.addEventListener('click', ()=> selectGalleryImage(src));
         grid.appendChild(div);
@@ -141,11 +211,18 @@ async function loadGalleryPage(page, replace){
 }
 
 function selectGalleryImage(src){
+  if (typeof galleryState.onSelect === 'function') {
+    try { galleryState.onSelect(src); } catch (e) { console.warn('pixabay picker callback failed', e); }
+    try { if (typeof window.__gameBuilderMarkDirty === 'function') window.__gameBuilderMarkDirty(); } catch {}
+    closeGallery();
+    return;
+  }
   if(galleryState.targetIndex==null) return; try {
     if(window.__gameBuilderList){
       const list = window.__gameBuilderList();
       if(Array.isArray(list) && list[galleryState.targetIndex]){
-        list[galleryState.targetIndex].image_url = src;
+        list[galleryState.targetIndex].image_url = proxifyPixabayUrl(src);
+        try { if (typeof window.__gameBuilderMarkDirty === 'function') window.__gameBuilderMarkDirty(); } catch {}
         if(typeof window.__gameBuilderRender==='function') window.__gameBuilderRender();
       }
     }
@@ -271,7 +348,7 @@ export async function loadImageForRow(list, idx, loadingImagesSet, renderCallbac
     const js = await res.json();
     const img = js?.images?.[0];
     if (img) {
-      list[idx].image_url = img;
+      list[idx].image_url = proxifyPixabayUrl(img);
       console.log(`Loaded new image for "${term}":`, img);
     }
   } catch (e) {
@@ -295,7 +372,7 @@ export async function loadImagesForMissingOnly(list, loadingImagesSet, renderCal
 }
 
 // Setup drag and drop for image zones
-export function setupImageDropZone(zone, idx, list, renderCallback, escapeHtml, saveStateCallback = null) {
+export function setupImageDropZone(zone, idx, list, renderCallback, escapeHtml, saveStateCallback = null, onChangeCallback = null) {
   // Expose accessors for gallery
   if(!window.__gameBuilderList) window.__gameBuilderList = () => list;
   if(!window.__gameBuilderRender) window.__gameBuilderRender = () => renderCallback();
@@ -333,6 +410,7 @@ export function setupImageDropZone(zone, idx, list, renderCallback, escapeHtml, 
         reader.onload = function(ev) {
           list[idx].image_url = ev.target.result;
           console.log(`Dropped file image for "${list[idx].eng}"`);
+          if (onChangeCallback) onChangeCallback();
           renderCallback();
         };
         reader.readAsDataURL(file);
@@ -345,6 +423,7 @@ export function setupImageDropZone(zone, idx, list, renderCallback, escapeHtml, 
     if (text && /^https?:\/\//i.test(text.trim())) {
       list[idx].image_url = text.trim();
       console.log(`Dropped URL image for "${list[idx].eng}":`, text.trim());
+      if (onChangeCallback) onChangeCallback();
       renderCallback();
     }
   });

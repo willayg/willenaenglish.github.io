@@ -46,8 +46,14 @@ export function initWordtest() {
             increaseFontSize,
             () => {/* highlight handled in renderer */},
             updatePreview,
-            () => {/* clearAllImages handled by images.js */},
-            () => {/* refreshImages handled by images.js */}
+            async (cb) => {
+                const mod = await import('./images.js');
+                return mod.clearAllImages(cb || updatePreview);
+            },
+            async (cb) => {
+                const mod = await import('./images.js');
+                return mod.refreshImages(cb || updatePreview);
+            }
         );
         setupAIEventListeners((...args) => extractWords(...args), updatePreview);
         // Expose updater globally for image error fallback
