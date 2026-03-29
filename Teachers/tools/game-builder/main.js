@@ -11,7 +11,7 @@ import {
   generateImageDropZoneHTML,
   escapeHtml
 } from './images.js?v=20260322u';
-import { initMintAiListBuilder } from './MintAi-list-builder.js?v=20260329a';
+import { initMintAiListBuilder } from './MintAi-list-builder.js?v=20260329b';
 import { initCreateGameModal, openCreateGameModal } from './create-game-modal.js?v=20260329a';
 import { showTinyToast, ensureLoadingOverlay, buildSkeletonHTML } from './utils/dom-helpers.js';
 import { fetchJSONSafe, timedJSONFetch, recordPerfSample, isLocalHost } from './utils/network.js';

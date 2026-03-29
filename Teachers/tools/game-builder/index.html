@@ -29,7 +29,7 @@
       } catch(e){ console.warn('[game-builder] auth guard error', e); }
     })();
   </script>
-  <script type="module" src="main.js?v=20260329c"></script>
+  <script type="module" src="main.js?v=20260329d"></script>
   <script>
     // Public base URL for R2-hosted images. IMPORTANT: For Cloudflare public buckets the domain already maps to the bucket.
     // Do NOT append the bucket name again. (Previously we had '/images' here which caused 404s like /images/words/...)
@@ -310,7 +310,7 @@
         <textarea id="mintAiWordlist" class="mint-ai-textarea" placeholder="Enter words here, one per line: English, Korean"></textarea>
 
         <!-- Sentence Generation Section -->
-        <div id="mintAiSentenceSection" class="mint-ai-sentence-section" style="display:none;">
+        <div id="mintAiSentenceSection" class="mint-ai-sentence-section">
           <div class="mint-ai-section-divider"></div>
           <h3 class="mint-ai-subtitle">Example Sentences</h3>
           <p class="mint-ai-hint">Add example sentences for each word above.</p>
