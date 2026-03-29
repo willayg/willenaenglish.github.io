@@ -28,12 +28,74 @@ function ensureLiveListenStyles() {
   document.head.appendChild(style);
 }
 
+function askPracticeWrongWordsModal(wrongCount) {
+  return new Promise((resolve) => {
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:10050;display:flex;align-items:center;justify-content:center;padding:16px;';
+    const modal = document.createElement('div');
+    modal.style.cssText = 'width:min(460px,calc(100vw - 32px));background:#fff;border-radius:18px;border:2px solid #21b3be;box-shadow:0 18px 46px rgba(0,0,0,.28);padding:18px 18px 16px;font-family:system-ui,-apple-system,Segoe UI,Arial,sans-serif;';
+    modal.innerHTML = `
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+        <h3 style="margin:0;font-size:1.08rem;color:#0f766e;font-weight:900;">Review Wrong Words?</h3>
+        <span style="font-size:1.35rem;line-height:1;">✨</span>
+      </div>
+      <div style="margin-top:10px;color:#334155;font-size:.95rem;line-height:1.5;">
+        You missed <strong>${wrongCount}</strong> word${wrongCount > 1 ? 's' : ''}.<br>
+        틀린 단어를 바로 복습할까요?
+      </div>
+      <div style="margin-top:10px;background:#ecfeff;border:1px solid #99f6e4;color:#0f766e;border-radius:12px;padding:10px 12px;font-size:.92rem;font-weight:700;line-height:1.4;">
+        Practice now for <strong>triple points</strong>.<br>
+        지금 복습하면 <strong>3배 포인트</strong>를 받을 수 있어요.
+      </div>
+      <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:14px;">
+        <button id="waPracticeLaterBtn" style="appearance:none;border:1px solid #cbd5e1;background:#fff;color:#475569;border-radius:10px;padding:9px 12px;font-weight:700;cursor:pointer;">Later / 나중에</button>
+        <button id="waPracticeNowBtn" style="appearance:none;border:none;background:#14b8a6;color:#fff;border-radius:10px;padding:9px 14px;font-weight:800;cursor:pointer;">Practice Now / 지금 복습</button>
+      </div>
+    `;
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+
+    const cleanup = (result) => {
+      try { overlay.remove(); } catch {}
+      resolve(result);
+    };
+
+    const nowBtn = modal.querySelector('#waPracticeNowBtn');
+    const laterBtn = modal.querySelector('#waPracticeLaterBtn');
+    if (nowBtn) nowBtn.addEventListener('click', () => cleanup(true));
+    if (laterBtn) laterBtn.addEventListener('click', () => cleanup(false));
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) cleanup(false); });
+  });
+}
+
+function getKoreanMeaning(entry) {
+  if (!entry || typeof entry !== 'object') return '한국어 뜻을 준비 중이에요';
+  const candidates = [
+    entry.kor,
+    entry.ko,
+    entry.korean,
+    entry.korean_meaning,
+    entry.koreanMeaning,
+    entry.meaning_ko,
+    entry.translation_ko,
+    entry.kr,
+    entry.def_ko,
+    entry.exampleSentenceKo,
+  ];
+  for (const value of candidates) {
+    const normalized = String(value || '').trim();
+    if (normalized) return normalized;
+  }
+  return '한국어 뜻을 준비 중이에요';
+}
+
 // Listen and Spell (Tap-to-Spell) mode
 export function runListenAndSpellMode({ wordList, gameArea, playTTS, playTTSVariant, preprocessTTS, startGame, listName = null }) {
   const isReview = (listName === 'Review List') || ((window.WordArcade?.getListName?.() || '') === 'Review List');
   ensureLiveListenStyles();
   let score = 0;
   let idx = 0;
+  const wrongWordMap = new Map();
   const ordered = [...wordList].sort(() => Math.random() - 0.5);
   const sessionId = startSession({ mode: 'listen_and_spell', wordList, listName });
 
@@ -55,19 +117,8 @@ export function runListenAndSpellMode({ wordList, gameArea, playTTS, playTTSVari
   function makeLetterTilesFor(word) {
     const clean = String(word || '').trim();
     const base = clean.split('');
-    // Build distractors: choose 2 letters not in the word (avoid duplicates)
-    const alphabet = 'abcdefghijklmnopqrstuvwxyz'.split('');
-    const inWordSet = new Set(base.map(c => c.toLowerCase()));
-    const pool = alphabet.filter(ch => !inWordSet.has(ch));
-    const distractorCount = 2;
-    const distractors = [];
-    while (distractors.length < distractorCount && pool.length) {
-      const pick = pool.splice(Math.floor(Math.random() * pool.length), 1)[0];
-      distractors.push(pick);
-    }
-    // Create tile objects with ids, including duplicates from base letters
+    // Create tile objects using only letters from the target word
     const tiles = base.map((ch, i) => ({ id: 'b' + i, ch }));
-    distractors.forEach((ch, i) => tiles.push({ id: 'd' + i, ch }));
     // Shuffle
     for (let i = tiles.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
@@ -79,7 +130,13 @@ export function runListenAndSpellMode({ wordList, gameArea, playTTS, playTTSVari
   function renderQuestion() {
     if (idx >= ordered.length) {
       playSFX('end');
-  endSession(sessionId, { mode: 'listen_and_spell', summary: { score, total: ordered.length * 2, completed: true }, listName, wordList: ordered });
+      const wrongWords = Array.from(wrongWordMap.values());
+      endSession(sessionId, {
+        mode: 'listen_and_spell',
+        summary: { score, total: ordered.length * 2, completed: true, wrong_words: wrongWords, wrong_count: wrongWords.length },
+        listName,
+        wordList: ordered
+      });
       hideGameProgress();
       gameArea.innerHTML = `<div class="ending-screen" style="padding:40px 18px;text-align:center;">
         <h2 style="color:#f59e0b;font-size:2em;margin-bottom:18px;">Listening Game Over!</h2>
@@ -100,11 +157,24 @@ export function runListenAndSpellMode({ wordList, gameArea, playTTS, playTTSVari
           }
         };
       }
+
+      // Prompt students to immediately practice wrong words using Review flow.
+        if (!isReview && wrongWords.length && window.WordArcade && typeof window.WordArcade.startReviewFromWords === 'function') {
+          setTimeout(async () => {
+            const shouldPractice = await askPracticeWrongWordsModal(wrongWords.length);
+            if (shouldPractice) {
+              try { window.WordArcade.startReviewFromWords(wrongWords, { skipSelection: true }); } catch (e) {
+                console.warn('Failed to start wrong-word review:', e);
+              }
+            }
+          }, 260);
+      }
       return;
     }
 
     const current = ordered[idx];
     const correct = String(current.eng || '').trim();
+    const koreanPrompt = getKoreanMeaning(current);
     const fromBuilder = !!window.__WA_FROM_BUILDER;
     const live = isLivePlayContext();
     // Multi-line slot rendering: split answer into words, skip spaces
@@ -138,20 +208,8 @@ export function runListenAndSpellMode({ wordList, gameArea, playTTS, playTTSVari
           return `<div class=\"slot-row\" data-row-len='${slotCount}' style=\"display:inline-flex;gap:${slotGap}px;margin-bottom:4px;\">${segment.split('').map(() => `<div class=\"slot\" style=\"width:${slotSize}px;height:${slotSize}px;border:2px solid #93cbcf;border-radius:10px;background:#f7fafc;display:flex;align-items:center;justify-content:center;font-size:${fontPx}px;font-weight:800;color:#0f172a;transition:width .2s;\"></div>`).join('')}</div>`;
         }).join('') + '</div>';
     }
-    // Only show tiles for non-space characters
-    const tileChars = correct.replace(/ /g, '').split('');
-    const tileObjs = tileChars.map((ch, i) => ({ id: 'b' + i, ch }));
-    // Add distractors as before
-    const alphabet = 'abcdefghijklmnopqrstuvwxyz'.split('');
-    const inWordSet = new Set(tileChars);
-    const pool = alphabet.filter(ch => !inWordSet.has(ch));
-    const distractorCount = 2;
-    const distractors = [];
-    while (distractors.length < distractorCount && pool.length) {
-      const pick = pool.splice(Math.floor(Math.random() * pool.length), 1)[0];
-      distractors.push(pick);
-    }
-    distractors.forEach((ch, i) => tileObjs.push({ id: 'd' + i, ch }));
+    // Only show tiles for letters in the target word (no distractors)
+    const tileObjs = makeLetterTilesFor(correct.replace(/ /g, ''));
     // Shuffle
     for (let i = tileObjs.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
@@ -162,6 +220,7 @@ export function runListenAndSpellMode({ wordList, gameArea, playTTS, playTTSVari
     const innerHTML = `
       <div class="tap-spell ${fromBuilder ? 'from-builder' : ''}" style="max-width:${fromBuilder ? '600px' : (live ? dynamicContainerWidth + 'px' : '520px')};margin:0 auto;">
         <div id="tap-instructions" style="margin-bottom:12px;text-align:center;font-size:1.06em;color:#19777e;">Listen and tap the letters to spell the word:</div>
+        <div id="korPrompt" style="margin-bottom:8px;text-align:center;font-size:${fromBuilder ? '1.1em' : '1.02em'};color:#19777e;font-weight:800;">${koreanPrompt}</div>
         <div style="display:flex;justify-content:center;align-items:center;margin:10px 0 58px 0;gap:10px;">
          <button id="playAudioBtn" title="Replay" style="border:none;background:#19777e;color:#fff;border-radius:999px;width:52px;height:52px;box-shadow:0 2px 8px rgba(60,60,80,0.12);cursor:pointer;font-size:1.5em;">▶</button>
         </div>
@@ -296,6 +355,14 @@ export function runListenAndSpellMode({ wordList, gameArea, playTTS, playTTSVari
         basePoints = 1; feedback.textContent = 'Close! +1'; feedback.style.color = '#f59e0b'; playSFX('kindaRight');
       } else {
         basePoints = 0; feedback.textContent = 'Oops!'; feedback.style.color = '#e53e3e'; playSFX('wrong');
+        const key = String(current.eng || '').trim().toLowerCase();
+        if (key && !wrongWordMap.has(key)) {
+          wrongWordMap.set(key, {
+            eng: String(current.eng || '').trim(),
+            kor: String(koreanPrompt || '').trim(),
+            def: String(current.def || current.definition || '').trim()
+          });
+        }
       }
       const points = basePoints > 0 ? (isReview ? 3 : basePoints) : 0;
       // Log attempt

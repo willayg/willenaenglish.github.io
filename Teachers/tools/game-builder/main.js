@@ -10,13 +10,13 @@ import {
   setupImageDropZone, 
   generateImageDropZoneHTML,
   escapeHtml
-} from './images.js';
-import { initMintAiListBuilder } from './MintAi-list-builder.js';
-import { initCreateGameModal, openCreateGameModal } from './create-game-modal.js';
+} from './images.js?v=20260322u';
+import { initMintAiListBuilder } from './MintAi-list-builder.js?v=20260322n';
+import { initCreateGameModal, openCreateGameModal } from './create-game-modal.js?v=20260322u';
 import { showTinyToast, ensureLoadingOverlay, buildSkeletonHTML } from './utils/dom-helpers.js';
 import { fetchJSONSafe, timedJSONFetch, recordPerfSample, isLocalHost } from './utils/network.js';
 import { escapeRegExp, cleanDefinitionResponse, normalizeForKey, capitalize, ensurePunctuation } from './utils/validation.js';
-import { generateExample, generateDefinition } from './services/ai-service.js';
+import { generateExample, generateDefinition } from './services/ai-service.js?v=20260322p';
 import { 
   preferredVoice, 
   checkExistingAudioKeys, 
@@ -28,6 +28,7 @@ import {
 import { 
   getCurrentUserId,
   ensureSentenceIdsBuilder,
+  ensureSentenceAudioBuilder,
   prepareAndUploadImagesIfNeeded,
   saveGameData,
   loadGameData,
@@ -36,7 +37,7 @@ import {
   findGameByTitle,
   generateIncrementedTitle,
   showTitleConflictModal
-} from './services/file-service.js';
+} from './services/file-service.js?v=20260328e';
 import {
   getList,
   setList,
@@ -50,7 +51,7 @@ import {
   buildPayload,
   cacheCurrentGame,
   parseWords
-} from './state/game-state.js';
+} from './state/game-state.js?v=20260328e';
 // Legacy global bridge: some pre-refactor modules and inline code still expect
 // window.list / window.currentGameId to exist. Keep them synchronized with the
 // state module without changing existing references.
@@ -63,8 +64,8 @@ if (!('currentGameId' in window)) Object.defineProperty(window, 'currentGameId',
   set(v) { setCurrentGameId(v); }
 });
 // Phase 3: Render & UI extraction
-import { buildRowHTML, applyTableToggles } from './render/row-html.js';
-import { ensureMaterialIcons, buildGameCardHTML, buildFileListHTML } from './render/file-grid.js';
+import { buildRowHTML, applyTableToggles } from './render/row-html.js?v=20260328e';
+import { ensureMaterialIcons, buildGameCardHTML, buildFileListHTML } from './render/file-grid.js?v=20260328m';
 import { 
   showEditListModal as showEditListModalUI, 
   hideEditListModal as hideEditListModalUI,
@@ -73,9 +74,10 @@ import {
   handleSaveAsConfirm,
   showFileModal as showFileModalUI,
   hideFileModal as hideFileModalUI
-} from './ui/modals.js';
+} from './ui/modals.js?v=20260328e';
 import {
   handleQuickSave,
+  isQuickSaveInFlight,
   handlePreview,
   handleAddWord,
   handleUndo,
@@ -83,10 +85,123 @@ import {
   handleGetTranslations,
   handleGenerateDefinitions,
   handleGenerateExamples
-} from './ui/event-handlers.js';
+} from './ui/event-handlers.js?v=20260328e';
 import { ENDPOINTS, STORAGE_KEYS, ACTIONS, DEFAULTS, TOAST_DURATION } from './constants.js';
-import { initFileListModal } from './ui/file-list.js';
-import { loadWorksheetIntoBuilder } from './services/worksheet-service.js';
+import { initFileListModal } from './ui/file-list.js?v=20260328m';
+import { loadWorksheetIntoBuilder } from './services/worksheet-service.js?v=20260328e';
+
+const GB_BUILD_STAMP = 'GB_BUILD 20260328m · force-checkbox-no-trash';
+
+function injectBuilderBuildStamp() {
+  try {
+    if (typeof window !== 'undefined') {
+      window.__GB_BUILD_STAMP = GB_BUILD_STAMP;
+      console.log('[GameBuilder][BuildStamp]', GB_BUILD_STAMP, location.hostname);
+    }
+    if (typeof document === 'undefined') return;
+    if (document.getElementById('gbBuildStamp')) return;
+    const badge = document.createElement('div');
+    badge.id = 'gbBuildStamp';
+    badge.textContent = GB_BUILD_STAMP;
+    badge.style.cssText = [
+      'position:fixed',
+      'right:8px',
+      'bottom:8px',
+      'z-index:99999',
+      'font:600 10px/1.2 system-ui,-apple-system,Segoe UI,Arial,sans-serif',
+      'letter-spacing:.2px',
+      'color:#0f172a',
+      'background:rgba(255,255,255,.92)',
+      'border:1px solid rgba(148,163,184,.9)',
+      'border-radius:8px',
+      'padding:4px 6px',
+      'pointer-events:none',
+      'box-shadow:0 1px 4px rgba(2,6,23,.15)'
+    ].join(';');
+    document.body.appendChild(badge);
+  } catch {}
+}
+
+if (typeof document !== 'undefined') {
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', injectBuilderBuildStamp, { once: true });
+  } else {
+    injectBuilderBuildStamp();
+  }
+}
+
+function applyBuilderRoutingHotfix() {
+  try {
+    if (window.__GB_ROUTING_HOTFIX_APPLIED) return true;
+    const host = window.location.hostname || '';
+    const isCFPages = host === 'staging.willenaenglish.com'
+      || host === 'teachers.willenaenglish.com'
+      || host === 'students.willenaenglish.com'
+      || host === 'cf.willenaenglish.com'
+      || host.endsWith('.pages.dev');
+    if (!isCFPages) return true;
+    if (!window.WillenaAPI || typeof window.WillenaAPI.fetch !== 'function') return false;
+
+    const CF_GATEWAY = 'https://willena-proxy.willena.workers.dev';
+    const FORCE_GATEWAY_FUNCTIONS = new Set([
+      'openai_proxy',
+      'eleven_labs_proxy',
+      'upsert_sentences_batch',
+      'get_sentence_audio_urls'
+    ]);
+
+    const extractFn = (value) => {
+      const s = String(value || '');
+      const m = s.match(/\/\.netlify\/functions\/([^\/?#]+)/);
+      return m ? m[1] : '';
+    };
+
+    const toGatewayUrl = (value) => {
+      const s = String(value || '');
+      const fn = extractFn(s);
+      if (!fn) return s;
+      const qIndex = s.indexOf('?');
+      const search = qIndex >= 0 ? s.slice(qIndex) : '';
+      return `${CF_GATEWAY}/.netlify/functions/${fn}${search}`;
+    };
+
+    const origFetch = window.WillenaAPI.fetch.bind(window.WillenaAPI);
+    window.WillenaAPI.fetch = function(functionPath, options = {}) {
+      const fn = extractFn(functionPath);
+      if (fn && FORCE_GATEWAY_FUNCTIONS.has(fn)) {
+        const routed = toGatewayUrl(functionPath);
+        console.warn('[GameBuilder][RoutingHotfix] forcing gateway for', fn, '->', routed);
+        return origFetch(routed, options);
+      }
+      return origFetch(functionPath, options);
+    };
+
+    window.__GB_ROUTING_HOTFIX_APPLIED = true;
+    console.log('[GameBuilder][RoutingHotfix] Applied for CF Pages host:', host);
+    return true;
+  } catch (e) {
+    console.warn('[GameBuilder][RoutingHotfix] Failed:', e?.message);
+    return false;
+  }
+}
+
+if (!applyBuilderRoutingHotfix()) {
+  let retries = 0;
+  const timer = setInterval(() => {
+    retries++;
+    if (applyBuilderRoutingHotfix() || retries >= 40) clearInterval(timer);
+  }, 50);
+}
+
+function getExampleText(word) {
+  if (!word || typeof word !== 'object') return '';
+  return word.example
+    || word.example_sentence
+    || word.exampleSentence
+    || word.sentence
+    || word.legacy_sentence
+    || '';
+}
 
 // Early toast shim: ensures calls before actual toast util wiring don't throw
 const toast = (function(){
@@ -127,6 +242,36 @@ if (editListSave) editListSave.onclick = () => {
   handleEditListSave(editListRaw, newRow, saveState, setList, render, toast, () => hideEditListModalUI(editListModal));
 };
 
+let __saveToastTimer = null;
+window.showSaveCenterMessage = function(message = '', opts = {}) {
+  const toastEl = document.getElementById('saveCenterToast');
+  if (!toastEl) return;
+  const { variant = 'info', ms = 0 } = opts || {};
+  if (__saveToastTimer) {
+    clearTimeout(__saveToastTimer);
+    __saveToastTimer = null;
+  }
+  toastEl.textContent = String(message || '');
+  toastEl.classList.remove('info', 'success', 'error');
+  toastEl.classList.add(variant === 'error' ? 'error' : (variant === 'success' ? 'success' : 'info'));
+  toastEl.classList.add('show');
+  if (ms > 0) {
+    __saveToastTimer = setTimeout(() => {
+      toastEl.classList.remove('show');
+      __saveToastTimer = null;
+    }, ms);
+  }
+};
+window.hideSaveCenterMessage = function() {
+  const toastEl = document.getElementById('saveCenterToast');
+  if (!toastEl) return;
+  if (__saveToastTimer) {
+    clearTimeout(__saveToastTimer);
+    __saveToastTimer = null;
+  }
+  toastEl.classList.remove('show');
+};
+
 const getTranslationsLink = document.getElementById('getTranslationsLink');
 const enablePicturesEl = document.getElementById('enablePictures');
 const enableDefinitionsEl = document.getElementById('enableDefinitions');
@@ -136,6 +281,80 @@ const fileModal = document.getElementById('fileModal');
 const fileList = document.getElementById('fileList');
 const fileModalClose = document.getElementById('fileModalClose');
 
+let hasUnsavedChanges = false;
+let autosaveInFlight = false;
+let lastAutosaveTs = 0;
+const AUTOSAVE_INTERVAL_MS = 12000;
+
+let __gbWhoAmIInFlight = null;
+function invalidateSavedGamesCache() {
+  try { sessionStorage.removeItem('gb_file_list_cache_v1'); } catch {}
+  try { localStorage.removeItem('gb_file_list_cache_v2'); } catch {}
+}
+if (typeof window !== 'undefined') {
+  window.__gbInvalidateFileListCache = invalidateSavedGamesCache;
+}
+
+function collectOwnerIdCandidates(primary = '') {
+  const out = new Set();
+  const add = (v) => {
+    const s = String(v || '').trim();
+    if (s) out.add(s);
+  };
+  add(primary);
+  try {
+    add(localStorage.getItem('user_id'));
+    add(localStorage.getItem('userId'));
+    add(localStorage.getItem('id'));
+    add(localStorage.getItem('profile_id'));
+    add(sessionStorage.getItem('user_id'));
+    add(sessionStorage.getItem('userId'));
+    add(sessionStorage.getItem('id'));
+    add(sessionStorage.getItem('profile_id'));
+  } catch {}
+  return Array.from(out);
+}
+
+async function resolveCurrentUserIdFresh() {
+  const cached = getCurrentUserId();
+  if (cached) return cached;
+  if (__gbWhoAmIInFlight) return __gbWhoAmIInFlight;
+
+  __gbWhoAmIInFlight = (async () => {
+    try {
+      const res = await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=whoami&_=' + Date.now(), { cache: 'no-store' });
+      if (!res || !res.ok) return '';
+      const js = await res.json().catch(() => null);
+      const uid = String(js?.user_id || '').trim();
+      if (!uid) return '';
+      try { localStorage.setItem('user_id', uid); } catch {}
+      try { localStorage.setItem('userId', uid); } catch {}
+      try { sessionStorage.setItem('user_id', uid); } catch {}
+      try { sessionStorage.setItem('userId', uid); } catch {}
+      return uid;
+    } catch {
+      return '';
+    } finally {
+      __gbWhoAmIInFlight = null;
+    }
+  })();
+
+  return __gbWhoAmIInFlight;
+}
+
+function markDirty() {
+  hasUnsavedChanges = true;
+  if (!autosaveInFlight && statusEl) statusEl.textContent = 'Unsaved changes';
+}
+
+try { window.__gameBuilderMarkDirty = markDirty; } catch {}
+
+function markSaved(message = 'All changes saved') {
+  hasUnsavedChanges = false;
+  lastAutosaveTs = Date.now();
+  if (statusEl) statusEl.textContent = message;
+}
+
 // State now managed by state/game-state.js module
 // Access via getList(), setList(), getCurrentGameId(), setCurrentGameId()
 let loadingImages; // from image system
@@ -143,15 +362,10 @@ let loadingImages; // from image system
 (async function bootstrapUserId(){
   try {
     // Skip if already present
-    const existing = localStorage.getItem('user_id') || localStorage.getItem('id') || sessionStorage.getItem('user_id');
+    const existing = localStorage.getItem('user_id') || localStorage.getItem('userId') || localStorage.getItem('id') || sessionStorage.getItem('user_id') || sessionStorage.getItem('userId');
     if(existing && existing.trim()) return;
-    const res = await WillenaAPI.fetch('/.netlify/functions/supabase_proxy_fixed?action=whoami');
-    if(!res.ok) return; // silent fail
-    const js = await res.json().catch(()=>null);
-    if(js && js.success && js.user_id){
-      try { localStorage.setItem('user_id', js.user_id); } catch {}
-      console.debug('[whoami/bootstrap] stored user_id', js.user_id);
-    }
+    const uid = await resolveCurrentUserIdFresh();
+    if(uid) console.debug('[whoami/bootstrap] stored user id', uid);
   } catch(e){ console.debug('[whoami/bootstrap] failed', e?.message); }
 })();
 // Disabled: prior auto session restore removed intentionally (user wants clean slate on refresh)
@@ -189,6 +403,7 @@ clearAllBtn.addEventListener('click', () => {
   try { sessionStorage.removeItem('gb_image_folder_v1'); } catch {}
   // Clear any image placeholders referencing past session (basic rerender)
   render();
+  markSaved('Cleared');
   toast('All game builder data cleared');
 });
 
@@ -215,19 +430,33 @@ if (addWordLink) {
   addWordLink.onclick = (e) => {
     e.preventDefault();
     handleAddWord(saveState, getList, setList, newRow, render);
+    markDirty();
+  };
+}
+if (loadWorksheetsLink) {
+  loadWorksheetsLink.onclick = (e) => {
+    e.preventDefault();
+    const url = '/Teachers/worksheet_manager.html?mode=load&type=wordtest&vocab_only=1&require_words=1';
+    window.open(url, 'worksheetManagerWordtest', 'width=1280,height=860,resizable=yes,scrollbars=yes');
   };
 }
 // Get Translations button wiring
 if (getTranslationsLink) {
   getTranslationsLink.onclick = (e) => {
     e.preventDefault();
-    handleGetTranslations(getList, setList, render, toast);
+    handleGetTranslations(getList, setList, render, toast).then(() => markDirty());
   };
 }
 // NOTE: Re-upload button removed; images now auto-processed during every Save / Save As.
 
 // Undo/Redo keyboard shortcuts
 document.addEventListener('keydown', (e) => {
+  if ((e.ctrlKey || e.metaKey) && String(e.key || '').toLowerCase() === 's') {
+    e.preventDefault();
+    if (isQuickSaveInFlight()) return;
+    saveLink?.click();
+    return;
+  }
   if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) { 
     e.preventDefault(); 
     if (undoState()) {
@@ -260,6 +489,7 @@ initFileListModal({
 function render() {
   const list = getList();
   rowsEl.innerHTML = '';
+  let gameImage = document.getElementById('gameImageZone')?.querySelector('img')?.src || '';
   // If we don't have a real public base (placeholder) rewrite any direct R2 API endpoints to proxy form for visibility
   try {
     const placeholder = !window.R2_PUBLIC_BASE || /your-r2-public-domain/i.test(window.R2_PUBLIC_BASE);
@@ -286,6 +516,16 @@ function render() {
       const base = window.R2_PUBLIC_BASE.replace(/\/$/, '');
       for (const w of list) {
         if (!w || !w.image_url) continue;
+        // Convert relative image_proxy URLs to absolute R2 public URLs
+        const proxyMatch = String(w.image_url).match(/^\/?\.netlify\/functions\/image_proxy\?key=(.+)/);
+        if (proxyMatch && proxyMatch[1]) {
+          const key = decodeURIComponent(proxyMatch[1]);
+          w.image_url = `${base}/${key}`;
+        }
+        const pixProxy = String(w.image_url).match(/\/\.netlify\/functions\/pixabay_image_proxy\?url=([^&]+)/i);
+        if (pixProxy && pixProxy[1]) {
+          try { w.image_url = decodeURIComponent(pixProxy[1]); } catch {}
+        }
         // Strip /images/ from absolute R2 URLs (bucket name shouldn't be in public URL path)
         if (w.image_url.startsWith(base + '/images/words/')) {
           w.image_url = base + '/' + w.image_url.substring((base + '/images/').length);
@@ -297,6 +537,15 @@ function render() {
         }
       }
       // Also check game cover image
+      // Convert relative image_proxy cover URL to absolute R2 public URL
+      const coverProxyMatch = String(gameImage || '').match(/^\/?\.netlify\/functions\/image_proxy\?key=(.+)/);
+      if (coverProxyMatch && coverProxyMatch[1]) {
+        gameImage = `${base}/${decodeURIComponent(coverProxyMatch[1])}`;
+      }
+      const gamePixProxy = String(gameImage || '').match(/\/\.netlify\/functions\/pixabay_image_proxy\?url=([^&]+)/i);
+      if (gamePixProxy && gamePixProxy[1]) {
+        try { gameImage = decodeURIComponent(gamePixProxy[1]); } catch {}
+      }
       if (gameImage && typeof gameImage === 'string' && gameImage.startsWith(base + '/images/cover/')) {
         gameImage = base + '/' + gameImage.substring((base + '/images/').length);
         console.log('[builder] Stripped /images/ from gameImage:', gameImage.substring(0, 80));
@@ -345,7 +594,10 @@ function bindRowEvents(){
     el.addEventListener('input', () => {
       const idx = parseInt(el.dataset.idx,10);
       const field = el.dataset.field;
-      if(list[idx]) list[idx][field] = el.value;
+      if(list[idx]) {
+        list[idx][field] = el.value;
+        markDirty();
+      }
     });
     el.addEventListener('focus', () => { originalValue = el.value; });
     el.addEventListener('blur', () => {
@@ -358,13 +610,14 @@ function bindRowEvents(){
       const idx = parseInt(btn.dataset.idx,10);
       saveState();
       list.splice(idx,1);
+      markDirty();
       render();
     };
   });
   // Drop zones
   rowsEl.querySelectorAll('.drop-zone').forEach(zone => {
     const idx = parseInt(zone.dataset.idx,10);
-    setupImageDropZone(zone, idx, list, render, escapeHtml, saveState);
+    setupImageDropZone(zone, idx, list, render, escapeHtml, saveState, markDirty);
   });
   // Refresh definition/example buttons
   rowsEl.querySelectorAll('[data-action="refresh-def"]').forEach(btn => {
@@ -372,6 +625,10 @@ function bindRowEvents(){
   });
   rowsEl.querySelectorAll('[data-action="refresh-example"]').forEach(btn => {
     btn.onclick = async () => { const idx = parseInt(btn.dataset.idx,10); await generateExampleForRow(idx, true); };
+  });
+  // Play sentence audio preview buttons
+  rowsEl.querySelectorAll('[data-action="play-sentence"]').forEach(btn => {
+    btn.onclick = () => playSentencePreview(btn, parseInt(btn.dataset.idx, 10));
   });
 }
 
@@ -402,7 +659,7 @@ function bindRowEvents(){
           kor: (w && (w.kor || w.kr || w.translation)) || (typeof w === 'string' ? String(w).split(/[,|]/)[1]?.trim() : ''),
           image_url: (w && (w.image_url || w.image)) || '',
           definition: (w && w.definition) || '',
-          example: (w && (w.example || w.example_sentence)) || ''
+          example: getExampleText(w)
         })).filter(r => r.eng);
       }
       // If not, try to parse wordList
@@ -421,7 +678,7 @@ function bindRowEvents(){
                 kor: w.kor || w.kr || w.translation || '',
                 image_url: w.image_url || w.image || '',
                 definition: w.definition || '',
-                example: w.example || w.example_sentence || ''
+                example: getExampleText(w)
               });
             }).filter(r => r.eng);
           }
@@ -454,7 +711,7 @@ function bindRowEvents(){
           kor: w.kor || w.kr || w.translation || '',
           image_url: w.image_url || w.image || '',
           definition: w.definition || '',
-          example: w.example || w.example_sentence || ''
+          example: getExampleText(w)
         });
       }).filter(r => r.eng);
     } else if (typeof raw === 'string') {
@@ -511,8 +768,252 @@ function applyWorksheetImages(rows, imagesField, originalWords) {
   applyWorksheetImagesFromModule(rows, imagesField, originalWords);
 }
 
+// ── Play Sentence Preview ─────────────────────────────────────────────
+// Plays the sentence audio for a word row: tries sent_<id>.mp3 first,
+// then generates on-the-fly via ElevenLabs TTS, falling back to browser TTS.
+let _previewAudio = null;
+async function playSentencePreview(btn, idx) {
+  const list = getList();
+  const word = list[idx];
+  if (!word) return;
+  const sentence = (word.example || word.legacy_sentence || '').trim();
+  if (!sentence) { toast('No sentence to play'); return; }
+
+  // Stop any currently playing preview
+  if (_previewAudio) { try { _previewAudio.pause(); _previewAudio = null; } catch {} }
+  // Reset all play buttons
+  document.querySelectorAll('.play-sentence-btn').forEach(b => {
+    b.classList.remove('playing', 'error');
+    b.querySelector('.play-icon').textContent = '▶';
+  });
+
+  btn.classList.add('playing');
+  btn.querySelector('.play-icon').textContent = '⏳';
+
+  try {
+    // 0) If we already resolved a URL for this word, reuse it instantly
+    if (word.__sentencePreviewUrl) {
+      await playAudioUrl(word.__sentencePreviewUrl, btn);
+      return;
+    }
+
+    // 1) Try sent_<id>.mp3 if word has a sentence ID
+    const sid = word.primary_sentence_id;
+    if (sid) {
+      try {
+        const doFetch = (typeof WillenaAPI !== 'undefined' && WillenaAPI.fetch) ? WillenaAPI.fetch.bind(WillenaAPI) : (u, o) => fetch(u, { ...o, credentials: 'include' });
+        const r = await doFetch('/.netlify/functions/get_sentence_audio_urls', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sentence_ids: [sid] }) });
+        if (r.ok) {
+          const data = await r.json().catch(() => null);
+          if (data?.success && data.results?.[sid]?.exists && data.results[sid].url) {
+            const url = data.results[sid].url;
+            word.__sentencePreviewUrl = url;
+            await playAudioUrl(url, btn);
+            return;
+          }
+        }
+      } catch (e) { console.debug('[playSentencePreview] signed URL failed, trying TTS', e?.message); }
+    }
+
+    // 2) Generate audio on-the-fly via ElevenLabs (cache the result)
+    btn.querySelector('.play-icon').textContent = '🔄';
+    try {
+      const voice = preferredVoice();
+      const ttsResult = await callTTSProxy({ text: sentence, voice_id: voice, model_id: 'eleven_turbo_v2_5' });
+      if (ttsResult?.audio) {
+        const audioSrc = `data:audio/mpeg;base64,${ttsResult.audio}`;
+        word.__sentencePreviewUrl = audioSrc;
+        await playAudioUrl(audioSrc, btn);
+        return;
+      }
+    } catch (e) { console.debug('[playSentencePreview] ElevenLabs failed, using browser TTS', e?.message); }
+
+    // 3) Last resort: browser TTS
+    btn.querySelector('.play-icon').textContent = '🗣️';
+    const utterance = new SpeechSynthesisUtterance(sentence);
+    utterance.lang = 'en-US';
+    utterance.rate = 0.9;
+    utterance.onend = () => { btn.classList.remove('playing'); btn.querySelector('.play-icon').textContent = '▶'; };
+    utterance.onerror = () => { btn.classList.remove('playing'); btn.classList.add('error'); btn.querySelector('.play-icon').textContent = '✗'; setTimeout(() => { btn.classList.remove('error'); btn.querySelector('.play-icon').textContent = '▶'; }, 2000); };
+    speechSynthesis.speak(utterance);
+  } catch (e) {
+    console.error('[playSentencePreview]', e);
+    btn.classList.remove('playing');
+    btn.classList.add('error');
+    btn.querySelector('.play-icon').textContent = '✗';
+    setTimeout(() => { btn.classList.remove('error'); btn.querySelector('.play-icon').textContent = '▶'; }, 2000);
+  }
+}
+
+function playAudioUrl(url, btn) {
+  return new Promise((resolve) => {
+    const a = new Audio(url);
+    _previewAudio = a;
+    btn.querySelector('.play-icon').textContent = '🔊';
+    a.onended = () => { _previewAudio = null; btn.classList.remove('playing'); btn.querySelector('.play-icon').textContent = '▶'; resolve(); };
+    a.onerror = () => { _previewAudio = null; btn.classList.remove('playing'); btn.classList.add('error'); btn.querySelector('.play-icon').textContent = '✗'; setTimeout(() => { btn.classList.remove('error'); btn.querySelector('.play-icon').textContent = '▶'; }, 2000); resolve(); };
+    a.play().catch(() => { a.onerror(); });
+  });
+}
+
+// ── Save Sentences Handler ────────────────────────────────────────────
+// Forces re-generation of sentence IDs and audio for ALL words with sentences.
+// This is the "🔊 Save Sentences" toolbar button.
+async function handleSaveSentences() {
+  const link = document.getElementById('saveSentencesLink');
+  if (!link || link.classList.contains('working')) return;
+  link.classList.add('working');
+  const origText = link.textContent;
+  link.textContent = '⏳ Working…';
+
+  const list = getList();
+  if (!list.length) { toast('No words to process'); link.classList.remove('working'); link.textContent = origText; return; }
+
+  const currentGameId = getCurrentGameId();
+  if (!currentGameId) { toast('Save the game first before generating sentence audio'); link.classList.remove('working'); link.textContent = origText; return; }
+
+  try {
+    // Step 1: Save first (ensures data is fresh)
+    link.textContent = '⏳ Saving…';
+    const title = titleEl.value || 'Untitled';
+    const gameImage = document.getElementById('gameImageZone').querySelector('img')?.src || '';
+    const payload = buildPayload(title, gameImage);
+
+    // Step 2: Force sentence ID resolution (clears existing to get fresh IDs)
+    link.textContent = '⏳ Resolving sentences…';
+    // Clear all existing sentence IDs to force fresh resolution
+    for (const w of payload.words) {
+      delete w.primary_sentence_id;
+      if (Array.isArray(w.sentences)) w.sentences = [];
+    }
+    const idResult = await ensureSentenceIdsBuilder(payload.words, { forceNewIds: true });
+    console.log('[SaveSentences] ID resolution:', idResult);
+
+    const withIds = payload.words.filter(w => w.primary_sentence_id);
+    if (!withIds.length) {
+      toast('⚠️ No sentence IDs available for these rows (check sentence text length).');
+      link.classList.remove('working');
+      link.textContent = origText;
+      return;
+    }
+    link.textContent = `⏳ Generating audio (0/${withIds.length})…`;
+
+    // Step 3: Force regenerate ALL sentence audio (skip existence check)
+    const voice = preferredVoice();
+    let generated = 0, failed = 0;
+    const concurrency = 2;
+    let queueIdx = 0;
+    const tasks = withIds.map(w => {
+      const sid = w.primary_sentence_id;
+      const sentObj = Array.isArray(w.sentences) && w.sentences.find(s => s?.id === sid);
+      const text = (sentObj?.text || w.example || '').trim();
+      return { sid, text, eng: w.eng, word: w };
+    }).filter(t => t.text && t.text.split(/\s+/).length >= 3);
+
+    async function worker() {
+      while (queueIdx < tasks.length) {
+        const i = queueIdx++;
+        const t = tasks[i];
+        const key = `sent_${t.sid}`;
+        try {
+          const ttsResult = await callTTSProxy({ text: t.text, voice_id: voice, model_id: 'eleven_turbo_v2_5' });
+          if (ttsResult?.audio) {
+            await uploadAudioFile(key, ttsResult.audio);
+            generated++;
+            // Update audio_key on word
+            if (Array.isArray(t.word.sentences)) {
+              const s = t.word.sentences.find(x => x?.id === t.sid);
+              if (s) s.audio_key = `${key}.mp3`;
+            }
+            console.log('[SaveSentences] ✓', t.eng, '→', key);
+          } else {
+            failed++;
+            console.warn('[SaveSentences] No audio returned for', t.eng);
+          }
+        } catch (e) {
+          failed++;
+          console.warn('[SaveSentences] Failed:', t.eng, e?.message);
+        }
+        link.textContent = `⏳ Audio ${generated + failed}/${tasks.length}…`;
+      }
+    }
+    await Promise.all(Array.from({ length: Math.min(concurrency, tasks.length) }, () => worker()));
+
+    // Step 4: Copy sentence IDs back to the live list
+    const liveList = getList();
+    for (const pw of payload.words) {
+      const live = liveList.find(l => l.eng === pw.eng);
+      if (live && pw.primary_sentence_id) {
+        live.primary_sentence_id = pw.primary_sentence_id;
+        live.sentences = pw.sentences;
+      }
+    }
+
+    // Step 5: Save again with updated sentence IDs and audio keys
+    link.textContent = '⏳ Saving…';
+    const finalPayload = buildPayload(title, gameImage);
+    const saveResult = await saveGameData(finalPayload, currentGameId);
+
+    if (saveResult?.success) {
+      const msg = `✓ ${generated} sentence${generated !== 1 ? 's' : ''} generated` + (failed ? `, ${failed} failed` : '');
+      toast(msg);
+      if (typeof window.showSaveCenterMessage === 'function') {
+        window.showSaveCenterMessage(msg, { variant: 'success', ms: 3000 });
+      }
+    } else {
+      toast('Audio generated but save failed: ' + (saveResult?.error || 'unknown'));
+    }
+  } catch (e) {
+    console.error('[SaveSentences]', e);
+    toast('Error: ' + (e?.message || 'unknown'));
+  } finally {
+    link.classList.remove('working');
+    link.textContent = origText;
+  }
+}
+
 // Quick Save (silent): overwrite if currentGameId, else open Save As modal
-saveLink.onclick = (ev) => handleQuickSave(ev, buildPayload, getCurrentGameId, titleEl, toast);
+saveLink.onclick = async (ev) => {
+  const result = await handleQuickSave(ev, buildPayload, getCurrentGameId, setCurrentGameId, titleEl, toast, { silent: false, onImagesSynced: render });
+  if (result?.success) {
+    invalidateSavedGamesCache();
+    markSaved('Saved');
+  }
+};
+
+// Save Sentences: force regenerate all sentence audio
+const saveSentencesLink = document.getElementById('saveSentencesLink');
+if (saveSentencesLink) {
+  saveSentencesLink.onclick = () => handleSaveSentences();
+}
+
+if (titleEl && !titleEl._dirtyBound) {
+  titleEl._dirtyBound = true;
+  titleEl.addEventListener('input', () => markDirty());
+}
+
+setInterval(async () => {
+  if (autosaveInFlight) return;
+  if (!hasUnsavedChanges) return;
+  const currentId = getCurrentGameId();
+  if (!currentId) {
+    if (statusEl) statusEl.textContent = 'Unsaved changes (Save As once to enable autosave)';
+    return;
+  }
+  autosaveInFlight = true;
+  if (statusEl) statusEl.textContent = 'Autosaving…';
+  try {
+    const result = await handleQuickSave(null, buildPayload, getCurrentGameId, setCurrentGameId, titleEl, toast, { silent: true, onImagesSynced: render });
+    if (result?.success) {
+      markSaved(`Autosaved ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`);
+    }
+  } catch (e) {
+    console.warn('[autosave] failed', e?.message || e);
+    if (statusEl) statusEl.textContent = 'Autosave failed (will retry)';
+  } finally {
+    autosaveInFlight = false;
+  }
+}, AUTOSAVE_INTERVAL_MS);
 
 // Basic burger menu toggle
 (function setupBurger() {
@@ -524,6 +1025,7 @@ saveLink.onclick = (ev) => handleQuickSave(ev, buildPayload, getCurrentGameId, t
 // Auto behaviors for toggles
 enableDefinitionsEl.addEventListener('change', async () => {
   render(); // Always re-render to hide/show definitions
+  markDirty();
   if (enableDefinitionsEl.checked) {
     await generateDefinitionsForMissing();
   }
@@ -531,6 +1033,7 @@ enableDefinitionsEl.addEventListener('change', async () => {
 
 enableExamplesEl.addEventListener('change', async () => {
   render(); // Always re-render to hide/show examples
+  markDirty();
   if (enableExamplesEl.checked) {
     await generateExamplesForMissing();
   }
@@ -538,6 +1041,7 @@ enableExamplesEl.addEventListener('change', async () => {
 
 enablePicturesEl.addEventListener('change', async () => {
   render(); // Always re-render to hide/show images
+  markDirty();
   if (enablePicturesEl.checked) {
     const list = getList();
     await loadImagesForMissingOnly(list, loadingImages, render);
@@ -566,6 +1070,25 @@ async function generateExamplesForMissing() {
   }
 }
 
+let examplesAutofillInFlight = false;
+async function maybeAutofillMissingExamples(reason = '') {
+  try {
+    if (!enableExamplesEl || !enableExamplesEl.checked) return;
+    if (examplesAutofillInFlight) return;
+    const list = getList();
+    const missing = list.filter((w) => w && w.eng && !(w.example && String(w.example).trim()));
+    if (!missing.length) return;
+    examplesAutofillInFlight = true;
+    if (statusEl) statusEl.textContent = `Generating examples (${missing.length})...`;
+    await generateExamplesForMissing();
+  } catch (e) {
+    console.warn('[game-builder] example autofill failed', reason, e);
+  } finally {
+    examplesAutofillInFlight = false;
+    if (statusEl && /^Generating examples/.test(statusEl.textContent || '')) statusEl.textContent = '';
+  }
+}
+
 // AI generation wrappers using services/ai-service.js
 async function generateExampleForRow(idx, force = false) {
   const list = getList();
@@ -576,6 +1099,7 @@ async function generateExampleForRow(idx, force = false) {
   const example = await generateExample(w.eng);
   if (example) {
     w.example = example;
+    markDirty();
     render();
   }
 }
@@ -587,7 +1111,9 @@ async function generateDefinitionForRow(idx) {
   
   const definition = await generateDefinition(w.eng, w.kor || '');
   if (definition) {
-    w.definition = definition;
+    const cleaned = ensurePunctuation(cleanDefinitionResponse(definition));
+    w.definition = cleaned;
+    markDirty();
     render();
   }
 }
@@ -600,6 +1126,8 @@ async function loadPicturesForMissing() {
   await loadImagesForMissingOnly(list, loadingImages, render);
 }
 
+// Legacy Saved Games code is disabled. The active implementation lives in ui/file-list.js.
+if (false) {
 // File modal: list previously saved game_data and open
 openLink.onclick = () => {
   // Show modal immediately with skeleton for instant feedback
@@ -616,6 +1144,7 @@ window.addEventListener('click', (e) => { if (e.target === fileModal) fileModal.
 // Save modal
 const saveModal = document.getElementById('saveModal');
 const saveModalClose = document.getElementById('saveModalClose');
+const saveModalStatus = document.getElementById('saveModalStatus');
 saveModalClose.onclick = () => { saveModal.style.display = 'none'; };
 window.addEventListener('click', (e) => { if (e.target === saveModal) saveModal.style.display = 'none'; });
 
@@ -642,6 +1171,7 @@ let fileListOffset = 0;
 let fileListRows = [];
 let fileListUniqueCount = 0;
 let fileListUid = '';
+let fileListUidCandidates = [];
 let fileListAllMode = false; // when true, show all users' games
 const LOAD_LIMIT = 10;
 // --- Saved games modal caching & skeleton ---
@@ -887,7 +1417,8 @@ async function populateFileList() {
   fileListOffset = 0;
   fileListRows = [];
   fileListUniqueCount = 0;
-  fileListUid = getCurrentUserId();
+  fileListUid = await resolveCurrentUserIdFresh();
+  fileListUidCandidates = collectOwnerIdCandidates(fileListUid);
   fileListAllMode = false; // reset to user scope on explicit populate
   // Attempt session cache reuse
   try {
@@ -929,14 +1460,27 @@ async function populateFileList() {
 async function loadFileListPage(isInitial) {
   if (fileListLoading) return;
   fileListLoading = true;
-  const uid = fileListUid;
-  // When no uid, still attempt to fetch system (NULL created_by) rows
-  const baseUrl = '/.netlify/functions/list_game_data_unique?limit=' + LOAD_LIMIT + '&offset=' + fileListOffset + '&page_pull=' + (LOAD_LIMIT*4) + '&names=0';
+  let uid = fileListUid;
+  if (!fileListAllMode && !uid) {
+    uid = await resolveCurrentUserIdFresh();
+    fileListUid = uid;
+    fileListUidCandidates = collectOwnerIdCandidates(uid);
+  }
+  const baseUrl = '/.netlify/functions/list_game_data_unique?limit=' + LOAD_LIMIT + '&offset=' + fileListOffset + '&page_pull=' + (LOAD_LIMIT*4) + '&names=1';
   let url;
   if (fileListAllMode) {
     url = baseUrl + '&all=1&unique=0';
   } else {
-    url = uid ? (baseUrl + '&created_by=' + encodeURIComponent(uid) + '&include_null=1') : (baseUrl + '&include_null=1');
+    const candidateIds = collectOwnerIdCandidates(uid);
+    fileListUidCandidates = candidateIds;
+    if (!candidateIds.length) {
+      fileList.innerHTML = '<div class="status">Sign in again to load My Games. <button id="retryListBtn" class="btn">Retry</button></div>';
+      const retryAuth = document.getElementById('retryListBtn');
+      if (retryAuth) retryAuth.onclick = () => { fileListLoading = false; loadFileListPage(isInitial); };
+      fileListLoading = false;
+      return;
+    }
+    url = baseUrl + '&created_by_any=' + encodeURIComponent(candidateIds.join(','));
   }
   // Timeout guard (8s)
   const ac = typeof AbortController !== 'undefined' ? new AbortController() : null;
@@ -953,7 +1497,7 @@ async function loadFileListPage(isInitial) {
   const t0 = performance.now();
   let ttfbMs = 0; let totalMs = 0; let sizeBytes = 0; let js=null; let status=0; let ok=false;
   try {
-    const res = await fetch(url, ac? { signal: ac.signal } : undefined);
+    const res = await WillenaAPI.fetch(url, ac ? { signal: ac.signal } : undefined);
     status = res.status;
     ttfbMs = performance.now() - t0; // approximation
     const text = await res.text();
@@ -1108,12 +1652,19 @@ function paintFileList(initialRows, { cached, initial, uniqueCount }) {
           kor: w.kor || w.kr || w.translation || '',
           image_url: w.image_url || w.image || w.img || w.img_url || w.picture || '',
           definition: w.definition || w.def || w.meaning || '',
-          example: w.example || w.example_sentence || w.sentence || ''
+          example: getExampleText(w),
+          legacy_sentence: w.legacy_sentence || w.sentence || getExampleText(w),
+          sentences: Array.isArray(w.sentences) ? w.sentences : [],
+          primary_sentence_id: w.primary_sentence_id || w.sentence_id || '',
+          sentence_mp3: w.sentence_mp3 || '',
+          sentence_audio: w.sentence_audio || ''
         });
       }).filter(Boolean);
       setList(mapped);
       if (titleEl) titleEl.value = row.title || 'Untitled Game';
       render();
+      markSaved('Game loaded');
+      maybeAutofillMissingExamples('openGameData');
       toast(mapped.length ? 'Game loaded' : 'Loaded (empty)');
       fileModal.style.display = 'none';
       cacheCurrentGame();
@@ -1151,12 +1702,13 @@ function paintFileList(initialRows, { cached, initial, uniqueCount }) {
 
   function renderList(list) {
     const frag = document.createDocumentFragment();
-    const currentUid = getCurrentUserId();
+    const currentUid = fileListUid || getCurrentUserId();
+    const ownerSet = new Set(fileListUidCandidates || []);
     list.forEach(r => {
       const div = document.createElement('div');
       div.className = 'game-card new-style';
       if(selectedGameIds.has(r.id)) div.classList.add('selected');
-      const owned = !r.created_by || r.created_by === currentUid;
+      const owned = !r.created_by || ownerSet.has(String(r.created_by));
       const isSelected = selectedGameIds.has(r.id);
       div.innerHTML = buildGameCardHTML(r, owned, isSelected, currentUid);
       frag.appendChild(div);
@@ -1276,19 +1828,29 @@ initMintAiListBuilder({
   addItems: (items) => {
     saveState();
     const start = list.length;
-    items.forEach(it => list.push({ eng: it.eng, kor: it.kor, image_url: '', definition: '' }));
+    items.forEach(it => list.push({ eng: it.eng, kor: it.kor, image_url: '', definition: '', example: '' }));
     render();
     return { from: start, to: list.length - 1 };
   },
   render,
   enablePicturesEl,
   enableDefinitionsEl,
+  enableExamplesEl,
   loadingImages,
-  generateDefinitionForRow
+  generateDefinitionForRow,
+  generateExampleForRow
 });
 
 // Initialize Create Game modal
 initCreateGameModal(buildPayload);
+
+try {
+  const shouldOpenHomework = localStorage.getItem('gameBuilderOpenHomeworkAssignment');
+  if (shouldOpenHomework === '1') {
+    localStorage.removeItem('gameBuilderOpenHomeworkAssignment');
+    setTimeout(() => openCreateGameModal({ panel: 'homework' }), 180);
+  }
+} catch {}
 
 // --- Prefetch & Warm-Up -------------------------------------------------------
 // After main UI is stable, warm the list endpoint so first manual open is instant.
@@ -1307,3 +1869,4 @@ if(!window.__gbPrefetchScheduled){
   });
 }
 // -----------------------------------------------------------------------------
+}

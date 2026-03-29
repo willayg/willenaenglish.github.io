@@ -47,49 +47,66 @@ export async function generateDefinition(targetWord, koreanHint = '') {
   if (!targetWord || !targetWord.trim()) return '';
   
   const target = targetWord.trim();
-  const prompt = `Write a concise, kid-friendly definition that does NOT include or repeat the word "${target}". Consider the Korean meaning "${koreanHint}" as context. Keep it simple for young learners, one short sentence.`;
-  
-  try {
-    const res = await WillenaAPI.fetch('/.netlify/functions/openai_proxy', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prompt })
-    });
-    
-    const js = await res.json();
-    let def = (js?.result || '').trim();
+  const promptPrimary = `Write a concise, kid-friendly definition that does NOT include or repeat the word "${target}". Consider the Korean meaning "${koreanHint}" as context. Keep it simple for young learners, one short sentence.`;
+  const promptRetry = `Give ONE beginner-friendly meaning sentence for "${target}" without using that exact word. Use plain classroom English, 6-14 words, output only the sentence.`;
+
+  function fallbackDefinition(word, kor) {
+    const cleanWord = String(word || '').trim();
+    const cleanKor = String(kor || '').trim();
+    if (cleanKor) {
+      return `A common word that means ${cleanKor}.`;
+    }
+    if (cleanWord.includes(' ')) {
+      return 'A useful phrase used in everyday English.';
+    }
+    return 'A useful English word for everyday conversation.';
+  }
+
+  function sanitizeCandidate(raw, targetWordInner, koreanHintInner) {
+    let def = String(raw || '').trim();
     if (!def) return '';
-    
-    // Clean up conversational AI responses - extract just the definition
+
     def = cleanDefinitionResponse(def);
     if (!def) return '';
-    
-    // Remove any Korean (Hangul) characters
+
     def = def.replace(/[\uAC00-\uD7AF]+/g, '');
-    
-    // Remove the exact Korean word if present
-    if (koreanHint) {
-      const esc = koreanHint.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    if (koreanHintInner) {
+      const esc = koreanHintInner.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       def = def.replace(new RegExp(esc, 'g'), '');
     }
-    
-    def = def.replace(/\s{2,}/g, ' ').trim();
-    
-    // Ensure it does not contain the target word (case-insensitive)
-    const re = new RegExp(`\\b${escapeRegExp(target)}\\b`, 'i');
-    if (re.test(def)) {
-      // Remove the target word and clean up
-      def = def.replace(re, '').replace(/\s{2,}/g, ' ').replace(/^\W+|\W+$/g, '').trim();
-    }
-    
-    // Capitalize first letter; ensure it ends with a period
+
+    def = def.replace(/["'`]+/g, '').replace(/\s{2,}/g, ' ').trim();
+
+    const re = new RegExp(`\\b${escapeRegExp(targetWordInner)}\\b`, 'ig');
+    def = def.replace(re, '').replace(/\s{2,}/g, ' ').replace(/^\W+|\W+$/g, '').trim();
+
     def = capitalize(def);
     def = ensurePunctuation(def);
-    
+
+    // Quality guardrails: avoid empty/too-short/no-letter outputs (e.g., '?').
+    if (!/[a-zA-Z]{3,}/.test(def)) return '';
+    if (def.length < 12) return '';
+    if (/^[?.!\s]+$/.test(def)) return '';
     return def;
+  }
+  
+  try {
+    const prompts = [promptPrimary, promptRetry];
+    for (const prompt of prompts) {
+      const res = await WillenaAPI.fetch('/.netlify/functions/openai_proxy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt })
+      });
+      const js = await res.json().catch(() => ({}));
+      const raw = String(js?.result || js?.data?.choices?.[0]?.message?.content || '').trim();
+      const clean = sanitizeCandidate(raw, target, koreanHint);
+      if (clean) return clean;
+    }
+    return fallbackDefinition(target, koreanHint);
   } catch (e) {
     console.error('[AI-Service] generateDefinition error:', e);
-    return '';
+    return fallbackDefinition(target, koreanHint);
   }
 }
 

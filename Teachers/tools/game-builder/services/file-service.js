@@ -2,6 +2,37 @@
 import { fetchJSONSafe } from '../utils/network.js';
 // escapeHtml lives in dom-helpers (not validation)
 import { escapeHtml } from '../utils/dom-helpers.js';
+import { callTTSProxy, uploadAudioFile, preferredVoice } from './audio-service.js';
+
+function normalizeSentenceText(value) {
+  return String(value || '').trim().replace(/\s+/g, ' ');
+}
+
+function makeLocalSentenceId(text) {
+  const normalized = normalizeSentenceText(text).toLowerCase();
+  let hash = 5381;
+  for (let i = 0; i < normalized.length; i++) {
+    hash = ((hash << 5) + hash) + normalized.charCodeAt(i);
+    hash = hash | 0;
+  }
+  const hex = (hash >>> 0).toString(16).padStart(8, '0');
+  return `local_${hex}`;
+}
+
+function createLocalIdAllocator() {
+  const usedIds = new Map();
+  return function allocate(text) {
+    const normalized = normalizeSentenceText(text).toLowerCase();
+    const baseId = makeLocalSentenceId(normalized);
+    let candidate = baseId;
+    let suffix = 1;
+    while (usedIds.has(candidate) && usedIds.get(candidate) !== normalized) {
+      candidate = `${baseId}_${suffix++}`;
+    }
+    usedIds.set(candidate, normalized);
+    return candidate;
+  };
+}
 
 /**
  * Get current user ID from various storage locations
@@ -72,17 +103,37 @@ export function getCurrentUserId() {
  * @param {Array} wordObjs - Array of word objects
  * @returns {Promise<Object>} {inserted: number}
  */
-export async function ensureSentenceIdsBuilder(wordObjs) {
+export async function ensureSentenceIdsBuilder(wordObjs, opts = {}) {
   try {
     if (!Array.isArray(wordObjs) || !wordObjs.length) return { inserted: 0 };
     
     const norm = s => (s || '').trim().replace(/\s+/g, ' ');
-    const targets = wordObjs.filter(w =>
-      !w.primary_sentence_id &&
-      !Array.isArray(w.sentences) &&
-      (w.legacy_sentence || w.example)
-    );
+    // Case-insensitive key for reliable text matching (backend may return different casing)
+    const normKey = s => norm(s).toLowerCase();
+    const targets = wordObjs.filter(w => {
+      const currentText = norm(w.example || w.legacy_sentence || '');
+      if (!currentText || currentText.split(/\s+/).length < 3) return false;
+
+      // Case 1: No sentence identity yet — needs processing
+      if (!w.primary_sentence_id && !(Array.isArray(w.sentences) && w.sentences.length)) return true;
+
+      // Case 2: Has identity but the text has CHANGED (teacher edited sentence)
+      if (Array.isArray(w.sentences) && w.sentences.length) {
+        const persistedText = norm(
+          (w.sentences.find(s => s && typeof s === 'object' && s.text) || {}).text || ''
+        );
+        if (persistedText && normKey(persistedText) !== normKey(currentText)) {
+          // Clear stale identity so backend creates a fresh sentence row + audio
+          delete w.primary_sentence_id;
+          w.sentences = [];
+          return true;
+        }
+      }
+
+      return false;
+    });
     
+    console.log('[SentenceUpgrade][builder] targets:', targets.length, 'of', wordObjs.length, 'words');
     if (!targets.length) return { inserted: 0 };
     
     const map = new Map();
@@ -90,69 +141,286 @@ export async function ensureSentenceIdsBuilder(wordObjs) {
       const raw = w.legacy_sentence || w.example || '';
       if (raw && raw.split(/\s+/).length >= 3) {
         const n = norm(raw);
-        if (n && !map.has(n)) {
-          map.set(n, { text: n, words: [w.eng].filter(Boolean) });
+        const key = normKey(raw);
+        if (key && !map.has(key)) {
+          map.set(key, { text: n, words: [w.eng].filter(Boolean) });
         }
       }
     }
     
-    if (!map.size) return { inserted: 0 };
+    if (!map.size) { console.warn('[SentenceUpgrade][builder] no sentences to send'); return { inserted: 0 }; }
+    
+    const sentenceList = Array.from(map.values());
+    console.log('[SentenceUpgrade][builder] sending', sentenceList.length, 'unique sentences to backend');
     
     const payload = {
       action: 'upsert_sentences_batch',
-      sentences: Array.from(map.values())
+      sentences: sentenceList
     };
+    if (opts.forceNewIds) payload.force_new_ids = true;
     
-    const res = await WillenaAPI.fetch('/.netlify/functions/upsert_sentences_batch', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
+    // Use WillenaAPI.fetch if available (handles routing + auth), fallback to raw fetch
+    const doFetch = (typeof WillenaAPI !== 'undefined' && WillenaAPI.fetch)
+      ? WillenaAPI.fetch.bind(WillenaAPI)
+      : (url, init) => fetch(url, { ...init, credentials: 'include' });
     
-    const js = await res.json().catch(() => null);
+    const postBatch = async () => {
+      const res = await doFetch('/.netlify/functions/upsert_sentences_batch', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const js = await res.json().catch(() => null);
+      return { res, js };
+    };
+
+    let { res, js } = await postBatch();
     
     if (js && js.audio) {
-      console.debug('[SentenceUpgrade][builder][audio] summary', js.audio);
+      console.log('[SentenceUpgrade][builder][audio] summary', js.audio);
     }
     if (js && js.audio_status) {
-      console.debug('[SentenceUpgrade][builder][audio_status sample]', js.audio_status.slice(0, 5));
-    }
-    if (js && js.env) {
-      console.debug('[SentenceUpgrade][builder][env]', js.env);
+      console.log('[SentenceUpgrade][builder][audio_status sample]', js.audio_status.slice(0, 5));
     }
     
     if (!js || !js.success || !Array.isArray(js.sentences)) {
-      console.debug('[SentenceUpgrade][builder] batch failed', { status: res.status, ok: res.ok, body: js });
-      return { inserted: 0, backend: false };
+      console.warn('[SentenceUpgrade][builder] batch FAILED (attempt 1)', { status: res.status, ok: res.ok, body: js });
+
+      // Retry a couple of times before falling back to local IDs.
+      for (let attempt = 2; attempt <= 3; attempt++) {
+        const delayMs = attempt === 2 ? 250 : 600;
+        await new Promise(resolve => setTimeout(resolve, delayMs));
+        try {
+          const retried = await postBatch();
+          res = retried.res;
+          js = retried.js;
+          if (js && js.success && Array.isArray(js.sentences)) {
+            console.log(`[SentenceUpgrade][builder] batch recovered on retry ${attempt}`);
+            break;
+          }
+          console.warn(`[SentenceUpgrade][builder] batch FAILED (attempt ${attempt})`, { status: res.status, ok: res.ok, body: js });
+        } catch (retryErr) {
+          console.warn(`[SentenceUpgrade][builder] retry ${attempt} error`, retryErr?.message);
+        }
+      }
+    }
+
+    if (!js || !js.success || !Array.isArray(js.sentences)) {
+      // Client-only fallback: still assign deterministic local sentence IDs
+      // so sentence audio generation can proceed without backend sentence rows.
+      const allocLocalId = createLocalIdAllocator();
+      const byLocalText = new Map();
+      let fallbackApplied = 0;
+      for (const w of targets) {
+        const raw = normalizeSentenceText(w.legacy_sentence || w.example || '');
+        if (!raw || raw.split(/\s+/).length < 3) continue;
+        const key = normKey(raw);
+        let localId = byLocalText.get(key);
+        if (!localId) {
+          localId = allocLocalId(raw);
+          byLocalText.set(key, localId);
+        }
+        w.primary_sentence_id = localId;
+        w.sentences = [{ id: localId, text: raw, audio_key: `sent_${localId}.mp3` }];
+        fallbackApplied++;
+      }
+      console.warn('[SentenceUpgrade][builder] applied LOCAL fallback IDs:', fallbackApplied, '/', targets.length, '(after retries)');
+      return { inserted: fallbackApplied, backend: false, localFallback: true };
     }
     
-    const byText = new Map(js.sentences.map(r => [norm(r.text), r]));
+    console.log('[SentenceUpgrade][builder] backend returned', js.sentences.length, 'sentences');
+    
+    // Build case-insensitive text map for reliable matching
+    const byText = new Map(js.sentences.map(r => [normKey(r.text), r]));
+    const allocLocalId = createLocalIdAllocator();
+    const byLocalText = new Map();
     let applied = 0;
     
     for (const w of targets) {
       const raw = w.legacy_sentence || w.example || '';
-      const rec = byText.get(norm(raw));
+      const rec = byText.get(normKey(raw));
       if (rec && rec.id) {
         const sentObj = { id: rec.id, text: rec.text };
         if (rec.audio_key) sentObj.audio_key = rec.audio_key;
         w.sentences = [sentObj];
         w.primary_sentence_id = rec.id;
         applied++;
+      } else {
+        let localId = byLocalText.get(normKey(raw));
+        if (!localId) {
+          localId = allocLocalId(raw);
+          byLocalText.set(normKey(raw), localId);
+        }
+        w.sentences = [{ id: localId, text: normalizeSentenceText(raw), audio_key: `sent_${localId}.mp3` }];
+        w.primary_sentence_id = localId;
+        applied++;
+        console.warn('[SentenceUpgrade][builder] NO MATCH from backend, used LOCAL ID for word:', w.eng, 'sid:', localId);
       }
     }
     
-    console.debug('[SentenceUpgrade][builder] applied', {
-      applied,
-      totalTargets: targets.length,
-      unique: map.size,
-      meta: js.meta
-    });
+    console.log('[SentenceUpgrade][builder] ✓ applied sentence IDs:', applied, '/', targets.length,
+      'sample:', targets.slice(0, 2).map(w => ({ eng: w.eng, sid: w.primary_sentence_id, ak: w.sentences?.[0]?.audio_key })));
     
     return { inserted: applied };
   } catch (e) {
-    console.debug('[SentenceUpgrade][builder] error', e?.message);
+    console.warn('[SentenceUpgrade][builder] ERROR:', e?.message, e);
     return { inserted: 0, error: true };
   }
+}
+
+/**
+ * Ensure sent_<id>.mp3 audio files exist in R2 for all words with sentence IDs.
+ * The backend upsert_sentences_batch tries to generate audio server-side, but
+ * internal function-to-function calls can fail silently. This client-side
+ * fallback checks each sentence and generates+uploads any missing audio.
+ * @param {Array} wordObjs - Array of word objects (after ensureSentenceIdsBuilder)
+ * @returns {Promise<{checked: number, generated: number, failed: number}>}
+ */
+export async function ensureSentenceAudioBuilder(wordObjs) {
+  const result = { checked: 0, generated: 0, failed: 0 };
+  try {
+    if (!Array.isArray(wordObjs) || !wordObjs.length) return result;
+
+    // Collect unique sentence IDs and their text
+    const sentenceMap = new Map(); // id -> { text, words: [...] }
+    for (const w of wordObjs) {
+      const sid = w.primary_sentence_id;
+      if (!sid) continue;
+      const sentObj = Array.isArray(w.sentences) && w.sentences.find(s => s && s.id === sid);
+      const text = (sentObj && sentObj.text) || w.example || w.legacy_sentence || '';
+      if (!text || text.trim().split(/\s+/).length < 3) continue;
+      if (sentenceMap.has(sid)) {
+        sentenceMap.get(sid).words.push(w.eng);
+      } else {
+        sentenceMap.set(sid, { text: text.trim(), audioKey: sentObj?.audio_key || null, words: [w.eng] });
+      }
+    }
+
+    if (!sentenceMap.size) {
+      console.log('[SentenceAudio][builder] No sentence IDs to check');
+      return result;
+    }
+
+    console.log('[SentenceAudio][builder] Checking audio for', sentenceMap.size, 'unique sentences');
+
+    // Check which sent_<id>.mp3 files already exist via get_sentence_audio_urls
+    const ids = Array.from(sentenceMap.keys());
+    let existingResults = {};
+    try {
+      const doFetch = (typeof WillenaAPI !== 'undefined' && WillenaAPI.fetch)
+        ? WillenaAPI.fetch.bind(WillenaAPI)
+        : (url, init) => fetch(url, { ...init, credentials: 'include' });
+      const r = await doFetch('/.netlify/functions/get_sentence_audio_urls', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sentence_ids: ids })
+      });
+      if (r.ok) {
+        const data = await r.json().catch(() => null);
+        if (data && data.success && data.results) existingResults = data.results;
+      }
+    } catch (e) {
+      console.warn('[SentenceAudio][builder] check failed, generating all', e?.message);
+    }
+
+    // Find which sentences need audio generated
+    const needGeneration = [];
+    for (const [sid, info] of sentenceMap) {
+      result.checked++;
+      const rec = existingResults[sid];
+      if (rec && rec.exists) {
+        // Audio already exists — update audio_key on word objects if missing
+        if (rec.key) {
+          for (const w of wordObjs) {
+            if (w.primary_sentence_id === sid && Array.isArray(w.sentences)) {
+              const s = w.sentences.find(x => x && x.id === sid);
+              if (s && !s.audio_key) s.audio_key = rec.key;
+            }
+          }
+        }
+        continue;
+      }
+      needGeneration.push({ id: sid, text: info.text });
+    }
+
+    if (!needGeneration.length) {
+      console.log('[SentenceAudio][builder] All', result.checked, 'sentences already have audio');
+      return result;
+    }
+
+    console.log('[SentenceAudio][builder] Generating audio for', needGeneration.length, 'sentences');
+
+    // Generate and upload in small batches (concurrency 2)
+    const voice = preferredVoice();
+    const workers = 2;
+    let idx = 0;
+
+    async function worker() {
+      while (idx < needGeneration.length) {
+        const i = idx++;
+        const sent = needGeneration[i];
+        const key = `sent_${sent.id}`;
+        try {
+          const ttsResult = await callTTSProxy({
+            text: sent.text,
+            voice_id: voice,
+            model_id: 'eleven_turbo_v2_5'
+          });
+          if (ttsResult && ttsResult.audio) {
+            await uploadAudioFile(key, ttsResult.audio);
+            result.generated++;
+            // Update audio_key on word objects
+            const audioKey = `${key}.mp3`;
+            for (const w of wordObjs) {
+              if (w.primary_sentence_id === sent.id && Array.isArray(w.sentences)) {
+                const s = w.sentences.find(x => x && x.id === sent.id);
+                if (s) s.audio_key = audioKey;
+              }
+            }
+            console.log('[SentenceAudio][builder] ✓ generated', key, '-', sent.text.substring(0, 50));
+          } else {
+            result.failed++;
+            console.warn('[SentenceAudio][builder] TTS returned no audio for', sent.id);
+          }
+        } catch (e) {
+          result.failed++;
+          console.warn('[SentenceAudio][builder] failed for', sent.id, e?.message);
+        }
+      }
+    }
+
+    await Promise.all(Array.from({ length: Math.min(workers, needGeneration.length) }, () => worker()));
+
+    console.log('[SentenceAudio][builder] Done:', result);
+    return result;
+  } catch (e) {
+    console.warn('[SentenceAudio][builder] ERROR:', e?.message);
+    return result;
+  }
+}
+
+function modeNeedsSentenceIds(mode) {
+  return /sentence/i.test(String(mode || ''));
+}
+
+function payloadNeedsSentenceIds(payload) {
+  const modes = Array.isArray(payload?.modes) ? payload.modes : [];
+  if (modes.some(modeNeedsSentenceIds)) return true;
+  return modeNeedsSentenceIds(payload?.mode);
+}
+
+function unresolvedSentenceLinks(words = []) {
+  if (!Array.isArray(words)) return [];
+  return words.filter((w) => {
+    if (!w || typeof w !== 'object') return false;
+    const sentenceFromArray = Array.isArray(w.sentences) && w.sentences.length
+      ? (w.sentences.find(s => typeof s?.text === 'string' && s.text.trim())?.text || '')
+      : '';
+    const hasSentence = String(w.sentence || w.legacy_sentence || w.example || sentenceFromArray || '').trim().split(/\s+/).length >= 3;
+    if (!hasSentence) return false;
+    const nestedId = Array.isArray(w.sentences) && w.sentences.some(s => s && s.id);
+    return !w.primary_sentence_id && !nestedId;
+  });
 }
 
 /**
@@ -243,17 +511,30 @@ export async function prepareAndUploadImagesIfNeeded(payload, gameId, opts = {})
         let js = null;
         try { js = await res.json(); } catch (e) { console.warn('[ImageUpload] bad JSON', e); }
         if (js) {
+          // Server may return relative image_proxy URLs when R2_PUBLIC_BASE env
+          // is missing. Convert them to absolute R2 public URLs client-side so
+          // the stored URLs work from any origin (staging, production, etc.).
+          const fixProxyUrl = (url) => {
+            if (!url) return url;
+            const m = url.match(/^\/?\.netlify\/functions\/image_proxy\?key=(.+)/);
+            if (m) {
+              const key = decodeURIComponent(m[1]);
+              const base = (window.R2_PUBLIC_BASE || '').replace(/\/+$/, '');
+              if (base) return `${base}/${key}`;
+            }
+            return url;
+          };
           if (Array.isArray(js.words)) {
             for (const w of js.words) {
               if (w && typeof w.index === 'number' && w.url && payload.words[w.index]) {
-                payload.words[w.index].image_url = w.url;
-                console.debug('[ImageUpload] word', w.index, w.url.substring(0,60));
+                payload.words[w.index].image_url = fixProxyUrl(w.url);
+                console.debug('[ImageUpload] word', w.index, payload.words[w.index].image_url.substring(0,80));
               }
             }
           }
           if (js.cover && js.cover.url) {
-            payload.gameImage = js.cover.url;
-            console.debug('[ImageUpload] cover', js.cover.url.substring(0,60));
+            payload.gameImage = fixProxyUrl(js.cover.url);
+            console.debug('[ImageUpload] cover', payload.gameImage.substring(0,80));
           }
         }
       }
@@ -277,10 +558,54 @@ export async function prepareAndUploadImagesIfNeeded(payload, gameId, opts = {})
 export async function saveGameData(payload, existingId = null) {
   try {
     // Ensure created_by is attached
-    const uid = getCurrentUserId();
+    let uid = '';
+    if (typeof WillenaAPI !== 'undefined' && typeof WillenaAPI.fetch === 'function') {
+      try {
+        const whoRes = await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=whoami&_=' + Date.now(), { cache: 'no-store' });
+        if (whoRes && whoRes.ok) {
+          const who = await whoRes.json().catch(() => null);
+          const resolved = who?.user_id || who?.id || '';
+          if (resolved) {
+            uid = String(resolved).trim();
+            try { localStorage.setItem('user_id', uid); } catch {}
+            try { sessionStorage.setItem('user_id', uid); } catch {}
+          }
+        }
+      } catch (e) {
+        console.warn('[saveGameData] whoami fallback failed:', e?.message || e);
+      }
+    }
+    if (!uid) uid = getCurrentUserId();
     if (uid) payload.created_by = uid;
+
+    // Always ensure sentence IDs for every word before saving.
+    // This is a safety net — the caller should have already called ensureSentenceIdsBuilder,
+    // but if it failed or was skipped, this catch-all ensures sentence identity is created.
+    if (Array.isArray(payload.words) && payload.words.length) {
+      const needIds = payload.words.some(w =>
+        !(w.primary_sentence_id || (Array.isArray(w.sentences) && w.sentences.length))
+        && (w.example || w.legacy_sentence)
+      );
+      if (needIds) {
+        console.log('[saveGameData] Running safety-net ensureSentenceIdsBuilder…');
+        await ensureSentenceIdsBuilder(payload.words);
+      }
+
+      // Ensure sent_<id>.mp3 audio files exist for every sentence.
+      // The server-side upsert_sentences_batch tries to generate them, but its
+      // internal ElevenLabs call can fail silently.  This client-side fallback
+      // checks R2 and generates + uploads any missing sentence audio.
+      try {
+        const audioResult = await ensureSentenceAudioBuilder(payload.words);
+        if (audioResult.generated > 0) {
+          console.log('[saveGameData] Generated', audioResult.generated, 'sentence audio files client-side');
+        }
+      } catch (e) {
+        console.warn('[saveGameData] ensureSentenceAudioBuilder failed (non-fatal)', e?.message);
+      }
+    }
     
-    let action = existingId ? 'update_game_data' : 'insert_game_data';
+    const action = existingId ? 'update_game_data' : 'insert_game_data';
     let postBody = { action, data: payload };
     if (existingId) {
       postBody.id = existingId;
@@ -288,24 +613,44 @@ export async function saveGameData(payload, existingId = null) {
     
     console.log('[SAVE PAYLOAD words[0..5]]', (postBody.data.words || []).slice(0, 6).map(w => ({
       eng: w.eng,
-      img: (w.image_url || '').slice(0, 80)
+      img: (w.image_url || '').slice(0, 80),
+      sentence_id: w.primary_sentence_id || null,
+      audio_key: (w.sentences && w.sentences[0] && w.sentences[0].audio_key) || null,
+      has_sentences: !!(w.sentences && w.sentences.length)
     })));
     
-    const js = await fetchJSONSafe('/.netlify/functions/supabase_proxy_fixed', {
+    let js = await fetchJSONSafe('/.netlify/functions/supabase_proxy_fixed', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
       body: JSON.stringify(postBody)
     });
+
+    let savedId = existingId || null;
+    let savedAsCopy = false;
+
+    if (existingId && !js?.success && /not owner|forbidden/i.test(String(js?.error || ''))) {
+      js = await fetchJSONSafe('/.netlify/functions/supabase_proxy_fixed', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ action: 'insert_game_data', data: payload })
+      });
+      savedId = null;
+      savedAsCopy = !!js?.success;
+    }
+
+    const responseId = js?.id || js?.data?.id || (Array.isArray(js?.data) ? js.data[0]?.id : null) || null;
+    if (responseId) savedId = responseId;
     
     if (js?.success) {
-      return { success: true, id: existingId || js.id };
+      return { success: true, id: savedId, savedAsCopy };
     } else {
       return { success: false, error: js?.error || 'Save failed' };
     }
   } catch (e) {
     console.error('[saveGameData] Error:', e);
-    return { success: false, error: 'Save error' };
+    return { success: false, error: e?.message || 'Save error' };
   }
 }
 
@@ -350,13 +695,31 @@ export async function loadGameData(id) {
       return { success: false, error: 'Game has no words' };
     }
     
+    // Normalize image URLs: convert relative image_proxy URLs to absolute R2 public URLs
+    const r2Base = (window.R2_PUBLIC_BASE || '').replace(/\/+$/, '');
+    if (r2Base) {
+      for (const w of words) {
+        if (!w || !w.image_url) continue;
+        const pm = String(w.image_url).match(/^\/?\.netlify\/functions\/image_proxy\?key=(.+)/);
+        if (pm && pm[1]) {
+          w.image_url = `${r2Base}/${decodeURIComponent(pm[1])}`;
+        }
+      }
+    }
+    
+    let gameImg = row.gameImage || row.game_image || '';
+    if (r2Base && gameImg) {
+      const cm = String(gameImg).match(/^\/?\.netlify\/functions\/image_proxy\?key=(.+)/);
+      if (cm && cm[1]) gameImg = `${r2Base}/${decodeURIComponent(cm[1])}`;
+    }
+
     return {
       success: true,
       game: {
         id: row.id || id,
         title: row.title || 'Untitled Game',
         words: words,
-        gameImage: row.gameImage || row.game_image || '',
+        gameImage: gameImg,
         // Best-effort extraction of image folder for older records that predate image_folder persistence
         image_folder: (() => {
           if (row.image_folder && typeof row.image_folder === 'string') return row.image_folder;
@@ -458,14 +821,25 @@ export async function listGameData(opts = {}) {
 export async function findGameByTitle(title) {
   try {
     const currentUid = getCurrentUserId();
-    const result = await listGameData({ limit: 50, offset: 0, created_by: currentUid });
-    
-    if (result.success && Array.isArray(result.data)) {
-      return result.data.find(r =>
-        r.title && r.title.trim().toLowerCase() === title.trim().toLowerCase()
-      ) || null;
+    const targetTitle = title.trim().toLowerCase();
+    const limit = 100;
+    let offset = 0;
+    let page = 0;
+
+    while (page < 20) {
+      const result = await listGameData({ limit, offset, created_by: currentUid });
+      if (!result.success || !Array.isArray(result.data) || !result.data.length) break;
+
+      const found = result.data.find(r =>
+        r.title && r.title.trim().toLowerCase() === targetTitle
+      );
+      if (found) return found;
+
+      if (result.data.length < limit) break;
+      offset += limit;
+      page += 1;
     }
-    
+
     return null;
   } catch (e) {
     console.warn('[findGameByTitle] Error:', e);
@@ -482,11 +856,23 @@ export async function generateIncrementedTitle(baseTitle) {
   try {
     const base = baseTitle.replace(/\s*\(\d+\)$/, '').trim();
     const currentUid = getCurrentUserId();
-    const result = await listGameData({ limit: 200, offset: 0, created_by: currentUid });
-    
-    if (!result.success) return `${base} (2)`;
-    
-    const titlesLower = new Set((result.data || []).map(r => (r.title || '').toLowerCase()));
+    const titlesLower = new Set();
+    const limit = 100;
+    let offset = 0;
+    let page = 0;
+
+    while (page < 20) {
+      const result = await listGameData({ limit, offset, created_by: currentUid });
+      if (!result.success) break;
+      const rows = Array.isArray(result.data) ? result.data : [];
+      rows.forEach(r => titlesLower.add((r.title || '').toLowerCase()));
+      if (rows.length < limit) break;
+      offset += limit;
+      page += 1;
+    }
+
+    if (!titlesLower.size) return `${base} (2)`;
+
     let n = 2;
     let newTitle = `${base} (${n})`;
     

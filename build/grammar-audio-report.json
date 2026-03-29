@@ -1,14 +1,374 @@
 {
-  "generatedAt": "2025-12-04T15:44:12.926Z",
+  "generatedAt": "2026-01-18T15:35:04.098Z",
   "summary": {
-    "considered": 90,
-    "generated": 90,
+    "considered": 354,
+    "generated": 354,
     "skippedExisting": 0,
     "errors": 0,
     "dryRun": false,
     "force": true
   },
   "items": [
+    {
+      "key": "a_few_vs_a_little_1_grammar",
+      "file": "level3\\a_few_vs_a_little.json",
+      "word": "a_few_apples",
+      "entryId": "a_few_vs_a_little_1",
+      "article": "",
+      "text": "I have a few apples in my bag."
+    },
+    {
+      "key": "a_few_vs_a_little_10_grammar",
+      "file": "level3\\a_few_vs_a_little.json",
+      "word": "a_little_money",
+      "entryId": "a_few_vs_a_little_10",
+      "article": "",
+      "text": "I have a little money saved for a new game."
+    },
+    {
+      "key": "a_few_vs_a_little_11_grammar",
+      "file": "level3\\a_few_vs_a_little.json",
+      "word": "a_few_questions",
+      "entryId": "a_few_vs_a_little_11",
+      "article": "",
+      "text": "I have a few questions about the homework."
+    },
+    {
+      "key": "a_few_vs_a_little_12_grammar",
+      "file": "level3\\a_few_vs_a_little.json",
+      "word": "a_little_help",
+      "entryId": "a_few_vs_a_little_12",
+      "article": "",
+      "text": "I need a little help with this problem."
+    },
+    {
+      "key": "a_few_vs_a_little_13_grammar",
+      "file": "level3\\a_few_vs_a_little.json",
+      "word": "a_few_toys",
+      "entryId": "a_few_vs_a_little_13",
+      "article": "",
+      "text": "He has a few toys in his room."
+    },
+    {
+      "key": "a_few_vs_a_little_14_grammar",
+      "file": "level3\\a_few_vs_a_little.json",
+      "word": "a_little_patience",
+      "entryId": "a_few_vs_a_little_14",
+      "article": "",
+      "text": "Please have a little patience while I finish."
+    },
+    {
+      "key": "a_few_vs_a_little_15_grammar",
+      "file": "level3\\a_few_vs_a_little.json",
+      "word": "a_few_minutes",
+      "entryId": "a_few_vs_a_little_15",
+      "article": "",
+      "text": "Wait a few minutes for the food to be ready."
+    },
+    {
+      "key": "a_few_vs_a_little_2_grammar",
+      "file": "level3\\a_few_vs_a_little.json",
+      "word": "a_little_milk",
+      "entryId": "a_few_vs_a_little_2",
+      "article": "",
+      "text": "There is a little milk left in the bottle."
+    },
+    {
+      "key": "a_few_vs_a_little_3_grammar",
+      "file": "level3\\a_few_vs_a_little.json",
+      "word": "a_few_students",
+      "entryId": "a_few_vs_a_little_3",
+      "article": "",
+      "text": "A few students stayed after class to ask questions."
+    },
+    {
+      "key": "a_few_vs_a_little_4_grammar",
+      "file": "level3\\a_few_vs_a_little.json",
+      "word": "a_little_sugar",
+      "entryId": "a_few_vs_a_little_4",
+      "article": "",
+      "text": "She put a little sugar in her tea."
+    },
+    {
+      "key": "a_few_vs_a_little_5_grammar",
+      "file": "level3\\a_few_vs_a_little.json",
+      "word": "a_few_books",
+      "entryId": "a_few_vs_a_little_5",
+      "article": "",
+      "text": "I bought a few books at the store yesterday."
+    },
+    {
+      "key": "a_few_vs_a_little_6_grammar",
+      "file": "level3\\a_few_vs_a_little.json",
+      "word": "a_little_water",
+      "entryId": "a_few_vs_a_little_6",
+      "article": "",
+      "text": "Please give me a little water to drink."
+    },
+    {
+      "key": "a_few_vs_a_little_7_grammar",
+      "file": "level3\\a_few_vs_a_little.json",
+      "word": "a_few_friends",
+      "entryId": "a_few_vs_a_little_7",
+      "article": "",
+      "text": "She has a few friends at school."
+    },
+    {
+      "key": "a_few_vs_a_little_8_grammar",
+      "file": "level3\\a_few_vs_a_little.json",
+      "word": "a_little_time",
+      "entryId": "a_few_vs_a_little_8",
+      "article": "",
+      "text": "We have a little time left before the bus comes."
+    },
+    {
+      "key": "a_few_vs_a_little_9_grammar",
+      "file": "level3\\a_few_vs_a_little.json",
+      "word": "a_few_cookies",
+      "entryId": "a_few_vs_a_little_9",
+      "article": "",
+      "text": "There are a few cookies left in the jar."
+    },
+    {
+      "key": "adjectives_people_1_grammar",
+      "file": "level3\\adjectives_people.json",
+      "word": "friendly",
+      "entryId": "adjectives_people_1",
+      "article": "",
+      "text": "She is very friendly to everyone she meets."
+    },
+    {
+      "key": "adjectives_people_10_grammar",
+      "file": "level3\\adjectives_people.json",
+      "word": "creative",
+      "entryId": "adjectives_people_10",
+      "article": "",
+      "text": "She is creative and draws beautiful pictures."
+    },
+    {
+      "key": "adjectives_people_11_grammar",
+      "file": "level3\\adjectives_people.json",
+      "word": "lazy",
+      "entryId": "adjectives_people_11",
+      "article": "",
+      "text": "He is lazy about cleaning his room on weekends."
+    },
+    {
+      "key": "adjectives_people_12_grammar",
+      "file": "level3\\adjectives_people.json",
+      "word": "hardworking",
+      "entryId": "adjectives_people_12",
+      "article": "",
+      "text": "She is hardworking and studies late every night."
+    },
+    {
+      "key": "adjectives_people_13_grammar",
+      "file": "level3\\adjectives_people.json",
+      "word": "honest",
+      "entryId": "adjectives_people_13",
+      "article": "",
+      "text": "He is honest and always tells the truth."
+    },
+    {
+      "key": "adjectives_people_14_grammar",
+      "file": "level3\\adjectives_people.json",
+      "word": "patient",
+      "entryId": "adjectives_people_14",
+      "article": "",
+      "text": "She is patient with young children at the daycare."
+    },
+    {
+      "key": "adjectives_people_15_grammar",
+      "file": "level3\\adjectives_people.json",
+      "word": "generous",
+      "entryId": "adjectives_people_15",
+      "article": "",
+      "text": "He is generous and shares his toys with friends."
+    },
+    {
+      "key": "adjectives_people_2_grammar",
+      "file": "level3\\adjectives_people.json",
+      "word": "smart",
+      "entryId": "adjectives_people_2",
+      "article": "",
+      "text": "He is smart and quick at solving puzzles."
+    },
+    {
+      "key": "adjectives_people_3_grammar",
+      "file": "level3\\adjectives_people.json",
+      "word": "funny",
+      "entryId": "adjectives_people_3",
+      "article": "",
+      "text": "My friend is very funny and makes everyone laugh."
+    },
+    {
+      "key": "adjectives_people_4_grammar",
+      "file": "level3\\adjectives_people.json",
+      "word": "tall",
+      "entryId": "adjectives_people_4",
+      "article": "",
+      "text": "She is taller than her sister by ten centimeters."
+    },
+    {
+      "key": "adjectives_people_5_grammar",
+      "file": "level3\\adjectives_people.json",
+      "word": "kind",
+      "entryId": "adjectives_people_5",
+      "article": "",
+      "text": "He is kind to everyone at school."
+    },
+    {
+      "key": "adjectives_people_6_grammar",
+      "file": "level3\\adjectives_people.json",
+      "word": "shy",
+      "entryId": "adjectives_people_6",
+      "article": "",
+      "text": "He feels shy in new places but opens up later."
+    },
+    {
+      "key": "adjectives_people_7_grammar",
+      "file": "level3\\adjectives_people.json",
+      "word": "brave",
+      "entryId": "adjectives_people_7",
+      "article": "",
+      "text": "The firefighter is brave and saves many lives."
+    },
+    {
+      "key": "adjectives_people_8_grammar",
+      "file": "level3\\adjectives_people.json",
+      "word": "polite",
+      "entryId": "adjectives_people_8",
+      "article": "",
+      "text": "She is polite at school and respects her teachers."
+    },
+    {
+      "key": "adjectives_people_9_grammar",
+      "file": "level3\\adjectives_people.json",
+      "word": "rude",
+      "entryId": "adjectives_people_9",
+      "article": "",
+      "text": "The man was rude to the clerk at the store."
+    },
+    {
+      "key": "adjectives_world_1_grammar",
+      "file": "level3\\adjectives_world.json",
+      "word": "beautiful",
+      "entryId": "adjectives_world_1",
+      "article": "",
+      "text": "This city is beautiful at night with all the lights."
+    },
+    {
+      "key": "adjectives_world_10_grammar",
+      "file": "level3\\adjectives_world.json",
+      "word": "colorful",
+      "entryId": "adjectives_world_10",
+      "article": "",
+      "text": "The garden is colorful in spring with many flowers."
+    },
+    {
+      "key": "adjectives_world_11_grammar",
+      "file": "level3\\adjectives_world.json",
+      "word": "bright",
+      "entryId": "adjectives_world_11",
+      "article": "",
+      "text": "The room is bright in the morning with sunlight."
+    },
+    {
+      "key": "adjectives_world_12_grammar",
+      "file": "level3\\adjectives_world.json",
+      "word": "dark",
+      "entryId": "adjectives_world_12",
+      "article": "",
+      "text": "The cave is very dark and you need a flashlight."
+    },
+    {
+      "key": "adjectives_world_13_grammar",
+      "file": "level3\\adjectives_world.json",
+      "word": "dangerous",
+      "entryId": "adjectives_world_13",
+      "article": "",
+      "text": "The road can be dangerous when it rains."
+    },
+    {
+      "key": "adjectives_world_14_grammar",
+      "file": "level3\\adjectives_world.json",
+      "word": "peaceful",
+      "entryId": "adjectives_world_14",
+      "article": "",
+      "text": "The village is peaceful with no loud noises."
+    },
+    {
+      "key": "adjectives_world_15_grammar",
+      "file": "level3\\adjectives_world.json",
+      "word": "cold",
+      "entryId": "adjectives_world_15",
+      "article": "",
+      "text": "The water there is very cold even in summer."
+    },
+    {
+      "key": "adjectives_world_2_grammar",
+      "file": "level3\\adjectives_world.json",
+      "word": "noisy",
+      "entryId": "adjectives_world_2",
+      "article": "",
+      "text": "The street is noisy at night with cars and people."
+    },
+    {
+      "key": "adjectives_world_3_grammar",
+      "file": "level3\\adjectives_world.json",
+      "word": "quiet",
+      "entryId": "adjectives_world_3",
+      "article": "",
+      "text": "The library is quiet and perfect for studying."
+    },
+    {
+      "key": "adjectives_world_4_grammar",
+      "file": "level3\\adjectives_world.json",
+      "word": "clean",
+      "entryId": "adjectives_world_4",
+      "article": "",
+      "text": "The kitchen is clean after we washed everything."
+    },
+    {
+      "key": "adjectives_world_5_grammar",
+      "file": "level3\\adjectives_world.json",
+      "word": "dirty",
+      "entryId": "adjectives_world_5",
+      "article": "",
+      "text": "The room is dirty and needs to be cleaned."
+    },
+    {
+      "key": "adjectives_world_6_grammar",
+      "file": "level3\\adjectives_world.json",
+      "word": "crowded",
+      "entryId": "adjectives_world_6",
+      "article": "",
+      "text": "The market is crowded on weekends with many shoppers."
+    },
+    {
+      "key": "adjectives_world_7_grammar",
+      "file": "level3\\adjectives_world.json",
+      "word": "spacious",
+      "entryId": "adjectives_world_7",
+      "article": "",
+      "text": "The hall is very spacious for big events."
+    },
+    {
+      "key": "adjectives_world_8_grammar",
+      "file": "level3\\adjectives_world.json",
+      "word": "modern",
+      "entryId": "adjectives_world_8",
+      "article": "",
+      "text": "The museum looks modern with its glass walls."
+    },
+    {
+      "key": "adjectives_world_9_grammar",
+      "file": "level3\\adjectives_world.json",
+      "word": "ancient",
+      "entryId": "adjectives_world_9",
+      "article": "",
+      "text": "The temple is ancient and over 1000 years old."
+    },
     {
       "key": "be_going_to_future_1_grammar",
       "file": "level3\\be_going_to_future.json",
@@ -248,6 +608,798 @@
       "entryId": "be_going_to_questions_9",
       "article": "",
       "text": "Are they going to move next month?"
+    },
+    {
+      "key": "have_to_1_grammar",
+      "file": "level3\\have_to.json",
+      "word": "i_have_to_do_homework",
+      "entryId": "have_to_1",
+      "article": "",
+      "text": "I have to do my homework after school."
+    },
+    {
+      "key": "have_to_10_grammar",
+      "file": "level3\\have_to.json",
+      "word": "he_has_to_take_medicine",
+      "entryId": "have_to_10",
+      "article": "",
+      "text": "He has to take the medicine three times a day."
+    },
+    {
+      "key": "have_to_11_grammar",
+      "file": "level3\\have_to.json",
+      "word": "they_have_to_clean_after_party",
+      "entryId": "have_to_11",
+      "article": "",
+      "text": "They have to clean up after the party."
+    },
+    {
+      "key": "have_to_12_grammar",
+      "file": "level3\\have_to.json",
+      "word": "you_have_to_finish_test",
+      "entryId": "have_to_12",
+      "article": "",
+      "text": "You have to finish the test in time."
+    },
+    {
+      "key": "have_to_13_grammar",
+      "file": "level3\\have_to.json",
+      "word": "i_have_to_call_parents",
+      "entryId": "have_to_13",
+      "article": "",
+      "text": "I have to call my parents tonight."
+    },
+    {
+      "key": "have_to_14_grammar",
+      "file": "level3\\have_to.json",
+      "word": "she_has_to_study_hard",
+      "entryId": "have_to_14",
+      "article": "",
+      "text": "She has to study hard for the exam."
+    },
+    {
+      "key": "have_to_15_grammar",
+      "file": "level3\\have_to.json",
+      "word": "we_have_to_follow_rules",
+      "entryId": "have_to_15",
+      "article": "",
+      "text": "We have to follow the rules at school."
+    },
+    {
+      "key": "have_to_2_grammar",
+      "file": "level3\\have_to.json",
+      "word": "she_has_to_clean_room",
+      "entryId": "have_to_2",
+      "article": "",
+      "text": "She has to clean her room before dinner."
+    },
+    {
+      "key": "have_to_3_grammar",
+      "file": "level3\\have_to.json",
+      "word": "we_have_to_go_to_school",
+      "entryId": "have_to_3",
+      "article": "",
+      "text": "We have to go to school on weekdays."
+    },
+    {
+      "key": "have_to_4_grammar",
+      "file": "level3\\have_to.json",
+      "word": "he_has_to_wake_up_early",
+      "entryId": "have_to_4",
+      "article": "",
+      "text": "He has to wake up early for practice."
+    },
+    {
+      "key": "have_to_5_grammar",
+      "file": "level3\\have_to.json",
+      "word": "they_have_to_study_for_test",
+      "entryId": "have_to_5",
+      "article": "",
+      "text": "They have to study for the test tomorrow."
+    },
+    {
+      "key": "have_to_6_grammar",
+      "file": "level3\\have_to.json",
+      "word": "you_have_to_wear_uniform",
+      "entryId": "have_to_6",
+      "article": "",
+      "text": "You have to wear a uniform at school."
+    },
+    {
+      "key": "have_to_7_grammar",
+      "file": "level3\\have_to.json",
+      "word": "i_have_to_feed_cat",
+      "entryId": "have_to_7",
+      "article": "",
+      "text": "I have to feed the cat every morning."
+    },
+    {
+      "key": "have_to_8_grammar",
+      "file": "level3\\have_to.json",
+      "word": "she_has_to_finish_project",
+      "entryId": "have_to_8",
+      "article": "",
+      "text": "She has to finish her project by Friday."
+    },
+    {
+      "key": "have_to_9_grammar",
+      "file": "level3\\have_to.json",
+      "word": "we_have_to_be_on_time",
+      "entryId": "have_to_9",
+      "article": "",
+      "text": "We have to be on time for the show."
+    },
+    {
+      "key": "imperatives_suggestions_1_grammar",
+      "file": "level3\\imperatives_suggestions.json",
+      "word": "lets_play_soccer",
+      "entryId": "imperatives_suggestions_1",
+      "article": "",
+      "text": "Let's play soccer after school."
+    },
+    {
+      "key": "imperatives_suggestions_10_grammar",
+      "file": "level3\\imperatives_suggestions.json",
+      "word": "dont_eat_in_library",
+      "entryId": "imperatives_suggestions_10",
+      "article": "",
+      "text": "Don't eat in the library to keep it clean."
+    },
+    {
+      "key": "imperatives_suggestions_11_grammar",
+      "file": "level3\\imperatives_suggestions.json",
+      "word": "come_here",
+      "entryId": "imperatives_suggestions_11",
+      "article": "",
+      "text": "Come here and show me your drawing."
+    },
+    {
+      "key": "imperatives_suggestions_12_grammar",
+      "file": "level3\\imperatives_suggestions.json",
+      "word": "wait_for_me",
+      "entryId": "imperatives_suggestions_12",
+      "article": "",
+      "text": "Wait for me at the gate."
+    },
+    {
+      "key": "imperatives_suggestions_13_grammar",
+      "file": "level3\\imperatives_suggestions.json",
+      "word": "stop_that",
+      "entryId": "imperatives_suggestions_13",
+      "article": "",
+      "text": "Stop that or you will get hurt."
+    },
+    {
+      "key": "imperatives_suggestions_14_grammar",
+      "file": "level3\\imperatives_suggestions.json",
+      "word": "take_a_break",
+      "entryId": "imperatives_suggestions_14",
+      "article": "",
+      "text": "Take a break during your study."
+    },
+    {
+      "key": "imperatives_suggestions_15_grammar",
+      "file": "level3\\imperatives_suggestions.json",
+      "word": "read_this_aloud",
+      "entryId": "imperatives_suggestions_15",
+      "article": "",
+      "text": "Read this aloud for practice."
+    },
+    {
+      "key": "imperatives_suggestions_2_grammar",
+      "file": "level3\\imperatives_suggestions.json",
+      "word": "please_sit_down",
+      "entryId": "imperatives_suggestions_2",
+      "article": "",
+      "text": "Please sit down in your seat."
+    },
+    {
+      "key": "imperatives_suggestions_3_grammar",
+      "file": "level3\\imperatives_suggestions.json",
+      "word": "dont_run",
+      "entryId": "imperatives_suggestions_3",
+      "article": "",
+      "text": "Don't run in the hallway."
+    },
+    {
+      "key": "imperatives_suggestions_4_grammar",
+      "file": "level3\\imperatives_suggestions.json",
+      "word": "help_your_friend",
+      "entryId": "imperatives_suggestions_4",
+      "article": "",
+      "text": "Help your friend with the homework."
+    },
+    {
+      "key": "imperatives_suggestions_5_grammar",
+      "file": "level3\\imperatives_suggestions.json",
+      "word": "try_again",
+      "entryId": "imperatives_suggestions_5",
+      "article": "",
+      "text": "Try the puzzle again."
+    },
+    {
+      "key": "imperatives_suggestions_6_grammar",
+      "file": "level3\\imperatives_suggestions.json",
+      "word": "be_quiet",
+      "entryId": "imperatives_suggestions_6",
+      "article": "",
+      "text": "Be quiet in the library."
+    },
+    {
+      "key": "imperatives_suggestions_7_grammar",
+      "file": "level3\\imperatives_suggestions.json",
+      "word": "dont_forget_rules",
+      "entryId": "imperatives_suggestions_7",
+      "article": "",
+      "text": "Don't forget the rules of the game."
+    },
+    {
+      "key": "imperatives_suggestions_8_grammar",
+      "file": "level3\\imperatives_suggestions.json",
+      "word": "lets_go_home",
+      "entryId": "imperatives_suggestions_8",
+      "article": "",
+      "text": "Let's go home now."
+    },
+    {
+      "key": "imperatives_suggestions_9_grammar",
+      "file": "level3\\imperatives_suggestions.json",
+      "word": "please_wash_hands",
+      "entryId": "imperatives_suggestions_9",
+      "article": "",
+      "text": "Please wash your hands before dinner."
+    },
+    {
+      "key": "like_to_1_grammar",
+      "file": "level3\\like_to.json",
+      "word": "i_like_to_read",
+      "entryId": "like_to_1",
+      "article": "",
+      "text": "I like to read books before bed."
+    },
+    {
+      "key": "like_to_10_grammar",
+      "file": "level3\\like_to.json",
+      "word": "he_likes_to_build",
+      "entryId": "like_to_10",
+      "article": "",
+      "text": "He likes to build with blocks at home."
+    },
+    {
+      "key": "like_to_11_grammar",
+      "file": "level3\\like_to.json",
+      "word": "you_like_to_help",
+      "entryId": "like_to_11",
+      "article": "",
+      "text": "You like to help others at school."
+    },
+    {
+      "key": "like_to_12_grammar",
+      "file": "level3\\like_to.json",
+      "word": "she_likes_to_ride",
+      "entryId": "like_to_12",
+      "article": "",
+      "text": "She likes to ride a bike in the park."
+    },
+    {
+      "key": "like_to_13_grammar",
+      "file": "level3\\like_to.json",
+      "word": "they_like_to_watch",
+      "entryId": "like_to_13",
+      "article": "",
+      "text": "They like to watch movies on weekends."
+    },
+    {
+      "key": "like_to_14_grammar",
+      "file": "level3\\like_to.json",
+      "word": "i_like_to_collect",
+      "entryId": "like_to_14",
+      "article": "",
+      "text": "I like to collect stickers at school."
+    },
+    {
+      "key": "like_to_15_grammar",
+      "file": "level3\\like_to.json",
+      "word": "we_like_to_plant",
+      "entryId": "like_to_15",
+      "article": "",
+      "text": "We like to plant flowers in the spring."
+    },
+    {
+      "key": "like_to_2_grammar",
+      "file": "level3\\like_to.json",
+      "word": "she_likes_to_play",
+      "entryId": "like_to_2",
+      "article": "",
+      "text": "She likes to play soccer on weekends."
+    },
+    {
+      "key": "like_to_3_grammar",
+      "file": "level3\\like_to.json",
+      "word": "we_like_to_eat",
+      "entryId": "like_to_3",
+      "article": "",
+      "text": "We like to eat pizza on Fridays."
+    },
+    {
+      "key": "like_to_4_grammar",
+      "file": "level3\\like_to.json",
+      "word": "he_likes_to_swim",
+      "entryId": "like_to_4",
+      "article": "",
+      "text": "He likes to swim in summer."
+    },
+    {
+      "key": "like_to_5_grammar",
+      "file": "level3\\like_to.json",
+      "word": "they_like_to_sing",
+      "entryId": "like_to_5",
+      "article": "",
+      "text": "They like to sing songs together."
+    },
+    {
+      "key": "like_to_6_grammar",
+      "file": "level3\\like_to.json",
+      "word": "i_like_to_draw",
+      "entryId": "like_to_6",
+      "article": "",
+      "text": "I like to draw pictures in art class."
+    },
+    {
+      "key": "like_to_7_grammar",
+      "file": "level3\\like_to.json",
+      "word": "you_like_to_play",
+      "entryId": "like_to_7",
+      "article": "",
+      "text": "You like to play games after school."
+    },
+    {
+      "key": "like_to_8_grammar",
+      "file": "level3\\like_to.json",
+      "word": "she_likes_to_listen",
+      "entryId": "like_to_8",
+      "article": "",
+      "text": "She likes to listen to music when studying."
+    },
+    {
+      "key": "like_to_9_grammar",
+      "file": "level3\\like_to.json",
+      "word": "we_like_to_go",
+      "entryId": "like_to_9",
+      "article": "",
+      "text": "We like to go to the park on sunny days."
+    },
+    {
+      "key": "like_to_vs_want_to_vs_have_to_1_grammar",
+      "file": "level3\\like_to_vs_want_to_vs_have_to.json",
+      "word": "i_like_to_play",
+      "entryId": "like_to_vs_want_to_vs_have_to_1",
+      "article": "",
+      "text": "I like to play, but I have to study."
+    },
+    {
+      "key": "like_to_vs_want_to_vs_have_to_10_grammar",
+      "file": "level3\\like_to_vs_want_to_vs_have_to.json",
+      "word": "he_wants_to_watch",
+      "entryId": "like_to_vs_want_to_vs_have_to_10",
+      "article": "",
+      "text": "He wants to watch TV, but must finish chores."
+    },
+    {
+      "key": "like_to_vs_want_to_vs_have_to_11_grammar",
+      "file": "level3\\like_to_vs_want_to_vs_have_to.json",
+      "word": "they_like_to_relax",
+      "entryId": "like_to_vs_want_to_vs_have_to_11",
+      "article": "",
+      "text": "They want to relax, but study first."
+    },
+    {
+      "key": "like_to_vs_want_to_vs_have_to_12_grammar",
+      "file": "level3\\like_to_vs_want_to_vs_have_to.json",
+      "word": "i_want_to_eat_cookies",
+      "entryId": "like_to_vs_want_to_vs_have_to_12",
+      "article": "",
+      "text": "I want cookies, but I must wait."
+    },
+    {
+      "key": "like_to_vs_want_to_vs_have_to_13_grammar",
+      "file": "level3\\like_to_vs_want_to_vs_have_to.json",
+      "word": "she_likes_to_dance",
+      "entryId": "like_to_vs_want_to_vs_have_to_13",
+      "article": "",
+      "text": "She likes to dance, but has to practice."
+    },
+    {
+      "key": "like_to_vs_want_to_vs_have_to_14_grammar",
+      "file": "level3\\like_to_vs_want_to_vs_have_to.json",
+      "word": "we_want_to_go_outside",
+      "entryId": "like_to_vs_want_to_vs_have_to_14",
+      "article": "",
+      "text": "We want to go out, but must finish work."
+    },
+    {
+      "key": "like_to_vs_want_to_vs_have_to_15_grammar",
+      "file": "level3\\like_to_vs_want_to_vs_have_to.json",
+      "word": "you_want_to_sleep_late",
+      "entryId": "like_to_vs_want_to_vs_have_to_15",
+      "article": "",
+      "text": "You want to sleep late, but need to wake early."
+    },
+    {
+      "key": "like_to_vs_want_to_vs_have_to_2_grammar",
+      "file": "level3\\like_to_vs_want_to_vs_have_to.json",
+      "word": "she_wants_to_eat",
+      "entryId": "like_to_vs_want_to_vs_have_to_2",
+      "article": "",
+      "text": "She wants cake, but she must wait."
+    },
+    {
+      "key": "like_to_vs_want_to_vs_have_to_3_grammar",
+      "file": "level3\\like_to_vs_want_to_vs_have_to.json",
+      "word": "we_like_to_travel",
+      "entryId": "like_to_vs_want_to_vs_have_to_3",
+      "article": "",
+      "text": "We like to travel, but we have to save money."
+    },
+    {
+      "key": "like_to_vs_want_to_vs_have_to_4_grammar",
+      "file": "level3\\like_to_vs_want_to_vs_have_to.json",
+      "word": "he_wants_to_sleep",
+      "entryId": "like_to_vs_want_to_vs_have_to_4",
+      "article": "",
+      "text": "He wants to sleep, but he has to finish his work."
+    },
+    {
+      "key": "like_to_vs_want_to_vs_have_to_5_grammar",
+      "file": "level3\\like_to_vs_want_to_vs_have_to.json",
+      "word": "they_like_to_sing",
+      "entryId": "like_to_vs_want_to_vs_have_to_5",
+      "article": "",
+      "text": "They like to sing, but they need to practice."
+    },
+    {
+      "key": "like_to_vs_want_to_vs_have_to_6_grammar",
+      "file": "level3\\like_to_vs_want_to_vs_have_to.json",
+      "word": "i_want_to_play",
+      "entryId": "like_to_vs_want_to_vs_have_to_6",
+      "article": "",
+      "text": "I want to play, but I have to clean my room."
+    },
+    {
+      "key": "like_to_vs_want_to_vs_have_to_7_grammar",
+      "file": "level3\\like_to_vs_want_to_vs_have_to.json",
+      "word": "she_likes_to_draw",
+      "entryId": "like_to_vs_want_to_vs_have_to_7",
+      "article": "",
+      "text": "She likes to draw, but has to do homework."
+    },
+    {
+      "key": "like_to_vs_want_to_vs_have_to_8_grammar",
+      "file": "level3\\like_to_vs_want_to_vs_have_to.json",
+      "word": "you_want_to_go",
+      "entryId": "like_to_vs_want_to_vs_have_to_8",
+      "article": "",
+      "text": "You want to go, but you need permission."
+    },
+    {
+      "key": "like_to_vs_want_to_vs_have_to_9_grammar",
+      "file": "level3\\like_to_vs_want_to_vs_have_to.json",
+      "word": "we_like_to_swim",
+      "entryId": "like_to_vs_want_to_vs_have_to_9",
+      "article": "",
+      "text": "We like to swim, but we must wear life jackets."
+    },
+    {
+      "key": "mixed_tense_questions_1_grammar",
+      "file": "level3\\mixed_tense_questions.json",
+      "word": "will_she_eat",
+      "entryId": "mixed_tense_questions_1",
+      "article": "",
+      "text": "Will she eat pizza later?"
+    },
+    {
+      "key": "mixed_tense_questions_10_grammar",
+      "file": "level3\\mixed_tense_questions.json",
+      "word": "did_she_cook",
+      "entryId": "mixed_tense_questions_10",
+      "article": "",
+      "text": "Did she cook dinner last night?"
+    },
+    {
+      "key": "mixed_tense_questions_11_grammar",
+      "file": "level3\\mixed_tense_questions.json",
+      "word": "do_we_need",
+      "entryId": "mixed_tense_questions_11",
+      "article": "",
+      "text": "Do we need more milk?"
+    },
+    {
+      "key": "mixed_tense_questions_12_grammar",
+      "file": "level3\\mixed_tense_questions.json",
+      "word": "does_it_rain",
+      "entryId": "mixed_tense_questions_12",
+      "article": "",
+      "text": "Does it rain a lot here?"
+    },
+    {
+      "key": "mixed_tense_questions_13_grammar",
+      "file": "level3\\mixed_tense_questions.json",
+      "word": "will_you_help",
+      "entryId": "mixed_tense_questions_13",
+      "article": "",
+      "text": "Will you help me tomorrow?"
+    },
+    {
+      "key": "mixed_tense_questions_14_grammar",
+      "file": "level3\\mixed_tense_questions.json",
+      "word": "did_they_finish",
+      "entryId": "mixed_tense_questions_14",
+      "article": "",
+      "text": "Did they finish the homework?"
+    },
+    {
+      "key": "mixed_tense_questions_15_grammar",
+      "file": "level3\\mixed_tense_questions.json",
+      "word": "do_cats_sleep",
+      "entryId": "mixed_tense_questions_15",
+      "article": "",
+      "text": "Do cats sleep a lot?"
+    },
+    {
+      "key": "mixed_tense_questions_2_grammar",
+      "file": "level3\\mixed_tense_questions.json",
+      "word": "did_he_go",
+      "entryId": "mixed_tense_questions_2",
+      "article": "",
+      "text": "Did he go to school yesterday?"
+    },
+    {
+      "key": "mixed_tense_questions_3_grammar",
+      "file": "level3\\mixed_tense_questions.json",
+      "word": "do_they_play",
+      "entryId": "mixed_tense_questions_3",
+      "article": "",
+      "text": "Do they play soccer every day?"
+    },
+    {
+      "key": "mixed_tense_questions_4_grammar",
+      "file": "level3\\mixed_tense_questions.json",
+      "word": "does_she_like",
+      "entryId": "mixed_tense_questions_4",
+      "article": "",
+      "text": "Does she like ice cream?"
+    },
+    {
+      "key": "mixed_tense_questions_5_grammar",
+      "file": "level3\\mixed_tense_questions.json",
+      "word": "will_we_travel",
+      "entryId": "mixed_tense_questions_5",
+      "article": "",
+      "text": "Will we travel next summer?"
+    },
+    {
+      "key": "mixed_tense_questions_6_grammar",
+      "file": "level3\\mixed_tense_questions.json",
+      "word": "did_you_see",
+      "entryId": "mixed_tense_questions_6",
+      "article": "",
+      "text": "Did you see the movie last night?"
+    },
+    {
+      "key": "mixed_tense_questions_7_grammar",
+      "file": "level3\\mixed_tense_questions.json",
+      "word": "do_you_study",
+      "entryId": "mixed_tense_questions_7",
+      "article": "",
+      "text": "Do you study English every day?"
+    },
+    {
+      "key": "mixed_tense_questions_8_grammar",
+      "file": "level3\\mixed_tense_questions.json",
+      "word": "does_he_work",
+      "entryId": "mixed_tense_questions_8",
+      "article": "",
+      "text": "Does he work on Saturdays?"
+    },
+    {
+      "key": "mixed_tense_questions_9_grammar",
+      "file": "level3\\mixed_tense_questions.json",
+      "word": "will_they_come",
+      "entryId": "mixed_tense_questions_9",
+      "article": "",
+      "text": "Will they come to the party tomorrow?"
+    },
+    {
+      "key": "modal_verbs_advanced_1_grammar",
+      "file": "level3\\modal_verbs_advanced.json",
+      "word": "you_must_stop",
+      "entryId": "modal_verbs_advanced_1",
+      "article": "",
+      "text": "You must stop at the red light to be safe."
+    },
+    {
+      "key": "modal_verbs_advanced_10_grammar",
+      "file": "level3\\modal_verbs_advanced.json",
+      "word": "you_neednt_come_early",
+      "entryId": "modal_verbs_advanced_10",
+      "article": "",
+      "text": "You needn't come early for the meeting."
+    },
+    {
+      "key": "modal_verbs_advanced_11_grammar",
+      "file": "level3\\modal_verbs_advanced.json",
+      "word": "are_students_allowed",
+      "entryId": "modal_verbs_advanced_11",
+      "article": "",
+      "text": "Are students allowed to use phones during breaks?"
+    },
+    {
+      "key": "modal_verbs_advanced_12_grammar",
+      "file": "level3\\modal_verbs_advanced.json",
+      "word": "i_could_have_told_you",
+      "entryId": "modal_verbs_advanced_12",
+      "article": "",
+      "text": "I could have told you earlier if you'd asked."
+    },
+    {
+      "key": "modal_verbs_advanced_2_grammar",
+      "file": "level3\\modal_verbs_advanced.json",
+      "word": "you_should_eat_vegetables",
+      "entryId": "modal_verbs_advanced_2",
+      "article": "",
+      "text": "You should eat vegetables every day."
+    },
+    {
+      "key": "modal_verbs_advanced_3_grammar",
+      "file": "level3\\modal_verbs_advanced.json",
+      "word": "it_might_rain_tomorrow",
+      "entryId": "modal_verbs_advanced_3",
+      "article": "",
+      "text": "Take an umbrella because it might rain tomorrow."
+    },
+    {
+      "key": "modal_verbs_advanced_4_grammar",
+      "file": "level3\\modal_verbs_advanced.json",
+      "word": "could_you_help_me",
+      "entryId": "modal_verbs_advanced_4",
+      "article": "",
+      "text": "Could you help me with this box?"
+    },
+    {
+      "key": "modal_verbs_advanced_5_grammar",
+      "file": "level3\\modal_verbs_advanced.json",
+      "word": "would_you_like_tea",
+      "entryId": "modal_verbs_advanced_5",
+      "article": "",
+      "text": "Would you like some tea with your snack?"
+    },
+    {
+      "key": "modal_verbs_advanced_6_grammar",
+      "file": "level3\\modal_verbs_advanced.json",
+      "word": "may_i_come_in",
+      "entryId": "modal_verbs_advanced_6",
+      "article": "",
+      "text": "May I come in and talk to you?"
+    },
+    {
+      "key": "modal_verbs_advanced_7_grammar",
+      "file": "level3\\modal_verbs_advanced.json",
+      "word": "you_ought_to_apologize",
+      "entryId": "modal_verbs_advanced_7",
+      "article": "",
+      "text": "You ought to apologize for what you said."
+    },
+    {
+      "key": "modal_verbs_advanced_8_grammar",
+      "file": "level3\\modal_verbs_advanced.json",
+      "word": "you_had_better_study",
+      "entryId": "modal_verbs_advanced_8",
+      "article": "",
+      "text": "You had better study now if you want to pass."
+    },
+    {
+      "key": "modal_verbs_advanced_9_grammar",
+      "file": "level3\\modal_verbs_advanced.json",
+      "word": "you_mustnt_touch",
+      "entryId": "modal_verbs_advanced_9",
+      "article": "",
+      "text": "You mustn't touch the exhibits at the museum."
+    },
+    {
+      "key": "modal_verbs_intermediate_1_grammar",
+      "file": "level3\\modal_verbs_intermediate.json",
+      "word": "you_must_stop",
+      "entryId": "modal_verbs_intermediate_1",
+      "article": "",
+      "text": "You must stop at the red light to be safe."
+    },
+    {
+      "key": "modal_verbs_intermediate_10_grammar",
+      "file": "level3\\modal_verbs_intermediate.json",
+      "word": "you_neednt_come_early",
+      "entryId": "modal_verbs_intermediate_10",
+      "article": "",
+      "text": "You needn't come early for the meeting."
+    },
+    {
+      "key": "modal_verbs_intermediate_11_grammar",
+      "file": "level3\\modal_verbs_intermediate.json",
+      "word": "are_students_allowed",
+      "entryId": "modal_verbs_intermediate_11",
+      "article": "",
+      "text": "Are students allowed to use phones during breaks?"
+    },
+    {
+      "key": "modal_verbs_intermediate_12_grammar",
+      "file": "level3\\modal_verbs_intermediate.json",
+      "word": "i_could_have_told_you",
+      "entryId": "modal_verbs_intermediate_12",
+      "article": "",
+      "text": "I could have told you earlier if you'd asked."
+    },
+    {
+      "key": "modal_verbs_intermediate_2_grammar",
+      "file": "level3\\modal_verbs_intermediate.json",
+      "word": "you_should_eat_vegetables",
+      "entryId": "modal_verbs_intermediate_2",
+      "article": "",
+      "text": "You should eat vegetables every day."
+    },
+    {
+      "key": "modal_verbs_intermediate_3_grammar",
+      "file": "level3\\modal_verbs_intermediate.json",
+      "word": "it_might_rain_tomorrow",
+      "entryId": "modal_verbs_intermediate_3",
+      "article": "",
+      "text": "Take an umbrella because it might rain tomorrow."
+    },
+    {
+      "key": "modal_verbs_intermediate_4_grammar",
+      "file": "level3\\modal_verbs_intermediate.json",
+      "word": "could_you_help_me",
+      "entryId": "modal_verbs_intermediate_4",
+      "article": "",
+      "text": "Could you help me with this box?"
+    },
+    {
+      "key": "modal_verbs_intermediate_5_grammar",
+      "file": "level3\\modal_verbs_intermediate.json",
+      "word": "would_you_like_tea",
+      "entryId": "modal_verbs_intermediate_5",
+      "article": "",
+      "text": "Would you like some tea with your snack?"
+    },
+    {
+      "key": "modal_verbs_intermediate_6_grammar",
+      "file": "level3\\modal_verbs_intermediate.json",
+      "word": "may_i_come_in",
+      "entryId": "modal_verbs_intermediate_6",
+      "article": "",
+      "text": "May I come in and talk to you?"
+    },
+    {
+      "key": "modal_verbs_intermediate_7_grammar",
+      "file": "level3\\modal_verbs_intermediate.json",
+      "word": "you_ought_to_apologize",
+      "entryId": "modal_verbs_intermediate_7",
+      "article": "",
+      "text": "You ought to apologize for what you said."
+    },
+    {
+      "key": "modal_verbs_intermediate_8_grammar",
+      "file": "level3\\modal_verbs_intermediate.json",
+      "word": "you_had_better_study",
+      "entryId": "modal_verbs_intermediate_8",
+      "article": "",
+      "text": "You had better study now if you want to pass."
+    },
+    {
+      "key": "modal_verbs_intermediate_9_grammar",
+      "file": "level3\\modal_verbs_intermediate.json",
+      "word": "you_mustnt_touch",
+      "entryId": "modal_verbs_intermediate_9",
+      "article": "",
+      "text": "You mustn't touch the exhibits at the museum."
     },
     {
       "key": "past_simple_irregular_1_grammar",
@@ -490,6 +1642,126 @@
       "text": "He painted the wall last weekend."
     },
     {
+      "key": "past_tense_questions_1_grammar",
+      "file": "level3\\past_tense_questions.json",
+      "word": "did_you_play",
+      "entryId": "past_tense_questions_1",
+      "article": "",
+      "text": "Did you play soccer yesterday?"
+    },
+    {
+      "key": "past_tense_questions_10_grammar",
+      "file": "level3\\past_tense_questions.json",
+      "word": "did_you_buy",
+      "entryId": "past_tense_questions_10",
+      "article": "",
+      "text": "Did you buy a gift for her birthday?"
+    },
+    {
+      "key": "past_tense_questions_11_grammar",
+      "file": "level3\\past_tense_questions.json",
+      "word": "did_we_have",
+      "entryId": "past_tense_questions_11",
+      "article": "",
+      "text": "Did we have a class today?"
+    },
+    {
+      "key": "past_tense_questions_12_grammar",
+      "file": "level3\\past_tense_questions.json",
+      "word": "did_she_pass",
+      "entryId": "past_tense_questions_12",
+      "article": "",
+      "text": "Did she pass the test last month?"
+    },
+    {
+      "key": "past_tense_questions_13_grammar",
+      "file": "level3\\past_tense_questions.json",
+      "word": "did_they_clean",
+      "entryId": "past_tense_questions_13",
+      "article": "",
+      "text": "Did they clean the room after the party?"
+    },
+    {
+      "key": "past_tense_questions_14_grammar",
+      "file": "level3\\past_tense_questions.json",
+      "word": "did_you_drink",
+      "entryId": "past_tense_questions_14",
+      "article": "",
+      "text": "Did you drink water this morning?"
+    },
+    {
+      "key": "past_tense_questions_15_grammar",
+      "file": "level3\\past_tense_questions.json",
+      "word": "did_he_find",
+      "entryId": "past_tense_questions_15",
+      "article": "",
+      "text": "Did he find his keys under the couch?"
+    },
+    {
+      "key": "past_tense_questions_2_grammar",
+      "file": "level3\\past_tense_questions.json",
+      "word": "did_she_eat",
+      "entryId": "past_tense_questions_2",
+      "article": "",
+      "text": "Did she eat breakfast today?"
+    },
+    {
+      "key": "past_tense_questions_3_grammar",
+      "file": "level3\\past_tense_questions.json",
+      "word": "did_we_win",
+      "entryId": "past_tense_questions_3",
+      "article": "",
+      "text": "Did we win the game last week?"
+    },
+    {
+      "key": "past_tense_questions_4_grammar",
+      "file": "level3\\past_tense_questions.json",
+      "word": "did_he_go",
+      "entryId": "past_tense_questions_4",
+      "article": "",
+      "text": "Did he go to school on Monday?"
+    },
+    {
+      "key": "past_tense_questions_5_grammar",
+      "file": "level3\\past_tense_questions.json",
+      "word": "did_they_see",
+      "entryId": "past_tense_questions_5",
+      "article": "",
+      "text": "Did they see the movie last night?"
+    },
+    {
+      "key": "past_tense_questions_6_grammar",
+      "file": "level3\\past_tense_questions.json",
+      "word": "did_you_finish",
+      "entryId": "past_tense_questions_6",
+      "article": "",
+      "text": "Did you finish your homework on time?"
+    },
+    {
+      "key": "past_tense_questions_7_grammar",
+      "file": "level3\\past_tense_questions.json",
+      "word": "did_she_come",
+      "entryId": "past_tense_questions_7",
+      "article": "",
+      "text": "Did she come home early yesterday?"
+    },
+    {
+      "key": "past_tense_questions_8_grammar",
+      "file": "level3\\past_tense_questions.json",
+      "word": "did_they_travel",
+      "entryId": "past_tense_questions_8",
+      "article": "",
+      "text": "Did they travel to Busan last year?"
+    },
+    {
+      "key": "past_tense_questions_9_grammar",
+      "file": "level3\\past_tense_questions.json",
+      "word": "did_he_call",
+      "entryId": "past_tense_questions_9",
+      "article": "",
+      "text": "Did he call you yesterday evening?"
+    },
+    {
       "key": "past_vs_future_f_1_grammar",
       "file": "level3\\past_vs_future.json",
       "word": "tomorrow",
@@ -728,6 +2000,846 @@
       "entryId": "past_vs_future_p_9",
       "article": "",
       "text": "He watched TV last night."
+    },
+    {
+      "key": "past_vs_present_vs_future_vs_continuous_1_grammar",
+      "file": "level3\\past_vs_present_vs_future_vs_continuous.json",
+      "word": "i_played_soccer_every",
+      "entryId": "past_vs_present_vs_future_vs_continuous_1",
+      "article": "",
+      "text": "Past, Present, Future, Continuous."
+    },
+    {
+      "key": "past_vs_present_vs_future_vs_continuous_10_grammar",
+      "file": "level3\\past_vs_present_vs_future_vs_continuous.json",
+      "word": "they_helped_their_friend",
+      "entryId": "past_vs_present_vs_future_vs_continuous_10",
+      "article": "",
+      "text": "Past, Present, Future, Continuous."
+    },
+    {
+      "key": "past_vs_present_vs_future_vs_continuous_11_grammar",
+      "file": "level3\\past_vs_present_vs_future_vs_continuous.json",
+      "word": "i_painted_the_room",
+      "entryId": "past_vs_present_vs_future_vs_continuous_11",
+      "article": "",
+      "text": "Past, Present, Future, Continuous."
+    },
+    {
+      "key": "past_vs_present_vs_future_vs_continuous_12_grammar",
+      "file": "level3\\past_vs_present_vs_future_vs_continuous.json",
+      "word": "she_bought_a_bike",
+      "entryId": "past_vs_present_vs_future_vs_continuous_12",
+      "article": "",
+      "text": "Past, Present, Future, Continuous."
+    },
+    {
+      "key": "past_vs_present_vs_future_vs_continuous_13_grammar",
+      "file": "level3\\past_vs_present_vs_future_vs_continuous.json",
+      "word": "we_started_the_project",
+      "entryId": "past_vs_present_vs_future_vs_continuous_13",
+      "article": "",
+      "text": "Past, Present, Future, Continuous."
+    },
+    {
+      "key": "past_vs_present_vs_future_vs_continuous_14_grammar",
+      "file": "level3\\past_vs_present_vs_future_vs_continuous.json",
+      "word": "he_learned_to_drive",
+      "entryId": "past_vs_present_vs_future_vs_continuous_14",
+      "article": "",
+      "text": "Past, Present, Future, Continuous."
+    },
+    {
+      "key": "past_vs_present_vs_future_vs_continuous_15_grammar",
+      "file": "level3\\past_vs_present_vs_future_vs_continuous.json",
+      "word": "they_moved_to_a_new",
+      "entryId": "past_vs_present_vs_future_vs_continuous_15",
+      "article": "",
+      "text": "Past, Present, Future, Continuous."
+    },
+    {
+      "key": "past_vs_present_vs_future_vs_continuous_2_grammar",
+      "file": "level3\\past_vs_present_vs_future_vs_continuous.json",
+      "word": "she_studied_last",
+      "entryId": "past_vs_present_vs_future_vs_continuous_2",
+      "article": "",
+      "text": "Past, Present, Future, Continuous."
+    },
+    {
+      "key": "past_vs_present_vs_future_vs_continuous_3_grammar",
+      "file": "level3\\past_vs_present_vs_future_vs_continuous.json",
+      "word": "we_visited_the_museum",
+      "entryId": "past_vs_present_vs_future_vs_continuous_3",
+      "article": "",
+      "text": "Past, Present, Future, Continuous."
+    },
+    {
+      "key": "past_vs_present_vs_future_vs_continuous_4_grammar",
+      "file": "level3\\past_vs_present_vs_future_vs_continuous.json",
+      "word": "he_ate_pizza_yesterday",
+      "entryId": "past_vs_present_vs_future_vs_continuous_4",
+      "article": "",
+      "text": "Past, Present, Future, Continuous."
+    },
+    {
+      "key": "past_vs_present_vs_future_vs_continuous_5_grammar",
+      "file": "level3\\past_vs_present_vs_future_vs_continuous.json",
+      "word": "they_traveled_last",
+      "entryId": "past_vs_present_vs_future_vs_continuous_5",
+      "article": "",
+      "text": "Past, Present, Future, Continuous."
+    },
+    {
+      "key": "past_vs_present_vs_future_vs_continuous_6_grammar",
+      "file": "level3\\past_vs_present_vs_future_vs_continuous.json",
+      "word": "i_learned_english_last",
+      "entryId": "past_vs_present_vs_future_vs_continuous_6",
+      "article": "",
+      "text": "Past, Present, Future, Continuous."
+    },
+    {
+      "key": "past_vs_present_vs_future_vs_continuous_7_grammar",
+      "file": "level3\\past_vs_present_vs_future_vs_continuous.json",
+      "word": "she_made_dinner_yesterday",
+      "entryId": "past_vs_present_vs_future_vs_continuous_7",
+      "article": "",
+      "text": "Past, Present, Future, Continuous."
+    },
+    {
+      "key": "past_vs_present_vs_future_vs_continuous_8_grammar",
+      "file": "level3\\past_vs_present_vs_future_vs_continuous.json",
+      "word": "we_watched_the_game",
+      "entryId": "past_vs_present_vs_future_vs_continuous_8",
+      "article": "",
+      "text": "Past, Present, Future, Continuous."
+    },
+    {
+      "key": "past_vs_present_vs_future_vs_continuous_9_grammar",
+      "file": "level3\\past_vs_present_vs_future_vs_continuous.json",
+      "word": "he_fixed_his_bike",
+      "entryId": "past_vs_present_vs_future_vs_continuous_9",
+      "article": "",
+      "text": "Past, Present, Future, Continuous."
+    },
+    {
+      "key": "prepositions_direction_1_grammar",
+      "file": "level3\\prepositions_direction.json",
+      "word": "walk_around",
+      "entryId": "prepositions_direction_1",
+      "article": "",
+      "text": "Walk around the park with friends."
+    },
+    {
+      "key": "prepositions_direction_10_grammar",
+      "file": "level3\\prepositions_direction.json",
+      "word": "walk_along_the",
+      "entryId": "prepositions_direction_10",
+      "article": "",
+      "text": "Walk along the river in the evening."
+    },
+    {
+      "key": "prepositions_direction_11_grammar",
+      "file": "level3\\prepositions_direction.json",
+      "word": "turn_left_at",
+      "entryId": "prepositions_direction_11",
+      "article": "",
+      "text": "Turn left at the corner to reach the park."
+    },
+    {
+      "key": "prepositions_direction_12_grammar",
+      "file": "level3\\prepositions_direction.json",
+      "word": "go_towards_the",
+      "entryId": "prepositions_direction_12",
+      "article": "",
+      "text": "Go towards the school to find the gym."
+    },
+    {
+      "key": "prepositions_direction_13_grammar",
+      "file": "level3\\prepositions_direction.json",
+      "word": "head_back_home",
+      "entryId": "prepositions_direction_13",
+      "article": "",
+      "text": "Head back home after practice."
+    },
+    {
+      "key": "prepositions_direction_14_grammar",
+      "file": "level3\\prepositions_direction.json",
+      "word": "step_into_the",
+      "entryId": "prepositions_direction_14",
+      "article": "",
+      "text": "Step into the room carefully."
+    },
+    {
+      "key": "prepositions_direction_15_grammar",
+      "file": "level3\\prepositions_direction.json",
+      "word": "walk_around_block",
+      "entryId": "prepositions_direction_15",
+      "article": "",
+      "text": "Walk around the block for exercise."
+    },
+    {
+      "key": "prepositions_direction_2_grammar",
+      "file": "level3\\prepositions_direction.json",
+      "word": "go_up_the",
+      "entryId": "prepositions_direction_2",
+      "article": "",
+      "text": "Go up the stairs to the second floor."
+    },
+    {
+      "key": "prepositions_direction_3_grammar",
+      "file": "level3\\prepositions_direction.json",
+      "word": "come_down_quickly",
+      "entryId": "prepositions_direction_3",
+      "article": "",
+      "text": "Come down quickly for lunch."
+    },
+    {
+      "key": "prepositions_direction_4_grammar",
+      "file": "level3\\prepositions_direction.json",
+      "word": "go_through_the",
+      "entryId": "prepositions_direction_4",
+      "article": "",
+      "text": "Go through the door to the classroom."
+    },
+    {
+      "key": "prepositions_direction_5_grammar",
+      "file": "level3\\prepositions_direction.json",
+      "word": "run_across",
+      "entryId": "prepositions_direction_5",
+      "article": "",
+      "text": "Run across the bridge to the park."
+    },
+    {
+      "key": "prepositions_direction_6_grammar",
+      "file": "level3\\prepositions_direction.json",
+      "word": "walk_past",
+      "entryId": "prepositions_direction_6",
+      "article": "",
+      "text": "Walk past the store to get to school."
+    },
+    {
+      "key": "prepositions_direction_7_grammar",
+      "file": "level3\\prepositions_direction.json",
+      "word": "go_under_the",
+      "entryId": "prepositions_direction_7",
+      "article": "",
+      "text": "Go under the bridge to reach the river."
+    },
+    {
+      "key": "prepositions_direction_8_grammar",
+      "file": "level3\\prepositions_direction.json",
+      "word": "climb_up_the",
+      "entryId": "prepositions_direction_8",
+      "article": "",
+      "text": "Climb up the hill to see the view."
+    },
+    {
+      "key": "prepositions_direction_9_grammar",
+      "file": "level3\\prepositions_direction.json",
+      "word": "jump_over_the",
+      "entryId": "prepositions_direction_9",
+      "article": "",
+      "text": "Jump over the puddle so your shoes don't get wet."
+    },
+    {
+      "key": "short_comparatives_1_grammar",
+      "file": "level3\\short_comparatives.json",
+      "word": "bigger",
+      "entryId": "short_comparatives_1",
+      "article": "",
+      "text": "My house is bigger than yours."
+    },
+    {
+      "key": "short_comparatives_10_grammar",
+      "file": "level3\\short_comparatives.json",
+      "word": "more_expensive",
+      "entryId": "short_comparatives_10",
+      "article": "",
+      "text": "This phone is more expensive than mine."
+    },
+    {
+      "key": "short_comparatives_11_grammar",
+      "file": "level3\\short_comparatives.json",
+      "word": "hotter",
+      "entryId": "short_comparatives_11",
+      "article": "",
+      "text": "July is hotter than May."
+    },
+    {
+      "key": "short_comparatives_12_grammar",
+      "file": "level3\\short_comparatives.json",
+      "word": "colder",
+      "entryId": "short_comparatives_12",
+      "article": "",
+      "text": "January is colder than April."
+    },
+    {
+      "key": "short_comparatives_13_grammar",
+      "file": "level3\\short_comparatives.json",
+      "word": "easier",
+      "entryId": "short_comparatives_13",
+      "article": "",
+      "text": "Math is easier than physics for me."
+    },
+    {
+      "key": "short_comparatives_14_grammar",
+      "file": "level3\\short_comparatives.json",
+      "word": "harder",
+      "entryId": "short_comparatives_14",
+      "article": "",
+      "text": "This puzzle is harder than that one."
+    },
+    {
+      "key": "short_comparatives_15_grammar",
+      "file": "level3\\short_comparatives.json",
+      "word": "better",
+      "entryId": "short_comparatives_15",
+      "article": "",
+      "text": "She sings better than before."
+    },
+    {
+      "key": "short_comparatives_2_grammar",
+      "file": "level3\\short_comparatives.json",
+      "word": "smaller",
+      "entryId": "short_comparatives_2",
+      "article": "",
+      "text": "This pencil is smaller than that one."
+    },
+    {
+      "key": "short_comparatives_3_grammar",
+      "file": "level3\\short_comparatives.json",
+      "word": "faster",
+      "entryId": "short_comparatives_3",
+      "article": "",
+      "text": "A cheetah is faster than a dog."
+    },
+    {
+      "key": "short_comparatives_4_grammar",
+      "file": "level3\\short_comparatives.json",
+      "word": "slower",
+      "entryId": "short_comparatives_4",
+      "article": "",
+      "text": "A snail is slower than a rabbit."
+    },
+    {
+      "key": "short_comparatives_5_grammar",
+      "file": "level3\\short_comparatives.json",
+      "word": "taller",
+      "entryId": "short_comparatives_5",
+      "article": "",
+      "text": "She is taller than her brother."
+    },
+    {
+      "key": "short_comparatives_6_grammar",
+      "file": "level3\\short_comparatives.json",
+      "word": "shorter",
+      "entryId": "short_comparatives_6",
+      "article": "",
+      "text": "He is shorter than his father."
+    },
+    {
+      "key": "short_comparatives_7_grammar",
+      "file": "level3\\short_comparatives.json",
+      "word": "older",
+      "entryId": "short_comparatives_7",
+      "article": "",
+      "text": "My sister is older than me."
+    },
+    {
+      "key": "short_comparatives_8_grammar",
+      "file": "level3\\short_comparatives.json",
+      "word": "younger",
+      "entryId": "short_comparatives_8",
+      "article": "",
+      "text": "My brother is younger than me."
+    },
+    {
+      "key": "short_comparatives_9_grammar",
+      "file": "level3\\short_comparatives.json",
+      "word": "cheaper",
+      "entryId": "short_comparatives_9",
+      "article": "",
+      "text": "This toy is cheaper than that one."
+    },
+    {
+      "key": "short_superlatives_1_grammar",
+      "file": "level3\\short_superlatives.json",
+      "word": "biggest",
+      "entryId": "short_superlatives_1",
+      "article": "",
+      "text": "He has the biggest toy collection in the class."
+    },
+    {
+      "key": "short_superlatives_10_grammar",
+      "file": "level3\\short_superlatives.json",
+      "word": "most_expensive",
+      "entryId": "short_superlatives_10",
+      "article": "",
+      "text": "That watch is the most expensive in the shop."
+    },
+    {
+      "key": "short_superlatives_11_grammar",
+      "file": "level3\\short_superlatives.json",
+      "word": "hottest",
+      "entryId": "short_superlatives_11",
+      "article": "",
+      "text": "This is the hottest day of the year."
+    },
+    {
+      "key": "short_superlatives_12_grammar",
+      "file": "level3\\short_superlatives.json",
+      "word": "coldest",
+      "entryId": "short_superlatives_12",
+      "article": "",
+      "text": "Yesterday was the coldest day of the winter."
+    },
+    {
+      "key": "short_superlatives_13_grammar",
+      "file": "level3\\short_superlatives.json",
+      "word": "easiest",
+      "entryId": "short_superlatives_13",
+      "article": "",
+      "text": "This is the easiest question on the test."
+    },
+    {
+      "key": "short_superlatives_14_grammar",
+      "file": "level3\\short_superlatives.json",
+      "word": "hardest",
+      "entryId": "short_superlatives_14",
+      "article": "",
+      "text": "That is the hardest level in the game."
+    },
+    {
+      "key": "short_superlatives_15_grammar",
+      "file": "level3\\short_superlatives.json",
+      "word": "best",
+      "entryId": "short_superlatives_15",
+      "article": "",
+      "text": "She is the best student in class."
+    },
+    {
+      "key": "short_superlatives_2_grammar",
+      "file": "level3\\short_superlatives.json",
+      "word": "smallest",
+      "entryId": "short_superlatives_2",
+      "article": "",
+      "text": "This is the smallest room in the house."
+    },
+    {
+      "key": "short_superlatives_3_grammar",
+      "file": "level3\\short_superlatives.json",
+      "word": "fastest",
+      "entryId": "short_superlatives_3",
+      "article": "",
+      "text": "She is the fastest runner in the class."
+    },
+    {
+      "key": "short_superlatives_4_grammar",
+      "file": "level3\\short_superlatives.json",
+      "word": "slowest",
+      "entryId": "short_superlatives_4",
+      "article": "",
+      "text": "The turtle is the slowest animal here."
+    },
+    {
+      "key": "short_superlatives_5_grammar",
+      "file": "level3\\short_superlatives.json",
+      "word": "tallest",
+      "entryId": "short_superlatives_5",
+      "article": "",
+      "text": "He is the tallest person in the team."
+    },
+    {
+      "key": "short_superlatives_6_grammar",
+      "file": "level3\\short_superlatives.json",
+      "word": "shortest",
+      "entryId": "short_superlatives_6",
+      "article": "",
+      "text": "This is the shortest street in the town."
+    },
+    {
+      "key": "short_superlatives_7_grammar",
+      "file": "level3\\short_superlatives.json",
+      "word": "oldest",
+      "entryId": "short_superlatives_7",
+      "article": "",
+      "text": "This is the oldest tree in the park."
+    },
+    {
+      "key": "short_superlatives_8_grammar",
+      "file": "level3\\short_superlatives.json",
+      "word": "youngest",
+      "entryId": "short_superlatives_8",
+      "article": "",
+      "text": "She is the youngest in the class."
+    },
+    {
+      "key": "short_superlatives_9_grammar",
+      "file": "level3\\short_superlatives.json",
+      "word": "cheapest",
+      "entryId": "short_superlatives_9",
+      "article": "",
+      "text": "This is the cheapest gift in the store."
+    },
+    {
+      "key": "want_to_1_grammar",
+      "file": "level3\\want_to.json",
+      "word": "i_want_to_eat",
+      "entryId": "want_to_1",
+      "article": "",
+      "text": "I want to eat ice cream now."
+    },
+    {
+      "key": "want_to_10_grammar",
+      "file": "level3\\want_to.json",
+      "word": "he_wants_to_learn",
+      "entryId": "want_to_10",
+      "article": "",
+      "text": "He wants to learn to drive next year."
+    },
+    {
+      "key": "want_to_11_grammar",
+      "file": "level3\\want_to.json",
+      "word": "they_want_to_play",
+      "entryId": "want_to_11",
+      "article": "",
+      "text": "They want to play together after school."
+    },
+    {
+      "key": "want_to_12_grammar",
+      "file": "level3\\want_to.json",
+      "word": "you_want_to_visit",
+      "entryId": "want_to_12",
+      "article": "",
+      "text": "You want to visit your friend this weekend."
+    },
+    {
+      "key": "want_to_13_grammar",
+      "file": "level3\\want_to.json",
+      "word": "i_want_to_try",
+      "entryId": "want_to_13",
+      "article": "",
+      "text": "I want to try the new game tonight."
+    },
+    {
+      "key": "want_to_14_grammar",
+      "file": "level3\\want_to.json",
+      "word": "she_wants_to_study_abroad",
+      "entryId": "want_to_14",
+      "article": "",
+      "text": "She wants to study abroad next year."
+    },
+    {
+      "key": "want_to_15_grammar",
+      "file": "level3\\want_to.json",
+      "word": "we_want_to_help",
+      "entryId": "want_to_15",
+      "article": "",
+      "text": "We want to help the animals at the shelter."
+    },
+    {
+      "key": "want_to_2_grammar",
+      "file": "level3\\want_to.json",
+      "word": "she_wants_to_go",
+      "entryId": "want_to_2",
+      "article": "",
+      "text": "She wants to go home early."
+    },
+    {
+      "key": "want_to_3_grammar",
+      "file": "level3\\want_to.json",
+      "word": "we_want_to_watch",
+      "entryId": "want_to_3",
+      "article": "",
+      "text": "We want to watch a movie tonight."
+    },
+    {
+      "key": "want_to_4_grammar",
+      "file": "level3\\want_to.json",
+      "word": "he_wants_to_buy",
+      "entryId": "want_to_4",
+      "article": "",
+      "text": "He wants to buy a toy at the store."
+    },
+    {
+      "key": "want_to_5_grammar",
+      "file": "level3\\want_to.json",
+      "word": "they_want_to_travel",
+      "entryId": "want_to_5",
+      "article": "",
+      "text": "They want to travel next summer."
+    },
+    {
+      "key": "want_to_6_grammar",
+      "file": "level3\\want_to.json",
+      "word": "you_want_to_learn",
+      "entryId": "want_to_6",
+      "article": "",
+      "text": "You want to learn English well."
+    },
+    {
+      "key": "want_to_7_grammar",
+      "file": "level3\\want_to.json",
+      "word": "i_want_to_play",
+      "entryId": "want_to_7",
+      "article": "",
+      "text": "I want to play outside now."
+    },
+    {
+      "key": "want_to_8_grammar",
+      "file": "level3\\want_to.json",
+      "word": "she_wants_to_eat",
+      "entryId": "want_to_8",
+      "article": "",
+      "text": "She wants to eat cake after school."
+    },
+    {
+      "key": "want_to_9_grammar",
+      "file": "level3\\want_to.json",
+      "word": "we_want_to_buy",
+      "entryId": "want_to_9",
+      "article": "",
+      "text": "We want to buy new books at the store."
+    },
+    {
+      "key": "will_future_1_grammar",
+      "file": "level3\\will_future.json",
+      "word": "i_will_call",
+      "entryId": "will_future_1",
+      "article": "",
+      "text": "I will call you tomorrow after lunch."
+    },
+    {
+      "key": "will_future_10_grammar",
+      "file": "level3\\will_future.json",
+      "word": "they_will_return",
+      "entryId": "will_future_10",
+      "article": "",
+      "text": "They will return the books to the library."
+    },
+    {
+      "key": "will_future_11_grammar",
+      "file": "level3\\will_future.json",
+      "word": "i_will_answer",
+      "entryId": "will_future_11",
+      "article": "",
+      "text": "I will answer your question after class."
+    },
+    {
+      "key": "will_future_12_grammar",
+      "file": "level3\\will_future.json",
+      "word": "she_will_travel",
+      "entryId": "will_future_12",
+      "article": "",
+      "text": "She will travel to Japan next spring."
+    },
+    {
+      "key": "will_future_13_grammar",
+      "file": "level3\\will_future.json",
+      "word": "we_will_celebrate",
+      "entryId": "will_future_13",
+      "article": "",
+      "text": "We will celebrate his birthday this weekend."
+    },
+    {
+      "key": "will_future_14_grammar",
+      "file": "level3\\will_future.json",
+      "word": "he_will_pass",
+      "entryId": "will_future_14",
+      "article": "",
+      "text": "He will pass the test if he studies."
+    },
+    {
+      "key": "will_future_15_grammar",
+      "file": "level3\\will_future.json",
+      "word": "they_will_bring",
+      "entryId": "will_future_15",
+      "article": "",
+      "text": "They will bring the cake to the party."
+    },
+    {
+      "key": "will_future_2_grammar",
+      "file": "level3\\will_future.json",
+      "word": "she_will_help",
+      "entryId": "will_future_2",
+      "article": "",
+      "text": "She will help us with our homework."
+    },
+    {
+      "key": "will_future_3_grammar",
+      "file": "level3\\will_future.json",
+      "word": "we_will_visit",
+      "entryId": "will_future_3",
+      "article": "",
+      "text": "We will visit the museum next week."
+    },
+    {
+      "key": "will_future_4_grammar",
+      "file": "level3\\will_future.json",
+      "word": "he_will_be",
+      "entryId": "will_future_4",
+      "article": "",
+      "text": "He will be a doctor one day."
+    },
+    {
+      "key": "will_future_5_grammar",
+      "file": "level3\\will_future.json",
+      "word": "they_will_buy",
+      "entryId": "will_future_5",
+      "article": "",
+      "text": "They will buy a new house next year."
+    },
+    {
+      "key": "will_future_6_grammar",
+      "file": "level3\\will_future.json",
+      "word": "i_will_be_there",
+      "entryId": "will_future_6",
+      "article": "",
+      "text": "I will be there at six o'clock."
+    },
+    {
+      "key": "will_future_7_grammar",
+      "file": "level3\\will_future.json",
+      "word": "she_will_learn",
+      "entryId": "will_future_7",
+      "article": "",
+      "text": "She will learn driving next year."
+    },
+    {
+      "key": "will_future_8_grammar",
+      "file": "level3\\will_future.json",
+      "word": "we_will_watch",
+      "entryId": "will_future_8",
+      "article": "",
+      "text": "We will watch a movie tonight together."
+    },
+    {
+      "key": "will_future_9_grammar",
+      "file": "level3\\will_future.json",
+      "word": "he_will_start",
+      "entryId": "will_future_9",
+      "article": "",
+      "text": "He will start a new job next month."
+    },
+    {
+      "key": "will_questions_1_grammar",
+      "file": "level3\\will_questions.json",
+      "word": "will_you_come",
+      "entryId": "will_questions_1",
+      "article": "",
+      "text": "Will you come to my party on Friday?"
+    },
+    {
+      "key": "will_questions_10_grammar",
+      "file": "level3\\will_questions.json",
+      "word": "will_they_be_late",
+      "entryId": "will_questions_10",
+      "article": "",
+      "text": "Will they be late for the meeting?"
+    },
+    {
+      "key": "will_questions_11_grammar",
+      "file": "level3\\will_questions.json",
+      "word": "will_he_call",
+      "entryId": "will_questions_11",
+      "article": "",
+      "text": "Will he call you after work?"
+    },
+    {
+      "key": "will_questions_12_grammar",
+      "file": "level3\\will_questions.json",
+      "word": "will_we_have_time",
+      "entryId": "will_questions_12",
+      "article": "",
+      "text": "Will we have time to finish this?"
+    },
+    {
+      "key": "will_questions_13_grammar",
+      "file": "level3\\will_questions.json",
+      "word": "will_you_bring",
+      "entryId": "will_questions_13",
+      "article": "",
+      "text": "Will you bring dessert to the party?"
+    },
+    {
+      "key": "will_questions_14_grammar",
+      "file": "level3\\will_questions.json",
+      "word": "will_she_come",
+      "entryId": "will_questions_14",
+      "article": "",
+      "text": "Will she come with us to the museum?"
+    },
+    {
+      "key": "will_questions_15_grammar",
+      "file": "level3\\will_questions.json",
+      "word": "will_they_attend",
+      "entryId": "will_questions_15",
+      "article": "",
+      "text": "Will they attend the meeting tomorrow?"
+    },
+    {
+      "key": "will_questions_2_grammar",
+      "file": "level3\\will_questions.json",
+      "word": "will_she_help",
+      "entryId": "will_questions_2",
+      "article": "",
+      "text": "Will she help me with the homework?"
+    },
+    {
+      "key": "will_questions_3_grammar",
+      "file": "level3\\will_questions.json",
+      "word": "will_they_play",
+      "entryId": "will_questions_3",
+      "article": "",
+      "text": "Will they play soccer tomorrow?"
+    },
+    {
+      "key": "will_questions_4_grammar",
+      "file": "level3\\will_questions.json",
+      "word": "will_he_eat",
+      "entryId": "will_questions_4",
+      "article": "",
+      "text": "Will he eat lunch at school?"
+    },
+    {
+      "key": "will_questions_5_grammar",
+      "file": "level3\\will_questions.json",
+      "word": "will_we_win",
+      "entryId": "will_questions_5",
+      "article": "",
+      "text": "Will we win the game today?"
+    },
+    {
+      "key": "will_questions_6_grammar",
+      "file": "level3\\will_questions.json",
+      "word": "will_you_study",
+      "entryId": "will_questions_6",
+      "article": "",
+      "text": "Will you study English this year?"
+    },
+    {
+      "key": "will_questions_7_grammar",
+      "file": "level3\\will_questions.json",
+      "word": "will_it_rain",
+      "entryId": "will_questions_7",
+      "article": "",
+      "text": "Will it rain tomorrow or will it be sunny?"
+    },
+    {
+      "key": "will_questions_8_grammar",
+      "file": "level3\\will_questions.json",
+      "word": "will_she_pass",
+      "entryId": "will_questions_8",
+      "article": "",
+      "text": "Will she pass the exam if she studies?"
+    },
+    {
+      "key": "will_questions_9_grammar",
+      "file": "level3\\will_questions.json",
+      "word": "will_you_help",
+      "entryId": "will_questions_9",
+      "article": "",
+      "text": "Will you help me move next week?"
     }
   ]
 }

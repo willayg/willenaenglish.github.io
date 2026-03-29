@@ -113,11 +113,44 @@ async function fetchProfile(env, userId, fields = 'id,role,approved,class,name,k
   return data && data[0] ? data[0] : null;
 }
 
+function getAssignmentTargetStudentIds(assignment) {
+  const ids = new Set();
+  const meta = assignment?.list_meta || {};
+  if (Array.isArray(meta.target_student_ids)) {
+    meta.target_student_ids.forEach((value) => {
+      const id = String(value || '').trim();
+      if (id) ids.add(id);
+    });
+  }
+  if (Array.isArray(meta.target_students)) {
+    meta.target_students.forEach((entry) => {
+      const id = String(entry?.id || '').trim();
+      if (id) ids.add(id);
+    });
+  }
+  return Array.from(ids);
+}
+
 // Generate run token
 function generateRunToken(assignmentId) {
   const t = Date.now().toString(36);
   const rand = Math.random().toString(36).slice(2, 8);
   return `run_${assignmentId}_${t}_${rand}`;
+}
+
+function normalizeWordKey(value) {
+  return String(value || '')
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function parseJsonMaybe(value) {
+  if (!value) return null;
+  if (typeof value === 'object') return value;
+  try { return JSON.parse(value); } catch { return null; }
 }
 
 // Supabase REST helpers
@@ -236,8 +269,15 @@ export default {
           class: className, title, description, list_key, list_title,
           list_meta, start_at, due_at, goal_type, goal_value,
         } = body;
-        
-        if (!className || !title || !list_key || !due_at) {
+        const sourceMeta = list_meta && typeof list_meta === 'object' ? { ...list_meta } : {};
+        const isSavedGameAssignment = String(sourceMeta.source_type || '').toLowerCase() === 'saved_game' || !!sourceMeta.game_id;
+        const effectiveListKey = list_key || (isSavedGameAssignment && sourceMeta.game_id ? `saved_game:${sourceMeta.game_id}` : '');
+
+        if (isSavedGameAssignment && !sourceMeta.game_id) {
+          return jsonResponse({ success: false, error: 'Custom saved-game homework requires list_meta.game_id' }, 400, origin);
+        }
+
+        if (!className || !title || !effectiveListKey || !due_at) {
           return jsonResponse({
             success: false,
             error: 'Missing required fields: class, title, list_key, due_at',
@@ -248,9 +288,9 @@ export default {
           class: className,
           title,
           description: description || null,
-          list_key,
+          list_key: effectiveListKey,
           list_title: list_title || null,
-          list_meta: list_meta || {},
+          list_meta: sourceMeta,
           start_at: start_at || new Date().toISOString(),
           due_at,
           goal_type: goal_type || 'stars',
@@ -260,7 +300,28 @@ export default {
         };
         
         const data = await supabaseInsert(env, 'homework_assignments', insertData);
-        return jsonResponse({ success: true, assignment: data[0] }, 200, origin);
+        let assignment = data[0];
+        let runToken = null;
+
+        const existingTokens = Array.isArray(assignment?.list_meta?.run_tokens)
+          ? assignment.list_meta.run_tokens.map(entry => entry?.token).filter(Boolean)
+          : [];
+
+        if (!existingTokens.length && assignment?.id) {
+          runToken = generateRunToken(assignment.id);
+          const updatedMeta = {
+            ...(assignment.list_meta || {}),
+            run_tokens: [{ token: runToken, created_at: new Date().toISOString(), auto: true }],
+          };
+          const updatedRows = await supabaseUpdate(env, 'homework_assignments', `id=eq.${assignment.id}`, { list_meta: updatedMeta });
+          if (Array.isArray(updatedRows) && updatedRows[0]) {
+            assignment = updatedRows[0];
+          } else {
+            assignment = { ...assignment, list_meta: updatedMeta };
+          }
+        }
+
+        return jsonResponse({ success: true, assignment, run_token: runToken }, 200, origin);
       }
       
       // ===== CREATE RUN TOKEN =====
@@ -340,6 +401,11 @@ export default {
         if (String(assignment.class || '') !== String(prof.class || '')) {
           return jsonResponse({ success: false, error: 'Not assigned to this class' }, 403, origin);
         }
+
+        const targetStudentIds = getAssignmentTargetStudentIds(assignment);
+        if (targetStudentIds.length && !targetStudentIds.includes(authUserId)) {
+          return jsonResponse({ success: false, error: 'Not assigned to this student' }, 403, origin);
+        }
         
         const tokens = Array.isArray(assignment.list_meta?.run_tokens)
           ? assignment.list_meta.run_tokens.map(r => r?.token).filter(Boolean)
@@ -371,12 +437,16 @@ export default {
             'homework_assignments',
             `class=eq.${encodeURIComponent(prof.class)}&active=eq.true&start_at=lte.${nowIso}&order=due_at.asc&select=*`
           );
+          const assignmentsForStudent = (data || []).filter((assignment) => {
+            const targetStudentIds = getAssignmentTargetStudentIds(assignment);
+            return !targetStudentIds.length || targetStudentIds.includes(authUserId);
+          });
           
           return jsonResponse({
             success: true,
             class: prof.class,
             student_name: prof.name || prof.korean_name || null,
-            assignments: data || [],
+            assignments: assignmentsForStudent,
           }, 200, origin);
         }
         
@@ -440,6 +510,40 @@ export default {
         await supabaseDelete(env, 'homework_assignments', `id=eq.${assignmentId}`);
         return jsonResponse({ success: true }, 200, origin);
       }
+
+      // ===== UPDATE ASSIGNMENT META =====
+      if (action === 'update_assignment_meta') {
+        const authUserId = await getUserIdFromRequest(request, env);
+        if (!authUserId) {
+          return jsonResponse({ success: false, error: 'Not signed in' }, 401, origin);
+        }
+
+        const prof = await fetchProfile(env, authUserId);
+        if (!prof || !['teacher', 'admin'].includes(String(prof.role || '').toLowerCase())) {
+          return jsonResponse({ success: false, error: 'Only teachers can update assignments' }, 403, origin);
+        }
+
+        const body = await request.json();
+        const uaId = body.assignment_id || url.searchParams.get('assignment_id');
+        if (!uaId) {
+          return jsonResponse({ success: false, error: 'Missing assignment_id' }, 400, origin);
+        }
+
+        const existing = await supabaseSelect(env, 'homework_assignments', `id=eq.${uaId}&select=*`);
+        if (!existing || !existing.length) {
+          return jsonResponse({ success: false, error: 'Assignment not found' }, 404, origin);
+        }
+
+        const existingMeta = existing[0].list_meta || {};
+        const mergedMeta = { ...existingMeta, ...(body.list_meta || {}) };
+        const updateFields = { list_meta: mergedMeta };
+        if (body.goal_value !== undefined) updateFields.goal_value = body.goal_value;
+        if (body.goal_type !== undefined) updateFields.goal_type = body.goal_type;
+
+        const updated = await supabaseUpdate(env, 'homework_assignments', `id=eq.${uaId}`, updateFields);
+        console.log(`[homework-api] Updated assignment ${uaId} meta:`, JSON.stringify(updateFields));
+        return jsonResponse({ success: true, assignment: updated?.[0] || null }, 200, origin);
+      }
       
       // ===== ASSIGNMENT PROGRESS =====
       if (action === 'assignment_progress') {
@@ -469,10 +573,14 @@ export default {
         
         const assignment = assignments[0];
         const targetClass = className || assignment.class;
+        const targetStudentIds = getAssignmentTargetStudentIds(assignment);
         
         // Authorization: only teachers/admins can see all students, students only see their own
         const isTeacher = ['teacher', 'admin'].includes(String(authProf.role || '').toLowerCase());
         if (!isTeacher && String(authProf.class || '') !== String(targetClass || '')) {
+          return jsonResponse({ success: false, error: 'Not authorized to view this assignment' }, 403, origin);
+        }
+        if (!isTeacher && targetStudentIds.length && !targetStudentIds.includes(authUserId)) {
           return jsonResponse({ success: false, error: 'Not authorized to view this assignment' }, 403, origin);
         }
         
@@ -491,7 +599,9 @@ export default {
         const students = await supabaseSelect(
           env,
           'profiles',
-          `class=eq.${encodeURIComponent(targetClass)}&select=id,name,korean_name`
+          targetStudentIds.length
+            ? `class=eq.${encodeURIComponent(targetClass)}&id=in.(${targetStudentIds.join(',')})&select=id,name,korean_name`
+            : `class=eq.${encodeURIComponent(targetClass)}&select=id,name,korean_name`
         );
         
         if (!students || !students.length) {
@@ -567,104 +677,118 @@ export default {
           return 0;
         }
         
-        // Filter sessions by list name matching
-        const listKeyLast = (assignment.list_key || '').split('/').pop();
-        const coreName = listKeyLast.replace(/\.json$/, '').toLowerCase();
-        
-        // Create multiple matching patterns for flexibility
-        // 1. coreName with underscores: "prepositions_next_to_behind_infront"
-        // 2. coreName with spaces: "prepositions next to behind infront"
-        // 3. Assignment title (display name): "Prepositions Next To Behind Infront"
-        const coreNameSpaces = coreName.replace(/_/g, ' ');
-        const assignmentTitle = (assignment.title || '').toLowerCase();
-        const listTitle = (assignment.list_title || '').toLowerCase();
-        
-        // Handle path variations - homework stores "Games/english_arcade/data/grammar/level2/..."
-        // but sessions may store just "data/grammar/level2/..." or the full path
-        const listKeyFull = (assignment.list_key || '').toLowerCase();
-        const listKeyWithoutPrefix = listKeyFull.replace(/^games\/english_arcade\//i, '');
-        
-        // Extract tokens from filename for display-name matching
-        // e.g., "prepositions_next_to_behind_infront" -> ["prepositions", "next", "behind", "infront"]
-        const tokens = coreName.split(/[-_]+/).filter(t => t.length >= 2 && !/^(phonics|sample|wordlists|level\d?|grammar|data|games|english|arcade|json)$/.test(t));
-        
-        // Normalize function to strip common variations
-        const normalize = (s) => (s || '').toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
-        const normalizedCoreName = normalize(coreName);
-        const normalizedTitle = normalize(assignmentTitle);
-        
-        // Debug: collect unique list_names from sessions
-        const uniqueListNames = [...new Set((sessions || []).map(s => s.list_name))];
-        
-        const filteredSessions = (sessions || []).filter(sess => {
-          const listName = (sess.list_name || '').toLowerCase();
-          const normalizedListName = normalize(listName);
-          
-          // Direct match on coreName (filename without extension)
-          if (listName.includes(coreName)) {
-            return true;
+        const requestRunToken = url.searchParams.get('run_token') || null;
+        const isWrongWordsGoal = String(assignment.goal_type || '').toLowerCase() === 'wrong_words_fixed';
+        const assignmentRunTokens = Array.isArray(assignment.list_meta?.run_tokens)
+          ? assignment.list_meta.run_tokens.map(entry => entry?.token).filter(Boolean)
+          : [];
+        const isSavedGameAssignment = String(assignment.list_meta?.source_type || '').toLowerCase() === 'saved_game'
+          || !!assignment.list_meta?.game_id
+          || /^saved_game:/i.test(String(assignment.list_key || ''));
+
+        console.log(`[homework-api] session matching for ${assignment.id}: isSavedGame=${isSavedGameAssignment}, totalSessions=${(sessions||[]).length}, validTokens=[${[requestRunToken, ...assignmentRunTokens].filter(Boolean).join(',')}], list_key=${assignment.list_key}`);
+
+        // Log a sample of session summaries to see if assignment_run tokens exist
+        if (isSavedGameAssignment && sessions && sessions.length > 0) {
+          const sampleSessions = sessions.slice(0, 5).map(s => {
+            const sum = parseSummary(s.summary);
+            return { user_id: s.user_id, mode: s.mode, list_name: s.list_name, assignment_run: sum?.assignment_run || 'NONE' };
+          });
+          console.log(`[homework-api] sample sessions:`, JSON.stringify(sampleSessions));
+        }
+
+        let filteredSessions = [];
+        if (isSavedGameAssignment) {
+          const validTokens = [requestRunToken, ...assignmentRunTokens].filter(Boolean);
+          filteredSessions = (sessions || []).filter(sess => {
+            const summary = parseSummary(sess.summary);
+            const token = summary && summary.assignment_run;
+            return !!token && validTokens.includes(token);
+          });
+          // FALLBACK: If run-token matching fails for saved game, try list_name matching too
+          if (filteredSessions.length === 0 && sessions && sessions.length > 0) {
+            console.log(`[homework-api] run-token match failed for saved game ${assignment.id}, trying list_name fallback`);
+            const listKeyLast = (assignment.list_key || '').split('/').pop();
+            const coreName = listKeyLast.replace(/\.json$/, '').replace(/^saved_game:/i, '').toLowerCase();
+            const assignmentTitle = (assignment.title || '').toLowerCase();
+            const listTitle = (assignment.list_title || '').toLowerCase();
+            const gameName = String(assignment.list_meta?.title || assignment.list_meta?.game_name || '').toLowerCase();
+            const normalize = (v) => String(v || '').toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+            const normalizedCoreName = normalize(coreName);
+            const normalizedTitle = normalize(assignmentTitle);
+            const normalizedGameName = normalize(gameName);
+
+            filteredSessions = (sessions || []).filter(sess => {
+              const ln = (sess.list_name || '').toLowerCase();
+              const nln = normalize(ln);
+              if (coreName && (ln.includes(coreName) || nln.includes(normalizedCoreName))) return true;
+              if (assignmentTitle && (ln.includes(assignmentTitle) || nln.includes(normalizedTitle))) return true;
+              if (listTitle && ln.includes(listTitle)) return true;
+              if (gameName && (ln.includes(gameName) || nln.includes(normalizedGameName))) return true;
+              return false;
+            });
+            console.log(`[homework-api] list_name fallback found ${filteredSessions.length} sessions`);
           }
-          
-          // Match full assignment list_key path (with or without prefix)
-          if (listName.includes(listKeyFull) || listName.includes(listKeyWithoutPrefix)) {
-            return true;
-          }
-          
-          // Match if session list_name contains or is contained by the list_key variants
-          if (listKeyFull.includes(listName) || listKeyWithoutPrefix.includes(listName)) {
-            return true;
-          }
-          
-          // Match coreName with spaces (display name stored in session)
-          if (listName.includes(coreNameSpaces)) {
-            return true;
-          }
-          
-          // Match against assignment title
-          if (assignmentTitle && listName.includes(assignmentTitle)) {
-            return true;
-          }
-          
-          // Match against list_title
-          if (listTitle && listName.includes(listTitle)) {
-            return true;
-          }
-          
-          // Normalized comparison (handles underscore/space/hyphen variations)
-          if (normalizedListName.includes(normalizedCoreName) || normalizedCoreName.includes(normalizedListName)) {
-            return true;
-          }
-          if (normalizedTitle && normalizedListName.includes(normalizedTitle)) {
-            return true;
-          }
-          
-          // Token-based match for display names (e.g., "Prepositions Next To Behind Infront")
-          // Require majority of significant tokens to match
-          if (tokens.length >= 2) {
-            const matchCount = tokens.filter(t => listName.includes(t)).length;
-            if (matchCount >= Math.ceil(tokens.length * 0.5)) return true;
-          }
-          
-          // Also try matching tokens against normalized list name
-          if (tokens.length >= 2) {
-            const matchCount = tokens.filter(t => normalizedListName.includes(t)).length;
-            if (matchCount >= Math.ceil(tokens.length * 0.5)) return true;
-          }
-          
-          return false;
-        });
-        
-        // Debug info for troubleshooting
-        const debugInfo = {
-          list_key: assignment.list_key,
-          listKeyWithoutPrefix,
-          coreName,
-          coreNameSpaces,
-          tokens,
-          totalSessions: (sessions || []).length,
-          matchedSessions: filteredSessions.length,
-          sampleListNames: uniqueListNames.slice(0, 30),
-        };
+        } else {
+          // Filter sessions by list name matching.
+          // The stored assignment list_key and the recorded session list_name are not always
+          // formatted the same way, so match across path, title, and normalized token variants.
+          const listKeyLast = (assignment.list_key || '').split('/').pop();
+          const coreName = listKeyLast.replace(/\.json$/, '').toLowerCase();
+          const coreNameSpaces = coreName.replace(/_/g, ' ');
+          const assignmentTitle = (assignment.title || '').toLowerCase();
+          const listTitle = (assignment.list_title || '').toLowerCase();
+          const listKeyFull = (assignment.list_key || '').toLowerCase();
+          const listKeyWithoutPrefix = listKeyFull.replace(/^games\/english_arcade\//i, '');
+          const tokens = coreName.split(/[-_]+/).filter(t => t.length >= 2 && !/^(phonics|sample|wordlists|level\d?|grammar|data|games|english|arcade|json)$/.test(t));
+          const normalize = (value) => String(value || '')
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, '_')
+            .replace(/^_+|_+$/g, '');
+          const normalizedCoreName = normalize(coreName);
+          const normalizedTitle = normalize(assignmentTitle);
+
+          filteredSessions = (sessions || []).filter(sess => {
+            const listName = (sess.list_name || '').toLowerCase();
+            const normalizedListName = normalize(listName);
+
+            if (listName.includes(coreName)) {
+              return true;
+            }
+            if (listName.includes(listKeyFull) || listName.includes(listKeyWithoutPrefix)) {
+              return true;
+            }
+            if (listKeyFull.includes(listName) || listKeyWithoutPrefix.includes(listName)) {
+              return true;
+            }
+            if (listName.includes(coreNameSpaces)) {
+              return true;
+            }
+            if (assignmentTitle && listName.includes(assignmentTitle)) {
+              return true;
+            }
+            if (listTitle && listName.includes(listTitle)) {
+              return true;
+            }
+            if (normalizedListName.includes(normalizedCoreName) || normalizedCoreName.includes(normalizedListName)) {
+              return true;
+            }
+            if (normalizedTitle && normalizedListName.includes(normalizedTitle)) {
+              return true;
+            }
+            if (tokens.length >= 2) {
+              const rawTokenMatches = tokens.filter(t => listName.includes(t)).length;
+              if (rawTokenMatches >= Math.ceil(tokens.length * 0.5)) {
+                return true;
+              }
+              const normalizedTokenMatches = tokens.filter(t => normalizedListName.includes(t)).length;
+              if (normalizedTokenMatches >= Math.ceil(tokens.length * 0.5)) {
+                return true;
+              }
+            }
+            return false;
+          });
+        }
         
         filteredSessions.forEach(sess => {
           const row = byStudent.get(sess.user_id);
@@ -707,23 +831,20 @@ export default {
             grammarLevel = parseInt(levelMatch[1], 10);
           }
           
-          // Start with base modes for grammar level
+          // Start with the base grammar mode count from the level.
           totalModes = grammarLevel === 1 ? 4 : 6;
-          
-          // Check for special grammar list types that have fewer modes
-          // Preposition lists (Level 2) have only 4 modes (fill_gap, unscramble, find_mistake, translation)
+
+          // Some grammar lists intentionally expose fewer modes than the default.
           const isPrepositionList = /prepositions_/i.test(listKeyPath);
           if (grammarLevel === 2 && isPrepositionList) {
             totalModes = 4;
           }
-          
-          // WH micro lists (WH Who & What, WH Where/When/What Time, WH How/Why/Which) have 4 modes
+
           const isWhMicroList = /wh_who_what|wh_where_when_whattime|wh_how_why_which/i.test(listKeyPath);
           if (isWhMicroList) {
             totalModes = 4;
           }
-          
-          // WH Questions list (present_simple_questions_wh) has 5 modes (no sorting)
+
           const isWhQuestionsList = /present_simple_questions_wh/i.test(listKeyPath);
           if (isWhQuestionsList) {
             totalModes = 5;
@@ -733,13 +854,73 @@ export default {
           totalModes = 6;
         }
         // Allow override from assignment meta if explicitly set
-        const metaModes = assignment.list_meta?.modes_total || assignment.list_meta?.total_modes || assignment.list_meta?.mode_count;
-        if (Number.isFinite(metaModes) && metaModes > 0 && metaModes <= 10) {
+        const metaModesRaw = assignment.list_meta?.modes_total ?? assignment.list_meta?.total_modes ?? assignment.list_meta?.mode_count;
+        const metaModes = Number(metaModesRaw);
+        const difficultyMode = String(assignment.list_meta?.difficulty_mode || '').toLowerCase();
+        const forcedMode = String(assignment.list_meta?.forced_mode || assignment.list_meta?.mode || assignment.list_meta?.difficulty_mode || '').toLowerCase();
+
+        // Multi-signal spelling-only detection:
+        // 1. Metadata: forced_mode/difficulty_mode === 'spelling' or modes_total === 1
+        // 2. Goal value: goal_value === 1  (set by Game Builder for spelling-only)
+        // 3. Client hint: frontend passes spelling_only=1 URL param
+        // 4. Session inference: if ALL sessions are spelling/listen_and_spell modes
+        const clientHintSpellingOnly = url.searchParams.get('spelling_only') === '1';
+        const goalValueHint = Number(assignment.goal_value) === 1;
+        let isSpellingOnlyAssignment = forcedMode === 'spelling' || difficultyMode === 'spelling' || metaModes === 1 || goalValueHint || clientHintSpellingOnly;
+
+        // wrong_words_fixed is fundamentally a spelling/review completion flow.
+        if (isWrongWordsGoal) {
+          isSpellingOnlyAssignment = true;
+        }
+
+        // Session-based fallback: if metadata didn't flag it, check actual session data
+        if (!isSpellingOnlyAssignment && filteredSessions.length > 0) {
+          const allSpelling = filteredSessions.every(s => {
+            const m = String(s.mode || '').toLowerCase();
+            return m === 'spelling' || m === 'listen_and_spell' || m === 'spell';
+          });
+          if (allSpelling) {
+            isSpellingOnlyAssignment = true;
+            console.log(`[homework-api] Session-inferred spelling-only for assignment ${assignment.id}`);
+          }
+        }
+
+        console.log(`[homework-api] spelling-only detection for ${assignment.id} (${assignment.title}):`, JSON.stringify({
+          forcedMode, difficultyMode, metaModes, goalValueHint, clientHintSpellingOnly, isSpellingOnlyAssignment,
+          goal_value: assignment.goal_value, goal_type: assignment.goal_type,
+        }));
+
+        if (isSpellingOnlyAssignment) {
+          totalModes = 1;
+          // Auto-heal: backfill forced_mode into list_meta so future calls work without hints
+          if (!assignment.list_meta?.forced_mode || assignment.list_meta.forced_mode !== 'spelling') {
+            try {
+              const healedMeta = { ...(assignment.list_meta || {}), forced_mode: 'spelling', modes_total: 1, difficulty_mode: 'spelling' };
+              await supabaseUpdate(env, 'homework_assignments', `id=eq.${assignment.id}`, { list_meta: healedMeta });
+              console.log(`[homework-api] Auto-healed list_meta for assignment ${assignment.id}: added forced_mode:spelling`);
+            } catch (e) { console.warn('[homework-api] Auto-heal failed:', e.message); }
+          }
+        } else if (Number.isFinite(metaModes) && metaModes > 0 && metaModes <= 10) {
           if (category === 'phonics' && metaModes <= 4) totalModes = metaModes;
           else if (category === 'grammar' && metaModes >= 4 && metaModes <= 6) totalModes = metaModes;
           else if (category === 'vocab' && metaModes >= 4 && metaModes <= 8) totalModes = metaModes;
         }
         
+        // For wrong_words_fixed goal, collect correct attempts keyed by assignment_run token.
+        // We keep this query broad (class students + assignment date window) and filter in JS.
+        let attemptsForWrongWordFix = [];
+        if (isWrongWordsGoal) {
+          try {
+            const assignmentStart = assignment.start_at || new Date(Date.now() - 1000 * 60 * 60 * 24 * 30).toISOString();
+            const attemptsQuery = `user_id=in.(${studentIds.join(',')})&created_at=gte.${encodeURIComponent(assignmentStart)}&select=user_id,word,is_correct,mode,extra,created_at`;
+            const attemptsRows = await supabaseSelect(env, 'progress_attempts', attemptsQuery);
+            attemptsForWrongWordFix = Array.isArray(attemptsRows) ? attemptsRows : [];
+          } catch (e) {
+            console.warn('[homework-api] failed loading attempts for wrong_words_fixed:', e.message);
+            attemptsForWrongWordFix = [];
+          }
+        }
+
         const progress = Array.from(byStudent.values()).map(r => {
           const modesArr = Object.entries(r.modes).map(([mode, v]) => ({
             mode,
@@ -748,9 +929,94 @@ export default {
           }));
           
           const starsEarned = modesArr.reduce((sum, m) => sum + (m.bestStars || 0), 0);
-          // Only count modes where student achieved at least 1 star toward homework completion
-          const modesAttempted = modesArr.filter(m => m.bestStars >= 1).length;
-          const completionPercent = totalModes > 0 ? Math.round((modesAttempted / totalModes) * 100) : 0;
+
+          // For spelling-only: check if student completed any spelling mode with >=1 star
+          let modesAttempted;
+          if (isSpellingOnlyAssignment) {
+            const spellingDone = modesArr.some(m => {
+              const mn = String(m.mode || '').toLowerCase();
+              return m.bestStars >= 1 && (mn === 'spelling' || mn === 'listen_and_spell' || mn === 'spell');
+            });
+            modesAttempted = spellingDone ? 1 : 0;
+          } else {
+            // Only count modes where student achieved at least 1 star toward homework completion
+            modesAttempted = modesArr.filter(m => m.bestStars >= 1).length;
+          }
+          let completionPercent = totalModes > 0 ? Math.round((modesAttempted / totalModes) * 100) : 0;
+
+          // New goal type: homework completion based on fixing enough wrong words.
+          // Baseline = unique wrong words captured in spelling/listen_and_spell session summaries.
+          // Fixed = baseline words answered correctly in later assignment-linked attempts.
+          let wrongWordsTotal = null;
+          let wrongWordsFixed = null;
+          let wrongWordsRawPct = null;
+          let wrongWordsTargetPct = null;
+          if (isWrongWordsGoal) {
+            const runTokensForStudent = new Set();
+            filteredSessions.forEach(sess => {
+              if (sess.user_id !== r.user_id) return;
+              const summary = parseSummary(sess.summary);
+              const tok = summary && summary.assignment_run;
+              if (tok) runTokensForStudent.add(tok);
+            });
+
+            // If no run token was found in sessions, allow assignment-level tokens as fallback.
+            if (runTokensForStudent.size === 0) {
+              assignmentRunTokens.forEach(tok => { if (tok) runTokensForStudent.add(tok); });
+              if (requestRunToken) runTokensForStudent.add(requestRunToken);
+            }
+
+            const baseline = new Set();
+            filteredSessions.forEach(sess => {
+              if (sess.user_id !== r.user_id) return;
+              const summary = parseSummary(sess.summary) || {};
+              const wrongWords = Array.isArray(summary.wrong_words) ? summary.wrong_words : [];
+              wrongWords.forEach(item => {
+                const word = normalizeWordKey(item?.eng || item?.word || item);
+                if (word) baseline.add(word);
+              });
+            });
+
+            const fixed = new Set();
+            const allowedPracticeModes = new Set(['spelling', 'listen_and_spell', 'review_mc', 'review_spell']);
+            attemptsForWrongWordFix.forEach(att => {
+              if (!att || att.user_id !== r.user_id) return;
+              if (!att.is_correct) return;
+              const modeName = String(att.mode || '').toLowerCase();
+              if (!allowedPracticeModes.has(modeName)) return;
+              const extra = parseJsonMaybe(att.extra) || {};
+              const token = extra.assignment_run;
+              if (runTokensForStudent.size > 0 && (!token || !runTokensForStudent.has(token))) return;
+              const key = normalizeWordKey(att.word);
+              if (!key) return;
+              if (baseline.has(key)) fixed.add(key);
+            });
+
+            wrongWordsTotal = baseline.size;
+            wrongWordsFixed = fixed.size;
+            wrongWordsRawPct = wrongWordsTotal > 0 ? Math.round((wrongWordsFixed / wrongWordsTotal) * 100) : 0;
+
+            // goal_value is treated as target percent.
+            // Accept 0..1 as ratio (e.g. 0.7) and 1..100 as percent.
+            const gv = Number(assignment.goal_value);
+            if (Number.isFinite(gv) && gv > 0 && gv <= 1) wrongWordsTargetPct = Math.round(gv * 100);
+            else if (Number.isFinite(gv) && gv > 1) wrongWordsTargetPct = Math.round(gv);
+            else wrongWordsTargetPct = 70;
+            wrongWordsTargetPct = Math.max(1, Math.min(100, wrongWordsTargetPct));
+
+            // Keep dashboard semantics: 100% means goal reached.
+            // If baseline is 0 and student has started sessions, treat as complete.
+            const studentHasSessions = filteredSessions.some(sess => sess.user_id === r.user_id);
+            if (wrongWordsTotal === 0) {
+              completionPercent = studentHasSessions ? 100 : 0;
+            } else {
+              completionPercent = Math.max(0, Math.min(100, Math.round((wrongWordsRawPct / wrongWordsTargetPct) * 100)));
+            }
+
+            // Override mode-based completion counters for this goal type.
+            modesAttempted = completionPercent >= 100 ? 1 : 0;
+            totalModes = 1;
+          }
           
           return {
             user_id: r.user_id,
@@ -762,6 +1028,10 @@ export default {
             modes_total: totalModes,
             modes: modesArr,
             category,
+            wrong_words_total: wrongWordsTotal,
+            wrong_words_fixed: wrongWordsFixed,
+            wrong_words_fix_pct: wrongWordsRawPct,
+            wrong_words_target_pct: wrongWordsTargetPct,
             // A homework is considered completed only when every mode has at least 1 star
             status: assignment.active
               ? (completionPercent >= 100 ? 'Completed' : 'In Progress')
@@ -777,14 +1047,30 @@ export default {
         
         return jsonResponse({
           success: true,
+          _v: 'cf-hw-api-v3-fallback',
           assignment_id: assignment.id,
           class: targetClass,
           total_modes: totalModes,
           category,
+          is_spelling_only: isSpellingOnlyAssignment,
+          is_wrong_words_goal: isWrongWordsGoal,
           difficulty_mode: assignment.list_meta?.difficulty_mode || 'full',
           stars_required: assignment.list_meta?.stars_required || null,
+          goal_type: assignment.goal_type || null,
+          goal_value: assignment.goal_value || null,
           progress: filteredProgress,
-          _debug: debugInfo,
+          _debug: {
+            total_sessions_fetched: (sessions || []).length,
+            filtered_sessions_count: filteredSessions.length,
+            is_saved_game: isSavedGameAssignment,
+            run_tokens_on_assignment: (assignmentRunTokens || []).length,
+            request_run_token: requestRunToken || null,
+            list_key: assignment.list_key,
+            forced_mode: forcedMode,
+            meta_modes: metaModes,
+            goal_value: assignment.goal_value,
+            sample_session_modes: filteredSessions.slice(0, 5).map(s => s.mode),
+          },
         }, 200, origin);
       }
       

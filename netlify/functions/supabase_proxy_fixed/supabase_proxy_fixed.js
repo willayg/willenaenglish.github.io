@@ -1016,6 +1016,13 @@ exports.handler = async (event) => {
         const body = JSON.parse(event.body || '{}');
         if (body.action === 'insert_game_data' && body.data) {
           const gd = body.data;
+          let requesterId = getUserIdFromCookie(event);
+          if (!requesterId) {
+            const user = await getUserFromCookie(supabase, event); requesterId = user && user.id;
+          }
+          if (!requesterId && gd && gd.created_by) {
+            requesterId = gd.created_by;
+          }
           // Normalize words shape
           if (!Array.isArray(gd.words)) gd.words = [];
           // Derive game_image from explicit gd.gameImage or first word image
@@ -1032,7 +1039,7 @@ exports.handler = async (event) => {
             class: gd.class || gd.gameClass || null,
             book: gd.book || gd.gameBook || null,
             unit: gd.unit || gd.gameUnit || null,
-            created_by: gd.created_by || gd.created_by_id || gd.user_id || gd.profile_id || null,
+            created_by: requesterId || gd.created_by || gd.created_by_id || gd.user_id || gd.profile_id || null,
             tags: Array.isArray(gd.tags) ? gd.tags : null,
             visibility: gd.visibility || undefined,
             game_image: derivedImage,
@@ -1047,7 +1054,7 @@ exports.handler = async (event) => {
           }
           return { statusCode: 200, body: JSON.stringify({ success: true, data }) };
         } else if (body.action === 'update_game_data' && body.id && body.data) {
-          // Ownership enforcement similar to single-file variant
+          // Ownership check removed – any authenticated user may update any game.
           let requesterId = getUserIdFromCookie(event);
           if (!requesterId) {
             const user = await getUserFromCookie(supabase, event); requesterId = user && user.id;
@@ -1055,13 +1062,10 @@ exports.handler = async (event) => {
           if (!requesterId) return { statusCode: 401, body: JSON.stringify({ success:false, error:'Not authenticated' }) };
           const { data: existing, error: exErr } = await supabase
             .from('game_data')
-            .select('created_by')
+            .select('id')
             .eq('id', body.id)
             .single();
           if (exErr || !existing) return { statusCode: 404, body: JSON.stringify({ success:false, error:'Game not found' }) };
-          if (existing.created_by && existing.created_by !== requesterId) {
-            return { statusCode: 403, body: JSON.stringify({ success:false, error:'Forbidden: not owner' }) };
-          }
           const gd = body.data;
           if (!Array.isArray(gd.words)) gd.words = [];
           // Derive updated game_image

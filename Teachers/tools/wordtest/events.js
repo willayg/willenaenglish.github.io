@@ -60,6 +60,7 @@ export function setupEventListeners(
     const refreshBtn = document.getElementById('refreshBtn');
     if (refreshBtn) {
         refreshBtn.addEventListener('click', async (e) => {
+            e.preventDefault();
             // If Shift is held, clear all images completely.
             if (e.shiftKey) {
                 return clearAllImages(updatePreview);

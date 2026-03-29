@@ -77,6 +77,9 @@ exports.handler = async (event) => {
     if (action === 'delete_assignment') {
       return await deleteAssignment(event);
     }
+    if (action === 'update_assignment_meta') {
+      return await updateAssignmentMeta(event);
+    }
     if (action === 'link_sessions') {
       return await linkSessionsToAssignment(event);
     }
@@ -302,8 +305,84 @@ async function createAssignment(event) {
   return _json(200, { success: true, assignment: data, run_token: autoToken });
 }
 
+// Allow teachers to update an existing assignment's list_meta (e.g. set forced_mode)
+async function updateAssignmentMeta(event) {
+  const authUserId = await getUserIdFromCookie(event);
+  if (!authUserId) return _json(401, { success: false, error: 'Not signed in' });
+
+  const { data: prof } = await supabase
+    .from('profiles')
+    .select('id, role, approved, class')
+    .eq('id', authUserId)
+    .single();
+
+  if (!prof || !['teacher', 'admin'].includes(String(prof.role || '').toLowerCase())) {
+    return _json(403, { success: false, error: 'Only teachers can update assignments' });
+  }
+
+  let body;
+  try { body = JSON.parse(event.body || '{}'); }
+  catch { return _json(400, { success: false, error: 'Invalid JSON body' }); }
+
+  const assignmentId = body.assignment_id || event.queryStringParameters?.assignment_id;
+  if (!assignmentId) return _json(400, { success: false, error: 'Missing assignment_id' });
+
+  const { data: assignment, error: aErr } = await supabase.from('homework_assignments').select('*').eq('id', assignmentId).single();
+  if (aErr || !assignment) return _json(404, { success: false, error: 'Assignment not found' });
+
+  // Merge new meta fields into existing list_meta
+  const existingMeta = parseAssignmentMeta(assignment.list_meta);
+  const mergedMeta = { ...existingMeta, ...(body.list_meta || {}) };
+
+  // Also allow updating goal_value directly
+  const updateFields = { list_meta: mergedMeta };
+  if (body.goal_value !== undefined) updateFields.goal_value = body.goal_value;
+  if (body.goal_type !== undefined) updateFields.goal_type = body.goal_type;
+
+  const { data: updated, error: uErr } = await supabase
+    .from('homework_assignments')
+    .update(updateFields)
+    .eq('id', assignmentId)
+    .select()
+    .single();
+
+  if (uErr) return _json(500, { success: false, error: 'Update failed: ' + (uErr.message || uErr.code) });
+
+  console.log(`[updateAssignmentMeta] Updated assignment ${assignmentId}:`, JSON.stringify(updateFields));
+  return _json(200, { success: true, assignment: updated });
+}
+
+async function autoExpireAssignmentsPastGrace({ className = null } = {}) {
+  const now = new Date();
+  const cutoff = new Date(now.getTime() - (24 * 60 * 60 * 1000)).toISOString();
+  let query = supabase
+    .from('homework_assignments')
+    .update({ active: false, ended_at: now.toISOString() })
+    .eq('active', true)
+    .lte('due_at', cutoff);
+
+  if (className) {
+    query = query.eq('class', className);
+  }
+
+  const { data, error } = await query.select('id');
+  if (error) {
+    console.error('autoExpireAssignmentsPastGrace error:', {
+      message: error.message,
+      details: error.details,
+      hint: error.hint,
+      code: error.code
+    });
+    return { expiredCount: 0, error };
+  }
+
+  return { expiredCount: Array.isArray(data) ? data.length : 0, error: null };
+}
+
 async function listAssignments(event) {
   const className = event.queryStringParameters?.class || null;
+
+  await autoExpireAssignmentsPastGrace({ className });
 
   let query = supabase
     .from('homework_assignments')
@@ -354,6 +433,19 @@ function normalizeListIdentifier(value) {
     .replace(/\s+/g, ' ');
 }
 
+function parseAssignmentMeta(rawMeta) {
+  if (!rawMeta) return {};
+  if (typeof rawMeta === 'string') {
+    try {
+      const parsed = JSON.parse(rawMeta);
+      return parsed && typeof parsed === 'object' ? parsed : {};
+    } catch {
+      return {};
+    }
+  }
+  return (rawMeta && typeof rawMeta === 'object') ? rawMeta : {};
+}
+
 async function assignmentProgress(event) {
   // Returns per-student progress for a given assignment id
   const assignmentId = event.queryStringParameters?.assignment_id || event.queryStringParameters?.id || null;
@@ -362,6 +454,7 @@ async function assignmentProgress(event) {
   // Fetch assignment
   let { data: assignment, error: aErr } = await supabase.from('homework_assignments').select('*').eq('id', assignmentId).single();
   if (aErr || !assignment) return _json(404,{ success:false, error:'Assignment not found' });
+  assignment.list_meta = parseAssignmentMeta(assignment.list_meta);
 
   // Auto-create run token if assignment has none (backfill for older assignments)
   let assignmentRunTokens = Array.isArray(assignment.list_meta?.run_tokens)
@@ -702,12 +795,57 @@ async function assignmentProgress(event) {
     totalModes = 6;
   }
   // Allow override from assignment meta if explicitly set
-  const metaModes = assignment.list_meta?.modes_total || assignment.list_meta?.total_modes || assignment.list_meta?.mode_count;
-  if (Number.isFinite(metaModes) && metaModes > 0 && metaModes <= 10) {
+  const metaModesRaw = assignment.list_meta?.modes_total ?? assignment.list_meta?.total_modes ?? assignment.list_meta?.mode_count;
+  const metaModes = Number(metaModesRaw);
+  const difficultyMode = String(assignment.list_meta?.difficulty_mode || '').toLowerCase();
+  const forcedMode = String(assignment.list_meta?.forced_mode || assignment.list_meta?.mode || assignment.list_meta?.difficulty_mode || '').toLowerCase();
+
+  // Multiple-signal spelling-only detection:
+  // 1. Metadata: forced_mode/difficulty_mode === 'spelling' or modes_total === 1
+  // 2. Goal value: goal_value === 1 strongly indicates spelling-only (new assignments)
+  // 3. Client hint: frontend passes spelling_only=1 when it detects spelling-only locally
+  // 4. Session-based: if ALL sessions for this assignment are spelling/listen_and_spell only
+  const clientHintSpellingOnly = String(event.queryStringParameters?.spelling_only || '').trim() === '1';
+  const goalValueHint = Number(assignment.goal_value) === 1;
+  let isSpellingOnlyAssignment = forcedMode === 'spelling' || difficultyMode === 'spelling' || metaModes === 1 || goalValueHint || clientHintSpellingOnly;
+
+  // Session-based fallback: if no metadata signals fired, check actual session data
+  // If every session mode is spelling/listen_and_spell, infer spelling-only
+  if (!isSpellingOnlyAssignment && sessions.length > 0) {
+    const allSpelling = sessions.every(s => {
+      const m = String(s.mode || '').toLowerCase();
+      return m === 'spelling' || m === 'listen_and_spell' || m === 'spell';
+    });
+    if (allSpelling) {
+      isSpellingOnlyAssignment = true;
+      console.log(`[assignmentProgress] Session-inferred spelling-only for assignment ${assignment.id} (all ${sessions.length} sessions are spelling)`);
+    }
+  }
+
+  // Diagnostic logging — shows exactly what the detection sees
+  console.log(`[assignmentProgress] spelling-only detection for assignment ${assignment.id} (${assignment.title}):`, JSON.stringify({
+    forcedMode, difficultyMode, metaModes, goalValueHint, clientHintSpellingOnly, isSpellingOnlyAssignment,
+    raw_list_meta: assignment.list_meta,
+    goal_type: assignment.goal_type,
+    goal_value: assignment.goal_value,
+  }));
+
+  if (isSpellingOnlyAssignment) {
+    totalModes = 1;
+    // Auto-heal: backfill forced_mode into list_meta if missing, so future calls work without hints
+    if (!assignment.list_meta?.forced_mode || assignment.list_meta.forced_mode !== 'spelling') {
+      try {
+        const healedMeta = { ...(assignment.list_meta || {}), forced_mode: 'spelling', modes_total: 1, difficulty_mode: 'spelling' };
+        await supabase.from('homework_assignments').update({ list_meta: healedMeta }).eq('id', assignment.id);
+        assignment.list_meta = healedMeta;
+        console.log(`[assignmentProgress] Auto-healed list_meta for assignment ${assignment.id}: added forced_mode:spelling`);
+      } catch (e) { console.warn('[assignmentProgress] Auto-heal failed:', e.message); }
+    }
+  } else if (Number.isFinite(metaModes) && metaModes > 0 && metaModes <= 10) {
     // Only override if category matches expected range
     if (category === 'phonics' && metaModes <= 4) totalModes = metaModes;
     else if (category === 'grammar' && metaModes >= 4 && metaModes <= 6) totalModes = metaModes;
-    else if (category === 'vocab' && metaModes >= 4 && metaModes <= 8) totalModes = metaModes;
+    else if (category === 'vocab' && (metaModes >= 4 && metaModes <= 8)) totalModes = metaModes;
   }
   console.log(`[assignmentProgress] category=${category}, totalModes=${totalModes} for assignment ${assignment.id} (${assignment.title})`);
   
@@ -717,8 +855,14 @@ async function assignmentProgress(event) {
     const bestAccuracy = rawModesArr.reduce((best,m)=> Math.max(best, m.bestAccuracy||0), 0);
     const overallAccuracy = (r._total && r._total > 0) ? Math.round((r._score / r._total) * 100) : 0;
     // Only count modes where the student achieved at least 1 star toward homework completion
-    // Requirement: a level is complete when the student has earned >=1 star in every mode
-    const countedModesArr = rawModesArr.filter(m => m.bestStars >= 1);
+    // Requirement: a level is complete when the student has earned >=1 star in every required mode
+    const spellingModeMatched = rawModesArr.some(m => {
+      const modeName = String(m.mode || '').toLowerCase();
+      return m.bestStars >= 1 && (modeName === 'spelling' || modeName === 'listen_and_spell');
+    });
+    const countedModesArr = isSpellingOnlyAssignment
+      ? (spellingModeMatched ? [{ mode: 'spelling', bestStars: 1 }] : [])
+      : rawModesArr.filter(m => m.bestStars >= 1);
     const distinctModesAttempted = countedModesArr.length;
     const completionPercent = totalModes > 0 ? Math.round((distinctModesAttempted / totalModes) * 100) : 0;
     return {
@@ -737,7 +881,19 @@ async function assignmentProgress(event) {
       category
     };
   });
-  return _json(200,{ success:true, assignment_id: assignment.id, class: targetClass, total_modes: totalModes, category, progress });
+  return _json(200,{
+    success:true,
+    _v: 'hw-api-v4-spelling-fix',
+    assignment_id: assignment.id,
+    class: targetClass,
+    total_modes: totalModes,
+    category,
+    is_spelling_only: isSpellingOnlyAssignment,
+    goal_type: assignment.goal_type || null,
+    goal_value: assignment.goal_value || null,
+    _debug_meta: { forcedMode, difficultyMode, metaModes, goalValueHint, clientHintSpellingOnly },
+    progress
+  });
 }
 
 async function getProfileForEvent(event) {
@@ -765,6 +921,8 @@ async function listAssignmentsForStudent(event) {
 
   const nowIso = new Date().toISOString();
 
+  await autoExpireAssignmentsPastGrace({ className: prof.class });
+
   const { data, error } = await supabase
     .from('homework_assignments')
     .select('*, profiles!homework_assignments_created_by_fkey(name)')
@@ -781,7 +939,8 @@ async function listAssignmentsForStudent(event) {
   // Map teacher name for convenience on each assignment
   const assignments = (data || []).map(a => ({
     ...a,
-    teacher_name: a.profiles?.name || null
+      teacher_name: a.profiles?.name || null,
+      list_meta: parseAssignmentMeta(a.list_meta),
   }));
 
   return _json(200, {
@@ -831,7 +990,29 @@ async function getRunTokenForStudent(event) {
     return _json(403, { success: false, error: 'Not assigned to this class' });
   }
 
-  const tokens = Array.isArray(assignment.list_meta?.run_tokens) ? assignment.list_meta.run_tokens.map(r => r?.token).filter(Boolean) : [];
+  const listMeta = parseAssignmentMeta(assignment.list_meta);
+  let tokens = Array.isArray(listMeta?.run_tokens) ? listMeta.run_tokens.map(r => r?.token).filter(Boolean) : [];
+
+  // Backfill token here as well so student session_start can always get a token
+  // before assignment_progress is requested.
+  if (!tokens.length) {
+    const autoToken = `run_student_${assignment.id}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+    const updatedMeta = {
+      ...listMeta,
+      run_tokens: [{ token: autoToken, created_at: new Date().toISOString(), auto: true, backfilled: true }]
+    };
+    const { data: upd, error: updErr } = await supabase
+      .from('homework_assignments')
+      .update({ list_meta: updatedMeta })
+      .eq('id', assignment.id)
+      .select('id, list_meta')
+      .single();
+    if (!updErr && upd) {
+      tokens = [autoToken];
+      console.log(`[getRunTokenForStudent] Backfilled run_token for assignment ${assignment.id}: ${autoToken}`);
+    }
+  }
+
   return _json(200, { success: true, assignment_id: assignment.id, tokens });
 }
 

@@ -5,8 +5,8 @@
 	<meta name="viewport" content="width=device-width,initial-scale=1" />
 	<title>Word Arcade - Live Mode</title>
 	<!-- API gateway MUST load before api-config for students.willenaenglish.com routing -->
-	<script src="/students/api-gateway.js"></script>
-	<script src="/js/api-config.js"></script>
+	<script src="/students/api-gateway.js?v=20260326c"></script>
+	<script src="/js/api-config.js?v=20260324r"></script>
 	<link rel="stylesheet" href="mini.css" />
 	<link rel="stylesheet" href="/students/theme.css" />
 	<script src="/students/language.js"></script>
@@ -17,8 +17,10 @@
 	  const doc = document; doc.documentElement.style.visibility='hidden';
 	  function show(){ doc.documentElement.style.visibility=''; }
 	  async function check(){
-	    // Must wait for BOTH WillenaAPI AND the gateway patch
-	    if (!window.WillenaAPI || !window.WillenaAPI.fetch || !window.__STUDENTS_GATEWAY_PATCHED) {
+	    // Must wait for WillenaAPI and gateway patch readiness.
+	    // Accept both legacy and current gateway-ready flags for compatibility.
+	    const gatewayReady = !!(window.__STUDENTS_GATEWAY_PATCHED || window.__CF_GATEWAY_PATCHED);
+	    if (!window.WillenaAPI || !window.WillenaAPI.fetch || !gatewayReady) {
 	      setTimeout(check, 20);
 	      return;
 	    }

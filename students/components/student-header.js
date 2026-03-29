@@ -568,8 +568,8 @@ class StudentHeader extends HTMLElement {
                 <svg width="20" height="20" viewBox="0 0 24 24" style="margin-right:4px" xmlns="http://www.w3.org/2000/svg" fill="none"><path fill="#19777e" d="M14 6.3V5a2 2 0 10-4 0v1.3A5 5 0 007 11v1H5a1 1 0 000 2h2v1c0 .34.03.67.1 1H5a1 1 0 000 2h2.68A5.98 5.98 0 0012 21a5.98 5.98 0 004.32-1H19a1 1 0 000-2h-2.1c.07-.33.1-.66.1-1v-1h2a1 1 0 000-2h-2v-1a5 5 0 00-3-4.7zM12 19a4 4 0 01-4-4v-4a4 4 0 118 0v4a4 4 0 01-4 4z"/></svg>
                 Bugs
               </button>
-              <button class="dd-item" id="logoutAction" role="menuitem" type="button" style="color:#c62828;" data-i18n="Logout">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right:4px"><path d="M16 13v-2H7V8l-5 4 5 4v-3h9zm3-11H9c-1.1 0-2 .9-2 2v4h2V4h10v16H9v-4H7v4c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z" fill="#c62828"/></svg>
+              <button class="dd-item" id="logoutAction" role="menuitem" type="button" data-i18n="Logout">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right:4px"><path d="M16 13v-2H7V8l-5 4 5 4v-3h9zm3-11H9c-1.1 0-2 .9-2 2v4h2V4h10v16H9v-4H7v4c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z" fill="#19777e"/></svg>
                 Logout
               </button>
             </div>

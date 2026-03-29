@@ -15,10 +15,22 @@ export function recordPerfSample(sample) {
   } catch (e) { /* non-fatal */ }
 }
 
+function resolveApiUrl(url) {
+  if (typeof url !== 'string') return url;
+  if (!url.startsWith('/.netlify/functions/')) return url;
+  try {
+    if (typeof window !== 'undefined' && window.WillenaAPI && typeof window.WillenaAPI.getApiUrl === 'function') {
+      return window.WillenaAPI.getApiUrl(url);
+    }
+  } catch {}
+  return url;
+}
+
 /**
  * Timed JSON fetch with performance tracking
  */
 export async function timedJSONFetch(label, url, init) {
+  const resolvedUrl = resolveApiUrl(url);
   const start = performance.now();
   let ttfbMs = 0; 
   let ok = false; 
@@ -29,7 +41,7 @@ export async function timedJSONFetch(label, url, init) {
   let err = null;
   
   try {
-    const res = await fetch(url, init);
+    const res = await fetch(resolvedUrl, init);
     status = res.status;
     ttfbMs = performance.now() - start; // approximate (headers received)
     text = await res.text();
@@ -80,8 +92,9 @@ export async function timedJSONFetch(label, url, init) {
  */
 export async function fetchJSONSafe(url, init, opts = {}) {
   const { retryOnNetwork = true, retryDelayMs = 700 } = opts;
+  const resolvedUrl = resolveApiUrl(url);
   try {
-    const res = await fetch(url, init);
+    const res = await fetch(resolvedUrl, init);
     // Read text first so we can report useful errors on non-JSON responses
     let text = '';
     try { 
@@ -103,7 +116,7 @@ export async function fetchJSONSafe(url, init, opts = {}) {
     // Retry once on network-style errors seen in Netlify dev (connection reset / failed to fetch)
     if (retryOnNetwork && /Failed to fetch|NetworkError|ERR_CONNECTION_RESET|load failed|TypeError: NetworkError/i.test(msg)) {
       await new Promise(r => setTimeout(r, retryDelayMs));
-      return fetchJSONSafe(url, init, { retryOnNetwork: false, retryDelayMs });
+      return fetchJSONSafe(resolvedUrl, init, { retryOnNetwork: false, retryDelayMs });
     }
     throw err;
   }

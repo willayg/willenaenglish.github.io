@@ -499,49 +499,29 @@ const HomeworkModal = (() => {
       listMeta.stars_required = starsRequired;
     }
 
-    const assignment = {
-      class: selectedClass,
-      title: title,
-      description: description,
-      list_key: selectedList.path,
-      list_title: getDisplayTitle(selectedList.path, selectedList.level, selectedList.type),
-      list_meta: listMeta,
-      start_at: new Date().toISOString(),
-      due_at: new Date(dueDate + 'T23:59:59').toISOString(),
-      goal_type: 'stars',
-      goal_value: 5
-    };
+    const helper = window.TeacherHomeworkAssignment;
+    if (!helper || typeof helper.buildAssignmentPayload !== 'function' || typeof helper.createAssignment !== 'function') {
+      alert('Homework helper is unavailable. Please refresh and try again.');
+      return;
+    }
+
+    const assignment = helper.buildAssignmentPayload({
+      className: selectedClass,
+      title,
+      description,
+      listKey: selectedList.path,
+      listTitle: getDisplayTitle(selectedList.path, selectedList.level, selectedList.type),
+      listMeta,
+      dueDate,
+      startAt: new Date().toISOString(),
+      goalType: 'stars',
+      goalValue: 5
+    });
 
     console.log('Assignment payload:', assignment);
 
     try {
-      const apiUrl = window.WillenaAPI
-        ? window.WillenaAPI.getApiUrl('/.netlify/functions/homework_api?action=create_assignment')
-        : '/.netlify/functions/homework_api?action=create_assignment';
-      const resp = await fetch(apiUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify(assignment)
-      });
-
-      const rawText = await resp.text();
-      let data;
-      try {
-        data = rawText ? JSON.parse(rawText) : {};
-      } catch (parseErr) {
-        console.error('Homework assign error: non-JSON response from server', {
-          status: resp.status,
-          rawText,
-          parseErr
-        });
-        throw new Error('Server returned an unexpected response while creating homework.');
-      }
-
-      if (!resp.ok || !data.success) {
-        console.error('Homework assign error payload:', data);
-        throw new Error(data.error || `HTTP ${resp.status}`);
-      }
+      await helper.createAssignment(assignment);
 
       const listTitle = getDisplayTitle(selectedList.path, selectedList.level, selectedList.type);
       alert(`Homework assigned!\n\nClass: ${selectedClass}\nTitle: ${title}\nList: ${listTitle}\nDue: ${dueDate}`);

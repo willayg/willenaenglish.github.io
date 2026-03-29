@@ -19,20 +19,21 @@ export function insertBurgerMenu(targetSelector = 'body') {
     fallback.innerHTML = `
       <style>
         .burger-menu { position: fixed; top: 10px; right: 10px; z-index: 9999; }
-        .burger-btn { background: #4CAF50; color: white; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer; font-size: 16px; }
-        .burger-btn:hover { background: #45a049; }
+        .burger-btn { background: #00c9db; color: white; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer; font-size: 16px; }
+        .burger-btn:hover { background: #00b4c6; }
         .burger-dropdown { display: none; position: absolute; top: 50px; right: 0; background: white; box-shadow: 0 4px 8px rgba(0,0,0,0.2); border-radius: 5px; min-width: 200px; }
         .burger-dropdown a { display: block; padding: 12px 16px; text-decoration: none; color: #333; border-bottom: 1px solid #eee; }
         .burger-dropdown a:hover { background: #f1f1f1; }
         .burger-dropdown a:last-child { border-bottom: none; }
       </style>
       <div class="burger-menu">
-        <button class="burger-btn">☰ Menu</button>
+        <button class="burger-btn" aria-label="Menu">☰</button>
         <div class="burger-dropdown">
           <a href="/Teachers/index.html">Teachers Home</a>
           <a href="/Teachers/tools/manage_students.html">Manage Students</a>
           <a href="/Teachers/tools/student_tracker/student_tracker.html">Student Tracker</a>
           <a href="/Teachers/tools/planner/planner.html">Planner</a>
+          <a href="/Teachers/tools/game-builder/index.html">Game Builder</a>
           <a href="/Teachers/tools/survey_builder/survey_builder.html">Survey Builder</a>
           <a href="/Teachers/tools/reading/reading.html">Reading</a>
           <a href="/Teachers/tools/flashcard/flashcard.html">Flashcards</a>
@@ -42,7 +43,7 @@ export function insertBurgerMenu(targetSelector = 'body') {
           <a href="/Teachers/tools/worksheet-builder-vanilla/index.html">Worksheet Builder</a>
           <a href="/Teachers/tools/test_input/index.html">Test Input</a>
           <a href="#" id="feedbackMenuBtn">Feedback</a>
-          <a href="/Teachers/login.html">Login</a>
+          <button type="button" id="logoutMenuBtn" style="display:block;width:100%;text-align:left;padding:12px 16px;background:#fff;border:none;border-top:1px solid #eee;color:#333;cursor:pointer;font:inherit;">Logout</button>
         </div>
       </div>
     `;
@@ -71,13 +72,31 @@ export function insertBurgerMenu(targetSelector = 'body') {
 
   // Feedback modal logic (optional: trigger your feedback modal here)
   const feedbackBtn = wrapper.querySelector('#feedbackMenuBtn');
-  if (!feedbackBtn) return;
-  feedbackBtn.onclick = (e) => {
-    e.preventDefault();
-    if (window.showFeedbackModal) window.showFeedbackModal();
-    else alert('Feedback modal not implemented!');
-    dropdown.style.display = 'none';
-  };
+  if (feedbackBtn) {
+    feedbackBtn.onclick = (e) => {
+      e.preventDefault();
+      if (window.showFeedbackModal) window.showFeedbackModal();
+      else alert('Feedback modal not implemented!');
+      dropdown.style.display = 'none';
+    };
+  }
+
+  const logoutBtn = wrapper.querySelector('#logoutMenuBtn');
+  if (logoutBtn) {
+    logoutBtn.onclick = async () => {
+      try {
+        localStorage.removeItem('userId');
+        localStorage.removeItem('userRole');
+        localStorage.removeItem('username');
+        localStorage.removeItem('userEmail');
+      } catch {}
+      try { await window.WillenaAPI?.fetch?.('/.netlify/functions/supabase_auth?action=logout', { method: 'POST' }); } catch {}
+      const redirect = encodeURIComponent(location.pathname + location.search);
+      window.location.href = '/Teachers/login.html?redirect=' + redirect;
+    };
+  }
+
+  if (!feedbackBtn && !logoutBtn) return;
 }
 
 // If not using modules, you can expose insertBurgerMenu globally:

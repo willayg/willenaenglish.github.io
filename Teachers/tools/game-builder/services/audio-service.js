@@ -2,6 +2,14 @@
 import { isLocalHost } from '../utils/network.js';
 import { normalizeForKey } from '../utils/validation.js';
 
+function getApiPath(path) {
+  try {
+    return window.WillenaAPI?.getApiUrl ? window.WillenaAPI.getApiUrl(path) : path;
+  } catch {
+    return path;
+  }
+}
+
 /**
  * Get the preferred TTS voice ID from localStorage
  * @returns {string|null} Voice ID or null for default
@@ -24,8 +32,8 @@ export async function checkExistingAudioKeys(keys) {
   if (!Array.isArray(keys) || !keys.length) return {};
   
   const endpoints = isLocalHost()
-    ? ['/.netlify/functions/get_audio_urls', 'http://localhost:9000/.netlify/functions/get_audio_urls']
-    : ['/.netlify/functions/get_audio_urls'];
+    ? [getApiPath('/.netlify/functions/get_audio_urls'), 'http://localhost:9000/.netlify/functions/get_audio_urls']
+    : [getApiPath('/.netlify/functions/get_audio_urls')];
   
   let lastErr = null;
   for (const url of endpoints) {
@@ -62,8 +70,8 @@ export async function checkExistingAudioKeys(keys) {
  */
 export async function callTTSProxy(payload) {
   const endpoints = isLocalHost()
-    ? ['/.netlify/functions/eleven_labs_proxy', 'http://localhost:9000/.netlify/functions/eleven_labs_proxy']
-    : ['/.netlify/functions/eleven_labs_proxy'];
+    ? [getApiPath('/.netlify/functions/eleven_labs_proxy'), 'http://localhost:9000/.netlify/functions/eleven_labs_proxy']
+    : [getApiPath('/.netlify/functions/eleven_labs_proxy')];
   
   for (const url of endpoints) {
     try {
@@ -90,8 +98,8 @@ export async function callTTSProxy(payload) {
  */
 export async function uploadAudioFile(key, audioBase64) {
   const endpoints = isLocalHost()
-    ? ['/.netlify/functions/upload_audio', 'http://localhost:9000/.netlify/functions/upload_audio']
-    : ['/.netlify/functions/upload_audio'];
+    ? [getApiPath('/.netlify/functions/upload_audio'), 'http://localhost:9000/.netlify/functions/upload_audio']
+    : [getApiPath('/.netlify/functions/upload_audio')];
   
   for (const url of endpoints) {
     try {
@@ -165,7 +173,7 @@ export async function ensureAudioForWordsAndSentences(wordsList, examplesMap, op
     if (k) originalByKey[k] = String(orig);
   });
   
-  const { maxWorkers = 3, onInit, onProgress, onDone, force = false } = opts || {};
+  const { maxWorkers = 3, onInit, onProgress, onDone, force = false, skipSentenceAudio = false } = opts || {};
   
   if (!words.length && (!examplesMap || Object.keys(examplesMap).length === 0)) {
     if (typeof onInit === 'function') onInit(0);
@@ -175,7 +183,7 @@ export async function ensureAudioForWordsAndSentences(wordsList, examplesMap, op
   
   // 1) Prepare keys
   const wordKeys = words.slice();
-  const sentenceKeys = words.map(w => `${w}_sentence`);
+  const sentenceKeys = skipSentenceAudio ? [] : words.map(w => `${w}_sentence`);
   
   let missingWordKeys = wordKeys.slice();
   let missingSentenceKeys = sentenceKeys.slice();

@@ -9,7 +9,8 @@ Request body:
 {
   action: 'upsert_sentences_batch',
   sentences: [ { text: 'I run every day.', words:['run','day'] }, ... ],
-  voice_id?: 'override_voice'
+  voice_id?: 'override_voice',
+  force_new_ids?: boolean
 }
 Response:
 { success:true, sentences:[ { text, id } ], audio: { generated: n, reused: m } }
@@ -70,27 +71,31 @@ exports.handler = async (event) => {
     if(!unique.length) return { statusCode:200, headers:cors, body: JSON.stringify({ success:true, sentences:[], info:{ skippedShort } }) };
 
   const out = [];
+  const forceNewIds = !!body.force_new_ids;
   const audioStatus = []; // will collect per-sentence audio attempt result
     for (const entry of unique){
       try {
-        // 2. Try existing (exact = eq) first for speed, then fallback to ilike if needed
+        // 2. Try existing (exact = eq) first for speed, then fallback to ilike if needed.
+        // Callers can force independent sentence IDs by setting force_new_ids=true.
         let id = null; let audio_key = null;
-        let existingSel = await supabase
-          .from('sentences')
-          .select('id, text, audio_key')
-          .eq('text', entry.text)
-          .limit(1);
-        if(existingSel.error){
-          console.warn('[upsert_sentences_batch] eq select failed, falling back to ilike', existingSel.error.message);
-          existingSel = await supabase
+        if (!forceNewIds) {
+          let existingSel = await supabase
             .from('sentences')
             .select('id, text, audio_key')
-            .ilike('text', entry.text)
+            .eq('text', entry.text)
             .limit(1);
-        }
-        if(!existingSel.error && existingSel.data && existingSel.data[0]){
-          id = existingSel.data[0].id; audio_key = existingSel.data[0].audio_key || null;
-          console.log('[upsert_sentences_batch] reuse sentence', { id });
+          if(existingSel.error){
+            console.warn('[upsert_sentences_batch] eq select failed, falling back to ilike', existingSel.error.message);
+            existingSel = await supabase
+              .from('sentences')
+              .select('id, text, audio_key')
+              .ilike('text', entry.text)
+              .limit(1);
+          }
+          if(!existingSel.error && existingSel.data && existingSel.data[0]){
+            id = existingSel.data[0].id; audio_key = existingSel.data[0].audio_key || null;
+            console.log('[upsert_sentences_batch] reuse sentence', { id });
+          }
         }
         if(!id){
           const ins = await supabase

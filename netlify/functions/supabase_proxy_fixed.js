@@ -93,23 +93,43 @@ exports.handler = async (event) => {
 
   async function getUserFromCookie(supabase, event) {
     const headers = event.headers || {};
+    const cookieHeader = (headers.Cookie || headers.cookie) || '';
+    const cookies = parseCookies(cookieHeader);
+    const cookieToken = cookies['sb_access'] || null;
     const authHeader = headers.authorization || headers.Authorization || '';
-    let token = null;
-    if (authHeader && authHeader.startsWith('Bearer ')) {
-      token = authHeader.slice(7);
-    } else {
-      const cookieHeader = (headers.Cookie || headers.cookie) || '';
-      const cookies = parseCookies(cookieHeader);
-      token = cookies['sb_access'] || null;
+    const bearerToken = (authHeader && authHeader.startsWith('Bearer ')) ? authHeader.slice(7) : null;
+
+    const tokensToTry = [];
+    // Cookie session should be authoritative for browser requests.
+    if (cookieToken) tokensToTry.push(cookieToken);
+    if (bearerToken && bearerToken !== cookieToken) tokensToTry.push(bearerToken);
+
+    for (const token of tokensToTry) {
+      try {
+        const { data, error } = await supabase.auth.getUser(token);
+        if (!error && data && data.user) return data.user;
+      } catch {
+        // Try next token source.
+      }
     }
-    if (!token) return null;
+
+    return null;
+  }
+
+  async function resolveOwnerProfileId(supabase, requesterId) {
+    if (!requesterId) return requesterId;
     try {
-      const { data, error } = await supabase.auth.getUser(token);
-      if (error || !data || !data.user) return null;
-      return data.user;
+      // Most environments use profiles.id === auth user id.
+      const direct = await supabase.from('profiles').select('id').eq('id', requesterId).maybeSingle();
+      if (!direct.error && direct.data && direct.data.id) return direct.data.id;
+
+      // Fallback for schemas that separate auth user id and profile id.
+      const byAuth = await supabase.from('profiles').select('id').eq('auth_user_id', requesterId).maybeSingle();
+      if (!byAuth.error && byAuth.data && byAuth.data.id) return byAuth.data.id;
     } catch {
-      return null;
+      // Keep requesterId as-is if lookup fails.
     }
+    return requesterId;
   }
   // Decode JWT locally to extract the user id (sub), avoids upstream failures
   function getUserIdFromCookie(event) {
@@ -857,6 +877,18 @@ exports.handler = async (event) => {
         const body = JSON.parse(event.body || '{}');
   if (body.action === 'insert_game_data' && body.data) {
           const gd = body.data;
+          const localDev = isLocalDev(event);
+          let requesterId = getUserIdFromCookie(event);
+          if (!requesterId) {
+            const user = await getUserFromCookie(supabase, event); requesterId = user && user.id;
+          }
+          if (!requesterId && localDev && gd && gd.created_by) {
+            requesterId = gd.created_by;
+          }
+          if (!requesterId) {
+            return { statusCode: 401, body: JSON.stringify({ success: false, error: 'Not authenticated' }) };
+          }
+          const ownerId = await resolveOwnerProfileId(supabase, requesterId);
           // Normalize words shape
           if (!Array.isArray(gd.words)) gd.words = [];
           // Map incoming fields to schema columns
@@ -873,7 +905,7 @@ exports.handler = async (event) => {
             class: gd.class || gd.gameClass || null,
             book: gd.book || gd.gameBook || null,
             unit: gd.unit || gd.gameUnit || null,
-            created_by: gd.created_by || gd.created_by_id || gd.user_id || gd.profile_id || null,
+            created_by: ownerId,
             tags: Array.isArray(gd.tags) ? gd.tags : null,
             visibility: gd.visibility || undefined,
             game_image: derivedImage || null,
@@ -884,25 +916,21 @@ exports.handler = async (event) => {
           }
           return { statusCode: 200, body: JSON.stringify({ success: true, data }) };
         } else if (body.action === 'update_game_data' && body.id && body.data) {
-          // Ownership enforcement with enhanced diagnostics
+          // Ownership check removed per teacher request – any authenticated user may update any game.
+          // Auth is still required to prevent anonymous writes.
           let requesterId = getUserIdFromCookie(event);
           if (!requesterId) {
             const user = await getUserFromCookie(supabase, event); requesterId = user && user.id;
           }
-          // Local dev fallback: allow supplied created_by in body.data ONLY when no requesterId and running locally
           if (!requesterId && isLocalDev(event) && body.data && body.data.created_by) {
-            console.log('[update_game_data][dev-fallback] using payload.created_by', body.data.created_by);
             requesterId = body.data.created_by;
           }
           if (!requesterId) {
-            console.log('[update_game_data][auth-fail] cookies present?', Object.keys(parseCookies((event.headers && (event.headers.Cookie||event.headers.cookie))||'')).join(','));
             return { statusCode: 401, body: JSON.stringify({ success:false, error:'Not authenticated' }) };
           }
-          const { data: existing, error: exErr } = await supabase.from('game_data').select('created_by').eq('id', body.id).single();
+          // Verify the record exists (but do NOT enforce ownership)
+          const { data: existing, error: exErr } = await supabase.from('game_data').select('id').eq('id', body.id).single();
           if (exErr || !existing) return { statusCode: 404, body: JSON.stringify({ success:false, error:'Game not found' }) };
-          if (existing.created_by && existing.created_by !== requesterId) {
-            return { statusCode: 403, body: JSON.stringify({ success:false, error:'Forbidden: not owner' }) };
-          }
           const gd = body.data;
           if (!Array.isArray(gd.words)) gd.words = [];
             let derivedImage = null;

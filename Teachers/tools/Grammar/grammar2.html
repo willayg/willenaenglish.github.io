@@ -1,6 +1,8 @@
 
     <!-- html2pdf.js for PDF export -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <!-- API gateway for CF Pages routing - MUST load before api-config.js -->
+    <script src="/students/api-gateway.js?v=20260116"></script>
     <script src="/js/api-config.js?v=20260108"></script>
 <!DOCTYPE html>
 <html lang="en">
@@ -290,24 +292,6 @@
   </script>
     <!-- Load shared burger menu component -->
     <script type="module">
-      // Temporary logout pill for teachers when burger menu fails to load
-      (function(){
-        if (document.getElementById('teacher-logout-pill')) return;
-        function doLogout() {
-          localStorage.removeItem('userId');
-          localStorage.removeItem('userRole');
-          localStorage.removeItem('username');
-          const redirect = encodeURIComponent(location.pathname + location.search);
-          window.location.href = '/Teachers/login.html?redirect=' + redirect;
-        }
-        const btn = document.createElement('button');
-        btn.id = 'teacher-logout-pill';
-        btn.textContent = 'Logout';
-        Object.assign(btn.style, { position:'fixed', top:'12px', right:'12px', zIndex:99999, background:'#e74c3c', color:'#fff', border:'none', padding:'8px 12px', borderRadius:'6px', cursor:'pointer', boxShadow:'0 2px 8px rgba(0,0,0,0.2)' });
-        btn.onclick = doLogout;
-        document.addEventListener('DOMContentLoaded', function(){ if (location.hostname !== 'willenaenglish.netlify.app') document.body.appendChild(btn); });
-      })();
-
       import { insertBurgerMenu } from '/components/burger-menu.js?v=20260219';
       async function ensureBurgerMenuTemplate() {
         if (!document.getElementById('burger-menu-template')) {

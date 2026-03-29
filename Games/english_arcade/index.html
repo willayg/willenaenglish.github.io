@@ -4,8 +4,8 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <!-- API gateway MUST load before api-config for students.willenaenglish.com routing -->
-  <script src="/students/api-gateway.js"></script>
-  <script src="/js/api-config.js"></script>
+  <script src="/students/api-gateway.js?v=20260326c"></script>
+  <script src="/js/api-config.js?v=20260324r"></script>
   <base href="/Games/english_arcade/" />
   <title data-i18n="English Arcade">English Arcade</title>
 
@@ -34,7 +34,115 @@
     body { font: 14px/1.4 system-ui, Segoe UI, Arial, sans-serif; background:#f5f7fa; color:var(--ink); }
     /* Force consistent header height to prevent jumpiness */
     student-header::part(name) { font-size: 16px; line-height: 1.2; }
+    html.wa-autostart-pending #openingButtons { display: none !important; }
+    html.wa-autostart-pending #waAutostartOverlay { display: flex; }
+    #waAutostartOverlay {
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: rgba(245, 247, 250, 0.96);
+      z-index: 9998;
+      padding: 24px;
+    }
+    #waAutostartOverlay .wa-autostart-card {
+      min-width: 220px;
+      max-width: 320px;
+      background: #fff;
+      border: 2px solid #93cbcf;
+      border-radius: 18px;
+      box-shadow: 0 12px 36px rgba(25,119,126,0.14);
+      padding: 24px 22px;
+      text-align: center;
+    }
+    #waAutostartOverlay .wa-spinner {
+      width: 42px;
+      height: 42px;
+      margin: 0 auto 14px;
+      border-radius: 50%;
+      border: 4px solid rgba(147, 203, 207, 0.35);
+      border-top-color: #19777e;
+      animation: wa-spin 0.9s linear infinite;
+    }
+    #waAutostartOverlay .wa-title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #19777e;
+      margin-bottom: 6px;
+    }
+    #waAutostartOverlay .wa-subtitle {
+      font-size: 0.86rem;
+      color: #5b6670;
+    }
+    @keyframes wa-spin {
+      to { transform: rotate(360deg); }
+    }
+    .wa-hw-done-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(9, 20, 31, 0.5);
+      backdrop-filter: blur(2px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10020;
+      padding: 20px;
+    }
+    .wa-hw-done-card {
+      width: min(640px, 94vw);
+      border-radius: 26px;
+      padding: 34px 22px 20px;
+      text-align: center;
+      background: linear-gradient(160deg, #ffffff 0%, #f0fdff 100%);
+      border: 3px solid #22d3ee;
+      box-shadow: 0 22px 54px rgba(25, 119, 126, 0.24);
+      animation: wa-hw-pop 260ms ease-out;
+    }
+    .wa-hw-done-title {
+      margin: 0;
+      color: #0f3f44;
+      font-size: clamp(1.8rem, 5.2vw, 3rem);
+      line-height: 1.12;
+      letter-spacing: 0.2px;
+      font-weight: 800;
+    }
+    .wa-hw-done-sub {
+      margin: 14px 0 0;
+      color: #4c6170;
+      font-size: clamp(0.9rem, 2.4vw, 1.05rem);
+      line-height: 1.35;
+      font-weight: 600;
+    }
+    .wa-hw-done-ok {
+      margin-top: 20px;
+      border: none;
+      border-radius: 14px;
+      padding: 11px 20px;
+      background: #19777e;
+      color: #fff;
+      font-weight: 700;
+      font-size: 0.95rem;
+      cursor: pointer;
+      box-shadow: 0 8px 18px rgba(25, 119, 126, 0.24);
+    }
+    @keyframes wa-hw-pop {
+      from { transform: scale(0.94); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
   </style>
+  <script>
+    (function() {
+      try {
+        const params = new URLSearchParams(window.location.search);
+        const shouldShowLaunchOverlay = params.get('autostart') === '1' || (params.get('open') || '').toLowerCase() === 'saved';
+        window.__WA_AUTOSTART_PENDING__ = shouldShowLaunchOverlay;
+        if (shouldShowLaunchOverlay) {
+          document.documentElement.classList.add('wa-autostart-pending');
+        }
+      } catch {}
+    })();
+  </script>
   <script>
     // Early auth gate: redirect to student login if no valid whoami
     (function(){
@@ -46,8 +154,10 @@
       
       // Wait for api-gateway to patch WillenaAPI before checking auth
       function checkAuth() {
-        // Must wait for BOTH WillenaAPI AND the gateway patch
-        if (!window.WillenaAPI || !window.WillenaAPI.fetch || !window.__STUDENTS_GATEWAY_PATCHED) {
+        // Must wait for WillenaAPI and gateway patch readiness.
+        // Accept both legacy and current gateway-ready flags for compatibility.
+        const gatewayReady = !!(window.__STUDENTS_GATEWAY_PATCHED || window.__CF_GATEWAY_PATCHED);
+        if (!window.WillenaAPI || !window.WillenaAPI.fetch || !gatewayReady) {
           setTimeout(checkAuth, 20);
           return;
         }
@@ -68,9 +178,16 @@
   <script src="/students/language.js"></script>
   <script src="/students/theme.js"></script>
   <!-- Game app -->
-  <script type="module" src="main.js?v=20251214a"></script>
+  <script type="module" src="main.js?v=20260326c"></script>
 </head>
 <body class="word-arcade">
+  <div id="waAutostartOverlay" aria-live="polite" aria-busy="true">
+    <div class="wa-autostart-card">
+      <div class="wa-spinner" aria-hidden="true"></div>
+      <div class="wa-title">Loading homework…</div>
+      <div class="wa-subtitle">Preparing your game</div>
+    </div>
+  </div>
   <student-header title="" show-home="false" home-href="/students/dashboard.html" home-label="Home" data-i18n="Home">
   <img slot="actions" src="assets/Images/icons/english-arcade.svg" alt="English Arcade" style="height:4em;max-height:4.5em;display:block;" />
   <a slot="menu-item" id="tabWordArcade" class="wa-menu-btn wa-tab active" href="#" data-i18n="English Arcade">English Arcade</a>
@@ -164,7 +281,143 @@
       const autostart = urlParams.get('autostart');
       const listParam = urlParams.get('list');
       const hwParam = urlParams.get('hw');
+      const modeParam = urlParams.get('mode');
   const isGrammarParam = urlParams.get('grammar'); // optional override
+      try {
+        if (hwParam) sessionStorage.setItem('wa_homework_assignment_id', String(hwParam));
+      } catch {}
+      const homeworkDoneModalKey = hwParam ? `wa_hw_done_modal_${hwParam}` : null;
+
+      let currentUserIdCache = null;
+      let homeworkCompletionBaseline = null;
+      let homeworkDoneModalVisible = false;
+
+      async function getCurrentUserIdCached() {
+        if (currentUserIdCache) return currentUserIdCache;
+        try {
+          const whoRes = await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=whoami');
+          const whoJson = await whoRes.json().catch(() => ({}));
+          if (whoRes.ok && whoJson.success && whoJson.user_id) {
+            currentUserIdCache = whoJson.user_id;
+            return currentUserIdCache;
+          }
+        } catch {}
+        return null;
+      }
+
+      function computeCompletionPercent(studentProgress) {
+        if (!studentProgress || typeof studentProgress !== 'object') return 0;
+        let completionPct = 0;
+        if (typeof studentProgress.completion === 'number') completionPct = studentProgress.completion;
+        else if (typeof studentProgress.completion_pct === 'number') completionPct = studentProgress.completion_pct;
+        else if (typeof studentProgress.modes_attempted === 'number' && typeof studentProgress.modes_total === 'number' && studentProgress.modes_total > 0) {
+          completionPct = Math.round((studentProgress.modes_attempted / studentProgress.modes_total) * 100);
+        }
+        return Math.max(0, Math.min(100, completionPct));
+      }
+
+      async function fetchHomeworkCompletionPct(assignmentId) {
+        if (!assignmentId) return null;
+        try {
+          // Try to detect spelling-only from sessionStorage (set when game is launched)
+          let spHint = '';
+          try {
+            const storedMeta = sessionStorage.getItem('wa_hw_forced_mode');
+            if (storedMeta === 'spelling') spHint = '&spelling_only=1';
+          } catch {}
+          const prRes = await WillenaAPI.fetch(`/.netlify/functions/homework_api?action=assignment_progress&assignment_id=${encodeURIComponent(assignmentId)}${spHint}`);
+          const prJson = await prRes.json().catch(() => ({}));
+          console.log('[HW Progress] API response:', JSON.stringify(prJson._debug || {}), 'progress:', JSON.stringify((prJson.progress || []).map(p => ({uid: p.user_id, completion: p.completion, modes: p.modes_attempted + '/' + p.modes_total, modes_list: p.modes}))));
+          if (!prRes.ok || !prJson.success || !Array.isArray(prJson.progress)) return null;
+
+          const uid = await getCurrentUserIdCached();
+          let studentProgress = null;
+          if (uid) studentProgress = prJson.progress.find(p => String(p.user_id) === String(uid)) || null;
+          if (!studentProgress && prJson.progress.length === 1) studentProgress = prJson.progress[0];
+          if (!studentProgress) return null;
+
+          return computeCompletionPercent(studentProgress);
+        } catch {
+          return null;
+        }
+      }
+
+      function showHomeworkDoneModal() {
+        if (homeworkDoneModalVisible) return;
+        if (document.getElementById('waHomeworkDoneModal')) return;
+
+        homeworkDoneModalVisible = true;
+        const modal = document.createElement('div');
+        modal.id = 'waHomeworkDoneModal';
+        modal.className = 'wa-hw-done-modal';
+        modal.innerHTML = `
+          <div class="wa-hw-done-card" role="dialog" aria-modal="true" aria-labelledby="waHwDoneTitle">
+            <h2 id="waHwDoneTitle" class="wa-hw-done-title">You've finished your homework! Nice Job!</h2>
+            <p class="wa-hw-done-sub">숙제를 완료했어요! 정말 잘했어요!</p>
+            <button type="button" class="wa-hw-done-ok" id="waHwDoneOkBtn">Awesome!</button>
+          </div>
+        `;
+
+        const closeModal = () => {
+          try { modal.remove(); } catch {}
+          homeworkDoneModalVisible = false;
+        };
+
+        modal.addEventListener('click', (e) => {
+          if (e.target === modal) closeModal();
+        });
+
+        document.body.appendChild(modal);
+        document.getElementById('waHwDoneOkBtn')?.addEventListener('click', closeModal);
+
+        try {
+          const badgeSfx = new Audio('./assets/audio/badge6.mp3');
+          badgeSfx.volume = 0.78;
+          badgeSfx.play().catch(() => {});
+          setTimeout(() => {
+            const praiseSfx = new Audio('./assets/audio/great_work.mp3');
+            praiseSfx.volume = 0.9;
+            praiseSfx.play().catch(() => {});
+          }, 220);
+        } catch {}
+      }
+
+      async function maybeCelebrateHomeworkCompletion() {
+        if (!hwParam) return;
+        if (homeworkDoneModalKey && sessionStorage.getItem(homeworkDoneModalKey)) return;
+
+        let completionPct = null;
+        for (let attempt = 0; attempt < 4; attempt += 1) {
+          completionPct = await fetchHomeworkCompletionPct(hwParam);
+          if (typeof completionPct === 'number' && completionPct >= 100) break;
+          if (attempt < 3) {
+            await new Promise(resolve => setTimeout(resolve, 700));
+          }
+        }
+        if (typeof completionPct !== 'number') return;
+
+        if (homeworkCompletionBaseline == null) {
+          homeworkCompletionBaseline = completionPct;
+          return;
+        }
+
+        if (homeworkCompletionBaseline < 100 && completionPct >= 100) {
+          showHomeworkDoneModal();
+          try {
+            if (homeworkDoneModalKey) sessionStorage.setItem(homeworkDoneModalKey, '1');
+          } catch {}
+        }
+        homeworkCompletionBaseline = Math.max(homeworkCompletionBaseline, completionPct);
+      }
+
+      if (hwParam) {
+        maybeCelebrateHomeworkCompletion();
+        window.addEventListener('wa:session-ended', () => {
+          setTimeout(() => {
+            maybeCelebrateHomeworkCompletion();
+          }, 500);
+        });
+      }
 
       if (tabWordArcade) {
         tabWordArcade.addEventListener('click', (e) => {
@@ -206,8 +459,20 @@
           const assignments = data.assignments || [];
           await Promise.all(assignments.map(async (a) => {
             try {
-              const pr = await WillenaAPI.fetch(`/.netlify/functions/homework_api?action=assignment_progress&assignment_id=${encodeURIComponent(a.id)}`);
+              // Detect spelling-only from local metadata to pass as a hint to the backend
+              let listMetaForBadge = a?.list_meta;
+              if (typeof listMetaForBadge === 'string') {
+                try { listMetaForBadge = JSON.parse(listMetaForBadge); } catch { listMetaForBadge = {}; }
+              }
+              if (!listMetaForBadge || typeof listMetaForBadge !== 'object') listMetaForBadge = {};
+              const badgeForcedMode = String(listMetaForBadge.forced_mode || listMetaForBadge.mode || listMetaForBadge.difficulty_mode || '').trim().toLowerCase();
+              const badgeModesTotal = Number(listMetaForBadge.modes_total ?? listMetaForBadge.total_modes ?? listMetaForBadge.mode_count ?? 0);
+              const localSpellingOnly = badgeForcedMode === 'spelling' || badgeModesTotal === 1;
+              const spHint = localSpellingOnly ? '&spelling_only=1' : '';
+
+              const pr = await WillenaAPI.fetch(`/.netlify/functions/homework_api?action=assignment_progress&assignment_id=${encodeURIComponent(a.id)}${spHint}`);
               const pj = await pr.json().catch(()=>({}));
+              console.log(`[HW Badge] assignment ${a.id} (${a.title}):`, { _v: pj._v, is_spelling_only: pj.is_spelling_only, _debug_meta: pj._debug_meta, localSpellingOnly, badgeForcedMode, badgeModesTotal });
               if (pr.ok && pj && pj.success && Array.isArray(pj.progress)) {
                 // find current user row if present
                 const who = await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=whoami').then(r=>r.ok?r.json():{}).catch(()=>({}));
@@ -216,10 +481,12 @@
                 if (uid) myRow = pj.progress.find(p => String(p.user_id) === String(uid));
                 if (!myRow && pj.progress.length === 1) myRow = pj.progress[0];
                 let completionPct = myRow ? (typeof myRow.completion === 'number' ? myRow.completion : (myRow.completion_pct || 0)) : 0;
-                // If stars_required is set, override completion % to be star-based
-                if (pj.stars_required && myRow && typeof myRow.stars === 'number') {
+                const isSpellingOnlyAssignment = !!pj.is_spelling_only || localSpellingOnly;
+                // If stars_required is set, override completion % to be star-based (except spelling-only assignments)
+                if (!isSpellingOnlyAssignment && pj.stars_required && myRow && typeof myRow.stars === 'number') {
                   completionPct = Math.round((myRow.stars / pj.stars_required) * 100);
                 }
+                console.log(`[HW Badge] assignment ${a.id} final: completionPct=${completionPct}, myRow=`, myRow);
                 const completed = completionPct >= 100;
                 if (!completed) incomplete++;
               } else {
@@ -304,8 +571,24 @@
           // Fetch progress for each assignment
           const assignmentsWithProgress = await Promise.all(assignments.map(async (a) => {
             try {
-              const prRes = await WillenaAPI.fetch(`/.netlify/functions/homework_api?action=assignment_progress&assignment_id=${encodeURIComponent(a.id)}`);
+              // Detect spelling-only from local metadata to pass as a hint
+              let listMetaForProgress = a?.list_meta;
+              if (typeof listMetaForProgress === 'string') {
+                try { listMetaForProgress = JSON.parse(listMetaForProgress); } catch { listMetaForProgress = {}; }
+              }
+              if (!listMetaForProgress || typeof listMetaForProgress !== 'object') listMetaForProgress = {};
+              const progressForcedMode = String(listMetaForProgress.forced_mode || listMetaForProgress.mode || listMetaForProgress.difficulty_mode || '').trim().toLowerCase();
+              const progressModesTotal = Number(listMetaForProgress.modes_total ?? listMetaForProgress.total_modes ?? listMetaForProgress.mode_count ?? 0);
+              const localSpellingOnly = progressForcedMode === 'spelling' || progressModesTotal === 1;
+              const spHint = localSpellingOnly ? '&spelling_only=1' : '';
+
+              const prRes = await WillenaAPI.fetch(`/.netlify/functions/homework_api?action=assignment_progress&assignment_id=${encodeURIComponent(a.id)}${spHint}`);
               const prJson = await prRes.json().catch(()=>({}));
+              console.log(`[HW Cards] assignment ${a.id} (${a.title}):`, {
+                _v: prJson._v, is_spelling_only: prJson.is_spelling_only, _debug_meta: prJson._debug_meta,
+                localSpellingOnly, progressForcedMode, progressModesTotal, goal_value: prJson.goal_value,
+                raw_list_meta: listMetaForProgress,
+              });
               if (prRes.ok && prJson.success && Array.isArray(prJson.progress)) {
                 let studentProgress = null;
                 // Use String() for safe comparison - user_id may be UUID string or other type
@@ -319,10 +602,12 @@
                     completionPct = Math.round((studentProgress.modes_attempted / studentProgress.modes_total) * 100);
                   }
                   completionPct = Math.max(0, Math.min(100, completionPct));
-                  // If stars_required is set, override completion % to be star-based
-                  if (prJson.stars_required && typeof studentProgress.stars === 'number') {
+                  const isSpellingOnlyAssignment = !!prJson.is_spelling_only || localSpellingOnly;
+                  // If stars_required is set, override completion % to be star-based (except spelling-only assignments)
+                  if (!isSpellingOnlyAssignment && prJson.stars_required && typeof studentProgress.stars === 'number') {
                     completionPct = Math.round((studentProgress.stars / prJson.stars_required) * 100);
                   }
+                  console.log(`[HW Cards] assignment ${a.id} final: completionPct=${completionPct}, modes_attempted=${studentProgress.modes_attempted}, modes_total=${studentProgress.modes_total}, completion=${studentProgress.completion}, isSpellingOnly=${isSpellingOnlyAssignment}`);
                   return { ...a, completion_pct: completionPct, stars: studentProgress.stars || 0, accuracy: studentProgress.accuracy_best || 0, teacher_name: a.teacher_name || data.teacher_name || null, stars_required: prJson.stars_required || null };
                 }
               }
@@ -405,17 +690,44 @@
             // Goal message (for incomplete only, will add later)
             let goalMsg = null;
             if (progress < 100) {
+              let listMetaForGoal = a?.list_meta;
+              if (typeof listMetaForGoal === 'string') {
+                try { listMetaForGoal = JSON.parse(listMetaForGoal); } catch { listMetaForGoal = {}; }
+              }
+              if (!listMetaForGoal || typeof listMetaForGoal !== 'object') listMetaForGoal = {};
+              const goalForcedMode = String(listMetaForGoal.forced_mode || listMetaForGoal.mode || listMetaForGoal.difficulty_mode || '').trim().toLowerCase();
+              const goalModesTotal = Number(listMetaForGoal.modes_total ?? listMetaForGoal.total_modes ?? listMetaForGoal.mode_count ?? 0);
+              const isSpellingOnlyGoal = goalForcedMode === 'spelling' || goalModesTotal === 1;
+
               goalMsg = document.createElement('div');
               goalMsg.style.fontSize = '0.75rem';
               goalMsg.style.fontWeight = '600';
               goalMsg.style.color = '#19777e';
               goalMsg.style.marginTop = '2px';
-              if (a.stars_required !== null && typeof a.stars_required === 'number') {
+              if (isSpellingOnlyGoal) {
+                goalMsg.textContent = 'Goal: Complete spelling mode';
+              } else if (a.stars_required !== null && typeof a.stars_required === 'number') {
                 const currentStars = (typeof a.stars === 'number') ? a.stars : 0;
                 goalMsg.textContent = `Goal: ${a.stars_required}+ stars (${currentStars}/${a.stars_required})`;
               } else {
                 goalMsg.textContent = 'Goal: Complete all modes';
               }
+            }
+
+            // Debug overlay (visible via ?hwdebug=1 in URL, or always in console)
+            const showDebug = new URLSearchParams(window.location.search).has('hwdebug');
+            if (showDebug) {
+              const dbg = document.createElement('div');
+              dbg.style.fontSize = '0.6rem';
+              dbg.style.color = '#999';
+              dbg.style.fontFamily = 'monospace';
+              dbg.style.marginTop = '4px';
+              dbg.style.padding = '4px';
+              dbg.style.background = '#f8f8f8';
+              dbg.style.borderRadius = '4px';
+              dbg.style.wordBreak = 'break-all';
+              dbg.textContent = `id:${a.id} | progress:${Math.round(progress)}% | goal_v:${a.goal_value ?? '?'} | meta.forced_mode:${listMetaForGoal.forced_mode ?? 'none'} | meta.modes_total:${listMetaForGoal.modes_total ?? '?'} | meta.difficulty_mode:${listMetaForGoal.difficulty_mode ?? 'none'}`;
+              card.appendChild(dbg);
             }
 
             if (progress >= 100) {
@@ -447,19 +759,51 @@
               const teacher = document.createElement('div'); teacher.style.fontSize='0.7rem'; teacher.style.color='#555'; teacher.textContent=t('Teacher') + ': ' + a.teacher_name; card.appendChild(teacher);
             }
             card.addEventListener('click', async () => {
-              const listKey = a.list_key || a.list_title || '';
-              if (!listKey) return;
-              // Switch back to main arcade tab
+              let listMeta = a?.list_meta;
+              if (typeof listMeta === 'string') {
+                try { listMeta = JSON.parse(listMeta); } catch { listMeta = {}; }
+              }
+              if (!listMeta || typeof listMeta !== 'object') listMeta = {};
+
+              const listKey = a.list_key || a.list || a.wordlist_key || listMeta.list_key || listMeta.filename || a.list_title || '';
+              const sourceType = String(listMeta.source_type || '').toLowerCase();
+              const metaType = String(listMeta.type || '').toLowerCase();
+              const listKeySavedMatch = String(listKey || '').match(/^saved_game:(.+)$/i);
+              const explicitGameId = a?.game_id || listMeta.game_id || listMeta.id || '';
+              const gameId = String(explicitGameId || (listKeySavedMatch && listKeySavedMatch[1]) || '').trim();
+              const isSavedGameHomework = sourceType === 'saved_game' || metaType === 'saved_game' || !!listKeySavedMatch;
+              const hwId = a.id;
+              const forcedModeRaw = String(listMeta.forced_mode || listMeta.mode || listMeta.difficulty_mode || '').trim().toLowerCase();
+              const forcedMode = forcedModeRaw === 'spelling' ? 'spelling' : '';
+
+              try {
+                if (hwId) sessionStorage.setItem('wa_homework_assignment_id', String(hwId));
+                if (forcedMode) sessionStorage.setItem('wa_hw_forced_mode', forcedMode);
+                else sessionStorage.removeItem('wa_hw_forced_mode');
+              } catch {}
+
+              if (isSavedGameHomework && gameId) {
+                const savedUrl = `${window.location.pathname}?hw=${encodeURIComponent(hwId || '')}&open=saved&id=${encodeURIComponent(gameId)}&autostart=1${forcedMode ? `&mode=${encodeURIComponent(forcedMode)}` : ''}`;
+                window.location.href = savedUrl;
+                return;
+              }
+
+              if (!listKey) {
+                console.warn('Homework card missing launch key', a);
+                return;
+              }
+
+              // Switch back to main arcade tab only when we have a launch target
               tabWordArcade?.classList.add('active');
               tabGrammarArcade.classList.remove('active');
-              const hwId = a.id;
+
               // Autostart the homework and prefer the teacher-assigned title when available
               try {
-                await autostartHomework(listKey, hwId, a.title || a.list_title || null);
+                await autostartHomework(listKey, hwId, a.title || a.list_title || listMeta.title || null, forcedMode || null);
               } catch (err) {
                 console.error('autostartHomework failed', err);
                 // Fallback: navigate to autostart URL
-                const url = `${window.location.pathname}?hw=${encodeURIComponent(hwId)}&list=${encodeURIComponent(listKey)}&autostart=1`;
+                const url = `${window.location.pathname}?hw=${encodeURIComponent(hwId || '')}&list=${encodeURIComponent(listKey)}&autostart=1${forcedMode ? `&mode=${encodeURIComponent(forcedMode)}` : ''}`;
                 window.location.href = url;
               }
             });
@@ -642,7 +986,17 @@
         return k.includes('grammar_') || k.includes('/grammar/') || k.includes('present_simple') || k.includes('questions_') || k.includes('prepositions_');
       }
 
-  async function autostartHomework(listKey, hwId, displayName) {
+  async function autostartHomework(listKey, hwId, displayName, preferredMode = null) {
+        try {
+          if (hwId) sessionStorage.setItem('wa_homework_assignment_id', String(hwId));
+        } catch {}
+        const savedGameMatch = String(listKey || '').match(/^saved_game:(.+)$/i);
+        if (savedGameMatch && savedGameMatch[1]) {
+          const gameId = String(savedGameMatch[1]).trim();
+          const target = `${window.location.pathname}?hw=${encodeURIComponent(hwId || '')}&open=saved&id=${encodeURIComponent(gameId)}&autostart=1${preferredMode ? `&mode=${encodeURIComponent(preferredMode)}` : ''}`;
+          window.location.href = target;
+          return;
+        }
         // Normalize leading path prefix if homework stored full project path
         // e.g. "Games/english_arcade/sample-wordlists-level2/Adjectives1.json" -> "sample-wordlists-level2/Adjectives1.json"
         if (/^Games\/english_arcade\//.test(listKey)) {
@@ -659,12 +1013,12 @@
           try {
             // Prefer existing phonics loader for proper audio preload & session state
             if (window.WordArcade?.loadPhonicsGame) {
-              window.WordArcade.loadPhonicsGame({ listFile: listKey, listName: displayName || listKey });
+              window.WordArcade.loadPhonicsGame({ listFile: listKey, listName: displayName || listKey, mode: preferredMode || null });
               return;
             }
             // Fallback: treat as sample list (will not show phonics-specific modes but still playable)
             if (window.WordArcade?.loadSampleWordlistByFilename) {
-              window.WordArcade.loadSampleWordlistByFilename(listKey, { force: true, listName: displayName || listKey });
+              window.WordArcade.loadSampleWordlistByFilename(listKey, { force: true, listName: displayName || listKey, mode: preferredMode || null });
               return;
             }
           } catch (e) {
@@ -708,7 +1062,7 @@
           // Vocab / word list
           try {
             if (window.WordArcade?.loadSampleWordlistByFilename) {
-              window.WordArcade.loadSampleWordlistByFilename(listKey, { force: true, listName: listKey });
+              window.WordArcade.loadSampleWordlistByFilename(listKey, { force: true, listName: listKey, mode: preferredMode || null });
             } else if (window.WordArcade?.loadHomeworkList) {
               window.WordArcade.loadHomeworkList({ listKey, hwId });
             } else {
@@ -728,13 +1082,13 @@
       // If autostart provided: directly load list instead of showing homework list menu first
       if (autostart === '1' && listParam) {
         // Attempt direct autostart without opening homework tab menu
-        autostartHomework(listParam, hwParam).catch(err => {
+        autostartHomework(listParam, hwParam, null, modeParam).catch(err => {
           console.error('Autostart failed', err);
           // Friendly fallback: show opening buttons + inline notice
           try { window.WordArcade?.quitToOpening?.(); } catch {}
           const ga = document.getElementById('gameArea');
           if (ga) ga.innerHTML = `<div style="padding:22px;text-align:center;color:#e53e3e;font-weight:600;">Couldn't load homework list.<br><small>${(err && err.message) || 'Unknown error'}</small><br><br><button id='retryAutostart' style='background:#19777e;color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;'>Retry</button></div>`;
-          document.getElementById('retryAutostart')?.addEventListener('click', () => { ga.innerHTML=''; autostartHomework(listParam, hwParam); });
+          document.getElementById('retryAutostart')?.addEventListener('click', () => { ga.innerHTML=''; autostartHomework(listParam, hwParam, null, modeParam); });
         });
       }
 

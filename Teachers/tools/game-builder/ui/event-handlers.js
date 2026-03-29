@@ -1,32 +1,93 @@
 // Event handlers - Wire toolbar buttons and UI actions
 import { showTinyToast, ensureLoadingOverlay } from '../utils/dom-helpers.js';
-import { fetchJSONSafe } from '../utils/network.js';
-import { ENDPOINTS, DEFAULTS } from '../constants.js';
-import { generateDefinition, generateExample } from '../services/ai-service.js';
+import { DEFAULTS } from '../constants.js';
+import { generateDefinition, generateExample } from '../services/ai-service.js?v=20260322p';
 import { openSaveAsModal, handleSaveAsConfirm, showFileModal } from './modals.js';
 import { ensureAudioForWordsAndSentences } from '../services/audio-service.js';
-import { prepareAndUploadImagesIfNeeded } from '../services/file-service.js';
+import { ensureSentenceIdsBuilder, prepareAndUploadImagesIfNeeded, saveGameData } from '../services/file-service.js?v=20260328e';
+import { syncImagesFromPayload } from '../state/game-state.js?v=20260328e';
+
+let isSaving = false;
+let firstSaveCompletionPromise = null;
+
+export function isQuickSaveInFlight() {
+  return isSaving || !!firstSaveCompletionPromise;
+}
+
+export function setFirstSaveCompletionPromise(promise) {
+  if (!promise || typeof promise.finally !== 'function') return;
+  firstSaveCompletionPromise = promise;
+  promise.finally(() => {
+    if (firstSaveCompletionPromise === promise) firstSaveCompletionPromise = null;
+  });
+}
+
+if (typeof window !== 'undefined') {
+  window.__gbSetFirstSaveCompletionPromise = setFirstSaveCompletionPromise;
+}
+
+/**
+ * Save progress bar helpers
+ */
+function getSaveProgressEls() {
+  return {
+    wrap: document.getElementById('saveProgressWrap'),
+    fill: document.getElementById('saveProgressFill'),
+    text: document.getElementById('saveProgressText')
+  };
+}
+function showSaveProgress(pct, label, variant = '') {
+  const { wrap, fill, text } = getSaveProgressEls();
+  if (!wrap) return;
+  wrap.classList.add('active');
+  wrap.classList.remove('done', 'error');
+  if (variant) wrap.classList.add(variant);
+  fill.style.width = `${Math.min(100, Math.max(0, pct))}%`;
+  text.textContent = label || '';
+}
+function hideSaveProgress(delay = 1200) {
+  const { wrap, fill } = getSaveProgressEls();
+  if (!wrap) return;
+  setTimeout(() => {
+    wrap.classList.remove('active', 'done', 'error');
+    fill.style.width = '0%';
+  }, delay);
+}
 
 /**
  * Quick save handler (silent overwrite if ID exists, else open Save As)
  */
-export async function handleQuickSave(ev, buildPayload, getCurrentGameId, titleEl, toast) {
+export async function handleQuickSave(ev, buildPayload, getCurrentGameId, setCurrentGameId, titleEl, toast, options = {}) {
+  const { silent = false, onImagesSynced = null } = options || {};
+  if (firstSaveCompletionPromise) {
+    if (!silent) toast('Finishing first save...');
+    try { await firstSaveCompletionPromise; } catch {}
+  }
+  if (isSaving) {
+    if (!silent) toast('Save already in progress');
+    return { success: false, inFlight: true, error: 'Save already in progress' };
+  }
+
+  isSaving = true;
   const title = titleEl.value || DEFAULTS.TITLE;
   const gameImage = document.getElementById('gameImageZone').querySelector('img')?.src || '';
   const payload = buildPayload(title, gameImage);
   const currentGameId = getCurrentGameId();
   
   if (!payload.title || payload.words.length === 0) {
-    toast('Need title and at least 1 word');
-    return;
+    if (!silent) toast('Need title and at least 1 word');
+    return { success: false, error: 'Need title and at least 1 word' };
   }
   
   // First-time save -> open modal
   if (!currentGameId) {
+    if (silent) {
+      return { success: false, requiresInitialSave: true, error: 'No current file id' };
+    }
     const saveModalEl = document.getElementById('saveModal');
     const saveModalStatusEl = document.getElementById('saveModalStatus');
     openSaveAsModal(titleEl, saveModalEl, saveModalStatusEl);
-    return;
+    return { success: false, requiresInitialSave: true };
   }
   
   // Otherwise overwrite
@@ -34,34 +95,67 @@ export async function handleQuickSave(ev, buildPayload, getCurrentGameId, titleE
   if (saveLink) saveLink.classList.add('disabled');
   
   try {
+    const sentResult = await ensureSentenceIdsBuilder(payload.words || []);
+    console.log('[quickSave] ensureSentenceIdsBuilder result:', sentResult,
+      'words with sentence IDs:', (payload.words || []).filter(w => w.primary_sentence_id).length, '/', (payload.words || []).length);
+
+    // Stage 1: Upload images
+    if (!silent && typeof window.showSaveCenterMessage === 'function') {
+      window.showSaveCenterMessage('Saving…', { variant: 'info' });
+    }
+    if (!silent) showSaveProgress(15, 'Uploading images…');
     await prepareAndUploadImagesIfNeeded(payload, currentGameId, { force: !!(ev && ev.shiftKey) });
-    const body = { action: 'update_game_data', id: currentGameId, data: payload };
-    const js = await fetchJSONSafe(ENDPOINTS.SUPABASE_PROXY, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify(body)
-    });
+    syncImagesFromPayload(payload);
+    if (typeof onImagesSynced === 'function') onImagesSynced();
+
+    // Stage 2: Saving to database
+    if (!silent) showSaveProgress(55, 'Saving to database…');
+    const js = await saveGameData(payload, currentGameId);
+    if (js?.success && js?.id && typeof setCurrentGameId === 'function' && js.id !== currentGameId) {
+      setCurrentGameId(js.id);
+    }
     
     if (js?.success) {
-      showTinyToast('Saved', { ms: 500 });
+      if (!silent) {
+        showSaveProgress(100, js?.savedAsCopy ? '✓ Saved as new copy' : '✓ Saved!', 'done');
+        if (typeof window.showSaveCenterMessage === 'function') {
+          window.showSaveCenterMessage(js?.savedAsCopy ? 'Saved as new copy' : 'Saved', { variant: 'success', ms: 1400 });
+        }
+        hideSaveProgress(1400);
+      }
       // Fire-and-forget ensure missing audio (non-force) after successful save
       try {
         const words = (payload.words || []).map(w => w.eng).filter(Boolean);
         const examplesMap = Object.fromEntries((payload.words || []).filter(w => w.eng && w.example).map(w => [w.eng, w.example]));
         // slight delay to keep UI responsive
         setTimeout(() => {
-          ensureAudioForWordsAndSentences(words, examplesMap, { force: false })
+          ensureAudioForWordsAndSentences(words, examplesMap, { force: false, skipSentenceAudio: true })
             .catch(e => console.debug('[quickSave][audio] skipped', e?.message));
         }, 50);
       } catch (e) { console.debug('[quickSave][audio] init error', e?.message); }
+      return { success: true, id: js?.id || currentGameId, savedAsCopy: !!js?.savedAsCopy };
     } else {
-      showTinyToast(js?.error || 'Save failed', { variant: 'error', ms: 3000 });
+      if (!silent) {
+        showSaveProgress(100, '✗ ' + (js?.error || 'Save failed'), 'error');
+        if (typeof window.showSaveCenterMessage === 'function') {
+          window.showSaveCenterMessage(js?.error || 'Save failed', { variant: 'error', ms: 3000 });
+        }
+        hideSaveProgress(3000);
+      }
+      return { success: false, error: js?.error || 'Save failed' };
     }
   } catch (e) {
     console.error(e);
-    showTinyToast('Save error', { variant: 'error', ms: 3000 });
+    if (!silent) {
+      showSaveProgress(100, '✗ Save error', 'error');
+      if (typeof window.showSaveCenterMessage === 'function') {
+        window.showSaveCenterMessage('Save error', { variant: 'error', ms: 3000 });
+      }
+      hideSaveProgress(3000);
+    }
+    return { success: false, error: e?.message || 'Save error' };
   } finally {
+    isSaving = false;
     if (saveLink) saveLink.classList.remove('disabled');
   }
 }
@@ -169,7 +263,7 @@ export async function handleGenerateDefinitions(getList, setList, render, toast)
   
   try {
     for (const w of missing) {
-      const def = await generateDefinition(w.eng);
+      const def = await generateDefinition(w.eng, w.kor || '');
       if (def) w.definition = def;
     }
     setList([...list]);
