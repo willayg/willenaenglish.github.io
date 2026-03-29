@@ -33,6 +33,15 @@ import { prefetchAllProgress, loadStarCounts } from './utils/progress-data-servi
 
 const EA_BUILD_STAMP = 'EA_BUILD 20260326c · sentence-fetch-hotfix';
 
+function isStagingLikeHost(host) {
+  const h = String(host || '').toLowerCase();
+  return h === 'localhost'
+    || h === '127.0.0.1'
+    || h === 'staging.willenaenglish.com'
+    || h === 'cf.willenaenglish.com'
+    || h.endsWith('.pages.dev');
+}
+
 function applyArcadeRoutingHotfix() {
   try {
     if (window.__EA_ROUTING_HOTFIX_APPLIED) return true;
@@ -87,6 +96,8 @@ function applyArcadeRoutingHotfix() {
 
 function injectBuildStamp() {
   try {
+    const host = (typeof location !== 'undefined' && location.hostname) ? location.hostname : '';
+    if (!isStagingLikeHost(host)) return;
     if (typeof window !== 'undefined') {
       window.__EA_BUILD_STAMP = EA_BUILD_STAMP;
       console.log('[EnglishArcade][BuildStamp]', EA_BUILD_STAMP, location.hostname);

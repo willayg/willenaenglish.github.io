@@ -5,6 +5,56 @@ import { escapeHtml, hasValidImageUrl, loadImageForRow } from './images.js?v=202
 
 const AI_PREVIEW_PLACEHOLDER = 'Paste or edit here, one pair per line: English, Korean';
 
+function extractAiText(payload) {
+  const candidates = [
+    payload?.result,
+    payload?.text,
+    payload?.data?.result,
+    payload?.data?.text,
+    payload?.choices?.[0]?.message?.content,
+    payload?.data?.choices?.[0]?.message?.content
+  ];
+  const pick = candidates.find(v => typeof v === 'string' && v.trim());
+  return pick ? pick.trim() : '';
+}
+
+async function fetchOpenAiText(prompt) {
+  const body = JSON.stringify({ prompt });
+  const attempts = [
+    () => WillenaAPI.fetch('/.netlify/functions/openai_proxy', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body
+    }),
+    () => fetch('https://willena-proxy.willena.workers.dev/.netlify/functions/openai_proxy', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body,
+      credentials: 'include'
+    }),
+    () => fetch('https://api.willenaenglish.com/.netlify/functions/openai_proxy', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body,
+      credentials: 'include'
+    })
+  ];
+
+  let lastError = '';
+  for (const call of attempts) {
+    try {
+      const res = await call();
+      const js = await res.json().catch(() => ({}));
+      const text = extractAiText(js);
+      if (res.ok && text) return text;
+      lastError = (js && (js.error || js.message)) ? String(js.error || js.message) : `HTTP ${res.status}`;
+    } catch (e) {
+      lastError = e?.message || String(e);
+    }
+  }
+  throw new Error(lastError || 'AI response was empty.');
+}
+
 export function initMintAiListBuilder({
   getList,
   addItems, // (items) => {from, to}
@@ -109,11 +159,7 @@ export function initMintAiListBuilder({
       ? `From this passage, extract ${n} English-Korean word pairs (level: ${diff}). Format 'english, korean' per line. Passage:\n\n${passage}`
       : `Generate ${n} English-Korean word pairs (level: ${diff}) about the topic "${topic || 'everyday objects'}". Format 'english, korean' per line.`;
     try {
-      const res = await WillenaAPI.fetch('/.netlify/functions/openai_proxy', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt })
-      });
-      const js = await res.json();
-      const text = (js?.result || '').trim();
+      const text = await fetchOpenAiText(prompt);
       aiWordlist.value = text;
       renderAiPreviewFromWordlist();
 
@@ -126,19 +172,15 @@ export function initMintAiListBuilder({
       } else {
         titlePrompt = `Invent a short, catchy title (2-3 words only) for a vocabulary box about everyday objects.`;
       }
-      const titleRes = await WillenaAPI.fetch('/.netlify/functions/openai_proxy', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt: titlePrompt })
-      });
-      const titleJs = await titleRes.json();
-      let title = (titleJs?.result || '').trim();
+      let title = await fetchOpenAiText(titlePrompt);
       // Remove quotes, extra punctuation, and keep only 2-3 words
       title = title.replace(/^"|"$/g, '').replace(/[.!?]+$/g, '').trim();
       const words = title.split(/\s+/).filter(Boolean);
       if (words.length > 3) title = words.slice(0, 3).join(' ');
       if (aiTitleInput) aiTitleInput.value = title;
     } catch (e) {
-      console.error(e);
-      aiPreview.textContent = 'Error generating list.';
+      console.error('[MintAI] generate failed:', e);
+      aiPreview.textContent = `Error generating list: ${e?.message || 'Unknown error'}`;
     }
   };
 
