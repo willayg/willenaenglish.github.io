@@ -5,7 +5,7 @@ import { ensureRegenerateAudioCheckbox, ensureAudioForWordsAndSentences } from '
 import { prepareAndUploadImagesIfNeeded } from '../services/file-service.js?v=20260329a';
 import { fetchJSONSafe } from '../utils/network.js';
 import { ENDPOINTS } from '../constants.js';
-import { syncImagesFromPayload } from '../state/game-state.js?v=20260328e';
+import { syncImagesFromPayload } from '../state/game-state.js?v=20260329f';
 
 let saveAsInFlight = false;
 

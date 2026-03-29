@@ -51,7 +51,7 @@ import {
   buildPayload,
   cacheCurrentGame,
   parseWords
-} from './state/game-state.js?v=20260328e';
+} from './state/game-state.js?v=20260329f';
 // Legacy global bridge: some pre-refactor modules and inline code still expect
 // window.list / window.currentGameId to exist. Keep them synchronized with the
 // state module without changing existing references.
@@ -87,10 +87,10 @@ import {
   handleGenerateExamples
 } from './ui/event-handlers.js?v=20260329h';
 import { ENDPOINTS, STORAGE_KEYS, ACTIONS, DEFAULTS, TOAST_DURATION } from './constants.js';
-import { initFileListModal } from './ui/file-list.js?v=20260329a';
+import { initFileListModal } from './ui/file-list.js?v=20260329b';
 import { loadWorksheetIntoBuilder } from './services/worksheet-service.js?v=20260328e';
 
-const GB_BUILD_STAMP = 'GB_BUILD 20260329r - llm-translation-path-fix';
+const GB_BUILD_STAMP = 'GB_BUILD 20260329s - exkor-load-fix';
 
 function isStagingLikeHost(host) {
   const h = String(host || '').toLowerCase();
@@ -758,7 +758,8 @@ function bindRowEvents(){
           kor: (w && (w.kor || w.kr || w.translation)) || (typeof w === 'string' ? String(w).split(/[,|]/)[1]?.trim() : ''),
           image_url: (w && (w.image_url || w.image)) || '',
           definition: (w && w.definition) || '',
-          example: getExampleText(w)
+          example: getExampleText(w),
+          ex_kor: (w && (w.ex_kor || w.exKor || w.example_kor || w.exampleKor || w.sentence_kor || w.korean_sentence)) || ''
         })).filter(r => r.eng);
       }
       // If not, try to parse wordList
@@ -777,7 +778,8 @@ function bindRowEvents(){
                 kor: w.kor || w.kr || w.translation || '',
                 image_url: w.image_url || w.image || '',
                 definition: w.definition || '',
-                example: getExampleText(w)
+                example: getExampleText(w),
+                ex_kor: w.ex_kor || w.exKor || w.example_kor || w.exampleKor || w.sentence_kor || w.korean_sentence || ''
               });
             }).filter(r => r.eng);
           }
@@ -810,7 +812,8 @@ function bindRowEvents(){
           kor: w.kor || w.kr || w.translation || '',
           image_url: w.image_url || w.image || '',
           definition: w.definition || '',
-          example: getExampleText(w)
+          example: getExampleText(w),
+          ex_kor: w.ex_kor || w.exKor || w.example_kor || w.exampleKor || w.sentence_kor || w.korean_sentence || ''
         });
       }).filter(r => r.eng);
     } else if (typeof raw === 'string') {
@@ -1761,6 +1764,7 @@ function paintFileList(initialRows, { cached, initial, uniqueCount }) {
           image_url: w.image_url || w.image || w.img || w.img_url || w.picture || '',
           definition: w.definition || w.def || w.meaning || '',
           example: getExampleText(w),
+          ex_kor: w.ex_kor || w.exKor || w.example_kor || w.exampleKor || w.sentence_kor || w.korean_sentence || '',
           legacy_sentence: w.legacy_sentence || w.sentence || getExampleText(w),
           sentences: Array.isArray(w.sentences) ? w.sentences : [],
           primary_sentence_id: w.primary_sentence_id || w.sentence_id || '',
