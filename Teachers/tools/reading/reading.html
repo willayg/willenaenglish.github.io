@@ -40,10 +40,10 @@
   </script>
     <!-- Load shared burger menu component -->
     <script type="module">
-    import { insertBurgerMenu } from '/components/burger-menu.js?v=20260329e';
+    import { insertBurgerMenu } from '/components/burger-menu.js?v=20260329f';
       async function ensureBurgerMenuTemplate() {
         if (!document.getElementById('burger-menu-template')) {
-                const resp = await fetch('/components/burger-menu.html?v=20260329e');
+                const resp = await fetch('/components/burger-menu.html?v=20260329f');
           const html = await resp.text();
           const tempDiv = document.createElement('div');
           tempDiv.innerHTML = html;

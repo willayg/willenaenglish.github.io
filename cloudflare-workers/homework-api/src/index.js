@@ -148,6 +148,145 @@ function getAssignmentModeMeta(rawMeta) {
   };
 }
 
+function inferAssignmentCategory(assignment) {
+  const listKey = String(assignment?.list_key || '').toLowerCase();
+  if (listKey.includes('/phonics/') || listKey.includes('phonics')) return 'phonics';
+  if (listKey.includes('/grammar/') || listKey.includes('grammar')) return 'grammar';
+  return 'vocab';
+}
+
+function isSentenceMode(mode) {
+  const name = String(mode || '').toLowerCase();
+  if (!name) return false;
+  return name === 'full_sentence_mode'
+    || name === 'word_sentence_mode'
+    || name === 'sentence'
+    || name === 'sentence_unscramble'
+    || name === 'fill_blank_sentence_mode'
+    || name === 'broken_sentence_mode'
+    || name === 'grammar_sentence_unscramble'
+    || name.includes('sentence');
+}
+
+function isSpellingMode(mode) {
+  const name = String(mode || '').toLowerCase();
+  return name === 'spelling' || name === 'listen_and_spell' || name === 'spell';
+}
+
+function getHomeworkCompletionConfig(assignment, sessions = []) {
+  const meta = parseJsonMaybe(assignment?.list_meta) || assignment?.list_meta || {};
+  const modeMeta = getAssignmentModeMeta(meta);
+  const category = inferAssignmentCategory(assignment);
+  const difficultyMode = String(modeMeta.difficulty_mode || '').toLowerCase();
+  const forcedMode = String(modeMeta.forced_mode || '').toLowerCase();
+  const goalValueHint = Number(assignment?.goal_value) === 1;
+
+  let totalModes;
+  if (category === 'phonics') {
+    totalModes = 4;
+  } else if (category === 'grammar') {
+    const listKeyPath = String(assignment?.list_key || '').toLowerCase();
+    let grammarLevel = 2;
+    const levelMatch = listKeyPath.match(/\/grammar\/level(\d)/);
+    if (levelMatch) grammarLevel = parseInt(levelMatch[1], 10);
+    totalModes = grammarLevel === 1 ? 4 : 6;
+    if (grammarLevel === 2 && /prepositions_/i.test(listKeyPath)) totalModes = 4;
+    if (/wh_who_what|wh_where_when_whattime|wh_how_why_which/i.test(listKeyPath)) totalModes = 4;
+    if (/present_simple_questions_wh/i.test(listKeyPath)) totalModes = 5;
+  } else {
+    totalModes = 6;
+  }
+
+  if (Number.isFinite(modeMeta.modes_total) && modeMeta.modes_total > 0 && modeMeta.modes_total <= 10) {
+    totalModes = modeMeta.modes_total;
+  }
+
+  const isSentenceOnlyAssignment = forcedMode === 'full_sentence_mode'
+    || forcedMode === 'sentence_unscramble'
+    || difficultyMode === 'sentence_unscramble'
+    || sessions.some((sess) => isSentenceMode(sess.mode));
+
+  let isSpellingOnlyAssignment = !isSentenceOnlyAssignment && (
+    forcedMode === 'spelling'
+    || difficultyMode === 'spelling'
+    || modeMeta.modes_total === 1
+    || goalValueHint
+  );
+
+  if (!isSpellingOnlyAssignment && sessions.length > 0) {
+    isSpellingOnlyAssignment = sessions.every((sess) => isSpellingMode(sess.mode));
+  }
+
+  const requiredModeCount = Number.isFinite(modeMeta.modes_required) && modeMeta.modes_required > 0
+    ? modeMeta.modes_required
+    : totalModes;
+  const requiredStars = Number.isFinite(modeMeta.required_stars) && modeMeta.required_stars > 0
+    ? modeMeta.required_stars
+    : null;
+
+  return {
+    category,
+    difficultyMode,
+    forcedMode,
+    totalModes,
+    requiredModeCount,
+    requiredStars,
+    isSentenceOnlyAssignment,
+    isSpellingOnlyAssignment,
+  };
+}
+
+function evaluateHomeworkCompletion(assignment, sessions = []) {
+  const config = getHomeworkCompletionConfig(assignment, sessions);
+  const byMode = new Map();
+  let latestCompletedAt = null;
+  let latestMode = null;
+
+  sessions.forEach((session) => {
+    const mode = String(session.mode || 'unknown');
+    const previous = byMode.get(mode);
+    const stars = Math.max(0, Number(session.stars) || 0);
+    if (!previous || stars > previous.stars) {
+      byMode.set(mode, { stars, completed_at: session.completed_at || null });
+    }
+    const completedAt = session.completed_at ? new Date(session.completed_at) : null;
+    if (completedAt && !Number.isNaN(completedAt.getTime()) && (!latestCompletedAt || completedAt > new Date(latestCompletedAt))) {
+      latestCompletedAt = session.completed_at;
+      latestMode = mode;
+    }
+  });
+
+  const modesArr = Array.from(byMode.entries()).map(([mode, value]) => ({ mode, bestStars: value.stars }));
+  const starsEarned = modesArr.reduce((sum, mode) => sum + (mode.bestStars || 0), 0);
+  const spellingDone = modesArr.some((mode) => mode.bestStars >= 1 && isSpellingMode(mode.mode));
+  const sentenceDone = sessions.some((session) => isSentenceMode(session.mode));
+  const countedModes = modesArr.filter((mode) => mode.bestStars >= 1).length;
+
+  let completed = false;
+  let completion = 0;
+  if (config.isSentenceOnlyAssignment) {
+    completed = sentenceDone;
+    completion = completed ? 100 : 0;
+  } else if (config.isSpellingOnlyAssignment) {
+    completed = spellingDone;
+    completion = completed ? 100 : 0;
+  } else if (config.requiredStars) {
+    completed = starsEarned >= config.requiredStars;
+    completion = Math.max(0, Math.min(100, Math.round((starsEarned / config.requiredStars) * 100)));
+  } else {
+    completed = config.requiredModeCount > 0 ? countedModes >= config.requiredModeCount : false;
+    completion = config.requiredModeCount > 0 ? Math.max(0, Math.min(100, Math.round((countedModes / config.requiredModeCount) * 100))) : 0;
+  }
+
+  return {
+    completed,
+    completion,
+    completed_at: completed ? latestCompletedAt : null,
+    mode: completed ? latestMode : null,
+    stars: starsEarned,
+  };
+}
+
 // Generate run token
 function generateRunToken(assignmentId) {
   const t = Date.now().toString(36);
@@ -1333,7 +1472,7 @@ export default {
         const assignments = await supabaseSelect(
           env,
           'homework_assignments',
-          `created_by=eq.${encodeURIComponent(authUserId)}&active=eq.true&select=id,title,class,due_at,list_meta,active,created_at&order=due_at.asc`
+          `created_by=eq.${encodeURIComponent(authUserId)}&active=eq.true&select=id,title,class,due_at,list_key,list_meta,goal_type,goal_value,active,created_at&order=due_at.asc`
         );
 
         if (!Array.isArray(assignments) || !assignments.length) {
@@ -1366,7 +1505,7 @@ export default {
           tokens.forEach((token) => tokenToAssignment.set(token, assignment));
         });
 
-        const completionMap = new Map();
+        const sessionsByAssignmentStudent = new Map();
         const allStudentIds = [...studentsById.keys()];
         if (allStudentIds.length && tokenToAssignment.size) {
           const sessions = await supabaseSelect(
@@ -1398,18 +1537,13 @@ export default {
                 else if (acc >= 0.6) stars = 1;
               }
             }
-            if (stars < 1) return;
-
             const key = `${assignment.id}__${sess.user_id}`;
-            const existing = completionMap.get(key);
-            if (!existing || new Date(sess.ended_at) > new Date(existing.completed_at)) {
-              completionMap.set(key, {
-                user_id: sess.user_id,
-                completed_at: sess.ended_at,
-                stars,
-                mode: sess.mode,
-              });
-            }
+            if (!sessionsByAssignmentStudent.has(key)) sessionsByAssignmentStudent.set(key, []);
+            sessionsByAssignmentStudent.get(key).push({
+              mode: sess.mode,
+              completed_at: sess.ended_at,
+              stars,
+            });
           });
         }
 
@@ -1425,14 +1559,15 @@ export default {
           const done = [];
           const pending = [];
           roster.forEach((student) => {
-            const status = completionMap.get(`${assignment.id}__${student.id}`);
             const entry = {
               user_id: student.id,
               name: student.name || null,
               korean_name: student.korean_name || null,
             };
-            if (status) done.push({ ...entry, completed_at: status.completed_at, stars: status.stars, mode: status.mode });
-            else pending.push(entry);
+            const studentSessions = sessionsByAssignmentStudent.get(`${assignment.id}__${student.id}`) || [];
+            const status = evaluateHomeworkCompletion(assignment, studentSessions);
+            if (status.completed) done.push({ ...entry, completed_at: status.completed_at, stars: status.stars, mode: status.mode, completion: status.completion });
+            else pending.push({ ...entry, completion: status.completion });
           });
 
           done.sort((a, b) => new Date(b.completed_at) - new Date(a.completed_at));
@@ -1445,6 +1580,8 @@ export default {
             due_at: assignment.due_at,
             created_at: assignment.created_at,
             ...modeMeta,
+            goal_type: assignment.goal_type || null,
+            goal_value: assignment.goal_value || null,
             completed_count: done.length,
             pending_count: pending.length,
             total_count: roster.length,

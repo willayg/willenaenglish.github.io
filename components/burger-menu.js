@@ -46,38 +46,42 @@ export function insertBurgerMenu(targetSelector = 'body') {
         .hw-notif-footer { display: flex; gap: 8px; padding: 10px 14px 14px; border-top: 1px solid #eef2f7; background: #fafafa; }
         .hw-notif-footer-btn, .hw-notif-footer-link { flex: 1; text-align: center; border-radius: 8px; font-size: 12px; font-weight: 600; padding: 9px 10px; text-decoration: none; border: 1px solid #cfe7ea; background: #ffffff; color: #19777e; cursor: pointer; }
         .hw-status-modal-backdrop { display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.45); z-index: 10020; padding: 24px; align-items: center; justify-content: center; }
-        .hw-status-modal { width: min(980px, 100%); max-height: min(86vh, 820px); overflow: hidden; background: #ffffff; border-radius: 20px; box-shadow: 0 24px 64px rgba(15, 23, 42, 0.3); display: flex; flex-direction: column; }
-        .hw-status-modal-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px 18px; border-bottom: 1px solid #e5e7eb; background: #f8fafc; }
+        .hw-status-modal { width: min(1120px, 100%); max-height: min(88vh, 860px); overflow: hidden; background: #ffffff; border-radius: 20px; box-shadow: 0 24px 64px rgba(15, 23, 42, 0.3); display: flex; flex-direction: column; }
+        .hw-status-modal-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px 18px; border-bottom: 1px solid #e5e7eb; background: #ffffff; }
         .hw-status-modal-heading { min-width: 0; }
         .hw-status-modal-title { font-size: 16px; font-weight: 700; color: #111827; margin: 0; }
         .hw-status-modal-subtitle { margin: 4px 0 0; font-size: 12px; color: #64748b; }
         .hw-status-modal-close { border: none; background: transparent; font-size: 24px; line-height: 1; cursor: pointer; color: #64748b; padding: 0; }
-        .hw-status-modal-body { padding: 18px; overflow: auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%); }
+        .hw-status-modal-body { padding: 16px 18px 18px; overflow: auto; display: flex; flex-direction: column; gap: 14px; background: #f3f4f6; }
         .hw-status-loading, .hw-status-empty { padding: 28px 16px; text-align: center; color: #64748b; background: #ffffff; border-radius: 12px; border: 1px solid #e5e7eb; }
-        .hw-status-card { background: #ffffff; border: 1px solid #e5e7eb; border-radius: 16px; overflow: hidden; box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08); }
-        .hw-status-card-head { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; padding: 14px 16px; border-bottom: 1px solid #eef2f7; background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%); }
+        .hw-status-toolbar { position: sticky; top: 0; z-index: 2; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; padding: 12px 14px; border: 1px solid #d1d5db; border-radius: 14px; background: rgba(255, 255, 255, 0.96); backdrop-filter: blur(6px); }
+        .hw-status-toolbar-label { font-size: 12px; color: #6b7280; font-weight: 600; margin-right: 2px; }
+        .hw-status-toolbar-select { min-width: 160px; padding: 8px 10px; border: 1px solid #d1d5db; border-radius: 10px; background: #ffffff; color: #111827; font-size: 13px; }
+        .hw-status-summary { margin-left: auto; font-size: 12px; color: #6b7280; white-space: nowrap; }
+        .hw-status-cards { display: flex; flex-direction: column; gap: 14px; }
+        .hw-status-card { background: #ffffff; border: 1px solid #e5e7eb; border-radius: 16px; overflow: hidden; box-shadow: 0 6px 18px rgba(15, 23, 42, 0.08); }
+        .hw-status-card-head { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; padding: 14px 16px; border-bottom: 1px solid #eef2f7; background: #ffffff; }
         .hw-status-card-title { margin: 0; font-size: 15px; font-weight: 700; color: #111827; }
         .hw-status-card-meta { margin-top: 4px; font-size: 12px; color: #64748b; }
-        .hw-status-card-counts { text-align: right; font-size: 12px; color: #334155; }
-        .hw-status-card-counts strong { display: block; font-size: 15px; color: #0f766e; }
+        .hw-status-card-counts { text-align: right; font-size: 12px; color: #4b5563; }
+        .hw-status-card-counts strong { display: block; font-size: 16px; color: #111827; }
         .hw-status-card-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
-        .hw-status-chip { display: inline-flex; align-items: center; border-radius: 999px; padding: 4px 9px; font-size: 11px; font-weight: 700; background: #e0f2fe; color: #0369a1; }
-        .hw-status-chip.mode { background: #ede9fe; color: #6d28d9; }
-        .hw-status-chip.class { background: #dcfce7; color: #166534; }
+        .hw-status-chip { display: inline-flex; align-items: center; border-radius: 999px; padding: 4px 9px; font-size: 11px; font-weight: 700; background: #f3f4f6; color: #4b5563; border: 1px solid #e5e7eb; }
+        .hw-status-chip.mode, .hw-status-chip.class { background: #f3f4f6; color: #4b5563; }
         .hw-status-lists { display: grid; grid-template-columns: 1fr 1fr; gap: 0; align-items: start; }
         .hw-status-list { padding: 14px 16px; min-height: 0; }
         .hw-status-list + .hw-status-list { border-left: 1px solid #eef2f7; }
         .hw-status-list h4 { margin: 0 0 10px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; }
-        .hw-status-list-scroll { max-height: 220px; overflow: auto; padding-right: 4px; }
+        .hw-status-list-scroll { max-height: 200px; overflow: auto; padding-right: 4px; }
         .hw-status-empty-list { padding: 12px 0; font-size: 12px; color: #64748b; }
         .hw-status-person { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 7px 0; border-bottom: 1px solid #f1f5f9; }
         .hw-status-person:last-child { border-bottom: none; }
         .hw-status-person-name { font-size: 13px; font-weight: 600; color: #111827; }
         .hw-status-person-meta { font-size: 11px; color: #64748b; margin-top: 2px; }
         .hw-status-done-badge, .hw-status-pending-badge { flex-shrink: 0; border-radius: 999px; padding: 4px 8px; font-size: 11px; font-weight: 700; }
-        .hw-status-done-badge { background: #dcfce7; color: #166534; }
-        .hw-status-pending-badge { background: #fee2e2; color: #991b1b; }
-        @media (max-width: 700px) { .burger-btn, .hw-notif-btn { width: 40px; height: 36px; } .hw-status-modal-backdrop { padding: 12px; } .hw-status-lists { grid-template-columns: 1fr; } .hw-status-list + .hw-status-list { border-left: none; border-top: 1px solid #eef2f7; } .hw-notif-footer { flex-direction: column; } .hw-status-modal-body { grid-template-columns: 1fr; } }
+        .hw-status-done-badge { background: #eef2f7; color: #374151; }
+        .hw-status-pending-badge { background: #f3f4f6; color: #6b7280; }
+        @media (max-width: 700px) { .burger-btn, .hw-notif-btn { width: 40px; height: 36px; } .hw-status-modal-backdrop { padding: 12px; } .hw-status-lists { grid-template-columns: 1fr; } .hw-status-list + .hw-status-list { border-left: none; border-top: 1px solid #eef2f7; } .hw-notif-footer { flex-direction: column; } .hw-status-toolbar { align-items: stretch; } .hw-status-toolbar-select { width: 100%; } .hw-status-summary { margin-left: 0; width: 100%; white-space: normal; } }
       </style>
       <div class="burger-menu">
         <div class="hw-notif-wrap">
@@ -207,6 +211,9 @@ function initNotificationBell(wrapper) {
   let pollTimer   = null;
   let currentCount = 0;
   let statusModalOpen = false;
+  let statusAssignments = [];
+  let statusClassFilter = 'all';
+  let statusSort = 'due_asc';
 
   function apiFetch(url, options = {}) {
     if (window.WillenaAPI && typeof window.WillenaAPI.fetch === 'function') {
@@ -368,6 +375,28 @@ function initNotificationBell(wrapper) {
     return '';
   }
 
+  function getClassFilterOptions(assignments) {
+    return [...new Set((assignments || []).map((assignment) => String(assignment.class || '').trim()).filter(Boolean))].sort((left, right) => left.localeCompare(right));
+  }
+
+  function sortAssignments(assignments) {
+    const list = [...assignments];
+    list.sort((left, right) => {
+      const leftTime = Date.parse(left.due_at || left.created_at || '') || 0;
+      const rightTime = Date.parse(right.due_at || right.created_at || '') || 0;
+      if (statusSort === 'due_desc') return rightTime - leftTime;
+      return leftTime - rightTime;
+    });
+    return list;
+  }
+
+  function filterAssignments(assignments) {
+    const filtered = statusClassFilter === 'all'
+      ? [...assignments]
+      : assignments.filter((assignment) => String(assignment.class || '') === statusClassFilter);
+    return sortAssignments(filtered);
+  }
+
   function renderAssignmentChips(assignment) {
     const chips = [];
     if (assignment.class) chips.push({ kind: 'class', label: assignment.class });
@@ -427,14 +456,11 @@ function initNotificationBell(wrapper) {
     }).join('');
   }
 
-  function renderStatusModal(assignments) {
-    if (!statusBody) return;
-    if (!assignments || !assignments.length) {
-      statusBody.innerHTML = '<div class="hw-status-empty">No active homework right now.</div>';
-      return;
+  function renderStatusCards(assignments) {
+    if (!assignments.length) {
+      return '<div class="hw-status-empty">No active homework matches that filter.</div>';
     }
-
-    statusBody.innerHTML = assignments.map((assignment) => `
+    return assignments.map((assignment) => `
       <section class="hw-status-card">
         <div class="hw-status-card-head">
           <div>
@@ -458,6 +484,52 @@ function initNotificationBell(wrapper) {
           </div>
         </div>
       </section>`).join('');
+  }
+
+  function renderStatusModal(assignments) {
+    if (!statusBody) return;
+    statusAssignments = Array.isArray(assignments) ? assignments : [];
+    if (!statusAssignments.length) {
+      statusBody.innerHTML = '<div class="hw-status-empty">No active homework right now.</div>';
+      return;
+    }
+
+    const classOptions = getClassFilterOptions(statusAssignments);
+    if (statusClassFilter !== 'all' && !classOptions.includes(statusClassFilter)) {
+      statusClassFilter = 'all';
+    }
+    const filteredAssignments = filterAssignments(statusAssignments);
+
+    statusBody.innerHTML = `
+      <div class="hw-status-toolbar">
+        <span class="hw-status-toolbar-label">Class</span>
+        <select class="hw-status-toolbar-select" id="hwStatusClassFilter">
+          <option value="all">All classes</option>
+          ${classOptions.map((className) => `<option value="${htmlEscape(className)}"${className === statusClassFilter ? ' selected' : ''}>${htmlEscape(className)}</option>`).join('')}
+        </select>
+        <span class="hw-status-toolbar-label">Sort</span>
+        <select class="hw-status-toolbar-select" id="hwStatusSortOrder">
+          <option value="due_asc"${statusSort === 'due_asc' ? ' selected' : ''}>Earliest due first</option>
+          <option value="due_desc"${statusSort === 'due_desc' ? ' selected' : ''}>Latest due first</option>
+        </select>
+        <div class="hw-status-summary">${filteredAssignments.length} assignment${filteredAssignments.length === 1 ? '' : 's'} shown</div>
+      </div>
+      <div class="hw-status-cards">${renderStatusCards(filteredAssignments)}</div>`;
+
+    const classFilter = statusBody.querySelector('#hwStatusClassFilter');
+    const sortOrder = statusBody.querySelector('#hwStatusSortOrder');
+    if (classFilter) {
+      classFilter.addEventListener('change', () => {
+        statusClassFilter = classFilter.value || 'all';
+        renderStatusModal(statusAssignments);
+      });
+    }
+    if (sortOrder) {
+      sortOrder.addEventListener('change', () => {
+        statusSort = sortOrder.value || 'due_asc';
+        renderStatusModal(statusAssignments);
+      });
+    }
   }
 
   function htmlEscape(s) {
