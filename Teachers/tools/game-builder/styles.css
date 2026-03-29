@@ -389,7 +389,10 @@ body { margin:0; background: linear-gradient(135deg, #6b6b6b 0%, #696969 100%); 
 .def-textarea, .ex-textarea { min-height: 60px; resize: vertical; font-size:12px; }
 .def-textarea { background:#f5fbff; border:1px solid #b7d9e2; }
 .ex-textarea { background:#fffdf5; border:1px solid #e2d5b7; }
-.example-stack-cell { display:flex; flex-direction:column; gap:8px; align-items:stretch !important; }
+.example-stack-cell { display:flex; flex-direction:column; gap:8px; align-items:stretch !important; width:100%; }
+.example-stack-cell .ex-textarea,
+.example-stack-cell .ex-kor-textarea { width:100%; box-sizing:border-box; }
+.example-row-actions { display:flex; justify-content:flex-end; align-items:center; gap:8px; }
 .ex-kor-textarea { min-height:56px; resize:vertical; font-size:12px; background:#f4f7ff; border:1px solid #c7d3f2; }
 .def-textarea:focus { outline:2px solid #8bd0d8; }
 .ex-textarea:focus { outline:2px solid #f3c974; }
