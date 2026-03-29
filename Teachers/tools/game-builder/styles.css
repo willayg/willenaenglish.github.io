@@ -8,6 +8,9 @@
 .word-table.hide-examples textarea[data-field="example"] {
   display: none !important;
 }
+.word-table.hide-example-kor textarea[data-field="ex_kor"] {
+  display: none !important;
+}
 .word-table.hide-images td:nth-child(4),
 .word-table.hide-images .drop-zone {
   display: none !important;
@@ -386,8 +389,15 @@ body { margin:0; background: linear-gradient(135deg, #6b6b6b 0%, #696969 100%); 
 .def-textarea, .ex-textarea { min-height: 60px; resize: vertical; font-size:12px; }
 .def-textarea { background:#f5fbff; border:1px solid #b7d9e2; }
 .ex-textarea { background:#fffdf5; border:1px solid #e2d5b7; }
+.example-stack-cell { display:grid; grid-template-columns:minmax(0,1fr) 34px; align-items:stretch !important; column-gap:8px; width:100%; }
+.example-inputs-col { min-width:0; display:flex; flex-direction:column; gap:8px; }
+.example-inputs-col .ex-textarea,
+.example-inputs-col .ex-kor-textarea { width:100%; box-sizing:border-box; }
+.example-actions-col { width:34px; display:flex; flex-direction:column; justify-content:center; align-items:center; gap:8px; }
+.ex-kor-textarea { min-height:56px; resize:vertical; font-size:12px; background:#f4f7ff; border:1px solid #c7d3f2; }
 .def-textarea:focus { outline:2px solid #8bd0d8; }
 .ex-textarea:focus { outline:2px solid #f3c974; }
+.ex-kor-textarea:focus { outline:2px solid #9bb1f5; }
 
 /* Refresh buttons */
 .refresh-btn { background: #f0f9ff; border: 1px solid #93cbcf; color: #19777e; font-weight: bold; border-radius: 6px; transition: background 0.2s; }
@@ -405,7 +415,7 @@ body { margin:0; background: linear-gradient(135deg, #6b6b6b 0%, #696969 100%); 
 /* Simplified Mint AI modal styles */
 .mint-ai-card { width:min(1100px,98vw); max-width:99vw; min-height:70vh; background:linear-gradient(135deg,#f0f9ff 0%,#e0f7fa 100%); border-radius:20px; border:2px solid #93cbcf; box-shadow:0 8px 32px rgba(60,60,80,0.18); display:flex; position:relative; overflow:hidden; }
 .mint-ai-close { position:absolute; top:10px; right:12px; background:none; border:none; font-size:1.7em; color:#666; cursor:pointer; z-index:1; }
-.mint-ai-left { flex:0.95; background:#fff; border-right:2px solid #93cbcf; padding:26px 18px 18px 24px; display:flex; flex-direction:column; gap:10px; }
+.mint-ai-left { flex:0.95; background:#fff; border-right:2px solid #93cbcf; padding:26px 18px 18px 24px; display:flex; flex-direction:column; gap:10px; overflow-y:auto; }
 .mint-ai-right { flex:1.7; padding:28px; display:flex; flex-direction:column; gap:12px; }
 .mint-ai-title { font-size:1.6em; font-weight:800; color:#045c63; margin:0 0 4px 0; }
 .mint-ai-input { font-size:0.9em; padding:6px 8px; border-radius:7px; border:2px solid #93cbcf; background:#fff; outline:none; }
@@ -420,6 +430,19 @@ body { margin:0; background: linear-gradient(135deg, #6b6b6b 0%, #696969 100%); 
 .mint-ai-preview-head { font-size:1.06em; font-weight:700; color:#00897b; }
 .mint-ai-preview { flex:1; background:#fff; border-radius:10px; min-height:265px; max-height:530px; padding:15px 17px; box-shadow:0 2px 12px rgba(60,60,80,0.07); border:2px solid #93cbcf; font-size:0.9em; color:#444; overflow-y:auto; }
 .mint-ai-actions { display:flex; gap:10px; justify-content:flex-end; }
+.mint-ai-sentence-section { padding-top:6px; }
+.mint-ai-section-divider { height:1px; background:#93cbcf; margin:4px 0 8px 0; }
+.mint-ai-subtitle { font-size:1.05em; font-weight:700; color:#045c63; margin:0 0 2px 0; }
+.mint-ai-hint { font-size:0.8em; color:#64748b; margin:0 0 6px 0; }
+.mint-ai-inline-toggle { display:inline-flex; align-items:center; gap:6px; margin-left:2px; }
+.mint-ai-inline-toggle input[type="checkbox"] { margin:0; }
+.mint-ai-preview .sent-item { padding:4px 0; border-bottom:1px solid #e8ecef; }
+.mint-ai-preview .sent-item:last-child { border-bottom:none; }
+.mint-ai-preview .sent-eng { font-weight:600; color:#1a1a1a; }
+.mint-ai-preview .sent-kor { color:#5a6a7a; font-size:0.92em; }
+.mint-ai-preview .sent-example-stack { display:flex; flex-direction:column; gap:2px; margin-top:2px; }
+.mint-ai-preview .sent-ex-en { color:#0c5b69; font-size:0.92em; line-height:1.35; }
+.mint-ai-preview .sent-ex-ko { color:#5f6f83; font-size:0.88em; line-height:1.35; }
 
 @media (max-width: 900px) {
   .mint-ai-card { flex-direction:column; min-height:auto; }

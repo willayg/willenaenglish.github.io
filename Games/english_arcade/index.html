@@ -178,7 +178,7 @@
   <script src="/students/language.js"></script>
   <script src="/students/theme.js"></script>
   <!-- Game app -->
-  <script type="module" src="main.js?v=20260326c"></script>
+  <script type="module" src="main.js?v=20260329f"></script>
 </head>
 <body class="word-arcade">
   <div id="waAutostartOverlay" aria-live="polite" aria-busy="true">
@@ -316,6 +316,19 @@
         return Math.max(0, Math.min(100, completionPct));
       }
 
+      function resolveHomeworkForcedMode(meta) {
+        const m = (meta && typeof meta === 'object') ? meta : {};
+        const forcedRaw = String(m.forced_mode || m.mode || '').trim().toLowerCase();
+        const diffRaw = String(m.difficulty_mode || '').trim().toLowerCase();
+        if (forcedRaw === 'full_sentence_mode' || forcedRaw === 'sentence_unscramble' || diffRaw === 'sentence_unscramble') {
+          return 'full_sentence_mode';
+        }
+        if (forcedRaw === 'spelling' || diffRaw === 'spelling') {
+          return 'spelling';
+        }
+        return '';
+      }
+
       async function fetchHomeworkCompletionPct(assignmentId) {
         if (!assignmentId) return null;
         try {
@@ -412,10 +425,37 @@
 
       if (hwParam) {
         maybeCelebrateHomeworkCompletion();
-        window.addEventListener('wa:session-ended', () => {
+        let pendingHomeworkCelebrateCheck = false;
+        let pendingHomeworkCelebrateTimer = null;
+
+        const runHomeworkCelebrateCheckSoon = (delayMs = 140) => {
           setTimeout(() => {
             maybeCelebrateHomeworkCompletion();
-          }, 500);
+          }, delayMs);
+        };
+
+        window.addEventListener('wa:session-ended', () => {
+          pendingHomeworkCelebrateCheck = true;
+          if (pendingHomeworkCelebrateTimer) {
+            clearTimeout(pendingHomeworkCelebrateTimer);
+            pendingHomeworkCelebrateTimer = null;
+          }
+          // Fallback path: if a mode did not show stars, still run completion check.
+          pendingHomeworkCelebrateTimer = setTimeout(() => {
+            if (!pendingHomeworkCelebrateCheck) return;
+            pendingHomeworkCelebrateCheck = false;
+            runHomeworkCelebrateCheckSoon(120);
+          }, 3600);
+        });
+
+        window.addEventListener('wa:stars-overlay-closed', () => {
+          if (!pendingHomeworkCelebrateCheck) return;
+          pendingHomeworkCelebrateCheck = false;
+          if (pendingHomeworkCelebrateTimer) {
+            clearTimeout(pendingHomeworkCelebrateTimer);
+            pendingHomeworkCelebrateTimer = null;
+          }
+          runHomeworkCelebrateCheckSoon(80);
         });
       }
 
@@ -465,9 +505,9 @@
                 try { listMetaForBadge = JSON.parse(listMetaForBadge); } catch { listMetaForBadge = {}; }
               }
               if (!listMetaForBadge || typeof listMetaForBadge !== 'object') listMetaForBadge = {};
-              const badgeForcedMode = String(listMetaForBadge.forced_mode || listMetaForBadge.mode || listMetaForBadge.difficulty_mode || '').trim().toLowerCase();
+              const badgeForcedMode = resolveHomeworkForcedMode(listMetaForBadge);
               const badgeModesTotal = Number(listMetaForBadge.modes_total ?? listMetaForBadge.total_modes ?? listMetaForBadge.mode_count ?? 0);
-              const localSpellingOnly = badgeForcedMode === 'spelling' || badgeModesTotal === 1;
+              const localSpellingOnly = badgeForcedMode === 'spelling';
               const spHint = localSpellingOnly ? '&spelling_only=1' : '';
 
               const pr = await WillenaAPI.fetch(`/.netlify/functions/homework_api?action=assignment_progress&assignment_id=${encodeURIComponent(a.id)}${spHint}`);
@@ -577,9 +617,9 @@
                 try { listMetaForProgress = JSON.parse(listMetaForProgress); } catch { listMetaForProgress = {}; }
               }
               if (!listMetaForProgress || typeof listMetaForProgress !== 'object') listMetaForProgress = {};
-              const progressForcedMode = String(listMetaForProgress.forced_mode || listMetaForProgress.mode || listMetaForProgress.difficulty_mode || '').trim().toLowerCase();
+              const progressForcedMode = resolveHomeworkForcedMode(listMetaForProgress);
               const progressModesTotal = Number(listMetaForProgress.modes_total ?? listMetaForProgress.total_modes ?? listMetaForProgress.mode_count ?? 0);
-              const localSpellingOnly = progressForcedMode === 'spelling' || progressModesTotal === 1;
+              const localSpellingOnly = progressForcedMode === 'spelling';
               const spHint = localSpellingOnly ? '&spelling_only=1' : '';
 
               const prRes = await WillenaAPI.fetch(`/.netlify/functions/homework_api?action=assignment_progress&assignment_id=${encodeURIComponent(a.id)}${spHint}`);
@@ -695,16 +735,18 @@
                 try { listMetaForGoal = JSON.parse(listMetaForGoal); } catch { listMetaForGoal = {}; }
               }
               if (!listMetaForGoal || typeof listMetaForGoal !== 'object') listMetaForGoal = {};
-              const goalForcedMode = String(listMetaForGoal.forced_mode || listMetaForGoal.mode || listMetaForGoal.difficulty_mode || '').trim().toLowerCase();
+              const goalForcedMode = resolveHomeworkForcedMode(listMetaForGoal);
               const goalModesTotal = Number(listMetaForGoal.modes_total ?? listMetaForGoal.total_modes ?? listMetaForGoal.mode_count ?? 0);
-              const isSpellingOnlyGoal = goalForcedMode === 'spelling' || goalModesTotal === 1;
+              const isSpellingOnlyGoal = goalForcedMode === 'spelling';
 
               goalMsg = document.createElement('div');
               goalMsg.style.fontSize = '0.75rem';
               goalMsg.style.fontWeight = '600';
               goalMsg.style.color = '#19777e';
               goalMsg.style.marginTop = '2px';
-              if (isSpellingOnlyGoal) {
+              if (goalForcedMode === 'full_sentence_mode') {
+                goalMsg.textContent = 'Goal: Complete sentence unscramble';
+              } else if (isSpellingOnlyGoal) {
                 goalMsg.textContent = 'Goal: Complete spelling mode';
               } else if (a.stars_required !== null && typeof a.stars_required === 'number') {
                 const currentStars = (typeof a.stars === 'number') ? a.stars : 0;
@@ -773,8 +815,7 @@
               const gameId = String(explicitGameId || (listKeySavedMatch && listKeySavedMatch[1]) || '').trim();
               const isSavedGameHomework = sourceType === 'saved_game' || metaType === 'saved_game' || !!listKeySavedMatch;
               const hwId = a.id;
-              const forcedModeRaw = String(listMeta.forced_mode || listMeta.mode || listMeta.difficulty_mode || '').trim().toLowerCase();
-              const forcedMode = forcedModeRaw === 'spelling' ? 'spelling' : '';
+              const forcedMode = resolveHomeworkForcedMode(listMeta);
 
               try {
                 if (hwId) sessionStorage.setItem('wa_homework_assignment_id', String(hwId));

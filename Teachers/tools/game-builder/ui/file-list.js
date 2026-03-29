@@ -6,7 +6,7 @@ import { cacheCurrentGame } from '../state/game-state.js?v=20260328e';
 
 let fileListRows = [];
 let fileListUniqueCount = 0;
-let fileListAllMode = true;
+let fileListAllMode = false;
 let fileListCache = null; // { ts, rows, uniqueCount, key }
 const SESSION_CACHE_MAX_AGE_MS = 180000;
 const IMAGE_BATCH_SIZE = 10;
@@ -98,13 +98,15 @@ export function initFileListModal({ fileModal, fileListEl, openLink, fileModalCl
   openLink.onclick = () => {
     fileModal.style.display = 'flex';
     fileListEl.innerHTML = buildSkeletonHTML(8);
-    populateFileList();
+    // Always refresh on open so newly saved games appear immediately.
+    fileListCache = null;
+    populateFileList({ forceFresh: true });
   };
   fileModalClose && (fileModalClose.onclick = () => fileModal.style.display = 'none');
   window.addEventListener('click', (e) => { if (e.target === fileModal) fileModal.style.display = 'none'; });
 }
 
-async function populateFileList() {
+async function populateFileList({ forceFresh = false } = {}) {
   if (!fileListAllMode) {
     await resolveCurrentUserProfile();
   } else {
@@ -115,7 +117,7 @@ async function populateFileList() {
   const modeKey = fileListAllMode ? 'all' : 'mine';
   const userKey = currentUserNameCandidates().join('|');
   const cacheKey = `${modeKey}:${userKey}`;
-  const useCache = fileListCache
+  const useCache = !forceFresh && fileListCache
     && fileListCache.key === cacheKey
     && (Date.now() - fileListCache.ts) < SESSION_CACHE_MAX_AGE_MS;
 

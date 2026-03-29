@@ -4,7 +4,7 @@ import { DEFAULTS } from '../constants.js';
 import { generateDefinition, generateExample } from '../services/ai-service.js?v=20260322p';
 import { openSaveAsModal, handleSaveAsConfirm, showFileModal } from './modals.js';
 import { ensureAudioForWordsAndSentences } from '../services/audio-service.js';
-import { ensureSentenceIdsBuilder, prepareAndUploadImagesIfNeeded, saveGameData } from '../services/file-service.js?v=20260328e';
+import { ensureSentenceIdsBuilder, ensureSentenceAudioBuilder, prepareAndUploadImagesIfNeeded, saveGameData } from '../services/file-service.js?v=20260329a';
 import { syncImagesFromPayload } from '../state/game-state.js?v=20260328e';
 
 let isSaving = false;
@@ -99,6 +99,14 @@ export async function handleQuickSave(ev, buildPayload, getCurrentGameId, setCur
     console.log('[quickSave] ensureSentenceIdsBuilder result:', sentResult,
       'words with sentence IDs:', (payload.words || []).filter(w => w.primary_sentence_id).length, '/', (payload.words || []).length);
 
+    // Ensure sent_<id>.mp3 exists before save so teachers do not need Save Sentences button.
+    try {
+      const sentenceAudioResult = await ensureSentenceAudioBuilder(payload.words || []);
+      console.log('[quickSave] ensureSentenceAudioBuilder result:', sentenceAudioResult);
+    } catch (e) {
+      console.warn('[quickSave] ensureSentenceAudioBuilder failed (non-fatal):', e?.message || e);
+    }
+
     // Stage 1: Upload images
     if (!silent && typeof window.showSaveCenterMessage === 'function') {
       window.showSaveCenterMessage('Saving…', { variant: 'info' });
@@ -126,10 +134,18 @@ export async function handleQuickSave(ev, buildPayload, getCurrentGameId, setCur
       // Fire-and-forget ensure missing audio (non-force) after successful save
       try {
         const words = (payload.words || []).map(w => w.eng).filter(Boolean);
-        const examplesMap = Object.fromEntries((payload.words || []).filter(w => w.eng && w.example).map(w => [w.eng, w.example]));
+        const examplesMap = Object.fromEntries(
+          (payload.words || [])
+            .filter(w => w && w.eng)
+            .map(w => {
+              const sentence = String(w.example || w.legacy_sentence || '').trim();
+              return [w.eng, sentence];
+            })
+            .filter(([, sentence]) => !!sentence)
+        );
         // slight delay to keep UI responsive
         setTimeout(() => {
-          ensureAudioForWordsAndSentences(words, examplesMap, { force: false, skipSentenceAudio: true })
+          ensureAudioForWordsAndSentences(words, examplesMap, { force: false, skipSentenceAudio: false })
             .catch(e => console.debug('[quickSave][audio] skipped', e?.message));
         }, 50);
       } catch (e) { console.debug('[quickSave][audio] init error', e?.message); }
@@ -203,42 +219,120 @@ export function handleRedo(redoState, render) {
  */
 export async function handleGetTranslations(getList, setList, render, toast) {
   const list = getList();
-  const targets = list.filter(w => w.eng && !w.kor);
-  if (!targets.length) { toast('No words need translation'); return; }
+  const wordTargets = list.filter(w => w.eng && !w.kor);
+  const sentenceTargets = list.filter(w => w.example && !w.ex_kor);
+  if (!wordTargets.length && !sentenceTargets.length) { toast('No words or sentences need translation'); return; }
   toast('Translating...');
   const overlay = ensureLoadingOverlay();
-  overlay.show('Translating ' + targets.length + ' words...');
-  try {
-    // Build a single prompt asking for a JSON array mapping english->korean
-    const words = targets.map(w => w.eng.trim()).slice(0, 50); // safety cap
-    const prompt = `Provide Korean translations for these English words as compact JSON array of objects with keys eng and kor only. No commentary. Words: ${words.join(', ')}`;
-    const res = await fetch(ENDPOINTS.TRANSLATE, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prompt })
-    });
-    const js = await res.json().catch(()=>null);
-    let result = js?.result || js?.data?.choices?.[0]?.message?.content || '';
-    // Attempt to extract JSON
-    let parsed = null;
-    const match = result.match(/\[[\s\S]*\]/);
-    if (match) {
-      try { parsed = JSON.parse(match[0]); } catch {}
-    } else {
-      try { parsed = JSON.parse(result); } catch {}
-    }
-    if (Array.isArray(parsed)) {
-      const map = new Map(parsed.filter(o=>o && o.eng).map(o=>[o.eng.toLowerCase(), o.kor]));
-      for (const w of targets) {
-        const tr = map.get(w.eng.toLowerCase());
-        if (tr && !w.kor) w.kor = tr;
+  overlay.show(`Translating ${wordTargets.length} words and ${sentenceTargets.length} sentences...`);
+
+  const extractAiText = (payload) => {
+    const candidates = [
+      payload?.result,
+      payload?.text,
+      payload?.data?.result,
+      payload?.data?.text,
+      payload?.choices?.[0]?.message?.content,
+      payload?.data?.choices?.[0]?.message?.content
+    ];
+    const pick = candidates.find(v => typeof v === 'string' && v.trim());
+    return pick ? pick.trim() : '';
+  };
+
+  const fetchOpenAiText = async (prompt) => {
+    const body = JSON.stringify({ prompt });
+    const attempts = [
+      () => WillenaAPI.fetch('/.netlify/functions/openai_proxy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body
+      }),
+      () => fetch('https://willena-proxy.willena.workers.dev/.netlify/functions/openai_proxy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body,
+        credentials: 'include'
+      }),
+      () => fetch('https://api.willenaenglish.com/.netlify/functions/openai_proxy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body,
+        credentials: 'include'
+      })
+    ];
+
+    let lastError = 'Translate failed';
+    for (const call of attempts) {
+      try {
+        const res = await call();
+        const js = await res.json().catch(() => ({}));
+        const text = extractAiText(js);
+        if (res.ok && text) return text;
+        lastError = js?.error || js?.message || `Translate HTTP ${res.status}`;
+      } catch (e) {
+        lastError = e?.message || String(e);
       }
+    }
+    throw new Error(String(lastError));
+  };
+
+  const cleanTranslation = (raw) => String(raw || '')
+    .trim()
+    .replace(/^['"`]+|['"`]+$/g, '')
+    .replace(/^korean\s*[:：-]\s*/i, '')
+    .replace(/^translation\s*[:：-]\s*/i, '')
+    .trim();
+
+  const translateSingle = async (text, kind) => {
+    const source = String(text || '').trim();
+    if (!source) return '';
+    const prompt = kind === 'sentence'
+      ? `Translate this English sentence into natural Korean for a young ESL learner. Return only the Korean translation, with no explanation or quotes. Sentence: ${source}`
+      : `Translate this English word or short phrase into Korean. Return only the Korean translation, with no explanation or quotes. Text: ${source}`;
+    try {
+      const translated = cleanTranslation(await fetchOpenAiText(prompt));
+      if (translated && translated.toLowerCase() !== source.toLowerCase()) return translated;
+      console.warn('[translate] empty or unchanged translation:', source, translated);
+    } catch (e) {
+      console.warn('[translate] single translate failed:', source, e?.message || e);
+    }
+    return '';
+  };
+
+  try {
+    let updates = 0;
+    let failures = 0;
+
+    if (wordTargets.length) {
+      for (const w of wordTargets.slice(0, 60)) {
+        const tr = await translateSingle(w.eng);
+        if (tr && !w.kor) {
+          w.kor = tr;
+          updates += 1;
+        } else {
+          failures += 1;
+        }
+      }
+    }
+
+    if (sentenceTargets.length) {
+      for (const w of sentenceTargets.slice(0, 60)) {
+        const tr = await translateSingle(w.example);
+        if (tr && !w.ex_kor) {
+          w.ex_kor = tr;
+          updates += 1;
+        } else {
+          failures += 1;
+        }
+      }
+    }
+
+    if (updates > 0) {
       setList([...list]);
       render();
-      toast('Translated');
+      toast(`Translated ${updates} item${updates === 1 ? '' : 's'}${failures ? ` (${failures} failed)` : ''}`);
     } else {
-      console.warn('[translate] Could not parse JSON from OpenAI result', result);
-      toast('Translate parse fail');
+      toast('No new translations found');
     }
   } catch (e) {
     console.error(e);
