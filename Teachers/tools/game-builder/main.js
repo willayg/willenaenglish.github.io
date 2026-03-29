@@ -92,8 +92,19 @@ import { loadWorksheetIntoBuilder } from './services/worksheet-service.js?v=2026
 
 const GB_BUILD_STAMP = 'GB_BUILD 20260328m · force-checkbox-no-trash';
 
+function isStagingLikeHost(host) {
+  const h = String(host || '').toLowerCase();
+  return h === 'localhost'
+    || h === '127.0.0.1'
+    || h === 'staging.willenaenglish.com'
+    || h === 'cf.willenaenglish.com'
+    || h.endsWith('.pages.dev');
+}
+
 function injectBuilderBuildStamp() {
   try {
+    const host = (typeof location !== 'undefined' && location.hostname) ? location.hostname : '';
+    if (!isStagingLikeHost(host)) return;
     if (typeof window !== 'undefined') {
       window.__GB_BUILD_STAMP = GB_BUILD_STAMP;
       console.log('[GameBuilder][BuildStamp]', GB_BUILD_STAMP, location.hostname);
