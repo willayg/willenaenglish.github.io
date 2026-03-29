@@ -405,7 +405,7 @@ body { margin:0; background: linear-gradient(135deg, #6b6b6b 0%, #696969 100%); 
 /* Simplified Mint AI modal styles */
 .mint-ai-card { width:min(1100px,98vw); max-width:99vw; min-height:70vh; background:linear-gradient(135deg,#f0f9ff 0%,#e0f7fa 100%); border-radius:20px; border:2px solid #93cbcf; box-shadow:0 8px 32px rgba(60,60,80,0.18); display:flex; position:relative; overflow:hidden; }
 .mint-ai-close { position:absolute; top:10px; right:12px; background:none; border:none; font-size:1.7em; color:#666; cursor:pointer; z-index:1; }
-.mint-ai-left { flex:0.95; background:#fff; border-right:2px solid #93cbcf; padding:26px 18px 18px 24px; display:flex; flex-direction:column; gap:10px; }
+.mint-ai-left { flex:0.95; background:#fff; border-right:2px solid #93cbcf; padding:26px 18px 18px 24px; display:flex; flex-direction:column; gap:10px; overflow-y:auto; }
 .mint-ai-right { flex:1.7; padding:28px; display:flex; flex-direction:column; gap:12px; }
 .mint-ai-title { font-size:1.6em; font-weight:800; color:#045c63; margin:0 0 4px 0; }
 .mint-ai-input { font-size:0.9em; padding:6px 8px; border-radius:7px; border:2px solid #93cbcf; background:#fff; outline:none; }
