@@ -1,31 +1,107 @@
 <template id="burger-menu-template">
   <style>
-    .burger-menu { position: fixed; top: 10px; right: 10px; z-index: 9999; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
+    .burger-menu { position: fixed; top: 10px; right: 10px; z-index: 9999; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; display: flex; align-items: center; gap: 8px; }
     .burger-btn { background: #00c9db; color: white; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer; font-size: 16px; }
     .burger-btn:hover { background: #00b4c6; }
     .burger-dropdown { display: none; position: absolute; top: 50px; right: 0; background: white; box-shadow: 0 4px 8px rgba(0,0,0,0.2); border-radius: 5px; min-width: 220px; max-height: 70vh; overflow: auto; }
     .burger-dropdown a { display: block; padding: 12px 16px; text-decoration: none; color: #333; border-bottom: 1px solid #eee; }
     .burger-dropdown a:hover { background: #f1f1f1; }
     .burger-dropdown a:last-child { border-bottom: none; }
+
+    /* ── Notification bell ── */
+    .hw-notif-wrap { position: relative; }
+    .hw-notif-btn {
+      background: #00c9db; color: white; border: none;
+      padding: 10px 13px; border-radius: 5px; cursor: pointer;
+      font-size: 16px; line-height: 1; position: relative;
+    }
+    .hw-notif-btn:hover { background: #00b4c6; }
+    .hw-notif-badge {
+      display: none; position: absolute; top: -5px; right: -5px;
+      background: #ef4444; color: white; font-size: 11px; font-weight: 700;
+      min-width: 18px; height: 18px; border-radius: 9px;
+      align-items: center; justify-content: center;
+      padding: 0 3px; pointer-events: none;
+    }
+    .hw-notif-panel {
+      display: none; position: absolute; top: calc(100% + 8px); right: 0;
+      width: 320px; max-height: 480px; overflow-y: auto;
+      background: white; border-radius: 8px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.18); z-index: 10000;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    }
+    .hw-notif-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 14px 10px; border-bottom: 1px solid #e5e7eb;
+      font-weight: 600; font-size: 13px; color: #111827;
+      position: sticky; top: 0; background: white; z-index: 1;
+    }
+    .hw-notif-header-link {
+      font-size: 11px; font-weight: 500; color: #00b4c6;
+      text-decoration: none; white-space: nowrap;
+    }
+    .hw-notif-header-link:hover { text-decoration: underline; }
+    .hw-notif-loading { padding: 24px; text-align: center; color: #9ca3af; font-size: 13px; }
+    .hw-notif-empty { padding: 24px; text-align: center; color: #9ca3af; font-size: 13px; }
+    .hw-notif-group { border-bottom: 1px solid #f3f4f6; }
+    .hw-notif-group-title {
+      padding: 8px 14px 4px; font-size: 11px; font-weight: 700;
+      color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em;
+      background: #f9fafb;
+    }
+    .hw-notif-row {
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 14px; cursor: pointer; transition: background 0.12s;
+      border-bottom: 1px solid #f3f4f6;
+      text-decoration: none; color: inherit;
+    }
+    .hw-notif-row:last-child { border-bottom: none; }
+    .hw-notif-row:hover { background: #f0fdfe; }
+    .hw-notif-check { font-size: 15px; flex-shrink: 0; }
+    .hw-notif-info { flex: 1; min-width: 0; }
+    .hw-notif-name { font-size: 13px; font-weight: 600; color: #111827; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .hw-notif-meta { font-size: 11px; color: #6b7280; margin-top: 1px; }
+    .hw-notif-stars { font-size: 12px; flex-shrink: 0; color: #f59e0b; letter-spacing: -1px; }
+    .hw-notif-time { font-size: 11px; color: #9ca3af; flex-shrink: 0; white-space: nowrap; }
   </style>
+
   <div class="burger-menu">
-    <button class="burger-btn" aria-label="Menu">☰</button>
-    <div class="burger-dropdown">
-      <a href="/Teachers/index.html">Teachers Home</a>
-      <a href="/Teachers/tools/manage_students.html">Manage Students</a>
-      <a href="/Teachers/tools/student_tracker/student_tracker.html">Student Tracker</a>
-      <a href="/Teachers/tools/planner/planner.html">Planner</a>
-      <a href="/Teachers/tools/game-builder/index.html">Game Builder</a>
-      <a href="/Teachers/tools/survey_builder/survey_builder.html">Survey Builder</a>
-      <a href="/Teachers/tools/reading/reading.html">Reading</a>
-      <a href="/Teachers/tools/flashcard/flashcard.html">Flashcards</a>
-      <a href="/Teachers/tools/grid_game/grid_game.html">Grid Game</a>
-      <a href="/Teachers/tools/puzzles/wordsearch.html">Word Search</a>
-      <a href="/Teachers/tools/wordtest/wordtest2.html">Word Test</a>
-      <a href="/Teachers/tools/worksheet-builder-vanilla/index.html">Worksheet Builder</a>
-      <a href="/Teachers/tools/test_input/index.html">Test Input</a>
-      <a href="#" id="feedbackMenuBtn">Feedback</a>
-      <button type="button" id="logoutMenuBtn" style="display:block;width:100%;text-align:left;padding:12px 16px;background:#fff;border:none;border-top:1px solid #eee;color:#333;cursor:pointer;font:inherit;">Logout</button>
+    <!-- Notification bell -->
+    <div class="hw-notif-wrap">
+      <button class="hw-notif-btn" aria-label="Homework notifications" title="Homework notifications">🔔
+        <span class="hw-notif-badge" aria-live="polite"></span>
+      </button>
+      <div class="hw-notif-panel" role="dialog" aria-label="Homework notifications">
+        <div class="hw-notif-header">
+          <span>Homework Updates</span>
+          <a class="hw-notif-header-link" href="/Teachers/tools/student_tracker/student_tracker.html?tab=homework">Open Tracker →</a>
+        </div>
+        <div class="hw-notif-body">
+          <div class="hw-notif-loading">Loading…</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Burger menu -->
+    <div style="position:relative;">
+      <button class="burger-btn" aria-label="Menu">☰</button>
+      <div class="burger-dropdown">
+        <a href="/Teachers/index.html">Teachers Home</a>
+        <a href="/Teachers/tools/manage_students.html">Manage Students</a>
+        <a href="/Teachers/tools/student_tracker/student_tracker.html">Student Tracker</a>
+        <a href="/Teachers/tools/planner/planner.html">Planner</a>
+        <a href="/Teachers/tools/game-builder/index.html">Game Builder</a>
+        <a href="/Teachers/tools/survey_builder/survey_builder.html">Survey Builder</a>
+        <a href="/Teachers/tools/reading/reading.html">Reading</a>
+        <a href="/Teachers/tools/flashcard/flashcard.html">Flashcards</a>
+        <a href="/Teachers/tools/grid_game/grid_game.html">Grid Game</a>
+        <a href="/Teachers/tools/puzzles/wordsearch.html">Word Search</a>
+        <a href="/Teachers/tools/wordtest/wordtest2.html">Word Test</a>
+        <a href="/Teachers/tools/worksheet-builder-vanilla/index.html">Worksheet Builder</a>
+        <a href="/Teachers/tools/test_input/index.html">Test Input</a>
+        <a href="#" id="feedbackMenuBtn">Feedback</a>
+        <button type="button" id="logoutMenuBtn" style="display:block;width:100%;text-align:left;padding:12px 16px;background:#fff;border:none;border-top:1px solid #eee;color:#333;cursor:pointer;font:inherit;">Logout</button>
+      </div>
     </div>
   </div>
 </template>
