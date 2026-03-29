@@ -622,15 +622,44 @@ async function preloadSentenceAudio(list) {
     ? window.WillenaAPI.fetch.bind(window.WillenaAPI)
     : (url, init) => fetch(url, { ...init, credentials: 'include' });
 
-  // 1) Collect words that have a sentence (example / legacy_sentence / sentences[])
+  const getSentenceText = (w) => {
+    if (!w || typeof w !== 'object') return '';
+    const direct = [w.example, w.ex, w.sentence, w.legacy_sentence].find(v => typeof v === 'string' && v.trim());
+    if (direct) return String(direct).trim();
+    if (Array.isArray(w.sentences) && w.sentences.length) {
+      const preferred = (w.primary_sentence_id && w.sentences.find(s => s?.id === w.primary_sentence_id))
+        || w.sentences.find(s => s && typeof s.text === 'string' && s.text.trim())
+        || null;
+      if (preferred && typeof preferred.text === 'string' && preferred.text.trim()) return preferred.text.trim();
+    }
+    return '';
+  };
+
+  // 1) Collect words that have sentence identity or sentence text (default + builder shapes)
   const hasSentence = list.filter(w => {
     if (!w) return false;
+    if (w.sentence_id) return true;
     if (w.primary_sentence_id) return true;
     if (Array.isArray(w.sentences) && w.sentences.length) return true;
-    const text = w.example || w.legacy_sentence || '';
+    const text = getSentenceText(w);
     return typeof text === 'string' && text.trim().split(/\s+/).length >= 3;
   });
   if (!hasSentence.length) return;
+
+  // Normalize sentence_id -> primary_sentence_id so downstream resolution is ID-first.
+  for (const w of hasSentence) {
+    if (!w || typeof w !== 'object') continue;
+    const sid = String(w.primary_sentence_id || w.sentence_id || '').trim();
+    if (!sid) continue;
+    if (!w.primary_sentence_id) w.primary_sentence_id = sid;
+    if (!Array.isArray(w.sentences)) w.sentences = [];
+    if (!w.sentences.some(s => s?.id === sid)) {
+      const text = getSentenceText(w);
+      const sentObj = { id: sid };
+      if (text) sentObj.text = text;
+      w.sentences.push(sentObj);
+    }
+  }
 
   const norm = s => (s || '').trim().replace(/\s+/g, ' ');
   const isLocalSentenceId = (id) => /^local_/i.test(String(id || '').trim());
@@ -640,7 +669,7 @@ async function preloadSentenceAudio(list) {
   if (needIds.length) {
     const byText = new Map();
     for (const w of needIds) {
-      const text = norm(w.example || w.legacy_sentence || '');
+      const text = norm(getSentenceText(w));
       if (!text || text.split(/\s+/).length < 3) continue;
       if (!byText.has(text)) byText.set(text, new Set());
       if (w.eng) byText.get(text).add(String(w.eng));
@@ -661,7 +690,7 @@ async function preloadSentenceAudio(list) {
           if (js?.success && Array.isArray(js.sentences)) {
             const byTextResolved = new Map(js.sentences.map(s => [norm(s.text).toLowerCase(), s]));
             for (const w of needIds) {
-              const text = norm(w.example || w.legacy_sentence || '');
+              const text = norm(getSentenceText(w));
               const rec = byTextResolved.get(text.toLowerCase());
               if (rec?.id) {
                 const sentObj = { id: rec.id, text: rec.text };

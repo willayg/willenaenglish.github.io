@@ -120,6 +120,20 @@ export function showStudyWordsModal({ wordList = [], onClose = null }) {
     return String(item || '');
   };
 
+  // Helper: resolve canonical sentence ID shape used across default and builder lists
+  const getSentenceId = (item) => {
+    if (!item || typeof item !== 'object') return '';
+    const direct = String(item.primary_sentence_id || item.sentence_id || '').trim();
+    if (direct) return direct;
+    if (Array.isArray(item.sentences)) {
+      const chosen = (item.primary_sentence_id && item.sentences.find(s => s && s.id === item.primary_sentence_id))
+        || item.sentences.find(s => s && s.id)
+        || null;
+      if (chosen && chosen.id) return String(chosen.id).trim();
+    }
+    return '';
+  };
+
   // Helper: determine if a word is short (<=4 chars)
   const isShortWord = (word) => {
     const w = String(word || '').trim();
@@ -260,9 +274,12 @@ export function showStudyWordsModal({ wordList = [], onClose = null }) {
         sentenceBtn.style.background = '#2d9ba0';
         try {
           // Use sentence_id if available (proper fix), fallback to word-based lookup
-          const sentenceId = (item && typeof item === 'object') ? item.sentence_id : null;
+          const sentenceId = getSentenceId(item);
+          const prefetchedUrl = (item && typeof item === 'object' && typeof item.sentenceAudioUrl === 'string')
+            ? item.sentenceAudioUrl
+            : null;
           if (sentenceId) {
-            await playSentenceById(sentenceId, getEngWord(item));
+            await playSentenceById(sentenceId, getEngWord(item), prefetchedUrl);
           } else {
             await playTTSVariant(getEngWord(item), 'sentence');
           }
