@@ -227,6 +227,22 @@ async function supabaseDelete(env, table, query) {
   return resp.ok;
 }
 
+async function autoExpireAssignmentsPastGrace(env, className = null) {
+  const nowIso = new Date().toISOString();
+  const cutoffIso = new Date(Date.now() - (2 * 24 * 60 * 60 * 1000)).toISOString();
+  let query = `active=eq.true&due_at=lte.${encodeURIComponent(cutoffIso)}`;
+  if (className) {
+    query += `&class=eq.${encodeURIComponent(className)}`;
+  }
+
+  try {
+    await supabaseUpdate(env, 'homework_assignments', query, { active: false, ended_at: nowIso });
+  } catch (err) {
+    // Fallback for schemas where ended_at may be unavailable.
+    await supabaseUpdate(env, 'homework_assignments', query, { active: false });
+  }
+}
+
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
@@ -430,6 +446,8 @@ export default {
           if (!prof.class) {
             return jsonResponse({ success: false, error: 'No class set for this profile' }, 400, origin);
           }
+
+          await autoExpireAssignmentsPastGrace(env, prof.class);
           
           const nowIso = new Date().toISOString();
           const data = await supabaseSelect(
@@ -452,6 +470,7 @@ export default {
         
         // Teacher mode
         const className = url.searchParams.get('class');
+        await autoExpireAssignmentsPastGrace(env, className || null);
         let query = 'order=created_at.desc&select=*';
         if (className) {
           query = `class=eq.${encodeURIComponent(className)}&${query}`;
