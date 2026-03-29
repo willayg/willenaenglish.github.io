@@ -987,7 +987,7 @@ export default {
           
           const starsEarned = modesArr.reduce((sum, m) => sum + (m.bestStars || 0), 0);
 
-          // For spelling-only: check if student completed any spelling mode with >=1 star
+          // For one-mode homework types, completion criteria can be mode-specific.
           let modesAttempted;
           if (isSpellingOnlyAssignment) {
             const spellingDone = modesArr.some(m => {
@@ -995,6 +995,21 @@ export default {
               return m.bestStars >= 1 && (mn === 'spelling' || mn === 'listen_and_spell' || mn === 'spell');
             });
             modesAttempted = spellingDone ? 1 : 0;
+          } else if (isSentenceOnlyAssignment) {
+            const sentenceDone = modesArr.some(m => {
+              const mn = String(m.mode || '').toLowerCase();
+              if (!mn) return false;
+              return mn === 'full_sentence_mode'
+                || mn === 'word_sentence_mode'
+                || mn === 'sentence'
+                || mn === 'sentence_unscramble'
+                || mn === 'fill_blank_sentence_mode'
+                || mn === 'broken_sentence_mode'
+                || mn === 'grammar_sentence_unscramble'
+                || mn.includes('sentence');
+            });
+            // Sentence-only homework is completed when a sentence session is finished.
+            modesAttempted = sentenceDone ? 1 : 0;
           } else {
             // Only count modes where student achieved at least 1 star toward homework completion
             modesAttempted = modesArr.filter(m => m.bestStars >= 1).length;
