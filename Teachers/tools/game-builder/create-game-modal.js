@@ -1172,7 +1172,7 @@ export function initCreateGameModal(buildPayload) {
         setStatus('Ensuring audio...');
         await ensureAudioForWordsAndSentences(english, examplesMap, {
           force: false,
-          skipSentenceAudio: true,
+          skipSentenceAudio: false,
           onInit: (total) => setStatus(`Ensuring audio (0/${total})...`),
           onProgress: (done, total) => setStatus(`Ensuring audio (${done}/${total})...`),
           onDone: () => setStatus('Audio ready. Saving custom game...')

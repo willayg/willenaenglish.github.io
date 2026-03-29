@@ -126,10 +126,18 @@ export async function handleQuickSave(ev, buildPayload, getCurrentGameId, setCur
       // Fire-and-forget ensure missing audio (non-force) after successful save
       try {
         const words = (payload.words || []).map(w => w.eng).filter(Boolean);
-        const examplesMap = Object.fromEntries((payload.words || []).filter(w => w.eng && w.example).map(w => [w.eng, w.example]));
+        const examplesMap = Object.fromEntries(
+          (payload.words || [])
+            .filter(w => w && w.eng)
+            .map(w => {
+              const sentence = String(w.example || w.legacy_sentence || '').trim();
+              return [w.eng, sentence];
+            })
+            .filter(([, sentence]) => !!sentence)
+        );
         // slight delay to keep UI responsive
         setTimeout(() => {
-          ensureAudioForWordsAndSentences(words, examplesMap, { force: false, skipSentenceAudio: true })
+          ensureAudioForWordsAndSentences(words, examplesMap, { force: false, skipSentenceAudio: false })
             .catch(e => console.debug('[quickSave][audio] skipped', e?.message));
         }, 50);
       } catch (e) { console.debug('[quickSave][audio] init error', e?.message); }

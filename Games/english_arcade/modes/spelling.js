@@ -161,6 +161,11 @@ export function runSpellingMode({ wordList, gameArea, listName = null }) {
         listName,
         wordList: ordered
       });
+      try {
+        window.dispatchEvent(new CustomEvent('wa:session-ended', {
+          detail: { summary: { mode: 'spelling', score, total: ordered.length * 2 } }
+        }));
+      } catch {}
       hideGameProgress();
       gameArea.innerHTML = `<div class="ending-screen" style="padding:40px 18px;text-align:center;">
         <h2 style="color:#f59e0b;font-size:2em;margin-bottom:18px;">Spelling Game Over!</h2>

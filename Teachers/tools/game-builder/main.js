@@ -12,7 +12,7 @@ import {
   escapeHtml
 } from './images.js?v=20260322u';
 import { initMintAiListBuilder } from './MintAi-list-builder.js?v=20260329b';
-import { initCreateGameModal, openCreateGameModal } from './create-game-modal.js?v=20260329a';
+import { initCreateGameModal, openCreateGameModal } from './create-game-modal.js?v=20260329b';
 import { showTinyToast, ensureLoadingOverlay, buildSkeletonHTML } from './utils/dom-helpers.js';
 import { fetchJSONSafe, timedJSONFetch, recordPerfSample, isLocalHost } from './utils/network.js';
 import { escapeRegExp, cleanDefinitionResponse, normalizeForKey, capitalize, ensurePunctuation } from './utils/validation.js';
@@ -74,7 +74,7 @@ import {
   handleSaveAsConfirm,
   showFileModal as showFileModalUI,
   hideFileModal as hideFileModalUI
-} from './ui/modals.js?v=20260328e';
+} from './ui/modals.js?v=20260329a';
 import {
   handleQuickSave,
   isQuickSaveInFlight,
@@ -85,12 +85,12 @@ import {
   handleGetTranslations,
   handleGenerateDefinitions,
   handleGenerateExamples
-} from './ui/event-handlers.js?v=20260328e';
+} from './ui/event-handlers.js?v=20260329a';
 import { ENDPOINTS, STORAGE_KEYS, ACTIONS, DEFAULTS, TOAST_DURATION } from './constants.js';
-import { initFileListModal } from './ui/file-list.js?v=20260328m';
+import { initFileListModal } from './ui/file-list.js?v=20260329a';
 import { loadWorksheetIntoBuilder } from './services/worksheet-service.js?v=20260328e';
 
-const GB_BUILD_STAMP = 'GB_BUILD 20260329e - save-modal-live-bindings';
+const GB_BUILD_STAMP = 'GB_BUILD 20260329f - save-audio-filelist-homework-fixes';
 
 function isStagingLikeHost(host) {
   const h = String(host || '').toLowerCase();

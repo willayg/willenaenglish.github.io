@@ -141,7 +141,7 @@ export async function handleSaveAsConfirm(titleEl, buildPayload, getCurrentGameI
           examplesMap,
           {
             force: shouldRegenerateAudio,
-            skipSentenceAudio: true,
+            skipSentenceAudio: false,
             onInit: (total) => { if (saveModalStatusEl) saveModalStatusEl.textContent = (shouldRegenerateAudio? 'Generating':'Ensuring') + ` audio (0/${total})...`; },
             onProgress: (done, total) => { if (saveModalStatusEl) saveModalStatusEl.textContent = (shouldRegenerateAudio? 'Generating':'Ensuring') + ` audio (${done}/${total})...`; },
             onDone: () => { if (saveModalStatusEl) saveModalStatusEl.textContent = 'Audio ready. Saving...'; }
