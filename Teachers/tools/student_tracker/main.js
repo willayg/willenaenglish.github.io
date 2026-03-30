@@ -720,12 +720,12 @@ function renderStudentDetails(d){
           <div class="label">Accuracy</div>
         </div>
         <div class="stat-card">
-          <div class="icon">?</div>
+          <div class="icon">STAR</div>
           <div class="val">${t.stars||0}</div>
           <div class="label">Stars earned</div>
         </div>
         <div class="stat-card">
-          <div class="icon">??</div>
+          <div class="icon">PTS</div>
           <div class="val">${t.points||0}</div>
           <div class="label">Points</div>
         </div>
@@ -869,7 +869,7 @@ function renderStudentDetails(d){
               <div class="game-chart mode">
                 <canvas id="${modeId}" width="140" height="140" data-percent="${percent}"></canvas>
                 <div class="chart-caption">${friendlyModeName(mode.mode)}</div>
-                <div class="mode-caption">${metaBits.join(' ¡¤ ')}</div>
+                <div class="mode-caption">${metaBits.join(' ï¿½ï¿½ ')}</div>
               </div>
             `;
           }).join('');
@@ -881,7 +881,7 @@ function renderStudentDetails(d){
               <div class="game-header">
                 <div>
                   <div class="game-name">${friendlyListName(game.name)}</div>
-                  <div class="game-meta">${metaLine.join(' ¡¤ ')}</div>
+                  <div class="game-meta">${metaLine.join(' ï¿½ï¿½ ')}</div>
                 </div>
               </div>
               <div class="game-charts">
@@ -1458,7 +1458,7 @@ window.loadHomeworkForClass = loadHomeworkForClass;
 async function loadClassStats(classNameRaw, displayName){
   const statsContent = $('#classStatsContent');
   const statsTitle = $('#classStatsTitle');
-  statsTitle.textContent = `${displayName || displayClassName(classNameRaw)} ??Top Students`;
+  statsTitle.textContent = `${displayName || displayClassName(classNameRaw)} - Top Students`;
   statsContent.innerHTML = '<div style="text-align:center; padding:1.25rem; color:#6b7280;">Loading...</div>';
   
   try{
@@ -1554,7 +1554,7 @@ function initHomeworkShell() {
       if (!selected) {
         const subtitle = document.getElementById('homeworkStudentsSubtitle');
         if (subtitle && subtitle.textContent) {
-          const match = subtitle.textContent.match(/^(.+?)\s*[-??:]?\s*Homework/i);
+          const match = subtitle.textContent.match(/^(.+?)\s*[-:]\s*Homework/i);
           if (match && match[1]) {
             const displayName = match[1].trim();
             // Find the class item to get the actual class name
@@ -1590,7 +1590,7 @@ async function loadHomeworkStudentProgress(className, assignmentId) {
   const table = document.getElementById('homeworkStudentsTable');
   if (!table) return;
   const tbody = table.querySelector('tbody');
-  if (tbody) tbody.innerHTML = '<tr><td colspan="5" class="empty">Loading progress??/td></tr>';
+  if (tbody) tbody.innerHTML = '<tr><td colspan="5" class="empty">Loading progress...</td></tr>';
   try {
     const resp = await WillenaAPI.fetch(`/.netlify/functions/homework_api?action=assignment_progress&class=${encodeURIComponent(className)}&assignment_id=${encodeURIComponent(assignmentId)}`);
     const js = await resp.json();
@@ -1772,7 +1772,7 @@ function showHomeworkStudentModal(row, totalModes, assignmentId) {
   const capAcc = v => Math.min(100, Math.max(0, Math.round(Number(v) || 0)));
   const overallAcc = capAcc(row.accuracy_overall != null ? row.accuracy_overall : (row.accuracy_best||0));
   const bestAcc = capAcc(row.accuracy_best||0);
-  if (meta) meta.textContent = `Completion: ${displayCompletion}% ¡¤ Stars: ${row.stars || 0} ¡¤ Overall Accuracy: ${overallAcc}% (Best: ${bestAcc}%) ¡¤ Modes attempted: ${displayModesAttempted}/${displayTotalModes}${totalWasComputed ? ' (computed)' : ''}`;
+  if (meta) meta.textContent = `Completion: ${displayCompletion}% | Stars: ${row.stars || 0} | Overall Accuracy: ${overallAcc}% (Best: ${bestAcc}%) | Modes attempted: ${displayModesAttempted}/${displayTotalModes}${totalWasComputed ? ' (computed)' : ''}`;
   if (modesWrap) {
     modesWrap.innerHTML = (row.modes||[]).map(m => {
       const acc = capAcc(m.bestAccuracy || m.accuracy_best || m.accuracy || 0);
