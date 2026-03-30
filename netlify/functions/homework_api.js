@@ -86,6 +86,9 @@ exports.handler = async (event) => {
     if (action === 'teacher_notifications') {
       return await teacherNotifications(event);
     }
+    if (action === 'teacher_homework_status') {
+      return await teacherHomeworkStatus(event);
+    }
     return _json(400, { success: false, error: 'Invalid action' });
   } catch (err) {
     console.error('homework_api error:', err);
@@ -476,6 +479,180 @@ function parseAssignmentMeta(rawMeta) {
     }
   }
   return (rawMeta && typeof rawMeta === 'object') ? rawMeta : {};
+}
+
+function getAssignmentTargetStudentIds(rawMeta) {
+  const meta = parseAssignmentMeta(rawMeta);
+  const ids = new Set();
+  if (Array.isArray(meta.target_student_ids)) {
+    meta.target_student_ids.forEach((value) => {
+      const id = String(value || '').trim();
+      if (id) ids.add(id);
+    });
+  }
+  if (Array.isArray(meta.target_students)) {
+    meta.target_students.forEach((entry) => {
+      const id = String(entry?.id || '').trim();
+      if (id) ids.add(id);
+    });
+  }
+  return Array.from(ids);
+}
+
+function getAssignmentModeMeta(rawMeta) {
+  const meta = parseAssignmentMeta(rawMeta);
+  const numberOrNull = (value) => {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : null;
+  };
+
+  return {
+    difficulty_mode: meta.difficulty_mode || null,
+    forced_mode: meta.forced_mode || meta.mode || null,
+    modes_total: numberOrNull(meta.modes_total ?? meta.total_modes ?? meta.mode_count),
+    modes_required: numberOrNull(meta.difficulty_modes_required ?? meta.modes_required),
+    required_stars: numberOrNull(meta.difficulty_required_stars ?? meta.required_stars),
+    max_stars: numberOrNull(meta.max_stars),
+  };
+}
+
+function inferAssignmentCategory(assignment) {
+  const listKey = String(assignment?.list_key || '').toLowerCase();
+  if (listKey.includes('/phonics/') || listKey.includes('phonics')) return 'phonics';
+  if (listKey.includes('/grammar/') || listKey.includes('grammar')) return 'grammar';
+  return 'vocab';
+}
+
+function isSentenceMode(mode) {
+  const name = String(mode || '').toLowerCase();
+  if (!name) return false;
+  return name === 'full_sentence_mode'
+    || name === 'word_sentence_mode'
+    || name === 'sentence'
+    || name === 'sentence_unscramble'
+    || name === 'fill_blank_sentence_mode'
+    || name === 'broken_sentence_mode'
+    || name === 'grammar_sentence_unscramble'
+    || name.includes('sentence');
+}
+
+function isSpellingMode(mode) {
+  const name = String(mode || '').toLowerCase();
+  return name === 'spelling' || name === 'listen_and_spell' || name === 'spell';
+}
+
+function getHomeworkCompletionConfig(assignment, sessions = []) {
+  const meta = parseAssignmentMeta(assignment?.list_meta);
+  const modeMeta = getAssignmentModeMeta(meta);
+  const category = inferAssignmentCategory(assignment);
+  const difficultyMode = String(modeMeta.difficulty_mode || '').toLowerCase();
+  const forcedMode = String(modeMeta.forced_mode || '').toLowerCase();
+  const goalValueHint = Number(assignment?.goal_value) === 1;
+
+  let totalModes;
+  if (category === 'phonics') {
+    totalModes = 4;
+  } else if (category === 'grammar') {
+    const listKeyPath = String(assignment?.list_key || '').toLowerCase();
+    let grammarLevel = 2;
+    const levelMatch = listKeyPath.match(/\/grammar\/level(\d)/);
+    if (levelMatch) grammarLevel = parseInt(levelMatch[1], 10);
+    totalModes = grammarLevel === 1 ? 4 : 6;
+    if (grammarLevel === 2 && /prepositions_/i.test(listKeyPath)) totalModes = 4;
+    if (/wh_who_what|wh_where_when_whattime|wh_how_why_which/i.test(listKeyPath)) totalModes = 4;
+    if (/present_simple_questions_wh/i.test(listKeyPath)) totalModes = 5;
+  } else {
+    totalModes = 6;
+  }
+
+  if (Number.isFinite(modeMeta.modes_total) && modeMeta.modes_total > 0 && modeMeta.modes_total <= 10) {
+    totalModes = modeMeta.modes_total;
+  }
+
+  const isSentenceOnlyAssignment = forcedMode === 'full_sentence_mode'
+    || forcedMode === 'sentence_unscramble'
+    || difficultyMode === 'sentence_unscramble'
+    || sessions.some((sess) => isSentenceMode(sess.mode));
+
+  let isSpellingOnlyAssignment = !isSentenceOnlyAssignment && (
+    forcedMode === 'spelling'
+    || difficultyMode === 'spelling'
+    || modeMeta.modes_total === 1
+    || goalValueHint
+  );
+
+  if (!isSpellingOnlyAssignment && sessions.length > 0) {
+    isSpellingOnlyAssignment = sessions.every((sess) => isSpellingMode(sess.mode));
+  }
+
+  const requiredModeCount = Number.isFinite(modeMeta.modes_required) && modeMeta.modes_required > 0
+    ? modeMeta.modes_required
+    : totalModes;
+  const requiredStars = Number.isFinite(modeMeta.required_stars) && modeMeta.required_stars > 0
+    ? modeMeta.required_stars
+    : null;
+
+  return {
+    category,
+    difficultyMode,
+    forcedMode,
+    totalModes,
+    requiredModeCount,
+    requiredStars,
+    isSentenceOnlyAssignment,
+    isSpellingOnlyAssignment,
+  };
+}
+
+function evaluateHomeworkCompletion(assignment, sessions = []) {
+  const config = getHomeworkCompletionConfig(assignment, sessions);
+  const byMode = new Map();
+  let latestCompletedAt = null;
+  let latestMode = null;
+
+  sessions.forEach((session) => {
+    const mode = String(session.mode || 'unknown');
+    const previous = byMode.get(mode);
+    const stars = Math.max(0, Number(session.stars) || 0);
+    if (!previous || stars > previous.stars) {
+      byMode.set(mode, { stars, completed_at: session.completed_at || null });
+    }
+    const completedAt = session.completed_at ? new Date(session.completed_at) : null;
+    if (completedAt && !Number.isNaN(completedAt.getTime()) && (!latestCompletedAt || completedAt > new Date(latestCompletedAt))) {
+      latestCompletedAt = session.completed_at;
+      latestMode = mode;
+    }
+  });
+
+  const modesArr = Array.from(byMode.entries()).map(([mode, value]) => ({ mode, bestStars: value.stars }));
+  const starsEarned = modesArr.reduce((sum, mode) => sum + (mode.bestStars || 0), 0);
+  const spellingDone = modesArr.some((mode) => mode.bestStars >= 1 && isSpellingMode(mode.mode));
+  const sentenceDone = sessions.some((session) => isSentenceMode(session.mode));
+  const countedModes = modesArr.filter((mode) => mode.bestStars >= 1).length;
+
+  let completed = false;
+  let completion = 0;
+  if (config.isSentenceOnlyAssignment) {
+    completed = sentenceDone;
+    completion = completed ? 100 : 0;
+  } else if (config.isSpellingOnlyAssignment) {
+    completed = spellingDone;
+    completion = completed ? 100 : 0;
+  } else if (config.requiredStars) {
+    completed = starsEarned >= config.requiredStars;
+    completion = Math.max(0, Math.min(100, Math.round((starsEarned / config.requiredStars) * 100)));
+  } else {
+    completed = config.requiredModeCount > 0 ? countedModes >= config.requiredModeCount : false;
+    completion = config.requiredModeCount > 0 ? Math.max(0, Math.min(100, Math.round((countedModes / config.requiredModeCount) * 100))) : 0;
+  }
+
+  return {
+    completed,
+    completion,
+    completed_at: completed ? latestCompletedAt : null,
+    mode: completed ? latestMode : null,
+    stars: starsEarned,
+  };
 }
 
 async function assignmentProgress(event) {
@@ -1395,4 +1572,167 @@ async function teacherNotifications(event) {
     since,
     notifications,
   });
+}
+
+async function teacherHomeworkStatus(event) {
+  const authUserId = await getUserIdFromCookie(event);
+  if (!authUserId) return _json(401, { success: false, error: 'Not signed in' });
+
+  const { data: prof, error: profErr } = await supabase
+    .from('profiles')
+    .select('id, role, approved')
+    .eq('id', authUserId)
+    .single();
+  if (profErr || !prof) return _json(403, { success: false, error: 'Profile not found' });
+  if (!['teacher', 'admin'].includes(String(prof.role || '').toLowerCase())) {
+    return _json(403, { success: false, error: 'Only teachers can view homework status' });
+  }
+
+  const { data: assignments, error: aErr } = await supabase
+    .from('homework_assignments')
+    .select('id, title, class, due_at, list_key, list_meta, goal_type, goal_value, active, created_at')
+    .eq('created_by', authUserId)
+    .eq('active', true)
+    .order('due_at', { ascending: true });
+
+  if (aErr) {
+    console.error('[teacher_homework_status] assignments fetch error:', aErr.message);
+    return _json(500, { success: false, error: 'Failed to fetch assignments' });
+  }
+
+  if (!assignments || !assignments.length) {
+    return _json(200, { success: true, assignments: [] });
+  }
+
+  const classes = [...new Set(assignments.map((a) => String(a.class || '').trim()).filter(Boolean))];
+  const { data: classProfiles, error: pErr } = await supabase
+    .from('profiles')
+    .select('id, name, korean_name, class, role')
+    .in('class', classes)
+    .in('role', ['student', 'Student']);
+
+  if (pErr) {
+    console.error('[teacher_homework_status] profiles fetch error:', pErr.message);
+    return _json(500, { success: false, error: 'Failed to fetch student roster' });
+  }
+
+  const studentsByClass = new Map();
+  const studentsById = new Map();
+  (classProfiles || []).forEach((student) => {
+    if (!studentsByClass.has(student.class)) studentsByClass.set(student.class, []);
+    studentsByClass.get(student.class).push(student);
+    studentsById.set(student.id, student);
+  });
+
+  const allStudentIds = [...studentsById.keys()];
+  const tokenToAssignment = new Map();
+  assignments.forEach((assignment) => {
+    const meta = parseAssignmentMeta(assignment.list_meta);
+    const tokens = Array.isArray(meta.run_tokens)
+      ? meta.run_tokens.map((entry) => entry?.token).filter(Boolean)
+      : [];
+    tokens.forEach((token) => tokenToAssignment.set(token, assignment));
+  });
+
+  const sessionsByAssignmentStudent = new Map();
+  if (allStudentIds.length && tokenToAssignment.size) {
+    const { data: sessions, error: sErr } = await supabase
+      .from('progress_sessions')
+      .select('user_id, mode, summary, ended_at')
+      .in('user_id', allStudentIds)
+      .not('ended_at', 'is', null)
+      .order('ended_at', { ascending: false })
+      .limit(2000);
+
+    if (sErr) {
+      console.error('[teacher_homework_status] sessions fetch error:', sErr.message);
+      return _json(500, { success: false, error: 'Failed to fetch homework completion status' });
+    }
+
+    (sessions || []).forEach((sess) => {
+      let summary = sess.summary;
+      if (typeof summary === 'string') {
+        try { summary = JSON.parse(summary); } catch { summary = {}; }
+      }
+      summary = summary || {};
+      const token = summary.assignment_run;
+      if (!token) return;
+
+      const assignment = tokenToAssignment.get(token);
+      if (!assignment) return;
+
+      let stars = 0;
+      if (typeof summary.stars === 'number') {
+        stars = summary.stars;
+      } else {
+        let acc = null;
+        if (typeof summary.accuracy === 'number') acc = summary.accuracy;
+        else if (typeof summary.score === 'number' && typeof summary.total === 'number' && summary.total > 0) acc = summary.score / summary.total;
+        if (acc !== null) {
+          if (acc >= 1) stars = 5;
+          else if (acc >= 0.95) stars = 4;
+          else if (acc >= 0.90) stars = 3;
+          else if (acc >= 0.80) stars = 2;
+          else if (acc >= 0.60) stars = 1;
+        }
+      }
+      const key = `${assignment.id}__${sess.user_id}`;
+      if (!sessionsByAssignmentStudent.has(key)) sessionsByAssignmentStudent.set(key, []);
+      sessionsByAssignmentStudent.get(key).push({
+        mode: sess.mode,
+        completed_at: sess.ended_at,
+        stars,
+      });
+    });
+  }
+
+  const assignmentStatus = assignments.map((assignment) => {
+    const meta = parseAssignmentMeta(assignment.list_meta);
+    const modeMeta = getAssignmentModeMeta(meta);
+    const targetIds = getAssignmentTargetStudentIds(assignment.list_meta);
+    let roster = (studentsByClass.get(assignment.class) || []).slice();
+    if (targetIds.length) {
+      roster = targetIds
+        .map((id) => studentsById.get(id) || roster.find((student) => student.id === id))
+        .filter(Boolean);
+    }
+
+    const done = [];
+    const pending = [];
+    roster.forEach((student) => {
+      const entry = {
+        user_id: student.id,
+        name: student.name || null,
+        korean_name: student.korean_name || null,
+      };
+      const studentSessions = sessionsByAssignmentStudent.get(`${assignment.id}__${student.id}`) || [];
+      const status = evaluateHomeworkCompletion(assignment, studentSessions);
+      if (status.completed) {
+        done.push({ ...entry, completed_at: status.completed_at, stars: status.stars, mode: status.mode, completion: status.completion });
+      } else {
+        pending.push({ ...entry, completion: status.completion });
+      }
+    });
+
+    done.sort((a, b) => new Date(b.completed_at) - new Date(a.completed_at));
+    pending.sort((a, b) => String(a.name || a.korean_name || '').localeCompare(String(b.name || b.korean_name || '')));
+
+    return {
+      assignment_id: assignment.id,
+      assignment_title: assignment.title,
+      class: assignment.class,
+      due_at: assignment.due_at,
+      created_at: assignment.created_at,
+      ...modeMeta,
+      goal_type: assignment.goal_type || null,
+      goal_value: assignment.goal_value || null,
+      completed_count: done.length,
+      pending_count: pending.length,
+      total_count: roster.length,
+      done,
+      pending,
+    };
+  });
+
+  return _json(200, { success: true, assignments: assignmentStatus });
 }

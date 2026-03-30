@@ -3,16 +3,160 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Redirecting...</title>
-  <meta http-equiv="refresh" content="0; url=/Teachers/components/feedback-admin.html" />
-  <link rel="canonical" href="/Teachers/components/feedback-admin.html" />
-  <style>body{font-family:Arial,system-ui,Roboto,sans-serif;display:flex;min-height:100dvh;align-items:center;justify-content:center;background:#0f172a;color:#e2e8f0;margin:0}a{color:#67e2e6}</style>
+  <title>Admin Tools</title>
+  <style>
+    :root {
+      --bg: #eef3f6;
+      --panel: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --line: #d7dee5;
+      --accent: #19777e;
+      --accent-soft: #dff3f4;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Poppins, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      background: linear-gradient(180deg, #edf5f6 0%, #e7edf2 100%);
+      color: var(--text);
+    }
+    .shell {
+      width: min(1120px, calc(100% - 32px));
+      margin: 28px auto;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      box-shadow: 0 18px 42px rgba(15, 23, 42, 0.12);
+      overflow: hidden;
+    }
+    .hero {
+      padding: 24px 28px 18px;
+      border-bottom: 1px solid var(--line);
+      background: linear-gradient(135deg, #f7fbfc 0%, #edf7f8 100%);
+    }
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+    h1 {
+      margin: 0;
+      font-size: clamp(1.7rem, 2.4vw, 2.3rem);
+      line-height: 1.1;
+    }
+    .lead {
+      margin: 10px 0 0;
+      max-width: 720px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+    .content {
+      padding: 22px 28px 28px;
+      display: grid;
+      gap: 16px;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    }
+    .tool-card {
+      display: block;
+      text-decoration: none;
+      color: inherit;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 18px;
+      background: #ffffff;
+      transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease;
+    }
+    .tool-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 14px 28px rgba(15, 23, 42, 0.08);
+      border-color: #b8c8d5;
+    }
+    .tool-card h2 {
+      margin: 0 0 8px;
+      font-size: 1rem;
+    }
+    .tool-card p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+    .helper {
+      padding: 0 28px 24px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .hidden { display: none !important; }
+    @media (max-width: 700px) {
+      .shell { width: min(100% - 20px, 100%); margin: 14px auto; }
+      .hero, .content, .helper { padding-left: 18px; padding-right: 18px; }
+      .content { grid-template-columns: 1fr; }
+    }
+  </style>
 </head>
 <body>
-  <div>
-    <h1 style="font-size:1.2rem;margin:0 0 12px">Redirecting…</h1>
-    <p>If you are not redirected automatically, <a href="/Teachers/components/feedback-admin.html">click here for Feedback Admin</a>.</p>
-    <script>location.replace('/Teachers/components/feedback-admin.html');</script>
-  </div>
+  <main class="shell hidden" id="adminShell">
+    <section class="hero">
+      <div class="eyebrow">Admin</div>
+      <h1>Admin Tools</h1>
+      <p class="lead">Central access for higher-permission teacher tools. This page is visible only to accounts whose role is set to <strong>admin</strong>.</p>
+    </section>
+    <section class="content">
+      <a class="tool-card" href="/Teachers/index.html">
+        <h2>Teacher Dashboard</h2>
+        <p>Return to the main teacher dashboard and shared navigation entry point.</p>
+      </a>
+      <a class="tool-card" href="/Teachers/tools/manage_students.html">
+        <h2>Manage Students</h2>
+        <p>Roster access, student management, and class administration.</p>
+      </a>
+      <a class="tool-card" href="/Teachers/signup.html">
+        <h2>Create Teacher Account</h2>
+        <p>Open the teacher signup flow to create a new teacher login and profile.</p>
+      </a>
+      <a class="tool-card" href="/Teachers/signin.html">
+        <h2>Manual Teacher Sign In</h2>
+        <p>Use the alternate sign-in page if you need to verify credentials or profile routing.</p>
+      </a>
+      <a class="tool-card" href="/Teachers/tools/student_tracker/student_tracker.html?tab=homework">
+        <h2>Homework Tracker</h2>
+        <p>Inspect student progress and validate homework completion behavior.</p>
+      </a>
+      <a class="tool-card" href="/Teachers/worksheet_manager.html">
+        <h2>Worksheet Manager</h2>
+        <p>Open the worksheet manager with admin-aware controls.</p>
+      </a>
+    </section>
+    <div class="helper">If you need another admin-only page added here, I can wire it into this hub and the shared burger menu.</div>
+  </main>
+
+  <script>
+    (function () {
+      let role = '';
+      try {
+        role = String(localStorage.getItem('userRole') || localStorage.getItem('role') || '').trim().toLowerCase();
+      } catch {}
+
+      if (role !== 'admin') {
+        const redirect = encodeURIComponent(location.pathname + location.search);
+        location.replace('/Teachers/login.html?redirect=' + redirect);
+        return;
+      }
+
+      const shell = document.getElementById('adminShell');
+      if (shell) shell.classList.remove('hidden');
+    })();
+  </script>
 </body>
 </html>
