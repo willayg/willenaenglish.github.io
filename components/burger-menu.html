@@ -1,27 +1,55 @@
 <template id="burger-menu-template">
   <style>
-    .burger-menu { position: fixed; top: 10px; right: 10px; z-index: 9999; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; display: flex; align-items: center; gap: 8px; }
-    .burger-btn { background: #00c9db; color: white; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer; font-size: 16px; }
-    .burger-btn:hover { background: #00b4c6; }
+    .burger-menu { position: fixed; top: 10px; right: 10px; z-index: 9999; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; display: flex; align-items: stretch; border-radius: 12px; overflow: visible; box-shadow: 0 10px 22px rgba(15, 23, 42, 0.22); }
+    .burger-user-label {
+      display: none;
+      max-width: 140px;
+      padding: 0 12px;
+      background: rgba(255,255,255,0.96);
+      color: #334155;
+      border: 1px solid rgba(15, 23, 42, 0.08);
+      border-right: none;
+      border-radius: 12px 0 0 12px;
+      font-size: 12px;
+      font-weight: 700;
+      align-items: center;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      box-shadow: 0 10px 22px rgba(15, 23, 42, 0.12);
+    }
+    .burger-btn,
+    .hw-notif-btn {
+      width: 42px;
+      height: 38px;
+      border: none;
+      background: linear-gradient(180deg, #19d2df 0%, #00b4c6 100%);
+      color: white;
+      cursor: pointer;
+      font-size: 16px;
+      line-height: 1;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+    }
+    .hw-notif-btn { border-radius: 0; }
+    .burger-btn { border-left: 1px solid rgba(255,255,255,0.35); border-radius: 0 12px 12px 0; }
+    .burger-btn:hover,
+    .hw-notif-btn:hover { background: linear-gradient(180deg, #12c0cf 0%, #0293a4 100%); }
     .burger-dropdown { display: none; position: absolute; top: 50px; right: 0; background: white; box-shadow: 0 4px 8px rgba(0,0,0,0.2); border-radius: 5px; min-width: 220px; max-height: 70vh; overflow: auto; }
     .burger-dropdown a { display: block; padding: 12px 16px; text-decoration: none; color: #333; border-bottom: 1px solid #eee; }
     .burger-dropdown a:hover { background: #f1f1f1; }
     .burger-dropdown a:last-child { border-bottom: none; }
 
     /* ── Notification bell ── */
-    .hw-notif-wrap { position: relative; }
-    .hw-notif-btn {
-      background: #00c9db; color: white; border: none;
-      padding: 10px 13px; border-radius: 5px; cursor: pointer;
-      font-size: 16px; line-height: 1; position: relative;
-    }
-    .hw-notif-btn:hover { background: #00b4c6; }
+    .hw-notif-wrap { position: relative; z-index: 10002; }
     .hw-notif-badge {
       display: none; position: absolute; top: -5px; right: -5px;
       background: #ef4444; color: white; font-size: 11px; font-weight: 700;
       min-width: 18px; height: 18px; border-radius: 9px;
       align-items: center; justify-content: center;
-      padding: 0 3px; pointer-events: none;
+      padding: 0 3px; pointer-events: none; z-index: 10003;
     }
     .hw-notif-panel {
       display: none; position: absolute; top: calc(100% + 8px); right: 0;
@@ -63,9 +91,193 @@
     .hw-notif-meta { font-size: 11px; color: #6b7280; margin-top: 1px; }
     .hw-notif-stars { font-size: 12px; flex-shrink: 0; color: #f59e0b; letter-spacing: -1px; }
     .hw-notif-time { font-size: 11px; color: #9ca3af; flex-shrink: 0; white-space: nowrap; }
+    .hw-notif-footer { display: flex; gap: 8px; padding: 10px 14px 14px; border-top: 1px solid #eef2f7; background: #fafafa; }
+    .hw-notif-footer-btn,
+    .hw-notif-footer-link {
+      flex: 1;
+      text-align: center;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 9px 10px;
+      text-decoration: none;
+      border: 1px solid #cfe7ea;
+      background: #ffffff;
+      color: #19777e;
+      cursor: pointer;
+    }
+    .hw-notif-footer-btn:hover,
+    .hw-notif-footer-link:hover { background: #eefbfc; }
+
+    .hw-status-modal-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.45);
+      z-index: 10020;
+      padding: 24px;
+      align-items: center;
+      justify-content: center;
+    }
+    .hw-status-modal {
+      width: min(1120px, 100%);
+      max-height: min(88vh, 860px);
+      overflow: hidden;
+      background: #ffffff;
+      border-radius: 20px;
+      box-shadow: 0 24px 64px rgba(15, 23, 42, 0.3);
+      display: flex;
+      flex-direction: column;
+    }
+    .hw-status-modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 16px 18px;
+      border-bottom: 1px solid #e5e7eb;
+      background: #ffffff;
+    }
+    .hw-status-modal-heading { min-width: 0; }
+    .hw-status-modal-title { font-size: 16px; font-weight: 700; color: #111827; margin: 0; }
+    .hw-status-modal-subtitle { margin: 4px 0 0; font-size: 12px; color: #64748b; }
+    .hw-status-modal-close {
+      border: none;
+      background: transparent;
+      font-size: 24px;
+      line-height: 1;
+      cursor: pointer;
+      color: #64748b;
+      padding: 0;
+    }
+    .hw-status-modal-body {
+      padding: 16px 18px 18px;
+      overflow: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      background: #f3f4f6;
+    }
+    .hw-status-loading,
+    .hw-status-empty {
+      padding: 28px 16px;
+      text-align: center;
+      color: #64748b;
+      background: #ffffff;
+      border-radius: 12px;
+      border: 1px solid #e5e7eb;
+    }
+    .hw-status-toolbar {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      padding: 12px 14px;
+      border: 1px solid #d1d5db;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.96);
+      backdrop-filter: blur(6px);
+    }
+    .hw-status-toolbar-label {
+      font-size: 12px;
+      color: #6b7280;
+      font-weight: 600;
+      margin-right: 2px;
+    }
+    .hw-status-toolbar-select {
+      min-width: 160px;
+      padding: 8px 10px;
+      border: 1px solid #d1d5db;
+      border-radius: 10px;
+      background: #ffffff;
+      color: #111827;
+      font-size: 13px;
+    }
+    .hw-status-summary {
+      margin-left: auto;
+      font-size: 12px;
+      color: #6b7280;
+      white-space: nowrap;
+    }
+    .hw-status-cards {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .hw-status-card {
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 6px 18px rgba(15, 23, 42, 0.08);
+    }
+    .hw-status-card-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: flex-start;
+      padding: 14px 16px;
+      border-bottom: 1px solid #eef2f7;
+      background: #ffffff;
+    }
+    .hw-status-card-title { margin: 0; font-size: 15px; font-weight: 700; color: #111827; }
+    .hw-status-card-meta { margin-top: 4px; font-size: 12px; color: #64748b; }
+    .hw-status-card-counts { text-align: right; font-size: 12px; color: #4b5563; }
+    .hw-status-card-counts strong { display: block; font-size: 16px; color: #111827; }
+    .hw-status-card-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+    .hw-status-chip {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      padding: 4px 9px;
+      font-size: 11px;
+      font-weight: 700;
+      background: #f3f4f6;
+      color: #4b5563;
+      border: 1px solid #e5e7eb;
+    }
+    .hw-status-chip.mode,
+    .hw-status-chip.class { background: #f3f4f6; color: #4b5563; }
+    .hw-status-lists { display: grid; grid-template-columns: 1fr 1fr; gap: 0; align-items: start; }
+    .hw-status-list { padding: 14px 16px; min-height: 0; }
+    .hw-status-list + .hw-status-list { border-left: 1px solid #eef2f7; }
+    .hw-status-list h4 { margin: 0 0 10px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; }
+    .hw-status-list-scroll { max-height: 200px; overflow: auto; padding-right: 4px; }
+    .hw-status-empty-list { padding: 12px 0; font-size: 12px; color: #64748b; }
+    .hw-status-person { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 7px 0; border-bottom: 1px solid #f1f5f9; }
+    .hw-status-person:last-child { border-bottom: none; }
+    .hw-status-person-name { font-size: 13px; font-weight: 600; color: #111827; }
+    .hw-status-person-meta { font-size: 11px; color: #64748b; margin-top: 2px; }
+    .hw-status-done-badge,
+    .hw-status-pending-badge {
+      flex-shrink: 0;
+      border-radius: 999px;
+      padding: 4px 8px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .hw-status-done-badge { background: #eef2f7; color: #374151; }
+    .hw-status-pending-badge { background: #f3f4f6; color: #6b7280; }
+
+    @media (max-width: 700px) {
+      .burger-btn,
+      .hw-notif-btn { width: 40px; height: 36px; }
+      .burger-user-label { max-width: 100px; padding: 0 10px; font-size: 11px; }
+      .hw-status-modal-backdrop { padding: 12px; }
+      .hw-status-lists { grid-template-columns: 1fr; }
+      .hw-status-list + .hw-status-list { border-left: none; border-top: 1px solid #eef2f7; }
+      .hw-notif-footer { flex-direction: column; }
+      .hw-status-toolbar { align-items: stretch; }
+      .hw-status-toolbar-select { width: 100%; }
+      .hw-status-summary { margin-left: 0; width: 100%; white-space: normal; }
+    }
   </style>
 
   <div class="burger-menu">
+    <div class="burger-user-label" id="burgerUserLabel"></div>
     <!-- Notification bell -->
     <div class="hw-notif-wrap">
       <button type="button" class="hw-notif-btn" aria-label="Homework notifications" title="Homework notifications" aria-expanded="false">🔔
@@ -79,11 +291,30 @@
         <div class="hw-notif-body">
           <div class="hw-notif-loading">Loading…</div>
         </div>
+        <div class="hw-notif-footer">
+          <button type="button" class="hw-notif-footer-btn" id="hwNotifStatusBtn">Active Homework</button>
+          <a class="hw-notif-footer-link" href="/Teachers/tools/student_tracker/student_tracker.html?tab=homework">Open Tracker</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="hw-status-modal-backdrop" id="hwStatusModalBackdrop" aria-hidden="true">
+      <div class="hw-status-modal" role="dialog" aria-modal="true" aria-label="Active homework status">
+        <div class="hw-status-modal-header">
+          <div class="hw-status-modal-heading">
+            <h3 class="hw-status-modal-title">Active Homework</h3>
+            <p class="hw-status-modal-subtitle">See each assignment, its class, the required mode, and who is done or still pending.</p>
+          </div>
+          <button type="button" class="hw-status-modal-close" id="hwStatusModalClose" aria-label="Close">×</button>
+        </div>
+        <div class="hw-status-modal-body" id="hwStatusModalBody">
+          <div class="hw-status-loading">Loading active homework…</div>
+        </div>
       </div>
     </div>
 
     <!-- Burger menu -->
-    <div style="position:relative;">
+    <div class="burger-dropdown-wrap" style="position:relative;">
       <button type="button" class="burger-btn" aria-label="Menu">☰</button>
       <div class="burger-dropdown">
         <a href="/Teachers/index.html">Teachers Home</a>
@@ -99,6 +330,7 @@
         <a href="/Teachers/tools/wordtest/wordtest2.html">Word Test</a>
         <a href="/Teachers/tools/worksheet-builder-vanilla/index.html">Worksheet Builder</a>
         <a href="/Teachers/tools/test_input/index.html">Test Input</a>
+        <a href="/Teachers/tools/feedback-admin.html" data-admin-only style="display:none;">Admin Tools</a>
         <a href="#" id="feedbackMenuBtn">Feedback</a>
         <button type="button" id="logoutMenuBtn" style="display:block;width:100%;text-align:left;padding:12px 16px;background:#fff;border:none;border-top:1px solid #eee;color:#333;cursor:pointer;font:inherit;">Logout</button>
       </div>
