@@ -43,13 +43,13 @@
     .burger-dropdown a:last-child { border-bottom: none; }
 
     /* ── Notification bell ── */
-    .hw-notif-wrap { position: relative; }
+    .hw-notif-wrap { position: relative; z-index: 10002; }
     .hw-notif-badge {
       display: none; position: absolute; top: -5px; right: -5px;
       background: #ef4444; color: white; font-size: 11px; font-weight: 700;
       min-width: 18px; height: 18px; border-radius: 9px;
       align-items: center; justify-content: center;
-      padding: 0 3px; pointer-events: none;
+      padding: 0 3px; pointer-events: none; z-index: 10003;
     }
     .hw-notif-panel {
       display: none; position: absolute; top: calc(100% + 8px); right: 0;

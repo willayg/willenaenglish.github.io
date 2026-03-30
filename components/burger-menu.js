@@ -28,8 +28,8 @@ export function insertBurgerMenu(targetSelector = 'body') {
         .burger-dropdown a { display: block; padding: 12px 16px; text-decoration: none; color: #333; border-bottom: 1px solid #eee; }
         .burger-dropdown a:hover { background: #f1f1f1; }
         .burger-dropdown a:last-child { border-bottom: none; }
-        .hw-notif-wrap { position: relative; }
-        .hw-notif-badge { display: none; position: absolute; top: -5px; right: -5px; background: #ef4444; color: white; font-size: 11px; font-weight: 700; min-width: 18px; height: 18px; border-radius: 9px; align-items: center; justify-content: center; padding: 0 3px; pointer-events: none; }
+        .hw-notif-wrap { position: relative; z-index: 10002; }
+        .hw-notif-badge { display: none; position: absolute; top: -5px; right: -5px; background: #ef4444; color: white; font-size: 11px; font-weight: 700; min-width: 18px; height: 18px; border-radius: 9px; align-items: center; justify-content: center; padding: 0 3px; pointer-events: none; z-index: 10003; }
         .hw-notif-panel { display: none; position: absolute; top: calc(100% + 8px); right: 0; width: 320px; max-height: 480px; overflow-y: auto; background: white; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.18); z-index: 10000; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
         .hw-notif-header { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px 10px; border-bottom: 1px solid #e5e7eb; font-weight: 600; font-size: 13px; color: #111827; position: sticky; top: 0; background: white; }
         .hw-notif-header-link { font-size: 11px; font-weight: 500; color: #00b4c6; text-decoration: none; }
