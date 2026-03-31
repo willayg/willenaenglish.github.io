@@ -37,6 +37,7 @@ const state = {
   sessionId: null,
   gameActive: false,
   nextWordAudioAt: 0,
+  audioWarmupId: 0,
 };
 
 const elements = {
@@ -124,8 +125,6 @@ async function startNewGame() {
     const result = await resolveRandomBoard(state.difficulty, state.grid);
     state.currentListMeta = result.meta;
     state.currentWords = result.words;
-    showLoading(`Loading ${result.words.length} word sounds…`);
-    await preloadRoundAudio(result.words);
     state.cards = buildDeck(result.words);
     state.startedAt = Date.now();
     state.sessionId = startSession({
@@ -146,6 +145,7 @@ async function startNewGame() {
     renderBoard();
     startTimer();
     hideLoading();
+    scheduleRoundAudioWarmup(result.words);
     setMessage(`Loaded ${result.meta.label}.`);
   } catch (error) {
     hideLoading();
@@ -159,6 +159,7 @@ async function startNewGame() {
 
 function resetRoundState() {
   stopTimer();
+  state.audioWarmupId += 1;
   state.cards = [];
   state.selectedIds = [];
   state.matchedPairs = 0;
@@ -320,6 +321,7 @@ function buildDeck(words) {
 function renderBoard() {
   const gridConfig = GRID_CONFIG[state.grid];
   elements.boardGrid.dataset.rows = String(gridConfig.rows);
+  elements.boardGrid.dataset.grid = state.grid;
   const fragment = document.createDocumentFragment();
 
   for (const card of state.cards) {
@@ -330,7 +332,9 @@ function renderBoard() {
     button.dataset.matchType = card.matchType;
     button.innerHTML = `
       <span class="card-face-wrap">
-        <span class="card-face card-back" aria-hidden="true">?</span>
+        <span class="card-face card-back" aria-hidden="true">
+          <span class="card-back-mark"><span></span><span></span><span></span><span></span></span>
+        </span>
         <span class="card-face card-front ${card.faceType}-front">
           <span class="card-value">${escapeHtml(card.value)}</span>
         </span>
@@ -499,6 +503,26 @@ async function preloadRoundAudio(words) {
   try {
     await preloadAllAudio(words);
   } catch {}
+}
+
+function scheduleRoundAudioWarmup(words) {
+  const warmupId = state.audioWarmupId + 1;
+  state.audioWarmupId = warmupId;
+  const runWarmup = async () => {
+    if (warmupId !== state.audioWarmupId || !state.gameActive) return;
+    await preloadRoundAudio(words);
+  };
+
+  if (typeof window.requestIdleCallback === 'function') {
+    window.requestIdleCallback(() => {
+      void runWarmup();
+    }, { timeout: 1200 });
+    return;
+  }
+
+  window.setTimeout(() => {
+    void runWarmup();
+  }, 180);
 }
 
 function triggerMatchFeedback(pairId) {

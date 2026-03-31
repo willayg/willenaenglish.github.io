@@ -1,14 +1,14 @@
 :root {
-  --ink: #1b2f34;
-  --muted: #6f7d80;
-  --bg-top: #f7f2e8;
-  --bg-bottom: #edf2ee;
-  --panel: rgba(255, 254, 250, 0.96);
-  --line: rgba(27, 47, 52, 0.11);
-  --shadow: 0 16px 36px rgba(27, 47, 52, 0.08);
-  --accent: #1f8ca2;
-  --accent-strong: #155f70;
-  --accent-soft: rgba(31, 140, 162, 0.08);
+  --ink: #1d2a2e;
+  --muted: #667579;
+  --bg-top: #f4ede1;
+  --bg-bottom: #e7eeea;
+  --panel: rgba(255, 252, 245, 0.97);
+  --line: rgba(29, 42, 46, 0.09);
+  --shadow: 0 18px 40px rgba(29, 42, 46, 0.08);
+  --accent: #187b86;
+  --accent-strong: #0f5661;
+  --accent-soft: rgba(24, 123, 134, 0.08);
   --mismatch: #dd5b52;
   --matched: #2aa56e;
 }
@@ -39,7 +39,7 @@ student-header {
 .memory-app {
   flex: 1 1 auto;
   min-height: 0;
-  padding: 8px 10px 10px;
+  padding: 10px 12px 12px;
 }
 
 .screen {
@@ -54,19 +54,20 @@ student-header {
 
 .screen-setup {
   display: grid;
-  place-items: center;
+  place-items: start center;
+  padding-top: 14px;
 }
 
 .setup-stage {
-  width: min(430px, 100%);
+  width: min(460px, 100%);
   display: grid;
-  gap: 14px;
+  gap: 10px;
 }
 
 .setup-intro {
   text-align: center;
   display: grid;
-  gap: 4px;
+  gap: 2px;
 }
 
 .setup-kicker,
@@ -81,14 +82,14 @@ student-header {
 
 .setup-title {
   margin: 0;
-  font-size: clamp(1.8rem, 5vw, 2.5rem);
-  line-height: 0.98;
+  font-size: clamp(2rem, 5vw, 2.7rem);
+  line-height: 0.94;
   letter-spacing: -0.04em;
 }
 
 .setup-subtitle {
   margin: 0;
-  font-size: 0.92rem;
+  font-size: 0.98rem;
   line-height: 1.35;
   color: var(--muted);
 }
@@ -103,15 +104,15 @@ student-header {
 
 .setup-card {
   width: 100%;
-  padding: 18px;
+  padding: 20px;
   display: grid;
-  gap: 14px;
+  gap: 16px;
 }
 
 .setup-fields {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
+  gap: 12px;
 }
 
 .field-group {
@@ -121,7 +122,7 @@ student-header {
 
 .field-group label,
 .stat-label {
-  font-size: 0.68rem;
+  font-size: 0.72rem;
   text-transform: uppercase;
   letter-spacing: 0.14em;
   color: var(--muted);
@@ -130,16 +131,18 @@ student-header {
 .field-group select {
   width: 100%;
   border: 1px solid rgba(20, 48, 67, 0.12);
-  border-radius: 14px;
+  border-radius: 16px;
   background: rgba(255, 255, 255, 0.88);
-  padding: 12px 14px;
+  padding: 14px 16px;
   font: inherit;
+  font-size: 1rem;
+  font-weight: 600;
   color: var(--ink);
 }
 
 .setup-facts {
   margin: 0;
-  font-size: 0.9rem;
+  font-size: 0.96rem;
   color: var(--muted);
 }
 
@@ -151,8 +154,9 @@ student-header {
 .secondary-action {
   appearance: none;
   border-radius: 999px;
-  padding: 12px 18px;
+  padding: 14px 20px;
   font: inherit;
+  font-size: 1rem;
   font-weight: 700;
   cursor: pointer;
   transition: transform 0.16s ease, box-shadow 0.16s ease, opacity 0.16s ease;
@@ -211,10 +215,10 @@ student-header {
 .game-shell {
   height: 100%;
   min-height: 0;
-  padding: 12px 12px 10px;
+  padding: 14px 14px 12px;
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
-  gap: 8px;
+  gap: 10px;
   overflow: hidden;
 }
 
@@ -238,7 +242,7 @@ student-header {
   gap: 5px;
   align-items: center;
   color: var(--muted);
-  font-size: 0.82rem;
+  font-size: 0.9rem;
 }
 
 .game-context strong,
@@ -248,13 +252,13 @@ student-header {
 
 .exit-action {
   flex: 0 0 auto;
-  padding: 8px 12px;
+  padding: 10px 14px;
 }
 
 .session-stats {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 4px;
+  gap: 6px;
 }
 
 .board-frame {
@@ -262,7 +266,7 @@ student-header {
   min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
   padding: 0;
 }
 
@@ -270,7 +274,7 @@ student-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 6px;
+  gap: 8px;
   padding: 0 1px;
 }
 
@@ -278,7 +282,7 @@ student-header {
   margin: 0;
   min-width: 0;
   color: var(--ink);
-  font-size: 0.82rem;
+  font-size: 0.9rem;
   font-weight: 700;
   white-space: nowrap;
   overflow: hidden;
@@ -287,7 +291,7 @@ student-header {
 
 .star-note {
   margin: 0;
-  font-size: 0.78rem;
+  font-size: 0.84rem;
   color: var(--muted);
   white-space: nowrap;
 }
@@ -297,8 +301,8 @@ student-header {
 }
 
 .stat-chip {
-  border-radius: 14px;
-  padding: 7px 8px;
+  border-radius: 16px;
+  padding: 9px 10px;
 }
 
 .stat-chip-minimal {
@@ -308,14 +312,14 @@ student-header {
 
 .stat-chip-minimal strong {
   display: block;
-  margin-top: 2px;
-  font-size: 0.92rem;
+  margin-top: 3px;
+  font-size: 1rem;
 }
 
 .message-game {
   padding: 0 2px;
   min-height: 14px;
-  font-size: 0.78rem;
+  font-size: 0.84rem;
 }
 
 .board-grid {
@@ -323,7 +327,7 @@ student-header {
   min-height: 0;
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 6px;
+  gap: 8px;
   align-content: stretch;
 }
 
@@ -368,7 +372,7 @@ student-header {
   position: relative;
   border: none;
   background: transparent;
-  border-radius: 16px;
+  border-radius: 18px;
   cursor: pointer;
   perspective: 1000px;
   padding: 0;
@@ -401,7 +405,7 @@ student-header {
 .card-face {
   position: absolute;
   inset: 0;
-  border-radius: 16px;
+  border-radius: 18px;
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
   display: grid;
@@ -410,11 +414,23 @@ student-header {
 }
 
 .card-back {
-  background: linear-gradient(180deg, #258aa0, #1b6f82);
+  background: linear-gradient(180deg, #1c6d79, #124c58);
   color: #fff;
-  font-size: clamp(1.2rem, 2.4vw, 1.8rem);
-  font-weight: 700;
-  box-shadow: 0 8px 18px rgba(21, 95, 112, 0.16);
+  box-shadow: 0 10px 22px rgba(15, 86, 97, 0.18);
+}
+
+.card-back-mark {
+  width: 36%;
+  aspect-ratio: 1;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14%;
+}
+
+.card-back-mark span {
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08);
 }
 
 .card-front {
@@ -422,17 +438,17 @@ student-header {
   -webkit-transform: rotateY(180deg) translateZ(0);
   border: 1px solid rgba(20, 48, 67, 0.08);
   box-shadow: 0 8px 18px rgba(20, 48, 67, 0.06);
-  padding: 8px;
+  padding: 10px 8px;
   background: #fff;
   color: var(--ink);
 }
 
 .card-front.word-front {
-  background: linear-gradient(180deg, #fcf7ef, #ffffff);
+  background: linear-gradient(180deg, #fbf5eb, #ffffff);
 }
 
 .card-front.match-front {
-  background: linear-gradient(180deg, #f4fafa, #ffffff);
+  background: linear-gradient(180deg, #f2f8f7, #ffffff);
 }
 
 .card-value {
@@ -445,15 +461,43 @@ student-header {
 }
 
 .word-front .card-value {
-  font-size: clamp(0.74rem, 1.8vw, 1.08rem);
+  font-size: clamp(0.86rem, 1.95vw, 1.12rem);
+}
+
+.board-grid[data-rows="4"] .word-front .card-value {
+  font-size: clamp(0.96rem, 2.2vw, 1.26rem);
+}
+
+.board-grid[data-rows="5"] .word-front .card-value {
+  font-size: clamp(0.86rem, 1.95vw, 1.08rem);
+}
+
+.board-grid[data-rows="6"] .word-front .card-value {
+  font-size: clamp(0.78rem, 1.75vw, 0.98rem);
 }
 
 .match-card[data-match-type="emoji"] .match-front .card-value {
-  font-size: clamp(1.5rem, 3.5vw, 2.35rem);
+  font-size: clamp(1.65rem, 3.6vw, 2.4rem);
+}
+
+.board-grid[data-rows="4"] .match-card[data-match-type="emoji"] .match-front .card-value {
+  font-size: clamp(1.95rem, 4.2vw, 2.7rem);
+}
+
+.board-grid[data-rows="6"] .match-card[data-match-type="emoji"] .match-front .card-value {
+  font-size: clamp(1.4rem, 3vw, 2rem);
 }
 
 .match-card[data-match-type="korean"] .match-front .card-value {
-  font-size: clamp(0.74rem, 1.9vw, 1.04rem);
+  font-size: clamp(0.84rem, 1.95vw, 1.08rem);
+}
+
+.board-grid[data-rows="4"] .match-card[data-match-type="korean"] .match-front .card-value {
+  font-size: clamp(0.94rem, 2.1vw, 1.18rem);
+}
+
+.board-grid[data-rows="6"] .match-card[data-match-type="korean"] .match-front .card-value {
+  font-size: clamp(0.76rem, 1.7vw, 0.94rem);
 }
 
 .match-card.is-matched .card-front {
@@ -513,26 +557,52 @@ student-header {
 
 @media (max-width: 680px) {
   .memory-app {
-    padding: 8px;
+    padding: 10px;
+  }
+
+  .screen-setup {
+    padding-top: 10px;
   }
 
   .setup-stage {
-    gap: 12px;
+    width: 100%;
+    gap: 8px;
   }
 
   .setup-card,
   .game-shell {
-    border-radius: 18px;
+    border-radius: 20px;
   }
 
   .setup-card,
   .game-shell {
-    padding: 10px;
+    padding: 14px;
+  }
+
+  .setup-title {
+    font-size: clamp(2.15rem, 8vw, 2.7rem);
+  }
+
+  .setup-subtitle,
+  .setup-facts {
+    font-size: 1rem;
   }
 
   .setup-fields {
     grid-template-columns: 1fr;
-    gap: 10px;
+    gap: 12px;
+  }
+
+  .field-group label,
+  .stat-label {
+    font-size: 0.76rem;
+  }
+
+  .field-group select,
+  .primary-action,
+  .secondary-action {
+    min-height: 50px;
+    font-size: 1.02rem;
   }
 
   .game-topbar {
@@ -540,35 +610,65 @@ student-header {
   }
 
   .game-context {
-    font-size: 0.76rem;
+    font-size: 0.9rem;
   }
 
   .session-stats {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
   }
 
   .round-strip {
     flex-direction: column;
     align-items: flex-start;
-    gap: 2px;
+    gap: 4px;
   }
 
   .board-grid {
-    gap: 6px;
+    gap: 9px;
   }
 
   .match-card,
   .card-face {
-    border-radius: 14px;
+    border-radius: 16px;
   }
 
-  .word-front .card-value,
-  .match-card[data-match-type="korean"] .match-front .card-value {
-    font-size: clamp(0.64rem, 2.9vw, 0.82rem);
+  .board-grid[data-rows="4"] .word-front .card-value,
+  .board-grid[data-rows="4"] .match-card[data-match-type="korean"] .match-front .card-value {
+    font-size: clamp(1rem, 4vw, 1.22rem);
   }
 
-  .match-card[data-match-type="emoji"] .match-front .card-value {
-    font-size: clamp(1rem, 5.8vw, 1.55rem);
+  .board-grid[data-rows="5"] .word-front .card-value,
+  .board-grid[data-rows="5"] .match-card[data-match-type="korean"] .match-front .card-value {
+    font-size: clamp(0.94rem, 3.65vw, 1.08rem);
+  }
+
+  .board-grid[data-rows="6"] .word-front .card-value,
+  .board-grid[data-rows="6"] .match-card[data-match-type="korean"] .match-front .card-value {
+    font-size: clamp(0.84rem, 3.1vw, 0.98rem);
+  }
+
+  .board-grid[data-rows="4"] .match-card[data-match-type="emoji"] .match-front .card-value {
+    font-size: clamp(1.75rem, 8vw, 2.3rem);
+  }
+
+  .board-grid[data-rows="5"] .match-card[data-match-type="emoji"] .match-front .card-value {
+    font-size: clamp(1.52rem, 7vw, 1.95rem);
+  }
+
+  .board-grid[data-rows="6"] .match-card[data-match-type="emoji"] .match-front .card-value {
+    font-size: clamp(1.24rem, 5.7vw, 1.6rem);
+  }
+
+  .stat-chip {
+    padding: 10px 11px;
+  }
+
+  .stat-chip-minimal strong,
+  .round-list,
+  .star-note,
+  .message-game {
+    font-size: 0.94rem;
   }
 }
 
