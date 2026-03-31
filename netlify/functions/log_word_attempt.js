@@ -260,15 +260,15 @@ exports.handler = async (event) => {
 
       const { error } = await supabase
         .from('progress_sessions')
-        .update({
+        .upsert({
+          session_id,
           ended_at: new Date().toISOString(),
           summary: extra || null,
           mode: mode || null,
           user_id: userIdFromCookie,
           list_name: nextListName,
-            list_size: nextListSize
-        })
-        .eq('session_id', session_id);
+          list_size: nextListSize
+        }, { onConflict: 'session_id' });
       if (error) return reply(400, { error: error.message, code: error.code, details: error.details, hint: error.hint });
       
       // Invalidate leaderboard cache so next read sees fresh data

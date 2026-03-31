@@ -436,6 +436,7 @@ async function finishRound() {
       listName: state.currentListMeta?.label || null,
       wordList: state.currentWords,
       summary: {
+        stars: starCount,
         score: efficiencyPct,
         total: 100,
         completed: true,
@@ -473,6 +474,7 @@ async function closePartialSession() {
       listName: state.currentListMeta?.label || null,
       wordList: state.currentWords,
       summary: {
+        stars: 0,
         score: efficiencyPct,
         total: 100,
         completed: false,
