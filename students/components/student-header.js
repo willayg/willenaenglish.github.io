@@ -17,6 +17,7 @@ class StudentHeader extends HTMLElement {
   this._avatar = null;
   this._uid = null;
   this._onFocus = this._onFocus.bind(this);
+  this._overviewRefreshTimer = 0;
   this._onPointsUpdate = (e) => {
     try {
       const total = e?.detail?.total;
@@ -48,6 +49,9 @@ class StudentHeader extends HTMLElement {
       requestAnimationFrame(() => this._animateStarsBounce());
     } catch {}
   };
+  this._onStarsRefresh = () => {
+    this._scheduleOverviewRefresh();
+  };
   this._points = null;
   this._stars = null;
   this._fetchingOverview = false;
@@ -69,6 +73,8 @@ class StudentHeader extends HTMLElement {
   window.addEventListener('points:update', this._onPointsUpdate);
   window.addEventListener('points:optimistic-bump', this._onOptimisticBump);
   window.addEventListener('stars:optimistic-bump', this._onStarsBump);
+  window.addEventListener('stars:refresh', this._onStarsRefresh);
+  window.addEventListener('session:ended', this._onStarsRefresh);
   // Hydrate identity from server session and refresh on focus changes
   this._hydrateProfile();
   window.addEventListener('focus', this._onFocus);
@@ -86,6 +92,8 @@ class StudentHeader extends HTMLElement {
   window.removeEventListener('points:update', this._onPointsUpdate);
   window.removeEventListener('points:optimistic-bump', this._onOptimisticBump);
   window.removeEventListener('stars:optimistic-bump', this._onStarsBump);
+  window.removeEventListener('stars:refresh', this._onStarsRefresh);
+  window.removeEventListener('session:ended', this._onStarsRefresh);
   window.removeEventListener('focus', this._onFocus);
   }
 
@@ -109,6 +117,9 @@ class StudentHeader extends HTMLElement {
     // Only re-render if relevant keys change
   if (["user_name", "user_id", "selectedEmojiAvatar"].includes(e.key)) {
       this.render();
+    }
+    if (e.key === 'stars:refresh') {
+      this._scheduleOverviewRefresh();
     }
   }
 
@@ -152,6 +163,12 @@ class StudentHeader extends HTMLElement {
   }
 
   _onFocus() { this._hydrateProfile(); this._fetchOverview(); }
+
+  _scheduleOverviewRefresh() {
+    try { clearTimeout(this._overviewRefreshTimer); } catch {}
+    this._fetchOverview();
+    this._overviewRefreshTimer = setTimeout(() => this._fetchOverview(), 900);
+  }
 
   // --- Mission Modal (homework alert) ---
   _shouldSuppressGameInterrupt() {
