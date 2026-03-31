@@ -16,6 +16,10 @@ const DIFFICULTY_CONFIG = {
   expert: { label: 'Expert', pool: LEVEL4_LISTS },
 };
 
+const STAR_THRESHOLDS = {
+  '3x4': { 5: 8, 4: 9, 3: 10, 2: 11, 1: 12 },
+};
+
 const CARD_PALETTE = [
   { accent: '#df8a2f', fill: 'rgba(223, 138, 47, 0.05)', fillStrong: 'rgba(223, 138, 47, 0.11)' },
   { accent: '#6fd7de', fill: 'rgba(111, 215, 222, 0.05)', fillStrong: 'rgba(111, 215, 222, 0.11)' },
@@ -419,11 +423,10 @@ function logPairAttempt(firstCard, secondCard, isCorrect) {
 }
 
 async function finishRound() {
-  stopTimer();
   state.gameActive = false;
   const pairs = GRID_CONFIG[state.grid].pairs;
   const efficiencyPct = Math.max(0, Math.min(100, Math.round((pairs / Math.max(state.moves, pairs)) * 100)));
-  const starCount = pctToStars(efficiencyPct);
+  const starCount = movesToStars(state.moves, state.grid);
 
   if (state.sessionId) {
     await endSession(state.sessionId, {
@@ -446,11 +449,15 @@ async function finishRound() {
 
   try {
     if (typeof window.showRoundStars === 'function') {
-      window.showRoundStars({ correct: pairs, total: Math.max(state.moves, pairs) });
+      window.showRoundStars({
+        correct: pairs,
+        total: Math.max(state.moves, pairs),
+        stars: starCount,
+        subtitle: `${state.moves} moves`,
+      });
     }
   } catch {}
   refreshHeaderOverview();
-  setMessage(`Round complete. ${state.points} points earned.`);
 }
 
 async function closePartialSession() {
@@ -566,7 +573,7 @@ function updateSetupSummary() {
 }
 
 function getPerfectMovesLabel() {
-  return `${GRID_CONFIG[state.grid].pairs} moves`;
+  return `${getStarThresholds(state.grid)[5]} moves`;
 }
 
 function showLoading(message) {
@@ -603,13 +610,29 @@ function refreshHeaderOverview() {
   } catch {}
 }
 
-function pctToStars(pct) {
-  if (pct >= 100) return 5;
-  if (pct > 90) return 4;
-  if (pct > 80) return 3;
-  if (pct > 70) return 2;
-  if (pct >= 60) return 1;
+function movesToStars(moves, gridKey = state.grid) {
+  const thresholds = getStarThresholds(gridKey);
+  if (moves <= thresholds[5]) return 5;
+  if (moves <= thresholds[4]) return 4;
+  if (moves <= thresholds[3]) return 3;
+  if (moves <= thresholds[2]) return 2;
+  if (moves <= thresholds[1]) return 1;
   return 0;
+}
+
+function getStarThresholds(gridKey) {
+  if (STAR_THRESHOLDS[gridKey]) {
+    return STAR_THRESHOLDS[gridKey];
+  }
+
+  const pairs = GRID_CONFIG[gridKey]?.pairs || 6;
+  return {
+    5: pairs + 2,
+    4: pairs + 3,
+    3: pairs + 4,
+    2: pairs + 5,
+    1: pairs + 6,
+  };
 }
 
 function shuffleArray(list) {

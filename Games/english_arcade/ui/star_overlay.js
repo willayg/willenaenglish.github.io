@@ -88,10 +88,10 @@
     setTimeout(()=>{ try { overlay.remove(); } catch{} }, 240);
   }
 
-  function showRoundStars({ correct, total }){
+  function showRoundStars({ correct, total, stars = null, subtitle = '' }){
     ensureStyles();
     const pct = total ? Math.round((correct/total)*100) : 0;
-    const starCount = pctToStars(pct);
+    const starCount = Number.isFinite(stars) ? stars : pctToStars(pct);
 
     // Dispatch stars:refresh event so header can fetch updated totals from server
     // (Removed optimistic bump - was causing double-counting issues)
@@ -119,7 +119,7 @@
 
     const sub = document.createElement('div');
     sub.className='star-sub';
-    sub.textContent = `${correct} / ${total}  (${pct}%)`;
+    sub.textContent = subtitle || `${correct} / ${total}  (${pct}%)`;
 
   const row = document.createElement('div');
   row.className='star-row size-lg'; // default large size; adjust classes if needed
