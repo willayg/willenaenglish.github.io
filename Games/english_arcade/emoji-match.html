@@ -11,20 +11,18 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/students/theme.css" />
-  <link rel="stylesheet" href="./emoji-match.css?v=20260401g" />
+  <link rel="stylesheet" href="./emoji-match.css?v=20260401h" />
   <script src="/students/language.js"></script>
   <script src="/students/theme.js"></script>
 </head>
 <body>
-  <student-header title="Memory Match" show-home="true" show-points="true" show-logout="true" home-href="/students/dashboard.html" home-label="Home"></student-header>
+  <student-header title="" show-home="true" show-points="true" show-logout="true" home-href="/students/dashboard.html" home-label="Home"></student-header>
 
   <main class="memory-app">
     <section id="setupScreen" class="screen screen-setup">
       <div class="setup-stage">
         <div class="setup-intro">
-          <p class="setup-kicker">Memory Match</p>
           <h1 class="setup-title">Memory Match</h1>
-          <p class="setup-subtitle">Choose a level. Start.</p>
         </div>
 
         <div class="setup-card">
@@ -39,8 +37,6 @@
               </select>
             </div>
           </div>
-
-          <p class="setup-facts"><strong id="setupPairsValue">6</strong> pairs <span aria-hidden="true">•</span> 5 stars at <strong id="setupStarValue">10 moves</strong></p>
 
           <div id="setupMessage" class="message-banner" aria-live="polite"></div>
 
@@ -90,6 +86,6 @@
   </main>
 
   <script type="module" src="/students/components/student-header.js?v=20260115"></script>
-  <script type="module" src="./emoji-match.js?v=20260401g"></script>
+  <script type="module" src="./emoji-match.js?v=20260401h"></script>
 </body>
 </html>

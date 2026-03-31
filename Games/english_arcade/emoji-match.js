@@ -29,6 +29,9 @@ const CARD_PALETTE = [
   { accent: '#ef4b93', fill: 'rgba(239, 75, 147, 0.05)', fillStrong: 'rgba(239, 75, 147, 0.11)' },
 ];
 
+const PAGE_THEMES = ['gradient', 'white', 'pink-stars', 'rainbow-clouds'];
+const BORDER_THEMES = ['cyan', 'pink'];
+
 const emojiSupportCache = new Map();
 
 const state = {
@@ -54,8 +57,6 @@ const elements = {
   setupScreen: document.getElementById('setupScreen'),
   gameScreen: document.getElementById('gameScreen'),
   difficultySelect: document.getElementById('difficultySelect'),
-  setupPairsValue: document.getElementById('setupPairsValue'),
-  setupStarValue: document.getElementById('setupStarValue'),
   setupMessage: document.getElementById('setupMessage'),
   startGameBtn: document.getElementById('startGameBtn'),
   exitGameBtn: document.getElementById('exitGameBtn'),
@@ -73,6 +74,7 @@ const elements = {
 bootstrap();
 
 function bootstrap() {
+  applyPageTheme();
   initPointsClient();
   elements.difficultySelect.value = state.difficulty;
   updateSetupSummary();
@@ -560,16 +562,34 @@ function renderStats() {
   elements.pointsValue.textContent = String(state.points);
   elements.movesValue.textContent = String(state.moves);
   elements.matchesValue.textContent = `${state.matchedPairs} / ${gridConfig.pairs}`;
-  const perfectMoves = getPerfectMovesLabel();
-  elements.starTargetValue.textContent = perfectMoves;
-  elements.setupPairsValue.textContent = String(gridConfig.pairs);
-  elements.setupStarValue.textContent = perfectMoves;
+  elements.starTargetValue.textContent = getPerfectMovesLabel();
 }
 
-function updateSetupSummary() {
-  const gridConfig = GRID_CONFIG[state.grid];
-  elements.setupPairsValue.textContent = String(gridConfig.pairs);
-  elements.setupStarValue.textContent = getPerfectMovesLabel();
+function updateSetupSummary() {}
+
+function applyPageTheme() {
+  const pageTheme = pickNextTheme('memoryMatch.pageTheme', PAGE_THEMES);
+  const borderTheme = pickNextTheme('memoryMatch.borderTheme', BORDER_THEMES);
+  document.body.dataset.pageTheme = pageTheme;
+  document.body.dataset.borderTheme = borderTheme;
+  document.documentElement.style.setProperty('--chrome-border-angle', `${Math.floor(Math.random() * 360)}deg`);
+}
+
+function pickNextTheme(storageKey, options) {
+  let lastValue = '';
+  try {
+    lastValue = sessionStorage.getItem(storageKey) || '';
+  } catch {}
+
+  const pool = options.filter((option) => option !== lastValue);
+  const available = pool.length ? pool : options;
+  const nextValue = available[Math.floor(Math.random() * available.length)];
+
+  try {
+    sessionStorage.setItem(storageKey, nextValue);
+  } catch {}
+
+  return nextValue;
 }
 
 function getPerfectMovesLabel() {

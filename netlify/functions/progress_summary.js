@@ -137,6 +137,8 @@ function safeParseJson(value) {
 
 function deriveStars(summary) {
   const s = summary || {};
+  if (typeof s.stars === 'number') return s.stars;
+  if (typeof s.stars_preview === 'number') return s.stars_preview;
   let acc = null;
   if (typeof s.accuracy === 'number') acc = s.accuracy;
   else if (typeof s.score === 'number' && typeof s.total === 'number' && s.total > 0) acc = s.score / s.total;
@@ -149,7 +151,6 @@ function deriveStars(summary) {
     if (acc >= 0.60) return 1;
     return 0;
   }
-  if (typeof s.stars === 'number') return s.stars;
   return 0;
 }
 
