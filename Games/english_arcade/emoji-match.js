@@ -6,9 +6,7 @@ import { startSession, logAttempt, endSession } from '../../students/records.js'
 import { initPointsClient } from '../../students/scripts/points-client.js';
 
 const GRID_CONFIG = {
-  '4x4': { columns: 4, rows: 4, cards: 16, pairs: 8 },
-  '4x5': { columns: 4, rows: 5, cards: 20, pairs: 10 },
-  '4x6': { columns: 4, rows: 6, cards: 24, pairs: 12 },
+  '3x6': { columns: 3, rows: 6, cards: 18, pairs: 9 },
 };
 
 const DIFFICULTY_CONFIG = {
@@ -20,16 +18,13 @@ const DIFFICULTY_CONFIG = {
 
 const state = {
   difficulty: readDifficultyFromQuery(),
-  grid: readGridFromQuery(),
+  grid: '3x6',
   cards: [],
   selectedIds: [],
   matchedPairs: 0,
   moves: 0,
   points: 0,
   lockBoard: false,
-  timerId: null,
-  startedAt: 0,
-  secondsElapsed: 0,
   currentListMeta: null,
   currentWords: [],
   attemptedLists: new Set(),
@@ -43,22 +38,18 @@ const state = {
 const elements = {
   setupScreen: document.getElementById('setupScreen'),
   gameScreen: document.getElementById('gameScreen'),
-  gridSelect: document.getElementById('gridSelect'),
   difficultySelect: document.getElementById('difficultySelect'),
   setupPairsValue: document.getElementById('setupPairsValue'),
   setupStarValue: document.getElementById('setupStarValue'),
   setupMessage: document.getElementById('setupMessage'),
   startGameBtn: document.getElementById('startGameBtn'),
   exitGameBtn: document.getElementById('exitGameBtn'),
-  gameGridValue: document.getElementById('gameGridValue'),
   gameDifficultyValue: document.getElementById('gameDifficultyValue'),
   gameListValue: document.getElementById('gameListValue'),
   pointsValue: document.getElementById('pointsValue'),
   movesValue: document.getElementById('movesValue'),
   matchesValue: document.getElementById('matchesValue'),
-  timeValue: document.getElementById('timeValue'),
   starTargetValue: document.getElementById('starTargetValue'),
-  messageBanner: document.getElementById('messageBanner'),
   boardGrid: document.getElementById('boardGrid'),
   loadingState: document.getElementById('loadingState'),
   loadingText: document.getElementById('loadingText'),
@@ -68,7 +59,6 @@ bootstrap();
 
 function bootstrap() {
   initPointsClient();
-  elements.gridSelect.value = state.grid;
   elements.difficultySelect.value = state.difficulty;
   updateSetupSummary();
   wireControls();
@@ -86,19 +76,7 @@ function readDifficultyFromQuery() {
   return DIFFICULTY_CONFIG[requested] ? requested : 'easy';
 }
 
-function readGridFromQuery() {
-  const params = new URLSearchParams(window.location.search || '');
-  const requested = String(params.get('grid') || '').toLowerCase();
-  return GRID_CONFIG[requested] ? requested : '4x4';
-}
-
 function wireControls() {
-  elements.gridSelect.addEventListener('change', () => {
-    state.grid = elements.gridSelect.value;
-    updateSetupSummary();
-    syncUrlState();
-  });
-
   elements.difficultySelect.addEventListener('change', () => {
     state.difficulty = elements.difficultySelect.value;
     updateSetupSummary();
@@ -112,21 +90,18 @@ function wireControls() {
 async function startNewGame() {
   if (state.loading) return;
   state.loading = true;
-  state.grid = elements.gridSelect.value;
   state.difficulty = elements.difficultySelect.value;
   resetRoundState();
   syncUrlState();
   setSetupMessage('');
   showGameScreen();
-  showLoading(`Building a ${state.grid} ${DIFFICULTY_CONFIG[state.difficulty].label.toLowerCase()} board…`);
-  setMessage('');
+  showLoading(`Building a ${DIFFICULTY_CONFIG[state.difficulty].label.toLowerCase()} board…`);
 
   try {
     const result = await resolveRandomBoard(state.difficulty, state.grid);
     state.currentListMeta = result.meta;
     state.currentWords = result.words;
     state.cards = buildDeck(result.words);
-    state.startedAt = Date.now();
     state.sessionId = startSession({
       mode: 'memory_match',
       wordList: result.words,
@@ -143,10 +118,8 @@ async function startNewGame() {
 
     renderStats();
     renderBoard();
-    startTimer();
     hideLoading();
     scheduleRoundAudioWarmup(result.words);
-    setMessage(`Loaded ${result.meta.label}.`);
   } catch (error) {
     hideLoading();
     state.gameActive = false;
@@ -158,7 +131,6 @@ async function startNewGame() {
 }
 
 function resetRoundState() {
-  stopTimer();
   state.audioWarmupId += 1;
   state.cards = [];
   state.selectedIds = [];
@@ -166,7 +138,6 @@ function resetRoundState() {
   state.moves = 0;
   state.points = 0;
   state.lockBoard = false;
-  state.secondsElapsed = 0;
   state.currentListMeta = null;
   state.currentWords = [];
   state.sessionId = null;
@@ -181,7 +152,6 @@ function showGameScreen() {
 }
 
 function exitToSetup({ keepMessage = false } = {}) {
-  stopTimer();
   state.loading = false;
   state.lockBoard = false;
   state.selectedIds = [];
@@ -192,7 +162,6 @@ function exitToSetup({ keepMessage = false } = {}) {
   elements.setupScreen.hidden = false;
   elements.gameScreen.hidden = true;
   hideLoading();
-  if (!keepMessage) setMessage('');
   updateSetupSummary();
 }
 
@@ -559,13 +528,11 @@ function createSparkles(cardEl) {
 function renderStats() {
   const gridConfig = GRID_CONFIG[state.grid];
   const difficultyLabel = DIFFICULTY_CONFIG[state.difficulty].label;
-  elements.gameGridValue.textContent = state.grid;
   elements.gameDifficultyValue.textContent = difficultyLabel;
   elements.gameListValue.textContent = state.currentListMeta?.label || 'Loading…';
   elements.pointsValue.textContent = String(state.points);
   elements.movesValue.textContent = String(state.moves);
   elements.matchesValue.textContent = `${state.matchedPairs} / ${gridConfig.pairs}`;
-  elements.timeValue.textContent = formatSeconds(state.secondsElapsed);
   const perfectMoves = getPerfectMovesLabel();
   elements.starTargetValue.textContent = perfectMoves;
   elements.setupPairsValue.textContent = String(gridConfig.pairs);
@@ -582,21 +549,6 @@ function getPerfectMovesLabel() {
   return `${GRID_CONFIG[state.grid].pairs} moves`;
 }
 
-function startTimer() {
-  stopTimer();
-  state.timerId = window.setInterval(() => {
-    state.secondsElapsed = Math.floor((Date.now() - state.startedAt) / 1000);
-    renderStats();
-  }, 1000);
-}
-
-function stopTimer() {
-  if (state.timerId) {
-    window.clearInterval(state.timerId);
-    state.timerId = null;
-  }
-}
-
 function showLoading(message) {
   elements.loadingText.textContent = message;
   elements.loadingState.hidden = false;
@@ -610,11 +562,6 @@ function hideLoading() {
   elements.exitGameBtn.disabled = false;
 }
 
-function setMessage(message, isError = false) {
-  elements.messageBanner.textContent = message;
-  elements.messageBanner.classList.toggle('is-error', isError);
-}
-
 function setSetupMessage(message, isError = false) {
   elements.setupMessage.textContent = message;
   elements.setupMessage.classList.toggle('is-error', isError);
@@ -623,7 +570,7 @@ function setSetupMessage(message, isError = false) {
 function syncUrlState() {
   const url = new URL(window.location.href);
   url.searchParams.set('difficulty', state.difficulty);
-  url.searchParams.set('grid', state.grid);
+  url.searchParams.delete('grid');
   window.history.replaceState({}, '', url.toString());
 }
 
@@ -652,12 +599,6 @@ function shuffleArray(list) {
     [copy[index], copy[swapIndex]] = [copy[swapIndex], copy[index]];
   }
   return copy;
-}
-
-function formatSeconds(seconds) {
-  const mins = Math.floor(seconds / 60).toString().padStart(2, '0');
-  const secs = Math.floor(seconds % 60).toString().padStart(2, '0');
-  return `${mins}:${secs}`;
 }
 
 function escapeHtml(value) {

@@ -11,7 +11,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/students/theme.css" />
-  <link rel="stylesheet" href="./emoji-match.css?v=20260331h" />
+  <link rel="stylesheet" href="./emoji-match.css?v=20260401a" />
   <script src="/students/language.js"></script>
   <script src="/students/theme.js"></script>
 </head>
@@ -24,20 +24,11 @@
         <div class="setup-intro">
           <p class="setup-kicker">Memory Match</p>
           <h1 class="setup-title">Memory Match</h1>
-          <p class="setup-subtitle">Choose a grid. Choose a level. Start.</p>
+          <p class="setup-subtitle">Choose a level. Start.</p>
         </div>
 
         <div class="setup-card">
           <div class="setup-fields">
-            <div class="field-group">
-              <label for="gridSelect">Grid</label>
-              <select id="gridSelect">
-                <option value="4x4">4x4</option>
-                <option value="4x5">4x5</option>
-                <option value="4x6">4x6</option>
-              </select>
-            </div>
-
             <div class="field-group">
               <label for="difficultySelect">Level</label>
               <select id="difficultySelect">
@@ -49,11 +40,11 @@
             </div>
           </div>
 
-          <p class="setup-facts"><strong id="setupPairsValue">8</strong> pairs <span aria-hidden="true">•</span> 5 stars at <strong id="setupStarValue">8 moves</strong></p>
+          <p class="setup-facts"><strong id="setupPairsValue">9</strong> pairs <span aria-hidden="true">•</span> 5 stars at <strong id="setupStarValue">9 moves</strong></p>
 
           <div id="setupMessage" class="message-banner" aria-live="polite"></div>
 
-          <button id="startGameBtn" class="primary-action start-action" type="button">Start Round</button>
+          <button id="startGameBtn" class="primary-action start-action" type="button">Start</button>
         </div>
       </div>
     </section>
@@ -62,7 +53,7 @@
       <div class="game-shell">
         <div class="game-topbar">
           <div class="game-heading">
-            <p class="game-context"><strong id="gameDifficultyValue">Easy</strong><span aria-hidden="true">•</span><span id="gameGridValue">4x4</span></p>
+            <p class="game-context"><strong id="gameDifficultyValue">Easy</strong></p>
           </div>
           <button id="exitGameBtn" class="secondary-action exit-action" type="button">Exit</button>
         </div>
@@ -84,11 +75,7 @@
             </div>
             <div class="stat-chip stat-chip-minimal">
               <span class="stat-label">Matches</span>
-              <strong id="matchesValue">0 / 8</strong>
-            </div>
-            <div class="stat-chip stat-chip-minimal">
-              <span class="stat-label">Time</span>
-              <strong id="timeValue">00:00</strong>
+              <strong id="matchesValue">0 / 9</strong>
             </div>
           </div>
 
@@ -96,7 +83,6 @@
             <div class="loader"></div>
             <p id="loadingText">Building board…</p>
           </div>
-          <div id="messageBanner" class="message-banner message-game" aria-live="polite"></div>
           <div id="boardGrid" class="board-grid" aria-live="polite"></div>
         </div>
       </div>
@@ -104,6 +90,6 @@
   </main>
 
   <script type="module" src="/students/components/student-header.js?v=20260115"></script>
-  <script type="module" src="./emoji-match.js?v=20260331h"></script>
+  <script type="module" src="./emoji-match.js?v=20260401a"></script>
 </body>
 </html>
