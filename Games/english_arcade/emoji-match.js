@@ -6,7 +6,7 @@ import { startSession, logAttempt, endSession } from '../../students/records.js'
 import { initPointsClient } from '../../students/scripts/points-client.js';
 
 const GRID_CONFIG = {
-  '3x6': { columns: 3, rows: 6, cards: 18, pairs: 9 },
+  '4x6': { columns: 4, rows: 6, cards: 24, pairs: 12 },
 };
 
 const DIFFICULTY_CONFIG = {
@@ -21,13 +21,15 @@ const CARD_PALETTE = [
   { accent: '#6fd7de', fill: 'rgba(111, 215, 222, 0.05)', fillStrong: 'rgba(111, 215, 222, 0.11)' },
   { accent: '#8eb9e6', fill: 'rgba(142, 185, 230, 0.05)', fillStrong: 'rgba(142, 185, 230, 0.11)' },
   { accent: '#19777e', fill: 'rgba(25, 119, 126, 0.05)', fillStrong: 'rgba(25, 119, 126, 0.11)' },
+  { accent: '#f3a9c3', fill: 'rgba(243, 169, 195, 0.05)', fillStrong: 'rgba(243, 169, 195, 0.11)' },
+  { accent: '#ef4b93', fill: 'rgba(239, 75, 147, 0.05)', fillStrong: 'rgba(239, 75, 147, 0.11)' },
 ];
 
 const emojiSupportCache = new Map();
 
 const state = {
   difficulty: readDifficultyFromQuery(),
-  grid: '3x6',
+  grid: '4x6',
   cards: [],
   selectedIds: [],
   matchedPairs: 0,
@@ -272,10 +274,8 @@ async function fetchPlayableEntries(meta) {
 
 function buildDeck(words) {
   const deck = [];
-  const paletteCycle = shuffleArray([...CARD_PALETTE]);
-  let pairIndex = 0;
+  const roundColor = pickRoundColor();
   for (const word of words) {
-    const color = paletteCycle[pairIndex % paletteCycle.length];
     deck.push({
       id: `${word.pairId}:word`,
       pairId: word.pairId,
@@ -283,9 +283,9 @@ function buildDeck(words) {
       matchType: word.matchType,
       spokenWord: word.eng,
       value: word.eng,
-      accentColor: color.accent,
-      fillColor: color.fill,
-      fillStrongColor: color.fillStrong,
+      accentColor: roundColor.accent,
+      fillColor: roundColor.fill,
+      fillStrongColor: roundColor.fillStrong,
       matched: false,
       mismatched: false,
     });
@@ -296,13 +296,12 @@ function buildDeck(words) {
       matchType: word.matchType,
       spokenWord: word.eng,
       value: word.matchValue,
-      accentColor: color.accent,
-      fillColor: color.fill,
-      fillStrongColor: color.fillStrong,
+      accentColor: roundColor.accent,
+      fillColor: roundColor.fill,
+      fillStrongColor: roundColor.fillStrong,
       matched: false,
       mismatched: false,
     });
-    pairIndex += 1;
   }
   return shuffleArray(deck);
 }
@@ -620,6 +619,11 @@ function shuffleArray(list) {
     [copy[index], copy[swapIndex]] = [copy[swapIndex], copy[index]];
   }
   return copy;
+}
+
+function pickRoundColor() {
+  const index = Math.floor(Math.random() * CARD_PALETTE.length);
+  return CARD_PALETTE[index];
 }
 
 function escapeHtml(value) {
