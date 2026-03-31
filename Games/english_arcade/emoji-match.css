@@ -356,6 +356,9 @@ student-header {
 }
 
 .match-card {
+  --card-accent: #19777e;
+  --card-fill: rgba(25, 119, 126, 0.05);
+  --card-fill-strong: rgba(25, 119, 126, 0.11);
   position: relative;
   border: none;
   background: transparent;
@@ -401,41 +404,27 @@ student-header {
 }
 
 .card-back {
-  background: linear-gradient(180deg, #238d95, #19777e);
-  color: #fff;
-  box-shadow: 0 8px 18px rgba(25, 119, 126, 0.16);
-}
-
-.card-back-mark {
-  width: 36%;
-  aspect-ratio: 1;
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 14%;
-}
-
-.card-back-mark span {
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.92);
-  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08);
+  background: var(--card-fill-strong);
+  border: 5px solid var(--card-accent);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
 }
 
 .card-front {
   transform: rotateY(180deg);
   -webkit-transform: rotateY(180deg) translateZ(0);
-  border: 2px solid #e6eff1;
-  box-shadow: 0 5px 12px rgba(0, 0, 0, 0.06);
+  border: 5px solid var(--card-accent);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
   padding: 10px 8px;
-  background: #fff;
+  background: var(--card-fill);
   color: var(--ink);
 }
 
 .card-front.word-front {
-  background: #ffffff;
+  background: var(--card-fill);
 }
 
 .card-front.match-front {
-  background: #f8fdff;
+  background: var(--card-fill);
 }
 
 .card-value {
@@ -460,8 +449,7 @@ student-header {
 }
 
 .match-card.is-matched .card-front {
-  border-color: rgba(42, 165, 110, 0.45);
-  box-shadow: 0 12px 28px rgba(42, 165, 110, 0.2);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.9), 0 8px 20px rgba(0, 0, 0, 0.08);
 }
 
 .match-card.just-matched .card-front {
@@ -482,7 +470,7 @@ student-header {
 }
 
 .match-card.is-mismatched .card-front {
-  border-color: rgba(221, 91, 82, 0.45);
+  border-color: rgba(221, 91, 82, 0.9);
   animation: shake 0.34s ease;
 }
 

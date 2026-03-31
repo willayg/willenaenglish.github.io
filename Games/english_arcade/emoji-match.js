@@ -16,6 +16,15 @@ const DIFFICULTY_CONFIG = {
   expert: { label: 'Expert', pool: LEVEL4_LISTS },
 };
 
+const CARD_PALETTE = [
+  { accent: '#df8a2f', fill: 'rgba(223, 138, 47, 0.05)', fillStrong: 'rgba(223, 138, 47, 0.11)' },
+  { accent: '#6fd7de', fill: 'rgba(111, 215, 222, 0.05)', fillStrong: 'rgba(111, 215, 222, 0.11)' },
+  { accent: '#8eb9e6', fill: 'rgba(142, 185, 230, 0.05)', fillStrong: 'rgba(142, 185, 230, 0.11)' },
+  { accent: '#19777e', fill: 'rgba(25, 119, 126, 0.05)', fillStrong: 'rgba(25, 119, 126, 0.11)' },
+];
+
+const emojiSupportCache = new Map();
+
 const state = {
   difficulty: readDifficultyFromQuery(),
   grid: '3x6',
@@ -238,8 +247,9 @@ async function fetchPlayableEntries(meta) {
     const eng = String(item?.eng || '').trim();
     const emoji = String(item?.emoji || '').trim();
     const kor = String(item?.kor || '').trim();
-    const secondaryValue = emoji || kor;
-    const secondaryType = emoji ? 'emoji' : 'korean';
+    const hasSupportedEmoji = emoji && supportsEmojiGlyph(emoji);
+    const secondaryValue = hasSupportedEmoji ? emoji : kor;
+    const secondaryType = hasSupportedEmoji ? 'emoji' : 'korean';
     if (!eng || !secondaryValue) continue;
 
     const wordKey = eng.toLowerCase();
@@ -262,7 +272,10 @@ async function fetchPlayableEntries(meta) {
 
 function buildDeck(words) {
   const deck = [];
+  const paletteCycle = shuffleArray([...CARD_PALETTE]);
+  let pairIndex = 0;
   for (const word of words) {
+    const color = paletteCycle[pairIndex % paletteCycle.length];
     deck.push({
       id: `${word.pairId}:word`,
       pairId: word.pairId,
@@ -270,6 +283,9 @@ function buildDeck(words) {
       matchType: word.matchType,
       spokenWord: word.eng,
       value: word.eng,
+      accentColor: color.accent,
+      fillColor: color.fill,
+      fillStrongColor: color.fillStrong,
       matched: false,
       mismatched: false,
     });
@@ -280,9 +296,13 @@ function buildDeck(words) {
       matchType: word.matchType,
       spokenWord: word.eng,
       value: word.matchValue,
+      accentColor: color.accent,
+      fillColor: color.fill,
+      fillStrongColor: color.fillStrong,
       matched: false,
       mismatched: false,
     });
+    pairIndex += 1;
   }
   return shuffleArray(deck);
 }
@@ -299,11 +319,12 @@ function renderBoard() {
     button.className = buildCardClass(card);
     button.dataset.cardId = card.id;
     button.dataset.matchType = card.matchType;
+    button.style.setProperty('--card-accent', card.accentColor || '#19777e');
+    button.style.setProperty('--card-fill', card.fillColor || 'rgba(25, 119, 126, 0.05)');
+    button.style.setProperty('--card-fill-strong', card.fillStrongColor || 'rgba(25, 119, 126, 0.11)');
     button.innerHTML = `
       <span class="card-face-wrap">
-        <span class="card-face card-back" aria-hidden="true">
-          <span class="card-back-mark"><span></span><span></span><span></span><span></span></span>
-        </span>
+        <span class="card-face card-back" aria-hidden="true"></span>
         <span class="card-face card-front ${card.faceType}-front">
           <span class="card-value">${escapeHtml(card.value)}</span>
         </span>
@@ -615,4 +636,54 @@ function cssEscape(value) {
     return window.CSS.escape(value);
   }
   return String(value).replaceAll('"', '\\"');
+}
+
+function supportsEmojiGlyph(emoji) {
+  if (!emoji) return false;
+  if (emojiSupportCache.has(emoji)) {
+    return emojiSupportCache.get(emoji);
+  }
+
+  try {
+    const canvas = document.createElement('canvas');
+    canvas.width = 32;
+    canvas.height = 32;
+    const context = canvas.getContext('2d', { willReadFrequently: true });
+    if (!context) {
+      emojiSupportCache.set(emoji, true);
+      return true;
+    }
+
+    const drawPixels = (text) => {
+      context.clearRect(0, 0, canvas.width, canvas.height);
+      context.textBaseline = 'top';
+      context.font = '28px "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif';
+      context.fillText(text, 0, 0);
+      return context.getImageData(0, 0, canvas.width, canvas.height).data;
+    };
+
+    const emojiPixels = drawPixels(emoji);
+    const tofuPixels = drawPixels('\u25a1');
+    const replacementPixels = drawPixels('\ufffd');
+    let hasInk = false;
+    let tofuDiff = 0;
+    let replacementDiff = 0;
+
+    for (let index = 0; index < emojiPixels.length; index += 4) {
+      if (emojiPixels[index + 3] > 0) hasInk = true;
+      tofuDiff += Math.abs(emojiPixels[index] - tofuPixels[index]);
+      tofuDiff += Math.abs(emojiPixels[index + 1] - tofuPixels[index + 1]);
+      tofuDiff += Math.abs(emojiPixels[index + 2] - tofuPixels[index + 2]);
+      replacementDiff += Math.abs(emojiPixels[index] - replacementPixels[index]);
+      replacementDiff += Math.abs(emojiPixels[index + 1] - replacementPixels[index + 1]);
+      replacementDiff += Math.abs(emojiPixels[index + 2] - replacementPixels[index + 2]);
+    }
+
+    const supported = hasInk && tofuDiff > 1200 && replacementDiff > 1200;
+    emojiSupportCache.set(emoji, supported);
+    return supported;
+  } catch {
+    emojiSupportCache.set(emoji, true);
+    return true;
+  }
 }
