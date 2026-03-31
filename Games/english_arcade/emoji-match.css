@@ -1,15 +1,14 @@
 :root {
-  --ink: #143043;
-  --muted: #647381;
-  --bg-top: #fff5de;
-  --bg-bottom: #d6f0f5;
-  --panel: rgba(255, 252, 246, 0.96);
-  --line: rgba(20, 48, 67, 0.1);
-  --shadow: 0 18px 44px rgba(14, 43, 60, 0.1);
-  --accent: #1ea3be;
-  --accent-strong: #0b7287;
-  --accent-soft: rgba(30, 163, 190, 0.12);
-  --warm-soft: rgba(255, 188, 115, 0.18);
+  --ink: #1b2f34;
+  --muted: #6f7d80;
+  --bg-top: #f7f2e8;
+  --bg-bottom: #edf2ee;
+  --panel: rgba(255, 254, 250, 0.96);
+  --line: rgba(27, 47, 52, 0.11);
+  --shadow: 0 16px 36px rgba(27, 47, 52, 0.08);
+  --accent: #1f8ca2;
+  --accent-strong: #155f70;
+  --accent-soft: rgba(31, 140, 162, 0.08);
   --mismatch: #dd5b52;
   --matched: #2aa56e;
 }
@@ -27,11 +26,7 @@ body {
 body {
   font-family: "Poppins", sans-serif;
   color: var(--ink);
-  background:
-    radial-gradient(circle at top left, rgba(255, 170, 102, 0.22), transparent 28%),
-    radial-gradient(circle at top right, rgba(32, 193, 213, 0.1), transparent 30%),
-    radial-gradient(circle at bottom right, rgba(11, 114, 135, 0.12), transparent 25%),
-    linear-gradient(180deg, var(--bg-top), var(--bg-bottom));
+  background: linear-gradient(180deg, var(--bg-top), var(--bg-bottom));
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -44,7 +39,7 @@ student-header {
 .memory-app {
   flex: 1 1 auto;
   min-height: 0;
-  padding: 10px 12px 12px;
+  padding: 8px 10px 10px;
 }
 
 .screen {
@@ -63,21 +58,21 @@ student-header {
 }
 
 .setup-stage {
-  width: min(560px, 100%);
+  width: min(430px, 100%);
   display: grid;
-  gap: 16px;
+  gap: 14px;
 }
 
 .setup-intro {
   text-align: center;
   display: grid;
-  gap: 6px;
+  gap: 4px;
 }
 
 .setup-kicker,
 .game-kicker {
   margin: 0;
-  font-size: 0.74rem;
+  font-size: 0.7rem;
   font-weight: 700;
   letter-spacing: 0.16em;
   text-transform: uppercase;
@@ -86,15 +81,15 @@ student-header {
 
 .setup-title {
   margin: 0;
-  font-size: clamp(2rem, 5vw, 3rem);
-  line-height: 0.96;
+  font-size: clamp(1.8rem, 5vw, 2.5rem);
+  line-height: 0.98;
   letter-spacing: -0.04em;
 }
 
 .setup-subtitle {
   margin: 0;
-  font-size: 0.98rem;
-  line-height: 1.45;
+  font-size: 0.92rem;
+  line-height: 1.35;
   color: var(--muted);
 }
 
@@ -103,35 +98,20 @@ student-header {
   background: var(--panel);
   border: 1px solid var(--line);
   box-shadow: var(--shadow);
-  border-radius: 30px;
+  border-radius: 24px;
 }
 
 .setup-card {
   width: 100%;
-  padding: 22px;
+  padding: 18px;
   display: grid;
-  gap: 18px;
-  position: relative;
-  overflow: hidden;
-}
-
-.setup-card::before {
-  content: "";
-  position: absolute;
-  inset: auto -80px -80px auto;
-  width: 220px;
-  height: 220px;
-  border-radius: 50%;
-  background: radial-gradient(circle, var(--accent-soft), transparent 70%);
-  pointer-events: none;
+  gap: 14px;
 }
 
 .setup-fields {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-  position: relative;
-  z-index: 1;
+  gap: 10px;
 }
 
 .field-group {
@@ -140,62 +120,38 @@ student-header {
 }
 
 .field-group label,
-.summary-label,
-.meta-label,
 .stat-label {
-  font-size: 0.76rem;
+  font-size: 0.68rem;
   text-transform: uppercase;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.14em;
   color: var(--muted);
 }
 
 .field-group select {
   width: 100%;
   border: 1px solid rgba(20, 48, 67, 0.12);
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.9);
-  padding: 14px 16px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.88);
+  padding: 12px 14px;
   font: inherit;
   color: var(--ink);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
 }
 
-.setup-summary,
-.session-stats,
-.game-meta {
-  display: grid;
-  gap: 10px;
+.setup-facts {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--muted);
 }
 
-.setup-summary {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  position: relative;
-  z-index: 1;
-}
-
-.summary-chip,
-.meta-chip,
-.stat-chip {
-  background: rgba(255, 255, 255, 0.82);
-  border: 1px solid rgba(20, 48, 67, 0.08);
-  border-radius: 18px;
-  padding: 11px 13px;
-}
-
-.summary-chip strong,
-.meta-chip strong,
-.stat-chip strong {
-  display: block;
-  margin-top: 4px;
-  font-size: 1rem;
-  font-weight: 700;
+.setup-facts strong {
+  color: var(--ink);
 }
 
 .primary-action,
 .secondary-action {
   appearance: none;
-  border-radius: 18px;
-  padding: 13px 18px;
+  border-radius: 999px;
+  padding: 12px 18px;
   font: inherit;
   font-weight: 700;
   cursor: pointer;
@@ -214,12 +170,12 @@ student-header {
   border: none;
   background: linear-gradient(135deg, var(--accent), var(--accent-strong));
   color: #fff;
-  box-shadow: 0 14px 30px rgba(11, 116, 138, 0.22);
+  box-shadow: 0 10px 24px rgba(21, 95, 112, 0.18);
 }
 
 .secondary-action {
   border: 1px solid rgba(20, 48, 67, 0.12);
-  background: rgba(255, 255, 255, 0.88);
+  background: rgba(255, 255, 255, 0.78);
   color: var(--ink);
 }
 
@@ -239,11 +195,9 @@ student-header {
 
 .message-banner {
   min-height: 22px;
-  font-size: 0.92rem;
+  font-size: 0.84rem;
   font-weight: 600;
   color: var(--accent-strong);
-  position: relative;
-  z-index: 1;
 }
 
 .message-banner.is-error {
@@ -257,16 +211,16 @@ student-header {
 .game-shell {
   height: 100%;
   min-height: 0;
-  padding: 12px;
+  padding: 12px 12px 10px;
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
-  gap: 10px;
+  gap: 8px;
   overflow: hidden;
 }
 
 .game-topbar {
   display: flex;
-  gap: 10px;
+  gap: 8px;
   justify-content: space-between;
   align-items: center;
 }
@@ -274,35 +228,33 @@ student-header {
 .game-heading {
   min-width: 0;
   display: grid;
-  gap: 6px;
+  gap: 3px;
 }
 
-.game-meta {
+.game-context {
+  margin: 0;
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 6px;
+  align-items: center;
+  color: var(--muted);
+  font-size: 0.88rem;
 }
 
-.meta-chip-compact {
-  padding: 8px 12px;
-  border-radius: 999px;
-  background: var(--accent-soft);
-  border-color: rgba(30, 163, 190, 0.08);
-}
-
-.meta-chip-compact strong {
-  margin-top: 1px;
-  font-size: 0.95rem;
+.game-context strong,
+.game-context span {
+  min-width: 0;
 }
 
 .exit-action {
   flex: 0 0 auto;
-  padding: 10px 14px;
-  border-radius: 999px;
+  padding: 9px 14px;
 }
 
 .session-stats {
+  display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
 }
 
 .board-frame {
@@ -310,43 +262,48 @@ student-header {
   min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 4px;
+  gap: 6px;
+  padding: 0;
 }
 
 .round-strip {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  padding: 0 2px;
+  justify-content: flex-start;
+  gap: 8px;
+  padding: 0 1px;
 }
 
-.round-strip-group {
-  min-width: 0;
-  display: grid;
-  gap: 2px;
-}
-
-.round-strip-group strong {
-  font-size: 0.98rem;
-  line-height: 1.1;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.round-label {
-  font-size: 0.7rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+.star-note {
+  margin: 0;
+  font-size: 0.82rem;
   color: var(--muted);
+}
+
+.star-note strong {
+  color: var(--ink);
+}
+
+.stat-chip {
+  border-radius: 14px;
+  padding: 9px 10px;
+}
+
+.stat-chip-minimal {
+  background: rgba(255, 255, 255, 0.68);
+  border: 1px solid rgba(27, 47, 52, 0.06);
+}
+
+.stat-chip-minimal strong {
+  display: block;
+  margin-top: 3px;
+  font-size: 0.96rem;
 }
 
 .message-game {
   padding: 0 2px;
   min-height: 18px;
-  font-size: 0.84rem;
+  font-size: 0.78rem;
 }
 
 .board-grid {
@@ -354,7 +311,7 @@ student-header {
   min-height: 0;
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 8px;
+  gap: 6px;
   align-content: stretch;
 }
 
@@ -399,7 +356,7 @@ student-header {
   position: relative;
   border: none;
   background: transparent;
-  border-radius: 20px;
+  border-radius: 16px;
   cursor: pointer;
   perspective: 1000px;
   padding: 0;
@@ -430,7 +387,7 @@ student-header {
 .card-face {
   position: absolute;
   inset: 0;
-  border-radius: 20px;
+  border-radius: 16px;
   backface-visibility: hidden;
   display: grid;
   place-items: center;
@@ -438,29 +395,27 @@ student-header {
 }
 
 .card-back {
-  background:
-    radial-gradient(circle at top left, rgba(255,255,255,0.2), transparent 34%),
-    linear-gradient(145deg, #1ab0ca, #0b748a);
+  background: linear-gradient(180deg, #258aa0, #1b6f82);
   color: #fff;
-  font-size: clamp(1.4rem, 2.5vw, 2rem);
+  font-size: clamp(1.2rem, 2.4vw, 1.8rem);
   font-weight: 700;
-  box-shadow: 0 12px 24px rgba(11, 116, 138, 0.2);
+  box-shadow: 0 8px 18px rgba(21, 95, 112, 0.16);
 }
 
 .card-front {
   transform: rotateY(180deg);
-  border: 2px solid rgba(20, 48, 67, 0.08);
-  box-shadow: 0 10px 24px rgba(20, 48, 67, 0.08);
+  border: 1px solid rgba(20, 48, 67, 0.08);
+  box-shadow: 0 8px 18px rgba(20, 48, 67, 0.06);
   padding: 8px;
   background: #fff;
 }
 
 .card-front.word-front {
-  background: linear-gradient(180deg, #fff8ec, #ffffff);
+  background: linear-gradient(180deg, #fcf7ef, #ffffff);
 }
 
 .card-front.match-front {
-  background: linear-gradient(180deg, #effcff, #ffffff);
+  background: linear-gradient(180deg, #f4fafa, #ffffff);
 }
 
 .card-value {
@@ -472,15 +427,15 @@ student-header {
 }
 
 .word-front .card-value {
-  font-size: clamp(0.82rem, 1.85vw, 1.25rem);
+  font-size: clamp(0.74rem, 1.8vw, 1.08rem);
 }
 
 .match-card[data-match-type="emoji"] .match-front .card-value {
-  font-size: clamp(1.8rem, 3.8vw, 2.8rem);
+  font-size: clamp(1.5rem, 3.5vw, 2.35rem);
 }
 
 .match-card[data-match-type="korean"] .match-front .card-value {
-  font-size: clamp(0.82rem, 2vw, 1.2rem);
+  font-size: clamp(0.74rem, 1.9vw, 1.04rem);
 }
 
 .match-card.is-matched .card-front {
@@ -520,12 +475,12 @@ student-header {
 
   .setup-card,
   .game-shell {
-    border-radius: 24px;
+    border-radius: 18px;
   }
 
   .setup-card,
   .game-shell {
-    padding: 12px;
+    padding: 10px;
   }
 
   .setup-fields {
@@ -534,7 +489,7 @@ student-header {
   }
 
   .game-topbar {
-    align-items: flex-start;
+    align-items: center;
   }
 
   .session-stats {
@@ -542,8 +497,6 @@ student-header {
   }
 
   .round-strip {
-    align-items: flex-start;
-    flex-direction: column;
     gap: 6px;
   }
 
@@ -553,15 +506,15 @@ student-header {
 
   .match-card,
   .card-face {
-    border-radius: 16px;
+    border-radius: 14px;
   }
 
   .word-front .card-value,
   .match-card[data-match-type="korean"] .match-front .card-value {
-    font-size: clamp(0.68rem, 3vw, 0.9rem);
+    font-size: clamp(0.64rem, 2.9vw, 0.82rem);
   }
 
   .match-card[data-match-type="emoji"] .match-front .card-value {
-    font-size: clamp(1.15rem, 6.2vw, 1.85rem);
+    font-size: clamp(1rem, 5.8vw, 1.55rem);
   }
 }
