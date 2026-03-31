@@ -113,6 +113,7 @@ async function startNewGame() {
   state.difficulty = elements.difficultySelect.value;
   resetRoundState();
   syncUrlState();
+  setSetupMessage('');
   showGameScreen();
   showLoading(`Building a ${state.grid} ${DIFFICULTY_CONFIG[state.difficulty].label.toLowerCase()} board…`);
   setMessage('');
@@ -201,6 +202,9 @@ async function resolveRandomBoard(difficultyKey, gridKey) {
   const config = DIFFICULTY_CONFIG[difficultyKey];
   const gridConfig = GRID_CONFIG[gridKey];
   const shuffledPool = shuffleArray([...config.pool]);
+  const mixedEntries = [];
+  const mixedEntryKeys = new Set();
+  const mixedSourceLabels = [];
 
   for (const meta of shuffledPool) {
     const cacheKey = `${difficultyKey}:${gridKey}:${meta.file}`;
@@ -213,10 +217,29 @@ async function resolveRandomBoard(difficultyKey, gridKey) {
         words: shuffleArray(entries).slice(0, gridConfig.pairs),
       };
     }
+
+    if (!entries.length) continue;
+    mixedSourceLabels.push(meta.label);
+    for (const entry of shuffleArray(entries)) {
+      const entryKey = `${entry.eng.toLowerCase()}::${entry.matchType}::${String(entry.matchValue).toLowerCase()}`;
+      if (mixedEntryKeys.has(entryKey)) continue;
+      mixedEntryKeys.add(entryKey);
+      mixedEntries.push(entry);
+      if (mixedEntries.length >= gridConfig.pairs) {
+        return {
+          meta: {
+            label: `Mixed ${config.label} Lists`,
+            file: `mixed:${difficultyKey}`,
+            sourceLabels: [...mixedSourceLabels],
+          },
+          words: shuffleArray(mixedEntries).slice(0, gridConfig.pairs),
+        };
+      }
+    }
   }
 
   state.attemptedLists.clear();
-  throw new Error(`No ${DIFFICULTY_CONFIG[difficultyKey].label.toLowerCase()} list had ${gridConfig.pairs} playable pairs.`);
+  throw new Error(`Could not build a ${gridKey} ${config.label.toLowerCase()} board. Try another level or smaller grid.`);
 }
 
 async function tryPlayableEntries(meta) {

@@ -50,6 +50,10 @@ student-header {
   margin: 0 auto;
 }
 
+.screen[hidden] {
+  display: none !important;
+}
+
 .screen-setup {
   display: grid;
   place-items: center;
