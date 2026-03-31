@@ -126,11 +126,13 @@ async function startNewGame() {
     state.sessionId = startSession({
       mode: 'memory_match',
       wordList: result.words,
-      listName: result.meta.label,
+      listName: null,
       meta: {
         difficulty: state.difficulty,
         grid: state.grid,
         source: 'memory_match',
+        source_list_label: result.meta.label,
+        source_list_file: result.meta.file,
       },
     });
     state.gameActive = true;
