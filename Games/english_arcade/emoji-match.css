@@ -142,6 +142,8 @@ student-header {
 .screen-setup {
   display: grid;
   place-items: center;
+  align-content: start;
+  padding-top: 200px;
 }
 
 .setup-stage {
@@ -595,6 +597,10 @@ student-header {
   .setup-stage {
     width: 100%;
     gap: 18px;
+  }
+
+  .screen-setup {
+    padding-top: 200px;
   }
 
   .setup-card,
