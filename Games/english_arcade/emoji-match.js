@@ -1,6 +1,7 @@
 import './ui/star_overlay.js?v=20260329a';
 import { LEVEL1_LISTS, LEVEL2_LISTS, LEVEL3_LISTS, LEVEL4_LISTS } from './utils/level-lists.js?v=20251214a';
-import { playTTSVariant } from './tts.js?v=20251214a';
+import { playTTSVariant, preloadAllAudio } from './tts.js?v=20251214a';
+import { playSFX } from './sfx.js?v=20251214a';
 import { startSession, logAttempt, endSession } from '../../students/records.js';
 import { initPointsClient } from '../../students/scripts/points-client.js';
 
@@ -35,6 +36,7 @@ const state = {
   loading: false,
   sessionId: null,
   gameActive: false,
+  nextWordAudioAt: 0,
 };
 
 const elements = {
@@ -122,6 +124,8 @@ async function startNewGame() {
     const result = await resolveRandomBoard(state.difficulty, state.grid);
     state.currentListMeta = result.meta;
     state.currentWords = result.words;
+    showLoading(`Loading ${result.words.length} word sounds…`);
+    await preloadRoundAudio(result.words);
     state.cards = buildDeck(result.words);
     state.startedAt = Date.now();
     state.sessionId = startSession({
@@ -355,7 +359,9 @@ function handleCardClick(cardId) {
   if (!card || card.matched || state.selectedIds.includes(cardId)) return;
 
   state.selectedIds.push(cardId);
-  playCardAudio(card);
+  if (state.selectedIds.length === 1) {
+    playCardAudio(card);
+  }
   renderBoard();
   if (state.selectedIds.length < 2) return;
 
@@ -372,6 +378,7 @@ function handleCardClick(cardId) {
     state.selectedIds = [];
     state.matchedPairs += 1;
     state.points += 1;
+    triggerMatchFeedback(firstCard.pairId);
     logPairAttempt(firstCard, secondCard, true);
     renderStats();
     renderBoard();
@@ -479,9 +486,50 @@ async function closePartialSession() {
 }
 
 function playCardAudio(card) {
+  if (card.faceType !== 'word') return;
+  const now = Date.now();
+  if (now < state.nextWordAudioAt) return;
+  state.nextWordAudioAt = now + 900;
   try {
     playTTSVariant(card.spokenWord, 'itself');
   } catch {}
+}
+
+async function preloadRoundAudio(words) {
+  try {
+    await preloadAllAudio(words);
+  } catch {}
+}
+
+function triggerMatchFeedback(pairId) {
+  try {
+    playSFX('correct');
+  } catch {}
+
+  const selector = `[data-card-id^="${cssEscape(pairId)}:"]`;
+  const matchingCards = Array.from(elements.boardGrid.querySelectorAll(selector));
+  for (const cardEl of matchingCards) {
+    cardEl.classList.remove('just-matched');
+    void cardEl.offsetWidth;
+    cardEl.classList.add('just-matched');
+    createSparkles(cardEl);
+    window.setTimeout(() => cardEl.classList.remove('just-matched'), 700);
+  }
+}
+
+function createSparkles(cardEl) {
+  if (!cardEl) return;
+  for (let index = 0; index < 5; index += 1) {
+    const sparkle = document.createElement('span');
+    sparkle.className = 'match-sparkle';
+    sparkle.style.left = `${18 + Math.random() * 64}%`;
+    sparkle.style.top = `${18 + Math.random() * 64}%`;
+    sparkle.style.animationDelay = `${index * 40}ms`;
+    sparkle.style.setProperty('--sparkle-dx', `${(Math.random() - 0.5) * 24}px`);
+    sparkle.style.setProperty('--sparkle-dy', `${-12 - Math.random() * 18}px`);
+    cardEl.appendChild(sparkle);
+    window.setTimeout(() => sparkle.remove(), 720);
+  }
 }
 
 function renderStats() {
@@ -595,4 +643,11 @@ function escapeHtml(value) {
     .replaceAll('>', '&gt;')
     .replaceAll('"', '&quot;')
     .replaceAll("'", '&#39;');
+}
+
+function cssEscape(value) {
+  if (typeof window !== 'undefined' && window.CSS && typeof window.CSS.escape === 'function') {
+    return window.CSS.escape(value);
+  }
+  return String(value).replaceAll('"', '\\"');
 }

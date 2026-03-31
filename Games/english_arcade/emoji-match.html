@@ -11,7 +11,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/students/theme.css" />
-  <link rel="stylesheet" href="./emoji-match.css?v=20260331f" />
+  <link rel="stylesheet" href="./emoji-match.css?v=20260331g" />
   <script src="/students/language.js"></script>
   <script src="/students/theme.js"></script>
 </head>
@@ -62,14 +62,14 @@
       <div class="game-shell">
         <div class="game-topbar">
           <div class="game-heading">
-            <p class="game-kicker">Memory Match</p>
-            <p class="game-context"><strong id="gameGridValue">4x4</strong><span aria-hidden="true">•</span><strong id="gameDifficultyValue">Easy</strong><span aria-hidden="true">•</span><span id="gameListValue">Loading…</span></p>
+            <p class="game-context"><strong id="gameDifficultyValue">Easy</strong><span aria-hidden="true">•</span><span id="gameGridValue">4x4</span></p>
           </div>
           <button id="exitGameBtn" class="secondary-action exit-action" type="button">Exit</button>
         </div>
 
         <div class="board-frame">
           <div class="round-strip">
+            <p class="round-list"><span id="gameListValue">Loading…</span></p>
             <p class="star-note">5 stars at <strong id="starTargetValue">8 moves</strong></p>
           </div>
 
@@ -104,6 +104,6 @@
   </main>
 
   <script type="module" src="/students/components/student-header.js?v=20260115"></script>
-  <script type="module" src="./emoji-match.js?v=20260331f"></script>
+  <script type="module" src="./emoji-match.js?v=20260331g"></script>
 </body>
 </html>
