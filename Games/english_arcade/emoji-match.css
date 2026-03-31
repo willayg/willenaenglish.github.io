@@ -477,22 +477,18 @@ student-header {
 }
 
 .card-back {
-  background:
-    linear-gradient(var(--card-fill-strong), var(--card-fill-strong)) padding-box,
-    linear-gradient(var(--chrome-border-angle), #59d7db, #ef4b93, #59d7db) border-box;
-  border: 5px solid transparent;
+  background: var(--card-fill-strong);
+  border: 5px solid var(--card-accent);
   box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
 }
 
 .card-front {
   transform: rotateY(180deg);
   -webkit-transform: rotateY(180deg) translateZ(0);
-  border: 5px solid transparent;
+  border: 5px solid var(--card-accent);
   box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
   padding: 10px 8px;
-  background:
-    linear-gradient(var(--card-fill), var(--card-fill)) padding-box,
-    linear-gradient(var(--chrome-border-angle), #59d7db, #ef4b93, #59d7db) border-box;
+  background: var(--card-fill);
   color: var(--ink);
 }
 
