@@ -6,7 +6,7 @@ import { startSession, logAttempt, endSession } from '../../students/records.js'
 import { initPointsClient } from '../../students/scripts/points-client.js';
 
 const GRID_CONFIG = {
-  '4x6': { columns: 4, rows: 6, cards: 24, pairs: 12 },
+  '3x4': { columns: 3, rows: 4, cards: 12, pairs: 6 },
 };
 
 const DIFFICULTY_CONFIG = {
@@ -29,7 +29,7 @@ const emojiSupportCache = new Map();
 
 const state = {
   difficulty: readDifficultyFromQuery(),
-  grid: '4x6',
+  grid: '3x4',
   cards: [],
   selectedIds: [],
   matchedPairs: 0,

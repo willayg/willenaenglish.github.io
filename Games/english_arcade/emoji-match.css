@@ -321,13 +321,13 @@ student-header {
   flex: 1 1 auto;
   min-height: 0;
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 8px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
   align-content: stretch;
 }
 
-.board-grid[data-rows="6"] {
-  grid-template-rows: repeat(6, minmax(0, 1fr));
+.board-grid[data-rows="4"] {
+  grid-template-rows: repeat(4, minmax(0, 1fr));
 }
 
 .board-overlay {
@@ -561,7 +561,7 @@ student-header {
   }
 
   .board-grid {
-    gap: 8px;
+    gap: 10px;
   }
 
   .match-card,
@@ -571,11 +571,11 @@ student-header {
 
   .word-front .card-value,
   .match-card[data-match-type="korean"] .match-front .card-value {
-    font-size: clamp(0.82rem, 3vw, 0.98rem);
+    font-size: clamp(1rem, 4vw, 1.18rem);
   }
 
   .match-card[data-match-type="emoji"] .match-front .card-value {
-    font-size: clamp(1.2rem, 5.6vw, 1.65rem);
+    font-size: clamp(1.6rem, 7vw, 2.05rem);
   }
 
   .stat-chip {
