@@ -3,115 +3,116 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Emoji Match Ladder</title>
-  <meta name="description" content="A standalone 4x4 word and emoji matching game with easy to expert difficulty levels." />
+  <title>Memory Match</title>
+  <meta name="description" content="Standalone Memory Match with English words, emoji or Korean pairs, and English Arcade points and stars." />
+  <script src="/students/api-gateway.js?v=20260326c"></script>
+  <script src="/js/api-config.js?v=20260324r"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Manrope:wght@500;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="./emoji-match.css?v=20260331a" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/students/theme.css" />
+  <link rel="stylesheet" href="./emoji-match.css?v=20260331b" />
+  <script src="/students/language.js"></script>
+  <script src="/students/theme.js"></script>
 </head>
 <body>
-  <div class="page-shell">
-    <header class="hero">
-      <div class="hero-copy">
-        <p class="eyebrow">Standalone English Arcade Experiment</p>
-        <h1>Emoji Match Ladder</h1>
-        <p class="hero-text">Flip a word and its emoji partner on a 4x4 board. Each difficulty pulls a random sample list, so the game stays fresh without changing the existing English Arcade menus.</p>
+  <student-header title="Memory Match" show-home="true" show-points="true" show-logout="true" home-href="/students/dashboard.html" home-label="Home"></student-header>
+
+  <main class="memory-app">
+    <section id="setupScreen" class="screen screen-setup">
+      <div class="setup-card">
+        <div class="field-group">
+          <label for="gridSelect">Grid</label>
+          <select id="gridSelect">
+            <option value="4x4">4x4</option>
+            <option value="4x5">4x5</option>
+            <option value="4x6">4x6</option>
+          </select>
+        </div>
+
+        <div class="field-group">
+          <label for="difficultySelect">Level</label>
+          <select id="difficultySelect">
+            <option value="easy">Easy</option>
+            <option value="medium">Medium</option>
+            <option value="hard">Hard</option>
+            <option value="expert">Expert</option>
+          </select>
+        </div>
+
+        <div class="setup-summary">
+          <div class="summary-chip">
+            <span class="summary-label">Pairs</span>
+            <strong id="setupPairsValue">8</strong>
+          </div>
+          <div class="summary-chip">
+            <span class="summary-label">5 Stars</span>
+            <strong id="setupStarValue">8 moves</strong>
+          </div>
+        </div>
+
+        <div id="setupMessage" class="message-banner" aria-live="polite"></div>
+
+        <button id="startGameBtn" class="primary-action" type="button">Start</button>
       </div>
-      <div class="hero-panel">
-        <div class="orb orb-one" aria-hidden="true"></div>
-        <div class="orb orb-two" aria-hidden="true"></div>
-        <div class="hero-stat">
-          <span class="hero-stat-label">Board</span>
-          <span class="hero-stat-value">4 x 4</span>
-        </div>
-        <div class="hero-stat">
-          <span class="hero-stat-label">Pairs</span>
-          <span class="hero-stat-value">8</span>
-        </div>
-        <div class="hero-stat">
-          <span class="hero-stat-label">Source</span>
-          <span class="hero-stat-value">Sample Lists</span>
-        </div>
-      </div>
-    </header>
+    </section>
 
-    <main class="match-layout">
-      <section class="control-panel">
-        <div class="panel-card">
-          <div class="panel-heading">
-            <p class="panel-kicker">Choose Difficulty</p>
-            <h2>Easy to Hard</h2>
+    <section id="gameScreen" class="screen screen-game" hidden>
+      <div class="game-shell">
+        <div class="game-topbar">
+          <div class="game-meta">
+            <div class="meta-chip">
+              <span class="meta-label">Grid</span>
+              <strong id="gameGridValue">4x4</strong>
+            </div>
+            <div class="meta-chip">
+              <span class="meta-label">Level</span>
+              <strong id="gameDifficultyValue">Easy</strong>
+            </div>
+            <div class="meta-chip">
+              <span class="meta-label">List</span>
+              <strong id="gameListValue">Loading…</strong>
+            </div>
           </div>
+          <button id="exitGameBtn" class="secondary-action exit-action" type="button">Exit</button>
+        </div>
 
-          <div id="difficultyList" class="difficulty-list" role="radiogroup" aria-label="Choose difficulty"></div>
-
-          <div class="control-actions">
-            <button id="startBoardBtn" class="primary-action" type="button">Start Random Board</button>
-            <button id="nextBoardBtn" class="secondary-action" type="button">Next Random Board</button>
+        <div class="session-stats">
+          <div class="stat-chip">
+            <span class="stat-label">Points</span>
+            <strong id="pointsValue">0</strong>
           </div>
-
-          <div class="status-grid">
-            <div class="status-card">
-              <span class="status-label">Difficulty</span>
-              <strong id="difficultyValue">Easy</strong>
-            </div>
-            <div class="status-card">
-              <span class="status-label">Moves</span>
-              <strong id="movesValue">0</strong>
-            </div>
-            <div class="status-card">
-              <span class="status-label">Matches</span>
-              <strong id="matchesValue">0 / 8</strong>
-            </div>
-            <div class="status-card">
-              <span class="status-label">Time</span>
-              <strong id="timeValue">00:00</strong>
-            </div>
+          <div class="stat-chip">
+            <span class="stat-label">Moves</span>
+            <strong id="movesValue">0</strong>
+          </div>
+          <div class="stat-chip">
+            <span class="stat-label">Matches</span>
+            <strong id="matchesValue">0 / 8</strong>
+          </div>
+          <div class="stat-chip">
+            <span class="stat-label">Time</span>
+            <strong id="timeValue">00:00</strong>
+          </div>
+          <div class="stat-chip">
+            <span class="stat-label">5 Stars</span>
+            <strong id="starTargetValue">8 moves</strong>
           </div>
         </div>
 
-        <div class="panel-card list-card">
-          <div class="panel-heading compact">
-            <p class="panel-kicker">Current Draw</p>
-            <h2 id="currentListLabel">Pick a difficulty to begin</h2>
-          </div>
-          <p id="currentListHint" class="list-hint">This standalone build rotates through existing sample vocab lists and skips lists that do not have enough emoji-ready words.</p>
-          <div id="messageBanner" class="message-banner" aria-live="polite"></div>
-        </div>
-      </section>
-
-      <section class="board-panel">
-        <div class="board-shell">
-          <div id="loadingState" class="board-overlay">
+        <div class="board-frame">
+          <div id="loadingState" class="board-overlay" hidden>
             <div class="loader"></div>
-            <p id="loadingText">Preparing a random board…</p>
+            <p id="loadingText">Building board…</p>
           </div>
-
-          <div id="emptyState" class="empty-state">
-            <div class="empty-badge">🎯</div>
-            <h2>Ready to play</h2>
-            <p>Choose a difficulty, then start a random board. The page will pull one eligible list from that level and build a fresh 4x4 deck.</p>
-          </div>
-
+          <div id="messageBanner" class="message-banner message-game" aria-live="polite"></div>
           <div id="boardGrid" class="board-grid" aria-live="polite"></div>
         </div>
-      </section>
-    </main>
-  </div>
-
-  <div id="winModal" class="win-modal" hidden>
-    <div class="win-card">
-      <p class="panel-kicker">Board Complete</p>
-      <h2 id="winTitle">Nice round.</h2>
-      <p id="winSummary" class="win-summary"></p>
-      <div class="win-actions">
-        <button id="playSameLevelBtn" class="primary-action" type="button">Play Same Difficulty</button>
-        <button id="closeWinBtn" class="secondary-action" type="button">Choose Another Level</button>
       </div>
-    </div>
-  </div>
+    </section>
+  </main>
 
-  <script type="module" src="./emoji-match.js?v=20260331a"></script>
+  <script type="module" src="/students/components/student-header.js?v=20260115"></script>
+  <script type="module" src="./emoji-match.js?v=20260331b"></script>
 </body>
 </html>

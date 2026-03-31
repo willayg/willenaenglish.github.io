@@ -1,38 +1,30 @@
+import './ui/star_overlay.js?v=20260329a';
 import { LEVEL1_LISTS, LEVEL2_LISTS, LEVEL3_LISTS, LEVEL4_LISTS } from './utils/level-lists.js?v=20251214a';
+import { playTTSVariant } from './tts.js?v=20251214a';
+import { startSession, logAttempt, endSession } from '../../students/records.js';
+import { initPointsClient } from '../../students/scripts/points-client.js';
+
+const GRID_CONFIG = {
+  '4x4': { columns: 4, rows: 4, cards: 16, pairs: 8 },
+  '4x5': { columns: 4, rows: 5, cards: 20, pairs: 10 },
+  '4x6': { columns: 4, rows: 6, cards: 24, pairs: 12 },
+};
 
 const DIFFICULTY_CONFIG = {
-  easy: {
-    label: 'Easy',
-    subtitle: 'Level 1 sample lists with familiar everyday words.',
-    color: '#0ea5a4',
-    pool: LEVEL1_LISTS,
-  },
-  medium: {
-    label: 'Medium',
-    subtitle: 'Level 2 sample lists with broader vocabulary and trickier choices.',
-    color: '#f59e0b',
-    pool: LEVEL2_LISTS,
-  },
-  hard: {
-    label: 'Hard',
-    subtitle: 'Level 3 lists with less common words and tighter matching pressure.',
-    color: '#ef6a3b',
-    pool: LEVEL3_LISTS,
-  },
-  expert: {
-    label: 'Expert',
-    subtitle: 'Level 4 lists for the toughest standalone rounds.',
-    color: '#ff4f87',
-    pool: LEVEL4_LISTS,
-  },
+  easy: { label: 'Easy', pool: LEVEL1_LISTS },
+  medium: { label: 'Medium', pool: LEVEL2_LISTS },
+  hard: { label: 'Hard', pool: LEVEL3_LISTS },
+  expert: { label: 'Expert', pool: LEVEL4_LISTS },
 };
 
 const state = {
   difficulty: readDifficultyFromQuery(),
+  grid: readGridFromQuery(),
   cards: [],
   selectedIds: [],
   matchedPairs: 0,
   moves: 0,
+  points: 0,
   lockBoard: false,
   timerId: null,
   startedAt: 0,
@@ -41,41 +33,47 @@ const state = {
   currentWords: [],
   attemptedLists: new Set(),
   loading: false,
+  sessionId: null,
+  gameActive: false,
 };
 
 const elements = {
-  difficultyList: document.getElementById('difficultyList'),
-  difficultyValue: document.getElementById('difficultyValue'),
+  setupScreen: document.getElementById('setupScreen'),
+  gameScreen: document.getElementById('gameScreen'),
+  gridSelect: document.getElementById('gridSelect'),
+  difficultySelect: document.getElementById('difficultySelect'),
+  setupPairsValue: document.getElementById('setupPairsValue'),
+  setupStarValue: document.getElementById('setupStarValue'),
+  setupMessage: document.getElementById('setupMessage'),
+  startGameBtn: document.getElementById('startGameBtn'),
+  exitGameBtn: document.getElementById('exitGameBtn'),
+  gameGridValue: document.getElementById('gameGridValue'),
+  gameDifficultyValue: document.getElementById('gameDifficultyValue'),
+  gameListValue: document.getElementById('gameListValue'),
+  pointsValue: document.getElementById('pointsValue'),
   movesValue: document.getElementById('movesValue'),
   matchesValue: document.getElementById('matchesValue'),
   timeValue: document.getElementById('timeValue'),
-  currentListLabel: document.getElementById('currentListLabel'),
-  currentListHint: document.getElementById('currentListHint'),
+  starTargetValue: document.getElementById('starTargetValue'),
   messageBanner: document.getElementById('messageBanner'),
   boardGrid: document.getElementById('boardGrid'),
-  emptyState: document.getElementById('emptyState'),
   loadingState: document.getElementById('loadingState'),
   loadingText: document.getElementById('loadingText'),
-  startBoardBtn: document.getElementById('startBoardBtn'),
-  nextBoardBtn: document.getElementById('nextBoardBtn'),
-  winModal: document.getElementById('winModal'),
-  winTitle: document.getElementById('winTitle'),
-  winSummary: document.getElementById('winSummary'),
-  playSameLevelBtn: document.getElementById('playSameLevelBtn'),
-  closeWinBtn: document.getElementById('closeWinBtn'),
 };
 
 bootstrap();
 
 function bootstrap() {
-  renderDifficultyButtons();
+  initPointsClient();
+  elements.gridSelect.value = state.grid;
+  elements.difficultySelect.value = state.difficulty;
+  updateSetupSummary();
   wireControls();
   renderStats();
-  updateDifficultyPanel();
 
   const params = new URLSearchParams(window.location.search || '');
   if (params.get('autostart') === '1') {
-    loadRandomBoard();
+    startNewGame();
   }
 }
 
@@ -85,153 +83,177 @@ function readDifficultyFromQuery() {
   return DIFFICULTY_CONFIG[requested] ? requested : 'easy';
 }
 
-function renderDifficultyButtons() {
-  const fragment = document.createDocumentFragment();
-  for (const [key, config] of Object.entries(DIFFICULTY_CONFIG)) {
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.className = `difficulty-btn${state.difficulty === key ? ' is-active' : ''}`;
-    button.dataset.difficulty = key;
-    button.setAttribute('role', 'radio');
-    button.setAttribute('aria-checked', state.difficulty === key ? 'true' : 'false');
-    button.innerHTML = `
-      <span class="difficulty-title">${config.label}</span>
-      <span class="difficulty-desc">${config.subtitle}</span>
-    `;
-    button.addEventListener('click', () => setDifficulty(key));
-    fragment.appendChild(button);
-  }
-
-  elements.difficultyList.replaceChildren(fragment);
+function readGridFromQuery() {
+  const params = new URLSearchParams(window.location.search || '');
+  const requested = String(params.get('grid') || '').toLowerCase();
+  return GRID_CONFIG[requested] ? requested : '4x4';
 }
 
 function wireControls() {
-  elements.startBoardBtn.addEventListener('click', () => loadRandomBoard());
-  elements.nextBoardBtn.addEventListener('click', () => loadRandomBoard());
-  elements.playSameLevelBtn.addEventListener('click', () => {
-    hideWinModal();
-    loadRandomBoard();
+  elements.gridSelect.addEventListener('change', () => {
+    state.grid = elements.gridSelect.value;
+    updateSetupSummary();
+    syncUrlState();
   });
-  elements.closeWinBtn.addEventListener('click', () => hideWinModal());
+
+  elements.difficultySelect.addEventListener('change', () => {
+    state.difficulty = elements.difficultySelect.value;
+    updateSetupSummary();
+    syncUrlState();
+  });
+
+  elements.startGameBtn.addEventListener('click', () => startNewGame());
+  elements.exitGameBtn.addEventListener('click', () => handleExitGame());
 }
 
-function setDifficulty(key) {
-  if (!DIFFICULTY_CONFIG[key] || state.loading) return;
-  const changedWhileBoardVisible = state.cards.length > 0 && state.currentListMeta;
-  state.difficulty = key;
-  state.attemptedLists.clear();
-  renderDifficultyButtons();
-  updateDifficultyPanel();
-  setMessage(changedWhileBoardVisible
-    ? `${DIFFICULTY_CONFIG[key].label} selected. Start a new board to switch this round over.`
-    : `${DIFFICULTY_CONFIG[key].label} selected. Build a fresh random board when ready.`);
-  const url = new URL(window.location.href);
-  url.searchParams.set('difficulty', key);
-  window.history.replaceState({}, '', url.toString());
-}
-
-async function loadRandomBoard() {
+async function startNewGame() {
   if (state.loading) return;
   state.loading = true;
-  hideWinModal();
-  showLoading(`Finding a ${DIFFICULTY_CONFIG[state.difficulty].label.toLowerCase()} board…`);
+  state.grid = elements.gridSelect.value;
+  state.difficulty = elements.difficultySelect.value;
+  resetRoundState();
+  syncUrlState();
+  showGameScreen();
+  showLoading(`Building a ${state.grid} ${DIFFICULTY_CONFIG[state.difficulty].label.toLowerCase()} board…`);
   setMessage('');
-  stopTimer();
 
   try {
-    const result = await resolveRandomBoard(state.difficulty);
+    const result = await resolveRandomBoard(state.difficulty, state.grid);
     state.currentListMeta = result.meta;
     state.currentWords = result.words;
     state.cards = buildDeck(result.words);
-    state.selectedIds = [];
-    state.matchedPairs = 0;
-    state.moves = 0;
-    state.lockBoard = false;
-    state.secondsElapsed = 0;
     state.startedAt = Date.now();
+    state.sessionId = startSession({
+      mode: 'memory_match',
+      wordList: result.words,
+      listName: result.meta.label,
+      meta: {
+        difficulty: state.difficulty,
+        grid: state.grid,
+        source: 'memory_match',
+      },
+    });
+    state.gameActive = true;
 
-    updateDifficultyPanel();
     renderStats();
     renderBoard();
-    hideLoading();
     startTimer();
-    setMessage(`Loaded ${result.meta.label}. Match each word with its emoji.`);
+    hideLoading();
+    setMessage(`Loaded ${result.meta.label}.`);
   } catch (error) {
     hideLoading();
-    setMessage(error.message || 'Could not build a playable board.', true);
+    state.gameActive = false;
+    setSetupMessage(error.message || 'Could not build a playable board.', true);
+    exitToSetup({ keepMessage: true });
   } finally {
     state.loading = false;
   }
 }
 
-async function resolveRandomBoard(difficultyKey) {
+function resetRoundState() {
+  stopTimer();
+  state.cards = [];
+  state.selectedIds = [];
+  state.matchedPairs = 0;
+  state.moves = 0;
+  state.points = 0;
+  state.lockBoard = false;
+  state.secondsElapsed = 0;
+  state.currentListMeta = null;
+  state.currentWords = [];
+  state.sessionId = null;
+  state.gameActive = false;
+  elements.boardGrid.replaceChildren();
+  renderStats();
+}
+
+function showGameScreen() {
+  elements.setupScreen.hidden = true;
+  elements.gameScreen.hidden = false;
+}
+
+function exitToSetup({ keepMessage = false } = {}) {
+  stopTimer();
+  state.loading = false;
+  state.lockBoard = false;
+  state.selectedIds = [];
+  state.cards = [];
+  state.sessionId = null;
+  state.gameActive = false;
+  elements.boardGrid.replaceChildren();
+  elements.setupScreen.hidden = false;
+  elements.gameScreen.hidden = true;
+  hideLoading();
+  if (!keepMessage) setMessage('');
+  updateSetupSummary();
+}
+
+async function handleExitGame() {
+  if (state.sessionId && state.gameActive) {
+    await closePartialSession();
+  }
+  exitToSetup();
+}
+
+async function resolveRandomBoard(difficultyKey, gridKey) {
   const config = DIFFICULTY_CONFIG[difficultyKey];
+  const gridConfig = GRID_CONFIG[gridKey];
   const shuffledPool = shuffleArray([...config.pool]);
 
   for (const meta of shuffledPool) {
-    const cacheKey = `${difficultyKey}:${meta.file}`;
+    const cacheKey = `${difficultyKey}:${gridKey}:${meta.file}`;
     if (state.attemptedLists.has(cacheKey)) continue;
     state.attemptedLists.add(cacheKey);
-
-    let entries = [];
-    try {
-      entries = await fetchPlayableEntries(meta);
-    } catch {
-      continue;
-    }
-    if (entries.length >= 8) {
+    const entries = await tryPlayableEntries(meta);
+    if (entries.length >= gridConfig.pairs) {
       return {
         meta,
-        words: shuffleArray(entries).slice(0, 8),
+        words: shuffleArray(entries).slice(0, gridConfig.pairs),
       };
     }
   }
 
   state.attemptedLists.clear();
-  for (const meta of shuffledPool) {
-    let entries = [];
-    try {
-      entries = await fetchPlayableEntries(meta);
-    } catch {
-      continue;
-    }
-    if (entries.length >= 8) {
-      return {
-        meta,
-        words: shuffleArray(entries).slice(0, 8),
-      };
-    }
-  }
+  throw new Error(`No ${DIFFICULTY_CONFIG[difficultyKey].label.toLowerCase()} list had ${gridConfig.pairs} playable pairs.`);
+}
 
-  throw new Error(`No playable ${config.label.toLowerCase()} lists were found with 8 unique emoji pairs.`);
+async function tryPlayableEntries(meta) {
+  try {
+    return await fetchPlayableEntries(meta);
+  } catch {
+    return [];
+  }
 }
 
 async function fetchPlayableEntries(meta) {
   const filePath = meta.file.includes('/') ? `./${meta.file}` : `./sample-wordlists/${meta.file}`;
   const response = await fetch(filePath, { cache: 'no-store' });
-  if (!response.ok) {
-    throw new Error(`Failed to load ${meta.label}.`);
-  }
+  if (!response.ok) throw new Error(`Failed to load ${meta.label}.`);
 
   const raw = await response.json();
-  const uniqueByEmoji = new Set();
-  const uniqueByWord = new Set();
+  const uniqueWord = new Set();
+  const uniqueMatch = new Set();
   const playable = [];
 
   for (const item of Array.isArray(raw) ? raw : []) {
     const eng = String(item?.eng || '').trim();
     const emoji = String(item?.emoji || '').trim();
-    if (!eng || !emoji) continue;
+    const kor = String(item?.kor || '').trim();
+    const secondaryValue = emoji || kor;
+    const secondaryType = emoji ? 'emoji' : 'korean';
+    if (!eng || !secondaryValue) continue;
 
     const wordKey = eng.toLowerCase();
-    if (uniqueByEmoji.has(emoji) || uniqueByWord.has(wordKey)) continue;
+    const matchKey = `${secondaryType}:${secondaryValue.toLowerCase()}`;
+    if (uniqueWord.has(wordKey) || uniqueMatch.has(matchKey)) continue;
 
-    uniqueByEmoji.add(emoji);
-    uniqueByWord.add(wordKey);
+    uniqueWord.add(wordKey);
+    uniqueMatch.add(matchKey);
     playable.push({
       pairId: `${meta.file}:${wordKey}`,
       eng,
-      emoji,
+      matchValue: secondaryValue,
+      matchType: secondaryType,
       listLabel: meta.label,
     });
   }
@@ -240,29 +262,35 @@ async function fetchPlayableEntries(meta) {
 }
 
 function buildDeck(words) {
-  const cards = [];
+  const deck = [];
   for (const word of words) {
-    cards.push({
+    deck.push({
       id: `${word.pairId}:word`,
       pairId: word.pairId,
-      type: 'word',
+      faceType: 'word',
+      matchType: word.matchType,
+      spokenWord: word.eng,
       value: word.eng,
       matched: false,
+      mismatched: false,
     });
-    cards.push({
-      id: `${word.pairId}:emoji`,
+    deck.push({
+      id: `${word.pairId}:match`,
       pairId: word.pairId,
-      type: 'emoji',
-      value: word.emoji,
+      faceType: 'match',
+      matchType: word.matchType,
+      spokenWord: word.eng,
+      value: word.matchValue,
       matched: false,
+      mismatched: false,
     });
   }
-
-  return shuffleArray(cards);
+  return shuffleArray(deck);
 }
 
 function renderBoard() {
-  elements.emptyState.hidden = true;
+  const gridConfig = GRID_CONFIG[state.grid];
+  elements.boardGrid.dataset.rows = String(gridConfig.rows);
   const fragment = document.createDocumentFragment();
 
   for (const card of state.cards) {
@@ -270,12 +298,11 @@ function renderBoard() {
     button.type = 'button';
     button.className = buildCardClass(card);
     button.dataset.cardId = card.id;
-    button.setAttribute('aria-label', card.matched ? `${card.type} matched` : `${card.type} hidden card`);
+    button.dataset.matchType = card.matchType;
     button.innerHTML = `
       <span class="card-face-wrap">
-        <span class="card-face card-back" aria-hidden="true">✦</span>
-        <span class="card-face card-front ${card.type}-front">
-          <span class="card-type">${card.type}</span>
+        <span class="card-face card-back" aria-hidden="true">?</span>
+        <span class="card-face card-front ${card.faceType}-front">
           <span class="card-value">${escapeHtml(card.value)}</span>
         </span>
       </span>
@@ -288,29 +315,23 @@ function renderBoard() {
 }
 
 function buildCardClass(card) {
-  const selected = state.selectedIds.includes(card.id);
-  const mismatched = Boolean(card.mismatched);
   return [
     'match-card',
-    (selected || card.matched) ? 'is-revealed' : '',
+    (state.selectedIds.includes(card.id) || card.matched) ? 'is-revealed' : '',
     card.matched ? 'is-matched' : '',
-    mismatched ? 'is-mismatched' : '',
+    card.mismatched ? 'is-mismatched' : '',
     state.lockBoard && !card.matched ? 'is-disabled' : '',
   ].filter(Boolean).join(' ');
 }
 
 function handleCardClick(cardId) {
-  if (state.lockBoard) return;
+  if (state.lockBoard || !state.gameActive) return;
   const card = state.cards.find((entry) => entry.id === cardId);
   if (!card || card.matched || state.selectedIds.includes(cardId)) return;
 
   state.selectedIds.push(cardId);
-  if (card.type === 'word') {
-    speak(card.value);
-  }
-
+  playCardAudio(card);
   renderBoard();
-
   if (state.selectedIds.length < 2) return;
 
   const [firstId, secondId] = state.selectedIds;
@@ -319,27 +340,27 @@ function handleCardClick(cardId) {
   if (!firstCard || !secondCard) return;
 
   state.moves += 1;
-  const isMatch = firstCard.pairId === secondCard.pairId && firstCard.type !== secondCard.type;
-  renderStats();
-
+  const isMatch = firstCard.pairId === secondCard.pairId && firstCard.faceType !== secondCard.faceType;
   if (isMatch) {
     firstCard.matched = true;
     secondCard.matched = true;
     state.selectedIds = [];
     state.matchedPairs += 1;
+    state.points += 1;
+    logPairAttempt(firstCard, secondCard, true);
     renderStats();
     renderBoard();
-
-    if (state.matchedPairs === 8) {
-      stopTimer();
-      showWinModal();
+    if (state.matchedPairs === GRID_CONFIG[state.grid].pairs) {
+      finishRound();
     }
     return;
   }
 
-  state.lockBoard = true;
+  logPairAttempt(firstCard, secondCard, false);
   firstCard.mismatched = true;
   secondCard.mismatched = true;
+  state.lockBoard = true;
+  renderStats();
   renderBoard();
 
   window.setTimeout(() => {
@@ -348,27 +369,120 @@ function handleCardClick(cardId) {
     state.selectedIds = [];
     state.lockBoard = false;
     renderBoard();
-  }, 780);
+  }, 760);
+}
+
+function logPairAttempt(firstCard, secondCard, isCorrect) {
+  if (!state.sessionId) return;
+  const promptCard = firstCard.faceType === 'word' ? secondCard : firstCard;
+  logAttempt({
+    session_id: state.sessionId,
+    mode: 'memory_match',
+    word: firstCard.spokenWord,
+    is_correct: isCorrect,
+    answer: `${firstCard.value} + ${secondCard.value}`,
+    correct_answer: promptCard.value,
+    points: isCorrect ? 1 : 0,
+    extra: {
+      difficulty: state.difficulty,
+      grid: state.grid,
+      pair_type: promptCard.matchType,
+      moves: state.moves,
+      matched_pairs: state.matchedPairs,
+    },
+  });
+}
+
+async function finishRound() {
+  stopTimer();
+  state.gameActive = false;
+  const pairs = GRID_CONFIG[state.grid].pairs;
+  const efficiencyPct = Math.max(0, Math.min(100, Math.round((pairs / Math.max(state.moves, pairs)) * 100)));
+  const starCount = pctToStars(efficiencyPct);
+
+  if (state.sessionId) {
+    await endSession(state.sessionId, {
+      mode: 'memory_match',
+      listName: state.currentListMeta?.label || null,
+      wordList: state.currentWords,
+      summary: {
+        score: efficiencyPct,
+        total: 100,
+        completed: true,
+        points_earned: state.points,
+        matches: state.matchedPairs,
+        moves: state.moves,
+        difficulty: state.difficulty,
+        grid: state.grid,
+        stars_preview: starCount,
+      },
+    });
+  }
+
+  try {
+    if (typeof window.showRoundStars === 'function') {
+      window.showRoundStars({ correct: pairs, total: Math.max(state.moves, pairs) });
+    }
+  } catch {}
+  refreshHeaderOverview();
+  setMessage(`Round complete. ${state.points} points earned.`);
+}
+
+async function closePartialSession() {
+  try {
+    const pairs = GRID_CONFIG[state.grid].pairs;
+    const efficiencyPct = state.moves > 0
+      ? Math.max(0, Math.min(100, Math.round((state.matchedPairs / Math.max(state.moves, state.matchedPairs || 1)) * 100)))
+      : 0;
+    await endSession(state.sessionId, {
+      mode: 'memory_match',
+      listName: state.currentListMeta?.label || null,
+      wordList: state.currentWords,
+      summary: {
+        score: efficiencyPct,
+        total: 100,
+        completed: false,
+        points_earned: state.points,
+        matches: state.matchedPairs,
+        target_pairs: pairs,
+        moves: state.moves,
+        difficulty: state.difficulty,
+        grid: state.grid,
+      },
+    });
+  } catch {}
+}
+
+function playCardAudio(card) {
+  try {
+    playTTSVariant(card.spokenWord, 'itself');
+  } catch {}
 }
 
 function renderStats() {
-  elements.difficultyValue.textContent = DIFFICULTY_CONFIG[state.difficulty].label;
+  const gridConfig = GRID_CONFIG[state.grid];
+  const difficultyLabel = DIFFICULTY_CONFIG[state.difficulty].label;
+  elements.gameGridValue.textContent = state.grid;
+  elements.gameDifficultyValue.textContent = difficultyLabel;
+  elements.gameListValue.textContent = state.currentListMeta?.label || 'Loading…';
+  elements.pointsValue.textContent = String(state.points);
   elements.movesValue.textContent = String(state.moves);
-  elements.matchesValue.textContent = `${state.matchedPairs} / 8`;
+  elements.matchesValue.textContent = `${state.matchedPairs} / ${gridConfig.pairs}`;
   elements.timeValue.textContent = formatSeconds(state.secondsElapsed);
-  elements.nextBoardBtn.disabled = state.loading;
+  const perfectMoves = getPerfectMovesLabel();
+  elements.starTargetValue.textContent = perfectMoves;
+  elements.setupPairsValue.textContent = String(gridConfig.pairs);
+  elements.setupStarValue.textContent = perfectMoves;
 }
 
-function updateDifficultyPanel() {
-  const config = DIFFICULTY_CONFIG[state.difficulty];
-  elements.difficultyValue.textContent = config.label;
-  if (state.currentListMeta) {
-    elements.currentListLabel.textContent = state.currentListMeta.label;
-    elements.currentListHint.textContent = `${config.label} mode is active. This board came from a random eligible list in that difficulty pool.`;
-  } else {
-    elements.currentListLabel.textContent = 'Pick a difficulty to begin';
-    elements.currentListHint.textContent = config.subtitle;
-  }
+function updateSetupSummary() {
+  const gridConfig = GRID_CONFIG[state.grid];
+  elements.setupPairsValue.textContent = String(gridConfig.pairs);
+  elements.setupStarValue.textContent = getPerfectMovesLabel();
+}
+
+function getPerfectMovesLabel() {
+  return `${GRID_CONFIG[state.grid].pairs} moves`;
 }
 
 function startTimer() {
@@ -389,14 +503,14 @@ function stopTimer() {
 function showLoading(message) {
   elements.loadingText.textContent = message;
   elements.loadingState.hidden = false;
-  elements.startBoardBtn.disabled = true;
-  elements.nextBoardBtn.disabled = true;
+  elements.startGameBtn.disabled = true;
+  elements.exitGameBtn.disabled = true;
 }
 
 function hideLoading() {
   elements.loadingState.hidden = true;
-  elements.startBoardBtn.disabled = false;
-  elements.nextBoardBtn.disabled = false;
+  elements.startGameBtn.disabled = false;
+  elements.exitGameBtn.disabled = false;
 }
 
 function setMessage(message, isError = false) {
@@ -404,23 +518,34 @@ function setMessage(message, isError = false) {
   elements.messageBanner.classList.toggle('is-error', isError);
 }
 
-function showWinModal() {
-  const difficultyLabel = DIFFICULTY_CONFIG[state.difficulty].label;
-  const rating = getRoundRating();
-  elements.winTitle.textContent = `${rating} ${difficultyLabel} round.`;
-  elements.winSummary.textContent = `You cleared ${state.currentListMeta?.label || 'this list'} in ${state.moves} moves and ${formatSeconds(state.secondsElapsed)}.`;
-  elements.winModal.hidden = false;
+function setSetupMessage(message, isError = false) {
+  elements.setupMessage.textContent = message;
+  elements.setupMessage.classList.toggle('is-error', isError);
 }
 
-function hideWinModal() {
-  elements.winModal.hidden = true;
+function syncUrlState() {
+  const url = new URL(window.location.href);
+  url.searchParams.set('difficulty', state.difficulty);
+  url.searchParams.set('grid', state.grid);
+  window.history.replaceState({}, '', url.toString());
 }
 
-function getRoundRating() {
-  if (state.moves <= 10) return 'Brilliant';
-  if (state.moves <= 12) return 'Sharp';
-  if (state.moves <= 15) return 'Strong';
-  return 'Finished';
+function refreshHeaderOverview() {
+  try {
+    const header = document.querySelector('student-header');
+    if (header && typeof header._fetchOverview === 'function') {
+      header._fetchOverview();
+    }
+  } catch {}
+}
+
+function pctToStars(pct) {
+  if (pct >= 100) return 5;
+  if (pct > 90) return 4;
+  if (pct > 80) return 3;
+  if (pct > 70) return 2;
+  if (pct >= 60) return 1;
+  return 0;
 }
 
 function shuffleArray(list) {
@@ -436,17 +561,6 @@ function formatSeconds(seconds) {
   const mins = Math.floor(seconds / 60).toString().padStart(2, '0');
   const secs = Math.floor(seconds % 60).toString().padStart(2, '0');
   return `${mins}:${secs}`;
-}
-
-function speak(text) {
-  if (!('speechSynthesis' in window)) return;
-  try {
-    window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.rate = 0.92;
-    utterance.pitch = 1.02;
-    window.speechSynthesis.speak(utterance);
-  } catch {}
 }
 
 function escapeHtml(value) {
