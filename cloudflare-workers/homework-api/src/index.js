@@ -905,6 +905,7 @@ export default {
             const normalize = (v) => String(v || '').toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
             const normalizedCoreName = normalize(coreName);
             const normalizedTitle = normalize(assignmentTitle);
+            const normalizedListTitle = normalize(listTitle);
             const normalizedGameName = normalize(gameName);
 
             filteredSessions = (sessions || []).filter(sess => {
@@ -913,6 +914,7 @@ export default {
               if (coreName && (ln.includes(coreName) || nln.includes(normalizedCoreName))) return true;
               if (assignmentTitle && (ln.includes(assignmentTitle) || nln.includes(normalizedTitle))) return true;
               if (listTitle && ln.includes(listTitle)) return true;
+              if (listTitle && normalizedListTitle && (nln.includes(normalizedListTitle) || normalizedListTitle.includes(nln))) return true;
               if (gameName && (ln.includes(gameName) || nln.includes(normalizedGameName))) return true;
               return false;
             });
