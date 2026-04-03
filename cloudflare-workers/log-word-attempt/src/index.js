@@ -278,8 +278,11 @@ export default {
         // Fetch existing to avoid overwriting
         const existing = await fetchSession(env, session_id) || {};
         
-        // Merge: preserve assignment_run token from session_start if the
-        // incoming session_end payload does not carry one (race-condition guard).
+        // Patch note (Apr 2026): preserve assignment_run across session_end.
+        // In some runs the client fetched assignment_run asynchronously after
+        // session_start; session_end could arrive without the token and replace
+        // summary, breaking saved-game homework matching. This merge keeps the
+        // existing token whenever session_end omits it.
         let mergedSummary = extra || null;
         if (mergedSummary && typeof mergedSummary === 'object') {
           const existingSummary = typeof existing.summary === 'string'
