@@ -118,7 +118,18 @@ function getStoredHomeworkAssignmentId() {
 function persistHomeworkAssignmentId(assignmentId) {
   try {
     if (!assignmentId) return;
-    if (typeof sessionStorage !== 'undefined') sessionStorage.setItem('wa_homework_assignment_id', String(assignmentId));
+    if (typeof sessionStorage !== 'undefined') {
+      const nextId = String(assignmentId);
+      const prevId = sessionStorage.getItem('wa_homework_assignment_id');
+      sessionStorage.setItem('wa_homework_assignment_id', nextId);
+      if (prevId && prevId !== nextId) {
+        const tokenOwner = sessionStorage.getItem('wa_assignment_run_assignment_id');
+        if (tokenOwner && tokenOwner !== nextId) {
+          sessionStorage.removeItem('wa_assignment_run');
+          sessionStorage.removeItem('wa_assignment_run_assignment_id');
+        }
+      }
+    }
   } catch (e) {}
 }
 
@@ -133,6 +144,7 @@ function getHomeworkAssignmentId() {
 
 function getStoredAssignmentRun() {
   try {
+    const currentAssignmentId = getStoredHomeworkAssignmentId();
     // prefer in-memory global if teacher UI set it
     if (typeof window !== 'undefined' && window.currentHomeworkRunTokens) {
       // If an exact token was placed here (string) use it
@@ -144,6 +156,10 @@ function getStoredAssignmentRun() {
       // teacher UI didn't propagate a plain string global.
       if (typeof window.currentHomeworkRunTokens === 'object' && window.currentHomeworkRunTokens !== null) {
         try {
+          if (currentAssignmentId) {
+            const exact = window.currentHomeworkRunTokens[currentAssignmentId];
+            if (typeof exact === 'string' && exact) return exact;
+          }
           for (const k of Object.keys(window.currentHomeworkRunTokens)) {
             const v = window.currentHomeworkRunTokens[k];
             if (typeof v === 'string' && v) return v;
@@ -151,13 +167,28 @@ function getStoredAssignmentRun() {
         } catch (e) {}
       }
     }
-    if (typeof sessionStorage !== 'undefined') return sessionStorage.getItem('wa_assignment_run');
+    if (typeof sessionStorage !== 'undefined') {
+      const storedToken = sessionStorage.getItem('wa_assignment_run');
+      if (!storedToken) return null;
+      const storedAssignmentId = sessionStorage.getItem('wa_assignment_run_assignment_id');
+      if (!storedAssignmentId || !currentAssignmentId || storedAssignmentId === currentAssignmentId) {
+        return storedToken;
+      }
+      sessionStorage.removeItem('wa_assignment_run');
+      sessionStorage.removeItem('wa_assignment_run_assignment_id');
+    }
   } catch (e) {}
   return null;
 }
 
-function persistAssignmentRun(token) {
-  try { if (!token) return; if (typeof sessionStorage !== 'undefined') sessionStorage.setItem('wa_assignment_run', token); } catch (e) {}
+function persistAssignmentRun(token, assignmentId = null) {
+  try {
+    if (!token || typeof sessionStorage === 'undefined') return;
+    sessionStorage.setItem('wa_assignment_run', token);
+    const ownerId = assignmentId || getHomeworkAssignmentId();
+    if (ownerId) sessionStorage.setItem('wa_assignment_run_assignment_id', String(ownerId));
+    else sessionStorage.removeItem('wa_assignment_run_assignment_id');
+  } catch (e) {}
 }
 
 function getAssignmentRun() {
@@ -171,7 +202,7 @@ function getAssignmentRun() {
 try {
   const _ar = readAssignmentRunFromURL();
   if (_ar) {
-    persistAssignmentRun(_ar);
+    persistAssignmentRun(_ar, readHomeworkAssignmentIdFromURL());
     try { console.debug('[records] assignment_run token captured:', _ar); } catch (e) {}
   }
 } catch (e) {}
@@ -278,7 +309,7 @@ export function startSession({ mode, wordList = [], listName = null, meta = {} }
           const js = await res.json().catch(() => null);
           const token = js && Array.isArray(js.tokens) && js.tokens.length ? js.tokens[0] : (js && js.run_token) || null;
           if (token) {
-            persistAssignmentRun(token);
+            persistAssignmentRun(token, assignmentId || (js && js.assignment_id) || null);
             try { console.debug('[records] fetched assignment_run token for', listName, token); } catch (e) {}
             // If we have a pending session_start queued due to auth, attach token there
             const pending = __pendingSessionStarts.get(sessionId);
