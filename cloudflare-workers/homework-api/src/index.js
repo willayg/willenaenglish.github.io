@@ -807,11 +807,16 @@ export default {
         const studentIds = students.map(s => s.id);
         
         // Load sessions for these students
-        // Use a simpler query approach - just get all completed sessions
+        // Order by ended_at descending so the newest sessions appear first within
+        // the PostgREST default row limit (1000). Also scope to the assignment
+        // window to keep the result set small.
+        const sessDateFilter = assignment.start_at
+          ? `&ended_at=gte.${encodeURIComponent(assignment.start_at)}`
+          : '';
         const sessions = await supabaseSelect(
           env,
           'progress_sessions',
-          `user_id=in.(${studentIds.join(',')})&ended_at=not.is.null&select=session_id,user_id,list_name,mode,summary,list_size`
+          `user_id=in.(${studentIds.join(',')})&ended_at=not.is.null${sessDateFilter}&order=ended_at.desc&select=session_id,user_id,list_name,mode,summary,list_size`
         );
         
         // Build progress map
