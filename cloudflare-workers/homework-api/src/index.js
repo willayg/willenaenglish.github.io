@@ -650,10 +650,11 @@ export default {
         // Get student IDs for query
         const studentIds = students.map(s => s.id);
         
-        // Load sessions for these students
-        // Order by ended_at descending so the newest sessions appear first within
-        // the PostgREST default row limit (1000). Also scope to the assignment
-        // window to keep the result set small.
+        // Patch note (Apr 2026): assignment_progress previously returned 0% for
+        // some students even after successful completion because PostgREST
+        // defaulted to the first 1000 rows (oldest sessions). We now request
+        // newest-first rows and constrain to assignment.start_at so recent runs
+        // are always included in the evaluated set.
         const sessDateFilter = assignment.start_at
           ? `&ended_at=gte.${encodeURIComponent(assignment.start_at)}`
           : '';
