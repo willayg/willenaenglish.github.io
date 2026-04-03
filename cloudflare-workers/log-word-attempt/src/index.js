@@ -278,9 +278,21 @@ export default {
         // Fetch existing to avoid overwriting
         const existing = await fetchSession(env, session_id) || {};
         
+        // Merge: preserve assignment_run token from session_start if the
+        // incoming session_end payload does not carry one (race-condition guard).
+        let mergedSummary = extra || null;
+        if (mergedSummary && typeof mergedSummary === 'object') {
+          const existingSummary = typeof existing.summary === 'string'
+            ? (() => { try { return JSON.parse(existing.summary); } catch { return null; } })()
+            : existing.summary;
+          if (existingSummary?.assignment_run && !mergedSummary.assignment_run) {
+            mergedSummary = { ...mergedSummary, assignment_run: existingSummary.assignment_run };
+          }
+        }
+        
         const updates = {
           ended_at: new Date().toISOString(),
-          summary: extra || null,
+          summary: mergedSummary,
           mode: mode || null,
           user_id: userId,
           list_name: list_name || existing.list_name || null,
