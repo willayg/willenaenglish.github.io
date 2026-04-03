@@ -811,7 +811,7 @@ export default {
         const sessions = await supabaseSelect(
           env,
           'progress_sessions',
-          `user_id=in.(${studentIds.join(',')})&ended_at=not.is.null&select=user_id,list_name,mode,summary,list_size`
+          `user_id=in.(${studentIds.join(',')})&ended_at=not.is.null&select=session_id,user_id,list_name,mode,summary,list_size`
         );
         
         // Build progress map
@@ -894,6 +894,27 @@ export default {
             const token = summary && summary.assignment_run;
             return !!token && validTokens.includes(token);
           });
+          if (filteredSessions.length === 0 && validTokens.length > 0 && studentIds.length > 0) {
+            try {
+              const attemptsQuery = `user_id=in.(${studentIds.join(',')})&created_at=gte.${encodeURIComponent(assignment.start_at || new Date(0).toISOString())}&select=session_id,extra`;
+              const attemptRows = await supabaseSelect(env, 'progress_attempts', attemptsQuery);
+              const matchingSessionIds = new Set(
+                (Array.isArray(attemptRows) ? attemptRows : [])
+                  .map((attempt) => {
+                    const extra = parseJsonMaybe(attempt?.extra) || {};
+                    const token = extra?.assignment_run;
+                    return token && validTokens.includes(token) ? String(attempt?.session_id || '').trim() : '';
+                  })
+                  .filter(Boolean)
+              );
+              if (matchingSessionIds.size > 0) {
+                filteredSessions = (sessions || []).filter((sess) => matchingSessionIds.has(String(sess?.session_id || '').trim()));
+                console.log(`[homework-api] attempts fallback recovered ${filteredSessions.length} sessions across ${matchingSessionIds.size} session ids`);
+              }
+            } catch (e) {
+              console.warn('[homework-api] attempts fallback failed:', e.message);
+            }
+          }
           // FALLBACK: If run-token matching fails for saved game, try list_name matching too
           if (filteredSessions.length === 0 && sessions && sessions.length > 0) {
             console.log(`[homework-api] run-token match failed for saved game ${assignment.id}, trying list_name fallback`);
