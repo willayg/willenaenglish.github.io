@@ -16,7 +16,7 @@ const DIFFICULTY_CONFIG = {
 };
 
 const STAR_THRESHOLDS = {
-  '3x4': { 5: 10, 4: 12, 3: 14, 2: 16, 1: 20 },
+  '3x4': { 5: 10, 4: 12, 3: 14, 2: 16, 1: 40 },
 };
 
 const CARD_PALETTE = [
