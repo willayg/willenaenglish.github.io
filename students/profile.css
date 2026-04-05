@@ -400,10 +400,10 @@ th { color:#356; font-weight:800; }
 .award { position:absolute; font-weight:800; text-align:center; }
 .award .award-label { font-weight:800; color:#ff61ba; font-size: 1.3em; }
 .award .award-value { margin-top: 10px; font-size: 1.2em; color:rgb(109, 169, 173); font-weight:600; }
-.a-points { top: 10%; left: 16%; color:#e78bbf; }
-.a-medals { top: 10%; right: 16%; color:#ff2ea5; }
-.a-stars { bottom: 10%; left: 16%; color:#ff2ea5; }
-.a-badges { bottom: 10%; right: 16%; color:#ff2ea5; }
+.a-points { top: 10%; left: 25%; transform: translateX(-50%); color:#e78bbf; }
+.a-medals { top: 10%; left: 75%; transform: translateX(-50%); color:#ff2ea5; }
+.a-stars { bottom: 10%; left: 25%; transform: translateX(-50%); color:#ff2ea5; }
+.a-badges { bottom: 10%; left: 75%; transform: translateX(-50%); color:#ff2ea5; }
 
 /* Hide legacy blocks on narrow view so screenshot layout shows */
 @media (max-width: 760px) { .legacy { display:none !important; } }
