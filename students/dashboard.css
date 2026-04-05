@@ -113,7 +113,6 @@ html { overflow-x:hidden; }
    background: linear-gradient(145deg, #2a3439, #20282d) !important;
    border: 3px solid #59d7db !important;
    box-shadow: 0 0 18px rgba(89, 215, 219, 0.42), 0 4px 12px rgba(0,0,0,0.16), 0 1px 2px rgba(0,0,0,0.24) !important;
-   padding-right: 72px !important;
 }
 
 .wa-mix-match:hover {
@@ -129,9 +128,9 @@ html { overflow-x:hidden; }
 }
 
 .wa-mix-match-logo {
-   font-size: 1.28rem;
+   font-size: 1.58rem;
    font-weight: 900;
-   letter-spacing: .07em;
+   letter-spacing: .08em;
    color: #ecfeff;
    text-shadow: 0 0 8px rgba(103,226,230,.85), 0 0 16px rgba(103,226,230,.55);
    line-height: 1;
@@ -152,15 +151,12 @@ html { overflow-x:hidden; }
    text-transform: uppercase;
    box-shadow: 0 0 12px rgba(255, 97, 186, 0.58);
    animation: wa-tag-pop 1.3s ease-in-out infinite;
-   position: absolute;
-   right: 12px;
-   top: 50%;
-   transform: translateY(-50%);
+   position: static;
 }
 
 @keyframes wa-tag-pop {
-   0%, 100% { transform: translateY(-50%) scale(1); }
-   50% { transform: translateY(-50%) scale(1.08); }
+   0%, 100% { transform: scale(1); }
+   50% { transform: scale(1.08); }
 }
 
 /* =====================
