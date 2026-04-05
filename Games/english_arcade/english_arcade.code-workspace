@@ -1,0 +1,22 @@
+{
+    "folders": [
+        {
+            "path": "."
+        },
+        {
+            "path": "../../cloudflare"
+        },
+        {
+            "path": "../../cloudflare-workers"
+        },
+        {
+            "path": "../../students"
+        },
+        {
+            "path": "../../Teachers"
+        }
+    ],
+    "settings": {
+        "git.ignoreLimitWarning": true
+    }
+}

@@ -127,6 +127,90 @@ student-header {
   flex: 1 1 auto;
   min-height: 0;
   padding: 8px 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.audio-control-bar {
+  width: min(780px, 100%);
+  margin: 0 auto;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+}
+
+.toggle-switch {
+  border: none;
+  background: rgba(255, 255, 255, 0.82);
+  border-radius: 999px;
+  padding: 4px 8px 4px 4px;
+  min-height: 32px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.toggle-track {
+  width: 44px;
+  height: 24px;
+  border-radius: 999px;
+  background: #d8dee3;
+  display: inline-flex;
+  align-items: center;
+  padding: 2px;
+  transition: background 0.18s ease;
+}
+
+.toggle-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.22);
+  transform: translateX(0);
+  transition: transform 0.18s ease;
+}
+
+.toggle-switch[aria-checked="true"] .toggle-track {
+  background: #1aa59c;
+}
+
+.toggle-switch[aria-checked="true"] .toggle-thumb {
+  transform: translateX(20px);
+}
+
+.toggle-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #255b60;
+}
+
+.music-next-btn {
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background:
+    linear-gradient(#ffffff, #ffffff) padding-box,
+    linear-gradient(var(--chrome-border-angle), var(--line), var(--chrome-secondary), var(--line)) border-box;
+  color: var(--accent);
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  min-height: 32px;
+  padding: 0 10px;
+  cursor: pointer;
+}
+
+.music-next-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
 }
 
 .screen {
@@ -588,6 +672,21 @@ student-header {
 @media (max-width: 680px) {
   .memory-app {
     padding: 8px;
+  }
+
+  .audio-control-bar {
+    justify-content: center;
+    gap: 6px;
+  }
+
+  .toggle-switch {
+    padding-right: 6px;
+    gap: 6px;
+  }
+
+  .toggle-label,
+  .music-next-btn {
+    font-size: 0.72rem;
   }
 
   .setup-stage {

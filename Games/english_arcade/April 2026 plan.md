@@ -3,8 +3,15 @@
 ## Purpose
 This plan documents the full roadmap for Game Creator/Game Builder, English Arcade, Teacher tools, and Student Tracker alignment so future AI agents can execute work without re-discovery.
 
-## Status Update (2026-03-27)
+## Priority Key
+- `[P1]` highest priority
+- `[P2]` next priority
+- Higher-numbered phases remain lower priority unless explicitly marked otherwise.
+
+## Status Update (2026-03-29)
+- Completed and scratched off: Phases 1 to 4 are done.
 - Completed and scratched off: Game Builder `Save Sentences` now uses plain text link styling and removed the speaker emoji.
+- Still open: the load file filtering system has a few persistent edge cases; that cleanup now lives in Phase 8.
 
 ## Product Flow Overview: Game Builder <-> English Arcade
 1. Teacher builds or edits a game in `Teachers/tools/game-builder/`.
@@ -14,6 +21,8 @@ This plan documents the full roadmap for Game Creator/Game Builder, English Arca
 5. Student progress/attempts flow into `progress_sessions` and `progress_attempts` and are used by student dashboard + teacher tracker.
 
 ## Phase 1: Fast UI/UX Changes
+
+### Phase 1 Status: Done
 
 ### 1) Game Builder toolbar: make "Save Sentences" plain text
 Goal: Make it visually consistent with Load/Save/Save As links.
@@ -55,7 +64,7 @@ Acceptance criteria:
 
 ## Phase 2: Game Builder Save/Load Reliability
 
-### Phase 2 Status (2026-03-28)
+### Phase 2 Status (2026-03-29)
 - 4) Fix save race conditions and duplicate saves: Solved.
 - 5) Fix sentence fallback ID collision behavior: Solved.
 - 6) Improve title conflict and save-as checks: Solved.
@@ -63,6 +72,7 @@ Acceptance criteria:
 - 7b) Fix Game Builder save ownership (`created_by`) so `My Games` is accurate: Open.
   - Temporary product decision: default Saved Games filter is now `All Users`.
   - Follow-up still needed: make `My Games` reliably show only the signed-in teacher's saved games.
+  - Load file filtering still has a few persistent edge cases; move final cleanup to Phase 8.
 
 ### 4) Fix save race conditions and duplicate saves
 Observed risk:
@@ -152,6 +162,8 @@ Acceptance criteria:
 
 ## Phase 3: Sentence Audio Naming and Default List Conflicts
 
+### Phase 3 Status: Done
+
 ### 8) Standardize all sentence audio resolution on sentence IDs
 Problem statement:
 - Legacy `<name>_sentence` naming causes collisions and mismatch with default list behavior.
@@ -176,131 +188,10 @@ Acceptance criteria:
 - No new uploads rely on `<word>_sentence` naming.
 - Conflict class from duplicate word names is eliminated.
 
-## Phase 4: Homework Completion Notifications (Teacher)
+## Phase 4: Sentence Pattern Generator Module + Grammar Unscramble Assignment Flow [P1]
 
-### 9) Persistent homework notification indicator near burger icon
-Goal:
-- Teachers always see homework completion alerts next to menu icon.
+### Phase 4 Status: Done
 
-Feature design:
-- Add a bell/dot/badge component adjacent to burger icon.
-- Count reflects new homework completions since last seen timestamp.
-- Clicking indicator opens notification panel or routes to Homework tab with filters.
-
-Backend requirements:
-- Extend homework API with teacher notification query endpoint.
-- Compute completed submissions by assignment/student over time.
-- Store per-teacher `last_seen` marker.
-
-Frontend requirements:
-- Poll endpoint (for example every 60s) and on tab focus.
-- Render badge count and compact item list.
-- Clear or decrement notifications on view acknowledgment.
-
-Primary files:
-- `components/burger-menu.html`
-- `components/burger-menu.js`
-- `netlify/functions/homework_api.js`
-- Optional helper in `Teachers/tools/student_tracker/`.
-
-Acceptance criteria:
-- Badge is visible on teacher pages with burger menu.
-- New student homework completions raise count without page reload.
-
-## Phase 5: Leaderboard Number Alignment (Student Tracker vs Student Dashboard)
-
-### 10) Make Student Dashboard the source of truth
-Problem statement:
-- Student Tracker and Student Dashboard show different numbers for stars/points/super score.
-- Student-facing dashboard must be authoritative.
-
-Implementation strategy:
-- Align Teacher Student Tracker aggregation path with student leaderboard logic.
-- Remove or constrain stale pre-aggregated path when it diverges from live results.
-- Ensure same formulas and timeframe windows are used in both systems.
-
-Primary files:
-- `Teachers/tools/student_tracker/` frontend render and API usage.
-- `netlify/functions/progress_teacher_summary.js`
-- `netlify/functions/progress_summary.js`
-- Optional: `netlify/functions/populate_daily_stats.js` if still needed as cache-only optimization.
-
-Acceptance criteria:
-- Same class/timeframe returns matching stars, points, and super score in both views.
-- Student leaderboard remains unchanged.
-
-## Phase 6: Phonics Mode Difficulty Tuning
-
-### 11) Reduce phonics list session size from 24 to 12 words
-Goal:
-- Make phonics spelling/listening rounds more manageable.
-
-Implementation options:
-- Preferred: code-side cap (keep JSON full lists intact).
-- Add `MAX_PHONICS_WORDS = 12` in phonics mode and slice shuffled list.
-- Optionally make cap configurable in builder settings later.
-
-Primary files:
-- `Games/english_arcade/modes/phonics_listening.js`
-- Any related phonics mode files.
-
-Acceptance criteria:
-- Each phonics run serves 12 words max.
-- Existing wordlist JSON files remain unchanged unless explicitly requested.
-
-## Phase 7: New 4x4 Word-Emoji Matching Game
-
-### 12) Build new matching mode using vocab JSON emojis
-Goal:
-- Add kid-friendly game: 4x4 grid where players match English word card with emoji card.
-
-Game rules:
-- 16 cards total (8 word cards + 8 emoji cards).
-- Click two cards to attempt a match.
-- Correct pair stays open; incorrect pair flips back.
-- Track attempts, matched pairs, and completion score.
-
-Data source:
-- Existing vocab JSON files in `Games/english_arcade/sample-wordlists*/` using `eng` + `emoji` fields.
-
-Implementation outline:
-- Create new mode module, e.g. `Games/english_arcade/modes/emoji_match_4x4.js`.
-- Register mode in `Games/english_arcade/core/mode-registry.js`.
-- Add card UI styles and animation.
-- Reuse existing progress logging hooks for attempts and completion.
-
-Acceptance criteria:
-- Mode selectable and playable in English Arcade.
-- Works on desktop and mobile.
-- Uses JSON vocab source and emoji fields correctly.
-
-## Execution Order
-1. Phase 1 UI updates (quick wins, low risk).
-2. Phase 2 save/load reliability fixes.
-3. Phase 3 sentence audio ID-first standardization.
-4. Phase 5 leaderboard alignment (source-of-truth correction).
-5. Phase 4 notifications (new cross-feature UX).
-6. Phase 6 phonics tuning.
-7. Phase 7 new 4x4 matching game.
-
-## Testing Checklist
-- Game Builder save/load regression tests (new save, overwrite, save as, image upload, sentence save).
-- Sentence audio tests on default lists and builder-created lists.
-- Teacher menu regression across all pages using shared burger component.
-- Homework completion end-to-end test (assign -> student completes -> teacher sees notification).
-- Leaderboard parity checks for same class/timeframe in tracker vs dashboard.
-- Phonics run count assertions (12 words max).
-- New matching mode functional and responsive UI checks.
-
-## Notes for Future AI Agents
-- Preserve secure auth/storage patterns; do not introduce token storage anti-patterns.
-- Maintain backward compatibility for legacy audio lookups during migration window.
-- Treat student-facing leaderboard values as immutable product expectation unless explicitly approved.
-- Prefer small, reversible changes with clear feature flags when touching cross-cutting score/audio logic.
-
-## Addendum: New Items Requested (2026-03-27)
-
-### 13) Sentence Pattern Generator Module + Grammar Unscramble Assignment Flow
 Goal:
 - Add a dedicated sentence-pattern generator that builds sentence sets from teacher-provided grammar templates (example pattern: `I have ___`).
 - Feed generated sets into a standalone grammar sentence unscramble game.
@@ -331,7 +222,218 @@ Acceptance criteria:
 - Teacher can save and assign as homework.
 - Student can play standalone grammar unscramble and completion logs to existing homework progress views.
 
-### 14) Version/Environment Badges: Staging-Only Visibility
+## Phase 5: Homework Completion Notifications (Teacher) [P2]
+
+### 9) Persistent homework notification indicator near burger icon
+Goal:
+- Teachers always see homework completion alerts next to menu icon.
+
+Feature design:
+- Add a bell/dot/badge component adjacent to burger icon.
+- Count reflects new homework completions since last seen timestamp.
+- Clicking indicator opens notification panel or routes to Homework tab with filters.
+
+Backend requirements:
+- Extend homework API with teacher notification query endpoint.
+- Compute completed submissions by assignment/student over time.
+- Store per-teacher `last_seen` marker.
+
+Frontend requirements:
+- Poll endpoint (for example every 60s) and on tab focus.
+- Render badge count and compact item list.
+- Clear or decrement notifications on view acknowledgment.
+
+Primary files:
+- `components/burger-menu.html`
+- `components/burger-menu.js`
+- `netlify/functions/homework_api.js`
+- Optional helper in `Teachers/tools/student_tracker/`.
+
+Acceptance criteria:
+- Badge is visible on teacher pages with burger menu.
+- New student homework completions raise count without page reload.
+
+## Phase 5.1: Randomized Word-Emoji Match Ladder [P4]
+
+### 9a) Build 4x4 word-emoji matching mode with level-based random list rotation
+Goal:
+- Add a fast, kid-friendly matching game where students can tap either a word card or an emoji card first, then complete the pair.
+- Keep content sourcing simple by reusing existing sample vocab JSON files that already contain `eng` and `emoji` fields.
+- Make the mode feel fresh by drawing a random eligible list from the selected level pool each time the student launches it.
+
+Product behavior:
+- 16 cards total per board: 8 English word cards + 8 emoji cards.
+- Students can start from either side: word -> emoji or emoji -> word.
+- Correct pair stays revealed; wrong pair flips back after a short delay.
+- Session tracks attempts, matched pairs, completion percent, and end-of-round score.
+- Mode should support repeated play by rotating through different lists within the chosen level.
+
+Level and list strategy:
+- Reuse existing level pools already defined for arcade list selection:
+  - Level 1 -> `LEVEL1_LISTS`
+  - Level 2 -> `LEVEL2_LISTS`
+  - Level 3 -> `LEVEL3_LISTS`
+  - Level 4 -> `LEVEL4_LISTS`
+- On launch, choose one random eligible list from that level, then choose 8 valid entries from that list.
+- Eligible entries must have a non-empty English value and a usable emoji.
+- If a chosen list does not contain at least 8 emoji-ready entries, skip it and draw another list from the same level.
+- Keep the first release limited to sample lists only; do not couple this phase to builder-created lists yet.
+
+Implementation architecture:
+- Reuse the current matching foundation rather than building a separate mini-engine from scratch.
+- Add a dedicated mode module, example: `Games/english_arcade/modes/emoji_match_4x4.js`.
+- Keep matching-specific board logic isolated in the new mode so legacy English-Korean matching is not destabilized.
+- Register the new mode in both runtime entry points:
+  - `Games/english_arcade/core/mode-registry.js`
+  - `Games/english_arcade/main.js` mode loader map.
+- Add mode chooser visibility in:
+  - `Games/english_arcade/ui/mode_selector.js`
+  - `Games/english_arcade/ui/mode_modal.js`
+- Add dedicated UI styles for card sizing, flip states, matched states, and mobile responsiveness.
+
+Gameplay implementation outline:
+- Build a normalized deck shape per entry, for example:
+  - pair id
+  - `eng`
+  - `emoji`
+  - `listName`
+  - optional progress metadata
+- Duplicate each selected vocab item into two cards:
+  - `type = word`
+  - `type = emoji`
+- Shuffle the full 16-card deck before render.
+- Maintain a small interaction state:
+  - first selected card
+  - second selected card
+  - lock flag while mismatch animation resolves
+  - matched pair count
+  - attempts count
+- Prevent double-tapping the same card from counting as a pair attempt.
+- Consider playing the base word audio when a word card is tapped, if that can be reused cheaply from existing TTS helpers.
+
+Progress and scoring plan:
+- Reuse the existing student session hooks already used by other modes:
+  - `startSession`
+  - `logAttempt`
+  - `endSession`
+- Log one attempt per revealed pair.
+- Score should reward completion plus efficiency, using a simple first-pass rule:
+  - completion required for end-of-session success
+  - fewer attempts yields higher score/star outcome
+- Keep scoring formula simple in v1 so it aligns with existing stars/progress systems without needing backend changes.
+
+UI and launch plan:
+- Add this mode as a selectable word-game mode, labeled clearly for children, for example `Emoji Match`.
+- For the first pass, launch from an already selected level/list context rather than adding a brand-new top-level menu.
+- If student entered from a level card, use that level's list pool for random selection.
+- If student already loaded a specific sample list, allow the mode to use that current list directly when it has enough emoji-ready entries.
+- Fall back gracefully with a friendly message if no eligible emoji list is available.
+
+Primary files:
+- `Games/english_arcade/modes/emoji_match_4x4.js`
+- `Games/english_arcade/main.js`
+- `Games/english_arcade/core/mode-registry.js`
+- `Games/english_arcade/ui/mode_selector.js`
+- `Games/english_arcade/ui/mode_modal.js`
+- `Games/english_arcade/utils/level-lists.js`
+- Optional shared styles helper under `Games/english_arcade/ui/`
+
+Acceptance criteria:
+- Mode is selectable in English Arcade.
+- Students can tap either card type first and complete matches on a 4x4 board.
+- Launching from a level chooses a random emoji-ready sample list from that level.
+- Lists with missing emoji entries are skipped or filtered without breaking the run.
+- Works on desktop and mobile without cards overlapping or becoming unreadable.
+- Progress logging works with existing session/attempt infrastructure.
+
+## Phase 6: Leaderboard Number Alignment (Student Tracker vs Student Dashboard) (play.js) [P3]
+
+### 10) Make Student Dashboard the source of truth
+Problem statement:
+- Student Tracker and Student Dashboard show different numbers for stars/points/super score.
+- Student-facing dashboard must be authoritative.
+
+Implementation strategy:
+- Align Teacher Student Tracker aggregation path with student leaderboard logic.
+- Remove or constrain stale pre-aggregated path when it diverges from live results.
+- Ensure same formulas and timeframe windows are used in both systems.
+
+Primary files:
+- `Teachers/tools/student_tracker/` frontend render and API usage.
+- `netlify/functions/progress_teacher_summary.js`
+- `netlify/functions/progress_summary.js`
+- Optional: `netlify/functions/populate_daily_stats.js` if still needed as cache-only optimization.
+
+Acceptance criteria:
+- Same class/timeframe returns matching stars, points, and super score in both views.
+- Student leaderboard remains unchanged.
+
+## Phase 7: Phonics Mode Difficulty Tuning [P5]
+
+### 11) Reduce phonics list session size from 24 to 12 words
+Goal:
+- Make phonics spelling/listening rounds more manageable.
+
+Implementation options:
+- Preferred: code-side cap (keep JSON full lists intact).
+- Add `MAX_PHONICS_WORDS = 12` in phonics mode and slice shuffled list.
+- Optionally make cap configurable in builder settings later.
+
+Primary files:
+- `Games/english_arcade/modes/phonics_listening.js`
+- Any related phonics mode files.
+
+Acceptance criteria:
+- Each phonics run serves 12 words max.
+- Existing wordlist JSON files remain unchanged unless explicitly requested.
+
+## Phase 8: Final Touches / Load File Filtering System [P6]
+
+Goal:
+- Finish the stubborn saved-game/load-file filtering edge cases.
+- Tighten search/filter behavior so stale cards and mismatched filters don’t leak through.
+- Treat this as the last cleanup phase while the roadmap keeps growing.
+
+Implementation focus:
+- Stabilize saved-games filtering across page load, pagination, and search.
+- Remove any stale cache paths that can repopulate old rows after filtering changes.
+- Verify the filter state always matches the currently selected scope.
+
+Primary files:
+- `Teachers/tools/game-builder/ui/file-list.js`
+- `Teachers/tools/game-builder/main.js`
+- `Teachers/tools/game-builder/services/file-service.js`
+
+Acceptance criteria:
+- Saved-games filtering is stable after reload and pagination.
+- Load/search/filter controls never reintroduce stale rows.
+- No regressions in create/save/open flows.
+
+## Execution Order
+1. Phase 5 homework notifications.
+2. Phase 5.1 matching game.
+3. Phase 6 leaderboard alignment.
+4. Phase 7 phonics tuning.
+5. Phase 8 final touches / load file filtering.
+
+## Testing Checklist
+- Game Builder save/load regression tests (new save, overwrite, save as, image upload, sentence save).
+- Sentence audio tests on default lists and builder-created lists.
+- Teacher menu regression across all pages using shared burger component.
+- Homework completion end-to-end test (assign -> student completes -> teacher sees notification).
+- Leaderboard parity checks for same class/timeframe in tracker vs dashboard.
+- Phonics run count assertions (12 words max).
+- New matching mode functional and responsive UI checks.
+
+## Notes for Future AI Agents
+- Preserve secure auth/storage patterns; do not introduce token storage anti-patterns.
+- Maintain backward compatibility for legacy audio lookups during migration window.
+- Treat student-facing leaderboard values as immutable product expectation unless explicitly approved.
+- Prefer small, reversible changes with clear feature flags when touching cross-cutting score/audio logic.
+
+## Addendum: New Items Requested (2026-03-27)
+
+### 14) Version/Environment Badges: Staging-Only Visibility [P7]
 Goal:
 - Show environment/version badges only in staging contexts, not on production branches/domains.
 
@@ -350,7 +452,7 @@ Acceptance criteria:
 - Badges never appear on production domains.
 - Badges continue to appear on staging and branch previews.
 
-### 15) Spelling Homework Difficulty Tiers (Stars Target)
+### 15) Spelling Homework Difficulty Tiers (Stars Target) [P8]
 Goal:
 - For spelling homework assignments, provide three selectable levels:
   - Easy -> 1 star target
@@ -375,7 +477,7 @@ Acceptance criteria:
 - Student sees level label and required star target.
 - Tracker progress aligns to assigned target.
 
-### 16) Large List Management: Split Wizard + Warning Modal
+### 16) Large List Management: Split Wizard + Warning Modal [P9]
 Goal:
 - Prevent sending oversized single assignments that reduce engagement.
 - If list size > 20 words, prompt teacher to either continue or split into parts.
@@ -398,7 +500,7 @@ Acceptance criteria:
 - Teacher can split in one click.
 - Resulting parts are independently assignable and trackable.
 
-### 17) Difficult-Words Practice Loop (Research + Recommendation)
+### 17) Difficult-Words Practice Loop (Research + Recommendation) [P10]
 Research findings in current codebase:
 - A challenging-words system already exists and is production-ready at API level:
   - `netlify/functions/progress_summary.js` sections `challenging` and `challenging_v2`.
@@ -427,7 +529,7 @@ Acceptance criteria:
 - Student can quickly retry hardest words from homework.
 - Difficult-word list shrinks naturally as accuracy improves.
 
-### 18) Real-Time Stars Update
+### 18) Real-Time Stars Update [P11]
 Goal:
 - Make stars update in real time during and immediately after game sessions (no stale delay).
 
@@ -448,7 +550,7 @@ Acceptance criteria:
 - Student-visible stars increment without manual refresh.
 - Teacher tracker and student dashboard show matching star totals shortly after each session.
 
-### 19) Keep Watching: Homework Spelling Launch Bounce Regression
+### 19) Keep Watching: Homework Spelling Launch Bounce Regression [P12]
 Status:
 - Mitigation deployed on `staging` (2026-03-27), but issue is intermittent and should remain on active watch.
 

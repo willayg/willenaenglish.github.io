@@ -1,6 +1,5 @@
 import './ui/star_overlay.js?v=20260329a';
 import { LEVEL1_LISTS, LEVEL2_LISTS, LEVEL3_LISTS, LEVEL4_LISTS } from './utils/level-lists.js?v=20251214a';
-import { playTTSVariant, preloadAllAudio } from './tts.js?v=20251214a';
 import { playSFX } from './sfx.js?v=20251214a';
 import { startSession, logAttempt, endSession } from '../../students/records.js';
 import { initPointsClient } from '../../students/scripts/points-client.js';
@@ -31,8 +30,22 @@ const CARD_PALETTE = [
 
 const PAGE_THEMES = ['gradient', 'white', 'pink-stars', 'rainbow-clouds'];
 const BORDER_THEMES = ['cyan', 'pink'];
+const MUSIC_TRACKS = [
+  './assets/audio/music/8_bits.mp3',
+  './assets/audio/music/candy.mp3',
+  './assets/audio/music/Halloween_Playground.mp3',
+  './assets/audio/music/kids1.mp3',
+  './assets/audio/music/pianopoly.mp3',
+  './assets/audio/music/Pixel_Playground.mp3',
+  './assets/audio/music/rainbows_end.mp3',
+  './assets/audio/music/snowdrops_droppings.mp3',
+  './assets/audio/music/space-walk-226545.mp3',
+];
+const SOUND_PREF_KEY = 'memoryMatch.soundEnabled';
+const MUSIC_PREF_KEY = 'memoryMatch.musicEnabled';
 
 const emojiSupportCache = new Map();
+let ukMaleVoiceCache = null;
 
 const state = {
   difficulty: readDifficultyFromQuery(),
@@ -49,8 +62,11 @@ const state = {
   loading: false,
   sessionId: null,
   gameActive: false,
+  soundEnabled: false,
+  musicEnabled: false,
+  musicTrackIndex: -1,
+  musicAudio: null,
   nextWordAudioAt: 0,
-  audioWarmupId: 0,
 };
 
 const elements = {
@@ -66,6 +82,9 @@ const elements = {
   movesValue: document.getElementById('movesValue'),
   matchesValue: document.getElementById('matchesValue'),
   starTargetValue: document.getElementById('starTargetValue'),
+  soundToggle: document.getElementById('soundToggle'),
+  musicToggle: document.getElementById('musicToggle'),
+  musicNextBtn: document.getElementById('musicNextBtn'),
   boardGrid: document.getElementById('boardGrid'),
   loadingState: document.getElementById('loadingState'),
   loadingText: document.getElementById('loadingText'),
@@ -76,6 +95,7 @@ bootstrap();
 function bootstrap() {
   applyPageTheme();
   initPointsClient();
+  initAudioControls();
   elements.difficultySelect.value = state.difficulty;
   updateSetupSummary();
   wireControls();
@@ -102,6 +122,31 @@ function wireControls() {
 
   elements.startGameBtn.addEventListener('click', () => startNewGame());
   elements.exitGameBtn.addEventListener('click', () => handleExitGame());
+
+  elements.soundToggle.addEventListener('click', () => {
+    state.soundEnabled = !state.soundEnabled;
+    persistAudioPreferences();
+    if (!state.soundEnabled) {
+      stopBrowserSpeech();
+    }
+    renderAudioControls();
+  });
+
+  elements.musicToggle.addEventListener('click', async () => {
+    state.musicEnabled = !state.musicEnabled;
+    persistAudioPreferences();
+    renderAudioControls();
+    if (state.musicEnabled) {
+      await playRandomMusicTrack({ avoidCurrent: false });
+      return;
+    }
+    stopMusic();
+  });
+
+  elements.musicNextBtn.addEventListener('click', async () => {
+    if (!state.musicEnabled) return;
+    await playRandomMusicTrack({ avoidCurrent: true });
+  });
 }
 
 async function startNewGame() {
@@ -136,7 +181,6 @@ async function startNewGame() {
     renderStats();
     renderBoard();
     hideLoading();
-    scheduleRoundAudioWarmup(result.words);
   } catch (error) {
     hideLoading();
     state.gameActive = false;
@@ -148,7 +192,6 @@ async function startNewGame() {
 }
 
 function resetRoundState() {
-  state.audioWarmupId += 1;
   state.cards = [];
   state.selectedIds = [];
   state.matchedPairs = 0;
@@ -437,6 +480,7 @@ async function finishRound() {
       wordList: state.currentWords,
       summary: {
         stars: starCount,
+        accuracy: starsToAccuracy(starCount),
         score: efficiencyPct,
         total: 100,
         completed: true,
@@ -475,6 +519,7 @@ async function closePartialSession() {
       wordList: state.currentWords,
       summary: {
         stars: 0,
+        accuracy: 0,
         score: efficiencyPct,
         total: 100,
         completed: false,
@@ -490,45 +535,20 @@ async function closePartialSession() {
 }
 
 function playCardAudio(card) {
+  if (!state.soundEnabled) return;
   if (card.faceType !== 'word') return;
   const now = Date.now();
   if (now < state.nextWordAudioAt) return;
   state.nextWordAudioAt = now + 900;
-  try {
-    playTTSVariant(card.spokenWord, 'itself');
-  } catch {}
-}
-
-async function preloadRoundAudio(words) {
-  try {
-    await preloadAllAudio(words);
-  } catch {}
-}
-
-function scheduleRoundAudioWarmup(words) {
-  const warmupId = state.audioWarmupId + 1;
-  state.audioWarmupId = warmupId;
-  const runWarmup = async () => {
-    if (warmupId !== state.audioWarmupId || !state.gameActive) return;
-    await preloadRoundAudio(words);
-  };
-
-  if (typeof window.requestIdleCallback === 'function') {
-    window.requestIdleCallback(() => {
-      void runWarmup();
-    }, { timeout: 1200 });
-    return;
-  }
-
-  window.setTimeout(() => {
-    void runWarmup();
-  }, 180);
+  void speakWordWithBrowserTts(card.spokenWord);
 }
 
 function triggerMatchFeedback(pairId) {
-  try {
-    playSFX('correct');
-  } catch {}
+  if (state.soundEnabled) {
+    try {
+      playSFX('correct');
+    } catch {}
+  }
 
   const selector = `[data-card-id^="${cssEscape(pairId)}:"]`;
   const matchingCards = Array.from(elements.boardGrid.querySelectorAll(selector));
@@ -735,4 +755,153 @@ function supportsEmojiGlyph(emoji) {
     emojiSupportCache.set(emoji, true);
     return true;
   }
+}
+
+function starsToAccuracy(starCount) {
+  if (starCount >= 5) return 1;
+  if (starCount === 4) return 0.95;
+  if (starCount === 3) return 0.9;
+  if (starCount === 2) return 0.8;
+  if (starCount === 1) return 0.6;
+  return 0;
+}
+
+function initAudioControls() {
+  state.musicAudio = new Audio();
+  state.musicAudio.preload = 'auto';
+  state.musicAudio.volume = 0.3;
+  state.musicAudio.addEventListener('ended', () => {
+    if (!state.musicEnabled) return;
+    void playRandomMusicTrack({ avoidCurrent: true });
+  });
+
+  try {
+    state.soundEnabled = localStorage.getItem(SOUND_PREF_KEY) === '1';
+    state.musicEnabled = localStorage.getItem(MUSIC_PREF_KEY) === '1';
+  } catch {
+    state.soundEnabled = false;
+    state.musicEnabled = false;
+  }
+
+  renderAudioControls();
+}
+
+function persistAudioPreferences() {
+  try {
+    localStorage.setItem(SOUND_PREF_KEY, state.soundEnabled ? '1' : '0');
+    localStorage.setItem(MUSIC_PREF_KEY, state.musicEnabled ? '1' : '0');
+  } catch {}
+}
+
+function renderAudioControls() {
+  elements.soundToggle.setAttribute('aria-checked', state.soundEnabled ? 'true' : 'false');
+  elements.musicToggle.setAttribute('aria-checked', state.musicEnabled ? 'true' : 'false');
+  elements.musicNextBtn.disabled = !state.musicEnabled;
+}
+
+async function playRandomMusicTrack({ avoidCurrent = true } = {}) {
+  if (!state.musicEnabled || !state.musicAudio) return;
+  if (!MUSIC_TRACKS.length) return;
+
+  const candidateIndexes = MUSIC_TRACKS
+    .map((_, index) => index)
+    .filter((index) => !avoidCurrent || MUSIC_TRACKS.length < 2 || index !== state.musicTrackIndex);
+  if (!candidateIndexes.length) return;
+
+  const nextIndex = candidateIndexes[Math.floor(Math.random() * candidateIndexes.length)];
+  state.musicTrackIndex = nextIndex;
+  state.musicAudio.src = MUSIC_TRACKS[nextIndex];
+
+  try {
+    await state.musicAudio.play();
+  } catch {
+    // Autoplay can be blocked until the first direct user interaction.
+  }
+}
+
+function stopMusic() {
+  if (!state.musicAudio) return;
+  state.musicAudio.pause();
+  state.musicAudio.currentTime = 0;
+}
+
+function stopBrowserSpeech() {
+  try {
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+    }
+  } catch {}
+}
+
+async function speakWordWithBrowserTts(word) {
+  const spokenWord = String(word || '').trim();
+  if (!spokenWord || !state.soundEnabled) return;
+  if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+
+  const synth = window.speechSynthesis;
+  stopBrowserSpeech();
+  const voice = await getUkMaleVoice(synth);
+
+  await new Promise((resolve) => {
+    const utterance = new SpeechSynthesisUtterance(spokenWord);
+    if (voice) {
+      utterance.voice = voice;
+      utterance.lang = voice.lang || 'en-GB';
+    } else {
+      utterance.lang = 'en-GB';
+    }
+    utterance.rate = 0.92;
+    utterance.pitch = 0.95;
+    utterance.volume = 1;
+    utterance.onend = resolve;
+    utterance.onerror = resolve;
+    synth.speak(utterance);
+    window.setTimeout(resolve, 3500);
+  });
+}
+
+async function getUkMaleVoice(synth) {
+  if (ukMaleVoiceCache) return ukMaleVoiceCache;
+
+  const pickVoice = (voices) => {
+    if (!Array.isArray(voices) || !voices.length) return null;
+    const exact = voices.find((voice) => /google uk english male/i.test(voice.name || ''));
+    if (exact) return exact;
+
+    const ukMale = voices.find((voice) => {
+      const lang = String(voice.lang || '').toLowerCase();
+      const name = String(voice.name || '').toLowerCase();
+      return lang.startsWith('en-gb') && /male|daniel|george|ryan|tom|oliver/i.test(name);
+    });
+    if (ukMale) return ukMale;
+
+    const anyUk = voices.find((voice) => String(voice.lang || '').toLowerCase().startsWith('en-gb'));
+    if (anyUk) return anyUk;
+
+    return voices.find((voice) => String(voice.lang || '').toLowerCase().startsWith('en')) || voices[0] || null;
+  };
+
+  let voices = synth.getVoices() || [];
+  let selected = pickVoice(voices);
+  if (selected) {
+    ukMaleVoiceCache = selected;
+    return selected;
+  }
+
+  selected = await new Promise((resolve) => {
+    const onVoicesChanged = () => {
+      const loaded = synth.getVoices() || [];
+      const picked = pickVoice(loaded);
+      synth.removeEventListener('voiceschanged', onVoicesChanged);
+      resolve(picked);
+    };
+    synth.addEventListener('voiceschanged', onVoicesChanged);
+    window.setTimeout(() => {
+      synth.removeEventListener('voiceschanged', onVoicesChanged);
+      resolve(pickVoice(synth.getVoices() || []));
+    }, 1200);
+  });
+
+  ukMaleVoiceCache = selected || null;
+  return ukMaleVoiceCache;
 }
