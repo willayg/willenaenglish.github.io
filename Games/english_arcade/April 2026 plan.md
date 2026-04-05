@@ -478,6 +478,7 @@ Bug sweep focus areas:
 - Class/filter state mismatches after refresh or navigation.
 - Small modal/control regressions (open/close, stale labels, disabled states).
 - Quick consistency fixes in Student Tracker tables/charts where behavior is confusing.
+- Student Tracker no-data incident (staging): add a dedicated recovery patch that enforces endpoint fallback and verifies class leaderboard returns non-empty rows before release (deferred to next session).
 - Word Builder matching worksheet limit/print issue: replace hard caps with chunked page groups (deferred; do not ship until print behavior is validated).
 
 Execution approach:
