@@ -30,19 +30,7 @@ const CARD_PALETTE = [
 
 const PAGE_THEMES = ['gradient', 'white', 'pink-stars', 'rainbow-clouds'];
 const BORDER_THEMES = ['cyan', 'pink'];
-const MUSIC_TRACKS = [
-  './assets/audio/music/8_bits.mp3',
-  './assets/audio/music/candy.mp3',
-  './assets/audio/music/Halloween_Playground.mp3',
-  './assets/audio/music/kids1.mp3',
-  './assets/audio/music/pianopoly.mp3',
-  './assets/audio/music/Pixel_Playground.mp3',
-  './assets/audio/music/rainbows_end.mp3',
-  './assets/audio/music/snowdrops_droppings.mp3',
-  './assets/audio/music/space-walk-226545.mp3',
-];
-const SOUND_PREF_KEY = 'memoryMatch.soundEnabled';
-const MUSIC_PREF_KEY = 'memoryMatch.musicEnabled';
+const WA_AUDIO_SOUND_KEY = 'wa.audio.sound.enabled';
 
 const emojiSupportCache = new Map();
 let ukMaleVoiceCache = null;
@@ -62,10 +50,6 @@ const state = {
   loading: false,
   sessionId: null,
   gameActive: false,
-  soundEnabled: false,
-  musicEnabled: false,
-  musicTrackIndex: -1,
-  musicAudio: null,
   nextWordAudioAt: 0,
 };
 
@@ -82,9 +66,6 @@ const elements = {
   movesValue: document.getElementById('movesValue'),
   matchesValue: document.getElementById('matchesValue'),
   starTargetValue: document.getElementById('starTargetValue'),
-  soundToggle: document.getElementById('soundToggle'),
-  musicToggle: document.getElementById('musicToggle'),
-  musicNextBtn: document.getElementById('musicNextBtn'),
   boardGrid: document.getElementById('boardGrid'),
   loadingState: document.getElementById('loadingState'),
   loadingText: document.getElementById('loadingText'),
@@ -95,7 +76,6 @@ bootstrap();
 function bootstrap() {
   applyPageTheme();
   initPointsClient();
-  initAudioControls();
   elements.difficultySelect.value = state.difficulty;
   updateSetupSummary();
   wireControls();
@@ -122,31 +102,6 @@ function wireControls() {
 
   elements.startGameBtn.addEventListener('click', () => startNewGame());
   elements.exitGameBtn.addEventListener('click', () => handleExitGame());
-
-  elements.soundToggle.addEventListener('click', () => {
-    state.soundEnabled = !state.soundEnabled;
-    persistAudioPreferences();
-    if (!state.soundEnabled) {
-      stopBrowserSpeech();
-    }
-    renderAudioControls();
-  });
-
-  elements.musicToggle.addEventListener('click', async () => {
-    state.musicEnabled = !state.musicEnabled;
-    persistAudioPreferences();
-    renderAudioControls();
-    if (state.musicEnabled) {
-      await playRandomMusicTrack({ avoidCurrent: false });
-      return;
-    }
-    stopMusic();
-  });
-
-  elements.musicNextBtn.addEventListener('click', async () => {
-    if (!state.musicEnabled) return;
-    await playRandomMusicTrack({ avoidCurrent: true });
-  });
 }
 
 async function startNewGame() {
@@ -535,7 +490,7 @@ async function closePartialSession() {
 }
 
 function playCardAudio(card) {
-  if (!state.soundEnabled) return;
+  if (!isGlobalSoundEnabled()) return;
   if (card.faceType !== 'word') return;
   const now = Date.now();
   if (now < state.nextWordAudioAt) return;
@@ -544,7 +499,7 @@ function playCardAudio(card) {
 }
 
 function triggerMatchFeedback(pairId) {
-  if (state.soundEnabled) {
+  if (isGlobalSoundEnabled()) {
     try {
       playSFX('correct');
     } catch {}
@@ -766,63 +721,12 @@ function starsToAccuracy(starCount) {
   return 0;
 }
 
-function initAudioControls() {
-  state.musicAudio = new Audio();
-  state.musicAudio.preload = 'auto';
-  state.musicAudio.volume = 0.3;
-  state.musicAudio.addEventListener('ended', () => {
-    if (!state.musicEnabled) return;
-    void playRandomMusicTrack({ avoidCurrent: true });
-  });
-
+function isGlobalSoundEnabled() {
   try {
-    state.soundEnabled = localStorage.getItem(SOUND_PREF_KEY) === '1';
-    state.musicEnabled = localStorage.getItem(MUSIC_PREF_KEY) === '1';
+    return localStorage.getItem(WA_AUDIO_SOUND_KEY) === '1';
   } catch {
-    state.soundEnabled = false;
-    state.musicEnabled = false;
+    return false;
   }
-
-  renderAudioControls();
-}
-
-function persistAudioPreferences() {
-  try {
-    localStorage.setItem(SOUND_PREF_KEY, state.soundEnabled ? '1' : '0');
-    localStorage.setItem(MUSIC_PREF_KEY, state.musicEnabled ? '1' : '0');
-  } catch {}
-}
-
-function renderAudioControls() {
-  elements.soundToggle.setAttribute('aria-checked', state.soundEnabled ? 'true' : 'false');
-  elements.musicToggle.setAttribute('aria-checked', state.musicEnabled ? 'true' : 'false');
-  elements.musicNextBtn.disabled = !state.musicEnabled;
-}
-
-async function playRandomMusicTrack({ avoidCurrent = true } = {}) {
-  if (!state.musicEnabled || !state.musicAudio) return;
-  if (!MUSIC_TRACKS.length) return;
-
-  const candidateIndexes = MUSIC_TRACKS
-    .map((_, index) => index)
-    .filter((index) => !avoidCurrent || MUSIC_TRACKS.length < 2 || index !== state.musicTrackIndex);
-  if (!candidateIndexes.length) return;
-
-  const nextIndex = candidateIndexes[Math.floor(Math.random() * candidateIndexes.length)];
-  state.musicTrackIndex = nextIndex;
-  state.musicAudio.src = MUSIC_TRACKS[nextIndex];
-
-  try {
-    await state.musicAudio.play();
-  } catch {
-    // Autoplay can be blocked until the first direct user interaction.
-  }
-}
-
-function stopMusic() {
-  if (!state.musicAudio) return;
-  state.musicAudio.pause();
-  state.musicAudio.currentTime = 0;
 }
 
 function stopBrowserSpeech() {
@@ -835,7 +739,7 @@ function stopBrowserSpeech() {
 
 async function speakWordWithBrowserTts(word) {
   const spokenWord = String(word || '').trim();
-  if (!spokenWord || !state.soundEnabled) return;
+  if (!spokenWord || !isGlobalSoundEnabled()) return;
   if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
 
   const synth = window.speechSynthesis;

@@ -1,6 +1,16 @@
 // Shared TTS utilities
 import { FN } from './scripts/api-base.js?v=20251231a';
 
+const WA_AUDIO_SOUND_KEY = 'wa.audio.sound.enabled';
+
+function isSoundEnabled() {
+  try {
+    return localStorage.getItem(WA_AUDIO_SOUND_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
+
 // Audio cache for preloaded sounds (keyed by normalized key string)
 // Note: key may be a base word (e.g., "run") or a variant key (e.g., "run_itself")
 const audioCache = new Map(); // normalizedKey -> Audio object
@@ -310,6 +320,7 @@ function extractWordForAudio(text) {
 function speakWithSystemTTS(word) {
   return new Promise((resolve) => {
     try {
+      if (!isSoundEnabled()) return resolve();
       if (typeof window === 'undefined' || !('speechSynthesis' in window)) return resolve();
       const synth = window.speechSynthesis;
       const pickVoice = () => {
@@ -365,6 +376,7 @@ const PLAY_COOLDOWN_MS = 700; // minimal spacing for rapid clicks
 const _lastPlayAt = new Map(); // key -> timestamp ms
 
 export async function playTTS(text) {
+  if (!isSoundEnabled()) return;
   console.log(`Playing TTS for: "${text}"`);
   // Extract the actual word for filename (remove prompt formatting)
   const word = extractWordForAudio(text);
@@ -473,6 +485,7 @@ export async function playTTS(text) {
 // Variant-aware playback: tries preferred variant keys in order and falls back gracefully
 // variant can be: 'itself' (word-only), 'sentence' (example/sentence), or 'default'
 export async function playTTSVariant(word, variant = 'default') {
+  if (!isSoundEnabled()) return;
   try {
     const base = String(word || '').trim();
     if (!base) return;

@@ -1,5 +1,18 @@
 // Reusable Student Header Web Component
 // Usage: <student-header home-href="/index.html" home-label="Home"></student-header>
+const WA_AUDIO_SOUND_KEY = 'wa.audio.sound.enabled';
+const WA_AUDIO_MUSIC_KEY = 'wa.audio.music.enabled';
+const WA_MUSIC_TRACKS = [
+  '/Games/english_arcade/assets/audio/music/8_bits.mp3',
+  '/Games/english_arcade/assets/audio/music/candy.mp3',
+  '/Games/english_arcade/assets/audio/music/Halloween_Playground.mp3',
+  '/Games/english_arcade/assets/audio/music/kids1.mp3',
+  '/Games/english_arcade/assets/audio/music/pianopoly.mp3',
+  '/Games/english_arcade/assets/audio/music/Pixel_Playground.mp3',
+  '/Games/english_arcade/assets/audio/music/rainbows_end.mp3',
+  '/Games/english_arcade/assets/audio/music/snowdrops_droppings.mp3',
+  '/Games/english_arcade/assets/audio/music/space-walk-226545.mp3',
+];
 
 class StudentHeader extends HTMLElement {
   static get observedAttributes() {
@@ -9,6 +22,10 @@ class StudentHeader extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: "open" });
+    this._musicAudio = null;
+    this._musicTrackIndex = -1;
+    this._onAudioEvent = this._onAudioEvent.bind(this);
+    this._onAnyUserGestureResumeMusic = this._onAnyUserGestureResumeMusic.bind(this);
   this._onStorage = this._onStorage.bind(this);
   this._onAuthChanged = this._onAuthChanged?.bind(this);
   this._fetchingPoints = false;
@@ -78,12 +95,17 @@ class StudentHeader extends HTMLElement {
   // Hydrate identity from server session and refresh on focus changes
   this._hydrateProfile();
   window.addEventListener('focus', this._onFocus);
+      window.addEventListener('wa:audio-settings-changed', this._onAudioEvent);
+      document.addEventListener('pointerdown', this._onAnyUserGestureResumeMusic, true);
     // If points not yet known, fetch once to seed
     if ((this._points == null || this._stars == null) && !this._fetchingOverview) {
       this._fetchOverview();
     }
   // Defer mission modal check a tick to avoid blocking initial paint
   try { setTimeout(() => this._maybeShowMissionModal(), 0); } catch {}
+    this._ensureAudioDefaults();
+    this._ensureMusicAudio();
+    this._syncMusicPlaybackWithPreference();
   }
 
   disconnectedCallback() {
@@ -95,6 +117,8 @@ class StudentHeader extends HTMLElement {
   window.removeEventListener('stars:refresh', this._onStarsRefresh);
   window.removeEventListener('session:ended', this._onStarsRefresh);
   window.removeEventListener('focus', this._onFocus);
+    window.removeEventListener('wa:audio-settings-changed', this._onAudioEvent);
+    document.removeEventListener('pointerdown', this._onAnyUserGestureResumeMusic, true);
   }
 
   refresh() { this.render(); }
@@ -115,12 +139,105 @@ class StudentHeader extends HTMLElement {
 
   _onStorage(e) {
     // Only re-render if relevant keys change
-  if (["user_name", "user_id", "selectedEmojiAvatar"].includes(e.key)) {
+    if (["user_name", "user_id", "selectedEmojiAvatar"].includes(e.key)) {
       this.render();
     }
     if (e.key === 'stars:refresh') {
       this._scheduleOverviewRefresh();
     }
+    if (e.key === WA_AUDIO_SOUND_KEY || e.key === WA_AUDIO_MUSIC_KEY) {
+      this._syncAudioUi();
+      this._syncMusicPlaybackWithPreference();
+    }
+  }
+
+  _onAudioEvent() {
+    this._syncAudioUi();
+    this._syncMusicPlaybackWithPreference();
+  }
+
+  _ensureAudioDefaults() {
+    try {
+      if (localStorage.getItem(WA_AUDIO_SOUND_KEY) == null) localStorage.setItem(WA_AUDIO_SOUND_KEY, '0');
+      if (localStorage.getItem(WA_AUDIO_MUSIC_KEY) == null) localStorage.setItem(WA_AUDIO_MUSIC_KEY, '0');
+    } catch {}
+  }
+
+  _isSoundEnabled() {
+    try { return localStorage.getItem(WA_AUDIO_SOUND_KEY) === '1'; } catch { return false; }
+  }
+
+  _isMusicEnabled() {
+    try { return localStorage.getItem(WA_AUDIO_MUSIC_KEY) === '1'; } catch { return false; }
+  }
+
+  _setSoundEnabled(enabled) {
+    try { localStorage.setItem(WA_AUDIO_SOUND_KEY, enabled ? '1' : '0'); } catch {}
+    if (!enabled) {
+      try { if ('speechSynthesis' in window) window.speechSynthesis.cancel(); } catch {}
+    }
+    window.dispatchEvent(new CustomEvent('wa:audio-settings-changed', { detail: { sound: !!enabled, music: this._isMusicEnabled() } }));
+  }
+
+  _setMusicEnabled(enabled) {
+    try { localStorage.setItem(WA_AUDIO_MUSIC_KEY, enabled ? '1' : '0'); } catch {}
+    window.dispatchEvent(new CustomEvent('wa:audio-settings-changed', { detail: { sound: this._isSoundEnabled(), music: !!enabled } }));
+  }
+
+  _ensureMusicAudio() {
+    if (this._musicAudio) return;
+    this._musicAudio = new Audio();
+    this._musicAudio.preload = 'auto';
+    this._musicAudio.volume = 0.28;
+    this._musicAudio.addEventListener('ended', () => {
+      if (!this._isMusicEnabled()) return;
+      this._playNextMusicTrack(true);
+    });
+  }
+
+  async _playNextMusicTrack(avoidCurrent = true) {
+    this._ensureMusicAudio();
+    if (!WA_MUSIC_TRACKS.length) return;
+    const candidates = WA_MUSIC_TRACKS
+      .map((_, idx) => idx)
+      .filter((idx) => !avoidCurrent || WA_MUSIC_TRACKS.length < 2 || idx !== this._musicTrackIndex);
+    if (!candidates.length) return;
+    const nextIndex = candidates[Math.floor(Math.random() * candidates.length)];
+    this._musicTrackIndex = nextIndex;
+    this._musicAudio.src = WA_MUSIC_TRACKS[nextIndex];
+    try { await this._musicAudio.play(); } catch {}
+  }
+
+  _syncMusicPlaybackWithPreference() {
+    this._ensureMusicAudio();
+    if (this._isMusicEnabled()) {
+      if (!this._musicAudio.src) {
+        this._playNextMusicTrack(false);
+      } else if (this._musicAudio.paused) {
+        this._musicAudio.play().catch(() => {});
+      }
+      return;
+    }
+    try {
+      this._musicAudio.pause();
+      this._musicAudio.currentTime = 0;
+    } catch {}
+  }
+
+  _onAnyUserGestureResumeMusic() {
+    if (!this._isMusicEnabled()) return;
+    if (!this._musicAudio) return;
+    if (!this._musicAudio.paused) return;
+    this._musicAudio.play().catch(() => {});
+  }
+
+  _syncAudioUi() {
+    const soundBtn = this.shadowRoot?.getElementById('audioSoundToggle');
+    const musicBtn = this.shadowRoot?.getElementById('audioMusicToggle');
+    const nextBtn = this.shadowRoot?.getElementById('audioMusicNextBtn');
+    if (soundBtn) soundBtn.setAttribute('aria-checked', this._isSoundEnabled() ? 'true' : 'false');
+    if (musicBtn) musicBtn.setAttribute('aria-checked', this._isMusicEnabled() ? 'true' : 'false');
+    if (nextBtn) nextBtn.disabled = !this._isMusicEnabled();
   }
 
   _onAuthChanged() {
@@ -469,6 +586,15 @@ class StudentHeader extends HTMLElement {
   }
   .dropdown.open { /* keep class for legacy logic; now handled with states */ }
   .dd-item { display:flex; align-items:flex-start; gap:10px; width:100%; text-align:left; border:1px solid transparent; background:#fff; border-radius:10px; padding:9px 12px; cursor:pointer; font-weight:600; color: #19777e; font-size: clamp(.8rem, 2.6vw, .95rem); line-height:1.2; white-space: normal; overflow-wrap: anywhere; }
+    .dd-divider { height:1px; background:#e6eaef; margin:8px 2px; }
+    .dd-audio-row { display:flex; align-items:center; gap:10px; padding:8px 6px; color:#19777e; }
+    .dd-audio-label { flex:1; font-weight:700; font-size:.86rem; }
+    .dd-audio-switch { width:42px; height:24px; border:none; border-radius:999px; background:#d7dfe6; padding:2px; cursor:pointer; position:relative; transition:background .18s ease; }
+    .dd-audio-switch::after { content:''; display:block; width:20px; height:20px; border-radius:50%; background:#fff; box-shadow:0 1px 3px rgba(0,0,0,.25); transform:translateX(0); transition:transform .18s ease; }
+    .dd-audio-switch[aria-checked="true"] { background:#1aa59c; }
+    .dd-audio-switch[aria-checked="true"]::after { transform:translateX(18px); }
+    .dd-audio-next { border:1px solid #93cbcf; background:#fff; color:#19777e; border-radius:999px; padding:4px 10px; font-weight:700; font-size:.76rem; cursor:pointer; }
+    .dd-audio-next:disabled { opacity:.45; cursor:default; }
   .dd-item svg { flex: 0 0 auto; margin-top:2px; }
   .dd-item:hover, .dd-item:focus { background:#f7fcfd; border-color:#e6eaef; outline:none; }
         .menu-row {
@@ -573,6 +699,10 @@ class StudentHeader extends HTMLElement {
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right:4px"><circle cx="12" cy="12" r="10" fill="#19777e"/><text x="12" y="16" text-anchor="middle" font-size="10" fill="#fff">E</text></svg>
                 English Arcade
               </a>
+              <a class="dd-item" role="menuitem" href="/Games/english_arcade/emoji-match.html?autostart=1" data-i18n="Emoji Match">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right:4px"><circle cx="12" cy="12" r="10" fill="#19777e"/><text x="12" y="16" text-anchor="middle" font-size="10" fill="#fff">:)</text></svg>
+                Emoji Match
+              </a>
               <a class="dd-item" role="menuitem" href="/playzone.html" data-i18n="More Games">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right:4px"><path d="M20 6h-2.18c.09-.3.18-.58.18-.9a2.5 2.5 0 00-5-1.45A2.5 2.5 0 005 5.1a2.5 2.5 0 00-5 1.45c0 .32.09.6.18.9H2a2 2 0 00-2 2v12c0 1.1.9 2 2 2h20c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-5-2c.83 0 1.5.67 1.5 1.5S15.83 7 15 7s-1.5-.67-1.5-1.5S14.17 4 15 4zm-4 0c.83 0 1.5.67 1.5 1.5S11.83 7 11 7s-1.5-.67-1.5-1.5S10.17 4 11 4zm3.5 9.5c0 .83-.67 1.5-1.5 1.5s-1.5-.67-1.5-1.5.67-1.5 1.5-1.5 1.5.67 1.5 1.5z" fill="#19777e"/></svg>
                 More Games
@@ -585,6 +715,16 @@ class StudentHeader extends HTMLElement {
                 <svg width="20" height="20" viewBox="0 0 24 24" style="margin-right:4px" xmlns="http://www.w3.org/2000/svg" fill="none"><path fill="#19777e" d="M14 6.3V5a2 2 0 10-4 0v1.3A5 5 0 007 11v1H5a1 1 0 000 2h2v1c0 .34.03.67.1 1H5a1 1 0 000 2h2.68A5.98 5.98 0 0012 21a5.98 5.98 0 004.32-1H19a1 1 0 000-2h-2.1c.07-.33.1-.66.1-1v-1h2a1 1 0 000-2h-2v-1a5 5 0 00-3-4.7zM12 19a4 4 0 01-4-4v-4a4 4 0 118 0v4a4 4 0 01-4 4z"/></svg>
                 Bugs
               </button>
+              <div class="dd-divider" aria-hidden="true"></div>
+              <div class="dd-audio-row">
+                <span class="dd-audio-label">Sound</span>
+                <button id="audioSoundToggle" class="dd-audio-switch" type="button" role="switch" aria-checked="false" aria-label="Toggle sound"></button>
+              </div>
+              <div class="dd-audio-row">
+                <span class="dd-audio-label">Music</span>
+                <button id="audioMusicToggle" class="dd-audio-switch" type="button" role="switch" aria-checked="false" aria-label="Toggle music"></button>
+                <button id="audioMusicNextBtn" class="dd-audio-next" type="button" aria-label="Next music track">Next</button>
+              </div>
               <button class="dd-item" id="logoutAction" role="menuitem" type="button" data-i18n="Logout">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right:4px"><path d="M16 13v-2H7V8l-5 4 5 4v-3h9zm3-11H9c-1.1 0-2 .9-2 2v4h2V4h10v16H9v-4H7v4c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z" fill="#19777e"/></svg>
                 Logout
@@ -709,12 +849,38 @@ class StudentHeader extends HTMLElement {
       avatarMenu.addEventListener('keydown', (e) => { if (e.key === 'Escape') { e.preventDefault(); toggleMenu(false); avatarBtn.focus(); } });
     }
 
+    const soundToggle = this.shadowRoot.getElementById('audioSoundToggle');
+    const musicToggle = this.shadowRoot.getElementById('audioMusicToggle');
+    const nextTrackBtn = this.shadowRoot.getElementById('audioMusicNextBtn');
+    if (soundToggle) {
+      soundToggle.addEventListener('click', () => {
+        this._setSoundEnabled(!this._isSoundEnabled());
+        this._syncAudioUi();
+      });
+    }
+    if (musicToggle) {
+      musicToggle.addEventListener('click', () => {
+        this._setMusicEnabled(!this._isMusicEnabled());
+        this._syncAudioUi();
+        this._syncMusicPlaybackWithPreference();
+      });
+    }
+    if (nextTrackBtn) {
+      nextTrackBtn.addEventListener('click', () => {
+        if (!this._isMusicEnabled()) return;
+        this._playNextMusicTrack(true);
+      });
+    }
+    this._syncAudioUi();
+
     // Logout wiring
     const doLogout = async () => {
       // Clear identity crumbs so UI doesn't show stale data before server hydrate
       try {
         const keys = ['user_name','username','name','user_id','userId','student_id','profile_id','id','selectedEmojiAvatar','avatar'];
         keys.forEach(k => { localStorage.removeItem(k); sessionStorage.removeItem(k); });
+        localStorage.removeItem(WA_AUDIO_SOUND_KEY);
+        localStorage.removeItem(WA_AUDIO_MUSIC_KEY);
       } catch {}
       // Clear localStorage tokens
       try { WillenaAPI.clearLocalTokens?.(); } catch {}

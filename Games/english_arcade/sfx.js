@@ -1,5 +1,16 @@
 // Simple SFX utility
+const WA_AUDIO_SOUND_KEY = 'wa.audio.sound.enabled';
+
+function isSoundEnabled() {
+  try {
+    return localStorage.getItem(WA_AUDIO_SOUND_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
+
 export function playSFX(name) {
+  if (!isSoundEnabled()) return;
   const audioMap = {
     correct: 'assets/audio/right-answer.mp3',
     wrong: 'assets/audio/wrong-answer.mp3',
