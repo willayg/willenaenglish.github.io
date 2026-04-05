@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-  <link rel="stylesheet" href="/students/dashboard.css" />
+  <link rel="stylesheet" href="/students/dashboard.css?v=20260406a" />
   <link rel="stylesheet" href="/students/theme.css" />
   <base href="/students/">
   <meta name="robots" content="noindex" />
@@ -29,7 +29,7 @@
         window.location.replace(netlifyUrl);
         return;
       }
-    })();
+    });
 
     // Redirect to login if not signed in
     document.addEventListener('DOMContentLoaded', async () => {
@@ -101,6 +101,13 @@
           <a href="/Games/english_arcade/index.html" class="wa-option-card wa-word-arcade" style="text-decoration: none; color: inherit; background: #343d44; border: 3px solid #59d7db; border-radius: 16px; padding: 24px 12px 28px; box-shadow: 0 4px 12px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.08); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; transition: transform .25s cubic-bezier(.4,2,.3,.7), box-shadow .25s ease, border-color .25s ease; cursor: pointer; grid-column: span 2; min-height: 200px;">
             <img src="/Games/english_arcade/assets/Images/icons/english-arcade.svg" alt="English Arcade" style="width: 250px; height: 100px; max-width: none; object-fit: contain;">
             <div style="text-align: center; font-size: 1.6rem; font-weight: 700; letter-spacing: .3px; color: white; text-shadow: 0 0 10px #00ffff, 0 0 20px rgba(0,255,255,0.6);" data-i18n="Start Game">Start Game</div>
+          </a>
+
+          <a href="/Games/english_arcade/emoji-match.html" class="wa-option-card wa-mix-match" style="text-decoration: none; color: inherit; border-radius: 16px; padding: 14px 14px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; cursor: pointer; grid-column: span 2; min-height: 96px; overflow: hidden;">
+            <div class="wa-mix-match-logo-wrap">
+              <span class="wa-mix-match-logo">MIX MATCH</span>
+            </div>
+            <span class="wa-new-tag">New!!!</span>
           </a>
         </div>
       </section>
@@ -200,8 +207,8 @@
             </div>
             <div class="settings-row">
               <span class="settings-label" data-i18n="Music">Music</span>
-              <span class="settings-muted" data-i18n="Off">Off</span>
-              <span class="settings-switch"></span>
+              <span class="settings-muted" id="musicStatus" data-i18n="Off">Off</span>
+              <span id="musicToggle" class="settings-switch" role="switch" aria-checked="false" tabindex="0" title="Toggle Music"></span>
             </div>
           </div>
         </div>
@@ -262,6 +269,53 @@
       if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', init); else init();
       // StudentTheme.apply already performs the DOM updates; avoid calling apply again here to prevent recursion
       window.addEventListener('studenttheme:changed', () => { /* no-op: theme already applied by StudentTheme */ });
+    })();
+  </script>
+
+  <script>
+    // Wire dashboard music toggle to shared audio settings used by StudentHeader
+    (function(){
+      const WA_AUDIO_MUSIC_KEY = 'wa.audio.music.enabled';
+
+      function isMusicEnabled(){
+        try { return localStorage.getItem(WA_AUDIO_MUSIC_KEY) === '1'; } catch { return false; }
+      }
+
+      function syncMusicUi(){
+        const sw = document.getElementById('musicToggle');
+        const status = document.getElementById('musicStatus');
+        const enabled = isMusicEnabled();
+        if (sw) sw.setAttribute('aria-checked', enabled ? 'true' : 'false');
+        if (status) {
+          const key = enabled ? 'On' : 'Off';
+          status.setAttribute('data-i18n', key);
+          status.textContent = (window.StudentLang && StudentLang.translate) ? StudentLang.translate(key) : key;
+        }
+      }
+
+      function setMusicEnabled(enabled){
+        try { localStorage.setItem(WA_AUDIO_MUSIC_KEY, enabled ? '1' : '0'); } catch {}
+        try {
+          window.dispatchEvent(new CustomEvent('wa:audio-settings-changed', {
+            detail: { music: !!enabled }
+          }));
+        } catch {}
+        syncMusicUi();
+      }
+
+      function init(){
+        const sw = document.getElementById('musicToggle');
+        if (!sw) return;
+        const activate = () => setMusicEnabled(!isMusicEnabled());
+        sw.addEventListener('click', activate);
+        sw.addEventListener('keydown', e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); activate(); }});
+        syncMusicUi();
+      }
+
+      if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
+      window.addEventListener('wa:audio-settings-changed', syncMusicUi);
+      window.addEventListener('studentlang:changed', syncMusicUi);
+      window.addEventListener('storage', (e) => { if (e.key === WA_AUDIO_MUSIC_KEY) syncMusicUi(); });
     })();
   </script>
 
@@ -594,6 +648,7 @@
           teacher.textContent = a.teacher_name ? `${t('Teacher')}: ${a.teacher_name}` : '';
 
           // Progress bar
+          const progress = typeof a.completion_pct === 'number' ? a.completion_pct : (a.completion || 0);
           const progressBar = document.createElement('div');
           progressBar.style.height = '8px';
           progressBar.style.width = '100%';
