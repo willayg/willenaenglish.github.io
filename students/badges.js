@@ -106,7 +106,8 @@ function getStatsFromPage() {
   // Read current counters already painted by student_profile.js
   return {
     points: parseInt(document.getElementById('awardPoints')?.textContent)||0,
-    medals: parseInt(document.getElementById('awardMedals')?.textContent)||0,
+    // awardMedals now displays Super Score in profile, so medals come from overview fields.
+    medals: parseInt(document.getElementById('ovPerfectRuns')?.textContent)||0,
     stars: parseInt(document.getElementById('awardStars')?.textContent)||0,
     // Fallbacks until overview event arrives
     perfectRuns: parseInt(document.getElementById('ovPerfectRuns')?.textContent)||0,
@@ -171,7 +172,7 @@ document.addEventListener('DOMContentLoaded', () => {
   renderBadges();
   // Fallback: observe counters and re-render when they change
   const starsEl = document.getElementById('awardStars');
-  const medalsEl = document.getElementById('awardMedals');
+  const medalsEl = document.getElementById('ovPerfectRuns');
   const obs = new MutationObserver(() => renderBadges());
   [starsEl, medalsEl].forEach(el => { if (el) obs.observe(el, { characterData: true, subtree: true, childList: true }); });
 });

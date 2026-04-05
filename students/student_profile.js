@@ -80,6 +80,15 @@ import { initPointsClient } from './scripts/points-client.js';
 
   function setText(id, text){ const el = document.getElementById(id); if (el) el.textContent = text; }
 
+  function calcSuperScore(stars, points, explicitSuperScore) {
+    if (typeof explicitSuperScore === 'number' && Number.isFinite(explicitSuperScore)) {
+      return Math.max(0, Math.round(explicitSuperScore));
+    }
+    const s = Number(stars) || 0;
+    const p = Number(points) || 0;
+    return Math.max(0, Math.round((s * p) / 1000));
+  }
+
   async function loadKpi(uid){
     // Deprecated in UI, but still used for best streak fallback if needed.
     try { await fetchJSON(API.kpi()); } catch {}
@@ -104,6 +113,7 @@ import { initPointsClient } from './scripts/points-client.js';
       setText('ovHardestWord', (ov.hardest_word && ov.hardest_word.word) || '—');
   const pts = (typeof cc.points === 'number') ? cc.points : (typeof cc.correct === 'number' ? cc.correct : (ov.points ?? 0));
       setText('awardPoints', String(pts));
+      setText('awardMedals', String(calcSuperScore(ov.stars, pts, ov.super_score)));
       try { window.dispatchEvent(new CustomEvent('points:update', { detail: { total: pts } })); } catch {}
       try { window.dispatchEvent(new CustomEvent('profile:overview', { detail: ov })); } catch {}
     } catch (e) {
@@ -119,6 +129,7 @@ import { initPointsClient } from './scripts/points-client.js';
       setText('ovFavoriteList', '—');
       setText('ovHardestWord', '—');
       setText('awardPoints', '0');
+      setText('awardMedals', '0');
     }
   }
 
@@ -373,11 +384,11 @@ import { initPointsClient } from './scripts/points-client.js';
       paintOverview(ov);
       setCache(`ov:${uid}`, ov, TTL);
       hideNotice();
-      // Stars/medals quick counters from overview
+        // Stars/super score quick counters from overview
       const setCount = (id, v) => { const e = document.getElementById(id); if (e) e.textContent = String(v ?? 0); };
-  // Stars retained; medals deprecated (removed calculation/update)
+      // Stars retained and super score shown in the second awards slot.
   setCount('awardStars', ov.stars);
-  // setCount('awardMedals', ov.perfect_runs ?? ov.mastered_lists); // removed: legacy medal metric
+      setCount('awardMedals', calcSuperScore(ov.stars, ov.points, ov.super_score));
       // Seed points from overview if present
       if (typeof ov.points === 'number') {
         setText('awardPoints', String(ov.points));
@@ -399,12 +410,12 @@ import { initPointsClient } from './scripts/points-client.js';
         setTimeout(poll, 3000);
       };
       poll();
-      // Fallback: if we had a cached overview but failed fresh fetch, ensure stars/medals counters reflect cached values
+      // Fallback: if we had a cached overview but failed fresh fetch, ensure stars/super score counters reflect cached values
       if (cacheOv) {
         try {
           const setCount = (id, v) => { const e = document.getElementById(id); if (e && v != null) e.textContent = String(v); };
           setCount('awardStars', cacheOv.stars);
-          // setCount('awardMedals', cacheOv.perfect_runs ?? cacheOv.mastered_lists); // removed legacy medal update
+          setCount('awardMedals', calcSuperScore(cacheOv.stars, cacheOv.points, cacheOv.super_score));
         } catch {}
       }
     }
@@ -429,6 +440,8 @@ import { initPointsClient } from './scripts/points-client.js';
       const pts = (cc && (typeof cc.points === 'number' ? cc.points : (typeof cc.correct === 'number' ? cc.correct : null)));
       if (pts != null) {
         setCount('awardPoints', pts);
+        const starsNow = parseInt(document.getElementById('awardStars')?.textContent, 10) || 0;
+        setCount('awardMedals', calcSuperScore(starsNow, pts));
         try { window.dispatchEvent(new CustomEvent('points:update', { detail: { total: pts } })); } catch {}
       }
     } catch {}
@@ -438,18 +451,16 @@ import { initPointsClient } from './scripts/points-client.js';
     if (Array.isArray(challenging)) { paintChallenging(challenging); setCache(`challenging:${uid}`, challenging, TTL); }
     else if (!challenging) console.warn('[profile] challenging fetch failed or timed out');
 
-    // If stars/medals still zero after Phase 2 but we have badges (indicator of activity), schedule a lazy recheck of overview
+    // If stars/super score still zero after Phase 2 but we have badges (indicator of activity), schedule a lazy recheck of overview
     try {
       const starsEl = document.getElementById('awardStars');
-      // medal element intentionally ignored (deprecated)
-      const medalsEl = null;
       if (starsEl && starsEl.textContent === '0') {
         setTimeout(async () => {
           const lateOv = await tryJSON(() => fetchWithTimeout(API.overview(), { ms: 3000, label: 'overview:late' }));
           if (lateOv) {
             const setCount = (id, v) => { const e = document.getElementById(id); if (e && v != null) e.textContent = String(v); };
             setCount('awardStars', lateOv.stars);
-            // setCount('awardMedals', lateOv.perfect_runs ?? lateOv.mastered_lists); // medals disabled
+            setCount('awardMedals', calcSuperScore(lateOv.stars, lateOv.points, lateOv.super_score));
             // Fire overview event if initial one never fired
             try { window.dispatchEvent(new CustomEvent('profile:overview', { detail: lateOv })); } catch {}
           }

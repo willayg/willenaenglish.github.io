@@ -158,7 +158,7 @@ class StudentHeader extends HTMLElement {
 
   _ensureAudioDefaults() {
     try {
-      if (localStorage.getItem(WA_AUDIO_SOUND_KEY) == null) localStorage.setItem(WA_AUDIO_SOUND_KEY, '0');
+      if (localStorage.getItem(WA_AUDIO_SOUND_KEY) == null) localStorage.setItem(WA_AUDIO_SOUND_KEY, '1');
       if (localStorage.getItem(WA_AUDIO_MUSIC_KEY) == null) localStorage.setItem(WA_AUDIO_MUSIC_KEY, '0');
     } catch {}
   }
