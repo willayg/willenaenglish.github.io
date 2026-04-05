@@ -735,7 +735,7 @@ class StudentHeader extends HTMLElement {
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right:4px"><circle cx="12" cy="12" r="10" fill="#19777e"/><text x="12" y="16" text-anchor="middle" font-size="10" fill="#fff">E</text></svg>
                 English Arcade
               </a>
-              <a class="dd-item" role="menuitem" href="/Games/english_arcade/emoji-match.html?autostart=1" data-i18n="Emoji Match">
+              <a class="dd-item" role="menuitem" href="/Games/english_arcade/emoji-match.html" data-i18n="Emoji Match">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right:4px"><circle cx="12" cy="12" r="10" fill="#19777e"/><text x="12" y="16" text-anchor="middle" font-size="10" fill="#fff">:)</text></svg>
                 Emoji Match
               </a>
