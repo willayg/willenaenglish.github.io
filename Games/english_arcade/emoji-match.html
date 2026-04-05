@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Memory Match</title>
+  <meta name="description" content="Standalone Memory Match with English words, emoji or Korean pairs, and English Arcade points and stars." />
+  <script src="/students/api-gateway.js?v=20260326c"></script>
+  <script src="/js/api-config.js?v=20260324r"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/students/theme.css" />
+  <link rel="stylesheet" href="./emoji-match.css?v=20260405a" />
+  <script src="/students/language.js"></script>
+  <script src="/students/theme.js"></script>
+</head>
+<body>
+  <student-header title="" show-home="true" show-points="true" show-logout="true" home-href="/students/dashboard.html" home-label="Home"></student-header>
+
+  <main class="memory-app">
+    <section id="setupScreen" class="screen screen-setup">
+      <div class="setup-stage">
+        <div class="setup-intro">
+          <h1 class="setup-title">Memory Match</h1>
+        </div>
+
+        <div class="setup-card">
+          <div class="setup-fields">
+            <div class="field-group">
+              <label for="difficultySelect">Level</label>
+              <select id="difficultySelect">
+                <option value="easy">Easy</option>
+                <option value="medium">Medium</option>
+                <option value="hard">Hard</option>
+                <option value="expert">Expert</option>
+              </select>
+            </div>
+          </div>
+
+          <div id="setupMessage" class="message-banner" aria-live="polite"></div>
+
+          <button id="startGameBtn" class="primary-action start-action" type="button">Start</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="gameScreen" class="screen screen-game" hidden>
+      <div class="game-shell">
+        <div class="game-topbar">
+          <div class="game-heading">
+            <p class="game-context"><strong id="gameDifficultyValue">Easy</strong></p>
+          </div>
+          <button id="exitGameBtn" class="secondary-action exit-action" type="button">Exit</button>
+        </div>
+
+        <div class="board-frame">
+          <div class="round-strip">
+            <p class="round-list"><span id="gameListValue">Loading…</span></p>
+            <p class="star-note">5 stars at <strong id="starTargetValue">10 moves</strong></p>
+          </div>
+
+          <div class="session-stats">
+            <div class="stat-chip stat-chip-minimal">
+              <span class="stat-label">Points</span>
+              <strong id="pointsValue">0</strong>
+            </div>
+            <div class="stat-chip stat-chip-minimal">
+              <span class="stat-label">Moves</span>
+              <strong id="movesValue">0</strong>
+            </div>
+            <div class="stat-chip stat-chip-minimal">
+              <span class="stat-label">Matches</span>
+              <strong id="matchesValue">0 / 6</strong>
+            </div>
+          </div>
+
+          <div id="loadingState" class="board-overlay" hidden>
+            <div class="loader"></div>
+            <p id="loadingText">Building board…</p>
+          </div>
+          <div id="boardGrid" class="board-grid" aria-live="polite"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="/students/components/student-header.js?v=20260405a"></script>
+  <script type="module" src="./emoji-match.js?v=20260405b"></script>
+</body>
+</html>
