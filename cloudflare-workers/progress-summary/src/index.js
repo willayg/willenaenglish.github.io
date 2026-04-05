@@ -310,22 +310,6 @@ async function fetchProfiles(env, classFilter = null) {
   return (profiles || []).filter(p => !p.username || (p.username && p.username.length > 1));
 }
 
-async function getUserRoleFromProfiles(env, userId) {
-  if (!userId) return null;
-  try {
-    const rows = await supabaseSelect(env, 'profiles', `id=eq.${userId}&select=role&limit=1`);
-    const role = rows && rows[0] && rows[0].role;
-    return role ? String(role).toLowerCase() : null;
-  } catch {
-    return null;
-  }
-}
-
-async function requireTeacherAccess(env, userId) {
-  const role = await getUserRoleFromProfiles(env, userId);
-  return role === 'teacher' || role === 'admin';
-}
-
 // Build leaderboard from profiles, sessions, and points
 function finalizeLeaderboard(entries) {
   entries.sort((a, b) => (b.points || 0) - (a.points || 0) || (a.name || '').localeCompare(b.name || ''));
@@ -674,88 +658,6 @@ export default {
           timeframe,
           cached_at: cacheData.cached_at,
           leaderboard: shaped,
-        }, 200, origin, RESPONSE_CACHE_SECONDS);
-      }
-
-      // ===== TEACHER CLASS LEADERBOARD (full class list, same aggregation as student dashboard) =====
-      if (section === 'leaderboard_stars_teacher_class') {
-        const hasTeacherAccess = await requireTeacherAccess(env, userId);
-        if (!hasTeacherAccess) {
-          return jsonResponse({ error: 'Teacher access required' }, 403, origin);
-        }
-
-        const classFilter = (url.searchParams.get('class') || '').trim();
-        if (!classFilter || classFilter.length === 1) {
-          return jsonResponse({ success: true, class: classFilter || null, leaderboard: [] }, 200, origin);
-        }
-
-        const timeframe = url.searchParams.get('timeframe') || 'all';
-        const firstOfMonth = timeframe === 'month' ? getMonthStartIso() : null;
-        const cacheKey = `lb:teacher:class:${classFilter.toLowerCase()}:${timeframe}`;
-
-        const cached = await getFromCache(env, cacheKey);
-        if (cached && Array.isArray(cached.leaderboard)) {
-          return jsonResponse({
-            success: true,
-            class: classFilter,
-            timeframe,
-            cached_at: cached.cached_at,
-            leaderboard: cached.leaderboard,
-            _cached: true,
-          }, 200, origin, RESPONSE_CACHE_SECONDS);
-        }
-
-        const profiles = await fetchProfiles(env, classFilter);
-        const userIds = profiles.map(p => p.id);
-
-        const [sessions, pointsMap] = await Promise.all([
-          fetchSessionsForUsers(env, userIds, firstOfMonth),
-          aggregatePointsForIds(env, userIds, firstOfMonth),
-        ]);
-
-        const starsMap = buildStarsByUserMap(sessions);
-        const leaderboard = buildLeaderboard(profiles, starsMap, pointsMap);
-        const accuracyByUser = new Map();
-
-        for (const sess of sessions) {
-          if (!sess || !sess.user_id) continue;
-          const parsed = safeParseSummary(sess.summary);
-          let accuracy = null;
-          if (parsed && typeof parsed.accuracy === 'number') accuracy = parsed.accuracy;
-          else if (parsed && typeof parsed.score === 'number' && typeof parsed.total === 'number' && parsed.total > 0) {
-            accuracy = parsed.score / parsed.total;
-          }
-          if (typeof accuracy !== 'number' || !Number.isFinite(accuracy)) continue;
-
-          const bucket = accuracyByUser.get(sess.user_id) || { sum: 0, count: 0 };
-          bucket.sum += accuracy;
-          bucket.count += 1;
-          accuracyByUser.set(sess.user_id, bucket);
-        }
-
-        const teacherLeaderboard = leaderboard.map(entry => {
-          const acc = accuracyByUser.get(entry.user_id);
-          const accuracy = acc && acc.count ? Math.round((acc.sum / acc.count) * 100) : 0;
-          return {
-            ...entry,
-            accuracy,
-          };
-        });
-
-        const cacheData = {
-          class: classFilter,
-          timeframe,
-          cached_at: new Date().toISOString(),
-          leaderboard: teacherLeaderboard,
-        };
-        await setToCache(env, cacheKey, cacheData, CLASS_CACHE_TTL_SECONDS);
-
-        return jsonResponse({
-          success: true,
-          class: classFilter,
-          timeframe,
-          cached_at: cacheData.cached_at,
-          leaderboard: teacherLeaderboard,
         }, 200, origin, RESPONSE_CACHE_SECONDS);
       }
       

@@ -348,8 +348,6 @@ Acceptance criteria:
 
 ## Phase 6: Leaderboard Number Alignment (Student Tracker vs Student Dashboard) (play.js) [P3]
 
-Note: Update profile page at the same time
-
 ### 10) Make Student Dashboard the source of truth
 Problem statement:
 - Student Tracker and Student Dashboard show different numbers for stars/points/super score.
@@ -434,69 +432,6 @@ Acceptance criteria:
 - Prefer small, reversible changes with clear feature flags when touching cross-cutting score/audio logic.
 
 ## Addendum: New Items Requested (2026-03-27)
-
-## Phase 8 (New): Sentence + Phonics Game Expansion (Planned) [P13]
-
-Goal:
-- Add two new game modes that focus on sentence fluency and phonics mastery.
-- Keep this phase as a planning placeholder so implementation can start quickly once gameplay details are finalized.
-
-Planned game A: Sentence Builder Sprint
-- Student assembles shuffled sentence chunks into correct order.
-- Supports teacher-authored sentences and sample sentence pools.
-- Score emphasizes correct first-try ordering and completion speed.
-
-Planned game B: Phonics Sound Hunt
-- Student hears a phonics sound and selects matching word families.
-- Supports progressive rounds by blend/digraph/target pattern.
-- Score emphasizes listening accuracy and streak consistency.
-
-Implementation scope (first pass):
-- Add mode placeholders and registration wiring.
-- Define payload/data contract for sentence sets and phonics sets.
-- Add mode card visibility in selector without breaking existing modes.
-- Keep logging compatible with existing `startSession`, `logAttempt`, `endSession` flow.
-
-Primary files (expected):
-- `Games/english_arcade/modes/sentence_builder_sprint.js` (new)
-- `Games/english_arcade/modes/phonics_sound_hunt.js` (new)
-- `Games/english_arcade/core/mode-registry.js`
-- `Games/english_arcade/main.js`
-- `Games/english_arcade/ui/mode_selector.js`
-- `Games/english_arcade/ui/mode_modal.js`
-
-Acceptance criteria:
-- Both modes are visible/selectable behind safe launch guards.
-- No regressions in existing mode loading or homework forced-mode behavior.
-- Session and attempt events continue to appear in progress summaries.
-
-## Phase 9 (New): Teacher Branch Small Bug Sweep [P14]
-
-Goal:
-- Resolve small but recurring teacher-side bugs with low-risk, fast patches.
-
-Bug sweep focus areas:
-- Minor UI glitches in Teacher dashboard/tools pages.
-- Class/filter state mismatches after refresh or navigation.
-- Small modal/control regressions (open/close, stale labels, disabled states).
-- Quick consistency fixes in Student Tracker tables/charts where behavior is confusing.
-
-Execution approach:
-- Batch fixes into small, isolated commits.
-- Prefer no schema changes; use defensive frontend fixes first.
-- Keep each patch easy to rollback.
-
-Primary files (expected, varies by bug):
-- `Teachers/index.html`
-- `Teachers/login.js`
-- `Teachers/tools/student_tracker/main.js`
-- `Teachers/tools/manage_students*.js`
-- Shared UI components under `components/`
-
-Acceptance criteria:
-- Reported minor bugs are reproducible and then verified fixed.
-- No auth flow regressions.
-- No regression to homework assignment and tracker workflows.
 
 ### 14) Version/Environment Badges: Staging-Only Visibility [P7]
 Goal:

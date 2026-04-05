@@ -92,7 +92,7 @@ async function fetchJsonWithLog(url, label, options = {}) {
 const API = {
   classes: () => fetchJsonWithLog(`${FN('progress_teacher_summary')}?action=classes_list`, 'classes_list'),
   leaderboard: (cls, tf) => fetchJsonWithLog(
-    `${FN('progress_summary')}?section=leaderboard_stars_teacher_class&class=${encodeURIComponent(cls)}&timeframe=${encodeURIComponent(tf)}`,
+    `${FN('progress_teacher_summary')}?action=leaderboard&class=${encodeURIComponent(cls)}&timeframe=${encodeURIComponent(tf)}`,
     `leaderboard (${cls} - ${tf})`
   ),
   student: (uid, tf) => fetchJsonWithLog(
@@ -115,7 +115,7 @@ const ST_CACHE_DEFAULT_TTL = 45000; // ~45s client cache to mask function latenc
 
 const teacherPrefetchEndpoints = {
   classes: () => `${FN('progress_teacher_summary')}?action=classes_list`,
-  leaderboard: (cls, tf = DEFAULT_TIMEFRAME) => `${FN('progress_summary')}?section=leaderboard_stars_teacher_class&class=${encodeURIComponent(cls)}&timeframe=${encodeURIComponent(tf)}`,
+  leaderboard: (cls, tf = DEFAULT_TIMEFRAME) => `${FN('progress_teacher_summary')}?action=leaderboard&class=${encodeURIComponent(cls)}&timeframe=${encodeURIComponent(tf)}`,
   student: (uid, tf = DEFAULT_TIMEFRAME) => `${FN('progress_teacher_summary')}?action=student_details&user_id=${encodeURIComponent(uid)}&timeframe=${encodeURIComponent(tf)}`
 };
 
