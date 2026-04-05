@@ -113,6 +113,7 @@ html { overflow-x:hidden; }
    background: linear-gradient(145deg, #2a3439, #20282d) !important;
    border: 3px solid #59d7db !important;
    box-shadow: 0 0 18px rgba(89, 215, 219, 0.42), 0 4px 12px rgba(0,0,0,0.16), 0 1px 2px rgba(0,0,0,0.24) !important;
+   padding-right: 72px !important;
 }
 
 .wa-mix-match:hover {
@@ -120,26 +121,46 @@ html { overflow-x:hidden; }
    box-shadow: 0 0 24px rgba(89, 215, 219, 0.62), 0 8px 16px rgba(0,0,0,0.28) !important;
 }
 
+.wa-mix-match-logo-wrap {
+   width: 100%;
+   display: flex;
+   justify-content: center;
+   align-items: center;
+}
+
+.wa-mix-match-logo {
+   font-size: 1.28rem;
+   font-weight: 900;
+   letter-spacing: .07em;
+   color: #ecfeff;
+   text-shadow: 0 0 8px rgba(103,226,230,.85), 0 0 16px rgba(103,226,230,.55);
+   line-height: 1;
+}
+
 .wa-new-tag {
    display: inline-flex;
    align-items: center;
    justify-content: center;
-   padding: 5px 11px;
+   padding: 5px 10px;
    border-radius: 999px;
-   border: 2px solid #ffc46d;
-   background: linear-gradient(180deg, #fff2c8, #ffd27e);
-   color: #7b3d00;
-   font-size: 0.78rem;
+   border: 2px solid #ff8dc4;
+   background: linear-gradient(180deg, #ff94c9, #ff6fb1);
+   color: #ffffff;
+   font-size: 0.72rem;
    font-weight: 900;
-   letter-spacing: 0.03em;
+   letter-spacing: 0.05em;
    text-transform: uppercase;
-   box-shadow: 0 0 12px rgba(255, 196, 109, 0.55);
+   box-shadow: 0 0 12px rgba(255, 97, 186, 0.58);
    animation: wa-tag-pop 1.3s ease-in-out infinite;
+   position: absolute;
+   right: 12px;
+   top: 50%;
+   transform: translateY(-50%);
 }
 
 @keyframes wa-tag-pop {
-   0%, 100% { transform: scale(1); }
-   50% { transform: scale(1.08); }
+   0%, 100% { transform: translateY(-50%) scale(1); }
+   50% { transform: translateY(-50%) scale(1.08); }
 }
 
 /* =====================

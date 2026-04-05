@@ -448,7 +448,7 @@ export default {
           user_id: userId,
           stars: totalStars,
           points: totalPoints,
-        }, 200, origin, RESPONSE_CACHE_SECONDS);
+        }, 200, origin, 0);
       }
       
       // ===== SESSIONS (for progress-data-service star/progress calculations) =====

@@ -68,7 +68,10 @@ class StudentHeader extends HTMLElement {
   };
   this._onStarsRefresh = () => {
     this._scheduleOverviewRefresh();
+    this._startAuthoritativeStarsSync();
   };
+  this._starsSyncInterval = 0;
+  this._starsSyncStopTimer = 0;
   this._points = null;
   this._stars = null;
   this._fetchingOverview = false;
@@ -119,6 +122,7 @@ class StudentHeader extends HTMLElement {
   window.removeEventListener('focus', this._onFocus);
     window.removeEventListener('wa:audio-settings-changed', this._onAudioEvent);
     document.removeEventListener('pointerdown', this._onAnyUserGestureResumeMusic, true);
+    this._stopAuthoritativeStarsSync();
   }
 
   refresh() { this.render(); }
@@ -287,6 +291,37 @@ class StudentHeader extends HTMLElement {
     this._overviewRefreshTimer = setTimeout(() => this._fetchOverview(), 900);
   }
 
+  _stopAuthoritativeStarsSync() {
+    try { clearInterval(this._starsSyncInterval); } catch {}
+    try { clearTimeout(this._starsSyncStopTimer); } catch {}
+    this._starsSyncInterval = 0;
+    this._starsSyncStopTimer = 0;
+  }
+
+  _startAuthoritativeStarsSync() {
+    this._stopAuthoritativeStarsSync();
+    const baselineStars = (typeof this._stars === 'number') ? this._stars : null;
+    const intervalMs = 500;
+    const maxDurationMs = 7000;
+    const startedAt = Date.now();
+
+    const tick = async () => {
+      if (Date.now() - startedAt >= maxDurationMs) {
+        this._stopAuthoritativeStarsSync();
+        return;
+      }
+      const ov = await this._fetchOverview();
+      const latestStars = (ov && typeof ov.stars === 'number') ? ov.stars : null;
+      if (baselineStars != null && latestStars != null && latestStars > baselineStars) {
+        this._stopAuthoritativeStarsSync();
+      }
+    };
+
+    tick();
+    this._starsSyncInterval = setInterval(() => { void tick(); }, intervalMs);
+    this._starsSyncStopTimer = setTimeout(() => this._stopAuthoritativeStarsSync(), maxDurationMs + 250);
+  }
+
   // --- Mission Modal (homework alert) ---
   _shouldSuppressGameInterrupt() {
     try {
@@ -437,17 +472,18 @@ class StudentHeader extends HTMLElement {
   }
 
   _fetchOverview() {
-    if (this._fetchingOverview) return;
+    if (this._fetchingOverview) return Promise.resolve(null);
     this._fetchingOverview = true;
-    WillenaAPI.fetch(`/.netlify/functions/progress_summary?section=overview&_=${Date.now()}`)
+    return WillenaAPI.fetch(`/.netlify/functions/progress_summary?section=overview&_=${Date.now()}`)
       .then(r => r.ok ? r.json() : null)
       .then(ov => {
         let changed = false;
         if (ov && typeof ov.points === 'number' && ov.points !== this._points) { this._points = ov.points; changed = true; }
         if (ov && typeof ov.stars === 'number' && ov.stars !== this._stars) { this._stars = ov.stars; changed = true; }
         if (changed) this.refresh();
+        return ov || null;
       })
-      .catch(() => {})
+      .catch(() => null)
       .finally(() => { this._fetchingOverview = false; });
   }
 
