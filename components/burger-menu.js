@@ -1,3 +1,11 @@
+// Teacher-only session repair bootstrap.
+// This shared component is loaded by the teacher dashboard and most teacher tools.
+if (typeof window !== 'undefined' && window.location.hostname === 'teachers.willenaenglish.com') {
+  import('/Teachers/auth-refresh.js?v=20260726b')
+    .then((mod) => mod.ensureAuthRefresh())
+    .catch((error) => console.debug('[teacher-session] bootstrap failed', error));
+}
+
 // Burger menu component loader
 // Usage: import this file and call insertBurgerMenu() after DOMContentLoaded
 
