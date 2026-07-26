@@ -39,7 +39,11 @@ async function repairSession() {
         return false;
       }
 
+      // Keep both event names for compatibility. The shared header already
+      // listens for auth:changed and will immediately reload identity,
+      // points, and stars after a successful session repair.
       try { window.dispatchEvent(new CustomEvent('auth:refreshed')); } catch {}
+      try { window.dispatchEvent(new CustomEvent('auth:changed')); } catch {}
       return true;
     } catch (error) {
       lastRefreshAt = Date.now();
