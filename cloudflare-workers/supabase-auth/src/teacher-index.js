@@ -1,6 +1,7 @@
 import baseWorker from './index.js';
 
 const TEACHER_ORIGIN = 'https://teachers.willenaenglish.com';
+const STUDENT_ORIGIN = 'https://students.willenaenglish.com';
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 30;
 
 function parseCookies(cookieHeader) {
@@ -30,7 +31,7 @@ function jsonResponse(data, status, origin) {
     status,
     headers: {
       'Content-Type': 'application/json',
-      'Access-Control-Allow-Origin': origin || TEACHER_ORIGIN,
+      'Access-Control-Allow-Origin': origin,
       'Access-Control-Allow-Credentials': 'true',
       'Cache-Control': 'no-store',
     },
@@ -43,7 +44,7 @@ function asBaseWhoamiRequest(request) {
   return new Request(url.toString(), request);
 }
 
-async function refreshTeacherSession(request, env, ctx) {
+async function refreshSession(request, env, ctx) {
   const cookies = parseCookies(request.headers.get('Cookie') || '');
   const refreshToken = cookies.sb_refresh;
   if (!refreshToken) return null;
@@ -91,19 +92,26 @@ async function refreshTeacherSession(request, env, ctx) {
   });
 }
 
+function expectedOriginForAction(action) {
+  if (action === 'whoami_teacher') return TEACHER_ORIGIN;
+  if (action === 'whoami_student') return STUDENT_ORIGIN;
+  return null;
+}
+
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
     const action = url.searchParams.get('action');
+    const expectedOrigin = expectedOriginForAction(action);
 
     // Every existing action remains delegated to the original worker unchanged.
-    if (action !== 'whoami_teacher') {
+    if (!expectedOrigin) {
       return baseWorker.fetch(request, env, ctx);
     }
 
     const origin = request.headers.get('Origin') || '';
-    if (origin !== TEACHER_ORIGIN || request.method !== 'GET') {
-      return jsonResponse({ success: false, error: 'Action not found' }, 404, origin);
+    if (origin !== expectedOrigin || request.method !== 'GET') {
+      return jsonResponse({ success: false, error: 'Action not found' }, 404, expectedOrigin);
     }
 
     const initialResponse = await baseWorker.fetch(
@@ -115,11 +123,9 @@ export default {
     if (initialResponse.status !== 401) return initialResponse;
 
     try {
-      return (
-        (await refreshTeacherSession(request, env, ctx)) || initialResponse
-      );
+      return (await refreshSession(request, env, ctx)) || initialResponse;
     } catch (error) {
-      console.error('[teacher-whoami-refresh] Failed to repair session:', error);
+      console.error(`[${action}] Failed to repair session:`, error);
       return initialResponse;
     }
   },
