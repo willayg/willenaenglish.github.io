@@ -57,7 +57,7 @@ let __lastAuthRefresh = 0;
 
 async function fetchWhoAmI() {
   try {
-  const res = await fetch(FN('supabase_auth') + '?action=whoami', {
+  const res = await fetch(FN('supabase_auth') + '?action=whoami_student', {
       credentials: 'include',
       cache: 'no-store'
     });
