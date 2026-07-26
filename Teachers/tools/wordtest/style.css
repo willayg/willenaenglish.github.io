@@ -3,7 +3,7 @@
 @import url('./styles/preview-table.css');
 @import url('./styles/image-drop-and-burger.css');
 @import url('./styles/print.css');
-@import url('./styles/responsive.css');
+@import url('./styles/responsive.css?v=20260727b');
 
 /* Aggregated base and header/toolbar styles are now imported above */
 
