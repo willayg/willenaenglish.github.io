@@ -1,0 +1,39 @@
+name: Deploy and Merge Student Session
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/deploy-and-merge-student-session.yml'
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: deploy-supabase-auth
+  cancel-in-progress: false
+
+jobs:
+  deploy-and-merge:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out teachers branch
+        uses: actions/checkout@v4
+        with:
+          ref: teachers
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Deploy Supabase auth Worker
+        working-directory: cloudflare-workers/supabase-auth
+        run: npx wrangler deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      - name: Merge student frontend PR after successful deploy
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh pr merge 11 --repo willayg/willenaenglish.github.io --merge --match-head-commit 3e938f1d4ed0823e3313fa442104e1e283742be0
