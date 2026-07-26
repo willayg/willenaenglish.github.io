@@ -4,6 +4,7 @@
 @import url('./styles/image-drop-and-burger.css');
 @import url('./styles/print.css');
 @import url('./styles/responsive.css?v=20260727b');
+@import url('./styles/mobile-force.css?v=20260727c');
 
 /* Aggregated base and header/toolbar styles are now imported above */
 
