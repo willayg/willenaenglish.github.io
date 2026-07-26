@@ -1,0 +1,78 @@
+name: Patch Student Session Coverage
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/patch-student-session.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: student-session-frontend
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Apply narrow student session patch
+        shell: python
+        run: |
+          from pathlib import Path
+
+          helper = Path('students/auth-refresh.js')
+          helper.write_text("""// Shared student-session repair helper.\n// Verifies the current access token and uses the refresh-token cookie when needed.\n\nconst REFRESH_INTERVAL = 1000 * 60 * 35;\nconst MIN_FOCUS_REFRESH_AGE = 1000 * 60 * 15;\n\nlet refreshTimer = null;\nlet lastRefreshAt = 0;\nlet refreshInFlight = null;\n\nasync function sessionRequest() {\n  const path = '/.netlify/functions/supabase_auth?action=whoami_student&_=' + Date.now();\n\n  if (window.WillenaAPI && typeof window.WillenaAPI.fetch === 'function') {\n    return window.WillenaAPI.fetch(path, { method: 'GET', cache: 'no-store' });\n  }\n\n  return fetch(path, {\n    method: 'GET',\n    credentials: 'include',\n    cache: 'no-store',\n  });\n}\n\nasync function repairSession() {\n  if (refreshInFlight) return refreshInFlight;\n\n  refreshInFlight = (async () => {\n    try {\n      const response = await sessionRequest();\n      const data = await response.json().catch(() => ({}));\n      lastRefreshAt = Date.now();\n\n      if (!response.ok || !data.success) {\n        console.debug('[student-auth-refresh] session repair did not succeed', {\n          status: response.status,\n          body: data,\n        });\n        return false;\n      }\n\n      try { window.dispatchEvent(new CustomEvent('auth:refreshed')); } catch {}\n      return true;\n    } catch (error) {\n      lastRefreshAt = Date.now();\n      console.debug('[student-auth-refresh] request error', error);\n      return false;\n    } finally {\n      refreshInFlight = null;\n    }\n  })();\n\n  return refreshInFlight;\n}\n\nfunction scheduleRefresh() {\n  if (refreshTimer) clearInterval(refreshTimer);\n  refreshTimer = setInterval(repairSession, REFRESH_INTERVAL);\n}\n\nfunction repairAfterReturning() {\n  if (document.visibilityState === 'hidden') return;\n  const elapsed = Date.now() - lastRefreshAt;\n  if (!lastRefreshAt || elapsed >= MIN_FOCUS_REFRESH_AGE) repairSession();\n}\n\nexport function ensureStudentAuthRefresh() {\n  if (window.__studentAuthRefreshInitialized) return;\n  window.__studentAuthRefreshInitialized = true;\n\n  repairSession().finally(scheduleRefresh);\n  window.addEventListener('focus', repairAfterReturning);\n  document.addEventListener('visibilitychange', repairAfterReturning);\n  window.addEventListener('online', repairAfterReturning);\n}\n\nif (typeof window !== 'undefined') {\n  window.ensureStudentAuthRefresh = ensureStudentAuthRefresh;\n}\n""", encoding='utf-8')
+
+          header = Path('students/components/student-header.js')
+          text = header.read_text(encoding='utf-8')
+          bootstrap = """// Student session repair bootstrap.\nif (typeof window !== 'undefined' && window.location.hostname === 'students.willenaenglish.com') {\n  import('/students/auth-refresh.js?v=20260726a')\n    .then((mod) => mod.ensureStudentAuthRefresh())\n    .catch((error) => console.debug('[student-session] bootstrap failed', error));\n}\n\n"""
+          if bootstrap not in text:
+            text = bootstrap + text
+          text = text.replace('action=whoami&', 'action=whoami_student&')
+          text = text.replace('action=whoami`', 'action=whoami_student`')
+          text = text.replace("action=whoami'", "action=whoami_student'")
+          text = text.replace('action=whoami"', 'action=whoami_student"')
+          header.write_text(text, encoding='utf-8')
+
+          targets = [
+            Path('students/dashboard.html'),
+            Path('students/profile.html'),
+            Path('Games/english_arcade/index.html'),
+            Path('Games/english_arcade/play.html'),
+            Path('Games/GrammarArcade/index.html'),
+          ]
+
+          changed_targets = 0
+          for path in targets:
+            if not path.exists():
+              continue
+            original = path.read_text(encoding='utf-8')
+            updated = original.replace('action=whoami', 'action=whoami_student')
+            if updated != original:
+              path.write_text(updated, encoding='utf-8')
+              changed_targets += 1
+
+          if changed_targets < 2:
+            raise SystemExit(f'Expected at least two student auth gates; changed {changed_targets}')
+
+      - name: Verify scope
+        run: |
+          git diff --check
+          git status --short
+          git diff --stat
+          test -f students/auth-refresh.js
+          grep -q 'whoami_student' students/components/student-header.js
+          grep -q 'whoami_student' students/dashboard.html
+          grep -q 'whoami_student' Games/english_arcade/index.html
+
+      - name: Commit and push
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add students/auth-refresh.js students/components/student-header.js students/dashboard.html students/profile.html Games/english_arcade/index.html Games/english_arcade/play.html Games/GrammarArcade/index.html
+          git commit -m 'Keep student sessions alive across apps'
+          git push origin HEAD:student-session-frontend
