@@ -1,0 +1,141 @@
+name: Patch student header refresh retry
+
+on:
+  push:
+    paths:
+      - '.github/workflows/patch-student-header-refresh.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: student-header-refresh-retry
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Patch header refresh handling
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          header = Path('students/components/student-header.js')
+          text = header.read_text(encoding='utf-8')
+
+          old_connected = """  window.addEventListener('auth:changed', this._onAuthChanged);"""
+          new_connected = """  window.addEventListener('auth:changed', this._onAuthChanged);\n  window.addEventListener('auth:refreshed', this._onAuthChanged);"""
+          if text.count(old_connected) != 1:
+              raise SystemExit(f'Expected one auth:changed listener, found {text.count(old_connected)}')
+          text = text.replace(old_connected, new_connected, 1)
+
+          old_disconnected = """  window.removeEventListener('auth:changed', this._onAuthChanged);"""
+          new_disconnected = """  window.removeEventListener('auth:changed', this._onAuthChanged);\n  window.removeEventListener('auth:refreshed', this._onAuthChanged);"""
+          if text.count(old_disconnected) != 1:
+              raise SystemExit(f'Expected one auth:changed remover, found {text.count(old_disconnected)}')
+          text = text.replace(old_disconnected, new_disconnected, 1)
+
+          old_fetch = """  _fetchOverview() {
+    if (this._fetchingOverview) return Promise.resolve(null);
+    this._fetchingOverview = true;
+    return WillenaAPI.fetch(`/.netlify/functions/progress_summary?section=overview&_=${Date.now()}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(ov => {
+        let changed = false;
+        if (ov && typeof ov.points === 'number' && ov.points !== this._points) { this._points = ov.points; changed = true; }
+        if (ov && typeof ov.stars === 'number' && ov.stars !== this._stars) { this._stars = ov.stars; changed = true; }
+        if (changed) this.refresh();
+        return ov || null;
+      })
+      .catch(() => null)
+      .finally(() => { this._fetchingOverview = false; });
+  }"""
+
+          new_fetch = """  _fetchOverview() {
+    if (this._fetchingOverview) return Promise.resolve(null);
+    this._fetchingOverview = true;
+
+    const fetchOverviewOnce = () =>
+      WillenaAPI.fetch(`/.netlify/functions/progress_summary?section=overview&_=${Date.now()}`);
+
+    return fetchOverviewOnce()
+      .then(async (response) => {
+        if (response.status !== 401) return response;
+
+        const repair = await WillenaAPI.fetch(
+          `/.netlify/functions/supabase_auth?action=whoami_student&_=${Date.now()}`,
+          { cache: 'no-store' }
+        ).catch(() => null);
+
+        if (!repair || !repair.ok) return response;
+        return fetchOverviewOnce();
+      })
+      .then(r => r && r.ok ? r.json() : null)
+      .then(ov => {
+        let changed = false;
+        if (ov && typeof ov.points === 'number' && ov.points !== this._points) { this._points = ov.points; changed = true; }
+        if (ov && typeof ov.stars === 'number' && ov.stars !== this._stars) { this._stars = ov.stars; changed = true; }
+        if (changed) this.refresh();
+        return ov || null;
+      })
+      .catch(() => null)
+      .finally(() => { this._fetchingOverview = false; });
+  }"""
+
+          if text.count(old_fetch) != 1:
+              raise SystemExit(f'Expected one overview implementation, found {text.count(old_fetch)}')
+          text = text.replace(old_fetch, new_fetch, 1)
+          header.write_text(text, encoding='utf-8')
+
+          replacements = {
+            'Games/english_arcade/index.html': [
+              ('/students/components/student-header.js', '/students/components/student-header.js?v=20260727b'),
+            ],
+            'Games/english_arcade/play.html': [
+              ('/students/components/student-header.js', '/students/components/student-header.js?v=20260727b'),
+            ],
+            'Games/GrammarArcade/index.html': [
+              ('/students/components/student-header.js', '/students/components/student-header.js?v=20260727b'),
+            ],
+            'students/dashboard.html': [
+              ('/students/components/student-header.js', '/students/components/student-header.js?v=20260727b'),
+            ],
+            'students/profile.html': [
+              ('/students/components/student-header.js', '/students/components/student-header.js?v=20260727b'),
+            ],
+          }
+
+          for filename, pairs in replacements.items():
+              path = Path(filename)
+              content = path.read_text(encoding='utf-8')
+              for old, new in pairs:
+                  if new in content:
+                      continue
+                  if content.count(old) != 1:
+                      raise SystemExit(f'{filename}: expected one {old!r}, found {content.count(old)}')
+                  content = content.replace(old, new, 1)
+              path.write_text(content, encoding='utf-8')
+          PY
+
+          git diff --check
+          changed=$(git diff --name-only)
+          expected=$(printf '%s\n' \
+            Games/GrammarArcade/index.html \
+            Games/english_arcade/index.html \
+            Games/english_arcade/play.html \
+            students/components/student-header.js \
+            students/dashboard.html \
+            students/profile.html)
+          test "$changed" = "$expected"
+
+      - name: Commit and push
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add Games/GrammarArcade/index.html Games/english_arcade/index.html Games/english_arcade/play.html students/components/student-header.js students/dashboard.html students/profile.html
+          git commit -m "Retry student overview after session repair"
+          git push origin student-header-refresh-retry
