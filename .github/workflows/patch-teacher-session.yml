@@ -1,0 +1,83 @@
+name: Patch teacher session coverage
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/patch-teacher-session.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out rollback branch
+        uses: actions/checkout@v4
+        with:
+          ref: teacher-shared-session-repair
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Apply narrow teacher-only session changes
+        shell: python
+        run: |
+          from pathlib import Path
+
+          def replace_checked(path, old, new, minimum=1):
+              p = Path(path)
+              text = p.read_text(encoding='utf-8')
+              count = text.count(old)
+              if count < minimum:
+                  raise SystemExit(f'{path}: expected at least {minimum} occurrence(s), found {count}')
+              p.write_text(text.replace(old, new), encoding='utf-8')
+              print(f'{path}: replaced {count} occurrence(s)')
+
+          burger = Path('components/burger-menu.js')
+          burger_text = burger.read_text(encoding='utf-8')
+          marker = '// Teacher-only session repair bootstrap.'
+          if marker not in burger_text:
+              bootstrap = """// Teacher-only session repair bootstrap.
+          // This shared component is loaded by the teacher dashboard and most teacher tools.
+          if (typeof window !== 'undefined' && window.location.hostname === 'teachers.willenaenglish.com') {
+            import('/Teachers/auth-refresh.js?v=20260726b')
+              .then((mod) => mod.ensureAuthRefresh())
+              .catch((error) => console.debug('[teacher-session] bootstrap failed', error));
+          }
+
+          """
+              burger.write_text(bootstrap + burger_text, encoding='utf-8')
+              print('components/burger-menu.js: added teacher-only session bootstrap')
+          else:
+              print('components/burger-menu.js: bootstrap already present')
+
+          replace_checked(
+              'Teachers/index.html',
+              'action=whoami&_',
+              'action=whoami_teacher&_'
+          )
+          replace_checked(
+              'Teachers/tools/student_tracker/main.js',
+              'action=whoami\'',
+              'action=whoami_teacher\''
+          )
+          replace_checked(
+              'Teachers/tools/manage_students.js',
+              'action=whoami',
+              'action=whoami_teacher'
+          )
+
+      - name: Validate diff
+        run: |
+          git diff --check
+          git diff --stat
+          git diff -- components/burger-menu.js Teachers/index.html Teachers/tools/student_tracker/main.js Teachers/tools/manage_students.js
+
+      - name: Commit rollback-branch changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add components/burger-menu.js Teachers/index.html Teachers/tools/student_tracker/main.js Teachers/tools/manage_students.js
+          git commit -m "Keep teacher sessions alive across dashboard tools"
+          git push origin HEAD:teacher-shared-session-repair
