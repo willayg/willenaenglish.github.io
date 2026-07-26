@@ -1555,7 +1555,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   wire();
   // auth guard: ensure teacher role
   try {
-    const who = await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=whoami').then(r=>r.json());
+    const who = await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=whoami_teacher').then(r=>r.json());
     if (!who?.success) throw new Error('not signed in');
     const roleRes = await WillenaAPI.fetch(`/.netlify/functions/supabase_auth?action=get_role&user_id=${encodeURIComponent(who.user_id)}`);
     const role = await roleRes.json();

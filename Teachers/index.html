@@ -337,7 +337,7 @@
       (async function() {
         try {
           // Prefer cookie-based auth; do not depend on localStorage for access control.
-          const whoRes = await WillenaAPI.fetch(`/.netlify/functions/supabase_auth?action=whoami&_=${Date.now()}`);
+          const whoRes = await WillenaAPI.fetch(`/.netlify/functions/supabase_auth?action=whoami_teacher&_=${Date.now()}`);
           const who = await whoRes.json().catch(() => ({}));
           if (!who || !who.success || !who.user_id) {
             const redirect = encodeURIComponent(location.pathname + location.search);
@@ -462,7 +462,7 @@
         let name = '';
         let userId = '';
         try {
-          const whoRes = await WillenaAPI.fetch(`/.netlify/functions/supabase_auth?action=whoami&_=${Date.now()}`);
+          const whoRes = await WillenaAPI.fetch(`/.netlify/functions/supabase_auth?action=whoami_teacher&_=${Date.now()}`);
           const who = await whoRes.json().catch(() => ({}));
           if (who && who.success && who.user_id) {
             userId = who.user_id;
