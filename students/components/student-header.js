@@ -1,3 +1,10 @@
+// Student session repair bootstrap.
+if (typeof window !== 'undefined' && window.location.hostname === 'students.willenaenglish.com') {
+  import('/students/auth-refresh.js?v=20260726a')
+    .then((mod) => mod.ensureStudentAuthRefresh())
+    .catch((error) => console.debug('[student-session] bootstrap failed', error));
+}
+
 // Reusable Student Header Web Component
 // Usage: <student-header home-href="/index.html" home-label="Home"></student-header>
 const WA_AUDIO_SOUND_KEY = 'wa.audio.sound.enabled';
@@ -253,7 +260,7 @@ class StudentHeader extends HTMLElement {
 
   async _hydrateProfile() {
     try {
-      const whoRes = await WillenaAPI.fetch(`/.netlify/functions/supabase_auth?action=whoami&_=${Date.now()}`);
+      const whoRes = await WillenaAPI.fetch(`/.netlify/functions/supabase_auth?action=whoami_student&_=${Date.now()}`);
       const who = await whoRes.json();
       if (!who || !who.success || !who.user_id) return;
       this._uid = who.user_id;
@@ -392,7 +399,7 @@ class StudentHeader extends HTMLElement {
             let uid = this._uid || null;
             if (!uid) {
               try {
-                const who = await WillenaAPI.fetch(`/.netlify/functions/supabase_auth?action=whoami&_=${Date.now()}`);
+                const who = await WillenaAPI.fetch(`/.netlify/functions/supabase_auth?action=whoami_student&_=${Date.now()}`);
                 if (who.ok) {
                   const wj = await who.json().catch(() => ({}));
                   if (wj && wj.success && wj.user_id) uid = wj.user_id;
