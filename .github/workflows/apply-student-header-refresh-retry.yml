@@ -1,0 +1,132 @@
+name: Apply student header refresh retry
+
+on:
+  push:
+    paths:
+      - '.github/workflows/apply-student-header-refresh-retry.yml'
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  patch-and-merge:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout students branch
+        uses: actions/checkout@v4
+        with:
+          ref: students
+          fetch-depth: 0
+
+      - name: Create patch branch
+        run: |
+          git checkout -B student-header-refresh-retry
+
+      - name: Patch student header refresh handling
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          header = Path('students/components/student-header.js')
+          text = header.read_text()
+
+          old = "window.addEventListener('auth:changed', this._onAuthChanged);"
+          new = old + "\n  window.addEventListener('auth:refreshed', this._onAuthChanged);"
+          assert text.count(old) == 1, text.count(old)
+          text = text.replace(old, new, 1)
+
+          old = "window.removeEventListener('auth:changed', this._onAuthChanged);"
+          new = old + "\n  window.removeEventListener('auth:refreshed', this._onAuthChanged);"
+          assert text.count(old) == 1, text.count(old)
+          text = text.replace(old, new, 1)
+
+          old = """  _fetchOverview() {
+    if (this._fetchingOverview) return Promise.resolve(null);
+    this._fetchingOverview = true;
+    return WillenaAPI.fetch(`/.netlify/functions/progress_summary?section=overview&_=${Date.now()}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(ov => {
+        let changed = false;
+        if (ov && typeof ov.points === 'number' && ov.points !== this._points) { this._points = ov.points; changed = true; }
+        if (ov && typeof ov.stars === 'number' && ov.stars !== this._stars) { this._stars = ov.stars; changed = true; }
+        if (changed) this.refresh();
+        return ov || null;
+      })
+      .catch(() => null)
+      .finally(() => { this._fetchingOverview = false; });
+  }
+"""
+          new = """  _fetchOverview(retriedAfterAuth = false) {
+    if (this._fetchingOverview) return Promise.resolve(null);
+    this._fetchingOverview = true;
+    return WillenaAPI.fetch(`/.netlify/functions/progress_summary?section=overview&_=${Date.now()}`)
+      .then(async r => {
+        if (r.status === 401 && !retriedAfterAuth) {
+          const auth = await WillenaAPI.fetch(`/.netlify/functions/supabase_auth?action=whoami_student&_=${Date.now()}`);
+          if (auth.ok) {
+            this._fetchingOverview = false;
+            return this._fetchOverview(true);
+          }
+        }
+        return r.ok ? r.json() : null;
+      })
+      .then(ov => {
+        let changed = false;
+        if (ov && typeof ov.points === 'number' && ov.points !== this._points) { this._points = ov.points; changed = true; }
+        if (ov && typeof ov.stars === 'number' && ov.stars !== this._stars) { this._stars = ov.stars; changed = true; }
+        if (changed) this.refresh();
+        return ov || null;
+      })
+      .catch(() => null)
+      .finally(() => { this._fetchingOverview = false; });
+  }
+"""
+          assert text.count(old) == 1, text.count(old)
+          header.write_text(text.replace(old, new, 1))
+
+          files = [
+            Path('students/dashboard.html'),
+            Path('students/profile.html'),
+            Path('Games/english_arcade/index.html'),
+            Path('Games/english_arcade/play.html'),
+            Path('Games/GrammarArcade/index.html'),
+          ]
+          for path in files:
+            s = path.read_text()
+            old_import = '/students/components/student-header.js'
+            assert old_import in s, path
+            s = s.replace(old_import, '/students/components/student-header.js?v=20260727a')
+            path.write_text(s)
+          PY
+
+      - name: Validate expected changes
+        run: |
+          git diff --check
+          test "$(git diff --name-only | sort)" = "$(printf '%s\n' \
+            Games/GrammarArcade/index.html \
+            Games/english_arcade/index.html \
+            Games/english_arcade/play.html \
+            students/components/student-header.js \
+            students/dashboard.html \
+            students/profile.html | sort)"
+          grep -q "auth:refreshed" students/components/student-header.js
+          grep -q "_fetchOverview(retriedAfterAuth = false)" students/components/student-header.js
+
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Games/GrammarArcade/index.html Games/english_arcade/index.html Games/english_arcade/play.html students/components/student-header.js students/dashboard.html students/profile.html
+          git commit -m "Refresh student points after session repair"
+          git push --force-with-lease origin student-header-refresh-retry
+
+      - name: Create and merge PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          pr=$(gh pr list --head student-header-refresh-retry --base students --state open --json number --jq '.[0].number')
+          if [ -z "$pr" ]; then
+            pr=$(gh pr create --head student-header-refresh-retry --base students --title "Refresh student header after session repair" --body "Retries the points/stars overview after student session repair and cache-busts the shared header imports." --json number --jq '.number')
+          fi
+          gh pr merge "$pr" --merge --delete-branch=false
