@@ -18,15 +18,33 @@ window.updatePreview = updatePreview;
 window.updateWordtestPreview = updatePreview;
 
 const VIEW_STORAGE_KEY = 'wordtest-view-mode';
+let selectedViewMode = 'auto';
+
+function shouldUseMobileLayout() {
+  const coarsePointer = window.matchMedia?.('(pointer: coarse)').matches === true;
+  const touchDevice = navigator.maxTouchPoints > 0;
+  const physicalWidth = Math.min(
+    Number(screen.width) || Number.POSITIVE_INFINITY,
+    Number(screen.availWidth) || Number.POSITIVE_INFINITY
+  );
+  const visibleWidth = window.visualViewport?.width || window.innerWidth;
+
+  // Mobile browsers can report a fake desktop viewport when "Desktop site" is used.
+  // screen.width still reflects the actual device display closely enough to catch phones.
+  return (coarsePointer || touchDevice) && (physicalWidth < 900 || visibleWidth < 700);
+}
 
 function applyViewMode(mode) {
-  const validMode = ['auto', 'mobile', 'desktop'].includes(mode) ? mode : 'auto';
-  if (validMode === 'auto') {
-    document.body.removeAttribute('data-wordtest-layout');
-  } else {
-    document.body.setAttribute('data-wordtest-layout', validMode);
+  selectedViewMode = ['auto', 'mobile', 'desktop'].includes(mode) ? mode : 'auto';
+
+  let effectiveMode = selectedViewMode;
+  if (selectedViewMode === 'auto') {
+    effectiveMode = shouldUseMobileLayout() ? 'mobile' : 'desktop';
   }
-  return validMode;
+
+  document.body.setAttribute('data-wordtest-layout', effectiveMode);
+  document.body.setAttribute('data-wordtest-view-choice', selectedViewMode);
+  return selectedViewMode;
 }
 
 function setupViewSelector() {
@@ -60,6 +78,17 @@ function setupViewSelector() {
   });
 
   toolbar.appendChild(select);
+
+  let resizeTimer;
+  const recheckAutoMode = () => {
+    if (selectedViewMode !== 'auto') return;
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => applyViewMode('auto'), 120);
+  };
+
+  window.addEventListener('resize', recheckAutoMode, { passive: true });
+  window.visualViewport?.addEventListener('resize', recheckAutoMode, { passive: true });
+  screen.orientation?.addEventListener?.('change', recheckAutoMode);
 }
 
 // Bootstrap
