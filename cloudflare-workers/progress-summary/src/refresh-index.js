@@ -30,6 +30,21 @@ function authCookie(name, value, maxAge) {
   return `${name}=${value}; Domain=${COOKIE_DOMAIN}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${maxAge}`;
 }
 
+function preferCookieRequest(request, cookieHeader = null) {
+  const headers = new Headers(request.headers);
+  const effectiveCookie = cookieHeader ?? headers.get('Cookie') ?? '';
+  const cookies = parseCookies(effectiveCookie);
+
+  if (cookies.sb_access) {
+    headers.delete('Authorization');
+  }
+  if (cookieHeader !== null) {
+    headers.set('Cookie', cookieHeader);
+  }
+
+  return new Request(request, { headers });
+}
+
 async function refreshTokens(env, refreshToken) {
   if (!refreshToken || !env.SUPABASE_URL) return null;
   const apiKey = env.SUPABASE_ANON_KEY || env.SUPABASE_SERVICE_KEY;
@@ -52,7 +67,8 @@ async function refreshTokens(env, refreshToken) {
 
 export default {
   async fetch(request, env, ctx) {
-    const first = await baseWorker.fetch(request, env, ctx);
+    const firstRequest = preferCookieRequest(request);
+    const first = await baseWorker.fetch(firstRequest, env, ctx);
     if (first.status !== 401 || request.headers.get('Origin') !== STUDENT_ORIGIN) {
       return first;
     }
@@ -66,9 +82,7 @@ export default {
     nextCookie = replaceCookie(nextCookie, 'sb_access', encodeURIComponent(tokens.access_token));
     nextCookie = replaceCookie(nextCookie, 'sb_refresh', encodeURIComponent(tokens.refresh_token));
 
-    const headers = new Headers(request.headers);
-    headers.set('Cookie', nextCookie);
-    const retriedRequest = new Request(request, { headers });
+    const retriedRequest = preferCookieRequest(request, nextCookie);
     const retried = await baseWorker.fetch(retriedRequest, env, ctx);
 
     const responseHeaders = new Headers(retried.headers);
