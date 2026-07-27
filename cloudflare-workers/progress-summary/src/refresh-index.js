@@ -1,6 +1,5 @@
 import baseWorker from './index.js';
 
-const STUDENT_ORIGIN = 'https://students.willenaenglish.com';
 const COOKIE_DOMAIN = '.willenaenglish.com';
 
 function parseCookies(header) {
@@ -69,7 +68,7 @@ export default {
   async fetch(request, env, ctx) {
     const firstRequest = preferCookieRequest(request);
     const first = await baseWorker.fetch(firstRequest, env, ctx);
-    if (first.status !== 401 || request.headers.get('Origin') !== STUDENT_ORIGIN) {
+    if (first.status !== 401) {
       return first;
     }
 
