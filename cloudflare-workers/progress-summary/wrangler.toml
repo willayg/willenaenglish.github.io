@@ -1,5 +1,5 @@
 name = "progress-summary"
-main = "src/index.js"
+main = "src/refresh-index.js"
 compatibility_date = "2024-01-01"
 
 # KV namespace for leaderboard cache
