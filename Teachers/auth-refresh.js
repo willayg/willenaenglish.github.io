@@ -26,6 +26,21 @@ async function sessionRequest() {
   });
 }
 
+function redirectAuthenticatedLogin(data) {
+  if (!/\/Teachers\/(?:login|signin)\.html$/i.test(window.location.pathname)) return;
+
+  const role = String(data?.role || '').toLowerCase();
+  if (!['teacher', 'admin'].includes(role)) return;
+
+  const params = new URLSearchParams(window.location.search);
+  const requested = params.get('redirect');
+  const target = requested && requested.startsWith('/') && !/^https?:/i.test(requested)
+    ? requested
+    : '/Teachers/index.html';
+
+  window.location.replace(target);
+}
+
 async function repairSession() {
   if (refreshInFlight) return refreshInFlight;
 
@@ -47,6 +62,8 @@ async function repairSession() {
       try {
         window.dispatchEvent(new CustomEvent('auth:refreshed'));
       } catch {}
+
+      redirectAuthenticatedLogin(data);
       return true;
     } catch (error) {
       lastRefreshAt = Date.now();
