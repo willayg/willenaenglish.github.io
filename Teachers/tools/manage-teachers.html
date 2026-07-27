@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Manage Teachers</title>
+  <script src="/students/api-gateway.js?v=20260727"></script>
+  <script src="/js/api-config.js?v=20260108"></script>
+  <style>
+    :root{font-family:Inter,system-ui,sans-serif;color:#1f2937;background:#eef2f7}*{box-sizing:border-box}
+    body{margin:0;padding:20px}.wrap{max-width:1100px;margin:auto}.top{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:18px}
+    h1{margin:0;font-size:clamp(1.5rem,4vw,2.2rem)}a{color:#4f46e5;text-decoration:none}.panel{background:white;border-radius:16px;padding:18px;box-shadow:0 8px 28px #0001;margin-bottom:18px}
+    .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.full{grid-column:1/-1}label{display:block;font-weight:700;font-size:.9rem;margin-bottom:5px}
+    input,select,button{font:inherit}input,select{width:100%;padding:11px;border:1px solid #cbd5e1;border-radius:9px;background:white}button{border:0;border-radius:9px;padding:10px 14px;font-weight:700;cursor:pointer}
+    .primary{background:#4f46e5;color:white}.secondary{background:#e2e8f0}.danger{background:#dc2626;color:white}.small{padding:7px 10px;font-size:.85rem}
+    .status{min-height:24px;margin:8px 0;font-weight:700}.error{color:#b91c1c}.ok{color:#047857}.table-wrap{overflow:auto}table{width:100%;border-collapse:collapse;min-width:820px}
+    th,td{text-align:left;padding:10px;border-bottom:1px solid #e5e7eb;vertical-align:middle}th{background:#f8fafc}.badge{display:inline-block;border-radius:999px;padding:3px 8px;font-size:.78rem;font-weight:800;background:#e0e7ff;color:#3730a3}
+    .off{background:#fee2e2;color:#991b1b}.actions{display:flex;flex-wrap:wrap;gap:6px}.muted{color:#64748b;font-size:.9rem}
+    @media(max-width:650px){body{padding:10px}.grid{grid-template-columns:1fr}.top{align-items:flex-start;flex-direction:column}.panel{padding:14px}}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top"><div><h1>Manage Teachers</h1><div class="muted">Admin-only account management</div></div><a href="/Teachers/tools/feedback-admin">← Admin Dashboard</a></div>
+  <section class="panel" id="createPanel" hidden>
+    <h2>Create teacher</h2>
+    <form id="createForm" class="grid">
+      <div><label>Name</label><input name="name" required></div>
+      <div><label>Username</label><input name="username" autocomplete="off"></div>
+      <div><label>Email</label><input name="email" type="email" required autocomplete="off"></div>
+      <div><label>Temporary password</label><input name="password" type="password" minlength="8" required autocomplete="new-password"></div>
+      <div><label>Role</label><select name="role"><option value="teacher">Teacher</option><option value="admin">Admin</option></select></div>
+      <div><label>Access</label><select name="approved"><option value="true">Approved</option><option value="false">Disabled</option></select></div>
+      <div class="full"><button class="primary" type="submit">Create account</button></div>
+    </form>
+  </section>
+  <section class="panel">
+    <div class="top"><div><h2 style="margin:0">Teacher accounts</h2><div class="muted" id="count"></div></div><button id="refreshBtn" class="secondary">Refresh</button></div>
+    <div id="status" class="status">Checking admin access…</div>
+    <div class="table-wrap"><table id="table" hidden><thead><tr><th>Name</th><th>Email / username</th><th>Role</th><th>Status</th><th>Actions</th></tr></thead><tbody></tbody></table></div>
+  </section>
+</div>
+<script type="module">
+  import { ensureAuthRefresh } from '/Teachers/auth-refresh.js?v=20260727c';
+  ensureAuthRefresh();
+  const API_PATH='/.netlify/functions/teacher_management';
+  const statusEl=document.getElementById('status'),table=document.getElementById('table'),tbody=table.querySelector('tbody'),createPanel=document.getElementById('createPanel');
+  let actorId='';
+  function setStatus(message,type=''){statusEl.textContent=message;statusEl.className='status '+type}
+  async function request(action,options={}){const response=await WillenaAPI.fetch(`${API_PATH}?action=${encodeURIComponent(action)}&_=${Date.now()}`,{cache:'no-store',...options});const data=await response.json().catch(()=>({}));if(!response.ok||!data.success)throw new Error(data.error||`Request failed (${response.status})`);return data}
+  function esc(value){return String(value??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))}
+  async function load(){setStatus('Loading teacher accounts…');table.hidden=true;try{const data=await request('list');actorId=data.actor_id||'';render(data.teachers||[]);createPanel.hidden=false;table.hidden=false;setStatus('')}catch(error){setStatus(error.message,'error');if(/not signed in/i.test(error.message))location.href='/Teachers/signin?redirect='+encodeURIComponent(location.pathname)}}
+  function render(rows){document.getElementById('count').textContent=`${rows.length} account${rows.length===1?'':'s'}`;tbody.innerHTML=rows.map(row=>{const self=row.id===actorId;return `<tr data-id="${esc(row.id)}"><td><strong>${esc(row.name||'Unnamed')}</strong>${self?' <span class="badge">You</span>':''}</td><td>${esc(row.email||'')}<br><span class="muted">${esc(row.username||'')}</span></td><td><select class="role" ${self?'disabled':''}><option value="teacher" ${row.role==='teacher'?'selected':''}>Teacher</option><option value="admin" ${row.role==='admin'?'selected':''}>Admin</option></select></td><td><select class="approved" ${self?'disabled':''}><option value="true" ${row.approved?'selected':''}>Approved</option><option value="false" ${!row.approved?'selected':''}>Disabled</option></select></td><td><div class="actions"><button class="small secondary save">Save</button><button class="small secondary password">Reset password</button>${self?'':`<button class="small danger delete">Delete</button>`}</div></td></tr>`}).join('')}
+  document.getElementById('createForm').addEventListener('submit',async e=>{e.preventDefault();const form=new FormData(e.currentTarget),payload=Object.fromEntries(form.entries());payload.approved=payload.approved==='true';setStatus('Creating account…');try{await request('create',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});e.currentTarget.reset();setStatus('Teacher account created.','ok');await load()}catch(error){setStatus(error.message,'error')}});
+  tbody.addEventListener('click',async e=>{const row=e.target.closest('tr');if(!row)return;const user_id=row.dataset.id;try{if(e.target.classList.contains('save')){await request('update',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({user_id,role:row.querySelector('.role').value,approved:row.querySelector('.approved').value==='true'})});setStatus('Account updated.','ok');await load()}if(e.target.classList.contains('password')){const password=prompt('Enter a new password (at least 8 characters):');if(password===null)return;await request('reset_password',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({user_id,password})});setStatus('Password reset.','ok')}if(e.target.classList.contains('delete')){if(!confirm('Delete this teacher account permanently?'))return;await request('delete',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({user_id})});setStatus('Teacher deleted.','ok');await load()}}catch(error){setStatus(error.message,'error')}});
+  document.getElementById('refreshBtn').addEventListener('click',load);load();
+</script>
+</body>
+</html>
