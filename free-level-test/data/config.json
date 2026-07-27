@@ -1,0 +1,9 @@
+{
+  "version":"0.2.0",
+  "defaultLanguage":"en",
+  "storageKey":"willena.freeLevelTest.v2",
+  "routes":{"phonics":{"startLevel":0},"beginner":{"startLevel":2},"experienced":{"startLevel":6}},
+  "sections":["phonics","vocabulary","listening","grammar","reading","speaking"],
+  "questionLimit":24,
+  "minQuestionsPerSection":3
+}
