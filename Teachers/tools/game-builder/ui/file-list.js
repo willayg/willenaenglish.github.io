@@ -6,7 +6,7 @@ import { cacheCurrentGame } from '../state/game-state.js?v=20260329f';
 
 let fileListRows = [];
 let fileListUniqueCount = 0;
-let fileListAllMode = false;
+let fileListAllMode = true;
 let fileListCache = null; // { ts, rows, uniqueCount, key }
 const SESSION_CACHE_MAX_AGE_MS = 180000;
 const IMAGE_BATCH_SIZE = 10;
