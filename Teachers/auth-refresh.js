@@ -28,9 +28,9 @@ async function sessionRequest() {
 
 function redirectAuthenticatedLogin(data) {
   if (!/\/Teachers\/(?:login|signin)\.html$/i.test(window.location.pathname)) return;
-
-  const role = String(data?.role || '').toLowerCase();
-  if (!['teacher', 'admin'].includes(role)) return;
+  // whoami_teacher is already restricted to teacher/admin accounts, so a
+  // successful response is sufficient even when the response omits `role`.
+  if (!data?.success) return;
 
   const params = new URLSearchParams(window.location.search);
   const requested = params.get('redirect');
