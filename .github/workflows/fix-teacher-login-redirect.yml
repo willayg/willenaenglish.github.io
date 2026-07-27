@@ -1,0 +1,45 @@
+name: Fix Teacher Login Redirect
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: teachers
+          fetch-depth: 0
+      - name: Create branch and patch files
+        shell: bash
+        run: |
+          git checkout -b teacher-login-redirect-v2
+          python - <<'PY'
+          from pathlib import Path
+
+          helper = Path('Teachers/auth-refresh.js')
+          text = helper.read_text()
+          text = text.replace("  const role = String(data?.role || '').toLowerCase();\n  if (!['teacher', 'admin'].includes(role)) return;\n\n", "  if (!data?.success) return;\n\n")
+          helper.write_text(text)
+
+          login = Path('Teachers/login.html')
+          text = login.read_text()
+          text = text.replace("import { ensureAuthRefresh } from '/Teachers/auth-refresh.js';", "import { ensureAuthRefresh } from '/Teachers/auth-refresh.js?v=20260727b';")
+          login.write_text(text)
+          PY
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add Teachers/auth-refresh.js Teachers/login.html
+          git commit -m "Fix cached teacher login auto redirect"
+          git push origin teacher-login-redirect-v2
+      - name: Open and merge PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          pr=$(gh pr create --base teachers --head teacher-login-redirect-v2 --title "Fix teacher login auto redirect" --body "Cache-busts the auth helper import and redirects after any successful teacher-only whoami response.")
+          gh pr merge "$pr" --merge
