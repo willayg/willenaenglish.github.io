@@ -27,7 +27,9 @@ async function sessionRequest() {
 }
 
 function redirectAuthenticatedLogin(data) {
-  if (!/\/Teachers\/(?:login|signin)\.html$/i.test(window.location.pathname)) return;
+  // Cloudflare Pages serves both extensionless routes (/Teachers/signin)
+  // and explicit HTML routes (/Teachers/signin.html).
+  if (!/\/Teachers\/(?:login|signin)(?:\.html)?\/?$/i.test(window.location.pathname)) return;
   // whoami_teacher is already restricted to teacher/admin accounts, so a
   // successful response is sufficient even when the response omits `role`.
   if (!data?.success) return;
