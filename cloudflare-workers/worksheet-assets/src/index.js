@@ -1,9 +1,11 @@
 const ALLOWED_ORIGINS = new Set([
   'https://willenaenglish.com',
   'https://www.willenaenglish.com',
+  'https://teachers.willenaenglish.com',
+  'https://staging.willenaenglish.com',
+  'https://cf.willenaenglish.com',
   'https://willenaenglish.github.io',
   'https://willenaenglish-github-io.pages.dev',
-  'https://cf.willenaenglish.com',
   'http://localhost:8888',
   'http://localhost:9000',
 ]);
@@ -22,7 +24,7 @@ function corsHeaders(origin) {
   return {
     'Access-Control-Allow-Origin': allowed,
     'Access-Control-Allow-Credentials': 'true',
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Methods': 'GET, HEAD, POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     Vary: 'Origin',
   };
@@ -31,10 +33,7 @@ function corsHeaders(origin) {
 function json(data, status, origin) {
   return new Response(JSON.stringify(data), {
     status,
-    headers: {
-      'Content-Type': 'application/json; charset=utf-8',
-      ...corsHeaders(origin),
-    },
+    headers: { 'Content-Type': 'application/json; charset=utf-8', ...corsHeaders(origin) },
   });
 }
 
@@ -62,10 +61,7 @@ async function getUser(env, token) {
   if (!token || !env.SUPABASE_URL || !env.SUPABASE_ANON_KEY) return null;
   try {
     const response = await fetch(`${env.SUPABASE_URL}/auth/v1/user`, {
-      headers: {
-        apikey: env.SUPABASE_ANON_KEY,
-        Authorization: `Bearer ${token}`,
-      },
+      headers: { apikey: env.SUPABASE_ANON_KEY, Authorization: `Bearer ${token}` },
     });
     if (!response.ok) return null;
     return await response.json();
@@ -79,15 +75,12 @@ function parseJsonObject(value, fieldName) {
   if (typeof value === 'object' && !Array.isArray(value)) return structuredClone(value);
   if (typeof value !== 'string') throw new TypeError(`${fieldName} must be a JSON object or JSON string`);
   const parsed = JSON.parse(value);
-  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
-    throw new TypeError(`${fieldName} must parse to an object`);
-  }
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) throw new TypeError(`${fieldName} must parse to an object`);
   return parsed;
 }
 
 function decodeBase64(base64) {
-  const cleaned = base64.replace(/\s+/g, '');
-  const binary = atob(cleaned);
+  const binary = atob(base64.replace(/\s+/g, ''));
   const bytes = new Uint8Array(binary.length);
   for (let index = 0; index < binary.length; index += 1) bytes[index] = binary.charCodeAt(index);
   return bytes;
@@ -111,7 +104,7 @@ async function inspectImageValue(value) {
   if (!bytes.byteLength) throw new Error('Embedded worksheet image is empty');
   const sha256 = toHex(await crypto.subtle.digest('SHA-256', bytes));
   const assetKey = `worksheets/assets/sha256/${sha256.slice(0, 2)}/${sha256}.${extension}`;
-  return { kind: 'embedded', mimeType, extension, bytes, byteLength: bytes.byteLength, sha256, assetKey, dataUrl: value };
+  return { kind: 'embedded', mimeType, extension, bytes, byteLength: bytes.byteLength, sha256, assetKey };
 }
 
 function publicAssetUrl(env, assetKey) {
@@ -122,7 +115,7 @@ function publicAssetUrl(env, assetKey) {
 
 function containsEmbeddedImage(value) {
   if (typeof value === 'string') {
-    if (/^data:image\//i.test(value)) return true;
+    if (/data:image\//i.test(value)) return true;
     try { return containsEmbeddedImage(JSON.parse(value)); } catch { return false; }
   }
   if (!value || typeof value !== 'object') return false;
@@ -172,7 +165,7 @@ async function transformFlashcard(worksheet, env, uploads) {
   const images = await replaceEmbeddedDeep(parseJsonObject(worksheet.images, 'images'), env, uploads);
   const settings = await replaceEmbeddedDeep(parseJsonObject(worksheet.settings, 'settings'), env, uploads);
   settings.storage_schema_version = 2;
-  return { ...worksheet, images: JSON.stringify(images), settings: JSON.stringify(settings) };
+  return { ...worksheet, images: JSON.stringify(images), settings: JSON.stringify(settings), image_data: null };
 }
 
 async function transformWorksheet(worksheet, env) {
@@ -215,10 +208,7 @@ async function persistAssets(env, uploads, dryRun) {
       const existing = await env.WORKSHEET_ASSETS.head(image.assetKey);
       if (!existing) {
         await env.WORKSHEET_ASSETS.put(image.assetKey, image.bytes, {
-          httpMetadata: {
-            contentType: image.mimeType,
-            cacheControl: 'public, max-age=31536000, immutable',
-          },
+          httpMetadata: { contentType: image.mimeType, cacheControl: 'public, max-age=31536000, immutable' },
           customMetadata: { sha256: image.sha256, source: 'worksheet' },
         });
         created = true;
@@ -237,20 +227,37 @@ async function persistAssets(env, uploads, dryRun) {
   return assets;
 }
 
+async function serveAsset(request, env, pathname) {
+  const prefix = '/assets/';
+  const key = decodeURIComponent(pathname.slice(prefix.length));
+  if (!key.startsWith('worksheets/assets/')) return new Response('Not found', { status: 404 });
+  const object = await env.WORKSHEET_ASSETS.get(key);
+  if (!object) return new Response('Not found', { status: 404 });
+  const headers = new Headers();
+  object.writeHttpMetadata(headers);
+  headers.set('etag', object.httpEtag);
+  headers.set('Cache-Control', 'public, max-age=31536000, immutable');
+  if (request.method === 'HEAD') return new Response(null, { status: 200, headers });
+  return new Response(object.body, { status: 200, headers });
+}
+
 export default {
   async fetch(request, env) {
+    const url = new URL(request.url);
     const origin = request.headers.get('Origin') || '';
+
+    if ((request.method === 'GET' || request.method === 'HEAD') && url.pathname.startsWith('/assets/')) {
+      return serveAsset(request, env, url.pathname);
+    }
     if (request.method === 'OPTIONS') return new Response('', { status: 200, headers: corsHeaders(origin) });
     if (request.method !== 'POST') return json({ success: false, error: 'Method not allowed' }, 405, origin);
 
     try {
       const user = await getUser(env, getAccessToken(request));
       if (!user) return json({ success: false, error: 'Sign in required' }, 401, origin);
-
       let body;
       try { body = await request.json(); }
       catch { return json({ success: false, error: 'Invalid JSON body' }, 400, origin); }
-
       if (body.action !== 'transform_worksheet' || !body.worksheet) {
         return json({ success: false, error: 'Expected action transform_worksheet' }, 400, origin);
       }
