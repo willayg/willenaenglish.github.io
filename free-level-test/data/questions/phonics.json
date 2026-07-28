@@ -1,0 +1,22 @@
+[
+{"id":"P001","level":0,"phonicsStage":1,"section":"phonics","skill":"Initial consonants","type":"phonics-gap","visual":"🐈","pattern":"_at","answer":"c","options":["c","m","s","p"],"audio":"cat"},
+{"id":"P002","level":0,"phonicsStage":1,"section":"phonics","skill":"Initial consonants","type":"phonics-gap","visual":"🐕","pattern":"_og","answer":"d","options":["d","f","l","b"],"audio":"dog"},
+{"id":"P003","level":0,"phonicsStage":2,"section":"phonics","skill":"Final consonants","type":"phonics-gap","visual":"🐖","pattern":"pi_","answer":"g","options":["g","t","n","p"],"audio":"pig"},
+{"id":"P004","level":0,"phonicsStage":2,"section":"phonics","skill":"Final consonants","type":"phonics-gap","visual":"☀️","pattern":"su_","answer":"n","options":["n","m","t","p"],"audio":"sun"},
+{"id":"P005","level":0,"phonicsStage":3,"section":"phonics","skill":"Short vowels","type":"phonics-gap","visual":"🐈","pattern":"c_t","answer":"a","options":["a","e","i","o"],"audio":"cat"},
+{"id":"P006","level":0,"phonicsStage":3,"section":"phonics","skill":"Short vowels","type":"phonics-gap","visual":"🐖","pattern":"p_g","answer":"i","options":["a","e","i","o"],"audio":"pig"},
+{"id":"P007","level":0,"phonicsStage":4,"section":"phonics","skill":"Word families","type":"phonics-gap","visual":"🐈","pattern":"c__","answer":"at","options":["at","an","ap","ot"],"audio":"cat"},
+{"id":"P008","level":0,"phonicsStage":4,"section":"phonics","skill":"Word families","type":"phonics-gap","visual":"👨","pattern":"m__","answer":"an","options":["an","at","ap","ad"],"audio":"man"},
+{"id":"P009","level":0,"phonicsStage":5,"section":"phonics","skill":"Beginning blends","type":"phonics-gap","visual":"🛑","pattern":"__op","answer":"st","options":["st","sn","dr","cl"],"audio":"stop"},
+{"id":"P010","level":0,"phonicsStage":5,"section":"phonics","skill":"Beginning blends","type":"phonics-gap","visual":"🥁","pattern":"__um","answer":"dr","options":["dr","tr","br","gr"],"audio":"drum"},
+{"id":"P011","level":0,"phonicsStage":6,"section":"phonics","skill":"Ending blends","type":"phonics-gap","visual":"🦘","pattern":"ju__","answer":"mp","options":["mp","nd","st","sk"],"audio":"jump"},
+{"id":"P012","level":0,"phonicsStage":6,"section":"phonics","skill":"Ending blends","type":"phonics-gap","visual":"✋","pattern":"ha__","answer":"nd","options":["nd","mp","st","sk"],"audio":"hand"},
+{"id":"P013","level":0,"phonicsStage":7,"section":"phonics","skill":"Digraphs","type":"phonics-gap","visual":"🚢","pattern":"__ip","answer":"sh","options":["sh","ch","th","wh"],"audio":"ship"},
+{"id":"P014","level":0,"phonicsStage":7,"section":"phonics","skill":"Digraphs","type":"phonics-gap","visual":"🪑","pattern":"__air","answer":"ch","options":["ch","sh","th","wh"],"audio":"chair"},
+{"id":"P015","level":0,"phonicsStage":8,"section":"phonics","skill":"Silent e","type":"phonics-gap","visual":"🎂","pattern":"c__e","answer":"ake","options":["ake","ack","at","an"],"audio":"cake"},
+{"id":"P016","level":0,"phonicsStage":8,"section":"phonics","skill":"Silent e","type":"phonics-gap","visual":"🪁","pattern":"k__e","answer":"ite","options":["ite","it","ick","in"],"audio":"kite"},
+{"id":"P017","level":0,"phonicsStage":9,"section":"phonics","skill":"Vowel teams","type":"phonics-gap","visual":"🌧️","pattern":"r__n","answer":"ai","options":["ai","ee","oa","oo"],"audio":"rain"},
+{"id":"P018","level":0,"phonicsStage":9,"section":"phonics","skill":"Vowel teams","type":"phonics-gap","visual":"⛵","pattern":"b__t","answer":"oa","options":["oa","ai","ee","oo"],"audio":"boat"},
+{"id":"P019","level":0,"phonicsStage":10,"section":"phonics","skill":"Advanced clusters","type":"phonics-gap","visual":"🧵","pattern":"___ing","answer":"str","options":["str","spr","scr","thr"],"audio":"string"},
+{"id":"P020","level":0,"phonicsStage":10,"section":"phonics","skill":"Advanced clusters","type":"phonics-gap","visual":"🌱","pattern":"___out","answer":"spr","options":["spr","str","scr","spl"],"audio":"sprout"}
+]
