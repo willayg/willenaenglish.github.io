@@ -38,12 +38,8 @@ function parseArgs(argv) {
     else if (arg.startsWith('--output=')) options.output = arg.slice(9).trim() || options.output;
     else throw new Error(`Unknown argument: ${arg}`);
   }
-  if (options.apply && options.confirm !== APPLY_CONFIRMATION) {
-    throw new Error(`Apply mode requires --confirm=${APPLY_CONFIRMATION}`);
-  }
-  if (options.type && !['wordtest', 'flashcard'].includes(options.type)) {
-    throw new Error('--type must be wordtest or flashcard');
-  }
+  if (options.apply && options.confirm !== APPLY_CONFIRMATION) throw new Error(`Apply mode requires --confirm=${APPLY_CONFIRMATION}`);
+  if (options.type && !['wordtest', 'flashcard'].includes(options.type)) throw new Error('--type must be wordtest or flashcard');
   return options;
 }
 
@@ -108,7 +104,20 @@ async function callWorker({ fetchImpl = fetch, workerUrl, accessToken, worksheet
   return body;
 }
 
+async function fetchWorksheetById({ fetchImpl = fetch, supabaseUrl, serviceRoleKey, userId }) {
+  const response = await fetchImpl(`${supabaseUrl}/rest/v1/worksheets?user_id=eq.${encodeURIComponent(userId)}&select=*`, {
+    headers: { apikey: serviceRoleKey, Authorization: `Bearer ${serviceRoleKey}` }
+  });
+  const rows = await response.json().catch(() => []);
+  if (!response.ok) throw new Error(rows?.message || `Supabase returned HTTP ${response.status}`);
+  if (!Array.isArray(rows) || rows.length !== 1) throw new Error('Worksheet no longer exists or is not unique');
+  return rows[0];
+}
+
 async function patchWorksheet({ fetchImpl = fetch, supabaseUrl, serviceRoleKey, original, patch }) {
+  const current = await fetchWorksheetById({ fetchImpl, supabaseUrl, serviceRoleKey, userId: original.user_id });
+  if (checksum(current) !== checksum(original)) throw new Error('Optimistic update failed: worksheet changed since migration read');
+
   const filters = [`user_id=eq.${encodeURIComponent(original.user_id)}`];
   if (original.updated_at) filters.push(`updated_at=eq.${encodeURIComponent(original.updated_at)}`);
   const response = await fetchImpl(`${supabaseUrl}/rest/v1/worksheets?${filters.join('&')}&select=user_id,updated_at`, {
@@ -152,6 +161,7 @@ module.exports = {
   buildPatch,
   makeReportEntry,
   callWorker,
+  fetchWorksheetById,
   patchWorksheet,
   fetchAllWorksheets
 };
