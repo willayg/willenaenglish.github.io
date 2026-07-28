@@ -17,12 +17,12 @@ const DATA = 'data:image/png;base64,aGVsbG8=';
 function row(overrides = {}) {
   return {
     user_id: '11111111-1111-1111-1111-111111111111',
-    updated_at: '2026-07-29T00:00:00.000Z',
+    updated_at: null,
     worksheet_type: 'wordtest',
     title: 'Test',
     words: ['cat'],
     images: JSON.stringify({ cat: DATA }),
-    settings: JSON.stringify({ font: 'Arial' }),
+    settings: { font: 'Arial' },
     image_data: null,
     ...overrides
   };
@@ -68,20 +68,32 @@ test('dry-run worker request cannot write to Supabase', async () => {
   assert.equal(request.url, 'https://worker.test');
 });
 
-test('database patch uses optimistic updated_at filter and only supplied fields', async () => {
-  let request;
-  const fetchImpl = async (url, options) => {
-    request = { url, options };
-    return { ok: true, status: 200, json: async () => [{ user_id: row().user_id }] };
+test('database patch verifies the current complete row before updating', async () => {
+  const requests = [];
+  const original = row();
+  const fetchImpl = async (url, options = {}) => {
+    requests.push({ url, options });
+    if (!options.method) return { ok: true, status: 200, json: async () => [original] };
+    return { ok: true, status: 200, json: async () => [{ user_id: original.user_id }] };
   };
   await patchWorksheet({
     fetchImpl,
     supabaseUrl: 'https://db.test',
     serviceRoleKey: 'secret',
-    original: row(),
+    original,
     patch: { images: '{}' }
   });
-  assert.match(request.url, /user_id=eq\./);
-  assert.match(request.url, /updated_at=eq\./);
-  assert.deepEqual(JSON.parse(request.options.body), { images: '{}' });
+  assert.equal(requests.length, 2);
+  assert.match(requests[0].url, /select=\*/);
+  assert.equal(requests[1].options.method, 'PATCH');
+  assert.deepEqual(JSON.parse(requests[1].options.body), { images: '{}' });
+});
+
+test('database patch refuses a row changed since the migration read', async () => {
+  const original = row();
+  const fetchImpl = async () => ({ ok: true, status: 200, json: async () => [{ ...original, title: 'Changed live' }] });
+  await assert.rejects(
+    patchWorksheet({ fetchImpl, supabaseUrl: 'https://db.test', serviceRoleKey: 'secret', original, patch: { images: '{}' } }),
+    /changed since migration read/
+  );
 });
