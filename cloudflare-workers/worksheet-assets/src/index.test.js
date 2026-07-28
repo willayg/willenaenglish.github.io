@@ -17,6 +17,13 @@ test('reads access token from cookie and bearer header', () => {
   assert.equal(__test.getAccessToken(request({ Authorization: 'Bearer token-value' })), 'token-value');
 });
 
+test('accepts only the exact server-side migration secret', () => {
+  const env = { WORKSHEET_MIGRATION_SECRET: 'server-secret-value' };
+  assert.equal(__test.hasMigrationAccess(request({ 'X-Worksheet-Migration-Secret': 'server-secret-value' }), env), true);
+  assert.equal(__test.hasMigrationAccess(request({ 'X-Worksheet-Migration-Secret': 'wrong-value' }), env), false);
+  assert.equal(__test.hasMigrationAccess(request(), env), false);
+});
+
 test('creates a stable SHA-256 asset key', async () => {
   const first = await __test.inspectImageValue(PNG_1X1);
   const second = await __test.inspectImageValue(PNG_1X1);
