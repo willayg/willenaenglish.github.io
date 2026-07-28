@@ -1,6 +1,11 @@
 name = "worksheet-assets"
 main = "src/index.js"
 compatibility_date = "2026-07-01"
+workers_dev = true
+
+routes = [
+  { pattern = "worksheet-assets.willenaenglish.com", custom_domain = true }
+]
 
 [[r2_buckets]]
 binding = "WORKSHEET_ASSETS"
@@ -8,8 +13,9 @@ bucket_name = "willena-files"
 preview_bucket_name = "willena-files"
 
 [vars]
-# Set this to the public/custom-domain base serving willena-files before deployment.
-R2_PUBLIC_BASE = ""
+R2_PUBLIC_BASE = "https://worksheet-assets.willenaenglish.com/assets"
+SUPABASE_URL = "https://fiieuiktlsivwfgyivai.supabase.co"
+SUPABASE_ANON_KEY = "sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e"
 WORKSHEET_IMAGE_MAX_BYTES = "5242880"
 WORKSHEET_MAX_ASSETS = "60"
 WORKSHEET_TOTAL_IMAGE_MAX_BYTES = "20971520"
