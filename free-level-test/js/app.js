@@ -13,7 +13,7 @@ async function init(){[config,descriptions,bank,dict]=await Promise.all([loadJSO
 langBtn.onclick=async()=>{lang=lang==="en"?"ko":"en";dict=await loadJSON(`./locales/${lang}.json`);langBtn.textContent=lang==="en"?"한국어":"English";document.documentElement.lang=lang;render()};
 function screen(html){root.innerHTML=`<section class="screen">${html}</section>`}
 function history(){const a=Storage.load().attempts||[];if(!a.length)return"";const x=a[0];return `<div class="history-card"><strong>Previous result</strong><div>${x.title} · ${new Date(x.date).toLocaleDateString()}</div></div>`}
-function render(){({welcome,route,custom,sections,test,transition,result}[state.view]||welcome)()}
+function render(){const views={welcome,route,custom,sections,test:renderTest,transition,result};(views[state.view]||welcome)()}
 function welcome(){screen(`<span class="eyebrow">Free level test</span><h1>${t("welcomeTitle")}</h1><p class="lead">${t("welcomeText")}</p><div class="actions"><button class="btn btn-primary" id="go">${t("continue")} →</button></div>${history()}`);document.querySelector("#go").onclick=()=>{state.view="route";render()}}
 function route(){screen(`<div class="step-meta"><span>1 / 3</span><span>Setup</span></div><h2>${t("chooseRoute")}</h2><p class="lead">${t("routeHelp")}</p><div class="option-grid">${routeCard("phonics","🔤",t("phonics"),t("phonicsHelp"))}${routeCard("beginner","🌱",t("beginner"),t("beginnerHelp"))}${routeCard("experienced","🌳",t("experienced"),t("experiencedHelp"))}${routeCard("custom","⚙️",t("custom"),t("customHelp"))}</div>`)}
 function routeCard(id,icon,title,help){return `<button class="route-card" data-route="${id}"><span class="icon">${icon}</span><strong>${title}</strong><span>${help}</span></button>`}
