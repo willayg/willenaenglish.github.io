@@ -1,0 +1,1 @@
+{"version":"0.5.0-staging","defaultLanguage":"en","storageKey":"willena.freeLevelTest.staging.v1","routes":{"phonics":{"startLevel":1},"beginner":{"startLevel":2},"experienced":{"startLevel":5}},"sections":["phonics","vocabulary","listening","grammar","reading"],"questionsPerSection":{"phonics":10,"vocabulary":8,"listening":8,"grammar":8,"reading":6}}
