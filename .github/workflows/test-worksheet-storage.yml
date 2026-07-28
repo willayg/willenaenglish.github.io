@@ -1,0 +1,32 @@
+name: Test Worksheet Storage
+
+on:
+  push:
+    branches:
+      - worksheet-storage-audit
+    paths:
+      - 'cloudflare-workers/worksheet-assets/**'
+      - 'Teachers/worksheet_save_v2.html'
+      - 'Teachers/tools/wordtest/**'
+      - 'Teachers/tools/flashcard/**'
+      - '.github/workflows/test-worksheet-storage.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Test Worker
+        working-directory: cloudflare-workers/worksheet-assets
+        run: npm test
+      - name: Check browser JavaScript modules
+        run: |
+          node --check Teachers/tools/wordtest/init.js
+          node --check Teachers/tools/flashcard/dataManager.js
