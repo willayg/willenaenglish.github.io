@@ -1,0 +1,1 @@
+.app-header{background:linear-gradient(135deg,#66d6df,#55cbd7);border-bottom-color:rgba(255,255,255,.45)}.app-header .brand-logo{filter:brightness(0) invert(1);height:46px}.header-button{background:#fff;color:#ff0a8a;border-color:#fff}.welcome-mode .app-header{display:none}@media(max-width:650px){.app-header .brand-logo{height:40px}}
