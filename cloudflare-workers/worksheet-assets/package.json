@@ -1,0 +1,12 @@
+{
+  "name": "worksheet-assets-worker",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test src/index.test.js",
+    "check": "node --check src/index.js && node --test src/index.test.js"
+  },
+  "devDependencies": {
+    "wrangler": "^4.0.0"
+  }
+}
