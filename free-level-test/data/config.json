@@ -1,8 +1,8 @@
 {
-  "version":"0.3.0",
+  "version":"0.4.0",
   "defaultLanguage":"en",
-  "storageKey":"willena.freeLevelTest.v3",
+  "storageKey":"willena.freeLevelTest.v4",
   "routes":{"phonics":{"startLevel":1},"beginner":{"startLevel":2},"experienced":{"startLevel":5}},
   "sections":["phonics","vocabulary","listening","grammar","reading"],
-  "questionsPerSection":{"phonics":7,"vocabulary":5,"listening":5,"grammar":5,"reading":4}
+  "questionsPerSection":{"phonics":10,"vocabulary":8,"listening":8,"grammar":8,"reading":6}
 }
