@@ -17,15 +17,11 @@ function containsEmbeddedImage(value) {
 
 function stableValue(value) {
   if (Array.isArray(value)) return value.map(stableValue);
-  if (value && typeof value === 'object') {
-    return Object.fromEntries(Object.keys(value).sort().map(key => [key, stableValue(value[key])]));
-  }
+  if (value && typeof value === 'object') return Object.fromEntries(Object.keys(value).sort().map(key => [key, stableValue(value[key])]));
   return value;
 }
 
-function checksum(value) {
-  return crypto.createHash('sha256').update(JSON.stringify(stableValue(value))).digest('hex');
-}
+function checksum(value) { return crypto.createHash('sha256').update(JSON.stringify(stableValue(value))).digest('hex'); }
 
 function parseArgs(argv) {
   const options = { apply: false, confirm: '', limit: 0, type: '', ids: [], output: 'migration-output/worksheet-storage' };
@@ -93,10 +89,10 @@ function makeReportEntry(original, transformed, patch, workerResult, mode) {
   };
 }
 
-async function callWorker({ fetchImpl = fetch, workerUrl, accessToken, worksheet, dryRun }) {
+async function callWorker({ fetchImpl = fetch, workerUrl, migrationSecret, worksheet, dryRun }) {
   const response = await fetchImpl(workerUrl, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
+    headers: { 'Content-Type': 'application/json', 'X-Worksheet-Migration-Secret': migrationSecret },
     body: JSON.stringify({ action: 'transform_worksheet', dry_run: dryRun, worksheet })
   });
   const body = await response.json().catch(() => ({}));
@@ -115,12 +111,9 @@ async function fetchWorksheetById({ fetchImpl = fetch, supabaseUrl, serviceRoleK
 }
 
 async function patchWorksheet({ fetchImpl = fetch, supabaseUrl, serviceRoleKey, original, patch }) {
-  const current = await fetchWorksheetById({ fetchImpl, supabaseUrl, serviceRoleKey, userId: original.user_id });
-  if (checksum(current) !== checksum(original)) throw new Error('Optimistic update failed: worksheet changed since migration read');
-
-  const filters = [`user_id=eq.${encodeURIComponent(original.user_id)}`];
-  if (original.updated_at) filters.push(`updated_at=eq.${encodeURIComponent(original.updated_at)}`);
-  const response = await fetchImpl(`${supabaseUrl}/rest/v1/worksheets?${filters.join('&')}&select=user_id,updated_at`, {
+  const live = await fetchWorksheetById({ fetchImpl, supabaseUrl, serviceRoleKey, userId: original.user_id });
+  if (checksum(live) !== checksum(original)) throw new Error('Optimistic update failed: worksheet changed after migration started');
+  const response = await fetchImpl(`${supabaseUrl}/rest/v1/worksheets?user_id=eq.${encodeURIComponent(original.user_id)}&select=user_id,updated_at`, {
     method: 'PATCH',
     headers: {
       apikey: serviceRoleKey,
