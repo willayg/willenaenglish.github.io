@@ -4,12 +4,12 @@ compatibility_date = "2026-07-01"
 
 [[r2_buckets]]
 binding = "WORKSHEET_ASSETS"
-bucket_name = "willena-images"
-preview_bucket_name = "willena-images-preview"
+bucket_name = "willena-files"
+preview_bucket_name = "willena-files"
 
 [vars]
-# Public base that serves the bound R2 bucket. Override per environment.
-R2_PUBLIC_BASE = "https://assets.willenaenglish.com"
+# Set this to the public/custom-domain base serving willena-files before deployment.
+R2_PUBLIC_BASE = ""
 WORKSHEET_IMAGE_MAX_BYTES = "5242880"
 WORKSHEET_MAX_ASSETS = "60"
 WORKSHEET_TOTAL_IMAGE_MAX_BYTES = "20971520"
