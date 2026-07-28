@@ -1,0 +1,33 @@
+name: Test Worksheet Migration
+
+on:
+  push:
+    branches: [worksheet-storage-audit]
+    paths:
+      - 'scripts/worksheet-storage/migration.js'
+      - 'scripts/worksheet-storage/migrate_legacy_worksheets.js'
+      - 'scripts/worksheet-storage/migration.test.js'
+      - '.github/workflows/test-worksheet-migration.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Run migration safeguard tests
+        run: node --test scripts/worksheet-storage/migration.test.js
+      - name: Verify CLI defaults to dry run
+        run: |
+          node - <<'NODE'
+          const { parseArgs } = require('./scripts/worksheet-storage/migration');
+          const options = parseArgs([]);
+          if (options.apply !== false) throw new Error('CLI does not default to dry-run');
+          console.log('Default mode is dry-run.');
+          NODE
