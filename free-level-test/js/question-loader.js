@@ -1,4 +1,4 @@
-const ASSET_VERSION="20260728-1";
+const ASSET_VERSION="20260728-2";
 export async function loadQuestionBank(){
   const paths=Array.from({length:10},(_,i)=>`adaptive-level-${String(i+1).padStart(2,"0")}`);
   const groups=await Promise.all(paths.map(async p=>{
