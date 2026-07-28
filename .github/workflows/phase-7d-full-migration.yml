@@ -1,0 +1,106 @@
+name: Phase 7D Full Worksheet Migration
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: "Enter MIGRATE_ALL_LEGACY_WORKSHEETS"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      SUPABASE_URL: https://fiieuiktlsivwfgyivai.supabase.co
+      WORKSHEET_ASSETS_URL: https://worksheet-assets.willenaenglish.com
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+    steps:
+      - name: Validate confirmation
+        shell: bash
+        run: |
+          test "${{ inputs.confirmation }}" = "MIGRATE_ALL_LEGACY_WORKSHEETS" || {
+            echo "Migration blocked: incorrect confirmation phrase"
+            exit 1
+          }
+
+      - name: Check out migration code
+        uses: actions/checkout@v4
+        with:
+          ref: worksheet-storage-audit
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Run migration safeguard tests
+        run: node --test scripts/worksheet-storage/migration.test.js
+
+      - name: Validate required secret
+        shell: bash
+        run: |
+          test -n "$SUPABASE_SERVICE_ROLE_KEY" || {
+            echo "Missing SUPABASE_SERVICE_ROLE_KEY"
+            exit 1
+          }
+
+      - name: Migrate batch 1
+        run: node scripts/worksheet-storage/migrate_legacy_worksheets.js --limit=15 --apply --confirm=MIGRATE_LEGACY_WORKSHEETS --output=migration-output/phase-7d/batch-1
+
+      - name: Migrate batch 2
+        run: node scripts/worksheet-storage/migrate_legacy_worksheets.js --limit=15 --apply --confirm=MIGRATE_LEGACY_WORKSHEETS --output=migration-output/phase-7d/batch-2
+
+      - name: Migrate batch 3
+        run: node scripts/worksheet-storage/migrate_legacy_worksheets.js --limit=15 --apply --confirm=MIGRATE_LEGACY_WORKSHEETS --output=migration-output/phase-7d/batch-3
+
+      - name: Migrate batch 4
+        run: node scripts/worksheet-storage/migrate_legacy_worksheets.js --limit=15 --apply --confirm=MIGRATE_LEGACY_WORKSHEETS --output=migration-output/phase-7d/batch-4
+
+      - name: Migrate final batch
+        run: node scripts/worksheet-storage/migrate_legacy_worksheets.js --limit=15 --apply --confirm=MIGRATE_LEGACY_WORKSHEETS --output=migration-output/phase-7d/batch-5
+
+      - name: Verify no legacy rows remain
+        shell: bash
+        run: |
+          node <<'NODE'
+          const base = process.env.SUPABASE_URL;
+          const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+          const headers = { apikey: key, Authorization: `Bearer ${key}` };
+          const embedded = /data:image\/(?:png|jpe?g|webp|gif);base64,/i;
+          const hasEmbedded = value => {
+            if (typeof value === 'string') {
+              if (embedded.test(value)) return true;
+              try { return hasEmbedded(JSON.parse(value)); } catch { return false; }
+            }
+            if (!value || typeof value !== 'object') return false;
+            return Array.isArray(value) ? value.some(hasEmbedded) : Object.values(value).some(hasEmbedded);
+          };
+          const rows = [];
+          for (let offset = 0; ; offset += 200) {
+            const response = await fetch(`${base}/rest/v1/worksheets?select=user_id,worksheet_type,images,settings,image_data&order=user_id.asc&limit=200&offset=${offset}`, { headers });
+            if (!response.ok) throw new Error(`Supabase verification failed: HTTP ${response.status}`);
+            const page = await response.json();
+            rows.push(...page);
+            if (page.length < 200) break;
+          }
+          const remaining = rows.filter(row => ['wordtest','flashcard'].includes(row.worksheet_type) && ['images','settings','image_data'].some(field => hasEmbedded(row[field])));
+          console.log(`Verification scanned ${rows.length} rows; remaining legacy rows: ${remaining.length}`);
+          if (remaining.length) {
+            console.error(remaining.map(row => row.user_id).join('\n'));
+            process.exit(1);
+          }
+          NODE
+
+      - name: Upload migration reports and backups
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase-7d-full-migration-${{ github.run_id }}
+          path: migration-output/phase-7d/
+          if-no-files-found: warn
+          retention-days: 90
