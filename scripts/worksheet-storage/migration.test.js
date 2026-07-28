@@ -22,7 +22,7 @@ function row(overrides = {}) {
     title: 'Test',
     words: ['cat'],
     images: JSON.stringify({ cat: DATA }),
-    settings: { font: 'Arial' },
+    settings: JSON.stringify({ font: 'Arial' }),
     image_data: null,
     ...overrides
   };
@@ -56,19 +56,21 @@ test('buildPatch rejects protected-field changes', () => {
   assert.throws(() => buildPatch(original, transformed), /protected worksheet field/);
 });
 
-test('dry-run worker request cannot write to Supabase', async () => {
+test('dry-run Worker request uses the server-side migration header', async () => {
   let request;
   const fetchImpl = async (url, options) => {
     request = { url, options };
     return { ok: true, status: 200, json: async () => ({ success: true, worksheet: { ...row(), images: '{}' }, stats: {} }) };
   };
-  await callWorker({ fetchImpl, workerUrl: 'https://worker.test', accessToken: 'token', worksheet: row(), dryRun: true });
+  await callWorker({ fetchImpl, workerUrl: 'https://worker.test', migrationSecret: 'server-secret', worksheet: row(), dryRun: true });
   const body = JSON.parse(request.options.body);
   assert.equal(body.dry_run, true);
   assert.equal(request.url, 'https://worker.test');
+  assert.equal(request.options.headers['X-Worksheet-Migration-Secret'], 'server-secret');
+  assert.equal(request.options.headers.Authorization, undefined);
 });
 
-test('database patch verifies the current complete row before updating', async () => {
+test('database patch verifies the complete live row before updating', async () => {
   const requests = [];
   const original = row();
   const fetchImpl = async (url, options = {}) => {
@@ -89,11 +91,12 @@ test('database patch verifies the current complete row before updating', async (
   assert.deepEqual(JSON.parse(requests[1].options.body), { images: '{}' });
 });
 
-test('database patch refuses a row changed since the migration read', async () => {
+test('database patch refuses a row changed after selection', async () => {
   const original = row();
-  const fetchImpl = async () => ({ ok: true, status: 200, json: async () => [{ ...original, title: 'Changed live' }] });
+  const changed = { ...original, title: 'Changed elsewhere' };
+  const fetchImpl = async () => ({ ok: true, status: 200, json: async () => [changed] });
   await assert.rejects(
     patchWorksheet({ fetchImpl, supabaseUrl: 'https://db.test', serviceRoleKey: 'secret', original, patch: { images: '{}' } }),
-    /changed since migration read/
+    /worksheet changed after migration started/
   );
 });
