@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
+    "audit:worksheets": "node scripts/audit_worksheets.js",
     "process:wordlists": "node scripts/process_wordlists.js",
     "generate:sentences": "node scripts/generate_sentences.js",
     "process:sentences": "node scripts/process_sentence_audio.js",
