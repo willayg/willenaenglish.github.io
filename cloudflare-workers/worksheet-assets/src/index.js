@@ -12,12 +12,7 @@ const ALLOWED_ORIGINS = new Set([
 
 const DATA_URL_RE = /^data:(image\/(?:png|jpeg|webp|gif));base64,([A-Za-z0-9+/=\r\n]+)$/i;
 const HTTP_URL_RE = /^https?:\/\//i;
-const MIME_EXTENSIONS = {
-  'image/png': 'png',
-  'image/jpeg': 'jpg',
-  'image/webp': 'webp',
-  'image/gif': 'gif',
-};
+const MIME_EXTENSIONS = { 'image/png': 'png', 'image/jpeg': 'jpg', 'image/webp': 'webp', 'image/gif': 'gif' };
 
 function corsHeaders(origin) {
   const allowed = ALLOWED_ORIGINS.has(origin) ? origin : 'https://willenaenglish.com';
@@ -25,16 +20,13 @@ function corsHeaders(origin) {
     'Access-Control-Allow-Origin': allowed,
     'Access-Control-Allow-Credentials': 'true',
     'Access-Control-Allow-Methods': 'GET, HEAD, POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Worksheet-Migration-Secret',
     Vary: 'Origin',
   };
 }
 
 function json(data, status, origin) {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: { 'Content-Type': 'application/json; charset=utf-8', ...corsHeaders(origin) },
-  });
+  return new Response(JSON.stringify(data), { status, headers: { 'Content-Type': 'application/json; charset=utf-8', ...corsHeaders(origin) } });
 }
 
 function parseCookies(header) {
@@ -57,17 +49,27 @@ function getAccessToken(request) {
   return authorization.startsWith('Bearer ') ? authorization.slice(7) : null;
 }
 
+function constantTimeEqual(left, right) {
+  const a = new TextEncoder().encode(String(left || ''));
+  const b = new TextEncoder().encode(String(right || ''));
+  let difference = a.length ^ b.length;
+  const length = Math.max(a.length, b.length);
+  for (let index = 0; index < length; index += 1) difference |= (a[index % Math.max(a.length, 1)] || 0) ^ (b[index % Math.max(b.length, 1)] || 0);
+  return difference === 0;
+}
+
+function hasMigrationAccess(request, env) {
+  const supplied = request.headers.get('X-Worksheet-Migration-Secret') || '';
+  return Boolean(env.WORKSHEET_MIGRATION_SECRET && supplied && constantTimeEqual(supplied, env.WORKSHEET_MIGRATION_SECRET));
+}
+
 async function getUser(env, token) {
   if (!token || !env.SUPABASE_URL || !env.SUPABASE_ANON_KEY) return null;
   try {
-    const response = await fetch(`${env.SUPABASE_URL}/auth/v1/user`, {
-      headers: { apikey: env.SUPABASE_ANON_KEY, Authorization: `Bearer ${token}` },
-    });
+    const response = await fetch(`${env.SUPABASE_URL}/auth/v1/user`, { headers: { apikey: env.SUPABASE_ANON_KEY, Authorization: `Bearer ${token}` } });
     if (!response.ok) return null;
     return await response.json();
-  } catch {
-    return null;
-  }
+  } catch { return null; }
 }
 
 function parseJsonObject(value, fieldName) {
@@ -86,9 +88,7 @@ function decodeBase64(base64) {
   return bytes;
 }
 
-function toHex(arrayBuffer) {
-  return Array.from(new Uint8Array(arrayBuffer), byte => byte.toString(16).padStart(2, '0')).join('');
-}
+function toHex(arrayBuffer) { return Array.from(new Uint8Array(arrayBuffer), byte => byte.toString(16).padStart(2, '0')).join(''); }
 
 async function inspectImageValue(value) {
   if (typeof value !== 'string') return { kind: 'other', value };
@@ -96,7 +96,6 @@ async function inspectImageValue(value) {
   if (HTTP_URL_RE.test(value)) return { kind: 'url', url: value };
   const match = value.match(DATA_URL_RE);
   if (!match) return { kind: 'other', value };
-
   const mimeType = match[1].toLowerCase();
   const extension = MIME_EXTENSIONS[mimeType];
   if (!extension) throw new Error(`Unsupported worksheet image MIME type: ${mimeType}`);
@@ -175,7 +174,6 @@ async function transformWorksheet(worksheet, env) {
   if (worksheet.worksheet_type === 'wordtest') transformed = await transformWordTest(worksheet, env, uploads);
   else if (worksheet.worksheet_type === 'flashcard') transformed = await transformFlashcard(worksheet, env, uploads);
   else transformed = structuredClone(worksheet);
-
   const remainingFields = ['images', 'settings', 'image_data'].filter(field => containsEmbeddedImage(transformed[field]));
   if (remainingFields.length) throw new Error(`Transformation left embedded images in: ${remainingFields.join(', ')}`);
   return { worksheet: transformed, uploads: Array.from(uploads.values()) };
@@ -193,14 +191,12 @@ async function persistAssets(env, uploads, dryRun) {
   if (!env.WORKSHEET_ASSETS) throw new Error('WORKSHEET_ASSETS R2 binding is missing');
   const { maxImageBytes, maxAssets, maxTotalBytes } = limits(env);
   if (uploads.length > maxAssets) throw new Error(`Too many worksheet images; maximum is ${maxAssets}`);
-
   let totalBytes = 0;
   for (const image of uploads) {
     if (image.byteLength > maxImageBytes) throw new Error(`Worksheet image exceeds ${maxImageBytes} byte limit`);
     totalBytes += image.byteLength;
   }
   if (totalBytes > maxTotalBytes) throw new Error(`Worksheet images exceed ${maxTotalBytes} byte combined limit`);
-
   const assets = [];
   for (const image of uploads) {
     let created = false;
@@ -214,15 +210,7 @@ async function persistAssets(env, uploads, dryRun) {
         created = true;
       }
     }
-    assets.push({
-      asset_key: image.assetKey,
-      url: publicAssetUrl(env, image.assetKey),
-      sha256: image.sha256,
-      mime_type: image.mimeType,
-      bytes: image.byteLength,
-      created,
-      dry_run: dryRun,
-    });
+    assets.push({ asset_key: image.assetKey, url: publicAssetUrl(env, image.assetKey), sha256: image.sha256, mime_type: image.mimeType, bytes: image.byteLength, created, dry_run: dryRun });
   }
   return assets;
 }
@@ -245,23 +233,16 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     const origin = request.headers.get('Origin') || '';
-
-    if ((request.method === 'GET' || request.method === 'HEAD') && url.pathname.startsWith('/assets/')) {
-      return serveAsset(request, env, url.pathname);
-    }
+    if ((request.method === 'GET' || request.method === 'HEAD') && url.pathname.startsWith('/assets/')) return serveAsset(request, env, url.pathname);
     if (request.method === 'OPTIONS') return new Response('', { status: 200, headers: corsHeaders(origin) });
     if (request.method !== 'POST') return json({ success: false, error: 'Method not allowed' }, 405, origin);
-
     try {
-      const user = await getUser(env, getAccessToken(request));
+      const migrationAccess = hasMigrationAccess(request, env);
+      const user = migrationAccess ? { migration: true } : await getUser(env, getAccessToken(request));
       if (!user) return json({ success: false, error: 'Sign in required' }, 401, origin);
       let body;
-      try { body = await request.json(); }
-      catch { return json({ success: false, error: 'Invalid JSON body' }, 400, origin); }
-      if (body.action !== 'transform_worksheet' || !body.worksheet) {
-        return json({ success: false, error: 'Expected action transform_worksheet' }, 400, origin);
-      }
-
+      try { body = await request.json(); } catch { return json({ success: false, error: 'Invalid JSON body' }, 400, origin); }
+      if (body.action !== 'transform_worksheet' || !body.worksheet) return json({ success: false, error: 'Expected action transform_worksheet' }, 400, origin);
       const dryRun = body.dry_run === true;
       const transformed = await transformWorksheet(body.worksheet, env);
       const assets = await persistAssets(env, transformed.uploads, dryRun);
@@ -285,11 +266,4 @@ export default {
   },
 };
 
-export const __test = {
-  parseCookies,
-  getAccessToken,
-  inspectImageValue,
-  transformWorksheet,
-  persistAssets,
-  containsEmbeddedImage,
-};
+export const __test = { parseCookies, getAccessToken, constantTimeEqual, hasMigrationAccess, inspectImageValue, transformWorksheet, persistAssets, containsEmbeddedImage };
