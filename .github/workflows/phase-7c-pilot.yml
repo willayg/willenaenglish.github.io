@@ -1,0 +1,80 @@
+name: Phase 7C Pilot Migration
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "Run a real-data dry run or apply the reviewed four-row pilot"
+        required: true
+        default: dry-run
+        type: choice
+        options:
+          - dry-run
+          - apply
+      confirmation:
+        description: "For apply only, enter MIGRATE_LEGACY_WORKSHEETS"
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  pilot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      SUPABASE_URL: https://fiieuiktlsivwfgyivai.supabase.co
+      WORKSHEET_ASSETS_URL: https://worksheet-assets.willenaenglish.com
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      PILOT_IDS: 7f6a342f-f5a8-48ed-a489-ffee27ebe392,8b9d1a22-3e2d-41df-bd08-c2d02fd1a8ad,59686818-10ab-41ee-b775-6997ff5049e9,96df2b6a-1e30-4416-80b3-b3557613d613
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: worksheet-storage-audit
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Run migration safeguard tests
+        run: node --test scripts/worksheet-storage/migration.test.js
+
+      - name: Validate required secret
+        shell: bash
+        run: |
+          test -n "$SUPABASE_SERVICE_ROLE_KEY" || { echo "Missing SUPABASE_SERVICE_ROLE_KEY"; exit 1; }
+
+      - name: Validate apply confirmation
+        if: ${{ inputs.mode == 'apply' }}
+        shell: bash
+        run: |
+          test "${{ inputs.confirmation }}" = "MIGRATE_LEGACY_WORKSHEETS" || {
+            echo "Apply blocked: incorrect confirmation phrase"
+            exit 1
+          }
+
+      - name: Run real-data dry run
+        if: ${{ inputs.mode == 'dry-run' }}
+        run: |
+          node scripts/worksheet-storage/migrate_legacy_worksheets.js \
+            --ids="$PILOT_IDS" \
+            --output=migration-output/phase-7c-pilot
+
+      - name: Apply four-row pilot
+        if: ${{ inputs.mode == 'apply' }}
+        run: |
+          node scripts/worksheet-storage/migrate_legacy_worksheets.js \
+            --ids="$PILOT_IDS" \
+            --apply \
+            --confirm=MIGRATE_LEGACY_WORKSHEETS \
+            --output=migration-output/phase-7c-pilot
+
+      - name: Upload pilot report and backups
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase-7c-pilot-${{ inputs.mode }}-${{ github.run_id }}
+          path: migration-output/phase-7c-pilot/
+          if-no-files-found: warn
+          retention-days: 30
