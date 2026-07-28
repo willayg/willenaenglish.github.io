@@ -28,27 +28,27 @@ async function main() {
   const options = parseArgs(process.argv.slice(2));
   const supabaseUrl = process.env.SUPABASE_URL || 'https://fiieuiktlsivwfgyivai.supabase.co';
   const serviceRoleKey = requireEnv('SUPABASE_SERVICE_ROLE_KEY');
-  const accessToken = requireEnv('WORKSHEET_MIGRATION_ACCESS_TOKEN');
+  const migrationSecret = process.env.WORKSHEET_MIGRATION_SECRET || serviceRoleKey;
   const workerUrl = process.env.WORKSHEET_ASSETS_URL || 'https://worksheet-assets.willenaenglish.com';
   const startedAt = new Date().toISOString();
   const runId = startedAt.replace(/[:.]/g, '-');
   const runDir = path.resolve(options.output, runId);
   const reports = [];
 
-  console.log(`[phase7b] mode=${options.apply ? 'APPLY' : 'DRY RUN'}`);
+  console.log(`[phase7] mode=${options.apply ? 'APPLY' : 'DRY RUN'}`);
   const rows = await fetchAllWorksheets({ supabaseUrl, serviceRoleKey });
   const candidates = selectCandidates(rows, options);
-  console.log(`[phase7b] selected ${candidates.length} legacy rows from ${rows.length} total rows`);
+  console.log(`[phase7] selected ${candidates.length} legacy rows from ${rows.length} total rows`);
 
   for (const [index, original] of candidates.entries()) {
     const id = String(original.user_id);
-    console.log(`[phase7b] ${index + 1}/${candidates.length} ${original.worksheet_type} ${id}`);
+    console.log(`[phase7] ${index + 1}/${candidates.length} ${original.worksheet_type} ${id}`);
     const entry = { worksheet_id: id, title: original.title || '', worksheet_type: original.worksheet_type };
     try {
       if (options.apply) await writeJson(path.join(runDir, 'backups', `${id}.json`), original);
       const workerResult = await callWorker({
         workerUrl,
-        accessToken,
+        migrationSecret,
         worksheet: original,
         dryRun: !options.apply
       });
@@ -66,13 +66,13 @@ async function main() {
       reports.push(report);
     } catch (error) {
       reports.push({ ...entry, mode: options.apply ? 'apply' : 'dry-run', status: 'failed', error: error.message });
-      console.error(`[phase7b] FAILED ${id}: ${error.message}`);
+      console.error(`[phase7] FAILED ${id}: ${error.message}`);
       if (options.apply) break;
     }
   }
 
   const summary = {
-    phase: '7B',
+    phase: '7C',
     started_at: startedAt,
     finished_at: new Date().toISOString(),
     mode: options.apply ? 'apply' : 'dry-run',
@@ -86,11 +86,11 @@ async function main() {
   };
   await fs.mkdir(runDir, { recursive: true });
   await fs.writeFile(path.join(runDir, 'report.json'), `${JSON.stringify(summary, null, 2)}\n`);
-  console.log(`[phase7b] report: ${path.join(runDir, 'report.json')}`);
+  console.log(`[phase7] report: ${path.join(runDir, 'report.json')}`);
   if (summary.failed_rows) process.exitCode = 1;
 }
 
 main().catch(error => {
-  console.error(`[phase7b] fatal: ${error.message}`);
+  console.error(`[phase7] fatal: ${error.message}`);
   process.exitCode = 1;
 });
