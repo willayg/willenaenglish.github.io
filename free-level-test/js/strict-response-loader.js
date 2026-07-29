@@ -92,12 +92,11 @@ function pools(rows){
 
 function identificationQuestions(p){
   return p.nouns.flatMap((n,i)=>{
-    const noun=clean(n.canonical_text),emoji=clean(n.emoji);
+    const emoji=clean(n.emoji);
     const alternatives=shuffle(p.nouns.filter(x=>x.id!==n.id)).slice(0,2);
     if(alternatives.length<2)return[];
     const answer=`It's ${singularObject(n)}.`;
-    const plural=pluralOf(n);
-    return[make(`identify-${n.id}-${i}`,n.level_id,`${emoji}\nWhat is this?`,answer,[`They're ${plural}.`,`Yes, it is.`,`It's ${singularObject(alternatives[0])}.`],n.difficulty_rating)];
+    return[make(`identify-${n.id}-${i}`,n.level_id,`${emoji}\nWhat is this?`,answer,[`They're ${pluralOf(n)}.`,`Yes, it is.`,`It's ${singularObject(alternatives[0])}.`],n.difficulty_rating)];
   }).filter(Boolean);
 }
 
@@ -123,7 +122,7 @@ function preferenceQuestions(p){
     const thing=generalPreference(row),ynAnswer=i%2?"No, I don't.":"Yes, I do.";
     return[
       make(`like-yn-${row.id}`,2,`Do you like ${thing}?`,ynAnswer,["Yes, I can.","Yes, I am.",ynAnswer.startsWith("Yes")?"No, I don't.":"Yes, I do."],30),
-      make(`like-wh-${row.id}`,2,"What do you like?",`I like ${thing}.`,[`I want ${singularObject(row)}.`,`Yes, I do.",`I can ${clean(row.canonical_text)}.`],29)
+      make(`like-wh-${row.id}`,2,"What do you like?",`I like ${thing}.`,[`I want ${singularObject(row)}.`,`Yes, I do.`,`I can ${clean(row.canonical_text)}.`],29)
     ];
   }).filter(Boolean);
 }
