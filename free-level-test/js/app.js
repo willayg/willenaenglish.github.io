@@ -1,4 +1,4 @@
-import{loadQuestionBank}from"./strict-response-loader.js?v=20260730-5";
+import{loadQuestionBank}from"./assessment-loader.js?v=20260730-6";
 const root=document.querySelector("#app"),langBtn=document.querySelector("#languageBtn"),brandSubtitle=document.querySelector("#brandSubtitle"),footerText=document.querySelector("#footerText");
 let bank=[],lang="ko";
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),shuffle=a=>[...a].sort(()=>Math.random()-.5);
