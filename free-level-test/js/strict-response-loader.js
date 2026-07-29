@@ -8,36 +8,22 @@ const article=n=>/^[aeiou]/i.test(n)?"an":"a";
 async function loadLexicalEntries(){
   const originalFetch=window.fetch.bind(window);
   let requestInfo=null;
-
   window.fetch=async(...args)=>{
     const raw=typeof args[0]==="string"?args[0]:args[0]?.url;
     if(raw){
       try{
         const url=new URL(raw);
-        if(url.pathname.endsWith("/rest/v1/lexical_entries")){
-          requestInfo={url,options:args[1]||{}};
-        }
+        if(url.pathname.endsWith("/rest/v1/lexical_entries"))requestInfo={url,options:args[1]||{}};
       }catch(_){/* Ignore unrelated requests. */}
     }
     return originalFetch(...args);
   };
-
-  try{
-    await loadLegacyBank();
-  }catch(_){
-    // The legacy generator may reject its own bank. We only use it to capture
-    // the authenticated Supabase request, so that rejection is irrelevant.
-  }finally{
-    window.fetch=originalFetch;
-  }
-
+  try{await loadLegacyBank();}catch(_){/* Only capturing the authenticated request. */}finally{window.fetch=originalFetch;}
   if(!requestInfo)throw new Error("Could not connect to the published curriculum.");
-
   const url=new URL(requestInfo.url);
   url.searchParams.set("select","id,canonical_text,entry_type,part_of_speech,level_id,difficulty_rating,tags,status,emoji");
   url.searchParams.set("status","eq.published");
   url.searchParams.set("order","level_id.asc,difficulty_rating.asc");
-
   const response=await originalFetch(url.toString(),{...requestInfo.options,cache:"no-store"});
   if(!response.ok)throw new Error(`Could not load response vocabulary (${response.status}).`);
   const rows=await response.json();
@@ -71,8 +57,7 @@ function identificationQuestions(p){
     const alternatives=shuffle(p.nouns.filter(x=>x.id!==n.id)).slice(0,3).map(x=>clean(x.canonical_text));
     if(alternatives.length<3)return[];
     const answer=`It's ${article(noun)} ${noun}.`;
-    const wrong=[`It's ${article(alternatives[0])} ${alternatives[0]}.`,`Yes, it is.`,`I like ${alternatives[1]}.`];
-    return[make(`identify-${n.id}-${i}`,n.level_id,`${emoji}\nWhat is this?`,answer,wrong,n.difficulty_rating)];
+    return[make(`identify-${n.id}-${i}`,n.level_id,`${emoji}\nWhat is this?`,answer,[`It's ${article(alternatives[0])} ${alternatives[0]}.`,`Yes, it is.`,`I like ${alternatives[1]}.`],n.difficulty_rating)];
   }).filter(Boolean);
 }
 
@@ -99,7 +84,7 @@ function preferenceQuestions(p){
     const ynAnswer=i%2?"No, I don't.":"Yes, I do.";
     return[
       make(`like-yn-${i}`,2,`Do you like ${thing}?`,ynAnswer,["Yes, I can.","Yes, I am.",ynAnswer.startsWith("Yes")?"No, I don't.":"Yes, I do."],30),
-      make(`like-wh-${i}`,2,"What do you like?",`I like ${thing}.",[`I want ${thing}.`,`Yes, I do.`,`I can ${thing}.`],29)
+      make(`like-wh-${i}`,2,"What do you like?",`I like ${thing}.`,[`I want ${thing}.`,`Yes, I do.`,`I can ${thing}.`],29)
     ];
   }).filter(Boolean);
 }
@@ -107,9 +92,9 @@ function preferenceQuestions(p){
 function wantAndHaveQuestions(p){
   const things=uniq(p.things.map(x=>x.canonical_text)).filter(x=>x.length<24).slice(0,18);
   return things.flatMap((thing,i)=>[
-    make(`want-wh-${i}`,2,"What do you want?",`I want ${thing}.",[`I have ${thing}.`,`I like ${thing}.`,`Yes, I do.`],32),
+    make(`want-wh-${i}`,2,"What do you want?",`I want ${thing}.`,[`I have ${thing}.`,`I like ${thing}.`,`Yes, I do.`],32),
     make(`want-yn-${i}`,2,`Do you want ${thing}?`,i%2?"No, I don't.":"Yes, I do.",["Yes, I can.","Yes, I am.",`I have ${thing}.`],32),
-    make(`have-wh-${i}`,2,"What do you have?",`I have ${thing}.",[`I want ${thing}.`,`I like ${thing}.`,`Yes, I do.`],35),
+    make(`have-wh-${i}`,2,"What do you have?",`I have ${thing}.`,[`I want ${thing}.`,`I like ${thing}.`,`Yes, I do.`],35),
     make(`have-yn-${i}`,2,`Do you have ${thing}?`,i%2?"Yes, I do.":"No, I don't.",["Yes, I can.","Yes, I am.","No, I'm not."],36)
   ]).filter(Boolean);
 }
@@ -126,7 +111,7 @@ function locationQuestions(p){
   return nouns.slice(0,8).map((item,i)=>{
     const place=nouns[(i+3)%nouns.length],prep=preps[i%preps.length];
     const otherPreps=preps.filter(x=>x!==prep).slice(0,2);
-    return make(`where-${i}`,2,`The ${item} is ${prep} the ${place}.\nWhere is the ${item}?`,`It's ${prep} the ${place}.",[`It's ${otherPreps[0]} the ${place}.`,`It's ${otherPreps[1]} the ${place}.`,`It's ${prep} the ${nouns[(i+5)%nouns.length]}.`],34);
+    return make(`where-${i}`,2,`The ${item} is ${prep} the ${place}.\nWhere is the ${item}?`,`It's ${prep} the ${place}.`,[`It's ${otherPreps[0]} the ${place}.`,`It's ${otherPreps[1]} the ${place}.`,`It's ${prep} the ${nouns[(i+5)%nouns.length]}.`],34);
   }).filter(Boolean);
 }
 
