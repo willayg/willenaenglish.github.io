@@ -77,7 +77,9 @@ function pools(rows){
   const tagged=t=>published.filter(r=>(r.tags||[]).includes(t));
   const naturalPreference=published.filter(r=>{
     const tags=r.tags||[];
-    return tags.includes("food")||tags.includes("drink")||tags.includes("sport")||tags.includes("hobby")||tags.includes("animal");
+    const nounLike=r.part_of_speech==="noun"||["word","noun_phrase"].includes(r.entry_type);
+    const preferredCategory=tags.includes("food")||tags.includes("drink")||tags.includes("sport")||tags.includes("hobby")||tags.includes("animal");
+    return nounLike&&preferredCategory&&!["verb_phrase","phrasal_verb","fixed_expression"].includes(r.entry_type);
   });
   return{
     nouns:published.filter(r=>r.part_of_speech==="noun"&&r.emoji),
@@ -122,7 +124,7 @@ function preferenceQuestions(p){
     const thing=generalPreference(row),ynAnswer=i%2?"No, I don't.":"Yes, I do.";
     return[
       make(`like-yn-${row.id}`,2,`Do you like ${thing}?`,ynAnswer,["Yes, I can.","Yes, I am.",ynAnswer.startsWith("Yes")?"No, I don't.":"Yes, I do."],30),
-      make(`like-wh-${row.id}`,2,"What do you like?",`I like ${thing}.`,[`I want ${singularObject(row)}.`,`Yes, I do.`,`I can ${clean(row.canonical_text)}.`],29)
+      make(`like-wh-${row.id}`,2,"What do you like?",`I like ${thing}.`,[`I want ${singularObject(row)}.`,`Yes, I do.`,`No, I don't.`],29)
     ];
   }).filter(Boolean);
 }
