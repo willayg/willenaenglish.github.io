@@ -21,7 +21,7 @@ async function loadLexicalEntries(){
   try{await loadLegacyBank();}catch(_){/* Only capturing the authenticated request. */}finally{window.fetch=originalFetch;}
   if(!requestInfo)throw new Error("Could not connect to the published curriculum.");
   const url=new URL(requestInfo.url);
-  url.searchParams.set("select","id,canonical_text,entry_type,part_of_speech,level_id,difficulty_rating,tags,status,emoji");
+  url.searchParams.set("select","id,canonical_text,entry_type,part_of_speech,level_id,difficulty_rating,tags,status,emoji,countability,plural_required,plural_rule,metadata");
   url.searchParams.set("status","eq.published");
   url.searchParams.set("order","level_id.asc,difficulty_rating.asc");
   const response=await originalFetch(url.toString(),{...requestInfo.options,cache:"no-store"});
@@ -37,13 +37,52 @@ function make(id,level,q,a,wrong,difficulty=level*20){
   return{id:`meaningful_response:${id}`,type:"meaningful_response",q,a,choices,level:Number(level)||1,difficulty:Number(difficulty)||level*20,sourceTable:"generated_from_database"};
 }
 
+function isCountable(row){
+  const c=clean(row.countability).toLowerCase();
+  if(["countable","count","both"].includes(c))return true;
+  if(["uncountable","mass","noncount"].includes(c))return false;
+  return row.plural_required===true;
+}
+
+function pluraliseWord(word){
+  if(/[^aeiou]y$/i.test(word))return word.slice(0,-1)+"ies";
+  if(/(s|x|z|ch|sh)$/i.test(word))return word+"es";
+  if(/fe$/i.test(word))return word.slice(0,-2)+"ves";
+  if(/f$/i.test(word))return word.slice(0,-1)+"ves";
+  return word+"s";
+}
+
+function pluralOf(row){
+  const explicit=clean(row.metadata?.plural||row.metadata?.plural_form||row.plural_rule);
+  if(explicit&&!/^(regular|add_s|add_es|y_to_ies)$/i.test(explicit))return explicit;
+  const text=clean(row.canonical_text);
+  const irregular={child:"children",person:"people",man:"men",woman:"women",mouse:"mice",goose:"geese",tooth:"teeth",foot:"feet",fish:"fish",sheep:"sheep"};
+  if(irregular[text.toLowerCase()])return irregular[text.toLowerCase()];
+  const parts=text.split(" ");
+  parts[parts.length-1]=pluraliseWord(parts[parts.length-1]);
+  return parts.join(" ");
+}
+
+function singularObject(row){
+  const text=clean(row.canonical_text);
+  return isCountable(row)?`${article(text)} ${text}`:text;
+}
+
+function generalPreference(row){
+  return isCountable(row)?pluralOf(row):clean(row.canonical_text);
+}
+
 function pools(rows){
   const published=rows.filter(r=>r.status==="published"&&clean(r.canonical_text));
   const tagged=t=>published.filter(r=>(r.tags||[]).includes(t));
+  const naturalPreference=published.filter(r=>{
+    const tags=r.tags||[];
+    return tags.includes("food")||tags.includes("drink")||tags.includes("sport")||tags.includes("hobby")||tags.includes("animal");
+  });
   return{
     nouns:published.filter(r=>r.part_of_speech==="noun"&&r.emoji),
-    things:published.filter(r=>["noun","noun_phrase"].includes(r.entry_type)||r.part_of_speech==="noun"),
-    foods:[...tagged("food"),...tagged("drink")],
+    things:published.filter(r=>(["noun","noun_phrase"].includes(r.entry_type)||r.part_of_speech==="noun")&&!((r.tags||[]).includes("grammar"))),
+    preferences:naturalPreference,
     verbs:published.filter(r=>r.part_of_speech==="verb"&&!['be','do','have','want'].includes(clean(r.canonical_text).toLowerCase())),
     verbPhrases:published.filter(r=>["verb_phrase","phrasal_verb","fixed_expression"].includes(r.entry_type)),
     prepositions:published.filter(r=>r.part_of_speech==="preposition"),
@@ -54,10 +93,11 @@ function pools(rows){
 function identificationQuestions(p){
   return p.nouns.flatMap((n,i)=>{
     const noun=clean(n.canonical_text),emoji=clean(n.emoji);
-    const alternatives=shuffle(p.nouns.filter(x=>x.id!==n.id)).slice(0,3).map(x=>clean(x.canonical_text));
-    if(alternatives.length<3)return[];
-    const answer=`It's ${article(noun)} ${noun}.`;
-    return[make(`identify-${n.id}-${i}`,n.level_id,`${emoji}\nWhat is this?`,answer,[`It's ${article(alternatives[0])} ${alternatives[0]}.`,`Yes, it is.`,`I like ${alternatives[1]}.`],n.difficulty_rating)];
+    const alternatives=shuffle(p.nouns.filter(x=>x.id!==n.id)).slice(0,2);
+    if(alternatives.length<2)return[];
+    const answer=`It's ${singularObject(n)}.`;
+    const plural=pluralOf(n);
+    return[make(`identify-${n.id}-${i}`,n.level_id,`${emoji}\nWhat is this?`,answer,[`They're ${plural}.`,`Yes, it is.`,`It's ${singularObject(alternatives[0])}.`],n.difficulty_rating)];
   }).filter(Boolean);
 }
 
@@ -79,24 +119,26 @@ function abilityQuestions(p){
 }
 
 function preferenceQuestions(p){
-  const things=uniq(p.foods.map(x=>x.canonical_text)).slice(0,18);
-  return things.flatMap((thing,i)=>{
-    const ynAnswer=i%2?"No, I don't.":"Yes, I do.";
+  return p.preferences.slice(0,18).flatMap((row,i)=>{
+    const thing=generalPreference(row),ynAnswer=i%2?"No, I don't.":"Yes, I do.";
     return[
-      make(`like-yn-${i}`,2,`Do you like ${thing}?`,ynAnswer,["Yes, I can.","Yes, I am.",ynAnswer.startsWith("Yes")?"No, I don't.":"Yes, I do."],30),
-      make(`like-wh-${i}`,2,"What do you like?",`I like ${thing}.`,[`I want ${thing}.`,`Yes, I do.`,`I can ${thing}.`],29)
+      make(`like-yn-${row.id}`,2,`Do you like ${thing}?`,ynAnswer,["Yes, I can.","Yes, I am.",ynAnswer.startsWith("Yes")?"No, I don't.":"Yes, I do."],30),
+      make(`like-wh-${row.id}`,2,"What do you like?",`I like ${thing}.`,[`I want ${singularObject(row)}.`,`Yes, I do.",`I can ${clean(row.canonical_text)}.`],29)
     ];
   }).filter(Boolean);
 }
 
 function wantAndHaveQuestions(p){
-  const things=uniq(p.things.map(x=>x.canonical_text)).filter(x=>x.length<24).slice(0,18);
-  return things.flatMap((thing,i)=>[
-    make(`want-wh-${i}`,2,"What do you want?",`I want ${thing}.`,[`I have ${thing}.`,`I like ${thing}.`,`Yes, I do.`],32),
-    make(`want-yn-${i}`,2,`Do you want ${thing}?`,i%2?"No, I don't.":"Yes, I do.",["Yes, I can.","Yes, I am.",`I have ${thing}.`],32),
-    make(`have-wh-${i}`,2,"What do you have?",`I have ${thing}.`,[`I want ${thing}.`,`I like ${thing}.`,`Yes, I do.`],35),
-    make(`have-yn-${i}`,2,`Do you have ${thing}?`,i%2?"Yes, I do.":"No, I don't.",["Yes, I can.","Yes, I am.","No, I'm not."],36)
-  ]).filter(Boolean);
+  const things=p.things.filter(r=>clean(r.canonical_text).length<24).slice(0,18);
+  return things.flatMap((row,i)=>{
+    const thing=singularObject(row);
+    return[
+      make(`want-wh-${row.id}`,2,"What do you want?",`I want ${thing}.`,[`I have ${thing}.`,`I like ${generalPreference(row)}.`,`Yes, I do.`],32),
+      make(`want-yn-${row.id}`,2,`Do you want ${thing}?`,i%2?"No, I don't.":"Yes, I do.",["Yes, I can.","Yes, I am.",`I have ${thing}.`],32),
+      make(`have-wh-${row.id}`,2,"What do you have?",`I have ${thing}.`,[`I want ${thing}.`,`I like ${generalPreference(row)}.`,`Yes, I do.`],35),
+      make(`have-yn-${row.id}`,2,`Do you have ${thing}?`,i%2?"Yes, I do.":"No, I don't.",["Yes, I can.","Yes, I am.","No, I'm not."],36)
+    ];
+  }).filter(Boolean);
 }
 
 function permissionQuestions(p){
@@ -106,12 +148,13 @@ function permissionQuestions(p){
 
 function locationQuestions(p){
   const preps=uniq(p.prepositions.map(x=>x.canonical_text)).filter(x=>["in","on","under","behind","next to","between"].includes(x));
-  const nouns=uniq(p.things.map(x=>x.canonical_text)).filter(x=>/^[a-z ]+$/i.test(x)&&x.length<12).slice(0,12);
+  const nouns=p.things.filter(r=>/^[a-z ]+$/i.test(clean(r.canonical_text))&&clean(r.canonical_text).length<12).slice(0,12);
   if(preps.length<3||nouns.length<4)return[];
-  return nouns.slice(0,8).map((item,i)=>{
-    const place=nouns[(i+3)%nouns.length],prep=preps[i%preps.length];
+  return nouns.slice(0,8).map((itemRow,i)=>{
+    const placeRow=nouns[(i+3)%nouns.length],prep=preps[i%preps.length];
+    const item=clean(itemRow.canonical_text),place=clean(placeRow.canonical_text);
     const otherPreps=preps.filter(x=>x!==prep).slice(0,2);
-    return make(`where-${i}`,2,`The ${item} is ${prep} the ${place}.\nWhere is the ${item}?`,`It's ${prep} the ${place}.`,[`It's ${otherPreps[0]} the ${place}.`,`It's ${otherPreps[1]} the ${place}.`,`It's ${prep} the ${nouns[(i+5)%nouns.length]}.`],34);
+    return make(`where-${i}`,2,`The ${item} is ${prep} the ${place}.\nWhere is the ${item}?`,`It's ${prep} the ${place}.`,[`It's ${otherPreps[0]} the ${place}.`,`It's ${otherPreps[1]} the ${place}.`,`It's ${prep} the ${clean(nouns[(i+5)%nouns.length].canonical_text)}.`],34);
   }).filter(Boolean);
 }
 
