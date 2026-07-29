@@ -1,0 +1,30 @@
+name: Worksheet Storage Regression Audit
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 18 * * *'
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      SUPABASE_URL: https://fiieuiktlsivwfgyivai.supabase.co
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+    steps:
+      - name: Check out audit tooling
+        uses: actions/checkout@v4
+        with:
+          ref: worksheet-storage-audit
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Verify no embedded worksheet images
+        run: node scripts/worksheet-storage/check_no_embedded_images.js
