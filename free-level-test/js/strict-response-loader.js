@@ -4,26 +4,45 @@ const clean=v=>String(v??"").trim();
 const uniq=a=>[...new Set(a.map(clean).filter(Boolean))];
 const shuffle=a=>[...a].sort(()=>Math.random()-.5);
 const article=n=>/^[aeiou]/i.test(n)?"an":"a";
-const contractions=s=>s.replace(/^It is /,"It's ").replace(/^I am /,"I'm ").replace(/^That is /,"That's ").replace(/^This is /,"This is ");
 
-async function captureDatabaseRows(){
+async function loadLexicalEntries(){
   const originalFetch=window.fetch.bind(window);
-  const captured={};
+  let requestInfo=null;
+
   window.fetch=async(...args)=>{
-    const response=await originalFetch(...args);
-    try{
-      const url=new URL(typeof args[0]==="string"?args[0]:args[0].url);
-      const match=url.pathname.match(/\/rest\/v1\/([^/]+)/);
-      if(match){
-        const clone=response.clone();
-        const data=await clone.json();
-        if(Array.isArray(data))captured[match[1]]=data;
-      }
-    }catch(_){/* The legacy request still continues normally. */}
-    return response;
+    const raw=typeof args[0]==="string"?args[0]:args[0]?.url;
+    if(raw){
+      try{
+        const url=new URL(raw);
+        if(url.pathname.endsWith("/rest/v1/lexical_entries")){
+          requestInfo={url,options:args[1]||{}};
+        }
+      }catch(_){/* Ignore unrelated requests. */}
+    }
+    return originalFetch(...args);
   };
-  try{await loadLegacyBank();}finally{window.fetch=originalFetch}
-  return captured;
+
+  try{
+    await loadLegacyBank();
+  }catch(_){
+    // The legacy generator may reject its own bank. We only use it to capture
+    // the authenticated Supabase request, so that rejection is irrelevant.
+  }finally{
+    window.fetch=originalFetch;
+  }
+
+  if(!requestInfo)throw new Error("Could not connect to the published curriculum.");
+
+  const url=new URL(requestInfo.url);
+  url.searchParams.set("select","id,canonical_text,entry_type,part_of_speech,level_id,difficulty_rating,tags,status,emoji");
+  url.searchParams.set("status","eq.published");
+  url.searchParams.set("order","level_id.asc,difficulty_rating.asc");
+
+  const response=await originalFetch(url.toString(),{...requestInfo.options,cache:"no-store"});
+  if(!response.ok)throw new Error(`Could not load response vocabulary (${response.status}).`);
+  const rows=await response.json();
+  if(!Array.isArray(rows)||!rows.length)throw new Error("No published vocabulary was returned.");
+  return rows;
 }
 
 function make(id,level,q,a,wrong,difficulty=level*20){
@@ -39,7 +58,7 @@ function pools(rows){
     nouns:published.filter(r=>r.part_of_speech==="noun"&&r.emoji),
     things:published.filter(r=>["noun","noun_phrase"].includes(r.entry_type)||r.part_of_speech==="noun"),
     foods:[...tagged("food"),...tagged("drink")],
-    verbs:published.filter(r=>r.part_of_speech==="verb"&&!["be","do","have","want"].includes(clean(r.canonical_text).toLowerCase())),
+    verbs:published.filter(r=>r.part_of_speech==="verb"&&!['be','do','have','want'].includes(clean(r.canonical_text).toLowerCase())),
     verbPhrases:published.filter(r=>["verb_phrase","phrasal_verb","fixed_expression"].includes(r.entry_type)),
     prepositions:published.filter(r=>r.part_of_speech==="preposition"),
     classroom:tagged("classroom")
@@ -49,10 +68,10 @@ function pools(rows){
 function identificationQuestions(p){
   return p.nouns.flatMap((n,i)=>{
     const noun=clean(n.canonical_text),emoji=clean(n.emoji);
-    const wrongNouns=shuffle(p.nouns.filter(x=>x.id!==n.id)).slice(0,3).map(x=>clean(x.canonical_text));
-    if(wrongNouns.length<3)return[];
+    const alternatives=shuffle(p.nouns.filter(x=>x.id!==n.id)).slice(0,3).map(x=>clean(x.canonical_text));
+    if(alternatives.length<3)return[];
     const answer=`It's ${article(noun)} ${noun}.`;
-    const wrong=[`They're ${noun}s.`,`Yes, it is.`,`I like ${wrongNouns[0]}.`];
+    const wrong=[`It's ${article(alternatives[0])} ${alternatives[0]}.`,`Yes, it is.`,`I like ${alternatives[1]}.`];
     return[make(`identify-${n.id}-${i}`,n.level_id,`${emoji}\nWhat is this?`,answer,wrong,n.difficulty_rating)];
   }).filter(Boolean);
 }
@@ -67,10 +86,9 @@ function fixedPersonalQuestions(){
 
 function abilityQuestions(p){
   return p.verbs.slice(0,18).map((v,i)=>{
-    const verb=clean(v.canonical_text);
-    const positive=i%2===0;
+    const verb=clean(v.canonical_text),positive=i%2===0;
     const answer=positive?"Yes, I can.":"No, I can't.";
-    const wrong=positive?["Yes, I do.","Yes, I am.",`I ${verb} yesterday.`]:["No, I don't.","No, I'm not.","No, I didn't."];
+    const wrong=positive?["Yes, I do.","Yes, I am.","No, I can't."]:["No, I don't.","No, I'm not.","Yes, I can."];
     return make(`can-${v.id}`,Math.max(1,Number(v.level_id)||1),`Can you ${verb}?`,answer,wrong,v.difficulty_rating);
   }).filter(Boolean);
 }
@@ -78,18 +96,20 @@ function abilityQuestions(p){
 function preferenceQuestions(p){
   const things=uniq(p.foods.map(x=>x.canonical_text)).slice(0,18);
   return things.flatMap((thing,i)=>{
-    const yn=make(`like-yn-${i}`,2,`Do you like ${thing}?`,i%2?"No, I don't.":"Yes, I do.",["Yes, I can.","Yes, I am.","No, I'm not."],30);
-    const wh=make(`like-wh-${i}`,2,"What do you like?",`I like ${thing}.`,[`I want ${thing}.`,`Yes, I do.`,`I can ${thing}.`],29);
-    return[yn,wh];
+    const ynAnswer=i%2?"No, I don't.":"Yes, I do.";
+    return[
+      make(`like-yn-${i}`,2,`Do you like ${thing}?`,ynAnswer,["Yes, I can.","Yes, I am.",ynAnswer.startsWith("Yes")?"No, I don't.":"Yes, I do."],30),
+      make(`like-wh-${i}`,2,"What do you like?",`I like ${thing}.",[`I want ${thing}.`,`Yes, I do.`,`I can ${thing}.`],29)
+    ];
   }).filter(Boolean);
 }
 
 function wantAndHaveQuestions(p){
   const things=uniq(p.things.map(x=>x.canonical_text)).filter(x=>x.length<24).slice(0,18);
   return things.flatMap((thing,i)=>[
-    make(`want-wh-${i}`,2,"What do you want?",`I want ${thing}.`,[`I have ${thing}.`,`I like ${thing}.`,`Yes, I do.`],32),
+    make(`want-wh-${i}`,2,"What do you want?",`I want ${thing}.",[`I have ${thing}.`,`I like ${thing}.`,`Yes, I do.`],32),
     make(`want-yn-${i}`,2,`Do you want ${thing}?`,i%2?"No, I don't.":"Yes, I do.",["Yes, I can.","Yes, I am.",`I have ${thing}.`],32),
-    make(`have-wh-${i}`,2,"What do you have?",`I have ${thing}.`,[`I want ${thing}.`,`I like ${thing}.`,`Yes, I do.`],35),
+    make(`have-wh-${i}`,2,"What do you have?",`I have ${thing}.",[`I want ${thing}.`,`I like ${thing}.`,`Yes, I do.`],35),
     make(`have-yn-${i}`,2,`Do you have ${thing}?`,i%2?"Yes, I do.":"No, I don't.",["Yes, I can.","Yes, I am.","No, I'm not."],36)
   ]).filter(Boolean);
 }
@@ -106,17 +126,12 @@ function locationQuestions(p){
   return nouns.slice(0,8).map((item,i)=>{
     const place=nouns[(i+3)%nouns.length],prep=preps[i%preps.length];
     const otherPreps=preps.filter(x=>x!==prep).slice(0,2);
-    const context=`The ${item} is ${prep} the ${place}.\nWhere is the ${item}?`;
-    const answer=`It's ${prep} the ${place}.`;
-    const wrong=[`It's ${otherPreps[0]} the ${place}.`,`It's ${otherPreps[1]} the ${place}.`,`It's ${prep} the ${nouns[(i+5)%nouns.length]}.`];
-    return make(`where-${i}`,2,context,answer,wrong,34);
+    return make(`where-${i}`,2,`The ${item} is ${prep} the ${place}.\nWhere is the ${item}?`,`It's ${prep} the ${place}.",[`It's ${otherPreps[0]} the ${place}.`,`It's ${otherPreps[1]} the ${place}.`,`It's ${prep} the ${nouns[(i+5)%nouns.length]}.`],34);
   }).filter(Boolean);
 }
 
 export async function loadQuestionBank(){
-  const data=await captureDatabaseRows();
-  const lexical=data.lexical_entries||[];
-  if(!lexical.length)throw new Error("Could not read the published vocabulary needed for response questions.");
+  const lexical=await loadLexicalEntries();
   const p=pools(lexical);
   const bank=[...identificationQuestions(p),...fixedPersonalQuestions(),...abilityQuestions(p),...preferenceQuestions(p),...wantAndHaveQuestions(p),...permissionQuestions(p),...locationQuestions(p)].filter(Boolean);
   if(bank.length<20)throw new Error(`Only ${bank.length} strict response questions could be generated from the published curriculum.`);
