@@ -1,14 +1,20 @@
 /* Premium UI refinements */
-.screen-in{transition:opacity .58s cubic-bezier(.22,.61,.36,1),transform .58s cubic-bezier(.22,.61,.36,1),filter .5s ease}
-.screen-out-left{animation-duration:.34s;animation-timing-function:cubic-bezier(.22,.61,.36,1)}
-.screen-out-right{animation-duration:.34s;animation-timing-function:cubic-bezier(.22,.61,.36,1)}
+/* Keep exit timing inside app.js's 180 ms screen swap. Avoid blur filters on mobile GPUs. */
+.screen-in{filter:none!important;transition:opacity .38s cubic-bezier(.22,.61,.36,1),transform .38s cubic-bezier(.22,.61,.36,1)!important}
+.screen-in.screen-ready{filter:none!important}
+.screen-out-left{animation-duration:.16s!important;animation-timing-function:cubic-bezier(.22,.61,.36,1)!important}
+.screen-out-right{animation-duration:.16s!important;animation-timing-function:cubic-bezier(.22,.61,.36,1)!important}
+@keyframes screenOutLeft{to{opacity:0;transform:translateX(-18px) scale(.995);filter:none}}
+@keyframes screenOutRight{to{opacity:0;transform:translateX(18px) scale(.995);filter:none}}
 
-.welcome-panel{display:flex;flex-direction:column;align-items:center}
-.welcome-start{width:clamp(142px,24vw,176px)!important;height:clamp(142px,24vw,176px)!important;min-height:0!important;border-radius:50%!important;padding:18px!important;display:grid!important;place-items:center!important;text-align:center!important;line-height:1.15!important;box-shadow:0 0 0 7px rgba(216,247,250,.95),0 0 34px rgba(37,184,196,.28),inset 0 2px 0 rgba(255,255,255,.95)!important;transition:transform .18s ease,box-shadow .18s ease!important}
-.welcome-start:active{transform:scale(.95)!important;box-shadow:0 0 0 5px rgba(216,247,250,.9),0 0 17px rgba(37,184,196,.2),inset 0 4px 9px rgba(25,91,101,.09)!important}
+.welcome-panel{position:relative!important;display:block!important}
+.welcome-panel h1{position:relative;z-index:1}
+.welcome-start{position:absolute!important;left:50%!important;top:50%!important;width:clamp(142px,24vw,176px)!important;height:clamp(142px,24vw,176px)!important;min-height:0!important;border-radius:50%!important;padding:18px!important;display:grid!important;place-items:center!important;text-align:center!important;line-height:1.15!important;transform:translate(-50%,-50%)!important;box-shadow:0 0 0 7px rgba(216,247,250,.95),0 0 34px rgba(37,184,196,.28),inset 0 2px 0 rgba(255,255,255,.95)!important;transition:transform .18s ease,box-shadow .18s ease!important}
+.welcome-start:hover{transform:translate(-50%,-50%) scale(1.015)!important}
+.welcome-start:active{transform:translate(-50%,-50%) scale(.95)!important;box-shadow:0 0 0 5px rgba(216,247,250,.9),0 0 17px rgba(37,184,196,.2),inset 0 4px 9px rgba(25,91,101,.09)!important}
 
-.reading-passage.emoji-passage{min-height:118px!important;padding:14px!important;display:grid!important;place-items:center!important;font-size:clamp(58px,11vw,86px)!important;line-height:1!important;text-align:center!important;animation:emojiReveal .58s cubic-bezier(.22,.61,.36,1) both}
-@keyframes emojiReveal{from{opacity:0;transform:scale(.82);filter:blur(3px)}to{opacity:1;transform:scale(1);filter:blur(0)}}
+.reading-passage.emoji-passage{min-height:118px!important;padding:14px!important;display:grid!important;place-items:center!important;font-size:clamp(58px,11vw,86px)!important;line-height:1!important;text-align:center!important;animation:emojiReveal .48s cubic-bezier(.22,.61,.36,1) both}
+@keyframes emojiReveal{from{opacity:0;transform:scale(.86)}to{opacity:1;transform:scale(1)}}
 
 body:has(.question-meta) .app-header,body:has(.report-screen) .app-header{min-height:0;height:0;padding:0;border:0;box-shadow:none;overflow:visible;background:transparent;position:relative}
 body:has(.question-meta) .brand-logo,body:has(.question-meta) .brand-copy,body:has(.report-screen) .brand-logo,body:has(.report-screen) .brand-copy{display:none}
@@ -44,4 +50,5 @@ body:has(.question-meta) footer,body:has(.report-screen) footer{display:none}
  .report-section{padding:16px;border-radius:18px}
  .report-actions .btn{min-width:0}
  body:has(.question-meta) .app-main,body:has(.report-screen) .app-main{padding:10px}
+ .welcome-start{top:52%!important}
 }
