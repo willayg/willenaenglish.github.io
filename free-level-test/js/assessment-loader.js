@@ -27,6 +27,7 @@ function mapItem(row){
   if(!prompt)throw new Error(`Assessment item ${row.source_key||row.id} has no prompt.`);
   if(!answer)throw new Error(`Assessment item ${row.source_key||row.id} has no correct answer.`);
 
+  // Unscramble items are token-order tasks, not four-choice questions.
   if(type==="sentence_unscramble"){
     const tokens=Array.isArray(metadata.tokens)?metadata.tokens.map(clean).filter(Boolean):[];
     if(tokens.length<2)throw new Error(`Unscramble item ${row.source_key||row.id} has no usable tokens.`);
