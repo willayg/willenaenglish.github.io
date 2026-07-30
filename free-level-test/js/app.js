@@ -8,7 +8,7 @@ let S={view:"setup",setupStep:0,setup:{grade:null,years:null,listening:null,leng
 function chrome(){document.documentElement.lang=lang;langBtn.textContent=lang==="ko"?"English":"한국어";brandSubtitle.textContent=tx("brand");footerText.textContent=tx("footer")}
 langBtn.onclick=()=>{lang=lang==="en"?"ko":"en";chrome();render()};
 function screen(html,dir="forward"){speechSynthesis?.cancel?.();root.classList.add("is-swapping");root.innerHTML=`<section class="screen screen-safe-in ${dir==="back"?"from-left":"from-right"}">${html}</section>`;const next=root.querySelector(".screen");requestAnimationFrame(()=>{requestAnimationFrame(()=>{next?.classList.add("screen-safe-ready");root.classList.remove("is-swapping")})});setTimeout(()=>{next?.classList.add("screen-safe-ready");root.classList.remove("is-swapping")},420)}
-function startAbility(years,grade){return clamp(1+(+years*1.15)+((+grade-1)*.45),1,9.2)}
+function startAbility(years,grade){const yearBase={0:1,1:1.8,2:2.7,4:4,6:5.3};const stageAdjustment={1:0,2:0,4:.25,6:.5,8:.75,9:1};return clamp((yearBase[+years]??1)+(stageAdjustment[+grade]??0),1,7)}
 function expected(a,d){return 1/(1+Math.exp((d-a)*1.1))}
 function confidenceFactor(){return Math.max(.28,1-(S.answers.length*.035))}
 function wrongPenalty(level){return Math.pow(.8,S.wrongByLevel[level]||0)}
