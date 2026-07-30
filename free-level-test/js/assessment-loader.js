@@ -30,20 +30,7 @@ function mapItem(row){
   if(type==="sentence_unscramble"){
     const tokens=Array.isArray(metadata.tokens)?metadata.tokens.map(clean).filter(Boolean):[];
     if(tokens.length<2)throw new Error(`Unscramble item ${row.source_key||row.id} has no usable tokens.`);
-    return{
-      id:clean(row.source_key)||row.id,
-      type,
-      q:prompt,
-      meaning:context,
-      a:answer,
-      choices:[],
-      tokens,
-      level:Number(row.level_id)||1,
-      difficulty:Number(row.difficulty_rating)||Number(row.level_id)*20,
-      sourceTable:"assessment_items",
-      translation:false,
-      metadata
-    };
+    return{id:clean(row.source_key)||row.id,type,q:prompt,meaning:context,a:answer,choices:[],tokens,level:Number(row.level_id)||1,difficulty:Number(row.difficulty_rating)||Number(row.level_id)*20,sourceTable:"assessment_items",translation:false,metadata};
   }
 
   const options=optionRows(row);
@@ -51,22 +38,15 @@ function mapItem(row){
   const markedCorrect=options.filter(option=>option.correct).map(option=>option.text);
   if(choices.length!==4)throw new Error(`Assessment item ${row.source_key||row.id} must have exactly four unique choices.`);
   if(!choices.includes(answer))throw new Error(`Assessment item ${row.source_key||row.id} does not include its correct answer among the choices.`);
-  if(markedCorrect.length&&!(markedCorrect.length===1&&markedCorrect[0]===answer)){
-    throw new Error(`Assessment item ${row.source_key||row.id} has inconsistent correct-option data.`);
+  if(markedCorrect.length&&!(markedCorrect.length===1&&markedCorrect[0]===answer))throw new Error(`Assessment item ${row.source_key||row.id} has inconsistent correct-option data.`);
+
+  if(type==="listening"){
+    const transcript=clean(metadata.transcript)||context;
+    if(!transcript)throw new Error(`Listening item ${row.source_key||row.id} has no transcript.`);
+    return{id:clean(row.source_key)||row.id,type,q:prompt,a:answer,choices,level:Number(row.level_id)||1,difficulty:Number(row.difficulty_rating)||Number(row.level_id)*20,sourceTable:"assessment_items",translation:false,metadata:{...metadata,transcript}};
   }
 
-  return{
-    id:clean(row.source_key)||row.id,
-    type,
-    q:context?`${context}\n${prompt}`:prompt,
-    a:answer,
-    choices,
-    level:Number(row.level_id)||1,
-    difficulty:Number(row.difficulty_rating)||Number(row.level_id)*20,
-    sourceTable:"assessment_items",
-    translation:false,
-    metadata
-  };
+  return{id:clean(row.source_key)||row.id,type,q:context?`${context}\n${prompt}`:prompt,a:answer,choices,level:Number(row.level_id)||1,difficulty:Number(row.difficulty_rating)||Number(row.level_id)*20,sourceTable:"assessment_items",translation:false,metadata};
 }
 
 export async function loadQuestionBank(){
@@ -81,6 +61,4 @@ export async function loadQuestionBank(){
   return shuffle(bank);
 }
 
-export async function loadJSON(){
-  throw new Error("JSON loading is disabled. This test uses authored Supabase assessment items only.");
-}
+export async function loadJSON(){throw new Error("JSON loading is disabled. This test uses authored Supabase assessment items only.");}
