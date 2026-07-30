@@ -30,15 +30,19 @@ body:has(.question-meta) footer,body:has(.report-screen) footer{display:none}
 .fit-label,.skill-heading{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:7px}
 .fit-label span,.skill-heading strong{font-weight:800;color:var(--ink)}
 .fit-label strong,.skill-heading span{color:var(--cyan-strong);font-weight:800}
-.fit-row.best .fit-label strong,.fit-row.best .fit-label span{color:var(--pink)}
-.fit-track,.skill-track{height:12px;border-radius:999px;background:#e8f7f8;overflow:hidden}
-.fit-track i,.skill-track i{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,var(--cyan-strong),var(--pink));transition:width .75s cubic-bezier(.22,.61,.36,1)}
+.fit-row.best .fit-label strong,.fit-row.best .fit-label span{color:var(--cyan-strong)}
+.fit-track,.skill-track{height:12px;border-radius:999px;background:#edf9fa;overflow:hidden}
+.fit-track i,.skill-track i{display:block;height:100%;border-radius:inherit;background:#a9e7eb;transition:width .75s cubic-bezier(.22,.61,.36,1)}
 .skill-row small{display:block;margin-top:6px;color:var(--muted);font-size:12px}
 .skill-row.insufficient{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #edf6f7}
 .skill-row.insufficient div{display:flex;flex-direction:column}.skill-row.insufficient small{margin:2px 0 0}.skill-row.insufficient>span{color:var(--muted);font-weight:800}
 .report-note{font-size:12px;color:var(--muted);margin:16px 2px 0}
 .report-actions{justify-content:center}
 .report-actions .btn{min-width:180px}
+
+/* One calm pastel-cyan language for every progress indicator. */
+.progress,.setup-progress>div,.fit-track,.skill-track{background:#edf9fa!important}
+.progress i,.setup-progress i,.fit-track i,.skill-track i,[class*="level-meter"] i,[class*="level-meter"] .fill{background:#a9e7eb!important;background-image:none!important}
 
 @media(max-width:650px){
  .reading-passage.emoji-passage{min-height:104px!important;font-size:clamp(58px,18vw,78px)!important}
