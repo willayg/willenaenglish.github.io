@@ -24,12 +24,26 @@ function headphoneSvg(){
     </svg>`;
 }
 
+function cleanButton(button){
+  const labelText=button.querySelector("span")?.textContent?.trim()||
+    (document.documentElement.lang==="ko"?"음성 듣기":"Play audio");
+  button.replaceChildren();
+  button.insertAdjacentHTML("afterbegin",headphoneSvg());
+  const label=document.createElement("span");
+  label.textContent=labelText;
+  button.appendChild(label);
+  button.setAttribute("aria-label",document.documentElement.lang==="ko"?"음성 듣기":"Play audio");
+}
+
 function compactPanel(panel){
-  if(!panel||panel.dataset.compactListening==="1")return;
+  if(!panel)return;
   const button=panel.querySelector("#playAudio");
   const remaining=panel.querySelector("#playsRemaining");
   if(!button||!remaining)return;
 
+  cleanButton(button);
+
+  if(panel.dataset.compactListening==="1")return;
   panel.dataset.compactListening="1";
   panel.querySelector(".listening-icon")?.remove();
   panel.querySelector("p")?.remove();
@@ -41,10 +55,6 @@ function compactPanel(panel){
     panel.insertBefore(help,button);
   }
 
-  const hiddenLabel=button.querySelector("span");
-  const labelText=hiddenLabel?.textContent||"";
-  button.innerHTML=`${headphoneSvg()}<span>${labelText}</span>`;
-  button.setAttribute("aria-label",document.documentElement.lang==="ko"?"음성 듣기":"Play audio");
   button.addEventListener("click",markHelpSeen,{once:true});
 }
 
