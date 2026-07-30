@@ -1,0 +1,47 @@
+/* Premium UI refinements */
+.screen-in{transition:opacity .58s cubic-bezier(.22,.61,.36,1),transform .58s cubic-bezier(.22,.61,.36,1),filter .5s ease}
+.screen-out-left{animation-duration:.34s;animation-timing-function:cubic-bezier(.22,.61,.36,1)}
+.screen-out-right{animation-duration:.34s;animation-timing-function:cubic-bezier(.22,.61,.36,1)}
+
+.welcome-panel{display:flex;flex-direction:column;align-items:center}
+.welcome-start{width:clamp(142px,24vw,176px)!important;height:clamp(142px,24vw,176px)!important;min-height:0!important;border-radius:50%!important;padding:18px!important;display:grid!important;place-items:center!important;text-align:center!important;line-height:1.15!important;box-shadow:0 0 0 7px rgba(216,247,250,.95),0 0 34px rgba(37,184,196,.28),inset 0 2px 0 rgba(255,255,255,.95)!important;transition:transform .18s ease,box-shadow .18s ease!important}
+.welcome-start:active{transform:scale(.95)!important;box-shadow:0 0 0 5px rgba(216,247,250,.9),0 0 17px rgba(37,184,196,.2),inset 0 4px 9px rgba(25,91,101,.09)!important}
+
+.reading-passage.emoji-passage{min-height:118px!important;padding:14px!important;display:grid!important;place-items:center!important;font-size:clamp(58px,11vw,86px)!important;line-height:1!important;text-align:center!important;animation:emojiReveal .58s cubic-bezier(.22,.61,.36,1) both}
+@keyframes emojiReveal{from{opacity:0;transform:scale(.82);filter:blur(3px)}to{opacity:1;transform:scale(1);filter:blur(0)}}
+
+body:has(.question-meta) .app-header,body:has(.report-screen) .app-header{min-height:0;height:0;padding:0;border:0;box-shadow:none;overflow:visible;background:transparent;position:relative}
+body:has(.question-meta) .brand-logo,body:has(.question-meta) .brand-copy,body:has(.report-screen) .brand-logo,body:has(.report-screen) .brand-copy{display:none}
+body:has(.question-meta) .header-button,body:has(.report-screen) .header-button{position:fixed;top:max(10px,env(safe-area-inset-top));right:12px;z-index:50;padding:7px 11px;border-width:2px;border-radius:14px;font-size:14px}
+body:has(.question-meta) .app-main,body:has(.report-screen) .app-main{padding-top:clamp(16px,3vw,28px)}
+body:has(.question-meta) footer,body:has(.report-screen) footer{display:none}
+
+.report-screen{max-width:820px!important;text-align:left}
+.report-hero{text-align:center;padding:4px 0 18px}
+.report-level{display:flex;align-items:baseline;justify-content:center;gap:12px;margin:12px 0 6px;color:var(--pink)}
+.report-level span{font-size:clamp(22px,4vw,34px);font-weight:800}
+.report-level strong{font-size:clamp(62px,13vw,108px);line-height:.9;letter-spacing:-.06em}
+.report-hero p{color:var(--muted);margin:12px auto 0;max-width:560px}
+.report-section{border:2px solid var(--line);border-radius:22px;padding:20px;margin-top:16px;background:#fff;box-shadow:0 12px 30px rgba(46,150,161,.07)}
+.report-section h3{margin-bottom:16px;font-size:20px}
+.fit-list,.skill-list{display:grid;gap:14px}
+.fit-label,.skill-heading{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:7px}
+.fit-label span,.skill-heading strong{font-weight:800;color:var(--ink)}
+.fit-label strong,.skill-heading span{color:var(--cyan-strong);font-weight:800}
+.fit-row.best .fit-label strong,.fit-row.best .fit-label span{color:var(--pink)}
+.fit-track,.skill-track{height:12px;border-radius:999px;background:#e8f7f8;overflow:hidden}
+.fit-track i,.skill-track i{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,var(--cyan-strong),var(--pink));transition:width .75s cubic-bezier(.22,.61,.36,1)}
+.skill-row small{display:block;margin-top:6px;color:var(--muted);font-size:12px}
+.skill-row.insufficient{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #edf6f7}
+.skill-row.insufficient div{display:flex;flex-direction:column}.skill-row.insufficient small{margin:2px 0 0}.skill-row.insufficient>span{color:var(--muted);font-weight:800}
+.report-note{font-size:12px;color:var(--muted);margin:16px 2px 0}
+.report-actions{justify-content:center}
+.report-actions .btn{min-width:180px}
+
+@media(max-width:650px){
+ .reading-passage.emoji-passage{min-height:104px!important;font-size:clamp(58px,18vw,78px)!important}
+ .report-screen{padding:20px 15px!important}
+ .report-section{padding:16px;border-radius:18px}
+ .report-actions .btn{min-width:0}
+ body:has(.question-meta) .app-main,body:has(.report-screen) .app-main{padding:10px}
+}
