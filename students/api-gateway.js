@@ -149,3 +149,44 @@
   // Stop rapid polling after 500ms
   setTimeout(() => clearInterval(rapidPatch), 500);
 })();
+
+// Curriculum Studio assessment-type compatibility patch.
+// Keep this narrow because api-gateway.js is shared by many pages.
+(function() {
+  'use strict';
+  if (typeof window === 'undefined' || !/\/Teachers\/tools\/curriculum-editor\/?$/i.test(window.location.pathname)) return;
+
+  function addReadingOption(select) {
+    if (!(select instanceof HTMLSelectElement)) return;
+    const values = [...select.options].map(option => option.value || option.textContent.trim());
+    const isAssessmentTypeSelect = select.id === 'typeFilter' ||
+      (values.includes('question_response') && values.includes('grammar_error'));
+    if (!isAssessmentTypeSelect || values.includes('reading')) return;
+
+    const option = document.createElement('option');
+    option.value = 'reading';
+    option.textContent = 'reading';
+
+    const vocabulary = [...select.options].find(item => (item.value || item.textContent.trim()) === 'vocabulary');
+    if (vocabulary) select.insertBefore(option, vocabulary);
+    else select.appendChild(option);
+  }
+
+  function patchAssessmentTypeSelects(root = document) {
+    if (root instanceof HTMLSelectElement) addReadingOption(root);
+    root.querySelectorAll?.('select').forEach(addReadingOption);
+  }
+
+  const start = () => {
+    patchAssessmentTypeSelects();
+    const observer = new MutationObserver(records => {
+      records.forEach(record => record.addedNodes.forEach(node => {
+        if (node.nodeType === Node.ELEMENT_NODE) patchAssessmentTypeSelects(node);
+      }));
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+  };
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start, { once: true });
+  else start();
+})();
