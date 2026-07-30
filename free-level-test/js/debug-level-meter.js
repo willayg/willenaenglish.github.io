@@ -1,3 +1,8 @@
+import{loadQuestionBank}from"./assessment-loader.js?v=20260730-8";
+
+const clean=value=>String(value??"").trim().replace(/\s+/g," ");
+let bank=[];
+
 function ensureMeter(){
   let meter=document.querySelector("#debugLevelMeter");
   if(meter)return meter;
@@ -18,13 +23,25 @@ function ensureMeter(){
   return meter;
 }
 
+function currentQuestion(){
+  const card=document.querySelector(".question-card");
+  if(!card)return null;
+  const scrambleTokens=[...card.querySelectorAll(".scramble-token")].map(x=>clean(x.textContent)).sort();
+  if(scrambleTokens.length){
+    return bank.find(q=>q.type==="sentence_unscramble"&&[...q.tokens].map(clean).sort().join("|")===scrambleTokens.join("|"))||null;
+  }
+  const prompt=clean(card.querySelector(".prompt")?.textContent);
+  const choices=[...card.querySelectorAll(".choice")].map(x=>clean(x.textContent)).sort();
+  return bank.find(q=>clean(q.q)===prompt&&[...q.choices].map(clean).sort().join("|")===choices.join("|"))||bank.find(q=>clean(q.q)===prompt)||null;
+}
+
 function updateMeter(){
   const meter=ensureMeter();
-  const card=document.querySelector(".question-card[data-question-level]");
-  const level=Number(card?.dataset.questionLevel);
-  const visible=Number.isFinite(level)&&level>=1&&level<=10;
+  const question=currentQuestion();
+  const visible=Boolean(document.querySelector(".question-card")&&question);
   meter.classList.toggle("is-visible",visible);
   if(!visible)return;
+  const level=Math.max(1,Math.min(10,Number(question.level)||1));
   meter.querySelector(".debug-level-meter__value").textContent=`Level ${level}`;
   meter.querySelectorAll(".debug-level-meter__track span").forEach(segment=>{
     const segmentLevel=Number(segment.dataset.level);
@@ -34,5 +51,6 @@ function updateMeter(){
 }
 
 const observer=new MutationObserver(()=>requestAnimationFrame(updateMeter));
-observer.observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:["data-question-level"]});
+observer.observe(document.body,{childList:true,subtree:true,characterData:true});
+loadQuestionBank().then(items=>{bank=items;updateMeter()}).catch(error=>console.warn("Level meter could not load the assessment bank",error));
 updateMeter();
