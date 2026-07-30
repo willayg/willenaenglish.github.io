@@ -15,6 +15,15 @@ function shouldShowHelp(){
   try{return localStorage.getItem(HELP_KEY)!=="1"}catch{return true}
 }
 
+function headphoneSvg(){
+  return `
+    <svg class="listen-headphone-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+      <path d="M4 14v-2a8 8 0 0 1 16 0v2"></path>
+      <path d="M18 19h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2h-1z"></path>
+      <path d="M6 19H5a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h1z"></path>
+    </svg>`;
+}
+
 function compactPanel(panel){
   if(!panel||panel.dataset.compactListening==="1")return;
   const button=panel.querySelector("#playAudio");
@@ -34,6 +43,9 @@ function compactPanel(panel){
     panel.insertBefore(help,button);
   }
 
+  const hiddenLabel=button.querySelector("span");
+  button.insertAdjacentHTML("afterbegin",headphoneSvg());
+  if(hiddenLabel)button.appendChild(hiddenLabel);
   button.setAttribute("aria-label",document.documentElement.lang==="ko"?"음성 듣기":"Play audio");
   button.addEventListener("click",markHelpSeen,{once:true});
 }
