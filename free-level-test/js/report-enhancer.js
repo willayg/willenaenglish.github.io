@@ -46,10 +46,11 @@ document.addEventListener('click',e=>{
  if(e.target.closest('#retry,#home'))evidence.length=0;
 },true);
 
-function probabilities(rows){
+function probabilities(rows,maxLevel=10){
  if(!rows.length)return[];
+ const ceiling=Math.max(1,Math.min(10,Number(maxLevel)||10));
  const scores=[];
- for(let level=1;level<=10;level++){
+ for(let level=1;level<=ceiling;level++){
   let log=0;
   for(const row of rows){
    const p=1/(1+Math.exp((row.level-level)*1.12));
@@ -65,7 +66,8 @@ function probabilities(rows){
 }
 
 function nearestFit(rows,count=4){
- const probs=probabilities(rows);
+ const maxTested=Math.max(...rows.map(x=>Number(x.level)||1),1);
+ const probs=probabilities(rows,maxTested);
  const peak=probs[0]?.level||1;
  return probs.filter(x=>Math.abs(x.level-peak)<=2).sort((a,b)=>b.pct-a.pct).slice(0,count);
 }
@@ -83,9 +85,13 @@ function skillRows(){
  return order.map(name=>{
   const rows=evidence.filter(x=>skillFor(x.type)===name);
   if(rows.length<2)return `<div class="skill-row insufficient"><div><strong>${name}</strong><small>${document.documentElement.lang==='ko'?'근거 부족':'Not enough evidence'}</small></div><span>—</span></div>`;
-  const fit=probabilities(rows)[0];
+  const highestTested=Math.max(...rows.map(x=>Number(x.level)||1));
+  const fit=probabilities(rows,highestTested)[0];
+  const topRows=rows.filter(x=>Number(x.level)===highestTested);
+  const toppedOut=fit.level===highestTested&&topRows.length>0&&topRows.every(x=>x.correct);
+  const levelLabel=`Level ${fit.level}${toppedOut?'+':''}`;
   const confidence=Math.round(Math.min(96,50+rows.length*6+fit.pct*.22));
-  return `<div class="skill-row"><div class="skill-heading"><strong>${name}</strong><span>Level ${fit.level}</span></div><div class="skill-track"><i style="width:${confidence}%"></i></div><small>${rows.length} questions</small></div>`;
+  return `<div class="skill-row"><div class="skill-heading"><strong>${name}</strong><span>${levelLabel}</span></div><div class="skill-track"><i style="width:${confidence}%"></i></div><small>${rows.length} questions</small></div>`;
  }).join('');
 }
 
@@ -111,7 +117,7 @@ function renderReport(){
    <h3>${ko?'영역별 예상 레벨':'Estimated level by skill'}</h3>
    <div class="skill-list">${skillRows()}</div>
   </section>
-  <p class="report-note">${ko?'영역별 레벨은 해당 유형의 문제가 두 개 이상 출제된 경우에만 표시됩니다.':'A skill estimate is shown only when at least two questions from that skill were answered.'}</p>
+  <p class="report-note">${ko?'영역별 레벨은 해당 유형의 문제가 두 개 이상 출제된 경우에만 표시되며, 실제로 출제된 최고 레벨을 넘지 않습니다. 최고 출제 레벨을 모두 맞히면 +로 표시됩니다.':'A skill estimate appears only after at least two questions and never exceeds the highest level actually tested. A + means the learner answered all questions at that top tested level correctly.'}</p>
   <div class="actions report-actions"><button class="btn btn-primary" id="retry">${ko?'다시 하기':'Try again'}</button><button class="btn btn-ghost" id="home">${ko?'처음으로':'Back to start'}</button></div>`;
 }
 
