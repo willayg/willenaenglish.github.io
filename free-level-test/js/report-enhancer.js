@@ -13,14 +13,28 @@ function visibleQuestion(){
  const card=root?.querySelector('.question-card');
  if(!card)return null;
  const choices=[...card.querySelectorAll('.choice')].map(x=>clean(x.dataset.value||x.textContent));
- const text=clean(card.textContent);
- const candidates=bank.filter(q=>q.type!=='sentence_unscramble'&&sameSet([...q.choices].map(clean),choices));
- return candidates.find(q=>text.includes(clean(q.q)))||candidates[0]||null;
+ if(choices.length){
+  const text=clean(card.textContent);
+  const candidates=bank.filter(q=>q.type!=='sentence_unscramble'&&sameSet([...q.choices].map(clean),choices));
+  return candidates.find(q=>text.includes(clean(q.q)))||candidates[0]||null;
+ }
+ const tokens=[...card.querySelectorAll('.scramble-token')].map(x=>clean(x.textContent));
+ if(tokens.length){
+  return bank.find(q=>q.type==='sentence_unscramble'&&sameSet([...q.tokens].map(clean),tokens))||null;
+ }
+ return null;
 }
 
 function recordAnswer(){
  const q=visibleQuestion();
  if(!q||evidence.some(x=>x.id===q.id))return;
+ if(q.type==='sentence_unscramble'){
+  const selected=[...root.querySelectorAll('.scramble-answer .scramble-token')].map(x=>clean(x.textContent));
+  if(!selected.length)return;
+  const correct=selected.length===q.tokens.length&&selected.every((x,i)=>x===clean(q.tokens[i]));
+  evidence.push({id:q.id,level:Number(q.level)||1,type:q.type,correct});
+  return;
+ }
  const selected=root.querySelector('.choice.selected');
  if(!selected)return;
  const answer=clean(selected.dataset.value||selected.textContent);
