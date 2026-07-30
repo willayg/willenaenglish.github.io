@@ -156,25 +156,28 @@
   'use strict';
   if (typeof window === 'undefined' || !/\/Teachers\/tools\/curriculum-editor(?:\/|\/index\.html)?$/i.test(window.location.pathname)) return;
 
-  function addReadingOption(select) {
+  const supportedTypes = ['reading', 'listening', 'speaking'];
+
+  function addAssessmentTypeOptions(select) {
     if (!(select instanceof HTMLSelectElement)) return;
     const values = [...select.options].map(option => option.value || option.textContent.trim());
     const isAssessmentTypeSelect = select.id === 'typeFilter' ||
       (values.includes('question_response') && values.includes('grammar_error'));
-    if (!isAssessmentTypeSelect || values.includes('reading')) return;
+    if (!isAssessmentTypeSelect) return;
 
-    const option = document.createElement('option');
-    option.value = 'reading';
-    option.textContent = 'reading';
-
-    const vocabulary = [...select.options].find(item => (item.value || item.textContent.trim()) === 'vocabulary');
-    if (vocabulary) select.insertBefore(option, vocabulary);
-    else select.appendChild(option);
+    supportedTypes.forEach(type => {
+      const currentValues = [...select.options].map(option => option.value || option.textContent.trim());
+      if (currentValues.includes(type)) return;
+      const option = document.createElement('option');
+      option.value = type;
+      option.textContent = type;
+      select.appendChild(option);
+    });
   }
 
   function patchAssessmentTypeSelects(root = document) {
-    if (root instanceof HTMLSelectElement) addReadingOption(root);
-    root.querySelectorAll?.('select').forEach(addReadingOption);
+    if (root instanceof HTMLSelectElement) addAssessmentTypeOptions(root);
+    root.querySelectorAll?.('select').forEach(addAssessmentTypeOptions);
   }
 
   const start = () => {
