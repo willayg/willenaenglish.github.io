@@ -36,15 +36,14 @@ function cleanButton(button){
 }
 
 function compactPanel(panel){
-  if(!panel)return;
+  if(!panel||panel.dataset.compactListening==="1")return;
   const button=panel.querySelector("#playAudio");
   const remaining=panel.querySelector("#playsRemaining");
   if(!button||!remaining)return;
 
-  cleanButton(button);
-
-  if(panel.dataset.compactListening==="1")return;
+  // Mark before mutating so our own MutationObserver cannot process this panel again.
   panel.dataset.compactListening="1";
+  cleanButton(button);
   panel.querySelector(".listening-icon")?.remove();
   panel.querySelector("p")?.remove();
 
@@ -58,9 +57,14 @@ function compactPanel(panel){
   button.addEventListener("click",markHelpSeen,{once:true});
 }
 
-function scan(){
-  document.querySelectorAll(".listening-panel").forEach(compactPanel);
+function scan(root=document){
+  if(root instanceof Element&&root.matches(".listening-panel"))compactPanel(root);
+  root.querySelectorAll?.(".listening-panel").forEach(compactPanel);
 }
 
-new MutationObserver(scan).observe(document.documentElement,{childList:true,subtree:true});
+new MutationObserver(records=>{
+  records.forEach(record=>record.addedNodes.forEach(node=>{
+    if(node.nodeType===Node.ELEMENT_NODE)scan(node);
+  }));
+}).observe(document.documentElement,{childList:true,subtree:true});
 scan();
