@@ -31,10 +31,8 @@ function compactPanel(panel){
   if(!button||!remaining)return;
 
   panel.dataset.compactListening="1";
-  const oldIcon=panel.querySelector(".listening-icon");
-  const oldInstruction=panel.querySelector("p");
-  oldIcon?.remove();
-  oldInstruction?.remove();
+  panel.querySelector(".listening-icon")?.remove();
+  panel.querySelector("p")?.remove();
 
   if(shouldShowHelp()){
     const help=document.createElement("div");
@@ -44,8 +42,8 @@ function compactPanel(panel){
   }
 
   const hiddenLabel=button.querySelector("span");
-  button.insertAdjacentHTML("afterbegin",headphoneSvg());
-  if(hiddenLabel)button.appendChild(hiddenLabel);
+  const labelText=hiddenLabel?.textContent||"";
+  button.innerHTML=`${headphoneSvg()}<span>${labelText}</span>`;
   button.setAttribute("aria-label",document.documentElement.lang==="ko"?"음성 듣기":"Play audio");
   button.addEventListener("click",markHelpSeen,{once:true});
 }
