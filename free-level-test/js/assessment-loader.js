@@ -13,30 +13,50 @@ function optionRows(row){
       .sort((a,b)=>(Number(a.display_order)||0)-(Number(b.display_order)||0))
       .map(option=>({text:clean(option.option_text),correct:option.is_correct===true}));
   }
-
   const stored=Array.isArray(row.choices)?row.choices:[];
   return stored.map(text=>({text:clean(text),correct:clean(text)===clean(row.correct_answer)}));
 }
 
 function mapItem(row){
   const answer=clean(row.correct_answer);
+  const type=clean(row.item_type)||"question_response";
+  const metadata=row.metadata||{};
+  const context=clean(row.context_text);
+  const prompt=clean(row.prompt_text);
+
+  if(!prompt)throw new Error(`Assessment item ${row.source_key||row.id} has no prompt.`);
+  if(!answer)throw new Error(`Assessment item ${row.source_key||row.id} has no correct answer.`);
+
+  if(type==="sentence_unscramble"){
+    const tokens=Array.isArray(metadata.tokens)?metadata.tokens.map(clean).filter(Boolean):[];
+    if(tokens.length<2)throw new Error(`Unscramble item ${row.source_key||row.id} has no usable tokens.`);
+    return{
+      id:clean(row.source_key)||row.id,
+      type,
+      q:context?`${context}\n${prompt}`:prompt,
+      a:answer,
+      choices:[],
+      tokens,
+      level:Number(row.level_id)||1,
+      difficulty:Number(row.difficulty_rating)||Number(row.level_id)*20,
+      sourceTable:"assessment_items",
+      translation:false,
+      metadata
+    };
+  }
+
   const options=optionRows(row);
   const choices=unique(options.map(option=>option.text));
   const markedCorrect=options.filter(option=>option.correct).map(option=>option.text);
-
-  if(!clean(row.prompt_text))throw new Error(`Assessment item ${row.source_key||row.id} has no prompt.`);
-  if(!answer)throw new Error(`Assessment item ${row.source_key||row.id} has no correct answer.`);
   if(choices.length!==4)throw new Error(`Assessment item ${row.source_key||row.id} must have exactly four unique choices.`);
   if(!choices.includes(answer))throw new Error(`Assessment item ${row.source_key||row.id} does not include its correct answer among the choices.`);
   if(markedCorrect.length&&!(markedCorrect.length===1&&markedCorrect[0]===answer)){
     throw new Error(`Assessment item ${row.source_key||row.id} has inconsistent correct-option data.`);
   }
 
-  const context=clean(row.context_text);
-  const prompt=clean(row.prompt_text);
   return{
     id:clean(row.source_key)||row.id,
-    type:clean(row.item_type)||"question_response",
+    type,
     q:context?`${context}\n${prompt}`:prompt,
     a:answer,
     choices,
@@ -44,7 +64,7 @@ function mapItem(row){
     difficulty:Number(row.difficulty_rating)||Number(row.level_id)*20,
     sourceTable:"assessment_items",
     translation:false,
-    metadata:row.metadata||{}
+    metadata
   };
 }
 
@@ -53,17 +73,10 @@ export async function loadQuestionBank(){
   const url=`${SUPABASE_URL}/rest/v1/assessment_items?select=${encodeURIComponent(select)}&status=eq.published&order=level_id.asc,difficulty_rating.asc,source_key.asc`;
   const response=await fetch(url,{headers,cache:"no-store"});
   if(!response.ok)throw new Error(`Could not load the authored assessment bank (${response.status}).`);
-
   const rows=await response.json();
-  if(!Array.isArray(rows)||!rows.length){
-    throw new Error("No published authored assessment questions are available yet.");
-  }
-
+  if(!Array.isArray(rows)||!rows.length)throw new Error("No published authored assessment questions are available yet.");
   const bank=rows.map(mapItem);
-  console.info("Willena authored assessment bank",{
-    total:bank.length,
-    byLevel:bank.reduce((counts,item)=>(counts[item.level]=(counts[item.level]||0)+1,counts),{})
-  });
+  console.info("Willena authored assessment bank",{total:bank.length,byLevel:bank.reduce((counts,item)=>(counts[item.level]=(counts[item.level]||0)+1,counts),{})});
   return shuffle(bank);
 }
 
