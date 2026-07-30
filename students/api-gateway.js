@@ -154,7 +154,7 @@
 // Keep this narrow because api-gateway.js is shared by many pages.
 (function() {
   'use strict';
-  if (typeof window === 'undefined' || !/\/Teachers\/tools\/curriculum-editor\/?$/i.test(window.location.pathname)) return;
+  if (typeof window === 'undefined' || !/\/Teachers\/tools\/curriculum-editor(?:\/|\/index\.html)?$/i.test(window.location.pathname)) return;
 
   function addReadingOption(select) {
     if (!(select instanceof HTMLSelectElement)) return;
