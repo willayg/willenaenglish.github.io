@@ -25,9 +25,7 @@ function stageLong(stage,ko){
  if(stage===2)return ko?'스타터 2':'Starter 2';
  return (ko?'레벨 ':'Level ')+(stage-2);
 }
-function rangeMarker(first,last){
- return stageShort(first)+'–'+stageShort(last);
-}
+function rangeMarker(first,last){return stageShort(first)+'–'+stageShort(last)}
 function rangeLabel(first,last,ko,isBefore){
  if(first===1&&last<=6)return ko?'기초 과정':'Foundation';
  return ko?(isBefore?'이전 레벨':'다음 레벨'):(isBefore?'Earlier levels':'Later levels');
@@ -49,9 +47,7 @@ function buildNodes(current,radius){
  var last=Math.min(maxStage,current+radius);
  var nodes=[];
  if(first>1)nodes.push({kind:'before',first:1,last:first-1});
- for(var stage=first;stage<=last;stage++){
-  nodes.push({kind:stage<current?'complete':stage===current?'current':'future',stage:stage});
- }
+ for(var stage=first;stage<=last;stage++)nodes.push({kind:stage<current?'complete':stage===current?'current':'future',stage:stage});
  if(last<maxStage)nodes.push({kind:'after',first:last+1,last:maxStage});
  return nodes;
 }
@@ -60,9 +56,12 @@ function renderJourney(){
  var current=stageFromReport();
  if(!journey||!current)return;
  var narrow=narrowQuery.matches;
+ var ko=isKorean();
+ var signature=[current,narrow?'n':'w',ko?'ko':'en'].join(':');
+ if(journey.dataset.responsiveJourneySignature===signature)return;
  var nodes=buildNodes(current,narrow?1:2);
  var currentIndex=nodes.findIndex(function(node){return node.kind==='current'});
- var ko=isKorean();
+ journey.dataset.responsiveJourneySignature=signature;
  journey.classList.add('responsive-level-journey');
  journey.classList.toggle('is-narrow',narrow);
  journey.style.setProperty('--journey-count',String(nodes.length));
