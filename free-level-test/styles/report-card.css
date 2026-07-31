@@ -1,0 +1,61 @@
+/* Reviewed placement report */
+.report-screen{max-width:860px!important;text-align:left!important;padding:clamp(18px,4vw,34px)!important}
+.report-hero{text-align:center;padding:2px 0 12px}
+.report-hero>.report-kicker{display:block;color:var(--muted);font-size:12px;font-weight:800;letter-spacing:.07em;text-transform:uppercase}
+.report-level{display:flex;align-items:baseline;justify-content:center;gap:12px;margin:10px 0 8px;color:var(--pink)}
+.report-level span{font-size:clamp(22px,4vw,34px);font-weight:800}
+.report-level strong{font-size:clamp(58px,12vw,92px);line-height:.9;letter-spacing:-.06em}
+.report-summary{max-width:650px;margin:14px auto 0;color:var(--muted);font-size:16px;line-height:1.7}
+
+.level-journey{position:relative;padding:52px 6px 12px;margin-top:12px}
+.level-journey__track{position:absolute;left:5%;right:5%;top:76px;height:8px;border-radius:999px;background:#dff1f3;overflow:hidden}
+.level-journey__fill{height:100%;background:#2ab4bf;border-radius:inherit}
+.level-journey__nodes{position:relative;display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:3px}
+.level-node{display:flex;flex-direction:column;align-items:center;gap:8px;min-width:0}
+.level-node__marker{width:38px;height:38px;border:5px solid #dff1f3;border-radius:12px;background:#fff;color:#8ca3a9;display:grid;place-items:center;font-size:12px;font-weight:800;z-index:2}
+.level-node.is-complete .level-node__marker{border-color:#2ab4bf;color:#2ab4bf}
+.level-node.is-current .level-node__marker{width:52px;height:52px;margin-top:-7px;border:6px solid var(--pink);border-radius:50%;color:var(--pink);background:#fff;font-size:15px;box-shadow:0 8px 18px rgba(255,10,138,.14)}
+.level-node__label{color:#8ca2a8;font-size:9px;line-height:1.15;text-align:center;white-space:nowrap}
+.level-journey__here{position:absolute;top:0;color:var(--pink);font-size:12px;font-weight:800;white-space:nowrap;transform:translateX(-50%)}
+.level-journey__here:after{content:"";display:block;width:2px;height:15px;margin:5px auto 0;background:var(--pink)}
+
+.report-card{border:2px solid var(--line);border-radius:22px;padding:20px;margin-top:16px;background:#fff;box-shadow:0 12px 30px rgba(46,150,161,.07)}
+.report-card.is-next{border-color:#ffc5e2}
+.report-card h3{margin:0 0 12px;color:var(--ink);font-size:20px}
+.report-card p{margin:0;color:var(--muted);line-height:1.7}
+.report-can-do{margin:0;padding-left:22px;color:var(--muted)}
+.report-can-do li{margin:9px 0;line-height:1.55}
+
+.report-skill{padding:15px 0;border-bottom:1px solid #edf6f7}
+.report-skill:first-child{padding-top:0}
+.report-skill:last-child{padding-bottom:0;border-bottom:0}
+.report-skill__head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:7px}
+.report-skill__head strong{color:var(--ink)}
+.report-skill__level{color:#2ab4bf;font-size:14px;font-weight:800;white-space:nowrap}
+.report-skill__track{height:11px;border-radius:999px;background:#edf9fa;overflow:hidden}
+.report-skill__track i{display:block;height:100%;border-radius:inherit;background:#a9e7eb}
+.report-skill__note{margin-top:7px!important;font-size:13px;line-height:1.55!important}
+.report-skill.is-unassessed .report-skill__head{margin-bottom:3px}
+.report-skill.is-unassessed .report-skill__level{color:var(--muted)}
+.report-skill.is-unassessed .report-skill__track{display:none}
+
+.report-method{margin:16px 2px 0;color:var(--muted);font-size:12px;line-height:1.55}
+.report-actions{justify-content:center}
+.report-actions .btn{min-width:180px}
+
+@media(max-width:520px){
+ .report-screen{padding:18px 14px!important;border-radius:22px!important}
+ .report-level strong{font-size:58px}
+ .report-summary{font-size:15px}
+ .level-journey{padding:30px 0 5px;margin-top:10px}
+ .level-journey__track,.level-journey__here{display:none}
+ .level-journey__nodes{grid-template-columns:repeat(5,minmax(0,1fr));column-gap:4px;row-gap:28px}
+ .level-node{position:relative;gap:7px}
+ .level-node:not(:nth-child(5)):not(:nth-child(10)):after{content:"";position:absolute;top:20px;left:66%;right:-34%;height:7px;border-radius:999px;background:#dff1f3;z-index:0}
+ .level-node.is-complete:not(:nth-child(5)):after{background:#2ab4bf}
+ .level-node__marker{width:44px;height:44px;border-width:5px;border-radius:13px;font-size:13px}
+ .level-node.is-current .level-node__marker{width:58px;height:58px;margin-top:-7px;border-width:6px;font-size:16px}
+ .level-node__label{font-size:10px}
+ .report-card{padding:17px;border-radius:18px}
+ .report-actions .btn{min-width:0}
+}
