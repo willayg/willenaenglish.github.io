@@ -51,7 +51,7 @@ function mapItem(row){
 
 export async function loadQuestionBank(){
   const select="id,source_key,level_id,difficulty_rating,item_type,prompt_text,context_text,correct_answer,metadata,choices,assessment_item_options(option_text,is_correct,display_order)";
-  const url=`${SUPABASE_URL}/rest/v1/assessment_items?select=${encodeURIComponent(select)}&status=eq.published&order=level_id.asc,difficulty_rating.asc,source_key.asc`;
+  const url=`${SUPABASE_URL}/rest/v1/assessment_items?select=${encodeURIComponent(select)}&status=eq.published&is_flagged=eq.false&order=level_id.asc,difficulty_rating.asc,source_key.asc`;
   const response=await fetch(url,{headers,cache:"no-store"});
   if(!response.ok)throw new Error(`Could not load the authored assessment bank (${response.status}).`);
   const rows=await response.json();
