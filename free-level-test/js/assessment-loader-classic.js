@@ -3,7 +3,7 @@
 var SUPABASE_URL="https://gxwfsqxyuufqtitspfqg.supabase.co";
 var SUPABASE_KEY=["sb_publishable_","G-FYhHfDL4OGdL892gY1Zg_","epdbEeqO"].join("");
 var headers={apikey:SUPABASE_KEY,Authorization:"Bearer "+SUPABASE_KEY};
-function clean(value){return String(value==null?"":value).trim()}
+function clean(value){return String(value==null?"":value).replace(/\\n/g,"\n").replace(/\\r/g,"").trim()}
 function shuffle(items){return items.slice().sort(function(){return Math.random()-.5})}
 function unique(items){var out=[];items.map(clean).filter(Boolean).forEach(function(x){if(out.indexOf(x)<0)out.push(x)});return out}
 function optionRows(row){
