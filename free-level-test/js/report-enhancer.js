@@ -46,7 +46,8 @@ function recordAnswer(){
  if(q.type==='sentence_unscramble'){
   const selected=[...root.querySelectorAll('.scramble-answer .scramble-token')].map(x=>clean(x.textContent));
   if(!selected.length)return;
-  evidence.push({id:q.id,level:Number(q.level)||1,type:q.type,correct:selected.length===q.tokens.length&&selected.every((x,i)=>x===clean(q.tokens[i]))});
+  const correct=Array.isArray(q.tokens)&&selected.length===q.tokens.length&&selected.every((x,i)=>clean(x).toLowerCase().replace(/[.,!?;:“”"()]/g,'')===clean(q.tokens[i]).toLowerCase().replace(/[.,!?;:“”"()]/g,''));
+  evidence.push({id:q.id,level:Number(q.level)||1,type:q.type,correct});
   return;
  }
  const selected=root.querySelector('.choice.selected');
@@ -76,18 +77,31 @@ function probabilities(rows,maxLevel=10){
  const total=weighted.reduce((s,x)=>s+x.w,0)||1;
  return weighted.map(x=>({level:x.level,pct:x.w/total*100})).sort((a,b)=>b.pct-a.pct);
 }
-function overallLevel(){
- if(!evidence.length)return 1;
- const max=Math.max(...evidence.map(x=>x.level),1);
- return probabilities(evidence,max)[0]?.level||1;
+function levelFromRows(rows){
+ if(!rows.length)return 1;
+ const highest=Math.max(...rows.map(x=>Number(x.level)||1),1);
+ return probabilities(rows,highest)[0]?.level||1;
 }
+function overallLevel(){return levelFromRows(evidence)}
 function estimateSkill(skill){
  const rows=evidence.filter(x=>skillFor(x.type)===skill);
- if(rows.length<2)return{assessed:false,rows};
+ if(rows.length<3)return{assessed:false,rows};
+ const otherRows=evidence.filter(x=>skillFor(x.type)!==skill);
+ const anchor=otherRows.length>=4?levelFromRows(otherRows):overallLevel();
  const highest=Math.max(...rows.map(x=>x.level));
- const fit=probabilities(rows,highest)[0]||{level:1,pct:0};
+ const prior=[{level:anchor,correct:true},{level:Math.min(10,anchor+1),correct:false}];
+ const fit=probabilities(rows.concat(prior),Math.max(highest,anchor+1))[0]||{level:anchor,pct:0};
+ const correctCount=rows.filter(x=>x.correct).length;
+ const accuracy=correctCount/rows.length;
+ const evidenceCap=Math.min(10,anchor+(rows.length>=5?2:1));
+ let level=Math.min(fit.level,highest,evidenceCap);
+ if(accuracy<.5)level=Math.min(level,anchor);
+ if(accuracy<.34)level=Math.min(level,Math.max(1,anchor-1));
+ level=Math.max(1,level);
  const top=rows.filter(x=>x.level===highest);
- return{assessed:true,rows,level:fit.level,confidence:Math.round(Math.min(96,50+rows.length*6+fit.pct*.22)),plus:fit.level===highest&&top.length&&top.every(x=>x.correct)};
+ const plus=rows.length>=5&&top.length>=3&&top.every(x=>x.correct)&&level===highest;
+ const confidence=Math.round(Math.min(92,42+rows.length*7+fit.pct*.15));
+ return{assessed:true,rows,level,confidence,plus,accuracy,anchor};
 }
 function profile(level,skill){return profiles.get(`${level}:${skill}`)||null}
 function txt(row,field,ko,fallback=''){return clean(row?.[`${field}_${ko?'ko':'en'}`])||fallback}
@@ -109,7 +123,7 @@ function skillRow(skill,best,ko){
  if(!result.assessed){
   const note=skill==='speaking'||skill==='writing'
    ?(ko?'현재 버전의 테스트에는 이 영역을 평가할 문항이 아직 포함되어 있지 않습니다.':'This version of the test does not yet include enough tasks to assess this skill.')
-   :(ko?'이 영역의 레벨을 신뢰성 있게 판단할 만큼 충분한 문항이 출제되지 않았습니다.':'Not enough questions were included to estimate this skill reliably.');
+   :(ko?'이 영역의 레벨을 신뢰성 있게 판단하려면 최소 세 문항의 결과가 필요합니다.':'At least three questions are needed to estimate this skill reliably.');
   return `<div class="report-skill is-unassessed"><div class="report-skill__head"><strong>${name}</strong><span class="report-skill__level">${ko?'평가되지 않음':'Not assessed'}</span></div><p class="report-skill__note">${note}</p></div>`;
  }
  const p=profile(result.level,skill);
@@ -150,7 +164,7 @@ function reportMarkup(){
   <section class="report-card is-next"><h3>${ko?'앞으로 연습하면 좋은 것':'Ready to work on'}</h3><p>${nextStep(best,ko)}</p></section>
   <section class="report-card"><h3>${ko?'영역별 예상 레벨':'Estimated level by skill'}</h3>${allSkills.map(s=>skillRow(s,best,ko)).join('')}</section>
   <section class="report-card"><h3>${ko?'이 결과는 무엇을 의미하나요?':'What does this result mean?'}</h3><p>${ko?'이 결과는 합격이나 불합격을 판단하는 점수가 아닙니다. 자녀가 어느 단계에서 가장 편안하게 학습을 시작할 수 있는지 보여주는 참고 자료입니다.':'This is not a pass-or-fail score. It is a guide to the level where your child is most likely to begin learning comfortably and successfully.'}</p></section>
-  <p class="report-method">${ko?'영역별 레벨은 해당 유형의 문항이 두 개 이상 출제된 경우에만 표시되며, 실제로 출제된 최고 레벨을 넘지 않습니다. +는 최고 출제 레벨의 문항을 모두 맞혔다는 뜻입니다.':'A skill estimate appears only after at least two questions and never exceeds the highest level actually tested. A + means all questions at that top tested level were answered correctly.'}</p>
+  <p class="report-method">${ko?'영역별 레벨은 해당 유형의 문항이 세 개 이상 출제된 경우에만 표시됩니다. 적은 수의 우연한 정답으로 높은 레벨이 나오지 않도록 전체 결과와 함께 계산합니다. +는 충분한 문항에서 최고 출제 레벨을 안정적으로 통과한 경우에만 표시됩니다.':'A skill estimate appears only after at least three questions. It is balanced against the learner’s wider test evidence so a few lucky guesses cannot create an extreme result. A + requires sustained success at the highest tested level.'}</p>
   <div class="actions report-actions"><button class="btn btn-primary" id="retry">${ko?'다시 테스트하기':'Try again'}</button><button class="btn btn-ghost" id="home">${ko?'처음으로 돌아가기':'Back to start'}</button></div>`;
 }
 function renderReport(force=false){
