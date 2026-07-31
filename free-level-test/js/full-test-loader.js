@@ -1,6 +1,6 @@
 (function(){
 'use strict';
-var loaderUrl='./js/adaptive-calibration-loader.js?v=20260731-2';
+var loaderUrl='./js/adaptive-calibration-loader.js?v=20260731-3';
 var marker=" var script=document.createElement('script');";
 var injection=String.raw`
  source=replaceOnce(source,'q40:"Detailed · 40 questions",back:','q40:"Detailed · 40 questions",qFull:"Full test · 50 questions",back:','English full option');
