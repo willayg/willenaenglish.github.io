@@ -35,7 +35,7 @@ function mapItem(row){
 }
 function loadQuestionBank(){
  var select="id,source_key,level_id,difficulty_rating,item_type,prompt_text,context_text,correct_answer,metadata,choices,assessment_item_options(option_text,is_correct,display_order)";
- var url=SUPABASE_URL+"/rest/v1/assessment_items?select="+encodeURIComponent(select)+"&status=eq.published&order=level_id.asc,difficulty_rating.asc,source_key.asc";
+ var url=SUPABASE_URL+"/rest/v1/assessment_items?select="+encodeURIComponent(select)+"&status=eq.published&is_flagged=eq.false&order=level_id.asc,difficulty_rating.asc,source_key.asc";
  return fetch(url,{headers:headers,cache:"no-store"}).then(function(response){if(!response.ok)throw new Error("Could not load the authored assessment bank ("+response.status+").");return response.json()}).then(function(rows){if(!Array.isArray(rows)||!rows.length)throw new Error("No published authored assessment questions are available yet.");return shuffle(rows.map(mapItem))});
 }
 window.loadQuestionBank=loadQuestionBank;
