@@ -10,8 +10,13 @@
 
   window.willenaLevelName=levelName;
 
+  function insideEnhancedReport(node){
+    var parent=node&&node.parentElement;
+    return Boolean(parent&&parent.closest('.report-screen'));
+  }
+
   function replaceTextNode(node){
-    if(!node||node.nodeType!==3)return;
+    if(!node||node.nodeType!==3||insideEnhancedReport(node))return;
     var raw=node.nodeValue||'';
     var trimmed=raw.trim();
     var match=trimmed.match(/^(?:Level|단계)\s*(10|[1-9])(\+)?$/i);
@@ -20,26 +25,12 @@
     if(replacement!==trimmed)node.nodeValue=raw.replace(trimmed,replacement);
   }
 
-  function updateReportHero(){
-    var hero=document.querySelector('.report-level');
-    if(!hero)return;
-    var strong=hero.querySelector('strong');
-    var prefix=hero.querySelector('span');
-    if(!strong)return;
-    var value=(strong.textContent||'').trim();
-    if(/^\d+$/.test(value)){
-      strong.textContent=levelName(value,false);
-      if(prefix&&prefix.textContent)prefix.textContent='';
-    }
-  }
-
   function scan(root){
     if(!root)return;
     if(root.nodeType===3){replaceTextNode(root);return;}
     var walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT,null,false);
     var node;
     while((node=walker.nextNode()))replaceTextNode(node);
-    updateReportHero();
   }
 
   var queued=false;
