@@ -1,0 +1,33 @@
+/* Segmented skill-level display */
+.report-skill__track{
+ display:grid;
+ grid-template-columns:repeat(10,minmax(0,1fr));
+ gap:6px;
+ height:auto;
+ overflow:visible;
+ background:transparent;
+ border-radius:0;
+}
+.report-skill__track i{display:none!important}
+.report-skill__segment{
+ display:block;
+ height:14px;
+ border:1px solid #d9eff1;
+ border-radius:6px;
+ background:#ebf7f8;
+}
+.report-skill__segment.is-complete{
+ border-color:#2ab4bf;
+ background:#2ab4bf;
+}
+.report-skill__segment.is-current{
+ border:3px solid var(--pink);
+ background:#fff;
+ box-shadow:0 3px 9px rgba(255,10,138,.1);
+}
+.report-skill.is-unassessed .report-skill__track{display:none}
+
+@media(max-width:520px){
+ .report-skill__track{gap:4px}
+ .report-skill__segment{height:13px;border-radius:5px}
+}
