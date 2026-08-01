@@ -1,8 +1,8 @@
 (function(){
 'use strict';
 
-var names={1:'Starter 1',2:'Starter 2',3:'Level 1',4:'Level 2',5:'Level 3',6:'Level 4',7:'Level 5',8:'Level 6',9:'Level 7',10:'Level 8'};
-var shortNames={1:'S1',2:'S2',3:'1',4:'2',5:'3',6:'4',7:'5',8:'6',9:'7',10:'8'};
+var names={1:'Starter 1',2:'Starter 2',3:'Level 1',4:'Level 2',5:'Level 3',6:'Level 4',7:'Level 5',8:'Level 6',9:'Level 7',10:'Level 8',11:'Level 9',12:'Level 10'};
+var shortNames={1:'S1',2:'S2',3:'1',4:'2',5:'3',6:'4',7:'5',8:'6',9:'7',10:'8',11:'9',12:'10'};
 var lastLevel=0;
 var lastVisible=false;
 var queued=false;
@@ -16,7 +16,7 @@ function ensureMeter(){
   meter.id='debugLevelMeter';
   meter.className='debug-level-meter';
   meter.setAttribute('aria-live','polite');
-  meter.innerHTML='<div class="debug-level-meter__top"><span class="debug-level-meter__label">Testing level</span><strong class="debug-level-meter__value">—</strong></div><div class="debug-level-meter__track" aria-label="Question level from Starter 1 to Level 8">'+Array.from({length:10},function(_,i){var n=i+1;return '<span data-level="'+n+'" aria-label="'+levelName(n)+'"><b>'+shortNames[n]+'</b></span>';}).join('')+'</div>';
+  meter.innerHTML='<div class="debug-level-meter__top"><span class="debug-level-meter__label">Testing level</span><strong class="debug-level-meter__value">—</strong></div><div class="debug-level-meter__track" aria-label="Question level from Starter 1 to Level 10">'+Array.from({length:12},function(_,i){var n=i+1;return '<span data-level="'+n+'" aria-label="'+levelName(n)+'"><b>'+shortNames[n]+'</b></span>';}).join('')+'</div>';
   document.body.appendChild(meter);
   return meter;
 }
@@ -26,7 +26,7 @@ function updateMeter(){
   var meter=ensureMeter();
   var card=document.querySelector('.question-card');
   var level=card?Number(card.getAttribute('data-question-level')):0;
-  var visible=level>=1&&level<=10;
+  var visible=level>=1&&level<=12;
 
   if(visible!==lastVisible){meter.classList.toggle('is-visible',visible);lastVisible=visible;}
   if(!visible||level===lastLevel)return;
