@@ -1,10 +1,10 @@
 (function(){
   'use strict';
 
-  var names={1:'Starter 1',2:'Starter 2',3:'Level 1',4:'Level 2',5:'Level 3',6:'Level 4',7:'Level 5',8:'Level 6',9:'Level 7',10:'Level 8'};
+  var names={1:'Starter 1',2:'Starter 2',3:'Level 1',4:'Level 2',5:'Level 3',6:'Level 4',7:'Level 5',8:'Level 6',9:'Level 7',10:'Level 8',11:'Level 9',12:'Level 10'};
 
   function levelName(level,plus){
-    var n=Math.max(1,Math.min(10,Number(level)||1));
+    var n=Math.max(1,Math.min(12,Number(level)||1));
     return names[n]+(plus?'+':'');
   }
 
@@ -19,7 +19,7 @@
     if(!node||node.nodeType!==3||insideEnhancedReport(node))return;
     var raw=node.nodeValue||'';
     var trimmed=raw.trim();
-    var match=trimmed.match(/^(?:Level|단계)\s*(10|[1-9])(\+)?$/i);
+    var match=trimmed.match(/^(?:Level|단계)\s*(12|11|10|[1-9])(\+)?$/i);
     if(!match)return;
     var replacement=levelName(match[1],Boolean(match[2]));
     if(replacement!==trimmed)node.nodeValue=raw.replace(trimmed,replacement);
