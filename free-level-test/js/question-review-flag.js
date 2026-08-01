@@ -44,15 +44,34 @@ async function submitFeedback(){
   closeModal();
  }catch(err){error.textContent=err.message||text('Could not send feedback.','피드백을 보내지 못했습니다.')}finally{send.disabled=false;localizeModal()}
 }
+function meterHidden(){try{return sessionStorage.getItem('willenaMeterHidden')==='1'}catch(e){return false}}
+function applyMeterState(hidden){
+ document.body.classList.toggle('meter-is-hidden',hidden);
+ try{sessionStorage.setItem('willenaMeterHidden',hidden?'1':'0')}catch(e){}
+ var button=document.querySelector('.question-meter-toggle');
+ if(button){
+  button.setAttribute('aria-pressed',hidden?'true':'false');
+  button.setAttribute('aria-label',hidden?text('Show level meter','레벨 표시 보기'):text('Hide level meter','레벨 표시 숨기기'));
+  button.innerHTML='<span aria-hidden="true">'+(hidden?'▰':'▱')+'</span><span>'+(hidden?text('Show meter','표시 보기'):text('Hide meter','표시 숨기기'))+'</span>';
+ }
+}
+function ensureMeterStyle(){
+ if(document.querySelector('#meterToggleStyle'))return;
+ var style=document.createElement('style');style.id='meterToggleStyle';
+ style.textContent='body.meter-is-hidden #debugLevelMeter{display:none!important}';
+ document.head.appendChild(style);
+}
 function addButtons(){
  var card=root.querySelector('.question-card[data-question-id]');if(!card||card.querySelector('.question-feedback-tools'))return;
  var sourceKey=card.getAttribute('data-question-id');if(!sourceKey)return;
  var tools=document.createElement('div');tools.className='question-feedback-tools';
- tools.innerHTML='<button type="button" class="question-review-flag" data-source-key="'+sourceKey+'" aria-label="'+text('Flag question','문항 검토 요청')+'"><span aria-hidden="true">⚑</span><span>'+text('Review','검토')+'</span></button><button type="button" class="question-review-like" data-source-key="'+sourceKey+'" aria-label="'+text('Like question','문항 좋아요')+'"><span aria-hidden="true">♡</span><span>'+text('Like','좋아요')+'</span></button>';
+ tools.innerHTML='<button type="button" class="question-review-flag" data-source-key="'+sourceKey+'" aria-label="'+text('Flag question','문항 검토 요청')+'"><span aria-hidden="true">⚑</span><span>'+text('Review','검토')+'</span></button><button type="button" class="question-review-like" data-source-key="'+sourceKey+'" aria-label="'+text('Like question','문항 좋아요')+'"><span aria-hidden="true">♡</span><span>'+text('Like','좋아요')+'</span></button><button type="button" class="question-meter-toggle"></button>';
  tools.querySelector('.question-review-flag').addEventListener('click',function(e){e.preventDefault();e.stopPropagation();openModal(sourceKey,'flag')});
  tools.querySelector('.question-review-like').addEventListener('click',function(e){e.preventDefault();e.stopPropagation();openModal(sourceKey,'like')});
- card.appendChild(tools);
+ tools.querySelector('.question-meter-toggle').addEventListener('click',function(e){e.preventDefault();e.stopPropagation();applyMeterState(!document.body.classList.contains('meter-is-hidden'))});
+ card.appendChild(tools);applyMeterState(meterHidden());
 }
+ensureMeterStyle();applyMeterState(meterHidden());
 var scheduled=false;function schedule(){if(scheduled)return;scheduled=true;requestAnimationFrame(function(){scheduled=false;addButtons()})}
 new MutationObserver(schedule).observe(root,{childList:true,subtree:true});new MutationObserver(function(){localizeModal();var tools=root.querySelector('.question-feedback-tools');if(tools)tools.remove();schedule()}).observe(document.documentElement,{attributes:true,attributeFilter:['lang']});schedule();
 })();
