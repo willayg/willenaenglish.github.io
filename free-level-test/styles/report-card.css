@@ -2,9 +2,9 @@
 .report-screen{max-width:860px!important;text-align:left!important;padding:clamp(18px,4vw,34px)!important}
 .report-hero{text-align:center;padding:2px 0 12px}
 .report-hero>.report-kicker{display:block;color:var(--muted);font-size:12px;font-weight:800;letter-spacing:.07em;text-transform:uppercase}
-.report-level{display:flex;align-items:baseline;justify-content:center;gap:12px;margin:10px 0 8px;color:var(--pink)}
-.report-level span{font-size:clamp(22px,4vw,34px);font-weight:800}
-.report-level strong{font-size:clamp(58px,12vw,92px);line-height:.9;letter-spacing:-.06em}
+.report-level{width:clamp(168px,28vw,208px);aspect-ratio:1;margin:18px auto 14px;border:12px solid var(--pink);border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;background:#fff;color:var(--pink);box-shadow:0 14px 34px rgba(255,10,138,.14)}
+.report-level span{font-size:clamp(14px,2.5vw,19px);font-weight:800;line-height:1;letter-spacing:.12em;text-transform:uppercase;margin-bottom:5px}
+.report-level strong{font-size:clamp(70px,14vw,104px);line-height:.78;letter-spacing:-.07em;color:#2ab4bf}
 .report-summary{max-width:650px;margin:14px auto 0;color:var(--muted);font-size:16px;line-height:1.7}
 
 .level-journey{position:relative;padding:52px 6px 12px;margin-top:12px}
@@ -45,7 +45,9 @@
 
 @media(max-width:520px){
  .report-screen{padding:18px 14px!important;border-radius:22px!important}
- .report-level strong{font-size:58px}
+ .report-level{width:160px;border-width:10px;margin-top:16px}
+ .report-level strong{font-size:76px}
+ .report-level span{font-size:14px}
  .report-summary{font-size:15px}
  .level-journey{padding:30px 0 5px;margin-top:10px}
  .level-journey__track,.level-journey__here{display:none}
