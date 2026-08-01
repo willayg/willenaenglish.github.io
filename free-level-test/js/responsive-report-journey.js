@@ -3,7 +3,7 @@
 var root=document.querySelector('#app');
 if(!root)return;
 
-var MAX_PUBLIC_LEVEL=12;
+var MAX_PUBLIC_LEVEL=10;
 var narrowQuery=window.matchMedia('(max-width: 599px)');
 
 function isKorean(){return document.documentElement.lang==='ko'}
