@@ -5,15 +5,16 @@
 .report-level-guide__header h3{margin:7px 0 9px;font-size:clamp(22px,4vw,30px)}
 .report-level-guide__header p{max-width:650px;margin:0 auto;color:var(--muted);line-height:1.65}
 .report-level-guide__list{position:relative;display:flex;flex-direction:column;gap:16px}
-.report-level-guide__row{position:relative;display:grid;grid-template-columns:92px minmax(0,1fr);gap:22px;align-items:center;min-height:126px}
-.report-level-guide__row:not(:last-child)::after{content:"";position:absolute;z-index:0;left:43px;top:50%;width:8px;height:calc(100% + 16px);border-radius:999px;background:#dceff1}
+.report-level-guide__list::before{content:"";position:absolute;z-index:0;left:43px;top:63px;bottom:63px;width:8px;border-radius:999px;background:#dceff1}
+.report-level-guide__row{position:relative;z-index:1;display:grid;grid-template-columns:92px minmax(0,1fr);gap:22px;align-items:center;min-height:126px}
+.report-level-guide__row:not(:last-child)::after{content:"";position:absolute;z-index:1;left:43px;top:50%;width:8px;height:calc(100% + 16px);border-radius:999px;background:#dceff1}
 .report-level-guide__row.is-complete:not(:last-child)::after{background:#2ab4bf}
 .report-level-guide__row.is-adjacent:not(:last-child)::after,.report-level-guide__row.is-current:not(:last-child)::after{background:#f3a1cb}
-.report-level-guide__circle{position:relative;z-index:2;display:grid;place-items:center;width:72px;height:72px;margin-left:8px;border:7px solid #dceff1;border-radius:50%;color:#8da4aa;background:#fff;font-size:21px;font-weight:900}
+.report-level-guide__circle{position:relative;z-index:3;display:grid;place-items:center;width:72px;height:72px;margin-left:8px;border:7px solid #dceff1;border-radius:50%;color:#8da4aa;background:#fff;font-size:21px;font-weight:900}
 .report-level-guide__row.is-complete .report-level-guide__circle{border-color:#2ab4bf;color:#2ab4bf}
 .report-level-guide__row.is-adjacent .report-level-guide__circle{width:82px;height:82px;margin-left:3px;border-color:#f3a1cb;color:var(--pink);background:#fff0f8;font-size:25px;box-shadow:0 10px 24px rgba(242,10,138,.11)}
 .report-level-guide__row.is-current .report-level-guide__circle{width:94px;height:94px;margin-left:-3px;border:10px solid var(--pink);color:var(--pink);background:#fff;font-size:31px;box-shadow:0 14px 30px rgba(242,10,138,.21)}
-.report-level-guide__description{position:relative;z-index:1;padding:19px 21px;border:2px solid #dceff1;border-radius:21px;background:#fff}
+.report-level-guide__description{position:relative;z-index:2;padding:19px 21px;border:2px solid #dceff1;border-radius:21px;background:#fff}
 .report-level-guide__row.is-complete .report-level-guide__description{border-color:#c8eaec;background:#fbffff}
 .report-level-guide__row.is-adjacent .report-level-guide__description{border-color:#f3a1cb;background:linear-gradient(135deg,#fff,#fff0f8)}
 .report-level-guide__row.is-current .report-level-guide__description{border-color:var(--pink);background:linear-gradient(135deg,#fff,#fff7fb);box-shadow:0 11px 28px rgba(242,10,138,.09)}
@@ -36,6 +37,7 @@
  .report-level-guide__header{margin-bottom:18px}
  .report-level-guide__header h3{font-size:22px}
  .report-level-guide__list{gap:12px}
+ .report-level-guide__list::before{left:29px;top:53px;bottom:53px;width:6px}
  .report-level-guide__row{grid-template-columns:66px minmax(0,1fr);gap:10px;min-height:106px}
  .report-level-guide__row:not(:last-child)::after{left:29px;top:50%;width:6px;height:calc(100% + 12px)}
  .report-level-guide__circle{width:58px;height:58px;margin-left:0;border-width:6px;font-size:17px}
