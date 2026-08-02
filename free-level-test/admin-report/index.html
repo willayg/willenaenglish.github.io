@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html data-candidate-ready="true" lang="ko"><head><meta content="text/html; charset=utf-8" http-equiv="Content-Type"/><style data-captured-from="cid:css-be0acb87-9c56-428c-8b0f-eb8371ff1892@mhtml.blink">@charset "utf-8";
+
+.scramble-meaning span { display: none !important; }</style><style data-captured-from="cid:css-dfa6da7f-1ce6-40bb-976a-147b9acae577@mhtml.blink">@charset "utf-8";
+
+body.meter-is-hidden #debugLevelMeter { display: none !important; }</style><style data-captured-from="cid:css-969a6bc2-ea51-4915-8dfb-67b1ba9f5714@mhtml.blink">@charset "utf-8";
+
+.candidate-flow { position: fixed; inset: 0px; z-index: 99999; background: linear-gradient(rgb(239, 252, 253) 0%, rgb(255, 245, 248) 100%); display: grid; place-items: center; padding: 18px; font-family: Poppins, system-ui, sans-serif; overflow: auto; }
+
+.candidate-slide { width: min(760px, 100%); background: rgb(255, 255, 255); border: 1px solid rgb(219, 232, 238); border-radius: 30px; padding: clamp(24px, 5vw, 44px); box-shadow: rgba(31, 91, 111, 0.16) 0px 24px 80px; }
+
+.candidate-brand { display: flex; align-items: center; gap: 14px; margin-bottom: 28px; }
+
+.candidate-brand img { width: 58px; height: 58px; object-fit: contain; }
+
+.candidate-brand strong { display: block; font-size: 20px; color: rgb(32, 79, 90); }
+
+.candidate-brand span { display: block; color: rgb(122, 146, 154); font-size: 13px; }
+
+.candidate-progress { height: 9px; border-radius: 999px; background: rgb(235, 247, 249); overflow: hidden; margin-bottom: 30px; }
+
+.candidate-progress i { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, rgb(44, 183, 193), rgb(255, 38, 137)); transition: width 300ms ease; }
+
+.candidate-slide h1 { margin: 0px 0px 12px; font-size: clamp(28px, 5vw, 42px); line-height: 1.15; color: rgb(32, 79, 90); }
+
+.candidate-slide p { margin: 0px 0px 25px; color: rgb(111, 136, 144); font-size: 16px; line-height: 1.7; }
+
+.candidate-fields { display: grid; gap: 15px; }
+
+.candidate-field { display: grid; gap: 8px; }
+
+.candidate-field span { font-size: 13px; font-weight: 800; color: rgb(62, 103, 113); }
+
+.candidate-field input, .candidate-field select { width: 100%; min-height: 52px; border: 2px solid rgb(219, 238, 241); border-radius: 16px; padding: 0px 16px; font: inherit; color: rgb(32, 79, 90); background: rgb(255, 255, 255); outline: none; }
+
+.candidate-field input:focus, .candidate-field select:focus { border-color: rgb(44, 183, 193); box-shadow: rgba(44, 183, 193, 0.12) 0px 0px 0px 4px; }
+
+.candidate-actions { display: flex; gap: 12px; justify-content: flex-end; margin-top: 28px; }
+
+.candidate-button { border: 0px; border-radius: 16px; padding: 14px 22px; font: inherit; font-weight: 800; cursor: pointer; }
+
+.candidate-button.primary { background: rgb(44, 183, 193); color: rgb(255, 255, 255); }
+
+.candidate-button.secondary { background: rgb(244, 250, 251); color: rgb(55, 98, 108); }
+
+.candidate-error { min-height: 22px; color: rgb(215, 42, 113); margin-top: 12px; font-size: 13px; }
+
+@media (max-width: 560px) {
+  .candidate-flow { padding: 10px; place-items: start center; }
+  .candidate-slide { margin-top: 10px; border-radius: 23px; padding: 22px 18px 26px; }
+  .candidate-brand { margin-bottom: 22px; }
+  .candidate-actions { flex-direction: column-reverse; }
+  .candidate-button { width: 100%; }
+}</style><style data-captured-from="cid:css-4b0b2706-7df0-41df-84aa-7081cff5b698@mhtml.blink">@charset "utf-8";
+
+.setup-panel { text-align: left; }
+
+.setup-choice-grid { display: grid; grid-template-columns: repeat(2, minmax(0px, 1fr)); gap: 12px; }
+
+.setup-choice { border: 2px solid rgb(225, 237, 240); border-radius: 18px; padding: 16px; background: rgb(255, 255, 255); color: rgb(32, 79, 90); cursor: pointer; transition: 150ms ease; }
+
+.setup-choice:hover, .setup-choice.is-selected { border-color: rgb(44, 183, 193); background: rgb(241, 252, 253); transform: translateY(-1px); }
+
+.setup-choice strong { display: block; margin-bottom: 4px; }
+
+.setup-choice span { display: block; color: rgb(120, 143, 150); font-size: 13px; line-height: 1.45; }
+
+@media (max-width: 560px) {
+  .setup-choice-grid { grid-template-columns: 1fr; }
+}</style><style data-captured-from="cid:css-530fc6fc-4875-4772-a487-132a7af2f1cf@mhtml.blink">@charset "utf-8";
+
+.listening-player { margin: 18px 0px; padding: 18px; border-radius: 20px; background: linear-gradient(135deg, rgb(241, 252, 253), rgb(255, 244, 249)); border: 2px solid rgb(219, 240, 242); }
+
+.listening-player__button { border: 0px; border-radius: 15px; min-height: 48px; padding: 0px 18px; font: inherit; font-weight: 800; background: rgb(44, 183, 193); color: rgb(255, 255, 255); cursor: pointer; }
+
+.listening-player__button:disabled { opacity: 0.55; cursor: wait; }
+
+.listening-player__status { margin-top: 10px; color: rgb(111, 136, 144); font-size: 13px; }
+
+.listening-player__wave { display: flex; gap: 4px; align-items: center; height: 32px; margin-top: 12px; }
+
+.listening-player__wave i { width: 4px; border-radius: 999px; background: rgb(44, 183, 193); animation: 900ms ease-in-out infinite alternate listening-wave; }
+
+@keyframes listening-wave { 
+  0% { height: 8px; opacity: 0.35; }
+  100% { height: 28px; opacity: 1; }
+}</style><style data-captured-from="cid:css-71a8444c-adb4-4928-a17c-736fe11d0ff3@mhtml.blink">@charset "utf-8";
+
+.question-card { border-radius: 24px; border: 2px solid rgb(222, 238, 241); box-shadow: rgba(34, 112, 123, 0.08) 0px 16px 38px; }
+
+.choice { transition: transform 120ms ease, border-color 120ms ease, background 120ms ease; }
+
+.choice:hover { transform: translateY(-1px); }
+
+.choice.selected { border-color: rgb(44, 183, 193); background: rgb(240, 252, 253); }
+
+.question-title { color: rgb(32, 79, 90); }
+
+.progress-bar > i { background: linear-gradient(90deg, rgb(44, 183, 193), rgb(255, 25, 137)); }
+</style><style data-captured-from="cid:css-c564cf82-40a2-4934-9972-d011d0ed0fe1@mhtml.blink">@charset "utf-8";
+
+.question-review-flag { display: inline-flex; align-items: center; gap: 8px; border: 0px; background: rgb(255, 244, 249); color: rgb(178, 40, 104); border-radius: 999px; padding: 9px 13px; font: inherit; font-size: 12px; font-weight: 800; cursor: pointer; }
+
+.question-review-flag.is-active { background: rgb(255, 216, 235); color: rgb(143, 24, 79); }
+</style><style data-captured-from="cid:css-6b7c0712-a29d-4224-a9a3-b4eb01dde5a4@mhtml.blink">@charset "utf-8";
+
+.report-screen { max-width: 860px !important; text-align: left !important; padding: clamp(18px, 4vw, 34px) !important; }
+
+.report-hero { text-align: center; padding: 2px 0px 12px; }
+
+.report-hero > .report-kicker { display: block; color: var(--muted); font-size: 12px; font-weight: 800; letter-spacing: 0.07em; text-transform: uppercase; }
+
+.report-level { width: clamp(168px, 28vw, 208px); aspect-ratio: 1 / 1; margin: 18px auto 14px; border: 12px solid var(--pink); border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0px; background: rgb(255, 255, 255); color: var(--pink); box-shadow: rgba(255, 10, 138, 0.14) 0px 14px 34px; }
+
+.report-level span { font-size: clamp(14px, 2.5vw, 19px); font-weight: 800; line-height: 1; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 5px; }
+
+.report-level strong { font-size: clamp(70px, 14vw, 104px); line-height: 0.78; letter-spacing: -0.07em; color: rgb(42, 180, 191); }
+
+.report-summary { max-width: 650px; margin: 14px auto 0px; color: var(--muted); font-size: 16px; line-height: 1.7; }
+
+.level-journey { position: relative; padding: 52px 6px 12px; margin-top: 12px; }
+
+.level-journey__track { position: absolute; left: 5%; right: 5%; top: 76px; height: 8px; border-radius: 999px; background: rgb(223, 241, 243); overflow: hidden; }
+
+.level-journey__fill { height: 100%; background: rgb(42, 180, 191); border-radius: inherit; }
+
+.level-journey__nodes { position: relative; display: grid; grid-template-columns: repeat(10, minmax(0px, 1fr)); gap: 3px; }
+
+.level-node { display: flex; flex-direction: column; align-items: center; gap: 8px; min-width: 0px; }
+
+.level-node__marker { width: 38px; height: 38px; border: 5px solid rgb(223, 241, 243); border-radius: 12px; background: rgb(255, 255, 255); color: rgb(140, 163, 169); display: grid; place-items: center; font-size: 12px; font-weight: 800; z-index: 2; }
+
+.level-node.is-complete .level-node__marker { border-color: rgb(42, 180, 191); color: rgb(42, 180, 191); }
+
+.level-node.is-current .level-node__marker { width: 52px; height: 52px; margin-top: -7px; border: 6px solid var(--pink); border-radius: 50%; color: var(--pink); background: rgb(255, 255, 255); font-size: 15px; box-shadow: rgba(255, 10, 138, 0.14) 0px 8px 18px; }
+
+.level-node__label { color: rgb(140, 162, 168); font-size: 9px; line-height: 1.15; text-align: center; white-space: nowrap; }
+
+.level-journey__here { position: absolute; top: 0px; color: var(--pink); font-size: 12px; font-weight: 800; white-space: nowrap; transform: translateX(-50%); }
+
+.level-journey__here::after { content: ""; display: block; width: 2px; height: 15px; margin: 5px auto 0px; background: var(--pink); }
+
+.report-card { border: 2px solid var(--line); border-radius: 22px; padding: 20px; margin-top: 16px; background: rgb(255, 255, 255); box-shadow: rgba(46, 150, 161, 0.07) 0px 12px 30px; }
+
+.report-card.is-next { border-color: rgb(255, 197, 226); }
+
+.report-card h3 { margin: 0px 0px 12px; color: var(--ink); font-size: 20px; }
+
+.report-card p { margin: 0px; color: var(--muted); line-height: 1.7; }
+
+.report-can-do { margin: 0px; padding-left: 22px; color: var(--muted); }
+
+.report-can-do li { margin: 9px 0px; line-height: 1.55; }
+
+.report-skill { padding: 15px 0px; border-bottom: 1px solid rgb(237, 246, 247); }
+
+.report-skill:first-child { padding-top: 0px; }
+
+.report-skill:last-child { padding-bottom: 0px; border-bottom: 0px; }
+
+.report-skill__head { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 7px; }
+
+.report-skill__head strong { color: var(--ink); }
+
+.report-skill__level { color: rgb(42, 180, 191); font-size: 14px; font-weight: 800; white-space: nowrap; }
+
+.report-skill__track { height: 11px; border-radius: 999px; background: rgb(237, 249, 250); overflow: hidden; }
+
+.report-skill__track i { display: block; height: 100%; border-radius: inherit; background: rgb(169, 231, 235); }
+
+.report-skill__note { margin-top: 7px !important; font-size: 13px; line-height: 1.55 !important; }
+
+.report-skill.is-unassessed .report-skill__head { margin-bottom: 3px; }
+
+.report-skill.is-unassessed .report-skill__level { color: var(--muted); }
+
+.report-skill.is-unassessed .report-skill__track { display: none; }
+
+.report-method { margin: 16px 2px 0px; color: var(--muted); font-size: 12px; line-height: 1.55; }
+
+.report-actions { justify-content: center; }
+
+.report-actions .btn { min-width: 180px; }
+
+@media (max-width: 520px) {
+  .report-screen { padding: 18px 14px !important; border-radius: 22px !important; }
+  .report-level { width: 160px; border-width: 10px; margin-top: 16px; }
+  .report-level strong { font-size: 76px; }
+  .report-level span { font-size: 14px; }
+  .report-summary { font-size: 15px; }
+  .level-journey { padding: 30px 0px 5px; margin-top: 10px; }
+  .level-journey__track, .level-journey__here { display: none; }
+  .level-journey__nodes { grid-template-columns: repeat(5, minmax(0px, 1fr)); column-gap: 4px; row-gap: 28px; }
+  .level-node { position: relative; gap: 7px; }
+  .level-node:not(:nth-child(5)):not(:nth-child(10))::after { content: ""; position: absolute; top: 20px; left: 66%; right: -34%; height: 7px; border-radius: 999px; background: rgb(223, 241, 243); z-index: 0; }
+  .level-node.is-complete:not(:nth-child(5))::after { background: rgb(42, 180, 191); }
+  .level-node__marker { width: 44px; height: 44px; border-width: 5px; border-radius: 13px; font-size: 13px; }
+  .level-node.is-current .level-node__marker { width: 58px; height: 58px; margin-top: -7px; border-width: 6px; font-size: 16px; }
+  .level-node__label { font-size: 10px; }
+  .report-card { padding: 17px; border-radius: 18px; }
+  .report-actions .btn { min-width: 0px; }
+}</style><style data-captured-from="cid:css-fbe7b5a9-fc15-4733-8169-6bef36e33f96@mhtml.blink">@charset "utf-8";
+
+.report-skill__track { display: grid; grid-template-columns: repeat(10, minmax(0px, 1fr)); gap: 5px; height: 13px; overflow: visible; background: transparent; }
+
+.report-skill__track i { display: none !important; }
+
+.report-skill__segment { display: block; min-width: 0px; border-radius: 999px; background: rgb(223, 241, 243); }
+
+.report-skill__segment.is-complete { background: rgb(42, 180, 191); }
+
+.report-skill__segment.is-current { background: rgb(255, 255, 255); box-shadow: rgb(255, 10, 138) 0px 0px 0px 3px inset; }
+
+@media (max-width: 520px) {
+  .report-skill__track { gap: 4px; height: 12px; }
+}</style><style data-captured-from="cid:css-3757d799-baa5-4b2b-82a0-b8b5d6c3b31a@mhtml.blink">@charset "utf-8";
+
+.level-journey.responsive-level-journey { --journey-pad: 56px; --journey-gap: 8px; --journey-marker: 46px; padding: 50px 0px 10px; margin: 14px auto 0px; }
+
+.level-journey.responsive-level-journey .level-journey__nodes { display: grid; grid-template-columns: repeat(var(--journey-count), minmax(0px, 1fr)); gap: var(--journey-gap); align-items: start; }
+
+.level-journey.responsive-level-journey .level-journey__track { left: calc(50% / var(--journey-count)); right: calc(50% / var(--journey-count)); top: 73px; height: 8px; overflow: hidden; }
+
+.level-journey.responsive-level-journey .level-journey__fill { width: calc(var(--journey-current-index) * 100% / (var(--journey-count) - 1)); }
+
+.level-journey.responsive-level-journey .level-journey__here { left: calc((var(--journey-current-index) + 0.5) * 100% / var(--journey-count)); top: 0px; }
+
+.level-journey.responsive-level-journey .level-node { position: relative; gap: 9px; min-width: 0px; }
+
+.level-journey.responsive-level-journey .level-node__marker { width: var(--journey-marker); height: var(--journey-marker); border-width: 5px; border-radius: 14px; font-size: 13px; white-space: nowrap; }
+
+.level-journey.responsive-level-journey .level-node.is-current .level-node__marker { width: 60px; height: 60px; margin-top: -7px; border-width: 7px; font-size: 17px; }
+
+.level-journey.responsive-level-journey .level-node.is-range .level-node__marker { width: auto; min-width: 72px; padding: 0px 11px; }
+
+.level-journey.responsive-level-journey .level-node__label { min-height: 24px; max-width: 100%; font-size: 11px; line-height: 1.15; white-space: normal; }
+
+.level-journey.responsive-level-journey .level-node.is-current .level-node__label { color: var(--pink); font-weight: 800; }
+
+.level-journey.responsive-level-journey .level-node.is-range .level-node__label { font-weight: 700; }
+
+.level-journey.responsive-level-journey .level-node.is-future-range .level-node__marker { color: rgb(140, 163, 169); }
+
+.level-journey.responsive-level-journey.is-narrow { --journey-gap: 10px; --journey-marker: 46px; padding: 10px 0px 4px; }
+
+.level-journey.responsive-level-journey.is-narrow .level-journey__track, .level-journey.responsive-level-journey.is-narrow .level-journey__here { display: none; }
+
+.level-journey.responsive-level-journey.is-narrow .level-journey__nodes { grid-template-columns: repeat(var(--journey-count), minmax(0px, 1fr)); gap: var(--journey-gap); }
+
+.level-journey.responsive-level-journey.is-narrow .level-node::after { display: none !important; }
+
+.level-journey.responsive-level-journey.is-narrow .level-node__marker { width: 44px; height: 44px; border-radius: 13px; }
+
+.level-journey.responsive-level-journey.is-narrow .level-node.is-current .level-node__marker { width: 58px; height: 58px; }
+
+.level-journey.responsive-level-journey.is-narrow .level-node.is-range .level-node__marker { width: auto; min-width: 64px; padding: 0px 8px; font-size: 12px; }
+
+.level-journey.responsive-level-journey.is-narrow .level-node__label { font-size: 10px; }
+</style><style data-captured-from="cid:css-d1e0fa70-437d-48d9-8cef-ecc65840086d@mhtml.blink">@charset "utf-8";
+
+.level-test-sections { display: grid; gap: 18px; }
+
+.level-test-section { border: 2px solid rgb(222, 238, 241); border-radius: 22px; background: rgb(255, 255, 255); padding: 20px; }
+
+.level-test-section h2 { margin: 0px 0px 10px; color: rgb(32, 79, 90); }
+
+.level-test-section p { margin: 0px; color: rgb(111, 136, 144); line-height: 1.65; }
+</style><style data-captured-from="cid:css-14a413f2-4843-4b72-8f10-385cd1bca4f7@mhtml.blink">@charset "utf-8";
+
+.screen-safe-in { animation: 300ms ease both screen-safe-in; }
+
+.screen-safe-in.from-right { animation-name: screen-safe-in-right; }
+
+@keyframes screen-safe-in { 
+  0% { opacity: 0; transform: translateY(8px); }
+  100% { opacity: 1; transform: translateY(0px); }
+}
+
+@keyframes screen-safe-in-right { 
+  0% { opacity: 0; transform: translateX(14px); }
+  100% { opacity: 1; transform: translateX(0px); }
+}</style><style data-captured-from="cid:css-d204e9b7-0495-4ca2-8d08-b635ffcc1cc1@mhtml.blink">@charset "utf-8";
+
+.report-level-guide { margin-top: 22px; padding: 24px; border-radius: 24px; border: 2px solid rgb(214, 239, 242); background: linear-gradient(180deg, rgb(252, 255, 255), rgb(245, 252, 253)); box-shadow: rgba(34, 112, 123, 0.06) 0px 14px 34px; }
+
+.report-level-guide__header { text-align: left; margin-bottom: 22px; }
+
+.report-level-guide__eyebrow { color: rgb(42, 180, 191); font-size: 12px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; }
+
+.report-level-guide__header h3 { margin: 5px 0px 7px; color: var(--ink); font-size: 23px; }
+
+.report-level-guide__header p { margin: 0px; color: var(--muted); line-height: 1.6; }
+
+.report-level-guide__list { position: relative; display: grid; gap: 0px; }
+
+.report-level-guide__svg { position: absolute; inset: 0px; width: 100%; height: 100%; z-index: 0; overflow: visible; pointer-events: none; }
+
+.report-level-guide__svg line { fill: none; stroke-width: 10; stroke-linecap: round; }
+
+.report-level-guide__svg line.is-complete { stroke: rgb(42, 180, 191); }
+
+.report-level-guide__svg line.is-near { stroke: rgb(255, 10, 138); opacity: 0.3; }
+
+.report-level-guide__svg line.is-future { stroke: rgb(223, 241, 243); }
+
+.report-level-guide__row { position: relative; z-index: 1; display: grid; grid-template-columns: 88px minmax(0px, 1fr); gap: 18px; align-items: center; min-height: 136px; padding: 14px 0px; }
+
+.report-level-guide__circle { width: 78px; height: 78px; border-radius: 50%; border: 8px solid rgb(223, 241, 243); background: rgb(255, 255, 255); color: rgb(140, 163, 169); display: grid; place-items: center; font-size: 20px; font-weight: 800; box-shadow: rgba(38, 104, 114, 0.06) 0px 8px 18px; }
+
+.report-level-guide__row.is-complete .report-level-guide__circle { border-color: rgb(42, 180, 191); color: rgb(42, 180, 191); }
+
+.report-level-guide__row.is-adjacent .report-level-guide__circle { border-color: rgb(255, 10, 138); color: rgb(255, 10, 138); box-shadow: rgba(255, 10, 138, 0.13) 0px 9px 22px; }
+
+.report-level-guide__row.is-current .report-level-guide__circle { width: 88px; height: 88px; border-width: 10px; border-color: rgb(255, 10, 138); color: rgb(255, 10, 138); box-shadow: rgba(255, 10, 138, 0.18) 0px 10px 26px; }
+
+.report-level-guide__description { padding: 16px 18px; border-radius: 18px; background: rgba(255, 255, 255, 0.82); border: 1px solid rgb(230, 241, 243); }
+
+.report-level-guide__row.is-current .report-level-guide__description { border-color: rgb(255, 163, 204); background: rgb(255, 250, 253); }
+
+.report-level-guide__row.is-adjacent .report-level-guide__description { border-color: rgb(255, 213, 233); background: rgb(255, 252, 254); }
+
+.report-level-guide__description h4 { margin: 4px 0px 6px; color: var(--ink); font-size: 19px; }
+
+.report-level-guide__description p { margin: 0px; color: var(--muted); line-height: 1.6; }
+
+.report-level-guide__recommendation { display: inline-flex; align-items: center; border-radius: 999px; padding: 5px 9px; font-size: 11px; font-weight: 800; }
+
+.report-level-guide__recommendation.is-main { background: rgb(255, 10, 138); color: rgb(255, 255, 255); }
+
+.report-level-guide__recommendation.is-soft { background: rgb(255, 229, 241); color: rgb(167, 50, 105); }
+
+.report-level-guide__note { margin-top: 8px !important; color: rgb(155, 92, 121) !important; font-size: 13px; }
+
+@media (max-width: 560px) {
+  .report-level-guide { padding: 19px 14px; border-radius: 20px; }
+  .report-level-guide__header h3 { font-size: 21px; }
+  .report-level-guide__row { grid-template-columns: 68px minmax(0px, 1fr); gap: 12px; min-height: 128px; }
+  .report-level-guide__circle { width: 60px; height: 60px; border-width: 7px; font-size: 16px; }
+  .report-level-guide__row.is-current .report-level-guide__circle { width: 66px; height: 66px; border-width: 8px; }
+  .report-level-guide__description { padding: 14px; }
+  .report-level-guide__description h4 { font-size: 17px; }
+  .report-level-guide__description p { font-size: 14px; }
+  .report-level-guide__svg line { stroke-width: 8; }
+}</style><style data-captured-from="cid:css-1649ddfc-1ca0-4c06-b911-2642d48da508@mhtml.blink">@charset "utf-8";
+
+:root { --cyan: #2cb7c1; --pink: #ff0a8a; --ink: #204f5a; --muted: #6f8890; --line: #dbeef1; --soft: #f4fafb; }
+
+* { box-sizing: border-box; }
+
+html, body { margin: 0px; min-height: 100%; font-family: Poppins, system-ui, sans-serif; color: var(--ink); }
+
+body { background: linear-gradient(rgb(101, 213, 221) 0px, rgb(101, 213, 221) 300px, rgb(239, 252, 253) 300px, rgb(239, 252, 253) 100%); }
+
+button, input, select { font: inherit; }
+
+.app-shell { width: min(1120px, 100%); margin: 0px auto; padding: 22px 18px 58px; }
+
+.app-header { display: flex; align-items: center; gap: 14px; margin-bottom: 20px; color: rgb(255, 255, 255); }
+
+.brand-logo { width: 50px; height: 50px; object-fit: contain; background: rgb(255, 255, 255); border-radius: 15px; padding: 4px; box-shadow: rgba(0, 0, 0, 0.12) 0px 8px 22px; }
+
+.brand-copy { flex: 1 1 0%; }
+
+.brand-copy strong { display: block; font-size: 21px; }
+
+.brand-copy span { display: block; font-size: 13px; opacity: 0.9; }
+
+.language-segmented { display: flex; padding: 3px; border-radius: 16px; background: rgba(255, 255, 255, 0.28); }
+
+.language-segmented button { border: 0px; border-radius: 13px; padding: 9px 13px; background: transparent; color: rgb(255, 255, 255); font-weight: 800; cursor: pointer; }
+
+.language-segmented button.is-active { background: rgb(255, 255, 255); color: var(--pink); }
+
+.header-button { border: 0px; border-radius: 15px; padding: 10px 14px; background: rgb(255, 255, 255); color: var(--pink); font-weight: 800; cursor: pointer; }
+
+.language-legacy-trigger { display: none; }
+
+.app-main { display: grid; }
+
+.screen { width: 100%; margin: 0px auto; background: rgb(255, 255, 255); border: 2px solid var(--line); border-radius: 30px; padding: clamp(22px, 5vw, 42px); box-shadow: rgba(28, 115, 123, 0.16) 0px 18px 50px; }
+
+.actions { display: flex; gap: 12px; margin-top: 24px; flex-wrap: wrap; }
+
+.btn { border: 0px; border-radius: 16px; min-height: 48px; padding: 0px 20px; font-weight: 800; cursor: pointer; }
+
+.btn-primary { background: var(--cyan); color: rgb(255, 255, 255); }
+
+.btn-ghost { background: rgb(255, 240, 247); color: rgb(167, 60, 109); }
+
+footer { text-align: center; margin-top: 18px; color: rgba(32, 79, 90, 0.65); font-size: 12px; }
+
+@media (max-width: 600px) {
+  .app-shell { padding: 12px 9px 38px; }
+  .app-header { margin-bottom: 13px; }
+  .brand-logo { width: 44px; height: 44px; }
+  .brand-copy strong { font-size: 18px; }
+  .brand-copy span { font-size: 11px; }
+  .language-segmented { display: none; }
+  .language-legacy-trigger { display: block; }
+  .screen { border-radius: 24px; }
+}</style><style data-captured-from="cid:css-eea4941c-8d2e-429c-858a-a938472d7b2f@mhtml.blink">@charset "utf-8";
+
+.reading-passage { border-radius: 20px; padding: 18px; background: rgb(247, 252, 253); border: 2px solid rgb(227, 241, 243); line-height: 1.7; color: rgb(59, 96, 105); }
+
+.reading-passage.emoji-passage { text-align: center; font-size: 56px; line-height: 1.2; }
+</style><style data-captured-from="cid:css-ae742f56-6b86-4d5d-b46c-a1b42bed3b29@mhtml.blink">@charset "utf-8";
+
+.welcome-screen { text-align: center; }
+
+.welcome-screen h1 { font-size: clamp(34px, 7vw, 58px); margin: 0px; color: var(--ink); }
+
+.welcome-screen p { max-width: 680px; margin: 14px auto 0px; color: var(--muted); font-size: 17px; line-height: 1.7; }
+</style><style data-captured-from="cid:css-f65cb7c6-b01d-4247-a04f-c38fc4f19194@mhtml.blink">@charset "utf-8";
+
+body { background: linear-gradient(rgb(101, 213, 221) 0px, rgb(101, 213, 221) 300px, rgb(239, 252, 253) 300px, rgb(239, 252, 253) 100%); }
+
+.screen { background: rgb(255, 255, 255); }
+
+.btn-primary { box-shadow: rgba(44, 183, 193, 0.2) 0px 8px 18px; }
+</style><style data-captured-from="cid:css-d4717449-5f2b-4891-8053-a70a90be5f61@mhtml.blink">@charset "utf-8";
+
+.debug-level-meter { position: fixed; right: 14px; bottom: 14px; z-index: 9999; border-radius: 16px; padding: 10px 12px; background: rgba(32, 79, 90, 0.92); color: rgb(255, 255, 255); font-size: 12px; box-shadow: rgba(0, 0, 0, 0.18) 0px 10px 28px; }
+</style><style data-captured-from="cid:css-45e594ff-d70b-4dcf-bc04-f45bf19c2b95@mhtml.blink">@charset "utf-8";
+
+body { background: linear-gradient(rgb(101, 213, 221) 0px, rgb(101, 213, 221) 300px, rgb(239, 252, 253) 300px, rgb(239, 252, 253) 100%); }
+
+.app-shell { min-height: 100vh; }
+</style><style data-captured-from="cid:css-8cda9da1-4acf-4032-b607-8efb4aa0aacc@mhtml.blink">@charset "utf-8";
+
+.question-card { padding: 24px; }
+
+.question-title { font-size: clamp(24px, 4.5vw, 36px); margin: 0px 0px 16px; line-height: 1.25; }
+
+.choice-grid { display: grid; gap: 12px; }
+
+.choice { border: 2px solid rgb(223, 239, 242); border-radius: 17px; padding: 14px 16px; background: rgb(255, 255, 255); color: rgb(32, 79, 90); cursor: pointer; text-align: left; }
+
+.choice.selected { border-color: rgb(44, 183, 193); }
+</style><style data-captured-from="cid:css-9006f40d-491b-4e6c-9924-f49adb61c4d3@mhtml.blink">@charset "utf-8";
+
+.listening-compact { display: flex; align-items: center; gap: 12px; }
+
+.listening-compact button { min-width: 130px; }
+</style><style data-captured-from="cid:css-07357e50-7176-4759-bc69-24b477f45e2f@mhtml.blink">@charset "utf-8";
+
+.loading-screen { text-align: center; padding: 44px 24px; }
+
+.loading-spinner { width: 48px; height: 48px; margin: 0px auto 18px; border-radius: 50%; border: 5px solid rgb(223, 241, 243); border-top-color: rgb(44, 183, 193); animation: 800ms linear infinite spin; }
+
+@keyframes spin { 
+  to { transform: rotate(360deg); }
+}</style><style data-captured-from="cid:css-28f620ca-bbb8-425a-a6b9-c4fd012be1c8@mhtml.blink">@charset "utf-8";
+
+.result-title { text-align: center; color: var(--ink); }
+</style><meta content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover" name="viewport"/><meta content="noindex,nofollow" name="robots"/><meta content="no-cache, no-store, must-revalidate" http-equiv="Cache-Control"/><meta content="no-cache" http-equiv="Pragma"/><meta content="0" http-equiv="Expires"/><title>Willena English Level Test</title><link href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQAAAAEACAYAAABccqhmAAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAAsTAAALEwEAmpwYAAAgAElEQVR4nOzdeXxV5b3//9dlJ5CEkIQEQhIKYrMIFgVBUVQUKxYHtFooLlr7uFpbW2tdbR1H7cN66Nba1tp+rbYVx5m+9s4vo0ZFUUAEBBEWmISEkIQEkgAJ5L73H7/MZTchJJE5J3fOefzcfr3e5z3vec7z2Xucc+65h0oIIZAAAAAAALwQdQAAAAAAAFQGAQAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRX/4H5yT0Y6H5J2gAAAABJRU5ErkJggg==" rel="icon"/><link crossorigin="" href="https://fonts.gstatic.com/" rel="preconnect"/><link href="https://fonts.googleapis.com/" rel="preconnect"/><meta content="staging.willenaenglish.com" name="saved-from"/></head><body class="meter-is-hidden"><div class="app-shell"><header class="app-header"><img alt="Willena English Academy" class="brand-logo" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQAAAAEACAYAAABccqhmAAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAAsTAAALEwEAmpwYAAAgAElEQVR4nOzdeXxV5b3//9dlJ5CEkIQEQhIKYrMIFgVBUVQUKxYHtFooLlr7uFpbW2tdbR1H7cN66Nba1tp+rbYVx5m+9s4vo0ZFUUAEBBEWmISEkIQEkgAJ5L73H7/MZTchJJE5J3fOefzcfr3e5z3vec7z2Xucc+65h0oIIZAAAAAAALwQdQAAAAAAAFQGAQAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRAXAAAAAAcFEBAAAAAABwUQEAAAAAAHBRX/4H5yT0Y6H5J2gAAAABJRU5ErkJggg=="/><div class="brand-copy"><strong>Willena English</strong><span id="brandSubtitle">무료 영어 레벨 테스트</span></div><div aria-label="Language" class="language-segmented" role="group"><button data-language-choice="ko" type="button">한국어</button><button data-language-choice="en" type="button">English</button></div><button class="header-button language-legacy-trigger" id="languageBtn" type="button">English</button></header><main aria-live="polite" class="app-main" id="app"><section class="screen report-screen">Loading report…</section></main><footer id="footerText">Willena English · 스테이징 진단 테스트</footer></div><script src="./shared-report.js?v=20260802-1"></script><script src="https://staging.willenaenglish.com/free-level-test/js/segmented-skill-report.js?v=20260731-1"></script><script src="https://staging.willenaenglish.com/free-level-test/js/responsive-report-journey.js?v=20260801-2"></script><script src="https://staging.willenaenglish.com/free-level-test/js/report-level-guide.js?v=20260802-1"></script></body></html>
