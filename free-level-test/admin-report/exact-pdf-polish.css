@@ -1,7 +1,24 @@
 /* PDF-export-only refinements. This file does not affect the live student/admin report. */
 .willena-pdf-stage,.willena-pdf-page{background:#fff!important}
 
-/* Keep the current-level label fully above the circle. */
+/* Page 1: increase separation between the major groups without changing their order. */
+.willena-pdf-page:nth-child(1) .willena-pdf-title-line{margin-bottom:30px!important}
+.willena-pdf-page:nth-child(1) .willena-pdf-hero-label{margin:12px 0 14px!important}
+.willena-pdf-page:nth-child(1) .willena-pdf-orbit{
+  margin:0 auto 32px!important;
+  box-shadow:
+    0 0 0 8px #fff,
+    0 0 0 10px rgba(242,10,135,.16),
+    0 0 0 16px #fff,
+    0 0 0 18px rgba(47,182,193,.14),
+    0 0 0 24px #fff,
+    0 0 0 26px rgba(242,10,135,.08)!important;
+}
+.willena-pdf-page:nth-child(1) .willena-pdf-summary{margin:0 auto 30px!important}
+.willena-pdf-page:nth-child(1) .willena-pdf-hjourney{height:136px!important;margin:10px 26px 30px!important}
+.willena-pdf-page:nth-child(1) .willena-pdf-two-cards{margin-top:18px!important}
+
+/* Keep the current-level label fully above the journey circle. */
 .willena-pdf-hnode.current:before{
   top:-42px!important;
   bottom:auto!important;
