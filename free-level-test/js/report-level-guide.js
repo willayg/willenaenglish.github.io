@@ -24,7 +24,11 @@ function internalLevel(){
  var prefix=(box.querySelector('span')||{}).textContent||'';
  var value=Number(((box.querySelector('strong')||{}).textContent||'').trim());
  if(!Number.isFinite(value))return null;
- return /starter|스타터/i.test(prefix)?value:value+2;
+ return Math.max(1,Math.min(12,/starter|스타터/i.test(prefix)?value:value+2));
+}
+function windowStages(best){
+ var start=Math.max(1,Math.min(8,best-2));
+ return [start,start+1,start+2,start+3,start+4];
 }
 function recommendation(stage,best,ko){
  if(stage===best)return '<span class="report-level-guide__recommendation is-main">'+(ko?'추천 시작 레벨':'Recommended starting level')+'</span>';
@@ -38,12 +42,13 @@ function note(stage,best,ko){
  return '';
 }
 function markup(best,ko){
- var rows=levels.map(function(item,index){
-  var stage=index+1;
-  var cls=stage===best?'is-current':Math.abs(stage-best)===1?'is-adjacent':stage<best-1?'is-complete':'';
+ var shown=windowStages(best);
+ var rows=shown.map(function(stage){
+  var item=levels[stage-1];
+  var cls=stage===best?'is-current':Math.abs(stage-best)===1?'is-adjacent':stage<best?'is-complete':'';
   return '<article class="report-level-guide__row '+cls+'"><div class="report-level-guide__circle" data-guide-stage="'+stage+'">'+item.short+'</div><div class="report-level-guide__description">'+recommendation(stage,best,ko)+'<h4>'+(ko?item.ko:item.en)+'</h4><p>'+(ko?item.koText:item.enText)+'</p>'+note(stage,best,ko)+'</div></article>';
  }).join('');
- return '<section class="report-level-guide" data-guide-best="'+best+'"><header class="report-level-guide__header"><span class="report-level-guide__eyebrow">'+(ko?'레벨 안내':'Level guide')+'</span><h3>'+(ko?'각 레벨에서 할 수 있는 것':'What students can do at each level')+'</h3><p>'+(ko?'추천 레벨과 가까운 두 단계는 가능한 대안으로 부드럽게 표시됩니다.':'The recommended level and its two nearest alternatives are highlighted to show the realistic placement range.')+'</p></header><div class="report-level-guide__list"><svg class="report-level-guide__svg" aria-hidden="true"><line class="is-complete"></line><line class="is-near"></line><line class="is-future"></line></svg>'+rows+'</div></section>';
+ return '<section class="report-level-guide" data-guide-best="'+best+'" data-guide-first="'+shown[0]+'" data-guide-last="'+shown[4]+'"><header class="report-level-guide__header"><span class="report-level-guide__eyebrow">'+(ko?'레벨 안내':'Level guide')+'</span><h3>'+(ko?'현재 레벨을 중심으로 다섯 단계':'Five levels around the result')+'</h3><p>'+(ko?'추천 레벨과 가까운 단계만 표시합니다.':'Only the levels closest to the recommendation are shown.')+'</p></header><div class="report-level-guide__list"><svg class="report-level-guide__svg" aria-hidden="true"><line class="is-complete"></line><line class="is-near"></line><line class="is-future"></line></svg>'+rows+'</div></section>';
 }
 function centre(list,stage){
  var el=list.querySelector('[data-guide-stage="'+stage+'"]');
@@ -51,18 +56,24 @@ function centre(list,stage){
  var a=list.getBoundingClientRect(),b=el.getBoundingClientRect();
  return{x:b.left-a.left+b.width/2,y:b.top-a.top+b.height/2};
 }
-function setLine(line,a,b){if(!line||!a||!b)return;line.setAttribute('x1',a.x);line.setAttribute('y1',a.y);line.setAttribute('x2',b.x);line.setAttribute('y2',b.y)}
+function setLine(line,a,b){
+ if(!line||!a||!b){if(line)line.setAttribute('visibility','hidden');return}
+ line.removeAttribute('visibility');
+ line.setAttribute('x1',a.x);line.setAttribute('y1',a.y);line.setAttribute('x2',b.x);line.setAttribute('y2',b.y);
+}
 function draw(section){
  if(!section)return;
  var list=section.querySelector('.report-level-guide__list');
  var svg=section.querySelector('svg');
  var best=Number(section.dataset.guideBest)||1;
- var low=Math.max(1,best-1),high=Math.min(12,best+1);
+ var first=Number(section.dataset.guideFirst)||1;
+ var last=Number(section.dataset.guideLast)||5;
  if(!list||!svg)return;
  svg.setAttribute('viewBox','0 0 '+list.clientWidth+' '+list.clientHeight);
- setLine(svg.querySelector('.is-complete'),centre(list,1),centre(list,low));
+ var low=Math.max(first,best-1),high=Math.min(last,best+1);
+ setLine(svg.querySelector('.is-complete'),centre(list,first),centre(list,low));
  setLine(svg.querySelector('.is-near'),centre(list,low),centre(list,high));
- setLine(svg.querySelector('.is-future'),centre(list,high),centre(list,12));
+ setLine(svg.querySelector('.is-future'),centre(list,high),centre(list,last));
 }
 function inject(){
  var screen=root.querySelector('.report-screen');
@@ -74,10 +85,8 @@ function inject(){
  if(existing&&Number(existing.dataset.guideBest)===best&&existing.dataset.guideLang===(ko?'ko':'en')){draw(existing);return}
  if(existing)existing.remove();
  var actions=screen.querySelector('.report-actions');
- var holder=document.createElement('div');
- holder.innerHTML=markup(best,ko);
- var section=holder.firstElementChild;
- section.dataset.guideLang=ko?'ko':'en';
+ var holder=document.createElement('div');holder.innerHTML=markup(best,ko);
+ var section=holder.firstElementChild;section.dataset.guideLang=ko?'ko':'en';
  if(actions)screen.insertBefore(section,actions);else screen.appendChild(section);
  requestAnimationFrame(function(){draw(section)});
 }
