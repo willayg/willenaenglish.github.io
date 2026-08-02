@@ -1,0 +1,26 @@
+/* Draw the vertical journey only between visible rows. */
+.report-level-guide__svg{display:none!important}
+.report-level-guide__list{position:relative}
+.report-level-guide__row{position:relative}
+.report-level-guide__row::before{
+ content:"";
+ position:absolute;
+ z-index:0;
+ left:44px;
+ top:50%;
+ width:8px;
+ height:100%;
+ border-radius:999px;
+ background:#dceff1;
+ transform:translateX(-50%);
+ pointer-events:none;
+}
+.report-level-guide__row.is-complete::before{background:#2ab4bf}
+.report-level-guide__row.is-adjacent::before,
+.report-level-guide__row.is-current::before{background:#f3a1cb}
+.report-level-guide__row:last-child::before{display:none}
+.report-level-guide__circle,
+.report-level-guide__description{position:relative;z-index:2}
+@media(max-width:620px){
+ .report-level-guide__row::before{left:32px;width:6px}
+}
