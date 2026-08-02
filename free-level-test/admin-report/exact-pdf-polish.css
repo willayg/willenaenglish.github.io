@@ -1,0 +1,32 @@
+/* PDF-export-only refinements. This file does not affect the live student/admin report. */
+.willena-pdf-stage,.willena-pdf-page{background:#fff!important}
+.willena-pdf-page{box-shadow:none!important}
+
+/* Page 1: match the approved reference's open vertical rhythm. */
+.willena-pdf-page:nth-child(1) .willena-pdf-title-line{margin-bottom:30px}
+.willena-pdf-page:nth-child(1) .willena-pdf-hero-label{margin-top:10px;margin-bottom:12px}
+.willena-pdf-page:nth-child(1) .willena-pdf-orbit{margin-bottom:28px}
+.willena-pdf-page:nth-child(1) .willena-pdf-summary{margin-bottom:30px;line-height:1.9}
+.willena-pdf-page:nth-child(1) .willena-pdf-hjourney{height:140px;margin-top:10px;margin-bottom:28px}
+.willena-pdf-page:nth-child(1) .willena-pdf-two-cards{margin-top:16px}
+
+/* Keep the current-level label clearly outside the circle. */
+.willena-pdf-hnode.current:before{top:-42px!important;bottom:auto!important;left:50%!important;transform:translateX(-50%)!important;line-height:1!important}
+.willena-pdf-hnode.current:after{top:-21px!important;bottom:auto!important;left:50%!important;height:18px!important}
+
+/* Page 2: give every skill row and the interpretation box breathing room. */
+.willena-pdf-page:nth-child(2) .willena-pdf-heading{margin-top:12px;margin-bottom:36px}
+.willena-pdf-page:nth-child(2) .willena-pdf-skill{padding-top:11px;padding-bottom:16px}
+.willena-pdf-page:nth-child(2) .willena-pdf-result{bottom:82px;height:112px}
+
+/* Page 3: preserve the five-level print window while increasing separation. */
+.willena-pdf-page:nth-child(3) .willena-pdf-heading{margin-top:12px;margin-bottom:10px}
+.willena-pdf-page:nth-child(3) .willena-pdf-subtitle{margin-bottom:30px}
+.willena-pdf-page:nth-child(3) .willena-pdf-vrow{min-height:150px}
+.willena-pdf-page:nth-child(3) .willena-pdf-vcard{min-height:118px;padding-top:35px;padding-bottom:22px}
+
+/* Page 4: maintain the same vertical cadence as the signed-off reference. */
+.willena-pdf-page:nth-child(4) .willena-pdf-heading{margin-top:12px;margin-bottom:10px}
+.willena-pdf-page:nth-child(4) .willena-pdf-subtitle{margin-bottom:30px}
+.willena-pdf-page:nth-child(4) .willena-pdf-other-row{min-height:88px}
+.willena-pdf-page:nth-child(4) .willena-pdf-other-card{height:72px;padding-top:15px;padding-bottom:15px}
