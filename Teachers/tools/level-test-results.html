@@ -11,37 +11,56 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="./level-test-results.css?v=20260802-2">
+<link rel="stylesheet" href="./level-test-results.css?v=20260802-3">
 </head>
 <body>
-<header class="app-header">
-  <img class="logo" src="/Assets/Images/Logo.png" alt="Willena English">
-  <div class="brand"><strong>Willena English</strong><span>Level Test Results</span></div>
-  <div class="header-actions">
-    <button id="backBtn" class="btn btn-soft"><span class="text">Teacher App</span> ←</button>
-    <button id="refreshBtn" class="btn btn-primary"><span class="text">Refresh</span> ↻</button>
-  </div>
-</header>
-<main class="shell fade-in">
-  <section class="hero">
-    <div><h1>Prospective Students</h1><p>Open the student’s full placement report or review their individual answers.</p></div>
-    <div class="stats">
-      <div class="stat"><strong id="totalStat">—</strong><span>Candidates</span></div>
-      <div class="stat"><strong id="completeStat">—</strong><span>Completed</span></div>
-      <div class="stat"><strong id="todayStat">—</strong><span>Today</span></div>
+<div class="tool-shell">
+  <header class="tool-header">
+    <div class="tool-brand">
+      <img src="/Assets/Images/Logo.png" alt="Willena English">
+      <div><strong>Level Test Results</strong><span>Willena English</span></div>
     </div>
-  </section>
-  <section class="filters">
-    <input id="searchInput" class="control" placeholder="Search name, school or grade">
-    <select id="statusFilter" class="control"><option value="all">All statuses</option><option value="completed">Completed</option><option value="started">Started</option></select>
-    <select id="gradeFilter" class="control"><option value="all">All grades</option></select>
-  </section>
-  <section class="workspace">
-    <aside class="card"><div class="card-head"><h2>Students</h2><span id="visibleCount"></span></div><div id="studentList" class="student-list"><div class="loading">Loading results…</div></div></aside>
-    <section class="card detail"><div id="detail"><div class="empty">Select a student.</div></div></section>
-  </section>
-</main>
+    <div class="tool-header-actions">
+      <button id="refreshBtn" class="icon-btn" type="button" aria-label="Refresh">↻</button>
+      <button id="teacherHomeBtn" class="icon-btn" type="button" aria-label="Teacher tools">☰</button>
+    </div>
+  </header>
+
+  <main class="tool-card">
+    <section id="listView" class="view is-active" aria-labelledby="listTitle">
+      <div class="view-heading">
+        <div><p class="eyebrow">Placement tests</p><h1 id="listTitle">Students</h1></div>
+        <span id="visibleCount" class="count-pill">0</span>
+      </div>
+
+      <div class="filter-bar">
+        <label class="search-box"><span>⌕</span><input id="searchInput" type="search" placeholder="Search student, school or grade"></label>
+        <select id="statusFilter" class="filter-select" aria-label="Status filter">
+          <option value="all">All statuses</option>
+          <option value="completed">Completed</option>
+          <option value="started">Started</option>
+        </select>
+        <select id="gradeFilter" class="filter-select" aria-label="Grade filter"><option value="all">All grades</option></select>
+      </div>
+
+      <div id="studentList" class="student-grid"><div class="state-card">Loading students…</div></div>
+    </section>
+
+    <section id="answersView" class="view" aria-labelledby="answersTitle">
+      <div class="answer-topbar">
+        <button id="answersBackBtn" class="back-button" type="button">← Back to students</button>
+        <div id="answerScore" class="score-pill"></div>
+      </div>
+      <div class="answer-heading">
+        <p class="eyebrow">Answer review</p>
+        <h1 id="answersTitle">Student answers</h1>
+        <p id="answerStudentMeta"></p>
+      </div>
+      <div id="answerList" class="answer-list"></div>
+    </section>
+  </main>
+</div>
 <script src="./level-test-cookie-auth.js?v=20260802-3"></script>
-<script src="./level-test-results.js?v=20260802-5"></script>
+<script src="./level-test-results.js?v=20260802-6"></script>
 </body>
 </html>
