@@ -18,13 +18,17 @@ var levels=[
  {short:'10',en:'Level 10',ko:'레벨 10',enText:'Can handle high-school bridge English, abstract vocabulary, dense texts, implied conclusions and nuanced meaning.',koText:'고등학교 진입 수준의 영어, 추상 어휘, 밀도 높은 글, 함축된 결론과 미묘한 의미를 다룰 수 있습니다.'}
 ];
 
-function internalLevel(){
+function fallbackInternalLevel(){
  var box=root.querySelector('.report-screen .report-level');
  if(!box)return null;
  var prefix=(box.querySelector('span')||{}).textContent||'';
  var value=Number(((box.querySelector('strong')||{}).textContent||'').trim());
  if(!Number.isFinite(value))return null;
  return Math.max(1,Math.min(12,/starter|스타터/i.test(prefix)?value:value+2));
+}
+function internalLevel(){
+ var stored=Number(window.WillenaStoredInternalLevel);
+ return Number.isFinite(stored)&&stored>0?Math.max(1,Math.min(12,stored)):fallbackInternalLevel();
 }
 function windowStages(best){
  var start=Math.max(1,Math.min(8,best-2));
@@ -46,55 +50,34 @@ function markup(best,ko){
  var rows=shown.map(function(stage){
   var item=levels[stage-1];
   var cls=stage===best?'is-current':Math.abs(stage-best)===1?'is-adjacent':stage<best?'is-complete':'';
-  return '<article class="report-level-guide__row '+cls+'"><div class="report-level-guide__circle" data-guide-stage="'+stage+'">'+item.short+'</div><div class="report-level-guide__description">'+recommendation(stage,best,ko)+'<h4>'+(ko?item.ko:item.en)+'</h4><p>'+(ko?item.koText:item.enText)+'</p>'+note(stage,best,ko)+'</div></article>';
+  return '<article class="report-level-guide__row '+cls+'" data-guide-stage="'+stage+'"><div class="report-level-guide__circle">'+item.short+'</div><div class="report-level-guide__description">'+recommendation(stage,best,ko)+'<h4>'+(ko?item.ko:item.en)+'</h4><p>'+(ko?item.koText:item.enText)+'</p>'+note(stage,best,ko)+'</div></article>';
  }).join('');
- return '<section class="report-level-guide" data-guide-best="'+best+'" data-guide-first="'+shown[0]+'" data-guide-last="'+shown[4]+'"><header class="report-level-guide__header"><span class="report-level-guide__eyebrow">'+(ko?'레벨 안내':'Level guide')+'</span><h3>'+(ko?'현재 레벨을 중심으로 다섯 단계':'Five levels around the result')+'</h3><p>'+(ko?'추천 레벨과 가까운 단계만 표시합니다.':'Only the levels closest to the recommendation are shown.')+'</p></header><div class="report-level-guide__list"><svg class="report-level-guide__svg" aria-hidden="true"><line class="is-complete"></line><line class="is-near"></line><line class="is-future"></line></svg>'+rows+'</div></section>';
+ return '<section class="report-level-guide" data-guide-best="'+best+'" data-guide-lang="'+(ko?'ko':'en')+'"><header class="report-level-guide__header"><span class="report-level-guide__eyebrow">'+(ko?'레벨 안내':'Level guide')+'</span><h3>'+(ko?'현재 레벨을 중심으로 다섯 단계':'Five levels around the result')+'</h3><p>'+(ko?'추천 레벨과 가까운 단계만 표시합니다.':'Only the levels closest to the recommendation are shown.')+'</p></header><div class="report-level-guide__list">'+rows+'</div></section>';
 }
-function centre(list,stage){
- var el=list.querySelector('[data-guide-stage="'+stage+'"]');
- if(!el)return null;
- var a=list.getBoundingClientRect(),b=el.getBoundingClientRect();
- return{x:b.left-a.left+b.width/2,y:b.top-a.top+b.height/2};
-}
-function setLine(line,a,b){
- if(!line||!a||!b){if(line)line.setAttribute('visibility','hidden');return}
- line.removeAttribute('visibility');
- line.setAttribute('x1',a.x);line.setAttribute('y1',a.y);line.setAttribute('x2',b.x);line.setAttribute('y2',b.y);
-}
-function draw(section){
- if(!section)return;
- var list=section.querySelector('.report-level-guide__list');
- var svg=section.querySelector('svg');
- var best=Number(section.dataset.guideBest)||1;
- var first=Number(section.dataset.guideFirst)||1;
- var last=Number(section.dataset.guideLast)||5;
- if(!list||!svg)return;
- svg.setAttribute('viewBox','0 0 '+list.clientWidth+' '+list.clientHeight);
- var low=Math.max(first,best-1),high=Math.min(last,best+1);
- setLine(svg.querySelector('.is-complete'),centre(list,first),centre(list,low));
- setLine(svg.querySelector('.is-near'),centre(list,low),centre(list,high));
- setLine(svg.querySelector('.is-future'),centre(list,high),centre(list,last));
-}
-function inject(){
+function inject(force){
  var screen=root.querySelector('.report-screen');
  if(!screen)return;
  var best=internalLevel();
  if(!best)return;
  var ko=document.documentElement.lang==='ko';
  var existing=screen.querySelector('.report-level-guide');
- if(existing&&Number(existing.dataset.guideBest)===best&&existing.dataset.guideLang===(ko?'ko':'en')){draw(existing);return}
+ if(!force&&existing&&Number(existing.dataset.guideBest)===best&&existing.dataset.guideLang===(ko?'ko':'en'))return;
  if(existing)existing.remove();
  var actions=screen.querySelector('.report-actions');
- var holder=document.createElement('div');holder.innerHTML=markup(best,ko);
- var section=holder.firstElementChild;section.dataset.guideLang=ko?'ko':'en';
+ var holder=document.createElement('div');
+ holder.innerHTML=markup(best,ko);
+ var section=holder.firstElementChild;
  if(actions)screen.insertBefore(section,actions);else screen.appendChild(section);
- requestAnimationFrame(function(){draw(section)});
 }
 var scheduled=false;
-function schedule(){if(scheduled)return;scheduled=true;requestAnimationFrame(function(){scheduled=false;inject()})}
-new MutationObserver(schedule).observe(root,{childList:true,subtree:true});
-new MutationObserver(schedule).observe(document.documentElement,{attributes:true,attributeFilter:['lang']});
-window.addEventListener('resize',schedule);
-if(window.ResizeObserver)new ResizeObserver(schedule).observe(root);
-schedule();
+function schedule(force){
+ if(scheduled&&!force)return;
+ scheduled=true;
+ requestAnimationFrame(function(){scheduled=false;inject(Boolean(force))});
+}
+new MutationObserver(function(){schedule(false)}).observe(root,{childList:true,subtree:true});
+new MutationObserver(function(){schedule(true)}).observe(document.documentElement,{attributes:true,attributeFilter:['lang']});
+window.addEventListener('willena:stored-level-ready',function(){schedule(true)});
+window.addEventListener('resize',function(){schedule(false)},{passive:true});
+schedule(false);
 })();
