@@ -27,7 +27,7 @@ function fallbackInternalLevel(){
  return Math.max(1,Math.min(12,/starter|스타터/i.test(prefix)?value:value+2));
 }
 function internalLevel(){
- var stored=Number(window.WillenaStoredInternalLevel);
+ var stored=Number(window.WillenaStoredInternalLevel||window.WillenaInternalResultLevel);
  return Number.isFinite(stored)&&stored>0?Math.max(1,Math.min(12,stored)):fallbackInternalLevel();
 }
 function windowStages(best){
@@ -52,7 +52,18 @@ function markup(best,ko){
   var cls=stage===best?'is-current':Math.abs(stage-best)===1?'is-adjacent':stage<best?'is-complete':'';
   return '<article class="report-level-guide__row '+cls+'" data-guide-stage="'+stage+'"><div class="report-level-guide__circle">'+item.short+'</div><div class="report-level-guide__description">'+recommendation(stage,best,ko)+'<h4>'+(ko?item.ko:item.en)+'</h4><p>'+(ko?item.koText:item.enText)+'</p>'+note(stage,best,ko)+'</div></article>';
  }).join('');
- return '<section class="report-level-guide" data-guide-best="'+best+'" data-guide-lang="'+(ko?'ko':'en')+'"><header class="report-level-guide__header"><span class="report-level-guide__eyebrow">'+(ko?'레벨 안내':'Level guide')+'</span><h3>'+(ko?'현재 레벨을 중심으로 다섯 단계':'Five levels around the result')+'</h3><p>'+(ko?'추천 레벨과 가까운 단계만 표시합니다.':'Only the levels closest to the recommendation are shown.')+'</p></header><div class="report-level-guide__list">'+rows+'</div></section>';
+ return '<section class="report-level-guide willena-five-level-guide" data-guide-best="'+best+'" data-guide-lang="'+(ko?'ko':'en')+'"><header class="report-level-guide__header"><span class="report-level-guide__eyebrow">'+(ko?'레벨 안내':'Level guide')+'</span><h3>'+(ko?'현재 레벨을 중심으로 다섯 단계':'Five levels around the result')+'</h3><p>'+(ko?'추천 레벨과 가까운 단계만 표시합니다.':'Only the levels closest to the recommendation are shown.')+'</p></header><div class="report-level-guide__list">'+rows+'</div></section>';
+}
+function looksLikeLegacyGuide(el){
+ if(!el||el.classList.contains('willena-five-level-guide'))return false;
+ var t=(el.textContent||'').replace(/\s+/g,' ');
+ return /레벨 안내|Level guide/i.test(t)&&(/스타터 1|Starter 1/i.test(t)||el.querySelectorAll('article,.level-guide-item,.level-step').length>4);
+}
+function removeLegacyGuides(screen){
+ screen.querySelectorAll('.report-level-guide,.level-guide,.level-guide-section,[data-level-guide]').forEach(function(el){
+  if(!el.classList.contains('willena-five-level-guide'))el.remove();
+ });
+ Array.from(screen.children).forEach(function(el){if(looksLikeLegacyGuide(el))el.remove()});
 }
 function inject(force){
  var screen=root.querySelector('.report-screen');
@@ -60,13 +71,14 @@ function inject(force){
  var best=internalLevel();
  if(!best)return;
  var ko=document.documentElement.lang==='ko';
- var existing=screen.querySelector('.report-level-guide');
+ removeLegacyGuides(screen);
+ var existing=screen.querySelector('.willena-five-level-guide');
  if(!force&&existing&&Number(existing.dataset.guideBest)===best&&existing.dataset.guideLang===(ko?'ko':'en'))return;
  if(existing)existing.remove();
- var actions=screen.querySelector('.report-actions');
  var holder=document.createElement('div');
  holder.innerHTML=markup(best,ko);
  var section=holder.firstElementChild;
+ var actions=screen.querySelector('.report-actions');
  if(actions)screen.insertBefore(section,actions);else screen.appendChild(section);
 }
 var scheduled=false;
@@ -79,5 +91,5 @@ new MutationObserver(function(){schedule(false)}).observe(root,{childList:true,s
 new MutationObserver(function(){schedule(true)}).observe(document.documentElement,{attributes:true,attributeFilter:['lang']});
 window.addEventListener('willena:stored-level-ready',function(){schedule(true)});
 window.addEventListener('resize',function(){schedule(false)},{passive:true});
-schedule(false);
+schedule(true);
 })();
