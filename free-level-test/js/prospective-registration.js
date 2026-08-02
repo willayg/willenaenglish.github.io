@@ -2,15 +2,9 @@
 'use strict';
 
 var STORAGE_KEY='willena_prospective_level_test_candidate_v1';
+var REGISTRATION_ENDPOINT='https://fiieuiktlsivwfgyivai.supabase.co/functions/v1/prospective-level-test';
 var params=new URLSearchParams(window.location.search);
 if(params.get('new')==='1')sessionStorage.removeItem(STORAGE_KEY);
-
-function apiBase(){
-  var host=window.location.hostname;
-  if(host==='students.willenaenglish.com'||host==='willenaenglish.netlify.app'||host==='localhost'||host==='127.0.0.1')return '';
-  if(host==='staging.willenaenglish.com'||host==='cf.willenaenglish.com'||host==='teachers.willenaenglish.com'||/\.pages\.dev$/.test(host))return 'https://api.willenaenglish.com';
-  return 'https://students.willenaenglish.com';
-}
 
 function savedCandidate(){
   try{return JSON.parse(sessionStorage.getItem(STORAGE_KEY)||'null');}catch(_){return null;}
@@ -58,7 +52,7 @@ function mount(){
     button.disabled=true;
     button.textContent='저장 중...';
     try{
-      var response=await fetch(apiBase()+'/.netlify/functions/prospective_level_test',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(payload)});
+      var response=await fetch(REGISTRATION_ENDPOINT,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(payload)});
       var json=await response.json().catch(function(){return{};});
       if(!response.ok||!json.success||!json.candidate)throw new Error(json.error||'정보를 저장할 수 없습니다.');
       sessionStorage.setItem(STORAGE_KEY,JSON.stringify(json.candidate));
