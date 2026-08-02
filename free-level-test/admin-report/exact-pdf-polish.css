@@ -1,15 +1,5 @@
 /* PDF-export-only refinements. This file does not affect the live student/admin report. */
 .willena-pdf-stage,.willena-pdf-page{background:#fff!important}
-.willena-pdf-page{box-shadow:none!important}
-.willena-pdf-stage *,
-.willena-pdf-page *{
-  outline:none!important;
-  box-shadow:none!important;
-  text-shadow:none!important;
-  filter:none!important;
-  -webkit-filter:none!important;
-  -webkit-text-stroke:0 transparent!important;
-}
 
 /* Page 1: match the approved reference's open vertical rhythm. */
 .willena-pdf-page:nth-child(1) .willena-pdf-title-line{margin-bottom:30px}
