@@ -5,6 +5,8 @@ const seenAnswers=new Set();
 const clampLevel=value=>Math.max(1,Math.min(12,Number(value)||1));
 const publicNumber=internal=>internal<=2?internal:internal-2;
 const originalFetch=window.fetch.bind(window);
+let correctionQueued=false;
+let lastResultSignature='';
 
 function extractInternalLevel(){
   const screen=document.querySelector('#app .screen');
@@ -24,31 +26,53 @@ function extractInternalLevel(){
 
 function rememberInternalLevel(){
   const level=extractInternalLevel();
-  if(level){
-    window.WillenaInternalResultLevel=level;
-    sessionStorage.setItem('willena_internal_result_level',String(level));
-  }
+  if(!level)return false;
+  window.WillenaInternalResultLevel=level;
+  sessionStorage.setItem('willena_internal_result_level',String(level));
+  return true;
 }
 
 function authoritativeLevel(){
   return clampLevel(window.WillenaInternalResultLevel||sessionStorage.getItem('willena_internal_result_level')||1);
 }
 
+function setTextIfChanged(element,value){
+  if(element&&element.textContent!==value)element.textContent=value;
+}
+
+function setClassIfChanged(element,name,on){
+  if(element&&element.classList.contains(name)!==on)element.classList.toggle(name,on);
+}
+
 function correctRenderedReport(){
+  correctionQueued=false;
   const internal=authoritativeLevel();
-  if(!internal)return;
   const levelBox=document.querySelector('.report-level');
+  const orbit=document.querySelector('.a4-level-orbit strong');
+  if(!levelBox&&!orbit)return;
+
+  const language=document.documentElement.lang==='ko'?'ko':'en';
+  const signature=[internal,language,Boolean(levelBox),Boolean(orbit)].join(':');
+  if(signature===lastResultSignature)return;
+  lastResultSignature=signature;
+
   if(levelBox){
     const label=levelBox.querySelector('span');
     const number=levelBox.querySelector('strong');
-    if(label)label.textContent=document.documentElement.lang==='ko'?(internal<=2?'스타터':'레벨'):(internal<=2?'Starter':'Level');
-    if(number)number.textContent=String(publicNumber(internal));
+    setTextIfChanged(label,language==='ko'?(internal<=2?'스타터':'레벨'):(internal<=2?'Starter':'Level'));
+    setTextIfChanged(number,String(publicNumber(internal)));
   }
   document.querySelectorAll('.level-node').forEach((node,index)=>{
-    node.classList.toggle('is-complete',index+1<internal);
-    node.classList.toggle('is-current',index+1===internal);
+    setClassIfChanged(node,'is-complete',index+1<internal);
+    setClassIfChanged(node,'is-current',index+1===internal);
   });
-  document.querySelectorAll('.a4-level-orbit strong').forEach(el=>el.textContent=String(publicNumber(internal)));
+  document.querySelectorAll('.a4-level-orbit strong').forEach(el=>setTextIfChanged(el,String(publicNumber(internal))));
+}
+
+function queueCorrection(){
+  if(correctionQueued)return;
+  correctionQueued=true;
+  requestAnimationFrame(correctRenderedReport);
 }
 
 window.fetch=async function(input,init){
@@ -82,11 +106,18 @@ window.fetch=async function(input,init){
   return originalFetch(input,nextInit);
 };
 
-const observer=new MutationObserver(()=>{
-  rememberInternalLevel();
-  queueMicrotask(correctRenderedReport);
-});
-observer.observe(document.documentElement,{subtree:true,childList:true});
+const app=document.querySelector('#app');
+if(app){
+  new MutationObserver(()=>{
+    const hasResult=rememberInternalLevel();
+    if(hasResult||document.querySelector('.report-level,.a4-level-orbit'))queueCorrection();
+  }).observe(app,{subtree:true,childList:true});
+}
+new MutationObserver(()=>{
+  lastResultSignature='';
+  queueCorrection();
+}).observe(document.documentElement,{attributes:true,attributeFilter:['lang']});
+
 rememberInternalLevel();
-correctRenderedReport();
+queueCorrection();
 })();
