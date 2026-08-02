@@ -14,20 +14,22 @@ function correctMainReport(){
   if(levelBox){
     const label=levelBox.querySelector('span');
     const number=levelBox.querySelector('strong');
-    if(label)label.textContent=document.documentElement.lang==='ko'?(internalLevel<=2?'스타터':'레벨'):(internalLevel<=2?'Starter':'Level');
-    if(number)number.textContent=String(publicNumber(internalLevel));
+    const nextLabel=document.documentElement.lang==='ko'?(internalLevel<=2?'스타터':'레벨'):(internalLevel<=2?'Starter':'Level');
+    const nextNumber=String(publicNumber(internalLevel));
+    if(label&&label.textContent!==nextLabel)label.textContent=nextLabel;
+    if(number&&number.textContent!==nextNumber)number.textContent=nextNumber;
   }
-  document.querySelectorAll('.level-node').forEach((node,index)=>{
-    node.classList.toggle('is-complete',index+1<internalLevel);
-    node.classList.toggle('is-current',index+1===internalLevel);
-  });
 }
 
 function correctA4Report(){
   if(!internalLevel)return;
-  document.querySelectorAll('.a4-level-orbit strong').forEach(el=>el.textContent=String(publicNumber(internalLevel)));
+  document.querySelectorAll('.a4-level-orbit strong').forEach(el=>{
+    const value=String(publicNumber(internalLevel));
+    if(el.textContent!==value)el.textContent=value;
+  });
   document.querySelectorAll('.a4-level-orbit span').forEach(el=>{
-    el.textContent=document.documentElement.lang==='ko'?(internalLevel<=2?'스타터':'레벨'):(internalLevel<=2?'STARTER':'LEVEL');
+    const value=document.documentElement.lang==='ko'?(internalLevel<=2?'스타터':'레벨'):(internalLevel<=2?'STARTER':'LEVEL');
+    if(el.textContent!==value)el.textContent=value;
   });
 }
 
@@ -42,9 +44,9 @@ async function load(){
   internalLevel=clamp(attempt.recommended_level||attempt.display_level);
   window.WillenaStoredInternalLevel=internalLevel;
   correct();
+  window.dispatchEvent(new CustomEvent('willena:stored-level-ready',{detail:{internalLevel}}));
 }
 
-new MutationObserver(()=>queueMicrotask(correct)).observe(document.documentElement,{subtree:true,childList:true});
 document.addEventListener('click',event=>{if(event.target.closest('[data-language-choice]'))setTimeout(correct,0)},true);
 load().catch(console.warn);
 })();
