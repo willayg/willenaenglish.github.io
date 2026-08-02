@@ -28,8 +28,8 @@
 .report-level-guide__recommendation.is-soft{color:var(--pink);background:#ffe0f0}
 .report-level-guide__note{margin-top:11px!important;padding-top:11px;border-top:1px solid rgba(242,10,138,.15);color:#98778a!important;font-size:13px!important}
 
-/* Segmented language control, while retaining the app's legacy language button invisibly. */
-.language-segmented{display:inline-flex;gap:4px;margin-left:auto;padding:4px;border:2px solid rgba(255,255,255,.55);border-radius:999px;background:rgba(255,255,255,.15)}
+/* Segmented language control. It remains visible while the test page scrolls. */
+.language-segmented{position:fixed;z-index:9999;top:max(10px,env(safe-area-inset-top));right:max(10px,env(safe-area-inset-right));display:inline-flex;gap:4px;margin:0;padding:4px;border:2px solid rgba(255,255,255,.72);border-radius:999px;background:rgba(33,92,101,.72);box-shadow:0 8px 24px rgba(23,79,88,.22);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
 .language-segmented button{min-width:78px;padding:8px 12px;border:0;border-radius:999px;color:#fff;background:transparent;font:inherit;font-size:13px;font-weight:800;cursor:pointer}
 .language-segmented button.is-active{color:var(--ink);background:#fff;box-shadow:0 5px 14px rgba(23,79,88,.14)}
 #languageBtn.language-legacy-trigger{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
@@ -44,5 +44,6 @@
  .report-level-guide__description{padding:17px 15px;border-radius:18px}
  .report-level-guide__description h4{font-size:18px}
  .report-level-guide__description p{font-size:14px}
- .language-segmented button{min-width:64px;padding:8px 9px;font-size:12px}
+ .language-segmented{top:max(8px,env(safe-area-inset-top));right:max(8px,env(safe-area-inset-right));padding:3px}
+ .language-segmented button{min-width:60px;padding:7px 8px;font-size:11px}
 }
