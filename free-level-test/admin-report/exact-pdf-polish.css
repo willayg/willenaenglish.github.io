@@ -1,6 +1,15 @@
 /* PDF-export-only refinements. This file does not affect the live student/admin report. */
 .willena-pdf-stage,.willena-pdf-page{background:#fff!important}
 .willena-pdf-page{box-shadow:none!important}
+.willena-pdf-stage *,
+.willena-pdf-page *{
+  outline:none!important;
+  box-shadow:none!important;
+  text-shadow:none!important;
+  filter:none!important;
+  -webkit-filter:none!important;
+  -webkit-text-stroke:0 transparent!important;
+}
 
 /* Page 1: match the approved reference's open vertical rhythm. */
 .willena-pdf-page:nth-child(1) .willena-pdf-title-line{margin-bottom:30px}
@@ -14,10 +23,10 @@
 .willena-pdf-hnode.current:before{top:-42px!important;bottom:auto!important;left:50%!important;transform:translateX(-50%)!important;line-height:1!important}
 .willena-pdf-hnode.current:after{top:-21px!important;bottom:auto!important;left:50%!important;height:18px!important}
 
-/* Page 2: give every skill row and the interpretation box breathing room. */
+/* Page 2: remove the result-explanation section completely. */
 .willena-pdf-page:nth-child(2) .willena-pdf-heading{margin-top:12px;margin-bottom:36px}
-.willena-pdf-page:nth-child(2) .willena-pdf-skill{padding-top:11px;padding-bottom:16px}
-.willena-pdf-page:nth-child(2) .willena-pdf-result{bottom:82px;height:112px}
+.willena-pdf-page:nth-child(2) .willena-pdf-skill{padding-top:13px;padding-bottom:18px}
+.willena-pdf-page:nth-child(2) .willena-pdf-result{display:none!important}
 
 /* Page 3: preserve the five-level print window while increasing separation. */
 .willena-pdf-page:nth-child(3) .willena-pdf-heading{margin-top:12px;margin-bottom:10px}
