@@ -27,6 +27,7 @@
 <link rel="stylesheet" href="./styles/responsive-report-journey.css?v=20260731-1">
 <link rel="stylesheet" href="./styles/full-test-sections.css?v=20260731-1">
 <link rel="stylesheet" href="./styles/loading-transitions.css?v=20260731-2">
+<link rel="stylesheet" href="./styles/report-level-guide.css?v=20260802-1">
 <style>.scramble-meaning span{display:none!important}</style>
 </head>
 <body>
@@ -34,7 +35,11 @@
 <header class="app-header">
 <img src="/Assets/Images/Logo.png?v=20260730-3" alt="Willena English Academy" class="brand-logo">
 <div class="brand-copy"><strong>Willena English</strong><span id="brandSubtitle">무료 영어 레벨 테스트</span></div>
-<button id="languageBtn" class="header-button" type="button">English</button>
+<div class="language-segmented" role="group" aria-label="Language">
+<button type="button" data-language-choice="ko">한국어</button>
+<button type="button" data-language-choice="en">English</button>
+</div>
+<button id="languageBtn" class="header-button language-legacy-trigger" type="button">English</button>
 </header>
 <main id="app" class="app-main" aria-live="polite"></main>
 <footer id="footerText">Willena English · 스테이징 진단 테스트</footer>
@@ -56,5 +61,7 @@
 <script src="./js/report-listening-fix.js?v=20260801-1"></script>
 <script src="./js/debug-level-meter.js?v=20260801-2"></script>
 <script src="./js/level-labels.js?v=20260801-2"></script>
+<script src="./js/report-level-guide.js?v=20260802-1"></script>
+<script src="./js/segmented-language-toggle.js?v=20260802-1"></script>
 </body>
 </html>
