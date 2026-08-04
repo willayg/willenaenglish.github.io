@@ -1,4 +1,4 @@
-// Worker proxy to forward /.netlify/functions/* requests to Netlify
+// Worker proxy to forward API requests to Cloudflare Workers or Netlify
 // and to proxy static site requests to either a local static server (during
 // `wrangler dev`) or to GitHub Pages (deployed preview on workers.dev).
 addEventListener('fetch', event => {
@@ -9,24 +9,26 @@ const NETLIFY_ORIGIN = 'https://willenaenglish.netlify.app';
 const GHPAGES_ORIGIN = 'https://willenaenglish.github.io';
 const LOCAL_STATIC = 'http://127.0.0.1:8000';
 
+// Migrated functions are called server-to-server through this gateway. This
+// preserves the browser's .willenaenglish.com auth cookie while avoiding the
+// third-party-cookie problem that would occur if the browser called workers.dev.
+const CLOUDFLARE_FUNCTIONS = {
+  log_word_attempt: 'https://log-word-attempt.willena.workers.dev'
+};
+
 async function handle(request) {
   try {
     const url = new URL(request.url);
 
-    // Proxy Netlify function requests to Netlify origin
     if (url.pathname.startsWith('/.netlify/functions/')) {
       return proxyFunctionRequest(request, url);
     }
 
-    // For other paths (static site), proxy to a static server.
-    // If running locally under wrangler dev (host contains 127.0.0.1 or localhost)
-    // proxy to the local static server. Otherwise proxy to GitHub Pages.
     const host = (request.headers.get('host') || '').toLowerCase();
     const targetStatic = host.includes('127.0.0.1') || host.includes('localhost') ? LOCAL_STATIC : GHPAGES_ORIGIN;
     const target = targetStatic + url.pathname + (url.search || '');
 
     const headers = new Headers(request.headers);
-    // Remove hop-by-hop headers that might confuse the origin
     headers.delete('x-forwarded-for');
     headers.delete('x-real-ip');
 
@@ -38,7 +40,6 @@ async function handle(request) {
     };
 
     const res = await fetch(target, init);
-    // Return the origin response directly for static files (preserve headers)
     const body = await res.arrayBuffer();
     const respHeaders = new Headers(res.headers);
     return new Response(body, { status: res.status, statusText: res.statusText, headers: respHeaders });
@@ -47,9 +48,25 @@ async function handle(request) {
   }
 }
 
+function getFunctionName(pathname) {
+  const match = pathname.match(/^\/\.netlify\/functions\/([^/?#]+)/);
+  return match ? match[1] : '';
+}
+
 async function proxyFunctionRequest(request, url) {
-  const target = NETLIFY_ORIGIN + url.pathname + (url.search || '');
+  const functionName = getFunctionName(url.pathname);
+  const workerOrigin = CLOUDFLARE_FUNCTIONS[functionName];
+  const target = workerOrigin
+    ? workerOrigin + (url.search || '')
+    : NETLIFY_ORIGIN + url.pathname + (url.search || '');
+
   const headers = new Headers(request.headers);
+  headers.delete('host');
+  headers.delete('content-length');
+  headers.delete('x-forwarded-for');
+  headers.delete('x-real-ip');
+  headers.set('x-willena-api-route', workerOrigin ? 'cloudflare-worker' : 'netlify');
+
   const init = {
     method: request.method,
     headers,
@@ -58,25 +75,17 @@ async function proxyFunctionRequest(request, url) {
   };
 
   const res = await fetch(target, init);
-
-  // Rewrite Set-Cookie headers so they are host-only for the worker origin
   const responseHeaders = new Headers(res.headers);
+  responseHeaders.set('x-willena-api-backend', workerOrigin ? 'cloudflare-worker' : 'netlify');
+
   const rewrittenCookies = [];
-  // Detect if the worker is being accessed locally (wrangler dev)
   const reqHost = (request.headers.get('host') || '').toLowerCase();
   const isLocalHost = reqHost.includes('127.0.0.1') || reqHost.includes('localhost');
 
   res.headers.forEach((v, k) => {
     if (k.toLowerCase() === 'set-cookie') {
-      let cookieVal = v;
-      // Remove Domain attribute so cookie is host-only for the worker origin
-      cookieVal = cookieVal.replace(/;\s*Domain=[^;]+/i, '');
-      // For local dev (HTTP) do not force Secure/SameSite=None otherwise the
-      // browser will ignore the cookie. For production (workers.dev) add
-      // SameSite=None; Secure so cross-site flows still work.
-      if (isLocalHost) {
-        // Keep cookie mostly as-is (no Domain), let it be set over HTTP for local testing
-      } else {
+      let cookieVal = v.replace(/;\s*Domain=[^;]+/i, '');
+      if (!isLocalHost) {
         if (!/samesite=/i.test(cookieVal)) cookieVal += '; SameSite=None';
         if (!/secure/i.test(cookieVal)) cookieVal += '; Secure';
       }
@@ -88,7 +97,6 @@ async function proxyFunctionRequest(request, url) {
     rewrittenCookies.forEach(c => responseHeaders.append('Set-Cookie', c));
   }
 
-  // Make user-specific endpoints uncacheable at edge (extra safety)
   if (url.pathname.includes('progress_summary') && url.search.includes('section=leaderboard_stars_class')) {
     responseHeaders.set('Cache-Control', 'private, max-age=0, no-store');
   }
@@ -100,5 +108,3 @@ async function proxyFunctionRequest(request, url) {
     headers: responseHeaders
   });
 }
-
-// End
