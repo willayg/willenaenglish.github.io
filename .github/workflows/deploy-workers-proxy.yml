@@ -44,8 +44,8 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Deploy API gateway Worker
-        working-directory: workers-proxy
+      - name: Deploy production API gateway Worker
+        working-directory: cloudflare-workers/proxy
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
