@@ -33,16 +33,23 @@ if (typeof window !== 'undefined') {
 }
 
 export function optimisticBump(delta = 1) {
-	// In-memory only; UI will refresh after server confirms
 	try {
 		const d = Number.isFinite(delta) ? delta : 1;
-		if (typeof currentPoints === 'number') currentPoints += d;
-		window.dispatchEvent(new CustomEvent('points:update', { detail: { total: currentPoints } }));
+		if (typeof currentPoints === 'number') {
+			currentPoints += d;
+			window.dispatchEvent(new CustomEvent('points:update', { detail: { total: currentPoints } }));
+			// Confirm the optimistic value against the server shortly afterward.
+			setTimeout(() => { refreshFromServerOnce().catch(() => {}); }, 500);
+			return;
+		}
+
+		// The header can receive a reward before its initial total has loaded.
+		// Never dispatch a null total; fetch the authoritative total immediately.
+		refreshFromServerOnce().catch(() => {});
 	} catch {}
 }
 
 export function scheduleRefresh(delayMs = 0) {
-	// THROTTLE: Skip if we refreshed recently (reduce function invocations)
 	const now = Date.now();
 	const timeSinceLast = now - lastRefreshTime;
 	if (timeSinceLast < REFRESH_THROTTLE_MS && delayMs === 0) {
@@ -62,9 +69,8 @@ export function applyServerPoints(n) {
 export async function refreshFromServerOnce() {
 	if (refreshing) return false;
 	refreshing = true;
-	lastRefreshTime = Date.now(); // Track for throttling
+	lastRefreshTime = Date.now();
 	try {
-		// Prefer the lightweight endpoint if available
 		const res = await fetch(COUNT_URL, { credentials: 'include', cache: 'no-store' });
 		if (res.ok) {
 			const js = await res.json().catch(() => null);
@@ -73,17 +79,14 @@ export async function refreshFromServerOnce() {
 				: null;
 			if (typeof total === 'number') {
 				applyServerPoints(total);
-				try { window.dispatchEvent(new CustomEvent('points:update', { detail: { total } })); } catch {}
 				return true;
 			}
 		}
-		// Fallback to overview points
 		const ovRes = await fetch(OV_URL, { credentials: 'include', cache: 'no-store' });
 		if (!ovRes.ok) return false;
 		const ov = await ovRes.json().catch(() => null);
 		if (!ov || typeof ov.points !== 'number') return false;
 		applyServerPoints(ov.points);
-		try { window.dispatchEvent(new CustomEvent('points:update', { detail: { total: ov.points } })); } catch {}
 		return true;
 	} finally {
 		refreshing = false;
@@ -97,7 +100,6 @@ export async function fetchOverview() {
 }
 
 export function handleVisibilityAndStorage() {
-	// On return to tab, refresh once
 	document.addEventListener('visibilitychange', () => {
 		if (document.visibilityState === 'visible') scheduleRefresh(0);
 	});
