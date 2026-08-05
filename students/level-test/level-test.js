@@ -20,64 +20,31 @@ window.fetch=function(input,init){
 
 function signin(){location.replace('/students/signin.html?next='+encodeURIComponent('/students/level-test/'))}
 function studentName(data){
- return String(data.display_name||data.student_name||data.full_name||data.name||data.username||data.user_id||'Student').trim();
+ return String(data&&data.name||data&&data.username||data&&data.user_id||'Student').trim();
 }
-function firstValue(object,keys){
- for(var i=0;i<keys.length;i++){
-  var value=object&&object[keys[i]];
-  if(value!==undefined&&value!==null&&String(value).trim()!=='')return value;
- }
- return null;
-}
-function directEngineGrade(profile){
- var value=firstValue(profile,['level_test_grade','level_test_stage','setup_grade','assessment_grade_bucket']);
- var number=Number(value);
- return [1,2,4,6,8,9].indexOf(number)>=0?number:null;
-}
-function normalizeGrade(profile){
- if(!profile)return null;
- var direct=directEngineGrade(profile);
- if(direct!==null)return direct;
-
- var raw=firstValue(profile,['school_grade','current_grade','student_grade','grade_level','grade','year_level','year','class_grade']);
- var stage=String(firstValue(profile,['school_type','school_stage','education_stage','stage','grade_type'])||'').toLowerCase();
- var text=String(raw==null?'':raw).trim().toLowerCase();
- var combined=(stage+' '+text).replace(/[_-]+/g,' ').replace(/\s+/g,' ').trim();
- if(!combined)return null;
-
- if(/유치|유아|kindergarten|preschool|pre school|kinder/.test(combined))return 1;
- if(/고등|고교|high school|\bhs\b/.test(combined))return 9;
- if(/중학|중학교|middle school|junior high|\bms\b/.test(combined))return 8;
-
- var elementary=/초등|초등학교|elementary|primary|grade school|\bes\b/.test(combined);
- var match=combined.match(/(?:grade|year|학년|초|elementary|primary)?\s*([1-6])(?:\s*(?:학년|grade|year))?/);
- var number=match?Number(match[1]):Number(text);
- if(elementary&&number>=1&&number<=6){
-  if(number<=2)return 2;
-  if(number<=4)return 4;
-  return 6;
- }
-
- // A bare 1–6 is only safe when a separate stage field explicitly says elementary.
- if(/elementary|primary|초등/.test(stage)&&number>=1&&number<=6){
-  return number<=2?2:number<=4?4:6;
- }
- if(/middle|junior|중학/.test(stage))return 8;
- if(/high|고등/.test(stage))return 9;
+function normalizeGrade(grade){
+ var text=String(grade==null?'':grade).trim().toLowerCase();
+ if(!text||text==='미정')return null;
+ if(/^초?[12]$/.test(text)||/^초등?[학교\s]*[12](?:학년)?$/.test(text))return 2;
+ if(/^초?[34]$/.test(text)||/^초등?[학교\s]*[34](?:학년)?$/.test(text))return 4;
+ if(/^초?[56]$/.test(text)||/^초등?[학교\s]*[56](?:학년)?$/.test(text))return 6;
+ if(/^중[123]$/.test(text)||/^중학교\s*[123](?:학년)?$/.test(text))return 8;
+ if(/^고[123]$/.test(text)||/^고등학교\s*[123](?:학년)?$/.test(text))return 9;
  return null;
 }
 function gradeLabel(bucket,ko){
- var labels=ko?{1:'유치원',2:'초등학교 1–2학년',4:'초등학교 3–4학년',6:'초등학교 5–6학년',8:'중학교',9:'고등학교'}:{1:'Preschool',2:'Elementary 1–2',4:'Elementary 3–4',6:'Elementary 5–6',8:'Middle school',9:'High school'};
+ var labels=ko?{2:'초등학교 1–2학년',4:'초등학교 3–4학년',6:'초등학교 5–6학년',8:'중학교',9:'고등학교'}:{2:'Elementary 1–2',4:'Elementary 3–4',6:'Elementary 5–6',8:'Middle school',9:'High school'};
  return labels[bucket]||'';
 }
-function exposeStudent(data,profile){
- gradePrefill=normalizeGrade(profile);
+function exposeStudent(authData,profileData){
+ var profile=profileData&&profileData.student?profileData.student:null;
+ gradePrefill=normalizeGrade(profile&&profile.grade);
  student={
-  id:data.user_id||data.id||null,
-  name:studentName(profile&&profile.success?profile:data),
+  id:authData.user_id||profile&&profile.id||null,
+  name:studentName(profile||authData),
   grade:gradePrefill,
-  raw:data,
-  profile:profile||null
+  raw:authData,
+  profile:profile
  };
  window.WillenaLevelTestContext={mode:'student',student:student,setup:{grade:gradePrefill}};
  document.documentElement.dataset.studentRecognized='true';
@@ -85,13 +52,13 @@ function exposeStudent(data,profile){
  updateGreeting();
  applyGradePrefill();
 }
-async function loadProfile(){
+async function loadStudentProfile(){
  try{
-  var response=await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=get_profile&_='+Date.now());
+  var response=await WillenaAPI.fetch('/.netlify/functions/student_profile_grade?_='+Date.now());
   var data=await response.json().catch(function(){return{}});
   return response.ok&&data.success?data:null;
  }catch(error){
-  console.warn('[StudentLevelTest] profile lookup failed; grade will be asked',error);
+  console.warn('[StudentLevelTest] profile grade lookup failed; grade will be asked',error);
   return null;
  }
 }
@@ -100,7 +67,7 @@ async function requireStudent(){
   var response=await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=whoami&_='+Date.now());
   var data=await response.json().catch(function(){return{}});
   if(!response.ok||!data.success){signin();return}
-  var profile=await loadProfile();
+  var profile=await loadStudentProfile();
   exposeStudent(data,profile);
   document.documentElement.classList.remove('auth-pending');
  }catch(error){console.error('[StudentLevelTest] auth failed',error);signin()}
