@@ -24,7 +24,11 @@
 <link rel="stylesheet" href="/free-level-test/styles/full-test-sections.css?v=20260731-1">
 <link rel="stylesheet" href="/free-level-test/styles/loading-transitions.css?v=20260731-2">
 <style>
-html.auth-pending body{visibility:hidden}.student-complete{min-height:65vh;display:grid;place-items:center;padding:24px}.student-complete-card{width:min(680px,100%);background:#fff;border:1px solid #dbe8ee;border-radius:30px;padding:clamp(28px,6vw,54px);text-align:center;box-shadow:0 22px 65px rgba(38,66,88,.13)}.student-complete-icon{width:82px;height:82px;margin:0 auto 20px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,#66d7df,#25b9c5);color:#fff;font-size:42px;font-weight:800}.student-complete h1{margin:0 0 12px;color:#17243f;font-size:clamp(30px,6vw,44px)}.student-complete p{margin:0 auto 26px;max-width:520px;color:#71809a;line-height:1.65}.student-complete a{display:inline-flex;align-items:center;justify-content:center;min-height:56px;padding:0 24px;border-radius:17px;background:#17243f;color:#fff;text-decoration:none;font-weight:800}
+html.auth-pending .app-shell{visibility:hidden}
+html.auth-pending body::before{content:'잠깐만요…';position:fixed;inset:0;z-index:9999;display:grid;place-items:center;background:linear-gradient(180deg,#61d6df,#45cbd5);color:#fff;font:800 clamp(28px,6vw,48px)/1.2 Poppins,sans-serif;text-shadow:0 3px 14px rgba(0,0,0,.12)}
+html.auth-pending body::after{content:'';position:fixed;left:50%;top:58%;z-index:10000;width:44px;height:44px;margin:-22px;border:5px solid rgba(255,255,255,.38);border-top-color:#fff;border-radius:50%;animation:student-loading-spin .8s linear infinite}
+@keyframes student-loading-spin{to{transform:rotate(360deg)}}
+.student-complete{min-height:65vh;display:grid;place-items:center;padding:24px}.student-complete-card{width:min(680px,100%);background:#fff;border:1px solid #dbe8ee;border-radius:30px;padding:clamp(28px,6vw,54px);text-align:center;box-shadow:0 22px 65px rgba(38,66,88,.13)}.student-complete-icon{width:82px;height:82px;margin:0 auto 20px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,#66d7df,#25b9c5);color:#fff;font-size:42px;font-weight:800}.student-complete h1{margin:0 0 12px;color:#17243f;font-size:clamp(30px,6vw,44px)}.student-complete p{margin:0 auto 26px;max-width:520px;color:#71809a;line-height:1.65}.student-complete a{display:inline-flex;align-items:center;justify-content:center;min-height:56px;padding:0 24px;border-radius:17px;background:#17243f;color:#fff;text-decoration:none;font-weight:800}
 </style>
 <script>document.documentElement.classList.add('auth-pending');</script>
 <script src="/students/api-gateway.js"></script>
@@ -40,7 +44,7 @@ html.auth-pending body{visibility:hidden}.student-complete{min-height:65vh;displ
 <main id="app" class="app-main" aria-live="polite"></main>
 <footer id="footerText">Willena English · Student assessment</footer>
 </div>
-<script src="./level-test.js?v=20260805e"></script>
+<script src="./level-test.js?v=20260805f"></script>
 <script src="/free-level-test/js/assessment-loader-classic.js?v=20260801-2"></script>
 <script src="/free-level-test/js/question-type-limits.js?v=20260802-1"></script>
 <script src="/free-level-test/js/dialogue-tts.js?v=20260730-3"></script>
