@@ -4,8 +4,18 @@ var completed=false;
 var student=null;
 var gradePrefill=null;
 var gradeApplied=false;
-var greetingIndex=Math.floor(Math.random()*3);
+var attemptId=null;
+var attemptStartedAt=null;
+var attemptStarting=false;
+var attemptCompleting=false;
+var setupSnapshot={grade:null,years:null,listening:null,length:null};
 var nativeFetch=window.fetch.bind(window);
+var greetingIndex=0;
+try{
+ var previous=Number(sessionStorage.getItem('willenaLevelGreeting')||'-1');
+ greetingIndex=(previous+1)%3;
+ sessionStorage.setItem('willenaLevelGreeting',String(greetingIndex));
+}catch(error){greetingIndex=Math.floor(Math.random()*3)}
 
 // Keep the open test engine as the single source of truth.
 window.fetch=function(input,init){
@@ -17,10 +27,15 @@ window.fetch=function(input,init){
  return nativeFetch(input,init);
 };
 
-function signin(){location.replace('/students/signin.html?next='+encodeURIComponent('/students/level-test/'))}
-function studentName(data){
- return String(data&&data.name||data&&data.username||'Student').trim();
+function api(action,body){
+ return WillenaAPI.fetch('/.netlify/functions/supabase_auth?action='+encodeURIComponent(action),{
+  method:'POST',
+  headers:{'Content-Type':'application/json'},
+  body:JSON.stringify(body||{})
+ });
 }
+function signin(){location.replace('/students/signin.html?next='+encodeURIComponent('/students/level-test/'))}
+function studentName(data){return String(data&&data.name||data&&data.username||'Student').trim()}
 function normalizeGrade(grade){
  var text=String(grade==null?'':grade).trim().toLowerCase();
  if(!text||text==='미정')return null;
@@ -37,12 +52,8 @@ function greeting(name){
 }
 function exposeStudent(profile){
  gradePrefill=normalizeGrade(profile&&profile.grade);
- student={
-  id:profile&&profile.id||null,
-  name:studentName(profile),
-  grade:gradePrefill,
-  profile:profile
- };
+ setupSnapshot.grade=gradePrefill;
+ student={id:profile&&profile.id||null,name:studentName(profile),grade:gradePrefill,profile:profile};
  window.WillenaLevelTestContext={mode:'student',student:student,setup:{grade:gradePrefill}};
  document.documentElement.dataset.studentRecognized='true';
  document.documentElement.dataset.gradePrefilled=gradePrefill===null?'false':'true';
@@ -51,11 +62,11 @@ function exposeStudent(profile){
 }
 async function requireStudent(){
  try{
-  // One authenticated request now handles both login validation and profile data.
   var response=await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=get_profile&_='+Date.now());
   var profile=await response.json().catch(function(){return{}});
   if(!response.ok||!profile.success){signin();return}
   exposeStudent(profile);
+  if(window.__studentLoadingTimer)clearInterval(window.__studentLoadingTimer);
   document.documentElement.classList.remove('auth-pending');
  }catch(error){console.error('[StudentLevelTest] profile lookup failed',error);signin()}
 }
@@ -77,10 +88,36 @@ function updateGreeting(){
  var welcome=document.querySelector('.welcome-panel h1');
  if(welcome)welcome.textContent=message;
 }
+async function startAttempt(){
+ if(attemptId||attemptStarting||!student)return;
+ attemptStarting=true;
+ attemptStartedAt=Date.now();
+ try{
+  var response=await api('start_internal_assessment',{setup:setupSnapshot,test_version:'2026-08-v1'});
+  var data=await response.json().catch(function(){return{}});
+  if(response.ok&&data.success&&data.attempt_id)attemptId=data.attempt_id;
+  else console.warn('[StudentLevelTest] attempt start was not saved',data);
+ }catch(error){console.warn('[StudentLevelTest] attempt start failed',error)}
+ attemptStarting=false;
+}
+async function completeAttempt(reportText){
+ if(attemptCompleting||!attemptId)return;
+ attemptCompleting=true;
+ try{
+  var duration=attemptStartedAt?Math.max(0,Math.round((Date.now()-attemptStartedAt)/1000)):null;
+  var response=await api('complete_internal_assessment',{
+   attempt_id:attemptId,
+   duration_seconds:duration,
+   setup:setupSnapshot,
+   report_text:String(reportText||'').trim()
+  });
+  var data=await response.json().catch(function(){return{}});
+  if(!response.ok||!data.success)console.warn('[StudentLevelTest] attempt completion was not saved',data);
+ }catch(error){console.warn('[StudentLevelTest] attempt completion failed',error)}
+}
 function completionMarkup(){
- var ko=(document.documentElement.lang||'ko').toLowerCase().indexOf('ko')===0;
  var name=student&&student.name?student.name:'';
- return '<section class="student-complete"><div class="student-complete-card"><div class="student-complete-icon">✓</div><h1>'+(ko?'테스트가 끝났습니다':'Test complete')+'</h1><p>'+(ko?(name?name+' 학생, 답변이 완료되었습니다. ': '답변이 완료되었습니다. ')+'결과는 아직 저장되지 않습니다. 다음 단계에서 학생 계정과 데이터베이스에 연결할 예정입니다.':(name?name+', you have completed the test. ':'You have completed the test. ')+'Results are not being saved yet; database wiring will be added next.')+'</p><a href="/students/dashboard.html">'+(ko?'학생 홈으로 돌아가기':'Return to student dashboard')+'</a></div></section>';
+ return '<section class="student-complete"><div class="student-complete-card"><div class="student-complete-icon">✓</div><h1>Test complete</h1><p>'+(name?name+', ':'')+'your test has been recorded.</p><a href="/students/dashboard.html">Return to student dashboard</a></div></section>';
 }
 function replaceReport(){
  if(completed)return;
@@ -90,10 +127,20 @@ function replaceReport(){
  var report=root.querySelector('.report-card,.result-card,.result-layout');
  if(!resultButton&&!report)return;
  completed=true;
+ completeAttempt(root.innerText||'');
  if(window.speechSynthesis)window.speechSynthesis.cancel();
  root.innerHTML=completionMarkup();
  document.body.classList.remove('welcome-mode');
 }
+document.addEventListener('click',function(event){
+ var option=event.target.closest&&event.target.closest('.setup-option');
+ if(!option)return;
+ var holder=option.closest('.setup-options');
+ var key=holder&&holder.getAttribute('data-key');
+ if(!key)return;
+ setupSnapshot[key]=Number(option.getAttribute('data-value'));
+ if(key==='length')setTimeout(startAttempt,0);
+},true);
 new MutationObserver(function(){requestAnimationFrame(function(){updateGreeting();applyGradePrefill();replaceReport()})}).observe(document.documentElement,{childList:true,subtree:true});
 requireStudent();
 })();
