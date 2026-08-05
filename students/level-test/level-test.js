@@ -37,7 +37,7 @@ function gradeLabel(bucket,ko){
  return labels[bucket]||'';
 }
 function exposeStudent(authData,profileData){
- var profile=profileData&&profileData.student?profileData.student:null;
+ var profile=profileData&&profileData.success?profileData:null;
  gradePrefill=normalizeGrade(profile&&profile.grade);
  student={
   id:authData.user_id||profile&&profile.id||null,
@@ -54,7 +54,7 @@ function exposeStudent(authData,profileData){
 }
 async function loadStudentProfile(){
  try{
-  var response=await WillenaAPI.fetch('/.netlify/functions/student_profile_grade?_='+Date.now());
+  var response=await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=get_profile&_='+Date.now());
   var data=await response.json().catch(function(){return{}});
   return response.ok&&data.success?data:null;
  }catch(error){
