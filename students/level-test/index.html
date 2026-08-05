@@ -1,71 +1,62 @@
 <!doctype html>
-<html lang="en">
+<html lang="ko">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="robots" content="noindex">
-  <title>Willena Level Test</title>
-  <script src="/students/api-gateway.js"></script>
-  <script src="/js/api-config.js?v=20260113c"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./level-test.css?v=20260805a">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>Willena Student Level Test</title>
+<link rel="icon" href="/Assets/Images/Logo.png?v=20260730-3">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/free-level-test/styles/app.css?v=20260730-7">
+<link rel="stylesheet" href="/free-level-test/styles/reading-layout.css?v=20260730-1">
+<link rel="stylesheet" href="/free-level-test/styles/welcome-overrides.css?v=20260730-3">
+<link rel="stylesheet" href="/free-level-test/styles/bright-theme-overrides.css?v=20260730-3">
+<link rel="stylesheet" href="/free-level-test/styles/setup-no-selection.css?v=20260730-2">
+<link rel="stylesheet" href="/free-level-test/styles/listening.css?v=20260730-4">
+<link rel="stylesheet" href="/free-level-test/styles/premium-ui.css?v=20260730-3">
+<link rel="stylesheet" href="/free-level-test/styles/question-polish.css?v=20260801-1">
+<link rel="stylesheet" href="/free-level-test/styles/question-review-flag.css?v=20260801-5">
+<link rel="stylesheet" href="/free-level-test/styles/full-test-sections.css?v=20260731-1">
+<link rel="stylesheet" href="/free-level-test/styles/loading-transitions.css?v=20260731-2">
+<style>
+html.auth-pending body{visibility:hidden}.student-complete{min-height:65vh;display:grid;place-items:center;padding:24px}.student-complete-card{width:min(680px,100%);background:#fff;border:1px solid #dbe8ee;border-radius:30px;padding:clamp(28px,6vw,54px);text-align:center;box-shadow:0 22px 65px rgba(38,66,88,.13)}.student-complete-icon{width:82px;height:82px;margin:0 auto 20px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,#66d7df,#25b9c5);color:#fff;font-size:42px;font-weight:800}.student-complete h1{margin:0 0 12px;color:#17243f;font-size:clamp(30px,6vw,44px)}.student-complete p{margin:0 auto 26px;max-width:520px;color:#71809a;line-height:1.65}.student-complete a{display:inline-flex;align-items:center;justify-content:center;min-height:56px;padding:0 24px;border-radius:17px;background:#17243f;color:#fff;text-decoration:none;font-weight:800}
+</style>
+<script>document.documentElement.classList.add('auth-pending');</script>
+<script src="/students/api-gateway.js"></script>
+<script src="/js/api-config.js?v=20260113c"></script>
 </head>
 <body>
-  <main class="shell">
-    <header class="topbar">
-      <a class="home-link" href="/students/dashboard.html" aria-label="Student dashboard">← Home</a>
-      <div class="brand">WILLENA</div>
-      <div id="studentName" class="student-name"></div>
-    </header>
-
-    <section id="loadingScreen" class="screen active card center">
-      <div class="spinner" aria-hidden="true"></div>
-      <h1>Loading your test…</h1>
-      <p>Please stay on this page.</p>
-    </section>
-
-    <section id="startScreen" class="screen card center">
-      <div class="badge">LEVEL TEST</div>
-      <h1>Willena English Level Test</h1>
-      <p class="lead">Answer each question as carefully as you can. Your teacher will review the results.</p>
-      <div class="notice">Your result will be saved automatically. You will not see a score at the end.</div>
-      <button id="startBtn" class="primary">Start Test</button>
-      <button id="resumeBtn" class="secondary hidden">Continue Previous Test</button>
-    </section>
-
-    <section id="testScreen" class="screen card">
-      <div class="progress-row">
-        <span id="progressText">Question 1 of 30</span>
-        <span id="sectionText">English</span>
-      </div>
-      <div class="progress-track"><div id="progressBar" class="progress-bar"></div></div>
-      <div id="audioWrap" class="audio-wrap hidden">
-        <button id="listenBtn" class="listen-btn" type="button">🔊 Listen</button>
-        <span id="listenNote">You can listen again.</span>
-      </div>
-      <div id="contextText" class="context hidden"></div>
-      <h2 id="promptText" class="prompt"></h2>
-      <div id="options" class="options"></div>
-      <div id="errorBox" class="error hidden"></div>
-    </section>
-
-    <section id="thanksScreen" class="screen card center">
-      <div class="thanks-icon">✓</div>
-      <h1>Thank you!</h1>
-      <p class="lead">Your test has been saved. Your teacher can view the results.</p>
-      <button id="againBtn" class="primary">Try Again</button>
-      <a class="secondary link-button" href="/students/dashboard.html">Return to Dashboard</a>
-    </section>
-
-    <section id="fatalScreen" class="screen card center">
-      <div class="fatal-icon">!</div>
-      <h1>We couldn't open the test.</h1>
-      <p id="fatalMessage" class="lead">Please try again.</p>
-      <button id="reloadBtn" class="primary">Reload</button>
-    </section>
-  </main>
-  <script src="./level-test.js?v=20260805a"></script>
+<div class="app-shell">
+<header class="app-header">
+<img src="/Assets/Images/Logo.png?v=20260730-3" alt="Willena English Academy" class="brand-logo">
+<div class="brand-copy"><strong>Willena English</strong><span id="brandSubtitle">학생 영어 레벨 테스트</span></div>
+<div class="language-segmented" role="group" aria-label="Language">
+<button type="button" data-language-choice="ko">한국어</button>
+<button type="button" data-language-choice="en">English</button>
+</div>
+<button id="languageBtn" class="header-button language-legacy-trigger" type="button">English</button>
+</header>
+<main id="app" class="app-main" aria-live="polite"></main>
+<footer id="footerText">Willena English · Student assessment</footer>
+</div>
+<script src="./level-test.js?v=20260805b"></script>
+<script src="/free-level-test/js/assessment-loader-classic.js?v=20260801-2"></script>
+<script src="/free-level-test/js/question-type-limits.js?v=20260802-1"></script>
+<script src="/free-level-test/js/dialogue-tts.js?v=20260730-3"></script>
+<script src="/free-level-test/js/adaptive-calibration-loader.js?v=20260801-2"></script>
+<script src="/free-level-test/js/level-result-consistency.js?v=20260803-5"></script>
+<script src="/free-level-test/js/scramble-token-letter-fix.js?v=20260801-1"></script>
+<script src="/free-level-test/js/loading-transitions.js?v=20260731-2"></script>
+<script src="/free-level-test/js/listening-audio-webview.js?v=20260731-1"></script>
+<script src="/free-level-test/js/reading-layout.js?v=20260730-2"></script>
+<script src="/free-level-test/js/listening-compact.js?v=20260730-5"></script>
+<script src="/free-level-test/js/question-review-flag.js?v=20260801-2"></script>
+<script src="/free-level-test/js/question-feedback-header.js?v=20260801-1"></script>
+<script src="/free-level-test/js/segmented-language-toggle.js?v=20260802-1"></script>
 </body>
 </html>
