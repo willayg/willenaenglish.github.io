@@ -1,0 +1,54 @@
+name: Fix student grade profile
+
+on:
+  push:
+    branches: [staging]
+    paths:
+      - .github/workflows/fix-student-grade-profile.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch-and-deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: staging
+
+      - name: Add grade to Cloudflare profile response
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('cloudflare-workers/supabase-auth/src/index.js')
+          source = path.read_text()
+          needle = "          class: classVal,\n        }, 200, origin);\n      }\n      \n      // ===== GET ROLE ====="
+          replacement = "          class: classVal,\n          grade: profile.grade,\n        }, 200, origin);\n      }\n      \n      // ===== GET ROLE ====="
+          if 'grade: profile.grade' not in source:
+              if needle not in source:
+                  raise SystemExit('Could not locate get_profile response')
+              source = source.replace(needle, replacement, 1)
+              path.write_text(source)
+          legacy = Path('netlify/functions/student_profile_grade.js')
+          if legacy.exists():
+              legacy.unlink()
+          PY
+
+      - name: Commit Cloudflare-only fix
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add cloudflare-workers/supabase-auth/src/index.js netlify/functions/student_profile_grade.js || true
+          if ! git diff --cached --quiet; then
+            git commit -m "Return profile grade from Cloudflare auth worker"
+            git push origin staging
+          fi
+
+      - name: Deploy Supabase auth Worker
+        working-directory: cloudflare-workers/supabase-auth
+        run: npx wrangler deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
