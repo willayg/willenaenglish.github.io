@@ -7,8 +7,6 @@ workers_dev = true
 pattern = "api.willenaenglish.com/*"
 zone_name = "willenaenglish.com"
 
-# Service bindings to route requests to other CF Workers
-# These allow calling other workers without going through the network
 [[services]]
 binding = "SUPABASE_AUTH"
 service = "supabase-auth"
@@ -33,6 +31,9 @@ service = "get-audio-urls"
 binding = "PIXABAY"
 service = "pixabay"
 
-# Fallback for non-CF functions
+[[services]]
+binding = "STUDENT_LEVEL_TEST"
+service = "student-level-test"
+
 [vars]
 NETLIFY_BASE = "https://willenaenglish.netlify.app"
