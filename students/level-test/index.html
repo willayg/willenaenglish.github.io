@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="robots" content="noindex">
+  <title>Willena Level Test</title>
+  <script src="/students/api-gateway.js"></script>
+  <script src="/js/api-config.js?v=20260113c"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./level-test.css?v=20260805a">
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <a class="home-link" href="/students/dashboard.html" aria-label="Student dashboard">← Home</a>
+      <div class="brand">WILLENA</div>
+      <div id="studentName" class="student-name"></div>
+    </header>
+
+    <section id="loadingScreen" class="screen active card center">
+      <div class="spinner" aria-hidden="true"></div>
+      <h1>Loading your test…</h1>
+      <p>Please stay on this page.</p>
+    </section>
+
+    <section id="startScreen" class="screen card center">
+      <div class="badge">LEVEL TEST</div>
+      <h1>Willena English Level Test</h1>
+      <p class="lead">Answer each question as carefully as you can. Your teacher will review the results.</p>
+      <div class="notice">Your result will be saved automatically. You will not see a score at the end.</div>
+      <button id="startBtn" class="primary">Start Test</button>
+      <button id="resumeBtn" class="secondary hidden">Continue Previous Test</button>
+    </section>
+
+    <section id="testScreen" class="screen card">
+      <div class="progress-row">
+        <span id="progressText">Question 1 of 30</span>
+        <span id="sectionText">English</span>
+      </div>
+      <div class="progress-track"><div id="progressBar" class="progress-bar"></div></div>
+      <div id="audioWrap" class="audio-wrap hidden">
+        <button id="listenBtn" class="listen-btn" type="button">🔊 Listen</button>
+        <span id="listenNote">You can listen again.</span>
+      </div>
+      <div id="contextText" class="context hidden"></div>
+      <h2 id="promptText" class="prompt"></h2>
+      <div id="options" class="options"></div>
+      <div id="errorBox" class="error hidden"></div>
+    </section>
+
+    <section id="thanksScreen" class="screen card center">
+      <div class="thanks-icon">✓</div>
+      <h1>Thank you!</h1>
+      <p class="lead">Your test has been saved. Your teacher can view the results.</p>
+      <button id="againBtn" class="primary">Try Again</button>
+      <a class="secondary link-button" href="/students/dashboard.html">Return to Dashboard</a>
+    </section>
+
+    <section id="fatalScreen" class="screen card center">
+      <div class="fatal-icon">!</div>
+      <h1>We couldn't open the test.</h1>
+      <p id="fatalMessage" class="lead">Please try again.</p>
+      <button id="reloadBtn" class="primary">Reload</button>
+    </section>
+  </main>
+  <script src="./level-test.js?v=20260805a"></script>
+</body>
+</html>
