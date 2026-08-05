@@ -466,6 +466,7 @@ export default {
           avatar: profile.avatar,
           korean_name: koreanName,
           class: classVal,
+          grade: profile.grade,
         }, 200, origin);
       }
       
