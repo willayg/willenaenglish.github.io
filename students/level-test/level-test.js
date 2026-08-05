@@ -4,11 +4,10 @@ var completed=false;
 var student=null;
 var gradePrefill=null;
 var gradeApplied=false;
+var greetingIndex=Math.floor(Math.random()*3);
 var nativeFetch=window.fetch.bind(window);
 
-// The adaptive loader still requests ./js/app-classic.js. Redirect that one
-// request to the open test's source-of-truth engine so both tests always run
-// exactly the same core file.
+// Keep the open test engine as the single source of truth.
 window.fetch=function(input,init){
  var url=typeof input==='string'?input:(input&&input.url)||'';
  var resolved=new URL(url,location.href);
@@ -20,7 +19,7 @@ window.fetch=function(input,init){
 
 function signin(){location.replace('/students/signin.html?next='+encodeURIComponent('/students/level-test/'))}
 function studentName(data){
- return String(data&&data.name||data&&data.username||data&&data.user_id||'Student').trim();
+ return String(data&&data.name||data&&data.username||'Student').trim();
 }
 function normalizeGrade(grade){
  var text=String(grade==null?'':grade).trim().toLowerCase();
@@ -32,18 +31,16 @@ function normalizeGrade(grade){
  if(/^고[123]$/.test(text)||/^고등학교\s*[123](?:학년)?$/.test(text))return 9;
  return null;
 }
-function gradeLabel(bucket,ko){
- var labels=ko?{2:'초등학교 1–2학년',4:'초등학교 3–4학년',6:'초등학교 5–6학년',8:'중학교',9:'고등학교'}:{2:'Elementary 1–2',4:'Elementary 3–4',6:'Elementary 5–6',8:'Middle school',9:'High school'};
- return labels[bucket]||'';
+function greeting(name){
+ var messages=['Hey, '+name+'!','Hello, '+name+'!','What’s up, '+name+'?'];
+ return messages[greetingIndex%messages.length];
 }
-function exposeStudent(authData,profileData){
- var profile=profileData&&profileData.success?profileData:null;
+function exposeStudent(profile){
  gradePrefill=normalizeGrade(profile&&profile.grade);
  student={
-  id:authData.user_id||profile&&profile.id||null,
-  name:studentName(profile||authData),
+  id:profile&&profile.id||null,
+  name:studentName(profile),
   grade:gradePrefill,
-  raw:authData,
   profile:profile
  };
  window.WillenaLevelTestContext={mode:'student',student:student,setup:{grade:gradePrefill}};
@@ -52,25 +49,15 @@ function exposeStudent(authData,profileData){
  updateGreeting();
  applyGradePrefill();
 }
-async function loadStudentProfile(){
- try{
-  var response=await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=get_profile&_='+Date.now());
-  var data=await response.json().catch(function(){return{}});
-  return response.ok&&data.success?data:null;
- }catch(error){
-  console.warn('[StudentLevelTest] profile grade lookup failed; grade will be asked',error);
-  return null;
- }
-}
 async function requireStudent(){
  try{
-  var response=await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=whoami&_='+Date.now());
-  var data=await response.json().catch(function(){return{}});
-  if(!response.ok||!data.success){signin();return}
-  var profile=await loadStudentProfile();
-  exposeStudent(data,profile);
+  // One authenticated request now handles both login validation and profile data.
+  var response=await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=get_profile&_='+Date.now());
+  var profile=await response.json().catch(function(){return{}});
+  if(!response.ok||!profile.success){signin();return}
+  exposeStudent(profile);
   document.documentElement.classList.remove('auth-pending');
- }catch(error){console.error('[StudentLevelTest] auth failed',error);signin()}
+ }catch(error){console.error('[StudentLevelTest] profile lookup failed',error);signin()}
 }
 function applyGradePrefill(){
  if(gradeApplied||gradePrefill===null)return;
@@ -84,14 +71,11 @@ function applyGradePrefill(){
 }
 function updateGreeting(){
  if(!student)return;
- var ko=(document.documentElement.lang||'ko').toLowerCase().indexOf('ko')===0;
+ var message=greeting(student.name);
  var subtitle=document.getElementById('brandSubtitle');
- if(subtitle)subtitle.textContent=(ko?'안녕하세요, ':'Hi, ')+student.name;
+ if(subtitle)subtitle.textContent=message;
  var welcome=document.querySelector('.welcome-panel h1');
- if(welcome){
-  var grade=student.grade!==null?' · '+gradeLabel(student.grade,ko):'';
-  welcome.textContent=(ko?'안녕하세요, ':'Hi, ')+student.name+'!'+grade;
- }
+ if(welcome)welcome.textContent=message;
 }
 function completionMarkup(){
  var ko=(document.documentElement.lang||'ko').toLowerCase().indexOf('ko')===0;
