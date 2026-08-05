@@ -29,6 +29,52 @@
     utterance.rate = .86;
     speechSynthesis.speak(utterance);
   }
+  function renderUnscramble(question, host){
+    const selected = [];
+    const answerBox = document.createElement('div');
+    answerBox.className = 'context';
+    answerBox.textContent = 'Tap the words in the correct order.';
+    host.appendChild(answerBox);
+
+    const tokenWrap = document.createElement('div');
+    tokenWrap.className = 'options';
+    const shuffled = [...question.tokens].sort(() => Math.random() - .5);
+    shuffled.forEach(token => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'option';
+      button.textContent = token;
+      button.addEventListener('click', () => {
+        selected.push(token);
+        button.disabled = true;
+        answerBox.textContent = selected.join(' ');
+      });
+      tokenWrap.appendChild(button);
+    });
+    host.appendChild(tokenWrap);
+
+    const controls = document.createElement('div');
+    controls.style.marginTop = '18px';
+    const reset = document.createElement('button');
+    reset.type = 'button';
+    reset.className = 'secondary';
+    reset.textContent = 'Start Again';
+    reset.addEventListener('click', () => renderQuestion(question));
+    const submit = document.createElement('button');
+    submit.type = 'button';
+    submit.className = 'primary';
+    submit.textContent = 'Submit';
+    submit.addEventListener('click', () => {
+      if (selected.length !== question.tokens.length) {
+        $('errorBox').textContent = 'Please use all the words.';
+        $('errorBox').classList.remove('hidden');
+        return;
+      }
+      submitAnswer(selected.join(' '));
+    });
+    controls.append(reset, submit);
+    host.appendChild(controls);
+  }
   function renderQuestion(question){
     state.question = question;
     state.shownAt = Date.now();
@@ -46,20 +92,23 @@
 
     const options = $('options');
     options.innerHTML = '';
-    const answers = Array.isArray(question.options) && question.options.length ? question.options : question.tokens;
-    answers.forEach(answer => {
-      const button = document.createElement('button');
-      button.type = 'button';
-      button.className = 'option';
-      button.textContent = answer;
-      button.addEventListener('click', () => submitAnswer(answer));
-      options.appendChild(button);
-    });
+    if (question.type === 'sentence_unscramble' && Array.isArray(question.tokens) && question.tokens.length) {
+      renderUnscramble(question, options);
+    } else {
+      (question.options || []).forEach(answer => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'option';
+        button.textContent = answer;
+        button.addEventListener('click', () => submitAnswer(answer));
+        options.appendChild(button);
+      });
+    }
     show('testScreen');
     if (hasAudio) setTimeout(() => speak(question.transcript), 350);
   }
   function disableOptions(disabled){
-    document.querySelectorAll('.option').forEach(button => { button.disabled = disabled; });
+    document.querySelectorAll('.option,.primary,.secondary').forEach(button => { button.disabled = disabled; });
   }
   async function submitAnswer(answer){
     if (!state.attemptId || !state.question) return;
