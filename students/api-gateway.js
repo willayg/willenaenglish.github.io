@@ -22,7 +22,6 @@
     'google_vision_proxy',
     'supabase_proxy',
     'supabase_proxy_fixed',
-    'teacher_admin',
     'test_admin',
     'eleven_labs_proxy',
     'translate',
@@ -34,7 +33,8 @@
   // willenaenglish.netlify.app where the real functions live.
   const FORCE_GATEWAY_FUNCTIONS = new Set([
     'upsert_sentences_batch',
-    'get_sentence_audio_urls'
+    'get_sentence_audio_urls',
+    'teacher_admin'
   ]);
 
   function extractFunctionName(input) {
@@ -91,11 +91,11 @@
       const url = origGetApiUrl(path);
       const fn = extractFunctionName(path) || extractFunctionName(url);
 
-      // Force sentence functions through the CF API gateway which proxies
+      // Force selected functions through the CF API gateway which proxies
       // to willenaenglish.netlify.app. Direct NETLIFY_ORIGIN (students.*)
       // is a CF Pages domain and cannot serve .netlify/functions.
       if (fn && FORCE_GATEWAY_FUNCTIONS.has(fn)) {
-        const gateway = SENTENCE_GATEWAY;
+        const gateway = fn === 'teacher_admin' ? window.__CF_API_GATEWAY : SENTENCE_GATEWAY;
         if (/^https?:\/\//i.test(url)) {
           // Already absolute — rewrite to gateway
           const fnPath = '/.netlify/functions/' + fn;
