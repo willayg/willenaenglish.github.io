@@ -16,7 +16,8 @@ const FUNCTION_TO_BINDING = {
 };
 
 const PREFER_CF_WORKER = {
-  supabase_auth: true,
+  // Emergency rollback: use the previously working Netlify auth backend.
+  supabase_auth: false,
   homework_api: true,
   log_word_attempt: true,
   progress_summary: true,
