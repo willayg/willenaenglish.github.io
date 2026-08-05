@@ -26,7 +26,6 @@ async function handle(request) {
     const target = targetStatic + url.pathname + (url.search || '');
 
     const headers = new Headers(request.headers);
-    // Remove hop-by-hop headers that might confuse the origin
     headers.delete('x-forwarded-for');
     headers.delete('x-real-ip');
 
@@ -38,7 +37,6 @@ async function handle(request) {
     };
 
     const res = await fetch(target, init);
-    // Return the origin response directly for static files (preserve headers)
     const body = await res.arrayBuffer();
     const respHeaders = new Headers(res.headers);
     return new Response(body, { status: res.status, statusText: res.statusText, headers: respHeaders });
@@ -59,39 +57,48 @@ async function proxyFunctionRequest(request, url) {
 
   const res = await fetch(target, init);
 
-  // Rewrite Set-Cookie headers so they are host-only for the worker origin
+  // Preserve shared Willena authentication cookies. The previous proxy removed
+  // Domain=.willenaenglish.com, which made sb_access and sb_refresh host-only
+  // cookies for api.willenaenglish.com. Teacher and student subdomains could
+  // therefore not send the session on their next request and were logged out.
   const responseHeaders = new Headers(res.headers);
   const rewrittenCookies = [];
-  // Detect if the worker is being accessed locally (wrangler dev)
   const reqHost = (request.headers.get('host') || '').toLowerCase();
   const isLocalHost = reqHost.includes('127.0.0.1') || reqHost.includes('localhost');
 
   res.headers.forEach((v, k) => {
     if (k.toLowerCase() === 'set-cookie') {
       let cookieVal = v;
-      // Remove Domain attribute so cookie is host-only for the worker origin
-      cookieVal = cookieVal.replace(/;\s*Domain=[^;]+/i, '');
-      // For local dev (HTTP) do not force Secure/SameSite=None otherwise the
-      // browser will ignore the cookie. For production (workers.dev) add
-      // SameSite=None; Secure so cross-site flows still work.
+
       if (isLocalHost) {
-        // Keep cookie mostly as-is (no Domain), let it be set over HTTP for local testing
+        // Local HTTP cannot use Secure cross-domain cookies.
+        cookieVal = cookieVal.replace(/;\s*Domain=[^;]+/i, '');
+        cookieVal = cookieVal.replace(/;\s*Secure/ig, '');
+        cookieVal = cookieVal.replace(/;\s*SameSite=None/ig, '; SameSite=Lax');
       } else {
+        // Authentication cookies must be available to teachers.*, students.*,
+        // staging.* and the main site. Preserve an existing Willena domain or
+        // add it when the origin response omitted one.
+        if (/;\s*Domain=/i.test(cookieVal)) {
+          cookieVal = cookieVal.replace(/;\s*Domain=[^;]+/i, '; Domain=.willenaenglish.com');
+        } else {
+          cookieVal += '; Domain=.willenaenglish.com';
+        }
         if (!/samesite=/i.test(cookieVal)) cookieVal += '; SameSite=None';
-        if (!/secure/i.test(cookieVal)) cookieVal += '; Secure';
+        if (!/;\s*Secure/i.test(cookieVal)) cookieVal += '; Secure';
       }
+
       rewrittenCookies.push(cookieVal);
     }
   });
+
   if (rewrittenCookies.length) {
     responseHeaders.delete('set-cookie');
     rewrittenCookies.forEach(c => responseHeaders.append('Set-Cookie', c));
   }
 
-  // Make user-specific endpoints uncacheable at edge (extra safety)
-  if (url.pathname.includes('progress_summary') && url.search.includes('section=leaderboard_stars_class')) {
-    responseHeaders.set('Cache-Control', 'private, max-age=0, no-store');
-  }
+  // All function responses are dynamic and may contain session information.
+  responseHeaders.set('Cache-Control', 'private, max-age=0, no-store');
 
   const body = await res.arrayBuffer();
   return new Response(body, {
