@@ -46,6 +46,10 @@ jobs:
         with:
           node-version: '20'
 
+      - name: Install student Worker dependencies
+        working-directory: cloudflare-workers/student-level-test
+        run: npm install
+
       - name: Deploy student level test Worker
         working-directory: cloudflare-workers/student-level-test
         env:
