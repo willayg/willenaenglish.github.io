@@ -1,0 +1,137 @@
+name: Add internal assessment recording
+
+on:
+  push:
+    branches: [staging]
+    paths:
+      - '.github/workflows/add-internal-assessment-recording.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: add-internal-assessment-recording
+  cancel-in-progress: false
+
+jobs:
+  patch-and-deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: staging
+      - name: Add recording actions to Cloudflare Worker
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('cloudflare-workers/supabase-auth/src/index.js')
+          s = p.read_text()
+          marker = '      // ===== ACTION NOT FOUND ====='
+          if "action === 'start_internal_assessment'" in s:
+              print('Recording actions already present')
+          else:
+              block = r'''
+      // ===== START INTERNAL ASSESSMENT =====
+      if (action === 'start_internal_assessment' && request.method === 'POST') {
+        const cookieHeader = request.headers.get('Cookie') || '';
+        const cookies = parseCookies(cookieHeader);
+        const authHeader = request.headers.get('Authorization') || '';
+        const tokenFromQuery = url.searchParams.get('token');
+        let token = cookies['sb_access'];
+        if (!token && authHeader.startsWith('Bearer ')) token = authHeader.slice(7);
+        if (!token && tokenFromQuery) token = tokenFromQuery;
+        if (!token) return jsonResponse({ success: false, error: 'Not signed in' }, 401, origin);
+
+        const user = await verifyToken(env, token);
+        if (!user) return jsonResponse({ success: false, error: 'Not signed in' }, 401, origin);
+
+        const body = await request.json().catch(() => ({}));
+        const payload = {
+          student_id: user.id,
+          assessment_key: 'willena-internal-level-test',
+          status: 'in_progress',
+          test_version: body.test_version || '2026-08-v1',
+          setup: body.setup && typeof body.setup === 'object' ? body.setup : {},
+          metadata: { source: 'students/level-test', user_agent: request.headers.get('User-Agent') || null }
+        };
+
+        const resp = await fetch(`${env.SUPABASE_URL}/rest/v1/student_assessment_attempts`, {
+          method: 'POST',
+          headers: {
+            'apikey': env.SUPABASE_SERVICE_KEY,
+            'Authorization': `Bearer ${env.SUPABASE_SERVICE_KEY}`,
+            'Content-Type': 'application/json',
+            'Prefer': 'return=representation'
+          },
+          body: JSON.stringify(payload)
+        });
+        const data = await resp.json().catch(() => []);
+        if (!resp.ok || !data[0]) return jsonResponse({ success: false, error: 'Could not create attempt' }, 500, origin);
+        return jsonResponse({ success: true, attempt_id: data[0].id }, 200, origin);
+      }
+
+      // ===== COMPLETE INTERNAL ASSESSMENT =====
+      if (action === 'complete_internal_assessment' && request.method === 'POST') {
+        const cookieHeader = request.headers.get('Cookie') || '';
+        const cookies = parseCookies(cookieHeader);
+        const authHeader = request.headers.get('Authorization') || '';
+        const tokenFromQuery = url.searchParams.get('token');
+        let token = cookies['sb_access'];
+        if (!token && authHeader.startsWith('Bearer ')) token = authHeader.slice(7);
+        if (!token && tokenFromQuery) token = tokenFromQuery;
+        if (!token) return jsonResponse({ success: false, error: 'Not signed in' }, 401, origin);
+
+        const user = await verifyToken(env, token);
+        if (!user) return jsonResponse({ success: false, error: 'Not signed in' }, 401, origin);
+
+        const body = await request.json().catch(() => ({}));
+        if (!body.attempt_id) return jsonResponse({ success: false, error: 'Missing attempt_id' }, 400, origin);
+        const duration = Number.isFinite(Number(body.duration_seconds)) ? Math.max(0, Math.round(Number(body.duration_seconds))) : null;
+        const metadata = {
+          source: 'students/level-test',
+          report_text: String(body.report_text || '').slice(0, 12000)
+        };
+        const updates = {
+          status: 'completed',
+          completed_at: new Date().toISOString(),
+          duration_seconds: duration,
+          setup: body.setup && typeof body.setup === 'object' ? body.setup : {},
+          metadata
+        };
+
+        const query = `${env.SUPABASE_URL}/rest/v1/student_assessment_attempts?id=eq.${encodeURIComponent(body.attempt_id)}&student_id=eq.${encodeURIComponent(user.id)}`;
+        const resp = await fetch(query, {
+          method: 'PATCH',
+          headers: {
+            'apikey': env.SUPABASE_SERVICE_KEY,
+            'Authorization': `Bearer ${env.SUPABASE_SERVICE_KEY}`,
+            'Content-Type': 'application/json',
+            'Prefer': 'return=representation'
+          },
+          body: JSON.stringify(updates)
+        });
+        const data = await resp.json().catch(() => []);
+        if (!resp.ok || !data[0]) return jsonResponse({ success: false, error: 'Could not complete attempt' }, 500, origin);
+        return jsonResponse({ success: true, attempt_id: data[0].id }, 200, origin);
+      }
+
+'''
+              if marker not in s:
+                  raise SystemExit('Insertion marker not found')
+              p.write_text(s.replace(marker, block + marker))
+          PY
+      - name: Commit Worker change
+        run: |
+          if git diff --quiet; then exit 0; fi
+          git config user.name "willayg"
+          git config user.email "william.gaule@gmail.com"
+          git add cloudflare-workers/supabase-auth/src/index.js
+          git commit -m "Record internal level test attempts"
+          git push origin staging
+      - name: Deploy Supabase auth Worker
+        working-directory: cloudflare-workers/supabase-auth
+        run: npx wrangler deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
