@@ -1,0 +1,10 @@
+name = "student-level-test"
+main = "src/index.js"
+compatibility_date = "2025-12-08"
+compatibility_flags = ["nodejs_compat"]
+
+# Set these as Cloudflare Worker secrets/variables:
+# SUPABASE_URL
+# SUPABASE_SERVICE_ROLE_KEY
+# CONTENT_SUPABASE_URL
+# CONTENT_SUPABASE_PUBLISHABLE_KEY
