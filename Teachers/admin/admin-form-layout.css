@@ -18,10 +18,18 @@
 #addClassModal .class-form-grid .full{grid-column:1/-1}
 #addClassModal select:disabled{background:#f1f4f7;color:#9aa5b1;cursor:not-allowed}
 .book-picker-field{min-width:0}
+.book-autocomplete{position:relative}
+.book-suggestions{display:none;position:absolute;z-index:20;top:calc(100% + 5px);left:0;right:0;max-height:270px;overflow:auto;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 16px 38px rgba(24,35,52,.18);padding:5px}
+.book-suggestions.show{display:block}
+.book-suggestion{display:block;width:100%;border:0;background:#fff;text-align:left;padding:10px 11px;border-radius:9px;color:var(--ink)}
+.book-suggestion:hover,.book-suggestion:focus{background:#eef8f8;outline:none}
+.book-suggestion b{display:block;font-size:.82rem}
+.book-suggestion span{display:block;margin-top:2px;color:var(--mut);font-size:.68rem;line-height:1.35}
+.book-suggestion.manual{border-top:1px solid var(--line);border-radius:0 0 9px 9px;color:#8a5b13}
+.book-suggestion-message{padding:9px 11px;color:var(--mut);font-size:.72rem}
 .book-source-status{min-height:19px;margin-top:6px;font-size:.7rem;font-weight:700;color:var(--mut)}
 .book-source-status.catalog{color:#16754c}
 .book-source-status.manual{color:#9b6414}
-.catalog-load-note{padding:9px 11px;border-radius:10px;background:#fff8e8;color:#8b5b10;font-size:.76rem;font-weight:650}
 .class-card .class-meta{margin:8px 0 2px;color:var(--mut);font-size:.78rem;line-height:1.8;min-height:20px}
 .book-chip{display:inline-flex;align-items:center;gap:5px;margin:2px 3px 2px 0;padding:4px 7px;border-radius:999px;background:#edf8f5;color:#166449;font-weight:700}
 .book-chip.manual{background:#fff5df;color:#8a5b13}
@@ -30,4 +38,5 @@
  #addStudentModal .add-modal-grid,#addClassModal .class-form-grid{grid-template-columns:1fr}
  #addStudentModal .add-modal-grid .full,#addClassModal .class-form-grid .full{grid-column:auto}
  #addStudentModal .modal,#addClassModal .modal{max-height:88vh}
+ .book-suggestions{max-height:210px}
 }
