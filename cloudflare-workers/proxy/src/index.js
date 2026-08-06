@@ -68,11 +68,18 @@ async function routeToCFWorker(request, binding, functionName, url) {
     if (token) headers.set('Authorization', `Bearer ${token}`);
   }
 
-  return binding.fetch(new Request(workerUrl.toString(), {
+  const response = await binding.fetch(new Request(workerUrl.toString(), {
     method: request.method,
     headers,
     body: request.method !== 'GET' && request.method !== 'HEAD' ? request.body : undefined,
   }));
+  const responseHeaders = new Headers(response.headers);
+  responseHeaders.set('X-Willena-Upstream', `cloudflare:${functionName}`);
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers: responseHeaders,
+  });
 }
 
 async function routeToNetlify(request, url) {
