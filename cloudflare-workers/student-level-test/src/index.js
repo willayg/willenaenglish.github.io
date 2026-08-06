@@ -160,11 +160,6 @@ function capturedSkill(row) {
   return skillFor({ item_type: row?.item_type });
 }
 
-function capturedAnswer(value) {
-  if (Array.isArray(value)) return JSON.stringify(value);
-  return value == null ? null : clean(value);
-}
-
 function capturedResponse(row, attempt, studentId) {
   return {
     attempt_id: attempt.id,
@@ -176,8 +171,8 @@ function capturedResponse(row, attempt, studentId) {
     item_type: clean(row.item_type) || null,
     prompt_snapshot: clean(row.prompt_snapshot),
     options_snapshot: Array.isArray(row.options_snapshot) ? row.options_snapshot : null,
-    selected_answer: capturedAnswer(row.selected_answer),
-    correct_answer: capturedAnswer(row.correct_answer),
+    selected_answer: row.selected_answer ?? null,
+    correct_answer: row.correct_answer ?? null,
     is_correct: row.is_correct === true,
     response_time_ms: Number(row.response_time_ms) || null,
     metadata: { ...(row.metadata || {}), skill: capturedSkill(row) },
