@@ -12,7 +12,7 @@
     var text = Array.isArray(value) ? value.map(cleanText).join(' ') : cleanText(value);
     return text
       .toLocaleLowerCase('en-US')
-      .replace(/[.,!?;:。！？、，；：]/gu, '')
+      .replace(/[.,!?;:。！？、，；：]+$/gu, '')
       .replace(/\s+/g, ' ')
       .trim();
   }
@@ -29,22 +29,39 @@
     return JSON.stringify(exactComparable(selected)) === JSON.stringify(exactComparable(correct));
   }
 
+  function firstDefined(row, keys) {
+    for (var index = 0; index < keys.length; index += 1) {
+      if (row[keys[index]] !== undefined && row[keys[index]] !== null) return row[keys[index]];
+    }
+    return undefined;
+  }
+
   function repairResponse(row) {
     if (!row || typeof row !== 'object') return row;
-    var type = row.question_type || row.item_type || row.type;
-    var selected = row.selected_answer !== undefined ? row.selected_answer : row.selected;
-    var correct = row.correct_answer !== undefined ? row.correct_answer : row.answer;
-    if (selected === undefined || correct === undefined) return row;
-    row.is_correct = isCorrect(type, selected, correct);
-    if ('correct' in row) row.correct = row.is_correct;
+    var type = firstDefined(row, ['question_type', 'item_type', 'type']);
+    var selected = firstDefined(row, ['selected_answer', 'student_answer', 'selected', 'response']);
+    var correct = firstDefined(row, ['correct_answer', 'answer', 'expected_answer']);
+
+    if (type !== 'sentence_unscramble' || selected === undefined || correct === undefined) return row;
+
+    var corrected = isCorrect(type, selected, correct);
+    row.is_correct = corrected;
+    if ('correct' in row) row.correct = corrected;
+    if ('isCorrect' in row) row.isCorrect = corrected;
     return row;
+  }
+
+  function repairList(rows) {
+    if (Array.isArray(rows)) rows.forEach(repairResponse);
   }
 
   function repairPayload(payload) {
     if (!payload || typeof payload !== 'object') return payload;
-    if (Array.isArray(payload.responses)) payload.responses.forEach(repairResponse);
-    if (Array.isArray(payload.answers)) payload.answers.forEach(repairResponse);
-    if (payload.attempt && Array.isArray(payload.attempt.responses)) payload.attempt.responses.forEach(repairResponse);
+    repairList(payload.responses);
+    repairList(payload.answers);
+    repairList(payload.question_results);
+    repairList(payload.attempt && payload.attempt.responses);
+    repairList(payload.report && payload.report.responses);
     return payload;
   }
 
