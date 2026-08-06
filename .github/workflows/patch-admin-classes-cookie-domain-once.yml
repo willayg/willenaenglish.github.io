@@ -1,10 +1,15 @@
 name: Patch admin classes cookie domain once
+
 on:
   push:
-    branches: [staging]
-    paths: ['.github/workflows/patch-admin-classes-cookie-domain-once.yml']
+    branches:
+      - staging
+    paths:
+      - '.github/workflows/patch-admin-classes-cookie-domain-once.yml'
+
 permissions:
   contents: write
+
 jobs:
   patch:
     runs-on: ubuntu-latest
@@ -12,47 +17,47 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: staging
+
       - name: Configure custom domain and cookie auth
+        shell: bash
         run: |
-          python - <<'PY'
+          python <<'PY'
           from pathlib import Path
 
-          p=Path('cloudflare-workers/admin-classes/wrangler.toml')
-          s=p.read_text()
-          route='routes = [{ pattern = "admin-classes-api.willenaenglish.com", custom_domain = true }]'
-          if route not in s:
-              s=s.rstrip()+f'\n\n{route}\n'
-          p.write_text(s)
+          wrangler = Path('cloudflare-workers/admin-classes/wrangler.toml')
+          text = wrangler.read_text()
+          route = 'routes = [{ pattern = "admin-classes-api.willenaenglish.com", custom_domain = true }]'
+          if route not in text:
+              wrangler.write_text(text.rstrip() + '\n\n' + route + '\n')
 
-          p=Path('cloudflare-workers/admin-classes/src/index.js')
-          s=p.read_text()
-          old="""function bearer(req) {
-  const value = req.headers.get('Authorization') || '';
-  return value.startsWith('Bearer ') ? value.slice(7).trim() : '';
-}"""
-          new="""function bearer(req) {
+          worker = Path('cloudflare-workers/admin-classes/src/index.js')
+          text = worker.read_text()
+          start = text.index('function bearer(req) {')
+          end = text.index('\n}\n\nasync function supabaseFetch', start) + 2
+          replacement = '''function bearer(req) {
   const value = req.headers.get('Authorization') || '';
   if (value.startsWith('Bearer ')) return value.slice(7).trim();
   const cookie = req.headers.get('Cookie') || '';
   const match = cookie.match(/(?:^|;\\s*)sb_access=([^;]+)/);
   return match ? decodeURIComponent(match[1]) : '';
-}"""
-          if old not in s and new not in s:
-              raise SystemExit('bearer function not found')
-          p.write_text(s.replace(old,new))
+}'''
+          worker.write_text(text[:start] + replacement + text[end:])
 
-          for name in ['admin-class-manager.js','admin-class-drawer.js']:
-              p=Path('Teachers/admin')/name
-              s=p.read_text().replace('https://admin-classes.willena.workers.dev','https://admin-classes-api.willenaenglish.com')
-              p.write_text(s)
+          for filename in ('admin-class-manager.js', 'admin-class-drawer.js'):
+              path = Path('Teachers/admin') / filename
+              text = path.read_text()
+              text = text.replace('https://admin-classes.willena.workers.dev', 'https://admin-classes-api.willenaenglish.com')
+              path.write_text(text)
 
-          p=Path('Teachers/admin/index.html')
-          s=p.read_text()
-          s=s.replace('/Teachers/admin/admin-class-manager.js?v=20260806e','/Teachers/admin/admin-class-manager.js?v=20260806f')
-          s=s.replace('/Teachers/admin/admin-class-drawer.js?v=20260806b','/Teachers/admin/admin-class-drawer.js?v=20260806c')
-          p.write_text(s)
+          index = Path('Teachers/admin/index.html')
+          text = index.read_text()
+          text = text.replace('/Teachers/admin/admin-class-manager.js?v=20260806e', '/Teachers/admin/admin-class-manager.js?v=20260806f')
+          text = text.replace('/Teachers/admin/admin-class-drawer.js?v=20260806b', '/Teachers/admin/admin-class-drawer.js?v=20260806c')
+          index.write_text(text)
           PY
+
       - name: Commit patch
+        shell: bash
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
