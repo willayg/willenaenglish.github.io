@@ -1,10 +1,10 @@
 (function(){
 'use strict';
 var tests=[],loaded=false,loading=false;
-var endpoint='/.netlify/functions/admin_classes?action=list_level_tests';
+var endpoint='https://fiieuiktlsivwfgyivai.supabase.co/functions/v1/admin_classes?action=list_level_tests';
 var byId=function(id){return document.getElementById(id)};
 function esc(value){return String(value==null?'':value).replace(/[&<>"']/g,function(char){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]})}
-function api(){var fn=window.WillenaAPI&&window.WillenaAPI.fetch||window.fetch.bind(window);return fn(endpoint,{credentials:'include',cache:'no-store'}).then(function(response){return response.json().catch(function(){return{}}).then(function(data){if(!response.ok||data.success===false)throw new Error(data.error||'Could not load level tests');return data})})}
+function api(){if(window.AdminClassEdge&&typeof window.AdminClassEdge.edge==='function')return window.AdminClassEdge.edge(endpoint);return Promise.reject(new Error('Admin data connection is not ready.'))}
 function labelSource(source){return source==='prospective'?'Free test':'Internal'}
 function labelStatus(status){return status==='completed'?'Completed':'In progress'}
 function publicLevel(level){var n=Number(level);if(!n)return'—';return n<=2?'S'+n:String(n-2)}
