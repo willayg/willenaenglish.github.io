@@ -13,13 +13,13 @@ function setupGuess(){var text=document.body.innerText||'';return{source:'adapti
 function ensureAttempt(){if(attempt)return Promise.resolve(attempt);var saved=loadSaved();if(saved&&saved.id&&saved.session_token){attempt=saved;return Promise.resolve(attempt)}var c=candidate();if(!c||!c.id||!c.registration_token)return Promise.reject(new Error('Candidate session missing'));startAt=Date.now();return post({action:'start',candidate_id:c.id,registration_token:c.registration_token,setup:setupGuess(),language:document.documentElement.lang||'ko'}).then(function(j){saveAttempt(j.attempt);return attempt})}
 function selectedValue(card,q){if(q&&q.type==='sentence_unscramble')return Array.from(card.querySelectorAll('.scramble-token.chosen')).map(function(x){return x.textContent.trim()});var s=card.querySelector('.choice.selected');return s?s.getAttribute('data-value'):null}
 function correctValue(q){return q&&q.type==='sentence_unscramble'?q.tokens:q?q.a:null}
-function same(a,b){return JSON.stringify(a)===JSON.stringify(b)}
+function same(type,a,b){var scoring=window.WillenaLevelTestScoring;return scoring?scoring.isCorrect(type,a,b):JSON.stringify(a)===JSON.stringify(b)}
 function captureAnswer(){
  var card=document.querySelector('.question-card');if(!card)return false;
  var id=card.getAttribute('data-question-id');if(!id||answerIds.has(String(id)))return false;
  var q=bankMap.get(String(id));if(!q)return false;
  var selected=selectedValue(card,q);if(selected==null)return false;
- var row={answer_index:answers.length+1,assessment_item_id:String(q.id),assessment_source_key:q.metadata&&q.metadata.source_key||null,question_level:Number(q.level)||null,item_type:q.type||null,prompt_snapshot:q.q||q.meaning||'',selected_answer:selected,correct_answer:correctValue(q),is_correct:same(selected,correctValue(q)),response_time_ms:lastQuestionAt?Date.now()-lastQuestionAt:null,metadata:{translation:Boolean(q.translation)}};
+ var row={answer_index:answers.length+1,assessment_item_id:String(q.id),assessment_source_key:q.metadata&&q.metadata.source_key||null,question_level:Number(q.level)||null,item_type:q.type||null,prompt_snapshot:q.q||q.meaning||'',selected_answer:selected,correct_answer:correctValue(q),is_correct:same(q.type,selected,correctValue(q)),response_time_ms:lastQuestionAt?Date.now()-lastQuestionAt:null,metadata:{translation:Boolean(q.translation)}};
  answerIds.add(String(id));answers.push(row);
  ensureAttempt().then(function(a){return post(Object.assign({action:'answer',attempt_id:a.id,session_token:a.session_token},row))}).catch(function(e){console.warn('[level-test-recording] answer save failed',e)});
  return true;
