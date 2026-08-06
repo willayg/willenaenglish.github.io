@@ -47,13 +47,13 @@
   };
 
   const saved=localStorage.getItem('willenaAdminLanguage');
-  let language=saved==='en'||saved==='ko'?saved:(navigator.language||'').toLowerCase().startsWith('ko')?'ko':'en';
+  let language=saved==='en'||saved==='ko'?saved:'ko';
   const t=(key,vars={})=>{
     let text=(translations[language]&&translations[language][key])||translations.en[key]||key;
     Object.entries(vars).forEach(([k,v])=>text=text.replaceAll(`{${k}}`,String(v)));
     return text;
   };
-  window.AdminI18n={t,get language(){return language},setLanguage};
+  window.AdminI18n={t,get language(){return language},setLanguage,translations};
 
   function setText(selector,key){const el=document.querySelector(selector);if(el)el.textContent=t(key)}
   function applyStatic(){
@@ -93,7 +93,6 @@
   }
   function setLanguage(next){if(next!=='en'&&next!=='ko')return;language=next;localStorage.setItem('willenaAdminLanguage',next);applyStatic()}
 
-  const originalBuildFilters=window.buildFilters;
   window.buildFilters=function(){
     const classFilter=document.getElementById('classFilter'),gradeFilter=document.getElementById('gradeFilter'),moveTarget=document.getElementById('moveTarget');
     const oldClass=classFilter?.value||'',oldGrade=gradeFilter?.value||'';
@@ -125,7 +124,6 @@
     const m={students:[t('studentsTitle'),t('studentsSub')],classes:[t('classesTitle'),t('classesSub')],home:[t('homeTitle'),t('homeSub')]}[p];document.getElementById('pageTitle').textContent=m[0];document.getElementById('pageSub').textContent=m[1];
   };
 
-  const originalLoad=window.load;
   window.load=async function(){
     if(pending.size){showToast(t('waitChanges'),{error:true});return}
     document.getElementById('studentList').innerHTML=`<div class="card empty">${t('loadingStudents')}</div>`;
