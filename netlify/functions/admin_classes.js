@@ -47,7 +47,7 @@ exports.handler=async event=>{
   let body;try{body=JSON.parse(event.body||'{}')}catch{return reply(event,400,{success:false,error:'Invalid JSON'})}
   const name=String(body.name||'').trim().replace(/\s+/g,' ');
   const books=(Array.isArray(body.books)?body.books:[]).map(v=>String(v||'').trim()).filter(Boolean).slice(0,3);
-  const allowedLevels=new Set(['S1','S2','S3','S4','S5','S6','S7','S8','S9','S10','Mixed']);
+  const allowedLevels=new Set(['S1','S2','1','2','3','4','5','6','7','8','9','10','Mixed']);
   let level=String(body.level||'').trim();
   if(books.length)level=null;else if(!level)level=null;else if(!allowedLevels.has(level))return reply(event,400,{success:false,error:'Invalid level'});
   if(name.length<2||name.length>80)return reply(event,400,{success:false,error:'Class name must be 2–80 characters'});
