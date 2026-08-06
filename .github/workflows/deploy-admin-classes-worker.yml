@@ -1,0 +1,52 @@
+name: Deploy Admin Classes Worker
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [staging]
+    paths:
+      - 'cloudflare-workers/admin-classes/**'
+      - '.github/workflows/deploy-admin-classes-worker.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-admin-classes-worker
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: staging
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Worker dependencies
+        working-directory: cloudflare-workers/admin-classes
+        run: npm install
+
+      - name: Configure Worker secrets
+        working-directory: cloudflare-workers/admin-classes
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          SCORES_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          CONTENT_KEY: ${{ secrets.CONTENT_SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          test -n "$SCORES_KEY" || (echo 'Missing SUPABASE_SERVICE_ROLE_KEY' && exit 1)
+          test -n "$CONTENT_KEY" || (echo 'Missing CONTENT_SUPABASE_SERVICE_ROLE_KEY' && exit 1)
+          printf '%s' "$SCORES_KEY" | npx wrangler secret put SCORES_SUPABASE_SERVICE_ROLE_KEY
+          printf '%s' "$CONTENT_KEY" | npx wrangler secret put CONTENT_SUPABASE_SERVICE_ROLE_KEY
+
+      - name: Deploy Worker
+        working-directory: cloudflare-workers/admin-classes
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: npx wrangler deploy
