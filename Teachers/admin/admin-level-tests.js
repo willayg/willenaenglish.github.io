@@ -1,7 +1,7 @@
 (function(){
 'use strict';
 var tests=[],loaded=false,loading=false,activeFilter='all',activeDetail=null;
-var endpoint='https://api.willenaenglish.com/.netlify/functions/admin_classes';
+var endpoint='https://willena-proxy.willena.workers.dev/.netlify/functions/admin_classes';
 var byId=function(id){return document.getElementById(id)};
 function esc(value){return String(value==null?'':value).replace(/[&<>"']/g,function(char){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]})}
 function api(url,options){var fn=window.WillenaAPI&&window.WillenaAPI.fetch?window.WillenaAPI.fetch:window.fetch.bind(window);return fn(url,Object.assign({credentials:'include',cache:'no-store',headers:{'Content-Type':'application/json'}},options||{})).then(function(response){return response.json().catch(function(){return{}}).then(function(data){if(!response.ok||data.success===false)throw new Error(data.error||'Request failed '+response.status);return data})})}
