@@ -3,9 +3,8 @@ main = "src/index.js"
 compatibility_date = "2025-12-08"
 workers_dev = true
 
-[[routes]]
-pattern = "api.willenaenglish.com/*"
-zone_name = "willenaenglish.com"
+# The api.willenaenglish.com route is already configured in Cloudflare.
+# This deployment updates only the Worker code and bindings.
 
 [[services]]
 binding = "SUPABASE_AUTH"
