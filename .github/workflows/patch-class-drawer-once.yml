@@ -1,0 +1,34 @@
+name: Patch class drawer once
+on:
+  push:
+    branches: [staging]
+    paths: ['.github/workflows/patch-class-drawer-once.yml']
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: staging
+      - name: Patch class drawer assets
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('Teachers/admin/index.html')
+          s=p.read_text()
+          s=s.replace('/Teachers/admin/admin-form-layout.css?v=20260806c','/Teachers/admin/admin-form-layout.css?v=20260806d')
+          marker='<script src="/Teachers/admin/admin-class-manager.js?v=20260806d"></script>'
+          drawer='<script src="/Teachers/admin/admin-class-drawer.js?v=20260806a"></script>'
+          if drawer not in s:
+              s=s.replace(marker,marker+'\n'+drawer)
+          p.write_text(s)
+          PY
+      - name: Commit patch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Teachers/admin/index.html
+          git diff --cached --quiet || git commit -m "Load editable class details drawer"
+          git push origin staging
