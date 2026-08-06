@@ -293,6 +293,12 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password })
       });
+      // The admin level-test API is hosted on workers.dev, so the shared
+      // .willenaenglish.com cookie cannot accompany that cross-domain request.
+      // Keep the Supabase access token as the existing API wrapper's fallback.
+      if (result.access_token && window.WillenaAPI?.setLocalTokens) {
+        window.WillenaAPI.setLocalTokens(result.access_token);
+      }
       return result.user;
     }
     

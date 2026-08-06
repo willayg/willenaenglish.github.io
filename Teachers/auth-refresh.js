@@ -42,6 +42,9 @@ async function callRefresh() {
         if (!resp.ok || !(json && json.success)) {
           console.debug('[auth-refresh] refresh request failed', { status: resp.status, body: json });
         } else {
+          if (json.access_token && window.WillenaAPI?.setLocalTokens) {
+            window.WillenaAPI.setLocalTokens(json.access_token);
+          }
           console.debug('[auth-refresh] refresh ok', { status: resp.status, body: json });
         }
       lastRefreshAt = Date.now();
