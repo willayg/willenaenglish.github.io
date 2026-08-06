@@ -9,6 +9,15 @@
   }
 
   function sentenceText(value) {
+    if (typeof value === 'string') {
+      var encoded = value.trim();
+      if (encoded.charAt(0) === '[' && encoded.charAt(encoded.length - 1) === ']') {
+        try {
+          var decoded = JSON.parse(encoded);
+          if (Array.isArray(decoded)) value = decoded;
+        } catch (_) {}
+      }
+    }
     var text = Array.isArray(value) ? value.map(cleanText).join(' ') : cleanText(value);
     return text
       .toLocaleLowerCase('en-US')
