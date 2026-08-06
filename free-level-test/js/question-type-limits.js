@@ -4,6 +4,11 @@
 var originalLoad=window.loadQuestionBank;
 if(typeof originalLoad!=="function")return;
 
+// Keep the complete bank available to observers such as the response recorder.
+// The test engine still uses the limited loader below to choose two grammar-error
+// questions, but recording must be able to resolve whichever questions it chose.
+window.loadCompleteQuestionBank=originalLoad;
+
 function shuffle(items){
   return items.slice().sort(function(){return Math.random()-.5});
 }
