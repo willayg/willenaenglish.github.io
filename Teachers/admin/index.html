@@ -66,7 +66,7 @@ document.querySelectorAll('[data-page]').forEach(b=>b.onclick=()=>setPage(b.data
 (async()=>{if(!await guard())return;$('loadingText').textContent='Loading students…';try{await load();$('loading').style.display='none'}catch(e){$('loadingText').textContent=e.message;setTimeout(()=>location.replace(loginUrl()),1200)}})();
 </script>
 <script src="/Teachers/admin/student-drawer.js?v=20260806e"></script>
-<script src="/Teachers/admin/admin-class-manager.js?v=20260806e"></script>
-<script src="/Teachers/admin/admin-class-drawer.js?v=20260806b"></script>
+<script src="/Teachers/admin/admin-class-manager.js?v=20260806g"></script>
+<script src="/Teachers/admin/admin-class-drawer.js?v=20260806d"></script>
 </body>
 </html>
