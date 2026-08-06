@@ -1,0 +1,73 @@
+name: Patch admin classes to Supabase once
+
+on:
+  push:
+    branches: [staging]
+    paths:
+      - '.github/workflows/patch-admin-classes-to-supabase-once.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: staging
+
+      - name: Patch class clients
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          helper = """  const classApi='https://fiieuiktlsivwfgyivai.supabase.co/functions/v1/admin_classes';
+  const contentApi='https://gxwfsqxyuufqtitspfqg.supabase.co/functions/v1/source_content_admin';
+  const getUserId=()=>localStorage.getItem('userId')||localStorage.getItem('profile_id')||'';
+  async function edgeFetch(url,options={}){
+    const headers={...(options.headers||{}),'x-user-id':getUserId()};
+    if(options.body&&!Object.keys(headers).some(k=>k.toLowerCase()==='content-type'))headers['Content-Type']='application/json';
+    const response=await fetch(url,{...options,headers,credentials:'omit'});
+    const data=await response.json().catch(()=>({error:`Request failed ${response.status}`}));
+    if(!response.ok||data?.error)throw new Error(data?.error||`Request failed ${response.status}`);
+    return data;
+  }
+"""
+
+          manager=Path('Teachers/admin/admin-class-manager.js')
+          s=manager.read_text()
+          s=s.replace("  const apiUrl='/.netlify/functions/admin_classes';\n",helper,1)
+          s=s.replace("const data=await api(`${apiUrl}?action=search_books&q=${encodeURIComponent(q)}`,{signal:controller.signal});","const data=await edgeFetch(contentApi,{method:'POST',signal:controller.signal,body:JSON.stringify({action:'search_books',q})});")
+          s=s.replace("const books=data.books||[];","const books=data.data||[];")
+          s=s.replace("const data=await api(apiUrl);classRows=data.classes||[];","const data=await edgeFetch(classApi);classRows=data.classes||[];")
+          s=s.replace("request:()=>api(apiUrl,{method:'POST',body:JSON.stringify({name,books,level:books.length?null:level})})","request:()=>edgeFetch(classApi,{method:'POST',body:JSON.stringify({action:'create_class',name,books,level:books.length?null:level})})")
+          if 'apiUrl' in s: raise SystemExit('manager still contains apiUrl')
+          manager.write_text(s)
+
+          drawer=Path('Teachers/admin/admin-class-drawer.js')
+          s=drawer.read_text()
+          s=s.replace("  const apiUrl='/.netlify/functions/admin_classes';\n",helper,1)
+          old="const d=await api(`${apiUrl}?action=search_books&q=${encodeURIComponent(q)}`,{signal:c.signal});if(input.value.trim()!==q)return;cache.set(key,{t:Date.now(),books:d.books||[]});menu(id,d.books||[],d.books?.length?'':tr('none'))"
+          new="const d=await edgeFetch(contentApi,{method:'POST',signal:c.signal,body:JSON.stringify({action:'search_books',q})});if(input.value.trim()!==q)return;cache.set(key,{t:Date.now(),books:d.data||[]});menu(id,d.data||[],d.data?.length?'':tr('none'))"
+          s=s.replace(old,new)
+          s=s.replace("const data=await api(apiUrl);row=(data.classes||[])","const data=await edgeFetch(classApi);row=(data.classes||[])")
+          s=s.replace("const d=await api(`${apiUrl}?action=update_class`,{method:'POST',body:JSON.stringify({class_id:before.id,books,level})});","const d=await edgeFetch(classApi,{method:'POST',body:JSON.stringify({action:'update_class',class_id:before.id,books,level})});")
+          if 'apiUrl' in s: raise SystemExit('drawer still contains apiUrl')
+          drawer.write_text(s)
+
+          index=Path('Teachers/admin/index.html')
+          s=index.read_text()
+          import re
+          s=re.sub(r'(admin-class-manager\.js\?v=)[^"\']+',r'\g<1>20260806h',s)
+          s=re.sub(r'(admin-class-drawer\.js\?v=)[^"\']+',r'\g<1>20260806e',s)
+          index.write_text(s)
+          PY
+
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Teachers/admin/admin-class-manager.js Teachers/admin/admin-class-drawer.js Teachers/admin/index.html
+          git diff --cached --quiet || git commit -m "Use Supabase Edge Functions for class admin"
+          git push origin staging
