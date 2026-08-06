@@ -1,0 +1,66 @@
+name: Patch real admin gateway source once
+
+on:
+  push:
+    branches: [staging]
+    paths:
+      - '.github/workflows/patch-real-admin-gateway-source-once.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: staging
+      - name: Patch source files
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          worker = Path('cloudflare-workers/admin-classes/src/index.js')
+          s = worker.read_text()
+          old = """function bearer(req) {
+  const value = req.headers.get('Authorization') || '';
+  return value.startsWith('Bearer ') ? value.slice(7).trim() : '';
+}"""
+          new = """function bearer(req) {
+  const value = req.headers.get('Authorization') || '';
+  if (value.startsWith('Bearer ')) return value.slice(7).trim();
+  const cookie = req.headers.get('Cookie') || '';
+  const match = cookie.match(/(?:^|;\\s*)sb_access=([^;]+)/);
+  return match ? decodeURIComponent(match[1]) : '';
+}"""
+          if old in s:
+              s = s.replace(old, new)
+          elif new not in s:
+              raise SystemExit('bearer function not found')
+          worker.write_text(s)
+
+          proxy = Path('cloudflare-workers/proxy/src/index.js')
+          s = proxy.read_text()
+          old_map = "  student_level_test: 'STUDENT_LEVEL_TEST',\n};"
+          new_map = "  student_level_test: 'STUDENT_LEVEL_TEST',\n  admin_classes: 'ADMIN_CLASSES',\n};"
+          if old_map in s:
+              s = s.replace(old_map, new_map)
+          elif "admin_classes: 'ADMIN_CLASSES'" not in s:
+              raise SystemExit('gateway map not found')
+          proxy.write_text(s)
+
+          wrangler = Path('cloudflare-workers/proxy/wrangler.toml')
+          s = wrangler.read_text()
+          binding = '\n[[services]]\nbinding = "ADMIN_CLASSES"\nservice = "admin-classes"\n'
+          if 'binding = "ADMIN_CLASSES"' not in s:
+              s = s.replace('\n[vars]\n', binding + '\n[vars]\n')
+          wrangler.write_text(s)
+          PY
+      - name: Commit source patch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add cloudflare-workers/admin-classes/src/index.js cloudflare-workers/proxy/src/index.js cloudflare-workers/proxy/wrangler.toml
+          git diff --cached --quiet || git commit -m "Bind admin classes to live API gateway"
+          git push origin staging
