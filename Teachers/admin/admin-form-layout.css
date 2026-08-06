@@ -1,0 +1,25 @@
+#addStudentModal .modal{width:min(720px,96vw)}
+#addStudentModal .add-modal-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:16px 20px;align-items:start}
+#addStudentModal .add-modal-grid>div{min-width:0}
+#addStudentModal .add-modal-grid label,
+#addClassModal .class-form-grid label{display:block;margin:0 0 7px;font-size:.78rem;color:var(--mut);font-weight:700}
+#addStudentModal .add-modal-grid input,
+#addStudentModal .add-modal-grid select,
+#addClassModal .class-form-grid input,
+#addClassModal .class-form-grid select{display:block;width:100%;height:46px;padding:10px 12px;border:1px solid var(--line);border-radius:11px;background:#fff;color:var(--ink)}
+#addStudentModal .add-modal-grid input:focus,
+#addStudentModal .add-modal-grid select:focus,
+#addClassModal .class-form-grid input:focus,
+#addClassModal .class-form-grid select:focus{outline:3px solid #19777e22;border-color:var(--teal)}
+#addStudentModal .form-hint,#addClassModal .form-hint{margin-top:2px}
+#addStudentModal .modal-foot,#addClassModal .modal-foot{border-top:1px solid var(--line);padding-top:16px}
+#addClassModal .modal{width:min(760px,96vw)}
+#addClassModal .class-form-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px 18px;align-items:start}
+#addClassModal .class-form-grid .full{grid-column:1/-1}
+#addClassModal select:disabled{background:#f1f4f7;color:#9aa5b1;cursor:not-allowed}
+.class-card .class-meta{margin:8px 0 2px;color:var(--mut);font-size:.78rem;line-height:1.5;min-height:20px}
+@media(max-width:720px){
+ #addStudentModal .add-modal-grid,#addClassModal .class-form-grid{grid-template-columns:1fr}
+ #addStudentModal .add-modal-grid .full,#addClassModal .class-form-grid .full{grid-column:auto}
+ #addStudentModal .modal,#addClassModal .modal{max-height:88vh}
+}
