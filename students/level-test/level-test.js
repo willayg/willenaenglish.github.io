@@ -9,6 +9,10 @@ var saveFailed=false;
 var setupSnapshot={grade:null,years:null,listening:null,length:null};
 var nativeFetch=window.fetch.bind(window);
 var greetingIndex=0;
+var AUTH_ENDPOINT='/.netlify/functions/supabase_auth';
+var SESSION_REFRESH_INTERVAL=40*60*1000;
+var lastSessionRefresh=0;
+var sessionRefreshTimer=null;
 try{
  var previous=Number(sessionStorage.getItem('willenaLevelGreeting')||'-1');
  greetingIndex=(previous+1)%3;
@@ -27,6 +31,33 @@ window.fetch=function(input,init){
 
 function signin(){location.replace('/students/signin.html?next='+encodeURIComponent('/students/level-test/'))}
 function studentName(data){return String(data&&data.name||data&&data.username||'Student').trim()}
+async function authRequest(action,params){
+ var query=new URLSearchParams(Object.assign({action:action,_:Date.now()},params||{}));
+ var response=await WillenaAPI.fetch(AUTH_ENDPOINT+'?'+query.toString(),{credentials:'include',cache:'no-store'});
+ var data=await response.json().catch(function(){return{}});
+ return{response:response,data:data};
+}
+async function refreshSession(){
+ var result=await authRequest('refresh');
+ if(!result.response.ok||!result.data.success)return false;
+ if(result.data.access_token&&window.WillenaAPI&&WillenaAPI.setLocalTokens)WillenaAPI.setLocalTokens(result.data.access_token);
+ lastSessionRefresh=Date.now();
+ return true;
+}
+async function currentUser(){
+ var result=await authRequest('whoami');
+ if(result.response.ok&&result.data.success&&result.data.user_id)return result.data;
+ if(!await refreshSession())return null;
+ result=await authRequest('whoami');
+ return result.response.ok&&result.data.success&&result.data.user_id?result.data:null;
+}
+function keepSessionAlive(){
+ if(sessionRefreshTimer)return;
+ sessionRefreshTimer=setInterval(function(){refreshSession().catch(function(error){console.debug('[StudentLevelTest] background session refresh failed',error)})},SESSION_REFRESH_INTERVAL);
+ window.addEventListener('focus',function(){
+  if(Date.now()-lastSessionRefresh>SESSION_REFRESH_INTERVAL/2)refreshSession().catch(function(error){console.debug('[StudentLevelTest] focus session refresh failed',error)});
+ });
+}
 function normalizeGrade(grade){
  var text=String(grade==null?'':grade).trim().toLowerCase();
  if(!text||text==='미정')return null;
@@ -53,10 +84,15 @@ function exposeStudent(profile){
 }
 async function requireStudent(){
  try{
-  var response=await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=get_profile&_='+Date.now());
-  var profile=await response.json().catch(function(){return{}});
-  if(!response.ok||!profile.success){signin();return}
-  exposeStudent(profile);
+  // Match the dashboard auth flow: whoami owns identity, profile only adds
+  // display fields. A stale access cookie is refreshed once before sign-in.
+  var who=await currentUser();
+  if(!who){signin();return}
+  var profileResult=await authRequest('get_profile',{user_id:who.user_id});
+  var profile=profileResult.data;
+  if(!profileResult.response.ok||!profile.success){signin();return}
+  exposeStudent(Object.assign({},profile,{id:who.user_id}));
+  keepSessionAlive();
   if(window.__studentLoadingTimer)clearInterval(window.__studentLoadingTimer);
   document.documentElement.classList.remove('auth-pending');
  }catch(error){console.error('[StudentLevelTest] profile lookup failed',error);signin()}
