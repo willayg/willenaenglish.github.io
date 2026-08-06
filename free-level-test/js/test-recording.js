@@ -1,6 +1,7 @@
 (function(){
 'use strict';
 var PUBLIC_ENDPOINT='https://fiieuiktlsivwfgyivai.supabase.co/functions/v1/prospective-level-test';
+var INTERNAL_ENDPOINT='https://student-level-test-api.willenaenglish.com/';
 var PUBLIC_ATTEMPT_KEY='willena_prospective_level_test_attempt_v1';
 var INTERNAL_ATTEMPT_KEY='willena_internal_level_test_attempt_v2';
 var STATE_SUFFIX='_offline_state';
@@ -16,7 +17,7 @@ function post(body){
  var action={start:'capture_start',answer:'capture_answer',finish:'capture_finish'}[body.action];
  if(!action)return Promise.reject(new Error('Unsupported recording action'));
  var payload=Object.assign({},body);delete payload.action;delete payload.session_token;delete payload.candidate_id;delete payload.registration_token;
- return WillenaAPI.fetch('/.netlify/functions/student_level_test?action='+encodeURIComponent(action),{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(payload)}).then(parseResponse);
+ return fetch(INTERNAL_ENDPOINT+'?action='+encodeURIComponent(action),{method:'POST',credentials:'include',headers:{'content-type':'application/json'},body:JSON.stringify(payload)}).then(parseResponse);
 }
 function loadSaved(){try{return JSON.parse(localStorage.getItem(attemptKey())||sessionStorage.getItem(attemptKey())||'null')}catch(_){return null}}
 function persistState(){try{localStorage.setItem(stateKey(),JSON.stringify({answers:answers,startAt:startAt||Date.now()}))}catch(_){}}
