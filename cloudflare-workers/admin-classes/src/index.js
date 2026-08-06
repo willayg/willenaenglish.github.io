@@ -163,15 +163,24 @@ async function searchBooks(env, q) {
 }
 
 async function listLevelTests(env) {
-  const attempts = await supabaseFetch(
+  const internalRows = await supabaseFetch(
     env.SCORES_SUPABASE_URL,
     env.SCORES_SUPABASE_SERVICE_ROLE_KEY,
-    '/rest/v1/student_assessment_attempts?select=id,student_id,assessment_key,status,test_version,setup,total_questions,answered_count,correct_count,recommended_level,duration_seconds,started_at,completed_at,updated_at,metadata&order=started_at.desc&limit=250'
+    '/rest/v1/student_assessment_attempts?select=id,student_id,assessment_key,status,test_version,setup,total_questions,answered_count,correct_count,recommended_level,duration_seconds,started_at,completed_at,updated_at,admin_opened_at,metadata&order=started_at.desc&limit=250'
   );
-  const attemptIds = (attempts || []).map(row => row.id).filter(Boolean);
-  const studentIds = [...new Set((attempts || []).map(row => row.student_id).filter(Boolean))];
+  const publicRows = await supabaseFetch(
+    env.SCORES_SUPABASE_URL,
+    env.SCORES_SUPABASE_SERVICE_ROLE_KEY,
+    '/rest/v1/prospective_level_test_attempts?select=id,candidate_id,status,test_version,setup,recommended_level,display_level,total_questions,correct_count,duration_seconds,started_at,completed_at,updated_at,admin_opened_at,metadata&order=started_at.desc&limit=250'
+  );
+  const internalIds = (internalRows || []).map(row => row.id).filter(Boolean);
+  const publicIds = (publicRows || []).map(row => row.id).filter(Boolean);
+  const studentIds = [...new Set((internalRows || []).map(row => row.student_id).filter(Boolean))];
+  const candidateIds = [...new Set((publicRows || []).map(row => row.candidate_id).filter(Boolean))];
   let profiles = [];
+  let candidates = [];
   let skillRows = [];
+  let publicResponses = [];
 
   if (studentIds.length) {
     profiles = await supabaseFetch(
@@ -180,16 +189,39 @@ async function listLevelTests(env) {
       `/rest/v1/profiles?id=in.(${studentIds.map(encodeURIComponent).join(',')})&select=id,name,korean_name,username,grade,school,class`
     );
   }
-  if (attemptIds.length) {
-    skillRows = await supabaseFetch(
+  if (candidateIds.length) {
+    candidates = await supabaseFetch(
       env.SCORES_SUPABASE_URL,
       env.SCORES_SUPABASE_SERVICE_ROLE_KEY,
-      `/rest/v1/student_assessment_skill_results?attempt_id=in.(${attemptIds.map(encodeURIComponent).join(',')})&select=attempt_id,skill_key,questions_seen,questions_correct,score_percent&order=skill_key.asc`
+      `/rest/v1/prospective_level_test_candidates?id=in.(${candidateIds.map(encodeURIComponent).join(',')})&select=id,student_name,school_name,school_grade`
+    );
+  }
+  if (internalIds.length) {
+    const rows = await supabaseFetch(
+      env.SCORES_SUPABASE_URL,
+      env.SCORES_SUPABASE_SERVICE_ROLE_KEY,
+      `/rest/v1/student_assessment_skill_results?attempt_id=in.(${internalIds.map(encodeURIComponent).join(',')})&select=attempt_id,skill_key,questions_seen,questions_correct,score_percent&order=skill_key.asc`
+    );
+    skillRows.push(...(rows || []));
+  }
+  if (publicIds.length) {
+    const rows = await supabaseFetch(
+      env.SCORES_SUPABASE_URL,
+      env.SCORES_SUPABASE_SERVICE_ROLE_KEY,
+      `/rest/v1/prospective_level_test_skill_results?attempt_id=in.(${publicIds.map(encodeURIComponent).join(',')})&select=attempt_id,skill_key,questions_seen,questions_correct,score_percent&order=skill_key.asc`
+    );
+    skillRows.push(...(rows || []));
+    publicResponses = await supabaseFetch(
+      env.SCORES_SUPABASE_URL,
+      env.SCORES_SUPABASE_SERVICE_ROLE_KEY,
+      `/rest/v1/prospective_level_test_responses?attempt_id=in.(${publicIds.map(encodeURIComponent).join(',')})&select=attempt_id,answer_index`
     );
   }
 
   const profileById = new Map((profiles || []).map(row => [String(row.id), row]));
+  const candidateById = new Map((candidates || []).map(row => [String(row.id), row]));
   const skillsByAttempt = new Map();
+  const publicAnswerCounts = new Map();
   for (const row of skillRows || []) {
     const key = String(row.attempt_id);
     if (!skillsByAttempt.has(key)) skillsByAttempt.set(key, []);
@@ -200,8 +232,12 @@ async function listLevelTests(env) {
       score_percent: Number(row.score_percent) || 0,
     });
   }
+  for (const row of publicResponses || []) {
+    const key = String(row.attempt_id);
+    publicAnswerCounts.set(key, (publicAnswerCounts.get(key) || 0) + 1);
+  }
 
-  return (attempts || []).map(row => {
+  const internal = (internalRows || []).map(row => {
     const profile = profileById.get(String(row.student_id)) || {};
     const metadata = row.metadata && typeof row.metadata === 'object' ? row.metadata : {};
     return {
@@ -226,9 +262,101 @@ async function listLevelTests(env) {
       completed_at: row.completed_at,
       updated_at: row.updated_at,
       setup: row.setup || {},
+      is_new: !row.admin_opened_at,
       skills: skillsByAttempt.get(String(row.id)) || [],
     };
   });
+  const prospective = (publicRows || []).map(row => {
+    const candidate = candidateById.get(String(row.candidate_id)) || {};
+    return {
+      id: row.id,
+      source: 'prospective',
+      candidate_id: row.candidate_id,
+      student_name: candidate.student_name || 'Prospective student',
+      grade: candidate.school_grade || null,
+      school: candidate.school_name || null,
+      class_name: null,
+      status: row.status,
+      test_version: row.test_version,
+      total_questions: Number(row.total_questions) || 0,
+      answered_count: publicAnswerCounts.get(String(row.id)) || 0,
+      correct_count: Number(row.correct_count) || 0,
+      recommended_level: Number(row.recommended_level || row.display_level) || null,
+      duration_seconds: Number(row.duration_seconds) || 0,
+      started_at: row.started_at,
+      completed_at: row.completed_at,
+      updated_at: row.updated_at,
+      setup: row.setup || {},
+      is_new: !row.admin_opened_at,
+      skills: skillsByAttempt.get(String(row.id)) || [],
+    };
+  });
+  return [...internal, ...prospective]
+    .sort((a, b) => new Date(b.started_at || b.updated_at || 0) - new Date(a.started_at || a.updated_at || 0))
+    .slice(0, 250);
+}
+
+function responseSkill(type) {
+  return ({
+    vocabulary: 'vocabulary', grammar: 'grammar', grammar_error: 'grammar',
+    question_response: 'grammar', listening: 'listening', reading: 'reading',
+    sentence_unscramble: 'sentence_building', speaking: 'speaking', writing: 'writing',
+  })[String(type || '')] || 'other';
+}
+
+async function levelTestDetail(env, body) {
+  const source = String(body?.source || '');
+  const attemptId = String(body?.attempt_id || '').trim();
+  if (!['internal', 'prospective'].includes(source) || !attemptId) {
+    throw Object.assign(new Error('Invalid level test request'), { status: 400 });
+  }
+  const internal = source === 'internal';
+  const attemptTable = internal ? 'student_assessment_attempts' : 'prospective_level_test_attempts';
+  const responseTable = internal ? 'student_assessment_responses' : 'prospective_level_test_responses';
+  const skillTable = internal ? 'student_assessment_skill_results' : 'prospective_level_test_skill_results';
+  const attempts = await supabaseFetch(env.SCORES_SUPABASE_URL, env.SCORES_SUPABASE_SERVICE_ROLE_KEY, `/rest/v1/${attemptTable}?id=eq.${encodeURIComponent(attemptId)}&select=*&limit=1`);
+  const attempt = attempts?.[0];
+  if (!attempt) throw Object.assign(new Error('Level test not found'), { status: 404 });
+  const responses = await supabaseFetch(env.SCORES_SUPABASE_URL, env.SCORES_SUPABASE_SERVICE_ROLE_KEY, `/rest/v1/${responseTable}?attempt_id=eq.${encodeURIComponent(attemptId)}&select=answer_index,assessment_item_id,assessment_source_key,question_level,item_type,prompt_snapshot,selected_answer,correct_answer,is_correct,response_time_ms,metadata&order=answer_index.asc`);
+  const skills = await supabaseFetch(env.SCORES_SUPABASE_URL, env.SCORES_SUPABASE_SERVICE_ROLE_KEY, `/rest/v1/${skillTable}?attempt_id=eq.${encodeURIComponent(attemptId)}&select=skill_key,questions_seen,questions_correct,score_percent&order=skill_key.asc`);
+  let person = {};
+  if (internal) {
+    const rows = await supabaseFetch(env.SCORES_SUPABASE_URL, env.SCORES_SUPABASE_SERVICE_ROLE_KEY, `/rest/v1/profiles?id=eq.${encodeURIComponent(attempt.student_id)}&select=id,name,korean_name,username,grade,school,class,phone,email&limit=1`);
+    person = rows?.[0] || {};
+  } else {
+    const rows = await supabaseFetch(env.SCORES_SUPABASE_URL, env.SCORES_SUPABASE_SERVICE_ROLE_KEY, `/rest/v1/prospective_level_test_candidates?id=eq.${encodeURIComponent(attempt.candidate_id)}&select=id,student_name,school_name,school_grade,metadata&limit=1`);
+    person = rows?.[0] || {};
+  }
+  if (!attempt.admin_opened_at) {
+    await supabaseFetch(env.SCORES_SUPABASE_URL, env.SCORES_SUPABASE_SERVICE_ROLE_KEY, `/rest/v1/${attemptTable}?id=eq.${encodeURIComponent(attemptId)}`, {
+      method: 'PATCH', body: JSON.stringify({ admin_opened_at: new Date().toISOString() }),
+    });
+  }
+  const candidate = internal ? {
+    student_name: person.name || person.korean_name || person.username || 'Student',
+    korean_name: person.korean_name || null,
+    username: person.username || null,
+    school_name: person.school || null,
+    school_grade: person.grade || null,
+    class_name: attempt.metadata?.class_at_test || person.class || null,
+    phone: person.phone || null,
+    email: person.email || null,
+    metadata: attempt.metadata || {},
+  } : {
+    student_name: person.student_name || 'Prospective student',
+    korean_name: null, username: null,
+    school_name: person.school_name || null,
+    school_grade: person.school_grade || null,
+    class_name: null, phone: null, email: null,
+    metadata: person.metadata || {},
+  };
+  return {
+    source,
+    attempt: { ...attempt, display_level: attempt.display_level || attempt.recommended_level },
+    candidate,
+    responses: (responses || []).map(row => ({ ...row, question_id: row.assessment_item_id, question_type: row.item_type, skill: responseSkill(row.item_type) })),
+    skills: (skills || []).map(row => ({ skill: row.skill_key, questions_seen: Number(row.questions_seen) || 0, questions_correct: Number(row.questions_correct) || 0, score_percent: Number(row.score_percent) || 0 })),
+  };
 }
 
 async function createClass(env, body) {
@@ -295,6 +423,7 @@ export default {
       if (req.method !== 'POST') return json(origin, 405, { success: false, error: 'Method not allowed' });
       const body = await req.json().catch(() => null);
       if (!body) return json(origin, 400, { success: false, error: 'Invalid JSON' });
+      if (body.action === 'level_test_detail') return json(origin, 200, { success: true, ...await levelTestDetail(env, body) });
       if (action === 'update_class') return json(origin, 200, { success: true, class: await updateClass(env, body) });
       return json(origin, 201, { success: true, class: await createClass(env, body) });
     } catch (error) {
