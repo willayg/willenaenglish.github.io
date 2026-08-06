@@ -1,0 +1,12 @@
+name = "admin-classes"
+main = "src/index.js"
+compatibility_date = "2025-12-08"
+compatibility_flags = ["nodejs_compat"]
+
+[vars]
+SCORES_SUPABASE_URL = "https://fiieuiktlsivwfgyivai.supabase.co"
+CONTENT_SUPABASE_URL = "https://gxwfsqxyuufqtitspfqg.supabase.co"
+
+# Required Worker secrets:
+# SCORES_SUPABASE_SERVICE_ROLE_KEY
+# CONTENT_SUPABASE_SERVICE_ROLE_KEY
