@@ -13,7 +13,8 @@ const LOCAL_STATIC = 'http://127.0.0.1:8000';
 // preserves the browser's .willenaenglish.com auth cookie while avoiding the
 // third-party-cookie problem that would occur if the browser called workers.dev.
 const CLOUDFLARE_FUNCTIONS = {
-  log_word_attempt: 'https://log-word-attempt.willena.workers.dev'
+  log_word_attempt: 'https://log-word-attempt.willena.workers.dev',
+  admin_classes: 'https://admin-classes.willena.workers.dev'
 };
 
 async function handle(request) {
@@ -53,6 +54,13 @@ function getFunctionName(pathname) {
   return match ? match[1] : '';
 }
 
+function cookieValue(cookieHeader, name) {
+  const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const match = String(cookieHeader || '').match(new RegExp(`(?:^|;\\s*)${escaped}=([^;]+)`));
+  if (!match) return '';
+  try { return decodeURIComponent(match[1]); } catch { return match[1]; }
+}
+
 async function proxyFunctionRequest(request, url) {
   const functionName = getFunctionName(url.pathname);
   const workerOrigin = CLOUDFLARE_FUNCTIONS[functionName];
@@ -66,6 +74,14 @@ async function proxyFunctionRequest(request, url) {
   headers.delete('x-forwarded-for');
   headers.delete('x-real-ip');
   headers.set('x-willena-api-route', workerOrigin ? 'cloudflare-worker' : 'netlify');
+
+  // The established Willena login is stored in an HttpOnly sb_access cookie.
+  // The isolated admin-classes Worker expects a bearer token, so translate the
+  // cookie only for this one route. Do not alter auth behavior for other routes.
+  if (functionName === 'admin_classes') {
+    const accessToken = cookieValue(request.headers.get('cookie'), 'sb_access');
+    if (accessToken) headers.set('authorization', `Bearer ${accessToken}`);
+  }
 
   const init = {
     method: request.method,
