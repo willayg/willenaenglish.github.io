@@ -12,7 +12,8 @@
     var text = Array.isArray(value) ? value.map(cleanText).join(' ') : cleanText(value);
     return text
       .toLocaleLowerCase('en-US')
-      .replace(/[.!?。！？]+$/u, '')
+      .replace(/[.,!?;:。！？、，；：]/gu, '')
+      .replace(/\s+/g, ' ')
       .trim();
   }
 
@@ -55,15 +56,13 @@
     repairPayload: repairPayload
   };
 
-  // Historical attempts can contain an old, strictly-computed is_correct value.
-  // Repair report responses as they are read so every student/teacher view uses
-  // the same canonical calculation without requiring the learner to retake.
   if (typeof global.fetch === 'function' && !global.__willenaLevelTestScoringFetchInstalled) {
     global.__willenaLevelTestScoringFetchInstalled = true;
     var originalFetch = global.fetch.bind(global);
     global.fetch = function () {
-      return originalFetch.apply(null, arguments).then(function (response) {
-        var requestUrl = String(response.url || (arguments[0] && arguments[0].url) || arguments[0] || '');
+      var args = arguments;
+      return originalFetch.apply(null, args).then(function (response) {
+        var requestUrl = String(response.url || (args[0] && args[0].url) || args[0] || '');
         if (requestUrl.indexOf('prospective-level-test') === -1) return response;
         var originalJson = response.json.bind(response);
         response.json = function () {
