@@ -1,5 +1,5 @@
 (()=>{
-  const apiUrl='/.netlify/functions/admin_classes';
+  const apiUrl='https://admin-classes.willena.workers.dev';
   const text={
     ko:{details:'반 정보',books:'교재 배정',roster:'학생 명단',students:'명',book1:'교재 1',book2:'교재 2',book3:'교재 3',level:'교재가 없을 때 레벨',noLevel:'레벨 없음',mixed:'혼합',save:'변경 저장',close:'닫기',type:'두 글자 이상 입력하세요',searching:'교재 검색 중…',none:'일치하는 교재가 없습니다.',manual:'직접 입력으로 사용',manualStatus:'직접 입력 · 나중에 DB 연결 가능',dbStatus:'커리큘럼 DB 교재',saved:'반 정보를 저장했습니다.',failed:'반 정보를 저장하지 못했습니다',emptyRoster:'배정된 학생이 없습니다.'},
     en:{details:'Class details',books:'Book assignments',roster:'Roster',students:'students',book1:'Book 1',book2:'Book 2',book3:'Book 3',level:'Level when no book is assigned',noLevel:'No level',mixed:'Mixed',save:'Save changes',close:'Close',type:'Type at least 2 characters',searching:'Searching books…',none:'No matching books.',manual:'Use as manual entry',manualStatus:'Manual entry · can be linked later',dbStatus:'Curriculum database book',saved:'Class details saved.',failed:'Could not save class details',emptyRoster:'No students assigned.'}
