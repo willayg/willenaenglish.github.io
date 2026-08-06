@@ -3,8 +3,6 @@ main = "src/index.js"
 compatibility_date = "2025-12-08"
 compatibility_flags = ["nodejs_compat"]
 
-routes = [{ pattern = "student-level-test-api.willenaenglish.com", custom_domain = true }]
-
 [vars]
 SUPABASE_URL = "https://fiieuiktlsivwfgyivai.supabase.co"
 CONTENT_SUPABASE_URL = "https://gxwfsqxyuufqtitspfqg.supabase.co"
