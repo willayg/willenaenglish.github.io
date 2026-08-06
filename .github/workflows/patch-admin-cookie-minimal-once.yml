@@ -1,0 +1,42 @@
+name: Patch admin cookie minimal once
+on:
+  push:
+    branches: [staging]
+    paths: ['.github/workflows/patch-admin-cookie-minimal-once.yml']
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: staging
+      - name: Patch files
+        run: |
+          python -c "from pathlib import Path; p=Path('cloudflare-workers/admin-classes/wrangler.toml'); s=p.read_text(); r='routes = [{ pattern = \"admin-classes-api.willenaenglish.com\", custom_domain = true }]'; p.write_text(s if r in s else s.rstrip()+'\\n\\n'+r+'\\n')"
+          python -c "from pathlib import Path; p=Path('Teachers/admin/admin-class-manager.js'); p.write_text(p.read_text().replace('https://admin-classes.willena.workers.dev','https://admin-classes-api.willenaenglish.com'))"
+          python -c "from pathlib import Path; p=Path('Teachers/admin/admin-class-drawer.js'); p.write_text(p.read_text().replace('https://admin-classes.willena.workers.dev','https://admin-classes-api.willenaenglish.com'))"
+          python -c "from pathlib import Path; p=Path('Teachers/admin/index.html'); s=p.read_text().replace('admin-class-manager.js?v=20260806e','admin-class-manager.js?v=20260806f').replace('admin-class-drawer.js?v=20260806b','admin-class-drawer.js?v=20260806c'); p.write_text(s)"
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('cloudflare-workers/admin-classes/src/index.js')
+          s=p.read_text()
+          a=s.index('function bearer(req) {')
+          b=s.index('\n}\n\nasync function supabaseFetch',a)+2
+          n="""function bearer(req) {
+  const value = req.headers.get('Authorization') || '';
+  if (value.startsWith('Bearer ')) return value.slice(7).trim();
+  const cookie = req.headers.get('Cookie') || '';
+  const match = cookie.match(/(?:^|;\\s*)sb_access=([^;]+)/);
+  return match ? decodeURIComponent(match[1]) : '';
+}"""
+          p.write_text(s[:a]+n+s[b:])
+          PY
+      - name: Commit patch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add cloudflare-workers/admin-classes/wrangler.toml cloudflare-workers/admin-classes/src/index.js Teachers/admin/admin-class-manager.js Teachers/admin/admin-class-drawer.js Teachers/admin/index.html
+          git diff --cached --quiet || git commit -m "Use Willena cookie with admin classes Worker"
+          git push origin staging
