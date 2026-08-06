@@ -1,0 +1,31 @@
+name: Patch live book autocomplete once
+on:
+  push:
+    branches: [staging]
+    paths: ['.github/workflows/patch-live-book-autocomplete-once.yml']
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: staging
+      - name: Patch admin autocomplete assets
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('Teachers/admin/index.html')
+          s=p.read_text()
+          s=s.replace('/Teachers/admin/admin-form-layout.css?v=20260806b','/Teachers/admin/admin-form-layout.css?v=20260806c')
+          s=s.replace('/Teachers/admin/admin-class-manager.js?v=20260806c','/Teachers/admin/admin-class-manager.js?v=20260806d')
+          p.write_text(s)
+          PY
+      - name: Commit patch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Teachers/admin/index.html
+          git diff --cached --quiet || git commit -m "Load live curriculum book autocomplete"
+          git push origin staging
