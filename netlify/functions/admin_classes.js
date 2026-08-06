@@ -44,6 +44,30 @@ exports.handler=async event=>{
   if(actorError||!actor||String(actor.role).toLowerCase()!=='admin'||actor.approved===false)return reply(event,403,{success:false,error:'Admins only'});
 
   if(event.httpMethod==='GET'){
+    const params=new URLSearchParams(event.rawQuery||'');
+    if(params.get('action')==='search_books'){
+      const q=String(params.get('q')||'').trim().replace(/[%_]/g,'');
+      if(q.length<2)return reply(event,200,{success:true,books:[]});
+      const {data,error}=await db.from('content_books')
+        .select('id,title,book_number,edition,public_level,internal_level_id,status,series:content_series(name,publisher)')
+        .ilike('title',`%${q}%`)
+        .neq('status','archived')
+        .order('title',{ascending:true})
+        .order('book_number',{ascending:true})
+        .limit(12);
+      if(error)return reply(event,400,{success:false,error:error.message});
+      const books=(data||[]).map(b=>({
+        book_id:b.id,
+        title:b.title,
+        book_number:b.book_number,
+        edition:b.edition,
+        series:b.series?.name||'',
+        publisher:b.series?.publisher||'',
+        level:b.public_level!=null?String(b.public_level):b.internal_level_id!=null?String(b.internal_level_id):''
+      }));
+      return reply(event,200,{success:true,books});
+    }
+
     const {data:classes,error}=await db.from('classes').select('id,name,display_name,status,level,room,capacity,notes,created_at,updated_at').eq('status','active').order('name');
     if(error)return reply(event,400,{success:false,error:error.message});
     const ids=(classes||[]).map(c=>c.id);
@@ -76,11 +100,8 @@ exports.handler=async event=>{
   let inserted=[];
   if(books.length){
     const rows=books.map(book=>({
-      class_id:created.id,
-      ...book,
-      subject:null,
-      started_at:new Date().toISOString().slice(0,10),
-      status:'active',
+      class_id:created.id,...book,subject:null,
+      started_at:new Date().toISOString().slice(0,10),status:'active',
       notes:book.source_type==='manual'?'Unresolved manual book; link to curriculum catalog when available.':null
     }));
     const result=await db.from('class_book_assignments').insert(rows)
