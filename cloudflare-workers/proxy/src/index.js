@@ -15,12 +15,13 @@ const FUNCTION_TO_BINDING = {
   get_audio_urls: 'GET_AUDIO_URLS',
   pixabay: 'PIXABAY',
   student_level_test: 'STUDENT_LEVEL_TEST',
+  admin_classes: 'ADMIN_CLASSES',
 };
 
 const PREFER_CF_WORKER = new Set(Object.keys(FUNCTION_TO_BINDING));
 
 // These endpoints must never incur a Netlify invocation or deploy dependency.
-const CLOUDFLARE_ONLY = new Set(['student_level_test']);
+const CLOUDFLARE_ONLY = new Set(['student_level_test', 'admin_classes']);
 
 const ALLOWED_ORIGINS = new Set([
   'https://willenaenglish.netlify.app',
@@ -50,14 +51,26 @@ function corsHeaders(origin) {
   };
 }
 
+function accessTokenFromCookie(cookieHeader) {
+  const match = String(cookieHeader || '').match(/(?:^|;\s*)sb_access=([^;]+)/);
+  return match ? decodeURIComponent(match[1]) : '';
+}
+
 async function routeToCFWorker(request, binding, functionName, url) {
   const workerUrl = new URL(request.url);
   const remainingPath = url.pathname.replace(/^\/?\.?netlify\/functions\/[^/?]+\/?/, '/') || '/';
   workerUrl.pathname = remainingPath || '/';
   console.log(`[proxy] Cloudflare Worker ${functionName}: ${workerUrl.pathname}${workerUrl.search}`);
+
+  const headers = new Headers(request.headers);
+  if (functionName === 'admin_classes' && !headers.get('Authorization')) {
+    const token = accessTokenFromCookie(headers.get('Cookie'));
+    if (token) headers.set('Authorization', `Bearer ${token}`);
+  }
+
   return binding.fetch(new Request(workerUrl.toString(), {
     method: request.method,
-    headers: request.headers,
+    headers,
     body: request.method !== 'GET' && request.method !== 'HEAD' ? request.body : undefined,
   }));
 }
