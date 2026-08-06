@@ -6,13 +6,10 @@ on:
     branches: [staging]
     paths:
       - 'cloudflare-workers/admin-classes/**'
-      - 'Teachers/admin/admin-class-manager.js'
-      - 'Teachers/admin/admin-class-drawer.js'
-      - 'Teachers/admin/index.html'
       - '.github/workflows/deploy-admin-classes-worker.yml'
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: deploy-admin-classes-worker
@@ -25,59 +22,9 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: staging
-
-      - name: Patch cookie-domain client
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-
-          p = Path('cloudflare-workers/admin-classes/wrangler.toml')
-          s = p.read_text()
-          route = 'routes = [{ pattern = "admin-classes-api.willenaenglish.com", custom_domain = true }]'
-          if route not in s:
-              p.write_text(s.rstrip() + '\n\n' + route + '\n')
-
-          p = Path('cloudflare-workers/admin-classes/src/index.js')
-          s = p.read_text()
-          start = s.index('function bearer(req) {')
-          end = s.index('\n}\n\nasync function supabaseFetch', start) + 2
-          replacement = '''function bearer(req) {
-  const value = req.headers.get('Authorization') || '';
-  if (value.startsWith('Bearer ')) return value.slice(7).trim();
-  const cookie = req.headers.get('Cookie') || '';
-  const match = cookie.match(/(?:^|;\\s*)sb_access=([^;]+)/);
-  return match ? decodeURIComponent(match[1]) : '';
-}'''
-          p.write_text(s[:start] + replacement + s[end:])
-
-          for filename in ('admin-class-manager.js', 'admin-class-drawer.js'):
-              p = Path('Teachers/admin') / filename
-              s = p.read_text().replace('https://admin-classes.willena.workers.dev', 'https://admin-classes-api.willenaenglish.com')
-              p.write_text(s)
-
-          p = Path('Teachers/admin/index.html')
-          s = p.read_text()
-          s = s.replace('admin-class-manager.js?v=20260806e', 'admin-class-manager.js?v=20260806f')
-          s = s.replace('admin-class-drawer.js?v=20260806b', 'admin-class-drawer.js?v=20260806c')
-          p.write_text(s)
-          PY
-
-      - name: Commit cookie-domain patch
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add cloudflare-workers/admin-classes/wrangler.toml cloudflare-workers/admin-classes/src/index.js Teachers/admin/admin-class-manager.js Teachers/admin/admin-class-drawer.js Teachers/admin/index.html
-          git diff --cached --quiet || git commit -m "Use Willena cookie with admin classes Worker"
-          git push origin staging
-
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-
-      - name: Install Worker dependencies
-        working-directory: cloudflare-workers/admin-classes
-        run: npm install
-
       - name: Configure Worker secrets
         working-directory: cloudflare-workers/admin-classes
         env:
@@ -90,8 +37,7 @@ jobs:
           test -n "$CONTENT_KEY" || (echo 'Missing CONTENT_SUPABASE_SERVICE_ROLE_KEY' && exit 1)
           printf '%s' "$SCORES_KEY" | npx wrangler secret put SCORES_SUPABASE_SERVICE_ROLE_KEY
           printf '%s' "$CONTENT_KEY" | npx wrangler secret put CONTENT_SUPABASE_SERVICE_ROLE_KEY
-
-      - name: Deploy Worker
+      - name: Deploy admin classes Worker
         working-directory: cloudflare-workers/admin-classes
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
