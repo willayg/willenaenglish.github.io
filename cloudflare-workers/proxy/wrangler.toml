@@ -35,5 +35,9 @@ service = "pixabay"
 binding = "STUDENT_LEVEL_TEST"
 service = "student-level-test"
 
+[[services]]
+binding = "ADMIN_CLASSES"
+service = "admin-classes"
+
 [vars]
 NETLIFY_BASE = "https://willenaenglish.netlify.app"
