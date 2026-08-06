@@ -565,7 +565,14 @@ export default {
             makeCookie('sb_refresh', data.refresh_token || refreshToken, cookieOpts),
           ];
           
-          return jsonResponse({ success: true }, 200, origin, newCookies);
+          // Return the rotated tokens as well as setting HttpOnly cookies. The
+          // browser API wrapper uses the access token only when a protected
+          // service lives on a workers.dev hostname that cannot receive the
+          // shared .willenaenglish.com cookie.
+          return jsonResponse({
+            success: true,
+            access_token: data.access_token,
+          }, 200, origin, newCookies);
         } catch {
           return jsonResponse({ success: false, message: 'Refresh failed' }, 200, origin);
         }
