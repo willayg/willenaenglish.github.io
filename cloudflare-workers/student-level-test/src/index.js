@@ -154,6 +154,92 @@ function levelForAbility(value) {
   return Math.max(1, Math.min(12, Math.round(Number(value) || 1)));
 }
 
+function capturedSkill(row) {
+  const explicit = clean(row?.metadata?.skill).toLowerCase();
+  if (explicit) return explicit;
+  return skillFor({ item_type: row?.item_type });
+}
+
+function capturedAnswer(value) {
+  if (Array.isArray(value)) return JSON.stringify(value);
+  return value == null ? null : clean(value);
+}
+
+function capturedResponse(row, attempt, studentId) {
+  return {
+    attempt_id: attempt.id,
+    student_id: studentId,
+    answer_index: Math.round(Number(row.answer_index) || 0),
+    assessment_item_id: clean(row.assessment_item_id),
+    assessment_source_key: clean(row.assessment_source_key) || null,
+    question_level: Number(row.question_level) || null,
+    item_type: clean(row.item_type) || null,
+    prompt_snapshot: clean(row.prompt_snapshot),
+    options_snapshot: Array.isArray(row.options_snapshot) ? row.options_snapshot : null,
+    selected_answer: capturedAnswer(row.selected_answer),
+    correct_answer: capturedAnswer(row.correct_answer),
+    is_correct: row.is_correct === true,
+    response_time_ms: Number(row.response_time_ms) || null,
+    metadata: { ...(row.metadata || {}), skill: capturedSkill(row) },
+  };
+}
+
+function validCapturedResponse(row) {
+  return Number.isInteger(row.answer_index) && row.answer_index > 0 && Boolean(row.assessment_item_id);
+}
+
+async function saveCapturedResponses(game, attempt, studentId, rows) {
+  const normalized = (Array.isArray(rows) ? rows : [])
+    .map(row => capturedResponse(row, attempt, studentId))
+    .filter(validCapturedResponse);
+  if (!normalized.length) return;
+
+  const { error } = await game
+    .from('student_assessment_responses')
+    .upsert(normalized, { onConflict: 'attempt_id,answer_index' });
+  if (error) throw error;
+}
+
+async function summarizeCapturedAttempt(game, attempt, studentId) {
+  const { data: rows, error } = await game
+    .from('student_assessment_responses')
+    .select('answer_index,is_correct,item_type,metadata')
+    .eq('attempt_id', attempt.id)
+    .eq('student_id', studentId)
+    .order('answer_index', { ascending: true });
+  if (error) throw error;
+
+  const responses = rows || [];
+  const correctCount = responses.filter(row => row.is_correct === true).length;
+  const skills = new Map();
+  responses.forEach(row => {
+    const skill = capturedSkill(row);
+    const current = skills.get(skill) || { seen: 0, correct: 0 };
+    current.seen += 1;
+    if (row.is_correct === true) current.correct += 1;
+    skills.set(skill, current);
+  });
+
+  for (const [skill, result] of skills) {
+    const { error: skillError } = await game.from('student_assessment_skill_results').upsert({
+      attempt_id: attempt.id,
+      student_id: studentId,
+      skill_key: skill,
+      questions_seen: result.seen,
+      questions_correct: result.correct,
+      score_percent: Math.round((result.correct / result.seen) * 100),
+      updated_at: new Date().toISOString(),
+    }, { onConflict: 'attempt_id,skill_key' });
+    if (skillError) throw skillError;
+  }
+
+  return {
+    answeredCount: responses.length,
+    correctCount,
+    answerIndexes: responses.map(row => Number(row.answer_index)).filter(Number.isInteger),
+  };
+}
+
 export default {
   async fetch(request, env) {
     const origin = request.headers.get('origin') || '';
@@ -191,6 +277,109 @@ export default {
             class: student.class,
           },
         }, origin);
+      }
+
+      // The internal student page uses the same adaptive browser engine and
+      // recorder as the public test. These capture actions provide its
+      // authenticated transport while keeping every response row recoverable.
+      if (action === 'capture_start' && request.method === 'POST') {
+        const totalQuestions = Math.max(0, Math.round(Number(body.total_questions) || Number(body.setup?.length) || 0));
+        const { data: attempt, error } = await game
+          .from('student_assessment_attempts')
+          .insert({
+            student_id: student.id,
+            assessment_key: 'willena-internal-level-test',
+            status: 'in_progress',
+            test_version: clean(body.test_version) || TEST_VERSION,
+            setup: body.setup && typeof body.setup === 'object' ? body.setup : {},
+            total_questions: totalQuestions,
+            metadata: {
+              source: 'students/level-test',
+              recording_engine: 'shared-browser-recorder-v1',
+              class_at_test: student.class || null,
+            },
+          })
+          .select('id,total_questions,started_at')
+          .single();
+        if (error) throw error;
+
+        return json(200, { success: true, attempt_id: attempt.id }, origin);
+      }
+
+      if (action === 'capture_answer' && request.method === 'POST') {
+        const attempt = await findAttempt(game, clean(body.attempt_id), student.id);
+        if (!attempt || attempt.status !== 'in_progress') return json(404, { success: false, error: 'Active attempt not found.' }, origin);
+
+        const row = capturedResponse(body, attempt, student.id);
+        if (!validCapturedResponse(row)) return json(400, { success: false, error: 'Invalid recorded answer.' }, origin);
+        if (attempt.total_questions > 0 && row.answer_index > attempt.total_questions) {
+          return json(409, { success: false, error: 'Answer index exceeds the selected test length.' }, origin);
+        }
+
+        await saveCapturedResponses(game, attempt, student.id, [body]);
+        const summary = await summarizeCapturedAttempt(game, attempt, student.id);
+        const { error: updateError } = await game
+          .from('student_assessment_attempts')
+          .update({
+            answered_count: summary.answeredCount,
+            correct_count: summary.correctCount,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', attempt.id)
+          .eq('student_id', student.id);
+        if (updateError) throw updateError;
+
+        return json(200, { success: true, answered_count: summary.answeredCount }, origin);
+      }
+
+      if (action === 'capture_finish' && request.method === 'POST') {
+        const attempt = await findAttempt(game, clean(body.attempt_id), student.id);
+        if (!attempt || attempt.status !== 'in_progress') return json(404, { success: false, error: 'Active attempt not found.' }, origin);
+
+        // Replay the complete browser answer set so a late or dropped
+        // per-question request cannot leave the report at 19/20.
+        await saveCapturedResponses(game, attempt, student.id, body.answers);
+        const summary = await summarizeCapturedAttempt(game, attempt, student.id);
+        const totalQuestions = Math.max(0, Number(attempt.total_questions) || Math.round(Number(body.total_questions) || 0) || summary.answeredCount);
+        const hasEveryAnswer = summary.answeredCount === totalQuestions
+          && summary.answerIndexes.every((answerIndex, index) => answerIndex === index + 1);
+        if (!hasEveryAnswer) {
+          return json(409, {
+            success: false,
+            error: `Recorded ${summary.answeredCount} of ${totalQuestions} answers. Please try saving again.`,
+            answered_count: summary.answeredCount,
+            total_questions: totalQuestions,
+          }, origin);
+        }
+
+        const recommendedLevel = Number(body.recommended_level) || null;
+        const completedAt = new Date().toISOString();
+        const { data: completed, error: updateError } = await game
+          .from('student_assessment_attempts')
+          .update({
+            status: 'completed',
+            answered_count: summary.answeredCount,
+            correct_count: summary.correctCount,
+            total_questions: totalQuestions,
+            recommended_level: recommendedLevel,
+            final_ability: recommendedLevel,
+            duration_seconds: Math.max(0, Math.round(Number(body.duration_seconds) || 0)),
+            completed_at: completedAt,
+            updated_at: completedAt,
+            metadata: {
+              ...(attempt.metadata || {}),
+              ...(body.metadata && typeof body.metadata === 'object' ? body.metadata : {}),
+              source: 'students/level-test',
+              recording_engine: 'shared-browser-recorder-v1',
+            },
+          })
+          .eq('id', attempt.id)
+          .eq('student_id', student.id)
+          .select('id,answered_count,total_questions,correct_count,recommended_level')
+          .single();
+        if (updateError) throw updateError;
+
+        return json(200, { success: true, attempt: completed }, origin);
       }
 
       if (action === 'start' && request.method === 'POST') {

@@ -162,6 +162,75 @@ async function searchBooks(env, q) {
   }));
 }
 
+async function listLevelTests(env) {
+  const attempts = await supabaseFetch(
+    env.SCORES_SUPABASE_URL,
+    env.SCORES_SUPABASE_SERVICE_ROLE_KEY,
+    '/rest/v1/student_assessment_attempts?select=id,student_id,assessment_key,status,test_version,setup,total_questions,answered_count,correct_count,recommended_level,duration_seconds,started_at,completed_at,updated_at,metadata&order=started_at.desc&limit=250'
+  );
+  const attemptIds = (attempts || []).map(row => row.id).filter(Boolean);
+  const studentIds = [...new Set((attempts || []).map(row => row.student_id).filter(Boolean))];
+  let profiles = [];
+  let skillRows = [];
+
+  if (studentIds.length) {
+    profiles = await supabaseFetch(
+      env.SCORES_SUPABASE_URL,
+      env.SCORES_SUPABASE_SERVICE_ROLE_KEY,
+      `/rest/v1/profiles?id=in.(${studentIds.map(encodeURIComponent).join(',')})&select=id,name,korean_name,username,grade,school,class`
+    );
+  }
+  if (attemptIds.length) {
+    skillRows = await supabaseFetch(
+      env.SCORES_SUPABASE_URL,
+      env.SCORES_SUPABASE_SERVICE_ROLE_KEY,
+      `/rest/v1/student_assessment_skill_results?attempt_id=in.(${attemptIds.map(encodeURIComponent).join(',')})&select=attempt_id,skill_key,questions_seen,questions_correct,score_percent&order=skill_key.asc`
+    );
+  }
+
+  const profileById = new Map((profiles || []).map(row => [String(row.id), row]));
+  const skillsByAttempt = new Map();
+  for (const row of skillRows || []) {
+    const key = String(row.attempt_id);
+    if (!skillsByAttempt.has(key)) skillsByAttempt.set(key, []);
+    skillsByAttempt.get(key).push({
+      skill: row.skill_key,
+      questions_seen: Number(row.questions_seen) || 0,
+      questions_correct: Number(row.questions_correct) || 0,
+      score_percent: Number(row.score_percent) || 0,
+    });
+  }
+
+  return (attempts || []).map(row => {
+    const profile = profileById.get(String(row.student_id)) || {};
+    const metadata = row.metadata && typeof row.metadata === 'object' ? row.metadata : {};
+    return {
+      id: row.id,
+      source: 'internal',
+      assessment_key: row.assessment_key,
+      student_id: row.student_id,
+      student_name: profile.name || profile.korean_name || profile.username || 'Student',
+      korean_name: profile.korean_name || null,
+      username: profile.username || null,
+      grade: profile.grade || null,
+      school: profile.school || null,
+      class_name: metadata.class_at_test || profile.class || null,
+      status: row.status,
+      test_version: row.test_version,
+      total_questions: Number(row.total_questions) || 0,
+      answered_count: Number(row.answered_count) || 0,
+      correct_count: Number(row.correct_count) || 0,
+      recommended_level: Number(row.recommended_level) || null,
+      duration_seconds: Number(row.duration_seconds) || 0,
+      started_at: row.started_at,
+      completed_at: row.completed_at,
+      updated_at: row.updated_at,
+      setup: row.setup || {},
+      skills: skillsByAttempt.get(String(row.id)) || [],
+    };
+  });
+}
+
 async function createClass(env, body) {
   const name = String(body.name || '').trim().replace(/\s+/g, ' ');
   if (name.length < 2 || name.length > 80) throw Object.assign(new Error('Class name must be 2–80 characters'), { status: 400 });
@@ -221,6 +290,7 @@ export default {
       const url = new URL(req.url);
       const action = url.searchParams.get('action') || '';
       if (req.method === 'GET' && action === 'search_books') return json(origin, 200, { success: true, books: await searchBooks(env, url.searchParams.get('q')) });
+      if (req.method === 'GET' && action === 'list_level_tests') return json(origin, 200, { success: true, tests: await listLevelTests(env) });
       if (req.method === 'GET') return json(origin, 200, { success: true, classes: await listClasses(env) });
       if (req.method !== 'POST') return json(origin, 405, { success: false, error: 'Method not allowed' });
       const body = await req.json().catch(() => null);

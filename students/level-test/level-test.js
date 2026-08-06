@@ -4,10 +4,8 @@ var completed=false;
 var student=null;
 var gradePrefill=null;
 var gradeApplied=false;
-var attemptId=null;
-var attemptStartedAt=null;
-var attemptStarting=false;
-var attemptCompleting=false;
+var resultReady=false;
+var saveFailed=false;
 var setupSnapshot={grade:null,years:null,listening:null,length:null};
 var nativeFetch=window.fetch.bind(window);
 var greetingIndex=0;
@@ -27,13 +25,6 @@ window.fetch=function(input,init){
  return nativeFetch(input,init);
 };
 
-function api(action,body){
- return WillenaAPI.fetch('/.netlify/functions/supabase_auth?action='+encodeURIComponent(action),{
-  method:'POST',
-  headers:{'Content-Type':'application/json'},
-  body:JSON.stringify(body||{})
- });
-}
 function signin(){location.replace('/students/signin.html?next='+encodeURIComponent('/students/level-test/'))}
 function studentName(data){return String(data&&data.name||data&&data.username||'Student').trim()}
 function normalizeGrade(grade){
@@ -54,7 +45,7 @@ function exposeStudent(profile){
  gradePrefill=normalizeGrade(profile&&profile.grade);
  setupSnapshot.grade=gradePrefill;
  student={id:profile&&profile.id||null,name:studentName(profile),grade:gradePrefill,profile:profile};
- window.WillenaLevelTestContext={mode:'student',student:student,setup:{grade:gradePrefill}};
+ window.WillenaLevelTestContext={mode:'student',student:student,setup:setupSnapshot};
  document.documentElement.dataset.studentRecognized='true';
  document.documentElement.dataset.gradePrefilled=gradePrefill===null?'false':'true';
  updateGreeting();
@@ -88,36 +79,12 @@ function updateGreeting(){
  var welcome=document.querySelector('.welcome-panel h1');
  if(welcome)welcome.textContent=message;
 }
-async function startAttempt(){
- if(attemptId||attemptStarting||!student)return;
- attemptStarting=true;
- attemptStartedAt=Date.now();
- try{
-  var response=await api('start_internal_assessment',{setup:setupSnapshot,test_version:'2026-08-v1'});
-  var data=await response.json().catch(function(){return{}});
-  if(response.ok&&data.success&&data.attempt_id)attemptId=data.attempt_id;
-  else console.warn('[StudentLevelTest] attempt start was not saved',data);
- }catch(error){console.warn('[StudentLevelTest] attempt start failed',error)}
- attemptStarting=false;
-}
-async function completeAttempt(reportText){
- if(attemptCompleting||!attemptId)return;
- attemptCompleting=true;
- try{
-  var duration=attemptStartedAt?Math.max(0,Math.round((Date.now()-attemptStartedAt)/1000)):null;
-  var response=await api('complete_internal_assessment',{
-   attempt_id:attemptId,
-   duration_seconds:duration,
-   setup:setupSnapshot,
-   report_text:String(reportText||'').trim()
-  });
-  var data=await response.json().catch(function(){return{}});
-  if(!response.ok||!data.success)console.warn('[StudentLevelTest] attempt completion was not saved',data);
- }catch(error){console.warn('[StudentLevelTest] attempt completion failed',error)}
-}
 function completionMarkup(){
  var name=student&&student.name?student.name:'';
  return '<section class="student-complete"><div class="student-complete-card"><div class="student-complete-icon">✓</div><h1>Test complete</h1><p>'+(name?name+', ':'')+'your test has been recorded.</p><a href="/students/dashboard.html">Return to student dashboard</a></div></section>';
+}
+function saveErrorMarkup(){
+ return '<section class="student-complete"><div class="student-complete-card"><h1>Almost finished</h1><p>Your answers are safe on this screen, but the test could not be recorded yet.</p><button class="welcome-start" id="retryRecording" type="button">Try saving again</button></div></section>';
 }
 function replaceReport(){
  if(completed)return;
@@ -126,11 +93,8 @@ function replaceReport(){
  var resultButton=root.querySelector('#retry,#home');
  var report=root.querySelector('.report-card,.result-card,.result-layout');
  if(!resultButton&&!report)return;
- completed=true;
- completeAttempt(root.innerText||'');
- if(window.speechSynthesis)window.speechSynthesis.cancel();
- root.innerHTML=completionMarkup();
- document.body.classList.remove('welcome-mode');
+ resultReady=true;
+ if(window.WillenaLevelTestRecorder)window.WillenaLevelTestRecorder.finish().catch(function(){});
 }
 document.addEventListener('click',function(event){
  var option=event.target.closest&&event.target.closest('.setup-option');
@@ -139,8 +103,23 @@ document.addEventListener('click',function(event){
  var key=holder&&holder.getAttribute('data-key');
  if(!key)return;
  setupSnapshot[key]=Number(option.getAttribute('data-value'));
- if(key==='length')setTimeout(startAttempt,0);
+ if(key==='length')setTimeout(function(){if(window.WillenaLevelTestRecorder)window.WillenaLevelTestRecorder.start().catch(function(error){console.warn('[StudentLevelTest] attempt start failed',error)})},0);
 },true);
+document.addEventListener('click',function(event){
+ if(event.target&&event.target.id==='retryRecording'&&window.WillenaLevelTestRecorder){saveFailed=false;window.WillenaLevelTestRecorder.finish().catch(function(){})}
+});
+window.addEventListener('willena:recording-finished',function(){
+ if(completed||!resultReady)return;
+ completed=true;
+ if(window.speechSynthesis)window.speechSynthesis.cancel();
+ var root=document.getElementById('app');if(root)root.innerHTML=completionMarkup();
+ document.body.classList.remove('welcome-mode');
+});
+window.addEventListener('willena:recording-failed',function(){
+ if(completed||!resultReady||saveFailed)return;
+ saveFailed=true;
+ var root=document.getElementById('app');if(root)root.insertAdjacentHTML('beforeend',saveErrorMarkup());
+});
 new MutationObserver(function(){requestAnimationFrame(function(){updateGreeting();applyGradePrefill();replaceReport()})}).observe(document.documentElement,{childList:true,subtree:true});
 requireStudent();
 })();
