@@ -3,9 +3,9 @@
 var PUBLIC_ENDPOINT='https://fiieuiktlsivwfgyivai.supabase.co/functions/v1/prospective-level-test';
 var INTERNAL_ENDPOINT='https://api.willenaenglish.com/.netlify/functions/student_level_test';
 var PUBLIC_ATTEMPT_KEY='willena_prospective_level_test_attempt_v1';
-var INTERNAL_ATTEMPT_KEY='willena_internal_level_test_attempt_v2';
+var INTERNAL_ATTEMPT_KEY='willena_internal_level_test_attempt_v3';
 var STATE_SUFFIX='_offline_state';
-var answers=[],answerIds=new Set(),bankMap=new Map(),attempt=null,attemptPromise=null,startAt=0,finalized=false,lastQuestionAt=0,finishPromise=null,finishRequested=false,recoveredFinishedTest=false;
+var answers=[],answerIds=new Set(),bankMap=new Map(),attempt=null,attemptPromise=null,newAttemptPromise=null,startAt=0,finalized=false,lastQuestionAt=0,finishPromise=null,finishRequested=false,recoveredFinishedTest=false;
 function context(){return window.WillenaLevelTestContext||{}}
 function internal(){return context().mode==='student'}
 function attemptKey(){return internal()?INTERNAL_ATTEMPT_KEY:PUBLIC_ATTEMPT_KEY}
@@ -66,7 +66,10 @@ function ensureAttempt(){
  return attemptPromise;
 }
 function beginNewAttempt(){
- answers=[];answerIds.clear();finalized=false;finishPromise=null;finishRequested=false;recoveredFinishedTest=false;clearAttempt();startAt=Date.now();persistState();return ensureAttempt();
+ if(newAttemptPromise)return newAttemptPromise;
+ answers=[];answerIds.clear();finalized=false;finishPromise=null;finishRequested=false;recoveredFinishedTest=false;clearAttempt();startAt=Date.now();persistState();
+ newAttemptPromise=ensureAttempt().finally(function(){newAttemptPromise=null});
+ return newAttemptPromise;
 }
 function selectedValue(card,q){if(q&&q.type==='sentence_unscramble')return Array.from(card.querySelectorAll('.scramble-token.chosen')).map(function(x){return x.textContent.trim()});var s=card.querySelector('.choice.selected');return s?s.getAttribute('data-value'):null}
 function correctValue(q){return q&&q.type==='sentence_unscramble'?q.tokens:q?q.a:null}
@@ -96,6 +99,9 @@ function syncCapturedAnswers(){
  return ensureAttempt().then(function(a){return Promise.all(answers.map(function(row){return post(Object.assign({action:'answer',attempt_id:a.id,session_token:a.session_token},row))}))});
 }
 function finishPayload(a,completedFrom,totalQuestions){
+ if(internal()&&totalQuestions>0&&answers.length!==totalQuestions){
+  return Promise.reject(new Error('Recorder state mismatch: '+answers.length+' answers for '+totalQuestions+' questions.'));
+ }
  var level=parseInternalLevel();
  return post({action:'finish',attempt_id:a.id,session_token:a.session_token,answers:answers,recommended_level:level,display_level:level,duration_seconds:startAt?Math.round((Date.now()-startAt)/1000):null,total_questions:totalQuestions,metadata:{completed_from:completedFrom,page_language:document.documentElement.lang||'ko'}});
 }
@@ -123,7 +129,8 @@ function finishIfReady(){
 function recoverFinishedTest(){
  if(!internal()||!recoveredFinishedTest||finalized||!answers.length)return Promise.resolve();
  finalized=true;
- finishPromise=finishWithStaleRecovery('persistent-browser-recovery',answers.length).then(function(result){recoveredFinishedTest=false;finishRequested=false;clearAttempt();emit('willena:recording-finished',{success:true,result:result,answered_count:answers.length,recovered:true});return result}).catch(function(error){finalized=false;finishPromise=null;persistState();emit('willena:recording-failed',{success:false,error:error,offline:navigator.onLine===false,recovered:true});throw error});
+ var totalQuestions=Number((JSON.parse(localStorage.getItem(stateKey())||'null')||{}).totalQuestions)||answers.length;
+ finishPromise=finishWithStaleRecovery('persistent-browser-recovery',totalQuestions).then(function(result){recoveredFinishedTest=false;finishRequested=false;clearAttempt();emit('willena:recording-finished',{success:true,result:result,answered_count:answers.length,recovered:true});return result}).catch(function(error){finalized=false;finishPromise=null;persistState();emit('willena:recording-failed',{success:false,error:error,offline:navigator.onLine===false,recovered:true});throw error});
  return finishPromise;
 }
 document.addEventListener('click',function(e){
