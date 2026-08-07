@@ -1,0 +1,52 @@
+name: Fix internal level test recorder cookie route once
+
+on:
+  push:
+    branches: [staging]
+    paths:
+      - '.github/workflows/fix-internal-level-test-recorder-cookie-route-once.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: staging
+      - name: Patch recorder and cache bust
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          recorder = Path('free-level-test/js/test-recording.js')
+          s = recorder.read_text()
+          old_endpoint = "var INTERNAL_ENDPOINT='https://willena-proxy.willena.workers.dev/.netlify/functions/student_level_test';"
+          new_endpoint = "var INTERNAL_ENDPOINT='https://api.willenaenglish.com/.netlify/functions/student_level_test';"
+          if old_endpoint in s:
+              s = s.replace(old_endpoint, new_endpoint)
+          elif new_endpoint not in s:
+              raise SystemExit('internal recorder endpoint not found')
+
+          old_refresh = "if(!result.response.ok||!result.data.success||!result.data.access_token)return false;\n  if(WillenaAPI.setLocalTokens)WillenaAPI.setLocalTokens(result.data.access_token,result.data.refresh_token);\n  return true;"
+          new_refresh = "if(!result.response.ok||result.data.success===false)return false;\n  if(result.data.access_token&&WillenaAPI.setLocalTokens)WillenaAPI.setLocalTokens(result.data.access_token,result.data.refresh_token);\n  return true;"
+          if old_refresh in s:
+              s = s.replace(old_refresh, new_refresh)
+          elif new_refresh not in s:
+              raise SystemExit('internal recorder refresh block not found')
+          recorder.write_text(s)
+
+          index = Path('students/level-test/index.html')
+          s = index.read_text()
+          s = s.replace('/free-level-test/js/test-recording.js?v=20260807-record5', '/free-level-test/js/test-recording.js?v=20260807-cookie1')
+          index.write_text(s)
+          PY
+      - name: Commit patch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add free-level-test/js/test-recording.js students/level-test/index.html
+          git diff --cached --quiet || git commit -m "Route internal level test saves through persistent cookie domain"
+          git push origin staging
