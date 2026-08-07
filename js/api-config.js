@@ -168,7 +168,8 @@
     }
 
     const existingAuth = (fetchOptions.headers && (fetchOptions.headers.Authorization || fetchOptions.headers.authorization));
-    if (!existingAuth) {
+    const isWillenaApiGateway = url.startsWith(CF_API_GATEWAY + '/');
+    if (!existingAuth && !isWillenaApiGateway) {
       let localToken = null;
       try {
         localToken = localStorage.getItem('sb_access_token') || null;
