@@ -18,29 +18,81 @@ jobs:
         with:
           ref: staging
 
-      - name: Patch stale attempt recovery and cache bust
+      - name: Patch duplicate attempt race and fresh test reset
         shell: bash
         run: |
           python <<'PY'
           from pathlib import Path
+          import re
 
           path = Path('free-level-test/js/test-recording.js')
           text = path.read_text()
 
-          old = """  return post({action:'finish',attempt_id:a.id,session_token:a.session_token,answers:answers,recommended_level:level,display_level:level,duration_seconds:startAt?Math.round((Date.now()-startAt)/1000):null,total_questions:Number(context().setup&&context().setup.length)||answers.length,metadata:{completed_from:'shared-browser-recorder',page_language:document.documentElement.lang||'ko'}});\n }).then(function(result){finishRequested=false;clearAttempt();emit('willena:recording-finished',{success:true,result:result,answered_count:answers.length});return result}).catch(function(error){finalized=false;finishPromise=null;persistState();emit('willena:recording-failed',{success:false,error:error,offline:navigator.onLine===false});console.warn('[level-test-recording] finish save failed',error);throw error});"""
+          text = text.replace(
+            "var answers=[],answerIds=new Set(),bankMap=new Map(),attempt=null,startAt=0,finalized=false,lastQuestionAt=0,finishPromise=null,finishRequested=false,recoveredFinishedTest=false;",
+            "var answers=[],answerIds=new Set(),bankMap=new Map(),attempt=null,attemptPromise=null,startAt=0,finalized=false,lastQuestionAt=0,finishPromise=null,finishRequested=false,recoveredFinishedTest=false;",
+            1
+          )
 
-          new = """  return post({action:'finish',attempt_id:a.id,session_token:a.session_token,answers:answers,recommended_level:level,display_level:level,duration_seconds:startAt?Math.round((Date.now()-startAt)/1000):null,total_questions:Number(context().setup&&context().setup.length)||answers.length,metadata:{completed_from:'shared-browser-recorder',page_language:document.documentElement.lang||'ko'}});\n }).catch(function(error){\n  if(internal()&&/Active attempt not found/i.test(String(error&&error.message||error))){\n   clearAttempt();\n   return ensureAttempt().then(function(a){\n    var level=parseInternalLevel();\n    return post({action:'finish',attempt_id:a.id,answers:answers,recommended_level:level,display_level:level,duration_seconds:startAt?Math.round((Date.now()-startAt)/1000):null,total_questions:Number(context().setup&&context().setup.length)||answers.length,metadata:{completed_from:'stale-attempt-recovery',page_language:document.documentElement.lang||'ko'}});\n   });\n  }\n  throw error;\n }).then(function(result){finishRequested=false;clearAttempt();emit('willena:recording-finished',{success:true,result:result,answered_count:answers.length});return result}).catch(function(error){finalized=false;finishPromise=null;persistState();emit('willena:recording-failed',{success:false,error:error,offline:navigator.onLine===false});console.warn('[level-test-recording] finish save failed',error);throw error});"""
+          text = text.replace(
+            "function clearAttempt(){attempt=null;sessionStorage.removeItem(attemptKey());try{localStorage.removeItem(attemptKey());localStorage.removeItem(stateKey())}catch(_){}}",
+            "function clearAttempt(){attempt=null;attemptPromise=null;sessionStorage.removeItem(attemptKey());try{localStorage.removeItem(attemptKey());localStorage.removeItem(stateKey())}catch(_){}}",
+            1
+          )
 
+          old = """function ensureAttempt(){
+ if(attempt)return Promise.resolve(attempt);
+ var saved=loadSaved();
+ if(saved&&saved.id&&(internal()||saved.session_token)){attempt=saved;return Promise.resolve(attempt)}
+ var c=candidate();
+ if(!internal()&&(!c||!c.id||!c.registration_token))return Promise.reject(new Error('Candidate session missing'));
+ startAt=Date.now();
+ var body={action:'start',setup:setupGuess(),language:document.documentElement.lang||'ko'};
+ if(internal()){body.test_version='2026-08-v1';body.total_questions=Number(context().setup&&context().setup.length)||null}
+ else{body.candidate_id=c.id;body.registration_token=c.registration_token}
+ return post(body).then(function(j){saveAttempt(j.attempt||{id:j.attempt_id});return attempt});
+}"""
+          new = """function ensureAttempt(){
+ if(attempt)return Promise.resolve(attempt);
+ if(attemptPromise)return attemptPromise;
+ var saved=loadSaved();
+ if(saved&&saved.id&&(internal()||saved.session_token)){attempt=saved;return Promise.resolve(attempt)}
+ var c=candidate();
+ if(!internal()&&(!c||!c.id||!c.registration_token))return Promise.reject(new Error('Candidate session missing'));
+ startAt=startAt||Date.now();
+ var body={action:'start',setup:setupGuess(),language:document.documentElement.lang||'ko'};
+ if(internal()){body.test_version='2026-08-v1';body.total_questions=Number(context().setup&&context().setup.length)||null}
+ else{body.candidate_id=c.id;body.registration_token=c.registration_token}
+ attemptPromise=post(body).then(function(j){saveAttempt(j.attempt||{id:j.attempt_id});return attempt}).finally(function(){attemptPromise=null});
+ return attemptPromise;
+}
+function beginNewAttempt(){
+ answers=[];answerIds.clear();finalized=false;finishPromise=null;finishRequested=false;recoveredFinishedTest=false;clearAttempt();startAt=Date.now();persistState();return ensureAttempt();
+}"""
           if old not in text:
-              raise SystemExit('target finish block not found')
+            raise SystemExit('ensureAttempt block not found')
+          text = text.replace(old, new, 1)
+
+          text = text.replace(
+            "window.WillenaLevelTestRecorder={start:ensureAttempt,finish:finishIfReady,recover:recoverFinishedTest,getAnswers:function(){return answers.slice()}};",
+            "window.WillenaLevelTestRecorder={start:ensureAttempt,begin:beginNewAttempt,finish:finishIfReady,recover:recoverFinishedTest,getAnswers:function(){return answers.slice()}};",
+            1
+          )
+          path.write_text(text)
+
+          path = Path('students/level-test/level-test.js')
+          text = path.read_text()
+          old = "if(key==='length')setTimeout(function(){if(window.WillenaLevelTestRecorder)window.WillenaLevelTestRecorder.start().catch(function(error){console.warn('[StudentLevelTest] attempt start failed',error)})},0);"
+          new = "if(key==='length')setTimeout(function(){if(window.WillenaLevelTestRecorder){var begin=window.WillenaLevelTestRecorder.begin||window.WillenaLevelTestRecorder.start;begin().catch(function(error){console.warn('[StudentLevelTest] attempt start failed',error)})}},0);"
+          if old not in text:
+            raise SystemExit('new test start hook not found')
           path.write_text(text.replace(old, new, 1))
 
-          index = Path('students/level-test/index.html')
-          html = index.read_text()
-          html = html.replace('/free-level-test/js/test-recording.js?v=20260807-cookie2', '/free-level-test/js/test-recording.js?v=20260807-stale1')
-          if 'test-recording.js?v=20260807-stale1' not in html:
-              html = html.replace('/free-level-test/js/test-recording.js?v=20260807-cookie3', '/free-level-test/js/test-recording.js?v=20260807-stale1')
-          index.write_text(html)
+          path = Path('students/level-test/index.html')
+          text = path.read_text()
+          text = re.sub(r'level-test\.js\?v=[^\"]+', 'level-test.js?v=20260807-race2', text)
+          text = re.sub(r'test-recording\.js\?v=[^\"]+', 'test-recording.js?v=20260807-race2', text)
+          path.write_text(text)
           PY
 
       - name: Commit patch
@@ -48,6 +100,6 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add free-level-test/js/test-recording.js students/level-test/index.html
-          git diff --cached --quiet || git commit -m "Recover stale internal level test attempts"
+          git add free-level-test/js/test-recording.js students/level-test/level-test.js students/level-test/index.html
+          git diff --cached --quiet || git commit -m "Fix duplicate internal level test attempts"
           git push origin staging
