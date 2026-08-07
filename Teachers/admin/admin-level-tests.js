@@ -1,9 +1,9 @@
 (function(){
 'use strict';
 var tests=[],loaded=false,loading=false,activeFilter='all',activeDetail=null;
-var endpoint='https://willena-proxy.willena.workers.dev/.netlify/functions/admin_classes';
+var endpoint='/.netlify/functions/admin_classes';
 var byId=function(id){return document.getElementById(id)};
-function esc(value){return String(value==null?'':value).replace(/[&<>"']/g,function(char){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]})}
+function esc(value){return String(value==null?'':value).replace(/[&<>"']/g,function(char){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[char]})}
 async function refreshAccessToken(){var fn=window.WillenaAPI&&window.WillenaAPI.fetch?window.WillenaAPI.fetch:window.fetch.bind(window);var response=await fn('/.netlify/functions/supabase_auth?action=refresh&_='+Date.now(),{credentials:'include',cache:'no-store'});var data=await response.json().catch(function(){return{}});if(!response.ok||!data.success||!data.access_token)return false;if(window.WillenaAPI&&window.WillenaAPI.setLocalTokens)window.WillenaAPI.setLocalTokens(data.access_token);return true}
 async function api(url,options,retried){var fn=window.WillenaAPI&&window.WillenaAPI.fetch?window.WillenaAPI.fetch:window.fetch.bind(window),requestOptions=Object.assign({credentials:'include',cache:'no-store',headers:{'Content-Type':'application/json'}},options||{}),response=await fn(url,requestOptions),data=await response.json().catch(function(){return{}});if(response.status===401&&!retried&&await refreshAccessToken())return api(url,options,true);if(!response.ok||data.success===false)throw new Error(data.error||'Request failed '+response.status);return data}
 function labelSource(source){return source==='prospective'?'Online test':source==='internal'?'Willena Student':'Visitor'}
