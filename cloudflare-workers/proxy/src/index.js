@@ -13,6 +13,7 @@ const FUNCTION_TO_BINDING = {
   log_word_attempt: 'LOG_WORD_ATTEMPT',
   progress_summary: 'PROGRESS_SUMMARY',
   get_audio_urls: 'GET_AUDIO_URLS',
+  admin_classes: 'ADMIN_CLASSES',
 };
 
 const PREFER_CF_WORKER = {
@@ -22,6 +23,7 @@ const PREFER_CF_WORKER = {
   log_word_attempt: true,
   progress_summary: true,
   get_audio_urls: true,
+  admin_classes: true,
 };
 
 const ALLOWED_ORIGINS = new Set([
@@ -54,6 +56,11 @@ function corsHeaders(origin) {
   };
 }
 
+function accessTokenFromCookie(cookieHeader) {
+  const match = String(cookieHeader || '').match(/(?:^|;\s*)sb_access=([^;]+)/);
+  return match ? decodeURIComponent(match[1]) : '';
+}
+
 async function routeToCFWorker(request, binding, functionName, url) {
   const workerUrl = new URL(request.url);
   const remainingPath = url.pathname.replace(/^\/?\.?netlify\/functions\/[^/?]+\/?/, '/') || '/';
@@ -62,6 +69,11 @@ async function routeToCFWorker(request, binding, functionName, url) {
   const workerHeaders = new Headers(request.headers);
   workerHeaders.set('X-Willena-Original-Origin', request.headers.get('Origin') || '');
   workerHeaders.set('X-Willena-Gateway-Host', url.hostname);
+
+  if (functionName === 'admin_classes' && !workerHeaders.get('Authorization')) {
+    const token = accessTokenFromCookie(workerHeaders.get('Cookie'));
+    if (token) workerHeaders.set('Authorization', `Bearer ${token}`);
+  }
 
   const workerRequest = new Request(workerUrl.toString(), {
     method: request.method,
