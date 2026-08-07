@@ -65,6 +65,7 @@ async function routeToCFWorker(request, binding, functionName, url) {
   const workerUrl = new URL(request.url);
   const remainingPath = url.pathname.replace(/^\/?\.?netlify\/functions\/[^/?]+\/?/, '/') || '/';
   workerUrl.pathname = remainingPath === '' ? '/' : remainingPath;
+  workerUrl.search = url.search;
 
   const workerHeaders = new Headers(request.headers);
   workerHeaders.set('X-Willena-Original-Origin', request.headers.get('Origin') || '');
@@ -154,7 +155,26 @@ async function handleRequest(request, env) {
     const functionName = extractFunctionName(url.pathname);
     let response;
 
-    if (functionName && PREFER_CF_WORKER[functionName]) {
+    // Reuse the already-live supabase_auth gateway route as an internal transport
+    // for admin level-test calls. The auth Worker itself is bypassed here.
+    if (functionName === 'supabase_auth' && url.searchParams.get('gateway_service') === 'admin_classes') {
+      const binding = env && env.ADMIN_CLASSES;
+      if (!binding || typeof binding.fetch !== 'function') {
+        response = new Response(JSON.stringify({ success: false, error: 'Admin level-test service unavailable' }), {
+          status: 503,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      } else {
+        const targetUrl = new URL(url.toString());
+        targetUrl.searchParams.delete('gateway_service');
+        const adminAction = targetUrl.searchParams.get('admin_action');
+        if (adminAction) {
+          targetUrl.searchParams.set('action', adminAction);
+          targetUrl.searchParams.delete('admin_action');
+        }
+        response = await routeToCFWorker(request, binding, 'admin_classes', targetUrl);
+      }
+    } else if (functionName && PREFER_CF_WORKER[functionName]) {
       const bindingName = FUNCTION_TO_BINDING[functionName];
       const binding = env && env[bindingName];
       response = binding && typeof binding.fetch === 'function'
