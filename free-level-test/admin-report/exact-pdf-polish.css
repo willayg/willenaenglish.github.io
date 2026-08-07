@@ -47,3 +47,35 @@
 
 /* Remove the result-explanation section from page 2 only. */
 .willena-pdf-page:nth-child(2) .willena-pdf-result{display:none!important}
+
+/* Page 3: three spacious cards only. The side timeline was visually crowded. */
+.willena-pdf-page:nth-child(3) .willena-pdf-heading{margin-bottom:34px!important}
+.willena-pdf-page:nth-child(3) .willena-pdf-subtitle{margin:-22px 0 54px!important}
+.willena-pdf-page:nth-child(3) .willena-pdf-vjourney{
+  display:grid!important;
+  gap:62px!important;
+  margin:0 16px!important;
+}
+.willena-pdf-page:nth-child(3) .willena-pdf-vrow{
+  display:block!important;
+  min-height:0!important;
+}
+.willena-pdf-page:nth-child(3) .willena-pdf-vcard{
+  min-height:150px!important;
+  padding:38px 40px 27px!important;
+  border-radius:31px!important;
+}
+.willena-pdf-page:nth-child(3) .willena-pdf-vcard h3{
+  margin:0 0 20px!important;
+  font-size:19px!important;
+}
+.willena-pdf-page:nth-child(3) .willena-pdf-vcard p{
+  max-width:570px!important;
+  font-size:12px!important;
+  line-height:1.65!important;
+}
+.willena-pdf-page:nth-child(3) .willena-pdf-vbadge{
+  left:30px!important;
+  padding:9px 24px!important;
+  font-size:11px!important;
+}
