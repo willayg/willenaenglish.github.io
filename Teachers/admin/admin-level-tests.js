@@ -1,7 +1,7 @@
 (function(){
 'use strict';
 var tests=[],loaded=false,loading=false,activeFilter='all',activeDetail=null;
-var endpoint='/api/admin-classes';
+var endpoint='/.netlify/functions/supabase_auth?gateway_service=admin_classes';
 var byId=function(id){return document.getElementById(id)};
 function esc(value){return String(value==null?'':value).replace(/[&<>"']/g,function(char){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]})}
 async function api(url,options){
@@ -37,7 +37,7 @@ function renderFullResults(){if(!activeDetail)return;var rows=activeDetail.respo
 function open(id){var row=tests.find(function(item){return String(item.id)===String(id)});if(!row)return;activeDetail=null;byId('levelTestDetailSource').className='level-test-source '+row.source;byId('levelTestDetailSource').textContent=labelSource(row.source);byId('levelTestDetailName').textContent=name(row);byId('levelTestDetailMeta').textContent=[row.class_name||row.school,when(row)].filter(Boolean).join(' · ');byId('levelTestDetailBody').innerHTML='<p class="level-test-empty">Loading mini report…</p>';byId('levelTestFullReport').disabled=true;byId('levelTestFullResults').disabled=true;byId('levelTestResults').classList.remove('show');var drawer=byId('levelTestDrawer');drawer.classList.add('show');drawer.setAttribute('aria-hidden','false');api(endpoint,{method:'POST',body:JSON.stringify({action:'level_test_detail',source:row.source,attempt_id:row.id})}).then(function(data){activeDetail=data;row.is_new=false;render();renderMini(data);byId('levelTestFullReport').disabled=false;byId('levelTestFullResults').disabled=false}).catch(function(error){byId('levelTestDetailBody').innerHTML='<p class="level-test-empty">'+esc(error.message)+'</p>'})}
 function closeResults(){byId('levelTestResults').classList.remove('show');byId('levelTestResults').setAttribute('aria-hidden','true')}
 function close(){closeResults();var drawer=byId('levelTestDrawer');drawer.classList.remove('show');drawer.setAttribute('aria-hidden','true');activeDetail=null}
-function load(force){if(loading||loaded&&!force)return;loading=true;byId('levelTestRows').innerHTML='<tr><td colspan="5" class="level-test-empty">Loading real test records…</td></tr>';api(endpoint+'?action=list_level_tests').then(function(data){tests=Array.isArray(data.tests)?data.tests:[];loaded=true;render()}).catch(function(error){byId('levelTestRows').innerHTML='<tr><td colspan="5" class="level-test-empty">'+esc(error.message)+'</td></tr>'}).finally(function(){loading=false})}
+function load(force){if(loading||loaded&&!force)return;loading=true;byId('levelTestRows').innerHTML='<tr><td colspan="5" class="level-test-empty">Loading real test records…</td></tr>';api(endpoint+'&admin_action=list_level_tests').then(function(data){tests=Array.isArray(data.tests)?data.tests:[];loaded=true;render()}).catch(function(error){byId('levelTestRows').innerHTML='<tr><td colspan="5" class="level-test-empty">'+esc(error.message)+'</td></tr>'}).finally(function(){loading=false})}
 document.querySelectorAll('[data-page="levelTests"]').forEach(function(button){button.addEventListener('click',function(){load(false)})});
 byId('levelTestSearch').addEventListener('input',render);byId('levelTestRefresh').addEventListener('click',function(){load(true)});
 byId('levelTestFilters').querySelectorAll('[data-test-filter]').forEach(function(button){button.onclick=function(){activeFilter=button.dataset.testFilter;byId('levelTestFilters').querySelectorAll('button').forEach(function(x){x.classList.toggle('active',x===button)});render()}});
