@@ -25,7 +25,10 @@ function json(origin, status, body) {
 
 function bearer(req) {
   const value = req.headers.get('Authorization') || '';
-  return value.startsWith('Bearer ') ? value.slice(7).trim() : '';
+  if (value.startsWith('Bearer ')) return value.slice(7).trim();
+  const cookie = req.headers.get('Cookie') || '';
+  const match = cookie.match(/(?:^|;\s*)sb_access=([^;]+)/);
+  return match ? decodeURIComponent(match[1]) : '';
 }
 
 async function supabaseFetch(base, key, path, init={}) {
