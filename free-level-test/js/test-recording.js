@@ -91,6 +91,15 @@ function finishIfReady(){
  finishPromise=ensureAttempt().then(function(a){
   var level=parseInternalLevel();
   return post({action:'finish',attempt_id:a.id,session_token:a.session_token,answers:answers,recommended_level:level,display_level:level,duration_seconds:startAt?Math.round((Date.now()-startAt)/1000):null,total_questions:Number(context().setup&&context().setup.length)||answers.length,metadata:{completed_from:'shared-browser-recorder',page_language:document.documentElement.lang||'ko'}});
+ }).catch(function(error){
+  if(internal()&&/Active attempt not found/i.test(String(error&&error.message||error))){
+   clearAttempt();
+   return ensureAttempt().then(function(a){
+    var level=parseInternalLevel();
+    return post({action:'finish',attempt_id:a.id,answers:answers,recommended_level:level,display_level:level,duration_seconds:startAt?Math.round((Date.now()-startAt)/1000):null,total_questions:Number(context().setup&&context().setup.length)||answers.length,metadata:{completed_from:'stale-attempt-recovery',page_language:document.documentElement.lang||'ko'}});
+   });
+  }
+  throw error;
  }).then(function(result){finishRequested=false;clearAttempt();emit('willena:recording-finished',{success:true,result:result,answered_count:answers.length});return result}).catch(function(error){finalized=false;finishPromise=null;persistState();emit('willena:recording-failed',{success:false,error:error,offline:navigator.onLine===false});console.warn('[level-test-recording] finish save failed',error);throw error});
  return finishPromise;
 }
