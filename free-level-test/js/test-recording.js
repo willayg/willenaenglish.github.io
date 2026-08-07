@@ -1,7 +1,7 @@
 (function(){
 'use strict';
 var PUBLIC_ENDPOINT='https://fiieuiktlsivwfgyivai.supabase.co/functions/v1/prospective-level-test';
-var INTERNAL_ENDPOINT='https://willena-proxy.willena.workers.dev/.netlify/functions/student_level_test';
+var INTERNAL_ENDPOINT='https://api.willenaenglish.com/.netlify/functions/student_level_test';
 var PUBLIC_ATTEMPT_KEY='willena_prospective_level_test_attempt_v1';
 var INTERNAL_ATTEMPT_KEY='willena_internal_level_test_attempt_v2';
 var STATE_SUFFIX='_offline_state';
@@ -15,8 +15,8 @@ function responseData(response){return response.json().catch(function(){return{}
 function refreshInternalSession(){
  if(!window.WillenaAPI||typeof WillenaAPI.fetch!=='function')return Promise.resolve(false);
  return WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=refresh&_='+Date.now(),{credentials:'include',cache:'no-store'}).then(responseData).then(function(result){
-  if(!result.response.ok||!result.data.success||!result.data.access_token)return false;
-  if(WillenaAPI.setLocalTokens)WillenaAPI.setLocalTokens(result.data.access_token,result.data.refresh_token);
+  if(!result.response.ok||result.data.success===false)return false;
+  if(result.data.access_token&&WillenaAPI.setLocalTokens)WillenaAPI.setLocalTokens(result.data.access_token,result.data.refresh_token);
   return true;
  }).catch(function(){return false});
 }
