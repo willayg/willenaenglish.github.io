@@ -7,6 +7,10 @@ var gradeApplied=false;
 var resultReady=false;
 var saveFailed=false;
 var setupSnapshot={grade:null,years:null,listening:null,length:null};
+// Declare student mode synchronously. Authentication fills in the student
+// later, but the recorder must choose the internal storage/API path while the
+// remaining scripts are still loading.
+window.WillenaLevelTestContext={mode:'student',student:null,setup:setupSnapshot};
 var nativeFetch=window.fetch.bind(window);
 var greetingIndex=0;
 var AUTH_ENDPOINT='/.netlify/functions/supabase_auth';
@@ -77,6 +81,7 @@ function exposeStudent(profile){
  setupSnapshot.grade=gradePrefill;
  student={id:profile&&profile.id||null,name:studentName(profile),grade:gradePrefill,profile:profile};
  window.WillenaLevelTestContext={mode:'student',student:student,setup:setupSnapshot};
+ window.dispatchEvent(new CustomEvent('willena:student-ready',{detail:{student:student}}));
  document.documentElement.dataset.studentRecognized='true';
  document.documentElement.dataset.gradePrefilled=gradePrefill===null?'false':'true';
  updateGreeting();
