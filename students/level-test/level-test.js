@@ -144,7 +144,7 @@ document.addEventListener('click',function(event){
  var key=holder&&holder.getAttribute('data-key');
  if(!key)return;
  setupSnapshot[key]=Number(option.getAttribute('data-value'));
- if(key==='length')setTimeout(function(){if(window.WillenaLevelTestRecorder)window.WillenaLevelTestRecorder.start().catch(function(error){console.warn('[StudentLevelTest] attempt start failed',error)})},0);
+ if(key==='length')setTimeout(function(){if(window.WillenaLevelTestRecorder){var begin=window.WillenaLevelTestRecorder.begin||window.WillenaLevelTestRecorder.start;begin().catch(function(error){console.warn('[StudentLevelTest] attempt start failed',error)})}},0);
 },true);
 document.addEventListener('click',function(event){
  if(event.target&&event.target.id==='retryRecording'&&window.WillenaLevelTestRecorder){saveFailed=false;window.WillenaLevelTestRecorder.finish().catch(function(){})}
