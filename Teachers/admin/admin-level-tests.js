@@ -34,7 +34,7 @@ function load(force){if(loading||loaded&&!force)return;loading=true;byId('levelT
 document.querySelectorAll('[data-page="levelTests"]').forEach(function(button){button.addEventListener('click',function(){load(false)})});
 byId('levelTestSearch').addEventListener('input',render);byId('levelTestRefresh').addEventListener('click',function(){load(true)});
 byId('levelTestFilters').querySelectorAll('[data-test-filter]').forEach(function(button){button.onclick=function(){activeFilter=button.dataset.testFilter;byId('levelTestFilters').querySelectorAll('button').forEach(function(x){x.classList.toggle('active',x===button)});render()}});
-byId('levelTestFullReport').onclick=function(){if(!activeDetail)return;window.open('/free-level-test/admin-report/?teacher=1&admin=1&source='+encodeURIComponent(activeDetail.source)+'&attempt_id='+encodeURIComponent(activeDetail.attempt.id),'_blank','noopener')};
+byId('levelTestFullReport').onclick=function(){if(!activeDetail)return;window.open('/free-level-test/admin-report-v2/?teacher=1&admin=1&source='+encodeURIComponent(activeDetail.source)+'&attempt_id='+encodeURIComponent(activeDetail.attempt.id),'_blank','noopener')};
 byId('levelTestFullResults').onclick=renderFullResults;byId('levelTestResultsBack').onclick=closeResults;
 document.querySelectorAll('[data-close-level-test]').forEach(function(button){button.addEventListener('click',close)});document.addEventListener('keydown',function(event){if(event.key==='Escape'){if(byId('levelTestResults').classList.contains('show'))closeResults();else close()}});
 })();
