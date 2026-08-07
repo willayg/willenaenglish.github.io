@@ -1,10 +1,7 @@
 name = "willena-proxy"
 main = "src/index.js"
 compatibility_date = "2025-12-08"
-
-[[routes]]
-pattern = "api.willenaenglish.com/.netlify/functions/admin_classes*"
-zone_name = "willenaenglish.com"
+workers_dev = true
 
 # Service bindings to route requests to other CF Workers
 # These allow calling other workers without going through the network
