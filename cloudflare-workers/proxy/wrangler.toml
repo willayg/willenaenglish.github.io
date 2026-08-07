@@ -2,6 +2,10 @@ name = "willena-proxy"
 main = "src/index.js"
 compatibility_date = "2025-12-08"
 
+[[routes]]
+pattern = "api.willenaenglish.com/.netlify/functions/admin_classes*"
+zone_name = "willenaenglish.com"
+
 # Service bindings to route requests to other CF Workers
 # These allow calling other workers without going through the network
 [[services]]
@@ -23,6 +27,10 @@ service = "progress-summary"
 [[services]]
 binding = "GET_AUDIO_URLS"
 service = "get-audio-urls"
+
+[[services]]
+binding = "ADMIN_CLASSES"
+service = "admin-classes"
 
 # Fallback for non-CF functions
 [vars]
