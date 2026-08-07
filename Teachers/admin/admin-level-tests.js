@@ -4,8 +4,17 @@ var tests=[],loaded=false,loading=false,activeFilter='all',activeDetail=null;
 var endpoint='/api/admin-classes';
 var byId=function(id){return document.getElementById(id)};
 function esc(value){return String(value==null?'':value).replace(/[&<>"']/g,function(char){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]})}
-async function refreshAccessToken(){var fn=window.WillenaAPI&&window.WillenaAPI.fetch?window.WillenaAPI.fetch:window.fetch.bind(window);var response=await fn('/.netlify/functions/supabase_auth?action=refresh&_='+Date.now(),{credentials:'include',cache:'no-store'});var data=await response.json().catch(function(){return{}});return response.ok&&data.success!==false}
-async function api(url,options,retried){var fn=window.WillenaAPI&&window.WillenaAPI.fetch?window.WillenaAPI.fetch:window.fetch.bind(window),requestOptions=Object.assign({credentials:'include',cache:'no-store',headers:{'Content-Type':'application/json'}},options||{}),response=await fn(url,requestOptions),data=await response.json().catch(function(){return{}});if(response.status===401&&!retried&&await refreshAccessToken())return api(url,options,true);if(!response.ok||data.success===false)throw new Error(data.error||'Request failed '+response.status);return data}
+async function api(url,options){
+  if(typeof window.verifiedSession==='function'){
+    var session=await window.verifiedSession();
+    if(!session)throw new Error('Not signed in');
+  }
+  if(typeof window.api==='function')return window.api(url,options||{});
+  var response=await window.fetch(url,Object.assign({credentials:'include',cache:'no-store',headers:{'Content-Type':'application/json'}},options||{}));
+  var data=await response.json().catch(function(){return{}});
+  if(!response.ok||data.success===false)throw new Error(data.error||'Request failed '+response.status);
+  return data;
+}
 function labelSource(source){return source==='prospective'?'Online test':source==='internal'?'Willena Student':'Visitor'}
 function labelStatus(status){return status==='completed'?'Completed':'In progress'}
 function publicLevel(level){var n=Number(level);if(!n)return'—';return n<=2?'S'+n:String(n-2)}
