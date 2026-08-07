@@ -1,0 +1,53 @@
+name: Fix stale internal level test attempt once
+
+on:
+  push:
+    branches:
+      - staging
+    paths:
+      - '.github/workflows/fix-stale-internal-level-test-attempt-once.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: staging
+
+      - name: Patch stale attempt recovery and cache bust
+        shell: bash
+        run: |
+          python <<'PY'
+          from pathlib import Path
+
+          path = Path('free-level-test/js/test-recording.js')
+          text = path.read_text()
+
+          old = """  return post({action:'finish',attempt_id:a.id,session_token:a.session_token,answers:answers,recommended_level:level,display_level:level,duration_seconds:startAt?Math.round((Date.now()-startAt)/1000):null,total_questions:Number(context().setup&&context().setup.length)||answers.length,metadata:{completed_from:'shared-browser-recorder',page_language:document.documentElement.lang||'ko'}});\n }).then(function(result){finishRequested=false;clearAttempt();emit('willena:recording-finished',{success:true,result:result,answered_count:answers.length});return result}).catch(function(error){finalized=false;finishPromise=null;persistState();emit('willena:recording-failed',{success:false,error:error,offline:navigator.onLine===false});console.warn('[level-test-recording] finish save failed',error);throw error});"""
+
+          new = """  return post({action:'finish',attempt_id:a.id,session_token:a.session_token,answers:answers,recommended_level:level,display_level:level,duration_seconds:startAt?Math.round((Date.now()-startAt)/1000):null,total_questions:Number(context().setup&&context().setup.length)||answers.length,metadata:{completed_from:'shared-browser-recorder',page_language:document.documentElement.lang||'ko'}});\n }).catch(function(error){\n  if(internal()&&/Active attempt not found/i.test(String(error&&error.message||error))){\n   clearAttempt();\n   return ensureAttempt().then(function(a){\n    var level=parseInternalLevel();\n    return post({action:'finish',attempt_id:a.id,answers:answers,recommended_level:level,display_level:level,duration_seconds:startAt?Math.round((Date.now()-startAt)/1000):null,total_questions:Number(context().setup&&context().setup.length)||answers.length,metadata:{completed_from:'stale-attempt-recovery',page_language:document.documentElement.lang||'ko'}});\n   });\n  }\n  throw error;\n }).then(function(result){finishRequested=false;clearAttempt();emit('willena:recording-finished',{success:true,result:result,answered_count:answers.length});return result}).catch(function(error){finalized=false;finishPromise=null;persistState();emit('willena:recording-failed',{success:false,error:error,offline:navigator.onLine===false});console.warn('[level-test-recording] finish save failed',error);throw error});"""
+
+          if old not in text:
+              raise SystemExit('target finish block not found')
+          path.write_text(text.replace(old, new, 1))
+
+          index = Path('students/level-test/index.html')
+          html = index.read_text()
+          html = html.replace('/free-level-test/js/test-recording.js?v=20260807-cookie2', '/free-level-test/js/test-recording.js?v=20260807-stale1')
+          if 'test-recording.js?v=20260807-stale1' not in html:
+              html = html.replace('/free-level-test/js/test-recording.js?v=20260807-cookie3', '/free-level-test/js/test-recording.js?v=20260807-stale1')
+          index.write_text(html)
+          PY
+
+      - name: Commit patch
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add free-level-test/js/test-recording.js students/level-test/index.html
+          git diff --cached --quiet || git commit -m "Recover stale internal level test attempts"
+          git push origin staging
