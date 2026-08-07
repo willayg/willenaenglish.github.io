@@ -5,23 +5,36 @@ var INTERNAL_ENDPOINT='https://willena-proxy.willena.workers.dev/.netlify/functi
 var PUBLIC_ATTEMPT_KEY='willena_prospective_level_test_attempt_v1';
 var INTERNAL_ATTEMPT_KEY='willena_internal_level_test_attempt_v2';
 var STATE_SUFFIX='_offline_state';
-var answers=[],answerIds=new Set(),bankMap=new Map(),attempt=null,startAt=0,finalized=false,lastQuestionAt=0,finishPromise=null,finishRequested=false;
+var answers=[],answerIds=new Set(),bankMap=new Map(),attempt=null,startAt=0,finalized=false,lastQuestionAt=0,finishPromise=null,finishRequested=false,recoveredFinishedTest=false;
 function context(){return window.WillenaLevelTestContext||{}}
 function internal(){return context().mode==='student'}
 function attemptKey(){return internal()?INTERNAL_ATTEMPT_KEY:PUBLIC_ATTEMPT_KEY}
 function stateKey(){return attemptKey()+STATE_SUFFIX}
 function candidate(){return window.WillenaProspectiveCandidate||null}
-function parseResponse(response){return response.json().catch(function(){return{}}).then(function(data){if(!response.ok||!data.success)throw new Error(data.error||'Save failed');return data})}
-function post(body){
+function responseData(response){return response.json().catch(function(){return{}}).then(function(data){return{response:response,data:data}})}
+function refreshInternalSession(){
+ if(!window.WillenaAPI||typeof WillenaAPI.fetch!=='function')return Promise.resolve(false);
+ return WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=refresh&_='+Date.now(),{credentials:'include',cache:'no-store'}).then(responseData).then(function(result){
+  if(!result.response.ok||!result.data.success||!result.data.access_token)return false;
+  if(WillenaAPI.setLocalTokens)WillenaAPI.setLocalTokens(result.data.access_token,result.data.refresh_token);
+  return true;
+ }).catch(function(){return false});
+}
+function post(body,retried){
  if(!internal())return fetch(PUBLIC_ENDPOINT,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)}).then(parseResponse);
  var action={start:'capture_start',answer:'capture_answer',finish:'capture_finish'}[body.action];
  if(!action)return Promise.reject(new Error('Unsupported recording action'));
  var payload=Object.assign({},body);delete payload.action;delete payload.session_token;delete payload.candidate_id;delete payload.registration_token;
- return WillenaAPI.fetch(INTERNAL_ENDPOINT+'?action='+encodeURIComponent(action),{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(payload)}).then(parseResponse);
+ return WillenaAPI.fetch(INTERNAL_ENDPOINT+'?action='+encodeURIComponent(action),{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(payload)}).then(responseData).then(function(result){
+  if(result.response.status===401&&!retried)return refreshInternalSession().then(function(refreshed){if(refreshed)return post(body,true);throw new Error(result.data.error||'Student login required')});
+  if(!result.response.ok||!result.data.success)throw new Error(result.data.error||'Save failed');
+  return result.data;
+ });
 }
+function parseResponse(response){return responseData(response).then(function(result){if(!result.response.ok||!result.data.success)throw new Error(result.data.error||'Save failed');return result.data})}
 function loadSaved(){try{return JSON.parse(localStorage.getItem(attemptKey())||sessionStorage.getItem(attemptKey())||'null')}catch(_){return null}}
-function persistState(){try{localStorage.setItem(stateKey(),JSON.stringify({answers:answers,startAt:startAt||Date.now()}))}catch(_){}}
-function restoreState(){try{var saved=JSON.parse(localStorage.getItem(stateKey())||'null');if(!saved||!Array.isArray(saved.answers))return;answers=saved.answers;answerIds=new Set(answers.map(function(row){return String(row.assessment_item_id)}));startAt=Number(saved.startAt)||Date.now()}catch(_){}}
+function persistState(){try{localStorage.setItem(stateKey(),JSON.stringify({answers:answers,startAt:startAt||Date.now(),finishRequested:finishRequested,totalQuestions:Number(context().setup&&context().setup.length)||answers.length,recommendedLevel:parseInternalLevel()}))}catch(_){}}
+function restoreState(){try{var saved=JSON.parse(localStorage.getItem(stateKey())||'null');if(!saved||!Array.isArray(saved.answers))return;answers=saved.answers;answerIds=new Set(answers.map(function(row){return String(row.assessment_item_id)}));startAt=Number(saved.startAt)||Date.now();finishRequested=saved.finishRequested===true;var count=answers.length,recoverable=[20,30,40,50].indexOf(count)>=0;if(internal()&&(finishRequested||recoverable)){finishRequested=true;recoveredFinishedTest=true}}catch(_){}}
 function saveAttempt(x){attempt=x;sessionStorage.setItem(attemptKey(),JSON.stringify(x));try{localStorage.setItem(attemptKey(),JSON.stringify(x))}catch(_){}}
 function clearAttempt(){attempt=null;sessionStorage.removeItem(attemptKey());try{localStorage.removeItem(attemptKey());localStorage.removeItem(stateKey())}catch(_){}}
 function ensureBank(){var loadBank=window.loadCompleteQuestionBank||window.loadQuestionBank;if(typeof loadBank!=='function')return Promise.resolve();return Promise.resolve(loadBank()).then(function(rows){rows.forEach(function(q){bankMap.set(String(q.id),q)})}).catch(function(){})}
@@ -81,6 +94,15 @@ function finishIfReady(){
  }).then(function(result){finishRequested=false;clearAttempt();emit('willena:recording-finished',{success:true,result:result,answered_count:answers.length});return result}).catch(function(error){finalized=false;finishPromise=null;persistState();emit('willena:recording-failed',{success:false,error:error,offline:navigator.onLine===false});console.warn('[level-test-recording] finish save failed',error);throw error});
  return finishPromise;
 }
+function recoverFinishedTest(){
+ if(!internal()||!recoveredFinishedTest||finalized||!answers.length)return Promise.resolve();
+ finalized=true;
+ finishPromise=ensureAttempt().then(function(a){
+  var level=parseInternalLevel();
+  return post({action:'finish',attempt_id:a.id,answers:answers,recommended_level:level,display_level:level,duration_seconds:startAt?Math.round((Date.now()-startAt)/1000):null,total_questions:answers.length,metadata:{completed_from:'persistent-browser-recovery',page_language:document.documentElement.lang||'ko'}});
+ }).then(function(result){recoveredFinishedTest=false;finishRequested=false;clearAttempt();emit('willena:recording-finished',{success:true,result:result,answered_count:answers.length,recovered:true});return result}).catch(function(error){finalized=false;finishPromise=null;persistState();emit('willena:recording-failed',{success:false,error:error,offline:navigator.onLine===false,recovered:true});throw error});
+ return finishPromise;
+}
 document.addEventListener('click',function(e){
  if(e.target.closest('#next,#finish,#submit,[data-finish-test]'))captureAnswer();
  if(e.target.closest('#retry')||e.target.closest('#home')){answers=[];answerIds.clear();finalized=false;finishPromise=null;finishRequested=false;clearAttempt()}
@@ -89,10 +111,13 @@ var observer=new MutationObserver(function(){var card=document.querySelector('.q
 observer.observe(document.documentElement,{subtree:true,childList:true});
 window.addEventListener('willena:candidate-ready',function(){ensureBank()});
 window.addEventListener('online',function(){
- if(finishRequested){finishIfReady().catch(function(){})}
+ if(recoveredFinishedTest){recoverFinishedTest().catch(function(){})}
+ else if(finishRequested){finishIfReady().catch(function(){})}
  else{syncCapturedAnswers().catch(function(error){console.warn('[level-test-recording] reconnect sync failed',error)})}
 });
-window.WillenaLevelTestRecorder={start:ensureAttempt,finish:finishIfReady,getAnswers:function(){return answers.slice()}};
+window.addEventListener('willena:student-ready',function(){recoverFinishedTest().catch(function(error){console.warn('[level-test-recording] saved test recovery failed',error)})});
+window.WillenaLevelTestRecorder={start:ensureAttempt,finish:finishIfReady,recover:recoverFinishedTest,getAnswers:function(){return answers.slice()}};
 restoreState();
 ensureBank();
+if(internal())setTimeout(function(){recoverFinishedTest().catch(function(error){console.warn('[level-test-recording] saved test recovery failed',error)})},0);
 })();
