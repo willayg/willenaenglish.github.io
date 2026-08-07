@@ -30,7 +30,51 @@ function otherRows(best,ko){const shown=windowFor(best),remaining=Array.from({le
 function build(){const ko=document.documentElement.lang!=='en',best=overall(),c=data.candidate||{},first=assessed.map(s=>({s,r:estimate(s)})).find(x=>x.r.assessed),canTitle=ko?'현재 할 수 있는 것':'What the learner can do',canHead=first?labels[first.s][ko?'ko':'en']:(ko?'기초 영어':'Core English'),canBody=first?text(profile(first.r.level,first.s),'summary',ko,fallback(first.r.level,first.s,ko)):summary(best,ko),nextTitle=ko?'다음 단계':'Next step',nextHead=ko?'원인과 결과':'Cause and result',stage=document.createElement('div');stage.className='willena-pdf-stage';stage.innerHTML=`<section class="willena-pdf-page">${frame(1,'PLACEMENT SUMMARY',c)}<div class="willena-pdf-hero-label">${ko?'추천 시작 레벨':'Recommended starting level'}</div><div class="willena-pdf-orbit"><span>${best<=2?(ko?'스타터':'STARTER'):(ko?'레벨':'LEVEL')}</span><strong>${display(best)}</strong></div><p class="willena-pdf-summary">${esc(summary(best,ko))}</p>${hJourney(best,ko)}<div class="willena-pdf-two-cards"><article class="willena-pdf-card"><div class="willena-pdf-bisect">${canTitle}</div><h3>${canHead}</h3><p>${esc(canBody)}</p></article><article class="willena-pdf-card pink"><div class="willena-pdf-bisect">${nextTitle}</div><h3>${nextHead}</h3><p>${esc(nextStep(best,ko))}</p></article></div></section><section class="willena-pdf-page">${frame(2,'SKILL PROFILE',c)}<h2 class="willena-pdf-heading">${ko?'영역별 예상 레벨':'Estimated level by skill'}</h2><div class="willena-pdf-skills">${all.map(s=>skillBlock(s,ko)).join('')}</div><div class="willena-pdf-result"><div class="willena-pdf-bisect">${ko?'결과 해석':'Result guide'}</div><p>${ko?'이 결과는 합격이나 불합격을 판단하는 점수가 아닙니다. 학생이 가장 편안하게 학습을 시작할 수 있는 단계를 보여주는 참고 자료입니다.':'This is not a pass-or-fail score. It shows the level where the learner is most likely to begin comfortably and successfully.'}</p></div></section><section class="willena-pdf-page">${frame(3,'LEVEL PATHWAY',c)}<h2 class="willena-pdf-heading">${ko?'레벨 안내':'Level guide'}</h2><p class="willena-pdf-subtitle">${ko?'현재 레벨을 중심으로 다섯 단계를 표시합니다.':'Five levels are shown around the current result.'}</p><div class="willena-pdf-vjourney">${vJourney(best,ko)}</div></section><section class="willena-pdf-page">${frame(4,'OTHER LEVELS',c)}<h2 class="willena-pdf-heading">${ko?'다른 레벨 안내':'Other levels'}</h2><p class="willena-pdf-subtitle">${ko?'페이지 3에 표시되지 않은 나머지 단계입니다.':'The remaining levels not shown on page 3.'}</p><div class="willena-pdf-other">${otherRows(best,ko)}</div></section>`;document.body.appendChild(stage);return stage}
 function loadScript(src,globalName){if(window[globalName])return Promise.resolve();return new Promise((resolve,reject)=>{const s=document.createElement('script');s.src=src;s.onload=resolve;s.onerror=reject;document.head.appendChild(s)})}
 async function loadData(){if(data&&sharedModel)return;const adminHeaders={'content-type':'application/json'};if(adminMode){try{const access=localStorage.getItem('sb_access_token');if(access&&access.includes('.')&&access.length>50)adminHeaders.Authorization=`Bearer ${access}`}catch(_){}}const reportRequest=adminMode?fetch(ADMIN_ENDPOINT,{method:'POST',credentials:'include',headers:adminHeaders,body:JSON.stringify({action:'level_test_detail',attempt_id:attemptId,source:adminSource}),cache:'no-store'}):fetch(ENDPOINT,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({action:'report',attempt_id:attemptId,session_token:token}),cache:'no-store'});const [rr,pr]=await Promise.all([reportRequest,fetch(`${CURRICULUM_URL}/rest/v1/assessment_report_profiles?select=level_id,skill,summary_en,summary_ko,next_step_en,next_step_ko&status=eq.published&order=level_id.asc,sort_order.asc`,{headers:{apikey:CURRICULUM_KEY,Authorization:`Bearer ${CURRICULUM_KEY}`},cache:'no-store'})]);data=await rr.json().catch(()=>({}));if(!rr.ok||!data.success)throw new Error(data.error||'Could not load report');if(window.WillenaLevelTestScoring)window.WillenaLevelTestScoring.repairPayload(data);if(pr.ok){const rows=await pr.json();profiles=new Map(rows.map(r=>[`${r.level_id}:${r.skill}`,r]))}sharedModel=window.WillenaLevelReportCalculation.create({attempt:data.attempt,responses:data.responses});evidence=sharedModel.evidence}
-async function download(){const button=document.querySelector('#printReport'),old=button?.textContent||'';if(button){button.disabled=true;button.textContent=document.documentElement.lang==='en'?'Building PDF…':'PDF 만드는 중…'}let overlay=document.createElement('div');overlay.className='willena-pdf-working';overlay.textContent=document.documentElement.lang==='en'?'Building the exact A4 PDF…':'A4 PDF를 만드는 중입니다…';document.body.appendChild(overlay);try{await Promise.all([loadScript('https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js','html2canvas'),loadScript('https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js','jspdf')]);await loadData();await document.fonts.ready;const stage=build(),pages=[...stage.querySelectorAll('.willena-pdf-page')],pdf=new window.jspdf.jsPDF({orientation:'portrait',unit:'mm',format:'a4',compress:true});for(let i=0;i<pages.length;i++){const canvas=await window.html2canvas(pages[i],{scale:2,backgroundColor:'#ffffff',logging:false,useCORS:true,width:794,height:1123});if(i)pdf.addPage('a4','portrait');pdf.addImage(canvas.toDataURL('image/jpeg',.96),'JPEG',0,0,210,297,undefined,'FAST');canvas.width=1;canvas.height=1}stage.remove();const student=clean(data.candidate?.student_name||'student').replace(/[^a-z0-9가-힣_-]+/gi,'_');pdf.save(`willena_${student}_level_report.pdf`)}catch(err){console.error('[exact-pdf]',err);alert(document.documentElement.lang==='en'?'Could not create the PDF. Please try again.':'PDF를 만들지 못했습니다. 다시 시도해 주세요.')}finally{overlay.remove();if(button){button.disabled=false;button.textContent=old}}}
+async function download(){
+  const button=document.querySelector('#printReport'),old=button?.textContent||'',english=document.documentElement.lang==='en';
+  const preview=window.open('','_blank');
+  if(!preview){
+    alert(english?'Please allow pop-ups so the PDF can open in a new tab.':'PDF를 새 탭에서 열려면 팝업을 허용해 주세요.');
+    return;
+  }
+  preview.document.write(`<!doctype html><title>${english?'Building PDF…':'PDF 만드는 중…'}</title><style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#fff;color:#214f59;font:700 17px system-ui}</style><body>${english?'Building the PDF…':'PDF를 만드는 중입니다…'}</body>`);
+  preview.document.close();
+  if(button){button.disabled=true;button.textContent=english?'Building PDF…':'PDF 만드는 중…'}
+  const overlay=document.createElement('div');
+  overlay.className='willena-pdf-working';
+  overlay.textContent=english?'Building the exact A4 PDF…':'A4 PDF를 만드는 중입니다…';
+  document.body.appendChild(overlay);
+  let stage=null;
+  try{
+    await Promise.all([
+      loadScript('https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js','html2canvas'),
+      loadScript('https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js','jspdf')
+    ]);
+    await loadData();
+    await document.fonts.ready;
+    stage=build();
+    const pages=[...stage.querySelectorAll('.willena-pdf-page')];
+    const pdf=new window.jspdf.jsPDF({orientation:'portrait',unit:'mm',format:'a4',compress:true});
+    for(let i=0;i<pages.length;i++){
+      const canvas=await window.html2canvas(pages[i],{scale:2,backgroundColor:'#ffffff',logging:false,useCORS:true,width:794,height:1123});
+      if(i)pdf.addPage('a4','portrait');
+      pdf.addImage(canvas.toDataURL('image/jpeg',.96),'JPEG',0,0,210,297,undefined,'FAST');
+      canvas.width=1;
+      canvas.height=1;
+    }
+    const blobUrl=URL.createObjectURL(pdf.output('blob'));
+    preview.location.replace(blobUrl);
+    setTimeout(()=>URL.revokeObjectURL(blobUrl),5*60*1000);
+  }catch(err){
+    console.error('[exact-pdf]',err);
+    preview.close();
+    alert(english?'Could not create the PDF. Please try again.':'PDF를 만들지 못했습니다. 다시 시도해 주세요.');
+  }finally{
+    stage?.remove();
+    overlay.remove();
+    if(button){button.disabled=false;button.textContent=old}
+  }
+}
 function adoptSharedModel(){sharedModel=window.WillenaSharedReportModel||null;if(!sharedModel)return;data=sharedModel.data;profiles=sharedModel.profiles;evidence=sharedModel.evidence}
 document.addEventListener('click',e=>{if(e.target.closest('#printReport'))adoptSharedModel()},true);
 document.addEventListener('click',e=>{const b=e.target.closest('#printReport');if(!b)return;e.preventDefault();e.stopImmediatePropagation();download()},true);
