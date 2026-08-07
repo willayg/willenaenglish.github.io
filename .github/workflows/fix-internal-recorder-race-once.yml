@@ -1,11 +1,15 @@
 name: Fix internal recorder duplicate attempt race once
+
 on:
   push:
-    branches: [staging]
+    branches:
+      - staging
     paths:
       - '.github/workflows/fix-internal-recorder-race-once.yml'
+
 permissions:
   contents: write
+
 jobs:
   patch:
     runs-on: ubuntu-latest
@@ -13,21 +17,26 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: staging
+
       - name: Patch recorder race and fresh-run reset
+        shell: bash
         run: |
-          python - <<'PY'
+          python <<'PY'
           from pathlib import Path
 
-          p = Path('free-level-test/js/test-recording.js')
-          s = p.read_text()
-          s = s.replace(
-            "var answers=[],answerIds=new Set(),bankMap=new Map(),attempt=null,startAt=0,finalized=false,lastQuestionAt=0,finishPromise=null,finishRequested=false,recoveredFinishedTest=false;",
-            "var answers=[],answerIds=new Set(),bankMap=new Map(),attempt=null,attemptPromise=null,startAt=0,finalized=false,lastQuestionAt=0,finishPromise=null,finishRequested=false,recoveredFinishedTest=false;"
+          path = Path('free-level-test/js/test-recording.js')
+          text = path.read_text()
+          text = text.replace(
+              "var answers=[],answerIds=new Set(),bankMap=new Map(),attempt=null,startAt=0,finalized=false,lastQuestionAt=0,finishPromise=null,finishRequested=false,recoveredFinishedTest=false;",
+              "var answers=[],answerIds=new Set(),bankMap=new Map(),attempt=null,attemptPromise=null,startAt=0,finalized=false,lastQuestionAt=0,finishPromise=null,finishRequested=false,recoveredFinishedTest=false;",
+              1,
           )
-          s = s.replace(
-            "function clearAttempt(){attempt=null;sessionStorage.removeItem(attemptKey());try{localStorage.removeItem(attemptKey());localStorage.removeItem(stateKey())}catch(_){}}",
-            "function clearAttempt(){attempt=null;attemptPromise=null;sessionStorage.removeItem(attemptKey());try{localStorage.removeItem(attemptKey());localStorage.removeItem(stateKey())}catch(_){}}"
+          text = text.replace(
+              "function clearAttempt(){attempt=null;sessionStorage.removeItem(attemptKey());try{localStorage.removeItem(attemptKey());localStorage.removeItem(stateKey())}catch(_){}}",
+              "function clearAttempt(){attempt=null;attemptPromise=null;sessionStorage.removeItem(attemptKey());try{localStorage.removeItem(attemptKey());localStorage.removeItem(stateKey())}catch(_){}}",
+              1,
           )
+
           old = """function ensureAttempt(){
  if(attempt)return Promise.resolve(attempt);
  var saved=loadSaved();
@@ -57,34 +66,37 @@ jobs:
 function beginNewAttempt(){
  answers=[];answerIds.clear();finalized=false;finishPromise=null;finishRequested=false;recoveredFinishedTest=false;clearAttempt();startAt=Date.now();persistState();return ensureAttempt();
 }"""
-          if old not in s:
+          if old not in text:
               raise SystemExit('ensureAttempt block not found')
-          s = s.replace(old, new)
-          s = s.replace(
-            "window.WillenaLevelTestRecorder={start:ensureAttempt,finish:finishIfReady,recover:recoverFinishedTest,getAnswers:function(){return answers.slice()}};",
-            "window.WillenaLevelTestRecorder={start:ensureAttempt,begin:beginNewAttempt,finish:finishIfReady,recover:recoverFinishedTest,getAnswers:function(){return answers.slice()}};"
+          text = text.replace(old, new, 1)
+          text = text.replace(
+              "window.WillenaLevelTestRecorder={start:ensureAttempt,finish:finishIfReady,recover:recoverFinishedTest,getAnswers:function(){return answers.slice()}};",
+              "window.WillenaLevelTestRecorder={start:ensureAttempt,begin:beginNewAttempt,finish:finishIfReady,recover:recoverFinishedTest,getAnswers:function(){return answers.slice()}};",
+              1,
           )
-          p.write_text(s)
+          path.write_text(text)
 
-          p = Path('students/level-test/level-test.js')
-          s = p.read_text()
-          s = s.replace(
-            "if(key==='length')setTimeout(function(){if(window.WillenaLevelTestRecorder)window.WillenaLevelTestRecorder.start().catch(function(error){console.warn('[StudentLevelTest] attempt start failed',error)})},0);",
-            "if(key==='length')setTimeout(function(){if(window.WillenaLevelTestRecorder){var begin=window.WillenaLevelTestRecorder.begin||window.WillenaLevelTestRecorder.start;begin().catch(function(error){console.warn('[StudentLevelTest] attempt start failed',error)})}},0);"
-          )
-          p.write_text(s)
+          path = Path('students/level-test/level-test.js')
+          text = path.read_text()
+          old = "if(key==='length')setTimeout(function(){if(window.WillenaLevelTestRecorder)window.WillenaLevelTestRecorder.start().catch(function(error){console.warn('[StudentLevelTest] attempt start failed',error)})},0);"
+          new = "if(key==='length')setTimeout(function(){if(window.WillenaLevelTestRecorder){var begin=window.WillenaLevelTestRecorder.begin||window.WillenaLevelTestRecorder.start;begin().catch(function(error){console.warn('[StudentLevelTest] attempt start failed',error)})}},0);"
+          if old not in text:
+              raise SystemExit('level-test start hook not found')
+          path.write_text(text.replace(old, new, 1))
 
-          p = Path('students/level-test/index.html')
-          s = p.read_text()
+          path = Path('students/level-test/index.html')
+          text = path.read_text()
           import re
-          s = re.sub(r'level-test\.js\?v=[^\"]+', 'level-test.js?v=20260807-race1', s)
-          s = re.sub(r'test-recording\.js\?v=[^\"]+', 'test-recording.js?v=20260807-race1', s)
-          p.write_text(s)
+          text = re.sub(r'level-test\.js\?v=[^\"]+', 'level-test.js?v=20260807-race1', text)
+          text = re.sub(r'test-recording\.js\?v=[^\"]+', 'test-recording.js?v=20260807-race1', text)
+          path.write_text(text)
           PY
+
       - name: Commit patch
+        shell: bash
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add free-level-test/js/test-recording.js students/level-test/level-test.js students/level-test/index.html
-          git commit -m "Fix duplicate internal level test attempts" || exit 0
+          git diff --cached --quiet || git commit -m "Fix duplicate internal level test attempts"
           git push origin staging
