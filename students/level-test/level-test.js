@@ -159,7 +159,7 @@ window.addEventListener('willena:recording-finished',function(){
 window.addEventListener('willena:recording-failed',function(){
  if(completed||!resultReady||saveFailed)return;
  saveFailed=true;
- var root=document.getElementById('app');if(root)root.insertAdjacentHTML('beforeend',saveErrorMarkup());
+ var root=document.getElementById('app');if(root)root.innerHTML=saveErrorMarkup();
 });
 new MutationObserver(function(){requestAnimationFrame(function(){updateGreeting();applyGradePrefill();replaceReport()})}).observe(document.documentElement,{childList:true,subtree:true});
 requireStudent();
