@@ -16,20 +16,34 @@ function signin(){location.replace('/students/signin.html?next='+encodeURICompon
 function shuffle(items){return items.slice().sort(function(){return Math.random()-.5;});}
 function unique(items){var out=[];items.forEach(function(x){if(x&&out.indexOf(x)<0)out.push(x);});return out;}
 function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
-async function authRequest(action){
- var response=await WillenaAPI.fetch(AUTH_ENDPOINT+'?action='+encodeURIComponent(action)+'&_='+Date.now(),{credentials:'include',cache:'no-store'});
+async function authRequest(action,params){
+ var query=new URLSearchParams(Object.assign({action:action,_:Date.now()},params||{}));
+ var response=await WillenaAPI.fetch(AUTH_ENDPOINT+'?'+query.toString(),{credentials:'include',cache:'no-store'});
  var data=await response.json().catch(function(){return{}});
  return{response:response,data:data};
 }
-async function getAccessToken(){
- var refreshed=await authRequest('refresh');
- if(!refreshed.response.ok||!refreshed.data.success||!refreshed.data.access_token)return null;
- if(window.WillenaAPI&&WillenaAPI.setLocalTokens)WillenaAPI.setLocalTokens(refreshed.data.access_token);
- return refreshed.data.access_token;
+async function refreshSession(){
+ var result=await authRequest('refresh');
+ if(!result.response.ok||!result.data.success)return false;
+ if(result.data.access_token&&window.WillenaAPI&&WillenaAPI.setLocalTokens)WillenaAPI.setLocalTokens(result.data.access_token,result.data.refresh_token);
+ return true;
 }
-async function loadStudentAssignment(token){
- var response=await WillenaAPI.fetch('/.netlify/functions/student_study_current?_='+Date.now(),{cache:'no-store',headers:{Authorization:'Bearer '+token}});
+async function currentUser(){
+ var result=await authRequest('whoami');
+ if(result.response.ok&&result.data.success&&(result.data.user_id||result.data.id))return result.data;
+ if(!await refreshSession())return null;
+ result=await authRequest('whoami');
+ return result.response.ok&&result.data.success&&(result.data.user_id||result.data.id)?result.data:null;
+}
+async function loadStudentAssignment(){
+ var response=await WillenaAPI.fetch('/.netlify/functions/student_study_current?_='+Date.now(),{credentials:'include',cache:'no-store'});
  var data=await response.json().catch(function(){return{}});
+ if(response.status===401){
+  if(await refreshSession()){
+   response=await WillenaAPI.fetch('/.netlify/functions/student_study_current?_='+Date.now(),{credentials:'include',cache:'no-store'});
+   data=await response.json().catch(function(){return{}});
+  }
+ }
  if(response.status===401){signin();throw new Error('Sign in required');}
  if(!response.ok||!data.success)throw new Error(data.error||'Could not load your class book.');
  return data;
@@ -138,8 +152,9 @@ function showError(error){
 async function init(){
  try{
   drawSkills();
-  var token=await getAccessToken();if(!token){signin();return;}
-  var data=await loadStudentAssignment(token);student=data.student;classInfo=data.class;assignment=data.assignment;
+  var who=await currentUser();
+  if(!who){signin();return;}
+  var data=await loadStudentAssignment();student=data.student;classInfo=data.class;assignment=data.assignment;
   if(!assignment||!assignment.book_id)throw new Error('No active book is assigned to this student.');
   units=await loadUnits(assignment.book_id);if(!units.length)throw new Error('No published units were found for '+assignment.book_title+'.');
   currentUnit=resolveUnit(units,assignment.current_unit||assignment.starting_unit);
