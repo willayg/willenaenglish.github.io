@@ -93,6 +93,15 @@
 <script src="./study-progress.js?v=20260808-4"></script>
 <script src="./study.js?v=20260808-14"></script>
 <script src="./study-stats.js?v=20260809-4"></script>
-<script src="./smart-study.js?v=20260809-7"></script>
+<script src="./smart-study.js?v=20260809-8"></script>
+<script>
+(function(){
+  function unlockStudyPage(){document.body.style.overflow='';}
+  unlockStudyPage();
+  window.addEventListener('pageshow',unlockStudyPage);
+  var close=document.getElementById('smartClose');
+  if(close)close.addEventListener('click',function(){setTimeout(unlockStudyPage,0);});
+})();
+</script>
 </body>
 </html>
