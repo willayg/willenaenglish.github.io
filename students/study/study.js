@@ -9,7 +9,13 @@ var T={
 function tx(k){return T[lang][k]||k;}
 function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
 function chrome(){document.documentElement.lang=lang;langBtn.textContent=lang==='ko'?'English':'한국어';brandSubtitle.textContent=tx('brand');footerText.textContent=tx('footer');}
-function screen(html,dir){dir=dir||'forward';root.classList.add('is-swapping');root.innerHTML='<section class="screen screen-safe-in '+(dir==='back'?'from-left':'from-right')+'">'+html+'</section>';var next=root.querySelector('.screen');requestAnimationFrame(function(){requestAnimationFrame(function(){if(next)next.classList.add('screen-safe-ready');root.classList.remove('is-swapping');});});setTimeout(function(){if(next)next.classList.add('screen-safe-ready');root.classList.remove('is-swapping');},420);}
+function screen(html,dir){
+ dir=dir||'forward';
+ root.innerHTML='<section class="screen screen-in '+(dir==='back'?'from-left':'from-right')+'">'+html+'</section>';
+ var next=root.querySelector('.screen');
+ requestAnimationFrame(function(){requestAnimationFrame(function(){if(next)next.classList.add('screen-ready');});});
+ setTimeout(function(){if(next)next.classList.add('screen-ready');},450);
+}
 function optionButtons(items){return '<div class="setup-options">'+items.map(function(item){return '<button class="setup-option" type="button" data-value="'+esc(item.value)+'">'+esc(item.label)+'<span>→</span></button>';}).join('')+'</div>';}
 function welcome(){document.body.classList.add('welcome-mode');screen('<div class="welcome-layout"><img class="welcome-logo" src="/Assets/Images/Logo.png?v=20260730-3" alt="Willena English Academy"><div class="welcome-panel"><h1>'+tx('welcome')+'</h1><p class="study-menu-copy">'+tx('intro')+'</p><div class="study-chip">'+tx('current')+' · '+tx('book')+' · '+tx('unit')+'</div><button class="welcome-start" id="studyStart" type="button">'+tx('start')+'</button><p class="study-demo-note">Prototype: the book and unit are placeholders until the student curriculum API is connected.</p></div></div>');}
 var skills=[
@@ -45,11 +51,11 @@ var examples={
 };
 function activityMenu(skill,dir){document.body.classList.remove('welcome-mode');view='activity-menu';selectedSkill=skill;var rows=examples[skill]||[];screen('<div class="setup-progress"><span>'+tx('book')+' · '+tx('unit')+'</span><div><i style="width:66%"></i></div></div><h2>'+tx('chooseActivity')+'</h2><p class="study-subtitle">'+tx(skills.find(function(s){return s.value===skill;}).labelKey)+'</p>'+optionButtons(rows.map(function(row,i){return{value:String(i),label:tx(row.label)};}))+'<div class="study-back-row"><button class="btn btn-ghost" id="backToSkills">'+tx('back')+'</button></div>',dir);}
 var engine=null;
-function practice(index,dir){document.body.classList.remove('welcome-mode');view='practice';selectedIndex=Number(index)||0;var rows=examples[selectedSkill]||[],row=rows[selectedIndex]||rows[0];if(!row){skillMenu('back');return;}screen('<div class="question-meta"><span>'+tx('question')+'</span><span>'+tx(skills.find(function(s){return s.value===selectedSkill;}).labelKey)+'</span></div><div class="progress"><i style="width:100%"></i></div><div class="activity-host" id="activityHost"></div><div class="study-back-row"><button class="btn btn-ghost" id="backToActivityMenu">'+tx('back')+'</button></div>',dir);var host=document.getElementById('activityHost');engine=new WillenaActivityEngine(host,{onAnswer:function(payload){total++;if(payload.result.correct)correct++;setTimeout(finish,650);}});engine.setActivity(row.activity);}
+function practice(index,dir){document.body.classList.remove('welcome-mode');view='practice';selectedIndex=Number(index)||0;var rows=examples[selectedSkill]||[],row=rows[selectedIndex]||rows[0];if(!row){skillMenu('back');return;}screen('<div class="question-meta"><span>'+tx('question')+'</span><span>'+tx(skills.find(function(s){return s.value===selectedSkill;}).labelKey)+'</span></div><div class="progress"><i style="width:100%"></i></div><div class="activity-host" id="activityHost"></div><div class="study-back-row"><button class="btn btn-ghost" id="backToActivityMenu">'+tx('back')+'</button></div>',dir);var host=document.getElementById('activityHost');if(!window.WillenaActivityEngine){host.innerHTML='<p class="error">Activity engine failed to load.</p>';return;}engine=new WillenaActivityEngine(host,{onAnswer:function(payload){total++;if(payload.result.correct)correct++;setTimeout(finish,650);}});engine.setActivity(row.activity);}
 function finish(){view='finish';screen('<div class="study-finish"><span class="study-chip">'+tx('finish')+'</span><strong>'+correct+' / '+total+'</strong><p>'+tx('score')+'</p><button class="welcome-start" id="practiceAgain" type="button">'+tx('again')+'</button><div class="study-back-row"><button class="btn btn-ghost" id="finishBack">'+tx('back')+'</button></div></div>');}
 root.addEventListener('click',function(e){
  if(e.target.closest('#studyStart')){skillMenu();return;}
- if(e.target.closest('#backToWelcome')){view='welcome';welcome('back');return;}
+ if(e.target.closest('#backToWelcome')){view='welcome';welcome();return;}
  if(e.target.closest('#backToSkills')){skillMenu('back');return;}
  if(e.target.closest('#backToActivityMenu')){activityMenu(selectedSkill,'back');return;}
  if(e.target.closest('#finishBack')){activityMenu(selectedSkill,'back');return;}
