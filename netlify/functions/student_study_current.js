@@ -14,16 +14,24 @@ function cors(event) {
   return {
     'content-type': 'application/json',
     'access-control-allow-origin': allowed,
+    'access-control-allow-credentials': 'true',
     'access-control-allow-headers': 'authorization,content-type',
     'access-control-allow-methods': 'GET,OPTIONS',
     'vary': 'Origin'
   };
 }
 
+function cookieValue(cookieHeader, name) {
+  const escaped = String(name).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const match = String(cookieHeader || '').match(new RegExp('(?:^|;\\s*)' + escaped + '=([^;]+)'));
+  return match ? decodeURIComponent(match[1]) : '';
+}
+
 async function verifyUser(event) {
   const authHeader = event.headers.authorization || event.headers.Authorization || '';
-  if (!authHeader.startsWith('Bearer ')) throw new Error('Missing bearer token');
-  const token = authHeader.slice(7);
+  let token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
+  if (!token) token = cookieValue(event.headers.cookie || event.headers.Cookie || '', 'sb_access');
+  if (!token) throw new Error('Missing student session');
   const { payload } = await jwtVerify(token, JWKS);
   if (!payload.sub) throw new Error('Invalid user token');
   return payload.sub;
@@ -105,7 +113,7 @@ exports.handler = async (event) => {
       assignment: assignment || null
     }) };
   } catch (error) {
-    const statusCode = /token|auth|Missing bearer/i.test(error.message || '') ? 401 : 500;
+    const statusCode = /token|auth|session|Missing student/i.test(error.message || '') ? 401 : 500;
     return { statusCode, headers, body: JSON.stringify({ success: false, error: error.message || 'Study lookup failed' }) };
   }
 };
