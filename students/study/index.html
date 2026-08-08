@@ -15,11 +15,36 @@
 <script src="/students/api-gateway.js?v=20260808-study1"></script>
 <script src="/js/api-config.js?v=20260113c"></script>
 <script type="module" src="/students/components/student-header.js?v=20260808-study1"></script>
+<script>
+(function(){
+  'use strict';
+  var INTERVAL=40*60*1000,lastRefresh=0,timer=null;
+  async function refreshSession(){
+    try{
+      var response=await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=refresh&_='+Date.now(),{credentials:'include',cache:'no-store'});
+      var data=await response.json().catch(function(){return{}});
+      if(!response.ok||!data.success)return false;
+      if(data.access_token&&WillenaAPI.setLocalTokens)WillenaAPI.setLocalTokens(data.access_token,data.refresh_token);
+      lastRefresh=Date.now();
+      window.dispatchEvent(new CustomEvent('auth:changed'));
+      return true;
+    }catch(error){console.debug('[WillenaStudy] background session refresh failed',error);return false;}
+  }
+  function startKeepalive(){
+    if(timer)return;
+    timer=setInterval(refreshSession,INTERVAL);
+    window.addEventListener('focus',function(){if(Date.now()-lastRefresh>INTERVAL/2)refreshSession();});
+    document.addEventListener('visibilitychange',function(){if(!document.hidden&&Date.now()-lastRefresh>INTERVAL/2)refreshSession();});
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',startKeepalive,{once:true});else startKeepalive();
+})();
+</script>
 </head>
 <body>
 <div class="study-app">
 <student-header title="Study" home-href="/students/dashboard.html" home-label="Dashboard" show-id="false" show-home="true" show-points="true" show-logout="true"></student-header>
 <main class="dashboard" id="app">
+  <span id="studentGreeting" hidden></span>
   <div class="study-controls"><button id="languageBtn" class="ghost-button" type="button">English</button></div>
   <section class="book-hero">
     <div class="hero-copy"><span class="eyebrow">CURRENT BOOK</span><h1 id="bookTitle">Loading…</h1><p id="unitTitle">Finding your assigned unit</p><div class="hero-actions"><button id="continueBtn" class="primary-button" type="button" disabled>Continue practice</button><button id="changeUnitBtn" class="secondary-button" type="button">Browse units</button></div></div>
