@@ -3,9 +3,9 @@
 var CONTENT_URL='https://gxwfsqxyuufqtitspfqg.supabase.co';
 var CONTENT_KEY=['sb_publishable_','G-FYhHfDL4OGdL892gY1Zg_','epdbEeqO'].join('');
 var HEADERS={apikey:CONTENT_KEY,Authorization:'Bearer '+CONTENT_KEY};
-var TARGET=12,engine=null,pool=[],queue=[],baseIds=new Set(),settled=new Set(),current=null,answered=false,previousScroll=0;
+var TARGET=12,engine=null,pool=[],queue=[],baseIds=new Set(),settled=new Set(),current=null,answered=false,previousScroll=0,previousOverflow='';
 var card=document.querySelector('.unit-progress-card'),ring=document.querySelector('.progress-ring'),title=document.getElementById('progressTitle'),copy=document.getElementById('progressCopy');
-var panel=document.getElementById('smartPracticePanel'),root=document.getElementById('smartActivityRoot'),nextBtn=document.getElementById('smartNext'),closeBtn=document.getElementById('smartClose'),countEl=document.getElementById('smartCount');
+var panel=document.getElementById('smartStudyScreen'),root=document.getElementById('smartActivityRoot'),nextBtn=document.getElementById('smartNext'),closeBtn=document.getElementById('smartClose'),countEl=document.getElementById('smartCount');
 function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
 function unique(a){var o=[];a.forEach(function(x){if(x!=null&&o.indexOf(x)<0)o.push(x);});return o;}
 function shuffle(a){return a.slice().sort(function(){return Math.random()-.5;});}
@@ -41,8 +41,8 @@ async function buildPool(){
  var s=o.sentence_id&&bySen[o.sentence_id];if(s){var ts=cleanTokens(s.text);if(ts.length>=3&&ts.length<=12&&!/[+\/]/.test(s.text||''))out.push({id:'smart-sentence-'+o.id,sourceType:'sentence',sourceId:s.id,skill:'sentence_building',usage:['practice'],stimulus:{type:'text',prompt:s.translation_ko||'문장을 올바른 순서로 만드세요.',context:'문장 만들기'},response:{type:'token_order',tokens:ts},answer:s.text,metadata:{book_id:bookId,unit_id:unitId,occurrence_id:o.id,smart_study:true}});}});
  pool=out;
 }
-function showSmartScreen(){previousScroll=window.scrollY||0;Array.prototype.forEach.call(document.querySelectorAll('#app > :not(#smartPracticePanel)'),function(n){if(n.id!=='studentGreeting'&&!n.classList.contains('study-controls'))n.dataset.smartWasHidden=n.hidden?'1':'0';n.hidden=true;});panel.hidden=false;window.scrollTo({top:0,left:0,behavior:'auto'});}
-function closeSmartScreen(){panel.hidden=true;Array.prototype.forEach.call(document.querySelectorAll('#app > [data-smart-was-hidden]'),function(n){n.hidden=n.dataset.smartWasHidden==='1';delete n.dataset.smartWasHidden;});paint();window.scrollTo({top:previousScroll,left:0,behavior:'auto'});}
+function showSmartScreen(){previousScroll=window.scrollY||0;previousOverflow=document.body.style.overflow||'';panel.hidden=false;panel.style.position='fixed';panel.style.inset='0';panel.style.zIndex='10000';panel.style.margin='0';panel.style.borderRadius='0';panel.style.width='100vw';panel.style.height='100dvh';panel.style.maxHeight='100dvh';panel.style.overflowY='auto';panel.style.background='linear-gradient(180deg,#dff7f8 0,#effafb 34%,#f7fafb 100%)';panel.style.padding='clamp(18px,4vw,34px)';document.body.style.overflow='hidden';panel.scrollTop=0;}
+function closeSmartScreen(){panel.hidden=true;document.body.style.overflow=previousOverflow;paint();window.scrollTo({top:previousScroll,left:0,behavior:'auto'});}
 function makeSession(){var prior=wrongIds().map(function(id){return pool.find(function(a){return a.id===id;});}).filter(Boolean),chosen=prior.slice(0,TARGET);shuffle(pool).forEach(function(a){if(chosen.length<TARGET&&!chosen.some(function(x){return x.id===a.id;}))chosen.push(a);});queue=chosen.slice();baseIds=new Set(chosen.map(function(a){return a.id;}));settled=new Set();renderNext();}
 function renderNext(){if(!queue.length){finish();return;}current=queue.shift();answered=false;countEl.textContent=(settled.size+1)+' / '+TARGET;engine=new WillenaActivityEngine(root,{onAnswer:function(){}});engine.setActivity(current);nextBtn.disabled=true;nextBtn.textContent='다음';}
 function onAnswer(e){if(panel.hidden||!current||answered)return;var d=e.detail||{},a=d.activity||{},r=d.result||{};if(a.id!==current.id)return;answered=true;if(r.correct){clearWrong(current.id);if(baseIds.has(current.id)&&!settled.has(current.id)){settled.add(current.id);addDaily();}}else{rememberWrong(current.id);queue.push(current);}nextBtn.disabled=false;nextBtn.textContent=queue.length?'다음':'완료';}
