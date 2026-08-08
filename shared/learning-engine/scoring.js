@@ -11,11 +11,16 @@ function sentenceText(value){
  var out=Array.isArray(value)?value.map(cleanText).join(' '):cleanText(value);
  return out.toLocaleLowerCase('en-US').replace(/[.,!?;:。！？、，；：]+$/gu,'').replace(/\s+/g,' ').trim();
 }
+function letterText(value){
+ var out=Array.isArray(value)?value.map(cleanText).join(''):cleanText(value);
+ return out.toLocaleLowerCase('en-US').replace(/[\s\-']/g,'').normalize('NFKC');
+}
 function exactComparable(value){return Array.isArray(value)?value.map(cleanText):cleanText(value);}
 function looseText(value){return sentenceText(value).replace(/[’]/g,"'");}
 function isCorrect(type,selected,correct,accepted){
  type=String(type||'');
  var candidates=[correct].concat(Array.isArray(accepted)?accepted:[]);
+ if(type==='letter_order')return candidates.some(function(candidate){return letterText(selected)===letterText(candidate);});
  if(type==='sentence_unscramble'||type==='token_order'||type==='typed_answer'||type==='gap_fill_text'){
   return candidates.some(function(candidate){return looseText(selected)===looseText(candidate);});
  }
@@ -27,5 +32,5 @@ function score(activity,selected){
  var accepted=activity&&activity.acceptedAnswers||[];
  return{correct:isCorrect(type,selected,correct,accepted),selected:selected,answer:correct};
 }
-global.WillenaActivityScoring={cleanText:cleanText,sentenceText:sentenceText,isCorrect:isCorrect,score:score};
+global.WillenaActivityScoring={cleanText:cleanText,sentenceText:sentenceText,letterText:letterText,isCorrect:isCorrect,score:score};
 })(window);
