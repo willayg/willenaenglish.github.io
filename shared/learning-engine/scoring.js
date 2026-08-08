@@ -1,5 +1,6 @@
 (function(global){
 'use strict';
+var VERSION='activity-v1';
 function cleanText(value){return String(value==null?'':value).normalize('NFKC').replace(/\s+/g,' ').trim();}
 function sentenceText(value){
  if(typeof value==='string'){
@@ -30,7 +31,8 @@ function score(activity,selected){
  var type=activity&&activity.response&&activity.response.type||activity&&activity.type;
  var correct=activity&&activity.answer!==undefined?activity.answer:activity&&activity.a;
  var accepted=activity&&activity.acceptedAnswers||[];
- return{correct:isCorrect(type,selected,correct,accepted),selected:selected,answer:correct};
+ var ok=isCorrect(type,selected,correct,accepted);
+ return{correct:ok,score:ok?1:0,selected:selected,answer:correct,scoringVersion:VERSION};
 }
-global.WillenaActivityScoring={cleanText:cleanText,sentenceText:sentenceText,letterText:letterText,isCorrect:isCorrect,score:score};
+global.WillenaActivityScoring={version:VERSION,cleanText:cleanText,sentenceText:sentenceText,letterText:letterText,isCorrect:isCorrect,score:score};
 })(window);
