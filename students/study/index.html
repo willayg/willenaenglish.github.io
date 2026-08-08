@@ -27,6 +27,7 @@
 <student-header title="Study" home-href="/students/dashboard.html" home-label="Dashboard" show-id="false" show-home="true" show-points="true" show-logout="true"></student-header>
 <main class="dashboard" id="app">
   <span id="studentGreeting" hidden></span>
+  <span id="vocabCount" hidden></span><span id="progressTitle" hidden></span><span id="progressCopy" hidden></span>
   <div class="study-controls"><button id="languageBtn" class="ghost-button" type="button">English</button></div>
 
   <section id="smartPracticePanel" class="practice-panel" hidden style="margin-top:0">
@@ -50,8 +51,8 @@
       </div>
     </div>
     <div class="unit-progress-card" role="button" tabindex="0" aria-label="Start Smart Study">
-      <div class="progress-ring"><span id="vocabCount">0%</span></div>
-      <div><strong id="progressTitle">Smart Study</strong><small id="progressCopy">오늘 목표 12문항 · 탭해서 시작</small></div>
+      <div class="progress-ring"><span id="smartDailyPct">0%</span></div>
+      <div><strong id="smartProgressTitle">Smart Study</strong><small id="smartProgressCopy">오늘 목표 12문항 · 탭해서 시작</small></div>
     </div>
   </section>
 
