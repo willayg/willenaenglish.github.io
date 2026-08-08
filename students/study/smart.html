@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<title>Smart Study</title>
+<link rel="icon" href="/Assets/Images/Logo.png?v=20260730-3">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./study.css?v=20260808-7">
+<link rel="stylesheet" href="./study-overrides.css?v=20260808-1">
+<link rel="stylesheet" href="./spelling.css?v=20260808-1">
+<script src="/students/api-gateway.js?v=20260808-study1"></script>
+<script type="module" src="/students/components/student-header.js?v=20260808-study1"></script>
+</head>
+<body>
+<div class="study-app">
+<student-header title="Smart Study" home-href="/students/study/" home-label="Study" show-id="false" show-home="true" show-points="true" show-logout="true"></student-header>
+<main class="dashboard">
+  <section class="practice-panel" style="margin-top:0">
+    <div class="practice-toolbar">
+      <button id="smartBack" class="ghost-button" type="button">← 뒤로</button>
+      <div><span class="eyebrow">SMART STUDY</span><h2 id="smartTitle">오늘의 연습</h2><small id="smartContext" class="section-note">불러오는 중…</small></div>
+      <button id="smartNext" class="secondary-button" type="button" disabled>다음</button>
+    </div>
+    <div id="smartActivityRoot"><div class="study-loading">Smart Study 준비 중…</div></div>
+  </section>
+</main>
+</div>
+<script src="/shared/learning-engine/activity-schema.js?v=20260808-3"></script>
+<script src="/shared/learning-engine/scoring.js?v=20260808-4"></script>
+<script src="/shared/learning-engine/engine.js?v=20260808-5"></script>
+<script src="./study-progress.js?v=20260808-4"></script>
+<script src="./smart-page.js?v=20260809-1"></script>
+</body>
+</html>
