@@ -5,8 +5,8 @@ var CONTENT_KEY=['sb_publishable_','G-FYhHfDL4OGdL892gY1Zg_','epdbEeqO'].join(''
 var HEADERS={apikey:CONTENT_KEY,Authorization:'Bearer '+CONTENT_KEY};
 var TARGET=12,engine=null,pool=[],queue=[],baseIds=new Set(),settled=new Set(),current=null,answered=false,previousScroll=0,previousOverflow='';
 var card=document.querySelector('.unit-progress-card'),ring=document.querySelector('.progress-ring'),title=document.getElementById('progressTitle'),copy=document.getElementById('progressCopy');
-var panel=document.getElementById('smartStudyScreen'),root=document.getElementById('smartActivityRoot'),nextBtn=document.getElementById('smartNext'),closeBtn=document.getElementById('smartClose'),countEl=document.getElementById('smartCount');
-function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+var panel=document.getElementById('smartPracticePanel'),root=document.getElementById('smartActivityRoot'),nextBtn=document.getElementById('smartNext'),closeBtn=document.getElementById('smartClose'),countEl=document.getElementById('smartCount');
+function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c];});}
 function unique(a){var o=[];a.forEach(function(x){if(x!=null&&o.indexOf(x)<0)o.push(x);});return o;}
 function shuffle(a){return a.slice().sort(function(){return Math.random()-.5;});}
 function dateKey(){var d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
