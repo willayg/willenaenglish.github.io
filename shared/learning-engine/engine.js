@@ -2,10 +2,10 @@
 'use strict';
 function el(tag,className,text){var node=document.createElement(tag);if(className)node.className=className;if(text!=null)node.textContent=text;return node;}
 function shuffle(items){return items.slice().sort(function(){return Math.random()-.5;});}
-function ActivityEngine(root,options){this.root=root;this.options=options||{};this.current=null;this.selected=null;}
+function ActivityEngine(root,options){this.root=root;this.options=options||{};this.current=null;this.selected=null;this.startedAt=0;}
 ActivityEngine.prototype.setActivity=function(raw){
  var schema=global.WillenaActivitySchema;if(!schema)throw new Error('WillenaActivitySchema is not loaded');
- this.current=schema.normalize(raw);this.selected=null;this.render();return this.current;
+ this.current=schema.normalize(raw);this.selected=null;this.startedAt=(global.performance&&performance.now)?performance.now():Date.now();this.render();return this.current;
 };
 ActivityEngine.prototype.render=function(){
  var a=this.current;if(!a||!this.root)return;
@@ -53,8 +53,10 @@ ActivityEngine.prototype.renderLetterOrder=function(card,tokens,wordLengths){
 };
 ActivityEngine.prototype.check=function(feedback,button){
  var scoring=global.WillenaActivityScoring;if(!scoring)throw new Error('WillenaActivityScoring is not loaded');
- var result=scoring.score(this.current,this.selected);feedback.hidden=false;feedback.className='activity-feedback '+(result.correct?'is-correct':'is-wrong');feedback.textContent=result.correct?'Correct!':'Not quite. Correct answer: '+(Array.isArray(result.answer)?result.answer.join(' '):result.answer);button.disabled=true;
- if(typeof this.options.onAnswer==='function')this.options.onAnswer({activity:this.current,result:result});
+ var result=scoring.score(this.current,this.selected);var now=(global.performance&&performance.now)?performance.now():Date.now();result.responseTimeMs=Math.max(0,Math.round(now-this.startedAt));feedback.hidden=false;feedback.className='activity-feedback '+(result.correct?'is-correct':'is-wrong');feedback.textContent=result.correct?'Correct!':'Not quite. Correct answer: '+(Array.isArray(result.answer)?result.answer.join(' '):result.answer);button.disabled=true;
+ var detail={activity:this.current,result:result,responseTimeMs:result.responseTimeMs};
+ if(typeof this.options.onAnswer==='function')this.options.onAnswer(detail);
+ try{global.dispatchEvent(new CustomEvent('willena:activity-answer',{detail:detail}));}catch(_){}
 };
 global.WillenaActivityEngine=ActivityEngine;
 })(window);
