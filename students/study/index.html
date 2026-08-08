@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>Willena Study</title>
+<link rel="icon" href="/Assets/Images/Logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./study.css?v=20260808-1">
+<script src="/students/api-gateway.js"></script>
+<script src="/js/api-config.js?v=20260113c"></script>
+</head>
+<body>
+<div class="study-shell">
+<header class="study-header">
+<a class="brand" href="/students/dashboard.html"><img src="/Assets/Images/Logo.png" alt="Willena"><span><strong>Willena Study</strong><small id="studentLabel">Shared activity engine prototype</small></span></a>
+<a class="dashboard-link" href="/students/dashboard.html">Dashboard</a>
+</header>
+<main>
+<section class="hero">
+<div><span class="eyebrow">ENGINE PROTOTYPE</span><h1>Study Lab</h1><p>This screen is using the new shared Willena Activity Engine. Pick an activity type below and try it.</p></div>
+<div class="hero-stat"><strong id="scoreValue">0 / 0</strong><span>Correct</span></div>
+</section>
+<nav class="skill-tabs" id="skillTabs" aria-label="Activity examples"></nav>
+<section class="activity-stage">
+<div class="stage-head"><div><small id="skillLabel">Vocabulary</small><h2 id="activityTitle">Try an activity</h2></div><button id="nextActivity" class="next-button" type="button">Next example →</button></div>
+<div id="activityRoot"></div>
+</section>
+<section class="engine-notes">
+<h2>What this prototype proves</h2>
+<div class="note-grid">
+<div><strong>Shared now</strong><span>Activity shape, normalization, scoring, assessment adapter.</span></div>
+<div><strong>Working here</strong><span>Multiple choice, typed answer, token ordering, gap fill, listening and reading-style prompts.</span></div>
+<div><strong>Next connection</strong><span>Replace these demo activities with the logged-in student's assigned book/unit content.</span></div>
+</div>
+</section>
+</main>
+</div>
+<script src="/shared/learning-engine/activity-schema.js?v=20260808-1"></script>
+<script src="/shared/learning-engine/scoring.js?v=20260808-1"></script>
+<script src="/shared/learning-engine/engine.js?v=20260808-1"></script>
+<script src="./study.js?v=20260808-1"></script>
+</body>
+</html>
