@@ -1,571 +1,752 @@
 # Willena Student Study App — Build Plan
 
-## Goal
+## Core decision
 
-Build a logged-in student study app under `students/study/` that reuses the strongest parts of the existing student level-test framework while remaining a separate product.
+The study app must NOT create a second exercise/rendering system.
 
-The study app should:
-
-- automatically identify the student's current class, assigned book and current unit where possible;
-- load curriculum content from the Willena Content Database;
-- support vocabulary, spelling, grammar, sentence building, listening, reading, speaking and writing;
-- record every meaningful practice attempt;
-- maintain student progress/mastery over time;
-- provide teacher-side progress reports;
-- reuse shared renderers, scoring, answer normalization, TTS/listening and session components where sensible;
-- avoid coupling study behavior to level-test-specific adaptive logic;
-- automatically gain practice content when new books, units, words, sentences, patterns, passages or authored activities are added to the content database.
-
----
-
-# Existing systems to reuse
-
-## Student level test
-
-Current staging app:
-
-- `students/level-test/index.html`
-- `students/level-test/level-test.js`
-- `students/level-test/level-test.css`
-- `students/level-test/recorder-begin-guard.js`
-
-The student level test already reuses much of the free level-test implementation, including:
-
-- assessment loading;
-- canonical answer scoring;
-- sentence/token ordering;
-- listening UI;
-- dialogue TTS;
-- reading layouts;
-- loading transitions;
-- response recording;
-- student authentication/session handling.
-
-These useful pieces should gradually move into a neutral shared learning layer rather than making the new study app import increasingly more level-test-specific files.
-
-## Content Database
-
-The Willena Content Database already provides the correct curriculum hierarchy:
-
-`content_series -> content_books -> content_units -> content_sections -> source_content_occurrences`
-
-The source occurrences connect textbook locations to reusable curriculum objects such as:
-
-- `lexical_entries`
-- `sentences`
-- `patterns`
-- dialogues
-- future passages/audio
-
-The database also contains `assessment_items` for the level test and a currently empty generic `activities` table.
-
-The study system should use canonical content as its source of truth and use `activities` for authored/reusable practice where necessary.
-
-## Operational / student database
-
-The existing operational database already contains:
-
-- `profiles`
-- `classes`
-- `class_enrollments`
-- `class_book_assignments`
-- existing progress/session tables
-- level-test attempt/response/result tables
-
-`class_book_assignments.book_id` already links a class to the UUID of a book in the content catalog. This should be the main bridge between student identity and curriculum content.
-
----
-
-# Core architecture
+The long-term architecture is one shared Willena activity bank plus one shared Willena Activity Engine used by all compatible apps.
 
 ```text
-Student login
-    ↓
-Current class enrollment
-    ↓
-Class book assignment
-    ↓
-Content DB book / current unit
-    ↓
-Study API
-    ↓
-Practice selector
-    ↓
-Shared learning engine
-    ↓
-Question/activity renderer
-    ↓
-Answer scoring + feedback
-    ↓
-Study attempt recording
-    ↓
-Mastery / progress updates
-    ↓
-Teacher reports
+Willena Content Database
+        |
+        |-- canonical curriculum content
+        |   words / lexical forms / sentences / patterns / dialogues / passages / audio
+        |
+        `-- authored activities/questions
+                |
+                v
+        WILLENA ACTIVITY ENGINE
+                |
+      +---------+----------+----------------+
+      |                    |                |
+  Level tests          Study app      Future apps
+  - adaptive           - practice      - quizzes
+  - no hints           - hints/retry   - homework
+  - ability score      - mastery       - teacher tests
+  - assessment record  - study record  - games/tools
 ```
 
-Keep the two Supabase databases conceptually separate:
+The apps should differ mainly in **selection rules, session rules, feedback, recording and reporting**. They should not each invent their own multiple-choice renderer, sentence builder, audio control, scorer, etc.
 
-### Content Database
-Owns **what is taught**.
+---
 
-- books
-- units
-- sections
-- words
-- lexical forms
+# One shared activity bank
+
+The goal is a single content/activity ecosystem that can feed different applications.
+
+An activity must be able to declare where it is eligible to appear. Do not duplicate the same question simply because two apps use it.
+
+Suggested usage model:
+
+```text
+practice
+level_test
+teacher_quiz
+homework
+placement_test
+```
+
+An activity can support one or several usages.
+
+Examples:
+
+```text
+Activity A
+practice: yes
+level_test: yes
+teacher_quiz: yes
+homework: yes
+
+Activity B
+practice: yes
+level_test: no
+teacher_quiz: yes
+homework: yes
+```
+
+Assessment eligibility must be stricter than general publication. A useful practice activity is not automatically a good calibrated level-test item.
+
+Eventually assessment metadata may include fields such as:
+
+- assessment eligible
+- calibrated internal level
+- difficulty
+- approved/reviewed status
+- item quality/reliability metadata
+
+Do not make `assessment=true/false` the only long-term distinction.
+
+---
+
+# Canonical content and authored activities
+
+The shared bank has two sources.
+
+## 1. Canonical curriculum content
+
+Existing Content Database structures include:
+
+```text
+content_series
+content_books
+content_units
+content_sections
+source_content_occurrences
+lexical_entries
+lexical_forms
+sentences
+patterns
+source_dialogues
+passages
+```
+
+This content can generate predictable practice without manually storing every permutation.
+
+Example lexical entry:
+
+```text
+apple
+사과
+```
+
+can automatically support compatible activities such as:
+
+- English -> Korean choice
+- Korean -> English choice
+- typed English recall
+- spelling
+- letter ordering
+- audio -> word when audio exists
+
+Do not store every mechanically generated variant as a separate permanent activity unless there is a real reason to do so.
+
+## 2. Authored activities
+
+Store activities/questions where authorship adds value, for example:
+
+- carefully designed distractors
+- grammar error questions
+- reading comprehension
+- listening comprehension
+- inference
+- speaking prompts
+- writing prompts
+- teacher-curated exercises
+- assessment-quality questions
+
+The existing generic `activities` table should be evaluated and refined for this role instead of making the study app depend exclusively on level-test `assessment_items`.
+
+Existing `assessment_items` can continue to work during migration and should be normalized into the common runtime activity format.
+
+---
+
+# The current level-test engine is the starting point
+
+`free-level-test/js/app-classic.js` is already shared by the two level-test apps and contains useful rendering/interaction behavior.
+
+Do not throw it away and build a parallel study renderer.
+
+Instead, gradually separate it into:
+
+```text
+A. generic activity behavior
+B. level-test orchestration
+```
+
+Generic behavior includes:
+
+- multiple-choice rendering
+- answer selection
+- sentence/token ordering
+- listening controls
+- reading presentation
+- scoring/answer normalization
+- question navigation primitives
+- bilingual/common UI behavior where appropriate
+
+Level-test-only behavior includes:
+
+- starting ability calculation
+- adaptive selection
+- difficulty adjustment
+- question type balancing/limits
+- test length
+- full-test sections/calibration
+- final level calculation
+- assessment completion
+- level-test attempt recording
+- level result display/mapping
+
+The level tests should eventually become consumers of the shared activity engine rather than owners of the renderer implementation.
+
+---
+
+# Important migration rule
+
+Do not perform a large rewrite of the working level tests.
+
+Refactor incrementally.
+
+For every extraction:
+
+1. identify one generic behavior currently used by `app-classic.js`;
+2. move/refactor it into a neutral shared module;
+3. keep the level-test output/behavior the same;
+4. verify both level-test apps still work;
+5. let the study app consume that same shared module;
+6. only then move to the next component.
+
+Existing level tests must remain functional throughout this project.
+
+---
+
+# Target shared engine
+
+Likely direction:
+
+```text
+shared/learning-engine/
+    engine.js
+    activity-schema.js
+    answer-normalizer.js
+    scoring.js
+
+    stimuli/
+        text.js
+        image.js
+        audio.js
+        passage.js
+        dialogue.js
+
+    responses/
+        multiple-choice.js
+        typed-answer.js
+        token-order.js
+        gap-fill.js
+        speaking.js
+        writing.js
+
+    feedback/
+        feedback.js
+```
+
+Exact filenames are not sacred. The architectural separation is.
+
+A particularly important design improvement is to separate **stimulus** from **response type** instead of treating every combination as a completely separate question type.
+
+Example:
+
+```js
+{
+  skill: "listening",
+  stimulus: {
+    type: "audio",
+    text: "She wants to be a nurse."
+  },
+  response: {
+    type: "multiple_choice",
+    choices: ["...", "...", "...", "..."]
+  },
+  answer: "..."
+}
+```
+
+The same stimulus could instead use:
+
+```js
+response: {
+  type: "typed_answer"
+}
+```
+
+This prevents the engine from growing dozens of monolithic types such as `listening_multiple_choice`, `listening_dictation`, `reading_multiple_choice`, etc.
+
+---
+
+# New engine capabilities required for study
+
+The current level-test renderer is useful but insufficient for the full study app. Add capabilities to the shared engine rather than implementing them only inside `students/study/`.
+
+## Typed answer
+
+Required early.
+
+Supports:
+
+- vocabulary recall
+- spelling
+- Korean -> English
+- short grammar responses
+- dictation
+- sentence completion
+
+## Gap fill
+
+Support at least:
+
+```text
+gap fill with choices
+gap fill with typed response
+```
+
+Most of the surrounding renderer can be shared.
+
+## Generic token ordering
+
+Generalize the current sentence unscrambler into a reusable ordering response.
+
+It should support tokens such as:
+
+```text
+words
+letters
+phrases
+```
+
+This can power:
+
+- sentence unscramble
+- spelling scramble
+- phrase ordering
+
+Do not build independent near-duplicate ordering systems.
+
+## Flexible sentence production
+
+A canonical sentence should be usable at different practice difficulties.
+
+Example source sentence:
+
+```text
+She wants to be a nurse.
+```
+
+Possible modes:
+
+- all English tokens supplied
+- Korean prompt + English tokens
+- partial-gap support
+- full typed translation
+
+These do not necessarily need four unrelated database question records.
+
+## Feedback
+
+Shared engine must support configurable feedback rules.
+
+Level test example:
+
+```text
+feedback: none
+retries: 0
+hints: false
+```
+
+Study example:
+
+```text
+feedback: immediate
+retries: allowed
+hints: allowed
+show explanation: allowed
+```
+
+Feedback/session policy belongs to the calling app, while the reusable feedback component belongs to the shared engine.
+
+## Audio/listening
+
+Do not make listening a single rigid question type.
+
+Use reusable audio stimulus plus response modes such as:
+
+- choose picture
+- choose word
+- choose meaning
+- choose sentence
+- type word
+- dictation
+- comprehension
+
+Current hard-coded dialogue-TTS behavior should eventually become explicit reusable audio/dialogue helpers driven by database content.
+
+## Speaking
+
+Eventually support reusable speaking responses such as:
+
+```text
+speaking_repeat
+speaking_response
+```
+
+Study can permit repeats/practice; assessment can allow one captured response. Recording/session policy remains app-specific.
+
+## Reading
+
+Use passage stimulus plus compatible response renderers rather than making reading presentation a DOM repair layered on top of a generic text prompt.
+
+## Writing
+
+Start with short constructed responses, then support longer responses/rubrics as content matures.
+
+---
+
+# Runtime activity contract
+
+All source formats should eventually normalize into one runtime contract before reaching the renderer.
+
+Conceptual shape:
+
+```js
+{
+  id,
+  sourceType,
+  sourceId,
+
+  bookId,
+  unitId,
+  sectionId,
+
+  skill,
+  usage,
+
+  stimulus: {
+    type,
+    text,
+    image,
+    audio,
+    passage,
+    dialogue
+  },
+
+  response: {
+    type,
+    choices,
+    tokens,
+    settings
+  },
+
+  answer,
+  acceptedAnswers,
+  explanation,
+  metadata
+}
+```
+
+This is conceptual, not a final schema. Define the exact contract before implementing significant new renderers.
+
+The engine should not care whether an activity came from:
+
+- `assessment_items`
+- `activities`
+- a lexical entry generator
+- a sentence generator
+- a grammar pattern generator
+- a teacher-authored quiz
+
+The loader/adapter normalizes source data first.
+
+---
+
+# What each app owns
+
+## Shared Activity Engine owns
+
+- common activity contract
+- common stimuli
+- common response renderers
+- answer normalization
+- scoring primitives
+- common audio/TTS helpers
+- generic feedback UI
+- interaction behavior
+
+## Level test owns
+
+- assessment bank filter
+- assessment eligibility rules
+- adaptive selector
+- ability calculation
+- test configuration/length
+- question balancing
+- no-hint/no-retry policy
+- level-test recording
+- final level/report
+
+## Study app owns
+
+- current book/unit navigation
+- practice skill/mode selection
+- practice eligibility rules
+- hints/retries policy
+- weak-item selection
+- spaced review
+- study recording
+- mastery/progress
+- student progress UI
+
+## Future teacher quiz/homework apps own
+
+- teacher-selected scope
+- assignment/session rules
+- due/completion rules
+- quiz/homework recording/reporting
+
+They should still use the shared activity contract and engine.
+
+---
+
+# Existing implementation problems not to copy
+
+The current level-test system includes compatibility patches that were useful for stabilizing a working app but should not become the architecture of the new shared engine.
+
+Avoid introducing new dependencies on:
+
+- global `fetch` monkey-patching to redirect engine files;
+- downloading `app-classic.js` and replacing exact source strings;
+- post-render DOM repair with MutationObservers when the renderer itself can produce the correct markup;
+- global overrides of browser APIs such as `speechSynthesis.speak`;
+- hard-coded dialogue content inside renderer code;
+- direct cross-project Supabase coordination in the browser.
+
+Preserve behavior; replace the ownership pattern gradually.
+
+See `AUDIT.md` for the current level-test audit.
+
+---
+
+# Content eligibility and publication
+
+Keep these concepts separate:
+
+```text
+content exists
+activity exists/generated
+activity published
+activity allowed for practice
+activity allowed for teacher quiz/homework
+activity assessment eligible
+activity calibrated/approved for level test
+```
+
+This is important because one bank serves multiple use cases with different quality requirements.
+
+---
+
+# Two-database ownership
+
+Keep the current conceptual split.
+
+## Willena Content Database
+
+Owns **what is taught and what can be asked**:
+
+- series/books/units/sections
+- canonical words/forms
 - sentences
 - grammar patterns
 - dialogues
 - passages
 - audio references
 - authored activities/questions
+- usage/eligibility metadata
+- assessment calibration metadata where appropriate
 
-### Operational Database
-Owns **who learned what**.
+## Operational / Game Scores database
+
+Owns **who did what and how they are progressing**:
 
 - students
-- classes
-- enrollments
-- class/book assignment
+- classes/enrollments
+- class book assignments
 - current curriculum position
 - study sessions
-- individual attempts
+- study attempts
 - mastery
-- teacher reports
+- level-test attempts
+- quiz/homework attempts
+- teacher-facing progress data
 
-Do not duplicate entire textbook records into the operational DB. Store stable content IDs as references.
+Do not duplicate full curriculum content into the operational database.
+
+Cross-project references should use stable Content Database UUIDs.
 
 ---
 
-# Shared learning engine
+# Student curriculum resolution
 
-Create a neutral shared module area, likely:
+Current operational data already provides:
 
 ```text
-shared/learning-engine/
-    engine.js
-    scoring.js
-    answer-normalizer.js
-    session.js
-    activity-loader.js
-
-    renderers/
-        multiple-choice.js
-        typed-answer.js
-        sentence-order.js
-        listening.js
-        reading.js
-        speaking.js
-        writing.js
-
-    generators/
-        vocabulary.js
-        spelling.js
-        grammar.js
-        sentence.js
-        listening.js
+student
+ -> active class enrollment
+ -> class_book_assignments
+ -> Content DB book_id
 ```
 
-Do not move everything at once.
-
-First identify code that is genuinely generic, copy/refactor it into shared modules, verify the level test still behaves identically, and only then have the study app consume it.
-
-Level-test-only behavior should remain in the level test, including:
-
-- adaptive ability estimation;
-- level recommendation;
-- test-length/setup logic;
-- test completion reporting;
-- assessment-specific question balancing.
-
-Study-only behavior should live in the study app, including:
-
-- book/unit navigation;
-- hints;
-- retry behavior;
-- practice modes;
-- spaced review;
-- mastery;
-- weak-item selection;
-- student progress views.
-
----
-
-# Practice content model
-
-The study app should use a hybrid approach.
-
-## Generated activities
-
-Generate predictable exercises from canonical content whenever possible.
-
-Examples:
-
-### Vocabulary
-
-From a lexical entry:
-
-- English -> Korean choice
-- Korean -> English choice
-- type the English word
-- matching
-- picture/emoji -> word where visual data exists
-
-### Spelling
-
-From a lexical entry / lexical form:
-
-- type word
-- scrambled letters
-- missing letters
-- hear word -> type word when audio is available
-
-### Grammar
-
-From patterns and linked sentences:
-
-- multiple choice
-- gap fill
-- error recognition
-- transformation
-- choose correct response
-
-### Sentence building
-
-From canonical sentences:
-
-- token unscramble
-- Korean -> English build
-- missing word
-- sentence completion
-
-### Listening
-
-From audio-backed words/sentences/dialogues/passages:
-
-- hear -> choose text
-- hear -> choose meaning
-- dictation
-- comprehension
-
-## Authored activities
-
-Use database-authored activities for exercises that should not be generated mechanically, particularly:
-
-- reading comprehension;
-- listening comprehension;
-- nuanced grammar errors;
-- inference;
-- writing prompts;
-- speaking prompts;
-- custom teacher-curated tasks.
-
-Use the existing `activities` table as the generic practice layer rather than forcing everything into level-test `assessment_items`.
-
----
-
-# Proposed operational progress tables
-
-Do not simply reuse `progress_attempts` because it is too word/game-oriented.
-
-Add study-specific structures.
-
-## `study_sessions`
-
-Suggested fields:
-
-- `id uuid`
-- `student_id uuid`
-- `book_id uuid`
-- `unit_id uuid`
-- `section_id uuid nullable`
-- `practice_mode text`
-- `skill text nullable`
-- `started_at timestamptz`
-- `completed_at timestamptz nullable`
-- `summary jsonb`
-
-## `study_attempts`
-
-Suggested fields:
-
-- `id uuid`
-- `session_id uuid`
-- `student_id uuid`
-- `book_id uuid`
-- `unit_id uuid`
-- `section_id uuid nullable`
-- `activity_type text`
-- `skill text`
-- `content_type text`
-- `content_id uuid`
-- `activity_id uuid nullable`
-- `answer jsonb`
-- `correct_answer jsonb nullable`
-- `is_correct boolean nullable`
-- `score numeric nullable`
-- `response_time_ms integer nullable`
-- `hints_used integer default 0`
-- `attempt_number integer default 1`
-- `metadata jsonb`
-- `created_at timestamptz`
-
-## `student_content_mastery`
-
-Suggested fields:
-
-- `student_id uuid`
-- `content_type text`
-- `content_id uuid`
-- `skill text`
-- `attempts integer`
-- `correct integer`
-- `mastery_score numeric`
-- `last_seen timestamptz`
-- `next_review_at timestamptz nullable`
-- `updated_at timestamptz`
-
-Unique key should include student + content + skill.
-
-## Optional `student_unit_progress`
-
-This can be stored or derived later depending on performance requirements.
-
-Useful values:
-
-- student
-- book
-- unit
-- skill
-- items_available
-- items_seen
-- mastery average
-- last practiced
-
-Prefer deriving aggregates from attempts/mastery until there is a demonstrated need for cached summaries.
-
----
-
-# Curriculum position
-
-`class_book_assignments` currently stores `starting_unit` and `current_unit` as text.
-
-Add stable unit UUID references when the study system is implemented:
-
-- `starting_unit_id uuid`
-- `current_unit_id uuid`
-
-Keep the old text columns during migration for compatibility.
-
-Student startup flow should be:
-
-1. authenticate student;
-2. find active class enrollment;
-3. find active class book assignment;
-4. resolve assigned `book_id`;
-5. resolve `current_unit_id`;
-6. load available practice for that unit;
-7. optionally allow previous-unit review and teacher-approved extra practice.
-
----
-
-# Study API
-
-The browser should not directly coordinate two independent Supabase projects.
-
-Create a server-side study API/gateway that knows both systems.
-
-Initial API contract:
+Add stable unit references when implementation reaches this stage:
 
 ```text
-GET  /study/me
-GET  /study/current
-GET  /study/books/:bookId/units
-GET  /study/units/:unitId
-GET  /study/practice?unit_id=...&skill=...&mode=...
-POST /study/sessions
-POST /study/attempts
-POST /study/sessions/:id/complete
-GET  /study/progress
+starting_unit_id
+current_unit_id
 ```
 
-Teacher endpoints later:
+Keep old text fields during migration for compatibility.
+
+Default study startup should be:
 
 ```text
-GET /study/teacher/classes/:classId/progress
-GET /study/teacher/students/:studentId/progress
-GET /study/teacher/students/:studentId/units/:unitId
+student login
+ -> active class
+ -> assigned book
+ -> current unit
+ -> available activities/content
+ -> practice
 ```
 
-The API should enforce identity and authorization and should return only the curriculum/practice data needed for the current request.
+Students may later browse previous units or teacher-approved extra content.
 
 ---
 
-# V1 scope
+# Study progress model
 
-Build the vertical slice using the content that is already strongest.
+Do not reuse the old word/game `progress_attempts` unchanged.
 
-## V1 skills
+Likely operational tables:
+
+```text
+study_sessions
+study_attempts
+student_content_mastery
+```
+
+Each attempt should retain stable curriculum/activity references so teachers can report not just "grammar 70%" but which unit, pattern, sentence or word is weak.
+
+Target reporting hierarchy:
+
+```text
+Class
+ -> Student
+   -> Book
+     -> Unit
+       -> Skill
+         -> Content / activity / pattern / word
+```
+
+---
+
+# API/session architecture
+
+The browser should not coordinate the two Supabase projects itself.
+
+Use the Willena API/gateway pattern with the existing persistent student login/session architecture.
+
+Do not reintroduce temporary direct `workers.dev` authentication dependencies for study recording.
+
+The existing `students/api-gateway.js` and persistent-cookie flow are relevant patterns.
+
+Important existing constraint: do not edit `cloudflare-workers/supabase-auth/src/index.js` unless explicitly requested.
+
+---
+
+# V1 implementation scope
+
+Prove the architecture with the strongest existing curriculum content first.
+
+Order:
 
 1. Vocabulary
 2. Spelling
 3. Grammar
 4. Sentence building
+5. Teacher progress report V1
+6. Listening
+7. Speaking
+8. Reading
+9. Writing
 
-Do **not** begin by implementing every skill.
-
-The first milestone is proving the entire chain:
+The first complete milestone is:
 
 ```text
-student -> assigned book -> unit -> content -> practice -> answer -> recording -> mastery -> teacher report
+logged-in student
+ -> assigned book
+ -> current unit
+ -> shared bank/content
+ -> shared activity engine
+ -> vocabulary activity
+ -> answer/scoring/feedback
+ -> attempt recording
+ -> mastery
+ -> teacher report
 ```
 
-Once that is reliable, add:
-
-5. Listening
-6. Speaking
-7. Reading
-8. Writing
+Do not build eight superficial modes before this pipeline works end-to-end.
 
 ---
 
-# Content work required
+# Current content gaps
 
-The current database has strong vocabulary/grammar/sentence coverage, but reading and listening need enrichment.
+Vocabulary, grammar and sentence coverage are currently much stronger than reading/listening assets.
 
-Before those modes are considered complete:
+Before later modes are considered complete:
 
-- populate `passages`;
-- link reading passages to book/unit/section;
+- populate passages;
+- link passages to books/units/sections;
 - add reading comprehension activities;
-- populate sentence/word/dialogue audio references;
-- establish audio storage convention;
+- establish audio storage/reference conventions;
+- add word/sentence/dialogue audio;
 - add listening comprehension activities;
-- add speaking prompts and expected response metadata;
-- add writing prompts/rubrics where appropriate.
+- add speaking prompts/expected response metadata;
+- add writing prompts/rubrics.
 
-Create a curriculum coverage report/admin view that can show, by book and unit:
-
-- vocabulary count;
-- grammar pattern count;
-- sentence count;
-- listening assets;
-- reading passages;
-- speaking activities;
-- writing activities;
-- practice readiness percentage.
-
-This should become the quality-control tool used whenever new books are imported.
+Create a content coverage/admin view showing per book/unit readiness for each skill.
 
 ---
 
-# Future-proof content ingestion
+# Updated build phases
 
-New content should become usable through data, not code changes.
+## Phase 0 — Architecture contracts
 
-Expected flow:
+- keep `AUDIT.md` as the current engine audit;
+- define final runtime Activity contract;
+- define source adapters (`assessment_items`, `activities`, generated curriculum content);
+- define usage/eligibility model;
+- define feedback/session policy interface;
+- define progress/mastery rules;
+- verify student -> class -> book -> unit resolution;
+- verify API/session routing.
 
-```text
-new book imported
-    ↓
-units / sections created
-    ↓
-source occurrences created
-    ↓
-canonical words / sentences / patterns / dialogues / passages linked
-    ↓
-practice engine detects compatible content
-    ↓
-generated practice automatically available
-    ↓
-authored activities supplement generated practice where required
-```
+## Phase 1 — Shared engine foundation
 
-Examples:
+Extract/refactor the safest generic pieces first:
 
-- a new lexical entry automatically enables compatible vocabulary/spelling templates;
-- a new canonical sentence automatically enables sentence building;
-- a sentence linked to a grammar pattern enables appropriate grammar practice;
-- adding an audio reference enables compatible listening/dictation modes;
-- adding a passage plus authored questions enables reading comprehension.
+- answer normalization
+- scoring primitives
+- activity contract/validation
 
----
+Do not alter level-test behavior.
 
-# Teacher reporting
+## Phase 2 — First shared renderer extraction
 
-Teacher reports should be curriculum-aware, not just total percentages.
+Move/refactor current multiple-choice behavior into shared engine and make the level tests continue using it.
 
-Required drill-down:
+Then make a minimal study harness use the same renderer.
 
-```text
-Class
-  -> Student
-      -> Book
-          -> Unit
-              -> Skill
-                  -> Content / pattern / word
-```
+This proves real renderer sharing before adding new exercise types.
 
-Useful teacher views:
+## Phase 3 — Add missing shared study capabilities
 
-- class overview by current unit;
-- students who have not practiced;
-- students struggling with a specific unit;
-- vocabulary mastery;
-- spelling mastery;
-- grammar pattern mastery;
-- sentence-building accuracy;
-- attempts/time/recent activity;
-- weak content needing review;
-- improvement over time.
+Add to the shared engine, not just to study:
 
-A teacher should eventually be able to see something like:
+- typed answer
+- generic token ordering
+- gap fill
+- configurable feedback
 
-```text
-English Bus 4 — Unit 3
-Vocabulary        91%
-Spelling          76%
-Grammar           62%
-Sentence Building 67%
+Existing sentence unscramble should migrate toward generic token ordering.
 
-Weak grammar:
-- want to + verb       4 / 8
-- third-person -s      3 / 7
-```
+## Phase 4 — Study API/app shell
 
----
-
-# Security
-
-All new exposed operational tables must have RLS enabled.
-
-Students must only be able to read/write their own study sessions, attempts and mastery.
-
-Teachers must only be able to read students/classes they are authorized to teach.
-
-Do not expose service-role keys to the browser.
-
-Prefer routing cross-database operations through the existing Willena API/gateway model.
-
----
-
-# Build phases
-
-## Phase 0 — Audit and contracts
-
-- inspect level-test modules and mark each as shared, level-test-only or obsolete;
-- document the study activity object shape;
-- document the content API response shape;
-- document progress/mastery rules;
-- verify the exact class -> student -> book resolution path;
-- verify current auth/session gateway behavior.
-
-Deliverable: agreed contracts before significant UI work.
-
-## Phase 1 — App shell
-
-Create:
+Create/use:
 
 ```text
 students/study/index.html
@@ -573,163 +754,62 @@ students/study/study.css
 students/study/study.js
 ```
 
-Features:
+Resolve logged-in student, assigned book and unit through the server-side API/gateway.
 
-- use existing student auth/session system;
-- show student identity;
-- resolve current book;
-- show current unit;
-- show skill tiles;
-- no attempt recording yet beyond test instrumentation.
+## Phase 5 — Vocabulary vertical slice
 
-## Phase 2 — Study API
+Use canonical lexical content plus authored activities where appropriate.
 
-Implement the API needed to:
+Support:
 
-- resolve current book/unit;
-- query unit curriculum;
-- return normalized practice payloads;
-- create sessions;
-- save attempts.
+- multiple choice
+- typed recall
+- basic spelling where suitable
+- immediate feedback
+- attempt recording
+- mastery
 
-## Phase 3 — Shared engine extraction
+## Phase 6 — Teacher report V1
 
-Extract generic level-test pieces in small, verified steps:
+Build reporting from real recorded study attempts before broadening the system too far.
 
-- answer normalization/scoring;
-- multiple choice renderer;
-- typed-answer renderer;
-- sentence-order renderer;
-- common feedback UI;
-- TTS/listening helpers where generic.
+## Phase 7 — Spelling / grammar / sentence building
 
-After every extraction, verify the existing student level test still behaves correctly.
+Expand shared engine usage and content generators.
 
-## Phase 4 — Vocabulary vertical slice
+## Phase 8+ — Listening / speaking / reading / writing
 
-Implement:
+Add content assets and shared stimuli/response capabilities systematically.
 
-- load vocabulary from current unit;
-- multiple choice;
-- typed recall;
-- result feedback;
-- study sessions;
-- attempt recording;
-- basic mastery.
+## Later — More consumers
 
-This is the first complete end-to-end milestone.
-
-## Phase 5 — Spelling
-
-Add:
-
-- typed spelling;
-- scramble;
-- missing letters;
-- retry behavior;
-- mastery integration.
-
-## Phase 6 — Grammar + sentence building
-
-Add:
-
-- grammar choices;
-- gap fill where content permits;
-- error recognition using authored/generated items;
-- sentence unscramble;
-- Korean -> English sentence build where translations exist.
-
-## Phase 7 — Teacher report V1
-
-Create teacher-side class/student progress views for the first four skills.
-
-Do this before expanding to all skills so the progress model is proven early.
-
-## Phase 8 — Listening
-
-First complete audio ingestion/storage conventions, then add:
-
-- word listening;
-- sentence listening;
-- dictation;
-- authored comprehension.
-
-## Phase 9 — Reading
-
-Populate passages and reading activities, then add reading mode and reporting.
-
-## Phase 10 — Speaking
-
-Reuse the level-test/audio recording architecture where appropriate, but store practice attempts separately from assessment attempts.
-
-Add teacher review only for tasks that genuinely need human review.
-
-## Phase 11 — Writing
-
-Add short constructed responses first, followed later by longer writing and rubrics.
-
-## Phase 12 — Adaptive review / spaced practice
-
-Once enough attempt history exists, choose practice based on mastery:
-
-- unseen content;
-- weak content;
-- overdue review;
-- current unit priority;
-- previous-unit maintenance.
-
-Do not build a sophisticated adaptive system before enough real student data exists.
+Teacher quizzes, homework, games and other apps should use the same activity bank and engine rather than creating independent question systems.
 
 ---
 
-# Immediate next actions
+# Non-negotiable design rules
 
-1. Create the study app shell under `students/study/`.
-2. Audit all current level-test JavaScript modules and classify what can become shared.
-3. Define a single normalized `StudyActivity` object used by every renderer.
-4. Define study DB tables and RLS policies.
-5. Add stable `current_unit_id` support to class book assignments.
-6. Build a read-only study API endpoint that returns the logged-in student's assigned book/current unit.
-7. Build a unit-content endpoint using the Content Database.
-8. Implement vocabulary practice as the first vertical slice.
-9. Record vocabulary attempts and calculate basic mastery.
-10. Build the first teacher report from those real attempts.
-11. Only then add spelling, grammar and sentence building.
-12. Perform a dedicated content-enrichment phase before listening/reading/speaking/writing.
-
----
-
-# Important design rules
-
-1. **Content IDs must be stable.** Progress must attach to IDs, not display text.
-2. **Do not make the study app a fork of the level test.** Both should consume shared modules.
-3. **Do not create thousands of static questions unnecessarily.** Generate deterministic drills from canonical content and author only what benefits from authorship.
-4. **Do not mix assessment attempts with study attempts.** They answer different questions.
-5. **Do not duplicate the Content Database into the student database.** Reference it through stable IDs.
-6. **Every new book should work through the same pipeline.** New curriculum should not require app code changes.
-7. **Teacher reporting is part of V1 architecture, not an afterthought.**
-8. **Add skills incrementally.** Prove the full data loop before expanding breadth.
-9. **Keep current production/staging level-test behavior stable while extracting shared code.**
-10. **Prefer simple mastery rules initially.** Improve adaptivity after collecting real usage data.
+1. **One activity/question ecosystem.** Do not create a separate study question bank if the same content can belong to the shared bank.
+2. **One shared renderer/interaction engine.** Do not build parallel multiple-choice, sentence-order, audio, scoring, etc. implementations per app.
+3. **Apps own orchestration, not basic exercise mechanics.**
+4. **Practice eligibility and assessment eligibility are different.**
+5. **Generated practice and authored activities may coexist.**
+6. **Do not store every mechanical activity permutation unnecessarily.**
+7. **Normalize all source data before it reaches renderers.**
+8. **Separate stimulus from response type where practical.**
+9. **Refactor the working level tests incrementally; do not rewrite them wholesale.**
+10. **Existing level-test behavior must remain stable while shared pieces are extracted.**
+11. **New exercise types that are generally useful belong in the shared engine, even if first requested by the study app.**
+12. **Content DB owns curriculum/activity definitions; operational DB owns learner history.**
+13. **Use the existing persistent same-domain/gateway auth model for student-facing recording.**
+14. **Do not edit `cloudflare-workers/supabase-auth/src/index.js` unless explicitly authorized.**
 
 ---
 
-# Definition of V1 complete
+# Immediate next task
 
-V1 is complete when a logged-in student can:
+Before building the study UI, define the exact shared runtime Activity contract and map the current `assessment_items`/`app-classic.js` question object into it.
 
-1. open `/students/study/`;
-2. automatically see the book assigned to their active class;
-3. open the current unit;
-4. practice vocabulary, spelling, grammar and sentence building using real content from the Content Database;
-5. receive immediate feedback;
-6. leave and return without losing recorded progress;
-7. see basic progress for the unit;
+Then identify the smallest safe piece of `app-classic.js` to extract first. The preferred first extraction is answer normalization/scoring, followed by multiple-choice rendering.
 
-and a teacher can:
-
-8. open the teacher side;
-9. select the class/student;
-10. see unit-level and skill-level progress based on real recorded attempts.
-
-New compatible content added to an existing or new book should appear in study practice without requiring new frontend code.
+The study app should begin consuming the same engine immediately after that first renderer extraction, so sharing is proven in practice rather than merely planned.
