@@ -13,6 +13,7 @@ function normalize(raw){
  var context=text(raw.context||raw.meaning||stimulus.context);
  var choices=arr(response.choices&&response.choices.length?response.choices:raw.choices).slice();
  var tokens=arr(response.tokens&&response.tokens.length?response.tokens:raw.tokens).slice();
+ var wordLengths=arr(response.wordLengths&&response.wordLengths.length?response.wordLengths:raw.wordLengths).map(function(n){return Number(n)||0;}).filter(Boolean);
  var answer=raw.answer!==undefined?raw.answer:raw.a;
  var activity={
   id:text(raw.id||raw.sourceId||raw.source_id),
@@ -35,6 +36,7 @@ function normalize(raw){
    type:type,
    choices:choices,
    tokens:tokens,
+   wordLengths:wordLengths,
    inputMode:text(response.inputMode||response.input_mode||'')
   },
   answer:clone(answer),
@@ -44,12 +46,12 @@ function normalize(raw){
   difficulty:Number(raw.difficulty||raw.difficulty_rating)||null,
   metadata:clone(raw.metadata||{})||{}
  };
- // Temporary legacy aliases keep current level-test renderers working during migration.
  activity.type=activity.response.type;
  activity.q=activity.stimulus.prompt;
  activity.meaning=activity.stimulus.context;
  activity.choices=activity.response.choices;
  activity.tokens=activity.response.tokens;
+ activity.wordLengths=activity.response.wordLengths;
  activity.a=clone(activity.answer);
  activity.sourceTable=activity.sourceType;
  activity.translation=Boolean(raw.translation);
