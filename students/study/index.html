@@ -49,9 +49,9 @@
         <button id="changeUnitBtn" class="secondary-button" type="button">단원 보기</button>
       </div>
     </div>
-    <div class="unit-progress-card">
-      <div class="progress-ring"><span id="vocabCount">—</span></div>
-      <div><strong id="progressTitle">학습 내용</strong><small id="progressCopy">Connecting to the Willena Content Database…</small></div>
+    <div class="unit-progress-card" role="button" tabindex="0" aria-label="Start Smart Study">
+      <div class="progress-ring"><span id="vocabCount">0%</span></div>
+      <div><strong id="progressTitle">Smart Study</strong><small id="progressCopy">오늘 목표 12문항 · 탭해서 시작</small></div>
     </div>
   </section>
 
@@ -93,15 +93,9 @@
 <script src="./study-progress.js?v=20260808-4"></script>
 <script src="./study.js?v=20260808-14"></script>
 <script src="./study-stats.js?v=20260809-4"></script>
-<script src="./smart-study.js?v=20260809-8"></script>
+<script src="./smart-study-screen.js"></script>
 <script>
-(function(){
-  function unlockStudyPage(){document.body.style.overflow='';}
-  unlockStudyPage();
-  window.addEventListener('pageshow',unlockStudyPage);
-  var close=document.getElementById('smartClose');
-  if(close)close.addEventListener('click',function(){setTimeout(unlockStudyPage,0);});
-})();
+(function(){document.body.style.overflow='';window.addEventListener('pageshow',function(){document.body.style.overflow='';});})();
 </script>
 </body>
 </html>
