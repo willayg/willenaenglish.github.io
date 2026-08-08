@@ -1,3 +1,4 @@
+// Deployment touch: 2026-08-09 Smart Study POST route redeploy
 import baseWorker from './index.js';
 
 const COOKIE_DOMAIN = '.willenaenglish.com';
