@@ -23,9 +23,18 @@ function speak(text){if(!text||!window.speechSynthesis)return;window.speechSynth
 async function authRequest(action,params){var query=new URLSearchParams(Object.assign({action:action,_:Date.now()},params||{}));var response=await WillenaAPI.fetch(AUTH_ENDPOINT+'?'+query.toString(),{credentials:'include',cache:'no-store'});var data=await response.json().catch(function(){return{}});return{response:response,data:data};}
 async function refreshSession(){var result=await authRequest('refresh');if(!result.response.ok||!result.data.success)return null;if(result.data.access_token&&window.WillenaAPI&&WillenaAPI.setLocalTokens)WillenaAPI.setLocalTokens(result.data.access_token,result.data.refresh_token);return result.data.access_token||null;}
 async function currentUser(){var result=await authRequest('whoami');if(result.response.ok&&result.data.success&&(result.data.user_id||result.data.id))return result.data;if(!await refreshSession())return null;result=await authRequest('whoami');return result.response.ok&&result.data.success&&(result.data.user_id||result.data.id)?result.data:null;}
-async function accessToken(){var token=window.WillenaAPI&&WillenaAPI.getLocalAccessToken?WillenaAPI.getLocalAccessToken():null;if(token&&token.split('.').length===3)return token;return refreshSession();}
-async function rpcStudyContext(token){return fetch(OP_URL+'/rest/v1/rpc/get_student_study_context',{method:'POST',headers:{apikey:OP_KEY,Authorization:'Bearer '+token,'Content-Type':'application/json'},body:'{}',cache:'no-store'});}
-async function loadStudentAssignment(){var token=await accessToken();if(!token)throw new Error('Could not establish student session.');var response=await rpcStudyContext(token);if(response.status===401||response.status===403){token=await refreshSession();if(token)response=await rpcStudyContext(token);}var data=await response.json().catch(function(){return{}});if(response.status===401||response.status===403){signin();throw new Error('Sign in required');}if(!response.ok||!data.success)throw new Error(data.error||data.message||'Could not load your class book.');return data;}
+async function loadStudentAssignment(){
+ var response=await WillenaAPI.fetch('/.netlify/functions/progress_summary?section=my_progress&_='+Date.now(),{credentials:'include',cache:'no-store'});
+ var me=await response.json().catch(function(){return{}});
+ if(response.status===401||response.status===403){signin();throw new Error('Sign in required');}
+ if(!response.ok||!me.success)throw new Error(me.error||'Could not load your student profile.');
+ var className=String(me.class||'').trim();
+ if(!className)throw new Error('No active class is assigned to this student.');
+ var assignmentResponse=await fetch(OP_URL+'/rest/v1/rpc/get_study_assignment_for_class',{method:'POST',headers:{apikey:OP_KEY,Authorization:'Bearer '+OP_KEY,'Content-Type':'application/json'},body:JSON.stringify({p_class_name:className}),cache:'no-store'});
+ var data=await assignmentResponse.json().catch(function(){return{}});
+ if(!assignmentResponse.ok||!data.success)throw new Error(data.error||'Could not load your class book.');
+ return{student:{id:me.user_id||null,name:me.name||null},class:data.class,assignment:data.assignment};
+}
 async function contentGet(path){var response=await fetch(CONTENT_URL+'/rest/v1/'+path,{headers:CONTENT_HEADERS,cache:'no-store'});if(!response.ok)throw new Error('Content DB request failed ('+response.status+').');return response.json();}
 function resolveUnit(rows,unitHint){if(!rows.length)return null;var hint=String(unitHint||'').trim().toLowerCase();if(hint){var number=(hint.match(/\d+/)||[])[0];var matched=rows.find(function(u){return String(u.unit_number)===number||String(u.title||'').trim().toLowerCase()===hint;});if(matched)return matched;}return rows[0];}
 async function loadUnits(bookId){return contentGet('content_units?select=id,unit_number,title,source_key,status,metadata&book_id=eq.'+encodeURIComponent(bookId)+'&status=in.(review,published)&order=unit_number.asc');}
