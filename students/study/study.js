@@ -6,164 +6,58 @@ var CONTENT_HEADERS={apikey:CONTENT_KEY,Authorization:'Bearer '+CONTENT_KEY};
 var OP_URL='https://fiieuiktlsivwfgyivai.supabase.co';
 var OP_KEY='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
 var AUTH_ENDPOINT='/.netlify/functions/supabase_auth';
-
 var lang='ko',engine=null,activityIndex=0,activeMode='vocabulary';
-var vocabActivities=[],spellingActivities=[],vocab=[],units=[],assignment=null,currentUnit=null,student=null,classInfo=null;
+var vocabActivities=[],spellingActivities=[],grammarActivities=[],sentenceActivities=[];
+var vocab=[],patterns=[],sentences=[],units=[],assignment=null,currentUnit=null,student=null,classInfo=null;
 var grid=document.getElementById('skillGrid'),panel=document.getElementById('practicePanel'),root=document.getElementById('activityRoot'),langBtn=document.getElementById('languageBtn'),skillLabel=document.getElementById('practiceSkill'),title=document.getElementById('practiceTitle');
-
 var copy={
- ko:{continue:'어휘 연습 이어하기',browse:'단원 보기',choose:'연습할 영역을 선택하세요',vocabulary:'어휘',spelling:'철자',next:'다음',back:'뒤로',meaning:'뜻 고르기',spell:'단어 만들기',chooseKo:'한국어 뜻을 고르세요.',spellEn:'글자를 눌러 영어 단어를 만드세요.',loading:'불러오는 중…',coming:'곧 연결 예정',words:'개 단어'},
- en:{continue:'Continue vocabulary',browse:'Browse units',choose:'Choose a skill',vocabulary:'Vocabulary',spelling:'Spelling',next:'Next',back:'Back',meaning:'Choose the meaning',spell:'Build the word',chooseKo:'Choose the Korean meaning.',spellEn:'Tap the letters to build the English word.',loading:'Loading…',coming:'Coming next',words:'words'}
+ ko:{continue:'어휘 연습 이어하기',browse:'단원 보기',choose:'연습할 영역을 선택하세요',vocabulary:'어휘',spelling:'철자',grammar:'문법',sentence:'문장 만들기',next:'다음',back:'뒤로',meaning:'뜻 고르기',spell:'단어 만들기',grammarFill:'빈칸 채우기',sentenceBuild:'문장 만들기',chooseKo:'한국어 뜻을 고르세요.',spellEn:'글자를 눌러 영어 단어를 만드세요.',grammarHelp:'질문을 보고 알맞은 문법 표현을 완성하세요.',sentenceHelp:'단어를 올바른 순서로 배열하세요.',loading:'불러오는 중…',coming:'곧 연결 예정',words:'개 단어',items:'문항'},
+ en:{continue:'Continue vocabulary',browse:'Browse units',choose:'Choose a skill',vocabulary:'Vocabulary',spelling:'Spelling',grammar:'Grammar',sentence:'Sentence Building',next:'Next',back:'Back',meaning:'Choose the meaning',spell:'Build the word',grammarFill:'Fill the gap',sentenceBuild:'Build the sentence',chooseKo:'Choose the Korean meaning.',spellEn:'Tap the letters to build the English word.',grammarHelp:'Read the question and complete the grammar pattern.',sentenceHelp:'Put the words in the correct order.',loading:'Loading…',coming:'Coming next',words:'words',items:'items'}
 };
 function t(k){return copy[lang][k]||k;}
 function signin(){location.replace('/students/signin.html?next='+encodeURIComponent('/students/study/'));}
 function shuffle(items){return items.slice().sort(function(){return Math.random()-.5;});}
 function unique(items){var out=[];items.forEach(function(x){if(x&&out.indexOf(x)<0)out.push(x);});return out;}
-function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
-
-async function authRequest(action,params){
- var query=new URLSearchParams(Object.assign({action:action,_:Date.now()},params||{}));
- var response=await WillenaAPI.fetch(AUTH_ENDPOINT+'?'+query.toString(),{credentials:'include',cache:'no-store'});
- var data=await response.json().catch(function(){return{}});
- return{response:response,data:data};
-}
-async function refreshSession(){
- var result=await authRequest('refresh');
- if(!result.response.ok||!result.data.success)return null;
- if(result.data.access_token&&window.WillenaAPI&&WillenaAPI.setLocalTokens)WillenaAPI.setLocalTokens(result.data.access_token,result.data.refresh_token);
- return result.data.access_token||null;
-}
-async function currentUser(){
- var result=await authRequest('whoami');
- if(result.response.ok&&result.data.success&&(result.data.user_id||result.data.id))return result.data;
- if(!await refreshSession())return null;
- result=await authRequest('whoami');
- return result.response.ok&&result.data.success&&(result.data.user_id||result.data.id)?result.data:null;
-}
-async function accessToken(){
- var token=window.WillenaAPI&&WillenaAPI.getLocalAccessToken?WillenaAPI.getLocalAccessToken():null;
- if(token&&token.split('.').length===3)return token;
- return refreshSession();
-}
-async function rpcStudyContext(token){
- return fetch(OP_URL+'/rest/v1/rpc/get_student_study_context',{method:'POST',headers:{apikey:OP_KEY,Authorization:'Bearer '+token,'Content-Type':'application/json'},body:'{}',cache:'no-store'});
-}
-async function loadStudentAssignment(){
- var token=await accessToken();if(!token)throw new Error('Could not establish student session.');
- var response=await rpcStudyContext(token);
- if(response.status===401||response.status===403){token=await refreshSession();if(token)response=await rpcStudyContext(token);}
- var data=await response.json().catch(function(){return{}});
- if(response.status===401||response.status===403){signin();throw new Error('Sign in required');}
- if(!response.ok||!data.success)throw new Error(data.error||data.message||'Could not load your class book.');
- return data;
-}
-async function contentGet(path){
- var response=await fetch(CONTENT_URL+'/rest/v1/'+path,{headers:CONTENT_HEADERS,cache:'no-store'});
- if(!response.ok)throw new Error('Content DB request failed ('+response.status+').');
- return response.json();
-}
-function resolveUnit(rows,unitHint){
- if(!rows.length)return null;
- var hint=String(unitHint||'').trim().toLowerCase();
- if(hint){var number=(hint.match(/\d+/)||[])[0];var matched=rows.find(function(u){return String(u.unit_number)===number||String(u.title||'').trim().toLowerCase()===hint;});if(matched)return matched;}
- return rows[0];
-}
-async function loadUnits(bookId){
- return contentGet('content_units?select=id,unit_number,title,source_key,status&book_id=eq.'+encodeURIComponent(bookId)+'&status=in.(review,published)&order=unit_number.asc');
-}
-async function loadVocabulary(unitId){
- var occurrences=await contentGet('source_content_occurrences?select=id,lexical_entry_id,source_text,status&page_number=not.is.null&unit_id=eq.'+encodeURIComponent(unitId)+'&occurrence_type=eq.lexical_entry&status=in.(review,published)&order=page_number.asc');
- if(!occurrences.length)occurrences=await contentGet('source_content_occurrences?select=id,lexical_entry_id,source_text,status&unit_id=eq.'+encodeURIComponent(unitId)+'&occurrence_type=eq.lexical_entry&status=in.(review,published)');
- var ids=unique(occurrences.map(function(o){return o.lexical_entry_id;}).filter(Boolean));
- if(!ids.length)return[];
- var entries=await contentGet('lexical_entries?select=id,canonical_text,translation_ko,emoji,status&id=in.'+encodeURIComponent('('+ids.join(',')+')')+'&status=in.(review,published)');
- var byId={};entries.forEach(function(e){byId[e.id]=e;});
- return occurrences.map(function(o){var e=byId[o.lexical_entry_id];if(!e)return null;return{id:e.id,occurrenceId:o.id,word:String(e.canonical_text||o.source_text||'').trim(),ko:String(e.translation_ko||'').trim(),emoji:e.emoji||null};}).filter(function(x){return x&&x.word&&x.ko;});
-}
-function distractorsFor(item){
- var others=shuffle(unique(vocab.filter(function(v){return v.id!==item.id;}).map(function(v){return v.ko;}))).slice(0,3);
- return shuffle(unique([item.ko].concat(others))).slice(0,4);
-}
+function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c];});}
+async function authRequest(action,params){var query=new URLSearchParams(Object.assign({action:action,_:Date.now()},params||{}));var response=await WillenaAPI.fetch(AUTH_ENDPOINT+'?'+query.toString(),{credentials:'include',cache:'no-store'});var data=await response.json().catch(function(){return{}});return{response:response,data:data};}
+async function refreshSession(){var result=await authRequest('refresh');if(!result.response.ok||!result.data.success)return null;if(result.data.access_token&&window.WillenaAPI&&WillenaAPI.setLocalTokens)WillenaAPI.setLocalTokens(result.data.access_token,result.data.refresh_token);return result.data.access_token||null;}
+async function currentUser(){var result=await authRequest('whoami');if(result.response.ok&&result.data.success&&(result.data.user_id||result.data.id))return result.data;if(!await refreshSession())return null;result=await authRequest('whoami');return result.response.ok&&result.data.success&&(result.data.user_id||result.data.id)?result.data:null;}
+async function accessToken(){var token=window.WillenaAPI&&WillenaAPI.getLocalAccessToken?WillenaAPI.getLocalAccessToken():null;if(token&&token.split('.').length===3)return token;return refreshSession();}
+async function rpcStudyContext(token){return fetch(OP_URL+'/rest/v1/rpc/get_student_study_context',{method:'POST',headers:{apikey:OP_KEY,Authorization:'Bearer '+token,'Content-Type':'application/json'},body:'{}',cache:'no-store'});}
+async function loadStudentAssignment(){var token=await accessToken();if(!token)throw new Error('Could not establish student session.');var response=await rpcStudyContext(token);if(response.status===401||response.status===403){token=await refreshSession();if(token)response=await rpcStudyContext(token);}var data=await response.json().catch(function(){return{}});if(response.status===401||response.status===403){signin();throw new Error('Sign in required');}if(!response.ok||!data.success)throw new Error(data.error||data.message||'Could not load your class book.');return data;}
+async function contentGet(path){var response=await fetch(CONTENT_URL+'/rest/v1/'+path,{headers:CONTENT_HEADERS,cache:'no-store'});if(!response.ok)throw new Error('Content DB request failed ('+response.status+').');return response.json();}
+function resolveUnit(rows,unitHint){if(!rows.length)return null;var hint=String(unitHint||'').trim().toLowerCase();if(hint){var number=(hint.match(/\d+/)||[])[0];var matched=rows.find(function(u){return String(u.unit_number)===number||String(u.title||'').trim().toLowerCase()===hint;});if(matched)return matched;}return rows[0];}
+async function loadUnits(bookId){return contentGet('content_units?select=id,unit_number,title,source_key,status&book_id=eq.'+encodeURIComponent(bookId)+'&status=in.(review,published)&order=unit_number.asc');}
+async function loadVocabulary(unitId){var occurrences=await contentGet('source_content_occurrences?select=id,lexical_entry_id,source_text,status&unit_id=eq.'+encodeURIComponent(unitId)+'&occurrence_type=eq.lexical_entry&status=in.(review,published)');var ids=unique(occurrences.map(function(o){return o.lexical_entry_id;}).filter(Boolean));if(!ids.length)return[];var entries=await contentGet('lexical_entries?select=id,canonical_text,translation_ko,emoji,status&id=in.'+encodeURIComponent('('+ids.join(',')+')')+'&status=in.(review,published)');var byId={};entries.forEach(function(e){byId[e.id]=e;});return occurrences.map(function(o){var e=byId[o.lexical_entry_id];if(!e)return null;return{id:e.id,occurrenceId:o.id,word:String(e.canonical_text||o.source_text||'').trim(),ko:String(e.translation_ko||'').trim(),emoji:e.emoji||null};}).filter(function(x){return x&&x.word&&x.ko;});}
+async function loadPatterns(unitId){var occ=await contentGet('source_content_occurrences?select=id,pattern_id,source_text&unit_id=eq.'+encodeURIComponent(unitId)+'&occurrence_type=eq.pattern&status=in.(review,published)');var ids=unique(occ.map(function(o){return o.pattern_id;}).filter(Boolean));if(!ids.length)return[];var rows=await contentGet('patterns?select=id,name,grammar_category,prompt_pattern,response_pattern,status&id=in.'+encodeURIComponent('('+ids.join(',')+')')+'&status=in.(review,published)');var by={};rows.forEach(function(r){by[r.id]=r;});return occ.map(function(o){var p=by[o.pattern_id];if(!p)return null;p=Object.assign({},p,{occurrenceId:o.id});return p;}).filter(Boolean);}
+async function loadSentences(unitId){var occ=await contentGet('source_content_occurrences?select=id,sentence_id,source_text,skill&unit_id=eq.'+encodeURIComponent(unitId)+'&occurrence_type=eq.sentence&status=in.(review,published)');var ids=unique(occ.map(function(o){return o.sentence_id;}).filter(Boolean));if(!ids.length)return[];var rows=await contentGet('sentences?select=id,text,translation_ko,status&id=in.'+encodeURIComponent('('+ids.join(',')+')')+'&status=in.(review,published)');var by={};rows.forEach(function(r){by[r.id]=r;});return occ.map(function(o){var s=by[o.sentence_id];if(!s)return null;return{id:s.id,occurrenceId:o.id,text:s.text||o.source_text||'',ko:s.translation_ko||'',skill:o.skill||''};}).filter(function(s){return s.text;});}
+function distractorsFor(item){return shuffle(unique(vocab.filter(function(v){return v.id!==item.id;}).map(function(v){return v.ko;}))).slice(0,3);}
 function spellingTokens(word){return String(word||'').toLowerCase().replace(/[^a-z]/g,'').split('');}
 function wordLengths(word){return String(word||'').trim().split(/\s+/).map(function(part){return part.replace(/[^a-z]/gi,'').length;}).filter(Boolean);}
-function buildActivities(){
- vocabActivities=[];spellingActivities=[];
- shuffle(vocab).forEach(function(item){
-  var choices=distractorsFor(item);
-  if(choices.length===4)vocabActivities.push({title:t('meaning'),activity:{id:'vocab-meaning-'+item.occurrenceId,sourceType:'lexical_entry',sourceId:item.id,skill:'vocabulary',usage:['practice'],stimulus:{type:'text',prompt:(item.emoji?item.emoji+'  ':'')+item.word,context:t('chooseKo')},response:{type:'multiple_choice',choices:choices},answer:item.ko,metadata:{unit_id:currentUnit.id,book_id:assignment.book_id,occurrence_id:item.occurrenceId}}});
-  var tokens=spellingTokens(item.word);
-  if(tokens.length)spellingActivities.push({title:t('spell'),activity:{id:'spell-'+item.occurrenceId,sourceType:'lexical_entry',sourceId:item.id,skill:'spelling',usage:['practice'],stimulus:{type:'text',prompt:(item.emoji?item.emoji+'  ':'')+item.ko,context:t('spellEn')},response:{type:'letter_order',tokens:tokens,wordLengths:wordLengths(item.word)},answer:item.word,metadata:{unit_id:currentUnit.id,book_id:assignment.book_id,occurrence_id:item.occurrenceId}}});
- });
- activityIndex=0;
-}
-function drawSkills(){
- var rows=[
-  {id:'vocabulary',icon:'Aa',label:t('vocabulary'),desc:vocab.length?vocab.length+' '+t('words'):t('loading'),enabled:vocabActivities.length>0},
-  {id:'spelling',icon:'ABC',label:t('spelling'),desc:vocab.length?vocab.length+' '+t('words'):t('loading'),enabled:spellingActivities.length>0},
-  {id:'grammar',icon:'✓',label:lang==='ko'?'문법':'Grammar',desc:t('coming')},
-  {id:'sentence',icon:'↔',label:lang==='ko'?'문장 만들기':'Sentence Building',desc:t('coming')},
-  {id:'listening',icon:'♪',label:lang==='ko'?'듣기':'Listening',desc:t('coming')},
-  {id:'reading',icon:'¶',label:lang==='ko'?'읽기':'Reading',desc:t('coming')}
- ];
- grid.innerHTML='';
- rows.forEach(function(skill){var b=document.createElement('button');b.type='button';b.className='skill-card'+(skill.enabled?'':' is-disabled');b.disabled=!skill.enabled;b.innerHTML='<span class="skill-icon">'+skill.icon+'</span><span><strong>'+esc(skill.label)+'</strong><small>'+esc(skill.desc)+'</small></span>';if(skill.enabled)b.addEventListener('click',function(){openPractice(skill.id,0);});grid.appendChild(b);});
-}
-function renderPreview(){
- var holder=document.getElementById('vocabPreview');
- if(!vocab.length){holder.innerHTML='<div class="study-loading">No vocabulary found for this unit.</div>';return;}
- holder.innerHTML=vocab.slice(0,8).map(function(v){return '<div class="review-row static"><span class="review-icon">'+esc(v.emoji||'Aa')+'</span><span><strong>'+esc(v.word)+'</strong><small>'+esc(v.ko)+'</small></span></div>';}).join('');
-}
-function updateHero(){
- document.getElementById('studentGreeting').textContent=(student&&student.name?student.name+' · ':'')+(classInfo&&(classInfo.display_name||classInfo.name)||'Willena');
- document.getElementById('bookTitle').textContent=assignment&&assignment.book_title||'No book assigned';
- document.getElementById('unitTitle').textContent=currentUnit?'Unit '+currentUnit.unit_number+' · '+(currentUnit.title||''):'No unit available';
- document.getElementById('vocabCount').textContent=String(vocab.length);
- document.getElementById('progressTitle').textContent='Vocabulary loaded';
- document.getElementById('progressCopy').textContent=vocab.length+' real words from the Content Database.';
- document.getElementById('unitWordCount').textContent=String(vocab.length);
- document.getElementById('unitNumberStat').textContent=currentUnit?String(currentUnit.unit_number):'—';
- document.getElementById('classStat').textContent=classInfo?(classInfo.display_name||classInfo.name||'—').slice(0,8):'—';
- document.getElementById('connectionTitle').textContent=vocab.length?'Live curriculum connected':'No vocabulary found';
- document.getElementById('contentStatus').textContent=vocab.length?'Real content from '+(assignment.book_title||'assigned book')+' · Unit '+currentUnit.unit_number:'No vocabulary available';
- document.getElementById('continueBtn').disabled=!vocabActivities.length;
-}
-function rowsForMode(mode){return mode==='spelling'?spellingActivities:vocabActivities;}
-function openPractice(mode,index){
- activeMode=mode||'vocabulary';var rows=rowsForMode(activeMode);if(!rows.length)return;
- activityIndex=Number(index)||0;var row=rows[activityIndex%rows.length];
- skillLabel.textContent=t(activeMode).toUpperCase();title.textContent=row.title;panel.hidden=false;
- if(!window.WillenaActivityEngine){root.innerHTML='<p>Activity engine failed to load.</p>';return;}
- engine=new WillenaActivityEngine(root,{onAnswer:function(){}});engine.setActivity(row.activity);panel.scrollIntoView({behavior:'smooth',block:'start'});
-}
+function grammarGap(pattern){var r=String(pattern.response_pattern||'').trim(),cat=String(pattern.grammar_category||'');var rules=[];
+ if(cat==='comparatives')rules=[/\bfaster\b/i,/\bslower\b/i,/\bbigger\b/i,/\bsmaller\b/i];
+ else if(cat==='superlatives')rules=[/\bthe fastest\b/i,/\bthe slowest\b/i,/\bthe biggest\b/i,/\bthe smallest\b/i];
+ else if(cat==='simple_past')rules=[/\bswam\b/i,/\bhad\b/i,/\bwent\b/i,/\bdidn't\b/i,/\bdid\b/i];
+ else if(cat==='verb_patterns')rules=[/\blikes to\b/i,/\blike to\b/i,/\bwant to be\b/i,/\bwant to\b/i];
+ else if(cat==='be_going_to')rules=[/\bgoing to\b/i];
+ else if(cat==='dates')rules=[/\bin\b/i,/\b1st\b/i];
+ for(var i=0;i<rules.length;i++){var m=r.match(rules[i]);if(m)return{prompt:r.replace(rules[i],'____'),answer:m[0]};}
+ return null;}
+function sentenceTokens(text){return String(text||'').trim().replace(/[.!?]+$/,'').split(/\s+/).filter(Boolean);}
+function buildActivities(){vocabActivities=[];spellingActivities=[];grammarActivities=[];sentenceActivities=[];
+ shuffle(vocab).forEach(function(item){var others=distractorsFor(item),choices=shuffle(unique([item.ko].concat(others))).slice(0,4);if(choices.length>=2)vocabActivities.push({title:t('meaning'),activity:{id:'vocab-meaning-'+item.occurrenceId,sourceType:'lexical_entry',sourceId:item.id,skill:'vocabulary',usage:['practice'],stimulus:{type:'text',prompt:(item.emoji?item.emoji+'  ':'')+item.word,context:t('chooseKo')},response:{type:'multiple_choice',choices:choices},answer:item.ko,metadata:{unit_id:currentUnit.id,book_id:assignment.book_id,occurrence_id:item.occurrenceId}}});var tokens=spellingTokens(item.word);if(tokens.length)spellingActivities.push({title:t('spell'),activity:{id:'spell-'+item.occurrenceId,sourceType:'lexical_entry',sourceId:item.id,skill:'spelling',usage:['practice'],stimulus:{type:'text',prompt:(item.emoji?item.emoji+'  ':'')+item.ko,context:t('spellEn')},response:{type:'letter_order',tokens:tokens,wordLengths:wordLengths(item.word)},answer:item.word,metadata:{unit_id:currentUnit.id,book_id:assignment.book_id,occurrence_id:item.occurrenceId}}});});
+ patterns.forEach(function(p){var gap=grammarGap(p);if(gap)grammarActivities.push({title:t('grammarFill'),activity:{id:'grammar-'+p.occurrenceId,sourceType:'pattern',sourceId:p.id,skill:'grammar',usage:['practice'],stimulus:{type:'text',prompt:gap.prompt,context:(p.prompt_pattern?p.prompt_pattern+'\n':'')+t('grammarHelp')},response:{type:'gap_fill_text'},answer:gap.answer,metadata:{unit_id:currentUnit.id,book_id:assignment.book_id,occurrence_id:p.occurrenceId,grammar_category:p.grammar_category}}});});
+ sentences.forEach(function(s){var tokens=sentenceTokens(s.text);if(tokens.length<3||tokens.length>14||/[\/]/.test(s.text))return;sentenceActivities.push({title:t('sentenceBuild'),activity:{id:'sentence-'+s.occurrenceId,sourceType:'sentence',sourceId:s.id,skill:'sentence_building',usage:['practice'],stimulus:{type:'text',prompt:s.ko||t('sentenceBuild'),context:t('sentenceHelp')},response:{type:'token_order',tokens:tokens},answer:s.text,metadata:{unit_id:currentUnit.id,book_id:assignment.book_id,occurrence_id:s.occurrenceId,source_skill:s.skill}}});});activityIndex=0;}
+function drawSkills(){var rows=[{id:'vocabulary',icon:'Aa',label:t('vocabulary'),desc:vocab.length?vocab.length+' '+t('words'):t('loading'),enabled:vocabActivities.length>0},{id:'spelling',icon:'ABC',label:t('spelling'),desc:vocab.length?vocab.length+' '+t('words'):t('loading'),enabled:spellingActivities.length>0},{id:'grammar',icon:'✓',label:t('grammar'),desc:grammarActivities.length?grammarActivities.length+' '+t('items'):t('loading'),enabled:grammarActivities.length>0},{id:'sentence',icon:'↔',label:t('sentence'),desc:sentenceActivities.length?sentenceActivities.length+' '+t('items'):t('loading'),enabled:sentenceActivities.length>0},{id:'listening',icon:'♪',label:lang==='ko'?'듣기':'Listening',desc:t('coming')},{id:'reading',icon:'¶',label:lang==='ko'?'읽기':'Reading',desc:t('coming')}];grid.innerHTML='';rows.forEach(function(skill){var b=document.createElement('button');b.type='button';b.className='skill-card'+(skill.enabled?'':' is-disabled');b.disabled=!skill.enabled;b.innerHTML='<span class="skill-icon">'+skill.icon+'</span><span><strong>'+esc(skill.label)+'</strong><small>'+esc(skill.desc)+'</small></span>';if(skill.enabled)b.addEventListener('click',function(){openPractice(skill.id,0);});grid.appendChild(b);});}
+function renderPreview(){var holder=document.getElementById('vocabPreview');if(!vocab.length){holder.innerHTML='<div class="study-loading">No vocabulary found for this unit.</div>';return;}holder.innerHTML=vocab.slice(0,8).map(function(v){return '<div class="review-row static"><span class="review-icon">'+esc(v.emoji||'Aa')+'</span><span><strong>'+esc(v.word)+'</strong><small>'+esc(v.ko)+'</small></span></div>';}).join('');}
+function updateHero(){document.getElementById('studentGreeting').textContent=(student&&student.name?student.name+' · ':'')+(classInfo&&(classInfo.display_name||classInfo.name)||'Willena');document.getElementById('bookTitle').textContent=assignment&&assignment.book_title||'No book assigned';document.getElementById('unitTitle').textContent=currentUnit?'Unit '+currentUnit.unit_number+' · '+(currentUnit.title||''):'No unit available';document.getElementById('vocabCount').textContent=String(vocab.length);document.getElementById('progressTitle').textContent='Unit content loaded';document.getElementById('progressCopy').textContent=vocab.length+' words · '+grammarActivities.length+' grammar · '+sentenceActivities.length+' sentences';document.getElementById('unitWordCount').textContent=String(vocab.length);document.getElementById('unitNumberStat').textContent=currentUnit?String(currentUnit.unit_number):'—';document.getElementById('classStat').textContent=classInfo?(classInfo.display_name||classInfo.name||'—').slice(0,8):'—';document.getElementById('connectionTitle').textContent='Live curriculum connected';document.getElementById('contentStatus').textContent='Real content from '+(assignment.book_title||'assigned book')+' · Unit '+currentUnit.unit_number;document.getElementById('continueBtn').disabled=!vocabActivities.length;}
+function rowsForMode(mode){if(mode==='spelling')return spellingActivities;if(mode==='grammar')return grammarActivities;if(mode==='sentence')return sentenceActivities;return vocabActivities;}
+function openPractice(mode,index){activeMode=mode||'vocabulary';var rows=rowsForMode(activeMode);if(!rows.length)return;activityIndex=Number(index)||0;var row=rows[activityIndex%rows.length];skillLabel.textContent=t(activeMode).toUpperCase();title.textContent=row.title;panel.hidden=false;if(!window.WillenaActivityEngine){root.innerHTML='<p>Activity engine failed to load.</p>';return;}engine=new WillenaActivityEngine(root,{onAnswer:function(){}});engine.setActivity(row.activity);panel.scrollIntoView({behavior:'smooth',block:'start'});}
 function next(){var rows=rowsForMode(activeMode);if(!rows.length)return;activityIndex=(activityIndex+1)%rows.length;openPractice(activeMode,activityIndex);}
-async function selectUnit(unit){
- currentUnit=unit;panel.hidden=true;document.getElementById('contentStatus').textContent='Loading Unit '+unit.unit_number+' vocabulary…';
- vocab=await loadVocabulary(unit.id);buildActivities();updateHero();drawSkills();renderPreview();
-}
-function browseUnits(){
- var holder=document.getElementById('vocabPreview');
- holder.innerHTML=units.map(function(u){return '<button class="unit-pick" type="button" data-unit-id="'+esc(u.id)+'"><strong>Unit '+esc(u.unit_number)+'</strong><span>'+esc(u.title||'')+'</span></button>';}).join('');
- holder.querySelectorAll('.unit-pick').forEach(function(b){b.addEventListener('click',function(){var unit=units.find(function(u){return u.id===b.dataset.unitId;});if(unit)selectUnit(unit).catch(showError);});});
- holder.scrollIntoView({behavior:'smooth',block:'center'});
-}
-function showError(error){
- console.error('[WillenaStudy]',error);document.getElementById('bookTitle').textContent='Could not load study content';document.getElementById('unitTitle').textContent=error&&error.message||'Please try again.';document.getElementById('contentStatus').textContent='Connection failed';document.getElementById('connectionTitle').textContent='Connection error';document.getElementById('progressCopy').textContent=error&&error.message||'Study data could not be loaded.';
-}
-async function init(){
- try{
-  drawSkills();var who=await currentUser();if(!who){signin();return;}
-  var data=await loadStudentAssignment();student=data.student;classInfo=data.class;assignment=data.assignment;
-  if(!assignment||!assignment.book_id)throw new Error('No active book is assigned to this student.');
-  units=await loadUnits(assignment.book_id);if(!units.length)throw new Error('No available units were found for '+assignment.book_title+'.');
-  currentUnit=resolveUnit(units,assignment.current_unit||assignment.starting_unit);
-  vocab=await loadVocabulary(currentUnit.id);buildActivities();updateHero();drawSkills();renderPreview();
- }catch(error){showError(error);}
-}
-
-document.getElementById('continueBtn').addEventListener('click',function(){openPractice('vocabulary',activityIndex);});
-document.getElementById('changeUnitBtn').addEventListener('click',browseUnits);
-document.getElementById('closePractice').addEventListener('click',function(){panel.hidden=true;document.querySelector('.section-block').scrollIntoView({behavior:'smooth'});});
-document.getElementById('nextActivity').addEventListener('click',next);
-langBtn.addEventListener('click',function(){lang=lang==='ko'?'en':'ko';langBtn.textContent=lang==='ko'?'English':'한국어';document.getElementById('continueBtn').textContent=t('continue');document.getElementById('changeUnitBtn').textContent=t('browse');document.querySelector('.section-heading h2').textContent=t('choose');document.getElementById('nextActivity').textContent=t('next');document.getElementById('closePractice').textContent='← '+t('back');buildActivities();drawSkills();if(!panel.hidden)openPractice(activeMode,activityIndex);});
+async function loadUnitContent(unit){currentUnit=unit;panel.hidden=true;document.getElementById('contentStatus').textContent='Loading Unit '+unit.unit_number+'…';var loaded=await Promise.all([loadVocabulary(unit.id),loadPatterns(unit.id),loadSentences(unit.id)]);vocab=loaded[0];patterns=loaded[1];sentences=loaded[2];buildActivities();updateHero();drawSkills();renderPreview();}
+function browseUnits(){var holder=document.getElementById('vocabPreview');holder.innerHTML=units.map(function(u){return '<button class="unit-pick" type="button" data-unit-id="'+esc(u.id)+'"><strong>Unit '+esc(u.unit_number)+'</strong><span>'+esc(u.title||'')+'</span></button>';}).join('');holder.querySelectorAll('.unit-pick').forEach(function(b){b.addEventListener('click',function(){var unit=units.find(function(u){return u.id===b.dataset.unitId;});if(unit)loadUnitContent(unit).catch(showError);});});holder.scrollIntoView({behavior:'smooth',block:'center'});}
+function showError(error){console.error('[WillenaStudy]',error);document.getElementById('bookTitle').textContent='Could not load study content';document.getElementById('unitTitle').textContent=error&&error.message||'Please try again.';document.getElementById('contentStatus').textContent='Connection failed';document.getElementById('connectionTitle').textContent='Connection error';document.getElementById('progressCopy').textContent=error&&error.message||'Study data could not be loaded.';}
+async function init(){try{drawSkills();var who=await currentUser();if(!who){signin();return;}var data=await loadStudentAssignment();student=data.student;classInfo=data.class;assignment=data.assignment;if(!assignment||!assignment.book_id)throw new Error('No active book is assigned to this student.');units=await loadUnits(assignment.book_id);if(!units.length)throw new Error('No available units were found for '+assignment.book_title+'.');await loadUnitContent(resolveUnit(units,assignment.current_unit||assignment.starting_unit));}catch(error){showError(error);}}
+document.getElementById('continueBtn').addEventListener('click',function(){openPractice('vocabulary',activityIndex);});document.getElementById('changeUnitBtn').addEventListener('click',browseUnits);document.getElementById('closePractice').addEventListener('click',function(){panel.hidden=true;document.querySelector('.section-block').scrollIntoView({behavior:'smooth'});});document.getElementById('nextActivity').addEventListener('click',next);langBtn.addEventListener('click',function(){lang=lang==='ko'?'en':'ko';langBtn.textContent=lang==='ko'?'English':'한국어';document.getElementById('continueBtn').textContent=t('continue');document.getElementById('changeUnitBtn').textContent=t('browse');document.querySelector('.section-heading h2').textContent=t('choose');document.getElementById('nextActivity').textContent=t('next');document.getElementById('closePractice').textContent='← '+t('back');buildActivities();drawSkills();if(!panel.hidden)openPractice(activeMode,activityIndex);});
 init();
 })();
