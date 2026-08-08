@@ -1,6 +1,8 @@
 import baseWorker from './index.js';
 
 const COOKIE_DOMAIN = '.willenaenglish.com';
+const CONTENT_URL = 'https://gxwfsqxyuufqtitspfqg.supabase.co';
+const CONTENT_KEY = 'sb_publishable_G-FYhHfDL4OGdL892gY1Zg_epdbEeqO';
 
 function parseCookies(header) {
   const out = {};
@@ -33,7 +35,6 @@ function preferCookieRequest(request, cookieHeader = null) {
   const headers = new Headers(request.headers);
   const effectiveCookie = cookieHeader ?? headers.get('Cookie') ?? '';
   const cookies = parseCookies(effectiveCookie);
-
   if (cookies.sb_access) headers.delete('Authorization');
   if (cookieHeader !== null) headers.set('Cookie', cookieHeader);
   return new Request(request, { headers });
@@ -43,13 +44,11 @@ async function refreshTokens(env, refreshToken) {
   if (!refreshToken || !env.SUPABASE_URL) return null;
   const apiKey = env.SUPABASE_ANON_KEY || env.SUPABASE_SERVICE_KEY;
   if (!apiKey) return null;
-
   const response = await fetch(`${env.SUPABASE_URL}/auth/v1/token?grant_type=refresh_token`, {
     method: 'POST',
     headers: { apikey: apiKey, 'Content-Type': 'application/json' },
     body: JSON.stringify({ refresh_token: decodeURIComponent(refreshToken) }),
   });
-
   if (!response.ok) return null;
   const data = await response.json().catch(() => null);
   if (!data?.access_token || !data?.refresh_token) return null;
@@ -98,16 +97,26 @@ async function serviceRpc(env, name, args) {
   return data;
 }
 
-async function verifyAssignedBook(env, userId, bookId) {
+async function assignedBookId(env, userId) {
   const profileResp = await fetch(`${env.SUPABASE_URL}/rest/v1/profiles?id=eq.${encodeURIComponent(userId)}&select=class&limit=1`, {
     headers: { apikey: env.SUPABASE_SERVICE_KEY, Authorization: `Bearer ${env.SUPABASE_SERVICE_KEY}` },
   });
-  if (!profileResp.ok) return false;
+  if (!profileResp.ok) return null;
   const profiles = await profileResp.json().catch(() => []);
   const className = String(profiles?.[0]?.class || '').trim();
-  if (!className) return false;
+  if (!className) return null;
   const assignment = await serviceRpc(env, 'get_study_assignment_for_class', { p_class_name: className });
-  return !!(assignment?.success && assignment?.assignment?.book_id && String(assignment.assignment.book_id) === String(bookId));
+  return assignment?.success && assignment?.assignment?.book_id ? String(assignment.assignment.book_id) : null;
+}
+
+async function validCurriculumUnit(bookId, unitId) {
+  const query = `content_units?id=eq.${encodeURIComponent(unitId)}&book_id=eq.${encodeURIComponent(bookId)}&status=in.(review,published)&select=id&limit=1`;
+  const response = await fetch(`${CONTENT_URL}/rest/v1/${query}`, {
+    headers: { apikey: CONTENT_KEY, Authorization: `Bearer ${CONTENT_KEY}` },
+  });
+  if (!response.ok) return false;
+  const rows = await response.json().catch(() => []);
+  return Array.isArray(rows) && rows.length === 1;
 }
 
 async function handleStudyRoute(request, env) {
@@ -124,13 +133,17 @@ async function handleStudyRoute(request, env) {
     if (section === 'study_attempt') {
       if (request.method !== 'POST') return json({ success: false, error: 'Method Not Allowed' }, 405, origin);
       const body = await request.json().catch(() => ({}));
-      const payload = body?.payload || body?.p_payload || null;
-      if (!payload?.book_id || !payload?.unit_id) return json({ success: false, error: 'Missing study attempt payload' }, 400, origin);
-      if (payload.preview_mode) return json({ success: false, error: 'Preview attempts are not recordable' }, 400, origin);
-      const assigned = await verifyAssignedBook(env, user.id, payload.book_id);
-      if (!assigned) return json({ success: false, error: 'Attempt does not match the student assigned book' }, 409, origin);
+      const incoming = body?.payload || body?.p_payload || null;
+      if (!incoming?.book_id || !incoming?.unit_id) return json({ success: false, error: 'Missing study attempt payload' }, 400, origin);
+      if (incoming.preview_mode) return json({ success: false, error: 'Preview attempts are not recordable' }, 400, origin);
+      if (!(await validCurriculumUnit(incoming.book_id, incoming.unit_id))) {
+        return json({ success: false, error: 'Book/unit is not valid Willena curriculum content' }, 400, origin);
+      }
+      const currentBook = await assignedBookId(env, user.id);
+      const studyContext = currentBook && currentBook === String(incoming.book_id) ? 'current' : 'independent';
+      const payload = { ...incoming, study_context: studyContext };
       const result = await serviceRpc(env, 'record_study_attempt_v1', { p_student_id: user.id, p_payload: payload });
-      return json(result, 200, origin);
+      return json({ ...result, study_context: studyContext }, 200, origin);
     }
 
     if (request.method !== 'GET') return json({ success: false, error: 'Method Not Allowed' }, 405, origin);
