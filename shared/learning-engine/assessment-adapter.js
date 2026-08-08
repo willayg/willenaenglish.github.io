@@ -34,7 +34,10 @@ function fromAssessmentItem(row){
   if(markedCorrect.length&&!(markedCorrect.length===1&&markedCorrect[0]===answer))throw new Error('Assessment item '+(row.source_key||row.id)+' has inconsistent correct-option data.');
   response.choices=choices;
  }
- var stimulus={type:type==='listening'?'audio':'text',prompt:context&&type!=='sentence_unscramble'?context+'\n'+prompt:prompt,context:type==='sentence_unscramble'?context:'',text:''};
+ var visiblePrompt=prompt,visibleContext='';
+ if(type==='sentence_unscramble')visibleContext=context;
+ else if(type!=='listening'&&context)visiblePrompt=context+'\n'+prompt;
+ var stimulus={type:type==='listening'?'audio':'text',prompt:visiblePrompt,context:visibleContext,text:''};
  if(type==='listening'){
   var transcript=clean(metadata.transcript)||context;
   if(!transcript)throw new Error('Listening item '+(row.source_key||row.id)+' has no transcript.');
