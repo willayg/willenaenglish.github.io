@@ -4,7 +4,7 @@ var CONTENT_URL='https://gxwfsqxyuufqtitspfqg.supabase.co';
 var CONTENT_KEY=['sb_publishable_','G-FYhHfDL4OGdL892gY1Zg_','epdbEeqO'].join('');
 var HEADERS={apikey:CONTENT_KEY,Authorization:'Bearer '+CONTENT_KEY};
 var TARGET=12,engine=null,pool=[],queue=[],baseIds=new Set(),settled=new Set(),current=null,answered=false,previousScroll=0;
-var card=document.querySelector('.unit-progress-card'),ring=document.querySelector('.progress-ring'),title=document.getElementById('progressTitle'),copy=document.getElementById('progressCopy');
+var card=document.querySelector('.unit-progress-card'),ring=document.querySelector('.progress-ring'),title=document.getElementById('smartProgressTitle'),copy=document.getElementById('smartProgressCopy'),pctEl=document.getElementById('smartDailyPct');
 var panel=document.getElementById('smartPracticePanel'),root=document.getElementById('smartActivityRoot'),nextBtn=document.getElementById('smartNext'),closeBtn=document.getElementById('smartClose'),countEl=document.getElementById('smartCount');
 function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
 function unique(a){var o=[];a.forEach(function(x){if(x!=null&&o.indexOf(x)<0)o.push(x);});return o;}
@@ -23,7 +23,7 @@ function wrongIds(){var v=readJson(wrongKey(),[]);return Array.isArray(v)?v:[];}
 function rememberWrong(id){writeJson(wrongKey(),unique(wrongIds().concat(id)));}
 function clearWrong(id){writeJson(wrongKey(),wrongIds().filter(function(x){return x!==id;}));}
 function ready(){var c=context();return c.book&&!/^Loading/i.test(c.book)&&unitNumber(c.unit);}
-function paint(){if(!ring)return;var pct=ready()?Math.round(dailyCount()/TARGET*100):0,fill=Math.min(100,pct);ring.style.background='conic-gradient(var(--pink) 0 '+fill+'%,#dff5f7 '+fill+'% 100%)';var s=ring.querySelector('span');if(s)s.textContent=pct+'%';if(title)title.textContent='Smart Study';if(copy)copy.textContent='오늘 목표 '+TARGET+'문항 · 탭해서 시작';}
+function paint(){if(!ring)return;var pct=ready()?Math.round(dailyCount()/TARGET*100):0,fill=Math.min(100,pct);ring.style.background='conic-gradient(var(--pink) 0 '+fill+'%,#dff5f7 '+fill+'% 100%)';if(pctEl)pctEl.textContent=pct+'%';if(title)title.textContent='Smart Study';if(copy)copy.textContent='오늘 목표 '+TARGET+'문항 · 탭해서 시작';}
 async function get(path){var r=await fetch(CONTENT_URL+'/rest/v1/'+path,{headers:HEADERS,cache:'no-store'});if(!r.ok)throw new Error('Content DB '+r.status);return r.json();}
 function cleanTokens(text){return String(text||'').trim().replace(/[.!?]+$/,'').split(/\s+/).filter(Boolean);}
 function letters(text){return String(text||'').toLowerCase().replace(/[^a-z]/g,'').split('');}
