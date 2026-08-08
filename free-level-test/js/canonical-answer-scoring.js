@@ -1,86 +1,48 @@
 (function (global) {
   'use strict';
 
+  function shared() {
+    return global.WillenaActivityScoring || null;
+  }
   function cleanText(value) {
-    return String(value == null ? '' : value)
-      .normalize('NFKC')
-      .replace(/\s+/g, ' ')
-      .trim();
+    var scoring = shared();
+    return scoring ? scoring.cleanText(value) : String(value == null ? '' : value).normalize('NFKC').replace(/\s+/g, ' ').trim();
   }
-
   function sentenceText(value) {
-    if (typeof value === 'string') {
-      var encoded = value.trim();
-      if (encoded.charAt(0) === '[' && encoded.charAt(encoded.length - 1) === ']') {
-        try {
-          var decoded = JSON.parse(encoded);
-          if (Array.isArray(decoded)) value = decoded;
-        } catch (_) {}
-      }
-    }
-    var text = Array.isArray(value) ? value.map(cleanText).join(' ') : cleanText(value);
-    return text
-      .toLocaleLowerCase('en-US')
-      .replace(/[.,!?;:。！？、，；：]+$/gu, '')
-      .replace(/\s+/g, ' ')
-      .trim();
+    var scoring = shared();
+    if (scoring) return scoring.sentenceText(value);
+    return cleanText(Array.isArray(value) ? value.join(' ') : value).toLocaleLowerCase('en-US').replace(/[.,!?;:。！？、，；：]+$/gu, '').trim();
   }
-
-  function exactComparable(value) {
-    if (Array.isArray(value)) return value.map(cleanText);
-    return cleanText(value);
-  }
-
   function isCorrect(type, selected, correct) {
-    if (type === 'sentence_unscramble') {
-      return sentenceText(selected) === sentenceText(correct);
-    }
-    return JSON.stringify(exactComparable(selected)) === JSON.stringify(exactComparable(correct));
+    var scoring = shared();
+    return scoring ? scoring.isCorrect(type, selected, correct) : JSON.stringify(selected) === JSON.stringify(correct);
   }
-
   function firstDefined(row, keys) {
     for (var index = 0; index < keys.length; index += 1) {
       if (row[keys[index]] !== undefined && row[keys[index]] !== null) return row[keys[index]];
     }
     return undefined;
   }
-
   function repairResponse(row) {
     if (!row || typeof row !== 'object') return row;
     var type = firstDefined(row, ['question_type', 'item_type', 'type']);
     var selected = firstDefined(row, ['selected_answer', 'student_answer', 'selected', 'response']);
     var correct = firstDefined(row, ['correct_answer', 'answer', 'expected_answer']);
-
     if (type !== 'sentence_unscramble' || selected === undefined || correct === undefined) return row;
-
     var corrected = isCorrect(type, selected, correct);
     row.is_correct = corrected;
     if ('correct' in row) row.correct = corrected;
     if ('isCorrect' in row) row.isCorrect = corrected;
     return row;
   }
-
-  function repairList(rows) {
-    if (Array.isArray(rows)) rows.forEach(repairResponse);
-  }
-
+  function repairList(rows) { if (Array.isArray(rows)) rows.forEach(repairResponse); }
   function repairPayload(payload) {
     if (!payload || typeof payload !== 'object') return payload;
-    repairList(payload.responses);
-    repairList(payload.answers);
-    repairList(payload.question_results);
-    repairList(payload.attempt && payload.attempt.responses);
-    repairList(payload.report && payload.report.responses);
+    repairList(payload.responses); repairList(payload.answers); repairList(payload.question_results);
+    repairList(payload.attempt && payload.attempt.responses); repairList(payload.report && payload.report.responses);
     return payload;
   }
-
-  global.WillenaLevelTestScoring = {
-    cleanText: cleanText,
-    sentenceText: sentenceText,
-    isCorrect: isCorrect,
-    repairResponse: repairResponse,
-    repairPayload: repairPayload
-  };
+  global.WillenaLevelTestScoring = { cleanText: cleanText, sentenceText: sentenceText, isCorrect: isCorrect, repairResponse: repairResponse, repairPayload: repairPayload };
 
   if (typeof global.fetch === 'function' && !global.__willenaLevelTestScoringFetchInstalled) {
     global.__willenaLevelTestScoringFetchInstalled = true;
@@ -91,9 +53,7 @@
         var requestUrl = String(response.url || (args[0] && args[0].url) || args[0] || '');
         if (requestUrl.indexOf('prospective-level-test') === -1) return response;
         var originalJson = response.json.bind(response);
-        response.json = function () {
-          return originalJson().then(repairPayload);
-        };
+        response.json = function () { return originalJson().then(repairPayload); };
         return response;
       });
     };
