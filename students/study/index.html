@@ -10,34 +10,13 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="./study.css?v=20260808-5">
+<link rel="stylesheet" href="./study.css?v=20260808-6">
 <link rel="stylesheet" href="./spelling.css?v=20260808-1">
 <script src="/students/api-gateway.js?v=20260808-study1"></script>
 <script src="/js/api-config.js?v=20260113c"></script>
 <script type="module" src="/students/components/student-header.js?v=20260808-study1"></script>
 <script>
-(function(){
-  'use strict';
-  var INTERVAL=40*60*1000,lastRefresh=0,timer=null;
-  async function refreshSession(){
-    try{
-      var response=await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=refresh&_='+Date.now(),{credentials:'include',cache:'no-store'});
-      var data=await response.json().catch(function(){return{}});
-      if(!response.ok||!data.success)return false;
-      if(data.access_token&&WillenaAPI.setLocalTokens)WillenaAPI.setLocalTokens(data.access_token,data.refresh_token);
-      lastRefresh=Date.now();
-      window.dispatchEvent(new CustomEvent('auth:changed'));
-      return true;
-    }catch(error){console.debug('[WillenaStudy] background session refresh failed',error);return false;}
-  }
-  function startKeepalive(){
-    if(timer)return;
-    timer=setInterval(refreshSession,INTERVAL);
-    window.addEventListener('focus',function(){if(Date.now()-lastRefresh>INTERVAL/2)refreshSession();});
-    document.addEventListener('visibilitychange',function(){if(!document.hidden&&Date.now()-lastRefresh>INTERVAL/2)refreshSession();});
-  }
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',startKeepalive,{once:true});else startKeepalive();
-})();
+(function(){'use strict';var INTERVAL=40*60*1000,lastRefresh=0,timer=null;async function refreshSession(){try{var response=await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=refresh&_='+Date.now(),{credentials:'include',cache:'no-store'});var data=await response.json().catch(function(){return{}});if(!response.ok||!data.success)return false;if(data.access_token&&WillenaAPI.setLocalTokens)WillenaAPI.setLocalTokens(data.access_token,data.refresh_token);lastRefresh=Date.now();window.dispatchEvent(new CustomEvent('auth:changed'));return true;}catch(error){console.debug('[WillenaStudy] background session refresh failed',error);return false;}}function startKeepalive(){if(timer)return;timer=setInterval(refreshSession,INTERVAL);window.addEventListener('focus',function(){if(Date.now()-lastRefresh>INTERVAL/2)refreshSession();});document.addEventListener('visibilitychange',function(){if(!document.hidden&&Date.now()-lastRefresh>INTERVAL/2)refreshSession();});}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',startKeepalive,{once:true});else startKeepalive();})();
 </script>
 </head>
 <body>
@@ -46,21 +25,57 @@
 <main class="dashboard" id="app">
   <span id="studentGreeting" hidden></span>
   <div class="study-controls"><button id="languageBtn" class="ghost-button" type="button">English</button></div>
+
   <section class="book-hero">
-    <div class="hero-copy"><span class="eyebrow">CURRENT BOOK</span><h1 id="bookTitle">Loading…</h1><p id="unitTitle">Finding your assigned unit</p><div class="hero-actions"><button id="continueBtn" class="primary-button" type="button" disabled>Continue practice</button><button id="changeUnitBtn" class="secondary-button" type="button">Browse units</button></div></div>
-    <div class="unit-progress-card"><div class="progress-ring"><span id="vocabCount">—</span></div><div><strong id="progressTitle">Vocabulary</strong><small id="progressCopy">Connecting to the Willena Content Database…</small></div></div>
+    <div class="hero-copy">
+      <span class="eyebrow">CURRENT BOOK</span>
+      <h1 id="bookTitle">Loading…</h1>
+      <p id="unitTitle">Finding your assigned unit</p>
+      <div class="hero-actions">
+        <button id="continueBtn" class="primary-button" type="button" disabled>단원 공부하기</button>
+        <button id="practiceHeroBtn" class="secondary-button" type="button">연습하기</button>
+        <button id="changeUnitBtn" class="secondary-button" type="button">단원 보기</button>
+      </div>
+    </div>
+    <div class="unit-progress-card">
+      <div class="progress-ring"><span id="vocabCount">—</span></div>
+      <div><strong id="progressTitle">학습 내용</strong><small id="progressCopy">Connecting to the Willena Content Database…</small></div>
+    </div>
   </section>
-  <section class="section-block"><div class="section-heading"><div><span class="eyebrow">PRACTICE</span><h2>Choose a skill</h2></div><span class="section-note" id="contentStatus">Loading real unit content…</span></div><div class="skill-grid" id="skillGrid"></div></section>
+
+  <section class="learning-map-section">
+    <div class="section-heading"><div><span class="eyebrow">UNIT GUIDE</span><h2 id="learnMapHeading">이번 단원에서 배울 내용</h2></div></div>
+    <div class="learning-map" id="learningMap"><div class="study-loading">Loading lesson…</div></div>
+  </section>
+
+  <section id="studyPanel" class="study-panel" hidden>
+    <div class="study-panel-top">
+      <button id="closeStudy" class="ghost-button" type="button">← 뒤로</button>
+      <div><span class="eyebrow">STUDY</span><h2>단원 공부</h2></div>
+    </div>
+    <div class="study-tabs" id="studyTabs"></div>
+    <div class="study-content" id="studyContent"></div>
+  </section>
+
+  <section class="section-block">
+    <div class="section-heading"><div><span class="eyebrow">PRACTICE</span><h2>연습할 영역을 선택하세요</h2></div><span class="section-note" id="contentStatus">Loading real unit content…</span></div>
+    <div class="skill-grid" id="skillGrid"></div>
+  </section>
+
   <section class="lower-grid">
     <article class="panel"><div class="panel-heading"><div><span class="eyebrow">UNIT WORDS</span><h2>Vocabulary preview</h2></div></div><div class="review-list" id="vocabPreview"><div class="study-loading">Loading vocabulary…</div></div></article>
-    <article class="panel"><div class="panel-heading"><div><span class="eyebrow">CONNECTED</span><h2>Data source</h2></div></div><div class="mini-stats"><div><strong id="unitWordCount">—</strong><span>Words</span></div><div><strong id="unitNumberStat">—</strong><span>Unit</span></div><div><strong id="classStat">—</strong><span>Class</span></div></div><div class="streak"><span>✓</span><div><strong id="connectionTitle">Connecting…</strong><small id="connectionCopy">Student assignment + Content DB vocabulary</small></div></div></article>
+    <article class="panel"><div class="panel-heading"><div><span class="eyebrow">CONNECTED</span><h2>Data source</h2></div></div><div class="mini-stats"><div><strong id="unitWordCount">—</strong><span>Words</span></div><div><strong id="unitNumberStat">—</strong><span>Unit</span></div><div><strong id="classStat">—</strong><span>Class</span></div></div><div class="streak"><span>✓</span><div><strong id="connectionTitle">Connecting…</strong><small id="connectionCopy">Student assignment + Content DB curriculum</small></div></div></article>
   </section>
-  <section id="practicePanel" class="practice-panel" hidden><div class="practice-toolbar"><button id="closePractice" class="ghost-button" type="button">← Back</button><div><span id="practiceSkill" class="eyebrow">VOCABULARY</span><h2 id="practiceTitle">Practice</h2></div><button id="nextActivity" class="secondary-button" type="button">Next</button></div><div id="activityRoot"></div></section>
+
+  <section id="practicePanel" class="practice-panel" hidden>
+    <div class="practice-toolbar"><button id="closePractice" class="ghost-button" type="button">← 뒤로</button><div><span id="practiceSkill" class="eyebrow">VOCABULARY</span><h2 id="practiceTitle">Practice</h2></div><button id="nextActivity" class="secondary-button" type="button">다음</button></div>
+    <div id="activityRoot"></div>
+  </section>
 </main>
 </div>
 <script src="/shared/learning-engine/activity-schema.js?v=20260808-3"></script>
 <script src="/shared/learning-engine/scoring.js?v=20260808-2"></script>
 <script src="/shared/learning-engine/engine.js?v=20260808-3"></script>
-<script src="./study.js?v=20260808-11"></script>
+<script src="./study.js?v=20260808-12"></script>
 </body>
 </html>
