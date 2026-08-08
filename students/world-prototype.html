@@ -1,124 +1,206 @@
 <!doctype html>
 <html lang="ko">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Willena World Prototype</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Willena Student Dashboard Prototype</title>
+  <link rel="icon" href="/Assets/Images/Logo.png?v=20260730-3">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <script src="/students/api-gateway.js"></script>
   <script src="/js/api-config.js?v=20260113c"></script>
   <script type="module" src="/students/components/student-header.js"></script>
   <script src="/students/language.js"></script>
   <script src="/students/theme.js"></script>
-  <meta name="robots" content="noindex" />
   <style>
+    :root{
+      --cyan:#66d6df;
+      --cyan-strong:#25b8c4;
+      --cyan-border:#5ed8df;
+      --cyan-soft:#e9fbfc;
+      --pink:#ff0a8a;
+      --pink-dark:#e60076;
+      --ink:#214b57;
+      --muted:#72818e;
+      --line:#cceff2;
+      --paper:#fff;
+      --shadow:0 22px 54px rgba(39,118,127,.16);
+    }
     *{box-sizing:border-box}
-    :root{--ink:#173f46;--muted:#718388;--teal:#27b7c2;--teal-dark:#197f88;--paper:#fff;--dark:#26383e;--purple:#8069cf;--orange:#dc9145;--green:#43a775}
-    html,body{margin:0;min-height:100%;font-family:Poppins,sans-serif;background:#e9f8f8;color:var(--ink)}
-    body{padding-bottom:86px;overflow-x:hidden}
-    button,a{font:inherit}
-    .page{max-width:1000px;margin:0 auto;padding:20px 16px 34px}
-    .hero{position:relative;overflow:hidden;min-height:232px;border-radius:32px;padding:26px;background:radial-gradient(circle at 82% 16%,rgba(255,255,255,.96) 0 8%,transparent 8.5%),radial-gradient(circle at 94% 37%,rgba(255,255,255,.65) 0 5%,transparent 5.5%),linear-gradient(145deg,#7fdbe3,#c4efdf);box-shadow:0 18px 44px rgba(43,105,105,.13)}
-    .hero:after{content:"";position:absolute;width:520px;height:175px;border-radius:50%;right:-130px;bottom:-105px;background:#75c99e;opacity:.58;transform:rotate(-7deg)}
-    .eyebrow{position:relative;z-index:2;font-size:11px;font-weight:800;letter-spacing:.1em;color:#34777c;text-transform:uppercase}
-    .hero h1{position:relative;z-index:2;font-family:"Space Grotesk",Poppins,sans-serif;font-size:clamp(35px,6vw,56px);line-height:.98;letter-spacing:-.055em;margin:7px 0 10px;color:#167b84}
-    .hero p{position:relative;z-index:2;max-width:540px;margin:0;color:#55777b;line-height:1.55;font-size:14px}
-    .course{position:relative;z-index:2;display:inline-flex;align-items:center;gap:11px;margin-top:21px;padding:9px 15px 9px 9px;border-radius:17px;background:rgba(255,255,255,.9);box-shadow:0 8px 22px rgba(47,101,98,.1)}
-    .course-ico{width:42px;height:42px;border-radius:13px;display:grid;place-items:center;background:#e7f8f6;color:#25aeb7}
-    .course-ico svg{width:23px;height:23px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-    .course small{display:block;font-size:10px;color:#819094}.course strong{display:block;font-size:13px}
-    .section-head{display:flex;justify-content:space-between;align-items:end;margin:28px 3px 12px}.section-head h2{margin:0;font-size:20px;letter-spacing:-.025em}.section-head span{font-size:11px;color:#829195}
-    .destinations{display:grid;grid-template-columns:1.15fr .85fr;gap:14px}
-    .card{position:relative;display:block;width:100%;overflow:hidden;border:0;border-radius:27px;background:#fff;padding:21px;text-align:left;color:var(--ink);text-decoration:none;box-shadow:0 10px 30px rgba(42,89,89,.08);transition:.18s ease;cursor:pointer}
-    .card:hover{transform:translateY(-3px);box-shadow:0 16px 34px rgba(42,89,89,.13)}
-    .card-icon{width:52px;height:52px;border-radius:18px;display:grid;place-items:center;margin-bottom:18px}.card-icon svg{width:27px;height:27px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-    .card strong{display:block;font-size:19px;line-height:1.15}.card small{display:block;margin-top:6px;max-width:310px;color:#74868a;font-size:12px;line-height:1.45}
-    .arrow{position:absolute;right:19px;top:19px;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:#f0f8f8;color:#28afb8}.arrow svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
-    .study{min-height:238px;grid-row:span 2;background:radial-gradient(circle at 85% 18%,rgba(133,106,206,.11) 0 17%,transparent 17.5%),linear-gradient(145deg,#fff,#f8f5ff)}.study .card-icon{background:#eee8ff;color:#795fc6}.study .book-progress{position:absolute;left:21px;right:21px;bottom:20px}.book-line{display:flex;justify-content:space-between;margin-bottom:7px;color:#819095;font-size:10px}.mini-bar,.big-bar{height:9px;border-radius:99px;background:#eaf0ef;overflow:hidden}.mini-bar span{display:block;width:63%;height:100%;border-radius:99px;background:linear-gradient(90deg,#6dd2d8,#8067ce)}
-    .level,.games{min-height:112px}.level .card-icon{background:#fff0dc;color:#cb7d2f}.games .card-icon{background:#e7f8ef;color:#3b9e6d}
-    .arcade{margin-top:14px;min-height:154px;background:radial-gradient(circle at 89% 25%,rgba(74,213,222,.13) 0 22%,transparent 22.5%),linear-gradient(135deg,#293a40,#203137);color:#fff;border:2px solid #51cfd7}.arcade .card-icon{margin-bottom:14px;background:#354b50;color:#72eef2}.arcade .arrow{background:#34494f;color:#76e6eb}.arcade small{color:#c7d5d7}.arcade strong{font-size:21px}
-    .progress-card{background:#fff;border-radius:27px;padding:21px;box-shadow:0 10px 30px rgba(42,89,89,.08)}.progress-top{display:flex;align-items:center;gap:15px}.progress-icon{width:55px;height:55px;flex:0 0 55px;border-radius:19px;display:grid;place-items:center;background:#e7f9fa;color:#26b4bd}.progress-icon svg{width:28px;height:28px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round}.progress-copy{flex:1}.progress-copy small{color:#849397;font-size:10px}.progress-copy strong{display:block;font-size:18px}.score{text-align:right}.score strong{font-size:20px;color:#237f87}.score span{display:block;color:#869599;font-size:10px}.big-bar{margin-top:17px}.big-bar span{display:block;width:72%;height:100%;border-radius:99px;background:linear-gradient(90deg,#51cbd4,#806ad0)}
-    .stats{display:grid;grid-template-columns:repeat(3,1fr);margin-top:16px;padding-top:15px;border-top:1px solid #edf1f1}.stat{text-align:center;border-right:1px solid #edf1f1}.stat:last-child{border-right:0}.stat strong{display:block;font-size:17px}.stat small{color:#879598;font-size:10px}
-    .quick{display:grid;grid-template-columns:repeat(3,1fr);gap:11px;margin-top:14px}.quick a{display:block;border-radius:22px;padding:16px 8px;background:#fff;color:#48666b;text-align:center;text-decoration:none;box-shadow:0 8px 22px rgba(42,89,89,.065)}.quick svg{width:24px;height:24px;display:block;margin:0 auto 7px;fill:none;stroke:#26b4bd;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}.quick span{font-size:11px;font-weight:700}
-    .footer{position:fixed;z-index:50;left:0;right:0;bottom:0;height:78px;padding-bottom:env(safe-area-inset-bottom);display:flex;justify-content:center;background:rgba(255,255,255,.97);border-top:1px solid #e0ebeb;box-shadow:0 -8px 28px rgba(32,75,78,.06);backdrop-filter:blur(18px)}.footer-inner{width:min(700px,100%);height:100%;display:grid;grid-template-columns:repeat(4,1fr)}.nav{position:relative;border:0;background:transparent;color:#7c8b8f;text-decoration:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px}.nav svg{width:23px;height:23px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}.nav span{font-size:10px;font-weight:700}.nav.active{color:#24b6c0}.nav.active:before{content:"";position:absolute;top:6px;width:34px;height:4px;border-radius:99px;background:#28bcc5}
-    @media(max-width:640px){body{padding-bottom:80px}.page{padding:15px 13px 26px}.hero{min-height:215px;border-radius:27px;padding:22px 20px}.hero h1{font-size:39px}.destinations{grid-template-columns:1fr 1fr}.study{grid-column:1/-1;grid-row:auto;min-height:215px}.level,.games{min-height:174px;padding:18px}.level .card-icon,.games .card-icon{margin-bottom:24px}.card{border-radius:24px}.card strong{font-size:17px}.card small{font-size:11px}.arcade{min-height:145px}.score{display:none}.footer{height:75px}}
+    html,body{margin:0;min-height:100%;font-family:Poppins,system-ui,sans-serif;color:var(--ink)}
+    body{min-height:100vh;background:linear-gradient(145deg,#73dce4 0%,#64d3dc 52%,#74d2d5 100%);padding-bottom:82px;overflow-x:hidden}
+    a,button{font:inherit}
+    .shell{width:min(980px,100%);margin:0 auto;padding:20px 16px 28px}
+    .surface{background:#fff;border-radius:32px;box-shadow:var(--shadow);border:1px solid rgba(255,255,255,.8);padding:clamp(20px,4vw,38px)}
+    .intro{display:flex;gap:18px;justify-content:space-between;align-items:flex-start;margin-bottom:26px}
+    .eyebrow{display:inline-flex;background:var(--cyan-soft);color:var(--pink);padding:8px 12px;border-radius:999px;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.02em}
+    h1{font-size:clamp(32px,6vw,52px);line-height:1.03;letter-spacing:-.045em;margin:14px 0 10px;color:var(--cyan-strong)}
+    .lead{margin:0;color:var(--muted);font-size:15px;line-height:1.6;max-width:620px}
+    .today{min-width:210px;border:3px solid var(--cyan-border);border-radius:18px;padding:14px 16px;background:#fff;box-shadow:0 10px 24px rgba(46,150,161,.08)}
+    .today small{display:block;color:var(--muted);font-size:11px;font-weight:700}
+    .today strong{display:block;margin-top:3px;color:var(--ink);font-size:15px}
+    .section{margin-top:24px}
+    .section-head{display:flex;justify-content:space-between;align-items:end;gap:12px;margin-bottom:12px}
+    .section-head h2{margin:0;color:var(--cyan-strong);font-size:clamp(21px,3vw,28px);letter-spacing:-.03em}
+    .section-head span{color:var(--muted);font-size:11px;font-weight:700}
+    .primary-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+    .feature{position:relative;min-height:156px;padding:20px;border:3px solid var(--cyan-border);border-radius:20px;background:#fff;text-decoration:none;color:var(--ink);box-shadow:0 10px 24px rgba(46,150,161,.08);transition:transform .16s ease,border-color .16s ease,background .16s ease,box-shadow .16s ease}
+    .feature:hover{transform:translateY(-2px);border-color:var(--cyan-strong);background:var(--cyan-soft);box-shadow:0 14px 30px rgba(46,150,161,.14)}
+    .feature.wide{grid-column:span 2;min-height:170px}
+    .feature.hot{border-color:var(--pink);background:#fff7fb}
+    .feature.hot:hover{background:#fff0f7;border-color:var(--pink-dark)}
+    .feature-icon{width:54px;height:54px;border-radius:17px;background:var(--cyan-soft);color:var(--cyan-strong);display:grid;place-items:center;margin-bottom:17px}
+    .feature.hot .feature-icon{background:#ffe9f4;color:var(--pink)}
+    .feature-icon svg{width:29px;height:29px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    .feature strong{display:block;font-size:20px;line-height:1.15}
+    .feature p{margin:7px 0 0;color:var(--muted);font-size:12px;line-height:1.5;max-width:500px}
+    .chev{position:absolute;top:18px;right:18px;color:var(--pink);font-size:24px;font-weight:800}
+    .tag{display:inline-flex;margin-top:12px;padding:6px 10px;border-radius:999px;background:var(--cyan-soft);color:var(--cyan-strong);font-size:10px;font-weight:800}
+    .feature.hot .tag{background:#ffe9f4;color:var(--pink-dark)}
+    .progress-card{border:3px solid var(--cyan-border);border-radius:20px;padding:18px 20px;background:#fff;box-shadow:0 10px 24px rgba(46,150,161,.08)}
+    .progress-top{display:flex;align-items:center;gap:14px}
+    .progress-badge{width:52px;height:52px;flex:0 0 52px;border-radius:16px;background:var(--cyan-soft);color:var(--cyan-strong);display:grid;place-items:center}
+    .progress-badge svg{width:27px;height:27px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    .progress-copy{flex:1}
+    .progress-copy small{display:block;color:var(--muted);font-size:10px;font-weight:800}
+    .progress-copy strong{display:block;font-size:18px}
+    .progress-score{font-size:22px;font-weight:800;color:var(--pink)}
+    .bar{height:11px;margin:16px 0 14px;border-radius:999px;background:#e5f7f8;overflow:hidden}
+    .bar i{display:block;height:100%;width:72%;border-radius:999px;background:linear-gradient(90deg,var(--cyan-strong),var(--pink))}
+    .stats{display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--line);padding-top:14px}
+    .stat{text-align:center;border-right:1px solid var(--line)}
+    .stat:last-child{border-right:0}
+    .stat strong{display:block;font-size:17px;color:var(--ink)}
+    .stat span{display:block;color:var(--muted);font-size:10px;margin-top:2px}
+    .mini-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+    .mini{min-height:108px;padding:15px 12px;border:3px solid var(--cyan-border);border-radius:18px;background:#fff;color:var(--ink);text-decoration:none;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;box-shadow:0 8px 20px rgba(46,150,161,.07)}
+    .mini:hover{background:var(--cyan-soft);border-color:var(--cyan-strong)}
+    .mini svg{width:25px;height:25px;margin-bottom:8px;fill:none;stroke:var(--cyan-strong);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    .mini strong{font-size:12px}
+    .footer-nav{position:fixed;left:0;right:0;bottom:0;height:76px;background:rgba(255,255,255,.97);border-top:1px solid rgba(94,216,223,.45);box-shadow:0 -8px 24px rgba(39,118,127,.10);z-index:40;display:flex;justify-content:center;padding-bottom:env(safe-area-inset-bottom)}
+    .footer-inner{width:min(680px,100%);display:grid;grid-template-columns:repeat(4,1fr)}
+    .nav-item{position:relative;color:#7c8b8f;text-decoration:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:10px;font-weight:800}
+    .nav-item svg{width:23px;height:23px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    .nav-item.active{color:var(--pink)}
+    .nav-item.active:before{content:"";position:absolute;top:5px;width:34px;height:4px;border-radius:999px;background:linear-gradient(90deg,var(--cyan-strong),var(--pink))}
+    @media(max-width:700px){
+      .shell{padding:12px}
+      .surface{padding:20px 14px;border-radius:24px}
+      .intro{display:block}
+      .today{margin-top:18px;width:100%;min-width:0}
+      .primary-grid{grid-template-columns:1fr}
+      .feature.wide{grid-column:auto}
+      .feature{min-height:142px;border-width:2px}
+      .mini-grid{grid-template-columns:repeat(2,1fr)}
+      .progress-card{border-width:2px}
+      .footer-nav{height:74px}
+    }
   </style>
 </head>
 <body>
-  <student-header title="Willena World" show-id="false" show-home="false" show-points="true"></student-header>
+  <student-header title="Dashboard" show-id="false" show-home="false" show-points="true"></student-header>
 
-  <main class="page">
-    <section class="hero">
-      <div class="eyebrow">Willena Learning World</div>
-      <h1>오늘은 어디로 갈까요?</h1>
-      <p>공부를 계속하거나, 레벨을 확인하거나, 게임으로 영어를 연습해 보세요.</p>
-      <div class="course">
-        <div class="course-ico"><svg viewBox="0 0 24 24"><path d="M4 5.5A3.5 3.5 0 0 1 7.5 2H11v17H7.5A3.5 3.5 0 0 0 4 22z"/><path d="M20 5.5A3.5 3.5 0 0 0 16.5 2H13v17h3.5A3.5 3.5 0 0 1 20 22z"/></svg></div>
-        <div><small>현재 학습</small><strong>English Bus 6 · Unit 4</strong></div>
+  <main class="shell">
+    <section class="surface">
+      <div class="intro">
+        <div>
+          <span class="eyebrow">Willena Student</span>
+          <h1>What do you want to do?</h1>
+          <p class="lead">Continue your class work, take a level test, play a game, or check your progress.</p>
+        </div>
+        <div class="today">
+          <small>CURRENT CLASS</small>
+          <strong>English Bus 6 · Unit 4</strong>
+        </div>
       </div>
-    </section>
 
-    <div class="section-head"><h2>학습 월드</h2><span>원하는 곳을 선택하세요</span></div>
-    <section class="destinations">
-      <a class="card study" href="/students/dashboard.html">
-        <span class="arrow"><svg viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></svg></span>
-        <div class="card-icon"><svg viewBox="0 0 24 24"><path d="M3 5.5A3.5 3.5 0 0 1 6.5 2H11v17H6.5A3.5 3.5 0 0 0 3 22z"/><path d="M21 5.5A3.5 3.5 0 0 0 17.5 2H13v17h4.5A3.5 3.5 0 0 1 21 22z"/></svg></div>
-        <strong>공부하기</strong><small>현재 교재를 계속하거나 단원과 스킬을 직접 선택하세요.</small>
-        <div class="book-progress"><div class="book-line"><span>English Bus 6</span><b>63%</b></div><div class="mini-bar"><span></span></div></div>
-      </a>
-      <a class="card level" href="/students/level-test/">
-        <span class="arrow"><svg viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></svg></span>
-        <div class="card-icon"><svg viewBox="0 0 24 24"><path d="M7 3h10v18H7z"/><path d="m10 11 2 2 4-4"/><path d="M10 17h4"/></svg></div>
-        <strong>레벨 테스트</strong><small>영어 실력을 확인하고 학습 레벨을 업데이트해요.</small>
-      </a>
-      <a class="card games" href="/Games/english_arcade/emoji-match.html">
-        <span class="arrow"><svg viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></svg></span>
-        <div class="card-icon"><svg viewBox="0 0 24 24"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2L12 17.3 6.4 20.2 7.5 14 3 9.6l6.2-.9z"/></svg></div>
-        <strong>게임 모음</strong><small>Mix Match와 새롭게 추가된 게임들을 만나보세요.</small>
-      </a>
-    </section>
+      <section class="section">
+        <div class="section-head"><h2>Learn</h2><span>Choose an activity</span></div>
+        <div class="primary-grid">
+          <a class="feature wide" href="/students/dashboard.html">
+            <span class="chev">›</span>
+            <div class="feature-icon"><svg viewBox="0 0 24 24"><path d="M4 5.5A3.5 3.5 0 0 1 7.5 2H11v17H7.5A3.5 3.5 0 0 0 4 22z"/><path d="M20 5.5A3.5 3.5 0 0 0 16.5 2H13v17h3.5A3.5 3.5 0 0 1 20 22z"/></svg></div>
+            <strong>Continue Study</strong>
+            <p>Open your current course, review your book, or choose a skill to practise.</p>
+            <span class="tag">English Bus 6</span>
+          </a>
 
-    <a class="card arcade" href="/Games/english_arcade/index.html">
-      <span class="arrow"><svg viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></svg></span>
-      <div class="card-icon"><svg viewBox="0 0 24 24"><path d="M7 8h10l3 9a2 2 0 0 1-3.5 1.8L14 16h-4l-2.5 2.8A2 2 0 0 1 4 17z"/><path d="M8 12h4M10 10v4"/><circle cx="16" cy="11" r="1"/><circle cx="18" cy="13" r="1"/></svg></div>
-      <strong>잉글리시 아케이드</strong><small>빠른 게임, 문법 배틀, 점수 챌린지로 영어를 연습하세요.</small>
-    </a>
+          <a class="feature hot" href="/students/level-test/">
+            <span class="chev">›</span>
+            <div class="feature-icon"><svg viewBox="0 0 24 24"><path d="M7 3h10v18H7z"/><path d="m10 11 2 2 4-4"/><path d="M10 17h4"/></svg></div>
+            <strong>Level Test</strong>
+            <p>Check your English level and update your student profile.</p>
+            <span class="tag">Assessment</span>
+          </a>
 
-    <div class="section-head"><h2>내 학습 기록</h2><span>이번 주</span></div>
-    <section class="progress-card">
-      <div class="progress-top">
-        <div class="progress-icon"><svg viewBox="0 0 24 24"><path d="M5 20V10M12 20V4M19 20V7"/></svg></div>
-        <div class="progress-copy"><small>WEEKLY GOAL</small><strong>72% 완료</strong></div>
-        <div class="score"><strong>82%</strong><span>정답률</span></div>
-      </div>
-      <div class="big-bar"><span></span></div>
-      <div class="stats"><div class="stat"><strong>186</strong><small>문제</small></div><div class="stat"><strong>82%</strong><small>정답률</small></div><div class="stat"><strong>4일</strong><small>연속 학습</small></div></div>
-    </section>
+          <a class="feature" href="/Games/english_arcade/index.html">
+            <span class="chev">›</span>
+            <div class="feature-icon"><svg viewBox="0 0 24 24"><path d="M7 8h10l3 9a2 2 0 0 1-3.5 1.8L14 16h-4l-2.5 2.8A2 2 0 0 1 4 17z"/><path d="M8 12h4M10 10v4"/><circle cx="16" cy="11" r="1"/><circle cx="18" cy="13" r="1"/></svg></div>
+            <strong>English Arcade</strong>
+            <p>Grammar battles, vocabulary games, listening and score attacks.</p>
+            <span class="tag">Games</span>
+          </a>
 
-    <section class="quick">
-      <a href="/students/dashboard.html"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span>최근 학습</span></a>
-      <a href="/students/profile.html"><svg viewBox="0 0 24 24"><path d="M4 5h16v14H4zM8 9h8M8 13h5"/></svg><span>결과 보기</span></a>
-      <a href="/students/profile.html"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3"/><path d="M6 20c.7-4 3-6 6-6s5.3 2 6 6"/></svg><span>내 프로필</span></a>
+          <a class="feature" href="/Games/english_arcade/emoji-match.html?autostart=1">
+            <span class="chev">›</span>
+            <div class="feature-icon"><svg viewBox="0 0 24 24"><path d="M8 7h8M8 12h8M8 17h5"/><path d="M5 5h14v14H5z"/></svg></div>
+            <strong>Mix Match</strong>
+            <p>Jump straight into the fast matching game.</p>
+            <span class="tag">Quick Play</span>
+          </a>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-head"><h2>Your Progress</h2><span>This week</span></div>
+        <div class="progress-card">
+          <div class="progress-top">
+            <div class="progress-badge"><svg viewBox="0 0 24 24"><path d="M5 20V10M12 20V4M19 20V7"/></svg></div>
+            <div class="progress-copy"><small>WEEKLY GOAL</small><strong>72% complete</strong></div>
+            <div class="progress-score">82%</div>
+          </div>
+          <div class="bar"><i></i></div>
+          <div class="stats">
+            <div class="stat"><strong>186</strong><span>Questions</span></div>
+            <div class="stat"><strong>82%</strong><span>Accuracy</span></div>
+            <div class="stat"><strong>4 days</strong><span>Streak</span></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-head"><h2>More</h2><span>Student tools</span></div>
+        <div class="mini-grid">
+          <a class="mini" href="/students/profile.html"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3"/><path d="M6 20c.7-4 3-6 6-6s5.3 2 6 6"/></svg><strong>Profile</strong></a>
+          <a class="mini" href="/students/dashboard.html#starsLeaderboardCard"><svg viewBox="0 0 24 24"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2L12 17.3 6.4 20.2 7.5 14 3 9.6l6.2-.9z"/></svg><strong>Class Leaders</strong></a>
+          <a class="mini" href="/students/dashboard.html#globalLeaderboardCard"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"/></svg><strong>Willena Leaders</strong></a>
+          <a class="mini" href="/students/dashboard.html"><svg viewBox="0 0 24 24"><path d="M4 5h16v14H4zM8 9h8M8 13h5"/></svg><strong>Settings</strong></a>
+        </div>
+      </section>
     </section>
   </main>
 
-  <nav class="footer" aria-label="Student navigation"><div class="footer-inner">
-    <a class="nav active" href="/students/world-prototype.html"><svg viewBox="0 0 24 24"><path d="M3 11 12 3l9 8M5 10v10h14V10M9 20v-6h6v6"/></svg><span>홈</span></a>
-    <a class="nav" href="/students/dashboard.html"><svg viewBox="0 0 24 24"><path d="M4 5.5A3.5 3.5 0 0 1 7.5 2H11v17H7.5A3.5 3.5 0 0 0 4 22z"/><path d="M20 5.5A3.5 3.5 0 0 0 16.5 2H13v17h3.5A3.5 3.5 0 0 1 20 22z"/></svg><span>공부</span></a>
-    <a class="nav" href="/Games/english_arcade/index.html"><svg viewBox="0 0 24 24"><path d="M7 8h10l3 9a2 2 0 0 1-3.5 1.8L14 16h-4l-2.5 2.8A2 2 0 0 1 4 17z"/><path d="M8 12h4M10 10v4"/><circle cx="16" cy="11" r="1"/><circle cx="18" cy="13" r="1"/></svg><span>게임</span></a>
-    <a class="nav" href="/students/profile.html"><svg viewBox="0 0 24 24"><path d="M5 20V10M12 20V4M19 20V7"/></svg><span>기록</span></a>
-  </div></nav>
+  <nav class="footer-nav" aria-label="Student navigation">
+    <div class="footer-inner">
+      <a class="nav-item active" href="/students/world-prototype.html"><svg viewBox="0 0 24 24"><path d="M3 11 12 3l9 8M5 10v10h14V10M9 20v-6h6v6"/></svg><span>Home</span></a>
+      <a class="nav-item" href="/students/dashboard.html"><svg viewBox="0 0 24 24"><path d="M4 5.5A3.5 3.5 0 0 1 7.5 2H11v17H7.5A3.5 3.5 0 0 0 4 22z"/><path d="M20 5.5A3.5 3.5 0 0 0 16.5 2H13v17h3.5A3.5 3.5 0 0 1 20 22z"/></svg><span>Study</span></a>
+      <a class="nav-item" href="/Games/english_arcade/index.html"><svg viewBox="0 0 24 24"><path d="M7 8h10l3 9a2 2 0 0 1-3.5 1.8L14 16h-4l-2.5 2.8A2 2 0 0 1 4 17z"/><path d="M8 12h4M10 10v4"/><circle cx="16" cy="11" r="1"/><circle cx="18" cy="13" r="1"/></svg><span>Games</span></a>
+      <a class="nav-item" href="/students/profile.html"><svg viewBox="0 0 24 24"><path d="M5 20V10M12 20V4M19 20V7"/></svg><span>Progress</span></a>
+    </div>
+  </nav>
 
   <script>
     document.addEventListener('DOMContentLoaded', async () => {
       try {
         const res = await WillenaAPI.fetch(`/.netlify/functions/supabase_auth?action=whoami&_=${Date.now()}`);
         const who = await res.json();
-        if (!who || !who.success) location.replace('/students/signin.html?next=' + encodeURIComponent(location.pathname));
+        if (!who || !who.success) {
+          location.replace('/students/signin.html?next=' + encodeURIComponent(location.pathname));
+        }
       } catch (err) {
-        console.error('[World Prototype] Auth check failed:', err);
+        console.error('[Dashboard Prototype] Auth check failed:', err);
         location.replace('/students/signin.html?next=' + encodeURIComponent(location.pathname));
       }
     });
