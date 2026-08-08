@@ -19,7 +19,8 @@ ActivityEngine.prototype.render=function(){
   card.appendChild(listen);
  }
  var response=a.response||{},type=response.type;
- if(type==='sentence_unscramble'||type==='token_order')this.renderTokenOrder(card,response.tokens||[]);
+ if(type==='letter_order')this.renderLetterOrder(card,response.tokens||[],response.wordLengths||[]);
+ else if(type==='sentence_unscramble'||type==='token_order')this.renderTokenOrder(card,response.tokens||[]);
  else if(type==='typed_answer'||type==='gap_fill_text')this.renderTextInput(card,type);
  else this.renderChoices(card,response.choices||[]);
  var feedback=el('div','activity-feedback');feedback.hidden=true;card.appendChild(feedback);
@@ -33,12 +34,20 @@ ActivityEngine.prototype.renderChoices=function(card,choices){
  card.appendChild(wrap);
 };
 ActivityEngine.prototype.renderTextInput=function(card,type){
- var input=el('input','activity-input');input.type='text';input.autocomplete='off';input.spellcheck=false;input.placeholder=type==='gap_fill_text'?'Type the missing word or phrase':'Type your answer';var self=this;input.addEventListener('input',function(){self.selected=input.value;card.querySelector('.activity-check').disabled=!input.value.trim();});input.addEventListener('keydown',function(e){if(e.key==='Enter'&&!card.querySelector('.activity-check').disabled)card.querySelector('.activity-check').click();});card.appendChild(input);
+ var input=el('input','activity-input');input.type='text';input.autocomplete='off';input.setAttribute('autocorrect','off');input.setAttribute('autocapitalize','none');input.spellcheck=false;input.placeholder=type==='gap_fill_text'?'Type the missing word or phrase':'Type your answer';var self=this;input.addEventListener('input',function(){self.selected=input.value;card.querySelector('.activity-check').disabled=!input.value.trim();});input.addEventListener('keydown',function(e){if(e.key==='Enter'&&!card.querySelector('.activity-check').disabled)card.querySelector('.activity-check').click();});card.appendChild(input);
 };
 ActivityEngine.prototype.renderTokenOrder=function(card,tokens){
  var self=this,chosen=[],bank=shuffle(tokens.map(function(t,i){return{text:String(t),id:i+'-'+Math.random()};}));
  var answer=el('div','activity-token-answer'),pool=el('div','activity-token-bank');card.appendChild(answer);card.appendChild(pool);
  function draw(){answer.innerHTML='';pool.innerHTML='';chosen.forEach(function(item,index){var b=el('button','activity-token is-chosen',item.text);b.type='button';b.addEventListener('click',function(){chosen.splice(index,1);draw();});answer.appendChild(b);});bank.filter(function(item){return chosen.indexOf(item)<0;}).forEach(function(item){var b=el('button','activity-token',item.text);b.type='button';b.addEventListener('click',function(){chosen.push(item);draw();});pool.appendChild(b);});self.selected=chosen.map(function(item){return item.text;});card.querySelector('.activity-check').disabled=chosen.length!==bank.length;}
+ draw();
+};
+ActivityEngine.prototype.renderLetterOrder=function(card,tokens,wordLengths){
+ var self=this,chosen=[],bank=shuffle(tokens.map(function(t,i){return{text:String(t),id:i+'-'+Math.random()};}));
+ var wrap=el('div','activity-letter-order'),slots=el('div','activity-letter-slots'),pool=el('div','activity-letter-bank');wrap.appendChild(slots);wrap.appendChild(pool);card.appendChild(wrap);
+ var lengths=Array.isArray(wordLengths)&&wordLengths.length?wordLengths.slice():[tokens.length];
+ function drawSlots(){slots.innerHTML='';var cursor=0;lengths.forEach(function(length,wordIndex){var row=el('div','activity-letter-word');for(var i=0;i<Number(length||0);i++){var slot=el('button','activity-letter-slot',chosen[cursor]?chosen[cursor].text:'');slot.type='button';slot.disabled=!chosen[cursor];(function(index){slot.addEventListener('click',function(){if(chosen[index]){chosen.splice(index,1);draw();}});})(cursor);row.appendChild(slot);cursor++;}slots.appendChild(row);if(wordIndex<lengths.length-1)slots.appendChild(el('span','activity-letter-space',' '));});}
+ function draw(){drawSlots();pool.innerHTML='';bank.filter(function(item){return chosen.indexOf(item)<0;}).forEach(function(item){var b=el('button','activity-letter-tile',item.text.toUpperCase());b.type='button';b.addEventListener('click',function(){chosen.push(item);draw();});pool.appendChild(b);});self.selected=chosen.map(function(item){return item.text;});card.querySelector('.activity-check').disabled=chosen.length!==bank.length;}
  draw();
 };
 ActivityEngine.prototype.check=function(feedback,button){
