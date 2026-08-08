@@ -7,12 +7,13 @@ function pct(value){var n=Number(value);return Number.isFinite(n)?Math.round(n)+
 function accuracy(value){var n=Number(value);return Number.isFinite(n)?Math.round(n*100)+'%':'—';}
 function num(value){var n=Number(value);return Number.isFinite(n)?String(n):'0';}
 function el(tag,cls,text){var n=document.createElement(tag);if(cls)n.className=cls;if(text!=null)n.textContent=text;return n;}
+function loadSmartStudy(){if(document.querySelector('script[data-smart-study-bootstrap]'))return;var s=document.createElement('script');s.src='./smart-study-bootstrap.js?v=20260809-1';s.dataset.smartStudyBootstrap='1';document.body.appendChild(s);}
 function mount(){
  var hero=document.querySelector('.book-hero');if(!hero||document.getElementById('studyStats'))return;
  var section=el('section','study-stats');section.id='studyStats';
  var head=el('div','study-stats-head');var left=el('div');left.appendChild(el('span','eyebrow','YOUR PROGRESS'));left.appendChild(el('h2','', '학습 현황'));head.appendChild(left);head.appendChild(el('span','study-stats-note','Canonical study-v1'));
  section.appendChild(head);var body=el('div','study-stats-message','Loading progress…');body.id='studyStatsBody';section.appendChild(body);hero.insertAdjacentElement('afterend',section);
- refresh();
+ refresh();loadSmartStudy();
 }
 function render(data){
  var body=document.getElementById('studyStatsBody');if(!body)return;
