@@ -8,8 +8,11 @@ Before changing code here, read:
 
 1. `BUILD_PLAN.md`
 2. `AUDIT.md`
+3. `PROGRESS_ARCHITECTURE.md` — **required before touching study recording, mastery, scoring, student progress, teacher reports, parent reports, or adaptive review**
 
 These documents define the intended architecture and the current level-test constraints.
+
+`PROGRESS_ARCHITECTURE.md` is a hard architectural constraint. In particular, do not create separate student/teacher/parent progress calculations, do not discard immutable raw attempts, and never record admin preview activity into real student progress.
 
 ---
 
