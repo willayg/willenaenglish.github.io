@@ -10,44 +10,32 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/free-level-test/styles/app.css?v=20260730-7">
-<link rel="stylesheet" href="/free-level-test/styles/welcome-overrides.css?v=20260730-3">
-<link rel="stylesheet" href="/free-level-test/styles/bright-theme-overrides.css?v=20260730-3">
-<link rel="stylesheet" href="/free-level-test/styles/setup-no-selection.css?v=20260730-2">
-<link rel="stylesheet" href="/free-level-test/styles/listening.css?v=20260730-4">
-<link rel="stylesheet" href="/free-level-test/styles/premium-ui.css?v=20260730-3">
-<link rel="stylesheet" href="/free-level-test/styles/question-polish.css?v=20260801-1">
-<link rel="stylesheet" href="/free-level-test/styles/loading-transitions.css?v=20260731-2">
-<link rel="stylesheet" href="./study.css?v=20260808-2">
+<link rel="stylesheet" href="./study.css?v=20260808-4">
 <script src="/students/api-gateway.js"></script>
 <script src="/js/api-config.js?v=20260113c"></script>
 </head>
-<body class="welcome-mode">
-<div class="app-shell">
-<header class="app-header">
-<img src="/Assets/Images/Logo.png?v=20260730-3" alt="Willena English Academy" class="brand-logo">
-<div class="brand-copy"><strong>Willena English</strong><span id="brandSubtitle">학습</span></div>
-<button id="languageBtn" class="header-button language-legacy-trigger" type="button">English</button>
+<body>
+<div class="study-app">
+<header class="topbar">
+  <a class="brand" href="/students/dashboard.html"><img src="/Assets/Images/Logo.png?v=20260730-3" alt="Willena English"><span><strong>Willena Study</strong><small>Practice your current unit</small></span></a>
+  <div class="top-actions"><button id="languageBtn" class="ghost-button" type="button">English</button><a class="ghost-button" href="/students/dashboard.html">Dashboard</a></div>
 </header>
-<main id="app" class="app-main" aria-live="polite">
-<section class="screen">
-<div class="welcome-layout">
-<img class="welcome-logo" src="/Assets/Images/Logo.png?v=20260730-3" alt="Willena English Academy">
-<div class="welcome-panel">
-<h1>영어 학습</h1>
-<p class="study-menu-copy">윌레나에서 배우고 있는 내용을 연습해 보세요.</p>
-<div class="study-chip">현재 교재 · English Bus 4 · Unit 3</div>
-<button class="welcome-start" id="studyStart" type="button">학습 시작</button>
-<p class="study-demo-note">Prototype: the book and unit are placeholders until the student curriculum API is connected.</p>
-</div>
-</div>
-</section>
+<main class="dashboard" id="app">
+  <section class="book-hero">
+    <div class="hero-copy"><span class="eyebrow">CURRENT BOOK</span><h1>English Bus 4</h1><p>Unit 3 · Current unit</p><div class="hero-actions"><button id="continueBtn" class="primary-button" type="button">Continue practice</button><button id="changeUnitBtn" class="secondary-button" type="button">Browse units</button></div></div>
+    <div class="unit-progress-card"><div class="progress-ring"><span>68%</span></div><div><strong>Unit progress</strong><small>Demo progress until real study data is connected.</small></div></div>
+  </section>
+  <section class="section-block"><div class="section-heading"><div><span class="eyebrow">PRACTICE</span><h2>Choose a skill</h2></div><span class="section-note">Only skills with content will appear later</span></div><div class="skill-grid" id="skillGrid"></div></section>
+  <section class="lower-grid">
+    <article class="panel"><div class="panel-heading"><div><span class="eyebrow">NEEDS PRACTICE</span><h2>Review these</h2></div></div><div class="review-list"><button class="review-row" data-skill="grammar"><span class="review-icon">Aa</span><span><strong>want to + verb</strong><small>Grammar · 4 of 8 correct</small></span><b>→</b></button><button class="review-row" data-skill="spelling"><span class="review-icon">ABC</span><span><strong>promise</strong><small>Spelling · review again</small></span><b>→</b></button><button class="review-row" data-skill="sentence"><span class="review-icon">↔</span><span><strong>Sentence building</strong><small>2 items due for review</small></span><b>→</b></button></div></article>
+    <article class="panel"><div class="panel-heading"><div><span class="eyebrow">THIS UNIT</span><h2>Your progress</h2></div></div><div class="mini-stats"><div><strong>42</strong><span>Questions</span></div><div><strong>79%</strong><span>Correct</span></div><div><strong>6</strong><span>Skills</span></div></div><div class="streak"><span>🔥</span><div><strong>3 day streak</strong><small>Demo only for now</small></div></div></article>
+  </section>
+  <section id="practicePanel" class="practice-panel" hidden><div class="practice-toolbar"><button id="closePractice" class="ghost-button" type="button">← Back</button><div><span id="practiceSkill" class="eyebrow">VOCABULARY</span><h2 id="practiceTitle">Practice</h2></div><button id="nextActivity" class="secondary-button" type="button">Next</button></div><div id="activityRoot"></div></section>
 </main>
-<footer id="footerText">Willena English · 학습</footer>
 </div>
 <script src="/shared/learning-engine/activity-schema.js?v=20260808-1"></script>
 <script src="/shared/learning-engine/scoring.js?v=20260808-1"></script>
 <script src="/shared/learning-engine/engine.js?v=20260808-1"></script>
-<script src="./study.js?v=20260808-3"></script>
+<script src="./study.js?v=20260808-4"></script>
 </body>
 </html>
