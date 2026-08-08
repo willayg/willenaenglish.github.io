@@ -29,6 +29,15 @@
   <span id="studentGreeting" hidden></span>
   <div class="study-controls"><button id="languageBtn" class="ghost-button" type="button">English</button></div>
 
+  <section id="smartStudyScreen" class="practice-panel" hidden style="margin-top:0">
+    <div class="practice-toolbar">
+      <button id="smartClose" class="ghost-button" type="button">← 뒤로</button>
+      <div><span class="eyebrow">SMART STUDY</span><h2 id="smartTitle">오늘의 연습</h2><small id="smartCount" class="section-note">— / 12</small></div>
+      <button id="smartNext" class="secondary-button" type="button" disabled>다음</button>
+    </div>
+    <div id="smartActivityRoot"></div>
+  </section>
+
   <section class="book-hero">
     <div class="hero-copy">
       <span class="eyebrow">CURRENT BOOK</span>
@@ -84,5 +93,6 @@
 <script src="./study-progress.js?v=20260808-4"></script>
 <script src="./study.js?v=20260808-14"></script>
 <script src="./study-stats.js?v=20260809-4"></script>
+<script src="./smart-study.js?v=20260809-6"></script>
 </body>
 </html>
