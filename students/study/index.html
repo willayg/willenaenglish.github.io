@@ -26,15 +26,28 @@
 <div class="app-shell">
 <header class="app-header">
 <img src="/Assets/Images/Logo.png?v=20260730-3" alt="Willena English Academy" class="brand-logo">
-<div class="brand-copy"><strong>Willena English</strong><span id="brandSubtitle">Study</span></div>
+<div class="brand-copy"><strong>Willena English</strong><span id="brandSubtitle">학습</span></div>
 <button id="languageBtn" class="header-button language-legacy-trigger" type="button">English</button>
 </header>
-<main id="app" class="app-main" aria-live="polite"></main>
-<footer id="footerText">Willena English · Study</footer>
+<main id="app" class="app-main" aria-live="polite">
+<section class="screen">
+<div class="welcome-layout">
+<img class="welcome-logo" src="/Assets/Images/Logo.png?v=20260730-3" alt="Willena English Academy">
+<div class="welcome-panel">
+<h1>영어 학습</h1>
+<p class="study-menu-copy">윌레나에서 배우고 있는 내용을 연습해 보세요.</p>
+<div class="study-chip">현재 교재 · English Bus 4 · Unit 3</div>
+<button class="welcome-start" id="studyStart" type="button">학습 시작</button>
+<p class="study-demo-note">Prototype: the book and unit are placeholders until the student curriculum API is connected.</p>
+</div>
+</div>
+</section>
+</main>
+<footer id="footerText">Willena English · 학습</footer>
 </div>
 <script src="/shared/learning-engine/activity-schema.js?v=20260808-1"></script>
 <script src="/shared/learning-engine/scoring.js?v=20260808-1"></script>
 <script src="/shared/learning-engine/engine.js?v=20260808-1"></script>
-<script src="./study.js?v=20260808-2"></script>
+<script src="./study.js?v=20260808-3"></script>
 </body>
 </html>
