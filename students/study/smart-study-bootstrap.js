@@ -12,7 +12,7 @@ function mount(){
   main.appendChild(section);
  }
  if(!document.querySelector('script[data-smart-study]')){
-  var s=document.createElement('script');s.src='./smart-study.js?v=20260809-3';s.dataset.smartStudy='1';document.body.appendChild(s);
+  var s=document.createElement('script');s.src='./smart-study.js?v=20260809-4';s.dataset.smartStudy='1';document.body.appendChild(s);
  }
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',mount,{once:true});else mount();
