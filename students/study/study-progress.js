@@ -16,10 +16,10 @@ function readQueue(){try{var q=JSON.parse(localStorage.getItem(QUEUE_KEY)||'[]')
 function writeQueue(q){try{localStorage.setItem(QUEUE_KEY,JSON.stringify(q.slice(-100)));}catch(_){}}
 function queueAttempt(item){var q=readQueue();if(!q.some(function(x){return x&&x.payload&&x.payload.client_attempt_id===item.payload.client_attempt_id;}))q.push(item);writeQueue(q);}
 function sessionId(bookId,unitId){var key='willena-study-session-v1:'+bookId+':'+unitId;try{var id=sessionStorage.getItem(key);if(!id){id=uuid();sessionStorage.setItem(key,id);}return id;}catch(_){return uuid();}}
-function payloadFrom(detail){var activity=detail&&detail.activity||{},result=detail&&detail.result||{},meta=activity.metadata||{},bookId=meta.book_id,unitId=meta.unit_id;if(!bookId||!unitId)return null;return{
+function payloadFrom(detail){var activity=detail&&detail.activity||{},result=detail&&detail.result||{},meta=activity.metadata||{},bookId=meta.book_id,unitId=meta.unit_id;if(!bookId||!unitId)return null;var contentType=String(activity.sourceType||'activity'),contentId=activity.sourceId||null;var masteryType=meta.mastery_content_type||contentType,masteryId=meta.mastery_content_id||contentId;if(activity.skill==='grammar'&&meta.pattern_id){masteryType='pattern';masteryId=meta.pattern_id;}return{
  session_id:sessionId(bookId,unitId),client_attempt_id:uuid(),book_id:bookId,unit_id:unitId,
  skill:String(activity.skill||'practice'),response_type:String(activity.response&&activity.response.type||'unknown'),
- content_type:String(activity.sourceType||'activity'),content_id:activity.sourceId||null,occurrence_id:meta.occurrence_id||null,
+ content_type:contentType,content_id:contentId,mastery_content_type:String(masteryType||contentType),mastery_content_id:masteryId||null,occurrence_id:meta.occurrence_id||null,
  activity_id:String(activity.id||''),stimulus_snapshot:activity.stimulus||{},student_answer:result.selected===undefined?null:result.selected,
  correct_answer:result.answer===undefined?null:result.answer,score:result.correct?1:0,is_correct:!!result.correct,
  response_time_ms:Number(detail.responseTimeMs||result.responseTimeMs||0)||0,hints_used:0,retry_count:0,
