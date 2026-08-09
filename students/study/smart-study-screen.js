@@ -4,8 +4,11 @@ function addCss(href){if(document.querySelector('link[href="'+href+'"]'))return;
 function load(src){return new Promise(function(resolve,reject){var s=document.createElement('script');s.src=src;s.async=false;s.onload=resolve;s.onerror=function(){reject(new Error('Could not load '+src));};document.head.appendChild(s);});}
 addCss('./study-coach.css?v=20260809-phase1b');
 addCss('./conversation-order.css?v=20260809-conversationonly2');
+addCss('./study-listening.css?v=20260809-leveltestaudio1');
 (async function(){
  try{
+  await load('/shared/learning-engine/engine.js?v=20260809-leveltestaudio1');
+  await load('/shared/learning-engine/practice-pool.js?v=20260809-unambiguousvocab1');
   await load('/shared/learning-engine/adaptive-study.js?v=20260809-fastpass1');
   await load('./study-question-policy.js?v=20260809-phase1');
   await load('./study-question-bank.js?v=20260809-conversationui');
