@@ -2,19 +2,19 @@
 'use strict';
 function keyFor(activity){return String(activity.sourceType||'activity')+'|'+String(activity.sourceId||'')+'|'+String(activity.skill||'');}
 function stateKey(item){return String(item.content_type||'activity')+'|'+String(item.content_id||'')+'|'+String(item.skill||'');}
-function nowMs(){return Date.now();}
 function parseDate(v){var n=Date.parse(v||'');return Number.isFinite(n)?n:0;}
 function buildStateMap(state){var map={};((state&&state.items)||[]).forEach(function(item){map[stateKey(item)]=item;});return map;}
 function scoreActivity(activity,stateMap,options){
- options=options||{};var s=stateMap[keyFor(activity)]||null,meta=activity.metadata||{},score=0,now=nowMs();
- var mastery=s&&Number(s.mastery_score),due=!s||!s.next_review_at||parseDate(s.next_review_at)<=now;
+ options=options||{};var s=stateMap[keyFor(activity)]||null,meta=activity.metadata||{},score=0,now=Date.now();
+ var mastery=s&&Number(s.mastery_score),due=!s||!s.next_review_at||parseDate(s.next_review_at)<=now,focused=!!(options.focusSkill||options.focusUnitId);
  if(!s){score+=36;}else{
-  if(due)score+=100;
+  if(due)score+=110;
   if(Number.isFinite(mastery))score+=(100-mastery)*.55;
   score+=Math.min(30,Number(s.lapses||0)*8);
-  if(s.review_state==='learning')score+=22;
-  if(s.review_state==='mastered')score+=8;
-  if(!due&&Number.isFinite(mastery)&&mastery>=80)score-=95;
+  if(s.review_state==='learning')score+=18;
+  if(s.review_state==='mastered')score+=6;
+  if(!due&&!focused)score-=100;
+  if(!due&&focused)score-=12;
  }
  if(options.currentBookId&&String(meta.book_id)===String(options.currentBookId))score+=20;
  if(options.currentUnitId&&String(meta.unit_id)===String(options.currentUnitId))score+=28;
@@ -32,7 +32,6 @@ function chooseSession(activities,state,options){
   if(options.focusUnitId&&String(a.metadata&&a.metadata.unit_id)!==String(options.focusUnitId))return false;
   return true;
  }).map(function(a){var ranked=scoreActivity(a,stateMap,options);return{activity:a,score:ranked.score,state:ranked.state,due:ranked.due};}).sort(function(a,b){return b.score-a.score;});
-
  while(rows.length&&chosen.length<target){
   var pickIndex=-1;
   for(var i=0;i<rows.length;i++){
