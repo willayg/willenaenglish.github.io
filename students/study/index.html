@@ -17,7 +17,9 @@
 <link rel="stylesheet" href="./study-stats.css?v=20260809-adaptive1">
 <link rel="stylesheet" href="./study-card-mastery.css?v=20260809-1">
 <style>
-.smart-finish{text-align:center;padding:clamp(30px,7vw,64px)!important}.smart-finish h2{font-size:clamp(2rem,7vw,3.8rem);margin:12px 0;color:var(--ink)}.smart-finish p{font-size:1.05rem;font-weight:700;color:var(--muted)}.smart-confetti{font-size:clamp(2rem,8vw,4.5rem);letter-spacing:.15em;margin-bottom:18px;animation:smartPop .7s ease both}.smart-home-button{display:inline-flex;margin:24px auto 0;font-size:1.05rem;padding:16px 24px!important}.smart-finish-note{font-size:.95rem!important}@keyframes smartPop{0%{transform:scale(.5);opacity:0}70%{transform:scale(1.12)}100%{transform:scale(1);opacity:1}}
+.smart-finish{text-align:center;padding:clamp(30px,7vw,64px)!important}.smart-finish h2{font-size:clamp(2rem,7vw,3.8rem);margin:12px 0;color:var(--ink)}.smart-finish p{font-size:1.05rem;font-weight:700;color:var(--muted)}.smart-home-button{display:inline-flex;margin:24px auto 0;font-size:1.05rem;padding:16px 24px!important}.smart-finish-note{font-size:.95rem!important}
+.smart-confetti{position:relative;height:128px;margin:0 auto 4px;max-width:520px;font-size:0;color:transparent;overflow:visible}.smart-confetti:before,.smart-confetti:after{content:"";position:absolute;inset:18px 10%;opacity:0;transform:scale(.2);background:radial-gradient(circle,#ff0787 0 3px,transparent 4px) 12% 36%/9px 9px no-repeat,radial-gradient(circle,#16b8c7 0 3px,transparent 4px) 24% 14%/9px 9px no-repeat,radial-gradient(circle,#ffd24a 0 3px,transparent 4px) 34% 44%/9px 9px no-repeat,radial-gradient(circle,#ff0787 0 3px,transparent 4px) 46% 8%/9px 9px no-repeat,radial-gradient(circle,#16b8c7 0 3px,transparent 4px) 56% 40%/9px 9px no-repeat,radial-gradient(circle,#ffd24a 0 3px,transparent 4px) 68% 16%/9px 9px no-repeat,radial-gradient(circle,#ff0787 0 3px,transparent 4px) 80% 42%/9px 9px no-repeat,radial-gradient(circle,#16b8c7 0 3px,transparent 4px) 90% 20%/9px 9px no-repeat;animation:smartFirework .95s cubic-bezier(.15,.72,.25,1) both}.smart-confetti:after{inset:42px 22% 0;animation-delay:.12s;filter:brightness(1.05)}@keyframes smartFirework{0%{opacity:0;transform:scale(.15)}18%{opacity:1}72%{opacity:1;transform:scale(1.15)}100%{opacity:0;transform:scale(1.5) translateY(-10px)}}
+.activity-dialogue{display:grid;gap:9px;margin:18px 0 22px;padding:16px;border-radius:18px;background:#f6fbfc;border:1px solid rgba(23,63,70,.1)}.activity-dialogue-line{display:grid;grid-template-columns:34px minmax(0,1fr);gap:10px;align-items:start;padding:10px 12px;border-radius:12px;background:#fff}.activity-dialogue-speaker{display:grid;place-items:center;width:28px;height:28px;border-radius:999px;background:#dff7f8;color:#145c65;font-size:.72rem;font-weight:800}.activity-dialogue-text{font-size:clamp(.92rem,2.7vw,1.08rem);line-height:1.45;font-weight:650;color:var(--ink)}.activity-dialogue-line.is-target{background:#fff4fa;border:2px dashed rgba(255,7,135,.4)}.activity-dialogue-line.is-target .activity-dialogue-text{min-height:28px;color:var(--pink);letter-spacing:.18em;font-weight:800}.activity-dialogue-line.is-target .activity-dialogue-text:after{content:"Choose this line ↓";letter-spacing:0;font-size:.72rem;color:var(--muted);font-weight:700;margin-left:8px}@media(max-width:700px){.activity-dialogue{padding:12px}.activity-dialogue-line{grid-template-columns:30px minmax(0,1fr);padding:9px}.activity-dialogue-speaker{width:26px;height:26px}}
 </style>
 <script src="/students/api-gateway.js?v=20260808-study1"></script>
 <script src="/js/api-config.js?v=20260113c"></script>
@@ -89,10 +91,10 @@
   </section>
 </main>
 </div>
-<script src="/shared/learning-engine/activity-schema.js?v=20260808-3"></script>
+<script src="/shared/learning-engine/activity-schema.js?v=20260809-dialogue1"></script>
 <script src="/shared/learning-engine/scoring.js?v=20260808-4"></script>
-<script src="/shared/learning-engine/engine.js?v=20260808-5"></script>
-<script src="/shared/learning-engine/practice-pool.js?v=20260809-1"></script>
+<script src="/shared/learning-engine/engine.js?v=20260809-dialogue1"></script>
+<script src="/shared/learning-engine/practice-pool.js?v=20260809-dialogue1"></script>
 <script src="/shared/learning-engine/adaptive-study.js?v=20260809-1"></script>
 <script src="./study-preview.js?v=20260808-2"></script>
 <script src="./study-preview-warning.js?v=20260808-2"></script>
