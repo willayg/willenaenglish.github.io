@@ -1,12 +1,12 @@
-#smartPracticePanel .activity-token-answer,
-#smartPracticePanel .activity-token-bank{
+#smartPracticePanel .activity-card.is-conversation-order .activity-token-answer,
+#smartPracticePanel .activity-card.is-conversation-order .activity-token-bank{
   display:flex!important;
   flex-direction:column!important;
   align-items:stretch!important;
   gap:10px!important;
 }
-#smartPracticePanel .activity-token-answer .activity-token,
-#smartPracticePanel .activity-token-bank .activity-token{
+#smartPracticePanel .activity-card.is-conversation-order .activity-token-answer .activity-token,
+#smartPracticePanel .activity-card.is-conversation-order .activity-token-bank .activity-token{
   width:100%!important;
   max-width:none!important;
   text-align:left!important;
