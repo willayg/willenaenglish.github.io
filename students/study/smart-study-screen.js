@@ -8,8 +8,8 @@ addCss('./study-coach.css?v=20260809-phase1b');
   await load('/shared/learning-engine/adaptive-study.js?v=20260809-patterns2');
   await load('./study-question-policy.js?v=20260809-phase1');
   await load('./study-question-bank.js?v=20260809-eb6grammar');
-  await load('./study-coach.js?v=20260809-directunit');
-  await load('./daily-workout.js?v=20260809-patternmastery');
+  await load('./study-coach.js?v=20260809-stableunits');
+  await load('./daily-workout.js?v=20260809-strictfocus');
   await load('./study-practice-override.js?v=20260809-directunit');
  }catch(error){console.error('[WillenaStudy Phase1]',error);}
 })();
