@@ -4,6 +4,8 @@ var CONTENT_URL='https://gxwfsqxyuufqtitspfqg.supabase.co';
 var CONTENT_KEY=['sb_publishable_','G-FYhHfDL4OGdL892gY1Zg_','epdbEeqO'].join('');
 var HEADERS={apikey:CONTENT_KEY,Authorization:'Bearer '+CONTENT_KEY};
 var cacheKey='',ctx=null,source=null,masteryItems=[];
+function installQuestionPolicy(){var pool=global.WillenaPracticePool;if(!pool||pool.__willenaSafePolicy)return;var original=pool.loadUnitPool;pool.loadUnitPool=async function(options){var pack=await original.call(pool,options);pack.activities=(pack.activities||[]).filter(function(a){if(!a||!a.id)return false;var id=String(a.id);return !!(a.metadata&&a.metadata.structured_dialogue)||/^pool-(vocab-|spell-|listen-word-|listen-sentence-|sentence-|dialogue-)/.test(id);});return pack;};pool.__willenaSafePolicy=true;pool.questionPolicy='safe-generated-v1';}
+installQuestionPolicy();
 function text(v){return String(v==null?'':v).trim();}
 function unitNumber(){var m=text(document.getElementById('unitTitle')&&document.getElementById('unitTitle').textContent).match(/Unit\s*(\d+)/i);return m?Number(m[1]):null;}
 async function get(path){var r=await fetch(CONTENT_URL+'/rest/v1/'+path,{headers:HEADERS,cache:'no-store'});if(!r.ok)throw new Error('Content DB '+r.status);return r.json();}
