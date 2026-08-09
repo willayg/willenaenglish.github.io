@@ -30,7 +30,9 @@ function normalize(raw){
    context:context,
    text:text(stimulus.text||raw.metadata&&raw.metadata.transcript||''),
    audio:clone(stimulus.audio||raw.audio||null),
-   image:clone(stimulus.image||raw.image||null)
+   image:clone(stimulus.image||raw.image||null),
+   lines:clone(stimulus.lines||raw.dialogue_lines||[]),
+   targetIndex:Number.isInteger(stimulus.targetIndex)?stimulus.targetIndex:(Number.isInteger(raw.targetIndex)?raw.targetIndex:null)
   },
   response:{
    type:type,
