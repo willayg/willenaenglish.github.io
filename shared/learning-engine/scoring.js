@@ -21,7 +21,7 @@ function looseText(value){return sentenceText(value).replace(/[’]/g,"'");}
 function isCorrect(type,selected,correct,accepted){
  type=String(type||'');
  var candidates=[correct].concat(Array.isArray(accepted)?accepted:[]);
- if(type==='letter_order')return candidates.some(function(candidate){return letterText(selected)===letterText(candidate);});
+ if(type==='letter_order'||type==='chunk_order')return candidates.some(function(candidate){return letterText(selected)===letterText(candidate);});
  if(type==='sentence_unscramble'||type==='token_order'||type==='typed_answer'||type==='gap_fill_text'){
   return candidates.some(function(candidate){return looseText(selected)===looseText(candidate);});
  }
