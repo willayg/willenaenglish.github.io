@@ -14,7 +14,8 @@
 <link rel="stylesheet" href="./study-overrides.css?v=20260808-1">
 <link rel="stylesheet" href="./spelling.css?v=20260809-2">
 <link rel="stylesheet" href="./study-preview.css?v=20260808-2">
-<link rel="stylesheet" href="./study-stats.css?v=20260809-2">
+<link rel="stylesheet" href="./study-stats.css?v=20260809-adaptive1">
+<link rel="stylesheet" href="./study-card-mastery.css?v=20260809-1">
 <style>
 .smart-finish{text-align:center;padding:clamp(30px,7vw,64px)!important}.smart-finish h2{font-size:clamp(2rem,7vw,3.8rem);margin:12px 0;color:var(--ink)}.smart-finish p{font-size:1.05rem;font-weight:700;color:var(--muted)}.smart-confetti{font-size:clamp(2rem,8vw,4.5rem);letter-spacing:.15em;margin-bottom:18px;animation:smartPop .7s ease both}.smart-home-button{display:inline-flex;margin:24px auto 0;font-size:1.05rem;padding:16px 24px!important}.smart-finish-note{font-size:.95rem!important}@keyframes smartPop{0%{transform:scale(.5);opacity:0}70%{transform:scale(1.12)}100%{transform:scale(1);opacity:1}}
 </style>
@@ -36,7 +37,7 @@
   <section id="smartPracticePanel" class="practice-panel" hidden style="margin-top:0">
     <div class="practice-toolbar">
       <button id="smartClose" class="ghost-button" type="button">← 뒤로</button>
-      <div><span class="eyebrow">SMART STUDY</span><h2>오늘의 연습</h2><small id="smartCount" class="section-note">— / 12</small></div>
+      <div><span class="eyebrow">SMART STUDY</span><h2>오늘의 맞춤 연습</h2><small id="smartCount" class="section-note">— / 12</small></div>
     </div>
     <div id="smartActivityRoot"></div>
   </section>
@@ -54,7 +55,7 @@
     </div>
     <div class="unit-progress-card" role="button" tabindex="0" aria-label="Start Smart Study">
       <div class="progress-ring"><span id="smartDailyPct">0%</span></div>
-      <div><strong id="smartProgressTitle">Smart Study</strong><small id="smartProgressCopy">오늘 목표 12문항 · 탭해서 시작</small></div>
+      <div><strong id="smartProgressTitle">Smart Study</strong><small id="smartProgressCopy">오늘 목표 12문항 · 맞춤 복습</small></div>
     </div>
   </section>
 
@@ -91,12 +92,15 @@
 <script src="/shared/learning-engine/activity-schema.js?v=20260808-3"></script>
 <script src="/shared/learning-engine/scoring.js?v=20260808-4"></script>
 <script src="/shared/learning-engine/engine.js?v=20260808-5"></script>
+<script src="/shared/learning-engine/practice-pool.js?v=20260809-1"></script>
+<script src="/shared/learning-engine/adaptive-study.js?v=20260809-1"></script>
 <script src="./study-preview.js?v=20260808-2"></script>
 <script src="./study-preview-warning.js?v=20260808-2"></script>
-<script src="./study-progress.js?v=20260808-4"></script>
+<script src="./study-progress.js?v=20260809-adaptive1"></script>
 <script src="./study.js?v=20260808-14"></script>
-<script src="./study-stats.js?v=20260809-6"></script>
-<script src="./smart-study-screen.js?v=20260809-3"></script>
+<script src="./study-stats.js?v=20260809-adaptive1"></script>
+<script src="./study-card-mastery.js?v=20260809-1"></script>
+<script src="./smart-study-screen.js?v=20260809-adaptive1"></script>
 <script>
 (function(){document.body.style.overflow='';window.addEventListener('pageshow',function(){document.body.style.overflow='';});})();
 </script>
