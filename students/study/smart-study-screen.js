@@ -9,6 +9,7 @@ addCss('./study-coach.css?v=20260809-phase1');
   await load('./study-question-bank.js?v=20260809-phase1');
   await load('./study-coach.js?v=20260809-phase1');
   await load('./daily-workout.js?v=20260809-phase1');
+  await load('./study-practice-override.js?v=20260809-phase1');
  }catch(error){console.error('[WillenaStudy Phase1]',error);}
 })();
 })();
