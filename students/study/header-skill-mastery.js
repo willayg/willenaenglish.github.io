@@ -2,8 +2,8 @@
 'use strict';
 var SKILLS=[['vocabulary','Vocabulary'],['spelling','Spelling'],['grammar','Grammar'],['sentence_building','Sentence Builder'],['conversation','Conversation'],['listening','Listening']];
 var LABELS={
- ko:{mastery:'단원 숙련도',hint:'영역을 눌러 연습하세요',vocabulary:'어휘',spelling:'철자',grammar:'문법',sentence_building:'문장 만들기',conversation:'회화',listening:'듣기',workout:'오늘의 학습',workoutCopy:'오늘 목표 12문항 · 맞춤 복습'},
- en:{mastery:'Unit mastery',hint:'Tap a skill to practice',vocabulary:'Vocabulary',spelling:'Spelling',grammar:'Grammar',sentence_building:'Sentence Builder',conversation:'Conversation',listening:'Listening',workout:'Daily Workout',workoutCopy:'12 questions · adaptive review'}
+ ko:{mastery:'단원 숙련도',hint:'영역을 눌러 연습하세요',vocabulary:'어휘',spelling:'철자',grammar:'문법',sentence_building:'문장 만들기',conversation:'회화',listening:'듣기'},
+ en:{mastery:'Unit mastery',hint:'Tap a skill to practice',vocabulary:'Vocabulary',spelling:'Spelling',grammar:'Grammar',sentence_building:'Sentence Builder',conversation:'Conversation',listening:'Listening'}
 };
 var ICONS={
 vocabulary:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5h10M5 9h7M5 13h5"/><path d="M16 12l3 7M22 19l-3-7"/><path d="M17.2 16.5h3.6"/></svg>',
@@ -20,8 +20,7 @@ function uid(){try{return text(localStorage.getItem('user_id')||sessionStorage.g
 function runtime(){return global.WillenaStudyRuntime&&global.WillenaStudyRuntime.getContext?global.WillenaStudyRuntime.getContext():null;}
 function visibleContext(){var c=runtime();if(c)return c;var book=text(document.getElementById('bookTitle')&&document.getElementById('bookTitle').textContent),unitText=text(document.getElementById('unitTitle')&&document.getElementById('unitTitle').textContent),m=unitText.match(/Unit\s*(\d+)/i);if(!book||/^Loading/i.test(book)||!m)return null;return{bookTitle:book,unitNumber:Number(m[1])};}
 function currentLanguage(){var b=document.getElementById('languageBtn');return b&&text(b.textContent)==='English'?'ko':'en';}
-function applyLanguage(lang){var c=LABELS[lang]||LABELS.ko,box=document.getElementById('headerSkillMastery');if(box){var hs=box.querySelector('.header-skill-mastery-head strong'),hh=box.querySelector('.header-skill-mastery-head span');if(hs)hs.textContent=c.mastery;if(hh)hh.textContent=c.hint;box.querySelectorAll('.header-skill-master').forEach(function(b){var label=b.querySelector('.header-skill-master-top strong'),key=b.dataset.skill;if(label&&c[key])label.textContent=c[key];b.dataset.label=c[key]||key;});}var wt=document.getElementById('smartProgressTitle'),wc=document.getElementById('smartProgressCopy');if(wt)wt.textContent=c.workout;if(wc)wc.textContent=c.workoutCopy;}
-function reapplyLanguage(){setTimeout(function(){applyLanguage(currentLanguage());},0);}
+function applyLanguage(lang){var c=LABELS[lang]||LABELS.ko,box=document.getElementById('headerSkillMastery');if(!box)return;var hs=box.querySelector('.header-skill-mastery-head strong'),hh=box.querySelector('.header-skill-mastery-head span');if(hs)hs.textContent=c.mastery;if(hh)hh.textContent=c.hint;box.querySelectorAll('.header-skill-master').forEach(function(b){var label=b.querySelector('.header-skill-master-top strong'),key=b.dataset.skill;if(label&&c[key])label.textContent=c[key];b.dataset.label=c[key]||key;});}
 function cacheKey(){var id=uid();return id?CACHE_PREFIX+id+':mastery:last':'';}
 function readCache(){var k=cacheKey();if(!k)return null;try{var raw=localStorage.getItem(k);if(!raw)return null;var obj=JSON.parse(raw);if(!obj||!obj.t||Date.now()-obj.t>CACHE_MAX_AGE){localStorage.removeItem(k);return null;}return obj.v||null;}catch(_){return null;}}
 function writeCache(c,data){var k=cacheKey();if(!k||!c||!data)return;try{localStorage.setItem(k,JSON.stringify({t:Date.now(),v:{bookId:c.bookId||null,bookTitle:c.bookTitle||'',unitId:c.unitId||null,unitNumber:Number(c.unitNumber)||null,data:data}}));}catch(_){}}
@@ -40,11 +39,8 @@ async function refresh(){var c=runtime();if(!c||!c.bookId||!c.unitId||!global.Wi
 global.addEventListener('willena:study-unit-changing',function(e){seq++;var d=e&&e.detail||{},hit=readCache();if(hit&&cacheMatches(hit,d))paint(hit.data);else showSkeleton();});
 global.addEventListener('willena:study-unit-changed',function(){moveDailyWorkout();applyLanguage(currentLanguage());refresh();});
 global.addEventListener('willena:study-progress-updated',function(e){var c=runtime();if(c&&e&&e.detail)apply(e.detail,c.unitId);});
-global.addEventListener('willena:activity-answer',reapplyLanguage);
-var languageBtn=document.getElementById('languageBtn');if(languageBtn)languageBtn.addEventListener('click',reapplyLanguage);
-document.addEventListener('click',function(e){var target=e.target&&e.target.closest&&e.target.closest('#smartClose,.smart-home-button');if(target)reapplyLanguage();});
-global.addEventListener('load',function(){applyLanguage(currentLanguage());setTimeout(function(){applyLanguage(currentLanguage());},2300);},{once:true});
+var languageBtn=document.getElementById('languageBtn');if(languageBtn)languageBtn.addEventListener('click',function(){setTimeout(function(){applyLanguage(currentLanguage());},0);});
 prime();
-function wait(){var tries=0,t=setInterval(function(){tries++;moveDailyWorkout();ensureHost();applyLanguage(currentLanguage());var c=runtime();if(c&&global.WillenaStudyProgress){clearInterval(t);refresh();}else if(tries>40)clearInterval(t);},125);}
+function wait(){var tries=0,t=setInterval(function(){tries++;moveDailyWorkout();ensureHost();var c=runtime();if(c&&global.WillenaStudyProgress){clearInterval(t);refresh();}else if(tries>40)clearInterval(t);},125);}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){prime();wait();},{once:true});else wait();
 })(window);
