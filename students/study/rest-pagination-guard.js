@@ -1,9 +1,0 @@
-(function(global){
-'use strict';
-if(global.__willenaRestPaginationGuard)return;
-global.__willenaRestPaginationGuard=true;
-var nativeFetch=global.fetch.bind(global),CONTENT_HOST='gxwfsqxyuufqtitspfqg.supabase.co',PAGE_SIZE=1000;
-function shouldPage(url,init){try{var u=new URL(url,location.href),method=String(init&&init.method||'GET').toUpperCase();if(method!=='GET'||u.hostname!==CONTENT_HOST||u.pathname!=='/rest/v1/assessment_items')return false;if(u.searchParams.has('limit')||u.searchParams.has('offset'))return false;var headers=new Headers(init&&init.headers||{});if(headers.has('Range'))return false;return true;}catch(_){return false;}}
-async function fetchPage(url,init,offset){var u=new URL(url,location.href);u.searchParams.set('limit',String(PAGE_SIZE));u.searchParams.set('offset',String(offset));return nativeFetch(u.toString(),init);}
-global.fetch=async function(input,init){var url=typeof input==='string'?input:(input&&input.url)||'',response=await nativeFetch(input,init);if(!response.ok||!shouldPage(url,init))return response;var first;try{first=await response.clone().json();}catch(_){return response;}if(!Array.isArray(first)||first.length<PAGE_SIZE)return response;console.warn('[WillenaStudy] 1000-row assessment response detected; paging automatically.');var all=first.slice(),offset=PAGE_SIZE;while(true){var next=await fetchPage(url,init,offset);if(!next.ok)return response;var rows;try{rows=await next.json();}catch(_){return response;}if(!Array.isArray(rows))return response;all=all.concat(rows);if(rows.length<PAGE_SIZE)break;offset+=PAGE_SIZE;if(offset>100000)throw new Error('Study REST pagination safety limit exceeded');}var headers=new Headers(response.headers);headers.set('content-type','application/json');headers.delete('content-length');headers.set('x-willena-paginated','true');return new Response(JSON.stringify(all),{status:response.status,statusText:response.statusText,headers:headers});};
-})(window);
