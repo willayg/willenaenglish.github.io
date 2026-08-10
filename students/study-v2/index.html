@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<title>Willena Study V2</title>
+<link rel="icon" href="/Assets/Images/Logo.png?v=20260730-3">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/students/study/study.css?v=20260808-7">
+<link rel="stylesheet" href="/students/study/study-overrides.css?v=20260808-1">
+<link rel="stylesheet" href="/students/study/study-coach.css?v=20260810-mobilelang1">
+<link rel="stylesheet" href="./v2.css?v=20260811-1">
+<script src="/students/api-gateway.js?v=20260808-study1"></script>
+<script src="/js/api-config.js?v=20260113c"></script>
+<script type="module" src="/students/components/student-header.js?v=20260808-study1"></script>
+</head>
+<body>
+<div class="study-app">
+<student-header title="Study" show-id="false" show-home="false" show-points="true" show-logout="true"></student-header>
+<main class="dashboard" id="app">
+  <div class="study-controls"><button id="languageBtn" class="ghost-button" type="button">English</button></div>
+
+  <section class="book-hero daily-inline">
+    <div class="hero-copy">
+      <nav id="bookTabs" class="study-v2-book-tabs" aria-label="Books" hidden></nav>
+
+      <div id="bookSwipe" class="study-v2-book-title-wrap">
+        <h1 id="bookTitle">Loading…</h1>
+        <p id="unitTitle">Finding your assigned unit</p>
+        <div id="bookPips" class="study-v2-book-pips" hidden></div>
+      </div>
+
+      <div id="dailyWorkoutCard" class="unit-progress-card" role="button" tabindex="0" aria-label="Start Daily Workout">
+        <div class="progress-ring"><span id="smartDailyPct">0%</span></div>
+        <div><strong id="smartProgressTitle">오늘의 학습</strong><small id="smartProgressCopy">오늘 목표 12문항 · 맞춤 복습</small></div>
+      </div>
+
+      <div class="study-v2-units">
+        <div class="study-v2-units-head"><span>공부할 단원을 선택하세요</span><span id="currentUnitLabel">현재 · Unit —</span></div>
+        <div id="unitStrip" class="study-v2-unit-strip"></div>
+      </div>
+
+      <div class="header-skill-mastery" id="headerSkillMastery">
+        <div class="header-skill-mastery-head"><strong>단원 숙련도</strong><span>영역을 눌러 연습하세요</span></div>
+        <div class="header-skill-mastery-grid">
+          <button class="header-skill-master is-loading" type="button" data-skill="vocabulary"><div class="header-skill-master-top"><strong>어휘</strong><span class="header-skill-master-pct">—</span></div><div class="header-skill-master-track"><i class="header-skill-master-fill"></i></div></button>
+          <button class="header-skill-master is-loading" type="button" data-skill="spelling"><div class="header-skill-master-top"><strong>철자</strong><span class="header-skill-master-pct">—</span></div><div class="header-skill-master-track"><i class="header-skill-master-fill"></i></div></button>
+          <button class="header-skill-master is-loading" type="button" data-skill="grammar"><div class="header-skill-master-top"><strong>문법</strong><span class="header-skill-master-pct">—</span></div><div class="header-skill-master-track"><i class="header-skill-master-fill"></i></div></button>
+          <button class="header-skill-master is-loading" type="button" data-skill="sentence_building"><div class="header-skill-master-top"><strong>문장 만들기</strong><span class="header-skill-master-pct">—</span></div><div class="header-skill-master-track"><i class="header-skill-master-fill"></i></div></button>
+          <button class="header-skill-master is-loading" type="button" data-skill="conversation"><div class="header-skill-master-top"><strong>회화</strong><span class="header-skill-master-pct">—</span></div><div class="header-skill-master-track"><i class="header-skill-master-fill"></i></div></button>
+          <button class="header-skill-master is-loading" type="button" data-skill="listening"><div class="header-skill-master-top"><strong>듣기</strong><span class="header-skill-master-pct">—</span></div><div class="header-skill-master-track"><i class="header-skill-master-fill"></i></div></button>
+        </div>
+      </div>
+
+      <div class="hero-actions">
+        <button id="continueBtn" class="primary-button" type="button">단원 공부하기</button>
+        <button id="practiceHeroBtn" class="secondary-button" type="button">AI 추천</button>
+        <button id="changeUnitBtn" class="secondary-button" type="button">단원 보기</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="aiRecommendations" class="study-coach study-v2-ai">
+    <div class="study-coach-head"><div><h2 id="aiHeading">AI 추천</h2></div></div>
+    <div id="aiGrid" class="study-coach-grid"></div>
+  </section>
+</main>
+</div>
+<script src="./v2.js?v=20260811-1"></script>
+</body>
+</html>
