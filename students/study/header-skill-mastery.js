@@ -9,10 +9,9 @@ function pct(v){var n=Number(v);return Number.isFinite(n)?Math.max(0,Math.min(10
 function launch(skill,label){var c=runtime();if(!c||!c.bookId||!c.unitId)return;global.dispatchEvent(new CustomEvent('willena:smart-study-focus',{detail:{bookId:c.bookId,unitId:c.unitId,skill:skill,skillLabel:label,source:'header-skill'}}));}
 function apply(data,unitId){var c=runtime();if(!c||String(c.unitId)!==String(unitId))return;var box=ensureHost();if(!box)return;var rows=Array.isArray(data&&data.skill_summary)?data.skill_summary:(Array.isArray(data&&data.unit_skills)?data.unit_skills:[]),by={};rows.forEach(function(r){by[r.skill]=r;});SKILLS.forEach(function(def){var b=box.querySelector('[data-skill="'+def[0]+'"]');if(!b)return;var value=pct(by[def[0]]&&by[def[0]].mastery_score),p=b.querySelector('.header-skill-master-pct'),fill=b.querySelector('.header-skill-master-fill');if(p)p.textContent=value+'%';if(fill)fill.style.width=value+'%';b.classList.toggle('is-complete',value>=80);});}
 async function refresh(){var c=runtime();if(!c||!c.bookId||!c.unitId||!global.WillenaStudyProgress)return;ensureHost();var my=++seq,unitId=c.unitId;try{var data=await global.WillenaStudyProgress.getProgress(c.bookId,unitId);if(my!==seq)return;apply(data,unitId);}catch(e){console.debug('[HeaderSkillMastery]',e);}}
-global.addEventListener('willena:study-unit-changing',function(){seq++;setTimeout(refresh,0);});
+global.addEventListener('willena:study-unit-changing',function(){seq++;});
 global.addEventListener('willena:study-unit-changed',refresh);
-global.addEventListener('willena:study-recording',function(e){if(e&&e.detail&&e.detail.status==='recorded')setTimeout(refresh,180);});
-global.addEventListener('willena:study-progress-updated',function(){setTimeout(refresh,120);});
+global.addEventListener('willena:study-progress-updated',function(e){var c=runtime();if(c&&e&&e.detail)apply(e.detail,c.unitId);});
 function wait(){var tries=0,t=setInterval(function(){tries++;if(runtime()&&document.getElementById('studyHomeUnits')){clearInterval(t);ensureHost();refresh();}else if(tries>40)clearInterval(t);},250);}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',wait,{once:true});else wait();
 })(window);
