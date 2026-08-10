@@ -1,3 +1,25 @@
+(function(){
+'use strict';
+/* Study-only first-paint cache primer. The Study markup already exists when this file runs. */
+try{
+ if(!/^\/students\/study\/?(?:index\.html)?$/i.test(location.pathname))return;
+ var uid=String(localStorage.getItem('user_id')||sessionStorage.getItem('user_id')||localStorage.getItem('userId')||sessionStorage.getItem('userId')||'').trim();
+ if(!uid)return;
+ var prefix='willena-study-cache:v1:'+uid+':',maxAge=7*24*60*60*1000;
+ function read(k){var raw=localStorage.getItem(prefix+k);if(!raw)return null;var o=JSON.parse(raw);if(!o||!o.t||Date.now()-o.t>maxAge)return null;return o.v||null;}
+ function by(id){return document.getElementById(id);}
+ function txt(id,v){var e=by(id);if(e&&v!=null&&v!=='')e.textContent=v;}
+ function html(id,v){var e=by(id);if(e&&v)e.innerHTML=v;}
+ var s=read('ui-snapshot');
+ if(s){
+  txt('bookTitle',s.bookTitle);txt('unitTitle',s.unitTitle);html('learningMap',s.learningMap);html('skillGrid',s.skillGrid);html('vocabPreview',s.vocabPreview);
+  txt('contentStatus',s.contentStatus);txt('unitWordCount',s.unitWordCount);txt('unitNumberStat',s.unitNumberStat);txt('classStat',s.classStat);txt('connectionTitle',s.connectionTitle);txt('connectionCopy',s.connectionCopy);txt('vocabCount',s.vocabCount);txt('progressTitle',s.progressTitle);txt('progressCopy',s.progressCopy);
+  var c=by('continueBtn');if(c)c.disabled=false;document.documentElement.dataset.studySnapshot='first-paint';
+ }else{
+  var summary=read('summary');if(summary){txt('bookTitle',summary.bookTitle);txt('unitTitle',summary.unitText);}
+ }
+}catch(_){ }
+})();
 (function(global){
 'use strict';
 function clone(value){return value==null?value:JSON.parse(JSON.stringify(value));}
