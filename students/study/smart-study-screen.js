@@ -11,10 +11,10 @@ addCss('./study-listening.css?v=20260809-leveltestaudio1');
   await load('/shared/learning-engine/practice-pool.js?v=20260810-chunkspelling1');
   await load('/shared/learning-engine/adaptive-study.js?v=20260810-patternrecovery1');
   await load('./study-question-policy.js?v=20260809-phase1');
-  await load('./study-question-bank.js?v=20260810-eb6feedback1');
+  await load('./study-question-bank.js?v=20260810-comeonfix1');
   await load('./study-coach.js?v=20260809-stableunits');
-  await load('./daily-workout.js?v=20260810-grammarminimums1');
-  await load('./study-practice-override.js?v=20260809-directunit');
+  await load('./daily-workout.js?v=20260810-comeonfix1');
+  await load('./study-practice-override.js?v=20260810-comeonfix1');
  }catch(error){console.error('[WillenaStudy Phase1]',error);}
 })();
 })();
