@@ -21,6 +21,7 @@ function runtime(){return global.WillenaStudyRuntime&&global.WillenaStudyRuntime
 function visibleContext(){var c=runtime();if(c)return c;var book=text(document.getElementById('bookTitle')&&document.getElementById('bookTitle').textContent),unitText=text(document.getElementById('unitTitle')&&document.getElementById('unitTitle').textContent),m=unitText.match(/Unit\s*(\d+)/i);if(!book||/^Loading/i.test(book)||!m)return null;return{bookTitle:book,unitNumber:Number(m[1])};}
 function currentLanguage(){var b=document.getElementById('languageBtn');return b&&text(b.textContent)==='English'?'ko':'en';}
 function applyLanguage(lang){var c=LABELS[lang]||LABELS.ko,box=document.getElementById('headerSkillMastery');if(box){var hs=box.querySelector('.header-skill-mastery-head strong'),hh=box.querySelector('.header-skill-mastery-head span');if(hs)hs.textContent=c.mastery;if(hh)hh.textContent=c.hint;box.querySelectorAll('.header-skill-master').forEach(function(b){var label=b.querySelector('.header-skill-master-top strong'),key=b.dataset.skill;if(label&&c[key])label.textContent=c[key];b.dataset.label=c[key]||key;});}var wt=document.getElementById('smartProgressTitle'),wc=document.getElementById('smartProgressCopy');if(wt)wt.textContent=c.workout;if(wc)wc.textContent=c.workoutCopy;}
+function reapplyLanguage(){setTimeout(function(){applyLanguage(currentLanguage());},0);}
 function cacheKey(){var id=uid();return id?CACHE_PREFIX+id+':mastery:last':'';}
 function readCache(){var k=cacheKey();if(!k)return null;try{var raw=localStorage.getItem(k);if(!raw)return null;var obj=JSON.parse(raw);if(!obj||!obj.t||Date.now()-obj.t>CACHE_MAX_AGE){localStorage.removeItem(k);return null;}return obj.v||null;}catch(_){return null;}}
 function writeCache(c,data){var k=cacheKey();if(!k||!c||!data)return;try{localStorage.setItem(k,JSON.stringify({t:Date.now(),v:{bookId:c.bookId||null,bookTitle:c.bookTitle||'',unitId:c.unitId||null,unitNumber:Number(c.unitNumber)||null,data:data}}));}catch(_){}}
@@ -39,7 +40,10 @@ async function refresh(){var c=runtime();if(!c||!c.bookId||!c.unitId||!global.Wi
 global.addEventListener('willena:study-unit-changing',function(e){seq++;var d=e&&e.detail||{},hit=readCache();if(hit&&cacheMatches(hit,d))paint(hit.data);else showSkeleton();});
 global.addEventListener('willena:study-unit-changed',function(){moveDailyWorkout();applyLanguage(currentLanguage());refresh();});
 global.addEventListener('willena:study-progress-updated',function(e){var c=runtime();if(c&&e&&e.detail)apply(e.detail,c.unitId);});
-var languageBtn=document.getElementById('languageBtn');if(languageBtn)languageBtn.addEventListener('click',function(){setTimeout(function(){applyLanguage(currentLanguage());},0);});
+global.addEventListener('willena:activity-answer',reapplyLanguage);
+var languageBtn=document.getElementById('languageBtn');if(languageBtn)languageBtn.addEventListener('click',reapplyLanguage);
+document.addEventListener('click',function(e){var target=e.target&&e.target.closest&&e.target.closest('#smartClose,.smart-home-button');if(target)reapplyLanguage();});
+global.addEventListener('load',function(){applyLanguage(currentLanguage());setTimeout(function(){applyLanguage(currentLanguage());},2300);},{once:true});
 prime();
 function wait(){var tries=0,t=setInterval(function(){tries++;moveDailyWorkout();ensureHost();applyLanguage(currentLanguage());var c=runtime();if(c&&global.WillenaStudyProgress){clearInterval(t);refresh();}else if(tries>40)clearInterval(t);},125);}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){prime();wait();},{once:true});else wait();
