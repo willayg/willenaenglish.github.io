@@ -14,7 +14,7 @@ addCss('./study-listening.css?v=20260809-leveltestaudio1');
   await load('./study-question-bank.js?v=20260810-comeonfix1');
   await load('./study-coach.js?v=20260809-stableunits');
   await load('./daily-workout.js?v=20260810-comeonfix1');
-  await load('./study-practice-override.js?v=20260810-comeonfix1');
+  await load('./study-practice-override.js?v=20260810-skillcards1');
  }catch(error){console.error('[WillenaStudy Phase1]',error);}
 })();
 })();
