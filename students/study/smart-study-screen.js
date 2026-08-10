@@ -7,13 +7,13 @@ addCss('./conversation-order.css?v=20260809-conversationonly2');
 addCss('./study-listening.css?v=20260809-leveltestaudio1');
 (async function(){
  try{
-  await load('/shared/learning-engine/engine.js?v=20260809-leveltestaudio1');
-  await load('/shared/learning-engine/practice-pool.js?v=20260809-unambiguousvocab1');
-  await load('/shared/learning-engine/adaptive-study.js?v=20260809-grammar2perpattern');
+  await load('/shared/learning-engine/engine.js?v=20260810-chunkspelling1');
+  await load('/shared/learning-engine/practice-pool.js?v=20260810-chunkspelling1');
+  await load('/shared/learning-engine/adaptive-study.js?v=20260810-grammaractivityfastpass1');
   await load('./study-question-policy.js?v=20260809-phase1');
   await load('./study-question-bank.js?v=20260809-conversationui');
   await load('./study-coach.js?v=20260809-stableunits');
-  await load('./daily-workout.js?v=20260809-strictfocus');
+  await load('./daily-workout.js?v=20260810-grammarminimums1');
   await load('./study-practice-override.js?v=20260809-directunit');
  }catch(error){console.error('[WillenaStudy Phase1]',error);}
 })();
