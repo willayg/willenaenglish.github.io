@@ -6,6 +6,7 @@ var BOOK_KEY='willena-study-selected-book:v1';
 var bookList=[];
 var activeBookId='';
 
+function clearLegacyAssignmentCache(){try{var uid=String(localStorage.getItem('user_id')||sessionStorage.getItem('user_id')||localStorage.getItem('userId')||sessionStorage.getItem('userId')||'').trim();if(!uid)return;var prefix='willena-study-cache:v1:'+uid+':assignment:',remove=[];for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i);if(!k||k.indexOf(prefix)!==0)continue;try{var o=JSON.parse(localStorage.getItem(k)||'null');if(!o||!o.v||!Array.isArray(o.v.assignments))remove.push(k);}catch(_){remove.push(k);}}remove.forEach(function(k){localStorage.removeItem(k);});}catch(_){}}
 function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
 function bookId(b){return String(b&&(b.book_id||b.id)||'');}
 function bookTitle(b){return String(b&&(b.book_title||b.title||b.name)||'Book');}
@@ -16,7 +17,6 @@ function selectedAssignment(data,rows){if(!rows.length)return data&&data.assignm
  activeBookId=bookId(chosen);return chosen;
 }
 function installStyle(){if(document.getElementById('studyBookSwitcherStyle'))return;var s=document.createElement('style');s.id='studyBookSwitcherStyle';s.textContent='.book-hero .hero-copy>span.eyebrow:first-child{display:none!important}.study-book-tabs{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;margin:0 0 14px;padding:0 0 2px}.study-book-tabs::-webkit-scrollbar{display:none}.study-book-tab{flex:0 0 auto;border:2px solid var(--cyan);background:#fff;color:var(--pink-dark);border-radius:999px;padding:8px 13px;font-weight:800;font-size:.72rem;cursor:pointer}.study-book-tab.is-active{border-color:var(--pink);background:#fff3f9;color:var(--pink-dark)}.study-book-swipe{touch-action:pan-y;user-select:none}.study-book-pips{display:flex;justify-content:center;gap:7px;margin:9px 0 2px}.study-book-pip{width:7px;height:7px;border:0;border-radius:999px;padding:0;background:#cfecef}.study-book-pip.is-active{width:22px;background:var(--pink)}@media(max-width:560px){.study-book-tabs{margin-bottom:11px}.study-book-tab{font-size:.65rem;padding:7px 10px}}';document.head.appendChild(s);}
-function clearBookUi(){var tabs=document.getElementById('studyBookTabs'),pips=document.getElementById('studyBookPips'),swipe=document.getElementById('studyBookSwipe');if(tabs)tabs.remove();if(pips)pips.remove();if(swipe){var parent=swipe.parentNode;while(swipe.firstChild)parent.insertBefore(swipe.firstChild,swipe);swipe.remove();}}
 function activateBook(id){if(!id||id===activeBookId)return;try{sessionStorage.setItem(BOOK_KEY,id);}catch(_){ }location.reload();}
 function renderBookUi(){installStyle();if(bookList.length<=1){try{sessionStorage.removeItem(BOOK_KEY);}catch(_){ }return;}
  var title=document.getElementById('bookTitle'),unit=document.getElementById('unitTitle');if(!title||!unit)return;var hero=title.parentNode;if(!hero)return;
@@ -27,6 +27,7 @@ function renderBookUi(){installStyle();if(bookList.length<=1){try{sessionStorage
  if(swipe.dataset.bookSwipeBound!=='1'){swipe.dataset.bookSwipeBound='1';var sx=0,sy=0;swipe.addEventListener('touchstart',function(e){if(!e.touches||!e.touches[0])return;sx=e.touches[0].clientX;sy=e.touches[0].clientY;},{passive:true});swipe.addEventListener('touchend',function(e){if(!e.changedTouches||!e.changedTouches[0]||bookList.length<=1)return;var dx=e.changedTouches[0].clientX-sx,dy=e.changedTouches[0].clientY-sy;if(Math.abs(dx)<50||Math.abs(dx)<Math.abs(dy))return;var idx=bookList.findIndex(function(b){return bookId(b)===activeBookId;});if(idx<0)idx=0;idx=dx<0?(idx+1)%bookList.length:(idx-1+bookList.length)%bookList.length;activateBook(bookId(bookList[idx]));},{passive:true});}
 }
 
+clearLegacyAssignmentCache();
 if(!window.__willenaBookFetchWrapped){window.__willenaBookFetchWrapped=true;var nativeFetch=window.fetch.bind(window);window.fetch=async function(input,init){var response=await nativeFetch(input,init);try{var url=typeof input==='string'?input:(input&&input.url)||'';if(url.indexOf('/rest/v1/rpc/get_study_assignment_for_class')>=0&&response.ok){var clone=response.clone(),data=await clone.json();var rows=extractBooks(data);if(rows.length){bookList=rows;var chosen=selectedAssignment(data,rows);if(chosen)data.assignment=chosen;setTimeout(renderBookUi,0);if(rows.length>1){return new Response(JSON.stringify(data),{status:response.status,statusText:response.statusText,headers:response.headers});}}}}catch(e){console.debug('[WillenaStudyBooks] selector fallback',e);}return response;};}
 
 try{
@@ -42,5 +43,5 @@ try{
  var status=by('contentStatus');if(status)status.textContent='';
 }catch(_){ }
 installStyle();
-if(!document.querySelector('script[data-study-home-polish]')){var s=document.createElement('script');s.src='./study-home-polish.js?v=20260810-home4';s.dataset.studyHomePolish='1';s.defer=true;document.head.appendChild(s);}
+if(!document.querySelector('script[data-study-home-polish]')){var s=document.createElement('script');s.src='./study-home-polish.js?v=20260810-home5';s.dataset.studyHomePolish='1';s.defer=true;document.head.appendChild(s);}
 })();
