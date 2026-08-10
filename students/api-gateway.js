@@ -12,6 +12,11 @@
 (function() {
   'use strict';
 
+  // Study cache must exist before study.js starts its refresh-time data chain.
+  if (typeof document !== 'undefined' && /\/students\/study\/?(?:index\.html)?$/i.test(window.location.pathname) && document.readyState === 'loading') {
+    document.write('<script src="/students/study/study-cache.js?v=20260810-cache1"><\/script>');
+  }
+
   const NETLIFY_ORIGIN = 'https://students.willenaenglish.com';
   const SENTENCE_GATEWAY = 'https://willena-proxy.willena.workers.dev';
   const NETLIFY_ONLY_FUNCTIONS = new Set([
