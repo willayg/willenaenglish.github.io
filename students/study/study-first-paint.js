@@ -43,5 +43,5 @@ try{
  var status=by('contentStatus');if(status)status.textContent='';
 }catch(_){ }
 installStyle();
-if(!document.querySelector('script[data-study-home-polish]')){var s=document.createElement('script');s.src='./study-home-polish.js?v=20260810-home5';s.dataset.studyHomePolish='1';s.defer=true;document.head.appendChild(s);}
+if(!document.querySelector('script[data-study-home-polish]')){var s=document.createElement('script');s.src='./study-home-polish.js?v=20260810-home6';s.dataset.studyHomePolish='1';s.defer=true;document.head.appendChild(s);}
 })();
