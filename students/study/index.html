@@ -14,6 +14,10 @@
 <link rel="stylesheet" href="./study-overrides.css?v=20260808-1">
 <link rel="stylesheet" href="./spelling.css?v=20260809-2">
 <link rel="stylesheet" href="./study-preview.css?v=20260808-2">
+<link rel="stylesheet" href="./study-first-paint.css?v=20260810-clean1">
+<link rel="stylesheet" href="./study-coach.css?v=20260809-phase1b">
+<link rel="stylesheet" href="./conversation-order.css?v=20260809-conversationonly2">
+<link rel="stylesheet" href="./study-listening.css?v=20260809-leveltestaudio1">
 <style>
 .smart-finish{text-align:center;padding:clamp(30px,7vw,64px)!important}.smart-finish h2{font-size:clamp(2rem,7vw,3.8rem);margin:12px 0;color:var(--ink)}.smart-finish p{font-size:1.05rem;font-weight:700;color:var(--muted)}.smart-home-button{display:inline-flex;margin:24px auto 0;font-size:1.05rem;padding:16px 24px!important}.smart-finish-note{font-size:.95rem!important}
 .smart-confetti{position:relative;height:128px;margin:0 auto 4px;max-width:520px;font-size:0;color:transparent;overflow:visible}.smart-confetti:before,.smart-confetti:after{content:"";position:absolute;inset:18px 10%;opacity:0;transform:scale(.2);background:radial-gradient(circle,#ff0787 0 3px,transparent 4px) 12% 36%/9px 9px no-repeat,radial-gradient(circle,#16b8c7 0 3px,transparent 4px) 24% 14%/9px 9px no-repeat,radial-gradient(circle,#ffd24a 0 3px,transparent 4px) 34% 44%/9px 9px no-repeat,radial-gradient(circle,#ff0787 0 3px,transparent 4px) 46% 8%/9px 9px no-repeat,radial-gradient(circle,#16b8c7 0 3px,transparent 4px) 56% 40%/9px 9px no-repeat,radial-gradient(circle,#ffd24a 0 3px,transparent 4px) 68% 16%/9px 9px no-repeat,radial-gradient(circle,#ff0787 0 3px,transparent 4px) 80% 42%/9px 9px no-repeat,radial-gradient(circle,#16b8c7 0 3px,transparent 4px) 90% 20%/9px 9px no-repeat;animation:smartFirework .95s cubic-bezier(.15,.72,.25,1) both}.smart-confetti:after{inset:42px 22% 0;animation-delay:.12s;filter:brightness(1.05)}@keyframes smartFirework{0%{opacity:0;transform:scale(.15)}18%{opacity:1}72%{opacity:1;transform:scale(1.15)}100%{opacity:0;transform:scale(1.5) translateY(-10px)}}
@@ -38,22 +42,26 @@
   <section class="book-hero"><div class="hero-copy"><span class="eyebrow">CURRENT BOOK</span><h1 id="bookTitle">Loading…</h1><p id="unitTitle">Finding your assigned unit</p><div class="hero-actions"><button id="continueBtn" class="primary-button" type="button" disabled>단원 공부하기</button><button id="practiceHeroBtn" class="secondary-button" type="button">연습하기</button><button id="changeUnitBtn" class="secondary-button" type="button">단원 보기</button></div></div><div class="unit-progress-card" role="button" tabindex="0" aria-label="Start Smart Study"><div class="progress-ring"><span id="smartDailyPct">0%</span></div><div><strong id="smartProgressTitle">Smart Study</strong><small id="smartProgressCopy">오늘 목표 12문항 · 맞춤 복습</small></div></div></section>
   <section class="learning-map-section"><div class="section-heading"><div><span class="eyebrow">UNIT GUIDE</span><h2 id="learnMapHeading">이번 단원에서 배울 내용</h2></div></div><div class="learning-map" id="learningMap"><div class="study-loading">Loading lesson…</div></div></section>
   <section id="studyPanel" class="study-panel" hidden><div class="study-panel-top"><button id="closeStudy" class="ghost-button" type="button">← 뒤로</button><div><span class="eyebrow">STUDY</span><h2>단원 공부</h2></div></div><div class="study-tabs" id="studyTabs"></div><div class="study-content" id="studyContent"></div></section>
-  <section class="section-block"><div class="section-heading"><div><span class="eyebrow">PRACTICE</span><h2>연습할 영역을 선택하세요</h2></div><span class="section-note" id="contentStatus">Loading real unit content…</span></div><div class="skill-grid" id="skillGrid"></div></section>
+  <section class="section-block"><div class="section-heading"><div><span class="eyebrow">PRACTICE</span><h2>연습할 영역을 선택하세요</h2></div><span class="section-note" id="contentStatus"></span></div><div class="skill-grid" id="skillGrid"></div></section>
   <section class="lower-grid"><article class="panel"><div class="panel-heading"><div><span class="eyebrow">UNIT WORDS</span><h2>Vocabulary preview</h2></div></div><div class="review-list" id="vocabPreview"><div class="study-loading">Loading vocabulary…</div></div></article><article class="panel"><div class="panel-heading"><div><span class="eyebrow">CONNECTED</span><h2>Data source</h2></div></div><div class="mini-stats"><div><strong id="unitWordCount">—</strong><span>Words</span></div><div><strong id="unitNumberStat">—</strong><span>Unit</span></div><div><strong id="classStat">—</strong><span>Class</span></div></div><div class="streak"><span>✓</span><div><strong id="connectionTitle">Connecting…</strong><small id="connectionCopy">Student assignment + Content DB curriculum</small></div></div></article></section>
   <section id="practicePanel" class="practice-panel" hidden><div class="practice-toolbar"><button id="closePractice" class="ghost-button" type="button">← 뒤로</button><div><span id="practiceSkill" class="eyebrow">VOCABULARY</span><h2 id="practiceTitle">Practice</h2></div><button id="nextActivity" class="secondary-button" type="button">다음</button></div><div id="activityRoot"></div></section>
 </main>
 </div>
-<script src="/shared/learning-engine/activity-schema.js?v=20260809-dialogue1"></script>
+<script src="./study-first-paint.js?v=20260810-clean1"></script>
+<script src="./study-cache.js?v=20260810-clean1"></script>
+<script src="/shared/learning-engine/activity-schema.js?v=20260810-clean1"></script>
 <script src="/shared/learning-engine/scoring.js?v=20260810-chunkspelling1"></script>
 <script src="/shared/learning-engine/engine.js?v=20260810-multiline1"></script>
 <script src="/shared/learning-engine/practice-pool.js?v=20260810-chunkspelling1"></script>
 <script src="/shared/learning-engine/adaptive-study.js?v=20260810-patternrecovery1"></script>
-<script src="./study-cache.js?v=20260810-cache4"></script>
+<script src="./study-question-bank.js?v=20260810-clean1"></script>
 <script src="./study-preview.js?v=20260808-2"></script>
 <script src="./study-preview-warning.js?v=20260809-recording-preview"></script>
 <script src="./study-progress.js?v=20260810-grammaractivityfastpass1"></script>
-<script src="./study.js?v=20260809-directunit2"></script>
-<script src="./smart-study-screen.js?v=20260810-tighten1"></script>
+<script src="./study.js?v=20260810-clean1"></script>
+<script src="./study-question-policy.js?v=20260809-phase1"></script>
+<script src="./study-coach.js?v=20260809-stableunits"></script>
+<script src="./daily-workout.js?v=20260810-comeonfix1"></script>
 <script src="./header-skill-mastery.js?v=20260809-stablebars"></script>
 <script>(function(){document.body.style.overflow='';window.addEventListener('pageshow',function(){document.body.style.overflow='';});})();</script>
 </body>
