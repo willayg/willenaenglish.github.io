@@ -7,6 +7,7 @@ addCss('./conversation-order.css?v=20260809-conversationonly2');
 addCss('./study-listening.css?v=20260809-leveltestaudio1');
 (async function(){
  try{
+  await load('./rest-pagination-guard.js?v=20260810-restpage1');
   await load('/shared/learning-engine/engine.js?v=20260810-multiline1');
   await load('/shared/learning-engine/practice-pool.js?v=20260810-chunkspelling1');
   await load('/shared/learning-engine/adaptive-study.js?v=20260810-patternrecovery1');
