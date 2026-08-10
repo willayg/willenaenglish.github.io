@@ -13,4 +13,5 @@ try{
  var vocab=by('vocabPreview');if(vocab){var rows='';for(var j=0;j<5;j++)rows+='<div class="study-sk-vrow" aria-hidden="true"><div class="study-sk study-sk-vicon"></div><div class="study-sk-lines"><div class="study-sk study-sk-line med"></div><div class="study-sk study-sk-line short"></div></div></div>';vocab.innerHTML=rows;}
  var status=by('contentStatus');if(status)status.textContent='';
 }catch(_){ }
+if(!document.querySelector('script[data-study-home-polish]')){var s=document.createElement('script');s.src='./study-home-polish.js?v=20260810-home1';s.dataset.studyHomePolish='1';s.defer=true;document.head.appendChild(s);}
 })();
