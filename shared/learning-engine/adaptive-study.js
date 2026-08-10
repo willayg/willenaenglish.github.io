@@ -1,7 +1,7 @@
 (function(global){
 'use strict';
-function keyFor(activity){var m=activity&&activity.metadata||{};if(activity&&activity.skill==='grammar'&&m.mastery_content_id)return String(m.mastery_content_type||'pattern')+'|'+String(m.mastery_content_id)+'|grammar';return String(activity&&activity.sourceType||'activity')+'|'+String(activity&&activity.sourceId||'')+'|'+String(activity&&activity.skill||'');}
-function exactKeyFor(activity){return String(activity&&activity.sourceType||'activity')+'|'+String(activity&&activity.sourceId||'')+'|'+String(activity&&activity.skill||'');}
+function keyFor(activity){var m=activity&&activity.metadata||{};if(activity&&activity.skill==='grammar'&&m.mastery_content_id)return String(m.mastery_content_type||'pattern')+'|'+String(m.mastery_content_id)+'|grammar';if(activity&&activity.skill==='grammar'&&m.pattern_id)return'pattern|'+String(m.pattern_id)+'|grammar';return String(activity&&activity.sourceType||'activity')+'|'+String(activity&&activity.sourceId||'')+'|'+String(activity&&activity.skill||'');}
+function exactKeyFor(activity){if(activity&&activity.skill==='grammar')return'grammar_activity|'+String(activity.id||'')+'|grammar';return String(activity&&activity.sourceType||'activity')+'|'+String(activity&&activity.sourceId||'')+'|'+String(activity&&activity.skill||'');}
 function stateKey(item){return String(item.content_type||'activity')+'|'+String(item.content_id||'')+'|'+String(item.skill||'');}
 function parseDate(v){var n=Date.parse(v||'');return Number.isFinite(n)?n:0;}
 function buildStateMap(state){var map={};((state&&state.items)||[]).forEach(function(item){map[stateKey(item)]=item;});return map;}
@@ -22,5 +22,5 @@ function chooseSession(activities,state,options){options=options||{};var target=
 function retryPosition(queue){if(!queue||!queue.length)return 0;return Math.min(queue.length,Math.max(3,Math.floor(3+Math.random()*3)));}
 function insertRetry(queue,activity){var idx=retryPosition(queue);queue.splice(idx,0,activity);return idx;}
 function stateFor(activity,state){var map=buildStateMap(state);return activity&&activity.skill==='grammar'?(map[exactKeyFor(activity)]||map[keyFor(activity)]||null):(map[keyFor(activity)]||null);}
-global.WillenaAdaptiveStudy={version:'adaptive-v4.2-question-fast-pass',chooseSession:chooseSession,insertRetry:insertRetry,stateFor:stateFor,keyFor:keyFor,exactKeyFor:exactKeyFor,buildStateMap:buildStateMap,sourceKind:sourceKind};
+global.WillenaAdaptiveStudy={version:'adaptive-v4.3-activity-fast-pass',chooseSession:chooseSession,insertRetry:insertRetry,stateFor:stateFor,keyFor:keyFor,exactKeyFor:exactKeyFor,buildStateMap:buildStateMap,sourceKind:sourceKind};
 })(window);
