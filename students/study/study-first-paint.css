@@ -1,0 +1,8 @@
+@keyframes studySk{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.study-sk{position:relative;overflow:hidden;background:linear-gradient(90deg,#edf3f4 25%,#f7fafb 40%,#edf3f4 60%);background-size:300% 100%;animation:studySk 1.15s ease-in-out infinite;border-radius:12px}
+.study-sk-card{min-height:92px;border:1px solid rgba(23,63,70,.07);border-radius:18px;padding:16px;background:#fff;display:flex;gap:13px;align-items:center}
+.study-sk-icon{width:46px;height:46px;flex:0 0 46px;border-radius:14px}
+.study-sk-lines{display:grid;gap:9px;flex:1}.study-sk-line{height:13px}.study-sk-line.short{width:48%}.study-sk-line.med{width:72%}
+.study-sk-unit{min-height:108px;border:1px solid rgba(23,63,70,.07);border-radius:18px;padding:17px;background:#fff;display:grid;gap:11px}
+.study-sk-vrow{display:flex;gap:12px;align-items:center;padding:10px 0}.study-sk-vicon{width:38px;height:38px;border-radius:10px;flex:0 0 38px}
+@media(prefers-reduced-motion:reduce){.study-sk{animation:none}}
