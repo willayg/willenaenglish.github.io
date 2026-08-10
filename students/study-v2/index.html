@@ -78,6 +78,19 @@
 <script src="/shared/learning-engine/engine.js?v=20260810-multiline1"></script>
 <script src="/students/study/study-question-bank.js?v=20260810-clean1"></script>
 <script src="/students/study/study-progress.js?v=20260810-grammaractivityfastpass1"></script>
-<script src="./v2.js?v=20260811-vocab1"></script>
+<script>
+(function(){
+  try{
+    var marker='willena-study-v2-cache-schema-v2';
+    if(!localStorage.getItem(marker)){
+      Object.keys(localStorage).forEach(function(k){
+        if(k.indexOf('willena-study-v2-home:v1:')===0)localStorage.removeItem(k);
+      });
+      localStorage.setItem(marker,'1');
+    }
+  }catch(_){}
+})();
+</script>
+<script src="./v2.js?v=20260811-vocab2"></script>
 </body>
 </html>
