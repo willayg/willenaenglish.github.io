@@ -22,7 +22,16 @@
 <div class="study-app">
 <student-header title="Study" show-id="false" show-home="false" show-points="true" show-logout="true"></student-header>
 <main class="dashboard" id="app">
-  <div class="study-controls"><button id="languageBtn" class="ghost-button" type="button">English</button></div>
+  <div class="study-controls"><button id="v2PracticeTest" class="ghost-button" type="button">연습 테스트</button><button id="languageBtn" class="ghost-button" type="button">English</button></div>
+
+  <section id="v2PracticePanel" class="practice-panel" hidden>
+    <div class="practice-toolbar">
+      <button id="v2PracticeClose" class="ghost-button" type="button">← 뒤로</button>
+      <div><span id="v2PracticeSkill" class="eyebrow">연습</span><h2 id="v2PracticeTitle">연습</h2><small id="practicePerf" class="section-note">미리 준비된 문제로 테스트합니다.</small></div>
+      <button id="v2PracticeNext" class="secondary-button" type="button">다음</button>
+    </div>
+    <div id="v2ActivityRoot"></div>
+  </section>
 
   <section class="book-hero daily-inline">
     <div class="hero-copy">
@@ -70,6 +79,12 @@
   </section>
 </main>
 </div>
+<script src="/shared/learning-engine/activity-schema.js?v=20260810-clean1"></script>
+<script src="/shared/learning-engine/scoring.js?v=20260810-chunkspelling1"></script>
+<script src="/shared/learning-engine/engine.js?v=20260810-multiline1"></script>
+<script src="/students/study/study-question-bank.js?v=20260810-clean1"></script>
+<script src="/students/study/study-progress.js?v=20260810-grammaractivityfastpass1"></script>
 <script src="./v2.js?v=20260811-1"></script>
+<script src="./v2-practice.js?v=20260811-1"></script>
 </body>
 </html>
