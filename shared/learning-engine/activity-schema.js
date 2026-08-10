@@ -10,11 +10,19 @@ try{
  function by(id){return document.getElementById(id);}
  function txt(id,v){var e=by(id);if(e&&v!=null&&v!=='')e.textContent=v;}
  function html(id,v){var e=by(id);if(e&&v)e.innerHTML=v;}
- var s=read('ui-snapshot');
- if(s){
+ var s=read('ui-snapshot'),liveReady=false,holdTimer=0;
+ function restoreSnapshot(){
+  if(!s||liveReady)return false;
   txt('bookTitle',s.bookTitle);txt('unitTitle',s.unitTitle);html('learningMap',s.learningMap);html('skillGrid',s.skillGrid);html('vocabPreview',s.vocabPreview);
   txt('contentStatus',s.contentStatus);txt('unitWordCount',s.unitWordCount);txt('unitNumberStat',s.unitNumberStat);txt('classStat',s.classStat);txt('connectionTitle',s.connectionTitle);txt('connectionCopy',s.connectionCopy);txt('vocabCount',s.vocabCount);txt('progressTitle',s.progressTitle);txt('progressCopy',s.progressCopy);
-  var c=by('continueBtn');if(c)c.disabled=false;document.documentElement.dataset.studySnapshot='first-paint';
+  var c=by('continueBtn');if(c)c.disabled=false;document.documentElement.dataset.studySnapshot='first-paint';return true;
+ }
+ if(s){
+  restoreSnapshot();
+  /* study.js initially redraws empty/loading cards. Hold the ready snapshot on screen until its live unit has fully loaded. */
+  window.addEventListener('willena:study-unit-changed',function(){liveReady=true;if(holdTimer)clearInterval(holdTimer);delete document.documentElement.dataset.studySnapshot;},{once:true});
+  holdTimer=setInterval(restoreSnapshot,40);
+  setTimeout(function(){if(holdTimer)clearInterval(holdTimer);},5000);
  }else{
   var summary=read('summary');if(summary){txt('bookTitle',summary.bookTitle);txt('unitTitle',summary.unitText);}
  }
