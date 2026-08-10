@@ -5,7 +5,7 @@ var QUEUE_KEY='willena-study-attempt-queue-v1';
 var PREVIEW_KEY='willena-study-preview-book';
 var SCORING_VERSION=(global.WillenaActivityScoring&&WillenaActivityScoring.version)||'activity-v1';
 var PROGRESS_VERSION='study-v1';
-var SCHEDULER_VERSION='adaptive-v1';
+var SCHEDULER_VERSION='adaptive-v2-question-fast-pass';
 var flushing=false;
 
 function uuid(){if(global.crypto&&crypto.randomUUID)return crypto.randomUUID();return'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,function(c){var r=Math.random()*16|0,v=c==='x'?r:(r&3|8);return v.toString(16);});}
@@ -16,7 +16,7 @@ function readQueue(){try{var q=JSON.parse(localStorage.getItem(QUEUE_KEY)||'[]')
 function writeQueue(q){try{localStorage.setItem(QUEUE_KEY,JSON.stringify(q.slice(-100)));}catch(_){}}
 function queueAttempt(item){var q=readQueue();if(!q.some(function(x){return x&&x.payload&&x.payload.client_attempt_id===item.payload.client_attempt_id;}))q.push(item);writeQueue(q);}
 function sessionId(bookId,unitId){var key='willena-study-session-v1:'+bookId+':'+unitId;try{var id=sessionStorage.getItem(key);if(!id){id=uuid();sessionStorage.setItem(key,id);}return id;}catch(_){return uuid();}}
-function payloadFrom(detail){var activity=detail&&detail.activity||{},result=detail&&detail.result||{},meta=activity.metadata||{},bookId=meta.book_id,unitId=meta.unit_id;if(!bookId||!unitId)return null;var contentType=String(activity.sourceType||'activity'),contentId=activity.sourceId||null;var masteryType=meta.mastery_content_type||contentType,masteryId=meta.mastery_content_id||contentId;if(activity.skill==='grammar'&&meta.pattern_id){masteryType='pattern';masteryId=meta.pattern_id;}var isPreview=previewActive();return{
+function payloadFrom(detail){var activity=detail&&detail.activity||{},result=detail&&detail.result||{},meta=activity.metadata||{},bookId=meta.book_id,unitId=meta.unit_id;if(!bookId||!unitId)return null;var contentType=String(activity.sourceType||'activity'),contentId=activity.sourceId||null;var masteryType=meta.mastery_content_type||contentType,masteryId=meta.mastery_content_id||contentId;if(activity.skill==='grammar'){masteryType=contentType;masteryId=contentId;}var isPreview=previewActive();return{
  session_id:sessionId(bookId,unitId),client_attempt_id:uuid(),book_id:bookId,unit_id:unitId,
  skill:String(activity.skill||'practice'),response_type:String(activity.response&&activity.response.type||'unknown'),
  content_type:contentType,content_id:contentId,mastery_content_type:String(masteryType||contentType),mastery_content_id:masteryId||null,occurrence_id:meta.occurrence_id||null,
