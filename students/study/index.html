@@ -33,75 +33,26 @@
   <span id="studentGreeting" hidden></span>
   <span id="vocabCount" hidden></span><span id="progressTitle" hidden></span><span id="progressCopy" hidden></span>
   <div class="study-controls"><button id="languageBtn" class="ghost-button" type="button">English</button></div>
-
-  <section id="smartPracticePanel" class="practice-panel" hidden style="margin-top:0">
-    <div class="practice-toolbar">
-      <button id="smartClose" class="ghost-button" type="button">← 뒤로</button>
-      <div><span class="eyebrow">SMART STUDY</span><h2>오늘의 맞춤 연습</h2><small id="smartCount" class="section-note">— / 12</small></div>
-    </div>
-    <div id="smartActivityRoot"></div>
-  </section>
-
-  <section class="book-hero">
-    <div class="hero-copy">
-      <span class="eyebrow">CURRENT BOOK</span>
-      <h1 id="bookTitle">Loading…</h1>
-      <p id="unitTitle">Finding your assigned unit</p>
-      <div class="hero-actions">
-        <button id="continueBtn" class="primary-button" type="button" disabled>단원 공부하기</button>
-        <button id="practiceHeroBtn" class="secondary-button" type="button">연습하기</button>
-        <button id="changeUnitBtn" class="secondary-button" type="button">단원 보기</button>
-      </div>
-    </div>
-    <div class="unit-progress-card" role="button" tabindex="0" aria-label="Start Smart Study">
-      <div class="progress-ring"><span id="smartDailyPct">0%</span></div>
-      <div><strong id="smartProgressTitle">Smart Study</strong><small id="smartProgressCopy">오늘 목표 12문항 · 맞춤 복습</small></div>
-    </div>
-  </section>
-
-  <section class="learning-map-section">
-    <div class="section-heading"><div><span class="eyebrow">UNIT GUIDE</span><h2 id="learnMapHeading">이번 단원에서 배울 내용</h2></div></div>
-    <div class="learning-map" id="learningMap"><div class="study-loading">Loading lesson…</div></div>
-  </section>
-
-  <section id="studyPanel" class="study-panel" hidden>
-    <div class="study-panel-top">
-      <button id="closeStudy" class="ghost-button" type="button">← 뒤로</button>
-      <div><span class="eyebrow">STUDY</span><h2>단원 공부</h2></div>
-    </div>
-    <div class="study-tabs" id="studyTabs"></div>
-    <div class="study-content" id="studyContent"></div>
-  </section>
-
-  <section class="section-block">
-    <div class="section-heading"><div><span class="eyebrow">PRACTICE</span><h2>연습할 영역을 선택하세요</h2></div><span class="section-note" id="contentStatus">Loading real unit content…</span></div>
-    <div class="skill-grid" id="skillGrid"></div>
-  </section>
-
-  <section class="lower-grid">
-    <article class="panel"><div class="panel-heading"><div><span class="eyebrow">UNIT WORDS</span><h2>Vocabulary preview</h2></div></div><div class="review-list" id="vocabPreview"><div class="study-loading">Loading vocabulary…</div></div></article>
-    <article class="panel"><div class="panel-heading"><div><span class="eyebrow">CONNECTED</span><h2>Data source</h2></div></div><div class="mini-stats"><div><strong id="unitWordCount">—</strong><span>Words</span></div><div><strong id="unitNumberStat">—</strong><span>Unit</span></div><div><strong id="classStat">—</strong><span>Class</span></div></div><div class="streak"><span>✓</span><div><strong id="connectionTitle">Connecting…</strong><small id="connectionCopy">Student assignment + Content DB curriculum</small></div></div></article>
-  </section>
-
-  <section id="practicePanel" class="practice-panel" hidden>
-    <div class="practice-toolbar"><button id="closePractice" class="ghost-button" type="button">← 뒤로</button><div><span id="practiceSkill" class="eyebrow">VOCABULARY</span><h2 id="practiceTitle">Practice</h2></div><button id="nextActivity" class="secondary-button" type="button">다음</button></div>
-    <div id="activityRoot"></div>
-  </section>
+  <section id="smartPracticePanel" class="practice-panel" hidden style="margin-top:0"><div class="practice-toolbar"><button id="smartClose" class="ghost-button" type="button">← 뒤로</button><div><span class="eyebrow">SMART STUDY</span><h2>오늘의 맞춤 연습</h2><small id="smartCount" class="section-note">— / 12</small></div></div><div id="smartActivityRoot"></div></section>
+  <section class="book-hero"><div class="hero-copy"><span class="eyebrow">CURRENT BOOK</span><h1 id="bookTitle">Loading…</h1><p id="unitTitle">Finding your assigned unit</p><div class="hero-actions"><button id="continueBtn" class="primary-button" type="button" disabled>단원 공부하기</button><button id="practiceHeroBtn" class="secondary-button" type="button">연습하기</button><button id="changeUnitBtn" class="secondary-button" type="button">단원 보기</button></div></div><div class="unit-progress-card" role="button" tabindex="0" aria-label="Start Smart Study"><div class="progress-ring"><span id="smartDailyPct">0%</span></div><div><strong id="smartProgressTitle">Smart Study</strong><small id="smartProgressCopy">오늘 목표 12문항 · 맞춤 복습</small></div></div></section>
+  <section class="learning-map-section"><div class="section-heading"><div><span class="eyebrow">UNIT GUIDE</span><h2 id="learnMapHeading">이번 단원에서 배울 내용</h2></div></div><div class="learning-map" id="learningMap"><div class="study-loading">Loading lesson…</div></div></section>
+  <section id="studyPanel" class="study-panel" hidden><div class="study-panel-top"><button id="closeStudy" class="ghost-button" type="button">← 뒤로</button><div><span class="eyebrow">STUDY</span><h2>단원 공부</h2></div></div><div class="study-tabs" id="studyTabs"></div><div class="study-content" id="studyContent"></div></section>
+  <section class="section-block"><div class="section-heading"><div><span class="eyebrow">PRACTICE</span><h2>연습할 영역을 선택하세요</h2></div><span class="section-note" id="contentStatus">Loading real unit content…</span></div><div class="skill-grid" id="skillGrid"></div></section>
+  <section class="lower-grid"><article class="panel"><div class="panel-heading"><div><span class="eyebrow">UNIT WORDS</span><h2>Vocabulary preview</h2></div></div><div class="review-list" id="vocabPreview"><div class="study-loading">Loading vocabulary…</div></div></article><article class="panel"><div class="panel-heading"><div><span class="eyebrow">CONNECTED</span><h2>Data source</h2></div></div><div class="mini-stats"><div><strong id="unitWordCount">—</strong><span>Words</span></div><div><strong id="unitNumberStat">—</strong><span>Unit</span></div><div><strong id="classStat">—</strong><span>Class</span></div></div><div class="streak"><span>✓</span><div><strong id="connectionTitle">Connecting…</strong><small id="connectionCopy">Student assignment + Content DB curriculum</small></div></div></article></section>
+  <section id="practicePanel" class="practice-panel" hidden><div class="practice-toolbar"><button id="closePractice" class="ghost-button" type="button">← 뒤로</button><div><span id="practiceSkill" class="eyebrow">VOCABULARY</span><h2 id="practiceTitle">Practice</h2></div><button id="nextActivity" class="secondary-button" type="button">다음</button></div><div id="activityRoot"></div></section>
 </main>
 </div>
 <script src="/shared/learning-engine/activity-schema.js?v=20260809-dialogue1"></script>
 <script src="/shared/learning-engine/scoring.js?v=20260810-chunkspelling1"></script>
 <script src="/shared/learning-engine/engine.js?v=20260810-chunkspelling1"></script>
 <script src="/shared/learning-engine/practice-pool.js?v=20260810-chunkspelling1"></script>
-<script src="/shared/learning-engine/adaptive-study.js?v=20260809-conversationcycle"></script>
+<script src="/shared/learning-engine/adaptive-study.js?v=20260810-grammaractivityfastpass1"></script>
 <script src="./study-preview.js?v=20260808-2"></script>
 <script src="./study-preview-warning.js?v=20260809-recording-preview"></script>
-<script src="./study-progress.js?v=20260809-recording-preview2"></script>
+<script src="./study-progress.js?v=20260810-grammaractivityfastpass1"></script>
 <script src="./study.js?v=20260809-directunit2"></script>
-<script src="./smart-study-screen.js?v=20260809-conversationonly2"></script>
+<script src="./smart-study-screen.js?v=20260810-grammarminimums1"></script>
 <script src="./header-skill-mastery.js?v=20260809-stablebars"></script>
-<script>
-(function(){document.body.style.overflow='';window.addEventListener('pageshow',function(){document.body.style.overflow='';});})();
-</script>
+<script>(function(){document.body.style.overflow='';window.addEventListener('pageshow',function(){document.body.style.overflow='';});})();</script>
 </body>
 </html>
