@@ -9,7 +9,7 @@ addCss('./study-listening.css?v=20260809-leveltestaudio1');
  try{
   await load('/shared/learning-engine/engine.js?v=20260810-chunkspelling1');
   await load('/shared/learning-engine/practice-pool.js?v=20260810-chunkspelling1');
-  await load('/shared/learning-engine/adaptive-study.js?v=20260810-grammaractivityfastpass1');
+  await load('/shared/learning-engine/adaptive-study.js?v=20260810-patternrecovery1');
   await load('./study-question-policy.js?v=20260809-phase1');
   await load('./study-question-bank.js?v=20260809-conversationui');
   await load('./study-coach.js?v=20260809-stableunits');
