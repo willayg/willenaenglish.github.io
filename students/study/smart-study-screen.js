@@ -27,7 +27,7 @@ addCss('./study-listening.css?v=20260809-leveltestaudio1');
   /* engine.js, practice-pool.js and adaptive-study.js are already loaded by index.html */
   await load('./rest-pagination-guard.js?v=20260810-restpage2');
   await load('./study-question-bank.js?v=20260810-indexedunit1');
-  await load('./study-practice-override.js?v=20260810-authoredunit1');
+  await load('./study-practice-override.js?v=20260810-authoredunit2');
   await load('./study-question-policy.js?v=20260809-phase1');
   await load('./study-coach.js?v=20260809-stableunits');
   await load('./daily-workout.js?v=20260810-comeonfix1');
