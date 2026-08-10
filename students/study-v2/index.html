@@ -23,13 +23,13 @@
 <div class="study-app">
 <student-header title="Study" show-id="false" show-home="false" show-points="true" show-logout="true"></student-header>
 <main class="dashboard" id="app">
-  <div class="study-controls"><button id="v2PracticeTest" class="ghost-button" type="button">연습 테스트</button><button id="languageBtn" class="ghost-button" type="button">English</button></div>
+  <div class="study-controls"><button id="languageBtn" class="ghost-button" type="button">English</button></div>
 
   <section id="v2PracticePanel" class="practice-panel" hidden>
     <div class="practice-toolbar">
       <button id="v2PracticeClose" class="ghost-button" type="button">← 뒤로</button>
-      <div><span id="v2PracticeSkill" class="eyebrow">연습</span><h2 id="v2PracticeTitle">연습</h2><small id="practicePerf" class="section-note">미리 준비된 문제로 테스트합니다.</small></div>
-      <button id="v2PracticeNext" class="secondary-button" type="button">다음</button>
+      <div><span id="v2PracticeSkill" class="eyebrow">연습</span><h2 id="v2PracticeTitle">연습</h2><small id="practicePerf" class="section-note"></small></div>
+      <button id="v2PracticeNext" class="secondary-button" type="button" disabled>다음</button>
     </div>
     <div id="v2ActivityRoot"></div>
   </section>
@@ -46,7 +46,7 @@
 
       <div id="dailyWorkoutCard" class="unit-progress-card" role="button" tabindex="0" aria-label="Start Daily Workout">
         <div class="progress-ring"><span id="smartDailyPct">0%</span></div>
-        <div><strong id="smartProgressTitle">오늘의 학습</strong><small id="smartProgressCopy">오늘 목표 12문항 · 맞춤 복습</small></div>
+        <div><strong id="smartProgressTitle">오늘의 학습</strong><small id="smartProgressCopy">오늘 목표 20문항 · 맞춤 복습</small></div>
       </div>
 
       <div class="study-v2-units">
@@ -56,14 +56,7 @@
 
       <div class="header-skill-mastery" id="headerSkillMastery">
         <div class="header-skill-mastery-head"><strong>단원 숙련도</strong><span>영역을 눌러 연습하세요</span></div>
-        <div class="header-skill-mastery-grid">
-          <button class="header-skill-master is-loading" type="button" data-skill="vocabulary"><div class="header-skill-master-top"><strong>어휘</strong><span class="header-skill-master-pct">—</span></div><div class="header-skill-master-track"><i class="header-skill-master-fill"></i></div></button>
-          <button class="header-skill-master is-loading" type="button" data-skill="spelling"><div class="header-skill-master-top"><strong>철자</strong><span class="header-skill-master-pct">—</span></div><div class="header-skill-master-track"><i class="header-skill-master-fill"></i></div></button>
-          <button class="header-skill-master is-loading" type="button" data-skill="grammar"><div class="header-skill-master-top"><strong>문법</strong><span class="header-skill-master-pct">—</span></div><div class="header-skill-master-track"><i class="header-skill-master-fill"></i></div></button>
-          <button class="header-skill-master is-loading" type="button" data-skill="sentence_building"><div class="header-skill-master-top"><strong>문장 만들기</strong><span class="header-skill-master-pct">—</span></div><div class="header-skill-master-track"><i class="header-skill-master-fill"></i></div></button>
-          <button class="header-skill-master is-loading" type="button" data-skill="conversation"><div class="header-skill-master-top"><strong>회화</strong><span class="header-skill-master-pct">—</span></div><div class="header-skill-master-track"><i class="header-skill-master-fill"></i></div></button>
-          <button class="header-skill-master is-loading" type="button" data-skill="listening"><div class="header-skill-master-top"><strong>듣기</strong><span class="header-skill-master-pct">—</span></div><div class="header-skill-master-track"><i class="header-skill-master-fill"></i></div></button>
-        </div>
+        <div id="masteryGrid" class="header-skill-mastery-grid"></div>
       </div>
 
       <div class="hero-actions">
@@ -85,6 +78,6 @@
 <script src="/shared/learning-engine/engine.js?v=20260810-multiline1"></script>
 <script src="/students/study/study-question-bank.js?v=20260810-clean1"></script>
 <script src="/students/study/study-progress.js?v=20260810-grammaractivityfastpass1"></script>
-<script src="./v2.js?v=20260811-practice1"></script>
+<script src="./v2.js?v=20260811-vocab1"></script>
 </body>
 </html>
