@@ -1,23 +1,3 @@
-(function(){
-'use strict';
-/* Study-only first-paint skeletons. The Study markup already exists when this file runs. */
-try{
- if(!/^\/students\/study\/?(?:index\.html)?$/i.test(location.pathname))return;
- var uid=String(localStorage.getItem('user_id')||sessionStorage.getItem('user_id')||localStorage.getItem('userId')||sessionStorage.getItem('userId')||'').trim();
- var prefix=uid?'willena-study-cache:v1:'+uid+':':'',maxAge=7*24*60*60*1000;
- function read(k){if(!prefix)return null;var raw=localStorage.getItem(prefix+k);if(!raw)return null;var o=JSON.parse(raw);if(!o||!o.t||Date.now()-o.t>maxAge)return null;return o.v||null;}
- function by(id){return document.getElementById(id);}
- function txt(id,v){var e=by(id);if(e&&v!=null&&v!=='')e.textContent=v;}
- var style=document.createElement('style');style.id='studySkeletonStyle';style.textContent='@keyframes studySk{0%{background-position:200% 0}100%{background-position:-200% 0}}.study-sk{position:relative;overflow:hidden;background:linear-gradient(90deg,#edf3f4 25%,#f7fafb 40%,#edf3f4 60%);background-size:300% 100%;animation:studySk 1.15s ease-in-out infinite;border-radius:12px}.study-sk-card{min-height:92px;border:1px solid rgba(23,63,70,.07);border-radius:18px;padding:16px;background:#fff;display:flex;gap:13px;align-items:center}.study-sk-icon{width:46px;height:46px;flex:0 0 46px;border-radius:14px}.study-sk-lines{display:grid;gap:9px;flex:1}.study-sk-line{height:13px}.study-sk-line.short{width:48%}.study-sk-line.med{width:72%}.study-sk-unit{min-height:108px;border:1px solid rgba(23,63,70,.07);border-radius:18px;padding:17px;background:#fff;display:grid;gap:11px}.study-sk-vrow{display:flex;gap:12px;align-items:center;padding:10px 0}.study-sk-vicon{width:38px;height:38px;border-radius:10px;flex:0 0 38px}@media(prefers-reduced-motion:reduce){.study-sk{animation:none}}';document.head.appendChild(style);
- var summary=read('summary');if(summary){txt('bookTitle',summary.bookTitle);txt('unitTitle',summary.unitText);}
- var map=by('learningMap');if(map)map.innerHTML='<div class="study-sk-unit"><div class="study-sk study-sk-line med"></div><div class="study-sk study-sk-line"></div><div class="study-sk study-sk-line short"></div></div><div class="study-sk-unit"><div class="study-sk study-sk-line med"></div><div class="study-sk study-sk-line"></div><div class="study-sk study-sk-line short"></div></div><div class="study-sk-unit"><div class="study-sk study-sk-line med"></div><div class="study-sk study-sk-line"></div><div class="study-sk study-sk-line short"></div></div>';
- var grid=by('skillGrid');if(grid){var cards='';for(var i=0;i<6;i++)cards+='<div class="study-sk-card" aria-hidden="true"><div class="study-sk study-sk-icon"></div><div class="study-sk-lines"><div class="study-sk study-sk-line med"></div><div class="study-sk study-sk-line short"></div></div></div>';grid.innerHTML=cards;}
- var vocab=by('vocabPreview');if(vocab){var rows='';for(var j=0;j<5;j++)rows+='<div class="study-sk-vrow" aria-hidden="true"><div class="study-sk study-sk-vicon"></div><div class="study-sk-lines"><div class="study-sk study-sk-line med"></div><div class="study-sk study-sk-line short"></div></div></div>';vocab.innerHTML=rows;}
- var status=by('contentStatus');if(status)status.textContent='';
- document.documentElement.dataset.studySkeleton='1';
- window.addEventListener('willena:study-unit-changed',function(){delete document.documentElement.dataset.studySkeleton;},{once:true});
-}catch(_){ }
-})();
 (function(global){
 'use strict';
 function clone(value){return value==null?value:JSON.parse(JSON.stringify(value));}
