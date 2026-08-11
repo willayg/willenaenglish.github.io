@@ -4,5 +4,7 @@ compatibility_date = "2026-08-11"
 compatibility_flags = ["nodejs_compat"]
 
 [vars]
+SUPABASE_URL = "https://fiieuiktlsivwfgyivai.supabase.co"
+SUPABASE_PUBLISHABLE_KEY = "sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e"
 CONTENT_SUPABASE_URL = "https://gxwfsqxyuufqtitspfqg.supabase.co"
 CONTENT_SUPABASE_PUBLISHABLE_KEY = "sb_publishable_G-FYhHfDL4OGdL892gY1Zg_epdbEeqO"
