@@ -6,6 +6,7 @@ var back=document.getElementById('v2PracticeClose');
 var panel=document.getElementById('v2PracticePanel');
 var previous={};
 var watchTimer=null;
+var backClosing=false;
 
 function pct(card){
   var el=card&&card.querySelector('.header-skill-master-pct');
@@ -17,19 +18,15 @@ function snapshot(){
   if(!grid)return;
   grid.querySelectorAll('[data-skill]').forEach(function(card){previous[card.dataset.skill]=pct(card);});
 }
-function loading(on){
-  if(mastery)mastery.classList.toggle('is-loading',!!on);
-}
+function loading(on){if(mastery)mastery.classList.toggle('is-loading',!!on);}
 function animateFreshCards(){
   if(!grid)return false;
   var cards=Array.from(grid.querySelectorAll('[data-skill]'));
   if(!cards.length)return false;
-  var changed=false;
   cards.forEach(function(card){
     var skill=card.dataset.skill,target=pct(card),fill=card.querySelector('.header-skill-master-fill');
     if(!fill)return;
     var start=Object.prototype.hasOwnProperty.call(previous,skill)?previous[skill]:0;
-    if(Math.abs(start-target)>.01)changed=true;
     fill.style.transition='none';
     fill.style.width=start+'%';
     fill.offsetWidth;
@@ -37,21 +34,25 @@ function animateFreshCards(){
     requestAnimationFrame(function(){fill.style.width=target+'%';});
   });
   loading(false);
-  return changed||cards.length>0;
+  return true;
 }
-function watchForNewMastery(oldUnit){
+function watchForLoadedMastery(firstNode){
   clearInterval(watchTimer);
-  var tries=0;
+  var tries=0,interimNode=null;
   watchTimer=setInterval(function(){
     tries++;
-    var current=document.querySelector('.study-v2-unit.is-current');
-    var currentId=current&&current.dataset.unitId||'';
-    var cards=grid&&grid.querySelectorAll('[data-skill]');
-    if(currentId&&currentId!==oldUnit&&cards&&cards.length){
+    var node=grid&&grid.firstElementChild;
+    if(node&&node!==firstNode){
+      if(!interimNode)interimNode=node;
+      else if(node!==interimNode){
+        clearInterval(watchTimer);watchTimer=null;
+        requestAnimationFrame(function(){requestAnimationFrame(animateFreshCards);});
+        return;
+      }
+    }
+    if(tries>=32){
       clearInterval(watchTimer);watchTimer=null;
-      requestAnimationFrame(function(){requestAnimationFrame(animateFreshCards);});
-    }else if(tries>=30){
-      clearInterval(watchTimer);watchTimer=null;loading(false);
+      if(node)animateFreshCards();else loading(false);
     }
   },70);
 }
@@ -60,20 +61,23 @@ document.addEventListener('pointerdown',function(e){
   var unit=e.target&&e.target.closest&&e.target.closest('.study-v2-unit');
   if(unit&&!unit.classList.contains('is-current')){
     snapshot();
-    var current=document.querySelector('.study-v2-unit.is-current');
-    var oldId=current&&current.dataset.unitId||'';
     loading(true);
-    watchForNewMastery(oldId);
+    watchForLoadedMastery(grid&&grid.firstElementChild);
   }
 },true);
 
 if(back){
   back.style.touchAction='manipulation';
-  back.addEventListener('pointerdown',function(){
-    if(panel&&!panel.hidden){
-      panel.hidden=true;
-      document.body.classList.remove('study-v2-practice-mode');
-    }
-  },{capture:true,passive:true});
+  back.addEventListener('pointerdown',function(e){
+    if(backClosing||!panel||panel.hidden)return;
+    backClosing=true;
+    panel.hidden=true;
+    document.body.classList.remove('study-v2-practice-mode');
+    e.preventDefault();
+    setTimeout(function(){
+      back.click();
+      backClosing=false;
+    },0);
+  },{capture:true});
 }
 })();
