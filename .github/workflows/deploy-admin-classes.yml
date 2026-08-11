@@ -12,6 +12,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: deploy-admin-classes-worker
+  cancel-in-progress: false
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -27,6 +31,16 @@ jobs:
       - name: Install dependencies
         working-directory: cloudflare-workers/admin-classes
         run: npm install
+
+      - name: Restore Worker service key
+        working-directory: cloudflare-workers/admin-classes
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          SCORES_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          test -n "$SCORES_KEY" || (echo 'Missing SUPABASE_SERVICE_ROLE_KEY' && exit 1)
+          printf '%s' "$SCORES_KEY" | npx wrangler secret put SUPABASE_SERVICE_ROLE_KEY
 
       - name: Deploy Worker
         working-directory: cloudflare-workers/admin-classes
