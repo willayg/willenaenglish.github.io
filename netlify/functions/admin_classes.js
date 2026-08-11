@@ -61,7 +61,7 @@ exports.handler=async event=>{
   if(event.httpMethod==='GET' && action==='search_books'){
     const q=String(event.queryStringParameters?.q||'').trim();
     if(q.length<2)return reply(event,200,{success:true,books:[]});
-    const {data,error}=await db.from('content_books').select('id,title,book_number,public_level,internal_level_id,series_id,content_series(name,publisher)').ilike('title',`%${q}%`).eq('status','active').order('title').limit(12);
+    const {data,error}=await db.from('content_books').select('id,title,book_number,public_level,internal_level_id,series_id,content_series(name,publisher)').ilike('title',`%${q}%`).eq('status','published').order('title').limit(12);
     if(error)return reply(event,400,{success:false,error:error.message});
     return reply(event,200,{success:true,books:(data||[]).map(b=>({book_id:b.id,title:b.title,series:b.content_series?.name||'',publisher:b.content_series?.publisher||'',level:b.public_level!=null?String(b.public_level):b.internal_level_id!=null?String(b.internal_level_id):''}))});
   }
