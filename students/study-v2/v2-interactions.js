@@ -8,6 +8,7 @@ var previous={};
 var watchTimer=null;
 var initialTimer=null;
 var backClosing=false;
+var initialStarted=false;
 
 function pct(card){
   var el=card&&card.querySelector('.header-skill-master-pct');
@@ -69,11 +70,26 @@ function watchInitialCache(firstNode){
       requestAnimationFrame(function(){requestAnimationFrame(function(){animateFreshCards(true);});});
       return;
     }
-    if(tries>=100){
+    if(tries>=120){
       clearInterval(initialTimer);initialTimer=null;
       loading(false);
     }
-  },60);
+  },50);
+}
+function waitForInitialCards(){
+  if(!grid||initialStarted)return;
+  var tries=0;
+  var timer=setInterval(function(){
+    tries++;
+    var first=grid.firstElementChild;
+    if(first){
+      clearInterval(timer);
+      initialStarted=true;
+      watchInitialCache(first);
+    }else if(tries>=120){
+      clearInterval(timer);
+    }
+  },25);
 }
 
 document.addEventListener('pointerdown',function(e){
@@ -100,5 +116,5 @@ if(back){
   },{capture:true});
 }
 
-if(grid&&grid.firstElementChild)watchInitialCache(grid.firstElementChild);
+waitForInitialCards();
 })();
