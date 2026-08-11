@@ -44,6 +44,23 @@ async function supabaseFetch(base, key, path, init={}) {
   return data;
 }
 
+async function supabaseFetchAll(base, key, path, init={}, pageSize=1000) {
+  const method = String(init.method || 'GET').toUpperCase();
+  if (method !== 'GET') return supabaseFetch(base, key, path, init);
+  const separator = path.includes('?') ? '&' : '?';
+  const out = [];
+  let offset = 0;
+  while (true) {
+    const rows = await supabaseFetch(base, key, `${path}${separator}limit=${pageSize}&offset=${offset}`, init);
+    if (!Array.isArray(rows)) throw new Error('Supabase paginated query returned invalid data');
+    out.push(...rows);
+    if (rows.length < pageSize) break;
+    offset += pageSize;
+    if (offset > 100000) throw new Error('Supabase pagination safety limit exceeded');
+  }
+  return out;
+}
+
 async function requireAdmin(req, env) {
   const token = bearer(req);
   if (!token) throw Object.assign(new Error('Not signed in'), { status: 401 });
@@ -200,24 +217,24 @@ async function listLevelTests(env) {
     );
   }
   if (internalIds.length) {
-    const rows = await supabaseFetch(
+    const rows = await supabaseFetchAll(
       env.SCORES_SUPABASE_URL,
       env.SCORES_SUPABASE_SERVICE_ROLE_KEY,
-      `/rest/v1/student_assessment_skill_results?attempt_id=in.(${internalIds.map(encodeURIComponent).join(',')})&select=attempt_id,skill_key,questions_seen,questions_correct,score_percent&order=skill_key.asc`
+      `/rest/v1/student_assessment_skill_results?attempt_id=in.(${internalIds.map(encodeURIComponent).join(',')})&select=attempt_id,skill_key,questions_seen,questions_correct,score_percent&order=attempt_id.asc,skill_key.asc`
     );
-    skillRows.push(...(rows || []));
+    skillRows.push(...rows);
   }
   if (publicIds.length) {
-    const rows = await supabaseFetch(
+    const rows = await supabaseFetchAll(
       env.SCORES_SUPABASE_URL,
       env.SCORES_SUPABASE_SERVICE_ROLE_KEY,
-      `/rest/v1/prospective_level_test_skill_results?attempt_id=in.(${publicIds.map(encodeURIComponent).join(',')})&select=attempt_id,skill_key,questions_seen,questions_correct,score_percent&order=skill_key.asc`
+      `/rest/v1/prospective_level_test_skill_results?attempt_id=in.(${publicIds.map(encodeURIComponent).join(',')})&select=attempt_id,skill_key,questions_seen,questions_correct,score_percent&order=attempt_id.asc,skill_key.asc`
     );
-    skillRows.push(...(rows || []));
-    publicResponses = await supabaseFetch(
+    skillRows.push(...rows);
+    publicResponses = await supabaseFetchAll(
       env.SCORES_SUPABASE_URL,
       env.SCORES_SUPABASE_SERVICE_ROLE_KEY,
-      `/rest/v1/prospective_level_test_responses?attempt_id=in.(${publicIds.map(encodeURIComponent).join(',')})&select=attempt_id,answer_index`
+      `/rest/v1/prospective_level_test_responses?attempt_id=in.(${publicIds.map(encodeURIComponent).join(',')})&select=attempt_id,answer_index&order=attempt_id.asc,answer_index.asc`
     );
   }
 
@@ -320,8 +337,8 @@ async function levelTestDetail(env, body) {
   const attempts = await supabaseFetch(env.SCORES_SUPABASE_URL, env.SCORES_SUPABASE_SERVICE_ROLE_KEY, `/rest/v1/${attemptTable}?id=eq.${encodeURIComponent(attemptId)}&select=*&limit=1`);
   const attempt = attempts?.[0];
   if (!attempt) throw Object.assign(new Error('Level test not found'), { status: 404 });
-  const responses = await supabaseFetch(env.SCORES_SUPABASE_URL, env.SCORES_SUPABASE_SERVICE_ROLE_KEY, `/rest/v1/${responseTable}?attempt_id=eq.${encodeURIComponent(attemptId)}&select=answer_index,assessment_item_id,assessment_source_key,question_level,item_type,prompt_snapshot,selected_answer,correct_answer,is_correct,response_time_ms,metadata&order=answer_index.asc`);
-  const skills = await supabaseFetch(env.SCORES_SUPABASE_URL, env.SCORES_SUPABASE_SERVICE_ROLE_KEY, `/rest/v1/${skillTable}?attempt_id=eq.${encodeURIComponent(attemptId)}&select=skill_key,questions_seen,questions_correct,score_percent&order=skill_key.asc`);
+  const responses = await supabaseFetchAll(env.SCORES_SUPABASE_URL, env.SCORES_SUPABASE_SERVICE_ROLE_KEY, `/rest/v1/${responseTable}?attempt_id=eq.${encodeURIComponent(attemptId)}&select=answer_index,assessment_item_id,assessment_source_key,question_level,item_type,prompt_snapshot,selected_answer,correct_answer,is_correct,response_time_ms,metadata&order=answer_index.asc`);
+  const skills = await supabaseFetchAll(env.SCORES_SUPABASE_URL, env.SCORES_SUPABASE_SERVICE_ROLE_KEY, `/rest/v1/${skillTable}?attempt_id=eq.${encodeURIComponent(attemptId)}&select=skill_key,questions_seen,questions_correct,score_percent&order=skill_key.asc`);
   let person = {};
   if (internal) {
     const rows = await supabaseFetch(env.SCORES_SUPABASE_URL, env.SCORES_SUPABASE_SERVICE_ROLE_KEY, `/rest/v1/profiles?id=eq.${encodeURIComponent(attempt.student_id)}&select=id,name,korean_name,username,grade,school,class,phone,email&limit=1`);
