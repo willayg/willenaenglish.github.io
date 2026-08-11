@@ -49,15 +49,52 @@ function mapItem(row){
   return{id:clean(row.source_key)||row.id,type,q:context?`${context}\n${prompt}`:prompt,a:answer,choices,level:Number(row.level_id)||1,difficulty:Number(row.difficulty_rating)||Number(row.level_id)*20,sourceTable:"assessment_items",translation:false,metadata};
 }
 
-export async function loadQuestionBank(){
+async function loadAllPublishedRows(){
   const select="id,source_key,level_id,difficulty_rating,item_type,prompt_text,context_text,correct_answer,metadata,choices,assessment_item_options(option_text,is_correct,display_order)";
-  const url=`${SUPABASE_URL}/rest/v1/assessment_items?select=${encodeURIComponent(select)}&status=eq.published&is_flagged=eq.false&order=level_id.asc,difficulty_rating.asc,source_key.asc`;
-  const response=await fetch(url,{headers,cache:"no-store"});
-  if(!response.ok)throw new Error(`Could not load the authored assessment bank (${response.status}).`);
-  const rows=await response.json();
-  if(!Array.isArray(rows)||!rows.length)throw new Error("No published authored assessment questions are available yet.");
-  const bank=rows.map(mapItem);
-  console.info("Willena authored assessment bank",{total:bank.length,byLevel:bank.reduce((counts,item)=>(counts[item.level]=(counts[item.level]||0)+1,counts),{})});
+  const baseUrl=`${SUPABASE_URL}/rest/v1/assessment_items?select=${encodeURIComponent(select)}&status=eq.published&is_flagged=eq.false&order=level_id.asc,difficulty_rating.asc,source_key.asc,id.asc`;
+  const pageSize=1000;
+  const rows=[];
+
+  for(let start=0;;start+=pageSize){
+    const response=await fetch(baseUrl,{headers:{...headers,Range:`${start}-${start+pageSize-1}`},cache:"no-store"});
+    if(!response.ok)throw new Error(`Could not load the authored assessment bank (${response.status}).`);
+    const page=await response.json();
+    if(!Array.isArray(page))throw new Error("The authored assessment bank returned an invalid response.");
+    rows.push(...page);
+    if(page.length<pageSize)break;
+  }
+  return rows;
+}
+
+export async function loadQuestionBank(){
+  const rows=await loadAllPublishedRows();
+  if(!rows.length)throw new Error("No published authored assessment questions are available yet.");
+
+  const bank=[];
+  let excludedByMetadata=0;
+  let invalid=0;
+  for(const row of rows){
+    const metadata=row.metadata||{};
+    if(metadata.exclude_level_test===true||metadata.exclude_level_test==="true"){
+      excludedByMetadata++;
+      continue;
+    }
+    try{
+      bank.push(mapItem(row));
+    }catch(error){
+      invalid++;
+      console.warn("Skipping invalid level-test assessment item",row.source_key||row.id,error.message);
+    }
+  }
+
+  if(!bank.length)throw new Error("No usable published authored assessment questions are available yet.");
+  console.info("Willena authored assessment bank",{
+    fetched:rows.length,
+    total:bank.length,
+    excludedByMetadata,
+    invalid,
+    byLevel:bank.reduce((counts,item)=>(counts[item.level]=(counts[item.level]||0)+1,counts),{})
+  });
   return shuffle(bank);
 }
 
