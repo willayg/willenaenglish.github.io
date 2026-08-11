@@ -1,0 +1,11 @@
+{
+  "name": "admin-classes-worker",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.57.4"
+  },
+  "devDependencies": {
+    "wrangler": "^4.28.1"
+  }
+}
