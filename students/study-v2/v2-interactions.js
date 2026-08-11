@@ -6,6 +6,7 @@ var back=document.getElementById('v2PracticeClose');
 var panel=document.getElementById('v2PracticePanel');
 var previous={};
 var watchTimer=null;
+var initialTimer=null;
 var backClosing=false;
 
 function pct(card){
@@ -19,14 +20,14 @@ function snapshot(){
   grid.querySelectorAll('[data-skill]').forEach(function(card){previous[card.dataset.skill]=pct(card);});
 }
 function loading(on){if(mastery)mastery.classList.toggle('is-loading',!!on);}
-function animateFreshCards(){
+function animateFreshCards(fromFull){
   if(!grid)return false;
   var cards=Array.from(grid.querySelectorAll('[data-skill]'));
   if(!cards.length)return false;
   cards.forEach(function(card){
     var skill=card.dataset.skill,target=pct(card),fill=card.querySelector('.header-skill-master-fill');
     if(!fill)return;
-    var start=Object.prototype.hasOwnProperty.call(previous,skill)?previous[skill]:0;
+    var start=fromFull?100:(Object.prototype.hasOwnProperty.call(previous,skill)?previous[skill]:0);
     fill.style.transition='none';
     fill.style.width=start+'%';
     fill.offsetWidth;
@@ -46,15 +47,33 @@ function watchForLoadedMastery(firstNode){
       if(!interimNode)interimNode=node;
       else if(node!==interimNode){
         clearInterval(watchTimer);watchTimer=null;
-        requestAnimationFrame(function(){requestAnimationFrame(animateFreshCards);});
+        requestAnimationFrame(function(){requestAnimationFrame(function(){animateFreshCards(false);});});
         return;
       }
     }
     if(tries>=32){
       clearInterval(watchTimer);watchTimer=null;
-      if(node)animateFreshCards();else loading(false);
+      if(node)animateFreshCards(false);else loading(false);
     }
   },70);
+}
+function watchInitialCache(firstNode){
+  clearInterval(initialTimer);
+  var tries=0;
+  loading(true);
+  initialTimer=setInterval(function(){
+    tries++;
+    var node=grid&&grid.firstElementChild;
+    if(node&&node!==firstNode){
+      clearInterval(initialTimer);initialTimer=null;
+      requestAnimationFrame(function(){requestAnimationFrame(function(){animateFreshCards(true);});});
+      return;
+    }
+    if(tries>=100){
+      clearInterval(initialTimer);initialTimer=null;
+      loading(false);
+    }
+  },60);
 }
 
 document.addEventListener('pointerdown',function(e){
@@ -80,4 +99,6 @@ if(back){
     },0);
   },{capture:true});
 }
+
+if(grid&&grid.firstElementChild)watchInitialCache(grid.firstElementChild);
 })();
