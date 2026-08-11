@@ -3,7 +3,7 @@
 var URL='https://gxwfsqxyuufqtitspfqg.supabase.co';
 var KEY=['sb_publishable_','G-FYhHfDL4OGdL892gY1Zg_','epdbEeqO'].join('');
 var HEADERS={apikey:KEY,Authorization:'Bearer '+KEY};
-var ALLOWED={grammar:'grammar',grammar_error:'grammar',grammar_application:'grammar',question_response:'conversation',vocabulary:'vocabulary',listening:'listening',sentence_unscramble:'sentence_building'};
+var ALLOWED={grammar:'grammar',grammar_error:'grammar',grammar_application:'grammar',question_response:'conversation',vocabulary:'vocabulary',listening:'listening',reading:'reading',sentence_unscramble:'sentence_building'};
 var SELECT='id,book_id,unit_id,level_id,difficulty_rating,item_type,prompt_text,context_text,correct_answer,metadata,choices,anchor_pattern_id';
 function arr(v){return Array.isArray(v)?v:[];}
 function text(v){return String(v==null?'':v).trim();}
@@ -19,5 +19,5 @@ function mapRow(row,context){var meta=row.metadata||{},skill=ALLOWED[text(row.it
 async function resolveBankLevel(publicLevel,context){if(!publicLevel)return null;var bookId=context&&context.bookId;if(bookId){try{var books=await get('content_books?select=internal_level_id,public_level&id=eq.'+encodeURIComponent(bookId)+'&status=in.(review,published)&limit=1');if(books.length){var internal=Number(books[0].internal_level_id)||null,pub=Number(books[0].public_level)||Number(publicLevel);if(internal&&internal<=2)return internal;if(pub)return pub+2;}}catch(_){}}return Number(publicLevel)+2;}
 async function loadUnit(publicLevel,context){context=context||{};if(!context.bookId||!context.unitId)return loadLevel(publicLevel,context);var path='assessment_items?select='+encodeURIComponent(SELECT)+'&book_id=eq.'+encodeURIComponent(context.bookId)+'&unit_id=eq.'+encodeURIComponent(context.unitId)+'&status=eq.published&is_flagged=eq.false&order=difficulty_rating.asc,source_key.asc';var rows=arr(await get(path));return rows.map(function(r){return mapRow(r,context);}).filter(Boolean);}
 async function loadLevel(publicLevel,context){context=context||{};var bankLevel=await resolveBankLevel(publicLevel,context);if(!bankLevel)return[];var path='assessment_items?select='+encodeURIComponent(SELECT)+'&level_id=eq.'+encodeURIComponent(bankLevel)+'&status=eq.published&is_flagged=eq.false&order=difficulty_rating.asc,source_key.asc';var rows=await getAll(path);return arr(rows).map(function(r){return mapRow(r,context);}).filter(Boolean);}
-global.WillenaStudyQuestionBank={version:'authored-bank-v10-indexed-unit',loadUnit:loadUnit,loadLevel:loadLevel};
+global.WillenaStudyQuestionBank={version:'authored-bank-v11-reading',loadUnit:loadUnit,loadLevel:loadLevel};
 })(window);
