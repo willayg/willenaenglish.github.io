@@ -70,6 +70,10 @@ export default {
     if (!supabaseUrl || !serviceKey) return reply(request, 500, { success:false, error:'Missing server configuration' });
 
     const db = createClient(supabaseUrl, serviceKey, { auth:{ persistSession:false, autoRefreshToken:false } });
+    const contentDb = env.CONTENT_SUPABASE_URL && env.CONTENT_SUPABASE_PUBLISHABLE_KEY
+      ? createClient(env.CONTENT_SUPABASE_URL, env.CONTENT_SUPABASE_PUBLISHABLE_KEY, { auth:{ persistSession:false, autoRefreshToken:false } })
+      : null;
+
     const token = accessToken(request);
     if (!token) return reply(request, 401, { success:false, error:'Not signed in' });
 
@@ -86,7 +90,9 @@ export default {
     if (request.method === 'GET' && action === 'search_books') {
       const q = String(url.searchParams.get('q') || '').trim();
       if (q.length < 2) return reply(request, 200, { success:true, books:[] });
-      const { data, error } = await db.from('content_books')
+      if (!contentDb) return reply(request, 500, { success:false, error:'Content database not configured' });
+
+      const { data, error } = await contentDb.from('content_books')
         .select('id,title,book_number,public_level,internal_level_id,series_id,content_series(name,publisher)')
         .ilike('title', `%${q}%`)
         .eq('status', 'published')
