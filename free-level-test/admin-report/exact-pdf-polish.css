@@ -1,7 +1,8 @@
 /* PDF-export-only refinements. This file does not affect the live student/admin report. */
 .willena-pdf-stage,.willena-pdf-page{background:#fff!important}
-.willena-pdf-brand-logo{position:absolute!important;left:-18px!important;top:-16px!important;display:block!important;width:128px!important;height:42px!important;max-width:none!important;object-fit:contain!important;object-position:left center!important}
-.willena-pdf-subbrand{position:absolute!important;left:-18px!important;top:32px!important;margin:0!important}
+.willena-pdf-brand-logo-wrap{position:absolute!important;left:-18px!important;top:-16px!important;width:120px!important;height:46px!important;overflow:hidden!important}
+.willena-pdf-brand-logo{position:absolute!important;left:-24px!important;top:-42px!important;display:block!important;width:169px!important;height:auto!important;max-width:none!important}
+.willena-pdf-subbrand{position:absolute!important;left:-18px!important;top:34px!important;margin:0!important}
 
 /* Page 1: increase separation between the major groups without changing their order. */
 .willena-pdf-page:nth-child(1) .willena-pdf-title-line{margin-bottom:38px!important}
@@ -10,7 +11,7 @@
   position:relative!important;
   width:196px!important;
   height:196px!important;
-  margin:0 auto 42px!important;
+  margin:0 auto 24px!important;
   box-shadow:none!important;
 }
 .willena-pdf-page:nth-child(1) .willena-pdf-orbit:before,
@@ -29,15 +30,14 @@
   border:3px solid rgba(47,182,193,.17);
 }
 .willena-pdf-page:nth-child(1) .willena-pdf-hjourney{height:136px!important;margin:10px 26px 30px!important}
-.willena-pdf-page:nth-child(1) .willena-pdf-placement-pips{margin-top:30px!important}
-.willena-pdf-page:nth-child(1) .willena-pdf-placement-scale{margin-bottom:42px!important}
+.willena-pdf-page:nth-child(1) .willena-pdf-placement-pips{margin-top:16px!important}
+.willena-pdf-page:nth-child(1) .willena-pdf-placement-scale{margin-bottom:24px!important}
 .willena-pdf-page:nth-child(1) .willena-pdf-one-card{margin:0 14px!important}
 .willena-pdf-page:nth-child(1) .willena-pdf-card-full{
-  height:350px!important;
-  padding:49px 38px 26px!important;
+  height:400px!important;
+  padding:48px 38px 30px!important;
   border-radius:34px!important;
 }
-.willena-pdf-page:nth-child(1) .willena-pdf-card-full h3{margin-bottom:16px!important;font-size:22px!important}
 .willena-pdf-page:nth-child(1) .willena-pdf-card-full p{color:#526a72!important;text-align:left!important;font-size:12.5px!important;line-height:1.52!important}
 .willena-pdf-page:nth-child(1) .willena-pdf-summary-section{display:block!important;margin-top:6px!important}
 .willena-pdf-page:nth-child(1) .willena-pdf-summary-section:first-child{margin-top:0!important}
