@@ -10,7 +10,9 @@ var ASSESSED_SKILLS=['vocabulary','grammar','listening','reading','sentence_buil
 var ALL_SKILLS=ASSESSED_SKILLS.concat(['speaking','writing']);
 
 function skillFor(value){
- return({vocabulary:'vocabulary',grammar:'grammar',grammar_error:'grammar',question_response:'grammar',listening:'listening',reading:'reading',sentence_unscramble:'sentence_building',sentence_building:'sentence_building',speaking:'speaking',writing:'writing'})[String(value||'')]||null;
+ var normalized=String(value||'').trim().toLowerCase();
+ if(normalized.indexOf('unscramble')>=0||normalized.indexOf('sentence_build')>=0||normalized==='sentence_making')return'sentence_building';
+ return({vocabulary:'vocabulary',grammar:'grammar',grammar_error:'grammar',question_response:'grammar',listening:'listening',reading:'reading',speaking:'speaking',writing:'writing'})[normalized]||null;
 }
 function clampLevel(value,fallback){
  var number=Number(value);

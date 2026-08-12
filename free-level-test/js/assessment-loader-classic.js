@@ -12,7 +12,7 @@ function isExcludedFromLevelTest(row){
  return value===true||String(value).toLowerCase()==='true';
 }
 function fetchAssessmentPage(select,offset){
- var url=SUPABASE_URL+"/rest/v1/assessment_items?select="+encodeURIComponent(select)+"&status=eq.published&is_flagged=eq.false&order=level_id.asc,difficulty_rating.asc,source_key.asc&limit="+PAGE_SIZE+"&offset="+offset;
+ var url=SUPABASE_URL+"/rest/v1/assessment_items?select="+encodeURIComponent(select)+"&status=eq.published&is_flagged=eq.false&order=level_id.asc,difficulty_rating.asc,source_key.asc,id.asc&limit="+PAGE_SIZE+"&offset="+offset;
  return fetch(url,{headers:headers,cache:"no-store"}).then(function(response){
   if(!response.ok)throw new Error("Could not load the authored assessment bank ("+response.status+").");
   return response.json();

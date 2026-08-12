@@ -40,8 +40,8 @@ test('public and internal tests load the same eligibility-aware bank', async () 
     readFile(new URL('students/level-test/index.html', root), 'utf8'),
   ]);
 
-  assert.match(publicHtml, /assessment-loader-classic\.js\?v=20260812-eligibility1/);
-  assert.match(studentHtml, /assessment-loader-classic\.js\?v=20260812-eligibility1/);
+  assert.match(publicHtml, /assessment-loader-classic\.js\?v=20260812-eligibility2/);
+  assert.match(studentHtml, /assessment-loader-classic\.js\?v=20260812-eligibility2/);
 });
 
 test('study question bank keeps assessment questions regardless of level-test eligibility', async () => {

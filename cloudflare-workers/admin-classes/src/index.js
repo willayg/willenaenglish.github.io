@@ -316,12 +316,20 @@ async function listLevelTests(env) {
     .slice(0, 250);
 }
 
-function responseSkill(type) {
-  return ({
+function responseSkill(type, metadata={}) {
+  const normalizedType = String(type || '').trim().toLowerCase();
+  if (normalizedType.includes('unscramble') || normalizedType.includes('sentence_build') || normalizedType === 'sentence_making') {
+    return 'sentence_building';
+  }
+  const inferred = ({
     vocabulary: 'vocabulary', grammar: 'grammar', grammar_error: 'grammar',
     question_response: 'grammar', listening: 'listening', reading: 'reading',
-    sentence_unscramble: 'sentence_building', speaking: 'speaking', writing: 'writing',
-  })[String(type || '')] || 'other';
+    speaking: 'speaking', writing: 'writing',
+  })[normalizedType];
+  if (inferred) return inferred;
+  const stored = String(metadata?.skill || '').trim().toLowerCase();
+  if (stored.includes('unscramble') || stored.includes('sentence_build') || stored === 'sentence_making') return 'sentence_building';
+  return stored || 'other';
 }
 
 async function levelTestDetail(env, body) {
@@ -374,7 +382,7 @@ async function levelTestDetail(env, body) {
     source,
     attempt: { ...attempt, display_level: attempt.display_level || attempt.recommended_level },
     candidate,
-    responses: (responses || []).map(row => ({ ...row, question_id: row.assessment_item_id, question_type: row.item_type, skill: responseSkill(row.item_type) })),
+    responses: (responses || []).map(row => ({ ...row, question_id: row.assessment_item_id, question_type: row.item_type, skill: responseSkill(row.item_type, row.metadata) })),
     skills: (skills || []).map(row => ({ skill: row.skill_key, questions_seen: Number(row.questions_seen) || 0, questions_correct: Number(row.questions_correct) || 0, score_percent: Number(row.score_percent) || 0 })),
   };
 }

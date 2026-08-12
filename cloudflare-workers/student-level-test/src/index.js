@@ -2,6 +2,7 @@ import { createClient } from '@supabase/supabase-js';
 
 const TEST_VERSION = '2026-08-v1';
 const TEST_LENGTH = 30;
+const BANK_PAGE_SIZE = 1000;
 const ALLOWED_ORIGINS = new Set([
   'https://students.willenaenglish.com',
   'https://staging.willenaenglish.com',
@@ -67,7 +68,8 @@ function skillFor(item) {
   if (type.includes('read')) return 'reading';
   if (type.includes('phon')) return 'phonics';
   if (type.includes('vocab') || type.includes('word')) return 'vocabulary';
-  if (type.includes('writ') || type.includes('unscramble')) return 'writing';
+  if (type.includes('unscramble') || type.includes('sentence_build')) return 'sentence_building';
+  if (type.includes('writ')) return 'writing';
   return 'grammar';
 }
 
@@ -129,16 +131,26 @@ async function getStudent(request, game) {
 }
 
 async function loadBank(content) {
-  const { data, error } = await content
-    .from('assessment_items')
-    .select('id,source_key,level_id,difficulty_rating,item_type,prompt_text,context_text,correct_answer,metadata,choices,assessment_item_options(option_text,is_correct,display_order)')
-    .eq('status', 'published')
-    .eq('is_flagged', false)
-    .order('level_id', { ascending: true })
-    .order('difficulty_rating', { ascending: true });
+  const rows = [];
+  for (let start = 0; ; start += BANK_PAGE_SIZE) {
+    const { data, error } = await content
+      .from('assessment_items')
+      .select('id,source_key,level_id,difficulty_rating,item_type,prompt_text,context_text,correct_answer,metadata,choices,assessment_item_options(option_text,is_correct,display_order)')
+      .eq('status', 'published')
+      .eq('is_flagged', false)
+      .order('level_id', { ascending: true })
+      .order('difficulty_rating', { ascending: true })
+      .order('source_key', { ascending: true })
+      .order('id', { ascending: true })
+      .range(start, start + BANK_PAGE_SIZE - 1);
 
-  if (error) throw error;
-  return (data || []).filter(item => {
+    if (error) throw error;
+    const page = data || [];
+    rows.push(...page);
+    if (page.length < BANK_PAGE_SIZE) break;
+  }
+
+  return rows.filter(item => {
     if (isExcludedFromLevelTest(item)) return false;
     const options = optionsFor(item);
     const type = clean(item.item_type);
@@ -162,9 +174,11 @@ function levelForAbility(value) {
 }
 
 function capturedSkill(row) {
+  const inferred = skillFor({ item_type: row?.item_type });
+  if (inferred === 'sentence_building') return inferred;
   const explicit = clean(row?.metadata?.skill).toLowerCase();
   if (explicit) return explicit;
-  return skillFor({ item_type: row?.item_type });
+  return inferred;
 }
 
 function capturedResponse(row, attempt, studentId) {
