@@ -69,9 +69,9 @@ async function download(){
     const pages=[...stage.querySelectorAll('.willena-pdf-page')];
     const pdf=new window.jspdf.jsPDF({orientation:'portrait',unit:'mm',format:'a4',compress:true});
     for(let i=0;i<pages.length;i++){
-      const canvas=await window.html2canvas(pages[i],{scale:2,backgroundColor:'#ffffff',logging:false,useCORS:true,width:794,height:1123});
+      const canvas=await window.html2canvas(pages[i],{scale:3,backgroundColor:'#ffffff',logging:false,useCORS:true,width:794,height:1123});
       if(i)pdf.addPage('a4','portrait');
-      pdf.addImage(canvas.toDataURL('image/jpeg',.96),'JPEG',0,0,210,297,undefined,'FAST');
+      pdf.addImage(canvas.toDataURL('image/jpeg',.99),'JPEG',0,0,210,297,undefined,'NONE');
       canvas.width=1;
       canvas.height=1;
     }
