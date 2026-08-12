@@ -31,10 +31,11 @@
 <link rel="stylesheet" href="./styles/report-level-guide.css?v=20260803-spine1">
 <style>
 .scramble-meaning span{display:none!important}
+.visitor-test .student-complete{min-height:65vh;display:grid;place-items:center;padding:24px}.visitor-test .student-complete-card{width:min(680px,100%);background:#fff;border:1px solid #dbe8ee;border-radius:30px;padding:clamp(28px,6vw,54px);text-align:center;box-shadow:0 22px 65px rgba(38,66,88,.13)}.visitor-test .student-complete-icon{width:82px;height:82px;margin:0 auto 20px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,#66d7df,#25b9c5);color:#fff;font-size:42px;font-weight:800}.visitor-test .student-complete h1{margin:0 0 12px;color:#17243f;font-size:clamp(30px,6vw,44px)}.visitor-test .student-complete p{margin:0 auto 26px;max-width:520px;color:#71809a;line-height:1.65}.visitor-test .student-complete button{display:inline-flex;align-items:center;justify-content:center;min-height:56px;padding:0 24px;border:0;border-radius:17px;background:#17243f;color:#fff;font-weight:800;cursor:pointer}
 .leave-guard[hidden]{display:none}.leave-guard{position:fixed;inset:0;z-index:120000;display:grid;place-items:center;padding:20px;background:rgba(12,29,48,.68);backdrop-filter:blur(5px)}.leave-guard-card{width:min(440px,100%);padding:30px 24px 24px;border-radius:26px;background:#fff;color:#17243f;text-align:center;box-shadow:0 24px 80px rgba(9,27,45,.28)}.leave-guard-icon{width:68px;height:68px;margin:0 auto 16px;border-radius:50%;display:grid;place-items:center;background:#fff1d6;color:#f0a126;font-size:34px;font-weight:800}.leave-guard-card h2{margin:0 0 10px;font-size:clamp(24px,6vw,30px)}.leave-guard-card p{margin:0 0 24px;color:#66758e;line-height:1.6;font-weight:600}.leave-guard-actions{display:grid;grid-template-columns:1fr 1fr;gap:12px}.leave-guard-actions button{min-height:56px;border:0;border-radius:16px;padding:10px 14px;font:800 16px/1.25 Poppins,sans-serif;cursor:pointer}.leave-guard-stay{background:#28bec9;color:#fff}.leave-guard-exit{background:#eef2f6;color:#536178}@media(max-width:430px){.leave-guard-actions{grid-template-columns:1fr}.leave-guard-stay{order:-1}}
 </style>
 </head>
-<body>
+<body class="visitor-test">
 <div id="leaveGuard" class="leave-guard" role="dialog" aria-modal="true" aria-labelledby="leaveGuardTitle" aria-describedby="leaveGuardText" hidden>
   <div class="leave-guard-card">
     <div class="leave-guard-icon" aria-hidden="true">!</div>
