@@ -1,8 +1,8 @@
 /* PDF-export-only refinements. This file does not affect the live student/admin report. */
 .willena-pdf-stage,.willena-pdf-page{background:#fff!important}
-.willena-pdf-brand-logo-wrap{position:absolute!important;left:-10px!important;top:-8px!important;width:120px!important;height:46px!important;overflow:hidden!important}
+.willena-pdf-brand-logo-wrap{position:absolute!important;left:-2px!important;top:0!important;width:120px!important;height:46px!important;overflow:hidden!important}
 .willena-pdf-brand-logo{position:absolute!important;left:-24px!important;top:-42px!important;display:block!important;width:169px!important;height:auto!important;max-width:none!important}
-.willena-pdf-subbrand{position:absolute!important;left:-10px!important;top:42px!important;margin:0!important}
+.willena-pdf-subbrand{position:absolute!important;left:-2px!important;top:50px!important;margin:0!important}
 
 /* Page 1: increase separation between the major groups without changing their order. */
 .willena-pdf-page:nth-child(1) .willena-pdf-title-line{margin-bottom:38px!important}
