@@ -31,12 +31,15 @@
 .willena-pdf-page:nth-child(1) .willena-pdf-placement-scale{margin-bottom:82px!important}
 .willena-pdf-page:nth-child(1) .willena-pdf-one-card{margin:0 14px!important}
 .willena-pdf-page:nth-child(1) .willena-pdf-card-full{
-  height:210px!important;
-  padding:64px 58px 30px!important;
+  height:252px!important;
+  padding:45px 34px 22px!important;
   border-radius:34px!important;
 }
-.willena-pdf-page:nth-child(1) .willena-pdf-card-full h3{margin-bottom:28px!important;font-size:24px!important}
-.willena-pdf-page:nth-child(1) .willena-pdf-card-full p{font-size:14px!important;line-height:1.8!important}
+.willena-pdf-page:nth-child(1) .willena-pdf-card-full h3{margin-bottom:10px!important;font-size:19px!important}
+.willena-pdf-page:nth-child(1) .willena-pdf-card-full p{text-align:left!important;font-size:8.8px!important;line-height:1.42!important}
+.willena-pdf-page:nth-child(1) .willena-pdf-summary-section{display:block!important;margin-top:3px!important}
+.willena-pdf-page:nth-child(1) .willena-pdf-summary-section:first-child{margin-top:0!important}
+.willena-pdf-page:nth-child(1) .willena-pdf-summary-section strong{color:#546d74!important;font-weight:800!important;margin-right:5px!important}
 
 /* Keep the current-level label fully above the journey circle. */
 .willena-pdf-hnode.current:before{
