@@ -28,9 +28,23 @@
 <link rel="stylesheet" href="./styles/full-test-sections.css?v=20260731-1">
 <link rel="stylesheet" href="./styles/loading-transitions.css?v=20260731-2">
 <link rel="stylesheet" href="./styles/report-level-guide.css?v=20260803-spine1">
-<style>.scramble-meaning span{display:none!important}</style>
+<style>
+.scramble-meaning span{display:none!important}
+.leave-guard[hidden]{display:none}.leave-guard{position:fixed;inset:0;z-index:120000;display:grid;place-items:center;padding:20px;background:rgba(12,29,48,.68);backdrop-filter:blur(5px)}.leave-guard-card{width:min(440px,100%);padding:30px 24px 24px;border-radius:26px;background:#fff;color:#17243f;text-align:center;box-shadow:0 24px 80px rgba(9,27,45,.28)}.leave-guard-icon{width:68px;height:68px;margin:0 auto 16px;border-radius:50%;display:grid;place-items:center;background:#fff1d6;color:#f0a126;font-size:34px;font-weight:800}.leave-guard-card h2{margin:0 0 10px;font-size:clamp(24px,6vw,30px)}.leave-guard-card p{margin:0 0 24px;color:#66758e;line-height:1.6;font-weight:600}.leave-guard-actions{display:grid;grid-template-columns:1fr 1fr;gap:12px}.leave-guard-actions button{min-height:56px;border:0;border-radius:16px;padding:10px 14px;font:800 16px/1.25 Poppins,sans-serif;cursor:pointer}.leave-guard-stay{background:#28bec9;color:#fff}.leave-guard-exit{background:#eef2f6;color:#536178}@media(max-width:430px){.leave-guard-actions{grid-template-columns:1fr}.leave-guard-stay{order:-1}}
+</style>
 </head>
 <body>
+<div id="leaveGuard" class="leave-guard" role="dialog" aria-modal="true" aria-labelledby="leaveGuardTitle" aria-describedby="leaveGuardText" hidden>
+  <div class="leave-guard-card">
+    <div class="leave-guard-icon" aria-hidden="true">!</div>
+    <h2 id="leaveGuardTitle">시험을 종료하시겠습니까?</h2>
+    <p id="leaveGuardText">지금 나가면 지금까지 푼 답이 사라질 수 있어요.</p>
+    <div class="leave-guard-actions">
+      <button id="leaveGuardExit" class="leave-guard-exit" type="button">시험 나가기</button>
+      <button id="leaveGuardStay" class="leave-guard-stay" type="button">계속 풀기</button>
+    </div>
+  </div>
+</div>
 <div class="app-shell">
 <header class="app-header">
 <img src="/Assets/Images/Logo.png?v=20260730-3" alt="Willena English Academy" class="brand-logo">
@@ -45,6 +59,7 @@
 <footer id="footerText">Willena English · 스테이징 진단 테스트</footer>
 </div>
 <script src="./js/prospective-registration.js?v=20260802-5"></script>
+<script src="./js/leave-guard.js?v=20260813-1"></script>
 <script src="/shared/learning-engine/activity-schema.js?v=20260808-1"></script>
 <script src="/shared/learning-engine/scoring.js?v=20260808-1"></script>
 <script src="/shared/learning-engine/assessment-adapter.js?v=20260808-1"></script>
