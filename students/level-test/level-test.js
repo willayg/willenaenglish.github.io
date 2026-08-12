@@ -6,6 +6,9 @@ var gradePrefill=null;
 var gradeApplied=false;
 var resultReady=false;
 var saveFailed=false;
+var testActive=false;
+var allowPageExit=false;
+var leaveGuardOpen=false;
 var setupSnapshot={grade:null,years:null,listening:null,length:null};
 // Declare student mode synchronously. Authentication fills in the student
 // later, but the recorder must choose the internal storage/API path while the
@@ -33,7 +36,56 @@ window.fetch=function(input,init){
  return nativeFetch(input,init);
 };
 
-function signin(){location.replace('/students/signin.html?next='+encodeURIComponent('/students/level-test/'))}
+function signin(){allowPageExit=true;location.replace('/students/signin.html?next='+encodeURIComponent('/students/level-test/'))}
+function leaveGuard(){
+ return document.getElementById('leaveGuard');
+}
+function showLeaveGuard(){
+ if(!testActive||completed||leaveGuardOpen)return;
+ var modal=leaveGuard();
+ if(!modal)return;
+ leaveGuardOpen=true;
+ modal.hidden=false;
+ document.body.style.overflow='hidden';
+ var stay=document.getElementById('leaveGuardStay');
+ if(stay)setTimeout(function(){stay.focus()},0);
+}
+function hideLeaveGuard(){
+ var modal=leaveGuard();
+ leaveGuardOpen=false;
+ if(modal)modal.hidden=true;
+ document.body.style.overflow='';
+}
+function activateLeaveGuard(){
+ if(testActive||completed)return;
+ testActive=true;
+ history.pushState({willenaLevelTestGuard:true},'',location.href);
+}
+function deactivateLeaveGuard(){
+ testActive=false;
+ allowPageExit=true;
+ hideLeaveGuard();
+}
+window.addEventListener('popstate',function(){
+ if(!testActive||completed||allowPageExit)return;
+ history.pushState({willenaLevelTestGuard:true},'',location.href);
+ showLeaveGuard();
+});
+window.addEventListener('beforeunload',function(event){
+ if(!testActive||completed||allowPageExit)return;
+ event.preventDefault();
+ event.returnValue='';
+});
+document.addEventListener('click',function(event){
+ if(event.target&&event.target.id==='leaveGuardStay'){hideLeaveGuard();return}
+ if(event.target&&event.target.id==='leaveGuardExit'){
+  deactivateLeaveGuard();
+  location.href='/students/dashboard.html';
+ }
+});
+document.addEventListener('keydown',function(event){
+ if(event.key==='Escape'&&leaveGuardOpen){event.preventDefault();hideLeaveGuard()}
+});
 function studentName(data){return String(data&&data.name||data&&data.username||'Student').trim()}
 async function authRequest(action,params){
  var query=new URLSearchParams(Object.assign({action:action,_:Date.now()},params||{}));
@@ -144,7 +196,7 @@ document.addEventListener('click',function(event){
  var key=holder&&holder.getAttribute('data-key');
  if(!key)return;
  setupSnapshot[key]=Number(option.getAttribute('data-value'));
- if(key==='length')setTimeout(function(){if(window.WillenaLevelTestRecorder){var begin=window.WillenaLevelTestRecorder.begin||window.WillenaLevelTestRecorder.start;begin().catch(function(error){console.warn('[StudentLevelTest] attempt start failed',error)})}},0);
+ if(key==='length'){activateLeaveGuard();setTimeout(function(){if(window.WillenaLevelTestRecorder){var begin=window.WillenaLevelTestRecorder.begin||window.WillenaLevelTestRecorder.start;begin().catch(function(error){console.warn('[StudentLevelTest] attempt start failed',error)})}},0)}
 },true);
 document.addEventListener('click',function(event){
  if(event.target&&event.target.id==='retryRecording'&&window.WillenaLevelTestRecorder){saveFailed=false;window.WillenaLevelTestRecorder.finish().catch(function(){})}
@@ -152,6 +204,7 @@ document.addEventListener('click',function(event){
 window.addEventListener('willena:recording-finished',function(){
  if(completed||!resultReady)return;
  completed=true;
+ deactivateLeaveGuard();
  if(window.speechSynthesis)window.speechSynthesis.cancel();
  var root=document.getElementById('app');if(root)root.innerHTML=completionMarkup();
  document.body.classList.remove('welcome-mode');
