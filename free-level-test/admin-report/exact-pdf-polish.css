@@ -1,5 +1,7 @@
 /* PDF-export-only refinements. This file does not affect the live student/admin report. */
 .willena-pdf-stage,.willena-pdf-page{background:#fff!important}
+.willena-pdf-brand-logo{display:block;width:154px;height:50px;object-fit:contain;object-position:left center}
+.willena-pdf-subbrand{margin-top:6px!important}
 
 /* Page 1: increase separation between the major groups without changing their order. */
 .willena-pdf-page:nth-child(1) .willena-pdf-title-line{margin-bottom:38px!important}
