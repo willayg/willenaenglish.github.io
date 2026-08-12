@@ -14,7 +14,9 @@ var levels=[
  ['7','Level 7','레벨 7','Can understand conditional meaning, present perfect forms, reported ideas and more complex relationships between events.','조건의 의미, 현재완료, 전달된 생각과 사건 사이의 더 복잡한 관계를 이해할 수 있습니다.'],
  ['8','Level 8','레벨 8','Can understand advanced middle-school grammar and follow detailed explanations with less support.','중학교 상위 문법을 이해하고 도움을 덜 받으면서 자세한 설명을 따라갈 수 있습니다.'],
  ['9','Level 9','레벨 9','Can analyse complex sentences and understand arguments, assumptions and speaker position.','복잡한 문장을 분석하고 주장, 가정과 화자의 입장을 이해할 수 있습니다.'],
- ['10','Level 10','레벨 10','Can handle high-school bridge English, abstract vocabulary, dense texts, implied conclusions and nuanced meaning.','고등학교 진입 수준의 영어, 추상 어휘, 밀도 높은 글, 함축된 결론과 미묘한 의미를 다룰 수 있습니다.']
+ ['10','Level 10','레벨 10','Can handle high-school bridge English, abstract vocabulary, dense texts, implied conclusions and nuanced meaning.','고등학교 진입 수준의 영어, 추상 어휘, 밀도 높은 글, 함축된 결론과 미묘한 의미를 다룰 수 있습니다.'],
+ ['11','Level 11','레벨 11','Can study successfully in an English-medium international or overseas high school, handling academic texts, class discussions and extended assignments.','영어로 수업하는 국제학교나 해외 고등학교에서 학업을 수행하며 학술적인 글, 수업 토론과 장문 과제를 다룰 수 있습니다.'],
+ ['12','Level 12','레벨 12','Can study at an American university, following lectures, reading academic texts, participating in seminars and producing university-level assignments.','미국 대학교에서 강의를 이해하고 학술 자료를 읽으며 세미나에 참여하고 대학 수준의 과제를 작성할 수 있습니다.']
 ];
 function fallbackLevel(){
  var box=root.querySelector('.report-screen .report-level');
