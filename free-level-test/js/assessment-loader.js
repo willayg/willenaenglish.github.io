@@ -3,6 +3,12 @@ const SUPABASE_KEY=["sb_publishable_","G-FYhHfDL4OGdL892gY1Zg_","epdbEeqO"].join
 const headers={apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`};
 
 const clean=value=>String(value??"").trim();
+
+function isExcludedFromLevelTest(row){
+  const metadata=row?.metadata||{};
+  const value=metadata.exclude_level_test??metadata.exclude_from_level_test;
+  return value===true||String(value).toLowerCase()==="true";
+}
 const shuffle=items=>[...items].sort(()=>Math.random()-.5);
 const unique=items=>[...new Set(items.map(clean).filter(Boolean))];
 
@@ -74,8 +80,7 @@ export async function loadQuestionBank(){
   let excludedByMetadata=0;
   let invalid=0;
   for(const row of rows){
-    const metadata=row.metadata||{};
-    if(metadata.exclude_level_test===true||metadata.exclude_level_test==="true"){
+    if(isExcludedFromLevelTest(row)){
       excludedByMetadata++;
       continue;
     }

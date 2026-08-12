@@ -5,6 +5,12 @@ var SUPABASE_KEY=["sb_publishable_","G-FYhHfDL4OGdL892gY1Zg_","epdbEeqO"].join("
 var headers={apikey:SUPABASE_KEY,Authorization:"Bearer "+SUPABASE_KEY};
 var PAGE_SIZE=1000;
 function shuffle(items){return items.slice().sort(function(){return Math.random()-.5});}
+function isExcludedFromLevelTest(row){
+ var metadata=row&&row.metadata||{};
+ var value=metadata.exclude_level_test;
+ if(value==null)value=metadata.exclude_from_level_test;
+ return value===true||String(value).toLowerCase()==='true';
+}
 function fetchAssessmentPage(select,offset){
  var url=SUPABASE_URL+"/rest/v1/assessment_items?select="+encodeURIComponent(select)+"&status=eq.published&is_flagged=eq.false&order=level_id.asc,difficulty_rating.asc,source_key.asc&limit="+PAGE_SIZE+"&offset="+offset;
  return fetch(url,{headers:headers,cache:"no-store"}).then(function(response){
@@ -32,14 +38,16 @@ function loadQuestionBank(){
   if(!rows.length)throw new Error("No published authored assessment questions are available yet.");
   var adapted=[];
   var rejected=0;
+  var excluded=0;
   rows.forEach(function(row){
+   if(isExcludedFromLevelTest(row)){excluded++;return;}
    try{adapted.push(adapter.fromAssessmentItem(row));}
    catch(error){rejected++;console.warn('[LevelTest] Skipping invalid assessment item',row&&row.source_key||row&&row.id,error);}
   });
   if(!adapted.length)throw new Error("No usable authored assessment questions are available yet.");
   var levels={};
   adapted.forEach(function(item){levels[item.level]=(levels[item.level]||0)+1;});
-  console.info('[LevelTest] Loaded complete assessment bank',{rows:rows.length,usable:adapted.length,rejected:rejected,levels:levels});
+  console.info('[LevelTest] Loaded complete assessment bank',{rows:rows.length,usable:adapted.length,excluded:excluded,rejected:rejected,levels:levels});
   return shuffle(adapted);
  });
 }

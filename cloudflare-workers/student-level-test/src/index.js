@@ -55,6 +55,12 @@ function optionsFor(item) {
   return [...new Set(options.filter(Boolean))];
 }
 
+function isExcludedFromLevelTest(item) {
+  const metadata = item?.metadata || {};
+  const value = metadata.exclude_level_test ?? metadata.exclude_from_level_test;
+  return value === true || String(value).toLowerCase() === 'true';
+}
+
 function skillFor(item) {
   const type = clean(item.item_type).toLowerCase();
   if (type.includes('listen')) return 'listening';
@@ -133,6 +139,7 @@ async function loadBank(content) {
 
   if (error) throw error;
   return (data || []).filter(item => {
+    if (isExcludedFromLevelTest(item)) return false;
     const options = optionsFor(item);
     const type = clean(item.item_type);
     const supported = type !== 'sentence_unscramble' || Array.isArray(item.metadata?.tokens);
