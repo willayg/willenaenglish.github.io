@@ -1,0 +1,20 @@
+.willena-pdf-segments {
+  display: flex;
+  align-items: stretch;
+  gap: 7px;
+}
+
+.willena-pdf-segment {
+  flex: 1.18 1 0;
+  min-width: 0;
+}
+
+.willena-pdf-segment.done,
+.willena-pdf-segment.current {
+  flex-grow: .68;
+}
+
+.willena-pdf-segment.starter {
+  flex-grow: .3;
+  min-width: 7px;
+}

@@ -1,0 +1,30 @@
+.level-test-mini-segments {
+  display: flex;
+  align-items: stretch;
+  gap: clamp(3px, .8vw, 5px);
+}
+
+.level-test-mini-segments i {
+  flex: 1.18 1 0;
+  min-width: 0;
+}
+
+.level-test-mini-segments i.is-complete,
+.level-test-mini-segments i.is-current {
+  flex-grow: .68;
+}
+
+.level-test-mini-segments i.is-starter {
+  flex-grow: .3;
+  min-width: 6px;
+}
+
+@media (max-width: 480px) {
+  .level-test-mini-segments {
+    gap: 3px;
+  }
+
+  .level-test-mini-segments i.is-starter {
+    min-width: 5px;
+  }
+}

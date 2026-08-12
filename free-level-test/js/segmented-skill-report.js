@@ -8,7 +8,7 @@ function internalLevelFromLabel(text){
  var number=Number((value.match(/\d+/)||[])[0]);
  if(!number)return null;
  if(/starter|스타터/i.test(value))return Math.max(1,Math.min(2,number));
- if(/level|레벨/i.test(value))return Math.max(3,Math.min(10,number+2));
+ if(/level|레벨/i.test(value))return Math.max(3,Math.min(12,number+2));
  return null;
 }
 
@@ -16,11 +16,15 @@ function buildSegments(track,level){
  if(!track||track.querySelector('.report-skill__segment'))return;
  track.innerHTML='';
  track.setAttribute('aria-hidden','true');
- for(var i=1;i<=10;i++){
+ var starter=document.createElement('span');
+ starter.className='report-skill__segment is-starter '+(level<=2?'is-current':'is-complete');
+ track.appendChild(starter);
+ for(var displayLevel=1;displayLevel<=12;displayLevel++){
+  var internalLevel=displayLevel+2;
   var segment=document.createElement('span');
   segment.className='report-skill__segment';
-  if(i<level)segment.classList.add('is-complete');
-  else if(i===level)segment.classList.add('is-current');
+  if(internalLevel<level)segment.classList.add('is-complete');
+  else if(internalLevel===level)segment.classList.add('is-current');
   track.appendChild(segment);
  }
 }
