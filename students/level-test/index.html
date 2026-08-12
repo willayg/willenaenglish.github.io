@@ -30,6 +30,7 @@ html.auth-pending #authLoading{position:fixed;inset:0;z-index:9999;display:grid;
 #loadingDots{display:inline-block;min-width:1.6em;text-align:left}
 .question-meter-toggle{display:none!important}
 .student-complete{min-height:65vh;display:grid;place-items:center;padding:24px}.student-complete-card{width:min(680px,100%);background:#fff;border:1px solid #dbe8ee;border-radius:30px;padding:clamp(28px,6vw,54px);text-align:center;box-shadow:0 22px 65px rgba(38,66,88,.13)}.student-complete-icon{width:82px;height:82px;margin:0 auto 20px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,#66d7df,#25b9c5);color:#fff;font-size:42px;font-weight:800}.student-complete h1{margin:0 0 12px;color:#17243f;font-size:clamp(30px,6vw,44px)}.student-complete p{margin:0 auto 26px;max-width:520px;color:#71809a;line-height:1.65}.student-complete a{display:inline-flex;align-items:center;justify-content:center;min-height:56px;padding:0 24px;border-radius:17px;background:#17243f;color:#fff;text-decoration:none;font-weight:800}
+.leave-guard[hidden]{display:none}.leave-guard{position:fixed;inset:0;z-index:12000;display:grid;place-items:center;padding:20px;background:rgba(12,29,48,.68);backdrop-filter:blur(5px)}.leave-guard-card{width:min(440px,100%);padding:30px 24px 24px;border-radius:26px;background:#fff;color:#17243f;text-align:center;box-shadow:0 24px 80px rgba(9,27,45,.28)}.leave-guard-icon{width:68px;height:68px;margin:0 auto 16px;border-radius:50%;display:grid;place-items:center;background:#fff1d6;color:#f0a126;font-size:34px;font-weight:800}.leave-guard-card h2{margin:0 0 10px;font-size:clamp(24px,6vw,30px)}.leave-guard-card p{margin:0 0 24px;color:#66758e;line-height:1.6;font-weight:600}.leave-guard-actions{display:grid;grid-template-columns:1fr 1fr;gap:12px}.leave-guard-actions button{min-height:56px;border:0;border-radius:16px;padding:10px 14px;font:800 16px/1.25 Poppins,sans-serif;cursor:pointer}.leave-guard-stay{background:#28bec9;color:#fff}.leave-guard-exit{background:#eef2f6;color:#536178}@media(max-width:430px){.leave-guard-actions{grid-template-columns:1fr}.leave-guard-stay{order:-1}}
 </style>
 <script>document.documentElement.classList.add('auth-pending');</script>
 <script src="/students/api-gateway.js"></script>
@@ -37,6 +38,17 @@ html.auth-pending #authLoading{position:fixed;inset:0;z-index:9999;display:grid;
 </head>
 <body>
 <div id="authLoading" role="status" aria-live="polite">Wait a sec<span id="loadingDots">.</span></div>
+<div id="leaveGuard" class="leave-guard" role="dialog" aria-modal="true" aria-labelledby="leaveGuardTitle" aria-describedby="leaveGuardText" hidden>
+  <div class="leave-guard-card">
+    <div class="leave-guard-icon" aria-hidden="true">!</div>
+    <h2 id="leaveGuardTitle">시험을 종료하시겠습니까?</h2>
+    <p id="leaveGuardText">지금 나가면 지금까지 푼 답이 사라질 수 있어요.</p>
+    <div class="leave-guard-actions">
+      <button id="leaveGuardExit" class="leave-guard-exit" type="button">시험 나가기</button>
+      <button id="leaveGuardStay" class="leave-guard-stay" type="button">계속 풀기</button>
+    </div>
+  </div>
+</div>
 <div class="app-shell">
 <header class="app-header">
 <img src="/Assets/Images/Logo.png?v=20260730-3" alt="Willena English Academy" class="brand-logo">
@@ -49,7 +61,7 @@ html.auth-pending #authLoading{position:fixed;inset:0;z-index:9999;display:grid;
 <script>
 (function(){var dots=document.getElementById('loadingDots'),n=1;window.__studentLoadingTimer=setInterval(function(){n=n%3+1;if(dots)dots.textContent='.'.repeat(n)},420)})();
 </script>
-<script src="./level-test.js?v=20260807-race3"></script>
+<script src="./level-test.js?v=20260812-leaveguard1"></script>
 <script src="/shared/learning-engine/activity-schema.js?v=20260808-1"></script>
 <script src="/shared/learning-engine/scoring.js?v=20260808-1"></script>
 <script src="/shared/learning-engine/assessment-adapter.js?v=20260808-1"></script>
