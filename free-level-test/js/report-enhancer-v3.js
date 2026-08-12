@@ -17,7 +17,7 @@ const levelNames={1:'Starter 1',2:'Starter 2',3:'Level 1',4:'Level 2',5:'Level 3
 const levelNamesKo={1:'스타터 1',2:'스타터 2',3:'레벨 1',4:'레벨 2',5:'레벨 3',6:'레벨 4',7:'레벨 5',8:'레벨 6',9:'레벨 7',10:'레벨 8',11:'레벨 9',12:'레벨 10'};
 const shortNames={1:'S1',2:'S2',3:'1',4:'2',5:'3',6:'4',7:'5',8:'6',9:'7',10:'8',11:'9',12:'10'};
 const skillFor=type=>({vocabulary:'vocabulary',grammar:'grammar',grammar_error:'grammar',question_response:'grammar',listening:'listening',reading:'reading',sentence_unscramble:'sentence_building',speaking:'speaking',writing:'writing'}[type]||null);
-const skillLabels={vocabulary:{en:'Vocabulary',ko:'어휘'},grammar:{en:'Grammar',ko:'문법'},listening:{en:'Listening',ko:'듣기'},reading:{en:'Reading',ko:'읽기'},sentence_building:{en:'Sentence building',ko:'문장 만들기'},speaking:{en:'Speaking',ko:'말하기'},writing:{en:'Writing',ko:'쓰기'}};
+const skillLabels={vocabulary:{en:'Vocabulary',ko:'어휘'},grammar:{en:'Grammar',ko:'문법'},listening:{en:'Listening',ko:'듣기'},reading:{en:'Reading',ko:'읽기'},sentence_building:{en:'Sentence structure',ko:'문장 구조 파악 능력'},speaking:{en:'Speaking',ko:'말하기'},writing:{en:'Writing',ko:'쓰기'}};
 const assessedSkills=['vocabulary','grammar','listening','reading','sentence_building'];
 const allSkills=[...assessedSkills,'speaking','writing'];
 
@@ -112,11 +112,6 @@ function fallbackSummary(level,skill,ko){
  if(level===12)return ko?'고등학교 진입 수준의 문법, 추론, 긴 글과 함축적 의미를 다룰 수 있습니다.':'Can handle high-school bridge grammar, inference, longer texts and implied meaning.';
  return ko?`레벨 ${publicLevel}에서 익숙한 ${skillLabels[skill]?.ko||'영어'}를 이해하고 사용할 수 있습니다.`:`Can understand and use familiar ${skillLabels[skill]?.en.toLowerCase()||'English'} at Level ${publicLevel}.`;
 }
-function journey(best,ko){
- const nodes=Array.from({length:MAX_LEVEL},(_,i)=>{const level=i+1,cls=level<best?'is-complete':level===best?'is-current':'';return `<div class="level-node ${cls}"><div class="level-node__marker">${shortNames[level]}</div><span class="level-node__label">${ko?levelNamesKo[level]:levelNames[level]}</span></div>`}).join('');
- const left=((best-.5)/MAX_LEVEL)*100;
- return `<div class="level-journey"><div class="level-journey__here" style="left:${left}%">${ko?'현재 레벨':'You are here'}</div><div class="level-journey__track"><div class="level-journey__fill" style="width:${Math.max(0,Math.min(100,left))}%"></div></div><div class="level-journey__nodes">${nodes}</div></div>`;
-}
 function skillRow(skill,ko){
  const result=estimateSkill(skill),name=skillLabels[skill][ko?'ko':'en'];
  if(!result.assessed){
@@ -140,7 +135,7 @@ function nextStep(best,ko){
 function compactSkillRow(skill,ko){
  const result=estimateSkill(skill),name=skillLabels[skill][ko?'ko':'en'];
  const value=result.assessed?labelLevel(result.level,ko,result.plus):(ko?'평가되지 않음':'Not assessed');
- return `<div class="report-skill ${result.assessed?'':'is-unassessed'}"><div class="report-skill__head"><strong>${name}</strong><span class="report-skill__level">${value}</span></div></div>`;
+ return `<div class="report-skill ${result.assessed?'':'is-unassessed'}"><div class="report-skill__head"><strong>${name}</strong><span class="report-skill__level">${value}</span></div>${result.assessed?'<div class="report-skill__track"><i></i></div>':''}</div>`;
 }
 function reportMarkup(){
  const ko=document.documentElement.lang==='ko',best=overallLevel();
