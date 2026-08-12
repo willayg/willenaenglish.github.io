@@ -18,3 +18,15 @@
   flex-grow: .3;
   min-width: 7px;
 }
+
+.willena-pdf-placement-pips {
+  display: flex;
+  align-items: stretch;
+  gap: 7px;
+  height: 16px;
+  margin: 22px 26px 58px;
+}
+
+.willena-pdf-placement-pips .willena-pdf-segment {
+  height: 16px;
+}

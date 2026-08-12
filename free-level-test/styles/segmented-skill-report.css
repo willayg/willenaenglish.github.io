@@ -8,6 +8,14 @@
  background:transparent;
  border-radius:0;
 }
+.report-placement-pips{
+ display:flex;
+ align-items:stretch;
+ gap:clamp(3px,.8vw,6px);
+ width:100%;
+ margin:22px auto 10px;
+}
+.report-placement-pips .report-skill__segment{height:14px}
 .report-skill__track i{display:none!important}
 .report-skill__segment{
  display:block;
@@ -37,6 +45,7 @@
 
 @media(max-width:520px){
  .report-skill__track{gap:4px}
+ .report-placement-pips{gap:4px;margin-top:18px}
  .report-skill__segment{height:13px;border-radius:5px}
  .report-skill__segment.is-starter{min-width:5px}
 }

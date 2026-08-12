@@ -19,6 +19,15 @@
   min-width: 6px;
 }
 
+.level-test-mini-placement-pips {
+  width: 100%;
+  margin: 18px auto 0;
+}
+
+.level-test-mini-placement-pips i {
+  height: 12px;
+}
+
 @media (max-width: 480px) {
   .level-test-mini-segments {
     gap: 3px;
