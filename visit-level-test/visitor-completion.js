@@ -20,8 +20,9 @@ function save(){
  var report=root.querySelector('.report-screen');
  if(!report||!window.WillenaLevelTestRecorder)return;
  finishing=true;
+ var finishPromise=window.WillenaLevelTestRecorder.finish();
  card('saving',ko()?'잠시만 기다려 주세요.':'Please wait a moment.');
- window.WillenaLevelTestRecorder.finish().then(done).catch(function(){
+ finishPromise.then(done).catch(function(){
   finishing=false;
   card('error',ko()?'답변은 이 화면에 남아 있습니다. 선생님에게 알려 주세요.':'Your answers are still on this device. Please tell your teacher.');
  });
