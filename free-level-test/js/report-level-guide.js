@@ -45,7 +45,7 @@ function markup(best,ko){
   var cls=stage===best?'is-current':Math.abs(stage-best)===1?'is-adjacent':stage<best?'is-complete':'';
   return '<article class="report-level-guide__row '+cls+'" data-guide-stage="'+stage+'"><div class="report-level-guide__circle">'+item[0]+'</div><div class="report-level-guide__description">'+badge(stage,best,ko)+'<h4>'+(ko?item[2]:item[1])+'</h4><p>'+(ko?item[4]:item[3])+'</p>'+note(stage,best,ko)+'</div></article>';
  }).join('');
- return '<section class="report-level-guide willena-full-level-guide" data-guide-best="'+best+'" data-guide-lang="'+(ko?'ko':'en')+'"><header class="report-level-guide__header"><span class="report-level-guide__eyebrow">'+(ko?'레벨 안내':'Level guide')+'</span><h3>'+(ko?'전체 레벨 여정':'Complete level journey')+'</h3><p>'+(ko?'스타터 1부터 레벨 10까지 전체 단계를 표시합니다.':'All stages from Starter 1 through Level 10 are shown.')+'</p></header><div class="report-level-guide__list">'+rows+'</div></section>';
+ return '<section class="report-level-guide willena-full-level-guide" data-guide-best="'+best+'" data-guide-lang="'+(ko?'ko':'en')+'"><header class="report-level-guide__header"><span class="report-level-guide__eyebrow">'+(ko?'레벨 안내':'Level guide')+'</span><h3>Willena Level</h3></header><div class="report-level-guide__list">'+rows+'</div></section>';
 }
 function removeOtherGuides(screen){
  screen.querySelectorAll('.report-level-guide,.level-guide,.level-guide-section,[data-level-guide]').forEach(function(el){if(!el.classList.contains('willena-full-level-guide'))el.remove()});

@@ -26,9 +26,9 @@
   inset:-32px;
   border:3px solid rgba(47,182,193,.17);
 }
-.willena-pdf-page:nth-child(1) .willena-pdf-summary{margin:0 auto 38px!important}
 .willena-pdf-page:nth-child(1) .willena-pdf-hjourney{height:136px!important;margin:10px 26px 30px!important}
-.willena-pdf-page:nth-child(1) .willena-pdf-placement-scale{margin-bottom:70px!important}
+.willena-pdf-page:nth-child(1) .willena-pdf-placement-pips{margin-top:64px!important}
+.willena-pdf-page:nth-child(1) .willena-pdf-placement-scale{margin-bottom:82px!important}
 .willena-pdf-page:nth-child(1) .willena-pdf-one-card{margin:0 14px!important}
 .willena-pdf-page:nth-child(1) .willena-pdf-card-full{
   height:210px!important;
