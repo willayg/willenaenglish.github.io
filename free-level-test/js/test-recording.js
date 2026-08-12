@@ -49,7 +49,7 @@ function clearAttempt(){attempt=null;attemptPromise=null;sessionStorage.removeIt
 function ensureBank(){var loadBank=window.loadCompleteQuestionBank||window.loadQuestionBank;if(typeof loadBank!=='function')return Promise.resolve();return Promise.resolve(loadBank()).then(function(rows){rows.forEach(function(q){bankMap.set(String(q.id),q)})}).catch(function(){})}
 function setupGuess(){
  var text=document.body.innerText||'',ctx=context(),setup=ctx.setup&&typeof ctx.setup==='object'?Object.assign({},ctx.setup):{};
- return Object.assign(setup,{source:internal()?'students/level-test':'adaptive-ui',language:document.documentElement.lang||'ko',page_text:text.slice(0,500)});
+ return Object.assign(setup,{source:internal()?'students/level-test':ctx.mode==='visitor'?'willena-visitor':'adaptive-ui',language:document.documentElement.lang||'ko',page_text:text.slice(0,500)});
 }
 function ensureAttempt(){
  if(attempt)return Promise.resolve(attempt);
