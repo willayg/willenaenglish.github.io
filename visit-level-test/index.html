@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<base href="/free-level-test/">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>Willena Visitor Level Test</title>
+<link rel="icon" href="/Assets/Images/Logo.png?v=20260730-3">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./styles/app.css?v=20260730-7">
+<link rel="stylesheet" href="./styles/reading-layout.css?v=20260730-1">
+<link rel="stylesheet" href="./styles/welcome-overrides.css?v=20260730-3">
+<link rel="stylesheet" href="./styles/bright-theme-overrides.css?v=20260730-3">
+<link rel="stylesheet" href="./styles/debug-level-meter.css?v=20260730-1">
+<link rel="stylesheet" href="./styles/setup-no-selection.css?v=20260730-2">
+<link rel="stylesheet" href="./styles/listening.css?v=20260730-4">
+<link rel="stylesheet" href="./styles/premium-ui.css?v=20260730-3">
+<link rel="stylesheet" href="./styles/question-polish.css?v=20260801-1">
+<link rel="stylesheet" href="./styles/question-review-flag.css?v=20260801-5">
+<link rel="stylesheet" href="./styles/report-card.css?v=20260802-2">
+<link rel="stylesheet" href="./styles/segmented-skill-report.css?v=20260731-1">
+<link rel="stylesheet" href="./styles/responsive-report-journey.css?v=20260731-1">
+<link rel="stylesheet" href="./styles/full-test-sections.css?v=20260731-1">
+<link rel="stylesheet" href="./styles/loading-transitions.css?v=20260731-2">
+<link rel="stylesheet" href="./styles/report-level-guide.css?v=20260803-spine1">
+<style>
+.scramble-meaning span{display:none!important}
+.leave-guard[hidden]{display:none}.leave-guard{position:fixed;inset:0;z-index:120000;display:grid;place-items:center;padding:20px;background:rgba(12,29,48,.68);backdrop-filter:blur(5px)}.leave-guard-card{width:min(440px,100%);padding:30px 24px 24px;border-radius:26px;background:#fff;color:#17243f;text-align:center;box-shadow:0 24px 80px rgba(9,27,45,.28)}.leave-guard-icon{width:68px;height:68px;margin:0 auto 16px;border-radius:50%;display:grid;place-items:center;background:#fff1d6;color:#f0a126;font-size:34px;font-weight:800}.leave-guard-card h2{margin:0 0 10px;font-size:clamp(24px,6vw,30px)}.leave-guard-card p{margin:0 0 24px;color:#66758e;line-height:1.6;font-weight:600}.leave-guard-actions{display:grid;grid-template-columns:1fr 1fr;gap:12px}.leave-guard-actions button{min-height:56px;border:0;border-radius:16px;padding:10px 14px;font:800 16px/1.25 Poppins,sans-serif;cursor:pointer}.leave-guard-stay{background:#28bec9;color:#fff}.leave-guard-exit{background:#eef2f6;color:#536178}@media(max-width:430px){.leave-guard-actions{grid-template-columns:1fr}.leave-guard-stay{order:-1}}
+</style>
+</head>
+<body>
+<div id="leaveGuard" class="leave-guard" role="dialog" aria-modal="true" aria-labelledby="leaveGuardTitle" aria-describedby="leaveGuardText" hidden>
+  <div class="leave-guard-card">
+    <div class="leave-guard-icon" aria-hidden="true">!</div>
+    <h2 id="leaveGuardTitle">시험을 종료하시겠습니까?</h2>
+    <p id="leaveGuardText">지금 나가면 지금까지 푼 답이 사라질 수 있어요.</p>
+    <div class="leave-guard-actions">
+      <button id="leaveGuardExit" class="leave-guard-exit" type="button">시험 나가기</button>
+      <button id="leaveGuardStay" class="leave-guard-stay" type="button">계속 풀기</button>
+    </div>
+  </div>
+</div>
+<div class="app-shell">
+<header class="app-header">
+<img src="/Assets/Images/Logo.png?v=20260730-3" alt="Willena English Academy" class="brand-logo">
+<div class="brand-copy"><strong>Willena English</strong><span id="brandSubtitle">윌레나 영어 레벨 테스트</span></div>
+<div class="language-segmented" role="group" aria-label="Language">
+<button type="button" data-language-choice="ko">한국어</button>
+<button type="button" data-language-choice="en">English</button>
+</div>
+<button id="languageBtn" class="header-button language-legacy-trigger" type="button">English</button>
+</header>
+<main id="app" class="app-main" aria-live="polite"></main>
+<footer id="footerText">Willena English · 방문 학생 레벨 테스트</footer>
+</div>
+<script>window.WillenaLevelTestContext={mode:"visitor",setup:{}};</script>
+<script src="./js/prospective-registration.js?v=20260802-5"></script>
+<script src="./js/leave-guard.js?v=20260813-1"></script>
+<script src="/shared/learning-engine/activity-schema.js?v=20260808-1"></script>
+<script src="/shared/learning-engine/scoring.js?v=20260808-1"></script>
+<script src="/shared/learning-engine/assessment-adapter.js?v=20260808-1"></script>
+<script src="./js/assessment-loader-classic.js?v=20260812-eligibility2"></script>
+<script src="./js/question-type-limits.js?v=20260806-record1"></script>
+<script src="./js/dialogue-tts.js?v=20260730-3"></script>
+<script src="./js/adaptive-calibration-loader.js?v=20260811-adaptive2"></script>
+<script src="./js/level-result-consistency.js?v=20260803-5"></script>
+<script src="./js/canonical-answer-scoring.js?v=20260808-shared1"></script>
+<script src="./js/test-recording.js?v=20260813-visitor1"></script>
+<script src="./js/scramble-token-letter-fix.js?v=20260801-1"></script>
+<script src="./js/loading-transitions.js?v=20260731-2"></script>
+<script src="./js/listening-audio-webview.js?v=20260731-1"></script>
+<script src="./js/reading-layout.js?v=20260730-2"></script>
+<script src="./js/listening-compact.js?v=20260730-5"></script>
+<script src="./js/question-review-flag.js?v=20260801-2"></script>
+<script src="./js/question-feedback-header.js?v=20260801-1"></script>
+<script type="module" src="./js/report-enhancer-v3.js?v=20260813-compact1"></script>
+<script src="./js/segmented-skill-report.js?v=20260731-1"></script>
+<script src="./js/responsive-report-journey.js?v=20260801-2"></script>
+<script src="./js/report-listening-fix.js?v=20260801-1"></script>
+<script src="./js/debug-level-meter.js?v=20260801-2"></script>
+<script src="./js/level-labels.js?v=20260801-2"></script>
+<script src="./js/report-level-guide.js?v=20260803-full1"></script>
+<script src="./js/segmented-language-toggle.js?v=20260802-1"></script>
+<script src="/visit-level-test/visitor-completion.js?v=20260813-1"></script>
+</body>
+</html>
