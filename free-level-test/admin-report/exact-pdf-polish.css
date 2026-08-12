@@ -2,13 +2,13 @@
 .willena-pdf-stage,.willena-pdf-page{background:#fff!important}
 
 /* Page 1: increase separation between the major groups without changing their order. */
-.willena-pdf-page:nth-child(1) .willena-pdf-title-line{margin-bottom:30px!important}
-.willena-pdf-page:nth-child(1) .willena-pdf-hero-label{margin:12px 0 14px!important}
+.willena-pdf-page:nth-child(1) .willena-pdf-title-line{margin-bottom:38px!important}
+.willena-pdf-page:nth-child(1) .willena-pdf-hero-label{margin:18px 0!important}
 .willena-pdf-page:nth-child(1) .willena-pdf-orbit{
   position:relative!important;
   width:196px!important;
   height:196px!important;
-  margin:0 auto 32px!important;
+  margin:0 auto 42px!important;
   box-shadow:none!important;
 }
 .willena-pdf-page:nth-child(1) .willena-pdf-orbit:before,
@@ -26,9 +26,17 @@
   inset:-32px;
   border:3px solid rgba(47,182,193,.17);
 }
-.willena-pdf-page:nth-child(1) .willena-pdf-summary{margin:0 auto 30px!important}
+.willena-pdf-page:nth-child(1) .willena-pdf-summary{margin:0 auto 38px!important}
 .willena-pdf-page:nth-child(1) .willena-pdf-hjourney{height:136px!important;margin:10px 26px 30px!important}
-.willena-pdf-page:nth-child(1) .willena-pdf-two-cards{margin-top:18px!important}
+.willena-pdf-page:nth-child(1) .willena-pdf-placement-scale{margin-bottom:70px!important}
+.willena-pdf-page:nth-child(1) .willena-pdf-one-card{margin:0 14px!important}
+.willena-pdf-page:nth-child(1) .willena-pdf-card-full{
+  height:210px!important;
+  padding:64px 58px 30px!important;
+  border-radius:34px!important;
+}
+.willena-pdf-page:nth-child(1) .willena-pdf-card-full h3{margin-bottom:28px!important;font-size:24px!important}
+.willena-pdf-page:nth-child(1) .willena-pdf-card-full p{font-size:14px!important;line-height:1.8!important}
 
 /* Keep the current-level label fully above the journey circle. */
 .willena-pdf-hnode.current:before{
