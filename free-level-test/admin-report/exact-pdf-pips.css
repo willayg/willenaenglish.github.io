@@ -5,13 +5,8 @@
 }
 
 .willena-pdf-segment {
-  flex: 1.18 1 0;
+  flex: 1 1 0;
   min-width: 0;
-}
-
-.willena-pdf-segment.done,
-.willena-pdf-segment.current {
-  flex-grow: .68;
 }
 
 .willena-pdf-segment.starter {
@@ -24,9 +19,25 @@
   align-items: stretch;
   gap: 7px;
   height: 16px;
-  margin: 22px 26px 58px;
+  margin: 22px 26px 0;
 }
 
 .willena-pdf-placement-pips .willena-pdf-segment {
   height: 16px;
+}
+
+.willena-pdf-placement-scale {
+  margin-bottom: 48px;
+}
+
+.willena-pdf-placement-stages {
+  display: grid;
+  grid-template-columns: 1fr 2fr 2fr 3fr 3fr 2fr;
+  gap: 2px;
+  margin: 8px 26px 0;
+  color: #758a91;
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 1;
+  text-align: center;
 }

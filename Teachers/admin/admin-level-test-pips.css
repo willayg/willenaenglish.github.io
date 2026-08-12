@@ -5,13 +5,8 @@
 }
 
 .level-test-mini-segments i {
-  flex: 1.18 1 0;
+  flex: 1 1 0;
   min-width: 0;
-}
-
-.level-test-mini-segments i.is-complete,
-.level-test-mini-segments i.is-current {
-  flex-grow: .68;
 }
 
 .level-test-mini-segments i.is-starter {
@@ -28,6 +23,23 @@
   height: 12px;
 }
 
+.level-test-mini-placement-stages {
+  display: grid;
+  grid-template-columns: 1fr 2fr 2fr 3fr 3fr 2fr;
+  gap: 2px;
+  margin-top: 7px;
+  color: var(--report-muted);
+  font-size: clamp(8px, 1.7vw, 10px);
+  font-weight: 700;
+  line-height: 1.15;
+  text-align: center;
+}
+
+.level-test-mini-placement-stages span {
+  min-width: 0;
+  white-space: nowrap;
+}
+
 @media (max-width: 480px) {
   .level-test-mini-segments {
     gap: 3px;
@@ -35,5 +47,10 @@
 
   .level-test-mini-segments i.is-starter {
     min-width: 5px;
+  }
+
+  .level-test-mini-placement-stages {
+    font-size: 8px;
+    letter-spacing: -.025em;
   }
 }
