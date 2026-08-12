@@ -137,10 +137,14 @@ function nextStep(best,ko){
  if(best>=11)return ko?'복잡한 문법을 정확하게 적용하고 긴 듣기와 읽기에서 근거를 찾는 연습을 이어가세요.':'Keep practising accurate use of complex grammar and finding evidence in longer listening and reading.';
  return txt(profile(best,'overall'),'next_step',ko,ko?'다음 단계의 영어를 정확하게 사용할 수 있도록 꾸준히 연습해 주세요.':'Continue practising the next level with growing accuracy and independence.');
 }
+function compactSkillRow(skill,ko){
+ const result=estimateSkill(skill),name=skillLabels[skill][ko?'ko':'en'];
+ const value=result.assessed?labelLevel(result.level,ko,result.plus):(ko?'평가되지 않음':'Not assessed');
+ return `<div class="report-skill ${result.assessed?'':'is-unassessed'}"><div class="report-skill__head"><strong>${name}</strong><span class="report-skill__level">${value}</span></div></div>`;
+}
 function reportMarkup(){
  const ko=document.documentElement.lang==='ko',best=overallLevel();
- const summary=txt(profile(best,'overall'),'summary',ko,fallbackSummary(best,'grammar',ko));
- return `<section class="report-hero"><span class="report-kicker">${ko?'추천 시작 레벨':'Estimated starting level'}</span><div class="report-level"><span>${ko?(best<=2?'스타터':'레벨'):(best<=2?'Starter':'Level')}</span><strong>${best<=2?best:best-2}</strong></div><p class="report-summary">${summary}</p>${journey(best,ko)}</section><section class="report-card"><h3>${ko?'현재 할 수 있는 것':'What your child can do'}</h3><ul class="report-can-do">${canDoItems(best,ko)}</ul></section><section class="report-card is-next"><h3>${ko?'앞으로 연습하면 좋은 것':'Ready to work on'}</h3><p>${nextStep(best,ko)}</p></section><section class="report-card"><h3>${ko?'영역별 예상 레벨':'Estimated level by skill'}</h3>${allSkills.map(skill=>skillRow(skill,ko)).join('')}</section><section class="report-card"><h3>${ko?'이 결과는 무엇을 의미하나요?':'What does this result mean?'}</h3><p>${ko?'이 결과는 합격이나 불합격을 판단하는 점수가 아닙니다. 가장 편안하게 학습을 시작할 수 있는 단계를 보여주는 참고 자료입니다.':'This is not a pass-or-fail score. It guides you to the level where the learner is most likely to begin comfortably and successfully.'}</p></section><p class="report-method">${ko?'영역별 레벨은 해당 유형의 문항이 세 개 이상 출제된 경우에만 표시됩니다. +는 최고 출제 레벨을 충분한 문항에서 안정적으로 통과한 경우에만 표시됩니다.':'A skill estimate appears only after at least three questions. A + requires sustained success at the highest tested level.'}</p><div class="actions report-actions"><button class="btn btn-primary" id="retry">${ko?'다시 테스트하기':'Try again'}</button><button class="btn btn-ghost" id="home">${ko?'처음으로 돌아가기':'Back to start'}</button></div>`;
+ return `<section class="report-hero"><span class="report-kicker">${ko?'추천 시작 레벨':'Estimated starting level'}</span><div class="report-level"><span>${ko?(best<=2?'스타터':'레벨'):(best<=2?'Starter':'Level')}</span><strong>${best<=2?best:best-2}</strong></div></section><section class="report-card"><h3>${ko?'영역별 레벨':'Level by skill'}</h3>${assessedSkills.map(skill=>compactSkillRow(skill,ko)).join('')}</section><div class="actions report-actions"><button class="btn btn-primary" id="retry">${ko?'다시 테스트하기':'Try again'}</button><button class="btn btn-ghost" id="home">${ko?'처음으로 돌아가기':'Back to start'}</button></div>`;
 }
 function renderReport(force=false){
  const screen=root?.querySelector('.screen');
