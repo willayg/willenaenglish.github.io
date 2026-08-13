@@ -182,16 +182,17 @@ async function searchBooks(env, q) {
   }));
 }
 
-async function listLevelTests(env) {
+async function listLevelTests(env, archived=false) {
+  const archiveFilter = archived ? 'not.is.null' : 'is.null';
   const internalRows = await supabaseFetch(
     env.SCORES_SUPABASE_URL,
     env.SCORES_SUPABASE_SERVICE_ROLE_KEY,
-    '/rest/v1/student_assessment_attempts?select=id,student_id,assessment_key,status,test_version,setup,total_questions,answered_count,correct_count,recommended_level,duration_seconds,started_at,completed_at,updated_at,admin_opened_at,metadata&order=started_at.desc&limit=250'
+    `/rest/v1/student_assessment_attempts?archived_at=${archiveFilter}&select=id,student_id,assessment_key,status,test_version,setup,total_questions,answered_count,correct_count,recommended_level,duration_seconds,started_at,completed_at,updated_at,admin_opened_at,archived_at,metadata&order=started_at.desc&limit=250`
   );
   const publicRows = await supabaseFetch(
     env.SCORES_SUPABASE_URL,
     env.SCORES_SUPABASE_SERVICE_ROLE_KEY,
-    '/rest/v1/prospective_level_test_attempts?select=id,candidate_id,status,test_version,setup,recommended_level,display_level,total_questions,correct_count,duration_seconds,started_at,completed_at,updated_at,admin_opened_at,metadata&order=started_at.desc&limit=250'
+    `/rest/v1/prospective_level_test_attempts?archived_at=${archiveFilter}&select=id,candidate_id,status,test_version,setup,recommended_level,display_level,total_questions,correct_count,duration_seconds,started_at,completed_at,updated_at,admin_opened_at,archived_at,metadata&order=started_at.desc&limit=250`
   );
   const internalIds = (internalRows || []).map(row => row.id).filter(Boolean);
   const publicIds = (publicRows || []).map(row => row.id).filter(Boolean);
@@ -281,6 +282,7 @@ async function listLevelTests(env) {
       started_at: row.started_at,
       completed_at: row.completed_at,
       updated_at: row.updated_at,
+      archived_at: row.archived_at,
       setup: row.setup || {},
       is_new: !row.admin_opened_at,
       skills: skillsByAttempt.get(String(row.id)) || [],
@@ -306,6 +308,7 @@ async function listLevelTests(env) {
       started_at: row.started_at,
       completed_at: row.completed_at,
       updated_at: row.updated_at,
+      archived_at: row.archived_at,
       setup: row.setup || {},
       is_new: !row.admin_opened_at,
       skills: skillsByAttempt.get(String(row.id)) || [],
@@ -314,6 +317,28 @@ async function listLevelTests(env) {
   return [...internal, ...prospective]
     .sort((a, b) => new Date(b.started_at || b.updated_at || 0) - new Date(a.started_at || a.updated_at || 0))
     .slice(0, 250);
+}
+
+async function setLevelTestArchived(env, body) {
+  const source = String(body?.source || '');
+  const attemptId = String(body?.attempt_id || '').trim();
+  if (!['internal', 'prospective'].includes(source) || !attemptId) {
+    throw Object.assign(new Error('Invalid level test request'), { status: 400 });
+  }
+  const table = source === 'internal' ? 'student_assessment_attempts' : 'prospective_level_test_attempts';
+  const archivedAt = body.archived ? new Date().toISOString() : null;
+  const rows = await supabaseFetch(
+    env.SCORES_SUPABASE_URL,
+    env.SCORES_SUPABASE_SERVICE_ROLE_KEY,
+    `/rest/v1/${table}?id=eq.${encodeURIComponent(attemptId)}&select=id`,
+    {
+      method: 'PATCH',
+      headers: { Prefer: 'return=representation' },
+      body: JSON.stringify({ archived_at: archivedAt }),
+    }
+  );
+  if (!rows?.length) throw Object.assign(new Error('Level test not found'), { status: 404 });
+  return archivedAt;
 }
 
 function responseSkill(type, metadata={}) {
@@ -447,11 +472,13 @@ export default {
       const action = url.searchParams.get('action') || '';
       if (req.method === 'GET' && action === 'search_books') return json(origin, 200, { success: true, books: await searchBooks(env, url.searchParams.get('q')) });
       if (req.method === 'GET' && action === 'list_level_tests') return json(origin, 200, { success: true, tests: await listLevelTests(env) });
+      if (req.method === 'GET' && action === 'list_archived_level_tests') return json(origin, 200, { success: true, tests: await listLevelTests(env, true) });
       if (req.method === 'GET') return json(origin, 200, { success: true, classes: await listClasses(env) });
       if (req.method !== 'POST') return json(origin, 405, { success: false, error: 'Method not allowed' });
       const body = await req.json().catch(() => null);
       if (!body) return json(origin, 400, { success: false, error: 'Invalid JSON' });
       if (body.action === 'level_test_detail') return json(origin, 200, { success: true, ...await levelTestDetail(env, body) });
+      if (body.action === 'set_level_test_archived') return json(origin, 200, { success: true, archived_at: await setLevelTestArchived(env, body) });
       if (action === 'update_class') return json(origin, 200, { success: true, class: await updateClass(env, body) });
       return json(origin, 201, { success: true, class: await createClass(env, body) });
     } catch (error) {
