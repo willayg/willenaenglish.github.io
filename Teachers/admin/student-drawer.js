@@ -1,8 +1,8 @@
 (()=>{
   const dict={
     ko:{
-      appTitle:'윌레나 관리자',studentOperations:'학생 관리',administrator:'관리자',students:'학생',classes:'반 관리',home:'홈',
-      studentsTitle:'학생 관리',studentsSub:'학생 정보와 반 배정을 관리합니다.',classesTitle:'반 관리',classesSub:'15개 반의 현재 학생 명단입니다.',homeTitle:'홈',homeSub:'빠른 현황과 일정 기능은 추후 추가됩니다.',
+      appTitle:'윌레나 관리자',studentOperations:'학생 관리',administrator:'관리자',students:'학생',classes:'반 관리',levelTests:'레벨 테스트',home:'홈',
+      studentsTitle:'학생 관리',studentsSub:'학생 정보와 반 배정을 관리합니다.',classesTitle:'반 관리',classesSub:'15개 반의 현재 학생 명단입니다.',levelTestsTitle:'레벨 테스트',levelTestsSub:'내부, 온라인 및 대면 레벨 테스트 기록입니다.',homeTitle:'홈',homeSub:'빠른 현황과 일정 기능은 추후 추가됩니다.',
       optimisticNotice:'변경 내용은 화면에 즉시 반영되고 백그라운드에서 저장됩니다. 문제가 생긴 경우에만 알려드립니다.',classNotice:'학생 이동은 즉시 반영되며 백그라운드에서 저장됩니다.',homeEmpty:'홈 화면은 추후 구성할 예정입니다.',
       searchStudents:'학생 검색',refresh:'새로고침',addStudent:'학생 추가',allClasses:'전체 반',noClass:'미배정',allGrades:'전체 학년',noGrade:'학년 미입력',shown:'명 표시',studentCount:'명',noClassCount:'명 미배정',loadingStudents:'학생 정보를 불러오는 중…',checkingAccess:'관리자 권한 확인 중…',noStudents:'검색 결과가 없습니다.',
       approved:'승인됨',approvalPending:'승인 대기',saving:'저장 중',edit:'수정',move:'이동',assign:'배정',remove:'제외',viewRoster:'학생 명단 보기',
@@ -14,8 +14,8 @@
       newStudentHint:'학생은 화면에 즉시 추가되고 계정은 백그라운드에서 생성됩니다.',accountCreated:'{name} 학생 계정을 만들었습니다.'
     },
     en:{
-      appTitle:'Willena Admin',studentOperations:'Student operations',administrator:'Administrator',students:'Students',classes:'Classes',home:'Home',
-      studentsTitle:'Students',studentsSub:'Live student profiles and class management.',classesTitle:'Classes',classesSub:'15 canonical classes with live rosters.',homeTitle:'Home',homeSub:'Quick updates will come later.',
+      appTitle:'Willena Admin',studentOperations:'Student operations',administrator:'Administrator',students:'Students',classes:'Classes',levelTests:'Level Tests',home:'Home',
+      studentsTitle:'Students',studentsSub:'Live student profiles and class management.',classesTitle:'Classes',classesSub:'15 canonical classes with live rosters.',levelTestsTitle:'Level Tests',levelTestsSub:'Recorded internal, online and face-to-face placement tests.',homeTitle:'Home',homeSub:'Quick updates will come later.',
       optimisticNotice:'Changes appear immediately and save quietly in the background. You will only be notified if something fails.',classNotice:'Class counts update immediately while changes save in the background.',homeEmpty:'Home updates will be designed later.',
       searchStudents:'Search students',refresh:'Refresh',addStudent:'Add student',allClasses:'All classes',noClass:'No class',allGrades:'All grades',noGrade:'No grade',shown:'shown',studentCount:'students',noClassCount:'no class',loadingStudents:'Loading students…',checkingAccess:'Checking admin access…',noStudents:'No students found.',
       approved:'Approved',approvalPending:'Approval pending',saving:'Saving',edit:'Edit',move:'Move',assign:'Assign',remove:'Remove',viewRoster:'View roster',
@@ -58,7 +58,7 @@
   function applyLanguage(){
     document.documentElement.lang=language;document.title=t('appTitle');
     const brand=document.querySelector('.brand div');if(brand){brand.querySelector('b').textContent=t('appTitle');brand.querySelector('small').textContent=t('studentOperations')}
-    document.querySelectorAll('[data-page="students"]').forEach(el=>el.textContent=`◎ ${t('students')}`);document.querySelectorAll('[data-page="classes"]').forEach(el=>el.textContent=`▦ ${t('classes')}`);document.querySelectorAll('[data-page="home"]').forEach(el=>el.textContent=`⌂ ${t('home')}`);
+    document.querySelectorAll('[data-page="students"]').forEach(el=>el.textContent=`◎ ${t('students')}`);document.querySelectorAll('[data-page="classes"]').forEach(el=>el.textContent=`▦ ${t('classes')}`);document.querySelectorAll('[data-page="levelTests"]').forEach(el=>el.textContent=`◫ ${t('levelTests')}`);document.querySelectorAll('[data-page="home"]').forEach(el=>el.textContent=`⌂ ${t('home')}`);
     const who=document.querySelector('.who small');if(who)who.textContent=t('administrator');
     const notices=document.querySelectorAll('.notice');if(notices[0])notices[0].textContent=t('optimisticNotice');if(notices[1])notices[1].textContent=t('classNotice');
     setText('#home .empty','homeEmpty');const search=document.getElementById('searchBox');if(search)search.placeholder=t('searchStudents');setText('#refreshBtn','refresh');setText('#addStudentBtn','addStudent');
@@ -83,7 +83,7 @@
     document.querySelectorAll('[data-edit]').forEach(b=>b.onclick=e=>{e.stopPropagation();openEdit(b.dataset.edit)});document.querySelectorAll('[data-move]').forEach(b=>b.onclick=e=>{e.stopPropagation();openMove(b.dataset.move)});document.querySelectorAll('[data-remove]').forEach(b=>b.onclick=e=>{e.stopPropagation();openRemove(b.dataset.remove)});
   };
   window.renderClasses=function(){const counts=Object.fromEntries(canonical.map(c=>[c,0]));students.forEach(s=>{if(counts[s.class]!==undefined)counts[s.class]++});document.getElementById('classGrid').innerHTML=canonical.map(c=>`<div class="card class-card"><h3>${c}</h3><div class="count">${counts[c]}</div><div class="mut">${t('studentCount')}</div><button data-view-class="${c}">${t('viewRoster')}</button></div>`).join('');document.querySelectorAll('[data-view-class]').forEach(b=>b.onclick=()=>{document.getElementById('classFilter').value=b.dataset.viewClass;apply();setPage('students')})};
-  window.setPage=function(p){currentPage=p;document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));document.getElementById(p).classList.add('active');document.querySelectorAll('[data-page]').forEach(b=>b.classList.toggle('active',b.dataset.page===p));const m={students:[t('studentsTitle'),t('studentsSub')],classes:[t('classesTitle'),t('classesSub')],home:[t('homeTitle'),t('homeSub')]}[p];document.getElementById('pageTitle').textContent=m[0];document.getElementById('pageSub').textContent=m[1]};
+  window.setPage=function(p){currentPage=p;document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));document.getElementById(p).classList.add('active');document.querySelectorAll('[data-page]').forEach(b=>b.classList.toggle('active',b.dataset.page===p));const m={students:[t('studentsTitle'),t('studentsSub')],classes:[t('classesTitle'),t('classesSub')],levelTests:[t('levelTestsTitle'),t('levelTestsSub')],home:[t('homeTitle'),t('homeSub')]}[p];document.getElementById('pageTitle').textContent=m[0];document.getElementById('pageSub').textContent=m[1]};
 
   const toolbar=document.querySelector('#students .toolbar');const addButton=document.createElement('button');addButton.className='btn primary';addButton.id='addStudentBtn';toolbar.appendChild(addButton);
   const addModal=document.createElement('div');addModal.className='modal-bg';addModal.id='addStudentModal';document.body.appendChild(addModal);
