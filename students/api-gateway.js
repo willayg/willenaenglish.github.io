@@ -26,8 +26,7 @@
   ]);
   const FORCE_GATEWAY_FUNCTIONS = new Set([
     'upsert_sentences_batch',
-    'get_sentence_audio_urls',
-    'admin_classes'
+    'get_sentence_audio_urls'
   ]);
 
   function extractFunctionName(input) {
