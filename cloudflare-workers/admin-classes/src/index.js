@@ -290,9 +290,11 @@ async function listLevelTests(env, archived=false) {
   });
   const prospective = (publicRows || []).map(row => {
     const candidate = candidateById.get(String(row.candidate_id)) || {};
+    const setup = row.setup && typeof row.setup === 'object' ? row.setup : {};
+    const visitor = setup.source === 'willena-visitor';
     return {
       id: row.id,
-      source: 'prospective',
+      source: visitor ? 'visitor' : 'prospective',
       candidate_id: row.candidate_id,
       student_name: candidate.student_name || 'Prospective student',
       grade: candidate.school_grade || null,
@@ -309,7 +311,7 @@ async function listLevelTests(env, archived=false) {
       completed_at: row.completed_at,
       updated_at: row.updated_at,
       archived_at: row.archived_at,
-      setup: row.setup || {},
+      setup,
       is_new: !row.admin_opened_at,
       skills: skillsByAttempt.get(String(row.id)) || [],
     };
@@ -322,7 +324,7 @@ async function listLevelTests(env, archived=false) {
 async function setLevelTestArchived(env, body) {
   const source = String(body?.source || '');
   const attemptId = String(body?.attempt_id || '').trim();
-  if (!['internal', 'prospective'].includes(source) || !attemptId) {
+  if (!['internal', 'prospective', 'visitor'].includes(source) || !attemptId) {
     throw Object.assign(new Error('Invalid level test request'), { status: 400 });
   }
   const table = source === 'internal' ? 'student_assessment_attempts' : 'prospective_level_test_attempts';
@@ -360,7 +362,7 @@ function responseSkill(type, metadata={}) {
 async function levelTestDetail(env, body) {
   const source = String(body?.source || '');
   const attemptId = String(body?.attempt_id || '').trim();
-  if (!['internal', 'prospective'].includes(source) || !attemptId) {
+  if (!['internal', 'prospective', 'visitor'].includes(source) || !attemptId) {
     throw Object.assign(new Error('Invalid level test request'), { status: 400 });
   }
   const internal = source === 'internal';
