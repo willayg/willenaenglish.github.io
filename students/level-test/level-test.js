@@ -10,9 +10,6 @@ var testActive=false;
 var allowPageExit=false;
 var leaveGuardOpen=false;
 var setupSnapshot={grade:null,years:null,listening:null,length:null};
-// Declare student mode synchronously. Authentication fills in the student
-// later, but the recorder must choose the internal storage/API path while the
-// remaining scripts are still loading.
 window.WillenaLevelTestContext={mode:'student',student:null,setup:setupSnapshot};
 var nativeFetch=window.fetch.bind(window);
 var greetingIndex=0;
@@ -26,7 +23,6 @@ try{
  sessionStorage.setItem('willenaLevelGreeting',String(greetingIndex));
 }catch(error){greetingIndex=Math.floor(Math.random()*3)}
 
-// Keep the open test engine as the single source of truth.
 window.fetch=function(input,init){
  var url=typeof input==='string'?input:(input&&input.url)||'';
  var resolved=new URL(url,location.href);
@@ -37,55 +33,23 @@ window.fetch=function(input,init){
 };
 
 function signin(){allowPageExit=true;location.replace('/students/signin.html?next='+encodeURIComponent('/students/level-test/'))}
-function leaveGuard(){
- return document.getElementById('leaveGuard');
-}
+function leaveGuard(){return document.getElementById('leaveGuard')}
 function showLeaveGuard(){
  if(!testActive||completed||leaveGuardOpen)return;
- var modal=leaveGuard();
- if(!modal)return;
- leaveGuardOpen=true;
- modal.hidden=false;
- document.body.style.overflow='hidden';
- var stay=document.getElementById('leaveGuardStay');
- if(stay)setTimeout(function(){stay.focus()},0);
+ var modal=leaveGuard();if(!modal)return;
+ leaveGuardOpen=true;modal.hidden=false;document.body.style.overflow='hidden';
+ var stay=document.getElementById('leaveGuardStay');if(stay)setTimeout(function(){stay.focus()},0);
 }
-function hideLeaveGuard(){
- var modal=leaveGuard();
- leaveGuardOpen=false;
- if(modal)modal.hidden=true;
- document.body.style.overflow='';
-}
-function activateLeaveGuard(){
- if(testActive||completed)return;
- testActive=true;
- history.pushState({willenaLevelTestGuard:true},'',location.href);
-}
-function deactivateLeaveGuard(){
- testActive=false;
- allowPageExit=true;
- hideLeaveGuard();
-}
-window.addEventListener('popstate',function(){
- if(!testActive||completed||allowPageExit)return;
- history.pushState({willenaLevelTestGuard:true},'',location.href);
- showLeaveGuard();
-});
-window.addEventListener('beforeunload',function(event){
- if(!testActive||completed||allowPageExit)return;
- event.preventDefault();
- event.returnValue='';
-});
+function hideLeaveGuard(){var modal=leaveGuard();leaveGuardOpen=false;if(modal)modal.hidden=true;document.body.style.overflow=''}
+function activateLeaveGuard(){if(testActive||completed)return;testActive=true;history.pushState({willenaLevelTestGuard:true},'',location.href)}
+function deactivateLeaveGuard(){testActive=false;allowPageExit=true;hideLeaveGuard()}
+window.addEventListener('popstate',function(){if(!testActive||completed||allowPageExit)return;history.pushState({willenaLevelTestGuard:true},'',location.href);showLeaveGuard()});
+window.addEventListener('beforeunload',function(event){if(!testActive||completed||allowPageExit)return;event.preventDefault();event.returnValue=''});
 document.addEventListener('click',function(event){
  if(event.target&&event.target.id==='leaveGuardStay'){hideLeaveGuard();return}
- if(event.target&&event.target.id==='leaveGuardExit'){
-  deactivateLeaveGuard();
-  location.href='/students/dashboard.html';
- }
+ if(event.target&&event.target.id==='leaveGuardExit'){deactivateLeaveGuard();location.href='/students/dashboard.html'}
 });
-document.addEventListener('keydown',function(event){
- if(event.key==='Escape'&&leaveGuardOpen){event.preventDefault();hideLeaveGuard()}
-});
+document.addEventListener('keydown',function(event){if(event.key==='Escape'&&leaveGuardOpen){event.preventDefault();hideLeaveGuard()}});
 function studentName(data){return String(data&&data.name||data&&data.username||'Student').trim()}
 async function authRequest(action,params){
  var query=new URLSearchParams(Object.assign({action:action,_:Date.now()},params||{}));
@@ -97,8 +61,7 @@ async function refreshSession(){
  var result=await authRequest('refresh');
  if(!result.response.ok||!result.data.success)return false;
  if(result.data.access_token&&window.WillenaAPI&&WillenaAPI.setLocalTokens)WillenaAPI.setLocalTokens(result.data.access_token);
- lastSessionRefresh=Date.now();
- return true;
+ lastSessionRefresh=Date.now();return true;
 }
 async function currentUser(){
  var result=await authRequest('whoami');
@@ -110,9 +73,7 @@ async function currentUser(){
 function keepSessionAlive(){
  if(sessionRefreshTimer)return;
  sessionRefreshTimer=setInterval(function(){refreshSession().catch(function(error){console.debug('[StudentLevelTest] background session refresh failed',error)})},SESSION_REFRESH_INTERVAL);
- window.addEventListener('focus',function(){
-  if(Date.now()-lastSessionRefresh>SESSION_REFRESH_INTERVAL/2)refreshSession().catch(function(error){console.debug('[StudentLevelTest] focus session refresh failed',error)});
- });
+ window.addEventListener('focus',function(){if(Date.now()-lastSessionRefresh>SESSION_REFRESH_INTERVAL/2)refreshSession().catch(function(error){console.debug('[StudentLevelTest] focus session refresh failed',error)})});
 }
 function normalizeGrade(grade){
  var text=String(grade==null?'':grade).trim().toLowerCase();
@@ -124,78 +85,74 @@ function normalizeGrade(grade){
  if(/^고[123]$/.test(text)||/^고등학교\s*[123](?:학년)?$/.test(text))return 9;
  return null;
 }
-function greeting(name){
- var messages=['Hey, '+name+'!','Hello, '+name+'!','What’s up, '+name+'?'];
- return messages[greetingIndex%messages.length];
-}
+function greeting(name){var messages=['Hey, '+name+'!','Hello, '+name+'!','What’s up, '+name+'?'];return messages[greetingIndex%messages.length]}
 function exposeStudent(profile){
- gradePrefill=normalizeGrade(profile&&profile.grade);
- setupSnapshot.grade=gradePrefill;
+ gradePrefill=normalizeGrade(profile&&profile.grade);setupSnapshot.grade=gradePrefill;
  student={id:profile&&profile.id||null,name:studentName(profile),grade:gradePrefill,profile:profile};
  window.WillenaLevelTestContext={mode:'student',student:student,setup:setupSnapshot};
  window.dispatchEvent(new CustomEvent('willena:student-ready',{detail:{student:student}}));
- document.documentElement.dataset.studentRecognized='true';
- document.documentElement.dataset.gradePrefilled=gradePrefill===null?'false':'true';
- updateGreeting();
- applyGradePrefill();
+ document.documentElement.dataset.studentRecognized='true';document.documentElement.dataset.gradePrefilled=gradePrefill===null?'false':'true';
+ updateGreeting();applyGradePrefill();
 }
 async function requireStudent(){
  try{
-  // Match the dashboard auth flow: whoami owns identity, profile only adds
-  // display fields. A stale access cookie is refreshed once before sign-in.
-  var who=await currentUser();
-  if(!who){signin();return}
-  var profileResult=await authRequest('get_profile',{user_id:who.user_id});
-  var profile=profileResult.data;
+  var who=await currentUser();if(!who){signin();return}
+  var profileResult=await authRequest('get_profile',{user_id:who.user_id});var profile=profileResult.data;
   if(!profileResult.response.ok||!profile.success){signin();return}
-  exposeStudent(Object.assign({},profile,{id:who.user_id}));
-  keepSessionAlive();
-  if(window.__studentLoadingTimer)clearInterval(window.__studentLoadingTimer);
-  document.documentElement.classList.remove('auth-pending');
+  exposeStudent(Object.assign({},profile,{id:who.user_id}));keepSessionAlive();
+  if(window.__studentLoadingTimer)clearInterval(window.__studentLoadingTimer);document.documentElement.classList.remove('auth-pending');
  }catch(error){console.error('[StudentLevelTest] profile lookup failed',error);signin()}
 }
 function applyGradePrefill(){
- if(gradeApplied||gradePrefill===null)return;
- var holder=document.querySelector('.setup-options[data-key="grade"]');
- if(!holder)return;
- var option=holder.querySelector('[data-value="'+gradePrefill+'"]');
- if(!option)return;
- gradeApplied=true;
- option.setAttribute('data-profile-prefill','true');
- requestAnimationFrame(function(){option.click()});
+ if(gradeApplied||gradePrefill===null)return;var holder=document.querySelector('.setup-options[data-key="grade"]');if(!holder)return;
+ var option=holder.querySelector('[data-value="'+gradePrefill+'"]');if(!option)return;gradeApplied=true;option.setAttribute('data-profile-prefill','true');requestAnimationFrame(function(){option.click()});
 }
-function updateGreeting(){
- if(!student)return;
- var message=greeting(student.name);
- var subtitle=document.getElementById('brandSubtitle');
- if(subtitle)subtitle.textContent=message;
- var welcome=document.querySelector('.welcome-panel h1');
- if(welcome)welcome.textContent=message;
+function updateGreeting(){if(!student)return;var message=greeting(student.name);var subtitle=document.getElementById('brandSubtitle');if(subtitle)subtitle.textContent=message;var welcome=document.querySelector('.welcome-panel h1');if(welcome)welcome.textContent=message}
+function completionMarkup(){var name=student&&student.name?student.name:'';return '<section class="student-complete"><div class="student-complete-card"><div class="student-complete-icon">✓</div><h1>Test complete</h1><p>'+(name?name+', ':'')+'your test has been recorded.</p><a href="/students/dashboard.html">Return to student dashboard</a></div></section>'}
+function saveErrorMarkup(){return '<section class="student-complete"><div class="student-complete-card"><h1>Almost finished</h1><p>Your answers are safe on this screen, but the test could not be recorded yet.</p><button class="welcome-start" id="retryRecording" type="button">Try saving again</button></div></section>'}
+
+function publicLevelFromInternal(value){
+ var internalLevel=Math.round(Number(value)||0);
+ if(internalLevel<1||internalLevel>12)return null;
+ return internalLevel<=2?internalLevel:internalLevel-2;
 }
-function completionMarkup(){
- var name=student&&student.name?student.name:'';
- return '<section class="student-complete"><div class="student-complete-card"><div class="student-complete-icon">✓</div><h1>Test complete</h1><p>'+(name?name+', ':'')+'your test has been recorded.</p><a href="/students/dashboard.html">Return to student dashboard</a></div></section>';
+async function loadTargetAssignment(){
+ async function request(){
+  var response=await WillenaAPI.fetch('/.netlify/functions/student_study_current?_='+Date.now(),{credentials:'include',cache:'no-store'});
+  var data=await response.json().catch(function(){return{}});
+  if(!response.ok||data.success===false)throw new Error(data.error||'Class book lookup failed');
+  return data.assignment||null;
+ }
+ try{return await request()}catch(error){if(await refreshSession())return request();throw error}
 }
-function saveErrorMarkup(){
- return '<section class="student-complete"><div class="student-complete-card"><h1>Almost finished</h1><p>Your answers are safe on this screen, but the test could not be recorded yet.</p><button class="welcome-start" id="retryRecording" type="button">Try saving again</button></div></section>';
-}
-function completionPointValue(answeredCount){
- var questionCount=Number(setupSnapshot.length)||Number(answeredCount)||0;
- return [20,30,40,50].indexOf(questionCount)>=0?questionCount*2:0;
-}
-async function awardCompletionPoints(answeredCount){
- var questionCount=Number(setupSnapshot.length)||Number(answeredCount)||0;
- var points=completionPointValue(answeredCount);
- if(!points)return;
+async function awardCompletionPoints(event){
+ var detail=event&&event.detail||{};
+ var questionCount=Number(setupSnapshot.length)||Number(detail.answered_count)||0;
+ if([20,30,40,50].indexOf(questionCount)<0)return;
+ var result=detail.result||{};
+ var attempt=result.attempt||{};
+ var internalLevel=Number(attempt.recommended_level)||Number(window.WillenaInternalResultLevel)||Number(sessionStorage.getItem('willena_internal_result_level'))||null;
+ var publicLevel=publicLevelFromInternal(internalLevel);
+ var assignment=null;
+ try{assignment=await loadTargetAssignment()}catch(error){console.warn('[StudentLevelTest] target book lookup failed; using completion points',error)}
+ var targetLevel=assignment&&Number(assignment.catalog_level)>0?Number(assignment.catalog_level):null;
+ var hitTarget=Boolean(targetLevel&&publicLevel&&publicLevel>=targetLevel);
+ var points=hitTarget?questionCount*2:Math.round(questionCount/2);
+ var attemptId=attempt&&attempt.id?String(attempt.id):null;
  var payload={
   event_type:'attempt',
-  session_id:'level-test-'+String(student&&student.id||'student')+'-'+Date.now(),
+  session_id:attemptId?'level-test:'+attemptId:'level-test-'+String(student&&student.id||'student')+'-'+Date.now(),
   mode:'level_test_completion',
   word:'level-test-'+questionCount,
   is_correct:false,
   points:points,
   attempt_index:1,
-  extra:{source:'students/level-test',test_length:questionCount,completion_reward:true}
+  extra:{
+   source:'students/level-test',test_length:questionCount,completion_reward:true,reward_scheme:'class-target-v1',
+   assessment_attempt_id:attemptId,result_internal_level:internalLevel,result_public_level:publicLevel,
+   hit_target:hitTarget,target_public_level:targetLevel,target_book_id:assignment&&assignment.book_id||null,
+   target_book_title:assignment&&assignment.book_title||null,target_series:assignment&&assignment.catalog_series||null
+  }
  };
  async function send(){
   var response=await WillenaAPI.fetch('/.netlify/functions/log_word_attempt',{method:'POST',headers:{'content-type':'application/json'},credentials:'include',body:JSON.stringify(payload)});
@@ -203,51 +160,27 @@ async function awardCompletionPoints(answeredCount){
   if(!response.ok||data.error)throw new Error(data.error||'Points award failed');
   return data;
  }
- try{
-  await send();
- }catch(error){
-  if(await refreshSession())await send();
-  else throw error;
- }
+ try{await send()}catch(error){if(await refreshSession())await send();else throw error}
  try{window.dispatchEvent(new CustomEvent('points:optimistic-bump',{detail:{delta:points}}))}catch(_){}
 }
 function replaceReport(){
- if(completed)return;
- var root=document.getElementById('app');
- if(!root)return;
- var resultButton=root.querySelector('#retry,#home');
- var report=root.querySelector('.report-card,.result-card,.result-layout');
- if(!resultButton&&!report)return;
- resultReady=true;
- if(window.WillenaLevelTestRecorder)window.WillenaLevelTestRecorder.finish().catch(function(){});
+ if(completed)return;var root=document.getElementById('app');if(!root)return;
+ var resultButton=root.querySelector('#retry,#home');var report=root.querySelector('.report-card,.result-card,.result-layout');if(!resultButton&&!report)return;
+ resultReady=true;if(window.WillenaLevelTestRecorder)window.WillenaLevelTestRecorder.finish().catch(function(){});
 }
 document.addEventListener('click',function(event){
- var option=event.target.closest&&event.target.closest('.setup-option');
- if(!option)return;
- var holder=option.closest('.setup-options');
- var key=holder&&holder.getAttribute('data-key');
- if(!key)return;
+ var option=event.target.closest&&event.target.closest('.setup-option');if(!option)return;
+ var holder=option.closest('.setup-options');var key=holder&&holder.getAttribute('data-key');if(!key)return;
  setupSnapshot[key]=Number(option.getAttribute('data-value'));
  if(key==='length'){activateLeaveGuard();setTimeout(function(){if(window.WillenaLevelTestRecorder){var begin=window.WillenaLevelTestRecorder.begin||window.WillenaLevelTestRecorder.start;begin().catch(function(error){console.warn('[StudentLevelTest] attempt start failed',error)})}},0)}
 },true);
-document.addEventListener('click',function(event){
- if(event.target&&event.target.id==='retryRecording'&&window.WillenaLevelTestRecorder){saveFailed=false;window.WillenaLevelTestRecorder.finish().catch(function(){})}
-});
+document.addEventListener('click',function(event){if(event.target&&event.target.id==='retryRecording'&&window.WillenaLevelTestRecorder){saveFailed=false;window.WillenaLevelTestRecorder.finish().catch(function(){})}});
 window.addEventListener('willena:recording-finished',function(event){
- if(completed||!resultReady)return;
- completed=true;
- deactivateLeaveGuard();
- if(window.speechSynthesis)window.speechSynthesis.cancel();
- var answeredCount=event&&event.detail&&event.detail.answered_count;
- awardCompletionPoints(answeredCount).catch(function(error){console.warn('[StudentLevelTest] completion points award failed',error)});
- var root=document.getElementById('app');if(root)root.innerHTML=completionMarkup();
- document.body.classList.remove('welcome-mode');
+ if(completed||!resultReady)return;completed=true;deactivateLeaveGuard();if(window.speechSynthesis)window.speechSynthesis.cancel();
+ awardCompletionPoints(event).catch(function(error){console.warn('[StudentLevelTest] completion points award failed',error)});
+ var root=document.getElementById('app');if(root)root.innerHTML=completionMarkup();document.body.classList.remove('welcome-mode');
 });
-window.addEventListener('willena:recording-failed',function(){
- if(completed||!resultReady||saveFailed)return;
- saveFailed=true;
- var root=document.getElementById('app');if(root)root.innerHTML=saveErrorMarkup();
-});
+window.addEventListener('willena:recording-failed',function(){if(completed||!resultReady||saveFailed)return;saveFailed=true;var root=document.getElementById('app');if(root)root.innerHTML=saveErrorMarkup()});
 new MutationObserver(function(){requestAnimationFrame(function(){updateGreeting();applyGradePrefill();replaceReport()})}).observe(document.documentElement,{childList:true,subtree:true});
 requireStudent();
 })();
