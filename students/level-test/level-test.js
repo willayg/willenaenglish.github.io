@@ -179,6 +179,38 @@ function completionMarkup(){
 function saveErrorMarkup(){
  return '<section class="student-complete"><div class="student-complete-card"><h1>Almost finished</h1><p>Your answers are safe on this screen, but the test could not be recorded yet.</p><button class="welcome-start" id="retryRecording" type="button">Try saving again</button></div></section>';
 }
+function completionPointValue(answeredCount){
+ var questionCount=Number(setupSnapshot.length)||Number(answeredCount)||0;
+ return [20,30,40,50].indexOf(questionCount)>=0?questionCount*2:0;
+}
+async function awardCompletionPoints(answeredCount){
+ var questionCount=Number(setupSnapshot.length)||Number(answeredCount)||0;
+ var points=completionPointValue(answeredCount);
+ if(!points)return;
+ var payload={
+  event_type:'attempt',
+  session_id:'level-test-'+String(student&&student.id||'student')+'-'+Date.now(),
+  mode:'level_test_completion',
+  word:'level-test-'+questionCount,
+  is_correct:false,
+  points:points,
+  attempt_index:1,
+  extra:{source:'students/level-test',test_length:questionCount,completion_reward:true}
+ };
+ async function send(){
+  var response=await WillenaAPI.fetch('/.netlify/functions/log_word_attempt',{method:'POST',headers:{'content-type':'application/json'},credentials:'include',body:JSON.stringify(payload)});
+  var data=await response.json().catch(function(){return{}});
+  if(!response.ok||data.error)throw new Error(data.error||'Points award failed');
+  return data;
+ }
+ try{
+  await send();
+ }catch(error){
+  if(await refreshSession())await send();
+  else throw error;
+ }
+ try{window.dispatchEvent(new CustomEvent('points:optimistic-bump',{detail:{delta:points}}))}catch(_){}
+}
 function replaceReport(){
  if(completed)return;
  var root=document.getElementById('app');
@@ -201,11 +233,13 @@ document.addEventListener('click',function(event){
 document.addEventListener('click',function(event){
  if(event.target&&event.target.id==='retryRecording'&&window.WillenaLevelTestRecorder){saveFailed=false;window.WillenaLevelTestRecorder.finish().catch(function(){})}
 });
-window.addEventListener('willena:recording-finished',function(){
+window.addEventListener('willena:recording-finished',function(event){
  if(completed||!resultReady)return;
  completed=true;
  deactivateLeaveGuard();
  if(window.speechSynthesis)window.speechSynthesis.cancel();
+ var answeredCount=event&&event.detail&&event.detail.answered_count;
+ awardCompletionPoints(answeredCount).catch(function(error){console.warn('[StudentLevelTest] completion points award failed',error)});
  var root=document.getElementById('app');if(root)root.innerHTML=completionMarkup();
  document.body.classList.remove('welcome-mode');
 });
