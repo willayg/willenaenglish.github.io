@@ -17,169 +17,42 @@ var AUTH_ENDPOINT='/.netlify/functions/supabase_auth';
 var SESSION_REFRESH_INTERVAL=40*60*1000;
 var lastSessionRefresh=0;
 var sessionRefreshTimer=null;
-try{
- var previous=Number(sessionStorage.getItem('willenaLevelGreeting')||'-1');
- greetingIndex=(previous+1)%3;
- sessionStorage.setItem('willenaLevelGreeting',String(greetingIndex));
-}catch(error){greetingIndex=Math.floor(Math.random()*3)}
-
-window.fetch=function(input,init){
- var url=typeof input==='string'?input:(input&&input.url)||'';
- var resolved=new URL(url,location.href);
- if(/(?:^|\/)students\/level-test\/js\/app-classic\.js(?:\?|$)/.test(resolved.pathname+resolved.search)||/^\.\/js\/app-classic\.js(?:\?|$)/.test(url)){
-  return nativeFetch('/free-level-test/js/app-classic.js?v=20260731-4',init);
- }
- return nativeFetch(input,init);
-};
-
+try{var previous=Number(sessionStorage.getItem('willenaLevelGreeting')||'-1');greetingIndex=(previous+1)%3;sessionStorage.setItem('willenaLevelGreeting',String(greetingIndex))}catch(error){greetingIndex=Math.floor(Math.random()*3)}
+window.fetch=function(input,init){var url=typeof input==='string'?input:(input&&input.url)||'';var resolved=new URL(url,location.href);if(/(?:^|\/)students\/level-test\/js\/app-classic\.js(?:\?|$)/.test(resolved.pathname+resolved.search)||/^\.\/js\/app-classic\.js(?:\?|$)/.test(url)){return nativeFetch('/free-level-test/js/app-classic.js?v=20260731-4',init)}return nativeFetch(input,init)};
 function signin(){allowPageExit=true;location.replace('/students/signin.html?next='+encodeURIComponent('/students/level-test/'))}
 function leaveGuard(){return document.getElementById('leaveGuard')}
-function showLeaveGuard(){
- if(!testActive||completed||leaveGuardOpen)return;
- var modal=leaveGuard();if(!modal)return;
- leaveGuardOpen=true;modal.hidden=false;document.body.style.overflow='hidden';
- var stay=document.getElementById('leaveGuardStay');if(stay)setTimeout(function(){stay.focus()},0);
-}
+function showLeaveGuard(){if(!testActive||completed||leaveGuardOpen)return;var modal=leaveGuard();if(!modal)return;leaveGuardOpen=true;modal.hidden=false;document.body.style.overflow='hidden';var stay=document.getElementById('leaveGuardStay');if(stay)setTimeout(function(){stay.focus()},0)}
 function hideLeaveGuard(){var modal=leaveGuard();leaveGuardOpen=false;if(modal)modal.hidden=true;document.body.style.overflow=''}
 function activateLeaveGuard(){if(testActive||completed)return;testActive=true;history.pushState({willenaLevelTestGuard:true},'',location.href)}
 function deactivateLeaveGuard(){testActive=false;allowPageExit=true;hideLeaveGuard()}
 window.addEventListener('popstate',function(){if(!testActive||completed||allowPageExit)return;history.pushState({willenaLevelTestGuard:true},'',location.href);showLeaveGuard()});
 window.addEventListener('beforeunload',function(event){if(!testActive||completed||allowPageExit)return;event.preventDefault();event.returnValue=''});
-document.addEventListener('click',function(event){
- if(event.target&&event.target.id==='leaveGuardStay'){hideLeaveGuard();return}
- if(event.target&&event.target.id==='leaveGuardExit'){deactivateLeaveGuard();location.href='/students/dashboard.html'}
-});
+document.addEventListener('click',function(event){if(event.target&&event.target.id==='leaveGuardStay'){hideLeaveGuard();return}if(event.target&&event.target.id==='leaveGuardExit'){deactivateLeaveGuard();location.href='/students/dashboard.html'}});
 document.addEventListener('keydown',function(event){if(event.key==='Escape'&&leaveGuardOpen){event.preventDefault();hideLeaveGuard()}});
 function studentName(data){return String(data&&data.name||data&&data.username||'Student').trim()}
-async function authRequest(action,params){
- var query=new URLSearchParams(Object.assign({action:action,_:Date.now()},params||{}));
- var response=await WillenaAPI.fetch(AUTH_ENDPOINT+'?'+query.toString(),{credentials:'include',cache:'no-store'});
- var data=await response.json().catch(function(){return{}});
- return{response:response,data:data};
-}
-async function refreshSession(){
- var result=await authRequest('refresh');
- if(!result.response.ok||!result.data.success)return false;
- if(result.data.access_token&&window.WillenaAPI&&WillenaAPI.setLocalTokens)WillenaAPI.setLocalTokens(result.data.access_token);
- lastSessionRefresh=Date.now();return true;
-}
-async function currentUser(){
- var result=await authRequest('whoami');
- if(result.response.ok&&result.data.success&&result.data.user_id)return result.data;
- if(!await refreshSession())return null;
- result=await authRequest('whoami');
- return result.response.ok&&result.data.success&&result.data.user_id?result.data:null;
-}
-function keepSessionAlive(){
- if(sessionRefreshTimer)return;
- sessionRefreshTimer=setInterval(function(){refreshSession().catch(function(error){console.debug('[StudentLevelTest] background session refresh failed',error)})},SESSION_REFRESH_INTERVAL);
- window.addEventListener('focus',function(){if(Date.now()-lastSessionRefresh>SESSION_REFRESH_INTERVAL/2)refreshSession().catch(function(error){console.debug('[StudentLevelTest] focus session refresh failed',error)})});
-}
-function normalizeGrade(grade){
- var text=String(grade==null?'':grade).trim().toLowerCase();
- if(!text||text==='미정')return null;
- if(/^초?[12]$/.test(text)||/^초등?[학교\s]*[12](?:학년)?$/.test(text))return 2;
- if(/^초?[34]$/.test(text)||/^초등?[학교\s]*[34](?:학년)?$/.test(text))return 4;
- if(/^초?[56]$/.test(text)||/^초등?[학교\s]*[56](?:학년)?$/.test(text))return 6;
- if(/^중[123]$/.test(text)||/^중학교\s*[123](?:학년)?$/.test(text))return 8;
- if(/^고[123]$/.test(text)||/^고등학교\s*[123](?:학년)?$/.test(text))return 9;
- return null;
-}
+async function authRequest(action,params){var query=new URLSearchParams(Object.assign({action:action,_:Date.now()},params||{}));var response=await WillenaAPI.fetch(AUTH_ENDPOINT+'?'+query.toString(),{credentials:'include',cache:'no-store'});var data=await response.json().catch(function(){return{}});return{response:response,data:data}}
+async function refreshSession(){var result=await authRequest('refresh');if(!result.response.ok||!result.data.success)return false;if(result.data.access_token&&window.WillenaAPI&&WillenaAPI.setLocalTokens)WillenaAPI.setLocalTokens(result.data.access_token);lastSessionRefresh=Date.now();return true}
+async function currentUser(){var result=await authRequest('whoami');if(result.response.ok&&result.data.success&&result.data.user_id)return result.data;if(!await refreshSession())return null;result=await authRequest('whoami');return result.response.ok&&result.data.success&&result.data.user_id?result.data:null}
+function keepSessionAlive(){if(sessionRefreshTimer)return;sessionRefreshTimer=setInterval(function(){refreshSession().catch(function(error){console.debug('[StudentLevelTest] background session refresh failed',error)})},SESSION_REFRESH_INTERVAL);window.addEventListener('focus',function(){if(Date.now()-lastSessionRefresh>SESSION_REFRESH_INTERVAL/2)refreshSession().catch(function(error){console.debug('[StudentLevelTest] focus session refresh failed',error)})})}
+function normalizeGrade(grade){var text=String(grade==null?'':grade).trim().toLowerCase();if(!text||text==='미정')return null;if(/^초?[12]$/.test(text)||/^초등?[학교\s]*[12](?:학년)?$/.test(text))return 2;if(/^초?[34]$/.test(text)||/^초등?[학교\s]*[34](?:학년)?$/.test(text))return 4;if(/^초?[56]$/.test(text)||/^초등?[학교\s]*[56](?:학년)?$/.test(text))return 6;if(/^중[123]$/.test(text)||/^중학교\s*[123](?:학년)?$/.test(text))return 8;if(/^고[123]$/.test(text)||/^고등학교\s*[123](?:학년)?$/.test(text))return 9;return null}
 function greeting(name){var messages=['Hey, '+name+'!','Hello, '+name+'!','What’s up, '+name+'?'];return messages[greetingIndex%messages.length]}
-function exposeStudent(profile){
- gradePrefill=normalizeGrade(profile&&profile.grade);setupSnapshot.grade=gradePrefill;
- student={id:profile&&profile.id||null,name:studentName(profile),grade:gradePrefill,profile:profile};
- window.WillenaLevelTestContext={mode:'student',student:student,setup:setupSnapshot};
- window.dispatchEvent(new CustomEvent('willena:student-ready',{detail:{student:student}}));
- document.documentElement.dataset.studentRecognized='true';document.documentElement.dataset.gradePrefilled=gradePrefill===null?'false':'true';
- updateGreeting();applyGradePrefill();
-}
-async function requireStudent(){
- try{
-  var who=await currentUser();if(!who){signin();return}
-  var profileResult=await authRequest('get_profile',{user_id:who.user_id});var profile=profileResult.data;
-  if(!profileResult.response.ok||!profile.success){signin();return}
-  exposeStudent(Object.assign({},profile,{id:who.user_id}));keepSessionAlive();
-  if(window.__studentLoadingTimer)clearInterval(window.__studentLoadingTimer);document.documentElement.classList.remove('auth-pending');
- }catch(error){console.error('[StudentLevelTest] profile lookup failed',error);signin()}
-}
-function applyGradePrefill(){
- if(gradeApplied||gradePrefill===null)return;var holder=document.querySelector('.setup-options[data-key="grade"]');if(!holder)return;
- var option=holder.querySelector('[data-value="'+gradePrefill+'"]');if(!option)return;gradeApplied=true;option.setAttribute('data-profile-prefill','true');requestAnimationFrame(function(){option.click()});
-}
+function exposeStudent(profile){gradePrefill=normalizeGrade(profile&&profile.grade);setupSnapshot.grade=gradePrefill;student={id:profile&&profile.id||null,name:studentName(profile),grade:gradePrefill,profile:profile};window.WillenaLevelTestContext={mode:'student',student:student,setup:setupSnapshot};window.dispatchEvent(new CustomEvent('willena:student-ready',{detail:{student:student}}));document.documentElement.dataset.studentRecognized='true';document.documentElement.dataset.gradePrefilled=gradePrefill===null?'false':'true';updateGreeting();applyGradePrefill()}
+async function requireStudent(){try{var who=await currentUser();if(!who){signin();return}var profileResult=await authRequest('get_profile',{user_id:who.user_id});var profile=profileResult.data;if(!profileResult.response.ok||!profile.success){signin();return}exposeStudent(Object.assign({},profile,{id:who.user_id}));keepSessionAlive();if(window.__studentLoadingTimer)clearInterval(window.__studentLoadingTimer);document.documentElement.classList.remove('auth-pending')}catch(error){console.error('[StudentLevelTest] profile lookup failed',error);signin()}}
+function applyGradePrefill(){if(gradeApplied||gradePrefill===null)return;var holder=document.querySelector('.setup-options[data-key="grade"]');if(!holder)return;var option=holder.querySelector('[data-value="'+gradePrefill+'"]');if(!option)return;gradeApplied=true;option.setAttribute('data-profile-prefill','true');requestAnimationFrame(function(){option.click()})}
 function updateGreeting(){if(!student)return;var message=greeting(student.name);var subtitle=document.getElementById('brandSubtitle');if(subtitle)subtitle.textContent=message;var welcome=document.querySelector('.welcome-panel h1');if(welcome)welcome.textContent=message}
-function completionMarkup(){var name=student&&student.name?student.name:'';return '<section class="student-complete"><div class="student-complete-card"><div class="student-complete-icon">✓</div><h1>Test complete</h1><p>'+(name?name+', ':'')+'your test has been recorded.</p><a href="/students/dashboard.html">Return to student dashboard</a></div></section>'}
 function saveErrorMarkup(){return '<section class="student-complete"><div class="student-complete-card"><h1>Almost finished</h1><p>Your answers are safe on this screen, but the test could not be recorded yet.</p><button class="welcome-start" id="retryRecording" type="button">Try saving again</button></div></section>'}
-
-function publicLevelFromInternal(value){
- var internalLevel=Math.round(Number(value)||0);
- if(internalLevel<1||internalLevel>12)return null;
- return internalLevel<=2?internalLevel:internalLevel-2;
-}
-async function loadTargetAssignment(){
- async function request(){
-  var response=await WillenaAPI.fetch('/.netlify/functions/student_study_current?_='+Date.now(),{credentials:'include',cache:'no-store'});
-  var data=await response.json().catch(function(){return{}});
-  if(!response.ok||data.success===false)throw new Error(data.error||'Class book lookup failed');
-  return data.assignment||null;
- }
- try{return await request()}catch(error){if(await refreshSession())return request();throw error}
-}
-async function awardCompletionPoints(event){
- var detail=event&&event.detail||{};
- var questionCount=Number(setupSnapshot.length)||Number(detail.answered_count)||0;
- if([20,30,40,50].indexOf(questionCount)<0)return;
- var result=detail.result||{};
- var attempt=result.attempt||{};
- var internalLevel=Number(attempt.recommended_level)||Number(window.WillenaInternalResultLevel)||Number(sessionStorage.getItem('willena_internal_result_level'))||null;
- var publicLevel=publicLevelFromInternal(internalLevel);
- var assignment=null;
- try{assignment=await loadTargetAssignment()}catch(error){console.warn('[StudentLevelTest] target book lookup failed; using completion points',error)}
- var targetLevel=assignment&&Number(assignment.catalog_level)>0?Number(assignment.catalog_level):null;
- var hitTarget=Boolean(targetLevel&&publicLevel&&publicLevel>=targetLevel);
- var points=hitTarget?questionCount*2:Math.round(questionCount/2);
- var attemptId=attempt&&attempt.id?String(attempt.id):null;
- var payload={
-  event_type:'attempt',
-  session_id:attemptId?'level-test:'+attemptId:'level-test-'+String(student&&student.id||'student')+'-'+Date.now(),
-  mode:'level_test_completion',
-  word:'level-test-'+questionCount,
-  is_correct:false,
-  points:points,
-  attempt_index:1,
-  extra:{
-   source:'students/level-test',test_length:questionCount,completion_reward:true,reward_scheme:'class-target-v1',
-   assessment_attempt_id:attemptId,result_internal_level:internalLevel,result_public_level:publicLevel,
-   hit_target:hitTarget,target_public_level:targetLevel,target_book_id:assignment&&assignment.book_id||null,
-   target_book_title:assignment&&assignment.book_title||null,target_series:assignment&&assignment.catalog_series||null
-  }
- };
- async function send(){
-  var response=await WillenaAPI.fetch('/.netlify/functions/log_word_attempt',{method:'POST',headers:{'content-type':'application/json'},credentials:'include',body:JSON.stringify(payload)});
-  var data=await response.json().catch(function(){return{}});
-  if(!response.ok||data.error)throw new Error(data.error||'Points award failed');
-  return data;
- }
- try{await send()}catch(error){if(await refreshSession())await send();else throw error}
- try{window.dispatchEvent(new CustomEvent('points:optimistic-bump',{detail:{delta:points}}))}catch(_){}
-}
-function replaceReport(){
- if(completed)return;var root=document.getElementById('app');if(!root)return;
- var resultButton=root.querySelector('#retry,#home');var report=root.querySelector('.report-card,.result-card,.result-layout');if(!resultButton&&!report)return;
- resultReady=true;if(window.WillenaLevelTestRecorder)window.WillenaLevelTestRecorder.finish().catch(function(){});
-}
-document.addEventListener('click',function(event){
- var option=event.target.closest&&event.target.closest('.setup-option');if(!option)return;
- var holder=option.closest('.setup-options');var key=holder&&holder.getAttribute('data-key');if(!key)return;
- setupSnapshot[key]=Number(option.getAttribute('data-value'));
- if(key==='length'){activateLeaveGuard();setTimeout(function(){if(window.WillenaLevelTestRecorder){var begin=window.WillenaLevelTestRecorder.begin||window.WillenaLevelTestRecorder.start;begin().catch(function(error){console.warn('[StudentLevelTest] attempt start failed',error)})}},0)}
-},true);
+function publicLevelFromInternal(value){var internalLevel=Math.round(Number(value)||0);if(internalLevel<1||internalLevel>12)return null;return internalLevel<=2?internalLevel:internalLevel-2}
+async function loadTargetAssignment(){async function request(){var response=await WillenaAPI.fetch('/.netlify/functions/student_study_current?_='+Date.now(),{credentials:'include',cache:'no-store'});var data=await response.json().catch(function(){return{}});if(!response.ok||data.success===false)throw new Error(data.error||'Class book lookup failed');return data.assignment||null}try{return await request()}catch(error){if(await refreshSession())return request();throw error}}
+async function awardCompletionPoints(event){var detail=event&&event.detail||{};var questionCount=Number(setupSnapshot.length)||Number(detail.answered_count)||0;if([20,30,40,50].indexOf(questionCount)<0)return null;var result=detail.result||{},attempt=result.attempt||{};var internalLevel=Number(attempt.recommended_level)||Number(window.WillenaInternalResultLevel)||Number(sessionStorage.getItem('willena_internal_result_level'))||null;var publicLevel=publicLevelFromInternal(internalLevel);var assignment=null;try{assignment=await loadTargetAssignment()}catch(error){console.warn('[StudentLevelTest] target book lookup failed; using completion points',error)}var targetLevel=assignment&&Number(assignment.catalog_level)>0?Number(assignment.catalog_level):null;var hitTarget=Boolean(targetLevel&&publicLevel&&publicLevel>=targetLevel);var points=hitTarget?questionCount*2:Math.round(questionCount/2);var attemptId=attempt&&attempt.id?String(attempt.id):null;var payload={event_type:'attempt',session_id:attemptId?'level-test:'+attemptId:'level-test-'+String(student&&student.id||'student')+'-'+Date.now(),mode:'level_test_completion',word:'level-test-'+questionCount,is_correct:false,points:points,attempt_index:1,extra:{source:'students/level-test',test_length:questionCount,completion_reward:true,reward_scheme:'class-target-v1',assessment_attempt_id:attemptId,result_internal_level:internalLevel,result_public_level:publicLevel,hit_target:hitTarget,target_public_level:targetLevel,target_book_id:assignment&&assignment.book_id||null,target_book_title:assignment&&assignment.book_title||null,target_series:assignment&&assignment.catalog_series||null}};async function send(){var response=await WillenaAPI.fetch('/.netlify/functions/log_word_attempt',{method:'POST',headers:{'content-type':'application/json'},credentials:'include',body:JSON.stringify(payload)});var data=await response.json().catch(function(){return{}});if(!response.ok||data.error)throw new Error(data.error||'Points award failed');return data}try{await send()}catch(error){if(await refreshSession())await send();else throw error}try{window.dispatchEvent(new CustomEvent('points:optimistic-bump',{detail:{delta:points}}))}catch(_){}return{points:points,hitTarget:hitTarget,targetLevel:targetLevel,publicLevel:publicLevel,questionCount:questionCount}}
+function rewardMarkup(info){var hit=info&&info.hitTarget,target=info&&info.targetLevel;var targetLine=target?'<div class="reward-target">Target level '+target+(hit?' reached':'')+'</div>':'';var note=hit?'You hit or exceeded your class target. Full completion reward earned.':'Test complete. Keep working toward your class target for the full reward next time.';return '<section class="reward-screen"><div class="particle-layer" aria-hidden="true"></div><div class="reward-card"><div class="reward-kicker">Willena Points</div><h1 class="reward-title">Test complete</h1><div class="reward-points"><strong class="reward-number">0</strong><span class="reward-label">points</span></div>'+targetLine+'<p class="reward-note">'+note+'</p><a class="reward-home" href="/students/dashboard.html">Return to student dashboard</a></div></section>'}
+function installRewardStyles(){if(document.getElementById('willenaRewardStyles'))return;var s=document.createElement('style');s.id='willenaRewardStyles';s.textContent='.reward-screen{min-height:68vh;display:grid;place-items:center;padding:24px;position:relative;overflow:hidden}.reward-card{position:relative;z-index:2;width:min(680px,100%);background:#fff;border:1px solid #dbe8ee;border-radius:30px;padding:clamp(30px,7vw,58px);text-align:center;box-shadow:0 22px 65px rgba(38,66,88,.13)}.reward-kicker{font-size:13px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#71809a}.reward-title{margin:8px 0 12px;color:#17243f;font-size:clamp(30px,7vw,46px)}.reward-points{display:flex;justify-content:center;align-items:baseline;gap:10px;margin:10px 0}.reward-number{font-size:clamp(58px,15vw,96px);line-height:1;font-weight:800;color:#20b9c5;font-variant-numeric:tabular-nums}.reward-label{font-size:clamp(18px,4vw,25px);font-weight:800;color:#40516a}.reward-note{margin:0 auto 24px;max-width:520px;color:#71809a;line-height:1.65;font-weight:600}.reward-target{display:inline-flex;gap:8px;align-items:center;margin:0 auto 22px;padding:10px 14px;border-radius:999px;background:#eef9fa;color:#1c6d74;font-weight:800}.reward-home{display:inline-flex;align-items:center;justify-content:center;min-height:56px;padding:0 24px;border-radius:17px;background:#17243f;color:#fff;text-decoration:none;font-weight:800}.particle-layer{position:absolute;inset:0;pointer-events:none;z-index:1}.spark{position:absolute;width:6px;height:14px;border-radius:5px;background:currentColor;opacity:0;transform-origin:50% 80px;animation:spark-pop 900ms ease-out forwards}.burst-a{color:#20b9c5}.burst-b{color:#f5b942}.burst-c{color:#6c7bd9}@keyframes spark-pop{0%{opacity:0;transform:translate(-50%,-50%) rotate(var(--a)) translateY(0) scale(.6)}18%{opacity:1}100%{opacity:0;transform:translate(-50%,-50%) rotate(var(--a)) translateY(-82px) scale(.9)}}@media(prefers-reduced-motion:reduce){.spark{display:none}}';document.head.appendChild(s)}
+function burst(layer,x,y,klass){for(var i=0;i<12;i++){var s=document.createElement('span');s.className='spark '+klass;s.style.left=x+'%';s.style.top=y+'%';s.style.setProperty('--a',(i*30)+'deg');layer.appendChild(s);setTimeout(function(el){el.remove()},1100,s)}}
+function countUp(el,target){if(matchMedia('(prefers-reduced-motion: reduce)').matches){el.textContent=target;return}var start=performance.now(),duration=1000;function tick(now){var p=Math.min(1,(now-start)/duration);el.textContent=Math.round(target*(1-Math.pow(1-p,3)));if(p<1)requestAnimationFrame(tick)}requestAnimationFrame(tick)}
+function showReward(info){var root=document.getElementById('app');if(!root)return;installRewardStyles();root.innerHTML=rewardMarkup(info||{points:0});var num=root.querySelector('.reward-number'),layer=root.querySelector('.particle-layer');countUp(num,Number(info&&info.points)||0);burst(layer,18,27,'burst-a');setTimeout(function(){burst(layer,82,23,'burst-b')},180);setTimeout(function(){burst(layer,52,18,'burst-c')},360)}
+function replaceReport(){if(completed)return;var root=document.getElementById('app');if(!root)return;var resultButton=root.querySelector('#retry,#home');var report=root.querySelector('.report-card,.result-card,.result-layout');if(!resultButton&&!report)return;resultReady=true;if(window.WillenaLevelTestRecorder)window.WillenaLevelTestRecorder.finish().catch(function(){})}
+document.addEventListener('click',function(event){var option=event.target.closest&&event.target.closest('.setup-option');if(!option)return;var holder=option.closest('.setup-options');var key=holder&&holder.getAttribute('data-key');if(!key)return;setupSnapshot[key]=Number(option.getAttribute('data-value'));if(key==='length'){activateLeaveGuard();setTimeout(function(){if(window.WillenaLevelTestRecorder){var begin=window.WillenaLevelTestRecorder.begin||window.WillenaLevelTestRecorder.start;begin().catch(function(error){console.warn('[StudentLevelTest] attempt start failed',error)})}},0)}},true);
 document.addEventListener('click',function(event){if(event.target&&event.target.id==='retryRecording'&&window.WillenaLevelTestRecorder){saveFailed=false;window.WillenaLevelTestRecorder.finish().catch(function(){})}});
-window.addEventListener('willena:recording-finished',function(event){
- if(completed||!resultReady)return;completed=true;deactivateLeaveGuard();if(window.speechSynthesis)window.speechSynthesis.cancel();
- awardCompletionPoints(event).catch(function(error){console.warn('[StudentLevelTest] completion points award failed',error)});
- var root=document.getElementById('app');if(root)root.innerHTML=completionMarkup();document.body.classList.remove('welcome-mode');
-});
+window.addEventListener('willena:recording-finished',async function(event){if(completed||!resultReady)return;completed=true;deactivateLeaveGuard();if(window.speechSynthesis)window.speechSynthesis.cancel();var info=null;try{info=await awardCompletionPoints(event)}catch(error){console.warn('[StudentLevelTest] completion points award failed',error);var q=Number(setupSnapshot.length)||Number(event&&event.detail&&event.detail.answered_count)||0;info={points:Math.round(q/2),hitTarget:false,targetLevel:null}}showReward(info);document.body.classList.remove('welcome-mode')});
 window.addEventListener('willena:recording-failed',function(){if(completed||!resultReady||saveFailed)return;saveFailed=true;var root=document.getElementById('app');if(root)root.innerHTML=saveErrorMarkup()});
 new MutationObserver(function(){requestAnimationFrame(function(){updateGreeting();applyGradePrefill();replaceReport()})}).observe(document.documentElement,{childList:true,subtree:true});
 requireStudent();
