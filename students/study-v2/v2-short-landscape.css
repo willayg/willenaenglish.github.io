@@ -3,55 +3,60 @@
   .dashboard{padding:8px 12px 22px}
   .study-controls{display:none!important}
   .book-hero{display:block!important;padding:12px 16px!important;border-width:2px!important;border-radius:20px!important;min-height:0!important}
-  .book-hero .hero-copy{display:grid;grid-template-columns:minmax(0,1fr) 285px;grid-template-areas:"tabs tabs" "title daily" "units units" "mastery mastery" "actions actions";column-gap:16px;row-gap:7px;align-items:center}
+  .book-hero .hero-copy{display:grid;grid-template-columns:minmax(0,1fr) 285px;grid-template-areas:"tabs tabs" "title daily" "units units" "mastery mastery" "actions actions";column-gap:16px;row-gap:9px;align-items:center}
   .study-v2-book-tabs{grid-area:tabs;margin:0!important;padding:0!important;gap:6px!important}
   .study-v2-book-tab{font-size:.64rem!important;padding:5px 9px!important;border-width:1.5px!important}
   .study-v2-book-title-wrap{grid-area:title;margin:0!important;padding:0!important;display:block!important;min-width:0}
   .study-v2-book-title-wrap #bookTitle{font-size:clamp(1.75rem,4.1vw,2.65rem)!important;line-height:1.02!important;letter-spacing:-.04em!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .study-v2-book-title-wrap #unitTitle{margin:5px 0 0!important;font-size:.82rem!important;line-height:1.2!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .study-v2-book-pips{display:none!important}
+  .study-v2-book-title-wrap #unitTitle{margin:6px 0 0!important;font-size:.82rem!important;line-height:1.25!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .study-v2-book-pips{display:flex!important;justify-content:flex-start!important;align-items:center!important;gap:6px!important;margin:8px 0 0!important;height:8px!important}
+  .study-v2-book-pip{width:7px!important;height:7px!important;background:#cfecef!important}
+  .study-v2-book-pip.is-active{width:24px!important;background:var(--pink)!important}
   .study-v2-book-title-wrap+#dailyWorkoutCard{grid-area:daily;margin:0!important}
   #dailyWorkoutCard{min-height:66px!important;padding:8px 12px!important;border-radius:16px!important;gap:10px!important}
   #dailyWorkoutCard .progress-ring{width:52px!important;height:52px!important;flex:0 0 52px!important}
   #dailyWorkoutCard .progress-ring:after{inset:6px!important}
   #dailyWorkoutCard .progress-ring span{font-size:.9rem!important}
   #dailyWorkoutCard strong{font-size:.86rem!important;line-height:1.1!important}
-  #dailyWorkoutCard small{margin-top:2px!important;font-size:.68rem!important;line-height:1.15!important}
-  .study-v2-units{grid-area:units;margin:2px 0 0!important}
+  #dailyWorkoutCard small{margin-top:3px!important;font-size:.68rem!important;line-height:1.2!important}
+  .study-v2-units{grid-area:units;margin:3px 0 0!important}
   .study-v2-units-head{display:none!important}
-  .study-v2-unit-strip{gap:5px!important}
-  .study-v2-unit{padding:5px 9px!important;border-radius:10px!important;border-width:1.5px!important;font-size:.68rem!important}
+  .study-v2-unit-strip{gap:6px!important}
+  .study-v2-unit{padding:6px 10px!important;border-radius:10px!important;border-width:1.5px!important;font-size:.7rem!important}
   #headerSkillMastery{grid-area:mastery;margin:0!important}
   #headerSkillMastery .header-skill-mastery-head{display:none!important}
-  #masteryGrid{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:8px!important;margin:1px 0 0!important}
-  #masteryGrid .header-skill-master{min-height:70px!important;padding:10px 13px!important;border-radius:14px!important}
+  #masteryGrid{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:9px!important;margin:2px 0 0!important}
+  #masteryGrid .header-skill-master{min-height:74px!important;padding:11px 14px!important;border-radius:14px!important}
   #masteryGrid .header-skill-master-top{gap:7px!important;align-items:center!important}
-  #masteryGrid .header-skill-master-top strong{font-size:.82rem!important;line-height:1.15!important;color:var(--pink-dark)!important;font-weight:800!important}
-  #masteryGrid .header-skill-master-pct{font-size:.76rem!important;line-height:1.1!important;font-weight:800!important}
-  #masteryGrid .header-skill-master-track{height:7px!important;margin-top:9px!important;border-radius:999px!important}
-  .hero-actions{grid-area:actions;display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px!important;margin:0!important}
-  .hero-actions button{min-height:36px!important;padding:0 10px!important;border-width:2px!important;border-radius:11px!important;font-size:.72rem!important}
-  .study-v2-ai{margin-top:10px!important}
+  #masteryGrid .header-skill-master-top strong{font-size:.86rem!important;line-height:1.18!important;color:var(--pink-dark)!important;font-weight:800!important}
+  #masteryGrid .header-skill-master-pct{font-size:.78rem!important;line-height:1.1!important;font-weight:800!important}
+  #masteryGrid .header-skill-master-track{height:7px!important;margin-top:10px!important;border-radius:999px!important}
+  .hero-actions{grid-area:actions;display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px!important;margin:1px 0 0!important}
+  .hero-actions button{min-height:38px!important;padding:0 11px!important;border-width:2px!important;border-radius:11px!important;font-size:.74rem!important}
+  .study-v2-ai{margin-top:12px!important}
 
   /* Question / Daily / focused-practice screens: question owns the viewport. */
-  #v2PracticePanel{padding:8px 12px 12px!important}
-  .practice-toolbar{min-height:48px!important;margin-bottom:8px!important;align-items:center!important;gap:10px!important}
-  .practice-toolbar #v2PracticeClose{min-height:36px!important;padding:0 10px!important;border-radius:10px!important;font-size:.75rem!important}
-  .practice-toolbar .eyebrow{font-size:.62rem!important}
-  .practice-toolbar h2{font-size:1.25rem!important;line-height:1.1!important;margin:2px 0 0!important}
-  .practice-toolbar .section-note{font-size:.7rem!important}
-  .activity-card{padding:12px 14px!important;border-radius:16px!important}
+  #v2PracticePanel{padding:10px 14px 16px!important}
+  .practice-toolbar{min-height:52px!important;margin-bottom:14px!important;align-items:center!important;gap:14px!important}
+  .practice-toolbar #v2PracticeClose{min-height:38px!important;padding:0 12px!important;border-radius:10px!important;font-size:.78rem!important}
+  .practice-toolbar .eyebrow{font-size:.66rem!important}
+  .practice-toolbar h2{font-size:1.38rem!important;line-height:1.16!important;margin:3px 0 0!important}
+  .practice-toolbar .section-note{font-size:.74rem!important;line-height:1.2!important}
+  .activity-card{padding:16px 18px!important;border-radius:16px!important}
   .activity-source-badge{display:none!important}
-  .activity-context{padding:8px 11px!important;margin-bottom:10px!important;border-radius:10px!important;line-height:1.3!important;font-size:.82rem!important}
-  .activity-prompt{font-size:clamp(1.25rem,3.1vw,1.75rem)!important;line-height:1.22!important;margin:0 0 12px!important}
-  .activity-choices{gap:8px!important}
-  .activity-choice,.activity-token{min-height:48px!important;padding:9px 12px!important;border-radius:11px!important;font-size:.88rem!important}
-  .activity-audio{padding:8px 13px!important;margin-bottom:10px!important;font-size:.78rem!important}
-  .activity-token-answer,.activity-token-bank{min-height:50px!important;padding:8px!important;gap:6px!important}
-  .activity-actions{margin-top:9px!important}
-  .activity-check{padding:9px 16px!important;border-radius:11px!important;font-size:.84rem!important}
-  .activity-feedback{margin-top:9px!important;padding:9px 11px!important;border-radius:10px!important;font-size:.8rem!important;line-height:1.35!important}
-  .smart-finish{padding:20px!important}
+  .activity-context{padding:11px 14px!important;margin-bottom:18px!important;border-left:0!important;border-radius:11px!important;line-height:1.55!important;font-size:1.02rem!important;background:rgba(102,214,223,.12)!important}
+  .activity-prompt{font-size:clamp(1.35rem,3.1vw,1.9rem)!important;line-height:1.35!important;margin:0 0 20px!important;font-weight:800!important}
+  .activity-choices{gap:14px!important;row-gap:14px!important}
+  .activity-choice,.activity-token{min-height:64px!important;padding:14px 16px!important;border-radius:13px!important;font-size:1rem!important;line-height:1.3!important}
+  .activity-audio{margin:2px 0 20px!important}
+  .activity-audio-icon{display:none!important}
+  .activity-audio:before{content:"";display:block;width:44px;height:44px;background-repeat:no-repeat;background-position:center;background-size:contain;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235f6677' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 13v-2a8 8 0 0 1 16 0v2'/%3E%3Cpath d='M4 13a2 2 0 0 1 2-2h1v7H6a2 2 0 0 1-2-2v-3Z'/%3E%3Cpath d='M20 13a2 2 0 0 0-2-2h-1v7h1a2 2 0 0 0 2-2v-3Z'/%3E%3C/svg%3E")}
+  .activity-token-answer,.activity-token-bank{min-height:60px!important;padding:11px!important;gap:9px!important;margin-top:4px!important}
+  .activity-token-answer{margin-bottom:14px!important}
+  .activity-actions{margin-top:18px!important}
+  .activity-check{padding:11px 19px!important;border-radius:11px!important;font-size:.9rem!important}
+  .activity-feedback{margin-top:16px!important;padding:12px 14px!important;border-radius:10px!important;font-size:.86rem!important;line-height:1.5!important}
+  .smart-finish{padding:22px!important}
   .smart-finish h2{font-size:2rem!important}
   .smart-confetti{height:60px!important}
 }
