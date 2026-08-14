@@ -53,26 +53,54 @@ function accessTokenFromCookie(cookieHeader) {
   return match ? decodeURIComponent(match[1]) : '';
 }
 
-async function routeDirectCF(request, binding, name) {
+async function authenticatedUserId(request, env) {
+  const auth = env?.SUPABASE_AUTH;
+  if (!auth || typeof auth.fetch !== 'function') return '';
+  const url = new URL(request.url);
+  url.pathname = '/';
+  url.search = '?action=whoami';
+  const headers = new Headers(request.headers);
+  const response = await auth.fetch(new Request(url.toString(), {
+    method: 'GET',
+    headers,
+  }));
+  if (!response.ok) return '';
+  const data = await response.json().catch(() => null);
+  return data && data.success && data.user_id ? String(data.user_id) : '';
+}
+
+async function routeDailyStudy(request, env) {
+  const binding = env?.DAILY_STUDY_V2;
   if (!binding || typeof binding.fetch !== 'function') {
-    return new Response(JSON.stringify({ success:false, error:`${name} service unavailable` }), {
+    return new Response(JSON.stringify({ success:false, error:'Daily Study service unavailable' }), {
       status:503,
       headers:{'content-type':'application/json; charset=utf-8'}
     });
   }
-  const headers = new Headers(request.headers);
-  if (!headers.get('Authorization')) {
-    const token = accessTokenFromCookie(headers.get('Cookie'));
-    if (token) headers.set('Authorization', `Bearer ${token}`);
+
+  const userId = await authenticatedUserId(request, env);
+  if (!userId) {
+    return new Response(JSON.stringify({ success:false, error:'Not signed in' }), {
+      status:401,
+      headers:{'content-type':'application/json; charset=utf-8'}
+    });
   }
+
+  const headers = new Headers(request.headers);
+  headers.set('X-Willena-Authenticated-User', userId);
+  headers.delete('Authorization');
   const response = await binding.fetch(new Request(request.url, {
     method: request.method,
     headers,
     body: request.method !== 'GET' && request.method !== 'HEAD' ? request.body : undefined,
   }));
   const responseHeaders = new Headers(response.headers);
-  responseHeaders.set('X-Willena-Upstream', `cloudflare:${name}`);
-  return new Response(response.body,{status:response.status,statusText:response.statusText,headers:responseHeaders});
+  responseHeaders.set('X-Willena-Upstream', 'cloudflare:daily-study-v2');
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers: responseHeaders,
+  });
 }
 
 async function routeToCFWorker(request, binding, functionName, url) {
@@ -152,7 +180,7 @@ async function handleRequest(request, env) {
 
   try {
     if (url.pathname === '/api/daily-study' || url.pathname === '/api/daily-study/') {
-      const response = await routeDirectCF(request, env?.DAILY_STUDY_V2, 'daily-study-v2');
+      const response = await routeDailyStudy(request, env);
       return rewriteResponse(response, origin);
     }
 
