@@ -28,7 +28,7 @@
 </head>
 <body>
 <div class="study-app">
-<student-header title="Study" show-id="false" show-home="false" show-home="false" show-points="true" show-logout="true"></student-header>
+<student-header title="Study" show-id="false" show-home="false" show-points="true" show-logout="true"></student-header>
 <main class="dashboard" id="app">
   <section id="v2PracticePanel" class="practice-panel" hidden>
     <div class="practice-toolbar">
@@ -103,7 +103,25 @@
 <script src="./v2.js?v=20260815-nodaily1"></script>
 <script src="./v2-short-landscape.js?v=20260814-listennudge1"></script>
 <script src="./v2-round-ux.js?v=20260815-dailysequence1"></script>
-<script src="./v2-daily.js?v=20260815-responsive2"></script>
+<script src="./v2-daily.js?v=20260815-singleowner1"></script>
+<script>
+(function(){
+  var card=document.getElementById('dailyWorkoutCard');
+  if(!card)return;
+  function launch(e){
+    if(e)e.preventDefault();
+    var daily=window.WillenaStudyV2Daily;
+    if(daily&&typeof daily.open==='function'){
+      daily.open();
+      return;
+    }
+    var copy=document.getElementById('smartProgressCopy');
+    if(copy)copy.textContent='Daily Study failed to load. Please refresh.';
+  }
+  card.addEventListener('click',launch);
+  card.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){launch(e);}});
+})();
+</script>
 <script src="./v2-practice-ux.js?v=20260814-skilltitle1"></script>
 <script src="./v2-deferred-render.js?v=20260811-1"></script>
 <script src="./v2-interactions.js?v=20260811-4"></script>
