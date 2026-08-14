@@ -3,6 +3,7 @@ main = "src/index.js"
 compatibility_date = "2025-12-08"
 workers_dev = true
 
+# Authenticated student Daily Study state endpoint.
 [[routes]]
 pattern = "api.willenaenglish.com/api/daily-study-state*"
 zone_name = "willenaenglish.com"
