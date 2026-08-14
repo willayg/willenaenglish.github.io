@@ -74,4 +74,9 @@ if(mq.addEventListener)mq.addEventListener('change',compactHeader);else mq.addLi
 window.addEventListener('resize',compactHeader);
 window.addEventListener('orientationchange',function(){setTimeout(compactHeader,100);});
 customElements.whenDefined('student-header').then(function(){setTimeout(compactHeader,0);setTimeout(compactHeader,500);setTimeout(compactHeader,1500);});
+
+document.addEventListener('click',function(e){
+  var audio=e.target&&e.target.closest&&e.target.closest('.activity-audio');
+  if(audio)audio.classList.add('has-played');
+},true);
 })();
