@@ -1,7 +1,6 @@
 /**
  * Cloudflare Worker: API gateway and cookie-domain rewrite.
- * Migrated functions use service bindings. Legacy functions may still fall back
- * to Netlify, except functions marked Cloudflare-only.
+ * Daily Study V2 is Cloudflare-only and uses a direct /api/daily-study route.
  */
 
 const NETLIFY_BASE = 'https://willenaenglish.netlify.app';
@@ -19,8 +18,6 @@ const FUNCTION_TO_BINDING = {
 };
 
 const PREFER_CF_WORKER = new Set(Object.keys(FUNCTION_TO_BINDING));
-
-// These endpoints must never incur a Netlify invocation or deploy dependency.
 const CLOUDFLARE_ONLY = new Set(['student_level_test', 'admin_classes']);
 
 const ALLOWED_ORIGINS = new Set([
@@ -54,6 +51,28 @@ function corsHeaders(origin) {
 function accessTokenFromCookie(cookieHeader) {
   const match = String(cookieHeader || '').match(/(?:^|;\s*)sb_access=([^;]+)/);
   return match ? decodeURIComponent(match[1]) : '';
+}
+
+async function routeDirectCF(request, binding, name) {
+  if (!binding || typeof binding.fetch !== 'function') {
+    return new Response(JSON.stringify({ success:false, error:`${name} service unavailable` }), {
+      status:503,
+      headers:{'content-type':'application/json; charset=utf-8'}
+    });
+  }
+  const headers = new Headers(request.headers);
+  if (!headers.get('Authorization')) {
+    const token = accessTokenFromCookie(headers.get('Cookie'));
+    if (token) headers.set('Authorization', `Bearer ${token}`);
+  }
+  const response = await binding.fetch(new Request(request.url, {
+    method: request.method,
+    headers,
+    body: request.method !== 'GET' && request.method !== 'HEAD' ? request.body : undefined,
+  }));
+  const responseHeaders = new Headers(response.headers);
+  responseHeaders.set('X-Willena-Upstream', `cloudflare:${name}`);
+  return new Response(response.body,{status:response.status,statusText:response.statusText,headers:responseHeaders});
 }
 
 async function routeToCFWorker(request, binding, functionName, url) {
@@ -132,6 +151,11 @@ async function handleRequest(request, env) {
   if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: corsHeaders(origin) });
 
   try {
+    if (url.pathname === '/api/daily-study' || url.pathname === '/api/daily-study/') {
+      const response = await routeDirectCF(request, env?.DAILY_STUDY_V2, 'daily-study-v2');
+      return rewriteResponse(response, origin);
+    }
+
     if (url.pathname.startsWith('/audio/')) {
       const binding = env?.GET_AUDIO_URLS;
       if (!binding || typeof binding.fetch !== 'function') {
