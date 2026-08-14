@@ -38,5 +38,9 @@ service = "student-level-test"
 binding = "ADMIN_CLASSES"
 service = "admin-classes"
 
+[[services]]
+binding = "DAILY_STUDY_V2"
+service = "daily-study-v2"
+
 [vars]
 NETLIFY_BASE = "https://willenaenglish.netlify.app"
