@@ -16,12 +16,13 @@ const FUNCTION_TO_BINDING = {
   pixabay: 'PIXABAY',
   student_level_test: 'STUDENT_LEVEL_TEST',
   admin_classes: 'ADMIN_CLASSES',
+  daily_study_state: 'DAILY_STUDY_STATE',
 };
 
 const PREFER_CF_WORKER = new Set(Object.keys(FUNCTION_TO_BINDING));
 
 // These endpoints must never incur a Netlify invocation or deploy dependency.
-const CLOUDFLARE_ONLY = new Set(['student_level_test', 'admin_classes']);
+const CLOUDFLARE_ONLY = new Set(['student_level_test', 'admin_classes', 'daily_study_state']);
 
 const ALLOWED_ORIGINS = new Set([
   'https://willenaenglish.netlify.app',
@@ -63,7 +64,7 @@ async function routeToCFWorker(request, binding, functionName, url) {
   console.log(`[proxy] Cloudflare Worker ${functionName}: ${workerUrl.pathname}${workerUrl.search}`);
 
   const headers = new Headers(request.headers);
-  if (functionName === 'admin_classes' && !headers.get('Authorization')) {
+  if ((functionName === 'admin_classes' || functionName === 'daily_study_state') && !headers.get('Authorization')) {
     const token = accessTokenFromCookie(headers.get('Cookie'));
     if (token) headers.set('Authorization', `Bearer ${token}`);
   }
