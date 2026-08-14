@@ -63,39 +63,78 @@ async function syncCard(){
 }
 
 function contextFor(book,unit){return{bookId:book.book_id,bookTitle:book.book_title,unitId:unit.id,unitNumber:Number(unit.unit_number)};}
-async function adaptive(){try{if(global.WillenaStudyProgress&&typeof global.WillenaStudyProgress.getAdaptiveState==='function')return await global.WillenaStudyProgress.getAdaptiveState();}catch(e){console.warn('[Daily Study] adaptive state unavailable',e);}return{items:[]};}
-async function loadUnitPool(book,unit,kind){
-  if(!book||!unit||!global.WillenaStudyQuestionBank)return[];
+async function loadCurrentUnitPool(book){
+  if(!book||!book.currentUnit||!global.WillenaStudyQuestionBank)return[];
+  var unit=book.currentUnit;
   var rows=await global.WillenaStudyQuestionBank.loadUnit(null,contextFor(book,unit)).catch(function(){return[];});
   return arr(rows).filter(validActivity).map(function(source){
-    var a=clone(source),key=text(a.id);a.daily_key=key;
-    a.metadata=Object.assign({},a.metadata||{},{book_id:book.book_id,unit_id:unit.id,daily_mode:true,daily_key:key,daily_origin_id:key,daily_book_title:book.book_title,daily_unit_number:Number(unit.unit_number),daily_source:kind||'current',current_curriculum:kind!=='review',adaptive_review:kind==='review'});
+    var a=clone(source),key=text(a.id);
+    a.daily_key=key;
+    a.metadata=Object.assign({},a.metadata||{}, {
+      book_id:book.book_id,
+      unit_id:unit.id,
+      daily_mode:true,
+      daily_key:key,
+      daily_origin_id:key,
+      daily_book_title:book.book_title,
+      daily_unit_number:Number(unit.unit_number),
+      daily_source:'current',
+      current_curriculum:true
+    });
     return a;
   });
 }
-async function loadBookPool(book,state){
-  if(!book||!book.currentUnit)return[];
-  var dueIds=[],seen={};
-  arr(state&&state.items).filter(function(x){return String(x.book_id)===String(book.book_id)&&String(x.unit_id)!==String(book.currentUnit.id)&&(x.due||Number(x.lapses||0)>0);}).sort(function(a,b){var al=Number(a.lapses||0),bl=Number(b.lapses||0);if(al!==bl)return bl-al;return Number(a.mastery_score||0)-Number(b.mastery_score||0);}).forEach(function(x){var id=String(x.unit_id||'');if(id&&!seen[id]&&dueIds.length<2){seen[id]=true;dueIds.push(id);}});
-  var units=arr(book.units),reviewUnits=dueIds.map(function(id){return units.find(function(u){return String(u.id)===id;});}).filter(Boolean);
-  var jobs=[loadUnitPool(book,book.currentUnit,'current')].concat(reviewUnits.map(function(u){return loadUnitPool(book,u,'review');}));
-  var parts=await Promise.all(jobs);return [].concat.apply([],parts);
-}
+
 function balancedCandidates(groups){
-  var books=groups.map(function(rows){var by={};SKILLS.forEach(function(s){by[s]=[];});shuffle(rows).forEach(function(a){if(validActivity(a))by[a.skill].push(a);});SKILLS.forEach(function(s){by[s]=shuffle(by[s]);});return by;});
+  var books=groups.map(function(rows){
+    var by={};
+    SKILLS.forEach(function(s){by[s]=[];});
+    shuffle(rows).forEach(function(a){if(validActivity(a))by[a.skill].push(a);});
+    SKILLS.forEach(function(s){by[s]=shuffle(by[s]);});
+    return by;
+  });
   var out=[],used={},progress=true;
-  while(out.length<MAX_CANDIDATES&&progress){progress=false;for(var s=0;s<SKILLS.length&&out.length<MAX_CANDIDATES;s++){for(var b=0;b<books.length&&out.length<MAX_CANDIDATES;b++){var bucket=books[b][SKILLS[s]];while(bucket.length){var a=bucket.shift(),k=dailyKey(a);if(!k||used[k])continue;used[k]=true;out.push(a);progress=true;break;}}}}
+  while(out.length<MAX_CANDIDATES&&progress){
+    progress=false;
+    for(var s=0;s<SKILLS.length&&out.length<MAX_CANDIDATES;s++){
+      for(var b=0;b<books.length&&out.length<MAX_CANDIDATES;b++){
+        var bucket=books[b][SKILLS[s]];
+        while(bucket.length){
+          var a=bucket.shift(),k=dailyKey(a);
+          if(!k||used[k])continue;
+          used[k]=true;
+          out.push(a);
+          progress=true;
+          break;
+        }
+      }
+    }
+  }
   return out;
 }
+
 async function buildPlan(){
-  var h=home();if(!h||!h.books.length)throw new Error('Assigned books are still loading.');
-  var books=h.books.filter(function(b){return b&&b.book_id&&b.currentUnit&&b.currentUnit.id;});if(!books.length)throw new Error('No study books are ready.');
-  var state=await adaptive(),groups=await Promise.all(books.map(function(b){return loadBookPool(b,state);}));groups=groups.filter(function(g){return g.length;});if(!groups.length)throw new Error('No Daily Study questions are available.');
-  var plan=balancedCandidates(groups);if(plan.length<TARGET)throw new Error('Daily Study needs at least 20 unique questions.');return plan;
+  var h=home();
+  if(!h||!h.books.length)throw new Error('Assigned books are still loading.');
+  var books=h.books.filter(function(b){return b&&b.book_id&&b.currentUnit&&b.currentUnit.id;});
+  if(!books.length)throw new Error('No study books are ready.');
+
+  var groups=await Promise.all(books.map(loadCurrentUnitPool));
+  groups=groups.filter(function(g){return g.length;});
+  if(!groups.length)throw new Error('No Daily Study questions are available in the assigned current units.');
+
+  var plan=balancedCandidates(groups);
+  if(plan.length<TARGET)throw new Error('Daily Study needs at least 20 unique questions across the assigned current units.');
+  return plan;
 }
+
 async function ensureSession(){
-  var data=await request('GET');if(data&&data.session)return sessionFrom(data);if(!data||!data.needs_plan)throw new Error('Daily Study session could not be loaded.');
-  var plan=await buildPlan(),created=await request('POST',{action:'create',plan:plan});if(!created||!created.session)throw new Error(created&&created.error||'Daily Study session could not be created.');return sessionFrom(created);
+  var data=await request('GET');
+  if(data&&data.session)return sessionFrom(data);
+  if(!data||!data.needs_plan)throw new Error('Daily Study session could not be loaded.');
+  var plan=await buildPlan(),created=await request('POST',{action:'create',plan:plan});
+  if(!created||!created.session)throw new Error(created&&created.error||'Daily Study session could not be created.');
+  return sessionFrom(created);
 }
 function currentItem(){if(!session||session.status==='completed')return null;var cursor=Number(session.cursor)||0,plan=arr(session.plan);return cursor>=0&&cursor<plan.length?clone(plan[cursor]):null;}
 function setHeader(){if(skillEl)skillEl.textContent=langKo()?'오늘의 학습':'DAILY STUDY';if(titleEl)titleEl.textContent=langKo()?'오늘의 Daily Study':'Daily Study';if(countEl)countEl.textContent=resolvedCount()+' / '+TARGET;}
@@ -117,8 +156,11 @@ function showError(error){
   var retry=document.getElementById('v2DailyRetry');if(retry)retry.addEventListener('click',open,{once:true});
 }
 function showCurrent(){
-  paint();setHeader();if(!session)return;if(session.status==='completed'||resolvedCount()>=TARGET){finish();return;}
-  var item=currentItem();if(!item){if(root)root.innerHTML='<div class="smart-finish"><h2>'+(langKo()?'오늘의 문제를 모두 사용했어요.':'Daily question pool exhausted.')+'</h2><p>'+(langKo()?'담당 선생님에게 알려 주세요.':'Please tell your teacher.')+'</p></div>';return;}
+  paint();setHeader();
+  if(!session)return;
+  if(session.status==='completed'||resolvedCount()>=TARGET){finish();return;}
+  var item=currentItem();
+  if(!item){if(root)root.innerHTML='<div class="smart-finish"><h2>'+(langKo()?'오늘의 문제를 모두 사용했어요.':'Daily question pool exhausted.')+'</h2><p>'+(langKo()?'담당 선생님에게 알려 주세요.':'Please tell your teacher.')+'</p></div>';return;}
   current=prepareActivity(item);answerLocked=false;
   if(!global.WillenaActivityEngine)throw new Error('Activity engine is not ready.');
   if(!engine)engine=new global.WillenaActivityEngine(root,{onAnswer:function(){}});
@@ -127,8 +169,19 @@ function showCurrent(){
 function replaceCheck(label,handler){var check=root&&root.querySelector('.activity-check');if(!check)return;var b=check.cloneNode(true);b.disabled=false;b.textContent=label;check.replaceWith(b);b.addEventListener('click',handler,{once:true});}
 async function submitAnswer(correct){var key=dailyKey(current),data=await request('POST',{action:'answer',daily_key:key,correct:!!correct});if(data&&data.stale){sessionFrom(data);showCurrent();return;}if(!data||data.success===false)throw new Error(data&&data.error||'Daily answer was not saved.');sessionFrom(data);}
 async function onAnswer(e){
-  if(!document.body.classList.contains('study-v2-daily-mode')||!current||answerLocked)return;var d=e.detail||{},a=d.activity||{},r=d.result||{};if(String(a.id)!==String(current.id))return;answerLocked=true;
-  try{await submitAnswer(!!r.correct);if(session&&session.status==='completed'){replaceCheck(langKo()?'완료':'Done',finish);return;}replaceCheck(langKo()?'계속':'Continue',showCurrent);}catch(error){console.warn('[Daily Study] answer save',error);answerLocked=false;var check=root&&root.querySelector('.activity-check');if(check){check.disabled=false;check.textContent=langKo()?'저장 다시 시도':'Retry save';}}
+  if(!document.body.classList.contains('study-v2-daily-mode')||!current||answerLocked)return;
+  var d=e.detail||{},a=d.activity||{},r=d.result||{};
+  if(String(a.id)!==String(current.id))return;
+  answerLocked=true;
+  try{
+    await submitAnswer(!!r.correct);
+    if(session&&session.status==='completed'){replaceCheck(langKo()?'완료':'Done',finish);return;}
+    replaceCheck(langKo()?'계속':'Continue',showCurrent);
+  }catch(error){
+    console.warn('[Daily Study] answer save',error);answerLocked=false;
+    var check=root&&root.querySelector('.activity-check');
+    if(check){check.disabled=false;check.textContent=langKo()?'저장 다시 시도':'Retry save';}
+  }
 }
 function finish(){if(session)session.status='completed';paint();openShell(langKo()?'잘했어요!':'Great work!');if(countEl)countEl.textContent=langKo()?'완료':'Done';if(titleEl)titleEl.textContent=langKo()?'오늘 목표 완료':'Daily goal complete';if(root)root.innerHTML='<div class="smart-finish"><div class="smart-confetti">✓</div><h2>'+(langKo()?'잘했어요!':'Great work!')+'</h2><p>'+(langKo()?'오늘의 20개 학습 목표를 모두 맞혔어요.':'You got all 20 Daily Study targets correct.')+'</p><button id="v2DailyHome" class="primary-button smart-home-button" type="button">'+(langKo()?'돌아가기':'Back to Study')+'</button></div>';var b=document.getElementById('v2DailyHome');if(b)b.addEventListener('click',close,{once:true});}
 function close(){document.body.classList.remove('study-v2-practice-mode','study-v2-daily-mode');if(panel)panel.hidden=true;if(root)root.innerHTML='';current=null;engine=null;paint();window.scrollTo({top:0,behavior:'auto'});}
