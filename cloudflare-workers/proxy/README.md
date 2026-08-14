@@ -17,6 +17,7 @@ When ready to go live:
 Verification checklist:
 - `Set-Cookie` headers include `Domain=.willenaenglish.com; Secure; SameSite=None` when responses set cookies.
 - Responses include `Access-Control-Allow-Credentials: true` and an appropriate `Access-Control-Allow-Origin`.
+- `/api/daily-study` routes through the `DAILY_STUDY_V2` service binding.
 
 Notes:
 - Only rewrite cookies if you control the backend; avoid rewriting cookies from untrusted upstreams.
