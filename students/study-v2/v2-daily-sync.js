@@ -1,15 +1,35 @@
 (function(global){
 'use strict';
 var PREFIX='willena-study-v2-daily:v1:';
-var ENDPOINT='/.netlify/functions/daily_study_state'; // Legacy gateway alias; Cloudflare-only service binding, never Netlify.
-var opening=false;
-function uid(){try{return String(localStorage.getItem('user_id')||sessionStorage.getItem('user_id')||localStorage.getItem('userId')||sessionStorage.getItem('userId')||'').trim();}catch(_){return'';}}
+var ENDPOINT='/.netlify/functions/daily_study_state'; // Legacy URL shape only. Cloudflare-only service binding; no Netlify runtime.
+var opening=false,serverUserId='';
+function browserUid(){try{return String(localStorage.getItem('user_id')||sessionStorage.getItem('user_id')||localStorage.getItem('userId')||sessionStorage.getItem('userId')||'').trim();}catch(_){return'';}}
+function activeUid(){return serverUserId||browserUid();}
 function dateKey(){var d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
-function key(){return PREFIX+uid()+':'+dateKey();}
-function local(){try{return JSON.parse(localStorage.getItem(key())||'null');}catch(_){return null;}}
-function writeLocal(s){try{if(s&&s.date===dateKey())localStorage.setItem(key(),JSON.stringify(s));}catch(_){}}
+function keyFor(id){return PREFIX+String(id||'').trim()+':'+dateKey();}
+function key(){return keyFor(activeUid());}
+function localFor(id){try{return JSON.parse(localStorage.getItem(keyFor(id))||'null');}catch(_){return null;}}
+function local(){return localFor(activeUid());}
+function writeLocal(s){try{if(s&&s.date===dateKey()&&activeUid())localStorage.setItem(key(),JSON.stringify(s));}catch(_){}}
 function repaint(){try{if(global.WillenaStudyV2Daily&&WillenaStudyV2Daily.paint)WillenaStudyV2Daily.paint();}catch(_){}}
+function adoptIdentity(id){
+  id=String(id||'').trim();if(!id)return;
+  var previous=browserUid();serverUserId=id;
+  try{
+    localStorage.setItem('user_id',id);
+    sessionStorage.setItem('user_id',id);
+    if(previous&&previous!==id){
+      localStorage.removeItem(keyFor(previous));
+    }
+  }catch(_){}
+}
+async function waitForAuth(){
+  try{
+    if(global.WillenaStudyV2AuthReady)await global.WillenaStudyV2AuthReady;
+  }catch(_){}
+}
 async function request(method,state,keepalive){
+  await waitForAuth();
   var path=ENDPOINT+'?date='+encodeURIComponent(dateKey())+'&_='+Date.now();
   var opts={method:method,credentials:'include',cache:'no-store',headers:{Accept:'application/json'}};
   if(method==='POST'){
@@ -19,6 +39,7 @@ async function request(method,state,keepalive){
   }
   var r=await (global.WillenaAPI?WillenaAPI.fetch:fetch)(path,opts),d=await r.json().catch(function(){return{};});
   if(!r.ok||d.success===false)throw new Error((d&&d.error)||('Daily Study sync '+r.status));
+  if(d&&d.user_id)adoptIdentity(d.user_id);
   return d;
 }
 async function pull(){
@@ -42,6 +63,10 @@ async function push(s,keepalive){
     return null;
   }catch(e){console.warn('[StudyV2 Daily Sync] push failed',e);return null;}
 }
+async function initialSync(){
+  await waitForAuth();
+  await pull();
+}
 function bind(){
   document.addEventListener('click',async function(e){
     var card=e.target&&e.target.closest&&e.target.closest('#dailyWorkoutCard');
@@ -59,7 +84,9 @@ function bind(){
   window.addEventListener('focus',function(){pull();});
   document.addEventListener('visibilitychange',function(){if(!document.hidden)pull();});
   window.addEventListener('pagehide',function(){push(null,true);});
-  setTimeout(pull,250);
+  setTimeout(initialSync,50);
+  setTimeout(function(){pull();},1200);
+  setTimeout(function(){pull();},3500);
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind,{once:true});else bind();
 global.WillenaStudyV2DailySync={pull:pull,push:push};
