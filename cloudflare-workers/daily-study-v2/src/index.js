@@ -1,5 +1,4 @@
 const OP_URL='https://fiieuiktlsivwfgyivai.supabase.co';
-const OP_ANON_KEY='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
 
 const ALLOWED_ORIGINS=new Set([
   'https://staging.willenaenglish.com',
@@ -20,16 +19,6 @@ function cors(origin){
   };
 }
 function json(origin,status,body){return new Response(JSON.stringify(body),{status,headers:{...cors(origin),'Content-Type':'application/json; charset=utf-8'}});}
-function cookies(header){const out={};String(header||'').split(/;\s*/).forEach(part=>{const i=part.indexOf('=');if(i>0)out[part.slice(0,i).trim()]=decodeURIComponent(part.slice(i+1));});return out;}
-async function userFromRequest(request){
-  const auth=request.headers.get('Authorization')||'';
-  const token=auth.startsWith('Bearer ')?auth.slice(7):cookies(request.headers.get('Cookie')).sb_access;
-  if(!token)return null;
-  const r=await fetch(`${OP_URL}/auth/v1/user`,{headers:{apikey:OP_ANON_KEY,Authorization:`Bearer ${token}`}});
-  if(!r.ok)return null;
-  const user=await r.json().catch(()=>null);
-  return user&&user.id?user:null;
-}
 async function rpc(env,name,args){
   if(!env.SUPABASE_SERVICE_KEY)throw new Error('Daily Study worker missing Supabase service key');
   const r=await fetch(`${OP_URL}/rest/v1/rpc/${name}`,{
@@ -48,13 +37,19 @@ export default {
   async fetch(request,env){
     const origin=request.headers.get('Origin')||'';
     if(request.method==='OPTIONS')return new Response(null,{status:204,headers:cors(origin)});
-    const user=await userFromRequest(request);
-    if(!user)return json(origin,401,{success:false,error:'Not signed in'});
+
+    // This Worker is internal-only. The API gateway authenticates the shared
+    // Willena session through SUPABASE_AUTH, then supplies this trusted header.
+    const userId=String(request.headers.get('X-Willena-Authenticated-User')||'').trim();
+    if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(userId)){
+      return json(origin,401,{success:false,error:'Not signed in'});
+    }
+
     const url=new URL(request.url),date=url.searchParams.get('date');
     if(!validDate(date))return json(origin,400,{success:false,error:'Invalid study date'});
     try{
       if(request.method==='GET'){
-        const data=await rpc(env,'get_daily_study_v2',{p_student_id:user.id,p_study_date:date});
+        const data=await rpc(env,'get_daily_study_v2',{p_student_id:userId,p_study_date:date});
         return json(origin,200,data);
       }
       if(request.method==='POST'){
@@ -62,13 +57,13 @@ export default {
         if(!body||typeof body!=='object')return json(origin,400,{success:false,error:'Invalid JSON'});
         if(body.action==='create'){
           if(!Array.isArray(body.plan))return json(origin,400,{success:false,error:'Plan must be an array'});
-          const data=await rpc(env,'create_daily_study_v2',{p_student_id:user.id,p_study_date:date,p_plan:body.plan});
+          const data=await rpc(env,'create_daily_study_v2',{p_student_id:userId,p_study_date:date,p_plan:body.plan});
           return json(origin,200,data);
         }
         if(body.action==='answer'){
           const key=String(body.daily_key||'').trim();
           if(!key)return json(origin,400,{success:false,error:'Missing daily key'});
-          const data=await rpc(env,'answer_daily_study_v2',{p_student_id:user.id,p_study_date:date,p_daily_key:key,p_correct:!!body.correct});
+          const data=await rpc(env,'answer_daily_study_v2',{p_student_id:userId,p_study_date:date,p_daily_key:key,p_correct:!!body.correct});
           return json(origin,200,data);
         }
         return json(origin,400,{success:false,error:'Unknown action'});
