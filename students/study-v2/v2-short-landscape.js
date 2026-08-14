@@ -7,10 +7,24 @@ function compactHeader(){
   if(!header||!header.shadowRoot)return;
   var old=header.shadowRoot.getElementById(headerStyleId);
   if(!mq.matches){if(old)old.remove();return;}
-  if(old)return;
+  if(old)old.remove();
   var s=document.createElement('style');
   s.id=headerStyleId;
-  s.textContent='header{padding:4px 10px!important;min-height:44px!important} .top{min-height:36px!important;gap:8px!important;justify-content:space-between!important} .info{flex-direction:row!important;gap:5px!important;align-items:center!important} .points-pill,.stars-pill{padding:2px 6px!important;font-size:10px!important;gap:4px!important} .points-pill svg,.stars-pill svg{width:11px!important;height:11px!important} .page-title,.title{font-size:15px!important;line-height:1!important} .avatar{width:32px!important;height:32px!important;font-size:17px!important;border-width:1.5px!important} .btn{padding:5px 8px!important;font-size:11px!important;border-radius:8px!important} .mut{display:none!important}';
+  s.textContent=[
+    'header{padding:3px 10px!important;min-height:42px!important;height:42px!important;display:flex!important;align-items:center!important}',
+    '.top{width:100%!important;height:36px!important;min-height:36px!important;display:grid!important;grid-template-columns:auto minmax(80px,1fr) auto!important;align-items:center!important;gap:10px!important;justify-content:initial!important}',
+    '.info{grid-column:1!important;display:flex!important;flex-direction:row!important;gap:5px!important;align-items:center!important;justify-content:flex-start!important;min-width:0!important}',
+    '.page-title{grid-column:2!important;grid-row:1!important;justify-self:center!important;align-self:center!important;margin:0!important;font-size:14px!important;line-height:1!important;white-space:nowrap!important}',
+    '.menu-anchor{grid-column:3!important;grid-row:1!important;justify-self:end!important;align-self:center!important;display:flex!important;align-items:center!important}',
+    '.spacer{display:none!important}',
+    '.points-pill,.stars-pill{padding:2px 6px!important;font-size:10px!important;gap:4px!important;line-height:1!important;min-height:22px!important}',
+    '.points-pill svg,.stars-pill svg{width:11px!important;height:11px!important}',
+    '.title{font-size:14px!important;line-height:1!important;margin:0!important}',
+    '.avatar{width:30px!important;height:30px!important;font-size:16px!important;border-width:1.5px!important}',
+    '.btn{padding:4px 7px!important;font-size:10px!important;border-radius:8px!important;min-height:28px!important}',
+    '.mut{display:none!important}',
+    '.dropdown{top:calc(100% + 4px)!important}'
+  ].join(' ');
   header.shadowRoot.appendChild(s);
 }
 function deviceLang(){var l=String((navigator.languages&&navigator.languages[0])||navigator.language||'en').toLowerCase();return l.indexOf('ko')===0?'ko':'en';}
@@ -20,10 +34,7 @@ function applyDeviceLanguage(){
   btn.dataset.deviceDefaultApplied='1';
   var target=deviceLang();
   document.documentElement.dataset.studyDeviceLang=target;
-  /* V2 starts in Korean and labels the toggle "English". Ask the existing controller to switch once on non-Korean devices. */
-  if(target==='en'&&/^english$/i.test(String(btn.textContent||'').trim())){
-    setTimeout(function(){btn.click();},0);
-  }
+  if(target==='en'&&/^english$/i.test(String(btn.textContent||'').trim()))setTimeout(function(){btn.click();},0);
 }
 function ready(){compactHeader();applyDeviceLanguage();}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',ready);else ready();
