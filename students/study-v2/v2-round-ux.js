@@ -16,16 +16,14 @@ function exitFullscreen(){
 }
 function roundStarter(target){
   if(!target||!target.closest)return null;
-  var el=target.closest('#dailyWorkoutCard,#masteryGrid [data-skill],#continueBtn,#practiceHeroBtn,.practice-this,.study-coach button,.study-coach [data-skill]');
+  /* Daily Study is intentionally excluded. Its start is asynchronous because the
+     server-owned daily session must load/create before the first question opens.
+     Fullscreening here would fullscreen the dashboard before Daily is ready. */
+  var el=target.closest('#masteryGrid [data-skill],#continueBtn,#practiceHeroBtn,.practice-this,.study-coach button,.study-coach [data-skill]');
   if(!el||el.disabled||el.classList.contains('is-disabled'))return null;
   return el;
 }
 
-/* Important: use CLICK, not pointerdown. pointerdown was entering fullscreen before
-   the selected Study mode had a chance to open, which could strand the dashboard/menu
-   in fullscreen and swallow/derail the intended round start. At document bubble time,
-   the button/card's own click handler has already run, while user activation is still
-   available for the fullscreen request. */
 document.addEventListener('click',function(e){
   var back=e.target&&e.target.closest&&e.target.closest('#v2PracticeClose,#v2DailyHome');
   if(back){exitFullscreen();return;}
