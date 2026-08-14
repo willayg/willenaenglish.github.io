@@ -1,7 +1,7 @@
 (function(global){
 'use strict';
 var PREFIX='willena-study-v2-daily:v1:';
-var ENDPOINT='https://api.willenaenglish.com/api/daily-study-state';
+var ENDPOINT='/.netlify/functions/daily_study_state'; // Legacy gateway alias; Cloudflare-only service binding, never Netlify.
 var opening=false;
 function uid(){try{return String(localStorage.getItem('user_id')||sessionStorage.getItem('user_id')||localStorage.getItem('userId')||sessionStorage.getItem('userId')||'').trim();}catch(_){return'';}}
 function dateKey(){var d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
@@ -10,14 +10,14 @@ function local(){try{return JSON.parse(localStorage.getItem(key())||'null');}cat
 function writeLocal(s){try{if(s&&s.date===dateKey())localStorage.setItem(key(),JSON.stringify(s));}catch(_){}}
 function repaint(){try{if(global.WillenaStudyV2Daily&&WillenaStudyV2Daily.paint)WillenaStudyV2Daily.paint();}catch(_){}}
 async function request(method,state,keepalive){
-  var url=ENDPOINT+'?date='+encodeURIComponent(dateKey())+'&_='+Date.now();
+  var path=ENDPOINT+'?date='+encodeURIComponent(dateKey())+'&_='+Date.now();
   var opts={method:method,credentials:'include',cache:'no-store',headers:{Accept:'application/json'}};
   if(method==='POST'){
     opts.headers['Content-Type']='application/json';
     opts.body=JSON.stringify({session:state});
     if(keepalive)opts.keepalive=true;
   }
-  var r=await fetch(url,opts),d=await r.json().catch(function(){return{};});
+  var r=await (global.WillenaAPI?WillenaAPI.fetch:fetch)(path,opts),d=await r.json().catch(function(){return{};});
   if(!r.ok||d.success===false)throw new Error((d&&d.error)||('Daily Study sync '+r.status));
   return d;
 }
