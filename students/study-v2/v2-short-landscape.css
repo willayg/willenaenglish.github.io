@@ -23,11 +23,12 @@
   .study-v2-unit{padding:5px 9px!important;border-radius:10px!important;border-width:1.5px!important;font-size:.68rem!important}
   #headerSkillMastery{grid-area:mastery;margin:0!important}
   #headerSkillMastery .header-skill-mastery-head{display:none!important}
-  #masteryGrid{display:grid!important;grid-template-columns:repeat(6,minmax(0,1fr))!important;gap:6px!important;margin:0!important}
-  #masteryGrid .header-skill-master{min-height:52px!important;padding:7px 9px!important;border-radius:12px!important}
-  #masteryGrid .header-skill-master-top{gap:4px!important}
-  #masteryGrid .header-skill-master-top strong,#masteryGrid .header-skill-master-pct{font-size:.68rem!important;line-height:1.1!important}
-  #masteryGrid .header-skill-master-track{height:5px!important;margin-top:6px!important}
+  #masteryGrid{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:8px!important;margin:1px 0 0!important}
+  #masteryGrid .header-skill-master{min-height:70px!important;padding:10px 13px!important;border-radius:14px!important}
+  #masteryGrid .header-skill-master-top{gap:7px!important;align-items:center!important}
+  #masteryGrid .header-skill-master-top strong{font-size:.82rem!important;line-height:1.15!important;color:var(--pink-dark)!important;font-weight:800!important}
+  #masteryGrid .header-skill-master-pct{font-size:.76rem!important;line-height:1.1!important;font-weight:800!important}
+  #masteryGrid .header-skill-master-track{height:7px!important;margin-top:9px!important;border-radius:999px!important}
   .hero-actions{grid-area:actions;display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px!important;margin:0!important}
   .hero-actions button{min-height:36px!important;padding:0 10px!important;border-width:2px!important;border-radius:11px!important;font-size:.72rem!important}
   .study-v2-ai{margin-top:10px!important}
