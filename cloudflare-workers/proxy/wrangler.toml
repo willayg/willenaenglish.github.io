@@ -3,15 +3,8 @@ main = "src/index.js"
 compatibility_date = "2025-12-08"
 workers_dev = true
 
-# Intercept only the two level-test services on the existing proxied API host.
-# Other legacy paths keep their current origin behavior.
-[[routes]]
-pattern = "api.willenaenglish.com/.netlify/functions/admin_classes*"
-zone_name = "willenaenglish.com"
-
-[[routes]]
-pattern = "api.willenaenglish.com/.netlify/functions/student_level_test*"
-zone_name = "willenaenglish.com"
+# api.willenaenglish.com is already routed to this Worker in Cloudflare.
+# Do not declare routes here: the deployment token updates Worker code/bindings only.
 
 [[services]]
 binding = "SUPABASE_AUTH"
