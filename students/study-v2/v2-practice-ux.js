@@ -4,12 +4,14 @@ var root=document.getElementById('v2ActivityRoot');
 var panel=document.getElementById('v2PracticePanel');
 var countEl=document.getElementById('practicePerf');
 var titleEl=document.getElementById('v2PracticeTitle');
+var skillEl=document.getElementById('v2PracticeSkill');
 var position=0;
 var target=10;
 
 function currentLanguage(){var b=document.getElementById('languageBtn');return b&&String(b.textContent||'').trim()==='English'?'ko':'en';}
 function isDaily(){return document.body.classList.contains('study-v2-daily-mode');}
-function setFocusHeader(){if(isDaily())return;if(titleEl)titleEl.textContent=currentLanguage()==='ko'?'약한 부분 집중 연습':'Focused practice';if(countEl)countEl.textContent=(position+1)+' / '+target;}
+function skillName(){var s=String(skillEl&&skillEl.textContent||'').trim();if(!s||s==='연습'||/^practice$/i.test(s))return currentLanguage()==='ko'?'영역':'Skill';return s;}
+function setFocusHeader(){if(isDaily())return;var s=skillName();if(titleEl)titleEl.textContent=currentLanguage()==='ko'?s+' 연습':s+' Practice';if(countEl)countEl.textContent=(position+1)+' / '+target;}
 function addSourceBadge(){if(isDaily()||!root)return;var card=root.querySelector('.activity-card');if(!card||card.querySelector('.activity-source-badge'))return;var badge=document.createElement('div');badge.className='activity-source-badge';badge.textContent='Source · Focused unit practice';card.insertBefore(badge,card.firstChild);}
 function decorate(){if(isDaily())return;setFocusHeader();addSourceBadge();if(panel)panel.scrollTop=0;}
 
