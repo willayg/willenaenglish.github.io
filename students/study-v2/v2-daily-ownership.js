@@ -1,34 +1,41 @@
 (function(global){
 'use strict';
-var scheduled=false;
+var painting=false;
 function repaint(){
-  scheduled=false;
+  if(painting)return;
   if(global.WillenaStudyV2Daily&&typeof global.WillenaStudyV2Daily.paint==='function'){
-    global.WillenaStudyV2Daily.paint();
+    painting=true;
+    try{
+      document.body.classList.add('study-v2-daily-painting');
+      global.WillenaStudyV2Daily.paint();
+    }finally{
+      document.body.classList.remove('study-v2-daily-painting');
+      painting=false;
+    }
   }
-}
-function schedule(){
-  if(scheduled)return;
-  scheduled=true;
-  requestAnimationFrame(function(){requestAnimationFrame(repaint);});
 }
 function bind(){
   var daily=document.getElementById('dailyWorkoutCard');
   var book=document.getElementById('bookTitle');
   var unit=document.getElementById('unitTitle');
   var lang=document.getElementById('languageBtn');
+
+  // Daily Study owns this card. Repaint in the mutation microtask instead of
+  // waiting two animation frames; otherwise v2.js can visibly flash its old
+  // unit-mastery-derived "Daily" percentage before the real Daily state wins.
   [book,unit].forEach(function(node){
-    if(node)new MutationObserver(schedule).observe(node,{childList:true,subtree:true,characterData:true});
+    if(node)new MutationObserver(repaint).observe(node,{childList:true,subtree:true,characterData:true});
   });
   if(daily)new MutationObserver(function(){
-    if(document.body.classList.contains('study-v2-daily-painting'))return;
-    schedule();
+    if(painting||document.body.classList.contains('study-v2-daily-painting'))return;
+    repaint();
   }).observe(daily,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:['style']});
-  if(lang)lang.addEventListener('click',function(){setTimeout(schedule,0);},true);
+  if(lang)lang.addEventListener('click',function(){queueMicrotask(repaint);},true);
   document.addEventListener('click',function(e){
-    if(e.target&&e.target.closest&&e.target.closest('[data-book-index], [data-unit-id]'))setTimeout(schedule,0);
+    if(e.target&&e.target.closest&&e.target.closest('[data-book-index], [data-unit-id]'))queueMicrotask(repaint);
   },true);
-  schedule();
+
+  repaint();
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind,{once:true});else bind();
 })(window);
