@@ -13,6 +13,17 @@ html,body,.study-app{background:#f2f3f5!important;}
 }
 .study-v2-book-tabs{margin-bottom:26px!important;}
 
+/* AI Coach now sits before book practice and reads as its own pink section. */
+.study-v2-ai{
+  margin:0 0 30px!important;
+  padding:22px 20px 20px!important;
+  border:2px solid #ff6fb0!important;
+  border-radius:26px!important;
+  background:#fff!important;
+  box-shadow:0 10px 28px rgba(38,74,79,.06)!important;
+}
+.study-v2-ai .study-coach-head{margin-bottom:16px!important;}
+
 /* Floating title card: a little taller, with a very faint charcoal edge. */
 .study-v2-book-title-wrap{
   width:min(94%,660px)!important;
@@ -81,6 +92,11 @@ html,body,.study-app{background:#f2f3f5!important;}
 
 /* Phone layout: prioritize readability over squeezing every label in. */
 @media(max-width:560px){
+  .study-v2-ai{
+    margin:0 0 24px!important;
+    padding:16px 12px 15px!important;
+    border-radius:20px!important;
+  }
   .study-v2-book-panel{
     padding:18px 10px 22px!important;
     border-width:2px!important;
@@ -180,6 +196,7 @@ html,body,.study-app{background:#f2f3f5!important;}
 
 /* Extra-small phones still keep text legible; horizontal controls can scroll instead. */
 @media(max-width:390px){
+  .study-v2-ai{padding:15px 10px 14px!important;}
   .study-v2-book-panel{padding:16px 8px 20px!important;}
   .study-v2-book-tabs{gap:15px!important;margin-bottom:17px!important;}
   .study-v2-book-tab{font-size:.71rem!important;}
