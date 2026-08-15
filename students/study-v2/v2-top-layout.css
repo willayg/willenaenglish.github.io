@@ -3,40 +3,45 @@
 .book-hero.daily-inline{background:transparent!important;border:0!important;box-shadow:none!important;padding:4px 0 10px!important;overflow:visible!important}
 .book-hero.daily-inline .hero-copy{display:block}
 
-/* Four independent actions: always one full-width card per row. */
+/* Four independent actions: spacious border-first hierarchy. */
 .study-v2-top-actions{display:flex!important;flex-direction:column!important;align-items:stretch!important;gap:18px;margin:0 0 46px;padding:0;border:0;background:transparent;box-shadow:none;width:100%}
-.study-v2-top-actions>.study-v2-action-card{display:flex!important;flex:0 0 auto!important;width:100%!important;max-width:none!important;box-sizing:border-box!important;align-items:center!important;justify-content:flex-start!important;gap:18px!important;text-align:left!important;padding:20px 20px!important;min-height:108px;border-radius:22px!important;background:#fff!important;color:#35565b!important;box-shadow:0 7px 20px rgba(38,74,79,.06)!important;font-family:inherit;cursor:pointer;transition:transform .16s ease,box-shadow .16s ease,background .16s ease,border-color .16s ease}
-.study-v2-action-card:hover,.study-v2-action-card:focus-visible{transform:translateY(-2px);outline:none;box-shadow:0 11px 26px rgba(38,74,79,.11)!important}
-.study-v2-action-card>strong{display:block;font-size:1.1rem;line-height:1.18;font-weight:800;color:#35565b!important}
-.study-v2-action-card>small{display:block;margin-top:6px;font-size:.78rem;line-height:1.3;font-weight:700;color:#7c8c91!important}
+.study-v2-top-actions>.study-v2-action-card{display:flex!important;flex:0 0 auto!important;width:100%!important;max-width:none!important;box-sizing:border-box!important;align-items:center!important;justify-content:flex-start!important;gap:18px!important;text-align:left!important;padding:20px 22px!important;min-height:112px;border-radius:24px!important;background:#fff!important;color:#35565b!important;box-shadow:0 8px 22px rgba(38,74,79,.06)!important;font-family:inherit;cursor:pointer;transition:transform .16s ease,box-shadow .16s ease,background .16s ease,border-color .16s ease}
+.study-v2-action-card:hover,.study-v2-action-card:focus-visible{transform:translateY(-2px);outline:none;box-shadow:0 11px 27px rgba(38,74,79,.10)!important}
+.study-v2-action-card>strong{display:block;font-size:1.16rem;line-height:1.18;font-weight:800;color:#35565b!important}
+.study-v2-action-card>small{display:block;margin-top:6px;font-size:.79rem;line-height:1.3;font-weight:700;color:#7c8c91!important}
+.study-v2-action-card:before{content:"";display:block;width:60px;height:60px;flex:0 0 60px;border-radius:20px;background-color:#f5f8f9;background-repeat:no-repeat;background-position:center;background-size:34px 34px}
 
-/* Arcade-colored action icons, injected visually so existing button behavior stays untouched. */
-.study-v2-action-card:before{content:"";display:block;width:62px;height:62px;flex:0 0 62px;border-radius:18px;background-color:#f5f8f9;background-repeat:no-repeat;background-position:center;background-size:34px 34px}
 #practiceHeroBtn{border:2px solid var(--arcade-cyan)!important}
 #practiceHeroBtn:before{background-color:#eefafb;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2321b3be' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='4' y='6' width='16' height='12' rx='4'/%3E%3Cpath d='M12 3v3M8 12h.01M16 12h.01M9 15h6'/%3E%3C/svg%3E")}
-#bookPracticeBtn{border:2px solid var(--arcade-orange)!important}
-#bookPracticeBtn:before{background-color:#fff8ee;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23d9923b' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 5.5A2.5 2.5 0 0 1 6.5 3H11v16H6.5A2.5 2.5 0 0 0 4 21.5z'/%3E%3Cpath d='M20 5.5A2.5 2.5 0 0 0 17.5 3H13v16h4.5A2.5 2.5 0 0 1 20 21.5z'/%3E%3C/svg%3E")}
-#bookStudyBtn{border:2px solid var(--arcade-blue)!important;opacity:.64}
-#bookStudyBtn:before{background-color:#f3f5ff;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235b7fe5' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 19h14'/%3E%3Cpath d='M7 16l3-3 2 2 5-6'/%3E%3Cpath d='M15 9h2v2'/%3E%3C/svg%3E")}
-.study-v2-action-card.is-coming-soon{cursor:default}
-.study-v2-action-card.is-coming-soon:hover{transform:none;box-shadow:0 7px 20px rgba(38,74,79,.06)!important}
 
-/* Daily Study owns the hierarchy: solid Arcade pink with a dot-progress chart. */
-#dailyWorkoutCard.study-v2-daily-primary{position:relative;display:flex!important;align-items:center!important;gap:18px!important;width:100%!important;min-height:116px;padding:20px 20px!important;border:2px solid var(--arcade-pink)!important;border-radius:22px!important;background:var(--arcade-pink)!important;color:#fff!important;box-shadow:0 10px 24px rgba(255,111,176,.20)!important}
-#dailyWorkoutCard.study-v2-daily-primary:hover,#dailyWorkoutCard.study-v2-daily-primary:focus-visible{background:var(--arcade-pink)!important;border-color:var(--arcade-pink)!important;box-shadow:0 13px 30px rgba(255,111,176,.27)!important}
-#dailyWorkoutCard.study-v2-daily-primary:before{content:"";display:block;width:62px;height:62px;flex:0 0 62px;border-radius:18px;background-color:rgba(255,255,255,.16);background-repeat:no-repeat;background-position:center;background-size:34px 34px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='8'/%3E%3Cpath d='M12 8v4l3 2'/%3E%3C/svg%3E")}
-#dailyWorkoutCard.study-v2-daily-primary>div:not(.progress-ring){min-width:0}
-#dailyWorkoutCard.study-v2-daily-primary strong{font-size:1.1rem;line-height:1.18;color:#fff!important}
-#dailyWorkoutCard.study-v2-daily-primary small{margin-top:6px;font-size:.78rem;font-weight:700;color:#fff!important;opacity:.9}
-/* Reuse the existing live --progress value, but render it as a 5x3 dot field instead of a ring. */
-#dailyWorkoutCard.study-v2-daily-primary .progress-ring{order:3;position:relative!important;margin-left:auto!important;width:72px!important;height:42px!important;flex:0 0 72px!important;border-radius:0!important;background:radial-gradient(circle at 4.5px 4.5px,rgba(255,255,255,.34) 0 4px,transparent 4.5px) 0 0/14px 14px!important;overflow:hidden!important;box-shadow:none!important}
-#dailyWorkoutCard.study-v2-daily-primary .progress-ring:after{content:""!important;position:absolute!important;left:0!important;top:0!important;bottom:0!important;right:auto!important;width:calc(var(--progress,0)*1%)!important;height:100%!important;border-radius:0!important;background:radial-gradient(circle at 4.5px 4.5px,#fff 0 4px,transparent 4.5px) 0 0/14px 14px!important;transition:width .25s ease!important}
+/* 교재 연습 uses the rising-practice SVG. */
+#bookPracticeBtn{border:2px solid var(--arcade-orange)!important}
+#bookPracticeBtn:before{background-color:#fff8ee;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23d9923b' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 19h16'/%3E%3Cpath d='M6 16l3-3 2 2 5-6 2 2'/%3E%3Cpath d='M16 7h3v3'/%3E%3C/svg%3E")}
+
+/* 교재 공부 uses the open-book SVG. */
+#bookStudyBtn{border:2px solid var(--arcade-blue)!important;opacity:.72}
+#bookStudyBtn:before{background-color:#f3f5ff;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235b7fe5' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 5.5A2.5 2.5 0 0 1 6.5 3H11v16H6.5A2.5 2.5 0 0 0 4 21.5z'/%3E%3Cpath d='M20 5.5A2.5 2.5 0 0 0 17.5 3H13v16h4.5A2.5 2.5 0 0 1 20 21.5z'/%3E%3C/svg%3E")}
+.study-v2-action-card.is-coming-soon{cursor:default}
+.study-v2-action-card.is-coming-soon:hover{transform:none;box-shadow:0 8px 22px rgba(38,74,79,.06)!important}
+
+/* Daily Study: white card, pink border, simple streak text, circular progress. */
+#dailyWorkoutCard.study-v2-daily-primary{position:relative;display:flex!important;align-items:center!important;gap:18px!important;width:100%!important;min-height:130px;padding:20px 22px!important;border:2px solid var(--arcade-pink)!important;border-radius:24px!important;background:#fff!important;color:#35565b!important;box-shadow:0 9px 24px rgba(38,74,79,.06)!important}
+#dailyWorkoutCard.study-v2-daily-primary:hover,#dailyWorkoutCard.study-v2-daily-primary:focus-visible{background:#fff!important;border-color:var(--arcade-pink)!important;box-shadow:0 12px 29px rgba(255,111,176,.14)!important}
+#dailyWorkoutCard.study-v2-daily-primary:before{content:"";display:block;width:60px;height:60px;flex:0 0 60px;border-radius:20px;background-color:#fff2f8;background-repeat:no-repeat;background-position:center;background-size:34px 34px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ff6fb0' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M7 3h10'/%3E%3Cpath d='M9 3v3M15 3v3'/%3E%3Ccircle cx='12' cy='13' r='7'/%3E%3Cpath d='M12 10v3l2 1.5'/%3E%3C/svg%3E")}
+#dailyWorkoutCard.study-v2-daily-primary>div:not(.progress-ring){min-width:0;flex:1}
+#dailyWorkoutCard.study-v2-daily-primary strong{font-size:1.16rem;line-height:1.18;color:var(--arcade-pink)!important}
+#dailyWorkoutCard.study-v2-daily-primary #smartProgressCopy{display:none!important}
+#dailyWorkoutCard .daily-streak-status{display:block!important;margin-top:8px!important;font-size:.77rem!important;line-height:1.25!important;font-weight:800!important;color:#7c8c91!important;opacity:1!important}
+
+/* Existing live --progress drives the ring. The center remains empty until completion. */
+#dailyWorkoutCard.study-v2-daily-primary .progress-ring{order:3;position:relative!important;margin-left:auto!important;width:76px!important;height:76px!important;flex:0 0 76px!important;border-radius:50%!important;background:conic-gradient(var(--arcade-pink) 0 calc(var(--progress,0)*1%),#f6d7e5 calc(var(--progress,0)*1%) 100%)!important;overflow:visible!important;box-shadow:none!important}
+#dailyWorkoutCard.study-v2-daily-primary .progress-ring:after{content:""!important;position:absolute!important;inset:10px!important;width:auto!important;height:auto!important;border-radius:50%!important;background:#fff!important;transition:none!important}
 #dailyWorkoutCard.study-v2-daily-primary .progress-ring span{position:absolute!important;clip:rect(0 0 0 0)!important;clip-path:inset(50%)!important;width:1px!important;height:1px!important;overflow:hidden!important;white-space:nowrap!important}
+#dailyWorkoutCard.study-v2-daily-primary .progress-ring:before{content:"";position:absolute;z-index:2;left:50%;top:50%;width:24px;height:13px;border-left:3px solid var(--arcade-pink);border-bottom:3px solid var(--arcade-pink);transform:translate(-50%,-62%) rotate(-45deg);opacity:0;transition:opacity .18s ease}
+#dailyWorkoutCard.study-v2-daily-primary.is-complete .progress-ring:before{opacity:1}
 
 /* Book switcher, title, units and mastery all belong to one book-level container. */
-.study-v2-book-panel{padding:28px;border:1px solid #e1e7e9;border-radius:28px;background:#fff;box-shadow:0 10px 30px rgba(38,74,79,.055);scroll-margin-top:18px}
-
-/* Book choices behave as tabs, not cards inside another card. */
+.study-v2-book-panel{padding:24px;border:1px solid #e1e7e9;border-radius:30px;background:#fff;box-shadow:0 8px 25px rgba(38,74,79,.05);scroll-margin-top:18px}
 .study-v2-book-tabs{display:flex!important;align-items:flex-end;gap:24px!important;margin:0 0 34px!important;padding:0 0 1px!important;border:0!important;border-bottom:1px solid #dde5e8!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;overflow-x:auto}
 .study-v2-book-tab{position:relative;flex:0 0 auto;border:0!important;border-radius:0!important;background:transparent!important;color:var(--muted)!important;padding:0 2px 15px!important;font-size:.76rem!important;box-shadow:none!important}
 .study-v2-book-tab:after{content:"";position:absolute;left:2px;right:2px;bottom:-1px;height:3px;border-radius:999px;background:transparent;transition:background .16s ease}
@@ -44,7 +49,6 @@
 .study-v2-book-tab:hover:after,.study-v2-book-tab:focus-visible:after{background:rgba(33,179,190,.35)}
 .study-v2-book-tab.is-active{border:0!important;background:transparent!important;color:var(--arcade-pink)!important}
 .study-v2-book-tab.is-active:after{background:var(--arcade-cyan)}
-
 .study-v2-book-title-wrap{margin-bottom:36px!important;padding-top:0!important}
 .study-v2-book-title-wrap #unitTitle{margin-top:22px!important;color:var(--arcade-cyan)!important}
 .study-v2-book-pips{position:relative;margin-top:24px!important;padding-bottom:16px}
@@ -53,7 +57,7 @@
 .study-v2-units{margin-top:0!important}
 .study-v2-units-head{margin-bottom:16px!important}
 .study-v2-unit-strip{gap:10px!important;padding:2px 1px 6px}
-.study-v2-unit{border:2px solid var(--arcade-cyan)!important;background:#fff!important;padding:10px 14px!important}
+.study-v2-unit{border:2px solid var(--arcade-cyan)!important;background:#fff!important;padding:11px 15px!important;border-radius:15px!important}
 .study-v2-unit:hover,.study-v2-unit:focus-visible{border-color:var(--arcade-cyan)!important;background:#eefafb!important;outline:none}
 .study-v2-unit.is-current{border-color:var(--arcade-cyan)!important;background:#fff8fb!important;color:var(--arcade-pink)!important}
 
@@ -61,13 +65,13 @@
 .header-skill-mastery{margin-top:40px!important;padding-top:30px!important;border-top:1px solid #dde5e8!important}
 .header-skill-mastery-head{margin-bottom:16px!important}
 .header-skill-mastery-grid{gap:12px!important}
-.header-skill-master{padding:12px 13px!important;min-height:72px;background:#fff!important;border-radius:16px!important}
+.header-skill-master{padding:14px 14px!important;min-height:76px;background:#fff!important;border-radius:18px!important}
 .header-skill-master:nth-child(4n+1){border:2px solid var(--arcade-pink)!important}
 .header-skill-master:nth-child(4n+2){border:2px solid var(--arcade-cyan)!important}
 .header-skill-master:nth-child(4n+3){border:2px solid var(--arcade-orange)!important}
 .header-skill-master:nth-child(4n){border:2px solid var(--arcade-blue)!important}
-.header-skill-master-top strong{font-size:.9rem!important;line-height:1.2!important;color:#35565b!important}
-.header-skill-master-top span{font-size:.86rem!important;color:#35565b!important}
+.header-skill-master-top strong{font-size:.94rem!important;line-height:1.2!important;color:#35565b!important}
+.header-skill-master-top span{font-size:.88rem!important;color:#35565b!important}
 .header-skill-master-track{height:8px!important;background:#e8f1f2!important}
 .header-skill-master:nth-child(4n+1) .header-skill-master-fill{background:var(--arcade-pink)!important}
 .header-skill-master:nth-child(4n+2) .header-skill-master-fill{background:var(--arcade-cyan)!important}
@@ -75,7 +79,6 @@
 .header-skill-master:nth-child(4n) .header-skill-master-fill{background:var(--arcade-blue)!important}
 .hero-actions{display:none!important}
 
-/* AI recommendations stay quieter so the four top actions remain the main hierarchy. */
 .study-v2-ai{margin-top:44px!important;margin-bottom:34px!important}
 .study-v2-ai .study-coach-head{margin-bottom:18px!important}
 .study-v2-ai .study-coach-grid{gap:14px!important}
@@ -84,15 +87,17 @@
 
 @media(max-width:560px){
   .book-hero.daily-inline{padding-top:2px!important}
-  .study-v2-top-actions{gap:15px;margin-bottom:38px;width:100%!important}
-  .study-v2-top-actions>.study-v2-action-card{width:100%!important;min-width:100%!important;max-width:100%!important;min-height:100px!important;padding:17px 16px!important;border-radius:18px!important;gap:14px!important}
-  .study-v2-action-card:before,#dailyWorkoutCard.study-v2-daily-primary:before{width:56px;height:56px;flex-basis:56px;border-radius:16px;background-size:31px 31px}
-  .study-v2-action-card>strong,#dailyWorkoutCard.study-v2-daily-primary strong{font-size:1.05rem!important}
-  .study-v2-action-card>small,#dailyWorkoutCard.study-v2-daily-primary small{font-size:.73rem!important}
-  #dailyWorkoutCard.study-v2-daily-primary{min-height:106px!important;padding:17px 16px!important;border-radius:18px!important;gap:14px!important}
-  #dailyWorkoutCard.study-v2-daily-primary .progress-ring{width:64px!important;height:38px!important;flex-basis:64px!important;background-size:12.5px 12.5px!important;background-image:radial-gradient(circle at 4px 4px,rgba(255,255,255,.34) 0 3.6px,transparent 4px)!important}
-  #dailyWorkoutCard.study-v2-daily-primary .progress-ring:after{background-size:12.5px 12.5px!important;background-image:radial-gradient(circle at 4px 4px,#fff 0 3.6px,transparent 4px)!important}
-  .study-v2-book-panel{padding:20px 18px 22px;border-radius:23px}
+  .study-v2-top-actions{gap:16px;margin-bottom:38px;width:100%!important}
+  .study-v2-top-actions>.study-v2-action-card{width:100%!important;min-width:100%!important;max-width:100%!important;min-height:104px!important;padding:16px!important;border-radius:20px!important;gap:15px!important}
+  .study-v2-action-card:before,#dailyWorkoutCard.study-v2-daily-primary:before{width:54px;height:54px;flex-basis:54px;border-radius:18px;background-size:31px 31px}
+  .study-v2-action-card>strong,#dailyWorkoutCard.study-v2-daily-primary strong{font-size:1.06rem!important}
+  .study-v2-action-card>small{font-size:.73rem!important}
+  #dailyWorkoutCard.study-v2-daily-primary{min-height:120px!important;padding:16px!important;border-radius:20px!important;gap:15px!important}
+  #dailyWorkoutCard .daily-streak-status{font-size:.74rem!important;margin-top:7px!important}
+  #dailyWorkoutCard.study-v2-daily-primary .progress-ring{width:68px!important;height:68px!important;flex-basis:68px!important}
+  #dailyWorkoutCard.study-v2-daily-primary .progress-ring:after{inset:9px!important}
+  #dailyWorkoutCard.study-v2-daily-primary .progress-ring:before{width:21px;height:12px;border-width:0 0 3px 3px}
+  .study-v2-book-panel{padding:20px 18px 22px;border-radius:24px}
   .study-v2-book-tabs{gap:20px!important;margin-bottom:30px!important}
   .study-v2-book-tab{padding:0 1px 13px!important;font-size:.7rem!important}
   .study-v2-book-title-wrap{margin-bottom:30px!important}
@@ -102,7 +107,7 @@
   .study-v2-units-head{margin-bottom:14px!important}
   .header-skill-mastery{margin-top:34px!important;padding-top:26px!important}
   .header-skill-mastery-grid{gap:10px!important}
-  .header-skill-master{min-height:72px!important;padding:13px 12px!important}
+  .header-skill-master{min-height:74px!important;padding:13px 12px!important}
   .header-skill-master-top strong{font-size:.9rem!important}
   .header-skill-master-top span{font-size:.86rem!important}
   .study-v2-ai{margin-top:38px!important;margin-bottom:30px!important}
