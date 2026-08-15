@@ -3,8 +3,11 @@ main = "src/index.js"
 compatibility_date = "2025-12-08"
 workers_dev = true
 
-# api.willenaenglish.com is already routed to this Worker in Cloudflare.
-# Do not declare routes here: the deployment token updates Worker code/bindings only.
+# Route only Daily Study through this gateway. Other api.willenaenglish.com
+# routes remain untouched.
+[[routes]]
+pattern = "api.willenaenglish.com/api/daily-study*"
+zone_name = "willenaenglish.com"
 
 [[services]]
 binding = "SUPABASE_AUTH"
