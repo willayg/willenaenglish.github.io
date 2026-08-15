@@ -32,38 +32,53 @@ async function rpc(env,name,args){
   return data;
 }
 function validDate(v){return /^\d{4}-\d{2}-\d{2}$/.test(String(v||''));}
+function validTrack(v){return v==='test'?'test':'live';}
 
 export default {
   async fetch(request,env){
     const origin=request.headers.get('Origin')||'';
     if(request.method==='OPTIONS')return new Response(null,{status:204,headers:cors(origin)});
 
-    // This Worker is internal-only. The API gateway authenticates the shared
-    // Willena session through SUPABASE_AUTH, then supplies this trusted header.
+    // Internal-only: the proxy authenticates the real Willena user and supplies
+    // this trusted header. The database RPCs themselves are no longer public.
     const userId=String(request.headers.get('X-Willena-Authenticated-User')||'').trim();
     if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(userId)){
       return json(origin,401,{success:false,error:'Not signed in'});
     }
 
-    const url=new URL(request.url),date=url.searchParams.get('date');
+    const url=new URL(request.url);
+    const date=url.searchParams.get('date');
+    const track=validTrack(url.searchParams.get('track'));
     if(!validDate(date))return json(origin,400,{success:false,error:'Invalid study date'});
+    if(track==='test'&&origin!=='https://staging.willenaenglish.com'){
+      return json(origin,403,{success:false,error:'Daily Study test mode is staging only'});
+    }
+
     try{
       if(request.method==='GET'){
-        const data=await rpc(env,'get_daily_study_v2',{p_student_id:userId,p_study_date:date});
+        const data=await rpc(env,'daily_study_v3_get',{p_student_id:userId,p_study_date:date,p_track:track});
         return json(origin,200,data);
       }
       if(request.method==='POST'){
         const body=await request.json().catch(()=>null);
         if(!body||typeof body!=='object')return json(origin,400,{success:false,error:'Invalid JSON'});
+
+        if(body.action==='test_reset'){
+          if(track!=='test'||origin!=='https://staging.willenaenglish.com'){
+            return json(origin,403,{success:false,error:'Test reset is staging only'});
+          }
+          const data=await rpc(env,'reset_daily_study_v3_test',{p_student_id:userId});
+          return json(origin,200,data);
+        }
         if(body.action==='create'){
           if(!Array.isArray(body.plan))return json(origin,400,{success:false,error:'Plan must be an array'});
-          const data=await rpc(env,'create_daily_study_v2',{p_student_id:userId,p_study_date:date,p_plan:body.plan});
+          const data=await rpc(env,'daily_study_v3_create',{p_student_id:userId,p_study_date:date,p_plan:body.plan,p_track:track});
           return json(origin,200,data);
         }
         if(body.action==='answer'){
           const key=String(body.daily_key||'').trim();
           if(!key)return json(origin,400,{success:false,error:'Missing daily key'});
-          const data=await rpc(env,'answer_daily_study_v2',{p_student_id:userId,p_study_date:date,p_daily_key:key,p_correct:!!body.correct});
+          const data=await rpc(env,'daily_study_v3_answer',{p_student_id:userId,p_study_date:date,p_daily_key:key,p_correct:!!body.correct,p_track:track});
           return json(origin,200,data);
         }
         return json(origin,400,{success:false,error:'Unknown action'});
