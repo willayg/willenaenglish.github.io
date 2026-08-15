@@ -1,11 +1,11 @@
-/* Guided AI Coach: conversational, button-led, and visually standardized. */
+/* Guided AI Coach: cyan + dark gray, with the section's pink outer border left intact. */
 .study-v2-ai{
-  --coach-accent:#ff6fb0;
-  --coach-accent-dark:#9d3e6a;
-  --coach-ink:#2f3a3d;
-  --coach-muted:#70787c;
-  --coach-surface:#f7f7f8;
-  --coach-line:#e3e5e7;
+  --coach-accent:#25b8c4;
+  --coach-accent-dark:#176f78;
+  --coach-ink:#30363a;
+  --coach-muted:#6f777b;
+  --coach-surface:#f3f5f5;
+  --coach-line:#dce1e2;
 }
 .study-v2-ai .study-coach-note{display:none!important;}
 .study-v2-ai #aiGrid{display:none!important;}
@@ -23,16 +23,18 @@
   line-height:1.55;
   font-weight:600;
   white-space:pre-wrap;
-  color:var(--coach-ink);
   border:1px solid var(--coach-line);
 }
 .study-v2-ai-chat-row.is-coach .study-v2-ai-chat-bubble{
+  color:var(--coach-ink);
   background:#fff;
   border-left:3px solid var(--coach-accent);
   border-bottom-left-radius:7px;
 }
 .study-v2-ai-chat-row.is-user .study-v2-ai-chat-bubble{
-  background:var(--coach-surface);
+  color:#fff;
+  background:var(--coach-ink);
+  border-color:var(--coach-ink);
   border-bottom-right-radius:7px;
 }
 .study-v2-ai-thinking{display:inline-flex;align-items:center;gap:8px;font-weight:700;color:var(--coach-muted);}
@@ -45,7 +47,7 @@
 .study-v2-ai-chat-prompts{display:flex;flex-wrap:wrap;gap:9px;padding-top:2px;}
 .study-v2-ai-prompt{
   appearance:none;
-  border:1.5px solid var(--coach-line);
+  border:1.5px solid var(--coach-accent);
   background:#fff;
   color:var(--coach-ink);
   border-radius:999px;
@@ -55,7 +57,7 @@
   text-align:left;
   transition:transform .14s ease,background .14s ease,border-color .14s ease,color .14s ease;
 }
-.study-v2-ai-prompt:hover{background:var(--coach-surface);border-color:var(--coach-accent);color:var(--coach-accent-dark);}
+.study-v2-ai-prompt:hover{background:#eef9fa;color:var(--coach-accent-dark);}
 .study-v2-ai-prompt:active{transform:scale(.98);}
 .study-v2-ai-prompt:disabled{opacity:.5;cursor:default;}
 
@@ -68,23 +70,23 @@
   border-radius:14px;
   padding:12px 17px;
   font:800 .98rem/1.2 Poppins,sans-serif;
-  box-shadow:0 7px 17px rgba(255,111,176,.18);
+  box-shadow:0 7px 17px rgba(37,184,196,.18);
   cursor:pointer;
 }
 .study-v2-ai-chat-cta:active{transform:translateY(1px);}
 
-/* AI Coach practice keeps the same pink + neutral system. Green/red are reserved for answer feedback. */
+/* AI Coach practice uses the same cyan + dark gray system. */
 .ai-coach-practice-overlay{
-  --coach-accent:#ff6fb0;
-  --coach-accent-dark:#9d3e6a;
-  --coach-ink:#2f3a3d;
-  --coach-muted:#70787c;
-  --coach-surface:#f7f7f8;
-  --coach-line:#e3e5e7;
+  --coach-accent:#25b8c4;
+  --coach-accent-dark:#176f78;
+  --coach-ink:#30363a;
+  --coach-muted:#6f777b;
+  --coach-surface:#f3f5f5;
+  --coach-line:#dce1e2;
   position:fixed;
   inset:0;
   z-index:10020;
-  background:#f4f5f6;
+  background:#f3f4f5;
   overflow:auto;
   padding:max(14px,env(safe-area-inset-top)) 14px max(22px,env(safe-area-inset-bottom));
 }
