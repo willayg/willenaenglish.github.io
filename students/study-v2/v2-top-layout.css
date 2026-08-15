@@ -16,28 +16,29 @@
 #practiceHeroBtn.study-v2-ai-launch:hover{transform:translateY(-1px);background:var(--cyan-soft);border-color:var(--cyan-strong)}
 #practiceHeroBtn.study-v2-ai-launch:focus-visible{outline:4px solid rgba(102,214,223,.22);outline-offset:3px}
 
-/* Book choices are a separate control group, not part of the action stack. */
-.study-v2-book-tabs{gap:10px!important;margin:0 0 38px!important;padding:15px!important;border:1px solid #d7eef1;border-radius:24px;background:#fff;box-shadow:0 10px 26px rgba(34,106,116,.06)}
+/* Book choices are a separate control group. */
+.study-v2-book-tabs{gap:10px!important;margin:0 0 34px!important;padding:15px!important;border:1px solid #d7eef1;border-radius:24px;background:#fff;box-shadow:0 10px 26px rgba(34,106,116,.06)}
 .study-v2-book-tab{border:2px solid var(--cyan)!important;background:#fff!important;color:var(--ink)!important;padding:10px 15px!important}
 .study-v2-book-tab:hover,.study-v2-book-tab:focus-visible{border-color:var(--cyan-strong)!important;background:var(--cyan-soft)!important;outline:none}
 .study-v2-book-tab.is-active{border-color:var(--cyan-strong)!important;background:var(--cyan-soft)!important;color:var(--pink-dark)!important}
 
-/* Give the book, unit and mastery layers room to read as separate levels. */
-.study-v2-book-title-wrap{margin-bottom:34px!important;padding-top:0!important}
+/* The selected book and its study controls are their own visual level. */
+.study-v2-book-panel{padding:30px 28px 28px;border:1px solid #d7eef1;border-radius:28px;background:#fff;box-shadow:0 14px 34px rgba(34,106,116,.07)}
+.study-v2-book-title-wrap{margin-bottom:36px!important;padding-top:0!important}
 .study-v2-book-title-wrap #unitTitle{margin-top:22px!important}
 .study-v2-book-pips{margin-top:24px!important}
-.study-v2-units{margin-top:32px!important}
-.study-v2-units-head{margin-bottom:14px!important}
-.study-v2-unit-strip{gap:10px!important;padding:2px 1px 5px}
+.study-v2-units{margin-top:0!important}
+.study-v2-units-head{margin-bottom:16px!important}
+.study-v2-unit-strip{gap:10px!important;padding:2px 1px 6px}
 .study-v2-unit{border:2px solid var(--cyan)!important;background:#fff!important;padding:10px 14px!important}
 .study-v2-unit:hover,.study-v2-unit:focus-visible{border-color:var(--cyan-strong)!important;background:var(--cyan-soft)!important;outline:none}
 .study-v2-unit.is-current{border-color:var(--cyan-strong)!important;background:#fff5fa!important;color:var(--pink-dark)!important}
 
-.header-skill-mastery{margin-top:38px!important;padding-top:28px!important;border-top:1px solid #d7eef1!important}
-.header-skill-mastery-head{margin-bottom:14px!important}
+.header-skill-mastery{margin-top:40px!important;padding-top:30px!important;border-top:1px solid #d7eef1!important}
+.header-skill-mastery-head{margin-bottom:16px!important}
 .header-skill-mastery-grid{gap:12px!important}
 .header-skill-master{border:2px solid var(--cyan)!important}
-.hero-actions{margin-top:34px!important;gap:12px!important}
+.hero-actions{margin-top:36px!important;gap:12px!important;padding-top:4px}
 
 /* Every recommendation card uses the same clickable-card language. */
 .study-v2-ai{margin-top:44px!important;margin-bottom:34px!important}
@@ -56,14 +57,15 @@
   #dailyWorkoutCard.study-v2-daily-primary strong{font-size:1.28rem}
   #dailyWorkoutCard.study-v2-daily-primary small{font-size:.78rem}
   #practiceHeroBtn.study-v2-ai-launch{min-height:64px;border-radius:18px;font-size:1rem}
-  .study-v2-book-tabs{margin-bottom:30px!important;padding:12px!important;border-radius:20px}
+  .study-v2-book-tabs{margin-bottom:28px!important;padding:12px!important;border-radius:20px}
   .study-v2-book-tab{padding:9px 12px!important}
-  .study-v2-book-title-wrap{margin-bottom:28px!important}
+  .study-v2-book-panel{padding:24px 18px 22px;border-radius:23px}
+  .study-v2-book-title-wrap{margin-bottom:30px!important}
   .study-v2-book-title-wrap #unitTitle{margin-top:20px!important}
-  .study-v2-units{margin-top:28px!important}
-  .header-skill-mastery{margin-top:32px!important;padding-top:24px!important}
+  .study-v2-units-head{margin-bottom:14px!important}
+  .header-skill-mastery{margin-top:34px!important;padding-top:26px!important}
   .header-skill-mastery-grid{gap:10px!important}
-  .hero-actions{margin-top:30px!important}
+  .hero-actions{margin-top:32px!important}
   .study-v2-ai{margin-top:38px!important;margin-bottom:30px!important}
   .study-v2-ai .study-coach-grid{gap:12px!important}
 }
