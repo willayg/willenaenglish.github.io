@@ -1,5 +1,7 @@
 // badges.js - Badge logic and rendering for student profile
 
+let dailyStreakBest = 0;
+
 // Define badge types and calculation logic
 const BADGES = [
   {
@@ -50,6 +52,13 @@ const BADGES = [
     title: 'Hot Streak',
     subtitle: '5-game win streak',
     achieved: stats => stats.hotStreak >= 5
+  },
+  {
+    id: 'daily-streak-30',
+    icon: '🔥',
+    title: 'Daily Legend',
+    subtitle: '30-day Daily Study streak',
+    achieved: stats => Number(stats.dailyStreakBest || 0) >= 30
   },
   {
     id: 'words-mastered',
@@ -113,6 +122,7 @@ function getStatsFromPage() {
     perfectRuns: parseInt(document.getElementById('ovPerfectRuns')?.textContent)||0,
     listsExplored: parseInt(document.getElementById('ovListsExplored')?.textContent)||0,
     hotStreak: parseInt(document.getElementById('ovHotStreak')?.textContent)||0,
+    dailyStreakBest,
     wordsMastered: parseInt(document.getElementById('ovWordsMastered')?.textContent)||0,
     sessionsPlayed: parseInt(document.getElementById('ovSessionsPlayed')?.textContent)||0,
     favoriteList: (document.getElementById('ovFavoriteList')?.textContent||'').trim() && (document.getElementById('ovFavoriteList')?.textContent||'').trim() !== '—',
@@ -122,6 +132,7 @@ function getStatsFromPage() {
 
 function renderBadges(statsOverride) {
   const stats = statsOverride || getStatsFromPage();
+  if (stats.dailyStreakBest == null) stats.dailyStreakBest = dailyStreakBest;
   const container = document.getElementById('badgesContainer');
   if (!container) return;
   const achieved = BADGES.filter(b => b.achieved(stats));
@@ -149,6 +160,25 @@ function renderBadges(statsOverride) {
   } catch {}
 }
 
+async function loadDailyStreakBest() {
+  try {
+    const res = await fetch(`/.netlify/functions/progress_summary?section=sessions&_=${Date.now()}`, { credentials: 'include', cache: 'no-store' });
+    if (!res.ok) return;
+    const sessions = await res.json().catch(() => []);
+    if (!Array.isArray(sessions)) return;
+    let best = 0;
+    sessions.forEach(s => {
+      if (!s || s.mode !== 'daily_study') return;
+      let sum = s.summary;
+      try { if (typeof sum === 'string') sum = JSON.parse(sum); } catch { sum = null; }
+      if (!sum || typeof sum !== 'object') return;
+      best = Math.max(best, Number(sum.longest_daily_streak || 0), Number(sum.daily_streak || 0));
+    });
+    dailyStreakBest = best;
+    renderBadges();
+  } catch {}
+}
+
 // Re-render when overview stats are loaded by student_profile.js
 window.addEventListener('profile:overview', (ev) => {
   const ov = ev?.detail || {};
@@ -159,6 +189,7 @@ window.addEventListener('profile:overview', (ev) => {
     perfectRuns: Number(ov.perfect_runs)||0,
     listsExplored: Number(ov.lists_explored)||0,
     hotStreak: Number(ov.best_streak)||0,
+    dailyStreakBest,
     wordsMastered: Number(ov.words_mastered)||0,
     sessionsPlayed: Number(ov.sessions_played)||0,
     favoriteList: !!(ov.favorite_list && ov.favorite_list.name),
@@ -170,6 +201,7 @@ window.addEventListener('profile:overview', (ev) => {
 // Initial paint and a small fallback that reacts when counters change later
 document.addEventListener('DOMContentLoaded', () => {
   renderBadges();
+  loadDailyStreakBest();
   // Fallback: observe counters and re-render when they change
   const starsEl = document.getElementById('awardStars');
   const medalsEl = document.getElementById('ovPerfectRuns');
