@@ -3,8 +3,18 @@ main = "src/index.js"
 compatibility_date = "2025-12-08"
 workers_dev = true
 
-# Route only Daily Study through this gateway. Other api.willenaenglish.com
-# routes remain untouched.
+# Daily Study uses a same-origin browser request so the shared Willena auth
+# cookie is sent reliably. Intercept only this path on the student/staging
+# hosts; all other traffic on those hosts remains untouched.
+[[routes]]
+pattern = "staging.willenaenglish.com/api/daily-study*"
+zone_name = "willenaenglish.com"
+
+[[routes]]
+pattern = "students.willenaenglish.com/api/daily-study*"
+zone_name = "willenaenglish.com"
+
+# Keep the API-host route as a compatibility fallback for older clients.
 [[routes]]
 pattern = "api.willenaenglish.com/api/daily-study*"
 zone_name = "willenaenglish.com"
