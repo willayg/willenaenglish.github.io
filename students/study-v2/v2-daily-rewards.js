@@ -30,13 +30,14 @@ function ensureStyles(){
 
 function renderCard(r){
   var card=document.getElementById('dailyWorkoutCard');if(!card)return;
+  card.classList.toggle('is-complete',!!(r&&r.completed));
   var host=card.children&&card.children[1];if(!host)return;
   var el=card.querySelector('.daily-streak-status');
   if(!el){el=document.createElement('small');el.className='daily-streak-status';host.appendChild(el);}
   var streak=num(r&&r.current_streak);
   if(testMode()||streak<=0){el.hidden=true;return;}
   el.hidden=false;
-  el.textContent=ko()?'🔥 '+streak+'일 연속 학습':'🔥 '+streak+' day streak';
+  el.textContent=ko()?streak+'일 연속 학습':streak+' day streak';
 }
 
 function renderFinish(r){
@@ -44,7 +45,6 @@ function renderFinish(r){
   var root=document.getElementById('v2ActivityRoot');if(!root)return;
   var finish=root.querySelector('.smart-finish');if(!finish)return;
   var points=num(r.today_points),rating=num(r.daily_rating_stars),bonusPts=num(r.streak_bonus_points),bonusStars=num(r.streak_bonus_stars),streak=num(r.current_streak);
-  // A session completed before the reward system was installed has no reward row.
   if(points<=0&&rating<=0)return;
   var block=finish.querySelector('.daily-reward-summary');
   if(!block){
@@ -114,17 +114,11 @@ function savedAnswerVisible(root){
 
 function bind(){
   ensureStyles();
-  // Establish a baseline without animating rewards that were earned before this page load.
   schedule(false,120);
-
-  // Daily Study replaces its Check button with Continue/Done only after the
-  // server has accepted the answer. That gives us a reliable, non-auth-invasive
-  // hook to refresh rewards without patching fetch or touching the login flow.
   var root=document.getElementById('v2ActivityRoot');
   if(root&&global.MutationObserver){
     new MutationObserver(function(){if(savedAnswerVisible(root))schedule(true,90);}).observe(root,{childList:true,characterData:true,subtree:true});
   }
-
   var lang=document.getElementById('languageBtn');if(lang)lang.addEventListener('click',function(){setTimeout(function(){if(lastReward)renderCard(lastReward);},0);});
   document.addEventListener('visibilitychange',function(){if(!document.hidden)schedule(false,80);});
 }
