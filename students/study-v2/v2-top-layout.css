@@ -16,14 +16,12 @@
 #practiceHeroBtn.study-v2-ai-launch:hover{transform:translateY(-1px);background:var(--cyan-soft);border-color:var(--cyan-strong)}
 #practiceHeroBtn.study-v2-ai-launch:focus-visible{outline:4px solid rgba(102,214,223,.22);outline-offset:3px}
 
-/* Book choices are a separate control group. */
-.study-v2-book-tabs{gap:10px!important;margin:0 0 34px!important;padding:15px!important;border:1px solid #d7eef1;border-radius:24px;background:#fff;box-shadow:0 10px 26px rgba(34,106,116,.06)}
+/* Book switcher, title, units and mastery all belong to one book-level container. */
+.study-v2-book-panel{padding:28px;border:1px solid #d7eef1;border-radius:28px;background:#fff;box-shadow:0 14px 34px rgba(34,106,116,.07)}
+.study-v2-book-tabs{gap:10px!important;margin:0 0 32px!important;padding:0 0 24px!important;border:0!important;border-bottom:1px solid #d7eef1!important;border-radius:0!important;background:transparent!important;box-shadow:none!important}
 .study-v2-book-tab{border:2px solid var(--cyan)!important;background:#fff!important;color:var(--ink)!important;padding:10px 15px!important}
 .study-v2-book-tab:hover,.study-v2-book-tab:focus-visible{border-color:var(--cyan-strong)!important;background:var(--cyan-soft)!important;outline:none}
 .study-v2-book-tab.is-active{border-color:var(--cyan-strong)!important;background:var(--cyan-soft)!important;color:var(--pink-dark)!important}
-
-/* The selected book and its study controls are their own visual level. */
-.study-v2-book-panel{padding:30px 28px 28px;border:1px solid #d7eef1;border-radius:28px;background:#fff;box-shadow:0 14px 34px rgba(34,106,116,.07)}
 .study-v2-book-title-wrap{margin-bottom:36px!important;padding-top:0!important}
 .study-v2-book-title-wrap #unitTitle{margin-top:22px!important}
 .study-v2-book-pips{margin-top:24px!important}
@@ -57,9 +55,9 @@
   #dailyWorkoutCard.study-v2-daily-primary strong{font-size:1.28rem}
   #dailyWorkoutCard.study-v2-daily-primary small{font-size:.78rem}
   #practiceHeroBtn.study-v2-ai-launch{min-height:64px;border-radius:18px;font-size:1rem}
-  .study-v2-book-tabs{margin-bottom:28px!important;padding:12px!important;border-radius:20px}
+  .study-v2-book-panel{padding:20px 18px 22px;border-radius:23px}
+  .study-v2-book-tabs{margin-bottom:28px!important;padding-bottom:20px!important}
   .study-v2-book-tab{padding:9px 12px!important}
-  .study-v2-book-panel{padding:24px 18px 22px;border-radius:23px}
   .study-v2-book-title-wrap{margin-bottom:30px!important}
   .study-v2-book-title-wrap #unitTitle{margin-top:20px!important}
   .study-v2-units-head{margin-bottom:14px!important}
