@@ -1,7 +1,6 @@
 /**
  * Cloudflare Worker: API gateway and cookie-domain rewrite.
  * Daily Study V2 is Cloudflare-only and uses a direct /api/daily-study route.
- * Deployment touch: force the staging API gateway to pick up the Daily Study V2 route/binding.
  */
 
 const NETLIFY_BASE = 'https://willenaenglish.netlify.app';
@@ -54,6 +53,11 @@ function accessTokenFromCookie(cookieHeader) {
   return match ? decodeURIComponent(match[1]) : '';
 }
 
+function bearerToken(headers) {
+  const value = String(headers.get('Authorization') || '').trim();
+  return /^Bearer\s+/i.test(value) ? value.replace(/^Bearer\s+/i, '').trim() : '';
+}
+
 async function authenticatedUserId(request, env) {
   const auth = env?.SUPABASE_AUTH;
   if (!auth || typeof auth.fetch !== 'function') return '';
@@ -61,6 +65,16 @@ async function authenticatedUserId(request, env) {
   url.pathname = '/';
   url.search = '?action=whoami';
   const headers = new Headers(request.headers);
+
+  // The browser may call this Worker on workers.dev, where a
+  // .willenaenglish.com cookie cannot be sent. In that case Study V2 sends
+  // its persisted access token as Bearer auth. Translate that token into the
+  // cookie shape expected by the existing supabase-auth whoami handler.
+  if (!accessTokenFromCookie(headers.get('Cookie'))) {
+    const token = bearerToken(headers);
+    if (token) headers.set('Cookie', `sb_access=${encodeURIComponent(token)}`);
+  }
+
   const response = await auth.fetch(new Request(url.toString(), {
     method: 'GET',
     headers,
