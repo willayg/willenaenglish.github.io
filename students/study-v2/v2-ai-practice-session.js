@@ -23,6 +23,15 @@ function activityResult(item,selected){
 function dispatchAnswer(item,result){
   try{global.dispatchEvent(new CustomEvent('willena:activity-answer',{detail:{activity:item,result:result,responseTimeMs:0}}));}catch(_){}
 }
+function scrollActionIntoView(overlay,action){
+  if(!overlay||!action)return;
+  requestAnimationFrame(function(){
+    requestAnimationFrame(function(){
+      try{overlay.scrollTo({top:overlay.scrollHeight,behavior:'smooth'});}
+      catch(_){try{action.scrollIntoView({behavior:'smooth',block:'end'});}catch(__){}}
+    });
+  });
+}
 function advance(){
   if(!session||!session.answered)return;
   if(session.index>=session.items.length-1){close(true);return;}
@@ -87,6 +96,9 @@ function render(){
     action.textContent=session.index>=session.items.length-1?(isKo()?'완료':'Finish'):(isKo()?'다음':'Next');
     action.classList.add('is-next');
     dispatchAnswer(item,result);
+
+    /* On phones especially, bring the newly available Next/Finish action into view. */
+    scrollActionIntoView(overlay,action);
   });
 
   overlay.scrollTo({top:0,behavior:'auto'});
