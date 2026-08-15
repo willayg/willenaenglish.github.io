@@ -20,7 +20,7 @@
 <link rel="stylesheet" href="./v2-top-layout.css?v=20260815-bookspacing2">
 <link rel="stylesheet" href="./v2-short-landscape.css?v=20260814-listenrow1">
 <link rel="stylesheet" href="./v2-round-ux.css?v=20260814-roundux1">
-<link rel="stylesheet" href="./v2-background.css?v=20260815-mobileread1">
+<link rel="stylesheet" href="./v2-background.css?v=20260815-aiabove1">
 <link rel="stylesheet" href="./v2-spelling-input.css?v=20260814-keyboard2">
 <link rel="stylesheet" href="./v2-daily-test.css?v=20260815-pacedtester1">
 <script src="/students/api-gateway.js?v=20260808-study1"></script>
@@ -53,6 +53,11 @@
         <button id="bookStudyBtn" class="study-v2-action-card is-coming-soon" type="button" disabled><strong>교재 공부</strong><small>준비 중</small></button>
       </div>
 
+      <section id="aiRecommendations" class="study-coach study-v2-ai">
+        <div class="study-coach-head"><div><h2 id="aiHeading">AI 추천</h2></div></div>
+        <div id="aiGrid" class="study-coach-grid"></div>
+      </section>
+
       <div class="study-v2-book-panel" id="bookPracticeArea">
         <nav id="bookTabs" class="study-v2-book-tabs" aria-label="Books" hidden></nav>
 
@@ -78,11 +83,6 @@
         </div>
       </div>
     </div>
-  </section>
-
-  <section id="aiRecommendations" class="study-coach study-v2-ai">
-    <div class="study-coach-head"><div><h2 id="aiHeading">AI 추천</h2></div></div>
-    <div id="aiGrid" class="study-coach-grid"></div>
   </section>
 </main>
 <footer class="study-v2-footer"><button id="languageBtn" type="button">English</button></footer>
