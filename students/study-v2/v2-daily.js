@@ -3,9 +3,9 @@
 
 var TARGET=20;
 var MAX_CANDIDATES=80;
-// Keep Daily Study same-origin. This preserves the shared Willena session
-// cookie and avoids sending this app through a second API-host router.
-var ENDPOINT='/api/daily-study';
+// Daily Study talks directly to the deployed proxy Worker. The api subdomain
+// currently lands on an older router for this path and returns "Invalid API path".
+var ENDPOINT='https://willena-proxy.willena.workers.dev/api/daily-study';
 var CACHE_PREFIX='willena-study-v2-home:v1:';
 var SKILLS=['vocabulary','spelling','grammar','sentence_building','conversation','listening','reading'];
 
@@ -36,10 +36,35 @@ function resolvedCount(){return Math.min(TARGET,arr(session&&session.resolved_ke
 function validActivity(a){return a&&a.id&&SKILLS.indexOf(a.skill)>=0&&a.response&&a.stimulus;}
 function dailyKey(a){return text(a&&a.daily_key||a&&a.id);}
 
+async function dailyAccessToken(){
+  var api=global.WillenaAPI,token='';
+  try{
+    token=text(api&&api.getLocalAccessToken?api.getLocalAccessToken():localStorage.getItem('sb_access_token'));
+  }catch(_){token='';}
+  if(token)return token;
+
+  // A long-lived cookie session may be valid even when an old browser session
+  // has no local token. Refresh once through the existing gateway to obtain a
+  // token for the workers.dev call without changing the shared auth Worker.
+  if(api&&typeof api.fetch==='function'){
+    try{
+      var r=await api.fetch('/.netlify/functions/supabase_auth?action=refresh&_='+Date.now(),{cache:'no-store'});
+      var d=await r.json().catch(function(){return{};});
+      if(r.ok&&d&&d.success&&d.access_token){
+        if(api.setLocalTokens)api.setLocalTokens(d.access_token,d.refresh_token||'');
+        return text(d.access_token);
+      }
+    }catch(_){}
+  }
+  return '';
+}
+
 async function request(method,body){
   try{if(global.WillenaStudyV2AuthReady)await global.WillenaStudyV2AuthReady;}catch(_){}
+  var token=await dailyAccessToken();
   var url=ENDPOINT+'?date='+encodeURIComponent(dateKey())+'&_='+Date.now();
-  var opts={method:method,credentials:'include',cache:'no-store',headers:{Accept:'application/json'}};
+  var opts={method:method,credentials:'omit',cache:'no-store',headers:{Accept:'application/json'}};
+  if(token)opts.headers.Authorization='Bearer '+token;
   if(body){opts.headers['Content-Type']='application/json';opts.body=JSON.stringify(body);}
   var r=await fetch(url,opts),d=await r.json().catch(function(){return{};});
   if(!r.ok)throw new Error(d.error||('Daily Study request failed ('+r.status+')'));
