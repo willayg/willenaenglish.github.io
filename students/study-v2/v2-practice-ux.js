@@ -14,6 +14,14 @@ function skillName(){var s=String(skillEl&&skillEl.textContent||'').trim();if(!s
 function setFocusHeader(){if(isDaily())return;var s=skillName();if(titleEl)titleEl.textContent=currentLanguage()==='ko'?s+' 연습':s+' Practice';if(countEl)countEl.textContent=(position+1)+' / '+target;}
 function addSourceBadge(){if(isDaily()||!root)return;var card=root.querySelector('.activity-card');if(!card||card.querySelector('.activity-source-badge'))return;var badge=document.createElement('div');badge.className='activity-source-badge';badge.textContent='Source · Focused unit practice';card.insertBefore(badge,card.firstChild);}
 function decorate(){if(isDaily())return;setFocusHeader();addSourceBadge();if(panel)panel.scrollTop=0;}
+function scrollNextIntoView(button){
+  if(!button)return;
+  requestAnimationFrame(function(){
+    requestAnimationFrame(function(){
+      try{button.scrollIntoView({behavior:'smooth',block:'end'});}catch(_){}
+    });
+  });
+}
 
 if(global.WillenaActivityEngine&&global.WillenaActivityEngine.prototype){
   var originalSetActivity=global.WillenaActivityEngine.prototype.setActivity;
@@ -45,5 +53,8 @@ global.addEventListener('willena:activity-answer',function(){
     var hiddenNext=document.getElementById('v2PracticeNext');
     if(hiddenNext)hiddenNext.click();
   },{once:true});
+
+  /* Once Check becomes Next/Done, move the viewport down so the action is ready to tap. */
+  scrollNextIntoView(replacement);
 });
 })(window);
