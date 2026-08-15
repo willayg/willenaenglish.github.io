@@ -48,7 +48,7 @@ function ensureStyles(){
 #dailyWorkoutCard.is-complete #smartProgressTitle{font-size:1.42rem!important;line-height:1.02!important;font-weight:900!important;letter-spacing:-.02em!important;color:#ea4d96!important;position:relative;z-index:2}\
 #dailyWorkoutCard.is-complete #smartProgressCopy{display:block!important;margin-top:8px!important;font-size:.82rem!important;line-height:1.25!important;font-weight:800!important;color:#7c8c91!important;opacity:1!important;position:relative;z-index:2}\
 #dailyWorkoutCard.is-complete .daily-streak-status{margin-top:9px!important;position:relative;z-index:2}\
-#dailyWorkoutCard.is-complete .progress-ring{box-shadow:none!important;z-index:2}\
+#dailyWorkoutCard.is-complete .progress-ring{box-shadow:0 0 0 3px rgba(255,111,176,.10),0 0 12px rgba(255,111,176,.24)!important;z-index:2}\
 #dailyWorkoutCard.is-complete:before{z-index:2}\
 .daily-reward-summary{margin:16px auto 4px;padding:16px 18px;border-radius:18px;background:rgba(255,255,255,.72);max-width:360px;text-align:center;box-shadow:0 8px 24px rgba(23,63,70,.08)}\
 .daily-reward-points{font-size:22px;font-weight:900;line-height:1.25}\
