@@ -1,0 +1,26 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Staging Proof Test</title>
+<style>
+body{font-family:Arial,sans-serif;display:flex;min-height:100vh;align-items:center;justify-content:center;background:#f5f7fb}
+.box{text-align:center;background:white;padding:40px;border-radius:20px;box-shadow:0 10px 30px #0002}
+button{font-size:20px;padding:15px 25px;border-radius:12px;border:0;background:#2563eb;color:white;cursor:pointer}
+#msg{margin-top:25px;font-size:24px;font-weight:bold}
+</style>
+</head>
+<body>
+<div class="box">
+<h1>Staging Proof Test</h1>
+<button id="btn">See, I can do it</button>
+<div id="msg"></div>
+</div>
+<script>
+document.getElementById('btn').addEventListener('click',()=>{
+ document.getElementById('msg').textContent='See, I can do it on staging';
+});
+</script>
+</body>
+</html>
