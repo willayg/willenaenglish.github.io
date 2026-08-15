@@ -104,19 +104,25 @@ function schedule(announce,delay){
   timer=setTimeout(function(){var a=pendingAnnounce;pendingAnnounce=false;syncReward(a);},delay==null?140:delay);
 }
 
+function savedAnswerVisible(root){
+  if(!document.body.classList.contains('study-v2-daily-mode'))return false;
+  if(root.querySelector('.smart-finish'))return true;
+  var check=root.querySelector('.activity-check');if(!check)return false;
+  var label=String(check.textContent||'').trim().toLowerCase();
+  return label==='continue'||label==='계속'||label==='done'||label==='완료';
+}
+
 function bind(){
   ensureStyles();
   // Establish a baseline without animating rewards that were earned before this page load.
   schedule(false,120);
 
-  var progress=document.getElementById('smartDailyPct');
-  if(progress&&global.MutationObserver){
-    new MutationObserver(function(){schedule(true,160);}).observe(progress,{childList:true,characterData:true,subtree:true});
-  }
-
+  // Daily Study replaces its Check button with Continue/Done only after the
+  // server has accepted the answer. That gives us a reliable, non-auth-invasive
+  // hook to refresh rewards without patching fetch or touching the login flow.
   var root=document.getElementById('v2ActivityRoot');
   if(root&&global.MutationObserver){
-    new MutationObserver(function(){if(root.querySelector('.smart-finish'))schedule(true,100);}).observe(root,{childList:true,subtree:true});
+    new MutationObserver(function(){if(savedAnswerVisible(root))schedule(true,90);}).observe(root,{childList:true,characterData:true,subtree:true});
   }
 
   var lang=document.getElementById('languageBtn');if(lang)lang.addEventListener('click',function(){setTimeout(function(){if(lastReward)renderCard(lastReward);},0);});
