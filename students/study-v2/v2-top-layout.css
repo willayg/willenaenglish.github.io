@@ -18,13 +18,20 @@
 
 /* Book switcher, title, units and mastery all belong to one book-level container. */
 .study-v2-book-panel{padding:28px;border:1px solid #d7eef1;border-radius:28px;background:#fff;box-shadow:0 14px 34px rgba(34,106,116,.07)}
-.study-v2-book-tabs{gap:10px!important;margin:0 0 32px!important;padding:0 0 24px!important;border:0!important;border-bottom:1px solid #d7eef1!important;border-radius:0!important;background:transparent!important;box-shadow:none!important}
-.study-v2-book-tab{border:2px solid var(--cyan)!important;background:#fff!important;color:var(--ink)!important;padding:10px 15px!important}
-.study-v2-book-tab:hover,.study-v2-book-tab:focus-visible{border-color:var(--cyan-strong)!important;background:var(--cyan-soft)!important;outline:none}
-.study-v2-book-tab.is-active{border-color:var(--cyan-strong)!important;background:var(--cyan-soft)!important;color:var(--pink-dark)!important}
+
+/* Book choices behave as tabs, not cards inside another card. */
+.study-v2-book-tabs{display:flex!important;align-items:flex-end;gap:24px!important;margin:0 0 34px!important;padding:0 0 1px!important;border:0!important;border-bottom:1px solid #d7eef1!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;overflow-x:auto}
+.study-v2-book-tab{position:relative;flex:0 0 auto;border:0!important;border-radius:0!important;background:transparent!important;color:var(--muted)!important;padding:0 2px 15px!important;font-size:.76rem!important;box-shadow:none!important}
+.study-v2-book-tab:after{content:"";position:absolute;left:2px;right:2px;bottom:-1px;height:3px;border-radius:999px;background:transparent;transition:background .16s ease}
+.study-v2-book-tab:hover,.study-v2-book-tab:focus-visible{border:0!important;background:transparent!important;color:var(--cyan-strong)!important;outline:none}
+.study-v2-book-tab:hover:after,.study-v2-book-tab:focus-visible:after{background:rgba(37,184,196,.38)}
+.study-v2-book-tab.is-active{border:0!important;background:transparent!important;color:var(--pink-dark)!important}
+.study-v2-book-tab.is-active:after{background:var(--cyan-strong)}
+
 .study-v2-book-title-wrap{margin-bottom:36px!important;padding-top:0!important}
 .study-v2-book-title-wrap #unitTitle{margin-top:22px!important}
-.study-v2-book-pips{margin-top:24px!important}
+.study-v2-book-pips{position:relative;margin-top:24px!important;padding-bottom:16px}
+.study-v2-book-pips:after{content:"";position:absolute;left:50%;bottom:0;width:56px;height:3px;transform:translateX(-50%);border-radius:999px;background:var(--cyan);opacity:.72}
 .study-v2-units{margin-top:0!important}
 .study-v2-units-head{margin-bottom:16px!important}
 .study-v2-unit-strip{gap:10px!important;padding:2px 1px 6px}
@@ -56,10 +63,12 @@
   #dailyWorkoutCard.study-v2-daily-primary small{font-size:.78rem}
   #practiceHeroBtn.study-v2-ai-launch{min-height:64px;border-radius:18px;font-size:1rem}
   .study-v2-book-panel{padding:20px 18px 22px;border-radius:23px}
-  .study-v2-book-tabs{margin-bottom:28px!important;padding-bottom:20px!important}
-  .study-v2-book-tab{padding:9px 12px!important}
+  .study-v2-book-tabs{gap:20px!important;margin-bottom:30px!important}
+  .study-v2-book-tab{padding:0 1px 13px!important;font-size:.7rem!important}
   .study-v2-book-title-wrap{margin-bottom:30px!important}
   .study-v2-book-title-wrap #unitTitle{margin-top:20px!important}
+  .study-v2-book-pips{padding-bottom:15px}
+  .study-v2-book-pips:after{width:48px;height:3px}
   .study-v2-units-head{margin-bottom:14px!important}
   .header-skill-mastery{margin-top:34px!important;padding-top:26px!important}
   .header-skill-mastery-grid{gap:10px!important}
