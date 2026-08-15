@@ -1,0 +1,18 @@
+.study-v2-ai-inline-link{
+  display:block;
+  margin:10px 0 0;
+  padding:5px 0 1px;
+  border:0;
+  background:transparent;
+  color:#ff4fa3;
+  font:800 1rem/1.35 Poppins,sans-serif;
+  text-align:left;
+  cursor:pointer;
+  text-decoration:none;
+}
+.study-v2-ai-inline-link:hover{text-decoration:underline;}
+.study-v2-ai-inline-link:active{transform:translateY(1px);}
+#aiChatCta{display:none!important;}
+@media(max-width:560px){
+  .study-v2-ai-inline-link{font-size:1.06rem;line-height:1.4;margin-top:11px;}
+}
