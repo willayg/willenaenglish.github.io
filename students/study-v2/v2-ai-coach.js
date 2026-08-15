@@ -234,9 +234,10 @@ function observeGrid(){
 function mount(){observeGrid();schedule(80);setTimeout(function(){if(!lastCandidates.length)schedule(0);},800);setTimeout(function(){if(!lastCandidates.length)schedule(0);},1800);}
 
 global.addEventListener('willena:study-recording',function(e){var d=e&&e.detail||{};if(d.status!=='recorded'||d.metadata&&d.metadata.daily_test_mode===true)return;schedule(550);});
+/* Browsing books/units is local navigation, not a reason to rebuild AI Coach above it. */
 document.addEventListener('click',function(e){
-  var target=e.target&&e.target.closest&&e.target.closest('#bookTabs [data-book-index],#unitStrip [data-unit-id],#languageBtn');
-  if(target)schedule(target.id==='languageBtn'?80:650);
+  var target=e.target&&e.target.closest&&e.target.closest('#languageBtn');
+  if(target)schedule(80);
 },true);
 global.addEventListener('focus',function(){schedule(120);});
 
