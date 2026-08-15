@@ -11,10 +11,9 @@ function ensureOverlay(){
   var overlay=document.createElement('section');
   overlay.id='aiCoachPracticeOverlay';
   overlay.className='ai-coach-practice-overlay ai-coach-practice-overlay-v2';
-  overlay.innerHTML='<div class="ai-coach-practice-shell"><header class="ai-coach-practice-head"><button id="aiCoachPracticeBack" class="ai-coach-practice-back" type="button" aria-label="Back">←</button><div class="ai-coach-practice-title"><span>AI COACH</span><h2 id="aiCoachPracticeTitle"></h2><div id="aiCoachPracticeProgress" class="ai-coach-practice-progress"></div></div></header><div id="aiCoachPracticeQuestion" class="ai-coach-question-card"></div><button id="aiCoachPracticeNext" class="ai-coach-practice-next" type="button" disabled></button></div>';
+  overlay.innerHTML='<div class="ai-coach-practice-shell"><header class="ai-coach-practice-head"><button id="aiCoachPracticeBack" class="ai-coach-practice-back" type="button" aria-label="Back">←</button><div class="ai-coach-practice-title"><span>AI COACH</span><h2 id="aiCoachPracticeTitle"></h2><div id="aiCoachPracticeProgress" class="ai-coach-practice-progress"></div></div></header><div id="aiCoachPracticeQuestion" class="ai-coach-question-card"></div></div>';
   document.body.appendChild(overlay);
   overlay.querySelector('#aiCoachPracticeBack').addEventListener('click',function(){close(false);});
-  overlay.querySelector('#aiCoachPracticeNext').addEventListener('click',next);
   return overlay;
 }
 function activityResult(item,selected){
@@ -24,23 +23,33 @@ function activityResult(item,selected){
 function dispatchAnswer(item,result){
   try{global.dispatchEvent(new CustomEvent('willena:activity-answer',{detail:{activity:item,result:result,responseTimeMs:0}}));}catch(_){}
 }
+function advance(){
+  if(!session||!session.answered)return;
+  if(session.index>=session.items.length-1){close(true);return;}
+  session.index++;
+  render();
+}
 function render(){
   if(!session)return;
   var item=session.items[session.index];
   if(!item){close(true);return;}
-  var overlay=session.overlay,root=overlay.querySelector('#aiCoachPracticeQuestion'),nextBtn=overlay.querySelector('#aiCoachPracticeNext');
-  session.answered=false;session.selected=null;
+  var overlay=session.overlay,root=overlay.querySelector('#aiCoachPracticeQuestion');
+  session.answered=false;
+  session.selected=null;
   overlay.querySelector('#aiCoachPracticeProgress').textContent=(session.index+1)+' / '+session.items.length;
-  nextBtn.disabled=true;nextBtn.textContent=isKo()?'다음':'Next';
   root.innerHTML='';
 
   var context=text(item.stimulus&&item.stimulus.context);
   var prompt=text(item.stimulus&&item.stimulus.prompt||item.q);
   if(context){var c=document.createElement('div');c.className='ai-coach-question-context';c.textContent=context;root.appendChild(c);}
-  var h=document.createElement('h3');h.className='ai-coach-question-prompt';h.textContent=prompt|| (isKo()?'알맞은 답을 고르세요.':'Choose the best answer.');root.appendChild(h);
+  var h=document.createElement('h3');h.className='ai-coach-question-prompt';h.textContent=prompt||(isKo()?'알맞은 답을 고르세요.':'Choose the best answer.');root.appendChild(h);
 
   var choices=arr(item.response&&item.response.choices||item.choices).slice();
   var choicesWrap=document.createElement('div');choicesWrap.className='ai-coach-question-choices';root.appendChild(choicesWrap);
+
+  var feedback=document.createElement('div');feedback.className='ai-coach-question-feedback';feedback.hidden=true;
+  var action=document.createElement('button');action.type='button';action.className='ai-coach-question-check ai-coach-question-action';action.textContent=isKo()?'확인':'Check';action.disabled=true;
+
   choices.forEach(function(choice){
     var b=document.createElement('button');b.type='button';b.className='ai-coach-question-choice';b.textContent=text(choice);
     b.addEventListener('click',function(){
@@ -48,27 +57,38 @@ function render(){
       session.selected=text(choice);
       choicesWrap.querySelectorAll('button').forEach(function(x){x.classList.remove('is-selected');});
       b.classList.add('is-selected');
-      check.disabled=false;
+      action.disabled=false;
     });
     choicesWrap.appendChild(b);
   });
 
-  var feedback=document.createElement('div');feedback.className='ai-coach-question-feedback';feedback.hidden=true;root.appendChild(feedback);
-  var check=document.createElement('button');check.type='button';check.className='ai-coach-question-check';check.textContent=isKo()?'확인':'Check';check.disabled=true;root.appendChild(check);
-  check.addEventListener('click',function(){
-    if(session.answered||!session.selected)return;
-    var result=activityResult(item,session.selected);session.answered=true;
+  root.appendChild(feedback);
+  root.appendChild(action);
+
+  action.addEventListener('click',function(){
+    if(!session)return;
+    if(session.answered){advance();return;}
+    if(!session.selected)return;
+
+    var result=activityResult(item,session.selected);
+    session.answered=true;
     choicesWrap.querySelectorAll('button').forEach(function(x){
       x.disabled=true;
       if(sameAnswer(x.textContent,item.answer))x.classList.add('is-correct');
       else if(x.classList.contains('is-selected'))x.classList.add('is-wrong');
     });
-    feedback.hidden=false;feedback.classList.add(result.correct?'is-correct':'is-wrong');
+    feedback.hidden=false;
+    feedback.classList.remove('is-correct','is-wrong');
+    feedback.classList.add(result.correct?'is-correct':'is-wrong');
     feedback.textContent=result.correct?(isKo()?'정답이에요!':'Correct!'):(isKo()?'정답 · '+text(item.answer):'Answer · '+text(item.answer));
-    check.disabled=true;check.hidden=true;
-    nextBtn.disabled=false;nextBtn.textContent=session.index>=session.items.length-1?(isKo()?'완료':'Finish'):(isKo()?'다음':'Next');
+
+    /* One button only: Check instantly becomes Next/Finish after grading. */
+    action.disabled=false;
+    action.textContent=session.index>=session.items.length-1?(isKo()?'완료':'Finish'):(isKo()?'다음':'Next');
+    action.classList.add('is-next');
     dispatchAnswer(item,result);
   });
+
   overlay.scrollTo({top:0,behavior:'auto'});
 }
 function open(plan){
@@ -79,11 +99,6 @@ function open(plan){
   document.documentElement.style.overflow='hidden';
   render();
   return true;
-}
-function next(){
-  if(!session||!session.answered)return;
-  if(session.index>=session.items.length-1){close(true);return;}
-  session.index++;render();
 }
 function close(completed){
   var overlay=document.getElementById('aiCoachPracticeOverlay');if(overlay)overlay.remove();
