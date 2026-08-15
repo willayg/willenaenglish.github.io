@@ -43,12 +43,12 @@ function ensureStyles(){
   s.id='v2DailyRewardStyles';
   s.textContent='\
 #dailyWorkoutCard .daily-streak-status{display:block;margin-top:4px;font-size:12px;font-weight:800;opacity:.82}\
-#dailyWorkoutCard.is-complete{min-height:138px!important;border-width:4px!important;background:linear-gradient(135deg,#fff 0%,#fffafd 70%,#ffeaf3 100%)!important;box-shadow:0 18px 44px rgba(255,111,176,.16)!important}\
-#dailyWorkoutCard.is-complete:after{content:"";position:absolute;right:-42px;top:-42px;width:170px;height:170px;border-radius:50%;background:radial-gradient(circle at 35% 35%,rgba(255,255,255,.95),rgba(255,111,176,.16) 28%,rgba(255,111,176,0) 62%);pointer-events:none}\
+#dailyWorkoutCard.is-complete{min-height:138px!important;border-width:4px!important;background:#fff!important;box-shadow:0 10px 24px rgba(255,111,176,.08)!important;overflow:hidden!important}\
+#dailyWorkoutCard.is-complete:after{content:none!important;display:none!important;background:none!important}\
 #dailyWorkoutCard.is-complete #smartProgressTitle{font-size:1.42rem!important;line-height:1.02!important;font-weight:900!important;letter-spacing:-.02em!important;color:#ea4d96!important;position:relative;z-index:2}\
 #dailyWorkoutCard.is-complete #smartProgressCopy{display:block!important;margin-top:8px!important;font-size:.82rem!important;line-height:1.25!important;font-weight:800!important;color:#7c8c91!important;opacity:1!important;position:relative;z-index:2}\
 #dailyWorkoutCard.is-complete .daily-streak-status{margin-top:9px!important;position:relative;z-index:2}\
-#dailyWorkoutCard.is-complete .progress-ring{box-shadow:0 0 0 10px rgba(255,111,176,.08),0 0 24px rgba(255,111,176,.15)!important;z-index:2}\
+#dailyWorkoutCard.is-complete .progress-ring{box-shadow:none!important;z-index:2}\
 #dailyWorkoutCard.is-complete:before{z-index:2}\
 .daily-reward-summary{margin:16px auto 4px;padding:16px 18px;border-radius:18px;background:rgba(255,255,255,.72);max-width:360px;text-align:center;box-shadow:0 8px 24px rgba(23,63,70,.08)}\
 .daily-reward-points{font-size:22px;font-weight:900;line-height:1.25}\
