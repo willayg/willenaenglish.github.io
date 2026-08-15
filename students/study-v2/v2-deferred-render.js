@@ -12,7 +12,9 @@ proto.setActivity=function(raw){
   var token=setTimeout(function(){
     pending.delete(engine);
     var panel=document.getElementById('v2PracticePanel');
-    if(panel&&panel.hidden)return;
+    var root=engine&&engine.root;
+    var inAiCoach=!!(root&&root.closest&&root.closest('#aiCoachPracticeOverlay'));
+    if(panel&&panel.hidden&&!inAiCoach)return;
     original.call(engine,raw);
   },32);
   pending.set(engine,token);
