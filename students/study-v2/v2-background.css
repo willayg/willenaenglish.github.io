@@ -1,4 +1,4 @@
-/* Slightly deeper Study V2 canvas behind cards/containers. */
-html,body,.study-app{background:#d8f1f3!important;}
+/* Neutral Study V2 canvas so the colorful learning cards stand out. */
+html,body,.study-app{background:#f2f3f5!important;}
 .dashboard{background:transparent!important;}
-.study-v2-practice-mode,.study-v2-daily-mode{background:#d8f1f3!important;}
+.study-v2-practice-mode,.study-v2-daily-mode{background:#f2f3f5!important;}
