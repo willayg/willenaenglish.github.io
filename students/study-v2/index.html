@@ -17,7 +17,7 @@
 <link rel="stylesheet" href="/students/study/study-listening.css?v=20260809-leveltestaudio1">
 <link rel="stylesheet" href="/students/study/study-coach.css?v=20260810-mobilelang1">
 <link rel="stylesheet" href="./v2.css?v=20260814-daily1">
-<link rel="stylesheet" href="./v2-top-layout.css?v=20260815-hierarchy1">
+<link rel="stylesheet" href="./v2-top-layout.css?v=20260815-hierarchy2">
 <link rel="stylesheet" href="./v2-short-landscape.css?v=20260814-listenrow1">
 <link rel="stylesheet" href="./v2-round-ux.css?v=20260814-roundux1">
 <link rel="stylesheet" href="./v2-background.css?v=20260814-bg1">
@@ -53,25 +53,27 @@
 
       <nav id="bookTabs" class="study-v2-book-tabs" aria-label="Books" hidden></nav>
 
-      <div id="bookSwipe" class="study-v2-book-title-wrap">
-        <h1 id="bookTitle">Loading…</h1>
-        <p id="unitTitle">Finding your assigned unit</p>
-        <div id="bookPips" class="study-v2-book-pips" hidden></div>
-      </div>
+      <div class="study-v2-book-panel">
+        <div id="bookSwipe" class="study-v2-book-title-wrap">
+          <h1 id="bookTitle">Loading…</h1>
+          <p id="unitTitle">Finding your assigned unit</p>
+          <div id="bookPips" class="study-v2-book-pips" hidden></div>
+        </div>
 
-      <div class="study-v2-units">
-        <div class="study-v2-units-head"><span>공부할 단원을 선택하세요</span><span id="currentUnitLabel">현재 · Unit —</span></div>
-        <div id="unitStrip" class="study-v2-unit-strip"></div>
-      </div>
+        <div class="study-v2-units">
+          <div class="study-v2-units-head"><span>공부할 단원을 선택하세요</span><span id="currentUnitLabel">현재 · Unit —</span></div>
+          <div id="unitStrip" class="study-v2-unit-strip"></div>
+        </div>
 
-      <div class="header-skill-mastery" id="headerSkillMastery">
-        <div class="header-skill-mastery-head"><strong>단원 숙련도</strong><span>영역을 눌러 연습하세요</span></div>
-        <div id="masteryGrid" class="header-skill-mastery-grid"></div>
-      </div>
+        <div class="header-skill-mastery" id="headerSkillMastery">
+          <div class="header-skill-mastery-head"><strong>단원 숙련도</strong><span>영역을 눌러 연습하세요</span></div>
+          <div id="masteryGrid" class="header-skill-mastery-grid"></div>
+        </div>
 
-      <div class="hero-actions">
-        <button id="continueBtn" class="primary-button" type="button">단원 공부하기</button>
-        <button id="changeUnitBtn" class="secondary-button" type="button">단원 보기</button>
+        <div class="hero-actions">
+          <button id="continueBtn" class="primary-button" type="button">단원 공부하기</button>
+          <button id="changeUnitBtn" class="secondary-button" type="button">단원 보기</button>
+        </div>
       </div>
     </div>
   </section>
