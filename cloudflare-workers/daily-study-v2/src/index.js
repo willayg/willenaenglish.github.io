@@ -33,6 +33,16 @@ async function rpc(env,name,args){
 }
 function validDate(v){return /^\d{4}-\d{2}-\d{2}$/.test(String(v||''));}
 function validTrack(v){return v==='test'?'test':'live';}
+async function attachReward(env,userId,date,track,data){
+  try{
+    const reward=await rpc(env,'daily_study_reward_snapshot',{p_student_id:userId,p_study_date:date,p_track:track});
+    return Object.assign({},data||{},{reward});
+  }catch(error){
+    // Rewards must never make the core Daily Study fail to load or save.
+    console.warn('[daily-study-v2] reward snapshot',error&&error.message||error);
+    return Object.assign({},data||{},{reward:null});
+  }
+}
 
 export default {
   async fetch(request,env){
@@ -57,7 +67,7 @@ export default {
     try{
       if(request.method==='GET'){
         const data=await rpc(env,'daily_study_v3_get',{p_student_id:userId,p_study_date:date,p_track:track});
-        return json(origin,200,data);
+        return json(origin,200,await attachReward(env,userId,date,track,data));
       }
       if(request.method==='POST'){
         const body=await request.json().catch(()=>null);
@@ -68,18 +78,18 @@ export default {
             return json(origin,403,{success:false,error:'Test reset is staging only'});
           }
           const data=await rpc(env,'reset_daily_study_v3_test',{p_student_id:userId});
-          return json(origin,200,data);
+          return json(origin,200,await attachReward(env,userId,date,track,data));
         }
         if(body.action==='create'){
           if(!Array.isArray(body.plan))return json(origin,400,{success:false,error:'Plan must be an array'});
           const data=await rpc(env,'daily_study_v3_create',{p_student_id:userId,p_study_date:date,p_plan:body.plan,p_track:track});
-          return json(origin,200,data);
+          return json(origin,200,await attachReward(env,userId,date,track,data));
         }
         if(body.action==='answer'){
           const key=String(body.daily_key||'').trim();
           if(!key)return json(origin,400,{success:false,error:'Missing daily key'});
           const data=await rpc(env,'daily_study_v3_answer',{p_student_id:userId,p_study_date:date,p_daily_key:key,p_correct:!!body.correct,p_track:track});
-          return json(origin,200,data);
+          return json(origin,200,await attachReward(env,userId,date,track,data));
         }
         return json(origin,400,{success:false,error:'Unknown action'});
       }
