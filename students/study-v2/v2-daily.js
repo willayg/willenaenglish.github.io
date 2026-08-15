@@ -22,6 +22,7 @@ var current=null;
 var loading=false;
 var answerLocked=false;
 var syncing=false;
+var progression={bookStates:[],unitProgress:[]};
 
 function text(v){return String(v==null?'':v).trim();}
 function arr(v){return Array.isArray(v)?v:[];}
@@ -36,16 +37,52 @@ function resolvedCount(){return Math.min(TARGET,arr(session&&session.resolved_ke
 function validActivity(a){return a&&a.id&&SKILLS.indexOf(a.skill)>=0&&a.response&&a.stimulus;}
 function dailyKey(a){return text(a&&a.daily_key||a&&a.id);}
 
+function ingestProgress(data){
+  if(!data||typeof data!=='object')return;
+  if(Array.isArray(data.book_states))progression.bookStates=data.book_states;
+  if(Array.isArray(data.unit_progress))progression.unitProgress=data.unit_progress;
+}
+function bookState(book){return progression.bookStates.find(function(s){return String(s.book_id)===String(book.book_id);})||null;}
+function unitProgress(bookId,unitId){return progression.unitProgress.find(function(p){return String(p.book_id)===String(bookId)&&String(p.unit_id)===String(unitId);})||null;}
+function unitByHint(book,hint){
+  var units=arr(book&&book.units);if(!units.length||hint==null||hint==='')return null;
+  var raw=String(hint),n=(raw.match(/\d+/)||[])[0];
+  return units.find(function(u){return String(u.id)===raw||(n&&String(u.unit_number)===String(n));})||null;
+}
+function assignmentUnit(book){
+  return unitByHint(book,book&&book.current_unit)||unitByHint(book,book&&book.starting_unit)||arr(book&&book.units)[0]||book.currentUnit||null;
+}
+function dailyCursor(book){
+  var units=arr(book&&book.units).slice().sort(function(a,b){return Number(a.unit_number)-Number(b.unit_number);});
+  var assigned=assignmentUnit(book);if(!assigned)return null;
+  var state=bookState(book),sameAssignment=state&&(!state.assignment_unit_id||String(state.assignment_unit_id)===String(assigned.id));
+  var currentUnit=sameAssignment?units.find(function(u){return String(u.id)===String(state.current_unit_id);}):null;
+  if(!currentUnit)currentUnit=assigned;
+  var idx=units.findIndex(function(u){return String(u.id)===String(currentUnit.id);});
+  var previousUnit=null;
+  if(sameAssignment&&state.previous_unit_id)previousUnit=units.find(function(u){return String(u.id)===String(state.previous_unit_id);})||null;
+  if(!previousUnit&&idx>0&&sameAssignment&&state&&state.previous_unit_id)previousUnit=units[idx-1];
+  var nextUnit=idx>=0&&idx<units.length-1?units[idx+1]:null;
+  return{assigned:assigned,current:currentUnit,previous:previousUnit,next:nextUnit,state:state};
+}
+function recentAccuracy(progress){
+  if(!progress)return{attempts:0,count:0,accuracy:0};
+  var recent=arr(progress.recent_results),count=recent.length,correct=recent.filter(function(v){return v===true;}).length;
+  var attempts=Number(progress.attempts)||0;
+  if(!count&&attempts>0){count=attempts;correct=Number(progress.correct)||0;}
+  return{attempts:attempts,count:count,accuracy:count?correct/count:0};
+}
+function previewRatio(progress){
+  var p=recentAccuracy(progress);
+  if(p.attempts>=15&&p.count>=10&&p.accuracy>=0.85)return 0.40;
+  if(p.attempts>=10&&p.count>=10&&p.accuracy>=0.70)return 0.20;
+  return 0;
+}
+
 async function dailyAccessToken(){
   var api=global.WillenaAPI,token='';
-  try{
-    token=text(api&&api.getLocalAccessToken?api.getLocalAccessToken():localStorage.getItem('sb_access_token'));
-  }catch(_){token='';}
+  try{token=text(api&&api.getLocalAccessToken?api.getLocalAccessToken():localStorage.getItem('sb_access_token'));}catch(_){token='';}
   if(token)return token;
-
-  // A long-lived cookie session may be valid even when an old browser session
-  // has no local token. Refresh once through the existing gateway to obtain a
-  // token for the workers.dev call without changing the shared auth Worker.
   if(api&&typeof api.fetch==='function'){
     try{
       var r=await api.fetch('/.netlify/functions/supabase_auth?action=refresh&_='+Date.now(),{cache:'no-store'});
@@ -68,6 +105,7 @@ async function request(method,body){
   if(body){opts.headers['Content-Type']='application/json';opts.body=JSON.stringify(body);}
   var r=await fetch(url,opts),d=await r.json().catch(function(){return{};});
   if(!r.ok)throw new Error(d.error||('Daily Study request failed ('+r.status+')'));
+  ingestProgress(d);
   return d;
 }
 
@@ -82,7 +120,7 @@ function paint(){
   if(title)title.textContent=langKo()?'오늘의 학습':'Daily Study';
   if(copy)copy.textContent=done>=TARGET?(langKo()?'오늘 목표 완료 ✓':'Daily goal complete ✓'):(langKo()?'오늘 목표 · '+done+'/'+TARGET:'Today · '+done+'/'+TARGET);
 }
-function sessionFrom(data){if(data&&data.session){session=data.session;paint();return session;}return null;}
+function sessionFrom(data){ingestProgress(data);if(data&&data.session){session=data.session;paint();return session;}return null;}
 async function syncCard(){
   if(syncing)return syncing;
   syncing=(async function(){try{var data=await request('GET');if(data&&data.session)sessionFrom(data);else{session=null;paint();}return data;}catch(e){console.warn('[Daily Study] sync',e);return null;}finally{syncing=false;}})();
@@ -90,12 +128,11 @@ async function syncCard(){
 }
 
 function contextFor(book,unit){return{bookId:book.book_id,bookTitle:book.book_title,unitId:unit.id,unitNumber:Number(unit.unit_number)};}
-async function loadCurrentUnitPool(book){
-  if(!book||!book.currentUnit||!global.WillenaStudyQuestionBank)return[];
-  var unit=book.currentUnit;
+async function loadUnitPool(book,unit,role,cursor){
+  if(!book||!unit||!global.WillenaStudyQuestionBank)return[];
   var rows=await global.WillenaStudyQuestionBank.loadUnit(null,contextFor(book,unit)).catch(function(){return[];});
   return arr(rows).filter(validActivity).map(function(source){
-    var a=clone(source),key=text(a.id);
+    var a=clone(source),key=text(a.id),assigned=cursor.assigned,next=cursor.next,previous=cursor.previous;
     a.daily_key=key;
     a.metadata=Object.assign({},a.metadata||{}, {
       book_id:book.book_id,
@@ -105,36 +142,75 @@ async function loadCurrentUnitPool(book){
       daily_origin_id:key,
       daily_book_title:book.book_title,
       daily_unit_number:Number(unit.unit_number),
-      daily_source:'current',
-      current_curriculum:true
+      daily_role:role,
+      daily_source:role,
+      daily_assignment_unit_id:assigned&&assigned.id||null,
+      daily_assignment_unit_number:assigned?Number(assigned.unit_number):null,
+      daily_cursor_unit_id:cursor.current.id,
+      daily_cursor_unit_number:Number(cursor.current.unit_number),
+      daily_previous_unit_id:previous&&previous.id||null,
+      daily_previous_unit_number:previous?Number(previous.unit_number):null,
+      daily_next_unit_id:next&&next.id||null,
+      daily_next_unit_number:next?Number(next.unit_number):null,
+      current_curriculum:role==='current'
     });
     return a;
   });
 }
-
+function skillBalancedQueue(rows){
+  var by={};SKILLS.forEach(function(s){by[s]=[];});
+  shuffle(rows).forEach(function(a){if(validActivity(a))by[a.skill].push(a);});
+  SKILLS.forEach(function(s){by[s]=shuffle(by[s]);});
+  var out=[],progress=true;
+  while(progress){
+    progress=false;
+    SKILLS.forEach(function(s){if(by[s].length){out.push(by[s].shift());progress=true;}});
+  }
+  return out;
+}
+function weightedUnitQueue(currentRows,nextRows,previousRows,ratio){
+  var queues={current:skillBalancedQueue(currentRows),next:skillBalancedQueue(nextRows),previous:skillBalancedQueue(previousRows)};
+  var hasNext=queues.next.length>0&&ratio>0,hasPrevious=queues.previous.length>0,pattern;
+  if(hasPrevious&&hasNext){pattern=ratio>=0.40?['current','next','current','next','previous']:['current','current','current','next','previous'];}
+  else if(hasPrevious){pattern=['current','current','current','current','previous'];}
+  else if(hasNext){pattern=ratio>=0.40?['current','next','current','next','current']:['current','current','current','current','next'];}
+  else pattern=['current'];
+  var out=[],used={},alive=true,step=0;
+  while(alive&&out.length<MAX_CANDIDATES){
+    alive=queues.current.length||queues.next.length||queues.previous.length;
+    if(!alive)break;
+    var role=pattern[step%pattern.length],item=null;
+    step++;
+    while(queues[role]&&queues[role].length&&!item){var candidate=queues[role].shift(),k=dailyKey(candidate);if(k&&!used[k])item=candidate;}
+    if(!item){
+      ['current','next','previous'].some(function(fallback){
+        while(queues[fallback].length&&!item){var candidate=queues[fallback].shift(),k=dailyKey(candidate);if(k&&!used[k])item=candidate;}
+        return !!item;
+      });
+    }
+    if(item){used[dailyKey(item)]=true;out.push(item);}
+  }
+  return out;
+}
+async function loadDailyBookGroup(book){
+  var cursor=dailyCursor(book);if(!cursor||!cursor.current)return{book:book,rows:[]};
+  var progress=unitProgress(book.book_id,cursor.current.id),ratio=previewRatio(progress);
+  var pools=await Promise.all([
+    loadUnitPool(book,cursor.current,'current',cursor),
+    cursor.next&&ratio>0?loadUnitPool(book,cursor.next,'next',cursor):Promise.resolve([]),
+    cursor.previous?loadUnitPool(book,cursor.previous,'previous',cursor):Promise.resolve([])
+  ]);
+  var rows=weightedUnitQueue(pools[0],pools[1],pools[2],ratio);
+  return{book:book,rows:rows,cursor:cursor,previewRatio:ratio};
+}
 function balancedCandidates(groups){
-  var books=groups.map(function(rows){
-    var by={};
-    SKILLS.forEach(function(s){by[s]=[];});
-    shuffle(rows).forEach(function(a){if(validActivity(a))by[a.skill].push(a);});
-    SKILLS.forEach(function(s){by[s]=shuffle(by[s]);});
-    return by;
-  });
-  var out=[],used={},progress=true;
+  var queues=groups.map(function(g){return arr(g.rows).slice();}),out=[],used={},progress=true;
   while(out.length<MAX_CANDIDATES&&progress){
     progress=false;
-    for(var s=0;s<SKILLS.length&&out.length<MAX_CANDIDATES;s++){
-      for(var b=0;b<books.length&&out.length<MAX_CANDIDATES;b++){
-        var bucket=books[b][SKILLS[s]];
-        while(bucket.length){
-          var a=bucket.shift(),k=dailyKey(a);
-          if(!k||used[k])continue;
-          used[k]=true;
-          out.push(a);
-          progress=true;
-          break;
-        }
-      }
+    for(var b=0;b<queues.length&&out.length<MAX_CANDIDATES;b++){
+      var q=queues[b],item=null;
+      while(q.length&&!item){var candidate=q.shift(),k=dailyKey(candidate);if(k&&!used[k])item=candidate;}
+      if(item){used[dailyKey(item)]=true;out.push(item);progress=true;}
     }
   }
   return out;
@@ -143,15 +219,15 @@ function balancedCandidates(groups){
 async function buildPlan(){
   var h=home();
   if(!h||!h.books.length)throw new Error('Assigned books are still loading.');
-  var books=h.books.filter(function(b){return b&&b.book_id&&b.currentUnit&&b.currentUnit.id;});
+  var books=h.books.filter(function(b){return b&&b.book_id&&arr(b.units).length;});
   if(!books.length)throw new Error('No study books are ready.');
 
-  var groups=await Promise.all(books.map(loadCurrentUnitPool));
-  groups=groups.filter(function(g){return g.length;});
-  if(!groups.length)throw new Error('No Daily Study questions are available in the assigned current units.');
+  var groups=await Promise.all(books.map(loadDailyBookGroup));
+  groups=groups.filter(function(g){return g.rows.length;});
+  if(!groups.length)throw new Error('No Daily Study questions are available for the assigned learning path.');
 
   var plan=balancedCandidates(groups);
-  if(plan.length<TARGET)throw new Error('Daily Study needs at least 20 unique questions across the assigned current units.');
+  if(plan.length<TARGET)throw new Error('Daily Study needs at least 20 unique questions across the assigned books.');
   return plan;
 }
 
@@ -229,5 +305,5 @@ function bind(){
   paint();syncCard();
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind,{once:true});else bind();
-global.WillenaStudyV2Daily={open:open,close:close,paint:paint,sync:syncCard,getSession:function(){return session;}};
+global.WillenaStudyV2Daily={open:open,close:close,paint:paint,sync:syncCard,getSession:function(){return session;},getProgression:function(){return clone(progression);}};
 })(window);
