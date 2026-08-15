@@ -6,10 +6,10 @@ html,body,.study-app{background:#f2f3f5!important;}
 /* Comfortable spacing: roomier than the original without feeling empty. */
 .study-v2-book-panel{padding:34px 28px 40px!important;}
 .study-v2-book-tabs{margin-bottom:46px!important;}
-.study-v2-book-title-wrap{margin-bottom:50px!important;padding-top:5px!important;grid-template-rows:auto auto 21px!important;}
-.study-v2-book-title-wrap #bookTitle{line-height:1.09!important;padding:4px 0 7px!important;}
-.study-v2-book-title-wrap #unitTitle{margin-top:29px!important;line-height:1.48!important;}
-.study-v2-book-pips{margin-top:32px!important;padding-bottom:21px!important;}
+.study-v2-book-title-wrap{margin-bottom:50px!important;padding-top:5px!important;grid-template-rows:auto auto 21px!important;text-align:center!important;justify-items:center!important;}
+.study-v2-book-title-wrap #bookTitle{line-height:1.09!important;padding:4px 0 7px!important;text-align:center!important;width:100%!important;}
+.study-v2-book-title-wrap #unitTitle{margin-top:29px!important;line-height:1.48!important;text-align:center!important;width:100%!important;}
+.study-v2-book-pips{margin-top:32px!important;padding-bottom:21px!important;justify-content:center!important;width:100%!important;}
 .study-v2-units-head{margin-bottom:20px!important;}
 .study-v2-unit-strip{gap:11px!important;padding:3px 1px 10px!important;}
 .study-v2-unit{min-height:49px!important;padding:12px 17px!important;}
