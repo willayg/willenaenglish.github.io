@@ -162,7 +162,10 @@ function renderBadges(statsOverride) {
 
 async function loadDailyStreakBest() {
   try {
-    const res = await fetch(`/.netlify/functions/progress_summary?section=sessions&_=${Date.now()}`, { credentials: 'include', cache: 'no-store' });
+    const apiFetch = window.WillenaAPI && typeof WillenaAPI.fetch === 'function'
+      ? WillenaAPI.fetch.bind(WillenaAPI)
+      : fetch;
+    const res = await apiFetch(`/.netlify/functions/progress_summary?section=sessions&_=${Date.now()}`, { credentials: 'include', cache: 'no-store' });
     if (!res.ok) return;
     const sessions = await res.json().catch(() => []);
     if (!Array.isArray(sessions)) return;
