@@ -3,37 +3,111 @@ html,body,.study-app{background:#f2f3f5!important;}
 .dashboard{background:transparent!important;}
 .study-v2-practice-mode,.study-v2-daily-mode{background:#f2f3f5!important;}
 
-/* Comfortable spacing: roomier than the original without feeling empty. */
-.study-v2-book-panel{padding:34px 28px 40px!important;}
-.study-v2-book-tabs{margin-bottom:46px!important;}
-.study-v2-book-title-wrap{margin-bottom:50px!important;padding-top:5px!important;grid-template-rows:auto auto 21px!important;text-align:center!important;justify-items:center!important;}
-.study-v2-book-title-wrap #bookTitle{line-height:1.09!important;padding:4px 0 7px!important;text-align:center!important;width:100%!important;}
-.study-v2-book-title-wrap #unitTitle{margin-top:29px!important;line-height:1.48!important;text-align:center!important;width:100%!important;}
-.study-v2-book-pips{margin-top:32px!important;padding-bottom:21px!important;justify-content:center!important;width:100%!important;}
-.study-v2-units-head{margin-bottom:20px!important;}
-.study-v2-unit-strip{gap:11px!important;padding:3px 1px 10px!important;}
-.study-v2-unit{min-height:49px!important;padding:12px 17px!important;}
-.header-skill-mastery{margin-top:52px!important;padding-top:39px!important;}
-.header-skill-mastery-head{margin-bottom:23px!important;}
-.header-skill-mastery-grid{gap:18px!important;row-gap:19px!important;}
-.header-skill-master{min-height:88px!important;padding:17px 16px!important;}
-.header-skill-master-top{margin-bottom:10px!important;}
-.header-skill-master-track{margin-top:10px!important;}
+/* 3A direction: cyan frame around the full book area with a lifted title card. */
+.study-v2-book-panel{
+  padding:26px 22px 30px!important;
+  border:3px solid #21b3be!important;
+  border-radius:30px!important;
+  background:#fff!important;
+  box-shadow:0 10px 30px rgba(38,74,79,.06)!important;
+}
+.study-v2-book-tabs{margin-bottom:26px!important;}
+
+/* Floating title card. */
+.study-v2-book-title-wrap{
+  width:min(94%,660px)!important;
+  max-width:660px!important;
+  margin:0 auto 31px!important;
+  padding:25px 20px 23px!important;
+  grid-template-rows:auto auto 21px!important;
+  text-align:center!important;
+  justify-items:center!important;
+  background:#fff!important;
+  border:1px solid #dce7e9!important;
+  border-radius:24px!important;
+  box-shadow:0 12px 28px rgba(38,74,79,.09)!important;
+}
+.study-v2-book-title-wrap #bookTitle{
+  width:100%!important;
+  margin:0!important;
+  padding:0!important;
+  text-align:center!important;
+  font-size:clamp(2.15rem,6vw,4.1rem)!important;
+  line-height:1.05!important;
+  letter-spacing:-.035em!important;
+  font-weight:800!important;
+}
+/* Subtitle stays plain text: no pill, box, or background. */
+.study-v2-book-title-wrap #unitTitle{
+  width:100%!important;
+  display:block!important;
+  margin:13px 0 0!important;
+  padding:0!important;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  color:#21b3be!important;
+  text-align:center!important;
+  font-size:.92rem!important;
+  line-height:1.4!important;
+  font-weight:800!important;
+}
+.study-v2-book-pips{
+  width:100%!important;
+  margin-top:17px!important;
+  padding-bottom:15px!important;
+  justify-content:center!important;
+}
+.study-v2-book-pips:after{width:52px!important;height:3px!important;}
+
+/* Compact unit controls so they do not compete with the book header. */
+.study-v2-units-head{margin-bottom:9px!important;}
+.study-v2-unit-strip{gap:7px!important;padding:0 1px 3px!important;}
+.study-v2-unit{
+  min-height:31px!important;
+  padding:5px 11px!important;
+  border-radius:10px!important;
+  line-height:1.15!important;
+}
+
+/* Keep mastery comfortably sized. */
+.header-skill-mastery{margin-top:31px!important;padding-top:23px!important;}
+.header-skill-mastery-head{margin-bottom:13px!important;}
+.header-skill-mastery-grid{gap:12px!important;row-gap:12px!important;}
+.header-skill-master{min-height:78px!important;padding:13px 12px!important;}
+.header-skill-master-top{margin-bottom:8px!important;}
+.header-skill-master-track{margin-top:8px!important;}
 
 @media(max-width:560px){
-  .study-v2-book-panel{padding:27px 19px 34px!important;}
-  .study-v2-book-tabs{margin-bottom:38px!important;}
-  .study-v2-book-title-wrap{margin-bottom:42px!important;padding-top:4px!important;grid-template-rows:auto auto 20px!important;}
-  .study-v2-book-title-wrap #bookTitle{padding:4px 0 7px!important;line-height:1.10!important;}
-  .study-v2-book-title-wrap #unitTitle{margin-top:24px!important;line-height:1.5!important;}
-  .study-v2-book-pips{margin-top:28px!important;padding-bottom:19px!important;}
-  .study-v2-units-head{margin-bottom:18px!important;}
-  .study-v2-unit-strip{gap:10px!important;padding-bottom:10px!important;}
-  .study-v2-unit{min-height:46px!important;padding:12px 15px!important;}
-  .header-skill-mastery{margin-top:45px!important;padding-top:33px!important;}
-  .header-skill-mastery-head{margin-bottom:20px!important;}
-  .header-skill-mastery-grid{gap:14px!important;row-gap:15px!important;}
-  .header-skill-master{min-height:84px!important;padding:15px 13px!important;}
-  .header-skill-master-top{margin-bottom:9px!important;}
-  .header-skill-master-track{margin-top:9px!important;}
+  .study-v2-book-panel{
+    padding:21px 14px 24px!important;
+    border-radius:24px!important;
+  }
+  .study-v2-book-tabs{margin-bottom:22px!important;}
+  .study-v2-book-title-wrap{
+    width:97%!important;
+    margin-bottom:27px!important;
+    padding:22px 14px 20px!important;
+    grid-template-rows:auto auto 19px!important;
+    border-radius:21px!important;
+  }
+  .study-v2-book-title-wrap #bookTitle{
+    font-size:clamp(1.9rem,8vw,3rem)!important;
+    line-height:1.06!important;
+  }
+  .study-v2-book-title-wrap #unitTitle{
+    margin-top:12px!important;
+    font-size:.86rem!important;
+  }
+  .study-v2-book-pips{margin-top:15px!important;padding-bottom:14px!important;}
+  .study-v2-units-head{margin-bottom:8px!important;}
+  .study-v2-unit-strip{gap:7px!important;padding-bottom:3px!important;}
+  .study-v2-unit{min-height:30px!important;padding:5px 10px!important;}
+  .header-skill-mastery{margin-top:28px!important;padding-top:21px!important;}
+  .header-skill-mastery-head{margin-bottom:12px!important;}
+  .header-skill-mastery-grid{gap:10px!important;row-gap:10px!important;}
+  .header-skill-master{min-height:76px!important;padding:12px 10px!important;}
+  .header-skill-master-top{margin-bottom:8px!important;}
+  .header-skill-master-track{margin-top:8px!important;}
 }
