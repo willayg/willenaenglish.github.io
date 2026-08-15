@@ -28,7 +28,7 @@
 .study-v2-ai-chat-row.is-coach .study-v2-ai-chat-bubble{
   color:var(--coach-ink);
   background:#fff;
-  border-left:3px solid var(--coach-accent);
+  border-color:var(--coach-line);
   border-bottom-left-radius:7px;
 }
 .study-v2-ai-chat-row.is-user .study-v2-ai-chat-bubble{
