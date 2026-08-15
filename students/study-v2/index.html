@@ -21,6 +21,7 @@
 <link rel="stylesheet" href="./v2-short-landscape.css?v=20260814-listenrow1">
 <link rel="stylesheet" href="./v2-round-ux.css?v=20260814-roundux1">
 <link rel="stylesheet" href="./v2-background.css?v=20260815-aicoachtype2">
+<link rel="stylesheet" href="./v2-ai-chat.css?v=20260815-guided1">
 <link rel="stylesheet" href="./v2-spelling-input.css?v=20260814-keyboard2">
 <link rel="stylesheet" href="./v2-daily-test.css?v=20260815-pacedtester1">
 <script src="/students/api-gateway.js?v=20260808-study1"></script>
@@ -55,7 +56,12 @@
 
       <section id="aiRecommendations" class="study-coach study-v2-ai">
         <div class="study-coach-head"><div><h2 id="aiHeading">AI 코치</h2></div></div>
-        <div id="aiGrid" class="study-coach-grid"></div>
+        <div id="aiChat" class="study-v2-ai-chat">
+          <div id="aiChatTranscript" class="study-v2-ai-chat-transcript" aria-live="polite"></div>
+          <div id="aiChatPrompts" class="study-v2-ai-chat-prompts"></div>
+          <div id="aiChatCta" class="study-v2-ai-chat-cta-wrap"></div>
+        </div>
+        <div id="aiGrid" class="study-coach-grid" hidden aria-hidden="true"></div>
       </section>
 
       <div class="study-v2-book-panel" id="bookPracticeArea">
@@ -115,6 +121,7 @@
 <script src="./v2-daily.js?v=20260815-pacedtester1"></script>
 <script src="./v2-ai-coach.js?v=20260815-stablenav1"></script>
 <script src="./v2-ai-copy-friendly.js?v=20260815-friendlycoach1"></script>
+<script src="./v2-ai-chat.js?v=20260815-guided1"></script>
 <script src="./v2-daily-test-placement.js?v=20260815-bottom1"></script>
 <script src="./v2-daily-rewards.js?v=20260815-endingring1"></script>
 <script>
