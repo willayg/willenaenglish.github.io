@@ -1,78 +1,97 @@
-/* Study V2 top-of-page hierarchy and spacing. */
+/* Study V2 top-of-page hierarchy and English Arcade palette. */
+:root{--arcade-pink:#ff6fb0;--arcade-cyan:#21b3be;--arcade-orange:#d9923b;--arcade-blue:#5b7fe5;}
 .book-hero.daily-inline{background:transparent!important;border:0!important;box-shadow:none!important;padding:4px 0 10px!important;overflow:visible!important}
 .book-hero.daily-inline .hero-copy{display:block}
 
 /* Four independent actions: always one full-width card per row. */
 .study-v2-top-actions{display:flex!important;flex-direction:column!important;align-items:stretch!important;gap:14px;margin:0 0 42px;padding:0;border:0;background:transparent;box-shadow:none;width:100%}
-.study-v2-top-actions>.study-v2-action-card{display:flex;flex:0 0 auto!important;width:100%!important;max-width:none!important;box-sizing:border-box!important}
-.study-v2-action-card{min-width:0;width:100%;min-height:108px;border:3px solid var(--cyan)!important;border-radius:20px!important;background:#fff!important;color:var(--pink-dark)!important;box-shadow:none!important;font-family:inherit;cursor:pointer;transition:transform .16s ease,box-shadow .16s ease,background .16s ease,border-color .16s ease}
-.study-v2-action-card:hover,.study-v2-action-card:focus-visible{transform:translateY(-2px);background:var(--cyan-soft)!important;border-color:var(--cyan-strong)!important;outline:none;box-shadow:0 10px 24px rgba(34,106,116,.10)!important}
-.study-v2-action-card>strong{display:block;font-size:1rem;line-height:1.18;font-weight:800;color:var(--pink-dark)}
-.study-v2-action-card>small{display:block;margin-top:7px;font-size:.72rem;line-height:1.3;font-weight:700;color:var(--muted)}
-.study-v2-action-card.is-coming-soon{cursor:default;opacity:.58}
-.study-v2-action-card.is-coming-soon:hover{transform:none;background:#fff!important;border-color:var(--cyan)!important;box-shadow:none!important}
+.study-v2-top-actions>.study-v2-action-card{display:flex!important;flex:0 0 auto!important;width:100%!important;max-width:none!important;box-sizing:border-box!important;align-items:center!important;justify-content:flex-start!important;gap:16px!important;text-align:left!important;padding:16px 18px!important;min-height:92px;border-radius:22px!important;background:#fff!important;color:#35565b!important;box-shadow:0 7px 20px rgba(38,74,79,.06)!important;font-family:inherit;cursor:pointer;transition:transform .16s ease,box-shadow .16s ease,background .16s ease,border-color .16s ease}
+.study-v2-action-card:hover,.study-v2-action-card:focus-visible{transform:translateY(-2px);outline:none;box-shadow:0 11px 26px rgba(38,74,79,.11)!important}
+.study-v2-action-card>strong{display:block;font-size:1.08rem;line-height:1.18;font-weight:800;color:#35565b!important}
+.study-v2-action-card>small{display:block;margin-top:5px;font-size:.76rem;line-height:1.3;font-weight:700;color:#7c8c91!important}
 
-#dailyWorkoutCard.study-v2-daily-primary{display:flex!important;align-items:center;gap:14px;width:100%!important;padding:16px;border:3px solid var(--cyan);border-radius:20px;background:#fff;color:var(--pink-dark);box-shadow:none}
-#dailyWorkoutCard.study-v2-daily-primary .progress-ring{width:70px;height:70px;flex:0 0 70px;background:conic-gradient(var(--pink) 0 calc(var(--progress,0)*1%),#ffe1f0 calc(var(--progress,0)*1%) 100%)}
-#dailyWorkoutCard.study-v2-daily-primary .progress-ring:after{inset:8px;background:#fff}
-#dailyWorkoutCard.study-v2-daily-primary .progress-ring span{font-size:.95rem;color:var(--pink-dark)}
-#dailyWorkoutCard.study-v2-daily-primary strong{font-size:1rem;line-height:1.18;color:var(--pink-dark)}
-#dailyWorkoutCard.study-v2-daily-primary small{margin-top:7px;font-size:.72rem;font-weight:700;color:var(--muted);opacity:1}
-#practiceHeroBtn.study-v2-ai-launch,#bookPracticeBtn,#bookStudyBtn{display:grid!important;place-content:center;text-align:center;padding:16px}
+/* Arcade-colored action icons, injected visually so existing button behavior stays untouched. */
+.study-v2-action-card:before{content:"";display:block;width:58px;height:58px;flex:0 0 58px;border-radius:18px;background-color:#f5f8f9;background-repeat:no-repeat;background-position:center;background-size:32px 32px}
+#practiceHeroBtn{border:2px solid var(--arcade-cyan)!important}
+#practiceHeroBtn:before{background-color:#eefafb;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2321b3be' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='4' y='6' width='16' height='12' rx='4'/%3E%3Cpath d='M12 3v3M8 12h.01M16 12h.01M9 15h6'/%3E%3C/svg%3E")}
+#bookPracticeBtn{border:2px solid var(--arcade-orange)!important}
+#bookPracticeBtn:before{background-color:#fff8ee;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23d9923b' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 5.5A2.5 2.5 0 0 1 6.5 3H11v16H6.5A2.5 2.5 0 0 0 4 21.5z'/%3E%3Cpath d='M20 5.5A2.5 2.5 0 0 0 17.5 3H13v16h4.5A2.5 2.5 0 0 1 20 21.5z'/%3E%3C/svg%3E")}
+#bookStudyBtn{border:2px solid var(--arcade-blue)!important;opacity:.64}
+#bookStudyBtn:before{background-color:#f3f5ff;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235b7fe5' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 19h14'/%3E%3Cpath d='M7 16l3-3 2 2 5-6'/%3E%3Cpath d='M15 9h2v2'/%3E%3C/svg%3E")}
+.study-v2-action-card.is-coming-soon{cursor:default}
+.study-v2-action-card.is-coming-soon:hover{transform:none;box-shadow:0 7px 20px rgba(38,74,79,.06)!important}
+
+/* Daily Study owns the hierarchy: solid Arcade pink with a dot-progress chart. */
+#dailyWorkoutCard.study-v2-daily-primary{position:relative;display:flex!important;align-items:center!important;gap:16px!important;width:100%!important;min-height:100px;padding:16px 18px!important;border:2px solid var(--arcade-pink)!important;border-radius:22px!important;background:var(--arcade-pink)!important;color:#fff!important;box-shadow:0 10px 24px rgba(255,111,176,.20)!important}
+#dailyWorkoutCard.study-v2-daily-primary:hover,#dailyWorkoutCard.study-v2-daily-primary:focus-visible{background:var(--arcade-pink)!important;border-color:var(--arcade-pink)!important;box-shadow:0 13px 30px rgba(255,111,176,.27)!important}
+#dailyWorkoutCard.study-v2-daily-primary:before{content:"";display:block;width:58px;height:58px;flex:0 0 58px;border-radius:18px;background-color:rgba(255,255,255,.16);background-repeat:no-repeat;background-position:center;background-size:32px 32px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='8'/%3E%3Cpath d='M12 8v4l3 2'/%3E%3C/svg%3E")}
+#dailyWorkoutCard.study-v2-daily-primary>div:not(.progress-ring){min-width:0}
+#dailyWorkoutCard.study-v2-daily-primary strong{font-size:1.08rem;line-height:1.18;color:#fff!important}
+#dailyWorkoutCard.study-v2-daily-primary small{margin-top:5px;font-size:.76rem;font-weight:700;color:#fff!important;opacity:.9}
+/* Reuse the existing live --progress value, but render it as a 5x3 dot field instead of a ring. */
+#dailyWorkoutCard.study-v2-daily-primary .progress-ring{order:3;position:relative!important;margin-left:auto!important;width:72px!important;height:42px!important;flex:0 0 72px!important;border-radius:0!important;background:radial-gradient(circle at 4.5px 4.5px,rgba(255,255,255,.34) 0 4px,transparent 4.5px) 0 0/14px 14px!important;overflow:hidden!important;box-shadow:none!important}
+#dailyWorkoutCard.study-v2-daily-primary .progress-ring:after{content:""!important;position:absolute!important;left:0!important;top:0!important;bottom:0!important;right:auto!important;width:calc(var(--progress,0)*1%)!important;height:100%!important;border-radius:0!important;background:radial-gradient(circle at 4.5px 4.5px,#fff 0 4px,transparent 4.5px) 0 0/14px 14px!important;transition:width .25s ease!important}
+#dailyWorkoutCard.study-v2-daily-primary .progress-ring span{position:absolute!important;clip:rect(0 0 0 0)!important;clip-path:inset(50%)!important;width:1px!important;height:1px!important;overflow:hidden!important;white-space:nowrap!important}
 
 /* Book switcher, title, units and mastery all belong to one book-level container. */
-.study-v2-book-panel{padding:28px;border:1px solid #d7eef1;border-radius:28px;background:#fff;box-shadow:0 14px 34px rgba(34,106,116,.07);scroll-margin-top:18px}
+.study-v2-book-panel{padding:28px;border:1px solid #e1e7e9;border-radius:28px;background:#fff;box-shadow:0 10px 30px rgba(38,74,79,.055);scroll-margin-top:18px}
 
 /* Book choices behave as tabs, not cards inside another card. */
-.study-v2-book-tabs{display:flex!important;align-items:flex-end;gap:24px!important;margin:0 0 34px!important;padding:0 0 1px!important;border:0!important;border-bottom:1px solid #d7eef1!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;overflow-x:auto}
+.study-v2-book-tabs{display:flex!important;align-items:flex-end;gap:24px!important;margin:0 0 34px!important;padding:0 0 1px!important;border:0!important;border-bottom:1px solid #dde5e8!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;overflow-x:auto}
 .study-v2-book-tab{position:relative;flex:0 0 auto;border:0!important;border-radius:0!important;background:transparent!important;color:var(--muted)!important;padding:0 2px 15px!important;font-size:.76rem!important;box-shadow:none!important}
 .study-v2-book-tab:after{content:"";position:absolute;left:2px;right:2px;bottom:-1px;height:3px;border-radius:999px;background:transparent;transition:background .16s ease}
-.study-v2-book-tab:hover,.study-v2-book-tab:focus-visible{border:0!important;background:transparent!important;color:var(--cyan-strong)!important;outline:none}
-.study-v2-book-tab:hover:after,.study-v2-book-tab:focus-visible:after{background:rgba(37,184,196,.38)}
-.study-v2-book-tab.is-active{border:0!important;background:transparent!important;color:var(--pink-dark)!important}
-.study-v2-book-tab.is-active:after{background:var(--cyan-strong)}
+.study-v2-book-tab:hover,.study-v2-book-tab:focus-visible{border:0!important;background:transparent!important;color:var(--arcade-cyan)!important;outline:none}
+.study-v2-book-tab:hover:after,.study-v2-book-tab:focus-visible:after{background:rgba(33,179,190,.35)}
+.study-v2-book-tab.is-active{border:0!important;background:transparent!important;color:var(--arcade-pink)!important}
+.study-v2-book-tab.is-active:after{background:var(--arcade-cyan)}
 
 .study-v2-book-title-wrap{margin-bottom:36px!important;padding-top:0!important}
-.study-v2-book-title-wrap #unitTitle{margin-top:22px!important}
+.study-v2-book-title-wrap #unitTitle{margin-top:22px!important;color:var(--arcade-cyan)!important}
 .study-v2-book-pips{position:relative;margin-top:24px!important;padding-bottom:16px}
-.study-v2-book-pips:after{content:"";position:absolute;left:50%;bottom:0;width:56px;height:3px;transform:translateX(-50%);border-radius:999px;background:var(--cyan);opacity:.72}
+.study-v2-book-pips:after{content:"";position:absolute;left:50%;bottom:0;width:56px;height:3px;transform:translateX(-50%);border-radius:999px;background:var(--arcade-cyan);opacity:.8}
+.study-v2-book-pip.is-active{background:var(--arcade-pink)!important}
 .study-v2-units{margin-top:0!important}
 .study-v2-units-head{margin-bottom:16px!important}
 .study-v2-unit-strip{gap:10px!important;padding:2px 1px 6px}
-.study-v2-unit{border:2px solid var(--cyan)!important;background:#fff!important;padding:10px 14px!important}
-.study-v2-unit:hover,.study-v2-unit:focus-visible{border-color:var(--cyan-strong)!important;background:var(--cyan-soft)!important;outline:none}
-.study-v2-unit.is-current{border-color:var(--cyan-strong)!important;background:#fff5fa!important;color:var(--pink-dark)!important}
+.study-v2-unit{border:2px solid var(--arcade-cyan)!important;background:#fff!important;padding:10px 14px!important}
+.study-v2-unit:hover,.study-v2-unit:focus-visible{border-color:var(--arcade-cyan)!important;background:#eefafb!important;outline:none}
+.study-v2-unit.is-current{border-color:var(--arcade-cyan)!important;background:#fff8fb!important;color:var(--arcade-pink)!important}
 
-.header-skill-mastery{margin-top:40px!important;padding-top:30px!important;border-top:1px solid #d7eef1!important}
+/* Skill cards rotate through the English Arcade accents. */
+.header-skill-mastery{margin-top:40px!important;padding-top:30px!important;border-top:1px solid #dde5e8!important}
 .header-skill-mastery-head{margin-bottom:16px!important}
 .header-skill-mastery-grid{gap:12px!important}
-.header-skill-master{border:2px solid var(--cyan)!important;padding:12px 13px!important;min-height:68px}
-.header-skill-master-top strong{font-size:.84rem!important;line-height:1.2!important}
-.header-skill-master-top span{font-size:.82rem!important}
-.header-skill-master-track{height:7px!important}
+.header-skill-master{padding:12px 13px!important;min-height:72px;background:#fff!important;border-radius:16px!important}
+.header-skill-master:nth-child(4n+1){border:2px solid var(--arcade-pink)!important}
+.header-skill-master:nth-child(4n+2){border:2px solid var(--arcade-cyan)!important}
+.header-skill-master:nth-child(4n+3){border:2px solid var(--arcade-orange)!important}
+.header-skill-master:nth-child(4n){border:2px solid var(--arcade-blue)!important}
+.header-skill-master-top strong{font-size:.9rem!important;line-height:1.2!important;color:#35565b!important}
+.header-skill-master-top span{font-size:.86rem!important;color:#35565b!important}
+.header-skill-master-track{height:8px!important;background:#e8f1f2!important}
+.header-skill-master:nth-child(4n+1) .header-skill-master-fill{background:var(--arcade-pink)!important}
+.header-skill-master:nth-child(4n+2) .header-skill-master-fill{background:var(--arcade-cyan)!important}
+.header-skill-master:nth-child(4n+3) .header-skill-master-fill{background:var(--arcade-orange)!important}
+.header-skill-master:nth-child(4n) .header-skill-master-fill{background:var(--arcade-blue)!important}
 .hero-actions{display:none!important}
 
-/* Every recommendation card uses the same clickable-card language. */
+/* AI recommendations stay quieter so the four top actions remain the main hierarchy. */
 .study-v2-ai{margin-top:44px!important;margin-bottom:34px!important}
 .study-v2-ai .study-coach-head{margin-bottom:18px!important}
 .study-v2-ai .study-coach-grid{gap:14px!important}
-.study-v2-ai .study-coach-card{border:2px solid var(--cyan)!important;background:#fff!important;padding:17px!important}
-.study-v2-ai .study-coach-card:hover,.study-v2-ai .study-coach-card:focus-visible{border-color:var(--cyan-strong)!important;background:var(--cyan-soft)!important}
+.study-v2-ai .study-coach-card{border:2px solid var(--arcade-cyan)!important;background:#fff!important;padding:17px!important}
+.study-v2-ai .study-coach-card:hover,.study-v2-ai .study-coach-card:focus-visible{border-color:var(--arcade-cyan)!important;background:#eefafb!important}
 
 @media(max-width:560px){
   .book-hero.daily-inline{padding-top:2px!important}
-  .study-v2-top-actions{display:flex!important;flex-direction:column!important;align-items:stretch!important;gap:11px;margin-bottom:32px;width:100%!important}
-  .study-v2-top-actions>.study-v2-action-card{display:flex;flex-basis:auto!important;width:100%!important;min-width:100%!important;max-width:100%!important}
-  .study-v2-action-card{min-height:102px;border-radius:18px!important;border-width:2px!important}
-  .study-v2-action-card>strong{font-size:.96rem}
-  .study-v2-action-card>small{font-size:.68rem}
-  #dailyWorkoutCard.study-v2-daily-primary{min-height:102px;padding:13px;border-width:2px;border-radius:18px;gap:10px;width:100%!important}
-  #dailyWorkoutCard.study-v2-daily-primary .progress-ring{width:58px;height:58px;flex-basis:58px}
-  #dailyWorkoutCard.study-v2-daily-primary .progress-ring:after{inset:7px}
-  #dailyWorkoutCard.study-v2-daily-primary .progress-ring span{font-size:.82rem}
-  #dailyWorkoutCard.study-v2-daily-primary strong{font-size:.95rem}
-  #dailyWorkoutCard.study-v2-daily-primary small{font-size:.66rem}
-  #practiceHeroBtn.study-v2-ai-launch,#bookPracticeBtn,#bookStudyBtn{display:grid!important;padding:12px;width:100%!important}
+  .study-v2-top-actions{gap:11px;margin-bottom:32px;width:100%!important}
+  .study-v2-top-actions>.study-v2-action-card{width:100%!important;min-width:100%!important;max-width:100%!important;min-height:86px!important;padding:13px 14px!important;border-radius:18px!important;gap:12px!important}
+  .study-v2-action-card:before,#dailyWorkoutCard.study-v2-daily-primary:before{width:52px;height:52px;flex-basis:52px;border-radius:16px;background-size:29px 29px}
+  .study-v2-action-card>strong,#dailyWorkoutCard.study-v2-daily-primary strong{font-size:1.02rem!important}
+  .study-v2-action-card>small,#dailyWorkoutCard.study-v2-daily-primary small{font-size:.71rem!important}
+  #dailyWorkoutCard.study-v2-daily-primary{min-height:90px!important;padding:13px 14px!important;border-radius:18px!important;gap:12px!important}
+  #dailyWorkoutCard.study-v2-daily-primary .progress-ring{width:64px!important;height:38px!important;flex-basis:64px!important;background-size:12.5px 12.5px!important;background-image:radial-gradient(circle at 4px 4px,rgba(255,255,255,.34) 0 3.6px,transparent 4px)!important}
+  #dailyWorkoutCard.study-v2-daily-primary .progress-ring:after{background-size:12.5px 12.5px!important;background-image:radial-gradient(circle at 4px 4px,#fff 0 3.6px,transparent 4px)!important}
   .study-v2-book-panel{padding:20px 18px 22px;border-radius:23px}
   .study-v2-book-tabs{gap:20px!important;margin-bottom:30px!important}
   .study-v2-book-tab{padding:0 1px 13px!important;font-size:.7rem!important}
