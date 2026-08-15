@@ -1,6 +1,7 @@
 /**
  * Cloudflare Worker: API gateway and cookie-domain rewrite.
  * Daily Study V2 is Cloudflare-only and uses a direct /api/daily-study route.
+ * Deployment touch: force the staging API gateway to pick up the Daily Study V2 route/binding.
  */
 
 const NETLIFY_BASE = 'https://willenaenglish.netlify.app';
