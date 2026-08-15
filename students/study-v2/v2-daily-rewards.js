@@ -12,25 +12,71 @@ function daily(){return global.WillenaStudyV2Daily||null;}
 function testMode(){var d=daily();try{return !!(d&&d.isTestMode&&d.isTestMode());}catch(_){return false;}}
 function rewardOf(data){return data&&data.reward&&typeof data.reward==='object'?data.reward:null;}
 
+var COMPLETE_MESSAGES=[
+  {title:'VICTORY',subtitle:'Come back tomorrow'},
+  {title:'MISSION ACCOMPLISHED',subtitle:'Come back tomorrow'},
+  {title:'VICTORY',subtitle:'See you tomorrow'},
+  {title:'MISSION ACCOMPLISHED',subtitle:'See you tomorrow'},
+  {title:'MISSION COMPLETE',subtitle:'Come back tomorrow'},
+  {title:'ALL CLEAR',subtitle:'You\'re done for today'},
+  {title:'DAY COMPLETE',subtitle:'Come back tomorrow'},
+  {title:'오늘 미션 완료',subtitle:'내일 다시 만나요'},
+  {title:'오늘도 성공!',subtitle:'내일 또 도전해요'},
+  {title:'목표 달성!',subtitle:'오늘은 여기까지!'},
+  {title:'오늘도 해냈어요!',subtitle:'내일 다시 만나요'},
+  {title:'오늘 학습 끝!',subtitle:'내일 또 도전해요'}
+];
+
+function daySeed(dateText){
+  var s=String(dateText||'');
+  var n=0;
+  for(var i=0;i<s.length;i++)n=((n*31)+s.charCodeAt(i))>>>0;
+  return n;
+}
+function completionMessage(r){
+  return COMPLETE_MESSAGES[daySeed(r&&r.study_date)%COMPLETE_MESSAGES.length];
+}
+
 function ensureStyles(){
   if(document.getElementById('v2DailyRewardStyles'))return;
   var s=document.createElement('style');
   s.id='v2DailyRewardStyles';
   s.textContent='\
 #dailyWorkoutCard .daily-streak-status{display:block;margin-top:4px;font-size:12px;font-weight:800;opacity:.82}\
+#dailyWorkoutCard.is-complete{min-height:138px!important;border-width:4px!important;background:linear-gradient(135deg,#fff 0%,#fffafd 70%,#ffeaf3 100%)!important;box-shadow:0 18px 44px rgba(255,111,176,.16)!important}\
+#dailyWorkoutCard.is-complete:after{content:"";position:absolute;right:-42px;top:-42px;width:170px;height:170px;border-radius:50%;background:radial-gradient(circle at 35% 35%,rgba(255,255,255,.95),rgba(255,111,176,.16) 28%,rgba(255,111,176,0) 62%);pointer-events:none}\
+#dailyWorkoutCard.is-complete #smartProgressTitle{font-size:1.42rem!important;line-height:1.02!important;font-weight:900!important;letter-spacing:-.02em!important;color:#ea4d96!important;position:relative;z-index:2}\
+#dailyWorkoutCard.is-complete #smartProgressCopy{display:block!important;margin-top:8px!important;font-size:.82rem!important;line-height:1.25!important;font-weight:800!important;color:#7c8c91!important;opacity:1!important;position:relative;z-index:2}\
+#dailyWorkoutCard.is-complete .daily-streak-status{margin-top:9px!important;position:relative;z-index:2}\
+#dailyWorkoutCard.is-complete .progress-ring{box-shadow:0 0 0 10px rgba(255,111,176,.08),0 0 24px rgba(255,111,176,.15)!important;z-index:2}\
+#dailyWorkoutCard.is-complete:before{z-index:2}\
 .daily-reward-summary{margin:16px auto 4px;padding:16px 18px;border-radius:18px;background:rgba(255,255,255,.72);max-width:360px;text-align:center;box-shadow:0 8px 24px rgba(23,63,70,.08)}\
 .daily-reward-points{font-size:22px;font-weight:900;line-height:1.25}\
 .daily-reward-stars{font-size:25px;letter-spacing:2px;margin:7px 0 4px}\
 .daily-reward-streak{font-size:14px;font-weight:800;margin-top:5px}\
 .daily-reward-bonus{font-size:12px;font-weight:800;opacity:.78;margin-top:7px}\
 .daily-reward-toast{position:fixed;left:50%;top:88px;transform:translateX(-50%);z-index:10050;padding:10px 16px;border-radius:999px;background:#173f46;color:#fff;font:800 14px Poppins,sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.2);pointer-events:none;animation:dailyRewardToast 1.8s ease forwards}\
-@keyframes dailyRewardToast{0%{opacity:0;transform:translate(-50%,-8px) scale(.96)}15%,75%{opacity:1;transform:translate(-50%,0) scale(1)}100%{opacity:0;transform:translate(-50%,-5px) scale(.98)}}';
+@keyframes dailyRewardToast{0%{opacity:0;transform:translate(-50%,-8px) scale(.96)}15%,75%{opacity:1;transform:translate(-50%,0) scale(1)}100%{opacity:0;transform:translate(-50%,-5px) scale(.98)}}\
+@media(max-width:560px){#dailyWorkoutCard.is-complete #smartProgressTitle{font-size:1.18rem!important}#dailyWorkoutCard.is-complete #smartProgressCopy{font-size:.75rem!important}}';
   document.head.appendChild(s);
 }
 
 function renderCard(r){
   var card=document.getElementById('dailyWorkoutCard');if(!card)return;
-  card.classList.toggle('is-complete',!!(r&&r.completed));
+  var complete=!!(r&&r.completed)&&!testMode();
+  card.classList.toggle('is-complete',complete);
+  var title=document.getElementById('smartProgressTitle');
+  var copy=document.getElementById('smartProgressCopy');
+  if(complete){
+    var msg=completionMessage(r);
+    if(title)title.textContent=msg.title;
+    if(copy)copy.textContent=msg.subtitle;
+    card.setAttribute('aria-label',msg.title+'. '+msg.subtitle);
+  }else{
+    if(title)title.textContent='데일리 스터디';
+    card.setAttribute('aria-label','Start Daily Study');
+  }
+
   var host=card.children&&card.children[1];if(!host)return;
   var el=card.querySelector('.daily-streak-status');
   if(!el){el=document.createElement('small');el.className='daily-streak-status';host.appendChild(el);}
@@ -55,9 +101,9 @@ function renderFinish(r){
   var bonus=[];
   if(bonusPts>0)bonus.push('+'+bonusPts+' pts');
   if(bonusStars>0)bonus.push('+'+'⭐'.repeat(bonusStars));
-  block.innerHTML='<div class="daily-reward-points">+'+points+' points</div>'+
-    '<div class="daily-reward-stars">'+stars+'</div>'+
-    '<div class="daily-reward-streak">🔥 '+streak+(ko()?'일 연속 학습':' day streak')+'</div>'+
+  block.innerHTML='<div class="daily-reward-points">+'+points+' points</div>'+ 
+    '<div class="daily-reward-stars">'+stars+'</div>'+ 
+    '<div class="daily-reward-streak">🔥 '+streak+(ko()?'일 연속 학습':' day streak')+'</div>'+ 
     (bonus.length?'<div class="daily-reward-bonus">'+(ko()?'연속 학습 보너스 · ':'Streak bonus · ')+bonus.join(' · ')+'</div>':'');
 }
 
