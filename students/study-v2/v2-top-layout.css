@@ -1,0 +1,16 @@
+/* Study V2 top-of-page action hierarchy. */
+.study-v2-top-actions{display:grid;gap:12px;margin:0 0 28px}
+#dailyWorkoutCard.study-v2-daily-primary{min-height:142px;width:100%;padding:24px 28px;border:4px solid var(--pink);border-radius:28px;background:#fff;color:var(--pink-dark);box-shadow:0 14px 34px rgba(255,10,138,.10);cursor:pointer;transition:transform .16s ease,box-shadow .16s ease,background .16s ease}
+#dailyWorkoutCard.study-v2-daily-primary:hover{transform:translateY(-2px);background:#fff8fc;box-shadow:0 18px 40px rgba(255,10,138,.14)}
+#dailyWorkoutCard.study-v2-daily-primary:focus-visible{outline:4px solid rgba(255,10,138,.18);outline-offset:3px}
+#dailyWorkoutCard.study-v2-daily-primary .progress-ring{width:112px;height:112px;flex:0 0 112px;background:conic-gradient(var(--pink) 0 calc(var(--progress,0)*1%),#ffe1f0 calc(var(--progress,0)*1%) 100%)}
+#dailyWorkoutCard.study-v2-daily-primary .progress-ring:after{inset:11px;background:#fff}
+#dailyWorkoutCard.study-v2-daily-primary .progress-ring span{font-size:1.35rem;color:var(--pink-dark)}
+#dailyWorkoutCard.study-v2-daily-primary strong{font-size:clamp(1.35rem,3vw,1.75rem);line-height:1.15;color:var(--pink-dark)}
+#dailyWorkoutCard.study-v2-daily-primary small{margin-top:8px;font-size:.9rem;font-weight:700;color:var(--pink-dark);opacity:.72}
+#practiceHeroBtn.study-v2-ai-launch{width:100%;min-height:72px;padding:0 22px;border:3px solid var(--cyan);border-radius:22px;background:#fff;color:var(--pink-dark);font-weight:800;font-size:1.05rem;cursor:pointer;box-shadow:none;transition:transform .16s ease,background .16s ease,border-color .16s ease}
+#practiceHeroBtn.study-v2-ai-launch:hover{transform:translateY(-1px);background:var(--cyan-soft);border-color:var(--cyan-strong)}
+#practiceHeroBtn.study-v2-ai-launch:focus-visible{outline:4px solid rgba(102,214,223,.22);outline-offset:3px}
+.study-v2-top-actions+.study-v2-book-tabs{margin-top:2px}
+.study-v2-top-actions~.study-v2-book-title-wrap{padding-top:8px}
+@media(max-width:560px){.study-v2-top-actions{gap:10px;margin-bottom:22px}#dailyWorkoutCard.study-v2-daily-primary{min-height:118px;padding:18px 19px;border-width:4px;border-radius:24px;gap:16px}#dailyWorkoutCard.study-v2-daily-primary .progress-ring{width:86px;height:86px;flex-basis:86px}#dailyWorkoutCard.study-v2-daily-primary .progress-ring:after{inset:9px}#dailyWorkoutCard.study-v2-daily-primary .progress-ring span{font-size:1.05rem}#dailyWorkoutCard.study-v2-daily-primary strong{font-size:1.28rem}#dailyWorkoutCard.study-v2-daily-primary small{font-size:.78rem}#practiceHeroBtn.study-v2-ai-launch{min-height:62px;border-radius:18px;font-size:1rem}}
