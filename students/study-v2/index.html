@@ -17,7 +17,7 @@
 <link rel="stylesheet" href="/students/study/study-listening.css?v=20260809-leveltestaudio1">
 <link rel="stylesheet" href="/students/study/study-coach.css?v=20260810-mobilelang1">
 <link rel="stylesheet" href="./v2.css?v=20260814-daily1">
-<link rel="stylesheet" href="./v2-top-layout.css?v=20260815-fourcards1">
+<link rel="stylesheet" href="./v2-top-layout.css?v=20260815-fourcards2">
 <link rel="stylesheet" href="./v2-short-landscape.css?v=20260814-listenrow1">
 <link rel="stylesheet" href="./v2-round-ux.css?v=20260814-roundux1">
 <link rel="stylesheet" href="./v2-background.css?v=20260814-bg1">
@@ -53,7 +53,7 @@
         <button id="bookStudyBtn" class="study-v2-action-card is-coming-soon" type="button" disabled><strong>책 공부</strong><small>준비 중</small></button>
       </div>
 
-      <div class="study-v2-book-panel">
+      <div class="study-v2-book-panel" id="bookPracticeArea">
         <nav id="bookTabs" class="study-v2-book-tabs" aria-label="Books" hidden></nav>
 
         <div id="bookSwipe" class="study-v2-book-title-wrap">
@@ -134,8 +134,8 @@
   }
   var bookPractice=document.getElementById('bookPracticeBtn');
   if(bookPractice)bookPractice.addEventListener('click',function(){
-    var existing=document.getElementById('continueBtn');
-    if(existing)existing.click();
+    var area=document.getElementById('bookPracticeArea');
+    if(area)area.scrollIntoView({behavior:'smooth',block:'start'});
   });
 })();
 </script>
