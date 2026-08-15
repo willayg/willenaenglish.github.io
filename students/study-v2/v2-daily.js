@@ -3,7 +3,9 @@
 
 var TARGET=20;
 var MAX_CANDIDATES=80;
-var ENDPOINT='https://api.willenaenglish.com/api/daily-study';
+// Keep Daily Study same-origin. This preserves the shared Willena session
+// cookie and avoids sending this app through a second API-host router.
+var ENDPOINT='/api/daily-study';
 var CACHE_PREFIX='willena-study-v2-home:v1:';
 var SKILLS=['vocabulary','spelling','grammar','sentence_building','conversation','listening','reading'];
 
