@@ -17,6 +17,7 @@
 <link rel="stylesheet" href="/students/study/study-listening.css?v=20260809-leveltestaudio1">
 <link rel="stylesheet" href="/students/study/study-coach.css?v=20260810-mobilelang1">
 <link rel="stylesheet" href="./v2.css?v=20260814-daily1">
+<link rel="stylesheet" href="./v2-top-layout.css?v=20260815-topactions1">
 <link rel="stylesheet" href="./v2-short-landscape.css?v=20260814-listenrow1">
 <link rel="stylesheet" href="./v2-round-ux.css?v=20260814-roundux1">
 <link rel="stylesheet" href="./v2-background.css?v=20260814-bg1">
@@ -42,17 +43,20 @@
 
   <section class="book-hero daily-inline">
     <div class="hero-copy">
+      <div class="study-v2-top-actions">
+        <div id="dailyWorkoutCard" class="unit-progress-card study-v2-daily-primary" role="button" tabindex="0" aria-label="Start Daily Study">
+          <div class="progress-ring"><span id="smartDailyPct">0/20</span></div>
+          <div><strong id="smartProgressTitle">오늘의 학습</strong><small id="smartProgressCopy">오늘 목표 · 0/20</small></div>
+        </div>
+        <button id="practiceHeroBtn" class="study-v2-ai-launch" type="button">AI 추천</button>
+      </div>
+
       <nav id="bookTabs" class="study-v2-book-tabs" aria-label="Books" hidden></nav>
 
       <div id="bookSwipe" class="study-v2-book-title-wrap">
         <h1 id="bookTitle">Loading…</h1>
         <p id="unitTitle">Finding your assigned unit</p>
         <div id="bookPips" class="study-v2-book-pips" hidden></div>
-      </div>
-
-      <div id="dailyWorkoutCard" class="unit-progress-card" role="button" tabindex="0" aria-label="Start Daily Study">
-        <div class="progress-ring"><span id="smartDailyPct">0/20</span></div>
-        <div><strong id="smartProgressTitle">오늘의 학습</strong><small id="smartProgressCopy">오늘 목표 · 0/20</small></div>
       </div>
 
       <div class="study-v2-units">
@@ -67,7 +71,6 @@
 
       <div class="hero-actions">
         <button id="continueBtn" class="primary-button" type="button">단원 공부하기</button>
-        <button id="practiceHeroBtn" class="secondary-button" type="button">AI 추천</button>
         <button id="changeUnitBtn" class="secondary-button" type="button">단원 보기</button>
       </div>
     </div>
