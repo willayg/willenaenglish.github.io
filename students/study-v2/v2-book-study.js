@@ -20,6 +20,8 @@ function uniq(list){var out=[],seen={};(list||[]).forEach(function(v){v=txt(v);v
 function ids(rows,key){return uniq((rows||[]).map(function(r){return r&&r[key];}).filter(Boolean));}
 function byId(rows){var m={};(rows||[]).forEach(function(r){if(r&&r.id)m[String(r.id)]=r;});return m;}
 function listQuery(values){return encodeURIComponent('('+values.join(',')+')');}
+function occurrenceTranslation(o){return txt(o&&o.metadata&&o.metadata.translation_ko);}
+function listenButton(value){return '<button class="book-study-listen" type="button" data-listen-text="'+esc(value)+'">'+(ko()?'듣기':'Listen')+'</button>';}
 async function rest(path){
   var r=await fetch(ROOT+path,{headers:{apikey:KEY,Authorization:'Bearer '+KEY},cache:'no-store'});
   if(!r.ok)throw new Error('Content DB '+r.status);
@@ -52,7 +54,7 @@ function syncCurrentLabel(fallback){
   var label=fallback||'';
   if(cached&&cached.unit){label='Unit '+cached.unit.unit_number+(cached.unit.title?' · '+cached.unit.title:'');}
   if(currentLabel)currentLabel.textContent=(ko()?'현재 · ':'Current · ')+(label||'Unit —');
-  if(bookStudyNote)bookStudyNote.textContent=ko()?'단원을 선택하고 교재 내용을 확인하세요':'Choose a unit to view its book content';
+  if(bookStudyNote)bookStudyNote.textContent='';
 }
 function looksSentence(s){s=txt(s);return !!s&&(/[.?!]$/.test(s)||/^(what|where|when|who|why|how|do|does|did|is|are|was|were|can|could|will|would|should|have|has|had)\b/i.test(s));}
 
@@ -70,7 +72,7 @@ async function loadUnit(unitId,fallbackLabel){
     var unit=base[0][0]||null,occ=base[1]||[];
     var lexicalIds=ids(occ,'lexical_entry_id'),sentenceIds=ids(occ,'sentence_id'),patternIds=ids(occ,'pattern_id'),passageIds=ids(occ,'passage_id');
     var details=await Promise.all([
-      lexicalIds.length?rest('lexical_entries?select=id,canonical_text,translation_ko,emoji,part_of_speech&id=in.'+listQuery(lexicalIds)+'&status=in.(review,published)'):Promise.resolve([]),
+      lexicalIds.length?rest('lexical_entries?select=id,canonical_text,translation_ko&id=in.'+listQuery(lexicalIds)+'&status=in.(review,published)'):Promise.resolve([]),
       sentenceIds.length?rest('sentences?select=id,text,canonical_text,translation_ko,grammar_notes&id=in.'+listQuery(sentenceIds)+'&status=in.(review,published)'):Promise.resolve([]),
       patternIds.length?rest('patterns?select=id,name,grammar_category,prompt_pattern,response_pattern,explanation_en,explanation_ko&id=in.'+listQuery(patternIds)+'&status=in.(review,published)'):Promise.resolve([]),
       passageIds.length?rest('passages?select=id,title,body,translation_ko,topic,content_type&id=in.'+listQuery(passageIds)+'&status=in.(review,published)'):Promise.resolve([])
@@ -88,37 +90,58 @@ async function loadUnit(unitId,fallbackLabel){
 function vocabSection(data){
   var rows=data.occ.filter(function(o){return o.occurrence_type==='lexical_entry'||(o.skill==='vocabulary'&&o.lexical_entry_id);});
   var seen={},items=[];
-  rows.forEach(function(o){var d=data.lex[String(o.lexical_entry_id)]||{};var word=txt(d.canonical_text||o.source_text);if(!word)return;var key=word.toLowerCase();if(seen[key])return;seen[key]=1;items.push({word:word,ko:txt(d.translation_ko),emoji:txt(d.emoji)||'Aa',pos:txt(d.part_of_speech)});});
+  rows.forEach(function(o){
+    var d=data.lex[String(o.lexical_entry_id)]||{};
+    var word=txt(d.canonical_text||o.source_text);if(!word)return;
+    var key=word.toLowerCase();if(seen[key])return;seen[key]=1;
+    items.push({word:word,translation:txt(d.translation_ko)||occurrenceTranslation(o)});
+  });
   if(!items.length)return'';
-  return section('vocabulary',ko()?'어휘':'Vocabulary',items.length, '<div class="book-study-vocab-grid">'+items.map(function(v){return '<div class="book-study-vocab"><span class="book-study-vocab-emoji">'+esc(v.emoji)+'</span><div><strong>'+esc(v.word)+'</strong><small>'+esc(v.ko+(v.pos?' · '+v.pos:''))+'</small></div></div>';}).join('')+'</div>');
+  return section('vocabulary',ko()?'어휘':'Vocabulary',items.length,
+    '<div class="book-study-vocab-grid">'+items.map(function(v){return '<div class="book-study-vocab"><div class="book-study-vocab-copy"><strong>'+esc(v.word)+'</strong>'+(v.translation?'<small>'+esc(v.translation)+'</small>':'')+'</div>'+listenButton(v.word)+'</div>';}).join('')+'</div>');
 }
 function sentenceSection(data){
   var items=[],seen={};
   data.occ.forEach(function(o){
     var text='',translation='';
-    if(o.occurrence_type==='sentence'&&o.sentence_id){var d=data.sent[String(o.sentence_id)]||{};text=txt(d.canonical_text||d.text||o.source_text);translation=txt(d.translation_ko);}
-    else if(o.occurrence_type==='sentence'){text=txt(o.source_text);}
-    else if(o.occurrence_type==='pattern'&&looksSentence(o.source_text)){text=txt(o.source_text);}
+    if(o.occurrence_type==='sentence'&&o.sentence_id){var d=data.sent[String(o.sentence_id)]||{};text=txt(d.canonical_text||d.text||o.source_text);translation=txt(d.translation_ko)||occurrenceTranslation(o);}
+    else if(o.occurrence_type==='sentence'){text=txt(o.source_text);translation=occurrenceTranslation(o);}
+    else if(o.occurrence_type==='pattern'&&looksSentence(o.source_text)){text=txt(o.source_text);translation=occurrenceTranslation(o);}
     if(!text)return;var key=text.toLowerCase();if(seen[key])return;seen[key]=1;items.push({text:text,translation:translation});
   });
   if(!items.length)return'';
-  return section('sentences',ko()?'핵심 문장':'Key Sentences',items.length,'<div class="book-study-sentence-list">'+items.map(function(v){return '<div class="book-study-sentence"><strong>'+esc(v.text)+'</strong>'+(v.translation?'<small>'+esc(v.translation)+'</small>':'')+'</div>';}).join('')+'</div>');
+  return section('sentences',ko()?'핵심 문장':'Key Sentences',items.length,
+    '<div class="book-study-sentence-list">'+items.map(function(v){return '<div class="book-study-sentence"><div class="book-study-sentence-copy"><strong>'+esc(v.text)+'</strong>'+(v.translation?'<small>'+esc(v.translation)+'</small>':'')+'</div>'+listenButton(v.text)+'</div>';}).join('')+'</div>');
 }
 function grammarSection(data){
   var groups={},loose=[];
   data.occ.filter(function(o){return o.occurrence_type==='pattern'||o.skill==='grammar';}).forEach(function(o){
-    if(o.pattern_id){var id=String(o.pattern_id);if(!groups[id])groups[id]={detail:data.patterns[id]||{},labels:[]};if(!looksSentence(o.source_text))groups[id].labels.push(o.source_text);}
-    else if(o.source_text)loose.push(o.source_text);
+    if(o.pattern_id){
+      var id=String(o.pattern_id);
+      if(!groups[id])groups[id]={detail:data.patterns[id]||{},labels:[],examples:[]};
+      if(looksSentence(o.source_text))groups[id].examples.push({text:txt(o.source_text),translation:occurrenceTranslation(o)});
+      else groups[id].labels.push(o.source_text);
+    } else if(o.source_text)loose.push(o.source_text);
   });
   var cards=[];
-  Object.keys(groups).forEach(function(id){var g=groups[id],d=g.detail||{},labels=uniq(g.labels);var name=txt(d.name||labels[0]||d.grammar_category||'Grammar');var explanation=txt((ko()?d.explanation_ko:d.explanation_en)||d.explanation_en||d.explanation_ko);var pats=[];if(d.prompt_pattern)pats.push({label:ko()?'질문':'Prompt',text:d.prompt_pattern});if(d.response_pattern)pats.push({label:ko()?'대답':'Response',text:d.response_pattern});cards.push('<div class="book-study-grammar"><h5>'+esc(name)+'</h5>'+(d.grammar_category?'<span class="grammar-category">'+esc(d.grammar_category)+'</span>':'')+(explanation?'<p>'+esc(explanation)+'</p>':'')+(pats.length?'<div class="book-study-patterns">'+pats.map(function(p){return '<div class="book-study-pattern"><b>'+esc(p.label)+'</b>'+esc(p.text)+'</div>';}).join('')+'</div>':'')+'</div>');});
+  Object.keys(groups).forEach(function(id){
+    var g=groups[id],d=g.detail||{},labels=uniq(g.labels);
+    var name=txt(d.name||labels[0]||d.grammar_category||'Grammar');
+    var explanation=txt((ko()?d.explanation_ko:d.explanation_en)||d.explanation_en||d.explanation_ko);
+    var examples=[];
+    for(var i=0;i<g.examples.length;i+=2){
+      var first=g.examples[i],second=g.examples[i+1];
+      examples.push('<div class="book-study-grammar-pair"><div><strong>'+esc(first.text)+'</strong>'+(first.translation?'<small>'+esc(first.translation)+'</small>':'')+'</div>'+(second?'<div><strong>'+esc(second.text)+'</strong>'+(second.translation?'<small>'+esc(second.translation)+'</small>':'')+'</div>':'')+'</div>');
+    }
+    cards.push('<div class="book-study-grammar"><h5>'+esc(name)+'</h5>'+(explanation?'<p>'+esc(explanation)+'</p>':'')+(examples.length?'<div class="book-study-grammar-examples">'+examples.join('')+'</div>':'')+'</div>');
+  });
   uniq(loose).forEach(function(s){cards.push('<div class="book-study-grammar"><h5>'+esc(s)+'</h5></div>');});
   if(!cards.length)return'';
   return section('grammar',ko()?'문법':'Grammar',cards.length,'<div class="book-study-grammar-list">'+cards.join('')+'</div>');
 }
 function readingSection(data){
   var rows=data.occ.filter(function(o){return o.occurrence_type==='passage'||o.skill==='reading';}),seen={},items=[];
-  rows.forEach(function(o){var d=o.passage_id?data.passages[String(o.passage_id)]||{}:{};var title=txt(d.title||o.source_text||o.activity_label);var body=txt(d.body);var trans=txt(d.translation_ko);var key=(title+'|'+body).toLowerCase();if(!title&&!body||seen[key])return;seen[key]=1;items.push({title:title||(ko()?'읽기':'Reading'),body:body,translation:trans});});
+  rows.forEach(function(o){var d=o.passage_id?data.passages[String(o.passage_id)]||{}:{};var title=txt(d.title||o.source_text||o.activity_label);var body=txt(d.body);var trans=txt(d.translation_ko);var key=(title+'|'+body).toLowerCase();if((!title&&!body)||seen[key])return;seen[key]=1;items.push({title:title||(ko()?'읽기':'Reading'),body:body,translation:trans});});
   if(!items.length)return'';
   return section('reading',ko()?'읽기':'Reading',items.length,'<div class="book-study-reading-list">'+items.map(function(v){return '<div class="book-study-reading"><h5>'+esc(v.title)+'</h5>'+(v.body?'<p>'+esc(v.body)+'</p>':'')+(v.translation?'<small>'+esc(v.translation)+'</small>':'')+'</div>';}).join('')+'</div>');
 }
@@ -147,6 +170,16 @@ function setActiveKind(kind){
     s.setAttribute('aria-hidden',on?'false':'true');
   });
 }
+function bindAudio(){
+  contentRoot.querySelectorAll('[data-listen-text]').forEach(function(button){
+    button.addEventListener('click',function(){
+      var value=txt(button.getAttribute('data-listen-text'));
+      if(!value)return;
+      var player=window.WillenaAudioPlayback;
+      if(player&&typeof player.playText==='function')player.playText(button,value,{lang:'en-US',rate:.9});
+    });
+  });
+}
 function render(data){
   var blocks=[],tabs=[];
   [['vocabulary',vocabSection],['sentences',sentenceSection],['grammar',grammarSection],['reading',readingSection],['other',otherSection]].forEach(function(pair){
@@ -159,8 +192,9 @@ function render(data){
   });
   if(!blocks.length){state(ko()?'이 단원에는 아직 연결된 교재 내용이 없어요.':'No book content is linked to this unit yet.');return;}
   var unit=data.unit||{},unitName='Unit '+(unit.unit_number||'')+(unit.title?' · '+unit.title:'');
-  contentRoot.innerHTML='<div class="book-study-content-top"><div><h3>'+esc(unitName)+'</h3><p>'+(ko()?'보고 싶은 내용을 선택하세요.':'Choose what you want to study.')+'</p></div><span class="book-study-count">'+data.occ.length+' '+(ko()?'항목':'items')+'</span></div><div class="book-study-jump" role="tablist" aria-label="'+(ko()?'교재 내용':'Book content')+'">'+tabs.join('')+'</div><div class="book-study-active-pane">'+blocks.join('')+'</div>';
+  contentRoot.innerHTML='<div class="book-study-content-top"><h3>'+esc(unitName)+'</h3><span class="book-study-count">'+data.occ.length+' '+(ko()?'항목':'items')+'</span></div><div class="book-study-jump" role="tablist" aria-label="'+(ko()?'교재 내용':'Book content')+'">'+tabs.join('')+'</div><div class="book-study-active-pane">'+blocks.join('')+'</div>';
   contentRoot.querySelectorAll('[data-study-kind]').forEach(function(b){b.addEventListener('click',function(){setActiveKind(b.getAttribute('data-study-kind'));});});
+  bindAudio();
   setActiveKind(activeKind);
 }
 
