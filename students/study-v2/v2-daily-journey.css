@@ -263,14 +263,14 @@
   .book-hero.daily-inline #dailyWorkoutCard.study-v2-daily-primary strong{font-size:1.42rem;line-height:1.12}
   .book-hero.daily-inline #dailyWorkoutCard .daily-streak-status{display:block;margin-top:10px;font-size:.78rem}
   .book-hero.daily-inline #dailyWorkoutCard.study-v2-daily-primary .progress-ring{
-    width:96px;
-    height:96px;
-    flex:0 0 96px;
+    width:150px;
+    height:150px;
+    flex:0 0 150px;
     margin:18px auto 0;
     box-shadow:none;
   }
-  .book-hero.daily-inline #dailyWorkoutCard.study-v2-daily-primary .progress-ring:after{inset:11px}
-  .book-hero.daily-inline #dailyWorkoutCard.study-v2-daily-primary .progress-ring span{font-size:.95rem}
+  .book-hero.daily-inline #dailyWorkoutCard.study-v2-daily-primary .progress-ring:after{inset:16px}
+  .book-hero.daily-inline #dailyWorkoutCard.study-v2-daily-primary .progress-ring span{font-size:1.25rem}
 
   .book-hero.daily-inline .daily-rail-main{
     grid-column:2 / 5;
