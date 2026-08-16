@@ -91,11 +91,9 @@ async function playStored(url,ctx,myRun,button,noCache){
     return await playDecodedBuffer(await r.arrayBuffer(),ctx,myRun,button);
   }catch(_){return false;}
 }
-async function playDirectGenerated(spoken,ctx,myRun,button){
+async function playDirectR2(spoken,ctx,myRun,button){
   var url=directR2Url(spoken);
   if(!url)return false;
-  /* This goes straight to /audio/<deterministic filename>, so a stale cached
-     get_audio_urls "missing" result cannot force another ElevenLabs request. */
   return playStored(url,ctx,myRun,button,true);
 }
 function pickVoice(synth,lang){
@@ -104,8 +102,6 @@ function pickVoice(synth,lang){
   var wanted=text(lang||'en-US').toLowerCase();
   var exact=voices.find(function(v){return text(v.lang).toLowerCase()===wanted;});
   if(exact)return exact;
-  var preferred=voices.find(function(v){return /^en-us/i.test(text(v.lang))&&/(female|zira|aria|jenny|samantha|allison|emily|lisa|michelle|google us english)/i.test(text(v.name));});
-  if(preferred)return preferred;
   var us=voices.find(function(v){return /^en-us/i.test(text(v.lang));});
   if(us)return us;
   var en=voices.find(function(v){return /^en/i.test(text(v.lang));});
@@ -116,37 +112,24 @@ function speakWithVoice(button,activity,myRun){
     var synth=global.speechSynthesis,Utterance=global.SpeechSynthesisUtterance;
     var spoken=spokenText(activity),stimulus=activity&&activity.stimulus||{};
     if(!spoken||!synth||!Utterance||myRun!==runId){resolve(false);return;}
-    var finished=false,voiceListener=null,voiceTimer=null,startTimer=null;
-    function cleanup(){
-      if(voiceListener)try{synth.removeEventListener('voiceschanged',voiceListener);}catch(_){}
-      if(voiceTimer)clearTimeout(voiceTimer);
-      if(startTimer)clearTimeout(startTimer);
-    }
-    function finish(ok){if(finished)return;finished=true;cleanup();resolve(ok);}
-    function launch(voice){
-      if(finished||myRun!==runId)return;
-      var u=new Utterance(spoken);currentUtterance=u;
-      if(voice)u.voice=voice;
-      u.lang=text(voice&&voice.lang||stimulus.lang)||'en-US';
-      var rate=Number(stimulus.rate);u.rate=Number.isFinite(rate)&&rate>0?rate:.9;
-      u.pitch=1;u.volume=1;
-      u.onstart=function(){if(myRun!==runId)return;button.classList.add('is-playing','has-played');finish(true);};
-      u.onend=function(){if(myRun!==runId)return;button.classList.remove('is-playing');button.classList.add('has-played');};
-      u.onerror=function(){if(myRun!==runId)return;button.classList.remove('is-playing');finish(false);};
-      try{synth.resume();synth.speak(u);}catch(_){finish(false);return;}
-      startTimer=setTimeout(function(){
-        if(finished||myRun!==runId)return;
-        try{synth.cancel();}catch(_){}
-        button.classList.remove('is-playing');
-        finish(false);
-      },1500);
-    }
+    var finished=false,startTimer=null;
+    function finish(ok){if(finished)return;finished=true;if(startTimer)clearTimeout(startTimer);resolve(ok);}
+    var u=new Utterance(spoken);currentUtterance=u;
     var voice=pickVoice(synth,stimulus.lang);
-    if(voice){launch(voice);return;}
-    voiceListener=function(){var loaded=pickVoice(synth,stimulus.lang);if(loaded)launch(loaded);};
-    try{synth.addEventListener('voiceschanged',voiceListener);}catch(_){}
-    try{synth.getVoices();}catch(_){}
-    voiceTimer=setTimeout(function(){if(!finished&&myRun===runId)launch(pickVoice(synth,stimulus.lang));},500);
+    if(voice)u.voice=voice;
+    u.lang=text(voice&&voice.lang||stimulus.lang)||'en-US';
+    var rate=Number(stimulus.rate);u.rate=Number.isFinite(rate)&&rate>0?rate:.9;
+    u.pitch=1;u.volume=1;
+    u.onstart=function(){if(myRun!==runId)return;button.classList.add('is-playing','has-played');finish(true);};
+    u.onend=function(){if(myRun!==runId)return;button.classList.remove('is-playing');button.classList.add('has-played');};
+    u.onerror=function(){if(myRun!==runId)return;button.classList.remove('is-playing');finish(false);};
+    try{synth.cancel();synth.resume();synth.speak(u);}catch(_){finish(false);return;}
+    startTimer=setTimeout(function(){
+      if(finished||myRun!==runId)return;
+      try{synth.cancel();}catch(_){}
+      button.classList.remove('is-playing');
+      finish(false);
+    },1800);
   });
 }
 function base64Buffer(b64){
@@ -175,13 +158,15 @@ async function generateBufferOnce(spoken){
       var buffer=base64Buffer(d.audio);
       if(!buffer)return null;
 
-      /* Save in memory before upload. Replaying this sentence in the same page now
-         never calls ElevenLabs twice, even while the R2 upload is still finishing. */
+      /* Cache immediately so one page session cannot spend ElevenLabs credits twice
+         for the same sentence even if the R2 write is still settling. */
       generatedBuffers.set(key,buffer.slice(0));
 
-      /* Persist one generated clip to R2. The deterministic filename is derived from
-         the spoken sentence, matching upload_audio.js and get-audio-urls. */
-      fetch(AUDIO_UPLOAD,{method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',body:JSON.stringify({word:spoken,fileDataBase64:d.audio})}).catch(function(){});
+      /* Save before we move on to the browser-TTS fallback. A failed upload does not
+         discard usable generated audio, but it is no longer a fire-and-forget write. */
+      try{
+        await fetch(AUDIO_UPLOAD,{method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',cache:'no-store',body:JSON.stringify({word:spoken,fileDataBase64:d.audio})});
+      }catch(_){}
       return buffer;
     }catch(_){return null;}
     finally{generationLocks.delete(key);}
@@ -205,21 +190,13 @@ async function playAudio(button,activity){
   var ctx=getAudioContext();
   var spoken=spokenText(activity);
 
-  /* First reuse anything generated during this page session. */
-  var memory=getGeneratedBuffer(spoken);
-  if(memory&&ctx){
-    var memoryOk=await playDecodedBuffer(memory,ctx,myRun,button);
-    if(memoryOk)return;
-  }
-
-  /* Then probe the exact deterministic R2 filename. This bypasses the lookup
-     Worker's five-minute negative cache after a clip has just been uploaded. */
+  /* 1. R2 first. Probe the deterministic sentence filename directly, then the
+     broader lookup path for older/curriculum-specific audio keys. */
   if(spoken&&ctx){
-    var directOk=await playDirectGenerated(spoken,ctx,myRun,button);
+    var directOk=await playDirectR2(spoken,ctx,myRun,button);
     if(myRun!==runId)return;
     if(directOk)return;
   }
-
   var stored=await findStoredAudio(audioCandidates(activity));
   if(myRun!==runId)return;
   if(stored&&ctx){
@@ -227,12 +204,23 @@ async function playAudio(button,activity){
     if(storedOk)return;
   }
 
-  var speechOk=await speakWithVoice(button,activity,myRun);
-  if(myRun!==runId||speechOk)return;
+  /* Same-page replay guard. This sits between the R2 miss and any paid generation,
+     so a just-generated sentence cannot burn credits twice. */
+  var memory=getGeneratedBuffer(spoken);
+  if(memory&&ctx){
+    var memoryOk=await playDecodedBuffer(memory,ctx,myRun,button);
+    if(memoryOk)return;
+  }
 
+  /* 2. ElevenLabs second: generate once, save to R2, then play the real MP3. */
   var generated=await generateAndPlay(activity,ctx,myRun,button);
   if(myRun!==runId)return;
-  if(!generated){button.classList.remove('is-playing','has-played');}
+  if(generated)return;
+
+  /* 3. Browser TTS is now the last fallback only. */
+  var speechOk=await speakWithVoice(button,activity,myRun);
+  if(myRun!==runId)return;
+  if(!speechOk)button.classList.remove('is-playing','has-played');
 }
 
 proto.render=function(){
