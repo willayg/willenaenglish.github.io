@@ -24,6 +24,7 @@
 <link rel="stylesheet" href="./v2-daily-journey.css?v=20260816-railhero2">
 <link rel="stylesheet" href="./v2-daily-rail-impact.css?v=20260816-railimpact4">
 <link rel="stylesheet" href="./v2-daily-spark.css?v=20260816-spark1">
+<link rel="stylesheet" href="./v2-study-sections.css?v=20260816-sections1">
 <link rel="stylesheet" href="./v2-ai-chat.css?v=20260816-cyangray2">
 <link rel="stylesheet" href="./v2-ai-inline-link.css?v=20260815-cyangray1">
 <link rel="stylesheet" href="./v2-ai-practice-session.css?v=20260816-tokenorder1">
@@ -68,7 +69,7 @@
         </div>
         <button id="practiceHeroBtn" class="study-v2-action-card study-v2-ai-launch" type="button"><strong>AI 코치</strong><small>추천 학습</small></button>
         <button id="bookPracticeBtn" class="study-v2-action-card" type="button"><strong>교재 연습</strong><small>교재 · 단원 · 영역 선택</small></button>
-        <button id="bookStudyBtn" class="study-v2-action-card is-coming-soon" type="button" disabled><strong>교재 공부</strong><small>준비 중</small></button>
+        <button id="bookStudyBtn" class="study-v2-action-card" type="button"><strong>교재 공부</strong><small>현재 교재 보기</small></button>
       </div>
 
       <section id="aiRecommendations" class="study-coach study-v2-ai">
@@ -81,15 +82,24 @@
         <div id="aiGrid" class="study-coach-grid" hidden aria-hidden="true"></div>
       </section>
 
-      <div class="study-v2-book-panel" id="bookPracticeArea">
+      <section class="study-v2-book-study-panel" id="bookStudyArea">
+        <div class="study-v2-section-heading">
+          <div class="study-v2-section-heading-copy"><span class="study-v2-section-kicker">BOOK STUDY</span><h2 id="bookStudyHeading">교재 공부</h2></div>
+          <small id="bookStudyNote">현재 교재와 단원</small>
+        </div>
         <nav id="bookTabs" class="study-v2-book-tabs" aria-label="Books" hidden></nav>
-
         <div id="bookSwipe" class="study-v2-book-title-wrap">
           <h1 id="bookTitle">Loading…</h1>
           <p id="unitTitle">Finding your assigned unit</p>
           <div id="bookPips" class="study-v2-book-pips" hidden></div>
         </div>
+      </section>
 
+      <section class="study-v2-book-panel" id="bookPracticeArea">
+        <div class="study-v2-section-heading">
+          <div class="study-v2-section-heading-copy"><span class="study-v2-section-kicker">BOOK PRACTICE</span><h2 id="bookPracticeHeading">교재 연습</h2></div>
+          <small id="bookPracticeNote">단원과 영역을 선택하세요</small>
+        </div>
         <div class="study-v2-units">
           <div class="study-v2-units-head"><span>공부할 단원을 선택하세요</span><span id="currentUnitLabel">현재 · Unit —</span></div>
           <div id="unitStrip" class="study-v2-unit-strip"></div>
@@ -104,7 +114,7 @@
           <button id="continueBtn" class="primary-button" type="button">단원 공부하기</button>
           <button id="changeUnitBtn" class="secondary-button" type="button">단원 보기</button>
         </div>
-      </div>
+      </section>
     </div>
   </section>
 </main>
@@ -169,6 +179,23 @@
     var area=document.getElementById('bookPracticeArea');
     if(area)area.scrollIntoView({behavior:'smooth',block:'start'});
   });
+  var bookStudy=document.getElementById('bookStudyBtn');
+  if(bookStudy)bookStudy.addEventListener('click',function(){
+    var area=document.getElementById('bookStudyArea');
+    if(area)area.scrollIntoView({behavior:'smooth',block:'start'});
+  });
+  function syncSectionLabels(){
+    var lang=document.getElementById('languageBtn');
+    var ko=!lang||String(lang.textContent||'').trim()==='English';
+    var a=document.getElementById('bookStudyHeading'),b=document.getElementById('bookStudyNote'),c=document.getElementById('bookPracticeHeading'),d=document.getElementById('bookPracticeNote');
+    if(a)a.textContent=ko?'교재 공부':'Book Study';
+    if(b)b.textContent=ko?'현재 교재와 단원':'Current book and unit';
+    if(c)c.textContent=ko?'교재 연습':'Book Practice';
+    if(d)d.textContent=ko?'단원과 영역을 선택하세요':'Choose a unit and skill';
+  }
+  syncSectionLabels();
+  var languageBtn=document.getElementById('languageBtn');
+  if(languageBtn)languageBtn.addEventListener('click',function(){setTimeout(syncSectionLabels,0);});
 })();
 </script>
 <script src="./v2-practice-ux.js?v=20260815-autoscroll1"></script>
