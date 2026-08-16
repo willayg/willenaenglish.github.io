@@ -48,6 +48,12 @@
   scroll-margin-top:18px;
 }
 
+/* Book Study is now a real navigation target rather than a coming-soon tile. */
+.book-hero.daily-inline #bookStudyBtn{
+  opacity:1!important;
+  cursor:pointer!important;
+}
+
 .study-v2-section-heading{
   display:flex;
   align-items:flex-end;
