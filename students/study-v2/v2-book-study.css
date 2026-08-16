@@ -1,0 +1,75 @@
+/* Book Study content browser: unit selection + source-book content. */
+.study-v2-book-study-panel .book-study-unit-picker{margin-top:30px;padding-top:26px;border-top:1px solid #e3eaec}
+.study-v2-book-study-panel .book-study-unit-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;color:#61777c;font-size:.78rem;font-weight:850}
+.study-v2-book-study-panel #bookStudyCurrentUnitLabel{color:var(--arcade-blue);font-weight:900;white-space:nowrap}
+.study-v2-book-study-panel #bookStudyUnitStrip{display:flex;gap:9px;overflow-x:auto;padding:2px 1px 8px;scrollbar-width:none}
+.study-v2-book-study-panel #bookStudyUnitStrip::-webkit-scrollbar{display:none}
+.study-v2-book-study-panel .book-study-unit{flex:0 0 auto;min-width:70px;padding:10px 14px;border:2px solid var(--arcade-blue);border-radius:15px;background:#fff;color:#4d666c;font:850 .78rem/1.15 Poppins,sans-serif;cursor:pointer}
+.study-v2-book-study-panel .book-study-unit:hover,.study-v2-book-study-panel .book-study-unit:focus-visible{outline:none;background:#f3f5ff}
+.study-v2-book-study-panel .book-study-unit.is-current{background:#f3f5ff;color:var(--arcade-blue);box-shadow:inset 0 0 0 1px rgba(91,127,229,.08)}
+
+.book-study-content{margin-top:28px;padding-top:26px;border-top:1px solid #e3eaec}
+.book-study-content-state{padding:18px;border:2px dashed #dbe6e8;border-radius:18px;color:#71858a;text-align:center;font-size:.82rem;font-weight:800;background:#fbfdfd}
+.book-study-content-top{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:16px}
+.book-study-content-top h3{margin:0;color:#35565b;font-size:1.2rem;line-height:1.15;font-weight:900;letter-spacing:-.025em}
+.book-study-content-top p{margin:5px 0 0;color:#7c8c91;font-size:.75rem;line-height:1.4;font-weight:750}
+.book-study-count{flex:0 0 auto;padding:6px 10px;border-radius:999px;background:#f3f5ff;color:var(--arcade-blue);font-size:.68rem;font-weight:900}
+.book-study-jump{display:flex;gap:7px;overflow-x:auto;margin:0 0 18px;padding:0 0 4px;scrollbar-width:none}
+.book-study-jump::-webkit-scrollbar{display:none}
+.book-study-jump button{flex:0 0 auto;padding:7px 10px;border:2px solid #dce7e9;border-radius:999px;background:#fff;color:#60767b;font:850 .68rem/1 Poppins,sans-serif;cursor:pointer}
+.book-study-jump button:nth-child(4n+1){border-color:var(--arcade-pink);color:#d94e91}
+.book-study-jump button:nth-child(4n+2){border-color:var(--arcade-cyan);color:#188f98}
+.book-study-jump button:nth-child(4n+3){border-color:var(--arcade-orange);color:#b66f20}
+.book-study-jump button:nth-child(4n){border-color:var(--arcade-blue);color:#506fca}
+
+.book-study-section{margin-top:18px;padding:18px;border:2px solid #dfe8ea;border-radius:22px;background:#fff;scroll-margin-top:18px}
+.book-study-section:first-of-type{margin-top:0}
+.book-study-section[data-kind="vocabulary"]{border-color:var(--arcade-cyan)}
+.book-study-section[data-kind="sentences"]{border-color:var(--arcade-pink)}
+.book-study-section[data-kind="grammar"]{border-color:var(--arcade-orange)}
+.book-study-section[data-kind="reading"]{border-color:var(--arcade-blue)}
+.book-study-section[data-kind="other"]{border-color:var(--arcade-cyan)}
+.book-study-section-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:14px}
+.book-study-section-head h4{margin:0;color:#35565b;font-size:1rem;line-height:1.2;font-weight:900}
+.book-study-section-head span{color:#8a9a9e;font-size:.68rem;font-weight:850}
+
+.book-study-vocab-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.book-study-vocab{display:grid;grid-template-columns:auto minmax(0,1fr);gap:9px;align-items:center;min-width:0;padding:10px 11px;border:1px solid #dcebed;border-radius:15px;background:#fbfefe}
+.book-study-vocab-emoji{width:31px;height:31px;display:grid;place-items:center;border-radius:10px;background:#eefafb;font-size:18px}
+.book-study-vocab strong{display:block;min-width:0;color:#31565d;font-size:.8rem;line-height:1.22;font-weight:900;overflow-wrap:anywhere}
+.book-study-vocab small{display:block;margin-top:3px;color:#75898e;font-size:.66rem;line-height:1.28;font-weight:750;overflow-wrap:anywhere}
+
+.book-study-sentence-list{display:grid;gap:8px}
+.book-study-sentence{padding:11px 12px;border-radius:15px;background:#fff7fb;border:1px solid #f5d8e5}
+.book-study-sentence strong{display:block;color:#35565b;font-size:.82rem;line-height:1.4;font-weight:850}
+.book-study-sentence small{display:block;margin-top:5px;color:#7c8c91;font-size:.68rem;line-height:1.4;font-weight:750}
+
+.book-study-grammar-list{display:grid;gap:10px}
+.book-study-grammar{padding:13px 14px;border:1px solid #f0dfc8;border-radius:16px;background:#fffaf3}
+.book-study-grammar h5{margin:0;color:#70532e;font-size:.86rem;line-height:1.3;font-weight:900}
+.book-study-grammar .grammar-category{display:inline-block;margin-top:6px;padding:4px 7px;border-radius:999px;background:#fff1dc;color:#b66f20;font-size:.6rem;font-weight:900}
+.book-study-grammar p{margin:8px 0 0;color:#6e7f83;font-size:.72rem;line-height:1.5;font-weight:750}
+.book-study-patterns{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-top:10px}
+.book-study-pattern{padding:8px 9px;border-radius:12px;background:#fff;border:1px solid #ead9c2;color:#4e666b;font-size:.68rem;line-height:1.35;font-weight:800;overflow-wrap:anywhere}
+.book-study-pattern b{display:block;margin-bottom:3px;color:#b66f20;font-size:.58rem;text-transform:uppercase;letter-spacing:.08em}
+
+.book-study-reading-list,.book-study-other-list{display:grid;gap:9px}
+.book-study-reading,.book-study-other{padding:12px 13px;border-radius:15px;background:#f7f9ff;border:1px solid #dfe4fb}
+.book-study-reading h5,.book-study-other h5{margin:0;color:#4963b5;font-size:.83rem;line-height:1.3;font-weight:900}
+.book-study-reading p,.book-study-other p{margin:7px 0 0;color:#657b80;font-size:.72rem;line-height:1.55;font-weight:750;white-space:pre-wrap}
+.book-study-reading small{display:block;margin-top:8px;color:#7c8c91;font-size:.66rem;line-height:1.45;font-weight:750;white-space:pre-wrap}
+
+@media(min-width:900px){
+  .book-study-vocab-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .book-study-section{padding:20px}
+}
+@media(max-width:560px){
+  .study-v2-book-study-panel .book-study-unit-picker{margin-top:24px;padding-top:22px}
+  .book-study-content{margin-top:24px;padding-top:22px}
+  .book-study-vocab-grid{grid-template-columns:1fr 1fr;gap:7px}
+  .book-study-vocab{padding:9px;gap:7px}
+  .book-study-vocab-emoji{width:28px;height:28px;font-size:16px}
+  .book-study-section{padding:14px;border-radius:18px}
+  .book-study-patterns{grid-template-columns:1fr}
+}
+@media(max-width:360px){.book-study-vocab-grid{grid-template-columns:1fr}}
