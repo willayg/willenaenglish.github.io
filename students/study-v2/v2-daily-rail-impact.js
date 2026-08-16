@@ -7,17 +7,6 @@ var title=document.getElementById('bookTitle');
 var titleWrap=document.getElementById('bookSwipe');
 if(!card)return;
 
-/* Top launcher frame: the pink outline belongs to the whole captured container, not Daily Study. */
-(function(){
-  var style=document.createElement('style');
-  style.id='study-v2-top-frame-border-fix';
-  style.textContent=''
-    +'.study-v2-top-actions{border:2px solid #ff6fb0!important;}'
-    +'#dailyWorkoutCard.study-v2-daily-primary{border:1px solid #dfe8ea!important;}'
-    +'#dailyWorkoutCard.study-v2-daily-primary:hover,#dailyWorkoutCard.study-v2-daily-primary:focus-visible{border-color:#dfe8ea!important;}';
-  document.head.appendChild(style);
-})();
-
 var streak=main&&main.querySelector('.daily-rail-streak');
 if(main&&!streak){
   streak=document.createElement('span');
