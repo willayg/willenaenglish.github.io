@@ -24,8 +24,8 @@
 <link rel="stylesheet" href="./v2-daily-journey.css?v=20260816-railhero2">
 <link rel="stylesheet" href="./v2-daily-rail-impact.css?v=20260816-railimpact4">
 <link rel="stylesheet" href="./v2-daily-spark.css?v=20260816-spark1">
-<link rel="stylesheet" href="./v2-study-sections.css?v=20260816-sections3">
-<link rel="stylesheet" href="./v2-book-study.css?v=20260816-bookcontent3">
+<link rel="stylesheet" href="./v2-study-sections.css?v=20260816-sections4">
+<link rel="stylesheet" href="./v2-book-study.css?v=20260816-bookcontent4">
 <link rel="stylesheet" href="./v2-ai-chat.css?v=20260816-cyangray2">
 <link rel="stylesheet" href="./v2-ai-inline-link.css?v=20260815-cyangray1">
 <link rel="stylesheet" href="./v2-ai-practice-session.css?v=20260816-tokenorder1">
@@ -86,7 +86,7 @@
       <section class="study-v2-book-study-panel" id="bookStudyArea">
         <div class="study-v2-section-heading">
           <div class="study-v2-section-heading-copy"><span class="study-v2-section-kicker">BOOK STUDY</span><h2 id="bookStudyHeading">교재 공부</h2></div>
-          <small id="bookStudyNote">단원을 선택하고 교재 내용을 확인하세요</small>
+          <small id="bookStudyNote"></small>
         </div>
         <nav id="bookTabs" class="study-v2-book-tabs" aria-label="Books" hidden></nav>
         <div id="bookSwipe" class="study-v2-book-title-wrap">
@@ -106,7 +106,7 @@
       <section class="study-v2-book-panel" id="bookPracticeArea">
         <div class="study-v2-section-heading">
           <div class="study-v2-section-heading-copy"><span class="study-v2-section-kicker">BOOK PRACTICE</span><h2 id="bookPracticeHeading">교재 연습</h2></div>
-          <small id="bookPracticeNote">단원과 영역을 선택하세요</small>
+          <small id="bookPracticeNote"></small>
         </div>
         <div class="study-v2-units">
           <div class="study-v2-units-head"><span>공부할 단원을 선택하세요</span><span id="currentUnitLabel">현재 · Unit —</span></div>
@@ -114,7 +114,7 @@
         </div>
 
         <div class="header-skill-mastery" id="headerSkillMastery">
-          <div class="header-skill-mastery-head"><strong>단원 숙련도</strong><span>영역을 눌러 연습하세요</span></div>
+          <div class="header-skill-mastery-head"><strong>단원 숙련도</strong><span></span></div>
           <div id="masteryGrid" class="header-skill-mastery-grid"></div>
         </div>
 
@@ -131,7 +131,7 @@
 <script src="/shared/learning-engine/activity-schema.js?v=20260816-sharedengine1"></script>
 <script src="/shared/learning-engine/scoring.js?v=20260810-chunkspelling1"></script>
 <script src="/shared/learning-engine/engine.js?v=20260816-sharedengine1"></script>
-<script src="/shared/learning-engine/audio-playback.js?v=20260816-order-r2-11labs-browser1"></script>
+<script src="/shared/learning-engine/audio-playback.js?v=20260816-bookaudio1"></script>
 <script src="./v2-spelling-input.js?v=20260814-keyboard2"></script>
 <script src="/shared/learning-engine/adaptive-study.js?v=20260812-canonicalmastery1"></script>
 <script src="/students/study/study-question-bank.js?v=20260816-sharedengine1"></script>
@@ -152,7 +152,7 @@
 </script>
 <script src="./v2-ai-heading-lock.js?v=20260815-heading1"></script>
 <script src="./v2.js?v=20260815-stablenav1"></script>
-<script src="./v2-book-study.js?v=20260816-bookcontent3"></script>
+<script src="./v2-book-study.js?v=20260816-bookcontent4"></script>
 <script src="./v2-short-landscape.js?v=20260814-listennudge1"></script>
 <script src="./v2-round-ux.js?v=20260815-nofullscreen1"></script>
 <script src="./v2-daily.js?v=20260815-pacedtester1"></script>
@@ -196,11 +196,9 @@
   function syncSectionLabels(){
     var lang=document.getElementById('languageBtn');
     var ko=!lang||String(lang.textContent||'').trim()==='English';
-    var a=document.getElementById('bookStudyHeading'),b=document.getElementById('bookStudyNote'),c=document.getElementById('bookPracticeHeading'),d=document.getElementById('bookPracticeNote'),e=document.getElementById('bookStudyUnitPrompt');
+    var a=document.getElementById('bookStudyHeading'),c=document.getElementById('bookPracticeHeading'),e=document.getElementById('bookStudyUnitPrompt');
     if(a)a.textContent=ko?'교재 공부':'Book Study';
-    if(b)b.textContent=ko?'단원을 선택하고 교재 내용을 확인하세요':'Choose a unit to view its book content';
     if(c)c.textContent=ko?'교재 연습':'Book Practice';
-    if(d)d.textContent=ko?'단원과 영역을 선택하세요':'Choose a unit and skill';
     if(e)e.textContent=ko?'공부할 단원을 선택하세요':'Choose a unit to study';
   }
   syncSectionLabels();
