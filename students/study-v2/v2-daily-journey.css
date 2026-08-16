@@ -225,84 +225,83 @@
 }
 
 @media (min-width:760px) and (max-width:1024px){
-  /* Tablet: the outer rail is open. Daily Study itself owns the pink frame. */
+  /* Concept 07: Daily Rail Hero. */
   .book-hero.daily-inline .study-v2-top-actions{
-    grid-template-columns:300px repeat(3,minmax(0,1fr));
-    grid-template-rows:222px 104px;
-    gap:14px;
-    padding:0;
-    border:0;
-    border-radius:0;
-    background:transparent;
-    box-shadow:none;
-    overflow:visible;
+    grid-template-columns:230px repeat(3,minmax(0,1fr));
+    grid-template-rows:minmax(172px,auto) 82px;
+    gap:10px;
+    width:100%;
+    margin:0;
+    padding:0 18px 18px 0;
+    overflow:hidden;
+    border:2px solid var(--arcade-pink);
+    border-radius:28px;
+    background:#fff;
+    box-shadow:0 10px 28px rgba(38,74,79,.06);
   }
 
   .book-hero.daily-inline #dailyWorkoutCard.study-v2-daily-primary{
     grid-column:1;
-    grid-row:1 / span 2;
+    grid-row:1 / 3;
     align-self:stretch;
-    min-height:340px;
-    padding:26px 22px 22px;
-    border:3px solid var(--arcade-pink);
-    border-radius:28px;
-    background:linear-gradient(180deg,#fff3f8 0%,#fff 100%);
-    box-shadow:0 10px 28px rgba(38,74,79,.07);
+    min-height:272px;
+    padding:22px;
+    border:0;
+    border-right:1px solid #f3d7e4;
+    border-radius:26px 0 0 26px;
+    background:linear-gradient(180deg,#fff3f8,#fff);
+    box-shadow:none;
   }
   .book-hero.daily-inline #dailyWorkoutCard.study-v2-daily-primary:hover,
   .book-hero.daily-inline #dailyWorkoutCard.study-v2-daily-primary:focus-visible{
-    border-color:var(--arcade-pink);
-    background:linear-gradient(180deg,#fff1f7 0%,#fff 100%);
-    box-shadow:0 12px 30px rgba(38,74,79,.09);
+    border-color:#f3d7e4;
+    background:linear-gradient(180deg,#fff3f8,#fff);
+    box-shadow:none;
   }
-  .book-hero.daily-inline .daily-rail-today{font-size:.82rem;margin-bottom:10px}
-  .book-hero.daily-inline #dailyWorkoutCard.study-v2-daily-primary strong{font-size:1.42rem}
 
-  /* Progress is deliberately the visual anchor on tablets. */
+  .book-hero.daily-inline .daily-rail-today{font-size:.72rem;margin-bottom:9px}
+  .book-hero.daily-inline #dailyWorkoutCard.study-v2-daily-primary strong{font-size:1.42rem;line-height:1.12}
+  .book-hero.daily-inline #dailyWorkoutCard .daily-streak-status{display:block;margin-top:10px;font-size:.78rem}
   .book-hero.daily-inline #dailyWorkoutCard.study-v2-daily-primary .progress-ring{
-    width:220px;
-    height:220px;
-    flex:0 0 220px;
-    margin:20px auto 0;
-    box-shadow:0 0 0 7px rgba(255,111,176,.07);
+    width:96px;
+    height:96px;
+    flex:0 0 96px;
+    margin:18px auto 0;
+    box-shadow:none;
   }
-  .book-hero.daily-inline #dailyWorkoutCard.study-v2-daily-primary .progress-ring:after{inset:24px}
-  .book-hero.daily-inline #dailyWorkoutCard.study-v2-daily-primary .progress-ring span{font-size:1.65rem}
+  .book-hero.daily-inline #dailyWorkoutCard.study-v2-daily-primary .progress-ring:after{inset:11px}
+  .book-hero.daily-inline #dailyWorkoutCard.study-v2-daily-primary .progress-ring span{font-size:.95rem}
 
   .book-hero.daily-inline .daily-rail-main{
     grid-column:2 / 5;
     grid-row:1;
-    padding:26px 24px 14px;
+    justify-content:flex-start;
+    padding:22px 22px 6px;
   }
-  .book-hero.daily-inline .daily-rail-headline{font-size:1.65rem}
-  .book-hero.daily-inline .daily-rail-sub{font-size:.92rem}
-  .book-hero.daily-inline .daily-rail-progress{margin-top:20px;gap:8px}
+  .book-hero.daily-inline .daily-rail-headline{font-size:1.48rem;line-height:1.12}
+  .book-hero.daily-inline .daily-rail-sub{margin-top:7px;font-size:.82rem}
+  .book-hero.daily-inline .daily-rail-progress{margin-top:15px;gap:7px}
+  .book-hero.daily-inline .daily-rail-segment{height:7px}
 
   .book-hero.daily-inline .study-v2-top-actions>#practiceHeroBtn{grid-column:2;grid-row:2}
-  .book-hero.daily-inline .study-v2-top-actions>#bookStudyBtn{grid-column:3;grid-row:2}
-  .book-hero.daily-inline .study-v2-top-actions>#bookPracticeBtn{grid-column:4;grid-row:2}
+  .book-hero.daily-inline .study-v2-top-actions>#bookPracticeBtn{grid-column:3;grid-row:2}
+  .book-hero.daily-inline .study-v2-top-actions>#bookStudyBtn{grid-column:4;grid-row:2}
   .book-hero.daily-inline .study-v2-top-actions>.study-v2-action-card:not(#dailyWorkoutCard){
-    min-height:104px;
-    padding:14px 16px;
-    gap:14px;
+    min-height:80px;
+    padding:14px 15px;
+    gap:12px;
+    border-radius:18px;
+    box-shadow:none;
   }
   .book-hero.daily-inline .study-v2-top-actions>.study-v2-action-card:not(#dailyWorkoutCard):before{
-    width:62px;
-    height:62px;
-    flex:0 0 62px;
-    border-radius:0;
-    background-color:transparent;
-    background-size:44px 44px;
+    width:44px;
+    height:44px;
+    flex:0 0 44px;
+    border-radius:15px;
+    background-size:24px 24px;
   }
-  .book-hero.daily-inline .study-v2-top-actions>.study-v2-action-card:not(#dailyWorkoutCard)>strong{
-    font-size:1.22rem;
-    line-height:1.12;
-  }
-  .book-hero.daily-inline .study-v2-top-actions>.study-v2-action-card:not(#dailyWorkoutCard)>small{
-    font-size:.76rem;
-    margin-top:4px;
-  }
-
+  .book-hero.daily-inline .study-v2-top-actions>.study-v2-action-card:not(#dailyWorkoutCard)>strong{font-size:.98rem;line-height:1.15}
+  .book-hero.daily-inline .study-v2-top-actions>.study-v2-action-card:not(#dailyWorkoutCard)>small{display:none}
   .header-skill-mastery-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
 
