@@ -130,7 +130,7 @@
 @media (max-width:759px){
   /* Keep the hero/menu relationship unchanged, but give the three main content containers breathing room. */
   .book-hero.daily-inline .hero-copy{gap:12px!important}
-  .book-hero.daily-inline .study-v2-ai{margin-top:0!important;margin-bottom:18px!important}
+  .book-hero.daily-inline .study-v2-ai{margin-top:18px!important;margin-bottom:18px!important}
   .book-hero.daily-inline .study-v2-book-study-panel{margin-bottom:18px!important}
   .book-hero.daily-inline .study-v2-top-actions>#practiceHeroBtn{grid-column:1/-1!important;grid-row:2!important}
   .book-hero.daily-inline .study-v2-top-actions>#bookStudyBtn{grid-column:1!important;grid-row:3!important}
