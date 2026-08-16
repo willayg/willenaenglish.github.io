@@ -29,7 +29,7 @@
     margin:0!important;
     padding:22px!important;
     overflow:hidden!important;
-    border:3px solid var(--arcade-pink)!important;
+    border:2px solid #dfe4e7!important;
     border-radius:27px!important;
     background-color:#fff!important;
     background-image:
@@ -45,6 +45,7 @@
   .book-hero.daily-inline #dailyWorkoutCard.study-v2-daily-primary:hover,
   .book-hero.daily-inline #dailyWorkoutCard.study-v2-daily-primary:focus-visible{
     transform:none!important;
+    border-color:#dfe4e7!important;
     background-color:#fff!important;
     box-shadow:0 14px 34px rgba(255,111,176,.16)!important;
   }
