@@ -39,22 +39,33 @@
 .book-study-section-head h4{margin:0;color:#35565b;font-size:1rem;line-height:1.2;font-weight:900}
 .book-study-section-head span{color:#8a9a9e;font-size:.68rem;font-weight:850}
 
-.book-study-vocab-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
-.book-study-vocab{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:9px;align-items:center;min-width:0;padding:11px 11px 11px 14px;border:1px solid #dcebed;border-radius:15px;background:#fbfefe}
+/* Vocabulary cards: larger, simpler and translation-first. */
+.book-study-vocab-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}
+.book-study-vocab{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:14px;align-items:center;min-width:0;min-height:82px;padding:15px 14px 15px 18px;border:2px solid #dcebed;border-radius:19px;background:#fbfefe;transition:border-color .18s ease,background .18s ease,box-shadow .18s ease}
 .book-study-vocab-copy{min-width:0}
-.book-study-vocab strong{display:block;min-width:0;color:#31565d;font-size:.8rem;line-height:1.22;font-weight:900;overflow-wrap:anywhere}
-.book-study-vocab small{display:block;margin-top:4px;color:#75898e;font-size:.7rem;line-height:1.3;font-weight:800;overflow-wrap:anywhere}
+.book-study-vocab strong{display:block;min-width:0;color:#31565d;font-size:1rem;line-height:1.24;font-weight:900;overflow-wrap:anywhere}
+.book-study-vocab small{display:block;margin-top:6px;color:#637a80;font-size:.84rem;line-height:1.35;font-weight:850;overflow-wrap:anywhere}
 
-.book-study-listen{min-width:46px;min-height:38px;padding:7px 9px;border:2px solid #bfe8eb;border-radius:12px;background:#fff;color:#168c95;font:850 .66rem/1 Poppins,sans-serif;cursor:pointer;white-space:nowrap}
+/* Same headphone SVG as the shared learning engine. Text remains in the DOM for accessibility. */
+.book-study-listen{position:relative;display:grid;place-items:center;width:56px;height:56px;min-width:56px;min-height:56px;padding:0;border:3px solid #bfe8eb;border-radius:18px;background:#fff;color:#168c95;font-size:0;line-height:0;cursor:pointer;white-space:nowrap;transition:border-color .18s ease,background .18s ease,transform .18s ease}
+.book-study-listen:before{content:"";width:28px;height:28px;background-repeat:no-repeat;background-position:center;background-size:contain;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23168c95' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 14v-2a8 8 0 0 1 16 0v2'/%3E%3Cpath d='M18 19h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2h-1z'/%3E%3Cpath d='M6 19H5a2 2 0 0 1-2-2v-3a2 2 0 0 0-2-2h1z'/%3E%3C/svg%3E")}
 .book-study-listen:hover,.book-study-listen:focus-visible{outline:none;background:#eefafb;border-color:var(--arcade-cyan)}
-.book-study-listen.is-playing{background:#e7f8fa;border-color:var(--arcade-cyan);color:#116f76}
 .book-study-listen.has-played:not(.is-playing){border-color:#8bd9de}
 
-.book-study-sentence-list{display:grid;gap:8px}
-.book-study-sentence{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;padding:12px 12px 12px 14px;border-radius:15px;background:#fff7fb;border:1px solid #f5d8e5}
+/* is-playing begins as soon as audio lookup/generation starts, so the whole card visibly waits with the student. */
+.book-study-vocab:has(.book-study-listen.is-playing),
+.book-study-sentence:has(.book-study-listen.is-playing){border-color:var(--arcade-cyan)!important;background:#f1fbfc!important;box-shadow:0 0 0 4px rgba(33,179,190,.09),0 8px 22px rgba(33,179,190,.10)}
+.book-study-listen.is-playing{background:#e7f8fa;border-color:var(--arcade-cyan);color:#116f76;animation:bookAudioPulse 1s ease-in-out infinite}
+.book-study-listen.is-playing:after{content:"";position:absolute;inset:-7px;border:3px solid rgba(33,179,190,.24);border-top-color:var(--arcade-cyan);border-radius:22px;animation:bookAudioSpin .9s linear infinite}
+@keyframes bookAudioSpin{to{transform:rotate(360deg)}}
+@keyframes bookAudioPulse{50%{transform:scale(.97)}}
+
+/* Sentence cards use the same hierarchy as vocabulary, with room for Korean underneath. */
+.book-study-sentence-list{display:grid;gap:11px}
+.book-study-sentence{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:16px;align-items:center;min-height:92px;padding:16px 14px 16px 18px;border-radius:19px;background:#fff7fb;border:2px solid #f5d8e5;transition:border-color .18s ease,background .18s ease,box-shadow .18s ease}
 .book-study-sentence-copy{min-width:0}
-.book-study-sentence strong{display:block;color:#35565b;font-size:.82rem;line-height:1.4;font-weight:850}
-.book-study-sentence small{display:block;margin-top:5px;color:#7c8c91;font-size:.72rem;line-height:1.4;font-weight:800}
+.book-study-sentence strong{display:block;color:#35565b;font-size:1.04rem;line-height:1.4;font-weight:900}
+.book-study-sentence small{display:block;margin-top:7px;color:#63777c;font-size:.86rem;line-height:1.4;font-weight:850}
 
 .book-study-grammar-list{display:grid;gap:10px}
 .book-study-grammar{padding:15px 16px;border:1px solid #f0dfc8;border-radius:16px;background:#fffaf3}
@@ -80,11 +91,15 @@
   .book-study-content{margin-top:24px;padding-top:22px}
   .book-study-jump{gap:18px;margin-bottom:20px}
   .book-study-jump button{min-height:46px;padding:12px 3px 13px;font-size:1rem;line-height:1}
-  .book-study-vocab-grid{grid-template-columns:1fr 1fr;gap:7px}
-  .book-study-vocab{padding:10px 9px 10px 11px;gap:6px}
-  .book-study-listen{min-width:48px;min-height:42px;padding:8px;font-size:.68rem}
+  .book-study-vocab-grid{grid-template-columns:1fr;gap:12px}
+  .book-study-vocab{min-height:102px;padding:18px 16px 18px 20px;gap:14px;border-radius:21px}
+  .book-study-vocab strong{font-size:1.18rem;line-height:1.24}
+  .book-study-vocab small{margin-top:7px;font-size:.98rem;line-height:1.34}
+  .book-study-listen{width:62px;height:62px;min-width:62px;min-height:62px;border-radius:19px}
+  .book-study-listen:before{width:31px;height:31px}
+  .book-study-sentence-list{gap:12px}
+  .book-study-sentence{min-height:112px;padding:19px 16px 19px 20px;gap:15px;border-radius:21px}
+  .book-study-sentence strong{font-size:1.16rem;line-height:1.38}
+  .book-study-sentence small{margin-top:8px;font-size:.98rem;line-height:1.4}
   .book-study-grammar-pair{grid-template-columns:1fr}
-}
-@media(max-width:390px){
-  .book-study-vocab-grid{grid-template-columns:1fr}
 }
