@@ -3,6 +3,7 @@
 var TARGET=20,SEGMENTS=5,PER_SEGMENT=TARGET/SEGMENTS;
 var card=document.getElementById('dailyWorkoutCard');
 var pct=document.getElementById('smartDailyPct');
+var smartTitle=document.getElementById('smartProgressTitle');
 var today=document.querySelector('.daily-rail-today');
 var main=document.querySelector('.daily-rail-main');
 if(!card||!pct||!today||!main)return;
@@ -35,6 +36,7 @@ function currentSkill(){
 function paint(){
   var done=doneCount(),remaining=Math.max(0,TARGET-done),ko=korean(),skill=currentSkill();
   today.textContent='TODAY';
+  if(done<TARGET&&smartTitle)smartTitle.textContent=ko?'오늘의 학습':"Today's Study";
   if(headline){
     if(done>=TARGET)headline.textContent=ko?'오늘 학습 완료!':'Daily Study complete!';
     else headline.textContent=ko?'오늘은 '+remaining+'문제만 더 하면 끝!':remaining+' more question'+(remaining===1?'':'s')+' and you are done!';
