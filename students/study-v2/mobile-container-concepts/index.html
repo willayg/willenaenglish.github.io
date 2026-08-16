@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>Study V2 · Mobile Container Concepts</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{--pink:#ff63aa;--cyan:#25b3bd;--orange:#d99132;--blue:#5b7fe5;--ink:#28545b;--muted:#71858a;--bg:#edf5f6;--line:#d9e5e7;--deep:#183d43;--deep2:#214f56;--white:#fff;--sp:#fff4f9;--sc:#eefafb;--so:#fff8ef;--sb:#f3f5ff}
+*{box-sizing:border-box}html,body{margin:0;min-height:100%;font-family:Poppins,system-ui,sans-serif;background:#dde8ea;color:var(--ink)}button{font:inherit}.page{min-height:100vh}.chooser{position:sticky;top:0;z-index:20;background:#fff;border-bottom:3px solid var(--cyan);padding:12px 14px}.chooser-top{max-width:760px;margin:auto;display:flex;align-items:end;justify-content:space-between;gap:12px}.chooser h1{margin:0;font-size:18px}.chooser p{margin:2px 0 0;color:var(--muted);font-size:10px;font-weight:700}.count{font-size:11px;font-weight:900;color:var(--muted);white-space:nowrap}.tabs{max-width:760px;margin:10px auto 0;display:flex;gap:7px;overflow:auto;scrollbar-width:none}.tabs::-webkit-scrollbar{display:none}.tab{flex:0 0 auto;width:44px;height:38px;border:2px solid var(--line);border-radius:999px;background:#fff;color:var(--muted);font-size:11px;font-weight:900}.tab.on{border-color:var(--pink);background:var(--sp);color:var(--pink)}
+.phone{max-width:430px;margin:auto;min-height:100vh;background:var(--bg);box-shadow:0 16px 50px rgba(24,61,67,.14)}.studentbar{height:66px;padding:0 16px;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between}.points{display:flex;gap:7px}.pill{padding:7px 10px;border-radius:999px;font-size:10px;font-weight:900}.pill.c{background:var(--sc);color:var(--cyan)}.pill.p{background:var(--sp);color:var(--pink)}.avatar{width:34px;height:34px;border:3px solid var(--cyan);border-radius:50%;display:grid;place-items:center;background:#fff}.studytitle{font-size:16px;font-weight:900}
+/* SAME TOP AREA ON EVERY CONCEPT */
+.fixedtop{padding:12px}.daily{position:relative;overflow:hidden;padding:18px;border:3px solid var(--pink);border-radius:26px;background:linear-gradient(145deg,#fff 55%,#fff5fa 100%)}.spark{position:absolute;color:#ffc4dd;font-size:34px;font-weight:900;line-height:1;opacity:.8}.s1{right:18px;top:18px}.s2{left:17px;bottom:21px;font-size:23px}.dailyhead{display:flex;justify-content:space-between;align-items:center;gap:12px}.eyebrow{font-size:10px;letter-spacing:.15em;font-weight:900;color:var(--pink)}.daily h2{margin:2px 0 0;font-size:26px;line-height:1;font-weight:900;letter-spacing:-.03em}.streak{position:relative;z-index:2;padding:8px 11px;border-radius:999px;background:#fff3f8;color:#d64d8b;font-size:10px;font-weight:900}.ring{position:relative;width:152px;height:152px;margin:16px auto 0;border-radius:50%;background:conic-gradient(var(--pink) 0 70%,#f2d4e1 70%)}.ring:after{content:"";position:absolute;inset:18px;border-radius:50%;background:#fff}.ring span{position:absolute;inset:0;z-index:2;display:grid;place-items:center;color:var(--pink);font-size:22px;font-weight:900}.dailycopy{text-align:center;margin-top:12px;font-size:12px;font-weight:900}.progress{display:grid;grid-template-columns:repeat(5,1fr);gap:7px;margin-top:15px}.progress i{height:10px;border-radius:999px;background:#e5ecee}.progress i.on{background:var(--pink)}.quick{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:10px}.quick button{min-height:67px;border:3px solid;border-radius:20px;background:#fff;color:var(--ink);font-weight:900}.quick .aiq{grid-column:1/-1;border-color:var(--cyan)}.quick .bookq{border-color:var(--blue)}.quick .practiceq{border-color:var(--orange)}
+.concept{display:none}.concept.on{display:block}.body{padding:0 12px 36px}.concept-label{display:flex;align-items:end;justify-content:space-between;margin:12px 2px 8px}.concept-label strong{font-size:14px}.concept-label span{font-size:28px;font-weight:900;color:#bfd0d3}.section{position:relative}.section h3{margin:0;font-size:20px;font-weight:900}.section small{display:block;margin-top:2px;color:var(--muted);font-size:10px;font-weight:800}.dummy{margin-top:13px;display:grid;gap:8px}.bubble{padding:12px;border:1px solid var(--line);border-radius:15px;background:#fff;font-size:11px;font-weight:800;line-height:1.45}.book-title{font-size:24px;font-weight:900;line-height:1.05}.units{display:flex;gap:7px;margin-top:12px}.units b{padding:8px 10px;border:2px solid currentColor;border-radius:13px;font-size:10px}.study-tabs{display:flex;gap:14px;margin-top:13px;border-bottom:1px solid var(--line)}.study-tabs b{padding:7px 0 10px;font-size:11px}.study-tabs b:first-child{color:var(--cyan);border-bottom:3px solid var(--cyan)}.grammar{margin-top:12px;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:#fff}.grammar div{display:grid;grid-template-columns:1fr 1fr 1fr}.grammar span{padding:9px 7px;border-right:1px solid var(--line);font-size:9px;font-weight:800;text-align:center}.grammar div+div{border-top:1px solid var(--line)}.practice-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:12px}.practice-grid b{padding:13px 8px;border:2px solid var(--orange);border-radius:15px;background:#fff;text-align:center;font-size:10px}
+/* 01 Big air gaps */
+.c1 .section{padding:18px;border:2px solid var(--line);border-radius:24px;background:#fff}.c1 .section+.section{margin-top:22px}.c1 .ai-sec{border-color:#bfe7e9}.c1 .study-sec{border-color:#cfd9fb}.c1 .practice-sec{border-color:#efd5b0}
+/* 02 Separator bands */
+.c2 .section{padding:18px;border-radius:22px;background:#fff}.c2 .section+.section{margin-top:28px}.c2 .section:before{content:"";position:absolute;left:0;right:0;top:-14px;height:8px;border-radius:999px;background:var(--line)}.c2 .ai-sec:before{display:none}.c2 .study-sec:before{background:var(--blue)}.c2 .practice-sec:before{background:var(--orange)}
+/* 03 Dark AI */
+.c3 .section{padding:19px;border-radius:25px;background:#fff}.c3 .section+.section{margin-top:18px}.c3 .ai-sec{background:var(--deep);color:#fff}.c3 .ai-sec small{color:#b8d2d5}.c3 .ai-sec .bubble{background:#214c52;border-color:#3c666b;color:#fff}.c3 .ai-sec .bubble:last-child{background:#fff;color:var(--ink)}.c3 .study-sec{border:3px solid var(--blue)}.c3 .practice-sec{border:3px solid var(--orange)}
+/* 04 Dark full-width AI band */
+.c4{margin-left:-12px;margin-right:-12px}.c4 .section{padding:22px 24px;background:#fff}.c4 .ai-sec{background:#173a40;color:#fff;padding-top:26px;padding-bottom:28px}.c4 .ai-sec small{color:#c1d5d7}.c4 .ai-sec .bubble{background:#214c52;border-color:#40686d;color:#fff}.c4 .study-sec{margin-top:12px;border-radius:26px 26px 0 0}.c4 .practice-sec{margin-top:12px;border-top:8px solid #eef2f3}.c4 .study-sec,.c4 .practice-sec{padding-left:24px;padding-right:24px}
+/* 05 Section ribbons */
+.c5 .section{padding:0 18px 18px;border:2px solid var(--line);border-radius:24px;background:#fff;overflow:hidden}.c5 .section+.section{margin-top:18px}.c5 .section-head{margin:0 -18px 14px;padding:12px 18px;background:#f4f7f8}.c5 .ai-sec .section-head{background:#e9f8f9}.c5 .study-sec .section-head{background:#eff2ff}.c5 .practice-sec .section-head{background:#fff5e9}
+/* 06 Layered cards */
+.c6 .section{padding:18px;border-radius:24px;background:#fff;box-shadow:0 10px 25px rgba(31,73,80,.09)}.c6 .section+.section{margin-top:24px}.c6 .ai-sec{box-shadow:0 10px 25px rgba(33,179,190,.16)}.c6 .study-sec{box-shadow:0 10px 25px rgba(91,127,229,.14)}.c6 .practice-sec{box-shadow:0 10px 25px rgba(217,145,50,.14)}
+/* 07 Left rail */
+.c7{position:relative;padding-left:12px}.c7:before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;border-radius:999px;background:linear-gradient(var(--cyan) 0 33%,var(--blue) 33% 66%,var(--orange) 66%)}.c7 .section{padding:18px;border-radius:0 22px 22px 0;background:#fff;border-left:0}.c7 .section+.section{margin-top:16px}.c7 .ai-sec{border:2px solid #cdebed;border-left:0}.c7 .study-sec{border:2px solid #d8def7;border-left:0}.c7 .practice-sec{border:2px solid #f0dcc1;border-left:0}
+/* 08 Dark AI + dark header bars */
+.c8 .section{overflow:hidden;border-radius:24px;background:#fff;border:2px solid var(--line)}.c8 .section+.section{margin-top:18px}.c8 .section-head{padding:13px 17px;background:#264f56;color:#fff}.c8 .section-head small{color:#c6d8da}.c8 .section-body{padding:17px}.c8 .ai-sec{background:#173b41;border-color:#173b41;color:#fff}.c8 .ai-sec .section-head{background:#102e33}.c8 .ai-sec .bubble{background:#234e55;border-color:#3d6870;color:#fff}.c8 .study-sec .section-head{background:#516fc1}.c8 .practice-sec .section-head{background:#b77a2e}
+/* 09 White cards + huge labels */
+.c9 .section{padding:20px 18px 18px;border-radius:25px;background:#fff;border:1px solid var(--line)}.c9 .section+.section{margin-top:28px}.c9 .section h3{font-size:24px}.c9 .ai-sec{border-top:7px solid var(--cyan)}.c9 .study-sec{border-top:7px solid var(--blue)}.c9 .practice-sec{border-top:7px solid var(--orange)}
+/* 10 Dark AI island, light book band */
+.c10{padding:2px 0}.c10 .ai-sec{margin:0 0 24px;padding:22px;border-radius:28px;background:linear-gradient(145deg,#183c42,#234f56);color:#fff}.c10 .ai-sec small{color:#bad0d3}.c10 .ai-sec .bubble{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.16);color:#fff}.c10 .study-sec,.c10 .practice-sec{padding:20px;border-radius:24px;background:#fff}.c10 .study-sec{border:2px solid #ccd7fb}.c10 .practice-sec{margin-top:20px;border:2px solid #eed6b6}.c10 .study-sec:after{content:"BOOK STUDY";position:absolute;right:16px;top:15px;font-size:9px;letter-spacing:.12em;color:#8fa3e5;font-weight:900}.c10 .practice-sec:after{content:"BOOK PRACTICE";position:absolute;right:16px;top:15px;font-size:9px;letter-spacing:.12em;color:#d39a50;font-weight:900}
+@media(max-width:430px){.phone{max-width:none;box-shadow:none}.chooser{padding-left:10px;padding-right:10px}}
+</style>
+</head>
+<body>
+<div class="page">
+  <header class="chooser">
+    <div class="chooser-top"><div><h1>Study V2 · Container Concepts</h1><p>Top area stays the same. Only AI / Book Study / Book Practice separation changes.</p></div><div class="count" id="count">Concept 1 / 10</div></div>
+    <div class="tabs" id="tabs"></div>
+  </header>
+  <div class="phone">
+    <div class="studentbar"><div class="points"><span class="pill c">● 4775</span><span class="pill p">★ 763</span></div><span class="studytitle">Study</span><span class="avatar">🐯</span></div>
+    <div class="fixedtop">
+      <div class="daily"><span class="spark s1">✦</span><span class="spark s2">✦</span><div class="dailyhead"><div><div class="eyebrow">TODAY</div><h2>오늘의 학습</h2></div><div class="streak">✦ 4일 연속 학습</div></div><div class="ring"><span>14/20</span></div><div class="dailycopy">오늘은 6문제만 더 하면 끝!</div><div class="progress"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i></div></div>
+      <div class="quick"><button class="aiq">AI 코치</button><button class="bookq">교재 공부</button><button class="practiceq">교재 연습</button></div>
+    </div>
+    <main class="body" id="body"></main>
+  </div>
+</div>
+<script>
+const concepts=[
+ ['01','Air Gap Cards','More breathing room and separate bordered cards.'],
+ ['02','Divider Bands','White containers separated by strong horizontal rails.'],
+ ['03','Dark AI Card','Dark AI container with distinct blue and orange book cards.'],
+ ['04','Dark AI Band','AI becomes an edge-to-edge dark band before the book sections.'],
+ ['05','Header Ribbons','Each container gets a quiet section ribbon instead of a heavy border.'],
+ ['06','Floating Layers','Soft shadows separate the three containers without adding more color.'],
+ ['07','Learning Rail','One left rail visually divides AI, Book Study, and Book Practice.'],
+ ['08','Dark Section Headers','Dark AI plus compact colored header bars for the book containers.'],
+ ['09','Strong Top Edges','Simple white cards separated by thick section top borders.'],
+ ['10','Dark AI Island','Dark AI island, then very clean Book Study and Book Practice cards.']
+];
+function content(cls,n,name,desc){
+ const wrapped=cls==='c5'||cls==='c8';
+ const head=(title,sub)=>wrapped?`<div class="section-head"><h3>${title}</h3><small>${sub}</small></div><div class="section-body">`:`<h3>${title}</h3><small>${sub}</small>`;
+ const end=wrapped?'</div>':'';
+ return `<section class="concept ${cls}" data-i="${n}"><div class="concept-label"><strong>${name}<br><small>${desc}</small></strong><span>${String(n).padStart(2,'0')}</span></div>
+ <div class="section ai-sec">${head('AI 코치','오늘 가장 도움이 되는 학습')}
+   <div class="dummy"><div class="bubble">문장 만들기에서 조금 더 연습하면 좋아요.</div><div class="bubble">10문제 집중 연습 시작하기 →</div></div>${end}</div>
+ <div class="section study-sec">${head('교재 공부','Come On Everyone 4')}
+   <div class="book-title">Unit 2 · Dream Jobs</div><div class="units"><b>Unit 1</b><b>Unit 2</b><b>Unit 3</b></div><div class="study-tabs"><b>어휘</b><b>문장</b><b>문법</b></div><div class="grammar"><div><span>He<br>She<br>It</span><span>wants to</span><span>be a reporter<br>go to space</span></div><div><span>I<br>You<br>We<br>They</span><span>want to</span><span>be a reporter<br>go to space</span></div></div>${end}</div>
+ <div class="section practice-sec">${head('교재 연습','단원과 영역을 골라 연습')}
+   <div class="practice-grid"><b>어휘 연습</b><b>문장 연습</b><b>문법 연습</b><b>철자 연습</b></div>${end}</div></section>`;
+}
+const body=document.getElementById('body'),tabs=document.getElementById('tabs'),count=document.getElementById('count');
+concepts.forEach((c,i)=>{body.insertAdjacentHTML('beforeend',content('c'+(i+1),i+1,c[1],c[2]));tabs.insertAdjacentHTML('beforeend',`<button class="tab" data-i="${i+1}">${c[0]}</button>`)});
+function show(i){document.querySelectorAll('.concept').forEach(x=>x.classList.toggle('on',+x.dataset.i===i));document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('on',+x.dataset.i===i));count.textContent=`Concept ${i} / 10`;history.replaceState(null,'','#'+i);window.scrollTo({top:0,behavior:'smooth'})}
+tabs.addEventListener('click',e=>{const b=e.target.closest('.tab');if(b)show(+b.dataset.i)});show(Math.min(10,Math.max(1,parseInt(location.hash.slice(1),10)||1)));
+</script>
+</body>
+</html>
