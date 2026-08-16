@@ -14,7 +14,7 @@ var requestToken=0;
 var cached=null;
 
 function ko(){var b=document.getElementById('languageBtn');return !b||String(b.textContent||'').trim()==='English';}
-function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c];});}
+function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
 function txt(v){return String(v==null?'':v).trim();}
 function uniq(list){var out=[],seen={};(list||[]).forEach(function(v){v=txt(v);var k=v.toLowerCase();if(v&&!seen[k]){seen[k]=1;out.push(v);}});return out;}
 function ids(rows,key){return uniq((rows||[]).map(function(r){return r&&r[key];}).filter(Boolean));}
