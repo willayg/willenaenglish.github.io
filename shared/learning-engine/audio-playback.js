@@ -8,7 +8,10 @@ var currentUtterance=null;
 var currentSource=null;
 var audioContext=null;
 var runId=0;
-var AUDIO_LOOKUP='https://api.willenaenglish.com/.netlify/functions/get_audio_urls';
+var API_BASE='https://api.willenaenglish.com/.netlify/functions/';
+var AUDIO_LOOKUP=API_BASE+'get_audio_urls';
+var TTS_GENERATE=API_BASE+'eleven_labs_proxy';
+var AUDIO_UPLOAD=API_BASE+'upload_audio';
 
 function text(v){return String(v==null?'':v).replace(/\\n/g,'\n').trim();}
 function unique(items){var out=[];items.forEach(function(v){v=text(v);if(v&&out.indexOf(v)<0)out.push(v);});return out;}
@@ -33,7 +36,7 @@ function getAudioContext(){
 function stopCurrent(){
   try{if(currentSource)currentSource.stop(0);}catch(_){}
   currentSource=null;
-  try{if(global.speechSynthesis&&global.speechSynthesis.speaking)global.speechSynthesis.cancel();}catch(_){}
+  try{if(global.speechSynthesis)global.speechSynthesis.cancel();}catch(_){}
   currentUtterance=null;
 }
 async function findStoredAudio(candidates){
@@ -50,14 +53,10 @@ async function findStoredAudio(candidates){
   }catch(_){}
   return'';
 }
-async function playStored(url,ctx,myRun,button){
-  if(!url||!ctx||myRun!==runId)return false;
+async function playDecodedBuffer(buffer,ctx,myRun,button){
+  if(!buffer||!ctx||myRun!==runId)return false;
   try{
-    var r=await fetch(url,{cache:'force-cache'});
-    if(!r.ok)return false;
-    var buf=await r.arrayBuffer();
-    if(myRun!==runId)return false;
-    var decoded=await ctx.decodeAudioData(buf.slice(0));
+    var decoded=await ctx.decodeAudioData(buffer.slice(0));
     if(myRun!==runId)return false;
     var source=ctx.createBufferSource();
     source.buffer=decoded;
@@ -74,12 +73,22 @@ async function playStored(url,ctx,myRun,button){
     return true;
   }catch(_){return false;}
 }
+async function playStored(url,ctx,myRun,button){
+  if(!url||!ctx||myRun!==runId)return false;
+  try{
+    var r=await fetch(url,{cache:'force-cache'});
+    if(!r.ok)return false;
+    return await playDecodedBuffer(await r.arrayBuffer(),ctx,myRun,button);
+  }catch(_){return false;}
+}
 function pickVoice(synth,lang){
   var voices=[];try{voices=synth.getVoices()||[];}catch(_){}
   if(!voices.length)return null;
   var wanted=text(lang||'en-US').toLowerCase();
   var exact=voices.find(function(v){return text(v.lang).toLowerCase()===wanted;});
   if(exact)return exact;
+  var preferred=voices.find(function(v){return /^en-us/i.test(text(v.lang))&&/(female|zira|aria|jenny|samantha|allison|emily|lisa|michelle|google us english)/i.test(text(v.name));});
+  if(preferred)return preferred;
   var us=voices.find(function(v){return /^en-us/i.test(text(v.lang));});
   if(us)return us;
   var en=voices.find(function(v){return /^en/i.test(text(v.lang));});
@@ -108,26 +117,48 @@ function speakWithVoice(button,activity,myRun){
       u.onend=function(){if(myRun!==runId)return;button.classList.remove('is-playing');button.classList.add('has-played');};
       u.onerror=function(){if(myRun!==runId)return;button.classList.remove('is-playing');finish(false);};
       try{synth.resume();synth.speak(u);}catch(_){finish(false);return;}
+      /* Only onstart counts as success. Some Android builds sit in pending forever
+         without producing sound; treat that as a failure and use real MP3 audio. */
       startTimer=setTimeout(function(){
         if(finished||myRun!==runId)return;
-        var active=false;try{active=!!(synth.speaking||synth.pending);}catch(_){}
-        if(active){finish(true);return;}
+        try{synth.cancel();}catch(_){}
+        button.classList.remove('is-playing');
         finish(false);
-      },1200);
+      },1500);
     }
     var voice=pickVoice(synth,stimulus.lang);
     if(voice){launch(voice);return;}
-    voiceListener=function(){
-      var loaded=pickVoice(synth,stimulus.lang);
-      if(loaded)launch(loaded);
-    };
+    voiceListener=function(){var loaded=pickVoice(synth,stimulus.lang);if(loaded)launch(loaded);};
     try{synth.addEventListener('voiceschanged',voiceListener);}catch(_){}
     try{synth.getVoices();}catch(_){}
-    voiceTimer=setTimeout(function(){
-      if(finished||myRun!==runId)return;
-      launch(pickVoice(synth,stimulus.lang));
-    },500);
+    voiceTimer=setTimeout(function(){if(!finished&&myRun===runId)launch(pickVoice(synth,stimulus.lang));},500);
   });
+}
+function base64Buffer(b64){
+  try{
+    var raw=global.atob(String(b64||'')),out=new Uint8Array(raw.length);
+    for(var i=0;i<raw.length;i++)out[i]=raw.charCodeAt(i);
+    return out.buffer;
+  }catch(_){return null;}
+}
+async function generateAndPlay(activity,ctx,myRun,button){
+  var spoken=spokenText(activity);
+  if(!spoken||spoken.length>400||!ctx||myRun!==runId)return false;
+  try{
+    var r=await fetch(TTS_GENERATE,{method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',cache:'no-store',body:JSON.stringify({text:spoken})});
+    if(!r.ok)return false;
+    var d=await r.json().catch(function(){return{};});
+    if(!d||!d.audio)return false;
+    var buffer=base64Buffer(d.audio);
+    if(!buffer||myRun!==runId)return false;
+    var played=await playDecodedBuffer(buffer,ctx,myRun,button);
+    if(played){
+      /* Cache the generated listening clip globally so the next student gets the R2
+         version instead of generating it again. Upload is best-effort and non-blocking. */
+      fetch(AUDIO_UPLOAD,{method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',body:JSON.stringify({word:spoken,fileDataBase64:d.audio})}).catch(function(){});
+    }
+    return played;
+  }catch(_){return false;}
 }
 async function playAudio(button,activity){
   var myRun=++runId;
@@ -135,25 +166,24 @@ async function playAudio(button,activity){
   button.classList.remove('has-played');
   button.classList.add('is-playing');
 
-  /* Resume WebAudio from the actual tap. Once unlocked, fetched R2 audio can play
-     after the network request without Android autoplay blocking it. */
+  /* Unlock WebAudio from the actual tap. This keeps later network-fetched MP3 playback
+     legal on Android even though the fetch itself is asynchronous. */
   var ctx=getAudioContext();
-  var candidates=audioCandidates(activity);
-  var stored=await findStoredAudio(candidates);
+  var stored=await findStoredAudio(audioCandidates(activity));
   if(myRun!==runId)return;
   if(stored&&ctx){
     var storedOk=await playStored(stored,ctx,myRun,button);
     if(storedOk)return;
   }
 
-  /* Sentence listening often has no stored MP3. Use the same voice-loading pattern
-     as English Arcade instead of assuming Android already has a voice ready. */
   var speechOk=await speakWithVoice(button,activity,myRun);
+  if(myRun!==runId||speechOk)return;
+
+  /* Final fallback: create one real MP3 through the existing Willena TTS service,
+     play it through the already-unlocked AudioContext, and cache it to R2. */
+  var generated=await generateAndPlay(activity,ctx,myRun,button);
   if(myRun!==runId)return;
-  if(!speechOk){
-    button.classList.remove('is-playing');
-    button.classList.remove('has-played');
-  }
+  if(!generated){button.classList.remove('is-playing','has-played');}
 }
 
 proto.render=function(){
