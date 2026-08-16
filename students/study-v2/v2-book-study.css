@@ -70,7 +70,12 @@
 .book-study-grammar-list{display:grid;gap:10px}
 .book-study-grammar{padding:15px 16px;border:1px solid #f0dfc8;border-radius:16px;background:#fffaf3}
 .book-study-grammar h5{margin:0;color:#70532e;font-size:.9rem;line-height:1.3;font-weight:900}
-.book-study-grammar>p{margin:9px 0 0;color:#5f7479;font-size:.78rem;line-height:1.55;font-weight:800}
+.book-study-grammar>p{margin:11px 0 0;color:#5f7479;font-size:.78rem;line-height:1.55;font-weight:800}
+.book-study-grammar-chart{display:grid;margin-top:12px;border:1px solid #ead7bd;border-radius:14px;overflow:hidden;background:#fff}
+.book-study-grammar-chart-row{display:grid;grid-template-columns:76px minmax(0,1fr);align-items:stretch}
+.book-study-grammar-chart-row+.book-study-grammar-chart-row{border-top:1px solid #ead7bd}
+.book-study-grammar-chart-row>span{display:flex;align-items:center;padding:11px 10px;background:#fff1dc;color:#a4651e;font-size:.72rem;line-height:1.25;font-weight:900}
+.book-study-grammar-chart-row>strong{display:flex;align-items:center;padding:11px 12px;color:#425f65;font-size:.86rem;line-height:1.45;font-weight:900;overflow-wrap:anywhere}
 .book-study-grammar-examples{display:grid;gap:9px;margin-top:13px}
 .book-study-grammar-pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
 .book-study-grammar-pair>div{padding:10px 11px;border-radius:13px;background:#fff;border:1px solid #ead9c2}
@@ -101,5 +106,8 @@
   .book-study-sentence{min-height:112px;padding:19px 16px 19px 20px;gap:15px;border-radius:21px}
   .book-study-sentence strong{font-size:1.16rem;line-height:1.38}
   .book-study-sentence small{margin-top:8px;font-size:.98rem;line-height:1.4}
+  .book-study-grammar-chart-row{grid-template-columns:70px minmax(0,1fr)}
+  .book-study-grammar-chart-row>span{font-size:.78rem;padding:12px 9px}
+  .book-study-grammar-chart-row>strong{font-size:.95rem;padding:12px}
   .book-study-grammar-pair{grid-template-columns:1fr}
 }
