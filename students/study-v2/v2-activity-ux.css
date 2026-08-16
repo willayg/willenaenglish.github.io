@@ -65,3 +65,12 @@
   #v2ActivityRoot .activity-audio:before,
   #aiCoachActivityRoot .activity-audio:before{width:38px;height:38px}
 }
+
+/* Final launcher-card border authority. Daily Study stays light grey even though Spark styles load earlier. */
+.book-hero.daily-inline #dailyWorkoutCard.study-v2-daily-primary,
+.book-hero.daily-inline #dailyWorkoutCard.study-v2-daily-primary.is-complete,
+.book-hero.daily-inline #dailyWorkoutCard.study-v2-daily-primary:hover,
+.book-hero.daily-inline #dailyWorkoutCard.study-v2-daily-primary:focus-visible{
+  border:2px solid #dfe4e7!important;
+  border-color:#dfe4e7!important;
+}
