@@ -151,6 +151,17 @@
   .study-v2-book-title-wrap #bookTitle{font-size:clamp(1.55rem,3.8vw,2.65rem)!important}
 }
 
+/* Large tablets often report a CSS viewport wider than 1024px. */
+@media (min-width:1025px) and (max-width:1366px) and (pointer:coarse){
+  #dailyWorkoutCard.study-v2-daily-primary .progress-ring{
+    width:210px!important;
+    height:210px!important;
+    flex-basis:210px!important;
+  }
+  #dailyWorkoutCard.study-v2-daily-primary .progress-ring:after{inset:22px!important}
+  #dailyWorkoutCard.study-v2-daily-primary .progress-ring span{font-size:1.68rem!important}
+}
+
 /* Landscape phones get the Rail layout, but stay compact enough to use. */
 @media (orientation:landscape) and (min-width:600px) and (max-width:759px) and (max-height:700px){
   .study-v2-top-actions{
