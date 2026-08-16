@@ -160,7 +160,7 @@
 }
 
 /* Tablet-only refinement: Daily owns the pink frame; outer group is visually open. */
-@media (min-width:760px) and (max-width:1024px) and (min-height:701px){
+@media (min-width:760px) and (max-width:1400px) and (min-height:701px) and (pointer:coarse){
   .book-hero.daily-inline .study-v2-top-actions{
     border:0!important;
     background:transparent!important;
