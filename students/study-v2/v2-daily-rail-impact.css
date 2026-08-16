@@ -56,19 +56,32 @@
   .daily-rail-streak{
     position:absolute!important;
     top:32px!important;
-    right:18px!important;
+    right:6px!important;
     display:inline-flex!important;
     align-items:center!important;
     justify-content:center!important;
+    gap:7px!important;
     margin:0!important;
-    padding:11px 17px!important;
+    padding:8px 11px!important;
+    border:2px solid #ffc6df!important;
     border-radius:999px!important;
-    background:#fff3f8!important;
-    color:#d94e91!important;
-    font-size:1.08rem!important;
-    line-height:1.1!important;
+    background:#fff!important;
+    color:#d44e8d!important;
+    font-size:.9rem!important;
+    line-height:1!important;
     font-weight:900!important;
     white-space:nowrap!important;
+    box-shadow:0 6px 15px rgba(255,111,176,.09)!important;
+  }
+  .daily-rail-streak svg{
+    width:25px!important;
+    height:25px!important;
+    flex:0 0 25px!important;
+    fill:none!important;
+    stroke:currentColor!important;
+    stroke-width:2.2!important;
+    stroke-linecap:round!important;
+    stroke-linejoin:round!important;
   }
   .daily-rail-progress{
     display:grid!important;
@@ -132,7 +145,7 @@
   .daily-rail-main{padding:28px 205px 15px 25px!important}
   .daily-rail-headline{font-size:1.82rem!important}
   .daily-rail-sub{font-size:.98rem!important}
-  .daily-rail-streak{top:28px!important;right:14px!important;font-size:.96rem!important;padding:10px 14px!important}
+  .daily-rail-streak{top:28px!important;right:4px!important;font-size:.86rem!important;padding:8px 10px!important}
   .daily-rail-progress{width:calc(100% + 187px)!important;margin-top:21px!important}
   .daily-rail-segment{height:10px!important}
   .study-v2-book-title-wrap #bookTitle{font-size:clamp(1.55rem,3.8vw,2.65rem)!important}
@@ -153,7 +166,8 @@
   .daily-rail-main{padding:15px 118px 8px 14px!important}
   .daily-rail-headline{font-size:1.16rem!important}
   .daily-rail-sub{font-size:.7rem!important;margin-top:6px!important}
-  .daily-rail-streak{top:15px!important;right:8px!important;font-size:.68rem!important;padding:6px 8px!important}
+  .daily-rail-streak{top:15px!important;right:4px!important;font-size:.68rem!important;padding:6px 8px!important}
+  .daily-rail-streak svg{width:20px!important;height:20px!important;flex-basis:20px!important}
   .daily-rail-progress{width:calc(100% + 104px)!important;margin-top:10px!important;gap:5px!important}
   .daily-rail-segment{height:6px!important}
   .study-v2-book-title-wrap #bookTitle{font-size:clamp(1.35rem,3.9vw,2rem)!important}
