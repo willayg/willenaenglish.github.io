@@ -1,5 +1,8 @@
 /* Combined Book Study + Practice hub. One container, one book tab row, one shared unit strip. */
 .study-v2-book-hub{
+  order:3;
+  width:100%;
+  min-width:0;
   margin-top:34px;
   padding:24px;
   border:2px solid var(--arcade-cyan);
