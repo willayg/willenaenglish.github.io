@@ -271,3 +271,15 @@ html,body,.study-app{background:#f2f3f5!important;}
   .study-v2-ai .study-coach-card small{font-size:1rem!important;line-height:1.5!important;}
   .study-v2-ai .study-coach-card .coach-action{font-size:.98rem!important;}
 }
+
+/* The pink frame belongs to the whole top launcher group, not the Daily Study card. */
+.book-hero.daily-inline .study-v2-top-actions{
+  border:2px solid #ff6fb0!important;
+}
+#dailyWorkoutCard.study-v2-daily-primary{
+  border:1px solid #dfe8ea!important;
+}
+#dailyWorkoutCard.study-v2-daily-primary:hover,
+#dailyWorkoutCard.study-v2-daily-primary:focus-visible{
+  border-color:#dfe8ea!important;
+}
