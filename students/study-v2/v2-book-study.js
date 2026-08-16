@@ -14,7 +14,7 @@ var requestToken=0;
 var cached=null;
 
 function ko(){var b=document.getElementById('languageBtn');return !b||String(b.textContent||'').trim()==='English';}
-function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c];});}
 function txt(v){return String(v==null?'':v).trim();}
 function uniq(list){var out=[],seen={};(list||[]).forEach(function(v){v=txt(v);var k=v.toLowerCase();if(v&&!seen[k]){seen[k]=1;out.push(v);}});return out;}
 function ids(rows,key){return uniq((rows||[]).map(function(r){return r&&r[key];}).filter(Boolean));}
@@ -57,6 +57,7 @@ function syncCurrentLabel(fallback){
   if(bookStudyNote)bookStudyNote.textContent='';
 }
 function looksSentence(s){s=txt(s);return !!s&&(/[.?!]$/.test(s)||/^(what|where|when|who|why|how|do|does|did|is|are|was|were|can|could|will|would|should|have|has|had)\b/i.test(s));}
+function isStudySentence(s){s=txt(s);return looksSentence(s)&&!(/[+{}]|→/.test(s));}
 
 async function loadUnit(unitId,fallbackLabel){
   unitId=txt(unitId);if(!unitId)return;
@@ -70,15 +71,13 @@ async function loadUnit(unitId,fallbackLabel){
     ]);
     if(token!==requestToken)return;
     var unit=base[0][0]||null,occ=base[1]||[];
-    var lexicalIds=ids(occ,'lexical_entry_id'),sentenceIds=ids(occ,'sentence_id'),patternIds=ids(occ,'pattern_id'),passageIds=ids(occ,'passage_id');
+    var lexicalIds=ids(occ,'lexical_entry_id'),sentenceIds=ids(occ,'sentence_id');
     var details=await Promise.all([
       lexicalIds.length?rest('lexical_entries?select=id,canonical_text,translation_ko&id=in.'+listQuery(lexicalIds)+'&status=in.(review,published)'):Promise.resolve([]),
-      sentenceIds.length?rest('sentences?select=id,text,canonical_text,translation_ko,grammar_notes&id=in.'+listQuery(sentenceIds)+'&status=in.(review,published)'):Promise.resolve([]),
-      patternIds.length?rest('patterns?select=id,name,grammar_category,prompt_pattern,response_pattern,explanation_en,explanation_ko&id=in.'+listQuery(patternIds)+'&status=in.(review,published)'):Promise.resolve([]),
-      passageIds.length?rest('passages?select=id,title,body,translation_ko,topic,content_type&id=in.'+listQuery(passageIds)+'&status=in.(review,published)'):Promise.resolve([])
+      sentenceIds.length?rest('sentences?select=id,text,canonical_text,translation_ko,grammar_notes&id=in.'+listQuery(sentenceIds)+'&status=in.(review,published)'):Promise.resolve([])
     ]);
     if(token!==requestToken)return;
-    cached={unit:unit,occ:occ,lex:byId(details[0]),sent:byId(details[1]),patterns:byId(details[2]),passages:byId(details[3])};
+    cached={unit:unit,occ:occ,lex:byId(details[0]),sent:byId(details[1])};
     render(cached);
     syncCurrentLabel(fallbackLabel);
   }catch(e){
@@ -106,50 +105,12 @@ function sentenceSection(data){
     var text='',translation='';
     if(o.occurrence_type==='sentence'&&o.sentence_id){var d=data.sent[String(o.sentence_id)]||{};text=txt(d.canonical_text||d.text||o.source_text);translation=txt(d.translation_ko)||occurrenceTranslation(o);}
     else if(o.occurrence_type==='sentence'){text=txt(o.source_text);translation=occurrenceTranslation(o);}
-    else if(o.occurrence_type==='pattern'&&looksSentence(o.source_text)){text=txt(o.source_text);translation=occurrenceTranslation(o);}
+    else if(o.occurrence_type==='pattern'&&isStudySentence(o.source_text)){text=txt(o.source_text);translation=occurrenceTranslation(o);}
     if(!text)return;var key=text.toLowerCase();if(seen[key])return;seen[key]=1;items.push({text:text,translation:translation});
   });
   if(!items.length)return'';
   return section('sentences',ko()?'핵심 문장':'Key Sentences',items.length,
     '<div class="book-study-sentence-list">'+items.map(function(v){return '<div class="book-study-sentence"><div class="book-study-sentence-copy"><strong>'+esc(v.text)+'</strong>'+(v.translation?'<small>'+esc(v.translation)+'</small>':'')+'</div>'+listenButton(v.text)+'</div>';}).join('')+'</div>');
-}
-function grammarSection(data){
-  var groups={},loose=[];
-  data.occ.filter(function(o){return o.occurrence_type==='pattern'||o.skill==='grammar';}).forEach(function(o){
-    if(o.pattern_id){
-      var id=String(o.pattern_id);
-      if(!groups[id])groups[id]={detail:data.patterns[id]||{},labels:[],examples:[]};
-      if(looksSentence(o.source_text))groups[id].examples.push({text:txt(o.source_text),translation:occurrenceTranslation(o)});
-      else groups[id].labels.push(o.source_text);
-    } else if(o.source_text)loose.push(o.source_text);
-  });
-  var cards=[];
-  Object.keys(groups).forEach(function(id){
-    var g=groups[id],d=g.detail||{},labels=uniq(g.labels);
-    var name=txt(d.name||labels[0]||d.grammar_category||'Grammar');
-    var explanation=txt((ko()?d.explanation_ko:d.explanation_en)||d.explanation_en||d.explanation_ko);
-    var examples=[];
-    for(var i=0;i<g.examples.length;i+=2){
-      var first=g.examples[i],second=g.examples[i+1];
-      examples.push('<div class="book-study-grammar-pair"><div><strong>'+esc(first.text)+'</strong>'+(first.translation?'<small>'+esc(first.translation)+'</small>':'')+'</div>'+(second?'<div><strong>'+esc(second.text)+'</strong>'+(second.translation?'<small>'+esc(second.translation)+'</small>':'')+'</div>':'')+'</div>');
-    }
-    cards.push('<div class="book-study-grammar"><h5>'+esc(name)+'</h5>'+(explanation?'<p>'+esc(explanation)+'</p>':'')+(examples.length?'<div class="book-study-grammar-examples">'+examples.join('')+'</div>':'')+'</div>');
-  });
-  uniq(loose).forEach(function(s){cards.push('<div class="book-study-grammar"><h5>'+esc(s)+'</h5></div>');});
-  if(!cards.length)return'';
-  return section('grammar',ko()?'문법':'Grammar',cards.length,'<div class="book-study-grammar-list">'+cards.join('')+'</div>');
-}
-function readingSection(data){
-  var rows=data.occ.filter(function(o){return o.occurrence_type==='passage'||o.skill==='reading';}),seen={},items=[];
-  rows.forEach(function(o){var d=o.passage_id?data.passages[String(o.passage_id)]||{}:{};var title=txt(d.title||o.source_text||o.activity_label);var body=txt(d.body);var trans=txt(d.translation_ko);var key=(title+'|'+body).toLowerCase();if((!title&&!body)||seen[key])return;seen[key]=1;items.push({title:title||(ko()?'읽기':'Reading'),body:body,translation:trans});});
-  if(!items.length)return'';
-  return section('reading',ko()?'읽기':'Reading',items.length,'<div class="book-study-reading-list">'+items.map(function(v){return '<div class="book-study-reading"><h5>'+esc(v.title)+'</h5>'+(v.body?'<p>'+esc(v.body)+'</p>':'')+(v.translation?'<small>'+esc(v.translation)+'</small>':'')+'</div>';}).join('')+'</div>');
-}
-function otherSection(data){
-  var rows=data.occ.filter(function(o){return o.occurrence_type==='function'||o.occurrence_type==='topic'||(['speaking','phonics','listening'].indexOf(o.skill)>=0&&o.occurrence_type!=='instruction');}),seen={},items=[];
-  rows.forEach(function(o){var text=txt(o.source_text);if(!text)return;var key=(o.skill+'|'+text).toLowerCase();if(seen[key])return;seen[key]=1;items.push({label:txt(o.activity_label)||(o.skill||'Study'),text:text,skill:o.skill});});
-  if(!items.length)return'';
-  return section('other',ko()?'말하기 · 기타':'Speaking & More',items.length,'<div class="book-study-other-list">'+items.map(function(v){return '<div class="book-study-other"><h5>'+esc(v.label)+'</h5><p>'+esc(v.text)+'</p></div>';}).join('')+'</div>');
 }
 function section(kind,title,count,body){return '<section class="book-study-section" data-kind="'+kind+'" id="bookStudy-'+kind+'" role="tabpanel"><div class="book-study-section-head"><h4>'+esc(title)+'</h4><span>'+count+'</span></div>'+body+'</section>';}
 function setActiveKind(kind){
@@ -182,17 +143,17 @@ function bindAudio(){
 }
 function render(data){
   var blocks=[],tabs=[];
-  [['vocabulary',vocabSection],['sentences',sentenceSection],['grammar',grammarSection],['reading',readingSection],['other',otherSection]].forEach(function(pair){
+  [['vocabulary',vocabSection],['sentences',sentenceSection]].forEach(function(pair){
     var html=pair[1](data);
     if(html){
       blocks.push(html);
-      var label={vocabulary:ko()?'어휘':'Vocabulary',sentences:ko()?'문장':'Sentences',grammar:ko()?'문법':'Grammar',reading:ko()?'읽기':'Reading',other:ko()?'기타':'More'}[pair[0]];
+      var label={vocabulary:ko()?'어휘':'Vocabulary',sentences:ko()?'문장':'Sentences'}[pair[0]];
       tabs.push('<button type="button" role="tab" data-study-kind="'+pair[0]+'" aria-selected="false">'+esc(label)+'</button>');
     }
   });
-  if(!blocks.length){state(ko()?'이 단원에는 아직 연결된 교재 내용이 없어요.':'No book content is linked to this unit yet.');return;}
+  if(!blocks.length){state(ko()?'이 단원에는 아직 연결된 어휘나 문장이 없어요.':'No vocabulary or sentences are linked to this unit yet.');return;}
   var unit=data.unit||{},unitName='Unit '+(unit.unit_number||'')+(unit.title?' · '+unit.title:'');
-  contentRoot.innerHTML='<div class="book-study-content-top"><h3>'+esc(unitName)+'</h3><span class="book-study-count">'+data.occ.length+' '+(ko()?'항목':'items')+'</span></div><div class="book-study-jump" role="tablist" aria-label="'+(ko()?'교재 내용':'Book content')+'">'+tabs.join('')+'</div><div class="book-study-active-pane">'+blocks.join('')+'</div>';
+  contentRoot.innerHTML='<div class="book-study-content-top"><h3>'+esc(unitName)+'</h3></div><div class="book-study-jump" role="tablist" aria-label="'+(ko()?'교재 내용':'Book content')+'">'+tabs.join('')+'</div><div class="book-study-active-pane">'+blocks.join('')+'</div>';
   contentRoot.querySelectorAll('[data-study-kind]').forEach(function(b){b.addEventListener('click',function(){setActiveKind(b.getAttribute('data-study-kind'));});});
   bindAudio();
   setActiveKind(activeKind);
