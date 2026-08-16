@@ -32,14 +32,14 @@
 <link rel="stylesheet" href="./v2-ai-practice-session.css?v=20260816-tokenorder1">
 <link rel="stylesheet" href="./v2-spelling-input.css?v=20260814-keyboard2">
 <link rel="stylesheet" href="./v2-daily-test.css?v=20260815-pacedtester1">
-<link rel="stylesheet" href="./v2-activity-ux.css?v=20260816-activityux3">
+<link rel="stylesheet" href="./v2-activity-ux.css?v=20260816-activityux4">
 <style>
 /* Keep the Daily, AI and book launch actions captured in one top container, matching the tablet treatment. */
 .study-v2-top-actions{
   padding:18px!important;
   gap:12px!important;
   margin:0 0 34px!important;
-  border:1px solid #dfe8ea!important;
+  border:2px solid #ff6fb0!important;
   border-radius:28px!important;
   background:#fff!important;
   box-shadow:0 10px 30px rgba(38,74,79,.07)!important;
@@ -49,10 +49,16 @@
 #dailyWorkoutCard.study-v2-daily-primary{
   box-shadow:none!important;
 }
-.study-v2-top-actions>.study-v2-action-card:hover,
-.study-v2-top-actions>.study-v2-action-card:focus-visible,
+#dailyWorkoutCard.study-v2-daily-primary,
+#dailyWorkoutCard.study-v2-daily-primary.is-complete,
 #dailyWorkoutCard.study-v2-daily-primary:hover,
 #dailyWorkoutCard.study-v2-daily-primary:focus-visible{
+  border:3px solid #d4dadd!important;
+  border-color:#d4dadd!important;
+  box-shadow:0 8px 22px rgba(38,74,79,.08)!important;
+}
+.study-v2-top-actions>.study-v2-action-card:hover,
+.study-v2-top-actions>.study-v2-action-card:focus-visible{
   box-shadow:0 7px 18px rgba(38,74,79,.07)!important;
 }
 .study-v2-top-actions .daily-rail-main{
