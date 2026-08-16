@@ -131,7 +131,8 @@ function builderRows(name,explanation,examples){
 
   return rowsForPresentAgreement(name,explanation,examples);
 }
-function makeCell(value,index){var c=document.createElement('div');c.className='book-study-grammar-builder-cell is-col-'+(index+1);c.textContent=value;return c;}
+function displayCellText(value){return text(value).replace(/\s*\/\s*/g,'\n');}
+function makeCell(value,index){var c=document.createElement('div');c.className='book-study-grammar-builder-cell is-col-'+(index+1);c.textContent=displayCellText(value);return c;}
 function makeBuilder(rows){
   var wrap=document.createElement('div');wrap.className='book-study-grammar-builder';
   var title=document.createElement('div');title.className='book-study-grammar-builder-title';title.textContent=isKo()?'문장 만들기':'Build a sentence';wrap.appendChild(title);
