@@ -17,13 +17,18 @@ var bareBtn=makeBtn('1. Bare TTS');
 var noCancelBtn=makeBtn('2. en-US · no cancel');
 var oldBtn=makeBtn('3. Yesterday exact');
 var pickedBtn=makeBtn('4. Picked voice · no cancel');
+var localBtn=makeBtn('5. Local English voice');
+var networkBtn=makeBtn('6. Network English voice');
 var status=document.createElement('div');
 status.textContent='staging only';
 status.style.cssText='display:none;background:#173f46;color:#fff;border-radius:10px;padding:7px 9px;font:600 11px/1.35 Poppins,system-ui,sans-serif;word-break:break-word';
-wrap.appendChild(bareBtn);wrap.appendChild(noCancelBtn);wrap.appendChild(oldBtn);wrap.appendChild(pickedBtn);wrap.appendChild(status);document.body.appendChild(wrap);
+[bareBtn,noCancelBtn,oldBtn,pickedBtn,localBtn,networkBtn,status].forEach(function(x){wrap.appendChild(x);});
+document.body.appendChild(wrap);
 
 function show(msg){status.textContent=msg;status.style.display='block';}
 function getVoices(){try{return window.speechSynthesis?window.speechSynthesis.getVoices()||[]:[];}catch(_){return[];}}
+function english(list){return list.filter(function(v){return /^en/i.test(String(v&&v.lang||''));});}
+function voiceText(v){return v?(String(v.name||'?')+' ('+String(v.lang||'?')+') · local='+!!v.localService+' · default='+!!v.default):'none';}
 function pick(list){
   return list.find(function(v){return !!v.default&&/^en/i.test(v.lang||'');})||
          list.find(function(v){return /^en-US$/i.test(v.lang||'');})||
@@ -35,8 +40,11 @@ function state(synth){
 function run(label,build,start){
   if(!window.speechSynthesis||!window.SpeechSynthesisUtterance){show('NOT SUPPORTED: speechSynthesis unavailable');return;}
   var synth=window.speechSynthesis,list=getVoices(),u=build(list);
+  if(!u)return;
   var defaultVoice=list.find(function(v){return !!v.default;})||null;
-  var meta='voices='+list.length+(defaultVoice?' · default='+defaultVoice.name+' ('+defaultVoice.lang+')':' · no default voice');
+  var en=english(list),localEn=en.filter(function(v){return !!v.localService;}),networkEn=en.filter(function(v){return !v.localService;});
+  var meta='voices='+list.length+' · English='+en.length+' · local English='+localEn.length+' · network English='+networkEn.length+(defaultVoice?' · default='+voiceText(defaultVoice):' · no default voice');
+  if(u.__diagVoice)meta+=' · chosen='+voiceText(u.__diagVoice);
   show('REQUESTED · '+label+' · '+meta+' · '+state(synth));
   var finished=false;
   u.onstart=function(){finished=true;show('STARTED · '+label+' · '+meta+' · '+state(synth));};
@@ -46,23 +54,27 @@ function run(label,build,start){
   setTimeout(function(){if(!finished)show('NO EVENT · '+label+' · '+meta+' · '+state(synth));},2000);
 }
 
-/* Absolute minimum Web Speech call. No cancel, voice, lang, rate, resume, or other state changes. */
 bareBtn.addEventListener('click',function(){
   run('BARE',function(){return new SpeechSynthesisUtterance('Hello. This is a test.');},function(synth,u){synth.speak(u);});
 });
 
-/* Same basic utterance settings as Study, but deliberately does NOT call cancel(). */
 noCancelBtn.addEventListener('click',function(){
   run('EN-US NO CANCEL',function(){var u=new SpeechSynthesisUtterance('This is the browser text to speech test.');u.lang='en-US';u.rate=.9;return u;},function(synth,u){synth.speak(u);});
 });
 
-/* Exact audio click code from the Aug 14 shared Study engine that was working before the compatibility layer. */
 oldBtn.addEventListener('click',function(){
   run('YESTERDAY EXACT',function(){var u=new SpeechSynthesisUtterance('This is the browser text to speech test.');u.lang='en-US';u.rate=.9;return u;},function(synth,u){synth.cancel();synth.speak(u);});
 });
 
-/* Explicit English voice, but no cancel/resume. This isolates voice selection from queue cancellation. */
 pickedBtn.addEventListener('click',function(){
-  run('PICKED NO CANCEL',function(list){var u=new SpeechSynthesisUtterance('This is the browser text to speech test.');var voice=pick(list);if(voice)u.voice=voice;u.lang=voice&&voice.lang?voice.lang:'en-US';u.rate=.9;return u;},function(synth,u){synth.speak(u);});
+  run('PICKED NO CANCEL',function(list){var u=new SpeechSynthesisUtterance('This is the browser text to speech test.');var voice=pick(list);if(voice){u.voice=voice;u.__diagVoice=voice;}u.lang=voice&&voice.lang?voice.lang:'en-US';u.rate=.9;return u;},function(synth,u){synth.speak(u);});
+});
+
+localBtn.addEventListener('click',function(){
+  run('LOCAL ENGLISH',function(list){var en=english(list),voice=en.find(function(v){return !!v.localService&&/^en-US$/i.test(v.lang||'');})||en.find(function(v){return !!v.localService;});if(!voice){show('NO LOCAL ENGLISH VOICE · voices='+list.length+' · English='+en.length);return null;}var u=new SpeechSynthesisUtterance('This is the local English voice test.');u.voice=voice;u.__diagVoice=voice;u.lang=voice.lang||'en-US';u.rate=.9;return u;},function(synth,u){synth.speak(u);});
+});
+
+networkBtn.addEventListener('click',function(){
+  run('NETWORK ENGLISH',function(list){var en=english(list),voice=en.find(function(v){return !v.localService&&/^en-US$/i.test(v.lang||'');})||en.find(function(v){return !v.localService;});if(!voice){show('NO NETWORK ENGLISH VOICE · voices='+list.length+' · English='+en.length);return null;}var u=new SpeechSynthesisUtterance('This is the network English voice test.');u.voice=voice;u.__diagVoice=voice;u.lang=voice.lang||'en-US';u.rate=.9;return u;},function(synth,u){synth.speak(u);});
 });
 })();
