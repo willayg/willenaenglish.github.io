@@ -23,12 +23,13 @@ jobs:
           from pathlib import Path
           p = Path('students/study-v2/index.html')
           s = p.read_text()
-          old = './v2-interactions.js?v=20260816-chaptermarkers1'
-          new = './v2-interactions.js?v=20260816-chaptermarkers2'
-          if old not in s:
-              print('already updated')
-              raise SystemExit(0)
-          p.write_text(s.replace(old, new))
+          for old in (
+              './v2-interactions.js?v=20260816-chaptermarkers1',
+              './v2-interactions.js?v=20260816-chaptermarkers2'
+          ):
+              if old in s:
+                  s = s.replace(old, './v2-interactions.js?v=20260816-bookrollback1')
+          p.write_text(s)
           PY
       - name: Commit cache bust
         run: |
@@ -36,7 +37,7 @@ jobs:
           git config user.name 'willayg'
           git config user.email 'william.gaule@gmail.com'
           git add students/study-v2/index.html
-          git commit -m 'Bust Study V2 interaction cache again'
+          git commit -m 'Bust Study V2 rollback interaction cache'
           git push origin staging
       - name: Trigger staging deploy hook
         env:
