@@ -1,7 +1,7 @@
-/* Study V2 wide-screen Daily Journey layout. Portrait phones keep the existing stack. */
-.daily-journey{display:none}
+/* Study V2 Daily Rail Hero (concept 07). Narrow/portrait phone layout is untouched. */
+.daily-rail-main,.daily-rail-today{display:none}
 
-@media (min-width:760px), (orientation:landscape) and (min-width:600px) and (max-height:650px){
+@media (min-width:760px), (orientation:landscape) and (min-width:600px) and (max-height:700px){
   .book-hero.daily-inline .hero-copy{
     display:grid!important;
     grid-template-columns:minmax(0,1.15fr) minmax(300px,.85fr)!important;
@@ -9,116 +9,190 @@
     align-items:start!important;
   }
 
+  /* The whole top area is one pink outlined hero, like concept 07. */
   .study-v2-top-actions{
     grid-column:1/-1!important;
     grid-row:1!important;
     display:grid!important;
-    grid-template-columns:repeat(3,minmax(0,1fr))!important;
-    gap:12px!important;
+    grid-template-columns:230px repeat(3,minmax(0,1fr))!important;
+    grid-template-rows:minmax(132px,auto) 82px!important;
+    gap:10px!important;
+    width:100%!important;
     margin:0!important;
+    padding:0 18px 18px 0!important;
+    overflow:hidden!important;
+    border:2px solid var(--arcade-pink)!important;
+    border-radius:28px!important;
+    background:#fff!important;
+    box-shadow:0 10px 28px rgba(38,74,79,.06)!important;
   }
-  .study-v2-top-actions>.study-v2-action-card{
+
+  /* Left rail: TODAY / Daily / streak / live 14/20-style ring. */
+  #dailyWorkoutCard.study-v2-daily-primary{
+    grid-column:1!important;
+    grid-row:1/3!important;
+    display:flex!important;
+    flex-direction:column!important;
+    align-items:flex-start!important;
+    justify-content:flex-start!important;
+    gap:0!important;
+    width:100%!important;
+    min-width:0!important;
+    min-height:232px!important;
+    margin:0!important;
+    padding:23px 21px 20px!important;
+    border:0!important;
+    border-right:1px solid #f3d7e4!important;
+    border-radius:26px 0 0 26px!important;
+    background:linear-gradient(180deg,#fff3f8 0%,#fff 100%)!important;
+    box-shadow:none!important;
+  }
+  #dailyWorkoutCard.study-v2-daily-primary:hover,
+  #dailyWorkoutCard.study-v2-daily-primary:focus-visible{
+    transform:none!important;
+    background:linear-gradient(180deg,#fff1f7 0%,#fff 100%)!important;
+    box-shadow:none!important;
+  }
+  #dailyWorkoutCard.study-v2-daily-primary:before{display:none!important}
+  #dailyWorkoutCard.study-v2-daily-primary>div:not(.progress-ring){
     min-width:0!important;
     width:100%!important;
-    min-height:88px!important;
-    padding:14px 16px!important;
-    gap:12px!important;
-    border-radius:20px!important;
+    flex:0 0 auto!important;
+    order:2!important;
   }
-  .study-v2-top-actions>.study-v2-action-card:before{
-    width:48px!important;
-    height:48px!important;
-    flex:0 0 48px!important;
-    border-radius:16px!important;
-    background-size:27px 27px!important;
+  .daily-rail-today{
+    display:block!important;
+    order:1!important;
+    margin:0 0 10px!important;
+    color:var(--arcade-pink)!important;
+    font-size:.68rem!important;
+    line-height:1!important;
+    font-weight:900!important;
+    letter-spacing:.12em!important;
+    text-transform:uppercase!important;
   }
-  .study-v2-top-actions>.study-v2-action-card>strong{font-size:1rem!important}
-  .study-v2-top-actions>.study-v2-action-card>small{font-size:.7rem!important;margin-top:4px!important}
-
-  #dailyWorkoutCard.study-v2-daily-primary{
-    grid-column:1/-1!important;
-    display:grid!important;
-    grid-template-columns:60px minmax(0,1fr) 76px minmax(250px,.9fr)!important;
-    align-items:center!important;
-    column-gap:16px!important;
-    row-gap:8px!important;
-    min-height:150px!important;
-    padding:22px 24px!important;
-    border-radius:24px!important;
+  #dailyWorkoutCard.study-v2-daily-primary strong{
+    font-size:1.32rem!important;
+    line-height:1.15!important;
+    color:#35565b!important;
   }
-  #dailyWorkoutCard.study-v2-daily-primary:before{
-    width:60px!important;
-    height:60px!important;
-    flex:0 0 60px!important;
-    border-radius:20px!important;
-    background-size:34px 34px!important;
-  }
-  #dailyWorkoutCard.study-v2-daily-primary>div:not(.progress-ring):not(.daily-journey){
-    min-width:0!important;
+  #dailyWorkoutCard.study-v2-daily-primary #smartProgressCopy{display:none!important}
+  #dailyWorkoutCard .daily-streak-status{
+    display:block!important;
+    margin-top:12px!important;
+    color:#7c8c91!important;
+    font-size:.78rem!important;
+    line-height:1.25!important;
+    font-weight:800!important;
   }
   #dailyWorkoutCard.study-v2-daily-primary .progress-ring{
-    order:initial!important;
-    margin:0!important;
-    width:76px!important;
-    height:76px!important;
-    flex:0 0 76px!important;
+    order:3!important;
+    position:relative!important;
+    width:92px!important;
+    height:92px!important;
+    flex:0 0 92px!important;
+    margin:22px auto 0!important;
+    border-radius:50%!important;
+    background:conic-gradient(var(--arcade-pink) 0 calc(var(--progress,0)*1%),#f4dbe6 calc(var(--progress,0)*1%) 100%)!important;
+    box-shadow:none!important;
   }
-  #dailyWorkoutCard.study-v2-daily-primary strong{font-size:1.18rem!important}
-  #dailyWorkoutCard .daily-streak-status{font-size:.75rem!important}
-
-  .daily-journey{
-    display:block!important;
-    min-width:0;
-    padding:15px 16px;
-    border-radius:18px;
-    background:#f8fbfb;
-    border:1px solid #e3ecee;
+  #dailyWorkoutCard.study-v2-daily-primary .progress-ring:after{
+    content:""!important;
+    position:absolute!important;
+    inset:11px!important;
+    border-radius:50%!important;
+    background:#fff!important;
   }
-  .daily-journey-label{
-    display:block;
-    margin:0 0 10px;
-    color:#35565b!important;
-    font-size:.72rem!important;
-    line-height:1.2!important;
+  #dailyWorkoutCard.study-v2-daily-primary .progress-ring:before{display:none!important}
+  #dailyWorkoutCard.study-v2-daily-primary .progress-ring span{
+    position:relative!important;
+    z-index:3!important;
+    display:grid!important;
+    place-items:center!important;
+    width:100%!important;
+    height:100%!important;
+    clip:auto!important;
+    clip-path:none!important;
+    overflow:visible!important;
+    white-space:normal!important;
+    color:var(--arcade-pink)!important;
+    font-size:.9rem!important;
+    line-height:1!important;
     font-weight:900!important;
   }
-  .daily-journey-milestones{
-    display:grid;
-    grid-template-columns:repeat(5,minmax(0,1fr));
-    gap:7px;
+
+  /* Right side: remaining-question message, current skill and 5-part progress strip. */
+  .daily-rail-main{
+    grid-column:2/5!important;
+    grid-row:1!important;
+    display:flex!important;
+    flex-direction:column!important;
+    justify-content:center!important;
+    min-width:0!important;
+    padding:24px 24px 12px!important;
   }
-  .daily-journey-mile{
-    position:relative;
-    display:grid;
-    place-items:center;
-    height:44px;
-    min-width:0;
-    border:1px solid #dfe8ea;
-    border-radius:12px;
-    background:#edf2f3;
-    color:#8ca0a4;
-    font-size:.68rem;
-    line-height:1;
-    font-weight:900;
-    transition:background .18s ease,border-color .18s ease,color .18s ease,transform .18s ease;
+  .daily-rail-headline{
+    margin:0!important;
+    color:#35565b!important;
+    font-size:clamp(1.28rem,2.3vw,1.82rem)!important;
+    line-height:1.15!important;
+    font-weight:900!important;
+    letter-spacing:-.025em!important;
   }
-  .daily-journey-mile.is-done{
-    background:#fff3f8;
-    border-color:#ffc6df;
-    color:#ff6fb0;
+  .daily-rail-sub{
+    margin:9px 0 0!important;
+    color:#7c8c91!important;
+    font-size:.78rem!important;
+    line-height:1.4!important;
+    font-weight:800!important;
   }
-  .daily-journey-mile.is-current{
-    border:2px solid #21b3be;
-    background:#eefafb;
-    color:#21b3be;
-    transform:translateY(-1px);
+  .daily-rail-progress{
+    display:grid!important;
+    grid-template-columns:repeat(5,minmax(0,1fr))!important;
+    gap:8px!important;
+    width:100%!important;
+    margin-top:20px!important;
   }
-  #dailyWorkoutCard.is-complete .daily-journey-mile{
-    background:#fff3f8;
-    border-color:#ffc6df;
-    color:#ff6fb0;
+  .daily-rail-segment{
+    height:8px!important;
+    overflow:hidden!important;
+    border-radius:999px!important;
+    background:#e7edef!important;
+  }
+  .daily-rail-segment>i{
+    display:block!important;
+    width:var(--fill,0%)!important;
+    height:100%!important;
+    border-radius:inherit!important;
+    background:var(--arcade-pink)!important;
+    transition:width .25s ease!important;
   }
 
+  /* The three launch cards sit inside the same hero under the progress strip. */
+  .study-v2-top-actions>#practiceHeroBtn{grid-column:2!important;grid-row:2!important}
+  .study-v2-top-actions>#bookPracticeBtn{grid-column:3!important;grid-row:2!important}
+  .study-v2-top-actions>#bookStudyBtn{grid-column:4!important;grid-row:2!important}
+  .study-v2-top-actions>.study-v2-action-card:not(#dailyWorkoutCard){
+    width:100%!important;
+    min-width:0!important;
+    min-height:66px!important;
+    margin:0!important;
+    padding:10px 13px!important;
+    gap:10px!important;
+    border-radius:18px!important;
+    box-shadow:none!important;
+  }
+  .study-v2-top-actions>.study-v2-action-card:not(#dailyWorkoutCard):before{
+    width:40px!important;
+    height:40px!important;
+    flex:0 0 40px!important;
+    border-radius:13px!important;
+    background-size:23px 23px!important;
+  }
+  .study-v2-top-actions>.study-v2-action-card:not(#dailyWorkoutCard)>strong{font-size:.9rem!important}
+  .study-v2-top-actions>.study-v2-action-card:not(#dailyWorkoutCard)>small{font-size:.64rem!important;margin-top:3px!important}
+
+  /* Concept 07 also uses the tablet width below the hero. */
   .study-v2-book-panel{
     grid-column:1!important;
     grid-row:2!important;
@@ -135,42 +209,55 @@
 }
 
 @media (min-width:760px) and (max-width:1024px){
+  .study-v2-top-actions{
+    grid-template-columns:195px repeat(3,minmax(0,1fr))!important;
+    grid-template-rows:minmax(120px,auto) 74px!important;
+    padding:0 14px 14px 0!important;
+    gap:8px!important;
+  }
+  #dailyWorkoutCard.study-v2-daily-primary{min-height:214px!important;padding:20px 17px 17px!important}
+  #dailyWorkoutCard.study-v2-daily-primary strong{font-size:1.15rem!important}
+  #dailyWorkoutCard.study-v2-daily-primary .progress-ring{width:80px!important;height:80px!important;flex-basis:80px!important;margin-top:18px!important}
+  #dailyWorkoutCard.study-v2-daily-primary .progress-ring:after{inset:10px!important}
+  .daily-rail-main{padding:20px 18px 10px!important}
+  .daily-rail-headline{font-size:1.34rem!important}
+  .daily-rail-progress{margin-top:16px!important;gap:6px!important}
+  .study-v2-top-actions>.study-v2-action-card:not(#dailyWorkoutCard){min-height:60px!important;padding:8px 10px!important}
+  .study-v2-top-actions>.study-v2-action-card:not(#dailyWorkoutCard):before{width:36px!important;height:36px!important;flex-basis:36px!important;background-size:21px 21px!important}
   .header-skill-mastery-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
-  #dailyWorkoutCard.study-v2-daily-primary{
-    grid-template-columns:54px minmax(0,1fr) 70px minmax(220px,.85fr)!important;
-    padding:18px 20px!important;
-    column-gap:13px!important;
-  }
-  #dailyWorkoutCard.study-v2-daily-primary:before{
-    width:54px!important;height:54px!important;flex-basis:54px!important;border-radius:18px!important;background-size:31px 31px!important;
-  }
-  #dailyWorkoutCard.study-v2-daily-primary .progress-ring{width:70px!important;height:70px!important;flex-basis:70px!important}
-  .daily-journey{padding:13px 12px}
-  .daily-journey-mile{height:40px}
 }
 
-@media (orientation:landscape) and (min-width:600px) and (max-height:650px){
-  .dashboard{padding-top:12px!important}
+/* Flipped/landscape phones: same concept, compressed vertically. */
+@media (orientation:landscape) and (min-width:600px) and (max-height:700px){
+  .dashboard{padding-top:10px!important}
   .book-hero.daily-inline .hero-copy{gap:10px!important}
-  .study-v2-top-actions{gap:8px!important}
-  .study-v2-top-actions>.study-v2-action-card{min-height:68px!important;padding:9px 11px!important;border-radius:16px!important}
-  .study-v2-top-actions>.study-v2-action-card:before{width:38px!important;height:38px!important;flex-basis:38px!important;border-radius:13px!important;background-size:22px 22px!important}
-  .study-v2-top-actions>.study-v2-action-card>small{display:none!important}
-  #dailyWorkoutCard.study-v2-daily-primary{
-    min-height:112px!important;
-    grid-template-columns:44px minmax(0,1fr) 58px minmax(205px,.9fr)!important;
-    padding:12px 14px!important;
-    column-gap:10px!important;
+  .study-v2-top-actions{
+    grid-template-columns:165px repeat(3,minmax(0,1fr))!important;
+    grid-template-rows:minmax(92px,auto) 56px!important;
+    gap:7px!important;
+    padding:0 10px 10px 0!important;
+    border-radius:22px!important;
   }
-  #dailyWorkoutCard.study-v2-daily-primary:before{width:44px!important;height:44px!important;flex-basis:44px!important;border-radius:14px!important;background-size:25px 25px!important}
-  #dailyWorkoutCard.study-v2-daily-primary .progress-ring{width:58px!important;height:58px!important;flex-basis:58px!important}
+  #dailyWorkoutCard.study-v2-daily-primary{
+    min-height:158px!important;
+    padding:14px 13px 12px!important;
+    border-radius:20px 0 0 20px!important;
+  }
+  .daily-rail-today{font-size:.56rem!important;margin-bottom:7px!important}
+  #dailyWorkoutCard.study-v2-daily-primary strong{font-size:.94rem!important}
+  #dailyWorkoutCard .daily-streak-status{font-size:.62rem!important;margin-top:7px!important}
+  #dailyWorkoutCard.study-v2-daily-primary .progress-ring{width:64px!important;height:64px!important;flex-basis:64px!important;margin-top:11px!important}
   #dailyWorkoutCard.study-v2-daily-primary .progress-ring:after{inset:8px!important}
-  #dailyWorkoutCard.study-v2-daily-primary strong{font-size:1rem!important}
-  #dailyWorkoutCard .daily-streak-status{font-size:.66rem!important;margin-top:5px!important}
-  .daily-journey{padding:9px 10px;border-radius:14px}
-  .daily-journey-label{font-size:.62rem!important;margin-bottom:6px}
-  .daily-journey-milestones{gap:5px}
-  .daily-journey-mile{height:32px;border-radius:9px;font-size:.58rem}
+  #dailyWorkoutCard.study-v2-daily-primary .progress-ring span{font-size:.72rem!important}
+  .daily-rail-main{padding:13px 12px 7px!important}
+  .daily-rail-headline{font-size:1.02rem!important}
+  .daily-rail-sub{font-size:.62rem!important;margin-top:5px!important}
+  .daily-rail-progress{margin-top:10px!important;gap:5px!important}
+  .daily-rail-segment{height:6px!important}
+  .study-v2-top-actions>.study-v2-action-card:not(#dailyWorkoutCard){min-height:48px!important;padding:6px 8px!important;border-radius:14px!important;gap:7px!important}
+  .study-v2-top-actions>.study-v2-action-card:not(#dailyWorkoutCard):before{width:31px!important;height:31px!important;flex-basis:31px!important;border-radius:10px!important;background-size:18px 18px!important}
+  .study-v2-top-actions>.study-v2-action-card:not(#dailyWorkoutCard)>strong{font-size:.72rem!important}
+  .study-v2-top-actions>.study-v2-action-card:not(#dailyWorkoutCard)>small{display:none!important}
   .study-v2-book-panel{padding:18px 14px 20px!important;border-radius:22px!important}
   .study-v2-ai{padding:14px 12px!important;border-radius:20px!important}
   .study-v2-book-title-wrap{padding:18px 12px 16px!important;margin-bottom:18px!important}
