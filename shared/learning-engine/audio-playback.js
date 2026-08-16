@@ -6,6 +6,7 @@ if(proto.__willenaAudioPlayback)return;
 var originalRender=proto.render;
 var currentUtterance=null;
 var currentSource=null;
+var currentButton=null;
 var audioContext=null;
 var runId=0;
 var API_ORIGIN='https://api.willenaenglish.com';
@@ -43,7 +44,14 @@ function getAudioContext(){
     return audioContext;
   }catch(_){return null;}
 }
+function clearPlayingButton(button,played){
+  if(!button)return;
+  button.classList.remove('is-playing');
+  if(played)button.classList.add('has-played');
+  if(currentButton===button)currentButton=null;
+}
 function stopCurrent(){
+  clearPlayingButton(currentButton,false);
   try{if(currentSource)currentSource.stop(0);}catch(_){}
   currentSource=null;
   try{if(global.speechSynthesis)global.speechSynthesis.cancel();}catch(_){}
@@ -72,11 +80,11 @@ async function playDecodedBuffer(buffer,ctx,myRun,button){
     source.buffer=decoded;
     source.connect(ctx.destination);
     currentSource=source;
+    currentButton=button;
     source.onended=function(){
       if(myRun!==runId)return;
       if(currentSource===source)currentSource=null;
-      button.classList.remove('is-playing');
-      button.classList.add('has-played');
+      clearPlayingButton(button,true);
     };
     source.start(0);
     button.classList.add('is-playing','has-played');
@@ -120,14 +128,14 @@ function speakWithVoice(button,activity,myRun){
     u.lang=text(voice&&voice.lang||stimulus.lang)||'en-US';
     var rate=Number(stimulus.rate);u.rate=Number.isFinite(rate)&&rate>0?rate:.9;
     u.pitch=1;u.volume=1;
-    u.onstart=function(){if(myRun!==runId)return;button.classList.add('is-playing','has-played');finish(true);};
-    u.onend=function(){if(myRun!==runId)return;button.classList.remove('is-playing');button.classList.add('has-played');};
-    u.onerror=function(){if(myRun!==runId)return;button.classList.remove('is-playing');finish(false);};
+    u.onstart=function(){if(myRun!==runId)return;currentButton=button;button.classList.add('is-playing','has-played');finish(true);};
+    u.onend=function(){if(myRun!==runId)return;clearPlayingButton(button,true);};
+    u.onerror=function(){if(myRun!==runId)return;clearPlayingButton(button,false);finish(false);};
     try{synth.cancel();synth.resume();synth.speak(u);}catch(_){finish(false);return;}
     startTimer=setTimeout(function(){
       if(finished||myRun!==runId)return;
       try{synth.cancel();}catch(_){}
-      button.classList.remove('is-playing');
+      clearPlayingButton(button,false);
       finish(false);
     },1800);
   });
@@ -180,6 +188,7 @@ async function generateAndPlay(activity,ctx,myRun,button){
 async function playAudio(button,activity){
   var myRun=++runId;
   stopCurrent();
+  currentButton=button;
   button.classList.remove('has-played');
   button.classList.add('is-playing');
 
@@ -210,7 +219,7 @@ async function playAudio(button,activity){
 
   var speechOk=await speakWithVoice(button,activity,myRun);
   if(myRun!==runId)return;
-  if(!speechOk)button.classList.remove('is-playing','has-played');
+  if(!speechOk)clearPlayingButton(button,false);
 }
 
 /* Public hook for non-question study content. It uses the exact same R2 -> ElevenLabs -> browser fallback path. */
