@@ -23,8 +23,8 @@ jobs:
           from pathlib import Path
           p = Path('students/study-v2/index.html')
           s = p.read_text()
-          old = './v2-interactions.js?v=20260811-4'
-          new = './v2-interactions.js?v=20260816-chaptermarkers1'
+          old = './v2-interactions.js?v=20260816-chaptermarkers1'
+          new = './v2-interactions.js?v=20260816-chaptermarkers2'
           if old not in s:
               print('already updated')
               raise SystemExit(0)
@@ -36,7 +36,7 @@ jobs:
           git config user.name 'willayg'
           git config user.email 'william.gaule@gmail.com'
           git add students/study-v2/index.html
-          git commit -m 'Bust Study V2 chapter marker interaction cache'
+          git commit -m 'Bust Study V2 interaction cache again'
           git push origin staging
       - name: Trigger staging deploy hook
         env:
