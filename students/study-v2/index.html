@@ -33,6 +33,70 @@
 <link rel="stylesheet" href="./v2-spelling-input.css?v=20260814-keyboard2">
 <link rel="stylesheet" href="./v2-daily-test.css?v=20260815-pacedtester1">
 <link rel="stylesheet" href="./v2-activity-ux.css?v=20260816-activityux2">
+<style>
+/* Keep the Daily, AI and book launch actions captured in one top container, matching the tablet treatment. */
+.study-v2-top-actions{
+  padding:18px!important;
+  gap:12px!important;
+  margin:0 0 34px!important;
+  border:1px solid #dfe8ea!important;
+  border-radius:28px!important;
+  background:#fff!important;
+  box-shadow:0 10px 30px rgba(38,74,79,.07)!important;
+  overflow:hidden;
+}
+.study-v2-top-actions>.study-v2-action-card,
+#dailyWorkoutCard.study-v2-daily-primary{
+  box-shadow:none!important;
+}
+.study-v2-top-actions>.study-v2-action-card:hover,
+.study-v2-top-actions>.study-v2-action-card:focus-visible,
+#dailyWorkoutCard.study-v2-daily-primary:hover,
+#dailyWorkoutCard.study-v2-daily-primary:focus-visible{
+  box-shadow:0 7px 18px rgba(38,74,79,.07)!important;
+}
+.study-v2-top-actions .daily-rail-main{
+  margin:0!important;
+  border-radius:20px!important;
+}
+@media (min-width:760px){
+  .study-v2-top-actions{
+    display:grid!important;
+    grid-template-columns:minmax(0,1.35fr) minmax(250px,.65fr)!important;
+    align-items:stretch!important;
+    padding:20px!important;
+    gap:12px 14px!important;
+  }
+  #dailyWorkoutCard.study-v2-daily-primary,
+  .study-v2-top-actions .daily-rail-main{
+    grid-column:1;
+  }
+  #practiceHeroBtn,
+  #bookStudyBtn,
+  #bookPracticeBtn{
+    grid-column:2;
+    min-height:88px!important;
+    padding:14px 16px!important;
+  }
+  #practiceHeroBtn{grid-row:1}
+  #bookStudyBtn{grid-row:2}
+  #bookPracticeBtn{grid-row:3}
+  #dailyWorkoutCard.study-v2-daily-primary{grid-row:1 / span 2}
+  .study-v2-top-actions .daily-rail-main{grid-row:3}
+}
+@media (max-width:560px){
+  .study-v2-top-actions{
+    padding:12px!important;
+    gap:10px!important;
+    border-radius:24px!important;
+    margin-bottom:30px!important;
+  }
+  .study-v2-top-actions>.study-v2-action-card,
+  #dailyWorkoutCard.study-v2-daily-primary{
+    border-radius:18px!important;
+  }
+}
+</style>
 <script src="/students/api-gateway.js?v=20260808-study1"></script>
 <script src="/js/api-config.js?v=20260113c"></script>
 <script src="./auth-guard.js?v=20260815-dailypersist1"></script>
