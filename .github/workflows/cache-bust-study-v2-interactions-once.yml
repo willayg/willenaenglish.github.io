@@ -23,10 +23,12 @@ jobs:
           from pathlib import Path
           p = Path('students/study-v2/index.html')
           s = p.read_text()
-          old = './v2-daily-rail-impact.css?v=20260816-railimpact4'
-          new = './v2-daily-rail-impact.css?v=20260816-tablethero1'
-          if old in s:
-              s = s.replace(old, new)
+          for old in (
+              './v2-daily-rail-impact.css?v=20260816-railimpact4',
+              './v2-daily-rail-impact.css?v=20260816-tablethero1'
+          ):
+              if old in s:
+                  s = s.replace(old, './v2-daily-rail-impact.css?v=20260816-tablethero2')
           p.write_text(s)
           PY
       - name: Commit cache bust
@@ -35,7 +37,7 @@ jobs:
           git config user.name 'willayg'
           git config user.email 'william.gaule@gmail.com'
           git add students/study-v2/index.html
-          git commit -m 'Bust Study V2 tablet rail CSS cache'
+          git commit -m 'Bust Study V2 wide tablet rail CSS cache'
           git push origin staging
       - name: Trigger staging deploy hook
         env:
