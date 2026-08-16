@@ -1,0 +1,47 @@
+name: Enlarge Study V2 tablet progress ring once
+
+on:
+  push:
+    branches: [staging]
+    paths:
+      - .github/workflows/bump-study-v2-circle-once.yml
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: staging
+      - name: Enlarge tablet ring
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('students/study-v2/v2-daily-journey.css')
+          s = p.read_text()
+          old = '''  .book-hero.daily-inline #dailyWorkoutCard.study-v2-daily-primary .progress-ring{\n    width:96px;\n    height:96px;\n    flex:0 0 96px;\n    margin:18px auto 0;\n    box-shadow:none;\n  }\n  .book-hero.daily-inline #dailyWorkoutCard.study-v2-daily-primary .progress-ring:after{inset:11px}\n  .book-hero.daily-inline #dailyWorkoutCard.study-v2-daily-primary .progress-ring span{font-size:.95rem}'''
+          new = '''  .book-hero.daily-inline #dailyWorkoutCard.study-v2-daily-primary .progress-ring{\n    width:150px;\n    height:150px;\n    flex:0 0 150px;\n    margin:18px auto 0;\n    box-shadow:none;\n  }\n  .book-hero.daily-inline #dailyWorkoutCard.study-v2-daily-primary .progress-ring:after{inset:16px}\n  .book-hero.daily-inline #dailyWorkoutCard.study-v2-daily-primary .progress-ring span{font-size:1.25rem}'''
+          if old not in s:
+              raise SystemExit('tablet ring block not found')
+          p.write_text(s.replace(old,new,1))
+
+          p = Path('students/study-v2/index.html')
+          s = p.read_text()
+          old = './v2-daily-journey.css?v=20260816-concept07-1'
+          new = './v2-daily-journey.css?v=20260816-concept07-ring2'
+          if old not in s:
+              raise SystemExit('daily journey asset version not found')
+          p.write_text(s.replace(old,new,1))
+
+          Path('.github/workflows/bump-study-v2-circle-once.yml').unlink()
+          PY
+      - name: Commit
+        run: |
+          git config user.name 'willayg'
+          git config user.email 'william.gaule@gmail.com'
+          git add -A
+          git commit -m 'Enlarge Study V2 tablet progress ring'
+          git push origin staging
