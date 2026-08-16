@@ -48,7 +48,6 @@
   scroll-margin-top:18px;
 }
 
-/* Book Study is now a real navigation target rather than a coming-soon tile. */
 .book-hero.daily-inline #bookStudyBtn{
   opacity:1!important;
   cursor:pointer!important;
@@ -90,7 +89,13 @@
 .study-v2-book-study-panel .study-v2-section-kicker{color:var(--arcade-blue)}
 .study-v2-book-panel .study-v2-section-kicker{color:var(--arcade-orange)}
 
-/* The title/tabs are now the Book Study container, so remove spacing inherited from the old combined panel. */
+/* Hide the small grey helper copy in the two book containers for now. */
+.study-v2-book-study-panel .study-v2-section-heading small,
+.study-v2-book-panel .study-v2-section-heading small,
+.study-v2-book-panel .header-skill-mastery-head>span{
+  display:none!important;
+}
+
 .study-v2-book-study-panel .study-v2-book-tabs{
   margin-bottom:30px!important;
 }
@@ -104,7 +109,6 @@
   margin-top:24px!important;
 }
 
-/* Practice container starts directly with unit selection + mastery. */
 .study-v2-book-panel .study-v2-units{margin-top:0!important}
 .study-v2-book-panel .header-skill-mastery{margin-top:38px!important}
 
@@ -114,7 +118,6 @@
     grid-column:auto!important;
     grid-row:auto!important;
   }
-  /* Hero menu order follows the page: AI -> Book Study -> Book Practice. */
   .book-hero.daily-inline .study-v2-top-actions>#practiceHeroBtn{grid-column:2!important;grid-row:2!important}
   .book-hero.daily-inline .study-v2-top-actions>#bookStudyBtn{grid-column:3!important;grid-row:2!important}
   .book-hero.daily-inline .study-v2-top-actions>#bookPracticeBtn{grid-column:4!important;grid-row:2!important}
@@ -127,7 +130,6 @@
 @media (max-width:759px){
   .book-hero.daily-inline .hero-copy{gap:12px!important}
   .book-hero.daily-inline .study-v2-ai{margin-top:0!important}
-  /* Spark mobile menu order: AI first, then Book Study, then Book Practice. */
   .book-hero.daily-inline .study-v2-top-actions>#practiceHeroBtn{grid-column:1/-1!important;grid-row:2!important}
   .book-hero.daily-inline .study-v2-top-actions>#bookStudyBtn{grid-column:1!important;grid-row:3!important}
   .book-hero.daily-inline .study-v2-top-actions>#bookPracticeBtn{grid-column:2!important;grid-row:3!important}
@@ -138,7 +140,6 @@
   }
   .study-v2-section-heading{margin-bottom:20px}
   .study-v2-section-heading h2{font-size:1.28rem}
-  .study-v2-section-heading small{font-size:.65rem}
   .study-v2-book-study-panel .study-v2-book-tabs{margin-bottom:26px!important}
   .study-v2-book-panel .header-skill-mastery{margin-top:32px!important}
 }
