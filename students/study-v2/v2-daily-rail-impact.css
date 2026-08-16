@@ -174,8 +174,8 @@
   .book-hero.daily-inline #dailyWorkoutCard.study-v2-daily-primary.is-complete,
   .book-hero.daily-inline #dailyWorkoutCard.study-v2-daily-primary:hover,
   .book-hero.daily-inline #dailyWorkoutCard.study-v2-daily-primary:focus-visible{
-    min-height:330px!important;
-    padding:28px 24px 24px!important;
+    min-height:344px!important;
+    padding:30px 24px 26px!important;
     border:3px solid var(--arcade-pink,#ff6fb0)!important;
     border-color:var(--arcade-pink,#ff6fb0)!important;
     border-radius:28px!important;
@@ -184,36 +184,44 @@
   }
 
   .book-hero.daily-inline #dailyWorkoutCard.study-v2-daily-primary .progress-ring{
-    width:220px!important;
-    height:220px!important;
-    min-width:220px!important;
-    flex:0 0 220px!important;
+    width:236px!important;
+    height:236px!important;
+    min-width:236px!important;
+    flex:0 0 236px!important;
     margin:24px auto 0!important;
     box-shadow:0 0 0 7px rgba(255,111,176,.07)!important;
   }
-  .book-hero.daily-inline #dailyWorkoutCard.study-v2-daily-primary .progress-ring:after{inset:24px!important}
+  .book-hero.daily-inline #dailyWorkoutCard.study-v2-daily-primary .progress-ring:after{inset:26px!important}
   .book-hero.daily-inline #dailyWorkoutCard.study-v2-daily-primary .progress-ring span{
-    font-size:1.72rem!important;
+    font-size:1.82rem!important;
   }
 
-  .book-hero.daily-inline .study-v2-top-actions>.study-v2-action-card:not(#dailyWorkoutCard){
-    min-height:98px!important;
-    padding:16px 18px!important;
-    gap:14px!important;
+  .book-hero.daily-inline #practiceHeroBtn,
+  .book-hero.daily-inline #bookStudyBtn,
+  .book-hero.daily-inline #bookPracticeBtn{
+    min-height:104px!important;
+    padding:17px 20px!important;
+    gap:16px!important;
   }
-  .book-hero.daily-inline .study-v2-top-actions>.study-v2-action-card:not(#dailyWorkoutCard):before{
-    width:58px!important;
-    height:58px!important;
-    flex:0 0 58px!important;
+  .book-hero.daily-inline #practiceHeroBtn:before,
+  .book-hero.daily-inline #bookStudyBtn:before,
+  .book-hero.daily-inline #bookPracticeBtn:before{
+    width:64px!important;
+    height:64px!important;
+    flex:0 0 64px!important;
     border-radius:0!important;
     background-color:transparent!important;
-    background-size:40px 40px!important;
+    background-size:46px 46px!important;
   }
-  .book-hero.daily-inline .study-v2-top-actions>.study-v2-action-card:not(#dailyWorkoutCard)>strong{
-    font-size:1.28rem!important;
+  .book-hero.daily-inline #practiceHeroBtn>strong,
+  .book-hero.daily-inline #bookStudyBtn>strong,
+  .book-hero.daily-inline #bookPracticeBtn>strong{
+    font-size:1.34rem!important;
     line-height:1.15!important;
   }
-  .book-hero.daily-inline .study-v2-top-actions>.study-v2-action-card:not(#dailyWorkoutCard)>small{
-    font-size:.84rem!important;
+  .book-hero.daily-inline #practiceHeroBtn>small,
+  .book-hero.daily-inline #bookStudyBtn>small,
+  .book-hero.daily-inline #bookPracticeBtn>small{
+    font-size:.88rem!important;
   }
 }
