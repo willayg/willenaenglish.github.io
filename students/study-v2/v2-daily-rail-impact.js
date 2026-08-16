@@ -30,33 +30,50 @@ function paintStreak(){
 
 function clearTitleInline(){
   if(!title)return;
-  title.style.removeProperty('font-size');
-  title.style.removeProperty('white-space');
-  title.style.removeProperty('overflow');
-  title.style.removeProperty('text-overflow');
-  title.style.removeProperty('width');
-  title.style.removeProperty('max-width');
+  ['font-size','white-space','overflow','text-overflow','width','max-width'].forEach(function(p){title.style.removeProperty(p);});
+}
+function horizontalPadding(el){
+  try{
+    var cs=getComputedStyle(el);
+    return (parseFloat(cs.paddingLeft)||0)+(parseFloat(cs.paddingRight)||0);
+  }catch(_){return 0;}
+}
+function measuredTextWidth(size){
+  if(!title)return 0;
+  try{
+    var cs=getComputedStyle(title);
+    var canvas=measuredTextWidth._canvas||(measuredTextWidth._canvas=document.createElement('canvas'));
+    var ctx=canvas.getContext('2d');
+    if(!ctx)return 0;
+    ctx.font=(cs.fontStyle||'normal')+' '+(cs.fontWeight||'800')+' '+size+'px '+(cs.fontFamily||'Poppins,sans-serif');
+    var txt=String(title.textContent||'');
+    var width=ctx.measureText(txt).width;
+    var ls=parseFloat(cs.letterSpacing);
+    if(Number.isFinite(ls)&&txt.length>1)width+=ls*(txt.length-1);
+    return width;
+  }catch(_){return 0;}
 }
 function fitBookTitle(){
   if(!title||!titleWrap)return;
   if(!wide.matches){clearTitleInline();return;}
-  var available=Math.max(0,titleWrap.clientWidth-8);
+  var available=Math.max(0,titleWrap.clientWidth-horizontalPadding(titleWrap)-28);
   if(!available)return;
   title.style.setProperty('white-space','nowrap','important');
   title.style.setProperty('overflow','visible','important');
   title.style.setProperty('text-overflow','clip','important');
   title.style.setProperty('width','100%','important');
   title.style.setProperty('max-width','100%','important');
-  var max=window.innerWidth<=1024?46:58;
-  var min=27;
+  var max=window.innerWidth<=1024?44:56;
+  var min=20;
   var size=max;
+  while(size>min&&measuredTextWidth(size)>available)size-=1;
   title.style.setProperty('font-size',size+'px','important');
-  while(size>min&&title.scrollWidth>available){size-=1;title.style.setProperty('font-size',size+'px','important');}
 }
 function refresh(){paintStreak();fitBookTitle();}
 
 refresh();
-setTimeout(refresh,180);setTimeout(refresh,700);setTimeout(refresh,1600);
+setTimeout(refresh,120);setTimeout(refresh,500);setTimeout(refresh,1200);setTimeout(refresh,2400);
+if(document.fonts&&document.fonts.ready)document.fonts.ready.then(function(){setTimeout(fitBookTitle,0);});
 if(window.MutationObserver){
   new MutationObserver(function(){setTimeout(paintStreak,0);}).observe(card,{childList:true,characterData:true,subtree:true,attributes:true});
   if(title)new MutationObserver(function(){setTimeout(fitBookTitle,0);}).observe(title,{childList:true,characterData:true,subtree:true});
