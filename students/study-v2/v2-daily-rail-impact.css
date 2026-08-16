@@ -25,10 +25,17 @@
     width:210px!important;
     height:210px!important;
     min-width:210px!important;
-    max-width:none!important;
+    min-height:210px!important;
+    max-width:210px!important;
+    max-height:210px!important;
+    aspect-ratio:1 / 1!important;
     flex:0 0 210px!important;
     flex-basis:210px!important;
+    flex-shrink:0!important;
+    align-self:center!important;
+    box-sizing:border-box!important;
     margin:24px auto 0!important;
+    border-radius:50%!important;
     box-shadow:0 0 0 6px rgba(255,111,176,.07)!important;
   }
   #dailyWorkoutCard.study-v2-daily-primary .progress-ring:after{inset:22px!important}
@@ -154,7 +161,20 @@
   #dailyWorkoutCard.study-v2-daily-primary{min-height:190px!important;padding:16px 15px 13px!important}
   .daily-rail-today{font-size:.64rem!important}
   #dailyWorkoutCard.study-v2-daily-primary strong{font-size:1.34rem!important}
-  #dailyWorkoutCard.study-v2-daily-primary .progress-ring{width:96px!important;height:96px!important;min-width:96px!important;flex:0 0 96px!important;flex-basis:96px!important;margin-top:12px!important}
+  #dailyWorkoutCard.study-v2-daily-primary .progress-ring{
+    width:96px!important;
+    height:96px!important;
+    min-width:96px!important;
+    min-height:96px!important;
+    max-width:96px!important;
+    max-height:96px!important;
+    aspect-ratio:1 / 1!important;
+    flex:0 0 96px!important;
+    flex-basis:96px!important;
+    flex-shrink:0!important;
+    align-self:center!important;
+    margin-top:12px!important;
+  }
   #dailyWorkoutCard.study-v2-daily-primary .progress-ring:after{inset:10px!important}
   #dailyWorkoutCard.study-v2-daily-primary .progress-ring span{font-size:.9rem!important}
   .daily-rail-main{padding:15px 118px 8px 14px!important}
