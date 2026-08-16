@@ -5,7 +5,7 @@
     grid-template-rows:minmax(200px,auto) 92px!important;
   }
 
-  /* BLUE AREA: make the label and pink progress ring the visual anchor. */
+  /* Daily Rail owns the progress graph size whenever the Rail layout is active. */
   #dailyWorkoutCard.study-v2-daily-primary{
     min-height:304px!important;
     padding:30px 26px 24px!important;
@@ -22,19 +22,22 @@
   }
   #dailyWorkoutCard .daily-streak-status{display:none!important}
   #dailyWorkoutCard.study-v2-daily-primary .progress-ring{
-    width:176px!important;
-    height:176px!important;
-    flex-basis:176px!important;
+    width:210px!important;
+    height:210px!important;
+    min-width:210px!important;
+    max-width:none!important;
+    flex:0 0 210px!important;
+    flex-basis:210px!important;
     margin:24px auto 0!important;
     box-shadow:0 0 0 6px rgba(255,111,176,.07)!important;
   }
-  #dailyWorkoutCard.study-v2-daily-primary .progress-ring:after{inset:19px!important}
+  #dailyWorkoutCard.study-v2-daily-primary .progress-ring:after{inset:22px!important}
   #dailyWorkoutCard.study-v2-daily-primary .progress-ring span{
-    font-size:1.55rem!important;
+    font-size:1.68rem!important;
     letter-spacing:-.025em!important;
   }
 
-  /* PURPLE AREA: streak is a large badge pinned to the extreme right. */
+  /* Streak badge pinned to the far right, using the mobile Spark SVG treatment. */
   .daily-rail-main{
     position:relative!important;
     display:block!important;
@@ -98,7 +101,6 @@
   }
   .study-v2-top-actions>.study-v2-action-card:not(#dailyWorkoutCard)>strong{font-size:1.02rem!important}
 
-  /* YELLOW AREA: JS sets the final pixel size; these rules prevent clipping/ellipsis. */
   .study-v2-book-title-wrap{
     width:100%!important;
     max-width:100%!important;
@@ -122,7 +124,7 @@
   }
 }
 
-/* Tablet widths: keep the same hierarchy on typical 760-1024px tablets. */
+/* Tablet geometry only; ring sizing remains owned by the Rail rule above. */
 @media (min-width:760px) and (max-width:1024px){
   .study-v2-top-actions{
     grid-template-columns:270px repeat(3,minmax(0,1fr))!important;
@@ -134,14 +136,6 @@
   }
   .daily-rail-today{font-size:.84rem!important}
   #dailyWorkoutCard.study-v2-daily-primary strong{font-size:2.12rem!important}
-  #dailyWorkoutCard.study-v2-daily-primary .progress-ring{
-    width:190px!important;
-    height:190px!important;
-    flex-basis:190px!important;
-    margin-top:22px!important;
-  }
-  #dailyWorkoutCard.study-v2-daily-primary .progress-ring:after{inset:20px!important}
-  #dailyWorkoutCard.study-v2-daily-primary .progress-ring span{font-size:1.52rem!important}
   .daily-rail-main{padding:28px 205px 15px 25px!important}
   .daily-rail-headline{font-size:1.82rem!important}
   .daily-rail-sub{font-size:.98rem!important}
@@ -151,18 +145,7 @@
   .study-v2-book-title-wrap #bookTitle{font-size:clamp(1.55rem,3.8vw,2.65rem)!important}
 }
 
-/* Large tablets often report a CSS viewport wider than 1024px. */
-@media (min-width:1025px) and (max-width:1366px) and (pointer:coarse){
-  #dailyWorkoutCard.study-v2-daily-primary .progress-ring{
-    width:210px!important;
-    height:210px!important;
-    flex-basis:210px!important;
-  }
-  #dailyWorkoutCard.study-v2-daily-primary .progress-ring:after{inset:22px!important}
-  #dailyWorkoutCard.study-v2-daily-primary .progress-ring span{font-size:1.68rem!important}
-}
-
-/* Landscape phones get the Rail layout, but stay compact enough to use. */
+/* Landscape phones keep their compact Rail size. */
 @media (orientation:landscape) and (min-width:600px) and (max-width:759px) and (max-height:700px){
   .study-v2-top-actions{
     grid-template-columns:205px repeat(3,minmax(0,1fr))!important;
@@ -171,7 +154,7 @@
   #dailyWorkoutCard.study-v2-daily-primary{min-height:190px!important;padding:16px 15px 13px!important}
   .daily-rail-today{font-size:.64rem!important}
   #dailyWorkoutCard.study-v2-daily-primary strong{font-size:1.34rem!important}
-  #dailyWorkoutCard.study-v2-daily-primary .progress-ring{width:96px!important;height:96px!important;flex-basis:96px!important;margin-top:12px!important}
+  #dailyWorkoutCard.study-v2-daily-primary .progress-ring{width:96px!important;height:96px!important;min-width:96px!important;flex:0 0 96px!important;flex-basis:96px!important;margin-top:12px!important}
   #dailyWorkoutCard.study-v2-daily-primary .progress-ring:after{inset:10px!important}
   #dailyWorkoutCard.study-v2-daily-primary .progress-ring span{font-size:.9rem!important}
   .daily-rail-main{padding:15px 118px 8px 14px!important}
