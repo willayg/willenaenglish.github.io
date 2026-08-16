@@ -15,6 +15,7 @@ if(main&&!streak){
   if(sub&&sub.nextSibling)main.insertBefore(streak,sub.nextSibling);else main.appendChild(streak);
 }
 
+var SPARK_SVG='<svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 3l2.1 6.1L24 12l-5.9 2.9L16 21l-2.1-6.1L8 12l5.9-2.9L16 3z"></path><path d="M25 21l1.1 3 2.9 1.4-2.9 1.4-1.1 3-1.1-3-2.9-1.4 2.9-1.4L25 21z"></path></svg>';
 function ko(){var b=document.getElementById('languageBtn');return !b||String(b.textContent||'').trim()==='English';}
 function streakNumber(){
   var source=card.querySelector('.daily-streak-status');
@@ -25,7 +26,8 @@ function streakNumber(){
 function paintStreak(){
   if(!streak)return;
   var n=streakNumber();
-  streak.textContent=ko()?('🔥 '+n+'일 연속 학습'):('🔥 '+n+' day'+(n===1?'':'s')+' streak');
+  var label=ko()?(n+'일 연속 학습'):(n+' day'+(n===1?'':'s')+' streak');
+  streak.innerHTML=SPARK_SVG+'<span>'+label+'</span>';
 }
 
 function clearTitleInline(){
