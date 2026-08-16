@@ -8,7 +8,7 @@ function node(tag,className,text){var n=document.createElement(tag);if(className
 function pref(){try{return localStorage.getItem(PREF)==='keyboard'?'keyboard':'tiles';}catch(_){return'tiles';}}
 function savePref(v){try{localStorage.setItem(PREF,v);}catch(_){}}
 function cleanWordLength(w){return String(w||'').replace(/[^A-Za-zÀ-ÖØ-öø-ÿ]/g,'').length;}
-function lettersOnly(v){return String(v==null?'':v).toLowerCase().replace(/[^a-zà-öø-öø-ÿ]/g,'');}
+function lettersOnly(v){return String(v==null?'':v).toLowerCase().replace(/[^a-z]/g,'');}
 function answerWords(engine,tokens,wordLengths){
   if(Array.isArray(wordLengths)&&wordLengths.length>1)return wordLengths.map(Number).filter(function(n){return n>0;});
   var ans=engine&&engine.current&&engine.current.answer;
