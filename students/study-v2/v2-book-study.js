@@ -26,6 +26,7 @@ async function rest(path){
 }
 function state(message){contentRoot.innerHTML='<div class="book-study-content-state">'+esc(message)+'</div>';}
 function currentSourceButton(){return sourceStrip.querySelector('.study-v2-unit.is-current,[data-unit-id].is-current')||sourceStrip.querySelector('[data-unit-id]');}
+function sourceButtonById(id){var out=null;Array.prototype.some.call(sourceStrip.querySelectorAll('[data-unit-id]'),function(b){if(txt(b.getAttribute('data-unit-id'))===id){out=b;return true;}return false;});return out;}
 function mirrorUnits(){
   var buttons=Array.prototype.slice.call(sourceStrip.querySelectorAll('[data-unit-id]'));
   if(!buttons.length){studyStrip.innerHTML='';if(!activeUnitId)state(ko()?'교재를 불러오는 중이에요.':'Loading your book…');return;}
@@ -33,7 +34,7 @@ function mirrorUnits(){
   studyStrip.querySelectorAll('[data-study-unit-id]').forEach(function(b){
     b.addEventListener('click',function(){
       var id=txt(b.getAttribute('data-study-unit-id'));
-      var target=sourceStrip.querySelector('[data-unit-id="'+(window.CSS&&CSS.escape?CSS.escape(id):id)+'"]');
+      var target=sourceButtonById(id);
       if(target)target.click();
       studyStrip.querySelectorAll('.book-study-unit').forEach(function(x){x.classList.toggle('is-current',x===b);});
       loadUnit(id,txt(b.textContent));
