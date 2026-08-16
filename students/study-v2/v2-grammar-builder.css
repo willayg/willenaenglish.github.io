@@ -1,0 +1,20 @@
+/* Grammar Study substitution charts: build useful sentences from interchangeable chunks. */
+.book-study-grammar-builder{display:grid;gap:8px;margin-top:13px}
+.book-study-grammar-builder-title{color:#a4651e;font:900 .78rem/1.2 Poppins,sans-serif;letter-spacing:.02em}
+.book-study-grammar-builder-row{display:grid;grid-template-columns:repeat(var(--grammar-chunks,3),minmax(0,1fr));gap:7px;min-width:0}
+.book-study-grammar-builder-cell{display:flex;align-items:center;justify-content:center;min-width:0;min-height:58px;padding:11px 10px;border:1px solid #dce7e9;border-radius:12px;color:#35565b;text-align:center;font:900 .82rem/1.4 Poppins,sans-serif;overflow-wrap:anywhere;background:#fff}
+.book-study-grammar-builder-cell.is-col-1{background:#eefafb;border-color:#cdecef;color:#26727a}
+.book-study-grammar-builder-cell.is-col-2{background:#fff2f8;border-color:#f5d6e5;color:#bf4f84}
+.book-study-grammar-builder-cell.is-col-3{background:#fff8ee;border-color:#f0dfc8;color:#8c612c}
+.book-study-grammar.has-substitution-builder>.book-study-grammar-chart[hidden]{display:none!important}
+
+@media(max-width:560px){
+  .book-study-grammar-builder{gap:9px;margin-top:14px}
+  .book-study-grammar-builder-title{font-size:.86rem}
+  .book-study-grammar-builder-row{gap:6px}
+  .book-study-grammar-builder-cell{min-height:70px;padding:12px 8px;border-radius:13px;font-size:.92rem;line-height:1.38}
+}
+
+@media(max-width:390px){
+  .book-study-grammar-builder-cell{font-size:.86rem;padding:11px 6px}
+}
