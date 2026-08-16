@@ -94,9 +94,9 @@
     position:relative;
     display:grid;
     place-items:center;
-    width:92px;
-    height:92px;
-    flex:0 0 92px;
+    width:150px;
+    height:150px;
+    flex:0 0 150px;
     margin:22px auto 0;
     border-radius:50%;
     background:conic-gradient(var(--arcade-pink) 0 calc(var(--progress,0)*1%),#f4dbe6 calc(var(--progress,0)*1%) 100%);
@@ -105,7 +105,7 @@
   .book-hero.daily-inline #dailyWorkoutCard.study-v2-daily-primary .progress-ring:after{
     content:"";
     position:absolute;
-    inset:11px;
+    inset:16px;
     border-radius:50%;
     background:#fff;
   }
@@ -122,7 +122,7 @@
     overflow:visible;
     white-space:normal;
     color:var(--arcade-pink);
-    font-size:.9rem;
+    font-size:1.25rem;
     line-height:1;
     font-weight:900;
   }
