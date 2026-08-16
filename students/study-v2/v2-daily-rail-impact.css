@@ -1,0 +1,160 @@
+/* Wide-screen visual tuning for Daily Rail Hero. Portrait/mobile remains untouched. */
+@media (min-width:760px), (orientation:landscape) and (min-width:600px) and (max-height:700px){
+  .study-v2-top-actions{
+    grid-template-columns:300px repeat(3,minmax(0,1fr))!important;
+    grid-template-rows:minmax(200px,auto) 92px!important;
+  }
+
+  /* BLUE AREA: make the label and pink progress ring the visual anchor. */
+  #dailyWorkoutCard.study-v2-daily-primary{
+    min-height:304px!important;
+    padding:30px 26px 24px!important;
+  }
+  .daily-rail-today{
+    font-size:.9rem!important;
+    margin-bottom:13px!important;
+    letter-spacing:.15em!important;
+  }
+  #dailyWorkoutCard.study-v2-daily-primary strong{
+    font-size:2.42rem!important;
+    line-height:1.02!important;
+    letter-spacing:-.045em!important;
+  }
+  #dailyWorkoutCard .daily-streak-status{display:none!important}
+  #dailyWorkoutCard.study-v2-daily-primary .progress-ring{
+    width:176px!important;
+    height:176px!important;
+    flex-basis:176px!important;
+    margin:24px auto 0!important;
+    box-shadow:0 0 0 6px rgba(255,111,176,.07)!important;
+  }
+  #dailyWorkoutCard.study-v2-daily-primary .progress-ring:after{inset:19px!important}
+  #dailyWorkoutCard.study-v2-daily-primary .progress-ring span{
+    font-size:1.55rem!important;
+    letter-spacing:-.025em!important;
+  }
+
+  /* PURPLE AREA: streak is a large badge pinned to the extreme right. */
+  .daily-rail-main{
+    position:relative!important;
+    display:block!important;
+    padding:32px 230px 18px 32px!important;
+  }
+  .daily-rail-headline{
+    display:block!important;
+    margin:0!important;
+    font-size:clamp(1.9rem,3vw,2.5rem)!important;
+    line-height:1.06!important;
+    letter-spacing:-.04em!important;
+  }
+  .daily-rail-sub{
+    display:block!important;
+    margin:12px 0 0!important;
+    font-size:1.08rem!important;
+    line-height:1.38!important;
+  }
+  .daily-rail-streak{
+    position:absolute!important;
+    top:32px!important;
+    right:18px!important;
+    display:inline-flex!important;
+    align-items:center!important;
+    justify-content:center!important;
+    margin:0!important;
+    padding:11px 17px!important;
+    border-radius:999px!important;
+    background:#fff3f8!important;
+    color:#d94e91!important;
+    font-size:1.08rem!important;
+    line-height:1.1!important;
+    font-weight:900!important;
+    white-space:nowrap!important;
+  }
+  .daily-rail-progress{
+    display:grid!important;
+    grid-template-columns:repeat(5,minmax(0,1fr))!important;
+    width:calc(100% + 212px)!important;
+    margin-top:25px!important;
+    gap:10px!important;
+  }
+  .daily-rail-segment{height:12px!important}
+
+  .study-v2-top-actions>.study-v2-action-card:not(#dailyWorkoutCard){
+    min-height:76px!important;
+    padding:12px 16px!important;
+  }
+  .study-v2-top-actions>.study-v2-action-card:not(#dailyWorkoutCard)>strong{font-size:1.02rem!important}
+
+  /* YELLOW AREA: JS sets the final pixel size; these rules prevent clipping/ellipsis. */
+  .study-v2-book-title-wrap{
+    width:100%!important;
+    max-width:100%!important;
+    min-width:0!important;
+    overflow:hidden!important;
+  }
+  .study-v2-book-title-wrap #bookTitle{
+    display:block!important;
+    width:100%!important;
+    max-width:100%!important;
+    min-width:0!important;
+    margin-left:auto!important;
+    margin-right:auto!important;
+    padding-left:0!important;
+    padding-right:0!important;
+    white-space:nowrap!important;
+    overflow:visible!important;
+    text-overflow:clip!important;
+    line-height:1.04!important;
+    font-size:clamp(1.65rem,3.75vw,3.4rem)!important;
+  }
+}
+
+/* Tablet widths: keep the same hierarchy on typical 760-1024px tablets. */
+@media (min-width:760px) and (max-width:1024px){
+  .study-v2-top-actions{
+    grid-template-columns:270px repeat(3,minmax(0,1fr))!important;
+    grid-template-rows:minmax(188px,auto) 82px!important;
+  }
+  #dailyWorkoutCard.study-v2-daily-primary{
+    min-height:282px!important;
+    padding:27px 22px 21px!important;
+  }
+  .daily-rail-today{font-size:.84rem!important}
+  #dailyWorkoutCard.study-v2-daily-primary strong{font-size:2.12rem!important}
+  #dailyWorkoutCard.study-v2-daily-primary .progress-ring{
+    width:156px!important;
+    height:156px!important;
+    flex-basis:156px!important;
+    margin-top:22px!important;
+  }
+  #dailyWorkoutCard.study-v2-daily-primary .progress-ring:after{inset:17px!important}
+  #dailyWorkoutCard.study-v2-daily-primary .progress-ring span{font-size:1.38rem!important}
+  .daily-rail-main{padding:28px 205px 15px 25px!important}
+  .daily-rail-headline{font-size:1.82rem!important}
+  .daily-rail-sub{font-size:.98rem!important}
+  .daily-rail-streak{top:28px!important;right:14px!important;font-size:.96rem!important;padding:10px 14px!important}
+  .daily-rail-progress{width:calc(100% + 187px)!important;margin-top:21px!important}
+  .daily-rail-segment{height:10px!important}
+  .study-v2-book-title-wrap #bookTitle{font-size:clamp(1.55rem,3.8vw,2.65rem)!important}
+}
+
+/* Landscape phones get the Rail layout, but stay compact enough to use. */
+@media (orientation:landscape) and (min-width:600px) and (max-height:700px){
+  .study-v2-top-actions{
+    grid-template-columns:205px repeat(3,minmax(0,1fr))!important;
+    grid-template-rows:minmax(122px,auto) 60px!important;
+  }
+  #dailyWorkoutCard.study-v2-daily-primary{min-height:190px!important;padding:16px 15px 13px!important}
+  .daily-rail-today{font-size:.64rem!important}
+  #dailyWorkoutCard.study-v2-daily-primary strong{font-size:1.34rem!important}
+  #dailyWorkoutCard.study-v2-daily-primary .progress-ring{width:96px!important;height:96px!important;flex-basis:96px!important;margin-top:12px!important}
+  #dailyWorkoutCard.study-v2-daily-primary .progress-ring:after{inset:10px!important}
+  #dailyWorkoutCard.study-v2-daily-primary .progress-ring span{font-size:.9rem!important}
+  .daily-rail-main{padding:15px 118px 8px 14px!important}
+  .daily-rail-headline{font-size:1.16rem!important}
+  .daily-rail-sub{font-size:.7rem!important;margin-top:6px!important}
+  .daily-rail-streak{top:15px!important;right:8px!important;font-size:.68rem!important;padding:6px 8px!important}
+  .daily-rail-progress{width:calc(100% + 104px)!important;margin-top:10px!important;gap:5px!important}
+  .daily-rail-segment{height:6px!important}
+  .study-v2-book-title-wrap #bookTitle{font-size:clamp(1.35rem,3.9vw,2rem)!important}
+}
