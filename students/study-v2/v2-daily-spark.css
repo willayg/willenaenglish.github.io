@@ -261,63 +261,7 @@
   }
 }
 
-/* Wide tablets / desktop: preserve Daily Rail structure but give the whole hero the Spark identity. */
-@media (min-width:760px), (orientation:landscape) and (min-width:600px) and (max-height:700px){
-  .book-hero.daily-inline .study-v2-top-actions{
-    background-color:#fff!important;
-    background-image:
-      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M50 5 59 38 92 50 59 62 50 95 41 62 8 50 41 38Z' fill='none' stroke='%23ff6fb0' stroke-opacity='.11' stroke-width='4' stroke-linejoin='round'/%3E%3C/svg%3E"),
-      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 70 70'%3E%3Cpath d='M35 7 41 29 63 35 41 41 35 63 29 41 7 35 29 29Z' fill='none' stroke='%2321b3be' stroke-opacity='.12' stroke-width='4' stroke-linejoin='round'/%3E%3C/svg%3E"),
-      linear-gradient(155deg,#fff 0 70%,#fff3f8 100%)!important;
-    background-repeat:no-repeat,no-repeat,no-repeat!important;
-    background-position:left 31% top 18px,right 34px top 72px,center!important;
-    background-size:150px 150px,84px 84px,100% 100%!important;
-    box-shadow:0 12px 30px rgba(255,111,176,.09)!important;
-  }
-  .book-hero.daily-inline #dailyWorkoutCard.study-v2-daily-primary,
-  .book-hero.daily-inline #dailyWorkoutCard.study-v2-daily-primary:hover,
-  .book-hero.daily-inline #dailyWorkoutCard.study-v2-daily-primary:focus-visible{
-    background-color:#fff!important;
-    background-image:
-      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M50 5 59 38 92 50 59 62 50 95 41 62 8 50 41 38Z' fill='none' stroke='%23ff6fb0' stroke-opacity='.14' stroke-width='4' stroke-linejoin='round'/%3E%3C/svg%3E"),
-      linear-gradient(180deg,#fff3f8 0%,#fff 100%)!important;
-    background-repeat:no-repeat,no-repeat!important;
-    background-position:left -42px bottom 15px,center!important;
-    background-size:126px 126px,100% 100%!important;
-  }
-  .book-hero.daily-inline .daily-rail-main{
-    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 70 70'%3E%3Cpath d='M35 7 41 29 63 35 41 41 35 63 29 41 7 35 29 29Z' fill='none' stroke='%2321b3be' stroke-opacity='.11' stroke-width='4' stroke-linejoin='round'/%3E%3C/svg%3E")!important;
-    background-repeat:no-repeat!important;
-    background-position:right 28px bottom 10px!important;
-    background-size:78px 78px!important;
-  }
-  .book-hero.daily-inline .daily-rail-streak{
-    gap:8px!important;
-    border:2px solid #ffc6df!important;
-    background:#fff!important;
-    color:#d44e8d!important;
-    box-shadow:0 6px 16px rgba(255,111,176,.09)!important;
-  }
-  .book-hero.daily-inline .daily-rail-streak svg{
-    width:28px!important;
-    height:28px!important;
-    flex:0 0 28px!important;
-    fill:none!important;
-    stroke:currentColor!important;
-    stroke-width:2.2!important;
-    stroke-linecap:round!important;
-    stroke-linejoin:round!important;
-  }
-}
-
-@media (min-width:760px) and (max-width:1024px){
-  .book-hero.daily-inline .study-v2-top-actions{
-    background-position:left 34% top 14px,right 22px top 62px,center!important;
-    background-size:132px 132px,72px 72px,100% 100%!important;
-  }
-  .book-hero.daily-inline .daily-rail-streak svg{width:25px!important;height:25px!important;flex-basis:25px!important}
-}
-
+/* Landscape-phone Spark decoration. */
 @media (orientation:landscape) and (min-width:600px) and (max-height:700px){
   .book-hero.daily-inline .study-v2-top-actions{
     background-position:left 34% top 8px,right 16px top 37px,center!important;

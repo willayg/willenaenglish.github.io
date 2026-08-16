@@ -65,13 +65,3 @@
   #v2ActivityRoot .activity-audio:before,
   #aiCoachActivityRoot .activity-audio:before{width:38px;height:38px}
 }
-
-/* Final launcher-card border authority. Keep the Daily card visually separate from the pink outer frame. */
-.book-hero.daily-inline #dailyWorkoutCard.study-v2-daily-primary,
-.book-hero.daily-inline #dailyWorkoutCard.study-v2-daily-primary.is-complete,
-.book-hero.daily-inline #dailyWorkoutCard.study-v2-daily-primary:hover,
-.book-hero.daily-inline #dailyWorkoutCard.study-v2-daily-primary:focus-visible{
-  border:3px solid #d4dadd!important;
-  border-color:#d4dadd!important;
-  box-shadow:0 8px 22px rgba(38,74,79,.08)!important;
-}
