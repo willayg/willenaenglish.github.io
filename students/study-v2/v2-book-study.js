@@ -9,6 +9,7 @@ var contentRoot=document.getElementById('bookStudyContent');
 var bookStudyNote=document.getElementById('bookStudyNote');
 if(!sourceStrip||!studyStrip||!contentRoot)return;
 var activeUnitId='';
+var activeKind='vocabulary';
 var requestToken=0;
 var cached=null;
 
@@ -117,7 +118,7 @@ function grammarSection(data){
 }
 function readingSection(data){
   var rows=data.occ.filter(function(o){return o.occurrence_type==='passage'||o.skill==='reading';}),seen={},items=[];
-  rows.forEach(function(o){var d=o.passage_id?data.passages[String(o.passage_id)]||{}:{};var title=txt(d.title||o.source_text||o.activity_label);var body=txt(d.body);var trans=txt(d.translation_ko);var key=(title+'|'+body).toLowerCase();if(!title&&!body||seen[key])return;seen[key]=1;items.push({title:title|| (ko()?'읽기':'Reading'),body:body,translation:trans});});
+  rows.forEach(function(o){var d=o.passage_id?data.passages[String(o.passage_id)]||{}:{};var title=txt(d.title||o.source_text||o.activity_label);var body=txt(d.body);var trans=txt(d.translation_ko);var key=(title+'|'+body).toLowerCase();if(!title&&!body||seen[key])return;seen[key]=1;items.push({title:title||(ko()?'읽기':'Reading'),body:body,translation:trans});});
   if(!items.length)return'';
   return section('reading',ko()?'읽기':'Reading',items.length,'<div class="book-study-reading-list">'+items.map(function(v){return '<div class="book-study-reading"><h5>'+esc(v.title)+'</h5>'+(v.body?'<p>'+esc(v.body)+'</p>':'')+(v.translation?'<small>'+esc(v.translation)+'</small>':'')+'</div>';}).join('')+'</div>');
 }
@@ -127,14 +128,40 @@ function otherSection(data){
   if(!items.length)return'';
   return section('other',ko()?'말하기 · 기타':'Speaking & More',items.length,'<div class="book-study-other-list">'+items.map(function(v){return '<div class="book-study-other"><h5>'+esc(v.label)+'</h5><p>'+esc(v.text)+'</p></div>';}).join('')+'</div>');
 }
-function section(kind,title,count,body){return '<section class="book-study-section" data-kind="'+kind+'" id="bookStudy-'+kind+'"><div class="book-study-section-head"><h4>'+esc(title)+'</h4><span>'+count+'</span></div>'+body+'</section>';}
+function section(kind,title,count,body){return '<section class="book-study-section" data-kind="'+kind+'" id="bookStudy-'+kind+'" role="tabpanel"><div class="book-study-section-head"><h4>'+esc(title)+'</h4><span>'+count+'</span></div>'+body+'</section>';}
+function setActiveKind(kind){
+  var sections=Array.prototype.slice.call(contentRoot.querySelectorAll('.book-study-section'));
+  if(!sections.length)return;
+  var exists=sections.some(function(s){return s.getAttribute('data-kind')===kind;});
+  if(!exists)kind=sections[0].getAttribute('data-kind')||'vocabulary';
+  activeKind=kind;
+  contentRoot.querySelectorAll('[data-study-kind]').forEach(function(b){
+    var on=b.getAttribute('data-study-kind')===kind;
+    b.classList.toggle('is-active',on);
+    b.setAttribute('aria-selected',on?'true':'false');
+    b.tabIndex=on?0:-1;
+  });
+  sections.forEach(function(s){
+    var on=s.getAttribute('data-kind')===kind;
+    s.hidden=!on;
+    s.setAttribute('aria-hidden',on?'false':'true');
+  });
+}
 function render(data){
-  var blocks=[],jumps=[];
-  [['vocabulary',vocabSection],['sentences',sentenceSection],['grammar',grammarSection],['reading',readingSection],['other',otherSection]].forEach(function(pair){var html=pair[1](data);if(html){blocks.push(html);var label={vocabulary:ko()?'어휘':'Vocabulary',sentences:ko()?'문장':'Sentences',grammar:ko()?'문법':'Grammar',reading:ko()?'읽기':'Reading',other:ko()?'기타':'More'}[pair[0]];jumps.push('<button type="button" data-jump="bookStudy-'+pair[0]+'">'+esc(label)+'</button>');}});
+  var blocks=[],tabs=[];
+  [['vocabulary',vocabSection],['sentences',sentenceSection],['grammar',grammarSection],['reading',readingSection],['other',otherSection]].forEach(function(pair){
+    var html=pair[1](data);
+    if(html){
+      blocks.push(html);
+      var label={vocabulary:ko()?'어휘':'Vocabulary',sentences:ko()?'문장':'Sentences',grammar:ko()?'문법':'Grammar',reading:ko()?'읽기':'Reading',other:ko()?'기타':'More'}[pair[0]];
+      tabs.push('<button type="button" role="tab" data-study-kind="'+pair[0]+'" aria-selected="false">'+esc(label)+'</button>');
+    }
+  });
   if(!blocks.length){state(ko()?'이 단원에는 아직 연결된 교재 내용이 없어요.':'No book content is linked to this unit yet.');return;}
   var unit=data.unit||{},unitName='Unit '+(unit.unit_number||'')+(unit.title?' · '+unit.title:'');
-  contentRoot.innerHTML='<div class="book-study-content-top"><div><h3>'+esc(unitName)+'</h3><p>'+(ko()?'교재에 연결된 핵심 내용을 한눈에 볼 수 있어요.':'See the key content linked to this unit.')+'</p></div><span class="book-study-count">'+data.occ.length+' '+(ko()?'항목':'items')+'</span></div><div class="book-study-jump">'+jumps.join('')+'</div>'+blocks.join('');
-  contentRoot.querySelectorAll('[data-jump]').forEach(function(b){b.addEventListener('click',function(){var el=document.getElementById(b.getAttribute('data-jump'));if(el)el.scrollIntoView({behavior:'smooth',block:'start'});});});
+  contentRoot.innerHTML='<div class="book-study-content-top"><div><h3>'+esc(unitName)+'</h3><p>'+(ko()?'보고 싶은 내용을 선택하세요.':'Choose what you want to study.')+'</p></div><span class="book-study-count">'+data.occ.length+' '+(ko()?'항목':'items')+'</span></div><div class="book-study-jump" role="tablist" aria-label="'+(ko()?'교재 내용':'Book content')+'">'+tabs.join('')+'</div><div class="book-study-active-pane">'+blocks.join('')+'</div>';
+  contentRoot.querySelectorAll('[data-study-kind]').forEach(function(b){b.addEventListener('click',function(){setActiveKind(b.getAttribute('data-study-kind'));});});
+  setActiveKind(activeKind);
 }
 
 if(window.MutationObserver)new MutationObserver(function(){setTimeout(mirrorUnits,0);}).observe(sourceStrip,{childList:true,subtree:true,attributes:true,attributeFilter:['class']});
