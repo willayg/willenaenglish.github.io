@@ -158,12 +158,8 @@ async function generateBufferOnce(spoken){
       var buffer=base64Buffer(d.audio);
       if(!buffer)return null;
 
-      /* Cache immediately so one page session cannot spend ElevenLabs credits twice
-         for the same sentence even if the R2 write is still settling. */
       generatedBuffers.set(key,buffer.slice(0));
 
-      /* Save before we move on to the browser-TTS fallback. A failed upload does not
-         discard usable generated audio, but it is no longer a fire-and-forget write. */
       try{
         await fetch(AUDIO_UPLOAD,{method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',cache:'no-store',body:JSON.stringify({word:spoken,fileDataBase64:d.audio})});
       }catch(_){}
@@ -190,8 +186,6 @@ async function playAudio(button,activity){
   var ctx=getAudioContext();
   var spoken=spokenText(activity);
 
-  /* 1. R2 first. Probe the deterministic sentence filename directly, then the
-     broader lookup path for older/curriculum-specific audio keys. */
   if(spoken&&ctx){
     var directOk=await playDirectR2(spoken,ctx,myRun,button);
     if(myRun!==runId)return;
@@ -204,24 +198,29 @@ async function playAudio(button,activity){
     if(storedOk)return;
   }
 
-  /* Same-page replay guard. This sits between the R2 miss and any paid generation,
-     so a just-generated sentence cannot burn credits twice. */
   var memory=getGeneratedBuffer(spoken);
   if(memory&&ctx){
     var memoryOk=await playDecodedBuffer(memory,ctx,myRun,button);
     if(memoryOk)return;
   }
 
-  /* 2. ElevenLabs second: generate once, save to R2, then play the real MP3. */
   var generated=await generateAndPlay(activity,ctx,myRun,button);
   if(myRun!==runId)return;
   if(generated)return;
 
-  /* 3. Browser TTS is now the last fallback only. */
   var speechOk=await speakWithVoice(button,activity,myRun);
   if(myRun!==runId)return;
   if(!speechOk)button.classList.remove('is-playing','has-played');
 }
+
+/* Public hook for non-question study content. It uses the exact same R2 -> ElevenLabs -> browser fallback path. */
+global.WillenaAudioPlayback=global.WillenaAudioPlayback||{};
+global.WillenaAudioPlayback.playText=function(button,value,options){
+  if(!button||!text(value))return Promise.resolve();
+  options=options||{};
+  return playAudio(button,{stimulus:{type:'audio',text:text(value),lang:text(options.lang)||'en-US',rate:Number(options.rate)||.9},metadata:options.metadata||{}});
+};
+global.WillenaAudioPlayback.stop=stopCurrent;
 
 proto.render=function(){
   var result=originalRender.apply(this,arguments);
