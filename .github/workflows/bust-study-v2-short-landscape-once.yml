@@ -1,0 +1,38 @@
+name: Bust cleaned Study V2 short-landscape cache once
+
+on:
+  push:
+    branches: [staging]
+    paths:
+      - .github/workflows/bust-study-v2-short-landscape-once.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: staging
+      - name: Bust cache and remove this workflow
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('students/study-v2/index.html')
+          s=p.read_text()
+          old='./v2-short-landscape.css?v=20260816-ringconflict1'
+          new='./v2-short-landscape.css?v=20260816-practiceonly1'
+          if old not in s:
+              raise SystemExit('old cache key not found')
+          p.write_text(s.replace(old,new,1))
+          Path('.github/workflows/bust-study-v2-short-landscape-once.yml').unlink()
+          PY
+      - name: Commit
+        run: |
+          git config user.name 'willayg'
+          git config user.email 'william.gaule@gmail.com'
+          git add -A
+          git commit -m 'Bust cleaned Study V2 short-landscape cache'
+          git push origin staging
