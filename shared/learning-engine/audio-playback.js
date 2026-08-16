@@ -8,10 +8,13 @@ var currentUtterance=null;
 var currentSource=null;
 var audioContext=null;
 var runId=0;
-var API_BASE='https://api.willenaenglish.com/.netlify/functions/';
+var API_ORIGIN='https://api.willenaenglish.com';
+var API_BASE=API_ORIGIN+'/.netlify/functions/';
 var AUDIO_LOOKUP=API_BASE+'get_audio_urls';
 var TTS_GENERATE=API_BASE+'eleven_labs_proxy';
 var AUDIO_UPLOAD=API_BASE+'upload_audio';
+var generatedBuffers=new Map();
+var generationLocks=new Map();
 
 function text(v){return String(v==null?'':v).replace(/\\n/g,'\n').trim();}
 function unique(items){var out=[];items.forEach(function(v){v=text(v);if(v&&out.indexOf(v)<0)out.push(v);});return out;}
@@ -23,6 +26,13 @@ function audioCandidates(activity){
     m.audioKey,m.audio_key,m.ttsKey,m.tts_key,
     spoken
   ]);
+}
+function r2Key(value){
+  return text(value).toLowerCase().replace(/\s+/g,'_').replace(/[^a-z0-9_\-]/g,'');
+}
+function directR2Url(value){
+  var key=r2Key(value);
+  return key?API_ORIGIN+'/audio/'+encodeURIComponent(key+'.mp3'):'';
 }
 function getAudioContext(){
   var AC=global.AudioContext||global.webkitAudioContext;
@@ -73,13 +83,20 @@ async function playDecodedBuffer(buffer,ctx,myRun,button){
     return true;
   }catch(_){return false;}
 }
-async function playStored(url,ctx,myRun,button){
+async function playStored(url,ctx,myRun,button,noCache){
   if(!url||!ctx||myRun!==runId)return false;
   try{
-    var r=await fetch(url,{cache:'force-cache'});
+    var r=await fetch(url,{cache:noCache?'no-store':'force-cache'});
     if(!r.ok)return false;
     return await playDecodedBuffer(await r.arrayBuffer(),ctx,myRun,button);
   }catch(_){return false;}
+}
+async function playDirectGenerated(spoken,ctx,myRun,button){
+  var url=directR2Url(spoken);
+  if(!url)return false;
+  /* This goes straight to /audio/<deterministic filename>, so a stale cached
+     get_audio_urls "missing" result cannot force another ElevenLabs request. */
+  return playStored(url,ctx,myRun,button,true);
 }
 function pickVoice(synth,lang){
   var voices=[];try{voices=synth.getVoices()||[];}catch(_){}
@@ -117,8 +134,6 @@ function speakWithVoice(button,activity,myRun){
       u.onend=function(){if(myRun!==runId)return;button.classList.remove('is-playing');button.classList.add('has-played');};
       u.onerror=function(){if(myRun!==runId)return;button.classList.remove('is-playing');finish(false);};
       try{synth.resume();synth.speak(u);}catch(_){finish(false);return;}
-      /* Only onstart counts as success. Some Android builds sit in pending forever
-         without producing sound; treat that as a failure and use real MP3 audio. */
       startTimer=setTimeout(function(){
         if(finished||myRun!==runId)return;
         try{synth.cancel();}catch(_){}
@@ -141,24 +156,45 @@ function base64Buffer(b64){
     return out.buffer;
   }catch(_){return null;}
 }
+function getGeneratedBuffer(spoken){
+  var key=r2Key(spoken);
+  return key&&generatedBuffers.has(key)?generatedBuffers.get(key):null;
+}
+async function generateBufferOnce(spoken){
+  var key=r2Key(spoken);
+  if(!key||!spoken||spoken.length>400)return null;
+  if(generatedBuffers.has(key))return generatedBuffers.get(key);
+  if(generationLocks.has(key))return generationLocks.get(key);
+
+  var job=(async function(){
+    try{
+      var r=await fetch(TTS_GENERATE,{method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',cache:'no-store',body:JSON.stringify({text:spoken})});
+      if(!r.ok)return null;
+      var d=await r.json().catch(function(){return{};});
+      if(!d||!d.audio)return null;
+      var buffer=base64Buffer(d.audio);
+      if(!buffer)return null;
+
+      /* Save in memory before upload. Replaying this sentence in the same page now
+         never calls ElevenLabs twice, even while the R2 upload is still finishing. */
+      generatedBuffers.set(key,buffer.slice(0));
+
+      /* Persist one generated clip to R2. The deterministic filename is derived from
+         the spoken sentence, matching upload_audio.js and get-audio-urls. */
+      fetch(AUDIO_UPLOAD,{method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',body:JSON.stringify({word:spoken,fileDataBase64:d.audio})}).catch(function(){});
+      return buffer;
+    }catch(_){return null;}
+    finally{generationLocks.delete(key);}
+  })();
+  generationLocks.set(key,job);
+  return job;
+}
 async function generateAndPlay(activity,ctx,myRun,button){
   var spoken=spokenText(activity);
-  if(!spoken||spoken.length>400||!ctx||myRun!==runId)return false;
-  try{
-    var r=await fetch(TTS_GENERATE,{method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',cache:'no-store',body:JSON.stringify({text:spoken})});
-    if(!r.ok)return false;
-    var d=await r.json().catch(function(){return{};});
-    if(!d||!d.audio)return false;
-    var buffer=base64Buffer(d.audio);
-    if(!buffer||myRun!==runId)return false;
-    var played=await playDecodedBuffer(buffer,ctx,myRun,button);
-    if(played){
-      /* Cache the generated listening clip globally so the next student gets the R2
-         version instead of generating it again. Upload is best-effort and non-blocking. */
-      fetch(AUDIO_UPLOAD,{method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',body:JSON.stringify({word:spoken,fileDataBase64:d.audio})}).catch(function(){});
-    }
-    return played;
-  }catch(_){return false;}
+  if(!spoken||!ctx||myRun!==runId)return false;
+  var buffer=await generateBufferOnce(spoken);
+  if(!buffer||myRun!==runId)return false;
+  return playDecodedBuffer(buffer,ctx,myRun,button);
 }
 async function playAudio(button,activity){
   var myRun=++runId;
@@ -166,21 +202,34 @@ async function playAudio(button,activity){
   button.classList.remove('has-played');
   button.classList.add('is-playing');
 
-  /* Unlock WebAudio from the actual tap. This keeps later network-fetched MP3 playback
-     legal on Android even though the fetch itself is asynchronous. */
   var ctx=getAudioContext();
+  var spoken=spokenText(activity);
+
+  /* First reuse anything generated during this page session. */
+  var memory=getGeneratedBuffer(spoken);
+  if(memory&&ctx){
+    var memoryOk=await playDecodedBuffer(memory,ctx,myRun,button);
+    if(memoryOk)return;
+  }
+
+  /* Then probe the exact deterministic R2 filename. This bypasses the lookup
+     Worker's five-minute negative cache after a clip has just been uploaded. */
+  if(spoken&&ctx){
+    var directOk=await playDirectGenerated(spoken,ctx,myRun,button);
+    if(myRun!==runId)return;
+    if(directOk)return;
+  }
+
   var stored=await findStoredAudio(audioCandidates(activity));
   if(myRun!==runId)return;
   if(stored&&ctx){
-    var storedOk=await playStored(stored,ctx,myRun,button);
+    var storedOk=await playStored(stored,ctx,myRun,button,false);
     if(storedOk)return;
   }
 
   var speechOk=await speakWithVoice(button,activity,myRun);
   if(myRun!==runId||speechOk)return;
 
-  /* Final fallback: create one real MP3 through the existing Willena TTS service,
-     play it through the already-unlocked AudioContext, and cache it to R2. */
   var generated=await generateAndPlay(activity,ctx,myRun,button);
   if(myRun!==runId)return;
   if(!generated){button.classList.remove('is-playing','has-played');}
