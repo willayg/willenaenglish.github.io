@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" role="img" aria-labelledby="title desc">
+  <title id="title">Book Practice</title>
+  <desc id="desc">A practice workbook with a check mark and a target.</desc>
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="31" y="23" width="84" height="112" rx="18" fill="#173f45" stroke="#9fe3df" stroke-width="7"/>
+    <path d="M50 23v112" stroke="#86d8d7" stroke-width="5"/>
+    <path d="M64 51h31M64 70h23M64 89h31" stroke="#d9fffb" stroke-width="5" opacity=".9"/>
+    <circle cx="117" cy="103" r="27" fill="#244e54" stroke="#86d8d7" stroke-width="6"/>
+    <circle cx="117" cy="103" r="14" stroke="#f6c56f" stroke-width="5"/>
+    <circle cx="117" cy="103" r="4" fill="#f6c56f" stroke="none"/>
+    <path d="M72 112l9 9 18-22" stroke="#f6c56f" stroke-width="7"/>
+    <path d="M112 62l18-18M125 43h8v8" stroke="#f6c56f" stroke-width="5"/>
+  </g>
+</svg>
