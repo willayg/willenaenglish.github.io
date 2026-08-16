@@ -43,6 +43,19 @@ function normalizeDailyLabels(){
   });
 }
 
+/* Daily saves the answer before enabling Next. Change the visible label at the
+   original tap, before the network save begins, so the UI responds instantly. */
+document.addEventListener('click',function(e){
+  if(!document.body.classList.contains('study-v2-daily-mode'))return;
+  var check=e.target&&e.target.closest&&e.target.closest('#v2ActivityRoot .activity-check');
+  if(!check||check.disabled)return;
+  var t=text(check.textContent);
+  if(t==='Check'||t==='확인'){
+    check.textContent=nextLabel();
+    check.dataset.awaitingDailySave='1';
+  }
+},true);
+
 global.addEventListener('willena:activity-answer',function(e){
   var detail=e.detail||{};
   fixWrongAnswer(detail);
