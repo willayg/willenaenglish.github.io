@@ -1,4 +1,4 @@
-name: Refactor Study V2 tablet hero cascade once
+name: Restore Study V2 hero baseline once
 
 on:
   push:
@@ -11,98 +11,32 @@ permissions:
   contents: write
 
 jobs:
-  patch:
+  restore:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           ref: staging
+          fetch-depth: 0
 
-      - name: Consolidate top hero styling ownership
+      - name: Restore last known-good hero files
         run: |
-          python - <<'PY'
-          from pathlib import Path
-          import re
+          git checkout 8c8c44d7d5bf7852b1150eadbedd04258ca1a77a -- \
+            students/study-v2/index.html \
+            students/study-v2/v2-top-layout.css \
+            students/study-v2/v2-daily-rail-impact.css \
+            students/study-v2/v2-daily-rail-impact.js \
+            students/study-v2/v2-daily-spark.css
 
-          root = Path('students/study-v2')
+          git rm -f students/study-v2/v2-tablet-hero.css || true
+          git rm -f .github/workflows/cache-bust-study-v2-interactions-once.yml
 
-          # Base top hero: remove legacy importance only from the top-hero section.
-          p = root / 'v2-top-layout.css'
-          s = p.read_text()
-          marker = '/* Book switcher, title, units and mastery all belong to one book-level container. */'
-          if marker in s:
-              head, tail = s.split(marker, 1)
-              head = head.replace('!important', '')
-              s = head + marker + tail
-          p.write_text(s)
-
-          # Wide/tablet rail is itself a top-hero stylesheet, so normal cascade is enough.
-          p = root / 'v2-daily-rail-impact.css'
-          s = p.read_text().replace('!important', '')
-          p.write_text(s)
-
-          # Keep phone Spark exactly as-is; make only the wide/tablet Spark section non-forcing.
-          p = root / 'v2-daily-spark.css'
-          s = p.read_text()
-          marker = '/* Wide tablets / desktop: preserve Daily Rail structure but give the whole hero the Spark identity. */'
-          if marker in s:
-              head, tail = s.split(marker, 1)
-              tail = tail.replace('!important', '')
-              s = head + marker + tail
-          p.write_text(s)
-
-          # Runtime JS should update data only; it must not inject visual CSS.
-          p = root / 'v2-daily-rail-impact.js'
-          s = p.read_text()
-          s = re.sub(
-              r"/\* Top launcher frame:.*?\*/\s*\(function\(\)\{.*?\}\)\(\);\s*",
-              '',
-              s,
-              count=1,
-              flags=re.S,
-          )
-          p.write_text(s)
-
-          # The old inline hero block remains as legacy fallback, but no longer forces precedence.
-          p = root / 'index.html'
-          s = p.read_text()
-          m = re.search(r'<style>\s*/\* Keep the Daily, AI and book launch actions captured.*?</style>', s, flags=re.S)
-          if m:
-              cleaned = m.group(0).replace('!important', '')
-              s = s[:m.start()] + cleaned + s[m.end():]
-
-          # Cache versions for every refactored asset.
-          replacements = {
-              './v2-top-layout.css?v=20260815-bookspacing2': './v2-top-layout.css?v=20260816-herocascade1',
-              './v2-daily-rail-impact.css?v=20260816-tablethero2': './v2-daily-rail-impact.css?v=20260816-herocascade1',
-              './v2-daily-spark.css?v=20260816-spark2': './v2-daily-spark.css?v=20260816-herocascade1',
-              './v2-daily-rail-impact.js?v=20260816-spark1': './v2-daily-rail-impact.js?v=20260816-herocascade1',
-          }
-          for old, new in replacements.items():
-              s = s.replace(old, new)
-
-          tablet_link = '<link rel="stylesheet" href="./v2-tablet-hero.css?v=20260816-herocascade1">'
-          if tablet_link not in s:
-              anchor = '</style>\n<script src="/students/api-gateway.js'
-              if anchor in s:
-                  s = s.replace(anchor, '</style>\n' + tablet_link + '\n<script src="/students/api-gateway.js', 1)
-              else:
-                  raise SystemExit('Could not place tablet hero stylesheet after inline hero block')
-
-          p.write_text(s)
-          PY
-
-      - name: Commit refactor
+      - name: Commit clean rollback
         run: |
-          if git diff --quiet; then exit 0; fi
           git config user.name 'willayg'
           git config user.email 'william.gaule@gmail.com'
-          git add students/study-v2/index.html \
-                  students/study-v2/v2-top-layout.css \
-                  students/study-v2/v2-daily-rail-impact.css \
-                  students/study-v2/v2-daily-spark.css \
-                  students/study-v2/v2-daily-rail-impact.js
-          git commit -m 'Refactor tablet hero cascade ownership'
+          git add -A
+          git commit -m 'Restore Study V2 hero to clean pre-tablet baseline'
           git push origin staging
 
       - name: Trigger staging deploy hook
