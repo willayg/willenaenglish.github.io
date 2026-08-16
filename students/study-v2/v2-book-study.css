@@ -46,9 +46,9 @@
 .book-study-vocab strong{display:block;min-width:0;color:#31565d;font-size:1rem;line-height:1.24;font-weight:900;overflow-wrap:anywhere}
 .book-study-vocab small{display:block;margin-top:6px;color:#637a80;font-size:.84rem;line-height:1.35;font-weight:850;overflow-wrap:anywhere}
 
-/* Same headphone SVG as the shared learning engine. Text remains in the DOM for accessibility. */
+/* Use a real SVG asset rather than an encoded CSS SVG so Chrome renders it cleanly. */
 .book-study-listen{position:relative;display:grid;place-items:center;width:56px;height:56px;min-width:56px;min-height:56px;padding:0;border:3px solid #bfe8eb;border-radius:18px;background:#fff;color:#168c95;font-size:0;line-height:0;cursor:pointer;white-space:nowrap;transition:border-color .18s ease,background .18s ease,transform .18s ease}
-.book-study-listen:before{content:"";width:28px;height:28px;background-repeat:no-repeat;background-position:center;background-size:contain;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23168c95' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 14v-2a8 8 0 0 1 16 0v2'/%3E%3Cpath d='M18 19h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2h-1z'/%3E%3Cpath d='M6 19H5a2 2 0 0 1-2-2v-3a2 2 0 0 0-2-2h1z'/%3E%3C/svg%3E")}
+.book-study-listen:before{content:"";width:28px;height:28px;background:url("./headphones.svg?v=20260816-1") center/contain no-repeat}
 .book-study-listen:hover,.book-study-listen:focus-visible{outline:none;background:#eefafb;border-color:var(--arcade-cyan)}
 .book-study-listen.has-played:not(.is-playing){border-color:#8bd9de}
 
