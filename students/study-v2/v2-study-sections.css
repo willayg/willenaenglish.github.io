@@ -118,9 +118,7 @@
     grid-column:auto!important;
     grid-row:auto!important;
   }
-  .book-hero.daily-inline .study-v2-top-actions>#practiceHeroBtn{grid-column:2!important;grid-row:2!important}
-  .book-hero.daily-inline .study-v2-top-actions>#bookStudyBtn{grid-column:3!important;grid-row:2!important}
-  .book-hero.daily-inline .study-v2-top-actions>#bookPracticeBtn{grid-column:4!important;grid-row:2!important}
+  /* Tablet/wide launcher geometry is owned by v2-daily-journey.css. */
   .study-v2-section-heading h2{font-size:1.6rem}
   .study-v2-book-study-panel .study-v2-book-title-wrap #bookTitle{
     max-width:100%!important;
