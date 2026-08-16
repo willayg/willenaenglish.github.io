@@ -1,0 +1,63 @@
+/* Shared Study V2 activity presentation across Daily, focused practice and AI Coach. */
+#v2ActivityRoot .activity-source-badge,
+#aiCoachActivityRoot .activity-source-badge{
+  display:inline-flex;
+  align-items:center;
+  width:max-content;
+  max-width:100%;
+  margin:0 0 12px;
+  padding:7px 12px;
+  border-radius:999px;
+  background:#f3f6f6;
+  color:#667b80;
+  font:800 .8rem/1.2 Poppins,sans-serif;
+}
+
+/* Instructions should read like instructions, not another coloured answer card. */
+#v2ActivityRoot .activity-context,
+#aiCoachActivityRoot .activity-context{
+  margin:0 0 12px!important;
+  padding:0!important;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  color:#31565d!important;
+  font-size:clamp(1.08rem,3.2vw,1.3rem)!important;
+  line-height:1.48!important;
+  font-weight:800!important;
+}
+
+#v2ActivityRoot .activity-prompt,
+#aiCoachActivityRoot .activity-prompt{
+  margin:0 0 22px!important;
+  color:#244f56;
+  font-size:clamp(1.65rem,5vw,2.2rem)!important;
+  line-height:1.3!important;
+  font-weight:900;
+}
+
+/* Use the same real headphone asset as Book Study instead of the malformed inline path. */
+#v2ActivityRoot .activity-audio-icon,
+#aiCoachActivityRoot .activity-audio-icon{display:none!important}
+#v2ActivityRoot .activity-audio:before,
+#aiCoachActivityRoot .activity-audio:before{
+  content:"";
+  width:44px;
+  height:44px;
+  display:block;
+  background:url("./headphones.svg?v=20260816-2") center/contain no-repeat;
+}
+
+/* AI Coach now uses the inline Check -> Next control, just like the other modes. */
+#aiCoachPracticeOverlay .ai-coach-practice-next{display:none!important}
+
+@media(max-width:560px){
+  #v2ActivityRoot .activity-source-badge,
+  #aiCoachActivityRoot .activity-source-badge{font-size:.78rem;padding:7px 11px;margin-bottom:11px}
+  #v2ActivityRoot .activity-context,
+  #aiCoachActivityRoot .activity-context{font-size:1.16rem!important;margin-bottom:12px!important}
+  #v2ActivityRoot .activity-prompt,
+  #aiCoachActivityRoot .activity-prompt{font-size:1.9rem!important;line-height:1.28!important;margin-bottom:22px!important}
+  #v2ActivityRoot .activity-audio:before,
+  #aiCoachActivityRoot .activity-audio:before{width:38px;height:38px}
+}
