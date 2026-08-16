@@ -24,9 +24,9 @@
 .study-v2-action-card.is-coming-soon{cursor:default}
 .study-v2-action-card.is-coming-soon:hover{transform:none;box-shadow:0 8px 22px rgba(38,74,79,.06)!important}
 
-/* Daily Study: white card, pink border, simple streak text, circular progress. */
-#dailyWorkoutCard.study-v2-daily-primary{position:relative;display:flex!important;align-items:center!important;gap:18px!important;width:100%!important;min-height:130px;padding:20px 22px!important;border:2px solid var(--arcade-pink)!important;border-radius:24px!important;background:#fff!important;color:#35565b!important;box-shadow:0 9px 24px rgba(38,74,79,.06)!important}
-#dailyWorkoutCard.study-v2-daily-primary:hover,#dailyWorkoutCard.study-v2-daily-primary:focus-visible{background:#fff!important;border-color:var(--arcade-pink)!important;box-shadow:0 12px 29px rgba(255,111,176,.14)!important}
+/* Daily Study: white card, light grey border, simple streak text, circular progress. */
+#dailyWorkoutCard.study-v2-daily-primary{position:relative;display:flex!important;align-items:center!important;gap:18px!important;width:100%!important;min-height:130px;padding:20px 22px!important;border:2px solid #dfe8ea!important;border-radius:24px!important;background:#fff!important;color:#35565b!important;box-shadow:0 9px 24px rgba(38,74,79,.06)!important}
+#dailyWorkoutCard.study-v2-daily-primary:hover,#dailyWorkoutCard.study-v2-daily-primary:focus-visible{background:#fff!important;border-color:#dfe8ea!important;box-shadow:0 12px 29px rgba(38,74,79,.10)!important}
 #dailyWorkoutCard.study-v2-daily-primary:before{content:"";display:block;width:60px;height:60px;flex:0 0 60px;border-radius:20px;background-color:#fff2f8;background-repeat:no-repeat;background-position:center;background-size:34px 34px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ff6fb0' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M7 3h10'/%3E%3Cpath d='M9 3v3M15 3v3'/%3E%3Ccircle cx='12' cy='13' r='7'/%3E%3Cpath d='M12 10v3l2 1.5'/%3E%3C/svg%3E")}
 #dailyWorkoutCard.study-v2-daily-primary>div:not(.progress-ring){min-width:0;flex:1}
 #dailyWorkoutCard.study-v2-daily-primary strong{font-size:1.16rem;line-height:1.18;color:var(--arcade-pink)!important}
