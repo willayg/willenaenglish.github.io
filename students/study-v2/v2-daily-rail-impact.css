@@ -135,13 +135,13 @@
   .daily-rail-today{font-size:.84rem!important}
   #dailyWorkoutCard.study-v2-daily-primary strong{font-size:2.12rem!important}
   #dailyWorkoutCard.study-v2-daily-primary .progress-ring{
-    width:156px!important;
-    height:156px!important;
-    flex-basis:156px!important;
+    width:190px!important;
+    height:190px!important;
+    flex-basis:190px!important;
     margin-top:22px!important;
   }
-  #dailyWorkoutCard.study-v2-daily-primary .progress-ring:after{inset:17px!important}
-  #dailyWorkoutCard.study-v2-daily-primary .progress-ring span{font-size:1.38rem!important}
+  #dailyWorkoutCard.study-v2-daily-primary .progress-ring:after{inset:20px!important}
+  #dailyWorkoutCard.study-v2-daily-primary .progress-ring span{font-size:1.52rem!important}
   .daily-rail-main{padding:28px 205px 15px 25px!important}
   .daily-rail-headline{font-size:1.82rem!important}
   .daily-rail-sub{font-size:.98rem!important}
@@ -152,7 +152,7 @@
 }
 
 /* Landscape phones get the Rail layout, but stay compact enough to use. */
-@media (orientation:landscape) and (min-width:600px) and (max-height:700px){
+@media (orientation:landscape) and (min-width:600px) and (max-width:759px) and (max-height:700px){
   .study-v2-top-actions{
     grid-template-columns:205px repeat(3,minmax(0,1fr))!important;
     grid-template-rows:minmax(122px,auto) 60px!important;
