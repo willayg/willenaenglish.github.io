@@ -193,15 +193,15 @@
     position:relative!important;
     display:grid!important;
     place-items:center!important;
-    width:165px!important;
-    height:165px!important;
-    min-width:165px!important;
-    min-height:165px!important;
-    max-width:165px!important;
-    max-height:165px!important;
+    width:155px!important;
+    height:155px!important;
+    min-width:155px!important;
+    min-height:155px!important;
+    max-width:155px!important;
+    max-height:155px!important;
     aspect-ratio:1 / 1!important;
-    flex:0 0 165px!important;
-    flex-basis:165px!important;
+    flex:0 0 155px!important;
+    flex-basis:155px!important;
     flex-shrink:0!important;
     align-self:center!important;
     box-sizing:border-box!important;
@@ -213,7 +213,7 @@
   .book-hero.daily-inline #dailyWorkoutCard.study-v2-daily-primary .progress-ring:after{
     content:""!important;
     position:absolute!important;
-    inset:23px!important;
+    inset:22px!important;
     border-radius:50%!important;
     background:#fff!important;
   }
@@ -230,7 +230,7 @@
     overflow:visible!important;
     white-space:normal!important;
     color:var(--arcade-pink)!important;
-    font-size:1.32rem!important;
+    font-size:1.26rem!important;
     line-height:1!important;
     font-weight:900!important;
   }
