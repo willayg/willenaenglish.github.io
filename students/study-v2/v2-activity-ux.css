@@ -16,7 +16,7 @@
 /* Instructions should read like instructions, not another coloured answer card. */
 #v2ActivityRoot .activity-context,
 #aiCoachActivityRoot .activity-context{
-  margin:0 0 12px!important;
+  margin:0 0 26px!important;
   padding:0!important;
   border:0!important;
   border-radius:0!important;
@@ -25,6 +25,10 @@
   font-size:clamp(1.08rem,3.2vw,1.3rem)!important;
   line-height:1.48!important;
   font-weight:800!important;
+  text-decoration-line:underline;
+  text-decoration-thickness:2px;
+  text-underline-offset:6px;
+  text-decoration-color:rgba(49,86,93,.42);
 }
 
 #v2ActivityRoot .activity-prompt,
@@ -55,7 +59,7 @@
   #v2ActivityRoot .activity-source-badge,
   #aiCoachActivityRoot .activity-source-badge{font-size:.78rem;padding:7px 11px;margin-bottom:11px}
   #v2ActivityRoot .activity-context,
-  #aiCoachActivityRoot .activity-context{font-size:1.16rem!important;margin-bottom:12px!important}
+  #aiCoachActivityRoot .activity-context{font-size:1.16rem!important;margin-bottom:28px!important;text-underline-offset:6px}
   #v2ActivityRoot .activity-prompt,
   #aiCoachActivityRoot .activity-prompt{font-size:1.9rem!important;line-height:1.28!important;margin-bottom:22px!important}
   #v2ActivityRoot .activity-audio:before,
