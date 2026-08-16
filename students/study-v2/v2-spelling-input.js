@@ -8,6 +8,7 @@ function node(tag,className,text){var n=document.createElement(tag);if(className
 function pref(){try{return localStorage.getItem(PREF)==='keyboard'?'keyboard':'tiles';}catch(_){return'tiles';}}
 function savePref(v){try{localStorage.setItem(PREF,v);}catch(_){}}
 function cleanWordLength(w){return String(w||'').replace(/[^A-Za-zÀ-ÖØ-öø-ÿ]/g,'').length;}
+function lettersOnly(v){return String(v==null?'':v).toLowerCase().replace(/[^a-zà-öø-öø-ÿ]/g,'');}
 function answerWords(engine,tokens,wordLengths){
   if(Array.isArray(wordLengths)&&wordLengths.length>1)return wordLengths.map(Number).filter(function(n){return n>0;});
   var ans=engine&&engine.current&&engine.current.answer;
@@ -17,14 +18,15 @@ function answerWords(engine,tokens,wordLengths){
   var sum=fromAnswer.reduce(function(a,b){return a+b;},0);
   return fromAnswer.length>1&&sum===total?fromAnswer:[total];
 }
-async function lexicalWordLengths(engine,tokens){
+async function lexicalPhrase(engine,tokens){
   var a=engine&&engine.current||{},id=a.sourceType==='lexical_entry'&&a.sourceId?a.sourceId:null;if(!id)return null;
   try{
     var url=DB+'/rest/v1/lexical_entries?select=canonical_text&id=eq.'+encodeURIComponent(id)+'&limit=1';
     var r=await fetch(url,{headers:{apikey:KEY,Authorization:'Bearer '+KEY},cache:'no-store'});if(!r.ok)return null;
     var rows=await r.json(),phrase=rows&&rows[0]&&rows[0].canonical_text;if(!phrase)return null;
-    var parts=String(phrase).trim().split(/\s+/).filter(Boolean),lengths=parts.map(cleanWordLength).filter(function(n){return n>0;}),total=(tokens||[]).length,sum=lengths.reduce(function(a,b){return a+b;},0);
-    return lengths.length>1&&sum===total?lengths:null;
+    phrase=String(phrase).trim();
+    var parts=phrase.split(/\s+/).filter(Boolean),lengths=parts.map(cleanWordLength).filter(function(n){return n>0;}),total=(tokens||[]).length,sum=lengths.reduce(function(a,b){return a+b;},0);
+    return lengths.length>1&&sum===total?{lengths:lengths,phrase:phrase}:null;
   }catch(_){return null;}
 }
 function cleanup(){if(activeKeyHandler){document.removeEventListener('keydown',activeKeyHandler,true);activeKeyHandler=null;}}
@@ -37,6 +39,7 @@ function install(){
     cleanup();
     var self=this,chosen=[],bank=(tokens||[]).map(function(t,i){return{text:String(t),id:i+'-'+Math.random()};});bank=bank.slice().sort(function(){return Math.random()-.5;});
     var lengths=answerWords(self,tokens,wordLengths),wrap=node('div','activity-letter-order'),controls=node('div','activity-spelling-controls'),tilesBtn=node('button','activity-spelling-mode','글자 버튼'),keyBtn=node('button','activity-spelling-mode','키보드'),slots=node('div','activity-letter-slots'),pool=node('div','activity-letter-bank'),hint=node('div','activity-spelling-keyboard-hint','실제 키보드로 입력하세요 · Backspace 삭제 · Enter 확인');
+    if(self.current&&self.current.response&&lengths.length>1)self.current.response.wordLengths=lengths.slice();
     tilesBtn.type=keyBtn.type='button';controls.appendChild(tilesBtn);controls.appendChild(keyBtn);wrap.appendChild(controls);wrap.appendChild(slots);wrap.appendChild(pool);wrap.appendChild(hint);card.appendChild(wrap);
     var mode=pref();
     function setMode(next){mode=next;savePref(next);wrap.dataset.inputMode=next;tilesBtn.classList.toggle('is-active',next==='tiles');keyBtn.classList.toggle('is-active',next==='keyboard');draw();}
@@ -54,7 +57,7 @@ function install(){
     document.addEventListener('keydown',activeKeyHandler,true);
     tilesBtn.addEventListener('click',function(){setMode('tiles');});keyBtn.addEventListener('click',function(){setMode('keyboard');});
     setMode(mode);
-    if(lengths.length===1){lexicalWordLengths(self,tokens).then(function(found){if(found&&document.body.contains(card)){lengths=found;draw();}});}
+    if(lengths.length===1){lexicalPhrase(self,tokens).then(function(found){if(found&&document.body.contains(card)){lengths=found.lengths;if(self.current&&self.current.response)self.current.response.wordLengths=lengths.slice();if(self.current&&lettersOnly(self.current.answer)===lettersOnly(found.phrase))self.current.answer=found.phrase;draw();}});}
   };
   return true;
 }
