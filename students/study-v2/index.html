@@ -21,7 +21,7 @@
 <link rel="stylesheet" href="./v2-short-landscape.css?v=20260814-listenrow1">
 <link rel="stylesheet" href="./v2-round-ux.css?v=20260814-roundux1">
 <link rel="stylesheet" href="./v2-background.css?v=20260815-aicoachtype2">
-<link rel="stylesheet" href="./v2-daily-journey.css?v=20260816-railhero1">
+<link rel="stylesheet" href="./v2-daily-journey.css?v=20260816-railhero2">
 <link rel="stylesheet" href="./v2-ai-chat.css?v=20260816-cyangray2">
 <link rel="stylesheet" href="./v2-ai-inline-link.css?v=20260815-cyangray1">
 <link rel="stylesheet" href="./v2-ai-practice-session.css?v=20260816-tokenorder1">
@@ -51,6 +51,18 @@
         <div id="dailyWorkoutCard" class="unit-progress-card study-v2-action-card study-v2-daily-primary" role="button" tabindex="0" aria-label="Start Daily Study">
           <div class="progress-ring"><span id="smartDailyPct">0/20</span></div>
           <div><strong id="smartProgressTitle">데일리 스터디</strong><small id="smartProgressCopy">오늘 목표 · 0/20</small></div>
+          <span class="daily-rail-today" aria-hidden="true">TODAY</span>
+        </div>
+        <div class="daily-rail-main" aria-live="polite">
+          <strong class="daily-rail-headline">오늘은 20문제만 더 하면 끝!</strong>
+          <p class="daily-rail-sub">오늘의 Daily Study를 시작해 볼까요?</p>
+          <div class="daily-rail-progress" aria-hidden="true">
+            <span class="daily-rail-segment"><i></i></span>
+            <span class="daily-rail-segment"><i></i></span>
+            <span class="daily-rail-segment"><i></i></span>
+            <span class="daily-rail-segment"><i></i></span>
+            <span class="daily-rail-segment"><i></i></span>
+          </div>
         </div>
         <button id="practiceHeroBtn" class="study-v2-action-card study-v2-ai-launch" type="button"><strong>AI 코치</strong><small>추천 학습</small></button>
         <button id="bookPracticeBtn" class="study-v2-action-card" type="button"><strong>교재 연습</strong><small>교재 · 단원 · 영역 선택</small></button>
@@ -131,7 +143,7 @@
 <script src="./v2-ai-relevant-prompts.js?v=20260816-relevant1"></script>
 <script src="./v2-daily-test-placement.js?v=20260815-bottom1"></script>
 <script src="./v2-daily-rewards.js?v=20260815-endingring1"></script>
-<script src="./v2-daily-journey.js?v=20260816-railhero1"></script>
+<script src="./v2-daily-journey.js?v=20260816-railhero2"></script>
 <script>
 (function(){
   var card=document.getElementById('dailyWorkoutCard');
