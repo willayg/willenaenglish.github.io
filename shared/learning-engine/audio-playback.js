@@ -4,6 +4,7 @@ if(!global.WillenaActivityEngine||!global.WillenaActivityEngine.prototype)return
 var proto=global.WillenaActivityEngine.prototype;
 if(proto.__willenaAudioPlayback)return;
 var originalRender=proto.render;
+var currentUtterance=null;
 
 function text(v){return String(v==null?'':v).replace(/\\n/g,'\n').trim();}
 function playSpeech(button,stimulus){
@@ -12,59 +13,37 @@ function playSpeech(button,stimulus){
   var spoken=text(stimulus&&stimulus.text||stimulus&&stimulus.prompt);
   if(!spoken||!synth||!Utterance)return;
 
-  var started=false;
-  var retryUsed=false;
-  var runId=String(Date.now())+'-'+Math.random();
-  button.dataset.audioRun=runId;
   button.classList.remove('has-played');
   button.classList.add('is-playing');
-
-  try{synth.getVoices();}catch(_){}
-  try{synth.cancel();}catch(_){}
   try{synth.resume();}catch(_){}
+  try{synth.getVoices();}catch(_){}
 
-  function speak(){
-    if(button.dataset.audioRun!==runId)return;
-    var u=new Utterance(spoken);
-    u.lang=text(stimulus&&stimulus.lang)||'en-US';
-    var rate=Number(stimulus&&stimulus.rate);
-    u.rate=Number.isFinite(rate)&&rate>0?rate:.9;
-    u.onstart=function(){
-      if(button.dataset.audioRun!==runId)return;
-      started=true;
-      button.classList.add('has-played');
-      button.classList.add('is-playing');
-    };
-    u.onend=function(){
-      if(button.dataset.audioRun!==runId)return;
-      button.classList.remove('is-playing');
-      button.classList.add('has-played');
-    };
-    u.onerror=function(e){
-      if(button.dataset.audioRun!==runId)return;
-      var kind=String(e&&e.error||'');
-      if(!retryUsed&&kind!=='interrupted'&&kind!=='canceled'){
-        retryUsed=true;
-        try{synth.cancel();synth.resume();}catch(_){}
-        setTimeout(speak,140);
-        return;
-      }
-      button.classList.remove('is-playing');
-    };
-    try{synth.speak(u);}catch(_){button.classList.remove('is-playing');}
+  /* Keep the first speak() inside the actual tap/click gesture. Delaying it can make
+     Android Chrome silently block speech for the whole Study app. */
+  if(synth.speaking||synth.pending){
+    try{synth.cancel();}catch(_){}
   }
 
-  /* Chrome/Android can swallow an utterance when speak() immediately follows cancel(). */
-  setTimeout(speak,70);
-  setTimeout(function(){
-    if(button.dataset.audioRun!==runId||started||retryUsed)return;
-    var active=false;
-    try{active=!!(synth.speaking||synth.pending);}catch(_){}
-    if(active)return;
-    retryUsed=true;
-    try{synth.cancel();synth.resume();}catch(_){}
-    setTimeout(speak,120);
-  },700);
+  var u=new Utterance(spoken);
+  currentUtterance=u;
+  u.lang=text(stimulus&&stimulus.lang)||'en-US';
+  var rate=Number(stimulus&&stimulus.rate);
+  u.rate=Number.isFinite(rate)&&rate>0?rate:.9;
+  u.onstart=function(){
+    if(currentUtterance!==u)return;
+    button.classList.add('has-played');
+    button.classList.add('is-playing');
+  };
+  u.onend=function(){
+    if(currentUtterance!==u)return;
+    button.classList.remove('is-playing');
+    button.classList.add('has-played');
+  };
+  u.onerror=function(){
+    if(currentUtterance!==u)return;
+    button.classList.remove('is-playing');
+  };
+  try{synth.speak(u);}catch(_){button.classList.remove('is-playing');}
 }
 
 proto.render=function(){
@@ -74,8 +53,8 @@ proto.render=function(){
   var old=engine.root&&engine.root.querySelector&&engine.root.querySelector('.activity-audio');
   if(!old||!a||!a.stimulus||a.stimulus.type!=='audio')return result;
 
-  /* Clone removes the older one-shot speech handler from engine.js so every Study mode
-     uses this same mobile-safe audio path instead. */
+  /* Replace engine.js's older handler so Daily, Book Practice and AI Coach all use
+     one audio path while preserving the shared activity renderer. */
   var button=old.cloneNode(true);
   old.replaceWith(button);
   button.addEventListener('click',function(e){
