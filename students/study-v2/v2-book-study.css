@@ -10,15 +10,14 @@
 
 .book-study-content{margin-top:28px;padding-top:26px;border-top:1px solid #e3eaec}
 .book-study-content-state{padding:18px;border:2px dashed #dbe6e8;border-radius:18px;color:#71858a;text-align:center;font-size:.82rem;font-weight:800;background:#fbfdfd}
-.book-study-content-top{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:16px}
+.book-study-content-top{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:16px}
 .book-study-content-top h3{margin:0;color:#35565b;font-size:1.2rem;line-height:1.15;font-weight:900;letter-spacing:-.025em}
-.book-study-content-top p{margin:5px 0 0;color:#7c8c91;font-size:.75rem;line-height:1.4;font-weight:750}
 .book-study-count{flex:0 0 auto;padding:6px 10px;border-radius:999px;background:#f3f5ff;color:var(--arcade-blue);font-size:.68rem;font-weight:900}
 
-/* Content categories are tabs, not jump links. Only the selected pane is visible. */
+/* Content categories are tabs. Only the selected pane is visible. */
 .book-study-jump{display:flex;gap:14px;overflow-x:auto;margin:0 0 20px;padding:0 1px 1px;border-bottom:1px solid #e1e8ea;scrollbar-width:none}
 .book-study-jump::-webkit-scrollbar{display:none}
-.book-study-jump button{position:relative;flex:0 0 auto;padding:9px 2px 11px;border:0;border-radius:0;background:transparent;color:#7d9094;font:850 .72rem/1 Poppins,sans-serif;cursor:pointer}
+.book-study-jump button{position:relative;flex:0 0 auto;padding:9px 2px 11px;border:0;border-radius:0;background:transparent;color:#6f8489;font:850 .72rem/1 Poppins,sans-serif;cursor:pointer}
 .book-study-jump button:after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:3px;border-radius:999px;background:transparent}
 .book-study-jump button:hover,.book-study-jump button:focus-visible{outline:none;color:#4f6b70}
 .book-study-jump button.is-active{font-weight:900}
@@ -41,24 +40,31 @@
 .book-study-section-head span{color:#8a9a9e;font-size:.68rem;font-weight:850}
 
 .book-study-vocab-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
-.book-study-vocab{display:grid;grid-template-columns:auto minmax(0,1fr);gap:9px;align-items:center;min-width:0;padding:10px 11px;border:1px solid #dcebed;border-radius:15px;background:#fbfefe}
-.book-study-vocab-emoji{width:31px;height:31px;display:grid;place-items:center;border-radius:10px;background:#eefafb;font-size:18px}
+.book-study-vocab{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:9px;align-items:center;min-width:0;padding:11px 11px 11px 14px;border:1px solid #dcebed;border-radius:15px;background:#fbfefe}
+.book-study-vocab-copy{min-width:0}
 .book-study-vocab strong{display:block;min-width:0;color:#31565d;font-size:.8rem;line-height:1.22;font-weight:900;overflow-wrap:anywhere}
-.book-study-vocab small{display:block;margin-top:3px;color:#75898e;font-size:.66rem;line-height:1.28;font-weight:750;overflow-wrap:anywhere}
+.book-study-vocab small{display:block;margin-top:4px;color:#75898e;font-size:.7rem;line-height:1.3;font-weight:800;overflow-wrap:anywhere}
+
+.book-study-listen{min-width:46px;min-height:38px;padding:7px 9px;border:2px solid #bfe8eb;border-radius:12px;background:#fff;color:#168c95;font:850 .66rem/1 Poppins,sans-serif;cursor:pointer;white-space:nowrap}
+.book-study-listen:hover,.book-study-listen:focus-visible{outline:none;background:#eefafb;border-color:var(--arcade-cyan)}
+.book-study-listen.is-playing{background:#e7f8fa;border-color:var(--arcade-cyan);color:#116f76}
+.book-study-listen.has-played:not(.is-playing){border-color:#8bd9de}
 
 .book-study-sentence-list{display:grid;gap:8px}
-.book-study-sentence{padding:11px 12px;border-radius:15px;background:#fff7fb;border:1px solid #f5d8e5}
+.book-study-sentence{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;padding:12px 12px 12px 14px;border-radius:15px;background:#fff7fb;border:1px solid #f5d8e5}
+.book-study-sentence-copy{min-width:0}
 .book-study-sentence strong{display:block;color:#35565b;font-size:.82rem;line-height:1.4;font-weight:850}
-.book-study-sentence small{display:block;margin-top:5px;color:#7c8c91;font-size:.68rem;line-height:1.4;font-weight:750}
+.book-study-sentence small{display:block;margin-top:5px;color:#7c8c91;font-size:.72rem;line-height:1.4;font-weight:800}
 
 .book-study-grammar-list{display:grid;gap:10px}
-.book-study-grammar{padding:13px 14px;border:1px solid #f0dfc8;border-radius:16px;background:#fffaf3}
-.book-study-grammar h5{margin:0;color:#70532e;font-size:.86rem;line-height:1.3;font-weight:900}
-.book-study-grammar .grammar-category{display:inline-block;margin-top:6px;padding:4px 7px;border-radius:999px;background:#fff1dc;color:#b66f20;font-size:.6rem;font-weight:900}
-.book-study-grammar p{margin:8px 0 0;color:#6e7f83;font-size:.72rem;line-height:1.5;font-weight:750}
-.book-study-patterns{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-top:10px}
-.book-study-pattern{padding:8px 9px;border-radius:12px;background:#fff;border:1px solid #ead9c2;color:#4e666b;font-size:.68rem;line-height:1.35;font-weight:800;overflow-wrap:anywhere}
-.book-study-pattern b{display:block;margin-bottom:3px;color:#b66f20;font-size:.58rem;text-transform:uppercase;letter-spacing:.08em}
+.book-study-grammar{padding:15px 16px;border:1px solid #f0dfc8;border-radius:16px;background:#fffaf3}
+.book-study-grammar h5{margin:0;color:#70532e;font-size:.9rem;line-height:1.3;font-weight:900}
+.book-study-grammar>p{margin:9px 0 0;color:#5f7479;font-size:.78rem;line-height:1.55;font-weight:800}
+.book-study-grammar-examples{display:grid;gap:9px;margin-top:13px}
+.book-study-grammar-pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.book-study-grammar-pair>div{padding:10px 11px;border-radius:13px;background:#fff;border:1px solid #ead9c2}
+.book-study-grammar-pair strong{display:block;color:#4e666b;font-size:.76rem;line-height:1.4;font-weight:850}
+.book-study-grammar-pair small{display:block;margin-top:4px;color:#7c8c91;font-size:.68rem;line-height:1.4;font-weight:750}
 
 .book-study-reading-list,.book-study-other-list{display:grid;gap:9px}
 .book-study-reading,.book-study-other{padding:12px 13px;border-radius:15px;background:#f7f9ff;border:1px solid #dfe4fb}
@@ -72,11 +78,13 @@
 @media(max-width:560px){
   .study-v2-book-study-panel .book-study-unit-picker{margin-top:24px;padding-top:22px}
   .book-study-content{margin-top:24px;padding-top:22px}
-  .book-study-jump{gap:12px;margin-bottom:17px}
-  .book-study-jump button{font-size:.69rem;padding-bottom:10px}
+  .book-study-jump{gap:18px;margin-bottom:20px}
+  .book-study-jump button{min-height:46px;padding:12px 3px 13px;font-size:1rem;line-height:1}
   .book-study-vocab-grid{grid-template-columns:1fr 1fr;gap:7px}
-  .book-study-vocab{padding:9px;gap:7px}
-  .book-study-vocab-emoji{width:28px;height:28px;font-size:16px}
-  .book-study-patterns{grid-template-columns:1fr}
+  .book-study-vocab{padding:10px 9px 10px 11px;gap:6px}
+  .book-study-listen{min-width:48px;min-height:42px;padding:8px;font-size:.68rem}
+  .book-study-grammar-pair{grid-template-columns:1fr}
 }
-@media(max-width:360px){.book-study-vocab-grid{grid-template-columns:1fr}}
+@media(max-width:390px){
+  .book-study-vocab-grid{grid-template-columns:1fr}
+}
