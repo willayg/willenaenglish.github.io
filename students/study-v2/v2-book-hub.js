@@ -8,7 +8,11 @@ var practice=document.getElementById('bookPracticeArea');
 var studyBtn=document.getElementById('bookStudyBtn');
 var practiceBtn=document.getElementById('bookPracticeBtn');
 var langBtn=document.getElementById('languageBtn');
+var unitStrip=document.getElementById('unitStrip');
+var studyContent=document.getElementById('bookStudyContent');
 var mode='study';
+var switchTimer=0;
+var switching=false;
 
 function ko(){return !langBtn||String(langBtn.textContent||'').trim()==='English';}
 function labels(){
@@ -30,11 +34,48 @@ function setMode(next,scroll){
   hub.setAttribute('data-mode',mode);
   if(scroll)hub.scrollIntoView({behavior:'smooth',block:'start'});
 }
+function beginUnitSwitch(){
+  if(!studyContent)return;
+  var h=Math.max(260,Math.round(studyContent.getBoundingClientRect().height||0));
+  studyContent.style.minHeight=h+'px';
+  studyContent.classList.remove('is-unit-entering');
+  studyContent.classList.add('is-unit-switching');
+  switching=true;
+  clearTimeout(switchTimer);
+  switchTimer=setTimeout(finishUnitSwitch,2200);
+}
+function finishUnitSwitch(){
+  if(!studyContent||!switching)return;
+  switching=false;
+  clearTimeout(switchTimer);
+  studyContent.classList.remove('is-unit-switching');
+  studyContent.classList.add('is-unit-entering');
+  setTimeout(function(){
+    studyContent.classList.remove('is-unit-entering');
+    studyContent.style.minHeight='';
+  },260);
+}
 
 tabs.forEach(function(b){b.addEventListener('click',function(){setMode(b.getAttribute('data-book-mode'),false);});});
 if(studyBtn)studyBtn.addEventListener('click',function(){setMode('study',true);});
 if(practiceBtn)practiceBtn.addEventListener('click',function(){setMode('practice',true);});
 if(langBtn)langBtn.addEventListener('click',function(){setTimeout(labels,0);});
+if(unitStrip&&studyContent){
+  unitStrip.addEventListener('click',function(e){
+    var b=e.target&&e.target.closest?e.target.closest('[data-unit-id]'):null;
+    if(!b||b.classList.contains('is-current'))return;
+    beginUnitSwitch();
+  },true);
+  if(window.MutationObserver){
+    new MutationObserver(function(mutations){
+      if(!switching)return;
+      var ready=mutations.some(function(m){
+        return m.type==='childList'&&studyContent.querySelector('.book-study-content-top,.book-study-section');
+      });
+      if(ready)requestAnimationFrame(function(){requestAnimationFrame(finishUnitSwitch);});
+    }).observe(studyContent,{childList:true,subtree:true});
+  }
+}
 labels();
 setMode('study',false);
 })();
