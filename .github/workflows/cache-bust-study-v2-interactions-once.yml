@@ -1,0 +1,45 @@
+name: Cache bust Study V2 interactions once
+
+on:
+  push:
+    branches:
+      - staging
+    paths:
+      - .github/workflows/cache-bust-study-v2-interactions-once.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: staging
+      - name: Bust v2-interactions cache
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('students/study-v2/index.html')
+          s = p.read_text()
+          old = './v2-interactions.js?v=20260811-4'
+          new = './v2-interactions.js?v=20260816-chaptermarkers1'
+          if old not in s:
+              print('already updated')
+              raise SystemExit(0)
+          p.write_text(s.replace(old, new))
+          PY
+      - name: Commit cache bust
+        run: |
+          if git diff --quiet; then exit 0; fi
+          git config user.name 'willayg'
+          git config user.email 'william.gaule@gmail.com'
+          git add students/study-v2/index.html
+          git commit -m 'Bust Study V2 chapter marker interaction cache'
+          git push origin staging
+      - name: Trigger staging deploy hook
+        env:
+          CF_PAGES_STAGING_HOOK: ${{ secrets.CF_PAGES_STAGING_HOOK }}
+        run: |
+          if [ -n "$CF_PAGES_STAGING_HOOK" ]; then curl -fsS -X POST "$CF_PAGES_STAGING_HOOK"; fi
