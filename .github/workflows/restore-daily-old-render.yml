@@ -1,0 +1,131 @@
+name: Restore Daily Study old renderer
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: staging
+          fetch-depth: 0
+
+      - name: Restore established Daily Study activity root
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          p = Path('students/study-v2/v2-daily.js')
+          s = p.read_text()
+
+          # Replace the rebuilt dynamic shell with the original Study V2 practice panel/root.
+          start = s.index('function ensureShell(){')
+          end = s.index('function replaceCheck(', start)
+          old_render = r'''function ensureShell(){
+  shell=document.getElementById('v2PracticePanel');
+  root=document.getElementById('v2ActivityRoot');
+  progressEl=document.getElementById('practicePerf');
+  titleEl=document.getElementById('v2PracticeTitle');
+  kickerEl=document.getElementById('v2PracticeSkill');
+  if(!shell||!root)throw new Error('Study practice panel is not ready.');
+  return shell;
+}
+function setHeader(item){
+  ensureShell();
+  if(progressEl)progressEl.textContent=resolvedCount()+' / '+TARGET;
+  if(kickerEl)kickerEl.textContent=testMode?'TEST DAILY STUDY':(langKo()?'오늘의 학습':'DAILY STUDY');
+  if(titleEl)titleEl.textContent=item?skillLabel(item.skill):(testMode?'Daily Study Test · Day '+testDay:(langKo()?'오늘의 Daily Study':'Daily Study'));
+}
+function paint(){
+  var done=resolvedCount(),pct=Math.round(done/TARGET*100),ring=document.querySelector('#dailyWorkoutCard .progress-ring'),num=document.getElementById('smartDailyPct'),title=document.getElementById('smartProgressTitle'),copy=document.getElementById('smartProgressCopy');
+  if(ring)ring.style.setProperty('--progress',pct);if(num)num.textContent=done>=TARGET?'✓':done+'/'+TARGET;if(title)title.textContent=langKo()?'오늘의 학습':'Daily Study';if(copy)copy.textContent=done>=TARGET?(langKo()?'오늘 목표 완료 ✓':'Daily goal complete ✓'):(langKo()?'오늘 목표 · '+done+'/'+TARGET:'Today · '+done+'/'+TARGET);if(progressEl)progressEl.textContent=done+' / '+TARGET;
+}
+function sourceBadge(a){if(!root)return;var c=root.querySelector('.activity-card');if(!c)return;var old=c.querySelector('.activity-source-badge');if(old)old.remove();var m=a.metadata||{},b=document.createElement('div');b.className='activity-source-badge';b.textContent=(m.daily_book_title||'Study')+' · Unit '+(m.daily_unit_number||'');c.insertBefore(b,c.firstChild);}
+function prepareActivity(item){var a=clone(item),key=dailyKey(a);a.daily_key=key;a.metadata=Object.assign({},a.metadata||{},{daily_mode:true,daily_date:activeDate(),daily_track:activeTrack(),daily_key:key,daily_origin_id:key,daily_target:TARGET});return a;}
+function openShell(message){
+  ensureShell();
+  document.body.classList.add('study-v2-practice-mode','study-v2-daily-mode');
+  shell.hidden=false;
+  setHeader(null);
+  if(root)root.innerHTML='<div class="smart-finish"><h2>'+message+'</h2></div>';
+  shell.scrollTop=0;
+}
+function showCurrent(){
+  paint();setHeader(null);if(!session)return;if(session.status==='completed'||resolvedCount()>=TARGET){finish();return;}
+  var item=currentItem();if(!item){if(root)root.innerHTML='<div class="smart-finish"><h2>'+(langKo()?'오늘의 문제를 모두 사용했어요.':'Daily question pool exhausted.')+'</h2></div>';return;}
+  current=prepareActivity(item);answerLocked=false;ensureShell();setHeader(current);
+  if(!global.WillenaActivityEngine)throw new Error('Activity engine is not ready.');
+  engine=new global.WillenaActivityEngine(root,{onAnswer:function(){}});
+  engine.setActivity(current);
+  sourceBadge(current);
+  shell.scrollTop=0;
+}
+'''
+          s = s[:start] + old_render + s[end:]
+
+          # Replace rebuilt message/open/close lifecycle with the old established panel lifecycle.
+          pattern = re.compile(r"function showMessage\(message,detail,retry\)\{.*?\nasync function syncCard\(\)", re.S)
+          replacement = r'''function showMessage(message,detail,retry){
+  openShell(message);
+  if(root)root.innerHTML='<div class="smart-finish"><h2>'+text(message)+'</h2>'+(detail?'<p>'+text(detail)+'</p>':'')+(retry?'<button id="dailyStudyRetry" class="primary-button smart-home-button" type="button">'+(langKo()?'다시 시도':'Try again')+'</button>':'')+'</div>';
+  var b=document.getElementById('dailyStudyRetry');if(b)b.addEventListener('click',open,{once:true});
+}
+async function open(){
+  openShell(testMode?'Loading test Daily Study…':(langKo()?'Daily Study 불러오는 중…':'Loading Daily Study…'));
+  try{await ensureSession();showCurrent();}catch(error){console.warn('[Daily Study] open',error);showMessage(langKo()?'Daily Study를 불러오지 못했습니다.':'Could not load Daily Study.',error&&error.message||error,true);}
+}
+function close(){
+  document.body.classList.remove('study-v2-practice-mode','study-v2-daily-mode');
+  if(shell)shell.hidden=true;
+  if(root)root.innerHTML='';
+  current=null;engine=null;answerLocked=false;paint();window.scrollTo({top:0,behavior:'auto'});
+}
+function finish(){
+  if(session)session.status='completed';paint();openShell(langKo()?'잘했어요!':'Great work!');
+  if(progressEl)progressEl.textContent=langKo()?'완료':'Done';
+  if(titleEl)titleEl.textContent=langKo()?'오늘 목표 완료':'Daily goal complete';
+  if(root)root.innerHTML='<div class="smart-finish"><div class="smart-confetti">✓</div><h2>'+(langKo()?'잘했어요!':'Great work!')+'</h2><p>'+(langKo()?'오늘의 20개 학습 목표를 모두 맞혔어요.':'You got all 20 Daily Study targets correct.')+'</p><button id="v2DailyHome" class="primary-button smart-home-button" type="button">'+(langKo()?'돌아가기':'Back to Study')+'</button></div>';
+  var b=document.getElementById('v2DailyHome');if(b)b.addEventListener('click',close,{once:true});
+}
+async function syncCard()'''
+          s2, n = pattern.subn(replacement, s, count=1)
+          if n != 1:
+              raise SystemExit('Could not replace rebuilt Daily Study lifecycle')
+          s = s2
+
+          p.write_text(s)
+
+          # Remove the temporary render-failure recovery helper: old root is restored now.
+          q = Path('students/study-v2/v2-daily-test-placement.js')
+          if q.exists():
+              t = q.read_text()
+              marker = 'ActivityEngine did not create an activity card'
+              if marker in t:
+                  # Restore file from the last commit before the temporary recovery patch.
+                  import subprocess
+                  old = subprocess.check_output(['git','show','bf22b69b^:students/study-v2/v2-daily-test-placement.js'], text=True)
+                  q.write_text(old)
+
+          # Force the new renderer to load on phones/tablets.
+          idx = Path('students/study-v2/index.html')
+          x = idx.read_text()
+          x = re.sub(r'\./v2-daily\.js\?v=[^"\']+', './v2-daily.js?v=20260817-oldrender1', x, count=1)
+          idx.write_text(x)
+          PY
+
+      - name: Commit restored renderer to staging
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add students/study-v2/v2-daily.js students/study-v2/v2-daily-test-placement.js students/study-v2/index.html
+          git diff --cached --quiet || git commit -m "Restore old Daily Study activity renderer"
+          git pull --rebase origin staging
+          git push origin HEAD:staging
