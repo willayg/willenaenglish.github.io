@@ -1,0 +1,39 @@
+name: Restore Netlify auth routing once
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/restore-netlify-auth-routing-once.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  restore:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: staging
+
+      - name: Restore Netlify auth routing in API proxy
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('cloudflare-workers/proxy/src/index.js')
+          s = p.read_text()
+          old = "const PREFER_CF_WORKER = new Set(Object.keys(FUNCTION_TO_BINDING));"
+          new = "const PREFER_CF_WORKER = new Set(Object.keys(FUNCTION_TO_BINDING).filter(function(name){ return name !== 'supabase_auth'; }));"
+          if old not in s:
+              raise SystemExit('Expected PREFER_CF_WORKER line not found')
+          p.write_text(s.replace(old, new, 1))
+          PY
+
+      - name: Commit to staging
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add cloudflare-workers/proxy/src/index.js
+          git diff --cached --quiet || git commit -m "Restore Netlify Supabase auth routing"
+          git push origin HEAD:staging
