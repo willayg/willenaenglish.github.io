@@ -1,0 +1,49 @@
+name: Teacher persistent session repair
+
+on:
+  push:
+    paths:
+      - '.github/workflows/repair-teacher-session-once.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: teachers
+      - name: Patch files
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          auth = Path('Teachers/auth-refresh.js')
+          s = auth.read_text()
+          if 'window.ensureTeacherSession' not in s:
+              extra = "\nasync function ensureTeacherSession() {\n  try {\n    let r = await sessionRequest();\n    let d = await r.json().catch(() => ({}));\n    if (r.ok && d && d.success) return d;\n    const u = '/.netlify/functions/supabase_auth?action=refresh&_=' + Date.now();\n    const rr = window.WillenaAPI && typeof window.WillenaAPI.fetch === 'function' ? await window.WillenaAPI.fetch(u, { method: 'POST', cache: 'no-store' }) : await fetch(u, { method: 'POST', credentials: 'include', cache: 'no-store' });\n    if (!rr.ok) return null;\n    r = await sessionRequest();\n    d = await r.json().catch(() => ({}));\n    return r.ok && d && d.success ? d : null;\n  } catch (e) { return null; }\n}\nif (typeof window !== 'undefined') window.ensureTeacherSession = ensureTeacherSession;\n"
+              auth.write_text(s + extra)
+
+          tracker = Path('Teachers/tools/student_tracker/student_tracker.html')
+          s = tracker.read_text()
+          old = '<script src="main.js?v=20260330a"></script>'
+          new = '<script type="module">import { ensureAuthRefresh } from "/Teachers/auth-refresh.js?v=20260817d"; ensureAuthRefresh(); await window.ensureTeacherSession?.(); await import("./main.js?v=20260817d");</script>'
+          if old in s:
+              tracker.write_text(s.replace(old, new, 1))
+
+          manage = Path('Teachers/tools/manage_students.html')
+          s = manage.read_text()
+          old = '<script type="module" src="./manage_students.js?v=20260302c"></script>'
+          new = '<script type="module">import { ensureAuthRefresh } from "/Teachers/auth-refresh.js?v=20260817d"; ensureAuthRefresh(); await window.ensureTeacherSession?.(); await import("./manage_students.js?v=20260817d");</script>'
+          if old in s:
+              manage.write_text(s.replace(old, new, 1))
+          PY
+      - name: Commit repair
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Teachers/auth-refresh.js Teachers/tools/student_tracker/student_tracker.html Teachers/tools/manage_students.html
+          git commit -m "Wait for teacher session recovery before loading tools"
+          git push origin HEAD:teachers
