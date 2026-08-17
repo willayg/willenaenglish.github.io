@@ -1,5 +1,5 @@
 name = "supabase-auth"
-main = "src/index.js"
+main = "src/worker-token-bridge.js"
 compatibility_date = "2024-01-01"
 
 # Required environment variables (set in Cloudflare Dashboard > Workers > Settings > Variables):
