@@ -3,10 +3,6 @@
 var NEXT='/students/study-v2/';
 var LOGIN='/students/signin.html?next='+encodeURIComponent(NEXT);
 
-if(typeof document!=='undefined'&&document.readyState==='loading'){
-  document.write('<script src="./v2-daily-auth-refresh.js?v=20260817-standardauth1"><\/script>');
-}
-
 function authFetch(path,options){
   var fn=window.WillenaAPI&&typeof window.WillenaAPI.fetch==='function'?window.WillenaAPI.fetch.bind(window.WillenaAPI):window.fetch.bind(window);
   return fn(path,Object.assign({credentials:'include',cache:'no-store'},options||{}));
