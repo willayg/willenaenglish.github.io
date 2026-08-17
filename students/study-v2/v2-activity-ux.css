@@ -13,22 +13,23 @@
   font:800 .8rem/1.2 Poppins,sans-serif;
 }
 
-/* Instructions should read like instructions, not another coloured answer card. */
+/* Instructions should read like a calm prompt label, not another answer card. */
 #v2ActivityRoot .activity-context,
 #aiCoachActivityRoot .activity-context{
+  display:inline-block!important;
+  width:auto!important;
+  max-width:100%;
   margin:0 0 26px!important;
-  padding:0!important;
-  border:0!important;
-  border-radius:0!important;
-  background:transparent!important;
-  color:#31565d!important;
+  padding:11px 16px!important;
+  border:1px solid #e2eded!important;
+  border-radius:14px!important;
+  background:#fff!important;
+  color:#4f7177!important;
   font-size:clamp(1.08rem,3.2vw,1.3rem)!important;
   line-height:1.48!important;
-  font-weight:800!important;
-  text-decoration-line:underline;
-  text-decoration-thickness:2px;
-  text-underline-offset:6px;
-  text-decoration-color:rgba(49,86,93,.42);
+  font-weight:650!important;
+  text-decoration:none!important;
+  box-shadow:0 2px 8px rgba(28,72,78,.05);
 }
 
 #v2ActivityRoot .activity-prompt,
@@ -59,7 +60,7 @@
   #v2ActivityRoot .activity-source-badge,
   #aiCoachActivityRoot .activity-source-badge{font-size:.78rem;padding:7px 11px;margin-bottom:11px}
   #v2ActivityRoot .activity-context,
-  #aiCoachActivityRoot .activity-context{font-size:1.16rem!important;margin-bottom:28px!important;text-underline-offset:6px}
+  #aiCoachActivityRoot .activity-context{font-size:1.16rem!important;margin-bottom:28px!important;padding:10px 14px!important}
   #v2ActivityRoot .activity-prompt,
   #aiCoachActivityRoot .activity-prompt{font-size:1.9rem!important;line-height:1.28!important;margin-bottom:22px!important}
   #v2ActivityRoot .activity-audio:before,
