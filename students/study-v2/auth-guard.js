@@ -3,57 +3,47 @@
 var NEXT='/students/study-v2/';
 var LOGIN='/students/signin.html?next='+encodeURIComponent(NEXT);
 var DAILY_RE=/^https:\/\/willena-proxy\.willena\.workers\.dev\/api\/daily-study(?:\?|$)/i;
-var SUPABASE_URL='https://gxwfsqxyuufqtitspfqg.supabase.co';
-var SUPABASE_KEY=['sb_publishable_','G-FYhHfDL4OGdL892gY1Zg_','epdbEeqO'].join('');
 var nativeFetch=window.fetch.bind(window);
-var dailyRefreshPromise=null;
+var refreshPromise=null;
 
-function authFetch(path,options){return (window.WillenaAPI?WillenaAPI.fetch:fetch)(path,Object.assign({credentials:'include',cache:'no-store'},options||{}));}
-async function whoami(){try{var r=await authFetch('/.netlify/functions/supabase_auth?action=whoami&_='+Date.now());var d=await r.json().catch(function(){return{}});return !!(r.ok&&d&&d.success);}catch(_){return false;}}
-function localAccessToken(){try{return String((window.WillenaAPI&&WillenaAPI.getLocalAccessToken?WillenaAPI.getLocalAccessToken():localStorage.getItem('sb_access_token'))||'').trim();}catch(_){return'';}}
-function localRefreshToken(){try{return String(localStorage.getItem('sb_refresh_token')||'').trim();}catch(_){return'';}}
-function saveTokens(accessToken,refreshToken){
-  if(!accessToken)return;
+function authFetch(path,options){
+  return (window.WillenaAPI?WillenaAPI.fetch:fetch)(path,Object.assign({credentials:'include',cache:'no-store'},options||{}));
+}
+async function whoami(){
   try{
-    if(window.WillenaAPI&&WillenaAPI.setLocalTokens)WillenaAPI.setLocalTokens(accessToken,refreshToken||'');
-    else{
-      localStorage.setItem('sb_access_token',accessToken);
-      if(refreshToken)localStorage.setItem('sb_refresh_token',refreshToken);
-    }
+    var r=await authFetch('/.netlify/functions/supabase_auth?action=whoami&_='+Date.now());
+    var d=await r.json().catch(function(){return{}});
+    return !!(r.ok&&d&&d.success);
+  }catch(_){return false;}
+}
+function localAccessToken(){
+  try{
+    return String((window.WillenaAPI&&WillenaAPI.getLocalAccessToken?WillenaAPI.getLocalAccessToken():localStorage.getItem('sb_access_token'))||'').trim();
+  }catch(_){return'';}
+}
+function saveAccessToken(token){
+  if(!token)return;
+  try{
+    if(window.WillenaAPI&&WillenaAPI.setLocalTokens)WillenaAPI.setLocalTokens(token);
+    else localStorage.setItem('sb_access_token',token);
   }catch(_){}
 }
-async function refreshFromSession(){
-  try{
-    var r=await authFetch('/.netlify/functions/supabase_auth?action=refresh&_='+Date.now());
-    var d=await r.json().catch(function(){return{}});
-    var token=String(d&&d.access_token||'').trim();
-    if(!r.ok||!d||!d.success||!token)return'';
-    saveTokens(token,d.refresh_token||'');
-    try{window.dispatchEvent(new CustomEvent('auth:changed'));}catch(_){}
-    return token;
-  }catch(_){return'';}
-}
-async function refreshFromLocalRefreshToken(){
-  var refreshToken=localRefreshToken();
-  if(!refreshToken)return'';
-  try{
-    var r=await nativeFetch(SUPABASE_URL+'/auth/v1/token?grant_type=refresh_token',{
-      method:'POST',
-      cache:'no-store',
-      headers:{
-        apikey:SUPABASE_KEY,
-        'Content-Type':'application/json'
-      },
-      body:JSON.stringify({refresh_token:refreshToken})
-    });
-    var d=await r.json().catch(function(){return{}});
-    var token=String(d&&d.access_token||'').trim();
-    if(!r.ok||!token)return'';
-    saveTokens(token,d.refresh_token||refreshToken);
-    try{window.dispatchEvent(new CustomEvent('auth:changed'));}catch(_){}
-    console.info('[Study V2 auth] restored access token from stored refresh token');
-    return token;
-  }catch(_){return'';}
+async function refreshAccessToken(){
+  if(refreshPromise)return refreshPromise;
+  refreshPromise=(async function(){
+    try{
+      var r=await authFetch('/.netlify/functions/supabase_auth?action=refresh&_='+Date.now());
+      var d=await r.json().catch(function(){return{}});
+      var token=String(d&&d.access_token||'').trim();
+      if(!r.ok||!d||!d.success||!token)return'';
+      saveAccessToken(token);
+      try{window.dispatchEvent(new CustomEvent('auth:changed'));}catch(_){}
+      console.info('[Study V2 auth] restored access token from persistent session');
+      return token;
+    }catch(_){return'';}
+    finally{refreshPromise=null;}
+  })();
+  return refreshPromise;
 }
 function tokenExpiresSoon(token,skewSeconds){
   try{
@@ -75,41 +65,28 @@ function requestToken(input,init){
   return'';
 }
 function withDailyToken(input,init,token){
-  var retry=Object.assign({},init||{}),headers;
+  var opts=Object.assign({},init||{}),headers;
   try{headers=new Headers((init&&init.headers)||(input instanceof Request?input.headers:undefined));}catch(_){headers=new Headers();}
   if(token)headers.set('Authorization','Bearer '+token);
-  retry.headers=headers;
-  retry.credentials='omit';
-  retry.cache='no-store';
-  return retry;
-}
-async function recoverDailyToken(forceLocalRefresh){
-  if(dailyRefreshPromise)return dailyRefreshPromise;
-  dailyRefreshPromise=(async function(){
-    try{
-      var token='';
-      if(!forceLocalRefresh)token=await refreshFromSession();
-      if(!token)token=await refreshFromLocalRefreshToken();
-      return token||'';
-    }finally{dailyRefreshPromise=null;}
-  })();
-  return dailyRefreshPromise;
+  opts.headers=headers;
+  opts.credentials='omit';
+  opts.cache='no-store';
+  return opts;
 }
 async function currentDailyToken(forceRefresh){
   var token=localAccessToken();
   if(forceRefresh||!token||tokenExpiresSoon(token,90)){
-    var fresh=await recoverDailyToken(!!forceRefresh);
+    var fresh=await refreshAccessToken();
     if(fresh)token=fresh;
   }
   return token||'';
 }
 
 /*
- * Daily Study calls its existing workers.dev endpoint directly, so the normal
- * .willenaenglish.com cookie cannot travel with that request. Rebuild the
- * short-lived bearer token from the persistent session when possible, and if
- * sb_access_token has been cleared, fall back to the already stored
- * sb_refresh_token from the normal login flow.
+ * Daily Study is hosted on workers.dev, so it cannot receive the shared
+ * .willenaenglish.com login cookie. Use the already-deployed supabase_auth
+ * refresh endpoint to turn that persistent cookie session into a short-lived
+ * bearer token before Daily Study is allowed to run.
  */
 window.WillenaStudyV2GetAccessToken=currentDailyToken;
 window.fetch=async function(input,init){
@@ -119,24 +96,25 @@ window.fetch=async function(input,init){
 
   var token=requestToken(input,init)||localAccessToken();
   if(!token||tokenExpiresSoon(token,90)){
-    var fresh=await recoverDailyToken(false);
+    var fresh=await refreshAccessToken();
     if(fresh)token=fresh;
   }
 
   var first=await nativeFetch(input,token?withDailyToken(input,init,token):init);
   if(first.status!==401&&first.status!==403)return first;
 
-  token=await recoverDailyToken(true);
+  token=await refreshAccessToken();
   if(!token)return first;
   return nativeFetch(input,withDailyToken(input,init,token));
 };
 
 async function guard(){
   if(await whoami()){
-    if(!localAccessToken())recoverDailyToken(false).catch(function(){});
+    var token=localAccessToken();
+    if(!token||tokenExpiresSoon(token,90))await refreshAccessToken();
     return true;
   }
-  if(await refreshFromSession()&&await whoami())return true;
+  if(await refreshAccessToken()&&await whoami())return true;
   location.replace(LOGIN);
   return false;
 }
