@@ -389,8 +389,9 @@ async function flushPending(){if(pendingSync)return pendingSync;pendingSync=(asy
 async function onAnswer(e){
   if(!document.body.classList.contains('study-v2-daily-mode')||!current||answerLocked)return;
   var d=e.detail||{},a=d.activity||{},r=d.result||{};if(String(a.id)!==String(current.id))return;answerLocked=true;
+  var willComplete=!!r.correct&&(resolvedCount()+1)>=TARGET;
+  replaceCheck(willComplete?(langKo()?'완료':'Done'):(langKo()?'계속':'Continue'),willComplete?finish:showCurrent);
   var entry=queueAnswer(!!r.correct);optimisticApply(entry);
-  if(session&&session.status==='completed')replaceCheck(langKo()?'완료':'Done',finish);else replaceCheck(langKo()?'계속':'Continue',showCurrent);
   flushPending();
 }
 function finish(){if(session)session.status='completed';paint();openShell(testMode?'Test day complete ✓':(langKo()?'잘했어요!':'Great work!'));if(countEl)countEl.textContent=testMode?'Test Day '+testDay+' complete':(langKo()?'완료':'Done');if(titleEl)titleEl.textContent=testMode?'Daily Study Test':(langKo()?'오늘 목표 완료':'Daily goal complete');if(root)root.innerHTML='<div class="smart-finish"><div class="smart-confetti">✓</div><h2>'+(testMode?'Test day complete!':(langKo()?'잘했어요!':'Great work!'))+'</h2><p>'+(testMode?'Use the staging test panel to inspect the state or move to the next study day.':(langKo()?'오늘의 20개 학습 목표를 모두 맞혔어요.':'You got all 20 Daily Study targets correct.'))+'</p><button id="v2DailyHome" class="primary-button smart-home-button" type="button">'+(langKo()?'돌아가기':'Back to Study')+'</button></div>';var b=document.getElementById('v2DailyHome');if(b)b.addEventListener('click',close,{once:true});if(IS_STAGING)renderTestPanel();}
