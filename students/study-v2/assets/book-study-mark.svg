@@ -1,18 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" role="img" aria-labelledby="title desc">
   <title id="title">Book Study</title>
-  <desc id="desc">A simple learning lightbulb with a small study spark.</desc>
-  <g fill="none" stroke="#5b7fe5" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M80 20c-29 0-51 21-51 49 0 20 10 34 25 45 8 6 10 12 10 20h32c0-8 2-14 10-20 15-11 25-25 25-45 0-28-22-49-51-49z"/>
-    <path d="M62 134h36M67 146h26"/>
-    <path d="M61 76l13 13 27-31"/>
-  </g>
-  <g fill="#21b3be">
-    <circle cx="80" cy="7" r="5"/>
-    <circle cx="23" cy="39" r="4"/>
-    <circle cx="137" cy="39" r="4"/>
-  </g>
-  <g fill="none" stroke="#21b3be" stroke-width="6" stroke-linecap="round">
-    <path d="M47 18l7 11M113 18l-7 11M15 72h13M132 72h13"/>
-  </g>
-  <path d="M126 111l3.5 8.5 8.5 3.5-8.5 3.5-3.5 8.5-3.5-8.5-8.5-3.5 8.5-3.5 3.5-8.5z" fill="#ff6fb0"/>
+  <desc id="desc">A bold lightning bolt for active study.</desc>
+  <path d="M91 12L37 88h38l-9 60 58-83H86z" fill="#5b7fe5" stroke="#4468cd" stroke-width="5" stroke-linejoin="round"/>
+  <path d="M31 34l5 12 12 5-12 5-5 12-5-12-12-5 12-5z" fill="#21b3be"/>
+  <path d="M128 103l4 10 10 4-10 4-4 10-4-10-10-4 10-4z" fill="#ff6fb0"/>
 </svg>
