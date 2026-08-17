@@ -1,2 +1,2 @@
 Redeploy trigger for willena-proxy on 2026-08-17.
-No runtime logic change.
+Restore normal Supabase auth traffic to Netlify backend.
