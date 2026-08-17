@@ -1,4 +1,4 @@
-name: Fix Daily Study standard auth once
+name: Fix Daily Study persistent cookie auth once
 
 on:
   push:
@@ -17,104 +17,55 @@ jobs:
         with:
           ref: staging
 
-      - name: Make Daily Study use normal WillenaAPI auth path
+      - name: Route Daily Study through cookie-authenticated API gateway
         run: |
           python - <<'PY'
           from pathlib import Path
-          import re
 
-          # 1) Daily Study: same request style as AI Coach / Skills.
           p = Path('students/study-v2/v2-daily.js')
           s = p.read_text()
-          s = s.replace("var ENDPOINT='https://willena-proxy.willena.workers.dev/api/daily-study';",
-                        "var ENDPOINT='/.netlify/functions/daily_study_v2';")
-          pattern = re.compile(r"async function dailyAccessToken\(\)\{.*?\n\}\nasync function request\(method,body\)\{.*?\n\}\n", re.S)
-          replacement = """async function request(method,body){
-  try{if(global.WillenaStudyV2AuthReady)await global.WillenaStudyV2AuthReady;}catch(_){}
+
+          old_endpoint = "var ENDPOINT='https://willena-proxy.willena.workers.dev/api/daily-study';"
+          new_endpoint = "var ENDPOINT='https://api.willenaenglish.com/api/daily-study';"
+          if old_endpoint not in s:
+              raise SystemExit('Expected direct Daily Study endpoint not found')
+          s = s.replace(old_endpoint, new_endpoint, 1)
+
+          old_request = """  var token=await dailyAccessToken();
   var url=ENDPOINT+'?date='+encodeURIComponent(activeDate())+'&track='+encodeURIComponent(activeTrack())+'&_='+Date.now();
-  var opts={method:method,credentials:'include',cache:'no-store',headers:{Accept:'application/json'}};
-  if(body){opts.headers['Content-Type']='application/json';opts.body=JSON.stringify(body);}
-  var fn=global.WillenaAPI&&typeof global.WillenaAPI.fetch==='function'?global.WillenaAPI.fetch.bind(global.WillenaAPI):fetch;
-  var r=await fn(url,opts),d=await r.json().catch(function(){return{};});
-  if(!r.ok)throw new Error(d.error||('Daily Study request failed ('+r.status+')'));
-  ingestProgress(d);
-  return d;
-}
+  var opts={method:method,credentials:'omit',cache:'no-store',headers:{Accept:'application/json'}};
+  if(token)opts.headers.Authorization='Bearer '+token;
 """
-          s2, n = pattern.subn(replacement, s, count=1)
+          new_request = """  var url=ENDPOINT+'?date='+encodeURIComponent(activeDate())+'&track='+encodeURIComponent(activeTrack())+'&_='+Date.now();
+  var opts={method:method,credentials:'include',cache:'no-store',headers:{Accept:'application/json'}};
+"""
+          if old_request not in s:
+              raise SystemExit('Expected bearer-token Daily Study request block not found')
+          s = s.replace(old_request, new_request, 1)
+          p.write_text(s)
+
+          # Cache-bust only the Daily Study script so browsers get this fix immediately.
+          index = Path('students/study-v2/index.html')
+          h = index.read_text()
+          import re
+          h2, n = re.subn(r'\./v2-daily\.js\?v=[^"\']+', './v2-daily.js?v=20260817-cookieauth1', h, count=1)
           if n != 1:
-              raise SystemExit('Daily Study request block not found')
-          p.write_text(s2)
+              raise SystemExit('v2-daily script tag not found')
+          index.write_text(h2)
 
-          # 2) Auth guard: only shared whoami -> refresh -> whoami. No fetch interception.
-          p = Path('students/study-v2/auth-guard.js')
-          p.write_text("""(function(){
-'use strict';
-var NEXT='/students/study-v2/';
-var LOGIN='/students/signin.html?next='+encodeURIComponent(NEXT);
-
-function authFetch(path,options){
-  return (window.WillenaAPI?WillenaAPI.fetch:fetch)(path,Object.assign({credentials:'include',cache:'no-store'},options||{}));
-}
-async function whoami(){
-  try{
-    var r=await authFetch('/.netlify/functions/supabase_auth?action=whoami&_='+Date.now());
-    var d=await r.json().catch(function(){return{}});
-    return !!(r.ok&&d&&d.success);
-  }catch(_){return false;}
-}
-async function refresh(){
-  try{
-    var r=await authFetch('/.netlify/functions/supabase_auth?action=refresh&_='+Date.now());
-    var d=await r.json().catch(function(){return{}});
-    if(!r.ok||!d||!d.success)return false;
-    if(d.access_token&&window.WillenaAPI&&WillenaAPI.setLocalTokens){
-      WillenaAPI.setLocalTokens(d.access_token,d.refresh_token||'');
-    }
-    try{window.dispatchEvent(new CustomEvent('auth:changed'));}catch(_){}
-    return true;
-  }catch(_){return false;}
-}
-async function guard(){
-  if(await whoami())return true;
-  if(await refresh()&&await whoami())return true;
-  location.replace(LOGIN);
-  return false;
-}
-window.WillenaStudyV2AuthReady=guard();
-})();
-""")
-
-          # 3) Gateway: accept standard function-shaped Daily Study request and authenticate cookie.
-          p = Path('cloudflare-workers/proxy/src/index.js')
-          s = p.read_text()
-          needle = """    const functionName = extractFunctionName(url.pathname);
-    let response;
-
-    if (functionName && PREFER_CF_WORKER.has(functionName)) {"""
-          repl = """    const functionName = extractFunctionName(url.pathname);
-    let response;
-
-    if (functionName === 'daily_study_v2') {
-      response = await routeDailyStudy(request, env);
-    } else if (functionName && PREFER_CF_WORKER.has(functionName)) {"""
-          if needle not in s:
-              raise SystemExit('Gateway function routing block not found')
-          s = s.replace(needle, repl, 1)
-          p.write_text(s)
-
-          # 4) Cache bust the two changed Study V2 scripts.
-          p = Path('students/study-v2/index.html')
-          s = p.read_text()
-          s = s.replace('./auth-guard.js?v=20260817-dailypersist3','./auth-guard.js?v=20260817-standardauth1')
-          s = s.replace('./v2-daily.js?v=20260817-dailypersist3','./v2-daily.js?v=20260817-standardauth1')
-          p.write_text(s)
+          print('endpoint:', new_endpoint)
+          print('cookie credentials enabled:', "credentials:'include'" in s)
+          print('bearer header removed from request:', "opts.headers.Authorization='Bearer '+token" not in s)
           PY
 
       - name: Commit fix
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add students/study-v2/v2-daily.js students/study-v2/auth-guard.js students/study-v2/index.html cloudflare-workers/proxy/src/index.js
-          git diff --cached --quiet || git commit -m "Use standard gateway auth for Daily Study"
-          git push origin staging
+          git add students/study-v2/v2-daily.js students/study-v2/index.html
+          if git diff --cached --quiet; then
+            echo "No changes needed"
+            exit 0
+          fi
+          git commit -m "Use persistent cookie auth for Daily Study"
+          git push origin HEAD:staging
