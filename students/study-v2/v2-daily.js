@@ -342,6 +342,7 @@ async function buildPlan(){
   return plan;
 }
 async function ensureSession(){
+  await flushPending();
   var data=await request('GET');
   if(data&&data.session)return sessionFrom(data);
   if(!data||!data.needs_plan)throw new Error('Daily Study session could not be loaded.');
@@ -377,12 +378,20 @@ function showCurrent(){
   current=prepareActivity(item);answerLocked=false;if(!global.WillenaActivityEngine)throw new Error('Activity engine is not ready.');if(!engine)engine=new global.WillenaActivityEngine(root,{onAnswer:function(){}});engine.setActivity(current);sourceBadge(current);if(panel)panel.scrollTop=0;
 }
 function replaceCheck(label,handler){var check=root&&root.querySelector('.activity-check');if(!check)return;var b=check.cloneNode(true);b.disabled=false;b.textContent=label;check.replaceWith(b);b.addEventListener('click',handler,{once:true});}
-async function submitAnswer(correct){var key=dailyKey(current),data=await request('POST',{action:'answer',daily_key:key,correct:!!correct});if(data&&data.stale){sessionFrom(data);showCurrent();return;}if(!data||data.success===false)throw new Error(data&&data.error||'Daily answer was not saved.');sessionFrom(data);if(IS_STAGING)renderTestPanel();}
+var PENDING_PREFIX='willena-study-v2-daily-pending:v1:';
+var pendingSync=null;
+function pendingKey(){return PENDING_PREFIX+(uid()||'anon')+':'+activeTrack()+':'+activeDate();}
+function loadPending(){try{var q=JSON.parse(localStorage.getItem(pendingKey())||'[]');return Array.isArray(q)?q:[];}catch(_){return[];}}
+function savePending(q){try{if(q&&q.length)localStorage.setItem(pendingKey(),JSON.stringify(q));else localStorage.removeItem(pendingKey());}catch(_){}}
+function queueAnswer(correct){var entry={daily_key:dailyKey(current),correct:!!correct,date:activeDate(),track:activeTrack(),ts:Date.now()};var q=loadPending();if(!q.some(function(x){return String(x.daily_key)===String(entry.daily_key);})){q.push(entry);savePending(q);}return entry;}
+function optimisticApply(entry){if(!session||!entry)return;if(!Array.isArray(session.resolved_keys))session.resolved_keys=[];if(session.resolved_keys.indexOf(entry.daily_key)<0)session.resolved_keys.push(entry.daily_key);session.cursor=Math.min(arr(session.plan).length,Math.max(Number(session.cursor)||0,session.resolved_keys.length));if(session.resolved_keys.length>=TARGET||session.cursor>=arr(session.plan).length)session.status='completed';paint();setHeader();}
+async function flushPending(){if(pendingSync)return pendingSync;pendingSync=(async function(){var q=loadPending(),lastData=null;while(q.length){var item=q[0];try{var data=await request('POST',{action:'answer',daily_key:item.daily_key,correct:!!item.correct});if(!data||data.success===false)throw new Error(data&&data.error||'Daily answer was not saved.');lastData=data;q.shift();savePending(q);}catch(error){console.warn('[Daily Study] queued save will retry',error);break;}}if(!q.length&&lastData&&lastData.session){sessionFrom(lastData);if(IS_STAGING)renderTestPanel();}return q.length===0;})();try{return await pendingSync;}finally{pendingSync=null;}}
 async function onAnswer(e){
   if(!document.body.classList.contains('study-v2-daily-mode')||!current||answerLocked)return;
   var d=e.detail||{},a=d.activity||{},r=d.result||{};if(String(a.id)!==String(current.id))return;answerLocked=true;
-  try{await submitAnswer(!!r.correct);if(session&&session.status==='completed'){replaceCheck(langKo()?'완료':'Done',finish);return;}replaceCheck(langKo()?'계속':'Continue',showCurrent);}
-  catch(error){console.warn('[Daily Study] answer save',error);answerLocked=false;var check=root&&root.querySelector('.activity-check');if(check){check.disabled=false;check.textContent=langKo()?'저장 다시 시도':'Retry save';}}
+  var entry=queueAnswer(!!r.correct);optimisticApply(entry);
+  if(session&&session.status==='completed')replaceCheck(langKo()?'완료':'Done',finish);else replaceCheck(langKo()?'계속':'Continue',showCurrent);
+  flushPending();
 }
 function finish(){if(session)session.status='completed';paint();openShell(testMode?'Test day complete ✓':(langKo()?'잘했어요!':'Great work!'));if(countEl)countEl.textContent=testMode?'Test Day '+testDay+' complete':(langKo()?'완료':'Done');if(titleEl)titleEl.textContent=testMode?'Daily Study Test':(langKo()?'오늘 목표 완료':'Daily goal complete');if(root)root.innerHTML='<div class="smart-finish"><div class="smart-confetti">✓</div><h2>'+(testMode?'Test day complete!':(langKo()?'잘했어요!':'Great work!'))+'</h2><p>'+(testMode?'Use the staging test panel to inspect the state or move to the next study day.':(langKo()?'오늘의 20개 학습 목표를 모두 맞혔어요.':'You got all 20 Daily Study targets correct.'))+'</p><button id="v2DailyHome" class="primary-button smart-home-button" type="button">'+(langKo()?'돌아가기':'Back to Study')+'</button></div>';var b=document.getElementById('v2DailyHome');if(b)b.addEventListener('click',close,{once:true});if(IS_STAGING)renderTestPanel();}
 function close(){document.body.classList.remove('study-v2-practice-mode','study-v2-daily-mode');if(panel)panel.hidden=true;if(root)root.innerHTML='';current=null;engine=null;paint();if(IS_STAGING)renderTestPanel();window.scrollTo({top:0,behavior:'auto'});}
@@ -480,6 +489,7 @@ function bind(){
   paint();if(IS_STAGING)renderTestPanel();syncCard();
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind,{once:true});else bind();
+window.addEventListener('online',function(){flushPending();});window.addEventListener('focus',function(){flushPending();});setTimeout(function(){flushPending();},1200);
 global.WillenaStudyV2Daily={
   open:open,close:close,paint:paint,sync:syncCard,getSession:function(){return session;},getProgression:function(){return clone(progression);},
   isTestMode:function(){return testMode;},testDay:function(){return testDay;},resetTest:resetTest,nextTestDay:nextTestDay,simulateTestDay:simulateTestDay
