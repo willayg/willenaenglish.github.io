@@ -12,7 +12,7 @@
 .study-v2-action-card:before{content:"";display:block;width:68px;height:68px;flex:0 0 68px;border-radius:0;background-color:transparent;background-repeat:no-repeat;background-position:center;background-size:contain}
 
 #practiceHeroBtn{border:2px solid var(--arcade-cyan)}
-#practiceHeroBtn:before{width:78px;height:78px;flex-basis:78px;background-image:url("./assets/ai-coach-mark.svg?v=20260817-topicons2")}
+#practiceHeroBtn:before{width:94px;height:94px;flex-basis:94px;margin-left:-8px;margin-right:-8px;background-image:url("./assets/ai-coach-mark.svg?v=20260817-topicons2")}
 
 /* 교재 연습 uses a clean rocket. */
 #bookPracticeBtn{border:2px solid var(--arcade-orange)}
@@ -146,7 +146,7 @@
   .study-v2-top-actions{gap:16px;margin-bottom:38px;width:100%!important}
   .study-v2-top-actions>.study-v2-action-card{width:100%!important;min-width:100%!important;max-width:100%!important;min-height:104px!important;padding:16px!important;border-radius:20px!important;gap:15px!important}
   .study-v2-action-card:before{width:62px;height:62px;flex-basis:62px;border-radius:0;background-size:contain}
-  #practiceHeroBtn:before{width:70px;height:70px;flex-basis:70px}
+  #practiceHeroBtn:before{width:84px;height:84px;flex-basis:84px;margin-left:-7px;margin-right:-7px}
   #dailyWorkoutCard.study-v2-daily-primary:before{width:54px;height:54px;flex-basis:54px;border-radius:18px;background-size:31px 31px}
   .study-v2-action-card>strong,#dailyWorkoutCard.study-v2-daily-primary strong{font-size:1.06rem!important}
   .study-v2-action-card>small{font-size:.73rem!important}
