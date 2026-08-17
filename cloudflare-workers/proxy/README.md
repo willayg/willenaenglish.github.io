@@ -22,3 +22,4 @@ Verification checklist:
 Notes:
 - Only rewrite cookies if you control the backend; avoid rewriting cookies from untrusted upstreams.
 - Prefer setting sensitive tokens as HttpOnly cookies when possible.
+- Deployment refresh: 2026-08-17 persistent Daily Study gateway route.
