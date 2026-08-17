@@ -17,7 +17,7 @@ const FUNCTION_TO_BINDING = {
   admin_classes: 'ADMIN_CLASSES',
 };
 
-const PREFER_CF_WORKER = new Set(Object.keys(FUNCTION_TO_BINDING));
+const PREFER_CF_WORKER = new Set(Object.keys(FUNCTION_TO_BINDING).filter(function(name){ return name !== 'supabase_auth'; }));
 const CLOUDFLARE_ONLY = new Set(['student_level_test', 'admin_classes']);
 
 const ALLOWED_ORIGINS = new Set([
