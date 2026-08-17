@@ -1,4 +1,4 @@
-name: Patch legacy teacher whoami actions once
+name: Repair persistent teacher sessions once
 
 on:
   push:
@@ -15,35 +15,99 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: teachers
-      - name: Patch legacy teacher auth actions
+      - name: Repair teacher session bootstrap
         run: |
           python - <<'PY'
           from pathlib import Path
 
-          root = Path('Teachers')
-          changed = []
-          if root.exists():
-              for p in root.rglob('*'):
-                  if not p.is_file() or p.suffix.lower() not in {'.html', '.js', '.mjs', '.css'}:
-                      continue
-                  try:
-                      s = p.read_text()
-                  except Exception:
-                      continue
-                  if 'action=whoami_teacher' in s:
-                      p.write_text(s.replace('action=whoami_teacher', 'action=whoami'))
-                      changed.append(str(p))
+          auth = Path('Teachers/auth-refresh.js')
+          s = auth.read_text()
+          marker = 'window.ensureTeacherSession = ensureTeacherSession;'
+          if marker not in s:
+              addon = r'''
 
-          print('Patched files:')
-          for p in changed:
-              print(p)
-          if not changed:
-              raise SystemExit('No whoami_teacher references found')
+// Verify the persistent teacher session. If the short-lived access cookie has
+// expired, rotate it once using the refresh cookie, then retry whoami.
+async function ensureTeacherSession() {
+  try {
+    let response = await sessionRequest();
+    let data = await response.json().catch(() => ({}));
+    if (response.ok && data?.success) return data;
+
+    const refreshPath = '/.netlify/functions/supabase_auth?action=refresh&_=' + Date.now();
+    const refreshResponse = window.WillenaAPI && typeof window.WillenaAPI.fetch === 'function'
+      ? await window.WillenaAPI.fetch(refreshPath, { method: 'POST', cache: 'no-store' })
+      : await fetch(refreshPath, { method: 'POST', credentials: 'include', cache: 'no-store' });
+
+    if (!refreshResponse.ok) return null;
+
+    response = await sessionRequest();
+    data = await response.json().catch(() => ({}));
+    return response.ok && data?.success ? data : null;
+  } catch (error) {
+    console.debug('[auth-refresh] persistent teacher session recovery failed', error);
+    return null;
+  }
+}
+
+if (typeof window !== 'undefined') {
+  window.ensureTeacherSession = ensureTeacherSession;
+}
+'''
+              s += addon
+              auth.write_text(s)
+
+          # Student Tracker: load the shared refresh helper before main.js.
+          tracker = Path('Teachers/tools/student_tracker/student_tracker.html')
+          s = tracker.read_text()
+          needle = '  <script src="main.js?v=20260330a"></script>'
+          insert = '  <script type="module">import { ensureAuthRefresh } from "/Teachers/auth-refresh.js?v=20260817b"; ensureAuthRefresh();</script>\n' + needle
+          if '/Teachers/auth-refresh.js?v=20260817b' not in s:
+              if needle not in s: raise SystemExit('Student Tracker main.js marker not found')
+              s = s.replace(needle, insert, 1)
+              tracker.write_text(s)
+
+          main = Path('Teachers/tools/student_tracker/main.js')
+          s = main.read_text()
+          needle = "  try:\n"
+          # JS uses braces, patch immediately before its first whoami request instead.
+          call = "    const who = await (window.WillenaAPI\n"
+          recovery = "    if (window.ensureTeacherSession) await window.ensureTeacherSession();\n" + call
+          if 'if (window.ensureTeacherSession) await window.ensureTeacherSession();' not in s:
+              if call not in s: raise SystemExit('Student Tracker whoami marker not found')
+              s = s.replace(call, recovery, 1)
+              main.write_text(s)
+
+          # Manage Students: load shared refresh helper before its module and wait once
+          # before any teacher_admin requests are made.
+          manage = Path('Teachers/tools/manage_students.html')
+          s = manage.read_text()
+          needle = '  <script type="module" src="./manage_students.js?v=20260302c"></script>'
+          insert = '  <script type="module">import { ensureAuthRefresh } from "/Teachers/auth-refresh.js?v=20260817b"; ensureAuthRefresh();</script>\n' + needle
+          if '/Teachers/auth-refresh.js?v=20260817b' not in s:
+              if needle not in s: raise SystemExit('Manage Students module marker not found')
+              s = s.replace(needle, insert, 1)
+              manage.write_text(s)
+
+          managejs = Path('Teachers/tools/manage_students.js')
+          s = managejs.read_text()
+          wait = "// Wait for persistent cookie-session recovery before teacher_admin calls.\nif (window.ensureTeacherSession) await window.ensureTeacherSession();\n\n"
+          if 'Wait for persistent cookie-session recovery' not in s:
+              s = wait + s
+              managejs.write_text(s)
+
+          print('Remaining legacy teacher actions anywhere in repo:')
+          for p in Path('.').rglob('*'):
+              if p.is_file() and '.git' not in p.parts and p.suffix.lower() in {'.js','.html','.mjs','.ts'}:
+                  try: txt = p.read_text()
+                  except Exception: continue
+                  if 'whoami_teacher' in txt:
+                      print(p)
           PY
-      - name: Commit patch
+      - name: Commit repair
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add Teachers
-          git commit -m "Use standard whoami across teacher apps"
+          git commit -m "Repair persistent teacher session recovery"
           git push origin HEAD:teachers
