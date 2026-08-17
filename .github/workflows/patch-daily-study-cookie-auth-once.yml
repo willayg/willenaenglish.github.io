@@ -1,0 +1,58 @@
+name: Patch Daily Study persistent cookie auth once
+
+on:
+  push:
+    paths:
+      - '.github/workflows/patch-daily-study-cookie-auth-once.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: staging
+      - name: Route Daily Study through API gateway cookies
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          p = Path('students/study-v2/v2-daily.js')
+          s = p.read_text()
+
+          old_endpoint = "var ENDPOINT='https://willena-proxy.willena.workers.dev/api/daily-study';"
+          new_endpoint = "var ENDPOINT='https://api.willenaenglish.com/api/daily-study';"
+          if old_endpoint in s:
+              s = s.replace(old_endpoint, new_endpoint, 1)
+
+          old = """  var token=await dailyAccessToken();
+  var url=ENDPOINT+'?date='+encodeURIComponent(activeDate())+'&track='+encodeURIComponent(activeTrack())+'&_='+Date.now();
+  var opts={method:method,credentials:'omit',cache:'no-store',headers:{Accept:'application/json'}};
+  if(token)opts.headers.Authorization='Bearer '+token;
+"""
+          new = """  var url=ENDPOINT+'?date='+encodeURIComponent(activeDate())+'&track='+encodeURIComponent(activeTrack())+'&_='+Date.now();
+  var opts={method:method,credentials:'include',cache:'no-store',headers:{Accept:'application/json'}};
+"""
+          if old not in s:
+              raise SystemExit('Daily Study request block not found; refusing broad edit')
+          s = s.replace(old, new, 1)
+          p.write_text(s)
+
+          print('Daily Study now uses:', new_endpoint)
+          print('credentials include:', "credentials:'include'" in s)
+          print('direct workers.dev endpoint remains:', 'willena-proxy.willena.workers.dev/api/daily-study' in s)
+          PY
+      - name: Commit patch
+        run: |
+          if git diff --quiet -- students/study-v2/v2-daily.js; then
+            echo "No changes needed"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add students/study-v2/v2-daily.js
+          git commit -m "Use persistent cookie auth for Daily Study"
+          git push origin HEAD:staging
