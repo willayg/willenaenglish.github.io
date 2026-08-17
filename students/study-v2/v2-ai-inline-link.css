@@ -1,9 +1,9 @@
 .study-v2-ai-inline-link{
-  display:inline-flex;
+  display:flex;
   align-items:center;
   width:max-content;
   max-width:100%;
-  margin:11px 0 0;
+  margin:14px 0 0;
   padding:9px 13px;
   border:2px solid #25b8c4;
   border-radius:12px;
@@ -15,11 +15,6 @@
   text-decoration:none;
   box-shadow:0 3px 0 rgba(23,111,120,.14);
   transition:transform .12s ease,box-shadow .12s ease,background .12s ease;
-}
-.study-v2-ai-inline-link::after{
-  content:"↗";
-  margin-left:8px;
-  font-size:.95em;
 }
 .study-v2-ai-inline-link:hover,
 .study-v2-ai-inline-link:focus-visible{
@@ -49,6 +44,6 @@
     padding:11px 14px;
     font-size:1.06rem;
     line-height:1.35;
-    margin-top:12px;
+    margin-top:14px;
   }
 }
