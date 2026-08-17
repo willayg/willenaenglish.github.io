@@ -57,7 +57,7 @@
   display:grid;
   gap:12px;
   min-height:78px;
-  max-height:min(44vh,420px);
+  max-height:min(34vh,320px);
   overflow-y:auto;
   overscroll-behavior:contain;
   scroll-behavior:smooth;
@@ -202,7 +202,7 @@
   .study-v2-ai-chat{gap:15px;padding:16px 16px 20px;}
   .study-v2-ai-chat-transcript{
     gap:10px;
-    max-height:min(46vh,380px);
+    max-height:min(32vh,260px);
     padding-right:4px;
   }
   .study-v2-ai-chat-bubble{
