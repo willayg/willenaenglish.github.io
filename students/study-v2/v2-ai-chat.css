@@ -1,11 +1,41 @@
-/* Guided AI Coach: cyan + dark gray, with the section's pink outer border left intact. */
+/* Guided AI Coach: dark, clearly separated section with cyan accents. */
 .study-v2-ai{
   --coach-accent:#25b8c4;
   --coach-accent-dark:#176f78;
   --coach-ink:#30363a;
-  --coach-muted:#6f777b;
+  --coach-muted:#aeb9bd;
   --coach-surface:#f3f5f5;
   --coach-line:#dce1e2;
+  margin:26px 0 30px;
+  padding:22px 20px 24px;
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:24px;
+  background:linear-gradient(145deg,#2b3134 0%,#202528 100%);
+  box-shadow:0 18px 38px rgba(17,25,28,.18);
+  color:#fff;
+}
+.study-v2-ai .study-coach-head{
+  position:relative;
+  align-items:center;
+  margin:0 0 18px;
+  padding:0 2px 14px;
+}
+.study-v2-ai .study-coach-head::after{
+  content:"";
+  position:absolute;
+  left:2px;
+  right:2px;
+  bottom:0;
+  height:1px;
+  background:linear-gradient(90deg,rgba(37,184,196,.95),rgba(255,255,255,.18));
+}
+.study-v2-ai .study-coach-head h2{
+  margin:0;
+  color:#fff;
+  font-size:1.3rem;
+  line-height:1.2;
+  font-weight:800;
+  letter-spacing:.01em;
 }
 .study-v2-ai .study-coach-note{display:none!important;}
 .study-v2-ai #aiGrid{display:none!important;}
@@ -33,8 +63,8 @@
 }
 .study-v2-ai-chat-row.is-user .study-v2-ai-chat-bubble{
   color:#fff;
-  background:var(--coach-ink);
-  border-color:var(--coach-ink);
+  background:#3a4246;
+  border-color:#4b555a;
   border-bottom-right-radius:7px;
 }
 .study-v2-ai-thinking{display:inline-flex;align-items:center;gap:8px;font-weight:700;color:var(--coach-muted);}
@@ -108,6 +138,17 @@
 .ai-coach-practice-next:disabled{opacity:.42;cursor:default;}
 
 @media(max-width:560px){
+  .study-v2-ai{
+    margin:22px 0 26px;
+    padding:19px 16px 20px;
+    border-radius:21px;
+  }
+  .study-v2-ai .study-coach-head{
+    margin-bottom:16px;
+    padding:0 1px 12px;
+  }
+  .study-v2-ai .study-coach-head::after{left:1px;right:1px;}
+  .study-v2-ai .study-coach-head h2{font-size:1.24rem;}
   .study-v2-ai-chat{gap:15px;}
   .study-v2-ai-chat-transcript{gap:10px;}
   .study-v2-ai-chat-bubble{
