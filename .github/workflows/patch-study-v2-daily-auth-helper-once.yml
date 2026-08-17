@@ -1,0 +1,34 @@
+name: Patch Study V2 Daily auth helper once
+on:
+  push:
+    branches: [staging]
+    paths:
+      - '.github/workflows/patch-study-v2-daily-auth-helper-once.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: staging
+      - name: Load Daily Study auth helper explicitly
+        shell: python
+        run: |
+          from pathlib import Path
+          p = Path('students/study-v2/index.html')
+          s = p.read_text(encoding='utf-8')
+          old = '<script src="./auth-guard.js?v=20260817-dailypersist3"></script>'
+          new = '<script src="./v2-daily-auth-refresh.js?v=20260817-standardauth2"></script>\n<script src="./auth-guard.js?v=20260817-standardauth2"></script>'
+          if old not in s:
+              raise SystemExit('Expected auth-guard script tag not found')
+          s = s.replace(old, new, 1)
+          p.write_text(s, encoding='utf-8')
+      - name: Commit patch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add students/study-v2/index.html
+          git commit -m "Load Daily Study auth helper explicitly"
+          git push origin staging
