@@ -1,4 +1,4 @@
-name: Patch student dashboard whoami once
+name: Patch legacy student whoami actions once
 
 on:
   push:
@@ -15,22 +15,37 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: students
-      - name: Patch dashboard auth action
+      - name: Patch legacy student auth actions
         run: |
           python - <<'PY'
           from pathlib import Path
-          p = Path('students/dashboard.html')
-          s = p.read_text()
-          old = 'action=whoami_student'
-          new = 'action=whoami'
-          if old not in s:
-              raise SystemExit('Expected whoami_student call not found')
-          p.write_text(s.replace(old, new, 1))
+
+          roots = [Path('students'), Path('Games')]
+          changed = []
+          for root in roots:
+              if not root.exists():
+                  continue
+              for p in root.rglob('*'):
+                  if not p.is_file() or p.suffix.lower() not in {'.html', '.js', '.mjs', '.css'}:
+                      continue
+                  try:
+                      s = p.read_text()
+                  except Exception:
+                      continue
+                  if 'action=whoami_student' in s:
+                      p.write_text(s.replace('action=whoami_student', 'action=whoami'))
+                      changed.append(str(p))
+
+          print('Patched files:')
+          for p in changed:
+              print(p)
+          if not changed:
+              raise SystemExit('No whoami_student references found')
           PY
       - name: Commit patch
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add students/dashboard.html
-          git commit -m "Use standard whoami on student dashboard"
+          git add students Games
+          git commit -m "Use standard whoami across student apps"
           git push origin HEAD:students
