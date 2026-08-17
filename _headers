@@ -1,8 +1,13 @@
 # Cloudflare Pages custom headers
 # Fix NS_ERROR_CORRUPTED_CONTENT by ensuring proper content-type and caching
 
-# Study staging app changes frequently: never serve stale Study files
+# Study staging apps change frequently: never serve stale Study files
 /students/study/*
+  Cache-Control: no-store, no-cache, must-revalidate, max-age=0
+  Pragma: no-cache
+  Expires: 0
+
+/students/study-v2/*
   Cache-Control: no-store, no-cache, must-revalidate, max-age=0
   Pragma: no-cache
   Expires: 0
