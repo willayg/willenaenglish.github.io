@@ -1,0 +1,40 @@
+name: Add Daily Study session polish once
+on:
+  push:
+    branches: [staging]
+jobs:
+  patch:
+    if: github.event.head_commit.message == 'Add one-off Daily Study session polish loader'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: staging
+      - name: Patch Study V2 index
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('students/study-v2/index.html')
+          s=p.read_text(encoding='utf-8')
+          css='<link rel="stylesheet" href="./v2-daily-session-polish.css?v=20260818-coachmatch1">\n'
+          if css not in s:
+              needle='<link rel="stylesheet" href="./v2-activity-ux.css?v=20260817-instructioncard1">\n'
+              if needle not in s: raise SystemExit('CSS anchor not found')
+              s=s.replace(needle,needle+css,1)
+          js='<script src="./v2-daily-session-polish.js?v=20260818-coachmatch1"></script>\n'
+          if js not in s:
+              needle='<script src="./v2-daily-rewards.js?v=20260815-endingring1"></script>\n'
+              if needle not in s: raise SystemExit('JS anchor not found')
+              s=s.replace(needle,needle+js,1)
+          p.write_text(s,encoding='utf-8')
+          PY
+      - name: Commit
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add students/study-v2/index.html
+          git diff --cached --quiet && exit 0
+          git commit -m "Load Daily Study AI Coach-style polish"
+          git push origin HEAD:staging
