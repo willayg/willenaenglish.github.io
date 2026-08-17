@@ -57,3 +57,4 @@ jobs:
           git push origin HEAD:staging
 
 # auth-routing restore deploy trigger
+# daily-study route deploy trigger 2026-08-17
