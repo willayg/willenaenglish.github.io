@@ -3,7 +3,7 @@
 
 var TARGET=20;
 var MAX_CANDIDATES=80;
-var ENDPOINT='https://willena-proxy.willena.workers.dev/api/daily-study';
+var ENDPOINT='https://api.willenaenglish.com/api/daily-study';
 var CONTENT_URL='https://gxwfsqxyuufqtitspfqg.supabase.co';
 var CONTENT_KEY=['sb_publishable_','G-FYhHfDL4OGdL892gY1Zg_','epdbEeqO'].join('');
 var CACHE_PREFIX='willena-study-v2-home:v1:';
@@ -136,10 +136,8 @@ async function dailyAccessToken(){
 }
 async function request(method,body){
   try{if(global.WillenaStudyV2AuthReady)await global.WillenaStudyV2AuthReady;}catch(_){}
-  var token=await dailyAccessToken();
   var url=ENDPOINT+'?date='+encodeURIComponent(activeDate())+'&track='+encodeURIComponent(activeTrack())+'&_='+Date.now();
-  var opts={method:method,credentials:'omit',cache:'no-store',headers:{Accept:'application/json'}};
-  if(token)opts.headers.Authorization='Bearer '+token;
+  var opts={method:method,credentials:'include',cache:'no-store',headers:{Accept:'application/json'}};
   if(body){opts.headers['Content-Type']='application/json';opts.body=JSON.stringify(body);}
   var r=await fetch(url,opts),d=await r.json().catch(function(){return{};});
   if(!r.ok)throw new Error(d.error||('Daily Study request failed ('+r.status+')'));
