@@ -21,18 +21,18 @@ jobs:
           from pathlib import Path
 
           p = Path('Teachers/tools/student_tracker/student_tracker.html')
-          s = p.read_text()
-          old = '<script src="main.js?v=20260330a"></script>'
-          new = '<script type="module">import { ensureAuthRefresh, ensureTeacherSession } from "/Teachers/auth-refresh.js?v=20260817e"; ensureAuthRefresh(); await ensureTeacherSession(); await import("./main.js?v=20260817e");</script>'
-          if old in s:
-              p.write_text(s.replace(old, new, 1))
+          b = p.read_bytes()
+          old = b'<script src="main.js?v=20260330a"></script>'
+          new = b'<script type="module">import { ensureAuthRefresh, ensureTeacherSession } from "/Teachers/auth-refresh.js?v=20260817f"; ensureAuthRefresh(); await ensureTeacherSession(); await import("./main.js?v=20260817f");</script>'
+          if old in b:
+              p.write_bytes(b.replace(old, new, 1))
 
           p = Path('Teachers/tools/manage_students.html')
-          s = p.read_text()
-          old = '<script type="module" src="./manage_students.js?v=20260302c"></script>'
-          new = '<script type="module">import { ensureAuthRefresh, ensureTeacherSession } from "/Teachers/auth-refresh.js?v=20260817e"; ensureAuthRefresh(); await ensureTeacherSession(); await import("./manage_students.js?v=20260817e");</script>'
-          if old in s:
-              p.write_text(s.replace(old, new, 1))
+          b = p.read_bytes()
+          old = b'<script type="module" src="./manage_students.js?v=20260302c"></script>'
+          new = b'<script type="module">import { ensureAuthRefresh, ensureTeacherSession } from "/Teachers/auth-refresh.js?v=20260817f"; ensureAuthRefresh(); await ensureTeacherSession(); await import("./manage_students.js?v=20260817f");</script>'
+          if old in b:
+              p.write_bytes(b.replace(old, new, 1))
           PY
       - name: Commit patch
         run: |
