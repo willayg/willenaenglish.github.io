@@ -3,21 +3,68 @@
 var NEXT='/students/study-v2/';
 var LOGIN='/students/signin.html?next='+encodeURIComponent(NEXT);
 var DAILY_RE=/^https:\/\/willena-proxy\.willena\.workers\.dev\/api\/daily-study(?:\?|$)/i;
-var DAILY_GATEWAY='https://api.willenaenglish.com/api/daily-study';
+var SUPABASE_URL='https://gxwfsqxyuufqtitspfqg.supabase.co';
+var SUPABASE_KEY=['sb_publishable_','G-FYhHfDL4OGdL892gY1Zg_','epdbEeqO'].join('');
 var nativeFetch=window.fetch.bind(window);
+var dailyRefreshPromise=null;
 
 function authFetch(path,options){return (window.WillenaAPI?WillenaAPI.fetch:fetch)(path,Object.assign({credentials:'include',cache:'no-store'},options||{}));}
 async function whoami(){try{var r=await authFetch('/.netlify/functions/supabase_auth?action=whoami&_='+Date.now());var d=await r.json().catch(function(){return{}});return !!(r.ok&&d&&d.success);}catch(_){return false;}}
 function localAccessToken(){try{return String((window.WillenaAPI&&WillenaAPI.getLocalAccessToken?WillenaAPI.getLocalAccessToken():localStorage.getItem('sb_access_token'))||'').trim();}catch(_){return'';}}
-async function refresh(){
+function localRefreshToken(){try{return String(localStorage.getItem('sb_refresh_token')||'').trim();}catch(_){return'';}}
+function saveTokens(accessToken,refreshToken){
+  if(!accessToken)return;
+  try{
+    if(window.WillenaAPI&&WillenaAPI.setLocalTokens)WillenaAPI.setLocalTokens(accessToken,refreshToken||'');
+    else{
+      localStorage.setItem('sb_access_token',accessToken);
+      if(refreshToken)localStorage.setItem('sb_refresh_token',refreshToken);
+    }
+  }catch(_){}
+}
+async function refreshFromSession(){
   try{
     var r=await authFetch('/.netlify/functions/supabase_auth?action=refresh&_='+Date.now());
     var d=await r.json().catch(function(){return{}});
-    if(!r.ok||!d||!d.success)return false;
-    if(d.access_token&&window.WillenaAPI&&WillenaAPI.setLocalTokens)WillenaAPI.setLocalTokens(d.access_token,d.refresh_token||'');
+    var token=String(d&&d.access_token||'').trim();
+    if(!r.ok||!d||!d.success||!token)return'';
+    saveTokens(token,d.refresh_token||'');
     try{window.dispatchEvent(new CustomEvent('auth:changed'));}catch(_){}
-    return true;
-  }catch(_){return false;}
+    return token;
+  }catch(_){return'';}
+}
+async function refreshFromLocalRefreshToken(){
+  var refreshToken=localRefreshToken();
+  if(!refreshToken)return'';
+  try{
+    var r=await nativeFetch(SUPABASE_URL+'/auth/v1/token?grant_type=refresh_token',{
+      method:'POST',
+      cache:'no-store',
+      headers:{
+        apikey:SUPABASE_KEY,
+        'Content-Type':'application/json'
+      },
+      body:JSON.stringify({refresh_token:refreshToken})
+    });
+    var d=await r.json().catch(function(){return{}});
+    var token=String(d&&d.access_token||'').trim();
+    if(!r.ok||!token)return'';
+    saveTokens(token,d.refresh_token||refreshToken);
+    try{window.dispatchEvent(new CustomEvent('auth:changed'));}catch(_){}
+    console.info('[Study V2 auth] restored access token from stored refresh token');
+    return token;
+  }catch(_){return'';}
+}
+function tokenExpiresSoon(token,skewSeconds){
+  try{
+    var parts=String(token||'').split('.');
+    if(parts.length<2)return true;
+    var body=parts[1].replace(/-/g,'+').replace(/_/g,'/');
+    while(body.length%4)body+='=';
+    var data=JSON.parse(atob(body));
+    var exp=Number(data&&data.exp);
+    return !Number.isFinite(exp)||exp*1000<=Date.now()+(Number(skewSeconds)||90)*1000;
+  }catch(_){return true;}
 }
 function requestToken(input,init){
   try{
@@ -27,44 +74,69 @@ function requestToken(input,init){
   }catch(_){}
   return'';
 }
-function gatewayUrl(url){
-  try{return DAILY_GATEWAY+(new URL(url)).search;}
-  catch(_){return DAILY_GATEWAY;}
-}
-function gatewayInit(input,init){
-  var opts=Object.assign({},init||{}),headers;
+function withDailyToken(input,init,token){
+  var retry=Object.assign({},init||{}),headers;
   try{headers=new Headers((init&&init.headers)||(input instanceof Request?input.headers:undefined));}catch(_){headers=new Headers();}
-  var token=requestToken(input,init)||localAccessToken();
-  if(token&&!headers.get('Authorization'))headers.set('Authorization','Bearer '+token);
-  opts.headers=headers;
-  opts.credentials='include';
-  opts.cache='no-store';
-  return opts;
+  if(token)headers.set('Authorization','Bearer '+token);
+  retry.headers=headers;
+  retry.credentials='omit';
+  retry.cache='no-store';
+  return retry;
+}
+async function recoverDailyToken(forceLocalRefresh){
+  if(dailyRefreshPromise)return dailyRefreshPromise;
+  dailyRefreshPromise=(async function(){
+    try{
+      var token='';
+      if(!forceLocalRefresh)token=await refreshFromSession();
+      if(!token)token=await refreshFromLocalRefreshToken();
+      return token||'';
+    }finally{dailyRefreshPromise=null;}
+  })();
+  return dailyRefreshPromise;
+}
+async function currentDailyToken(forceRefresh){
+  var token=localAccessToken();
+  if(forceRefresh||!token||tokenExpiresSoon(token,90)){
+    var fresh=await recoverDailyToken(!!forceRefresh);
+    if(fresh)token=fresh;
+  }
+  return token||'';
 }
 
 /*
- * Older Daily Study frontend code points at workers.dev directly. The existing
- * Willena API gateway already exposes /api/daily-study and authenticates it from
- * the normal persistent sb_access cookie (with bearer auth as a fallback).
- * Route those calls through the gateway so Daily Study uses the same persistent
- * login path as the rest of Study V2.
+ * Daily Study calls its existing workers.dev endpoint directly, so the normal
+ * .willenaenglish.com cookie cannot travel with that request. Rebuild the
+ * short-lived bearer token from the persistent session when possible, and if
+ * sb_access_token has been cleared, fall back to the already stored
+ * sb_refresh_token from the normal login flow.
  */
+window.WillenaStudyV2GetAccessToken=currentDailyToken;
 window.fetch=async function(input,init){
   var url='';
   try{url=typeof input==='string'?input:(input&&input.url)||'';}catch(_){}
   if(!DAILY_RE.test(url))return nativeFetch(input,init);
-  return nativeFetch(gatewayUrl(url),gatewayInit(input,init));
-};
 
-window.WillenaStudyV2GetAccessToken=async function(forceRefresh){
-  var token=localAccessToken();
-  if(forceRefresh||!token){if(await refresh())token=localAccessToken();}
-  return token||'';
+  var token=requestToken(input,init)||localAccessToken();
+  if(!token||tokenExpiresSoon(token,90)){
+    var fresh=await recoverDailyToken(false);
+    if(fresh)token=fresh;
+  }
+
+  var first=await nativeFetch(input,token?withDailyToken(input,init,token):init);
+  if(first.status!==401&&first.status!==403)return first;
+
+  token=await recoverDailyToken(true);
+  if(!token)return first;
+  return nativeFetch(input,withDailyToken(input,init,token));
 };
 
 async function guard(){
-  if(await whoami())return true;
-  if(await refresh()&&await whoami())return true;
+  if(await whoami()){
+    if(!localAccessToken())recoverDailyToken(false).catch(function(){});
+    return true;
+  }
+  if(await refreshFromSession()&&await whoami())return true;
   location.replace(LOGIN);
   return false;
 }
