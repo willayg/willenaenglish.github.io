@@ -68,16 +68,31 @@
           return; // stop further checks to avoid lots of 401s
         }
 
-        const who = await WillenaAPI.fetch(`/.netlify/functions/supabase_auth?action=whoami&_=${Date.now()}`);
-        console.log('[Dashboard] Auth check response:', who.status, who.statusText);
-        const w = await who.json();
-        console.log('[Dashboard] Auth data:', w);
-        if (!w.success) {
-          console.log('[Dashboard] Not logged in, redirecting to signin');
-          // Not logged in - redirect to login
+        async function checkWhoami() {
+          const r = await WillenaAPI.fetch(`/.netlify/functions/supabase_auth?action=whoami&_=${Date.now()}`, { cache: 'no-store' });
+          const d = await r.json().catch(() => ({}));
+          return { response: r, data: d };
+        }
+
+        let auth = await checkWhoami();
+        console.log('[Dashboard] Auth check response:', auth.response.status, auth.response.statusText);
+
+        if (!auth.response.ok || !auth.data.success) {
+          console.log('[Dashboard] Access token unavailable/expired; trying persistent session refresh');
+          const refresh = await WillenaAPI.fetch(`/.netlify/functions/supabase_auth?action=refresh&_=${Date.now()}`, { cache: 'no-store' });
+          const rd = await refresh.json().catch(() => ({}));
+          if (refresh.ok && rd && rd.success) {
+            if (rd.access_token && WillenaAPI.setLocalTokens) WillenaAPI.setLocalTokens(rd.access_token, '');
+            auth = await checkWhoami();
+          }
+        }
+
+        console.log('[Dashboard] Auth data:', auth.data);
+        if (!auth.response.ok || !auth.data.success) {
+          console.log('[Dashboard] No persistent session, redirecting to signin');
           location.replace('/students/signin.html?next=' + encodeURIComponent(location.pathname));
         } else {
-          console.log('[Dashboard] User is logged in:', w.user_id || w.id);
+          console.log('[Dashboard] User is logged in:', auth.data.user_id || auth.data.id);
         }
       } catch (err) {
         // If auth check fails (network error, JSON parse error, etc.), redirect to login
