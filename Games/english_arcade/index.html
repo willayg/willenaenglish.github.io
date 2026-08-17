@@ -162,7 +162,7 @@
           return;
         }
         // Fetch whoami quickly; if unauthorized, redirect before heavy scripts load
-        WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=whoami_student')
+        WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=whoami')
           .then(r => r.ok ? r.json() : null)
           .then(js => { if (!js || !js.success || !js.user_id) goLogin(); })
           .catch(() => goLogin());
@@ -295,7 +295,7 @@
       async function getCurrentUserIdCached() {
         if (currentUserIdCache) return currentUserIdCache;
         try {
-          const whoRes = await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=whoami_student');
+          const whoRes = await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=whoami');
           const whoJson = await whoRes.json().catch(() => ({}));
           if (whoRes.ok && whoJson.success && whoJson.user_id) {
             currentUserIdCache = whoJson.user_id;
@@ -515,7 +515,7 @@
               console.log(`[HW Badge] assignment ${a.id} (${a.title}):`, { _v: pj._v, is_spelling_only: pj.is_spelling_only, _debug_meta: pj._debug_meta, localSpellingOnly, badgeForcedMode, badgeModesTotal });
               if (pr.ok && pj && pj.success && Array.isArray(pj.progress)) {
                 // find current user row if present
-                const who = await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=whoami_student').then(r=>r.ok?r.json():{}).catch(()=>({}));
+                const who = await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=whoami').then(r=>r.ok?r.json():{}).catch(()=>({}));
                 const uid = who && who.user_id ? who.user_id : null;
                 let myRow = null;
                 if (uid) myRow = pj.progress.find(p => String(p.user_id) === String(uid));
@@ -582,7 +582,7 @@
           // Determine current student user_id first (needed to match progress rows)
             let currentUserId = null;
             try {
-              const whoRes = await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=whoami_student');
+              const whoRes = await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=whoami');
               const whoJson = await whoRes.json().catch(()=>({}));
               if (whoRes.ok && whoJson.success && whoJson.user_id) currentUserId = whoJson.user_id;
             } catch {}

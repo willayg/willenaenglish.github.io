@@ -260,7 +260,7 @@ class StudentHeader extends HTMLElement {
 
   async _hydrateProfile() {
     try {
-      const whoRes = await WillenaAPI.fetch(`/.netlify/functions/supabase_auth?action=whoami_student&_=${Date.now()}`);
+      const whoRes = await WillenaAPI.fetch(`/.netlify/functions/supabase_auth?action=whoami&_=${Date.now()}`);
       const who = await whoRes.json();
       if (!who || !who.success || !who.user_id) return;
       this._uid = who.user_id;
@@ -399,7 +399,7 @@ class StudentHeader extends HTMLElement {
             let uid = this._uid || null;
             if (!uid) {
               try {
-                const who = await WillenaAPI.fetch(`/.netlify/functions/supabase_auth?action=whoami_student&_=${Date.now()}`);
+                const who = await WillenaAPI.fetch(`/.netlify/functions/supabase_auth?action=whoami&_=${Date.now()}`);
                 if (who.ok) {
                   const wj = await who.json().catch(() => ({}));
                   if (wj && wj.success && wj.user_id) uid = wj.user_id;

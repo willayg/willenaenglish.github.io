@@ -23,7 +23,7 @@
     async function getProfileInfo() {
       try {
         // Get user id from cookie session
-        const who = await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=whoami_student');
+        const who = await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=whoami');
         const whoRes = await who.json();
         if (!whoRes.success || !whoRes.user_id) {
           // For cross-origin scenarios, if whoami fails, redirect to Netlify version

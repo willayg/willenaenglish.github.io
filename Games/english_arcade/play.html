@@ -33,7 +33,7 @@
 	    }
 	    if (hasGuest) { window.__AUTH_OK = true; show(); return; }
 	    try {
-	      const r = await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=whoami_student');
+	      const r = await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=whoami');
 	      if(r.ok){ const d=await r.json().catch(()=>null); if(d&&d.success){ window.__AUTH_OK=true; show(); return; } }
 	    } catch {}
 	    const next = encodeURIComponent(location.pathname + location.search);

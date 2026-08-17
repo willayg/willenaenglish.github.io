@@ -742,7 +742,7 @@
         // Determine current student user_id first so we can match progress rows
         let currentUserId = null;
         try {
-          const whoRes = await WillenaAPI.fetch(`/.netlify/functions/supabase_auth?action=whoami_student&_=${Date.now()}`);
+          const whoRes = await WillenaAPI.fetch(`/.netlify/functions/supabase_auth?action=whoami&_=${Date.now()}`);
           const whoJson = await whoRes.json().catch(()=>({}));
           if (whoRes.ok && whoJson.success && whoJson.user_id) currentUserId = whoJson.user_id;
         } catch {}
