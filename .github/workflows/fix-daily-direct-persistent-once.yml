@@ -1,5 +1,6 @@
 name: Fix Daily Study direct persistent auth once
 
+# Triggered after registration so the one-off repair actually runs.
 on:
   push:
     branches: [main]
