@@ -462,7 +462,7 @@
         let name = '';
         let userId = '';
         try {
-          const whoRes = await WillenaAPI.fetch(`/.netlify/functions/supabase_auth?action=whoami_teacher&_=${Date.now()}`);
+          const whoRes = await WillenaAPI.fetch(`/.netlify/functions/supabase_auth?action=whoami&_=${Date.now()}`);
           const who = await whoRes.json().catch(() => ({}));
           if (who && who.success && who.user_id) {
             userId = who.user_id;

@@ -4,7 +4,7 @@
   const EDGE='https://fiieuiktlsivwfgyivai.supabase.co/functions/v1/level-test-admin';
   const SUPABASE_AUTH='https://fiieuiktlsivwfgyivai.supabase.co/auth/v1/token?grant_type=refresh_token';
   const ANON_KEY='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
-  const TEACHER_SESSION='https://api.willenaenglish.com/.netlify/functions/supabase_auth?action=whoami_teacher';
+  const TEACHER_SESSION='https://api.willenaenglish.com/.netlify/functions/supabase_auth?action=whoami';
   const nativeFetch=window.fetch.bind(window);
   let sessionCheck=null;
   let tokenRefresh=null;

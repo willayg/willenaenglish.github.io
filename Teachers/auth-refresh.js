@@ -10,7 +10,7 @@ let lastRefreshAt = 0;
 let refreshInFlight = null;
 
 async function sessionRequest() {
-  const path = '/.netlify/functions/supabase_auth?action=whoami_teacher&_=' + Date.now();
+  const path = '/.netlify/functions/supabase_auth?action=whoami&_=' + Date.now();
 
   if (window.WillenaAPI && typeof window.WillenaAPI.fetch === 'function') {
     return window.WillenaAPI.fetch(path, {

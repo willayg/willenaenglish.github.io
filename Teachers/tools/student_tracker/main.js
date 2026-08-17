@@ -5,8 +5,8 @@ const userRoleReady = new Promise((resolve) => { userRoleReadyResolve = resolve;
 (async function() {
   try {
     const who = await (window.WillenaAPI
-      ? window.WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=whoami_teacher')
-      : fetch('/.netlify/functions/supabase_auth?action=whoami_teacher', { credentials: 'include' }));
+      ? window.WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=whoami')
+      : fetch('/.netlify/functions/supabase_auth?action=whoami', { credentials: 'include' }));
     const whoJson = await who.json().catch(() => ({}));
     if (!who.ok || !whoJson?.success || !whoJson?.user_id) {
       const redirect = encodeURIComponent(location.pathname + location.search);
