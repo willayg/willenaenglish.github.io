@@ -37,3 +37,5 @@ jobs:
           git add cloudflare-workers/proxy/src/index.js
           git diff --cached --quiet || git commit -m "Restore Netlify Supabase auth routing"
           git push origin HEAD:staging
+
+# trigger
