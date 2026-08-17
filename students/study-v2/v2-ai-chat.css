@@ -1,13 +1,13 @@
 /* Study V2 AI Coach shell. Independent from the shared .study-coach card. */
 .study-v2-ai-shell{
-  --coach-bg:#3b4d4d;
-  --coach-surface:#465a5a;
-  --coach-surface-strong:#506565;
+  --coach-bg:#2d3134;
+  --coach-surface:#373c40;
+  --coach-surface-strong:#40464a;
   --coach-text:#ffffff;
   --coach-muted:rgba(255,255,255,.72);
   --coach-accent:#b8e0c5;
-  --coach-line:rgba(235,248,240,.16);
-  --coach-line-strong:rgba(235,248,240,.32);
+  --coach-line:rgba(255,255,255,.14);
+  --coach-line-strong:rgba(255,255,255,.28);
   padding:0;
   border:0;
   border-radius:24px;
@@ -19,16 +19,16 @@
 
 .study-v2-ai-head{
   display:grid;
-  grid-template-columns:64px minmax(0,1fr);
+  grid-template-columns:68px minmax(0,1fr);
   align-items:center;
   column-gap:14px;
   padding:18px 20px 0;
 }
 .study-v2-ai-head::before{
   content:"";
-  width:64px;
-  height:64px;
-  background:url("./assets/ai-coach-mark.svg?v=20260817-topicons1") center/contain no-repeat;
+  width:68px;
+  height:68px;
+  background:url("./assets/ai-coach-mark.svg?v=20260817-topicons2") center/contain no-repeat;
 }
 .study-v2-ai-head>div{min-width:0;}
 .study-v2-ai-head h2{
@@ -57,7 +57,7 @@
   display:grid;
   gap:12px;
   min-height:78px;
-  max-height:min(52vh,520px);
+  max-height:min(44vh,420px);
   overflow-y:auto;
   overscroll-behavior:contain;
   scroll-behavior:smooth;
@@ -192,17 +192,17 @@
 @media(max-width:560px){
   .study-v2-ai-shell{border-radius:21px;}
   .study-v2-ai-head{
-    grid-template-columns:54px minmax(0,1fr);
+    grid-template-columns:58px minmax(0,1fr);
     column-gap:12px;
     padding:16px 16px 0;
   }
-  .study-v2-ai-head::before{width:54px;height:54px;}
+  .study-v2-ai-head::before{width:58px;height:58px;}
   .study-v2-ai-head h2{font-size:1.24rem;}
   .study-v2-ai-head::after{margin-top:12px;}
   .study-v2-ai-chat{gap:15px;padding:16px 16px 20px;}
   .study-v2-ai-chat-transcript{
     gap:10px;
-    max-height:min(54vh,460px);
+    max-height:min(46vh,380px);
     padding-right:4px;
   }
   .study-v2-ai-chat-bubble{
