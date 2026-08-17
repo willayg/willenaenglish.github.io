@@ -10,9 +10,11 @@
   cursor:pointer;
   text-decoration:none;
 }
-.study-v2-ai-inline-link:hover{color:#176f78;text-decoration:underline;}
+.study-v2-ai-shell .study-v2-ai-inline-link{color:#fff;}
+.study-v2-ai-inline-link:hover{text-decoration:underline;}
+.study-v2-ai-shell .study-v2-ai-inline-link:hover{color:#fff;}
 .study-v2-ai-inline-link:active{transform:translateY(1px);}
-#aiChatCta{display:none!important;}
+#aiChatCta{display:none;}
 @media(max-width:560px){
   .study-v2-ai-inline-link{font-size:1.06rem;line-height:1.4;margin-top:11px;}
 }
