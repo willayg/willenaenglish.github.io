@@ -68,7 +68,7 @@
           return; // stop further checks to avoid lots of 401s
         }
 
-        const who = await WillenaAPI.fetch(`/.netlify/functions/supabase_auth?action=whoami_student&_=${Date.now()}`);
+        const who = await WillenaAPI.fetch(`/.netlify/functions/supabase_auth?action=whoami&_=${Date.now()}`);
         console.log('[Dashboard] Auth check response:', who.status, who.statusText);
         const w = await who.json();
         console.log('[Dashboard] Auth data:', w);
