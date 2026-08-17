@@ -1,6 +1,5 @@
 // Shared teacher-session repair helper.
-// Calls the teacher-only server action, which verifies the access token and
-// uses the refresh-token cookie when the access token has expired.
+// Verifies the access cookie and uses the refresh-token cookie when needed.
 
 const REFRESH_INTERVAL = 1000 * 60 * 35; // 35 minutes
 const MIN_FOCUS_REFRESH_AGE = 1000 * 60 * 15;
@@ -26,12 +25,25 @@ async function sessionRequest() {
   });
 }
 
+async function refreshRequest() {
+  const path = '/.netlify/functions/supabase_auth?action=refresh&_=' + Date.now();
+
+  if (window.WillenaAPI && typeof window.WillenaAPI.fetch === 'function') {
+    return window.WillenaAPI.fetch(path, {
+      method: 'POST',
+      cache: 'no-store',
+    });
+  }
+
+  return fetch(path, {
+    method: 'POST',
+    credentials: 'include',
+    cache: 'no-store',
+  });
+}
+
 function redirectAuthenticatedLogin(data) {
-  // Cloudflare Pages serves both extensionless routes (/Teachers/signin)
-  // and explicit HTML routes (/Teachers/signin.html).
   if (!/\/Teachers\/(?:login|signin)(?:\.html)?\/?$/i.test(window.location.pathname)) return;
-  // whoami_teacher is already restricted to teacher/admin accounts, so a
-  // successful response is sufficient even when the response omits `role`.
   if (!data?.success) return;
 
   const params = new URLSearchParams(window.location.search);
@@ -43,20 +55,43 @@ function redirectAuthenticatedLogin(data) {
   window.location.replace(target);
 }
 
+export async function ensureTeacherSession() {
+  try {
+    let response = await sessionRequest();
+    let data = await response.json().catch(() => ({}));
+
+    if (response.ok && data.success) {
+      lastRefreshAt = Date.now();
+      return data;
+    }
+
+    const refreshed = await refreshRequest();
+    if (!refreshed.ok) {
+      lastRefreshAt = Date.now();
+      return null;
+    }
+
+    response = await sessionRequest();
+    data = await response.json().catch(() => ({}));
+    lastRefreshAt = Date.now();
+
+    return response.ok && data.success ? data : null;
+  } catch (error) {
+    lastRefreshAt = Date.now();
+    console.debug('[auth-refresh] persistent teacher session recovery failed', error);
+    return null;
+  }
+}
+
 async function repairSession() {
   if (refreshInFlight) return refreshInFlight;
 
   refreshInFlight = (async () => {
     try {
-      const response = await sessionRequest();
-      const data = await response.json().catch(() => ({}));
-      lastRefreshAt = Date.now();
+      const data = await ensureTeacherSession();
 
-      if (!response.ok || !data.success) {
-        console.debug('[auth-refresh] teacher session repair did not succeed', {
-          status: response.status,
-          body: data,
-        });
+      if (!data?.success) {
+        console.debug('[auth-refresh] teacher session repair did not succeed');
         return false;
       }
 
@@ -67,10 +102,6 @@ async function repairSession() {
 
       redirectAuthenticatedLogin(data);
       return true;
-    } catch (error) {
-      lastRefreshAt = Date.now();
-      console.debug('[auth-refresh] teacher session request error', error);
-      return false;
     } finally {
       refreshInFlight = null;
     }
@@ -105,4 +136,5 @@ export function ensureAuthRefresh() {
 
 if (typeof window !== 'undefined') {
   window.ensureAuthRefresh = ensureAuthRefresh;
+  window.ensureTeacherSession = ensureTeacherSession;
 }
