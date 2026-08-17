@@ -16,7 +16,6 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: staging
-
       - name: Route Daily Study through cookie-authenticated API gateway
         run: |
           python - <<'PY'
@@ -25,47 +24,37 @@ jobs:
           p = Path('students/study-v2/v2-daily.js')
           s = p.read_text()
 
-          old_endpoint = "var ENDPOINT='https://willena-proxy.willena.workers.dev/api/daily-study';"
-          new_endpoint = "var ENDPOINT='https://api.willenaenglish.com/api/daily-study';"
-          if old_endpoint not in s:
-              raise SystemExit('Expected direct Daily Study endpoint not found')
-          s = s.replace(old_endpoint, new_endpoint, 1)
+          a = "var ENDPOINT='https://willena-proxy.willena.workers.dev/api/daily-study';"
+          b = "var ENDPOINT='https://api.willenaenglish.com/api/daily-study';"
+          if a not in s:
+              raise SystemExit('direct Daily Study endpoint not found')
+          s = s.replace(a, b, 1)
 
-          old_request = """  var token=await dailyAccessToken();
+          a = """  var token=await dailyAccessToken();
   var url=ENDPOINT+'?date='+encodeURIComponent(activeDate())+'&track='+encodeURIComponent(activeTrack())+'&_='+Date.now();
   var opts={method:method,credentials:'omit',cache:'no-store',headers:{Accept:'application/json'}};
   if(token)opts.headers.Authorization='Bearer '+token;
 """
-          new_request = """  var url=ENDPOINT+'?date='+encodeURIComponent(activeDate())+'&track='+encodeURIComponent(activeTrack())+'&_='+Date.now();
+          b = """  var url=ENDPOINT+'?date='+encodeURIComponent(activeDate())+'&track='+encodeURIComponent(activeTrack())+'&_='+Date.now();
   var opts={method:method,credentials:'include',cache:'no-store',headers:{Accept:'application/json'}};
 """
-          if old_request not in s:
-              raise SystemExit('Expected bearer-token Daily Study request block not found')
-          s = s.replace(old_request, new_request, 1)
+          if a not in s:
+              raise SystemExit('bearer Daily Study request block not found')
+          s = s.replace(a, b, 1)
           p.write_text(s)
 
-          # Cache-bust only the Daily Study script so browsers get this fix immediately.
-          index = Path('students/study-v2/index.html')
-          h = index.read_text()
-          import re
-          h2, n = re.subn(r'\./v2-daily\.js\?v=[^"\']+', './v2-daily.js?v=20260817-cookieauth1', h, count=1)
-          if n != 1:
-              raise SystemExit('v2-daily script tag not found')
-          index.write_text(h2)
-
-          print('endpoint:', new_endpoint)
-          print('cookie credentials enabled:', "credentials:'include'" in s)
-          print('bearer header removed from request:', "opts.headers.Authorization='Bearer '+token" not in s)
+          p = Path('students/study-v2/index.html')
+          h = p.read_text()
+          old = './v2-daily.js?v=20260817-dailypersist3'
+          new = './v2-daily.js?v=20260817-cookieauth1'
+          if old not in h:
+              raise SystemExit('Daily Study cache-bust tag not found')
+          p.write_text(h.replace(old, new, 1))
           PY
-
       - name: Commit fix
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add students/study-v2/v2-daily.js students/study-v2/index.html
-          if git diff --cached --quiet; then
-            echo "No changes needed"
-            exit 0
-          fi
           git commit -m "Use persistent cookie auth for Daily Study"
           git push origin HEAD:staging
