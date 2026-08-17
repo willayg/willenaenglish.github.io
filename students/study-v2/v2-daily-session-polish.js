@@ -12,14 +12,20 @@ function applyHeader(){
   var skill=document.getElementById('v2PracticeSkill');
   var title=document.getElementById('v2PracticeTitle');
   var progress=document.getElementById('practicePerf');
-  if(back){back.textContent='←';back.setAttribute('aria-label','Back');}
-  if(skill)skill.hidden=true;
-  if(title)title.textContent='Daily Study';
+  if(back){if(back.textContent!=='←')back.textContent='←';back.setAttribute('aria-label','Back');}
+  if(skill&&!skill.hidden)skill.hidden=true;
+  if(title&&title.textContent!=='Daily Study')title.textContent='Daily Study';
   if(progress){
     var done=resolved(),pct=Math.max(0,Math.min(100,done/TARGET*100));
     progress.classList.add('daily-session-progress');
     progress.setAttribute('aria-label',done+' of '+TARGET+' complete');
-    progress.innerHTML='<span class="daily-session-progress-track"><i style="width:'+pct+'%"></i></span>';
+    var track=progress.querySelector('.daily-session-progress-track');
+    if(!track){
+      progress.textContent='';
+      track=document.createElement('span');track.className='daily-session-progress-track';
+      var fill=document.createElement('i');track.appendChild(fill);progress.appendChild(track);
+    }
+    var bar=track.querySelector('i');if(bar){var width=pct+'%';if(bar.style.width!==width)bar.style.width=width;}
   }
 }
 function restoreHeader(){
@@ -72,7 +78,11 @@ function bind(){
     setTimeout(function(){if(dailyMode())applyHeader();else restoreHeader();},0);
   });
   if(global.MutationObserver){
-    new MutationObserver(function(){if(dailyMode())applyHeader();else restoreHeader();polishRewardStars();}).observe(document.body,{attributes:true,attributeFilter:['class'],childList:true,subtree:true});
+    /* Watch only the Daily mode class for header state. Watching the whole page
+       while rewriting the progress bar created a self-triggering mutation loop. */
+    new MutationObserver(function(){if(dailyMode())applyHeader();else restoreHeader();}).observe(document.body,{attributes:true,attributeFilter:['class']});
+    var root=document.getElementById('v2ActivityRoot');
+    if(root)new MutationObserver(function(){polishRewardStars();}).observe(root,{childList:true,subtree:true});
   }
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind,{once:true});else bind();
