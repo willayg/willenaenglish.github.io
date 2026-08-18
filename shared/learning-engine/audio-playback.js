@@ -241,31 +241,51 @@ function spellingAnswerText(activity){
   if(Array.isArray(tokens))return tokens.join('');
   return text(tokens);
 }
+function listenButtonMarkup(){
+  return '<svg class="activity-audio-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 14v-2a8 8 0 0 1 16 0v2"></path><path d="M18 19h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2h-1z"></path><path d="M6 19H5a2 2 0 0 1-2-2v-3a2 2 0 0 0-2-2h1z"></path></svg><span>Play audio</span>';
+}
 function ensureSpellingListen(engine,activity){
   if(!engine||!engine.root||!activity)return;
   var spelling=engine.root.querySelector&&engine.root.querySelector('.activity-letter-order');
   if(!spelling)return;
-  var controls=spelling.querySelector('.activity-spelling-controls');
-  if(!controls||controls.querySelector('.activity-spelling-listen'))return;
+  var card=spelling.closest&&spelling.closest('.activity-card');
+  if(!card||card.querySelector('.activity-spelling-listen'))return;
   var answer=spellingAnswerText(activity);
   if(!answer)return;
+  var prompt=card.querySelector('.activity-prompt');
+  if(!prompt)return;
+
+  var row=document.createElement('div');
+  row.className='activity-spelling-prompt-row';
+  row.style.display='flex';
+  row.style.alignItems='center';
+  row.style.justifyContent='flex-start';
+  row.style.gap='18px';
+  row.style.flexWrap='wrap';
+  row.style.margin='0 0 10px';
+  prompt.parentNode.insertBefore(row,prompt);
+  row.appendChild(prompt);
+  prompt.style.marginBottom='0';
+
   var button=document.createElement('button');
   button.type='button';
-  button.className='activity-spelling-mode activity-spelling-listen';
-  button.textContent='🔊 듣기';
+  button.className='activity-audio activity-spelling-listen';
   button.setAttribute('aria-label','단어 듣기');
+  button.innerHTML=listenButtonMarkup();
+  button.style.setProperty('margin','0','important');
+  button.style.setProperty('flex','0 0 auto');
   button.addEventListener('click',function(e){
     e.preventDefault();e.stopPropagation();
     global.WillenaAudioPlayback.playText(button,answer,{lang:'en-US',rate:.9});
   });
-  controls.insertBefore(button,controls.firstChild);
+  row.appendChild(button);
 }
 
 proto.render=function(){
   var result=originalRender.apply(this,arguments);
   var engine=this,a=engine.current;
   ensureSpellingListen(engine,a);
-  var old=engine.root&&engine.root.querySelector&&engine.root.querySelector('.activity-audio');
+  var old=engine.root&&engine.root.querySelector&&engine.root.querySelector('.activity-audio:not(.activity-spelling-listen)');
   if(old&&a&&a.stimulus&&a.stimulus.type==='audio'){
     var button=old.cloneNode(true);
     old.replaceWith(button);
