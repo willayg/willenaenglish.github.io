@@ -194,21 +194,34 @@ async function promptOptions(){
   var rows=masteryRows(),cs=currentCandidates(ctx),unit=await unitBank(ctx),level=await levelBank(ctx),analysis=classifyState(ctx,rows,cs),opts=[];
   var history=rows.some(function(r){return r.pct>0;})||cs.some(function(c){return (Number(c.attempts)||0)+(Number(c.unique)||0)>0;});
   function add(id,labelKo,labelEn,skill,meta){if(opts.length>=MAX_PROMPTS||opts.some(function(x){return x.id===id;}))return;opts.push(Object.assign({id:id,label:isKo()?labelKo:labelEn,skill:skill||null},meta||{}));}
-  if(!history){add('unit','이 단원에서 뭘 공부하면 좋을까요?','What should I study in this unit?');if(unit.length>=MIN_SET)add('practice_unit','이 단원을 연습해 볼래요','Practice this unit');return opts;}
+  function fill(){
+    if(opts.length<3)add('unit','이 단원에서 뭘 공부하면 좋을까요?','What should I study in this unit?');
+    if(opts.length<3)add('practice_unit','이 단원을 연습해 볼래요','Practice this unit');
+    if(opts.length<3)add('new','새로운 걸 해볼래요','Give me something new');
+    if(opts.length<3)add('challenge','조금 더 어렵게 해볼래요','Make it a little harder',(analysis.strongest||analysis.weak||{}).skill);
+    return opts.slice(0,MAX_PROMPTS);
+  }
+  if(!history){
+    add('unit','이 단원에서 뭘 공부하면 좋을까요?','What should I study in this unit?');
+    add('practice_unit','이 단원을 연습해 볼래요','Practice this unit');
+    add('new','새로운 걸 해볼래요','Give me something new');
+    return fill();
+  }
   if(analysis.state==='challenge'){
     var patternPool=await patternChallengePool(ctx);if(patternPool.items.length>=MIN_SET)add('challenge_pattern','다른 책에서도 같은 문법 해볼래요','Try the same grammar in other books','grammar',{pattern:patternPool.pattern});
-    var strong=analysis.strongest;if(strong){var hard=await harderChallengePool(ctx,strong.skill);if(hard.length>=MIN_SET)add('challenge_harder','조금 더 어렵게 해볼래요','Make it harder',strong.skill);}
-    var mixed=await mixedChallengePool(ctx,rows);if(mixed.length>=MIN_SET)add('challenge_mixed','오늘 잘한 걸 섞어서 도전할래요','Mix my strong skills');
-    var outside=level.filter(function(x){return!sameUnit(ctx,x);});if(opts.length<MAX_PROMPTS&&outside.length>=MIN_SET)add('new','새로운 걸 해볼래요','Give me something new');
-    if(opts.length)return opts.slice(0,MAX_PROMPTS);
+    var strong=analysis.strongest;if(strong)add('challenge_harder','조금 더 어렵게 해볼래요','Make it harder',strong.skill);
+    add('challenge_mixed','오늘 잘한 걸 섞어서 도전할래요','Mix my strong skills');
+    add('new','새로운 걸 해볼래요','Give me something new');
+    return fill();
   }
   add('unit','이 단원에서 뭘 공부하면 좋을까요?','What should I study in this unit?');
   var weak=analysis.weak,mistake=cs.filter(function(c){return Number(c.lapses)>0;}).sort(function(a,b){return Number(b.lapses)-Number(a.lapses);})[0];
-  if(mistake&&await canBuildSkill(ctx,mistake.skill))add('mistakes','틀린 부분을 다시 도와줘','Help me with my mistakes',mistake.skill);
-  if(weak&&await canBuildSkill(ctx,weak.skill))add('skill:'+weak.skill,skillName(weak.skill)+'을 더 연습할래요','More '+skillName(weak.skill)+' practice',weak.skill);
-  var due=cs.filter(function(c){return Number(c.due)>0;}).sort(function(a,b){return Number(b.due)-Number(a.due);})[0];if(due&&await canBuildSkill(ctx,due.skill))add('review','잊기 전에 복습할래요','Review before I forget',due.skill);
-  if(opts.length<MAX_PROMPTS&&analysis.daily.strong){var mp=await mixedChallengePool(ctx,rows);if(mp.length>=MIN_SET)add('challenge_mixed','오늘 잘했으니 도전할래요','I did well — challenge me');}
-  return opts.slice(0,MAX_PROMPTS);
+  if(mistake)add('mistakes','틀린 부분을 다시 도와줘','Help me with my mistakes',mistake.skill);
+  if(weak)add('skill:'+weak.skill,skillName(weak.skill)+'을 더 연습할래요','More '+skillName(weak.skill)+' practice',weak.skill);
+  var due=cs.filter(function(c){return Number(c.due)>0;}).sort(function(a,b){return Number(b.due)-Number(a.due);})[0];
+  if(due)add('review','잊기 전에 복습할래요','Review before I forget',due.skill);
+  if(opts.length<3&&analysis.daily.strong)add('challenge_mixed','오늘 잘했으니 도전할래요','I did well — challenge me');
+  return fill();
 }
 
 function noSet(){return{type:'unavailable',message:isKo()?'지금은 좋은 연습 세트를 만들 만큼 서로 다른 문제가 충분하지 않아요. 같은 한 문제를 반복해서 추천하지 않을게요.':'There are not enough different useful questions to build a good practice set right now. I will not keep sending you the same single question.',action:null};}
