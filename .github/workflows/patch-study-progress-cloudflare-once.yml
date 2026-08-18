@@ -1,0 +1,63 @@
+name: Patch Study progress Cloudflare loop
+
+on:
+  push:
+    branches: [staging]
+    paths:
+      - '.github/workflows/patch-study-progress-cloudflare-once.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: staging
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Add Study V2 RPC routes to progress-summary Worker
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('cloudflare-workers/progress-summary/src/index.js')
+          s=p.read_text()
+
+          helper_marker="""  return resp.json();\n}\n\n// Get first of month ISO string\n"""
+          helper_insert="""  return resp.json();\n}\n\n// Authenticated RPC helper for Study V2. The Worker authenticates the browser,\n// then calls SECURITY DEFINER RPCs with the server-side service key and an\n// explicit student id derived from that authenticated session.\nasync function supabaseRpc(env, functionName, body = {}) {\n  const resp = await fetch(`${env.SUPABASE_URL}/rest/v1/rpc/${functionName}`, {\n    method: 'POST',\n    headers: {\n      'apikey': env.SUPABASE_SERVICE_KEY,\n      'Authorization': `Bearer ${env.SUPABASE_SERVICE_KEY}`,\n      'Content-Type': 'application/json',\n    },\n    body: JSON.stringify(body),\n  });\n  if (!resp.ok) {\n    const error = await resp.text();\n    throw new Error(`Supabase RPC ${functionName} failed: ${error}`);\n  }\n  return resp.json();\n}\n\n// Get first of month ISO string\n"""
+          if 'async function supabaseRpc(env, functionName' not in s:
+              if helper_marker not in s: raise SystemExit('helper marker missing')
+              s=s.replace(helper_marker,helper_insert,1)
+
+          old_method="""    if (request.method !== 'GET') {\n      return jsonResponse({ error: 'Method Not Allowed' }, 405, origin);\n    }\n"""
+          new_method="""    if (!['GET', 'POST'].includes(request.method)) {\n      return jsonResponse({ error: 'Method Not Allowed' }, 405, origin);\n    }\n"""
+          if old_method in s:
+              s=s.replace(old_method,new_method,1)
+
+          route_marker="""    const userId = user.id;\n    const section = (url.searchParams.get('section') || 'kpi').toLowerCase();\n    \n    try {\n      // ===== KPI (basic stats for current user) =====\n"""
+          route_insert="""    const userId = user.id;\n    const section = (url.searchParams.get('section') || 'kpi').toLowerCase();\n    \n    try {\n      // ===== STUDY V2: canonical write/read feedback loop =====\n      if (section === 'study_attempt') {\n        if (request.method !== 'POST') return jsonResponse({ error: 'Method Not Allowed' }, 405, origin);\n        const body = await request.json().catch(() => null);\n        const payload = body && body.payload;\n        if (!payload || typeof payload !== 'object') return jsonResponse({ success:false, error:'Missing study attempt payload' }, 400, origin);\n        const result = await supabaseRpc(env, 'record_study_attempt_v1', { p_student_id: userId, p_payload: payload });\n        return jsonResponse(result, 200, origin);\n      }\n\n      if (request.method !== 'GET') return jsonResponse({ error: 'Method Not Allowed' }, 405, origin);\n\n      if (section === 'study_progress') {\n        const result = await supabaseRpc(env, 'get_study_progress_v1', {\n          p_student_id: userId,\n          p_book_id: url.searchParams.get('book_id') || null,\n          p_unit_id: url.searchParams.get('unit_id') || null,\n        });\n        return jsonResponse(result, 200, origin);\n      }\n\n      if (section === 'study_content_mastery') {\n        const result = await supabaseRpc(env, 'get_study_content_mastery_v1', {\n          p_student_id: userId,\n          p_book_id: url.searchParams.get('book_id') || null,\n          p_unit_id: url.searchParams.get('unit_id') || null,\n        });\n        return jsonResponse(result, 200, origin);\n      }\n\n      if (section === 'adaptive_state') {\n        const result = await supabaseRpc(env, 'get_adaptive_study_state_v1', { p_student_id: userId });\n        return jsonResponse(result, 200, origin);\n      }\n\n      // ===== KPI (basic stats for current user) =====\n"""
+          if "section === 'study_content_mastery'" not in s:
+              if route_marker not in s: raise SystemExit('route marker missing')
+              s=s.replace(route_marker,route_insert,1)
+
+          p.write_text(s)
+          PY
+          grep -n "study_content_mastery\|record_study_attempt_v1\|supabaseRpc" cloudflare-workers/progress-summary/src/index.js | head -20
+      - name: Commit Cloudflare worker patch
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add cloudflare-workers/progress-summary/src/index.js
+          git diff --cached --quiet || git commit -m "Add Study V2 progress routes to Cloudflare worker"
+          git push origin HEAD:staging
+      - name: Deploy progress-summary Worker
+        working-directory: cloudflare-workers/progress-summary
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: npx --yes wrangler@4.119.0 deploy
