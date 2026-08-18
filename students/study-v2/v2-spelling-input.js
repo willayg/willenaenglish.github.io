@@ -72,8 +72,10 @@ async function fetchBookLevel(engine){
   return bookLevelCache[bookId];
 }
 
+/* Preferred teaching chunks always win. Keep this small and intentional; the heuristic below handles the rest. */
 var CURATED_CHUNKS={
-  igloo:['ig','loo'],rabbit:['rab','bit'],window:['win','dow'],teacher:['tea','ch','er'],banana:['ba','na','na'],
+  andy:['an','dy'],igloo:['ig','loo'],ostrich:['os','trich'],insect:['in','sect'],octopus:['oc','to','pus'],
+  rabbit:['rab','bit'],window:['win','dow'],teacher:['tea','ch','er'],banana:['ba','na','na'],
   apple:['ap','ple'],tiger:['ti','ger'],lion:['li','on'],monkey:['mon','key'],zebra:['ze','bra'],
   pencil:['pen','cil'],eraser:['e','ra','ser'],table:['ta','ble'],school:['sch','ool'],
   happy:['hap','py'],funny:['fun','ny'],sunny:['sun','ny'],rainy:['rain','y'],
@@ -84,6 +86,45 @@ var CURATED_CHUNKS={
 var PHONICS_PATTERNS=['tch','dge','igh','air','ear','ure','sh','ch','th','ph','wh','ck','ng','qu','ee','ea','oo','ai','ay','oa','ow','ou','oi','oy','ar','er','ir','or','ur','nk','nd','nt','mp','st','sk','ft','ld','lk','lp','rk','rt','sp','bl','cl','fl','gl','pl','sl','br','cr','dr','fr','gr','pr','tr','sm','sn','sw'];
 var VOWELS='aeiouy';
 
+function isVowel(ch,index,word){
+  if('aeiou'.indexOf(ch)>=0)return true;
+  /* Final/interior y often carries the vowel sound in beginner words (Andy, happy, sunny). */
+  return ch==='y'&&index>0&&index===word.length-1;
+}
+function vowelNuclei(word){
+  var nuclei=[],i=0;
+  while(i<word.length){
+    if(!isVowel(word[i],i,word)){i++;continue;}
+    var start=i;i++;
+    while(i<word.length&&isVowel(word[i],i,word))i++;
+    nuclei.push({start:start,end:i});
+  }
+  return nuclei;
+}
+function syllableLikeChunks(word){
+  word=lettersOnly(word);
+  var nuclei=vowelNuclei(word);
+  if(nuclei.length<2)return[];
+  var cuts=[];
+  for(var i=0;i<nuclei.length-1;i++){
+    var consonantStart=nuclei[i].end,nextVowel=nuclei[i+1].start,cluster=nextVowel-consonantStart,cut;
+    if(cluster<=0)continue;
+    if(cluster===1){
+      /* VCV: keep the single consonant as the onset of the next chunk: ti-ger. */
+      cut=consonantStart;
+    }else{
+      /* VCCV/VCCCV: close the first chunk, leave a readable onset: an-dy, rab-bit, os-trich. */
+      cut=consonantStart+Math.floor(cluster/2);
+    }
+    if(cut>0&&cut<word.length&&cuts.indexOf(cut)<0)cuts.push(cut);
+  }
+  if(!cuts.length)return[];
+  var out=[],from=0;
+  cuts.forEach(function(cut){if(cut>from){out.push(word.slice(from,cut));from=cut;}});
+  if(from<word.length)out.push(word.slice(from));
+  if(out.length<2||out.some(function(x){return !x;}))return[];
+  return out;
+}
 function phonicsAtoms(word){
   word=lettersOnly(word);
   var out=[],i=0;
@@ -124,25 +165,35 @@ function cvcStyle(word,atoms){
   if(VOWELS.indexOf(word[0])<0&&VOWELS.indexOf(word[1])>=0&&VOWELS.indexOf(word[2])<0)return[word[0],word.slice(1)];
   return null;
 }
+function vowelConsonantFallback(word,atoms){
+  word=lettersOnly(word);atoms=(atoms&&atoms.length?atoms:phonicsAtoms(word)).slice();
+  var nuclei=vowelNuclei(word);
+  if(nuclei.length===1&&word.length>=4){
+    var nucleus=nuclei[0],cut=nucleus.start;
+    if(cut<=0)cut=Math.min(word.length-1,nucleus.end+1);
+    if(cut>0&&cut<word.length)return[word.slice(0,cut),word.slice(cut)];
+  }
+  return balancedMerge(atoms,2);
+}
 function forceTwoChunks(word,atoms){
   word=lettersOnly(word);atoms=(atoms&&atoms.length?atoms:phonicsAtoms(word)).slice();
-  if(atoms.length>=2){var split=Math.max(1,Math.floor(atoms.length/2));return[mergeRange(atoms,0,split),mergeRange(atoms,split,atoms.length)].filter(Boolean);}
+  var fallback=vowelConsonantFallback(word,atoms);
+  if(fallback.length>=2)return fallback;
   var cut=Math.max(1,Math.floor(word.length/2));return[word.slice(0,cut),word.slice(cut)].filter(Boolean);
 }
 function chunkWord(word,internalLevel){
   word=lettersOnly(word);
   if(!word)return[];
   if(CURATED_CHUNKS[word])return CURATED_CHUNKS[word].slice();
-  var atoms=phonicsAtoms(word),cvc=cvcStyle(word,atoms),chunks;
-  if(cvc)chunks=cvc;
-  else if((Number(internalLevel)||99)<=2){
-    chunks=balancedMerge(atoms,2);
-  }else{
-    if(atoms.length>=2&&atoms.length<=4)chunks=atoms.slice();
-    else{
-      var target=word.length<=4?2:word.length<=6?3:4;
-      chunks=balancedMerge(atoms,target);
-    }
+
+  /* First choice after curated teaching chunks: a readable syllable-like split. */
+  var chunks=syllableLikeChunks(word),atoms=phonicsAtoms(word),cvc;
+  if(!chunks.length){
+    cvc=cvcStyle(word,atoms);
+    if(cvc)chunks=cvc;
+    else if((Number(internalLevel)||99)<=2)chunks=vowelConsonantFallback(word,atoms);
+    else if(atoms.length>=2&&atoms.length<=4)chunks=atoms.slice();
+    else chunks=balancedMerge(atoms,word.length<=4?2:word.length<=6?3:4);
   }
   if(chunks.length<2)chunks=forceTwoChunks(word,atoms);
   if(chunks.length>4)chunks=balancedMerge(chunks,4);
@@ -187,16 +238,17 @@ function install(){
     tilesBtn.type=keyBtn.type='button';controls.appendChild(tilesBtn);controls.appendChild(keyBtn);wrap.appendChild(controls);wrap.appendChild(slots);wrap.appendChild(pool);wrap.appendChild(hint);card.appendChild(wrap);
     var mode=pref();
     function setMode(next){mode=next;savePref(next);wrap.dataset.inputMode=next;tilesBtn.classList.toggle('is-active',next==='tiles');keyBtn.classList.toggle('is-active',next==='keyboard');draw();}
+    function chunkSize(el,value){if(!el)return;el.style.setProperty('--chunk-chars',String(Math.max(2,String(value||'').length)));}
     function drawSlots(){
       slots.innerHTML='';
       if(lowLevel){
         var row=node('div','activity-letter-word');
-        tokenSet.forEach(function(_,index){var slot=node('button','activity-letter-slot activity-chunk-slot',chosen[index]?chosen[index].text.toUpperCase():'');slot.type='button';slot.disabled=!chosen[index];(function(idx){slot.addEventListener('click',function(){if(mode==='tiles'&&chosen[idx]){chosen.splice(idx,1);draw();}});})(index);row.appendChild(slot);});
+        tokenSet.forEach(function(targetChunk,index){var slot=node('button','activity-letter-slot activity-chunk-slot',chosen[index]?chosen[index].text.toUpperCase():'');slot.type='button';slot.disabled=!chosen[index];chunkSize(slot,targetChunk);(function(idx){slot.addEventListener('click',function(){if(mode==='tiles'&&chosen[idx]){chosen.splice(idx,1);draw();}});})(index);row.appendChild(slot);});
         slots.appendChild(row);return;
       }
       var cursor=0;lengths.forEach(function(length,wordIndex){var row=node('div','activity-letter-word');for(var i=0;i<Number(length||0);i++){var slot=node('button','activity-letter-slot',chosen[cursor]?chosen[cursor].text.toUpperCase():'');slot.type='button';slot.disabled=!chosen[cursor];(function(index){slot.addEventListener('click',function(){if(mode==='tiles'&&chosen[index]){chosen.splice(index,1);draw();}});})(cursor);row.appendChild(slot);cursor++;}slots.appendChild(row);if(wordIndex<lengths.length-1){var space=node('span','activity-letter-space');space.setAttribute('aria-hidden','true');slots.appendChild(space);}});
     }
-    function draw(){drawSlots();pool.innerHTML='';if(mode==='tiles'){bank.filter(function(item){return chosen.indexOf(item)<0;}).forEach(function(item){var b=node('button','activity-letter-tile',item.text.toUpperCase());b.type='button';b.addEventListener('click',function(){chosen.push(item);draw();});pool.appendChild(b);});}self.selected=lowLevel?chosen.reduce(function(all,item){return all.concat(String(item.text).split(''));},[]):chosen.map(function(item){return item.text;});self.setCheckEnabled(card,chosen.length===bank.length);}
+    function draw(){drawSlots();pool.innerHTML='';if(mode==='tiles'){bank.filter(function(item){return chosen.indexOf(item)<0;}).forEach(function(item){var b=node('button','activity-letter-tile',item.text.toUpperCase());b.type='button';if(lowLevel)chunkSize(b,item.text);b.addEventListener('click',function(){chosen.push(item);draw();});pool.appendChild(b);});}self.selected=lowLevel?chosen.reduce(function(all,item){return all.concat(String(item.text).split(''));},[]):chosen.map(function(item){return item.text;});self.setCheckEnabled(card,chosen.length===bank.length);}
     function choosePhysicalLetter(letter){if(lowLevel||chosen.length>=bank.length)return;var upper=String(letter).toUpperCase(),item=bank.find(function(x){return chosen.indexOf(x)<0&&String(x.text).toUpperCase()===upper;});if(item){chosen.push(item);draw();}}
     activeKeyHandler=function(e){
       if(mode!=='keyboard'||!document.body.contains(card))return;
@@ -214,7 +266,7 @@ function install(){
       if(!document.body.contains(card)||!isLowLevelInfo(info))return;
       var chunks=buildLowLevelChunks(self,originalTokens,info);
       if(!chunks.length||chunks.join('').toLowerCase()!==wordAnswer(self,originalTokens))return;
-      lowLevel=true;tokenSet=chunks;rebuildBank();tilesBtn.textContent='단어 조각';keyBtn.style.display='none';hint.style.display='none';mode='tiles';wrap.dataset.inputMode='tiles';draw();
+      lowLevel=true;tokenSet=chunks;rebuildBank();tilesBtn.textContent='단어 조각';keyBtn.style.display='none';hint.style.display='none';mode='tiles';wrap.dataset.inputMode='tiles';wrap.dataset.chunkCount=String(chunks.length);wrap.classList.add('is-chunk-mode');draw();
     });
     if(lengths.length===1){lexicalPhrase(self,originalTokens).then(function(found){if(found&&document.body.contains(card)&&!lowLevel){lengths=found.lengths;if(self.current&&self.current.response)self.current.response.wordLengths=lengths.slice();if(self.current&&lettersOnly(self.current.answer)===lettersOnly(found.phrase))self.current.answer=found.phrase;draw();}});}
   };
