@@ -11,6 +11,29 @@ function keyboardFree(item){
   var type=text(response.type||item&&item.type);
   return type!=='typed_answer'&&type!=='gap_fill_text';
 }
+function currentLowLevelContext(){
+  try{
+    var uid=text(localStorage.getItem('user_id')||sessionStorage.getItem('user_id')||localStorage.getItem('userId')||sessionStorage.getItem('userId'));
+    if(!uid)return null;
+    var cache=JSON.parse(localStorage.getItem('willena-study-v2-home:v1:'+uid)||'null');
+    var books=cache&&arr(cache.books)||[],wanted=cache&&cache.activeBookId;
+    var book=books.find(function(b){return String(b.book_id)===String(wanted);})||books[0]||null;
+    if(!book)return null;
+    var unit=book.currentUnit||arr(book.units)[0]||null;if(!unit)return null;
+    var internal=Number(book.internal_level_id||book.internalLevel)||null;
+    var pub=Number(book.public_level||book.publicLevel)||null;
+    var low=internal?internal<=2:(pub?pub<=2:false);
+    return low?{bookId:String(book.book_id),unitId:String(unit.id),internal:internal,publicLevel:pub}:null;
+  }catch(_){return null;}
+}
+function dedupe(items){var seen={},out=[];arr(items).forEach(function(item){var key=text(item&&item.id||item&&item.sourceId||item&&item.source_id);if(!key||seen[key])return;seen[key]=1;out.push(item);});return out;}
+function focusLowLevelPlan(plan,items){
+  var ctx=currentLowLevelContext();if(!ctx)return items;
+  var type=text(plan&&plan.type);
+  if(['challenge_harder','challenge_pattern','challenge_mixed','new'].indexOf(type)>=0)return items;
+  var unitItems=items.filter(function(item){var m=item&&item.metadata||{};return String(m.book_id||'')===ctx.bookId&&String(m.unit_id||'')===ctx.unitId;});
+  return unitItems.length?unitItems:items;
+}
 async function repairConversationPrompt(item){
   if(!item||text(item.sourceType)!=='assessment_item'||text(item.skill)!=='conversation')return item;
   var sourceId=text(item.sourceId||item.source_id);if(!sourceId)return item;
@@ -80,9 +103,10 @@ function advance(){
 }
 function open(plan){
   if(!plan||!arr(plan.items).length||!global.WillenaActivityEngine)return false;
-  var safeItems=arr(plan.items).filter(keyboardFree).slice(0,12);
+  var safeItems=dedupe(arr(plan.items).filter(keyboardFree));
+  safeItems=focusLowLevelPlan(plan,safeItems).slice(0,12);
   if(!safeItems.length){
-    console.warn('[AI Coach] Practice plan contained only keyboard-based activities; refusing to open it.');
+    console.warn('[AI Coach] Practice plan contained no usable activities; refusing to open it.');
     return false;
   }
   var homeY=Math.max(0,Math.round(global.scrollY||global.pageYOffset||0));
