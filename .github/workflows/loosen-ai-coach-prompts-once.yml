@@ -1,0 +1,85 @@
+name: Loosen AI Coach prompt variety once
+
+on:
+  push:
+    branches: [staging]
+    paths:
+      - '.github/workflows/loosen-ai-coach-prompts-once.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: staging
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: Loosen prompt gating
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('students/study-v2/v2-ai-relevant-prompts.js')
+          text = path.read_text()
+          start = text.index('async function promptOptions(){')
+          end = text.index('\n\nfunction noSet()', start)
+          new = r'''async function promptOptions(){
+  var ctx=currentContext();if(!ctx)return[];
+  var rows=masteryRows(),cs=currentCandidates(ctx),unit=await unitBank(ctx),level=await levelBank(ctx),analysis=classifyState(ctx,rows,cs),opts=[];
+  var history=rows.some(function(r){return r.pct>0;})||cs.some(function(c){return (Number(c.attempts)||0)+(Number(c.unique)||0)>0;});
+  function add(id,labelKo,labelEn,skill,meta){if(opts.length>=MAX_PROMPTS||opts.some(function(x){return x.id===id;}))return;opts.push(Object.assign({id:id,label:isKo()?labelKo:labelEn,skill:skill||null},meta||{}));}
+  function fill(){
+    if(opts.length<3)add('unit','이 단원에서 뭘 공부하면 좋을까요?','What should I study in this unit?');
+    if(opts.length<3)add('practice_unit','이 단원을 연습해 볼래요','Practice this unit');
+    if(opts.length<3)add('new','새로운 걸 해볼래요','Give me something new');
+    if(opts.length<3)add('challenge','조금 더 어렵게 해볼래요','Make it a little harder',(analysis.strongest||analysis.weak||{}).skill);
+    return opts.slice(0,MAX_PROMPTS);
+  }
+  if(!history){
+    add('unit','이 단원에서 뭘 공부하면 좋을까요?','What should I study in this unit?');
+    add('practice_unit','이 단원을 연습해 볼래요','Practice this unit');
+    add('new','새로운 걸 해볼래요','Give me something new');
+    return fill();
+  }
+  if(analysis.state==='challenge'){
+    var patternPool=await patternChallengePool(ctx);if(patternPool.items.length>=MIN_SET)add('challenge_pattern','다른 책에서도 같은 문법 해볼래요','Try the same grammar in other books','grammar',{pattern:patternPool.pattern});
+    var strong=analysis.strongest;if(strong)add('challenge_harder','조금 더 어렵게 해볼래요','Make it harder',strong.skill);
+    add('challenge_mixed','오늘 잘한 걸 섞어서 도전할래요','Mix my strong skills');
+    add('new','새로운 걸 해볼래요','Give me something new');
+    return fill();
+  }
+  add('unit','이 단원에서 뭘 공부하면 좋을까요?','What should I study in this unit?');
+  var weak=analysis.weak,mistake=cs.filter(function(c){return Number(c.lapses)>0;}).sort(function(a,b){return Number(b.lapses)-Number(a.lapses);})[0];
+  if(mistake)add('mistakes','틀린 부분을 다시 도와줘','Help me with my mistakes',mistake.skill);
+  if(weak)add('skill:'+weak.skill,skillName(weak.skill)+'을 더 연습할래요','More '+skillName(weak.skill)+' practice',weak.skill);
+  var due=cs.filter(function(c){return Number(c.due)>0;}).sort(function(a,b){return Number(b.due)-Number(a.due);})[0];
+  if(due)add('review','잊기 전에 복습할래요','Review before I forget',due.skill);
+  if(opts.length<3&&analysis.daily.strong)add('challenge_mixed','오늘 잘했으니 도전할래요','I did well — challenge me');
+  return fill();
+}'''
+          path.write_text(text[:start] + new + text[end:])
+
+          index = Path('students/study-v2/index.html')
+          html = index.read_text()
+          old = './v2-ai-relevant-prompts.js?v=20260817-coachbrain2'
+          new_src = './v2-ai-relevant-prompts.js?v=20260819-promptvariety1'
+          if old not in html:
+              raise SystemExit('Expected AI prompt script version not found in index.html')
+          index.write_text(html.replace(old, new_src, 1))
+          PY
+      - name: Validate JavaScript syntax
+        run: node --check students/study-v2/v2-ai-relevant-prompts.js
+      - name: Commit patch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add students/study-v2/v2-ai-relevant-prompts.js students/study-v2/index.html
+          git diff --cached --check
+          git commit -m "Loosen AI Coach prompt gating"
+          git push origin staging
