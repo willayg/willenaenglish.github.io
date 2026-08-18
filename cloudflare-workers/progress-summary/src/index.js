@@ -102,6 +102,26 @@ async function supabaseSelect(env, table, query, options = {}) {
   return resp.json();
 }
 
+// Authenticated RPC helper for Study V2. The Worker authenticates the browser,
+// then calls SECURITY DEFINER RPCs with the server-side service key and an
+// explicit student id derived from that authenticated session.
+async function supabaseRpc(env, functionName, body = {}) {
+  const resp = await fetch(`${env.SUPABASE_URL}/rest/v1/rpc/${functionName}`, {
+    method: 'POST',
+    headers: {
+      'apikey': env.SUPABASE_SERVICE_KEY,
+      'Authorization': `Bearer ${env.SUPABASE_SERVICE_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(body),
+  });
+  if (!resp.ok) {
+    const error = await resp.text();
+    throw new Error(`Supabase RPC ${functionName} failed: ${error}`);
+  }
+  return resp.json();
+}
+
 // Get first of month ISO string
 function getMonthStartIso() {
   const now = new Date();
@@ -367,7 +387,7 @@ export default {
       return new Response(null, { status: 200, headers: corsHeaders });
     }
     
-    if (request.method !== 'GET') {
+    if (!['GET', 'POST'].includes(request.method)) {
       return jsonResponse({ error: 'Method Not Allowed' }, 405, origin);
     }
     
@@ -405,6 +425,41 @@ export default {
     const section = (url.searchParams.get('section') || 'kpi').toLowerCase();
     
     try {
+      // ===== STUDY V2: canonical write/read feedback loop =====
+      if (section === 'study_attempt') {
+        if (request.method !== 'POST') return jsonResponse({ error: 'Method Not Allowed' }, 405, origin);
+        const body = await request.json().catch(() => null);
+        const payload = body && body.payload;
+        if (!payload || typeof payload !== 'object') return jsonResponse({ success:false, error:'Missing study attempt payload' }, 400, origin);
+        const result = await supabaseRpc(env, 'record_study_attempt_v1', { p_student_id: userId, p_payload: payload });
+        return jsonResponse(result, 200, origin);
+      }
+
+      if (request.method !== 'GET') return jsonResponse({ error: 'Method Not Allowed' }, 405, origin);
+
+      if (section === 'study_progress') {
+        const result = await supabaseRpc(env, 'get_study_progress_v1', {
+          p_student_id: userId,
+          p_book_id: url.searchParams.get('book_id') || null,
+          p_unit_id: url.searchParams.get('unit_id') || null,
+        });
+        return jsonResponse(result, 200, origin);
+      }
+
+      if (section === 'study_content_mastery') {
+        const result = await supabaseRpc(env, 'get_study_content_mastery_v1', {
+          p_student_id: userId,
+          p_book_id: url.searchParams.get('book_id') || null,
+          p_unit_id: url.searchParams.get('unit_id') || null,
+        });
+        return jsonResponse(result, 200, origin);
+      }
+
+      if (section === 'adaptive_state') {
+        const result = await supabaseRpc(env, 'get_adaptive_study_state_v1', { p_student_id: userId });
+        return jsonResponse(result, 200, origin);
+      }
+
       // ===== KPI (basic stats for current user) =====
       if (section === 'kpi') {
         // Get user's recent sessions
