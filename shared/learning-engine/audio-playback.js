@@ -231,17 +231,49 @@ global.WillenaAudioPlayback.playText=function(button,value,options){
 };
 global.WillenaAudioPlayback.stop=stopCurrent;
 
+function spellingAnswerText(activity){
+  if(!activity)return'';
+  var value=activity.answer;
+  if(Array.isArray(value))value=value.join(' ');
+  value=text(value);
+  if(value)return value;
+  var tokens=activity.response&&activity.response.tokens||activity.tokens||[];
+  if(Array.isArray(tokens))return tokens.join('');
+  return text(tokens);
+}
+function ensureSpellingListen(engine,activity){
+  if(!engine||!engine.root||!activity)return;
+  var spelling=engine.root.querySelector&&engine.root.querySelector('.activity-letter-order');
+  if(!spelling)return;
+  var controls=spelling.querySelector('.activity-spelling-controls');
+  if(!controls||controls.querySelector('.activity-spelling-listen'))return;
+  var answer=spellingAnswerText(activity);
+  if(!answer)return;
+  var button=document.createElement('button');
+  button.type='button';
+  button.className='activity-spelling-mode activity-spelling-listen';
+  button.textContent='🔊 듣기';
+  button.setAttribute('aria-label','단어 듣기');
+  button.addEventListener('click',function(e){
+    e.preventDefault();e.stopPropagation();
+    global.WillenaAudioPlayback.playText(button,answer,{lang:'en-US',rate:.9});
+  });
+  controls.insertBefore(button,controls.firstChild);
+}
+
 proto.render=function(){
   var result=originalRender.apply(this,arguments);
   var engine=this,a=engine.current;
+  ensureSpellingListen(engine,a);
   var old=engine.root&&engine.root.querySelector&&engine.root.querySelector('.activity-audio');
-  if(!old||!a||!a.stimulus||a.stimulus.type!=='audio')return result;
-  var button=old.cloneNode(true);
-  old.replaceWith(button);
-  button.addEventListener('click',function(e){
-    e.preventDefault();e.stopPropagation();
-    playAudio(button,a);
-  });
+  if(old&&a&&a.stimulus&&a.stimulus.type==='audio'){
+    var button=old.cloneNode(true);
+    old.replaceWith(button);
+    button.addEventListener('click',function(e){
+      e.preventDefault();e.stopPropagation();
+      playAudio(button,a);
+    });
+  }
   return result;
 };
 proto.__willenaAudioPlayback=true;
