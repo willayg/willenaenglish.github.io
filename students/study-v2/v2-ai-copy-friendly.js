@@ -66,3 +66,15 @@ function mount(){
 
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',mount,{once:true});else mount();
 })(window);
+
+/* AI Coach v2 diagnostics + need-level session layer. Kept separate from the legacy skill scorer. */
+(function(){
+  function load(src,done){
+    if(document.querySelector('script[data-ai-layer="'+src+'"]')){if(done)done();return;}
+    var s=document.createElement('script');s.src='./'+src+'?v=20260818-needs1';s.dataset.aiLayer=src;s.async=false;if(done)s.onload=done;document.head.appendChild(s);
+  }
+  load('v2-ai-needs.js',function(){
+    load('v2-ai-smart-session.js');
+    if(location.hostname==='staging.willenaenglish.com')load('v2-ai-debug-needs.js');
+  });
+})();
