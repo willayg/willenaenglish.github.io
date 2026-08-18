@@ -118,8 +118,8 @@ function buildLowLevelChunks(engine,tokens){
   var words=String(ans==null?'':ans).trim().split(/\s+/).map(lettersOnly).filter(Boolean);
   if(!words.length){var single=wordAnswer(engine,tokens);words=single?[single]:[];}
   var out=[];
-  words.forEach(function(w,idx){chunkWord(w).forEach(function(c){if(c)out.push(c);});if(idx<words.length-1)out.push(' ');});
-  return out.filter(function(x){return x!==' ';});
+  words.forEach(function(w){chunkWord(w).forEach(function(c){if(c)out.push(c);});});
+  return out;
 }
 
 async function lexicalPhrase(engine,tokens){
