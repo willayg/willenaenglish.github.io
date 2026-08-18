@@ -83,3 +83,5 @@ jobs:
           git diff --cached --check
           git commit -m "Loosen AI Coach prompt gating"
           git push origin staging
+
+# trigger 2
