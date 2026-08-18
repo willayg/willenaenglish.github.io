@@ -4,6 +4,11 @@ var session=null;
 function text(v){return String(v==null?'':v).trim();}
 function isKo(){var b=document.getElementById('languageBtn');return !b||text(b.textContent)==='English';}
 function arr(v){return Array.isArray(v)?v:[];}
+function keyboardFree(item){
+  var response=item&&item.response||{};
+  var type=text(response.type||item&&item.type);
+  return type!=='typed_answer'&&type!=='gap_fill_text';
+}
 function ensureOverlay(){
   var old=document.getElementById('aiCoachPracticeOverlay');
   if(old)old.remove();
@@ -43,10 +48,15 @@ function advance(){
 }
 function open(plan){
   if(!plan||!arr(plan.items).length||!global.WillenaActivityEngine)return false;
+  var safeItems=arr(plan.items).filter(keyboardFree).slice(0,12);
+  if(!safeItems.length){
+    console.warn('[AI Coach] Practice plan contained only keyboard-based activities; refusing to open it.');
+    return false;
+  }
   var overlay=ensureOverlay();
   var root=overlay.querySelector('#aiCoachActivityRoot');
   var next=overlay.querySelector('#aiCoachPracticeNext');
-  session={items:arr(plan.items).slice(0,12),index:0,overlay:overlay,answered:false,engine:null};
+  session={items:safeItems,index:0,overlay:overlay,answered:false,engine:null};
   session.engine=new global.WillenaActivityEngine(root,{onAnswer:function(){
     if(!session)return;
     session.answered=true;
