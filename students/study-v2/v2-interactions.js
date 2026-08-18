@@ -173,9 +173,6 @@ function armSessionHistory(){
     history.pushState(Object.assign({},history.state||{},{willenaStudySession:true}),'',location.href);
     sessionHistoryArmed=true;
     sessionEverActive=false;
-    setTimeout(function(){
-      if(sessionHistoryArmed&&!sessionEverActive&&!activeSessionType())disarmSessionHistory();
-    },900);
   }catch(_){}
 }
 function disarmSessionHistory(){
