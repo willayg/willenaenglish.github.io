@@ -1,0 +1,52 @@
+/* Tablet touch sizing for Study V2. Phones and wide desktop layouts keep their existing scale. */
+@media (min-width:700px) and (max-width:1180px){
+  /* Top-level launchers */
+  .study-v2-top-actions{gap:18px 20px!important;padding:24px!important}
+  .study-v2-top-actions>.study-v2-action-card,
+  #dailyWorkoutCard.study-v2-daily-primary{min-height:112px!important;padding:20px 22px!important;gap:20px!important;border-radius:24px!important}
+  .study-v2-action-card>strong,
+  #dailyWorkoutCard.study-v2-daily-primary strong{font-size:1.18rem!important}
+  .study-v2-action-card>small{font-size:.84rem!important}
+
+  /* Book hub navigation and study/practice selectors */
+  .study-v2-book-hub{padding:28px!important}
+  .study-v2-book-mode-tabs{gap:10px!important;padding:7px!important}
+  .study-v2-book-mode-tab{min-height:56px!important;padding:12px 24px!important;font-size:1rem!important;border-radius:14px!important}
+  .study-v2-book-hub .study-v2-book-tabs{gap:30px!important}
+  .study-v2-book-hub .study-v2-book-tab{min-height:50px!important;padding:10px 5px 16px!important;font-size:1rem!important}
+  .study-v2-book-hub .study-v2-unit-strip{gap:14px!important;padding-bottom:10px!important}
+  .study-v2-book-hub .study-v2-unit{min-width:88px!important;min-height:54px!important;padding:12px 19px!important;font-size:.96rem!important;border-radius:17px!important}
+  .study-v2-book-hub .book-study-jump{gap:14px!important}
+  .study-v2-book-hub .book-study-jump button{min-height:58px!important;padding:14px 22px!important;font-size:1.06rem!important;border-radius:17px!important}
+  .study-v2-book-hub .header-skill-mastery-grid{gap:16px!important}
+  .study-v2-book-hub .header-skill-master{min-height:104px!important;padding:19px!important;border-radius:20px!important}
+
+  /* AI Coach */
+  .study-v2-ai-chat{gap:20px!important;padding:22px 24px 28px!important}
+  .study-v2-ai-chat-prompts{gap:13px!important}
+  .study-v2-ai-prompt{min-height:52px!important;padding:13px 18px!important;font-size:1rem!important}
+  .study-v2-ai-chat-cta{min-height:54px!important;padding:14px 21px!important;font-size:1.04rem!important}
+  .ai-coach-practice-back{width:52px!important;height:52px!important;border-radius:15px!important}
+  .ai-coach-practice-next{min-height:58px!important;padding:16px 22px!important;font-size:1.06rem!important}
+
+  /* Shared practice controls */
+  #v2PracticeClose,
+  .ghost-button,
+  .primary-button,
+  .secondary-button{min-height:52px!important;padding:12px 20px!important}
+  .activity-actions{gap:14px!important}
+  .activity-check,
+  .activity-next{min-height:58px!important;padding:14px 24px!important;font-size:1.05rem!important;border-radius:16px!important}
+  .activity-choices{gap:14px!important}
+  .activity-choice{min-height:58px!important;padding:15px 20px!important;font-size:1.04rem!important;border-radius:17px!important}
+  .activity-token-bank,
+  .activity-token-answer,
+  .activity-letter-bank{gap:14px!important}
+  .activity-token,
+  .activity-letter-tile{min-height:54px!important;padding:12px 18px!important;font-size:1rem!important}
+  .activity-audio{min-height:54px!important;padding:12px 18px!important}
+
+  /* Small utility controls still need comfortable touch targets. */
+  .study-v2-footer button,
+  #languageBtn{min-height:48px!important;padding:10px 17px!important}
+}
