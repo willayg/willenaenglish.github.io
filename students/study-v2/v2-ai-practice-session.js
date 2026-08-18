@@ -27,6 +27,14 @@ function scrollActionIntoView(overlay,action){
     try{action.scrollIntoView({behavior:'smooth',block:'end'});}catch(_){}
   });});
 }
+function restoreHomeY(y){
+  y=Math.max(0,Number(y)||0);
+  function place(){
+    try{global.scrollTo({top:y,left:0,behavior:'auto'});}catch(_){global.scrollTo(0,y);}
+  }
+  requestAnimationFrame(function(){requestAnimationFrame(place);});
+  [60,160,320].forEach(function(ms){setTimeout(place,ms);});
+}
 function showItem(){
   if(!session)return;
   var item=session.items[session.index];
@@ -53,10 +61,11 @@ function open(plan){
     console.warn('[AI Coach] Practice plan contained only keyboard-based activities; refusing to open it.');
     return false;
   }
+  var homeY=Math.max(0,Math.round(global.scrollY||global.pageYOffset||0));
   var overlay=ensureOverlay();
   var root=overlay.querySelector('#aiCoachActivityRoot');
   var next=overlay.querySelector('#aiCoachPracticeNext');
-  session={items:safeItems,index:0,overlay:overlay,answered:false,engine:null};
+  session={items:safeItems,index:0,overlay:overlay,answered:false,engine:null,homeY:homeY};
   session.engine=new global.WillenaActivityEngine(root,{onAnswer:function(){
     if(!session)return;
     session.answered=true;
@@ -70,14 +79,15 @@ function open(plan){
   return true;
 }
 function close(completed){
+  var homeY=session&&Number.isFinite(session.homeY)?session.homeY:(global.scrollY||0);
   var overlay=document.getElementById('aiCoachPracticeOverlay');if(overlay)overlay.remove();
   document.documentElement.style.overflow='';
   session=null;
   if(completed){
     var t=document.getElementById('aiChatTranscript');
     if(t){var row=document.createElement('div');row.className='study-v2-ai-chat-row is-coach';var bubble=document.createElement('div');bubble.className='study-v2-ai-chat-bubble';bubble.textContent=isKo()?'잘했어요! 더 도전하거나 새로운 걸 골라도 좋아요.':'Nice work! You can challenge yourself again or try something new.';row.appendChild(bubble);t.appendChild(row);}
-    var section=document.getElementById('aiRecommendations');if(section)section.scrollIntoView({behavior:'auto',block:'start'});
   }
+  restoreHomeY(homeY);
 }
 document.addEventListener('click',function(e){
   var cta=e.target&&e.target.closest&&e.target.closest('#aiChatCta .study-v2-ai-chat-cta');
