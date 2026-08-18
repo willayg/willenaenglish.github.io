@@ -88,7 +88,6 @@ var VOWELS='aeiouy';
 
 function isVowel(ch,index,word){
   if('aeiou'.indexOf(ch)>=0)return true;
-  /* Final/interior y often carries the vowel sound in beginner words (Andy, happy, sunny). */
   return ch==='y'&&index>0&&index===word.length-1;
 }
 function vowelNuclei(word){
@@ -109,13 +108,8 @@ function syllableLikeChunks(word){
   for(var i=0;i<nuclei.length-1;i++){
     var consonantStart=nuclei[i].end,nextVowel=nuclei[i+1].start,cluster=nextVowel-consonantStart,cut;
     if(cluster<=0)continue;
-    if(cluster===1){
-      /* VCV: keep the single consonant as the onset of the next chunk: ti-ger. */
-      cut=consonantStart;
-    }else{
-      /* VCCV/VCCCV: close the first chunk, leave a readable onset: an-dy, rab-bit, os-trich. */
-      cut=consonantStart+Math.floor(cluster/2);
-    }
+    if(cluster===1)cut=consonantStart;
+    else cut=consonantStart+Math.floor(cluster/2);
     if(cut>0&&cut<word.length&&cuts.indexOf(cut)<0)cuts.push(cut);
   }
   if(!cuts.length)return[];
@@ -185,8 +179,6 @@ function chunkWord(word,internalLevel){
   word=lettersOnly(word);
   if(!word)return[];
   if(CURATED_CHUNKS[word])return CURATED_CHUNKS[word].slice();
-
-  /* First choice after curated teaching chunks: a readable syllable-like split. */
   var chunks=syllableLikeChunks(word),atoms=phonicsAtoms(word),cvc;
   if(!chunks.length){
     cvc=cvcStyle(word,atoms);
@@ -199,13 +191,23 @@ function chunkWord(word,internalLevel){
   if(chunks.length>4)chunks=balancedMerge(chunks,4);
   return chunks.filter(Boolean);
 }
-function buildLowLevelChunks(engine,tokens,levelInfo){
-  var ans=engine&&engine.current&&engine.current.answer;
-  if(Array.isArray(ans))ans=ans.join(' ');
+function buildLowLevelChunks(engine,tokens,levelInfo,phraseOverride){
+  var ans=phraseOverride;
+  if(!ans){
+    ans=engine&&engine.current&&engine.current.answer;
+    if(Array.isArray(ans))ans=ans.join(' ');
+  }
   var words=String(ans==null?'':ans).trim().split(/\s+/).map(lettersOnly).filter(Boolean);
   if(!words.length){var single=wordAnswer(engine,tokens);words=single?[single]:[];}
-  var out=[],internal=levelInfo&&levelInfo.internal;
-  words.forEach(function(w){chunkWord(w,internal).forEach(function(c){if(c)out.push(c);});});
+  var out=[],counts=[],internal=levelInfo&&levelInfo.internal;
+  words.forEach(function(w){
+    var chunks=chunkWord(w,internal).filter(Boolean);
+    if(!chunks.length)return;
+    counts.push(chunks.length);
+    chunks.forEach(function(c){out.push(c);});
+  });
+  out.wordChunkCounts=counts;
+  out.sourceWords=words;
   return out;
 }
 
@@ -228,7 +230,7 @@ function install(){
   proto.setActivity=function(raw){cleanup();return originalSetActivity.call(this,raw);};
   proto.renderLetterOrder=function(card,tokens,wordLengths){
     cleanup();
-    var self=this,chosen=[],originalTokens=(tokens||[]).map(function(t){return String(t);}),lowLevel=false;
+    var self=this,chosen=[],originalTokens=(tokens||[]).map(function(t){return String(t);}),lowLevel=false,chunkWordCounts=[];
     var tokenSet=originalTokens.slice();
     var lengths=answerWords(self,originalTokens,wordLengths),wrap=node('div','activity-letter-order'),controls=node('div','activity-spelling-controls'),tilesBtn=node('button','activity-spelling-mode','글자 버튼'),keyBtn=node('button','activity-spelling-mode','키보드'),slots=node('div','activity-letter-slots'),pool=node('div','activity-letter-bank'),hint=node('div','activity-spelling-keyboard-hint','실제 키보드로 입력하세요 · Backspace 삭제 · Enter 확인');
     var bank=[];
@@ -239,12 +241,23 @@ function install(){
     var mode=pref();
     function setMode(next){mode=next;savePref(next);wrap.dataset.inputMode=next;tilesBtn.classList.toggle('is-active',next==='tiles');keyBtn.classList.toggle('is-active',next==='keyboard');draw();}
     function chunkSize(el,value){if(!el)return;el.style.setProperty('--chunk-chars',String(Math.max(2,String(value||'').length)));}
+    function appendChunkSlot(row,targetChunk,index){
+      var slot=node('button','activity-letter-slot activity-chunk-slot',chosen[index]?chosen[index].text.toUpperCase():'');
+      slot.type='button';slot.disabled=!chosen[index];chunkSize(slot,targetChunk);
+      slot.addEventListener('click',function(){if(mode==='tiles'&&chosen[index]){chosen.splice(index,1);draw();}});
+      row.appendChild(slot);
+    }
     function drawSlots(){
       slots.innerHTML='';
       if(lowLevel){
-        var row=node('div','activity-letter-word');
-        tokenSet.forEach(function(targetChunk,index){var slot=node('button','activity-letter-slot activity-chunk-slot',chosen[index]?chosen[index].text.toUpperCase():'');slot.type='button';slot.disabled=!chosen[index];chunkSize(slot,targetChunk);(function(idx){slot.addEventListener('click',function(){if(mode==='tiles'&&chosen[idx]){chosen.splice(idx,1);draw();}});})(index);row.appendChild(slot);});
-        slots.appendChild(row);return;
+        var cursor=0,groups=chunkWordCounts.length?chunkWordCounts:[tokenSet.length];
+        groups.forEach(function(count,wordIndex){
+          var row=node('div','activity-letter-word activity-chunk-word-group');
+          for(var i=0;i<count&&cursor<tokenSet.length;i++,cursor++)appendChunkSlot(row,tokenSet[cursor],cursor);
+          slots.appendChild(row);
+          if(wordIndex<groups.length-1){var space=node('span','activity-letter-space activity-chunk-word-space');space.setAttribute('aria-hidden','true');slots.appendChild(space);}
+        });
+        return;
       }
       var cursor=0;lengths.forEach(function(length,wordIndex){var row=node('div','activity-letter-word');for(var i=0;i<Number(length||0);i++){var slot=node('button','activity-letter-slot',chosen[cursor]?chosen[cursor].text.toUpperCase():'');slot.type='button';slot.disabled=!chosen[cursor];(function(index){slot.addEventListener('click',function(){if(mode==='tiles'&&chosen[index]){chosen.splice(index,1);draw();}});})(cursor);row.appendChild(slot);cursor++;}slots.appendChild(row);if(wordIndex<lengths.length-1){var space=node('span','activity-letter-space');space.setAttribute('aria-hidden','true');slots.appendChild(space);}});
     }
@@ -262,11 +275,13 @@ function install(){
     document.addEventListener('keydown',activeKeyHandler,true);
     tilesBtn.addEventListener('click',function(){setMode('tiles');});keyBtn.addEventListener('click',function(){setMode('keyboard');});
     setMode(mode);
-    fetchBookLevel(self).then(function(info){
+    fetchBookLevel(self).then(async function(info){
       if(!document.body.contains(card)||!isLowLevelInfo(info))return;
-      var chunks=buildLowLevelChunks(self,originalTokens,info);
+      var phraseInfo=await lexicalPhrase(self,originalTokens);
+      if(!document.body.contains(card))return;
+      var chunks=buildLowLevelChunks(self,originalTokens,info,phraseInfo&&phraseInfo.phrase);
       if(!chunks.length||chunks.join('').toLowerCase()!==wordAnswer(self,originalTokens))return;
-      lowLevel=true;tokenSet=chunks;rebuildBank();tilesBtn.textContent='단어 조각';keyBtn.style.display='none';hint.style.display='none';mode='tiles';wrap.dataset.inputMode='tiles';wrap.dataset.chunkCount=String(chunks.length);wrap.classList.add('is-chunk-mode');draw();
+      lowLevel=true;tokenSet=chunks.slice();chunkWordCounts=(chunks.wordChunkCounts||[]).slice();rebuildBank();tilesBtn.textContent='단어 조각';keyBtn.style.display='none';hint.style.display='none';mode='tiles';wrap.dataset.inputMode='tiles';wrap.dataset.chunkCount=String(chunks.length);wrap.dataset.wordCount=String(chunkWordCounts.length||1);wrap.classList.add('is-chunk-mode');draw();
     });
     if(lengths.length===1){lexicalPhrase(self,originalTokens).then(function(found){if(found&&document.body.contains(card)&&!lowLevel){lengths=found.lengths;if(self.current&&self.current.response)self.current.response.wordLengths=lengths.slice();if(self.current&&lettersOnly(self.current.answer)===lettersOnly(found.phrase))self.current.answer=found.phrase;draw();}});}
   };
