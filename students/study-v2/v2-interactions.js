@@ -9,6 +9,8 @@ var watchTimer=null;
 var initialTimer=null;
 var backClosing=false;
 var initialStarted=false;
+var HOME_SCROLL_KEY='willena-study-v2-home-scroll:v1';
+var rememberedHomeY=null;
 
 function pct(card){
   var el=card&&card.querySelector('.header-skill-master-pct');
@@ -91,6 +93,51 @@ function waitForInitialCards(){
     }
   },25);
 }
+
+function saveHomePosition(){
+  var y=Math.max(0,Math.round(window.scrollY||window.pageYOffset||0));
+  rememberedHomeY=y;
+  try{sessionStorage.setItem(HOME_SCROLL_KEY,String(y));}catch(_){}
+}
+function readHomePosition(){
+  if(Number.isFinite(rememberedHomeY))return rememberedHomeY;
+  try{
+    var raw=sessionStorage.getItem(HOME_SCROLL_KEY),n=Number(raw);
+    if(Number.isFinite(n))return Math.max(0,n);
+  }catch(_){}
+  return 0;
+}
+function restoreHomePosition(){
+  var y=readHomePosition();
+  function place(){
+    try{window.scrollTo({top:y,left:0,behavior:'auto'});}catch(_){window.scrollTo(0,y);}
+  }
+  /* The home shell can re-expand over several frames after a fixed practice screen closes. */
+  requestAnimationFrame(function(){requestAnimationFrame(place);});
+  [60,160,320].forEach(function(ms){setTimeout(place,ms);});
+}
+function isHomeLaunch(target){
+  if(!target||!target.closest)return false;
+  return !!target.closest(
+    '#dailyWorkoutCard,'+
+    '#masteryGrid [data-skill],'+
+    '#aiChatCta .study-v2-ai-chat-cta'
+  );
+}
+function isReturnControl(target){
+  if(!target||!target.closest)return false;
+  return !!target.closest('#v2PracticeClose,#aiCoachPracticeBack,.ai-coach-practice-back');
+}
+
+/* Capture the page position before any full-screen Study V2 learning route can collapse the home layout. */
+document.addEventListener('pointerdown',function(e){
+  if(isHomeLaunch(e.target))saveHomePosition();
+},true);
+document.addEventListener('click',function(e){
+  /* Keyboard/assistive activation may not emit pointerdown. */
+  if(isHomeLaunch(e.target))saveHomePosition();
+  if(isReturnControl(e.target))restoreHomePosition();
+},true);
 
 document.addEventListener('pointerdown',function(e){
   var unit=e.target&&e.target.closest&&e.target.closest('.study-v2-unit');
