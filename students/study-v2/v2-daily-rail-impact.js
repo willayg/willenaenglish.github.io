@@ -29,6 +29,18 @@ function paintStreak(){
   var label=ko()?(n+'일 연속 학습'):(n+' day'+(n===1?'':'s')+' streak');
   streak.innerHTML=SPARK_SVG+'<span>'+label+'</span>';
 }
+function paintStartLabel(){
+  var ring=card.querySelector('.progress-ring');
+  var num=document.getElementById('smartDailyPct');
+  if(!ring||!num)return;
+  var raw=String(ring.style.getPropertyValue('--progress')||'').trim();
+  var progress=raw===''?NaN:Number(raw);
+  var copy=document.getElementById('smartProgressCopy');
+  var zeroCopy=/0\s*\/\s*20/.test(String(copy&&copy.textContent||''));
+  var isZero=(Number.isFinite(progress)&&progress===0)||zeroCopy;
+  var wanted=isZero?(ko()?'시작':'START'):null;
+  if(wanted&&num.textContent!==wanted)num.textContent=wanted;
+}
 
 function clearTitleInline(){
   if(!title)return;
@@ -71,13 +83,13 @@ function fitBookTitle(){
   while(size>min&&measuredTextWidth(size)>available)size-=1;
   title.style.setProperty('font-size',size+'px');
 }
-function refresh(){paintStreak();fitBookTitle();}
+function refresh(){paintStreak();paintStartLabel();fitBookTitle();}
 
 refresh();
 setTimeout(refresh,120);setTimeout(refresh,500);setTimeout(refresh,1200);setTimeout(refresh,2400);
 if(document.fonts&&document.fonts.ready)document.fonts.ready.then(function(){setTimeout(fitBookTitle,0);});
 if(window.MutationObserver){
-  new MutationObserver(function(){setTimeout(paintStreak,0);}).observe(card,{childList:true,characterData:true,subtree:true,attributes:true});
+  new MutationObserver(function(){setTimeout(function(){paintStreak();paintStartLabel();},0);}).observe(card,{childList:true,characterData:true,subtree:true,attributes:true});
   if(title)new MutationObserver(function(){setTimeout(fitBookTitle,0);}).observe(title,{childList:true,characterData:true,subtree:true});
 }
 if(window.ResizeObserver&&titleWrap)new ResizeObserver(function(){fitBookTitle();}).observe(titleWrap);
