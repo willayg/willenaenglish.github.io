@@ -6,7 +6,9 @@ var PREVIEW_KEY='willena-study-preview-book';
 var SCORING_VERSION=(global.WillenaActivityScoring&&WillenaActivityScoring.version)||'activity-v1';
 var PROGRESS_VERSION='study-v1';
 var SCHEDULER_VERSION='adaptive-v2-question-fast-pass';
+var CONCEPT_EVIDENCE_VERSION='grammar-taxonomy-v1';
 var flushing=false;
+var taxonomyPromise=null;
 
 function uuid(){if(global.crypto&&crypto.randomUUID)return crypto.randomUUID();return'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,function(c){var r=Math.random()*16|0,v=c==='x'?r:(r&3|8);return v.toString(16);});}
 function previewActive(){try{return !!sessionStorage.getItem(PREVIEW_KEY)||document.documentElement.classList.contains('study-preview-active');}catch(_){return document.documentElement.classList.contains('study-preview-active');}}
@@ -27,17 +29,40 @@ function payloadFrom(detail){var activity=detail&&detail.activity||{},result=det
  scoring_version:SCORING_VERSION,progress_version:PROGRESS_VERSION,study_context:isPreview?'independent':'current',preview_mode:false
  };}
 function normalizeQueuedPreview(item){if(!item||!item.payload)return item;var p=item.payload,m=p.metadata||{};if(p.preview_mode===true||m.preview_mode===true||m.recorded_from==='student-study-preview'){p.preview_mode=false;p.study_context='independent';p.metadata=Object.assign({},m,{preview_mode:true,recorded_from:'student-study-preview'});}return item;}
+function patternIdFor(payload){var m=payload&&payload.metadata||{};if(payload&&payload.skill==='grammar'&&m.pattern_id)return String(m.pattern_id);if(payload&&payload.mastery_content_type==='pattern'&&payload.mastery_content_id)return String(payload.mastery_content_id);if(payload&&payload.content_type==='pattern'&&payload.content_id)return String(payload.content_id);return'';}
+function ensureConceptTaxonomy(){
+ if(global.WillenaStudyConceptTaxonomy)return Promise.resolve(global.WillenaStudyConceptTaxonomy);
+ if(taxonomyPromise)return taxonomyPromise;
+ taxonomyPromise=new Promise(function(resolve){
+   var s=document.createElement('script');s.src='./study-concept-taxonomy.js?v=20260819-concepts1';s.async=true;
+   s.onload=function(){resolve(global.WillenaStudyConceptTaxonomy||null);};
+   s.onerror=function(){resolve(null);};
+   (document.head||document.documentElement).appendChild(s);
+ });
+ return taxonomyPromise;
+}
+async function attachConceptEvidence(payload){
+ if(!payload||payload.skill!=='grammar')return payload;
+ var patternId=patternIdFor(payload);if(!patternId)return payload;
+ try{
+   var taxonomy=await ensureConceptTaxonomy();
+   if(!taxonomy||typeof taxonomy.getPatternConcepts!=='function')return payload;
+   var evidence=await taxonomy.getPatternConcepts(patternId);
+   if(Array.isArray(evidence)&&evidence.length)payload.metadata=Object.assign({},payload.metadata,{concept_evidence:evidence,concept_evidence_version:CONCEPT_EVIDENCE_VERSION});
+ }catch(error){console.debug('[WillenaStudyProgress] concept evidence unavailable',error);}
+ return payload;
+}
 async function api(path,options){var response=await (global.WillenaAPI?WillenaAPI.fetch:fetch)(PROGRESS_ENDPOINT+path,Object.assign({credentials:'include',cache:'no-store'},options||{}));var data=await response.json().catch(function(){return{}});if(!response.ok||data&&data.success===false)throw new Error(data.error||('Study progress API failed ('+response.status+').'));return data;}
 async function send(item){item=normalizeQueuedPreview(item);return api('?section=study_attempt&_='+Date.now(),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({payload:item.payload})});}
 async function getProgress(bookId,unitId){var q='?section=study_progress&_='+Date.now();if(bookId)q+='&book_id='+encodeURIComponent(bookId);if(unitId)q+='&unit_id='+encodeURIComponent(unitId);return api(q);}
 async function getAdaptiveState(){return api('?section=adaptive_state&_='+Date.now());}
 async function getContentMastery(bookId,unitId){var q='?section=study_content_mastery&_='+Date.now();if(bookId)q+='&book_id='+encodeURIComponent(bookId);if(unitId)q+='&unit_id='+encodeURIComponent(unitId);return api(q);}
-async function flush(){if(flushing)return;flushing=true;try{var q=readQueue().map(normalizeQueuedPreview),remaining=[];for(var i=0;i<q.length;i++){try{await send(q[i]);}catch(error){remaining.push(q[i]);}}writeQueue(remaining);if(q.length&&!remaining.length)setStatus('Saved queued answers','#23704a');else if(remaining.length)setStatus('Queued '+remaining.length,'#a66a15');else setStatus(previewActive()?'Preview · recording':'Recorder ready','#173f46');}finally{flushing=false;}}
-async function record(detail){var payload=payloadFrom(detail);if(!payload){setStatus('Recorder · missing activity data','#a0443c');return;}var item={payload:payload,queued_at:new Date().toISOString()};setStatus(previewActive()?'Preview · saving…':'Saving…','#315e64');try{var result=await send(item);setStatus((previewActive()?'Preview · ':'')+'Saved ✓ · '+(result.study_context==='independent'?'independent':'current'),'#23704a');global.dispatchEvent(new CustomEvent('willena:study-recording',{detail:{status:'recorded',result:result,payload:payload}}));try{var progress=await getProgress(payload.book_id,payload.unit_id);global.dispatchEvent(new CustomEvent('willena:study-progress-updated',{detail:progress}));}catch(_){}try{var mastery=await getContentMastery(payload.book_id,payload.unit_id);global.dispatchEvent(new CustomEvent('willena:content-mastery-updated',{detail:{book_id:payload.book_id,unit_id:payload.unit_id,data:mastery}}));}catch(_){}}catch(error){console.warn('[WillenaStudyProgress] queued attempt after recording failure',error);queueAttempt(item);setStatus('Queued · '+error.message,'#a66a15');global.dispatchEvent(new CustomEvent('willena:study-recording',{detail:{status:'queued',error:error.message,payload:payload}}));}}
+async function flush(){if(flushing)return;flushing=true;try{var q=readQueue().map(normalizeQueuedPreview),remaining=[];for(var i=0;i<q.length;i++){try{await attachConceptEvidence(q[i].payload);await send(q[i]);}catch(error){remaining.push(q[i]);}}writeQueue(remaining);if(q.length&&!remaining.length)setStatus('Saved queued answers','#23704a');else if(remaining.length)setStatus('Queued '+remaining.length,'#a66a15');else setStatus(previewActive()?'Preview · recording':'Recorder ready','#173f46');}finally{flushing=false;}}
+async function record(detail){var payload=payloadFrom(detail);if(!payload){setStatus('Recorder · missing activity data','#a0443c');return;}await attachConceptEvidence(payload);var item={payload:payload,queued_at:new Date().toISOString()};setStatus(previewActive()?'Preview · saving…':'Saving…','#315e64');try{var result=await send(item);setStatus((previewActive()?'Preview · ':'')+'Saved ✓ · '+(result.study_context==='independent'?'independent':'current'),'#23704a');global.dispatchEvent(new CustomEvent('willena:study-recording',{detail:{status:'recorded',result:result,payload:payload}}));try{var progress=await getProgress(payload.book_id,payload.unit_id);global.dispatchEvent(new CustomEvent('willena:study-progress-updated',{detail:progress}));}catch(_){}try{var mastery=await getContentMastery(payload.book_id,payload.unit_id);global.dispatchEvent(new CustomEvent('willena:content-mastery-updated',{detail:{book_id:payload.book_id,unit_id:payload.unit_id,data:mastery}}));}catch(_){}}catch(error){console.warn('[WillenaStudyProgress] queued attempt after recording failure',error);queueAttempt(item);setStatus('Queued · '+error.message,'#a66a15');global.dispatchEvent(new CustomEvent('willena:study-recording',{detail:{status:'queued',error:error.message,payload:payload}}));}}
 
 global.addEventListener('willena:activity-answer',function(event){var activity=event&&event.detail&&event.detail.activity,meta=activity&&activity.metadata||{};if(meta.daily_test_mode===true)return;record(event.detail);});
 global.addEventListener('online',flush);
 global.addEventListener('auth:changed',flush);
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){ensureStatus();flush();},{once:true});else{ensureStatus();setTimeout(flush,0);}
-global.WillenaStudyProgress={record:record,flush:flush,getProgress:getProgress,getAdaptiveState:getAdaptiveState,getContentMastery:getContentMastery,isPreview:previewActive,scoringVersion:SCORING_VERSION,progressVersion:PROGRESS_VERSION,schedulerVersion:SCHEDULER_VERSION};
+global.WillenaStudyProgress={record:record,flush:flush,getProgress:getProgress,getAdaptiveState:getAdaptiveState,getContentMastery:getContentMastery,isPreview:previewActive,scoringVersion:SCORING_VERSION,progressVersion:PROGRESS_VERSION,schedulerVersion:SCHEDULER_VERSION,conceptEvidenceVersion:CONCEPT_EVIDENCE_VERSION};
 })(window);
