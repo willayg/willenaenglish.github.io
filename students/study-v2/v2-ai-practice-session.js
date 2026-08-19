@@ -19,11 +19,13 @@ async function awardCoachPoints(detail){
     extra:{source:'study_v2_ai_coach',skill:text(activity.skill),plan_type:session&&session.planType||null,activity_id:text(activity.id)}
   };
   try{
-    var r=await fetch(POINTS_ENDPOINT,{method:'POST',credentials:'include',cache:'no-store',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
-    if(!r.ok)throw new Error('points '+r.status);
+    var request=(global.WillenaAPI&&typeof global.WillenaAPI.fetch==='function')?global.WillenaAPI.fetch:fetch;
+    var r=await request(POINTS_ENDPOINT,{method:'POST',credentials:'include',cache:'no-store',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    var data=await r.json().catch(function(){return{};});
+    if(!r.ok||data&&data.error)throw new Error((data&&data.error)||('points '+r.status));
     try{global.dispatchEvent(new CustomEvent('points:optimistic-bump',{detail:{delta:2,source:'ai_coach'}}));}catch(_){}
     return true;
-  }catch(e){console.debug('[AI Coach] points award failed',e);return false;}
+  }catch(e){console.warn('[AI Coach] points award failed',e);return false;}
 }
 function keyboardFree(item){
   var response=item&&item.response||{};
