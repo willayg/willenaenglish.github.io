@@ -1,0 +1,43 @@
+name: Add Study V2 settings once
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/add-study-v2-settings-once.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: staging
+      - name: Load Study V2 settings
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('students/study-v2/index.html')
+          s=p.read_text()
+          css_marker='<link rel="stylesheet" href="./v2-daily-session-polish.css?v=20260818-coachmatch1">'
+          css_add=css_marker+'\n<link rel="stylesheet" href="./v2-settings.css?v=20260819-settings1">'
+          if './v2-settings.css?' not in s:
+              if css_marker not in s: raise SystemExit('CSS marker not found')
+              s=s.replace(css_marker,css_add,1)
+          js_marker='<script src="./v2-daily-rail-impact.js?v=20260816-heroclean1"></script>'
+          js_add=js_marker+'\n<script src="./v2-settings.js?v=20260819-settings1"></script>'
+          if './v2-settings.js?' not in s:
+              if js_marker not in s: raise SystemExit('JS marker not found')
+              s=s.replace(js_marker,js_add,1)
+          p.write_text(s)
+          PY
+      - name: Commit to staging
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add students/study-v2/index.html
+          git diff --cached --quiet || git commit -m "Load Study V2 settings and answer sounds"
+          git push origin HEAD:staging
