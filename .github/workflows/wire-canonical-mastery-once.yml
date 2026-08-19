@@ -110,3 +110,4 @@ async function request(method,body){
           git add students/study-v2/v2-daily.js students/study-v2/v2-ai-coach-needs.js students/study-v2/index.html
           git commit -m "Share canonical mastery between Daily and Coach"
           git push origin staging
+# trigger 2
