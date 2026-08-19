@@ -15,6 +15,15 @@
 }
 #studySettingsBtn:hover{background:#f7fcfd}
 #studySettingsBtn:focus-visible{outline:3px solid rgba(33,179,190,.24);outline-offset:3px}
+@media (min-width:760px){
+  .study-v2-top-actions>#studySettingsBtn{
+    grid-column:1 / -1;
+    grid-row:3;
+    justify-self:center;
+  }
+  .study-v2-top-actions .daily-rail-main{grid-row:4}
+  .study-v2-top-actions>#bookPracticeBtn{grid-row:4}
+}
 .study-settings-backdrop{
   position:fixed;
   inset:0;
