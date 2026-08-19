@@ -20,11 +20,7 @@ function applyHeader(){
     progress.classList.add('daily-session-progress');
     progress.setAttribute('aria-label',done+' of '+TARGET+' complete');
     var track=progress.querySelector('.daily-session-progress-track');
-    if(!track){
-      progress.textContent='';
-      track=document.createElement('span');track.className='daily-session-progress-track';
-      var fill=document.createElement('i');track.appendChild(fill);progress.appendChild(track);
-    }
+    if(!track){progress.textContent='';track=document.createElement('span');track.className='daily-session-progress-track';var fill=document.createElement('i');track.appendChild(fill);progress.appendChild(track);}
     var bar=track.querySelector('i');if(bar){var width=pct+'%';if(bar.style.width!==width)bar.style.width=width;}
   }
 }
@@ -41,11 +37,7 @@ function restoreHeader(){
 }
 function scrollActionIntoView(){
   if(!dailyMode())return;
-  requestAnimationFrame(function(){requestAnimationFrame(function(){
-    var action=document.querySelector('#v2ActivityRoot .activity-check');
-    if(!action)return;
-    try{action.scrollIntoView({behavior:'smooth',block:'end'});}catch(_){}
-  });});
+  requestAnimationFrame(function(){requestAnimationFrame(function(){var action=document.querySelector('#v2ActivityRoot .activity-check');if(!action)return;try{action.scrollIntoView({behavior:'smooth',block:'end'});}catch(_){}});});
 }
 function starSvg(){return '<svg class="daily-reward-star-svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 2.4l2.82 5.72 6.31.92-4.57 4.45 1.08 6.28L12 16.8l-5.64 2.97 1.08-6.28-4.57-4.45 6.31-.92L12 2.4z"/></svg>';}
 function replaceStars(el){
@@ -57,12 +49,16 @@ function replaceStars(el){
 }
 function polishRewardStars(){document.querySelectorAll('.daily-reward-stars,.daily-reward-bonus').forEach(replaceStars);}
 function afterAnswer(){if(!dailyMode())return;requestAnimationFrame(function(){applyHeader();scrollActionIntoView();polishRewardStars();});}
+function ensureMorphologyCoachMenu(){
+  if(document.getElementById('v2MorphologyCoachMenuScript'))return;
+  var s=document.createElement('script');s.id='v2MorphologyCoachMenuScript';s.src='/students/study-v2/v2-morphology-coach-menu.js?v=20260820-maintenance1';s.async=true;(document.head||document.documentElement).appendChild(s);
+}
 function ensureMorphologySidecar(){
-  if(global.WillenaMorphologySidecar||document.getElementById('v2MorphologySidecarScript'))return;
-  var s=document.createElement('script');s.id='v2MorphologySidecarScript';s.src='/students/study-v2/v2-morphology-sidecar.js?v=20260820-morph3-robust2';s.async=true;(document.head||document.documentElement).appendChild(s);
+  if(global.WillenaMorphologySidecar||document.getElementById('v2MorphologySidecarScript')){ensureMorphologyCoachMenu();return;}
+  var s=document.createElement('script');s.id='v2MorphologySidecarScript';s.src='/students/study-v2/v2-morphology-sidecar.js?v=20260820-morph3-robust2';s.async=true;s.onload=ensureMorphologyCoachMenu;(document.head||document.documentElement).appendChild(s);
 }
 function bind(){
-  applyHeader();polishRewardStars();ensureMorphologySidecar();
+  applyHeader();polishRewardStars();ensureMorphologySidecar();ensureMorphologyCoachMenu();
   global.addEventListener('willena:activity-answer',afterAnswer);
   document.addEventListener('click',function(e){var target=e.target&&e.target.closest?e.target.closest('#v2PracticeClose,#v2ActivityRoot .activity-check,#languageBtn'):null;if(!target)return;setTimeout(function(){if(dailyMode())applyHeader();else restoreHeader();},0);});
   if(global.MutationObserver){new MutationObserver(function(){if(dailyMode())applyHeader();else restoreHeader();}).observe(document.body,{attributes:true,attributeFilter:['class']});var root=document.getElementById('v2ActivityRoot');if(root)new MutationObserver(function(){polishRewardStars();}).observe(root,{childList:true,subtree:true});}
