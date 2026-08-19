@@ -1,0 +1,46 @@
+name: Study V2 settings outside launcher once
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/study-v2-settings-outside-launcher-once.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: staging
+      - name: Restore launcher layout and move settings outside
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          top = Path('students/study-v2/v2-top-layout.css')
+          s = top.read_text()
+          s = s.replace('align-items:center;gap:18px;margin:0 0 46px', 'align-items:stretch;gap:18px;margin:0 0 46px')
+          s = s.replace('    justify-items:center;\n', '')
+          top.write_text(s)
+
+          js = Path('students/study-v2/v2-settings.js')
+          s = js.read_text()
+          s = s.replace("daily.insertAdjacentElement('afterend',open);", "top.insertAdjacentElement('afterend',open);")
+          js.write_text(s)
+
+          idx = Path('students/study-v2/index.html')
+          s = idx.read_text()
+          s = s.replace('v2-top-layout.css?v=20260819-settingscenter1', 'v2-top-layout.css?v=20260820-settingsoutside1')
+          s = s.replace('v2-settings.css?v=20260820-settingscenter2', 'v2-settings.css?v=20260820-settingsoutside1')
+          s = s.replace('v2-settings.js?v=20260819-settings1', 'v2-settings.js?v=20260820-settingsoutside1')
+          idx.write_text(s)
+          PY
+      - name: Commit staging patch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add students/study-v2/v2-top-layout.css students/study-v2/v2-settings.js students/study-v2/index.html
+          git diff --cached --quiet && exit 0
+          git commit -m "Move Study V2 settings outside launcher"
+          git push origin HEAD:staging
