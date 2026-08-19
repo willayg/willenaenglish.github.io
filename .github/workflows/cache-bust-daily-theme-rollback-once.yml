@@ -1,0 +1,35 @@
+name: Cache bust Daily Study theme rollback once
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/cache-bust-daily-theme-rollback-once.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: staging
+      - name: Bust Daily Study journey cache after rollback
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('students/study-v2/index.html')
+          s=p.read_text()
+          s=s.replace('./v2-daily-journey.js?v=20260819-theme1','./v2-daily-journey.js?v=20260819-rollback1')
+          s=s.replace('./v2-daily-journey.js?v=20260819-themepips1','./v2-daily-journey.js?v=20260819-rollback1')
+          p.write_text(s)
+          PY
+      - name: Commit rollback cache bust
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add students/study-v2/index.html
+          git diff --cached --quiet || git commit -m "Cache bust Daily Study theme rollback"
+          git push origin HEAD:staging
