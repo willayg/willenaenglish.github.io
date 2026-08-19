@@ -1,0 +1,41 @@
+name: Move Study V2 settings below hero structural
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/move-settings-below-hero-structural-main-once.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: staging
+      - name: Restructure settings launcher below hero
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('students/study-v2/index.html')
+          s=p.read_text()
+          old='''      </div>\n\n      <div class="daily-settings-launch-row">\n        <button id="dailySettingsLauncher" type="button" aria-haspopup="dialog">설정</button>\n      </div>\n\n      <section id="aiRecommendations" class="study-v2-ai-shell">'''
+          new='''      </div>\n    </div>\n\n    <div class="daily-settings-launch-row">\n      <button id="dailySettingsLauncher" type="button" aria-haspopup="dialog">설정</button>\n    </div>\n\n    <div class="hero-copy">\n      <section id="aiRecommendations" class="study-v2-ai-shell">'''
+          if old not in s:
+              raise SystemExit('target settings block not found')
+          s=s.replace(old,new,1)
+          s=s.replace('./v2-settings.css?v=20260820-freshsettings1','./v2-settings.css?v=20260820-belowhero1')
+          s=s.replace('./v2-settings.js?v=20260820-freshsettings1','./v2-settings.js?v=20260820-belowhero1')
+          p.write_text(s)
+          css=Path('students/study-v2/v2-settings.css')
+          c=css.read_text()
+          c=c.replace('''@media (min-width:760px){\n  .book-hero.daily-inline .hero-copy>.daily-settings-launch-row{grid-column:1/-1;grid-row:2;margin:14px 0 22px}\n  .book-hero.daily-inline .hero-copy>#aiRecommendations{grid-column:1/-1;grid-row:3}\n  .book-hero.daily-inline .hero-copy>#bookHub{grid-column:1/-1;grid-row:4}\n}\n''','')
+          css.write_text(c)
+          PY
+      - name: Commit to staging
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add students/study-v2/index.html students/study-v2/v2-settings.css
+          git commit -m 'Move Study V2 settings launcher below hero structure' || exit 0
+          git push origin HEAD:staging
