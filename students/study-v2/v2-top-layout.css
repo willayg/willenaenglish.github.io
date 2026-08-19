@@ -4,7 +4,7 @@
 .book-hero.daily-inline .hero-copy{display:block}
 
 /* Four independent actions: spacious border-first hierarchy. */
-.study-v2-top-actions{display:flex;flex-direction:column;align-items:stretch;gap:18px;margin:0 0 46px;padding:0;border:0;background:transparent;box-shadow:none;width:100%}
+.study-v2-top-actions{display:flex;flex-direction:column;align-items:center;gap:18px;margin:0 0 46px;padding:0;border:0;background:transparent;box-shadow:none;width:100%}
 .study-v2-top-actions>.study-v2-action-card{display:flex;flex:0 0 auto;width:100%;max-width:none;box-sizing:border-box;align-items:center;justify-content:flex-start;gap:18px;text-align:left;padding:20px 22px;min-height:112px;border-radius:24px;background:#fff;color:#35565b;box-shadow:0 8px 22px rgba(38,74,79,.06);font-family:inherit;cursor:pointer;transition:transform .16s ease,box-shadow .16s ease,background .16s ease,border-color .16s ease}
 .study-v2-action-card:hover,.study-v2-action-card:focus-visible{transform:translateY(-2px);outline:none;box-shadow:0 11px 27px rgba(38,74,79,.10)}
 .study-v2-action-card>strong{display:block;font-size:1.16rem;line-height:1.18;font-weight:800;color:#35565b}
@@ -73,6 +73,7 @@
     display:grid;
     grid-template-columns:minmax(0,1.35fr) minmax(250px,.65fr);
     align-items:stretch;
+    justify-items:center;
     padding:20px;
     gap:12px 14px;
   }
