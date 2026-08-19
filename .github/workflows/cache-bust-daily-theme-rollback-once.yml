@@ -22,8 +22,12 @@ jobs:
           from pathlib import Path
           p=Path('students/study-v2/index.html')
           s=p.read_text()
-          s=s.replace('./v2-daily-journey.js?v=20260819-theme1','./v2-daily-journey.js?v=20260819-rollback1')
-          s=s.replace('./v2-daily-journey.js?v=20260819-themepips1','./v2-daily-journey.js?v=20260819-rollback1')
+          for old in [
+            './v2-daily-journey.js?v=20260819-theme1',
+            './v2-daily-journey.js?v=20260819-theme2',
+            './v2-daily-journey.js?v=20260819-themepips1'
+          ]:
+            s=s.replace(old,'./v2-daily-journey.js?v=20260819-rollback1')
           p.write_text(s)
           PY
       - name: Commit rollback cache bust
