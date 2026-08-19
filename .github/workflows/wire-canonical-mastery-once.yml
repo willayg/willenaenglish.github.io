@@ -1,0 +1,112 @@
+name: Wire canonical mastery once
+
+on:
+  push:
+    branches: [staging]
+    paths:
+      - '.github/workflows/wire-canonical-mastery-once.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: staging
+      - name: Patch Daily and Coach
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          daily = Path('students/study-v2/v2-daily.js')
+          s = daily.read_text()
+          old = "var lastPlanDiagnostics=[];\nvar testMode="
+          new = "var lastPlanDiagnostics=[];\nvar canonicalMasteryIndex={};\nvar canonicalMasteryLoaded=false;\nvar testMode="
+          if old not in s: raise SystemExit('daily state anchor missing')
+          s = s.replace(old,new,1)
+
+          old = "async function request(method,body){\n"
+          insert = """async function refreshCanonicalMastery(){
+  if(testMode){canonicalMasteryIndex={};canonicalMasteryLoaded=true;return canonicalMasteryIndex;}
+  var progress=global.WillenaStudyProgress,shared=global.WillenaStudyV2Mastery;
+  if(!progress||typeof progress.getContentMastery!=='function'||!shared||typeof shared.indexRows!=='function')return canonicalMasteryIndex;
+  try{canonicalMasteryIndex=shared.indexRows(await progress.getContentMastery());canonicalMasteryLoaded=true;}
+  catch(e){console.debug('[Daily Study] canonical mastery unavailable',e);}
+  return canonicalMasteryIndex;
+}
+function canonicalScoreForActivity(activity){
+  var shared=global.WillenaStudyV2Mastery;if(!shared||typeof shared.activityKey!=='function'||typeof shared.scoreNeed!=='function')return null;
+  var key=shared.activityKey(activity),row=key&&canonicalMasteryIndex[key];if(!row)return null;
+  return shared.scoreNeed(row,{current:((activity&&activity.metadata)||{}).daily_role==='current'});
+}
+function combinedPriority(activity,priorityMap){
+  var m=activity&&activity.metadata||{},local=Number(priorityMap&&priorityMap[dailyKey(activity)]||m.daily_review_priority)||0;
+  var scored=canonicalScoreForActivity(activity),shared=global.WillenaStudyV2Mastery;if(!scored||!shared)return local;
+  return local*shared.dailyFactor(scored)+scored.score*1.5;
+}
+
+async function request(method,body){
+"""
+          if old not in s: raise SystemExit('daily request anchor missing')
+          s = s.replace(old,insert,1)
+
+          old = "daily_review_last_seen_day:Number(info.last_seen_study_day)||0\n"
+          new = "daily_review_last_seen_day:Number(info.last_seen_study_day)||0,\n      daily_review_priority:candidateScore(info,mix.bookDay)\n"
+          if old not in s: raise SystemExit('review metadata anchor missing')
+          s = s.replace(old,new,1)
+
+          old = "rows.slice().sort(function(a,b){return (priorityMap[dailyKey(b)]||0)-(priorityMap[dailyKey(a)]||0)||Math.random()-.5;})"
+          new = "rows.slice().sort(function(a,b){return combinedPriority(b,priorityMap)-combinedPriority(a,priorityMap)||Math.random()-.5;})"
+          if old not in s: raise SystemExit('skill queue anchor missing')
+          s = s.replace(old,new,1)
+
+          old = "var queues={current:skillBalancedQueue(currentRows,priorityMap),review:reviewRows.slice(),next:skillBalancedQueue(nextRows,{})};"
+          new = "var queues={current:skillBalancedQueue(currentRows,priorityMap),review:skillBalancedQueue(reviewRows,{}),next:skillBalancedQueue(nextRows,{})};"
+          if old not in s: raise SystemExit('review queue anchor missing')
+          s = s.replace(old,new,1)
+
+          old = "async function buildPlan(){\n  var h=home();"
+          new = "async function buildPlan(){\n  await refreshCanonicalMastery();\n  var h=home();"
+          if old not in s: raise SystemExit('build plan anchor missing')
+          s = s.replace(old,new,1)
+
+          old = "global.addEventListener('willena:activity-answer',onAnswer);\n"
+          new = "global.addEventListener('willena:activity-answer',onAnswer);\n  global.addEventListener('willena:content-mastery-updated',function(){refreshCanonicalMastery();});\n"
+          if old not in s: raise SystemExit('bind anchor missing')
+          s = s.replace(old,new,1)
+          daily.write_text(s)
+
+          coach = Path('students/study-v2/v2-ai-coach-needs.js')
+          c = coach.read_text()
+          old = "function needScore(r,b,current){\n"
+          new = "function needScore(r,b,current){\n  var shared=global.WillenaStudyV2Mastery;if(shared&&typeof shared.scoreNeed==='function')return shared.scoreNeed(r,{current:current});\n"
+          if old not in c: raise SystemExit('coach score anchor missing')
+          c = c.replace(old,new,1)
+          coach.write_text(c)
+
+          index = Path('students/study-v2/index.html')
+          h = index.read_text()
+          old = '<script src="./v2-daily.js?v=20260818-immediatenext1"></script>'
+          new = '<script src="./v2-mastery-model.js?v=20260819-canonical1"></script>\n<script src="./v2-daily.js?v=20260819-canonical1"></script>'
+          if old not in h: raise SystemExit('daily script anchor missing')
+          h = h.replace(old,new,1)
+          h = h.replace('./v2-ai-coach-needs.js?v=20260819-progressdb1','./v2-ai-coach-needs.js?v=20260819-canonical1',1)
+          index.write_text(h)
+          PY
+      - name: Validate JavaScript
+        run: |
+          node --check students/study-v2/v2-mastery-model.js
+          node --check students/study-v2/v2-daily.js
+          node --check students/study-v2/v2-ai-coach-needs.js
+          git diff --check
+      - name: Commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add students/study-v2/v2-daily.js students/study-v2/v2-ai-coach-needs.js students/study-v2/index.html
+          git commit -m "Share canonical mastery between Daily and Coach"
+          git push origin staging
