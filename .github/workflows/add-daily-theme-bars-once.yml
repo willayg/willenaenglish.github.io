@@ -1,0 +1,42 @@
+name: Add Daily Study theme bars once
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/add-daily-theme-bars-once.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: staging
+      - name: Load Daily Study theme bars
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('students/study-v2/index.html')
+          s=p.read_text()
+          marker='<script src="./v2-daily-rail-impact.js?v=20260816-heroclean1"></script>'
+          add=marker+'\n<script src="./v2-daily-theme-bars.js?v=20260819-themebars1"></script>'
+          if './v2-daily-theme-bars.js?' not in s:
+              if marker not in s:
+                  raise SystemExit('rail impact marker not found')
+              s=s.replace(marker,add,1)
+          else:
+              import re
+              s=re.sub(r'<script src="\./v2-daily-theme-bars\.js\?v=[^"]+"></script>', '<script src="./v2-daily-theme-bars.js?v=20260819-themebars1"></script>', s, count=1)
+          p.write_text(s)
+          PY
+      - name: Commit to staging
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add students/study-v2/index.html students/study-v2/v2-daily-theme-bars.js
+          git diff --cached --quiet || git commit -m "Use Daily Study mini bars as theme controls"
+          git push origin HEAD:staging
