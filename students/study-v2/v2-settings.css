@@ -1,9 +1,16 @@
 /* Study V2 settings + Daily hero themes */
+.study-settings-slot{
+  width:100%;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  margin:-18px 0 26px;
+}
 #studySettingsBtn{
   display:block;
   width:fit-content;
   min-width:112px;
-  margin:8px auto 18px;
+  margin:0;
   padding:9px 17px;
   border:2px solid #d4dadd;
   border-radius:999px;
@@ -16,13 +23,11 @@
 #studySettingsBtn:hover{background:#f7fcfd}
 #studySettingsBtn:focus-visible{outline:3px solid rgba(33,179,190,.24);outline-offset:3px}
 @media (min-width:760px){
-  .study-v2-top-actions>#studySettingsBtn{
+  .book-hero.daily-inline .hero-copy>.study-settings-slot{
     grid-column:1 / -1;
-    grid-row:3;
-    justify-self:center;
+    grid-row:2;
+    margin:14px 0 22px;
   }
-  .study-v2-top-actions .daily-rail-main{grid-row:4}
-  .study-v2-top-actions>#bookPracticeBtn{grid-row:4}
 }
 .study-settings-backdrop{
   position:fixed;
