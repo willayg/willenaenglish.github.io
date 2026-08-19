@@ -1,0 +1,31 @@
+name: Cache bust Study V2 settings row2 once
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/cachebust-study-settings-row2-once.yml'
+permissions:
+  contents: write
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: staging
+      - run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('students/study-v2/index.html')
+          s=p.read_text()
+          for old in ['v2-settings.css?v=20260820-settingsoutside1','v2-settings.css?v=20260820-settingscenter2','v2-settings.css?v=20260820-settingsrow1']:
+              s=s.replace(old,'v2-settings.css?v=20260820-settingsrow2')
+          for old in ['v2-settings.js?v=20260820-settingsoutside1','v2-settings.js?v=20260820-settingscenter2','v2-settings.js?v=20260820-settingsrow1']:
+              s=s.replace(old,'v2-settings.js?v=20260820-settingsrow2')
+          p.write_text(s)
+          PY
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add students/study-v2/index.html
+          git commit -m "Cache bust Study V2 settings row fix" || exit 0
+          git push origin HEAD:staging
