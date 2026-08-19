@@ -59,7 +59,7 @@ function polishRewardStars(){document.querySelectorAll('.daily-reward-stars,.dai
 function afterAnswer(){if(!dailyMode())return;requestAnimationFrame(function(){applyHeader();scrollActionIntoView();polishRewardStars();});}
 function ensureMorphologySidecar(){
   if(global.WillenaMorphologySidecar||document.getElementById('v2MorphologySidecarScript'))return;
-  var s=document.createElement('script');s.id='v2MorphologySidecarScript';s.src='/students/study-v2/v2-morphology-sidecar.js?v=20260820-morph3-robust';s.async=true;(document.head||document.documentElement).appendChild(s);
+  var s=document.createElement('script');s.id='v2MorphologySidecarScript';s.src='/students/study-v2/v2-morphology-sidecar.js?v=20260820-morph3-robust2';s.async=true;(document.head||document.documentElement).appendChild(s);
 }
 function bind(){
   applyHeader();polishRewardStars();ensureMorphologySidecar();
