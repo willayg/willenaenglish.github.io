@@ -1,25 +1,39 @@
 /* Study V2 settings + Daily hero themes */
 #studySettingsBtn{
-  display:block;
-  width:max-content;
-  min-width:112px;
-  margin:8px auto 18px;
-  padding:9px 17px;
-  border:2px solid #d4dadd;
-  border-radius:999px;
-  background:#fff;
-  color:#21b3be;
-  font:800 .8rem/1 Poppins,sans-serif;
+  display:block!important;
+  width:fit-content!important;
+  max-width:max-content!important;
+  min-width:112px!important;
+  margin:8px auto 18px!important;
+  padding:9px 17px!important;
+  border:2px solid #d4dadd!important;
+  border-radius:999px!important;
+  background:#fff!important;
+  color:#21b3be!important;
+  font:800 .8rem/1 Poppins,sans-serif!important;
   cursor:pointer;
-  box-shadow:none;
-  align-self:center;
-  justify-self:center;
+  box-shadow:none!important;
+  align-self:center!important;
+  justify-self:center!important;
 }
-#studySettingsBtn:hover{background:#f7fcfd}
+#studySettingsBtn:hover{background:#f7fcfd!important}
 #studySettingsBtn:focus-visible{outline:3px solid rgba(33,179,190,.24);outline-offset:3px}
 @media (min-width:760px){
-  .study-v2-top-actions>#studySettingsBtn{grid-column:1;grid-row:3;justify-self:center;align-self:start;margin:10px auto 12px}
+  .study-v2-top-actions>#studySettingsBtn{
+    grid-column:1!important;
+    grid-row:3!important;
+    justify-self:center!important;
+    align-self:start!important;
+    margin:10px auto 12px!important;
+  }
   .study-v2-top-actions .daily-rail-main{grid-row:4!important}
+}
+@media (max-width:759px){
+  .study-v2-top-actions>#studySettingsBtn{
+    align-self:center!important;
+    margin-left:auto!important;
+    margin-right:auto!important;
+  }
 }
 .study-settings-backdrop{
   position:fixed;
