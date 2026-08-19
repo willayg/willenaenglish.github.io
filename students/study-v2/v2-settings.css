@@ -1,22 +1,20 @@
-/* Study V2 footer settings + Daily hero themes */
-.study-v2-footer{
-  display:flex!important;
-  flex-direction:column!important;
-  align-items:center!important;
-  gap:8px!important;
-}
+/* Study V2 settings + Daily hero themes */
 #studySettingsBtn{
+  display:block;
+  width:max-content;
   min-width:112px;
-  padding:8px 15px;
+  margin:24px auto 28px;
+  padding:9px 17px;
   border:2px solid #ff6fb0;
   border-radius:999px;
-  background:linear-gradient(135deg,#effcff 0 50%,#fff3f8 50% 100%);
-  color:#244d53;
-  font:800 .78rem/1 Poppins,sans-serif;
+  background:#25cfe6;
+  color:#fff;
+  font:800 .8rem/1 Poppins,sans-serif;
   cursor:pointer;
-  box-shadow:0 5px 14px rgba(37,207,230,.09),0 5px 14px rgba(255,111,176,.08);
+  box-shadow:0 6px 14px rgba(36,77,83,.10);
 }
-#studySettingsBtn:focus-visible{outline:3px solid rgba(37,207,230,.28);outline-offset:2px}
+#studySettingsBtn:hover{background:#20bfd4}
+#studySettingsBtn:focus-visible{outline:3px solid rgba(255,111,176,.30);outline-offset:3px}
 .study-settings-backdrop{
   position:fixed;
   inset:0;
@@ -66,17 +64,17 @@
 .study-sound-toggle:before{
   content:"";position:absolute;top:4px;left:4px;width:23px;height:23px;border-radius:50%;background:#fff;box-shadow:0 2px 6px rgba(36,77,83,.18);transition:transform .16s ease
 }
-.study-sound-toggle[aria-pressed="true"]{background:linear-gradient(90deg,#25cfe6,#ff6fb0)}
+.study-sound-toggle[aria-pressed="true"]{background:#25cfe6}
 .study-sound-toggle[aria-pressed="true"]:before{transform:translateX(23px)}
 
 /* Settings-selected Daily Study theme. */
 .book-hero.daily-inline .study-v2-top-actions[data-study-theme]{border-color:var(--study-theme-accent)!important}
 .book-hero.daily-inline #dailyWorkoutCard.study-v2-daily-primary[data-study-theme]{
   background-color:#fff!important;
-  background-image:var(--study-theme-art-large),var(--study-theme-art-small),linear-gradient(160deg,#fff 0 58%,var(--study-theme-soft) 100%)!important;
-  background-repeat:no-repeat,no-repeat,no-repeat!important;
-  background-position:left -42px top 142px,right 17px bottom 58px,center!important;
-  background-size:132px 132px,80px 80px,100% 100%!important;
+  background-image:var(--study-theme-art-large),var(--study-theme-art-small)!important;
+  background-repeat:no-repeat,no-repeat!important;
+  background-position:left -42px top 142px,right 17px bottom 58px!important;
+  background-size:132px 132px,80px 80px!important;
   box-shadow:0 12px 30px var(--study-theme-shadow)!important;
 }
 .book-hero.daily-inline #dailyWorkoutCard.study-v2-daily-primary[data-study-theme]:hover,
