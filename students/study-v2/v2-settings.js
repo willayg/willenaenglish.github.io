@@ -30,17 +30,13 @@ function applyTheme(){
 }
 function setupAudio(){try{rightAudio=new Audio('/Games/english_arcade/assets/audio/right-answer.mp3');wrongAudio=new Audio('/Games/english_arcade/assets/audio/wrong-answer.mp3');[rightAudio,wrongAudio].forEach(function(a){a.preload='auto';a.volume=.45;});}catch(_){}}
 function playAnswerSound(correct){if(!state.sounds)return;var a=correct?rightAudio:wrongAudio;if(!a)return;try{a.pause();a.currentTime=0;a.volume=.45;var p=a.play();if(p&&p.catch)p.catch(function(){});}catch(_){}}
-function syncCopy(){var ko=korean(),open=document.getElementById('studySettingsBtn'),title=document.getElementById('studySettingsTitle'),themeLabel=document.getElementById('studyThemeLabel'),soundLabel=document.getElementById('studySoundLabel'),soundState=document.getElementById('studySoundState'),toggle=document.getElementById('studySoundToggle');if(open)open.textContent=ko?'설정':'Settings';if(title)title.textContent=ko?'설정':'Settings';if(themeLabel)themeLabel.textContent=ko?'테마':'Theme';if(soundLabel)soundLabel.textContent=ko?'정답 효과음':'Answer sounds';if(soundState)soundState.textContent=state.sounds?(ko?'켜짐':'On'):(ko?'꺼짐':'Off');if(toggle){toggle.setAttribute('aria-label',ko?'정답 효과음 켜기/끄기':'Turn answer sounds on or off');toggle.setAttribute('aria-pressed',state.sounds?'true':'false');}}
-function closeSettings(){var back=document.getElementById('studySettingsBackdrop');if(back)back.hidden=true;var btn=document.getElementById('studySettingsBtn');if(btn)btn.focus();}
-function openSettings(){var back=document.getElementById('studySettingsBackdrop');if(back){back.hidden=false;var close=back.querySelector('.study-settings-close');if(close)close.focus();}}
-function buildUi(){
-  var top=document.querySelector('.study-v2-top-actions'),daily=document.getElementById('dailyWorkoutCard'),open=document.getElementById('studySettingsBtn');
-  if(!top||!daily)return;
-  if(document.getElementById('studySettingsBackdrop'))return;
-  var back=document.createElement('div');back.id='studySettingsBackdrop';back.className='study-settings-backdrop';back.hidden=true;
-  back.innerHTML='<section class="study-settings-panel" role="dialog" aria-modal="true" aria-labelledby="studySettingsTitle"><div class="study-settings-head"><strong id="studySettingsTitle"></strong><button class="study-settings-close" type="button" aria-label="Close">×</button></div><div class="study-settings-group"><span id="studyThemeLabel" class="study-settings-label"></span><div class="study-theme-options"><button type="button" class="study-theme-choice" data-theme="pink" aria-label="Pink"></button><button type="button" class="study-theme-choice" data-theme="cyan" aria-label="Cyan"></button><button type="button" class="study-theme-choice" data-theme="blue" aria-label="Blue"></button><button type="button" class="study-theme-choice" data-theme="orange" aria-label="Orange"></button></div></div><div class="study-settings-group"><span id="studySoundLabel" class="study-settings-label"></span><div class="study-sound-row"><span id="studySoundState" class="study-sound-state"></span><button id="studySoundToggle" class="study-sound-toggle" type="button" aria-pressed="true"></button></div></div></section>';
-  document.body.appendChild(back);if(open)open.addEventListener('click',openSettings);back.querySelector('.study-settings-close').addEventListener('click',closeSettings);back.addEventListener('click',function(e){if(e.target===back)closeSettings();});document.addEventListener('keydown',function(e){if(e.key==='Escape'&&!back.hidden)closeSettings();});back.querySelectorAll('.study-theme-choice').forEach(function(btn){btn.addEventListener('click',function(){state.theme=btn.dataset.theme;save();applyTheme();});});back.querySelector('#studySoundToggle').addEventListener('click',function(){state.sounds=!state.sounds;save();syncCopy();});var lang=document.getElementById('languageBtn');if(lang)lang.addEventListener('click',function(){setTimeout(syncCopy,0);});syncCopy();applyTheme();
+function bind(){
+  setupAudio();
+  applyTheme();
+  global.addEventListener('willena:activity-answer',function(e){
+    var detail=e&&e.detail||{},result=detail.result||{};
+    if(typeof result.correct==='boolean')playAnswerSound(result.correct);
+  });
 }
-function bind(){buildUi();setupAudio();applyTheme();global.addEventListener('willena:activity-answer',function(e){var detail=e&&e.detail||{},result=detail.result||{};if(typeof result.correct==='boolean')playAnswerSound(result.correct);});}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind,{once:true});else bind();
 })(window);
