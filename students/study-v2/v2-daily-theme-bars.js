@@ -14,9 +14,8 @@ var rail=document.querySelector('.daily-rail-main');
 var row=rail&&rail.querySelector('.daily-rail-progress');
 if(!shell||!card||!rail||!row)return;
 
-function esc(hex){return hex.replace('#','%23');}
 function svgData(kind,color){
-  var c=esc(color),svg='';
+  var c=color,svg='';
   if(kind==='bolt')svg="<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path d='M58 7 24 55h24l-8 38 36-52H52z' fill='none' stroke='"+c+"' stroke-opacity='.18' stroke-width='7' stroke-linejoin='round'/></svg>";
   else if(kind==='rocket')svg="<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path d='M58 14c16 4 25 13 28 29-14 3-25 10-34 20L37 78 22 63l15-15c10-9 17-20 21-34Z' fill='none' stroke='"+c+"' stroke-opacity='.18' stroke-width='6' stroke-linejoin='round'/><circle cx='64' cy='36' r='7' fill='none' stroke='"+c+"' stroke-opacity='.18' stroke-width='5'/><path d='m29 70-9 15 15-9M42 57l-18-3 7-10M55 70l3 18 10-8' fill='none' stroke='"+c+"' stroke-opacity='.18' stroke-width='5' stroke-linecap='round'/></svg>";
   else if(kind==='fire')svg="<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path d='M54 10c4 18-5 24-3 38 2-6 8-10 13-15 3 8 14 19 14 32 0 17-13 28-29 28S20 82 20 65c0-18 14-27 23-40 4-6 8-11 11-15Z' fill='none' stroke='"+c+"' stroke-opacity='.18' stroke-width='6' stroke-linejoin='round'/><path d='M50 55c6 8 11 13 11 21 0 7-5 12-12 12S37 83 37 76c0-7 6-13 13-21Z' fill='none' stroke='"+c+"' stroke-opacity='.18' stroke-width='5'/></svg>";
