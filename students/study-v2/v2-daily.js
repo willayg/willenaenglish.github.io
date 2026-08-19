@@ -30,6 +30,7 @@ var syncing=false;
 var progression={bookStates:[],unitProgress:[],reviewItems:[]};
 var bookMetaPromises={};
 var lastPlanDiagnostics=[];
+var canonicalMasteryIndex={};
 var testMode=IS_STAGING&&readBool(TEST_MODE_KEY,false);
 var testDay=Math.max(1,readNumber(TEST_DAY_KEY,1));
 var testDetailsOpen=false;
@@ -58,6 +59,29 @@ function resolvedCount(){return Math.min(TARGET,arr(session&&session.resolved_ke
 function validActivity(a){return a&&a.id&&SKILLS.indexOf(a.skill)>=0&&a.response&&a.stimulus;}
 function dailyKey(a){return text(a&&a.daily_key||a&&a.id);}
 function hashString(s){var h=2166136261;for(var i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return h>>>0;}
+function unwrapRows(d){if(Array.isArray(d))return d;if(!d||typeof d!=='object')return[];if(Array.isArray(d.items))return d.items;if(Array.isArray(d.rows))return d.rows;if(Array.isArray(d.records))return d.records;if(Array.isArray(d.data))return d.data;return[];}
+function masteryType(v){v=text(v).toLowerCase();if(v==='lexical'||v==='vocab'||v==='vocabulary')v='lexical_entry';if(v==='grammar_pattern')v='pattern';return v||'activity';}
+function masteryRowKey(r){return[String(r&&r.book_id||''),String(r&&r.unit_id||''),text(r&&r.skill),masteryType(r&&r.content_type),String(r&&r.content_id||'')].join('|');}
+function activityMasteryKey(a){var m=a&&a.metadata||{},skill=text(a&&a.skill),typ=m.mastery_content_type||a&&a.sourceType||'activity',id=m.mastery_content_id||a&&a.sourceId||a&&a.source_id||null;if(skill==='grammar'&&m.pattern_id){typ='pattern';id=m.pattern_id;}if(!m.book_id||!m.unit_id||!skill||!id)return'';return[String(m.book_id),String(m.unit_id),skill,masteryType(typ),String(id)].join('|');}
+function canonicalNeed(row,currentRole){
+  if(!row)return null;
+  var attempts=Math.max(0,Number(row.attempts)||0),correct=Math.max(0,Number(row.correct_attempts!=null?row.correct_attempts:row.correct)||0);
+  var mastery=Number.isFinite(Number(row.mastery_score))?clamp(Number(row.mastery_score),0,100):(attempts?clamp(correct/attempts*100,0,100):50);
+  var rawAcc=Number(row.accuracy),accuracy=Number.isFinite(rawAcc)?(rawAcc<=1?rawAcc*100:rawAcc):(attempts?correct/attempts*100:null);if(accuracy!=null)accuracy=clamp(accuracy,0,100);
+  var lapses=Math.max(0,Number(row.lapses)||0),reviewState=text(row.review_state).toLowerCase(),last=Date.parse(row.last_seen_at||row.updated_at||''),recentHours=Number.isFinite(last)?Math.max(0,(Date.now()-last)/3600000):9999;
+  var next=Date.parse(row.next_review_at||row.next_due_at||''),due=!!(row.due===true||(Number.isFinite(next)&&next<=Date.now())),overdue=due&&Number.isFinite(next)?Math.max(0,Math.floor((Date.now()-next)/86400000)):0;
+  var perfect=attempts>=3&&correct===attempts;
+  var score=5+Math.min(55,Math.max(0,85-mastery)*.65)+(accuracy!=null?Math.min(20,Math.max(0,80-accuracy)*.25):5)+Math.min(24,lapses*7)+(due?18:0)+(due?Math.min(10,overdue):0)+(currentRole?4:0)+(currentRole&&attempts>0&&attempts<2?5:0)+(/secure|master/.test(reviewState)?-20:0)+(mastery>=90&&accuracy!=null&&accuracy>=90?-25:0)+(recentHours<=2&&mastery>=80&&accuracy!=null&&accuracy>=85?-15:0)+(perfect?-12:0);
+  score=clamp(score,0,100);
+  var factor=score<20?.18:score<35?.35:score<60?.70:1;
+  return{score:score,mastery:mastery,factor:factor};
+}
+async function refreshCanonicalMastery(){
+  if(testMode){canonicalMasteryIndex={};return;}
+  var progress=global.WillenaStudyProgress;if(!progress||typeof progress.getContentMastery!=='function')return;
+  try{var rows=unwrapRows(await progress.getContentMastery()),idx={};rows.forEach(function(r){var k=masteryRowKey(r);if(k)idx[k]=r;});canonicalMasteryIndex=idx;}catch(e){console.debug('[Daily Study] canonical mastery unavailable',e);}
+}
+function combinedPriority(a,priorityMap){var m=a&&a.metadata||{},local=Number(priorityMap&&priorityMap[dailyKey(a)]||m.daily_review_priority)||0,row=canonicalMasteryIndex[activityMasteryKey(a)],need=canonicalNeed(row,m.daily_role==='current');if(!need)return local;return local*need.factor+need.score*1.5;}
 
 function emptyProgression(){progression={bookStates:[],unitProgress:[],reviewItems:[]};}
 function ingestProgress(data){
@@ -250,7 +274,8 @@ async function loadHistoricalReviewPool(book,cursor,pace,mix,records){
       daily_review_lapses:Number(info.lapses)||0,
       daily_review_streak:Number(info.streak)||0,
       daily_review_due_day:Number(info.next_due_study_day)||0,
-      daily_review_last_seen_day:Number(info.last_seen_study_day)||0
+      daily_review_last_seen_day:Number(info.last_seen_study_day)||0,
+      daily_review_priority:candidateScore(info,mix.bookDay)
     });
     out.push(a);
   });
@@ -278,7 +303,7 @@ function mixForBook(cursor,pace,progress,hasReview){
 }
 function skillBalancedQueue(rows,priorityMap){
   var by={};SKILLS.forEach(function(s){by[s]=[];});
-  rows.slice().sort(function(a,b){return (priorityMap[dailyKey(b)]||0)-(priorityMap[dailyKey(a)]||0)||Math.random()-.5;}).forEach(function(a){if(validActivity(a))by[a.skill].push(a);});
+  rows.slice().sort(function(a,b){return combinedPriority(b,priorityMap)-combinedPriority(a,priorityMap)||Math.random()-.5;}).forEach(function(a){if(validActivity(a))by[a.skill].push(a);});
   var out=[],progress=true;
   while(progress){progress=false;SKILLS.forEach(function(s){if(by[s].length){out.push(by[s].shift());progress=true;}});}
   return out;
@@ -293,7 +318,7 @@ function rolePattern(mix){
   return out;
 }
 function weightedBookQueue(currentRows,reviewRows,nextRows,mix,priorityMap){
-  var queues={current:skillBalancedQueue(currentRows,priorityMap),review:reviewRows.slice(),next:skillBalancedQueue(nextRows,{})};
+  var queues={current:skillBalancedQueue(currentRows,priorityMap),review:skillBalancedQueue(reviewRows,{}),next:skillBalancedQueue(nextRows,{})};
   var pattern=rolePattern(mix),out=[],used={},step=0,alive=true;
   while(alive&&out.length<MAX_CANDIDATES){
     alive=queues.current.length||queues.review.length||queues.next.length;if(!alive)break;
@@ -333,6 +358,7 @@ function balancedCandidates(groups){
   return out;
 }
 async function buildPlan(){
+  await refreshCanonicalMastery();
   var h=home();if(!h||!h.books.length)throw new Error('Assigned books are still loading.');
   var books=h.books.filter(function(b){return b&&b.book_id&&arr(b.units).length;});if(!books.length)throw new Error('No study books are ready.');
   var groups=await Promise.all(books.map(loadDailyBookGroup));groups=groups.filter(function(g){return g.rows.length;});
@@ -437,7 +463,7 @@ function testPanelHtml(){
     '</div>'+
     '<div class="v2-daily-test-meta"><span>Simulated day <strong>'+testDay+'</strong></span><span>Date '+testDateKey()+'</span><span>'+escapeHtml(testMessage|| (testBusy?'Working…':'Ready'))+'</span></div>'+cards+details;
 }
-function escapeHtml(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+function escapeHtml(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c];});}
 function ensureTestPanel(){
   if(!IS_STAGING)return null;var el=document.getElementById('v2DailyTestPanel');if(el)return el;var app=document.getElementById('app');if(!app)return null;el=document.createElement('section');el.id='v2DailyTestPanel';el.className='v2-daily-test-panel';app.insertBefore(el,app.firstChild);return el;
 }
@@ -483,6 +509,7 @@ async function handleTestAction(action){
 
 function bind(){
   global.addEventListener('willena:activity-answer',onAnswer);
+  global.addEventListener('willena:content-mastery-updated',function(){refreshCanonicalMastery();});
   global.addEventListener('focus',syncCard);
   document.addEventListener('visibilitychange',function(){if(!document.hidden)syncCard();});
   var lang=document.getElementById('languageBtn');if(lang)lang.addEventListener('click',function(){setTimeout(paint,0);});
