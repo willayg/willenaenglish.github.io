@@ -75,9 +75,11 @@ function syncCopy(){
 function closeSettings(){var back=document.getElementById('studySettingsBackdrop');if(back)back.hidden=true;var btn=document.getElementById('studySettingsBtn');if(btn)btn.focus();}
 function openSettings(){var back=document.getElementById('studySettingsBackdrop');if(back){back.hidden=false;var close=back.querySelector('.study-settings-close');if(close)close.focus();}}
 function buildUi(){
-  var footer=document.querySelector('.study-v2-footer');
-  if(!footer||document.getElementById('studySettingsBtn'))return;
-  var open=document.createElement('button');open.type='button';open.id='studySettingsBtn';open.setAttribute('aria-haspopup','dialog');footer.appendChild(open);
+  var top=document.querySelector('.study-v2-top-actions');
+  var ai=document.getElementById('aiRecommendations');
+  if(!top||!ai||document.getElementById('studySettingsBtn'))return;
+  var open=document.createElement('button');open.type='button';open.id='studySettingsBtn';open.setAttribute('aria-haspopup','dialog');
+  top.parentNode.insertBefore(open,ai);
   var back=document.createElement('div');back.id='studySettingsBackdrop';back.className='study-settings-backdrop';back.hidden=true;
   back.innerHTML='<section class="study-settings-panel" role="dialog" aria-modal="true" aria-labelledby="studySettingsTitle"><div class="study-settings-head"><strong id="studySettingsTitle"></strong><button class="study-settings-close" type="button" aria-label="Close">×</button></div><div class="study-settings-group"><span id="studyThemeLabel" class="study-settings-label"></span><div class="study-theme-options"><button type="button" class="study-theme-choice" data-theme="pink" aria-label="Pink"></button><button type="button" class="study-theme-choice" data-theme="cyan" aria-label="Cyan"></button><button type="button" class="study-theme-choice" data-theme="blue" aria-label="Blue"></button><button type="button" class="study-theme-choice" data-theme="orange" aria-label="Orange"></button></div></div><div class="study-settings-group"><span id="studySoundLabel" class="study-settings-label"></span><div class="study-sound-row"><span id="studySoundState" class="study-sound-state"></span><button id="studySoundToggle" class="study-sound-toggle" type="button" aria-pressed="true"></button></div></div></section>';
   document.body.appendChild(back);
