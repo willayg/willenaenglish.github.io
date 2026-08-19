@@ -29,3 +29,4 @@ jobs:
           git add students/study-v2/index.html
           git diff --cached --quiet || git commit -m 'Cache bust Study V2 settings center fix'
           git push origin HEAD:staging
+# retrigger
