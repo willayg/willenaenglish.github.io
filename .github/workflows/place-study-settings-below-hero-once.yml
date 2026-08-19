@@ -1,0 +1,62 @@
+name: Place Study V2 settings below hero once
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/place-study-settings-below-hero-once.yml'
+permissions:
+  contents: write
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: staging
+      - name: Move settings into dedicated row
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          js=Path('students/study-v2/v2-settings.js')
+          s=js.read_text()
+          old="var open=document.createElement('button');open.type='button';open.id='studySettingsBtn';open.setAttribute('aria-haspopup','dialog');top.insertAdjacentElement('afterend',open);"
+          new="var slot=document.createElement('div');slot.className='study-settings-slot';var open=document.createElement('button');open.type='button';open.id='studySettingsBtn';open.setAttribute('aria-haspopup','dialog');slot.appendChild(open);top.insertAdjacentElement('afterend',slot);"
+          if old not in s:
+              raise SystemExit('settings insertion pattern not found')
+          js.write_text(s.replace(old,new))
+
+          css=Path('students/study-v2/v2-settings.css')
+          c=css.read_text()
+          slot_css="""
+.study-settings-slot{
+  width:100%;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  margin:-18px 0 26px;
+}
+@media (min-width:760px){
+  .book-hero.daily-inline .hero-copy>.study-settings-slot{
+    grid-column:1 / -1;
+    grid-row:2;
+    margin:14px 0 22px;
+  }
+}
+"""
+          if '.study-settings-slot{' not in c:
+              c = c + '\n' + slot_css
+          css.write_text(c)
+
+          idx=Path('students/study-v2/index.html')
+          h=idx.read_text()
+          h=h.replace('v2-settings.css?v=20260820-settingsoutside1','v2-settings.css?v=20260820-settingsrow1')
+          h=h.replace('v2-settings.js?v=20260820-settingsoutside1','v2-settings.js?v=20260820-settingsrow1')
+          idx.write_text(h)
+          PY
+      - name: Commit staging fix
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add students/study-v2/v2-settings.js students/study-v2/v2-settings.css students/study-v2/index.html
+          git commit -m "Place Study V2 settings below Daily Study hero" || exit 0
+          git push origin HEAD:staging
