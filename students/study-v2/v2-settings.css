@@ -1,10 +1,10 @@
 /* Study V2 settings + Daily hero themes */
-.study-settings-slot{
+.study-settings-launch-row{
   width:100%;
   display:flex;
   justify-content:center;
   align-items:center;
-  margin:-18px 0 26px;
+  margin:14px 0 26px;
 }
 #studySettingsBtn{
   display:block;
@@ -23,10 +23,18 @@
 #studySettingsBtn:hover{background:#f7fcfd}
 #studySettingsBtn:focus-visible{outline:3px solid rgba(33,179,190,.24);outline-offset:3px}
 @media (min-width:760px){
-  .book-hero.daily-inline .hero-copy>.study-settings-slot{
+  .book-hero.daily-inline .hero-copy>.study-settings-launch-row{
     grid-column:1 / -1;
     grid-row:2;
     margin:14px 0 22px;
+  }
+  .book-hero.daily-inline .hero-copy>#aiRecommendations{
+    grid-column:1 / -1;
+    grid-row:3;
+  }
+  .book-hero.daily-inline .hero-copy>#bookHub{
+    grid-column:1 / -1;
+    grid-row:4;
   }
 }
 .study-settings-backdrop{
