@@ -1,0 +1,58 @@
+name: Remove Study V2 settings UI once
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/remove-study-settings-ui-once.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: staging
+      - name: Remove settings launcher and modal UI
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          idx = Path('students/study-v2/index.html')
+          s = idx.read_text()
+          block = '''      <div class="study-settings-launch-row">\n        <button id="studySettingsBtn" type="button" aria-haspopup="dialog">설정</button>\n      </div>\n\n'''
+          s = s.replace(block, '', 1)
+          s = s.replace('v2-settings.css?v=20260820-staticbutton1', 'v2-settings.css?v=20260820-nosettingsui1')
+          s = s.replace('v2-settings.css?v=20260820-nolauncher1', 'v2-settings.css?v=20260820-nosettingsui1')
+          s = s.replace('v2-settings.css?v=20260820-settingsrow2', 'v2-settings.css?v=20260820-nosettingsui1')
+          s = s.replace('v2-settings.js?v=20260820-staticbutton1', 'v2-settings.js?v=20260820-nosettingsui1')
+          s = s.replace('v2-settings.js?v=20260820-nolauncher1', 'v2-settings.js?v=20260820-nosettingsui1')
+          s = s.replace('v2-settings.js?v=20260820-settingsrow2', 'v2-settings.js?v=20260820-nosettingsui1')
+          idx.write_text(s)
+
+          js = Path('students/study-v2/v2-settings.js')
+          j = js.read_text()
+          start = j.find('function syncCopy()')
+          end = j.find("if(document.readyState==='loading')")
+          if start == -1 or end == -1:
+              raise SystemExit('settings UI block markers not found')
+          replacement = '''function bind(){\n  setupAudio();\n  applyTheme();\n  global.addEventListener('willena:activity-answer',function(e){\n    var detail=e&&e.detail||{},result=detail.result||{};\n    if(typeof result.correct==='boolean')playAnswerSound(result.correct);\n  });\n}\n'''
+          j = j[:start] + replacement + j[end:]
+          js.write_text(j)
+
+          css = Path('students/study-v2/v2-settings.css')
+          c = css.read_text()
+          marker = '.book-hero.daily-inline .study-v2-top-actions[data-study-theme]'
+          pos = c.find(marker)
+          if pos == -1:
+              raise SystemExit('theme css marker not found')
+          c = '/* Study V2 saved theme + answer sound support. Settings UI temporarily removed. */\n' + c[pos:]
+          css.write_text(c)
+          PY
+      - name: Commit staging patch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add students/study-v2/index.html students/study-v2/v2-settings.js students/study-v2/v2-settings.css
+          git commit -m "Remove Study V2 settings UI"
+          git push origin HEAD:staging
