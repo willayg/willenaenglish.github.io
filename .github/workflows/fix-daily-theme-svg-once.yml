@@ -1,0 +1,37 @@
+name: Fix Daily Study theme SVG encoding once
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/fix-daily-theme-svg-once.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: staging
+      - name: Fix SVG color encoding and bust cache
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('students/study-v2/v2-daily-theme-bars.js')
+          s=p.read_text()
+          s=s.replace("function esc(hex){return hex.replace('#','%23');}\nfunction svgData(kind,color){\n  var c=esc(color),svg='';", "function svgData(kind,color){\n  var c=color,svg='';")
+          p.write_text(s)
+          p=Path('students/study-v2/index.html')
+          s=p.read_text().replace('./v2-daily-theme-bars.js?v=20260819-themebars1','./v2-daily-theme-bars.js?v=20260819-themebars2')
+          p.write_text(s)
+          PY
+      - name: Commit to staging
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add students/study-v2/v2-daily-theme-bars.js students/study-v2/index.html
+          git diff --cached --quiet || git commit -m "Fix Daily Study theme SVG artwork"
+          git push origin HEAD:staging
