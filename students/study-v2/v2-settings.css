@@ -3,7 +3,7 @@
   display:block;
   width:max-content;
   min-width:112px;
-  margin:28px auto 32px;
+  margin:8px auto 18px;
   padding:9px 17px;
   border:2px solid #21b3be;
   border-radius:999px;
@@ -12,9 +12,14 @@
   font:800 .8rem/1 Poppins,sans-serif;
   cursor:pointer;
   box-shadow:none;
+  align-self:center;
 }
 #studySettingsBtn:hover{background:#f7fcfd}
 #studySettingsBtn:focus-visible{outline:3px solid rgba(33,179,190,.24);outline-offset:3px}
+@media (min-width:760px){
+  .study-v2-top-actions>#studySettingsBtn{grid-column:1;grid-row:3;justify-self:center;align-self:start;margin:10px auto 12px}
+  .study-v2-top-actions .daily-rail-main{grid-row:4!important}
+}
 .study-settings-backdrop{
   position:fixed;
   inset:0;
@@ -35,21 +40,11 @@
 }
 .study-settings-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
 .study-settings-head strong{font-size:1.05rem;color:#244d53}
-.study-settings-close{
-  width:34px;height:34px;padding:0;border:1px solid #dfe8ea;border-radius:50%;background:#fff;color:#526d72;font-size:1.2rem;cursor:pointer
-}
+.study-settings-close{width:34px;height:34px;padding:0;border:1px solid #dfe8ea;border-radius:50%;background:#fff;color:#526d72;font-size:1.2rem;cursor:pointer}
 .study-settings-group+ .study-settings-group{margin-top:20px;padding-top:18px;border-top:1px solid #edf1f2}
 .study-settings-label{display:block;margin-bottom:10px;color:#526d72;font-size:.8rem;font-weight:800}
 .study-theme-options{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}
-.study-theme-choice{
-  position:relative;
-  height:44px;
-  padding:0;
-  border:3px solid #fff;
-  border-radius:14px;
-  cursor:pointer;
-  box-shadow:0 0 0 1px #dfe8ea;
-}
+.study-theme-choice{position:relative;height:44px;padding:0;border:3px solid #fff;border-radius:14px;cursor:pointer;box-shadow:0 0 0 1px #dfe8ea}
 .study-theme-choice[data-theme="pink"]{background:#ff6fb0}
 .study-theme-choice[data-theme="cyan"]{background:#25cfe6}
 .study-theme-choice[data-theme="blue"]{background:#4f86ff}
@@ -58,37 +53,13 @@
 .study-theme-choice:focus-visible{outline:3px solid rgba(36,77,83,.2);outline-offset:3px}
 .study-sound-row{display:flex;align-items:center;justify-content:space-between;gap:14px}
 .study-sound-state{color:#244d53;font-size:.9rem;font-weight:800}
-.study-sound-toggle{
-  position:relative;width:54px;height:31px;padding:0;border:0;border-radius:999px;background:#cfdadd;cursor:pointer;transition:background .16s ease
-}
-.study-sound-toggle:before{
-  content:"";position:absolute;top:4px;left:4px;width:23px;height:23px;border-radius:50%;background:#fff;box-shadow:0 2px 6px rgba(36,77,83,.18);transition:transform .16s ease
-}
+.study-sound-toggle{position:relative;width:54px;height:31px;padding:0;border:0;border-radius:999px;background:#cfdadd;cursor:pointer;transition:background .16s ease}
+.study-sound-toggle:before{content:"";position:absolute;top:4px;left:4px;width:23px;height:23px;border-radius:50%;background:#fff;box-shadow:0 2px 6px rgba(36,77,83,.18);transition:transform .16s ease}
 .study-sound-toggle[aria-pressed="true"]{background:#21b3be}
 .study-sound-toggle[aria-pressed="true"]:before{transform:translateX(23px)}
-
-/* Settings-selected Daily Study theme. */
 .book-hero.daily-inline .study-v2-top-actions[data-study-theme]{border-color:var(--study-theme-accent)!important}
-.book-hero.daily-inline #dailyWorkoutCard.study-v2-daily-primary[data-study-theme]{
-  background-color:#fff!important;
-  background-image:var(--study-theme-art-large),var(--study-theme-art-small)!important;
-  background-repeat:no-repeat,no-repeat!important;
-  background-position:left -42px top 142px,right 17px bottom 58px!important;
-  background-size:132px 132px,80px 80px!important;
-  box-shadow:0 12px 30px var(--study-theme-shadow)!important;
-}
-.book-hero.daily-inline #dailyWorkoutCard.study-v2-daily-primary[data-study-theme]:hover,
-.book-hero.daily-inline #dailyWorkoutCard.study-v2-daily-primary[data-study-theme]:focus-visible{
-  box-shadow:0 14px 34px var(--study-theme-shadow)!important;
-}
-.book-hero.daily-inline #dailyWorkoutCard.study-v2-daily-primary[data-study-theme] .progress-ring{
-  background:conic-gradient(var(--study-theme-accent) 0 calc(var(--progress,0)*1%),var(--study-theme-ring) calc(var(--progress,0)*1%) 100%)!important;
-  box-shadow:0 0 0 5px #fff,0 0 0 8px var(--study-theme-glow),0 10px 22px rgba(36,77,83,.12)!important;
-}
-.book-hero.daily-inline #dailyWorkoutCard.study-v2-daily-primary[data-study-theme] .progress-ring span,
-.book-hero.daily-inline #dailyWorkoutCard.study-v2-daily-primary[data-study-theme] .daily-rail-today{color:var(--study-theme-accent)!important}
-.book-hero.daily-inline .study-v2-top-actions[data-study-theme] .daily-rail-streak{
-  border-color:var(--study-theme-badge)!important;
-  color:var(--study-theme-badge-text)!important;
-  box-shadow:0 6px 15px var(--study-theme-shadow)!important;
-}
+.book-hero.daily-inline #dailyWorkoutCard.study-v2-daily-primary[data-study-theme]{background-color:#fff!important;background-image:var(--study-theme-art-large),var(--study-theme-art-small)!important;background-repeat:no-repeat,no-repeat!important;background-position:left -42px top 142px,right 17px bottom 58px!important;background-size:132px 132px,80px 80px!important;box-shadow:0 12px 30px var(--study-theme-shadow)!important}
+.book-hero.daily-inline #dailyWorkoutCard.study-v2-daily-primary[data-study-theme]:hover,.book-hero.daily-inline #dailyWorkoutCard.study-v2-daily-primary[data-study-theme]:focus-visible{box-shadow:0 14px 34px var(--study-theme-shadow)!important}
+.book-hero.daily-inline #dailyWorkoutCard.study-v2-daily-primary[data-study-theme] .progress-ring{background:conic-gradient(var(--study-theme-accent) 0 calc(var(--progress,0)*1%),var(--study-theme-ring) calc(var(--progress,0)*1%) 100%)!important;box-shadow:0 0 0 5px #fff,0 0 0 8px var(--study-theme-glow),0 10px 22px rgba(36,77,83,.12)!important}
+.book-hero.daily-inline #dailyWorkoutCard.study-v2-daily-primary[data-study-theme] .progress-ring span,.book-hero.daily-inline #dailyWorkoutCard.study-v2-daily-primary[data-study-theme] .daily-rail-today{color:var(--study-theme-accent)!important}
+.book-hero.daily-inline .study-v2-top-actions[data-study-theme] .daily-rail-streak{border-color:var(--study-theme-badge)!important;color:var(--study-theme-badge-text)!important;box-shadow:0 6px 15px var(--study-theme-shadow)!important}
