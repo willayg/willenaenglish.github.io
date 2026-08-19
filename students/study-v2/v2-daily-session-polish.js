@@ -14,7 +14,7 @@ function applyHeader(){
   var progress=document.getElementById('practicePerf');
   if(back){if(back.textContent!=='←')back.textContent='←';back.setAttribute('aria-label','Back');}
   if(skill&&!skill.hidden)skill.hidden=true;
-  if(title&&title.textContent!=='Daily Study')title.textContent='Daily Study';
+  if(title&&!title.hidden)title.hidden=true;
   if(progress){
     var done=resolved(),pct=Math.max(0,Math.min(100,done/TARGET*100));
     progress.classList.add('daily-session-progress');
@@ -32,9 +32,11 @@ function restoreHeader(){
   if(dailyMode())return;
   var back=document.getElementById('v2PracticeClose');
   var skill=document.getElementById('v2PracticeSkill');
+  var title=document.getElementById('v2PracticeTitle');
   var progress=document.getElementById('practicePerf');
   if(back&&back.textContent.trim()==='←')back.textContent='← 뒤로';
   if(skill)skill.hidden=false;
+  if(title)title.hidden=false;
   if(progress){progress.classList.remove('daily-session-progress');progress.removeAttribute('aria-label');}
 }
 function scrollActionIntoView(){
