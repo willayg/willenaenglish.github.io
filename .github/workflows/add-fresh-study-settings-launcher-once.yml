@@ -1,0 +1,40 @@
+name: Add fresh Study V2 settings launcher once
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/add-fresh-study-settings-launcher-once.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: staging
+      - name: Patch Study V2 index
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('students/study-v2/index.html')
+          s=p.read_text()
+          old='''      </div>\n\n      <section id="aiRecommendations" class="study-v2-ai-shell">'''
+          new='''      </div>\n\n      <div class="daily-settings-launch-row">\n        <button id="dailySettingsLauncher" type="button" aria-haspopup="dialog">설정</button>\n      </div>\n\n      <section id="aiRecommendations" class="study-v2-ai-shell">'''
+          if 'id="dailySettingsLauncher"' not in s:
+              if old not in s:
+                  raise SystemExit('launcher insertion point not found')
+              s=s.replace(old,new,1)
+          s=s.replace('./v2-settings.css?v=20260820-nosettingsui1','./v2-settings.css?v=20260820-freshsettings1')
+          s=s.replace('./v2-settings.js?v=20260820-nosettingsui1','./v2-settings.js?v=20260820-freshsettings1')
+          s=s.replace('./v2-settings.js?v=20260820-staticbutton1','./v2-settings.js?v=20260820-freshsettings1')
+          p.write_text(s)
+          PY
+      - name: Commit staging change
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add students/study-v2/index.html
+          git diff --cached --quiet && exit 0
+          git commit -m "Add fresh Study V2 settings launcher under hero"
+          git push origin HEAD:staging
