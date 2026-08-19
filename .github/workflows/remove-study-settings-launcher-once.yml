@@ -1,0 +1,51 @@
+name: Remove Study V2 settings launcher once
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/remove-study-settings-launcher-once.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: staging
+      - name: Remove launcher and keep modal alive
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          idx = Path('students/study-v2/index.html')
+          s = idx.read_text()
+          block = '''      <div class="study-settings-launch-row">\n        <button id="studySettingsBtn" type="button" aria-haspopup="dialog">설정</button>\n      </div>\n\n'''
+          if block not in s:
+              raise SystemExit('settings launcher block not found')
+          s = s.replace(block, '', 1)
+          s = s.replace('v2-settings.css?v=20260820-staticbutton1', 'v2-settings.css?v=20260820-nolauncher1')
+          s = s.replace('v2-settings.js?v=20260820-staticbutton1', 'v2-settings.js?v=20260820-nolauncher1')
+          idx.write_text(s)
+
+          js = Path('students/study-v2/v2-settings.js')
+          j = js.read_text()
+          old = "  var top=document.querySelector('.study-v2-top-actions'),daily=document.getElementById('dailyWorkoutCard'),open=document.getElementById('studySettingsBtn');\n  if(!top||!daily||!open)return;"
+          new = "  var top=document.querySelector('.study-v2-top-actions'),daily=document.getElementById('dailyWorkoutCard'),open=document.getElementById('studySettingsBtn');\n  if(!top||!daily)return;\n  if(document.getElementById('studySettingsBackdrop'))return;"
+          if old not in j:
+              raise SystemExit('modal dependency block not found')
+          j = j.replace(old, new, 1)
+          old2 = "document.body.appendChild(back);open.addEventListener('click',openSettings);back.querySelector('.study-settings-close').addEventListener('click',closeSettings);"
+          new2 = "document.body.appendChild(back);if(open)open.addEventListener('click',openSettings);back.querySelector('.study-settings-close').addEventListener('click',closeSettings);"
+          if old2 not in j:
+              raise SystemExit('open listener block not found')
+          j = j.replace(old2, new2, 1)
+          js.write_text(j)
+          PY
+      - name: Commit staging patch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add students/study-v2/index.html students/study-v2/v2-settings.js
+          git commit -m "Remove settings launcher but keep settings modal"
+          git push origin HEAD:staging
