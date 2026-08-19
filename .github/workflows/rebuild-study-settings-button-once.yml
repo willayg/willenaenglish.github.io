@@ -1,0 +1,57 @@
+name: Rebuild Study V2 settings button once
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/rebuild-study-settings-button-once.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: staging
+      - name: Rebuild settings launcher
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          index = Path('students/study-v2/index.html')
+          s = index.read_text()
+          marker = '''        <button id="bookPracticeBtn" class="study-v2-action-card" type="button"><strong>교재 연습</strong><small>교재 · 단원 · 영역 선택</small></button>\n      </div>\n\n      <section id="aiRecommendations" class="study-v2-ai-shell">'''
+          replacement = '''        <button id="bookPracticeBtn" class="study-v2-action-card" type="button"><strong>교재 연습</strong><small>교재 · 단원 · 영역 선택</small></button>\n      </div>\n\n      <div class="study-settings-launch-row">\n        <button id="studySettingsBtn" type="button" aria-haspopup="dialog">설정</button>\n      </div>\n\n      <section id="aiRecommendations" class="study-v2-ai-shell">'''
+          if marker not in s:
+              raise SystemExit('index insertion marker not found')
+          s = s.replace(marker, replacement, 1)
+          s = s.replace('v2-settings.css?v=20260820-settingsrow2', 'v2-settings.css?v=20260820-staticbutton1')
+          s = s.replace('v2-settings.css?v=20260820-settingsoutside1', 'v2-settings.css?v=20260820-staticbutton1')
+          s = s.replace('v2-settings.js?v=20260820-settingsrow2', 'v2-settings.js?v=20260820-staticbutton1')
+          s = s.replace('v2-settings.js?v=20260820-settingsoutside1', 'v2-settings.js?v=20260820-staticbutton1')
+          index.write_text(s)
+
+          js = Path('students/study-v2/v2-settings.js')
+          s = js.read_text()
+          old = '''function buildUi(){\n  var top=document.querySelector('.study-v2-top-actions'),daily=document.getElementById('dailyWorkoutCard');\n  if(!top||!daily||document.getElementById('studySettingsBtn'))return;\n  var slot=document.createElement('div');slot.className='study-settings-slot';\n  var open=document.createElement('button');open.type='button';open.id='studySettingsBtn';open.setAttribute('aria-haspopup','dialog');slot.appendChild(open);top.insertAdjacentElement('afterend',slot);'''
+          new = '''function buildUi(){\n  var top=document.querySelector('.study-v2-top-actions'),daily=document.getElementById('dailyWorkoutCard'),open=document.getElementById('studySettingsBtn');\n  if(!top||!daily||!open)return;'''
+          if old not in s:
+              raise SystemExit('settings JS creation block not found')
+          s = s.replace(old, new, 1)
+          js.write_text(s)
+
+          css = Path('students/study-v2/v2-settings.css')
+          s = css.read_text()
+          start = s.index('.study-settings-slot{')
+          end = s.index('#studySettingsBtn{', start)
+          s = s[:start] + '''.study-settings-launch-row{\n  width:100%;\n  display:flex;\n  justify-content:center;\n  align-items:center;\n  margin:14px 0 26px;\n}\n''' + s[end:]
+          s = s.replace('''@media (min-width:760px){\n  .book-hero.daily-inline .hero-copy>.study-settings-slot{\n    grid-column:1 / -1;\n    grid-row:2;\n    margin:14px 0 22px;\n  }\n}''', '''@media (min-width:760px){\n  .book-hero.daily-inline .hero-copy>.study-settings-launch-row{\n    grid-column:1 / -1;\n    grid-row:2;\n    margin:14px 0 22px;\n  }\n  .book-hero.daily-inline .hero-copy>#aiRecommendations{\n    grid-column:1 / -1;\n    grid-row:3;\n  }\n  .book-hero.daily-inline .hero-copy>#bookHub{\n    grid-column:1 / -1;\n    grid-row:4;\n  }\n}''')
+          css.write_text(s)
+          PY
+      - name: Commit staging patch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add students/study-v2/index.html students/study-v2/v2-settings.js students/study-v2/v2-settings.css
+          git commit -m "Rebuild Study V2 settings launcher below Daily Study" || exit 0
+          git push origin HEAD:staging
