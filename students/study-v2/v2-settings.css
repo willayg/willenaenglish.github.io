@@ -5,7 +5,7 @@
   min-width:112px;
   margin:8px auto 18px;
   padding:9px 17px;
-  border:2px solid #21b3be;
+  border:2px solid #d4dadd;
   border-radius:999px;
   background:#fff;
   color:#21b3be;
@@ -13,6 +13,7 @@
   cursor:pointer;
   box-shadow:none;
   align-self:center;
+  justify-self:center;
 }
 #studySettingsBtn:hover{background:#f7fcfd}
 #studySettingsBtn:focus-visible{outline:3px solid rgba(33,179,190,.24);outline-offset:3px}
