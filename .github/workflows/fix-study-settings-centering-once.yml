@@ -1,0 +1,47 @@
+name: Fix Study V2 settings centering once
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/fix-study-settings-centering-once.yml'
+permissions:
+  contents: write
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: staging
+      - name: Remove parent stretch blocker and cache bust
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          p=Path('students/study-v2/v2-top-layout.css')
+          s=p.read_text()
+          old='.study-v2-top-actions{display:flex;flex-direction:column;align-items:stretch;gap:18px;margin:0 0 46px;padding:0;border:0;background:transparent;box-shadow:none;width:100%}'
+          new='.study-v2-top-actions{display:flex;flex-direction:column;align-items:center;gap:18px;margin:0 0 46px;padding:0;border:0;background:transparent;box-shadow:none;width:100%}'
+          if old not in s:
+              raise SystemExit('mobile/flex blocker pattern not found')
+          s=s.replace(old,new,1)
+          old2='    align-items:stretch;\n    padding:20px;'
+          new2='    align-items:stretch;\n    justify-items:center;\n    padding:20px;'
+          if old2 not in s:
+              raise SystemExit('desktop grid blocker pattern not found')
+          s=s.replace(old2,new2,1)
+          p.write_text(s)
+
+          idx=Path('students/study-v2/index.html')
+          t=idx.read_text()
+          t=t.replace('./v2-top-layout.css?v=20260817-topicons3','./v2-top-layout.css?v=20260819-settingscenter1')
+          t=t.replace('./v2-settings.css?v=20260819-settings1','./v2-settings.css?v=20260819-settingscenter1')
+          idx.write_text(t)
+          PY
+      - name: Commit staging fix
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add students/study-v2/v2-top-layout.css students/study-v2/index.html
+          git commit -m 'Fix Study V2 settings centering at parent layout' || exit 0
+          git push origin HEAD:staging
