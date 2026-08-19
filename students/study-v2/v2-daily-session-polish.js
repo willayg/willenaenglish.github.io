@@ -71,8 +71,12 @@ function afterAnswer(){
   if(!dailyMode())return;
   requestAnimationFrame(function(){applyHeader();scrollActionIntoView();polishRewardStars();});
 }
+function ensureMorphologySidecar(){
+  if(global.WillenaMorphologySidecar||document.getElementById('v2MorphologySidecarScript'))return;
+  var s=document.createElement('script');s.id='v2MorphologySidecarScript';s.src='/students/study-v2/v2-morphology-sidecar.js?v=20260820-morph1';s.async=true;(document.head||document.documentElement).appendChild(s);
+}
 function bind(){
-  applyHeader();polishRewardStars();
+  applyHeader();polishRewardStars();ensureMorphologySidecar();
   global.addEventListener('willena:activity-answer',afterAnswer);
   document.addEventListener('click',function(e){
     var target=e.target&&e.target.closest?e.target.closest('#v2PracticeClose,#v2ActivityRoot .activity-check,#languageBtn'):null;
@@ -80,8 +84,6 @@ function bind(){
     setTimeout(function(){if(dailyMode())applyHeader();else restoreHeader();},0);
   });
   if(global.MutationObserver){
-    /* Watch only the Daily mode class for header state. Watching the whole page
-       while rewriting the progress bar created a self-triggering mutation loop. */
     new MutationObserver(function(){if(dailyMode())applyHeader();else restoreHeader();}).observe(document.body,{attributes:true,attributeFilter:['class']});
     var root=document.getElementById('v2ActivityRoot');
     if(root)new MutationObserver(function(){polishRewardStars();}).observe(root,{childList:true,subtree:true});
