@@ -208,7 +208,10 @@
     margin:22px auto 0!important;
     border-radius:50%!important;
     background:conic-gradient(var(--arcade-pink) 0 calc(var(--progress,0)*1%),#f1d5e2 calc(var(--progress,0)*1%) 100%)!important;
-    box-shadow:none!important;
+    box-shadow:0 0 0 5px #fff,0 0 0 8px rgba(255,111,176,.32),0 10px 22px rgba(36,77,83,.12)!important;
+  }
+  .book-hero.daily-inline #dailyWorkoutCard.study-v2-daily-primary:hover .progress-ring{
+    box-shadow:0 0 0 5px #fff,0 0 0 9px rgba(255,111,176,.42),0 12px 24px rgba(36,77,83,.15)!important;
   }
   .book-hero.daily-inline #dailyWorkoutCard.study-v2-daily-primary .progress-ring:after{
     content:""!important;
@@ -251,7 +254,10 @@
     top:110px!important;
     border-radius:50%!important;
     background:conic-gradient(var(--arcade-pink) 0 calc(var(--progress,0)*1%),#f1d5e2 calc(var(--progress,0)*1%) 100%)!important;
-    box-shadow:0 10px 24px rgba(36,77,83,.07)!important;
+    box-shadow:0 0 0 5px #fff,0 0 0 8px rgba(255,111,176,.32),0 12px 26px rgba(36,77,83,.12)!important;
+  }
+  .book-hero.daily-inline #dailyWorkoutCard.study-v2-daily-primary:active .progress-ring{
+    box-shadow:0 0 0 5px #fff,0 0 0 9px rgba(255,111,176,.42),0 8px 18px rgba(36,77,83,.13)!important;
   }
   .book-hero.daily-inline #dailyWorkoutCard.study-v2-daily-primary .progress-ring:after{
     content:""!important;
