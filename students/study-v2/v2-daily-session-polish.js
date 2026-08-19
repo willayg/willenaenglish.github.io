@@ -64,16 +64,11 @@ function replaceStars(el){
   });
   el.innerHTML=html;el.dataset.svgStars='1';
 }
-function polishRewardStars(){
-  document.querySelectorAll('.daily-reward-stars,.daily-reward-bonus').forEach(replaceStars);
-}
-function afterAnswer(){
-  if(!dailyMode())return;
-  requestAnimationFrame(function(){applyHeader();scrollActionIntoView();polishRewardStars();});
-}
+function polishRewardStars(){document.querySelectorAll('.daily-reward-stars,.daily-reward-bonus').forEach(replaceStars);}
+function afterAnswer(){if(!dailyMode())return;requestAnimationFrame(function(){applyHeader();scrollActionIntoView();polishRewardStars();});}
 function ensureMorphologySidecar(){
   if(global.WillenaMorphologySidecar||document.getElementById('v2MorphologySidecarScript'))return;
-  var s=document.createElement('script');s.id='v2MorphologySidecarScript';s.src='/students/study-v2/v2-morphology-sidecar.js?v=20260820-morph1';s.async=true;(document.head||document.documentElement).appendChild(s);
+  var s=document.createElement('script');s.id='v2MorphologySidecarScript';s.src='/students/study-v2/v2-morphology-sidecar.js?v=20260820-morph2-sharedui';s.async=true;(document.head||document.documentElement).appendChild(s);
 }
 function bind(){
   applyHeader();polishRewardStars();ensureMorphologySidecar();
