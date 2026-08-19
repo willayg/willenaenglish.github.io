@@ -3,9 +3,28 @@
 var session=null;
 var CONTENT_URL='https://gxwfsqxyuufqtitspfqg.supabase.co';
 var CONTENT_KEY=['sb_publishable_','G-FYhHfDL4OGdL892gY1Zg_','epdbEeqO'].join('');
+var POINTS_ENDPOINT='/.netlify/functions/log_word_attempt';
 function text(v){return String(v==null?'':v).trim();}
 function isKo(){var b=document.getElementById('languageBtn');return !b||text(b.textContent)==='English';}
 function arr(v){return Array.isArray(v)?v:[];}
+function valueText(v){if(Array.isArray(v))return v.join(' ');if(v&&typeof v==='object')try{return JSON.stringify(v);}catch(_){return String(v);}return String(v==null?'':v);}
+function coachSessionId(){return'ai-coach-'+Date.now()+'-'+Math.random().toString(36).slice(2,9);}
+async function awardCoachPoints(detail){
+  var result=detail&&detail.result||{};if(!result.correct)return false;
+  var activity=detail&&detail.activity||{},sid=session&&session.pointsSessionId;if(!sid)return false;
+  var body={
+    event_type:'attempt',session_id:sid,mode:'ai_coach',word:text(activity.id||activity.sourceId||'ai-coach-answer'),
+    is_correct:true,answer:valueText(result.selected),correct_answer:valueText(result.answer),points:2,
+    attempt_index:session?session.index:null,duration_ms:Number(detail&&detail.responseTimeMs||result.responseTimeMs)||null,
+    extra:{source:'study_v2_ai_coach',skill:text(activity.skill),plan_type:session&&session.planType||null,activity_id:text(activity.id)}
+  };
+  try{
+    var r=await fetch(POINTS_ENDPOINT,{method:'POST',credentials:'include',cache:'no-store',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    if(!r.ok)throw new Error('points '+r.status);
+    try{global.dispatchEvent(new CustomEvent('points:optimistic-bump',{detail:{delta:2,source:'ai_coach'}}));}catch(_){}
+    return true;
+  }catch(e){console.debug('[AI Coach] points award failed',e);return false;}
+}
 function keyboardFree(item){
   var response=item&&item.response||{};
   var type=text(response.type||item&&item.type);
@@ -113,9 +132,10 @@ function open(plan){
   var overlay=ensureOverlay();
   var root=overlay.querySelector('#aiCoachActivityRoot');
   var next=overlay.querySelector('#aiCoachPracticeNext');
-  session={items:safeItems,index:0,overlay:overlay,answered:false,engine:null,homeY:homeY};
-  session.engine=new global.WillenaActivityEngine(root,{onAnswer:function(){
+  session={items:safeItems,index:0,overlay:overlay,answered:false,engine:null,homeY:homeY,pointsSessionId:coachSessionId(),planType:text(plan.type)};
+  session.engine=new global.WillenaActivityEngine(root,{onAnswer:function(detail){
     if(!session)return;
+    awardCoachPoints(detail);
     session.answered=true;
     next.disabled=false;
     next.textContent=session.index>=session.items.length-1?(isKo()?'완료':'Finish'):(isKo()?'다음':'Next');
