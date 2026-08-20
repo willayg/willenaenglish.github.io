@@ -51,7 +51,7 @@ function polishRewardStars(){document.querySelectorAll('.daily-reward-stars,.dai
 function afterAnswer(){if(!dailyMode())return;requestAnimationFrame(function(){applyHeader();scrollActionIntoView();polishRewardStars();});}
 function ensureMorphologyCoachMenu(){
   if(document.getElementById('v2MorphologyCoachMenuScript'))return;
-  var s=document.createElement('script');s.id='v2MorphologyCoachMenuScript';s.src='/students/study-v2/v2-morphology-coach-menu.js?v=20260820-maintenance1';s.async=true;(document.head||document.documentElement).appendChild(s);
+  var s=document.createElement('script');s.id='v2MorphologyCoachMenuScript';s.src='/students/study-v2/v2-morphology-coach-menu.js?v=20260820-maintenance2';s.async=true;(document.head||document.documentElement).appendChild(s);
 }
 function ensureMorphologySidecar(){
   if(global.WillenaMorphologySidecar||document.getElementById('v2MorphologySidecarScript')){ensureMorphologyCoachMenu();return;}
