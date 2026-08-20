@@ -11,12 +11,23 @@ function skillNameFor(lang,s){
   return (lang==='ko'?K:E)[s]||s;
 }
 function skillName(s){return skillNameFor(ko()?'ko':'en',s);}
-function mastery(ctx){
+function liveMastery(){
+  return Array.prototype.slice.call(document.querySelectorAll('#masteryGrid [data-skill]')).map(function(card){
+    var pctNode=card.querySelector('.header-skill-master-pct');
+    var raw=text(pctNode&&pctNode.textContent);
+    return{skill:text(card.dataset.skill),pct:Math.max(0,Math.min(100,Number(raw.replace(/[^0-9.]/g,''))||0))};
+  }).filter(function(x){return x.skill;});
+}
+function contextMastery(ctx){
   var progress=ctx&&ctx.book&&ctx.book.progress||{};
   var rows=Array.isArray(progress.skill_summary)?progress.skill_summary:(Array.isArray(progress.unit_skills)?progress.unit_skills:[]);
   return rows.map(function(r){
     return{skill:text(r&&r.skill),pct:Math.max(0,Math.min(100,Number(r&&r.mastery_score)||0))};
   }).filter(function(x){return x.skill;});
+}
+function mastery(ctx){
+  var live=liveMastery();
+  return live.length?live:contextMastery(ctx);
 }
 function weakest(ctx){
   return mastery(ctx).filter(function(x){return x.pct>0;}).sort(function(a,b){return (a.pct-b.pct)||a.skill.localeCompare(b.skill);})[0]||null;
