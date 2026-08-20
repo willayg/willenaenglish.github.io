@@ -34,6 +34,23 @@ The architecture should support these destinations without assuming every action
 - **Arcade** — open the exact recommended English Arcade activity.
 - **Speak** — reserved for the upcoming Speaking system.
 
+## Visual teaching cards — planned, not a Stage 4 detour
+
+Coach responses should eventually support reusable visual teaching cards alongside text and actions instead of relying on text-only explanations. Keep the response/action architecture open to a future `cards` array, but do not build the full card system during Stage 4.
+
+Planned reusable card types:
+
+- **Rule / contrast table** — e.g. `I/you/we/they play` vs `he/she/it plays`, `do` vs `does`, `some` vs `any`.
+- **Mistake / correction card** — e.g. `Does he plays?` → `Does he play?`.
+- **Study-path card** — concise Study → Practice → Arcade guidance where useful.
+
+Likely build points:
+
+- Stage 4 may use only a simple Study-path presentation if navigation needs it.
+- Stages 6–7 add mistake/correction and remediation cards.
+- Stage 11 adds the broader grammar/sentence-building rule and contrast card library.
+- Stage 14 polishes the common visual-card renderer and mobile behavior.
+
 ## Speaking-ready requirement
 
 Do not build Speaking during Coach V1, but keep the architecture ready for it:
