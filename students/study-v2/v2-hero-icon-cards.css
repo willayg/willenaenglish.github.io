@@ -23,6 +23,7 @@
   color:#35565b;
   font-family:inherit;
   cursor:pointer;
+  overflow:hidden;
 }
 
 /* Kill every legacy generated icon. The only artwork is the real <img>. */
@@ -41,10 +42,10 @@
   display:block!important;
   width:auto!important;
   height:61px!important;
-  max-width:none!important;
+  max-width:100%!important;
   object-fit:contain;
   pointer-events:none;
-  flex:0 0 auto!important;
+  flex:0 1 auto!important;
 }
 
 /* One short title only. */
@@ -54,8 +55,12 @@
   display:block!important;
   visibility:visible!important;
   opacity:1!important;
-  white-space:nowrap!important;
-  text-align:left!important;
+  min-width:0!important;
+  max-width:100%!important;
+  white-space:normal!important;
+  overflow-wrap:normal!important;
+  word-break:keep-all!important;
+  text-align:center!important;
   color:#35565b!important;
   font-size:.96rem!important;
   line-height:1.15!important;
@@ -70,6 +75,14 @@
   justify-content:center!important;
   padding-left:18px!important;
   padding-right:18px!important;
+}
+.book-hero.daily-inline #bookStudyBtn.hero-icon-card,
+.book-hero.daily-inline #bookPracticeBtn.hero-icon-card{
+  flex-direction:column!important;
+  justify-content:center!important;
+  align-items:center!important;
+  gap:4px!important;
+  padding:10px 12px!important;
 }
 .book-hero.daily-inline #bookStudyBtn.hero-icon-card{border:2px solid var(--arcade-blue);opacity:.72;}
 .book-hero.daily-inline #bookPracticeBtn.hero-icon-card{border:2px solid var(--arcade-orange);}
@@ -93,15 +106,19 @@
   }
   .book-hero.daily-inline .hero-icon-card .hero-icon-card-mark{height:53px!important;}
   .book-hero.daily-inline #practiceHeroBtn.hero-icon-card .hero-icon-card-mark{height:58px!important;}
+  .book-hero.daily-inline #bookStudyBtn.hero-icon-card,
+  .book-hero.daily-inline #bookPracticeBtn.hero-icon-card{gap:2px!important;padding:6px 8px!important;}
   .book-hero.daily-inline #practiceHeroBtn.hero-icon-card:after,
   .book-hero.daily-inline #bookStudyBtn.hero-icon-card:after,
   .book-hero.daily-inline #bookPracticeBtn.hero-icon-card:after{font-size:.78rem!important;}
 }
 
 @media (min-width:760px) and (max-width:1024px){
-  .book-hero.daily-inline .study-v2-top-actions>.hero-icon-card{min-height:70px;gap:8px!important;}
-  .book-hero.daily-inline .hero-icon-card .hero-icon-card-mark{height:49px!important;}
+  .book-hero.daily-inline .study-v2-top-actions>.hero-icon-card{min-height:70px;}
+  .book-hero.daily-inline .hero-icon-card .hero-icon-card-mark{height:45px!important;}
   .book-hero.daily-inline #practiceHeroBtn.hero-icon-card .hero-icon-card-mark{height:54px!important;}
+  .book-hero.daily-inline #bookStudyBtn.hero-icon-card,
+  .book-hero.daily-inline #bookPracticeBtn.hero-icon-card{gap:1px!important;padding:5px 7px!important;}
   .book-hero.daily-inline #practiceHeroBtn.hero-icon-card:after,
   .book-hero.daily-inline #bookStudyBtn.hero-icon-card:after,
   .book-hero.daily-inline #bookPracticeBtn.hero-icon-card:after{font-size:.72rem!important;}
@@ -110,21 +127,25 @@
 @media (max-width:759px){
   .book-hero.daily-inline .study-v2-top-actions>.hero-icon-card{
     min-height:92px;
-    padding:10px 20px!important;
-    gap:12px!important;
-    justify-content:flex-start!important;
   }
 
+  .book-hero.daily-inline #bookStudyBtn.hero-icon-card,
+  .book-hero.daily-inline #bookPracticeBtn.hero-icon-card{
+    min-height:104px;
+    padding:9px 8px!important;
+    gap:3px!important;
+  }
   .book-hero.daily-inline #bookStudyBtn.hero-icon-card .hero-icon-card-mark,
   .book-hero.daily-inline #bookPracticeBtn.hero-icon-card .hero-icon-card-mark{
-    height:70px!important;
-    margin-left:2px!important;
+    height:clamp(48px,12vw,62px)!important;
+    max-height:58%!important;
+    margin:0!important;
   }
-
   .book-hero.daily-inline #bookStudyBtn.hero-icon-card:after,
   .book-hero.daily-inline #bookPracticeBtn.hero-icon-card:after{
-    margin-left:2px!important;
-    font-size:1rem!important;
+    margin:0!important;
+    font-size:clamp(.76rem,3.5vw,.94rem)!important;
+    line-height:1.05!important;
   }
 
   .book-hero.daily-inline #practiceHeroBtn.hero-icon-card{
@@ -133,5 +154,21 @@
     gap:12px!important;
   }
   .book-hero.daily-inline #practiceHeroBtn.hero-icon-card .hero-icon-card-mark{height:70px!important;}
-  .book-hero.daily-inline #practiceHeroBtn.hero-icon-card:after{font-size:1rem!important;}
+  .book-hero.daily-inline #practiceHeroBtn.hero-icon-card:after{font-size:1rem!important;white-space:nowrap!important;}
+}
+
+@media (max-width:420px){
+  .book-hero.daily-inline #bookStudyBtn.hero-icon-card,
+  .book-hero.daily-inline #bookPracticeBtn.hero-icon-card{
+    min-height:98px;
+    padding:7px 6px!important;
+  }
+  .book-hero.daily-inline #bookStudyBtn.hero-icon-card .hero-icon-card-mark,
+  .book-hero.daily-inline #bookPracticeBtn.hero-icon-card .hero-icon-card-mark{
+    height:clamp(44px,11vw,54px)!important;
+  }
+  .book-hero.daily-inline #bookStudyBtn.hero-icon-card:after,
+  .book-hero.daily-inline #bookPracticeBtn.hero-icon-card:after{
+    font-size:clamp(.72rem,3.4vw,.86rem)!important;
+  }
 }
