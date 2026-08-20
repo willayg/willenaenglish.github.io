@@ -49,16 +49,12 @@ function replaceStars(el){
 }
 function polishRewardStars(){document.querySelectorAll('.daily-reward-stars,.daily-reward-bonus').forEach(replaceStars);}
 function afterAnswer(){if(!dailyMode())return;requestAnimationFrame(function(){applyHeader();scrollActionIntoView();polishRewardStars();});}
-function ensureMorphologyCoachMenu(){
-  if(document.getElementById('v2MorphologyCoachMenuScript'))return;
-  var s=document.createElement('script');s.id='v2MorphologyCoachMenuScript';s.src='/students/study-v2/v2-morphology-coach-menu.js?v=20260820-conversation2';s.async=true;(document.head||document.documentElement).appendChild(s);
-}
 function ensureMorphologySidecar(){
-  if(global.WillenaMorphologySidecar||document.getElementById('v2MorphologySidecarScript')){ensureMorphologyCoachMenu();return;}
-  var s=document.createElement('script');s.id='v2MorphologySidecarScript';s.src='/students/study-v2/v2-morphology-sidecar.js?v=20260820-morph3-robust2';s.async=true;s.onload=ensureMorphologyCoachMenu;(document.head||document.documentElement).appendChild(s);
+  if(global.WillenaMorphologySidecar||document.getElementById('v2MorphologySidecarScript'))return;
+  var s=document.createElement('script');s.id='v2MorphologySidecarScript';s.src='/students/study-v2/v2-morphology-sidecar.js?v=20260820-morph3-robust2';s.async=true;(document.head||document.documentElement).appendChild(s);
 }
 function bind(){
-  applyHeader();polishRewardStars();ensureMorphologySidecar();ensureMorphologyCoachMenu();
+  applyHeader();polishRewardStars();ensureMorphologySidecar();
   global.addEventListener('willena:activity-answer',afterAnswer);
   document.addEventListener('click',function(e){var target=e.target&&e.target.closest?e.target.closest('#v2PracticeClose,#v2ActivityRoot .activity-check,#languageBtn'):null;if(!target)return;setTimeout(function(){if(dailyMode())applyHeader();else restoreHeader();},0);});
   if(global.MutationObserver){new MutationObserver(function(){if(dailyMode())applyHeader();else restoreHeader();}).observe(document.body,{attributes:true,attributeFilter:['class']});var root=document.getElementById('v2ActivityRoot');if(root)new MutationObserver(function(){polishRewardStars();}).observe(root,{childList:true,subtree:true});}
