@@ -22,7 +22,7 @@
   const NETLIFY_ONLY_FUNCTIONS = new Set([
     'verify_student','set_student_password','debug_student_data','openai_proxy','google_vision_proxy',
     'supabase_proxy','supabase_proxy_fixed','teacher_admin','test_admin','eleven_labs_proxy','translate','define_word',
-    'student_study_current'
+    'student_study_current','progress_summary'
   ]);
   const FORCE_GATEWAY_FUNCTIONS = new Set([
     'upsert_sentences_batch',
