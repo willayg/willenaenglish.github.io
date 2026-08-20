@@ -133,7 +133,7 @@
   font:700 .9rem/1.25 Poppins,sans-serif;
   cursor:pointer;
   text-align:left;
-  transition:transform .14s ease,background .14s ease,border-color .14s ease;
+  transition:transform .14s ease,background .14s ease,border-color .14s ease,color .14s ease,box-shadow .14s ease;
 }
 .study-v2-ai-prompt:hover,
 .study-v2-ai-prompt:focus-visible{
@@ -143,6 +143,19 @@
 }
 .study-v2-ai-prompt:active{transform:scale(.98);}
 .study-v2-ai-prompt:disabled{opacity:.5;cursor:default;}
+.study-v2-ai-prompt.is-launch{
+  background:#fff !important;
+  border:2px solid #25b8c4 !important;
+  color:#ef5f9a !important;
+  box-shadow:0 3px 0 rgba(37,184,196,.10);
+}
+.study-v2-ai-prompt.is-launch:hover,
+.study-v2-ai-prompt.is-launch:focus-visible{
+  background:#f2fcfd !important;
+  border-color:#1aa8b5 !important;
+  color:#e84f90 !important;
+  box-shadow:0 4px 12px rgba(37,184,196,.16);
+}
 
 .study-v2-ai-chat-cta-wrap{
   display:flex;
