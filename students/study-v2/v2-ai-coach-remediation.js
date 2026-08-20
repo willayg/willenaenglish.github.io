@@ -39,7 +39,7 @@ function installRewardStyle(){
   if(document.getElementById('aiCoachPointsRewardStyle'))return;
   var style=document.createElement('style');
   style.id='aiCoachPointsRewardStyle';
-  style.textContent='@keyframes coachPointsGlow{0%{transform:translate(-50%,-50%) scale(.35);opacity:0;filter:blur(3px)}35%{transform:translate(-50%,-50%) scale(1.16);opacity:1;filter:blur(0)}55%{transform:translate(-50%,-50%) scale(1);opacity:1}100%{transform:translate(-50%,-50%) scale(1);opacity:1}}.ai-coach-points-reward-layer{position:fixed;inset:0;pointer-events:none;z-index:10060;overflow:hidden}.ai-coach-points-reward{position:absolute;left:50%;top:48%;transform:translate(-50%,-50%);padding:16px 24px;border-radius:999px;background:#fff;color:#173f46;border:3px solid #ffd65c;box-shadow:0 12px 34px rgba(23,63,70,.22),0 0 0 9px rgba(255,214,92,.2);font:800 clamp(24px,6vw,42px)/1 Poppins,sans-serif;letter-spacing:-.03em;white-space:nowrap;animation:coachPointsGlow 520ms cubic-bezier(.18,.9,.25,1) both;will-change:transform,opacity}.ai-coach-points-reward small{display:block;margin-top:5px;text-align:center;font-size:11px;letter-spacing:.13em;color:#69777a}@media(prefers-reduced-motion:reduce){.ai-coach-points-reward{animation:none}}';
+  style.textContent='@keyframes coachPointsGlow{0%{transform:translate(-50%,-50%) scale(.35);opacity:0;filter:blur(3px)}35%{transform:translate(-50%,-50%) scale(1.16);opacity:1;filter:blur(0)}65%{transform:translate(-50%,-50%) scale(1);opacity:1}100%{transform:translate(-50%,-50%) scale(1);opacity:1}}@keyframes coachPointsBurst{0%{transform:translate(-50%,-50%) scale(.35) rotate(0deg);opacity:0}12%{opacity:1}100%{transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy))) scale(.95) rotate(var(--rot));opacity:0}}.ai-coach-points-reward-layer{position:fixed;inset:0;pointer-events:none;z-index:10060;overflow:hidden}.ai-coach-points-reward{position:absolute;left:50%;top:48%;transform:translate(-50%,-50%);padding:16px 24px;border-radius:999px;background:#fff;color:#173f46;border:3px solid #ffd65c;box-shadow:0 12px 34px rgba(23,63,70,.22),0 0 0 9px rgba(255,214,92,.2);font:800 clamp(24px,6vw,42px)/1 Poppins,sans-serif;letter-spacing:-.03em;white-space:nowrap;animation:coachPointsGlow 620ms cubic-bezier(.18,.9,.25,1) both;will-change:transform,opacity}.ai-coach-points-reward small{display:block;margin-top:5px;text-align:center;font-size:11px;letter-spacing:.13em;color:#69777a}.ai-coach-points-burst{position:absolute;left:50%;top:48%;width:9px;height:17px;border-radius:3px;background:hsl(var(--h),88%,60%);animation:coachPointsBurst 1050ms cubic-bezier(.12,.7,.24,1) forwards;animation-delay:var(--delay)}@media(prefers-reduced-motion:reduce){.ai-coach-points-reward{animation:none}.ai-coach-points-burst{display:none}}';
   document.head.appendChild(style);
 }
 function celebratePoints(points){
@@ -50,10 +50,22 @@ function celebratePoints(points){
   var layer=document.createElement('div');layer.className='ai-coach-points-reward-layer';
   var badge=document.createElement('div');badge.className='ai-coach-points-reward';
   badge.innerHTML='<strong>+'+points+' POINTS</strong><small>'+(ko()?'이번 세션':'SESSION REWARD')+'</small>';
-  layer.appendChild(badge);document.body.appendChild(layer);
+  layer.appendChild(badge);
+  var count=34;
+  for(var i=0;i<count;i++){
+    var piece=document.createElement('i');piece.className='ai-coach-points-burst';
+    var angle=(Math.PI*2*i/count)+(Math.random()*.22-.11),dist=90+Math.random()*175;
+    piece.style.setProperty('--dx',Math.round(Math.cos(angle)*dist)+'px');
+    piece.style.setProperty('--dy',Math.round(Math.sin(angle)*dist)+'px');
+    piece.style.setProperty('--rot',Math.round((Math.random()*720)-360)+'deg');
+    piece.style.setProperty('--h',Math.round(Math.random()*360));
+    piece.style.setProperty('--delay',Math.round(Math.random()*90)+'ms');
+    layer.appendChild(piece);
+  }
+  document.body.appendChild(layer);
 
   var reduced=false;try{reduced=global.matchMedia&&global.matchMedia('(prefers-reduced-motion: reduce)').matches;}catch(_){}
-  if(reduced){setTimeout(function(){pulsePointsPill();if(layer.parentNode)layer.remove();},950);return;}
+  if(reduced){setTimeout(function(){pulsePointsPill();if(layer.parentNode)layer.remove();},1800);return;}
 
   setTimeout(function(){
     var pill=pointsPill();
@@ -65,13 +77,14 @@ function celebratePoints(points){
     try{
       var animation=badge.animate([
         {transform:'translate(-50%,-50%) scale(1)',opacity:1},
-        {offset:.16,transform:'translate(-50%,-50%) scale(1.08)',opacity:1},
-        {transform:'translate(calc(-50% + '+dx+'px),calc(-50% + '+dy+'px)) scale(.24)',opacity:.2}
-      ],{duration:820,easing:'cubic-bezier(.22,.78,.22,1)',fill:'forwards'});
+        {offset:.12,transform:'translate(-50%,-50%) scale(1.02)',opacity:1},
+        {offset:.72,transform:'translate(calc(-50% + '+(dx*.72)+'px),calc(-50% + '+(dy*.72)+'px)) scale(.62)',opacity:1},
+        {transform:'translate(calc(-50% + '+dx+'px),calc(-50% + '+dy+'px)) scale(.26)',opacity:.22}
+      ],{duration:1450,easing:'cubic-bezier(.2,.72,.18,1)',fill:'forwards'});
       animation.onfinish=function(){pulsePointsPill();if(layer.parentNode)layer.remove();};
     }catch(_){pulsePointsPill();if(layer.parentNode)layer.remove();}
-  },620);
-  setTimeout(function(){if(layer.parentNode){pulsePointsPill();layer.remove();}},1800);
+  },1450);
+  setTimeout(function(){if(layer.parentNode){pulsePointsPill();layer.remove();}},3300);
 }
 
 function classify(title,mistakes){
