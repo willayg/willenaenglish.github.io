@@ -31,9 +31,18 @@ async function startCoach(){
   return true;
 }
 
+async function onStudyReady(e){
+  var source=e&&e.detail&&e.detail.source||'';
+  if(!started){await startCoach();return;}
+  if(source!=='live')return;
+  var state=typeof coach.getState==='function'?coach.getState():null;
+  if(state&&state.view&&state.view!=='home')return;
+  await coach.refresh();
+}
+
 function boot(){
-  global.addEventListener('willena:study-v2-ready',startCoach);
-  if(startCoach())return;
+  global.addEventListener('willena:study-v2-ready',onStudyReady);
+  startCoach();
   failTimer=setTimeout(function(){
     if(started)return;
     console.warn('[AI Coach bootstrap] Study V2 did not publish ready context.');
