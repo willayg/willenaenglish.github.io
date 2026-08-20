@@ -12,17 +12,30 @@ function skillNameFor(lang,s){
 }
 function skillName(s){return skillNameFor(ko()?'ko':'en',s);}
 function history(){var h=global.WillenaCoachHistory;return h&&typeof h.getSnapshot==='function'?h.getSnapshot():null;}
-function rows(){
+function masteryRows(){
   var h=history(),current=h&&h.currentUnit&&h.currentUnit.skillMastery;
   if(Array.isArray(current)&&current.length)return current.map(function(x){return{skill:text(x.skill),pct:Math.max(0,Math.min(100,Number(x.mastery)||0))};});
   var overall=h&&h.skillMastery;
   return (Array.isArray(overall)?overall:[]).map(function(x){return{skill:text(x.skill),pct:Math.max(0,Math.min(100,Number(x.mastery)||0))};});
 }
+function recentMisses(){
+  var h=history(),counts={};
+  (Array.isArray(h&&h.recentAttempts)?h.recentAttempts:[]).slice(0,60).forEach(function(a){
+    var skill=text(a&&a.skill);if(!skill||a.correct)return;
+    counts[skill]=(counts[skill]||0)+1;
+  });
+  return counts;
+}
 function weakSkills(){
-  var ranked=rows().filter(function(x){return x.skill&&x.pct>0&&x.pct<80;}).sort(function(a,b){return(a.pct-b.pct)||a.skill.localeCompare(b.skill);});
+  var base=masteryRows(),misses=recentMisses(),by={};
+  base.forEach(function(x){if(x.skill)by[x.skill]={skill:x.skill,pct:x.pct,misses:Number(misses[x.skill])||0};});
+  Object.keys(misses).forEach(function(skill){if(!by[skill])by[skill]={skill:skill,pct:100,misses:Number(misses[skill])||0};});
+  var ranked=Object.keys(by).map(function(k){var x=by[k];x.effective=Math.min(x.pct,x.misses>=2?Math.max(25,90-x.misses*10):x.pct);return x;})
+    .filter(function(x){return x.skill&&((x.pct>0&&x.pct<80)||x.misses>=2);})
+    .sort(function(a,b){return(a.effective-b.effective)||(b.misses-a.misses)||a.skill.localeCompare(b.skill);});
   if(ranked.length)return ranked.slice(0,3);
-  var fallback=rows().filter(function(x){return x.skill&&x.pct>0;}).sort(function(a,b){return(a.pct-b.pct)||a.skill.localeCompare(b.skill);});
-  return fallback.length&&fallback[0].pct<90?[fallback[0]]:[];
+  var fallback=base.filter(function(x){return x.skill&&x.pct>0;}).sort(function(a,b){return(a.pct-b.pct)||a.skill.localeCompare(b.skill);});
+  return fallback.length&&fallback[0].pct<90?[{skill:fallback[0].skill,pct:fallback[0].pct,misses:0,effective:fallback[0].pct}]:[];
 }
 function names(xs,lang){return xs.map(function(x){return skillNameFor(lang,x.skill);});}
 function joinNames(xs,lang){
@@ -36,7 +49,7 @@ function joinNames(xs,lang){
 coach.registerCapability({
   id:'weakness',
   available:function(){return weakSkills().length>0;},
-  score:function(){var xs=weakSkills(),x=xs[0];return x?Math.max(70,120-x.pct)+Math.min(2,xs.length)*0.01:0;},
+  score:function(){var xs=weakSkills(),x=xs[0];return x?Math.max(70,120-(Number(x.effective)||x.pct))+Math.min(2,xs.length)*0.01:0;},
   label:function(){
     var xs=weakSkills();
     if(!xs.length)return{ko:'약한 부분 연습',en:'Practice weak areas'};
