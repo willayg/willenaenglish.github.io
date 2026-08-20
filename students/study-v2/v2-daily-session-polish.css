@@ -111,10 +111,9 @@
 @media(max-width:560px){
   .study-v2-daily-mode #v2PracticeTitle{font-size:1.22rem;}
 
-  /* Mobile: remove progress strip / remaining-question copy across exercise modes. */
-  #v2PracticePanel .practice-toolbar .section-note,
-  #v2PracticePanel #practicePerf,
-  #aiCoachPracticeOverlay .ai-coach-practice-progress{
+  /* Mobile home hero only: hide the remaining-question sentence and segmented strip. */
+  .book-hero.daily-inline .daily-rail-headline,
+  .book-hero.daily-inline .daily-rail-progress{
     display:none!important;
   }
 
