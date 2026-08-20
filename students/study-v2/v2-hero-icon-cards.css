@@ -1,12 +1,12 @@
-/* Rebuilt hero action buttons: one real SVG image per card, with labels restored. */
+/* Rebuilt hero action buttons: one real SVG image per card with one short title. */
 .book-hero.daily-inline .study-v2-top-actions>.hero-icon-card{
   appearance:none;
   -webkit-appearance:none;
   box-sizing:border-box;
   display:flex;
   align-items:center;
-  justify-content:flex-start;
-  gap:12px;
+  justify-content:center;
+  gap:14px;
   width:100%;
   min-width:0;
   min-height:78px;
@@ -37,33 +37,33 @@
 .book-hero.daily-inline .hero-icon-card .hero-icon-card-mark{
   display:block;
   width:auto;
-  height:48px;
-  max-width:45%;
+  height:66px;
+  max-width:48%;
   object-fit:contain;
   pointer-events:none;
   flex:0 0 auto;
 }
 
-/* Temporary labels until we put the final title markup back into the buttons. */
+/* One short title only. */
 .book-hero.daily-inline #practiceHeroBtn.hero-icon-card:after,
 .book-hero.daily-inline #bookStudyBtn.hero-icon-card:after,
 .book-hero.daily-inline #bookPracticeBtn.hero-icon-card:after{
   display:block!important;
-  white-space:pre-line;
+  white-space:nowrap;
   text-align:left;
   color:#35565b;
-  font-size:.82rem;
-  line-height:1.35;
+  font-size:.9rem;
+  line-height:1.15;
   font-weight:800;
 }
-.book-hero.daily-inline #practiceHeroBtn.hero-icon-card:after{content:"AI 코치\A 추천 학습"!important;}
-.book-hero.daily-inline #bookStudyBtn.hero-icon-card:after{content:"교재 공부\A 현재 교재 보기"!important;}
-.book-hero.daily-inline #bookPracticeBtn.hero-icon-card:after{content:"교재 연습\A 교재 · 단원 · 영역 선택"!important;}
+.book-hero.daily-inline #practiceHeroBtn.hero-icon-card:after{content:"AI 코치"!important;}
+.book-hero.daily-inline #bookStudyBtn.hero-icon-card:after{content:"교재 공부"!important;}
+.book-hero.daily-inline #bookPracticeBtn.hero-icon-card:after{content:"교재 연습"!important;}
 
 .book-hero.daily-inline #practiceHeroBtn.hero-icon-card{border:2px solid var(--arcade-cyan);}
 .book-hero.daily-inline #bookStudyBtn.hero-icon-card{border:2px solid var(--arcade-blue);opacity:.72;}
 .book-hero.daily-inline #bookPracticeBtn.hero-icon-card{border:2px solid var(--arcade-orange);}
-.book-hero.daily-inline #practiceHeroBtn.hero-icon-card .hero-icon-card-mark{height:54px;}
+.book-hero.daily-inline #practiceHeroBtn.hero-icon-card .hero-icon-card-mark{height:76px;}
 
 .book-hero.daily-inline .hero-icon-card:hover,
 .book-hero.daily-inline .hero-icon-card:focus-visible{
@@ -78,34 +78,34 @@
   .book-hero.daily-inline .study-v2-top-actions>#bookStudyBtn.hero-icon-card{grid-column:4!important;grid-row:2!important;}
   .book-hero.daily-inline .study-v2-top-actions>.hero-icon-card{
     min-height:78px;
-    padding:6px 11px;
-    gap:9px;
+    padding:6px 10px;
+    gap:10px;
   }
-  .book-hero.daily-inline .hero-icon-card .hero-icon-card-mark{height:44px;max-width:42%;}
-  .book-hero.daily-inline #practiceHeroBtn.hero-icon-card .hero-icon-card-mark{height:50px;}
+  .book-hero.daily-inline .hero-icon-card .hero-icon-card-mark{height:58px;max-width:46%;}
+  .book-hero.daily-inline #practiceHeroBtn.hero-icon-card .hero-icon-card-mark{height:68px;}
   .book-hero.daily-inline #practiceHeroBtn.hero-icon-card:after,
   .book-hero.daily-inline #bookStudyBtn.hero-icon-card:after,
-  .book-hero.daily-inline #bookPracticeBtn.hero-icon-card:after{font-size:.72rem;}
+  .book-hero.daily-inline #bookPracticeBtn.hero-icon-card:after{font-size:.76rem;}
 }
 
 @media (min-width:760px) and (max-width:1024px){
-  .book-hero.daily-inline .study-v2-top-actions>.hero-icon-card{min-height:70px;}
-  .book-hero.daily-inline .hero-icon-card .hero-icon-card-mark{height:40px;}
-  .book-hero.daily-inline #practiceHeroBtn.hero-icon-card .hero-icon-card-mark{height:46px;}
+  .book-hero.daily-inline .study-v2-top-actions>.hero-icon-card{min-height:70px;gap:8px;}
+  .book-hero.daily-inline .hero-icon-card .hero-icon-card-mark{height:54px;}
+  .book-hero.daily-inline #practiceHeroBtn.hero-icon-card .hero-icon-card-mark{height:62px;}
   .book-hero.daily-inline #practiceHeroBtn.hero-icon-card:after,
   .book-hero.daily-inline #bookStudyBtn.hero-icon-card:after,
-  .book-hero.daily-inline #bookPracticeBtn.hero-icon-card:after{font-size:.66rem;}
+  .book-hero.daily-inline #bookPracticeBtn.hero-icon-card:after{font-size:.7rem;}
 }
 
 @media (max-width:759px){
   .book-hero.daily-inline .study-v2-top-actions>.hero-icon-card{
     min-height:92px;
-    padding:10px 16px;
+    padding:10px 14px;
     gap:14px;
   }
-  .book-hero.daily-inline .hero-icon-card .hero-icon-card-mark{height:58px;max-width:38%;}
-  .book-hero.daily-inline #practiceHeroBtn.hero-icon-card .hero-icon-card-mark{height:64px;}
+  .book-hero.daily-inline .hero-icon-card .hero-icon-card-mark{height:72px;max-width:46%;}
+  .book-hero.daily-inline #practiceHeroBtn.hero-icon-card .hero-icon-card-mark{height:82px;}
   .book-hero.daily-inline #practiceHeroBtn.hero-icon-card:after,
   .book-hero.daily-inline #bookStudyBtn.hero-icon-card:after,
-  .book-hero.daily-inline #bookPracticeBtn.hero-icon-card:after{font-size:.9rem;}
+  .book-hero.daily-inline #bookPracticeBtn.hero-icon-card:after{font-size:.96rem;}
 }
