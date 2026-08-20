@@ -12,6 +12,8 @@ function text(v){return String(v==null?'':v).trim();}
 function arr(v){return Array.isArray(v)?v:[];}
 function ko(){var b=document.getElementById('languageBtn');return !b||text(b.textContent)==='English';}
 function shuffle(a){a=arr(a).slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),x=a[i];a[i]=a[j];a[j]=x;}return a;}
+function uid(){try{return text(localStorage.getItem('user_id')||sessionStorage.getItem('user_id')||localStorage.getItem('userId')||sessionStorage.getItem('userId'));}catch(_){return'';}}
+function home(){try{return JSON.parse(localStorage.getItem('willena-study-v2-home:v1:'+uid())||'null');}catch(_){return null;}}
 async function get(path){var r=await fetch(CONTENT_URL+'/rest/v1/'+path,{headers:HEADERS,cache:'no-store'});if(!r.ok)throw new Error('Content '+r.status);return r.json();}
 function optionTexts(row){return arr(row&&row.choices).map(function(x){return typeof x==='string'?x:text(x&&x.text||x&&x.option_text);}).filter(Boolean);}
 function answerText(row){var a=row&&row.correct_answer;if(typeof a==='string'||typeof a==='number')return String(a);if(a&&typeof a==='object')return text(a.text||a.answer||a.value);return'';}
@@ -72,11 +74,19 @@ function mapGrammar(row){
 }
 
 async function level(){
-  var side=global.WillenaMorphologySidecar;
-  if(side&&typeof side.resolveLevel==='function'){
-    try{return Number(await side.resolveLevel())||0;}catch(_){}
-  }
-  return 0;
+  var h=home(),books=arr(h&&h.books),wanted=text(h&&h.activeBookId),book=books.find(function(b){return String(b.book_id)===wanted;})||books[0]||null;
+  if(!book)return 0;
+  var direct=Number(book.public_level||book.publicLevel)||0;
+  if(direct>=1&&direct<=10)return direct;
+  var internal=Number(book.internal_level_id)||0;
+  if(internal>2&&internal<=12)return internal-2;
+  var id=text(book.book_id);
+  if(!id)return 0;
+  try{
+    var rows=arr(await get('content_books?select=id,public_level&id=eq.'+encodeURIComponent(id)+'&status=in.(review,published)&limit=1'));
+    var n=Number(rows[0]&&rows[0].public_level)||0;
+    return n>=1&&n<=10?n:0;
+  }catch(_){return 0;}
 }
 
 if(typeof coach.registerProvider==='function')coach.registerProvider('thirdPersonGrammar',async function(args,ctx){
