@@ -1,44 +1,70 @@
-/* Fresh hero action buttons: direct SVG elements only. No inherited action-card icon system. */
+/* Rebuilt hero action buttons: one real SVG image per card, with labels restored. */
 .book-hero.daily-inline .study-v2-top-actions>.hero-icon-card{
   appearance:none;
   -webkit-appearance:none;
   box-sizing:border-box;
-  display:grid;
-  place-items:center;
+  display:flex;
+  align-items:center;
+  justify-content:flex-start;
+  gap:12px;
   width:100%;
   min-width:0;
   min-height:78px;
   margin:0;
-  padding:8px 12px;
+  padding:8px 14px;
   border-radius:18px;
-  background:#fff;
+  background-color:#fff!important;
+  background-image:none!important;
+  background-repeat:no-repeat!important;
   box-shadow:none;
+  color:#35565b;
+  font-family:inherit;
   cursor:pointer;
 }
-.book-hero.daily-inline .study-v2-top-actions>.hero-icon-card:before,
-.book-hero.daily-inline .study-v2-top-actions>.hero-icon-card:after{
+
+/* Kill every legacy generated icon. The only artwork is the real <img>. */
+.book-hero.daily-inline .study-v2-top-actions>#practiceHeroBtn.hero-icon-card:before,
+.book-hero.daily-inline .study-v2-top-actions>#bookStudyBtn.hero-icon-card:before,
+.book-hero.daily-inline .study-v2-top-actions>#bookPracticeBtn.hero-icon-card:before{
   content:none!important;
   display:none!important;
+  background:none!important;
+  width:0!important;
+  height:0!important;
+  flex:0 0 0!important;
 }
+
 .book-hero.daily-inline .hero-icon-card .hero-icon-card-mark{
   display:block;
   width:auto;
-  height:58px;
-  max-width:100%;
+  height:48px;
+  max-width:45%;
   object-fit:contain;
   pointer-events:none;
+  flex:0 0 auto;
 }
-.book-hero.daily-inline #practiceHeroBtn.hero-icon-card{
-  border:2px solid var(--arcade-cyan);
+
+/* Temporary labels until we put the final title markup back into the buttons. */
+.book-hero.daily-inline #practiceHeroBtn.hero-icon-card:after,
+.book-hero.daily-inline #bookStudyBtn.hero-icon-card:after,
+.book-hero.daily-inline #bookPracticeBtn.hero-icon-card:after{
+  display:block!important;
+  white-space:pre-line;
+  text-align:left;
+  color:#35565b;
+  font-size:.82rem;
+  line-height:1.35;
+  font-weight:800;
 }
-.book-hero.daily-inline #bookStudyBtn.hero-icon-card{
-  border:2px solid var(--arcade-blue);
-  opacity:.72;
-}
-.book-hero.daily-inline #bookPracticeBtn.hero-icon-card{
-  border:2px solid var(--arcade-orange);
-}
-.book-hero.daily-inline #practiceHeroBtn.hero-icon-card .hero-icon-card-mark{height:68px;}
+.book-hero.daily-inline #practiceHeroBtn.hero-icon-card:after{content:"AI 코치\A 추천 학습"!important;}
+.book-hero.daily-inline #bookStudyBtn.hero-icon-card:after{content:"교재 공부\A 현재 교재 보기"!important;}
+.book-hero.daily-inline #bookPracticeBtn.hero-icon-card:after{content:"교재 연습\A 교재 · 단원 · 영역 선택"!important;}
+
+.book-hero.daily-inline #practiceHeroBtn.hero-icon-card{border:2px solid var(--arcade-cyan);}
+.book-hero.daily-inline #bookStudyBtn.hero-icon-card{border:2px solid var(--arcade-blue);opacity:.72;}
+.book-hero.daily-inline #bookPracticeBtn.hero-icon-card{border:2px solid var(--arcade-orange);}
+.book-hero.daily-inline #practiceHeroBtn.hero-icon-card .hero-icon-card-mark{height:54px;}
+
 .book-hero.daily-inline .hero-icon-card:hover,
 .book-hero.daily-inline .hero-icon-card:focus-visible{
   outline:none;
@@ -52,23 +78,34 @@
   .book-hero.daily-inline .study-v2-top-actions>#bookStudyBtn.hero-icon-card{grid-column:4!important;grid-row:2!important;}
   .book-hero.daily-inline .study-v2-top-actions>.hero-icon-card{
     min-height:78px;
-    padding:6px 10px;
+    padding:6px 11px;
+    gap:9px;
   }
-  .book-hero.daily-inline .hero-icon-card .hero-icon-card-mark{height:54px;}
-  .book-hero.daily-inline #practiceHeroBtn.hero-icon-card .hero-icon-card-mark{height:64px;}
+  .book-hero.daily-inline .hero-icon-card .hero-icon-card-mark{height:44px;max-width:42%;}
+  .book-hero.daily-inline #practiceHeroBtn.hero-icon-card .hero-icon-card-mark{height:50px;}
+  .book-hero.daily-inline #practiceHeroBtn.hero-icon-card:after,
+  .book-hero.daily-inline #bookStudyBtn.hero-icon-card:after,
+  .book-hero.daily-inline #bookPracticeBtn.hero-icon-card:after{font-size:.72rem;}
 }
 
 @media (min-width:760px) and (max-width:1024px){
   .book-hero.daily-inline .study-v2-top-actions>.hero-icon-card{min-height:70px;}
-  .book-hero.daily-inline .hero-icon-card .hero-icon-card-mark{height:48px;}
-  .book-hero.daily-inline #practiceHeroBtn.hero-icon-card .hero-icon-card-mark{height:58px;}
+  .book-hero.daily-inline .hero-icon-card .hero-icon-card-mark{height:40px;}
+  .book-hero.daily-inline #practiceHeroBtn.hero-icon-card .hero-icon-card-mark{height:46px;}
+  .book-hero.daily-inline #practiceHeroBtn.hero-icon-card:after,
+  .book-hero.daily-inline #bookStudyBtn.hero-icon-card:after,
+  .book-hero.daily-inline #bookPracticeBtn.hero-icon-card:after{font-size:.66rem;}
 }
 
 @media (max-width:759px){
   .book-hero.daily-inline .study-v2-top-actions>.hero-icon-card{
-    min-height:96px;
-    padding:10px 14px;
+    min-height:92px;
+    padding:10px 16px;
+    gap:14px;
   }
-  .book-hero.daily-inline .hero-icon-card .hero-icon-card-mark{height:70px;}
-  .book-hero.daily-inline #practiceHeroBtn.hero-icon-card .hero-icon-card-mark{height:82px;}
+  .book-hero.daily-inline .hero-icon-card .hero-icon-card-mark{height:58px;max-width:38%;}
+  .book-hero.daily-inline #practiceHeroBtn.hero-icon-card .hero-icon-card-mark{height:64px;}
+  .book-hero.daily-inline #practiceHeroBtn.hero-icon-card:after,
+  .book-hero.daily-inline #bookStudyBtn.hero-icon-card:after,
+  .book-hero.daily-inline #bookPracticeBtn.hero-icon-card:after{font-size:.9rem;}
 }
