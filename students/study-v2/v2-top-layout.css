@@ -9,18 +9,23 @@
 .study-v2-action-card:hover,.study-v2-action-card:focus-visible{transform:translateY(-2px);outline:none;box-shadow:0 11px 27px rgba(38,74,79,.10)}
 .study-v2-action-card>strong{display:block;font-size:1.16rem;line-height:1.18;font-weight:800;color:#35565b}
 .study-v2-action-card>small{display:block;margin-top:6px;font-size:.79rem;line-height:1.3;font-weight:700;color:#7c8c91}
-.study-v2-action-card:before{content:"";display:block;width:68px;height:68px;flex:0 0 68px;border-radius:0;background-color:transparent;background-repeat:no-repeat;background-position:center;background-size:contain}
 
-#practiceHeroBtn{border:2px solid var(--arcade-cyan)}
-#practiceHeroBtn:before{width:94px;height:94px;flex-basis:94px;margin-left:-8px;margin-right:-8px;background-image:url("./assets/ai-coach-mark.svg?v=20260817-topicons2")}
+/* Hero marks are now direct button backgrounds. No generated :before icon layer. */
+#practiceHeroBtn,
+#bookStudyBtn,
+#bookPracticeBtn{
+  background-color:#fff;
+  background-repeat:no-repeat;
+  background-position:22px center;
+  padding-left:116px;
+}
+#practiceHeroBtn{border:2px solid var(--arcade-cyan);background-image:url("./assets/ai-coach-mark.svg?v=20260820-direct1");background-size:82px 82px;padding-left:126px}
 
 /* 교재 연습 uses a clean rocket. */
-#bookPracticeBtn{border:2px solid var(--arcade-orange)}
-#bookPracticeBtn:before{background-image:url("./assets/book-practice-mark.svg?v=20260817-topicons2")}
+#bookPracticeBtn{border:2px solid var(--arcade-orange);background-image:url("./assets/book-practice-mark.svg?v=20260820-direct1");background-size:72px 72px}
 
 /* 교재 공부 uses a lightning bolt. */
-#bookStudyBtn{border:2px solid var(--arcade-blue);opacity:.72}
-#bookStudyBtn:before{background-image:url("./assets/book-study-mark.svg?v=20260817-topicons2")}
+#bookStudyBtn{border:2px solid var(--arcade-blue);opacity:.72;background-image:url("./assets/book-study-mark.svg?v=20260820-direct1");background-size:72px 72px}
 .study-v2-action-card.is-coming-soon{cursor:default}
 .study-v2-action-card.is-coming-soon:hover{transform:none;box-shadow:0 8px 22px rgba(38,74,79,.06)}
 
@@ -83,7 +88,6 @@
   #bookPracticeBtn{
     grid-column:2;
     min-height:88px;
-    padding:14px 16px;
   }
   #practiceHeroBtn{grid-row:1}
   #bookStudyBtn{grid-row:2}
@@ -144,9 +148,9 @@
 @media(max-width:560px){
   .book-hero.daily-inline{padding-top:2px!important}
   .study-v2-top-actions{gap:16px;margin-bottom:38px;width:100%!important}
-  .study-v2-top-actions>.study-v2-action-card{width:100%!important;min-width:100%!important;max-width:100%!important;min-height:104px!important;padding:16px!important;border-radius:20px!important;gap:15px!important}
-  .study-v2-action-card:before{width:62px;height:62px;flex-basis:62px;border-radius:0;background-size:contain}
-  #practiceHeroBtn:before{width:84px;height:84px;flex-basis:84px;margin-left:-7px;margin-right:-7px}
+  .study-v2-top-actions>.study-v2-action-card{width:100%!important;min-width:100%!important;max-width:100%!important;min-height:104px!important;border-radius:20px!important;gap:15px!important}
+  #practiceHeroBtn{background-position:14px center!important;background-size:90px 90px!important;padding:16px 16px 16px 118px!important}
+  #bookStudyBtn,#bookPracticeBtn{background-position:18px center!important;background-size:74px 74px!important;padding:16px 16px 16px 108px!important}
   #dailyWorkoutCard.study-v2-daily-primary:before{width:54px;height:54px;flex-basis:54px;border-radius:18px;background-size:31px 31px}
   .study-v2-action-card>strong,#dailyWorkoutCard.study-v2-daily-primary strong{font-size:1.06rem!important}
   .study-v2-action-card>small{font-size:.73rem!important}
