@@ -11,25 +11,23 @@ function skillNameFor(lang,s){
   return (lang==='ko'?K:E)[s]||s;
 }
 function skillName(s){return skillNameFor(ko()?'ko':'en',s);}
-function mastery(){
-  return Array.prototype.slice.call(document.querySelectorAll('#masteryGrid [data-skill]')).map(function(card){
-    var raw=text(card.querySelector('.header-skill-master-pct')&&card.querySelector('.header-skill-master-pct').textContent);
-    return{skill:text(card.dataset.skill),pct:Number(raw.replace(/[^0-9.]/g,''))||0};
+function mastery(ctx){
+  var progress=ctx&&ctx.book&&ctx.book.progress||{};
+  var rows=Array.isArray(progress.skill_summary)?progress.skill_summary:(Array.isArray(progress.unit_skills)?progress.unit_skills:[]);
+  return rows.map(function(r){
+    return{skill:text(r&&r.skill),pct:Math.max(0,Math.min(100,Number(r&&r.mastery_score)||0))};
   }).filter(function(x){return x.skill;});
 }
-function weakest(){return mastery().filter(function(x){return x.pct>0;}).sort(function(a,b){return a.pct-b.pct;})[0]||null;}
-function register(){
-  var w=weakest();
-  coach.registerCapability({
-    id:'weakness',
-    score:function(){var x=weakest();return x?Math.max(70,120-x.pct):0;},
-    available:function(){return !!weakest();},
-    label:w?{ko:skillNameFor('ko',w.skill)+'을 더 연습할래요',en:'More '+skillNameFor('en',w.skill)+' practice'}:{ko:'약한 부분 연습',en:'Practice a weak area'},
-    response:function(){var x=weakest();return x?(ko()?skillName(x.skill)+'이 지금 가장 먼저 챙기기 좋은 영역이에요.':'Your '+skillName(x.skill)+' looks like the best place to focus right now.'):'';},
-    actions:function(){var x=weakest();return x?[{label:{ko:skillNameFor('ko',x.skill)+' 집중 연습',en:'Focus on '+skillNameFor('en',x.skill)},provider:'unit',args:{skill:x.skill,count:10}}]:[];}
-  });
+function weakest(ctx){
+  return mastery(ctx).filter(function(x){return x.pct>0;}).sort(function(a,b){return (a.pct-b.pct)||a.skill.localeCompare(b.skill);})[0]||null;
 }
 
-global.addEventListener('willena:coach-bootstrap-ready',register);
-global.addEventListener('willena:study-recording',function(){setTimeout(function(){register();coach.refresh();},220);});
+coach.registerCapability({
+  id:'weakness',
+  score:function(ctx){var x=weakest(ctx);return x?Math.max(70,120-x.pct)+0.01:0;},
+  available:function(ctx){return !!weakest(ctx);},
+  label:function(ctx){var x=weakest(ctx);return x?{ko:skillNameFor('ko',x.skill)+'을 더 연습할래요',en:'More '+skillNameFor('en',x.skill)+' practice'}:{ko:'약한 부분 연습',en:'Practice a weak area'};},
+  response:function(ctx){var x=weakest(ctx);return x?(ko()?skillName(x.skill)+'이 지금 가장 먼저 챙기기 좋은 영역이에요.':'Your '+skillName(x.skill)+' looks like the best place to focus right now.'):'';},
+  actions:function(ctx){var x=weakest(ctx);return x?[{label:{ko:skillNameFor('ko',x.skill)+' 집중 연습',en:'Focus on '+skillNameFor('en',x.skill)},provider:'unit',args:{skill:x.skill,count:10}}]:[];}
+});
 })(window);
