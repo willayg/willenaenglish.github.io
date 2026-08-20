@@ -19,13 +19,13 @@ function masteryReady(){
   return cards.some(function(card){var pct=card.querySelector('.header-skill-master-pct');return !!text(pct&&pct.textContent);});
 }
 
-async function startCoach(){
+async function startFromLive(){
   if(started)return false;
   var ctx=coach.context();
   if(!ctx)return false;
   started=true;
   if(failTimer){clearTimeout(failTimer);failTimer=null;}
-  global.dispatchEvent(new CustomEvent('willena:coach-bootstrap-ready',{detail:{context:ctx,publicLevel:Number(ctx.publicLevel)||0,masteryReady:masteryReady()}}));
+  global.dispatchEvent(new CustomEvent('willena:coach-bootstrap-ready',{detail:{context:ctx,publicLevel:Number(ctx.publicLevel)||0,masteryReady:masteryReady(),source:'live'}}));
   await coach.home(true);
   root.classList.remove('willena-coach-booting');
   return true;
@@ -33,8 +33,8 @@ async function startCoach(){
 
 async function onStudyReady(e){
   var source=e&&e.detail&&e.detail.source||'';
-  if(!started){await startCoach();return;}
   if(source!=='live')return;
+  if(!started){await startFromLive();return;}
   var state=typeof coach.getState==='function'?coach.getState():null;
   if(state&&state.view&&state.view!=='home')return;
   await coach.refresh();
@@ -42,10 +42,9 @@ async function onStudyReady(e){
 
 function boot(){
   global.addEventListener('willena:study-v2-ready',onStudyReady);
-  startCoach();
   failTimer=setTimeout(function(){
     if(started)return;
-    console.warn('[AI Coach bootstrap] Study V2 did not publish ready context.');
+    console.warn('[AI Coach bootstrap] Live Study V2 context did not become ready.');
     root.classList.remove('willena-coach-booting');
   },12000);
 }
