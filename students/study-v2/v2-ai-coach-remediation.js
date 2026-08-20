@@ -5,6 +5,7 @@ if(!coach||typeof coach.registerCapability!=='function')return;
 
 var active=null;
 var pending=null;
+var successPending=false;
 
 function text(v){return String(v==null?'':v).trim();}
 function arr(v){return Array.isArray(v)?v:[];}
@@ -15,6 +16,32 @@ function overlayOpen(){return !!document.getElementById('aiCoachPracticeOverlay'
 function practiceTitle(){var n=document.getElementById('aiCoachPracticeTitle');return text(n&&n.textContent);}
 function retryFlag(activity){return !!(activity&&activity.metadata&&activity.metadata.coach_remediation_retry);}
 
+function installCelebrationStyle(){
+  if(document.getElementById('aiCoachCelebrationStyle'))return;
+  var style=document.createElement('style');
+  style.id='aiCoachCelebrationStyle';
+  style.textContent='@keyframes coachBurst{0%{transform:translate(-50%,-50%) scale(.35) rotate(0deg);opacity:0}12%{opacity:1}100%{transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy))) scale(1.05) rotate(var(--rot));opacity:0}}@keyframes coachPop{0%{transform:translate(-50%,-50%) scale(.3);opacity:0}35%{transform:translate(-50%,-50%) scale(1.18);opacity:1}100%{transform:translate(-50%,-50%) scale(1);opacity:0}}.ai-coach-celebration{position:fixed;inset:0;pointer-events:none;z-index:10050;overflow:hidden}.ai-coach-celebration-piece{position:absolute;left:50%;top:48%;width:10px;height:18px;border-radius:3px;background:hsl(var(--h),88%,60%);animation:coachBurst 900ms cubic-bezier(.12,.7,.24,1) forwards;animation-delay:var(--delay)}.ai-coach-celebration-pop{position:absolute;left:50%;top:48%;font-size:58px;line-height:1;animation:coachPop 760ms ease-out forwards}@media(prefers-reduced-motion:reduce){.ai-coach-celebration-piece{display:none}.ai-coach-celebration-pop{animation:none;opacity:1}}';
+  document.head.appendChild(style);
+}
+function celebrate(){
+  installCelebrationStyle();
+  var old=document.querySelector('.ai-coach-celebration');if(old)old.remove();
+  var layer=document.createElement('div');layer.className='ai-coach-celebration';
+  var pop=document.createElement('div');pop.className='ai-coach-celebration-pop';pop.textContent='🎉';layer.appendChild(pop);
+  var count=34;
+  for(var i=0;i<count;i++){
+    var piece=document.createElement('i');piece.className='ai-coach-celebration-piece';
+    var angle=(Math.PI*2*i/count)+(Math.random()*.22-.11),dist=85+Math.random()*165;
+    piece.style.setProperty('--dx',Math.round(Math.cos(angle)*dist)+'px');
+    piece.style.setProperty('--dy',Math.round(Math.sin(angle)*dist)+'px');
+    piece.style.setProperty('--rot',Math.round((Math.random()*720)-360)+'deg');
+    piece.style.setProperty('--h',Math.round(Math.random()*360));
+    piece.style.setProperty('--delay',Math.round(Math.random()*90)+'ms');
+    layer.appendChild(piece);
+  }
+  document.body.appendChild(layer);
+  setTimeout(function(){if(layer.parentNode)layer.remove();},1150);
+}
 function classify(title,mistakes){
   var low=text(title).toLowerCase();
   if(low.indexOf('3인칭')>=0||low.indexOf('third-person')>=0)return'third_person';
@@ -61,6 +88,29 @@ function makeRetryItems(mistakes,round){
     item.id=text(item.id||item.sourceId||'coach-retry')+'-retry-'+(round||1)+'-'+i;
     return item;
   });
+}
+function registerSuccess(data){
+  successPending=true;
+  var wasRetry=!!data.retry;
+  coach.registerCapability({
+    id:'remediation_success',
+    score:20000,
+    available:function(){return successPending;},
+    label:{ko:'🎉 모두 맞았어요!',en:'🎉 All correct!'},
+    response:wasRetry
+      ?{ko:'대단해요! 아까 틀렸던 문제를 전부 고쳤어요. 규칙을 다시 보고 바로 적용한 게 정말 좋아요!',en:'Great job! You fixed every question you missed. You reviewed the rule and applied it straight away!'}
+      :{ko:'완벽해요! 이번 문제를 전부 맞혔어요. 아주 잘했어요!',en:'Perfect! You got every question right. Excellent work!'},
+    actions:[]
+  });
+  coach.refresh();
+  setTimeout(function(){
+    var first=document.querySelector('#aiCoachChoices .study-v2-ai-prompt');
+    if(first&&successPending){
+      first.click();
+      successPending=false;
+      celebrate();
+    }
+  },150);
 }
 function registerReview(data){
   pending=data;
@@ -119,7 +169,11 @@ document.addEventListener('click',function(e){
   if(label!=='finish'&&label!=='완료')return;
   var finished=active;active=null;
   setTimeout(function(){
-    if(!finished.mistakes.length){pending=null;return;}
+    if(!finished.mistakes.length){
+      pending=null;
+      registerSuccess({title:finished.title,retry:finished.retry,round:finished.round,answered:finished.answered});
+      return;
+    }
     registerReview({title:finished.title||practiceTitle(),mistakes:finished.mistakes,round:finished.retry?finished.round:0});
   },180);
 },true);
