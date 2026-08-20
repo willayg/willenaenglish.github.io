@@ -59,7 +59,60 @@
 .daily-reward-star-svg{width:1em;height:1em;display:block;fill:#f4b942;}
 .daily-reward-stars .daily-reward-star-svg{width:25px;height:25px;}
 .daily-reward-bonus .daily-reward-star-svg{width:14px;height:14px;}
+
+/* Shared exercise rhythm: Daily Study, Skills and AI Coach */
+#v2PracticePanel .practice-toolbar{
+  margin-bottom:28px;
+}
+#v2PracticePanel .practice-toolbar .eyebrow{
+  margin-bottom:8px;
+}
+#v2PracticePanel .practice-toolbar h2{
+  margin-top:8px;
+}
+#v2PracticePanel .practice-toolbar .section-note:not(.daily-session-progress){
+  display:block;
+  margin-top:11px;
+}
+
+#v2PracticePanel .activity-context,
+#aiCoachPracticeOverlay .activity-context{
+  font-weight:600;
+}
+#v2PracticePanel .activity-prompt,
+#aiCoachPracticeOverlay .activity-prompt{
+  font-weight:550;
+  margin-bottom:30px;
+}
+#v2PracticePanel .activity-choice,
+#aiCoachPracticeOverlay .activity-choice,
+#v2PracticePanel .activity-token,
+#aiCoachPracticeOverlay .activity-token,
+#v2PracticePanel .activity-input,
+#aiCoachPracticeOverlay .activity-input{
+  font-weight:550;
+}
+
+#aiCoachPracticeOverlay .ai-coach-practice-head{
+  margin-bottom:28px;
+}
+#aiCoachPracticeOverlay .ai-coach-practice-title>span{
+  display:block;
+  margin-bottom:8px;
+}
+#aiCoachPracticeOverlay .ai-coach-practice-title h2{
+  margin-top:0;
+  margin-bottom:10px;
+}
+#aiCoachPracticeOverlay .ai-coach-practice-progress{
+  margin-top:0;
+}
+
 @media(max-width:560px){
   .study-v2-daily-mode #v2PracticeTitle{font-size:1.22rem;}
   .study-v2-daily-mode #practicePerf.daily-session-progress{width:min(210px,62vw);}
+  #v2PracticePanel .practice-toolbar,
+  #aiCoachPracticeOverlay .ai-coach-practice-head{margin-bottom:24px;}
+  #v2PracticePanel .activity-prompt,
+  #aiCoachPracticeOverlay .activity-prompt{margin-bottom:28px;}
 }
