@@ -22,7 +22,23 @@ function installGuideStyle(){
   if(document.getElementById('coachStudyGuideStyle'))return;
   var style=document.createElement('style');
   style.id='coachStudyGuideStyle';
-  style.textContent='.coach-study-guide{margin:0 0 18px;padding:16px 18px;border:2px solid #74d5db;border-radius:18px;background:linear-gradient(135deg,#f3fcfc,#fff7fb);box-shadow:0 8px 22px rgba(23,63,70,.10);font-family:Poppins,sans-serif;opacity:0;transform:translateY(-8px);transition:opacity .22s ease,transform .22s ease}.coach-study-guide.is-visible{opacity:1;transform:translateY(0)}.coach-study-guide.is-leaving{opacity:0;transform:translateY(-6px)}.coach-study-guide strong{display:block;margin-bottom:5px;color:#173f46;font-size:15px;font-weight:800}.coach-study-guide p{margin:0;color:#315e64;font-size:14px;font-weight:600;line-height:1.55}.coach-study-guide-badge{display:inline-block;margin-bottom:8px;padding:4px 9px;border-radius:999px;background:#eafafa;color:#179faa;font-size:10px;font-weight:800;letter-spacing:.08em}@media(prefers-reduced-motion:reduce){.coach-study-guide{transition:none;transform:none}}';
+  style.textContent='\
+.coach-study-guide-overlay{position:fixed;inset:0;z-index:10070;display:flex;align-items:center;justify-content:center;padding:22px;background:rgba(18,25,31,.48);opacity:0;transition:opacity .2s ease;cursor:pointer}\
+.coach-study-guide-overlay.is-visible{opacity:1}\
+.coach-study-guide-overlay.is-leaving{opacity:0}\
+.coach-study-guide{position:relative;width:min(430px,calc(100vw - 44px));padding:24px 22px 21px;background:#fff;border:4px solid #173f46;border-radius:0;box-shadow:8px 8px 0 #f2b4cf,-8px -8px 0 #7fd8df,12px 12px 0 rgba(23,63,70,.18);font-family:Poppins,sans-serif;text-align:center;color:#173f46;image-rendering:pixelated}\
+.coach-study-guide:before,.coach-study-guide:after{content:"";position:absolute;width:12px;height:12px;background:#fff}\
+.coach-study-guide:before{left:-4px;top:-4px;border-right:4px solid #173f46;border-bottom:4px solid #173f46}\
+.coach-study-guide:after{right:-4px;bottom:-4px;border-left:4px solid #173f46;border-top:4px solid #173f46}\
+.coach-study-guide-mark{display:block;width:74px;height:74px;margin:0 auto 11px;object-fit:contain;image-rendering:auto}\
+.coach-study-guide-badge{display:inline-block;margin-bottom:9px;padding:5px 9px;background:#173f46;color:#fff;border:0;border-radius:0;font-size:10px;font-weight:800;letter-spacing:.11em;text-transform:uppercase;box-shadow:3px 3px 0 #7fd8df}\
+.coach-study-guide strong{display:block;margin:0 0 7px;color:#173f46;font-size:18px;font-weight:800;line-height:1.25}\
+.coach-study-guide p{margin:0;color:#315e64;font-size:14px;font-weight:600;line-height:1.6}\
+.coach-study-guide-dismiss{display:block;margin-top:13px;color:#7a878a;font-size:10px;font-weight:700;letter-spacing:.05em}\
+.coach-study-guide-pixels{display:flex;justify-content:center;gap:5px;margin-top:14px}\
+.coach-study-guide-pixels i{display:block;width:9px;height:9px;border-radius:0}\
+.coach-study-guide-pixels i:nth-child(1){background:#ef78ae}.coach-study-guide-pixels i:nth-child(2){background:#6fd2d8}.coach-study-guide-pixels i:nth-child(3){background:#5785df}.coach-study-guide-pixels i:nth-child(4){background:#f0a24b}\
+@media(prefers-reduced-motion:reduce){.coach-study-guide-overlay{transition:none}}';
   document.head.appendChild(style);
 }
 function guideCopy(skill,kind){
@@ -39,21 +55,30 @@ function guideCopy(skill,kind){
   var key=copy[skill]?skill:(kind==='grammar'?'grammar':kind==='vocabulary'?'vocabulary':'sentence_building');
   return copy[key]||copy.sentence_building;
 }
-function showGuide(skill,kind){
-  var area=document.getElementById('bookStudyArea');if(!area)return;
-  installGuideStyle();
-  var old=document.getElementById('coachStudyGuide');if(old)old.remove();
+function dismissGuide(overlay){
   clearTimeout(guideTimer);
-  var c=guideCopy(skill,kind),box=document.createElement('div');
-  box.id='coachStudyGuide';box.className='coach-study-guide';box.setAttribute('role','status');
+  overlay=overlay||document.getElementById('coachStudyGuideOverlay');
+  if(!overlay||!overlay.parentNode)return;
+  overlay.classList.add('is-leaving');
+  setTimeout(function(){if(overlay.parentNode)overlay.remove();},220);
+}
+function showGuide(skill,kind){
+  installGuideStyle();
+  var old=document.getElementById('coachStudyGuideOverlay');if(old)old.remove();
+  clearTimeout(guideTimer);
+  var c=guideCopy(skill,kind),overlay=document.createElement('div'),box=document.createElement('div');
+  overlay.id='coachStudyGuideOverlay';overlay.className='coach-study-guide-overlay';overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');overlay.setAttribute('aria-label',ko()?'AI 코치 학습 안내':'AI Coach study tip');
+  box.id='coachStudyGuide';box.className='coach-study-guide';
+  var mark=document.createElement('img');mark.className='coach-study-guide-mark';mark.src='./assets/ai-coach-mark.svg?v=20260820-rebuild1';mark.alt='';
   var badge=document.createElement('span');badge.className='coach-study-guide-badge';badge.textContent=ko()?'AI 코치 추천':'AI COACH TIP';
   var title=document.createElement('strong');title.textContent=ko()?'이렇게 공부해 보세요':'How to study this';
   var p=document.createElement('p');p.textContent=ko()?c.ko:c.en;
-  box.appendChild(badge);box.appendChild(title);box.appendChild(p);
-  var content=document.getElementById('bookStudyContent');
-  if(content&&content.parentNode===area)area.insertBefore(box,content);else area.insertBefore(box,area.firstChild);
-  requestAnimationFrame(function(){requestAnimationFrame(function(){box.classList.add('is-visible');});});
-  guideTimer=setTimeout(function(){if(!box.parentNode)return;box.classList.add('is-leaving');setTimeout(function(){if(box.parentNode)box.remove();},260);},7000);
+  var dismiss=document.createElement('span');dismiss.className='coach-study-guide-dismiss';dismiss.textContent=ko()?'화면을 누르면 닫혀요':'Tap anywhere to close';
+  var pixels=document.createElement('span');pixels.className='coach-study-guide-pixels';pixels.setAttribute('aria-hidden','true');for(var i=0;i<4;i++)pixels.appendChild(document.createElement('i'));
+  box.appendChild(mark);box.appendChild(badge);box.appendChild(title);box.appendChild(p);box.appendChild(dismiss);box.appendChild(pixels);overlay.appendChild(box);document.body.appendChild(overlay);
+  overlay.addEventListener('click',function(){dismissGuide(overlay);},{once:true});
+  requestAnimationFrame(function(){requestAnimationFrame(function(){overlay.classList.add('is-visible');});});
+  guideTimer=setTimeout(function(){dismissGuide(overlay);},8500);
 }
 
 async function chooseBook(bookId){bookId=text(bookId);if(!bookId)return false;var ctx=current();if(ctx&&String(ctx.bookId)===bookId)return true;var books=arr(ctx&&ctx.books),index=books.findIndex(function(b){return String(b&&b.book_id)===bookId;});if(index<0)return false;var button=document.querySelector('#bookTabs [data-book-index="'+index+'"]')||document.querySelector('#bookPips [data-book-index="'+index+'"]');if(!button)return false;button.click();return !!(await waitFor(function(){var c=current();return c&&String(c.bookId)===bookId;},3500));}
@@ -71,7 +96,7 @@ async function openDestination(dest){
   openStudyMode();
   var target=kind?await openKind(kind,unitId):await waitForBookStudy(unitId);
   if(dest.patternName){var card=await waitFor(function(){return findPatternCard(dest.patternName);},2500);if(card)target=card;}
-  if(target){showGuide(skill||kind,kind);requestAnimationFrame(function(){requestAnimationFrame(scrollStudyTop);});}
+  if(target){requestAnimationFrame(function(){requestAnimationFrame(function(){scrollStudyTop();setTimeout(function(){showGuide(skill||kind,kind);},180);});});}
   return{bookId:bookId,unitId:unitId,kind:kind,skill:skill,patternName:text(dest.patternName)};
 }
 
@@ -80,5 +105,5 @@ async function resolveGrammarDestination(codes,ctx){codes=arr(codes).map(text).f
 async function studyProvider(args,ctx){args=args||{};var dest=null;if(args.codes||args.code)dest=await resolveGrammarDestination(arr(args.codes||args.code),ctx);if(!dest)dest={bookId:text(args.bookId||ctx&&ctx.bookId),unitId:text(args.unitId||ctx&&ctx.unitId),kind:text(args.kind||kindForSkill(args.skill)),skill:text(args.skill),patternName:text(args.patternName)};if(!dest||!dest.bookId||!dest.unitId)return{message:{ko:'이 학습 내용을 연결할 교재 위치를 찾지 못했어요.',en:'I could not find a linked Study location for this yet.'}};await openDestination(dest);return{message:args.message||{ko:'교재 공부에서 바로 확인할 수 있게 열어 두었어요.',en:'I opened the matching Book Study section for you.'},destination:dest};}
 
 coach.registerProvider('studyNavigation',studyProvider);
-global.WillenaStudyNavigator={version:'coach-study-nav-v1.2',open:openDestination,resolveGrammar:resolveGrammarDestination,kindForSkill:kindForSkill};
+global.WillenaStudyNavigator={version:'coach-study-nav-v1.3',open:openDestination,resolveGrammar:resolveGrammarDestination,kindForSkill:kindForSkill,dismissGuide:dismissGuide};
 })(window);
