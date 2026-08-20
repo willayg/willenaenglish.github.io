@@ -108,40 +108,6 @@
   margin-top:0;
 }
 
-/* Main hero action marks: keep the existing SVGs, but give them more visual weight. */
-.book-hero.daily-inline #practiceHeroBtn:before{
-  width:76px!important;
-  height:76px!important;
-  flex:0 0 76px!important;
-  background-size:contain!important;
-  margin-left:-5px!important;
-  margin-right:-5px!important;
-}
-.book-hero.daily-inline #bookStudyBtn:before,
-.book-hero.daily-inline #bookPracticeBtn:before{
-  width:64px!important;
-  height:64px!important;
-  flex:0 0 64px!important;
-  background-size:contain!important;
-}
-
-/* Phones get a slightly stronger icon scale because the action cards stack vertically. */
-@media(max-width:759px){
-  .book-hero.daily-inline #practiceHeroBtn:before{
-    width:88px!important;
-    height:88px!important;
-    flex-basis:88px!important;
-    margin-left:-7px!important;
-    margin-right:-7px!important;
-  }
-  .book-hero.daily-inline #bookStudyBtn:before,
-  .book-hero.daily-inline #bookPracticeBtn:before{
-    width:76px!important;
-    height:76px!important;
-    flex-basis:76px!important;
-  }
-}
-
 /* Phones and unfolded foldables: simplify the Daily home card, but stop short of tablet widths. */
 @media(max-width:719px){
   .book-hero.daily-inline .daily-rail-headline,
