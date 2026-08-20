@@ -29,6 +29,7 @@ function typesFor(level){
 }
 function schedule(){clearTimeout(timer);timer=setTimeout(sync,80);}
 function sameTypes(buttons,types){if(buttons.length!==types.length)return false;for(var i=0;i<types.length;i++)if(buttons[i].dataset.morphType!==types[i])return false;return true;}
+function ownedNode(n){return !!(n&&n.nodeType===1&&n.matches&&n.matches('[data-morph-coach]'));}
 function addBubble(kind,message){
   var t=document.getElementById('aiChatTranscript');if(!t)return;
   var row=document.createElement('div');row.className='study-v2-ai-chat-row is-'+kind;
@@ -36,9 +37,12 @@ function addBubble(kind,message){
   row.appendChild(bubble);t.appendChild(row);while(t.children.length>7)t.removeChild(t.firstChild);
 }
 function clearCta(){var c=document.getElementById('aiChatCta');if(c)c.innerHTML='';}
-function addAction(labelText,handler){
-  var c=document.getElementById('aiChatCta');if(!c)return;
-  var b=document.createElement('button');b.type='button';b.className='study-v2-ai-chat-cta';b.textContent=labelText;b.addEventListener('click',handler,{once:true});c.appendChild(b);
+function setPromptActions(actions){
+  var p=document.getElementById('aiChatPrompts');if(!p)return;
+  p.innerHTML='';
+  arr(actions).forEach(function(a){
+    var b=document.createElement('button');b.type='button';b.className='study-v2-ai-prompt';b.dataset.morphCoach='followup';b.textContent=a.label;b.addEventListener('click',a.handler,{once:true});p.appendChild(b);
+  });
 }
 function currentBook(){
   try{var c=JSON.parse(localStorage.getItem(CACHE_PREFIX+uid())||'null'),books=arr(c&&c.books),wanted=c&&c.activeBookId;return books.find(function(b){return String(b.book_id)===String(wanted);})||books[0]||null;}catch(_){return null;}
@@ -70,11 +74,11 @@ async function thirdPersonGrammarItems(){
   return shuffle(unique.slice(0,60)).map(mapGrammar).filter(Boolean).slice(0,12);
 }
 async function launchThirdPersonGrammar(){
-  clearCta();addBubble('user',ko()?'문장 속에서 연습할래요.':'Practice it in grammar questions.');
+  clearCta();setPromptActions([]);addBubble('user',ko()?'문장 속에서 연습할래요.':'Practice it in grammar questions.');
   addBubble('coach',ko()?'좋아요. 여러 교재에서 3인칭 단수와 does 문법 문제를 찾고 있어요.':'Great. I’m pulling third-person and does grammar questions from across the curriculum.');
   try{
     var items=await thirdPersonGrammarItems();
-    if(!items.length){addBubble('coach',ko()?'지금 사용할 수 있는 문법 문제를 찾지 못했어요. 동사 형태 연습은 바로 할 수 있어요.':'I couldn’t find a usable grammar set just now. The verb-form practice is still available.');return;}
+    if(!items.length){addBubble('coach',ko()?'지금 사용할 수 있는 문법 문제를 찾지 못했어요.':'I couldn’t find a usable grammar set just now.');return;}
     var practice=global.WillenaStudyV2AIPractice;if(!practice||typeof practice.open!=='function')return;
     practice.open({type:'third_person_grammar',title:ko()?'3인칭 단수 문법 연습':'Third-person grammar practice',items:items});
   }catch(e){console.debug('[Morphology Coach grammar]',e);addBubble('coach',ko()?'문법 문제를 불러오는 중에 문제가 생겼어요. 다시 시도해 주세요.':'I had trouble loading the grammar questions. Please try again.');}
@@ -84,22 +88,25 @@ function respond(type){
   var side=global.WillenaMorphologySidecar;if(!side)return;
   if(type==='third_person'){
     addBubble('coach',ko()?'좋아요. 3인칭 단수는 두 가지로 연습하면 좋아요. likes, goes, has, does 같은 동사 형태 자체를 연습할 수도 있고, 여러 교재에서 3인칭 단수를 실제 문장에 쓰는 문법 문제를 풀 수도 있어요. 어떤 걸 해볼까요?':'Good choice. There are two useful ways to practice third-person verbs: work directly on forms like likes, goes, has and does, or use them in full grammar questions pulled from across the curriculum. Which would you like?');
-    addAction(ko()?'동사 형태 연습':'Practice verb forms',function(){side.launchQuiz('third_person',10);});
-    addAction(ko()?'3인칭 단수 문법 문제':'Third-person grammar questions',launchThirdPersonGrammar);
+    setPromptActions([
+      {label:ko()?'동사 형태 연습':'Practice verb forms',handler:function(){side.launchQuiz('third_person',10);}},
+      {label:ko()?'3인칭 단수 문법 문제':'Third-person grammar questions',handler:launchThirdPersonGrammar}
+    ]);
     return;
   }
   if(type==='past'){
     addBubble('coach',ko()?'좋아요. 과거형은 특히 불규칙 동사를 반복해서 익히는 게 중요해요. 먼저 동사 형태를 집중해서 연습해 볼까요?':'Good choice. Past-tense practice is especially useful for building strong recall of irregular verbs. Start with a focused verb-form round?');
-    addAction(ko()?'과거형 동사 연습':'Practice past-tense verbs',function(){side.launchQuiz('past',10);});return;
+    setPromptActions([{label:ko()?'과거형 동사 연습':'Practice past-tense verbs',handler:function(){side.launchQuiz('past',10);}}]);return;
   }
   addBubble('coach',ko()?'좋아요. 과거분사는 불규칙 형태와 규칙형을 함께 익히는 게 중요해요. 동사 형태부터 집중해서 연습해 볼까요?':'Good choice. Past participles are worth practicing as their own forms, especially the irregular ones. Start with a focused verb-form round?');
-  addAction(ko()?'과거분사 동사 연습':'Practice participle forms',function(){side.launchQuiz('past_participle',10);});
+  setPromptActions([{label:ko()?'과거분사 동사 연습':'Practice participle forms',handler:function(){side.launchQuiz('past_participle',10);}}]);
 }
 async function sync(){
   if(busy)return;busy=true;
   try{
     var side=global.WillenaMorphologySidecar,p=document.getElementById('aiChatPrompts');
     if(!side||typeof side.resolveLevel!=='function'||typeof side.launchQuiz!=='function'||!p)return;
+    if(p.querySelector('[data-morph-coach="followup"]'))return;
     var level=Number(await side.resolveLevel())||0,types=typesFor(level),existing=Array.prototype.slice.call(p.querySelectorAll('[data-morph-coach="maintenance"]'));
     if(sameTypes(existing,types)){existing.forEach(function(b,i){var next=label(types[i]);if(b.textContent!==next)b.textContent=next;});return;}
     p.querySelectorAll('[data-morph-coach]').forEach(function(b){b.remove();});
@@ -110,7 +117,7 @@ async function sync(){
 }
 function bind(){
   var p=document.getElementById('aiChatPrompts');
-  if(p&&global.MutationObserver){observer=new MutationObserver(function(mutations){var meaningful=mutations.some(function(m){return Array.prototype.some.call(m.addedNodes,function(n){return n.nodeType===1&&!n.matches('[data-morph-coach="maintenance"]');})||Array.prototype.some.call(m.removedNodes,function(n){return n.nodeType===1&&!n.matches('[data-morph-coach="maintenance"]');});});if(meaningful)schedule();});observer.observe(p,{childList:true});}
+  if(p&&global.MutationObserver){observer=new MutationObserver(function(mutations){var meaningful=mutations.some(function(m){return Array.prototype.some.call(m.addedNodes,function(n){return n.nodeType===1&&!ownedNode(n);})||Array.prototype.some.call(m.removedNodes,function(n){return n.nodeType===1&&!ownedNode(n);});});if(meaningful)schedule();});observer.observe(p,{childList:true});}
   document.addEventListener('click',function(e){var b=e.target&&e.target.closest&&e.target.closest('#aiChatPrompts [data-morph-coach="maintenance"][data-morph-type]');if(!b)return;e.preventDefault();e.stopPropagation();respond(b.dataset.morphType);},true);
   global.addEventListener('willena:morphology-updated',schedule);global.addEventListener('focus',schedule);
   document.addEventListener('click',function(e){if(e.target&&e.target.closest&&e.target.closest('#languageBtn'))setTimeout(schedule,100);},true);
