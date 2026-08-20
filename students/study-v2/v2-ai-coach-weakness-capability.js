@@ -81,7 +81,7 @@ coach.registerCapability({
     weakSkills(ctx).forEach(function(x){
       var loc=x.location,where=locationLabel(loc),bookId=loc&&loc.bookId||ctx&&ctx.bookId,unitId=loc&&loc.unitId||ctx&&ctx.unitId;
       out.push({label:{ko:(where?where+' · ':'')+skillNameFor('ko',x.skill)+' 공부하기',en:'Study '+skillNameFor('en',x.skill)+(where?' · '+where:'')},provider:'studyNavigation',args:{bookId:bookId,unitId:unitId,skill:x.skill}});
-      out.push({label:{ko:(where?where+' · ':'')+skillNameFor('ko',x.skill)+' 집중 연습',en:'Practice '+skillNameFor('en',x.skill)+(where?' · '+where:'')},provider:'unit',args:{bookId:bookId,unitId:unitId,skill:x.skill,count:10}});
+      out.push({label:{ko:skillNameFor('ko',x.skill)+' 집중 연습',en:'Practice '+skillNameFor('en',x.skill)},provider:'unit',args:{skill:x.skill,count:10}});
     });
     return out;
   }
