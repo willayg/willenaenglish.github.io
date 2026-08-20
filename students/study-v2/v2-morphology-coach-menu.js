@@ -24,8 +24,19 @@ async function sync(){
     if(!side||typeof side.resolveLevel!=='function'||typeof side.launchQuiz!=='function'||!p)return;
     var level=await side.resolveLevel(),types=typesFor(Number(level)||0);
     p.querySelectorAll('[data-morph-coach]').forEach(function(b){b.remove();});
-    var room=Math.max(0,4-p.children.length);
-    types.slice(0,room).forEach(function(type){
+
+    // Morphology is recurring core practice, so reserve its slots instead of
+    // only showing it when the normal Coach happens to leave empty space.
+    var maxPrompts=4;
+    var morphCount=Math.min(types.length,maxPrompts);
+    var normalLimit=Math.max(0,maxPrompts-morphCount);
+    var normal=Array.prototype.slice.call(p.children).filter(function(el){return !el.hasAttribute('data-morph-coach');});
+    while(normal.length>normalLimit){
+      var el=normal.pop();
+      if(el&&el.parentNode===p)p.removeChild(el);
+    }
+
+    types.slice(0,morphCount).forEach(function(type){
       var b=document.createElement('button');
       b.type='button';b.className='study-v2-ai-prompt';
       b.dataset.morphCoach='maintenance';b.dataset.morphType=type;
