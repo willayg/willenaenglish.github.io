@@ -45,7 +45,7 @@ function ensureLoader(){
     chat.appendChild(loader);
   }
   var title=loader.querySelector('.coach-loader-title'),copy=loader.querySelector('.coach-loader-copy');
-  if(title)title.textContent=isKo()?'AI COACH LOADING...':'AI COACH LOADING...';
+  if(title)title.textContent='AI COACH LOADING...';
   if(copy)copy.innerHTML=isKo()?'학습 기록을 확인하고 있어요 <span class="coach-loader-cursor" aria-hidden="true"></span>':'CHECKING YOUR STUDY RECORDS <span class="coach-loader-cursor" aria-hidden="true"></span>';
   return loader;
 }
@@ -54,6 +54,11 @@ function masteryReady(){
   if(!cards.length)return false;
   return cards.some(function(card){var pct=card.querySelector('.header-skill-master-pct');return !!text(pct&&pct.textContent);});
 }
+async function loadHistory(ctx,force){
+  var history=global.WillenaCoachHistory;
+  if(!history||typeof history.load!=='function')return null;
+  try{return await history.load(ctx,force?{force:true}:{});}catch(e){console.warn('[AI Coach bootstrap] history load failed',e);return null;}
+}
 
 async function startFromLive(){
   if(started)return false;
@@ -61,7 +66,8 @@ async function startFromLive(){
   if(!ctx)return false;
   started=true;
   if(failTimer){clearTimeout(failTimer);failTimer=null;}
-  global.dispatchEvent(new CustomEvent('willena:coach-bootstrap-ready',{detail:{context:ctx,publicLevel:Number(ctx.publicLevel)||0,masteryReady:masteryReady(),source:'live'}}));
+  var history=await loadHistory(ctx,false);
+  global.dispatchEvent(new CustomEvent('willena:coach-bootstrap-ready',{detail:{context:ctx,history:history,publicLevel:Number(ctx.publicLevel)||0,masteryReady:masteryReady(),source:'live'}}));
   await coach.home(true);
   root.classList.remove('willena-coach-booting');
   return true;
@@ -73,6 +79,8 @@ async function onStudyReady(e){
   if(!started){await startFromLive();return;}
   var state=typeof coach.getState==='function'?coach.getState():null;
   if(state&&state.view&&state.view!=='home')return;
+  var ctx=coach.context();
+  if(ctx)await loadHistory(ctx,true);
   await coach.refresh();
 }
 
