@@ -90,7 +90,7 @@ function renderFinish(r){
   if(testMode()||!r||!r.completed)return;
   var root=document.getElementById('v2ActivityRoot');if(!root)return;
   var finish=root.querySelector('.smart-finish');if(!finish)return;
-  var points=num(r.today_points),rating=num(r.daily_rating_stars),bonusPts=num(r.streak_bonus_points),bonusStars=num(r.streak_bonus_stars),streak=num(r.current_streak);
+  var points=num(r.today_points),rating=Math.max(3,num(r.daily_rating_stars)),bonusPts=num(r.streak_bonus_points),bonusStars=num(r.streak_bonus_stars),streak=num(r.current_streak);
   if(points<=0&&rating<=0)return;
   var block=finish.querySelector('.daily-reward-summary');
   if(!block){
@@ -125,7 +125,9 @@ function refreshHeader(){
 function announceDelta(prev,next){
   if(testMode()||!prev||!next)return;
   var dp=Math.max(0,num(next.today_points)-num(prev.today_points));
-  var ds=Math.max(0,num(next.today_stars)-num(prev.today_stars));
+  var nextStars=next.completed?Math.max(3+Math.max(0,num(next.streak_bonus_stars)),num(next.today_stars)):num(next.today_stars);
+  var prevStars=prev.completed?Math.max(3+Math.max(0,num(prev.streak_bonus_stars)),num(prev.today_stars)):num(prev.today_stars);
+  var ds=Math.max(0,nextStars-prevStars);
   if(dp>0){try{global.dispatchEvent(new CustomEvent('points:optimistic-bump',{detail:{delta:dp,source:'daily-study'}}));}catch(_){}}
   if(ds>0){try{global.dispatchEvent(new CustomEvent('stars:optimistic-bump',{detail:{delta:ds,source:'daily-study'}}));}catch(_){}try{global.dispatchEvent(new CustomEvent('stars:refresh',{detail:{source:'daily-study'}}));}catch(_){}}
   if(dp>0||ds>0){toast(dp,ds);refreshHeader();}
