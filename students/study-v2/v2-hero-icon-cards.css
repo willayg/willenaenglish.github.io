@@ -40,7 +40,7 @@
 .book-hero.daily-inline .hero-icon-card .hero-icon-card-mark{
   display:block!important;
   width:auto!important;
-  height:72px!important;
+  height:61px!important;
   max-width:none!important;
   object-fit:contain;
   pointer-events:none;
@@ -73,7 +73,7 @@
 }
 .book-hero.daily-inline #bookStudyBtn.hero-icon-card{border:2px solid var(--arcade-blue);opacity:.72;}
 .book-hero.daily-inline #bookPracticeBtn.hero-icon-card{border:2px solid var(--arcade-orange);}
-.book-hero.daily-inline #practiceHeroBtn.hero-icon-card .hero-icon-card-mark{height:78px!important;}
+.book-hero.daily-inline #practiceHeroBtn.hero-icon-card .hero-icon-card-mark{height:66px!important;}
 
 .book-hero.daily-inline .hero-icon-card:hover,
 .book-hero.daily-inline .hero-icon-card:focus-visible{
@@ -91,8 +91,8 @@
     padding:6px 14px!important;
     gap:9px!important;
   }
-  .book-hero.daily-inline .hero-icon-card .hero-icon-card-mark{height:62px!important;}
-  .book-hero.daily-inline #practiceHeroBtn.hero-icon-card .hero-icon-card-mark{height:68px!important;}
+  .book-hero.daily-inline .hero-icon-card .hero-icon-card-mark{height:53px!important;}
+  .book-hero.daily-inline #practiceHeroBtn.hero-icon-card .hero-icon-card-mark{height:58px!important;}
   .book-hero.daily-inline #practiceHeroBtn.hero-icon-card:after,
   .book-hero.daily-inline #bookStudyBtn.hero-icon-card:after,
   .book-hero.daily-inline #bookPracticeBtn.hero-icon-card:after{font-size:.78rem!important;}
@@ -100,8 +100,8 @@
 
 @media (min-width:760px) and (max-width:1024px){
   .book-hero.daily-inline .study-v2-top-actions>.hero-icon-card{min-height:70px;gap:8px!important;}
-  .book-hero.daily-inline .hero-icon-card .hero-icon-card-mark{height:58px!important;}
-  .book-hero.daily-inline #practiceHeroBtn.hero-icon-card .hero-icon-card-mark{height:64px!important;}
+  .book-hero.daily-inline .hero-icon-card .hero-icon-card-mark{height:49px!important;}
+  .book-hero.daily-inline #practiceHeroBtn.hero-icon-card .hero-icon-card-mark{height:54px!important;}
   .book-hero.daily-inline #practiceHeroBtn.hero-icon-card:after,
   .book-hero.daily-inline #bookStudyBtn.hero-icon-card:after,
   .book-hero.daily-inline #bookPracticeBtn.hero-icon-card:after{font-size:.72rem!important;}
@@ -117,7 +117,7 @@
 
   .book-hero.daily-inline #bookStudyBtn.hero-icon-card .hero-icon-card-mark,
   .book-hero.daily-inline #bookPracticeBtn.hero-icon-card .hero-icon-card-mark{
-    height:82px!important;
+    height:70px!important;
     margin-left:2px!important;
   }
 
@@ -132,6 +132,6 @@
     padding:10px 18px!important;
     gap:12px!important;
   }
-  .book-hero.daily-inline #practiceHeroBtn.hero-icon-card .hero-icon-card-mark{height:82px!important;}
+  .book-hero.daily-inline #practiceHeroBtn.hero-icon-card .hero-icon-card-mark{height:70px!important;}
   .book-hero.daily-inline #practiceHeroBtn.hero-icon-card:after{font-size:1rem!important;}
 }
