@@ -1,0 +1,76 @@
+name: Fix Daily Study Star Floor Once
+
+on:
+  push:
+    branches: [staging]
+    paths:
+      - '.github/workflows/fix-daily-study-star-floor-once.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: staging
+          fetch-depth: 0
+      - name: Patch progress-summary Daily Study star handling
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('cloudflare-workers/progress-summary/src/index.js')
+          s = p.read_text()
+
+          old = """function deriveStars(summary) {
+  const s = summary || {};
+  let acc = null;
+"""
+          new = """function deriveStars(summary) {
+  const s = summary || {};
+  // Explicit session rewards are authoritative. Daily Study writes its own
+  // 3-5 star rating, so do not recalculate it from raw attempt accuracy.
+  if (typeof s.stars === 'number') return s.stars;
+  if (typeof s.stars_preview === 'number') return s.stars_preview;
+  let acc = null;
+"""
+          if old not in s:
+              raise SystemExit('deriveStars anchor not found')
+          s = s.replace(old, new, 1)
+
+          old_tail = """  if (typeof s.stars === 'number') return s.stars;
+  return 0;
+}
+"""
+          new_tail = """  return 0;
+}
+"""
+          if old_tail not in s:
+              raise SystemExit('deriveStars tail anchor not found')
+          s = s.replace(old_tail, new_tail, 1)
+
+          old_build = """    const stars = deriveStars(parsed);
+    if (stars <= 0) return;
+"""
+          new_build = """    var stars = deriveStars(parsed);
+    // Completing Daily Study always earns at least 3 stars, regardless of
+    // performance. Higher ratings and streak bonuses remain intact.
+    if (mode === 'daily_study' && parsed && parsed.completed !== false) stars = Math.max(3, stars);
+    if (stars <= 0) return;
+"""
+          if old_build not in s:
+              raise SystemExit('buildStarsByUserMap anchor not found')
+          s = s.replace(old_build, new_build, 1)
+
+          p.write_text(s)
+          PY
+      - name: Commit patch
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add cloudflare-workers/progress-summary/src/index.js
+          git diff --cached --quiet && exit 0
+          git commit -m "Fix Daily Study minimum 3 star aggregation"
+          git push origin staging
