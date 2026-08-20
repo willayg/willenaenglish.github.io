@@ -110,7 +110,14 @@
 
 @media(max-width:560px){
   .study-v2-daily-mode #v2PracticeTitle{font-size:1.22rem;}
-  .study-v2-daily-mode #practicePerf.daily-session-progress{width:min(210px,62vw);}
+
+  /* Mobile: remove progress strip / remaining-question copy across exercise modes. */
+  #v2PracticePanel .practice-toolbar .section-note,
+  #v2PracticePanel #practicePerf,
+  #aiCoachPracticeOverlay .ai-coach-practice-progress{
+    display:none!important;
+  }
+
   #v2PracticePanel .practice-toolbar,
   #aiCoachPracticeOverlay .ai-coach-practice-head{margin-bottom:24px;}
   #v2PracticePanel .activity-prompt,
