@@ -30,10 +30,6 @@ function register(){
   });
 }
 
-var style=document.createElement('style');
-style.textContent='#aiCoachChoices .study-v2-ai-prompt:empty{display:none!important;}';
-document.head.appendChild(style);
-
-global.addEventListener('willena:coach-bootstrap-ready',function(){register();});
+global.addEventListener('willena:coach-bootstrap-ready',register);
 global.addEventListener('willena:study-recording',function(){setTimeout(function(){register();coach.refresh();},220);});
 })(window);
