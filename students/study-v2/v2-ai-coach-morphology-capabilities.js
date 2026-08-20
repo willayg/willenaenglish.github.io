@@ -55,6 +55,4 @@ coach.registerCapability({
     {label:{ko:'과거분사 동사 연습',en:'Practice participle forms'},provider:'morphology',args:{type:'past_participle',count:10}}
   ]
 });
-
-coach.refresh();
 })(window);
