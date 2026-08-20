@@ -25,6 +25,24 @@ Work one numbered step at a time. Do not move to another step for polish or inte
 - [ ] **15. Full QA pass** — test levels 1–8+, new and experienced students, first login, refresh, no-history cases, mistakes, perfect scores, retries, Korean/English, phone/tablet and navigation destinations.
 - [ ] **16. Freeze Coach V1** — document capability, event, mastery, recommendation and navigation contracts so Teacher/Parent trackers can safely build on them.
 
+## Stage 4 checkpoint — next session
+
+Good progress on Stage 4 today. Keep Stage 4 **in progress**.
+
+What now works:
+
+- Coach Study actions can move to the Book Study area, switch the assigned book/unit, open the correct Study section, and scroll to the top of the Study container.
+- Weak-area evidence now retains real `book_id` + `unit_id`, so evidence-backed weak recommendations can name the actual book/unit and send the student there.
+- The Study landing tip is now a prominent Coach overlay with skill-specific instructions, Coach SVG, tap-to-dismiss behavior, and a temporary 8-bit visual treatment.
+- Study V2 language preference is now persisted rather than resetting on reload.
+
+Main unresolved Stage 4 issue for tomorrow:
+
+- **Generic Study actions are still context-bound.** Actions such as “Study grammar”, “Study vocabulary”, “Study sentence building”, etc. still default to whichever book/unit is currently open when they do not have explicit weakness evidence or a resolved concept destination.
+- We need to decide the routing rule for those generic actions instead of silently using current context. Possible evidence should be considered in this order: specific weak book/unit evidence, concept-linked unit, recent misses, current assigned unit where that skill actually exists, then an explicit choice if there is no defensible single destination.
+- Do **not** simply make every generic Study action jump to the currently open unit. The Coach should be able to explain **why that book/unit was chosen** whenever possible.
+- Cross-unit Practice is still separate: Study can navigate to an evidence-backed unit, but the existing Practice provider still uses its current-unit contract. Do not imply cross-unit Practice works until it is deliberately implemented.
+
 ## Coach action types
 
 The architecture should support these destinations without assuming every action is a multiple-choice quiz:
