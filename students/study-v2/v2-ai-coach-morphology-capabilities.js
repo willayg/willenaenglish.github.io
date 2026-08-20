@@ -37,10 +37,19 @@ function usefulThirdPersonPair(correct,wrong,context){
   if((ctx.indexOf(' does ')>=0||ctx.indexOf(" doesn't ")>=0||c.indexOf('does')>=0||c.indexOf("doesn't")>=0)&&thirdFromBase(a,b))return true;
   return false;
 }
+function hasUsefulContext(row){
+  var prompt=text(row&&row.prompt_text),context=text(row&&row.context_text);
+  var p=prompt.toLowerCase().replace(/[’]/g,"'");
+  if(/^\s*(yes|no)\s*,\s*(he|she|it|[a-z]+)\s+_{2,}[.!?]?\s*$/i.test(prompt))return false;
+  if(/^\s*(yes|no)\s*,\s*(he|she|it|[a-z]+)\s+\.{2,}[.!?]?\s*$/i.test(prompt))return false;
+  if((/^\s*(yes|no)\b/.test(p))&&!/[?]/.test(prompt)&&(!context||/^(빈칸에|알맞은|choose|fill|select)/i.test(context)))return false;
+  return true;
+}
 function isStrictThirdPersonRow(row){
   var prompt=text(row&&row.prompt_text),context=text(row&&row.context_text),correct=answerText(row),opts=optionTexts(row);
   var combined=(prompt+' '+context+' '+correct).toLowerCase().replace(/[’]/g,"'");
   if(!correct||opts.length<2)return false;
+  if(!hasUsefulContext(row))return false;
   if(/\b(have|has)\s+[^?.!]{0,18}\bever\b|\bever\b/.test(combined))return false;
   if(/\b(yesterday|last\s+(night|week|month|year)|ago)\b/.test(combined))return false;
   for(var i=0;i<opts.length;i++){
