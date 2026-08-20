@@ -6,7 +6,7 @@ function ko(){var b=document.getElementById('languageBtn');return !b||text(b.tex
 function label(type){
   if(type==='past_participle')return ko()?'과거분사 퀴즈 해볼래요?':'How about a participles quiz?';
   if(type==='past')return ko()?'과거형 퀴즈 해볼래요?':'How about a past-tense quiz?';
-  return ko()?'3인칭 단수 퀴즈 해볼래요?':'How about a third-person quiz?';
+  return ko()?'3인칭 단수 퀴즈 해볼래요?':'How about a third-person verb quiz?';
 }
 function typesFor(level){
   if(level<=1)return[];
