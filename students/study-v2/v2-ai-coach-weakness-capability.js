@@ -46,11 +46,16 @@ coach.registerCapability({
   response:function(){
     var xs=weakSkills();
     if(!xs.length)return'';
-    if(xs.length===1)return ko()?skillName(xs[0].skill)+'이 지금 가장 먼저 챙기기 좋은 영역이에요.':'Your '+skillName(xs[0].skill)+' looks like the best place to focus right now.';
-    return ko()?joinNames(xs,'ko')+'에서 도움이 될 만한 부분을 찾았어요. 하나를 골라 연습해 볼까요?':'I found useful practice in '+joinNames(xs,'en')+'. Pick the one you want to work on.';
+    if(xs.length===1)return ko()?skillName(xs[0].skill)+'이 지금 가장 먼저 챙기기 좋은 영역이에요. 공부 내용을 먼저 확인하거나 바로 연습할 수 있어요.':'Your '+skillName(xs[0].skill)+' looks like the best place to focus right now. You can study it first or go straight to practice.';
+    return ko()?joinNames(xs,'ko')+'에서 도움이 될 만한 부분을 찾았어요. 공부 내용을 먼저 보거나 바로 연습해도 돼요.':'I found useful work in '+joinNames(xs,'en')+'. You can study one first or go straight to practice.';
   },
-  actions:function(){
-    return weakSkills().map(function(x){return{label:{ko:skillNameFor('ko',x.skill)+' 집중 연습',en:'Focus on '+skillNameFor('en',x.skill)},provider:'unit',args:{skill:x.skill,count:10}};});
+  actions:function(ctx){
+    var out=[];
+    weakSkills().forEach(function(x){
+      out.push({label:{ko:skillNameFor('ko',x.skill)+' 공부하기',en:'Study '+skillNameFor('en',x.skill)},provider:'studyNavigation',args:{bookId:ctx&&ctx.bookId,unitId:ctx&&ctx.unitId,skill:x.skill}});
+      out.push({label:{ko:skillNameFor('ko',x.skill)+' 집중 연습',en:'Practice '+skillNameFor('en',x.skill)},provider:'unit',args:{skill:x.skill,count:10}});
+    });
+    return out;
   }
 });
 })(window);
