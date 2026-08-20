@@ -33,9 +33,20 @@ async function rpc(env,name,args){
 }
 function validDate(v){return /^\d{4}-\d{2}-\d{2}$/.test(String(v||''));}
 function validTrack(v){return v==='test'?'test':'live';}
+function normalizeReward(reward){
+  if(!reward||typeof reward!=='object'||!reward.completed||reward.track!=='live')return reward;
+  const bonusStars=Math.max(0,Number(reward.streak_bonus_stars)||0);
+  const ratingStars=Math.max(3,Number(reward.daily_rating_stars)||0);
+  const totalStars=Math.max(ratingStars+bonusStars,Number(reward.today_stars)||0);
+  return Object.assign({},reward,{
+    minimum_completion_stars:3,
+    daily_rating_stars:ratingStars,
+    today_stars:totalStars
+  });
+}
 async function attachReward(env,userId,date,track,data){
   try{
-    const reward=await rpc(env,'daily_study_reward_snapshot',{p_student_id:userId,p_study_date:date,p_track:track});
+    const reward=normalizeReward(await rpc(env,'daily_study_reward_snapshot',{p_student_id:userId,p_study_date:date,p_track:track}));
     return Object.assign({},data||{},{reward});
   }catch(error){
     // Rewards must never make the core Daily Study fail to load or save.
