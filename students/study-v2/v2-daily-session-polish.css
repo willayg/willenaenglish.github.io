@@ -108,15 +108,16 @@
   margin-top:0;
 }
 
-@media(max-width:560px){
-  .study-v2-daily-mode #v2PracticeTitle{font-size:1.22rem;}
-
-  /* Mobile home hero only: hide the remaining-question sentence and segmented strip. */
+/* Phones and unfolded foldables: simplify the Daily home card, but stop short of tablet widths. */
+@media(max-width:719px){
   .book-hero.daily-inline .daily-rail-headline,
   .book-hero.daily-inline .daily-rail-progress{
     display:none!important;
   }
+}
 
+@media(max-width:560px){
+  .study-v2-daily-mode #v2PracticeTitle{font-size:1.22rem;}
   #v2PracticePanel .practice-toolbar,
   #aiCoachPracticeOverlay .ai-coach-practice-head{margin-bottom:24px;}
   #v2PracticePanel .activity-prompt,
