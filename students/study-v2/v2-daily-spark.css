@@ -25,7 +25,7 @@
     display:block!important;
     width:100%!important;
     min-width:0!important;
-    min-height:430px!important;
+    min-height:360px!important;
     margin:0!important;
     padding:22px!important;
     overflow:hidden!important;
@@ -37,7 +37,7 @@
       url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 70 70'%3E%3Cpath d='M35 7 41 29 63 35 41 41 35 63 29 41 7 35 29 29Z' fill='none' stroke='%2321b3be' stroke-opacity='.16' stroke-width='4' stroke-linejoin='round'/%3E%3C/svg%3E"),
       linear-gradient(160deg,#fff 0 58%,#fff3f8 100%)!important;
     background-repeat:no-repeat,no-repeat,no-repeat!important;
-    background-position:left -42px top 142px,right 17px bottom 58px,center!important;
+    background-position:left -42px top 142px,right 17px bottom 36px,center!important;
     background-size:132px 132px,80px 80px,100% 100%!important;
     box-shadow:0 12px 30px rgba(255,111,176,.12)!important;
     transform:none!important;
@@ -134,8 +134,8 @@
     left:0!important;
     right:0!important;
     display:block!important;
-    height:430px!important;
-    min-height:430px!important;
+    height:360px!important;
+    min-height:360px!important;
     padding:0!important;
     pointer-events:none!important;
     background:transparent!important;
