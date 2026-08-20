@@ -1,0 +1,91 @@
+name: Patch Daily Study Star Floor
+
+on:
+  push:
+    branches: [staging]
+    paths:
+      - '.github/workflows/patch-progress-summary-daily-star-floor.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: staging
+          fetch-depth: 0
+      - name: Patch Daily Study star aggregation
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('cloudflare-workers/progress-summary/src/index.js')
+          s = p.read_text()
+
+          old = """function deriveStars(summary) {
+  const s = summary || {};
+  let acc = null;
+"""
+          new = """function deriveStars(summary) {
+  const s = summary || {};
+  // Explicit session rewards are authoritative. Daily Study stores its own
+  // 3-5 star rating, so never recalculate it from raw attempt accuracy.
+  if (typeof s.stars === 'number') return s.stars;
+  if (typeof s.stars_preview === 'number') return s.stars_preview;
+  let acc = null;
+"""
+          if old in s:
+              s = s.replace(old, new, 1)
+
+          old_tail = """  if (typeof s.stars === 'number') return s.stars;
+  return 0;
+}
+"""
+          if old_tail in s:
+              s = s.replace(old_tail, """  return 0;
+}
+""", 1)
+
+          old_needs = """function needsSummary(summary) {
+  const parsed = safeParseSummary(summary);
+  if (!parsed) return true;
+  if (typeof parsed.accuracy === 'number') return false;
+"""
+          new_needs = """function needsSummary(summary) {
+  const parsed = safeParseSummary(summary);
+  if (!parsed) return true;
+  // Do not overwrite a real stored reward summary with synthesized accuracy.
+  if (typeof parsed.stars === 'number' || typeof parsed.stars_preview === 'number') return false;
+  if (typeof parsed.accuracy === 'number') return false;
+"""
+          if old_needs not in s:
+              raise SystemExit('needsSummary anchor not found')
+          s = s.replace(old_needs, new_needs, 1)
+
+          old_build = """    const stars = deriveStars(parsed);
+    if (stars <= 0) return;
+"""
+          new_build = """    let stars = deriveStars(parsed);
+    // Daily Study completion has a 3-star floor. Higher ratings and streak
+    // bonus stars remain untouched.
+    if (mode === 'daily_study' && parsed && parsed.completed !== false) stars = Math.max(3, stars);
+    if (stars <= 0) return;
+"""
+          if old_build not in s:
+              raise SystemExit('buildStarsByUserMap anchor not found')
+          s = s.replace(old_build, new_build, 1)
+
+          p.write_text(s)
+          PY
+      - name: Commit patch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add cloudflare-workers/progress-summary/src/index.js
+          git diff --cached --quiet && exit 0
+          git commit -m "Fix Daily Study minimum 3 star aggregation"
+          git pull --rebase origin staging
+          git push origin HEAD:staging
