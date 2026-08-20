@@ -9,7 +9,7 @@ Work one numbered step at a time. Do not move to another step for polish or inte
 ## Status
 
 - [x] **1. Coach cleanup** — remove generic fallback behavior, duplicate capability ownership, legacy Coach prompt injection, duplicate level sources, and startup races. One controller owns Coach UI; one bootstrap owns first render; Coach recommendations use Study context for level.
-- [ ] **2. Stable recommendation engine** — combine level, current unit, mastery and available capabilities; rank every genuinely useful option without padding with generic fallback choices.
+- [x] **2. Stable recommendation engine** — combine global level, selected book/unit context, unit mastery and registered capabilities; rank every genuinely useful option without generic fallback padding. Weakness evidence comes from Study data rather than rendered DOM, so the same Study snapshot produces the same recommendation set/order.
 - [ ] **3. Student-history layer** — use recent attempts, recurring mistakes, morphology mastery, grammar mastery and skill mastery as Coach evidence.
 - [ ] **4. Study-section navigation** — allow Coach actions to open/scroll to the correct Study section, book, unit or concept so a student can study before practicing.
 - [ ] **5. English Arcade recommendations** — map Coach concepts/levels to specific English Arcade activities and deep-link directly to the appropriate game (for example, some/any).
