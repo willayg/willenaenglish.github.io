@@ -93,18 +93,14 @@
   #aiCoachActivityRoot .v2-audio-sparkles{display:none!important}
 }
 
-/* Skills / standard listening controls: calm, single canonical icon.
-   Spelling is deliberately excluded because it has its own layout and controls. */
+/* Skills / standard listening controls: keep the sparkles, but stop the button itself
+   from pulsing and use one clean canonical headphone icon. Spelling is excluded. */
 #v2ActivityRoot .activity-card:not(:has(.activity-letter-order)) .activity-audio,
 #aiCoachActivityRoot .activity-card:not(:has(.activity-letter-order)) .activity-audio{
   animation:none!important;
   transform:none!important;
   display:grid!important;
   place-items:center!important;
-}
-#v2ActivityRoot .activity-card:not(:has(.activity-letter-order)) .activity-audio .v2-audio-sparkles,
-#aiCoachActivityRoot .activity-card:not(:has(.activity-letter-order)) .activity-audio .v2-audio-sparkles{
-  display:none!important;
 }
 #v2ActivityRoot .activity-card:not(:has(.activity-letter-order)) .activity-audio .activity-audio-icon,
 #aiCoachActivityRoot .activity-card:not(:has(.activity-letter-order)) .activity-audio .activity-audio-icon{
