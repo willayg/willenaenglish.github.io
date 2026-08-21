@@ -12,14 +12,14 @@ Work one numbered step at a time. Do not move to another step for polish or inte
 - [x] **2. Stable recommendation engine** — combine global level, selected book/unit context, unit mastery and registered capabilities; rank every genuinely useful option without generic fallback padding. Weakness evidence comes from Study data rather than rendered DOM, so the same Study snapshot produces the same recommendation set/order.
 - [x] **3. Student-history layer** — one `WillenaCoachHistory` service loads current-unit skill mastery, recent attempts, recurring misses, all content mastery, grammar concept mastery, morphology mastery/attempts, due/weak/secure signals and short-term accuracy trends. It reads only the signed-in student's RLS-protected rows, refreshes after new study/morphology/progress events, and is loaded before Coach recommendations. Existing weakness recommendations now consume this shared history instead of maintaining a separate progress fetch.
 - [ ] **4. Study-section navigation** — allow Coach actions to open/scroll to the correct Study section, book, unit or concept so a student can study before practicing. **In progress:** `WillenaStudyNavigator` now drives the existing book/unit/Book Study controls, maps skills to Vocabulary/Sentences/Grammar, waits for the destination unit to finish loading, and can resolve grammar concept codes across assigned books. Weak-skill recommendations now expose Study as well as Practice actions. Do not mark complete until student QA confirms navigation lands reliably on the intended content.
-- [ ] **5. English Arcade recommendations** — map Coach concepts/levels to specific English Arcade activities and deep-link directly to the appropriate game (for example, some/any).
-- [ ] **6. Smart mistake diagnosis** — classify the actual rule behind errors such as -s, -es, y→ies, does + base verb, irregular past and participles.
-- [ ] **7. Complete remediation loop** — mistake → explanation → small rule check when useful → retry only missed questions → explain persistent misses → success/reward.
-- [ ] **8. Vocabulary Coach** — weak-word detection, meaning/form confusion, targeted study/practice and remediation.
-- [ ] **9. Spelling Coach** — repeated spelling-pattern detection, targeted study/practice and remediation.
-- [ ] **10. Listening Coach** — listening-history recommendations, targeted listening sets and useful remediation.
-- [ ] **11. Grammar + sentence-building Coach** — concept-level targeting across grammar and sentence-building, including Study, Practice and Arcade destinations.
-- [ ] **12. Reading + conversation Coach** — reading-comprehension targeting and question-response/conversation practice.
+- [ ] **5. Smart mistake diagnosis** — classify the actual rule behind errors such as -s, -es, y→ies, does + base verb, irregular past and participles.
+- [ ] **6. Complete remediation loop** — mistake → explanation → small rule check when useful → retry only missed questions → explain persistent misses → success/reward.
+- [ ] **7. Vocabulary Coach** — weak-word detection, meaning/form confusion, targeted study/practice and remediation.
+- [ ] **8. Spelling Coach** — repeated spelling-pattern detection, targeted study/practice and remediation.
+- [ ] **9. Listening Coach** — listening-history recommendations, targeted listening sets and useful remediation.
+- [ ] **10. Grammar + sentence-building Coach** — concept-level targeting across grammar and sentence-building, including Study and Practice destinations.
+- [ ] **11. Reading + conversation Coach** — reading-comprehension targeting and question-response/conversation practice.
+- [ ] **12. English Arcade recommendations** — after the core skill Coaches are built, map their concepts/weaknesses to specific English Arcade activities and deep-link directly to the appropriate game (for example, some/any). Arcade should consume Coach intelligence rather than drive it.
 - [ ] **13. Progress + points rules** — deliberately define what Coach study, practice, retries and Arcade play affect; prevent duplicate points or bogus unit/mastery progress.
 - [ ] **14. Conversation/navigation UX** — smooth Coach → Study, Coach → Practice, Coach → Arcade and return flows; clear button/action types; rewards and mobile behavior.
 - [ ] **15. Full QA pass** — test levels 1–8+, new and experienced students, first login, refresh, no-history cases, mistakes, perfect scores, retries, Korean/English, phone/tablet and navigation destinations.
@@ -42,6 +42,7 @@ Main unresolved Stage 4 issue for tomorrow:
 - We need to decide the routing rule for those generic actions instead of silently using current context. Possible evidence should be considered in this order: specific weak book/unit evidence, concept-linked unit, recent misses, current assigned unit where that skill actually exists, then an explicit choice if there is no defensible single destination.
 - Do **not** simply make every generic Study action jump to the currently open unit. The Coach should be able to explain **why that book/unit was chosen** whenever possible.
 - Cross-unit Practice is still separate: Study can navigate to an evidence-backed unit, but the existing Practice provider still uses its current-unit contract. Do not imply cross-unit Practice works until it is deliberately implemented.
+- **Concept-link direction:** the long-term goal is for grammar concepts generally—not only past and 3rd person—to resolve through concept links to real assigned-book/unit/pattern occurrences. Generic grammar Study should become concept-aware whenever evidence supports a specific concept.
 
 ## Coach action types
 
@@ -65,8 +66,8 @@ Planned reusable card types:
 Likely build points:
 
 - Stage 4 may use only a simple Study-path presentation if navigation needs it.
-- Stages 6–7 add mistake/correction and remediation cards.
-- Stage 11 adds the broader grammar/sentence-building rule and contrast card library.
+- Stages 5–6 add mistake/correction and remediation cards.
+- Stage 10 adds the broader grammar/sentence-building rule and contrast card library.
 - Stage 14 polishes the common visual-card renderer and mobile behavior.
 
 ## Speaking-ready requirement
