@@ -1,4 +1,4 @@
-/* Fold/tablet spelling listen cue: soft pale-yellow and white sparkle around the listen button. */
+/* Fold/tablet spelling listen cue: soft pale-orange and lemon-yellow sparkle around the listen button. */
 @media (min-width:600px) and (max-width:1100px){
   #v2ActivityRoot .v2-tablet-spelling-listen-wrap,
   #aiCoachActivityRoot .v2-tablet-spelling-listen-wrap{
@@ -39,8 +39,8 @@
     background:none!important;
     border-radius:0!important;
     box-shadow:none!important;
-    color:#fff6bf!important;
-    text-shadow:0 0 4px rgba(255,247,199,.75);
+    color:#ffe96a!important;
+    text-shadow:0 0 4px rgba(255,233,106,.72);
     font:900 12px/1 sans-serif;
     opacity:.9!important;
     animation:v2SpellSparkle 1.12s ease-in-out infinite!important;
@@ -48,7 +48,10 @@
   }
 
   #v2ActivityRoot .v2-spelling-comet span:nth-child(even),
-  #aiCoachActivityRoot .v2-spelling-comet span:nth-child(even){color:#fff!important;text-shadow:0 0 5px rgba(255,255,255,.86)}
+  #aiCoachActivityRoot .v2-spelling-comet span:nth-child(even){
+    color:#ffc37a!important;
+    text-shadow:0 0 5px rgba(255,195,122,.72)
+  }
 
   #v2ActivityRoot .v2-spelling-comet-0 .v2-spelling-comet-head,
   #aiCoachActivityRoot .v2-spelling-comet-0 .v2-spelling-comet-head{left:6px;top:15px;font-size:15px!important;animation-delay:0s!important}
