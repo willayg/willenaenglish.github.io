@@ -16,9 +16,24 @@ function ensureMessage(button){
   return msg;
 }
 
+function ensureSparkles(button){
+  if(!button||button.querySelector('.v2-audio-sparkles'))return;
+  var field=document.createElement('span');
+  field.className='v2-audio-sparkles';
+  field.setAttribute('aria-hidden','true');
+  for(var i=0;i<10;i++){
+    var star=document.createElement('i');
+    star.className='v2-audio-sparkle v2-audio-sparkle-'+(i+1);
+    star.textContent='✦';
+    field.appendChild(star);
+  }
+  button.appendChild(field);
+}
+
 function bindButton(button){
   if(!button||button.dataset.v2AudioLoadingBound==='1')return;
   button.dataset.v2AudioLoadingBound='1';
+  ensureSparkles(button);
   var timer=null;
   var msg=ensureMessage(button);
 
@@ -27,6 +42,7 @@ function bindButton(button){
     if(msg)msg.hidden=true;
   }
   function watch(){
+    button.classList.add('v2-audio-sparkles-used');
     hide();
     timer=setTimeout(function(){
       timer=null;
