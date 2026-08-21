@@ -11,7 +11,7 @@ Work one numbered step at a time. Do not move to another step for polish or inte
 - [x] **1. Coach cleanup** — remove generic fallback behavior, duplicate capability ownership, legacy Coach prompt injection, duplicate level sources, and startup races. One controller owns Coach UI; one bootstrap owns first render; Coach recommendations use Study context for level.
 - [x] **2. Stable recommendation engine** — combine global level, selected book/unit context, unit mastery and registered capabilities; rank every genuinely useful option without generic fallback padding. Weakness evidence comes from Study data rather than rendered DOM, so the same Study snapshot produces the same recommendation set/order.
 - [x] **3. Student-history layer** — one `WillenaCoachHistory` service loads current-unit skill mastery, recent attempts, recurring misses, all content mastery, grammar concept mastery, morphology mastery/attempts, due/weak/secure signals and short-term accuracy trends. It reads only the signed-in student's RLS-protected rows, refreshes after new study/morphology/progress events, and is loaded before Coach recommendations. Existing weakness recommendations now consume this shared history instead of maintaining a separate progress fetch.
-- [ ] **4. Study-section navigation** — allow Coach actions to open/scroll to the correct Study section, book, unit or concept so a student can study before practicing. **In progress:** `WillenaStudyNavigator` now drives the existing book/unit/Book Study controls, maps skills to Vocabulary/Sentences/Grammar, waits for the destination unit to finish loading, and can resolve grammar concept codes across assigned books. Weak-skill recommendations now expose Study as well as Practice actions. Do not mark complete until student QA confirms navigation lands reliably on the intended content.
+- [ ] **4. Study-section navigation** — implementation is now functionally complete and awaiting one final student tap-test before the checkbox is closed. `WillenaStudyNavigator` drives the existing book/unit/Book Study controls, maps skills to Vocabulary/Sentences/Grammar, waits for the destination unit to load, scrolls to the Study container top, and shows the Coach study-tip overlay. Generic Study actions no longer silently default to the open unit: routing now prefers specific grammar-concept links, real weak book/unit history, recent mistake location, then a current assigned unit only when that skill genuinely exists there. If no defensible destination exists, the Coach does not fabricate one.
 - [ ] **5. Smart mistake diagnosis** — classify the actual rule behind errors such as -s, -es, y→ies, does + base verb, irregular past and participles.
 - [ ] **6. Complete remediation loop** — mistake → explanation → small rule check when useful → retry only missed questions → explain persistent misses → success/reward.
 - [ ] **7. Vocabulary Coach** — weak-word detection, meaning/form confusion, targeted study/practice and remediation.
@@ -25,24 +25,26 @@ Work one numbered step at a time. Do not move to another step for polish or inte
 - [ ] **15. Full QA pass** — test levels 1–8+, new and experienced students, first login, refresh, no-history cases, mistakes, perfect scores, retries, Korean/English, phone/tablet and navigation destinations.
 - [ ] **16. Freeze Coach V1** — document capability, event, mastery, recommendation and navigation contracts so Teacher/Parent trackers can safely build on them.
 
-## Stage 4 checkpoint — next session
-
-Good progress on Stage 4 today. Keep Stage 4 **in progress**.
+## Stage 4 final QA checkpoint
 
 What now works:
 
-- Coach Study actions can move to the Book Study area, switch the assigned book/unit, open the correct Study section, and scroll to the top of the Study container.
-- Weak-area evidence now retains real `book_id` + `unit_id`, so evidence-backed weak recommendations can name the actual book/unit and send the student there.
-- The Study landing tip is now a prominent Coach overlay with skill-specific instructions, Coach SVG, tap-to-dismiss behavior, and a temporary 8-bit visual treatment.
-- Study V2 language preference is now persisted rather than resetting on reload.
+- Coach Study actions can switch assigned book/unit, enter Book Study, open the appropriate Vocabulary/Sentences/Grammar section, and scroll to the top of the Study container.
+- Weak-area evidence retains real `book_id` + `unit_id`, so weak recommendations can name and open the actual source unit.
+- Generic Study routing is evidence-based instead of context-bound. Routing order is: specific linked grammar concept when available → weakest real book/unit location → recent mistake location → currently assigned unit only if that skill exists there.
+- Generic grammar Study can consume any specific `grammar_concepts` code that has `pattern_concepts` occurrences in the student's assigned books. An audit confirmed the useful specific concepts (third person, do/does, past, present perfect, comparatives, conditionals, passive, etc.) are linked; zero-link rows are mostly broad/duplicate umbrella concepts and are not given invented links.
+- If no defensible Study location exists, no fake current-unit destination is created.
+- Fresh wrong Coach answers now retain `book_id` + `unit_id` when their activity has that context, allowing recent mistakes to become Study-routing evidence immediately.
+- Study landing guidance is a prominent Coach overlay with skill-specific instructions, Coach SVG, tap-to-dismiss behavior, ~8.5 second lifetime, and the temporary 8-bit visual treatment.
+- Study V2 language preference persists across reloads.
 
-Main unresolved Stage 4 issue for tomorrow:
+Final Stage 4 test before checking complete:
 
-- **Generic Study actions are still context-bound.** Actions such as “Study grammar”, “Study vocabulary”, “Study sentence building”, etc. still default to whichever book/unit is currently open when they do not have explicit weakness evidence or a resolved concept destination.
-- We need to decide the routing rule for those generic actions instead of silently using current context. Possible evidence should be considered in this order: specific weak book/unit evidence, concept-linked unit, recent misses, current assigned unit where that skill actually exists, then an explicit choice if there is no defensible single destination.
-- Do **not** simply make every generic Study action jump to the currently open unit. The Coach should be able to explain **why that book/unit was chosen** whenever possible.
-- Cross-unit Practice is still separate: Study can navigate to an evidence-backed unit, but the existing Practice provider still uses its current-unit contract. Do not imply cross-unit Practice works until it is deliberately implemented.
-- **Concept-link direction:** the long-term goal is for grammar concepts generally—not only past and 3rd person—to resolve through concept links to real assigned-book/unit/pattern occurrences. Generic grammar Study should become concept-aware whenever evidence supports a specific concept.
+- Open a generic weak-area Study action while a **different book/unit is currently selected**. Confirm the Coach changes to the evidence-backed destination rather than staying in the open unit.
+- Test one grammar weakness with a specific concept and confirm it opens the linked grammar unit/pattern when available.
+- Test one non-grammar weakness (vocabulary, sentence building or listening) and confirm it opens the evidence-backed book/unit and correct Study section.
+
+Cross-unit Practice remains deliberately separate. Study navigation may change book/unit from evidence; the existing Practice provider still uses its current-unit contract. Do not imply cross-unit Practice works until it is deliberately implemented in a later Coach step.
 
 ## Coach action types
 
