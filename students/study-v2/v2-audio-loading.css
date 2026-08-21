@@ -1,0 +1,24 @@
+#v2ActivityRoot .v2-audio-loading-message,
+#aiCoachActivityRoot .v2-audio-loading-message{
+  display:block;
+  margin-top:6px;
+  color:#7a8b90;
+  font:700 .76rem/1.2 Poppins,sans-serif;
+  letter-spacing:.01em;
+  text-align:center;
+}
+#v2ActivityRoot .v2-audio-loading-message[hidden],
+#aiCoachActivityRoot .v2-audio-loading-message[hidden]{display:none!important}
+
+@media (min-width:600px) and (max-width:1100px){
+  #v2ActivityRoot .v2-tablet-spelling-listen-wrap .v2-audio-loading-message,
+  #aiCoachActivityRoot .v2-tablet-spelling-listen-wrap .v2-audio-loading-message{
+    position:absolute;
+    top:100%;
+    left:50%;
+    transform:translateX(-50%);
+    margin-top:3px;
+    white-space:nowrap;
+    font-size:.7rem;
+  }
+}
