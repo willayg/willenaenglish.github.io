@@ -1,14 +1,24 @@
 const DAY_MS = 24 * 60 * 60 * 1000;
+const SEOUL_DATE = new Intl.DateTimeFormat('en-CA', { timeZone:'Asia/Seoul', year:'numeric', month:'2-digit', day:'2-digit' });
 
 function clamp(n, lo, hi) { return Math.max(lo, Math.min(hi, n)); }
 function pct(correct, total) { return total ? Math.round((correct / total) * 100) : null; }
-function startOfDay(d = new Date()) { const x = new Date(d); x.setHours(0,0,0,0); return x; }
 function daysAgoIso(days) { return new Date(Date.now() - days * DAY_MS).toISOString(); }
-function localDateKey(value) {
+function dateKey(value) {
   const d = value instanceof Date ? value : new Date(value);
   if (Number.isNaN(d.getTime())) return null;
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  return SEOUL_DATE.format(d);
 }
+function keyMs(key) {
+  if (!key) return NaN;
+  const [y,m,d]=key.split('-').map(Number);
+  return Date.UTC(y,m-1,d);
+}
+function dayDiff(newerKey, olderKey) {
+  const a=keyMs(newerKey),b=keyMs(olderKey);
+  return Number.isFinite(a)&&Number.isFinite(b)?Math.round((a-b)/DAY_MS):null;
+}
+function todayKey(){ return dateKey(new Date()); }
 function valueText(value) {
   if (value == null) return null;
   if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') return String(value);
@@ -31,50 +41,45 @@ function normalizedSkill(a) {
 }
 
 function currentStreak(dateKeys) {
-  const keys = [...new Set(dateKeys)].sort().reverse();
-  if (!keys.length) return 0;
-  const parse = s => { const [y,m,d]=s.split('-').map(Number); return new Date(y,m-1,d); };
-  const today = startOfDay();
-  let cur = parse(keys[0]);
-  if (Math.round((today - cur) / DAY_MS) > 1) return 0;
-  let streak = 1;
-  for (let i=1;i<keys.length;i++) {
-    const next = parse(keys[i]);
-    if (Math.round((cur-next)/DAY_MS) !== 1) break;
-    streak += 1; cur = next;
+  const keys=[...new Set(dateKeys)].sort().reverse();
+  if(!keys.length)return 0;
+  const gap=dayDiff(todayKey(),keys[0]);
+  if(gap==null||gap>1)return 0;
+  let streak=1,cur=keys[0];
+  for(let i=1;i<keys.length;i++){
+    if(dayDiff(cur,keys[i])!==1)break;
+    streak++;cur=keys[i];
   }
   return streak;
 }
 
 function median(values) {
-  const v = values.filter(Number.isFinite).sort((a,b)=>a-b);
-  if (!v.length) return null;
+  const v=values.filter(Number.isFinite).sort((a,b)=>a-b);
+  if(!v.length)return null;
   const m=Math.floor(v.length/2);
   return v.length%2?v[m]:Math.round((v[m-1]+v[m])/2);
 }
 
 function habitRating(attempts) {
-  const dateKeys = [...new Set(attempts.map(a=>localDateKey(a.created_at)).filter(Boolean))].sort().reverse();
-  const cutoff7 = startOfDay(new Date(Date.now()-6*DAY_MS)).getTime();
-  const active7 = dateKeys.filter(k=>{const [y,m,d]=k.split('-').map(Number);return new Date(y,m-1,d).getTime()>=cutoff7;}).length;
-  const activePeriod = dateKeys.length;
-  const streak = currentStreak(dateKeys);
-  const lastDate = dateKeys[0] || null;
-  let daysSince = null;
-  if (lastDate) { const [y,m,d]=lastDate.split('-').map(Number); daysSince=Math.max(0,Math.floor((startOfDay()-new Date(y,m-1,d))/DAY_MS)); }
+  const dates=[...new Set(attempts.map(a=>dateKey(a.created_at)).filter(Boolean))].sort().reverse();
+  const today=todayKey();
+  const active7=dates.filter(k=>{const d=dayDiff(today,k);return d!=null&&d>=0&&d<=6;}).length;
+  const activePeriod=dates.length;
+  const streak=currentStreak(dates);
+  const lastDate=dates[0]||null;
+  const daysSince=lastDate?Math.max(0,dayDiff(today,lastDate)):null;
 
-  const consistency = clamp(active7/5,0,1)*45;
-  const breadth = clamp(activePeriod/18,0,1)*20;
-  const streakPts = clamp(streak/5,0,1)*15;
-  const recency = daysSince==null?0:daysSince===0?20:daysSince===1?18:daysSince===2?14:daysSince===3?9:daysSince===4?4:0;
-  const score = Math.round(consistency+breadth+streakPts+recency);
+  const consistency=clamp(active7/5,0,1)*45;
+  const breadth=clamp(activePeriod/18,0,1)*20;
+  const streakPts=clamp(streak/5,0,1)*15;
+  const recency=daysSince==null?0:daysSince===0?20:daysSince===1?18:daysSince===2?14:daysSince===3?9:daysSince===4?4:0;
+  const score=Math.round(consistency+breadth+streakPts+recency);
   let label='Not enough data';
-  if (attempts.length) label=score>=80?'Excellent':score>=60?'Good':score>=35?'Developing':'Needs attention';
+  if(attempts.length)label=score>=80?'Excellent':score>=60?'Good':score>=35?'Developing':'Needs attention';
 
   const dailyCounts={};
-  attempts.forEach(a=>{const k=localDateKey(a.created_at);if(k)dailyCounts[k]=(dailyCounts[k]||0)+1;});
-  const dayCounts=Object.values(dailyCounts);
-  const maxDay=dayCounts.length?Math.max(...dayCounts):0;
+  attempts.forEach(a=>{const k=dateKey(a.created_at);if(k)dailyCounts[k]=(dailyCounts[k]||0)+1;});
+  const dayCounts=Object.values(dailyCounts),maxDay=dayCounts.length?Math.max(...dayCounts):0;
   const spreadScore=attempts.length?clamp(Math.round((1-maxDay/attempts.length)*100),0,100):0;
   const sessions=new Set(attempts.map(a=>a.session_id).filter(Boolean)).size;
   const responseTimes=attempts.map(a=>Number(a.response_time_ms)).filter(v=>Number.isFinite(v)&&v>0&&v<300000);
@@ -85,10 +90,12 @@ function habitRating(attempts) {
     label,score,
     active_days_7:active7,
     active_days_period:activePeriod,
+    active_days_30:activePeriod,
     current_streak:streak,
     days_since_last_study:daysSince,
     attempts:attempts.length,
     study_sessions:sessions,
+    completed_sessions:sessions,
     spread_score:spreadScore,
     last_active_date:lastDate,
     median_response_time_ms:median(responseTimes),
@@ -103,7 +110,7 @@ function learningRating(attempts) {
   attempts.forEach(a=>{
     const skill=normalizedSkill(a);
     const cur=bySkill.get(skill)||{skill,attempts:0,correct:0,recent:[],previous:[]};
-    cur.attempts++; if(a.is_correct)cur.correct++;
+    cur.attempts++;if(a.is_correct)cur.correct++;
     const age=Date.now()-new Date(a.created_at).getTime();
     if(age<=14*DAY_MS)cur.recent.push(a);else if(age<=28*DAY_MS)cur.previous.push(a);
     bySkill.set(skill,cur);
@@ -116,7 +123,6 @@ function learningRating(attempts) {
     const label=s.attempts<3?'Limited evidence':accuracy>=85?'Strong':accuracy>=75?'Secure':accuracy>=60?'Building':'Needs attention';
     return {skill:s.skill,attempts:s.attempts,correct:s.correct,accuracy,label,recent_accuracy:recentAccuracy,previous_accuracy:previousAccuracy,trend};
   }).sort((a,b)=>(a.accuracy??101)-(b.accuracy??101));
-
   const priorityWeaknesses=skills.filter(s=>s.attempts>=4&&s.accuracy!=null&&s.accuracy<60);
   let label='Not enough data';
   if(total>=5){
@@ -135,7 +141,7 @@ function learningRating(attempts) {
 function dailyProof(attempts) {
   const map=new Map();
   attempts.forEach(a=>{
-    const k=localDateKey(a.created_at);if(!k)return;
+    const k=dateKey(a.created_at);if(!k)return;
     if(!map.has(k))map.set(k,{date:k,attempts:0,correct:0,session_ids:new Set()});
     const d=map.get(k);d.attempts++;if(a.is_correct)d.correct++;if(a.session_id)d.session_ids.add(a.session_id);
   });
