@@ -92,3 +92,35 @@
   #v2ActivityRoot .v2-audio-sparkles,
   #aiCoachActivityRoot .v2-audio-sparkles{display:none!important}
 }
+
+/* Skills / standard listening controls: calm, single canonical icon.
+   Spelling is deliberately excluded because it has its own layout and controls. */
+#v2ActivityRoot .activity-card:not(:has(.activity-letter-order)) .activity-audio,
+#aiCoachActivityRoot .activity-card:not(:has(.activity-letter-order)) .activity-audio{
+  animation:none!important;
+  transform:none!important;
+  display:grid!important;
+  place-items:center!important;
+}
+#v2ActivityRoot .activity-card:not(:has(.activity-letter-order)) .activity-audio .v2-audio-sparkles,
+#aiCoachActivityRoot .activity-card:not(:has(.activity-letter-order)) .activity-audio .v2-audio-sparkles{
+  display:none!important;
+}
+#v2ActivityRoot .activity-card:not(:has(.activity-letter-order)) .activity-audio .activity-audio-icon,
+#aiCoachActivityRoot .activity-card:not(:has(.activity-letter-order)) .activity-audio .activity-audio-icon{
+  display:none!important;
+}
+#v2ActivityRoot .activity-card:not(:has(.activity-letter-order)) .activity-audio::before,
+#aiCoachActivityRoot .activity-card:not(:has(.activity-letter-order)) .activity-audio::before{
+  content:""!important;
+  display:block!important;
+  width:40px!important;
+  height:40px!important;
+  margin:auto!important;
+  background:url("./headphones.svg") center/contain no-repeat!important;
+}
+#v2ActivityRoot .activity-card:not(:has(.activity-letter-order)) .activity-audio::after,
+#aiCoachActivityRoot .activity-card:not(:has(.activity-letter-order)) .activity-audio::after{
+  content:none!important;
+  display:none!important;
+}
