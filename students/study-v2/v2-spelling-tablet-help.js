@@ -1,13 +1,14 @@
 (function(global){
 'use strict';
 function isTablet(){return global.matchMedia&&global.matchMedia('(min-width:600px) and (max-width:1100px)').matches;}
+function ko(){var b=document.getElementById('languageBtn');return !b||String(b.textContent||'').trim()==='English';}
 function decorateRoot(root){
   if(!isTablet()||!root)return;
   var spelling=root.querySelector('.activity-letter-order');
   if(!spelling)return;
   var card=spelling.closest('.activity-card');
-  if(!card||card.dataset.v2TabletSpellingHelp==='1')return;
-  card.dataset.v2TabletSpellingHelp='1';
+  if(!card||card.dataset.v2TabletSpellingHelp==='2')return;
+  card.dataset.v2TabletSpellingHelp='2';
   card.classList.add('v2-tablet-spelling');
 
   var instruction=card.querySelector('.activity-context,.activity-instruction');
@@ -18,7 +19,7 @@ function decorateRoot(root){
     help.type='button';
     help.className='v2-tablet-spelling-help';
     help.textContent='?';
-    help.setAttribute('aria-label','Show spelling instructions');
+    help.setAttribute('aria-label',ko()?'철자 도움말 보기':'Show spelling instructions');
     help.setAttribute('aria-expanded','false');
     help.addEventListener('click',function(){
       var open=instruction.hidden;
@@ -28,12 +29,39 @@ function decorateRoot(root){
     card.insertBefore(help,card.firstChild);
   }
 
-  var actions=card.querySelector('.activity-actions');
-  if(actions&&actions.parentNode!==spelling){
-    actions.classList.add('v2-tablet-spelling-actions');
-    var bank=spelling.querySelector('.activity-letter-bank');
-    if(bank)spelling.insertBefore(actions,bank);else spelling.appendChild(actions);
+  var promptRow=card.querySelector('.activity-spelling-prompt-row');
+  var prompt=promptRow&&promptRow.querySelector('.activity-prompt');
+  if(prompt){
+    prompt.classList.add('v2-tablet-spelling-cue');
+    card.insertBefore(prompt,spelling);
   }
+
+  var slots=spelling.querySelector('.activity-letter-slots');
+  var audio=(promptRow&&promptRow.querySelector('.activity-spelling-listen,.activity-audio'))||card.querySelector('.activity-spelling-listen,.activity-audio');
+  var actions=card.querySelector('.activity-actions');
+  var workRow=document.createElement('div');
+  workRow.className='v2-tablet-spelling-work-row';
+  if(slots&&slots.nextSibling)spelling.insertBefore(workRow,slots.nextSibling);else spelling.appendChild(workRow);
+
+  if(audio){
+    audio.classList.add('v2-tablet-spelling-listen');
+    audio.style.animation='none';
+    var listenWrap=document.createElement('div');
+    listenWrap.className='v2-tablet-spelling-listen-wrap';
+    listenWrap.appendChild(audio);
+    var hint=document.createElement('small');
+    hint.className='v2-tablet-spelling-listen-hint';
+    hint.textContent=ko()?'눌러서 듣기':'Tap to listen';
+    listenWrap.appendChild(hint);
+    workRow.appendChild(listenWrap);
+  }
+
+  if(actions){
+    actions.classList.add('v2-tablet-spelling-actions');
+    workRow.appendChild(actions);
+  }
+
+  if(promptRow&&!promptRow.children.length)promptRow.hidden=true;
 }
 function scan(){['v2ActivityRoot','aiCoachActivityRoot'].forEach(function(id){decorateRoot(document.getElementById(id));});}
 function bind(){
