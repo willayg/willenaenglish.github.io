@@ -12,7 +12,7 @@ Work one numbered step at a time. Do not move to another step for polish or inte
 - [x] **2. Stable recommendation engine** — combine global level, selected book/unit context, unit mastery and registered capabilities; rank every genuinely useful option without generic fallback padding. Weakness evidence comes from Study data rather than rendered DOM, so the same Study snapshot produces the same recommendation set/order.
 - [x] **3. Student-history layer** — one `WillenaCoachHistory` service loads current-unit skill mastery, recent attempts, recurring misses, all content mastery, grammar concept mastery, morphology mastery/attempts, due/weak/secure signals and short-term accuracy trends. It reads only the signed-in student's RLS-protected rows, refreshes after new study/morphology/progress events, and is loaded before Coach recommendations. Existing weakness recommendations now consume this shared history instead of maintaining a separate progress fetch.
 - [x] **4. Study-section navigation** — cross-unit student QA confirmed an evidence-backed weak-area Study action can leave the currently open unit and navigate to the actual source unit. `WillenaStudyNavigator` drives the existing book/unit/Book Study controls, maps skills to Vocabulary/Sentences/Grammar, waits for the destination unit to load, scrolls to the Study container top, and shows the Coach study-tip overlay. Generic Study actions no longer silently default to the open unit: routing prefers specific grammar-concept links, real weak book/unit history, recent mistake location, then a current assigned unit only when that skill genuinely exists there. If no defensible destination exists, the Coach does not fabricate one.
-- [ ] **5. Smart mistake diagnosis** — classify the actual rule behind errors such as -s, -es, y→ies, does + base verb, irregular past and participles.
+- [x] **5. Smart mistake diagnosis** — `WillenaAICoachDiagnosis` classifies wrong answers into a hierarchical domain/category/subtype result, including third-person -s/-es/y→ies, do/does/did + base verb, irregular past, irregular past participles, be + -ing, articles, plurals, sentence word order, spelling near-misses and broader vocabulary/listening/reading/conversation fallbacks. It assigns an internal confidence score, falls back to broader diagnoses when evidence is weaker, enriches recurrence from existing history/mastery evidence, and stores the diagnosis inside the existing Coach wrong-attempt `extra` JSON. Confidence is machine plumbing only and is not shown to students or teachers. A built-in rule self-test covers the core deterministic cases.
 - [ ] **6. Complete remediation loop** — mistake → explanation → small rule check when useful → retry only missed questions → explain persistent misses → success/reward.
 - [ ] **7. Vocabulary Coach** — weak-word detection, meaning/form confusion, targeted study/practice and remediation.
 - [ ] **8. Spelling Coach** — repeated spelling-pattern detection, targeted study/practice and remediation.
@@ -43,6 +43,15 @@ Follow-up bugs found immediately after Stage 4 QA:
 - Study V2 language persistence had a timing race: a fallback timer could simulate a language-button click before the main Study language handler was attached, then save the wrong state. Restore now waits for `willena:study-v2-ready`, so the real handler is guaranteed to exist first.
 
 Cross-unit Practice remains deliberately separate. Study navigation may change book/unit from evidence; the existing Practice provider still uses its current-unit contract. Do not imply cross-unit Practice works until it is deliberately implemented in a later Coach step.
+
+## Stage 5 completion notes
+
+- Diagnosis is rule-first rather than an opaque AI classifier. Exact structural signatures receive specific diagnoses; ambiguous answers deliberately fall back to broader skill/category diagnoses.
+- The diagnosis payload is hierarchical: `domain` → `category` → `subtype`, with a human-readable label plus internal confidence, recurrence evidence count, and possible-slip flag.
+- Confidence is **not a teacher/student-facing metric**. It exists only so later remediation can decide whether to teach a very specific rule or safely fall back to a broader explanation.
+- Current wrong Coach attempts persist the diagnosis in `progress_attempts.extra.diagnosis`; no new database table or migration was required.
+- Existing grammar/morphology weakness evidence can raise recurrence confidence. Future reporting can aggregate persisted diagnoses without changing the attempt contract.
+- Stage 5 does not render explanations or change Coach transcript/UI. Stage 6 consumes the diagnosis and decides the remediation sequence.
 
 ## Coach action types
 
