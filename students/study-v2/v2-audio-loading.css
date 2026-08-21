@@ -1,3 +1,51 @@
+#v2ActivityRoot .activity-audio,
+#aiCoachActivityRoot .activity-audio{
+  position:relative;
+  overflow:visible!important;
+}
+
+#v2ActivityRoot .v2-audio-sparkles,
+#aiCoachActivityRoot .v2-audio-sparkles{
+  position:absolute;
+  left:50%;
+  top:50%;
+  width:calc(100% + 26px);
+  height:calc(100% + 26px);
+  transform:translate(-50%,-50%);
+  pointer-events:none;
+  z-index:4;
+}
+#v2ActivityRoot .v2-audio-sparkle,
+#aiCoachActivityRoot .v2-audio-sparkle{
+  position:absolute;
+  display:block;
+  color:#ffe96a;
+  font:900 10px/1 sans-serif;
+  text-shadow:0 0 4px rgba(255,233,106,.7);
+  animation:v2AudioSparkle 1.15s ease-in-out infinite;
+  transform-origin:center;
+}
+#v2ActivityRoot .v2-audio-sparkle:nth-child(even),
+#aiCoachActivityRoot .v2-audio-sparkle:nth-child(even){
+  color:#ffc37a;
+  text-shadow:0 0 4px rgba(255,195,122,.68);
+}
+#v2ActivityRoot .v2-audio-sparkle-1,#aiCoachActivityRoot .v2-audio-sparkle-1{left:8%;top:12%;font-size:13px;animation-delay:0s}
+#v2ActivityRoot .v2-audio-sparkle-2,#aiCoachActivityRoot .v2-audio-sparkle-2{right:8%;top:10%;animation-delay:-.17s}
+#v2ActivityRoot .v2-audio-sparkle-3,#aiCoachActivityRoot .v2-audio-sparkle-3{right:-1%;top:44%;font-size:12px;animation-delay:-.34s}
+#v2ActivityRoot .v2-audio-sparkle-4,#aiCoachActivityRoot .v2-audio-sparkle-4{right:12%;bottom:7%;animation-delay:-.51s}
+#v2ActivityRoot .v2-audio-sparkle-5,#aiCoachActivityRoot .v2-audio-sparkle-5{left:39%;bottom:-2%;font-size:12px;animation-delay:-.68s}
+#v2ActivityRoot .v2-audio-sparkle-6,#aiCoachActivityRoot .v2-audio-sparkle-6{left:8%;bottom:9%;animation-delay:-.85s}
+#v2ActivityRoot .v2-audio-sparkle-7,#aiCoachActivityRoot .v2-audio-sparkle-7{left:-2%;top:46%;font-size:11px;animation-delay:-1.02s}
+#v2ActivityRoot .v2-audio-sparkle-8,#aiCoachActivityRoot .v2-audio-sparkle-8{left:30%;top:-3%;animation-delay:-.28s}
+#v2ActivityRoot .v2-audio-sparkle-9,#aiCoachActivityRoot .v2-audio-sparkle-9{right:30%;bottom:0;font-size:9px;animation-delay:-.61s}
+#v2ActivityRoot .v2-audio-sparkle-10,#aiCoachActivityRoot .v2-audio-sparkle-10{right:-1%;bottom:27%;font-size:9px;animation-delay:-.94s}
+
+#v2ActivityRoot .activity-audio.v2-audio-sparkles-used .v2-audio-sparkles,
+#aiCoachActivityRoot .activity-audio.v2-audio-sparkles-used .v2-audio-sparkles{
+  display:none!important;
+}
+
 #v2ActivityRoot .v2-audio-loading-message,
 #aiCoachActivityRoot .v2-audio-loading-message{
   display:block;
@@ -10,6 +58,12 @@
 #v2ActivityRoot .v2-audio-loading-message[hidden],
 #aiCoachActivityRoot .v2-audio-loading-message[hidden]{display:none!important}
 
+@keyframes v2AudioSparkle{
+  0%,100%{transform:scale(.58) rotate(-5deg);opacity:.28}
+  42%{transform:scale(1.1) rotate(6deg);opacity:1}
+  70%{transform:scale(.84);opacity:.68}
+}
+
 @media (min-width:600px) and (max-width:1100px){
   #v2ActivityRoot .v2-tablet-spelling-listen-wrap .v2-audio-loading-message,
   #aiCoachActivityRoot .v2-tablet-spelling-listen-wrap .v2-audio-loading-message{
@@ -21,4 +75,9 @@
     white-space:nowrap;
     font-size:.7rem;
   }
+}
+
+@media(prefers-reduced-motion:reduce){
+  #v2ActivityRoot .v2-audio-sparkles,
+  #aiCoachActivityRoot .v2-audio-sparkles{display:none!important}
 }
