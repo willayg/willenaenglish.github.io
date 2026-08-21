@@ -102,6 +102,50 @@
 /* AI Coach now uses the inline Check -> Next control, just like the other modes. */
 #aiCoachPracticeOverlay .ai-coach-practice-next{display:none!important}
 
+/* Fold/tablet: spelling and listening should fit comfortably without wasting a screenful of height. */
+@media (min-width:600px) and (max-width:1100px){
+  #v2ActivityRoot .activity-card:has(.activity-letter-order),
+  #aiCoachActivityRoot .activity-card:has(.activity-letter-order){padding-top:16px!important;padding-bottom:16px!important}
+  #v2ActivityRoot .activity-card:has(.activity-letter-order) .activity-context,
+  #aiCoachActivityRoot .activity-card:has(.activity-letter-order) .activity-context{margin-bottom:12px!important;padding:8px 13px!important;font-size:1rem!important;line-height:1.32!important}
+  #v2ActivityRoot .activity-spelling-prompt-row,
+  #aiCoachActivityRoot .activity-spelling-prompt-row{gap:5px!important;margin-bottom:8px!important}
+  #v2ActivityRoot .activity-spelling-prompt-row .activity-prompt,
+  #aiCoachActivityRoot .activity-spelling-prompt-row .activity-prompt{font-size:1.45rem!important;line-height:1.12!important}
+  #v2ActivityRoot .activity-card:has(.activity-letter-order) .activity-audio,
+  #aiCoachActivityRoot .activity-card:has(.activity-letter-order) .activity-audio{width:66px!important;height:66px!important;border-width:4px!important;margin:0!important}
+  #v2ActivityRoot .activity-card:has(.activity-letter-order) .activity-audio:before,
+  #aiCoachActivityRoot .activity-card:has(.activity-letter-order) .activity-audio:before{width:30px!important;height:30px!important}
+  #v2ActivityRoot .activity-letter-order.is-chunk-mode,
+  #aiCoachActivityRoot .activity-letter-order.is-chunk-mode{gap:9px!important;margin-top:0!important}
+  #v2ActivityRoot .activity-letter-order.is-chunk-mode .activity-letter-slots,
+  #aiCoachActivityRoot .activity-letter-order.is-chunk-mode .activity-letter-slots{min-height:78px!important;padding:10px 12px!important;gap:8px!important;border-radius:18px!important}
+  #v2ActivityRoot .activity-letter-order.is-chunk-mode .activity-letter-word,
+  #aiCoachActivityRoot .activity-letter-order.is-chunk-mode .activity-letter-word{gap:8px!important}
+  #v2ActivityRoot .activity-letter-order.is-chunk-mode .activity-chunk-slot,
+  #aiCoachActivityRoot .activity-letter-order.is-chunk-mode .activity-chunk-slot{height:54px!important;min-height:54px!important;min-width:clamp(68px,calc(46px + (var(--chunk-chars) * 14px)),145px)!important;padding:0 12px!important;border-width:3px!important;border-radius:15px!important;font-size:1.2rem!important}
+  #v2ActivityRoot .activity-letter-order.is-chunk-mode .activity-letter-bank,
+  #aiCoachActivityRoot .activity-letter-order.is-chunk-mode .activity-letter-bank{min-height:82px!important;padding:11px 12px!important;gap:8px!important;border-radius:18px!important}
+  #v2ActivityRoot .activity-letter-order.is-chunk-mode .activity-letter-tile,
+  #aiCoachActivityRoot .activity-letter-order.is-chunk-mode .activity-letter-tile{height:56px!important;min-height:56px!important;min-width:clamp(70px,calc(48px + (var(--chunk-chars) * 14px)),150px)!important;padding:0 13px!important;border-radius:15px!important;font-size:1.18rem!important;box-shadow:0 4px 10px rgba(56,101,108,.11)!important}
+  #v2ActivityRoot .activity-card:has(.activity-letter-order.is-chunk-mode) .activity-actions,
+  #aiCoachActivityRoot .activity-card:has(.activity-letter-order.is-chunk-mode) .activity-actions{margin-top:6px!important}
+  #v2ActivityRoot .activity-card:has(.activity-letter-order.is-chunk-mode) .activity-check,
+  #aiCoachActivityRoot .activity-card:has(.activity-letter-order.is-chunk-mode) .activity-check{min-height:50px!important;min-width:132px!important;padding:0 22px!important;font-size:1rem!important}
+
+  /* Listening only: audio activity without spelling controls. */
+  #v2ActivityRoot .activity-card:has(.activity-audio):not(:has(.activity-letter-order)),
+  #aiCoachActivityRoot .activity-card:has(.activity-audio):not(:has(.activity-letter-order)){padding-top:16px!important;padding-bottom:16px!important}
+  #v2ActivityRoot .activity-card:has(.activity-audio):not(:has(.activity-letter-order)) .activity-context,
+  #aiCoachActivityRoot .activity-card:has(.activity-audio):not(:has(.activity-letter-order)) .activity-context{margin-bottom:12px!important;padding:8px 13px!important;font-size:1rem!important;line-height:1.32!important}
+  #v2ActivityRoot .activity-card:has(.activity-audio):not(:has(.activity-letter-order)) .activity-prompt,
+  #aiCoachActivityRoot .activity-card:has(.activity-audio):not(:has(.activity-letter-order)) .activity-prompt{font-size:1.35rem!important;line-height:1.18!important;margin-bottom:8px!important}
+  #v2ActivityRoot .activity-card:has(.activity-audio):not(:has(.activity-letter-order)) .activity-audio,
+  #aiCoachActivityRoot .activity-card:has(.activity-audio):not(:has(.activity-letter-order)) .activity-audio{width:72px!important;height:72px!important;border-width:4px!important;margin:0 0 9px!important}
+  #v2ActivityRoot .activity-card:has(.activity-audio):not(:has(.activity-letter-order)) .activity-audio:before,
+  #aiCoachActivityRoot .activity-card:has(.activity-audio):not(:has(.activity-letter-order)) .activity-audio:before{width:32px!important;height:32px!important}
+}
+
 @media(max-width:560px){
   #v2ActivityRoot .activity-source-badge,
   #aiCoachActivityRoot .activity-source-badge{font-size:.78rem;padding:7px 11px;margin-bottom:11px}
