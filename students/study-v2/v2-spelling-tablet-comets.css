@@ -1,73 +1,66 @@
-/* Final Fold/tablet spelling listen cue: centered golden comet trails. */
+/* Final Fold/tablet spelling listen cue: moving golden comets with curved dotted trails. */
 @media (min-width:600px) and (max-width:1100px){
   #v2ActivityRoot .v2-tablet-spelling-listen-wrap,
-  #aiCoachActivityRoot .v2-tablet-spelling-listen-wrap{
-    position:relative!important;
-    overflow:visible!important;
-  }
+  #aiCoachActivityRoot .v2-tablet-spelling-listen-wrap{position:relative!important;overflow:visible!important}
 
-  /* Replace the older single-star orbit with compact dotted comets.
-     The transform origin is the exact center of the listen button wrapper. */
-  #v2ActivityRoot .v2-tablet-spelling-listen-wrap:not(.is-used)::before,
-  #aiCoachActivityRoot .v2-tablet-spelling-listen-wrap:not(.is-used)::before,
-  #v2ActivityRoot .v2-tablet-spelling-listen-wrap:not(.is-used)::after,
-  #aiCoachActivityRoot .v2-tablet-spelling-listen-wrap:not(.is-used)::after{
-    position:absolute!important;
-    left:50%!important;
-    top:50%!important;
-    width:48px!important;
-    height:16px!important;
-    margin:-8px 0 0 0!important;
-    display:block!important;
-    pointer-events:none!important;
-    white-space:pre!important;
-    text-align:right!important;
-    transform-origin:0 8px!important;
-    color:#ffc43d!important;
-    font:900 14px/16px Poppins,sans-serif!important;
-    letter-spacing:1px!important;
-    text-shadow:0 0 4px rgba(255,184,35,.88),0 0 9px rgba(255,211,91,.52)!important;
-    z-index:5!important;
-  }
-  #v2ActivityRoot .v2-tablet-spelling-listen-wrap:not(.is-used)::before,
-  #aiCoachActivityRoot .v2-tablet-spelling-listen-wrap:not(.is-used)::before{
-    content:'·  ·  •  ✦'!important;
-    animation:v2GoldenCometA .82s linear infinite!important;
-  }
-  #v2ActivityRoot .v2-tablet-spelling-listen-wrap:not(.is-used)::after,
-  #aiCoachActivityRoot .v2-tablet-spelling-listen-wrap:not(.is-used)::after{
-    content:'·  ·  •  ✦'!important;
-    width:42px!important;
-    color:#ffd86c!important;
-    font-size:11px!important;
-    opacity:.92!important;
-    animation:v2GoldenCometB .67s linear infinite!important;
-  }
-
-  #v2ActivityRoot .v2-tablet-spelling-listen-wrap.is-used::before,
-  #aiCoachActivityRoot .v2-tablet-spelling-listen-wrap.is-used::before,
-  #v2ActivityRoot .v2-tablet-spelling-listen-wrap.is-used::after,
-  #aiCoachActivityRoot .v2-tablet-spelling-listen-wrap.is-used::after{
-    display:none!important;
-  }
-}
-
-@keyframes v2GoldenCometA{
-  0%{transform:rotate(0deg) scale(.92);opacity:.68}
-  25%{transform:rotate(90deg) scale(1.03);opacity:1}
-  50%{transform:rotate(180deg) scale(.94);opacity:.78}
-  75%{transform:rotate(270deg) scale(1.05);opacity:1}
-  100%{transform:rotate(360deg) scale(.92);opacity:.68}
-}
-@keyframes v2GoldenCometB{
-  0%{transform:rotate(205deg) scale(1);opacity:.96}
-  50%{transform:rotate(385deg) scale(.88);opacity:.62}
-  100%{transform:rotate(565deg) scale(1);opacity:.96}
-}
-
-@media(prefers-reduced-motion:reduce){
+  /* Disable the old pseudo-element ferris-wheel effect completely. */
   #v2ActivityRoot .v2-tablet-spelling-listen-wrap::before,
   #aiCoachActivityRoot .v2-tablet-spelling-listen-wrap::before,
   #v2ActivityRoot .v2-tablet-spelling-listen-wrap::after,
-  #aiCoachActivityRoot .v2-tablet-spelling-listen-wrap::after{animation:none!important;display:none!important}
+  #aiCoachActivityRoot .v2-tablet-spelling-listen-wrap::after{display:none!important;content:none!important}
+
+  #v2ActivityRoot .v2-spelling-comet-field,
+  #aiCoachActivityRoot .v2-spelling-comet-field{
+    position:absolute;
+    left:50%;top:50%;
+    width:86px;height:78px;
+    transform:translate(-50%,-50%);
+    pointer-events:none;
+    overflow:visible;
+    z-index:5;
+  }
+  #v2ActivityRoot .v2-spelling-comet,
+  #aiCoachActivityRoot .v2-spelling-comet,
+  #v2ActivityRoot .v2-spelling-comet span,
+  #aiCoachActivityRoot .v2-spelling-comet span{
+    position:absolute;
+    left:0;top:0;
+    width:8px;height:8px;
+    offset-path:path('M 7 42 C 14 8 66 3 79 35 C 91 63 54 79 24 68 C 8 62 2 52 7 42');
+    offset-rotate:0deg;
+  }
+  #v2ActivityRoot .v2-spelling-comet-head,
+  #aiCoachActivityRoot .v2-spelling-comet-head{
+    color:#ffc43d;
+    font:900 15px/8px sans-serif;
+    text-shadow:0 0 4px rgba(255,181,28,.9),0 0 9px rgba(255,214,93,.58);
+    animation:v2CometFollowA .92s linear infinite;
+  }
+  #v2ActivityRoot .v2-spelling-comet-dot,
+  #aiCoachActivityRoot .v2-spelling-comet-dot{
+    width:5px;height:5px;border-radius:50%;
+    background:#ffd45a;
+    box-shadow:0 0 5px rgba(255,194,45,.72);
+    opacity:calc(.86 - (var(--trail-index) * .12));
+    animation:v2CometFollowA .92s linear infinite;
+    animation-delay:calc(var(--trail-index) * -0.045s);
+  }
+  #v2ActivityRoot .v2-spelling-comet-1 .v2-spelling-comet-head,
+  #aiCoachActivityRoot .v2-spelling-comet-1 .v2-spelling-comet-head{
+    color:#ffe17e;font-size:11px;animation-name:v2CometFollowB;animation-duration:.74s;
+  }
+  #v2ActivityRoot .v2-spelling-comet-1 .v2-spelling-comet-dot,
+  #aiCoachActivityRoot .v2-spelling-comet-1 .v2-spelling-comet-dot{
+    width:4px;height:4px;background:#ffe17e;animation-name:v2CometFollowB;animation-duration:.74s;animation-delay:calc(var(--trail-index) * -0.038s);
+  }
+  #v2ActivityRoot .v2-tablet-spelling-listen-wrap.is-used .v2-spelling-comet-field,
+  #aiCoachActivityRoot .v2-tablet-spelling-listen-wrap.is-used .v2-spelling-comet-field{display:none!important}
+}
+
+@keyframes v2CometFollowA{from{offset-distance:0%}to{offset-distance:100%}}
+@keyframes v2CometFollowB{from{offset-distance:54%}to{offset-distance:154%}}
+
+@media(prefers-reduced-motion:reduce){
+  #v2ActivityRoot .v2-spelling-comet-field,
+  #aiCoachActivityRoot .v2-spelling-comet-field{display:none!important}
 }
