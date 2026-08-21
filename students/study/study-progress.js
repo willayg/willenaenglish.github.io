@@ -52,13 +52,33 @@ async function attachConceptEvidence(payload){
  }catch(error){console.debug('[WillenaStudyProgress] concept evidence unavailable',error);}
  return payload;
 }
+function attachDiagnosis(payload){
+ if(!payload||payload.is_correct)return payload;
+ try{
+   var engine=global.WillenaAICoachDiagnosis;
+   if(!engine||typeof engine.diagnose!=='function')return payload;
+   var history=global.WillenaCoachHistory&&typeof global.WillenaCoachHistory.getSnapshot==='function'?global.WillenaCoachHistory.getSnapshot():null;
+   var activity={
+     id:payload.activity_id,
+     skill:payload.skill,
+     sourceType:payload.content_type,
+     sourceId:payload.content_id,
+     stimulus:payload.stimulus_snapshot||{},
+     response:{type:payload.response_type},
+     metadata:payload.metadata||{}
+   };
+   var diagnosis=engine.diagnose({activity:activity,result:{correct:false,selected:payload.student_answer,answer:payload.correct_answer},history:history});
+   if(diagnosis)payload.metadata=Object.assign({},payload.metadata,{diagnosis:diagnosis,diagnosis_version:diagnosis.version||engine.version||'coach-diagnosis'});
+ }catch(error){console.debug('[WillenaStudyProgress] diagnosis unavailable',error);}
+ return payload;
+}
 async function api(path,options){var response=await (global.WillenaAPI?WillenaAPI.fetch:fetch)(PROGRESS_ENDPOINT+path,Object.assign({credentials:'include',cache:'no-store'},options||{}));var data=await response.json().catch(function(){return{}});if(!response.ok||data&&data.success===false)throw new Error(data.error||('Study progress API failed ('+response.status+').'));return data;}
 async function send(item){item=normalizeQueuedPreview(item);return api('?section=study_attempt&_='+Date.now(),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({payload:item.payload})});}
 async function getProgress(bookId,unitId){var q='?section=study_progress&_='+Date.now();if(bookId)q+='&book_id='+encodeURIComponent(bookId);if(unitId)q+='&unit_id='+encodeURIComponent(unitId);return api(q);}
 async function getAdaptiveState(){return api('?section=adaptive_state&_='+Date.now());}
 async function getContentMastery(bookId,unitId){var q='?section=study_content_mastery&_='+Date.now();if(bookId)q+='&book_id='+encodeURIComponent(bookId);if(unitId)q+='&unit_id='+encodeURIComponent(unitId);return api(q);}
-async function flush(){if(flushing)return;flushing=true;try{var q=readQueue().map(normalizeQueuedPreview),remaining=[];for(var i=0;i<q.length;i++){try{await attachConceptEvidence(q[i].payload);await send(q[i]);}catch(error){remaining.push(q[i]);}}writeQueue(remaining);if(q.length&&!remaining.length)setStatus('Saved queued answers','#23704a');else if(remaining.length)setStatus('Queued '+remaining.length,'#a66a15');else setStatus(previewActive()?'Preview · recording':'Recorder ready','#173f46');}finally{flushing=false;}}
-async function record(detail){var payload=payloadFrom(detail);if(!payload){setStatus('Recorder · missing activity data','#a0443c');return;}await attachConceptEvidence(payload);var item={payload:payload,queued_at:new Date().toISOString()};setStatus(previewActive()?'Preview · saving…':'Saving…','#315e64');try{var result=await send(item);setStatus((previewActive()?'Preview · ':'')+'Saved ✓ · '+(result.study_context==='independent'?'independent':'current'),'#23704a');global.dispatchEvent(new CustomEvent('willena:study-recording',{detail:{status:'recorded',result:result,payload:payload}}));try{var progress=await getProgress(payload.book_id,payload.unit_id);global.dispatchEvent(new CustomEvent('willena:study-progress-updated',{detail:progress}));}catch(_){}try{var mastery=await getContentMastery(payload.book_id,payload.unit_id);global.dispatchEvent(new CustomEvent('willena:content-mastery-updated',{detail:{book_id:payload.book_id,unit_id:payload.unit_id,data:mastery}}));}catch(_){}}catch(error){console.warn('[WillenaStudyProgress] queued attempt after recording failure',error);queueAttempt(item);setStatus('Queued · '+error.message,'#a66a15');global.dispatchEvent(new CustomEvent('willena:study-recording',{detail:{status:'queued',error:error.message,payload:payload}}));}}
+async function flush(){if(flushing)return;flushing=true;try{var q=readQueue().map(normalizeQueuedPreview),remaining=[];for(var i=0;i<q.length;i++){try{await attachConceptEvidence(q[i].payload);attachDiagnosis(q[i].payload);await send(q[i]);}catch(error){remaining.push(q[i]);}}writeQueue(remaining);if(q.length&&!remaining.length)setStatus('Saved queued answers','#23704a');else if(remaining.length)setStatus('Queued '+remaining.length,'#a66a15');else setStatus(previewActive()?'Preview · recording':'Recorder ready','#173f46');}finally{flushing=false;}}
+async function record(detail){var payload=payloadFrom(detail);if(!payload){setStatus('Recorder · missing activity data','#a0443c');return;}await attachConceptEvidence(payload);attachDiagnosis(payload);var item={payload:payload,queued_at:new Date().toISOString()};setStatus(previewActive()?'Preview · saving…':'Saving…','#315e64');try{var result=await send(item);setStatus((previewActive()?'Preview · ':'')+'Saved ✓ · '+(result.study_context==='independent'?'independent':'current'),'#23704a');global.dispatchEvent(new CustomEvent('willena:study-recording',{detail:{status:'recorded',result:result,payload:payload}}));try{var progress=await getProgress(payload.book_id,payload.unit_id);global.dispatchEvent(new CustomEvent('willena:study-progress-updated',{detail:progress}));}catch(_){}try{var mastery=await getContentMastery(payload.book_id,payload.unit_id);global.dispatchEvent(new CustomEvent('willena:content-mastery-updated',{detail:{book_id:payload.book_id,unit_id:payload.unit_id,data:mastery}}));}catch(_){}}catch(error){console.warn('[WillenaStudyProgress] queued attempt after recording failure',error);queueAttempt(item);setStatus('Queued · '+error.message,'#a66a15');global.dispatchEvent(new CustomEvent('willena:study-recording',{detail:{status:'queued',error:error.message,payload:payload}}));}}
 
 global.addEventListener('willena:activity-answer',function(event){var activity=event&&event.detail&&event.detail.activity,meta=activity&&activity.metadata||{};if(meta.daily_test_mode===true||meta.morphology_sidecar===true||meta.ai_coach_cross_book===true)return;record(event.detail);});
 global.addEventListener('online',flush);
