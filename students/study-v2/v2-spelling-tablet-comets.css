@@ -1,4 +1,4 @@
-/* Fold/tablet spelling listen cue: simple multicolor sparkle around the listen button. */
+/* Fold/tablet spelling listen cue: soft pale-yellow and white sparkle around the listen button. */
 @media (min-width:600px) and (max-width:1100px){
   #v2ActivityRoot .v2-tablet-spelling-listen-wrap,
   #aiCoachActivityRoot .v2-tablet-spelling-listen-wrap{
@@ -6,7 +6,6 @@
     overflow:visible!important;
   }
 
-  /* Remove all orbit/trail pseudo effects. */
   #v2ActivityRoot .v2-tablet-spelling-listen-wrap::before,
   #aiCoachActivityRoot .v2-tablet-spelling-listen-wrap::before,
   #v2ActivityRoot .v2-tablet-spelling-listen-wrap::after,
@@ -29,10 +28,7 @@
   }
 
   #v2ActivityRoot .v2-spelling-comet,
-  #aiCoachActivityRoot .v2-spelling-comet{
-    position:absolute;
-    inset:0;
-  }
+  #aiCoachActivityRoot .v2-spelling-comet{position:absolute;inset:0}
 
   #v2ActivityRoot .v2-spelling-comet span,
   #aiCoachActivityRoot .v2-spelling-comet span{
@@ -43,61 +39,56 @@
     background:none!important;
     border-radius:0!important;
     box-shadow:none!important;
+    color:#fff6bf!important;
+    text-shadow:0 0 4px rgba(255,247,199,.75);
     font:900 12px/1 sans-serif;
-    opacity:.95!important;
-    animation:v2SpellSparkle 1.05s ease-in-out infinite!important;
+    opacity:.9!important;
+    animation:v2SpellSparkle 1.12s ease-in-out infinite!important;
     offset-path:none!important;
   }
 
+  #v2ActivityRoot .v2-spelling-comet span:nth-child(even),
+  #aiCoachActivityRoot .v2-spelling-comet span:nth-child(even){color:#fff!important;text-shadow:0 0 5px rgba(255,255,255,.86)}
+
   #v2ActivityRoot .v2-spelling-comet-0 .v2-spelling-comet-head,
-  #aiCoachActivityRoot .v2-spelling-comet-0 .v2-spelling-comet-head{
-    left:6px;top:15px;color:#ff9f1c!important;font-size:15px!important;animation-delay:0s!important;
-  }
+  #aiCoachActivityRoot .v2-spelling-comet-0 .v2-spelling-comet-head{left:6px;top:15px;font-size:15px!important;animation-delay:0s!important}
   #v2ActivityRoot .v2-spelling-comet-0 .v2-spelling-comet-dot:nth-of-type(2),
-  #aiCoachActivityRoot .v2-spelling-comet-0 .v2-spelling-comet-dot:nth-of-type(2){right:4px;top:12px;color:#35c7d8!important;animation-delay:-.18s!important}
+  #aiCoachActivityRoot .v2-spelling-comet-0 .v2-spelling-comet-dot:nth-of-type(2){right:4px;top:12px;animation-delay:-.18s!important}
   #v2ActivityRoot .v2-spelling-comet-0 .v2-spelling-comet-dot:nth-of-type(3),
-  #aiCoachActivityRoot .v2-spelling-comet-0 .v2-spelling-comet-dot:nth-of-type(3){right:1px;bottom:14px;color:#ff6fb5!important;animation-delay:-.36s!important}
+  #aiCoachActivityRoot .v2-spelling-comet-0 .v2-spelling-comet-dot:nth-of-type(3){right:1px;bottom:14px;animation-delay:-.36s!important}
   #v2ActivityRoot .v2-spelling-comet-0 .v2-spelling-comet-dot:nth-of-type(4),
-  #aiCoachActivityRoot .v2-spelling-comet-0 .v2-spelling-comet-dot:nth-of-type(4){left:8px;bottom:9px;color:#5596ff!important;animation-delay:-.54s!important}
+  #aiCoachActivityRoot .v2-spelling-comet-0 .v2-spelling-comet-dot:nth-of-type(4){left:8px;bottom:9px;animation-delay:-.54s!important}
   #v2ActivityRoot .v2-spelling-comet-0 .v2-spelling-comet-dot:nth-of-type(5),
-  #aiCoachActivityRoot .v2-spelling-comet-0 .v2-spelling-comet-dot:nth-of-type(5){left:31px;top:0;color:#ffd15a!important;animation-delay:-.72s!important}
+  #aiCoachActivityRoot .v2-spelling-comet-0 .v2-spelling-comet-dot:nth-of-type(5){left:31px;top:0;animation-delay:-.72s!important}
   #v2ActivityRoot .v2-spelling-comet-0 .v2-spelling-comet-dot:nth-of-type(6),
-  #aiCoachActivityRoot .v2-spelling-comet-0 .v2-spelling-comet-dot:nth-of-type(6){left:28px;bottom:0;color:#45d7cf!important;animation-delay:-.9s!important}
+  #aiCoachActivityRoot .v2-spelling-comet-0 .v2-spelling-comet-dot:nth-of-type(6){left:28px;bottom:0;animation-delay:-.9s!important}
 
   #v2ActivityRoot .v2-spelling-comet-1 .v2-spelling-comet-head,
-  #aiCoachActivityRoot .v2-spelling-comet-1 .v2-spelling-comet-head{
-    right:10px;top:31px;color:#ff6fb5!important;font-size:12px!important;animation-delay:-.12s!important;
-  }
+  #aiCoachActivityRoot .v2-spelling-comet-1 .v2-spelling-comet-head{right:10px;top:31px;font-size:12px!important;animation-delay:-.12s!important}
   #v2ActivityRoot .v2-spelling-comet-1 .v2-spelling-comet-dot:nth-of-type(2),
-  #aiCoachActivityRoot .v2-spelling-comet-1 .v2-spelling-comet-dot:nth-of-type(2){left:0;top:34px;color:#35c7d8!important;animation-delay:-.3s!important}
+  #aiCoachActivityRoot .v2-spelling-comet-1 .v2-spelling-comet-dot:nth-of-type(2){left:0;top:34px;animation-delay:-.3s!important}
   #v2ActivityRoot .v2-spelling-comet-1 .v2-spelling-comet-dot:nth-of-type(3),
-  #aiCoachActivityRoot .v2-spelling-comet-1 .v2-spelling-comet-dot:nth-of-type(3){right:18px;bottom:1px;color:#ff9f1c!important;animation-delay:-.48s!important}
+  #aiCoachActivityRoot .v2-spelling-comet-1 .v2-spelling-comet-dot:nth-of-type(3){right:18px;bottom:1px;animation-delay:-.48s!important}
   #v2ActivityRoot .v2-spelling-comet-1 .v2-spelling-comet-dot:nth-of-type(4),
-  #aiCoachActivityRoot .v2-spelling-comet-1 .v2-spelling-comet-dot:nth-of-type(4){left:17px;top:5px;color:#5596ff!important;animation-delay:-.66s!important}
+  #aiCoachActivityRoot .v2-spelling-comet-1 .v2-spelling-comet-dot:nth-of-type(4){left:17px;top:5px;animation-delay:-.66s!important}
   #v2ActivityRoot .v2-spelling-comet-1 .v2-spelling-comet-dot:nth-of-type(5),
-  #aiCoachActivityRoot .v2-spelling-comet-1 .v2-spelling-comet-dot:nth-of-type(5){right:0;top:27px;color:#ffd15a!important;animation-delay:-.84s!important}
+  #aiCoachActivityRoot .v2-spelling-comet-1 .v2-spelling-comet-dot:nth-of-type(5){right:0;top:27px;animation-delay:-.84s!important}
   #v2ActivityRoot .v2-spelling-comet-1 .v2-spelling-comet-dot:nth-of-type(6),
-  #aiCoachActivityRoot .v2-spelling-comet-1 .v2-spelling-comet-dot:nth-of-type(6){left:4px;bottom:20px;color:#45d7cf!important;animation-delay:-1.02s!important}
+  #aiCoachActivityRoot .v2-spelling-comet-1 .v2-spelling-comet-dot:nth-of-type(6){left:4px;bottom:20px;animation-delay:-1.02s!important}
 
   #v2ActivityRoot .v2-spelling-comet-dot,
-  #aiCoachActivityRoot .v2-spelling-comet-dot{
-    font-size:10px!important;
-  }
+  #aiCoachActivityRoot .v2-spelling-comet-dot{font-size:10px!important}
   #v2ActivityRoot .v2-spelling-comet-dot::before,
-  #aiCoachActivityRoot .v2-spelling-comet-dot::before{
-    content:'✦';
-  }
+  #aiCoachActivityRoot .v2-spelling-comet-dot::before{content:'✦'}
 
   #v2ActivityRoot .v2-tablet-spelling-listen-wrap.is-used .v2-spelling-comet-field,
-  #aiCoachActivityRoot .v2-tablet-spelling-listen-wrap.is-used .v2-spelling-comet-field{
-    display:none!important;
-  }
+  #aiCoachActivityRoot .v2-tablet-spelling-listen-wrap.is-used .v2-spelling-comet-field{display:none!important}
 }
 
 @keyframes v2SpellSparkle{
-  0%,100%{transform:scale(.55) rotate(-8deg);opacity:.25}
-  42%{transform:scale(1.18) rotate(8deg);opacity:1}
-  68%{transform:scale(.82) rotate(0deg);opacity:.7}
+  0%,100%{transform:scale(.62) rotate(-6deg);opacity:.3}
+  42%{transform:scale(1.12) rotate(6deg);opacity:1}
+  68%{transform:scale(.86);opacity:.72}
 }
 
 @media(prefers-reduced-motion:reduce){
