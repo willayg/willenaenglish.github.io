@@ -1,0 +1,52 @@
+name: Fix Study V2 Listening Button Once
+
+on:
+  push:
+    branches: [staging]
+    paths:
+      - '.github/workflows/fix-study-v2-listen-button-once.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: staging
+      - name: Remove pulse and use canonical headphone SVG
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          css = Path('students/study-v2/v2-short-landscape.css')
+          s = css.read_text()
+
+          old_svg = '''  .activity-audio:before{content:"";display:block;width:44px;height:44px;background-repeat:no-repeat;background-position:center;background-size:contain;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235f6677' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 13v-2a8 8 0 0 1 16 0v2'/%3E%3Cpath d='M4 13a2 2 0 0 1 2-2h1v7H6a2 2 0 0 1-2-2v-3Z'/%3E%3Cpath d='M20 13a2 2 0 0 0-2-2h-1v7h1a2 2 0 0 1 2 2v3Z'/%3E%3C/svg%3E")}'''
+          new_svg = '''  .activity-audio:before{content:"";display:block;width:44px;height:44px;margin:auto;background-repeat:no-repeat;background-position:center;background-size:contain;background-image:url("./headphones.svg")}'''
+          if old_svg not in s:
+              raise SystemExit('inline headphone SVG rule not found')
+          s = s.replace(old_svg, new_svg, 1)
+
+          old_anim = '''  .activity-card:has(.activity-audio) .activity-audio:not(.has-played){animation:v2ListenNudge 2.6s ease-in-out infinite!important;transform-origin:center!important}\n  @keyframes v2ListenNudge{0%,68%,100%{transform:translateY(0) scale(1);box-shadow:0 0 22px rgba(19,145,169,.20),0 0 0 2px rgba(99,197,215,.16),inset 0 2px 0 rgba(255,255,255,.95)}74%{transform:translateY(-3px) scale(1.045);box-shadow:0 0 30px rgba(19,145,169,.32),0 0 0 7px rgba(99,197,215,.12),inset 0 2px 0 rgba(255,255,255,.95)}80%{transform:translateY(0) scale(1)}}\n  @media (prefers-reduced-motion:reduce){.activity-card:has(.activity-audio) .activity-audio:not(.has-played){animation:none!important}}'''
+          new_anim = '''  .activity-card:has(.activity-audio) .activity-audio{animation:none!important;transform:none!important}\n  .activity-card:has(.activity-audio) .activity-audio:not(.has-played){animation:none!important;transform:none!important}'''
+          if old_anim not in s:
+              raise SystemExit('listen pulse block not found')
+          s = s.replace(old_anim, new_anim, 1)
+          css.write_text(s)
+
+          index = Path('students/study-v2/index.html')
+          h = index.read_text()
+          h = h.replace('./v2-short-landscape.css?v=20260816-practiceonly1', './v2-short-landscape.css?v=20260822-listencalm2')
+          index.write_text(h)
+          PY
+      - name: Commit fix and remove one-off workflow
+        run: |
+          rm .github/workflows/fix-study-v2-listen-button-once.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add students/study-v2/v2-short-landscape.css students/study-v2/index.html .github/workflows/fix-study-v2-listen-button-once.yml
+          git diff --cached --quiet || git commit -m "Calm Study V2 listening control"
+          git push origin HEAD:staging
