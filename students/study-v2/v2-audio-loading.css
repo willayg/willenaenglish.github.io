@@ -4,6 +4,17 @@
   overflow:visible!important;
 }
 
+#v2ActivityRoot .activity-audio .activity-audio-icon,
+#aiCoachActivityRoot .activity-audio .activity-audio-icon{
+  position:absolute!important;
+  left:50%!important;
+  top:50%!important;
+  transform:translate(-50%,-50%)!important;
+  margin:0!important;
+  display:block!important;
+  pointer-events:none!important;
+}
+
 #v2ActivityRoot .v2-audio-sparkles,
 #aiCoachActivityRoot .v2-audio-sparkles{
   position:absolute;
