@@ -13,10 +13,10 @@ function skillNameFor(lang,s){
 function skillName(s){return skillNameFor(ko()?'ko':'en',s);}
 function history(){var h=global.WillenaCoachHistory;return h&&typeof h.getSnapshot==='function'?h.getSnapshot():null;}
 function masteryRows(){
-  var h=history(),current=h&&h.currentUnit&&h.currentUnit.skillMastery;
-  if(Array.isArray(current)&&current.length)return current.map(function(x){return{skill:text(x.skill),pct:Math.max(0,Math.min(100,Number(x.mastery)||0)),attempts:Math.max(0,Number(x.attempts)||0)};});
-  var overall=h&&h.skillMastery;
-  return (Array.isArray(overall)?overall:[]).map(function(x){return{skill:text(x.skill),pct:Math.max(0,Math.min(100,Number(x.mastery)||0)),attempts:Math.max(0,Number(x.attempts)||0)};});
+  var h=history(),overall=Array.isArray(h&&h.skillMastery)?h.skillMastery:[],current=h&&h.currentUnit&&h.currentUnit.skillMastery,currentRows=Array.isArray(current)?current:[],by={};
+  overall.forEach(function(x){var skill=text(x&&x.skill);if(!skill)return;by[skill]={skill:skill,pct:Math.max(0,Math.min(100,Number(x.mastery)||0)),attempts:Math.max(0,Number(x.attempts)||0)};});
+  currentRows.forEach(function(x){var skill=text(x&&x.skill);if(!skill)return;var cur={skill:skill,pct:Math.max(0,Math.min(100,Number(x.mastery)||0)),attempts:Math.max(0,Number(x.attempts)||0)},old=by[skill];if(!old){by[skill]=cur;return;}if(cur.attempts>0&&cur.pct<old.pct){old.pct=cur.pct;old.attempts=Math.max(old.attempts,cur.attempts);}});
+  return Object.keys(by).map(function(k){return by[k];});
 }
 function recentMisses(){
   var h=history(),counts={};
