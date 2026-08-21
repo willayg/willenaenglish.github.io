@@ -27,7 +27,7 @@ async function record(detail){
     correct_answer:valueText(result.answer),
     points:0,
     duration_ms:Number(detail&&detail.responseTimeMs||result.responseTimeMs)||null,
-    extra:{source:'study_v2_ai_coach',skill:text(activity.skill),plan_type:text(meta.ai_coach_strict_concept||meta.source_label||''),activity_id:text(activity.id)}
+    extra:{source:'study_v2_ai_coach',skill:text(activity.skill),plan_type:text(meta.ai_coach_strict_concept||meta.source_label||''),activity_id:text(activity.id),book_id:text(meta.book_id),unit_id:text(meta.unit_id)}
   };
   try{
     var request=(global.WillenaAPI&&typeof global.WillenaAPI.fetch==='function')?global.WillenaAPI.fetch:fetch;
