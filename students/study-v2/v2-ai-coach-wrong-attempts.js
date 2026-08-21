@@ -13,10 +13,18 @@ function scheduleHistoryRefresh(){
     Promise.resolve(history.refresh(coach.context())).then(function(){if(!overlayOpen()&&typeof coach.refresh==='function')return coach.refresh();}).catch(function(){});
   },250);
 }
+function diagnose(activity,result){
+  var engine=global.WillenaAICoachDiagnosis,history=global.WillenaCoachHistory;
+  if(!engine||typeof engine.diagnose!=='function')return null;
+  try{return engine.diagnose({activity:activity,result:result,history:history&&typeof history.getSnapshot==='function'?history.getSnapshot():null});}catch(e){console.warn('[AI Coach] mistake diagnosis failed',e);return null;}
+}
 async function record(detail){
   var result=detail&&detail.result||{};if(result.correct)return false;
   var activity=detail&&detail.activity||{},meta=activity.metadata||{};
   if(!overlayOpen()||meta.morphology_sidecar===true)return false;
+  var diagnosis=diagnose(activity,result);
+  var extra={source:'study_v2_ai_coach',skill:text(activity.skill),plan_type:text(meta.ai_coach_strict_concept||meta.source_label||''),activity_id:text(activity.id),book_id:text(meta.book_id),unit_id:text(meta.unit_id)};
+  if(diagnosis)extra.diagnosis=diagnosis;
   var body={
     event_type:'attempt',
     session_id:'ai-coach-wrong-'+Date.now()+'-'+Math.random().toString(36).slice(2,8),
@@ -27,7 +35,7 @@ async function record(detail){
     correct_answer:valueText(result.answer),
     points:0,
     duration_ms:Number(detail&&detail.responseTimeMs||result.responseTimeMs)||null,
-    extra:{source:'study_v2_ai_coach',skill:text(activity.skill),plan_type:text(meta.ai_coach_strict_concept||meta.source_label||''),activity_id:text(activity.id),book_id:text(meta.book_id),unit_id:text(meta.unit_id)}
+    extra:extra
   };
   try{
     var request=(global.WillenaAPI&&typeof global.WillenaAPI.fetch==='function')?global.WillenaAPI.fetch:fetch;
