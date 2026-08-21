@@ -27,6 +27,98 @@
   .activity-card:has(.activity-audio) .activity-audio:not(.has-played){animation:v2ListenNudge 2.6s ease-in-out infinite!important;transform-origin:center!important}
   @keyframes v2ListenNudge{0%,68%,100%{transform:translateY(0) scale(1);box-shadow:0 0 22px rgba(19,145,169,.20),0 0 0 2px rgba(99,197,215,.16),inset 0 2px 0 rgba(255,255,255,.95)}74%{transform:translateY(-3px) scale(1.045);box-shadow:0 0 30px rgba(19,145,169,.32),0 0 0 7px rgba(99,197,215,.12),inset 0 2px 0 rgba(255,255,255,.95)}80%{transform:translateY(0) scale(1)}}
   @media (prefers-reduced-motion:reduce){.activity-card:has(.activity-audio) .activity-audio:not(.has-played){animation:none!important}}
+
+  /* Spelling is not an ordinary listen-and-answer card. Give it one full-width vertical flow:
+     Korean cue -> slots -> listening control -> chips. */
+  #v2ActivityRoot .activity-card:has(.activity-letter-order),
+  #aiCoachActivityRoot .activity-card:has(.activity-letter-order){
+    display:grid!important;
+    grid-template-columns:minmax(0,1fr)!important;
+    grid-template-areas:"context" "prompt" "spelling" "listen" "feedback"!important;
+    width:100%!important;
+    column-gap:0!important;
+    row-gap:8px!important;
+    align-items:stretch!important;
+  }
+  #v2ActivityRoot .activity-card:has(.activity-letter-order) .activity-spelling-prompt-row,
+  #aiCoachActivityRoot .activity-card:has(.activity-letter-order) .activity-spelling-prompt-row{
+    display:contents!important;
+  }
+  #v2ActivityRoot .activity-card:has(.activity-letter-order) .activity-spelling-prompt-row .activity-prompt,
+  #aiCoachActivityRoot .activity-card:has(.activity-letter-order) .activity-spelling-prompt-row .activity-prompt{
+    grid-area:prompt!important;
+    width:100%!important;
+    margin:0 0 4px!important;
+    padding:0 48px!important;
+    text-align:center!important;
+    font-size:clamp(1.35rem,3vw,1.72rem)!important;
+    line-height:1.22!important;
+    align-self:auto!important;
+  }
+  #v2ActivityRoot .activity-card:has(.activity-letter-order) .activity-letter-order,
+  #aiCoachActivityRoot .activity-card:has(.activity-letter-order) .activity-letter-order{
+    grid-area:spelling!important;
+    width:100%!important;
+    max-width:none!important;
+    margin:0!important;
+  }
+  #v2ActivityRoot .activity-card:has(.activity-letter-order) .activity-letter-slots,
+  #aiCoachActivityRoot .activity-card:has(.activity-letter-order) .activity-letter-slots,
+  #v2ActivityRoot .activity-card:has(.activity-letter-order) .activity-letter-bank,
+  #aiCoachActivityRoot .activity-card:has(.activity-letter-order) .activity-letter-bank{
+    width:100%!important;
+    max-width:none!important;
+    box-sizing:border-box!important;
+  }
+  #v2ActivityRoot .activity-card:has(.activity-letter-order) .activity-letter-word,
+  #aiCoachActivityRoot .activity-card:has(.activity-letter-order) .activity-letter-word{
+    width:100%!important;
+    max-width:none!important;
+    justify-content:space-evenly!important;
+  }
+  #v2ActivityRoot .activity-card:has(.activity-letter-order) .activity-letter-bank,
+  #aiCoachActivityRoot .activity-card:has(.activity-letter-order) .activity-letter-bank{
+    justify-content:space-evenly!important;
+  }
+  #v2ActivityRoot .activity-card:has(.activity-letter-order) .activity-spelling-listen,
+  #aiCoachActivityRoot .activity-card:has(.activity-letter-order) .activity-spelling-listen,
+  #v2ActivityRoot .activity-card:has(.activity-letter-order) .activity-audio,
+  #aiCoachActivityRoot .activity-card:has(.activity-letter-order) .activity-audio{
+    grid-area:listen!important;
+    position:relative!important;
+    justify-self:center!important;
+    align-self:center!important;
+    width:64px!important;
+    height:64px!important;
+    margin:2px auto 26px!important;
+    border-width:4px!important;
+    animation:none!important;
+    transform:none!important;
+  }
+  #v2ActivityRoot .activity-card:has(.activity-letter-order) .activity-audio:before,
+  #aiCoachActivityRoot .activity-card:has(.activity-letter-order) .activity-audio:before{
+    width:30px!important;
+    height:30px!important;
+    margin:auto!important;
+    background-position:center!important;
+  }
+  #v2ActivityRoot .activity-card:has(.activity-letter-order) .activity-audio:after,
+  #aiCoachActivityRoot .activity-card:has(.activity-letter-order) .activity-audio:after{
+    content:"눌러서 들어보세요";
+    position:absolute;
+    left:50%;
+    top:calc(100% + 6px);
+    transform:translateX(-50%);
+    width:max-content;
+    max-width:220px;
+    color:#6f8190;
+    font:800 .72rem/1.2 Poppins,sans-serif;
+    white-space:nowrap;
+    pointer-events:none;
+  }
+  #v2ActivityRoot .activity-card:has(.activity-letter-order) .activity-feedback,
+  #aiCoachActivityRoot .activity-card:has(.activity-letter-order) .activity-feedback{grid-area:feedback!important}
+
   .activity-token-answer,.activity-token-bank{min-height:60px!important;padding:11px!important;gap:9px!important;margin-top:4px!important}
   .activity-token-answer{margin-bottom:14px!important}
   .activity-actions{margin-top:18px!important}
