@@ -2,33 +2,13 @@
 'use strict';
 function isTablet(){return global.matchMedia&&global.matchMedia('(min-width:600px) and (max-width:1100px)').matches;}
 function ko(){var b=document.getElementById('languageBtn');return !b||String(b.textContent||'').trim()==='English';}
-function makeComets(wrap){
-  var field=document.createElement('div');
-  field.className='v2-spelling-comet-field';
-  [0,1].forEach(function(track){
-    var comet=document.createElement('div');
-    comet.className='v2-spelling-comet v2-spelling-comet-'+track;
-    var head=document.createElement('span');
-    head.className='v2-spelling-comet-head';
-    head.textContent='✦';
-    comet.appendChild(head);
-    for(var i=1;i<=5;i++){
-      var dot=document.createElement('span');
-      dot.className='v2-spelling-comet-dot';
-      dot.style.setProperty('--trail-index',String(i));
-      comet.appendChild(dot);
-    }
-    field.appendChild(comet);
-  });
-  wrap.appendChild(field);
-}
 function decorateRoot(root){
   if(!isTablet()||!root)return;
   var spelling=root.querySelector('.activity-letter-order');
   if(!spelling)return;
   var card=spelling.closest('.activity-card');
-  if(!card||card.dataset.v2TabletSpellingHelp==='5')return;
-  card.dataset.v2TabletSpellingHelp='5';
+  if(!card||card.dataset.v2TabletSpellingHelp==='6')return;
+  card.dataset.v2TabletSpellingHelp='6';
   card.classList.add('v2-tablet-spelling');
   var instruction=card.querySelector('.activity-context,.activity-instruction');
   if(instruction){
@@ -50,8 +30,7 @@ function decorateRoot(root){
   if(audio){
     audio.classList.add('v2-tablet-spelling-listen');
     var listenWrap=document.createElement('div');listenWrap.className='v2-tablet-spelling-listen-wrap';
-    listenWrap.appendChild(audio);makeComets(listenWrap);
-    audio.addEventListener('click',function(){listenWrap.classList.add('is-used');},{once:true});
+    listenWrap.appendChild(audio);
     workRow.appendChild(listenWrap);
   }
   if(actions){actions.classList.add('v2-tablet-spelling-actions');workRow.appendChild(actions);}
