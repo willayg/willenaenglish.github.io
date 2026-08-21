@@ -11,7 +11,7 @@ Work one numbered step at a time. Do not move to another step for polish or inte
 - [x] **1. Coach cleanup** — remove generic fallback behavior, duplicate capability ownership, legacy Coach prompt injection, duplicate level sources, and startup races. One controller owns Coach UI; one bootstrap owns first render; Coach recommendations use Study context for level.
 - [x] **2. Stable recommendation engine** — combine global level, selected book/unit context, unit mastery and registered capabilities; rank every genuinely useful option without generic fallback padding. Weakness evidence comes from Study data rather than rendered DOM, so the same Study snapshot produces the same recommendation set/order.
 - [x] **3. Student-history layer** — one `WillenaCoachHistory` service loads current-unit skill mastery, recent attempts, recurring misses, all content mastery, grammar concept mastery, morphology mastery/attempts, due/weak/secure signals and short-term accuracy trends. It reads only the signed-in student's RLS-protected rows, refreshes after new study/morphology/progress events, and is loaded before Coach recommendations. Existing weakness recommendations now consume this shared history instead of maintaining a separate progress fetch.
-- [ ] **4. Study-section navigation** — implementation is now functionally complete and awaiting one final student tap-test before the checkbox is closed. `WillenaStudyNavigator` drives the existing book/unit/Book Study controls, maps skills to Vocabulary/Sentences/Grammar, waits for the destination unit to load, scrolls to the Study container top, and shows the Coach study-tip overlay. Generic Study actions no longer silently default to the open unit: routing now prefers specific grammar-concept links, real weak book/unit history, recent mistake location, then a current assigned unit only when that skill genuinely exists there. If no defensible destination exists, the Coach does not fabricate one.
+- [x] **4. Study-section navigation** — cross-unit student QA confirmed an evidence-backed weak-area Study action can leave the currently open unit and navigate to the actual source unit. `WillenaStudyNavigator` drives the existing book/unit/Book Study controls, maps skills to Vocabulary/Sentences/Grammar, waits for the destination unit to load, scrolls to the Study container top, and shows the Coach study-tip overlay. Generic Study actions no longer silently default to the open unit: routing prefers specific grammar-concept links, real weak book/unit history, recent mistake location, then a current assigned unit only when that skill genuinely exists there. If no defensible destination exists, the Coach does not fabricate one.
 - [ ] **5. Smart mistake diagnosis** — classify the actual rule behind errors such as -s, -es, y→ies, does + base verb, irregular past and participles.
 - [ ] **6. Complete remediation loop** — mistake → explanation → small rule check when useful → retry only missed questions → explain persistent misses → success/reward.
 - [ ] **7. Vocabulary Coach** — weak-word detection, meaning/form confusion, targeted study/practice and remediation.
@@ -25,24 +25,22 @@ Work one numbered step at a time. Do not move to another step for polish or inte
 - [ ] **15. Full QA pass** — test levels 1–8+, new and experienced students, first login, refresh, no-history cases, mistakes, perfect scores, retries, Korean/English, phone/tablet and navigation destinations.
 - [ ] **16. Freeze Coach V1** — document capability, event, mastery, recommendation and navigation contracts so Teacher/Parent trackers can safely build on them.
 
-## Stage 4 final QA checkpoint
+## Stage 4 completion notes
 
-What now works:
+What works:
 
 - Coach Study actions can switch assigned book/unit, enter Book Study, open the appropriate Vocabulary/Sentences/Grammar section, and scroll to the top of the Study container.
 - Weak-area evidence retains real `book_id` + `unit_id`, so weak recommendations can name and open the actual source unit.
 - Generic Study routing is evidence-based instead of context-bound. Routing order is: specific linked grammar concept when available → weakest real book/unit location → recent mistake location → currently assigned unit only if that skill exists there.
 - Generic grammar Study can consume any specific `grammar_concepts` code that has `pattern_concepts` occurrences in the student's assigned books. An audit confirmed the useful specific concepts (third person, do/does, past, present perfect, comparatives, conditionals, passive, etc.) are linked; zero-link rows are mostly broad/duplicate umbrella concepts and are not given invented links.
 - If no defensible Study location exists, no fake current-unit destination is created.
-- Fresh wrong Coach answers now retain `book_id` + `unit_id` when their activity has that context, allowing recent mistakes to become Study-routing evidence immediately.
+- Fresh wrong Coach answers retain `book_id` + `unit_id` when their activity has that context, allowing recent mistakes to become Study-routing evidence immediately.
 - Study landing guidance is a prominent Coach overlay with skill-specific instructions, Coach SVG, tap-to-dismiss behavior, ~8.5 second lifetime, and the temporary 8-bit visual treatment.
-- Study V2 language preference persists across reloads.
 
-Final Stage 4 test before checking complete:
+Follow-up bugs found immediately after Stage 4 QA:
 
-- Open a generic weak-area Study action while a **different book/unit is currently selected**. Confirm the Coach changes to the evidence-backed destination rather than staying in the open unit.
-- Test one grammar weakness with a specific concept and confirm it opens the linked grammar unit/pattern when available.
-- Test one non-grammar weakness (vocabulary, sentence building or listening) and confirm it opens the evidence-backed book/unit and correct Study section.
+- Weak-area ranking incorrectly excluded **0% mastery** because it required `pct > 0`. This is now corrected to use evidence (`attempts > 0`) plus `mastery < 80`, so a student who gets every grammar question wrong is correctly treated as weak.
+- Study V2 language persistence had a timing race: a fallback timer could simulate a language-button click before the main Study language handler was attached, then save the wrong state. Restore now waits for `willena:study-v2-ready`, so the real handler is guaranteed to exist first.
 
 Cross-unit Practice remains deliberately separate. Study navigation may change book/unit from evidence; the existing Practice provider still uses its current-unit contract. Do not imply cross-unit Practice works until it is deliberately implemented in a later Coach step.
 
@@ -67,7 +65,6 @@ Planned reusable card types:
 
 Likely build points:
 
-- Stage 4 may use only a simple Study-path presentation if navigation needs it.
 - Stages 5–6 add mistake/correction and remediation cards.
 - Stage 10 adds the broader grammar/sentence-building rule and contrast card library.
 - Stage 14 polishes the common visual-card renderer and mobile behavior.
