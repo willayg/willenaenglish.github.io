@@ -18,7 +18,7 @@ function ensureMessage(button){
 
 function ensureSparkles(button){
   if(!button||button.querySelector('.v2-audio-sparkles'))return;
-  var field=document.createElement('span');
+  var field=document.createElement('div');
   field.className='v2-audio-sparkles';
   field.setAttribute('aria-hidden','true');
   for(var i=0;i<10;i++){
