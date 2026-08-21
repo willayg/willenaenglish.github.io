@@ -93,11 +93,14 @@
   #v2ActivityRoot .activity-card.v2-tablet-spelling .v2-tablet-spelling-listen-wrap,
   #aiCoachActivityRoot .activity-card.v2-tablet-spelling .v2-tablet-spelling-listen-wrap{
     grid-column:2!important;
+    position:relative!important;
     display:flex!important;
     flex-direction:column!important;
     align-items:center!important;
     justify-content:center!important;
     gap:2px!important;
+    width:72px!important;
+    height:72px!important;
   }
 
   #v2ActivityRoot .activity-card.v2-tablet-spelling .v2-tablet-spelling-listen,
@@ -120,11 +123,32 @@
     margin:auto!important;
   }
 
-  #v2ActivityRoot .activity-card.v2-tablet-spelling .v2-tablet-spelling-listen-hint,
-  #aiCoachActivityRoot .activity-card.v2-tablet-spelling .v2-tablet-spelling-listen-hint{
-    color:#6f8190!important;
-    font:700 .72rem/1.1 Poppins,sans-serif!important;
-    white-space:nowrap!important;
+  /* Game-like guidance: quick golden stars swirl around the listen button until it is tapped once. */
+  #v2ActivityRoot .v2-tablet-spelling-listen-wrap:not(.is-used)::before,
+  #aiCoachActivityRoot .v2-tablet-spelling-listen-wrap:not(.is-used)::before,
+  #v2ActivityRoot .v2-tablet-spelling-listen-wrap:not(.is-used)::after,
+  #aiCoachActivityRoot .v2-tablet-spelling-listen-wrap:not(.is-used)::after{
+    position:absolute;
+    left:50%;
+    top:50%;
+    z-index:3;
+    pointer-events:none;
+    color:#f6b92b;
+    text-shadow:0 0 5px rgba(255,193,51,.7),0 0 10px rgba(255,215,95,.38);
+    transform-origin:0 0;
+  }
+  #v2ActivityRoot .v2-tablet-spelling-listen-wrap:not(.is-used)::before,
+  #aiCoachActivityRoot .v2-tablet-spelling-listen-wrap:not(.is-used)::before{
+    content:'✦';
+    font-size:15px;
+    animation:v2GoldenStarSwirlA .9s linear infinite;
+  }
+  #v2ActivityRoot .v2-tablet-spelling-listen-wrap:not(.is-used)::after,
+  #aiCoachActivityRoot .v2-tablet-spelling-listen-wrap:not(.is-used)::after{
+    content:'✦';
+    font-size:10px;
+    color:#ffd96a;
+    animation:v2GoldenStarSwirlB .72s linear infinite;
   }
 
   #v2ActivityRoot .activity-card.v2-tablet-spelling .v2-tablet-spelling-actions,
@@ -192,4 +216,25 @@
     padding:0 11px!important;
     font-size:.72rem!important;
   }
+}
+
+@keyframes v2GoldenStarSwirlA{
+  0%{transform:rotate(0deg) translateX(36px) rotate(0deg) scale(.72);opacity:.35}
+  18%{opacity:1;transform:rotate(65deg) translateX(29px) rotate(-65deg) scale(1.08)}
+  48%{transform:rotate(172deg) translateX(38px) rotate(-172deg) scale(.82);opacity:.78}
+  76%{transform:rotate(274deg) translateX(27px) rotate(-274deg) scale(1.12);opacity:1}
+  100%{transform:rotate(360deg) translateX(36px) rotate(-360deg) scale(.72);opacity:.35}
+}
+@keyframes v2GoldenStarSwirlB{
+  0%{transform:rotate(210deg) translateX(27px) rotate(-210deg) scale(1);opacity:.9}
+  34%{transform:rotate(330deg) translateX(39px) rotate(-330deg) scale(.65);opacity:.42}
+  68%{transform:rotate(452deg) translateX(25px) rotate(-452deg) scale(1.2);opacity:1}
+  100%{transform:rotate(570deg) translateX(27px) rotate(-570deg) scale(1);opacity:.9}
+}
+
+@media(prefers-reduced-motion:reduce){
+  #v2ActivityRoot .v2-tablet-spelling-listen-wrap::before,
+  #aiCoachActivityRoot .v2-tablet-spelling-listen-wrap::before,
+  #v2ActivityRoot .v2-tablet-spelling-listen-wrap::after,
+  #aiCoachActivityRoot .v2-tablet-spelling-listen-wrap::after{animation:none!important;display:none!important}
 }
