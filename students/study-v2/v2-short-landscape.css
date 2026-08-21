@@ -34,88 +34,38 @@
   #aiCoachActivityRoot .activity-card:has(.activity-letter-order){
     display:grid!important;
     grid-template-columns:minmax(0,1fr)!important;
-    grid-template-areas:"context" "prompt" "spelling" "listen" "feedback"!important;
+    grid-template-areas:"context" "prompt" "spelling" "feedback"!important;
     width:100%!important;
     column-gap:0!important;
     row-gap:8px!important;
     align-items:stretch!important;
   }
   #v2ActivityRoot .activity-card:has(.activity-letter-order) .activity-spelling-prompt-row,
-  #aiCoachActivityRoot .activity-card:has(.activity-letter-order) .activity-spelling-prompt-row{
-    display:contents!important;
-  }
+  #aiCoachActivityRoot .activity-card:has(.activity-letter-order) .activity-spelling-prompt-row{display:contents!important}
   #v2ActivityRoot .activity-card:has(.activity-letter-order) .activity-spelling-prompt-row .activity-prompt,
   #aiCoachActivityRoot .activity-card:has(.activity-letter-order) .activity-spelling-prompt-row .activity-prompt{
-    grid-area:prompt!important;
-    width:100%!important;
-    margin:0 0 4px!important;
-    padding:0 48px!important;
-    text-align:center!important;
-    font-size:clamp(1.35rem,3vw,1.72rem)!important;
-    line-height:1.22!important;
-    align-self:auto!important;
+    grid-area:prompt!important;width:100%!important;margin:0 0 4px!important;padding:0 48px!important;text-align:center!important;font-size:clamp(1.35rem,3vw,1.72rem)!important;line-height:1.22!important;align-self:auto!important
   }
   #v2ActivityRoot .activity-card:has(.activity-letter-order) .activity-letter-order,
-  #aiCoachActivityRoot .activity-card:has(.activity-letter-order) .activity-letter-order{
-    grid-area:spelling!important;
-    width:100%!important;
-    max-width:none!important;
-    margin:0!important;
-  }
+  #aiCoachActivityRoot .activity-card:has(.activity-letter-order) .activity-letter-order{grid-area:spelling!important;width:100%!important;max-width:none!important;margin:0!important}
   #v2ActivityRoot .activity-card:has(.activity-letter-order) .activity-letter-slots,
   #aiCoachActivityRoot .activity-card:has(.activity-letter-order) .activity-letter-slots,
   #v2ActivityRoot .activity-card:has(.activity-letter-order) .activity-letter-bank,
-  #aiCoachActivityRoot .activity-card:has(.activity-letter-order) .activity-letter-bank{
-    width:100%!important;
-    max-width:none!important;
-    box-sizing:border-box!important;
-  }
+  #aiCoachActivityRoot .activity-card:has(.activity-letter-order) .activity-letter-bank{width:100%!important;max-width:none!important;box-sizing:border-box!important}
   #v2ActivityRoot .activity-card:has(.activity-letter-order) .activity-letter-word,
-  #aiCoachActivityRoot .activity-card:has(.activity-letter-order) .activity-letter-word{
-    width:100%!important;
-    max-width:none!important;
-    justify-content:space-evenly!important;
-  }
+  #aiCoachActivityRoot .activity-card:has(.activity-letter-order) .activity-letter-word{width:100%!important;max-width:none!important;justify-content:space-evenly!important}
   #v2ActivityRoot .activity-card:has(.activity-letter-order) .activity-letter-bank,
-  #aiCoachActivityRoot .activity-card:has(.activity-letter-order) .activity-letter-bank{
-    justify-content:space-evenly!important;
-  }
+  #aiCoachActivityRoot .activity-card:has(.activity-letter-order) .activity-letter-bank{justify-content:space-evenly!important}
   #v2ActivityRoot .activity-card:has(.activity-letter-order) .activity-spelling-listen,
   #aiCoachActivityRoot .activity-card:has(.activity-letter-order) .activity-spelling-listen,
   #v2ActivityRoot .activity-card:has(.activity-letter-order) .activity-audio,
   #aiCoachActivityRoot .activity-card:has(.activity-letter-order) .activity-audio{
-    grid-area:listen!important;
-    position:relative!important;
-    justify-self:center!important;
-    align-self:center!important;
-    width:64px!important;
-    height:64px!important;
-    margin:2px auto 26px!important;
-    border-width:4px!important;
-    animation:none!important;
-    transform:none!important;
+    position:relative!important;justify-self:center!important;align-self:center!important;width:64px!important;height:64px!important;margin:0 auto!important;border-width:4px!important;animation:none!important;transform:none!important
   }
   #v2ActivityRoot .activity-card:has(.activity-letter-order) .activity-audio:before,
-  #aiCoachActivityRoot .activity-card:has(.activity-letter-order) .activity-audio:before{
-    width:30px!important;
-    height:30px!important;
-    margin:auto!important;
-    background-position:center!important;
-  }
+  #aiCoachActivityRoot .activity-card:has(.activity-letter-order) .activity-audio:before{width:30px!important;height:30px!important;margin:auto!important;background-position:center!important}
   #v2ActivityRoot .activity-card:has(.activity-letter-order) .activity-audio:after,
-  #aiCoachActivityRoot .activity-card:has(.activity-letter-order) .activity-audio:after{
-    content:"눌러서 들어보세요";
-    position:absolute;
-    left:50%;
-    top:calc(100% + 6px);
-    transform:translateX(-50%);
-    width:max-content;
-    max-width:220px;
-    color:#6f8190;
-    font:800 .72rem/1.2 Poppins,sans-serif;
-    white-space:nowrap;
-    pointer-events:none;
-  }
+  #aiCoachActivityRoot .activity-card:has(.activity-letter-order) .activity-audio:after{content:none!important}
   #v2ActivityRoot .activity-card:has(.activity-letter-order) .activity-feedback,
   #aiCoachActivityRoot .activity-card:has(.activity-letter-order) .activity-feedback{grid-area:feedback!important}
 
