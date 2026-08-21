@@ -183,11 +183,21 @@ async function requireTeacher(env,userId,select){
   return p;
 }
 
-async function studentRows(env,select,className){
-  let q='role=eq.student&approved=eq.true&select=id,name,username,korean_name,class';
-  if(className)q+=`&class=eq.${encodeURIComponent(className)}`;
-  const rows=await select(env,'profiles',q);
-  return(rows||[]).filter(p=>!p.username||String(p.username).length>1);
+async function canonicalClasses(env,select){
+  const rows=await select(env,'classes','status=eq.active&select=id,name,display_name,legacy_class_name,status&order=name.asc');
+  return Array.isArray(rows)?rows:[];
+}
+
+async function studentsForCanonicalClass(env,select,className){
+  const classes=await select(env,'classes',`status=eq.active&name=eq.${encodeURIComponent(className)}&select=id,name,display_name`);
+  const cls=classes&&classes[0];
+  if(!cls)return {classRow:null,students:[]};
+  const enrollments=await select(env,'class_enrollments',`class_id=eq.${encodeURIComponent(cls.id)}&status=eq.active&select=student_id`);
+  const ids=[...new Set((enrollments||[]).map(r=>r.student_id).filter(Boolean))];
+  if(!ids.length)return {classRow:cls,students:[]};
+  const rows=await select(env,'profiles',`id=in.(${ids.join(',')})&role=eq.student&approved=eq.true&select=id,name,username,korean_name,class`);
+  const byId=new Map((rows||[]).map(r=>[r.id,{...r,class:cls.display_name||cls.name}]));
+  return {classRow:cls,students:ids.map(id=>byId.get(id)).filter(Boolean)};
 }
 
 async function fetchAttempts(env,select,userIds,days){
@@ -221,20 +231,27 @@ export async function handleTeacherInsights({request,env,userId,section,origin,j
   const url=new URL(request.url),days=clamp(Number(url.searchParams.get('days')||30)||30,7,90);
 
   if(section==='teacher_classes'){
-    const rows=await studentRows(env,supabaseSelect,null),map=new Map();
-    rows.forEach(s=>{if(s.class)map.set(s.class,(map.get(s.class)||0)+1);});
-    const classes=[...map.entries()].map(([name,student_count])=>({name,student_count})).sort((a,b)=>a.name.localeCompare(b.name));
+    const canonical=await canonicalClasses(env,supabaseSelect);
+    const ids=canonical.map(c=>c.id).filter(Boolean);
+    let enrollments=[];
+    if(ids.length)enrollments=await supabaseSelect(env,'class_enrollments',`class_id=in.(${ids.join(',')})&status=eq.active&select=class_id,student_id`);
+    const counts=new Map();
+    (enrollments||[]).forEach(r=>counts.set(r.class_id,(counts.get(r.class_id)||0)+1));
+    const classes=canonical.map(c=>({id:c.id,name:c.display_name||c.name,student_count:counts.get(c.id)||0}));
     return jsonResponse({success:true,classes},200,origin,30);
   }
 
   if(section==='teacher_class_insights'){
     const className=String(url.searchParams.get('class')||'').trim();
     if(!className)return jsonResponse({success:false,error:'Missing class'},400,origin,0);
-    const profiles=await studentRows(env,supabaseSelect,className),ids=profiles.map(p=>p.id),attempts=await fetchAttempts(env,supabaseSelect,ids,days);
+    const resolved=await studentsForCanonicalClass(env,supabaseSelect,className);
+    if(!resolved.classRow)return jsonResponse({success:false,error:'Class not found'},404,origin,0);
+    const profiles=resolved.students,ids=profiles.map(p=>p.id),attempts=await fetchAttempts(env,supabaseSelect,ids,days);
     const byStudent=new Map();attempts.forEach(a=>{if(!byStudent.has(a.student_id))byStudent.set(a.student_id,[]);byStudent.get(a.student_id).push(a);});
     const students=profiles.map(p=>studentInsight(p,byStudent.get(p.id)||[],false));
     const total=attempts.length,correct=attempts.filter(a=>a.is_correct).length;
-    return jsonResponse({success:true,class:className,days,summary:{students:students.length,active_students:students.filter(s=>s.habits.active_days_period>0).length,needs_learning_attention:students.filter(s=>s.learning.label==='Needs attention').length,needs_habit_attention:students.filter(s=>s.habits.label==='Needs attention').length,attempts:total,accuracy:pct(correct,total)},students},200,origin,20);
+    const canonicalName=resolved.classRow.display_name||resolved.classRow.name;
+    return jsonResponse({success:true,class:canonicalName,days,summary:{students:students.length,active_students:students.filter(s=>s.habits.active_days_period>0).length,needs_learning_attention:students.filter(s=>s.learning.label==='Needs attention').length,needs_habit_attention:students.filter(s=>s.habits.label==='Needs attention').length,attempts:total,accuracy:pct(correct,total)},students},200,origin,20);
   }
 
   if(section==='teacher_student_insights'){
