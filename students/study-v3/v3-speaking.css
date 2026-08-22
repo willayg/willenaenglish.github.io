@@ -9,16 +9,17 @@
 .v3-speaking-target[hidden]{display:none}
 .v3-speaking-listenrow,.v3-speaking-microw{display:flex;justify-content:center;margin:16px 0}
 .v3-speaking-listen{border:2px solid #66d6df;background:#fff;color:#e60076;border-radius:999px;padding:11px 18px;font:800 15px Poppins,sans-serif}
-.v3-speaking-mic{width:92px;height:92px;border:0;border-radius:50%;background:#ff0a8a;color:#fff;font-size:34px;box-shadow:0 0 0 9px rgba(255,10,138,.09)}
-.v3-speaking-mic.is-listening{animation:v3SpeakPulse .8s ease-in-out infinite alternate}
-@keyframes v3SpeakPulse{to{transform:scale(1.04);box-shadow:0 0 0 18px rgba(255,10,138,.15)}}
+.v3-speaking-mic{width:92px;height:92px;border:3px solid #ff0a8a;border-radius:50%;background:#fff;color:#ff0a8a;display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 9px rgba(255,10,138,.06);padding:0}
+.v3-speaking-mic svg{width:40px;height:40px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.v3-speaking-mic.is-listening{animation:v3SpeakPulse .8s ease-in-out infinite alternate;background:#fff7fb}
+@keyframes v3SpeakPulse{to{transform:scale(1.04);box-shadow:0 0 0 18px rgba(255,10,138,.14)}}
 .v3-speaking-status{text-align:center;min-height:24px;color:#6e858a;font:700 14px Poppins,sans-serif}
 .v3-speaking-heard{margin-top:12px;padding:12px 14px;border:2px solid #d8ecef;border-radius:14px;background:#f5fafb;color:#173f46;font:700 15px/1.4 Poppins,sans-serif}
 .v3-speaking-feedback{margin-top:12px;padding:12px 14px;border-radius:14px;font:700 14px/1.4 Poppins,sans-serif}
 .v3-speaking-feedback.good{background:#edfff6;border:2px solid #a7ebca;color:#21664b}
 .v3-speaking-feedback.retry{background:#fff7fb;border:2px solid #ffc8e4;color:#9a245d}
+.v3-speaking-answer{margin-top:12px;padding:12px 14px;border:2px dashed #ffc8e4;border-radius:14px;background:#fffafd;color:#173f46;font:700 16px/1.45 Poppins,sans-serif;text-align:center}
 .v3-speaking-actions{display:flex;gap:10px;margin-top:14px}
 .v3-speaking-actions button{flex:1;border-radius:14px;padding:12px 14px;font:800 15px Poppins,sans-serif}
-.v3-speaking-retry{border:2px solid #66d6df;background:#fff;color:#e60076}
 .v3-speaking-next{border:2px solid #ff0a8a;background:#ff0a8a;color:#fff}
 .v3-speaking-unsupported{padding:18px;border:2px solid #d8ecef;border-radius:18px;background:#fff;color:#6e858a;font:600 14px/1.5 Poppins,sans-serif}
