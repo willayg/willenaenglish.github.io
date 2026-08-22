@@ -19,113 +19,21 @@
 .v3-activity-back:hover,.v3-activity-back:focus-visible{outline:none;background:#f2fcfd}
 #v2ActivityRoot .activity-check,#aiCoachActivityRoot .activity-check{flex:0 0 auto!important}
 
-/* SPELLING FOOTER: the card itself owns the footer on phone and tablet. */
-#v2ActivityRoot .activity-card:has(.activity-letter-order),
-#aiCoachActivityRoot .activity-card:has(.activity-letter-order),
-#v2ActivityRoot .activity-card.v2-tablet-spelling,
-#aiCoachActivityRoot .activity-card.v2-tablet-spelling{
-  position:relative!important;
-  padding-bottom:104px!important;
-}
+#v2ActivityRoot .activity-card:has(.activity-letter-order),#aiCoachActivityRoot .activity-card:has(.activity-letter-order),#v2ActivityRoot .activity-card.v2-tablet-spelling,#aiCoachActivityRoot .activity-card.v2-tablet-spelling{position:relative!important;padding-bottom:104px!important}
+#v2ActivityRoot .activity-card.v2-tablet-spelling .v2-tablet-spelling-work-row,#aiCoachActivityRoot .activity-card.v2-tablet-spelling .v2-tablet-spelling-work-row{position:static!important;display:block!important;min-height:0!important;margin:0!important;padding:0!important}
+#v2ActivityRoot .activity-card:has(.activity-letter-order) .activity-actions,#aiCoachActivityRoot .activity-card:has(.activity-letter-order) .activity-actions,#v2ActivityRoot .activity-card.v2-tablet-spelling .v2-tablet-spelling-actions,#aiCoachActivityRoot .activity-card.v2-tablet-spelling .v2-tablet-spelling-actions{position:absolute!important;left:20px!important;right:20px!important;bottom:18px!important;top:auto!important;width:auto!important;height:50px!important;min-height:50px!important;margin:0!important;padding:0!important;display:block!important;z-index:30!important;order:99!important;pointer-events:none!important}
+#v2ActivityRoot .activity-card:has(.activity-letter-order) .activity-check,#aiCoachActivityRoot .activity-card:has(.activity-letter-order) .activity-check,#v2ActivityRoot .activity-card.v2-tablet-spelling .activity-check,#aiCoachActivityRoot .activity-card.v2-tablet-spelling .activity-check{position:absolute!important;right:0!important;left:auto!important;top:0!important;bottom:auto!important;margin:0!important;pointer-events:auto!important}
 
-/* Tablet helper moves actions into .v2-tablet-spelling-work-row. Override that completely. */
-#v2ActivityRoot .activity-card.v2-tablet-spelling .v2-tablet-spelling-work-row,
-#aiCoachActivityRoot .activity-card.v2-tablet-spelling .v2-tablet-spelling-work-row{
-  position:static!important;
-  display:block!important;
-  min-height:0!important;
-  margin:0!important;
-  padding:0!important;
-}
+/* Spelling Back is a direct child of the card, completely independent of the Check row. */
+#v2ActivityRoot .activity-card > .v3-spelling-back,#aiCoachActivityRoot .activity-card > .v3-spelling-back{position:absolute!important;left:20px!important;right:auto!important;bottom:18px!important;top:auto!important;margin:0!important;z-index:40!important;pointer-events:auto!important}
 
-#v2ActivityRoot .activity-card:has(.activity-letter-order) .activity-actions,
-#aiCoachActivityRoot .activity-card:has(.activity-letter-order) .activity-actions,
-#v2ActivityRoot .activity-card.v2-tablet-spelling .v2-tablet-spelling-actions,
-#aiCoachActivityRoot .activity-card.v2-tablet-spelling .v2-tablet-spelling-actions{
-  position:absolute!important;
-  left:20px!important;
-  right:20px!important;
-  bottom:18px!important;
-  top:auto!important;
-  width:auto!important;
-  height:50px!important;
-  min-height:50px!important;
-  margin:0!important;
-  padding:0!important;
-  display:block!important;
-  z-index:30!important;
-  order:99!important;
-  pointer-events:none!important;
-}
-
-#v2ActivityRoot .activity-card:has(.activity-letter-order) .v3-activity-back,
-#aiCoachActivityRoot .activity-card:has(.activity-letter-order) .v3-activity-back,
-#v2ActivityRoot .activity-card.v2-tablet-spelling .v3-activity-back,
-#aiCoachActivityRoot .activity-card.v2-tablet-spelling .v3-activity-back{
-  position:absolute!important;
-  left:0!important;
-  right:auto!important;
-  top:0!important;
-  bottom:auto!important;
-  margin:0!important;
-  pointer-events:auto!important;
-}
-
-#v2ActivityRoot .activity-card:has(.activity-letter-order) .activity-check,
-#aiCoachActivityRoot .activity-card:has(.activity-letter-order) .activity-check,
-#v2ActivityRoot .activity-card.v2-tablet-spelling .activity-check,
-#aiCoachActivityRoot .activity-card.v2-tablet-spelling .activity-check{
-  position:absolute!important;
-  right:0!important;
-  left:auto!important;
-  top:0!important;
-  bottom:auto!important;
-  margin:0!important;
-  pointer-events:auto!important;
-}
-
-/* Center tablet/desktop input-mode controls on the same bottom row. */
-#v2ActivityRoot .activity-card:has(.activity-letter-order) .activity-spelling-controls,
-#aiCoachActivityRoot .activity-card:has(.activity-letter-order) .activity-spelling-controls,
-#v2ActivityRoot .activity-card.v2-tablet-spelling .activity-spelling-controls,
-#aiCoachActivityRoot .activity-card.v2-tablet-spelling .activity-spelling-controls{
-  position:absolute!important;
-  left:50%!important;
-  right:auto!important;
-  bottom:24px!important;
-  top:auto!important;
-  transform:translateX(-50%)!important;
-  display:flex!important;
-  align-items:center!important;
-  justify-content:center!important;
-  gap:8px!important;
-  width:max-content!important;
-  max-width:42%!important;
-  margin:0!important;
-  z-index:31!important;
-  animation:none!important;
-  order:99!important;
-}
-#v2ActivityRoot .activity-card:has(.activity-letter-order.is-chunk-mode) .activity-spelling-controls,
-#aiCoachActivityRoot .activity-card:has(.activity-letter-order.is-chunk-mode) .activity-spelling-controls{display:none!important}
+#v2ActivityRoot .activity-card:has(.activity-letter-order) .activity-spelling-controls,#aiCoachActivityRoot .activity-card:has(.activity-letter-order) .activity-spelling-controls,#v2ActivityRoot .activity-card.v2-tablet-spelling .activity-spelling-controls,#aiCoachActivityRoot .activity-card.v2-tablet-spelling .activity-spelling-controls{position:absolute!important;left:50%!important;right:auto!important;bottom:24px!important;top:auto!important;transform:translateX(-50%)!important;display:flex!important;align-items:center!important;justify-content:center!important;gap:8px!important;width:max-content!important;max-width:42%!important;margin:0!important;z-index:31!important;animation:none!important;order:99!important}
+#v2ActivityRoot .activity-card:has(.activity-letter-order.is-chunk-mode) .activity-spelling-controls,#aiCoachActivityRoot .activity-card:has(.activity-letter-order.is-chunk-mode) .activity-spelling-controls{display:none!important}
 
 #v2ActivityRoot .v3-speaking-shell{width:min(720px,100%)!important;margin:auto!important;padding:0!important}
 .v3-speaking-actions{display:flex!important;width:100%!important;justify-content:flex-end!important;align-items:center!important;gap:10px!important}
 .v3-speaking-back{order:-1!important;flex:0 0 auto!important;min-width:92px;margin-right:auto!important;border:2px solid #66d6df!important;background:#fff!important;color:#315e64!important}
 .v3-speaking-next{flex:0 0 auto!important;min-width:112px}
 
-@media(max-width:560px){
-  #v2PracticePanel,#aiCoachPracticeOverlay{padding:14px!important}
-  #v2ActivityRoot .activity-card,#aiCoachActivityRoot .activity-card{padding:16px!important;border-radius:21px!important}
-  .v3-activity-back{min-height:44px;padding:0 14px;font-size:14px}
-  #v2ActivityRoot .activity-context,#aiCoachActivityRoot .activity-context{font-size:20px!important;line-height:1.55!important;margin-bottom:16px!important}
-  #v2ActivityRoot .activity-card:has(.activity-letter-order) .activity-spelling-controls,
-  #aiCoachActivityRoot .activity-card:has(.activity-letter-order) .activity-spelling-controls{display:none!important}
-  #v2ActivityRoot .activity-card:has(.activity-letter-order),#aiCoachActivityRoot .activity-card:has(.activity-letter-order){padding-bottom:86px!important}
-  #v2ActivityRoot .activity-card:has(.activity-letter-order) .activity-actions,
-  #aiCoachActivityRoot .activity-card:has(.activity-letter-order) .activity-actions,
-  #v2ActivityRoot .activity-card.v2-tablet-spelling .v2-tablet-spelling-actions,
-  #aiCoachActivityRoot .activity-card.v2-tablet-spelling .v2-tablet-spelling-actions{left:16px!important;right:16px!important;bottom:14px!important}
-}
-
+@media(max-width:560px){#v2PracticePanel,#aiCoachPracticeOverlay{padding:14px!important}#v2ActivityRoot .activity-card,#aiCoachActivityRoot .activity-card{padding:16px!important;border-radius:21px!important}.v3-activity-back{min-height:44px;padding:0 14px;font-size:14px}#v2ActivityRoot .activity-context,#aiCoachActivityRoot .activity-context{font-size:20px!important;line-height:1.55!important;margin-bottom:16px!important}#v2ActivityRoot .activity-card:has(.activity-letter-order) .activity-spelling-controls,#aiCoachActivityRoot .activity-card:has(.activity-letter-order) .activity-spelling-controls{display:none!important}#v2ActivityRoot .activity-card:has(.activity-letter-order),#aiCoachActivityRoot .activity-card:has(.activity-letter-order){padding-bottom:86px!important}#v2ActivityRoot .activity-card:has(.activity-letter-order) .activity-actions,#aiCoachActivityRoot .activity-card:has(.activity-letter-order) .activity-actions,#v2ActivityRoot .activity-card.v2-tablet-spelling .v2-tablet-spelling-actions,#aiCoachActivityRoot .activity-card.v2-tablet-spelling .v2-tablet-spelling-actions{left:16px!important;right:16px!important;bottom:14px!important}#v2ActivityRoot .activity-card > .v3-spelling-back,#aiCoachActivityRoot .activity-card > .v3-spelling-back{left:16px!important;bottom:14px!important}}
 @media(max-height:620px){#v2PracticePanel,#aiCoachPracticeOverlay{align-items:flex-start!important}#v2ActivityRoot,#aiCoachPracticeOverlay .ai-coach-practice-shell{margin-top:auto!important;margin-bottom:auto!important}}
