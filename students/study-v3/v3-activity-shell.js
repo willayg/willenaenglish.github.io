@@ -4,7 +4,20 @@ function text(v){return String(v==null?'':v).trim();}
 function isKo(){var b=document.getElementById('languageBtn');return !b||text(b.textContent)==='English';}
 function label(){return isKo()?'뒤로':'Back';}
 function addBack(actions,handler){
-  if(!actions||actions.querySelector('.v3-activity-back'))return;
+  if(!actions)return;
+  var card=actions.closest('.activity-card');
+  var spelling=!!(card&&card.querySelector('.activity-letter-order'));
+  if(spelling){
+    if(card.querySelector(':scope > .v3-spelling-back'))return;
+    var sb=document.createElement('button');
+    sb.type='button';
+    sb.className='v3-activity-back v3-spelling-back';
+    sb.textContent=label();
+    sb.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();handler();});
+    card.appendChild(sb);
+    return;
+  }
+  if(actions.querySelector('.v3-activity-back'))return;
   var b=document.createElement('button');
   b.type='button';
   b.className='v3-activity-back';
@@ -36,9 +49,7 @@ function scanCoach(){
 }
 function syncLabels(){
   var wanted=label();
-  document.querySelectorAll('.v3-activity-back,.v3-speaking-back').forEach(function(b){
-    if(text(b.textContent)!==wanted)b.textContent=wanted;
-  });
+  document.querySelectorAll('.v3-activity-back,.v3-speaking-back').forEach(function(b){if(text(b.textContent)!==wanted)b.textContent=wanted;});
 }
 function scan(){scanPractice();scanCoach();syncLabels();}
 function start(){
