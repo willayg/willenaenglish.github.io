@@ -2,46 +2,20 @@
 'use strict';
 var NEXT='/students/study-v3/';
 var LOGIN='/students/signin.html?next='+encodeURIComponent(NEXT);
-var V3_CACHE='20260822-hardbust7';
+var V3_CACHE='20260822-hardbust8';
 
 function loadV3Sidecar(){
   try{
-    if(!document.querySelector('link[data-study-v3-speaking]')){
-      var css=document.createElement('link');
-      css.rel='stylesheet';
-      css.href='./v3-speaking.css?v='+V3_CACHE;
-      css.setAttribute('data-study-v3-speaking','1');
-      (document.head||document.documentElement).appendChild(css);
-    }
-    if(!document.querySelector('script[data-study-v3-badge]')){
-      var badge=document.createElement('script');
-      badge.src='./v3-badge.js?v='+V3_CACHE;
-      badge.defer=true;
-      badge.setAttribute('data-study-v3-badge','1');
-      (document.head||document.documentElement).appendChild(badge);
-    }
-    if(!document.querySelector('script[data-study-v3-speaking-recall]')){
-      var recall=document.createElement('script');
-      recall.src='./v3-speaking-recall.js?v='+V3_CACHE;
-      recall.defer=true;
-      recall.setAttribute('data-study-v3-speaking-recall','1');
-      (document.head||document.documentElement).appendChild(recall);
-    }
-    if(!document.querySelector('script[data-study-v3-speaking-audio-fix]')){
-      var audioFix=document.createElement('script');
-      audioFix.src='./v3-speaking-audio-fix.js?v='+V3_CACHE;
-      audioFix.defer=true;
-      audioFix.setAttribute('data-study-v3-speaking-audio-fix','1');
-      (document.head||document.documentElement).appendChild(audioFix);
-    }
-    if(!document.querySelector('script[data-study-v3-speaking-card-icon]')){
-      var cardIcon=document.createElement('script');
-      cardIcon.src='./v3-speaking-card-icon.js?v='+V3_CACHE;
-      cardIcon.defer=true;
-      cardIcon.setAttribute('data-study-v3-speaking-card-icon','1');
-      (document.head||document.documentElement).appendChild(cardIcon);
-    }
-  }catch(e){console.warn('[StudyV3] speaking sidecar load failed',e);}
+    function addCss(key,src){if(document.querySelector('link['+key+']'))return;var x=document.createElement('link');x.rel='stylesheet';x.href=src+'?v='+V3_CACHE;x.setAttribute(key,'1');(document.head||document.documentElement).appendChild(x);}
+    function addJs(key,src){if(document.querySelector('script['+key+']'))return;var x=document.createElement('script');x.src=src+'?v='+V3_CACHE;x.defer=true;x.setAttribute(key,'1');(document.head||document.documentElement).appendChild(x);}
+    addCss('data-study-v3-speaking','./v3-speaking.css');
+    addCss('data-study-v3-activity-shell','./v3-activity-shell.css');
+    addJs('data-study-v3-badge','./v3-badge.js');
+    addJs('data-study-v3-speaking-recall','./v3-speaking-recall.js');
+    addJs('data-study-v3-speaking-audio-fix','./v3-speaking-audio-fix.js');
+    addJs('data-study-v3-speaking-card-icon','./v3-speaking-card-icon.js');
+    addJs('data-study-v3-activity-shell','./v3-activity-shell.js');
+  }catch(e){console.warn('[StudyV3] sidecar load failed',e);}
 }
 loadV3Sidecar();
 
