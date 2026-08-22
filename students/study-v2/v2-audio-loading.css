@@ -4,15 +4,33 @@
   overflow:visible!important;
 }
 
+/* One icon source only: the inline headphones SVG rendered by the activity engine. */
+#v2ActivityRoot .activity-audio::before,
+#aiCoachActivityRoot .activity-audio::before,
+#v2ActivityRoot .v2-tablet-spelling-listen::before,
+#aiCoachActivityRoot .v2-tablet-spelling-listen::before{
+  content:none!important;
+  display:none!important;
+  background:none!important;
+}
+#v2ActivityRoot .activity-audio::after,
+#aiCoachActivityRoot .activity-audio::after{
+  content:none!important;
+  display:none!important;
+}
+
 #v2ActivityRoot .activity-audio .activity-audio-icon,
 #aiCoachActivityRoot .activity-audio .activity-audio-icon{
   position:absolute!important;
   left:50%!important;
   top:50%!important;
   transform:translate(-50%,-50%)!important;
+  width:44px!important;
+  height:44px!important;
   margin:0!important;
   display:block!important;
   pointer-events:none!important;
+  z-index:2!important;
 }
 
 #v2ActivityRoot .v2-audio-sparkles,
@@ -86,6 +104,16 @@
     white-space:nowrap;
     font-size:.7rem;
   }
+  #v2ActivityRoot .activity-card.v2-tablet-spelling .activity-audio .activity-audio-icon,
+  #aiCoachActivityRoot .activity-card.v2-tablet-spelling .activity-audio .activity-audio-icon{
+    width:25px!important;
+    height:25px!important;
+  }
+  #v2ActivityRoot .activity-card:has(.activity-audio):not(:has(.activity-letter-order)) .activity-audio .activity-audio-icon,
+  #aiCoachActivityRoot .activity-card:has(.activity-audio):not(:has(.activity-letter-order)) .activity-audio .activity-audio-icon{
+    width:32px!important;
+    height:32px!important;
+  }
 }
 
 @media(prefers-reduced-motion:reduce){
@@ -93,30 +121,11 @@
   #aiCoachActivityRoot .v2-audio-sparkles{display:none!important}
 }
 
-/* Skills / standard listening controls: keep the sparkles, but stop the button itself
-   from pulsing and use one clean canonical headphone icon. Spelling is excluded. */
+/* Standard listening: no pulse, one centered inline headphones SVG. */
 #v2ActivityRoot .activity-card:not(:has(.activity-letter-order)) .activity-audio,
 #aiCoachActivityRoot .activity-card:not(:has(.activity-letter-order)) .activity-audio{
   animation:none!important;
   transform:none!important;
   display:grid!important;
   place-items:center!important;
-}
-#v2ActivityRoot .activity-card:not(:has(.activity-letter-order)) .activity-audio .activity-audio-icon,
-#aiCoachActivityRoot .activity-card:not(:has(.activity-letter-order)) .activity-audio .activity-audio-icon{
-  display:none!important;
-}
-#v2ActivityRoot .activity-card:not(:has(.activity-letter-order)) .activity-audio::before,
-#aiCoachActivityRoot .activity-card:not(:has(.activity-letter-order)) .activity-audio::before{
-  content:""!important;
-  display:block!important;
-  width:40px!important;
-  height:40px!important;
-  margin:auto!important;
-  background:url("./headphones.svg") center/contain no-repeat!important;
-}
-#v2ActivityRoot .activity-card:not(:has(.activity-letter-order)) .activity-audio::after,
-#aiCoachActivityRoot .activity-card:not(:has(.activity-letter-order)) .activity-audio::after{
-  content:none!important;
-  display:none!important;
 }
