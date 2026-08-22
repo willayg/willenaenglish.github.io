@@ -7,8 +7,8 @@ function decorateRoot(root){
   var spelling=root.querySelector('.activity-letter-order');
   if(!spelling)return;
   var card=spelling.closest('.activity-card');
-  if(!card||card.dataset.v2TabletSpellingHelp==='6')return;
-  card.dataset.v2TabletSpellingHelp='6';
+  if(!card||card.dataset.v2TabletSpellingHelp==='7')return;
+  card.dataset.v2TabletSpellingHelp='7';
   card.classList.add('v2-tablet-spelling');
   var instruction=card.querySelector('.activity-context,.activity-instruction');
   if(instruction){
@@ -27,6 +27,16 @@ function decorateRoot(root){
   var actions=card.querySelector('.activity-actions');
   var workRow=document.createElement('div');workRow.className='v2-tablet-spelling-work-row';
   if(slots&&slots.nextSibling)spelling.insertBefore(workRow,slots.nextSibling);else spelling.appendChild(workRow);
+
+  var close=document.getElementById('v2PracticeClose');
+  if(close){
+    var back=close.cloneNode(true);
+    back.removeAttribute('id');
+    back.classList.add('v2-tablet-spelling-back');
+    back.addEventListener('click',function(e){e.preventDefault();close.click();});
+    workRow.appendChild(back);
+  }
+
   if(audio){
     audio.classList.add('v2-tablet-spelling-listen');
     var listenWrap=document.createElement('div');listenWrap.className='v2-tablet-spelling-listen-wrap';
