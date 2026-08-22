@@ -45,21 +45,21 @@
   padding:0!important;
 }
 
-/* Match Speaking's small pink instruction above the main prompt. */
+/* Pink instruction above the main prompt: intentionally prominent and airy. */
 #v2ActivityRoot .activity-context,
 #aiCoachActivityRoot .activity-context{
   display:block!important;
   width:auto!important;
   max-width:100%!important;
-  margin:0 0 9px!important;
+  margin:0 0 18px!important;
   padding:0!important;
   border:0!important;
   border-radius:0!important;
   background:transparent!important;
   box-shadow:none!important;
   color:#e60076!important;
-  font:800 12px/1.25 Poppins,sans-serif!important;
-  letter-spacing:.055em!important;
+  font:800 24px/1.55 Poppins,sans-serif!important;
+  letter-spacing:.02em!important;
 }
 
 /* Bottom action row: Back left, Check/Next right. */
@@ -93,6 +93,45 @@
 #v2ActivityRoot .activity-check,
 #aiCoachActivityRoot .activity-check{
   flex:0 0 auto!important;
+}
+
+/* Spelling: one clean footer line — Back left, input-mode controls centered, Check right. */
+#v2ActivityRoot .activity-card:has(.activity-letter-order),
+#aiCoachActivityRoot .activity-card:has(.activity-letter-order){
+  position:relative!important;
+  padding-bottom:96px!important;
+}
+#v2ActivityRoot .activity-card:has(.activity-letter-order) .activity-actions,
+#aiCoachActivityRoot .activity-card:has(.activity-letter-order) .activity-actions{
+  position:absolute!important;
+  left:20px!important;
+  right:20px!important;
+  bottom:20px!important;
+  width:auto!important;
+  min-height:48px!important;
+  margin:0!important;
+  z-index:3!important;
+}
+#v2ActivityRoot .activity-card:has(.activity-letter-order) .activity-spelling-controls,
+#aiCoachActivityRoot .activity-card:has(.activity-letter-order) .activity-spelling-controls{
+  position:absolute!important;
+  left:50%!important;
+  bottom:20px!important;
+  transform:translateX(-50%)!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:8px!important;
+  width:max-content!important;
+  max-width:42%!important;
+  margin:0!important;
+  z-index:4!important;
+  animation:none!important;
+}
+/* Chunk mode never needs the input-mode choice. */
+#v2ActivityRoot .activity-card:has(.activity-letter-order.is-chunk-mode) .activity-spelling-controls,
+#aiCoachActivityRoot .activity-card:has(.activity-letter-order.is-chunk-mode) .activity-spelling-controls{
+  display:none!important;
 }
 
 /* Speaking uses its own renderer but follows the same centered shell/action geometry. */
@@ -129,7 +168,26 @@
   #aiCoachActivityRoot .activity-card{padding:16px!important;border-radius:21px!important}
   .v3-activity-back{min-height:44px;padding:0 14px;font-size:14px}
   #v2ActivityRoot .activity-context,
-  #aiCoachActivityRoot .activity-context{font-size:11px!important;margin-bottom:8px!important}
+  #aiCoachActivityRoot .activity-context{
+    font-size:20px!important;
+    line-height:1.55!important;
+    margin-bottom:16px!important;
+  }
+  /* No keyboard/input-mode controls on phones. */
+  #v2ActivityRoot .activity-card:has(.activity-letter-order) .activity-spelling-controls,
+  #aiCoachActivityRoot .activity-card:has(.activity-letter-order) .activity-spelling-controls{
+    display:none!important;
+  }
+  #v2ActivityRoot .activity-card:has(.activity-letter-order),
+  #aiCoachActivityRoot .activity-card:has(.activity-letter-order){
+    padding-bottom:82px!important;
+  }
+  #v2ActivityRoot .activity-card:has(.activity-letter-order) .activity-actions,
+  #aiCoachActivityRoot .activity-card:has(.activity-letter-order) .activity-actions{
+    left:16px!important;
+    right:16px!important;
+    bottom:16px!important;
+  }
 }
 
 /* If an activity is taller than the viewport, keep it usable instead of clipping it. */
