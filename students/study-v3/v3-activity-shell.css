@@ -24,11 +24,17 @@
 #v2ActivityRoot .activity-card:has(.activity-letter-order) .activity-actions,#aiCoachActivityRoot .activity-card:has(.activity-letter-order) .activity-actions,#v2ActivityRoot .activity-card.v2-tablet-spelling .v2-tablet-spelling-actions,#aiCoachActivityRoot .activity-card.v2-tablet-spelling .v2-tablet-spelling-actions{position:absolute!important;left:20px!important;right:20px!important;bottom:18px!important;top:auto!important;width:auto!important;height:50px!important;min-height:50px!important;margin:0!important;padding:0!important;display:block!important;z-index:30!important;order:99!important;pointer-events:none!important}
 #v2ActivityRoot .activity-card:has(.activity-letter-order) .activity-check,#aiCoachActivityRoot .activity-card:has(.activity-letter-order) .activity-check,#v2ActivityRoot .activity-card.v2-tablet-spelling .activity-check,#aiCoachActivityRoot .activity-card.v2-tablet-spelling .activity-check{position:absolute!important;right:0!important;left:auto!important;top:0!important;bottom:auto!important;margin:0!important;pointer-events:auto!important}
 
-/* Spelling Back is a direct child of the card, completely independent of the Check row. */
 #v2ActivityRoot .activity-card > .v3-spelling-back,#aiCoachActivityRoot .activity-card > .v3-spelling-back{position:absolute!important;left:20px!important;right:auto!important;bottom:18px!important;top:auto!important;margin:0!important;z-index:40!important;pointer-events:auto!important}
 
 #v2ActivityRoot .activity-card:has(.activity-letter-order) .activity-spelling-controls,#aiCoachActivityRoot .activity-card:has(.activity-letter-order) .activity-spelling-controls,#v2ActivityRoot .activity-card.v2-tablet-spelling .activity-spelling-controls,#aiCoachActivityRoot .activity-card.v2-tablet-spelling .activity-spelling-controls{position:absolute!important;left:50%!important;right:auto!important;bottom:24px!important;top:auto!important;transform:translateX(-50%)!important;display:flex!important;align-items:center!important;justify-content:center!important;gap:8px!important;width:max-content!important;max-width:42%!important;margin:0!important;z-index:31!important;animation:none!important;order:99!important}
 #v2ActivityRoot .activity-card:has(.activity-letter-order.is-chunk-mode) .activity-spelling-controls,#aiCoachActivityRoot .activity-card:has(.activity-letter-order.is-chunk-mode) .activity-spelling-controls{display:none!important}
+
+/* Listening + spelling action cue: clean pulse instead of decorative stars. */
+#v2ActivityRoot .v3-action-pulse,#aiCoachActivityRoot .v3-action-pulse{position:relative!important;background-image:none!important;animation:v3ActionPulse 1.45s ease-in-out infinite!important;box-shadow:0 0 0 8px rgba(255,10,138,.07)!important}
+#v2ActivityRoot .v3-action-pulse::before,#v2ActivityRoot .v3-action-pulse::after,#aiCoachActivityRoot .v3-action-pulse::before,#aiCoachActivityRoot .v3-action-pulse::after{content:none!important;display:none!important}
+@keyframes v3ActionPulse{0%,100%{box-shadow:0 0 0 7px rgba(255,10,138,.07)}50%{box-shadow:0 0 0 17px rgba(255,10,138,.17)}}
+.v3-action-hint{position:absolute;left:50%;bottom:calc(100% + 12px);transform:translateX(-50%);white-space:nowrap;padding:6px 10px;border-radius:999px;background:#ff0a8a;color:#fff;font:800 12px/1 Poppins,sans-serif;pointer-events:none;z-index:20}
+.v3-action-hint::after{content:'';position:absolute;left:50%;top:100%;transform:translateX(-50%);border:6px solid transparent;border-top-color:#ff0a8a}
 
 #v2ActivityRoot .v3-speaking-shell{width:min(720px,100%)!important;margin:auto!important;padding:0!important}
 .v3-speaking-actions{display:flex!important;width:100%!important;justify-content:flex-end!important;align-items:center!important;gap:10px!important}
