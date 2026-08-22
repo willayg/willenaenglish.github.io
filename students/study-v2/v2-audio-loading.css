@@ -4,14 +4,20 @@
   overflow:visible!important;
 }
 
-/* One icon source only: the inline headphones SVG rendered by the activity engine. */
-#v2ActivityRoot .activity-audio::before,
-#aiCoachActivityRoot .activity-audio::before,
-#v2ActivityRoot .v2-tablet-spelling-listen::before,
-#aiCoachActivityRoot .v2-tablet-spelling-listen::before{
-  content:none!important;
+/* Canonical audio icon: use the exact same headphones.svg asset as Book Study. */
+#v2ActivityRoot .activity-audio .activity-audio-icon,
+#aiCoachActivityRoot .activity-audio .activity-audio-icon{
   display:none!important;
-  background:none!important;
+}
+#v2ActivityRoot .activity-audio::before,
+#aiCoachActivityRoot .activity-audio::before{
+  content:""!important;
+  display:block!important;
+  width:28px!important;
+  height:28px!important;
+  margin:auto!important;
+  background:url("./headphones.svg?v=20260816-1") center/contain no-repeat!important;
+  pointer-events:none!important;
 }
 #v2ActivityRoot .activity-audio::after,
 #aiCoachActivityRoot .activity-audio::after{
@@ -19,18 +25,16 @@
   display:none!important;
 }
 
-#v2ActivityRoot .activity-audio .activity-audio-icon,
-#aiCoachActivityRoot .activity-audio .activity-audio-icon{
-  position:absolute!important;
-  left:50%!important;
-  top:50%!important;
-  transform:translate(-50%,-50%)!important;
-  width:44px!important;
-  height:44px!important;
-  margin:0!important;
-  display:block!important;
-  pointer-events:none!important;
-  z-index:2!important;
+/* Spelling listen control must remain a true circle at every breakpoint. */
+#v2ActivityRoot .activity-spelling-listen,
+#aiCoachActivityRoot .activity-spelling-listen,
+#v2ActivityRoot .v2-tablet-spelling-listen,
+#aiCoachActivityRoot .v2-tablet-spelling-listen{
+  box-sizing:border-box!important;
+  aspect-ratio:1 / 1!important;
+  border-radius:50%!important;
+  flex:none!important;
+  flex-shrink:0!important;
 }
 
 #v2ActivityRoot .v2-audio-sparkles,
@@ -104,13 +108,27 @@
     white-space:nowrap;
     font-size:.7rem;
   }
-  #v2ActivityRoot .activity-card.v2-tablet-spelling .activity-audio .activity-audio-icon,
-  #aiCoachActivityRoot .activity-card.v2-tablet-spelling .activity-audio .activity-audio-icon{
-    width:25px!important;
-    height:25px!important;
+  #v2ActivityRoot .activity-card.v2-tablet-spelling .activity-spelling-listen,
+  #aiCoachActivityRoot .activity-card.v2-tablet-spelling .activity-spelling-listen,
+  #v2ActivityRoot .activity-card.v2-tablet-spelling .v2-tablet-spelling-listen,
+  #aiCoachActivityRoot .activity-card.v2-tablet-spelling .v2-tablet-spelling-listen{
+    width:58px!important;
+    height:58px!important;
+    min-width:58px!important;
+    min-height:58px!important;
+    max-width:58px!important;
+    max-height:58px!important;
+    flex-basis:58px!important;
+    padding:0!important;
+    border-radius:50%!important;
   }
-  #v2ActivityRoot .activity-card:has(.activity-audio):not(:has(.activity-letter-order)) .activity-audio .activity-audio-icon,
-  #aiCoachActivityRoot .activity-card:has(.activity-audio):not(:has(.activity-letter-order)) .activity-audio .activity-audio-icon{
+  #v2ActivityRoot .activity-card.v2-tablet-spelling .activity-audio::before,
+  #aiCoachActivityRoot .activity-card.v2-tablet-spelling .activity-audio::before{
+    width:28px!important;
+    height:28px!important;
+  }
+  #v2ActivityRoot .activity-card:has(.activity-audio):not(:has(.activity-letter-order)) .activity-audio::before,
+  #aiCoachActivityRoot .activity-card:has(.activity-audio):not(:has(.activity-letter-order)) .activity-audio::before{
     width:32px!important;
     height:32px!important;
   }
@@ -121,7 +139,7 @@
   #aiCoachActivityRoot .v2-audio-sparkles{display:none!important}
 }
 
-/* Standard listening: no pulse, one centered inline headphones SVG. */
+/* Standard listening: keep the same canonical asset centered in the button. */
 #v2ActivityRoot .activity-card:not(:has(.activity-letter-order)) .activity-audio,
 #aiCoachActivityRoot .activity-card:not(:has(.activity-letter-order)) .activity-audio{
   animation:none!important;
