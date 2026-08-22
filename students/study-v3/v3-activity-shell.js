@@ -34,7 +34,12 @@ function scanCoach(){
     addBack(actions,function(){var old=document.getElementById('aiCoachPracticeBack');if(old)old.click();});
   });
 }
-function syncLabels(){document.querySelectorAll('.v3-activity-back,.v3-speaking-back').forEach(function(b){b.textContent=label();});}
+function syncLabels(){
+  var wanted=label();
+  document.querySelectorAll('.v3-activity-back,.v3-speaking-back').forEach(function(b){
+    if(text(b.textContent)!==wanted)b.textContent=wanted;
+  });
+}
 function scan(){scanPractice();scanCoach();syncLabels();}
 function start(){
   scan();
