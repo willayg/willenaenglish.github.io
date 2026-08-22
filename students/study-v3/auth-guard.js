@@ -19,6 +19,13 @@ function loadV3Sidecar(){
       js.setAttribute('data-study-v3-speaking','1');
       (document.head||document.documentElement).appendChild(js);
     }
+    if(!document.querySelector('script[data-study-v3-speaking-accuracy]')){
+      var acc=document.createElement('script');
+      acc.src='./v3-speaking-accuracy.js?v=20260822-accuracy1';
+      acc.defer=true;
+      acc.setAttribute('data-study-v3-speaking-accuracy','1');
+      (document.head||document.documentElement).appendChild(acc);
+    }
   }catch(e){console.warn('[StudyV3] speaking sidecar load failed',e);}
 }
 loadV3Sidecar();
