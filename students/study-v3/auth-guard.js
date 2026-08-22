@@ -1,7 +1,27 @@
 (function(){
 'use strict';
-var NEXT='/students/study-v2/';
+var NEXT='/students/study-v3/';
 var LOGIN='/students/signin.html?next='+encodeURIComponent(NEXT);
+
+function loadV3Sidecar(){
+  try{
+    if(!document.querySelector('link[data-study-v3-speaking]')){
+      var css=document.createElement('link');
+      css.rel='stylesheet';
+      css.href='./v3-speaking.css?v=20260822-speaking1';
+      css.setAttribute('data-study-v3-speaking','1');
+      (document.head||document.documentElement).appendChild(css);
+    }
+    if(!document.querySelector('script[data-study-v3-speaking]')){
+      var js=document.createElement('script');
+      js.src='./v3-speaking.js?v=20260822-speaking1';
+      js.defer=true;
+      js.setAttribute('data-study-v3-speaking','1');
+      (document.head||document.documentElement).appendChild(js);
+    }
+  }catch(e){console.warn('[StudyV3] speaking sidecar load failed',e);}
+}
+loadV3Sidecar();
 
 function authFetch(path,options){
   var fn=window.WillenaAPI&&typeof window.WillenaAPI.fetch==='function'?window.WillenaAPI.fetch.bind(window.WillenaAPI):window.fetch.bind(window);
