@@ -37,15 +37,6 @@ function addBack(actions,handler){
   var next=actions.querySelector('.activity-check');
   if(next)actions.insertBefore(b,next);else actions.appendChild(b);
 }
-function addSpeakingBack(actions){
-  if(!actions||actions.querySelector('.v3-speaking-back'))return;
-  var b=document.createElement('button');
-  b.type='button';
-  b.className='v3-speaking-back';
-  b.textContent=label();
-  b.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();var old=document.getElementById('v2PracticeClose');if(old)old.click();});
-  actions.appendChild(b);
-}
 function decorateAudio(root){
   if(!root)return;
   root.querySelectorAll('.activity-card').forEach(function(card){
@@ -85,7 +76,6 @@ function scanPractice(){
     if(actions.closest('.v3-speaking-shell'))return;
     addBack(actions,function(){var old=document.getElementById('v2PracticeClose');if(old)old.click();});
   });
-  document.querySelectorAll('#v2ActivityRoot .v3-speaking-actions').forEach(addSpeakingBack);
   decorateAudio(document.getElementById('v2ActivityRoot'));
 }
 function scanCoach(){
@@ -96,7 +86,7 @@ function scanCoach(){
 }
 function syncLabels(){
   var wanted=label();
-  document.querySelectorAll('.v3-activity-back,.v3-speaking-back').forEach(function(b){if(text(b.textContent)!==wanted)b.textContent=wanted;});
+  document.querySelectorAll('.v3-activity-back').forEach(function(b){if(text(b.textContent)!==wanted)b.textContent=wanted;});
   var hintWanted=isKo()?'여기를 눌러요':'Tap here';
   document.querySelectorAll('.v3-action-first .v3-action-hint').forEach(function(h){if(text(h.textContent)!==hintWanted)h.textContent=hintWanted;});
 }
