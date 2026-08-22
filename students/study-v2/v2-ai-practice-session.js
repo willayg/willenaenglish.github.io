@@ -80,7 +80,7 @@ function ensureOverlay(){
   var overlay=document.createElement('section');
   overlay.id='aiCoachPracticeOverlay';
   overlay.className='ai-coach-practice-overlay';
-  overlay.innerHTML='<div class="ai-coach-practice-shell"><header class="ai-coach-practice-head"><button id="aiCoachPracticeBack" class="ai-coach-practice-back" type="button" aria-label="Back">←</button><div class="ai-coach-practice-title"><span>AI COACH</span><h2 id="aiCoachPracticeTitle"></h2><div id="aiCoachPracticeProgress" class="ai-coach-practice-progress"></div></div></header><div class="ai-coach-practice-card"><div id="aiCoachActivityRoot"></div></div><button id="aiCoachPracticeNext" class="ai-coach-practice-next" type="button" disabled></button></div>';
+  overlay.innerHTML='<div class="ai-coach-practice-shell"><header class="ai-coach-practice-head"><button id="aiCoachPracticeBack" class="ai-coach-practice-back" type="button" aria-label="Back">←</button><div class="ai-coach-practice-title"><h2 id="aiCoachPracticeTitle"></h2><div id="aiCoachPracticeProgress" class="ai-coach-practice-progress"></div></div></header><div class="ai-coach-practice-card"><div id="aiCoachActivityRoot"></div></div><button id="aiCoachPracticeNext" class="ai-coach-practice-next" type="button" disabled></button></div>';
   document.body.appendChild(overlay);
   overlay.querySelector('#aiCoachPracticeBack').addEventListener('click',function(){close(false);});
   overlay.querySelector('#aiCoachPracticeNext').addEventListener('click',advance);
@@ -88,9 +88,13 @@ function ensureOverlay(){
 }
 function scrollActionIntoView(overlay,action){
   if(!overlay||!action)return;
-  requestAnimationFrame(function(){requestAnimationFrame(function(){
-    try{action.scrollIntoView({behavior:'smooth',block:'end'});}catch(_){}
-  });});
+  function place(smooth){
+    if(!document.body.contains(overlay)||!document.body.contains(action))return;
+    try{overlay.scrollTo({top:Math.max(0,overlay.scrollHeight-overlay.clientHeight),behavior:smooth?'smooth':'auto'});}catch(_){overlay.scrollTop=overlay.scrollHeight;}
+  }
+  requestAnimationFrame(function(){requestAnimationFrame(function(){place(true);});});
+  setTimeout(function(){place(false);},90);
+  setTimeout(function(){place(false);},220);
 }
 function restoreHomeY(y){
   y=Math.max(0,Number(y)||0);
