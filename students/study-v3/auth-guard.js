@@ -12,6 +12,13 @@ function loadV3Sidecar(){
       css.setAttribute('data-study-v3-speaking','1');
       (document.head||document.documentElement).appendChild(css);
     }
+    if(!document.querySelector('script[data-study-v3-badge]')){
+      var badge=document.createElement('script');
+      badge.src='./v3-badge.js?v=20260822-badge1';
+      badge.defer=true;
+      badge.setAttribute('data-study-v3-badge','1');
+      (document.head||document.documentElement).appendChild(badge);
+    }
     if(!document.querySelector('script[data-study-v3-speaking-accuracy]')){
       var acc=document.createElement('script');
       acc.src='./v3-speaking-accuracy.js?v=20260822-accuracy1';
