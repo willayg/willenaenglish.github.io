@@ -90,7 +90,8 @@ function scanCoach(){
 function syncLabels(){
   var wanted=label();
   document.querySelectorAll('.v3-activity-back,.v3-speaking-back').forEach(function(b){if(text(b.textContent)!==wanted)b.textContent=wanted;});
-  document.querySelectorAll('.v3-action-first .v3-action-hint').forEach(function(h){h.textContent=isKo()?'여기를 눌러요':'Tap here';});
+  var hintWanted=isKo()?'여기를 눌러요':'Tap here';
+  document.querySelectorAll('.v3-action-first .v3-action-hint').forEach(function(h){if(text(h.textContent)!==hintWanted)h.textContent=hintWanted;});
 }
 function scan(){scanPractice();scanCoach();syncLabels();}
 function start(){
