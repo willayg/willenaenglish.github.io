@@ -2,7 +2,7 @@
 'use strict';
 var NEXT='/students/study-v3/';
 var LOGIN='/students/signin.html?next='+encodeURIComponent(NEXT);
-var V3_CACHE='20260822-hardbust4';
+var V3_CACHE='20260822-hardbust5';
 
 function loadV3Sidecar(){
   try{
@@ -33,6 +33,13 @@ function loadV3Sidecar(){
       audioFix.defer=true;
       audioFix.setAttribute('data-study-v3-speaking-audio-fix','1');
       (document.head||document.documentElement).appendChild(audioFix);
+    }
+    if(!document.querySelector('script[data-study-v3-speaking-card-icon]')){
+      var cardIcon=document.createElement('script');
+      cardIcon.src='./v3-speaking-card-icon.js?v='+V3_CACHE;
+      cardIcon.defer=true;
+      cardIcon.setAttribute('data-study-v3-speaking-card-icon','1');
+      (document.head||document.documentElement).appendChild(cardIcon);
     }
   }catch(e){console.warn('[StudyV3] speaking sidecar load failed',e);}
 }
