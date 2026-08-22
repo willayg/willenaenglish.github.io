@@ -5,7 +5,7 @@ function ensureStyle(){
   var old=document.getElementById(STYLE_ID);if(old)old.remove();
   var s=document.createElement('style');
   s.id=STYLE_ID;
-  s.textContent='[data-v3-speaking-card]{position:relative!important}.v3-speaking-card-icon{position:absolute!important;left:52px!important;top:50%!important;transform:translate(-50%,-50%)!important;width:30px!important;height:30px!important;margin:0!important;padding:0!important;display:grid!important;place-items:center!important;color:#25b8c4!important;pointer-events:none!important}.v3-speaking-card-icon svg{display:block!important;width:28px!important;height:28px!important;fill:none!important;stroke:currentColor!important;stroke-width:2!important;stroke-linecap:round!important;stroke-linejoin:round!important}';
+  s.textContent='[data-v3-speaking-card]{position:relative!important}.v3-speaking-card-icon{position:absolute!important;left:32px!important;top:50%!important;transform:translate(-50%,-50%)!important;width:30px!important;height:30px!important;margin:0!important;padding:0!important;display:grid!important;place-items:center!important;color:#25b8c4!important;pointer-events:none!important}.v3-speaking-card-icon svg{display:block!important;width:28px!important;height:28px!important;fill:none!important;stroke:currentColor!important;stroke-width:2!important;stroke-linecap:round!important;stroke-linejoin:round!important}';
   (document.head||document.documentElement).appendChild(s);
 }
 function decorate(card){
