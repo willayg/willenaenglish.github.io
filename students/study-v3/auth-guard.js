@@ -19,12 +19,12 @@ function loadV3Sidecar(){
       badge.setAttribute('data-study-v3-badge','1');
       (document.head||document.documentElement).appendChild(badge);
     }
-    if(!document.querySelector('script[data-study-v3-speaking-accuracy]')){
-      var acc=document.createElement('script');
-      acc.src='./v3-speaking-accuracy.js?v=20260822-accuracy1';
-      acc.defer=true;
-      acc.setAttribute('data-study-v3-speaking-accuracy','1');
-      (document.head||document.documentElement).appendChild(acc);
+    if(!document.querySelector('script[data-study-v3-speaking-recall]')){
+      var recall=document.createElement('script');
+      recall.src='./v3-speaking-recall.js?v=20260822-recall1';
+      recall.defer=true;
+      recall.setAttribute('data-study-v3-speaking-recall','1');
+      (document.head||document.documentElement).appendChild(recall);
     }
   }catch(e){console.warn('[StudyV3] speaking sidecar load failed',e);}
 }
@@ -46,9 +46,7 @@ async function recoverSession(){
     var r=await authFetch('/.netlify/functions/supabase_auth?action=refresh&_='+Date.now());
     var d=await r.json().catch(function(){return{}});
     if(!r.ok||!d||!d.success||!d.access_token)return false;
-    if(window.WillenaAPI&&window.WillenaAPI.setLocalTokens){
-      window.WillenaAPI.setLocalTokens(d.access_token,'');
-    }
+    if(window.WillenaAPI&&window.WillenaAPI.setLocalTokens){window.WillenaAPI.setLocalTokens(d.access_token,'');}
     try{window.dispatchEvent(new CustomEvent('auth:changed'));}catch(_){}
     return true;
   }catch(_){return false;}
