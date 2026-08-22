@@ -5,7 +5,7 @@ var CONTENT_KEY=['sb_publishable_','G-FYhHfDL4OGdL892gY1Zg_','epdbEeqO'].join(''
 var SR=global.SpeechRecognition||global.webkitSpeechRecognition;
 var S={bookId:null,unitId:null,level:null,items:[],queue:[],current:null,startedAt:0,rec:null,listening:false};
 function t(v){return String(v==null?'':v).trim();}
-function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c];});}
 function norm(v){return t(v).toLowerCase().replace(/[’]/g,"'").replace(/\bi'm\b/g,'i am').replace(/\bit's\b/g,'it is').replace(/\bthat's\b/g,'that is').replace(/\bwhat's\b/g,'what is').replace(/\bthere's\b/g,'there is').replace(/\bdon't\b/g,'do not').replace(/\bdoesn't\b/g,'does not').replace(/\bdidn't\b/g,'did not').replace(/[^a-z0-9' ]/g,' ').replace(/\s+/g,' ').trim();}
 function words(v){return norm(v).split(' ').filter(Boolean);}
 function score(a,b){var A=words(a),B=words(b),m=A.length,n=B.length;if(!m&&!n)return 1;if(!m||!n)return 0;var p=new Array(n+1),c=new Array(n+1);for(var j=0;j<=n;j++)p[j]=j;for(var i=1;i<=m;i++){c[0]=i;for(j=1;j<=n;j++)c[j]=Math.min(p[j]+1,c[j-1]+1,p[j-1]+(A[i-1]===B[j-1]?0:1));var x=p;p=c;c=x;}return Math.max(0,1-p[n]/Math.max(m,n));}
@@ -49,7 +49,7 @@ function startRecognition(){if(!SR||S.listening)return;var root=document.getElem
 function evaluate(alts){var i=S.current,r=i.row,root=document.getElementById('v2ActivityRoot'),w=best(alts,r.en),threshold=i.mode==='exposure'?.78:.84,ok=w.score>=threshold;if(w.confidence!=null&&w.confidence<.2&&w.score<.95)ok=false;var heard=root.querySelector('.v3-speaking-heard');heard.hidden=false;heard.textContent='Heard: '+w.text;var fb=root.querySelector('.v3-speaking-feedback');fb.hidden=false;fb.className='v3-speaking-feedback '+(ok?'good':'retry');root.querySelector('.v3-speaking-status').textContent='';var next=root.querySelector('.v3-speaking-next');
  if(i.mode==='exposure'){
    if(ok){i.mode='recall';fb.textContent='✓ Good job';next.hidden=false;}
-   else{fb.textContent='Try that sentence again.';var ans=root.querySelector('.v3-speaking-answer');ans.hidden=false;ans.textContent=r.en;play(r.en,null);next.hidden=true;setTimeout(function(){render();},1600);}
+   else{fb.textContent='Try that sentence again.';var ans=root.querySelector('.v3-speaking-answer');ans.hidden=false;ans.textContent=r.en;play(r.en,null);next.hidden=true;setTimeout(function(){render();},5000);}
  }else{
    recordRecall(ok,w,alts);
    if(ok){i.recallWins++;var needed=i.failed?2:1;if(i.recallWins>=needed){i.mastered=true;fb.textContent='✓ Mastered';}else{fb.textContent='✓ Good — you’ll see it once more.';requeue(i,2);}next.hidden=false;}
@@ -62,5 +62,5 @@ function finishSession(){var root=document.getElementById('v2ActivityRoot');if(r
 function close(){document.body.classList.remove('study-v2-practice-mode');var panel=document.getElementById('v2PracticePanel'),root=document.getElementById('v2ActivityRoot');if(panel)panel.hidden=true;if(root)root.innerHTML='';inject();setTimeout(inject,0);setTimeout(inject,100);setTimeout(inject,300);window.scrollTo({top:0,behavior:'auto'});}
 function bindClose(){var b=document.getElementById('v2PracticeClose');if(!b||b.dataset.v3RecallBound)return;b.dataset.v3RecallBound='1';b.addEventListener('click',function(){var root=document.getElementById('v2ActivityRoot');if(root&&root.querySelector('.v3-speaking-shell'))close();},true);}
 function ready(e){var d=e&&e.detail||{};if(!d.bookId||!d.unitId)return;var changed=String(S.bookId)!==String(d.bookId)||String(S.unitId)!==String(d.unitId);S.bookId=d.bookId;S.unitId=d.unitId;S.level=d.publicLevel||null;bindClose();if(changed)load();else inject();}
-global.addEventListener('willena:study-v2-ready',ready);if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bindClose,{once:true});else bindClose();global.WillenaStudyV3SpeakingRecall={version:'v3-speaking-two-mode2',open:open,load:load,ensureCard:inject,getState:function(){return{bookId:S.bookId,unitId:S.unitId,sentences:S.items.length,masteryPct:masteryPct()};}};
+global.addEventListener('willena:study-v2-ready',ready);if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bindClose,{once:true});else bindClose();global.WillenaStudyV3SpeakingRecall={version:'v3-speaking-two-mode3',open:open,load:load,ensureCard:inject,getState:function(){return{bookId:S.bookId,unitId:S.unitId,sentences:S.items.length,masteryPct:masteryPct()};}};
 })(window);
