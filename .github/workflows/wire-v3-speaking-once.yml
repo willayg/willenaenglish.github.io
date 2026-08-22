@@ -1,0 +1,45 @@
+name: Wire V3 speaking sidecar once
+
+on:
+  push:
+    branches: [staging]
+    paths:
+      - '.github/workflows/wire-v3-speaking-once.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  wire:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: staging
+      - name: Add V3 speaking assets to Study V3
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('students/study-v3/index.html')
+          s = p.read_text()
+          css = '<link rel="stylesheet" href="./v3-speaking.css?v=20260822-speaking1">'
+          js = '<script src="./v3-speaking.js?v=20260822-speaking1"></script>'
+          if css not in s:
+              needle = '<link rel="stylesheet" href="./v2-settings.css?v=20260820-belowhero1">'
+              if needle not in s:
+                  raise SystemExit('V3 settings stylesheet marker not found')
+              s = s.replace(needle, needle+'\n'+css, 1)
+          if js not in s:
+              needle = '<script src="./v2.js?v=20260820-study-level-context1"></script>'
+              if needle not in s:
+                  raise SystemExit('V3 app script marker not found')
+              s = s.replace(needle, needle+'\n'+js, 1)
+          p.write_text(s)
+          PY
+      - name: Commit V3 wiring
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add students/study-v3/index.html
+          git diff --cached --quiet || git commit -m "Enable speaking sidecar in Study V3"
+          git push origin HEAD:staging
