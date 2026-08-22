@@ -15,7 +15,16 @@
   transition:transform .12s ease,box-shadow .12s ease,opacity .12s ease;
   margin:0 0 18px!important;
 }
-.activity-audio-icon{width:44px;height:44px;display:block;pointer-events:none}
+.activity-audio-icon{
+  width:44px;
+  height:44px;
+  display:block;
+  pointer-events:none;
+  position:absolute;
+  left:50%;
+  top:50%;
+  transform:translate(-50%,-50%);
+}
 .activity-audio span{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}
 .activity-audio:active:not(:disabled){transform:translateY(3px) scale(.98);box-shadow:0 0 12px rgba(19,145,169,.16),0 0 0 2px rgba(99,197,215,.13),inset 0 3px 7px rgba(0,0,0,.06)!important}
 .activity-audio:focus-visible{outline:4px solid rgba(236,20,133,.22);outline-offset:4px}
