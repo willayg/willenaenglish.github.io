@@ -1,0 +1,75 @@
+/* Study V3 activity shell: shared presentation for Book Practice, Daily Study and AI Coach. */
+#v2PracticePanel .practice-toolbar,
+#aiCoachPracticeOverlay .ai-coach-practice-head{
+  display:none!important;
+}
+
+#v2PracticePanel,
+#aiCoachPracticeOverlay{
+  padding-top:clamp(14px,3vw,28px)!important;
+}
+
+#v2ActivityRoot .activity-card,
+#aiCoachActivityRoot .activity-card{
+  background:#fff!important;
+  border:3px solid #66d6df!important;
+  border-radius:24px!important;
+  padding:20px!important;
+  box-shadow:0 10px 24px rgba(29,95,104,.08)!important;
+}
+
+#aiCoachPracticeOverlay .ai-coach-practice-card{
+  background:transparent!important;
+  border:0!important;
+  box-shadow:none!important;
+  padding:0!important;
+}
+
+#v2ActivityRoot .activity-actions,
+#aiCoachActivityRoot .activity-actions{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:flex-end!important;
+  gap:10px!important;
+}
+
+.v3-activity-back{
+  min-height:46px;
+  padding:0 17px;
+  border:2px solid #66d6df;
+  border-radius:14px;
+  background:#fff;
+  color:#315e64;
+  font:800 15px/1 Poppins,sans-serif;
+  cursor:pointer;
+  flex:0 0 auto;
+}
+.v3-activity-back:hover,
+.v3-activity-back:focus-visible{
+  outline:none;
+  background:#f2fcfd;
+}
+
+#v2ActivityRoot .activity-check,
+#aiCoachActivityRoot .activity-check{
+  flex:0 0 auto;
+}
+
+/* Speaking uses its own renderer. Keep the exit control low and right. */
+.v3-speaking-actions{
+  justify-content:flex-end!important;
+  align-items:center!important;
+}
+.v3-speaking-back{
+  flex:0 0 auto!important;
+  min-width:92px;
+  border:2px solid #66d6df!important;
+  background:#fff!important;
+  color:#315e64!important;
+}
+
+@media(max-width:560px){
+  #v2ActivityRoot .activity-card,
+  #aiCoachActivityRoot .activity-card{padding:16px!important;border-radius:21px!important}
+  .v3-activity-back{min-height:44px;padding:0 14px;font-size:14px}
+}
