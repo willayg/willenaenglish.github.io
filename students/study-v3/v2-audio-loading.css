@@ -196,9 +196,7 @@
   display:none!important;
 }
 
-/* V3 spelling: center the real headphones asset, recolor it mid-grey, and use an unmistakable mic-style pulse. */
-#v2ActivityRoot .activity-card:has(.activity-letter-order) .activity-audio,
-#aiCoachActivityRoot .activity-card:has(.activity-letter-order) .activity-audio,
+/* V3 spelling: use the real headphones.svg directly and give the button the same soft pulse language as the speaking mic. */
 #v2ActivityRoot .activity-card:has(.activity-letter-order) .activity-spelling-listen,
 #aiCoachActivityRoot .activity-card:has(.activity-letter-order) .activity-spelling-listen,
 #v2ActivityRoot .activity-card:has(.activity-letter-order) .v2-tablet-spelling-listen,
@@ -213,15 +211,11 @@
   background-image:url("./headphones.svg?v=20260816-1")!important;
   background-repeat:no-repeat!important;
   background-position:50% 50%!important;
-  background-size:38px 38px!important;
+  background-size:30px 30px!important;
   border:3px solid #66d6df!important;
-  box-shadow:0 0 0 8px rgba(102,214,223,.09),0 0 0 14px rgba(102,214,223,.04)!important;
-  filter:grayscale(1) brightness(.88)!important;
-  animation:v3SpellingListenPulseStrong .78s ease-in-out infinite alternate!important;
-  will-change:box-shadow!important;
+  box-shadow:0 0 0 9px rgba(102,214,223,.08)!important;
+  animation:v3SpellingListenPulse .9s ease-in-out infinite alternate!important;
 }
-#v2ActivityRoot .activity-card:has(.activity-letter-order) .activity-audio::before,
-#aiCoachActivityRoot .activity-card:has(.activity-letter-order) .activity-audio::before,
 #v2ActivityRoot .activity-card:has(.activity-letter-order) .activity-spelling-listen::before,
 #aiCoachActivityRoot .activity-card:has(.activity-letter-order) .activity-spelling-listen::before,
 #v2ActivityRoot .activity-card:has(.activity-letter-order) .v2-tablet-spelling-listen::before,
@@ -229,16 +223,25 @@
   content:none!important;
   display:none!important;
 }
-#v2ActivityRoot .activity-card:has(.activity-letter-order) .activity-audio .v2-audio-sparkles,
-#aiCoachActivityRoot .activity-card:has(.activity-letter-order) .activity-audio .v2-audio-sparkles{
+#v2ActivityRoot .activity-card:has(.activity-letter-order) .activity-spelling-listen .v2-audio-sparkles,
+#aiCoachActivityRoot .activity-card:has(.activity-letter-order) .activity-spelling-listen .v2-audio-sparkles,
+#v2ActivityRoot .activity-card:has(.activity-letter-order) .v2-tablet-spelling-listen .v2-audio-sparkles,
+#aiCoachActivityRoot .activity-card:has(.activity-letter-order) .v2-tablet-spelling-listen .v2-audio-sparkles{
   display:none!important;
 }
-#v2ActivityRoot .activity-card:has(.activity-letter-order) .activity-audio.v2-audio-loading-active,
-#aiCoachActivityRoot .activity-card:has(.activity-letter-order) .activity-audio.v2-audio-loading-active{
+#v2ActivityRoot .activity-card:has(.activity-letter-order) .activity-spelling-listen.v2-audio-loading-active,
+#aiCoachActivityRoot .activity-card:has(.activity-letter-order) .activity-spelling-listen.v2-audio-loading-active,
+#v2ActivityRoot .activity-card:has(.activity-letter-order) .v2-tablet-spelling-listen.v2-audio-loading-active,
+#aiCoachActivityRoot .activity-card:has(.activity-letter-order) .v2-tablet-spelling-listen.v2-audio-loading-active{
   animation:none!important;
-  filter:grayscale(1) brightness(.95)!important;
 }
-@keyframes v3SpellingListenPulseStrong{
-  from{box-shadow:0 0 0 8px rgba(102,214,223,.09),0 0 0 14px rgba(102,214,223,.04)}
-  to{box-shadow:0 0 0 16px rgba(102,214,223,.16),0 0 0 28px rgba(102,214,223,.055)}
+@keyframes v3SpellingListenPulse{
+  from{transform:scale(1);box-shadow:0 0 0 9px rgba(102,214,223,.08)}
+  to{transform:scale(1.045);box-shadow:0 0 0 18px rgba(102,214,223,.14)}
+}
+@media(prefers-reduced-motion:reduce){
+  #v2ActivityRoot .activity-card:has(.activity-letter-order) .activity-spelling-listen,
+  #aiCoachActivityRoot .activity-card:has(.activity-letter-order) .activity-spelling-listen,
+  #v2ActivityRoot .activity-card:has(.activity-letter-order) .v2-tablet-spelling-listen,
+  #aiCoachActivityRoot .activity-card:has(.activity-letter-order) .v2-tablet-spelling-listen{animation:none!important}
 }
