@@ -2,7 +2,7 @@
 'use strict';
 var NEXT='/students/study-v3/';
 var LOGIN='/students/signin.html?next='+encodeURIComponent(NEXT);
-var V3_CACHE='20260823-hardbust24';
+var V3_CACHE='20260823-hardbust25';
 
 function loadV3Sidecar(){
   try{
@@ -17,6 +17,7 @@ function loadV3Sidecar(){
     addJs('data-study-v3-speaking-card-icon','./v3-speaking-card-icon.js');
     addJs('data-study-v3-speaking-retry-cue','./v3-speaking-retry-cue.js');
     addJs('data-study-v3-points-optimistic','./v3-points-optimistic.js');
+    addJs('data-study-v3-daily-conversation-repair','./v3-daily-conversation-repair.js');
     addJs('data-study-v3-activity-shell','./v3-activity-shell.js');
     addJs('data-study-v3-spelling-tablet-help','./v2-spelling-tablet-help.js');
   }catch(e){console.warn('[StudyV3] sidecar load failed',e);}
