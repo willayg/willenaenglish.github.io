@@ -24,7 +24,7 @@ function audioCandidates(activity){
   var a=activity||{},s=a.stimulus||{},m=a.metadata||{},spoken=spokenText(a);
   return unique([
     s.audioKey,s.audio_key,s.ttsKey,s.tts_key,
-    m.audioKey,m.audio_key,m.ttsKey,m.tts_key,m.audio_text,m.spoken_text,m.canonical_text,
+    m.audioKey,m.audio_key,m.ttsKey,m.tts_key,
     spoken
   ]);
 }
@@ -222,7 +222,6 @@ async function playAudio(button,activity){
   if(!speechOk)clearPlayingButton(button,false);
 }
 
-/* Public hook for non-question study content. It uses the exact same R2 -> ElevenLabs -> browser fallback path. */
 global.WillenaAudioPlayback=global.WillenaAudioPlayback||{};
 global.WillenaAudioPlayback.playText=function(button,value,options){
   if(!button||!text(value))return Promise.resolve();
@@ -231,11 +230,8 @@ global.WillenaAudioPlayback.playText=function(button,value,options){
 };
 global.WillenaAudioPlayback.stop=stopCurrent;
 
-function spellingAudioText(activity){
+function spellingAnswerText(activity){
   if(!activity)return'';
-  var m=activity.metadata||{};
-  var canonical=text(m.audio_text||m.spoken_text||m.canonical_text);
-  if(canonical)return canonical;
   var value=activity.answer;
   if(Array.isArray(value))value=value.join(' ');
   value=text(value);
@@ -253,7 +249,7 @@ function ensureSpellingListen(engine,activity){
   if(!spelling)return;
   var card=spelling.closest&&spelling.closest('.activity-card');
   if(!card||card.querySelector('.activity-spelling-listen'))return;
-  var answer=spellingAudioText(activity);
+  var answer=spellingAnswerText(activity);
   if(!answer)return;
   var prompt=card.querySelector('.activity-prompt');
   if(!prompt)return;
@@ -279,7 +275,7 @@ function ensureSpellingListen(engine,activity){
   button.style.setProperty('flex','0 0 auto');
   button.addEventListener('click',function(e){
     e.preventDefault();e.stopPropagation();
-    global.WillenaAudioPlayback.playText(button,answer,{lang:'en-US',rate:.9,metadata:activity.metadata||{}});
+    global.WillenaAudioPlayback.playText(button,answer,{lang:'en-US',rate:.9});
   });
   row.appendChild(button);
 }
