@@ -1,6 +1,12 @@
 (function(){
 'use strict';
 var STYLE_ID='v3-speaking-card-icon-style';
+function loadActivityShell(){
+  try{
+    if(!document.querySelector('link[data-study-v3-activity-shell]')){var c=document.createElement('link');c.rel='stylesheet';c.href='./v3-activity-shell.css?v=20260822-hardbust8';c.setAttribute('data-study-v3-activity-shell','1');(document.head||document.documentElement).appendChild(c);}
+    if(!document.querySelector('script[data-study-v3-activity-shell]')){var j=document.createElement('script');j.src='./v3-activity-shell.js?v=20260822-hardbust8';j.defer=true;j.setAttribute('data-study-v3-activity-shell','1');(document.head||document.documentElement).appendChild(j);}
+  }catch(_){}
+}
 function ensureStyle(){
   var old=document.getElementById(STYLE_ID);if(old)old.remove();
   var s=document.createElement('style');
@@ -30,6 +36,6 @@ function scan(){
   document.querySelectorAll('[data-v3-speaking-card]').forEach(decorate);
 }
 var mo=new MutationObserver(scan);
-function start(){scan();mo.observe(document.body,{subtree:true,childList:true});}
+function start(){loadActivityShell();scan();mo.observe(document.body,{subtree:true,childList:true});}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })();
