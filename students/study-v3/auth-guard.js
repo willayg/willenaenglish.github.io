@@ -26,6 +26,13 @@ function loadV3Sidecar(){
       recall.setAttribute('data-study-v3-speaking-recall','1');
       (document.head||document.documentElement).appendChild(recall);
     }
+    if(!document.querySelector('script[data-study-v3-speaking-autohelp]')){
+      var autohelp=document.createElement('script');
+      autohelp.src='./v3-speaking-autohelp.js?v=20260822-autohelp1';
+      autohelp.defer=true;
+      autohelp.setAttribute('data-study-v3-speaking-autohelp','1');
+      (document.head||document.documentElement).appendChild(autohelp);
+    }
   }catch(e){console.warn('[StudyV3] speaking sidecar load failed',e);}
 }
 loadV3Sidecar();
