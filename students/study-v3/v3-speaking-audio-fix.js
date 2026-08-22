@@ -6,22 +6,16 @@ document.addEventListener('click',function(e){
   if(!button)return;
   e.preventDefault();
   e.stopImmediatePropagation();
-  var card=button.closest('.v3-speaking-card');
-  var prompt=card&&card.querySelector('.v3-speaking-prompt');
-  var value=text(prompt&&prompt.textContent);
+  var value=text(button.dataset&&button.dataset.target);
+  if(!value){
+    var card=button.closest('.v3-speaking-card');
+    var revealed=card&&card.querySelector('.v3-speaking-answer');
+    value=text(revealed&&revealed.textContent);
+  }
   if(!value)return;
   var player=global.WillenaAudioPlayback;
   if(player&&typeof player.playText==='function'){
     player.playText(button,value,{lang:'en-US',rate:.9});
-    return;
-  }
-  if(global.speechSynthesis&&global.SpeechSynthesisUtterance){
-    try{
-      global.speechSynthesis.cancel();
-      var u=new SpeechSynthesisUtterance(value);
-      u.lang='en-US';u.rate=.9;
-      global.speechSynthesis.speak(u);
-    }catch(_){}
   }
 },true);
 })(window);
