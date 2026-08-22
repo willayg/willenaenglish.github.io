@@ -51,7 +51,14 @@ function decorateAudio(root){
   root.querySelectorAll('.activity-card').forEach(function(card){
     var audio=card.querySelector('.activity-spelling-listen,.activity-audio');
     if(!audio)return;
-    var kind=card.querySelector('.activity-letter-order')?'spelling':'listening';
+    var spelling=!!card.querySelector('.activity-letter-order');
+    if(!spelling){
+      audio.classList.remove('v3-action-pulse','v3-action-first');
+      delete audio.dataset.v3ActionKind;
+      var oldHint=audio.querySelector('.v3-action-hint');if(oldHint)oldHint.remove();
+      return;
+    }
+    var kind='spelling';
     audio.classList.add('v3-action-pulse');
     audio.dataset.v3ActionKind=kind;
     if(!hasSeen(kind)){
