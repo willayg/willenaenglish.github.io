@@ -139,11 +139,19 @@
   #aiCoachActivityRoot .v2-audio-sparkles{display:none!important}
 }
 
-/* Standard listening: keep the same canonical asset centered in the button. */
+/* Standard listening: use the Book Study headphones asset as the button background itself so it is mathematically centered. */
 #v2ActivityRoot .activity-card:not(:has(.activity-letter-order)) .activity-audio,
 #aiCoachActivityRoot .activity-card:not(:has(.activity-letter-order)) .activity-audio{
   animation:none!important;
   transform:none!important;
-  display:grid!important;
-  place-items:center!important;
+  display:block!important;
+  background-image:url("./headphones.svg?v=20260816-1")!important;
+  background-repeat:no-repeat!important;
+  background-position:50% 50%!important;
+  background-size:32px 32px!important;
+}
+#v2ActivityRoot .activity-card:not(:has(.activity-letter-order)) .activity-audio::before,
+#aiCoachActivityRoot .activity-card:not(:has(.activity-letter-order)) .activity-audio::before{
+  content:none!important;
+  display:none!important;
 }
