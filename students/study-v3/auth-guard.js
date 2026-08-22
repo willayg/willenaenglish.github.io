@@ -12,13 +12,6 @@ function loadV3Sidecar(){
       css.setAttribute('data-study-v3-speaking','1');
       (document.head||document.documentElement).appendChild(css);
     }
-    if(!document.querySelector('script[data-study-v3-speaking]')){
-      var js=document.createElement('script');
-      js.src='./v3-speaking.js?v=20260822-speaking1';
-      js.defer=true;
-      js.setAttribute('data-study-v3-speaking','1');
-      (document.head||document.documentElement).appendChild(js);
-    }
     if(!document.querySelector('script[data-study-v3-speaking-accuracy]')){
       var acc=document.createElement('script');
       acc.src='./v3-speaking-accuracy.js?v=20260822-accuracy1';
