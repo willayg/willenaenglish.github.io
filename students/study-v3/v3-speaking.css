@@ -5,10 +5,14 @@
 .v3-speaking-mode{font:800 12px/1.2 Poppins,sans-serif;color:#e60076;letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px}
 .v3-speaking-prompt{font:700 clamp(1.35rem,5vw,2rem)/1.25 Poppins,sans-serif;color:#173f46;margin:0 0 8px}
 .v3-speaking-help{margin:0 0 14px;color:#6e858a;font:600 14px/1.5 Poppins,sans-serif}
+.v3-speaking-context{margin:8px 0 4px;padding:14px 16px;border-radius:16px;background:#f5fafb;color:#173f46;font:700 clamp(1.05rem,4vw,1.45rem)/1.4 Poppins,sans-serif}
+.v3-speaking-blank{margin:4px 0 14px;color:#66d6df;font:800 clamp(1.4rem,6vw,2.2rem)/1 Poppins,sans-serif;letter-spacing:.08em}
+.v3-speaking-ko-cue{margin-top:4px}
 .v3-speaking-target{padding:12px 14px;border:2px dashed #d8ecef;border-radius:16px;background:#fbfeff;margin:12px 0;font:700 17px/1.4 Poppins,sans-serif;color:#173f46}
 .v3-speaking-target[hidden]{display:none}
 .v3-speaking-listenrow,.v3-speaking-microw{display:flex;justify-content:center;margin:16px 0}
 .v3-speaking-listen{border:2px solid #66d6df;background:#fff;color:#e60076;border-radius:999px;padding:11px 18px;font:800 15px Poppins,sans-serif}
+.v3-speaking-listen:disabled{opacity:.45}
 .v3-speaking-mic{width:92px;height:92px;border:3px solid #ff0a8a;border-radius:50%;background:#fff;color:#ff0a8a;display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 9px rgba(255,10,138,.06);padding:0}
 .v3-speaking-mic svg{width:40px;height:40px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .v3-speaking-mic.is-listening{animation:v3SpeakPulse .8s ease-in-out infinite alternate;background:#fff7fb}
