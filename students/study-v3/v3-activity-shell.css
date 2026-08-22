@@ -19,11 +19,25 @@
 .v3-activity-back:hover,.v3-activity-back:focus-visible{outline:none;background:#f2fcfd}
 #v2ActivityRoot .activity-check,#aiCoachActivityRoot .activity-check{flex:0 0 auto!important}
 
-/* SPELLING FOOTER: the footer belongs to the card itself. */
+/* SPELLING FOOTER: the card itself owns the footer on phone and tablet. */
 #v2ActivityRoot .activity-card:has(.activity-letter-order),
-#aiCoachActivityRoot .activity-card:has(.activity-letter-order){position:relative!important;padding-bottom:98px!important}
+#aiCoachActivityRoot .activity-card:has(.activity-letter-order),
+#v2ActivityRoot .activity-card.v2-tablet-spelling,
+#aiCoachActivityRoot .activity-card.v2-tablet-spelling{
+  position:relative!important;
+  padding-bottom:104px!important;
+}
 
-/* The tablet renderer gives this row its own class. Force that exact row to the card footer. */
+/* Tablet helper moves actions into .v2-tablet-spelling-work-row. Override that completely. */
+#v2ActivityRoot .activity-card.v2-tablet-spelling .v2-tablet-spelling-work-row,
+#aiCoachActivityRoot .activity-card.v2-tablet-spelling .v2-tablet-spelling-work-row{
+  position:static!important;
+  display:block!important;
+  min-height:0!important;
+  margin:0!important;
+  padding:0!important;
+}
+
 #v2ActivityRoot .activity-card:has(.activity-letter-order) .activity-actions,
 #aiCoachActivityRoot .activity-card:has(.activity-letter-order) .activity-actions,
 #v2ActivityRoot .activity-card.v2-tablet-spelling .v2-tablet-spelling-actions,
@@ -34,25 +48,43 @@
   bottom:18px!important;
   top:auto!important;
   width:auto!important;
-  min-height:48px!important;
+  height:50px!important;
+  min-height:50px!important;
   margin:0!important;
   padding:0!important;
-  display:flex!important;
-  align-items:center!important;
-  justify-content:flex-end!important;
-  z-index:20!important;
+  display:block!important;
+  z-index:30!important;
   order:99!important;
+  pointer-events:none!important;
 }
+
 #v2ActivityRoot .activity-card:has(.activity-letter-order) .v3-activity-back,
-#aiCoachActivityRoot .activity-card:has(.activity-letter-order) .v3-activity-back{margin-right:auto!important}
+#aiCoachActivityRoot .activity-card:has(.activity-letter-order) .v3-activity-back,
+#v2ActivityRoot .activity-card.v2-tablet-spelling .v3-activity-back,
+#aiCoachActivityRoot .activity-card.v2-tablet-spelling .v3-activity-back{
+  position:absolute!important;
+  left:0!important;
+  right:auto!important;
+  top:0!important;
+  bottom:auto!important;
+  margin:0!important;
+  pointer-events:auto!important;
+}
+
 #v2ActivityRoot .activity-card:has(.activity-letter-order) .activity-check,
-#aiCoachActivityRoot .activity-card:has(.activity-letter-order) .activity-check{margin-left:auto!important;margin-right:0!important}
+#aiCoachActivityRoot .activity-card:has(.activity-letter-order) .activity-check,
+#v2ActivityRoot .activity-card.v2-tablet-spelling .activity-check,
+#aiCoachActivityRoot .activity-card.v2-tablet-spelling .activity-check{
+  position:absolute!important;
+  right:0!important;
+  left:auto!important;
+  top:0!important;
+  bottom:auto!important;
+  margin:0!important;
+  pointer-events:auto!important;
+}
 
-/* Keep the letter bank clearly above the footer. */
-#v2ActivityRoot .activity-card:has(.activity-letter-order) .activity-letter-bank,
-#aiCoachActivityRoot .activity-card:has(.activity-letter-order) .activity-letter-bank{margin-bottom:0!important}
-
-/* Input mode controls centered on the same bottom line. */
+/* Center tablet/desktop input-mode controls on the same bottom row. */
 #v2ActivityRoot .activity-card:has(.activity-letter-order) .activity-spelling-controls,
 #aiCoachActivityRoot .activity-card:has(.activity-letter-order) .activity-spelling-controls,
 #v2ActivityRoot .activity-card.v2-tablet-spelling .activity-spelling-controls,
@@ -60,7 +92,7 @@
   position:absolute!important;
   left:50%!important;
   right:auto!important;
-  bottom:25px!important;
+  bottom:24px!important;
   top:auto!important;
   transform:translateX(-50%)!important;
   display:flex!important;
@@ -70,7 +102,7 @@
   width:max-content!important;
   max-width:42%!important;
   margin:0!important;
-  z-index:21!important;
+  z-index:31!important;
   animation:none!important;
   order:99!important;
 }
@@ -89,7 +121,7 @@
   #v2ActivityRoot .activity-context,#aiCoachActivityRoot .activity-context{font-size:20px!important;line-height:1.55!important;margin-bottom:16px!important}
   #v2ActivityRoot .activity-card:has(.activity-letter-order) .activity-spelling-controls,
   #aiCoachActivityRoot .activity-card:has(.activity-letter-order) .activity-spelling-controls{display:none!important}
-  #v2ActivityRoot .activity-card:has(.activity-letter-order),#aiCoachActivityRoot .activity-card:has(.activity-letter-order){padding-bottom:82px!important}
+  #v2ActivityRoot .activity-card:has(.activity-letter-order),#aiCoachActivityRoot .activity-card:has(.activity-letter-order){padding-bottom:86px!important}
   #v2ActivityRoot .activity-card:has(.activity-letter-order) .activity-actions,
   #aiCoachActivityRoot .activity-card:has(.activity-letter-order) .activity-actions,
   #v2ActivityRoot .activity-card.v2-tablet-spelling .v2-tablet-spelling-actions,
