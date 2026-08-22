@@ -145,6 +145,8 @@
   animation:none!important;
   transform:none!important;
   display:block!important;
+  margin-left:auto!important;
+  margin-right:auto!important;
   background-image:url("./headphones.svg?v=20260816-1")!important;
   background-repeat:no-repeat!important;
   background-position:50% 50%!important;
