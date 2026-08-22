@@ -10,8 +10,8 @@ function addBack(actions,handler){
   b.className='v3-activity-back';
   b.textContent=label();
   b.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();handler();});
-  var check=actions.querySelector('.activity-check');
-  if(check)actions.insertBefore(b,check);else actions.appendChild(b);
+  var next=actions.querySelector('.activity-check');
+  if(next)actions.insertBefore(b,next);else actions.appendChild(b);
 }
 function scanPractice(){
   document.querySelectorAll('#v2ActivityRoot .activity-actions').forEach(function(actions){
@@ -26,6 +26,10 @@ function scanCoach(){
 }
 function syncLabels(){document.querySelectorAll('.v3-activity-back').forEach(function(b){b.textContent=label();});}
 function scan(){scanPractice();scanCoach();syncLabels();}
-function start(){scan();new MutationObserver(scan).observe(document.body,{subtree:true,childList:true});var l=document.getElementById('languageBtn');if(l)l.addEventListener('click',function(){setTimeout(syncLabels,0);});}
+function start(){
+  scan();
+  new MutationObserver(scan).observe(document.body,{subtree:true,childList:true});
+  var l=document.getElementById('languageBtn');if(l)l.addEventListener('click',function(){setTimeout(syncLabels,0);});
+}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })();
