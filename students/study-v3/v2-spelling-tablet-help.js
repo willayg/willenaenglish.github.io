@@ -7,11 +7,11 @@ function decorateRoot(root){
   var spelling=root.querySelector('.activity-letter-order');
   if(!spelling)return;
   var card=spelling.closest('.activity-card');
-  if(!card||card.dataset.v2TabletSpellingHelp==='6')return;
-  card.dataset.v2TabletSpellingHelp='6';
+  if(!card||card.dataset.v2TabletSpellingHelp==='7')return;
+  card.dataset.v2TabletSpellingHelp='7';
   card.classList.add('v2-tablet-spelling');
   var instruction=card.querySelector('.activity-context,.activity-instruction');
-  if(instruction){
+  if(instruction&&!instruction.classList.contains('v2-tablet-spelling-instruction')){
     instruction.classList.add('v2-tablet-spelling-instruction');instruction.hidden=true;
     var help=document.createElement('button');help.type='button';help.className='v2-tablet-spelling-help';help.textContent='?';
     help.setAttribute('aria-label',ko()?'철자 도움말 보기':'Show spelling instructions');help.setAttribute('aria-expanded','false');
@@ -20,24 +20,24 @@ function decorateRoot(root){
   }
   var promptRow=card.querySelector('.activity-spelling-prompt-row');
   var prompt=promptRow&&promptRow.querySelector('.activity-prompt');
-  if(prompt){prompt.classList.add('v2-tablet-spelling-cue');card.insertBefore(prompt,spelling);}
+  if(prompt&&!prompt.classList.contains('v2-tablet-spelling-cue')){prompt.classList.add('v2-tablet-spelling-cue');card.insertBefore(prompt,spelling);}
   var slots=spelling.querySelector('.activity-letter-slots');
   var bank=spelling.querySelector('.activity-letter-bank');
   var audio=(promptRow&&promptRow.querySelector('.activity-spelling-listen,.activity-audio'))||card.querySelector('.activity-spelling-listen,.activity-audio');
   var actions=card.querySelector('.activity-actions');
-  var workRow=document.createElement('div');workRow.className='v2-tablet-spelling-work-row';
-  if(slots&&slots.nextSibling)spelling.insertBefore(workRow,slots.nextSibling);else spelling.appendChild(workRow);
-  if(audio){
+  var workRow=spelling.querySelector('.v2-tablet-spelling-work-row');
+  if(!workRow){workRow=document.createElement('div');workRow.className='v2-tablet-spelling-work-row';if(slots&&slots.nextSibling)spelling.insertBefore(workRow,slots.nextSibling);else spelling.appendChild(workRow);}
+  if(audio&&!audio.closest('.v2-tablet-spelling-listen-wrap')){
     audio.classList.add('v2-tablet-spelling-listen');
     var listenWrap=document.createElement('div');listenWrap.className='v2-tablet-spelling-listen-wrap';
     listenWrap.appendChild(audio);
     workRow.appendChild(listenWrap);
   }
-  if(actions){actions.classList.add('v2-tablet-spelling-actions');workRow.appendChild(actions);}
+  if(actions&&!actions.closest('.v2-tablet-spelling-work-row')){actions.classList.add('v2-tablet-spelling-actions');workRow.appendChild(actions);}
   if(bank)bank.style.setProperty('order','3','important');
   if(promptRow&&!promptRow.children.length)promptRow.hidden=true;
 }
 function scan(){['v2ActivityRoot','aiCoachActivityRoot'].forEach(function(id){decorateRoot(document.getElementById(id));});}
-function bind(){scan();['v2ActivityRoot','aiCoachActivityRoot'].map(function(id){return document.getElementById(id);}).filter(Boolean).forEach(function(root){new MutationObserver(scan).observe(root,{childList:true,subtree:true});});}
+function bind(){scan();new MutationObserver(scan).observe(document.body,{childList:true,subtree:true});}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind,{once:true});else bind();
 })(window);
