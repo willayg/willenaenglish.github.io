@@ -1,16 +1,36 @@
-/* Study V3 activity shell: shared presentation for Book Practice, Daily Study and AI Coach. */
+/* Study V3 activity shell: shared presentation for Book Practice, Daily Study, AI Coach and Speaking. */
 #v2PracticePanel .practice-toolbar,
 #aiCoachPracticeOverlay .ai-coach-practice-head{
   display:none!important;
 }
 
+/* Full-screen activity views: center the working card vertically and horizontally. */
 #v2PracticePanel,
 #aiCoachPracticeOverlay{
-  padding-top:clamp(14px,3vw,28px)!important;
+  padding:clamp(14px,3vw,28px)!important;
+}
+#v2PracticePanel{
+  align-items:center!important;
+  justify-content:center!important;
+}
+#v2PracticePanel:not([hidden]){display:flex!important}
+#v2ActivityRoot{
+  width:min(920px,100%)!important;
+  margin:auto!important;
+}
+#aiCoachPracticeOverlay{
+  align-items:center!important;
+  justify-content:center!important;
+}
+#aiCoachPracticeOverlay .ai-coach-practice-shell{
+  width:min(920px,100%)!important;
+  margin:auto!important;
 }
 
+/* Every ordinary activity uses the same white/cyan shell as Speaking. */
 #v2ActivityRoot .activity-card,
 #aiCoachActivityRoot .activity-card{
+  width:100%!important;
   background:#fff!important;
   border:3px solid #66d6df!important;
   border-radius:24px!important;
@@ -25,24 +45,44 @@
   padding:0!important;
 }
 
+/* Match Speaking's small pink instruction above the main prompt. */
+#v2ActivityRoot .activity-context,
+#aiCoachActivityRoot .activity-context{
+  display:block!important;
+  width:auto!important;
+  max-width:100%!important;
+  margin:0 0 9px!important;
+  padding:0!important;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  color:#e60076!important;
+  font:800 12px/1.25 Poppins,sans-serif!important;
+  letter-spacing:.055em!important;
+}
+
+/* Bottom action row: Back left, Check/Next right. */
 #v2ActivityRoot .activity-actions,
 #aiCoachActivityRoot .activity-actions{
   display:flex!important;
   align-items:center!important;
   justify-content:flex-end!important;
   gap:10px!important;
+  width:100%!important;
 }
 
 .v3-activity-back{
   min-height:46px;
   padding:0 17px;
+  margin-right:auto!important;
   border:2px solid #66d6df;
   border-radius:14px;
   background:#fff;
   color:#315e64;
   font:800 15px/1 Poppins,sans-serif;
   cursor:pointer;
-  flex:0 0 auto;
+  flex:0 0 auto!important;
 }
 .v3-activity-back:hover,
 .v3-activity-back:focus-visible{
@@ -52,24 +92,50 @@
 
 #v2ActivityRoot .activity-check,
 #aiCoachActivityRoot .activity-check{
-  flex:0 0 auto;
+  flex:0 0 auto!important;
 }
 
-/* Speaking uses its own renderer. Keep the exit control low and right. */
+/* Speaking uses its own renderer but follows the same centered shell/action geometry. */
+#v2ActivityRoot .v3-speaking-shell{
+  width:min(720px,100%)!important;
+  margin:auto!important;
+  padding:0!important;
+}
 .v3-speaking-actions{
+  display:flex!important;
+  width:100%!important;
   justify-content:flex-end!important;
   align-items:center!important;
+  gap:10px!important;
 }
 .v3-speaking-back{
+  order:-1!important;
   flex:0 0 auto!important;
   min-width:92px;
+  margin-right:auto!important;
   border:2px solid #66d6df!important;
   background:#fff!important;
   color:#315e64!important;
 }
+.v3-speaking-next{
+  flex:0 0 auto!important;
+  min-width:112px;
+}
 
 @media(max-width:560px){
+  #v2PracticePanel,
+  #aiCoachPracticeOverlay{padding:14px!important}
   #v2ActivityRoot .activity-card,
   #aiCoachActivityRoot .activity-card{padding:16px!important;border-radius:21px!important}
   .v3-activity-back{min-height:44px;padding:0 14px;font-size:14px}
+  #v2ActivityRoot .activity-context,
+  #aiCoachActivityRoot .activity-context{font-size:11px!important;margin-bottom:8px!important}
+}
+
+/* If an activity is taller than the viewport, keep it usable instead of clipping it. */
+@media(max-height:620px){
+  #v2PracticePanel,
+  #aiCoachPracticeOverlay{align-items:flex-start!important}
+  #v2ActivityRoot,
+  #aiCoachPracticeOverlay .ai-coach-practice-shell{margin-top:auto!important;margin-bottom:auto!important}
 }
