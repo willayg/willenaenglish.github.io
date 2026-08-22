@@ -2,7 +2,7 @@
 'use strict';
 var NEXT='/students/study-v3/';
 var LOGIN='/students/signin.html?next='+encodeURIComponent(NEXT);
-var V3_CACHE='20260822-hardbust19';
+var V3_CACHE='20260822-hardbust20';
 
 function loadV3Sidecar(){
   try{
@@ -14,6 +14,7 @@ function loadV3Sidecar(){
     addJs('data-study-v3-speaking-recall','./v3-speaking-recall.js');
     addJs('data-study-v3-speaking-audio-fix','./v3-speaking-audio-fix.js');
     addJs('data-study-v3-speaking-card-icon','./v3-speaking-card-icon.js');
+    addJs('data-study-v3-speaking-retry-cue','./v3-speaking-retry-cue.js');
     addJs('data-study-v3-activity-shell','./v3-activity-shell.js');
     addJs('data-study-v3-spelling-tablet-help','./v2-spelling-tablet-help.js');
   }catch(e){console.warn('[StudyV3] sidecar load failed',e);}
