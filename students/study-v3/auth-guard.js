@@ -8,7 +8,7 @@ function loadV3Sidecar(){
     if(!document.querySelector('link[data-study-v3-speaking]')){
       var css=document.createElement('link');
       css.rel='stylesheet';
-      css.href='./v3-speaking.css?v=20260822-speaking1';
+      css.href='./v3-speaking.css?v=20260822-speaking2';
       css.setAttribute('data-study-v3-speaking','1');
       (document.head||document.documentElement).appendChild(css);
     }
@@ -21,17 +21,10 @@ function loadV3Sidecar(){
     }
     if(!document.querySelector('script[data-study-v3-speaking-recall]')){
       var recall=document.createElement('script');
-      recall.src='./v3-speaking-recall.js?v=20260822-recall1';
+      recall.src='./v3-speaking-recall.js?v=20260822-twomode2';
       recall.defer=true;
       recall.setAttribute('data-study-v3-speaking-recall','1');
       (document.head||document.documentElement).appendChild(recall);
-    }
-    if(!document.querySelector('script[data-study-v3-speaking-autohelp]')){
-      var autohelp=document.createElement('script');
-      autohelp.src='./v3-speaking-autohelp.js?v=20260822-autohelp1';
-      autohelp.defer=true;
-      autohelp.setAttribute('data-study-v3-speaking-autohelp','1');
-      (document.head||document.documentElement).appendChild(autohelp);
     }
   }catch(e){console.warn('[StudyV3] speaking sidecar load failed',e);}
 }
