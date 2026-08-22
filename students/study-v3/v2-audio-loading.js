@@ -13,14 +13,29 @@ function loadingBase(){return koreanMode()?'AI 음성을 불러오는 중':'AI l
 
 function ensureMessage(button){
   if(!button)return null;
-  var existing=button.querySelector&&button.querySelector('.v2-audio-loading-message');
+  var host=button.parentElement||button;
+  var existing=host.querySelector&&host.querySelector('.v2-audio-loading-message[data-v2-audio-for="'+(button.dataset.v2AudioLoadingId||'')+'"]');
   if(existing)return existing;
+  if(!button.dataset.v2AudioLoadingId)button.dataset.v2AudioLoadingId='a'+Math.random().toString(36).slice(2,9);
   var msg=document.createElement('small');
   msg.className='v2-audio-loading-message';
+  msg.dataset.v2AudioFor=button.dataset.v2AudioLoadingId;
   msg.hidden=true;
   msg.setAttribute('aria-live','polite');
-  button.appendChild(msg);
+  host.appendChild(msg);
   return msg;
+}
+
+function positionMessage(button,msg){
+  if(!button||!msg||!button.parentElement)return;
+  var host=button.parentElement;
+  var oldPos=getComputedStyle(host).position;
+  if(oldPos==='static')host.style.position='relative';
+  var b=button.getBoundingClientRect();
+  var h=host.getBoundingClientRect();
+  msg.style.setProperty('left',(b.left-h.left+b.width/2)+'px','important');
+  msg.style.setProperty('top',(b.top-h.top+b.height/2)+'px','important');
+  msg.style.setProperty('transform','translate(-50%,-50%)','important');
 }
 
 function ensureSparkles(button){
@@ -38,8 +53,8 @@ function ensureSparkles(button){
 }
 
 function bindButton(button){
-  if(!button||button.dataset.v2AudioLoadingBound==='2')return;
-  button.dataset.v2AudioLoadingBound='2';
+  if(!button||button.dataset.v2AudioLoadingBound==='3')return;
+  button.dataset.v2AudioLoadingBound='3';
   ensureSparkles(button);
   var timer=null,dotTimer=null,dotStep=0;
   var msg=ensureMessage(button);
@@ -54,15 +69,16 @@ function bindButton(button){
   function hide(){
     if(timer){clearTimeout(timer);timer=null;}
     stopDots();
-    button.classList.remove('v2-audio-loading-active');
+    if(button.classList.contains('v2-audio-loading-active'))button.classList.remove('v2-audio-loading-active');
     if(msg)msg.hidden=true;
   }
   function show(){
     if(!msg)return;
     dotStep=0;
     paintMessage();
+    positionMessage(button,msg);
     msg.hidden=false;
-    button.classList.add('v2-audio-loading-active');
+    if(!button.classList.contains('v2-audio-loading-active'))button.classList.add('v2-audio-loading-active');
     stopDots();
     dotTimer=setInterval(paintMessage,DOT_DELAY);
   }
@@ -91,11 +107,21 @@ function bind(){
     var root=document.getElementById(id);
     if(!root)return;
     scan(root);
-    new MutationObserver(function(){scan(root);}).observe(root,{childList:true,subtree:true});
+    new MutationObserver(function(records){
+      var needsScan=false;
+      for(var i=0;i<records.length;i++){
+        for(var j=0;j<records[i].addedNodes.length;j++){
+          var n=records[i].addedNodes[j];
+          if(n.nodeType===1&&(n.matches&&n.matches('.activity-audio')||n.querySelector&&n.querySelector('.activity-audio'))){needsScan=true;break;}
+        }
+        if(needsScan)break;
+      }
+      if(needsScan)scan(root);
+    }).observe(root,{childList:true,subtree:true});
   });
   var languageBtn=document.getElementById('languageBtn');
   if(languageBtn)languageBtn.addEventListener('click',function(){
-    setTimeout(function(){document.querySelectorAll('.activity-audio.v2-audio-loading-active .v2-audio-loading-message').forEach(function(msg){var button=msg.closest('.activity-audio');if(button){msg.textContent=loadingBase()+'.';}});},0);
+    setTimeout(function(){document.querySelectorAll('.v2-audio-loading-message:not([hidden])').forEach(function(msg){msg.textContent=loadingBase()+'.';});},0);
   });
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind,{once:true});else bind();
