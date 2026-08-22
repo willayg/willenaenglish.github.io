@@ -196,26 +196,36 @@
   display:none!important;
 }
 
-/* V3 spelling: use the real headphones.svg directly and give the button the same soft pulse language as the speaking mic. */
+/* V3 spelling: visually match the standard Listening button exactly. */
+#v2ActivityRoot .activity-card:has(.activity-letter-order) .activity-audio,
+#aiCoachActivityRoot .activity-card:has(.activity-letter-order) .activity-audio,
 #v2ActivityRoot .activity-card:has(.activity-letter-order) .activity-spelling-listen,
 #aiCoachActivityRoot .activity-card:has(.activity-letter-order) .activity-spelling-listen,
 #v2ActivityRoot .activity-card:has(.activity-letter-order) .v2-tablet-spelling-listen,
 #aiCoachActivityRoot .activity-card:has(.activity-letter-order) .v2-tablet-spelling-listen{
+  width:104px!important;
+  height:104px!important;
+  min-width:104px!important;
+  min-height:104px!important;
+  max-width:104px!important;
+  max-height:104px!important;
+  flex-basis:104px!important;
+  padding:0!important;
+  border:6px solid #d7f6fa!important;
+  border-radius:50%!important;
+  background:#fff url("./headphones.svg?v=20260816-1") center/44px 44px no-repeat!important;
+  color:#5f6677!important;
+  display:grid!important;
+  place-items:center!important;
   position:relative!important;
   left:auto!important;
   transform:none!important;
-  margin-left:auto!important;
-  margin-right:auto!important;
-  display:block!important;
-  background-color:#fff!important;
-  background-image:url("./headphones.svg?v=20260816-1")!important;
-  background-repeat:no-repeat!important;
-  background-position:50% 50%!important;
-  background-size:30px 30px!important;
-  border:3px solid #66d6df!important;
-  box-shadow:0 0 0 9px rgba(102,214,223,.08)!important;
-  animation:v3SpellingListenPulse .9s ease-in-out infinite alternate!important;
+  margin:0 auto 18px!important;
+  box-shadow:0 0 22px rgba(19,145,169,.20),0 0 0 2px rgba(99,197,215,.16),inset 0 2px 0 rgba(255,255,255,.95)!important;
+  animation:none!important;
 }
+#v2ActivityRoot .activity-card:has(.activity-letter-order) .activity-audio::before,
+#aiCoachActivityRoot .activity-card:has(.activity-letter-order) .activity-audio::before,
 #v2ActivityRoot .activity-card:has(.activity-letter-order) .activity-spelling-listen::before,
 #aiCoachActivityRoot .activity-card:has(.activity-letter-order) .activity-spelling-listen::before,
 #v2ActivityRoot .activity-card:has(.activity-letter-order) .v2-tablet-spelling-listen::before,
@@ -223,25 +233,30 @@
   content:none!important;
   display:none!important;
 }
-#v2ActivityRoot .activity-card:has(.activity-letter-order) .activity-spelling-listen .v2-audio-sparkles,
-#aiCoachActivityRoot .activity-card:has(.activity-letter-order) .activity-spelling-listen .v2-audio-sparkles,
-#v2ActivityRoot .activity-card:has(.activity-letter-order) .v2-tablet-spelling-listen .v2-audio-sparkles,
-#aiCoachActivityRoot .activity-card:has(.activity-letter-order) .v2-tablet-spelling-listen .v2-audio-sparkles{
+#v2ActivityRoot .activity-card:has(.activity-letter-order) .activity-audio .v2-audio-sparkles,
+#aiCoachActivityRoot .activity-card:has(.activity-letter-order) .activity-audio .v2-audio-sparkles{
   display:none!important;
 }
-#v2ActivityRoot .activity-card:has(.activity-letter-order) .activity-spelling-listen.v2-audio-loading-active,
-#aiCoachActivityRoot .activity-card:has(.activity-letter-order) .activity-spelling-listen.v2-audio-loading-active,
-#v2ActivityRoot .activity-card:has(.activity-letter-order) .v2-tablet-spelling-listen.v2-audio-loading-active,
-#aiCoachActivityRoot .activity-card:has(.activity-letter-order) .v2-tablet-spelling-listen.v2-audio-loading-active{
-  animation:none!important;
+#v2ActivityRoot .activity-card:has(.activity-letter-order) .activity-audio:active:not(:disabled),
+#aiCoachActivityRoot .activity-card:has(.activity-letter-order) .activity-audio:active:not(:disabled){
+  transform:translateY(3px) scale(.98)!important;
+  box-shadow:0 0 12px rgba(19,145,169,.16),0 0 0 2px rgba(99,197,215,.13),inset 0 3px 7px rgba(0,0,0,.06)!important;
 }
-@keyframes v3SpellingListenPulse{
-  from{transform:scale(1);box-shadow:0 0 0 9px rgba(102,214,223,.08)}
-  to{transform:scale(1.045);box-shadow:0 0 0 18px rgba(102,214,223,.14)}
-}
-@media(prefers-reduced-motion:reduce){
+@media(max-width:600px){
+  #v2ActivityRoot .activity-card:has(.activity-letter-order) .activity-audio,
+  #aiCoachActivityRoot .activity-card:has(.activity-letter-order) .activity-audio,
   #v2ActivityRoot .activity-card:has(.activity-letter-order) .activity-spelling-listen,
   #aiCoachActivityRoot .activity-card:has(.activity-letter-order) .activity-spelling-listen,
   #v2ActivityRoot .activity-card:has(.activity-letter-order) .v2-tablet-spelling-listen,
-  #aiCoachActivityRoot .activity-card:has(.activity-letter-order) .v2-tablet-spelling-listen{animation:none!important}
+  #aiCoachActivityRoot .activity-card:has(.activity-letter-order) .v2-tablet-spelling-listen{
+    width:88px!important;
+    height:88px!important;
+    min-width:88px!important;
+    min-height:88px!important;
+    max-width:88px!important;
+    max-height:88px!important;
+    flex-basis:88px!important;
+    border-width:5px!important;
+    background-size:38px 38px!important;
+  }
 }
