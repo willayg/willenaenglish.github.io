@@ -2,29 +2,37 @@
 'use strict';
 var NEXT='/students/study-v3/';
 var LOGIN='/students/signin.html?next='+encodeURIComponent(NEXT);
+var V3_CACHE='20260822-hardbust4';
 
 function loadV3Sidecar(){
   try{
     if(!document.querySelector('link[data-study-v3-speaking]')){
       var css=document.createElement('link');
       css.rel='stylesheet';
-      css.href='./v3-speaking.css?v=20260822-speaking2';
+      css.href='./v3-speaking.css?v='+V3_CACHE;
       css.setAttribute('data-study-v3-speaking','1');
       (document.head||document.documentElement).appendChild(css);
     }
     if(!document.querySelector('script[data-study-v3-badge]')){
       var badge=document.createElement('script');
-      badge.src='./v3-badge.js?v=20260822-badge1';
+      badge.src='./v3-badge.js?v='+V3_CACHE;
       badge.defer=true;
       badge.setAttribute('data-study-v3-badge','1');
       (document.head||document.documentElement).appendChild(badge);
     }
     if(!document.querySelector('script[data-study-v3-speaking-recall]')){
       var recall=document.createElement('script');
-      recall.src='./v3-speaking-recall.js?v=20260822-twomode2';
+      recall.src='./v3-speaking-recall.js?v='+V3_CACHE;
       recall.defer=true;
       recall.setAttribute('data-study-v3-speaking-recall','1');
       (document.head||document.documentElement).appendChild(recall);
+    }
+    if(!document.querySelector('script[data-study-v3-speaking-audio-fix]')){
+      var audioFix=document.createElement('script');
+      audioFix.src='./v3-speaking-audio-fix.js?v='+V3_CACHE;
+      audioFix.defer=true;
+      audioFix.setAttribute('data-study-v3-speaking-audio-fix','1');
+      (document.head||document.documentElement).appendChild(audioFix);
     }
   }catch(e){console.warn('[StudyV3] speaking sidecar load failed',e);}
 }
