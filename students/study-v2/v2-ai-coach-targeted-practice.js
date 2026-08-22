@@ -30,11 +30,11 @@ function sourceVocabularyActivities(bookId,unitId,items){
   var out=[],koPool=uniqueText(items.map(function(x){return x.ko;})),enPool=uniqueText(items.map(function(x){return x.word;}));
   items.forEach(function(item){
     var koChoices=shuffle(uniqueText([item.ko].concat(shuffle(koPool.filter(function(x){return x!==item.ko;})).slice(0,3))));
-    if(koChoices.length>=2)out.push({id:'coach-vocab-en-ko-'+item.occurrenceId,sourceType:'lexical_entry',sourceId:item.id,skill:'vocabulary',usage:['practice'],stimulus:{type:'text',prompt:(item.emoji?item.emoji+'  ':'')+item.word,context:'한국어 뜻을 고르세요.'},response:{type:'multiple_choice',choices:koChoices},answer:item.ko,metadata:{book_id:bookId,unit_id:unitId,occurrence_id:item.occurrenceId,pool_source:'source_content',source_label:'Book vocabulary',ai_coach:true}});
+    if(koChoices.length>=2)out.push({id:'coach-vocab-en-ko-'+item.occurrenceId,sourceType:'lexical_entry',sourceId:item.id,skill:'vocabulary',usage:['practice'],stimulus:{type:'text',prompt:(item.emoji?item.emoji+'  ':'')+item.word,context:'한국어 뜻을 고르세요.'},response:{type:'multiple_choice',choices:koChoices},answer:item.ko,metadata:{book_id:bookId,unit_id:unitId,occurrence_id:item.occurrenceId,pool_source:'source_content',source_label:'Book vocabulary',ai_coach:true,lexical_entry_id:item.id,audio_text:item.word}});
     var enChoices=shuffle(uniqueText([item.word].concat(shuffle(enPool.filter(function(x){return x!==item.word;})).slice(0,3))));
-    if(enChoices.length>=2)out.push({id:'coach-vocab-ko-en-'+item.occurrenceId,sourceType:'lexical_entry',sourceId:item.id,skill:'vocabulary',usage:['practice'],stimulus:{type:'text',prompt:item.ko,context:'알맞은 영어 표현을 고르세요.'},response:{type:'multiple_choice',choices:enChoices},answer:item.word,metadata:{book_id:bookId,unit_id:unitId,occurrence_id:item.occurrenceId,pool_source:'source_content',source_label:'Book vocabulary',ai_coach:true}});
+    if(enChoices.length>=2)out.push({id:'coach-vocab-ko-en-'+item.occurrenceId,sourceType:'lexical_entry',sourceId:item.id,skill:'vocabulary',usage:['practice'],stimulus:{type:'text',prompt:item.ko,context:'알맞은 영어 표현을 고르세요.'},response:{type:'multiple_choice',choices:enChoices},answer:item.word,metadata:{book_id:bookId,unit_id:unitId,occurrence_id:item.occurrenceId,pool_source:'source_content',source_label:'Book vocabulary',ai_coach:true,lexical_entry_id:item.id,audio_text:item.word}});
     var letters=item.word.toLowerCase().replace(/[^a-z]/g,'').split('');
-    if(letters.length>=2)out.push({id:'coach-spelling-'+item.occurrenceId,sourceType:'lexical_entry',sourceId:item.id,skill:'spelling',usage:['practice'],stimulus:{type:'text',prompt:item.ko,context:'글자를 눌러 영어 단어를 만드세요.'},response:{type:'letter_order',tokens:letters,wordLengths:[letters.length]},answer:item.word.toLowerCase().replace(/[^a-z]/g,''),metadata:{book_id:bookId,unit_id:unitId,occurrence_id:item.occurrenceId,pool_source:'source_content',source_label:'Book vocabulary',ai_coach:true}});
+    if(letters.length>=2)out.push({id:'coach-spelling-'+item.occurrenceId,sourceType:'lexical_entry',sourceId:item.id,skill:'spelling',usage:['practice'],stimulus:{type:'text',prompt:item.ko,context:'글자를 눌러 영어 단어를 만드세요.'},response:{type:'letter_order',tokens:letters,wordLengths:[letters.length]},answer:item.word.toLowerCase().replace(/[^a-z]/g,''),metadata:{book_id:bookId,unit_id:unitId,occurrence_id:item.occurrenceId,pool_source:'source_content',source_label:'Book vocabulary',ai_coach:true,lexical_entry_id:item.id,audio_text:item.word}});
   });
   return out;
 }
@@ -57,5 +57,5 @@ coach.registerProvider('unit',async function(args,ctx){
   if(!items.length)return{type:'coach_unit',title:args.title||{ko:'추천 연습',en:'Recommended practice'},message:{ko:'이 단원에서 해당 영역의 연습 문제를 찾지 못했어요.',en:'I could not find practice questions for that skill in this unit.'},items:[]};
   return{type:'coach_unit',title:args.title||{ko:'추천 연습',en:'Recommended practice'},message:args.message||{ko:'이 단원의 해당 영역 문제만 골랐어요.',en:'I picked only the matching skill questions from that unit.'},items:items};
 });
-global.WillenaCoachTargetedPractice={version:'targeted-practice-v1.1'};
+global.WillenaCoachTargetedPractice={version:'targeted-practice-v1.2-audio'};
 })(window);
