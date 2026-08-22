@@ -7,8 +7,8 @@ function decorateRoot(root){
   var spelling=root.querySelector('.activity-letter-order');
   if(!spelling)return;
   var card=spelling.closest('.activity-card');
-  if(!card||card.dataset.v2TabletSpellingHelp==='7')return;
-  card.dataset.v2TabletSpellingHelp='7';
+  if(!card||card.dataset.v2TabletSpellingHelp==='8')return;
+  card.dataset.v2TabletSpellingHelp='8';
   card.classList.add('v2-tablet-spelling');
   var instruction=card.querySelector('.activity-context,.activity-instruction');
   if(instruction&&!instruction.classList.contains('v2-tablet-spelling-instruction')){
@@ -33,7 +33,7 @@ function decorateRoot(root){
     listenWrap.appendChild(audio);
     workRow.appendChild(listenWrap);
   }
-  if(actions&&!actions.closest('.v2-tablet-spelling-work-row')){actions.classList.add('v2-tablet-spelling-actions');workRow.appendChild(actions);}
+  if(actions){actions.classList.add('v2-tablet-spelling-actions');if(actions.parentElement!==card)card.appendChild(actions);}
   if(bank)bank.style.setProperty('order','3','important');
   if(promptRow&&!promptRow.children.length)promptRow.hidden=true;
 }
