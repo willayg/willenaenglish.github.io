@@ -8,7 +8,8 @@ function onRecorded(e){
     var result=d.result||{},payload=d.payload||{};
     var id=String(payload.client_attempt_id||result.attempt_id||'');
     if(!id||seen.has(id))return;
-    var delta=Number(result.points_awarded);
+    var override=Number(payload&&payload.metadata&&payload.metadata.points_override);
+    var delta=Number.isFinite(override)&&override>=0?override:Number(result.points_awarded);
     if(!Number.isFinite(delta)||delta<=0)return;
     seen.add(id);
     global.dispatchEvent(new CustomEvent('points:optimistic-bump',{detail:{delta:delta,source:'study-v3',client_attempt_id:id}}));
