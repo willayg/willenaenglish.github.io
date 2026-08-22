@@ -1,0 +1,279 @@
+/* Combined Book Study + Practice hub. One container, one book tab row, one shared unit strip. */
+.study-v2-book-hub{
+  order:3;
+  width:100%;
+  min-width:0;
+  margin-top:34px;
+  padding:24px;
+  border:2px solid var(--arcade-cyan);
+  border-radius:28px;
+  background:#fff;
+  box-shadow:0 8px 24px rgba(38,74,79,.05);
+  transition:border-color .2s ease,box-shadow .2s ease;
+}
+.study-v2-book-hub[data-mode="study"]{border-color:var(--arcade-pink)}
+.study-v2-book-hub[data-mode="practice"]{border-color:var(--arcade-cyan)}
+
+.study-v2-book-hub-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:16px;
+  margin-bottom:20px;
+}
+
+/* Primary book actions: reuse the same Study/Practice SVG marks as the top launcher. */
+.study-v2-book-mode-tabs{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(150px,1fr));
+  gap:12px;
+  width:100%;
+  padding:0;
+  border:0;
+  border-radius:0;
+  background:transparent;
+}
+.study-v2-book-mode-tab{
+  position:relative;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:12px;
+  min-height:82px;
+  padding:14px 18px;
+  border:2px solid #ccecef;
+  border-radius:20px;
+  background:#f7fcfd;
+  color:#567176;
+  font:900 1.08rem/1 Poppins,sans-serif;
+  cursor:pointer;
+  box-shadow:0 5px 14px rgba(38,74,79,.04);
+  transition:background .16s ease,border-color .16s ease,color .16s ease,box-shadow .16s ease,transform .16s ease;
+}
+.study-v2-book-mode-tab:before{
+  content:"";
+  display:block;
+  width:44px;
+  height:44px;
+  flex:0 0 44px;
+  background-repeat:no-repeat;
+  background-position:center;
+  background-size:contain;
+}
+.study-v2-book-mode-tab[data-book-mode="study"]:before{background-image:url("./assets/book-study-mark.svg?v=20260817-topicons2")}
+.study-v2-book-mode-tab[data-book-mode="practice"]:before{background-image:url("./assets/book-practice-mark.svg?v=20260817-topicons2")}
+.study-v2-book-mode-tab:hover,
+.study-v2-book-mode-tab:focus-visible{
+  outline:none;
+  transform:translateY(-1px);
+  border-color:var(--arcade-cyan);
+  color:#168e98;
+  box-shadow:0 7px 17px rgba(33,179,190,.10);
+}
+.study-v2-book-mode-tab.is-active{
+  border-color:var(--arcade-cyan);
+  background:#eafafb;
+  color:#168e98;
+  box-shadow:inset 0 0 0 1px rgba(33,179,190,.08),0 7px 18px rgba(33,179,190,.10);
+}
+.study-v2-book-hub[data-mode="study"] .study-v2-book-mode-tab[data-book-mode="study"].is-active{
+  border-color:var(--arcade-pink);
+  background:#fff2f8;
+  color:#d94e91;
+  box-shadow:inset 0 0 0 1px rgba(255,111,176,.08),0 7px 18px rgba(255,111,176,.11);
+}
+
+/* Book tabs remain the existing real tabs, but live inside the shared container. */
+.study-v2-book-hub .study-v2-book-tabs{
+  margin:0 0 22px!important;
+  padding:0 0 1px!important;
+}
+.study-v2-book-hub .study-v2-book-tab{
+  font-size:.9rem!important;
+  padding-bottom:13px!important;
+}
+
+/* The old large book-title card is deliberately not presented. */
+.study-v2-book-hub .book-hub-legacy-meta,
+.study-v2-book-hub #bookStudyUnitStrip,
+.study-v2-book-hub .book-study-unit-head,
+.study-v2-book-hub .study-v2-units-head,
+.study-v2-book-hub .study-v2-section-heading{
+  display:none!important;
+}
+
+/* Shared unit selector = the existing Practice unit strip. */
+.study-v2-book-hub .study-v2-units{
+  margin:0 0 18px!important;
+  padding:0 0 16px!important;
+  border-bottom:1px solid #dcebed;
+}
+.study-v2-book-hub .study-v2-unit-strip{
+  display:flex;
+  gap:10px!important;
+  overflow-x:auto;
+  padding:2px 1px 6px!important;
+  scrollbar-width:none;
+}
+.study-v2-book-hub .study-v2-unit-strip::-webkit-scrollbar{display:none}
+.study-v2-book-hub .study-v2-unit{
+  flex:0 0 auto;
+  min-width:76px;
+  min-height:44px;
+  padding:10px 16px!important;
+  border:2px solid var(--arcade-cyan)!important;
+  border-radius:15px!important;
+  background:#fff!important;
+  color:#47666c!important;
+  font-size:.84rem!important;
+  font-weight:900!important;
+}
+.study-v2-book-hub .study-v2-unit:hover,
+.study-v2-book-hub .study-v2-unit:focus-visible{
+  outline:none;
+  background:#eefafb!important;
+}
+.study-v2-book-hub .study-v2-unit.is-current{
+  background:#e8f9fa!important;
+  color:#168e98!important;
+  box-shadow:inset 0 0 0 1px rgba(33,179,190,.08);
+}
+
+.study-v2-book-mode-pane[hidden]{display:none!important}
+.study-v2-book-mode-pane{min-width:0}
+
+/* Strip the legacy nested panel shells. The Book Hub itself is the only visible container. */
+.study-v2-book-hub .study-v2-book-study-panel,
+.study-v2-book-hub .study-v2-book-panel{
+  width:100%!important;
+  min-width:0!important;
+  margin:0!important;
+  padding:0!important;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+}
+.study-v2-book-hub .book-study-unit-picker{display:none!important}
+
+/* Study content starts immediately below the shared units: no legacy line or dead top padding. */
+.study-v2-book-hub .book-study-content{
+  position:relative;
+  margin:0!important;
+  padding:0!important;
+  border:0!important;
+  transition:min-height .24s ease;
+}
+.study-v2-book-hub .book-study-content-top{
+  margin:0 0 16px!important;
+  padding:0!important;
+  border:0!important;
+}
+.study-v2-book-hub .book-study-content-top h3{margin:0!important}
+
+/* Unit-change skeleton: preserves the old height so the page does not jump. */
+.study-v2-book-hub .book-study-content.is-unit-switching{overflow:hidden}
+.study-v2-book-hub .book-study-content.is-unit-switching>*{opacity:0;transition:opacity .12s ease}
+.study-v2-book-hub .book-study-content.is-unit-switching:before{
+  content:"";
+  position:absolute;
+  z-index:4;
+  inset:2px 0 auto 0;
+  height:min(340px,calc(100% - 4px));
+  min-height:220px;
+  border-radius:18px;
+  background:
+    linear-gradient(90deg,rgba(230,239,241,.58) 25%,rgba(246,250,250,.95) 42%,rgba(230,239,241,.58) 62%) 0 0/220% 100%,
+    linear-gradient(#edf3f4 0 0) 0 0/34% 28px no-repeat,
+    linear-gradient(#edf3f4 0 0) 0 52px/25% 48px no-repeat,
+    linear-gradient(#edf3f4 0 0) 28% 52px/25% 48px no-repeat,
+    linear-gradient(#edf3f4 0 0) 56% 52px/25% 48px no-repeat,
+    linear-gradient(#f4f8f8 0 0) 0 124px/48% 92px no-repeat,
+    linear-gradient(#f4f8f8 0 0) 52% 124px/48% 92px no-repeat;
+  animation:bookHubShimmer 1.05s linear infinite;
+}
+.study-v2-book-hub .book-study-content.is-unit-entering{animation:bookHubEnter .24s ease both}
+@keyframes bookHubShimmer{to{background-position:-120% 0,0 0,0 52px,28% 52px,56% 52px,0 124px,52% 124px}}
+@keyframes bookHubEnter{from{opacity:.25;transform:translateY(5px)}to{opacity:1;transform:none}}
+
+/* Larger Study content tabs: Vocabulary / Sentences / Grammar. */
+.study-v2-book-hub .book-study-jump{
+  gap:10px;
+  margin:0 0 24px;
+  padding:0 0 10px;
+  border-bottom:1px solid #dcebed;
+}
+.study-v2-book-hub .book-study-jump button{
+  min-height:50px;
+  padding:12px 18px;
+  border:2px solid #cfecef;
+  border-radius:15px;
+  background:#fff;
+  color:#45676d;
+  font:900 1rem/1 Poppins,sans-serif;
+}
+.study-v2-book-hub .book-study-jump button:after{display:none}
+.study-v2-book-hub .book-study-jump button:hover,
+.study-v2-book-hub .book-study-jump button:focus-visible{
+  border-color:var(--arcade-cyan);
+  background:#f3fcfd;
+  color:#168e98;
+}
+.study-v2-book-hub .book-study-jump button.is-active{
+  border-color:var(--arcade-cyan);
+  background:#eafafb;
+  color:#168e98;
+}
+
+/* Practice skill cards become larger cyan tabs/cards inside the same hub. */
+.study-v2-book-hub .header-skill-mastery{
+  margin:0!important;
+  padding:0!important;
+  border-top:0!important;
+}
+.study-v2-book-hub .header-skill-mastery-head{display:none!important}
+.study-v2-book-hub .header-skill-mastery-grid{
+  grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  gap:12px!important;
+}
+.study-v2-book-hub .header-skill-master{
+  min-height:92px!important;
+  padding:16px!important;
+  border:2px solid var(--arcade-cyan)!important;
+  border-radius:19px!important;
+  background:#fff!important;
+}
+.study-v2-book-hub .header-skill-master:hover,
+.study-v2-book-hub .header-skill-master:focus-visible{
+  outline:none;
+  background:#eefafb!important;
+  box-shadow:0 7px 18px rgba(33,179,190,.08)!important;
+}
+.study-v2-book-hub .header-skill-master-top strong{font-size:1.02rem!important}
+.study-v2-book-hub .header-skill-master-top span{font-size:.92rem!important}
+
+@media(max-width:759px){
+  .study-v2-book-hub{
+    margin-top:28px;
+    padding:18px 16px 22px;
+    border-radius:24px;
+  }
+  .study-v2-book-hub-head{margin-bottom:20px}
+  .study-v2-book-mode-tabs{width:100%;grid-template-columns:1fr 1fr;gap:10px}
+  .study-v2-book-mode-tab{
+    min-height:92px;
+    padding:13px 10px;
+    gap:8px;
+    border-width:3px;
+    border-radius:19px;
+    font-size:1.16rem;
+  }
+  .study-v2-book-mode-tab:before{width:48px;height:48px;flex-basis:48px}
+  .study-v2-book-hub .study-v2-book-tabs{margin-bottom:18px!important}
+  .study-v2-book-hub .study-v2-book-tab{font-size:.84rem!important}
+  .study-v2-book-hub .study-v2-unit{min-width:72px;min-height:46px;font-size:.88rem!important}
+  .study-v2-book-hub .book-study-jump{gap:8px;overflow-x:auto}
+  .study-v2-book-hub .book-study-jump button{min-height:50px;padding:12px 15px;font-size:.95rem}
+  .study-v2-book-hub .header-skill-mastery-grid{grid-template-columns:1fr!important}
+  .study-v2-book-hub .header-skill-master{min-height:86px!important}
+}

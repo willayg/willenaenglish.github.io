@@ -1,0 +1,81 @@
+/* Study V2 round UX: compact practice header and listening affordance. */
+body.study-v2-practice-mode .practice-toolbar{
+  display:grid!important;
+  grid-template-columns:auto minmax(0,1fr) auto!important;
+  align-items:center!important;
+  gap:10px!important;
+  min-height:38px!important;
+  margin:0 0 12px!important;
+  padding:2px 0!important;
+  background:#fff!important;
+  border:0!important;
+  box-shadow:none!important;
+}
+body.study-v2-practice-mode .practice-toolbar>div{display:contents!important}
+body.study-v2-practice-mode .practice-toolbar .eyebrow{display:none!important}
+body.study-v2-practice-mode .practice-toolbar #v2PracticeClose{
+  grid-column:1!important;
+  grid-row:1!important;
+  min-height:34px!important;
+  height:34px!important;
+  padding:0 11px!important;
+  margin:0!important;
+  border-radius:10px!important;
+  font-size:.78rem!important;
+  line-height:1!important;
+}
+body.study-v2-practice-mode .practice-toolbar #v2PracticeTitle{
+  grid-column:2!important;
+  grid-row:1!important;
+  justify-self:center!important;
+  align-self:center!important;
+  margin:0!important;
+  padding:0 8px!important;
+  font-size:clamp(.98rem,2.2vw,1.28rem)!important;
+  line-height:1.05!important;
+  text-align:center!important;
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+}
+body.study-v2-practice-mode .practice-toolbar #practicePerf{
+  grid-column:3!important;
+  grid-row:1!important;
+  justify-self:end!important;
+  align-self:center!important;
+  margin:0!important;
+  min-width:48px!important;
+  font-size:.8rem!important;
+  line-height:1!important;
+  text-align:right!important;
+  color:#6f8190!important;
+  font-weight:800!important;
+}
+body.study-v2-practice-mode #v2PracticePanel{padding-top:6px!important}
+
+/* One beat every 600ms = 100 BPM. Keep nudging until the listen control is touched. */
+body.study-v2-practice-mode .activity-audio:not(.has-played){
+  animation:v2ListenBeat100 .6s ease-in-out infinite!important;
+  transform-origin:center!important;
+}
+@keyframes v2ListenBeat100{
+  0%,58%,100%{transform:translateY(0) scale(1);filter:drop-shadow(0 0 0 rgba(37,184,196,0))}
+  70%{transform:translateY(-2px) scale(1.045);filter:drop-shadow(0 0 7px rgba(37,184,196,.32))}
+  82%{transform:translateY(0) scale(1);filter:drop-shadow(0 0 2px rgba(37,184,196,.12))}
+}
+@media(prefers-reduced-motion:reduce){
+  body.study-v2-practice-mode .activity-audio:not(.has-played){animation:none!important}
+}
+
+/* Fullscreen rounds should use the freed vertical space rather than recreating a tall top band. */
+:fullscreen body.study-v2-practice-mode .dashboard,
+:-webkit-full-screen body.study-v2-practice-mode .dashboard{padding-top:4px!important}
+:fullscreen body.study-v2-practice-mode #v2PracticePanel,
+:-webkit-full-screen body.study-v2-practice-mode #v2PracticePanel{margin-top:0!important}
+
+@media(max-width:560px){
+  body.study-v2-practice-mode .practice-toolbar{min-height:36px!important;gap:7px!important;margin-bottom:10px!important}
+  body.study-v2-practice-mode .practice-toolbar #v2PracticeClose{height:32px!important;min-height:32px!important;padding:0 9px!important;font-size:.72rem!important}
+  body.study-v2-practice-mode .practice-toolbar #v2PracticeTitle{font-size:.96rem!important}
+  body.study-v2-practice-mode .practice-toolbar #practicePerf{font-size:.74rem!important;min-width:42px!important}
+}

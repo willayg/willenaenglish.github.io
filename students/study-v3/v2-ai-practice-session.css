@@ -1,0 +1,182 @@
+.ai-coach-practice-overlay-v2 .ai-coach-question-card{
+  background:#fff;
+  border:1px solid #dce1e2;
+  border-radius:22px;
+  padding:22px;
+  box-shadow:0 8px 25px rgba(35,45,48,.05);
+  color:#30363a;
+}
+.ai-coach-question-context{
+  background:#f3f5f5;
+  border-left:4px solid #25b8c4;
+  border-radius:12px;
+  padding:14px 16px;
+  margin-bottom:18px;
+  line-height:1.6;
+  font-weight:600;
+  color:#4f575b;
+  white-space:pre-line;
+}
+.ai-coach-question-prompt{
+  margin:0 0 20px;
+  font-size:clamp(1.35rem,4vw,2rem);
+  line-height:1.4;
+  color:#30363a;
+}
+.ai-coach-question-choices{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:12px;
+}
+.ai-coach-question-choice{
+  border:2px solid #dce1e2;
+  background:#fff;
+  color:#30363a;
+  border-radius:15px;
+  padding:15px;
+  font-weight:700;
+  cursor:pointer;
+  text-align:left;
+}
+.ai-coach-question-choice.is-selected{
+  border-color:#25b8c4;
+  background:#eef9fa;
+  color:#176f78;
+}
+.ai-coach-question-choice.is-correct{
+  border-color:#43a775;
+  background:#e8f7ef;
+  color:#23704a;
+}
+.ai-coach-question-choice.is-wrong{
+  border-color:#d36c65;
+  background:#fff0ef;
+  color:#a0443c;
+}
+.ai-coach-question-check{
+  display:block;
+  margin:18px 0 0 auto;
+  border:0;
+  border-radius:14px;
+  background:#25b8c4;
+  color:#fff;
+  padding:13px 20px;
+  font-weight:800;
+  cursor:pointer;
+}
+.ai-coach-question-check:disabled{opacity:.35;}
+.ai-coach-question-feedback{
+  margin-top:16px;
+  border-radius:13px;
+  padding:13px 15px;
+  font-weight:800;
+}
+.ai-coach-question-feedback.is-correct{background:#e8f7ef;color:#23704a;}
+.ai-coach-question-feedback.is-wrong{background:#fff0ef;color:#a0443c;}
+
+/* Sentence unscramble / token-order activities */
+.ai-coach-token-builder{display:grid;gap:10px;margin-top:2px;}
+.ai-coach-token-label{
+  font-size:.82rem;
+  font-weight:800;
+  color:#6f777b;
+  letter-spacing:.01em;
+}
+.ai-coach-token-selected,
+.ai-coach-token-pool{
+  display:flex;
+  flex-wrap:wrap;
+  gap:9px;
+  align-content:flex-start;
+  min-height:58px;
+  padding:11px;
+  border-radius:15px;
+}
+.ai-coach-token-selected{
+  background:#f3f5f5;
+  border:2px dashed #cfd6d8;
+}
+.ai-coach-token-selected.is-empty::before{
+  content:'…';
+  color:#9aa1a4;
+  font-weight:800;
+  align-self:center;
+}
+.ai-coach-token-selected.is-correct{
+  border-color:#43a775;
+  background:#e8f7ef;
+}
+.ai-coach-token-selected.is-wrong{
+  border-color:#d36c65;
+  background:#fff0ef;
+}
+.ai-coach-token-pool{
+  background:#fff;
+  border:1px solid #dce1e2;
+}
+.ai-coach-token{
+  appearance:none;
+  border:2px solid #25b8c4;
+  background:#fff;
+  color:#30363a;
+  border-radius:12px;
+  padding:10px 13px;
+  font:800 1rem/1.2 Poppins,sans-serif;
+  cursor:pointer;
+  box-shadow:0 2px 5px rgba(35,45,48,.04);
+}
+.ai-coach-token.is-selected{
+  background:#25b8c4;
+  color:#fff;
+}
+.ai-coach-token:disabled{cursor:default;}
+
+/* Coach activity shell: keep the question close to the top of the screen. */
+.ai-coach-practice-overlay{
+  padding-top:max(8px,env(safe-area-inset-top));
+}
+.ai-coach-practice-shell{gap:8px;}
+.ai-coach-practice-head{
+  align-items:center;
+  gap:9px;
+  padding:3px 2px 2px;
+}
+.ai-coach-practice-back{
+  width:38px;
+  height:38px;
+  border-radius:12px;
+  font-size:1.08rem;
+}
+.ai-coach-practice-title h2{
+  font-size:1.08rem;
+  line-height:1.15;
+}
+.ai-coach-practice-progress{
+  margin-top:1px;
+  font-size:.78rem;
+  line-height:1.15;
+}
+.ai-coach-practice-card{
+  padding:14px;
+}
+
+@media(max-width:560px){
+  .ai-coach-practice-overlay-v2 .ai-coach-question-card{padding:18px 14px;border-radius:18px;}
+  .ai-coach-question-choices{grid-template-columns:1fr;}
+  .ai-coach-question-prompt{font-size:1.35rem;}
+  .ai-coach-question-choice{padding:15px 14px;font-size:1.05rem;line-height:1.35;}
+  .ai-coach-question-context{font-size:1rem;}
+  .ai-coach-question-check{width:100%;font-size:1rem;}
+  .ai-coach-token-selected,.ai-coach-token-pool{gap:8px;padding:10px;min-height:56px;}
+  .ai-coach-token{padding:11px 12px;font-size:1rem;}
+
+  .ai-coach-practice-overlay{
+    padding:max(6px,env(safe-area-inset-top)) 7px max(12px,env(safe-area-inset-bottom));
+  }
+  .ai-coach-practice-shell{gap:7px;}
+  .ai-coach-practice-head{gap:8px;padding:2px 1px;}
+  .ai-coach-practice-back{width:36px;height:36px;border-radius:11px;}
+  .ai-coach-practice-title h2{font-size:1rem;line-height:1.12;}
+  .ai-coach-practice-progress{font-size:.75rem;margin-top:0;}
+  .ai-coach-practice-card{padding:9px 7px 11px;border-radius:17px;}
+}

@@ -1,0 +1,94 @@
+/* Larger touch sizing for Study V2 tablets and unfolded Fold layouts.
+   Phones keep their dedicated mobile sizing; this tier also catches wide/short Fold landscape viewports. */
+@media (min-width:620px) and (max-width:1400px),
+       (orientation:landscape) and (min-width:560px) and (max-width:1400px) and (min-height:500px){
+  /* Give the whole practice surface permission to use the available tablet width. */
+  #v2PracticePanel{padding:clamp(22px,3.2vw,42px)!important}
+  #v2ActivityRoot{width:min(1080px,100%)!important;margin:0 auto!important}
+  .activity-card{padding:clamp(26px,3.5vw,44px)!important;border-radius:28px!important}
+  .activity-prompt{font-size:clamp(1.42rem,2.3vw,2rem)!important;line-height:1.3!important;margin-bottom:26px!important}
+  .activity-context{font-size:1.08rem!important;line-height:1.55!important;margin-bottom:20px!important}
+
+  /* Top-level launchers */
+  .study-v2-top-actions{gap:22px 24px!important;padding:28px!important}
+  .study-v2-top-actions>.study-v2-action-card,
+  #dailyWorkoutCard.study-v2-daily-primary{min-height:126px!important;padding:23px 27px!important;gap:23px!important;border-radius:26px!important}
+  .study-v2-action-card>strong,
+  #dailyWorkoutCard.study-v2-daily-primary strong{font-size:1.28rem!important}
+  .study-v2-action-card>small{font-size:.92rem!important}
+
+  /* Book hub navigation and study/practice selectors */
+  .study-v2-book-hub{padding:32px!important}
+  .study-v2-book-mode-tabs{gap:12px!important;padding:8px!important}
+  .study-v2-book-mode-tab{min-height:62px!important;padding:14px 28px!important;font-size:1.08rem!important;border-radius:16px!important}
+  .study-v2-book-hub .study-v2-book-tabs{gap:34px!important}
+  .study-v2-book-hub .study-v2-book-tab{min-height:56px!important;padding:12px 7px 18px!important;font-size:1.08rem!important}
+  .study-v2-book-hub .study-v2-unit-strip{gap:17px!important;padding:4px 2px 13px!important}
+  .study-v2-book-hub .study-v2-unit{min-width:98px!important;min-height:60px!important;padding:14px 22px!important;font-size:1.04rem!important;border-radius:18px!important}
+  .study-v2-book-hub .book-study-jump{gap:17px!important;margin-bottom:28px!important}
+  .study-v2-book-hub .book-study-jump button{min-height:64px!important;padding:16px 25px!important;font-size:1.13rem!important;border-radius:18px!important}
+  .study-v2-book-hub .header-skill-mastery-grid{gap:19px!important}
+  .study-v2-book-hub .header-skill-master{min-height:116px!important;padding:22px!important;border-radius:22px!important}
+
+  /* AI Coach */
+  .study-v2-ai-chat{gap:23px!important;padding:26px 28px 32px!important}
+  .study-v2-ai-chat-prompts{gap:16px!important}
+  .study-v2-ai-prompt{min-height:60px!important;padding:15px 21px!important;font-size:1.08rem!important}
+  .study-v2-ai-chat-cta{min-height:62px!important;padding:16px 24px!important;font-size:1.12rem!important}
+  .ai-coach-practice-back{width:58px!important;height:58px!important;border-radius:17px!important}
+  .ai-coach-practice-next{min-height:66px!important;padding:18px 26px!important;font-size:1.14rem!important}
+
+  /* Shared practice controls */
+  #v2PracticeClose,
+  .ghost-button,
+  .primary-button,
+  .secondary-button{min-height:58px!important;padding:14px 23px!important;font-size:1.04rem!important}
+  .practice-toolbar{gap:18px!important;margin-bottom:28px!important}
+  .activity-actions{gap:18px!important;margin-top:26px!important}
+  .activity-check,
+  .activity-next{min-height:68px!important;padding:17px 31px!important;font-size:1.18rem!important;border-radius:19px!important}
+
+  /* Multiple choice gets genuinely tablet-sized cards. */
+  .activity-choices{gap:18px!important;grid-gap:18px!important}
+  .activity-choice{min-height:72px!important;padding:18px 24px!important;font-size:1.14rem!important;line-height:1.35!important;border-radius:20px!important}
+
+  /* Sentence builder / token ordering: use the generous empty space. */
+  .activity-token-answer{min-height:112px!important;padding:22px!important;gap:17px!important;border-radius:22px!important}
+  .activity-token-bank{min-height:130px!important;padding:24px!important;gap:17px!important;border-radius:22px!important}
+  .activity-token{min-height:66px!important;padding:16px 23px!important;font-size:1.14rem!important;line-height:1.2!important;border-radius:18px!important}
+  .activity-token.is-chosen{min-height:68px!important}
+
+  /* Normal spelling and chunk spelling */
+  .activity-letter-slots{gap:15px!important;margin:10px 0 22px!important}
+  .activity-letter-word{gap:12px!important}
+  .activity-letter-slot{min-width:58px!important;width:58px!important;height:66px!important;min-height:66px!important;font-size:1.35rem!important;border-radius:15px!important}
+  .activity-letter-bank{min-height:124px!important;padding:22px!important;gap:17px!important;border-radius:22px!important}
+  .activity-letter-tile{min-height:64px!important;min-width:58px!important;padding:15px 20px!important;font-size:1.16rem!important;border-radius:17px!important}
+  .activity-spelling-mode{min-height:46px!important;padding:0 17px!important;font-size:.84rem!important}
+
+  /* Chunk mode is already intentionally larger; give it another step up on tablets/Fold. */
+  .activity-letter-order.is-chunk-mode .activity-letter-slots{min-height:136px!important;padding:26px 22px!important;gap:18px!important}
+  .activity-letter-order.is-chunk-mode .activity-letter-word{gap:18px!important}
+  .activity-letter-order.is-chunk-mode .activity-chunk-slot{height:82px!important;min-height:82px!important;padding:0 22px!important;font-size:clamp(1.45rem,2.6vw,1.9rem)!important}
+  .activity-letter-order.is-chunk-mode .activity-letter-bank{min-height:150px!important;padding:28px 22px!important;gap:18px!important}
+  .activity-letter-order.is-chunk-mode .activity-letter-tile{height:84px!important;min-height:84px!important;padding:0 23px!important;font-size:clamp(1.43rem,2.6vw,1.86rem)!important}
+
+  .activity-audio{min-height:62px!important;padding:14px 22px!important;font-size:1.06rem!important}
+
+  /* Small utility controls still need comfortable touch targets. */
+  .study-v2-footer button,
+  #languageBtn{min-height:54px!important;padding:12px 20px!important;font-size:.98rem!important}
+}
+
+/* Fold-open landscape is usually wide but vertically short. Keep the controls large even when short-landscape CSS also applies. */
+@media (orientation:landscape) and (min-width:700px) and (max-height:720px){
+  #v2PracticePanel{padding:18px 28px!important}
+  #v2ActivityRoot{width:min(1120px,100%)!important}
+  .activity-card{padding:22px 32px!important}
+  .activity-prompt{font-size:1.55rem!important;margin-bottom:18px!important}
+  .activity-token-answer{min-height:92px!important;padding:18px 22px!important}
+  .activity-token-bank{min-height:104px!important;padding:20px 22px!important}
+  .activity-token{min-height:62px!important;padding:14px 22px!important;font-size:1.12rem!important}
+  .activity-choice{min-height:66px!important;padding:15px 22px!important;font-size:1.1rem!important}
+  .activity-check,.activity-next{min-height:64px!important;padding:15px 29px!important;font-size:1.14rem!important}
+}

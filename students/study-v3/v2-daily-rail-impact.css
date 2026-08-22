@@ -1,0 +1,274 @@
+/* Wide-screen visual tuning for Daily Rail Hero. Portrait/mobile remains untouched. */
+@media (min-width:760px), (orientation:landscape) and (min-width:600px) and (max-height:700px){
+  .study-v2-top-actions{
+    grid-template-columns:300px repeat(3,minmax(0,1fr))!important;
+    grid-template-rows:minmax(200px,auto) 92px!important;
+  }
+
+  /* Daily Rail owns the progress graph size whenever the Rail layout is active. */
+  #dailyWorkoutCard.study-v2-daily-primary{
+    min-height:304px!important;
+    padding:30px 26px 24px!important;
+  }
+  .daily-rail-today{
+    font-size:.9rem!important;
+    margin-bottom:13px!important;
+    letter-spacing:.15em!important;
+  }
+  #dailyWorkoutCard.study-v2-daily-primary strong{
+    font-size:2.42rem!important;
+    line-height:1.02!important;
+    letter-spacing:-.045em!important;
+  }
+  #dailyWorkoutCard .daily-streak-status{display:none!important}
+  #dailyWorkoutCard.study-v2-daily-primary .progress-ring{
+    width:210px!important;
+    height:210px!important;
+    min-width:210px!important;
+    min-height:210px!important;
+    max-width:210px!important;
+    max-height:210px!important;
+    aspect-ratio:1 / 1!important;
+    flex:0 0 210px!important;
+    flex-basis:210px!important;
+    flex-shrink:0!important;
+    align-self:center!important;
+    box-sizing:border-box!important;
+    margin:24px auto 0!important;
+    border-radius:50%!important;
+    box-shadow:0 0 0 6px rgba(255,111,176,.07)!important;
+  }
+  #dailyWorkoutCard.study-v2-daily-primary .progress-ring:after{inset:22px!important}
+  #dailyWorkoutCard.study-v2-daily-primary .progress-ring span{
+    font-size:1.68rem!important;
+    letter-spacing:-.025em!important;
+  }
+
+  /* Streak badge pinned to the far right, using the mobile Spark SVG treatment. */
+  .daily-rail-main{
+    position:relative!important;
+    display:block!important;
+    padding:32px 230px 18px 32px!important;
+  }
+  .daily-rail-headline{
+    display:block!important;
+    margin:0!important;
+    font-size:clamp(1.9rem,3vw,2.5rem)!important;
+    line-height:1.06!important;
+    letter-spacing:-.04em!important;
+  }
+  .daily-rail-sub{
+    display:block!important;
+    margin:12px 0 0!important;
+    font-size:1.08rem!important;
+    line-height:1.38!important;
+  }
+  .daily-rail-streak{
+    position:absolute!important;
+    top:32px!important;
+    right:6px!important;
+    display:inline-flex!important;
+    align-items:center!important;
+    justify-content:center!important;
+    gap:7px!important;
+    margin:0!important;
+    padding:8px 11px!important;
+    border:2px solid #ffc6df!important;
+    border-radius:999px!important;
+    background:#fff!important;
+    color:#d44e8d!important;
+    font-size:.9rem!important;
+    line-height:1!important;
+    font-weight:900!important;
+    white-space:nowrap!important;
+    box-shadow:0 6px 15px rgba(255,111,176,.09)!important;
+  }
+  .daily-rail-streak svg{
+    width:25px!important;
+    height:25px!important;
+    flex:0 0 25px!important;
+    fill:none!important;
+    stroke:currentColor!important;
+    stroke-width:2.2!important;
+    stroke-linecap:round!important;
+    stroke-linejoin:round!important;
+  }
+  .daily-rail-progress{
+    display:grid!important;
+    grid-template-columns:repeat(5,minmax(0,1fr))!important;
+    width:calc(100% + 212px)!important;
+    margin-top:25px!important;
+    gap:10px!important;
+  }
+  .daily-rail-segment{height:12px!important}
+
+  .study-v2-top-actions>.study-v2-action-card:not(#dailyWorkoutCard){
+    min-height:76px!important;
+    padding:12px 16px!important;
+  }
+  .study-v2-top-actions>.study-v2-action-card:not(#dailyWorkoutCard)>strong{font-size:1.02rem!important}
+
+  .study-v2-book-title-wrap{
+    width:100%!important;
+    max-width:100%!important;
+    min-width:0!important;
+    overflow:hidden!important;
+  }
+  .study-v2-book-title-wrap #bookTitle{
+    display:block!important;
+    width:100%!important;
+    max-width:100%!important;
+    min-width:0!important;
+    margin-left:auto!important;
+    margin-right:auto!important;
+    padding-left:0!important;
+    padding-right:0!important;
+    white-space:nowrap!important;
+    overflow:visible!important;
+    text-overflow:clip!important;
+    line-height:1.04!important;
+    font-size:clamp(1.65rem,3.75vw,3.4rem)!important;
+  }
+}
+
+/* Tablet geometry only; ring sizing remains owned by the Rail rule above. */
+@media (min-width:760px) and (max-width:1024px){
+  .study-v2-top-actions{
+    grid-template-columns:270px repeat(3,minmax(0,1fr))!important;
+    grid-template-rows:minmax(188px,auto) 82px!important;
+  }
+  #dailyWorkoutCard.study-v2-daily-primary{
+    min-height:282px!important;
+    padding:27px 22px 21px!important;
+  }
+  .daily-rail-today{font-size:.84rem!important}
+  #dailyWorkoutCard.study-v2-daily-primary strong{font-size:2.12rem!important}
+  .daily-rail-main{padding:28px 205px 15px 25px!important}
+  .daily-rail-headline{font-size:1.82rem!important}
+  .daily-rail-sub{font-size:.98rem!important}
+  .daily-rail-streak{top:28px!important;right:4px!important;font-size:.86rem!important;padding:8px 10px!important}
+  .daily-rail-progress{width:calc(100% + 187px)!important;margin-top:21px!important}
+  .daily-rail-segment{height:10px!important}
+  .study-v2-book-title-wrap #bookTitle{font-size:clamp(1.55rem,3.8vw,2.65rem)!important}
+}
+
+/* Landscape phones keep their compact Rail size. */
+@media (orientation:landscape) and (min-width:600px) and (max-width:759px) and (max-height:700px){
+  .study-v2-top-actions{
+    grid-template-columns:205px repeat(3,minmax(0,1fr))!important;
+    grid-template-rows:minmax(122px,auto) 60px!important;
+  }
+  #dailyWorkoutCard.study-v2-daily-primary{min-height:190px!important;padding:16px 15px 13px!important}
+  .daily-rail-today{font-size:.64rem!important}
+  #dailyWorkoutCard.study-v2-daily-primary strong{font-size:1.34rem!important}
+  #dailyWorkoutCard.study-v2-daily-primary .progress-ring{
+    width:96px!important;
+    height:96px!important;
+    min-width:96px!important;
+    min-height:96px!important;
+    max-width:96px!important;
+    max-height:96px!important;
+    aspect-ratio:1 / 1!important;
+    flex:0 0 96px!important;
+    flex-basis:96px!important;
+    flex-shrink:0!important;
+    align-self:center!important;
+    margin-top:12px!important;
+  }
+  #dailyWorkoutCard.study-v2-daily-primary .progress-ring:after{inset:10px!important}
+  #dailyWorkoutCard.study-v2-daily-primary .progress-ring span{font-size:.9rem!important}
+  .daily-rail-main{padding:15px 118px 8px 14px!important}
+  .daily-rail-headline{font-size:1.16rem!important}
+  .daily-rail-sub{font-size:.7rem!important;margin-top:6px!important}
+  .daily-rail-streak{top:15px!important;right:4px!important;font-size:.68rem!important;padding:6px 8px!important}
+  .daily-rail-streak svg{width:20px!important;height:20px!important;flex-basis:20px!important}
+  .daily-rail-progress{width:calc(100% + 104px)!important;margin-top:10px!important;gap:5px!important}
+  .daily-rail-segment{height:6px!important}
+  .study-v2-book-title-wrap #bookTitle{font-size:clamp(1.35rem,3.9vw,2rem)!important}
+}
+
+/* Final Daily ring owner. Only the graph is rebuilt here; card/rail layout remains untouched. */
+@media (min-width:760px){
+  .book-hero.daily-inline #dailyWorkoutCard.study-v2-daily-primary .progress-ring{
+    position:relative!important;
+    display:grid!important;
+    place-items:center!important;
+    width:155px!important;
+    height:155px!important;
+    min-width:155px!important;
+    min-height:155px!important;
+    max-width:155px!important;
+    max-height:155px!important;
+    aspect-ratio:1 / 1!important;
+    flex:0 0 155px!important;
+    flex-basis:155px!important;
+    flex-shrink:0!important;
+    align-self:center!important;
+    box-sizing:border-box!important;
+    margin:22px auto 0!important;
+    border-radius:50%!important;
+    background:conic-gradient(var(--arcade-pink) 0 calc(var(--progress,0)*1%),#f1d5e2 calc(var(--progress,0)*1%) 100%)!important;
+    box-shadow:0 0 0 5px #fff,0 0 0 8px rgba(255,111,176,.32),0 10px 22px rgba(36,77,83,.12)!important;
+  }
+  .book-hero.daily-inline #dailyWorkoutCard.study-v2-daily-primary:hover .progress-ring{
+    box-shadow:0 0 0 5px #fff,0 0 0 9px rgba(255,111,176,.42),0 12px 24px rgba(36,77,83,.15)!important;
+  }
+  .book-hero.daily-inline #dailyWorkoutCard.study-v2-daily-primary .progress-ring:after{
+    content:""!important;
+    position:absolute!important;
+    inset:22px!important;
+    border-radius:50%!important;
+    background:#fff!important;
+  }
+  .book-hero.daily-inline #dailyWorkoutCard.study-v2-daily-primary .progress-ring:before{display:none!important}
+  .book-hero.daily-inline #dailyWorkoutCard.study-v2-daily-primary .progress-ring span{
+    position:relative!important;
+    z-index:3!important;
+    display:grid!important;
+    place-items:center!important;
+    width:100%!important;
+    height:100%!important;
+    clip:auto!important;
+    clip-path:none!important;
+    overflow:visible!important;
+    white-space:normal!important;
+    color:var(--arcade-pink)!important;
+    font-size:1.26rem!important;
+    line-height:1!important;
+    font-weight:900!important;
+  }
+}
+
+@media (max-width:759px){
+  .book-hero.daily-inline #dailyWorkoutCard.study-v2-daily-primary .progress-ring{
+    width:190px!important;
+    height:190px!important;
+    min-width:190px!important;
+    min-height:190px!important;
+    max-width:190px!important;
+    max-height:190px!important;
+    aspect-ratio:1 / 1!important;
+    flex:0 0 190px!important;
+    flex-basis:190px!important;
+    box-sizing:border-box!important;
+    top:110px!important;
+    border-radius:50%!important;
+    background:conic-gradient(var(--arcade-pink) 0 calc(var(--progress,0)*1%),#f1d5e2 calc(var(--progress,0)*1%) 100%)!important;
+    box-shadow:0 0 0 5px #fff,0 0 0 8px rgba(255,111,176,.32),0 12px 26px rgba(36,77,83,.12)!important;
+  }
+  .book-hero.daily-inline #dailyWorkoutCard.study-v2-daily-primary:active .progress-ring{
+    box-shadow:0 0 0 5px #fff,0 0 0 9px rgba(255,111,176,.42),0 8px 18px rgba(36,77,83,.13)!important;
+  }
+  .book-hero.daily-inline #dailyWorkoutCard.study-v2-daily-primary .progress-ring:after{
+    content:""!important;
+    position:absolute!important;
+    inset:24px!important;
+    border-radius:50%!important;
+    background:#fff!important;
+  }
+  .book-hero.daily-inline #dailyWorkoutCard.study-v2-daily-primary .progress-ring:before{display:none!important}
+  .book-hero.daily-inline #dailyWorkoutCard.study-v2-daily-primary .progress-ring span{
+    font-size:1.48rem!important;
+    color:var(--arcade-pink)!important;
+  }
+}

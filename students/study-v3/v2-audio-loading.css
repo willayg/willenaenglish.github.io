@@ -1,0 +1,157 @@
+#v2ActivityRoot .activity-audio,
+#aiCoachActivityRoot .activity-audio{
+  position:relative;
+  overflow:visible!important;
+}
+
+/* Canonical audio icon: use the exact same headphones.svg asset as Book Study. */
+#v2ActivityRoot .activity-audio .activity-audio-icon,
+#aiCoachActivityRoot .activity-audio .activity-audio-icon{
+  display:none!important;
+}
+#v2ActivityRoot .activity-audio::before,
+#aiCoachActivityRoot .activity-audio::before{
+  content:""!important;
+  display:block!important;
+  width:28px!important;
+  height:28px!important;
+  margin:auto!important;
+  background:url("./headphones.svg?v=20260816-1") center/contain no-repeat!important;
+  pointer-events:none!important;
+}
+#v2ActivityRoot .activity-audio::after,
+#aiCoachActivityRoot .activity-audio::after{
+  content:none!important;
+  display:none!important;
+}
+
+/* Spelling listen control must remain a true circle at every breakpoint. */
+#v2ActivityRoot .activity-spelling-listen,
+#aiCoachActivityRoot .activity-spelling-listen,
+#v2ActivityRoot .v2-tablet-spelling-listen,
+#aiCoachActivityRoot .v2-tablet-spelling-listen{
+  box-sizing:border-box!important;
+  aspect-ratio:1 / 1!important;
+  border-radius:50%!important;
+  flex:none!important;
+  flex-shrink:0!important;
+}
+
+#v2ActivityRoot .v2-audio-sparkles,
+#aiCoachActivityRoot .v2-audio-sparkles{
+  position:absolute;
+  left:50%;
+  top:50%;
+  width:calc(100% + 26px);
+  height:calc(100% + 26px);
+  transform:translate(-50%,-50%);
+  pointer-events:none;
+  z-index:4;
+}
+#v2ActivityRoot .v2-audio-sparkle,
+#aiCoachActivityRoot .v2-audio-sparkle{
+  position:absolute;
+  display:block;
+  color:#ffe96a;
+  font:900 10px/1 sans-serif;
+  text-shadow:0 0 4px rgba(255,233,106,.7);
+  animation:v2AudioSparkle 1.15s ease-in-out infinite;
+  transform-origin:center;
+}
+#v2ActivityRoot .v2-audio-sparkle:nth-child(even),
+#aiCoachActivityRoot .v2-audio-sparkle:nth-child(even){
+  color:#ffc37a;
+  text-shadow:0 0 4px rgba(255,195,122,.68);
+}
+#v2ActivityRoot .v2-audio-sparkle-1,#aiCoachActivityRoot .v2-audio-sparkle-1{left:8%;top:12%;font-size:13px;animation-delay:0s}
+#v2ActivityRoot .v2-audio-sparkle-2,#aiCoachActivityRoot .v2-audio-sparkle-2{right:8%;top:10%;animation-delay:-.17s}
+#v2ActivityRoot .v2-audio-sparkle-3,#aiCoachActivityRoot .v2-audio-sparkle-3{right:-1%;top:44%;font-size:12px;animation-delay:-.34s}
+#v2ActivityRoot .v2-audio-sparkle-4,#aiCoachActivityRoot .v2-audio-sparkle-4{right:12%;bottom:7%;animation-delay:-.51s}
+#v2ActivityRoot .v2-audio-sparkle-5,#aiCoachActivityRoot .v2-audio-sparkle-5{left:39%;bottom:-2%;font-size:12px;animation-delay:-.68s}
+#v2ActivityRoot .v2-audio-sparkle-6,#aiCoachActivityRoot .v2-audio-sparkle-6{left:8%;bottom:9%;animation-delay:-.85s}
+#v2ActivityRoot .v2-audio-sparkle-7,#aiCoachActivityRoot .v2-audio-sparkle-7{left:-2%;top:46%;font-size:11px;animation-delay:-1.02s}
+#v2ActivityRoot .v2-audio-sparkle-8,#aiCoachActivityRoot .v2-audio-sparkle-8{left:30%;top:-3%;animation-delay:-.28s}
+#v2ActivityRoot .v2-audio-sparkle-9,#aiCoachActivityRoot .v2-audio-sparkle-9{right:30%;bottom:0;font-size:9px;animation-delay:-.61s}
+#v2ActivityRoot .v2-audio-sparkle-10,#aiCoachActivityRoot .v2-audio-sparkle-10{right:-1%;bottom:27%;font-size:9px;animation-delay:-.94s}
+
+#v2ActivityRoot .activity-audio.v2-audio-sparkles-used .v2-audio-sparkles,
+#aiCoachActivityRoot .activity-audio.v2-audio-sparkles-used .v2-audio-sparkles{
+  display:none!important;
+}
+
+#v2ActivityRoot .v2-audio-loading-message,
+#aiCoachActivityRoot .v2-audio-loading-message{
+  display:block;
+  margin-top:6px;
+  color:#7a8b90;
+  font:700 .76rem/1.2 Poppins,sans-serif;
+  letter-spacing:.01em;
+  text-align:center;
+}
+#v2ActivityRoot .v2-audio-loading-message[hidden],
+#aiCoachActivityRoot .v2-audio-loading-message[hidden]{display:none!important}
+
+@keyframes v2AudioSparkle{
+  0%,100%{transform:scale(.58) rotate(-5deg);opacity:.28}
+  42%{transform:scale(1.1) rotate(6deg);opacity:1}
+  70%{transform:scale(.84);opacity:.68}
+}
+
+@media (min-width:600px) and (max-width:1100px){
+  #v2ActivityRoot .v2-tablet-spelling-listen-wrap .v2-audio-loading-message,
+  #aiCoachActivityRoot .v2-tablet-spelling-listen-wrap .v2-audio-loading-message{
+    position:absolute;
+    top:100%;
+    left:50%;
+    transform:translateX(-50%);
+    margin-top:3px;
+    white-space:nowrap;
+    font-size:.7rem;
+  }
+  #v2ActivityRoot .activity-card.v2-tablet-spelling .activity-spelling-listen,
+  #aiCoachActivityRoot .activity-card.v2-tablet-spelling .activity-spelling-listen,
+  #v2ActivityRoot .activity-card.v2-tablet-spelling .v2-tablet-spelling-listen,
+  #aiCoachActivityRoot .activity-card.v2-tablet-spelling .v2-tablet-spelling-listen{
+    width:58px!important;
+    height:58px!important;
+    min-width:58px!important;
+    min-height:58px!important;
+    max-width:58px!important;
+    max-height:58px!important;
+    flex-basis:58px!important;
+    padding:0!important;
+    border-radius:50%!important;
+  }
+  #v2ActivityRoot .activity-card.v2-tablet-spelling .activity-audio::before,
+  #aiCoachActivityRoot .activity-card.v2-tablet-spelling .activity-audio::before{
+    width:28px!important;
+    height:28px!important;
+  }
+  #v2ActivityRoot .activity-card:has(.activity-audio):not(:has(.activity-letter-order)) .activity-audio::before,
+  #aiCoachActivityRoot .activity-card:has(.activity-audio):not(:has(.activity-letter-order)) .activity-audio::before{
+    width:32px!important;
+    height:32px!important;
+  }
+}
+
+@media(prefers-reduced-motion:reduce){
+  #v2ActivityRoot .v2-audio-sparkles,
+  #aiCoachActivityRoot .v2-audio-sparkles{display:none!important}
+}
+
+/* Standard listening: use the Book Study headphones asset as the button background itself so it is mathematically centered. */
+#v2ActivityRoot .activity-card:not(:has(.activity-letter-order)) .activity-audio,
+#aiCoachActivityRoot .activity-card:not(:has(.activity-letter-order)) .activity-audio{
+  animation:none!important;
+  transform:none!important;
+  display:block!important;
+  background-image:url("./headphones.svg?v=20260816-1")!important;
+  background-repeat:no-repeat!important;
+  background-position:50% 50%!important;
+  background-size:32px 32px!important;
+}
+#v2ActivityRoot .activity-card:not(:has(.activity-letter-order)) .activity-audio::before,
+#aiCoachActivityRoot .activity-card:not(:has(.activity-letter-order)) .activity-audio::before{
+  content:none!important;
+  display:none!important;
+}

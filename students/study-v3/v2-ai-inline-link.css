@@ -1,0 +1,49 @@
+.study-v2-ai-inline-link{
+  display:flex;
+  align-items:center;
+  width:max-content;
+  max-width:100%;
+  margin:14px 0 0;
+  padding:9px 13px;
+  border:2px solid #25b8c4;
+  border-radius:12px;
+  background:#eefafb;
+  color:#176f78;
+  font:800 1rem/1.3 Poppins,sans-serif;
+  text-align:left;
+  cursor:pointer;
+  text-decoration:none;
+  box-shadow:0 3px 0 rgba(23,111,120,.14);
+  transition:transform .12s ease,box-shadow .12s ease,background .12s ease;
+}
+.study-v2-ai-inline-link:hover,
+.study-v2-ai-inline-link:focus-visible{
+  outline:none;
+  background:#dcf6f7;
+  text-decoration:none;
+}
+.study-v2-ai-inline-link:active{
+  transform:translateY(2px);
+  box-shadow:0 1px 0 rgba(23,111,120,.14);
+}
+.study-v2-ai-shell .study-v2-ai-inline-link{
+  border-color:#b8e0c5;
+  background:#b8e0c5;
+  color:#253033;
+  box-shadow:0 3px 0 rgba(0,0,0,.16);
+}
+.study-v2-ai-shell .study-v2-ai-inline-link:hover,
+.study-v2-ai-shell .study-v2-ai-inline-link:focus-visible{
+  background:#d0ecd8;
+  color:#20272a;
+}
+#aiChatCta{display:none;}
+@media(max-width:560px){
+  .study-v2-ai-inline-link{
+    min-height:46px;
+    padding:11px 14px;
+    font-size:1.06rem;
+    line-height:1.35;
+    margin-top:14px;
+  }
+}

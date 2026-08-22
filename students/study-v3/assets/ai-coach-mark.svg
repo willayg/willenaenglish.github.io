@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="8 0 144 144" role="img" aria-labelledby="title desc">
+  <title id="title">AI Coach</title>
+  <desc id="desc">A friendly geometric coach robot wearing a headset with a small spark.</desc>
+  <g fill="none" stroke="#86d8d7" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M53 42c0-13 12-24 27-24s27 11 27 24"/>
+    <rect x="38" y="43" width="84" height="78" rx="30" fill="#173f45" stroke="#9fe3df"/>
+    <path d="M38 74H27c-7 0-12 5-12 12v11c0 7 5 12 12 12h11" fill="#244e54"/>
+    <path d="M122 74h11c7 0 12 5 12 12v11c0 7-5 12-12 12h-11" fill="#244e54"/>
+    <path d="M145 98c0 18-11 30-28 34"/>
+    <path d="M116 132h-13"/>
+    <circle cx="62" cy="78" r="6" fill="#d9fffb" stroke="none"/>
+    <circle cx="98" cy="78" r="6" fill="#d9fffb" stroke="none"/>
+    <path d="M59 101c7 7 15 10 21 10s14-3 21-10"/>
+    <path d="M80 18V8"/>
+    <circle cx="80" cy="8" r="4" fill="#f6c56f" stroke="none"/>
+  </g>
+  <g fill="#f6c56f">
+    <path d="M130 27l4 10 10 4-10 4-4 10-4-10-10-4 10-4 4-10z"/>
+    <path d="M24 32l2.5 6.5L33 41l-6.5 2.5L24 50l-2.5-6.5L15 41l6.5-2.5L24 32z" opacity=".8"/>
+  </g>
+</svg>

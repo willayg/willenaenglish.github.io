@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<title>Willena Study V2</title>
+<link rel="icon" href="/Assets/Images/Logo.png?v=20260730-3">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/students/study/study.css?v=20260808-7">
+<link rel="stylesheet" href="/students/study/study-overrides.css?v=20260808-1">
+<link rel="stylesheet" href="/students/study/spelling.css?v=20260809-2">
+<link rel="stylesheet" href="/students/study/conversation-order.css?v=20260809-conversationonly2">
+<link rel="stylesheet" href="/students/study/study-listening.css?v=20260822-audiocenter1">
+<link rel="stylesheet" href="/students/study/study-coach.css?v=20260810-mobilelang1">
+<link rel="stylesheet" href="./v2.css?v=20260814-daily1">
+<link rel="stylesheet" href="./v2-top-layout.css?v=20260820-heroclean2">
+<link rel="stylesheet" href="./v2-hero-icon-cards.css?v=20260821-stack1">
+<link rel="stylesheet" href="./v2-short-landscape.css?v=20260822-listencalm2">
+<link rel="stylesheet" href="./v2-round-ux.css?v=20260814-roundux1">
+<link rel="stylesheet" href="./v2-background.css?v=20260817-railrestore1">
+<link rel="stylesheet" href="./v2-daily-journey.css?v=20260820-directhero1">
+<link rel="stylesheet" href="./v2-daily-spark.css?v=20260816-heroclean1">
+<link rel="stylesheet" href="./v2-daily-rail-impact.css?v=20260817-ring155-3">
+<link rel="stylesheet" href="./v2-study-sections.css?v=20260817-shell2">
+<link rel="stylesheet" href="./v2-book-study.css?v=20260816-bookcontent9">
+<link rel="stylesheet" href="./v2-book-hub.css?v=20260817-bookhub3">
+<link rel="stylesheet" href="./v2-grammar-builder.css?v=20260816-builder4">
+<link rel="stylesheet" href="./v2-ai-chat.css?v=20260820-launchpink1">
+<link rel="stylesheet" href="./v2-ai-practice-session.css?v=20260822-coachcompact1">
+<link rel="stylesheet" href="./v2-spelling-input.css?v=20260818-merge2">
+<link rel="stylesheet" href="./v2-daily-test.css?v=20260815-pacedtester1">
+<link rel="stylesheet" href="./v2-activity-ux.css?v=20260822-tabletcompact2">
+<link rel="stylesheet" href="./v2-spelling-tablet-layout.css?v=20260822-goldenstars1">
+<link rel="stylesheet" href="./v2-spelling-tablet-compact.css?v=20260822-tabletspelling2">
+<link rel="stylesheet" href="./v2-spelling-tablet-comets.css?v=20260822-sparkle3">
+<link rel="stylesheet" href="./v2-audio-loading.css?v=20260822-audioicon3">
+<link rel="stylesheet" href="./v2-daily-session-polish.css?v=20260820-rhythmclean1">
+<link rel="stylesheet" href="./v2-settings.css?v=20260820-belowhero1">
+<script src="/students/api-gateway.js?v=20260808-study1"></script>
+<script src="/js/api-config.js?v=20260113c"></script>
+<script src="./v2-daily-auth-refresh.js?v=20260817-standardauth2"></script>
+<script src="./auth-guard.js?v=20260817-standardauth2"></script>
+<script type="module" src="/students/components/student-header.js?v=20260814-studyv2header2"></script>
+</head>
+<body>
+<div class="study-app">
+<student-header title="Study" show-id="false" show-home="false" show-points="true" show-logout="true"></student-header>
+<main class="dashboard" id="app">
+  <section id="v2PracticePanel" class="practice-panel" hidden>
+    <div class="practice-toolbar">
+      <button id="v2PracticeClose" class="ghost-button" type="button">← 뒤로</button>
+      <div><span id="v2PracticeSkill" class="eyebrow">연습</span><h2 id="v2PracticeTitle">약한 부분 집중 연습</h2><small id="practicePerf" class="section-note">1 / 10</small></div>
+    </div>
+    <div id="v2ActivityRoot"></div>
+    <button id="v2PracticeNext" type="button" hidden aria-hidden="true"></button>
+  </section>
+
+  <section class="book-hero daily-inline">
+    <div class="hero-copy">
+      <div class="study-v2-top-actions">
+        <div id="dailyWorkoutCard" class="unit-progress-card study-v2-action-card study-v2-daily-primary" role="button" tabindex="0" aria-label="Start Daily Study">
+          <div class="progress-ring"><span id="smartDailyPct">0/20</span></div>
+          <div><strong id="smartProgressTitle">데일리 스터디</strong><small id="smartProgressCopy">오늘 목표 · 0/20</small></div>
+          <span class="daily-rail-today" aria-hidden="true">TODAY</span>
+        </div>
+        <div class="daily-rail-main" aria-live="polite">
+          <strong class="daily-rail-headline">오늘은 20문제만 더 하면 끝!</strong>
+          <p class="daily-rail-sub">오늘의 Daily Study를 시작해 볼까요?</p>
+          <div class="daily-rail-progress" aria-hidden="true">
+            <span class="daily-rail-segment"><i></i></span>
+            <span class="daily-rail-segment"><i></i></span>
+            <span class="daily-rail-segment"><i></i></span>
+            <span class="daily-rail-segment"><i></i></span>
+            <span class="daily-rail-segment"><i></i></span>
+          </div>
+        </div>
+        <button id="practiceHeroBtn" class="hero-icon-card study-v2-ai-launch" type="button" aria-label="AI Coach"><img class="hero-icon-card-mark" src="./assets/ai-coach-mark.svg?v=20260820-rebuild1" alt=""></button>
+        <button id="bookStudyBtn" class="hero-icon-card" type="button" aria-label="Book Study"><img class="hero-icon-card-mark" src="./assets/book-study-mark.svg?v=20260820-rebuild1" alt=""></button>
+        <button id="bookPracticeBtn" class="hero-icon-card" type="button" aria-label="Book Practice"><img class="hero-icon-card-mark" src="./assets/book-practice-mark.svg?v=20260820-rebuild1" alt=""></button>
+      </div>
+    </div>
+
+    <div class="daily-settings-launch-row"><button id="dailySettingsLauncher" type="button">설정</button></div>
+    <div class="hero-copy">
+      <section id="aiRecommendations" class="study-v2-ai-shell">
+        <div class="study-v2-ai-head"><div><h2 id="aiHeading">AI 코치</h2></div></div>
+        <div id="aiChat" class="study-v2-ai-chat"><div id="aiChatTranscript" class="study-v2-ai-chat-transcript" aria-live="polite"></div><div id="aiChatPrompts" class="study-v2-ai-chat-prompts"></div><div id="aiChatCta" class="study-v2-ai-chat-cta-wrap"></div></div>
+        <div id="aiGrid" hidden aria-hidden="true"></div>
+      </section>
+      <section class="study-v2-book-hub" id="bookHub" data-mode="study">
+        <div class="study-v2-book-hub-head"><div class="study-v2-book-mode-tabs" role="tablist" aria-label="Book mode"><button class="study-v2-book-mode-tab is-active" type="button" role="tab" data-book-mode="study" aria-selected="true">공부</button><button class="study-v2-book-mode-tab" type="button" role="tab" data-book-mode="practice" aria-selected="false">연습</button></div></div>
+        <nav id="bookTabs" class="study-v2-book-tabs" aria-label="Books" hidden></nav>
+        <div class="book-hub-legacy-meta" aria-hidden="true"><div id="bookSwipe" class="study-v2-book-title-wrap"><h1 id="bookTitle">Loading…</h1><p id="unitTitle">Finding your assigned unit</p><div id="bookPips" class="study-v2-book-pips" hidden></div></div></div>
+        <div class="study-v2-units"><div class="study-v2-units-head"><span>공부할 단원을 선택하세요</span><span id="currentUnitLabel">현재 · Unit —</span></div><div id="unitStrip" class="study-v2-unit-strip"></div></div>
+        <section id="bookStudyArea" class="study-v2-book-mode-pane study-v2-book-study-panel" data-book-mode-pane="study"><div class="study-v2-section-heading" aria-hidden="true"><div class="study-v2-section-heading-copy"><span class="study-v2-section-kicker">BOOK STUDY</span><h2 id="bookStudyHeading">교재 공부</h2></div><small id="bookStudyNote"></small></div><div class="book-study-unit-picker" aria-hidden="true"><div class="book-study-unit-head"><span id="bookStudyUnitPrompt">공부할 단원을 선택하세요</span><span id="bookStudyCurrentUnitLabel">현재 · Unit —</span></div><div id="bookStudyUnitStrip" aria-label="Book Study units"></div></div><div id="bookStudyContent" class="book-study-content"><div class="book-study-content-state">교재 내용을 불러오는 중이에요.</div></div></section>
+        <section id="bookPracticeArea" class="study-v2-book-mode-pane study-v2-book-panel" data-book-mode-pane="practice" hidden><div class="study-v2-section-heading" aria-hidden="true"><div class="study-v2-section-heading-copy"><span class="study-v2-section-kicker">BOOK PRACTICE</span><h2 id="bookPracticeHeading">교재 연습</h2></div><small id="bookPracticeNote"></small></div><div class="header-skill-mastery" id="headerSkillMastery"><div class="header-skill-mastery-head"><strong>단원 숙련도</strong><span></span></div><div id="masteryGrid" class="header-skill-mastery-grid"></div></div><div class="hero-actions" hidden aria-hidden="true"><button id="continueBtn" class="primary-button" type="button">단원 공부하기</button><button id="changeUnitBtn" class="secondary-button" type="button">단원 보기</button></div></section>
+      </section>
+    </div>
+  </section>
+</main>
+<footer class="study-v2-footer"><button id="languageBtn" type="button">English</button></footer>
+</div>
+<script src="/shared/learning-engine/activity-schema.js?v=20260816-sharedengine1"></script>
+<script src="/shared/learning-engine/scoring.js?v=20260810-chunkspelling1"></script>
+<script src="/shared/learning-engine/engine.js?v=20260816-sharedengine1"></script>
+<script src="/shared/learning-engine/audio-playback.js?v=20260822-spellingaudio1"></script>
+<script src="./v2-audio-loading.js?v=20260822-audio-loading3"></script>
+<script src="./v2-spelling-input.js?v=20260818-phrasechunk4"></script>
+<script src="./v2-spelling-audio.js?v=20260822-spellingaudio4"></script>
+<script src="./v2-spelling-tablet-help.js?v=20260822-tabletcompact6"></script>
+<script src="./v2-spelling-resolve-mask.js?v=20260818-noflash1"></script>
+<script src="/shared/learning-engine/adaptive-study.js?v=20260812-canonicalmastery1"></script>
+<script src="/students/study/study-question-bank.js?v=20260816-sharedengine1"></script>
+<script src="./v2-source-fallback.js?v=20260814-unitbank2"></script>
+<script src="./v2-ai-coach-mistake-diagnosis.js?v=20260822-stage5unscramble1"></script>
+<script src="/students/study/study-progress.js?v=20260822-stage5shared1"></script>
+<script>(function(){try{var marker='willena-study-v2-cache-schema-v2';if(!localStorage.getItem(marker)){Object.keys(localStorage).forEach(function(k){if(k.indexOf('willena-study-v2-home:v1:')===0)localStorage.removeItem(k);});localStorage.setItem(marker,'1');}}catch(_){}})();</script>
+<script src="./v2-ai-heading-lock.js?v=20260815-heading1"></script>
+<script src="./v2.js?v=20260820-study-level-context1"></script>
+<script src="./v2-language-preference.js?v=20260822-langpersist3"></script>
+<script src="./v2-book-study.js?v=20260816-bookcontent9"></script>
+<script src="./v2-book-hub.js?v=20260817-bookhub2"></script>
+<script src="./v2-grammar-builder.js?v=20260816-builder2"></script>
+<script src="./v2-short-landscape.js?v=20260814-listennudge1"></script>
+<script src="./v2-round-ux.js?v=20260815-nofullscreen1"></script>
+<script src="./v2-daily.js?v=20260818-immediatenext1"></script>
+<script src="./v2-ai-coach-needs.js?v=20260819-progressdb1"></script>
+<script src="./v2-ai-practice-session.js?v=20260822-coachcompact1"></script>
+<script id="v2MorphologySidecarScript" src="./v2-morphology-sidecar.js?v=20260820-coachrepeat1"></script>
+<script src="./v2-ai-coach-history.js?v=20260822-stage5shared1"></script>
+<script src="./v2-ai-coach-history-pagination.js?v=20260822-historypaged1"></script>
+<script src="./v2-ai-coach-controller.js?v=20260820-globallevel1"></script>
+<script src="./v2-ai-coach-targeted-practice.js?v=20260822-spellingaudio1"></script>
+<script src="./v2-ai-coach-study-navigation.js?v=20260821-stage4route1"></script>
+<script src="./v2-ai-coach-morphology-capabilities.js?v=20260822-hintless1"></script>
+<script src="./v2-ai-coach-weakness-capability.js?v=20260822-manyweak1"></script>
+<script src="./v2-ai-coach-wrong-attempts.js?v=20260822-stage5diagnosis1"></script>
+<script src="./v2-ai-coach-bootstrap.js?v=20260820-history1"></script>
+<script src="./v2-ai-coach-remediation.js?v=20260820-pointsglide2"></script>
+<script src="./v2-daily-test-placement.js?v=20260815-bottom1"></script>
+<script src="./v2-daily-rewards.js?v=20260815-endingring1"></script>
+<script src="./v2-daily-session-polish.js?v=20260820-rhythmclean1"></script>
+<script src="./v2-daily-journey.js?v=20260819-rollback1"></script>
+<script src="./v2-daily-rail-impact.js?v=20260816-heroclean1"></script>
+<script src="./v2-settings.js?v=20260820-belowhero1"></script>
+<script>(function(){var card=document.getElementById('dailyWorkoutCard');if(card){function launch(e){if(e)e.preventDefault();var daily=window.WillenaStudyV2Daily;if(daily&&typeof daily.open==='function'){daily.open();return;}var copy=document.getElementById('smartProgressCopy');if(copy)copy.textContent='Daily Study failed to load. Please refresh.';}card.addEventListener('click',launch);card.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){launch(e);}});}function openBookHub(mode){var tab=document.querySelector('[data-book-mode="'+mode+'"]');if(tab)tab.click();var hub=document.getElementById('bookHub');if(hub)hub.scrollIntoView({behavior:'smooth',block:'start'});}var bookPractice=document.getElementById('bookPracticeBtn');if(bookPractice)bookPractice.addEventListener('click',function(){openBookHub('practice');});var bookStudy=document.getElementById('bookStudyBtn');if(bookStudy)bookStudy.addEventListener('click',function(){openBookHub('study');});function syncSectionLabels(){var lang=document.getElementById('languageBtn');var ko=!lang||String(lang.textContent||'').trim()==='English';var a=document.getElementById('bookStudyHeading'),c=document.getElementById('bookPracticeHeading'),e=document.getElementById('bookStudyUnitPrompt');if(a)a.textContent=ko?'교재 공부':'Book Study';if(c)c.textContent=ko?'교재 연습':'Book Practice';if(e)e.textContent=ko?'공부할 단원을 선택하세요':'Choose a unit to study';}syncSectionLabels();var languageBtn=document.getElementById('languageBtn');if(languageBtn)languageBtn.addEventListener('click',function(){setTimeout(syncSectionLabels,0);});})();</script>
+<script src="./v2-practice-ux.js?v=20260815-autoscroll1"></script>
+<script src="./v2-unified-answer-flow.js?v=20260816-answerflow2"></script>
+<script src="./v2-deferred-render.js?v=20260816-aicoverlay1"></script>
+<script src="./v2-interactions.js?v=20260818-phoneback2"></script>
+</body>
+</html>

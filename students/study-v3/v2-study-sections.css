@@ -1,0 +1,147 @@
+/* Study V2 content stack: Hero -> AI -> Book Study -> Book Practice. */
+.book-hero.daily-inline .hero-copy{
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:stretch!important;
+  gap:16px!important;
+}
+
+.book-hero.daily-inline .study-v2-top-actions{
+  order:1!important;
+  width:100%!important;
+  margin-bottom:0!important;
+}
+
+.book-hero.daily-inline .study-v2-ai-shell{
+  order:2;
+  width:100%;
+  min-width:0;
+  margin:0;
+  align-self:stretch;
+}
+
+.book-hero.daily-inline .study-v2-book-study-panel{
+  order:3!important;
+  width:100%!important;
+  min-width:0!important;
+  margin:0!important;
+  padding:28px 26px 30px!important;
+  border:3px solid var(--arcade-blue)!important;
+  border-radius:30px!important;
+  background:#fff!important;
+  box-shadow:0 8px 25px rgba(38,74,79,.05)!important;
+  scroll-margin-top:18px;
+}
+
+.book-hero.daily-inline .study-v2-book-panel{
+  order:4!important;
+  grid-column:auto!important;
+  grid-row:auto!important;
+  width:100%!important;
+  min-width:0!important;
+  margin:0!important;
+  padding:28px 26px 32px!important;
+  border:3px solid var(--arcade-orange)!important;
+  border-radius:30px!important;
+  background:#fff!important;
+  box-shadow:0 8px 25px rgba(38,74,79,.05)!important;
+  scroll-margin-top:18px;
+}
+
+.book-hero.daily-inline #bookStudyBtn{
+  opacity:1!important;
+  cursor:pointer!important;
+}
+
+.study-v2-section-heading{
+  display:flex;
+  align-items:flex-end;
+  justify-content:space-between;
+  gap:14px;
+  margin:0 0 24px;
+}
+.study-v2-section-heading-copy{min-width:0}
+.study-v2-section-kicker{
+  display:block;
+  margin-bottom:5px;
+  font-size:.68rem;
+  line-height:1;
+  font-weight:900;
+  letter-spacing:.13em;
+  text-transform:uppercase;
+}
+.study-v2-section-heading h2{
+  margin:0;
+  color:#35565b;
+  font-size:1.42rem;
+  line-height:1.1;
+  font-weight:900;
+  letter-spacing:-.03em;
+}
+.study-v2-section-heading small{
+  flex:0 0 auto;
+  color:#7c8c91;
+  font-size:.72rem;
+  line-height:1.3;
+  font-weight:800;
+  text-align:right;
+}
+.study-v2-book-study-panel .study-v2-section-kicker{color:var(--arcade-blue)}
+.study-v2-book-panel .study-v2-section-kicker{color:var(--arcade-orange)}
+
+/* Hide the small grey helper copy in the two book containers for now. */
+.study-v2-book-study-panel .study-v2-section-heading small,
+.study-v2-book-panel .study-v2-section-heading small,
+.study-v2-book-panel .header-skill-mastery-head>span{
+  display:none!important;
+}
+
+.study-v2-book-study-panel .study-v2-book-tabs{
+  margin-bottom:30px!important;
+}
+.study-v2-book-study-panel .study-v2-book-title-wrap{
+  margin-bottom:0!important;
+}
+.study-v2-book-study-panel .study-v2-book-title-wrap #unitTitle{
+  margin-top:22px!important;
+}
+.study-v2-book-study-panel .study-v2-book-pips{
+  margin-top:24px!important;
+}
+
+.study-v2-book-panel .study-v2-units{margin-top:0!important}
+.study-v2-book-panel .header-skill-mastery{margin-top:38px!important}
+
+@media (min-width:760px){
+  .book-hero.daily-inline .hero-copy{gap:20px!important}
+  .book-hero.daily-inline .study-v2-ai-shell{
+    grid-column:auto;
+    grid-row:auto;
+  }
+  .book-hero.daily-inline .study-v2-top-actions>#practiceHeroBtn{grid-column:2!important;grid-row:2!important}
+  .book-hero.daily-inline .study-v2-top-actions>#bookStudyBtn{grid-column:3!important;grid-row:2!important}
+  .book-hero.daily-inline .study-v2-top-actions>#bookPracticeBtn{grid-column:4!important;grid-row:2!important}
+  .study-v2-section-heading h2{font-size:1.6rem}
+  .study-v2-book-study-panel .study-v2-book-title-wrap #bookTitle{
+    max-width:100%!important;
+  }
+}
+
+@media (max-width:759px){
+  /* Keep the hero/menu relationship unchanged, but give the three main content containers breathing room. */
+  .book-hero.daily-inline .hero-copy{gap:12px!important}
+  .book-hero.daily-inline .study-v2-ai-shell{margin-top:18px;margin-bottom:18px}
+  .book-hero.daily-inline .study-v2-book-study-panel{margin-bottom:18px!important}
+  .book-hero.daily-inline .study-v2-top-actions>#practiceHeroBtn{grid-column:1/-1!important;grid-row:2!important}
+  .book-hero.daily-inline .study-v2-top-actions>#bookStudyBtn{grid-column:1!important;grid-row:3!important}
+  .book-hero.daily-inline .study-v2-top-actions>#bookPracticeBtn{grid-column:2!important;grid-row:3!important}
+  .book-hero.daily-inline .study-v2-book-study-panel,
+  .book-hero.daily-inline .study-v2-book-panel{
+    padding:22px 18px 25px!important;
+    border-radius:24px!important;
+  }
+  .study-v2-section-heading{margin-bottom:20px}
+  .study-v2-section-heading h2{font-size:1.28rem}
+  .study-v2-book-study-panel .study-v2-book-tabs{margin-bottom:26px!important}
+  .study-v2-book-panel .header-skill-mastery{margin-top:32px!important}
+}

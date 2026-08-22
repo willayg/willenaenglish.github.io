@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" role="img" aria-labelledby="title desc">
+  <title id="title">Book Study</title>
+  <desc id="desc">A bold lightning bolt for active study.</desc>
+  <path d="M91 12L37 88h38l-9 60 58-83H86z" fill="#5b7fe5" stroke="#4468cd" stroke-width="5" stroke-linejoin="round"/>
+  <path d="M31 34l5 12 12 5-12 5-5 12-5-12-12-5 12-5z" fill="#21b3be"/>
+  <path d="M128 103l4 10 10 4-10 4-4 10-4-10-10-4 10-4z" fill="#ff6fb0"/>
+</svg>

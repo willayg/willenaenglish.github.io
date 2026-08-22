@@ -1,0 +1,125 @@
+@import url("./v2-tablet-touch.css?v=20260818-tablet2");
+
+.study-v2-daily-mode .practice-toolbar{
+  display:flex;
+  align-items:flex-start;
+  justify-content:flex-start;
+  gap:12px;
+  padding:12px 2px 4px;
+  margin-bottom:16px;
+}
+.study-v2-daily-mode #v2PracticeClose{
+  appearance:none;
+  border:1px solid #dce1e2;
+  background:#fff;
+  color:#30363a;
+  width:44px;
+  height:44px;
+  min-height:44px;
+  padding:0;
+  border-radius:14px;
+  font:800 1.2rem/1 Poppins,sans-serif;
+  cursor:pointer;
+  flex:0 0 auto;
+  box-shadow:none;
+}
+.study-v2-daily-mode .practice-toolbar>div{min-width:0;flex:1;}
+.study-v2-daily-mode #v2PracticeSkill[hidden]{display:none!important;}
+.study-v2-daily-mode #v2PracticeTitle{
+  margin:0;
+  color:#30363a;
+  font-size:1.35rem;
+  line-height:1.2;
+  font-weight:800;
+  letter-spacing:0;
+}
+.study-v2-daily-mode #practicePerf.daily-session-progress{
+  display:block;
+  width:min(240px,64vw);
+  height:auto;
+  margin-top:9px;
+  font-size:0;
+}
+.daily-session-progress-track{
+  display:block;
+  width:100%;
+  height:6px;
+  overflow:hidden;
+  border-radius:999px;
+  background:#dce1e2;
+}
+.daily-session-progress-track>i{
+  display:block;
+  height:100%;
+  border-radius:inherit;
+  background:#25b8c4;
+  transition:width .22s ease;
+}
+.daily-reward-star-group{display:inline-flex;align-items:center;gap:3px;vertical-align:middle;}
+.daily-reward-star-svg{width:1em;height:1em;display:block;fill:#f4b942;}
+.daily-reward-stars .daily-reward-star-svg{width:25px;height:25px;}
+.daily-reward-bonus .daily-reward-star-svg{width:14px;height:14px;}
+
+/* Shared exercise rhythm: Daily Study, Skills and AI Coach */
+#v2PracticePanel .practice-toolbar{
+  margin-bottom:28px;
+}
+#v2PracticePanel .practice-toolbar .eyebrow{
+  margin-bottom:8px;
+}
+#v2PracticePanel .practice-toolbar h2{
+  margin-top:8px;
+}
+#v2PracticePanel .practice-toolbar .section-note:not(.daily-session-progress){
+  display:block;
+  margin-top:11px;
+}
+
+#v2PracticePanel .activity-context,
+#aiCoachPracticeOverlay .activity-context{
+  font-weight:600;
+}
+#v2PracticePanel .activity-prompt,
+#aiCoachPracticeOverlay .activity-prompt{
+  font-weight:550;
+  margin-bottom:30px;
+}
+#v2PracticePanel .activity-choice,
+#aiCoachPracticeOverlay .activity-choice,
+#v2PracticePanel .activity-token,
+#aiCoachPracticeOverlay .activity-token,
+#v2PracticePanel .activity-input,
+#aiCoachPracticeOverlay .activity-input{
+  font-weight:550;
+}
+
+#aiCoachPracticeOverlay .ai-coach-practice-head{
+  margin-bottom:28px;
+}
+#aiCoachPracticeOverlay .ai-coach-practice-title>span{
+  display:block;
+  margin-bottom:8px;
+}
+#aiCoachPracticeOverlay .ai-coach-practice-title h2{
+  margin-top:0;
+  margin-bottom:10px;
+}
+#aiCoachPracticeOverlay .ai-coach-practice-progress{
+  margin-top:0;
+}
+
+/* Phones and unfolded foldables: simplify the Daily home card, but stop short of tablet widths. */
+@media(max-width:719px){
+  .book-hero.daily-inline .daily-rail-headline,
+  .book-hero.daily-inline .daily-rail-progress{
+    display:none!important;
+  }
+}
+
+@media(max-width:560px){
+  .study-v2-daily-mode #v2PracticeTitle{font-size:1.22rem;}
+  #v2PracticePanel .practice-toolbar,
+  #aiCoachPracticeOverlay .ai-coach-practice-head{margin-bottom:24px;}
+  #v2PracticePanel .activity-prompt,
+  #aiCoachPracticeOverlay .activity-prompt{margin-bottom:28px;}
+}

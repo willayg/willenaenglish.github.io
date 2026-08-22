@@ -1,0 +1,113 @@
+/* Book Study content browser: unit selection + one active content category. */
+.study-v2-book-study-panel .book-study-unit-picker{margin-top:30px;padding-top:26px;border-top:1px solid #e3eaec}
+.study-v2-book-study-panel .book-study-unit-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;color:#61777c;font-size:.78rem;font-weight:850}
+.study-v2-book-study-panel #bookStudyCurrentUnitLabel{color:var(--arcade-blue);font-weight:900;white-space:nowrap}
+.study-v2-book-study-panel #bookStudyUnitStrip{display:flex;gap:9px;overflow-x:auto;padding:2px 1px 8px;scrollbar-width:none}
+.study-v2-book-study-panel #bookStudyUnitStrip::-webkit-scrollbar{display:none}
+.study-v2-book-study-panel .book-study-unit{flex:0 0 auto;min-width:70px;padding:10px 14px;border:2px solid var(--arcade-blue);border-radius:15px;background:#fff;color:#4d666c;font:850 .78rem/1.15 Poppins,sans-serif;cursor:pointer}
+.study-v2-book-study-panel .book-study-unit:hover,.study-v2-book-study-panel .book-study-unit:focus-visible{outline:none;background:#f3f5ff}
+.study-v2-book-study-panel .book-study-unit.is-current{background:#f3f5ff;color:var(--arcade-blue);box-shadow:inset 0 0 0 1px rgba(91,127,229,.08)}
+
+.book-study-content{margin-top:28px;padding-top:26px;border-top:1px solid #e3eaec}
+.book-study-content-state{padding:18px;border:2px dashed #dbe6e8;border-radius:18px;color:#71858a;text-align:center;font-size:.82rem;font-weight:800;background:#fbfdfd}
+.book-study-content-top{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:16px}
+.book-study-content-top h3{margin:0;color:#35565b;font-size:1.2rem;line-height:1.15;font-weight:900;letter-spacing:-.025em}
+.book-study-count{flex:0 0 auto;padding:6px 10px;border-radius:999px;background:#f3f5ff;color:var(--arcade-blue);font-size:.68rem;font-weight:900}
+
+/* Content categories are tabs. Only the selected pane is visible. */
+.book-study-jump{display:flex;gap:14px;overflow-x:auto;margin:0 0 20px;padding:0 1px 1px;border-bottom:1px solid #e1e8ea;scrollbar-width:none}
+.book-study-jump::-webkit-scrollbar{display:none}
+.book-study-jump button{position:relative;flex:0 0 auto;padding:9px 2px 11px;border:0;border-radius:0;background:transparent;color:#6f8489;font:850 .72rem/1 Poppins,sans-serif;cursor:pointer}
+.book-study-jump button:after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:3px;border-radius:999px;background:transparent}
+.book-study-jump button:hover,.book-study-jump button:focus-visible{outline:none;color:#4f6b70}
+.book-study-jump button.is-active{font-weight:900}
+.book-study-jump button:nth-child(5n+1).is-active{color:#188f98}
+.book-study-jump button:nth-child(5n+1).is-active:after{background:var(--arcade-cyan)}
+.book-study-jump button:nth-child(5n+2).is-active{color:#d94e91}
+.book-study-jump button:nth-child(5n+2).is-active:after{background:var(--arcade-pink)}
+.book-study-jump button:nth-child(5n+3).is-active{color:#b66f20}
+.book-study-jump button:nth-child(5n+3).is-active:after{background:var(--arcade-orange)}
+.book-study-jump button:nth-child(5n+4).is-active{color:#506fca}
+.book-study-jump button:nth-child(5n+4).is-active:after{background:var(--arcade-blue)}
+.book-study-jump button:nth-child(5n+5).is-active{color:#188f98}
+.book-study-jump button:nth-child(5n+5).is-active:after{background:var(--arcade-cyan)}
+
+.book-study-active-pane{min-height:120px}
+.book-study-section{margin:0;padding:2px 0 0;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important}
+.book-study-section[hidden]{display:none!important}
+.book-study-section-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:14px}
+.book-study-section-head h4{margin:0;color:#35565b;font-size:1rem;line-height:1.2;font-weight:900}
+.book-study-section-head span{color:#8a9a9e;font-size:.68rem;font-weight:850}
+
+/* Vocabulary cards: larger, simpler and translation-first. */
+.book-study-vocab-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}
+.book-study-vocab{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:14px;align-items:center;min-width:0;min-height:82px;padding:15px 14px 15px 18px;border:2px solid #dcebed;border-radius:19px;background:#fbfefe;transition:border-color .18s ease,background .18s ease,box-shadow .18s ease}
+.book-study-vocab-copy{min-width:0}
+.book-study-vocab strong{display:block;min-width:0;color:#31565d;font-size:1rem;line-height:1.24;font-weight:900;overflow-wrap:anywhere}
+.book-study-vocab small{display:block;margin-top:6px;color:#637a80;font-size:.84rem;line-height:1.35;font-weight:850;overflow-wrap:anywhere}
+
+/* Use a real SVG asset rather than an encoded CSS SVG so Chrome renders it cleanly. */
+.book-study-listen{position:relative;display:grid;place-items:center;width:56px;height:56px;min-width:56px;min-height:56px;padding:0;border:3px solid #bfe8eb;border-radius:18px;background:#fff;color:#168c95;font-size:0;line-height:0;cursor:pointer;white-space:nowrap;transition:border-color .18s ease,background .18s ease,transform .18s ease}
+.book-study-listen:before{content:"";width:28px;height:28px;background:url("./headphones.svg?v=20260816-1") center/contain no-repeat}
+.book-study-listen:hover,.book-study-listen:focus-visible{outline:none;background:#eefafb;border-color:var(--arcade-cyan)}
+.book-study-listen.has-played:not(.is-playing){border-color:#8bd9de}
+
+/* is-playing begins as soon as audio lookup/generation starts, so the whole card visibly waits with the student. */
+.book-study-vocab:has(.book-study-listen.is-playing),
+.book-study-sentence:has(.book-study-listen.is-playing){border-color:var(--arcade-cyan)!important;background:#f1fbfc!important;box-shadow:0 0 0 4px rgba(33,179,190,.09),0 8px 22px rgba(33,179,190,.10)}
+.book-study-listen.is-playing{background:#e7f8fa;border-color:var(--arcade-cyan);color:#116f76;animation:bookAudioPulse 1s ease-in-out infinite}
+.book-study-listen.is-playing:after{content:"";position:absolute;inset:-7px;border:3px solid rgba(33,179,190,.24);border-top-color:var(--arcade-cyan);border-radius:22px;animation:bookAudioSpin .9s linear infinite}
+@keyframes bookAudioSpin{to{transform:rotate(360deg)}}
+@keyframes bookAudioPulse{50%{transform:scale(.97)}}
+
+/* Sentence cards use the same hierarchy as vocabulary, with room for Korean underneath. */
+.book-study-sentence-list{display:grid;gap:11px}
+.book-study-sentence{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:16px;align-items:center;min-height:92px;padding:16px 14px 16px 18px;border-radius:19px;background:#fff7fb;border:2px solid #f5d8e5;transition:border-color .18s ease,background .18s ease,box-shadow .18s ease}
+.book-study-sentence-copy{min-width:0}
+.book-study-sentence strong{display:block;color:#35565b;font-size:1.04rem;line-height:1.4;font-weight:900}
+.book-study-sentence small{display:block;margin-top:7px;color:#63777c;font-size:.86rem;line-height:1.4;font-weight:850}
+
+.book-study-grammar-list{display:grid;gap:10px}
+.book-study-grammar{padding:15px 16px;border:1px solid #f0dfc8;border-radius:16px;background:#fffaf3}
+.book-study-grammar h5{margin:0;color:#70532e;font-size:.9rem;line-height:1.3;font-weight:900}
+.book-study-grammar>p{margin:11px 0 0;color:#5f7479;font-size:.78rem;line-height:1.55;font-weight:800}
+.book-study-grammar-chart{display:grid;margin-top:12px;border:1px solid #ead7bd;border-radius:14px;overflow:hidden;background:#fff}
+.book-study-grammar-chart-row{display:grid;grid-template-columns:76px minmax(0,1fr);align-items:stretch}
+.book-study-grammar-chart-row+.book-study-grammar-chart-row{border-top:1px solid #ead7bd}
+.book-study-grammar-chart-row>span{display:flex;align-items:center;padding:11px 10px;background:#fff1dc;color:#a4651e;font-size:.72rem;line-height:1.25;font-weight:900}
+.book-study-grammar-chart-row>strong{display:flex;align-items:center;padding:11px 12px;color:#425f65;font-size:.86rem;line-height:1.45;font-weight:900;overflow-wrap:anywhere}
+.book-study-grammar-examples{display:grid;gap:9px;margin-top:13px}
+.book-study-grammar-pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.book-study-grammar-pair>div{padding:10px 11px;border-radius:13px;background:#fff;border:1px solid #ead9c2}
+.book-study-grammar-pair strong{display:block;color:#4e666b;font-size:.76rem;line-height:1.4;font-weight:850}
+.book-study-grammar-pair small{display:block;margin-top:4px;color:#7c8c91;font-size:.68rem;line-height:1.4;font-weight:750}
+
+.book-study-reading-list,.book-study-other-list{display:grid;gap:9px}
+.book-study-reading,.book-study-other{padding:12px 13px;border-radius:15px;background:#f7f9ff;border:1px solid #dfe4fb}
+.book-study-reading h5,.book-study-other h5{margin:0;color:#4963b5;font-size:.83rem;line-height:1.3;font-weight:900}
+.book-study-reading p,.book-study-other p{margin:7px 0 0;color:#657b80;font-size:.72rem;line-height:1.55;font-weight:750;white-space:pre-wrap}
+.book-study-reading small{display:block;margin-top:8px;color:#7c8c91;font-size:.66rem;line-height:1.45;font-weight:750;white-space:pre-wrap}
+
+@media(min-width:900px){
+  .book-study-vocab-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+@media(max-width:560px){
+  .study-v2-book-study-panel .book-study-unit-picker{margin-top:24px;padding-top:22px}
+  .book-study-content{margin-top:24px;padding-top:22px}
+  .book-study-jump{gap:18px;margin-bottom:20px}
+  .book-study-jump button{min-height:46px;padding:12px 3px 13px;font-size:1rem;line-height:1}
+  .book-study-vocab-grid{grid-template-columns:1fr;gap:12px}
+  .book-study-vocab{min-height:102px;padding:18px 16px 18px 20px;gap:14px;border-radius:21px}
+  .book-study-vocab strong{font-size:1.18rem;line-height:1.24}
+  .book-study-vocab small{margin-top:7px;font-size:.98rem;line-height:1.34}
+  .book-study-listen{width:62px;height:62px;min-width:62px;min-height:62px;border-radius:19px}
+  .book-study-listen:before{width:31px;height:31px}
+  .book-study-sentence-list{gap:12px}
+  .book-study-sentence{min-height:112px;padding:19px 16px 19px 20px;gap:15px;border-radius:21px}
+  .book-study-sentence strong{font-size:1.16rem;line-height:1.38}
+  .book-study-sentence small{margin-top:8px;font-size:.98rem;line-height:1.4}
+  .book-study-grammar-chart-row{grid-template-columns:70px minmax(0,1fr)}
+  .book-study-grammar-chart-row>span{font-size:.78rem;padding:12px 9px}
+  .book-study-grammar-chart-row>strong{font-size:.95rem;padding:12px}
+  .book-study-grammar-pair{grid-template-columns:1fr}
+}
