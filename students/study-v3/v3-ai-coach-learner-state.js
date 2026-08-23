@@ -1,7 +1,7 @@
 (function(global){
 'use strict';
 
-var VERSION='coach-learner-state-v1.2';
+var VERSION='coach-learner-state-v1.3';
 function text(v){return String(v==null?'':v).trim();}
 function lower(v){return text(v).toLowerCase();}
 function arr(v){return Array.isArray(v)?v:[];}
@@ -39,7 +39,7 @@ function interpret(input){
     action='retry_speech_later';
   }else if(d.possibleSlip||(!recurring&&strongHistory)){
     state='likely_slip';label='Likely slip';confidence=d.possibleSlip?.9:.82;action='light_retry';
-  }else if(weakHistory&&productionActivity(a)&&!recognitionActivity(a)){
+  }else if((weakHistory||recurring)&&productionActivity(a)&&!recognitionActivity(a)){
     state='recall_weakness';label='Recall / production weakness';confidence=.86;action='production_practice';
   }else if(weakHistory||recurring){
     state='concept_weakness';label='Concept weakness';confidence=.88;action='concept_remediation';
