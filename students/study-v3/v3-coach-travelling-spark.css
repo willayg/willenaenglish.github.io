@@ -1,4 +1,5 @@
 .study-v2-ai-shell{position:relative}
+.study-v2-ai-shell.is-daily-complete-spark{overflow:visible}
 .study-v2-ai-shell .v3-coach-spark-track{
   position:absolute;
   inset:0;
@@ -12,12 +13,12 @@
   position:absolute;
   left:0;
   top:0;
-  width:8px;
-  height:8px;
+  width:5px;
+  height:5px;
   border-radius:50%;
   background:#fff;
-  box-shadow:0 0 4px #fff,0 0 9px #87edf3,0 0 15px #25b8c4;
-  offset-path:inset(3px round 21px);
+  box-shadow:0 0 3px #fff,0 0 6px #87edf3,0 0 9px #25b8c4;
+  offset-path:inset(1px round 23px);
   offset-distance:0%;
   offset-rotate:0deg;
   animation:v3CoachSparkTravel 5.5s linear infinite;
@@ -25,17 +26,17 @@
 .study-v2-ai-shell .v3-coach-spark::after{
   content:"";
   position:absolute;
-  width:15px;
-  height:4px;
-  left:-12px;
-  top:2px;
+  width:9px;
+  height:2px;
+  left:-7px;
+  top:1.5px;
   border-radius:999px;
-  background:linear-gradient(90deg,transparent,rgba(102,214,223,.22),rgba(255,255,255,.8));
-  filter:blur(1px);
+  background:linear-gradient(90deg,transparent,rgba(102,214,223,.16),rgba(255,255,255,.72));
+  filter:blur(.6px);
 }
 @keyframes v3CoachSparkTravel{to{offset-distance:100%}}
 @media(max-width:560px){
-  .study-v2-ai-shell .v3-coach-spark{offset-path:inset(3px round 18px)}
+  .study-v2-ai-shell .v3-coach-spark{offset-path:inset(1px round 20px)}
 }
 @media(prefers-reduced-motion:reduce){
   .study-v2-ai-shell .v3-coach-spark{animation:none;offset-distance:8%}
