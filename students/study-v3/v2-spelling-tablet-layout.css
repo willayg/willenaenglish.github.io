@@ -86,13 +86,12 @@
     grid-template-columns:1fr auto 1fr!important;
     align-items:center!important;
     width:100%!important;
-    min-height:68px!important;
+    min-height:0!important;
     margin:0!important;
   }
 
   #v2ActivityRoot .activity-card.v2-tablet-spelling .v2-tablet-spelling-listen-wrap,
   #aiCoachActivityRoot .activity-card.v2-tablet-spelling .v2-tablet-spelling-listen-wrap{
-    grid-column:2!important;
     position:relative!important;
     display:flex!important;
     flex-direction:column!important;
@@ -101,6 +100,13 @@
     gap:2px!important;
     width:72px!important;
     height:72px!important;
+  }
+
+  #v2ActivityRoot .activity-card.v2-tablet-spelling .v2-tablet-spelling-listen-wrap.v2-tablet-spelling-listen-above-slots,
+  #aiCoachActivityRoot .activity-card.v2-tablet-spelling .v2-tablet-spelling-listen-wrap.v2-tablet-spelling-listen-above-slots{
+    order:0!important;
+    align-self:center!important;
+    margin:0 auto 2px!important;
   }
 
   #v2ActivityRoot .activity-card.v2-tablet-spelling .v2-tablet-spelling-listen,
@@ -153,7 +159,6 @@
 
   #v2ActivityRoot .activity-card.v2-tablet-spelling .v2-tablet-spelling-actions,
   #aiCoachActivityRoot .activity-card.v2-tablet-spelling .v2-tablet-spelling-actions{
-    grid-column:3!important;
     justify-self:end!important;
     align-self:center!important;
     margin:0!important;
