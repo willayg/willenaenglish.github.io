@@ -9,7 +9,7 @@
   --coach-line:#e0e7e9;
   --coach-line-strong:#cbd9dd;
   padding:0;
-  border:1px solid var(--coach-line);
+  border:2px solid var(--coach-accent);
   border-radius:24px;
   background:var(--coach-bg);
   color:var(--coach-text);
