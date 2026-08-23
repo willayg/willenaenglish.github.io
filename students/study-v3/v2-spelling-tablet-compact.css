@@ -88,76 +88,8 @@
     height:42px!important;
   }
 
-  /* Listen and Check share one short row directly beneath the slots. */
-  #v2ActivityRoot .v2-tablet-spelling-work-row,
-  #aiCoachActivityRoot .v2-tablet-spelling-work-row{
-    order:2!important;
-    width:100%!important;
-    min-height:52px!important;
-    display:grid!important;
-    grid-template-columns:1fr auto 1fr!important;
-    align-items:center!important;
-    margin:0!important;
-    padding:0 2px!important;
-  }
-  #v2ActivityRoot .v2-tablet-spelling-listen-wrap,
-  #aiCoachActivityRoot .v2-tablet-spelling-listen-wrap{
-    grid-column:2!important;
-    position:relative!important;
-    width:58px!important;
-    height:52px!important;
-    display:grid!important;
-    place-items:center!important;
-  }
-  #v2ActivityRoot .v2-tablet-spelling-listen,
-  #aiCoachActivityRoot .v2-tablet-spelling-listen{
-    width:50px!important;
-    height:50px!important;
-    min-width:50px!important;
-    margin:0!important;
-    border-width:3px!important;
-    animation:none!important;
-    transform:none!important;
-  }
-  #v2ActivityRoot .v2-tablet-spelling-listen:before,
-  #aiCoachActivityRoot .v2-tablet-spelling-listen:before{
-    width:25px!important;
-    height:25px!important;
-    animation:none!important;
-  }
+  /* Audio placement is owned by v2-spelling-tablet-layout.css. Do not re-grid it here. */
 
-  /* Gentle game-like sparkle orbit: cue attention without pulsing the button itself. */
-  #v2ActivityRoot .v2-tablet-spelling-listen-wrap:before,
-  #aiCoachActivityRoot .v2-tablet-spelling-listen-wrap:before,
-  #v2ActivityRoot .v2-tablet-spelling-listen-wrap:after,
-  #aiCoachActivityRoot .v2-tablet-spelling-listen-wrap:after{
-    position:absolute;
-    inset:-6px;
-    pointer-events:none;
-    display:grid;
-    place-items:start center;
-    font:900 15px/1 sans-serif;
-    animation:v2-spell-star-orbit 3.4s linear infinite;
-    transform-origin:center;
-  }
-  #v2ActivityRoot .v2-tablet-spelling-listen-wrap:before,
-  #aiCoachActivityRoot .v2-tablet-spelling-listen-wrap:before{content:'✦';color:#f3b449}
-  #v2ActivityRoot .v2-tablet-spelling-listen-wrap:after,
-  #aiCoachActivityRoot .v2-tablet-spelling-listen-wrap:after{content:'✧';color:#55cbd1;animation-duration:4.3s;animation-direction:reverse}
-  #v2ActivityRoot .v2-tablet-spelling-listen-wrap.is-used:before,
-  #aiCoachActivityRoot .v2-tablet-spelling-listen-wrap.is-used:before,
-  #v2ActivityRoot .v2-tablet-spelling-listen-wrap.is-used:after,
-  #aiCoachActivityRoot .v2-tablet-spelling-listen-wrap.is-used:after{display:none}
-  @keyframes v2-spell-star-orbit{to{transform:rotate(360deg)}}
-
-  #v2ActivityRoot .v2-tablet-spelling-actions,
-  #aiCoachActivityRoot .v2-tablet-spelling-actions{
-    grid-column:3!important;
-    justify-self:end!important;
-    align-self:center!important;
-    display:flex!important;
-    margin:0!important;
-  }
   #v2ActivityRoot .activity-card.v2-tablet-spelling .activity-check,
   #aiCoachActivityRoot .activity-card.v2-tablet-spelling .activity-check{
     min-width:104px!important;
@@ -233,11 +165,4 @@
     padding:0 10px!important;
     font-size:.68rem!important;
   }
-}
-
-@media (prefers-reduced-motion:reduce){
-  #v2ActivityRoot .v2-tablet-spelling-listen-wrap:before,
-  #aiCoachActivityRoot .v2-tablet-spelling-listen-wrap:before,
-  #v2ActivityRoot .v2-tablet-spelling-listen-wrap:after,
-  #aiCoachActivityRoot .v2-tablet-spelling-listen-wrap:after{animation:none!important}
 }
