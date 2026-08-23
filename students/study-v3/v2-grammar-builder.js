@@ -173,9 +173,61 @@ function addGenericFallback(card,anchor,info){
   return made;
 }
 
+function gerundParts(item){
+  var s=normaliseSentence(item.text),m=s.match(/^([A-Za-z]+ing\b.+?)\s+(isn't|aren't|wasn't|weren't|is|are|was|were)\s+(.+)$/i);
+  return m?[m[1],m[2].toLowerCase(),m[3]]:null;
+}
+function frequencyStatementParts(item){
+  var s=normaliseSentence(item.text),m=s.match(/^([A-Za-z][A-Za-z-]*|I|you|he|she|it|we|they)\s+(always|usually|often|sometimes|never)\s+(.+)$/i);
+  return m?[m[1],m[2].toLowerCase(),m[3]]:null;
+}
+function frequencyQuestionParts(item){
+  var s=normaliseSentence(item.text),m=s.match(/^(How often)\s+(do|does|did)\s+([A-Za-z][A-Za-z-]*|I|you|he|she|it|we|they)\s+(.+)$/i);
+  return m?[m[1],m[2].toLowerCase(),m[3],m[4]]:null;
+}
+function semanticSplitCard(card,info,old,anchor){
+  var original=card.getAttribute('data-semantic-original-title')||info.name||'';
+  var signal=(original+' '+info.explanation).toLowerCase();
+  var gerundItems=[],freqItems=[],freqQuestionItems=[];
+  (info.items||[]).forEach(function(item){if(gerundParts(item))gerundItems.push(item);if(frequencyStatementParts(item))freqItems.push(item);if(frequencyQuestionParts(item))freqQuestionItems.push(item);});
+  var mixed=(/gerund|동명사/.test(signal)&&/frequency|빈도/.test(signal))||(gerundItems.length&&(freqItems.length||freqQuestionItems.length));
+  if(!mixed)return false;
+
+  if(!card.hasAttribute('data-semantic-original-title'))card.setAttribute('data-semantic-original-title',original);
+  card.setAttribute('data-semantic-split','gerund-frequency');
+  card.querySelectorAll('.book-study-grammar-builder,.book-study-grammar-derived').forEach(function(n){n.remove();});
+  var heading=card.querySelector('h5');if(heading)heading.textContent=isKo()?'동명사':'Gerunds';
+
+  var originalExamples=card.querySelector('.book-study-grammar-examples');if(originalExamples)originalExamples.hidden=true;
+  if(old)old.hidden=true;
+
+  if(gerundItems.length){
+    var gerundRows=gerundItems.map(gerundParts).filter(Boolean);
+    var gerundBuilder=makeBuilder(gerundRows,isKo()?'문장 만들기':'Build a sentence','semantic-gerund',gerundItems);
+    if(anchor)card.insertBefore(gerundBuilder,anchor);else card.appendChild(gerundBuilder);
+  }
+
+  var freqWrap=document.createElement('div');freqWrap.className='book-study-grammar-derived';freqWrap.setAttribute('data-derived-grammar','frequency');
+  var freqHeading=document.createElement('h5');freqHeading.className='book-study-grammar-derived-heading';freqHeading.textContent=isKo()?'빈도부사':'Frequency Adverbs';freqWrap.appendChild(freqHeading);
+  if(freqItems.length){
+    var freqRows=freqItems.map(frequencyStatementParts).filter(Boolean);
+    freqWrap.appendChild(makeBuilder(freqRows,isKo()?'문장 만들기':'Build a sentence','semantic-frequency-statement',freqItems));
+  }
+  if(freqQuestionItems.length){
+    var qRows=freqQuestionItems.map(frequencyQuestionParts).filter(Boolean);
+    var qExamples=freqQuestionItems.concat(freqItems).slice(0,4);
+    freqWrap.appendChild(makeBuilder(qRows,isKo()?'의문사 질문 만들기':'Build a WH question','semantic-frequency-wh-question',qExamples));
+  }
+  if(freqItems.length||freqQuestionItems.length){if(anchor)card.insertBefore(freqWrap,anchor);else card.appendChild(freqWrap);}
+  return true;
+}
+
 function decorate(){
   root.querySelectorAll('.book-study-grammar').forEach(function(card){
-    var info=readCard(card),pk=primaryKind(info.name,info.explanation),rows=builderRows(info.name,info.explanation,info.examples),old=card.querySelector('.book-study-grammar-chart'),anchor=old||card.querySelector('.book-study-grammar-examples')||null,made=false;
+    var info=readCard(card),old=card.querySelector('.book-study-grammar-chart'),anchor=old||card.querySelector('.book-study-grammar-examples')||null;
+    if(semanticSplitCard(card,info,old,anchor))return;
+
+    var pk=primaryKind(info.name,info.explanation),rows=builderRows(info.name,info.explanation,info.examples),made=false;
     if(rows&&rows.length)made=addBuilder(card,anchor,rows,isKo()?'문장 만들기':'Build a sentence','statement',examplesFor(info,'statement',pk))||made;
     if(pk){
       made=addBuilder(card,anchor,yesNoRowsFor(pk,info.examples),isKo()?'예/아니오 질문 만들기':'Build a yes/no question','question',examplesFor(info,'yesno',pk))||made;
