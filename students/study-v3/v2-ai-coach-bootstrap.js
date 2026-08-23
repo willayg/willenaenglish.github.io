@@ -29,6 +29,7 @@ document.head.appendChild(style);
 
 var started=false;
 var failTimer=null;
+var stage5Loading=null;
 
 function text(v){return String(v==null?'':v).trim();}
 function isKo(){var b=document.getElementById('languageBtn');return !b||text(b.textContent)==='English';}
@@ -59,6 +60,26 @@ async function loadHistory(ctx,force){
   if(!history||typeof history.load!=='function')return null;
   try{return await history.load(ctx,force?{force:true}:{});}catch(e){console.warn('[AI Coach bootstrap] history load failed',e);return null;}
 }
+function loadScript(id,src){
+  return new Promise(function(resolve,reject){
+    var existing=document.getElementById(id);
+    if(existing){if(existing.dataset.loaded==='1')return resolve(true);existing.addEventListener('load',function(){resolve(true);},{once:true});existing.addEventListener('error',reject,{once:true});return;}
+    var s=document.createElement('script');s.id=id;s.src=src;s.async=false;s.addEventListener('load',function(){s.dataset.loaded='1';resolve(true);},{once:true});s.addEventListener('error',reject,{once:true});document.head.appendChild(s);
+  });
+}
+async function loadStage5(){
+  if(global.WillenaCoachLearnerState&&global.WillenaCoachConceptRetriever){if(global.WillenaCoachLearnerState.installDiagnosisBridge)global.WillenaCoachLearnerState.installDiagnosisBridge();return true;}
+  if(stage5Loading)return stage5Loading;
+  stage5Loading=(async function(){
+    try{
+      if(!global.WillenaCoachLearnerState)await loadScript('v3Stage5LearnerState','./v3-ai-coach-learner-state.js?v=20260823-stage5a2');
+      if(!global.WillenaCoachConceptRetriever)await loadScript('v3Stage5ConceptRetriever','./v3-ai-coach-concept-retriever.js?v=20260823-stage5a1');
+      if(global.WillenaCoachLearnerState&&global.WillenaCoachLearnerState.installDiagnosisBridge)global.WillenaCoachLearnerState.installDiagnosisBridge();
+      return !!(global.WillenaCoachLearnerState&&global.WillenaCoachConceptRetriever);
+    }catch(e){console.warn('[AI Coach bootstrap] Stage 5 load failed',e);return false;}
+  })();
+  return stage5Loading;
+}
 
 async function startFromLive(){
   if(started)return false;
@@ -66,8 +87,9 @@ async function startFromLive(){
   if(!ctx)return false;
   started=true;
   if(failTimer){clearTimeout(failTimer);failTimer=null;}
+  var stage5=await loadStage5();
   var history=await loadHistory(ctx,false);
-  global.dispatchEvent(new CustomEvent('willena:coach-bootstrap-ready',{detail:{context:ctx,history:history,publicLevel:Number(ctx.publicLevel)||0,masteryReady:masteryReady(),source:'live'}}));
+  global.dispatchEvent(new CustomEvent('willena:coach-bootstrap-ready',{detail:{context:ctx,history:history,publicLevel:Number(ctx.publicLevel)||0,masteryReady:masteryReady(),stage5Ready:stage5,source:'live'}}));
   await coach.home(true);
   root.classList.remove('willena-coach-booting');
   return true;
@@ -77,6 +99,7 @@ async function onStudyReady(e){
   var source=e&&e.detail&&e.detail.source||'';
   if(source!=='live')return;
   if(!started){await startFromLive();return;}
+  await loadStage5();
   var state=typeof coach.getState==='function'?coach.getState():null;
   if(state&&state.view&&state.view!=='home')return;
   var ctx=coach.context();
