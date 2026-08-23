@@ -1,0 +1,21 @@
+(function(global){
+'use strict';
+var VERSION='coach-stage5-target-history-v1.0';
+var URL='https://fiieuiktlsivwfgyivai.supabase.co';
+var KEY=['sb_publishable_','e-K50PquV9gHdfmefG6tmg_','o-vVSl0e'].join('');
+var cache=null,cacheAt=0,loading=null,CACHE_MS=30000;
+function text(v){return String(v==null?'':v).trim();}
+function lower(v){return text(v).toLowerCase();}
+function arr(v){return Array.isArray(v)?v:[];}
+function uid(){try{return text(localStorage.getItem('user_id')||sessionStorage.getItem('user_id')||localStorage.getItem('userId')||sessionStorage.getItem('userId'));}catch(_){return'';}}
+function token(){try{var api=global.WillenaAPI;if(api&&typeof api.getLocalAccessToken==='function'){var t=text(api.getLocalAccessToken());if(t)return t;}return text(localStorage.getItem('sb_access_token')||sessionStorage.getItem('sb_access_token'));}catch(_){return'';}}
+function domain(skill){skill=lower(skill);if(skill.indexOf('listen')>=0)return'listening';if(skill.indexOf('vocab')>=0||skill.indexOf('word')>=0)return'vocabulary';if(skill.indexOf('spell')>=0)return'spelling';if(skill.indexOf('conversation')>=0)return'conversation';if(skill.indexOf('read')>=0)return'reading';return'';}
+function pretty(v){return text(v).replace(/^(lexical|pattern|form):/,'').replace(/_/g,' ');}
+function targetFor(r){var m=r&&r.metadata&&typeof r.metadata==='object'?r.metadata:{},d=domain(r&&r.skill);if(!d)return null;var explicit=text(m.stage5_target);if(explicit)return{key:explicit,type:text(m.stage5_target_type)||'explicit',label:text(m.stage5_target_label)||pretty(explicit)};var lexical=text(m.lexical_entry_id||m.anchor_lexical_entry_id),pattern=text(m.pattern_id||m.anchor_pattern_id),form=text(m.conversation_form||m.question_form),assessment=text(m.assessment_item_type);if((d==='vocabulary'||d==='spelling')&&lexical)return{key:'lexical:'+lexical,type:'lexical_entry',label:d==='spelling'?'spelling item':'vocabulary item'};if((d==='conversation'||d==='listening')&&pattern)return{key:'pattern:'+pattern,type:'pattern',label:d==='conversation'?'conversation pattern':'listening pattern'};if(d==='conversation'&&form)return{key:'form:'+form,type:'conversation_form',label:pretty(form)};if(d==='vocabulary'&&form)return{key:'form:'+form,type:'question_form',label:pretty(form)};if(d==='listening')return{key:'listening_discrimination',type:'broad',label:'listening discrimination'};if(d==='reading')return{key:'reading_comprehension',type:'broad',label:'reading comprehension'};if(d==='spelling')return{key:'spelling',type:'broad',label:'spelling'};if(d==='vocabulary')return{key:'word_choice',type:'broad',label:'vocabulary choice'};if(d==='conversation')return{key:'response_choice',type:'broad',label:'conversation response'};return assessment?{key:assessment,type:'broad',label:pretty(assessment)}:null;}
+function normalize(r){var t=targetFor(r);if(!t)return null;return{id:r.id||null,domain:domain(r.skill),skill:text(r.skill),targetKey:t.key,targetType:t.type,targetLabel:t.label,correct:!!r.is_correct,activityId:text(r.activity_id),bookId:text(r.book_id),unitId:text(r.unit_id),createdAt:r.created_at||null,metadata:r.metadata||{}};}
+async function load(opts){opts=opts||{};if(!opts.force&&cache&&Date.now()-cacheAt<CACHE_MS)return cache;if(loading)return loading;var id=uid(),tok=token();if(!id||!tok)return null;loading=(async function(){var q='study_attempts?student_id=eq.'+encodeURIComponent(id)+'&select=id,book_id,unit_id,skill,activity_id,is_correct,metadata,created_at&order=created_at.desc&limit=220';var r=await fetch(URL+'/rest/v1/'+q,{headers:{apikey:KEY,Authorization:'Bearer '+tok},cache:'no-store'});if(!r.ok)throw new Error('Stage5 target history '+r.status);var rows=arr(await r.json()).map(normalize).filter(Boolean);cache={version:VERSION,loadedAt:new Date().toISOString(),attempts:rows};cacheAt=Date.now();return cache;})().catch(function(e){console.warn('[Stage5 target history]',e);return cache;}).finally(function(){loading=null;});return loading;}
+function getSnapshot(){return cache;}
+function invalidate(){cacheAt=0;}
+global.addEventListener('willena:study-recording',invalidate);
+global.WillenaCoachStage5TargetHistory={version:VERSION,load:load,getSnapshot:getSnapshot,invalidate:invalidate,targetFor:targetFor};
+})(window);
