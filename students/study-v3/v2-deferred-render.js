@@ -26,10 +26,25 @@ proto.__v2DeferredSetActivity=true;
 (function(){
 'use strict';
 if(location.hostname!=='staging.willenaenglish.com')return;
-if(document.querySelector('script[data-v3-question-flagger]'))return;
-var s=document.createElement('script');
-s.src='./v3-question-flagger.js?v=20260823-flagger1';
-s.async=false;
-s.dataset.v3QuestionFlagger='1';
-document.head.appendChild(s);
+if(!document.querySelector('script[data-v3-question-flagger]')){
+  var s=document.createElement('script');
+  s.src='./v3-question-flagger.js?v=20260823-flagger1';
+  s.async=false;
+  s.dataset.v3QuestionFlagger='1';
+  document.head.appendChild(s);
+}
+if(!document.querySelector('link[data-v3-coach-daily-shine]')){
+  var l=document.createElement('link');
+  l.rel='stylesheet';
+  l.href='./v3-coach-daily-shine.css?v=20260824-1';
+  l.dataset.v3CoachDailyShine='1';
+  document.head.appendChild(l);
+}
+if(!document.querySelector('script[data-v3-coach-daily-shine]')){
+  var c=document.createElement('script');
+  c.src='./v3-coach-daily-shine.js?v=20260824-1';
+  c.async=false;
+  c.dataset.v3CoachDailyShine='1';
+  document.head.appendChild(c);
+}
 })();
