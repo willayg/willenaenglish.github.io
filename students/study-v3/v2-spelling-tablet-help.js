@@ -4,15 +4,18 @@ function isTablet(){return global.matchMedia&&global.matchMedia('(min-width:600p
 function ko(){var b=document.getElementById('languageBtn');return !b||String(b.textContent||'').trim()==='English';}
 function ensureAudioPosition(card,spelling,promptRow,slots){
   var audio=(promptRow&&promptRow.querySelector('.activity-spelling-listen,.activity-audio'))||card.querySelector('.activity-spelling-listen,.activity-audio');
-  var workRow=spelling.querySelector('.v2-tablet-spelling-work-row');
-  if(!workRow){workRow=document.createElement('div');workRow.className='v2-tablet-spelling-work-row';if(slots&&slots.nextSibling)spelling.insertBefore(workRow,slots.nextSibling);else spelling.appendChild(workRow);}
-  if(audio){
-    audio.classList.add('v2-tablet-spelling-listen');
-    var listenWrap=audio.closest('.v2-tablet-spelling-listen-wrap');
-    if(!listenWrap){listenWrap=document.createElement('div');listenWrap.className='v2-tablet-spelling-listen-wrap';listenWrap.appendChild(audio);}
-    if(listenWrap.parentElement!==workRow)workRow.appendChild(listenWrap);
+  if(!audio)return;
+  audio.classList.add('v2-tablet-spelling-listen');
+  var listenWrap=audio.closest('.v2-tablet-spelling-listen-wrap');
+  if(!listenWrap){listenWrap=document.createElement('div');listenWrap.className='v2-tablet-spelling-listen-wrap';listenWrap.appendChild(audio);}
+  listenWrap.classList.add('v2-tablet-spelling-listen-above-slots');
+  if(slots){
+    if(listenWrap.parentElement!==spelling||listenWrap.nextSibling!==slots)spelling.insertBefore(listenWrap,slots);
+  }else if(listenWrap.parentElement!==spelling){
+    spelling.insertBefore(listenWrap,spelling.firstChild);
   }
-  return workRow;
+  var oldWorkRow=spelling.querySelector('.v2-tablet-spelling-work-row');
+  if(oldWorkRow&&!oldWorkRow.children.length)oldWorkRow.remove();
 }
 function decorateRoot(root){
   if(!isTablet()||!root)return;
@@ -20,8 +23,8 @@ function decorateRoot(root){
   if(!spelling)return;
   var card=spelling.closest('.activity-card');
   if(!card)return;
-  var alreadyDecorated=card.dataset.v2TabletSpellingHelp==='9';
-  card.dataset.v2TabletSpellingHelp='9';
+  var alreadyDecorated=card.dataset.v2TabletSpellingHelp==='10';
+  card.dataset.v2TabletSpellingHelp='10';
   card.classList.add('v2-tablet-spelling');
   var instruction=card.querySelector('.activity-context,.activity-instruction');
   if(!alreadyDecorated&&instruction&&!instruction.classList.contains('v2-tablet-spelling-instruction')){
