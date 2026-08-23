@@ -5,7 +5,7 @@
   inset:0;
   border-radius:inherit;
   pointer-events:none;
-  z-index:8;
+  z-index:50;
   display:none;
 }
 .study-v2-ai-shell.is-daily-complete-spark .v3-coach-spark-track{display:block}
@@ -18,10 +18,7 @@
   border-radius:50%;
   background:#fff;
   box-shadow:0 0 3px #fff,0 0 6px #87edf3,0 0 9px #25b8c4;
-  offset-path:inset(1px round 23px);
-  offset-distance:0%;
-  offset-rotate:0deg;
-  animation:v3CoachSparkTravel 5.5s linear infinite;
+  will-change:transform;
 }
 .study-v2-ai-shell .v3-coach-spark::after{
   content:"";
@@ -34,10 +31,6 @@
   background:linear-gradient(90deg,transparent,rgba(102,214,223,.16),rgba(255,255,255,.72));
   filter:blur(.6px);
 }
-@keyframes v3CoachSparkTravel{to{offset-distance:100%}}
-@media(max-width:560px){
-  .study-v2-ai-shell .v3-coach-spark{offset-path:inset(1px round 20px)}
-}
 @media(prefers-reduced-motion:reduce){
-  .study-v2-ai-shell .v3-coach-spark{animation:none;offset-distance:8%}
+  .study-v2-ai-shell .v3-coach-spark{box-shadow:0 0 3px #fff,0 0 6px #87edf3}
 }
