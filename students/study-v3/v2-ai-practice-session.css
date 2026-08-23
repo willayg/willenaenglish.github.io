@@ -131,15 +131,21 @@
 }
 .ai-coach-token:disabled{cursor:default;}
 
-/* Coach activity shell: keep the question close to the top of the screen. */
+/* Coach activity shell: keep header at top and vertically center the activity card. */
 .ai-coach-practice-overlay{
   padding-top:max(8px,env(safe-area-inset-top));
 }
-.ai-coach-practice-shell{gap:8px;}
+.ai-coach-practice-shell{
+  gap:8px;
+  min-height:calc(100dvh - max(16px,env(safe-area-inset-top)) - max(16px,env(safe-area-inset-bottom)));
+  display:flex;
+  flex-direction:column;
+}
 .ai-coach-practice-head{
   align-items:center;
   gap:9px;
   padding:3px 2px 2px;
+  flex:0 0 auto;
 }
 .ai-coach-practice-back{
   width:38px;
@@ -158,6 +164,11 @@
 }
 .ai-coach-practice-card{
   padding:14px;
+  flex:1 1 auto;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  min-height:0;
 }
 
 @media(max-width:560px){
@@ -173,7 +184,10 @@
   .ai-coach-practice-overlay{
     padding:max(6px,env(safe-area-inset-top)) 7px max(12px,env(safe-area-inset-bottom));
   }
-  .ai-coach-practice-shell{gap:7px;}
+  .ai-coach-practice-shell{
+    gap:7px;
+    min-height:calc(100dvh - max(12px,env(safe-area-inset-top)) - max(18px,env(safe-area-inset-bottom)));
+  }
   .ai-coach-practice-head{gap:8px;padding:2px 1px;}
   .ai-coach-practice-back{width:36px;height:36px;border-radius:11px;}
   .ai-coach-practice-title h2{font-size:1rem;line-height:1.12;}
