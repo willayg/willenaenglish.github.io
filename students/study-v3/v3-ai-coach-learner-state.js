@@ -1,7 +1,7 @@
 (function(global){
 'use strict';
 
-var VERSION='coach-learner-state-v1.1';
+var VERSION='coach-learner-state-v1.2';
 function text(v){return String(v==null?'':v).trim();}
 function lower(v){return text(v).toLowerCase();}
 function arr(v){return Array.isArray(v)?v:[];}
@@ -32,10 +32,11 @@ function interpret(input){
   var weakHistory=(attempts>=2&&(masteryScore<70||accuracy<75))||misses>=2||lapses>0;
   var state='single_mistake',label='Single mistake',confidence=.55,action='light_retry';
 
-  if(speech&&uncertain){
-    state='speech_uncertainty';label='Speech recognition uncertainty';confidence=.94;action='retry_speech_later';
-  }else if(speech&&!r.correct&&num(r.similarity)>=.55){
-    state='speech_uncertainty';label='Possible speech recognition mismatch';confidence=.82;action='retry_speech_later';
+  if(speech){
+    state='speech_uncertainty';
+    label=uncertain?'Speech recognition uncertainty':'Speech result needs separate confirmation';
+    confidence=uncertain?.94:.76;
+    action='retry_speech_later';
   }else if(d.possibleSlip||(!recurring&&strongHistory)){
     state='likely_slip';label='Likely slip';confidence=d.possibleSlip?.9:.82;action='light_retry';
   }else if(weakHistory&&productionActivity(a)&&!recognitionActivity(a)){
@@ -49,13 +50,7 @@ function interpret(input){
   var conceptPenalty=state==='concept_weakness'?1:state==='recall_weakness'?.55:state==='single_mistake'?.2:0;
   if(state==='speech_uncertainty'||state==='likely_slip')conceptPenalty=0;
   return{
-    version:VERSION,
-    state:state,
-    label:label,
-    confidence:Math.round(clamp(confidence,.01,.99)*100)/100,
-    action:action,
-    conceptCode:code,
-    diagnosisKey:key,
+    version:VERSION,state:state,label:label,confidence:Math.round(clamp(confidence,.01,.99)*100)/100,action:action,conceptCode:code,diagnosisKey:key,
     evidence:{recentSameDiagnosis:same.length,recentMisses:misses,recentCorrect:correct,mastery:masteryScore||null,accuracy:accuracy||null,masteryAttempts:attempts,lapses:lapses,recurring:recurring,strongHistory:strongHistory,weakHistory:weakHistory,speech:speech,speechUncertain:uncertain},
     conceptPenaltyWeight:conceptPenalty
   };
@@ -65,17 +60,14 @@ function installDiagnosisBridge(){
   var engine=global.WillenaAICoachDiagnosis;
   if(!engine||typeof engine.diagnose!=='function'||engine.__stage5LearnerState)return false;
   var original=engine.diagnose;
-  engine.diagnose=function(input){
-    var d=original.call(engine,input||{}),state=interpret({diagnosis:d,activity:input&&input.activity||{},result:input&&input.result||{},history:input&&input.history||null});
-    return Object.assign({},d,{learnerState:state,learner_state:state.state,remediationAction:state.action,conceptPenaltyWeight:state.conceptPenaltyWeight});
-  };
-  engine.__stage5LearnerState=true;
-  return true;
+  engine.diagnose=function(input){var d=original.call(engine,input||{}),state=interpret({diagnosis:d,activity:input&&input.activity||{},result:input&&input.result||{},history:input&&input.history||null});return Object.assign({},d,{learnerState:state,learner_state:state.state,remediationAction:state.action,conceptPenaltyWeight:state.conceptPenaltyWeight});};
+  engine.__stage5LearnerState=true;return true;
 }
 
 function selfTest(){
   var cases=[
     {name:'speech close',input:{activity:{skill:'speaking',response:{type:'speech'},metadata:{concept_code:'past_be'}},result:{correct:true,speech_match:'close',similarity:.8},diagnosis:{subtype:'be_agreement'}},want:'speech_uncertainty'},
+    {name:'speech mangled',input:{activity:{skill:'speaking',response:{type:'speech'},metadata:{concept_code:'past_be'}},result:{correct:false,speech_match:'wrong',similarity:.12},diagnosis:{subtype:'be_agreement',recurring:true},history:{}},want:'speech_uncertainty'},
     {name:'strong history slip',input:{activity:{skill:'grammar',metadata:{concept_code:'third_person'}},result:{correct:false},diagnosis:{subtype:'third_person_s',possibleSlip:true},history:{}},want:'likely_slip'},
     {name:'recurring production',input:{activity:{skill:'sentence_building',metadata:{concept_code:'third_person'}},result:{correct:false},diagnosis:{subtype:'third_person_s',recurring:true},history:{}},want:'recall_weakness'},
     {name:'recurring recognition',input:{activity:{skill:'grammar',response:{type:'choice'},metadata:{concept_code:'third_person'}},result:{correct:false},diagnosis:{subtype:'third_person_s',recurring:true},history:{}},want:'concept_weakness'}
