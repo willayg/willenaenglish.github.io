@@ -16,7 +16,11 @@ function normaliseSentence(value){
     .replace(/^She's\b/i,'She is')
     .replace(/^It's\b/i,'It is')
     .replace(/^We're\b/i,'We are')
-    .replace(/^They're\b/i,'They are');
+    .replace(/^They're\b/i,'They are')
+    .replace(/^What's\b/i,'What is')
+    .replace(/^Where's\b/i,'Where is')
+    .replace(/^When's\b/i,'When is')
+    .replace(/^Who's\b/i,'Who is');
 }
 function optionText(values,fallback){var a=limit(values,4);return a.length?a.join(' / '):fallback;}
 function collectAfter(examples,re){var out=[];(examples||[]).forEach(function(raw){var m=normaliseSentence(raw).match(re);if(m&&m[1])out.push(m[1]);});return uniq(out);}
@@ -131,11 +135,42 @@ function builderRows(name,explanation,examples){
 
   return rowsForPresentAgreement(name,explanation,examples);
 }
+function questionRows(name,explanation,examples){
+  var signal=(name+' '+explanation).toLowerCase();
+  var questions=(examples||[]).map(normaliseSentence).filter(function(s){return /^(?:what|where|when|why|how|who\b|am\b|is\b|are\b|do\b|does\b|did\b|can\b|could\b|will\b|would\b|should\b|have\b|has\b)/i.test(s);});
+  if(!questions.length)return null;
+
+  if(/going to|be_going_to/.test(signal)){
+    var tails=[];
+    questions.forEach(function(s){
+      var m=s.match(/^(?:(?:what|where|when|why|how)\s+)?(?:am|is|are)\s+(?:I|you|he|she|it|we|they)\s+going to\s+(.+)$/i);
+      if(m&&m[1])tails.push(m[1]);
+    });
+    var tailText=optionText(tails,'do / take / visit ...');
+    return[
+      ['Am','I','going to',tailText],
+      ['Is','He / She / It','going to',tailText],
+      ['Are','You / We / They','going to',tailText]
+    ];
+  }
+
+  if(/past simple: the verb be|past_be|과거형.*was|was.*were|was\/were/.test(signal)){
+    var endings=[];
+    questions.forEach(function(s){var m=s.match(/^(?:(?:where|when|why|how)\s+)?(?:was|were)\s+(?:I|you|he|she|it|we|they)\s+(.+)$/i);if(m&&m[1])endings.push(m[1]);});
+    var endingText=optionText(endings,'yesterday / at the park / ...');
+    return[
+      ['Was','I / He / She / It',endingText],
+      ['Were','You / We / They',endingText]
+    ];
+  }
+
+  return null;
+}
 function displayCellText(value){return text(value).replace(/\s*\/\s*/g,'\n');}
 function makeCell(value,index){var c=document.createElement('div');c.className='book-study-grammar-builder-cell is-col-'+(index+1);c.textContent=displayCellText(value);return c;}
-function makeBuilder(rows){
-  var wrap=document.createElement('div');wrap.className='book-study-grammar-builder';
-  var title=document.createElement('div');title.className='book-study-grammar-builder-title';title.textContent=isKo()?'문장 만들기':'Build a sentence';wrap.appendChild(title);
+function makeBuilder(rows,titleText,kind){
+  var wrap=document.createElement('div');wrap.className='book-study-grammar-builder'+(kind?' is-'+kind:'');
+  var title=document.createElement('div');title.className='book-study-grammar-builder-title';title.textContent=titleText;wrap.appendChild(title);
   rows.forEach(function(values){
     var row=document.createElement('div');row.className='book-study-grammar-builder-row';row.style.setProperty('--grammar-chunks',String(values.length));
     values.forEach(function(v,i){row.appendChild(makeCell(v,i));});wrap.appendChild(row);
@@ -150,19 +185,26 @@ function readCard(card){
 }
 function decorate(){
   root.querySelectorAll('.book-study-grammar').forEach(function(card){
-    if(card.querySelector('.book-study-grammar-builder'))return;
-    var info=readCard(card),rows=builderRows(info.name,info.explanation,info.examples);
-    if(!rows||!rows.length)return;
-    var old=card.querySelector('.book-study-grammar-chart'),builder=makeBuilder(rows);
-    if(old){card.insertBefore(builder,old);old.hidden=true;}else{
-      var title=card.querySelector('h5');if(title&&title.nextSibling)card.insertBefore(builder,title.nextSibling);else card.appendChild(builder);
+    var info=readCard(card),rows=builderRows(info.name,info.explanation,info.examples),qRows=questionRows(info.name,info.explanation,info.examples);
+    if((!rows||!rows.length)&&(!qRows||!qRows.length))return;
+    var old=card.querySelector('.book-study-grammar-chart');
+    var anchor=old||card.querySelector('.book-study-grammar-examples')||null;
+    if(rows&&rows.length&&!card.querySelector('.book-study-grammar-builder.is-statement')){
+      var builder=makeBuilder(rows,isKo()?'문장 만들기':'Build a sentence','statement');
+      if(anchor)card.insertBefore(builder,anchor);else card.appendChild(builder);
+      card.classList.add('has-substitution-builder');
     }
-    card.classList.add('has-substitution-builder');
+    if(qRows&&qRows.length&&!card.querySelector('.book-study-grammar-builder.is-question')){
+      var qBuilder=makeBuilder(qRows,isKo()?'질문 만들기':'Build a question','question');
+      if(old)card.insertBefore(qBuilder,old);else if(anchor)card.insertBefore(qBuilder,anchor);else card.appendChild(qBuilder);
+      card.classList.add('has-question-builder');
+    }
+    if(old)old.hidden=true;
   });
 }
 var scheduled=false;
 function schedule(){if(scheduled)return;scheduled=true;requestAnimationFrame(function(){scheduled=false;decorate();});}
 if(window.MutationObserver)new MutationObserver(schedule).observe(root,{childList:true,subtree:true});
-var lang=document.getElementById('languageBtn');if(lang)lang.addEventListener('click',function(){setTimeout(schedule,40);});
+var lang=document.getElementById('languageBtn');if(lang)lang.addEventListener('click',function(){setTimeout(function(){root.querySelectorAll('.book-study-grammar-builder').forEach(function(n){n.remove();});schedule();},40);});
 schedule();
 })();
