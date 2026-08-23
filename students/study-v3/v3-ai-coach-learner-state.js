@@ -1,7 +1,7 @@
 (function(global){
 'use strict';
 
-var VERSION='coach-learner-state-v1.0';
+var VERSION='coach-learner-state-v1.1';
 function text(v){return String(v==null?'':v).trim();}
 function lower(v){return text(v).toLowerCase();}
 function arr(v){return Array.isArray(v)?v:[];}
@@ -61,6 +61,18 @@ function interpret(input){
   };
 }
 
+function installDiagnosisBridge(){
+  var engine=global.WillenaAICoachDiagnosis;
+  if(!engine||typeof engine.diagnose!=='function'||engine.__stage5LearnerState)return false;
+  var original=engine.diagnose;
+  engine.diagnose=function(input){
+    var d=original.call(engine,input||{}),state=interpret({diagnosis:d,activity:input&&input.activity||{},result:input&&input.result||{},history:input&&input.history||null});
+    return Object.assign({},d,{learnerState:state,learner_state:state.state,remediationAction:state.action,conceptPenaltyWeight:state.conceptPenaltyWeight});
+  };
+  engine.__stage5LearnerState=true;
+  return true;
+}
+
 function selfTest(){
   var cases=[
     {name:'speech close',input:{activity:{skill:'speaking',response:{type:'speech'},metadata:{concept_code:'past_be'}},result:{correct:true,speech_match:'close',similarity:.8},diagnosis:{subtype:'be_agreement'}},want:'speech_uncertainty'},
@@ -69,8 +81,9 @@ function selfTest(){
     {name:'recurring recognition',input:{activity:{skill:'grammar',response:{type:'choice'},metadata:{concept_code:'third_person'}},result:{correct:false},diagnosis:{subtype:'third_person_s',recurring:true},history:{}},want:'concept_weakness'}
   ];
   var results=cases.map(function(c){var got=interpret(c.input);return{name:c.name,want:c.want,got:got.state,pass:got.state===c.want};});
-  return{version:VERSION,passed:results.filter(function(x){return x.pass;}).length,total:results.length,results:results};
+  return{version:VERSION,passed:results.filter(function(x){return x.pass;}).length,total:results.length,bridgeInstalled:!!(global.WillenaAICoachDiagnosis&&global.WillenaAICoachDiagnosis.__stage5LearnerState),results:results};
 }
 
-global.WillenaCoachLearnerState={version:VERSION,interpret:interpret,selfTest:selfTest};
+global.WillenaCoachLearnerState={version:VERSION,interpret:interpret,installDiagnosisBridge:installDiagnosisBridge,selfTest:selfTest};
+installDiagnosisBridge();
 })(window);
