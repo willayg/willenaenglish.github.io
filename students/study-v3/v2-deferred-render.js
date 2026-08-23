@@ -22,3 +22,14 @@ proto.setActivity=function(raw){
 };
 proto.__v2DeferredSetActivity=true;
 })(window);
+
+(function(){
+'use strict';
+if(location.hostname!=='staging.willenaenglish.com')return;
+if(document.querySelector('script[data-v3-question-flagger]'))return;
+var s=document.createElement('script');
+s.src='./v3-question-flagger.js?v=20260823-flagger1';
+s.async=false;
+s.dataset.v3QuestionFlagger='1';
+document.head.appendChild(s);
+})();
