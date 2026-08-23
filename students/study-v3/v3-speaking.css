@@ -14,12 +14,13 @@
 .v3-speaking-microw{position:relative;align-items:center;flex-direction:column}
 .v3-speaking-listen{border:2px solid #66d6df;background:#fff;color:#e60076;border-radius:999px;padding:11px 18px;font:800 15px Poppins,sans-serif}
 .v3-speaking-listen:disabled{opacity:.45}
-.v3-speaking-mic{width:92px;height:92px;border:3px solid #ff0a8a;border-radius:50%;background:#fff;color:#ff0a8a;display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 9px rgba(255,10,138,.06);padding:0}
-.v3-speaking-mic svg{width:40px;height:40px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.v3-speaking-mic{width:92px;height:92px;border:3px solid #ff0a8a;border-radius:50%;background:#fff;color:#ff0a8a;display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 9px rgba(255,10,138,.06);padding:0;position:relative}
+.v3-speaking-mic svg{width:40px;height:40px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;position:relative;z-index:2}
 .v3-speaking-mic.is-listening{animation:v3SpeakPulse .8s ease-in-out infinite alternate;background:#fff7fb}
 @keyframes v3SpeakPulse{to{transform:scale(1.04);box-shadow:0 0 0 18px rgba(255,10,138,.14)}}
-.v3-speaking-mic.is-retry-cue{animation:v3RetryPulse .72s ease-in-out infinite alternate;box-shadow:0 0 0 10px rgba(255,10,138,.10),0 0 0 20px rgba(255,10,138,.05)}
-@keyframes v3RetryPulse{from{transform:scale(1)}to{transform:scale(1.07);box-shadow:0 0 0 13px rgba(255,10,138,.14),0 0 0 26px rgba(255,10,138,.06)}}
+.v3-speaking-mic.is-retry-cue{animation:none;box-shadow:0 0 0 10px rgba(255,10,138,.08);overflow:visible}
+.v3-speaking-mic.is-retry-cue::before{content:"";position:absolute;inset:-7px;border-radius:50%;padding:5px;background:conic-gradient(transparent 0deg,transparent 278deg,rgba(255,255,255,.18) 300deg,#ff82c7 326deg,#fff 340deg,transparent 360deg);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;animation:v3RetryShimmer 1.55s linear infinite;pointer-events:none}
+@keyframes v3RetryShimmer{to{transform:rotate(360deg)}}
 .v3-speaking-retry-arrow{display:flex;align-items:center;justify-content:center;gap:5px;margin-bottom:4px;color:#e60076;font:800 13px/1 Poppins,sans-serif;animation:v3RetryNudge .75s ease-in-out infinite alternate}
 .v3-speaking-retry-arrow svg{width:30px;height:30px;fill:none;stroke:currentColor;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
 @keyframes v3RetryNudge{from{transform:translateY(-2px)}to{transform:translateY(4px)}}
