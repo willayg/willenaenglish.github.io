@@ -70,8 +70,8 @@ function loadScript(id,src){
 async function loadStage5(){
   if(global.WillenaCoachLearnerState&&global.WillenaCoachConceptRetriever&&global.WillenaCoachStage5Capability){
     if(global.WillenaCoachLearnerState.installDiagnosisBridge)global.WillenaCoachLearnerState.installDiagnosisBridge();
-    if(!global.WillenaCoachStage5SkillCapability&&!document.getElementById('v3Stage5SkillCapability'))loadScript('v3Stage5SkillCapability','./v3-ai-coach-stage5-skill-capability.js?v=20260823-stage5skill1').catch(function(e){console.warn('[AI Coach bootstrap] Stage 5 skill capability load failed',e);});
-    if(!document.getElementById('v3Stage5DebugScript'))loadScript('v3Stage5DebugScript','./v3-stage5-debug.js?v=20260823-stage5debug2').catch(function(e){console.warn('[AI Coach bootstrap] Stage 5 debug load failed',e);});
+    if(!global.WillenaCoachStage5SkillCapability&&!document.getElementById('v3Stage5SkillCapability'))loadScript('v3Stage5SkillCapability','./v3-ai-coach-stage5-skill-capability.js?v=20260823-stage5skill2').catch(function(e){console.warn('[AI Coach bootstrap] Stage 5 skill capability load failed',e);});
+    if(!document.getElementById('v3Stage5DebugScript'))loadScript('v3Stage5DebugScript','./v3-stage5-debug.js?v=20260823-stage5debug3').catch(function(e){console.warn('[AI Coach bootstrap] Stage 5 debug load failed',e);});
     return true;
   }
   if(stage5Loading)return stage5Loading;
@@ -79,10 +79,10 @@ async function loadStage5(){
     try{
       if(!global.WillenaCoachLearnerState)await loadScript('v3Stage5LearnerState','./v3-ai-coach-learner-state.js?v=20260823-stage5a4');
       if(!global.WillenaCoachConceptRetriever)await loadScript('v3Stage5ConceptRetriever','./v3-ai-coach-concept-retriever.js?v=20260823-stage5a3');
-      if(!global.WillenaCoachStage5Capability)await loadScript('v3Stage5Capability','./v3-ai-coach-stage5-capability.js?v=20260823-stage5a3');
+      if(!global.WillenaCoachStage5Capability)await loadScript('v3Stage5Capability','./v3-ai-coach-stage5-capability.js?v=20260823-stage5a4');
       if(global.WillenaCoachLearnerState&&global.WillenaCoachLearnerState.installDiagnosisBridge)global.WillenaCoachLearnerState.installDiagnosisBridge();
-      if(!global.WillenaCoachStage5SkillCapability)await loadScript('v3Stage5SkillCapability','./v3-ai-coach-stage5-skill-capability.js?v=20260823-stage5skill1');
-      await loadScript('v3Stage5DebugScript','./v3-stage5-debug.js?v=20260823-stage5debug2').catch(function(e){console.warn('[AI Coach bootstrap] Stage 5 debug load failed',e);});
+      if(!global.WillenaCoachStage5SkillCapability)await loadScript('v3Stage5SkillCapability','./v3-ai-coach-stage5-skill-capability.js?v=20260823-stage5skill2');
+      await loadScript('v3Stage5DebugScript','./v3-stage5-debug.js?v=20260823-stage5debug3').catch(function(e){console.warn('[AI Coach bootstrap] Stage 5 debug load failed',e);});
       return !!(global.WillenaCoachLearnerState&&global.WillenaCoachConceptRetriever&&global.WillenaCoachStage5Capability);
     }catch(e){console.warn('[AI Coach bootstrap] Stage 5 load failed',e);return false;}
   })();
