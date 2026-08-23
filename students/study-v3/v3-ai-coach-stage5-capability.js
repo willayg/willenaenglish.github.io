@@ -1,7 +1,7 @@
 (function(global){
 'use strict';
 
-var VERSION='coach-stage5-capability-v1.1';
+var VERSION='coach-stage5-capability-v1.2';
 var coach=global.WillenaAICoach;
 if(!coach||typeof coach.registerCapability!=='function')return;
 
@@ -20,8 +20,31 @@ function diagnosisDomain(d,skill){var domain=lower(d&&d.domain);if(domain&&domai
 function isSpeechAttempt(x,d){var s=lower(x&&x.skill),st=stateOf(d);return s.indexOf('speak')>=0||st==='speech_uncertainty'||lower(d&&d.domain)==='speech';}
 function isProduction(x){var s=lower(x&&x.skill),d=x&&x.diagnosis||{},a=lower(stateAction(d));return /sentence|build|write|production/.test(s)||a==='production_practice';}
 function diagnosisConcept(d,a){var r=retriever();return r&&typeof r.inferConceptCode==='function'?r.inferConceptCode(d,a):text(d&&d.concept);}
-function actionFor(domain,state){if(state==='recall_weakness')return'production_practice';if(domain==='grammar')return'concept_remediation';if(domain==='listening')return'listening_practice';if(domain==='vocabulary')return'vocabulary_practice';if(domain==='spelling')return'spelling_practice';if(domain==='conversation')return'conversation_practice';if(domain==='reading')return'reading_practice';return'targeted_practice';}
-function stateWeight(s){return s==='concept_weakness'?5:s==='recall_weakness'?4.8:s==='recurring_weakness'?4.5:0;}
+function actionFor(domain,state){if(state==='recall_weakness')return'production_practice';if(state==='recovering')return'light_retry';if(state==='secure')return'none';if(domain==='grammar')return'concept_remediation';if(domain==='listening')return'listening_practice';if(domain==='vocabulary')return'vocabulary_practice';if(domain==='spelling')return'spelling_practice';if(domain==='conversation')return'conversation_practice';if(domain==='reading')return'reading_practice';return'targeted_practice';}
+function stateWeight(s){return s==='concept_weakness'?5:s==='recall_weakness'?4.8:s==='recurring_weakness'?4.5:s==='recovering'?2.1:0;}
+function activeState(s){return s==='concept_weakness'||s==='recall_weakness'||s==='recurring_weakness'||s==='recovering';}
+function attemptDomain(x){return diagnosisDomain(x&&x.diagnosis||{},x&&x.skill);}
+function weightAt(i){return i<5?1.5:i<10?1:.5;}
+function relevantForGroup(x,g){
+  if(!x||isSpeechAttempt(x,x.diagnosis||{}))return false;
+  if(g.domain!=='grammar')return attemptDomain(x)===g.domain;
+  if(!x.diagnosis)return false;
+  var d=x.diagnosis,fake={skill:x.skill,metadata:{concept_code:text(d.concept),book_id:x.bookId,unit_id:x.unitId}};
+  return diagnosisConcept(d,fake)===g.conceptCode;
+}
+function recoveryStats(rows,g){
+  var relevant=arr(rows).filter(function(x){return relevantForGroup(x,g);}).slice(0,12),weightedCorrect=0,weightedTotal=0,correct=0,wrong=0,streak=0;
+  relevant.forEach(function(x,i){var w=weightAt(i);weightedTotal+=w;if(x.correct){correct++;weightedCorrect+=w;}else wrong++;});
+  for(var i=0;i<relevant.length;i++){if(relevant[i].correct)streak++;else break;}
+  return{sample:relevant.length,correct:correct,wrong:wrong,recentAccuracy:weightedTotal?Math.round(weightedCorrect/weightedTotal*100):0,correctStreak:streak};
+}
+function applyRecovery(g,rows){
+  var stats=recoveryStats(rows,g);g.recentSample=stats.sample;g.recentCorrect=stats.correct;g.recentWrong=stats.wrong;g.recentAccuracy=stats.recentAccuracy;g.correctStreak=stats.correctStreak;
+  if(g.domain==='grammar')return g;
+  if(stats.correctStreak>=4){g.state='secure';g.action='none';return g;}
+  if(stats.correctStreak>=2||(stats.correct>=3&&stats.recentAccuracy>=65)){g.state='recovering';g.action='light_retry';return g;}
+  return g;
+}
 
 function aggregateEvidence(ctx){
   var h=history(),rows=arr(h&&h.recentAttempts).slice(0,180),groups={};
@@ -43,26 +66,28 @@ function aggregateEvidence(ctx){
   Object.keys(groups).forEach(function(k){
     var g=groups[k];g.distinctItems=Object.keys(g.items).length;g.distinctDays=Object.keys(g.days).length;delete g.items;delete g.days;
     if(g.domain==='grammar'){
-      if(g.productionMisses>=2&&g.productionMisses>=Math.ceil(g.count*.5)){g.state='recall_weakness';}
-      else if(g.count>=2){g.state='concept_weakness';}
+      if(g.productionMisses>=2&&g.productionMisses>=Math.ceil(g.count*.5))g.state='recall_weakness';
+      else if(g.count>=2)g.state='concept_weakness';
     }else if((g.count>=3&&g.distinctItems>=2)||g.count>=4){
       g.state='recurring_weakness';
     }
     if(g.state)g.action=actionFor(g.domain,g.state);
+    applyRecovery(g,rows);
   });
 
-  var grammar=arr(h&&h.grammar&&h.grammar.weak);
-  grammar.forEach(function(x){
+  var grammarAll=arr(h&&h.grammar&&h.grammar.mastery),grammarWeak=arr(h&&h.grammar&&h.grammar.weak);
+  grammarWeak.forEach(function(x){
     var code=text(x&&x.key);if(!code)return;var key='grammar|'+code,attempts=num(x.attempts),mastery=num(x.mastery),accuracy=num(x.accuracy);if(attempts<2)return;
     var existing=groups[key];
-    if(existing){existing.mastery=mastery;existing.accuracy=accuracy;existing.count=Math.max(existing.count,Math.round(attempts));if(!existing.state)existing.state='concept_weakness';existing.action=actionFor('grammar',existing.state);return;}
-    groups[key]={domain:'grammar',targetKey:code,conceptCode:code,diagnosisKey:'mastery_weakness',state:'concept_weakness',action:'concept_remediation',count:Math.max(2,Math.round(attempts)),distinctItems:0,distinctDays:0,productionMisses:0,confidence:.78,lastSeen:Date.parse(x.lastSeen||'')||0,diagnosis:{concept:code,subtype:'mastery_weakness'},bookId:'',unitId:'',skill:'grammar',mastery:mastery,accuracy:accuracy};
+    if(existing){existing.mastery=mastery;existing.accuracy=accuracy;existing.count=Math.max(existing.count,Math.round(attempts));if(mastery>=80&&accuracy>=80&&attempts>=4){existing.state='secure';existing.action='none';}else if((mastery>=70||accuracy>=75)&&existing.state){existing.state='recovering';existing.action='light_retry';}else if(!existing.state){existing.state='concept_weakness';existing.action='concept_remediation';}return;}
+    groups[key]={domain:'grammar',targetKey:code,conceptCode:code,diagnosisKey:'mastery_weakness',state:(mastery>=70||accuracy>=75)?'recovering':'concept_weakness',action:(mastery>=70||accuracy>=75)?'light_retry':'concept_remediation',count:Math.max(2,Math.round(attempts)),distinctItems:0,distinctDays:0,productionMisses:0,confidence:.78,lastSeen:Date.parse(x.lastSeen||'')||0,diagnosis:{concept:code,subtype:'mastery_weakness'},bookId:'',unitId:'',skill:'grammar',mastery:mastery,accuracy:accuracy,recentSample:0,recentCorrect:0,recentWrong:0,recentAccuracy:accuracy,correctStreak:0};
   });
+  grammarAll.forEach(function(x){var code=text(x&&x.key),key='grammar|'+code,g=groups[key];if(!g)return;var attempts=num(x.attempts),mastery=num(x.mastery),accuracy=num(x.accuracy);g.mastery=mastery;g.accuracy=accuracy;if(attempts>=4&&mastery>=80&&accuracy>=80){g.state='secure';g.action='none';}});
 
-  return Object.keys(groups).map(function(k){var g=groups[k];if(!g.state)return null;g.score=stateWeight(g.state)*100+Math.min(8,g.count)*18+Math.min(5,g.distinctItems)*7+g.confidence*20+(g.lastSeen?Math.max(0,20-(Date.now()-g.lastSeen)/86400000):0);return g;}).filter(Boolean).sort(function(a,b){return b.score-a.score;}).slice(0,12);
+  return Object.keys(groups).map(function(k){var g=groups[k];if(!g.state)return null;g.score=stateWeight(g.state)*100+Math.min(8,g.count)*18+Math.min(5,g.distinctItems)*7+g.confidence*20+(g.lastSeen?Math.max(0,20-(Date.now()-g.lastSeen)/86400000):0);return g;}).filter(Boolean).sort(function(a,b){return b.score-a.score;}).slice(0,16);
 }
 function evidence(ctx){return aggregateEvidence(ctx);}
-function grammarEvidence(ctx){return aggregateEvidence(ctx).filter(function(x){return x.domain==='grammar'&&x.conceptCode;});}
+function grammarEvidence(ctx){return aggregateEvidence(ctx).filter(function(x){return x.domain==='grammar'&&x.conceptCode&&activeState(x.state)&&x.state!=='recovering';});}
 function labelFor(x){var code=text(x&&x.targetKey||x&&x.conceptCode).replace(/_/g,' ');return code||'grammar';}
 function stateMessage(x){if(!x)return{ko:'문법을 조금 더 연습해 볼까요?',en:'Let’s do a little more grammar practice.'};if(x.state==='recall_weakness')return{ko:'규칙은 어느 정도 알고 있지만 직접 문장을 만들 때 조금 더 연습이 필요해 보여요.',en:'You seem to know the rule, but producing it yourself still needs a little practice.'};return{ko:'같은 문법 포인트에서 몇 번 막힌 흔적이 있어요. 짧게 다른 문제로 다시 확인해 볼게요.',en:'I found repeated trouble with the same grammar point. Let’s check it with a few different questions.'};}
 function tokenActivity(item,i,concept){var answer=text(item.answer),tokens=answer.replace(/([?.!,])/g,' $1 ').split(/\s+/).filter(Boolean);if(tokens.length<3)return null;return{id:'stage5-build-'+item.id+'-'+i,sourceType:'assessment_item',sourceId:item.id,skill:'sentence_building',usage:['practice'],stimulus:{type:'text',prompt:text(item.prompt),context:ko()?'단어를 올바른 순서로 배열하세요.':'Put the words in the correct order.'},response:{type:'token_order',tokens:shuffle(tokens)},answer:tokens,level:item.levelId||null,difficulty:item.difficulty||null,metadata:Object.assign({},item.metadata||{},{ai_coach:true,ai_coach_cross_book:true,stage5_remediation:true,stage5_mode:'production',concept_code:concept,pattern_id:item.patternId||null,book_id:item.bookId||null,unit_id:item.unitId||null,source_label:'AI Coach · Stage 5 production',mastery_content_type:'pattern',mastery_content_id:item.patternId||item.id})};}
