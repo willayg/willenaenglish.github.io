@@ -18,13 +18,21 @@ function ensureAudioPosition(card,spelling,promptRow,slots){
   if(oldWorkRow&&!oldWorkRow.children.length)oldWorkRow.remove();
 }
 function decorateRoot(root){
-  if(!isTablet()||!root)return;
+  if(!root)return;
   var spelling=root.querySelector('.activity-letter-order');
   if(!spelling)return;
   var card=spelling.closest('.activity-card');
   if(!card)return;
-  var alreadyDecorated=card.dataset.v2TabletSpellingHelp==='11';
-  card.dataset.v2TabletSpellingHelp='11';
+  var promptRow=card.querySelector('.activity-spelling-prompt-row');
+  var slots=spelling.querySelector('.activity-letter-slots');
+
+  /* Audio placement is shared by mobile and tablet. */
+  ensureAudioPosition(card,spelling,promptRow,slots);
+
+  /* Everything below here is tablet-only decoration. */
+  if(!isTablet())return;
+  var alreadyDecorated=card.dataset.v2TabletSpellingHelp==='12';
+  card.dataset.v2TabletSpellingHelp='12';
   card.classList.add('v2-tablet-spelling');
   var instruction=card.querySelector('.activity-context,.activity-instruction');
   if(!alreadyDecorated&&instruction&&!instruction.classList.contains('v2-tablet-spelling-instruction')){
@@ -34,11 +42,8 @@ function decorateRoot(root){
     help.addEventListener('click',function(){var open=instruction.hidden;instruction.hidden=!open;help.setAttribute('aria-expanded',open?'true':'false');});
     card.insertBefore(help,card.firstChild);
   }
-  var promptRow=card.querySelector('.activity-spelling-prompt-row');
   var prompt=promptRow&&promptRow.querySelector('.activity-prompt');
   if(prompt&&!prompt.classList.contains('v2-tablet-spelling-cue')){prompt.classList.add('v2-tablet-spelling-cue');card.insertBefore(prompt,spelling);}
-  var slots=spelling.querySelector('.activity-letter-slots');
-  ensureAudioPosition(card,spelling,promptRow,slots);
   var actions=card.querySelector('.activity-actions');
   if(actions){actions.classList.add('v2-tablet-spelling-actions');if(actions.parentElement!==card)card.appendChild(actions);}
   if(promptRow&&!promptRow.children.length)promptRow.hidden=true;
