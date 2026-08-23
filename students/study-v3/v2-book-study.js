@@ -65,11 +65,11 @@ function grammarChart(detail,forms){
 }
 function grammarSection(data){
   var groups={},looseIndex=0;
-  data.occ.filter(function(o){return o.occurrence_type==='pattern'||o.skill==='grammar';}).forEach(function(o){
+  data.occ.filter(function(o){return !!o.pattern_id||o.occurrence_type==='pattern'||o.skill==='grammar';}).forEach(function(o){
     var id=o.pattern_id?String(o.pattern_id):'loose:'+String(o.activity_label||o.source_text||(++looseIndex));
     if(!groups[id])groups[id]={detail:o.pattern_id?(data.patterns[id]||{}):{},examples:[],forms:[],label:txt(o.activity_label)};
     var source=txt(o.source_text),translation=occurrenceTranslation(o);
-    if(!source&&o.sentence_id){var sd=data.sent[String(o.sentence_id)]||{};source=txt(sd.canonical_text||sd.text);translation=txt(sd.translation_ko)||translation;}
+    if(o.sentence_id){var sd=data.sent[String(o.sentence_id)]||{};source=txt(sd.canonical_text||sd.text||source);translation=txt(sd.translation_ko)||translation;}
     if(!source)return;
     if(isStudySentence(source))groups[id].examples.push({text:source,translation:translation});
     else groups[id].forms.push({text:source,label:txt(o.activity_label)});
