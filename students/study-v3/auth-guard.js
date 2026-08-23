@@ -2,7 +2,7 @@
 'use strict';
 var NEXT='/students/study-v3/';
 var LOGIN='/students/signin.html?next='+encodeURIComponent(NEXT);
-var V3_CACHE='20260823-hardbust27';
+var V3_CACHE='20260823-hardbust28';
 
 function loadV3Sidecar(){
   try{
