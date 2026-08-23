@@ -90,9 +90,20 @@ function primaryKind(name,explanation){var s=(name+' '+explanation).toLowerCase(
 function detectedKinds(examples){var kinds=[];(examples||[]).map(normaliseSentence).forEach(function(s){if(/^(?:did\b|(?:what|where|when|why|how|who)\s+did\b)/i.test(s))kinds.push('past-did');if(/^(?:do|does\b|(?:what|where|when|why|how|who)\s+(?:do|does)\b)/i.test(s))kinds.push('present-do');if(/^(?:was|were\b|(?:what|where|when|why|how|who)\s+(?:was|were)\b)/i.test(s))kinds.push('past-be');if(/\b(?:am|is|are)\s+(?:I|you|he|she|it|we|they)\s+going to\b/i.test(s)||/^(?:what|where|when|why|how|who)\s+(?:am|is|are)\s+.+\s+going to\b/i.test(s))kinds.push('going-to');});return uniq(kinds);}
 function pointTitle(kind){if(kind==='past-did')return isKo()?'과거형: 일반 동사':'Past Simple: ordinary verbs';if(kind==='present-do')return isKo()?'현재형: 일반 동사':'Present Simple: ordinary verbs';if(kind==='past-be')return isKo()?'과거형: be 동사':'Past Simple: the verb be';if(kind==='going-to')return isKo()?'미래: be going to':'Future: be going to';return isKo()?'문법':'Grammar';}
 
+function questionCase(v,index,kind){
+  var value=text(v);
+  if(index===0)return value;
+  if(kind!=='question'&&kind!=='wh-question'&&kind!=='derived-yesno'&&kind!=='derived-wh')return value;
+  return value.split(/\s*\/\s*/).map(function(part){
+    part=text(part);
+    if(part==='I')return'I';
+    if(/^(He|She|It|You|We|They|Am|Is|Are|Was|Were|Do|Does|Did|Can|Could|Will|Would|Should|Have|Has)$/i.test(part))return part.toLowerCase();
+    return part;
+  }).join(' / ');
+}
 function displayCellText(v){return text(v).replace(/\s*\/\s*/g,'\n');}
-function makeCell(value,index){var c=document.createElement('div');c.className='book-study-grammar-builder-cell is-col-'+(index+1);c.textContent=displayCellText(value);return c;}
-function makeBuilder(rows,titleText,kind){var wrap=document.createElement('div');wrap.className='book-study-grammar-builder'+(kind?' is-'+kind:'');var title=document.createElement('div');title.className='book-study-grammar-builder-title';title.textContent=titleText;wrap.appendChild(title);rows.forEach(function(values){var row=document.createElement('div');row.className='book-study-grammar-builder-row';row.style.setProperty('--grammar-chunks',String(values.length));values.forEach(function(v,i){row.appendChild(makeCell(v,i));});wrap.appendChild(row);});return wrap;}
+function makeCell(value,index,kind){var c=document.createElement('div');c.className='book-study-grammar-builder-cell is-col-'+(index+1);c.textContent=displayCellText(questionCase(value,index,kind));return c;}
+function makeBuilder(rows,titleText,kind){var wrap=document.createElement('div');wrap.className='book-study-grammar-builder'+(kind?' is-'+kind:'');wrap.setAttribute('role','button');wrap.setAttribute('tabindex','0');wrap.setAttribute('aria-label',titleText+' — '+(isKo()?'크게 보기':'enlarge chart'));var title=document.createElement('div');title.className='book-study-grammar-builder-title';title.textContent=titleText;wrap.appendChild(title);rows.forEach(function(values){var row=document.createElement('div');row.className='book-study-grammar-builder-row';row.style.setProperty('--grammar-chunks',String(values.length));values.forEach(function(v,i){row.appendChild(makeCell(v,i,kind));});wrap.appendChild(row);});return wrap;}
 function makePointHeading(kind){var h=document.createElement('h5');h.className='book-study-grammar-derived-heading';h.textContent=pointTitle(kind);return h;}
 function readCard(card){var name=text(card.querySelector('h5')&&card.querySelector('h5').textContent),explanation='';Array.prototype.forEach.call(card.children,function(ch){if(ch.tagName==='P'&&!explanation)explanation=text(ch.textContent);});var examples=Array.prototype.map.call(card.querySelectorAll('.book-study-grammar-examples strong'),function(n){return text(n.textContent);}).filter(Boolean);return{name:name,explanation:explanation,examples:examples};}
 function addBuilder(card,anchor,rows,title,kind){if(!rows||!rows.length||card.querySelector('.book-study-grammar-builder.is-'+kind))return;var b=makeBuilder(rows,title,kind);if(anchor)card.insertBefore(b,anchor);else card.appendChild(b);}
@@ -116,6 +127,23 @@ function decorate(){
   });
   root.querySelectorAll('.book-study-section[data-kind="grammar"] .book-study-section-head span').forEach(function(count){var section=count.closest('.book-study-section'),base=section?section.querySelectorAll('.book-study-grammar').length:0,extra=section?section.querySelectorAll('.book-study-grammar-derived').length:0;count.textContent=String(base+extra);});
 }
+
+var modal=null,modalBody=null,lastFocus=null;
+function ensureModal(){
+  if(modal)return;
+  modal=document.createElement('div');modal.className='book-study-grammar-modal';modal.hidden=true;modal.innerHTML='<div class="book-study-grammar-modal-panel" role="dialog" aria-modal="true"><button class="book-study-grammar-modal-close" type="button" aria-label="Close">×</button><div class="book-study-grammar-modal-body"></div></div>';
+  document.body.appendChild(modal);modalBody=modal.querySelector('.book-study-grammar-modal-body');
+  modal.querySelector('.book-study-grammar-modal-close').addEventListener('click',closeModal);
+  modal.addEventListener('click',function(e){if(e.target===modal)closeModal();});
+}
+function openModal(chart){
+  ensureModal();lastFocus=document.activeElement;modalBody.innerHTML='';var clone=chart.cloneNode(true);clone.removeAttribute('role');clone.removeAttribute('tabindex');clone.removeAttribute('aria-label');clone.classList.add('is-modal-copy');modalBody.appendChild(clone);modal.hidden=false;document.body.classList.add('grammar-modal-open');modal.querySelector('.book-study-grammar-modal-close').focus();
+}
+function closeModal(){if(!modal||modal.hidden)return;modal.hidden=true;modalBody.innerHTML='';document.body.classList.remove('grammar-modal-open');if(lastFocus&&typeof lastFocus.focus==='function')lastFocus.focus();}
+root.addEventListener('click',function(e){var chart=e.target.closest('.book-study-grammar-builder');if(chart&&root.contains(chart))openModal(chart);});
+root.addEventListener('keydown',function(e){var chart=e.target.closest('.book-study-grammar-builder');if(chart&&(e.key==='Enter'||e.key===' ')){e.preventDefault();openModal(chart);}});
+document.addEventListener('keydown',function(e){if(e.key==='Escape')closeModal();});
+
 var scheduled=false;function schedule(){if(scheduled)return;scheduled=true;requestAnimationFrame(function(){scheduled=false;decorate();});}
 if(window.MutationObserver)new MutationObserver(schedule).observe(root,{childList:true,subtree:true});
 var lang=document.getElementById('languageBtn');if(lang)lang.addEventListener('click',function(){setTimeout(function(){root.querySelectorAll('.book-study-grammar-builder,.book-study-grammar-derived').forEach(function(n){n.remove();});schedule();},40);});
