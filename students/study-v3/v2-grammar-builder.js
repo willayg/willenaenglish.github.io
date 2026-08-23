@@ -137,13 +137,13 @@ function builderRows(name,explanation,examples){
 }
 function questionRows(name,explanation,examples){
   var signal=(name+' '+explanation).toLowerCase();
-  var questions=(examples||[]).map(normaliseSentence).filter(function(s){return /^(?:what|where|when|why|how|who\b|am\b|is\b|are\b|do\b|does\b|did\b|can\b|could\b|will\b|would\b|should\b|have\b|has\b)/i.test(s);});
+  var questions=(examples||[]).map(normaliseSentence).filter(function(s){return /^(?:am|is|are|was|were|do|does|did|can|could|will|would|should|have|has)\b/i.test(s);});
   if(!questions.length)return null;
 
   if(/going to|be_going_to/.test(signal)){
     var tails=[];
     questions.forEach(function(s){
-      var m=s.match(/^(?:(?:what|where|when|why|how)\s+)?(?:am|is|are)\s+(?:I|you|he|she|it|we|they)\s+going to\s+(.+)$/i);
+      var m=s.match(/^(?:am|is|are)\s+(?:I|you|he|she|it|we|they)\s+going to\s+(.+)$/i);
       if(m&&m[1])tails.push(m[1]);
     });
     var tailText=optionText(tails,'do / take / visit ...');
@@ -156,12 +156,78 @@ function questionRows(name,explanation,examples){
 
   if(/past simple: the verb be|past_be|과거형.*was|was.*were|was\/were/.test(signal)){
     var endings=[];
-    questions.forEach(function(s){var m=s.match(/^(?:(?:where|when|why|how)\s+)?(?:was|were)\s+(?:I|you|he|she|it|we|they)\s+(.+)$/i);if(m&&m[1])endings.push(m[1]);});
-    var endingText=optionText(endings,'yesterday / at the park / ...');
+    questions.forEach(function(s){var m=s.match(/^(?:was|were)\s+(?:I|you|he|she|it|we|they)\s+(.+)$/i);if(m&&m[1])endings.push(m[1]);});
+    var endingText=optionText(endings,'at the park / happy / tired');
     return[
       ['Was','I / He / She / It',endingText],
       ['Were','You / We / They',endingText]
     ];
+  }
+
+  return null;
+}
+function whQuestionRows(name,explanation,examples){
+  var signal=(name+' '+explanation).toLowerCase();
+  var questions=(examples||[]).map(normaliseSentence).filter(function(s){return /^(?:what|where|when|why|how|who)\b/i.test(s);});
+  if(!questions.length)return null;
+  var wh=[],tails=[];
+
+  if(/going to|be_going_to/.test(signal)){
+    questions.forEach(function(s){
+      var m=s.match(/^(What|Where|When|Why|How|Who)\s+(am|is|are)\s+(I|you|he|she|it|we|they)\s+going to\s+(.+)$/i);
+      if(m){wh.push(m[1]);tails.push(m[4]);}
+    });
+    if(!wh.length)return null;
+    var whText=optionText(wh,'What / Where / When');
+    var tailText=optionText(tails,'do / go / visit ...');
+    return[
+      [whText,'Am','I','going to',tailText],
+      [whText,'Is','He / She / It','going to',tailText],
+      [whText,'Are','You / We / They','going to',tailText]
+    ];
+  }
+
+  if(/past simple: the verb be|past_be|과거형.*was|was.*were|was\/were/.test(signal)){
+    questions.forEach(function(s){
+      var m=s.match(/^(What|Where|When|Why|How|Who)\s+(was|were)\s+(I|you|he|she|it|we|they)(?:\s+(.+))?$/i);
+      if(m){wh.push(m[1]);if(m[4])tails.push(m[4]);}
+    });
+    if(!wh.length)return null;
+    var whBe=optionText(wh,'Where / When / Why');
+    var beTail=optionText(tails,'yesterday / at the park / ...');
+    return[
+      [whBe,'Was','I / He / She / It',beTail],
+      [whBe,'Were','You / We / They',beTail]
+    ];
+  }
+
+  var doParsed=[];
+  questions.forEach(function(s){
+    var m=s.match(/^(What|Where|When|Why|How|Who)\s+(do|does|did)\s+(I|you|he|she|it|we|they)\s+(.+)$/i);
+    if(m)doParsed.push({wh:m[1],aux:m[2].toLowerCase(),tail:m[4]});
+  });
+  if(doParsed.length){
+    var whDo=optionText(doParsed.map(function(x){return x.wh;}),'What / Where / When');
+    var doTails=optionText(doParsed.map(function(x){return x.tail;}),'do / go / like ...');
+    if(doParsed.some(function(x){return x.aux==='did';}))return[[whDo,'Did','I / You / He / She / It / We / They',doTails]];
+    return[
+      [whDo,'Does','He / She / It',doTails],
+      [whDo,'Do','I / You / We / They',doTails]
+    ];
+  }
+
+  var modalParsed=[];
+  questions.forEach(function(s){
+    var m=s.match(/^(What|Where|When|Why|How|Who)\s+(can|could|will|would|should)\s+(I|you|he|she|it|we|they)\s+(.+)$/i);
+    if(m)modalParsed.push({wh:m[1],aux:m[2],tail:m[4]});
+  });
+  if(modalParsed.length){
+    return[[
+      optionText(modalParsed.map(function(x){return x.wh;}),'What / Where / When'),
+      optionText(modalParsed.map(function(x){return x.aux;}),'Can'),
+      'I / You / He / She / It / We / They',
+      optionText(modalParsed.map(function(x){return x.tail;}),'do / go / ...')
+    ]];
   }
 
   return null;
@@ -185,8 +251,8 @@ function readCard(card){
 }
 function decorate(){
   root.querySelectorAll('.book-study-grammar').forEach(function(card){
-    var info=readCard(card),rows=builderRows(info.name,info.explanation,info.examples),qRows=questionRows(info.name,info.explanation,info.examples);
-    if((!rows||!rows.length)&&(!qRows||!qRows.length))return;
+    var info=readCard(card),rows=builderRows(info.name,info.explanation,info.examples),qRows=questionRows(info.name,info.explanation,info.examples),whRows=whQuestionRows(info.name,info.explanation,info.examples);
+    if((!rows||!rows.length)&&(!qRows||!qRows.length)&&(!whRows||!whRows.length))return;
     var old=card.querySelector('.book-study-grammar-chart');
     var anchor=old||card.querySelector('.book-study-grammar-examples')||null;
     if(rows&&rows.length&&!card.querySelector('.book-study-grammar-builder.is-statement')){
@@ -195,9 +261,14 @@ function decorate(){
       card.classList.add('has-substitution-builder');
     }
     if(qRows&&qRows.length&&!card.querySelector('.book-study-grammar-builder.is-question')){
-      var qBuilder=makeBuilder(qRows,isKo()?'질문 만들기':'Build a question','question');
+      var qBuilder=makeBuilder(qRows,isKo()?'예/아니오 질문 만들기':'Build a yes/no question','question');
       if(old)card.insertBefore(qBuilder,old);else if(anchor)card.insertBefore(qBuilder,anchor);else card.appendChild(qBuilder);
       card.classList.add('has-question-builder');
+    }
+    if(whRows&&whRows.length&&!card.querySelector('.book-study-grammar-builder.is-wh-question')){
+      var whBuilder=makeBuilder(whRows,isKo()?'의문사 질문 만들기':'Build a WH question','wh-question');
+      if(old)card.insertBefore(whBuilder,old);else if(anchor)card.insertBefore(whBuilder,anchor);else card.appendChild(whBuilder);
+      card.classList.add('has-wh-question-builder');
     }
     if(old)old.hidden=true;
   });
