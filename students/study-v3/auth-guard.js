@@ -2,15 +2,16 @@
 'use strict';
 var NEXT='/students/study-v3/';
 var LOGIN='/students/signin.html?next='+encodeURIComponent(NEXT);
-var V3_CACHE='20260823-hardbust28';
+var V3_CACHE='20260823-hardbust29';
 
 function loadV3Sidecar(){
   try{
     function addCss(key,src){if(document.querySelector('link['+key+']'))return;var x=document.createElement('link');x.rel='stylesheet';x.href=src+'?v='+V3_CACHE;x.setAttribute(key,'1');(document.head||document.documentElement).appendChild(x);}
-    function addJs(key,src){if(document.querySelector('script['+key+']'))return;var x=document.createElement('script');x.src=src+'?v='+V3_CACHE;x.defer=true;x.setAttribute(key,'1');(document.head||document.documentElement).appendChild(x);}
+    function addJs(key,src){if(document.querySelector('script['+key+']'))return;var x=document.createElement('script');x.src=src+'?v='+V3_CACHE;x.async=false;x.defer=true;x.setAttribute(key,'1');(document.head||document.documentElement).appendChild(x);}
     addCss('data-study-v3-speaking','./v3-speaking.css');
     addCss('data-study-v3-activity-shell','./v3-activity-shell.css');
     addJs('data-study-v3-badge','./v3-badge.js');
+    addJs('data-study-v3-speech-tolerance','./v3-speech-recognition-tolerance.js');
     addJs('data-study-v3-speaking-recall','./v3-speaking-recall.js');
     addJs('data-study-v3-speaking-integration','./v3-speaking-integration.js');
     addJs('data-study-v3-speaking-audio-fix','./v3-speaking-audio-fix.js');
