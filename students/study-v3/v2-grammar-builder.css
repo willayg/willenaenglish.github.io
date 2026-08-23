@@ -4,8 +4,8 @@
 .book-study-grammar-builder-title{margin-bottom:8px;color:#6f5331;font:900 .78rem/1.2 Poppins,sans-serif;letter-spacing:.02em}
 .book-study-grammar-builder-row{display:grid;grid-template-columns:repeat(var(--grammar-chunks,3),minmax(0,1fr));gap:0;min-width:0;background:#fff;border-left:2px solid var(--grammar-border);border-right:2px solid var(--grammar-border)}
 .book-study-grammar-builder-title + .book-study-grammar-builder-row{border-top:2px solid var(--grammar-border);border-radius:14px 14px 0 0;overflow:hidden}
-.book-study-grammar-builder-row:last-child{border-bottom:2px solid var(--grammar-border);border-radius:0 0 14px 14px;overflow:hidden}
 .book-study-grammar-builder-row+.book-study-grammar-builder-row{border-top:2px solid var(--grammar-border)}
+.book-study-grammar-builder-row:last-of-type{border-bottom:2px solid var(--grammar-border);border-radius:0 0 14px 14px;overflow:hidden}
 .book-study-grammar-builder-cell{display:flex;align-items:center;justify-content:center;min-width:0;min-height:64px;padding:13px 12px;border:0;border-radius:0;background:#fff;color:#35565b;text-align:center;font:900 .84rem/1.42 Poppins,sans-serif;overflow-wrap:anywhere;white-space:pre-line}
 .book-study-grammar-builder-cell+.book-study-grammar-builder-cell{border-left:2px solid var(--grammar-border)}
 .book-study-grammar-builder-cell.is-col-1,
@@ -13,6 +13,12 @@
 .book-study-grammar-builder-cell.is-col-3{background:#fff;color:#35565b}
 .book-study-grammar-builder-cell.is-col-2{color:#76552f}
 .book-study-grammar.has-substitution-builder>.book-study-grammar-chart[hidden]{display:none!important}
+
+.book-study-grammar-builder-examples{display:grid;gap:8px;margin-top:12px;padding:12px 13px 13px;border:1px solid #eadfce;border-radius:13px;background:rgba(255,255,255,.64)}
+.book-study-grammar-builder-examples-label{color:#86633a;font:900 .68rem/1.2 Poppins,sans-serif;letter-spacing:.04em;text-transform:uppercase}
+.book-study-grammar-builder-example{display:grid;gap:2px;padding:2px 0}
+.book-study-grammar-builder-example strong{color:#35565b;font:800 .77rem/1.35 Poppins,sans-serif}
+.book-study-grammar-builder-example small{color:#7d8e91;font:700 .68rem/1.35 Poppins,sans-serif}
 
 body.grammar-modal-open{overflow:hidden}
 .book-study-grammar-modal[hidden]{display:none!important}
@@ -23,15 +29,24 @@ body.grammar-modal-open{overflow:hidden}
 .book-study-grammar-modal .book-study-grammar-builder{margin-top:0;cursor:default}
 .book-study-grammar-modal .book-study-grammar-builder-title{font-size:1.15rem;margin-bottom:14px}
 .book-study-grammar-modal .book-study-grammar-builder-cell{min-height:108px;padding:20px 18px;font-size:1.3rem;line-height:1.42}
+.book-study-grammar-modal .book-study-grammar-builder-examples{margin-top:18px;padding:16px 18px;gap:12px}
+.book-study-grammar-modal .book-study-grammar-builder-examples-label{font-size:.84rem}
+.book-study-grammar-modal .book-study-grammar-builder-example strong{font-size:1.02rem}
+.book-study-grammar-modal .book-study-grammar-builder-example small{font-size:.86rem}
 
 @media(max-width:560px){
   .book-study-grammar-builder{margin-top:14px}
   .book-study-grammar-builder-title{margin-bottom:9px;font-size:.86rem}
   .book-study-grammar-builder-cell{min-height:74px;padding:13px 8px;font-size:.92rem;line-height:1.42}
+  .book-study-grammar-builder-examples{padding:11px 12px}
+  .book-study-grammar-builder-example strong{font-size:.8rem}
+  .book-study-grammar-builder-example small{font-size:.71rem}
   .book-study-grammar-modal{padding:10px}
   .book-study-grammar-modal-panel{width:98vw;max-height:92vh;padding:18px 14px 20px;border-radius:20px}
   .book-study-grammar-modal .book-study-grammar-builder-title{font-size:1rem}
   .book-study-grammar-modal .book-study-grammar-builder-cell{min-height:92px;padding:16px 10px;font-size:1.08rem}
+  .book-study-grammar-modal .book-study-grammar-builder-example strong{font-size:.92rem}
+  .book-study-grammar-modal .book-study-grammar-builder-example small{font-size:.8rem}
 }
 
 @media(max-width:390px){
