@@ -23,8 +23,8 @@ function decorateRoot(root){
   if(!spelling)return;
   var card=spelling.closest('.activity-card');
   if(!card)return;
-  var alreadyDecorated=card.dataset.v2TabletSpellingHelp==='10';
-  card.dataset.v2TabletSpellingHelp='10';
+  var alreadyDecorated=card.dataset.v2TabletSpellingHelp==='11';
+  card.dataset.v2TabletSpellingHelp='11';
   card.classList.add('v2-tablet-spelling');
   var instruction=card.querySelector('.activity-context,.activity-instruction');
   if(!alreadyDecorated&&instruction&&!instruction.classList.contains('v2-tablet-spelling-instruction')){
@@ -38,11 +38,9 @@ function decorateRoot(root){
   var prompt=promptRow&&promptRow.querySelector('.activity-prompt');
   if(prompt&&!prompt.classList.contains('v2-tablet-spelling-cue')){prompt.classList.add('v2-tablet-spelling-cue');card.insertBefore(prompt,spelling);}
   var slots=spelling.querySelector('.activity-letter-slots');
-  var bank=spelling.querySelector('.activity-letter-bank');
   ensureAudioPosition(card,spelling,promptRow,slots);
   var actions=card.querySelector('.activity-actions');
   if(actions){actions.classList.add('v2-tablet-spelling-actions');if(actions.parentElement!==card)card.appendChild(actions);}
-  if(bank)bank.style.setProperty('order','3','important');
   if(promptRow&&!promptRow.children.length)promptRow.hidden=true;
 }
 function scan(){['v2ActivityRoot','aiCoachActivityRoot'].forEach(function(id){decorateRoot(document.getElementById(id));});}
