@@ -2,12 +2,7 @@
 'use strict';
 var coach=global.WillenaAICoach;
 if(!coach||typeof coach.registerCapability!=='function')return;
-
-var active=null;
-var pending=null;
-var successPending=false;
-var chainPoints=0;
-
+var active=null,pending=null,successPending=false,chainPoints=0;
 function text(v){return String(v==null?'':v).trim();}
 function arr(v){return Array.isArray(v)?v:[];}
 function ko(){var b=document.getElementById('languageBtn');return !b||text(b.textContent)==='English';}
@@ -16,203 +11,21 @@ function answerText(v){if(Array.isArray(v))return v.join(' ');if(v&&typeof v==='
 function overlayOpen(){return !!document.getElementById('aiCoachPracticeOverlay');}
 function practiceTitle(){var n=document.getElementById('aiCoachPracticeTitle');return text(n&&n.textContent);}
 function retryFlag(activity){return !!(activity&&activity.metadata&&activity.metadata.coach_remediation_retry);}
-
-function pointsPill(){
-  try{
-    var header=document.querySelector('student-header');
-    var root=header&&header.shadowRoot;
-    return root&&(root.querySelector('.points-pill')||root.querySelector('[data-points]')||root.getElementById('pointsPill'));
-  }catch(_){return null;}
-}
-function pulsePointsPill(){
-  var pill=pointsPill();if(!pill)return;
-  try{
-    if(typeof pill.animate==='function')pill.animate([
-      {transform:'scale(1)'},
-      {transform:'scale(1.2)'},
-      {transform:'scale(.96)'},
-      {transform:'scale(1)'}
-    ],{duration:520,easing:'cubic-bezier(.2,.85,.25,1)'});
-  }catch(_){}
-}
-function installRewardStyle(){
-  if(document.getElementById('aiCoachPointsRewardStyle'))return;
-  var style=document.createElement('style');
-  style.id='aiCoachPointsRewardStyle';
-  style.textContent='@keyframes coachPointsGlow{0%{transform:translate(-50%,-50%) scale(.35);opacity:0;filter:blur(3px)}35%{transform:translate(-50%,-50%) scale(1.16);opacity:1;filter:blur(0)}65%{transform:translate(-50%,-50%) scale(1);opacity:1}100%{transform:translate(-50%,-50%) scale(1);opacity:1}}@keyframes coachPointsBurst{0%{transform:translate(-50%,-50%) scale(.35) rotate(0deg);opacity:0}12%{opacity:1}100%{transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy))) scale(.95) rotate(var(--rot));opacity:0}}.ai-coach-points-reward-layer{position:fixed;inset:0;pointer-events:none;z-index:10060;overflow:hidden}.ai-coach-points-reward{position:absolute;left:50%;top:48%;transform:translate(-50%,-50%);padding:16px 24px;border-radius:999px;background:#fff;color:#173f46;border:3px solid #ffd65c;box-shadow:0 12px 34px rgba(23,63,70,.22),0 0 0 9px rgba(255,214,92,.2);font:800 clamp(24px,6vw,42px)/1 Poppins,sans-serif;letter-spacing:-.03em;white-space:nowrap;animation:coachPointsGlow 620ms cubic-bezier(.18,.9,.25,1) both;will-change:transform,opacity}.ai-coach-points-reward small{display:block;margin-top:5px;text-align:center;font-size:11px;letter-spacing:.13em;color:#69777a}.ai-coach-points-burst{position:absolute;left:50%;top:48%;width:9px;height:17px;border-radius:3px;background:hsl(var(--h),88%,60%);animation:coachPointsBurst 1050ms cubic-bezier(.12,.7,.24,1) forwards;animation-delay:var(--delay)}@media(prefers-reduced-motion:reduce){.ai-coach-points-reward{animation:none}.ai-coach-points-burst{display:none}}';
-  document.head.appendChild(style);
-}
-function celebratePoints(points){
-  points=Math.max(0,Math.round(Number(points)||0));
-  if(!points)return;
-  installRewardStyle();
-  var old=document.querySelector('.ai-coach-points-reward-layer');if(old)old.remove();
-  var layer=document.createElement('div');layer.className='ai-coach-points-reward-layer';
-  var badge=document.createElement('div');badge.className='ai-coach-points-reward';
-  badge.innerHTML='<strong>+'+points+' POINTS</strong><small>'+(ko()?'이번 세션':'SESSION REWARD')+'</small>';
-  layer.appendChild(badge);
-  var count=34;
-  for(var i=0;i<count;i++){
-    var piece=document.createElement('i');piece.className='ai-coach-points-burst';
-    var angle=(Math.PI*2*i/count)+(Math.random()*.22-.11),dist=90+Math.random()*175;
-    piece.style.setProperty('--dx',Math.round(Math.cos(angle)*dist)+'px');
-    piece.style.setProperty('--dy',Math.round(Math.sin(angle)*dist)+'px');
-    piece.style.setProperty('--rot',Math.round((Math.random()*720)-360)+'deg');
-    piece.style.setProperty('--h',Math.round(Math.random()*360));
-    piece.style.setProperty('--delay',Math.round(Math.random()*90)+'ms');
-    layer.appendChild(piece);
-  }
-  document.body.appendChild(layer);
-
-  var reduced=false;try{reduced=global.matchMedia&&global.matchMedia('(prefers-reduced-motion: reduce)').matches;}catch(_){}
-  if(reduced){setTimeout(function(){pulsePointsPill();if(layer.parentNode)layer.remove();},1800);return;}
-
-  setTimeout(function(){
-    var pill=pointsPill();
-    var start=badge.getBoundingClientRect();
-    var sx=start.left+start.width/2,sy=start.top+start.height/2;
-    var tx=42,ty=28;
-    if(pill){var r=pill.getBoundingClientRect();tx=r.left+r.width/2;ty=r.top+r.height/2;}
-    var dx=tx-sx,dy=ty-sy;
-    try{
-      var animation=badge.animate([
-        {transform:'translate(-50%,-50%) scale(1)',opacity:1},
-        {offset:.12,transform:'translate(-50%,-50%) scale(1.02)',opacity:1},
-        {offset:.72,transform:'translate(calc(-50% + '+(dx*.72)+'px),calc(-50% + '+(dy*.72)+'px)) scale(.62)',opacity:1},
-        {transform:'translate(calc(-50% + '+dx+'px),calc(-50% + '+dy+'px)) scale(.26)',opacity:.22}
-      ],{duration:1450,easing:'cubic-bezier(.2,.72,.18,1)',fill:'forwards'});
-      animation.onfinish=function(){pulsePointsPill();if(layer.parentNode)layer.remove();};
-    }catch(_){pulsePointsPill();if(layer.parentNode)layer.remove();}
-  },1450);
-  setTimeout(function(){if(layer.parentNode){pulsePointsPill();layer.remove();}},3300);
-}
-
-function classify(title,mistakes){
-  var low=text(title).toLowerCase();
-  if(low.indexOf('3인칭')>=0||low.indexOf('third-person')>=0)return'third_person';
-  if(low.indexOf('과거분사')>=0||low.indexOf('participle')>=0)return'past_participle';
-  if(low.indexOf('과거')>=0||low.indexOf('past')>=0)return'past';
-  var skills={};arr(mistakes).forEach(function(m){var s=text(m.activity&&m.activity.skill);if(s)skills[s]=(skills[s]||0)+1;});
-  var best=Object.keys(skills).sort(function(a,b){return skills[b]-skills[a];})[0];
-  return best||'general';
-}
-function explanation(kind,count,secondPass){
-  var n=Number(count)||1;
-  if(kind==='third_person')return ko()
-    ?(secondPass?'아직 헷갈리는 문제가 있어요. 다시 기억해 봐요: he / she / it 뒤에서는 일반동사의 형태가 바뀌어요. 보통 -s를 붙이고, watch → watches, study → studies처럼 철자가 바뀌는 경우도 있어요.':'이번에 '+n+'개를 놓쳤어요. 핵심은 he / she / it 뒤의 동사예요. 보통 동사에 -s를 붙이고, watch → watches, study → studies처럼 철자가 바뀌는 경우도 있어요.')
-    :(secondPass?'A few are still tricky. Remember: after he, she, or it, the verb changes. Usually add -s, with forms such as watch → watches and study → studies.':'You missed '+n+'. The key rule is the verb after he, she, or it. Usually add -s, with spelling changes such as watch → watches and study → studies.');
-  if(kind==='past')return ko()
-    ?(secondPass?'아직 헷갈리는 문제가 있어요. 과거의 일을 말할 때는 동사를 과거형으로 바꿔야 해요. 규칙동사는 보통 -ed를 붙이고, go → went처럼 불규칙 동사는 형태를 따로 기억해야 해요.':'이번에 '+n+'개를 놓쳤어요. 과거의 일을 말할 때는 동사를 과거형으로 바꿔요. 규칙동사는 보통 -ed를 붙이고, go → went처럼 불규칙 동사는 형태를 따로 기억해야 해요.')
-    :(secondPass?'A few are still tricky. For past events, use the past form of the verb. Regular verbs usually take -ed, while irregular verbs such as go → went must be learned separately.':'You missed '+n+'. For past events, use the past form of the verb. Regular verbs usually take -ed, while irregular verbs such as go → went must be learned separately.');
-  if(kind==='past_participle')return ko()
-    ?'과거분사는 과거형과 같은 것도 있지만 다른 것도 있어요. 예를 들어 go → went → gone처럼 세 번째 형태를 따로 확인해야 해요.'
-    :'Past participles sometimes match the past form, but sometimes they do not. Think of the third form, such as go → went → gone.';
-  if(kind==='listening')return ko()
-    ?'듣기에서 놓친 부분이 있었어요. 먼저 문장의 핵심 단어와 끝소리를 잡고, 다시 들을 때는 모든 단어를 한꺼번에 이해하려고 하지 않아도 돼요.'
-    :'A few listening items were tricky. Listen for the key words and endings first; you do not need to catch every word at once.';
-  if(kind==='grammar')return ko()
-    ?'문법 문제에서 같은 종류의 실수가 몇 개 있었어요. 문장의 주어와 시간 표현을 먼저 보고 어떤 형태가 필요한지 결정해 봐요.'
-    :'There were a few similar grammar mistakes. First check the subject and the time clue, then decide which form the sentence needs.';
-  return ko()
-    ?'몇 문제가 어려웠어요. 정답을 외우기보다 문장에서 어떤 규칙을 써야 하는지 먼저 찾고 다시 풀어 봐요.'
-    :'A few questions were tricky. Instead of memorizing the answer, identify the rule the sentence needs and then try again.';
-}
-function answerSummary(mistakes){
-  var bits=arr(mistakes).slice(0,5).map(function(m){
-    var a=m.activity||{},prompt=text(a.stimulus&&a.stimulus.prompt),ans=answerText(m.result&&m.result.answer);
-    if(!ans)return'';
-    return prompt?(prompt+' → '+ans):ans;
-  }).filter(Boolean);
-  if(!bits.length)return'';
-  return (ko()?'다시 틀린 문제의 정답은 ':'The answers you still missed are ')+bits.join(' · ')+(ko()?'예요.':'.');
-}
-function makeRetryItems(mistakes,round){
-  return arr(mistakes).map(function(m,i){
-    var item=clone(m.activity)||{};
-    item.metadata=Object.assign({},item.metadata||{}, {coach_remediation_retry:true,coach_remediation_round:round||1});
-    item.id=text(item.id||item.sourceId||'coach-retry')+'-retry-'+(round||1)+'-'+i;
-    return item;
-  });
-}
-function registerSuccess(data){
-  successPending=true;
-  var wasRetry=!!data.retry,points=Math.max(0,Math.round(Number(data.points)||0));
-  coach.registerCapability({
-    id:'remediation_success',
-    score:20000,
-    available:function(){return successPending;},
-    label:{ko:'모두 맞았어요!',en:'All correct!'},
-    response:wasRetry
-      ?{ko:'대단해요! 아까 틀렸던 문제를 전부 고쳤어요. 이번 세션에서 '+points+'포인트를 획득했어요!',en:'Great job! You fixed every question you missed. You earned '+points+' points in this session!'}
-      :{ko:'완벽해요! 이번 문제를 전부 맞혔어요. 이번 세션에서 '+points+'포인트를 획득했어요!',en:'Perfect! You got every question right. You earned '+points+' points in this session!'},
-    actions:[]
-  });
-  coach.refresh();
-  setTimeout(function(){
-    var first=document.querySelector('#aiCoachChoices .study-v2-ai-prompt');
-    if(first&&successPending){
-      first.click();
-      successPending=false;
-      celebratePoints(points);
-      chainPoints=0;
-    }
-  },150);
-}
-function registerReview(data){
-  pending=data;
-  var count=data.mistakes.length,kind=classify(data.title,data.mistakes),second=data.round>0;
-  var intro=explanation(kind,count,second);
-  if(second){var answers=answerSummary(data.mistakes);if(answers)intro+=' '+answers;}
-  coach.registerCapability({
-    id:'remediation_pending',
-    score:10000,
-    available:function(){return !!(pending&&pending.mistakes&&pending.mistakes.length);},
-    label:{ko:count+'개 틀린 문제 다시 보기',en:'Review '+count+' missed '+(count===1?'question':'questions')},
-    response:intro,
-    actions:[{
-      label:{ko:'틀린 '+count+'문제만 다시 풀기',en:'Retry only the '+count+' missed '+(count===1?'question':'questions')},
-      run:function(){
-        var items=makeRetryItems(data.mistakes,(data.round||0)+1);
-        return{type:'coach_remediation_retry',title:ko()?'틀린 문제 다시 풀기':'Retry missed questions',message:ko()?'좋아요. 아까 틀린 문제만 다시 해볼게요.':'Good. Let’s retry only the ones you missed.',items:items};
-      }
-    }]
-  });
-  coach.refresh();
-  setTimeout(function(){var first=document.querySelector('#aiCoachChoices .study-v2-ai-prompt');if(first&&pending===data)first.click();},120);
-}
-function beginIfNeeded(){
-  if(!overlayOpen()||active)return;
-  active={title:practiceTitle(),answered:0,mistakes:[],round:0,retry:false};
-}
-
-global.addEventListener('willena:activity-answer',function(event){
-  if(!overlayOpen())return;
-  beginIfNeeded();if(!active)return;
-  var detail=event&&event.detail||{},activity=detail.activity||{},result=detail.result||{},isRetry=retryFlag(activity);
-  if(active.answered===0&&!isRetry)chainPoints=0;
-  active.answered++;
-  if(result.correct)chainPoints+=2;
-  if(isRetry){
-    active.retry=true;
-    active.round=Math.max(active.round,Number(activity.metadata&&activity.metadata.coach_remediation_round)||1);
-    if(!active.title)active.title=practiceTitle();
-  }
-  if(!result.correct)active.mistakes.push({activity:clone(activity),result:clone(result)});
-});
-
-document.addEventListener('click',function(e){
-  var btn=e.target&&e.target.closest&&e.target.closest('#aiCoachPracticeNext');
-  if(!btn||!active)return;
-  var label=text(btn.textContent).toLowerCase();if(label!=='finish'&&label!=='완료')return;
-  var finished=active;active=null;
-  setTimeout(function(){
-    if(!finished.mistakes.length){pending=null;registerSuccess({title:finished.title,retry:finished.retry,round:finished.round,answered:finished.answered,points:chainPoints});return;}
-    registerReview({title:finished.title||practiceTitle(),mistakes:finished.mistakes,round:finished.retry?finished.round:0});
-  },180);
-},true);
-
-document.addEventListener('click',function(e){
-  var back=e.target&&e.target.closest&&e.target.closest('#aiCoachPracticeBack');
-  if(back){active=null;pending=null;chainPoints=0;}
-},true);
+function pointsPill(){try{var header=document.querySelector('student-header'),root=header&&header.shadowRoot;return root&&(root.querySelector('.points-pill')||root.querySelector('[data-points]')||root.getElementById('pointsPill'));}catch(_){return null;}}
+function pulsePointsPill(){var pill=pointsPill();if(!pill)return;try{if(typeof pill.animate==='function')pill.animate([{transform:'scale(1)'},{transform:'scale(1.2)'},{transform:'scale(.96)'},{transform:'scale(1)'}],{duration:520,easing:'cubic-bezier(.2,.85,.25,1)'});}catch(_){}}
+function installRewardStyle(){if(document.getElementById('aiCoachPointsRewardStyle'))return;var style=document.createElement('style');style.id='aiCoachPointsRewardStyle';style.textContent='@keyframes coachPointsGlow{0%{transform:translate(-50%,-50%) scale(.35);opacity:0}35%{transform:translate(-50%,-50%) scale(1.16);opacity:1}100%{transform:translate(-50%,-50%) scale(1);opacity:1}}.ai-coach-points-reward-layer{position:fixed;inset:0;pointer-events:none;z-index:10060}.ai-coach-points-reward{position:absolute;left:50%;top:48%;transform:translate(-50%,-50%);padding:16px 24px;border-radius:999px;background:#fff;color:#173f46;border:3px solid #ffd65c;box-shadow:0 12px 34px rgba(23,63,70,.22);font:800 clamp(24px,6vw,42px)/1 Poppins,sans-serif;animation:coachPointsGlow 620ms both}.ai-coach-points-reward small{display:block;margin-top:5px;text-align:center;font-size:11px;color:#69777a}';document.head.appendChild(style);}
+function celebratePoints(points){points=Math.max(0,Math.round(Number(points)||0));if(!points)return;installRewardStyle();var old=document.querySelector('.ai-coach-points-reward-layer');if(old)old.remove();var layer=document.createElement('div');layer.className='ai-coach-points-reward-layer';var badge=document.createElement('div');badge.className='ai-coach-points-reward';badge.innerHTML='<strong>+'+points+' POINTS</strong><small>'+(ko()?'이번 세션':'SESSION REWARD')+'</small>';layer.appendChild(badge);document.body.appendChild(layer);setTimeout(function(){pulsePointsPill();if(layer.parentNode)layer.remove();},2100);}
+function classify(title,mistakes){var low=text(title).toLowerCase();if(low.indexOf('3인칭')>=0||low.indexOf('third-person')>=0)return'third_person';if(low.indexOf('과거분사')>=0||low.indexOf('participle')>=0)return'past_participle';if(low.indexOf('과거')>=0||low.indexOf('past')>=0)return'past';var skills={};arr(mistakes).forEach(function(m){var s=text(m.activity&&m.activity.skill);if(s)skills[s]=(skills[s]||0)+1;});return Object.keys(skills).sort(function(a,b){return skills[b]-skills[a];})[0]||'general';}
+function domainForSkill(skill){skill=text(skill).toLowerCase();if(skill.indexOf('listen')>=0)return'listening';if(skill.indexOf('vocab')>=0||skill.indexOf('word')>=0)return'vocabulary';if(skill.indexOf('spell')>=0)return'spelling';if(skill.indexOf('conversation')>=0)return'conversation';if(skill.indexOf('read')>=0)return'reading';if(skill.indexOf('sentence')>=0||skill.indexOf('grammar')>=0)return'grammar';return skill||'general';}
+function explanation(kind,count,secondPass){var n=Number(count)||1;if(kind==='third_person')return ko()?(secondPass?'아직 헷갈리는 문제가 있어요. he / she / it 뒤에서는 일반동사의 형태가 바뀌어요.':'이번에 '+n+'개를 놓쳤어요. he / she / it 뒤에서는 일반동사의 형태가 바뀌어요.'):(secondPass?'A few are still tricky. After he, she, or it, the verb changes.':'You missed '+n+'. After he, she, or it, the verb changes.');if(kind==='past')return ko()?'과거의 일을 말할 때는 동사를 과거형으로 바꿔요.':'For past events, use the past form of the verb.';if(kind==='past_participle')return ko()?'과거분사는 세 번째 동사 형태를 확인해 봐요.':'Check the third verb form for past participles.';if(kind==='listening')return ko()?'듣기에서 놓친 부분이 있었어요. 핵심 단어를 잡고 다시 확인해 봐요.':'A few listening items were tricky. Listen for the key words and try again.';if(kind==='grammar')return ko()?'문법 문제에서 같은 종류의 실수가 있었어요. 주어와 시간 표현을 먼저 확인해 봐요.':'There were similar grammar mistakes. Check the subject and time clue first.';return ko()?'몇 문제가 어려웠어요. 어떤 규칙이나 기술이 필요한지 확인하고 다시 해봐요.':'A few questions were tricky. Identify the rule or skill and try again.';}
+function answerSummary(mistakes){var bits=arr(mistakes).slice(0,5).map(function(m){var a=m.activity||{},prompt=text(a.stimulus&&a.stimulus.prompt),ans=answerText(m.result&&m.result.answer);if(!ans)return'';return prompt?(prompt+' → '+ans):ans;}).filter(Boolean);if(!bits.length)return'';return(ko()?'다시 틀린 문제의 정답은 ':'The answers you still missed are ')+bits.join(' · ')+(ko()?'예요.':'.');}
+function makeRetryItems(mistakes,round){return arr(mistakes).map(function(m,i){var item=clone(m.activity)||{};item.metadata=Object.assign({},item.metadata||{},{coach_remediation_retry:true,coach_remediation_round:round||1});item.id=text(item.id||item.sourceId||'coach-retry')+'-retry-'+(round||1)+'-'+i;return item;});}
+async function refreshStage5(){var ctx=coach.context&&coach.context(),jobs=[],h=global.WillenaCoachHistory,t=global.WillenaCoachStage5TargetHistory;if(ctx&&h&&typeof h.refresh==='function')jobs.push(Promise.resolve(h.refresh(ctx)));if(t&&typeof t.load==='function')jobs.push(Promise.resolve(t.load({force:true})));await Promise.all(jobs).catch(function(){});return ctx;}
+async function smartPlan(data){var ctx=await refreshStage5(),cap=global.WillenaCoachStage5Capability,skillCap=global.WillenaCoachStage5SkillCapability;if(!ctx||!cap||typeof cap.evidence!=='function')return null;var domain=domainForSkill(classify(data.title,data.mistakes)),ev=arr(cap.evidence(ctx)).filter(function(x){return x&&x.domain===domain&&x.state!=='secure';});var target=ev[0];if(!target)return null;if(domain==='grammar'&&typeof cap.buildPlan==='function')return cap.buildPlan(target,ctx);if(skillCap&&typeof skillCap.buildSkill==='function')return skillCap.buildSkill(ctx,target);return null;}
+function registerSuccess(data){successPending=true;var wasRetry=!!data.retry,points=Math.max(0,Math.round(Number(data.points)||0));coach.registerCapability({id:'remediation_success',score:20000,available:function(){return successPending;},label:{ko:'모두 맞았어요!',en:'All correct!'},response:wasRetry?{ko:'대단해요! 아까 틀렸던 문제를 전부 고쳤어요. 이번 세션에서 '+points+'포인트를 획득했어요!',en:'Great job! You fixed every question you missed. You earned '+points+' points in this session!'}:{ko:'완벽해요! 이번 문제를 전부 맞혔어요. 이번 세션에서 '+points+'포인트를 획득했어요!',en:'Perfect! You got every question right. You earned '+points+' points in this session!'},actions:[]});coach.refresh();setTimeout(function(){var first=document.querySelector('#aiCoachChoices .study-v2-ai-prompt');if(first&&successPending){first.click();successPending=false;celebratePoints(points);chainPoints=0;}},150);}
+function registerReview(data){pending=data;var count=data.mistakes.length,kind=classify(data.title,data.mistakes),second=data.round>0,intro=explanation(kind,count,second);if(second){var answers=answerSummary(data.mistakes);if(answers)intro+=' '+answers;}coach.registerCapability({id:'remediation_pending',score:10000,available:function(){return !!(pending&&pending.mistakes&&pending.mistakes.length);},label:{ko:count+'개 틀린 문제 다시 보기',en:'Review '+count+' missed '+(count===1?'question':'questions')},response:intro,actions:[{label:{ko:'약한 부분을 새 문제로 연습',en:'Practise the weak point with new questions'},run:async function(){var plan=await smartPlan(data);if(plan&&arr(plan.items).length>=3)return plan;var items=makeRetryItems(data.mistakes,(data.round||0)+1);return{type:'coach_remediation_retry',title:ko()?'틀린 문제 다시 풀기':'Retry missed questions',message:ko()?'새 문제를 충분히 찾지 못해서 방금 틀린 문제로 다시 확인할게요.':'I could not find enough suitable new items, so let’s retry the questions you just missed.',items:items};}},{label:{ko:'방금 틀린 '+count+'문제 다시 풀기',en:'Retry the exact '+count+' missed '+(count===1?'question':'questions')},run:function(){var items=makeRetryItems(data.mistakes,(data.round||0)+1);return{type:'coach_remediation_retry',title:ko()?'틀린 문제 다시 풀기':'Retry missed questions',message:ko()?'좋아요. 아까 틀린 문제만 다시 해볼게요.':'Good. Let’s retry only the ones you missed.',items:items};}}]});coach.refresh();setTimeout(function(){var first=document.querySelector('#aiCoachChoices .study-v2-ai-prompt');if(first&&pending===data)first.click();},120);}
+function beginIfNeeded(){if(!overlayOpen()||active)return;active={title:practiceTitle(),answered:0,mistakes:[],round:0,retry:false};}
+global.addEventListener('willena:activity-answer',function(event){if(!overlayOpen())return;beginIfNeeded();if(!active)return;var detail=event&&event.detail||{},activity=detail.activity||{},result=detail.result||{},isRetry=retryFlag(activity);if(active.answered===0&&!isRetry)chainPoints=0;active.answered++;if(result.correct)chainPoints+=2;if(isRetry){active.retry=true;active.round=Math.max(active.round,Number(activity.metadata&&activity.metadata.coach_remediation_round)||1);if(!active.title)active.title=practiceTitle();}if(!result.correct)active.mistakes.push({activity:clone(activity),result:clone(result)});});
+document.addEventListener('click',function(e){var btn=e.target&&e.target.closest&&e.target.closest('#aiCoachPracticeNext');if(!btn||!active)return;var label=text(btn.textContent).toLowerCase();if(label!=='finish'&&label!=='완료')return;var finished=active;active=null;setTimeout(function(){if(!finished.mistakes.length){pending=null;registerSuccess({title:finished.title,retry:finished.retry,round:finished.round,answered:finished.answered,points:chainPoints});return;}registerReview({title:finished.title||practiceTitle(),mistakes:finished.mistakes,round:finished.retry?finished.round:0});},180);},true);
+document.addEventListener('click',function(e){var back=e.target&&e.target.closest&&e.target.closest('#aiCoachPracticeBack');if(back){active=null;pending=null;chainPoints=0;}},true);
 })(window);
