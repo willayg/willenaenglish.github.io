@@ -1,5 +1,6 @@
 /* Grammar Study substitution charts: one connected white sentence-building table. */
-.book-study-grammar-builder{display:grid;gap:0;margin-top:13px;--grammar-border:#d9e2e4}
+.book-study-grammar-builder{display:grid;gap:0;margin-top:13px;--grammar-border:#d9e2e4;cursor:zoom-in;outline:none}
+.book-study-grammar-builder:focus-visible{box-shadow:0 0 0 3px rgba(49,171,182,.22);border-radius:14px}
 .book-study-grammar-builder-title{margin-bottom:8px;color:#6f5331;font:900 .78rem/1.2 Poppins,sans-serif;letter-spacing:.02em}
 .book-study-grammar-builder-row{display:grid;grid-template-columns:repeat(var(--grammar-chunks,3),minmax(0,1fr));gap:0;min-width:0;background:#fff;border-left:2px solid var(--grammar-border);border-right:2px solid var(--grammar-border)}
 .book-study-grammar-builder-title + .book-study-grammar-builder-row{border-top:2px solid var(--grammar-border);border-radius:14px 14px 0 0;overflow:hidden}
@@ -13,12 +14,27 @@
 .book-study-grammar-builder-cell.is-col-2{color:#76552f}
 .book-study-grammar.has-substitution-builder>.book-study-grammar-chart[hidden]{display:none!important}
 
+body.grammar-modal-open{overflow:hidden}
+.book-study-grammar-modal[hidden]{display:none!important}
+.book-study-grammar-modal{position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;padding:24px;background:rgba(21,36,40,.64);backdrop-filter:blur(4px)}
+.book-study-grammar-modal-panel{position:relative;width:min(1100px,96vw);max-height:90vh;overflow:auto;padding:28px;border-radius:26px;background:#fffaf3;box-shadow:0 28px 80px rgba(0,0,0,.28)}
+.book-study-grammar-modal-close{position:sticky;top:0;float:right;z-index:2;width:46px;height:46px;margin:-10px -10px 8px 12px;border:0;border-radius:50%;background:#fff;color:#35565b;font:800 1.7rem/1 Poppins,sans-serif;box-shadow:0 4px 16px rgba(0,0,0,.12);cursor:pointer}
+.book-study-grammar-modal-body{clear:both}
+.book-study-grammar-modal .book-study-grammar-builder{margin-top:0;cursor:default}
+.book-study-grammar-modal .book-study-grammar-builder-title{font-size:1.15rem;margin-bottom:14px}
+.book-study-grammar-modal .book-study-grammar-builder-cell{min-height:108px;padding:20px 18px;font-size:1.3rem;line-height:1.42}
+
 @media(max-width:560px){
   .book-study-grammar-builder{margin-top:14px}
   .book-study-grammar-builder-title{margin-bottom:9px;font-size:.86rem}
   .book-study-grammar-builder-cell{min-height:74px;padding:13px 8px;font-size:.92rem;line-height:1.42}
+  .book-study-grammar-modal{padding:10px}
+  .book-study-grammar-modal-panel{width:98vw;max-height:92vh;padding:18px 14px 20px;border-radius:20px}
+  .book-study-grammar-modal .book-study-grammar-builder-title{font-size:1rem}
+  .book-study-grammar-modal .book-study-grammar-builder-cell{min-height:92px;padding:16px 10px;font-size:1.08rem}
 }
 
 @media(max-width:390px){
   .book-study-grammar-builder-cell{font-size:.86rem;padding:12px 6px}
+  .book-study-grammar-modal .book-study-grammar-builder-cell{font-size:1rem;padding:14px 8px}
 }
