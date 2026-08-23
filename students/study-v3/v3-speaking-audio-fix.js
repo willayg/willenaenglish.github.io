@@ -9,8 +9,12 @@ document.addEventListener('click',function(e){
   var value=text(button.dataset&&button.dataset.target);
   if(!value){
     var card=button.closest('.v3-speaking-card');
-    var revealed=card&&card.querySelector('.v3-speaking-answer');
-    value=text(revealed&&revealed.textContent);
+    var prompt=card&&card.querySelector('.v3-speaking-prompt');
+    value=text(prompt&&prompt.textContent);
+    if(!value){
+      var revealed=card&&card.querySelector('.v3-speaking-answer');
+      value=text(revealed&&revealed.textContent);
+    }
   }
   if(!value)return;
   var player=global.WillenaAudioPlayback;
