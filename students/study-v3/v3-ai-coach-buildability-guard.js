@@ -1,6 +1,6 @@
 (function(global){
 'use strict';
-var VERSION='coach-buildability-guard-v1.2';
+var VERSION='coach-buildability-guard-v1.3';
 var coach=global.WillenaAICoach;
 var installed=false;
 var PROBE_IDS={
@@ -26,22 +26,24 @@ async function prepare(action,ctx){if(!action)return null;try{
 function normalizePrepared(result){if(!result||!arr(result.items).length)return result;var safe=launchableItems(result);if(safe.length===result.items.length)return result;return Object.assign({},result,{items:safe});}
 function wrapCapability(cap,prepared,preparedAt){
   var originalActions=cap.actions;
+  var preparedUsed=false;
   var wrapped=Object.assign({},cap);
   wrapped.actions=async function(ctx){
     var list=typeof originalActions==='function'?arr(await originalActions(ctx)):arr(originalActions);
     if(!list.length)return[];
     var first=Object.assign({},list[0]);
     var originalRun=first.run,provider=first.provider,args=first.args;
-    if(Date.now()-preparedAt<30000){
-      first.run=function(){return prepared;};
-      delete first.provider;
-      delete first.args;
-    }else if(typeof originalRun==='function'){
-      first.run=originalRun;
-    }else if(provider){
-      first.provider=provider;
-      first.args=args;
-    }
+    first.run=async function(liveCtx){
+      if(!preparedUsed&&Date.now()-preparedAt<30000){
+        preparedUsed=true;
+        return prepared;
+      }
+      if(typeof originalRun==='function')return originalRun(liveCtx||ctx);
+      if(provider&&coach&&typeof coach.provider==='function')return coach.provider(provider,args||{});
+      return null;
+    };
+    delete first.provider;
+    delete first.args;
     list[0]=first;
     return list;
   };
