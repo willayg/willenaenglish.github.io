@@ -1,10 +1,13 @@
 (function(global){
 'use strict';
-var VERSION='coach-buildability-guard-v1.1';
+var VERSION='coach-buildability-guard-v1.2';
 var coach=global.WillenaAICoach;
 var installed=false;
 var PROBE_IDS={
   weakness:1,
+  third_person:1,
+  past:1,
+  past_participle:1,
   stage5_exact_missed_review:1,
   stage5_vocabulary_weakness:1,
   stage5_listening_weakness:1,
