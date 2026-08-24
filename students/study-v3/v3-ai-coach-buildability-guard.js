@@ -1,6 +1,6 @@
 (function(global){
 'use strict';
-var VERSION='coach-buildability-guard-v1.0';
+var VERSION='coach-buildability-guard-v1.1';
 var coach=global.WillenaAICoach;
 var installed=false;
 var PROBE_IDS={
@@ -13,12 +13,14 @@ var PROBE_IDS={
   stage5_reading_weakness:1
 };
 function arr(v){return Array.isArray(v)?v:[];}
-function usable(result){return !!(result&&(arr(result.items).length||arr(result.actions).length||result.launched===true));}
+function launchableItems(result){return arr(result&&result.items).filter(function(item){var response=item&&item.response||{},type=String(response.type||item&&item.type||'').trim();return type!=='typed_answer'&&type!=='gap_fill_text';});}
+function usable(result){return !!(result&&(launchableItems(result).length||arr(result.actions).length||result.launched===true));}
 async function actionsFor(cap,ctx){try{return typeof cap.actions==='function'?arr(await cap.actions(ctx)):arr(cap.actions);}catch(e){console.warn('[AI Coach buildability] actions failed',cap&&cap.id,e);return[];}}
 async function prepare(action,ctx){if(!action)return null;try{
   if(typeof action.run==='function')return await action.run(ctx);
   if(action.provider&&coach&&typeof coach.provider==='function')return await coach.provider(action.provider,action.args||{});
 }catch(e){console.warn('[AI Coach buildability] prepare failed',e);}return null;}
+function normalizePrepared(result){if(!result||!arr(result.items).length)return result;var safe=launchableItems(result);if(safe.length===result.items.length)return result;return Object.assign({},result,{items:safe});}
 function wrapCapability(cap,prepared,preparedAt){
   var originalActions=cap.actions;
   var wrapped=Object.assign({},cap);
@@ -46,7 +48,7 @@ async function vet(cap,ctx){
   if(!cap||!PROBE_IDS[cap.id])return cap;
   var actions=await actionsFor(cap,ctx);
   if(!actions.length)return null;
-  var prepared=await prepare(actions[0],ctx);
+  var prepared=normalizePrepared(await prepare(actions[0],ctx));
   if(!usable(prepared)){
     console.info('[AI Coach buildability] hiding empty recommendation',cap.id,prepared&&{type:prepared.type,itemCount:arr(prepared.items).length,dueCount:prepared.dueCount,matchedCount:prepared.matchedCount});
     return null;
