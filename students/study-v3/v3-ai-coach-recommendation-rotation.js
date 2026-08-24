@@ -1,7 +1,7 @@
 (function(global){
 'use strict';
 
-var VERSION='coach-recommendation-rotation-v1.1';
+var VERSION='coach-recommendation-rotation-v1.2';
 var COMPLETION_KEY='willena-ai-coach-completions:v1:';
 
 function text(v){return String(v==null?'':v).trim();}
@@ -18,74 +18,21 @@ function targetHistory(){var h=global.WillenaCoachStage5TargetHistory,s=h&&typeo
 function matchingTargetAttempt(x,code){var raw=text(code).replace(/^concept:/,''),wanted=targetKey(raw),a=canonicalTarget(x&&x.targetKey,raw),m=x&&x.metadata||{},b=canonicalTarget(m.stage5_target,raw);return a===wanted||a===raw||b===wanted||b===raw;}
 function sourceIdFromActivityId(v){var s=text(v),m=s.match(/^stage5-(?:concept|build)-(.+?)-\d+(?:-retry.*)?$/);return m&&m[1]?m[1]:'';}
 function attemptItemId(x){return text(x&&x.contentId||x&&x.sourceId)||sourceIdFromActivityId(x&&x.activityId)||text(x&&x.activityId);}
-function recentSourceIds(code){
-  var out=[],seen={},local=localCompletion(code);
-  arr(local&&local.itemIds).forEach(function(id){id=text(id);if(id&&!seen[id]){seen[id]=1;out.push(id);}});
-  targetHistory().filter(function(x){return matchingTargetAttempt(x,code);}).forEach(function(x){var id=attemptItemId(x);if(id&&!seen[id]){seen[id]=1;out.push(id);}});
-  return out.slice(0,30);
-}
-function uniqueRecentTargetAttempts(code){
-  var seen={},out=[];
-  targetHistory().filter(function(x){return matchingTargetAttempt(x,code);}).forEach(function(x){
-    var at=Date.parse(x&&x.createdAt||'')||0;if(!at||Date.now()-at>24*60*60*1000)return;
-    var id=attemptItemId(x)||('row:'+text(x&&x.id));if(!id||seen[id])return;seen[id]=1;out.push(x);
-  });
-  return out;
-}
-function historyShowsRecovery(code){
-  var rows=uniqueRecentTargetAttempts(code).slice(0,6);if(rows.length<4)return false;
-  var streak=0;for(var i=0;i<rows.length;i++){if(rows[i]&&rows[i].correct)streak++;else break;}
-  if(streak>=4)return true;
-  var firstFive=rows.slice(0,5);return firstFive.length===5&&firstFive.filter(function(x){return x&&x.correct;}).length>=4;
-}
+function recentSourceIds(code){var out=[],seen={},local=localCompletion(code);arr(local&&local.itemIds).forEach(function(id){id=text(id);if(id&&!seen[id]){seen[id]=1;out.push(id);}});targetHistory().filter(function(x){return matchingTargetAttempt(x,code);}).forEach(function(x){var id=attemptItemId(x);if(id&&!seen[id]){seen[id]=1;out.push(id);}});return out.slice(0,30);}
+function uniqueRecentTargetAttempts(code){var seen={},out=[];targetHistory().filter(function(x){return matchingTargetAttempt(x,code);}).forEach(function(x){var at=Date.parse(x&&x.createdAt||'')||0;if(!at||Date.now()-at>24*60*60*1000)return;var id=attemptItemId(x)||('row:'+text(x&&x.id));if(!id||seen[id])return;seen[id]=1;out.push(x);});return out;}
+function historyShowsRecovery(code){var rows=uniqueRecentTargetAttempts(code).slice(0,6);if(rows.length<4)return false;var streak=0;for(var i=0;i<rows.length;i++){if(rows[i]&&rows[i].correct)streak++;else break;}if(streak>=4)return true;var firstFive=rows.slice(0,5);return firstFive.length===5&&firstFive.filter(function(x){return x&&x.correct;}).length>=4;}
 function cooldownActive(code){var row=localCompletion(code);if(row&&num(row.until)>Date.now())return true;return historyShowsRecovery(code);}
-function decoratePlan(plan,target){
-  if(!plan||!target||!target.conceptCode)return plan;
-  var code=text(target.conceptCode).replace(/^concept:/,''),key=targetKey(code),label=pretty(code),baseDiagnosis=target.diagnosis&&typeof target.diagnosis==='object'?target.diagnosis:{};
-  arr(plan.items).forEach(function(item){if(!item)return;var m=item.metadata&&typeof item.metadata==='object'?item.metadata:{};m.stage5_target=key;m.stage5_target_type='grammar_concept';m.stage5_target_label=label;m.concept_code=code;if(!m.pattern_id&&item.patternId)m.pattern_id=item.patternId;if(!m.mastery_content_type)m.mastery_content_type='pattern';if(!m.mastery_content_id)m.mastery_content_id=text(m.pattern_id||item.sourceId||item.id);m.diagnosis=Object.assign({},baseDiagnosis,{domain:'grammar',concept:code,subtype:text(baseDiagnosis.subtype||target.diagnosisKey||'stage5_target')});item.metadata=m;});
-  return plan;
-}
-function patchRetriever(retriever){
-  if(!retriever||retriever.__willenaRotationPatched||typeof retriever.remediationSet!=='function')return;
-  var original=retriever.remediationSet.bind(retriever);
-  retriever.remediationSet=async function(input){
-    input=input||{};var result=await original(input),pool=arr(result&&result.items).slice();if(!pool.length)return result;
-    var wanted=Math.max(3,Math.min(6,num(input.count)||4)),recent=recentSourceIds(input.conceptCode),recentRank={};recent.forEach(function(id,i){if(recentRank[id]==null)recentRank[id]=Math.max(22,140-i*6);});
-    var selected=[],used={},types={},books={};
-    for(var slot=0;slot<wanted&&selected.length<pool.length;slot++){
-      var best=null,bestScore=-Infinity;
-      pool.forEach(function(x){if(!x||used[x.id])return;var type=text(x.itemType).toLowerCase()||'other',book=text(x.bookId||x.sourceKey||'willena'),penalty=recentRank[text(x.id)]||0,score=num(x.score)-penalty+(types[type]?0:8)+(books[book]?0:5)+Math.random()*2;if(score>bestScore){bestScore=score;best={item:x,type:type,book:book,score:score};}});
-      if(!best)break;used[best.item.id]=1;types[best.type]=1;books[best.book]=1;selected.push(Object.assign({},best.item,{selectionScore:Math.round(best.score*10)/10}));
-    }
-    return Object.assign({},result,{selected:selected});
-  };
-  retriever.__willenaRotationPatched=true;
-}
+function decoratePlan(plan,target){if(!plan||!target||!target.conceptCode)return plan;var code=text(target.conceptCode).replace(/^concept:/,''),key=targetKey(code),label=pretty(code),baseDiagnosis=target.diagnosis&&typeof target.diagnosis==='object'?target.diagnosis:{};arr(plan.items).forEach(function(item){if(!item)return;var m=item.metadata&&typeof item.metadata==='object'?item.metadata:{};m.stage5_target=key;m.stage5_target_type='grammar_concept';m.stage5_target_label=label;m.concept_code=code;if(!m.pattern_id&&item.patternId)m.pattern_id=item.patternId;if(!m.mastery_content_type)m.mastery_content_type='pattern';if(!m.mastery_content_id)m.mastery_content_id=text(m.pattern_id||item.sourceId||item.id);m.diagnosis=Object.assign({},baseDiagnosis,{domain:'grammar',concept:code,subtype:text(baseDiagnosis.subtype||target.diagnosisKey||'stage5_target')});item.metadata=m;});return plan;}
+function patchRetriever(retriever){if(!retriever||retriever.__willenaRotationPatched||typeof retriever.remediationSet!=='function')return;var original=retriever.remediationSet.bind(retriever);retriever.remediationSet=async function(input){input=input||{};var result=await original(input),pool=arr(result&&result.items).slice();if(!pool.length)return result;var wanted=Math.max(3,Math.min(6,num(input.count)||4)),recent=recentSourceIds(input.conceptCode),recentRank={};recent.forEach(function(id,i){if(recentRank[id]==null)recentRank[id]=Math.max(22,140-i*6);});var selected=[],used={},types={},books={};for(var slot=0;slot<wanted&&selected.length<pool.length;slot++){var best=null,bestScore=-Infinity;pool.forEach(function(x){if(!x||used[x.id])return;var type=text(x.itemType).toLowerCase()||'other',book=text(x.bookId||x.sourceKey||'willena'),penalty=recentRank[text(x.id)]||0,score=num(x.score)-penalty+(types[type]?0:8)+(books[book]?0:5)+Math.random()*2;if(score>bestScore){bestScore=score;best={item:x,type:type,book:book,score:score};}});if(!best)break;used[best.item.id]=1;types[best.type]=1;books[best.book]=1;selected.push(Object.assign({},best.item,{selectionScore:Math.round(best.score*10)/10}));}return Object.assign({},result,{selected:selected});};retriever.__willenaRotationPatched=true;}
 function rawGrammarEvidence(cap,ctx){return arr(cap&&typeof cap.grammarEvidence==='function'?cap.grammarEvidence(ctx):[]);}
 function activeEvidence(cap,ctx){return rawGrammarEvidence(cap,ctx).filter(function(x){return x&&x.conceptCode&&!cooldownActive(x.conceptCode);});}
 function hasCooledGrammar(cap,ctx){return rawGrammarEvidence(cap,ctx).some(function(x){return x&&x.conceptCode&&cooldownActive(x.conceptCode);});}
 function skillName(lang,s){var K={vocabulary:'어휘',spelling:'철자',grammar:'문법',sentence_building:'문장 만들기',conversation:'회화',listening:'듣기',reading:'읽기'},E={vocabulary:'vocabulary',spelling:'spelling',grammar:'grammar',sentence_building:'sentence building',conversation:'conversation',listening:'listening',reading:'reading'};return(lang==='ko'?K:E)[s]||s;}
 function history(){var h=global.WillenaCoachHistory;return h&&typeof h.getSnapshot==='function'?h.getSnapshot():null;}
-function fallbackWeak(cap,ctx){
-  var h=history(),rows=arr(h&&h.skillMastery),misses={},suppressGrammar=hasCooledGrammar(cap,ctx);
-  arr(h&&h.recentAttempts).slice(0,120).forEach(function(a){var s=text(a&&a.skill);if(s&&!a.correct)misses[s]=(misses[s]||0)+1;});
-  return rows.map(function(x){var s=text(x&&x.skill),pct=Math.max(0,Math.min(100,Number(x&&x.mastery)||0)),attempts=Math.max(0,Number(x&&x.attempts)||0),m=Number(misses[s])||0;return{skill:s,pct:pct,attempts:attempts,misses:m,effective:Math.min(pct,m>=2?Math.max(20,90-m*10):pct)};}).filter(function(x){if(suppressGrammar&&(x.skill==='grammar'||x.skill==='sentence_building'))return false;return x.skill&&((x.attempts>0&&x.pct<80)||x.misses>=2);}).sort(function(a,b){return a.effective-b.effective||b.misses-a.misses;}).slice(0,5);
-}
+function fallbackWeak(cap,ctx){var h=history(),rows=arr(h&&h.skillMastery),misses={},suppressGrammar=hasCooledGrammar(cap,ctx);arr(h&&h.recentAttempts).slice(0,120).forEach(function(a){var s=text(a&&a.skill);if(s&&!a.correct)misses[s]=(misses[s]||0)+1;});return rows.map(function(x){var s=text(x&&x.skill),pct=Math.max(0,Math.min(100,Number(x&&x.mastery)||0)),attempts=Math.max(0,Number(x&&x.attempts)||0),m=Number(misses[s])||0;return{skill:s,pct:pct,attempts:attempts,misses:m,effective:Math.min(pct,m>=2?Math.max(20,90-m*10):pct)};}).filter(function(x){if(suppressGrammar&&(x.skill==='grammar'||x.skill==='sentence_building'))return false;return x.skill&&((x.attempts>0&&x.pct<80)||x.misses>=2);}).sort(function(a,b){return a.effective-b.effective||b.misses-a.misses;}).slice(0,5);}
 function conceptLabel(x){return pretty(text(x&&x.targetKey||x&&x.conceptCode||'grammar'));}
-function install(){
-  var coach=global.WillenaAICoach,cap=global.WillenaCoachStage5Capability,retriever=global.WillenaCoachConceptRetriever;if(!coach||typeof coach.registerCapability!=='function'||!cap||typeof cap.buildPlan!=='function'||!retriever)return false;
-  patchRetriever(retriever);
-  coach.registerCapability({id:'stage5_concept_weakness',available:false,score:0,label:{ko:'',en:''}});
-  coach.registerCapability({
-    id:'weakness',
-    available:function(ctx){return activeEvidence(cap,ctx).length>0||fallbackWeak(cap,ctx).length>0;},
-    score:function(ctx){var g=activeEvidence(cap,ctx)[0];if(g)return 350+Math.min(120,num(g.score));var x=fallbackWeak(cap,ctx)[0];return x?Math.max(70,120-(num(x.effective)||x.pct)):0;},
-    label:function(ctx){var g=activeEvidence(cap,ctx)[0];if(g)return g.state==='recall_weakness'?{ko:'문장 만들기 다시 연습',en:'Practise producing the sentence'}:{ko:'헷갈린 문법 다시 잡기',en:'Fix a recurring grammar point'};var x=fallbackWeak(cap,ctx)[0];if(!x)return{ko:'약한 부분 연습',en:'Practice weak areas'};return{ko:skillName('ko',x.skill)+'을 더 연습할래요',en:'More '+skillName('en',x.skill)+' practice'};},
-    response:function(ctx){var g=activeEvidence(cap,ctx)[0];if(g){var c=conceptLabel(g);return g.state==='recall_weakness'?(ko()?'규칙은 알고 있지만 직접 문장을 만들 때 조금 더 연습이 필요해 보여요. '+c+'를 문장으로 연습해 볼게요.':'You seem to know the rule, but producing it still needs practice. Let’s work on '+c+' in sentences.'):(ko()?'같은 문법 포인트에서 반복해서 막힌 흔적이 있어요. '+c+'를 다른 문제로 다시 확인해 볼게요.':'I found repeated trouble with the same grammar point. Let’s check '+c+' with different questions.');}var x=fallbackWeak(cap,ctx)[0];return x?(ko()?skillName('ko',x.skill)+'이 지금 가장 먼저 챙기기 좋은 영역이에요.':'Your '+skillName('en',x.skill)+' looks like the best place to focus right now.'):'';},
-    actions:function(ctx){var gs=activeEvidence(cap,ctx).slice(0,3);if(gs.length)return gs.map(function(g){return{label:{ko:conceptLabel(g)+' 연습하기',en:'Practise '+conceptLabel(g)},run:function(liveCtx){return Promise.resolve(cap.buildPlan(g,liveCtx||ctx)).then(function(plan){return decoratePlan(plan,g);});}};});var x=fallbackWeak(cap,ctx)[0];return x?[{label:{ko:skillName('ko',x.skill)+' 집중 연습',en:'Practice '+skillName('en',x.skill)},provider:'unit',args:{skill:x.skill,count:10}}]:[];}
-  });
-  return true;
-}
+function refreshHome(coach){setTimeout(function(){try{var state=typeof coach.getState==='function'?coach.getState():null;if(!state||!state.view||state.view==='home')coach.refresh();}catch(_){}},0);}
+function install(){var coach=global.WillenaAICoach,cap=global.WillenaCoachStage5Capability,retriever=global.WillenaCoachConceptRetriever;if(!coach||typeof coach.registerCapability!=='function'||!cap||typeof cap.buildPlan!=='function'||!retriever)return false;patchRetriever(retriever);coach.registerCapability({id:'stage5_concept_weakness',available:false,score:0,label:{ko:'',en:''}});coach.registerCapability({id:'weakness',available:function(ctx){return activeEvidence(cap,ctx).length>0||fallbackWeak(cap,ctx).length>0;},score:function(ctx){var g=activeEvidence(cap,ctx)[0];if(g)return 350+Math.min(120,num(g.score));var x=fallbackWeak(cap,ctx)[0];return x?Math.max(70,120-(num(x.effective)||x.pct)):0;},label:function(ctx){var g=activeEvidence(cap,ctx)[0];if(g)return g.state==='recall_weakness'?{ko:'문장 만들기 다시 연습',en:'Practise producing the sentence'}:{ko:'헷갈린 문법 다시 잡기',en:'Fix a recurring grammar point'};var x=fallbackWeak(cap,ctx)[0];if(!x)return{ko:'약한 부분 연습',en:'Practice weak areas'};return{ko:skillName('ko',x.skill)+'을 더 연습할래요',en:'More '+skillName('en',x.skill)+' practice'};},response:function(ctx){var g=activeEvidence(cap,ctx)[0];if(g){var c=conceptLabel(g);return g.state==='recall_weakness'?(ko()?'규칙은 알고 있지만 직접 문장을 만들 때 조금 더 연습이 필요해 보여요. '+c+'를 문장으로 연습해 볼게요.':'You seem to know the rule, but producing it still needs practice. Let’s work on '+c+' in sentences.'):(ko()?'같은 문법 포인트에서 반복해서 막힌 흔적이 있어요. '+c+'를 다른 문제로 다시 확인해 볼게요.':'I found repeated trouble with the same grammar point. Let’s check '+c+' with different questions.');}var x=fallbackWeak(cap,ctx)[0];return x?(ko()?skillName('ko',x.skill)+'이 지금 가장 먼저 챙기기 좋은 영역이에요.':'Your '+skillName('en',x.skill)+' looks like the best place to focus right now.'):'';},actions:function(ctx){var gs=activeEvidence(cap,ctx).slice(0,3);if(gs.length)return gs.map(function(g){return{label:{ko:conceptLabel(g)+' 연습하기',en:'Practise '+conceptLabel(g)},run:function(liveCtx){return Promise.resolve(cap.buildPlan(g,liveCtx||ctx)).then(function(plan){return decoratePlan(plan,g);});}};});var x=fallbackWeak(cap,ctx)[0];return x?[{label:{ko:skillName('ko',x.skill)+' 집중 연습',en:'Practice '+skillName('en',x.skill)},provider:'unit',args:{skill:x.skill,count:10}}]:[];}});refreshHome(coach);return true;}
 
 global.addEventListener('willena:coach-bootstrap-ready',function(){setTimeout(install,0);});
 var tries=0,iv=setInterval(function(){tries++;if(global.WillenaCoachStage5GrammarIntegration&&install())clearInterval(iv);else if(tries>150)clearInterval(iv);},100);
