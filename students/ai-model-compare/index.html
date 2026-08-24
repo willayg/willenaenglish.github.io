@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<title>Luna vs Terra · Writing Test</title>
+<style>
+:root{color-scheme:light;--bg:#f7f7fb;--card:#fff;--ink:#202033;--muted:#737386;--line:#e5e5ee;--accent:#5653c9;--accent2:#ecebff;--ok:#167a55;--bad:#b34141;--luna:#5c63d8;--terra:#a24882}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+button,textarea{font:inherit}
+button{touch-action:manipulation}
+main{width:min(1180px,100%);margin:0 auto;padding:28px 18px 52px}
+.top{display:flex;justify-content:space-between;align-items:flex-end;gap:18px;margin-bottom:22px}.top h1{margin:0;font-size:clamp(25px,5vw,38px);letter-spacing:-.035em}.top p{margin:7px 0 0;color:var(--muted);font-size:14px}.badge{border:1px solid var(--line);background:var(--card);padding:8px 11px;border-radius:999px;color:var(--muted);font-size:12px;white-space:nowrap}
+.card{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:20px;box-shadow:0 8px 28px rgba(28,26,62,.04)}
+.topic-card{display:grid;grid-template-columns:1fr auto;align-items:center;gap:16px;margin-bottom:16px}.eyebrow{font-size:11px;font-weight:800;letter-spacing:.13em;color:var(--accent);text-transform:uppercase}.topic{margin:6px 0 0;font-size:clamp(18px,3vw,25px);line-height:1.25;letter-spacing:-.02em}.secondary,.primary{border:0;border-radius:13px;min-height:46px;padding:0 17px;font-weight:750;cursor:pointer}.secondary{background:#f1f1f6;color:#39394c}.primary{background:var(--accent);color:#fff;min-width:170px}.secondary:disabled,.primary:disabled{opacity:.55;cursor:default}
+.editor-card{margin-bottom:18px}.editor-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px}.editor-head strong{font-size:15px}.counter{font-size:12px;color:var(--muted)}
+textarea{display:block;width:100%;min-height:245px;resize:vertical;border:1px solid var(--line);border-radius:16px;padding:16px 17px;font-size:17px;line-height:1.75;color:var(--ink);background:repeating-linear-gradient(to bottom,#fff 0,#fff 29px,#f2f2f7 30px);outline:none}.editor-actions{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:14px}.hint{font-size:12px;color:var(--muted)}
+.results{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:18px}.model-card{min-width:0}.model-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px}.model-name{display:flex;align-items:center;gap:9px;font-size:19px;font-weight:850}.dot{width:10px;height:10px;border-radius:50%}.luna .dot{background:var(--luna)}.terra .dot{background:var(--terra)}.model-id{font:11px ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--muted)}
+.output{min-height:250px;white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.55;font-size:14px;padding:16px;border-radius:16px;background:#fafafe;border:1px solid #eeeeF5}.placeholder{color:#9999aa}.loading{display:flex;align-items:center;gap:9px;color:var(--muted)}.spinner{width:17px;height:17px;border:2px solid #ddddea;border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}
+.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}.metric{border:1px solid var(--line);border-radius:13px;padding:10px}.metric span{display:block;color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.07em}.metric strong{display:block;margin-top:4px;font-size:14px}.cost-detail{margin-top:10px;font-size:12px;color:var(--muted);line-height:1.55}.cost-detail b{color:var(--ink)}
+.summary{margin-top:16px;display:none}.summary.show{display:block}.summary-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.summary-box{padding:14px;border-radius:15px;background:#fafafe;border:1px solid var(--line)}.summary-box span{display:block;color:var(--muted);font-size:11px}.summary-box strong{display:block;margin-top:4px;font-size:18px}.footnote{margin:12px 1px 0;color:var(--muted);font-size:11px;line-height:1.5}
+.error{color:var(--bad)}
+@media(max-width:760px){main{padding:18px 12px 40px}.top{align-items:flex-start}.badge{display:none}.topic-card{grid-template-columns:1fr}.topic-card .secondary{width:100%}.editor-actions{align-items:stretch;flex-direction:column}.editor-actions .primary{width:100%}.hint{text-align:center}.results{grid-template-columns:1fr}.summary-grid{grid-template-columns:1fr}.metrics{grid-template-columns:repeat(3,1fr)}textarea{min-height:270px}}
+@media(prefers-reduced-motion:reduce){.spinner{animation:none}}
+</style>
+<script src="/js/api-config.js?v=20260825-modelcompare1"></script>
+</head>
+<body>
+<main>
+  <header class="top">
+    <div><h1>Luna vs Terra</h1><p>Same writing. Same prompt. Side-by-side feedback and actual API cost.</p></div>
+    <div class="badge">GPT-5.6 comparison MVP</div>
+  </header>
+
+  <section class="card topic-card">
+    <div><div class="eyebrow">Your topic</div><h2 class="topic" id="topic"></h2></div>
+    <button class="secondary" id="newTopic" type="button">New topic</button>
+  </section>
+
+  <section class="card editor-card">
+    <div class="editor-head"><strong>Write about 8 lines</strong><span class="counter" id="counter">0 lines · 0 words</span></div>
+    <textarea id="writing" spellcheck="true" placeholder="Write naturally. Don't try to make it perfect — the point is to compare the models."></textarea>
+    <div class="editor-actions">
+      <span class="hint">Both models receive exactly the same topic, writing and evaluation instructions.</span>
+      <button class="primary" id="compare" type="button">Compare Luna + Terra</button>
+    </div>
+  </section>
+
+  <section class="results" aria-live="polite">
+    <article class="card model-card luna">
+      <div class="model-head"><div class="model-name"><i class="dot"></i>Luna</div><div class="model-id">gpt-5.6-luna</div></div>
+      <div class="output placeholder" id="lunaOutput">Luna's feedback will appear here.</div>
+      <div class="metrics" id="lunaMetrics" hidden>
+        <div class="metric"><span>Input</span><strong id="lunaInput">—</strong></div>
+        <div class="metric"><span>Output</span><strong id="lunaOutputTokens">—</strong></div>
+        <div class="metric"><span>Latency</span><strong id="lunaLatency">—</strong></div>
+      </div>
+      <div class="cost-detail" id="lunaCost"></div>
+    </article>
+
+    <article class="card model-card terra">
+      <div class="model-head"><div class="model-name"><i class="dot"></i>Terra</div><div class="model-id">gpt-5.6-terra</div></div>
+      <div class="output placeholder" id="terraOutput">Terra's feedback will appear here.</div>
+      <div class="metrics" id="terraMetrics" hidden>
+        <div class="metric"><span>Input</span><strong id="terraInput">—</strong></div>
+        <div class="metric"><span>Output</span><strong id="terraOutputTokens">—</strong></div>
+        <div class="metric"><span>Latency</span><strong id="terraLatency">—</strong></div>
+      </div>
+      <div class="cost-detail" id="terraCost"></div>
+    </article>
+  </section>
+
+  <section class="card summary" id="summary">
+    <div class="eyebrow">Cost comparison</div>
+    <div class="summary-grid" style="margin-top:10px">
+      <div class="summary-box"><span>Luna call</span><strong id="sumLuna">—</strong></div>
+      <div class="summary-box"><span>Terra call</span><strong id="sumTerra">—</strong></div>
+      <div class="summary-box"><span>Both together</span><strong id="sumBoth">—</strong></div>
+    </div>
+    <p class="footnote" id="projection"></p>
+  </section>
+</main>
+
+<script>
+(function(){
+'use strict';
+
+const TOPICS=[
+  'Do smartphones make everyday life better or more stressful?',
+  'Describe a place from your childhood that you still remember clearly.',
+  'Would you rather live in a very large city or a small town? Why?',
+  'What is something schools should teach that they usually do not?',
+  'Describe a small decision that had a surprisingly big effect on your life.',
+  'Is it better to be very talented or very persistent?',
+  'What makes a person a good teacher?',
+  'If you could redesign one part of your daily routine, what would you change?',
+  'Do people have more free time or less free time than they did 20 years ago?',
+  'Describe a skill you learned slowly but are glad you learned.',
+  'Should children have homework every day?',
+  'What makes a neighborhood a good place to live?',
+  'Which is more important when learning something new: practice or curiosity?',
+  'Describe an ordinary object that you think is especially well designed.',
+  'Would life be better if people used social media less?',
+  'What is one thing adults often misunderstand about children?',
+  'Is competition usually helpful or harmful?',
+  'Describe a time when changing your mind was the right decision.'
+];
+
+const RATES={
+  'gpt-5.6-luna':{input:0.20,cached:0.02,output:1.20},
+  'gpt-5.6-terra':{input:2.00,cached:0.20,output:12.00}
+};
+
+const topicEl=document.getElementById('topic');
+const writing=document.getElementById('writing');
+const counter=document.getElementById('counter');
+const compareBtn=document.getElementById('compare');
+const newTopicBtn=document.getElementById('newTopic');
+const summary=document.getElementById('summary');
+let lastTopic=-1;
+
+function chooseTopic(){
+  let i=Math.floor(Math.random()*TOPICS.length);
+  if(TOPICS.length>1&&i===lastTopic)i=(i+1)%TOPICS.length;
+  lastTopic=i;topicEl.textContent=TOPICS[i];
+}
+
+function updateCounter(){
+  const raw=writing.value;
+  const nonEmpty=raw.split(/\n/).filter(x=>x.trim()).length;
+  const words=raw.trim()?raw.trim().split(/\s+/).length:0;
+  counter.textContent=nonEmpty+' line'+(nonEmpty===1?'':'s')+' · '+words+' word'+(words===1?'':'s');
+}
+
+function money(v){
+  if(!Number.isFinite(v))return '—';
+  if(v>=0.01)return '$'+v.toFixed(4);
+  return '$'+v.toFixed(6);
+}
+
+function calculateCost(model,usage){
+  const r=RATES[model];
+  const input=Number(usage&&usage.prompt_tokens)||0;
+  const output=Number(usage&&usage.completion_tokens)||0;
+  const cached=Math.min(input,Number(usage&&usage.prompt_tokens_details&&usage.prompt_tokens_details.cached_tokens)||0);
+  const uncached=Math.max(0,input-cached);
+  const inputCost=uncached/1e6*r.input;
+  const cachedCost=cached/1e6*r.cached;
+  const outputCost=output/1e6*r.output;
+  return{input,output,cached,uncached,inputCost,cachedCost,outputCost,total:inputCost+cachedCost+outputCost};
+}
+
+function setLoading(prefix){
+  const out=document.getElementById(prefix+'Output');
+  out.className='output';
+  out.innerHTML='<div class="loading"><i class="spinner"></i>Calling model…</div>';
+  document.getElementById(prefix+'Metrics').hidden=true;
+  document.getElementById(prefix+'Cost').textContent='';
+}
+
+function setError(prefix,msg){
+  const out=document.getElementById(prefix+'Output');
+  out.className='output error';
+  out.textContent=msg;
+  document.getElementById(prefix+'Metrics').hidden=true;
+  document.getElementById(prefix+'Cost').textContent='';
+}
+
+function renderResult(prefix,result){
+  const out=document.getElementById(prefix+'Output');
+  out.className='output';
+  out.textContent=result.text||'(No text returned)';
+  document.getElementById(prefix+'Metrics').hidden=false;
+  document.getElementById(prefix+'Input').textContent=result.cost.input.toLocaleString()+(result.cost.cached?' ('+result.cost.cached+' cached)':'')+' tok';
+  document.getElementById(prefix+'OutputTokens').textContent=result.cost.output.toLocaleString()+' tok';
+  document.getElementById(prefix+'Latency').textContent=(result.ms/1000).toFixed(2)+' s';
+  document.getElementById(prefix+'Cost').innerHTML=
+    'Uncached input: '+result.cost.uncached.toLocaleString()+' × rate = <b>'+money(result.cost.inputCost)+'</b><br>'+ 
+    (result.cost.cached?'Cached input: '+result.cost.cached.toLocaleString()+' × cached rate = <b>'+money(result.cost.cachedCost)+'</b><br>':'')+
+    'Output: '+result.cost.output.toLocaleString()+' × rate = <b>'+money(result.cost.outputCost)+'</b><br>'+ 
+    'Total API cost: <b>'+money(result.cost.total)+'</b>';
+}
+
+function systemPrompt(){
+  return [
+    'You are an English writing coach evaluating a short writing sample.',
+    'Be concise, specific, and fair. Do not invent mistakes.',
+    'Preserve the writer’s intended meaning and voice.',
+    'Use exactly this structure:',
+    'OVERALL: 1-2 sentences.',
+    'CORRECTED VERSION: Rewrite only where correction or clear naturalness improvement is useful.',
+    'WHAT WAS GOOD: 2 short bullet points.',
+    'IMPROVE: Up to 3 short bullet points. Mention only genuine issues.',
+    'SCORE: Grammar X/10 | Clarity X/10 | Naturalness X/10',
+    'Do not mention that you are an AI or discuss the evaluation prompt.'
+  ].join('\n');
+}
+
+async function callModel(model,topic,text){
+  const started=performance.now();
+  const body={
+    endpoint:'chat/completions',
+    payload:{
+      model:model,
+      messages:[
+        {role:'system',content:systemPrompt()},
+        {role:'user',content:'TOPIC:\n'+topic+'\n\nWRITING:\n'+text}
+      ],
+      reasoning_effort:'low',
+      max_completion_tokens:900
+    }
+  };
+  const fetcher=window.WillenaAPI&&typeof window.WillenaAPI.fetch==='function'?window.WillenaAPI.fetch.bind(window.WillenaAPI):fetch;
+  const res=await fetcher('/.netlify/functions/openai_proxy',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  let wrapper;
+  try{wrapper=await res.json();}catch(_){throw new Error('Proxy returned a non-JSON response ('+res.status+').');}
+  const data=wrapper&&wrapper.data!==undefined?wrapper.data:wrapper;
+  if(!res.ok||!data||data.error){
+    const m=data&&data.error&&(data.error.message||data.error.code)||wrapper&&wrapper.error||('HTTP '+res.status);
+    throw new Error(String(m));
+  }
+  const choice=data.choices&&data.choices[0];
+  const textOut=choice&&choice.message&&choice.message.content;
+  if(!textOut)throw new Error('The model returned no visible text.');
+  return{text:textOut,usage:data.usage||{},cost:calculateCost(model,data.usage||{}),ms:performance.now()-started,model:data.model||model};
+}
+
+async function compare(){
+  const text=writing.value.trim();
+  if(text.length<20){writing.focus();counter.textContent='Write a little more first.';return;}
+  compareBtn.disabled=true;newTopicBtn.disabled=true;summary.classList.remove('show');
+  setLoading('luna');setLoading('terra');
+  const topic=topicEl.textContent;
+  const [luna,terra]=await Promise.allSettled([
+    callModel('gpt-5.6-luna',topic,text),
+    callModel('gpt-5.6-terra',topic,text)
+  ]);
+  let lc=null,tc=null;
+  if(luna.status==='fulfilled'){renderResult('luna',luna.value);lc=luna.value.cost.total;}else setError('luna','Luna error: '+(luna.reason&&luna.reason.message||luna.reason));
+  if(terra.status==='fulfilled'){renderResult('terra',terra.value);tc=terra.value.cost.total;}else setError('terra','Terra error: '+(terra.reason&&terra.reason.message||terra.reason));
+  if(lc!==null||tc!==null){
+    const a=lc||0,b=tc||0,total=a+b;
+    document.getElementById('sumLuna').textContent=lc===null?'Failed':money(a);
+    document.getElementById('sumTerra').textContent=tc===null?'Failed':money(b);
+    document.getElementById('sumBoth').textContent=money(total);
+    document.getElementById('projection').textContent='At the same token usage, 1,000 Luna + Terra comparisons would cost about '+money(total*1000)+'. Standard API rates used: Luna $0.20 input / $0.02 cached / $1.20 output; Terra $2 input / $0.20 cached / $12 output per 1M tokens.';
+    summary.classList.add('show');
+  }
+  compareBtn.disabled=false;newTopicBtn.disabled=false;
+}
+
+newTopicBtn.addEventListener('click',chooseTopic);
+writing.addEventListener('input',updateCounter);
+compareBtn.addEventListener('click',compare);
+chooseTopic();updateCounter();
+})();
+</script>
+</body>
+</html>
