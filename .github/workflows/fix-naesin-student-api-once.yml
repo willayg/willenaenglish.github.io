@@ -1,0 +1,39 @@
+name: Fix naesin student API once
+
+on:
+  push:
+    branches: [staging]
+    paths:
+      - '.github/workflows/fix-naesin-student-api-once.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: staging
+      - name: Route student picker through test prep API
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('Teachers/dashboard-v2/naesin.js')
+          s=p.read_text()
+          old="const STUDENT_API='/.netlify/functions/teacher_admin?action=list_students';"
+          new="const STUDENT_API='/.netlify/functions/test_prep_api?action=students';"
+          if old not in s:
+              raise SystemExit('Expected STUDENT_API line not found')
+          p.write_text(s.replace(old,new,1))
+          PY
+      - name: Commit patch
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Teachers/dashboard-v2/naesin.js
+          git diff --cached --quiet || git commit -m "Route naesin student picker through test prep API"
+          git push origin HEAD:staging
