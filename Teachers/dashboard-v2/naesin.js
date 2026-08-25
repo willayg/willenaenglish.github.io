@@ -1,8 +1,9 @@
 (function(){
 'use strict';
 
-const GROUP_API='/.netlify/functions/test_prep_api';
-const STUDENT_API='/.netlify/functions/test_prep_api?action=students';
+const GROUP_API='https://fiieuiktlsivwfgyivai.supabase.co/functions/v1/test-prep-teacher';
+const GROUP_API_KEY='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
+const STUDENT_API='/.netlify/functions/teacher_admin?action=list_students';
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const STD_SCHOOLS=['은행중학교','소래중학교','대흥중학교','은계중학교','신천중학교','매화중학교','시흥중학교','장곡중학교','응곡중학교','군서중학교','배곧중학교','배곧라온중학교'];
 const BOOKS=[{
@@ -32,7 +33,10 @@ async function jsonResponse(res,label='요청'){
   return data;
 }
 async function groupApi(action,opts={}){
-  const res=await routedFetch(`${GROUP_API}?action=${encodeURIComponent(action)}`,opts);
+  const token=window.WillenaAPI?.getLocalAccessToken?.()||localStorage.getItem('sb_access_token')||'';
+  if(!token) throw new Error('로그인이 필요합니다.');
+  const headers={...(opts.headers||{}),Authorization:`Bearer ${token}`,apikey:GROUP_API_KEY};
+  const res=await fetch(`${GROUP_API}?action=${encodeURIComponent(action)}`,{...opts,headers,credentials:'omit',cache:'no-store'});
   return jsonResponse(res,'내신 API');
 }
 async function postGroup(action,body){return groupApi(action,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})}
