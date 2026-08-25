@@ -21,7 +21,7 @@
       color: white;
       min-height: 100vh;
       position: relative;
-      overflow-y: auto; /* Ensures vertical scrolling is enabled */
+      overflow-y: auto;
     }
 
     .header-bar {
@@ -32,11 +32,41 @@
       align-items: center;
       border-bottom: 2px solid #4a4763;
       position: relative;
-      height: 70px; 
+      height: 70px;
     }
 
     .header-bar img {
-      height: 80px; /* 70% bigger than original 40px */
+      height: 80px;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .public-level-test-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 40px;
+      padding: 8px 16px;
+      border: 1px solid rgba(255,255,255,.32);
+      border-radius: 999px;
+      background: #ec6494;
+      color: white;
+      text-decoration: none;
+      font-family: 'Gowun Dodum', 'Poppins', sans-serif;
+      font-size: .92rem;
+      font-weight: 700;
+      white-space: nowrap;
+      box-shadow: 0 5px 14px rgba(0,0,0,.18);
+      transition: transform .18s ease, background-color .18s ease;
+    }
+
+    .public-level-test-btn:hover {
+      background: #f071a0;
+      transform: translateY(-1px);
     }
 
     .burger-menu {
@@ -101,14 +131,13 @@
       background-size: cover;
       background-position: center;
       background-repeat: no-repeat;
-      position: relative; /* Added to position sparkles within the hero section */
+      position: relative;
     }
 
-    /* Desktop: Use Girls.jpg */
     @media (min-width: 1025px) {
       .hero-section {
         background-color: white;
-        height: 75vh; /* Set height to 75% for desktop */
+        height: 75vh;
         background-image: url('Assets/Images/Girls.jpg');
         background-size: contain;
         background-position: center;
@@ -116,42 +145,41 @@
       }
 
       .desktop-buttons {
-        display: flex !important; /* Ensure buttons are displayed */
-        opacity: 1 !important; /* Make buttons fully visible */
-        transform: none !important; /* Reset any transform applied by AOS */
-        justify-content: center; /* Center the buttons horizontally */
-        gap: 20px; /* Add spacing between buttons */
-        margin-top: 20px; /* Add some margin above the buttons */
+        display: flex !important;
+        opacity: 1 !important;
+        transform: none !important;
+        justify-content: center;
+        gap: 20px;
+        margin-top: 20px;
       }
 
       .desktop-button {
-        padding: 15px 30px; /* Add padding for button size */
-        font-size: 1.5rem; /* Adjust font size */
-        font-weight: bold; /* Make text bold */
-        color: white; /* Button text color */
-        background-color: #4a4763; /* Button background color */
-        border: none; /* Remove border */
-        border-radius: 8px; /* Add rounded corners */
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3); /* Add shadow for depth */
-        cursor: pointer; /* Change cursor to pointer */
+        padding: 15px 30px;
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: white;
+        background-color: #4a4763;
+        border: none;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        cursor: pointer;
         transition: background-color 0.3s ease;
-        width: 170px; /* Set all buttons to a fixed width of 170px */
+        width: 170px;
       }
 
       .desktop-button:hover {
-        background-color: #6b5b95; /* Change background color on hover */
-
+        background-color: #6b5b95;
       }
 
       .desktop-buttons [data-aos] {
-        animation: none !important; /* Disable animations */
-        opacity: 1 !important; /* Ensure buttons are visible */
-        transform: none !important; /* Reset any transform applied by AOS */
+        animation: none !important;
+        opacity: 1 !important;
+        transform: none !important;
       }
 
       .program-image-section img,
       .stages-image-section img {
-        max-width: 80% !important; /* Ensure desktop styles take precedence */
+        max-width: 80% !important;
         height: auto;
       }
     }
@@ -163,7 +191,7 @@
       gap: 4px;
       margin-bottom: 10px;
       margin-top: 10px;
-      height: 45vh; /* Define the height of the button section */
+      height: 45vh;
     }
 
     .grid-item {
@@ -174,8 +202,8 @@
       font-size: clamp(1.2rem, 5vw, 2.5rem);
       font-weight: 700;
       text-decoration: none;
-      color: rgba(0, 0, 0, 0.7); /* Slightly darker version of button color */
-      text-shadow: 0 0 16px rgba(255, 255, 255, 1); /* Make glow more dramatic */
+      color: rgba(0, 0, 0, 0.7);
+      text-shadow: 0 0 16px rgba(255, 255, 255, 1);
       transition: all 0.3s ease;
       position: relative;
       overflow: hidden;
@@ -194,13 +222,13 @@
       background: linear-gradient(135deg, #6b5b95, #8e7cc3);
       grid-row: 1 / 3;
       font-size: clamp(2.5rem, 15vw, 12rem);
-      text-shadow: 0 0 24px rgba(255, 255, 255, 1); /* Stronger glow for Play button */
+      text-shadow: 0 0 24px rgba(255, 255, 255, 1);
     }
 
     .about-section {
       background: linear-gradient(135deg, #d291bc, #e6a8d0);
-      color: rgba(0, 0, 0, 0.7); /* Slightly darker version of button color */
-      text-shadow: 0 0 16px rgba(255, 255, 255, 1); /* Dramatic glow for About Willena */
+      color: rgba(0, 0, 0, 0.7);
+      text-shadow: 0 0 16px rgba(255, 255, 255, 1);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -209,41 +237,77 @@
 
     .teachers-section {
       background: linear-gradient(135deg, #88d8c0, #7fcdcd);
-      color: rgba(0, 0, 0, 0.7); /* Slightly darker version of button color */
-      text-shadow: 0 0 16px rgba(255, 255, 255, 1); /* Dramatic glow for Teachers */
+      color: rgba(0, 0, 0, 0.7);
+      text-shadow: 0 0 16px rgba(255, 255, 255, 1);
       display: flex;
       align-items: center;
       justify-content: center;
     }
 
+    .visitor-level-test-footer {
+      padding: 12px 20px 18px;
+      text-align: center;
+      background: #2e2b3f;
+    }
+
+    .visitor-level-test-footer a {
+      color: rgba(255,255,255,.28);
+      text-decoration: none;
+      font-family: 'Gowun Dodum', 'Poppins', sans-serif;
+      font-size: .68rem;
+      font-weight: 400;
+      letter-spacing: .02em;
+      transition: color .18s ease;
+    }
+
+    .visitor-level-test-footer a:hover,
+    .visitor-level-test-footer a:focus {
+      color: rgba(255,255,255,.68);
+    }
+
     @media (max-width: 768px) {
       .grid-item {
         font-size: clamp(1.1rem, 4vw, 1.8rem);
-        text-shadow: 0 0 16px rgba(255, 255, 255, 1); /* Make text glow more dramatic */
+        text-shadow: 0 0 16px rgba(255, 255, 255, 1);
         padding: 8px;
         text-align: center;
       }
 
       .play-section {
         font-size: clamp(2rem, 12vw, 3rem);
-        text-shadow: 0 0 24px rgba(255, 255, 255, 1); /* Stronger glow for Play button */
+        text-shadow: 0 0 24px rgba(255, 255, 255, 1);
       }
 
       .about-section {
         display: flex;
         align-items: center;
-        justify-content: center; /* Vertically center About Willena */
+        justify-content: center;
       }
 
       .program-image-section img,
       .stages-image-section img {
-        width: 100vw; /* Make images fit the screen width */
-        height: auto; /* Maintain aspect ratio */
-        object-fit: contain; /* Ensure the entire image is visible */
+        width: 100vw;
+        height: auto;
+        object-fit: contain;
       }
     }
 
     @media (max-width: 480px) {
+      .header-bar {
+        padding-left: 10px;
+        padding-right: 12px;
+      }
+
+      .header-actions {
+        gap: 9px;
+      }
+
+      .public-level-test-btn {
+        min-height: 36px;
+        padding: 7px 11px;
+        font-size: .78rem;
+      }
+
       .logo-circle {
         width: 120px;
         height: 120px;
@@ -290,45 +354,44 @@
     }
 
     .hero-section .sparkle {
-      /* Restrict sparkles to the top 45% of the hero section */
       top: calc(45% * var(--random-y));
       left: calc(100% * var(--random-x));
     }
 
     @media (min-width: 1025px) {
       .sparkle {
-        display: none; /* Remove stars on desktop */
+        display: none;
       }
 
       .grid-section {
-        display: none; /* Hide existing buttons on desktop */
+        display: none;
       }
 
       .desktop-buttons {
-        display: flex !important; /* Ensure buttons are displayed */
-        opacity: 1 !important; /* Make buttons fully visible */
-        transform: none !important; /* Reset any transform applied by AOS */
-        justify-content: center; /* Center the buttons horizontally */
-        gap: 20px; /* Add spacing between buttons */
-        margin-top: 20px; /* Add some margin above the buttons */
+        display: flex !important;
+        opacity: 1 !important;
+        transform: none !important;
+        justify-content: center;
+        gap: 20px;
+        margin-top: 20px;
       }
 
       .desktop-button {
-        padding: 15px 30px; /* Add padding for button size */
-        font-size: 1.5rem; /* Adjust font size */
-        font-weight: bold; /* Make text bold */
-        color: white; /* Button text color */
-        background-color: #4a4763; /* Button background color */
-        border: none; /* Remove border */
-        border-radius: 8px; /* Add rounded corners */
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3); /* Add shadow for depth */
-        cursor: pointer; /* Change cursor to pointer */
+        padding: 15px 30px;
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: white;
+        background-color: #4a4763;
+        border: none;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        cursor: pointer;
         transition: background-color 0.3s ease;
-        width: 240px; /* Set all buttons to a fixed width of 170px */
+        width: 240px;
       }
 
       .desktop-button:hover {
-        background-color: #6b5b95; /* Change background color on hover */
+        background-color: #6b5b95;
       }
 
       .program-stages-section {
@@ -339,14 +402,14 @@
 
       .program-image-section img,
       .stages-image-section img {
-        max-width: 300px; /* Reduced from 40% to 32% */
+        max-width: 300px;
         height: auto;
       }
     }
 
     @media (max-width: 1024px) {
       .desktop-buttons {
-        display: none; /* Hide desktop buttons on mobile */
+        display: none;
       }
     }
   </style>
@@ -354,10 +417,13 @@
 <body>
   <div class="header-bar">
     <img src="Assets/Images/Logo.png" alt="Willena Logo">
-    <div class="burger-menu" onclick="toggleMenu()">
-      <div class="burger-line"></div>
-      <div class="burger-line"></div>
-      <div class="burger-line"></div>
+    <div class="header-actions">
+      <a href="free-level-test/" class="public-level-test-btn">무료 레벨테스트</a>
+      <div class="burger-menu" onclick="toggleMenu()" aria-label="Menu">
+        <div class="burger-line"></div>
+        <div class="burger-line"></div>
+        <div class="burger-line"></div>
+      </div>
     </div>
     <div class="menu-dropdown" id="menuDropdown">
       <a href="students/signin.html" class="menu-item">로그인</a>
@@ -432,13 +498,17 @@
     </div>
   </div>
 
+  <div class="visitor-level-test-footer">
+    <a href="visit-level-test/">방문 레벨테스트</a>
+  </div>
+
   <script src="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', function() {
       AOS.init({
-        duration: 800, // Animation duration in milliseconds
-        easing: 'ease-in-out', // Easing function
-        once: false, // Allow animations to trigger on both scroll down and up
+        duration: 800,
+        easing: 'ease-in-out',
+        once: false,
       });
     });
 
@@ -447,11 +517,10 @@
       dropdown.classList.toggle('show');
     }
 
-    // Close menu when clicking outside
     document.addEventListener('click', function(event) {
       const burgerMenu = document.querySelector('.burger-menu');
       const dropdown = document.getElementById('menuDropdown');
-      
+
       if (!burgerMenu.contains(event.target) && !dropdown.contains(event.target)) {
         dropdown.classList.remove('show');
       }
