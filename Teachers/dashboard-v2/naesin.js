@@ -2,7 +2,7 @@
 'use strict';
 
 const GROUP_API='/.netlify/functions/test_prep_api';
-const STUDENT_API='/.netlify/functions/teacher_admin?action=list_students';
+const STUDENT_API='/.netlify/functions/test_prep_api?action=students';
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const STD_SCHOOLS=['은행중학교','소래중학교','대흥중학교','은계중학교','신천중학교','매화중학교','시흥중학교','장곡중학교','응곡중학교','군서중학교','배곧중학교','배곧라온중학교'];
 const BOOKS=[{
