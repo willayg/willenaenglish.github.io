@@ -1,0 +1,33 @@
+name: Install dashboard v2 naesin once
+on:
+  push:
+    branches: [staging]
+jobs:
+  patch:
+    if: github.event.head_commit.message == 'Install dashboard v2 naesin loader'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: staging
+      - name: Patch Dashboard V2
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('Teachers/dashboard-v2/index.html')
+          s=p.read_text(encoding='utf-8')
+          tag='<script src="./naesin.js?v=20260825-1"></script>'
+          if tag not in s:
+              s=s.replace('</body>', tag+'\n</body>')
+          p.write_text(s,encoding='utf-8')
+          PY
+      - name: Commit
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add Teachers/dashboard-v2/index.html
+          git diff --cached --quiet && exit 0
+          git commit -m "Enable naesin in dashboard v2"
+          git push origin HEAD:staging
