@@ -5,7 +5,16 @@ const GROUP_API='/.netlify/functions/test_prep_api';
 const STUDENT_API='/.netlify/functions/teacher_admin?action=list_students';
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const STD_SCHOOLS=['은행중학교','소래중학교','대흥중학교','은계중학교','신천중학교','매화중학교','시흥중학교','장곡중학교','응곡중학교','군서중학교','배곧중학교','배곧라온중학교'];
-const BOOKS=[{key:'middle1_donga_yoon',label:'중1 동아 윤정미',lessons:['Lesson 1']}];
+const BOOKS=[{
+  key:'middle1_donga_yoon',
+  label:'중1 동아 윤정미',
+  lessons:[
+    {title:'Lesson 1',sections:['communication','grammar','reading']},
+    {title:'Lesson 2',sections:['communication','grammar','reading']},
+    {title:'Lesson 3',sections:['grammar']},
+    {title:'Lesson 4',sections:['communication','grammar','reading']}
+  ]
+}];
 let students=[],groups=[],selected=new Set(),pickerDraft=new Set(),step=1,editId=null,externals=[];
 
 async function routedFetch(path,opts={}){
@@ -14,7 +23,7 @@ async function routedFetch(path,opts={}){
 }
 async function jsonResponse(res,label='요청'){
   const text=await res.text();
-  let data=null;
+  let data;
   try{data=JSON.parse(text)}catch{
     const preview=(text||'').trim().slice(0,80);
     throw new Error(`${label}: JSON 대신 HTML/텍스트 응답 (${preview||'empty'})`);
@@ -26,9 +35,7 @@ async function groupApi(action,opts={}){
   const res=await routedFetch(`${GROUP_API}?action=${encodeURIComponent(action)}`,opts);
   return jsonResponse(res,'내신 API');
 }
-async function postGroup(action,body){
-  return groupApi(action,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
-}
+async function postGroup(action,body){return groupApi(action,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})}
 
 function addStyles(){
   if(document.getElementById('naesin-flow-styles'))return;
@@ -62,10 +69,9 @@ function ensureUI(){
   if(ws&&!document.getElementById('view-naesin')){const sec=document.createElement('section');sec.className='view';sec.id='view-naesin';sec.innerHTML=`<div class="page-head"><div><h1>내신</h1><p>학교 시험 대비 그룹을 만들고 학생별 진행 상황과 오답을 추적합니다.</p></div><div class="filters"><button class="na-top-btn" id="naCreate">+ 시험 대비 추가</button></div></div><div id="naGroups"><div class="na-empty">Loading…</div></div>`;ws.appendChild(sec)}
   if(!document.getElementById('naWizardBg')){const bg=document.createElement('div');bg.id='naWizardBg';bg.innerHTML=wizardHTML();document.body.appendChild(bg);bg.addEventListener('click',e=>{if(e.target===bg)closeWizard()})}
 }
+
 function bindNavigation(){document.querySelectorAll('[data-view]').forEach(btn=>{if(btn.dataset.naBound)return;btn.dataset.naBound='1';btn.addEventListener('click',()=>{const v=btn.dataset.view;document.querySelectorAll('.nav,.mobile-tab').forEach(x=>x.classList.toggle('active',x.dataset.view===v));document.querySelectorAll('.workspace>.view').forEach(x=>x.classList.toggle('active',x.id===`view-${v}`));if(v==='naesin')loadGroups()})})}
-function bind(){
-  document.getElementById('naCreate')?.addEventListener('click',()=>openWizard());document.getElementById('naClose')?.addEventListener('click',closeWizard);document.getElementById('naBack')?.addEventListener('click',()=>{if(step>1){step--;renderStep()}});document.getElementById('naNext')?.addEventListener('click',nextStep);bindChoice('naTerms');bindChoice('naExamTypes');document.getElementById('naAddStudents')?.addEventListener('click',openPicker);document.getElementById('naPickerClose')?.addEventListener('click',()=>document.getElementById('naPicker').classList.remove('open'));document.getElementById('naPickerDone')?.addEventListener('click',confirmPicker);document.getElementById('naStudentSearch')?.addEventListener('input',renderPicker);document.getElementById('naBook')?.addEventListener('change',()=>{syncBookCard();renderLessons()});document.getElementById('naAddExternal')?.addEventListener('click',addExternal);
-}
+function bind(){document.getElementById('naCreate')?.addEventListener('click',()=>openWizard());document.getElementById('naClose')?.addEventListener('click',closeWizard);document.getElementById('naBack')?.addEventListener('click',()=>{if(step>1){step--;renderStep()}});document.getElementById('naNext')?.addEventListener('click',nextStep);bindChoice('naTerms');bindChoice('naExamTypes');document.getElementById('naAddStudents')?.addEventListener('click',openPicker);document.getElementById('naPickerClose')?.addEventListener('click',()=>document.getElementById('naPicker').classList.remove('open'));document.getElementById('naPickerDone')?.addEventListener('click',confirmPicker);document.getElementById('naStudentSearch')?.addEventListener('input',renderPicker);document.getElementById('naBook')?.addEventListener('change',()=>{syncBookCard();renderLessons()});document.getElementById('naAddExternal')?.addEventListener('click',addExternal)}
 function bindChoice(id){document.getElementById(id)?.querySelectorAll('.na-choice').forEach(b=>b.addEventListener('click',()=>{b.parentElement.querySelectorAll('.na-choice').forEach(x=>x.classList.remove('on'));b.classList.add('on')}))}
 function choose(id,val){document.getElementById(id)?.querySelectorAll('.na-choice').forEach(x=>x.classList.toggle('on',String(x.dataset.value)===String(val)))}
 function value(id){return document.querySelector(`#${id} .na-choice.on`)?.dataset.value||''}
@@ -77,9 +83,9 @@ function syncBookCard(){const b=book();const t=document.getElementById('naBookTi
 
 function openWizard(groupId=null){
   editId=groupId;step=1;selected=new Set();externals=[];populateSchools();choose('naTerms',2);choose('naExamTypes','midterm');document.getElementById('naEnd').value='';document.getElementById('naBook').value=BOOKS[0].key;
-  if(groupId){const item=groups.find(x=>x.group.id===groupId);if(item){const g=item.group;populateSchools(g.school);choose('naTerms',g.term);choose('naExamTypes',g.exam_type);document.getElementById('naEnd').value=g.end_date||'';document.getElementById('naBook').value=g.book_key||BOOKS[0].key;selected=new Set(item.members.map(m=>m.student.id));externals=(g.scope?.external_passages||[]).map((x,i)=>({id:x.id||String(Date.now()+i),name:x.name||`외부지문 ${i+1}`}));document.getElementById('naModalTitle').textContent='시험 대비 수정';renderLessons(g.scope?.lessons||[])}}
-  else{document.getElementById('naModalTitle').textContent='새 시험 대비';renderLessons()}
-  syncBookCard();renderSelected();renderExternal();document.getElementById('naWizardBg').classList.add('open');renderStep();
+  let savedScope=[];
+  if(groupId){const item=groups.find(x=>x.group.id===groupId);if(item){const g=item.group;populateSchools(g.school);choose('naTerms',g.term);choose('naExamTypes',g.exam_type);document.getElementById('naEnd').value=g.end_date||'';document.getElementById('naBook').value=g.book_key||BOOKS[0].key;selected=new Set(item.members.map(m=>m.student.id));externals=(g.scope?.external_passages||[]).map((x,i)=>({id:x.id||String(Date.now()+i),name:x.name||`외부지문 ${i+1}`}));savedScope=g.scope?.lessons||[];document.getElementById('naModalTitle').textContent='시험 대비 수정'}}else document.getElementById('naModalTitle').textContent='새 시험 대비';
+  syncBookCard();renderLessons(savedScope);renderSelected();renderExternal();document.getElementById('naWizardBg').classList.add('open');renderStep();
 }
 function closeWizard(){document.getElementById('naWizardBg').classList.remove('open');document.getElementById('naPicker').classList.remove('open')}
 function renderStep(){document.querySelectorAll('.na-step').forEach(x=>x.classList.toggle('active',Number(x.dataset.step)===step));document.querySelectorAll('.na-progress i').forEach(x=>x.classList.toggle('on',Number(x.dataset.p)<=step));const back=document.getElementById('naBack'),next=document.getElementById('naNext');back.style.visibility=step===1?'hidden':'visible';next.textContent=step===5?(editId?'변경사항 저장':'시험 대비 저장'):'다음';document.getElementById('naWizardStatus').textContent='';if(step===5)renderReview()}
@@ -87,34 +93,31 @@ function validateStep(){if(step===1&&!value('naTerms'))return'학기를 선택�
 async function nextStep(){const msg=validateStep();if(msg){document.getElementById('naWizardStatus').textContent=msg;return}if(step<5){step++;renderStep();return}await saveGroup()}
 
 function openPicker(){pickerDraft=new Set(selected);document.getElementById('naStudentSearch').value='';renderPicker();document.getElementById('naPicker').classList.add('open')}
-function renderPicker(){
-  const q=(document.getElementById('naStudentSearch')?.value||'').trim().toLocaleLowerCase('ko');const school=document.getElementById('naSchool')?.value||'';
-  const rows=students.filter(s=>{const hay=[s.name,s.korean_name,s.username,s.class,s.school].filter(Boolean).join(' ').toLocaleLowerCase('ko');return !q||hay.includes(q)});
-  const el=document.getElementById('naStudentResults');
-  el.innerHTML=rows.length?rows.map(s=>`<div class="na-student-row ${pickerDraft.has(s.id)?'on':''}" data-id="${esc(s.id)}"><div><b>${esc(s.korean_name||s.name||s.username||'Student')}</b>${s.name&&s.korean_name?`<span class="na-en-name">${esc(s.name)}</span>`:''}<small>${esc(s.class||'반 없음')}${s.school?` · ${esc(s.school)}`:''}${s.school===school?' · 현재 학교':''}</small></div><div class="na-check">${pickerDraft.has(s.id)?'✓':''}</div></div>`).join(''):'<div class="empty">검색 결과가 없습니다.</div>';
-  el.querySelectorAll('.na-student-row').forEach(r=>r.addEventListener('click',()=>{const id=r.dataset.id;pickerDraft.has(id)?pickerDraft.delete(id):pickerDraft.add(id);renderPicker()}));document.getElementById('naPickerCount').textContent=`${pickerDraft.size}명 선택`;
-}
+function renderPicker(){const q=(document.getElementById('naStudentSearch')?.value||'').trim().toLowerCase();const school=document.getElementById('naSchool')?.value||'';const rows=students.filter(s=>{const hay=[s.name,s.korean_name,s.username,s.class,s.school].filter(Boolean).join(' ').toLowerCase();return !q||hay.includes(q)});const el=document.getElementById('naStudentResults');el.innerHTML=rows.length?rows.map(s=>`<div class="na-student-row ${pickerDraft.has(s.id)?'on':''}" data-id="${esc(s.id)}"><div><b>${esc(s.korean_name||s.name||s.username||'Student')}</b>${s.name&&s.korean_name?`<span class="na-en-name">${esc(s.name)}</span>`:''}<small>${esc(s.class||'반 없음')}${s.school?` · ${esc(s.school)}`:''}${s.school===school?' · 현재 학교':''}</small></div><div class="na-check">${pickerDraft.has(s.id)?'✓':''}</div></div>`).join(''):'<div class="empty">검색 결과가 없습니다.</div>';el.querySelectorAll('.na-student-row').forEach(r=>r.addEventListener('click',()=>{const id=r.dataset.id;pickerDraft.has(id)?pickerDraft.delete(id):pickerDraft.add(id);renderPicker()}));document.getElementById('naPickerCount').textContent=`${pickerDraft.size}명 선택`}
 function confirmPicker(){selected=new Set(pickerDraft);renderSelected();document.getElementById('naPicker').classList.remove('open')}
 function renderSelected(){const arr=students.filter(s=>selected.has(s.id));document.getElementById('naSelectedCount').textContent=`${arr.length}명`;document.getElementById('naSelectedList').innerHTML=arr.map(s=>`<span class="na-student-chip">${esc(nameOf(s))}</span>`).join('')}
 
-function renderLessons(saved=[]){const b=book();const byLesson=new Map((saved||[]).map(x=>[x.lesson,new Set((x.sections||[]).map(s=>String(s).toLowerCase()))]));const el=document.getElementById('naLessonList');el.innerHTML=b.lessons.map(l=>{const set=byLesson.get(l)||new Set(l==='Lesson 1'?['communication','grammar','reading']:[]);return`<div class="na-lesson" data-lesson="${esc(l)}"><div class="na-lesson-head"><span>${esc(l)}</span><span class="na-desc" style="margin:0">영역 선택</span></div><div class="na-lesson-body">${[['communication','Communication'],['grammar','Grammar'],['reading','Reading']].map(([v,t])=>`<button class="na-scope-chip ${set.has(v)?'on':''}" data-section="${v}">${t}</button>`).join('')}</div></div>`}).join('');el.querySelectorAll('.na-scope-chip').forEach(x=>x.addEventListener('click',()=>x.classList.toggle('on')))}
-function scopeData(){const lessons=[...document.querySelectorAll('#naLessonList .na-lesson')].map(row=>({lesson:row.dataset.lesson,sections:[...row.querySelectorAll('.na-scope-chip.on')].map(x=>x.dataset.section)})).filter(x=>x.sections.length);return{lessons,external_passages:externals.map(x=>({id:x.id,name:x.name||'외부지문'}))}}
-function addExternal(){externals.push({id:String(Date.now()+Math.random()),name:`외부지문 ${externals.length+1}`});renderExternal()}
-function renderExternal(){const list=document.getElementById('naExternalList');if(!list)return;list.innerHTML=externals.map((x,i)=>`<div class="na-ext-item"><input class="na-input" value="${esc(x.name)}" aria-label="외부지문 이름"><button class="na-icon-btn" title="삭제">✕</button></div>`).join('')+`<button class="na-add-ext" id="naAddExternalWide">+ 외부지문 추가</button>`;list.querySelectorAll('.na-ext-item').forEach((row,i)=>{row.querySelector('input').addEventListener('input',e=>externals[i].name=e.target.value);row.querySelector('button').addEventListener('click',()=>{externals.splice(i,1);renderExternal()})});document.getElementById('naAddExternalWide')?.addEventListener('click',addExternal)}
-function renderReview(){const term=value('naTerms'),type=value('naExamTypes'),school=document.getElementById('naSchool').value,b=book(),scope=scopeData();document.getElementById('rvTest').textContent=`${school} · ${term}학기 · ${type==='final'?'기말고사':'중간고사'}`;document.getElementById('rvDate').textContent=document.getElementById('naEnd').value||'—';document.getElementById('rvStudents').textContent=`${selected.size}명`;document.getElementById('rvBook').textContent=b.label;document.getElementById('rvScope').textContent=scope.lessons.length?scope.lessons.map(x=>`${x.lesson} (${x.sections.join(', ')})`).join(' · '):'선택 없음';document.getElementById('rvExternal').textContent=externals.length?externals.map(x=>x.name).join(', '):'없음'}
-
-async function saveGroup(){const status=document.getElementById('naWizardStatus'),btn=document.getElementById('naNext');btn.disabled=true;status.textContent='저장 중…';const b=book(),payload={group_id:editId||undefined,school:document.getElementById('naSchool').value,term:Number(value('naTerms')),exam_type:value('naExamTypes'),end_date:document.getElementById('naEnd').value,book_key:b.key,book_label:b.label,student_ids:[...selected],scope:scopeData()};try{await postGroup(editId?'update_group':'create_group',payload);closeWizard();await loadGroups()}catch(e){status.textContent=e.message||'저장하지 못했습니다.'}finally{btn.disabled=false}}
-function renderGroups(){const el=document.getElementById('naGroups');if(!groups.length){el.innerHTML=`<div class="na-empty"><h3>아직 등록된 시험 대비가 없습니다.</h3><p>학교 시험을 만들고 학생과 교재, 범위를 연결하세요.</p><button class="na-top-btn" id="naEmptyCreate">+ 첫 시험 대비 추가</button></div>`;document.getElementById('naEmptyCreate')?.addEventListener('click',()=>openWizard());return}el.innerHTML=`<div class="na-grid">${groups.map(item=>{const g=item.group,scope=g.scope||{},lessons=(scope.lessons||[]).map(x=>x.lesson).join(', ')||'범위 미설정',ext=(scope.external_passages||[]).length;return`<article class="na-test-card"><div class="na-test-top"><div><div class="na-test-title">${esc(g.school)} · ${g.term}학기 · ${g.exam_type==='final'?'기말고사':'중간고사'}</div><div class="na-test-sub">${esc(g.book_label)}</div></div><span class="na-test-date">${esc(g.end_date||'날짜 없음')}</span></div><div class="na-test-meta"><span class="na-badge">${item.members.length}명</span><span class="na-badge gray">${esc(lessons)}${ext?` · 외부지문 ${ext}`:''}</span></div><div class="na-card-actions"><button class="na-edit" data-edit="${g.id}">수정</button><button class="na-track">학생 보기</button></div><div class="na-members">${item.members.map(m=>`<div class="na-member"><div><b>${esc(nameOf(m.student))}</b><small>${esc(m.student.class||'')}${m.student.school?` · ${esc(m.student.school)}`:''}</small></div><div>${m.stats?.questions||0}문제</div><div>${m.stats?.accuracy==null?'—':m.stats.accuracy+'%'}</div></div>`).join('')}</div></article>`}).join('')}</div>`;el.querySelectorAll('[data-edit]').forEach(b=>b.addEventListener('click',()=>openWizard(b.dataset.edit)));el.querySelectorAll('.na-track').forEach(b=>b.addEventListener('click',()=>{const c=b.closest('.na-test-card');c.classList.toggle('open');b.textContent=c.classList.contains('open')?'닫기':'학생 보기'}))}
-
-async function loadStudents(){
-  try{
-    const res=await routedFetch(STUDENT_API);
-    const data=await jsonResponse(res,'학생 목록');
-    students=(Array.isArray(data.students)?data.students:[]).filter(s=>s&&s.id&&s.approved!==false);
-    console.info(`[naesin] loaded ${students.length} students from Game Scores via teacher_admin`);
-  }catch(e){students=[];console.error('[naesin] student link failed',e);}
+function renderLessons(saved=[]){
+  const b=book();
+  const savedMap=new Map((saved||[]).map(x=>[x.lesson,new Set((x.sections||[]).map(s=>String(s).toLowerCase()))]));
+  const labels={communication:'Communication',grammar:'Grammar',reading:'Reading'};
+  const el=document.getElementById('naLessonList');
+  el.innerHTML=b.lessons.map((lesson,idx)=>{
+    const chosen=savedMap.has(lesson.title)?savedMap.get(lesson.title):new Set(idx===0?lesson.sections:[]);
+    return `<div class="na-lesson" data-lesson="${esc(lesson.title)}"><div class="na-lesson-head"><span>${esc(lesson.title)}</span><span class="na-desc" style="margin:0">영역 선택</span></div><div class="na-lesson-body">${lesson.sections.map(v=>`<button class="na-scope-chip ${chosen.has(v)?'on':''}" data-section="${v}">${labels[v]||v}</button>`).join('')}</div></div>`;
+  }).join('');
+  el.querySelectorAll('.na-scope-chip').forEach(x=>x.addEventListener('click',()=>x.classList.toggle('on')));
 }
-async function loadGroups(){const el=document.getElementById('naGroups');if(el)el.classList.add('loading');try{const data=await groupApi('teacher_groups');groups=data.groups||[];renderGroups()}catch(e){groups=[];if(el)el.innerHTML=`<div class="na-empty"><h3>내신 준비</h3><p>학생 목록은 연결되었습니다. 새 시험 대비를 추가하세요.</p><button class="na-top-btn" id="naEmptyCreate">+ 시험 대비 추가</button></div>`;document.getElementById('naEmptyCreate')?.addEventListener('click',()=>openWizard());console.warn('[naesin] groups API',e)}finally{el?.classList.remove('loading')}}
+function scopeData(){const lessons=[...document.querySelectorAll('#naLessonList .na-lesson')].map(row=>({lesson:row.dataset.lesson,sections:[...row.querySelectorAll('.na-scope-chip.on')].map(x=>x.dataset.section)})).filter(x=>x.sections.length);return{lessons,external_passages:externals.map(x=>({id:x.id,name:x.name||'외부지문'}))}}
+function addExternal(){externals.push({id:(crypto.randomUUID?.()||String(Date.now()+Math.random())),name:`외부지문 ${externals.length+1}`});renderExternal()}
+function renderExternal(){const list=document.getElementById('naExternalList');if(!list)return;list.innerHTML=externals.map((x,i)=>`<div class="na-ext-item"><input class="na-input" value="${esc(x.name)}" aria-label="외부지문 이름"><button class="na-icon-btn" title="삭제">✕</button></div>`).join('')+`<button class="na-add-ext" id="naAddExternalWide">+ 외부지문 추가</button>`;list.querySelectorAll('.na-ext-item').forEach((row,i)=>{row.querySelector('input').addEventListener('input',e=>externals[i].name=e.target.value);row.querySelector('button').addEventListener('click',()=>{externals.splice(i,1);renderExternal()})});document.getElementById('naAddExternalWide')?.addEventListener('click',addExternal)}
+function renderReview(){const term=value('naTerms'),type=value('naExamTypes'),school=document.getElementById('naSchool').value,b=book(),scope=scopeData();document.getElementById('rvTest').textContent=`${school} · ${term}학기 · ${type==='final'?'기말고사':'중간고사'}`;document.getElementById('rvDate').textContent=document.getElementById('naEnd').value||'—';document.getElementById('rvStudents').textContent=`${selected.size}명`;document.getElementById('rvBook').textContent=b.label;document.getElementById('rvScope').textContent=scope.lessons.length?scope.lessons.map(x=>`${x.lesson} (${x.sections.map(s=>s[0].toUpperCase()+s.slice(1)).join(', ')})`).join(' · '):'선택 없음';document.getElementById('rvExternal').textContent=externals.length?externals.map(x=>x.name).join(', '):'없음'}
+async function saveGroup(){const status=document.getElementById('naWizardStatus'),btn=document.getElementById('naNext');btn.disabled=true;status.textContent='저장 중…';const b=book(),payload={group_id:editId||undefined,school:document.getElementById('naSchool').value,term:Number(value('naTerms')),exam_type:value('naExamTypes'),end_date:document.getElementById('naEnd').value,book_key:b.key,book_label:b.label,student_ids:[...selected],scope:scopeData()};try{await postGroup(editId?'update_group':'create_group',payload);closeWizard();await loadGroups()}catch(e){status.textContent=e.message||'저장하지 못했습니다.'}finally{btn.disabled=false}}
+
+function renderGroups(){const el=document.getElementById('naGroups');if(!groups.length){el.innerHTML=`<div class="na-empty"><h3>아직 등록된 시험 대비가 없습니다.</h3><p>학교 시험을 만들고 학생과 교재, 범위를 연결하세요.</p><button class="na-top-btn" id="naEmptyCreate">+ 첫 시험 대비 추가</button></div>`;document.getElementById('naEmptyCreate')?.addEventListener('click',()=>openWizard());return}el.innerHTML=`<div class="na-grid">${groups.map(item=>{const g=item.group,scope=g.scope||{},lessons=(scope.lessons||[]).map(x=>x.lesson).join(', ')||'범위 미설정',ext=(scope.external_passages||[]).length;const accs=item.members.map(m=>m.stats.accuracy).filter(x=>x!=null),avg=accs.length?Math.round(accs.reduce((a,b)=>a+b,0)/accs.length):null;return`<article class="na-test-card" data-id="${g.id}"><div class="na-test-top"><div><div class="na-test-title">${esc(g.school)} · ${g.term}학기 · ${g.exam_type==='final'?'기말고사':'중간고사'}</div><div class="na-test-sub">${esc(g.book_label)}</div></div><span class="na-test-date">${esc(g.end_date||'날짜 없음')}</span></div><div class="na-test-meta"><span class="na-badge">${item.members.length}명</span><span class="na-badge gray">${esc(lessons)}${ext?` · 외부지문 ${ext}`:''}</span>${avg!=null?`<span class="na-badge gray">평균 ${avg}%</span>`:''}</div><div class="na-card-actions"><button class="na-edit" data-edit="${g.id}">수정</button><button class="na-track" data-track="${g.id}">학생 보기</button></div><div class="na-members">${item.members.length?item.members.map(m=>`<div class="na-member"><div><b>${esc(nameOf(m.student))}</b><small>${esc(m.student.class||'')}${m.student.school?` · ${esc(m.student.school)}`:''}</small></div><div>${m.stats.questions||0}문제</div><div>${m.stats.accuracy==null?'—':m.stats.accuracy+'%'}</div></div>`).join(''):'<div class="na-desc">학생 없음</div>'}</div></article>`}).join('')}</div>`;el.querySelectorAll('[data-edit]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();openWizard(b.dataset.edit)}));el.querySelectorAll('[data-track]').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();const card=b.closest('.na-test-card');card.classList.toggle('open');b.textContent=card.classList.contains('open')?'닫기':'학생 보기'}))}
+
+async function loadStudents(){try{const r=await routedFetch(STUDENT_API);const d=await jsonResponse(r,'학생 목록');students=Array.isArray(d.students)?d.students.filter(s=>s.approved!==false):[];console.info(`[naesin] loaded ${students.length} students`)}catch(e){students=[];console.error('[naesin] students',e)}}
+async function loadGroups(){const el=document.getElementById('naGroups');if(el)el.classList.add('loading');try{const d=await groupApi('teacher_groups');groups=d.groups||[];renderGroups()}catch(e){if(el)el.innerHTML=`<div class="na-empty"><h3>시험 대비를 불러오지 못했습니다.</h3><p>${esc(e.message)}</p></div>`}finally{el?.classList.remove('loading')}}
 
 async function init(){ensureUI();bindNavigation();bind();await loadStudents();populateSchools();await loadGroups()}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
