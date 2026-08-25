@@ -1,27 +1,14 @@
 /**
  * API Configuration - Simple and Deterministic
- * VERSION: 2026-01-13b CACHE_BUST
- * 
- * CLOUDFLARE PAGES (students.willenaenglish.com, staging, cf, teachers):
- *   → All API calls go through https://api.willenaenglish.com
- *   → API gateway routes to Cloudflare Workers
- *
- * NETLIFY (willenaenglish.netlify.app):
- *   → Relative paths only: /.netlify/functions/<name>
- *   → Same-origin requests, cookies work automatically
- *
- * GITHUB PAGES (willenaenglish.github.io):
- *   → Absolute URL to students domain: https://students.willenaenglish.com/.netlify/functions/<name>
- *   → Cross-origin, requires credentials: 'include'
- *   → Known cookie-blocking browsers redirected to students domain
+ * VERSION: 2026-08-26c CACHE_BUST
  */
-
 (function() {
   'use strict';
 
   const GITHUB_PAGES_HOST = 'willenaenglish.github.io';
   const NETLIFY_BASE = 'https://students.willenaenglish.com';
   const CF_API_GATEWAY = 'https://api.willenaenglish.com';
+  const TEST_PREP_TEACHER_EDGE = 'https://fiieuiktlsivwfgyivai.supabase.co/functions/v1/test-prep-teacher';
   const CF_FUNCTIONS = {
     supabase_auth: 'https://supabase-auth.willena.workers.dev',
     verify_student: 'https://verify-student.willena.workers.dev',
@@ -38,7 +25,7 @@
   const currentHost = window.location.hostname;
   const isGitHubPages = currentHost === GITHUB_PAGES_HOST;
   const isLocalhost = currentHost === 'localhost' || currentHost === '127.0.0.1';
-  const isCloudflarePages = currentHost === 'staging.willenaenglish.com' || 
+  const isCloudflarePages = currentHost === 'staging.willenaenglish.com' ||
                              currentHost === 'cf.willenaenglish.com' ||
                              currentHost === 'teachers.willenaenglish.com' ||
                              currentHost === 'students.willenaenglish.com' ||
@@ -71,9 +58,17 @@
       else functionPath = '/.netlify/functions/' + functionPath;
     }
     const fn = extractFunctionName(functionPath);
+    const qIndex = functionPath.indexOf('?');
+    const search = qIndex >= 0 ? functionPath.slice(qIndex) : '';
+
+    // Teacher-side 내신 group setup lives in the Game Scores Supabase project.
+    // Route only those actions to the authenticated Edge Function; student test-prep
+    // session actions continue using the existing API path.
+    if (fn === 'test_prep_api' && /(?:[?&])action=(?:teacher_groups|create_group|update_group)(?:&|$)/.test(search)) {
+      return TEST_PREP_TEACHER_EDGE + search;
+    }
+
     if (USE_CF_WORKERS && fn && CF_FUNCTIONS[fn]) {
-      const qIndex = functionPath.indexOf('?');
-      const search = qIndex >= 0 ? functionPath.slice(qIndex) : '';
       return CF_FUNCTIONS[fn] + search;
     }
     if (isCloudflarePages && fn && NETLIFY_ONLY_FUNCTIONS.includes(fn)) {
