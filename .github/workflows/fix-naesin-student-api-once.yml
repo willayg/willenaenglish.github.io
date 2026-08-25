@@ -25,18 +25,35 @@ jobs:
 
           p=Path('Teachers/dashboard-v2/naesin.js')
           s=p.read_text()
-          s=s.replace("const GROUP_API='/.netlify/functions/test_prep_api';", "const GROUP_API='https://fiieuiktlsivwfgyivai.supabase.co/functions/v1/test-prep-teacher';\nconst GROUP_API_KEY='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';", 1)
+          old_group="const GROUP_API='/.netlify/functions/test_prep_api';"
+          new_group="const GROUP_API='https://fiieuiktlsivwfgyivai.supabase.co/functions/v1/test-prep-teacher';\nconst GROUP_API_KEY='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';"
+          if old_group in s:
+              s=s.replace(old_group,new_group,1)
+          elif "const GROUP_API='https://fiieuiktlsivwfgyivai.supabase.co/functions/v1/test-prep-teacher';" not in s:
+              raise SystemExit('Unexpected GROUP_API')
+
           s=s.replace("const STUDENT_API='/.netlify/functions/test_prep_api?action=students';", "const STUDENT_API='/.netlify/functions/teacher_admin?action=list_students';", 1)
-          old="""async function groupApi(action,opts={}){\n  const res=await routedFetch(`${GROUP_API}?action=${encodeURIComponent(action)}`,opts);\n  return jsonResponse(res,'내신 API');\n}"""
-          new="""async function groupApi(action,opts={}){\n  const token=window.WillenaAPI?.getLocalAccessToken?.()||localStorage.getItem('sb_access_token')||'';\n  if(!token) throw new Error('로그인이 필요합니다.');\n  const headers={...(opts.headers||{}),Authorization:`Bearer ${token}`,apikey:GROUP_API_KEY};\n  const res=await fetch(`${GROUP_API}?action=${encodeURIComponent(action)}`,{...opts,headers,credentials:'omit',cache:'no-store'});\n  return jsonResponse(res,'내신 API');\n}"""
-          if old not in s:
+
+          old="""async function groupApi(action,opts={}){
+  const res=await routedFetch(`${GROUP_API}?action=${encodeURIComponent(action)}`,opts);
+  return jsonResponse(res,'내신 API');
+}"""
+          new="""async function groupApi(action,opts={}){
+  const token=window.WillenaAPI?.getLocalAccessToken?.()||localStorage.getItem('sb_access_token')||'';
+  if(!token) throw new Error('로그인이 필요합니다.');
+  const headers={...(opts.headers||{}),Authorization:`Bearer ${token}`,apikey:GROUP_API_KEY};
+  const res=await fetch(`${GROUP_API}?action=${encodeURIComponent(action)}`,{...opts,headers,credentials:'omit',cache:'no-store'});
+  return jsonResponse(res,'내신 API');
+}"""
+          if old in s:
+              s=s.replace(old,new,1)
+          elif "apikey:GROUP_API_KEY" not in s:
               raise SystemExit('Expected groupApi block not found')
-          s=s.replace(old,new,1)
           p.write_text(s)
 
           p=Path('Teachers/dashboard-v2/index.html')
           s=p.read_text()
-          s=re.sub(r'\.\/naesin\.js\?v=[^"\']+', './naesin.js?v=20260826-5', s, count=1)
+          s=re.sub(r'\.\/naesin\.js\?v=[^"\']+', './naesin.js?v=20260826-6', s, count=1)
           p.write_text(s)
           PY
       - name: Commit patch
@@ -48,4 +65,4 @@ jobs:
           git diff --cached --quiet || git commit -m "Call Supabase Edge directly for naesin groups"
           git push origin HEAD:staging
 
-# trigger direct edge 2026-08-26
+# trigger 2 2026-08-26
