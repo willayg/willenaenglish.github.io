@@ -1,0 +1,62 @@
+name: Install naesin tracker once
+on:
+  push:
+    branches: [staging]
+jobs:
+  patch:
+    if: github.event.head_commit.message == 'Install naesin tracker patch'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: staging
+      - name: Add naesin mode to teacher tracker
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('Teachers/tools/student_tracker/student_tracker.html')
+          s=p.read_text(encoding='utf-8')
+          tag='<script src="./naesin-dashboard.js?v=20260825-1"></script>'
+          if tag not in s:
+              s=s.replace('</body>', '  '+tag+'\n</body>')
+          p.write_text(s,encoding='utf-8')
+          PY
+      - name: Add auth and progress hooks to test prep
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('students/test-prep/index.html')
+          s=p.read_text(encoding='utf-8')
+          marker='<script>\nconst U='
+          inject='<script src="/students/api-gateway.js?v=20260825-testprep1"></script>\n<script src="/js/api-config.js?v=20260825-testprep1"></script>\n<script src="./auth-tracking.js?v=20260825-1"></script>\n<script>\nconst U='
+          if 'auth-tracking.js?v=20260825-1' not in s:
+              if marker not in s:
+                  raise SystemExit('test prep script marker not found')
+              s=s.replace(marker,inject,1)
+          hook="if(ok)score++;else wrongIds.push(q.id);"
+          hook2="if(ok)score++;else wrongIds.push(q.id);window.WillenaTestPrepAuth?.recordAttempt({practice_type:section,question_id:q.id,selected_answer:mine,correct_answer:ans,is_correct:ok,source_question_number:q.source_question_number,question_type:q.question_type,source_label:q.student_source_label});"
+          if 'recordAttempt({practice_type:section' not in s:
+              if hook not in s: raise SystemExit('attempt hook marker not found')
+              s=s.replace(hook,hook2,1)
+          result='function result(){bar.style.width=\'100%\';'
+          result2="function result(){window.WillenaTestPrepAuth?.completeSession(score,questions.length,wrongIds);bar.style.width='100%';"
+          if 'completeSession(score,questions.length,wrongIds)' not in s:
+              if result not in s: raise SystemExit('result hook marker not found')
+              s=s.replace(result,result2,1)
+          old='load();\n</script>'
+          if 'WillenaTestPrepAuth.ready.then' not in s:
+              pos=s.rfind(old)
+              if pos<0: raise SystemExit('final load marker not found')
+              s=s[:pos]+"window.WillenaTestPrepAuth.ready.then(ok=>{if(ok)load()});\n</script>"+s[pos+len(old):]
+          p.write_text(s,encoding='utf-8')
+          PY
+      - name: Commit patched pages
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add Teachers/tools/student_tracker/student_tracker.html students/test-prep/index.html
+          git diff --cached --quiet && exit 0
+          git commit -m "Enable authenticated naesin tracking"
+          git push origin HEAD:staging
