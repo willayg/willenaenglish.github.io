@@ -1,4 +1,4 @@
-name: Fix naesin student API once
+name: Fix naesin direct edge once
 
 on:
   push:
@@ -16,26 +16,36 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: staging
-      - name: Cache bust naesin script
+      - name: Route group API directly to Supabase Edge
         shell: bash
         run: |
           python - <<'PY'
           from pathlib import Path
+          import re
+
+          p=Path('Teachers/dashboard-v2/naesin.js')
+          s=p.read_text()
+          s=s.replace("const GROUP_API='/.netlify/functions/test_prep_api';", "const GROUP_API='https://fiieuiktlsivwfgyivai.supabase.co/functions/v1/test-prep-teacher';\nconst GROUP_API_KEY='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';", 1)
+          s=s.replace("const STUDENT_API='/.netlify/functions/test_prep_api?action=students';", "const STUDENT_API='/.netlify/functions/teacher_admin?action=list_students';", 1)
+          old="""async function groupApi(action,opts={}){\n  const res=await routedFetch(`${GROUP_API}?action=${encodeURIComponent(action)}`,opts);\n  return jsonResponse(res,'내신 API');\n}"""
+          new="""async function groupApi(action,opts={}){\n  const token=window.WillenaAPI?.getLocalAccessToken?.()||localStorage.getItem('sb_access_token')||'';\n  if(!token) throw new Error('로그인이 필요합니다.');\n  const headers={...(opts.headers||{}),Authorization:`Bearer ${token}`,apikey:GROUP_API_KEY};\n  const res=await fetch(`${GROUP_API}?action=${encodeURIComponent(action)}`,{...opts,headers,credentials:'omit',cache:'no-store'});\n  return jsonResponse(res,'내신 API');\n}"""
+          if old not in s:
+              raise SystemExit('Expected groupApi block not found')
+          s=s.replace(old,new,1)
+          p.write_text(s)
+
           p=Path('Teachers/dashboard-v2/index.html')
           s=p.read_text()
-          old='./naesin.js?v=20260826-3'
-          new='./naesin.js?v=20260826-4'
-          if old not in s:
-              raise SystemExit('Expected naesin cache-bust reference not found')
-          p.write_text(s.replace(old,new,1))
+          s=re.sub(r'\.\/naesin\.js\?v=[^"\']+', './naesin.js?v=20260826-5', s, count=1)
+          p.write_text(s)
           PY
       - name: Commit patch
         shell: bash
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add Teachers/dashboard-v2/index.html
-          git diff --cached --quiet || git commit -m "Cache bust naesin student API fix"
+          git add Teachers/dashboard-v2/naesin.js Teachers/dashboard-v2/index.html
+          git diff --cached --quiet || git commit -m "Call Supabase Edge directly for naesin groups"
           git push origin HEAD:staging
 
-# trigger cache bust 2026-08-26
+# trigger direct edge 2026-08-26
