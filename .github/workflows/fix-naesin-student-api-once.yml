@@ -16,17 +16,17 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: staging
-      - name: Route student picker through test prep API
+      - name: Cache bust naesin script
         shell: bash
         run: |
           python - <<'PY'
           from pathlib import Path
-          p=Path('Teachers/dashboard-v2/naesin.js')
+          p=Path('Teachers/dashboard-v2/index.html')
           s=p.read_text()
-          old="const STUDENT_API='/.netlify/functions/teacher_admin?action=list_students';"
-          new="const STUDENT_API='/.netlify/functions/test_prep_api?action=students';"
+          old='./naesin.js?v=20260826-3'
+          new='./naesin.js?v=20260826-4'
           if old not in s:
-              raise SystemExit('Expected STUDENT_API line not found')
+              raise SystemExit('Expected naesin cache-bust reference not found')
           p.write_text(s.replace(old,new,1))
           PY
       - name: Commit patch
@@ -34,8 +34,8 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add Teachers/dashboard-v2/naesin.js
-          git diff --cached --quiet || git commit -m "Route naesin student picker through test prep API"
+          git add Teachers/dashboard-v2/index.html
+          git diff --cached --quiet || git commit -m "Cache bust naesin student API fix"
           git push origin HEAD:staging
 
-# trigger 2026-08-26
+# trigger cache bust 2026-08-26
