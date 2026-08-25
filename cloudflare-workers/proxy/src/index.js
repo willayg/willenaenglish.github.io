@@ -5,6 +5,8 @@
 
 const NETLIFY_BASE = 'https://willenaenglish.netlify.app';
 const COOKIE_DOMAIN = '.willenaenglish.com';
+const TEST_PREP_EDGE = 'https://fiieuiktlsivwfgyivai.supabase.co/functions/v1/test-prep-teacher';
+const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
 
 const FUNCTION_TO_BINDING = {
   supabase_auth: 'SUPABASE_AUTH',
@@ -66,10 +68,6 @@ async function authenticatedUserId(request, env) {
   url.search = '?action=whoami';
   const headers = new Headers(request.headers);
 
-  // The browser may call this Worker on workers.dev, where a
-  // .willenaenglish.com cookie cannot be sent. In that case Study V2 sends
-  // its persisted access token as Bearer auth. Translate that token into the
-  // cookie shape expected by the existing supabase-auth whoami handler.
   if (!accessTokenFromCookie(headers.get('Cookie'))) {
     const token = bearerToken(headers);
     if (token) headers.set('Cookie', `sb_access=${encodeURIComponent(token)}`);
@@ -137,6 +135,41 @@ async function routeToCFWorker(request, binding, functionName, url) {
   }));
   const responseHeaders = new Headers(response.headers);
   responseHeaders.set('X-Willena-Upstream', `cloudflare:${functionName}`);
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers: responseHeaders,
+  });
+}
+
+async function routeTestPrepTeacher(request, url) {
+  const headers = new Headers(request.headers);
+  let token = bearerToken(headers);
+  if (!token) token = accessTokenFromCookie(headers.get('Cookie'));
+  if (!token) {
+    return new Response(JSON.stringify({ success:false, error:'Not signed in' }), {
+      status:401,
+      headers:{'content-type':'application/json; charset=utf-8'}
+    });
+  }
+
+  headers.set('Authorization', `Bearer ${token}`);
+  headers.set('apikey', SUPABASE_PUBLISHABLE_KEY);
+  headers.delete('Cookie');
+  headers.delete('Host');
+  headers.delete('Content-Length');
+  headers.delete('cf-connecting-ip');
+
+  const target = TEST_PREP_EDGE + (url.search || '');
+  console.log(`[proxy] Supabase Edge test_prep_api: ${url.search || ''}`);
+  const response = await fetch(new Request(target, {
+    method: request.method,
+    headers,
+    body: request.method !== 'GET' && request.method !== 'HEAD' ? request.body : undefined,
+    redirect: 'manual',
+  }));
+  const responseHeaders = new Headers(response.headers);
+  responseHeaders.set('X-Willena-Upstream', 'supabase:test-prep-teacher');
   return new Response(response.body, {
     status: response.status,
     statusText: response.statusText,
@@ -214,7 +247,9 @@ async function handleRequest(request, env) {
     const functionName = extractFunctionName(url.pathname);
     let response;
 
-    if (functionName && PREFER_CF_WORKER.has(functionName)) {
+    if (functionName === 'test_prep_api') {
+      response = await routeTestPrepTeacher(request, url);
+    } else if (functionName && PREFER_CF_WORKER.has(functionName)) {
       const bindingName = FUNCTION_TO_BINDING[functionName];
       const binding = env?.[bindingName];
       if (binding && typeof binding.fetch === 'function') {
