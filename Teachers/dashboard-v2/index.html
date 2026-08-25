@@ -31,7 +31,7 @@
 const $=(s,r=document)=>r.querySelector(s),$$=(s,r=document)=>[...r.querySelectorAll(s)];
 const FN=n=>`/.netlify/functions/${n}`;
 const state={classes:[],students:[],className:'',days:30,classOverviewLoadedFor:null};
-function esc(v){return String(v??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))}
+function esc(v){return String(v??'').replace(/[&<>'\"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','\"':'&quot;'}[c]))}
 function slug(v){return String(v||'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'not-enough-data'}
 function fmtDate(v){if(!v)return'—';const d=new Date(v);return Number.isNaN(d.getTime())?'—':d.toLocaleDateString(undefined,{month:'short',day:'numeric'})}
 function friendly(v){return String(v||'practice').replace(/[_-]+/g,' ').replace(/\b\w/g,c=>c.toUpperCase())}
@@ -73,6 +73,6 @@ function switchView(v){$$('.view').forEach(x=>x.classList.toggle('active',x.id==
 $('#classSelect').onchange=loadClass;$('#daysSelect').onchange=loadClass;$('#refreshBtn').onclick=loadClass;$('#searchInput').oninput=renderStudents;$('#classDaysSelect').onchange=()=>loadClassOverview(true);$('#classRefreshBtn').onclick=()=>loadClassOverview(true);$('#closeDrawer').onclick=()=>$('#drawerBg').classList.remove('open');$('#drawerBg').onclick=e=>{if(e.target===$('#drawerBg'))$('#drawerBg').classList.remove('open')};$$('[data-view]').forEach(b=>b.onclick=()=>switchView(b.dataset.view));
 (async()=>{if(await auth()){mountBurger();loadClasses()}})();
 </script>
-<script src="./naesin.js?v=20260825-1"></script>
+<script src="./naesin.js?v=20260826-2"></script>
 </body>
 </html>
