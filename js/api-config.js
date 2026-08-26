@@ -1,6 +1,6 @@
 /**
  * API Configuration - Simple and Deterministic
- * VERSION: 2026-08-26c CACHE_BUST
+ * VERSION: 2026-08-26d CACHE_BUST
  */
 (function() {
   'use strict';
@@ -60,6 +60,12 @@
     const fn = extractFunctionName(functionPath);
     const qIndex = functionPath.indexOf('?');
     const search = qIndex >= 0 ? functionPath.slice(qIndex) : '';
+
+    // Teacher dashboard class lists must come from the canonical classes/enrollments
+    // tables, not the legacy profiles.class field.
+    if (fn === 'progress_summary' && /(?:[?&])section=teacher_classes(?:&|$)/.test(search)) {
+      return (isNetlify || isLocalhost ? '' : API_BASE) + '/.netlify/functions/teacher_classes_list' + search;
+    }
 
     // Teacher-side 내신 group setup lives in the Game Scores Supabase project.
     // Route only those actions to the authenticated Edge Function; student test-prep
