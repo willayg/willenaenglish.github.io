@@ -24,7 +24,7 @@
     auth.recordAttempt=function(payload){
       const q=currentQuestion;
       const elapsed=Math.max(0,Math.round(performance.now()-questionShownAt));
-      const enriched={...(payload||{}),targets:Array.isArray(q?.targets)?q.targets:[],question_type:payload?.question_type||q?.question_type||null,response_time_ms:payload?.response_time_ms||elapsed};
+      const enriched={...(payload||{}),targets:Array.isArray(payload?.targets)?payload.targets:(Array.isArray(q?.targets)?q.targets:[]),question_type:payload?.question_type||q?.question_type||null,response_time_ms:payload?.response_time_ms||elapsed};
       const p=original(enriched);Promise.resolve(p).then(()=>scheduleRefresh()).catch(()=>{});return p;
     };
     patchedRecord=true;return true;
@@ -39,10 +39,9 @@
 
   async function persistCustom(type,detail){
     const auth=window.WillenaTestPrepAuth,sel=window.WillenaAssignedTestPrep?.selection;if(!auth||!sel?.plan)return;
-    auth.setActivePlan(sel.plan,sel.lesson);
+    if(String(auth.state?.plan?.id||'')!==String(sel.plan.id)||String(auth.state?.lesson||'')!==String(sel.lesson)) auth.setActivePlan(sel.plan,sel.lesson);
     const questionId=type==='vocabulary'?detail.lexical_entry_id:hashUuid(`${sel.plan.id}|${sel.lesson}|${detail.passage_id||''}|${detail.sentence||''}`);
-    const selected=type==='vocabulary'?(detail.input||detail.selected_answer||null):(detail.built_sentence||null);
-    await auth.recordAttempt({practice_type:type,question_id:questionId,selected_answer:selected,correct_answer:type==='vocabulary'?detail.canonical_text:detail.sentence,is_correct:!!detail.is_correct,question_type:type==='vocabulary'?`vocab_${detail.mode||'practice'}`:'sentence_unscramble',response_time_ms:Number(detail.response_time_ms)||null,targets:type==='vocabulary'?['vocabulary']:['reading_text','sentence_order'],metadata:{lesson:sel.lesson,book_label:sel.plan.book_label,lexical_entry_id:detail.lexical_entry_id||null,passage_id:detail.passage_id||null,passage_title:detail.passage_title||null,mode:detail.mode||null}});
+    await auth.recordAttempt({practice_type:type,question_id:questionId,selected_answer:type==='vocabulary'?(detail.input||detail.selected_answer||null):(detail.built_sentence||null),correct_answer:type==='vocabulary'?detail.canonical_text:detail.sentence,is_correct:!!detail.is_correct,question_type:type==='vocabulary'?`vocab_${detail.mode||'practice'}`:'sentence_unscramble',response_time_ms:Number(detail.response_time_ms)||null,targets:type==='vocabulary'?['vocabulary']:['reading_text','sentence_order'],metadata:{lesson:sel.lesson,book_label:sel.plan.book_label,lexical_entry_id:detail.lexical_entry_id||null,passage_id:detail.passage_id||null,passage_title:detail.passage_title||null,mode:detail.mode||null}});
     customAttemptCount++;if(customAttemptCount%2===0)scheduleRefresh();
   }
 
