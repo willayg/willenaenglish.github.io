@@ -14,8 +14,9 @@
 
   function isActive(){return !document.hidden&&document.hasFocus()}
   function flushActiveTime(){
-    if(activeTickAt&&isActive()) activeAccumulatedMs+=Math.max(0,performance.now()-activeTickAt);
-    activeTickAt=isActive()&&activityStartedAt?performance.now():0;
+    const now=performance.now();
+    if(activeTickAt) activeAccumulatedMs+=Math.max(0,now-activeTickAt);
+    activeTickAt=isActive()&&activityStartedAt?now:0;
   }
   function beginStudyActivity(){
     activityStartedAt=Date.now();
