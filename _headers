@@ -29,6 +29,13 @@
   Pragma: no-cache
   Expires: 0
 
+# Naesin module is under active staging development
+/Teachers/dashboard-v2/naesin.js
+  Content-Type: application/javascript; charset=utf-8
+  Cache-Control: no-store, no-cache, must-revalidate, max-age=0
+  Pragma: no-cache
+  Expires: 0
+
 # Shared learning engine is changing with Study staging too
 /shared/learning-engine/*
   Cache-Control: no-store, no-cache, must-revalidate, max-age=0
