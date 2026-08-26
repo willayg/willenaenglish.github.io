@@ -5,14 +5,18 @@
   const HEAD={apikey:KEY,Authorization:`Bearer ${KEY}`};
   let selection=null;
 
-  // Reuse the same student header/account menu as Study V3. This gives Test Prep
-  // the same identity/points/avatar treatment and, importantly, the same logout flow.
   if(!document.querySelector('script[data-testprep-student-header]')){
     const headerScript=document.createElement('script');
     headerScript.type='module';
     headerScript.src='/students/components/student-header.js?v=20260826-testprep1';
     headerScript.dataset.testprepStudentHeader='1';
     document.head.appendChild(headerScript);
+  }
+  if(!document.querySelector('script[data-testprep-phase1-tracking]')){
+    const trackingScript=document.createElement('script');
+    trackingScript.src='./tracking-phase1.js?v=20260826-phase1';
+    trackingScript.dataset.testprepPhase1Tracking='1';
+    document.head.appendChild(trackingScript);
   }
   if(!document.querySelector('student-header[data-testprep-header]')){
     const header=document.createElement('student-header');
@@ -57,12 +61,7 @@
     .empty-assign{background:#fff;border:1px solid #dde8eb;border-radius:24px;padding:46px 22px;text-align:center;color:#73828a;box-shadow:0 10px 28px rgba(42,70,80,.05)}
 
     #assignedQuizPane>.top{display:none!important}
-    #assignedQuizPane .tabs{background:#fff;border:1px solid #dde8eb;border-radius:16px;padding:5px;gap:5px;box-shadow:0 5px 15px rgba(42,70,80,.035)}
-    #assignedQuizPane .tab{border:0!important;background:transparent!important;color:#708087!important;border-radius:11px!important;font-size:12px!important;font-weight:800!important}
-    #assignedQuizPane .tab.active{background:#eaf7f8!important;color:#19777e!important;box-shadow:inset 0 0 0 1px #b9dfe2}
-    #assignedQuizPane .filters{gap:7px}
-    #assignedQuizPane .filter{border:1px solid #dce6e8!important;background:#fff!important;color:#708087!important;border-radius:12px!important}
-    #assignedQuizPane .filter.active{border-color:#ffc5da!important;background:#fff2f7!important;color:#cf477b!important}
+    #assignedQuizPane .tabs,#assignedQuizPane .filters{display:none!important}
     #assignedQuizPane .hero{background:linear-gradient(135deg,#fff,#f4fbfc)!important;border:1px solid #c7e4e6!important;border-radius:20px!important;box-shadow:0 8px 20px rgba(25,119,126,.045)}
     #assignedQuizPane .hero h1{color:#19777e!important;font-weight:800!important}
     #assignedQuizPane .progress i{background:linear-gradient(90deg,#67d4da,#19777e)!important}
@@ -113,6 +112,7 @@
       const ids=await resolveIds(plan,btn.dataset.lesson);
       selection={plan,lesson:btn.dataset.lesson,section:btn.dataset.section,...ids};
       window.WillenaTestPrepAuth.setActivePlan(plan,selection.lesson);
+      window.WillenaTestPrepAuth.beginStudyActivity?.();
       home.style.display='none'; quiz.style.display='block';
       let back=document.getElementById('assignedBackRow');
       if(!back){back=document.createElement('div');back.id='assignedBackRow';back.className='quiz-top-back';quiz.insertBefore(back,quiz.firstChild)}
