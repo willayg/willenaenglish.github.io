@@ -12,6 +12,9 @@
   let activeAccumulatedMs=0;
   let activeTickAt=0;
 
+  function emitTracking(type,data){
+    try{window.dispatchEvent(new CustomEvent('testprep:tracking',{detail:{type,at:new Date().toISOString(),...(data||{})}}))}catch(_){}
+  }
   function isActive(){return !document.hidden&&document.hasFocus()}
   function flushActiveTime(){
     const now=performance.now();
@@ -102,12 +105,13 @@
     state.session=d.session||null;
     state.sessionSection=p;
     if(!activityStartedAt) beginStudyActivity();
+    emitTracking('session_started',{session_id:state.session?.id||null,plan_id:state.plan?.id||null,lesson:state.lesson,practice_type:p});
     return state.session;
   }
   async function recordAttempt(payload){
     try{
       const s=await ensureSession(payload?.practice_type); if(!s) return;
-      await edge('attempt',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+      const request={
         session_id:s.id,
         question_id:payload.question_id,
         selected_answer:payload.selected_answer,
@@ -117,8 +121,10 @@
         targets:Array.isArray(payload.targets)?payload.targets:[],
         response_time_ms:Number(payload.response_time_ms)||0,
         metadata:{source_question_number:payload.source_question_number,question_type:payload.question_type,source_label:payload.source_label,lesson:state.lesson,plan_id:state.plan?.id}
-      })});
-    }catch(e){console.warn('[test-prep-app] attempt save failed',e)}
+      };
+      const d=await edge('attempt',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(request)});
+      emitTracking('attempt_saved',{...request,attempt_id:d?.attempt?.id||null,attempt_number:d?.attempt?.attempt_number??null,is_retry:d?.attempt?.is_retry??null,corrected_previous:d?.attempt?.corrected_previous??null});
+    }catch(e){console.warn('[test-prep-app] attempt save failed',e);emitTracking('attempt_error',{error:String(e?.message||e)})}
   }
   async function completeSession(correctCount,questionCount,wrongIds){
     const s=state.session; if(!s){resetStudyActivity();return;}
@@ -126,13 +132,11 @@
     state.session=null;
     state.sessionSection=null;
     resetStudyActivity();
-    try{await edge('complete_session',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
-      session_id:s.id,
-      correct_count:Number(correctCount)||0,
-      question_count:Number(questionCount)||0,
-      wrong_ids:Array.isArray(wrongIds)?wrongIds:[],
-      active_time_ms:activeTimeMs
-    })})}catch(e){console.warn('[test-prep-app] session completion failed',e)}
+    try{
+      const request={session_id:s.id,correct_count:Number(correctCount)||0,question_count:Number(questionCount)||0,wrong_ids:Array.isArray(wrongIds)?wrongIds:[],active_time_ms:activeTimeMs};
+      const d=await edge('complete_session',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(request)});
+      emitTracking('session_completed',{...request,session:d?.session||null});
+    }catch(e){console.warn('[test-prep-app] session completion failed',e);emitTracking('session_error',{error:String(e?.message||e)})}
   }
   window.WillenaTestPrepAuth={ready,state,edge,setActivePlan,recordAttempt,completeSession,ensureSession,beginStudyActivity,getActiveTimeMs};
 })();
