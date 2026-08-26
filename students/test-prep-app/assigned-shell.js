@@ -32,7 +32,14 @@
   const app=document.querySelector('.app');
   const home=document.createElement('div'); home.id='assignmentHome';
   const quiz=document.createElement('div'); quiz.id='assignedQuizPane'; quiz.style.display='none';
-  if(app){ const nodes=[...app.childNodes]; app.append(home,quiz); nodes.forEach(n=>quiz.appendChild(n)); }
+  if(app){
+    const nodes=[...app.childNodes];
+    app.append(home,quiz);
+    nodes.forEach(n=>quiz.appendChild(n));
+    // These controls are only legacy launch controls. The assigned shell already
+    // knows the selected lesson/section, so keep them out of the activity UI.
+    quiz.querySelectorAll('.tabs,.filters').forEach(el=>{ el.style.display='none'; el.setAttribute('aria-hidden','true'); });
+  }
 
   const style=document.createElement('style');
   style.textContent=`
@@ -59,7 +66,6 @@
     .section-btn:active{transform:translateY(0)}
     .section-btn.loading{opacity:.55;pointer-events:none}
     .empty-assign{background:#fff;border:1px solid #dde8eb;border-radius:24px;padding:46px 22px;text-align:center;color:#73828a;box-shadow:0 10px 28px rgba(42,70,80,.05)}
-
     #assignedQuizPane>.top{display:none!important}
     #assignedQuizPane .tabs,#assignedQuizPane .filters{display:none!important}
     #assignedQuizPane .hero{background:linear-gradient(135deg,#fff,#f4fbfc)!important;border:1px solid #c7e4e6!important;border-radius:20px!important;box-shadow:0 8px 20px rgba(25,119,126,.045)}
@@ -74,7 +80,9 @@
     .back-assign{border:1px solid #cbdcdf;background:#fff;color:#315960;border-radius:12px;padding:9px 12px;font-size:12px;font-weight:800;cursor:pointer}
     .back-assign:hover{background:#eefafb;border-color:#8acfd4;color:#19777e}
     .quiz-context{font-size:12px;color:#73828a;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-
+    #trackingDebug{position:fixed;right:12px;bottom:12px;z-index:99999;width:min(420px,calc(100vw - 24px));max-height:44vh;overflow:auto;background:#172127;color:#e9f5f6;border:1px solid #67d4da;border-radius:14px;padding:12px 14px;font:12px/1.45 ui-monospace,SFMono-Regular,Menlo,monospace;box-shadow:0 12px 34px rgba(0,0,0,.24)}
+    #trackingDebug strong{display:block;color:#67d4da;margin-bottom:6px;font-family:Poppins,system-ui,sans-serif}
+    #trackingDebug pre{white-space:pre-wrap;word-break:break-word;margin:0}
     @media(max-width:540px){
       .app{padding:16px 11px 38px!important}
       .ah-intro{padding:19px 17px;border-radius:22px}.ah-intro h1{font-size:22px}
@@ -89,6 +97,18 @@
     const lessons=plan.group?.scope?.lessons;
     if(Array.isArray(lessons)&&lessons.length) return lessons.filter(x=>x&&x.lesson&&Array.isArray(x.sections)&&x.sections.length);
     return (plan.units||[]).map(lesson=>({lesson,sections:plan.practice_types||[]}));
+  }
+  function installDebugPanel(){
+    const qs=new URLSearchParams(location.search);
+    if(qs.get('debug')!=='tracking'||document.getElementById('trackingDebug')) return;
+    const panel=document.createElement('div');
+    panel.id='trackingDebug';
+    panel.innerHTML='<strong>Phase 1 tracking test</strong><pre>Answer a question to see the event here.</pre>';
+    document.body.appendChild(panel);
+    window.addEventListener('testprep:tracking',e=>{
+      const pre=panel.querySelector('pre');
+      if(pre) pre.textContent=JSON.stringify(e.detail,null,2);
+    });
   }
   function renderHome(){
     selection=null; quiz.style.display='none'; home.style.display='block';
@@ -114,17 +134,18 @@
       window.WillenaTestPrepAuth.setActivePlan(plan,selection.lesson);
       window.WillenaTestPrepAuth.beginStudyActivity?.();
       home.style.display='none'; quiz.style.display='block';
+      quiz.querySelectorAll('.tabs,.filters').forEach(el=>{el.style.display='none';el.setAttribute('aria-hidden','true')});
       let back=document.getElementById('assignedBackRow');
       if(!back){back=document.createElement('div');back.id='assignedBackRow';back.className='quiz-top-back';quiz.insertBefore(back,quiz.firstChild)}
       back.innerHTML=`<button class="back-assign">← 시험 목록</button><span class="quiz-context">${esc(plan.book_label)} · ${esc(selection.lesson)}</span>`;
       back.querySelector('button').onclick=async()=>{try{await window.WillenaTestPrepAuth.completeSession(0,0,[])}catch(_){} renderHome()};
       const allowed=new Set((scopeFor(plan).find(x=>x.lesson===selection.lesson)?.sections||[]).map(x=>String(x).toLowerCase()));
-      document.querySelectorAll('.tab[data-section]').forEach(t=>{const ok=allowed.has(String(t.dataset.section).toLowerCase());t.style.display=ok?'':'none';t.classList.toggle('active',String(t.dataset.section).toLowerCase()===selection.section)});
+      document.querySelectorAll('.tab[data-section]').forEach(t=>{const ok=allowed.has(String(t.dataset.section).toLowerCase());t.style.display='none';t.classList.toggle('active',String(t.dataset.section).toLowerCase()===selection.section)});
       const pill=document.querySelector('.pill'); if(pill)pill.textContent=`${plan.book_label} · ${selection.lesson}`;
       const target=document.querySelector(`.tab[data-section="${CSS.escape(selection.section)}"]`); if(target)target.click(); else if(typeof load==='function')load();
     }catch(e){alert(e.message||'시험 범위를 불러오지 못했습니다.')}finally{btn.classList.remove('loading')}
   }
   function questionQuery(){return selection?`&book_id=eq.${encodeURIComponent(selection.bookId)}&unit_id=eq.${encodeURIComponent(selection.unitId)}`:''}
-  function init(){renderHome()}
+  function init(){installDebugPanel();renderHome()}
   window.WillenaAssignedTestPrep={init,renderHome,questionQuery,get selection(){return selection}};
 })();
