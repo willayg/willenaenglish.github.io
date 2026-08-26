@@ -11,9 +11,9 @@
     s.src=src; s.setAttribute(dataKey,'1'); document.head.appendChild(s);
   }
   if(!document.querySelector('script[data-testprep-student-header]')){
-    const s=document.createElement('script');s.type='module';s.src='/students/components/student-header.js?v=20260826-testprep3';s.dataset.testprepStudentHeader='1';document.head.appendChild(s);
+    const s=document.createElement('script');s.type='module';s.src='/students/components/student-header.js?v=20260826-testprep4';s.dataset.testprepStudentHeader='1';document.head.appendChild(s);
   }
-  addScript('./tracking-phase1.js?v=20260826-phase3','data-testprep-phase1-tracking');
+  addScript('./tracking-phase1.js?v=20260826-phase4','data-testprep-phase1-tracking');
   addScript('./vocab-practice.js?v=20260826-vocab4','data-testprep-vocab-practice');
   addScript('./sentence-practice.js?v=20260826-sentence1','data-testprep-sentence-practice');
   if(!document.querySelector('student-header[data-testprep-header]')){
