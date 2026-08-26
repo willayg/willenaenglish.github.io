@@ -23,6 +23,12 @@
   Pragma: no-cache
   Expires: 0
 
+# Test Prep teacher tracking is also under active development
+/Teachers/tools/student_tracker/test-prep.html
+  Cache-Control: no-store, no-cache, must-revalidate, max-age=0
+  Pragma: no-cache
+  Expires: 0
+
 # Shared learning engine is changing with Study staging too
 /shared/learning-engine/*
   Cache-Control: no-store, no-cache, must-revalidate, max-age=0
