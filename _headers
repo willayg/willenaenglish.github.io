@@ -29,19 +29,6 @@
   Pragma: no-cache
   Expires: 0
 
-# Teacher dashboard v2 is under active development too
-/Teachers/dashboard-v2/*
-  Cache-Control: no-store, no-cache, must-revalidate, max-age=0
-  Pragma: no-cache
-  Expires: 0
-
-# Shared API routing changes frequently during staging work
-/js/api-config.js
-  Content-Type: application/javascript; charset=utf-8
-  Cache-Control: no-store, no-cache, must-revalidate, max-age=0
-  Pragma: no-cache
-  Expires: 0
-
 # Shared learning engine is changing with Study staging too
 /shared/learning-engine/*
   Cache-Control: no-store, no-cache, must-revalidate, max-age=0
