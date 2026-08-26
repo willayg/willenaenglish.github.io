@@ -6,7 +6,7 @@ const HEAD={apikey:KEY,Authorization:`Bearer ${KEY}`};
 let selection=null;
 function addScript(src,dataKey){if(document.querySelector(`script[${dataKey}]`))return;const s=document.createElement('script');s.src=src;s.setAttribute(dataKey,'1');document.head.appendChild(s)}
 if(!document.querySelector('script[data-testprep-student-header]')){const s=document.createElement('script');s.type='module';s.src='/students/components/student-header.js?v=20260826-testprep8';s.dataset.testprepStudentHeader='1';document.head.appendChild(s)}
-addScript('./tracking-phase1.js?v=20260826-phase9','data-testprep-phase1-tracking');
+addScript('./tracking-phase1.js?v=20260827-phase10','data-testprep-phase1-tracking');
 addScript('./vocab-practice.js?v=20260826-vocab8','data-testprep-vocab-practice');
 addScript('./vocab-test-practice.js?v=20260826-vocabtest2','data-testprep-vocab-test-practice');
 addScript('./sentence-practice.js?v=20260826-sentence7','data-testprep-sentence-practice');
