@@ -11,10 +11,10 @@
     s.src=src; s.setAttribute(dataKey,'1'); document.head.appendChild(s);
   }
   if(!document.querySelector('script[data-testprep-student-header]')){
-    const s=document.createElement('script');s.type='module';s.src='/students/components/student-header.js?v=20260826-testprep1';s.dataset.testprepStudentHeader='1';document.head.appendChild(s);
+    const s=document.createElement('script');s.type='module';s.src='/students/components/student-header.js?v=20260826-testprep2';s.dataset.testprepStudentHeader='1';document.head.appendChild(s);
   }
-  addScript('./tracking-phase1.js?v=20260826-phase1','data-testprep-phase1-tracking');
-  addScript('./vocab-practice.js?v=20260826-vocab1','data-testprep-vocab-practice');
+  addScript('./tracking-phase1.js?v=20260826-phase2','data-testprep-phase1-tracking');
+  addScript('./vocab-practice.js?v=20260826-vocab2','data-testprep-vocab-practice');
   if(!document.querySelector('student-header[data-testprep-header]')){
     const header=document.createElement('student-header');
     header.setAttribute('data-testprep-header','1');header.setAttribute('title','Test Prep');header.setAttribute('show-id','false');header.setAttribute('show-home','false');header.setAttribute('show-points','true');header.setAttribute('show-logout','true');document.body.insertBefore(header,document.body.firstChild);
@@ -48,7 +48,7 @@
   function renderHome(){
     window.WillenaVocabPractice?.restore?.();selection=null;quiz.style.display='none';home.style.display='block';
     const state=window.WillenaTestPrepAuth.state,user=state.user||{},plans=state.plans||[];
-    home.innerHTML=`<section class="ah-intro"><h1>시험 대비</h1><p>선생님이 지정한 시험 범위만 보여요.</p></section>${plans.length?plans.map(plan=>{const g=plan.group||{},school=g.school||user.school||'학교 시험',lessons=scopeFor(plan);return `<article class="exam-card"><div class="exam-top"><div><div class="exam-school">${esc(school)}</div><div class="exam-meta">${esc(examLabel(plan))}</div></div>${plan.exam_date?`<div class="exam-date">${esc(plan.exam_date)}</div>`:''}</div><div class="book-name">${esc(plan.book_label)}</div>${lessons.map(l=>{const sections=[...new Set([...(l.sections||[]).map(x=>String(x).toLowerCase()),'vocabulary'])];return `<div class="lesson-card"><div class="lesson-title">${esc(l.lesson)}</div><div class="section-row">${sections.map(s=>`<button class="section-btn ${s==='vocabulary'?'vocab':''}" data-plan="${esc(plan.id)}" data-lesson="${esc(l.lesson)}" data-section="${esc(s)}">${s==='vocabulary'?'Vocabulary':esc(s[0].toUpperCase()+s.slice(1))}</button>`).join('')}</div></div>`}).join('')}</article>`}).join(''):`<div class="empty-assign"><b>지정된 시험 대비가 없습니다.</b><div style="margin-top:7px;font-size:12px">선생님이 시험 범위를 지정하면 여기에 표시됩니다.</div></div>`}`;
+    home.innerHTML=`<section class="ah-intro"><h1>시험 대비</h1><p>선생님이 지정한 시험 범위만 보여요.</p></section>${plans.length?plans.map(plan=>{const g=plan.group||{},school=g.school||user.school||'학교 시험',lessons=scopeFor(plan);return `<article class="exam-card"><div class="exam-top"><div><div class="exam-school">${esc(school)}</div><div class="exam-meta">${esc(examLabel(plan))}</div></div>${plan.exam_date?`<div class="exam-date">${esc(plan.exam_date)}</div>`:''}</div><div class="book-name">${esc(plan.book_label)}</div>${lessons.map(l=>{const sections=['vocabulary',...new Set((l.sections||[]).map(x=>String(x).toLowerCase()).filter(x=>x!=='vocabulary'))];return `<div class="lesson-card"><div class="lesson-title">${esc(l.lesson)}</div><div class="section-row">${sections.map(s=>`<button class="section-btn ${s==='vocabulary'?'vocab':''}" data-plan="${esc(plan.id)}" data-lesson="${esc(l.lesson)}" data-section="${esc(s)}">${s==='vocabulary'?'Vocabulary':esc(s[0].toUpperCase()+s.slice(1))}</button>`).join('')}</div></div>`}).join('')}</article>`}).join(''):`<div class="empty-assign"><b>지정된 시험 대비가 없습니다.</b><div style="margin-top:7px;font-size:12px">선생님이 시험 범위를 지정하면 여기에 표시됩니다.</div></div>`}`;
     home.querySelectorAll('.section-btn').forEach(btn=>btn.addEventListener('click',()=>start(btn)));
   }
   async function contentGet(path){const r=await fetch(CONTENT+path,{headers:HEAD,cache:'no-store'});if(!r.ok)throw new Error(await r.text());return r.json()}
