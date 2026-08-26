@@ -17,6 +17,12 @@
   Pragma: no-cache
   Expires: 0
 
+# Test Prep is under active staging development: always fetch the current build
+/students/test-prep-app/*
+  Cache-Control: no-store, no-cache, must-revalidate, max-age=0
+  Pragma: no-cache
+  Expires: 0
+
 # Shared learning engine is changing with Study staging too
 /shared/learning-engine/*
   Cache-Control: no-store, no-cache, must-revalidate, max-age=0
