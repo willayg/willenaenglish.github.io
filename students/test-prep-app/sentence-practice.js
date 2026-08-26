@@ -24,6 +24,7 @@
     const lines=String(body||'').split(/\n+/).map(x=>x.trim()).filter(Boolean);
     for(let line of lines){
       if(/^(Situation\s+\d+|D-?\d+|D-Day)$/i.test(line))continue;
+      if(/^What will happen next\?/i.test(line))continue;
       if(/^(Dear\s+.+,|Hi\s+.+,|Love,?|Best,?|Your friend,?|Uncle Jay|Amy|Minji)$/i.test(line))continue;
       line=line.replace(/^(D-?\d+|D-Day)\s+/i,'');
       let speaker='';const m=line.match(/^([A-Za-z][A-Za-z .'-]{0,24}):\s*(.+)$/);if(m){speaker=m[1];line=m[2]}
