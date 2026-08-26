@@ -14,7 +14,7 @@
     const s=document.createElement('script');s.type='module';s.src='/students/components/student-header.js?v=20260826-testprep2';s.dataset.testprepStudentHeader='1';document.head.appendChild(s);
   }
   addScript('./tracking-phase1.js?v=20260826-phase2','data-testprep-phase1-tracking');
-  addScript('./vocab-practice.js?v=20260826-vocab2','data-testprep-vocab-practice');
+  addScript('./vocab-practice.js?v=20260826-vocab3','data-testprep-vocab-practice');
   if(!document.querySelector('student-header[data-testprep-header]')){
     const header=document.createElement('student-header');
     header.setAttribute('data-testprep-header','1');header.setAttribute('title','Test Prep');header.setAttribute('show-id','false');header.setAttribute('show-home','false');header.setAttribute('show-points','true');header.setAttribute('show-logout','true');document.body.insertBefore(header,document.body.firstChild);
