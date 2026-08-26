@@ -9,19 +9,27 @@
   const state={user:null,plans:[],plan:null,lesson:null,session:null,sessionSection:null,blocked:true};
 
   function goLogin(){ location.replace(LOGIN); }
-  async function ensureToken(){
-    let token=localToken();
-    if(token) return token;
+
+  async function refreshToken(){
     try{
       const r=await routedFetch(authPath('refresh'));
       const d=await r.json().catch(()=>({}));
       if(r.ok&&d?.success&&d.access_token){
         window.WillenaAPI?.setLocalTokens?.(d.access_token,d.refresh_token||'');
-        token=d.access_token;
+        return d.access_token;
       }
     }catch(_){ }
+    return '';
+  }
+
+  async function ensureToken(forceRefresh=false){
+    if(forceRefresh) return refreshToken();
+    let token=localToken();
+    if(token) return token;
+    token=await refreshToken();
     return token;
   }
+
   async function edge(action,opts={}){
     const token=await ensureToken();
     if(!token) throw new Error('AUTH_REQUIRED');
@@ -36,11 +44,21 @@
 
   const ready=(async()=>{
     try{
+      // A local access token by itself is not enough. Test Prep must be backed by
+      // the current student browser session, otherwise stale tokens can open the app.
       const who=await routedFetch(authPath('whoami'));
       const wd=await who.json().catch(()=>({}));
       if(!who.ok||!wd?.success||!wd?.user_id){ goLogin(); return false; }
+
+      // Re-sync the access token from the authenticated browser session before
+      // asking the Test Prep student API who this user is.
+      const sessionToken=await ensureToken(true);
+      if(!sessionToken){ goLogin(); return false; }
+
       const d=await edge('me');
-      state.user=d.user||null;
+      if(!d?.user){ goLogin(); return false; }
+
+      state.user=d.user;
       state.plans=Array.isArray(d.plans)?d.plans:[];
       state.blocked=false;
       return true;
