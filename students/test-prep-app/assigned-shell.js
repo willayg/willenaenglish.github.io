@@ -36,9 +36,6 @@
     const nodes=[...app.childNodes];
     app.append(home,quiz);
     nodes.forEach(n=>quiz.appendChild(n));
-    // These controls are only legacy launch controls. The assigned shell already
-    // knows the selected lesson/section, so keep them out of the activity UI.
-    quiz.querySelectorAll('.tabs,.filters').forEach(el=>{ el.style.display='none'; el.setAttribute('aria-hidden','true'); });
   }
 
   const style=document.createElement('style');
@@ -67,7 +64,6 @@
     .section-btn.loading{opacity:.55;pointer-events:none}
     .empty-assign{background:#fff;border:1px solid #dde8eb;border-radius:24px;padding:46px 22px;text-align:center;color:#73828a;box-shadow:0 10px 28px rgba(42,70,80,.05)}
     #assignedQuizPane>.top{display:none!important}
-    #assignedQuizPane .tabs,#assignedQuizPane .filters{display:none!important}
     #assignedQuizPane .hero{background:linear-gradient(135deg,#fff,#f4fbfc)!important;border:1px solid #c7e4e6!important;border-radius:20px!important;box-shadow:0 8px 20px rgba(25,119,126,.045)}
     #assignedQuizPane .hero h1{color:#19777e!important;font-weight:800!important}
     #assignedQuizPane .progress i{background:linear-gradient(90deg,#67d4da,#19777e)!important}
@@ -124,6 +120,9 @@
     if(!units[0]) throw new Error('Lesson을 콘텐츠 DB에서 찾지 못했습니다.');
     return {bookId:books[0].id,unitId:units[0].id};
   }
+  function setLegacySection(value){
+    try{(0,eval)(`section=${JSON.stringify(String(value||'communication').toLowerCase())}`);return true}catch(_){return false}
+  }
   async function start(btn){
     const state=window.WillenaTestPrepAuth.state;
     const plan=state.plans.find(p=>String(p.id)===String(btn.dataset.plan)); if(!plan)return;
@@ -134,15 +133,18 @@
       window.WillenaTestPrepAuth.setActivePlan(plan,selection.lesson);
       window.WillenaTestPrepAuth.beginStudyActivity?.();
       home.style.display='none'; quiz.style.display='block';
-      quiz.querySelectorAll('.tabs,.filters').forEach(el=>{el.style.display='none';el.setAttribute('aria-hidden','true')});
       let back=document.getElementById('assignedBackRow');
       if(!back){back=document.createElement('div');back.id='assignedBackRow';back.className='quiz-top-back';quiz.insertBefore(back,quiz.firstChild)}
       back.innerHTML=`<button class="back-assign">← 시험 목록</button><span class="quiz-context">${esc(plan.book_label)} · ${esc(selection.lesson)}</span>`;
       back.querySelector('button').onclick=async()=>{try{await window.WillenaTestPrepAuth.completeSession(0,0,[])}catch(_){} renderHome()};
-      const allowed=new Set((scopeFor(plan).find(x=>x.lesson===selection.lesson)?.sections||[]).map(x=>String(x).toLowerCase()));
-      document.querySelectorAll('.tab[data-section]').forEach(t=>{const ok=allowed.has(String(t.dataset.section).toLowerCase());t.style.display='none';t.classList.toggle('active',String(t.dataset.section).toLowerCase()===selection.section)});
       const pill=document.querySelector('.pill'); if(pill)pill.textContent=`${plan.book_label} · ${selection.lesson}`;
-      const target=document.querySelector(`.tab[data-section="${CSS.escape(selection.section)}"]`); if(target)target.click(); else if(typeof load==='function')load();
+      const target=quiz.querySelector(`.tab[data-section="${CSS.escape(selection.section)}"]`);
+      if(target) target.click();
+      else if(setLegacySection(selection.section)&&typeof load==='function') load();
+      else if(typeof load==='function') load();
+      // The section/source controls are legacy controls from the original standalone
+      // quiz. Once the assigned section has been applied, remove them from the DOM.
+      quiz.querySelectorAll('.tabs,.filters').forEach(el=>el.remove());
     }catch(e){alert(e.message||'시험 범위를 불러오지 못했습니다.')}finally{btn.classList.remove('loading')}
   }
   function questionQuery(){return selection?`&book_id=eq.${encodeURIComponent(selection.bookId)}&unit_id=eq.${encodeURIComponent(selection.unitId)}`:''}
