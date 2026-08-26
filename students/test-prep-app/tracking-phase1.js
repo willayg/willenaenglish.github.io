@@ -7,7 +7,7 @@
   function watchQuestionCard(){const card=document.getElementById('card');if(!card)return;new MutationObserver(()=>{if(card.querySelector('.prompt')&&card.querySelector('.qnum'))resetQuestionTimer()}).observe(card,{childList:true,subtree:true})}
   function scheduleRefresh(){clearTimeout(refreshTimer);refreshTimer=setTimeout(refreshStats,450)}
   async function refreshStats(){const auth=window.WillenaTestPrepAuth;if(!auth)return;try{await auth.ready;const d=await auth.edge('me');if(d?.plans){auth.state.plans=d.plans;auth.state.tasks=d.tasks||[];window.dispatchEvent(new CustomEvent('testprep:student-state-refresh',{detail:{plans:d.plans,tasks:d.tasks||[]}}))}}catch(e){console.warn('[test-prep] state refresh failed',e)}}
-  function loadStudentUx(){if(document.querySelector('script[data-testprep-student-ux]'))return;const s=document.createElement('script');s.src='./student-ux-v3.js?v=20260826-subway2';s.dataset.testprepStudentUx='1';document.head.appendChild(s)}
+  function loadStudentUx(){if(document.querySelector('script[data-testprep-student-ux]'))return;const s=document.createElement('script');s.src='./student-ux-v4.js?v=20260826-mastery1';s.dataset.testprepStudentUx='1';document.head.appendChild(s)}
   function bootstrap(){loadStudentUx();patchRecordAttempt();patchCheck();watchQuestionCard();let tries=0;const timer=setInterval(()=>{patchRecordAttempt();patchCheck();if((patchedRecord&&patchedCheck)||++tries>100)clearInterval(timer)},50);setTimeout(refreshStats,650)}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bootstrap,{once:true});else bootstrap();
 })();
