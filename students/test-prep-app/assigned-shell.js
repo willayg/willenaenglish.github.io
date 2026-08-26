@@ -5,6 +5,26 @@
   const HEAD={apikey:KEY,Authorization:`Bearer ${KEY}`};
   let selection=null;
 
+  // Reuse the same student header/account menu as Study V3. This gives Test Prep
+  // the same identity/points/avatar treatment and, importantly, the same logout flow.
+  if(!document.querySelector('script[data-testprep-student-header]')){
+    const headerScript=document.createElement('script');
+    headerScript.type='module';
+    headerScript.src='/students/components/student-header.js?v=20260826-testprep1';
+    headerScript.dataset.testprepStudentHeader='1';
+    document.head.appendChild(headerScript);
+  }
+  if(!document.querySelector('student-header[data-testprep-header]')){
+    const header=document.createElement('student-header');
+    header.setAttribute('data-testprep-header','1');
+    header.setAttribute('title','Test Prep');
+    header.setAttribute('show-id','false');
+    header.setAttribute('show-home','false');
+    header.setAttribute('show-points','true');
+    header.setAttribute('show-logout','true');
+    document.body.insertBefore(header,document.body.firstChild);
+  }
+
   const app=document.querySelector('.app');
   const home=document.createElement('div'); home.id='assignmentHome';
   const quiz=document.createElement('div'); quiz.id='assignedQuizPane'; quiz.style.display='none';
@@ -12,10 +32,59 @@
 
   const style=document.createElement('style');
   style.textContent=`
-    #assignmentHome{padding:2px 0 24px}.ah-top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}.ah-brand{font-size:22px;font-weight:950}.ah-brand b{color:var(--pink)}.ah-user{font-size:12px;font-weight:800;color:#666;background:#fff;border:1px solid var(--line);padding:8px 11px;border-radius:999px}.ah-intro{background:linear-gradient(135deg,#fff,#fff7fa);border:1px solid #ffd4e2;border-radius:22px;padding:19px;margin-bottom:14px}.ah-intro h1{margin:0 0 5px;font-size:22px}.ah-intro p{margin:0;color:var(--muted);font-size:13px}.exam-card{background:#fff;border:1px solid var(--line);border-radius:22px;padding:17px;margin-bottom:13px;box-shadow:0 8px 22px rgba(30,35,55,.04)}.exam-top{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}.exam-school{font-size:17px;font-weight:950}.exam-meta{font-size:12px;color:var(--muted);margin-top:3px}.exam-date{background:#fff0f5;color:#b52e61;border-radius:999px;padding:7px 10px;font-size:11px;font-weight:900;white-space:nowrap}.book-name{font-weight:900;margin:15px 0 8px}.lesson-card{border:1px solid #e7e8ee;border-radius:15px;padding:12px;margin-top:8px}.lesson-title{font-size:13px;font-weight:900;margin-bottom:9px}.section-row{display:flex;gap:7px;flex-wrap:wrap}.section-btn{border:1px solid #dfe1e8;background:#fafbfc;border-radius:11px;padding:9px 11px;font-size:12px;font-weight:900;cursor:pointer}.section-btn:hover{border-color:#ffb8cf;background:var(--soft);color:#b52e61}.empty-assign{background:#fff;border:1px solid var(--line);border-radius:22px;padding:42px 20px;text-align:center;color:var(--muted)}.back-assign{border:1px solid var(--line);background:#fff;border-radius:11px;padding:8px 11px;font-size:12px;font-weight:900;cursor:pointer;margin-right:8px}.quiz-top-back{display:flex;align-items:center;margin-bottom:10px}.quiz-context{font-size:12px;color:var(--muted);font-weight:800}.section-btn.loading{opacity:.55;pointer-events:none}@media(max-width:540px){.ah-intro{padding:16px}.exam-card{padding:14px}.exam-school{font-size:15px}}
+    html,body{font-family:'Poppins','Pretendard','Noto Sans KR',system-ui,sans-serif!important}
+    body{background:linear-gradient(180deg,#f4f8fa 0,#f7f9fb 230px,#f6f7fb 100%)!important;color:#203039!important}
+    .app{max-width:880px!important;padding:24px 18px 54px!important}
+    #assignmentHome{padding:2px 0 24px}
+    .ah-top{display:none!important}
+    .ah-intro{position:relative;overflow:hidden;background:linear-gradient(135deg,#ffffff 0%,#f4fbfc 65%,#edf8f9 100%);border:1.5px solid #b8dde0;border-radius:26px;padding:24px 25px;margin-bottom:18px;box-shadow:0 12px 32px rgba(25,119,126,.07)}
+    .ah-intro:after{content:'';position:absolute;width:150px;height:150px;border-radius:50%;right:-54px;top:-70px;background:rgba(103,226,230,.16)}
+    .ah-intro h1{position:relative;margin:0 0 6px;font-size:25px;line-height:1.2;font-weight:800;color:#19777e;letter-spacing:-.02em;z-index:1}
+    .ah-intro p{position:relative;margin:0;color:#73828a;font-size:13px;font-weight:600;z-index:1}
+    .exam-card{background:#fff;border:1px solid #dde8eb;border-radius:24px;padding:20px 20px 18px;margin-bottom:15px;box-shadow:0 10px 28px rgba(42,70,80,.055)}
+    .exam-top{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+    .exam-school{font-size:18px;font-weight:800;color:#24343c;letter-spacing:-.015em}
+    .exam-meta{font-size:12px;color:#7a878e;margin-top:4px;font-weight:600}
+    .exam-date{background:#fff2f7;color:#d14d7f;border:1px solid #ffd6e5;border-radius:999px;padding:7px 11px;font-size:11px;font-weight:800;white-space:nowrap}
+    .book-name{font-size:15px;font-weight:800;color:#19777e;margin:17px 0 10px}
+    .lesson-card{border:1px solid #e2eaed;background:#fbfdfe;border-radius:17px;padding:14px;margin-top:9px}
+    .lesson-title{font-size:13px;font-weight:800;color:#384a52;margin-bottom:10px}
+    .section-row{display:flex;gap:8px;flex-wrap:wrap}
+    .section-btn{border:1.5px solid #c9dadd;background:#fff;color:#315960;border-radius:13px;padding:10px 14px;font-size:12px;font-weight:800;cursor:pointer;box-shadow:0 2px 5px rgba(25,119,126,.03);transition:transform .15s ease,border-color .15s ease,background .15s ease,color .15s ease}
+    .section-btn:hover{transform:translateY(-1px);border-color:#67cfd5;background:#eefafb;color:#19777e}
+    .section-btn:active{transform:translateY(0)}
+    .section-btn.loading{opacity:.55;pointer-events:none}
+    .empty-assign{background:#fff;border:1px solid #dde8eb;border-radius:24px;padding:46px 22px;text-align:center;color:#73828a;box-shadow:0 10px 28px rgba(42,70,80,.05)}
+
+    #assignedQuizPane>.top{display:none!important}
+    #assignedQuizPane .tabs{background:#fff;border:1px solid #dde8eb;border-radius:16px;padding:5px;gap:5px;box-shadow:0 5px 15px rgba(42,70,80,.035)}
+    #assignedQuizPane .tab{border:0!important;background:transparent!important;color:#708087!important;border-radius:11px!important;font-size:12px!important;font-weight:800!important}
+    #assignedQuizPane .tab.active{background:#eaf7f8!important;color:#19777e!important;box-shadow:inset 0 0 0 1px #b9dfe2}
+    #assignedQuizPane .filters{gap:7px}
+    #assignedQuizPane .filter{border:1px solid #dce6e8!important;background:#fff!important;color:#708087!important;border-radius:12px!important}
+    #assignedQuizPane .filter.active{border-color:#ffc5da!important;background:#fff2f7!important;color:#cf477b!important}
+    #assignedQuizPane .hero{background:linear-gradient(135deg,#fff,#f4fbfc)!important;border:1px solid #c7e4e6!important;border-radius:20px!important;box-shadow:0 8px 20px rgba(25,119,126,.045)}
+    #assignedQuizPane .hero h1{color:#19777e!important;font-weight:800!important}
+    #assignedQuizPane .progress i{background:linear-gradient(90deg,#67d4da,#19777e)!important}
+    #assignedQuizPane .card{border:1px solid #dde8eb!important;border-radius:22px!important;box-shadow:0 10px 26px rgba(42,70,80,.055)!important}
+    #assignedQuizPane .choice{border-color:#dce5e8!important;border-radius:14px!important}
+    #assignedQuizPane .choice.selected{border-color:#67cfd5!important;background:#eefafb!important}
+    #assignedQuizPane .primary{background:#19777e!important}
+    #assignedQuizPane .source.w{background:#fff2f7!important;color:#cf477b!important}
+    .quiz-top-back{display:flex;align-items:center;gap:9px;margin:0 0 12px}
+    .back-assign{border:1px solid #cbdcdf;background:#fff;color:#315960;border-radius:12px;padding:9px 12px;font-size:12px;font-weight:800;cursor:pointer}
+    .back-assign:hover{background:#eefafb;border-color:#8acfd4;color:#19777e}
+    .quiz-context{font-size:12px;color:#73828a;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+    @media(max-width:540px){
+      .app{padding:16px 11px 38px!important}
+      .ah-intro{padding:19px 17px;border-radius:22px}.ah-intro h1{font-size:22px}
+      .exam-card{padding:16px 14px;border-radius:20px}.exam-school{font-size:16px}
+      .lesson-card{padding:12px}.section-btn{padding:9px 11px}
+    }
   `; document.head.appendChild(style);
 
-  function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+  function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]))}
   function examLabel(plan){const g=plan.group||{};const term=g.term?`${g.term}학기`:'';const type=g.exam_type==='final'?'기말고사':g.exam_type==='midterm'?'중간고사':(plan.exam_name||'시험 대비');return [term,type].filter(Boolean).join(' · ')}
   function scopeFor(plan){
     const lessons=plan.group?.scope?.lessons;
@@ -25,7 +94,7 @@
   function renderHome(){
     selection=null; quiz.style.display='none'; home.style.display='block';
     const state=window.WillenaTestPrepAuth.state, user=state.user||{}, plans=state.plans||[];
-    home.innerHTML=`<div class="ah-top"><div class="ah-brand">Willena <b>Test Prep</b></div><div class="ah-user">${esc(user.korean_name||user.name||user.username||'Student')}</div></div><section class="ah-intro"><h1>시험 대비</h1><p>선생님이 지정한 시험 범위만 보여요.</p></section>${plans.length?plans.map(plan=>{const g=plan.group||{};const school=g.school||user.school||'학교 시험';const lessons=scopeFor(plan);return `<article class="exam-card"><div class="exam-top"><div><div class="exam-school">${esc(school)}</div><div class="exam-meta">${esc(examLabel(plan))}</div></div>${plan.exam_date?`<div class="exam-date">${esc(plan.exam_date)}</div>`:''}</div><div class="book-name">${esc(plan.book_label)}</div>${lessons.map(l=>`<div class="lesson-card"><div class="lesson-title">${esc(l.lesson)}</div><div class="section-row">${l.sections.map(s=>`<button class="section-btn" data-plan="${esc(plan.id)}" data-lesson="${esc(l.lesson)}" data-section="${esc(String(s).toLowerCase())}">${esc(String(s)[0].toUpperCase()+String(s).slice(1))}</button>`).join('')}</div></div>`).join('')}</article>`}).join(''):`<div class="empty-assign"><b>지정된 시험 대비가 없습니다.</b><div style="margin-top:7px;font-size:12px">선생님이 시험 범위를 지정하면 여기에 표시됩니다.</div></div>`}`;
+    home.innerHTML=`<section class="ah-intro"><h1>시험 대비</h1><p>선생님이 지정한 시험 범위만 보여요.</p></section>${plans.length?plans.map(plan=>{const g=plan.group||{};const school=g.school||user.school||'학교 시험';const lessons=scopeFor(plan);return `<article class="exam-card"><div class="exam-top"><div><div class="exam-school">${esc(school)}</div><div class="exam-meta">${esc(examLabel(plan))}</div></div>${plan.exam_date?`<div class="exam-date">${esc(plan.exam_date)}</div>`:''}</div><div class="book-name">${esc(plan.book_label)}</div>${lessons.map(l=>`<div class="lesson-card"><div class="lesson-title">${esc(l.lesson)}</div><div class="section-row">${l.sections.map(s=>`<button class="section-btn" data-plan="${esc(plan.id)}" data-lesson="${esc(l.lesson)}" data-section="${esc(String(s).toLowerCase())}">${esc(String(s)[0].toUpperCase()+String(s).slice(1))}</button>`).join('')}</div></div>`).join('')}</article>`}).join(''):`<div class="empty-assign"><b>지정된 시험 대비가 없습니다.</b><div style="margin-top:7px;font-size:12px">선생님이 시험 범위를 지정하면 여기에 표시됩니다.</div></div>`}`;
     home.querySelectorAll('.section-btn').forEach(btn=>btn.addEventListener('click',()=>start(btn)));
   }
   async function contentGet(path){const r=await fetch(CONTENT+path,{headers:HEAD,cache:'no-store'});if(!r.ok)throw new Error(await r.text());return r.json()}
