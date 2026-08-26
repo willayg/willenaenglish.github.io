@@ -8,6 +8,26 @@
   const localToken=()=>window.WillenaAPI?.getLocalAccessToken?.()||localStorage.getItem('sb_access_token')||'';
   const state={user:null,plans:[],plan:null,lesson:null,session:null,sessionSection:null,blocked:true};
 
+  let activityStartedAt=0;
+  let activeAccumulatedMs=0;
+  let activeTickAt=0;
+
+  function isActive(){return !document.hidden&&document.hasFocus()}
+  function flushActiveTime(){
+    if(activeTickAt&&isActive()) activeAccumulatedMs+=Math.max(0,performance.now()-activeTickAt);
+    activeTickAt=isActive()&&activityStartedAt?performance.now():0;
+  }
+  function beginStudyActivity(){
+    activityStartedAt=Date.now();
+    activeAccumulatedMs=0;
+    activeTickAt=isActive()?performance.now():0;
+  }
+  function getActiveTimeMs(){flushActiveTime();return Math.max(0,Math.round(activeAccumulatedMs))}
+  function resetStudyActivity(){activityStartedAt=0;activeAccumulatedMs=0;activeTickAt=0}
+  document.addEventListener('visibilitychange',flushActiveTime);
+  window.addEventListener('focus',flushActiveTime);
+  window.addEventListener('blur',flushActiveTime);
+
   function goLogin(){ location.replace(LOGIN); }
 
   async function refreshToken(){
@@ -44,20 +64,13 @@
 
   const ready=(async()=>{
     try{
-      // A local access token by itself is not enough. Test Prep must be backed by
-      // the current student browser session, otherwise stale tokens can open the app.
       const who=await routedFetch(authPath('whoami'));
       const wd=await who.json().catch(()=>({}));
       if(!who.ok||!wd?.success||!wd?.user_id){ goLogin(); return false; }
-
-      // Re-sync the access token from the authenticated browser session before
-      // asking the Test Prep student API who this user is.
       const sessionToken=await ensureToken(true);
       if(!sessionToken){ goLogin(); return false; }
-
       const d=await edge('me');
       if(!d?.user){ goLogin(); return false; }
-
       state.user=d.user;
       state.plans=Array.isArray(d.plans)?d.plans:[];
       state.blocked=false;
@@ -76,6 +89,7 @@
     state.lesson=lesson||null;
     state.session=null;
     state.sessionSection=null;
+    resetStudyActivity();
   }
   async function ensureSession(practiceType){
     await ready;
@@ -84,18 +98,40 @@
     if(state.session&&state.sessionSection===p) return state.session;
     if(state.session&&state.sessionSection!==p) await completeSession(0,0,[]);
     const d=await edge('start_session',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({plan_id:state.plan.id,practice_type:p,unit_key:state.lesson||null})});
-    state.session=d.session||null; state.sessionSection=p; return state.session;
+    state.session=d.session||null;
+    state.sessionSection=p;
+    if(!activityStartedAt) beginStudyActivity();
+    return state.session;
   }
   async function recordAttempt(payload){
     try{
       const s=await ensureSession(payload?.practice_type); if(!s) return;
-      await edge('attempt',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({session_id:s.id,question_id:payload.question_id,selected_answer:payload.selected_answer,correct_answer:payload.correct_answer,is_correct:!!payload.is_correct,metadata:{source_question_number:payload.source_question_number,question_type:payload.question_type,source_label:payload.source_label,lesson:state.lesson,plan_id:state.plan?.id}})});
+      await edge('attempt',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+        session_id:s.id,
+        question_id:payload.question_id,
+        selected_answer:payload.selected_answer,
+        correct_answer:payload.correct_answer,
+        is_correct:!!payload.is_correct,
+        question_type:payload.question_type||null,
+        targets:Array.isArray(payload.targets)?payload.targets:[],
+        response_time_ms:Number(payload.response_time_ms)||0,
+        metadata:{source_question_number:payload.source_question_number,question_type:payload.question_type,source_label:payload.source_label,lesson:state.lesson,plan_id:state.plan?.id}
+      })});
     }catch(e){console.warn('[test-prep-app] attempt save failed',e)}
   }
   async function completeSession(correctCount,questionCount,wrongIds){
-    const s=state.session; if(!s) return;
-    state.session=null; state.sessionSection=null;
-    try{await edge('complete_session',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({session_id:s.id,correct_count:Number(correctCount)||0,question_count:Number(questionCount)||0,wrong_ids:Array.isArray(wrongIds)?wrongIds:[]})})}catch(e){console.warn('[test-prep-app] session completion failed',e)}
+    const s=state.session; if(!s){resetStudyActivity();return;}
+    const activeTimeMs=getActiveTimeMs();
+    state.session=null;
+    state.sessionSection=null;
+    resetStudyActivity();
+    try{await edge('complete_session',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+      session_id:s.id,
+      correct_count:Number(correctCount)||0,
+      question_count:Number(questionCount)||0,
+      wrong_ids:Array.isArray(wrongIds)?wrongIds:[],
+      active_time_ms:activeTimeMs
+    })})}catch(e){console.warn('[test-prep-app] session completion failed',e)}
   }
-  window.WillenaTestPrepAuth={ready,state,edge,setActivePlan,recordAttempt,completeSession,ensureSession};
+  window.WillenaTestPrepAuth={ready,state,edge,setActivePlan,recordAttempt,completeSession,ensureSession,beginStudyActivity,getActiveTimeMs};
 })();
