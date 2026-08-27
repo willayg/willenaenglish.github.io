@@ -1,6 +1,6 @@
 /**
  * API Configuration - Simple and Deterministic
- * VERSION: 2026-08-26c CACHE_BUST
+ * VERSION: 2026-08-27d CACHE_BUST
  */
 (function() {
   'use strict';
@@ -61,9 +61,6 @@
     const qIndex = functionPath.indexOf('?');
     const search = qIndex >= 0 ? functionPath.slice(qIndex) : '';
 
-    // Teacher-side 내신 group setup lives in the Game Scores Supabase project.
-    // Route only those actions to the authenticated Edge Function; student test-prep
-    // session actions continue using the existing API path.
     if (fn === 'test_prep_api' && /(?:[?&])action=(?:teacher_groups|create_group|update_group)(?:&|$)/.test(search)) {
       return TEST_PREP_TEACHER_EDGE + search;
     }
@@ -155,4 +152,11 @@
     CF_ROLLOUT_PERCENT:100, CF_SHADOW_MODE:false,
     shouldUseCloudflare:()=>USE_CF_WORKERS,setRolloutPercent:()=>{},setFunctionRollout:()=>{},
   };
+
+  if (/^\/Teachers\/dashboard-v2\/?$/i.test(window.location.pathname)) {
+    const s = document.createElement('script');
+    s.src = '/Teachers/dashboard-v2/teacher-dashboard-ui-v3.js?v=20260827-ui3';
+    s.defer = true;
+    document.head.appendChild(s);
+  }
 })();
