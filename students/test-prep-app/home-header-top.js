@@ -1,6 +1,6 @@
 (function(){
 'use strict';
-let scheduled=false;
+let scheduled=false,bound=false;
 function styles(){
  if(document.getElementById('tpHomeHeaderTopStyles'))return;
  const s=document.createElement('style');
@@ -12,6 +12,7 @@ function styles(){
  #tpHomePlanTop .tp-exam-head{margin:0 2px 9px}
  #tpHomePlanTop .tp-book{margin:0 2px}
  #tpHomePlanTop .tp-dday{display:inline-flex;align-items:center;justify-content:center;padding:6px 9px;border:1px solid #cfe9eb;border-radius:999px;background:#f7fbfb;color:#19777e;font-size:9px;font-weight:800;white-space:nowrap}
+ #tpHomePlanTop [data-records]{position:relative;z-index:2;pointer-events:auto;cursor:pointer}
  .tp-exam-section>.tp-exam-head,.tp-exam-section>.tp-book{display:none!important}
  `;
  document.head.appendChild(s);
@@ -34,12 +35,29 @@ function addDday(top){
    if(!label)return;
    let pill=actions.querySelector('.tp-dday');
    if(!pill){pill=document.createElement('span');pill.className='tp-dday';actions.insertBefore(pill,date)}
-   pill.textContent=label;
+   if(pill.textContent!==label)pill.textContent=label;
  });
+}
+function bindClicks(){
+ if(bound)return;bound=true;
+ document.addEventListener('click',e=>{
+   const btn=e.target.closest?.('#tpHomePlanTop [data-records]');
+   if(!btn)return;
+   e.preventDefault();
+   e.stopPropagation();
+   const id=btn.dataset.records||'';
+   if(window.WillenaStudentDisplay?.showStatsByPlanId){
+     window.WillenaStudentDisplay.showStatsByPlanId(id);
+     return;
+   }
+   const home=document.getElementById('assignmentHome');
+   const original=[...(home?.querySelectorAll('.tp-exam-section [data-records]')||[])].find(x=>String(x.dataset.records)===String(id));
+   original?.click();
+ },true);
 }
 function place(){
  scheduled=false;
- styles();
+ styles();bindClicks();
  const home=document.getElementById('assignmentHome');
  if(!home||home.style.display==='none')return;
  if(home.querySelector('.tp-lesson-head,.tp-wrong-page-head'))return;
@@ -53,19 +71,21 @@ function place(){
    if(!head&&!book)return'';
    return `<div class="tp-home-plan-meta">${head?head.outerHTML:''}${book?book.outerHTML:''}</div>`;
  }).join('');
- if(top.innerHTML!==html)top.innerHTML=html;
+ const signature=sections.map(section=>{
+   const btn=section.querySelector(':scope > .tp-exam-head [data-records]');
+   const school=section.querySelector(':scope > .tp-exam-head h2')?.textContent||'';
+   const exam=section.querySelector(':scope > .tp-exam-head p')?.textContent||'';
+   const date=section.querySelector(':scope > .tp-exam-head .tp-exam-date')?.textContent||'';
+   const book=section.querySelector(':scope > .tp-book')?.textContent||'';
+   return [btn?.dataset.records||'',school,exam,date,book].join('|');
+ }).join('||');
+ if(top.dataset.signature!==signature){
+   top.innerHTML=html;
+   top.dataset.signature=signature;
+ }
  addDday(top);
- top.querySelectorAll('[data-records]').forEach(btn=>{
-   btn.onclick=e=>{
-     e.preventDefault();e.stopPropagation();
-     const id=btn.dataset.records||'';
-     if(window.WillenaStudentDisplay?.showStatsByPlanId){window.WillenaStudentDisplay.showStatsByPlanId(id);return;}
-     const original=[...home.querySelectorAll('.tp-exam-section [data-records]')].find(x=>String(x.dataset.records)===String(id));
-     original?.click();
-   };
- });
 }
 function schedule(){if(scheduled)return;scheduled=true;requestAnimationFrame(place)}
-function boot(){styles();schedule();new MutationObserver(schedule).observe(document.getElementById('assignmentHome')||document.body,{childList:true,subtree:true});window.addEventListener('popstate',()=>setTimeout(schedule,0));}
+function boot(){styles();bindClicks();schedule();new MutationObserver(schedule).observe(document.getElementById('assignmentHome')||document.body,{childList:true,subtree:true});window.addEventListener('popstate',()=>setTimeout(schedule,0));}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
