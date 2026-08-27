@@ -7,9 +7,9 @@ let selection=null;
 function addScript(src,dataKey){if(document.querySelector(`script[${dataKey}]`))return;const s=document.createElement('script');s.src=src;s.setAttribute(dataKey,'1');document.head.appendChild(s)}
 if(!document.querySelector('script[data-testprep-student-header]')){const s=document.createElement('script');s.type='module';s.src='/students/components/student-header.js?v=20260826-testprep8';s.dataset.testprepStudentHeader='1';document.head.appendChild(s)}
 addScript('./tracking-phase1.js?v=20260827-phase10','data-testprep-phase1-tracking');
-addScript('./vocab-practice.js?v=20260826-vocab8','data-testprep-vocab-practice');
-addScript('./vocab-test-practice.js?v=20260826-vocabtest2','data-testprep-vocab-test-practice');
-addScript('./sentence-practice.js?v=20260826-sentence7','data-testprep-sentence-practice');
+addScript('./vocab-practice.js?v=20260827-vocab9','data-testprep-vocab-practice');
+addScript('./vocab-test-practice.js?v=20260827-vocabtest3','data-testprep-vocab-test-practice');
+addScript('./sentence-practice.js?v=20260827-sentence8','data-testprep-sentence-practice');
 if(!document.querySelector('student-header[data-testprep-header]')){const header=document.createElement('student-header');header.setAttribute('data-testprep-header','1');header.setAttribute('title','Test Prep');header.setAttribute('show-id','false');header.setAttribute('show-home','false');header.setAttribute('show-points','true');header.setAttribute('show-logout','true');document.body.insertBefore(header,document.body.firstChild)}
 const app=document.querySelector('.app'),home=document.createElement('div'),quiz=document.createElement('div');
 home.id='assignmentHome';quiz.id='assignedQuizPane';quiz.style.display='none';
