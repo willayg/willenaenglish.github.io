@@ -5,7 +5,7 @@ const CONTENT_KEY=['sb_publishable_','G-FYhHfDL4OGdL892gY1Zg_','epdbEeqO'].join(
 const GROUP_API='https://fiieuiktlsivwfgyivai.supabase.co/functions/v1/test-prep-groups';
 const GROUP_KEY='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
 const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
-const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]));
 const label=s=>({communication:'Communication',grammar:'Grammar',reading:'Reading',vocabulary:'Vocabulary',sentences:'Sentences'}[s]||String(s||'').replace(/_/g,' '));
 let catalog=[],groups=[],catalogReady=false,currentGroupId=null,selectedIds=new Set();
 function headers(){return {apikey:CONTENT_KEY,Authorization:`Bearer ${CONTENT_KEY}`}}
@@ -30,12 +30,14 @@ function renderLessons(saved=savedScope()){const book=currentBook(),el=$('#naLes
 function scopeData(){return {lessons:$$('#naLessonList .na-lesson').map(r=>({lesson:r.dataset.lesson,unit_id:r.dataset.unitId,sections:$$('.na-scope-chip.on',r).map(x=>x.dataset.section)})).filter(x=>x.sections.length),external_passages:[]}}
 function chooseVal(id){return $(`#${id} .na-choice.on`)?.dataset.value||''}
 function syncReview(){if(!$('.na-step[data-step="5"].active'))return;const b=currentBook(),scope=scopeData();const rvBook=$('#rvBook'),rvScope=$('#rvScope');if(rvBook)rvBook.textContent=b?.label||'—';if(rvScope)rvScope.textContent=scope.lessons.map(x=>`${x.lesson} (${x.sections.map(label).join(', ')})`).join(' · ')||'선택 없음'}
+function syncSelectedFromPicker(){selectedIds=new Set($$('#naStudentResults .na-student-row.on[data-id]').map(r=>String(r.dataset.id||'')).filter(Boolean))}
 function prepareWizard(){if(!catalogReady)return;const modal=$('#naWizardBg');if(!modal?.classList.contains('open'))return;const item=groups.find(x=>x.group?.id===currentGroupId);const preferredLabel=item?.group?.book_label||'';const preferredKey=item?.group?.book_key||'';populateBookSelect(preferredLabel,preferredKey);selectedIds=new Set(item?.members?.map(m=>String(m.student?.id||m.plan?.student_id||'')).filter(Boolean)||[]);renderLessons(item?.group?.scope?.lessons||[]);syncReview()}
 async function saveDynamic(){const b=currentBook();if(!b)throw new Error('교재를 선택하세요.');if(!selectedIds.size)throw new Error('학생을 한 명 이상 선택하세요.');const payload={group_id:currentGroupId||undefined,school:$('#naSchool')?.value||'',term:Number(chooseVal('naTerms')),exam_type:chooseVal('naExamTypes'),end_date:$('#naEnd')?.value||'',book_key:b.key,book_label:b.label,student_ids:[...selectedIds],scope:scopeData()};if(!payload.school||![1,2].includes(payload.term)||!['midterm','final'].includes(payload.exam_type)||!payload.end_date)throw new Error('시험 정보를 확인하세요.');if(!payload.scope.lessons.length)throw new Error('시험 범위를 한 개 이상 선택하세요.');await groupApi(currentGroupId?'update_group':'create_group',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})}
 function bind(){document.addEventListener('click',e=>{
  const edit=e.target.closest('[data-edit]');if(edit){currentGroupId=edit.dataset.edit;const item=groups.find(x=>x.group?.id===currentGroupId);selectedIds=new Set(item?.members?.map(m=>String(m.student?.id||m.plan?.student_id||'')).filter(Boolean)||[]);setTimeout(prepareWizard,0);return}
  if(e.target.closest('#naCreate')||e.target.closest('#naEmptyCreate')){currentGroupId=null;selectedIds=new Set();setTimeout(prepareWizard,0);return}
- const row=e.target.closest('#naStudentResults .na-student-row[data-id]');if(row){setTimeout(()=>{if(row.classList.contains('on'))selectedIds.add(row.dataset.id);else selectedIds.delete(row.dataset.id)},0)}
+ const row=e.target.closest('#naStudentResults .na-student-row[data-id]');if(row){const id=String(row.dataset.id||'');if(id){if(row.classList.contains('on'))selectedIds.delete(id);else selectedIds.add(id)}return}
+ if(e.target.closest('#naPickerDone')){syncSelectedFromPicker();return}
  const next=e.target.closest('#naNext');if(next&&$('.na-step[data-step="5"].active')){e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();const st=$('#naWizardStatus');next.disabled=true;if(st)st.textContent='저장 중…';saveDynamic().then(async()=>{if(st)st.textContent='저장했습니다.';$('#naWizardBg')?.classList.remove('open');await loadGroups();document.querySelector('[data-view="naesin"]')?.click()}).catch(err=>{if(st)st.textContent=err.message||'저장하지 못했습니다.'}).finally(()=>{next.disabled=false});return}
  },true);
  document.addEventListener('change',e=>{if(e.target?.id==='naBook'&&e.target.dataset.dynamic==='1'){e.stopImmediatePropagation();e.target.dataset.dynamicKey=e.target.value;const b=currentBook();if($('#naBookTitle'))$('#naBookTitle').textContent=b?.label||'';renderLessons([])}},true)
