@@ -1,142 +1,57 @@
 (function(){
 'use strict';
 const $=(s,r=document)=>r.querySelector(s),$$=(s,r=document)=>[...r.querySelectorAll(s)];
+const INSIGHTS_API='https://fiieuiktlsivwfgyivai.supabase.co/functions/v1/test-prep-teacher-insights';
+const INSIGHTS_KEY='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
+let tpStudents=[],tpLoaded=false,tpLoading=false;
+
+function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function fmtDate(v){if(!v)return'—';const d=new Date(v);return Number.isNaN(d.getTime())?'—':d.toLocaleDateString('ko-KR',{month:'short',day:'numeric'})}
+function labelPractice(v){return ({vocabulary:'Vocabulary',vocab_test:'Vocabulary Test',sentences:'Sentences',communication:'Communication',grammar:'Grammar',reading:'Reading',mock_test:'Mock Test'}[v]||String(v||'Other').replace(/_/g,' '))}
+async function insights(action,params={}){const token=window.WillenaAPI?.getLocalAccessToken?.()||localStorage.getItem('sb_access_token')||'';if(!token)throw new Error('로그인이 필요합니다.');const q=new URLSearchParams({action,...params});const r=await fetch(`${INSIGHTS_API}?${q}`,{headers:{Authorization:`Bearer ${token}`,apikey:INSIGHTS_KEY},credentials:'omit',cache:'no-store'});const j=await r.json().catch(()=>({}));if(!r.ok||j.success===false)throw new Error(j.error||`Request failed (${r.status})`);return j}
 
 function addStyles(){
-  if($('#naesinDashboardV2Styles')) return;
-  const style=document.createElement('style');
-  style.id='naesinDashboardV2Styles';
-  style.textContent=`
-  #view-naesin .page-head{align-items:center;margin:0 0 22px!important}
-  #view-naesin .page-head h1{font-size:1.6rem!important;letter-spacing:-.02em}
-  #view-naesin .page-head p{font-size:.78rem!important;max-width:620px}
-  #view-naesin .na-grid{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:18px!important;align-items:start}
-  #view-naesin .na-test-card{position:relative!important;background:#fff!important;border:1.5px solid #dfe5e9!important;border-radius:24px!important;padding:20px!important;min-height:220px!important;box-shadow:0 9px 26px rgba(38,42,55,.065)!important;cursor:pointer!important;transition:transform .16s ease,box-shadow .16s ease,border-color .16s ease!important;overflow:hidden!important}
-  #view-naesin .na-test-card:hover,#view-naesin .na-test-card:focus-visible{transform:translateY(-2px)!important;border-color:#84d5df!important;box-shadow:0 16px 38px rgba(38,42,55,.11)!important;outline:none}
-  #view-naesin .na-test-card:before{content:'';position:absolute;left:0;top:0;bottom:0;width:5px;background:#58c3d2;opacity:.9}
-  #view-naesin .na-test-card:after{content:'학생 열기';position:absolute;right:18px;bottom:18px;font-size:.66rem;font-weight:700;color:#318c97;background:#eef9fb;border:1px solid #c8edf1;padding:7px 10px;border-radius:10px;pointer-events:none}
-  #view-naesin .na-test-card.open:after{content:'학생 닫기'}
-  #view-naesin .na-test-top{gap:16px!important}
-  #view-naesin .na-test-title{font-size:1.05rem!important;line-height:1.4;color:#303442}
-  #view-naesin .na-test-sub{font-size:.72rem!important;margin-top:5px!important;color:#7c8490}
-  #view-naesin .na-test-date{font-size:.67rem!important;padding:6px 9px!important;background:#f5f6f8!important;border:1px solid #eceef1}
-  #view-naesin .na-test-meta{margin-top:15px!important;gap:7px!important}
-  #view-naesin .na-badge{padding:6px 9px!important;font-size:.65rem!important}
-  #view-naesin .na-card-actions{margin-top:18px!important;padding-right:90px;gap:8px!important}
-  #view-naesin .na-task,#view-naesin .na-edit{min-height:40px;border-radius:11px!important;padding:9px 12px!important}
-  #view-naesin .na-track{display:none!important}
-  #view-naesin .na-members{margin-top:18px!important;padding-top:15px!important;border-top:1px solid #e9edf0!important}
-  #view-naesin .na-members:before{content:'학생 활동';display:block;font-size:.68rem;font-weight:700;color:#707883;margin-bottom:9px;text-transform:uppercase;letter-spacing:.05em}
-  #view-naesin .na-member{position:relative!important;display:grid!important;grid-template-columns:minmax(0,1fr) auto auto!important;gap:13px!important;align-items:center!important;padding:13px 42px 13px 13px!important;margin:7px 0!important;border:1px solid #e7ebee!important;border-radius:14px!important;background:#fbfcfd!important;cursor:pointer!important;transition:background .13s ease,border-color .13s ease,transform .13s ease!important}
-  #view-naesin .na-member:hover,#view-naesin .na-member:focus-visible{background:#fff!important;border-color:#9edce4!important;transform:translateX(2px);outline:none}
-  #view-naesin .na-member:after{content:'›';position:absolute;right:15px;top:50%;transform:translateY(-50%);font-size:22px;color:#8c9aa3}
-  #view-naesin .na-member b{font-size:.8rem!important;color:#313844}
-  #view-naesin .na-member small{font-size:.63rem!important;margin-top:3px!important;color:#858d96}
-  #view-naesin .na-member>div:nth-child(2){font-size:.72rem;font-weight:700;color:#53616b;background:#f1f4f6;border-radius:9px;padding:6px 8px;white-space:nowrap}
-  #view-naesin .na-member>div:nth-child(3){font-size:.72rem;font-weight:700;color:#287b85;background:#eef9fb;border-radius:9px;padding:6px 8px;min-width:48px;text-align:center;white-space:nowrap}
-  body.na-student-detail-open .drawer{width:min(920px,98vw)!important;background:#f5f6f8!important}
-  body.na-student-detail-open .drawer-head{padding:21px 24px!important}
-  body.na-student-detail-open .drawer-name{font-size:1.32rem!important}
-  body.na-student-detail-open .drawer-body{padding:18px!important}
-  body.na-student-detail-open .rating-grid{grid-template-columns:1fr 1fr!important;gap:13px!important}
-  body.na-student-detail-open .big-card{border-radius:20px!important;padding:18px!important;box-shadow:0 5px 18px rgba(38,42,55,.04)}
-  body.na-student-detail-open .big-card h3{font-size:.7rem!important;text-transform:uppercase;letter-spacing:.05em;color:#747d88}
-  body.na-student-detail-open .big-rating{font-size:1.45rem!important;margin-top:3px}
-  body.na-student-detail-open .statline{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:7px!important}
-  body.na-student-detail-open .statline span{margin:0!important;border:1px solid #ebeff2;border-radius:11px!important;padding:9px 10px!important;background:#f6f8f9!important;line-height:1.35}
-  body.na-student-detail-open .detail{border-radius:20px!important;padding:18px!important;box-shadow:0 4px 16px rgba(38,42,55,.035)}
-  body.na-student-detail-open .detail h3{font-size:.86rem!important;margin-bottom:13px!important}
-  body.na-student-detail-open .skill{padding:12px 0!important}
-  body.na-student-detail-open .proof-row{padding:11px 0!important}
-  @media(max-width:980px){#view-naesin .na-grid{grid-template-columns:1fr!important}}
-  @media(max-width:700px){#view-naesin .na-test-card{padding:17px!important;min-height:200px!important}#view-naesin .na-card-actions{padding-right:0;padding-bottom:45px}body.na-student-detail-open .rating-grid{grid-template-columns:1fr!important}body.na-student-detail-open .statline{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
-  `;
-  document.head.appendChild(style);
+ if($('#naesinDashboardV2Styles'))return;
+ const style=document.createElement('style');style.id='naesinDashboardV2Styles';style.textContent=`
+ #view-naesin .page-head{align-items:center;margin:0 0 22px!important}#view-naesin .page-head h1{font-size:1.6rem!important;letter-spacing:-.02em}#view-naesin .page-head p{font-size:.78rem!important;max-width:620px}
+ #view-naesin .na-grid{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:18px!important;align-items:start}
+ #view-naesin .na-test-card{position:relative!important;background:#fff!important;border:1.5px solid #dfe5e9!important;border-radius:24px!important;padding:20px!important;min-height:220px!important;box-shadow:0 9px 26px rgba(38,42,55,.065)!important;cursor:pointer!important;transition:.16s!important;overflow:hidden!important}
+ #view-naesin .na-test-card:hover{transform:translateY(-2px)!important;border-color:#84d5df!important;box-shadow:0 16px 38px rgba(38,42,55,.11)!important}#view-naesin .na-test-card:before{content:'';position:absolute;left:0;top:0;bottom:0;width:5px;background:#58c3d2}
+ #view-naesin .na-test-card:after{content:'학생 열기';position:absolute;right:18px;bottom:18px;font-size:.66rem;font-weight:700;color:#318c97;background:#eef9fb;border:1px solid #c8edf1;padding:7px 10px;border-radius:10px;pointer-events:none}#view-naesin .na-test-card.open:after{content:'학생 닫기'}
+ #view-naesin .na-track{display:none!important}#view-naesin .na-card-actions{padding-right:90px!important}#view-naesin .na-members{margin-top:18px!important;padding-top:15px!important;border-top:1px solid #e9edf0!important}#view-naesin .na-members:before{content:'학생 활동';display:block;font-size:.68rem;font-weight:700;color:#707883;margin-bottom:9px}
+ #view-naesin .na-member{position:relative!important;display:grid!important;grid-template-columns:minmax(0,1fr) auto auto!important;gap:13px!important;align-items:center!important;padding:13px 42px 13px 13px!important;margin:7px 0!important;border:1px solid #e7ebee!important;border-radius:14px!important;background:#fbfcfd!important;cursor:pointer!important}.na-member:hover{border-color:#9edce4!important;background:#fff!important}.na-member:after{content:'›';position:absolute;right:15px;top:50%;transform:translateY(-50%);font-size:22px;color:#8c9aa3}
+ #view-students.tp-testprep-view .page-head{align-items:flex-start}#view-students.tp-testprep-view .page-head p{max-width:620px}#view-students.tp-testprep-view .filters select,#view-students.tp-testprep-view #classSelect,#view-students.tp-testprep-view #daysSelect{display:none!important}
+ #view-students.tp-testprep-view .panel{overflow:visible;background:transparent;border:0;box-shadow:none}#view-students.tp-testprep-view .panel-head{background:#fff;border:1px solid var(--line);border-radius:18px;margin-bottom:12px}#view-students.tp-testprep-view .student-list{max-height:none;overflow:visible;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+ #view-students.tp-testprep-view .tp-student-card{background:#fff;border:1px solid #e3e7ea;border-radius:20px;padding:17px;box-shadow:0 6px 20px rgba(38,42,55,.05);cursor:pointer;transition:.15s;position:relative}#view-students.tp-testprep-view .tp-student-card:hover{transform:translateY(-2px);border-color:#9edce4;box-shadow:0 12px 28px rgba(38,42,55,.09)}#view-students.tp-testprep-view .tp-student-card:after{content:'›';position:absolute;right:16px;top:16px;color:#8d9ba5;font-size:22px}
+ .tp-student-name{font-size:.98rem;font-weight:700}.tp-student-sub{font-size:.67rem;color:var(--muted);margin-top:3px}.tp-student-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:15px}.tp-metric{background:#f5f7f8;border-radius:12px;padding:9px 10px}.tp-metric b{display:block;font-size:.88rem}.tp-metric span{display:block;font-size:.59rem;color:var(--muted);margin-top:2px}.tp-exams{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}.tp-exam-chip{font-size:.6rem;font-weight:700;color:#287b85;background:#eef9fb;border-radius:999px;padding:5px 8px}
+ body.na-student-detail-open .drawer{width:min(960px,98vw)!important;background:#f5f6f8!important}body.na-student-detail-open .drawer-head{padding:21px 24px!important}body.na-student-detail-open .drawer-body{padding:18px!important}.tp-summary-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:12px}.tp-summary{background:#fff;border:1px solid var(--line);border-radius:17px;padding:14px}.tp-summary b{display:block;font-size:1.25rem}.tp-summary span{font-size:.64rem;color:var(--muted)}.tp-detail{background:#fff;border:1px solid var(--line);border-radius:19px;padding:16px;margin-bottom:12px}.tp-detail h3{font-size:.82rem;margin:0 0 12px}.tp-skill-row,.tp-activity-row,.tp-wrong-row,.tp-mock-row{display:grid;grid-template-columns:1.3fr .7fr .7fr;gap:10px;padding:10px 0;border-top:1px solid #eef0f2;font-size:.7rem}.tp-skill-row:first-of-type,.tp-activity-row:first-of-type,.tp-wrong-row:first-of-type,.tp-mock-row:first-of-type{border-top:0}.tp-wrong-row{grid-template-columns:120px 1fr}.tp-good{color:#287b85;font-weight:700}.tp-bad{color:#a4464d;font-weight:700}
+ @media(max-width:900px){#view-naesin .na-grid,#view-students.tp-testprep-view .student-list{grid-template-columns:1fr!important}.tp-summary-grid{grid-template-columns:repeat(2,1fr)}}@media(max-width:700px){.tp-student-metrics{grid-template-columns:repeat(2,1fr)}}`;
+ document.head.appendChild(style);
 }
 
-function findStudentByName(name){
-  const needle=String(name||'').trim();
-  if(!needle) return null;
-  return (window.state?.students||[]).find(s=>String(s.name||'').trim()===needle||String(s.korean_name||'').trim()===needle)||null;
+function renderTpStudents(){
+ const view=$('#view-students');if(!view)return;view.classList.add('tp-testprep-view');
+ const head=view.querySelector('.page-head');if(head){head.querySelector('h1').textContent='Test Prep Students';head.querySelector('p').textContent='내신 Test Prep 앱의 실제 학습 기록입니다.';const refresh=$('#refreshBtn');if(refresh){refresh.textContent='Refresh Test Prep';refresh.onclick=()=>loadTpStudents(true)} const search=$('#searchInput');if(search){search.placeholder='학생 검색';search.oninput=renderTpStudents}}
+ const q=($('#searchInput')?.value||'').trim().toLowerCase();const rows=tpStudents.filter(x=>{const s=x.student||{};return !q||[s.name,s.korean_name,s.username,s.class,s.school].join(' ').toLowerCase().includes(q)});
+ $('#panelTitle').textContent='Test Prep activity';$('#statusText').textContent='Test Prep attempts · active exam plans';$('#studentCount').textContent=`${rows.length} student${rows.length===1?'':'s'}`;
+ const list=$('#studentList');if(!list)return;if(!rows.length){list.innerHTML='<div class="empty">Test Prep 기록이 있는 학생이 없습니다.</div>';return}
+ list.innerHTML=rows.map(x=>{const s=x.student||{},exams=x.exams||[];return `<article class="tp-student-card" data-id="${esc(s.id)}"><div class="tp-student-name">${esc(s.korean_name||s.name||s.username||'Student')}</div><div class="tp-student-sub">${esc(s.name&&s.name!==s.korean_name?s.name:'')}${s.class?' · '+esc(s.class):''}</div><div class="tp-student-metrics"><div class="tp-metric"><b>${esc(x.attempts||0)}</b><span>questions</span></div><div class="tp-metric"><b>${x.accuracy==null?'—':esc(x.accuracy)+'%'}</b><span>accuracy</span></div><div class="tp-metric"><b>${esc(x.active_days||0)}</b><span>active days</span></div><div class="tp-metric"><b>${esc(fmtDate(x.last_activity))}</b><span>last activity</span></div></div><div class="tp-exams">${exams.map(e=>`<span class="tp-exam-chip">${esc(e.school)} · ${esc(e.exam_name||'시험')}</span>`).join('')}</div></article>`}).join('');
+ $$('.tp-student-card',list).forEach(c=>c.onclick=()=>openTpStudent(c.dataset.id));
 }
 
-async function openStudentFromNaesin(row){
-  const name=row.querySelector('b')?.textContent?.trim()||'';
-  const className=row.querySelector('small')?.textContent?.trim()||'';
-  if(!name) return;
-  try{
-    if(className&&$('#classSelect')&&[...$('#classSelect').options].some(o=>o.value===className)){
-      $('#classSelect').value=className;
-      if(typeof window.loadClass==='function') await window.loadClass();
-      else if(typeof loadClass==='function') await loadClass();
-    }
-  }catch(e){console.warn('[naesin-ui] class load failed',e)}
-  let student=null;
-  try{student=findStudentByName(name)}catch(e){}
-  if(!student){
-    try{
-      const rows=$$('.student-row','#studentList');
-      const match=rows.find(r=>r.querySelector('.student-name')?.textContent?.trim()===name||r.querySelector('.student-ko')?.textContent?.trim()===name);
-      if(match){student={user_id:match.dataset.id}}
-    }catch(e){}
-  }
-  if(student?.user_id){
-    document.body.classList.add('na-student-detail-open');
-    try{
-      if(typeof window.openStudent==='function') await window.openStudent(student.user_id);
-      else if(typeof openStudent==='function') await openStudent(student.user_id);
-    }catch(e){console.error('[naesin-ui] open student failed',e)}
-    return;
-  }
-  try{
-    if(typeof window.switchView==='function') window.switchView('students');
-    else if(typeof switchView==='function') switchView('students');
-    const search=$('#searchInput');
-    if(search){search.value=name;search.dispatchEvent(new Event('input',{bubbles:true}))}
-  }catch(e){}
-}
+async function loadTpStudents(force=false){if(tpLoading)return;if(tpLoaded&&!force){renderTpStudents();return}tpLoading=true;try{const j=await insights('students');tpStudents=j.students||[];tpLoaded=true;renderTpStudents()}catch(e){const list=$('#studentList');if(list)list.innerHTML=`<div class="empty">${esc(e.message)}</div>`}finally{tpLoading=false}}
 
-function enhanceCards(){
-  const root=$('#view-naesin');
-  if(!root) return;
-  $$('.na-test-card',root).forEach(card=>{
-    if(!card.dataset.clickCardBound){
-      card.dataset.clickCardBound='1';
-      card.tabIndex=0;
-      card.setAttribute('role','button');
-      card.setAttribute('aria-label','학생 목록 열기');
-      card.addEventListener('click',e=>{
-        if(e.target.closest('button')||e.target.closest('.na-member')) return;
-        card.classList.toggle('open');
-      });
-      card.addEventListener('keydown',e=>{
-        if((e.key==='Enter'||e.key===' ')&&!e.target.closest('button')){
-          e.preventDefault();
-          card.classList.toggle('open');
-        }
-      });
-    }
-  });
-  $$('.na-member',root).forEach(row=>{
-    if(row.dataset.studentDetailBound) return;
-    row.dataset.studentDetailBound='1';
-    row.tabIndex=0;
-    row.setAttribute('role','button');
-    row.setAttribute('aria-label',`${row.querySelector('b')?.textContent?.trim()||'학생'} 활동 자세히 보기`);
-    row.addEventListener('click',e=>{e.stopPropagation();openStudentFromNaesin(row)});
-    row.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();e.stopPropagation();openStudentFromNaesin(row)}});
-  });
-}
+function rowsOrEmpty(rows,renderer,msg){return rows?.length?rows.map(renderer).join(''):`<div class="empty" style="padding:10px 0">${msg}</div>`}
+async function openTpStudent(id){document.body.classList.add('na-student-detail-open');$('#drawerBg')?.classList.add('open');$('#drawerName').textContent='Test Prep student';$('#drawerMeta').textContent='Loading Test Prep activity…';$('#drawerBody').innerHTML='<div class="empty">Loading Test Prep activity…</div>';try{const j=await insights('student_detail',{student_id:id}),s=j.student||{},sum=j.summary||{};$('#drawerName').textContent=s.korean_name||s.name||s.username||'Student';$('#drawerMeta').textContent=`Test Prep · ${s.class||''}${s.school?' · '+s.school:''}`;$('#drawerBody').innerHTML=`<div class="tp-summary-grid"><div class="tp-summary"><b>${sum.attempts||0}</b><span>Total questions</span></div><div class="tp-summary"><b>${sum.accuracy==null?'—':sum.accuracy+'%'}</b><span>Accuracy</span></div><div class="tp-summary"><b>${sum.active_days||0}</b><span>Active days</span></div><div class="tp-summary"><b>${j.mocks?.length||0}</b><span>Completed mocks</span></div></div>
+ <div class="tp-detail"><h3>Skill performance</h3>${rowsOrEmpty(j.skills,r=>`<div class="tp-skill-row"><b>${esc(labelPractice(r.practice))}</b><span>${r.attempts} questions</span><span class="${r.accuracy>=80?'tp-good':r.accuracy<60?'tp-bad':''}">${r.accuracy==null?'—':r.accuracy+'%'}</span></div>`,'No skill evidence yet.')}</div>
+ <div class="tp-detail"><h3>Lesson performance</h3>${rowsOrEmpty(j.lessons,r=>`<div class="tp-skill-row"><b>${esc(r.lesson)}</b><span>${r.attempts} questions</span><span>${r.accuracy==null?'—':r.accuracy+'%'}</span></div>`,'No lesson evidence yet.')}</div>
+ <div class="tp-detail"><h3>Mock tests</h3>${rowsOrEmpty(j.mocks,r=>`<div class="tp-mock-row"><b>${esc(fmtDate(r.completed_at))}${r.lesson?' · '+esc(r.lesson):''}</b><span>${r.correct}/25</span><span class="tp-good">${r.percent}%</span></div>`,'No completed 25-question mock tests yet.')}</div>
+ <div class="tp-detail"><h3>Recent wrong answers</h3>${rowsOrEmpty(j.recent_wrong,r=>`<div class="tp-wrong-row"><span>${esc(fmtDate(r.attempted_at))}<br>${esc(labelPractice(r.practice_type))}</span><div><b>${esc(r.prompt||r.lesson||'Question')}</b><div style="margin-top:4px;color:var(--muted)">Answer: ${esc(r.selected_answer||'—')} · Correct: ${esc(r.correct_answer||'—')}</div></div></div>`,'No recent wrong answers.')}</div>
+ <div class="tp-detail"><h3>Activity by day</h3>${rowsOrEmpty(j.activity,r=>`<div class="tp-activity-row"><b>${esc(r.date)}</b><span>${r.attempts} questions</span><span>${r.accuracy==null?'—':r.accuracy+'%'}</span></div>`,'No activity yet.')}</div>`}catch(e){$('#drawerBody').innerHTML=`<div class="empty">${esc(e.message)}</div>`}}
 
-function watchDrawer(){
-  const bg=$('#drawerBg');
-  if(!bg) return;
-  if(!bg.classList.contains('open')) document.body.classList.remove('na-student-detail-open');
-}
-
-let scheduled=false;
-function scan(){scheduled=false;addStyles();enhanceCards();watchDrawer()}
-function schedule(){if(scheduled)return;scheduled=true;requestAnimationFrame(scan)}
-function boot(){scan();new MutationObserver(schedule).observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['class']});}
+function enhanceNaesin(){const root=$('#view-naesin');if(!root)return;$$('.na-test-card',root).forEach(card=>{if(card.dataset.tpBound)return;card.dataset.tpBound='1';card.tabIndex=0;card.addEventListener('click',e=>{if(e.target.closest('button')||e.target.closest('.na-member'))return;card.classList.toggle('open')})});$$('.na-member',root).forEach(row=>{if(row.dataset.tpStudentBound)return;row.dataset.tpStudentBound='1';row.tabIndex=0;row.addEventListener('click',async e=>{e.stopPropagation();if(!tpLoaded)await loadTpStudents();const name=row.querySelector('b')?.textContent?.trim()||'';const hit=tpStudents.find(x=>{const s=x.student||{};return [s.korean_name,s.name,s.username].some(v=>String(v||'').trim()===name)});if(hit?.student?.id)openTpStudent(hit.student.id)});})}
+function bindStudentNav(){$$('[data-view="students"]').forEach(b=>{if(b.dataset.tpNavBound)return;b.dataset.tpNavBound='1';b.addEventListener('click',()=>setTimeout(()=>loadTpStudents(),50))})}
+function watchDrawer(){const bg=$('#drawerBg');if(bg&&!bg.classList.contains('open'))document.body.classList.remove('na-student-detail-open')}
+let scheduled=false;function scan(){scheduled=false;addStyles();enhanceNaesin();bindStudentNav();watchDrawer()}function schedule(){if(scheduled)return;scheduled=true;requestAnimationFrame(scan)}function boot(){scan();setTimeout(()=>{if($('#view-students')?.classList.contains('active'))loadTpStudents()},900);new MutationObserver(schedule).observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['class']})}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
