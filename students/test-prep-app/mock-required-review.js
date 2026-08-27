@@ -44,6 +44,15 @@ function wrongCount(result){
  const m=p?.textContent?.match(/오답\s*(\d+)개/);
  return m?Number(m[1]):0;
 }
+function autoLeave(result){
+ if(result.dataset.autoLeaveScheduled)return;
+ result.dataset.autoLeaveScheduled='1';
+ setTimeout(()=>{
+   const back=document.querySelector('#assignedBackRow .back-assign');
+   if(back)back.click();
+   else if(history.state?.tp==='practice')history.back();
+ },1800);
+}
 function enforce(){
  addStyles();wrapTracking();
  document.querySelectorAll('.result').forEach(result=>{
@@ -51,9 +60,9 @@ function enforce(){
    const allRetry=result.querySelector('#mockAllWrong');
    const retry=lessonRetry||allRetry;
    const done=result.querySelector('#mockDone,#mockAllDone');
+   if(done)done.remove();
    const wrong=wrongCount(result);
    if(wrong>0&&retry){
-     if(done)done.style.display='none';
      retry.textContent=correction?'틀린 문제 다시 풀기':'오답 복습 시작';
      if(!result.querySelector('.mock-review-required-note')){
        const note=document.createElement('p');
@@ -67,13 +76,14 @@ function enforce(){
        retry.dataset.requiredReview='1';
        retry.addEventListener('click',()=>{correction=true;},true);
      }
-   }else if(wrong===0&&done){
+   }else if(wrong===0){
      finishAnimation(result);
      correction=false;
      const h=result.querySelector('h2');
-     if(h&&/모의고사 완료/.test(h.textContent||''))h.textContent='모의고사 완료';
+     if(h)h.textContent='모의고사 완료';
      const p=result.querySelector('p');
      if(p&&/오답\s*0개/.test(p.textContent||''))p.textContent='모든 문제를 정확하게 마쳤어요.';
+     autoLeave(result);
    }
  });
 }
