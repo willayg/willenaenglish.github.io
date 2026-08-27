@@ -1,6 +1,6 @@
 /**
  * API Configuration - Simple and Deterministic
- * VERSION: 2026-08-27d CACHE_BUST
+ * VERSION: 2026-08-27e CACHE_BUST
  */
 (function() {
   'use strict';
@@ -155,7 +155,7 @@
 
   if (/^\/Teachers\/dashboard-v2\/?$/i.test(window.location.pathname)) {
     const s = document.createElement('script');
-    s.src = '/Teachers/dashboard-v2/teacher-dashboard-ui-v3.js?v=20260827-ui3';
+    s.src = '/Teachers/dashboard-v2/teacher-dashboard-ui-v3.js?v=20260827-ui4';
     s.defer = true;
     document.head.appendChild(s);
   }
