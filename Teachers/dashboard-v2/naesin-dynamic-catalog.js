@@ -15,10 +15,10 @@ async function groupApi(action,opts={}){const token=window.WillenaAPI?.getLocalA
 async function loadCatalog(){const [books,units,questions]=await Promise.all([
  rest('content_books?select=id,title,source_key,status&order=title.asc'),
  rest('content_units?select=id,book_id,unit_number,title,status&order=book_id.asc,unit_number.asc'),
- allRows('test_prep_questions?select=book_id,unit_id,section&student_usable=eq.true&replacement_needed=eq.false')
+ allRows('test_prep_questions?select=book_id,unit_id,section')
 ]);
  const sectionMap=new Map();questions.forEach(q=>{if(!q.unit_id||!q.section)return;const set=sectionMap.get(q.unit_id)||new Set();set.add(String(q.section).toLowerCase());sectionMap.set(q.unit_id,set)});
- const preferred=['communication','grammar','reading'];
+ const preferred=['vocabulary','sentences','communication','grammar','reading'];
  catalog=books.map(b=>({id:b.id,key:b.source_key||b.id,label:b.title||b.source_key||'Untitled book',status:b.status,lessons:units.filter(u=>u.book_id===b.id).sort((a,b)=>(a.unit_number||0)-(b.unit_number||0)).map(u=>({id:u.id,title:u.title||`Unit ${u.unit_number}`,number:u.unit_number,sections:[...(sectionMap.get(u.id)||new Set())].sort((a,b)=>{const ai=preferred.indexOf(a),bi=preferred.indexOf(b);return (ai<0?99:ai)-(bi<0?99:bi)||a.localeCompare(b)} )}))})).filter(b=>b.lessons.length);
  catalogReady=true;window.WillenaNaesinCatalog=catalog;return catalog}
 async function loadGroups(){try{const j=await groupApi('teacher_groups');groups=j.groups||[]}catch(e){console.warn('[naesin-catalog] groups',e)}}
