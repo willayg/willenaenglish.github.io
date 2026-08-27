@@ -55,7 +55,15 @@ function place(){
  }).join('');
  if(top.innerHTML!==html)top.innerHTML=html;
  addDday(top);
- top.querySelectorAll('[data-records]').forEach(btn=>{btn.onclick=e=>{e.stopPropagation();const original=home.querySelector(`.tp-exam-section [data-records="${CSS.escape(btn.dataset.records||'')}"]`);original?.click();};});
+ top.querySelectorAll('[data-records]').forEach(btn=>{
+   btn.onclick=e=>{
+     e.preventDefault();e.stopPropagation();
+     const id=btn.dataset.records||'';
+     if(window.WillenaStudentDisplay?.showStatsByPlanId){window.WillenaStudentDisplay.showStatsByPlanId(id);return;}
+     const original=[...home.querySelectorAll('.tp-exam-section [data-records]')].find(x=>String(x.dataset.records)===String(id));
+     original?.click();
+   };
+ });
 }
 function schedule(){if(scheduled)return;scheduled=true;requestAnimationFrame(place)}
 function boot(){styles();schedule();new MutationObserver(schedule).observe(document.getElementById('assignmentHome')||document.body,{childList:true,subtree:true});window.addEventListener('popstate',()=>setTimeout(schedule,0));}
