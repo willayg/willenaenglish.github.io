@@ -5,7 +5,7 @@ const CONTENT_KEY=['sb_publishable_','G-FYhHfDL4OGdL892gY1Zg_','epdbEeqO'].join(
 const GROUP_API='https://fiieuiktlsivwfgyivai.supabase.co/functions/v1/test-prep-groups';
 const GROUP_KEY='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
 const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
-const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]));
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const label=s=>({communication:'Communication',grammar:'Grammar',reading:'Reading',vocabulary:'Vocabulary',sentences:'Sentences'}[s]||String(s||'').replace(/_/g,' '));
 let catalog=[],groups=[],catalogReady=false,currentGroupId=null,selectedIds=new Set();
 function headers(){return {apikey:CONTENT_KEY,Authorization:`Bearer ${CONTENT_KEY}`}}
