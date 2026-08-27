@@ -73,6 +73,6 @@ function switchView(v){$$('.view').forEach(x=>x.classList.toggle('active',x.id==
 $('#classSelect').onchange=loadClass;$('#daysSelect').onchange=loadClass;$('#refreshBtn').onclick=loadClass;$('#searchInput').oninput=renderStudents;$('#classDaysSelect').onchange=()=>loadClassOverview(true);$('#classRefreshBtn').onclick=()=>loadClassOverview(true);$('#closeDrawer').onclick=()=>$('#drawerBg').classList.remove('open');$('#drawerBg').onclick=e=>{if(e.target===$('#drawerBg'))$('#drawerBg').classList.remove('open')};$$('[data-view]').forEach(b=>b.onclick=()=>switchView(b.dataset.view));
 (async()=>{if(await auth()){mountBurger();loadClasses()}})();
 </script>
-<script src="./naesin.js?v=20260826-5"></script>
+<script src="./naesin.js?v=20260827-analytics3"></script>
 </body>
 </html>
