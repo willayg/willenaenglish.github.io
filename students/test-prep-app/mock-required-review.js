@@ -53,6 +53,7 @@ function autoLeave(result){
    else if(history.state?.tp==='practice')history.back();
  },1800);
 }
+function setTextOnce(el,value){if(el&&el.textContent!==value)el.textContent=value}
 function enforce(){
  addStyles();wrapTracking();
  document.querySelectorAll('.result').forEach(result=>{
@@ -60,10 +61,11 @@ function enforce(){
    const allRetry=result.querySelector('#mockAllWrong');
    const retry=lessonRetry||allRetry;
    const done=result.querySelector('#mockDone,#mockAllDone');
-   if(done)done.remove();
+   if(done&&!done.dataset.removing){done.dataset.removing='1';done.remove()}
    const wrong=wrongCount(result);
    if(wrong>0&&retry){
-     retry.textContent=correction?'틀린 문제 다시 풀기':'오답 복습 시작';
+     const label=correction?'틀린 문제 다시 풀기':'오답 복습 시작';
+     setTextOnce(retry,label);
      if(!result.querySelector('.mock-review-required-note')){
        const note=document.createElement('p');
        note.className='mock-review-required-note';
@@ -76,17 +78,26 @@ function enforce(){
        retry.dataset.requiredReview='1';
        retry.addEventListener('click',()=>{correction=true;},true);
      }
-   }else if(wrong===0){
+   }else if(wrong===0&&!result.dataset.finishHandled){
+     result.dataset.finishHandled='1';
      finishAnimation(result);
      correction=false;
-     const h=result.querySelector('h2');
-     if(h)h.textContent='모의고사 완료';
+     setTextOnce(result.querySelector('h2'),'모의고사 완료');
      const p=result.querySelector('p');
-     if(p&&/오답\s*0개/.test(p.textContent||''))p.textContent='모든 문제를 정확하게 마쳤어요.';
+     if(p&&/오답\s*0개/.test(p.textContent||''))setTextOnce(p,'모든 문제를 정확하게 마쳤어요.');
      autoLeave(result);
    }
  });
 }
-function boot(){addStyles();wrapTracking();enforce();new MutationObserver(enforce).observe(document.body,{childList:true,subtree:true});}
+function boot(){
+ addStyles();wrapTracking();enforce();
+ let queued=false;
+ const observer=new MutationObserver(()=>{
+   if(queued)return;
+   queued=true;
+   requestAnimationFrame(()=>{queued=false;enforce()});
+ });
+ observer.observe(document.body,{childList:true,subtree:true});
+}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
