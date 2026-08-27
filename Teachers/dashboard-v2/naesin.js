@@ -5,7 +5,6 @@ function load(src){return new Promise((resolve,reject)=>{const s=document.create
   try{
     await load('./naesin-core.js?v=20260827-core1');
     await load('./naesin-dynamic-catalog.js?v=20260827-catalog1');
-    await load('./naesin-dashboard-v2.js?v=20260827-ui2');
   }catch(e){console.error('[naesin] failed to load dashboard modules',e)}
 })();
 })();
