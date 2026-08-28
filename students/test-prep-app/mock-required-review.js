@@ -1,22 +1,6 @@
 (function(){
 'use strict';
 let correction=false,wrapped=false;
-function addStyles(){
- if(document.getElementById('mockReviewFinishStyles'))return;
- const s=document.createElement('style');
- s.id='mockReviewFinishStyles';
- s.textContent=`
- .mock-finish-animation{position:relative;width:112px;height:112px;margin:2px auto 14px;display:grid;place-items:center;overflow:visible}
- .mock-finish-ring{position:absolute;inset:16px;border:3px solid #67d4da;border-radius:50%;animation:mockRing .7s cubic-bezier(.2,.8,.2,1) both}
- .mock-finish-ring.r2{inset:5px;border-width:2px;opacity:.35;animation-delay:.08s}
- .mock-finish-check{position:relative;width:58px;height:58px;border-radius:50%;background:#07888d;transform:scale(0);animation:mockPop .45s cubic-bezier(.2,1.25,.3,1) .14s forwards}
- .mock-finish-check:after{content:'';position:absolute;left:16px;top:14px;width:20px;height:11px;border-left:5px solid #fff;border-bottom:5px solid #fff;transform:rotate(-45deg) scale(0);transform-origin:center;animation:mockCheck .3s ease .42s forwards}
- .mock-finish-spark{position:absolute;width:5px;height:17px;border-radius:99px;background:#67d4da;left:53px;top:2px;transform-origin:3px 54px;opacity:0;animation:mockSpark .65s ease .24s forwards}
- .mock-finish-spark:nth-child(5){transform:rotate(45deg);background:#ee5f91}.mock-finish-spark:nth-child(6){transform:rotate(90deg)}.mock-finish-spark:nth-child(7){transform:rotate(135deg);background:#ee5f91}.mock-finish-spark:nth-child(8){transform:rotate(180deg)}.mock-finish-spark:nth-child(9){transform:rotate(225deg);background:#ee5f91}.mock-finish-spark:nth-child(10){transform:rotate(270deg)}.mock-finish-spark:nth-child(11){transform:rotate(315deg);background:#ee5f91}
- @keyframes mockPop{to{transform:scale(1)}}@keyframes mockCheck{to{transform:rotate(-45deg) scale(1)}}@keyframes mockRing{0%{transform:scale(.45);opacity:0}55%{opacity:1}100%{transform:scale(1);opacity:.8}}@keyframes mockSpark{0%{opacity:0;translate:0 0}35%{opacity:1}100%{opacity:0;translate:0 -18px}}
- @media (prefers-reduced-motion:reduce){.mock-finish-ring,.mock-finish-check,.mock-finish-check:after,.mock-finish-spark{animation:none!important}.mock-finish-check{transform:scale(1)}.mock-finish-check:after{transform:rotate(-45deg) scale(1)}}`;
- document.head.appendChild(s);
-}
 function finishAnimation(result){
  if(result.querySelector('.mock-finish-animation'))return;
  const a=document.createElement('div');
@@ -55,7 +39,7 @@ function autoLeave(result){
 }
 function setTextOnce(el,value){if(el&&el.textContent!==value)el.textContent=value}
 function enforce(){
- addStyles();wrapTracking();
+ wrapTracking();
  document.querySelectorAll('.result').forEach(result=>{
    const lessonRetry=result.querySelector('#mockWrong');
    const allRetry=result.querySelector('#mockAllWrong');
@@ -70,7 +54,6 @@ function enforce(){
        const note=document.createElement('p');
        note.className='mock-review-required-note';
        note.textContent='틀린 문제를 모두 맞힐 때까지 다시 풀어야 해요.';
-       note.style.cssText='margin:8px 0 2px;color:#6f7f86;font-size:11px;font-weight:700';
        const actions=retry.closest('.mock-result-actions,.mock-all-actions');
        actions?.parentNode?.insertBefore(note,actions);
      }
@@ -90,7 +73,7 @@ function enforce(){
  });
 }
 function boot(){
- addStyles();wrapTracking();enforce();
+ wrapTracking();enforce();
  let queued=false;
  const observer=new MutationObserver(()=>{
    if(queued)return;
