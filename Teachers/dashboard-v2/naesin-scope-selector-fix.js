@@ -101,7 +101,7 @@ function ensureWizard(){
   const next=document.createElement('button');next.type='button';next.id='naWizardNext';next.className='na-btn dark';next.textContent='다음';
   foot.replaceChildren();
   if(cancel)foot.appendChild(cancel);
-  foot.append(back,spacer,next);
+  foot.append(spacer,back,next);
   if(save)foot.appendChild(save);
   back.onclick=()=>goStep(currentStep-1);
   next.onclick=advance;
