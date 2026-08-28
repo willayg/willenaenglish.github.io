@@ -1,7 +1,7 @@
 (function(){
 'use strict';
 const DURATION_MS=45*60*1000;
-let timer=null,deadline=0,expired=false;
+let timer=null,deadline=0,expired=false,lastText='';
 const $=(s,r=document)=>r.querySelector(s);
 function isMockState(){const s=history.state||{};return s.tp==='practice'&&(s.skill==='mock'||s.skill==='mock_all')}
 function timerEl(){return $('#tpMockTimer')}
@@ -16,16 +16,16 @@ function format(ms){const total=Math.max(0,Math.ceil(ms/1000)),m=Math.floor(tota
 function tick(){
  if(!deadline||!isMockState()){stop(false);return}
  const el=ensureTimerEl();if(!el)return;
- const left=deadline-Date.now();
- el.textContent=left>0?`남은 시간 ${format(left)}`:'시간 종료 00:00';
+ const left=deadline-Date.now(),next=left>0?`남은 시간 ${format(left)}`:'시간 종료 00:00';
+ if(next!==lastText){el.textContent=next;lastText=next}
  el.classList.toggle('expired',left<=0);
  if(left<=0&&!expired){expired=true;el.setAttribute('aria-live','assertive')}
 }
 function start(){
- stop(false);expired=false;deadline=Date.now()+DURATION_MS;
+ stop(false);expired=false;lastText='';deadline=Date.now()+DURATION_MS;
  timer=setInterval(tick,250);tick();
 }
-function stop(remove=true){if(timer){clearInterval(timer);timer=null}deadline=0;expired=false;if(remove)timerEl()?.remove()}
+function stop(remove=true){if(timer){clearInterval(timer);timer=null}deadline=0;expired=false;lastText='';if(remove)timerEl()?.remove()}
 function maybeStartFromClick(e){
  const t=e.target instanceof Element?e.target:null;if(!t)return;
  if(t.closest('.tp-mock-card,.tp-mock-all-card'))setTimeout(start,0);
@@ -38,6 +38,6 @@ function sync(){
  else if(!isMockState())stop();
 }
 function addStyles(){if($('#tpMockTimerStyle'))return;const s=document.createElement('style');s.id='tpMockTimerStyle';s.textContent=`.tp-mock-timer{margin-left:auto;flex:0 0 auto;border:2px solid #67d4da;background:#fff;color:#203039;border-radius:999px;padding:8px 12px;font-size:12px;font-weight:900;letter-spacing:.02em;white-space:nowrap}.tp-mock-timer.expired{border-color:#ee5f91;color:#c93d70;background:#fff3f7}@media(max-width:650px){.quiz-top-back{flex-direction:row!important;align-items:center!important;flex-wrap:wrap}.tp-mock-timer{margin-left:auto}}`;document.head.appendChild(s)}
-function boot(){addStyles();document.addEventListener('click',maybeStartFromClick,true);window.addEventListener('popstate',()=>setTimeout(sync,0));new MutationObserver(()=>queueMicrotask(sync)).observe(document.body,{childList:true,subtree:true});sync()}
+function boot(){addStyles();document.addEventListener('click',maybeStartFromClick,true);window.addEventListener('popstate',()=>setTimeout(sync,0));const app=document.querySelector('.app')||document.body;new MutationObserver(muts=>{if(muts.some(m=>[...m.addedNodes,...m.removedNodes].some(n=>n.nodeType===1)))queueMicrotask(sync)}).observe(app,{childList:true,subtree:true});sync()}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
