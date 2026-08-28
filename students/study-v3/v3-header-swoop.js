@@ -23,7 +23,7 @@
       position:relative;
       z-index:30;
       width:100%;
-      margin:0 0 18px;
+      margin:0 0 22px;
       overflow:hidden;
       --study-v3-page:#f4f7f8;
     }
@@ -31,8 +31,8 @@
       position:relative !important;
       top:auto !important;
       width:100% !important;
-      min-height:142px !important;
-      padding:23px 34px 49px !important;
+      min-height:205px !important;
+      padding:34px 42px 72px !important;
       margin:0 !important;
       border:0 !important;
       overflow:hidden !important;
@@ -49,9 +49,9 @@
     header::before{
       z-index:2;
       width:58%;
-      height:43px;
+      height:58px;
       left:58%;
-      bottom:-5px;
+      bottom:-4px;
       background:#ffc5df;
       border-radius:76% 24% 0 0 / 100% 100% 0 0;
       transform:rotate(-3deg);
@@ -59,9 +59,9 @@
     header::after{
       z-index:3;
       width:120%;
-      height:82px;
+      height:112px;
       left:-10%;
-      bottom:-43px;
+      bottom:-59px;
       background:var(--study-v3-page,#f4f7f8);
       border-radius:61% 39% 0 0 / 100% 100% 0 0;
       transform:rotate(-1.1deg);
@@ -71,17 +71,17 @@
       z-index:6;
       display:flex;
       align-items:flex-start;
-      min-height:72px;
-      gap:18px;
+      min-height:92px;
+      gap:20px;
     }
     .top::before{
       content:'';
       position:absolute;
       z-index:-1;
-      width:190px;
-      height:190px;
+      width:240px;
+      height:240px;
       left:8px;
-      top:-105px;
+      top:-132px;
       border-radius:50%;
       background:rgba(255,255,255,.27);
       pointer-events:none;
@@ -93,7 +93,7 @@
       align-items:center;
       justify-items:start;
       column-gap:12px;
-      row-gap:10px;
+      row-gap:12px;
     }
     .title{
       grid-area:name;
@@ -103,7 +103,7 @@
       border-radius:0;
       background:transparent;
       color:#0b555c !important;
-      font-size:36px;
+      font-size:40px;
       font-weight:800;
       line-height:1;
       letter-spacing:-.04em;
@@ -113,19 +113,19 @@
     .points-pill,
     .stars-pill{
       margin:0 !important;
-      min-height:38px;
-      padding:9px 14px;
+      min-height:42px;
+      padding:10px 16px;
       background:rgba(255,255,255,.82);
       backdrop-filter:blur(7px);
       border-width:1.5px;
-      font-size:16px;
+      font-size:17px;
       line-height:1;
       box-shadow:none;
     }
     .points-pill svg,
     .stars-pill svg{
-      width:17px;
-      height:17px;
+      width:18px;
+      height:18px;
     }
     .points-pill{
       border-color:rgba(19,100,106,.48);
@@ -138,21 +138,21 @@
     .spacer{flex:1;}
     .page-title{
       align-self:center;
-      margin:7px 18px 0 auto;
+      margin:12px 22px 0 auto;
       color:#0d5158 !important;
-      font-size:36px;
+      font-size:40px;
       font-weight:800;
       line-height:1;
       letter-spacing:-.035em;
     }
     .page-title-text{color:#0d5158 !important;}
     .avatar{
-      width:64px;
-      height:64px;
-      border-radius:21px;
+      width:72px;
+      height:72px;
+      border-radius:22px;
       border:0;
       background:rgba(255,255,255,.96);
-      font-size:34px;
+      font-size:38px;
       box-shadow:0 8px 22px rgba(20,78,83,.11);
     }
     .menu-anchor{
@@ -163,39 +163,39 @@
     .menu-row{display:none !important;}
 
     @media (max-width:700px){
-      :host{margin-bottom:14px;}
+      :host{margin-bottom:16px;}
       header{
-        min-height:126px !important;
-        padding:18px 18px 43px !important;
+        min-height:158px !important;
+        padding:24px 20px 55px !important;
       }
       header::before{
         width:62%;
         left:55%;
-        height:36px;
+        height:43px;
         bottom:-3px;
       }
       header::after{
         width:124%;
         left:-12%;
-        height:70px;
-        bottom:-38px;
+        height:84px;
+        bottom:-45px;
       }
       .top::before{
-        width:155px;
-        height:155px;
+        width:180px;
+        height:180px;
         left:0;
-        top:-90px;
+        top:-102px;
       }
-      .info{column-gap:8px;row-gap:8px;}
-      .title{font-size:28px;}
+      .info{column-gap:8px;row-gap:9px;}
+      .title{font-size:30px;}
       .points-pill,.stars-pill{
-        min-height:32px;
-        padding:7px 10px;
-        font-size:13px;
+        min-height:34px;
+        padding:8px 11px;
+        font-size:14px;
       }
-      .points-pill svg,.stars-pill svg{width:14px;height:14px;}
-      .page-title{font-size:28px;margin-right:8px;}
-      .avatar{width:52px;height:52px;border-radius:18px;font-size:28px;}
+      .points-pill svg,.stars-pill svg{width:15px;height:15px;}
+      .page-title{font-size:30px;margin-right:10px;}
+      .avatar{width:56px;height:56px;border-radius:18px;font-size:30px;}
     }
   `;
 
