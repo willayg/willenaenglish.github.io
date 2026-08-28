@@ -20,9 +20,9 @@ function inject(){if($('#dashboardShellPolish'))return;const s=document.createEl
 .teacher-app-switch a.active{background:#fff;color:#3b3a4b;box-shadow:0 2px 8px rgba(0,0,0,.12)}
 .teacher-app-switch a:not(.active):hover{color:#fff;background:rgba(255,255,255,.09)}
 
-/* sidebar sits flush against the left edge; no rounded floating card treatment */
+/* sidebar connects directly to the header and left edge */
 .layout{width:100%!important;margin:0!important;padding-left:0!important}
-.rail{border-radius:0!important}
+.rail{border-radius:0!important;margin-top:-18px!important;height:calc(100vh - 76px)!important;top:76px!important}
 
 /* burger component belongs to this header, not the viewport */
 .top-actions #burger-menu-mount{display:flex!important;align-items:center!important;position:relative!important}
