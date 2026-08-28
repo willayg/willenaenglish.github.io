@@ -155,7 +155,7 @@
 
   if (/^\/Teachers\/dashboard-v2\/?$/i.test(window.location.pathname)) {
     const s = document.createElement('script');
-    s.src = '/Teachers/dashboard-v2/teacher-dashboard-ui-v3.js?v=20260827-ui4';
+    s.src = '/Teachers/dashboard-v2/teacher-dashboard-ui-v3.js?v=20260828-wrongdetail1';
     s.defer = true;
     document.head.appendChild(s);
   }
