@@ -32,7 +32,7 @@
       top:auto !important;
       width:100% !important;
       min-height:142px !important;
-      padding:25px 34px 49px !important;
+      padding:23px 34px 49px !important;
       margin:0 !important;
       border:0 !important;
       overflow:hidden !important;
@@ -46,7 +46,6 @@
       position:absolute;
       pointer-events:none;
     }
-    /* Pink accent stays inside the header bounds. */
     header::before{
       z-index:2;
       width:58%;
@@ -57,7 +56,6 @@
       border-radius:76% 24% 0 0 / 100% 100% 0 0;
       transform:rotate(-3deg);
     }
-    /* The main page curve carves into the cyan rather than hanging off the page. */
     header::after{
       z-index:3;
       width:120%;
@@ -73,8 +71,8 @@
       z-index:6;
       display:flex;
       align-items:flex-start;
-      min-height:68px;
-      gap:16px;
+      min-height:72px;
+      gap:18px;
     }
     .top::before{
       content:'';
@@ -94,7 +92,7 @@
       grid-template-areas:'name name' 'points stars';
       align-items:center;
       justify-items:start;
-      column-gap:10px;
+      column-gap:12px;
       row-gap:10px;
     }
     .title{
@@ -105,7 +103,7 @@
       border-radius:0;
       background:transparent;
       color:#0b555c !important;
-      font-size:28px;
+      font-size:36px;
       font-weight:800;
       line-height:1;
       letter-spacing:-.04em;
@@ -115,14 +113,19 @@
     .points-pill,
     .stars-pill{
       margin:0 !important;
-      min-height:32px;
-      padding:7px 12px;
-      background:rgba(255,255,255,.80);
+      min-height:38px;
+      padding:9px 14px;
+      background:rgba(255,255,255,.82);
       backdrop-filter:blur(7px);
-      border-width:1.4px;
-      font-size:13px;
+      border-width:1.5px;
+      font-size:16px;
       line-height:1;
       box-shadow:none;
+    }
+    .points-pill svg,
+    .stars-pill svg{
+      width:17px;
+      height:17px;
     }
     .points-pill{
       border-color:rgba(19,100,106,.48);
@@ -135,21 +138,21 @@
     .spacer{flex:1;}
     .page-title{
       align-self:center;
-      margin:8px 16px 0 auto;
+      margin:7px 18px 0 auto;
       color:#0d5158 !important;
-      font-size:29px;
+      font-size:36px;
       font-weight:800;
       line-height:1;
       letter-spacing:-.035em;
     }
     .page-title-text{color:#0d5158 !important;}
     .avatar{
-      width:57px;
-      height:57px;
-      border-radius:20px;
+      width:64px;
+      height:64px;
+      border-radius:21px;
       border:0;
       background:rgba(255,255,255,.96);
-      font-size:30px;
+      font-size:34px;
       box-shadow:0 8px 22px rgba(20,78,83,.11);
     }
     .menu-anchor{
@@ -163,7 +166,7 @@
       :host{margin-bottom:14px;}
       header{
         min-height:126px !important;
-        padding:20px 18px 43px !important;
+        padding:18px 18px 43px !important;
       }
       header::before{
         width:62%;
@@ -183,16 +186,16 @@
         left:0;
         top:-90px;
       }
-      .info{column-gap:7px;row-gap:8px;}
-      .title{font-size:23px;}
+      .info{column-gap:8px;row-gap:8px;}
+      .title{font-size:28px;}
       .points-pill,.stars-pill{
-        min-height:29px;
-        padding:6px 9px;
-        font-size:11px;
+        min-height:32px;
+        padding:7px 10px;
+        font-size:13px;
       }
-      .points-pill svg,.stars-pill svg{width:12px;height:12px;}
-      .page-title{font-size:23px;margin-right:7px;}
-      .avatar{width:47px;height:47px;border-radius:17px;font-size:25px;}
+      .points-pill svg,.stars-pill svg{width:14px;height:14px;}
+      .page-title{font-size:28px;margin-right:8px;}
+      .avatar{width:52px;height:52px;border-radius:18px;font-size:28px;}
     }
   `;
 
@@ -207,8 +210,6 @@
     root.appendChild(style);
   };
 
-  // The shared header re-renders its entire shadow DOM whenever points/avatar change.
-  // Reinstall this page-only skin after those renders so it cannot silently disappear.
   install();
   const observer=new MutationObserver(()=>{
     if(!host.shadowRoot.getElementById('studyV3HeaderSwoop')) install();
