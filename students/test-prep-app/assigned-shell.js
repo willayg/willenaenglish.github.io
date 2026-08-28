@@ -43,6 +43,31 @@ async function refreshHeader(){
     renderHeaderValues(values);
   }catch(_){}
 }
+function setProfileMenu(open){
+  const header=document.getElementById('tpStudentHeader');if(!header)return;
+  const menu=header.querySelector('#tpProfileMenu'),avatar=header.querySelector('.tp-header-avatar');
+  if(!menu||!avatar)return;
+  menu.hidden=!open;
+  avatar.setAttribute('aria-expanded',String(open));
+}
+async function logoutStudent(){
+  try{
+    const keys=['user_name','username','name','user_id','userId','student_id','profile_id','selectedEmojiAvatar','avatar','user_role','sb_access_token'];
+    for(const key of keys){localStorage.removeItem(key);sessionStorage.removeItem(key)}
+    const opts='Path=/; Max-Age=0; SameSite=Lax';
+    document.cookie='wa_guest_id=; '+opts;
+    document.cookie='wa_guest_name=; '+opts;
+    if(/willenaenglish\.com$/i.test(location.hostname)){
+      document.cookie='wa_guest_id=; Domain=.willenaenglish.com; '+opts;
+      document.cookie='wa_guest_name=; Domain=.willenaenglish.com; '+opts;
+    }
+    sessionStorage.removeItem('missionModalShown');
+    sessionStorage.removeItem('wa_hw_tap_hint_shown');
+  }catch(_){}
+  try{await window.WillenaAPI?.fetch?.('/.netlify/functions/supabase_auth?action=logout',{method:'POST'})}catch(_){}
+  try{window.dispatchEvent(new Event('auth:changed'))}catch(_){}
+  location.href='/students/login.html?next='+encodeURIComponent(location.pathname);
+}
 function installHeader(){
   if(document.getElementById('tpStudentHeader'))return;
   const identity=headerIdentity();
@@ -61,12 +86,26 @@ function installHeader(){
       </div>
       <div class="tp-header-brand">
         <div class="tp-header-title">Test Prep</div>
-        <button class="tp-header-avatar" type="button" aria-label="프로필"><span data-tp-avatar>${esc(identity.avatar)}</span></button>
+        <div class="tp-profile-menu-wrap">
+          <button class="tp-header-avatar" type="button" aria-label="프로필 메뉴" aria-haspopup="menu" aria-expanded="false"><span data-tp-avatar>${esc(identity.avatar)}</span></button>
+          <div class="tp-profile-menu" id="tpProfileMenu" role="menu" hidden>
+            <a class="tp-profile-menu-item" role="menuitem" href="/students/dashboard.html"><span class="tp-profile-menu-icon">⌂</span><span>Student Home</span></a>
+            <a class="tp-profile-menu-item" role="menuitem" href="/students/profile.html"><span class="tp-profile-menu-icon">☺</span><span>My Profile</span></a>
+            <a class="tp-profile-menu-item" role="menuitem" href="/Games/english_arcade/index.html"><span class="tp-profile-menu-icon">★</span><span>English Arcade</span></a>
+            <div class="tp-profile-menu-divider" aria-hidden="true"></div>
+            <button class="tp-profile-menu-item tp-profile-logout" id="tpProfileLogout" role="menuitem" type="button"><span class="tp-profile-menu-icon">↪</span><span>Logout</span></button>
+          </div>
+        </div>
       </div>
     </div>
     <div class="tp-header-curve" aria-hidden="true"></div>`;
   document.body.insertBefore(header,document.body.firstChild);
-  header.querySelector('.tp-header-avatar')?.addEventListener('click',()=>window.dispatchEvent(new CustomEvent('testprep:profile-click')));
+  const avatarBtn=header.querySelector('.tp-header-avatar');
+  avatarBtn?.addEventListener('click',e=>{e.stopPropagation();setProfileMenu(avatarBtn.getAttribute('aria-expanded')!=='true')});
+  header.querySelector('#tpProfileLogout')?.addEventListener('click',logoutStudent);
+  header.querySelector('#tpProfileMenu')?.addEventListener('click',e=>e.stopPropagation());
+  document.addEventListener('click',()=>setProfileMenu(false));
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'){setProfileMenu(false);avatarBtn?.focus()}});
   refreshHeader();
   window.addEventListener('focus',refreshHeader);
   window.addEventListener('points:update',refreshHeader);
