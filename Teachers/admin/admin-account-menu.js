@@ -26,26 +26,15 @@
   `;
   document.head.appendChild(style);
 
-  const api=async url=>{const f=window.WillenaAPI?.fetch||fetch;const r=await f(url,{credentials:'include',cache:'no-store'});const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.error||`Request failed (${r.status})`);return j};
-  async function verifyAdmin(){
-    try{
-      const who=await api(AUTH+'?action=whoami');
-      if(!who.user_id){location.replace('/Teachers/login.html?redirect='+encodeURIComponent('/Teachers/admin/'));return false}
-      const role=await api(AUTH+'?action=get_role&user_id='+encodeURIComponent(who.user_id));
-      if(String(role.role||'').toLowerCase()!=='admin'){
-        location.replace('/Teachers/dashboard-v2/?access=admin-denied');
-        return false;
-      }
-      return true;
-    }catch{
-      location.replace('/Teachers/login.html?redirect='+encodeURIComponent('/Teachers/admin/'));
-      return false;
-    }
+  function prefetchTeacher(){
+    if(document.getElementById('prefetchTeacherDashboard'))return;
+    const l=document.createElement('link');l.id='prefetchTeacherDashboard';l.rel='prefetch';l.as='document';l.href='/Teachers/dashboard-v2/';document.head.appendChild(l);
   }
   function clearIdentity(){
     try{
       ['user_name','username','name','user_id','userId','student_id','profile_id','id','selectedEmojiAvatar','avatar','sb_access_token','sb_refresh_token'].forEach(k=>{localStorage.removeItem(k);sessionStorage.removeItem(k)});
       window.WillenaAPI?.clearLocalTokens?.();
+      window.WillenaAPI?.clearAdminStudentCache?.();
     }catch{}
   }
   async function logout(){
@@ -57,11 +46,13 @@
   function mount(){
     const top=document.querySelector('.top');
     if(!top||document.getElementById('adminAccountMenuWrap'))return;
+    prefetchTeacher();
     if(!document.getElementById('adminAppSwitch')){
       const sw=document.createElement('div');
       sw.className='admin-app-switch';sw.id='adminAppSwitch';sw.setAttribute('aria-label','Teacher and admin apps');
-      sw.innerHTML='<a href="/Teachers/dashboard-v2/">Teacher</a><a class="active" href="/Teachers/admin/">Admin</a>';
+      sw.innerHTML='<a id="teacherSwitchLink" href="/Teachers/dashboard-v2/">Teacher</a><a class="active" href="/Teachers/admin/">Admin</a>';
       top.insertBefore(sw,top.querySelector('.lang')||top.querySelector('.badge-user')||null);
+      sw.querySelector('#teacherSwitchLink')?.addEventListener('pointerenter',prefetchTeacher,{once:true});
     }
     const wrap=document.createElement('div');
     wrap.className='admin-account-wrap';wrap.id='adminAccountMenuWrap';
@@ -80,6 +71,5 @@
       wrap.querySelector('[data-menu-label="logout"]').textContent=t('logout');
     });
   }
-  async function boot(){if(await verifyAdmin())mount()}
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',mount,{once:true});else mount();
 })();
