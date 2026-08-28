@@ -50,6 +50,26 @@ function setProfileMenu(open){
   menu.hidden=!open;
   avatar.setAttribute('aria-expanded',String(open));
 }
+async function ensureProfileMenuStyles(){
+  const header=document.getElementById('tpStudentHeader'),menu=header?.querySelector('#tpProfileMenu');
+  if(!menu)return false;
+  menu.hidden=false;
+  const ready=getComputedStyle(menu).position==='absolute'&&getComputedStyle(menu).display==='block';
+  menu.hidden=true;
+  if(ready)return true;
+  const link=document.getElementById('tpThemeSystem');
+  if(!link)return false;
+  await new Promise(resolve=>{
+    const done=()=>{link.removeEventListener('load',done);link.removeEventListener('error',done);resolve()};
+    link.addEventListener('load',done,{once:true});link.addEventListener('error',done,{once:true});
+    const u=new URL(link.href,location.href);u.searchParams.set('profileMenuFix',String(Date.now()));link.href=u.toString();
+    setTimeout(done,1200);
+  });
+  menu.hidden=false;
+  const ok=getComputedStyle(menu).position==='absolute'&&getComputedStyle(menu).display==='block';
+  menu.hidden=true;
+  return ok;
+}
 async function logoutStudent(){
   try{
     const keys=['user_name','username','name','user_id','userId','student_id','profile_id','selectedEmojiAvatar','avatar','user_role','sb_access_token'];
@@ -101,7 +121,13 @@ function installHeader(){
     <div class="tp-header-curve" aria-hidden="true"></div>`;
   document.body.insertBefore(header,document.body.firstChild);
   const avatarBtn=header.querySelector('.tp-header-avatar');
-  avatarBtn?.addEventListener('click',e=>{e.stopPropagation();setProfileMenu(avatarBtn.getAttribute('aria-expanded')!=='true')});
+  avatarBtn?.addEventListener('click',async e=>{
+    e.stopPropagation();
+    const opening=avatarBtn.getAttribute('aria-expanded')!=='true';
+    if(!opening){setProfileMenu(false);return}
+    setProfileMenu(false);
+    if(await ensureProfileMenuStyles())setProfileMenu(true);
+  });
   header.querySelector('#tpProfileLogout')?.addEventListener('click',logoutStudent);
   header.querySelector('#tpProfileMenu')?.addEventListener('click',e=>e.stopPropagation());
   document.addEventListener('click',()=>setProfileMenu(false));
