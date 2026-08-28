@@ -1,6 +1,7 @@
 (function(){
 'use strict';
 const v=Date.now();
+(function loadSharedPolish(){let l=document.getElementById('dashboardV2Polish');if(l)l.remove();l=document.createElement('link');l.id='dashboardV2Polish';l.rel='stylesheet';l.href=`./dashboard-v2-polish.css?v=${v}`;document.head.appendChild(l)})();
 function load(file){return new Promise((resolve,reject)=>{const s=document.createElement('script');s.src=`./${file}?v=${v}`;s.onload=resolve;s.onerror=reject;document.head.appendChild(s)})}
 load('naesin-core-fresh.js')
   .then(()=>load('naesin-signedoff-ui.js'))
