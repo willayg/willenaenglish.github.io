@@ -10,9 +10,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<style>
-:root{--bg:#f6f8fa;--card:#fff;--ink:#24343c;--muted:#78878e;--line:#67d4da;--pink:#ee5f91;--soft:#fff3f7;--ok:#159447;--bad:#d64045;--cyan:#67d4da;--cyan-dark:#19777e}*{box-sizing:border-box}html,body,button,input,textarea,select{font-family:'Poppins','Noto Sans KR',sans-serif!important}body{margin:0;background:var(--bg);color:var(--ink)}button{font:inherit}.app{max-width:920px;margin:auto;padding:18px 16px 42px;min-height:100vh}.engine-shell{display:block}.engine-progress{height:6px;background:#e6eff0;border-radius:99px;overflow:hidden;margin:0 0 14px}.engine-progress i{display:block;height:100%;background:linear-gradient(90deg,var(--cyan),var(--cyan-dark));width:0;transition:width .2s ease}.card{background:#fff;border:2px solid var(--cyan);border-radius:22px;overflow:hidden;box-shadow:0 8px 22px rgba(25,119,126,.05)}.card-head{display:flex;justify-content:space-between;align-items:center;padding:15px 18px 7px}.qnum{font-size:13px;font-weight:800;color:var(--muted)}.source{display:inline-flex;border-radius:999px;background:#f2f6f7;color:#5f6e74;padding:7px 9px;font-size:11px;font-weight:700}.source.w{background:#fff0f5;color:#b52e61}.flag{width:34px;height:34px;border:2px solid var(--cyan);background:#fff;color:var(--pink);border-radius:50%;display:inline-grid;place-items:center;padding:0;font-size:16px;line-height:1;cursor:pointer}.body{padding:6px 18px 20px}.prompt{font-size:17px;font-weight:800;line-height:1.55;margin:8px 0 14px}.context{background:#fafcfc;border:1.5px solid #ccebed;border-radius:14px;padding:14px;margin-bottom:14px;font-size:14px;line-height:1.7;overflow-wrap:anywhere}.context-title{font-weight:800;margin-bottom:8px}.line{display:block}.line+.line{margin-top:2px}.u{text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:3px}.items,.segments,.claims{display:grid;gap:8px;margin-top:8px}.item,.segment,.claim{background:#fff;border:1px solid #dcebed;border-radius:10px;padding:9px 10px}.choices{display:grid;gap:9px}.choice{width:100%;text-align:left;background:#fff;border:1.5px solid #cce7e9;border-radius:14px;padding:13px 14px;display:flex;gap:10px;align-items:flex-start;color:var(--ink);cursor:pointer}.choice.selected{border-color:var(--cyan-dark);background:#eefafb}.choice.correct{border-color:#75c98f;background:#effaf3}.choice.wrong{border-color:#ef9b9e;background:#fff1f1}.choice .n{font-weight:800;min-width:22px}.choice .t{line-height:1.5}.actions{display:flex;gap:10px;margin-top:16px}.primary,.secondary{border:2px solid var(--cyan);border-radius:14px;padding:13px 16px;font-weight:800;background:#fff;color:var(--pink)}.primary{flex:1}.primary:disabled{opacity:.35}.feedback{margin-top:13px;padding:12px;border-radius:13px;font-weight:700;font-size:13px;display:none}.feedback.ok{display:block;background:#effaf3;color:var(--ok)}.feedback.bad{display:block;background:#fff0f0;color:var(--bad)}.explanation{display:none;margin-top:10px;background:#fff8ea;border:1px solid #f2d9a4;border-radius:14px;padding:14px;color:#54462d;font-size:13px;line-height:1.7}.explanation.show{display:block}.explanation strong{display:block;margin-bottom:5px}.loading,.empty{padding:42px 20px;text-align:center;color:var(--muted);font-weight:700}.result{text-align:center;padding:32px 22px}.score{font-size:54px;font-weight:800;color:var(--cyan-dark)}.overlay{position:fixed;inset:0;background:rgba(20,22,29,.38);display:none;align-items:flex-end;justify-content:center;padding:12px;z-index:100000}.overlay.open{display:flex}.modal{width:min(560px,100%);background:#fff;border:2px solid var(--cyan);border-radius:22px;padding:18px}.reasons{display:flex;flex-wrap:wrap;gap:8px}.reason{border:1.5px solid var(--cyan);background:#fff;color:var(--pink);border-radius:999px;padding:9px 11px;font-size:12px;font-weight:700}.reason.on{background:#fff6fa;color:var(--pink)}.note{width:100%;margin-top:12px;border:1.5px solid var(--cyan);border-radius:12px;padding:11px;min-height:70px}.modal-actions{display:flex;gap:8px;margin-top:12px}.tp-records,.tp-review-start,.tp-review-btn,.tp-stats-x{border:2px solid var(--cyan)!important;background:#fff!important;color:var(--pink)!important}.tp-back{border:0!important;background:transparent!important;color:var(--pink)!important;border-radius:0!important;box-shadow:none!important;padding:4px 0 13px!important;width:auto!important}.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:#222;color:#fff;border-radius:999px;padding:10px 14px;font-size:12px;font-weight:700;opacity:0;transition:.2s;z-index:100001}.toast.show{opacity:1}@media(max-width:540px){.app{padding:12px 10px 32px}.body{padding:4px 13px 16px}.card-head{padding:13px 13px 6px}.prompt{font-size:16px}}
-</style>
+<link id="tpThemeSystem" rel="stylesheet" href="./theme-system.css?v=20260829-audit1">
 </head>
 <body>
 <div class="app">
@@ -23,29 +21,30 @@
 </div>
 <div class="overlay" id="overlay"><div class="modal"><h3>이 문제에 문제가 있나요? 🚩</h3><p>이유를 골라 주세요.</p><div class="reasons" id="reasons"></div><textarea class="note" id="flagNote" placeholder="추가 메모 (선택)"></textarea><div class="modal-actions"><button class="secondary" id="cancelFlag">취소</button><button class="primary" id="sendFlag">보내기</button></div></div></div>
 <div class="toast" id="toast"></div>
-<script src="/students/api-gateway.js?v=20260828-cache2"></script>
-<script src="/js/api-config.js?v=20260828-cache2"></script>
-<script src="./auth-tracking.js?v=20260828-cache2"></script>
-<script src="./flagger.js?v=20260828-cache2"></script>
-<script src="./assigned-shell.js?v=20260828-cache2"></script>
-<script src="./visual-shell.js?v=20260828-shell1"></script>
-<script src="./student-ux-v4.js?v=20260828-cache2" data-testprep-student-ux="1"></script>
-<script src="./theme-switcher.js?v=20260828-theme2"></script>
-<script src="./navigation-view-guard.js?v=20260828-cache2"></script>
-<script src="./dynamic-progress-sync.js?v=20260828-cache2"></script>
-<script src="./home-header-top.js?v=20260828-cache2"></script>
-<script src="./session-settings.js?v=20260828-cache2"></script>
-<script src="./question-engine.js?v=20260828-cache2"></script>
-<script src="./vocab-test-upgrade.js?v=20260828-cache2"></script>
-<script src="./mock-vocab-blueprint.js?v=20260828-cache3"></script>
-<script src="./vocab-card-controls.js?v=20260828-cache2"></script>
-<script src="./mock-test.js?v=20260828-cache2"></script>
-<script src="./mock-test-all.js?v=20260828-cache2"></script>
-<script src="./mock-timer.js?v=20260828-cache2"></script>
-<script src="./mock-required-review.js?v=20260828-cache2"></script>
-<script src="./question-render-fixes.js?v=20260828-cache2"></script>
-<script src="./student-display-polish.js?v=20260828-cache2"></script>
-<script src="./navigation-v1.js?v=20260828-nav3"></script>
-<script src="./review-state-fix.js?v=20260828-cache2"></script>
+<script src="/students/api-gateway.js?v=20260829-audit1"></script>
+<script src="/js/api-config.js?v=20260829-audit1"></script>
+<script src="./auth-tracking.js?v=20260829-audit1"></script>
+<script src="./flagger.js?v=20260829-audit1"></script>
+<script src="./assigned-shell.js?v=20260829-audit1"></script>
+<script src="./visual-shell.js?v=20260829-audit1"></script>
+<script src="./student-ux-v4.js?v=20260829-audit1" data-testprep-student-ux="1"></script>
+<script src="./theme-switcher.js?v=20260829-audit1"></script>
+<script src="./navigation-view-guard.js?v=20260829-audit1"></script>
+<script src="./dynamic-progress-sync.js?v=20260829-audit1"></script>
+<script src="./home-header-top.js?v=20260829-audit1"></script>
+<script src="./session-settings.js?v=20260829-audit1"></script>
+<script src="./question-engine.js?v=20260829-audit1"></script>
+<script src="./vocab-test-upgrade.js?v=20260829-audit1"></script>
+<script src="./mock-vocab-blueprint.js?v=20260829-audit1"></script>
+<script src="./vocab-card-controls.js?v=20260829-audit1"></script>
+<script src="./mock-test.js?v=20260829-audit1"></script>
+<script src="./mock-test-all.js?v=20260829-audit1"></script>
+<script src="./mock-timer.js?v=20260829-audit1"></script>
+<script src="./mock-required-review.js?v=20260829-audit1"></script>
+<script src="./question-render-fixes.js?v=20260829-audit1"></script>
+<script src="./student-display-polish.js?v=20260829-audit1"></script>
+<script src="./navigation-v1.js?v=20260829-audit1"></script>
+<script src="./review-state-fix.js?v=20260829-audit1"></script>
+<script src="./legacy-style-killer.js?v=20260829-audit1"></script>
 </body>
 </html>
