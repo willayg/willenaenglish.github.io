@@ -29,43 +29,33 @@
 #view-naesin .na-actions [data-delete]{background:#fff5f7!important;border-color:#efb4c7!important;color:#a94869!important}
 #view-naesin .na-actions .na-dday{font-weight:800!important}
 
-/* Students + Classes: use the same white-fill / outlined-container language */
-#view-students .panel,
-#view-classes .class-card{
-  background:#fff!important;
-  border:1.7px solid #9fdce3!important;
-  box-shadow:0 3px 10px rgba(79,185,200,.06)!important;
-}
+/* Shared Students / Classes visual language: white fill, cyan outline, soft radius */
+#view-students .panel,#view-classes .class-card{background:#fff!important;border:1.8px solid #9fdce3!important;box-shadow:0 3px 10px rgba(79,185,200,.06)!important}
 #view-students .panel{border-radius:22px!important}
 #view-classes .class-card{border-radius:20px!important}
 #view-classes .class-card:hover{border-color:#58c3d2!important;background:#fbfeff!important;box-shadow:0 6px 16px rgba(79,185,200,.10)!important}
 
-/* Individual student rows read as clean outlined cards rather than flat table strips */
-#view-students .student-list{padding:10px!important;background:#f8fbfc!important}
-#view-students .student-row{
-  background:#fff!important;
-  border:1.4px solid #d2e9ed!important;
-  border-radius:15px!important;
-  margin-bottom:8px!important;
-  padding:13px 15px!important;
-}
+/* Make the page controls visibly use the same outlined component style */
+#view-students .control,#view-classes .control{background:#fff!important;border:1.6px solid #9fdce3!important;border-radius:13px!important;color:#315b63!important;box-shadow:0 2px 7px rgba(79,185,200,.04)!important}
+#view-students button.control,#view-classes button.control{color:#267985!important;font-weight:800!important;cursor:pointer!important}
+#view-students button.control:hover,#view-classes button.control:hover{background:#f2fbfc!important;border-color:#58c3d2!important}
+#view-students .control:focus,#view-classes .control:focus{outline:none!important;border-color:#58c3d2!important;box-shadow:0 0 0 3px rgba(79,185,200,.10)!important}
+
+/* Individual student rows become distinct outlined containers */
+#view-students .student-list{padding:11px!important;background:#f6fafb!important}
+#view-students .student-row{background:#fff!important;border:1.5px solid #c7e5e9!important;border-radius:15px!important;margin-bottom:9px!important;padding:14px 15px!important;box-shadow:0 2px 6px rgba(79,185,200,.025)!important}
 #view-students .student-row:last-child{margin-bottom:0!important}
-#view-students .student-row:hover{border-color:#83cfda!important;background:#fbfeff!important}
+#view-students .student-row:hover{border-color:#83cfda!important;background:#fbfeff!important;box-shadow:0 3px 9px rgba(79,185,200,.06)!important}
 
-/* Class stat tiles use the same contained look */
-#view-classes .class-stat{
-  background:#fff!important;
-  border:1.3px solid #d2e9ed!important;
-  border-radius:12px!important;
-}
+/* Class cards and inner stat containers */
+#view-classes .class-stat{background:#fff!important;border:1.4px solid #c7e5e9!important;border-radius:13px!important}
+#view-classes .class-link{display:inline-flex!important;align-items:center!important;min-height:34px!important;padding:7px 10px!important;background:#fff!important;border:1.4px solid #9fdce3!important;border-radius:10px!important;color:#267985!important;font-weight:800!important}
 
-/* Student detail drawer: carry the same container language through */
-.drawer .big-card,.drawer .detail{
-  background:#fff!important;
-  border:1.5px solid #b8e1e6!important;
-  box-shadow:0 2px 8px rgba(79,185,200,.05)!important;
-}
-.drawer .mistake-group{background:#fff!important;border:1.3px solid #d2e9ed!important}
+/* Student detail drawer carries the same outlined-card language */
+.drawer .big-card,.drawer .detail{background:#fff!important;border:1.6px solid #b8e1e6!important;box-shadow:0 2px 8px rgba(79,185,200,.05)!important;border-radius:18px!important}
+.drawer .mistake-group{background:#fff!important;border:1.4px solid #d2e9ed!important}
+.drawer .statline span{background:#fff!important;border:1.2px solid #d2e9ed!important;color:#52666a!important}
+.drawer .rating{border:1px solid rgba(79,185,200,.14)!important}
 
 @media(max-width:700px){
   .top-actions #burger-menu-mount .burger-user-label{display:none!important}
