@@ -25,26 +25,34 @@ function inject(){if($('#naMobilePolishStyles'))return;const s=document.createEl
 /* Diagnostic screens */
 #naFreshDiagBg .na-modal-head h2{font-size:1.45rem!important}
 #naFreshDiagBg .na-modal-head p{font-size:.8rem!important}
+#naFreshDiagBg .na-subhead{padding-bottom:12px!important;border-bottom:2px solid #d4e7ea!important}
 #naFreshDiagBg .na-subhead h3{font-size:1.18rem!important}
 #naFreshDiagBg .na-back{font-size:.82rem!important;padding:9px 12px!important}
+#naFreshDiagBg .na-summary{gap:12px!important}
+#naFreshDiagBg .na-stat{border:2px solid #d5e2e6!important;box-shadow:0 2px 7px rgba(40,80,90,.035)!important}
 #naFreshDiagBg .na-stat b{font-size:1.28rem!important}
 #naFreshDiagBg .na-stat span{font-size:.72rem!important;line-height:1.35!important}
-#naFreshDiagBg .na-panel h3{font-size:1rem!important}
+#naFreshDiagBg .na-panel{border:2px solid #cfe1e5!important;box-shadow:0 2px 8px rgba(40,80,90,.035)!important}
+#naFreshDiagBg .na-panel.cyan{border-color:#58c3d2!important}
+#naFreshDiagBg .na-panel h3{font-size:1rem!important;padding-bottom:9px!important;border-bottom:1.5px solid #e1e9ec!important}
+#naFreshDiagBg .na-analysis-grid{gap:14px!important}
 #naFreshDiagBg .na-bar-row{font-size:.82rem!important;grid-template-columns:145px 1fr 58px!important;padding:12px 0!important;gap:10px!important}
 #naFreshDiagBg .na-bar-row b{font-size:.82rem!important;line-height:1.3!important}
 #naFreshDiagBg .na-bar-row strong{font-size:.82rem!important}
 #naFreshDiagBg .na-track{height:10px!important}
-#naFreshDiagBg .na-insight{font-size:.78rem!important;line-height:1.5!important;padding:13px!important}
+#naFreshDiagBg .na-insight{font-size:.78rem!important;line-height:1.5!important;padding:13px!important;border:2px solid #ecc58f!important}
 
 /* Exact wrong-answer cards */
-#naExactWrongList .na-panel-title{font-size:1.08rem!important}
-#naExactWrongList .na-panel-note{font-size:.76rem!important;line-height:1.45!important}
-#naExactWrongList .na-wrong-card{padding:16px!important;border-width:1.5px!important;border-radius:16px!important}
+#naExactWrongList{border:2px solid #cfe1e5!important}
+#naExactWrongList .na-panel-title{font-size:1.08rem!important;padding-bottom:9px!important;border-bottom:1.5px solid #e1e9ec!important}
+#naExactWrongList .na-panel-note{font-size:.76rem!important;line-height:1.45!important;margin-top:8px!important}
+#naExactWrongList .na-wrong-card{padding:16px!important;border-width:2px!important;border-color:#d5e2e6!important;border-radius:16px!important}
+#naExactWrongList .na-wrong-card.repeat{border-color:#edabc1!important}
 #naExactWrongList .na-tag{font-size:.68rem!important;padding:5px 8px!important}
 #naExactWrongList .na-question{font-size:.92rem!important;line-height:1.55!important;margin-top:11px!important}
-#naExactWrongList .na-wrong-context{font-size:.82rem!important;line-height:1.6!important;padding:11px 12px!important}
-#naExactWrongList .na-choice-list{font-size:.76rem!important;line-height:1.7!important;padding:10px 12px!important}
-#naExactWrongList .na-answer{font-size:.82rem!important;line-height:1.55!important;padding:11px!important}
+#naExactWrongList .na-wrong-context{font-size:.82rem!important;line-height:1.6!important;padding:11px 12px!important;border:1.5px solid #dfe8eb!important}
+#naExactWrongList .na-choice-list{font-size:.76rem!important;line-height:1.7!important;padding:10px 12px!important;border:1.5px solid #e1e9ec!important}
+#naExactWrongList .na-answer{font-size:.82rem!important;line-height:1.55!important;padding:11px!important;border-width:1.5px!important}
 #naExactWrongList .na-answer small{font-size:.64rem!important;margin-bottom:5px!important}
 #naExactWrongList .na-wrong-time{font-size:.68rem!important;margin-top:9px!important}
 
@@ -63,10 +71,10 @@ function inject(){if($('#naMobilePolishStyles'))return;const s=document.createEl
  #naFreshEditBg .na-pick-row small{font-size:.78rem!important}
  #naFreshDiagBg .na-modal-body{padding:18px!important}
  #naFreshDiagBg .na-summary{gap:10px!important}
- #naFreshDiagBg .na-stat{padding:14px!important}
+ #naFreshDiagBg .na-stat{padding:14px!important;border-width:2px!important}
  #naFreshDiagBg .na-stat b{font-size:1.38rem!important}
  #naFreshDiagBg .na-stat span{font-size:.76rem!important}
- #naFreshDiagBg .na-panel{padding:16px!important}
+ #naFreshDiagBg .na-panel{padding:16px!important;border-width:2px!important}
  #naFreshDiagBg .na-panel h3{font-size:1.08rem!important}
  #naFreshDiagBg .na-bar-row{grid-template-columns:150px 1fr 52px!important;font-size:.86rem!important;padding:13px 0!important}
  #naFreshDiagBg .na-bar-row b,#naFreshDiagBg .na-bar-row strong{font-size:.86rem!important}
