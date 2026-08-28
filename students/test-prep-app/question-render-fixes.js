@@ -6,32 +6,8 @@ const H={apikey:K,Authorization:`Bearer ${K}`};
 const cache=new Map();
 let queued=false,lastKey='';
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-function ensureStyles(){
-  if(document.getElementById('tp-inline-bank-style'))return;
-  const style=document.createElement('style');
-  style.id='tp-inline-bank-style';
-  style.textContent=`
-    .context .items.bank-inline{
-      display:flex;
-      flex-wrap:wrap;
-      align-items:center;
-      gap:8px;
-    }
-    .context .items.bank-inline .item{
-      width:auto;
-      flex:0 0 auto;
-      padding:8px 12px;
-    }
-    .context .items.bank-inline .item .line{
-      display:inline;
-      white-space:nowrap;
-    }
-  `;
-  document.head.appendChild(style);
-}
 function layoutBanks(card){
   if(!card)return;
-  ensureStyles();
   card.querySelectorAll('.context').forEach(ctx=>{
     const title=ctx.querySelector(':scope > .context-title');
     const items=ctx.querySelector(':scope > .items');
