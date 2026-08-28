@@ -4,5 +4,6 @@ function load(src){return new Promise((resolve,reject)=>{const s=document.create
 load('./naesin-core-fresh.js?v=20260828-ui3')
   .then(()=>load('./naesin-signedoff-ui.js?v=20260828-ui3'))
   .then(()=>load('./naesin-history.js?v=20260828-nav1'))
+  .then(()=>load('./naesin-diagnostic-fix.js?v=20260828-wrong3'))
   .catch(e=>console.error('[naesin-loader]',e));
 })();
