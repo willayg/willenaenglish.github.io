@@ -30,6 +30,6 @@ async function start(btn){const state=window.WillenaTestPrepAuth.state,plan=stat
 async function startSelection(planId,lesson,section,opts={}){const b=document.createElement('button');b.dataset.plan=String(planId);b.dataset.lesson=String(lesson);b.dataset.section=String(section);b.__reviewOptions=opts;return start(b)}
 function questionQuery(){if(!selection)return'';let q=`&book_id=eq.${encodeURIComponent(selection.bookId)}&unit_id=eq.${encodeURIComponent(selection.unitId)}`;if(selection.reviewIds?.length&&!['vocabulary','vocab_test','sentences'].includes(selection.section))q+=`&id=in.${encodeURIComponent('('+selection.reviewIds.join(',')+')')}`;return q}
 function init(){installDebugPanel();renderHome()}
-window.addEventListener('testprep:review-group-complete',()=>{restorePractice();showHomeSurface();if(window.WillenaTestPrepUX?.showWrongCenter)window.WillenaTestPrepUX.showWrongCenter();else window.WillenaTestPrepUX?.renderHome?.()});
+window.addEventListener('testprep:review-group-complete',()=>{restorePractice()});
 window.WillenaAssignedTestPrep={init,renderHome,startSelection,questionQuery,showHomeSurface,get selection(){return selection}};
 })();
