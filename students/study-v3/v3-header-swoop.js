@@ -1,30 +1,43 @@
 (async function(){
   'use strict';
 
+  // Hide the staging-only V3 badge so it does not sit on top of the finished header.
+  const hideBadge=()=>{
+    const badge=document.querySelector('.study-v3-badge');
+    if(badge) badge.style.display='none';
+  };
+  hideBadge();
+  const badgeObserver=new MutationObserver(hideBadge);
+  badgeObserver.observe(document.documentElement,{childList:true,subtree:true});
+  setTimeout(()=>badgeObserver.disconnect(),5000);
+
   await customElements.whenDefined('student-header');
   const host=document.querySelector('student-header');
   if(!host||!host.shadowRoot)return;
 
-  host.style.setProperty('--study-v3-page','#f4f6f7');
+  host.style.setProperty('--study-v3-page','#f4f7f8');
 
   const css=`
     :host{
       display:block;
       position:relative;
       z-index:30;
-      margin-bottom:24px;
-      --study-v3-page:#f4f6f7;
+      width:100%;
+      margin:0 0 18px;
+      overflow:hidden;
+      --study-v3-page:#f4f7f8;
     }
     header{
       position:relative !important;
       top:auto !important;
-      overflow:visible !important;
-      isolation:isolate;
-      min-height:108px !important;
-      padding:18px 26px 34px !important;
+      width:100% !important;
+      min-height:142px !important;
+      padding:25px 34px 49px !important;
       margin:0 !important;
       border:0 !important;
-      background:linear-gradient(112deg,#bff7f8 0%,#66dce2 57%,#43c6cf 100%) !important;
+      overflow:hidden !important;
+      isolation:isolate;
+      background:linear-gradient(112deg,#c7f8f8 0%,#72e1e6 53%,#3bc6cf 100%) !important;
       box-shadow:none !important;
     }
     header::before,
@@ -33,133 +46,172 @@
       position:absolute;
       pointer-events:none;
     }
+    /* Pink accent stays inside the header bounds. */
     header::before{
-      z-index:1;
-      width:96%;
-      height:34px;
-      left:36%;
-      bottom:-14px;
-      background:#ffc5df;
-      border-radius:78% 22% 0 0 / 100% 100% 0 0;
-      transform:rotate(-3deg);
-      opacity:.68;
-    }
-    header::after{
       z-index:2;
-      width:142%;
-      height:70px;
-      left:-18%;
-      bottom:-48px;
-      background:var(--study-v3-page,#f4f6f7);
-      border-radius:57% 43% 0 0 / 100% 100% 0 0;
-      transform:rotate(1.5deg);
+      width:58%;
+      height:43px;
+      left:58%;
+      bottom:-5px;
+      background:#ffc5df;
+      border-radius:76% 24% 0 0 / 100% 100% 0 0;
+      transform:rotate(-3deg);
+    }
+    /* The main page curve carves into the cyan rather than hanging off the page. */
+    header::after{
+      z-index:3;
+      width:120%;
+      height:82px;
+      left:-10%;
+      bottom:-43px;
+      background:var(--study-v3-page,#f4f7f8);
+      border-radius:61% 39% 0 0 / 100% 100% 0 0;
+      transform:rotate(-1.1deg);
     }
     .top{
       position:relative;
-      z-index:5;
-      min-height:54px;
-      align-items:center;
-      gap:12px;
+      z-index:6;
+      display:flex;
+      align-items:flex-start;
+      min-height:68px;
+      gap:16px;
+    }
+    .top::before{
+      content:'';
+      position:absolute;
+      z-index:-1;
+      width:190px;
+      height:190px;
+      left:8px;
+      top:-105px;
+      border-radius:50%;
+      background:rgba(255,255,255,.27);
+      pointer-events:none;
     }
     .info{
-      flex-direction:row;
+      display:grid;
+      grid-template-columns:auto auto;
+      grid-template-areas:'name name' 'points stars';
       align-items:center;
-      gap:8px;
+      justify-items:start;
+      column-gap:10px;
+      row-gap:10px;
     }
     .title{
-      display:inline-flex;
-      align-items:center;
-      min-height:32px;
-      padding:6px 12px;
-      border-radius:999px;
-      background:#174c50;
-      color:#fff !important;
-      font-size:14px;
+      grid-area:name;
+      display:block;
+      padding:0;
+      min-height:0;
+      border-radius:0;
+      background:transparent;
+      color:#0b555c !important;
+      font-size:28px;
+      font-weight:800;
       line-height:1;
-      white-space:nowrap;
+      letter-spacing:-.04em;
     }
+    .points-pill{grid-area:points;}
+    .stars-pill{grid-area:stars;}
     .points-pill,
     .stars-pill{
       margin:0 !important;
       min-height:32px;
-      padding:6px 10px;
-      background:rgba(255,255,255,.90);
+      padding:7px 12px;
+      background:rgba(255,255,255,.80);
       backdrop-filter:blur(7px);
-      font-size:12px;
+      border-width:1.4px;
+      font-size:13px;
+      line-height:1;
+      box-shadow:none;
     }
     .points-pill{
-      border-color:rgba(22,108,114,.36);
-      color:#176d73;
+      border-color:rgba(19,100,106,.48);
+      color:#0b666c;
     }
     .stars-pill{
-      border-color:#e7cf7d;
-      color:#9c7510;
+      border-color:#dfc976;
+      color:#9a7410;
     }
-    .page-title{
-      margin:0 8px 0 auto;
-      color:#154f54 !important;
-      font-size:23px;
-      line-height:1;
-    }
-    .page-title-text{color:#154f54 !important;}
     .spacer{flex:1;}
-    .avatar{
-      width:48px;
-      height:48px;
-      border-radius:50%;
-      border:2px solid #17868c;
-      background:rgba(255,255,255,.96);
-      font-size:26px;
-      box-shadow:0 7px 20px rgba(20,78,83,.11);
+    .page-title{
+      align-self:center;
+      margin:8px 16px 0 auto;
+      color:#0d5158 !important;
+      font-size:29px;
+      font-weight:800;
+      line-height:1;
+      letter-spacing:-.035em;
     }
-    .menu-anchor{z-index:8;}
+    .page-title-text{color:#0d5158 !important;}
+    .avatar{
+      width:57px;
+      height:57px;
+      border-radius:20px;
+      border:0;
+      background:rgba(255,255,255,.96);
+      font-size:30px;
+      box-shadow:0 8px 22px rgba(20,78,83,.11);
+    }
+    .menu-anchor{
+      align-self:center;
+      z-index:8;
+    }
     .dropdown{top:calc(100% + 9px);}
     .menu-row{display:none !important;}
 
     @media (max-width:700px){
-      :host{margin-bottom:20px;}
+      :host{margin-bottom:14px;}
       header{
-        min-height:100px !important;
-        padding:16px 15px 31px !important;
+        min-height:126px !important;
+        padding:20px 18px 43px !important;
       }
       header::before{
-        left:31%;
-        width:105%;
-        height:30px;
-        bottom:-12px;
+        width:62%;
+        left:55%;
+        height:36px;
+        bottom:-3px;
       }
       header::after{
-        width:150%;
-        left:-24%;
-        height:62px;
-        bottom:-43px;
+        width:124%;
+        left:-12%;
+        height:70px;
+        bottom:-38px;
       }
-      .top{gap:8px;}
-      .info{gap:6px;}
-      .title{
-        min-height:29px;
-        padding:5px 10px;
-        font-size:12px;
+      .top::before{
+        width:155px;
+        height:155px;
+        left:0;
+        top:-90px;
       }
+      .info{column-gap:7px;row-gap:8px;}
+      .title{font-size:23px;}
       .points-pill,.stars-pill{
         min-height:29px;
-        padding:5px 8px;
+        padding:6px 9px;
         font-size:11px;
       }
       .points-pill svg,.stars-pill svg{width:12px;height:12px;}
-      .page-title{font-size:20px;margin-right:4px;}
-      .avatar{width:43px;height:43px;font-size:23px;}
+      .page-title{font-size:23px;margin-right:7px;}
+      .avatar{width:47px;height:47px;border-radius:17px;font-size:25px;}
     }
   `;
 
-  try{
-    const sheet=new CSSStyleSheet();
-    sheet.replaceSync(css);
-    host.shadowRoot.adoptedStyleSheets=[...host.shadowRoot.adoptedStyleSheets,sheet];
-  }catch(_){
+  const install=()=>{
+    const root=host.shadowRoot;
+    if(!root)return;
+    const old=root.getElementById('studyV3HeaderSwoop');
+    if(old)old.remove();
     const style=document.createElement('style');
     style.id='studyV3HeaderSwoop';
     style.textContent=css;
-    host.shadowRoot.appendChild(style);
-  }
+    root.appendChild(style);
+  };
+
+  // The shared header re-renders its entire shadow DOM whenever points/avatar change.
+  // Reinstall this page-only skin after those renders so it cannot silently disappear.
+  install();
+  const observer=new MutationObserver(()=>{
+    if(!host.shadowRoot.getElementById('studyV3HeaderSwoop')) install();
+  });
+  observer.observe(host.shadowRoot,{childList:true});
 })();
