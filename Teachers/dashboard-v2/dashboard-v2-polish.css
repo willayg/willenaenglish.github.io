@@ -1,4 +1,4 @@
-/* Dashboard V2 targeted polish: sidebar icons, top command pill, and Naesin buttons only. */
+/* Dashboard V2 targeted polish: sidebar icons, top command pill, and shared outlined UI. */
 
 /* Sidebar icons: larger, darker, more vivid */
 .rail .nav{min-height:52px!important}
@@ -18,27 +18,58 @@
 .top-actions #burger-menu-mount .hw-notif-btn:hover,.top-actions #burger-menu-mount .burger-btn:hover{background:#3aa9b8!important}
 .top-actions #burger-menu-mount .burger-dropdown{top:calc(100% + 7px)!important;right:0!important}
 
-/* Naesin: improve buttons only; leave cards, spacing and modal layout alone */
-#view-naesin .na-add{background:#fff!important;color:#237581!important;border:2px solid #58c3d2!important;border-radius:14px!important;padding:11px 17px!important;min-height:46px!important;font-weight:800!important;box-shadow:0 2px 6px rgba(88,195,210,.08)!important}
-#view-naesin .na-add:hover{background:#f2fbfc!important;border-color:#47b5c5!important;color:#1d6973!important}
+/* Naesin: white-fill / cyan-outline button language */
+#view-naesin .na-add{background:#fff!important;color:#267985!important;border:1.7px solid #83cfda!important;border-radius:14px!important;padding:12px 17px!important;min-height:46px!important;font-weight:800!important;box-shadow:0 3px 9px rgba(79,185,200,.08)!important}
+#view-naesin .na-add:hover{background:#f2fbfc!important;border-color:#58c3d2!important}
 #view-naesin .na-actions{gap:9px!important}
 #view-naesin .na-actions .na-btn{min-height:40px!important;padding:9px 14px!important;border-radius:12px!important;border-width:1.5px!important;font-weight:800!important;box-shadow:none!important}
-#view-naesin .na-actions .na-btn.cyan{background:#eaf8fa!important;border-color:#9fdce3!important;color:#237581!important}
+#view-naesin .na-actions .na-btn.cyan{background:#fff!important;border-color:#9fdce3!important;color:#237581!important}
 #view-naesin .na-actions .na-btn:not(.cyan):not(.dark){background:#fff!important;border-color:#d9e0e4!important;color:#343343!important}
-#view-naesin .na-actions .na-btn.dark{background:#37434d!important;border-color:#37434d!important;color:#fff!important}
+#view-naesin .na-actions .na-btn.dark{background:#fff!important;border-color:#83cfda!important;color:#267985!important}
 #view-naesin .na-actions [data-delete]{background:#fff5f7!important;border-color:#efb4c7!important;color:#a94869!important}
 #view-naesin .na-actions .na-dday{font-weight:800!important}
 
-/* Wizard navigation: previous and next sit together and share one visual system */
-#naFreshEditBg .na-modal-foot{align-items:center!important}
-#naFreshEditBg #naWizardBack,#naFreshEditBg #naWizardNext,#naFreshEditBg #naEditSave{height:44px!important;min-height:44px!important;padding:0 17px!important;border-radius:12px!important;font-size:.8rem!important;font-weight:800!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;line-height:1!important}
-#naFreshEditBg #naWizardBack{background:#fff!important;border:1.5px solid #d4dde1!important;color:#46515b!important}
-#naFreshEditBg #naWizardNext,#naFreshEditBg #naEditSave{background:#fff!important;border:2px solid #58c3d2!important;color:#237581!important;box-shadow:0 2px 6px rgba(88,195,210,.08)!important}
-#naFreshEditBg #naWizardNext:hover,#naFreshEditBg #naEditSave:hover{background:#f2fbfc!important;border-color:#47b5c5!important;color:#1d6973!important}
+/* Students + Classes: use the same white-fill / outlined-container language */
+#view-students .panel,
+#view-classes .class-card{
+  background:#fff!important;
+  border:1.7px solid #9fdce3!important;
+  box-shadow:0 3px 10px rgba(79,185,200,.06)!important;
+}
+#view-students .panel{border-radius:22px!important}
+#view-classes .class-card{border-radius:20px!important}
+#view-classes .class-card:hover{border-color:#58c3d2!important;background:#fbfeff!important;box-shadow:0 6px 16px rgba(79,185,200,.10)!important}
+
+/* Individual student rows read as clean outlined cards rather than flat table strips */
+#view-students .student-list{padding:10px!important;background:#f8fbfc!important}
+#view-students .student-row{
+  background:#fff!important;
+  border:1.4px solid #d2e9ed!important;
+  border-radius:15px!important;
+  margin-bottom:8px!important;
+  padding:13px 15px!important;
+}
+#view-students .student-row:last-child{margin-bottom:0!important}
+#view-students .student-row:hover{border-color:#83cfda!important;background:#fbfeff!important}
+
+/* Class stat tiles use the same contained look */
+#view-classes .class-stat{
+  background:#fff!important;
+  border:1.3px solid #d2e9ed!important;
+  border-radius:12px!important;
+}
+
+/* Student detail drawer: carry the same container language through */
+.drawer .big-card,.drawer .detail{
+  background:#fff!important;
+  border:1.5px solid #b8e1e6!important;
+  box-shadow:0 2px 8px rgba(79,185,200,.05)!important;
+}
+.drawer .mistake-group{background:#fff!important;border:1.3px solid #d2e9ed!important}
 
 @media(max-width:700px){
   .top-actions #burger-menu-mount .burger-user-label{display:none!important}
   .top-actions #burger-menu-mount .hw-notif-btn{border-radius:14px 0 0 14px!important}
   #view-naesin .na-actions .na-btn{padding:9px 11px!important}
-  #naFreshEditBg #naWizardBack,#naFreshEditBg #naWizardNext,#naFreshEditBg #naEditSave{height:42px!important;min-height:42px!important;padding:0 14px!important}
+  #view-students .student-list{padding:7px!important}
 }
