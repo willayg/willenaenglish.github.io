@@ -1,22 +1,6 @@
 (function(){
 'use strict';
 let scheduled=false,bound=false;
-function styles(){
- if(document.getElementById('tpHomeHeaderTopStyles'))return;
- const s=document.createElement('style');
- s.id='tpHomeHeaderTopStyles';
- s.textContent=`
- #tpHomePlanTop{margin:0 0 16px}
- #tpHomePlanTop .tp-home-plan-meta{margin:0 0 12px}
- #tpHomePlanTop .tp-home-plan-meta:last-child{margin-bottom:0}
- #tpHomePlanTop .tp-exam-head{margin:0 2px 9px}
- #tpHomePlanTop .tp-book{margin:0 2px}
- #tpHomePlanTop .tp-dday{display:inline-flex;align-items:center;justify-content:center;padding:6px 9px;border:1px solid #cfe9eb;border-radius:999px;background:#f7fbfb;color:#19777e;font-size:9px;font-weight:800;white-space:nowrap}
- #tpHomePlanTop [data-records]{position:relative;z-index:2;pointer-events:auto;cursor:pointer}
- .tp-exam-section>.tp-exam-head,.tp-exam-section>.tp-book{display:none!important}
- `;
- document.head.appendChild(s);
-}
 function makeDday(dateText){
  const m=String(dateText||'').match(/(\d{4})-(\d{2})-(\d{2})/);
  if(!m)return'';
@@ -57,7 +41,7 @@ function bindClicks(){
 }
 function place(){
  scheduled=false;
- styles();bindClicks();
+ bindClicks();
  const home=document.getElementById('assignmentHome');
  if(!home||home.style.display==='none')return;
  if(home.querySelector('.tp-lesson-head,.tp-wrong-page-head'))return;
@@ -86,6 +70,6 @@ function place(){
  addDday(top);
 }
 function schedule(){if(scheduled)return;scheduled=true;requestAnimationFrame(place)}
-function boot(){styles();bindClicks();schedule();new MutationObserver(schedule).observe(document.getElementById('assignmentHome')||document.body,{childList:true,subtree:true});window.addEventListener('popstate',()=>setTimeout(schedule,0));}
+function boot(){bindClicks();schedule();new MutationObserver(schedule).observe(document.getElementById('assignmentHome')||document.body,{childList:true,subtree:true});window.addEventListener('popstate',()=>setTimeout(schedule,0));}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
