@@ -105,7 +105,7 @@ function installHeader(){
         </div>
       </div>
       <div class="tp-header-brand">
-        <div class="tp-header-title">Test Prep</div>
+        <div class="tp-header-title">내신 폭탄</div>
         <div class="tp-profile-menu-wrap">
           <button class="tp-header-avatar" type="button" aria-label="프로필 메뉴" aria-haspopup="menu" aria-expanded="false"><span data-tp-avatar>${esc(identity.avatar)}</span></button>
           <div class="tp-profile-menu" id="tpProfileMenu" role="menu" hidden>
