@@ -5,7 +5,7 @@ const K=['sb_publishable_','G-FYhHfDL4OGdL892gY1Zg_','epdbEeqO'].join('');
 const H={apikey:K,Authorization:`Bearer ${K}`};
 const cache=new Map();
 let queued=false,lastKey='';
-const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]));
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function ensureStyles(){
   if(document.getElementById('tp-inline-bank-style'))return;
   const style=document.createElement('style');
