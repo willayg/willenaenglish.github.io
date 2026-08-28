@@ -2,7 +2,7 @@
 'use strict';
 var NEXT='/students/study-v3/';
 var LOGIN='/students/signin.html?next='+encodeURIComponent(NEXT);
-var V3_CACHE='20260829-headerswoop1';
+var V3_CACHE='20260829-headerblockerfix1';
 
 function loadV3Sidecar(){
   try{
@@ -11,7 +11,6 @@ function loadV3Sidecar(){
     addCss('data-study-v3-speaking','./v3-speaking.css');
     addCss('data-study-v3-activity-shell','./v3-activity-shell.css');
     addJs('data-study-v3-badge','./v3-badge.js');
-    addJs('data-study-v3-header-swoop','./v3-header-swoop.js');
     addJs('data-study-v3-speech-tolerance','./v3-speech-recognition-tolerance.js');
     addJs('data-study-v3-speaking-recall','./v3-speaking-recall.js');
     addJs('data-study-v3-speaking-integration','./v3-speaking-integration.js');
