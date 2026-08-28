@@ -1,6 +1,6 @@
 /**
  * API Configuration - Simple and Deterministic
- * VERSION: 2026-08-27e CACHE_BUST
+ * VERSION: 2026-08-29 FAST_APP_SWITCH_CACHE
  */
 (function() {
   'use strict';
@@ -50,6 +50,24 @@
 
   let _crossOriginCookiesFailed = false;
   const isThirdPartyCookiesBlocked = () => isKnownCookieBlockingBrowser || _crossOriginCookiesFailed;
+
+  const ADMIN_STUDENTS_CACHE_KEY='willena:admin:list_students:v1';
+  const ADMIN_STUDENTS_CACHE_MS=120000;
+  function readSessionCache(key,maxAge){
+    try{
+      const value=JSON.parse(sessionStorage.getItem(key)||'null');
+      if(!value||!value.ts||Date.now()-value.ts>maxAge)return null;
+      return value;
+    }catch{return null}
+  }
+  function writeSessionCache(key,value){try{sessionStorage.setItem(key,JSON.stringify(value))}catch{}}
+  function clearSessionCache(key){try{sessionStorage.removeItem(key)}catch{}}
+  function isAdminStudentList(functionPath,options){
+    return (!options.method||String(options.method).toUpperCase()==='GET') && /(?:^|\/)teacher_admin(?:\?|$)/.test(functionPath) && /(?:[?&])action=list_students(?:&|$)/.test(functionPath);
+  }
+  function isAdminStudentMutation(functionPath,options){
+    return String(options.method||'GET').toUpperCase()!=='GET' && /(?:^|\/)teacher_admin(?:\?|$)/.test(functionPath) && /(?:[?&])action=(?:update_student|create_student|delete_student)(?:&|$)/.test(functionPath);
+  }
 
   function getApiUrl(functionPath) {
     if (functionPath.startsWith('http://') || functionPath.startsWith('https://')) return functionPath;
@@ -123,7 +141,28 @@
     if (options.method === 'POST' || options.body) {
       console.log('[WillenaAPI] POST request:', url, 'body:', options.body ? options.body.substring(0,100) : '(none)');
     }
-    try { return await fetch(url, fetchOptions); }
+
+    if(isAdminStudentList(functionPath,options)){
+      const cached=readSessionCache(ADMIN_STUDENTS_CACHE_KEY,ADMIN_STUDENTS_CACHE_MS);
+      if(cached?.body){
+        fetch(url,fetchOptions).then(async r=>{
+          if(!r.ok)return;
+          const body=await r.clone().text();
+          if(body)writeSessionCache(ADMIN_STUDENTS_CACHE_KEY,{ts:Date.now(),body,status:r.status});
+        }).catch(()=>{});
+        return new Response(cached.body,{status:cached.status||200,headers:{'Content-Type':'application/json','X-Willena-Cache':'HIT'}});
+      }
+    }
+
+    try {
+      const response=await fetch(url, fetchOptions);
+      if(isAdminStudentList(functionPath,options) && response.ok){
+        const body=await response.clone().text();
+        if(body)writeSessionCache(ADMIN_STUDENTS_CACHE_KEY,{ts:Date.now(),body,status:response.status});
+      }
+      if(isAdminStudentMutation(functionPath,options) && response.ok)clearSessionCache(ADMIN_STUDENTS_CACHE_KEY);
+      return response;
+    }
     catch (err) { console.error('[WillenaAPI] Fetch error:', err); throw err; }
   }
 
@@ -149,6 +188,7 @@
     setLocalTokens(accessToken,refreshToken){ try { if(accessToken)localStorage.setItem('sb_access_token',accessToken); if(refreshToken)localStorage.setItem('sb_refresh_token',refreshToken); } catch(e){} },
     getLocalAccessToken(){ try { return localStorage.getItem('sb_access_token') || null; } catch(e){ return null; } },
     clearLocalTokens(){ try { localStorage.removeItem('sb_access_token'); localStorage.removeItem('sb_refresh_token'); } catch(e){} },
+    clearAdminStudentCache(){clearSessionCache(ADMIN_STUDENTS_CACHE_KEY)},
     CF_ROLLOUT_PERCENT:100, CF_SHADOW_MODE:false,
     shouldUseCloudflare:()=>USE_CF_WORKERS,setRolloutPercent:()=>{},setFunctionRollout:()=>{},
   };
