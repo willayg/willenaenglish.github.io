@@ -1,0 +1,25 @@
+/* Dashboard V2 targeted polish: sidebar icons and top command pill only.
+   Naesin workspace/modal styling intentionally left to existing Naesin CSS. */
+
+/* Sidebar icons: larger, darker, more vivid */
+.rail .nav{min-height:52px!important}
+.rail .nav-icon{width:36px!important;height:36px!important;flex-basis:36px!important;border-radius:10px!important;background:#f8fbfc!important;color:#2b7f89!important}
+.rail .nav.active .nav-icon{background:#dff5f7!important;color:#1f7480!important}
+.rail .nav-icon svg{width:23px!important;height:23px!important;display:block!important;stroke:currentColor!important;stroke-width:2.2!important;opacity:1!important}
+.rail .nav:not(.active) .nav-icon svg{opacity:.92!important}
+.rail-collapse-toggle{width:40px!important;height:36px!important;color:#2b7f89!important;font-weight:900!important}
+
+/* Header user + bell + burger as one attached pill, anchored in the topbar */
+.top-actions #burger-menu-mount .burger-menu{position:relative!important;display:flex!important;align-items:stretch!important;gap:0!important;border-radius:14px!important;background:#fff!important;box-shadow:none!important;border:1px solid rgba(255,255,255,.16)!important;overflow:visible!important}
+.top-actions #burger-menu-mount .burger-user-label{display:flex!important;height:40px!important;padding:0 13px!important;border:0!important;border-radius:14px 0 0 14px!important;background:#fff!important;color:#37434d!important;box-shadow:none!important;font-size:.72rem!important}
+.top-actions #burger-menu-mount .hw-notif-wrap,.top-actions #burger-menu-mount .burger-dropdown-wrap{display:flex!important;margin:0!important}
+.top-actions #burger-menu-mount .hw-notif-btn,.top-actions #burger-menu-mount .burger-btn{width:40px!important;height:40px!important;margin:0!important;border-radius:0!important;background:#4fb9c8!important;color:#fff!important;box-shadow:none!important;border:0!important}
+.top-actions #burger-menu-mount .hw-notif-btn{border-left:1px solid rgba(255,255,255,.28)!important}
+.top-actions #burger-menu-mount .burger-btn{border-left:1px solid rgba(255,255,255,.28)!important;border-radius:0 14px 14px 0!important}
+.top-actions #burger-menu-mount .hw-notif-btn:hover,.top-actions #burger-menu-mount .burger-btn:hover{background:#3aa9b8!important}
+.top-actions #burger-menu-mount .burger-dropdown{top:calc(100% + 7px)!important;right:0!important}
+
+@media(max-width:700px){
+  .top-actions #burger-menu-mount .burger-user-label{display:none!important}
+  .top-actions #burger-menu-mount .hw-notif-btn{border-radius:14px 0 0 14px!important}
+}
