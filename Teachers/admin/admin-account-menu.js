@@ -18,7 +18,11 @@
     .admin-account-menu a,.admin-account-menu button{width:100%;border:1px solid transparent;background:#fff;color:var(--teal,#19777e);border-radius:10px;padding:10px 11px;text-decoration:none;text-align:left;font-weight:700;display:flex;align-items:center;gap:9px}
     .admin-account-menu a:hover,.admin-account-menu button:hover,.admin-account-menu a:focus,.admin-account-menu button:focus{background:#f0f9f9;border-color:#d9eeee;outline:none}
     .admin-account-menu .danger{color:#a63333;border-top:1px solid #edf0f3;border-radius:0 0 10px 10px;margin-top:5px;padding-top:12px}
-    @media(max-width:720px){.admin-account-menu{position:fixed;right:13px;top:68px;width:min(270px,calc(100vw - 26px))}}
+    .admin-app-switch{display:flex;align-items:center;background:#fff;border:1px solid var(--line,#e4e9ef);border-radius:999px;padding:3px;gap:2px;box-shadow:0 4px 14px rgba(24,35,52,.05);white-space:nowrap}
+    .admin-app-switch a{display:block;text-decoration:none;color:var(--mut,#748091);padding:7px 10px;border-radius:999px;font-size:.7rem;font-weight:700;line-height:1}
+    .admin-app-switch a.active{background:var(--teal,#19777e);color:#fff}
+    .admin-app-switch a:not(.active):hover{background:#eef8f8;color:var(--teal,#19777e)}
+    @media(max-width:720px){.admin-account-menu{position:fixed;right:13px;top:68px;width:min(270px,calc(100vw - 26px))}.admin-app-switch{display:none}}
   `;
   document.head.appendChild(style);
 
@@ -37,6 +41,12 @@
   function mount(){
     const top=document.querySelector('.top');
     if(!top||document.getElementById('adminAccountMenuWrap'))return;
+    if(!document.getElementById('adminAppSwitch')){
+      const sw=document.createElement('div');
+      sw.className='admin-app-switch';sw.id='adminAppSwitch';sw.setAttribute('aria-label','Teacher and admin apps');
+      sw.innerHTML='<a href="/Teachers/dashboard-v2/">Teacher</a><a class="active" href="/Teachers/admin/">Admin</a>';
+      top.insertBefore(sw,top.querySelector('.lang')||top.querySelector('.badge-user')||null);
+    }
     const wrap=document.createElement('div');
     wrap.className='admin-account-wrap';wrap.id='adminAccountMenuWrap';
     wrap.innerHTML=`<button class="admin-burger" id="adminBurger" aria-haspopup="menu" aria-expanded="false" aria-label="${t('menu')}"><span></span></button><div class="admin-account-menu" id="adminAccountMenu" role="menu"><a role="menuitem" href="/Teachers/index.html">⌂ <span data-menu-label="home">${t('home')}</span></a><a role="menuitem" href="/Teachers/tools/curriculum-editor/books">▦ <span data-menu-label="curriculum">${t('curriculum')}</span></a><button role="menuitem" class="danger" id="adminLogout">↪ <span data-menu-label="logout">${t('logout')}</span></button></div>`;
