@@ -16,10 +16,9 @@
 
   /*
    * The shared header remains responsible for identity, points, stars,
-   * avatar, menu and logout.  The page-level shell owns ONLY the visual
-   * height/background/curves so no shared-component sizing rule can squash it.
-   * This is deliberately idempotent because the V3 sidecar can be requested
-   * more than once by older cached loaders.
+   * avatar, menu and logout. The page-level shell owns only the visual
+   * background/curve. Keep auth and menu behaviour entirely inside the
+   * existing student-header component.
    */
   let shell=host.parentElement&&host.parentElement.classList.contains('study-v3-header-shell')
     ? host.parentElement
@@ -39,9 +38,9 @@
         position:relative;
         isolation:isolate;
         width:100%;
-        height:190px;
-        min-height:190px;
-        margin:0 0 24px;
+        height:142px;
+        min-height:142px;
+        margin:0 0 20px;
         overflow:hidden;
         background:linear-gradient(112deg,#c7f8f8 0%,#72e1e6 53%,#3bc6cf 100%);
       }
@@ -54,7 +53,7 @@
       .study-v3-header-shell::before{
         z-index:1;
         width:58%;
-        height:58px;
+        height:42px;
         left:57%;
         bottom:0;
         background:#ffc5df;
@@ -64,29 +63,29 @@
       .study-v3-header-shell::after{
         z-index:2;
         width:116%;
-        height:104px;
+        height:72px;
         left:-8%;
-        bottom:-58px;
+        bottom:-40px;
         background:#f2f3f5;
         border-radius:61% 39% 0 0 / 100% 100% 0 0;
         transform:rotate(-1.1deg);
       }
       @media(max-width:700px){
         .study-v3-header-shell{
-          height:154px;
-          min-height:154px;
-          margin-bottom:18px;
+          height:126px;
+          min-height:126px;
+          margin-bottom:16px;
         }
         .study-v3-header-shell::before{
           width:62%;
           left:55%;
-          height:44px;
+          height:36px;
         }
         .study-v3-header-shell::after{
           width:120%;
           left:-10%;
-          height:82px;
-          bottom:-46px;
+          height:64px;
+          bottom:-36px;
         }
       }
     `;
@@ -113,10 +112,10 @@
       left:auto !important;
       right:auto !important;
       width:100% !important;
-      min-height:128px !important;
+      min-height:112px !important;
       height:auto !important;
       box-sizing:border-box !important;
-      padding:30px 40px 18px !important;
+      padding:20px 34px 12px !important;
       margin:0 !important;
       border:0 !important;
       overflow:visible !important;
@@ -130,17 +129,17 @@
       z-index:7;
       display:flex;
       align-items:flex-start;
-      min-height:84px;
-      gap:20px;
+      min-height:82px;
+      gap:18px;
     }
     .top::before{
       content:'';
       position:absolute;
       z-index:-1;
-      width:230px;
-      height:230px;
-      left:4px;
-      top:-128px;
+      width:190px;
+      height:190px;
+      left:0;
+      top:-111px;
       border-radius:50%;
       background:rgba(255,255,255,.27);
       pointer-events:none;
@@ -152,7 +151,7 @@
       align-items:center;
       justify-items:start;
       column-gap:12px;
-      row-gap:11px;
+      row-gap:8px;
     }
     .title{
       grid-area:name;
@@ -162,9 +161,9 @@
       border-radius:0;
       background:transparent;
       color:#0b555c !important;
-      font-size:36px !important;
+      font-size:48px !important;
       font-weight:800;
-      line-height:1;
+      line-height:.95;
       letter-spacing:-.04em;
     }
     .points-pill{grid-area:points;}
@@ -172,59 +171,60 @@
     .points-pill,
     .stars-pill{
       margin:0 !important;
-      min-height:40px !important;
-      padding:9px 15px !important;
-      background:rgba(255,255,255,.84) !important;
+      min-height:38px !important;
+      padding:8px 14px !important;
+      background:rgba(255,255,255,.86) !important;
       backdrop-filter:blur(7px);
       border-width:1.5px !important;
-      font-size:16px !important;
+      font-size:18px !important;
+      font-weight:700 !important;
       line-height:1 !important;
       box-shadow:none !important;
     }
-    .points-pill svg,.stars-pill svg{width:17px !important;height:17px !important;}
+    .points-pill svg,.stars-pill svg{width:19px !important;height:19px !important;}
     .points-pill{border-color:rgba(19,100,106,.48) !important;color:#0b666c !important;}
     .stars-pill{border-color:#dfc976 !important;color:#9a7410 !important;}
     .spacer{flex:1;}
     .page-title{
-      align-self:center;
-      margin:8px 20px 0 auto !important;
+      align-self:flex-start;
+      margin:7px 20px 0 auto !important;
       color:#0d5158 !important;
-      font-size:36px !important;
+      font-size:48px !important;
       font-weight:800;
-      line-height:1;
+      line-height:.95;
       letter-spacing:-.035em;
     }
     .page-title-text{color:#0d5158 !important;}
     .avatar{
-      width:66px !important;
-      height:66px !important;
-      border-radius:21px !important;
+      width:70px !important;
+      height:70px !important;
+      border-radius:22px !important;
       border:0 !important;
       background:rgba(255,255,255,.96) !important;
-      font-size:35px !important;
+      font-size:38px !important;
       box-shadow:0 8px 22px rgba(20,78,83,.11) !important;
     }
-    .menu-anchor{align-self:center;z-index:9;}
+    .menu-anchor{align-self:flex-start;z-index:9;}
     .dropdown{top:calc(100% + 9px);}
     .menu-row{display:none !important;}
 
     @media(max-width:700px){
       header{
-        min-height:108px !important;
-        padding:22px 18px 14px !important;
+        min-height:98px !important;
+        padding:17px 16px 10px !important;
       }
-      .top{min-height:72px;gap:12px;}
-      .top::before{width:175px;height:175px;left:0;top:-103px;}
-      .info{column-gap:8px;row-gap:8px;}
-      .title{font-size:29px !important;}
+      .top{min-height:72px;gap:10px;}
+      .top::before{width:150px;height:150px;left:0;top:-88px;}
+      .info{column-gap:7px;row-gap:7px;}
+      .title{font-size:36px !important;}
       .points-pill,.stars-pill{
-        min-height:33px !important;
-        padding:7px 10px !important;
-        font-size:13px !important;
+        min-height:31px !important;
+        padding:6px 9px !important;
+        font-size:15px !important;
       }
-      .points-pill svg,.stars-pill svg{width:14px !important;height:14px !important;}
-      .page-title{font-size:29px !important;margin-right:9px !important;}
-      .avatar{width:54px !important;height:54px !important;border-radius:18px !important;font-size:29px !important;}
+      .points-pill svg,.stars-pill svg{width:16px !important;height:16px !important;}
+      .page-title{font-size:36px !important;margin-right:7px !important;}
+      .avatar{width:56px !important;height:56px !important;border-radius:18px !important;font-size:30px !important;}
     }
   `;
 
