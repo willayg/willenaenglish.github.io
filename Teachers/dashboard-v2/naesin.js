@@ -7,6 +7,6 @@ load('./naesin-core-fresh.js?v=20260828-ui3')
   .then(()=>load('./naesin-diagnostic-fix.js?v=20260828-wrong3'))
   .then(()=>load('./naesin-delete.js?v=20260828-delete1'))
   .then(()=>load('./naesin-mobile-polish.js?v=20260828-style2'))
-  .then(()=>load('./dashboard-shell-polish.js?v=20260828-shell1'))
+  .then(()=>load('./dashboard-shell-polish.js?v=20260828-shell2'))
   .catch(e=>console.error('[naesin-loader]',e));
 })();
