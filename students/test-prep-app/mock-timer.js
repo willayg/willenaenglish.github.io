@@ -1,0 +1,43 @@
+(function(){
+'use strict';
+const DURATION_MS=45*60*1000;
+let timer=null,deadline=0,expired=false;
+const $=(s,r=document)=>r.querySelector(s);
+function isMockState(){const s=history.state||{};return s.tp==='practice'&&(s.skill==='mock'||s.skill==='mock_all')}
+function timerEl(){return $('#tpMockTimer')}
+function ensureTimerEl(){
+ const row=$('#assignedBackRow');
+ if(!row)return null;
+ let el=timerEl();
+ if(!el){el=document.createElement('span');el.id='tpMockTimer';el.className='tp-mock-timer';row.appendChild(el)}
+ return el;
+}
+function format(ms){const total=Math.max(0,Math.ceil(ms/1000)),m=Math.floor(total/60),s=total%60;return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`}
+function tick(){
+ if(!deadline||!isMockState()){stop(false);return}
+ const el=ensureTimerEl();if(!el)return;
+ const left=deadline-Date.now();
+ el.textContent=left>0?`남은 시간 ${format(left)}`:'시간 종료 00:00';
+ el.classList.toggle('expired',left<=0);
+ if(left<=0&&!expired){expired=true;el.setAttribute('aria-live','assertive')}
+}
+function start(){
+ stop(false);expired=false;deadline=Date.now()+DURATION_MS;
+ timer=setInterval(tick,250);tick();
+}
+function stop(remove=true){if(timer){clearInterval(timer);timer=null}deadline=0;expired=false;if(remove)timerEl()?.remove()}
+function maybeStartFromClick(e){
+ const t=e.target instanceof Element?e.target:null;if(!t)return;
+ if(t.closest('.tp-mock-card,.tp-mock-all-card'))setTimeout(start,0);
+ if(t.closest('.back-assign'))stop();
+}
+function sync(){
+ if(isMockState()&&deadline){tick();return}
+ const done=$('.result h2');
+ if(done&&/모의고사 완료/.test(done.textContent||''))stop();
+ else if(!isMockState())stop();
+}
+function addStyles(){if($('#tpMockTimerStyle'))return;const s=document.createElement('style');s.id='tpMockTimerStyle';s.textContent=`.tp-mock-timer{margin-left:auto;flex:0 0 auto;border:2px solid #67d4da;background:#fff;color:#203039;border-radius:999px;padding:8px 12px;font-size:12px;font-weight:900;letter-spacing:.02em;white-space:nowrap}.tp-mock-timer.expired{border-color:#ee5f91;color:#c93d70;background:#fff3f7}@media(max-width:650px){.quiz-top-back{flex-direction:row!important;align-items:center!important;flex-wrap:wrap}.tp-mock-timer{margin-left:auto}}`;document.head.appendChild(s)}
+function boot(){addStyles();document.addEventListener('click',maybeStartFromClick,true);window.addEventListener('popstate',()=>setTimeout(sync,0));new MutationObserver(()=>queueMicrotask(sync)).observe(document.body,{childList:true,subtree:true});sync()}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
+})();
