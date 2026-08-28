@@ -1,5 +1,4 @@
-/* Dashboard V2 targeted polish: sidebar icons and top command pill only.
-   Naesin workspace/modal styling intentionally left to existing Naesin CSS. */
+/* Dashboard V2 targeted polish: sidebar icons, top command pill, and Naesin buttons only. */
 
 /* Sidebar icons: larger, darker, more vivid */
 .rail .nav{min-height:52px!important}
@@ -19,7 +18,19 @@
 .top-actions #burger-menu-mount .hw-notif-btn:hover,.top-actions #burger-menu-mount .burger-btn:hover{background:#3aa9b8!important}
 .top-actions #burger-menu-mount .burger-dropdown{top:calc(100% + 7px)!important;right:0!important}
 
+/* Naesin: improve buttons only; leave cards, spacing and modal layout alone */
+#view-naesin .na-add{background:#37434d!important;color:#fff!important;border:0!important;border-radius:14px!important;padding:12px 17px!important;min-height:46px!important;font-weight:800!important;box-shadow:0 4px 10px rgba(55,67,77,.10)!important}
+#view-naesin .na-add:hover{background:#2f3a43!important}
+#view-naesin .na-actions{gap:9px!important}
+#view-naesin .na-actions .na-btn{min-height:40px!important;padding:9px 14px!important;border-radius:12px!important;border-width:1.5px!important;font-weight:800!important;box-shadow:none!important}
+#view-naesin .na-actions .na-btn.cyan{background:#eaf8fa!important;border-color:#9fdce3!important;color:#237581!important}
+#view-naesin .na-actions .na-btn:not(.cyan):not(.dark){background:#fff!important;border-color:#d9e0e4!important;color:#343343!important}
+#view-naesin .na-actions .na-btn.dark{background:#37434d!important;border-color:#37434d!important;color:#fff!important}
+#view-naesin .na-actions [data-delete]{background:#fff5f7!important;border-color:#efb4c7!important;color:#a94869!important}
+#view-naesin .na-actions .na-dday{font-weight:800!important}
+
 @media(max-width:700px){
   .top-actions #burger-menu-mount .burger-user-label{display:none!important}
   .top-actions #burger-menu-mount .hw-notif-btn{border-radius:14px 0 0 14px!important}
+  #view-naesin .na-actions .na-btn{padding:9px 11px!important}
 }
