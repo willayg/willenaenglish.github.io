@@ -5,16 +5,79 @@ const KEY=['sb_publishable_','G-FYhHfDL4OGdL892gY1Zg_','epdbEeqO'].join('');
 const HEAD={apikey:KEY,Authorization:`Bearer ${KEY}`};
 let selection=null;
 function addScript(src,dataKey){if(document.querySelector(`script[${dataKey}]`))return;const s=document.createElement('script');s.src=src;s.setAttribute(dataKey,'1');document.head.appendChild(s)}
-if(!document.querySelector('script[data-testprep-student-header]')){const s=document.createElement('script');s.type='module';s.src='/students/components/student-header.js?v=20260826-testprep8';s.dataset.testprepStudentHeader='1';document.head.appendChild(s)}
 addScript('./tracking-phase1.js?v=20260827-phase10','data-testprep-phase1-tracking');
 addScript('./vocab-practice.js?v=20260827-vocab9','data-testprep-vocab-practice');
 addScript('./vocab-test-practice.js?v=20260827-vocabtest3','data-testprep-vocab-test-practice');
 addScript('./sentence-practice.js?v=20260827-sentence8','data-testprep-sentence-practice');
-if(!document.querySelector('student-header[data-testprep-header]')){const header=document.createElement('student-header');header.setAttribute('data-testprep-header','1');header.setAttribute('title','Test Prep');header.setAttribute('show-id','false');header.setAttribute('show-home','false');header.setAttribute('show-points','true');header.setAttribute('show-logout','true');document.body.insertBefore(header,document.body.firstChild)}
+
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]));
+
+function headerIdentity(){
+  return {
+    name:localStorage.getItem('user_name')||sessionStorage.getItem('user_name')||localStorage.getItem('username')||sessionStorage.getItem('username')||'Student',
+    avatar:localStorage.getItem('selectedEmojiAvatar')||sessionStorage.getItem('selectedEmojiAvatar')||localStorage.getItem('avatar')||sessionStorage.getItem('avatar')||'🙂'
+  };
+}
+function renderHeaderValues(values={}){
+  const header=document.getElementById('tpStudentHeader');if(!header)return;
+  const identity=headerIdentity();
+  const name=header.querySelector('[data-tp-name]'),avatar=header.querySelector('[data-tp-avatar]'),points=header.querySelector('[data-tp-points]'),stars=header.querySelector('[data-tp-stars]');
+  if(name)name.textContent=values.name||identity.name;
+  if(avatar)avatar.textContent=values.avatar||identity.avatar;
+  if(points&&Number.isFinite(values.points))points.textContent=String(values.points);
+  if(stars&&Number.isFinite(values.stars))stars.textContent=String(values.stars);
+}
+async function refreshHeader(){
+  renderHeaderValues();
+  try{
+    const [profileRes,overviewRes]=await Promise.all([
+      window.WillenaAPI?.fetch?.(`/.netlify/functions/supabase_auth?action=get_profile_name&_=${Date.now()}`),
+      window.WillenaAPI?.fetch?.(`/.netlify/functions/progress_summary?section=overview&_=${Date.now()}`)
+    ]);
+    const profile=profileRes?.ok?await profileRes.json():null;
+    const overview=overviewRes?.ok?await overviewRes.json():null;
+    const values={};
+    if(profile?.success){values.name=profile.name||profile.username||null;values.avatar=profile.avatar||null}
+    if(typeof overview?.points==='number')values.points=overview.points;
+    if(typeof overview?.stars==='number')values.stars=overview.stars;
+    renderHeaderValues(values);
+  }catch(_){}
+}
+function installHeader(){
+  if(document.getElementById('tpStudentHeader'))return;
+  const identity=headerIdentity();
+  const header=document.createElement('header');
+  header.id='tpStudentHeader';
+  header.className='tp-student-header';
+  header.innerHTML=`
+    <div class="tp-header-orb" aria-hidden="true"></div>
+    <div class="tp-header-inner">
+      <div class="tp-header-profile">
+        <div class="tp-header-name" data-tp-name>${esc(identity.name)}</div>
+        <div class="tp-header-counters">
+          <span class="tp-header-pill tp-header-points"><span class="tp-header-symbol">+</span><b data-tp-points>—</b></span>
+          <span class="tp-header-pill tp-header-stars"><span class="tp-header-star">★</span><b data-tp-stars>—</b></span>
+        </div>
+      </div>
+      <div class="tp-header-brand">
+        <div class="tp-header-title">Test Prep</div>
+        <button class="tp-header-avatar" type="button" aria-label="프로필"><span data-tp-avatar>${esc(identity.avatar)}</span></button>
+      </div>
+    </div>
+    <div class="tp-header-curve" aria-hidden="true"></div>`;
+  document.body.insertBefore(header,document.body.firstChild);
+  header.querySelector('.tp-header-avatar')?.addEventListener('click',()=>window.dispatchEvent(new CustomEvent('testprep:profile-click')));
+  refreshHeader();
+  window.addEventListener('focus',refreshHeader);
+  window.addEventListener('points:update',refreshHeader);
+  window.addEventListener('stars:refresh',refreshHeader);
+  window.addEventListener('auth:changed',refreshHeader);
+}
+installHeader();
+
 const app=document.querySelector('.app'),home=document.createElement('div'),quiz=document.createElement('div');
 home.id='assignmentHome';quiz.id='assignedQuizPane';quiz.style.display='none';
 if(app){const engine=document.getElementById('engineShell');app.append(home,quiz);if(engine)quiz.appendChild(engine)}
-const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]));
 const practiceLabel=k=>({vocabulary:'단어 학습',vocab_test:'어휘 시험',sentences:'본문외우기',communication:'Communication',grammar:'Grammar',reading:'Reading'}[k]||k);
 function installDebugPanel(){const qs=new URLSearchParams(location.search);if(qs.get('debug')!=='tracking'||document.getElementById('trackingDebug'))return;const panel=document.createElement('div');panel.id='trackingDebug';panel.innerHTML='<strong>Tracking debug</strong><pre>Answer a question to see the saved event.</pre>';document.body.appendChild(panel);const show=(type,detail)=>{const pre=panel.querySelector('pre');if(pre)pre.textContent=JSON.stringify({type,...detail},null,2)};window.addEventListener('testprep:tracking',e=>show('tracking',e.detail));window.addEventListener('testprep:vocab-attempt',e=>show('vocab-attempt',e.detail));window.addEventListener('testprep:sentence-attempt',e=>show('sentence-attempt',e.detail))}
 function restorePractice(){window.WillenaVocabPractice?.restore?.();window.WillenaVocabTestPractice?.restore?.();window.WillenaSentencePractice?.restore?.()}
