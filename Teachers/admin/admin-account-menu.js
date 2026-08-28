@@ -26,6 +26,22 @@
   `;
   document.head.appendChild(style);
 
+  const api=async url=>{const f=window.WillenaAPI?.fetch||fetch;const r=await f(url,{credentials:'include',cache:'no-store'});const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.error||`Request failed (${r.status})`);return j};
+  async function verifyAdmin(){
+    try{
+      const who=await api(AUTH+'?action=whoami');
+      if(!who.user_id){location.replace('/Teachers/login.html?redirect='+encodeURIComponent('/Teachers/admin/'));return false}
+      const role=await api(AUTH+'?action=get_role&user_id='+encodeURIComponent(who.user_id));
+      if(String(role.role||'').toLowerCase()!=='admin'){
+        location.replace('/Teachers/dashboard-v2/?access=admin-denied');
+        return false;
+      }
+      return true;
+    }catch{
+      location.replace('/Teachers/login.html?redirect='+encodeURIComponent('/Teachers/admin/'));
+      return false;
+    }
+  }
   function clearIdentity(){
     try{
       ['user_name','username','name','user_id','userId','student_id','profile_id','id','selectedEmojiAvatar','avatar','sb_access_token','sb_refresh_token'].forEach(k=>{localStorage.removeItem(k);sessionStorage.removeItem(k)});
@@ -64,5 +80,6 @@
       wrap.querySelector('[data-menu-label="logout"]').textContent=t('logout');
     });
   }
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',mount,{once:true});else mount();
+  async function boot(){if(await verifyAdmin())mount()}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
