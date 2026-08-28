@@ -19,8 +19,8 @@
 .top-actions #burger-menu-mount .burger-dropdown{top:calc(100% + 7px)!important;right:0!important}
 
 /* Naesin: improve buttons only; leave cards, spacing and modal layout alone */
-#view-naesin .na-add{background:#37434d!important;color:#fff!important;border:0!important;border-radius:14px!important;padding:12px 17px!important;min-height:46px!important;font-weight:800!important;box-shadow:0 4px 10px rgba(55,67,77,.10)!important}
-#view-naesin .na-add:hover{background:#2f3a43!important}
+#view-naesin .na-add{background:#fff!important;color:#237581!important;border:2px solid #58c3d2!important;border-radius:14px!important;padding:11px 17px!important;min-height:46px!important;font-weight:800!important;box-shadow:0 2px 6px rgba(88,195,210,.08)!important}
+#view-naesin .na-add:hover{background:#f2fbfc!important;border-color:#47b5c5!important;color:#1d6973!important}
 #view-naesin .na-actions{gap:9px!important}
 #view-naesin .na-actions .na-btn{min-height:40px!important;padding:9px 14px!important;border-radius:12px!important;border-width:1.5px!important;font-weight:800!important;box-shadow:none!important}
 #view-naesin .na-actions .na-btn.cyan{background:#eaf8fa!important;border-color:#9fdce3!important;color:#237581!important}
@@ -29,8 +29,16 @@
 #view-naesin .na-actions [data-delete]{background:#fff5f7!important;border-color:#efb4c7!important;color:#a94869!important}
 #view-naesin .na-actions .na-dday{font-weight:800!important}
 
+/* Wizard navigation: previous and next sit together and share one visual system */
+#naFreshEditBg .na-modal-foot{align-items:center!important}
+#naFreshEditBg #naWizardBack,#naFreshEditBg #naWizardNext,#naFreshEditBg #naEditSave{height:44px!important;min-height:44px!important;padding:0 17px!important;border-radius:12px!important;font-size:.8rem!important;font-weight:800!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;line-height:1!important}
+#naFreshEditBg #naWizardBack{background:#fff!important;border:1.5px solid #d4dde1!important;color:#46515b!important}
+#naFreshEditBg #naWizardNext,#naFreshEditBg #naEditSave{background:#fff!important;border:2px solid #58c3d2!important;color:#237581!important;box-shadow:0 2px 6px rgba(88,195,210,.08)!important}
+#naFreshEditBg #naWizardNext:hover,#naFreshEditBg #naEditSave:hover{background:#f2fbfc!important;border-color:#47b5c5!important;color:#1d6973!important}
+
 @media(max-width:700px){
   .top-actions #burger-menu-mount .burger-user-label{display:none!important}
   .top-actions #burger-menu-mount .hw-notif-btn{border-radius:14px 0 0 14px!important}
   #view-naesin .na-actions .na-btn{padding:9px 11px!important}
+  #naFreshEditBg #naWizardBack,#naFreshEditBg #naWizardNext,#naFreshEditBg #naEditSave{height:42px!important;min-height:42px!important;padding:0 14px!important}
 }
