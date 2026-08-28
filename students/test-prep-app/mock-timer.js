@@ -37,7 +37,6 @@ function sync(){
  if(done&&/모의고사 완료/.test(done.textContent||''))stop();
  else if(!isMockState())stop();
 }
-function addStyles(){if($('#tpMockTimerStyle'))return;const s=document.createElement('style');s.id='tpMockTimerStyle';s.textContent=`.tp-mock-timer{margin-left:auto;flex:0 0 auto;border:2px solid #67d4da;background:#fff;color:#203039;border-radius:999px;padding:8px 12px;font-size:12px;font-weight:900;letter-spacing:.02em;white-space:nowrap}.tp-mock-timer.expired{border-color:#ee5f91;color:#c93d70;background:#fff3f7}@media(max-width:650px){.quiz-top-back{flex-direction:row!important;align-items:center!important;flex-wrap:wrap}.tp-mock-timer{margin-left:auto}}`;document.head.appendChild(s)}
-function boot(){addStyles();document.addEventListener('click',maybeStartFromClick,true);window.addEventListener('popstate',()=>setTimeout(sync,0));const app=document.querySelector('.app')||document.body;new MutationObserver(muts=>{if(muts.some(m=>[...m.addedNodes,...m.removedNodes].some(n=>n.nodeType===1)))queueMicrotask(sync)}).observe(app,{childList:true,subtree:true});sync()}
+function boot(){document.addEventListener('click',maybeStartFromClick,true);window.addEventListener('popstate',()=>setTimeout(sync,0));const app=document.querySelector('.app')||document.body;new MutationObserver(muts=>{if(muts.some(m=>[...m.addedNodes,...m.removedNodes].some(n=>n.nodeType===1)))queueMicrotask(sync)}).observe(app,{childList:true,subtree:true});sync()}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
