@@ -1,43 +1,50 @@
 <!doctype html>
 <html lang="ko">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <title>Willena 내신 QC</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link id="tpThemeSystem" rel="stylesheet" href="/students/test-prep-app/theme-system.css?v=20260829-width1">
 <style>
-:root{--ink:#163236;--muted:#718085;--line:#dce7e8;--bg:#f4f8f8;--card:#fff;--teal:#19777e;--teal2:#dff2f1;--red:#b54545;--amber:#9a6716;--green:#287657}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,Pretendard,"Noto Sans KR",system-ui,sans-serif}.hidden{display:none!important}
-.gate{min-height:100vh;display:grid;place-items:center;padding:24px}.gatebox{width:min(520px,100%);background:#fff;border:1px solid var(--line);border-radius:24px;padding:30px;box-shadow:0 14px 40px #18383c14;text-align:center}.gatebox h1{margin:0 0 8px}.gatebox p{color:var(--muted);line-height:1.6}.spin{width:34px;height:34px;border:4px solid #d9e9e9;border-top-color:var(--teal);border-radius:50%;animation:s 1s linear infinite;margin:20px auto}@keyframes s{to{transform:rotate(360deg)}}
-.app{max-width:1500px;margin:auto;padding:18px}.top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}.brand{display:flex;gap:12px;align-items:center}.mark{width:44px;height:44px;border-radius:14px;background:var(--teal);color:white;display:grid;place-items:center;font-weight:900}.brand h1{font-size:21px;margin:0}.brand small{color:var(--muted)}.teacher{font-size:12px;background:white;border:1px solid var(--line);border-radius:999px;padding:8px 11px}
-.layout{display:grid;grid-template-columns:320px minmax(0,1fr) 290px;gap:14px}.panel,.viewer,.inspector{background:var(--card);border:1px solid var(--line);border-radius:20px;box-shadow:0 8px 26px #18383c0d}.panel,.inspector{padding:16px;align-self:start;position:sticky;top:14px}.panel h2,.inspector h2{font-size:14px;margin:0 0 12px}.field{margin-bottom:11px}.field label{display:block;font-size:11px;font-weight:800;color:#607276;margin:0 0 5px;text-transform:uppercase;letter-spacing:.04em}.field select,.field input{width:100%;border:1px solid #cfdedf;background:#fff;color:var(--ink);border-radius:11px;padding:10px 11px;font:inherit}.twocol{display:grid;grid-template-columns:1fr 1fr;gap:8px}.btnrow{display:flex;gap:7px;flex-wrap:wrap}.btn{border:1px solid #cfdedf;background:white;color:var(--ink);border-radius:11px;padding:9px 11px;font-weight:750;cursor:pointer}.btn.primary{background:var(--teal);color:white;border-color:var(--teal)}.btn.on{background:var(--teal2);border-color:#9bc8c6;color:#145f65}.count{font-size:12px;color:var(--muted);margin-top:10px}
-.viewer{min-height:720px;overflow:hidden}.viewerbar{padding:13px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:10px}.crumb{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.nav{display:flex;align-items:center;gap:7px}.nav button{width:38px;height:34px;border-radius:10px;border:1px solid #cfdedf;background:#fff;cursor:pointer}.position{font-size:12px;min-width:68px;text-align:center}.question{padding:22px 24px 28px}.qhead{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:18px}.source{font-size:11px;font-weight:850;border-radius:999px;padding:6px 9px;background:#edf3f3;color:#53686b}.source.w{background:#e6f4ee;color:#27664e}.source.z{background:#f2eefe;color:#644d9d}.source.b{background:#fff2d9;color:#815b14}.usable.no{background:#fde8e8;color:#9e3d3d}.prompt{font-size:18px;font-weight:850;line-height:1.55;margin-bottom:18px}.context{background:#f8fbfb;border:1px solid #e2ebec;border-radius:14px;padding:14px 15px;margin:10px 0;line-height:1.7}.context-title{font-size:11px;font-weight:850;color:#6a797c;margin-bottom:7px}.line{display:block}.u{text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:3px}.items{display:grid;gap:7px}.item{padding:7px 0}.segments,.claims{display:grid;gap:7px}.segment,.claim{padding:7px 0}.choices{display:grid;gap:9px;margin-top:17px}.choice{display:flex;gap:10px;text-align:left;width:100%;padding:12px 13px;border:1px solid #d7e2e3;background:white;border-radius:13px;font:inherit;color:inherit}.choice .n{font-weight:850;min-width:23px}.choice.answer{border-color:#78bca1;background:#edf8f2}.answerbox{margin-top:18px;border-radius:14px;background:#edf8f2;border:1px solid #c3e1d2;padding:13px 15px;line-height:1.6}.empty{padding:70px 25px;text-align:center;color:var(--muted)}
-.meta{display:grid;gap:9px}.metarow{border-bottom:1px solid #edf2f2;padding-bottom:8px}.metarow:last-child{border:0}.k{font-size:10px;font-weight:850;color:#7a8a8d;text-transform:uppercase}.v{font-size:12px;margin-top:3px;word-break:break-word}.qid{font-family:ui-monospace,monospace;font-size:10px}.pill{display:inline-block;margin:2px 3px 2px 0;padding:4px 7px;border-radius:999px;background:#eef4f4;font-size:10px}.rotate{margin:13px 0;padding:11px;border-radius:13px;background:#f1f8f8;font-size:11px;color:#5f7376}.rotate b{color:var(--teal)}
-@media(max-width:1050px){.layout{grid-template-columns:285px 1fr}.inspector{display:none}}@media(max-width:760px){.app{padding:9px}.layout{display:block}.panel{position:static;margin-bottom:9px}.viewer{min-height:600px}.question{padding:17px}.top{padding:4px}.brand small{display:none}}
+body{background:#f4f8f8}.qc-gate{min-height:70vh;display:grid;place-items:center;padding:24px}.qc-gatebox{width:min(520px,100%);background:#fff;border:1px solid #dce7e8;border-radius:24px;padding:30px;text-align:center}.qc-spin{width:34px;height:34px;border:4px solid #d9e9e9;border-top-color:#19777e;border-radius:50%;animation:qcs 1s linear infinite;margin:20px auto}@keyframes qcs{to{transform:rotate(360deg)}}
+.qc-shell{max-width:1180px;margin:0 auto;padding:16px}.qc-top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}.qc-brand{display:flex;align-items:center;gap:10px}.qc-mark{width:42px;height:42px;border-radius:13px;background:#19777e;color:#fff;display:grid;place-items:center;font-weight:900}.qc-brand h1{font-size:20px;margin:0;color:#163236}.qc-brand small,.qc-who{color:#718085}.qc-who{font-size:12px}.qc-panel{background:#fff;border:1px solid #dce7e8;border-radius:20px;padding:15px;margin-bottom:14px}.qc-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}.qc-field label{display:block;font-size:10px;font-weight:800;color:#607276;margin:0 0 5px;text-transform:uppercase}.qc-field select,.qc-field input{width:100%;min-height:42px;border:1px solid #cfdedf;border-radius:10px;padding:8px 10px;background:#fff;font:inherit;color:#163236}.qc-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:12px}.qc-btn{border:1px solid #cfdedf;background:#fff;color:#163236;border-radius:11px;padding:10px 14px;font-weight:800;cursor:pointer}.qc-btn.primary{background:#19777e;color:#fff;border-color:#19777e}.qc-note{margin-left:auto;font-size:11px;color:#718085}.qc-summary{font-size:12px;color:#607276;margin:0 0 8px}.qc-play{max-width:900px;margin:0 auto}.qc-panel.compact{padding:10px 12px}.qc-panel.compact .qc-grid{grid-template-columns:repeat(6,minmax(0,1fr))}.qc-panel.compact .qc-field label{font-size:9px}.qc-panel.compact .qc-field select,.qc-panel.compact .qc-field input{min-height:36px;padding:6px 8px;font-size:12px}.qc-panel.compact .qc-actions{margin-top:8px}
+@media(max-width:900px){.qc-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.qc-panel.compact .qc-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.qc-note{width:100%;margin-left:0}}@media(max-width:520px){.qc-shell{padding:9px}.qc-grid,.qc-panel.compact .qc-grid{grid-template-columns:1fr}.qc-top{align-items:flex-start}.qc-who{max-width:140px;text-align:right}.qc-brand small{display:none}}
 </style>
 </head>
 <body>
-<div id="gate" class="gate"><div class="gatebox"><div class="mark" style="margin:auto">QC</div><h1>내신 QC</h1><p id="gateText">교사 계정을 확인하고 있습니다.</p><div class="spin" id="spinner"></div></div></div>
-<div id="app" class="app hidden">
- <div class="top"><div class="brand"><div class="mark">QC</div><div><h1>내신 Question QC</h1><small>학생 앱과 분리된 검수 전용 뷰</small></div></div><div id="teacherBadge" class="teacher">Teacher</div></div>
- <div class="layout">
-  <aside class="panel">
-   <h2>필터</h2>
-   <div class="field"><label>Grade</label><select id="grade"><option value="">전체 학년</option></select></div>
-   <div class="field"><label>Book</label><select id="book"><option value="">전체 교재</option></select></div>
-   <div class="field"><label>Lesson</label><select id="unit"><option value="">전체 Lesson</option></select></div>
-   <div class="field"><label>Skill</label><select id="section"><option value="">전체 Skill</option><option value="vocabulary">Vocabulary</option><option value="communication">Communication</option><option value="grammar">Grammar</option><option value="reading">Reading</option></select></div>
-   <div class="field"><label>Pattern / Question type</label><select id="pattern"><option value="">전체 Pattern</option></select></div>
-   <div class="field"><label>Created</label><div class="twocol"><input id="from" type="date"><input id="to" type="date"></div></div>
-   <div class="field"><label>Source</label><select id="sourceMode"><option value="rotate">Reference ↔ Willena 회전</option><option value="reference">Reference만</option><option value="willena">Willena Published만</option><option value="all">전부</option></select></div>
-   <div class="field"><label>Usability</label><select id="usable"><option value="all">전체 — 비활성 포함</option><option value="true">Student usable</option><option value="false">Not usable</option></select></div>
-   <div class="field"><label>Search</label><input id="search" placeholder="prompt / context / choice"></div>
-   <div class="btnrow"><button class="btn primary" id="apply">적용</button><button class="btn" id="reset">초기화</button><button class="btn" id="random">랜덤</button></div>
-   <div id="count" class="count"></div>
-   <div class="rotate"><b>회전 모드</b>는 가능한 경우 Reference → Willena → Reference → Willena 순서로 섞습니다.</div>
-  </aside>
-  <main class="viewer"><div class="viewerbar"><div id="crumb" class="crumb">Loading…</div><div class="nav"><button id="prev">←</button><div id="position" class="position">0 / 0</div><button id="next">→</button></div></div><div id="question" class="question"><div class="empty">문제를 불러오는 중…</div></div></main>
-  <aside class="inspector"><h2>QC 정보</h2><div id="meta" class="meta"></div></aside>
- </div>
+<div id="gate" class="qc-gate"><div class="qc-gatebox"><div class="qc-mark" style="margin:auto">QC</div><h1>내신 QC</h1><p id="gateText">교사 계정을 확인하고 있습니다.</p><div id="spinner" class="qc-spin"></div></div></div>
+<div id="qcApp" class="qc-shell" hidden>
+  <div class="qc-top"><div class="qc-brand"><div class="qc-mark">QC</div><div><h1>내신 Student Play QC</h1><small>학생 문제 엔진 그대로 검수</small></div></div><div id="who" class="qc-who">Teacher</div></div>
+  <section id="filtersPane" class="qc-panel">
+    <div class="qc-grid">
+      <div class="qc-field"><label>Grade</label><select id="grade"><option value="">전체 학년</option></select></div>
+      <div class="qc-field"><label>Book</label><select id="book"><option value="">전체 교재</option></select></div>
+      <div class="qc-field"><label>Lesson</label><select id="unit"><option value="">전체 Lesson</option></select></div>
+      <div class="qc-field"><label>Skill</label><select id="section"><option value="communication">Communication</option><option value="grammar">Grammar</option><option value="reading">Reading</option><option value="vocabulary">Vocabulary questions</option></select></div>
+      <div class="qc-field"><label>Pattern</label><select id="pattern"><option value="">전체 Pattern</option></select></div>
+      <div class="qc-field"><label>Source</label><select id="sourceMode"><option value="rotate">Reference ↔ Willena 회전</option><option value="reference">Reference만</option><option value="willena">Willena Published만</option><option value="all">전부</option></select></div>
+      <div class="qc-field"><label>Usability</label><select id="usable"><option value="all">전체 — 비활성 포함</option><option value="true">Student usable</option><option value="false">Not usable</option></select></div>
+      <div class="qc-field"><label>Created from</label><input id="from" type="date"></div>
+      <div class="qc-field"><label>Created to</label><input id="to" type="date"></div>
+    </div>
+    <div class="qc-actions"><button id="start" class="qc-btn primary" type="button">학생처럼 시작</button><button id="reset" class="qc-btn" type="button">초기화</button><span class="qc-note">답변 기록은 학생 진도에 저장되지 않습니다. 🚩 신고는 QC DB에 저장됩니다.</span></div>
+  </section>
+  <section id="playPane" class="qc-play" hidden>
+    <div id="summary" class="qc-summary"></div>
+    <div class="app">
+      <div class="engine-shell" id="engineShell">
+        <div class="engine-progress" aria-hidden="true"><i id="bar"></i></div>
+        <main class="card" id="card"><div class="loading">문제를 불러오는 중...</div></main>
+      </div>
+    </div>
+  </section>
 </div>
-<script src="./auth-route.js?v=20260829-1"></script>
-<script src="./qc.js?v=20260829-2"></script>
-</body></html>
+<div class="overlay" id="overlay"><div class="modal"><h3>이 문제에 문제가 있나요? 🚩</h3><p>이유를 골라 주세요.</p><div class="reasons" id="reasons"></div><textarea class="note" id="flagNote" placeholder="추가 메모 (선택)"></textarea><div class="modal-actions"><button class="secondary" id="cancelFlag">취소</button><button class="primary" id="sendFlag">보내기</button></div></div></div>
+<div class="toast" id="toast"></div>
+<script src="./qc-play.js?v=20260829-play2"></script>
+</body>
+</html>
