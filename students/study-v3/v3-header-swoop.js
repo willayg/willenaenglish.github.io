@@ -1,7 +1,7 @@
 (async function(){
   'use strict';
 
-  const BUILD='20260829-studycompact1';
+  const BUILD='20260829-studycompact2';
   window.__WILLENA_STUDY_V3_HEADER_BUILD=BUILD;
 
   const hideBadge=()=>{
@@ -98,17 +98,17 @@
     if(mode==='phone') return {
       shell:126, host:82, pad:'15px 14px 7px', top:56, gap:8,
       name:18, page:19, pill:11, pillH:26, pillPad:'4px 8px', icon:14,
-      avatar:42, avatarFont:23, radius:13, curve:59, curveBottom:-38, pink:29
+      avatar:42, avatarFont:23, radius:13, curve:42, curveBottom:-29, pink:20
     };
     if(mode==='mid') return {
       shell:145, host:92, pad:'19px 20px 7px', top:63, gap:11,
       name:22, page:23, pill:12, pillH:29, pillPad:'5px 9px', icon:15,
-      avatar:48, avatarFont:27, radius:16, curve:73, curveBottom:-46, pink:34
+      avatar:48, avatarFont:27, radius:16, curve:52, curveBottom:-35, pink:24
     };
     return {
       shell:158, host:99, pad:'21px 25px 7px', top:67, gap:14,
       name:25, page:27, pill:13, pillH:31, pillPad:'6px 10px', icon:16,
-      avatar:53, avatarFont:29, radius:17, curve:80, curveBottom:-50, pink:38
+      avatar:53, avatarFont:29, radius:17, curve:58, curveBottom:-39, pink:27
     };
   }
 
@@ -191,8 +191,8 @@
   const curveStyle=document.createElement('style');
   curveStyle.id='studyV3HeaderCurveVars';
   curveStyle.textContent=`
-    .study-v3-header-shell::before{height:var(--v3-pink-h,38px)!important;}
-    .study-v3-header-shell::after{height:var(--v3-curve-h,80px)!important;bottom:var(--v3-curve-bottom,-50px)!important;}
+    .study-v3-header-shell::before{height:var(--v3-pink-h,27px)!important;}
+    .study-v3-header-shell::after{height:var(--v3-curve-h,58px)!important;bottom:var(--v3-curve-bottom,-39px)!important;}
   `;
   document.head.appendChild(curveStyle);
 
