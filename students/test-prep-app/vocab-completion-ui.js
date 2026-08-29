@@ -1,0 +1,13 @@
+(function(){
+'use strict';
+const TRACK='https://fiieuiktlsivwfgyivai.supabase.co';
+const KEY='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
+let loaded=false,loading=false,done=new Set();
+const token=()=>window.WillenaAPI?.getLocalAccessToken?.()||localStorage.getItem('sb_access_token')||'';
+const k=(planId,lesson)=>`${planId}|${lesson}`;
+async function load(){if(loading)return;const t=token();if(!t)return;loading=true;try{const r=await fetch(`${TRACK}/rest/v1/test_prep_vocab_progress?select=plan_id,lesson,spelling_complete&spelling_complete=eq.true`,{headers:{apikey:KEY,Authorization:`Bearer ${t}`},cache:'no-store'});if(!r.ok)throw new Error(await r.text());const rows=await r.json();done=new Set((rows||[]).map(x=>k(x.plan_id,x.lesson)));loaded=true;apply()}catch(e){console.warn('[test-prep] vocab completion UI sync failed',e)}finally{loading=false}}
+function visibleLessonContext(){const home=document.getElementById('assignmentHome'),h=home?.querySelector('.tp-lesson-head h1'),p=home?.querySelector('.tp-lesson-head p');if(!h||!p)return null;const lesson=String(h.textContent||'').trim(),book=String(p.textContent||'').split('·')[0].trim(),plans=window.WillenaTestPrepAuth?.state?.plans||[];const plan=plans.find(x=>String(x.book_label||'').trim()===book&&((x.units||[]).includes(lesson)||(x.group?.scope?.lessons||[]).some(y=>String(y?.lesson)===lesson)));return plan?{plan,lesson,home}:null}
+function apply(){if(!loaded)return;const c=visibleLessonContext();if(!c||!done.has(k(c.plan.id,c.lesson)))return;const stop=c.home.querySelector('.tp-stop[data-skill="vocabulary"]');if(!stop)return;stop.classList.add('done');const station=stop.querySelector('.tp-station');if(station)station.textContent='✓';const pct=stop.querySelector('.tp-stop-pct');if(pct){pct.childNodes[0].nodeValue='100%';const small=pct.querySelector('small');if(small)small.textContent='완료'}const bar=stop.querySelector('.tp-mini i');if(bar)bar.style.width='100%'}
+function boot(){load();new MutationObserver(()=>queueMicrotask(apply)).observe(document.getElementById('assignmentHome')||document.body,{childList:true,subtree:true});window.addEventListener('testprep:vocab-progress-changed',e=>{const d=e.detail||{};if(d.spelling_complete&&d.plan_id&&d.lesson)done.add(k(d.plan_id,d.lesson));loaded=true;apply()});window.addEventListener('testprep:student-state-refresh',load)}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
+})();
