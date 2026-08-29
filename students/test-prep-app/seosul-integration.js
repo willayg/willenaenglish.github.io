@@ -1,0 +1,20 @@
+(function(){
+'use strict';
+const $=(s,r=document)=>r.querySelector(s),$$=(s,r=document)=>[...r.querySelectorAll(s)];
+let enginePatched=false,uxPatched=false;
+function lessonScope(plan,lesson){const rows=plan?.group?.scope?.lessons||[];return rows.find(x=>String(x.lesson)===String(lesson))||null}
+function hasSection(plan,lesson,section){const row=lessonScope(plan,lesson);return !!row&&Array.isArray(row.sections)&&row.sections.map(x=>String(x).toLowerCase()).includes(section)}
+function currentPlan(planId){return window.WillenaTestPrepAuth?.state?.plans?.find(p=>String(p.id)===String(planId))||null}
+function patchEngine(){if(enginePatched)return true;const api=window.WillenaTestPrepQuestionEngine;if(!api?.loadSection||!window.WillenaSeosulEngine)return false;const original=api.loadSection.bind(api);api.loadSection=async function(name){const k=String(name||'').toLowerCase();if(k==='constructed_response'||k==='seosul'){const sel=window.WillenaAssignedTestPrep?.selection;return window.WillenaSeosulEngine.start({unitId:sel?.unitId,lesson:sel?.lesson,plan:sel?.plan})}return original(name)};enginePatched=true;return true}
+function stationHtml(stat={}){const done=Math.max(0,Number(stat.unique)||0),acc=Math.max(0,Math.min(100,Number(stat.accuracy)||0));return `<div class="tp-stop" data-skill="constructed_response"><div class="tp-station">7</div><div class="tp-stop-copy"><b>서술형</b><small>영작 · 배열 · 대화 · 본문 해석</small><div class="tp-mini"><i style="width:${acc}%"></i></div></div><div class="tp-stop-pct">${done?Math.round(acc)+'%':'0%'}<small>${done?done+'문제':''}</small></div></div>`}
+function applyLessonScope(planId,lesson){const plan=currentPlan(planId);if(!plan)return;const subway=$('.tp-subway');if(!subway)return;const row=lessonScope(plan,lesson),sections=new Set((row?.sections||[]).map(x=>String(x).toLowerCase()));
+ // Vocabulary was historically forced on in the student UI. From this scoped view onward,
+ // vocabulary + vocab test follow the teacher's Vocabulary selection.
+ ['vocabulary','vocab_test'].forEach(k=>{const el=$(`.tp-stop[data-skill="${k}"]`,subway);if(!el)return;const allowed=sections.has('vocabulary');el.classList.toggle('disabled',!allowed);if(!allowed){const small=$('.tp-stop-copy small',el);if(small)small.textContent='시험 범위에 없음';const pct=$('.tp-stop-pct',el);if(pct)pct.innerHTML='—'}});
+ const want=sections.has('constructed_response');let seosul=$('.tp-stop[data-skill="constructed_response"]',subway);if(want&&!seosul){const stat=plan.summary?.by_lesson_practice?.[`${lesson}||constructed_response`]||{};subway.insertAdjacentHTML('beforeend',stationHtml(stat));seosul=$('.tp-stop[data-skill="constructed_response"]',subway);seosul?.addEventListener('click',()=>window.WillenaTestPrepUX?.launchSkill?.(plan.id,lesson,'constructed_response'))}else if(!want&&seosul)seosul.remove()}
+function patchUX(){if(uxPatched)return true;const ux=window.WillenaTestPrepUX;if(!ux?.renderLesson)return false;const original=ux.renderLesson.bind(ux);ux.renderLesson=function(planId,lesson,focusSkill){const r=original(planId,lesson,focusSkill);queueMicrotask(()=>applyLessonScope(planId,lesson));return r};uxPatched=true;return true}
+function blockOutOfScopeClicks(e){const stop=e.target instanceof Element?e.target.closest('.tp-stop') : null;if(!stop||!stop.classList.contains('disabled'))return;if(['vocabulary','vocab_test'].includes(stop.dataset.skill)){e.preventDefault();e.stopPropagation();e.stopImmediatePropagation()}}
+function polishContext(){const c=$('#assignedBackRow .quiz-context');if(c&&/constructed_response/i.test(c.textContent))c.textContent=c.textContent.replace(/constructed_response/ig,'서술형')}
+function boot(){document.addEventListener('click',blockOutOfScopeClicks,true);new MutationObserver(polishContext).observe(document.body,{childList:true,subtree:true,characterData:true});let n=0;const t=setInterval(()=>{patchEngine();patchUX();if(enginePatched&&uxPatched||++n>160)clearInterval(t)},50)}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
+})();
