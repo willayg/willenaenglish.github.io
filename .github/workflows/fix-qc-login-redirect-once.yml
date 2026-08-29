@@ -1,0 +1,34 @@
+name: Fix QC login redirect once
+on:
+  push:
+    branches: [staging]
+jobs:
+  patch:
+    if: github.event.head_commit.message == 'Fix QC unauthenticated redirect'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: staging
+      - name: Patch QC auth redirect
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('qc/test-prep/qc.js')
+          s=p.read_text(encoding='utf-8')
+          old="""}catch(e){$('spinner').classList.add('hidden');$('gateText').innerHTML=e.message==='ROLE'?'이 페이지는 교사 역할 계정만 사용할 수 있습니다.':'먼저 Willena 교사 계정으로 로그인해 주세요.<br><small>로그인 후 이 페이지를 다시 열면 됩니다.</small>';return false}}"""
+          new="""}catch(e){if(e.message==='AUTH'){location.replace('/Teachers/signin.html?redirect='+encodeURIComponent('/qc/test-prep/'));return false}$('spinner').classList.add('hidden');$('gateText').innerHTML='이 페이지는 교사 역할 계정만 사용할 수 있습니다.';return false}}"""
+          if old not in s:
+              raise SystemExit('Expected QC auth block not found')
+          p.write_text(s.replace(old,new,1),encoding='utf-8')
+          PY
+      - name: Commit
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add qc/test-prep/qc.js
+          git diff --cached --quiet && exit 0
+          git commit -m "Redirect QC login to teacher signin"
+          git push origin HEAD:staging
