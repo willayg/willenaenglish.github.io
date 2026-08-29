@@ -1,7 +1,7 @@
 (async function(){
   'use strict';
 
-  const BUILD='20260829-header-direct1';
+  const BUILD='20260829-header-direct2';
   window.__WILLENA_STUDY_V3_HEADER_BUILD=BUILD;
 
   const hideBadge=()=>{
@@ -68,9 +68,9 @@
       avatar:42, avatarFont:23, radius:14, curve:43, curveBottom:-25, pink:25
     };
     if(mode==='tablet') return {
-      shell:116, host:94, pad:'13px 34px 7px', top:74, gap:18,
-      name:52, page:52, pill:18, pillH:34, pillPad:'7px 12px', icon:18,
-      avatar:62, avatarFont:34, radius:20, curve:55, curveBottom:-32, pink:34
+      shell:100, host:82, pad:'11px 30px 6px', top:62, gap:15,
+      name:42, page:42, pill:16, pillH:31, pillPad:'6px 11px', icon:16,
+      avatar:56, avatarFont:30, radius:18, curve:46, curveBottom:-27, pink:29
     };
     return {
       shell:142, host:112, pad:'18px 28px 9px', top:86, gap:16,
@@ -127,7 +127,7 @@
       color:'#0b555c','font-size':m.name+'px','font-weight':'800','line-height':'.95','letter-spacing':'-.04em',transform:'none'
     });
     setMany(page,{
-      'align-self':'flex-start',margin:(mode==='phone'?'2px 6px 0 auto':mode==='tablet'?'3px 16px 0 auto':'5px 16px 0 auto'),
+      'align-self':'flex-start',margin:(mode==='phone'?'2px 6px 0 auto':mode==='tablet'?'2px 14px 0 auto':'5px 16px 0 auto'),
       color:'#0d5158','font-size':m.page+'px','font-weight':'800','line-height':'.95','letter-spacing':'-.035em',transform:'none'
     });
     setMany(pageText,{color:'#0d5158','font-size':'inherit','font-weight':'inherit','line-height':'inherit'});
