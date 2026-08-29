@@ -18,7 +18,7 @@ function installFocusGuard(){
   return nativeFocus.apply(this,args);
  };
 }
-function rows(){return[['Q','W','E','R','T','Y','U','I','O','P'],['A','S','D','F','G','H','J','K','L'],['Z','X','C','V','B','N','M']];}
+function rows(){return[['q','w','e','r','t','y','u','i','o','p'],['a','s','d','f','g','h','j','k','l'],['z','x','c','v','b','n','m']];}
 function activeInput(){const i=document.querySelector('#testPrepVocabPractice #vpSpell');return i&&!i.disabled?i:null}
 function setValue(input,value){input.value=value;input.dispatchEvent(new Event('input',{bubbles:true}));}
 function append(input,ch){if(!input||input.disabled)return;setValue(input,input.value+ch.toLowerCase());}
@@ -35,7 +35,7 @@ function enhance(){
  document.getElementById('tpSpellingAppKeyboard')?.remove();
  const tools=document.createElement('div');tools.className='vp-spell-tools';tools.innerHTML='<button type="button" class="vp-spell-showkb" hidden>키보드 보기</button>';
  const kb=document.createElement('div');kb.id='tpSpellingAppKeyboard';kb.className='vp-app-keyboard';kb.setAttribute('aria-label','영어 철자 키보드');
- kb.innerHTML=rows().map(row=>`<div class="vp-kb-row">${row.map(k=>`<button type="button" class="vp-kb-key" data-key="${k}">${k}</button>`).join('')}</div>`).join('')+`<div class="vp-kb-row"><button type="button" class="vp-kb-key wide" data-key="space">Space</button><button type="button" class="vp-kb-key wide" data-key="backspace">⌫</button><button type="button" class="vp-kb-key wide enter" data-key="enter">Enter</button></div><div class="vp-kb-hint">실제 키보드를 사용하면 자동으로 숨겨집니다.</div>`;
+ kb.innerHTML=rows().map(row=>`<div class="vp-kb-row">${row.map(k=>`<button type="button" class="vp-kb-key" data-key="${k}">${k}</button>`).join('')}</div>`).join('')+`<div class="vp-kb-row"><button type="button" class="vp-kb-key wide" data-key="space">space</button><button type="button" class="vp-kb-key wide" data-key="backspace">⌫</button><button type="button" class="vp-kb-key wide enter" data-key="enter">enter</button></div><div class="vp-kb-hint">실제 키보드를 사용하면 자동으로 숨겨집니다.</div>`;
  input.insertAdjacentElement('afterend',tools);document.body.appendChild(kb);
  kb.addEventListener('pointerdown',e=>e.preventDefault());
  kb.addEventListener('click',e=>{const b=e.target.closest('[data-key]');if(!b)return;const key=b.dataset.key;if(key==='backspace')backspace(input);else if(key==='space')append(input,' ');else if(key==='enter')submit();else append(input,key)});
