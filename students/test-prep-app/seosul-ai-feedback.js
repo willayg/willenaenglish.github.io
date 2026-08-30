@@ -25,9 +25,9 @@ function enrichRequest(options){
     if(!system) return options;
     system.content = String(system.content || '').replace(
       /Return JSON only:[\s\S]*$/,
-      'Return JSON only: {"correct":true|false,"reason_code":"meaning|completeness|grammar|spelling|capitalization|task|correct_alternative|other","reason":"very short internal reason","explanation_ko":"student-facing Korean explanation"}. If correct, explanation_ko must be an empty string. If incorrect, explanation_ko must be 1–2 short Korean sentences that identify the exact error and, when useful, the specific correction principle. Be concrete and strict. Do not praise, soften, or give partial credit. Do not merely say that the answer differs from the model answer.'
+      'Return JSON only: {"correct":true|false,"reason_code":"typo|spelling|capitalization|punctuation|grammar|meaning|completeness|task|word_choice|word_order|missing_required_word|extra_information|correct_alternative|other","reason":"very short internal reason","error_label_ko":"짧은 오류 유형","explanation_ko":"student-facing Korean explanation"}. If correct, error_label_ko and explanation_ko must both be empty strings. If incorrect, identify the PRIMARY reason the answer is wrong. Use typo only for an obvious accidental mistype where the intended word is clear; use spelling for a genuine spelling error; grammar for tense/agreement/article/preposition/form errors; meaning for wrong meaning; completeness for missing required information; task for not following the question; word_choice for the wrong lexical item; word_order for incorrect ordering; missing_required_word when a required word/condition was omitted. explanation_ko must be 1–2 short Korean sentences that say exactly what was wrong and, when useful, how to fix it. Be concrete and strict. Do not praise, soften, or merely say that the answer differs from the model answer.'
     );
-    body.payload.max_completion_tokens = Math.max(Number(body.payload.max_completion_tokens || 0), 180);
+    body.payload.max_completion_tokens = Math.max(Number(body.payload.max_completion_tokens || 0), 220);
     return {...options, body: JSON.stringify(body)};
   }catch(_){ return options; }
 }
@@ -95,11 +95,13 @@ function addExplanation(){
   if(document.getElementById('seosulAiExplanation')) return;
   if(!lastVerdict || lastVerdict.correct !== false || Date.now() - Number(lastVerdict.capturedAt || 0) > 15000) return;
   const text = String(lastVerdict.explanation_ko || '').trim();
-  if(!text) return;
+  const label = String(lastVerdict.error_label_ko || '').trim();
+  if(!text && !label) return;
   const box = document.createElement('div');
   box.id = 'seosulAiExplanation';
   box.className = 'seosul-ai-explanation';
-  box.innerHTML = '<b>해설</b><div></div>';
+  box.innerHTML = '<b></b><div></div>';
+  box.querySelector('b').textContent = label ? `왜 틀렸나요? · ${label}` : '왜 틀렸나요?';
   box.querySelector('div').textContent = text;
   model.parentNode.insertBefore(box, model);
 }
