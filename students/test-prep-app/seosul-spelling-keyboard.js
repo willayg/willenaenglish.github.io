@@ -6,14 +6,18 @@ const rows=()=>[['q','w','e','r','t','y','u','i','o','p'],['a','s','d','f','g','
 function isEnglishQuestion(){const m=$('#seosulModel');if(!m)return false;const t=String(m.textContent||'').replace('모범 답안','').trim();return !!t && /[A-Za-z]/.test(t) && !/[가-힣]/.test(t)}
 function candidates(){if(!isEnglishQuestion())return[];const split=$$('#card .seosul-split-input').filter(x=>!x.disabled);if(split.length)return split;const ta=$('#card #seosulAnswer');return ta&&!ta.disabled&&ta.offsetParent!==null?[ta]:[]}
 function kb(){return $('#tpSeosulAppKeyboard')}
-function lock(el){if(!el)return;el.readOnly=true;el.setAttribute('readonly','');el.setAttribute('inputmode','none');el.setAttribute('autocomplete','off');el.setAttribute('autocorrect','off');el.setAttribute('autocapitalize','off');el.setAttribute('spellcheck','false')}
-function setValue(v){if(!active||active.disabled)return;active.value=v;active.dispatchEvent(new Event('input',{bubbles:true}))}
-function append(ch){setValue((active?.value||'')+(caps?ch.toUpperCase():ch.toLowerCase()))}
-function backspace(){setValue((active?.value||'').slice(0,-1))}
+function lock(el){if(!el)return;el.readOnly=false;el.removeAttribute('readonly');el.setAttribute('inputmode','none');el.setAttribute('autocomplete','off');el.setAttribute('autocorrect','off');el.setAttribute('autocapitalize','off');el.setAttribute('spellcheck','false');el.classList.add('tp-seosul-caret')}
+function range(){if(!active)return{start:0,end:0};const len=(active.value||'').length;let start=typeof active.selectionStart==='number'?active.selectionStart:len,end=typeof active.selectionEnd==='number'?active.selectionEnd:start;start=Math.max(0,Math.min(len,start));end=Math.max(start,Math.min(len,end));return{start,end}}
+function restoreCaret(pos){if(!active)return;requestAnimationFrame(()=>{try{active.focus({preventScroll:true});active.setSelectionRange(pos,pos)}catch(_){}})}
+function replaceSelection(text){if(!active||active.disabled)return;const v=active.value||'',{start,end}=range(),next=v.slice(0,start)+text+v.slice(end),pos=start+text.length;active.value=next;active.dispatchEvent(new Event('input',{bubbles:true}));restoreCaret(pos)}
+function append(ch){replaceSelection(caps?ch.toUpperCase():ch.toLowerCase())}
+function backspace(){if(!active||active.disabled)return;const v=active.value||'',{start,end}=range();if(start!==end){active.value=v.slice(0,start)+v.slice(end);active.dispatchEvent(new Event('input',{bubbles:true}));restoreCaret(start);return}if(start<=0)return;active.value=v.slice(0,start-1)+v.slice(end);active.dispatchEvent(new Event('input',{bubbles:true}));restoreCaret(start-1)}
 function submit(){const b=$('#seosulCheck');if(b&&!b.disabled)b.click()}
 function renderCaps(){const k=kb();if(!k)return;k.querySelectorAll('[data-key].letter').forEach(b=>b.textContent=caps?b.dataset.key.toUpperCase():b.dataset.key.toLowerCase());const shift=k.querySelector('[data-key="shift"]');if(shift){shift.classList.toggle('on',caps);shift.setAttribute('aria-pressed',String(caps));shift.textContent=caps?'⇧ ON':'⇧'}}
 function toggleCaps(){caps=!caps;renderCaps()}
 function addStyle(){if($('#tpSeosulCompactKbStyle'))return;const s=document.createElement('style');s.id='tpSeosulCompactKbStyle';s.textContent=`
+#card .tp-seosul-caret{caret-color:#19777e!important;cursor:text!important}
+#card .tp-seosul-caret:focus{caret-color:#19777e!important}
 #tpSeosulAppKeyboard{box-sizing:border-box;background:#eef3f5;border-top:1px solid #d7e0e3;padding:28px 10px 10px;z-index:11900}
 #tpSeosulAppKeyboard .vp-kb-hide{position:absolute;top:7px;right:10px;border:1px solid #c9d8dc;border-radius:999px;background:#fff;color:#4e656d;font-weight:800;padding:5px 10px;font-size:12px;line-height:1.2}
 #tpSeosulAppKeyboard .vp-kb-row{display:flex;justify-content:center;gap:5px;margin:5px 0}
@@ -57,10 +61,10 @@ function ensure(){addStyle();const inputs=candidates();if(!inputs.length){cleanu
  k.querySelector('.vp-kb-hide').onclick=hide;
  hide();
 }
-function chooseTarget(e){const el=e.target?.closest?.('#card .seosul-split-input,#card #seosulAnswer');if(!el||!candidates().includes(el))return;active=el;lock(el);e.preventDefault();ensure();show()}
-function hardwareKey(e){const inputs=candidates();if(!inputs.length)return;if(e.ctrlKey||e.metaKey||e.altKey)return;const t=e.target;if(t&&/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName)&&!inputs.includes(t))return;if(inputs.includes(t))active=t;if(!active)active=inputs[0];let handled=true;if(/^[a-zA-Z]$/.test(e.key))setValue((active?.value||'')+e.key);else if(e.key==='Backspace')backspace();else if(e.key===' ')append(' ');else if(e.key==='Enter')submit();else handled=false;if(!handled)return;e.preventDefault();hardware=true;hide()}
+function chooseTarget(e){const el=e.target?.closest?.('#card .seosul-split-input,#card #seosulAnswer');if(!el||!candidates().includes(el))return;active=el;lock(el);ensure();setTimeout(()=>{try{el.focus({preventScroll:true})}catch(_){el.focus()}show()},0)}
+function hardwareKey(e){const inputs=candidates();if(!inputs.length)return;if(e.ctrlKey||e.metaKey||e.altKey)return;const t=e.target;if(t&&/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName)&&!inputs.includes(t))return;if(inputs.includes(t))active=t;if(!active)active=inputs[0];let handled=true;if(/^[a-zA-Z]$/.test(e.key))replaceSelection(e.key);else if(e.key==='Backspace')backspace();else if(e.key===' ')replaceSelection(' ');else if(e.key==='Enter')submit();else handled=false;if(!handled)return;e.preventDefault();hardware=true;hide()}
 function cleanup(){if(candidates().length)return;$('#tpSeosulAppKeyboard')?.remove();document.body.classList.remove('tp-seosul-kb-open');active=null;caps=false}
 function inspect(){ensure();cleanup()}
-function boot(){addStyle();document.addEventListener('pointerdown',chooseTarget,true);document.addEventListener('touchstart',chooseTarget,{capture:true,passive:false});document.addEventListener('keydown',hardwareKey,true);const root=$('#card')||document.body;new MutationObserver(()=>queueMicrotask(inspect)).observe(root,{childList:true,subtree:true});inspect()}
+function boot(){addStyle();document.addEventListener('pointerdown',chooseTarget,true);document.addEventListener('touchstart',chooseTarget,{capture:true,passive:true});document.addEventListener('keydown',hardwareKey,true);const root=$('#card')||document.body;new MutationObserver(()=>queueMicrotask(inspect)).observe(root,{childList:true,subtree:true});inspect()}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
