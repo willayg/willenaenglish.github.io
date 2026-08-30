@@ -18,27 +18,26 @@ function sourceInfo(q){
   const isWillena=remix||/^willena$/i.test(raw);
   return isWillena?{label:'Willena',badge:'W',isWillena:true}:{label:raw||'B Reference',badge:'B',isWillena:false};
 }
+function setIfChanged(el,prop,value){if(el&&el[prop]!==value)el[prop]=value}
 function apply(){
   const q=currentQuestion();
   if(!q)return;
   const src=sourceInfo(q);
   const pill=$('#card .source,#card .tp-source-pill');
   if(pill){
-    pill.textContent=src.badge;
-    pill.title=src.label;
-    pill.dataset.referenceResolved='1';
-    pill.dataset.sourceLabel=src.label;
-    if(src.isWillena){pill.className='tp-source-pill w';}
-    else{pill.className='tp-source-pill b';}
-  }
-  const kind=$('#card .seosul-kind');
-  if(kind){
-    const base=String(kind.textContent||'').split('·')[0].trim();
-    const num=q.number!=null&&q.number!==''?` #${q.number}`:'';
-    kind.textContent=`${base} · ${src.label}${src.isWillena?'':num}`;
+    setIfChanged(pill,'textContent',src.badge);
+    setIfChanged(pill,'title',src.label);
+    if(pill.dataset.referenceResolved!=='1')pill.dataset.referenceResolved='1';
+    if(pill.dataset.sourceLabel!==src.label)pill.dataset.sourceLabel=src.label;
+    const wanted=src.isWillena?'tp-source-pill w':'tp-source-pill b';
+    if(pill.className!==wanted)pill.className=wanted;
   }
   const card=$('#card');
-  if(card){card.dataset.seosulSource=src.label;card.dataset.seosulQuestionId=String(q.id||'');}
+  if(card){
+    if(card.dataset.seosulSource!==src.label)card.dataset.seosulSource=src.label;
+    const id=String(q.id||'');
+    if(card.dataset.seosulQuestionId!==id)card.dataset.seosulQuestionId=id;
+  }
 }
 function audit(){
   const qs=window.WillenaSeosulEngine?.questions;
@@ -59,7 +58,7 @@ function audit(){
 function boot(){
   const root=$('#card')||document.body;
   const run=()=>{apply();audit()};
-  new MutationObserver(()=>queueMicrotask(run)).observe(root,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:['class']});
+  new MutationObserver(()=>queueMicrotask(run)).observe(root,{childList:true,subtree:true});
   let n=0;const t=setInterval(()=>{run();if(window.WillenaSeosulEngine?.questions||++n>200)clearInterval(t)},25);
   window.addEventListener('testprep:student-state-refresh',run);
 }
