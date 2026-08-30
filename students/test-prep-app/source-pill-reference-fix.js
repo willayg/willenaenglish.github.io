@@ -16,20 +16,11 @@ function isConstructedResponse(){
   const s=window.WillenaAssignedTestPrep?.selection;
   return String(s?.section||s?.practiceType||s?.practice_type||'').toLowerCase()==='constructed_response';
 }
-function forceBIfAuthored(){
-  const kind=document.querySelector('#card .seosul-kind');
-  const pill=document.querySelector('#card .tp-source-pill,#card .source');
-  const authored=isConstructedResponse()||!!document.querySelector('#card #seosulAnswer')||/b\s*reference/i.test(kind?.textContent||'');
-  if(!authored||!pill)return false;
-  pill.textContent='B';
-  pill.className='tp-source-pill b';
-  pill.title='Book reference';
-  pill.dataset.referenceResolved='1';
-  pill.dataset.wzDone='1';
-  return true;
-}
 async function refresh(){
-  if(forceBIfAuthored())return;
+  // 서술형 has its own source-aware renderer. The legacy pill observer used to
+  // force every 서술형 card back to B, and its own text mutation retriggered
+  // this observer repeatedly on Android. Do nothing here for that activity.
+  if(isConstructedResponse()||document.querySelector('#card #seosulAnswer'))return;
   if(running)return;
   const pill=document.querySelector('.tp-source-pill,.source');
   const prompt=document.querySelector('#card .prompt');
@@ -51,9 +42,10 @@ async function refresh(){
     if(!hit)return;
     const el=document.querySelector('.tp-source-pill,.source');
     if(!el)return;
-    el.textContent=hit.src.code;
-    el.className=`tp-source-pill ${hit.src.cls}`;
-    el.title=hit.src.title;
+    if(el.textContent!==hit.src.code)el.textContent=hit.src.code;
+    const cls=`tp-source-pill ${hit.src.cls}`;
+    if(el.className!==cls)el.className=cls;
+    if(el.title!==hit.src.title)el.title=hit.src.title;
     el.dataset.referenceResolved='1';
     lastKey=key;
   }catch(e){console.warn('[test-prep] source pill reference lookup failed',e)}finally{running=false}
