@@ -12,12 +12,14 @@ function apply(){
  const plan=findPlan(lesson),stat=statFor(plan,lesson);if(!stat)return;
  const done=Math.max(0,Number(stat.unique)||0),accuracy=Math.max(0,Math.min(100,Number(stat.accuracy)||0));
  const coverage=Math.min(100,done/TOTAL*100),mastery=Math.round(coverage*accuracy/100);
- const pct=$('.tp-stop-pct',stop),bar=$('.tp-mini i',stop);
- if(pct)pct.innerHTML=`${mastery}%<small>${done}/${TOTAL}</small>`;
- if(bar)bar.style.width=`${mastery}%`;
- stop.classList.toggle('done',mastery>=90);
- const station=$('.tp-station',stop);if(station&&mastery>=90)station.textContent='✓';
+ const pct=$('.tp-stop-pct',stop),bar=$('.tp-mini i',stop),station=$('.tp-station',stop);
+ const pctHtml=`${mastery}%<small>${done}/${TOTAL}</small>`;
+ if(pct&&pct.innerHTML!==pctHtml)pct.innerHTML=pctHtml;
+ if(bar&&bar.style.width!==`${mastery}%`)bar.style.width=`${mastery}%`;
+ if(stop.classList.contains('done')!==(mastery>=90))stop.classList.toggle('done',mastery>=90);
+ if(station&&mastery>=90&&station.textContent!=='✓')station.textContent='✓';
 }
-function boot(){apply();new MutationObserver(()=>queueMicrotask(apply)).observe(document.getElementById('assignmentHome')||document.body,{childList:true,subtree:true});window.addEventListener('testprep:student-state-refresh',()=>setTimeout(apply,0));}
+function schedule(){setTimeout(apply,0);setTimeout(apply,120);}
+function boot(){schedule();window.addEventListener('testprep:student-state-refresh',schedule);window.addEventListener('popstate',schedule);document.addEventListener('click',e=>{if(e.target.closest('[data-lesson-plan],.tp-back'))setTimeout(schedule,40)},true);}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
