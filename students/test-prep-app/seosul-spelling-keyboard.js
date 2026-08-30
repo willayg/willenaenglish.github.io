@@ -21,6 +21,11 @@ function addStyle(){if($('#tpSeosulCompactKbStyle'))return;const s=document.crea
 #tpSeosulAppKeyboard .vp-kb-key.wide{max-width:none;font-size:14px}
 #tpSeosulAppKeyboard .vp-kb-key.shift{max-width:72px;background:#f7fbfc;color:#526970}
 #tpSeosulAppKeyboard .vp-kb-key.shift.on{border-color:#67d4da;background:#e9fbfc;color:#07888d}
+#tpSeosulAppKeyboard .vp-kb-row.third{align-items:stretch}
+#tpSeosulAppKeyboard .vp-kb-row.third .vp-kb-key.backspace{max-width:88px;flex:1.15}
+#tpSeosulAppKeyboard .vp-kb-row.bottom{display:grid;grid-template-columns:1fr 88px;gap:5px;margin-top:5px}
+#tpSeosulAppKeyboard .vp-kb-row.bottom .space{width:100%;max-width:none;min-width:0}
+#tpSeosulAppKeyboard .vp-kb-row.bottom .enter{width:100%;max-width:none;min-width:0}
 #tpSeosulAppKeyboard[hidden]{display:none!important}
 body.tp-seosul-kb-open .app{padding-bottom:330px!important}
 body.tp-seosul-kb-open{scroll-padding-bottom:340px}
@@ -29,6 +34,8 @@ body.tp-seosul-kb-open{scroll-padding-bottom:340px}
  #tpSeosulAppKeyboard .vp-kb-key{height:38px;max-width:64px;font-size:17px}
  #tpSeosulAppKeyboard .vp-kb-key.shift{max-width:64px}
  #tpSeosulAppKeyboard .vp-kb-row{gap:6px;margin:4px 0}
+ #tpSeosulAppKeyboard .vp-kb-row.third .vp-kb-key.backspace{max-width:78px}
+ #tpSeosulAppKeyboard .vp-kb-row.bottom{grid-template-columns:1fr 78px;gap:6px}
  body.tp-seosul-kb-open .app{padding-bottom:285px!important}
  body.tp-seosul-kb-open{scroll-padding-bottom:295px}
 }
@@ -41,8 +48,9 @@ function show(){hardware=false;ensure();if(kb())kb().hidden=false;document.body.
 function keepVisible(){const k=kb(),target=active;if(!k||k.hidden||!target)return;requestAnimationFrame(()=>{const kr=k.getBoundingClientRect(),tr=target.getBoundingClientRect(),safe=kr.top-18;if(tr.bottom>safe)window.scrollBy({top:tr.bottom-safe,behavior:'smooth'})})}
 function ensure(){addStyle();const inputs=candidates();if(!inputs.length){cleanup();return}inputs.forEach(lock);if(!active||!inputs.includes(active))active=inputs[0];if(kb())return;
  const k=document.createElement('div');k.id='tpSeosulAppKeyboard';k.className='vp-app-keyboard';k.setAttribute('aria-label','서술형 영어 키보드');k.hidden=true;
- const letterRows=rows().map((row,i)=>`<div class="vp-kb-row">${i===2?'<button type="button" class="vp-kb-key shift" data-key="shift" aria-pressed="false">⇧</button>':''}${row.map(x=>`<button type="button" class="vp-kb-key letter" data-key="${x}">${x}</button>`).join('')}</div>`).join('');
- k.innerHTML=`<button type="button" class="vp-kb-hide">키보드 숨기기</button>`+letterRows+`<div class="vp-kb-row"><button type="button" class="vp-kb-key wide" data-key="space">space</button><button type="button" class="vp-kb-key wide" data-key="backspace">⌫</button><button type="button" class="vp-kb-key wide enter" data-key="enter">enter</button></div>`;
+ const r=rows();
+ const letterRows=`<div class="vp-kb-row">${r[0].map(x=>`<button type="button" class="vp-kb-key letter" data-key="${x}">${x}</button>`).join('')}</div><div class="vp-kb-row">${r[1].map(x=>`<button type="button" class="vp-kb-key letter" data-key="${x}">${x}</button>`).join('')}</div><div class="vp-kb-row third"><button type="button" class="vp-kb-key shift" data-key="shift" aria-pressed="false">⇧</button>${r[2].map(x=>`<button type="button" class="vp-kb-key letter" data-key="${x}">${x}</button>`).join('')}<button type="button" class="vp-kb-key backspace" data-key="backspace">⌫</button></div>`;
+ k.innerHTML=`<button type="button" class="vp-kb-hide">키보드 숨기기</button>`+letterRows+`<div class="vp-kb-row bottom"><button type="button" class="vp-kb-key wide space" data-key="space">space</button><button type="button" class="vp-kb-key wide enter" data-key="enter">return</button></div>`;
  document.body.appendChild(k);renderCaps();
  k.addEventListener('pointerdown',e=>e.preventDefault());
  k.addEventListener('click',e=>{const b=e.target.closest('[data-key]');if(!b)return;const key=b.dataset.key;if(key==='backspace')backspace();else if(key==='space')append(' ');else if(key==='enter')hide();else if(key==='shift')toggleCaps();else append(key)});
