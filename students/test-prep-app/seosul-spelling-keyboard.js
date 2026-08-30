@@ -14,8 +14,6 @@ function submit(){const b=$('#seosulCheck');if(b&&!b.disabled)b.click()}
 function renderCaps(){const k=kb();if(!k)return;k.querySelectorAll('[data-key].letter').forEach(b=>b.textContent=caps?b.dataset.key.toUpperCase():b.dataset.key.toLowerCase());const shift=k.querySelector('[data-key="shift"]');if(shift){shift.classList.toggle('on',caps);shift.setAttribute('aria-pressed',String(caps));shift.textContent=caps?'⇧ ON':'⇧'}}
 function toggleCaps(){caps=!caps;renderCaps()}
 function addStyle(){if($('#tpSeosulCompactKbStyle'))return;const s=document.createElement('style');s.id='tpSeosulCompactKbStyle';s.textContent=`
-#seosulKbTools{display:flex;justify-content:flex-end;clear:both;width:100%;margin:8px 0 0;position:relative;z-index:2}
-#seosulKbShow{border:1px solid #a9e4e7;background:#fff;color:#19777e;border-radius:999px;padding:8px 12px;font-weight:800;font-size:13px;line-height:1.2;width:auto!important;min-width:0!important;flex:none!important}
 #tpSeosulAppKeyboard{box-sizing:border-box;background:#eef3f5;border-top:1px solid #d7e0e3;padding:28px 10px 10px;z-index:11900}
 #tpSeosulAppKeyboard .vp-kb-hide{position:absolute;top:7px;right:10px;border:1px solid #c9d8dc;border-radius:999px;background:#fff;color:#4e656d;font-weight:800;padding:5px 10px;font-size:12px;line-height:1.2}
 #tpSeosulAppKeyboard .vp-kb-row{display:flex;justify-content:center;gap:5px;margin:5px 0}
@@ -38,24 +36,22 @@ body.tp-seosul-kb-open{scroll-padding-bottom:340px}
  #tpSeosulAppKeyboard{position:fixed;left:0;right:0;bottom:0;width:100%;box-shadow:0 -8px 24px rgba(31,59,66,.12)}
 }
 `;document.head.appendChild(s)}
-function hide(){if(kb())kb().hidden=true;document.body.classList.remove('tp-seosul-kb-open');const show=$('#seosulKbShow');if(show)show.hidden=false}
-function show(){hardware=false;ensure();if(kb())kb().hidden=false;document.body.classList.add('tp-seosul-kb-open');const show=$('#seosulKbShow');if(show)show.hidden=true;keepVisible()}
+function hide(){if(kb())kb().hidden=true;document.body.classList.remove('tp-seosul-kb-open')}
+function show(){hardware=false;ensure();if(kb())kb().hidden=false;document.body.classList.add('tp-seosul-kb-open');keepVisible()}
 function keepVisible(){const k=kb(),target=active;if(!k||k.hidden||!target)return;requestAnimationFrame(()=>{const kr=k.getBoundingClientRect(),tr=target.getBoundingClientRect(),safe=kr.top-18;if(tr.bottom>safe)window.scrollBy({top:tr.bottom-safe,behavior:'smooth'})})}
 function ensure(){addStyle();const inputs=candidates();if(!inputs.length){cleanup();return}inputs.forEach(lock);if(!active||!inputs.includes(active))active=inputs[0];if(kb())return;
- const tools=document.createElement('div');tools.id='seosulKbTools';tools.innerHTML='<button type="button" id="seosulKbShow">⌨ 키보드 열기</button>';
- const anchor=inputs[inputs.length-1];anchor.insertAdjacentElement('afterend',tools);
  const k=document.createElement('div');k.id='tpSeosulAppKeyboard';k.className='vp-app-keyboard';k.setAttribute('aria-label','서술형 영어 키보드');k.hidden=true;
  const letterRows=rows().map((row,i)=>`<div class="vp-kb-row">${i===2?'<button type="button" class="vp-kb-key shift" data-key="shift" aria-pressed="false">⇧</button>':''}${row.map(x=>`<button type="button" class="vp-kb-key letter" data-key="${x}">${x}</button>`).join('')}</div>`).join('');
  k.innerHTML=`<button type="button" class="vp-kb-hide">키보드 숨기기</button>`+letterRows+`<div class="vp-kb-row"><button type="button" class="vp-kb-key wide" data-key="space">space</button><button type="button" class="vp-kb-key wide" data-key="backspace">⌫</button><button type="button" class="vp-kb-key wide enter" data-key="enter">enter</button></div>`;
  document.body.appendChild(k);renderCaps();
  k.addEventListener('pointerdown',e=>e.preventDefault());
  k.addEventListener('click',e=>{const b=e.target.closest('[data-key]');if(!b)return;const key=b.dataset.key;if(key==='backspace')backspace();else if(key==='space')append(' ');else if(key==='enter')hide();else if(key==='shift')toggleCaps();else append(key)});
- $('#seosulKbShow').onclick=show;k.querySelector('.vp-kb-hide').onclick=hide;
+ k.querySelector('.vp-kb-hide').onclick=hide;
  hide();
 }
 function chooseTarget(e){const el=e.target?.closest?.('#card .seosul-split-input,#card #seosulAnswer');if(!el||!candidates().includes(el))return;active=el;lock(el);e.preventDefault();ensure();show()}
 function hardwareKey(e){const inputs=candidates();if(!inputs.length)return;if(e.ctrlKey||e.metaKey||e.altKey)return;const t=e.target;if(t&&/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName)&&!inputs.includes(t))return;if(inputs.includes(t))active=t;if(!active)active=inputs[0];let handled=true;if(/^[a-zA-Z]$/.test(e.key))setValue((active?.value||'')+e.key);else if(e.key==='Backspace')backspace();else if(e.key===' ')append(' ');else if(e.key==='Enter')submit();else handled=false;if(!handled)return;e.preventDefault();hardware=true;hide()}
-function cleanup(){if(candidates().length)return;$('#tpSeosulAppKeyboard')?.remove();$('#seosulKbTools')?.remove();document.body.classList.remove('tp-seosul-kb-open');active=null;caps=false}
+function cleanup(){if(candidates().length)return;$('#tpSeosulAppKeyboard')?.remove();document.body.classList.remove('tp-seosul-kb-open');active=null;caps=false}
 function inspect(){ensure();cleanup()}
 function boot(){addStyle();document.addEventListener('pointerdown',chooseTarget,true);document.addEventListener('touchstart',chooseTarget,{capture:true,passive:false});document.addEventListener('keydown',hardwareKey,true);const root=$('#card')||document.body;new MutationObserver(()=>queueMicrotask(inspect)).observe(root,{childList:true,subtree:true});inspect()}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
