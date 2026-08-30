@@ -15,13 +15,15 @@ function backspace(){if(!active||active.disabled)return;const v=active.value||''
 function submit(){const b=$('#seosulCheck');if(b&&!b.disabled)b.click()}
 function renderCaps(){const k=kb();if(!k)return;k.querySelectorAll('[data-key].letter').forEach(b=>b.textContent=caps?b.dataset.key.toUpperCase():b.dataset.key.toLowerCase());const shift=k.querySelector('[data-key="shift"]');if(shift){shift.classList.toggle('on',caps);shift.setAttribute('aria-pressed',String(caps));shift.textContent=caps?'⇧ ON':'⇧'}}
 function toggleCaps(){caps=!caps;renderCaps()}
+function haptic(key){try{if(!navigator.vibrate)return;const ms=(key==='enter'||key==='backspace')?12:8;navigator.vibrate(ms)}catch(_){}}
 function addStyle(){if($('#tpSeosulCompactKbStyle'))return;const s=document.createElement('style');s.id='tpSeosulCompactKbStyle';s.textContent=`
 #card .tp-seosul-caret{caret-color:#19777e!important;cursor:text!important}
 #card .tp-seosul-caret:focus{caret-color:#19777e!important}
 #tpSeosulAppKeyboard{box-sizing:border-box;background:#eef3f5;border-top:1px solid #d7e0e3;padding:28px 10px 10px;z-index:11900}
 #tpSeosulAppKeyboard .vp-kb-hide{position:absolute;top:7px;right:10px;border:1px solid #c9d8dc;border-radius:999px;background:#fff;color:#4e656d;font-weight:800;padding:5px 10px;font-size:12px;line-height:1.2}
 #tpSeosulAppKeyboard .vp-kb-row{display:flex;justify-content:center;gap:5px;margin:5px 0}
-#tpSeosulAppKeyboard .vp-kb-key{min-width:0;flex:1;max-width:72px;height:42px;border:1px solid #cbd6da;border-radius:9px;background:#fff;color:#24383f;font-size:18px;font-weight:800;box-shadow:0 1px 2px rgba(0,0,0,.06)}
+#tpSeosulAppKeyboard .vp-kb-key{min-width:0;flex:1;max-width:72px;height:42px;border:1px solid #cbd6da;border-radius:9px;background:#fff;color:#24383f;font-size:18px;font-weight:800;box-shadow:0 1px 2px rgba(0,0,0,.06);transition:transform .055s ease,background-color .055s ease,box-shadow .055s ease,border-color .055s ease}
+#tpSeosulAppKeyboard .vp-kb-key:active,#tpSeosulAppKeyboard .vp-kb-key.is-pressed{transform:translateY(1px) scale(.97);background:#d7e6e9;border-color:#a9c1c7;box-shadow:inset 0 1px 3px rgba(0,0,0,.12)}
 #tpSeosulAppKeyboard .vp-kb-key.wide{max-width:none;font-size:14px}
 #tpSeosulAppKeyboard .vp-kb-key.shift{max-width:72px;background:#f7fbfc;color:#526970}
 #tpSeosulAppKeyboard .vp-kb-key.shift.on{border-color:#67d4da;background:#e9fbfc;color:#07888d}
@@ -56,15 +58,18 @@ function ensure(){addStyle();const inputs=candidates();if(!inputs.length){cleanu
  const letterRows=`<div class="vp-kb-row">${r[0].map(x=>`<button type="button" class="vp-kb-key letter" data-key="${x}">${x}</button>`).join('')}</div><div class="vp-kb-row">${r[1].map(x=>`<button type="button" class="vp-kb-key letter" data-key="${x}">${x}</button>`).join('')}</div><div class="vp-kb-row third"><button type="button" class="vp-kb-key shift" data-key="shift" aria-pressed="false">⇧</button>${r[2].map(x=>`<button type="button" class="vp-kb-key letter" data-key="${x}">${x}</button>`).join('')}<button type="button" class="vp-kb-key backspace" data-key="backspace">⌫</button></div>`;
  k.innerHTML=`<button type="button" class="vp-kb-hide">키보드 숨기기</button>`+letterRows+`<div class="vp-kb-row bottom"><button type="button" class="vp-kb-key wide space" data-key="space">space</button><button type="button" class="vp-kb-key wide enter" data-key="enter">return</button></div>`;
  document.body.appendChild(k);renderCaps();
- k.addEventListener('pointerdown',e=>e.preventDefault());
+ k.addEventListener('pointerdown',e=>{const b=e.target.closest('[data-key]');if(!b)return;e.preventDefault();b.classList.add('is-pressed');haptic(b.dataset.key)});
+ const clearPressed=e=>{const b=e.target.closest?.('[data-key]');if(b)b.classList.remove('is-pressed')};
+ k.addEventListener('pointerup',clearPressed);k.addEventListener('pointercancel',clearPressed);k.addEventListener('pointerleave',clearPressed,true);
  k.addEventListener('click',e=>{const b=e.target.closest('[data-key]');if(!b)return;const key=b.dataset.key;if(key==='backspace')backspace();else if(key==='space')append(' ');else if(key==='enter')hide();else if(key==='shift')toggleCaps();else append(key)});
  k.querySelector('.vp-kb-hide').onclick=hide;
  hide();
 }
 function chooseTarget(e){const el=e.target?.closest?.('#card .seosul-split-input,#card #seosulAnswer');if(!el||!candidates().includes(el))return;active=el;lock(el);ensure();setTimeout(()=>{try{el.focus({preventScroll:true})}catch(_){el.focus()}show()},0)}
+function syncFocusedTarget(e){const el=e.target;if(!el||!candidates().includes(el))return;active=el;lock(el)}
 function hardwareKey(e){const inputs=candidates();if(!inputs.length)return;if(e.ctrlKey||e.metaKey||e.altKey)return;const t=e.target;if(t&&/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName)&&!inputs.includes(t))return;if(inputs.includes(t))active=t;if(!active)active=inputs[0];let handled=true;if(/^[a-zA-Z]$/.test(e.key))replaceSelection(e.key);else if(e.key==='Backspace')backspace();else if(e.key===' ')replaceSelection(' ');else if(e.key==='Enter')submit();else handled=false;if(!handled)return;e.preventDefault();hardware=true;hide()}
 function cleanup(){if(candidates().length)return;$('#tpSeosulAppKeyboard')?.remove();document.body.classList.remove('tp-seosul-kb-open');active=null;caps=false}
 function inspect(){ensure();cleanup()}
-function boot(){addStyle();document.addEventListener('pointerdown',chooseTarget,true);document.addEventListener('touchstart',chooseTarget,{capture:true,passive:true});document.addEventListener('keydown',hardwareKey,true);const root=$('#card')||document.body;new MutationObserver(()=>queueMicrotask(inspect)).observe(root,{childList:true,subtree:true});inspect()}
+function boot(){addStyle();document.addEventListener('pointerdown',chooseTarget,true);document.addEventListener('touchstart',chooseTarget,{capture:true,passive:true});document.addEventListener('focusin',syncFocusedTarget,true);document.addEventListener('keydown',hardwareKey,true);const root=$('#card')||document.body;new MutationObserver(()=>queueMicrotask(inspect)).observe(root,{childList:true,subtree:true});inspect()}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
