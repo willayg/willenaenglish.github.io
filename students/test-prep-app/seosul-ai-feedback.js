@@ -42,6 +42,7 @@ async function captureVerdict(response){
     const verdict = JSON.parse(clean);
     if(typeof verdict?.correct === 'boolean'){
       lastVerdict = {...verdict, capturedAt: Date.now()};
+      setTimeout(inspect, 0);
     }
   }catch(_){ }
 }
