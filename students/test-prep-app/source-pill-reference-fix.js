@@ -12,7 +12,18 @@ function sourceCode(label,status){
   if(s.includes('willena')||c==='willena_published')return{code:'W',title:'Willena',cls:'w'};
   return null;
 }
+function forceBIfAuthored(){
+  const kind=document.querySelector('#card .seosul-kind');
+  const pill=document.querySelector('#card .tp-source-pill,#card .source');
+  if(!kind||!pill||!/b\s*reference/i.test(kind.textContent||''))return false;
+  pill.textContent='B';
+  pill.className='tp-source-pill b';
+  pill.title='Book reference';
+  pill.dataset.referenceResolved='1';
+  return true;
+}
 async function refresh(){
+  if(forceBIfAuthored())return;
   if(running)return;
   const pill=document.querySelector('.tp-source-pill,.source');
   const prompt=document.querySelector('#card .prompt');
