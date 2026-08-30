@@ -14,13 +14,36 @@ function sourceCode(label,status){
 }
 function isConstructedResponse(){
   const s=window.WillenaAssignedTestPrep?.selection;
-  return String(s?.section||s?.practiceType||s?.practice_type||'').toLowerCase()==='constructed_response';
+  return String(s?.section||s?.practiceType||s?.practice_type||'').toLowerCase()==='constructed_response'||!!document.querySelector('#card #seosulAnswer');
+}
+function paint(el,src){
+  if(!el||!src)return false;
+  if(el.textContent!==src.code)el.textContent=src.code;
+  const cls=`tp-source-pill ${src.cls}`;
+  if(el.className!==cls)el.className=cls;
+  if(el.title!==src.title)el.title=src.title;
+  el.dataset.referenceResolved='1';
+  return true;
+}
+function refreshAuthored(){
+  const pill=document.querySelector('#card .tp-source-pill,#card .source');
+  const qnum=document.querySelector('#card .qnum');
+  const qs=window.WillenaSeosulEngine?.questions;
+  if(!pill||!qnum||!Array.isArray(qs))return false;
+  const m=String(qnum.textContent||'').match(/(\d+)\s*\/\s*\d+/);
+  if(!m)return false;
+  const q=qs[Number(m[1])-1];
+  if(!q)return false;
+  const label=q.metadata?.source_label||q.metadata?.student_source_label||q.raw?.student_source_label||'';
+  const src=sourceCode(label,q.raw?.content_status);
+  if(!src)return false;
+  return paint(pill,src);
 }
 async function refresh(){
-  // 서술형 has its own source-aware renderer. The legacy pill observer used to
-  // force every 서술형 card back to B, and its own text mutation retriggered
-  // this observer repeatedly on Android. Do nothing here for that activity.
-  if(isConstructedResponse()||document.querySelector('#card #seosulAnswer'))return;
+  if(isConstructedResponse()){
+    refreshAuthored();
+    return;
+  }
   if(running)return;
   const pill=document.querySelector('.tp-source-pill,.source');
   const prompt=document.querySelector('#card .prompt');
@@ -40,14 +63,7 @@ async function refresh(){
     const rows=await r.json();
     const hit=(rows||[]).map(x=>({row:x,src:sourceCode(x.student_source_label,x.content_status)})).find(x=>x.src);
     if(!hit)return;
-    const el=document.querySelector('.tp-source-pill,.source');
-    if(!el)return;
-    if(el.textContent!==hit.src.code)el.textContent=hit.src.code;
-    const cls=`tp-source-pill ${hit.src.cls}`;
-    if(el.className!==cls)el.className=cls;
-    if(el.title!==hit.src.title)el.title=hit.src.title;
-    el.dataset.referenceResolved='1';
-    lastKey=key;
+    if(paint(document.querySelector('.tp-source-pill,.source'),hit.src))lastKey=key;
   }catch(e){console.warn('[test-prep] source pill reference lookup failed',e)}finally{running=false}
 }
 function boot(){
