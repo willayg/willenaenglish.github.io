@@ -43,7 +43,7 @@ function ensure(){addStyle();const inputs=candidates();if(!inputs.length){cleanu
  k.innerHTML=`<button type="button" class="vp-kb-hide">키보드 숨기기</button>`+rows().map(row=>`<div class="vp-kb-row">${row.map(x=>`<button type="button" class="vp-kb-key" data-key="${x}">${x}</button>`).join('')}</div>`).join('')+`<div class="vp-kb-row"><button type="button" class="vp-kb-key wide" data-key="space">space</button><button type="button" class="vp-kb-key wide" data-key="backspace">⌫</button><button type="button" class="vp-kb-key wide enter" data-key="enter">enter</button></div>`;
  document.body.appendChild(k);
  k.addEventListener('pointerdown',e=>e.preventDefault());
- k.addEventListener('click',e=>{const b=e.target.closest('[data-key]');if(!b)return;const key=b.dataset.key;if(key==='backspace')backspace();else if(key==='space')append(' ');else if(key==='enter')submit();else append(key)});
+ k.addEventListener('click',e=>{const b=e.target.closest('[data-key]');if(!b)return;const key=b.dataset.key;if(key==='backspace')backspace();else if(key==='space')append(' ');else if(key==='enter')hide();else append(key)});
  $('#seosulKbShow').onclick=show;k.querySelector('.vp-kb-hide').onclick=hide;
  hide();
 }
