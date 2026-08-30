@@ -12,14 +12,20 @@ function sourceCode(label,status){
   if(s.includes('willena')||c==='willena_published')return{code:'W',title:'Willena',cls:'w'};
   return null;
 }
+function isConstructedResponse(){
+  const s=window.WillenaAssignedTestPrep?.selection;
+  return String(s?.section||s?.practiceType||s?.practice_type||'').toLowerCase()==='constructed_response';
+}
 function forceBIfAuthored(){
   const kind=document.querySelector('#card .seosul-kind');
   const pill=document.querySelector('#card .tp-source-pill,#card .source');
-  if(!kind||!pill||!/b\s*reference/i.test(kind.textContent||''))return false;
+  const authored=isConstructedResponse()||!!document.querySelector('#card #seosulAnswer')||/b\s*reference/i.test(kind?.textContent||'');
+  if(!authored||!pill)return false;
   pill.textContent='B';
   pill.className='tp-source-pill b';
   pill.title='Book reference';
   pill.dataset.referenceResolved='1';
+  pill.dataset.wzDone='1';
   return true;
 }
 async function refresh(){
