@@ -1,7 +1,7 @@
 (function(){
 'use strict';
 const $=(s,r=document)=>r.querySelector(s),$$=(s,r=document)=>[...r.querySelectorAll(s)];
-const FIELD='#card .seosul-split-input,#card #seosulAnswer';
+const FIELD='#card .seosul-split-input,#card #seosulAnswer,#testPrepVocabPractice #vpSpell';
 const PUNCT=['.',',','?','!','\'','-'];
 let lastActive=null;
 function addStyle(){if($('#tpSeosulPunctStyle'))return;const s=document.createElement('style');s.id='tpSeosulPunctStyle';s.textContent=`
@@ -10,7 +10,7 @@ function addStyle(){if($('#tpSeosulPunctStyle'))return;const s=document.createEl
 #tpSeosulPunctPanel{position:absolute;right:91px;bottom:49px;display:flex;gap:5px;padding:7px;border:1px solid #cbd6da;border-radius:12px;background:#fff;box-shadow:0 8px 24px rgba(31,59,66,.18);z-index:3}
 #tpSeosulPunctPanel[hidden]{display:none!important}
 #tpSeosulPunctPanel button{width:40px;height:38px;border:1px solid #cbd6da;border-radius:9px;background:#f8fbfc;color:#24383f;font-size:18px;font-weight:800}
-@media (min-width:700px) and (pointer:coarse){#tpSeosulAppKeyboard .vp-kb-row.bottom{grid-template-columns:1fr 58px 78px!important}#tpSeosulPunctPanel{right:84px;bottom:45px}}
+@media (min-width:700px) and (pointer:coarse){#tpSeosulAppKeyboard .vp-kb-row.bottom{grid-template-columns:1fr 78px 116px!important;gap:9px}#tpSeosulAppKeyboard .vp-kb-key.punct{font-size:18px}#tpSeosulPunctPanel{right:125px;bottom:70px;gap:7px;padding:9px}#tpSeosulPunctPanel button{width:46px;height:44px;font-size:20px}}
 `;document.head.appendChild(s)}
 function rememberField(el){if(el?.matches?.(FIELD)&&!el.disabled&&el.offsetParent!==null)lastActive=el}
 function activeInput(){const a=document.activeElement;if(a?.matches?.(FIELD)&&!a.disabled){lastActive=a;return a}if(lastActive?.isConnected&&!lastActive.disabled&&lastActive.offsetParent!==null)return lastActive;return null}

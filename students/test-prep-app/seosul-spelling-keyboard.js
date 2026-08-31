@@ -38,14 +38,14 @@ function addStyle(){if($('#tpSeosulCompactKbStyle'))return;const s=document.crea
 body.tp-seosul-kb-open .app{padding-bottom:330px!important}
 body.tp-seosul-kb-open{scroll-padding-bottom:340px}
 @media (min-width:700px) and (pointer:coarse){
- #tpSeosulAppKeyboard{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);width:min(900px,calc(100vw - 28px));border:1px solid #bdeff1;border-radius:18px;box-shadow:0 14px 40px rgba(31,59,66,.18);padding:30px 12px 12px}
- #tpSeosulAppKeyboard .vp-kb-key{height:54px;max-width:82px;font-size:22px}
- #tpSeosulAppKeyboard .vp-kb-key.shift{max-width:82px}
- #tpSeosulAppKeyboard .vp-kb-row{gap:8px;margin:7px 0}
- #tpSeosulAppKeyboard .vp-kb-row.third .vp-kb-key.backspace{max-width:104px}
- #tpSeosulAppKeyboard .vp-kb-row.bottom{grid-template-columns:1fr 104px;gap:8px}
- body.tp-seosul-kb-open .app{padding-bottom:350px!important}
- body.tp-seosul-kb-open{scroll-padding-bottom:360px}
+ #tpSeosulAppKeyboard{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);width:min(960px,calc(100vw - 28px));border:1px solid #bdeff1;border-radius:18px;box-shadow:0 14px 40px rgba(31,59,66,.18);padding:30px 12px 12px}
+ #tpSeosulAppKeyboard .vp-kb-key{height:60px;max-width:90px;font-size:24px}
+ #tpSeosulAppKeyboard .vp-kb-key.shift{max-width:90px}
+ #tpSeosulAppKeyboard .vp-kb-row{gap:9px;margin:8px 0}
+ #tpSeosulAppKeyboard .vp-kb-row.third .vp-kb-key.backspace{max-width:116px}
+ #tpSeosulAppKeyboard .vp-kb-row.bottom{grid-template-columns:1fr 116px;gap:9px}
+ body.tp-seosul-kb-open .app{padding-bottom:390px!important}
+ body.tp-seosul-kb-open{scroll-padding-bottom:400px}
 }
 @media (max-width:699px){#tpSeosulAppKeyboard{position:fixed;left:0;right:0;bottom:0;width:100%;box-shadow:0 -8px 24px rgba(31,59,66,.12)}}
 `;document.head.appendChild(s)}
