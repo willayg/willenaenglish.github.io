@@ -1,0 +1,58 @@
+(function(){
+'use strict';
+const CONTENT='https://gxwfsqxyuufqtitspfqg.supabase.co';
+const CONTENT_KEY=['sb_publishable_','G-FYhHfDL4OGdL892gY1Zg_','epdbEeqO'].join('');
+const TRACK='https://fiieuiktlsivwfgyivai.supabase.co';
+const TRACK_KEY='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
+const HEADPHONES_SVG='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 13v-1a8 8 0 0 1 16 0v1"/><path d="M4 13h2a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2H5a1 1 0 0 1-1-1v-7Z"/><path d="M20 13h-2a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2h1a1 1 0 0 0 1-1v-7Z"/></svg>';
+const LOCK_SVG='<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>';
+let ctx={key:'',loading:false,items:[],byWord:new Map(),seen:new Set(),cleared:new Set(),completed:false,unknown:new Set(),repeatPhase:false,repeatStarted:false,lastPrompt:'',shownAt:0};
+let enhanceQueued=false;
+const norm=s=>String(s??'').trim().toLowerCase().replace(/[’‘]/g,"'").replace(/\s+/g,' ');
+const token=()=>window.WillenaAPI?.getLocalAccessToken?.()||localStorage.getItem('sb_access_token')||'';
+function toast(msg){const t=document.getElementById('toast');if(!t)return;t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1700)}
+function resetRepeat(){ctx.repeatPhase=false;ctx.repeatStarted=false;ctx.unknown.clear();ctx.lastPrompt='';ctx.shownAt=0}
+function scheduleEnhance(){if(enhanceQueued)return;enhanceQueued=true;requestAnimationFrame(()=>{enhanceQueued=false;enhance()})}
+async function contentGet(path){const r=await fetch(CONTENT+path,{headers:{apikey:CONTENT_KEY,Authorization:`Bearer ${CONTENT_KEY}`},cache:'no-store'});if(!r.ok)throw new Error(await r.text());return r.json()}
+async function loadItems(unitId){
+ const occ=await contentGet(`/rest/v1/source_content_occurrences?select=lexical_entry_id&unit_id=eq.${encodeURIComponent(unitId)}&occurrence_type=eq.lexical_entry&skill=eq.vocabulary`);
+ const ids=[...new Set((occ||[]).map(x=>x.lexical_entry_id).filter(Boolean))];if(!ids.length)return[];
+ const lex=await contentGet(`/rest/v1/lexical_entries?select=id,canonical_text,translation_ko&id=in.${encodeURIComponent('('+ids.join(',')+')')}`);
+ const seen=new Set();
+ return(lex||[]).filter(x=>x?.id&&x?.canonical_text&&x?.translation_ko).filter(x=>{const k=norm(x.canonical_text);if(!k||seen.has(k))return false;seen.add(k);return true});
+}
+async function loadSeen(planId,lesson){const t=token();if(!t)return[];const q=new URLSearchParams({select:'lexical_entry_id,knew,repeat_phase,created_at,metadata',plan_id:`eq.${planId}`,lesson:`eq.${lesson}`,order:'created_at.asc'});const r=await fetch(`${TRACK}/rest/v1/test_prep_vocab_self_checks?${q}`,{headers:{apikey:TRACK_KEY,Authorization:`Bearer ${t}`},cache:'no-store'});if(!r.ok)throw new Error(await r.text());return r.json()}
+async function saveCheck(item,knew,repeatPhase,responseMs){const sel=window.WillenaAssignedTestPrep?.selection,state=window.WillenaTestPrepAuth?.state,t=token();if(!sel?.plan?.id||!state?.user?.id||!t||!item?.id)return;const payload={student_id:state.user.id,plan_id:sel.plan.id,lesson:sel.lesson,lexical_entry_id:item.id,knew:!!knew,repeat_phase:!!repeatPhase,response_time_ms:Math.max(0,Math.round(responseMs||0)),metadata:{canonical_text:item.canonical_text,translation_ko:item.translation_ko||null,book_label:sel.plan.book_label||null,source:'test-prep-vocab-card'}};const r=await fetch(`${TRACK}/rest/v1/test_prep_vocab_self_checks`,{method:'POST',headers:{apikey:TRACK_KEY,Authorization:`Bearer ${t}`,'Content-Type':'application/json',Prefer:'return=minimal'},body:JSON.stringify(payload)});if(!r.ok)throw new Error(await r.text())}
+async function ensureContext(force=false){
+ const sel=window.WillenaAssignedTestPrep?.selection;if(sel?.section!=='vocabulary'||sel.reviewMode||!sel.unitId||!sel.plan?.id)return false;
+ const key=`${sel.plan.id}|${sel.lesson}|${sel.unitId}`;if(!force&&ctx.key===key&&ctx.items.length)return true;if(ctx.loading)return false;
+ ctx={key,loading:true,items:[],byWord:new Map(),seen:new Set(),cleared:new Set(),completed:false,unknown:new Set(),repeatPhase:false,repeatStarted:false,lastPrompt:'',shownAt:0};
+ try{
+  const [items,rows]=await Promise.all([loadItems(sel.unitId),loadSeen(sel.plan.id,sel.lesson)]);ctx.items=items;ctx.byWord=new Map(items.map(x=>[norm(x.canonical_text),x]));
+  const latest=new Map();for(const r of rows||[]){const word=norm(r?.metadata?.canonical_text||'');if(word)latest.set(word,!!r.knew)}
+  ctx.seen=new Set([...latest.keys()].filter(k=>ctx.byWord.has(k)));ctx.cleared=new Set([...latest.entries()].filter(([k,v])=>v&&ctx.byWord.has(k)).map(([k])=>k));ctx.completed=items.length>0&&items.every(x=>ctx.cleared.has(norm(x.canonical_text)));
+  ctx.loading=false;scheduleEnhance();return true;
+ }catch(e){ctx.loading=false;console.warn('[test-prep] vocab card context failed',e);return false}
+}
+async function getRemainingIds(){const ok=await ensureContext();if(!ok)return null;return ctx.items.filter(x=>!ctx.cleared.has(norm(x.canonical_text))).map(x=>String(x.id))}
+function currentMode(root){return root.querySelector('.vp-mode.active')?.dataset.mode||''}
+function ensureModeMarkup(button){let label=button.querySelector('.vp-mode-label');let lock=button.querySelector('.vp-lock-icon');if(label&&lock)return;const base=(button.dataset.baseLabel||button.textContent||'').replace(/\s*🔒\s*$/,'').trim();button.dataset.baseLabel=base;button.textContent='';label=document.createElement('span');label.className='vp-mode-label';label.textContent=base;lock=document.createElement('span');lock.className='vp-lock-icon';lock.innerHTML=LOCK_SVG;lock.hidden=true;button.append(label,lock)}
+function decorateModes(root){root.querySelectorAll('.vp-mode').forEach(ensureModeMarkup)}
+function pickEnglishVoice(){const voices=window.speechSynthesis?.getVoices?.()||[];return voices.find(v=>/^en-US$/i.test(v.lang)&&/(google|microsoft|samsung)/i.test(v.name))||voices.find(v=>/^en-US$/i.test(v.lang))||voices.find(v=>/^en[-_]/i.test(v.lang))||null}
+function playWord(word,button){if(!word)return;if(!('speechSynthesis' in window)||typeof SpeechSynthesisUtterance==='undefined'){toast('이 기기에서는 음성 재생을 지원하지 않습니다.');return}try{window.speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(word);u.lang='en-US';u.rate=.82;u.pitch=1;const voice=pickEnglishVoice();if(voice)u.voice=voice;if(button){button.classList.add('busy');button.disabled=true}const done=()=>{if(button){button.classList.remove('busy');button.disabled=false}};u.onend=done;u.onerror=()=>{done();toast('오디오를 재생하지 못했습니다.')};window.speechSynthesis.speak(u)}catch(e){console.warn('[test-prep] browser vocab TTS failed',e);if(button){button.classList.remove('busy');button.disabled=false}toast('오디오를 재생하지 못했습니다.')}}
+function addAudio(root){if(root.querySelector('.vp-card-audio'))return;const prompt=root.querySelector('.vp-prompt');if(!prompt)return;const b=document.createElement('button');b.type='button';b.className='vp-card-audio';b.setAttribute('aria-label','단어 듣기');b.title='단어 듣기';b.innerHTML=HEADPHONES_SVG;b.onclick=e=>{e.preventDefault();e.stopPropagation();playWord(prompt.textContent.trim(),b)};prompt.insertAdjacentElement('afterend',b)}
+function addSelfCheck(root){if(root.querySelector('.vp-selfcheck'))return;const card=root.querySelector('.vp-card');if(!card)return;const box=document.createElement('div');box.className='vp-selfcheck';box.innerHTML='<p>이 단어를 알고 있었어요?</p><div class="vp-selfcheck-actions"><button type="button" class="vp-selfcheck-btn" data-knew="yes">예</button><button type="button" class="vp-selfcheck-btn" data-knew="no">아니요</button></div>';card.appendChild(box);box.querySelectorAll('[data-knew]').forEach(b=>b.onclick=()=>answerSelfCheck(root,b.dataset.knew==='yes'))}
+async function answerSelfCheck(root,knew){const prompt=root.querySelector('.vp-prompt')?.textContent?.trim()||'',word=norm(prompt),item=ctx.byWord.get(word);const buttons=root.querySelectorAll('.vp-selfcheck-btn');buttons.forEach(b=>b.disabled=true);if(item){ctx.seen.add(word);if(knew){ctx.cleared.add(word);if(ctx.repeatPhase)ctx.unknown.delete(String(item.id))}else{ctx.cleared.delete(word);ctx.unknown.add(String(item.id))}ctx.completed=ctx.items.length>0&&ctx.items.every(x=>ctx.cleared.has(norm(x.canonical_text)));try{await saveCheck(item,knew,ctx.repeatPhase,Date.now()-ctx.shownAt)}catch(e){console.warn('[test-prep] self-check save failed',e);toast('자기 확인 기록 저장에 실패했습니다.')} }const next=root.querySelector('#vpNext');if(next){next.disabled=false;next.click()}}
+function revealCard(root){const answer=root.querySelector('.vp-flash-answer'),reveal=root.querySelector('#vpReveal'),box=root.querySelector('.vp-selfcheck');answer?.classList.add('show');if(reveal)reveal.hidden=true;box?.classList.add('show')}
+function maybeRepeat(root){const result=root.querySelector('.vp-result');if(!result||ctx.repeatStarted||ctx.repeatPhase||!ctx.unknown.size)return false;ctx.repeatStarted=true;const ids=[...ctx.unknown];result.innerHTML=`<div class="vp-score">${ids.length}</div><h2>한 번 더 볼게요</h2><p class="vp-card-repeat-note">모른다고 답한 단어만 마지막에 다시 확인합니다.</p>`;setTimeout(async()=>{const mod=window.WillenaVocabPractice;if(!mod)return;ctx.repeatPhase=true;try{await mod.startMode?.('cards',{onlyIds:ids,repeat:true})}catch(e){console.warn('[test-prep] card repeat failed',e)}},450);return true}
+function finishRepeatIfNeeded(root){
+ if(!ctx.repeatPhase||!root.querySelector('.vp-result'))return false;
+ if(ctx.unknown.size){const ids=[...ctx.unknown];root.querySelector('.vp-result').innerHTML=`<div class="vp-score">${ids.length}</div><h2>조금만 더!</h2><p class="vp-card-repeat-note">아직 모르는 단어만 다시 확인합니다.</p>`;setTimeout(async()=>{try{await window.WillenaVocabPractice?.startMode?.('cards',{onlyIds:ids,repeat:true})}catch(e){console.warn('[test-prep] card repeat continuation failed',e)}},450);return true}
+ ctx.completed=true;resetRepeat();return false;
+}
+function enhance(){const root=document.querySelector('#testPrepVocabPractice .vp-wrap');if(!root)return;const sel=window.WillenaAssignedTestPrep?.selection;if(sel?.section!=='vocabulary'||sel.reviewMode)return;ensureContext();decorateModes(root);if(root.querySelector('.vp-result')){if(finishRepeatIfNeeded(root))return;if(maybeRepeat(root))return}const mode=currentMode(root);if(mode==='cards'){root.classList.add('vp-selfcheck-cards');addAudio(root);addSelfCheck(root);const prompt=root.querySelector('.vp-prompt')?.textContent?.trim()||'';if(prompt&&prompt!==ctx.lastPrompt){ctx.lastPrompt=prompt;ctx.shownAt=Date.now()}}else root.classList.remove('vp-selfcheck-cards')}
+function capture(e){const t=e.target instanceof Element?e.target:null;if(!t)return;const reveal=t.closest('#vpReveal');if(reveal&&reveal.closest('#testPrepVocabPractice')){const root=reveal.closest('.vp-wrap');if(root&&currentMode(root)==='cards'){e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();revealCard(root)}}}
+function boot(){document.addEventListener('click',capture,true);const target=document.getElementById('assignedQuizPane')||document.body;new MutationObserver(scheduleEnhance).observe(target,{childList:true,subtree:true});setInterval(scheduleEnhance,900);scheduleEnhance()}
+window.WillenaVocabCardControls={get completed(){return ctx.completed},get total(){return ctx.items.length},get seen(){return ctx.seen.size},get cleared(){return ctx.cleared.size},getRemainingIds,reload:()=>ensureContext(true)};
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
+})();
