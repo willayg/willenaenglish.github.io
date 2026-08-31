@@ -3,29 +3,73 @@
 const $=(s,r=document)=>r.querySelector(s),$$=(s,r=document)=>[...r.querySelectorAll(s)];
 const stage=$('#stage'),svg=$('#ribbon'),anchors=$$('.anchor'),cards=$$('.node-card'),back=$('#routeBack'),main=$('#routeMain'),glint=$('#routeGlint'),far=$('#far'),mid=$('#mid'),near=$('#near');
 let currentUserId='',phase=0,animOn=true,overviewTimer=0,currentScope='class';
+const classCache=new Map();
+const globalCache=new Map();
+
 function addShapes(layer,specs){if(!layer)return;specs.forEach(([type,x,y,size,color,rot=0])=>{const e=document.createElement('span');e.className=`shape ${type}`;e.style.left=x+'%';e.style.top=y+'px';e.style.width=size+'px';e.style.height=(type==='pillshape'?Math.max(14,Math.round(size*.28)):size)+'px';if(type==='ringshape'||type==='plusshape')e.style.color=color;else e.style.background=color;if(rot)e.style.transform=`rotate(${rot}deg)`;layer.appendChild(e)})}
 addShapes(far,[['circle',5,80,14,'#ff9bc5'],['ringshape',88,150,28,'#82dfe5'],['diamond',18,210,16,'#b7afff'],['plusshape',76,275,20,'#ffd76f'],['circle',72,340,12,'#9fe6bf'],['pillshape',11,410,54,'#ffd76f',-15],['ringshape',86,470,24,'#ff9bc5'],['diamond',34,540,14,'#72dce3'],['plusshape',64,600,18,'#9b8cff'],['circle',8,665,16,'#a9c4ff'],['diamond',89,730,18,'#ffb9d7'],['ringshape',20,790,26,'#9fe6bf'],['plusshape',77,860,18,'#72dce3'],['circle',82,930,13,'#ffd76f'],['pillshape',28,990,46,'#ff9bc5',20],['diamond',72,1060,16,'#b7afff'],['circle',62,1130,12,'#82dfe5'],['ringshape',9,1200,24,'#ffd76f'],['plusshape',87,1270,20,'#ff9bc5']]);
 addShapes(mid,[['circle',4,170,34,'#ff92bc'],['ringshape',84,240,46,'#72dce3'],['diamond',24,315,24,'#ffd76f'],['plusshape',71,380,30,'#9b8cff'],['circle',60,445,28,'#9fe6bf'],['pillshape',7,525,82,'#a9c4ff',15],['diamond',88,590,26,'#ff9ec7'],['ringshape',15,665,40,'#8fe3e8'],['plusshape',60,735,28,'#ffd76f'],['circle',87,815,38,'#9fe6bf'],['diamond',67,890,28,'#ff9ec7'],['ringshape',28,960,38,'#a9c4ff'],['pillshape',76,1035,78,'#ffd76f',-18],['plusshape',8,1115,26,'#ff92bc'],['circle',70,1190,30,'#72dce3']]);
 addShapes(near,[['ringshape',66,90,76,'#8fe3e8'],['diamond',10,180,34,'#ff9bc5'],['plusshape',88,275,44,'#72dce3'],['circle',72,365,58,'#ffd76f'],['ringshape',5,455,64,'#9b8cff'],['pillshape',80,545,106,'#a9c4ff',14],['diamond',14,640,42,'#9fe6bf'],['plusshape',82,735,46,'#ff9ec7'],['circle',88,835,72,'#9fe6bf'],['ringshape',18,930,62,'#ffd76f'],['diamond',70,1025,40,'#ff9bc5'],['pillshape',6,1120,112,'#ff9ec7',-12],['plusshape',88,1210,42,'#72dce3']]);
+
 function points(){if(!stage)return[];const sr=stage.getBoundingClientRect();return anchors.map(a=>{const r=a.getBoundingClientRect();return{x:r.left+r.width/2-sr.left,y:r.top+r.height/2-sr.top}})}
 function buildPath(p){if(p.length<2)return'';let d=`M ${p[0].x} ${p[0].y}`;for(let i=0;i<p.length-1;i++){const a=p[i],b=p[i+1],dx=b.x-a.x,dy=b.y-a.y;let c1x=a.x+dx*.38,c1y=a.y,c2x=b.x-dx*.38,c2y=b.y;if(Math.abs(dx)<80){c1x=a.x;c2x=b.x;c1y=a.y+dy*.38;c2y=b.y-dy*.38}d+=` C ${c1x} ${c1y}, ${c2x} ${c2y}, ${b.x} ${b.y}`}return d}
 function draw(){if(!stage||!svg)return;svg.setAttribute('viewBox',`0 0 ${stage.clientWidth} ${stage.clientHeight}`);const d=buildPath(points());[back,main,glint].forEach(p=>p?.setAttribute('d',d))}
 function animate(){if(animOn&&stage&&cards.length){const sr=stage.getBoundingClientRect(),focus=innerHeight*.52,progress=Math.max(0,Math.min(1,(focus-sr.top)/sr.height)),scaled=progress*(cards.length-1),from=Math.min(cards.length-2,Math.floor(scaled)),to=from+1,t=Math.max(0,Math.min(1,scaled-from));phase=(phase+1.15)%360;const pulse=.72+.28*((Math.sin(phase*Math.PI/180)+1)/2);cards.forEach((card,i)=>{let op=0;if(i===from)op=1-t;if(i===to)op=Math.max(op,t);op*=.78*pulse;card.style.setProperty('--shine-opacity',op.toFixed(3));card.style.setProperty('--shine-angle',phase+'deg')});if(glint){const gp=.78+.22*((Math.sin((phase+40)*Math.PI/180)+1)/2);glint.style.opacity=String(Math.max(0,Math.min(1,4*t*(1-t)*.9*gp)));glint.style.strokeDashoffset=String(-progress)}const scroll=Math.max(0,window.scrollY||0);if(far)far.style.transform=`translateY(${scroll*.07}px)`;if(mid)mid.style.transform=`translateY(${scroll*.18}px)`;if(near)near.style.transform=`translateY(${scroll*.40}px)`}requestAnimationFrame(animate)}
+
 async function jsonFetch(url,opts){const r=await WillenaAPI.fetch(url,opts);const d=await r.json().catch(()=>({}));return{r,d}}
 async function getSession(){let x=await jsonFetch(`/.netlify/functions/supabase_auth?action=whoami&_=${Date.now()}`,{cache:'no-store'});if(x.r.ok&&x.d.success)return x.d;try{const ref=await jsonFetch(`/.netlify/functions/supabase_auth?action=refresh&_=${Date.now()}`,{cache:'no-store'});if(ref.r.ok&&ref.d.success){if(ref.d.access_token&&WillenaAPI.setLocalTokens)WillenaAPI.setLocalTokens(ref.d.access_token,'');x=await jsonFetch(`/.netlify/functions/supabase_auth?action=whoami&_=${Date.now()}`,{cache:'no-store'});if(x.r.ok&&x.d.success)return x.d}}catch{}return null}
 function firstLetter(v){return String(v||'Student').trim().charAt(0).toUpperCase()||'S'}
 function applyProfile(name,avatar,cls){const n=name||'Student';if($('#profileName'))$('#profileName').textContent=n;if($('#headerName'))$('#headerName').textContent=n;const av=avatar||firstLetter(n);if($('#profileAvatar'))$('#profileAvatar').textContent=av;if($('.avatar'))$('.avatar').textContent=av;if(cls&&$('#headerClass'))$('#headerClass').textContent=cls}
 function applyOverview(ov){if(!ov)return;const stars=Number(ov.stars),pts=Number(ov.points);if(Number.isFinite(stars)&&$('#headerStars'))$('#headerStars').textContent=`⭐ ${stars.toLocaleString()}`;if(Number.isFinite(pts)&&$('#headerPoints'))$('#headerPoints').textContent=`+ ${pts.toLocaleString()}`}
-async function loadOverview(){try{const {r,d}=await jsonFetch(`/.netlify/functions/progress_summary?section=overview&_=${Date.now()}`,{cache:'no-store'});if(r.ok)applyOverview(d)}catch(e){console.warn('[dashboard] overview',e)}}
+async function loadOverview(){try{const {r,d}=await jsonFetch(`/.netlify/functions/progress_summary?section=overview&_=${Date.now()}`);if(r.ok)applyOverview(d)}catch(e){console.warn('[dashboard] overview',e)}}
 function scheduleOverview(){clearTimeout(overviewTimer);overviewTimer=setTimeout(loadOverview,300)}
-function renderLeaderboard(raw,scope){const rows=$('#leaderRows');const list=(Array.isArray(raw)?raw:[]).map(e=>({...e,name:e.name||'Student',stars:Number(e.stars)||0,points:Number(e.points)||0,superScore:Math.round(((Number(e.stars)||0)*(Number(e.points)||0))/1000)})).sort((a,b)=>b.superScore-a.superScore||b.stars-a.stars||b.points-a.points||String(a.name).localeCompare(String(b.name)));if(!list.length){rows.innerHTML=`<div class="loading">No ${scope==='class'?'class ':''}leaderboard data yet.</div>`;return}rows.innerHTML=list.slice(0,10).map((e,i)=>`<div class="row${e.self?' self':''}"><div class="rank">${i+1}</div><div class="name">${e.name}${e.self?' · You':''}</div><div class="score">${e.superScore.toLocaleString()} ⚡</div></div>`).join('')}
-async function loadLeaderboard(scope=currentScope){const rows=$('#leaderRows');if(!rows||!currentUserId)return;currentScope=scope;$$('.tab').forEach(b=>b.classList.toggle('active',b.dataset.scope===scope));rows.innerHTML='<div class="loading">Loading leaderboard…</div>';const section=scope==='global'?'leaderboard_stars_global':'leaderboard_stars_class';const u=scope==='class'?`&u=${encodeURIComponent(currentUserId)}`:'';try{const {r,d}=await jsonFetch(`/.netlify/functions/progress_summary?section=${section}&timeframe=month&bypass_cache=1${u}&_=${Date.now()}`,{cache:'no-store'});if(!r.ok||!d.success)throw new Error(d.error||`HTTP ${r.status}`);if($('#leaderClass'))$('#leaderClass').textContent=scope==='class'?(d.class?`${d.class} · THIS MONTH`:'MY CLASS · THIS MONTH'):'EVERYBODY · THIS MONTH';renderLeaderboard(d.leaderboard,scope)}catch(e){console.error('[dashboard] leaderboard',e);rows.innerHTML='<div class="loading">Could not refresh the leaderboard.</div>'}}
-async function bootIdentity(){if(!window.WillenaAPI){location.replace('/students/signin.html?next='+encodeURIComponent(location.pathname));return}try{const who=await getSession();if(!who){location.replace('/students/signin.html?next='+encodeURIComponent(location.pathname));return}currentUserId=who.user_id||who.id||'';let name=who.name||who.full_name||who.username||who.display_name||'',avatar='',cls='';try{const [{r:pr,d:pd},{r:or,d:od}]=await Promise.all([jsonFetch(`/.netlify/functions/supabase_auth?action=get_profile_name&_=${Date.now()}`,{cache:'no-store'}),jsonFetch(`/.netlify/functions/progress_summary?section=overview&_=${Date.now()}`,{cache:'no-store'})]);if(pr.ok&&pd.success){name=pd.name||pd.username||name;avatar=pd.avatar||'';cls=pd.class||''}if(or.ok)applyOverview(od)}catch{}applyProfile(name,avatar,cls);await loadLeaderboard('class')}catch(e){console.error('[dashboard] identity',e);location.replace('/students/signin.html?next='+encodeURIComponent(location.pathname))}}
+
+function updateTabUI(scope){$$('.tab').forEach(btn=>{const active=btn.dataset.scope===scope;btn.classList.toggle('active',active);btn.setAttribute('aria-selected',active?'true':'false')})}
+function normalizeEntries(raw){return (Array.isArray(raw)?raw:[]).map(e=>({...e,name:e.name||'Student',stars:Number(e.stars)||0,points:Number(e.points)||0,superScore:Math.round(((Number(e.stars)||0)*(Number(e.points)||0))/1000)})).sort((a,b)=>b.superScore-a.superScore||b.stars-a.stars||b.points-a.points||String(a.name).localeCompare(String(b.name)))}
+function renderLeaderboard(data,scope){const rows=$('#leaderRows');if(!rows)return;const list=normalizeEntries(data?.leaderboard);if($('#leaderClass'))$('#leaderClass').textContent=scope==='class'?(data?.class?`${data.class} · THIS MONTH`:'MY CLASS · THIS MONTH'):'EVERYBODY · THIS MONTH';if(!list.length){rows.innerHTML=`<div class="loading">No ${scope==='class'?'class ':''}leaderboard data yet.</div>`;return}rows.innerHTML=list.slice(0,10).map((e,i)=>`<div class="row${e.self?' self':''}"><div class="rank">${i+1}</div><div class="name">${e.name}${e.self?' · You':''}</div><div class="score">${e.superScore.toLocaleString()} ⚡</div></div>`).join('')}
+
+async function fetchLeaderboard(scope,forceRefresh=false){
+  const section=scope==='global'?'leaderboard_stars_global':'leaderboard_stars_class';
+  const cache=scope==='global'?globalCache:classCache;
+  const key=`month_${currentUserId}`;
+  if(!forceRefresh&&cache.has(key))return cache.get(key);
+  const bypass=forceRefresh?'&bypass_cache=1':'';
+  const userParam=scope==='class'?`&u=${encodeURIComponent(currentUserId)}`:'';
+  const url=`/.netlify/functions/progress_summary?section=${section}&timeframe=month${bypass}${userParam}`;
+  let {r,d}=await jsonFetch(url);
+  if((!r.ok||!d.success)&&forceRefresh){
+    ({r,d}=await jsonFetch(`/.netlify/functions/progress_summary?section=${section}&timeframe=month${userParam}`));
+  }
+  if(!r.ok||!d.success)throw new Error(d.error||`HTTP ${r.status}`);
+  cache.set(key,d);
+  return d;
+}
+
+async function loadLeaderboard(scope=currentScope,forceRefresh=false){
+  const rows=$('#leaderRows');
+  if(!rows||!currentUserId)return;
+  currentScope=scope;
+  updateTabUI(scope);
+  rows.innerHTML='<div class="loading">Loading leaderboard…</div>';
+  try{
+    const data=await fetchLeaderboard(scope,forceRefresh);
+    renderLeaderboard(data,scope);
+  }catch(e){
+    console.error('[dashboard] leaderboard',e);
+    rows.innerHTML='<div class="loading">Could not load the leaderboard.</div>';
+  }
+}
+
+async function bootIdentity(){if(!window.WillenaAPI){location.replace('/students/signin.html?next='+encodeURIComponent(location.pathname));return}try{const who=await getSession();if(!who){location.replace('/students/signin.html?next='+encodeURIComponent(location.pathname));return}currentUserId=who.user_id||who.id||'';let name=who.name||who.full_name||who.username||who.display_name||'',avatar='',cls='';try{const [{r:pr,d:pd},{r:or,d:od}]=await Promise.all([jsonFetch(`/.netlify/functions/supabase_auth?action=get_profile_name&_=${Date.now()}`),jsonFetch(`/.netlify/functions/progress_summary?section=overview&_=${Date.now()}`)]);if(pr.ok&&pd.success){name=pd.name||pd.username||name;avatar=pd.avatar||'';cls=pd.class||''}if(or.ok)applyOverview(od)}catch{}applyProfile(name,avatar,cls);await loadLeaderboard('class',true)}catch(e){console.error('[dashboard] identity',e);location.replace('/students/signin.html?next='+encodeURIComponent(location.pathname))}}
+
 function settings(){const modal=$('#settingsModal'),open=$('#openSettings'),close=$('#closeSettings');if(!modal||!open||!close)return;const show=()=>{modal.classList.add('open');modal.setAttribute('aria-hidden','false');document.body.classList.add('modal-open')},hide=()=>{modal.classList.remove('open');modal.setAttribute('aria-hidden','true');document.body.classList.remove('modal-open')};open.addEventListener('click',show);$('.avatar')?.addEventListener('click',show);close.addEventListener('click',hide);modal.addEventListener('click',e=>{if(e.target===modal)hide()});document.addEventListener('keydown',e=>{if(e.key==='Escape')hide()});$('#profileEditBtn')?.addEventListener('click',()=>location.href='/students/profile.html');$('#logoutBig')?.addEventListener('click',async()=>{try{WillenaAPI.clearLocalTokens?.();await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=logout',{method:'POST'})}catch{}location.href='/students/login.html'});const lang=$('#languageSelect');if(lang&&window.StudentLang){lang.value=StudentLang.getLang()==='ko'?'ko':'en';lang.addEventListener('change',()=>StudentLang.setLang(lang.value))}const dark=$('#darkToggle');dark?.addEventListener('change',()=>window.StudentTheme?.toggle());const motion=$('#motionToggle');motion?.addEventListener('change',()=>{animOn=motion.checked;document.body.classList.toggle('no-motion',!animOn)});const music=$('#musicToggle');if(music){try{music.checked=localStorage.getItem('wa.audio.music.enabled')==='1'}catch{}music.addEventListener('change',()=>{try{localStorage.setItem('wa.audio.music.enabled',music.checked?'1':'0');window.dispatchEvent(new CustomEvent('wa:audio-settings-changed',{detail:{music:music.checked}}))}catch{}})}}
-$$('.tab').forEach(b=>b.addEventListener('click',()=>loadLeaderboard(b.dataset.scope||'class')));
+
+$$('.tab').forEach(btn=>btn.addEventListener('click',()=>loadLeaderboard(btn.dataset.scope||'class',false)));
 window.addEventListener('points:update',e=>{if(Number.isFinite(Number(e.detail?.total))&&$('#headerPoints'))$('#headerPoints').textContent=`+ ${Number(e.detail.total).toLocaleString()}`;else scheduleOverview()});
-window.addEventListener('stars:optimistic-bump',scheduleOverview);window.addEventListener('stars:refresh',()=>{scheduleOverview();if(currentUserId)loadLeaderboard(currentScope)});window.addEventListener('session:ended',()=>{scheduleOverview();if(currentUserId)loadLeaderboard(currentScope)});
-window.addEventListener('focus',()=>{loadOverview();if(currentUserId)loadLeaderboard(currentScope)});
+window.addEventListener('stars:optimistic-bump',scheduleOverview);
+window.addEventListener('stars:refresh',()=>{scheduleOverview();classCache.clear();globalCache.clear();if(currentUserId)loadLeaderboard(currentScope,true)});
+window.addEventListener('session:ended',()=>{scheduleOverview();classCache.clear();globalCache.clear();if(currentUserId)loadLeaderboard(currentScope,true)});
+window.addEventListener('focus',()=>{loadOverview();if(currentUserId){classCache.clear();globalCache.clear();loadLeaderboard(currentScope,false)}});
 window.addEventListener('resize',draw);window.addEventListener('load',draw);if(document.fonts?.ready)document.fonts.ready.then(draw);
 draw();settings();bootIdentity();requestAnimationFrame(animate);
 })();
