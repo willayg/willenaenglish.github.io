@@ -47,9 +47,10 @@ function decorate(){
     const e=entries[i];
     if(!e)return;
     row.dataset.studentId=e.user_id||'';
-    row.setAttribute('role','button');
-    row.setAttribute('tabindex','0');
-    row.setAttribute('aria-expanded',row.classList.contains('show-private')?'true':'false');
+    row.removeAttribute('role');
+    row.removeAttribute('tabindex');
+    row.removeAttribute('aria-expanded');
+    row.classList.remove('show-private');
     const name=row.querySelector('.name');
     if(name&&!name.querySelector('.student-meta')){
       const meta=document.createElement('span');
@@ -61,7 +62,7 @@ function decorate(){
       const masked=maskKorean(e.korean_name);
       if(masked){
         const ko=document.createElement('span');
-        ko.className='student-korean';
+        ko.className='student-korean always-visible';
         ko.textContent=masked;
         meta.appendChild(ko);
       }
@@ -69,23 +70,6 @@ function decorate(){
     }
   });
 }
-function toggleRow(row){
-  if(!row||!row.classList.contains('row'))return;
-  const next=!row.classList.contains('show-private');
-  row.classList.toggle('show-private',next);
-  row.setAttribute('aria-expanded',next?'true':'false');
-}
-document.addEventListener('click',e=>{
-  const row=e.target.closest?.('#leaderRows .row');
-  if(row)toggleRow(row);
-});
-document.addEventListener('keydown',e=>{
-  if(e.key!=='Enter'&&e.key!==' ')return;
-  const row=e.target.closest?.('#leaderRows .row');
-  if(!row)return;
-  e.preventDefault();
-  toggleRow(row);
-});
 const observer=new MutationObserver(decorate);
 const start=()=>{const root=document.querySelector('#leaderRows');if(root){observer.observe(root,{childList:true,subtree:true});decorate()}else setTimeout(start,80)};
 start();
