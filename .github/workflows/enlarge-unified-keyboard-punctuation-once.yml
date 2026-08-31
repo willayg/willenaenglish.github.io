@@ -1,0 +1,57 @@
+name: Enlarge unified keyboard and punctuation once
+on:
+  push:
+    branches: [staging]
+    paths: ['.github/workflows/enlarge-unified-keyboard-punctuation-once.yml']
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: staging
+      - name: Patch keyboard and punctuation
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          k=Path('students/test-prep-app/seosul-spelling-keyboard.js')
+          s=k.read_text()
+          reps={
+          "width:min(900px,calc(100vw - 28px))":"width:min(960px,calc(100vw - 28px))",
+          "height:54px;max-width:82px;font-size:22px":"height:60px;max-width:90px;font-size:24px",
+          "max-width:82px}\n #tpSeosulAppKeyboard .vp-kb-row{gap:8px;margin:7px 0}":"max-width:90px}\n #tpSeosulAppKeyboard .vp-kb-row{gap:9px;margin:8px 0}",
+          "max-width:104px}\n #tpSeosulAppKeyboard .vp-kb-row.bottom{grid-template-columns:1fr 104px;gap:8px}":"max-width:116px}\n #tpSeosulAppKeyboard .vp-kb-row.bottom{grid-template-columns:1fr 116px;gap:9px}",
+          "padding-bottom:350px!important":"padding-bottom:390px!important",
+          "scroll-padding-bottom:360px":"scroll-padding-bottom:400px"
+          }
+          for a,b in reps.items():
+              if a not in s: raise SystemExit(f'missing keyboard pattern: {a}')
+              s=s.replace(a,b,1)
+          k.write_text(s)
+          p=Path('students/test-prep-app/seosul-punctuation-support.js')
+          s=p.read_text()
+          a="const FIELD='#card .seosul-split-input,#card #seosulAnswer';"
+          b="const FIELD='#card .seosul-split-input,#card #seosulAnswer,#testPrepVocabPractice #vpSpell';"
+          if a not in s: raise SystemExit('missing punctuation field pattern')
+          s=s.replace(a,b,1)
+          a="@media (min-width:700px) and (pointer:coarse){#tpSeosulAppKeyboard .vp-kb-row.bottom{grid-template-columns:1fr 58px 78px!important}#tpSeosulPunctPanel{right:84px;bottom:45px}}"
+          b="@media (min-width:700px) and (pointer:coarse){#tpSeosulAppKeyboard .vp-kb-row.bottom{grid-template-columns:1fr 78px 116px!important;gap:9px}#tpSeosulAppKeyboard .vp-kb-key.punct{font-size:18px}#tpSeosulPunctPanel{right:125px;bottom:70px;gap:7px;padding:9px}#tpSeosulPunctPanel button{width:46px;height:44px;font-size:20px}}"
+          if a not in s: raise SystemExit('missing punctuation tablet pattern')
+          s=s.replace(a,b,1)
+          p.write_text(s)
+          i=Path('students/test-prep-app/index.html')
+          s=i.read_text()
+          s=s.replace('seosul-spelling-keyboard.js?v=20260831-tabletbig1','seosul-spelling-keyboard.js?v=20260831-tabletbig2')
+          s=s.replace('seosul-punctuation-support.js?v=20260831-punct2','seosul-punctuation-support.js?v=20260831-punct3')
+          i.write_text(s)
+          PY
+      - name: Commit
+        run: |
+          rm .github/workflows/enlarge-unified-keyboard-punctuation-once.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add students/test-prep-app/seosul-spelling-keyboard.js students/test-prep-app/seosul-punctuation-support.js students/test-prep-app/index.html .github/workflows/enlarge-unified-keyboard-punctuation-once.yml
+          git commit -m "Enlarge tablet keyboard and enable spelling punctuation"
+          git push origin staging
