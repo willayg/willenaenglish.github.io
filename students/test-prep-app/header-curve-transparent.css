@@ -2,3 +2,8 @@
 .tp-header-curve{
   background:transparent !important;
 }
+
+/* Give lesson/practice content more breathing room below the student header. */
+.app{
+  padding-top:30px !important;
+}
