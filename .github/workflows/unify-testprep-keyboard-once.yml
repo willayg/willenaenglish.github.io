@@ -1,0 +1,42 @@
+name: Unify test prep English keyboard once
+on:
+  push:
+    branches: [students]
+    paths:
+      - '.github/workflows/unify-testprep-keyboard-once.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: students
+      - name: Patch shared Seosul keyboard for vocab spelling
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('students/test-prep-app/seosul-spelling-keyboard.js')
+          s=p.read_text()
+          s=s.replace("function candidates(){if(!isEnglishQuestion())return[];const split=$$('#card .seosul-split-input').filter(x=>!x.disabled);if(split.length)return split;const ta=$('#card #seosulAnswer');return ta&&!ta.disabled&&ta.offsetParent!==null?[ta]:[]}","function candidates(){const vocab=$('#testPrepVocabPractice #vpSpell');if(vocab&&!vocab.disabled&&vocab.offsetParent!==null)return[vocab];if(!isEnglishQuestion())return[];const split=$$('#card .seosul-split-input').filter(x=>!x.disabled);if(split.length)return split;const ta=$('#card #seosulAnswer');return ta&&!ta.disabled&&ta.offsetParent!==null?[ta]:[]}")
+          s=s.replace("function submit(){const b=$('#seosulCheck');if(b&&!b.disabled)b.click()}","function submit(){const b=active?.id==='vpSpell'?$('#testPrepVocabPractice #vpNext'):$('#seosulCheck');if(b&&!b.disabled)b.click()}")
+          s=s.replace("#card .tp-seosul-caret{caret-color:#19777e!important;cursor:text!important}","#card .tp-seosul-caret,#testPrepVocabPractice .tp-seosul-caret{caret-color:#19777e!important;cursor:text!important}")
+          s=s.replace("#card .tp-seosul-caret:focus{caret-color:#19777e!important}","#card .tp-seosul-caret:focus,#testPrepVocabPractice .tp-seosul-caret:focus{caret-color:#19777e!important}")
+          s=s.replace("function chooseTarget(e){const el=e.target?.closest?.('#card .seosul-split-input,#card #seosulAnswer');", "function chooseTarget(e){const el=e.target?.closest?.('#card .seosul-split-input,#card #seosulAnswer,#testPrepVocabPractice #vpSpell');")
+          s=s.replace("const key=b.dataset.key;if(key==='enter')hide()", "const key=b.dataset.key;if(key==='enter'){if(active?.id==='vpSpell')submit();hide()}")
+          p.write_text(s)
+
+          i=Path('students/test-prep-app/index.html')
+          h=i.read_text()
+          h=h.replace('<script src="./spelling-keyboard.js?v=20260829-answerbar1"></script>\n','')
+          h=h.replace('./seosul-spelling-keyboard.js?v=20260831-kb10','./seosul-spelling-keyboard.js?v=20260831-unified1')
+          i.write_text(h)
+          PY
+      - name: Commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add students/test-prep-app/seosul-spelling-keyboard.js students/test-prep-app/index.html
+          git commit -m "Use Seosul keyboard for vocab spelling" || exit 0
+          git push origin HEAD:students
