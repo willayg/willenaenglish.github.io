@@ -15,7 +15,7 @@ function backspace(){if(!active||active.disabled)return;const v=active.value||''
 function stopRepeat(){if(repeatDelay){clearTimeout(repeatDelay);repeatDelay=null}if(repeatTimer){clearInterval(repeatTimer);repeatTimer=null}if(repeatFastTimer){clearTimeout(repeatFastTimer);repeatFastTimer=null}}
 function startRepeat(){stopRepeat();backspace();repeatDelay=setTimeout(()=>{repeatTimer=setInterval(backspace,50);repeatFastTimer=setTimeout(()=>{if(repeatTimer){clearInterval(repeatTimer);repeatTimer=setInterval(backspace,30)}},600)},240)}
 function submit(){const b=active?.id==='vpSpell'?$('#testPrepVocabPractice #vpNext'):$('#seosulCheck');if(b&&!b.disabled)b.click()}
-function renderCaps(){const k=kb();if(!k)return;k.querySelectorAll('[data-key].letter').forEach(b=>b.textContent=caps?b.dataset.key.toUpperCase():b.dataset.key.toLowerCase());const shift=k.querySelector('[data-key="shift"]');if(shift){shift.classList.toggle('on',caps);shift.setAttribute('aria-pressed',String(caps));shift.textContent=caps?'⇧ ON':'⇧'}}
+function renderCaps(){const k=kb();if(!k)return;k.querySelectorAll('[data-key].letter').forEach(b=>b.textContent=caps?b.dataset.key.toUpperCase():b.dataset.key.toLowerCase());const shift=k.querySelector('[data-key="shift"]');if(shift){shift.classList.toggle('on',caps);shift.setAttribute('aria-pressed',String(caps));shift.textContent='⇧'}}
 function toggleCaps(){caps=!caps;renderCaps()}
 function haptic(key){setTimeout(()=>{try{if(!navigator.vibrate)return;navigator.vibrate((key==='enter'||key==='backspace')?7:3)}catch(_){}},0)}
 function addStyle(){if($('#tpSeosulCompactKbStyle'))return;const s=document.createElement('style');s.id='tpSeosulCompactKbStyle';s.textContent=`
