@@ -5,8 +5,8 @@ const REVIEW_EDGE='https://fiieuiktlsivwfgyivai.supabase.co/functions/v1/test-pr
 const STATIONS=[
  {k:'vocabulary',label:'단어 학습',desc:'카드 · 뜻 · 철자'},
  {k:'vocab_test',label:'어휘 시험',desc:'정의 · 시험형 어휘 문제'},
- {k:'sentences',label:'본문외우기',desc:'본문 문장 완성'},
  {k:'communication',label:'Communication',desc:'핵심 대화 표현'},
+ {k:'sentences',label:'본문외우기',desc:'본문 문장 완성'},
  {k:'grammar',label:'Grammar',desc:'핵심 문법'},
  {k:'reading',label:'Reading',desc:'본문 이해'},
  {k:'constructed_response',label:'서술형',desc:'영작 · 배열 · 대화 · 본문 해석'}
