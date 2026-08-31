@@ -1,6 +1,12 @@
 # Cloudflare Pages custom headers
 # Fix NS_ERROR_CORRUPTED_CONTENT by ensuring proper content-type and caching
 
+# Student dashboard - always serve fresh HTML
+/students/dashboard
+  Cache-Control: no-store, no-cache, must-revalidate, max-age=0
+/students/dashboard.html
+  Cache-Control: no-store, no-cache, must-revalidate, max-age=0
+
 # JavaScript files
 /Teachers/components/*.js
   Content-Type: application/javascript; charset=utf-8
