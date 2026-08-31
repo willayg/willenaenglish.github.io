@@ -1,0 +1,14 @@
+#leaderRows .row:nth-child(-n+3){position:relative;overflow:hidden;isolation:isolate}
+#leaderRows .row:nth-child(1){--medal:#f6c84d;--medal-glow:rgba(246,200,77,.42);box-shadow:inset 4px 0 0 var(--medal),0 0 0 1px rgba(246,200,77,.22)}
+#leaderRows .row:nth-child(2){--medal:#cbd3dd;--medal-glow:rgba(203,211,221,.38);box-shadow:inset 4px 0 0 var(--medal),0 0 0 1px rgba(203,211,221,.20)}
+#leaderRows .row:nth-child(3){--medal:#d59259;--medal-glow:rgba(213,146,89,.38);box-shadow:inset 4px 0 0 var(--medal),0 0 0 1px rgba(213,146,89,.20)}
+#leaderRows .row:nth-child(-n+3)::after{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;background:linear-gradient(110deg,transparent 14%,rgba(255,255,255,.03) 34%,rgba(255,255,255,.72) 50%,rgba(255,255,255,.06) 64%,transparent 86%);transform:translateX(-130%);animation:leaderSweep 5.2s ease-in-out infinite}
+#leaderRows .row:nth-child(2)::after{animation-delay:.55s;animation-duration:5.8s}
+#leaderRows .row:nth-child(3)::after{animation-delay:1.05s;animation-duration:6.4s}
+#leaderRows .row:nth-child(-n+3)>.rank,#leaderRows .row:nth-child(-n+3)>.name,#leaderRows .row:nth-child(-n+3)>.score{position:relative;z-index:1}
+#leaderRows .row:nth-child(1) .rank{box-shadow:0 0 14px var(--medal-glow)}
+#leaderRows .row:nth-child(2) .rank{box-shadow:0 0 12px var(--medal-glow)}
+#leaderRows .row:nth-child(3) .rank{box-shadow:0 0 11px var(--medal-glow)}
+@keyframes leaderSweep{0%,58%{transform:translateX(-130%)}86%,100%{transform:translateX(130%)}}
+body.no-motion #leaderRows .row:nth-child(-n+3)::after{animation:none;display:none}
+@media(prefers-reduced-motion:reduce){#leaderRows .row:nth-child(-n+3)::after{animation:none;display:none}}
