@@ -1,51 +1,25 @@
-#leaderRows .row:nth-child(-n+3){position:relative;overflow:hidden;isolation:isolate}
+#leaderRows .row{cursor:pointer;transition:border-color .18s ease,box-shadow .18s ease,background .18s ease}
+#leaderRows .row:nth-child(-n+3){position:relative;overflow:hidden;isolation:isolate;border:1px solid rgba(224,174,22,.16);box-shadow:0 0 0 1px rgba(224,174,22,.06)}
 #leaderRows .row:nth-child(1){--medal:#e0ae16;--medal-soft:rgba(224,174,22,.17);--medal-glow:rgba(224,174,22,.30)}
 #leaderRows .row:nth-child(2){--medal:#9da8b4;--medal-soft:rgba(157,168,180,.17);--medal-glow:rgba(157,168,180,.28)}
 #leaderRows .row:nth-child(3){--medal:#bd7848;--medal-soft:rgba(189,120,72,.16);--medal-glow:rgba(189,120,72,.28)}
 
-/* Concept 5 + 8: rotating medal ring around the rank plus a fine medal line through the row. */
-#leaderRows .row:nth-child(-n+3) .rank{
-  position:relative;
-  z-index:3;
-  background:#fff;
-  color:var(--medal);
-  border:2px solid var(--medal);
-  box-shadow:0 3px 9px var(--medal-glow);
-}
-#leaderRows .row:nth-child(-n+3) .rank::after{
-  content:"";
-  position:absolute;
-  inset:-6px;
-  border-radius:50%;
-  border:1.5px dashed var(--medal);
-  opacity:.7;
-  pointer-events:none;
-  animation:leaderMedalSpin 9s linear infinite;
-}
+#leaderRows .row:nth-child(-n+3) .rank{position:relative;z-index:3;background:#fff;color:var(--medal);border:2px solid var(--medal);box-shadow:0 3px 9px var(--medal-glow)}
+#leaderRows .row:nth-child(-n+3) .rank::after{content:"";position:absolute;inset:-6px;border-radius:50%;border:1.5px dashed var(--medal);opacity:.7;pointer-events:none;animation:leaderMedalSpin 9s linear infinite}
 #leaderRows .row:nth-child(2) .rank::after{animation-duration:11.3s;animation-direction:reverse}
 #leaderRows .row:nth-child(3) .rank::after{animation-duration:13.8s}
 
-#leaderRows .row:nth-child(-n+3)::before{
-  content:"";
-  position:absolute;
-  left:50px;
-  right:14px;
-  top:50%;
-  height:1.5px;
-  transform:translateY(-50%);
-  background:linear-gradient(90deg,var(--medal),rgba(255,255,255,0));
-  opacity:.58;
-  pointer-events:none;
-  z-index:0;
-}
-#leaderRows .row:nth-child(-n+3) .name,
-#leaderRows .row:nth-child(-n+3) .score{
-  position:relative;
-  z-index:2;
-  background:#fff;
-  padding:0 5px;
-}
+#leaderRows .row:nth-child(-n+3)::before{content:"";position:absolute;left:50px;right:14px;top:50%;height:1.5px;transform:translateY(-50%);background:linear-gradient(90deg,var(--medal),rgba(255,255,255,0));opacity:.34;pointer-events:none;z-index:0}
+#leaderRows .row:nth-child(-n+3) .name,#leaderRows .row:nth-child(-n+3) .score{position:relative;z-index:2;background:transparent!important;padding:0!important}
 #leaderRows .row:nth-child(-n+3) .score{color:var(--medal)}
+
+#leaderRows .name{display:flex;flex-direction:column;align-items:flex-start;gap:2px;min-width:0}
+#leaderRows .student-meta{display:flex;align-items:center;gap:7px;min-height:16px;font-size:10px;line-height:1.2;font-weight:800;color:#8fa1a6}
+#leaderRows .student-class{white-space:nowrap}
+#leaderRows .student-korean{display:none;color:#6f858a;font-weight:900;letter-spacing:.02em}
+#leaderRows .row.show-private .student-korean{display:inline}
+#leaderRows .row.show-private{border-color:rgba(224,174,22,.26);box-shadow:0 0 0 1px rgba(224,174,22,.09),0 4px 12px rgba(80,100,105,.05)}
+#leaderRows .row:focus-visible{outline:2px solid rgba(224,174,22,.28);outline-offset:2px}
 
 @keyframes leaderMedalSpin{to{transform:rotate(360deg)}}
 body.no-motion #leaderRows .row:nth-child(-n+3) .rank::after{animation:none}
