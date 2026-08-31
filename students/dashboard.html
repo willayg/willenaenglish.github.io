@@ -663,7 +663,6 @@
           teacher.textContent = a.teacher_name ? `${t('Teacher')}: ${a.teacher_name}` : '';
 
           // Progress bar
-          const progress = typeof a.completion_pct === 'number' ? a.completion_pct : (a.completion || 0);
           const progressBar = document.createElement('div');
           progressBar.style.height = '8px';
           progressBar.style.width = '100%';
