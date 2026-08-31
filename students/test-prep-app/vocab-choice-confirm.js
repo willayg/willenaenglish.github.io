@@ -48,6 +48,7 @@ function selectChoice(button,e){
   });
   const next=document.querySelector('#testPrepVocabPractice #vpNext');
   if(next){
+    if(!next.dataset.afterConfirmLabel)next.dataset.afterConfirmLabel=next.textContent;
     next.disabled=false;
     next.textContent='정답 확인';
   }
@@ -64,9 +65,7 @@ function confirmChoice(next,e){
     b.classList.remove('choice-selected');
     b.removeAttribute('aria-pressed');
   });
-  next.textContent=next.closest('#testPrepVocabPractice')?.querySelectorAll('.vp-choice').length
-    ? (document.querySelector('#testPrepVocabPractice .vp-count') ? next.textContent : next.textContent)
-    : next.textContent;
+  next.textContent=next.dataset.afterConfirmLabel||'다음';
   return true;
 }
 
@@ -78,9 +77,7 @@ function boot(){
     if(choice){selectChoice(choice,e);return;}
     const next=e.target.closest('#testPrepVocabPractice #vpNext');
     if(next&&selectedButton&&!confirmed){
-      if(confirmChoice(next,e)){
-        next.textContent='다음';
-      }
+      confirmChoice(next,e);
       return;
     }
     if(next&&confirmed){
