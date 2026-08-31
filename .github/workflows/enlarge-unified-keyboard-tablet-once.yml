@@ -1,0 +1,43 @@
+name: Enlarge unified keyboard on tablets once
+on:
+  push:
+    branches: [students]
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: students
+      - name: Enlarge tablet keyboard only
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('students/test-prep-app/seosul-spelling-keyboard.js')
+          s=p.read_text()
+          s=s.replace("width:min(760px,calc(100vw - 28px))","width:min(900px,calc(100vw - 28px))")
+          s=s.replace("height:38px;max-width:64px;font-size:17px","height:54px;max-width:82px;font-size:22px")
+          s=s.replace(".vp-kb-key.shift{max-width:64px}",".vp-kb-key.shift{max-width:82px}")
+          s=s.replace(".vp-kb-row{gap:6px;margin:4px 0}",".vp-kb-row{gap:8px;margin:7px 0}")
+          s=s.replace(".vp-kb-row.third .vp-kb-key.backspace{max-width:78px}",".vp-kb-row.third .vp-kb-key.backspace{max-width:104px}")
+          s=s.replace("grid-template-columns:1fr 78px;gap:6px","grid-template-columns:1fr 104px;gap:8px")
+          s=s.replace("padding-bottom:285px!important","padding-bottom:350px!important")
+          s=s.replace("scroll-padding-bottom:295px","scroll-padding-bottom:360px")
+          p.write_text(s)
+          PY
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('students/test-prep-app/index.html')
+          s=p.read_text().replace('seosul-spelling-keyboard.js?v=20260831-unified2','seosul-spelling-keyboard.js?v=20260831-tabletbig1')
+          p.write_text(s)
+          PY
+          rm .github/workflows/enlarge-unified-keyboard-tablet-once.yml
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add students/test-prep-app/seosul-spelling-keyboard.js students/test-prep-app/index.html .github/workflows/enlarge-unified-keyboard-tablet-once.yml
+          git commit -m "Enlarge unified keyboard on tablets"
+          git pull --rebase origin students
+          git push origin HEAD:students
