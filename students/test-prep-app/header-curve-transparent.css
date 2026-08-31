@@ -1,0 +1,4 @@
+/* Keep the decorative header curve from masking lesson/practice content. */
+.tp-header-curve{
+  background:transparent !important;
+}
