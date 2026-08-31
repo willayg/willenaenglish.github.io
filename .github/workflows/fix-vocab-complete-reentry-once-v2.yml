@@ -1,0 +1,36 @@
+name: Fix vocab completion reentry once v2
+on:
+  push:
+    branches: [students]
+    paths: ['.github/workflows/fix-vocab-complete-reentry-once-v2.yml']
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: students
+          fetch-depth: 0
+      - name: Patch vocab completed state
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('students/test-prep-app/vocab-practice.js')
+          s=p.read_text()
+          old="if(Array.isArray(ids)){const wanted=new Set(ids.map(String));return items.filter(x=>wanted.has(String(x.id)))}"
+          new="if(Array.isArray(ids)){if(ids.length===0)return items;const wanted=new Set(ids.map(String));return items.filter(x=>wanted.has(String(x.id)))}"
+          if new not in s:
+              if old not in s:
+                  raise SystemExit('modeItems target not found')
+              s=s.replace(old,new,1)
+              p.write_text(s)
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add students/test-prep-app/vocab-practice.js
+          if ! git diff --cached --quiet; then git commit -m 'Allow completed vocab cards to reopen for review'; fi
+          git fetch origin students
+          git rebase origin/students
+          git push origin HEAD:students
