@@ -2,7 +2,7 @@
 'use strict';
 const $=(s,r=document)=>r.querySelector(s),$$=(s,r=document)=>[...r.querySelectorAll(s)];
 const FIELD='#card .seosul-split-input,#card #seosulAnswer,#testPrepVocabPractice #vpSpell';
-const PUNCT=['.',',','?','!','\'','-'];
+const PUNCT=['.',',','?','!','\'','-','~'];
 let lastActive=null;
 function addStyle(){if($('#tpSeosulPunctStyle'))return;const s=document.createElement('style');s.id='tpSeosulPunctStyle';s.textContent=`
 #tpSeosulAppKeyboard .vp-kb-row.bottom{grid-template-columns:1fr 64px 88px!important;position:relative}
