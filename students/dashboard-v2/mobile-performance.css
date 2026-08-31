@@ -1,0 +1,13 @@
+@media (max-width: 600px){
+  /* Mobile performance: remove the animated ribbon glint entirely. */
+  .route-glint{display:none!important;filter:none!important}
+
+  /* Keep only a gentler middle-depth parallax layer moving on phones. */
+  .far,.near{transform:none!important}
+  .far .shape{opacity:.10!important;filter:none!important}
+  .mid .shape{opacity:.26!important;filter:none!important}
+  .near .shape{opacity:.34!important;filter:none!important}
+
+  /* Reduce expensive compositing effects while preserving the ring shine. */
+  .node-card:after{filter:none!important}
+}
