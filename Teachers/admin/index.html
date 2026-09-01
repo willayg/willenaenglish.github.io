@@ -73,7 +73,7 @@ document.querySelectorAll('[data-page]').forEach(b=>b.onclick=()=>setPage(b.data
 (async()=>{if(!await guard())return;$('loadingText').textContent='Loading students…';try{await load();$('loading').style.display='none'}catch(e){console.error('[Admin] Initial data load failed',e);$('loadingText').textContent=e.message||'Could not load admin data. Please refresh.'}})();
 </script>
 <script src="/Teachers/admin/student-drawer.js?v=20260813-leveltestko1"></script>
-<script src="/Teachers/admin/admin-class-manager.js?v=20260901-tactile1"></script>
+<script src="/Teachers/admin/admin-class-manager.js?v=20260901-compact1"></script>
 <script src="/Teachers/admin/admin-class-drawer.js?v=20260806e"></script>
 <script src="/Teachers/admin/admin-account-menu.js?v=20260806b"></script>
 <script src="/free-level-test/js/report-calculation.js?v=20260812-sentence1"></script>
