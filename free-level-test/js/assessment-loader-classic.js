@@ -11,6 +11,12 @@ function isExcludedFromLevelTest(row){
  if(value==null)value=metadata.exclude_from_level_test;
  return value===true||String(value).toLowerCase()==='true';
 }
+function normalizeSentenceTokens(item){
+ if(item&&item.type==='sentence_unscramble'&&Array.isArray(item.tokens)){
+  item.tokens=item.tokens.map(function(token){return String(token==null?'':token).trim().toLocaleLowerCase('en-US');}).filter(Boolean);
+ }
+ return item;
+}
 function fetchAssessmentPage(select,offset){
  var url=SUPABASE_URL+"/rest/v1/assessment_items?select="+encodeURIComponent(select)+"&status=eq.published&is_flagged=eq.false&order=level_id.asc,difficulty_rating.asc,source_key.asc,id.asc&limit="+PAGE_SIZE+"&offset="+offset;
  return fetch(url,{headers:headers,cache:"no-store"}).then(function(response){
@@ -41,7 +47,7 @@ function loadQuestionBank(){
   var excluded=0;
   rows.forEach(function(row){
    if(isExcludedFromLevelTest(row)){excluded++;return;}
-   try{adapted.push(adapter.fromAssessmentItem(row));}
+   try{adapted.push(normalizeSentenceTokens(adapter.fromAssessmentItem(row)));}
    catch(error){rejected++;console.warn('[LevelTest] Skipping invalid assessment item',row&&row.source_key||row&&row.id,error);}
   });
   if(!adapted.length)throw new Error("No usable authored assessment questions are available yet.");
