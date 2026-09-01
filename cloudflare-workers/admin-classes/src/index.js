@@ -6,6 +6,69 @@ const ALLOWED_ORIGINS = new Set([
   'https://willenaenglish.netlify.app','https://api.willenaenglish.com','http://localhost:8888','http://localhost:9000'
 ]);
 
+const REPORT_MAX_LEVEL = 12;
+const REPORT_ASSESSED_SKILLS = ['vocabulary','grammar','listening','reading','sentence_building'];
+
+function reportSkillFor(value) {
+  const normalized = String(value || '').trim().toLowerCase();
+  if (normalized.includes('unscramble') || normalized.includes('sentence_build') || normalized === 'sentence_making') return 'sentence_building';
+  return ({
+    vocabulary:'vocabulary',grammar:'grammar',grammar_error:'grammar',question_response:'grammar',
+    listening:'listening',reading:'reading',speaking:'speaking',writing:'writing'
+  })[normalized] || null;
+}
+function reportClampLevel(value, fallback) {
+  let number = Number(value);
+  if (!Number.isFinite(number) || number <= 0) number = Number(fallback) || 1;
+  return Math.max(1, Math.min(REPORT_MAX_LEVEL, number));
+}
+function reportEvidenceFromResponses(responses) {
+  return (Array.isArray(responses) ? responses : []).map(row => ({
+    id: row.question_id || row.assessment_item_id || row.id,
+    level: reportClampLevel(row.question_level || row.level, 1),
+    type: row.question_type || row.item_type || row.type || row.skill,
+    skill: reportSkillFor(row.skill) || reportSkillFor(row.question_type || row.item_type || row.type),
+    correct: row.is_correct === true || row.correct === true
+  }));
+}
+function reportProbabilities(rows, maxLevel) {
+  if (!rows.length) return [];
+  const ceiling = Math.max(1, Math.min(REPORT_MAX_LEVEL, Number(maxLevel) || REPORT_MAX_LEVEL));
+  const scores = [];
+  for (let level = 1; level <= ceiling; level++) {
+    let log = 0;
+    rows.forEach(row => {
+      const p = 1 / (1 + Math.exp((Number(row.level) - level) * 1.12));
+      log += Math.log(Math.max(.025, Math.min(.975, row.correct ? p : 1 - p)));
+    });
+    scores.push({ level, log });
+  }
+  const max = Math.max(...scores.map(row => row.log));
+  const weighted = scores.map(row => ({ level:row.level, w:Math.exp(row.log - max) }));
+  const total = weighted.reduce((sum,row) => sum + row.w, 0) || 1;
+  return weighted.map(row => ({ level:row.level, pct:row.w / total * 100 })).sort((a,b) => b.pct - a.pct);
+}
+function reportOverallLevel(attempt, responses) {
+  const evidence = reportEvidenceFromResponses(responses);
+  function levelFromRows(rows) {
+    if (!rows.length) return reportClampLevel(attempt?.recommended_level || attempt?.display_level, 1);
+    const highest = Math.min(REPORT_MAX_LEVEL, Math.max(...rows.map(row => Number(row.level) || 1), 1));
+    const result = reportProbabilities(rows, highest)[0];
+    return result ? result.level : 1;
+  }
+  let scores = REPORT_ASSESSED_SKILLS.map(skill => {
+    const rows = evidence.filter(row => (row.skill || reportSkillFor(row.type)) === skill);
+    return rows.length >= 3 ? levelFromRows(rows) : null;
+  }).filter(value => Number.isFinite(value)).sort((a,b) => a - b);
+  if (scores.length >= 3) {
+    if (scores.length >= 5) scores = scores.slice(1,-1);
+    else if (scores.length === 4) scores = scores.slice(0,3);
+    return reportClampLevel(Math.round(scores.reduce((sum,x) => sum + x, 0) / scores.length), 1);
+  }
+  const stored = Number(attempt?.recommended_level || attempt?.display_level);
+  return Number.isFinite(stored) && stored > 0 ? reportClampLevel(stored, 1) : levelFromRows(evidence);
+}
+
 function cors(request) {
   const original = request.headers.get('X-Willena-Original-Origin') || request.headers.get('Origin') || '';
   return {
@@ -77,30 +140,46 @@ async function listLevelTests(db) {
   const publicRows = publicResult.data || [];
   const profiles = await fetchByIds(db,'profiles','id,name,korean_name,username,grade,school,class,phone,email','id',internalRows.map(r=>r.student_id));
   const candidates = await fetchByIds(db,'prospective_level_test_candidates','id,student_name,school_name,school_grade,metadata','id',publicRows.map(r=>r.candidate_id));
+  const internalResponses = await fetchByIds(db,'student_assessment_responses','attempt_id,assessment_item_id,question_level,item_type,is_correct','attempt_id',internalRows.map(r=>r.id));
+  const publicResponses = await fetchByIds(db,'prospective_level_test_responses','attempt_id,assessment_item_id,question_level,item_type,is_correct','attempt_id',publicRows.map(r=>r.id));
   const profileById = new Map(profiles.map(r=>[String(r.id),r]));
   const candidateById = new Map(candidates.map(r=>[String(r.id),r]));
+  const internalResponsesByAttempt = new Map();
+  const publicResponsesByAttempt = new Map();
+  for (const response of internalResponses) {
+    const key = String(response.attempt_id);
+    if (!internalResponsesByAttempt.has(key)) internalResponsesByAttempt.set(key, []);
+    internalResponsesByAttempt.get(key).push(response);
+  }
+  for (const response of publicResponses) {
+    const key = String(response.attempt_id);
+    if (!publicResponsesByAttempt.has(key)) publicResponsesByAttempt.set(key, []);
+    publicResponsesByAttempt.get(key).push(response);
+  }
 
   const internal = internalRows.map(row => {
     const profile = profileById.get(String(row.student_id)) || {};
     const metadata = row.metadata && typeof row.metadata === 'object' ? row.metadata : {};
+    const calculatedLevel = reportOverallLevel(row, internalResponsesByAttempt.get(String(row.id)) || []);
     return {
       id:row.id,source:'internal',assessment_key:row.assessment_key,student_id:row.student_id,
       student_name:profile.name||profile.korean_name||profile.username||'Student',korean_name:profile.korean_name||null,
       username:profile.username||null,grade:profile.grade||null,school:profile.school||null,phone:profile.phone||null,
       class_name:metadata.class_at_test||profile.class||null,status:row.status,test_version:row.test_version,
       total_questions:Number(row.total_questions)||0,answered_count:Number(row.answered_count)||0,correct_count:Number(row.correct_count)||0,
-      recommended_level:Number(row.recommended_level)||null,duration_seconds:Number(row.duration_seconds)||0,
+      recommended_level:calculatedLevel,duration_seconds:Number(row.duration_seconds)||0,
       started_at:row.started_at,completed_at:row.completed_at,updated_at:row.updated_at,setup:row.setup||{},is_new:!row.admin_opened_at
     };
   });
   const prospective = publicRows.map(row => {
     const candidate = candidateById.get(String(row.candidate_id)) || {};
     const meta = candidate.metadata && typeof candidate.metadata === 'object' ? candidate.metadata : {};
+    const calculatedLevel = reportOverallLevel(row, publicResponsesByAttempt.get(String(row.id)) || []);
     return {
       id:row.id,source:'prospective',candidate_id:row.candidate_id,student_name:candidate.student_name||'Prospective student',
       grade:candidate.school_grade||null,school:candidate.school_name||null,phone:meta.phone||null,class_name:null,status:row.status,
       test_version:row.test_version,total_questions:Number(row.total_questions)||0,answered_count:Number(row.total_questions)||0,
-      correct_count:Number(row.correct_count)||0,recommended_level:Number(row.recommended_level||row.display_level)||null,
+      correct_count:Number(row.correct_count)||0,recommended_level:calculatedLevel,
       duration_seconds:Number(row.duration_seconds)||0,started_at:row.started_at,completed_at:row.completed_at,updated_at:row.updated_at,
       setup:row.setup||{},is_new:!row.admin_opened_at
     };
@@ -125,7 +204,9 @@ async function levelTestDetail(db, source, attemptId) {
     if (skillsResult.error) throw skillsResult.error;
     await db.from('student_assessment_attempts').update({admin_opened_at:now}).eq('id',attemptId);
     const p = profileResult.data || {};
-    return {source:'internal',candidate:{student_name:p.name||p.korean_name||p.username||'Student',korean_name:p.korean_name||null,username:p.username||null,email:p.email||null,grade:p.grade||null,school_name:p.school||null,class_name:(attempt.metadata||{}).class_at_test||p.class||null,phone:p.phone||null},attempt,responses:responsesResult.data||[],skills:skillsResult.data||[]};
+    const responses = responsesResult.data || [];
+    const calculatedAttempt = { ...attempt, recommended_level:reportOverallLevel(attempt, responses) };
+    return {source:'internal',candidate:{student_name:p.name||p.korean_name||p.username||'Student',korean_name:p.korean_name||null,username:p.username||null,email:p.email||null,grade:p.grade||null,school_name:p.school||null,class_name:(attempt.metadata||{}).class_at_test||p.class||null,phone:p.phone||null},attempt:calculatedAttempt,responses,skills:skillsResult.data||[]};
   }
   if (source === 'prospective') {
     const attemptResult = await db.from('prospective_level_test_attempts').select('*').eq('id',attemptId).maybeSingle();
@@ -141,7 +222,9 @@ async function levelTestDetail(db, source, attemptId) {
     await db.from('prospective_level_test_attempts').update({admin_opened_at:now}).eq('id',attemptId);
     const c = candidateResult.data || {};
     const meta = c.metadata && typeof c.metadata === 'object' ? c.metadata : {};
-    return {source:'prospective',candidate:{student_name:c.student_name||'Prospective student',korean_name:meta.korean_name||null,username:null,email:meta.email||null,grade:c.school_grade||null,school_name:c.school_name||null,class_name:null,phone:meta.phone||null},attempt,responses:responsesResult.data||[],skills:skillsResult.data||[]};
+    const responses = responsesResult.data || [];
+    const calculatedAttempt = { ...attempt, recommended_level:reportOverallLevel(attempt, responses), display_level:reportOverallLevel(attempt, responses) };
+    return {source:'prospective',candidate:{student_name:c.student_name||'Prospective student',korean_name:meta.korean_name||null,username:null,email:meta.email||null,grade:c.school_grade||null,school_name:c.school_name||null,class_name:null,phone:meta.phone||null},attempt:calculatedAttempt,responses,skills:skillsResult.data||[]};
   }
   throw new Error('Unknown level test source');
 }
