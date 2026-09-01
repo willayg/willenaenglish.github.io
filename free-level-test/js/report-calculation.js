@@ -56,7 +56,19 @@ function create(options){
   var result=probabilities(rows,highest)[0];
   return result?result.level:1;
  }
+ function evidenceOverall(){
+  var scores=ASSESSED_SKILLS.map(function(skill){
+   var rows=evidence.filter(function(row){return(row.skill||skillFor(row.type))===skill});
+   return rows.length>=3?levelFromRows(rows):null;
+  }).filter(function(value){return Number.isFinite(value)}).sort(function(a,b){return a-b});
+  if(scores.length<3)return 0;
+  if(scores.length>=5)scores=scores.slice(1,-1);
+  else if(scores.length===4)scores=scores.slice(0,3);
+  return clampLevel(Math.round(scores.reduce(function(sum,x){return sum+x},0)/scores.length),1);
+ }
  function overall(){
+  var fromEvidence=evidenceOverall();
+  if(fromEvidence)return fromEvidence;
   var stored=Number(attempt.recommended_level||attempt.display_level);
   return Number.isFinite(stored)&&stored>0?clampLevel(stored,1):levelFromRows(evidence);
  }
@@ -69,13 +81,15 @@ function create(options){
   var prior=[{level:anchor,correct:true},{level:Math.min(MAX_LEVEL,anchor+1),correct:false}];
   var fit=probabilities(rows.concat(prior),Math.max(highest,anchor+1))[0]||{level:anchor,pct:0};
   var accuracy=rows.filter(function(row){return row.correct}).length/rows.length;
-  var cap=Math.min(MAX_LEVEL,anchor+(rows.length>=5?2:1));
+  var strongUpper=rows.filter(function(row){return row.correct&&Number(row.level)>=anchor+1}).length;
+  var allowTwoLevelJump=rows.length>=8&&accuracy>=.70&&strongUpper>=3;
+  var cap=Math.min(MAX_LEVEL,anchor+(allowTwoLevelJump?2:1));
   var level=Math.min(fit.level,highest,cap);
   if(accuracy<.5)level=Math.min(level,anchor);
   if(accuracy<.34)level=Math.min(level,Math.max(1,anchor-1));
   level=Math.max(1,level);
   var top=rows.filter(function(row){return row.level===highest});
-  var plus=rows.length>=5&&top.length>=3&&top.every(function(row){return row.correct})&&level===highest;
+  var plus=rows.length>=5&&accuracy>=.8&&top.length>=3&&top.every(function(row){return row.correct})&&level===highest;
   var confidence=Math.round(Math.min(92,42+rows.length*7+fit.pct*.15));
   return{assessed:true,rows:rows,level:level,plus:plus,confidence:confidence,accuracy:accuracy,anchor:anchor};
  }
