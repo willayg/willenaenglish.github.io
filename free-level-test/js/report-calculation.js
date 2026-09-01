@@ -62,8 +62,7 @@ function create(options){
    return rows.length>=3?levelFromRows(rows):null;
   }).filter(function(value){return Number.isFinite(value)}).sort(function(a,b){return a-b});
   if(scores.length<3)return 0;
-  if(scores.length>=5)scores=scores.slice(1,-1);
-  else if(scores.length===4)scores=scores.slice(0,3);
+  if(scores.length>=4)scores=scores.slice(0,-1);
   return clampLevel(Math.floor(scores.reduce(function(sum,x){return sum+x},0)/scores.length),1);
  }
  function overall(){
