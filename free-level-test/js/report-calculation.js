@@ -64,7 +64,7 @@ function create(options){
   if(scores.length<3)return 0;
   if(scores.length>=5)scores=scores.slice(1,-1);
   else if(scores.length===4)scores=scores.slice(0,3);
-  return clampLevel(Math.round(scores.reduce(function(sum,x){return sum+x},0)/scores.length),1);
+  return clampLevel(Math.floor(scores.reduce(function(sum,x){return sum+x},0)/scores.length),1);
  }
  function overall(){
   var fromEvidence=evidenceOverall();
