@@ -41,6 +41,7 @@ jobs:
         run: |
           test -n "$SCORES_KEY" || (echo 'Missing SUPABASE_SERVICE_ROLE_KEY' && exit 1)
           printf '%s' "$SCORES_KEY" | npx wrangler secret put SUPABASE_SERVICE_ROLE_KEY
+          printf '%s' "$SCORES_KEY" | npx wrangler secret put SCORES_SUPABASE_SERVICE_ROLE_KEY
 
       - name: Deploy Worker
         working-directory: cloudflare-workers/admin-classes
