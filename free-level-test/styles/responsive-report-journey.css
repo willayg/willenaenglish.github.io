@@ -1,0 +1,149 @@
+/* Responsive report journey: compact narrow phones, fuller Fold/tablet view */
+.responsive-level-journey{
+ --journey-step:calc(100% / var(--journey-count));
+ position:relative;
+ padding:52px 6px 12px;
+ margin-top:12px;
+}
+.responsive-level-journey .level-journey__track{
+ position:absolute;
+ left:calc(var(--journey-step) / 2);
+ width:calc(100% - var(--journey-step));
+ right:auto;
+ top:76px;
+ height:8px;
+ border-radius:999px;
+ background:#dff1f3;
+ overflow:hidden;
+}
+.responsive-level-journey .level-journey__fill{
+ width:calc((var(--journey-current-index) / (var(--journey-count) - 1)) * 100%);
+ height:100%;
+ background:#2ab4bf;
+ border-radius:inherit;
+}
+.responsive-level-journey .level-journey__nodes{
+ position:relative;
+ display:grid;
+ grid-template-columns:repeat(var(--journey-count),minmax(0,1fr));
+ gap:3px;
+}
+.responsive-level-journey .level-node{
+ display:flex;
+ flex-direction:column;
+ align-items:center;
+ gap:8px;
+ min-width:0;
+}
+.responsive-level-journey .level-node__marker{
+ width:38px;
+ height:38px;
+ border:5px solid #dff1f3;
+ border-radius:12px;
+ background:#fff;
+ color:#8ca3a9;
+ display:grid;
+ place-items:center;
+ font-size:12px;
+ font-weight:800;
+ z-index:2;
+}
+.responsive-level-journey .level-node.is-complete .level-node__marker{
+ border-color:#2ab4bf;
+ color:#2ab4bf;
+}
+.responsive-level-journey .level-node.is-current .level-node__marker{
+ width:52px;
+ height:52px;
+ margin-top:-7px;
+ border:6px solid var(--pink);
+ border-radius:50%;
+ color:var(--pink);
+ background:#fff;
+ font-size:15px;
+ box-shadow:0 8px 18px rgba(255,10,138,.14);
+}
+.responsive-level-journey .level-node.is-range .level-node__marker{
+ width:min(86px,92%);
+ padding:3px;
+ font-size:10px;
+ line-height:1.1;
+}
+.responsive-level-journey .level-node.is-future-range .level-node__marker{
+ border-style:dashed;
+}
+.responsive-level-journey .level-node__label{
+ color:#8ca2a8;
+ font-size:9px;
+ line-height:1.15;
+ text-align:center;
+ white-space:nowrap;
+}
+.responsive-level-journey .level-journey__here{
+ position:absolute;
+ left:calc((var(--journey-current-index) + .5) * var(--journey-step));
+ top:0;
+ color:var(--pink);
+ font-size:12px;
+ font-weight:800;
+ white-space:nowrap;
+ transform:translateX(-50%);
+}
+.responsive-level-journey .level-journey__here:after{
+ content:"";
+ display:block;
+ width:2px;
+ height:15px;
+ margin:5px auto 0;
+ background:var(--pink);
+}
+
+@media(max-width:599px){
+ .responsive-level-journey{
+  padding:14px 0 5px;
+  margin-top:10px;
+ }
+ .responsive-level-journey .level-journey__here{display:none}
+ .responsive-level-journey .level-journey__track{
+  display:block;
+  top:39px;
+  height:7px;
+ }
+ .responsive-level-journey .level-journey__nodes{
+  grid-template-columns:repeat(var(--journey-count),minmax(0,1fr));
+  gap:1px;
+ }
+ .responsive-level-journey .level-node{
+  gap:3px;
+ }
+ .responsive-level-journey .level-node__marker{
+  width:34px;
+  height:34px;
+  border-width:4px;
+  border-radius:10px;
+  font-size:11px;
+ }
+ .responsive-level-journey .level-node.is-current .level-node__marker{
+  width:52px;
+  height:52px;
+  margin-top:-9px;
+  border-width:6px;
+  font-size:15px;
+ }
+ .responsive-level-journey .level-node.is-adjacent .level-node__marker{
+  transform:scale(.75);
+ }
+ .responsive-level-journey .level-node.is-adjacent .level-node__label{
+  transform:scale(.75);
+  transform-origin:top center;
+ }
+ .responsive-level-journey .level-node.is-range .level-node__marker{
+  width:min(64px,96%);
+  font-size:9px;
+ }
+ .responsive-level-journey .level-node__label{
+  font-size:8px;
+  white-space:normal;
+  min-height:20px;
+ }
+}

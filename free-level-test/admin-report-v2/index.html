@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>Willena English Student Report</title>
+<link rel="icon" href="/Assets/Images/Logo.png?v=20260806-score2">
+<script src="/students/api-gateway.js?v=20260813-leveltestauth1"></script>
+<script src="/js/api-config.js?v=20260813-leveltestauth1"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../styles/app.css?v=20260802-report6">
+<link rel="stylesheet" href="../styles/reading-layout.css?v=20260802-report6">
+<link rel="stylesheet" href="../styles/welcome-overrides.css?v=20260802-report6">
+<link rel="stylesheet" href="../styles/bright-theme-overrides.css?v=20260802-report6">
+<link rel="stylesheet" href="../styles/debug-level-meter.css?v=20260802-report6">
+<link rel="stylesheet" href="../styles/setup-no-selection.css?v=20260802-report6">
+<link rel="stylesheet" href="../styles/listening.css?v=20260802-report6">
+<link rel="stylesheet" href="../styles/premium-ui.css?v=20260802-report6">
+<link rel="stylesheet" href="../styles/question-polish.css?v=20260802-report6">
+<link rel="stylesheet" href="../styles/question-review-flag.css?v=20260802-report6">
+<link rel="stylesheet" href="../styles/report-card.css?v=20260813-current1">
+<link rel="stylesheet" href="../styles/segmented-skill-report.css?v=20260813-clean1">
+<link rel="stylesheet" href="../styles/responsive-report-journey.css?v=20260802-report6">
+<link rel="stylesheet" href="../styles/full-test-sections.css?v=20260802-report6">
+<link rel="stylesheet" href="../styles/loading-transitions.css?v=20260802-report6">
+<link rel="stylesheet" href="../styles/report-level-guide.css?v=20260803-spine1">
+<link rel="stylesheet" href="../admin-report/exact-pdf-report.css?v=20260812-pips1">
+<link rel="stylesheet" href="../admin-report/exact-pdf-polish.css?v=20260813-fit4">
+<link rel="stylesheet" href="../admin-report/exact-pdf-pips.css?v=20260812-pips3">
+<style>
+.app-header{position:relative!important;top:auto!important;left:auto!important;right:auto!important;z-index:20!important;width:100%!important;min-height:96px!important;padding:18px clamp(16px,4vw,34px)!important;display:flex!important;align-items:center!important;gap:14px!important;overflow:visible!important}
+.app-header .brand-logo{display:block!important;position:static!important;width:64px!important;height:64px!important;min-width:64px!important;object-fit:contain!important;margin:0!important;transform:none!important}
+.app-header .brand-copy{display:block!important;min-width:0!important}.app-header .brand-copy strong{display:block!important}.app-header .language-segmented{position:static!important;margin-left:auto!important;flex:0 0 auto!important;transform:none!important}
+.language-legacy-trigger,.question-review-flag,.question-feedback-header{display:none!important}.shared-report-loading{width:min(860px,100%);margin:0 auto;padding:44px;text-align:center;color:var(--muted)}
+.teacher-report-tools{position:static!important;top:auto!important;z-index:auto!important;width:min(860px,calc(100% - 24px))!important;margin:12px auto 8px!important;padding:0!important;display:flex!important;justify-content:flex-end!important}
+.teacher-print-btn{max-width:100%!important;white-space:nowrap!important}
+@media(max-width:600px){.app-header{min-height:84px!important;padding:12px 14px!important;gap:10px!important;flex-wrap:nowrap!important}.app-header .brand-logo{width:48px!important;height:48px!important;min-width:48px!important}.app-header .brand-copy strong{font-size:17px!important;white-space:nowrap!important}.app-header .brand-copy span{font-size:11px!important;white-space:nowrap!important}.app-header .language-segmented{min-width:0!important}.app-header .language-segmented button{padding:9px 11px!important;font-size:12px!important}.teacher-report-tools{width:calc(100% - 24px)!important;margin:10px auto 10px!important;justify-content:stretch!important}.teacher-print-btn{width:100%!important;min-height:48px!important;border-radius:14px!important}}
+@media(max-width:390px){.app-header .brand-copy span{display:none!important}.app-header .language-segmented button{padding:8px 9px!important}}
+@media print{.app-header,footer,.teacher-report-tools,.report-actions{display:none!important}}
+</style>
+</head>
+<body>
+<div class="app-shell">
+<header class="app-header">
+<img src="/Assets/Images/Logo.png?v=20260806-score2" alt="Willena English" class="brand-logo">
+<div class="brand-copy"><strong>Willena English</strong><span id="brandSubtitle">학생 리포트</span></div>
+<div class="language-segmented" role="group" aria-label="Language">
+<button type="button" data-language-choice="ko" class="is-active">한국어</button>
+<button type="button" data-language-choice="en">English</button>
+</div>
+</header>
+<main id="app" class="app-main" aria-live="polite"><section class="screen shared-report-loading">보고서를 불러오는 중입니다…</section></main>
+<footer id="footerText">Willena English · Student Report</footer>
+</div>
+<script type="module">import{ensureAuthRefresh}from'/Teachers/auth-refresh.js?v=20260812-reportauth1';ensureAuthRefresh();</script>
+<script src="../js/canonical-answer-scoring.js?v=20260806-score3"></script>
+<script src="../js/report-calculation.js?v=20260901-conservative2"></script>
+<script src="../admin-report/shared-report.js?v=20260813-leveltestauth1"></script>
+<script src="../admin-report/stored-level-authority.js?v=20260806-score3"></script>
+<script src="../js/segmented-skill-report.js?v=20260812-pips1"></script>
+<script src="../js/responsive-report-journey.js?v=20260803-safe2"></script>
+<script src="../js/report-level-guide.js?v=20260813-guide2"></script>
+<script src="../admin-report/exact-pdf-download.js?v=20260813-fit3"></script>
+</body>
+</html>

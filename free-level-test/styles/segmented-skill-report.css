@@ -1,0 +1,62 @@
+/* Segmented skill-level display */
+.report-skill__track{
+ display:flex;
+ align-items:stretch;
+ gap:clamp(3px,.8vw,6px);
+ height:auto;
+ overflow:visible;
+ background:transparent;
+ border-radius:0;
+}
+.report-placement-pips{
+ display:flex;
+ align-items:stretch;
+ gap:clamp(3px,.8vw,6px);
+ width:100%;
+ margin:38px auto 10px;
+}
+.report-placement-pips .report-skill__segment{height:14px}
+.report-placement-stages{
+ display:grid;
+ grid-template-columns:1fr 2fr 2fr 3fr 3fr 2fr;
+ gap:2px;
+ margin-top:7px;
+ color:#789099;
+ font-size:clamp(8px,1.7vw,11px);
+ font-weight:700;
+ line-height:1.15;
+ text-align:center;
+}
+.report-placement-stages span{min-width:0;white-space:nowrap}
+.report-skill__track i{display:none!important}
+.report-skill__segment{
+ display:block;
+ flex:1 1 0;
+ min-width:0;
+ height:14px;
+ border:1px solid #d9eff1;
+ border-radius:6px;
+ background:#ebf7f8;
+}
+.report-skill__segment.is-complete{
+ border-color:#2ab4bf;
+ background:#2ab4bf;
+}
+.report-skill__segment.is-current{
+ border:3px solid var(--pink);
+ background:#fff;
+ box-shadow:0 3px 9px rgba(255,10,138,.1);
+}
+.report-skill__segment.is-starter{
+ flex-grow:.3;
+ min-width:7px;
+}
+.report-skill.is-unassessed .report-skill__track{display:none}
+
+@media(max-width:520px){
+ .report-skill__track{gap:4px}
+ .report-placement-pips{gap:4px;margin-top:30px}
+ .report-placement-stages{font-size:8px;letter-spacing:-.025em}
+ .report-skill__segment{height:13px;border-radius:5px}
+ .report-skill__segment.is-starter{min-width:5px}
+}

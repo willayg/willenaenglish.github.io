@@ -1,0 +1,6 @@
+.setup-options .setup-option.selected{
+  border-color:var(--cyan-border)!important;
+  background:#fff!important;
+  color:var(--ink)!important;
+  box-shadow:0 10px 24px rgba(46,150,161,.08)!important;
+}
