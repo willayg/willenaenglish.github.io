@@ -62,4 +62,4 @@
   window.AdminClassEdge={edge,resolveUserId,CLASS_API,CONTENT_API,refresh:loadClasses};
   button.onclick=open;modal.onclick=e=>{if(e.target===modal)close()};document.addEventListener('click',e=>{if(!e.target.closest('.book-autocomplete'))closeMenus()});document.addEventListener('willena-language-change',applyLanguage);applyLanguage();loadClasses();
 })();
-import('/Teachers/admin/admin-class-order.js?v=20260901a').catch(e=>console.warn('[Admin class order] failed to load',e));
+import('/Teachers/admin/admin-class-order.js?v=20260901-tactile1').catch(e=>console.warn('[Admin class order] failed to load',e));
