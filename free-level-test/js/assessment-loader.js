@@ -34,7 +34,7 @@ function mapItem(row){
   if(!answer)throw new Error(`Assessment item ${row.source_key||row.id} has no correct answer.`);
 
   if(type==="sentence_unscramble"){
-    const tokens=Array.isArray(metadata.tokens)?metadata.tokens.map(clean).filter(Boolean):[];
+    const tokens=Array.isArray(metadata.tokens)?metadata.tokens.map(value=>clean(value).toLocaleLowerCase('en-US')).filter(Boolean):[];
     if(tokens.length<2)throw new Error(`Unscramble item ${row.source_key||row.id} has no usable tokens.`);
     return{id:clean(row.source_key)||row.id,type,q:prompt,meaning:context,a:answer,choices:[],tokens,level:Number(row.level_id)||1,difficulty:Number(row.difficulty_rating)||Number(row.level_id)*20,sourceTable:"assessment_items",translation:false,metadata};
   }
