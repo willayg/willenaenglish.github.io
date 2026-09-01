@@ -10,13 +10,6 @@
     applying: false
   };
 
-  const escapeHtml = (value) => String(value || '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
-
   async function apiFetch(options = {}) {
     if (window.WillenaAPI && typeof window.WillenaAPI.fetch === 'function') {
       return window.WillenaAPI.fetch(API_URL, options);
@@ -43,17 +36,19 @@
     const items = getItems();
     if (!list || !items.length || !state.savedOrder.length) return;
 
-    state.applying = true;
     const rank = new Map(state.savedOrder.map((name, index) => [classKey(name), index]));
     const originalIndex = new Map(items.map((item, index) => [item, index]));
-    items
-      .slice()
-      .sort((a, b) => {
-        const aRank = rank.has(classKey(a.dataset.class)) ? rank.get(classKey(a.dataset.class)) : Number.MAX_SAFE_INTEGER;
-        const bRank = rank.has(classKey(b.dataset.class)) ? rank.get(classKey(b.dataset.class)) : Number.MAX_SAFE_INTEGER;
-        return (aRank - bRank) || (originalIndex.get(a) - originalIndex.get(b));
-      })
-      .forEach(item => list.appendChild(item));
+    const sorted = items.slice().sort((a, b) => {
+      const aRank = rank.has(classKey(a.dataset.class)) ? rank.get(classKey(a.dataset.class)) : Number.MAX_SAFE_INTEGER;
+      const bRank = rank.has(classKey(b.dataset.class)) ? rank.get(classKey(b.dataset.class)) : Number.MAX_SAFE_INTEGER;
+      return (aRank - bRank) || (originalIndex.get(a) - originalIndex.get(b));
+    });
+
+    const alreadyCorrect = sorted.every((item, index) => item === items[index]);
+    if (alreadyCorrect) return;
+
+    state.applying = true;
+    sorted.forEach(item => list.appendChild(item));
     state.applying = false;
   }
 
@@ -221,7 +216,7 @@
   }
 
   function startDrag(event) {
-    if (!state.editing || event.button !== undefined && event.button !== 0) return;
+    if (!state.editing || (event.button !== undefined && event.button !== 0)) return;
     const handle = event.currentTarget;
     const item = handle.closest('.class-item');
     if (!item) return;
@@ -275,10 +270,9 @@
     const list = getClassList();
     if (!list || state.observer) return;
     state.observer = new MutationObserver(() => {
-      if (state.applying) return;
       decorateItems();
       blockClassClicksWhileEditing();
-      window.requestAnimationFrame(applySavedOrder);
+      if (!state.editing) window.requestAnimationFrame(applySavedOrder);
     });
     state.observer.observe(list, { childList: true });
   }
