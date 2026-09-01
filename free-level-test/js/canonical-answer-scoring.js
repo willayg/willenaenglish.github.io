@@ -10,10 +10,14 @@
   }
   function sentenceText(value) {
     var scoring = shared();
-    if (scoring) return scoring.sentenceText(value);
+    if (scoring) {
+      var normalized = scoring.sentenceText(value);
+      return String(normalized == null ? '' : normalized).toLocaleLowerCase('en-US').replace(/[.,!?;:。！？、，；：]+$/gu, '').trim();
+    }
     return cleanText(Array.isArray(value) ? value.join(' ') : value).toLocaleLowerCase('en-US').replace(/[.,!?;:。！？、，；：]+$/gu, '').trim();
   }
   function isCorrect(type, selected, correct) {
+    if (type === 'sentence_unscramble') return sentenceText(selected) === sentenceText(correct);
     var scoring = shared();
     return scoring ? scoring.isCorrect(type, selected, correct) : JSON.stringify(selected) === JSON.stringify(correct);
   }
