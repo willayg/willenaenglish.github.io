@@ -5,10 +5,12 @@
   if(!grid||!page)return;
 
   let editing=false,before=[],saved=[],dragged=null,observer=null,applying=false;
-  let dragPointerId=null,dragOffsetX=0,dragOffsetY=0,placeholder=null,originStyle=null;
+  let dragPointerId=null,dragOffsetY=0,placeholder=null,originStyle=null,compact=false;
   const cards=()=>Array.from(grid.querySelectorAll(':scope > .class-card'));
   const getName=card=>card?.querySelector('h3')?.textContent?.trim()||'';
   const getId=card=>String(card?.dataset?.classId||'').trim();
+  const getCount=card=>card?.querySelector('.count')?.textContent?.trim()||'0';
+  const useCompact=()=>window.matchMedia('(max-width:900px)').matches;
 
   async function api(opts={}){
     const adminEdge=window.AdminClassEdge;
@@ -32,13 +34,23 @@
     #classGrid.class-order-editing .class-order-handle{display:flex!important}
     #classGrid.class-order-editing .class-card::after{content:'Drag to reorder';position:absolute;top:14px;left:54px;color:#99a3af;font-size:.72rem;font-weight:600}
     #classGrid .class-card.dragging{position:fixed!important;z-index:1000!important;margin:0!important;pointer-events:none!important;opacity:.97!important;transform:scale(1.035) rotate(.35deg)!important;box-shadow:0 22px 54px rgba(24,35,52,.24)!important;transition:box-shadow .12s ease,transform .12s ease!important;will-change:left,top,transform}
-    #classGrid .class-order-placeholder{border:2px dashed #8fc6ca;border-radius:18px;background:rgba(25,119,126,.06);box-shadow:inset 0 0 0 1px rgba(25,119,126,.03);transition:height .14s ease,transform .14s ease}
+    #classGrid .class-order-placeholder{border:2px dashed #8fc6ca;border-radius:18px;background:rgba(25,119,126,.06);min-height:64px}
     #classGrid.class-order-editing .class-card>button:not(.class-order-handle){pointer-events:none;opacity:.7}
-    @media(max-width:720px){
-      #classGrid.class-order-editing .class-card::after{content:'Hold + drag'}
-      #classGrid .class-card.dragging{transform:scale(1.045) rotate(.5deg)!important;box-shadow:0 24px 58px rgba(24,35,52,.3)!important}
-      .class-order-handle{width:38px!important;height:32px!important;font-size:21px}
-    }
+
+    #classGrid.class-order-compact{display:flex!important;flex-direction:column;gap:8px}
+    #classGrid.class-order-compact .class-card{display:grid!important;grid-template-columns:44px minmax(0,1fr) auto;align-items:center;gap:10px;padding:10px 12px!important;min-height:58px;border-top:0!important;border-left:4px solid #2aa6ae;border-radius:14px;box-shadow:0 5px 14px rgba(24,35,52,.07)}
+    #classGrid.class-order-compact .class-card h3{grid-column:2;margin:0;font-size:.96rem;line-height:1.2}
+    #classGrid.class-order-compact .class-card .count{grid-column:3;grid-row:1;margin:0;font-size:.82rem;font-weight:700;color:var(--mut)}
+    #classGrid.class-order-compact .class-card .count::after{content:' students';font-size:.72rem;font-weight:600}
+    #classGrid.class-order-compact .class-card .mut,
+    #classGrid.class-order-compact .class-card .class-meta,
+    #classGrid.class-order-compact .class-card>button:not(.class-order-handle){display:none!important}
+    #classGrid.class-order-compact .class-order-handle{display:flex!important;position:static!important;grid-column:1;grid-row:1;width:40px!important;height:40px!important;border:0!important;background:#f2f5f7!important;font-size:22px;cursor:grab}
+    #classGrid.class-order-compact .class-card::after{display:none!important}
+    #classGrid.class-order-compact .class-card.dragging{position:fixed!important;display:grid!important;grid-template-columns:44px minmax(0,1fr) auto!important;min-height:58px!important;transform:scale(1.025)!important;box-shadow:0 18px 42px rgba(24,35,52,.26)!important}
+    #classGrid.class-order-compact .class-order-placeholder{min-height:58px;border-radius:14px}
+
+    @media(max-width:720px){.class-order-bar{position:sticky;top:8px;z-index:20;background:var(--bg);padding:6px 0}.class-order-status{display:none}}
   `;
   document.head.appendChild(style);
 
@@ -56,25 +68,19 @@
 
   function sortSaved(){
     if(editing||applying||!saved.length)return;
-    const current=cards();
-    if(!current.length)return;
+    const current=cards();if(!current.length)return;
     const rank=new Map(savedIds().map((id,i)=>[id,i]));
     const sorted=current.slice().sort((a,b)=>(rank.get(getId(a))??9999)-(rank.get(getId(b))??9999));
     if(sorted.every((card,i)=>card===current[i]))return;
-    applying=true;
-    sorted.forEach(card=>grid.appendChild(card));
-    applying=false;
+    applying=true;sorted.forEach(card=>grid.appendChild(card));applying=false;
   }
 
   function decorate(){
     cards().forEach(card=>{
       if(card.querySelector('.class-order-handle'))return;
       const handle=document.createElement('button');
-      handle.type='button';
-      handle.className='class-order-handle';
-      handle.textContent='⠿';
-      handle.title='Drag to reorder';
-      handle.setAttribute('aria-label',`Move ${getName(card)}`);
+      handle.type='button';handle.className='class-order-handle';handle.textContent='☰';
+      handle.title='Drag to reorder';handle.setAttribute('aria-label',`Move ${getName(card)}`);
       handle.addEventListener('click',e=>{e.preventDefault();e.stopPropagation()});
       handle.addEventListener('pointerdown',startDrag);
       card.prepend(handle);
@@ -82,112 +88,62 @@
   }
 
   function setMode(on){
-    editing=on;
+    editing=on;compact=on&&useCompact();
     grid.classList.toggle('class-order-editing',on);
-    editBtn.hidden=on;
-    cancelBtn.hidden=!on;
-    doneBtn.hidden=!on;
-    if(on)decorate();
+    grid.classList.toggle('class-order-compact',compact);
+    editBtn.hidden=on;cancelBtn.hidden=!on;doneBtn.hidden=!on;
+    if(on){decorate();setStatus(compact?'Drag the compact rows, then press Done.':'Drag the cards, then press Done.');}
   }
 
-  function begin(){before=cards().map(getId);setMode(true);setStatus('Drag the cards, then press Done.')}
+  function begin(){before=cards().map(getId);setMode(true)}
   function restore(ids){const byId=new Map(cards().map(card=>[getId(card),card]));ids.forEach(id=>{const card=byId.get(id);if(card)grid.appendChild(card)})}
-  function cancel(){if(dragged)finishDrag(false);restore(before.length?before:savedIds());setMode(false);setStatus('')}
+  function cancel(){if(dragged)finishDrag();restore(before.length?before:savedIds());setMode(false);setStatus('')}
 
   async function save(){
-    doneBtn.disabled=true;
-    const order=cards().map(getId).filter(Boolean);
-    setStatus('Saving…');
-    try{
-      const d=await api({method:'POST',body:JSON.stringify({order})});
-      saved=Array.isArray(d.order)?d.order:[];
-      before=[];
-      setMode(false);
-      setStatus('Saved');
-      setTimeout(()=>setStatus(''),1400);
-    }catch(e){console.error('[Admin class order] save failed',e);setStatus('Could not save order',true)}finally{doneBtn.disabled=false}
+    doneBtn.disabled=true;const order=cards().map(getId).filter(Boolean);setStatus('Saving…');
+    try{const d=await api({method:'POST',body:JSON.stringify({order})});saved=Array.isArray(d.order)?d.order:[];before=[];setMode(false);setStatus('Saved');setTimeout(()=>setStatus(''),1400)}
+    catch(e){console.error('[Admin class order] save failed',e);setStatus('Could not save order',true)}
+    finally{doneBtn.disabled=false}
   }
 
-  function makePlaceholder(card,rect){
-    const ph=document.createElement('div');
-    ph.className='class-order-placeholder';
-    ph.style.height=`${rect.height}px`;
-    ph.style.minHeight=`${rect.height}px`;
-    ph.style.gridColumn=getComputedStyle(card).gridColumn;
-    return ph;
-  }
+  function makePlaceholder(rect){const ph=document.createElement('div');ph.className='class-order-placeholder';ph.style.height=`${rect.height}px`;return ph}
 
   function startDrag(e){
     if(!editing||(e.button!==undefined&&e.button!==0))return;
-    const handle=e.currentTarget;
-    const card=handle.closest('.class-card');
-    if(!card)return;
+    const handle=e.currentTarget,card=handle.closest('.class-card');if(!card)return;
     e.preventDefault();e.stopPropagation();
-    const rect=card.getBoundingClientRect();
-    dragged=card;dragPointerId=e.pointerId;
-    dragOffsetX=e.clientX-rect.left;dragOffsetY=e.clientY-rect.top;
-    placeholder=makePlaceholder(card,rect);
-    card.parentNode.insertBefore(placeholder,card);
-    originStyle=card.getAttribute('style');
-    card.style.width=`${rect.width}px`;
-    card.style.height=`${rect.height}px`;
-    card.style.left=`${rect.left}px`;
-    card.style.top=`${rect.top}px`;
-    card.classList.add('dragging');
-    document.body.appendChild(card);
-    if(navigator.vibrate)navigator.vibrate(12);
+    const rect=card.getBoundingClientRect();dragged=card;dragPointerId=e.pointerId;dragOffsetY=e.clientY-rect.top;
+    placeholder=makePlaceholder(rect);card.parentNode.insertBefore(placeholder,card);originStyle=card.getAttribute('style');
+    card.style.width=`${rect.width}px`;card.style.height=`${rect.height}px`;card.style.left=`${rect.left}px`;card.style.top=`${rect.top}px`;
+    card.classList.add('dragging');document.body.appendChild(card);
+    if(navigator.vibrate)navigator.vibrate(10);
     try{handle.setPointerCapture(e.pointerId)}catch{}
-    handle.addEventListener('pointermove',moveDrag);
-    handle.addEventListener('pointerup',endDrag,{once:true});
-    handle.addEventListener('pointercancel',endDrag,{once:true});
+    handle.addEventListener('pointermove',moveDrag);handle.addEventListener('pointerup',endDrag,{once:true});handle.addEventListener('pointercancel',endDrag,{once:true});
   }
 
   function moveDrag(e){
-    if(!dragged||e.pointerId!==dragPointerId)return;
-    e.preventDefault();
-    dragged.style.left=`${e.clientX-dragOffsetX}px`;
+    if(!dragged||e.pointerId!==dragPointerId)return;e.preventDefault();
     dragged.style.top=`${e.clientY-dragOffsetY}px`;
-    const candidates=Array.from(grid.querySelectorAll(':scope > .class-card, :scope > .class-order-placeholder')).filter(el=>el!==placeholder);
-    let target=null,beforeTarget=false;
-    for(const el of candidates){
-      const r=el.getBoundingClientRect();
-      if(e.clientY>=r.top&&e.clientY<=r.bottom){target=el;beforeTarget=e.clientY<r.top+r.height/2;break}
-    }
-    if(!target){
-      const realCards=cards();
-      if(realCards.length){
-        const first=realCards[0].getBoundingClientRect(),last=realCards[realCards.length-1].getBoundingClientRect();
-        if(e.clientY<first.top)grid.insertBefore(placeholder,realCards[0]);
-        else if(e.clientY>last.bottom)grid.appendChild(placeholder);
-      }
-      return;
-    }
-    const reference=beforeTarget?target:target.nextSibling;
-    if(reference!==placeholder&&target!==placeholder)grid.insertBefore(placeholder,reference);
+    const rows=Array.from(grid.querySelectorAll(':scope > .class-card')).filter(el=>el!==dragged);
+    let inserted=false;
+    for(const row of rows){const r=row.getBoundingClientRect();if(e.clientY<r.top+r.height/2){grid.insertBefore(placeholder,row);inserted=true;break}}
+    if(!inserted)grid.appendChild(placeholder);
+    const edge=72;
+    if(e.clientY<edge)window.scrollBy({top:-14,behavior:'auto'});
+    else if(e.clientY>window.innerHeight-edge)window.scrollBy({top:14,behavior:'auto'});
   }
 
-  function finishDrag(place=true){
-    if(!dragged)return;
-    const card=dragged;
-    if(place&&placeholder?.parentNode)placeholder.parentNode.insertBefore(card,placeholder);
-    else if(placeholder?.parentNode)placeholder.parentNode.insertBefore(card,placeholder);
-    placeholder?.remove();
-    card.classList.remove('dragging');
-    if(originStyle===null)card.removeAttribute('style');else card.setAttribute('style',originStyle);
-    dragged=null;placeholder=null;originStyle=null;dragPointerId=null;
-    if(navigator.vibrate)navigator.vibrate(8);
+  function finishDrag(){
+    if(!dragged)return;const card=dragged;
+    if(placeholder?.parentNode)placeholder.parentNode.insertBefore(card,placeholder);placeholder?.remove();
+    card.classList.remove('dragging');if(originStyle===null)card.removeAttribute('style');else card.setAttribute('style',originStyle);
+    dragged=null;placeholder=null;originStyle=null;dragPointerId=null;if(navigator.vibrate)navigator.vibrate(6);
   }
 
-  function endDrag(e){
-    const handle=e.currentTarget;
-    handle.removeEventListener('pointermove',moveDrag);
-    try{handle.releasePointerCapture(e.pointerId)}catch{}
-    finishDrag(true);
-  }
+  function endDrag(e){const handle=e.currentTarget;handle.removeEventListener('pointermove',moveDrag);try{handle.releasePointerCapture(e.pointerId)}catch{}finishDrag()}
 
   editBtn.onclick=begin;cancelBtn.onclick=cancel;doneBtn.onclick=save;
-  observer=new MutationObserver(()=>{if(applying||dragged)return;decorate();if(!editing)requestAnimationFrame(sortSaved)});
-  observer.observe(grid,{childList:true});
+  observer=new MutationObserver(()=>{if(applying||dragged)return;decorate();if(!editing)requestAnimationFrame(sortSaved)});observer.observe(grid,{childList:true});
 
   api().then(d=>{saved=Array.isArray(d.order)?d.order:[];bar.style.display='flex';sortSaved()}).catch(e=>{console.error('[Admin class order] load failed',e);bar.style.display='flex';setStatus('Order unavailable',true);editBtn.disabled=true});
 })();
