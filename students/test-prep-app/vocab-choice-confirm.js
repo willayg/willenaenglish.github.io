@@ -48,7 +48,6 @@ function selectChoice(button,e){
   });
   const next=document.querySelector('#testPrepVocabPractice #vpNext');
   if(next){
-    if(!next.dataset.afterConfirmLabel)next.dataset.afterConfirmLabel=next.textContent;
     next.disabled=false;
     next.textContent='정답 확인';
   }
@@ -65,7 +64,6 @@ function confirmChoice(next,e){
     b.classList.remove('choice-selected');
     b.removeAttribute('aria-pressed');
   });
-  next.textContent=next.dataset.afterConfirmLabel||'다음';
   return true;
 }
 
@@ -77,7 +75,10 @@ function boot(){
     if(choice){selectChoice(choice,e);return;}
     const next=e.target.closest('#testPrepVocabPractice #vpNext');
     if(next&&selectedButton&&!confirmed){
-      confirmChoice(next,e);
+      if(confirmChoice(next,e)){
+        const practice=window.WillenaVocabPractice;
+        next.textContent=practice?.mode==='ko-en'||practice?.mode==='en-ko'?'다음':next.textContent;
+      }
       return;
     }
     if(next&&confirmed){
