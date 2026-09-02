@@ -4,7 +4,11 @@
 const STYLE_ID='tpAskWilliGrammarStyle';
 const BUTTON_ID='tpAskWilliGrammar';
 const RESULT_ID='tpAskWilliGrammarResult';
+const DB_EXTRA_CLASS='tp-db-explanation-extra';
+const DB_URL='https://gxwfsqxyuufqtitspfqg.supabase.co';
+const DB_KEY=['sb_publishable_','G-FYhHfDL4OGdL892gY1Zg_','epdbEeqO'].join('');
 let requestBusy=false;
+let lastWrongGrammarQuestionId='';
 
 function addStyles(){
   if(document.getElementById(STYLE_ID))return;
@@ -17,6 +21,7 @@ function addStyles(){
 #${RESULT_ID}{display:none;margin-top:10px;padding:13px 14px;border:1px solid #c9e6ea;border-radius:13px;background:#f4fbfc;color:#243840;font:600 13px/1.65 Poppins,system-ui,sans-serif;white-space:pre-wrap}
 #${RESULT_ID}.show{display:block}
 #${RESULT_ID}.error{border-color:#efccd8;background:#fff6f8;color:#7b334b}
+.${DB_EXTRA_CLASS}{margin-top:8px;white-space:pre-wrap}
 @media (min-width:600px) and (max-width:1100px){
   #${BUTTON_ID}{font-size:16px;padding:12px 18px;border-radius:14px}
   #${RESULT_ID}{font-size:16px;line-height:1.7;padding:16px 17px}
@@ -45,6 +50,7 @@ function collectQuestionContext(){
   const contextText=[...root.querySelectorAll('.context')].map(x=>String(x.textContent||'').trim()).filter(Boolean).join('\n\n');
   const existingExplanation=root.querySelector('#explanation')?.textContent?.replace(/Ask Willi[\s\S]*$/,'').trim()||'';
   return {
+    question_id:lastWrongGrammarQuestionId||'',
     book:selection?.plan?.book_label||selection?.plan?.book||'',
     lesson:selection?.lesson||'',
     prompt:String(root.querySelector('.prompt')?.textContent||'').trim(),
@@ -52,8 +58,46 @@ function collectQuestionContext(){
     choices,
     student_answer:choices.filter(x=>x.selected).map(x=>`${x.number}. ${x.text}`),
     correct_answer:choices.filter(x=>x.correct).map(x=>`${x.number}. ${x.text}`),
-    existing_explanation:existingExplanation.slice(0,1800)
+    existing_explanation:existingExplanation.slice(0,2400)
   };
+}
+
+function normalizeCompare(v){return String(v||'').replace(/\s+/g,' ').trim()}
+
+async function addDbExplanation(){
+  if(!isGrammarWrong()||!lastWrongGrammarQuestionId)return;
+  const e=document.querySelector('#card #explanation');
+  if(!e)return;
+  try{
+    const r=await fetch(`${DB_URL}/rest/v1/test_prep_questions?select=metadata&id=eq.${encodeURIComponent(lastWrongGrammarQuestionId)}&limit=1`,{
+      headers:{apikey:DB_KEY,Authorization:`Bearer ${DB_KEY}`},cache:'no-store'
+    });
+    if(!r.ok)throw new Error(`DB ${r.status}`);
+    const row=(await r.json())?.[0];
+    const m=row?.metadata||{};
+    const values=[m.source_explanation_ko,m.explanation_ko]
+      .map(v=>String(v||'').trim()).filter(Boolean)
+      .filter((v,i,a)=>a.findIndex(x=>normalizeCompare(x)===normalizeCompare(v))===i);
+    if(!values.length)return;
+    const existing=normalizeCompare(e.textContent||'');
+    const missing=values.filter(v=>!existing.includes(normalizeCompare(v)));
+    if(!missing.length)return;
+    if(!e.querySelector('strong')){
+      const title=document.createElement('strong');
+      title.textContent='해설';
+      e.prepend(title);
+    }
+    e.classList.add('show');
+    const wrap=e.querySelector('.tp-ask-willi-wrap');
+    missing.forEach(v=>{
+      const d=document.createElement('div');
+      d.className=DB_EXTRA_CLASS;
+      d.textContent=v;
+      if(wrap)e.insertBefore(d,wrap);else e.appendChild(d);
+    });
+  }catch(err){
+    console.warn('[Ask Willi grammar] DB explanation lookup failed',err);
+  }
 }
 
 async function askWilli(){
@@ -62,9 +106,9 @@ async function askWilli(){
   if(!btn||!out||!isGrammarWrong())return;
   requestBusy=true;
   btn.disabled=true;
-  btn.innerHTML='<span class="willi-spark">✦</span> Willi가 설명 중...';
+  btn.innerHTML='<span class="willi-spark">✦</span> 생각 중...';
   out.className='show';
-  out.textContent='이 문제와 네가 고른 답을 보고 있어요...';
+  out.textContent='좋은 해설을 위해 생각 중이에요';
 
   const q=collectQuestionContext();
   const system=`너는 한국 중학생을 돕는 친절하고 정확한 영어 문법 튜터 'Willi'다. 학생이 방금 틀린 실제 문제를 바탕으로 피드백한다. 반드시 한국어로 설명하고, 필요한 영어 표현과 예문만 영어로 쓴다. 학생이 왜 그 답을 골랐을지 추측해서 단정하지 말고, 실제 선택지와 정답의 차이를 근거로 설명한다. 먼저 이 문제에서 확인하는 핵심 문법을 짚고, 학생이 고른 답이 왜 맞지 않는지, 정답이 왜 맞는지 설명한다. 문맥이나 밑줄 친 표현이 중요하면 반드시 반영한다. 기존 해설이 있으면 참고하되 그대로 반복하지 말고 더 이해하기 쉽게 풀어 쓴다. 답변은 중학생이 읽기 쉽게 간결하게 작성한다. 보통 4~7개의 짧은 문단 또는 불릿이면 충분하다. 불필요한 인사말, 영어로 된 장황한 설명, 표는 사용하지 않는다.`;
@@ -106,18 +150,37 @@ async function askWilli(){
 function installButton(){
   if(!isGrammarWrong())return;
   const e=document.querySelector('#card #explanation');
-  if(!e||document.getElementById(BUTTON_ID))return;
-  if(!String(e.textContent||'').trim()){
-    const title=document.createElement('strong');
-    title.textContent='해설';
-    e.appendChild(title);
+  if(!e)return;
+  if(!document.getElementById(BUTTON_ID)){
+    if(!String(e.textContent||'').trim()){
+      const title=document.createElement('strong');
+      title.textContent='해설';
+      e.appendChild(title);
+    }
+    e.classList.add('show');
+    const wrap=document.createElement('div');
+    wrap.className='tp-ask-willi-wrap';
+    wrap.innerHTML=`<button type="button" id="${BUTTON_ID}"><span class="willi-spark">✦</span> Ask Willi</button><div id="${RESULT_ID}" aria-live="polite"></div>`;
+    e.appendChild(wrap);
+    document.getElementById(BUTTON_ID).addEventListener('click',askWilli);
   }
-  e.classList.add('show');
-  const wrap=document.createElement('div');
-  wrap.className='tp-ask-willi-wrap';
-  wrap.innerHTML=`<button type="button" id="${BUTTON_ID}"><span class="willi-spark">✦</span> Ask Willi</button><div id="${RESULT_ID}" aria-live="polite"></div>`;
-  e.appendChild(wrap);
-  document.getElementById(BUTTON_ID).addEventListener('click',askWilli);
+  addDbExplanation();
+}
+
+function installAttemptTap(){
+  const auth=window.WillenaTestPrepAuth;
+  if(!auth||typeof auth.recordAttempt!=='function'||auth.__askWilliGrammarTap)return false;
+  const original=auth.recordAttempt;
+  auth.recordAttempt=function(payload){
+    try{
+      if(String(payload?.practice_type||'').toLowerCase()==='grammar'&&payload?.is_correct===false&&payload?.question_id){
+        lastWrongGrammarQuestionId=String(payload.question_id);
+      }
+    }catch(_){ }
+    return original.apply(this,arguments);
+  };
+  auth.__askWilliGrammarTap=true;
+  return true;
 }
 
 function onDocumentClick(e){
@@ -128,6 +191,9 @@ function onDocumentClick(e){
 
 function boot(){
   addStyles();
+  installAttemptTap();
+  let tries=0;
+  const timer=setInterval(()=>{if(installAttemptTap()||++tries>200)clearInterval(timer)},25);
   document.addEventListener('click',onDocumentClick,false);
   console.info('[Test Prep staging] Ask Willi grammar pilot active');
 }
