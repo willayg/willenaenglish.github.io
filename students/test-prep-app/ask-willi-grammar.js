@@ -198,7 +198,13 @@ async function askWilli(){
   btn.disabled=true;
   btn.innerHTML='<span class="willi-spark">✦</span> 생각 중...';
   out.className='show';
-  out.textContent='좋은 해설을 위해 생각 중이에요';
+  out.textContent='좋은 해설을 위해 생각 중이에요.';
+  let thinkingDots=1;
+  const thinkingTimer=setInterval(()=>{
+    if(!requestBusy){clearInterval(thinkingTimer);return}
+    thinkingDots=thinkingDots%3+1;
+    out.textContent='좋은 해설을 위해 생각 중이에요'+'.'.repeat(thinkingDots);
+  },550);
   if(feedback)feedback.className='';
 
   const q=collectQuestionContext();
@@ -235,6 +241,7 @@ async function askWilli(){
     out.className='show error';
     out.textContent='지금은 Willi의 추가 설명을 불러오지 못했어요. 잠시 후 다시 눌러 주세요.';
   }finally{
+    clearInterval(thinkingTimer);
     requestBusy=false;
     updateButtonState();
   }
@@ -296,7 +303,7 @@ function boot(){
   let tries=0;
   const timer=setInterval(()=>{if(installAttemptTap()||++tries>200)clearInterval(timer)},25);
   document.addEventListener('click',onDocumentClick,false);
-  console.info('[Test Prep staging] Ask Willi grammar + reading pilot active');
+  console.info('[Test Prep staging] Ask Willi grammar + reading pilot active — Willi Rev2');
 }
 
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
