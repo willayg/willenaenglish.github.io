@@ -59,6 +59,10 @@ async function loadHistory(ctx,force){
   if(!history||typeof history.load!=='function')return null;
   try{return await history.load(ctx,force?{force:true}:{});}catch(e){console.warn('[AI Coach bootstrap] history load failed',e);return null;}
 }
+function loadAskWilli(){
+  if(location.hostname!=='staging.willenaenglish.com'||document.getElementById('askWilliGrammarScript'))return;
+  var s=document.createElement('script');s.id='askWilliGrammarScript';s.src='./v2-ask-willi-grammar.js?v='+Date.now();s.async=true;document.head.appendChild(s);
+}
 
 async function startFromLive(){
   if(started)return false;
@@ -86,6 +90,7 @@ async function onStudyReady(e){
 
 function boot(){
   ensureLoader();
+  loadAskWilli();
   global.addEventListener('willena:study-v2-ready',onStudyReady);
   var lang=document.getElementById('languageBtn');
   if(lang)lang.addEventListener('click',function(){setTimeout(ensureLoader,0);});
