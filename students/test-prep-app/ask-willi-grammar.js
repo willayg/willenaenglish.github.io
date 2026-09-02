@@ -15,9 +15,9 @@ function addStyles(){
   const s=document.createElement('style');
   s.id=STYLE_ID;
   s.textContent=`
-#${BUTTON_ID}{display:inline-flex;align-items:center;gap:7px;margin:14px 0 4px;padding:10px 15px;border:0;border-radius:12px;background:#123f52;color:#fff;font:800 13px/1.2 Poppins,system-ui,sans-serif;cursor:pointer;box-shadow:0 3px 10px rgba(18,63,82,.16)}
+#${BUTTON_ID}{display:inline-flex;align-items:center;gap:7px;margin:14px 0 4px;padding:10px 15px;border:2px solid #15aab5;border-radius:12px;background:#fff;color:#ee5f91;font:800 13px/1.2 Poppins,system-ui,sans-serif;cursor:pointer;box-shadow:none}
 #${BUTTON_ID}:disabled{opacity:.58;cursor:wait}
-#${BUTTON_ID} .willi-spark{font-size:15px}
+#${BUTTON_ID} .willi-spark{font-size:15px;color:#ee5f91}
 #${RESULT_ID}{display:none;margin-top:10px;padding:13px 14px;border:1px solid #c9e6ea;border-radius:13px;background:#f4fbfc;color:#243840;font:600 13px/1.65 Poppins,system-ui,sans-serif;white-space:pre-wrap}
 #${RESULT_ID}.show{display:block}
 #${RESULT_ID}.error{border-color:#efccd8;background:#fff6f8;color:#7b334b}
