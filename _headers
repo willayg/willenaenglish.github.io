@@ -7,6 +7,19 @@
 /students/dashboard.html
   Cache-Control: no-store, no-cache, must-revalidate, max-age=0
 
+# Test Prep - NEVER cache the app shell during active development/testing
+/students/test-prep-app/
+  Cache-Control: no-store, no-cache, must-revalidate, max-age=0
+/students/test-prep-app/index.html
+  Cache-Control: no-store, no-cache, must-revalidate, max-age=0
+/students/test-prep-app/*.html
+  Cache-Control: no-store, no-cache, must-revalidate, max-age=0
+
+# Test Prep JS - force revalidation so revision query strings are honored immediately
+/students/test-prep-app/*.js
+  Content-Type: application/javascript; charset=utf-8
+  Cache-Control: no-cache, must-revalidate, max-age=0
+
 # JavaScript files
 /Teachers/components/*.js
   Content-Type: application/javascript; charset=utf-8
