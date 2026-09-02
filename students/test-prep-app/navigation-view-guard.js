@@ -33,11 +33,13 @@ function sync(){
  hideHomeDuringPractice();
 }
 function addCrashFixBadge(){
- if(document.getElementById('tp-crash-fix-rev2'))return;
+ if(document.getElementById('tp-crash-fix-rev3'))return;
+ const old=document.getElementById('tp-crash-fix-rev2');
+ if(old)old.remove();
  const badge=document.createElement('div');
- badge.id='tp-crash-fix-rev2';
- badge.textContent='Crash Fix Rev2';
- badge.setAttribute('aria-label','Crash Fix Rev2 active');
+ badge.id='tp-crash-fix-rev3';
+ badge.textContent='Crash Fix Rev3';
+ badge.setAttribute('aria-label','Crash Fix Rev3 active');
  Object.assign(badge.style,{
    position:'fixed',right:'8px',bottom:'8px',zIndex:'2147483647',padding:'4px 8px',
    borderRadius:'999px',background:'rgba(20,20,24,.82)',color:'#fff',
@@ -53,10 +55,7 @@ function boot(){
  window.addEventListener('testprep:student-state-refresh',()=>queueMicrotask(sync));
  window.addEventListener('testprep:tracking',()=>queueMicrotask(sync));
  window.addEventListener('popstate',()=>setTimeout(sync,0));
- // Crash Fix Rev2: the previous global body MutationObserver watched every
- // child addition and style mutation across the entire app. It is intentionally
- // disabled for this diagnostic revision; navigation guard behavior remains
- // event-driven through the listeners above.
+ // Rev2/Rev3: global body MutationObserver remains disabled.
  sync();
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
