@@ -10,7 +10,7 @@ const STATIONS=[
  {k:'reading',label:'Reading',desc:'본문 이해'},
  {k:'constructed_response',label:'서술형',desc:'영작 · 배열 · 대화 · 본문 해석'}
 ];
-const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]));
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function scopeFor(plan){const lessons=plan?.group?.scope?.lessons;if(Array.isArray(lessons)&&lessons.length)return lessons.filter(x=>x?.lesson);return(plan?.units||[]).map(lesson=>({lesson,sections:plan.practice_types||[]}))}
 function available(plan,l,st){const sections=new Set((l?.sections||[]).map(x=>String(x).toLowerCase())),strict=plan?.group?.scope?.scope_controls_v2===true;if(st.k==='sentences')return true;if(strict){if(st.k==='vocabulary'||st.k==='vocab_test')return sections.has('vocabulary');return sections.has(st.k)}return['vocabulary','vocab_test','sentences'].includes(st.k)||sections.has(st.k)}
 function addStyles(){if(document.getElementById('tpCrashRev7Style'))return;const s=document.createElement('style');s.id='tpCrashRev7Style';s.textContent=`
