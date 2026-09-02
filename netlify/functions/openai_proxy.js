@@ -8,6 +8,7 @@ const OPENAI_CACHE_TTL = Number(process.env.OPENAI_CACHE_TTL_SECONDS || 3600); /
 const ALLOWED_ORIGINS = [
   'https://teachers.willenaenglish.com',
   'https://students.willenaenglish.com',
+  'https://staging.willenaenglish.com',
   'https://willenaenglish.com',
   'https://www.willenaenglish.com',
   'https://willenaenglish.netlify.app',
