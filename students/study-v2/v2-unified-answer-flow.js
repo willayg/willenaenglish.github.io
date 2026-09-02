@@ -42,6 +42,16 @@ function normalizeDailyLabels(){
     if(t==='계속'||t==='Continue')b.textContent=nextLabel();
   });
 }
+function finishDailyIfReady(){
+  if(!document.body.classList.contains('study-v2-daily-mode'))return;
+  var daily=global.WillenaStudyV2Daily;
+  var session=daily&&typeof daily.getSession==='function'?daily.getSession():null;
+  var resolved=session&&Array.isArray(session.resolved_keys)?session.resolved_keys.length:0;
+  var check=document.querySelector('#v2ActivityRoot .activity-check');
+  var label=text(check&&check.textContent).toLowerCase();
+  var doneLabelVisible=label==='완료'||label==='done'||label==='finish';
+  if(check&&!check.disabled&&(resolved>=20||doneLabelVisible))check.click();
+}
 
 /* Daily Study owns its own answer-button lifecycle in v2-daily.js. Do not
    replace or pre-mutate that button here: cloning it can discard the Done/Next
@@ -65,6 +75,7 @@ global.addEventListener('willena:activity-answer',function(e){
   }
 
   normalizeDailyLabels();
+  setTimeout(finishDailyIfReady,0);
 });
 
 if(global.MutationObserver){
