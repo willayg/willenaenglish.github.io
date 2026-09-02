@@ -33,13 +33,11 @@ function sync(){
  hideHomeDuringPractice();
 }
 function addCrashFixBadge(){
- if(document.getElementById('tp-crash-fix-rev3'))return;
- const old=document.getElementById('tp-crash-fix-rev2');
- if(old)old.remove();
+ if(document.getElementById('tp-crash-fix-rev2'))return;
  const badge=document.createElement('div');
- badge.id='tp-crash-fix-rev3';
- badge.textContent='Crash Fix Rev3';
- badge.setAttribute('aria-label','Crash Fix Rev3 active');
+ badge.id='tp-crash-fix-rev2';
+ badge.textContent='Crash Fix Rev2';
+ badge.setAttribute('aria-label','Crash Fix Rev2 active');
  Object.assign(badge.style,{
    position:'fixed',right:'8px',bottom:'8px',zIndex:'2147483647',padding:'4px 8px',
    borderRadius:'999px',background:'rgba(20,20,24,.82)',color:'#fff',
@@ -55,7 +53,7 @@ function boot(){
  window.addEventListener('testprep:student-state-refresh',()=>queueMicrotask(sync));
  window.addEventListener('testprep:tracking',()=>queueMicrotask(sync));
  window.addEventListener('popstate',()=>setTimeout(sync,0));
- // Rev2/Rev3: global body MutationObserver remains disabled.
+ // Crash Fix Rev2 baseline: global body MutationObserver remains disabled.
  sync();
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
