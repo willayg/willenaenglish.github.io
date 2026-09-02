@@ -43,18 +43,9 @@ function normalizeDailyLabels(){
   });
 }
 
-/* Daily saves the answer before enabling Next. Change the visible label at the
-   original tap, before the network save begins, so the UI responds instantly. */
-document.addEventListener('click',function(e){
-  if(!document.body.classList.contains('study-v2-daily-mode'))return;
-  var check=e.target&&e.target.closest&&e.target.closest('#v2ActivityRoot .activity-check');
-  if(!check||check.disabled)return;
-  var t=text(check.textContent);
-  if(t==='Check'||t==='확인'){
-    check.textContent=nextLabel();
-    check.dataset.awaitingDailySave='1';
-  }
-},true);
+/* Daily Study owns its own answer-button lifecycle in v2-daily.js. Do not
+   replace or pre-mutate that button here: cloning it can discard the Done/Next
+   handler installed by Daily Study, especially at the final-question handoff. */
 
 global.addEventListener('willena:activity-answer',function(e){
   var detail=e.detail||{};
@@ -73,13 +64,7 @@ global.addEventListener('willena:activity-answer',function(e){
     }
   }
 
-  if(document.body.classList.contains('study-v2-daily-mode')){
-    var dailyCheck=document.querySelector('#v2ActivityRoot .activity-check');
-    if(dailyCheck){
-      var t=text(dailyCheck.textContent);
-      if(t==='Check'||t==='확인')replaceInline(dailyCheck,nextLabel(),true,null);
-    }
-  }
+  normalizeDailyLabels();
 });
 
 if(global.MutationObserver){
