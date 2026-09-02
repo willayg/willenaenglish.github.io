@@ -10,7 +10,7 @@ const STATIONS=[
  {k:'reading',label:'Reading',desc:'본문 이해'},
  {k:'constructed_response',label:'서술형',desc:'영작 · 배열 · 대화 · 본문 해석'}
 ];
-const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]));
 function scopeFor(plan){const lessons=plan?.group?.scope?.lessons;if(Array.isArray(lessons)&&lessons.length)return lessons.filter(x=>x?.lesson);return(plan?.units||[]).map(lesson=>({lesson,sections:plan.practice_types||[]}))}
 function available(plan,l,st){const sections=new Set((l?.sections||[]).map(x=>String(x).toLowerCase())),strict=plan?.group?.scope?.scope_controls_v2===true;if(st.k==='sentences')return true;if(strict){if(st.k==='vocabulary'||st.k==='vocab_test')return sections.has('vocabulary');return sections.has(st.k)}return['vocabulary','vocab_test','sentences'].includes(st.k)||sections.has(st.k)}
 function addStyles(){if(document.getElementById('tpCrashRev7Style'))return;const s=document.createElement('style');s.id='tpCrashRev7Style';s.textContent=`
@@ -30,11 +30,27 @@ function addStyles(){if(document.getElementById('tpCrashRev7Style'))return;const
 .tp-r7-bar i{display:block;height:100%;width:0;background:#07888d;border-radius:999px}
 .tp-r7-pct{font-size:14px;font-weight:800;color:#203039;text-align:right;white-space:nowrap}
 .tp-r7-arrow{font-size:20px;color:#ee5f91;font-weight:800;text-align:right}
+@media (min-width:600px) and (max-width:1100px){
+ .tp-r7-wrap{max-width:860px;padding-top:12px}
+ .tp-r7-back{font-size:15px;padding-bottom:18px}
+ .tp-r7-head{padding-bottom:18px}
+ .tp-r7-head h1{font-size:32px}
+ .tp-r7-head p{font-size:14px;margin-top:7px}
+ .tp-r7-route{padding:22px 20px}
+ .tp-r7-stop{grid-template-columns:64px 1fr 72px 30px;gap:15px;min-height:108px;padding:9px 0}
+ .tp-r7-stop:not(:last-child)::before{left:29px;top:61px;bottom:-38px;width:5px}
+ .tp-r7-dot{width:60px;height:60px;border-width:6px;font-size:16px}
+ .tp-r7-copy b{font-size:19px;line-height:1.3}
+ .tp-r7-copy small{font-size:13px;margin-top:5px}
+ .tp-r7-pct{font-size:17px}
+ .tp-r7-arrow{font-size:25px}
+ .tp-r7-bar{height:10px;margin-top:11px}
+}
 `;
 document.head.appendChild(s)}
 function addBadge(){['tp-crash-fix-rev1','tp-crash-fix-rev2','tp-crash-fix-rev3','tp-crash-fix-rev4','tp-crash-fix-rev5','tp-crash-fix-rev6'].forEach(id=>document.getElementById(id)?.remove());if(document.getElementById('tp-crash-fix-rev7'))return;const b=document.createElement('div');b.id='tp-crash-fix-rev7';b.textContent='Crash Fix Rev7';Object.assign(b.style,{position:'fixed',right:'8px',bottom:'8px',zIndex:'2147483647',padding:'4px 8px',borderRadius:'999px',background:'rgba(20,20,24,.82)',color:'#fff',font:'600 11px/1.2 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif',boxShadow:'0 2px 8px rgba(0,0,0,.18)',pointerEvents:'none',opacity:'.88'});document.body.appendChild(b)}
 function renderJourney(planId,lesson){const home=document.getElementById('assignmentHome'),state=window.WillenaTestPrepAuth?.state,plan=state?.plans?.find(p=>String(p.id)===String(planId));if(!home||!plan)return;const l=scopeFor(plan).find(x=>String(x.lesson)===String(lesson));if(!l)return;const shown=STATIONS.filter(st=>available(plan,l,st));home.style.display='block';home.innerHTML=`<div class="tp-r7-wrap"><button type="button" class="tp-r7-back">← 시험 대비</button><div class="tp-r7-head"><h1>${esc(lesson)}</h1><p>${esc(plan.book_label||'')} · 학습 지도</p></div><div class="tp-r7-route">${shown.map((s,i)=>`<button type="button" class="tp-r7-stop" data-r7-skill="${esc(s.k)}"><span class="tp-r7-dot">${i+1}</span><span class="tp-r7-copy"><b>${esc(s.label)}</b><small>${esc(s.desc)}</small><span class="tp-r7-bar" aria-hidden="true"><i></i></span></span><span class="tp-r7-pct">—</span><span class="tp-r7-arrow">›</span></button>`).join('')}</div></div>`;home.querySelector('.tp-r7-back').onclick=()=>{window.WillenaTestPrepNavigation?.toHome?.({replaceEntry:true})||window.WillenaTestPrepUX?.renderHome?.()};home.querySelectorAll('[data-r7-skill]').forEach(btn=>btn.onclick=()=>window.WillenaTestPrepUX?.launchSkill?.(plan.id,lesson,btn.dataset.r7Skill))}
 function intercept(e){const card=e.target instanceof Element?e.target.closest('.tp-lesson-card'):null;if(!card)return;e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();renderJourney(card.dataset.lessonPlan,card.dataset.lesson)}
-function boot(){addStyles();addBadge();document.addEventListener('click',intercept,true);console.info('[Test Prep] Crash Fix Rev7 active: lightweight journey + real mastery + clearly visible simple width bars')}
+function boot(){addStyles();addBadge();document.addEventListener('click',intercept,true);console.info('[Test Prep] Crash Fix Rev7 active: lightweight journey + real mastery + clearly visible simple width bars + tablet text sizing')}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
