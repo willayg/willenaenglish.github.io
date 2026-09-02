@@ -2,7 +2,7 @@ const U='https://gxwfsqxyuufqtitspfqg.supabase.co',K=['sb_publishable_','G-FYhHf
 const card=document.getElementById('card'),bar=document.getElementById('bar'),overlay=document.getElementById('overlay'),reasonsEl=document.getElementById('reasons'),flagNote=document.getElementById('flagNote');
 let section='communication',bank=[],questions=[],index=0,selected=new Set(),checked=false,score=0,wrongIds=[],flagReason='';
 const flagReasons=['정답이 이상함','문제가 애매함','영어가 이상함','시험 범위와 안 맞음','너무 쉬움','너무 어려움','반복 문제','화면/표시 문제','기타'];
-const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]));
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function norm(v){let s=String(v??'').replace(/\r\n?/g,'\n');for(let i=0;i<4;i++)s=s.replace(/\\+n/g,'\n');return s}
 function markedLine(v,spans=[]){const src=String(v??'');if(!Array.isArray(spans))spans=[spans];const ss=[...new Set(spans.map(String).filter(Boolean))];if(!src||!ss.length)return esc(src);const hits=[];for(const x of ss){let from=0;while(from<src.length){const p=src.indexOf(x,from);if(p<0)break;hits.push([p,p+x.length]);from=p+x.length}}if(!hits.length)return esc(src);hits.sort((a,b)=>a[0]-b[0]||b[1]-a[1]);const merged=[];for(const h of hits){const last=merged[merged.length-1];if(!last||h[0]>=last[1])merged.push([...h]);else last[1]=Math.max(last[1],h[1])}let out='',p=0;for(const [a,b] of merged){out+=esc(src.slice(p,a))+`<span class="u">${esc(src.slice(a,b))}</span>`;p=b}return out+esc(src.slice(p))}
 function text(v,spans=[]){return norm(v).split('\n').map(x=>`<span class="line">${markedLine(x,spans)}</span>`).join('')}
