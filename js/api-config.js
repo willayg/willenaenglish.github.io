@@ -1,6 +1,6 @@
 /**
  * API Configuration - Simple and Deterministic
- * VERSION: 2026-09-03 ADMIN_CREATE_STUDENT_PROFILE_SYNC
+ * VERSION: 2026-09-03 ADMIN_CREATE_STUDENT_SUCCESS_RESPONSE
  */
 (function() {
   'use strict';
@@ -159,10 +159,12 @@
 
     try {
       const response=await fetch(url, fetchOptions);
+      let createResponseOverride=null;
 
       // Some deployed create_student backends only create the core account fields.
       // Immediately sync the full profile through update_student so grade/school/phone
-      // (and the rest of the profile) are guaranteed to persist.
+      // (and the rest of the profile) are guaranteed to persist. Also return the
+      // student object the admin UI expects so a successful create is not shown as an error.
       if(isAdminStudentCreate(functionPath,options) && response.ok && options.body){
         try{
           const createBody=typeof options.body==='string'?JSON.parse(options.body):options.body;
@@ -183,6 +185,23 @@
             const updateOptions={...fetchOptions,method:'POST',body:JSON.stringify(profileBody)};
             const updateResponse=await fetch(updateUrl,updateOptions);
             if(!updateResponse.ok)console.warn('[WillenaAPI] Post-create student profile sync failed:',updateResponse.status);
+            const student={
+              id:userId,
+              email:`${createBody.username}@stu.willena`,
+              username:createBody.username,
+              name:createBody.name || createBody.username,
+              korean_name:createBody.korean_name || '',
+              role:'student',
+              approved:createBody.approved ?? true,
+              class:createBody.class || '',
+              grade:createBody.grade ?? null,
+              school:createBody.school ?? null,
+              phone:createBody.phone ?? null,
+            };
+            createResponseOverride=new Response(JSON.stringify({...created,student}),{
+              status:response.status,
+              headers:{'Content-Type':'application/json'}
+            });
           }
         }catch(e){console.warn('[WillenaAPI] Post-create student profile sync error:',e)}
       }
@@ -192,7 +211,7 @@
         if(body)writeSessionCache(ADMIN_STUDENTS_CACHE_KEY,{ts:Date.now(),body,status:response.status});
       }
       if(isAdminStudentMutation(functionPath,options) && response.ok)clearSessionCache(ADMIN_STUDENTS_CACHE_KEY);
-      return response;
+      return createResponseOverride || response;
     }
     catch (err) { console.error('[WillenaAPI] Fetch error:', err); throw err; }
   }
