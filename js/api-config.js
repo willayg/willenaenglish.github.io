@@ -1,6 +1,6 @@
 /**
  * API Configuration - Simple and Deterministic
- * VERSION: 2026-08-29 FAST_APP_SWITCH_CACHE
+ * VERSION: 2026-09-03 ADMIN_CREATE_STUDENT_PROFILE_SYNC
  */
 (function() {
   'use strict';
@@ -67,6 +67,9 @@
   }
   function isAdminStudentMutation(functionPath,options){
     return String(options.method||'GET').toUpperCase()!=='GET' && /(?:^|\/)teacher_admin(?:\?|$)/.test(functionPath) && /(?:[?&])action=(?:update_student|create_student|delete_student)(?:&|$)/.test(functionPath);
+  }
+  function isAdminStudentCreate(functionPath,options){
+    return String(options.method||'GET').toUpperCase()==='POST' && /(?:^|\/)teacher_admin(?:\?|$)/.test(functionPath) && /(?:[?&])action=create_student(?:&|$)/.test(functionPath);
   }
 
   function getApiUrl(functionPath) {
@@ -156,6 +159,34 @@
 
     try {
       const response=await fetch(url, fetchOptions);
+
+      // Some deployed create_student backends only create the core account fields.
+      // Immediately sync the full profile through update_student so grade/school/phone
+      // (and the rest of the profile) are guaranteed to persist.
+      if(isAdminStudentCreate(functionPath,options) && response.ok && options.body){
+        try{
+          const createBody=typeof options.body==='string'?JSON.parse(options.body):options.body;
+          const created=await response.clone().json();
+          const userId=created?.user_id || created?.student?.id;
+          if(userId){
+            const profileBody={
+              user_id:userId,
+              name:createBody.name ?? '',
+              korean_name:createBody.korean_name ?? '',
+              username:createBody.username ?? '',
+              class:createBody.class ?? '',
+              grade:createBody.grade ?? null,
+              school:createBody.school ?? null,
+              phone:createBody.phone ?? null,
+            };
+            const updateUrl=getApiUrl('/.netlify/functions/teacher_admin?action=update_student');
+            const updateOptions={...fetchOptions,method:'POST',body:JSON.stringify(profileBody)};
+            const updateResponse=await fetch(updateUrl,updateOptions);
+            if(!updateResponse.ok)console.warn('[WillenaAPI] Post-create student profile sync failed:',updateResponse.status);
+          }
+        }catch(e){console.warn('[WillenaAPI] Post-create student profile sync error:',e)}
+      }
+
       if(isAdminStudentList(functionPath,options) && response.ok){
         const body=await response.clone().text();
         if(body)writeSessionCache(ADMIN_STUDENTS_CACHE_KEY,{ts:Date.now(),body,status:response.status});
