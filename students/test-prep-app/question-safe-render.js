@@ -2,7 +2,7 @@
 'use strict';
 const oldText=window.text,oldBlock=window.block,oldArr=window.arr,oldObj=window.obj;
 if(typeof oldText!=='function'||typeof oldBlock!=='function'||typeof oldArr!=='function'||typeof oldObj!=='function')return;
-const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]));
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const LABELS={korean:'우리말',sentence:'문장',text:'',question:'질문',answer:'답',from:'원문',to:'바꾼 문장',label:'',value:'',given:'주어진 말',hint:'힌트'};
 const quietKeys=new Set(['sentence','text','value']);
 function any(v,u=[]){
