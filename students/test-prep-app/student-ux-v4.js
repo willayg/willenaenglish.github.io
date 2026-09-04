@@ -25,7 +25,7 @@ const pct=v=>v==null?'—':`${Math.round(Number(v)||0)}%`;
 let wrapped=false,resultPatched=false,view={type:'home'},reviewQueue=[];
 function scopeFor(plan){const lessons=plan.group?.scope?.lessons;if(Array.isArray(lessons)&&lessons.length)return lessons.filter(x=>x?.lesson);return(plan.units||[]).map(lesson=>({lesson,sections:plan.practice_types||[]}))}
 function activeTasks(plan){return(plan.tasks||[]).filter(t=>t.active!==false&&!t.completed_at&&Number(t.progress?.remaining)>0)}
-function taskFor(plan,lesson,practice){return activeTasks(plan).filter(t=>String(t.lesson)===String(lesson)&&String(t.practice_type).toLowerCase()===String(practice).toLowerCase()).sort((a,b)=>new Date(a.t.due_at||'2999-01-01')-new Date(b.t.due_at||'2999-01-01'))[0]||null}
+function taskFor(plan,lesson,practice){return activeTasks(plan).filter(t=>String(t.lesson)===String(lesson)&&String(t.practice_type).toLowerCase()===String(practice).toLowerCase()).sort((a,b)=>new Date(a.due_at||'2999-01-01')-new Date(b.due_at||'2999-01-01'))[0]||null}
 function realTotal(plan,lesson,practice){return Number(CONTENT_TOTALS[plan.book_label]?.[lesson]?.[practice])||0}
 function skillProgress(plan,lesson,practice){const v=plan.summary?.by_lesson_practice?.[`${lesson}||${practice}`]||{},task=taskFor(plan,lesson,practice),target=realTotal(plan,lesson,practice),done=Math.max(0,Number(v.unique)||0),accuracy=done?Math.max(0,Math.min(100,Number(v.accuracy)||0)):0,coverage=target?Math.min(100,done/target*100):0,mastery=target?Math.round(coverage*accuracy/100):0;return{task,target,done,accuracy,coverage:Math.round(coverage),mastery}}
 function stationAvailable(plan,lessonObj,st,sections){
