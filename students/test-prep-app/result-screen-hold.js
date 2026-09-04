@@ -10,14 +10,12 @@ function snapshotSelection(){
 function resultVisible(){const card=$('#card');return !!card?.querySelector('.result,.tp-review-result')}
 function keepPracticeVisible(){
  if(!holding||!resultVisible())return;
+ // Result hold is only allowed while navigation still says we are in practice.
+ // An intentional browser/app Back must win and must never be rewritten to practice.
+ if(history.state?.tp!=='practice'){holding=false;return;}
  const home=$('#assignmentHome'),quiz=$('#assignedQuizPane');
  if(home)home.style.display='none';
  if(quiz)quiz.style.display='block';
- const s=lastSelection||window.WillenaAssignedTestPrep?.selection;
- if(history.state?.tp!=='practice'&&s){
-  const cur=history.state||{};
-  history.replaceState({...cur,tp:'practice',planId:s.plan?.id||cur.planId||null,lesson:s.lesson||cur.lesson||null,skill:s.section||cur.skill||null,returnTo:cur.returnTo||'lesson',review:!!s.reviewMode},'',location.href);
- }
  addSeosulRetry();
 }
 function addSeosulRetry(){
@@ -40,7 +38,7 @@ function addSeosulRetry(){
  actions.appendChild(b);
 }
 function beginHold(){
- if(!resultVisible())return;
+ if(!resultVisible()||history.state?.tp!=='practice')return;
  snapshotSelection();
  holding=true;
  keepPracticeVisible();
@@ -64,6 +62,10 @@ document.addEventListener('click',e=>{
  if(t.closest('.back-assign,.tp-back')){holding=false;return;}
  if(t.closest('#retry,#again,#authoredAgain,#seosulAgain,.tp-result-retry-wrong')){holding=false;return;}
 },true);
+
+window.addEventListener('popstate',()=>{
+ if(history.state?.tp!=='practice')holding=false;
+});
 
 function boot(){
  snapshotSelection();
