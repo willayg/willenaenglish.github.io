@@ -22,18 +22,16 @@ function resultVisible(){
  const c=$('#card');
  return !!c?.querySelector('.result,.tp-review-result,.tp-review-result,.score');
 }
+function release(){resultLock=false;$('#card')?.classList.remove('tp-skip-transition')}
 function forcePractice(){
  if(!resultLock)return;
+ // Result lock may preserve the result surface, but it may not override navigation.
+ // If Back has moved history away from practice, release immediately.
+ if(history.state?.tp!=='practice'){release();return;}
  const home=$('#assignmentHome'),quiz=$('#assignedQuizPane');
  if(home)home.style.display='none';
  if(quiz)quiz.style.display='block';
- const sel=window.WillenaAssignedTestPrep?.selection;
- if(sel&&history.state?.tp!=='practice'){
-  const cur=history.state||{};
-  history.replaceState({...cur,tp:'practice',planId:sel.plan?.id||cur.planId||null,lesson:sel.lesson||cur.lesson||null,skill:sel.section||cur.skill||null,returnTo:cur.returnTo||'lesson',review:!!sel.reviewMode},'',location.href);
- }
 }
-function release(){resultLock=false;$('#card')?.classList.remove('tp-skip-transition')}
 
 function patchUx(){
  const ux=window.WillenaTestPrepUX;
@@ -42,7 +40,8 @@ function patchUx(){
   if(typeof ux[name]!=='function')continue;
   const original=ux[name].bind(ux);
   ux[name]=function(...args){
-   if(resultLock&&resultVisible()){forcePractice();return false;}
+   if(resultLock&&resultVisible()&&history.state?.tp==='practice'){forcePractice();return false;}
+   if(history.state?.tp!=='practice')release();
    return original(...args);
   };
  }
@@ -68,6 +67,7 @@ document.addEventListener('click',e=>{
 // Hold the result surface until the student explicitly chooses what happens next.
 window.addEventListener('testprep:tracking',e=>{
  if(e.detail?.type!=='session_completed')return;
+ if(history.state?.tp!=='practice')return;
  resultLock=true;
  setTimeout(forcePractice,0);
  setTimeout(forcePractice,220);
@@ -75,10 +75,15 @@ window.addEventListener('testprep:tracking',e=>{
 
 window.addEventListener('testprep:student-state-refresh',e=>{
  if(!resultLock)return;
+ if(history.state?.tp!=='practice'){release();return;}
  // Do not allow completion-time refresh listeners to redraw home/lesson UI.
  e.stopImmediatePropagation();
  forcePractice();
 },true);
+
+window.addEventListener('popstate',()=>{
+ if(history.state?.tp!=='practice')release();
+});
 
 function boot(){
  styles();
