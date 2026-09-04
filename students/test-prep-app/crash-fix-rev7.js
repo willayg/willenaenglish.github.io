@@ -30,7 +30,7 @@ function addStyles(){if(document.getElementById('tpCrashRev7Style'))return;const
 .tp-r7-bar i{display:block;height:100%;width:0;background:#07888d;border-radius:999px}
 .tp-r7-pct{font-size:14px;font-weight:800;color:#203039;text-align:right;white-space:nowrap}
 .tp-r7-arrow{font-size:20px;color:#ee5f91;font-weight:800;text-align:right}
-#tp-students-rev1{position:fixed;right:10px;bottom:10px;z-index:99999;padding:4px 8px;border-radius:999px;background:#203039;color:#fff;font:800 10px/1.2 Poppins,sans-serif;letter-spacing:.04em;opacity:.82;pointer-events:none}
+#tp-students-rev2{position:fixed;right:10px;bottom:10px;z-index:99999;padding:4px 8px;border-radius:999px;background:#203039;color:#fff;font:800 10px/1.2 Poppins,sans-serif;letter-spacing:.04em;opacity:.82;pointer-events:none}
 @media (min-width:600px) and (max-width:1100px){
  .tp-r7-wrap{max-width:860px;padding-top:12px}
  .tp-r7-back{font-size:15px;padding-bottom:18px}
@@ -49,10 +49,10 @@ function addStyles(){if(document.getElementById('tpCrashRev7Style'))return;const
 }
 `;
 document.head.appendChild(s)}
-function showRevBadge(){let badge=document.getElementById('tp-students-rev1');if(!badge){badge=document.createElement('div');badge.id='tp-students-rev1';badge.textContent='REV1';document.body.appendChild(badge)}}
+function showRevBadge(){document.getElementById('tp-students-rev1')?.remove();let badge=document.getElementById('tp-students-rev2');if(!badge){badge=document.createElement('div');badge.id='tp-students-rev2';badge.textContent='REV2';document.body.appendChild(badge)}}
 function renderJourney(planId,lesson){const home=document.getElementById('assignmentHome'),state=window.WillenaTestPrepAuth?.state,plan=state?.plans?.find(p=>String(p.id)===String(planId));if(!home||!plan)return;const l=scopeFor(plan).find(x=>String(x.lesson)===String(lesson));if(!l)return;const shown=STATIONS.filter(st=>available(plan,l,st));home.style.display='block';home.innerHTML=`<div class="tp-r7-wrap"><button type="button" class="tp-r7-back">← 시험 대비</button><div class="tp-r7-head"><h1>${esc(lesson)}</h1><p>${esc(plan.book_label||'')} · 학습 지도</p></div><div class="tp-r7-route">${shown.map((s,i)=>`<button type="button" class="tp-r7-stop" data-r7-skill="${esc(s.k)}"><span class="tp-r7-dot">${i+1}</span><span class="tp-r7-copy"><b>${esc(s.label)}</b><small>${esc(s.desc)}</small><span class="tp-r7-bar" aria-hidden="true"><i></i></span></span><span class="tp-r7-pct">—</span><span class="tp-r7-arrow">›</span></button>`).join('')}</div></div>`;requestAnimationFrame(()=>window.scrollTo({top:0,left:0,behavior:'auto'}));home.querySelector('.tp-r7-back').onclick=()=>{window.WillenaTestPrepNavigation?.toHome?.({replaceEntry:true})||window.WillenaTestPrepUX?.renderHome?.()};home.querySelectorAll('[data-r7-skill]').forEach(btn=>btn.onclick=()=>window.WillenaTestPrepUX?.launchSkill?.(plan.id,lesson,btn.dataset.r7Skill))}
 function intercept(e){const card=e.target instanceof Element?e.target.closest('.tp-lesson-card'):null;if(!card)return;e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();renderJourney(card.dataset.lessonPlan,card.dataset.lesson)}
-function boot(){addStyles();showRevBadge();document.addEventListener('click',intercept,true);console.info('[Test Prep] REV1 active')}
+function boot(){addStyles();showRevBadge();document.addEventListener('click',intercept,true);console.info('[Test Prep] REV2 active')}
 window.WillenaStudentsRev5={renderJourney};
 window.WillenaStudentsRev4=window.WillenaStudentsRev5;
 window.WillenaStudentsRev2=window.WillenaStudentsRev5;
