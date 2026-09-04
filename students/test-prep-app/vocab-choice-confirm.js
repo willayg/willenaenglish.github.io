@@ -3,6 +3,7 @@
 let selectedButton=null;
 let confirmed=false;
 let activeRoot=null;
+let advanceLabel='다음';
 
 function rootConfig(el){
   const root=el?.closest?.('#testPrepVocabPractice, #testPrepVocabTestPractice');
@@ -16,12 +17,15 @@ function rootConfig(el){
   return null;
 }
 
+function clearState(){
+  selectedButton=null;
+  confirmed=false;
+  activeRoot=null;
+  advanceLabel='다음';
+}
+
 function resetIfNeeded(){
-  if(selectedButton && !selectedButton.isConnected){
-    selectedButton=null;
-    confirmed=false;
-    activeRoot=null;
-  }
+  if(selectedButton && !selectedButton.isConnected)clearState();
 }
 
 function ensureStyle(){
@@ -52,6 +56,10 @@ function selectChoice(button,e){
   if(!cfg||confirmed)return false;
   e.preventDefault();
   e.stopImmediatePropagation();
+  if(!selectedButton||activeRoot!==cfg.root){
+    const current=String(cfg.next?.textContent||'').trim();
+    advanceLabel=current&&current!=='정답 확인'?current:'다음';
+  }
   selectedButton=button;
   activeRoot=cfg.root;
   cfg.root.querySelectorAll(cfg.choiceSelector).forEach(b=>{
@@ -77,7 +85,7 @@ function confirmChoice(next,e){
     b.classList.remove('choice-selected');
     b.removeAttribute('aria-pressed');
   });
-  next.textContent='다음';
+  next.textContent=advanceLabel;
   return true;
 }
 
@@ -90,9 +98,7 @@ function boot(){
     const next=e.target.closest('#testPrepVocabPractice #vpNext, #testPrepVocabTestPractice #vtNext');
     if(next&&selectedButton&&!confirmed){confirmChoice(next,e);return;}
     if(next&&confirmed&&activeRoot&&next.closest('#testPrepVocabPractice, #testPrepVocabTestPractice')===activeRoot){
-      selectedButton=null;
-      confirmed=false;
-      activeRoot=null;
+      clearState();
     }
   },true);
 
