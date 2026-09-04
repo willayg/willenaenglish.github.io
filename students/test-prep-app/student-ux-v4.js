@@ -55,7 +55,19 @@ function nextReviewGroup(){if(!reviewQueue.length){finishReview();return}const g
 async function finishReview(){try{const auth=window.WillenaTestPrepAuth,d=await auth?.edge?.('me');if(d?.plans){auth.state.plans=d.plans;auth.state.tasks=d.tasks||[]}}catch(_){}showWrongCenter()}
 function patchResult(){if(resultPatched||typeof window.result!=='function')return false;const original=window.result;window.result=function(){const sel=window.WillenaAssignedTestPrep?.selection;if(!sel?.reviewMode)return original.apply(this,arguments);window.WillenaTestPrepAuth?.completeSession?.(score,questions.length,wrongIds);bar.style.width='100%';const p=questions.length?Math.round(score/questions.length*100):0;card.innerHTML=`<div class="tp-review-result"><div class="score">${score}/${questions.length}</div><h2>오답 복습 완료</h2><p>정답률 ${p}%</p><button class="tp-review-next">다음 오답 →</button></div>`;$('.tp-review-next',card).onclick=()=>window.dispatchEvent(new CustomEvent('testprep:review-group-complete'))};resultPatched=true;return true}
 function wrap(){if(wrapped)return;const api=window.WillenaAssignedTestPrep;if(!api?.renderHome)return;wrapped=true;const original=api.renderHome.bind(api);api.renderHome=function(){const r=original();queueMicrotask(renderHome);return r};renderHome()}
-function onRefresh(){const quiz=$('#assignedQuizPane');if(quiz&&quiz.style.display!=='none')return;if(view.type==='lesson')renderLesson(view.planId,view.lesson,view.focusSkill);else if(view.type==='home')renderHome()}
+function onRefresh(){
+ const nav=history.state?.tp?history.state:{tp:'home'};
+ const quiz=$('#assignedQuizPane');
+ if(nav.tp==='practice'||(quiz&&quiz.style.display!=='none'))return;
+ if(nav.tp==='lesson'&&nav.planId&&nav.lesson){
+  if(window.WillenaStudentsRev4?.renderJourney)window.WillenaStudentsRev4.renderJourney(nav.planId,nav.lesson);
+  else if(window.WillenaStudentsRev2?.renderJourney)window.WillenaStudentsRev2.renderJourney(nav.planId,nav.lesson);
+  else renderLesson(nav.planId,nav.lesson,nav.skill||null);
+  return;
+ }
+ if(nav.tp==='wrong'){showWrongCenter();return;}
+ if(nav.tp==='home')renderHome();
+}
 function boot(){let tries=0;const timer=setInterval(()=>{wrap();patchResult();if((wrapped&&resultPatched)||++tries>120)clearInterval(timer)},50);window.addEventListener('testprep:student-state-refresh',onRefresh);window.addEventListener('testprep:review-group-complete',()=>{if(reviewQueue.length)reviewQueue.shift();nextReviewGroup()})}
 window.WillenaTestPrepUX={renderHome,renderLesson,showWrongCenter,launchSkill};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
