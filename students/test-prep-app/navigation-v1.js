@@ -28,7 +28,7 @@ function normalizeColdPractice(){
 }
 function stopEvent(e){e.preventDefault();e.stopPropagation();e.stopImmediatePropagation()}
 function closePractice(){const quiz=$('#assignedQuizPane');if(!quiz||quiz.style.display==='none')return;try{window.WillenaTestPrepAuth?.completeSession?.(0,0,[])}catch(_){}try{window.WillenaVocabPractice?.restore?.()}catch(_){}try{window.WillenaVocabTestPractice?.restore?.()}catch(_){}try{window.WillenaSentencePractice?.restore?.()}catch(_){}try{window.WillenaAssignedTestPrep?.showHomeSurface?.()}catch(_){} }
-function renderState(state){const ux=window.WillenaTestPrepUX;if(!ux)return false;const s=state?.tp?state:{tp:'home'};if(s.tp!=='practice')closePractice();if(s.tp==='lesson'&&s.planId&&s.lesson){ux.renderLesson?.(s.planId,s.lesson,s.skill||null);return true}if(s.tp==='wrong'){ux.showWrongCenter?.();return true}if(s.tp==='home'){ux.renderHome?.();return true}return true}
+function renderState(state){const ux=window.WillenaTestPrepUX;if(!ux)return false;const s=state?.tp?state:{tp:'home'};if(s.tp!=='practice')closePractice();if(s.tp==='lesson'&&s.planId&&s.lesson){if(window.WillenaStudentsRev2?.renderJourney)window.WillenaStudentsRev2.renderJourney(s.planId,s.lesson);else ux.renderLesson?.(s.planId,s.lesson,s.skill||null);return true}if(s.tp==='wrong'){ux.showWrongCenter?.();return true}if(s.tp==='home'){ux.renderHome?.();return true}return true}
 function smartBack(){
  const cur=navState();
  if(cur.tp==='lesson'){
@@ -60,8 +60,8 @@ function clickCapture(e){const target=e.target instanceof Element?e.target:null;
  if(wrong){push({tp:'wrong'});return}
  const task=target.closest('[data-task-plan]');
  if(task){push({tp:'practice',planId:task.dataset.taskPlan,lesson:task.dataset.taskLesson,skill:task.dataset.taskSkill,returnTo:'home'});return}
- const stop=target.closest('.tp-stop:not(.disabled)');
- if(stop){const cur=navState();push({tp:'practice',planId:cur.planId||null,lesson:cur.lesson||null,skill:stop.dataset.skill||null,returnTo:'lesson'});return}
+ const stop=target.closest('.tp-stop:not(.disabled),.tp-r7-stop');
+ if(stop){const cur=navState();push({tp:'practice',planId:cur.planId||null,lesson:cur.lesson||null,skill:stop.dataset.skill||stop.dataset.r7Skill||null,returnTo:'lesson'});return}
  const review=target.closest('.tp-review-start,.tp-review-btn');
  if(review){push({tp:'practice',review:true,returnTo:'wrong'});return}
 }
