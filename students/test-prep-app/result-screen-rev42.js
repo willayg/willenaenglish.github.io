@@ -3,15 +3,20 @@
 
 const $=(s,r=document)=>r.querySelector(s);
 const isStaging=/^staging\./i.test(location.hostname)||['localhost','127.0.0.1'].includes(location.hostname)||new URLSearchParams(location.search).has('rev42test');
+const LABEL={vocab_test:'어휘 시험',communication:'Communication',grammar:'Grammar',sentences:'본문외우기',reading:'Reading',constructed_response:'서술형',seosul:'서술형'};
+const OWNED=new Set(Object.keys(LABEL));
 let active=false,current=null,originalComplete=null,saving=false,patched=false;
 
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function delay(ms){return new Promise(r=>setTimeout(r,ms))}
+function selection(){return window.WillenaAssignedTestPrep?.selection||null}
+function sectionKey(){return String(selection()?.section||'').toLowerCase()}
 function snapshotSelection(){
- const s=window.WillenaAssignedTestPrep?.selection;
+ const s=selection();
  if(!s?.plan||!s?.lesson)return null;
- return {plan:s.plan,lesson:s.lesson,section:s.section,unitId:s.unitId,bookId:s.bookId,reviewMode:!!s.reviewMode,reviewIds:Array.isArray(s.reviewIds)?[...s.reviewIds]:[]};
+ return {plan:s.plan,lesson:s.lesson,section:String(s.section||'').toLowerCase(),unitId:s.unitId,bookId:s.bookId,reviewMode:!!s.reviewMode,reviewIds:Array.isArray(s.reviewIds)?[...s.reviewIds]:[]};
 }
+function ownsSelection(s=snapshotSelection()){return !!s&&OWNED.has(String(s.section||'').toLowerCase())}
 function installStyles(){
  if($('#tpRev42Styles'))return;
  const s=document.createElement('style');
@@ -62,6 +67,7 @@ async function restart(opts={}){
  hideResult();
  try{await window.WillenaAssignedTestPrep?.startSelection?.(sel.plan.id,sel.lesson,sel.section,opts)}catch(e){console.error('[REV42] restart failed',e)}
 }
+function nextReview(){hideResult();window.dispatchEvent(new CustomEvent('testprep:review-group-complete'))}
 function leaveResult(){
  const sel=current?.selection;
  hideResult();
@@ -72,13 +78,16 @@ function leaveResult(){
 }
 function renderResult(){
  const el=ensureSurface();if(!el||!current)return;
- const total=current.total,correct=current.correct,wrong=current.wrongIds.length,pct=total?Math.round(correct/total*100):0;
+ const total=current.total,correct=current.correct,wrong=current.wrongIds.length,pct=total?Math.round(correct/total*100):0,review=!!current.selection?.reviewMode,skill=LABEL[current.selection?.section]||current.selection?.section||'';
  const title=pct>=90?'정말 잘했어요!':pct>=70?'좋아요! 거의 다 왔어요.':'틀린 문제를 한 번 더 보면 좋아요.';
+ const retry=wrong?'<button class="tp42-primary" data-tp42-action="retry" disabled>오답 다시 풀기</button>':'';
+ const continueReview=review&&!wrong?'<button class="tp42-primary" data-tp42-action="review-next" disabled>다음 오답 →</button>':'';
+ const again=!review?'<button class="tp42-secondary" data-tp42-action="again" disabled>새 문제 세트</button>':'';
  el.innerHTML=`<div class="tp42-card">
    <div class="tp42-kicker">Session complete</div>
    <div class="tp42-score">${pct}%</div>
    <h2 class="tp42-title">${title}</h2>
-   <p class="tp42-sub">${esc(current.selection?.lesson||'')} ${current.selection?.section?`· ${esc(String(current.selection.section))}`:''}</p>
+   <p class="tp42-sub">${esc(current.selection?.lesson||'')} ${skill?`· ${esc(skill)}`:''}</p>
    <div class="tp42-stats">
     <div class="tp42-stat"><strong>${correct}</strong><span>정답</span></div>
     <div class="tp42-stat"><strong>${Math.max(0,total-correct)}</strong><span>오답</span></div>
@@ -86,25 +95,26 @@ function renderResult(){
    </div>
    <div class="tp42-status" id="tp42Status">기록 저장 중...</div>
    <div class="tp42-actions">
-    ${wrong?'<button class="tp42-primary" data-tp42-action="retry" disabled>오답 다시 풀기</button>':''}
-    <button class="tp42-secondary" data-tp42-action="again" disabled>새 문제 세트</button>
+    ${retry}${continueReview}${again}
     <button class="tp42-ghost" data-tp42-action="lesson" disabled>Lesson으로 돌아가기</button>
     <button class="tp42-secondary" data-tp42-retry-save hidden>저장 다시 시도</button>
    </div>
   </div>`;
  el.querySelector('[data-tp42-action="retry"]')?.addEventListener('click',()=>restart({reviewMode:true,reviewIds:[...current.wrongIds]}));
+ el.querySelector('[data-tp42-action="review-next"]')?.addEventListener('click',nextReview);
  el.querySelector('[data-tp42-action="again"]')?.addEventListener('click',()=>restart({}));
  el.querySelector('[data-tp42-action="lesson"]')?.addEventListener('click',leaveResult);
  el.querySelector('[data-tp42-retry-save]')?.addEventListener('click',retrySave);
 }
-function showResult(correctCount,questionCount,wrongIds){
+function showResult(correctCount,questionCount,wrongIds,snap=snapshotSelection()){
  const total=Math.max(0,Number(questionCount)||0),correct=Math.max(0,Number(correctCount)||0);
- if(!total)return;
- current={correct:Math.min(correct,total),total,wrongIds:Array.isArray(wrongIds)?wrongIds.map(String):[],selection:snapshotSelection(),args:[correctCount,questionCount,Array.isArray(wrongIds)?[...wrongIds]:[]]};
+ if(!total||!ownsSelection(snap))return false;
+ current={correct:Math.min(correct,total),total,wrongIds:Array.isArray(wrongIds)?wrongIds.map(String):[],selection:snap,args:[correctCount,questionCount,Array.isArray(wrongIds)?[...wrongIds]:[]]};
  active=true;saving=true;
  ensureSurface();
  $('.app')?.classList.add('tp-rev42-result-active');
  renderResult();
+ return true;
 }
 function finishSave(result){
  if(!active)return;
@@ -124,11 +134,10 @@ function retrySave(){
 function patchAuth(){
  if(patched)return true;
  const auth=window.WillenaTestPrepAuth;if(!auth?.completeSession)return false;
- if(auth.__rev42ResultOwner){patched=true;return true}
  originalComplete=auth.completeSession.bind(auth);
  auth.completeSession=function(correctCount,questionCount,wrongIds){
-  const hadSession=!!auth.state?.session,shouldShow=hadSession&&(Number(questionCount)||0)>0;
-  if(shouldShow)showResult(correctCount,questionCount,wrongIds);
+  const snap=snapshotSelection(),hadSession=!!auth.state?.session,shouldShow=hadSession&&(Number(questionCount)||0)>0&&ownsSelection(snap);
+  if(shouldShow)showResult(correctCount,questionCount,wrongIds,snap);
   let p;try{p=originalComplete(correctCount,questionCount,wrongIds)}catch(e){if(shouldShow)finishSave(null);throw e}
   if(shouldShow)settleSave(p);
   return p;
@@ -136,29 +145,63 @@ function patchAuth(){
  auth.__rev42ResultOwner=true;patched=true;
  return true;
 }
+
+async function autoCoreStep(){
+ const c=$('#card');if(!c)return false;
+ let skip=c.querySelector('#tpSkipQuestion');
+ if(skip&&!skip.disabled){skip.click();await delay(480);return true}
+ if(c.querySelector('#seosulCheck')){await delay(280);skip=c.querySelector('#tpSkipQuestion');if(skip&&!skip.disabled){skip.click();await delay(480);return true}return false}
+ const check=c.querySelector('#check'),choice=c.querySelector('.choice');
+ if(choice&&check){
+  if(!c.querySelector('.choice.selected'))choice.click();
+  await delay(20);
+  const first=c.querySelector('#check');if(first&&!first.disabled)first.click();
+  await delay(80);
+  const next=c.querySelector('#check');if(next&&!next.disabled&&/다음 문제|결과 보기/.test(next.textContent||''))next.click();
+  await delay(120);return true;
+ }
+ return false;
+}
+async function autoVocabTestStep(){
+ const h=$('#testPrepVocabTestPractice');if(!h)return false;
+ const input=h.querySelector('#vtuInput'),next=h.querySelector('#vtuNext');
+ if(input&&next){
+  input.value='__REV42__';input.dispatchEvent(new Event('input',{bubbles:true}));
+  next.click();await delay(60);h.querySelector('#vtuNext')?.click();await delay(130);return true;
+ }
+ const choice=h.querySelector('.vtu-choice');
+ if(choice&&next){choice.click();await delay(20);h.querySelector('#vtuNext')?.click();await delay(60);h.querySelector('#vtuNext')?.click();await delay(130);return true}
+ return false;
+}
+async function autoSentenceStep(){
+ const h=$('#testPrepSentencePractice');if(!h)return false;
+ const check=h.querySelector('#spCheck');if(!check)return false;
+ [...h.querySelectorAll('#spBank .sp-word')].forEach(b=>b.click());
+ await delay(20);if(!check.disabled)check.click();await delay(70);h.querySelector('#spCheck')?.click();await delay(130);return true;
+}
+async function autoStep(k){
+ if(k==='vocab_test')return autoVocabTestStep();
+ if(k==='sentences')return autoSentenceStep();
+ if(['communication','grammar','reading','constructed_response','seosul'].includes(k))return autoCoreStep();
+ return false;
+}
 async function autoFinish(){
- const button=$('#tpRev42AutoFinish');if(!button)return;
- if(active)return;
- const regular=window.WillenaTestPrepQuestionEngine;
- if(!regular?.currentQuestion){alert('먼저 Grammar, Reading 또는 Communication 활동을 시작하세요.');return}
+ const button=$('#tpRev42AutoFinish');if(!button||active)return;
+ const k=sectionKey();
+ if(!k){alert('먼저 활동을 시작하세요.');return}
+ if(k==='vocabulary'){alert('단어 학습은 REV42 AUTO FINISH 대상에서 제외했습니다.');return}
+ if(!OWNED.has(k)){alert('이 활동은 REV42 AUTO FINISH 대상이 아닙니다.');return}
  button.disabled=true;const old=button.textContent;button.textContent='AUTO...';
  try{
-  for(let i=0;i<80&&!active;i++){
-   const c=$('#card');if(!c)break;
-   if(c.querySelector('.result,.tp-review-result')){await delay(100);continue}
-   const choice=c.querySelector('.choice');const check=c.querySelector('#check');
-   if(choice&&check){
-    if(!c.querySelector('.choice.selected'))choice.click();
-    await delay(25);
-    const first=c.querySelector('#check');if(first&&!first.disabled)first.click();
-    await delay(75);
-    const next=c.querySelector('#check');if(next&&!next.disabled)next.click();
-    await delay(90);continue;
-   }
-   const skip=c.querySelector('#tpSkipQuestion');if(skip){skip.click();await delay(120);continue}
-   await delay(100);
+  let misses=0;
+  for(let i=0;i<120&&!active;i++){
+   const moved=await autoStep(k);
+   if(moved){misses=0;continue}
+   misses++;
+   await delay(180);
+   if(misses>12)break;
   }
-  if(!active)alert('AUTO FINISH는 현재 일반 객관식 활동에서만 사용할 수 있습니다.');
+  if(!active)alert('자동 종료가 끝 화면까지 도달하지 못했습니다. 현재 화면을 확인해 주세요.');
  }finally{button.disabled=false;button.textContent=old}
 }
 function installAutoFinish(){
