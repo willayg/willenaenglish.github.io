@@ -1,13 +1,5 @@
 (function(){
-  'use strict';
-  let questionShownAt=performance.now(),currentQuestion=null,patchedCheck=false,patchedRecord=false,refreshTimer=null;
-  function resetQuestionTimer(){questionShownAt=performance.now()}
-  function patchRecordAttempt(){const auth=window.WillenaTestPrepAuth;if(!auth||patchedRecord||typeof auth.recordAttempt!=='function')return false;const original=auth.recordAttempt.bind(auth);auth.recordAttempt=function(payload){const q=currentQuestion,elapsed=Math.max(0,Math.round(performance.now()-questionShownAt));const enriched={...(payload||{}),targets:Array.isArray(payload?.targets)?payload.targets:(Array.isArray(q?.targets)?q.targets:[]),question_type:payload?.question_type||q?.question_type||null,response_time_ms:payload?.response_time_ms||elapsed};const p=original(enriched);Promise.resolve(p).then(scheduleRefresh).catch(()=>{});return p};patchedRecord=true;return true}
-  function patchCheck(){if(patchedCheck||typeof window.check!=='function')return false;const original=window.check;window.check=function(q){currentQuestion=q||currentQuestion;return original.apply(this,arguments)};patchedCheck=true;return true}
-  function watchQuestionCard(){const card=document.getElementById('card');if(!card)return;new MutationObserver(()=>{if(card.querySelector('.prompt')&&card.querySelector('.qnum'))resetQuestionTimer()}).observe(card,{childList:true,subtree:true})}
-  function scheduleRefresh(){clearTimeout(refreshTimer);refreshTimer=setTimeout(refreshStats,450)}
-  async function refreshStats(){const auth=window.WillenaTestPrepAuth;if(!auth)return;try{await auth.ready;const d=await auth.edge('me');if(d?.plans){auth.state.plans=d.plans;auth.state.tasks=d.tasks||[];window.dispatchEvent(new CustomEvent('testprep:student-state-refresh',{detail:{plans:d.plans,tasks:d.tasks||[]}}))}}catch(e){console.warn('[test-prep] state refresh failed',e)}}
-  function loadStudentUx(){if(document.querySelector('script[data-testprep-student-ux]'))return;const s=document.createElement('script');s.src='./student-ux-v4.js?v=20260826-mastery1';s.dataset.testprepStudentUx='1';document.head.appendChild(s)}
-  function bootstrap(){loadStudentUx();patchRecordAttempt();patchCheck();watchQuestionCard();let tries=0;const timer=setInterval(()=>{patchRecordAttempt();patchCheck();if((patchedRecord&&patchedCheck)||++tries>100)clearInterval(timer)},50)}
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bootstrap,{once:true});else bootstrap();
+'use strict';
+// REV34: removed legacy per-answer recordAttempt wrapper and delayed stats refresh.
+// Attempt recording stays owned by auth-tracking.js; progress refreshes happen after session completion.
 })();
