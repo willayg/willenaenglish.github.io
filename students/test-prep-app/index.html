@@ -14,84 +14,11 @@
 <link rel="stylesheet" href="./header-curve-transparent.css?v=20260831-gap1">
 <link rel="stylesheet" href="./willi-feedback-icons.css?v=20260903-willi-rev2-icons1">
 <link rel="stylesheet" href="./batch-recorder-translucent.css?v=20260905-translucent1">
-<style>
-.vtu-choice.selected:not(.correct):not(.wrong)::after{content:'✓';float:right;margin-left:8px;font-weight:900;color:#19777e}
-</style>
+<style>.vtu-choice.selected:not(.correct):not(.wrong)::after{content:'✓';float:right;margin-left:8px;font-weight:900;color:#19777e}</style>
 </head>
 <body>
-<div class="app">
-  <div class="engine-shell" id="engineShell">
-    <div class="engine-progress" aria-hidden="true"><i id="bar"></i></div>
-    <main class="card" id="card"><div class="loading">문제를 불러오는 중...</div></main>
-  </div>
-</div>
-<div class="overlay" id="overlay"><div class="modal"><h3>이 문제에 문제가 있나요? 🚩</h3><p>이유를 골라 주세요.</p><div class="reasons" id="reasons"></div><textarea class="note" id="flagNote" placeholder="추가 메모 (선택)"></textarea><div class="modal-actions"><button class="secondary" id="cancelFlag">취소</button><button class="primary" id="sendFlag">보내기</button></div></div></div>
-<div class="toast" id="toast"></div>
-<div id="tp-rev-badge" style="position:fixed;right:10px;bottom:10px;z-index:2147483647;padding:4px 8px;border-radius:999px;background:#203039;color:#fff;font:800 10px/1.2 Poppins,sans-serif;letter-spacing:.04em;opacity:.82;pointer-events:none">REV46l</div>
-<script src="/students/api-gateway.js?v=20260829-width1"></script>
-<script src="/js/api-config.js?v=20260829-width1"></script>
-<script src="./willi-model-luna.js?v=20260905-rev32-luna1"></script>
-<script src="./auth-tracking.js?v=20260905-rev37-session-drain1"></script>
-<script src="./flagger.js?v=20260906-rev46l-replace1"></script>
-<script src="./vocab-card-controls.js?v=20260829-cardpersist2"></script>
-<script src="./vocab-practice.js?v=20260831-completed-review1" data-testprep-vocab-practice="1"></script>
-<script src="./vocab-choice-confirm.js?v=20260904-rev13-rollback1"></script>
-<script src="./vocab-test-upgrade.js?v=20260905-rev33-targetfix1" data-testprep-vocab-test-practice="1"></script>
-<script src="./assigned-shell.js?v=20260905-rev22-singleowner1"></script>
-<script src="./vocab-source-links.js?v=20260905-rev27-source-links1"></script>
-<script src="./engine-visibility-fix.js?v=20260829-enginefix1"></script>
-<script src="./student-ux-v4.js?v=20260904-rev4-navstate1" data-testprep-student-ux="1"></script>
-<script src="./performance-practice.js?v=20260902-performance1"></script>
-<script src="./performance-visibility-fix.js?v=20260902-visible1"></script>
-<script src="./theme-switcher.js?v=20260829-width1"></script>
-<script src="./navigation-view-guard.js?v=20260903-rev3"></script>
-<script src="./dynamic-progress-sync.js?v=20260905-rev38-exit-refresh1"></script>
-<script src="./home-header-top.js?v=20260829-width1"></script>
-<script src="./session-settings.js?v=20260829-width1"></script>
-<script src="./question-engine.js?v=20260905-rev46a-single-return1"></script>
-<script src="./question-safe-render.js?v=20260903-renderguard1"></script>
-<script src="./willi-student-name.js?v=20260905-rev27-name1"></script>
-<script src="./ask-willi-grammar.js?v=20260903-willi-rev2-students1"></script>
-<script src="./ask-willi-vocab.js?v=20260905-willi-vocab-rev4-diagnostic1"></script>
-<script src="./seosul-source-safety.js?v=20260830-negstem1"></script>
-<script src="./seosul-engine.js?v=20260830-negstem1"></script>
-<script src="./seosul-context-source-fix.js?v=20260905-rev44-context1"></script>
-<script src="./seosul-authored.js?v=20260830-authored1"></script>
-<script src="./seosul-ai-feedback.js?v=20260830-ai-feedback2"></script>
-<script src="./seosul-ai-responses-fix.js?v=20260830-responses1"></script>
-<script src="./seosul-student-label-cleanup.js?v=20260830-labelclean1"></script>
-<script src="./seosul-snappy-save.js?v=20260829-snappy1"></script>
-<script src="./seosul-integration.js?v=20260829-scope3"></script>
-<script src="./seosul-no-giveaway.js?v=20260830-guard2"></script>
-<script src="./vocab-learning-fixes.js?v=20260829-vocabfix3"></script>
-<script src="./vocab-progression-safe.js?v=20260829-vocabpersist1"></script>
-<script src="./vocab-completion-ui.js?v=20260829-vocabflow-audit1"></script>
-<script src="./question-render-fixes.js?v=20260829-width1"></script>
-<script src="./student-display-polish.js?v=20260829-width1"></script>
-<script src="./source-pill-reference-fix.js?v=20260903-source-id1"></script>
-<script src="./navigation-v1.js?v=20260905-rev38-exit-refresh1"></script>
-<script src="./crash-fix-rev7.js?v=20260904-rev5-nobadge1"></script>
-<script src="./review-state-fix.js?v=20260829-width1"></script>
-<script src="./seosul-authored-layout-v2.js?v=20260830-layout4"></script>
-<script src="./seosul-progress-ui-fix.js?v=20260830-progress2"></script>
-<script src="./seosul-required-corrections.js?v=20260830-required1"></script>
-<script src="./seosul-enter-next.js?v=20260830-enter1"></script>
-<script src="./seosul-spelling-keyboard.js?v=20260905-rev46f-tqt1"></script>
-<script src="./seosul-punctuation-support.js?v=20260831-punctfix1"></script>
-<script src="./seosul-context-pairs.js?v=20260831-pairs1"></script>
-<script src="./seosul-underlined-context.js?v=20260831-underline1"></script>
-<script src="./skill-progress-simple.js?v=20260830-simple1"></script>
-<script src="./mastery-help-modal.js?v=20260830-help1"></script>
-<script src="./practice-layout-cleanup.js?v=20260905-rev46g-examrow1"></script>
-<script src="./seosul-willena-source-fix.js?v=20260830-sourceaudit2"></script>
-<script src="./skip-question.js?v=20260903-skip1"></script>
-<script src="./result-screen-rev42.js?v=20260905-rev42-unified2"></script>
-<script src="./text-question-engine.js?v=20260905-rev46b-layout1"></script>
-<script src="./question-runtime.js?v=20260906-rev46l-contextreplace1"></script>
-<script src="./exam-builder.js?v=20260906-rev46l-familytrack1"></script>
-<script src="./exam-session.js?v=20260906-rev46l-replace-track1"></script>
-<script src="./exam-shell.js?v=20260906-rev46l-theme1"></script>
-<script src="./exam-controls.js?v=20260906-rev46l-replace1"></script>
-<script src="./activity-finish-rev4.js?v=20260905-rev38-skip-only1"></script>
-</body>
-</html>
+<div class="app"><div class="engine-shell" id="engineShell"><div class="engine-progress" aria-hidden="true"><i id="bar"></i></div><main class="card" id="card"><div class="loading">문제를 불러오는 중...</div></main></div></div>
+<div class="overlay" id="overlay"><div class="modal"><h3>이 문제에 문제가 있나요? 🚩</h3><p>이유를 골라 주세요.</p><div class="reasons" id="reasons"></div><textarea class="note" id="flagNote" placeholder="추가 메모 (선택)"></textarea><div class="modal-actions"><button class="secondary" id="cancelFlag">취소</button><button class="primary" id="sendFlag">보내기</button></div></div></div><div class="toast" id="toast"></div>
+<div id="tp-rev-badge" style="position:fixed;right:10px;bottom:10px;z-index:2147483647;padding:4px 8px;border-radius:999px;background:#203039;color:#fff;font:800 10px/1.2 Poppins,sans-serif;letter-spacing:.04em;opacity:.82;pointer-events:none">REV 47a</div>
+<script src="/students/api-gateway.js?v=20260829-width1"></script><script src="/js/api-config.js?v=20260829-width1"></script><script src="./willi-model-luna.js?v=20260905-rev32-luna1"></script><script src="./auth-tracking.js?v=20260905-rev37-session-drain1"></script><script src="./flagger.js?v=20260906-rev46l-replace1"></script><script src="./vocab-card-controls.js?v=20260829-cardpersist2"></script><script src="./vocab-practice.js?v=20260831-completed-review1" data-testprep-vocab-practice="1"></script><script src="./vocab-choice-confirm.js?v=20260904-rev13-rollback1"></script><script src="./vocab-test-upgrade.js?v=20260905-rev33-targetfix1" data-testprep-vocab-test-practice="1"></script><script src="./assigned-shell.js?v=20260905-rev22-singleowner1"></script><script src="./vocab-source-links.js?v=20260905-rev27-source-links1"></script><script src="./engine-visibility-fix.js?v=20260829-enginefix1"></script><script src="./student-ux-v4.js?v=20260904-rev4-navstate1" data-testprep-student-ux="1"></script><script src="./performance-practice.js?v=20260902-performance1"></script><script src="./performance-visibility-fix.js?v=20260902-visible1"></script><script src="./theme-switcher.js?v=20260829-width1"></script><script src="./navigation-view-guard.js?v=20260903-rev3"></script><script src="./dynamic-progress-sync.js?v=20260905-rev38-exit-refresh1"></script><script src="./home-header-top.js?v=20260829-width1"></script><script src="./session-settings.js?v=20260829-width1"></script><script src="./question-engine.js?v=20260905-rev46a-single-return1"></script><script src="./question-safe-render.js?v=20260903-renderguard1"></script><script src="./willi-student-name.js?v=20260905-rev27-name1"></script><script src="./ask-willi-grammar.js?v=20260903-willi-rev2-students1"></script><script src="./ask-willi-vocab.js?v=20260905-willi-vocab-rev4-diagnostic1"></script><script src="./seosul-source-safety.js?v=20260830-negstem1"></script><script src="./seosul-engine.js?v=20260830-negstem1"></script><script src="./seosul-context-source-fix.js?v=20260905-rev44-context1"></script><script src="./seosul-authored.js?v=20260830-authored1"></script><script src="./seosul-ai-feedback.js?v=20260830-ai-feedback2"></script><script src="./seosul-ai-responses-fix.js?v=20260830-responses1"></script><script src="./seosul-student-label-cleanup.js?v=20260830-labelclean1"></script><script src="./seosul-snappy-save.js?v=20260829-snappy1"></script><script src="./seosul-integration.js?v=20260829-scope3"></script><script src="./seosul-no-giveaway.js?v=20260830-guard2"></script><script src="./vocab-learning-fixes.js?v=20260829-vocabfix3"></script><script src="./vocab-progression-safe.js?v=20260829-vocabpersist1"></script><script src="./vocab-completion-ui.js?v=20260829-vocabflow-audit1"></script><script src="./question-render-fixes.js?v=20260829-width1"></script><script src="./student-display-polish.js?v=20260829-width1"></script><script src="./source-pill-reference-fix.js?v=20260903-source-id1"></script><script src="./navigation-v1.js?v=20260905-rev38-exit-refresh1"></script><script src="./crash-fix-rev7.js?v=20260904-rev5-nobadge1"></script><script src="./review-state-fix.js?v=20260906-rev47a-clean1"></script><script src="./seosul-authored-layout-v2.js?v=20260830-layout4"></script><script src="./seosul-progress-ui-fix.js?v=20260830-progress2"></script><script src="./seosul-required-corrections.js?v=20260830-required1"></script><script src="./seosul-enter-next.js?v=20260830-enter1"></script><script src="./seosul-spelling-keyboard.js?v=20260905-rev46f-tqt1"></script><script src="./seosul-punctuation-support.js?v=20260831-punctfix1"></script><script src="./seosul-context-pairs.js?v=20260831-pairs1"></script><script src="./seosul-underlined-context.js?v=20260831-underline1"></script><script src="./skill-progress-simple.js?v=20260830-simple1"></script><script src="./mastery-help-modal.js?v=20260830-help1"></script><script src="./practice-layout-cleanup.js?v=20260905-rev46g-examrow1"></script><script src="./seosul-willena-source-fix.js?v=20260830-sourceaudit2"></script><script src="./skip-question.js?v=20260903-skip1"></script><script src="./result-screen-rev42.js?v=20260905-rev42-unified2"></script><script src="./text-question-engine.js?v=20260905-rev46b-layout1"></script><script src="./question-runtime.js?v=20260906-rev46l-contextreplace1"></script><script src="./exam-builder.js?v=20260906-rev46l-familytrack1"></script><script src="./exam-session.js?v=20260906-rev46l-replace-track1"></script><script src="./exam-shell.js?v=20260906-rev46l-theme1"></script><script src="./exam-controls.js?v=20260906-rev46l-replace1"></script><script src="./activity-finish-rev4.js?v=20260905-rev38-skip-only1"></script>
+</body></html>
