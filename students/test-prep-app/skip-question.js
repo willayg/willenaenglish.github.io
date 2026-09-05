@@ -35,9 +35,12 @@ function currentIndex(){
  return Number.isFinite(n)&&n>0?n-1:0;
 }
 
+function isMock(){return String(window.WillenaAssignedTestPrep?.selection?.section||'').toLowerCase()==='mock'}
+
 function isEligibleCard(){
  const card=$('#card');
  if(!card||card.querySelector('.result,.empty,.loading'))return false;
+ if(card.querySelector('#mockCheck'))return isMock();
  if(card.querySelector('#check')){
   const sec=String(window.WillenaTestPrepQuestionEngine?.section||'').toLowerCase();
   return ['communication','grammar','reading'].includes(sec);
@@ -60,6 +63,8 @@ function advanceSoon(){
   if(mc&&!mc.disabled&&/다음 문제|결과 보기/.test(mc.textContent||''))mc.click();
   const seo=$('#seosulCheck');
   if(seo&&!seo.disabled&&/다음 문제|결과 보기/.test(seo.textContent||''))seo.click();
+  const mock=$('#mockCheck');
+  if(mock&&!mock.disabled&&/다음 문제|결과 보기/.test(mock.textContent||''))mock.click();
   skipActive=false;
  },90);
  setTimeout(()=>{skipActive=false;inject()},400);
@@ -111,11 +116,34 @@ function skipSeosul(){
  return true;
 }
 
+function skipMock(){
+ const check=$('#mockCheck');
+ if(!check||!isMock())return false;
+ const input=$('#mockWrittenAnswer');
+ skipActive=true;
+ if(input){
+  input.value='__SKIPPED__';
+  input.dispatchEvent(new Event('input',{bubbles:true}));
+  check.disabled=false;
+  check.click();
+  advanceSoon();
+  return true;
+ }
+ // Deliberately submit no selected choice. A valid mock question always has
+ // at least one correct answer, so an empty selection is guaranteed wrong.
+ // The auth wrapper also records this attempt with metadata.skipped=true.
+ check.disabled=false;
+ check.click();
+ advanceSoon();
+ return true;
+}
+
 function skipCurrent(e){
  e?.preventDefault?.();
  const btn=e?.currentTarget||$('#tpSkipQuestion');
  if(btn)btn.disabled=true;
  patchAuth();
+ if($('#card #mockCheck')){if(!skipMock()&&btn)btn.disabled=false;return;}
  if($('#card #check')){if(!skipMc()&&btn)btn.disabled=false;return;}
  if($('#card #seosulCheck')){if(!skipSeosul()&&btn)btn.disabled=false;return;}
  if(btn)btn.disabled=false;
@@ -124,7 +152,7 @@ function skipCurrent(e){
 function poll(){
  patchAuth();
  const card=$('#card');
- const sig=card?`${card.querySelector('.qnum')?.textContent||''}|${!!card.querySelector('#check')}|${!!card.querySelector('#seosulCheck')}|${card.querySelector('.result')?'r':''}`:'';
+ const sig=card?`${card.querySelector('.qnum')?.textContent||''}|${!!card.querySelector('#check')}|${!!card.querySelector('#seosulCheck')}|${!!card.querySelector('#mockCheck')}|${card.querySelector('.result')?'r':''}`:'';
  if(sig!==lastCard){lastCard=sig;inject();}
  else if(card&&isEligibleCard()&&!card.querySelector('.tp-skip-wrap'))inject();
 }
