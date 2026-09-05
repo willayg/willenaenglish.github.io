@@ -33,7 +33,8 @@ function addStyle(){if($('#tpSeosulCompactKbStyle'))return;const s=document.crea
 #tpSeosulAppKeyboard .vp-kb-row.third .vp-kb-key.backspace{max-width:88px;flex:1.15}
 #tpSeosulAppKeyboard .vp-kb-row.bottom{display:grid;grid-template-columns:1fr 88px;gap:5px;margin-top:5px}
 #tpSeosulAppKeyboard .vp-kb-row.bottom .space{width:100%;max-width:none;min-width:0}
-#tpSeosulAppKeyboard .vp-kb-row.bottom .enter{width:100%;max-width:none;min-width:0}
+#tpSeosulAppKeyboard .vp-kb-row.bottom .enter{width:100%;max-width:none;min-width:0;border:2px solid #67d4da;background:#fff;color:#ee5f91;font-size:15px;font-weight:900;box-shadow:0 2px 5px rgba(25,119,126,.10)}
+#tpSeosulAppKeyboard .vp-kb-row.bottom .enter:active,#tpSeosulAppKeyboard .vp-kb-row.bottom .enter.is-pressed{background:#fff5f9;border-color:#35c3ca;color:#e74f86;box-shadow:inset 0 1px 3px rgba(25,119,126,.14)}
 #tpSeosulAppKeyboard[hidden]{display:none!important}
 body.tp-seosul-kb-open .app{padding-bottom:330px!important}
 body.tp-seosul-kb-open{scroll-padding-bottom:340px}
@@ -44,6 +45,7 @@ body.tp-seosul-kb-open{scroll-padding-bottom:340px}
  #tpSeosulAppKeyboard .vp-kb-row{gap:9px;margin:8px 0}
  #tpSeosulAppKeyboard .vp-kb-row.third .vp-kb-key.backspace{max-width:116px}
  #tpSeosulAppKeyboard .vp-kb-row.bottom{grid-template-columns:1fr 116px;gap:9px}
+ #tpSeosulAppKeyboard .vp-kb-row.bottom .enter{font-size:18px}
  body.tp-seosul-kb-open .app{padding-bottom:390px!important}
  body.tp-seosul-kb-open{scroll-padding-bottom:400px}
 }
@@ -56,7 +58,7 @@ function ensure(){addStyle();const inputs=candidates();if(!inputs.length){cleanu
  const k=document.createElement('div');k.id='tpSeosulAppKeyboard';k.className='vp-app-keyboard';k.setAttribute('aria-label','서술형 영어 키보드');k.hidden=true;
  const r=rows();
  const letterRows=`<div class="vp-kb-row">${r[0].map(x=>`<button type="button" class="vp-kb-key letter" data-key="${x}">${x}</button>`).join('')}</div><div class="vp-kb-row">${r[1].map(x=>`<button type="button" class="vp-kb-key letter" data-key="${x}">${x}</button>`).join('')}</div><div class="vp-kb-row third"><button type="button" class="vp-kb-key shift" data-key="shift" aria-pressed="false">⇧</button>${r[2].map(x=>`<button type="button" class="vp-kb-key letter" data-key="${x}">${x}</button>`).join('')}<button type="button" class="vp-kb-key backspace" data-key="backspace">⌫</button></div>`;
- k.innerHTML=`<button type="button" class="vp-kb-hide">키보드 숨기기</button>`+letterRows+`<div class="vp-kb-row bottom"><button type="button" class="vp-kb-key wide space" data-key="space">space</button><button type="button" class="vp-kb-key wide enter" data-key="enter">return</button></div>`;
+ k.innerHTML=`<button type="button" class="vp-kb-hide">키보드 숨기기</button>`+letterRows+`<div class="vp-kb-row bottom"><button type="button" class="vp-kb-key wide space" data-key="space">space</button><button type="button" class="vp-kb-key wide enter" data-key="enter">확인</button></div>`;
  document.body.appendChild(k);renderCaps();
  k.addEventListener('pointerdown',e=>{const b=e.target.closest('[data-key]');if(!b)return;const key=b.dataset.key;e.preventDefault();b.classList.add('is-pressed');haptic(key);if(key==='backspace'){startRepeat();b.dataset.downHandled='1'}else if(key==='space'){replaceSelection(' ');b.dataset.downHandled='1'}else if(key==='shift'){toggleCaps();b.dataset.downHandled='1'}else if(b.classList.contains('letter')){append(key);b.dataset.downHandled='1'}});
  const endPress=e=>{stopRepeat();const b=e.target.closest?.('[data-key]');if(b)b.classList.remove('is-pressed')};
