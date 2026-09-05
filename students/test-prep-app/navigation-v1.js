@@ -19,21 +19,25 @@ function ensureInitial(){if(!history.state?.tp)replace({tp:'home'});else remembe
 function normalizeColdPractice(){
  const s=navState();
  if(s.tp!=='practice')return;
- const live=window.WillenaAssignedTestPrep?.selection;
- if(live)return;
+ const shell=window.WillenaAssignedTestPrep;
+ if(shell?.isPracticeOpen?.()||shell?.selection)return;
  if(s.review||s.returnTo==='wrong'){replace({tp:'wrong'});return;}
  if(s.returnTo==='lesson'&&s.planId&&s.lesson){replace({tp:'lesson',planId:s.planId,lesson:s.lesson});return;}
  replace({tp:'home'});
 }
 function stopEvent(e){e.preventDefault();e.stopPropagation();e.stopImmediatePropagation()}
 function closePractice(){
+ const shell=window.WillenaAssignedTestPrep;
  const quiz=$('#assignedQuizPane');
- if(!quiz||quiz.style.display==='none')return false;
+ const open=!!shell?.isPracticeOpen?.()||!!quiz&&quiz.style.display!=='none';
+ if(!open)return false;
  try{window.WillenaTestPrepAuth?.completeSession?.(0,0,[])}catch(_){}
+ if(shell?.closePracticeSurface){shell.closePracticeSurface();return true;}
  try{window.WillenaVocabPractice?.restore?.()}catch(_){}
  try{window.WillenaVocabTestPractice?.restore?.()}catch(_){}
  try{window.WillenaSentencePractice?.restore?.()}catch(_){}
- try{window.WillenaAssignedTestPrep?.showHomeSurface?.()}catch(_){}
+ if(quiz)quiz.style.display='none';
+ const home=$('#assignmentHome');if(home)home.style.display='block';
  return true;
 }
 function notifyPracticeLeft(){try{window.dispatchEvent(new CustomEvent('testprep:practice-left'))}catch(_){}}
