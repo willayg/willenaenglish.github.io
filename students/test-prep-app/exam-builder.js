@@ -24,33 +24,33 @@ function allocate(total,n){if(!n)return[];const base=Math.floor(total/n),rem=tot
 
 async function resolveBook(plan){const books=await get(`/rest/v1/content_books?select=id,title&title=eq.${encodeURIComponent(plan.book_label||'')}&limit=1`);if(!books[0])throw new Error('교재를 콘텐츠 DB에서 찾지 못했습니다.');const units=await get(`/rest/v1/content_units?select=id,title&book_id=eq.${encodeURIComponent(books[0].id)}`);return{bookId:String(books[0].id),unitMap:new Map((units||[]).map(x=>[String(x.title),String(x.id)]))}}
 async function fetchSection(bookId,unitId,section,lesson){const qs=new URLSearchParams({select:FIELDS,student_usable:'eq.true',book_id:`eq.${bookId}`,unit_id:`eq.${unitId}`,section:`eq.${section}`});const rows=await get(`/rest/v1/test_prep_questions?${qs.toString()}`);return(rows||[]).filter(q=>q?.replacement_needed!==true).map(q=>({...q,__lesson:String(lesson),__unitId:String(unitId)}))}
-async function vocabPool(unitId,lesson){for(let i=0;i<100;i++){const api=window.WillenaVocabTestPractice;if(api?.buildMockPool){const rows=await api.buildMockPool(unitId,lesson);return(rows||[]).map(q=>({...q,__lesson:String(lesson),__unitId:String(unitId)}))}await wait(30)}return[]}
+async function generatedVocabPool(unitId,lesson){for(let i=0;i<100;i++){const api=window.WillenaVocabTestPractice;if(api?.buildMockPool){const rows=await api.buildMockPool(unitId,lesson);return(rows||[]).map(q=>({...q,__lesson:String(lesson),__unitId:String(unitId),__examVocabularyGenerated:true}))}await wait(30)}return[]}
+async function vocabPool(bookId,unitId,lesson){const [generated,stored]=await Promise.all([generatedVocabPool(unitId,lesson),fetchSection(bookId,unitId,'vocabulary',lesson)]);const storedForExam=stored.map(q=>({...q,__sourceSection:'vocabulary',section:'vocab_test'}));const seen=new Set(),out=[];for(const q of [...generated,...storedForExam]){const k=String(q.id||'');if(!k||seen.has(k))continue;seen.add(k);out.push(q)}return out}
 
 function splitSupported(rows,unsupported){const rt=runtime(),good=[];for(const q of rows||[]){if(rt.supports(q))good.push(q);else unsupported.push({id:q?.id||null,lesson:q?.__lesson||null,section:q?.section||null,question_type:q?.question_type||null,answer_mode:q?.answer_mode||null,reason:'no_registered_engine'})}return good}
 function takeBalanced(rows,count,used){const pool=shuffle((rows||[]).filter(q=>!used.has(String(q.id)))),groups=new Map();for(const q of pool){const k=typeKey(q);if(!groups.has(k))groups.set(k,[]);groups.get(k).push(q)}const keys=shuffle([...groups.keys()]),out=[];let moved=true;while(out.length<count&&moved){moved=false;for(const k of keys){const g=groups.get(k);if(g?.length&&out.length<count){const q=g.shift();used.add(String(q.id));out.push(q);moved=true}}}return out}
 function takeAcrossLessons(rows,count,used){const map=new Map();for(const q of rows||[]){const k=String(q.__lesson||'');if(!map.has(k))map.set(k,[]);map.get(k).push(q)}const groups=[...map.values()].filter(x=>x.length),quota=allocate(count,groups.length),out=[];groups.forEach((g,i)=>out.push(...takeBalanced(g,quota[i],used)));if(out.length<count)out.push(...takeBalanced(rows,count-out.length,used));return out}
-function finishManifest({plan,scope,lesson,items,unsupported}){const rt=runtime();const manifest={id:id(),version:'45c',createdAt:new Date().toISOString(),planId:String(plan.id),bookLabel:plan.book_label||'',scope,lesson:lesson||null,total:items.length,items:items.map((q,i)=>({position:i+1,lesson:String(q.__lesson||lesson||''),unitId:String(q.__unitId||''),engine:rt.engineFor(q),question:q})),unsupported};if(unsupported.length)console.warn('[REV45c] unsupported usable questions excluded',unsupported);console.info('[REV45c] manifest',{scope,lesson,total:manifest.total,engines:manifest.items.reduce((m,x)=>(m[x.engine]=(m[x.engine]||0)+1,m),{}),unsupported:unsupported.length});return manifest}
+function finishManifest({plan,scope,lesson,items,unsupported}){const rt=runtime();const manifest={id:id(),version:'45g',createdAt:new Date().toISOString(),planId:String(plan.id),bookLabel:plan.book_label||'',scope,lesson:lesson||null,total:items.length,items:items.map((q,i)=>({position:i+1,lesson:String(q.__lesson||lesson||''),unitId:String(q.__unitId||''),engine:rt.engineFor(q),question:q})),unsupported};if(unsupported.length)console.warn('[REV45g] unsupported usable questions excluded',unsupported);console.info('[REV45g] manifest',{scope,lesson,total:manifest.total,engines:manifest.items.reduce((m,x)=>(m[x.engine]=(m[x.engine]||0)+1,m),{}),unsupported:unsupported.length});return manifest}
 function order(items){const vocab=items.filter(q=>norm(q.section)==='vocab_test'),rest=items.filter(q=>norm(q.section)!=='vocab_test');return[...shuffle(vocab),...shuffle(rest)]}
 
 async function buildLesson(plan,lesson){
  const {bookId,unitMap}=await resolveBook(plan),unitId=unitMap.get(String(lesson));if(!unitId)throw new Error(`${lesson}을 콘텐츠 DB에서 찾지 못했습니다.`);
  const row=rowFor(plan,lesson),unsupported=[],pools={vocab_test:[],communication:[],grammar:[],reading:[]};
- if(vocabAllowed(plan,row))pools.vocab_test=splitSupported(await vocabPool(unitId,lesson),unsupported);
+ if(vocabAllowed(plan,row))pools.vocab_test=splitSupported(await vocabPool(bookId,unitId,lesson),unsupported);
  for(const section of sectionsFor(plan,row))pools[section]=splitSupported(await fetchSection(bookId,unitId,section,lesson),unsupported);
  const used=new Set(),picked=[];for(const key of ['vocab_test','communication','grammar','reading'])if(pools[key].length)picked.push(...takeBalanced(pools[key],BLUEPRINT[key],used));
  if(picked.length<25)picked.push(...takeBalanced(Object.values(pools).flat(),25-picked.length,used));
  return finishManifest({plan,scope:'lesson',lesson:String(lesson),items:order(picked.slice(0,25)),unsupported});
 }
-
 async function buildAll(plan){
  const {bookId,unitMap}=await resolveBook(plan),rows=lessonsFor(plan);if(!rows.length)throw new Error('시험 범위 Lesson이 없습니다.');
  const unsupported=[],pools={vocab_test:[],communication:[],grammar:[],reading:[]};
- for(const row of rows){const lesson=String(row.lesson),unitId=unitMap.get(lesson);if(!unitId)continue;if(vocabAllowed(plan,row))pools.vocab_test.push(...splitSupported(await vocabPool(unitId,lesson),unsupported));for(const section of sectionsFor(plan,row))pools[section].push(...splitSupported(await fetchSection(bookId,unitId,section,lesson),unsupported))}
+ for(const row of rows){const lesson=String(row.lesson),unitId=unitMap.get(lesson);if(!unitId)continue;if(vocabAllowed(plan,row))pools.vocab_test.push(...splitSupported(await vocabPool(bookId,unitId,lesson),unsupported));for(const section of sectionsFor(plan,row))pools[section].push(...splitSupported(await fetchSection(bookId,unitId,section,lesson),unsupported))}
  const used=new Set(),picked=[];for(const key of ['vocab_test','communication','grammar','reading'])if(pools[key].length)picked.push(...takeAcrossLessons(pools[key],BLUEPRINT[key],used));
  if(picked.length<25)picked.push(...takeAcrossLessons(Object.values(pools).flat(),25-picked.length,used));
  return finishManifest({plan,scope:'all',lesson:null,items:order(picked.slice(0,25)),unsupported});
 }
 
 window.WillenaExamBuilder={buildLesson,buildAll,resolveBook,lessonsFor,blueprint:{...BLUEPRINT}};
-console.log('[REV45c] ExamBuilder ready');
+console.log('[REV45g] ExamBuilder vocabulary text support ready');
 })();
