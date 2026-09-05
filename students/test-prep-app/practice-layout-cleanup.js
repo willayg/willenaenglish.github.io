@@ -6,7 +6,6 @@ function addStyle(){
  const s=document.createElement('style');
  s.id=STYLE_ID;
  s.textContent=`
- body.tp-practice-active #assignmentHome{display:none!important}
  body.tp-practice-active #assignedBackRow{display:none!important}
  body.tp-practice-active .app{padding-top:0!important}
  body.tp-practice-active .tp-header-curve{height:52px!important;bottom:-26px!important}
@@ -18,9 +17,8 @@ function addStyle(){
  document.head.appendChild(s);
 }
 function sync(){
- const shell=window.WillenaAssignedTestPrep;
  const quiz=document.getElementById('assignedQuizPane');
- const active=!!shell?.isPracticeOpen?.()||!!quiz&&quiz.style.display!=='none';
+ const active=!!quiz&&quiz.style.display!=='none';
  document.body.classList.toggle('tp-practice-active',active);
 }
 function boot(){
@@ -29,7 +27,6 @@ function boot(){
  const quiz=document.getElementById('assignedQuizPane');
  if(quiz)new MutationObserver(sync).observe(quiz,{attributes:true,attributeFilter:['style']});
  window.addEventListener('popstate',()=>setTimeout(sync,0));
- window.addEventListener('testprep:practice-left',()=>setTimeout(sync,0));
  document.addEventListener('click',()=>setTimeout(sync,0),true);
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
