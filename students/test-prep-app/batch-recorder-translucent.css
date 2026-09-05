@@ -1,0 +1,11 @@
+#tpBatchRecorder37 {
+  background: rgba(24, 39, 46, 0.58) !important;
+  border-color: rgba(255,255,255,0.22) !important;
+  box-shadow: 0 8px 28px rgba(0,0,0,0.14) !important;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+#tpBatchRecorder37 .tpbr-grid > div {
+  background: rgba(255,255,255,0.09) !important;
+}
