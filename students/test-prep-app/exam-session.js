@@ -14,23 +14,31 @@ function home(){return $('#assignmentHome')}
 function quiz(){return $('#assignedQuizPane')}
 function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function sectionLabel(q){return({vocab_test:'어휘',communication:'Communication',grammar:'Grammar',reading:'Reading',constructed_response:'서술형'})[String(q?.section||'').toLowerCase()]||String(q?.section||'')}
+function setText(el,value){if(el&&el.textContent!==value)el.textContent=value}
 
 function ensureView(){const h=home(),q=quiz();if(h)h.style.display='none';if(q)q.style.display='block';document.querySelector('.app')?.classList.add('tp-exam45-active')}
 function ensureBack(){const q=quiz();if(!q)return null;let row=$('#assignedBackRow');if(!row){row=document.createElement('div');row.id='assignedBackRow';row.className='quiz-top-back';q.insertBefore(row,q.firstChild)}return row}
+function ensureBackParts(row){
+ let back=row.querySelector('.back-assign'),context=row.querySelector('.quiz-context');
+ if(!back){back=document.createElement('button');back.type='button';back.className='back-assign';row.insertBefore(back,row.firstChild)}
+ if(!context){context=document.createElement('span');context.className='quiz-context';back.insertAdjacentElement('afterend',context)}
+ return{back,context};
+}
 function decorate(){
  if(!active)return;const item=active.queue[active.index],total=active.queue.length,pos=Math.min(total,active.index+1),row=ensureBack();
  if(row){
-  const phase=active.correction?'오답 복습':'모의고사';
-  row.innerHTML=`<button class="back-assign">← ${phase} 종료</button><span class="quiz-context">${esc(active.plan.book_label||'')} · ${active.scope==='all'?'전체 범위':esc(active.lesson||'')} · ${item?esc(item.lesson):''} ${item?`· ${esc(sectionLabel(item.question))}`:''}</span>`;
-  row.querySelector('button').onclick=e=>{e.preventDefault();exit(true)};
+  const {back,context}=ensureBackParts(row),phase=active.correction?'오답 복습':'모의고사';
+  setText(back,`← ${phase} 종료`);
+  setText(context,`${active.plan.book_label||''} · ${active.scope==='all'?'전체 범위':active.lesson||''} · ${item?item.lesson:''} ${item?`· ${sectionLabel(item.question)}`:''}`);
+  back.onclick=e=>{e.preventDefault();exit(true)};
  }
- const qnum=$('#card .qnum');if(qnum)qnum.textContent=`${pos} / ${total}`;
- const vcount=$('#testPrepVocabTestPractice .vtu-count');if(vcount)vcount.textContent=`${pos} / ${total}`;
- const b=bar();if(b)b.style.width=`${Math.max(0,Math.min(100,(active.index/Math.max(1,total))*100))}%`;
- const vb=$('#testPrepVocabTestPractice .vtu-progress i');if(vb)vb.style.width=`${Math.max(0,Math.min(100,(active.index/Math.max(1,total))*100))}%`;
+ const qnum=$('#card .qnum');if(qnum)setText(qnum,`${pos} / ${total}`);
+ const vcount=$('#testPrepVocabTestPractice .vtu-count');if(vcount)setText(vcount,`${pos} / ${total}`);
+ const pct=Math.max(0,Math.min(100,(active.index/Math.max(1,total))*100));const b=bar();if(b&&b.style.width!==`${pct}%`)b.style.width=`${pct}%`;
+ const vb=$('#testPrepVocabTestPractice .vtu-progress i');if(vb&&vb.style.width!==`${pct}%`)vb.style.width=`${pct}%`;
  window.WillenaExamControls?.decorate?.();
 }
-function startDecorator(){stopDecorator();const root=quiz()||document.body;decorator=new MutationObserver(()=>queueMicrotask(decorate));decorator.observe(root,{childList:true,subtree:true});decorate()}
+function startDecorator(){stopDecorator();const root=quiz()||document.body;let queued=false;decorator=new MutationObserver(()=>{if(queued)return;queued=true;queueMicrotask(()=>{queued=false;decorate()})});decorator.observe(root,{childList:true,subtree:true});decorate()}
 function stopDecorator(){decorator?.disconnect?.();decorator=null}
 function showLoading(text='모의고사를 준비하는 중...'){ensureView();const c=card();if(c)c.innerHTML=`<div class="loading">${esc(text)}</div>`;if(bar())bar().style.width='0';ensureBack()}
 function pushState(scope,planId,lesson){history.pushState({tp:'practice',skill:'exam45',scope,planId:String(planId),lesson:lesson||null,returnTo:scope==='all'?'home':'lesson'},'',location.href)}
@@ -56,9 +64,7 @@ async function runCurrent(runId){
 
 function showRuntimeError(item,e){const c=card();if(!c)return;c.innerHTML=`<div class="empty"><b>이 문제를 실행하지 못했습니다.</b><br><small>${esc(item?.question?.question_type||'unknown')} · ${esc(e?.message||e)}</small><div class="actions" style="margin-top:16px"><button class="secondary" id="exam45Retry">다시 시도</button><button class="secondary" id="exam45Exit">모의고사 종료</button></div></div>`;$('#exam45Retry')?.addEventListener('click',()=>runCurrent(active?.serial));$('#exam45Exit')?.addEventListener('click',()=>exit(true));decorate()}
 
-function itemForResult(r){
- return active?.manifest?.items?.find(i=>String(i.question?.id)===String(r.question?.id||r.questionId)&&String(i.lesson)===String(r.lesson))||{position:r.manifestPosition||0,lesson:r.lesson||'',unitId:r.question?.__unitId||'',engine:runtime().engineFor(r.question),question:r.question};
-}
+function itemForResult(r){return active?.manifest?.items?.find(i=>String(i.question?.id)===String(r.question?.id||r.questionId)&&String(i.lesson)===String(r.lesson))||{position:r.manifestPosition||0,lesson:r.lesson||'',unitId:r.question?.__unitId||'',engine:runtime().engineFor(r.question),question:r.question}}
 function correctionItems(results){return(results||[]).filter(r=>!r.correct).map(itemForResult).filter(x=>x?.question)}
 function originalStats(){const rows=active?.firstPassResults||active?.results||[],total=rows.length,correct=rows.filter(r=>r.correct).length;return{total,correct,wrong:Math.max(0,total-correct),pct:total?Math.round(correct/total*100):0}}
 
@@ -67,7 +73,6 @@ function finishPhase(){
  if(!active.correction){active.firstPassResults=active.results.slice();renderFirstPassResult();return}
  const remaining=correctionItems(active.results);if(remaining.length){renderCorrectionRetry(remaining.length);return}renderCorrectionComplete();
 }
-
 function renderFirstPassResult(){
  if(!active)return;const stats=originalStats(),wrongItems=correctionItems(active.firstPassResults),c=card(),b=bar();if(b)b.style.width='100%';
  if(c)c.innerHTML=`<div class="result exam45-result"><div class="score">${stats.correct}/${stats.total}</div><h2>모의고사 완료</h2><p>정답률 ${stats.pct}% · 오답 ${stats.wrong}개</p><div class="actions">${wrongItems.length?'<button class="primary" id="exam45Corrections">오답 복습 시작</button>':'<button class="primary" id="exam45Done">완료</button>'}</div></div>`;
