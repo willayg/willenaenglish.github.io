@@ -18,10 +18,36 @@ function spellingPattern(value){let wordStart=true;return [...String(value||'')]
 function isChoiceMode(q){return['single','single_choice','single_select','multi_select'].includes(norm(q?.answer_mode))}
 function isVocabText(q){const s=norm(q?.__sourceSection||q?.section);return norm(q?.answer_mode)==='text'&&(s==='vocabulary'||s==='vocab_test')}
 function singleWordishAnswer(q){const a=answerList(q);if(a.length!==1)return'';const v=a[0];if(v.length>40||/[.!?]\s*$/.test(v))return'';return /[A-Za-z]/.test(v)?v:''}
-function normalizeChoiceContext(q){if(!isChoiceMode(q)||!q?.context||typeof q.context!=='object'||Array.isArray(q.context))return q;const c=q.context;let context=c,changed=false;
- if(typeof c.summary==='string'&&c.summary.trim()&&!c.sentence){context={...context,sentence:c.summary};changed=true}
- if(c.segments&&typeof c.segments==='object'&&!Array.isArray(c.segments)&&!c.items&&!c.dialogue_start&&!c.passage_start){const items=Object.entries(c.segments).map(([k,v])=>{const s=String(v??'').trim();return /^\s*(?:\([A-D]\)|[A-D][.)])/i.test(s)?s:`(${k}) ${s}`}).filter(Boolean);if(items.length){context={...context,items};changed=true}}
- return changed?{...q,context,metadata:{...(q.metadata||{}),runtime_context_normalized:true}}:q}
+function valueList(v){
+ if(Array.isArray(v))return v.map(x=>typeof x==='string'?x:JSON.stringify(x)).filter(Boolean);
+ if(v&&typeof v==='object')return Object.entries(v).map(([k,x])=>`${k} ${typeof x==='string'?x:JSON.stringify(x)}`);
+ return[]
+}
+function normalizeChoiceContext(q){
+ if(!isChoiceMode(q)||!q?.context||typeof q.context!=='object'||Array.isArray(q.context))return q;
+ const c=q.context;let context=c,changed=false;
+ const set=(key,value)=>{if(value==null||value===''||context[key]!=null)return;context={...context,[key]:value};changed=true};
+ if(typeof c.summary==='string'&&c.summary.trim())set('sentence',c.summary);
+ if(typeof c.insert_sentence==='string'&&c.insert_sentence.trim())set('given_sentence',c.insert_sentence);
+ if(typeof c.sentence_to_insert==='string'&&c.sentence_to_insert.trim())set('given_sentence',c.sentence_to_insert);
+ if(typeof c.source_dialogue==='string'&&c.source_dialogue.trim())set('dialogue',c.source_dialogue);
+ if(typeof c.question==='string'&&c.question.trim()&&!c.sentence&&!c.dialogue&&!c.passage)set('sentence',c.question);
+ if(typeof c.given==='string'&&c.given.trim()&&!c.sentence&&!c.dialogue&&!c.passage)set('sentence',c.given);
+ if(typeof c.initial==='string'&&c.initial.trim())set('pattern',c.initial);
+ if(Array.isArray(c.sentences)&&c.sentences.length&&!c.items)set('items',c.sentences);
+ if(Array.isArray(c.view)&&c.view.length&&!c.items)set('items',c.view);
+ if(Array.isArray(c.words)&&c.words.length&&!c.bank)set('bank',c.words);
+ if(Array.isArray(c.provided_words)&&c.provided_words.length&&!c.bank)set('bank',c.provided_words);
+ if(Array.isArray(c.word_bank)&&c.word_bank.length&&!c.bank)set('bank',c.word_bank);
+ if(c.definitions&&!c.items){const a=valueList(c.definitions);if(a.length)set('items',a)}
+ if((c.sentence1||c.sentence2)&&!c.items)set('items',[c.sentence1,c.sentence2].filter(Boolean));
+ if((c.A_base||c.B_base)&&!c.items)set('items',[c.A_base?`(A) ${c.A_base}`:'',c.B_base?`(B) ${c.B_base}`:''].filter(Boolean));
+ if(c.segments&&typeof c.segments==='object'&&!Array.isArray(c.segments)&&!c.items&&!c.dialogue_start&&!c.passage_start){
+  const items=Object.entries(c.segments).map(([k,v])=>{const s=String(v??'').trim();return /^\s*(?:\([A-D]\)|[A-D][.)])/i.test(s)?s:`(${k}) ${s}`}).filter(Boolean);
+  if(items.length)set('items',items)
+ }
+ return changed?{...q,context,metadata:{...(q.metadata||{}),runtime_context_normalized:true}}:q
+}
 function addSpellingCue(q){if(!isVocabText(q)||!q?.context||typeof q.context!=='object'||Array.isArray(q.context)||q.context.pattern)return q;const answer=singleWordishAnswer(q);if(!answer)return q;return{...q,context:{...q.context,pattern:spellingPattern(answer)},metadata:{...(q.metadata||{}),runtime_spelling_pattern:true}}}
 function repairBlankQuestion(q){
  if(!q||typeof q!=='object')return q;
@@ -73,5 +99,5 @@ register({id:'choice',canHandle:q=>Array.isArray(q?.choices)&&q.choices.length>0
 register({id:'vocab',canHandle:q=>norm(q?.answer_mode)!=='text'&&(norm(q?.section)==='vocab_test'||/^vocab_/i.test(String(q?.question_type||'')))&&typeof window.WillenaVocabTestPractice?.runQuestion==='function',async start(q,ctx){const api=await waitFor(()=>window.WillenaVocabTestPractice,'Vocabulary test');if(typeof api.runQuestion!=='function')throw new Error('Vocabulary engine has no native single-question contract.');return api.runQuestion(q,{quiz:document.getElementById('assignedQuizPane'),lesson:ctx.lesson,runtime:true})}});
 
 window.WillenaQuestionRuntime={register,resolve,supports,engineFor,run,skip,cancel,trackingPractice,repairBlankQuestion,prepareQuestion,get current(){return active?{question:active.question,context:active.ctx,engine:active.handler.id}:null},get handlers(){return handlers.map(x=>x.id)}};
-console.log('[REV46h] QuestionRuntime display normalization + spelling cues ready',handlers.map(x=>x.id));
+console.log('[REV46i] QuestionRuntime context-shape coverage ready',handlers.map(x=>x.id));
 })();
