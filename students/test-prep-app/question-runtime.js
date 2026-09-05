@@ -11,20 +11,33 @@ async function waitFor(fn,label){for(let i=0;i<120;i++){const v=fn();if(v)return
 function qSection(q){return String(q?.__sourceSection||q?.section||'unknown').toLowerCase()}
 function trackingPractice(q,payloadType){const section=norm(q?.section);if(section==='vocab_test')return'vocab_test';const supplied=norm(payloadType);if(supplied&&supplied!=='mock')return supplied;const underlying=norm(q?.__sourceSection||q?.section);return underlying==='vocabulary'?'vocab_test':(underlying||'reading')}
 function metadataFor(ctx,q){return{exam_runtime:true,exam_session_id:ctx.examSessionId||null,exam_scope:ctx.scope||null,exam_position:Number(ctx.position)||null,exam_total:Number(ctx.total)||null,exam_correction:!!ctx.correction,underlying_section:qSection(q),exam_lesson:ctx.lesson||null}}
+function hasBlank(v){return /_{3,}|\([A-D]\)|[ⓐⓑⓒⓓ]|<\s*blank\s*>/i.test(String(v||''))}
+function choiceText(q){const raw=Array.isArray(q?.correct_answer)?q.correct_answer[0]:q?.correct_answer,n=Number(raw)-1;if(!Array.isArray(q?.choices)||!Number.isInteger(n)||n<0||n>=q.choices.length)return'';const x=q.choices[n];return typeof x==='string'?x:String(x?.text??x?.label??'').trim()}
+function repairBlankQuestion(q){
+ if(!q||typeof q!=='object')return q;
+ const qt=String(q.question_type||''),prompt=String(q.prompt_text||'');
+ if(!/blank/i.test(qt)&&!/빈칸/.test(prompt))return q;
+ const c=q.context&&typeof q.context==='object'&&!Array.isArray(q.context)?q.context:null;if(!c)return q;
+ if(Object.values(c).some(v=>typeof v==='string'&&hasBlank(v)))return q;
+ const answer=choiceText(q);if(!answer)return q;
+ const keys=['passage','dialogue','sentence','text','source_passage','source','source_sentence','example'];
+ for(const key of keys){const src=c[key];if(typeof src!=='string'||!src.includes(answer))continue;const marker=/\(A\)/.test(prompt)?'(A) ________':'________';const context={...c,[key]:src.replace(answer,marker)};return{...q,context,metadata:{...(q.metadata||{}),runtime_blank_repaired:true}}}
+ return q
+}
 
 function register(handler){if(!handler?.id||typeof handler.canHandle!=='function'||typeof handler.start!=='function')throw new Error('Invalid question runtime handler.');const i=handlers.findIndex(x=>x.id===handler.id);if(i>=0)handlers.splice(i,1);handlers.push(handler);return handler}
 function resolve(question){return handlers.find(h=>{try{return h.canHandle(question)}catch(_){return false}})||null}
 function supports(question){return !!resolve(question)}
 function engineFor(question){return resolve(question)?.id||null}
 
-async function run(question,ctx={}){
+async function run(sourceQuestion,ctx={}){
  if(active)throw new Error('A question is already running.');
- const handler=resolve(question);if(!handler)throw new Error(`Unsupported question type: ${question?.question_type||question?.answer_mode||'unknown'}`);
+ const question=repairBlankQuestion(sourceQuestion),handler=resolve(question);if(!handler)throw new Error(`Unsupported question type: ${question?.question_type||question?.answer_mode||'unknown'}`);
  const auth=await waitFor(()=>window.WillenaTestPrepAuth,'Tracking');
  const originalComplete=auth.completeSession.bind(auth),originalRecord=auth.recordAttempt.bind(auth);
  let resolvePromise,rejectPromise,done=false,lastAttempt=null;
  const promise=new Promise((resolve,reject)=>{resolvePromise=resolve;rejectPromise=reject});
- const token={question,ctx,handler,originalComplete,originalRecord,promise,get done(){return done}};active=token;
+ const token={question,sourceQuestion,ctx,handler,originalComplete,originalRecord,promise,get done(){return done}};active=token;
  function restore(){if(auth.completeSession===completeWrapper)auth.completeSession=originalComplete;if(auth.recordAttempt===recordWrapper)auth.recordAttempt=originalRecord;if(active===token)active=null}
  function resultFrom(counts={},extra={}){const total=Math.max(1,Number(counts.questionCount)||1),correctCount=Math.max(0,Number(counts.correctCount)||0),wrongIds=Array.isArray(counts.wrongIds)?counts.wrongIds.map(String):[];const attempt=lastAttempt||{};const correct=typeof attempt.is_correct==='boolean'?attempt.is_correct:(correctCount>=total&&!wrongIds.includes(String(question.id)));return{questionId:String(question.id||attempt.question_id||''),engine:handler.id,correct,skipped:!!extra.skipped||attempt?.metadata?.skipped===true,selectedAnswer:attempt.selected_answer??null,correctAnswer:attempt.correct_answer??question.correct_answer??question.correct_text??null,responseTimeMs:Number(attempt.response_time_ms)||0,lesson:ctx.lesson||null,section:qSection(question),questionType:question.question_type||null,...extra}}
  function finish(counts,extra={}){if(done)return;done=true;const result=resultFrom(counts,extra);restore();emit('complete',{question,result,context:ctx});resolvePromise(result)}
@@ -48,6 +61,6 @@ register({id:'text',canHandle:q=>norm(q?.answer_mode)==='text',async start(q){co
 register({id:'choice',canHandle:q=>Array.isArray(q?.choices)&&q.choices.length>0&&['single','single_choice','single_select','multi_select'].includes(norm(q?.answer_mode)),async start(q){const engine=await waitFor(()=>window.WillenaTestPrepQuestionEngine,'Choice question engine');const item=norm(q?.answer_mode)==='single'?{...q,answer_mode:'single_select'}:q;if(!engine.canHandle?.(item))throw new Error(`Choice engine rejected ${q?.question_type||'question'}`);return engine.runQuestion(item,{runtime:true})}});
 register({id:'vocab',canHandle:q=>norm(q?.answer_mode)!=='text'&&(norm(q?.section)==='vocab_test'||/^vocab_/i.test(String(q?.question_type||'')))&&typeof window.WillenaVocabTestPractice?.runQuestion==='function',async start(q,ctx){const api=await waitFor(()=>window.WillenaVocabTestPractice,'Vocabulary test');if(typeof api.runQuestion!=='function')throw new Error('Vocabulary engine has no native single-question contract.');return api.runQuestion(q,{quiz:document.getElementById('assignedQuizPane'),lesson:ctx.lesson,runtime:true})}});
 
-window.WillenaQuestionRuntime={register,resolve,supports,engineFor,run,skip,cancel,trackingPractice,get current(){return active?{question:active.question,context:active.ctx,engine:active.handler.id}:null},get handlers(){return handlers.map(x=>x.id)}};
-console.log('[REV46e] QuestionRuntime canonical tracking ready',handlers.map(x=>x.id));
+window.WillenaQuestionRuntime={register,resolve,supports,engineFor,run,skip,cancel,trackingPractice,repairBlankQuestion,get current(){return active?{question:active.question,context:active.ctx,engine:active.handler.id}:null},get handlers(){return handlers.map(x=>x.id)}};
+console.log('[REV46f] QuestionRuntime blank repair + canonical tracking ready',handlers.map(x=>x.id));
 })();
