@@ -45,16 +45,16 @@ register({
  async start(q){const engine=await waitFor(()=>window.WillenaTextQuestionEngine,'Text question engine');if(!engine.canHandle?.(q))throw new Error(`Text engine rejected ${q?.question_type||'question'}`);return engine.runQuestion(q)}
 });
 register({
- id:'vocab',
- canHandle:q=>norm(q?.answer_mode)!=='text'&&(norm(q?.section)==='vocab_test'||/^vocab_/i.test(String(q?.question_type||''))),
- async start(q,ctx){const api=await waitFor(()=>window.WillenaVocabTestPractice,'Vocabulary test');if(typeof api.runQuestion==='function')return api.runQuestion(q,{quiz:document.getElementById('assignedQuizPane'),lesson:ctx.lesson});const shell=await waitFor(()=>window.WillenaAssignedTestPrep,'Assigned Test Prep');const ids=[String(q.id||''),String(api.targetKey?.(q)||'')].filter(Boolean);return shell.startSelection(ctx.planId,ctx.lesson,'vocab_test',{reviewMode:true,reviewIds:ids})}
+ id:'choice',
+ canHandle:q=>Array.isArray(q?.choices)&&q.choices.length>0&&['single','single_choice','single_select','multi_select'].includes(norm(q?.answer_mode)),
+ async start(q){const engine=await waitFor(()=>window.WillenaTestPrepQuestionEngine,'Choice question engine');const item=norm(q?.answer_mode)==='single'?{...q,answer_mode:'single_select'}:q;if(!engine.canHandle?.(item))throw new Error(`Choice engine rejected ${q?.question_type||'question'}`);return engine.runQuestion(item)}
 });
 register({
- id:'choice',
- canHandle:q=>Array.isArray(q?.choices)&&q.choices.length>0&&['single_choice','single_select','multi_select'].includes(norm(q?.answer_mode)),
- async start(q){const engine=await waitFor(()=>window.WillenaTestPrepQuestionEngine,'Choice question engine');if(!engine.canHandle?.(q))throw new Error(`Choice engine rejected ${q?.question_type||'question'}`);return engine.runQuestion(q)}
+ id:'vocab',
+ canHandle:q=>norm(q?.answer_mode)!=='text'&&(norm(q?.section)==='vocab_test'||/^vocab_/i.test(String(q?.question_type||'')))&&typeof window.WillenaVocabTestPractice?.runQuestion==='function',
+ async start(q,ctx){const api=await waitFor(()=>window.WillenaVocabTestPractice,'Vocabulary test');if(typeof api.runQuestion!=='function')throw new Error('Vocabulary engine has no native single-question contract.');return api.runQuestion(q,{quiz:document.getElementById('assignedQuizPane'),lesson:ctx.lesson})}
 });
 
 window.WillenaQuestionRuntime={register,resolve,supports,engineFor,run,skip,cancel,get current(){return active?{question:active.question,context:active.ctx,engine:active.handler.id}:null},get handlers(){return handlers.map(x=>x.id)}};
-console.log('[REV45g] QuestionRuntime handlers ready',handlers.map(x=>x.id));
+console.log('[REV45h] QuestionRuntime handlers ready',handlers.map(x=>x.id));
 })();
