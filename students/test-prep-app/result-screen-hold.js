@@ -1,7 +1,7 @@
 (function(){
 'use strict';
 const $=(s,r=document)=>r.querySelector(s);
-let holding=false,lastSelection=null,wrongIds=new Set(),sessionSeen=false;
+let holding=false,lastSelection=null,wrongIds=new Set(),sessionSeen=false,userReleased=false;
 
 function snapshotSelection(){
  const s=window.WillenaAssignedTestPrep?.selection;
@@ -10,12 +10,15 @@ function snapshotSelection(){
 function resultVisible(){const card=$('#card');return !!card?.querySelector('.result,.tp-review-result')}
 function keepPracticeVisible(){
  if(!holding||!resultVisible())return;
- // Result hold is only allowed while navigation still says we are in practice.
- // An intentional browser/app Back must win and must never be rewritten to practice.
- if(history.state?.tp!=='practice'){holding=false;return;}
+ if(userReleased){holding=false;return;}
  const home=$('#assignmentHome'),quiz=$('#assignedQuizPane');
  if(home)home.style.display='none';
  if(quiz)quiz.style.display='block';
+ const s=lastSelection||window.WillenaAssignedTestPrep?.selection;
+ if(history.state?.tp!=='practice'&&s){
+  const cur=history.state||{};
+  history.replaceState({...cur,tp:'practice',planId:s.plan?.id||cur.planId||null,lesson:s.lesson||cur.lesson||null,skill:s.section||cur.skill||null,returnTo:cur.returnTo||'lesson',review:!!s.reviewMode},'',location.href);
+ }
  addSeosulRetry();
 }
 function addSeosulRetry(){
@@ -29,7 +32,7 @@ function addSeosulRetry(){
  b.type='button';b.className='primary tp-result-retry-wrong';b.textContent='오답 다시 풀기';
  b.onclick=async()=>{
   const snap=lastSelection||window.WillenaAssignedTestPrep?.selection;if(!snap)return;
-  holding=false;
+  userReleased=true;holding=false;
   const live=window.WillenaAssignedTestPrep?.selection;
   if(live){live.reviewMode=true;live.reviewIds=[...wrongIds];}
   const quiz=$('#assignedQuizPane'),home=$('#assignmentHome');if(home)home.style.display='none';if(quiz)quiz.style.display='block';
@@ -38,16 +41,16 @@ function addSeosulRetry(){
  actions.appendChild(b);
 }
 function beginHold(){
- if(!resultVisible()||history.state?.tp!=='practice')return;
+ if(!resultVisible()||userReleased)return;
  snapshotSelection();
  holding=true;
  keepPracticeVisible();
 }
-function releaseIfQuestion(){if(holding&&!resultVisible()){holding=false}}
+function releaseIfQuestion(){if(holding&&!resultVisible())holding=false}
 
 window.addEventListener('testprep:tracking',e=>{
  const d=e.detail||{};
- if(d.type==='session_started'){wrongIds.clear();sessionSeen=true;snapshotSelection();return;}
+ if(d.type==='session_started'){wrongIds.clear();sessionSeen=true;userReleased=false;snapshotSelection();return;}
  if(d.type==='attempt_saved'){
   snapshotSelection();
   if(d.is_correct===false&&d.question_id)wrongIds.add(String(d.question_id));
@@ -59,12 +62,12 @@ window.addEventListener('testprep:tracking',e=>{
 
 document.addEventListener('click',e=>{
  const t=e.target instanceof Element?e.target:null;if(!t)return;
- if(t.closest('.back-assign,.tp-back')){holding=false;return;}
- if(t.closest('#retry,#again,#authoredAgain,#seosulAgain,.tp-result-retry-wrong')){holding=false;return;}
+ if(t.closest('.back-assign,.tp-back')){userReleased=true;holding=false;return;}
+ if(t.closest('#retry,#again,#authoredAgain,#seosulAgain,.tp-result-retry-wrong,.tp-review-next')){userReleased=true;holding=false;return;}
 },true);
 
 window.addEventListener('popstate',()=>{
- if(history.state?.tp!=='practice')holding=false;
+ if(holding&&resultVisible()){userReleased=true;holding=false;}
 });
 
 function boot(){
