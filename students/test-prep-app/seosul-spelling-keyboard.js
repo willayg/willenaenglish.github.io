@@ -4,7 +4,14 @@ let active=null,hardware=false,caps=false,repeatDelay=null,repeatTimer=null,repe
 const $=(s,r=document)=>r.querySelector(s),$$=(s,r=document)=>[...r.querySelectorAll(s)];
 const rows=()=>[['q','w','e','r','t','y','u','i','o','p'],['a','s','d','f','g','h','j','k','l'],['z','x','c','v','b','n','m']];
 function isEnglishQuestion(){const m=$('#seosulModel');if(!m)return false;const t=String(m.textContent||'').replace('모범 답안','').trim();return !!t&&/[A-Za-z]/.test(t)&&!/[가-힣]/.test(t)}
-function candidates(){const vocab=$('#testPrepVocabPractice #vpSpell'),vocabTest=$('#testPrepVocabTestUpgrade #vtuInput,#testPrepVocabTestPractice #vtuInput,#vtuInput');if(vocab&&!vocab.disabled&&vocab.offsetParent!==null)return[vocab];if(vocabTest&&!vocabTest.disabled&&vocabTest.offsetParent!==null)return[vocabTest];if(!isEnglishQuestion())return[];const split=$$('#card .seosul-split-input').filter(x=>!x.disabled);if(split.length)return split;const ta=$('#card #seosulAnswer');return ta&&!ta.disabled&&ta.offsetParent!==null?[ta]:[]}
+function isEnglishTqt(){const m=$('#tqtModel');return !!m&&/[A-Za-z]/.test(String(m.textContent||''))}
+function visible(el){return !!el&&!el.disabled&&el.offsetParent!==null}
+function candidates(){
+ const vocab=$('#testPrepVocabPractice #vpSpell'),vocabTest=$('#testPrepVocabTestUpgrade #vtuInput,#testPrepVocabTestPractice #vtuInput,#vtuInput');
+ if(visible(vocab))return[vocab];if(visible(vocabTest))return[vocabTest];
+ if(isEnglishTqt()){const parts=$$('#card .tqt-input').filter(visible);if(parts.length)return parts;const tqt=$('#card #tqtAnswer');if(visible(tqt))return[tqt]}
+ if(!isEnglishQuestion())return[];const split=$$('#card .seosul-split-input').filter(visible);if(split.length)return split;const ta=$('#card #seosulAnswer');return visible(ta)?[ta]:[]
+}
 function kb(){return $('#tpSeosulAppKeyboard')}
 function lock(el){if(!el)return;el.readOnly=false;el.removeAttribute('readonly');el.setAttribute('inputmode','none');el.setAttribute('autocomplete','off');el.setAttribute('autocorrect','off');el.setAttribute('autocapitalize','off');el.setAttribute('spellcheck','false');el.classList.add('tp-seosul-caret')}
 function range(){if(!active)return{start:0,end:0};const len=(active.value||'').length;let start=typeof active.selectionStart==='number'?active.selectionStart:len,end=typeof active.selectionEnd==='number'?active.selectionEnd:start;start=Math.max(0,Math.min(len,start));end=Math.max(start,Math.min(len,end));return{start,end}}
@@ -14,7 +21,8 @@ function append(ch){replaceSelection(caps?ch.toUpperCase():ch.toLowerCase())}
 function backspace(){if(!active||active.disabled)return;const v=active.value||'',{start,end}=range();if(start!==end){active.value=v.slice(0,start)+v.slice(end);active.dispatchEvent(new Event('input',{bubbles:true}));restoreCaret(start);return}if(start<=0)return;active.value=v.slice(0,start-1)+v.slice(end);active.dispatchEvent(new Event('input',{bubbles:true}));restoreCaret(start-1)}
 function stopRepeat(){if(repeatDelay){clearTimeout(repeatDelay);repeatDelay=null}if(repeatTimer){clearInterval(repeatTimer);repeatTimer=null}if(repeatFastTimer){clearTimeout(repeatFastTimer);repeatFastTimer=null}}
 function startRepeat(){stopRepeat();backspace();repeatDelay=setTimeout(()=>{repeatTimer=setInterval(backspace,50);repeatFastTimer=setTimeout(()=>{if(repeatTimer){clearInterval(repeatTimer);repeatTimer=setInterval(backspace,30)}},600)},240)}
-function submit(){const b=active?.id==='vpSpell'?$('#testPrepVocabPractice #vpNext'):active?.id==='vtuInput'?$('#vtuNext'):$('#seosulCheck');if(b&&!b.disabled)b.click()}
+function isTqt(el=active){return !!el&&(el.id==='tqtAnswer'||el.classList?.contains('tqt-input'))}
+function submit(){const b=active?.id==='vpSpell'?$('#testPrepVocabPractice #vpNext'):active?.id==='vtuInput'?$('#vtuNext'):isTqt()?$('#tqtCheck'):$('#seosulCheck');if(b&&!b.disabled){b.click();return true}return false}
 function renderCaps(){const k=kb();if(!k)return;k.querySelectorAll('[data-key].letter').forEach(b=>b.textContent=caps?b.dataset.key.toUpperCase():b.dataset.key.toLowerCase());const shift=k.querySelector('[data-key="shift"]');if(shift){shift.classList.toggle('on',caps);shift.setAttribute('aria-pressed',String(caps));shift.textContent='⇧'}}
 function toggleCaps(){caps=!caps;renderCaps()}
 function haptic(key){setTimeout(()=>{try{if(!navigator.vibrate)return;navigator.vibrate((key==='enter'||key==='backspace')?7:3)}catch(_){}},0)}
@@ -63,12 +71,13 @@ function ensure(){addStyle();const inputs=candidates();if(!inputs.length){cleanu
  k.addEventListener('pointerdown',e=>{const b=e.target.closest('[data-key]');if(!b)return;const key=b.dataset.key;e.preventDefault();b.classList.add('is-pressed');haptic(key);if(key==='backspace'){startRepeat();b.dataset.downHandled='1'}else if(key==='space'){replaceSelection(' ');b.dataset.downHandled='1'}else if(key==='shift'){toggleCaps();b.dataset.downHandled='1'}else if(b.classList.contains('letter')){append(key);b.dataset.downHandled='1'}});
  const endPress=e=>{stopRepeat();const b=e.target.closest?.('[data-key]');if(b)b.classList.remove('is-pressed')};
  k.addEventListener('pointerup',endPress);k.addEventListener('pointercancel',endPress);k.addEventListener('pointerleave',endPress,true);
- k.addEventListener('click',e=>{const b=e.target.closest('[data-key]');if(!b)return;if(b.dataset.downHandled==='1'){delete b.dataset.downHandled;e.preventDefault();e.stopImmediatePropagation();return}const key=b.dataset.key;if(key==='enter'){if(active?.id==='vpSpell'||active?.id==='vtuInput')submit();hide()}});
+ k.addEventListener('click',e=>{const b=e.target.closest('[data-key]');if(!b)return;if(b.dataset.downHandled==='1'){delete b.dataset.downHandled;e.preventDefault();e.stopImmediatePropagation();return}if(b.dataset.key==='enter'&&submit())hide()});
  k.querySelector('.vp-kb-hide').onclick=hide;
  hide();
 }
-function chooseTarget(e){const el=e.target?.closest?.('#card .seosul-split-input,#card #seosulAnswer,#testPrepVocabPractice #vpSpell,#vtuInput');if(!el||!candidates().includes(el))return;active=el;lock(el);ensure();setTimeout(()=>{try{el.focus({preventScroll:true})}catch(_){el.focus()}show()},0)}
-function syncFocusedTarget(e){const el=e.target;if(!el||!candidates().includes(el))return;active=el;lock(el);if(el.id==='vpSpell'||el.id==='vtuInput')show()}
+const TARGET_SELECTOR='#card .tqt-input,#card #tqtAnswer,#card .seosul-split-input,#card #seosulAnswer,#testPrepVocabPractice #vpSpell,#vtuInput';
+function chooseTarget(e){const el=e.target?.closest?.(TARGET_SELECTOR);if(!el||!candidates().includes(el))return;active=el;lock(el);ensure();setTimeout(()=>{try{el.focus({preventScroll:true})}catch(_){el.focus()}show()},0)}
+function syncFocusedTarget(e){const el=e.target;if(!el||!candidates().includes(el))return;active=el;lock(el);if(el.id==='vpSpell'||el.id==='vtuInput'||isTqt(el))show()}
 function hardwareKey(e){const inputs=candidates();if(!inputs.length)return;if(e.ctrlKey||e.metaKey||e.altKey)return;const t=e.target;if(t&&/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName)&&!inputs.includes(t))return;if(inputs.includes(t))active=t;if(!active)active=inputs[0];let handled=true;if(/^[a-zA-Z]$/.test(e.key))replaceSelection(e.key);else if(e.key==='Backspace')backspace();else if(e.key===' ')replaceSelection(' ');else if(e.key==='Enter')submit();else handled=false;if(!handled)return;e.preventDefault();hardware=true;hide()}
 function cleanup(){if(candidates().length)return;stopRepeat();$('#tpSeosulAppKeyboard')?.remove();document.body.classList.remove('tp-seosul-kb-open');active=null;caps=false}
 function inspect(){ensure();cleanup()}
