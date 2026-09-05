@@ -13,6 +13,16 @@ function trackingPractice(q,payloadType){const section=norm(q?.section);if(secti
 function metadataFor(ctx,q){return{exam_runtime:true,exam_session_id:ctx.examSessionId||null,exam_scope:ctx.scope||null,exam_position:Number(ctx.position)||null,exam_total:Number(ctx.total)||null,exam_correction:!!ctx.correction,underlying_section:qSection(q),exam_lesson:ctx.lesson||null}}
 function hasBlank(v){return /_{3,}|\([A-D]\)|[ⓐⓑⓒⓓ]|<\s*blank\s*>/i.test(String(v||''))}
 function choiceText(q){const raw=Array.isArray(q?.correct_answer)?q.correct_answer[0]:q?.correct_answer,n=Number(raw)-1;if(!Array.isArray(q?.choices)||!Number.isInteger(n)||n<0||n>=q.choices.length)return'';const x=q.choices[n];return typeof x==='string'?x:String(x?.text??x?.label??'').trim()}
+function answerList(q){const a=Array.isArray(q?.correct_answer)?q.correct_answer:[q?.correct_answer];return a.filter(v=>v!=null&&String(v).trim()!=='').map(v=>String(v).trim())}
+function spellingPattern(value){let wordStart=true;return [...String(value||'')].map(ch=>{if(/[A-Za-z]/.test(ch)){const out=wordStart?ch.toLowerCase():'_';wordStart=false;return out}wordStart=/\s/.test(ch);return ch}).join(' ')}
+function isChoiceMode(q){return['single','single_choice','single_select','multi_select'].includes(norm(q?.answer_mode))}
+function isVocabText(q){const s=norm(q?.__sourceSection||q?.section);return norm(q?.answer_mode)==='text'&&(s==='vocabulary'||s==='vocab_test')}
+function singleWordishAnswer(q){const a=answerList(q);if(a.length!==1)return'';const v=a[0];if(v.length>40||/[.!?]\s*$/.test(v))return'';return /[A-Za-z]/.test(v)?v:''}
+function normalizeChoiceContext(q){if(!isChoiceMode(q)||!q?.context||typeof q.context!=='object'||Array.isArray(q.context))return q;const c=q.context;let context=c,changed=false;
+ if(typeof c.summary==='string'&&c.summary.trim()&&!c.sentence){context={...context,sentence:c.summary};changed=true}
+ if(c.segments&&typeof c.segments==='object'&&!Array.isArray(c.segments)&&!c.items&&!c.dialogue_start&&!c.passage_start){const items=Object.entries(c.segments).map(([k,v])=>{const s=String(v??'').trim();return /^\s*(?:\([A-D]\)|[A-D][.)])/i.test(s)?s:`(${k}) ${s}`}).filter(Boolean);if(items.length){context={...context,items};changed=true}}
+ return changed?{...q,context,metadata:{...(q.metadata||{}),runtime_context_normalized:true}}:q}
+function addSpellingCue(q){if(!isVocabText(q)||!q?.context||typeof q.context!=='object'||Array.isArray(q.context)||q.context.pattern)return q;const answer=singleWordishAnswer(q);if(!answer)return q;return{...q,context:{...q.context,pattern:spellingPattern(answer)},metadata:{...(q.metadata||{}),runtime_spelling_pattern:true}}}
 function repairBlankQuestion(q){
  if(!q||typeof q!=='object')return q;
  const qt=String(q.question_type||''),prompt=String(q.prompt_text||'');
@@ -24,6 +34,7 @@ function repairBlankQuestion(q){
  for(const key of keys){const src=c[key];if(typeof src!=='string'||!src.includes(answer))continue;const marker=/\(A\)/.test(prompt)?'(A) ________':'________';const context={...c,[key]:src.replace(answer,marker)};return{...q,context,metadata:{...(q.metadata||{}),runtime_blank_repaired:true}}}
  return q
 }
+function prepareQuestion(q){return repairBlankQuestion(addSpellingCue(normalizeChoiceContext(q)))}
 
 function register(handler){if(!handler?.id||typeof handler.canHandle!=='function'||typeof handler.start!=='function')throw new Error('Invalid question runtime handler.');const i=handlers.findIndex(x=>x.id===handler.id);if(i>=0)handlers.splice(i,1);handlers.push(handler);return handler}
 function resolve(question){return handlers.find(h=>{try{return h.canHandle(question)}catch(_){return false}})||null}
@@ -32,7 +43,7 @@ function engineFor(question){return resolve(question)?.id||null}
 
 async function run(sourceQuestion,ctx={}){
  if(active)throw new Error('A question is already running.');
- const question=repairBlankQuestion(sourceQuestion),handler=resolve(question);if(!handler)throw new Error(`Unsupported question type: ${question?.question_type||question?.answer_mode||'unknown'}`);
+ const question=prepareQuestion(sourceQuestion),handler=resolve(question);if(!handler)throw new Error(`Unsupported question type: ${question?.question_type||question?.answer_mode||'unknown'}`);
  const auth=await waitFor(()=>window.WillenaTestPrepAuth,'Tracking');
  const originalComplete=auth.completeSession.bind(auth),originalRecord=auth.recordAttempt.bind(auth);
  let resolvePromise,rejectPromise,done=false,lastAttempt=null;
@@ -44,7 +55,7 @@ async function run(sourceQuestion,ctx={}){
  function recordWrapper(payload){const practice=trackingPractice(question,payload?.practice_type),p={...(payload||{}),practice_type:practice,metadata:{...(payload?.metadata||{}),...metadataFor(ctx,question),underlying_practice_type:practice}};lastAttempt=p;return originalRecord(p)}
  function completeWrapper(correctCount,questionCount,wrongIds){finish({correctCount,questionCount,wrongIds});return Promise.resolve({question_runtime:true})}
  auth.recordAttempt=recordWrapper;auth.completeSession=completeWrapper;token.finish=finish;token.restore=restore;token.setAttempt=p=>{lastAttempt=p};
- try{emit('start',{question,engine:handler.id,context:ctx});await handler.start(question,ctx)}catch(e){done=true;restore();rejectPromise(e)}
+ try{emit('start',{question,engine:handler.id,context:ctx});await handler.start(question,ctx);if(handler.id==='text')document.querySelector('#card .tqt-kind')?.remove()}catch(e){done=true;restore();rejectPromise(e)}
  return promise;
 }
 
@@ -61,6 +72,6 @@ register({id:'text',canHandle:q=>norm(q?.answer_mode)==='text',async start(q){co
 register({id:'choice',canHandle:q=>Array.isArray(q?.choices)&&q.choices.length>0&&['single','single_choice','single_select','multi_select'].includes(norm(q?.answer_mode)),async start(q){const engine=await waitFor(()=>window.WillenaTestPrepQuestionEngine,'Choice question engine');const item=norm(q?.answer_mode)==='single'?{...q,answer_mode:'single_select'}:q;if(!engine.canHandle?.(item))throw new Error(`Choice engine rejected ${q?.question_type||'question'}`);return engine.runQuestion(item,{runtime:true})}});
 register({id:'vocab',canHandle:q=>norm(q?.answer_mode)!=='text'&&(norm(q?.section)==='vocab_test'||/^vocab_/i.test(String(q?.question_type||'')))&&typeof window.WillenaVocabTestPractice?.runQuestion==='function',async start(q,ctx){const api=await waitFor(()=>window.WillenaVocabTestPractice,'Vocabulary test');if(typeof api.runQuestion!=='function')throw new Error('Vocabulary engine has no native single-question contract.');return api.runQuestion(q,{quiz:document.getElementById('assignedQuizPane'),lesson:ctx.lesson,runtime:true})}});
 
-window.WillenaQuestionRuntime={register,resolve,supports,engineFor,run,skip,cancel,trackingPractice,repairBlankQuestion,get current(){return active?{question:active.question,context:active.ctx,engine:active.handler.id}:null},get handlers(){return handlers.map(x=>x.id)}};
-console.log('[REV46f] QuestionRuntime blank repair + canonical tracking ready',handlers.map(x=>x.id));
+window.WillenaQuestionRuntime={register,resolve,supports,engineFor,run,skip,cancel,trackingPractice,repairBlankQuestion,prepareQuestion,get current(){return active?{question:active.question,context:active.ctx,engine:active.handler.id}:null},get handlers(){return handlers.map(x=>x.id)}};
+console.log('[REV46h] QuestionRuntime display normalization + spelling cues ready',handlers.map(x=>x.id));
 })();
