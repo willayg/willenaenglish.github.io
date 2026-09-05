@@ -75,6 +75,7 @@ async function run(sourceQuestion,ctx={}){
  let resolvePromise,rejectPromise,done=false,lastAttempt=null;
  const promise=new Promise((resolve,reject)=>{resolvePromise=resolve;rejectPromise=reject});
  const token={question,sourceQuestion,ctx,handler,originalComplete,originalRecord,promise,get done(){return done}};active=token;
+ token.cancel=()=>{if(done)return;done=true;restore();resolvePromise({cancelled:true,questionId:String(question.id||''),engine:handler.id,lesson:ctx.lesson||null,section:qSection(question),questionType:question.question_type||null})};
  function restore(){if(auth.completeSession===completeWrapper)auth.completeSession=originalComplete;if(auth.recordAttempt===recordWrapper)auth.recordAttempt=originalRecord;if(active===token)active=null}
  function resultFrom(counts={},extra={}){const total=Math.max(1,Number(counts.questionCount)||1),correctCount=Math.max(0,Number(counts.correctCount)||0),wrongIds=Array.isArray(counts.wrongIds)?counts.wrongIds.map(String):[];const attempt=lastAttempt||{};const correct=typeof attempt.is_correct==='boolean'?attempt.is_correct:(correctCount>=total&&!wrongIds.includes(String(question.id)));return{questionId:String(question.id||attempt.question_id||''),engine:handler.id,correct,skipped:!!extra.skipped||attempt?.metadata?.skipped===true,selectedAnswer:attempt.selected_answer??null,correctAnswer:attempt.correct_answer??question.correct_answer??question.correct_text??null,responseTimeMs:Number(attempt.response_time_ms)||0,lesson:ctx.lesson||null,section:qSection(question),questionType:question.question_type||null,...extra}}
  function finish(counts,extra={}){if(done)return;done=true;const result=resultFrom(counts,extra);restore();emit('complete',{question,result,context:ctx});resolvePromise(result)}
@@ -92,12 +93,12 @@ async function skip(){
  token.setAttempt(payload);try{await Promise.resolve(token.originalRecord(payload))}catch(_){}
  token.finish({correctCount:0,questionCount:1,wrongIds:[String(q.id||'')]},{skipped:true});return true;
 }
-function cancel(){const token=active;if(!token)return;try{token.restore?.()}catch(_){}active=null;emit('cancel',{question:token.question,context:token.ctx})}
+function cancel(){const token=active;if(!token)return;try{token.cancel?.()}catch(_){try{token.restore?.()}catch(__){}}if(active===token)active=null;emit('cancel',{question:token.question,context:token.ctx})}
 
 register({id:'text',canHandle:q=>norm(q?.answer_mode)==='text',async start(q){const engine=await waitFor(()=>window.WillenaTextQuestionEngine,'Text question engine');if(!engine.canHandle?.(q))throw new Error(`Text engine rejected ${q?.question_type||'question'}`);return engine.runQuestion(q,{runtime:true})}});
 register({id:'choice',canHandle:q=>Array.isArray(q?.choices)&&q.choices.length>0&&['single','single_choice','single_select','multi_select'].includes(norm(q?.answer_mode)),async start(q){const engine=await waitFor(()=>window.WillenaTestPrepQuestionEngine,'Choice question engine');const item=norm(q?.answer_mode)==='single'?{...q,answer_mode:'single_select'}:q;if(!engine.canHandle?.(item))throw new Error(`Choice engine rejected ${q?.question_type||'question'}`);return engine.runQuestion(item,{runtime:true})}});
 register({id:'vocab',canHandle:q=>norm(q?.answer_mode)!=='text'&&(norm(q?.section)==='vocab_test'||/^vocab_/i.test(String(q?.question_type||'')))&&typeof window.WillenaVocabTestPractice?.runQuestion==='function',async start(q,ctx){const api=await waitFor(()=>window.WillenaVocabTestPractice,'Vocabulary test');if(typeof api.runQuestion!=='function')throw new Error('Vocabulary engine has no native single-question contract.');return api.runQuestion(q,{quiz:document.getElementById('assignedQuizPane'),lesson:ctx.lesson,runtime:true})}});
 
 window.WillenaQuestionRuntime={register,resolve,supports,engineFor,run,skip,cancel,trackingPractice,repairBlankQuestion,prepareQuestion,get current(){return active?{question:active.question,context:active.ctx,engine:active.handler.id}:null},get handlers(){return handlers.map(x=>x.id)}};
-console.log('[REV46i] QuestionRuntime context-shape coverage ready',handlers.map(x=>x.id));
+console.log('[REV46j] QuestionRuntime cancellable replacement handoff ready',handlers.map(x=>x.id));
 })();
