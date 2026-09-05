@@ -1,1 +1,0 @@
-(function(){['review-queue-rev47a.js','review-hook-rev47a.js','review-ui-rev47a.js','rev47a-badge.js'].forEach(f=>{const s=document.createElement('script');s.src='./'+f+'?v=47a';document.head.appendChild(s)})})();
