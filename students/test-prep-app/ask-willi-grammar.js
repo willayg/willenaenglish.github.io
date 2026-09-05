@@ -303,7 +303,7 @@ function boot(){
   let tries=0;
   const timer=setInterval(()=>{if(installAttemptTap()||++tries>200)clearInterval(timer)},25);
   document.addEventListener('click',onDocumentClick,false);
-  console.info('[Test Prep staging] Ask Willi grammar + reading pilot active — Willi Rev2');
+  console.info('[Test Prep students] Ask Willi grammar + reading active — Willi Rev2');
 }
 
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
