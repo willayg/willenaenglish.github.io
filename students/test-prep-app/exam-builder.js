@@ -25,6 +25,16 @@ function typeKey(q){return`${sourceBucket(q)}|${String(q?.question_type||'other'
 function allocate(total,n){if(!n)return[];const base=Math.floor(total/n),rem=total%n;return Array.from({length:n},(_,i)=>base+(i<rem?1:0))}
 function vocabTargetKey(q){const m=q?.metadata||{},ids=Array.isArray(m.lexical_entry_ids)?m.lexical_entry_ids.filter(Boolean):[];if(m.lexical_entry_id)return`lex:${m.lexical_entry_id}`;if(ids.length===1)return`lex:${ids[0]}`;const canonical=String(m.canonical_text||q?.correct_text||'').trim();if(canonical)return`word:${norm(canonical)}`;if(norm(q?.answer_mode)==='text'){const a=Array.isArray(q?.correct_answer)?q.correct_answer:[q?.correct_answer].filter(x=>x!=null);if(a.length===1&&String(a[0]||'').trim())return`word:${norm(a[0])}`}return`q:${String(q?.id||'')}`}
 function isVocabText(q){return norm(q?.answer_mode)==='text'}
+function vocabFormat(q){
+ const qt=norm(q?.question_type),text=isVocabText(q),answers=Array.isArray(q?.correct_answer)?q.correct_answer.filter(x=>x!=null&&String(x).trim()!==''):[q?.correct_answer].filter(x=>x!=null&&String(x).trim()!=='');
+ if(text){
+  if(answers.length>1||/(multi|word_bank|expression|phrase|family|form|particle|common_word|structured)/.test(qt))return'write-structured';
+  return'write-spelling'
+ }
+ if(/(expression|collocation|phrasal|phrase|common_word|double_blank|triple_blank|shared_blank|preposition|pair)/.test(qt))return'choice-expression';
+ if(/(usage|context|sentence|dialogue|completion|fit)/.test(qt))return'choice-context';
+ return'choice-meaning'
+}
 
 async function resolveBook(plan){const books=await get(`/rest/v1/content_books?select=id,title&title=eq.${encodeURIComponent(plan.book_label||'')}&limit=1`);if(!books[0])throw new Error('교재를 콘텐츠 DB에서 찾지 못했습니다.');const units=await get(`/rest/v1/content_units?select=id,title&book_id=eq.${encodeURIComponent(books[0].id)}`);return{bookId:String(books[0].id),unitMap:new Map((units||[]).map(x=>[String(x.title),String(x.id)]))}}
 async function fetchSection(bookId,unitId,section,lesson){const qs=new URLSearchParams({select:FIELDS,student_usable:'eq.true',book_id:`eq.${bookId}`,unit_id:`eq.${unitId}`,section:`eq.${section}`});const rows=await get(`/rest/v1/test_prep_questions?${qs.toString()}`);return(rows||[]).filter(q=>q?.replacement_needed!==true).map(q=>({...q,__lesson:String(lesson),__unitId:String(unitId)}))}
@@ -41,10 +51,19 @@ function balancedCore(rows,count,used,hp){const pool=(rows||[]).filter(q=>!used.
 function takeBalanced(rows,count,used,hp){const available=(rows||[]).filter(q=>!used.has(String(q.id))),fresh=available.filter(q=>!hp.recent.has(String(q.id))),out=[];if(fresh.length)out.push(...balancedCore(fresh,Math.min(count,fresh.length),used,hp));if(out.length<count)out.push(...balancedCore(available,count-out.length,used,hp));return out}
 function takeAcrossLessons(rows,count,used,hp){const map=new Map();for(const q of rows||[]){const k=String(q.__lesson||'');if(!map.has(k))map.set(k,[]);map.get(k).push(q)}const groups=[...map.values()].filter(x=>x.length),quota=allocate(count,groups.length),out=[];groups.forEach((g,i)=>out.push(...takeBalanced(g,quota[i],used,hp)));if(out.length<count)out.push(...takeBalanced(rows,count-out.length,used,hp));return out}
 function takeUniqueVocab(rows,count,used,hp,targetUsed,across=false){const out=[];for(let guard=0;guard<8&&out.length<count;guard++){const candidates=(rows||[]).filter(q=>!used.has(String(q.id))&&!targetUsed.has(vocabTargetKey(q)));if(!candidates.length)break;const raw=across?takeAcrossLessons(candidates,count-out.length,used,hp):takeBalanced(candidates,count-out.length,used,hp);if(!raw.length)break;for(const q of raw){const k=vocabTargetKey(q);if(targetUsed.has(k))continue;targetUsed.add(k);out.push(q);if(out.length>=count)break}}return out}
-function takeVocab(rows,count,used,hp,across=false,seedTargets=new Set()){const targetUsed=new Set(seedTargets),choice=(rows||[]).filter(q=>!isVocabText(q)),text=(rows||[]).filter(isVocabText),out=[];const choiceGoal=Math.min(count,3);out.push(...takeUniqueVocab(choice,choiceGoal,used,hp,targetUsed,across));const textGoal=Math.min(2,count-out.length);out.push(...takeUniqueVocab(text,textGoal,used,hp,targetUsed,across));if(out.length<count)out.push(...takeUniqueVocab(choice,count-out.length,used,hp,targetUsed,across));if(out.length<count)out.push(...takeUniqueVocab(text,count-out.length,used,hp,targetUsed,across));return out}
+function takeVocab(rows,count,used,hp,across=false,seedTargets=new Set()){
+ const targetUsed=new Set(seedTargets),out=[],families=['choice-meaning','choice-context','choice-expression','write-spelling','write-structured'];
+ for(const family of families){
+  if(out.length>=count)break;
+  const candidates=(rows||[]).filter(q=>vocabFormat(q)===family);
+  out.push(...takeUniqueVocab(candidates,1,used,hp,targetUsed,across))
+ }
+ if(out.length<count)out.push(...takeUniqueVocab(rows,count-out.length,used,hp,targetUsed,across));
+ return out
+}
 function selectedVocabTargets(rows){return new Set((rows||[]).filter(q=>practiceKey(q)==='vocab_test').map(vocabTargetKey))}
 function fillRemaining(picked,pools,used,hp,across){if(picked.length>=25)return;const regular=[...pools.communication,...pools.grammar,...pools.reading];picked.push(...(across?takeAcrossLessons(regular,25-picked.length,used,hp):takeBalanced(regular,25-picked.length,used,hp)));if(picked.length<25)picked.push(...takeVocab(pools.vocab_test,25-picked.length,used,hp,across,selectedVocabTargets(picked)))}
-function finishManifest({plan,scope,lesson,items,unsupported,hp}){const rt=runtime(),recentUsed=items.filter(q=>hp.recent.has(String(q.id))).length,unseenUsed=items.filter(q=>!hp.byId.has(String(q.id))).length,vocab=items.filter(q=>practiceKey(q)==='vocab_test'),vocabWriting=vocab.filter(isVocabText).length;const manifest={id:id(),version:'46j',createdAt:new Date().toISOString(),planId:String(plan.id),bookLabel:plan.book_label||'',scope,lesson:lesson||null,total:items.length,replacedQuestionIds:[],items:items.map((q,i)=>({position:i+1,lesson:String(q.__lesson||lesson||''),unitId:String(q.__unitId||''),engine:rt.engineFor(q),question:q})),unsupported,selectionDiagnostics:{historyQuestions:hp.total,recentWindow:RECENT_WINDOW,recentReused:recentUsed,unseenSelected:unseenUsed,vocabQuestions:vocab.length,vocabWriting,vocabChoice:vocab.length-vocabWriting,vocabUniqueTargets:new Set(vocab.map(vocabTargetKey)).size}};if(unsupported.length)console.warn('[REV46j] unsupported usable questions excluded',unsupported);console.info('[REV46j] manifest',{scope,lesson,total:manifest.total,history:hp.total,recentReused:recentUsed,unseenSelected:unseenUsed,vocab:{total:vocab.length,writing:vocabWriting,choice:vocab.length-vocabWriting,uniqueTargets:new Set(vocab.map(vocabTargetKey)).size},engines:manifest.items.reduce((m,x)=>(m[x.engine]=(m[x.engine]||0)+1,m),{})});return manifest}
+function finishManifest({plan,scope,lesson,items,unsupported,hp}){const rt=runtime(),recentUsed=items.filter(q=>hp.recent.has(String(q.id))).length,unseenUsed=items.filter(q=>!hp.byId.has(String(q.id))).length,vocab=items.filter(q=>practiceKey(q)==='vocab_test'),vocabWriting=vocab.filter(isVocabText).length;const manifest={id:id(),version:'46k',createdAt:new Date().toISOString(),planId:String(plan.id),bookLabel:plan.book_label||'',scope,lesson:lesson||null,total:items.length,replacedQuestionIds:[],items:items.map((q,i)=>({position:i+1,lesson:String(q.__lesson||lesson||''),unitId:String(q.__unitId||''),engine:rt.engineFor(q),question:q})),unsupported,selectionDiagnostics:{historyQuestions:hp.total,recentWindow:RECENT_WINDOW,recentReused:recentUsed,unseenSelected:unseenUsed,vocabQuestions:vocab.length,vocabWriting,vocabChoice:vocab.length-vocabWriting,vocabUniqueTargets:new Set(vocab.map(vocabTargetKey)).size,vocabFormats:vocab.reduce((m,q)=>(m[vocabFormat(q)]=(m[vocabFormat(q)]||0)+1,m),{})}};if(unsupported.length)console.warn('[REV46j] unsupported usable questions excluded',unsupported);console.info('[REV46k] manifest',{scope,lesson,total:manifest.total,history:hp.total,recentReused:recentUsed,unseenSelected:unseenUsed,vocab:{total:vocab.length,writing:vocabWriting,choice:vocab.length-vocabWriting,uniqueTargets:new Set(vocab.map(vocabTargetKey)).size},engines:manifest.items.reduce((m,x)=>(m[x.engine]=(m[x.engine]||0)+1,m),{})});return manifest}
 function order(items){const sectionOrder=['vocab_test','communication','grammar','reading'],used=new Set(),out=[];for(const section of sectionOrder){const sectionRows=(items||[]).filter(q=>practiceKey(q)===section&&!used.has(String(q.id))),byLesson=new Map();for(const q of sectionRows){const lesson=String(q.__lesson||'');if(!byLesson.has(lesson))byLesson.set(lesson,[]);byLesson.get(lesson).push(q)}for(const lesson of shuffle([...byLesson.keys()])){for(const q of shuffle(byLesson.get(lesson)||[])){used.add(String(q.id));out.push(q)}}}out.push(...shuffle((items||[]).filter(q=>!used.has(String(q.id)))));return out}
 
 async function buildLesson(plan,lesson){const [{bookId,unitMap},hist]=await Promise.all([resolveBook(plan),loadQuestionHistory(plan.id)]),hp=historyProfile(hist),unitId=unitMap.get(String(lesson));if(!unitId)throw new Error(`${lesson}을 콘텐츠 DB에서 찾지 못했습니다.`);const row=rowFor(plan,lesson),unsupported=[],pools={vocab_test:[],communication:[],grammar:[],reading:[]};if(vocabAllowed(plan,row))pools.vocab_test=splitSupported(await vocabPool(bookId,unitId,lesson),unsupported);for(const section of sectionsFor(plan,row))pools[section]=splitSupported(await fetchSection(bookId,unitId,section,lesson),unsupported);const used=new Set(),picked=[];if(pools.vocab_test.length)picked.push(...takeVocab(pools.vocab_test,BLUEPRINT.vocab_test,used,hp,false));for(const key of ['communication','grammar','reading'])if(pools[key].length)picked.push(...takeBalanced(pools[key],BLUEPRINT[key],used,hp));fillRemaining(picked,pools,used,hp,false);return finishManifest({plan,scope:'lesson',lesson:String(lesson),items:order(picked.slice(0,25)),unsupported,hp})}
@@ -59,10 +78,10 @@ async function replacementFor(plan,manifest,item){
  const targetBlocked=isVocab?new Set((manifest.items||[]).filter(x=>practiceKey(x.question)==='vocab_test').map(x=>vocabTargetKey(x.question))):new Set();
  let candidates=pool.filter(x=>!blocked.has(String(x.id))&&(!isVocab||!targetBlocked.has(vocabTargetKey(x))));
  if(!candidates.length)throw new Error('같은 범위에서 교체할 다른 문제가 없습니다.');
- const hist=await loadQuestionHistory(plan.id),hp=historyProfile(hist),mode=norm(q.answer_mode),type=String(q.question_type||'');
+ const hist=await loadQuestionHistory(plan.id),hp=historyProfile(hist),mode=norm(q.answer_mode),type=String(q.question_type||''),family=isVocab?vocabFormat(q):null;
  candidates=shuffle(candidates).sort((a,b)=>{
-  const sa=(String(a.question_type||'')===type?0:2)+(norm(a.answer_mode)===mode?0:1)+rank(a,hp)*4+difficultyDistance(a.difficulty,q.difficulty)*.1;
-  const sb=(String(b.question_type||'')===type?0:2)+(norm(b.answer_mode)===mode?0:1)+rank(b,hp)*4+difficultyDistance(b.difficulty,q.difficulty)*.1;
+  const sa=(family&&vocabFormat(a)!==family?3:0)+(String(a.question_type||'')===type?0:2)+(norm(a.answer_mode)===mode?0:1)+rank(a,hp)*4+difficultyDistance(a.difficulty,q.difficulty)*.1;
+  const sb=(family&&vocabFormat(b)!==family?3:0)+(String(b.question_type||'')===type?0:2)+(norm(b.answer_mode)===mode?0:1)+rank(b,hp)*4+difficultyDistance(b.difficulty,q.difficulty)*.1;
   return sa-sb||timeOf(a,hp)-timeOf(b,hp)
  });
  const replacement=candidates[0];
@@ -70,5 +89,5 @@ async function replacementFor(plan,manifest,item){
 }
 
 window.WillenaExamBuilder={buildLesson,buildAll,replacementFor,resolveBook,lessonsFor,blueprint:{...BLUEPRINT},vocabTargetKey};
-console.log('[REV46j] ExamBuilder replacement candidate support ready');
+console.log('[REV46k] ExamBuilder vocab format-family mix ready');
 })();
