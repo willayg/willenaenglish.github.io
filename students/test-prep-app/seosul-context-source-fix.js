@@ -26,13 +26,12 @@ const arr=v=>Array.isArray(v)?v.map(textItem).filter(Boolean):v==null?[]:[textIt
 function normalizeContext(raw){
   const c=raw&&typeof raw==='object'&&!Array.isArray(raw)?{...raw}:{};
 
-  // Existing renderer already understands these keys. Fill them from all of the
-  // other source structures used by Lessons 6–8 and future authored packs.
   if(!c.provided_words){
     if(Array.isArray(c.word_bank))c.provided_words=c.word_bank;
     else if(Array.isArray(c.bank))c.provided_words=c.bank;
     else if(Array.isArray(c.given))c.provided_words=c.given;
     else if(typeof c.given==='string')c.provided_words=[c.given];
+    else if(c.base_word)c.provided_words=[c.base_word];
   }
   if(!c.options&&c.choices&&typeof c.choices==='object'&&!Array.isArray(c.choices)){
     c.options=Object.entries(c.choices).map(([k,v])=>`${k} ${textItem(v)}`);
@@ -40,6 +39,7 @@ function normalizeContext(raw){
   if(!c.options&&Array.isArray(c.choices))c.options=c.choices;
 
   const sourceLines=[];
+  if(c.setup)sourceLines.push(textItem(c.setup));
   if(c.relation)sourceLines.push(textItem(c.relation));
   if(c.source)sourceLines.push(textItem(c.source));
   if(c.start)sourceLines.push(textItem(c.start));
@@ -49,8 +49,6 @@ function normalizeContext(raw){
   if(Array.isArray(c.segments))sourceLines.push(...arr(c.segments));
   if(Array.isArray(c.items))sourceLines.push(...arr(c.items));
 
-  // Do not overwrite a real passage/dialogue. Put extra source material in the
-  // normal "sentences" slot so the current renderer cannot silently drop it.
   if(sourceLines.length){
     const existing=arr(c.sentences);
     const combined=[...existing,...sourceLines].filter((v,i,a)=>v&&a.indexOf(v)===i);
@@ -63,8 +61,12 @@ function normalizeContext(raw){
     else c.question=[...arr(c.question),...qs];
   }
 
-  // Object-form items render as [object Object] in the old renderer. Replace
-  // them with readable source lines while preserving the original JSON too.
+  if(c.word_count){
+    const rule=`${c.word_count}단어`;
+    const conditions=arr(c.conditions);
+    if(!conditions.includes(rule))c.conditions=[...conditions,rule];
+  }
+
   if(Array.isArray(c.sentences))c.sentences=c.sentences.map(textItem).filter(Boolean);
   if(Array.isArray(c.conditions))c.conditions=c.conditions.map(textItem).filter(Boolean);
   if(Array.isArray(c.provided_words))c.provided_words=c.provided_words.map(textItem).filter(Boolean);
@@ -84,6 +86,8 @@ function normalizeRows(rows){
     return {...row,context:normalizeContext(row.context)};
   });
 }
+
+window.WillenaNormalizeAuthoredContext=normalizeContext;
 
 window.fetch=async function(input,init){
   const response=await originalFetch(input,init);
