@@ -2,13 +2,13 @@
 'use strict';
 const REVIEW_EDGE='https://fiieuiktlsivwfgyivai.supabase.co/functions/v1/test-prep-review-v48';
 const REVIEW_KEY='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
-let busy=false;
+let busy=false,cachedRows=null,dueTimer=null,refreshTimer=null;
 function token(){return window.WillenaAPI?.getLocalAccessToken?.()||localStorage.getItem('sb_access_token')||''}
 function due(x){return x?.due_now===true||!x?.next_review_at||new Date(x.next_review_at).getTime()<=Date.now()}
 function mount(){return document.getElementById('tpWrongCardMount')}
 function installStyles(){
- if(document.getElementById('tpWrong49oStyles'))return;
- const s=document.createElement('style');s.id='tpWrong49oStyles';s.textContent=`
+ if(document.getElementById('tpWrong49pStyles'))return;
+ const s=document.createElement('style');s.id='tpWrong49pStyles';s.textContent=`
  #tpWrongCardMount{margin-bottom:46px!important}
  .tp49-wrong-card{width:100%;box-sizing:border-box;border:0;border-radius:26px;background:linear-gradient(135deg,#ff5b98 0%,#f23879 100%);padding:25px 28px 24px;display:block;text-align:center;box-shadow:0 16px 38px rgba(242,56,121,.23),inset 0 0 0 1px rgba(255,255,255,.18);font-family:Poppins,'Noto Sans KR',system-ui,sans-serif;color:#fff;cursor:pointer;overflow:hidden;position:relative;transition:transform .16s ease,box-shadow .16s ease,filter .16s ease}
  .tp49-wrong-card:active:not(:disabled){transform:translateY(1px) scale(.995);box-shadow:0 9px 24px rgba(242,56,121,.22),inset 0 0 0 1px rgba(255,255,255,.18)}.tp49-wrong-card:disabled{cursor:default}
@@ -22,7 +22,8 @@ function installStyles(){
  @media(max-width:600px){#tpWrongCardMount{margin-bottom:38px!important}.tp49-wrong-card{padding:21px 19px 20px}.tp49-wrong-copy b{font-size:28px}.tp49-wrong-stats{padding-top:15px;margin-top:16px}.tp49-wrong-stat{padding:0 9px}.tp49-wrong-stat strong{font-size:25px}.tp49-wrong-stat small{font-size:10px}.tp49-wrong-cta{margin-top:16px;padding:9px 17px;font-size:12px}}
  `;document.head.appendChild(s);
 }
-function statsHtml(now,later,total){return`<span class="tp49-wrong-stats"><span class="tp49-wrong-stat"><strong>${now}</strong><small>지금 할 문제</small></span><span class="tp49-wrong-stat"><strong>${later}</strong><small>나중에 할 문제</small></span><span class="tp49-wrong-stat"><strong>${total}</strong><small>총 남은 문제</small></span></span>`}
+function counts(rows){const now=rows.filter(due).length,total=rows.length;return{now,later:total-now,total}}
+function statsHtml(now,later,total){return`<span class="tp49-wrong-stats"><span class="tp49-wrong-stat"><strong data-wrong-now>${now}</strong><small>지금 할 문제</small></span><span class="tp49-wrong-stat"><strong data-wrong-later>${later}</strong><small>나중에 할 문제</small></span><span class="tp49-wrong-stat"><strong data-wrong-total>${total}</strong><small>총 남은 문제</small></span></span>`}
 async function load(){
  const t=token();if(!t)throw new Error('로그인이 필요합니다.');
  const r=await fetch(REVIEW_EDGE,{headers:{Authorization:`Bearer ${t}`,apikey:REVIEW_KEY},cache:'no-store'});
@@ -30,26 +31,30 @@ async function load(){
  const seen=new Set();return(d.reviews||[]).filter(x=>{const k=`${x.plan_id}::${x.question_id}`;if(seen.has(k))return false;seen.add(k);return true});
 }
 function loadingCard(){return`<button class="tp49-wrong-card tp49-wrong-loading" type="button" disabled><span class="tp49-wrong-copy"><b>오답</b></span>${statsHtml('—','—','—')}</button>`}
-function card(rows){
- const ready=rows.filter(due).length,later=rows.length-ready,total=rows.length;
- return`<button class="tp49-wrong-card" type="button" data-tp49-open ${total?'':'disabled'}><span class="tp49-wrong-copy"><b>오답</b></span>${statsHtml(ready,later,total)}${total?'<span class="tp49-wrong-cta">복습 시작 →</span>':''}</button>`;
-}
+function card(rows){const c=counts(rows);return`<button class="tp49-wrong-card" type="button" data-tp49-open ${c.total?'':'disabled'}><span class="tp49-wrong-copy"><b>오답</b></span>${statsHtml(c.now,c.later,c.total)}${c.total?'<span class="tp49-wrong-cta">복습 시작 →</span>':''}</button>`}
 function errorCard(){return`<button class="tp49-wrong-card tp49-wrong-error" type="button" data-tp49-retry><span class="tp49-wrong-copy"><b>오답</b></span>${statsHtml('—','—','—')}<span class="tp49-wrong-cta">다시 불러오기 →</span></button>`}
 function openReview(){const nav=window.WillenaTestPrepNavigation;if(nav?.toWrong)return nav.toWrong();return window.WillenaReviewV49?.show?.()}
-function bind(){const m=mount();if(!m)return;m.querySelector('[data-tp49-open]')?.addEventListener('click',openReview);m.querySelector('[data-tp49-retry]')?.addEventListener('click',refresh)}
-async function refresh(){
- const m=mount();if(!m||busy)return;installStyles();busy=true;m.innerHTML=loadingCard();
- try{const rows=await load();const live=mount();if(!live)return;live.innerHTML=card(rows);bind()}
- catch(e){const live=mount();if(live){live.innerHTML=errorCard();bind()}}
+function bind(){const m=mount();if(!m)return;m.querySelector('[data-tp49-open]')?.addEventListener('click',openReview);m.querySelector('[data-tp49-retry]')?.addEventListener('click',()=>refresh({initial:false}))}
+function updateVisibleCounts(rows){const m=mount();if(!m)return;const c=counts(rows);const a=m.querySelector('[data-wrong-now]'),b=m.querySelector('[data-wrong-later]'),t=m.querySelector('[data-wrong-total]');if(a)a.textContent=String(c.now);if(b)b.textContent=String(c.later);if(t)t.textContent=String(c.total)}
+function scheduleDueTransition(rows){
+ if(dueTimer){clearTimeout(dueTimer);dueTimer=null}
+ const now=Date.now();const next=rows.map(x=>x?.next_review_at?new Date(x.next_review_at).getTime():NaN).filter(t=>Number.isFinite(t)&&t>now).sort((a,b)=>a-b)[0];
+ if(!next)return;
+ dueTimer=setTimeout(()=>{dueTimer=null;if(cachedRows){updateVisibleCounts(cachedRows);scheduleDueTransition(cachedRows)}},Math.min(Math.max(50,next-now+50),2147483000));
+}
+function renderCached(){const m=mount();if(!m||!cachedRows)return false;installStyles();m.innerHTML=card(cachedRows);bind();scheduleDueTransition(cachedRows);return true}
+async function refresh({initial=false}={}){
+ if(busy)return;const m=mount();if(initial&&m&&!cachedRows){installStyles();m.innerHTML=loadingCard()}busy=true;
+ try{const rows=await load();cachedRows=rows;if((history.state?.tp||'home')==='home'&&mount())renderCached()}
+ catch(e){if(!cachedRows&&mount()){mount().innerHTML=errorCard();bind()}}
  finally{busy=false}
 }
-function schedule(){if((history.state?.tp||'home')!=='home')return;queueMicrotask(refresh)}
-window.addEventListener('testprep:home-rendered',schedule);
-window.addEventListener('testprep:student-state-refresh',()=>setTimeout(schedule,20));
-window.addEventListener('testprep:review-finished',()=>setTimeout(schedule,20));
-window.addEventListener('pageshow',()=>setTimeout(schedule,50));
-setInterval(()=>{if((history.state?.tp||'home')==='home')refresh()},60000);
-if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(schedule,80),{once:true});else setTimeout(schedule,80);
-window.WillenaWrongCardV49={refresh,load};
-console.log('[REV49o] clickable wrong-answer card affordance');
+function queueServerRefresh(){if(refreshTimer)clearTimeout(refreshTimer);refreshTimer=setTimeout(()=>{refreshTimer=null;refresh({initial:false})},120)}
+function onHomeRendered(){if(!renderCached()&&!busy)refresh({initial:true})}
+window.addEventListener('testprep:home-rendered',onHomeRendered);
+window.addEventListener('testprep:review-finished',queueServerRefresh);
+window.addEventListener('testprep:tracking',e=>{if(e?.detail?.type==='session_completed')queueServerRefresh()});
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(()=>refresh({initial:true}),80),{once:true});else setTimeout(()=>refresh({initial:true}),80);
+window.WillenaWrongCardV49={refresh,load,get cachedRows(){return cachedRows}};
+console.log('[REV49p] wrong-answer card refreshes on initial load and completed sessions only');
 })();
