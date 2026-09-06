@@ -47,8 +47,14 @@ function place(){
  if(home.querySelector('.tp-lesson-head,.tp-wrong-page-head'))return;
  const sections=[...home.querySelectorAll(':scope > .tp-exam-section')];
  if(!sections.length)return;
+ const wrong=home.querySelector(':scope > #tpWrongCardMount');
  let top=document.getElementById('tpHomePlanTop');
- if(!top){top=document.createElement('div');top.id='tpHomePlanTop';home.insertBefore(top,home.firstChild)}
+ if(!top){top=document.createElement('div');top.id='tpHomePlanTop'}
+ if(wrong){
+   if(top.previousElementSibling!==wrong)wrong.insertAdjacentElement('afterend',top);
+ }else if(top.parentElement!==home){
+   home.insertBefore(top,home.firstChild);
+ }
  const html=sections.map(section=>{
    const head=section.querySelector(':scope > .tp-exam-head');
    const book=section.querySelector(':scope > .tp-book');
@@ -70,6 +76,12 @@ function place(){
  addDday(top);
 }
 function schedule(){if(scheduled)return;scheduled=true;requestAnimationFrame(place)}
-function boot(){bindClicks();schedule();new MutationObserver(schedule).observe(document.getElementById('assignmentHome')||document.body,{childList:true,subtree:true});window.addEventListener('popstate',()=>setTimeout(schedule,0));}
+function boot(){
+ bindClicks();
+ schedule();
+ window.addEventListener('testprep:home-rendered',schedule);
+ window.addEventListener('testprep:student-state-refresh',schedule);
+ window.addEventListener('popstate',()=>setTimeout(schedule,0));
+}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
