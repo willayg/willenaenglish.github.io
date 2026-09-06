@@ -1,6 +1,7 @@
 (function(){
 'use strict';
-const $=(s,r=document)=>r.querySelector(s),$$=(s,r=document)=>[...r.querySelectorAll(s)];
+
+const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
 const CONTENT='https://gxwfsqxyuufqtitspfqg.supabase.co';
 const CONTENT_KEY=['sb_publishable_','G-FYhHfDL4OGdL892gY1Zg_','epdbEeqO'].join('');
 const CONTENT_HEAD={apikey:CONTENT_KEY,Authorization:`Bearer ${CONTENT_KEY}`};
@@ -17,39 +18,200 @@ const STATIONS=[
 ];
 const LABEL=Object.fromEntries(STATIONS.map(x=>[x.k,x.label]));
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const pct=v=>v==null?'—':`${Math.round(Number(v)||0)}%`;
-const questionIdCache=new Map(),unitCache=new Map(),skillTotalCache=new Map();
-let wrapped=false,homeHydration=0,lessonHydration=0;
-function scopeFor(plan){const lessons=plan.group?.scope?.lessons;if(Array.isArray(lessons)&&lessons.length)return lessons.filter(x=>x?.lesson);return(plan.units||[]).map(lesson=>({lesson,sections:plan.practice_types||[]}))}
-function activeTasks(plan){return(plan.tasks||[]).filter(t=>t.active!==false&&!t.completed_at&&Number(t.progress?.remaining)>0)}
-function taskFor(plan,lesson,practice){return activeTasks(plan).filter(t=>String(t.lesson)===String(lesson)&&String(t.practice_type).toLowerCase()===String(practice).toLowerCase()).sort((a,b)=>new Date(a.due_at||'2999-01-01')-new Date(b.due_at||'2999-01-01'))[0]||null}
-function stationAvailable(plan,lessonObj,st,sections){const strict=plan?.group?.scope?.scope_controls_v2===true;if(st.k==='sentences')return true;if(strict){if(st.k==='vocabulary'||st.k==='vocab_test')return sections.has('vocabulary');return sections.has(st.k)}return['vocabulary','vocab_test','sentences'].includes(st.k)||sections.has(st.k)||!!taskFor(plan,lessonObj.lesson,st.k)}
-function lessonData(plan,lessonObj){const sections=new Set((lessonObj.sections||[]).map(x=>String(x).toLowerCase())),skills=STATIONS.map(st=>({...st,available:stationAvailable(plan,lessonObj,st,sections),task:taskFor(plan,lessonObj.lesson,st.k)})),tasks=activeTasks(plan).filter(t=>String(t.lesson)===String(lessonObj.lesson));return{...lessonObj,skills,tasks}}
-function examLabel(plan){const g=plan.group||{};return[g.term?`${g.term}학기`:'',g.exam_type==='final'?'기말고사':g.exam_type==='midterm'?'중간고사':plan.exam_name].filter(Boolean).join(' · ')}
-function planSchool(plan){return plan.group?.school||window.WillenaTestPrepAuth?.state?.user?.school||'학교 시험'}
-function taskShelf(plans){const all=plans.flatMap(p=>activeTasks(p).map(t=>({p,t}))).sort((a,b)=>new Date(a.t.due_at||'2999-01-01')-new Date(b.t.due_at||'2999-01-01'));if(!all.length)return'';return`<div class="tp-task-shelf">${all.slice(0,6).map(({p,t})=>`<button class="tp-task-chip" data-task-plan="${esc(p.id)}" data-task-lesson="${esc(t.lesson)}" data-task-skill="${esc(t.practice_type)}"><span class="arrow">→</span><span class="k">선생님 과제</span><b>${esc(t.title||`${t.lesson} ${LABEL[t.practice_type]||t.practice_type}`)}</b><small>${Number(t.progress?.remaining)||0}개 남음</small></button>`).join('')}</div>`}
-function wrongMount(){return'<div id="tpWrongCardMount" data-review-card-owner="rev49"></div>'}
-function lessonCard(plan,l){const d=lessonData(plan,l);return`<button class="tp-lesson-card" data-lesson-plan="${esc(plan.id)}" data-lesson="${esc(l.lesson)}"><span class="tp-lesson-card-copy"><h3>${esc(l.lesson)}</h3><p class="tp-card-accuracy-label">최근 정확도 · 불러오는 중</p><div class="tp-card-coverage"><div class="tp-card-coverage-meta"><span>문제 완료</span><b class="tp-card-coverage-count">—</b></div><div class="tp-card-coverage-track"><i></i></div></div>${d.tasks.length?`<span class="tp-task-badge">선생님 과제 ${d.tasks.length}</span>`:''}</span><span class="tp-card-ring-wrap"><span class="tp-ring tp-card-accuracy-ring" style="--p:0%" aria-label="최근 정확도"><b>—</b></span><small class="tp-card-ring-label">정확도</small></span></button>`}
+const norm=s=>String(s??'').trim().toLowerCase();
+const clamp=n=>Math.max(0,Math.min(100,Math.round(Number(n)||0)));
+const unitCache=new Map(), totalCache=new Map();
+let started=false, homeHydration=0, lessonHydration=0;
+
+function route(){return history.state?.tp?history.state:{tp:'home'}}
+function sameRoute(a,b){return ['tp','planId','lesson','skill','returnTo'].every(k=>String(a?.[k]||'')===String(b?.[k]||''))}
+function setRoute(next,{replace=false,render=true}={}){
+ const state={...next};
+ if(!state.tp)state.tp='home';
+ if(replace||sameRoute(route(),state))history.replaceState(state,'',location.href);else history.pushState(state,'',location.href);
+ if(render)renderRoute(state);
+}
+function normalizeRoute(){
+ const s=route();
+ if(s.tp==='practice'&&!window.WillenaAssignedTestPrep?.selection){
+   const back=s.returnTo==='lesson'&&s.planId&&s.lesson?{tp:'lesson',planId:s.planId,lesson:s.lesson,skill:s.skill||null}:{tp:'home'};
+   history.replaceState(back,'',location.href);
+   return back;
+ }
+ return s;
+}
+
+function state(){return window.WillenaTestPrepAuth?.state||null}
+function plans(){return state()?.plans||[]}
+function findPlan(id){return plans().find(p=>String(p.id)===String(id))||null}
+function scopeFor(plan){
+ const ls=plan?.group?.scope?.lessons;
+ if(Array.isArray(ls)&&ls.length)return ls.filter(x=>x?.lesson);
+ return (plan?.units||[]).map(lesson=>({lesson,sections:plan.practice_types||[]}));
+}
+function activeTasks(plan){return(plan?.tasks||[]).filter(t=>t.active!==false&&!t.completed_at&&Number(t.progress?.remaining)>0)}
+function taskFor(plan,lesson,practice){return activeTasks(plan).filter(t=>String(t.lesson)===String(lesson)&&norm(t.practice_type)===norm(practice)).sort((a,b)=>new Date(a.due_at||'2999-01-01')-new Date(b.due_at||'2999-01-01'))[0]||null}
+function stationAvailable(plan,l,st){
+ const sections=new Set((l?.sections||[]).map(norm));
+ const strict=plan?.group?.scope?.scope_controls_v2===true;
+ if(st.k==='sentences')return true;
+ if(strict){if(st.k==='vocabulary'||st.k==='vocab_test')return sections.has('vocabulary');return sections.has(st.k)}
+ return ['vocabulary','vocab_test','sentences'].includes(st.k)||sections.has(st.k)||!!taskFor(plan,l.lesson,st.k);
+}
+function skillRows(plan,l){return STATIONS.filter(st=>stationAvailable(plan,l,st)).map(st=>({...st,task:taskFor(plan,l.lesson,st.k)}))}
+function planSchool(plan){return plan?.group?.school||state()?.user?.school||'학교 시험'}
+function examLabel(plan){const g=plan?.group||{};return [g.term?`${g.term}학기`:'',g.exam_type==='final'?'기말고사':g.exam_type==='midterm'?'중간고사':plan?.exam_name].filter(Boolean).join(' · ')}
+function dday(dateText){const m=String(dateText||'').match(/(\d{4})-(\d{2})-(\d{2})/);if(!m)return'';const now=new Date(),a=Date.UTC(now.getFullYear(),now.getMonth(),now.getDate()),b=Date.UTC(+m[1],+m[2]-1,+m[3]),d=Math.round((b-a)/86400000);return d===0?'D-DAY':d>0?`D-${d}`:`D+${Math.abs(d)}`}
+function home(){return $('#assignmentHome')}
+function quiz(){return $('#assignedQuizPane')}
+function showHomeSurface(){const h=home(),q=quiz();if(q)q.style.display='none';if(h)h.style.display='block'}
+
 async function contentGet(path){const r=await fetch(CONTENT+path,{headers:CONTENT_HEAD,cache:'no-store'});if(!r.ok)throw new Error(await r.text());return r.json()}
-async function lessonUnit(plan,lesson){const key=`${plan.book_key||plan.book_label}::${lesson}`;if(unitCache.has(key))return unitCache.get(key);const promise=(async()=>{let books=[];if(plan.book_key)books=await contentGet(`/rest/v1/content_books?select=id&source_key=eq.${encodeURIComponent(plan.book_key)}&limit=1`);if(!books[0])books=await contentGet(`/rest/v1/content_books?select=id&title=eq.${encodeURIComponent(plan.book_label||'')}&limit=1`);if(!books[0])return null;let units=await contentGet(`/rest/v1/content_units?select=id,title&book_id=eq.${books[0].id}&title=eq.${encodeURIComponent(lesson)}&limit=1`);if(!units[0]){const m=String(lesson).match(/Lesson\s*(\d+)/i);if(m)units=await contentGet(`/rest/v1/content_units?select=id,title&book_id=eq.${books[0].id}&unit_number=eq.${encodeURIComponent(m[1])}&limit=1`)}return units[0]?{bookId:books[0].id,unitId:units[0].id}:null})();unitCache.set(key,promise);try{return await promise}catch(e){unitCache.delete(key);throw e}}
-async function lessonQuestionIds(plan,lesson){const key=`${plan.book_key||plan.book_label}::${lesson}`;if(questionIdCache.has(key))return questionIdCache.get(key);const promise=(async()=>{const ids=await lessonUnit(plan,lesson);if(!ids)return[];const rows=await contentGet(`/rest/v1/test_prep_questions?select=id&unit_id=eq.${ids.unitId}&student_usable=eq.true`);return(rows||[]).map(x=>String(x.id)).filter(Boolean)})();questionIdCache.set(key,promise);try{return await promise}catch(e){questionIdCache.delete(key);throw e}}
-function countPassageSentences(body){const lines=String(body||'').split(/\n+/).map(x=>x.trim()).filter(Boolean);let n=0;for(let line of lines){if(/^(Situation\s+\d+|D-?\d+|D-Day)$/i.test(line))continue;line=line.replace(/^[A-Za-z][A-Za-z .'-]{0,24}:\s*/, '');const parts=line.match(/[^.!?]+[.!?]+(?:["'”’])?|[^.!?]+$/g)||[];n+=parts.map(x=>x.trim()).filter(x=>x&&/[A-Za-z]/.test(x)).length}return n}
-async function lessonSkillTotal(plan,lesson,practice){const key=`${plan.book_key||plan.book_label}::${lesson}::${practice}`;if(skillTotalCache.has(key))return skillTotalCache.get(key);const promise=(async()=>{const ids=await lessonUnit(plan,lesson);if(!ids)return 0;if(practice==='vocabulary'||practice==='vocab_test'){const rows=await contentGet(`/rest/v1/source_content_occurrences?select=lexical_entry_id&unit_id=eq.${ids.unitId}&occurrence_type=eq.lexical_entry&skill=eq.vocabulary`);return new Set((rows||[]).map(x=>String(x.lexical_entry_id||'')).filter(Boolean)).size}if(practice==='sentences'){const rows=await contentGet(`/rest/v1/passages?select=body,metadata&status=eq.published&metadata-%3E%3Eunit_id=eq.${encodeURIComponent(ids.unitId)}`);return(rows||[]).reduce((n,p)=>n+countPassageSentences(p.body),0)}if(practice==='constructed_response'){const rows=await contentGet(`/rest/v1/test_prep_questions?select=id&unit_id=eq.${ids.unitId}&student_usable=eq.true`);return(rows||[]).length}const rows=await contentGet(`/rest/v1/test_prep_questions?select=id&unit_id=eq.${ids.unitId}&student_usable=eq.true&section=eq.${encodeURIComponent(practice)}`);return(rows||[]).length})();skillTotalCache.set(key,promise);try{return await promise}catch(e){skillTotalCache.delete(key);throw e}}
-async function planCardStats(planId){const token=window.WillenaAPI?.getLocalAccessToken?.()||localStorage.getItem('sb_access_token')||'';if(!token)return[];const r=await fetch(`${TRACK}/rest/v1/rpc/test_prep_card_stats`,{method:'POST',headers:{apikey:TRACK_KEY,Authorization:`Bearer ${token}`,'Content-Type':'application/json'},body:JSON.stringify({p_plan_id:String(planId)}),cache:'no-store'});if(!r.ok)throw new Error(await r.text());const rows=await r.json();return Array.isArray(rows)?rows:[]}
-function statPayload(stat){const raw=stat?.attempted_question_ids;if(Array.isArray(raw))return{all:raw,by_practice:{}};if(raw&&typeof raw==='object')return{all:Array.isArray(raw.all)?raw.all:[],by_practice:raw.by_practice&&typeof raw.by_practice==='object'?raw.by_practice:{}};return{all:[],by_practice:{}}}
-function cardNode(planId,lesson){return $$('.tp-lesson-card').find(x=>String(x.dataset.lessonPlan)===String(planId)&&String(x.dataset.lesson)===String(lesson))||null}
-function setRing(card,stat){const ring=$('.tp-card-accuracy-ring',card),b=$('.tp-card-accuracy-ring b',card),label=$('.tp-card-accuracy-label',card),count=Math.max(0,Number(stat?.recent_count)||0),raw=stat?.recent_accuracy,has=raw!=null&&count>0,accuracy=has?Math.max(0,Math.min(100,Math.round(Number(raw)||0))):0;if(ring){ring.style.setProperty('--p',`${accuracy}%`);ring.setAttribute('aria-label',has?`최근 ${count}개 고유 문제 정확도 ${accuracy}%`:'최근 정확도 기록 없음')}if(b)b.textContent=has?`${accuracy}%`:'—';if(label)label.textContent=count?`최근 ${count}문제 정확도`:'아직 푼 문제가 없어요'}
-function setCoverage(card,completed,total){const count=$('.tp-card-coverage-count',card),bar=$('.tp-card-coverage-track i',card),safeTotal=Math.max(0,Number(total)||0),safeDone=Math.max(0,Math.min(safeTotal,Number(completed)||0)),coverage=safeTotal?Math.round(safeDone/safeTotal*100):0;if(count)count.textContent=safeTotal?`${safeDone} / ${safeTotal}`:'0 / 0';if(bar)bar.style.width=`${coverage}%`}
-async function hydrateLessonCards(plans){const run=++homeHydration;await Promise.all((plans||[]).map(async plan=>{let stats=[];try{stats=await planCardStats(plan.id)}catch(e){console.warn('[REV50e] card accuracy load failed',e)}if(run!==homeHydration)return;const byLesson=new Map((stats||[]).map(x=>[String(x.unit_key),x]));await Promise.all(scopeFor(plan).map(async l=>{const card=cardNode(plan.id,l.lesson);if(!card||run!==homeHydration)return;const stat=byLesson.get(String(l.lesson))||null;setRing(card,stat);try{const ids=await lessonQuestionIds(plan,l.lesson);if(run!==homeHydration||!card.isConnected)return;const attempted=new Set(statPayload(stat).all.map(String)),completed=ids.reduce((n,id)=>n+(attempted.has(String(id))?1:0),0);setCoverage(card,completed,ids.length)}catch(e){console.warn('[REV50e] DB coverage load failed',e);const count=$('.tp-card-coverage-count',card);if(count)count.textContent='—'}}))}))}
-async function hydrateLessonPage(plan,lesson,skills){const run=++lessonHydration;let stats=[];try{stats=await planCardStats(plan.id)}catch(e){console.warn('[REV50e] lesson accuracy load failed',e)}if(run!==lessonHydration)return;const stat=(stats||[]).find(x=>String(x.unit_key)===String(lesson))||null,byPractice=statPayload(stat).by_practice;await Promise.all((skills||[]).map(async s=>{const row=$(`.tp-stop[data-skill="${CSS.escape(String(s.k))}"]`);if(!row||run!==lessonHydration)return;const ps=byPractice?.[s.k]||{},count=Math.max(0,Number(ps.recent_count)||0),raw=ps.recent_accuracy,has=raw!=null&&count>0,accuracy=has?Math.max(0,Math.min(100,Math.round(Number(raw)||0))):0,unique=Math.max(0,Number(ps.unique_count)||0);const a=$('[data-skill-accuracy]',row),al=$('[data-skill-accuracy-label]',row),c=$('[data-skill-coverage-count]',row),bar=$('.tp-mini i',row);if(a)a.textContent=has?`${accuracy}%`:'—';if(al)al.textContent=count?`정확도 · 최근 ${count}`:'정확도';try{const total=await lessonSkillTotal(plan,lesson,s.k);if(run!==lessonHydration||!row.isConnected)return;const done=total?Math.min(total,unique):unique,coverage=total?Math.round(done/total*100):0;if(c)c.textContent=total?`${done} / ${total} 완료`:(done?`${done}개 완료`:'0개 완료');if(bar)bar.style.width=`${coverage}%`}catch(e){console.warn('[REV50e] skill coverage load failed',s.k,e);if(c)c.textContent=unique?`${unique}개 완료`:'—'}}))}
-function openStats(plan){let bg=$('#tpStatsBg');if(!bg){bg=document.createElement('div');bg.id='tpStatsBg';bg.className='tp-stats-bg';document.body.appendChild(bg);bg.onclick=e=>{if(e.target===bg)bg.classList.remove('open')}}const s=plan.summary||{},pr=s.by_practice||{};bg.innerHTML=`<div class="tp-stats-modal"><div class="tp-stats-head"><h3>내 시험 대비 기록</h3><button class="tp-stats-x">×</button></div><div class="tp-stats-grid"><div class="tp-stat"><b>${pct(s.accuracy)}</b><span>정답률</span></div><div class="tp-stat"><b>${pct(s.first_attempt_accuracy)}</b><span>첫 시도</span></div><div class="tp-stat"><b>오답 복습</b><span>홈 카드에서 확인</span></div><div class="tp-stat"><b>${pct(s.correction_rate)}</b><span>오답 회복</span></div><div class="tp-stat"><b>${s.unique_questions||0}</b><span>완료 문제</span></div><div class="tp-stat"><b>${s.sessions||0}</b><span>학습 세션</span></div></div>${STATIONS.map(st=>`<div class="tp-stat-row"><span>${st.label}</span><b>${pct(pr[st.k]?.accuracy)}</b></div>`).join('')}</div>`;$('.tp-stats-x',bg).onclick=()=>bg.classList.remove('open');bg.classList.add('open')}
-function renderHome(){const home=$('#assignmentHome'),state=window.WillenaTestPrepAuth?.state;if(!home||!state)return;home.style.display='block';const plans=state.plans||[];home.innerHTML=`${wrongMount()}${taskShelf(plans)}${plans.length?plans.map(plan=>`<section class="tp-exam-section"><div class="tp-exam-head"><div><h2>${esc(planSchool(plan))}</h2><p>${esc(examLabel(plan))}</p></div><div class="tp-exam-actions">${plan.exam_date?`<span class="tp-exam-date">${esc(plan.exam_date)}</span>`:''}<button class="tp-records" data-records="${esc(plan.id)}">내 기록</button></div></div><div class="tp-book">${esc(plan.book_label||'')}</div><div class="tp-lessons">${scopeFor(plan).map(l=>lessonCard(plan,l)).join('')}</div></section>`).join(''):'<div class="tp-review-empty">지정된 시험 대비가 없습니다.</div>'}`;$$('[data-task-plan]',home).forEach(b=>b.onclick=()=>launchSkill(b.dataset.taskPlan,b.dataset.taskLesson,b.dataset.taskSkill));$$('[data-lesson-plan]',home).forEach(b=>b.onclick=()=>renderLesson(b.dataset.lessonPlan,b.dataset.lesson));$$('[data-records]',home).forEach(b=>b.onclick=e=>{e.stopPropagation();const p=plans.find(x=>String(x.id)===String(b.dataset.records));if(p)openStats(p)});hydrateLessonCards(plans);window.dispatchEvent(new CustomEvent('testprep:home-rendered'))}
-function renderLesson(planId,lesson,focusSkill=null){const home=$('#assignmentHome'),state=window.WillenaTestPrepAuth?.state,plan=state?.plans?.find(p=>String(p.id)===String(planId));if(!home||!plan)return;const l=scopeFor(plan).find(x=>String(x.lesson)===String(lesson));if(!l)return;const d=lessonData(plan,l),shown=d.skills.filter(x=>x.available),next=shown.find(x=>x.task)||shown[0];home.innerHTML=`<button class="tp-back">← 시험 대비</button><div class="tp-lesson-head"><div><h1>${esc(lesson)}</h1><p>${esc(plan.book_label||'')} · 학습 지도</p></div></div><div class="tp-subway">${shown.map((s,i)=>{const current=String(focusSkill||next?.k||'')===s.k;return`<div class="tp-stop ${current?'current':''}" data-skill="${esc(s.k)}"><div class="tp-station">${i+1}</div><div class="tp-stop-copy"><b>${esc(s.label)}</b><small>${esc(s.desc)}</small>${s.task?`<span class="tp-task-badge">선생님 과제 · ${s.task.progress?.remaining||0}개 남음</span>`:''}<div class="tp-mini"><i style="width:0"></i></div></div><div class="tp-stop-pct"><span data-skill-accuracy>—</span><small class="tp-skill-accuracy-label" data-skill-accuracy-label>정확도</small><small data-skill-coverage-count>불러오는 중</small></div></div>`}).join('')}</div><div class="tp-mastery-note">정확도는 최근 최대 50개 고유 문제의 현재 결과입니다. 같은 문제를 다시 풀면 가장 최근 결과만 반영됩니다. 막대는 이 영역의 전체 문제 중 완료한 비율입니다.</div>`;$$('.tp-stop',home).forEach(x=>x.onclick=()=>launchSkill(plan.id,lesson,x.dataset.skill));hydrateLessonPage(plan,lesson,shown)}
-async function launchSkill(planId,lesson,skill,opts={}){const api=window.WillenaAssignedTestPrep;if(!api?.startSelection)return;await api.startSelection(planId,lesson,skill,opts)}
-function wrap(){if(wrapped)return;const api=window.WillenaAssignedTestPrep;if(!api?.renderHome)return;wrapped=true;const original=api.renderHome.bind(api);api.renderHome=function(){const r=original();queueMicrotask(()=>{if((history.state?.tp||'home')==='home')renderHome()});return r};renderHome()}
-function onRefresh(){const nav=history.state?.tp?history.state:{tp:'home'},quiz=$('#assignedQuizPane');if(nav.tp==='practice'||(quiz&&quiz.style.display!=='none'))return;if(nav.tp==='wrong')return;if(nav.tp==='lesson'&&nav.planId&&nav.lesson){renderLesson(nav.planId,nav.lesson,nav.skill||null);return}if(nav.tp==='home')renderHome()}
-function boot(){let tries=0;const timer=setInterval(()=>{wrap();if(wrapped||++tries>120)clearInterval(timer)},50);window.addEventListener('testprep:student-state-refresh',onRefresh)}
-window.WillenaTestPrepUX={renderHome,renderLesson,launchSkill};
-if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
-console.log('[REV50e] student UX is sole lesson renderer; recent unique accuracy plus DB coverage');
+async function unitFor(plan,l){
+ if(l?.unit_id)return String(l.unit_id);
+ const key=`${plan?.book_key||plan?.book_label}::${l?.lesson}`;
+ if(unitCache.has(key))return unitCache.get(key);
+ const p=(async()=>{
+   let books=[];
+   if(plan?.book_key)books=await contentGet(`/rest/v1/content_books?select=id&source_key=eq.${encodeURIComponent(plan.book_key)}&limit=1`);
+   if(!books[0])books=await contentGet(`/rest/v1/content_books?select=id&title=eq.${encodeURIComponent(plan?.book_label||'')}&limit=1`);
+   if(!books[0])return'';
+   let units=await contentGet(`/rest/v1/content_units?select=id&book_id=eq.${books[0].id}&title=eq.${encodeURIComponent(l?.lesson||'')}&limit=1`);
+   if(!units[0]){const m=String(l?.lesson||'').match(/Lesson\s*(\d+)/i);if(m)units=await contentGet(`/rest/v1/content_units?select=id&book_id=eq.${books[0].id}&unit_number=eq.${m[1]}&limit=1`)}
+   return String(units?.[0]?.id||'');
+ })();
+ unitCache.set(key,p);try{return await p}catch(e){unitCache.delete(key);throw e}
+}
+function countPassageSentences(body){let n=0;for(let line of String(body||'').split(/\n+/).map(x=>x.trim()).filter(Boolean)){if(/^(Situation\s+\d+|D-?\d+|D-Day)$/i.test(line))continue;line=line.replace(/^[A-Za-z][A-Za-z .'-]{0,24}:\s*/,'');const parts=line.match(/[^.!?]+[.!?]+(?:["'”’])?|[^.!?]+$/g)||[];n+=parts.map(x=>x.trim()).filter(x=>x&&/[A-Za-z]/.test(x)).length}return n}
+async function totalFor(plan,l,practice){
+ const key=`${plan?.id}::${l?.lesson}::${practice}`;if(totalCache.has(key))return totalCache.get(key);
+ const p=(async()=>{
+   const unitId=await unitFor(plan,l);if(!unitId)return 0;
+   if(practice==='vocabulary'||practice==='vocab_test'){
+     const rows=await contentGet(`/rest/v1/source_content_occurrences?select=lexical_entry_id&unit_id=eq.${unitId}&skill=eq.vocabulary&limit=10000`);
+     return new Set((rows||[]).map(x=>String(x.lexical_entry_id||'')).filter(Boolean)).size;
+   }
+   if(practice==='sentences'){
+     const rows=await contentGet(`/rest/v1/passages?select=body&status=eq.published&metadata-%3E%3Eunit_id=eq.${encodeURIComponent(unitId)}&limit=1000`);
+     return(rows||[]).reduce((n,x)=>n+countPassageSentences(x.body),0);
+   }
+   const qs=await contentGet(`/rest/v1/test_prep_questions?select=id&unit_id=eq.${unitId}&student_usable=eq.true&replacement_needed=eq.false&section=eq.${encodeURIComponent(practice)}&limit=10000`);
+   return(qs||[]).length;
+ })();
+ totalCache.set(key,p);try{return await p}catch(e){totalCache.delete(key);throw e}
+}
+async function cardStats(planId){
+ const token=window.WillenaAPI?.getLocalAccessToken?.()||localStorage.getItem('sb_access_token')||'';if(!token)return[];
+ const r=await fetch(`${TRACK}/rest/v1/rpc/test_prep_card_stats`,{method:'POST',headers:{apikey:TRACK_KEY,Authorization:`Bearer ${token}`,'Content-Type':'application/json'},body:JSON.stringify({p_plan_id:String(planId)}),cache:'no-store'});
+ if(!r.ok)throw new Error(await r.text());const x=await r.json();return Array.isArray(x)?x:[];
+}
+function statPayload(stat){const raw=stat?.attempted_question_ids;if(raw&&typeof raw==='object'&&!Array.isArray(raw))return{all:Array.isArray(raw.all)?raw.all:[],byPractice:raw.by_practice&&typeof raw.by_practice==='object'?raw.by_practice:{}};return{all:Array.isArray(raw)?raw:[],byPractice:{}}}
+
+function taskShelf(allPlans){
+ const all=(allPlans||[]).flatMap(p=>activeTasks(p).map(t=>({p,t}))).sort((a,b)=>new Date(a.t.due_at||'2999-01-01')-new Date(b.t.due_at||'2999-01-01'));
+ if(!all.length)return'';
+ return `<div class="tp-task-shelf">${all.slice(0,6).map(({p,t})=>`<button class="tp-task-chip" data-task-plan="${esc(p.id)}" data-task-lesson="${esc(t.lesson)}" data-task-skill="${esc(t.practice_type)}"><span class="arrow">→</span><span class="k">선생님 과제</span><b>${esc(t.title||`${t.lesson} ${LABEL[t.practice_type]||t.practice_type}`)}</b><small>${Number(t.progress?.remaining)||0}개 남음</small></button>`).join('')}</div>`;
+}
+function planHead(plan){const dd=dday(plan?.exam_date);return `<div class="tp-exam-head"><div><h2>${esc(planSchool(plan))}</h2><p>${esc(examLabel(plan))}</p></div><div class="tp-exam-actions">${dd?`<span class="tp-dday">${esc(dd)}</span>`:''}${plan?.exam_date?`<span class="tp-exam-date">${esc(plan.exam_date)}</span>`:''}<button class="tp-records" data-records="${esc(plan.id)}">내 기록</button></div></div><div class="tp-book">${esc(plan?.book_label||'')}</div>`}
+function lessonCard(plan,l){return `<button class="tp-lesson-card" data-lesson-plan="${esc(plan.id)}" data-lesson="${esc(l.lesson)}"><span class="tp-lesson-card-copy"><h3>${esc(l.lesson)}</h3><p class="tp-card-accuracy-label">정확도 불러오는 중</p><div class="tp-card-coverage"><div class="tp-card-coverage-meta"><span>문제 완료</span><b class="tp-card-coverage-count">—</b></div><div class="tp-card-coverage-track"><i></i></div></div></span><span class="tp-card-ring-wrap"><span class="tp-ring tp-card-accuracy-ring" style="--p:0%"><b>—</b></span><small class="tp-card-ring-label">정확도</small></span></button>`}
+function wrongMount(){return '<div id="tpWrongCardMount" data-review-card-owner="rev49"></div>'}
+
+async function hydrateHome(allPlans,run){
+ await Promise.all((allPlans||[]).map(async plan=>{
+   let stats=[];try{stats=await cardStats(plan.id)}catch(e){console.warn('[REV51] stats',e)}
+   if(run!==homeHydration)return;
+   const byLesson=new Map(stats.map(x=>[String(x.unit_key),x]));
+   await Promise.all(scopeFor(plan).map(async l=>{
+     const card=$(`.tp-lesson-card[data-lesson-plan="${CSS.escape(String(plan.id))}"][data-lesson="${CSS.escape(String(l.lesson))}"]`);if(!card||run!==homeHydration)return;
+     const stat=byLesson.get(String(l.lesson))||null,count=Math.max(0,Number(stat?.recent_count)||0),acc=count&&stat?.recent_accuracy!=null?clamp(stat.recent_accuracy):null;
+     const ring=$('.tp-card-accuracy-ring',card),rb=$('.tp-card-accuracy-ring b',card),label=$('.tp-card-accuracy-label',card);
+     if(ring)ring.style.setProperty('--p',`${acc??0}%`);if(rb)rb.textContent=acc==null?'—':`${acc}%`;if(label)label.textContent=count?`최근 ${count}문제 정확도`:'아직 푼 문제가 없어요';
+     const payload=statPayload(stat),by=payload.byPractice,skills=skillRows(plan,l);let done=0,total=0;
+     await Promise.all(skills.map(async s=>{const t=await totalFor(plan,l,s.k);const u=Math.max(0,Number(by?.[s.k]?.unique_count)||0);total+=t;done+=t?Math.min(t,u):0}));
+     if(run!==homeHydration||!card.isConnected)return;
+     const c=$('.tp-card-coverage-count',card),bar=$('.tp-card-coverage-track i',card),coverage=total?clamp(done/total*100):0;
+     if(c)c.textContent=`${done} / ${total}`;if(bar)bar.style.width=`${coverage}%`;
+   }));
+ }));
+}
+
+function renderHome(){
+ showHomeSurface();const h=home();if(!h)return;
+ const all=plans();
+ h.innerHTML=`${wrongMount()}${taskShelf(all)}${all.length?all.map(plan=>`<section class="tp-exam-section">${planHead(plan)}<div class="tp-lessons">${scopeFor(plan).map(l=>lessonCard(plan,l)).join('')}</div></section>`).join(''):'<div class="tp-review-empty">지정된 시험 대비가 없습니다.</div>'}`;
+ $$('[data-task-plan]',h).forEach(b=>b.onclick=()=>openPractice(b.dataset.taskPlan,b.dataset.taskLesson,b.dataset.taskSkill,'home'));
+ $$('.tp-lesson-card',h).forEach(b=>b.onclick=()=>setRoute({tp:'lesson',planId:b.dataset.lessonPlan,lesson:b.dataset.lesson}));
+ $$('[data-records]',h).forEach(b=>b.onclick=e=>{e.stopPropagation();openStats(b.dataset.records)});
+ const run=++homeHydration;hydrateHome(all,run);window.dispatchEvent(new CustomEvent('testprep:home-rendered'));
+}
+
+async function hydrateLesson(plan,l,skills,run){
+ let stats=[];try{stats=await cardStats(plan.id)}catch(e){console.warn('[REV51] lesson stats',e)}
+ if(run!==lessonHydration)return;
+ const stat=stats.find(x=>String(x.unit_key)===String(l.lesson))||null,by=statPayload(stat).byPractice;
+ await Promise.all(skills.map(async s=>{
+   const row=$(`.tp-stop[data-skill="${CSS.escape(String(s.k))}"]`);if(!row||run!==lessonHydration)return;
+   const ps=by?.[s.k]||{},count=Math.max(0,Number(ps.recent_count)||0),acc=count&&ps.recent_accuracy!=null?clamp(ps.recent_accuracy):null,unique=Math.max(0,Number(ps.unique_count)||0);
+   const pct=$('[data-skill-accuracy]',row),lab=$('[data-skill-accuracy-label]',row),cov=$('[data-skill-coverage-count]',row),bar=$('.tp-mini i',row);
+   if(pct)pct.textContent=acc==null?'—':`${acc}%`;if(lab)lab.textContent=count?`정확도 · 최근 ${count}`:'정확도';
+   try{const total=await totalFor(plan,l,s.k);if(run!==lessonHydration||!row.isConnected)return;const done=total?Math.min(total,unique):unique,coverage=total?clamp(done/total*100):0;if(cov)cov.textContent=total?`${done} / ${total} 완료`:`${done}개 완료`;if(bar)bar.style.width=`${coverage}%`}catch(e){if(cov)cov.textContent=unique?`${unique}개 완료`:'—'}
+ }));
+}
+function renderLesson(planId,lesson,focusSkill=null){
+ showHomeSurface();const h=home(),plan=findPlan(planId);if(!h||!plan){setRoute({tp:'home'},{replace:true});return}
+ const l=scopeFor(plan).find(x=>String(x.lesson)===String(lesson));if(!l){setRoute({tp:'home'},{replace:true});return}
+ const skills=skillRows(plan,l);
+ h.innerHTML=`<button class="tp-back" type="button">← 시험 대비</button><div class="tp-lesson-head"><div><h1>${esc(l.lesson)}</h1><p>${esc(plan.book_label||'')} · 학습 지도</p></div></div><div class="tp-subway">${skills.map((s,i)=>`<div class="tp-stop" data-skill="${esc(s.k)}"><div class="tp-station">${i+1}</div><div class="tp-stop-copy"><b>${esc(s.label)}</b><small>${esc(s.desc)}</small>${s.task?`<span class="tp-task-badge">선생님 과제 · ${Number(s.task.progress?.remaining)||0}개 남음</span>`:''}<div class="tp-mini"><i style="width:0"></i></div></div><div class="tp-stop-pct"><span data-skill-accuracy>—</span><small class="tp-skill-accuracy-label" data-skill-accuracy-label>정확도</small><small data-skill-coverage-count>불러오는 중</small></div></div>`).join('')}</div><div class="tp-mastery-note">정확도는 최근 최대 50개 고유 문제의 가장 최근 결과만 반영합니다. 막대는 전체 문제 중 완료한 비율입니다.</div>`;
+ $('.tp-back',h).onclick=()=>setRoute({tp:'home'});
+ $$('.tp-stop',h).forEach(row=>row.onclick=()=>openPractice(plan.id,l.lesson,row.dataset.skill,'lesson'));
+ const run=++lessonHydration;hydrateLesson(plan,l,skills,run);
+}
+
+function showWrongCenter(){
+ showHomeSurface();const h=home();if(!h)return;
+ if(window.WillenaReviewV49?.show){window.WillenaReviewV49.show();return}
+ h.innerHTML='<div class="tp-review-empty">오답 복습을 불러오는 중...</div>';
+}
+
+async function openPractice(planId,lesson,skill,returnTo='lesson'){
+ setRoute({tp:'practice',planId:String(planId),lesson:String(lesson),skill:String(skill),returnTo},{render:false});
+ try{await window.WillenaAssignedTestPrep?.startSelection?.(planId,lesson,skill)}catch(e){console.error('[REV51] practice start',e);setRoute(returnTo==='lesson'?{tp:'lesson',planId,lesson,skill}:{tp:'home'},{replace:true})}
+}
+function returnFromPractice(selection){
+ const s=route(),planId=selection?.plan?.id||s.planId,lesson=selection?.lesson||s.lesson,skill=selection?.section||s.skill;
+ const target=s.returnTo==='home'?{tp:'home'}:(planId&&lesson?{tp:'lesson',planId,lesson,skill}:{tp:'home'});
+ setRoute(target,{replace:true});
+}
+function closePracticeSurface(){
+ try{window.WillenaVocabPractice?.restore?.()}catch(_){}try{window.WillenaVocabTestPractice?.restore?.()}catch(_){}try{window.WillenaSentencePractice?.restore?.()}catch(_){}
+ const q=quiz(),h=home();if(q)q.style.display='none';if(h)h.style.display='block';
+}
+function renderRoute(s=normalizeRoute()){
+ if(s.tp==='practice')return;
+ closePracticeSurface();
+ if(s.tp==='lesson'&&s.planId&&s.lesson)return renderLesson(s.planId,s.lesson,s.skill||null);
+ if(s.tp==='wrong')return showWrongCenter();
+ return renderHome();
+}
+
+async function openStats(planId){
+ const plan=findPlan(planId);if(!plan)return;
+ let bg=$('#tpStatsBg');if(!bg){bg=document.createElement('div');bg.id='tpStatsBg';bg.className='tp-stats-bg';document.body.appendChild(bg)}
+ bg.innerHTML='<div class="tp-stats-modal"><div class="tp-stats-head"><h3>내 시험 대비 기록</h3><button class="tp-stats-x">×</button></div><div class="tp-review-empty">불러오는 중...</div></div>';bg.classList.add('open');bg.onclick=e=>{if(e.target===bg)bg.classList.remove('open')};$('.tp-stats-x',bg).onclick=()=>bg.classList.remove('open');
+ try{
+   const stats=await cardStats(plan.id),rows=[];
+   for(const l of scopeFor(plan)){const stat=stats.find(x=>String(x.unit_key)===String(l.lesson))||null,p=statPayload(stat).byPractice;let done=0,total=0;for(const s of skillRows(plan,l)){const t=await totalFor(plan,l,s.k),u=Math.max(0,Number(p?.[s.k]?.unique_count)||0);total+=t;done+=t?Math.min(t,u):0}rows.push({lesson:l.lesson,accuracy:stat?.recent_count?clamp(stat.recent_accuracy):null,count:Number(stat?.recent_count)||0,done,total})}
+   const modal=$('.tp-stats-modal',bg);modal.innerHTML=`<div class="tp-stats-head"><h3>내 시험 대비 기록</h3><button class="tp-stats-x">×</button></div>${rows.map(r=>`<div class="tp-stat-row"><span>${esc(r.lesson)}</span><b>${r.accuracy==null?'—':`${r.accuracy}% 정확도`} · ${r.done}/${r.total} 완료</b></div>`).join('')}`;$('.tp-stats-x',bg).onclick=()=>bg.classList.remove('open');
+ }catch(e){const body=$('.tp-review-empty',bg);if(body)body.textContent='기록을 불러오지 못했습니다.'}
+}
+
+function toHome({replaceEntry=false}={}){setRoute({tp:'home'},{replace:replaceEntry})}
+function toWrong({replaceEntry=false}={}){setRoute({tp:'wrong'},{replace:replaceEntry})}
+function back(){const s=route();if(s.tp==='lesson'||s.tp==='wrong')toHome({replaceEntry:true});else if(s.tp==='practice')returnFromPractice(window.WillenaAssignedTestPrep?.selection);else history.back()}
+function start(){if(started)return;started=true;if(!history.state?.tp)history.replaceState({tp:'home'},'',location.href);window.addEventListener('popstate',()=>renderRoute(normalizeRoute()));window.addEventListener('testprep:student-state-refresh',()=>{const s=route();if(s.tp!=='practice')renderRoute(s)});renderRoute(normalizeRoute())}
+
+window.WillenaTestPrepUX={start,renderHome,renderLesson,showWrongCenter,openPractice,returnFromPractice,renderRoute};
+window.WillenaTestPrepNavigation={toHome,toWrong,back,renderState:renderRoute,get state(){return route()}};
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>{if(state()?.user)start()},{once:true});else if(state()?.user)start();
+console.log('[REV51] clean test-prep home/lesson/navigation owner');
 })();
