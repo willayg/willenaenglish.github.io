@@ -1,4 +1,4 @@
-# STOP — TEST PREP V2 SINGLE-SOURCE RULE
+# STOP — TEST PREP V2 SINGLE-SOURCE RULES
 
 Read the repository-root `AGENTS.md` before changing Test Prep v2 or the renderer lab.
 
@@ -16,3 +16,11 @@ there is exactly ONE question renderer implementation:
 If rendering is wrong, fix the canonical renderer. If normalization is wrong, fix the canonical model/source adapter. Do not add a patch renderer.
 
 Do not create another renderer file for vocab, 서술형, 본문, 수행평가, 오답, grammar, communication, or reading.
+
+There is also exactly ONE browser/history navigation owner for Test Prep v2:
+
+`students/test-prep-v2/navigation.js`
+
+Only that file may call `history.pushState`, `history.replaceState`, or listen to `popstate`.
+
+Do not add workflow-specific Back handlers, history stacks, `navigation-fix.js`, `back-fix.js`, or another `popstate` listener. UI Back controls must request the canonical navigator's `back()` behavior. If device/browser Back is wrong, fix `navigation.js` or the single route renderer in `app.js`.
