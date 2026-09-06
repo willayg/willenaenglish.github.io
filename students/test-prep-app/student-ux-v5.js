@@ -1,6 +1,10 @@
 (function(){
 'use strict';
 
+function removeRevBadge(){document.getElementById('tp-rev-badge')?.remove()}
+removeRevBadge();
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',removeRevBadge,{once:true});
+
 const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
 const CONTENT='https://gxwfsqxyuufqtitspfqg.supabase.co';
 const CONTENT_KEY=['sb_publishable_','G-FYhHfDL4OGdL892gY1Zg_','epdbEeqO'].join('');
@@ -233,7 +237,7 @@ async function openStats(planId){
 function toHome({replaceEntry=false}={}){setRoute({tp:'home'},{replace:replaceEntry})}
 function toWrong({replaceEntry=false}={}){setRoute({tp:'wrong'},{replace:replaceEntry})}
 function back(){const s=route();if(s.tp==='lesson'||s.tp==='wrong')toHome({replaceEntry:true});else if(s.tp==='practice')returnFromPractice(window.WillenaAssignedTestPrep?.selection);else history.back()}
-function start(){if(started)return;started=true;if(!history.state?.tp)history.replaceState({tp:'home'},'',location.href);window.addEventListener('popstate',()=>renderRoute(normalizeRoute()));window.addEventListener('testprep:student-state-refresh',()=>{const s=route();if(s.tp!=='practice')renderRoute(s)});renderRoute(normalizeRoute())}
+function start(){if(started)return;started=true;removeRevBadge();if(!history.state?.tp)history.replaceState({tp:'home'},'',location.href);window.addEventListener('popstate',()=>renderRoute(normalizeRoute()));window.addEventListener('testprep:student-state-refresh',()=>{const s=route();if(s.tp!=='practice')renderRoute(s)});renderRoute(normalizeRoute())}
 function renderState(s){if(!started){start();return}renderRoute(s||normalizeRoute())}
 
 window.WillenaTestPrepUX={start,renderHome,renderLesson,showWrongCenter,openPractice,returnFromPractice,renderRoute};
