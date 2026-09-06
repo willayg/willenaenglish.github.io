@@ -10,6 +10,7 @@ const cache=new Map();
 const token=()=>window.WillenaAPI?.getLocalAccessToken?.()||localStorage.getItem('sb_access_token')||'';
 const pct=(n,d)=>d?Math.max(0,Math.min(100,Math.round((Number(n)||0)/(Number(d)||1)*100))):0;
 const norm=s=>String(s??'').trim().toLowerCase();
+const number=v=>Number.isFinite(Number(v))?Number(v):0;
 
 async function contentGet(path,range=''){
   const headers={apikey:CONTENT_KEY,Authorization:`Bearer ${CONTENT_KEY}`};if(range)headers.Range=range;
@@ -66,7 +67,7 @@ export async function loadCardStats(plan,studentId,{force=false}={}){
     for(const row of scope){
       const lesson=String(row.lesson),unitId=unitMap.get(lesson),available=unitId?await availableForUnit(unitId):emptyAvailable(),sections=new Set((row.sections||[]).map(norm)),practices={};
       for(const practice of ACTIVE){
-        const on=practice==='constructed_response'?sections.has('constructed_response'):sections.has(practice);const set=on?available[practice]:new Set(),states=latestState(attempts,lesson,practice,set),stat=summarize(states,set.size);practices[practice]={...stat,_states:states.map(x=>({...x,id:`${lesson}|${practice}|${x.id}`}))};
+        const on=sections.has(practice),set=on?available[practice]:new Set(),states=latestState(attempts,lesson,practice,set),stat=summarize(states,set.size);practices[practice]={...stat,_states:states.map(x=>({...x,id:`${lesson}|${practice}|${x.id}`}))};
       }
       const activeStats=ACTIVE.filter(p=>sections.has(p)).map(p=>practices[p]);lessons[lesson]={summary:aggregate(activeStats),practices};
     }
@@ -76,6 +77,7 @@ export async function loadCardStats(plan,studentId,{force=false}={}){
 export function invalidateCardStats(planId){if(planId)cache.delete(String(planId));else cache.clear()}
 export function formatCardMetric(stat){if(!stat?.total)return'0 / 0 questions';return`${stat.completed} / ${stat.total} questions`}
 export function formatAccuracy(stat){return stat?.accuracySample?`${stat.accuracy}% accuracy`:'— accuracy'}
+export function reviewCounts(plan){const s=plan?.summary||{};return{now:number(s.wrong_now??s.review_now),later:number(s.wrong_later??s.review_later),cleared:number(s.cleared_wrong??s.review_cleared)}}
 
 // V2.13a card-stat contract:
 // coverage = unique current questions attempted / current available questions.
