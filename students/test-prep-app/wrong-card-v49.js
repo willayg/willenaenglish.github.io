@@ -30,9 +30,9 @@ async function load(){
  const d=await r.json().catch(()=>({}));if(!r.ok||d.success===false)throw new Error(d.error||'오답을 불러오지 못했습니다.');
  const seen=new Set();return(d.reviews||[]).filter(x=>{const k=`${x.plan_id}::${x.question_id}`;if(seen.has(k))return false;seen.add(k);return true});
 }
-function loadingCard(){return`<button class="tp49-wrong-card tp49-wrong-loading" type="button" disabled><span class="tp49-wrong-copy"><b>오답</b></span>${statsHtml('—','—','—')}</button>`}
-function card(rows){const c=counts(rows);return`<button class="tp49-wrong-card" type="button" data-tp49-open ${c.total?'':'disabled'}><span class="tp49-wrong-copy"><b>오답</b></span>${statsHtml(c.now,c.later,c.total)}${c.total?'<span class="tp49-wrong-cta">복습 시작 →</span>':''}</button>`}
-function errorCard(){return`<button class="tp49-wrong-card tp49-wrong-error" type="button" data-tp49-retry><span class="tp49-wrong-copy"><b>오답</b></span>${statsHtml('—','—','—')}<span class="tp49-wrong-cta">다시 불러오기 →</span></button>`}
+function loadingCard(){return`<button class="tp49-wrong-card tp49-wrong-loading" type="button" disabled><span class="tp49-wrong-copy"><b>전체 범위 오답</b></span>${statsHtml('—','—','—')}</button>`}
+function card(rows){const c=counts(rows);return`<button class="tp49-wrong-card" type="button" data-tp49-open ${c.total?'':'disabled'}><span class="tp49-wrong-copy"><b>전체 범위 오답</b></span>${statsHtml(c.now,c.later,c.total)}${c.total?'<span class="tp49-wrong-cta">복습 시작 →</span>':''}</button>`}
+function errorCard(){return`<button class="tp49-wrong-card tp49-wrong-error" type="button" data-tp49-retry><span class="tp49-wrong-copy"><b>전체 범위 오답</b></span>${statsHtml('—','—','—')}<span class="tp49-wrong-cta">다시 불러오기 →</span></button>`}
 function openReview(){const nav=window.WillenaTestPrepNavigation;if(nav?.toWrong)return nav.toWrong();return window.WillenaReviewV49?.show?.()}
 function bind(){const m=mount();if(!m)return;m.querySelector('[data-tp49-open]')?.addEventListener('click',openReview);m.querySelector('[data-tp49-retry]')?.addEventListener('click',()=>refresh({initial:false}))}
 function updateVisibleCounts(rows){const m=mount();if(!m)return;const c=counts(rows);const a=m.querySelector('[data-wrong-now]'),b=m.querySelector('[data-wrong-later]'),t=m.querySelector('[data-wrong-total]');if(a)a.textContent=String(c.now);if(b)b.textContent=String(c.later);if(t)t.textContent=String(c.total)}
@@ -56,5 +56,5 @@ window.addEventListener('testprep:review-finished',queueServerRefresh);
 window.addEventListener('testprep:tracking',e=>{if(e?.detail?.type==='session_completed')queueServerRefresh()});
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(()=>refresh({initial:true}),80),{once:true});else setTimeout(()=>refresh({initial:true}),80);
 window.WillenaWrongCardV49={refresh,load,get cachedRows(){return cachedRows}};
-console.log('[REV49p] wrong-answer card refreshes on initial load and completed sessions only');
+console.log('[REV49s] wrong-answer card title: 전체 범위 오답');
 })();
