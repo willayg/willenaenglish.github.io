@@ -1,6 +1,11 @@
 import {FORMS,parseCorrection} from './question-model.js';
 
-const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]));
+const display=v=>String(v??'')
+  .replace(/\\+r\\+n/g,'\n')
+  .replace(/\\+n/g,'\n')
+  .replace(/\\+r/g,'\n');
+const textHtml=v=>esc(display(v)).replace(/\n/g,'<br>');
 const LABELS={korean:'우리말',definition:'영영풀이',initial:'주어진 철자',sentence:'문장',sentences:'문장',dialogue:'대화',passage:'윗글',source_passage:'원문',rewritten:'바꿔 쓴 글',question:'질문',conditions:'조건',provided_words:'보기',word_bank:'보기',bank:'보기',options:'보기',base_word:'주어진 단어',setup:'조건',items:'문장',pairs:'보기',clues:'문제 단서',statements:'문장',claims:'설명',table:'표',source:'자료',source_sentence:'문장',source_phrase:'표현',phrase:'표현',example:'예문',incorrect:'고칠 문장',original:'원문',comparison:'비교',target:'대상',pattern:'형식',word_count:'단어 수',given_sentence:'보기',masked:'문장'};
 const PREFERRED=['korean','definition','initial','base_word','setup','sentence','sentences','dialogue','passage','source_passage','rewritten','question','conditions','provided_words','word_bank','bank','options','given_sentence','items','pairs','clues','statements','claims','table','source','source_sentence','source_phrase','phrase','example','incorrect','original','comparison','target','pattern','word_count','masked'];
 
@@ -8,25 +13,26 @@ function spans(context){
   const out=[];
   if(context?.underlined)out.push(context.underlined);
   if(Array.isArray(context?.underlined_spans))out.push(...context.underlined_spans);
-  return [...new Set(out.map(String).filter(Boolean))];
+  return [...new Set(out.map(display).filter(Boolean))];
 }
 function marked(value,under=[]){
-  const src=String(value??'');
-  if(!src||!under.length)return esc(src);
+  const src=display(value);
+  if(!src||!under.length)return textHtml(src);
   const hits=[];
-  for(const needle of under){
+  for(const rawNeedle of under){
+    const needle=display(rawNeedle);if(!needle)continue;
     let p=0;
     while(p<src.length){
       const i=src.indexOf(needle,p);if(i<0)break;hits.push([i,i+needle.length]);p=i+needle.length;
     }
   }
-  if(!hits.length)return esc(src);
+  if(!hits.length)return textHtml(src);
   hits.sort((a,b)=>a[0]-b[0]||b[1]-a[1]);
   const merged=[];
   for(const h of hits){const last=merged[merged.length-1];if(!last||h[0]>=last[1])merged.push([...h]);else last[1]=Math.max(last[1],h[1])}
   let out='',p=0;
-  for(const [a,b] of merged){out+=esc(src.slice(p,a))+`<span class="u">${esc(src.slice(a,b))}</span>`;p=b}
-  return out+esc(src.slice(p));
+  for(const [a,b] of merged){out+=textHtml(src.slice(p,a))+`<span class="u">${textHtml(src.slice(a,b))}</span>`;p=b}
+  return out+textHtml(src.slice(p));
 }
 function printable(value){
   if(value==null)return'';
@@ -56,17 +62,17 @@ export class QuestionRenderer{
   render(question,{onChange}={}){
     this.question=question;this.state={selected:new Set(),order:[],blank:[]};this.disabled=false;this.onChange=typeof onChange==='function'?onChange:null;
     const controls=this.controls(question);
-    this.host.innerHTML=`<div class="prompt">${esc(question.prompt||'')}</div><div class="context">${contextHtml(question)}</div><div data-answer>${controls}</div><div class="feedback" data-feedback></div>`;
+    this.host.innerHTML=`<div class="prompt">${textHtml(question.prompt||'')}</div><div class="context">${contextHtml(question)}</div><div data-answer>${controls}</div><div class="feedback" data-feedback></div>`;
     this.bind(question);this.emit();return this;
   }
   controls(q){
-    if(q.form===FORMS.choice||q.form===FORMS.multi)return `<div class="choices">${q.choices.map((x,i)=>`<button type="button" class="choice" data-choice="${i+1}"><span>${numberMark(i)}</span> ${esc(x)}</button>`).join('')}</div>`;
+    if(q.form===FORMS.choice||q.form===FORMS.multi)return `<div class="choices">${q.choices.map((x,i)=>`<button type="button" class="choice" data-choice="${i+1}"><span>${numberMark(i)}</span> ${textHtml(x)}</button>`).join('')}</div>`;
     if(q.form===FORMS.write)return `<textarea class="answer" data-write autocomplete="off" spellcheck="false" placeholder="답을 입력하세요"></textarea>`;
     if(q.form===FORMS.multipart){const marks=['ⓐ','ⓑ','ⓒ','ⓓ','ⓔ','ⓕ'];return `<div class="structured">${answerParts(q).map((_,i)=>`<div class="part-row"><div class="row-label">${marks[i]||i+1}</div><input class="text-input" data-part="${i}" autocomplete="off" spellcheck="false" placeholder="답 ${i+1}"></div>`).join('')}</div>`}
-    if(q.form===FORMS.correction){const marks=['ⓐ','ⓑ','ⓒ','ⓓ','ⓔ','ⓕ'];return `<div class="structured">${answerParts(q).map((a,i)=>{const p=parseCorrection(a);return `<div class="correction-row"><div class="row-label">${marks[i]||i+1}</div><input class="text-input" data-wrong="${i}" autocomplete="off" spellcheck="false" placeholder="틀린 부분"><div class="arrow">→</div><input class="text-input" data-right="${i}" autocomplete="off" spellcheck="false" placeholder="고친 부분"></div>`}).join('')}</div>`}
+    if(q.form===FORMS.correction){const marks=['ⓐ','ⓑ','ⓒ','ⓓ','ⓔ','ⓕ'];return `<div class="structured">${answerParts(q).map((a,i)=>{parseCorrection(a);return `<div class="correction-row"><div class="row-label">${marks[i]||i+1}</div><input class="text-input" data-wrong="${i}" autocomplete="off" spellcheck="false" placeholder="틀린 부분"><div class="arrow">→</div><input class="text-input" data-right="${i}" autocomplete="off" spellcheck="false" placeholder="고친 부분"></div>`}).join('')}</div>`}
     if(q.form===FORMS.order||q.form===FORMS.chunks){const chips=Array.isArray(q.chips)?q.chips:[];return `<div class="build" data-build></div><div class="chips" data-pool>${chips.map((x,i)=>`<button type="button" class="chip" data-chip="${i}">${esc(x)}</button>`).join('')}</div>`}
-    if(q.form===FORMS.blanks){const masked=String(q.context?.masked||'');const chips=Array.isArray(q.chips)?q.chips:[];return `<div class="masked">${esc(masked)}</div><div class="build" data-build></div><div class="chips" data-pool>${chips.map((x,i)=>`<button type="button" class="chip" data-chip="${i}">${esc(x)}</button>`).join('')}</div>`}
-    if(q.form===FORMS.learn)return `<div class="learn">${esc(answerParts(q)[0]||q.context?.target_en||'')}</div>`;
+    if(q.form===FORMS.blanks){const masked=String(q.context?.masked||'');const chips=Array.isArray(q.chips)?q.chips:[];return `<div class="masked">${textHtml(masked)}</div><div class="build" data-build></div><div class="chips" data-pool>${chips.map((x,i)=>`<button type="button" class="chip" data-chip="${i}">${esc(x)}</button>`).join('')}</div>`}
+    if(q.form===FORMS.learn)return `<div class="learn">${textHtml(answerParts(q)[0]||q.context?.target_en||'')}</div>`;
     return `<div class="error">Unsupported question form: ${esc(q.form||'unknown')}</div>`;
   }
   bind(q){
@@ -109,7 +115,7 @@ export class QuestionRenderer{
     const f=this.host.querySelector('[data-feedback]');if(!f)return;
     f.className=`feedback show ${result.correct?'ok':'bad'}`;
     const answer=Array.isArray(result.correctAnswer)?result.correctAnswer.join(' / '):String(result.correctAnswer??'');
-    f.innerHTML=result.correct?'정답입니다!':`${esc(result.message||'정답을 확인해 보세요.')}${answer?`<div class="model">정답: ${esc(answer)}</div>`:''}`;
+    f.innerHTML=result.correct?'정답입니다!':`${textHtml(result.message||'정답을 확인해 보세요.')}${answer?`<div class="model">정답: ${textHtml(answer)}</div>`:''}`;
     if([FORMS.choice,FORMS.multi].includes(this.question?.form)){
       const right=new Set((Array.isArray(this.question.answer)?this.question.answer:[]).map(String)),selected=this.state.selected;
       this.host.querySelectorAll('[data-choice]').forEach(btn=>{const k=String(btn.dataset.choice);btn.classList.remove('selected');if(right.has(k))btn.classList.add('correct');else if(selected.has(k))btn.classList.add('wrong')});
