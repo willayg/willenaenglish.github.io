@@ -112,7 +112,11 @@ function taskShelf(allPlans){
  if(!all.length)return'';
  return `<div class="tp-task-shelf">${all.slice(0,6).map(({p,t})=>`<button class="tp-task-chip" data-task-plan="${esc(p.id)}" data-task-lesson="${esc(t.lesson)}" data-task-skill="${esc(t.practice_type)}"><span class="arrow">→</span><span class="k">선생님 과제</span><b>${esc(t.title||`${t.lesson} ${LABEL[t.practice_type]||t.practice_type}`)}</b><small>${Number(t.progress?.remaining)||0}개 남음</small></button>`).join('')}</div>`;
 }
-function planHead(plan){const dd=dday(plan?.exam_date);return `<div class="tp-exam-head"><div><h2>${esc(planSchool(plan))}</h2><p>${esc(examLabel(plan))}</p></div><div class="tp-exam-actions">${dd?`<span class="tp-dday">${esc(dd)}</span>`:''}${plan?.exam_date?`<span class="tp-exam-date">${esc(plan.exam_date)}</span>`:''}<button class="tp-records" data-records="${esc(plan.id)}">내 기록</button></div></div><div class="tp-book">${esc(plan?.book_label||'')}</div>`}
+function planCompact(plan){
+ const dd=dday(plan?.exam_date),exam=examLabel(plan),book=plan?.book_label||'';
+ return `<section class="tp-plan-compact" style="margin:0 0 18px;padding:16px 18px;border:1.5px solid var(--tp-line);border-radius:20px;background:var(--tp-card);box-shadow:var(--tp-shadow);display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;color:var(--tp-ink)"><div style="min-width:0;flex:1 1 260px"><div style="font-size:20px;font-weight:800;line-height:1.15;letter-spacing:-.025em">${esc(planSchool(plan))}</div><div style="margin-top:5px;font-size:12px;font-weight:700;color:var(--tp-muted);line-height:1.45">${esc([exam,book].filter(Boolean).join(' · '))}</div></div><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end">${dd?`<span style="border:1.25px solid var(--tp-line);border-radius:999px;padding:8px 11px;background:#fff;font-size:11px;font-weight:800;white-space:nowrap">${esc(dd)}</span>`:''}${plan?.exam_date?`<span style="border:1.25px solid var(--tp-line);border-radius:999px;padding:8px 11px;background:#fff;color:var(--tp-pink);font-size:11px;font-weight:800;white-space:nowrap">${esc(plan.exam_date)}</span>`:''}<button class="tp-records" data-records="${esc(plan.id)}" style="padding:8px 11px;border-radius:999px;font-size:11px;white-space:nowrap">내 기록</button></div></section>`;
+}
+function planCompactShelf(allPlans){return (allPlans||[]).map(plan=>planCompact(plan)).join('')}
 function lessonCard(plan,l){return `<button class="tp-lesson-card" data-lesson-plan="${esc(plan.id)}" data-lesson="${esc(l.lesson)}"><span class="tp-lesson-card-copy"><h3>${esc(l.lesson)}</h3><p class="tp-card-accuracy-label">정확도 불러오는 중</p><div class="tp-card-coverage"><div class="tp-card-coverage-meta"><span>문제 완료</span><b class="tp-card-coverage-count">—</b></div><div class="tp-card-coverage-track"><i></i></div></div></span><span class="tp-card-ring-wrap"><span class="tp-ring tp-card-accuracy-ring" style="--p:0%"><b>—</b></span><small class="tp-card-ring-label">정확도</small></span></button>`}
 function wrongMount(){return '<div id="tpWrongCardMount" data-review-card-owner="rev49"></div>'}
 
@@ -139,7 +143,7 @@ function renderHome(){
  if(route().tp==='practice')history.replaceState({tp:'home'},'',location.href);
  showHomeSurface();const h=home();if(!h)return;
  const all=plans();
- h.innerHTML=`${wrongMount()}${taskShelf(all)}${all.length?all.map(plan=>`<section class="tp-exam-section">${planHead(plan)}<div class="tp-lessons">${scopeFor(plan).map(l=>lessonCard(plan,l)).join('')}</div></section>`).join(''):'<div class="tp-review-empty">지정된 시험 대비가 없습니다.</div>'}`;
+ h.innerHTML=`${wrongMount()}${planCompactShelf(all)}${taskShelf(all)}${all.length?all.map(plan=>`<section class="tp-exam-section"><div class="tp-lessons">${scopeFor(plan).map(l=>lessonCard(plan,l)).join('')}</div></section>`).join(''):'<div class="tp-review-empty">지정된 시험 대비가 없습니다.</div>'}`;
  $$('[data-task-plan]',h).forEach(b=>b.onclick=()=>openPractice(b.dataset.taskPlan,b.dataset.taskLesson,b.dataset.taskSkill,'home'));
  $$('.tp-lesson-card',h).forEach(b=>b.onclick=()=>setRoute({tp:'lesson',planId:b.dataset.lessonPlan,lesson:b.dataset.lesson}));
  $$('[data-records]',h).forEach(b=>b.onclick=e=>{e.stopPropagation();openStats(b.dataset.records)});
@@ -220,5 +224,5 @@ function renderState(s){if(!started){start();return}renderRoute(s||normalizeRout
 window.WillenaTestPrepUX={start,renderHome,renderLesson,showWrongCenter,openPractice,returnFromPractice,renderRoute};
 window.WillenaTestPrepNavigation={toHome,toWrong,back,renderState,get state(){return route()}};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>{if(state()?.user)start()},{once:true});else if(state()?.user)start();
-console.log('[REV51] clean test-prep home/lesson/navigation owner');
+console.log('[REV51d] compact exam details under wrong answer card');
 })();
