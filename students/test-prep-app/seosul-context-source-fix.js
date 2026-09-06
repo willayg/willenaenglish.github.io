@@ -3,7 +3,6 @@
 if(window.__willenaSeosulContextSourceFix)return;
 window.__willenaSeosulContextSourceFix=true;
 
-const originalFetch=window.fetch.bind(window);
 const clean=v=>String(v??'').replace(/\\\\n/g,'\n').replace(/\\n/g,'\n').trim();
 const textItem=v=>{
   if(v==null)return '';
@@ -76,29 +75,7 @@ function normalizeContext(raw){
   return c;
 }
 
-function normalizeRows(rows){
-  if(!Array.isArray(rows))return rows;
-  return rows.map(row=>{
-    if(!row||typeof row!=='object'||!row.context)return row;
-    const meta=row.metadata||{};
-    const authored=meta.constructed_response_authored===true||meta.authored_constructed_response===true;
-    if(!authored)return row;
-    return {...row,context:normalizeContext(row.context)};
-  });
-}
-
+// Explicit helper only. Do not monkey-patch window.fetch or mutate raw DB responses.
 window.WillenaNormalizeAuthoredContext=normalizeContext;
-
-window.fetch=async function(input,init){
-  const response=await originalFetch(input,init);
-  try{
-    const url=typeof input==='string'?input:String(input?.url||'');
-    if(!url.includes('/rest/v1/test_prep_questions'))return response;
-    const clone=response.clone();
-    const json=await clone.json();
-    if(!Array.isArray(json))return response;
-    const body=JSON.stringify(normalizeRows(json));
-    return new Response(body,{status:response.status,statusText:response.statusText,headers:response.headers});
-  }catch(_){return response;}
-};
+console.log('[REV49d] authored context helper is explicit; global fetch mutation removed');
 })();
