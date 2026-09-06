@@ -2,12 +2,13 @@ import {QuestionRenderer} from './question-renderer.js';
 import {gradeQuestion} from './question-grader.js';
 import {resolveContentIds,loadStoredSkill,loadStoredWritten,shuffle} from './content-source.js';
 import {initTracking,refreshTrackingState,setTrackingContext,startSession,recordAttempt,completeSession,trackingState} from './tracking-client.js?v=2.12.0';
+import {startVocabularyLearning} from './vocab-learning.js?v=2.13.0';
 import {planStats,lessonStats,formatMetric} from './stats-client.js';
 
 const $=s=>document.querySelector(s),esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const root=$('#screen'),bottom=$('#bottom'),userEl=$('#user');
 let state={plan:null,lesson:null,ids:null,practice:null,queue:[],index:0,score:0,wrongIds:[],checked:false,startedAt:0,renderer:null};
-const PRACTICES={communication:{label:'Communication',desc:'핵심 대화 표현',kind:'stored'},grammar:{label:'Grammar',desc:'핵심 문법',kind:'stored'},reading:{label:'Reading',desc:'본문 이해',kind:'stored'},constructed_response:{label:'서술형',desc:'저장된 영작 · 교정 · 다답형',kind:'written'}};
+const PRACTICES={vocabulary:{label:'단어 학습',desc:'카드 · 뜻 · 철자',kind:'vocab-learning'},communication:{label:'Communication',desc:'핵심 대화 표현',kind:'stored'},grammar:{label:'Grammar',desc:'핵심 문법',kind:'stored'},reading:{label:'Reading',desc:'본문 이해',kind:'stored'},constructed_response:{label:'서술형',desc:'저장된 영작 · 교정 · 다답형',kind:'written'}};
 
 function scopeFor(plan){const lessons=plan?.group?.scope?.lessons;if(Array.isArray(lessons)&&lessons.length)return lessons.filter(x=>x?.lesson);return(plan?.units||[]).map(lesson=>({lesson,sections:plan?.practice_types||[]}))}
 function sectionsFor(plan,lesson){const row=scopeFor(plan).find(x=>String(x.lesson)===String(lesson));return new Set((row?.sections||[]).map(x=>String(x).toLowerCase()))}
@@ -15,7 +16,7 @@ function setBottom(html=''){bottom.innerHTML=html;bottom.hidden=!html}
 function error(message){root.innerHTML=`<div class="error">${esc(message)}</div>`;setBottom('')}
 function updateUser(){const u=trackingState().user;userEl.textContent=u?.name||u?.username||'Student'}
 function ring(p){const n=Math.max(0,Math.min(100,Math.round(Number(p)||0)));return `<span class="ring" style="--p:${n}%"><b>${n}%</b></span>`}
-function lessonOverview(plan,lesson){const all=lessonStats(plan,lesson),used=['communication','grammar','reading','constructed_response'].map(k=>all[k]).filter(x=>x.unique),done=used.reduce((n,x)=>n+x.unique,0),accuracy=used.length?Math.round(used.reduce((n,x)=>n+x.accuracy,0)/used.length):0;return{all,done,accuracy}}
+function lessonOverview(plan,lesson){const all=lessonStats(plan,lesson),used=['vocabulary','communication','grammar','reading','constructed_response'].map(k=>all[k]).filter(x=>x.unique),done=used.reduce((n,x)=>n+x.unique,0),accuracy=used.length?Math.round(used.reduce((n,x)=>n+x.accuracy,0)/used.length):0;return{all,done,accuracy}}
 
 function renderHome(){
   state={...state,plan:null,lesson:null,practice:null,queue:[],index:0};const plans=trackingState().plans||[];setBottom('');
@@ -35,9 +36,17 @@ function renderLesson(plan,lesson){
   $('#lessonBack').onclick=()=>renderLessons(plan);root.querySelectorAll('[data-practice]').forEach(b=>b.onclick=()=>startPractice(b.dataset.practice));
 }
 
+async function returnFromVocabulary(){
+  try{await refreshTrackingState();const fresh=trackingState().plans.find(x=>String(x.id)===String(state.plan.id));if(fresh)state.plan=fresh}catch(e){console.warn('[test-prep-v2] vocab stats refresh failed',e)}
+  renderLesson(state.plan,state.lesson);
+}
 async function startPractice(practice){
   const config=PRACTICES[practice];if(!config)return;root.innerHTML='<div class="loading">문제를 불러오는 중...</div>';setBottom('');
-  try{const ids=await resolveContentIds(state.plan,state.lesson);state.ids=ids;let pool=config.kind==='written'?await loadStoredWritten(ids.unitId):await loadStoredSkill(ids.unitId,practice);pool=shuffle(pool);if(pool.length>20)pool=pool.slice(0,20);if(!pool.length){root.innerHTML=`<button class="back" id="emptyBack">← ${esc(state.lesson)}</button><div class="empty">이 영역에 사용할 v2.12 문제가 없습니다.</div>`;$('#emptyBack').onclick=()=>renderLesson(state.plan,state.lesson);return}state.practice=practice;state.queue=pool;state.index=0;state.score=0;state.wrongIds=[];state.checked=false;setTrackingContext(state.plan,state.lesson);await startSession(practice);renderQuestion()}catch(e){console.error('[test-prep-v2] start failed',e);error(e.message||'문제를 불러오지 못했습니다.')}
+  try{
+    const ids=await resolveContentIds(state.plan,state.lesson);state.ids=ids;state.practice=practice;setTrackingContext(state.plan,state.lesson);
+    if(config.kind==='vocab-learning'){await startVocabularyLearning({host:root,plan:state.plan,lesson:state.lesson,unitId:ids.unitId,onExit:returnFromVocabulary});return}
+    let pool=config.kind==='written'?await loadStoredWritten(ids.unitId):await loadStoredSkill(ids.unitId,practice);pool=shuffle(pool);if(pool.length>20)pool=pool.slice(0,20);if(!pool.length){root.innerHTML=`<button class="back" id="emptyBack">← ${esc(state.lesson)}</button><div class="empty">이 영역에 사용할 v2.13 문제가 없습니다.</div>`;$('#emptyBack').onclick=()=>renderLesson(state.plan,state.lesson);return}state.queue=pool;state.index=0;state.score=0;state.wrongIds=[];state.checked=false;await startSession(practice);renderQuestion();
+  }catch(e){console.error('[test-prep-v2] start failed',e);error(e.message||'문제를 불러오지 못했습니다.')}
 }
 function current(){return state.queue[state.index]||null}
 function headerFor(q){const code=q.source?.code||'',source=code?`<span class="badge ${code.toLowerCase()}" title="${code==='Z'?'Zocbo':code==='W'?'Willena authored':'Book reference'}">${code}</span>`:'';return `<div class="practice-head"><div><button class="back" id="practiceBack">← ${esc(state.lesson)}</button><div class="practice-meta">${source}<span>${esc(state.plan.book_label||'')}</span><span>·</span><span>${esc(PRACTICES[state.practice]?.label||state.practice)}</span></div></div><strong>${state.index+1} / ${state.queue.length}</strong></div><div class="progress"><i style="width:${Math.round(state.index/Math.max(1,state.queue.length)*100)}%"></i></div>`}
@@ -52,5 +61,5 @@ async function finishPractice(){
   setBottom('');try{await completeSession({correct:state.score,total:state.queue.length,wrongIds:state.wrongIds});await refreshTrackingState();const fresh=trackingState().plans.find(x=>String(x.id)===String(state.plan.id));if(fresh)state.plan=fresh}catch(e){console.warn('[test-prep-v2] finish/refresh failed',e)}const pct=state.queue.length?Math.round(state.score/state.queue.length*100):0;root.innerHTML=`<div class="card result"><div class="score">${state.score}/${state.queue.length}</div><h2>${pct>=80?'좋아요!':'한 번 더 확인해 보세요.'}</h2><div class="statline">정답률 ${pct}% · 틀린/건너뛴 문제 ${state.wrongIds.length}개</div><div style="margin-top:22px"><button class="tile" id="resultBack" style="text-align:center;min-height:auto">${esc(state.lesson)}로 돌아가기</button></div></div>`;$('#resultBack').onclick=()=>renderLesson(state.plan,state.lesson);
 }
 
-async function boot(){try{root.innerHTML='<div class="loading">Test Prep v2.12를 준비하는 중...</div>';await initTracking();updateUser();renderHome()}catch(e){console.error('[test-prep-v2] boot failed',e);error(e.message||'앱을 시작하지 못했습니다.')}}
+async function boot(){try{root.innerHTML='<div class="loading">Test Prep v2.13을 준비하는 중...</div>';await initTracking();updateUser();renderHome()}catch(e){console.error('[test-prep-v2] boot failed',e);error(e.message||'앱을 시작하지 못했습니다.')}}
 boot();
