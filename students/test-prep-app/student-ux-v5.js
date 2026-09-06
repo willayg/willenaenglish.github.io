@@ -107,17 +107,18 @@ async function cardStats(planId){
 }
 function statPayload(stat){const raw=stat?.attempted_question_ids;if(raw&&typeof raw==='object'&&!Array.isArray(raw))return{all:Array.isArray(raw.all)?raw.all:[],byPractice:raw.by_practice&&typeof raw.by_practice==='object'?raw.by_practice:{}};return{all:Array.isArray(raw)?raw:[],byPractice:{}}}
 function installLessonMetricStyles(){
- if(document.getElementById('tp51gMetricStyles'))return;
- const s=document.createElement('style');s.id='tp51gMetricStyles';s.textContent=`
+ if(document.getElementById('tp51jMetricStyles'))return;
+ const s=document.createElement('style');s.id='tp51jMetricStyles';s.textContent=`
  .tp-stop{grid-template-columns:64px minmax(0,1fr) 180px!important}
  .tp-stop-metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:center;padding-top:4px;min-width:0}
  .tp-skill-metric{display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:0}
  .tp-skill-metric+.tp-skill-metric{border-left:1px solid var(--tp-line);padding-left:12px}
- .tp-skill-metric b{display:block;font-size:25px;line-height:1;font-weight:800;letter-spacing:-.03em;white-space:nowrap}
- .tp-skill-metric small{display:block;margin-top:7px!important;font-size:11px!important;line-height:1.15!important;font-weight:800}
+ .tp-skill-metric b{display:block;font-size:22px;line-height:1;font-weight:800;letter-spacing:-.03em;white-space:nowrap}
+ .tp-skill-metric small{display:block;margin-top:7px!important;font-size:10px!important;line-height:1.15!important;font-weight:800}
  .tp-skill-metric.tp-average b,.tp-skill-metric.tp-average small{color:var(--tp-cyan-dark)!important}
  .tp-skill-metric.tp-completion b,.tp-skill-metric.tp-completion small{color:var(--tp-pink)!important}
- @media(max-width:620px){.tp-stop{grid-template-columns:56px minmax(0,1fr) 154px!important;gap:10px!important}.tp-stop-metrics{gap:8px}.tp-skill-metric+.tp-skill-metric{padding-left:8px}.tp-skill-metric b{font-size:21px}.tp-skill-metric small{font-size:10px!important}}
+ .tp-completion-fraction{margin-top:4px!important;font-size:9px!important;opacity:.72;letter-spacing:.01em;white-space:nowrap}
+ @media(max-width:620px){.tp-stop{grid-template-columns:56px minmax(0,1fr) 154px!important;gap:10px!important}.tp-stop-metrics{gap:8px}.tp-skill-metric+.tp-skill-metric{padding-left:8px}.tp-skill-metric b{font-size:19px}.tp-skill-metric small{font-size:9px!important}.tp-completion-fraction{font-size:8px!important}}
  `;document.head.appendChild(s);
 }
 
@@ -171,9 +172,9 @@ async function hydrateLesson(plan,l,skills,run){
  await Promise.all(skills.map(async s=>{
    const row=$(`.tp-stop[data-skill="${CSS.escape(String(s.k))}"]`);if(!row||run!==lessonHydration)return;
    const ps=by?.[s.k]||{},count=Math.max(0,Number(ps.recent_count)||0),acc=count&&ps.recent_accuracy!=null?clamp(ps.recent_accuracy):null,unique=Math.max(0,Number(ps.unique_count)||0);
-   const avg=$('[data-skill-average]',row),completed=$('[data-skill-completion]',row),bar=$('.tp-mini i',row);
+   const avg=$('[data-skill-average]',row),completed=$('[data-skill-completion]',row),fraction=$('[data-skill-completion-fraction]',row),bar=$('.tp-mini i',row);
    if(avg)avg.textContent=acc==null?'—':`${acc}%`;
-   try{const total=await totalFor(plan,l,s.k);if(run!==lessonHydration||!row.isConnected)return;const done=total?Math.min(total,unique):unique,coverage=total?clamp(done/total*100):0;if(completed)completed.textContent=total?`${done} / ${total}`:`${done}`;if(bar)bar.style.width=`${coverage}%`}catch(e){if(completed)completed.textContent=unique?`${unique}`:'—'}
+   try{const total=await totalFor(plan,l,s.k);if(run!==lessonHydration||!row.isConnected)return;const done=total?Math.min(total,unique):unique,coverage=total?clamp(done/total*100):0;if(completed)completed.textContent=total?`${coverage}%`:'—';if(fraction)fraction.textContent=total?`${done} / ${total}`:(unique?`${unique}`:'—');if(bar)bar.style.width=`${coverage}%`}catch(e){if(completed)completed.textContent='—';if(fraction)fraction.textContent=unique?`${unique}`:'—'}
  }));
 }
 function renderLesson(planId,lesson,focusSkill=null){
@@ -185,7 +186,7 @@ function renderLesson(planId,lesson,focusSkill=null){
  showHomeSurface();const h=home(),plan=findPlan(planId);if(!h||!plan){setRoute({tp:'home'},{replace:true});return}
  const l=scopeFor(plan).find(x=>String(x.lesson)===String(lesson));if(!l){setRoute({tp:'home'},{replace:true});return}
  const skills=skillRows(plan,l);installLessonMetricStyles();
- h.innerHTML=`<button class="tp-back" type="button">← 시험 대비</button><div class="tp-lesson-head"><div><h1>${esc(l.lesson)}</h1><p>${esc(plan.book_label||'')} · 학습 지도</p></div></div><div class="tp-subway">${skills.map((s,i)=>`<div class="tp-stop" data-skill="${esc(s.k)}"><div class="tp-station">${i+1}</div><div class="tp-stop-copy"><b>${esc(s.label)}</b><small>${esc(s.desc)}</small>${s.task?`<span class="tp-task-badge">선생님 과제 · ${Number(s.task.progress?.remaining)||0}개 남음</span>`:''}<div class="tp-mini"><i style="width:0"></i></div></div><div class="tp-stop-metrics"><span class="tp-skill-metric tp-completion"><b data-skill-completion>—</b><small>완료</small></span><span class="tp-skill-metric tp-average"><b data-skill-average>—</b><small>평균</small></span></div></div>`).join('')}</div>`;
+ h.innerHTML=`<button class="tp-back" type="button">← 시험 대비</button><div class="tp-lesson-head"><div><h1>${esc(l.lesson)}</h1><p>${esc(plan.book_label||'')} · 학습 지도</p></div></div><div class="tp-subway">${skills.map((s,i)=>`<div class="tp-stop" data-skill="${esc(s.k)}"><div class="tp-station">${i+1}</div><div class="tp-stop-copy"><b>${esc(s.label)}</b><small>${esc(s.desc)}</small>${s.task?`<span class="tp-task-badge">선생님 과제 · ${Number(s.task.progress?.remaining)||0}개 남음</span>`:''}<div class="tp-mini"><i style="width:0"></i></div></div><div class="tp-stop-metrics"><span class="tp-skill-metric tp-completion"><b data-skill-completion>—</b><small class="tp-completion-fraction" data-skill-completion-fraction>—</small><small>완료</small></span><span class="tp-skill-metric tp-average"><b data-skill-average>—</b><small>평균</small></span></div></div>`).join('')}</div>`;
  $('.tp-back',h).onclick=()=>setRoute({tp:'home'});
  $$('.tp-stop',h).forEach(row=>row.onclick=()=>openPractice(plan.id,l.lesson,row.dataset.skill,'lesson'));
  const run=++lessonHydration;hydrateLesson(plan,l,skills,run);
@@ -198,7 +199,7 @@ function showWrongCenter(){
 }
 
 async function openPractice(planId,lesson,skill,returnTo='lesson'){
- setRoute({tp:'practice',planId:String(planId),lesson:String(lesson),skill:String(skill),returnTo},{render:false});
+ setRoute({tp:'practice',planId:String(planId),lesson:String(skill),skill:String(skill),returnTo},{render:false});
  try{await window.WillenaAssignedTestPrep?.startSelection?.(planId,lesson,skill)}catch(e){console.error('[REV51] practice start',e);setRoute(returnTo==='lesson'?{tp:'lesson',planId,lesson,skill}:{tp:'home'},{replace:true})}
 }
 function returnFromPractice(selection){
@@ -238,5 +239,5 @@ function renderState(s){if(!started){start();return}renderRoute(s||normalizeRout
 window.WillenaTestPrepUX={start,renderHome,renderLesson,showWrongCenter,openPractice,returnFromPractice,renderRoute};
 window.WillenaTestPrepNavigation={toHome,toWrong,back,renderState,get state(){return route()}};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>{if(state()?.user)start()},{once:true});else if(state()?.user)start();
-console.log('[REV51h] Korean skill labels; completion left, average right');
+console.log('[REV51j] completion metric shows percent with fraction');
 })();
