@@ -7,19 +7,19 @@ function token(){return window.WillenaAPI?.getLocalAccessToken?.()||localStorage
 function due(x){return x?.due_now===true||!x?.next_review_at||new Date(x.next_review_at).getTime()<=Date.now()}
 function mount(){return document.getElementById('tpWrongCardMount')}
 function installStyles(){
- if(document.getElementById('tpWrong49pStyles'))return;
- const s=document.createElement('style');s.id='tpWrong49pStyles';s.textContent=`
+ if(document.getElementById('tpWrong49tStyles'))return;
+ const s=document.createElement('style');s.id='tpWrong49tStyles';s.textContent=`
  #tpWrongCardMount{margin-bottom:46px!important}
- .tp49-wrong-card{width:100%;box-sizing:border-box;border:0;border-radius:26px;background:linear-gradient(135deg,#ff5b98 0%,#f23879 100%);padding:25px 28px 24px;display:block;text-align:center;box-shadow:0 16px 38px rgba(242,56,121,.23),inset 0 0 0 1px rgba(255,255,255,.18);font-family:Poppins,'Noto Sans KR',system-ui,sans-serif;color:#fff;cursor:pointer;overflow:hidden;position:relative;transition:transform .16s ease,box-shadow .16s ease,filter .16s ease}
- .tp49-wrong-card:active:not(:disabled){transform:translateY(1px) scale(.995);box-shadow:0 9px 24px rgba(242,56,121,.22),inset 0 0 0 1px rgba(255,255,255,.18)}.tp49-wrong-card:disabled{cursor:default}
- @media(hover:hover) and (pointer:fine){.tp49-wrong-card:not(:disabled):hover{transform:translateY(-3px);filter:brightness(1.035);box-shadow:0 22px 50px rgba(242,56,121,.31),inset 0 0 0 1px rgba(255,255,255,.24)}.tp49-wrong-card:not(:disabled):hover .tp49-wrong-cta{background:rgba(255,255,255,.24);transform:translateX(2px)}}
- .tp49-wrong-copy{display:block;text-align:center}.tp49-wrong-copy b{display:block;font-size:32px;line-height:1.05;font-weight:800;color:#fff}
- .tp49-wrong-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0;margin-top:18px;border-top:1px solid rgba(255,255,255,.27);padding-top:17px}
- .tp49-wrong-stat{min-width:0;padding:0 16px;text-align:center;border-right:1px solid rgba(255,255,255,.24)}.tp49-wrong-stat:first-child{padding-left:0}.tp49-wrong-stat:last-child{border-right:0;padding-right:0}
- .tp49-wrong-stat strong{display:block;color:#fff;font-size:28px;line-height:1;font-weight:800}.tp49-wrong-stat small{display:block;color:rgba(255,255,255,.84);font-size:11px;line-height:1.35;font-weight:700;margin-top:7px;white-space:normal}
- .tp49-wrong-cta{display:inline-flex;align-items:center;justify-content:center;margin-top:18px;padding:9px 18px;border:1px solid rgba(255,255,255,.32);border-radius:999px;background:rgba(255,255,255,.17);color:#fff;font-size:12px;line-height:1;font-weight:800;letter-spacing:.01em;box-shadow:0 4px 12px rgba(153,18,70,.10);transition:background .16s ease,transform .16s ease}
- .tp49-wrong-loading{opacity:.82}.tp49-wrong-error{background:linear-gradient(135deg,#d95d77,#bd415d)}
- @media(max-width:600px){#tpWrongCardMount{margin-bottom:38px!important}.tp49-wrong-card{padding:21px 19px 20px}.tp49-wrong-copy b{font-size:28px}.tp49-wrong-stats{padding-top:15px;margin-top:16px}.tp49-wrong-stat{padding:0 9px}.tp49-wrong-stat strong{font-size:25px}.tp49-wrong-stat small{font-size:10px}.tp49-wrong-cta{margin-top:16px;padding:9px 17px;font-size:12px}}
+ .tp49-wrong-card{width:100%;box-sizing:border-box;border:3px solid #24cfe8;border-radius:26px;background:#fff9fc;padding:23px 26px 22px;display:block;text-align:center;box-shadow:0 12px 30px rgba(36,207,232,.16),0 8px 20px rgba(242,56,121,.08);font-family:Poppins,'Noto Sans KR',system-ui,sans-serif;color:#f23879;cursor:pointer;overflow:hidden;position:relative;transition:transform .16s ease,box-shadow .16s ease,background .16s ease}
+ .tp49-wrong-card:active:not(:disabled){transform:translateY(1px) scale(.995);box-shadow:0 7px 18px rgba(36,207,232,.18),0 4px 12px rgba(242,56,121,.08)}.tp49-wrong-card:disabled{cursor:default}
+ @media(hover:hover) and (pointer:fine){.tp49-wrong-card:not(:disabled):hover{transform:translateY(-3px);background:#fff;box-shadow:0 20px 42px rgba(36,207,232,.23),0 10px 24px rgba(242,56,121,.12)}.tp49-wrong-card:not(:disabled):hover .tp49-wrong-cta{background:#ecfbfe;transform:translateX(2px)}}
+ .tp49-wrong-copy{display:block;text-align:center}.tp49-wrong-copy b{display:block;font-size:32px;line-height:1.05;font-weight:800;color:#f23879}
+ .tp49-wrong-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0;margin-top:18px;border-top:1px solid rgba(36,207,232,.42);padding-top:17px}
+ .tp49-wrong-stat{min-width:0;padding:0 16px;text-align:center;border-right:1px solid rgba(36,207,232,.38)}.tp49-wrong-stat:first-child{padding-left:0}.tp49-wrong-stat:last-child{border-right:0;padding-right:0}
+ .tp49-wrong-stat strong{display:block;color:#f23879;font-size:28px;line-height:1;font-weight:800}.tp49-wrong-stat small{display:block;color:#d7346c;font-size:11px;line-height:1.35;font-weight:700;margin-top:7px;white-space:normal}
+ .tp49-wrong-cta{display:inline-flex;align-items:center;justify-content:center;margin-top:18px;padding:9px 18px;border:2px solid #24cfe8;border-radius:999px;background:#fff;color:#f23879;font-size:12px;line-height:1;font-weight:800;letter-spacing:.01em;box-shadow:0 3px 10px rgba(36,207,232,.12);transition:background .16s ease,transform .16s ease}
+ .tp49-wrong-loading{opacity:.72}.tp49-wrong-error{background:#fff3f7;border-color:#24cfe8}
+ @media(max-width:600px){#tpWrongCardMount{margin-bottom:38px!important}.tp49-wrong-card{padding:19px 17px 18px}.tp49-wrong-copy b{font-size:28px}.tp49-wrong-stats{padding-top:15px;margin-top:16px}.tp49-wrong-stat{padding:0 9px}.tp49-wrong-stat strong{font-size:25px}.tp49-wrong-stat small{font-size:10px}.tp49-wrong-cta{margin-top:16px;padding:9px 17px;font-size:12px}}
  `;document.head.appendChild(s);
 }
 function counts(rows){const now=rows.filter(due).length,total=rows.length;return{now,later:total-now,total}}
@@ -56,5 +56,5 @@ window.addEventListener('testprep:review-finished',queueServerRefresh);
 window.addEventListener('testprep:tracking',e=>{if(e?.detail?.type==='session_completed')queueServerRefresh()});
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(()=>refresh({initial:true}),80),{once:true});else setTimeout(()=>refresh({initial:true}),80);
 window.WillenaWrongCardV49={refresh,load,get cachedRows(){return cachedRows}};
-console.log('[REV49s] wrong-answer card title: 전체 범위 오답');
+console.log('[REV49t] cyan-border pink-text wrong-answer card');
 })();
