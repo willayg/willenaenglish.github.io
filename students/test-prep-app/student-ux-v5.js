@@ -107,16 +107,16 @@ async function cardStats(planId){
 }
 function statPayload(stat){const raw=stat?.attempted_question_ids;if(raw&&typeof raw==='object'&&!Array.isArray(raw))return{all:Array.isArray(raw.all)?raw.all:[],byPractice:raw.by_practice&&typeof raw.by_practice==='object'?raw.by_practice:{}};return{all:Array.isArray(raw)?raw:[],byPractice:{}}}
 function installLessonMetricStyles(){
- if(document.getElementById('tp51jMetricStyles'))return;
- const s=document.createElement('style');s.id='tp51jMetricStyles';s.textContent=`
+ if(document.getElementById('tp51kMetricStyles'))return;
+ const s=document.createElement('style');s.id='tp51kMetricStyles';s.textContent=`
  .tp-stop{grid-template-columns:64px minmax(0,1fr) 180px!important}
  .tp-stop-metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:center;padding-top:4px;min-width:0}
  .tp-skill-metric{display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:0}
  .tp-skill-metric+.tp-skill-metric{border-left:1px solid var(--tp-line);padding-left:12px}
  .tp-skill-metric b{display:block;font-size:22px;line-height:1;font-weight:800;letter-spacing:-.03em;white-space:nowrap}
  .tp-skill-metric small{display:block;margin-top:7px!important;font-size:10px!important;line-height:1.15!important;font-weight:800}
- .tp-skill-metric.tp-average b,.tp-skill-metric.tp-average small{color:var(--tp-cyan-dark)!important}
- .tp-skill-metric.tp-completion b,.tp-skill-metric.tp-completion small{color:var(--tp-pink)!important}
+ .tp-skill-metric.tp-average b,.tp-skill-metric.tp-average small{color:var(--tp-pink)!important}
+ .tp-skill-metric.tp-completion b,.tp-skill-metric.tp-completion small{color:var(--tp-cyan-dark)!important}
  .tp-completion-fraction{margin-top:4px!important;font-size:9px!important;opacity:.72;letter-spacing:.01em;white-space:nowrap}
  @media(max-width:620px){.tp-stop{grid-template-columns:56px minmax(0,1fr) 154px!important;gap:10px!important}.tp-stop-metrics{gap:8px}.tp-skill-metric+.tp-skill-metric{padding-left:8px}.tp-skill-metric b{font-size:19px}.tp-skill-metric small{font-size:9px!important}.tp-completion-fraction{font-size:8px!important}}
  `;document.head.appendChild(s);
@@ -239,5 +239,5 @@ function renderState(s){if(!started){start();return}renderRoute(s||normalizeRout
 window.WillenaTestPrepUX={start,renderHome,renderLesson,showWrongCenter,openPractice,returnFromPractice,renderRoute};
 window.WillenaTestPrepNavigation={toHome,toWrong,back,renderState,get state(){return route()}};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>{if(state()?.user)start()},{once:true});else if(state()?.user)start();
-console.log('[REV51j] completion metric shows percent with fraction');
+console.log('[REV51k] completion cyan; average pink');
 })();
