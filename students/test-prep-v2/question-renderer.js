@@ -6,9 +6,12 @@ const display=v=>String(v??'')
   .replace(/\\+n/g,'\n')
   .replace(/\\+r/g,'\n');
 const textHtml=v=>esc(display(v)).replace(/\n/g,'<br>');
-const LABELS={korean:'우리말',definition:'영영풀이',initial:'주어진 철자',sentence:'문장',sentences:'문장',dialogue:'대화',passage:'윗글',source_passage:'원문',rewritten:'바꿔 쓴 글',question:'질문',conditions:'조건',provided_words:'보기',word_bank:'보기',bank:'보기',options:'보기',base_word:'주어진 단어',setup:'조건',items:'문장',pairs:'보기',clues:'문제 단서',statements:'문장',claims:'설명',table:'표',source:'자료',source_sentence:'문장',source_phrase:'표현',phrase:'표현',example:'예문',incorrect:'고칠 문장',original:'원문',comparison:'비교',target:'대상',pattern:'형식',word_count:'단어 수',given_sentence:'보기',masked:'문장'};
-const PREFERRED=['korean','definition','initial','base_word','setup','sentence','sentences','dialogue','passage','source_passage','rewritten','question','conditions','provided_words','word_bank','bank','options','given_sentence','items','pairs','clues','statements','claims','table','source','source_sentence','source_phrase','phrase','example','incorrect','original','comparison','target','pattern','word_count','masked'];
+const LABELS={korean:'우리말',definition:'영영풀이',initial:'주어진 철자',sentence:'문장',sentences:'문장',dialogue:'대화',passage:'윗글',source_passage:'원문',rewritten:'바꿔 쓴 글',question:'질문',conditions:'조건',words:'보기',provided_words:'보기',word_bank:'보기',bank:'보기',options:'보기',base_word:'주어진 단어',setup:'조건',items:'문장',pairs:'보기',clues:'문제 단서',statements:'문장',claims:'설명',table:'표',source:'자료',source_sentence:'문장',source_phrase:'표현',phrase:'표현',example:'예문',incorrect:'고칠 문장',original:'원문',comparison:'비교',target:'대상',pattern:'형식',word_count:'단어 수',given_sentence:'보기',masked:'문장'};
+const PREFERRED=['korean','definition','initial','base_word','setup','sentence','sentences','dialogue','passage','source_passage','rewritten','question','conditions','words','provided_words','word_bank','bank','options','given_sentence','items','pairs','clues','statements','claims','table','source','source_sentence','source_phrase','phrase','example','incorrect','original','comparison','target','pattern','word_count','masked'];
+const COMPACT_LIST_KEYS=new Set(['words','provided_words','word_bank','bank','options']);
+const HIDDEN_CONTEXT_KEYS=new Set(['underlined','underlined_spans','chunks','target_en','prompt_ko','passage_anchor','source_anchor']);
 
+function hiddenContextKey(key){return HIDDEN_CONTEXT_KEYS.has(key)||/(^|_)id$/i.test(String(key||''))}
 function spans(context){
   const out=[];
   if(context?.underlined)out.push(context.underlined);
@@ -44,14 +47,17 @@ function printable(value){
 function block(key,value,under=[]){
   const val=printable(value);if(val===''||(Array.isArray(val)&&!val.length))return'';
   const label=LABELS[key]||key.replace(/_/g,' ');
-  if(Array.isArray(val))return `<div class="context-block"><div class="context-label">${esc(label)}</div><div class="context-list">${val.map(x=>`<div class="context-item">${marked(x,under)}</div>`).join('')}</div></div>`;
+  if(Array.isArray(val)){
+    const compact=COMPACT_LIST_KEYS.has(key)?' compact':'';
+    return `<div class="context-block"><div class="context-label">${esc(label)}</div><div class="context-list${compact}">${val.map(x=>`<div class="context-item">${marked(x,under)}</div>`).join('')}</div></div>`;
+  }
   return `<div class="context-block"><div class="context-label">${esc(label)}</div><div class="context-value">${marked(val,under)}</div></div>`;
 }
 function contextHtml(question){
   const c=question?.context&&typeof question.context==='object'&&!Array.isArray(question.context)?question.context:{};
   const under=spans(c),seen=new Set(),out=[];
-  for(const key of PREFERRED){if(Object.prototype.hasOwnProperty.call(c,key)){seen.add(key);out.push(block(key,c[key],under))}}
-  for(const [key,value] of Object.entries(c)){if(seen.has(key)||['underlined','underlined_spans','chunks','target_en','prompt_ko'].includes(key))continue;out.push(block(key,value,under))}
+  for(const key of PREFERRED){if(hiddenContextKey(key))continue;if(Object.prototype.hasOwnProperty.call(c,key)){seen.add(key);out.push(block(key,c[key],under))}}
+  for(const [key,value] of Object.entries(c)){if(seen.has(key)||hiddenContextKey(key))continue;out.push(block(key,value,under))}
   return out.filter(Boolean).join('');
 }
 function answerParts(question){return Array.isArray(question?.answer)?question.answer:[]}
