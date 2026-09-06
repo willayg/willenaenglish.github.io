@@ -18,10 +18,13 @@ function replace(state){history.replaceState(state,'',location.href);remember(st
 function ensureInitial(){if(!history.state?.tp)replace({tp:'home'});else remember(navState())}
 function normalizeColdPractice(){
  const s=navState();
+ // A reload/open should never trap the student inside the standalone wrong-answer surface.
+ if(s.tp==='wrong'){replace({tp:'home'});return;}
  if(s.tp!=='practice')return;
  const live=window.WillenaAssignedTestPrep?.selection;
  if(live)return;
- if(s.review||s.returnTo==='wrong'){replace({tp:'wrong'});return;}
+ // Old review/practice history from pre-REV48 is stale. Collapse it to the app home.
+ if(s.review||s.returnTo==='wrong'){replace({tp:'home'});return;}
  if(s.returnTo==='lesson'&&s.planId&&s.lesson){replace({tp:'lesson',planId:s.planId,lesson:s.lesson});return;}
  replace({tp:'home'});
 }
@@ -52,14 +55,14 @@ function smartBack(){
  if(cur.tp==='lesson'){const home={tp:'home'};replace(home);renderState(home);return;}
  if(cur.tp==='practice'){
   let target={tp:'home'};
-  if(cur.review||cur.returnTo==='wrong')target={tp:'wrong'};
+  if(cur.review||cur.returnTo==='wrong')target={tp:'home'};
   else if(cur.returnTo==='lesson'&&cur.planId&&cur.lesson)target={tp:'lesson',planId:cur.planId,lesson:cur.lesson};
   replace(target);renderState(target);return;
  }
  if(cur.tp==='wrong'){const home={tp:'home'};replace(home);renderState(home);}
 }
 function clickCapture(e){const target=e.target instanceof Element?e.target:null;if(!target)return;
- const back=target.closest('.tp-back,.back-assign');if(back){stopEvent(e);smartBack();return}
+ const back=target.closest('.tp-back,.back-assign,.tp48-back,#tp48Home');if(back){stopEvent(e);smartBack();return}
  const lesson=target.closest('.tp-lesson-card');if(lesson){push({tp:'lesson',planId:lesson.dataset.lessonPlan,lesson:lesson.dataset.lesson});return}
  const wrong=target.closest('.tp-wrong-card:not(.no-wrong)');if(wrong){push({tp:'wrong'});return}
  const task=target.closest('[data-task-plan]');if(task){push({tp:'practice',planId:task.dataset.taskPlan,lesson:task.dataset.taskLesson,skill:task.dataset.taskSkill,returnTo:'home'});return}
@@ -68,7 +71,9 @@ function clickCapture(e){const target=e.target instanceof Element?e.target:null;
 }
 function onPop(e){
  const from=currentState||{tp:'home'};let state=e.state?.tp?e.state:{tp:'home'};
- if(from.tp==='lesson'&&state.tp==='lesson'){state={tp:'home'};history.replaceState(state,'',location.href)}
+ // One physical/browser Back from review always returns to Test Prep home, regardless of stale stacked entries.
+ if(from.tp==='wrong'||(from.tp==='practice'&&(from.review||from.returnTo==='wrong'))){state={tp:'home'};history.replaceState(state,'',location.href)}
+ else if(from.tp==='lesson'&&state.tp==='lesson'){state={tp:'home'};history.replaceState(state,'',location.href)}
  remember(state);let tries=0;const go=()=>{if(renderState(state))return;if(++tries<80)setTimeout(go,25)};go();
 }
 function restoreCurrent(){const s=navState();remember(s);if(s.tp==='home'||s.tp==='practice')return;let tries=0;const go=()=>{if(renderState(s))return;if(++tries<80)setTimeout(go,25)};go()}
