@@ -10,7 +10,7 @@ const VOCAB_FIELDS='id,source_id,source_question_number,source_page,section,ques
 const $=(s,r=document)=>r.querySelector(s),$$=(s,r=document)=>[...r.querySelectorAll(s)];
 const norm=v=>String(v||'').trim().toLowerCase();
 
-function revBadge(){if(document.getElementById('tp-rev52c-badge'))return;const old=document.querySelector('[id^="tp-rev52"]');if(old)old.remove();const b=document.createElement('div');b.id='tp-rev52c-badge';b.textContent='REV 52c';b.style.cssText='position:fixed;right:10px;bottom:10px;z-index:2147483647;padding:4px 8px;border-radius:999px;background:#203039;color:#fff;font:800 10px/1.2 Poppins,sans-serif;letter-spacing:.04em;opacity:.82;pointer-events:none';document.body.appendChild(b)}
+function revBadge(){if(document.getElementById('tp-rev52d-badge'))return;const old=document.querySelector('[id^="tp-rev52"]');if(old)old.remove();const b=document.createElement('div');b.id='tp-rev52d-badge';b.textContent='REV 52d';b.style.cssText='position:fixed;right:10px;bottom:10px;z-index:2147483647;padding:4px 8px;border-radius:999px;background:#203039;color:#fff;font:800 10px/1.2 Poppins,sans-serif;letter-spacing:.04em;opacity:.82;pointer-events:none';document.body.appendChild(b)}
 function plans(){return window.WillenaTestPrepAuth?.state?.plans||[]}
 function planById(id){return plans().find(p=>String(p.id)===String(id))||null}
 function scopeFor(plan){const rows=plan?.group?.scope?.lessons;return Array.isArray(rows)?rows.filter(x=>x?.lesson):[]}
@@ -26,30 +26,44 @@ async function loadVocabAll(unitId){const rows=await rawVocab(unitId,'vocabulary
 function vocabTarget(q){const m=q?.metadata||{},ids=Array.isArray(m.lexical_entry_ids)?m.lexical_entry_ids.filter(Boolean):[];if(m.lexical_entry_id)return`lex:${m.lexical_entry_id}`;if(ids.length===1)return`lex:${ids[0]}`;if(m.canonical_text)return`word:${norm(m.canonical_text)}`;const a=Array.isArray(q?.answer)?q.answer:[];if(a.length===1&&String(a[0]||'').trim())return`word:${norm(a[0])}`;return`q:${idOf(q)}`}
 function vocabType(q){return norm(q?.tracking?.questionType)||norm(q?.metadata?.question_type)||norm(q?.form)||'other'}
 function isWrittenVocab(q){return q?.form===FORMS.write||q?.form===FORMS.multipart||q?.form===FORMS.correction}
+function vocabArchetype(q){
+  const t=vocabType(q);
+  if(isWrittenVocab(q)){
+    if(/(relation|relationship|family|synonym|analogy)/.test(t))return'written-relation';
+    if(/(definition)/.test(t))return'written-definition';
+    if(/(expression|phrase|particle|common_word|word_bank|multi_blank)/.test(t))return'written-expression';
+    return'written-completion';
+  }
+  if(/(incorrect_usage|usage_mismatch|usage_different|word_usage_different|correct_usage|part_of_speech_usage|incorrect_word_usage|vocab_incorrect_usage)/.test(t))return'usage-judgment';
+  if(/(relation|relationship|family|synonym|analogy|odd_one_out|definition_matching|definition_pair|pair_mismatch|meaning_mismatch|definition_incorrect|sense_classification)/.test(t))return'relation-definition';
+  if(/(expression|phrase|phrasal|common_word|preposition|shared_blank|double_blank|triple_blank|word_bank|multi_blank)/.test(t))return'expression-pattern';
+  if(/(context|dialogue|sentence|translation|completion|meaning_in_context)/.test(t))return'context-completion';
+  return'meaning-definition';
+}
 function pickVocabVaried(rows,count){
   const unique=[],ids=new Set(),targets=new Set();
   for(const q of shuffle(rows||[])){const id=idOf(q),target=vocabTarget(q);if(!id||ids.has(id)||targets.has(target))continue;ids.add(id);targets.add(target);unique.push(q)}
-  const byType=new Map();
-  for(const q of unique){const t=vocabType(q);if(!byType.has(t))byType.set(t,[]);byType.get(t).push(q)}
-  for(const [t,v] of byType)byType.set(t,shuffle(v));
-  const out=[],usedTypes=new Set(),usedLessons=new Set();
+  const out=[],usedIds=new Set(),usedTypes=new Set(),usedArchetypes=new Set(),usedLessons=new Set();
+  const take=q=>{if(!q||usedIds.has(idOf(q))||usedTypes.has(vocabType(q)))return false;out.push(q);usedIds.add(idOf(q));usedTypes.add(vocabType(q));usedArchetypes.add(vocabArchetype(q));usedLessons.add(String(q.__lesson||''));return true};
   const written=shuffle(unique.filter(isWrittenVocab));
-  if(written.length){const q=written.find(x=>!usedLessons.has(String(x.__lesson)))||written[0];out.push(q);usedTypes.add(vocabType(q));usedLessons.add(String(q.__lesson))}
-  const typeOrder=shuffle([...byType.keys()].filter(t=>!usedTypes.has(t)));
-  for(const t of typeOrder){if(out.length>=count)break;const pool=byType.get(t)||[];const q=pool.find(x=>!usedLessons.has(String(x.__lesson)))||pool[0];if(!q)continue;out.push(q);usedTypes.add(t);usedLessons.add(String(q.__lesson))}
-  if(!out.some(isWrittenVocab))return{items:out,error:'어휘 범위에 사용할 수 있는 저장된 written 문제가 없습니다.'};
-  if(out.length<count)return{items:out,error:`저장된 어휘 question_type 다양성 부족: ${out.length}/${count} (${[...usedTypes].join(', ')||'none'})`};
-  return{items:shuffle(out.slice(0,count)),error:null};
+  if(written.length){const nonBlankish=written.filter(q=>!/((blank|completion))/.test(vocabType(q)));take(nonBlankish.find(q=>!usedLessons.has(String(q.__lesson||'')))||nonBlankish[0]||written.find(q=>!usedLessons.has(String(q.__lesson||'')))||written[0])}
+  const archetypePriority=shuffle(['relation-definition','expression-pattern','context-completion','meaning-definition','usage-judgment','written-relation','written-definition','written-expression','written-completion']);
+  for(const a of archetypePriority){if(out.length>=count)break;if(usedArchetypes.has(a))continue;const pool=shuffle(unique.filter(q=>vocabArchetype(q)===a&&!usedIds.has(idOf(q))&&!usedTypes.has(vocabType(q))));const q=pool.find(x=>!usedLessons.has(String(x.__lesson||'')))||pool[0];take(q)}
+  if(out.length<count){const fallback=shuffle(unique.filter(q=>!usedIds.has(idOf(q))&&!usedTypes.has(vocabType(q))));for(const q of fallback){if(out.length>=count)break;const a=vocabArchetype(q),sameCount=out.filter(x=>vocabArchetype(x)===a).length;if(sameCount>=2)continue;take(q)}}
+  if(out.length<count){for(const q of shuffle(unique)){if(out.length>=count)break;take(q)}}
+  if(!out.some(isWrittenVocab)&&written.length)take(written.find(q=>!usedIds.has(idOf(q))));
+  if(out.length<count)return{items:out,error:`저장된 어휘 문제가 부족합니다: ${out.length}/${count}`};
+  return{items:shuffle(out.slice(0,count)),error:null,archetypes:out.slice(0,count).map(vocabArchetype)};
 }
 
 async function buildPool(plan){const pools={vocabulary:[],communication:[],grammar:[],reading:[],constructed_response:[]},resolved=[];for(const row of scopeFor(plan)){const lesson=String(row.lesson),ids=await resolveContentIds(plan,lesson);resolved.push({lesson,unitId:String(ids.unitId)});if(sectionAllowed(plan,row,'vocabulary')){const vocab=await loadVocabAll(ids.unitId);pools.vocabulary.push(...vocab.map(q=>decorate(q,lesson,ids.unitId,'vocabulary')))}for(const section of ['communication','grammar','reading'])if(sectionAllowed(plan,row,section)){const rows=await loadStoredSkill(ids.unitId,section);pools[section].push(...rows.map(q=>decorate(q,lesson,ids.unitId,section)))}if(sectionAllowed(plan,row,'constructed_response')){const rows=await loadStoredWritten(ids.unitId);pools.constructed_response.push(...rows.map(q=>decorate(q,lesson,ids.unitId,'constructed_response')))}}return{pools,resolved}}
 
-async function buildManifest(plan){const {pools,resolved}=await buildPool(plan),picked={},short=[];const vocabPick=pickVocabVaried(pools.vocabulary,BLUEPRINT.vocabulary);picked.vocabulary=vocabPick.items;if(vocabPick.error)short.push(vocabPick.error);for(const section of ['communication','grammar','reading','constructed_response']){const count=BLUEPRINT[section];picked[section]=diversePick(pools[section],count);if(picked[section].length<count)short.push(`${section}: ${picked[section].length}/${count}`)}if(short.length)throw new Error(`이 시험 범위에는 실전모의고사 구성을 만들 문제가 부족합니다.\n${short.join('\n')}`);const order=['vocabulary','communication','grammar','reading','constructed_response'],questions=order.flatMap(section=>shuffle(picked[section]));return{id:`real-mock-${Date.now()}-${Math.random().toString(36).slice(2)}`,version:'experiment-3',createdAt:new Date().toISOString(),planId:String(plan.id),bookLabel:plan.book_label||'',examName:plan.exam_name||'',blueprint:BLUEPRINT,resolved,vocabQuestionTypes:picked.vocabulary.map(vocabType),questions}}
+async function buildManifest(plan){const {pools,resolved}=await buildPool(plan),picked={},short=[];const vocabPick=pickVocabVaried(pools.vocabulary,BLUEPRINT.vocabulary);picked.vocabulary=vocabPick.items;if(vocabPick.error)short.push(vocabPick.error);for(const section of ['communication','grammar','reading','constructed_response']){const count=BLUEPRINT[section];picked[section]=diversePick(pools[section],count);if(picked[section].length<count)short.push(`${section}: ${picked[section].length}/${count}`)}if(short.length)throw new Error(`이 시험 범위에는 실전모의고사 구성을 만들 문제가 부족합니다.\n${short.join('\n')}`);const order=['vocabulary','communication','grammar','reading','constructed_response'],questions=order.flatMap(section=>shuffle(picked[section]));return{id:`real-mock-${Date.now()}-${Math.random().toString(36).slice(2)}`,version:'experiment-4',createdAt:new Date().toISOString(),planId:String(plan.id),bookLabel:plan.book_label||'',examName:plan.exam_name||'',blueprint:BLUEPRINT,resolved,vocabQuestionTypes:picked.vocabulary.map(vocabType),vocabArchetypes:picked.vocabulary.map(vocabArchetype),questions}}
 
 function styles(){if($('#realMockV2Styles'))return;const s=document.createElement('style');s.id='realMockV2Styles';s.textContent=`.tp-real-mock-v2{width:100%;box-sizing:border-box;display:flex;align-items:center;gap:14px;border:2px solid #07888d;background:#fff;border-radius:20px;padding:16px 18px;margin:10px 0 18px;cursor:pointer;text-align:left;box-shadow:0 7px 20px rgba(32,48,57,.10);font-family:Poppins,'Noto Sans KR',sans-serif;color:#203039}.tp-real-mock-v2:hover{transform:translateY(-1px)}.tp-real-mock-v2:disabled{opacity:.55;cursor:wait;transform:none}.tp-real-mock-v2-icon{display:grid;place-items:center;flex:0 0 50px;width:50px;height:50px;border-radius:16px;background:#e8fafb;color:#07888d;font-weight:900;font-size:15px}.tp-real-mock-v2-copy{min-width:0;display:flex;flex-direction:column;gap:3px}.tp-real-mock-v2-copy b{font-size:16px}.tp-real-mock-v2-copy small{font-size:11px;color:#6b7e87;font-weight:600}.tp-real-mock-v2-go{margin-left:auto;font-size:11px;font-weight:900;color:#d54685}@media(max-width:560px){.tp-real-mock-v2{padding:14px}.tp-real-mock-v2-icon{width:44px;height:44px;flex-basis:44px}.tp-real-mock-v2-copy b{font-size:14px}.tp-real-mock-v2-go{display:none}}`;document.head.appendChild(s)}
-function button(planId){const b=document.createElement('button');b.type='button';b.className='tp-real-mock-v2';b.dataset.realMockPlan=planId;b.innerHTML=`<span class="tp-real-mock-v2-icon">25</span><span class="tp-real-mock-v2-copy"><b>실전모의고사</b><small>4 저장 어휘(서로 다른 question_type + written 포함) · 5 의사소통 · 6 문법 · 6 독해 · 4 서술형</small></span><span class="tp-real-mock-v2-go">EXPERIMENT →</span>`;return b}
+function button(planId){const b=document.createElement('button');b.type='button';b.className='tp-real-mock-v2';b.dataset.realMockPlan=planId;b.innerHTML=`<span class="tp-real-mock-v2-icon">25</span><span class="tp-real-mock-v2-copy"><b>실전모의고사</b><small>4 저장 어휘(상호작용 유형 분산) · 5 의사소통 · 6 문법 · 6 독해 · 4 서술형</small></span><span class="tp-real-mock-v2-go">EXPERIMENT →</span>`;return b}
 async function launch(btn,planId){if(btn.disabled)return;const plan=planById(planId);if(!plan)return alert('시험 범위를 찾지 못했습니다.');btn.disabled=true;const go=$('.tp-real-mock-v2-go',btn),old=go?.textContent;if(go)go.textContent='BUILDING';try{const manifest=await buildManifest(plan);sessionStorage.setItem(STORAGE_KEY,JSON.stringify(manifest));location.href='./real-mock-v2.html'}catch(e){console.error('[real mock v2] build failed',e);alert(e?.message||'실전모의고사를 만들지 못했습니다.');btn.disabled=false;if(go)go.textContent=old||'EXPERIMENT →'}}
 function inject(){styles();const home=$('#assignmentHome');if(!home)return;for(const current of $$('.tp-exam46-all',home)){if(current.nextElementSibling?.classList?.contains('tp-real-mock-v2'))continue;const section=current.closest('.tp-exam-section'),first=section?.querySelector('.tp-lesson-card[data-lesson-plan]'),planId=first?.dataset.lessonPlan;if(!planId||!planById(planId))continue;const b=button(planId);b.onclick=()=>launch(b,planId);current.insertAdjacentElement('afterend',b)}}
 function boot(){revBadge();inject();const root=$('#assignmentHome')||document.body;new MutationObserver(()=>queueMicrotask(inject)).observe(root,{childList:true,subtree:true});window.addEventListener('testprep:student-state-refresh',()=>setTimeout(inject,0));window.addEventListener('popstate',()=>setTimeout(inject,0))}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
-console.log('[REV52c] REAL MOCK V2 EXPERIMENT stored vocab question-type diversity ready');
+console.log('[REV52d] REAL MOCK V2 EXPERIMENT interaction-diverse stored vocab ready');
