@@ -78,13 +78,45 @@ When preprocessing changes what the renderer receives, share that logic too.
 
 Example: textbook passage sentence splitting must use the shared Test Prep v2 passage utility. Do not create a second sentence splitter in the lab. This specifically protects abbreviations such as `Dr.`, `Mr.`, `Mrs.`, `Ms.`, `Prof.`, `St.`, `a.m.`, `p.m.`, `e.g.`, `i.e.`, `U.S.`, and `U.K.` from drifting into different behavior.
 
+---
+
+# TEST PREP V2 NAVIGATION IS ALSO SINGLE-SOURCE
+
+The only browser/history navigation owner for Test Prep v2 is:
+
+`students/test-prep-v2/navigation.js`
+
+This rule is non-negotiable too.
+
+Only `navigation.js` may:
+
+- call `history.pushState()`
+- call `history.replaceState()`
+- listen to `popstate`
+- decide how Test Prep history routes are encoded/restored
+
+`app.js`, vocabulary, 수행평가, 오답, Ask Willi, modals, and future workflows may request navigation or provide leave/cleanup hooks. They may NOT create their own browser-history implementation.
+
+UI back buttons must go through the canonical navigator (`back()` / browser history). Do not manually call an older screen renderer as a substitute for Back.
+
+A `popstate` render must NEVER push a new history entry. If Back causes a screen to reopen, fix the route/render ownership or stale async work; do not add a Back-button patch script.
+
+Do NOT add:
+
+- another `popstate` listener in Test Prep v2
+- `navigation-fix.js`, `back-fix.js`, `history-patch.js`, or equivalent workaround files
+- direct `pushState` / `replaceState` calls outside `navigation.js`
+- workflow-specific history stacks
+
+If navigation is wrong, fix `students/test-prep-v2/navigation.js` or the single route renderer in `app.js`.
+
 ## BEFORE ADDING A FILE
 
 Ask:
 
 1. Does an existing module already own this responsibility?
 2. Can I subtract/replace old code instead of adding another layer?
-3. Would this create a second implementation of rendering, grading, tracking, stats, source loading, or review state?
+3. Would this create a second implementation of rendering, navigation, grading, tracking, stats, source loading, or review state?
 
 If yes, stop and use the existing owner.
 
@@ -93,6 +125,8 @@ If yes, stop and use the existing owner.
 - `question-model.js` — canonical question shape / adaptation
 - `question-renderer.js` — ALL question answer UI / DOM
 - `question-grader.js` — grading only
+- `navigation.js` — ALL browser/device history ownership and route transitions
+- `app.js` — the single route-to-screen renderer/controller; it requests navigation but does not own browser history
 - content/source modules — question generation/loading only
 - `tracking-client.js` — attempts/sessions only
 - stats module/service — Test Prep metrics only
