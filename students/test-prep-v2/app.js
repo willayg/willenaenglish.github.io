@@ -1,19 +1,21 @@
 import {QuestionRenderer} from './question-renderer.js';
 import {gradeQuestion} from './question-grader.js';
 import {resolveContentIds,loadStoredSkill,loadStoredWritten,shuffle} from './content-source.js';
+import {loadVocabularyTest} from './vocab-test-source.js?v=2.14.0';
 import {initTracking,refreshTrackingState,setTrackingContext,startSession,recordAttempt,completeSession,trackingState} from './tracking-client.js?v=2.12.0';
 import {startVocabularyLearning} from './vocab-learning.js?v=2.13.0';
-import {loadCardStats,invalidateCardStats,formatCardMetric,formatAccuracy,reviewCounts} from './stats-client.js?v=2.13b-rpc1';
+import {loadCardStats,invalidateCardStats,formatCardMetric,formatAccuracy,reviewCounts} from './stats-client.js?v=2.14.0';
 import {initNavigation,navigate,replaceRoute,back,currentRoute} from './navigation.js?v=2.13b';
 
 const $=s=>document.querySelector(s),esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const root=$('#screen'),bottom=$('#bottom'),userEl=$('#user');
 let state={plan:null,lesson:null,ids:null,practice:null,queue:[],index:0,score:0,wrongIds:[],checked:false,startedAt:0,renderer:null,cardStats:new Map(),lastResult:null};
-const PRACTICES={vocabulary:{label:'단어 학습',desc:'카드 · 뜻 · 철자',kind:'vocab-learning'},communication:{label:'Communication',desc:'핵심 대화 표현',kind:'stored'},grammar:{label:'Grammar',desc:'핵심 문법',kind:'stored'},reading:{label:'Reading',desc:'본문 이해',kind:'stored'},constructed_response:{label:'서술형',desc:'저장된 영작 · 교정 · 다답형',kind:'written'}};
+const PRACTICES={vocabulary:{label:'단어 학습',desc:'카드 · 뜻 · 철자',kind:'vocab-learning'},vocab_test:{label:'어휘 시험',desc:'정의 · 문맥 · 철자',kind:'vocab-test'},communication:{label:'Communication',desc:'핵심 대화 표현',kind:'stored'},grammar:{label:'Grammar',desc:'핵심 문법',kind:'stored'},reading:{label:'Reading',desc:'본문 이해',kind:'stored'},constructed_response:{label:'서술형',desc:'저장된 영작 · 교정 · 다답형',kind:'written'}};
 
 function scopeFor(plan){const lessons=plan?.group?.scope?.lessons;if(Array.isArray(lessons)&&lessons.length)return lessons.filter(x=>x?.lesson);return(plan?.units||[]).map(lesson=>({lesson,sections:plan?.practice_types||[]}))}
-function sectionsFor(plan,lesson){const row=scopeFor(plan).find(x=>String(x.lesson)===String(lesson));return new Set((row?.sections||[]).map(x=>String(x).toLowerCase()))}
+function sectionsFor(plan,lesson){const row=scopeFor(plan).find(x=>String(x.lesson)===String(lesson)),sections=new Set((row?.sections||[]).map(x=>String(x).toLowerCase()));if(sections.has('vocabulary'))sections.add('vocab_test');return sections}
 function planById(id){return(trackingState().plans||[]).find(p=>String(p.id)===String(id))||null}
+function trackingId(q){return String(q?.tracking?.questionId||q?.id||'')}
 function setBottom(html=''){bottom.innerHTML=html;bottom.hidden=!html}
 function error(message){root.innerHTML=`<div class="error">${esc(message)}</div>`;setBottom('')}
 function updateUser(){const u=trackingState().user;userEl.textContent=u?.name||u?.username||'Student'}
@@ -50,9 +52,9 @@ async function startPracticeRoute(plan,lesson,practice){
       root.innerHTML='<div id="vocabActivityHost"></div>';const host=$('#vocabActivityHost');
       await startVocabularyLearning({host,plan,lesson,unitId:ids.unitId,onExit:back});return;
     }
-    let pool=config.kind==='written'?await loadStoredWritten(ids.unitId):await loadStoredSkill(ids.unitId,practice);if(!practiceRouteMatches(practice,plan.id,lesson))return;
-    pool=shuffle(pool);if(pool.length>20)pool=pool.slice(0,20);
-    if(!pool.length){root.innerHTML=`<button class="back" id="emptyBack">← ${esc(lesson)}</button><div class="empty">이 영역에 사용할 v2.13b 문제가 없습니다.</div>`;$('#emptyBack').onclick=back;return}
+    let pool=config.kind==='vocab-test'?await loadVocabularyTest(ids.unitId,{count:20}):config.kind==='written'?await loadStoredWritten(ids.unitId):await loadStoredSkill(ids.unitId,practice);if(!practiceRouteMatches(practice,plan.id,lesson))return;
+    if(config.kind!=='vocab-test'){pool=shuffle(pool);if(pool.length>20)pool=pool.slice(0,20)}
+    if(!pool.length){root.innerHTML=`<button class="back" id="emptyBack">← ${esc(lesson)}</button><div class="empty">이 영역에 사용할 v2.14 문제가 없습니다.</div>`;$('#emptyBack').onclick=back;return}
     state.queue=pool;await startSession(practice);if(!practiceRouteMatches(practice,plan.id,lesson))return;renderQuestion();
   }catch(e){if(!practiceRouteMatches(practice,plan.id,lesson))return;console.error('[test-prep-v2] start failed',e);error(e.message||'문제를 불러오지 못했습니다.')}
 }
@@ -62,9 +64,9 @@ function renderQuestion(){
   if(!practiceRouteMatches(state.practice))return;if(state.index>=state.queue.length)return finishPractice();const q=current();state.checked=false;state.startedAt=Date.now();root.innerHTML=`${headerFor(q)}<div class="question-card" id="questionHost"></div>`;state.renderer=new QuestionRenderer($('#questionHost')).render(q,{onChange:(_,has)=>{const check=$('#checkAnswer');if(check&&!state.checked)check.disabled=!has}});$('#practiceBack').onclick=back;setBottom(`<button id="skipQuestion">Skip</button><button class="primary" id="checkAnswer" disabled>Check Answer</button>`);$('#skipQuestion').onclick=skipQuestion;$('#checkAnswer').onclick=checkAnswer;
 }
 async function checkAnswer(){
-  if(!practiceRouteMatches(state.practice))return;if(state.checked){state.index++;renderQuestion();return}const q=current(),response=state.renderer.getResponse(),btn=$('#checkAnswer');btn.disabled=true;btn.textContent=q.grading?.aiAllowed&&q.grading?.mode==='ai_semantic_strict'?'Checking…':'Check Answer';state.renderer.setDisabled(true);const result=await gradeQuestion(q,response);if(!practiceRouteMatches(state.practice))return;result.responseTimeMs=Date.now()-state.startedAt;state.checked=true;if(result.correct)state.score++;else state.wrongIds.push(q.id);state.renderer.showFeedback(result);try{await recordAttempt({question:q,response,result,practiceType:state.practice})}catch(e){console.warn('[test-prep-v2] tracking failed',e)}if(!practiceRouteMatches(state.practice))return;btn.disabled=false;btn.textContent=state.index===state.queue.length-1?'Finish':'Next Question →';const skip=$('#skipQuestion');if(skip)skip.disabled=true;
+  if(!practiceRouteMatches(state.practice))return;if(state.checked){state.index++;renderQuestion();return}const q=current(),response=state.renderer.getResponse(),btn=$('#checkAnswer');btn.disabled=true;btn.textContent=q.grading?.aiAllowed&&q.grading?.mode==='ai_semantic_strict'?'Checking…':'Check Answer';state.renderer.setDisabled(true);const result=await gradeQuestion(q,response);if(!practiceRouteMatches(state.practice))return;result.responseTimeMs=Date.now()-state.startedAt;state.checked=true;if(result.correct)state.score++;else state.wrongIds.push(trackingId(q));state.renderer.showFeedback(result);try{await recordAttempt({question:q,response,result,practiceType:state.practice})}catch(e){console.warn('[test-prep-v2] tracking failed',e)}if(!practiceRouteMatches(state.practice))return;btn.disabled=false;btn.textContent=state.index===state.queue.length-1?'Finish':'Next Question →';const skip=$('#skipQuestion');if(skip)skip.disabled=true;
 }
-async function skipQuestion(){if(state.checked||!practiceRouteMatches(state.practice))return;const q=current(),response=state.renderer?.getResponse()??null,result={correct:false,method:'skipped',responseTimeMs:Date.now()-state.startedAt};state.wrongIds.push(q.id);try{await recordAttempt({question:q,response,result,practiceType:state.practice,skipped:true})}catch(e){console.warn('[test-prep-v2] skip tracking failed',e)}if(!practiceRouteMatches(state.practice))return;state.index++;renderQuestion()}
+async function skipQuestion(){if(state.checked||!practiceRouteMatches(state.practice))return;const q=current(),response=state.renderer?.getResponse()??null,result={correct:false,method:'skipped',responseTimeMs:Date.now()-state.startedAt};state.wrongIds.push(trackingId(q));try{await recordAttempt({question:q,response,result,practiceType:state.practice,skipped:true})}catch(e){console.warn('[test-prep-v2] skip tracking failed',e)}if(!practiceRouteMatches(state.practice))return;state.index++;renderQuestion()}
 async function finishPractice(){
   const route=currentRoute();if(route.view!=='practice')return;setBottom('');try{await completeSession({correct:state.score,total:state.queue.length,wrongIds:state.wrongIds});await refreshTrackingState();const fresh=planById(state.plan.id);if(fresh)state.plan=fresh;await refreshPlanCardStats(state.plan)}catch(e){console.warn('[test-prep-v2] finish/refresh failed',e)}
   if(!practiceRouteMatches(state.practice,route.planId,route.lesson))return;const pct=state.queue.length?Math.round(state.score/state.queue.length*100):0;state.lastResult={planId:route.planId,lesson:route.lesson,practice:route.practice,score:state.score,total:state.queue.length,wrong:state.wrongIds.length,pct};await replaceRoute({view:'result',planId:route.planId,lesson:route.lesson,practice:route.practice});
@@ -95,7 +97,7 @@ async function renderRoute(route){
 
 async function boot(){
   try{
-    root.innerHTML='<div class="loading">Test Prep v2.13b를 준비하는 중...</div>';await initTracking();updateUser();await preloadCardStats();
+    root.innerHTML='<div class="loading">Test Prep v2.14를 준비하는 중...</div>';await initTracking();updateUser();await preloadCardStats();
     let route=initNavigation({render:renderRoute,beforeRouteChange,initialRoute:{view:'home'}});
     if(route.view==='practice'||route.view==='result'){route={view:'lesson',planId:route.planId,lesson:route.lesson};await replaceRoute(route,{render:false})}
     await renderRoute(route);
