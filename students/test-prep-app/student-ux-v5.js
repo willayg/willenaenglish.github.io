@@ -199,7 +199,7 @@ function showWrongCenter(){
 }
 
 async function openPractice(planId,lesson,skill,returnTo='lesson'){
- setRoute({tp:'practice',planId:String(planId),lesson:String(skill),skill:String(skill),returnTo},{render:false});
+ setRoute({tp:'practice',planId:String(planId),lesson:String(lesson),skill:String(skill),returnTo},{render:false});
  try{await window.WillenaAssignedTestPrep?.startSelection?.(planId,lesson,skill)}catch(e){console.error('[REV51] practice start',e);setRoute(returnTo==='lesson'?{tp:'lesson',planId,lesson,skill}:{tp:'home'},{replace:true})}
 }
 function returnFromPractice(selection){
