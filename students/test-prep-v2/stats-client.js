@@ -32,6 +32,11 @@ async function resolveUnits(plan){
   for(const row of scope)if(!map.has(String(row.lesson))&&byTitle.has(String(row.lesson)))map.set(String(row.lesson),byTitle.get(String(row.lesson)));return map;
 }
 function emptyAvailable(){return Object.fromEntries(ACTIVE.map(k=>[k,new Set()]))}
+async function usableLexicalIds(unitId){
+  const occ=await contentPaged(`/rest/v1/source_content_occurrences?select=lexical_entry_id&unit_id=eq.${encodeURIComponent(unitId)}&occurrence_type=eq.lexical_entry&skill=eq.vocabulary`),ids=[...new Set(occ.map(x=>String(x.lexical_entry_id||'')).filter(Boolean))];if(!ids.length)return new Set();
+  const rows=[];for(let i=0;i<ids.length;i+=100)rows.push(...await contentGet(`/rest/v1/lexical_entries?select=id,canonical_text,translation_ko&id=in.${encodeURIComponent('('+ids.slice(i,i+100).join(',')+')')}`));
+  const seen=new Set(),usable=new Set();for(const row of rows){const word=norm(row.canonical_text);if(!word||!String(row.translation_ko||'').trim()||seen.has(word))continue;seen.add(word);usable.add(String(row.id))}return usable;
+}
 async function availableForUnit(unitId){
   const available=emptyAvailable();
   const rows=await contentPaged(`/rest/v1/test_prep_questions?select=${encodeURIComponent('id,section,answer_mode,choices,correct_answer,metadata,replacement_needed,student_usable')}&unit_id=eq.${encodeURIComponent(unitId)}&student_usable=eq.true`);
@@ -40,9 +45,7 @@ async function availableForUnit(unitId){
     if(['communication','grammar','reading'].includes(section)&&[FORMS.choice,FORMS.multi].includes(form))available[section].add(id);
     if(isAuthoredWritten(row)&&[FORMS.write,FORMS.multipart,FORMS.correction].includes(form))available.constructed_response.add(id);
   }
-  const occ=await contentPaged(`/rest/v1/source_content_occurrences?select=lexical_entry_id&unit_id=eq.${encodeURIComponent(unitId)}&occurrence_type=eq.lexical_entry&skill=eq.vocabulary`);
-  for(const row of occ)if(row.lexical_entry_id)available.vocabulary.add(String(row.lexical_entry_id));
-  return available;
+  available.vocabulary=await usableLexicalIds(unitId);return available;
 }
 function attemptLesson(a){return String(a?.unit_key||a?.metadata?.lesson||'')}
 function attemptPractice(a){return norm(a?.practice_type||a?.metadata?.practice_type)}
