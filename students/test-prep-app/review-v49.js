@@ -8,8 +8,8 @@ const CONTENT_HEADERS={apikey:CONTENT_KEY,Authorization:`Bearer ${CONTENT_KEY}`}
 const RUN_LIMIT=20;
 const IS_STAGING=/^staging\./i.test(location.hostname)||['localhost','127.0.0.1'].includes(location.hostname);
 const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelectorAll(s)];
-const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const htmlText=s=>esc(String(s??'')).replace(/\r\n?/g,'\n').replace(/\n/g,'<br>');
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]));
+const htmlText=s=>esc(String(s??'').replace(/\r\n?/g,'\n').replace(/\\r\\n|\\n|\\r/g,'\n')).replace(/\n/g,'<br>');
 const uuidLike=s=>/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(s||''));
 let reviews=[],run=[],index=0,done=0,correct=0,wrong=[],active=false,saving=false;
 
