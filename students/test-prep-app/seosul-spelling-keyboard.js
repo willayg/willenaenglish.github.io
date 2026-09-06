@@ -82,11 +82,11 @@ function ensure(){addStyle();const inputs=candidates();if(!inputs.length){cleanu
 }
 const TARGET_SELECTOR='#card .tqt-input,#card #tqtAnswer,#card .seosul-split-input,#card #seosulAnswer,#card .wcri-input,#card .wcri-textarea,#testPrepVocabPractice #vpSpell,#vtuInput,#assignmentHome .tp49-input,#assignmentHome .wcri-input,#assignmentHome .wcri-textarea';
 function chooseTarget(e){const el=e.target?.closest?.(TARGET_SELECTOR);if(!el||!candidates().includes(el))return;active=el;lock(el);ensure();setTimeout(()=>{try{el.focus({preventScroll:true})}catch(_){el.focus()}show()},0)}
-function syncFocusedTarget(e){const el=e.target;if(!el||!candidates().includes(el))return;active=el;lock(el);if(isReview(el)||el.id==='vpSpell'||el.id==='vtuInput'||isTqt(el)||(el.closest?.('#card')&&isEnglishQuestion()))show()}
+function syncFocusedTarget(e){const el=e.target;if(!el||!candidates().includes(el))return;active=el;lock(el);if(isReview(el)||el.id==='vpSpell'||el.id==='vtuInput'||isTqt(el))show()}
 function hardwareKey(e){const inputs=candidates();if(!inputs.length)return;if(e.ctrlKey||e.metaKey||e.altKey)return;const t=e.target;if(t&&/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName)&&!inputs.includes(t))return;if(inputs.includes(t))active=t;if(!active)active=inputs[0];let handled=true;if(/^[a-zA-Z]$/.test(e.key))replaceSelection(e.key);else if(e.key==='Backspace')backspace();else if(e.key===' ')replaceSelection(' ');else if(e.key==='Enter')submit();else handled=false;if(!handled)return;e.preventDefault();hardware=true;hide()}
 function cleanup(){if(candidates().length)return;stopRepeat();$('#tpSeosulAppKeyboard')?.remove();document.body.classList.remove('tp-seosul-kb-open');active=null;caps=false}
 function inspect(){ensure();cleanup()}
-function boot(){addStyle();document.addEventListener('pointerdown',chooseTarget,true);document.addEventListener('touchstart',chooseTarget,{capture:true,passive:true});document.addEventListener('focusin',syncFocusedTarget,true);document.addEventListener('keydown',hardwareKey,true);new MutationObserver(()=>queueMicrotask(inspect)).observe(document.body,{childList:true,subtree:true});inspect()}
+function boot(){addStyle();document.addEventListener('pointerdown',chooseTarget,true);document.addEventListener('touchstart',chooseTarget,{capture:true,passive:true});document.addEventListener('focusin',syncFocusedTarget,true);document.addEventListener('keydown',hardwareKey,true);inspect()}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
-console.log('[REV49h] Willena keyboard is English-only; Korean responses use device keyboard');
+console.log('[REV49i] Willena keyboard is lazy; no whole-document observer during seosul render');
 })();
