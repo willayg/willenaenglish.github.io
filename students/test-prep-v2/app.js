@@ -2,7 +2,7 @@ import {QuestionRenderer} from './question-renderer.js';
 import {gradeQuestion} from './question-grader.js';
 import {resolveContentIds,loadStoredSkill,loadStoredWritten,shuffle} from './content-source.js';
 import {loadVocabularyTest} from './vocab-test-source.js?v=2.14.0';
-import {initTracking,refreshTrackingState,setTrackingContext,startSession,recordAttempt,completeSession,trackingState} from './tracking-client.js?v=2.12.0';
+import {initTracking,refreshTrackingState,setTrackingContext,startSession,recordAttempt,completeSession,trackingState} from './tracking-client.js?v=2.14.0';
 import {startVocabularyLearning} from './vocab-learning.js?v=2.13.0';
 import {loadCardStats,invalidateCardStats,formatCardMetric,formatAccuracy,reviewCounts} from './stats-client.js?v=2.14.0';
 import {initNavigation,navigate,replaceRoute,back,currentRoute} from './navigation.js?v=2.13b';
