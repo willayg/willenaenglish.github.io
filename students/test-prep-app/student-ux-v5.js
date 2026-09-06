@@ -10,10 +10,10 @@ const TRACK_KEY=['sb_publishable_','e-K50PquV9gHdfmefG6tmg_o-vVSl0e'].join('');
 const STATIONS=[
  {k:'vocabulary',label:'단어 학습',desc:'카드 · 뜻 · 철자'},
  {k:'vocab_test',label:'어휘 시험',desc:'정의 · 시험형 어휘 문제'},
- {k:'communication',label:'Communication',desc:'핵심 대화 표현'},
- {k:'grammar',label:'Grammar',desc:'핵심 문법'},
+ {k:'communication',label:'의사소통',desc:'핵심 대화 표현'},
+ {k:'grammar',label:'문법',desc:'핵심 문법'},
  {k:'sentences',label:'본문외우기',desc:'본문 문장 완성'},
- {k:'reading',label:'Reading',desc:'본문 이해'},
+ {k:'reading',label:'독해',desc:'본문 이해'},
  {k:'constructed_response',label:'서술형',desc:'영작 · 배열 · 대화 · 본문 해석'}
 ];
 const LABEL=Object.fromEntries(STATIONS.map(x=>[x.k,x.label]));
@@ -185,7 +185,7 @@ function renderLesson(planId,lesson,focusSkill=null){
  showHomeSurface();const h=home(),plan=findPlan(planId);if(!h||!plan){setRoute({tp:'home'},{replace:true});return}
  const l=scopeFor(plan).find(x=>String(x.lesson)===String(lesson));if(!l){setRoute({tp:'home'},{replace:true});return}
  const skills=skillRows(plan,l);installLessonMetricStyles();
- h.innerHTML=`<button class="tp-back" type="button">← 시험 대비</button><div class="tp-lesson-head"><div><h1>${esc(l.lesson)}</h1><p>${esc(plan.book_label||'')} · 학습 지도</p></div></div><div class="tp-subway">${skills.map((s,i)=>`<div class="tp-stop" data-skill="${esc(s.k)}"><div class="tp-station">${i+1}</div><div class="tp-stop-copy"><b>${esc(s.label)}</b><small>${esc(s.desc)}</small>${s.task?`<span class="tp-task-badge">선생님 과제 · ${Number(s.task.progress?.remaining)||0}개 남음</span>`:''}<div class="tp-mini"><i style="width:0"></i></div></div><div class="tp-stop-metrics"><span class="tp-skill-metric tp-average"><b data-skill-average>—</b><small>평균</small></span><span class="tp-skill-metric tp-completion"><b data-skill-completion>—</b><small>완료</small></span></div></div>`).join('')}</div>`;
+ h.innerHTML=`<button class="tp-back" type="button">← 시험 대비</button><div class="tp-lesson-head"><div><h1>${esc(l.lesson)}</h1><p>${esc(plan.book_label||'')} · 학습 지도</p></div></div><div class="tp-subway">${skills.map((s,i)=>`<div class="tp-stop" data-skill="${esc(s.k)}"><div class="tp-station">${i+1}</div><div class="tp-stop-copy"><b>${esc(s.label)}</b><small>${esc(s.desc)}</small>${s.task?`<span class="tp-task-badge">선생님 과제 · ${Number(s.task.progress?.remaining)||0}개 남음</span>`:''}<div class="tp-mini"><i style="width:0"></i></div></div><div class="tp-stop-metrics"><span class="tp-skill-metric tp-completion"><b data-skill-completion>—</b><small>완료</small></span><span class="tp-skill-metric tp-average"><b data-skill-average>—</b><small>평균</small></span></div></div>`).join('')}</div>`;
  $('.tp-back',h).onclick=()=>setRoute({tp:'home'});
  $$('.tp-stop',h).forEach(row=>row.onclick=()=>openPractice(plan.id,l.lesson,row.dataset.skill,'lesson'));
  const run=++lessonHydration;hydrateLesson(plan,l,skills,run);
@@ -238,5 +238,5 @@ function renderState(s){if(!started){start();return}renderRoute(s||normalizeRout
 window.WillenaTestPrepUX={start,renderHome,renderLesson,showWrongCenter,openPractice,returnFromPractice,renderRoute};
 window.WillenaTestPrepNavigation={toHome,toWrong,back,renderState,get state(){return route()}};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>{if(state()?.user)start()},{once:true});else if(state()?.user)start();
-console.log('[REV51g] lesson metrics show average and completion side by side');
+console.log('[REV51h] Korean skill labels; completion left, average right');
 })();
