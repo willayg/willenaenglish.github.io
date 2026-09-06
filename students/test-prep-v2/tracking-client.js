@@ -143,10 +143,11 @@ export async function flushPendingSessionCloses(reason='manual'){
 
 export async function recordAttempt({question,response,result,practiceType,skipped=false}){
   const session=await startSession(practiceType);if(!session)return null;
+  const trackedQuestionId=String(question.tracking?.questionId||question.id);
   const attempt={
-    client_attempt_id:uuid(),session_id:session.id,question_id:String(question.id),selected_answer:response,correct_answer:question.answer,is_correct:!!result.correct,
+    client_attempt_id:uuid(),session_id:session.id,question_id:trackedQuestionId,selected_answer:response,correct_answer:question.answer,is_correct:!!result.correct,
     question_type:question.tracking?.questionType||null,targets:Array.isArray(question.tracking?.targets)?question.tracking.targets:[],response_time_ms:Number(result.responseTimeMs)||0,
-    metadata:{app_rev:'2.12',renderer_rev:'central-v2',form:question.form,mastery_key:question.masteryKey,source_code:question.source?.code||null,source_id:question.source?.sourceId||null,source_question_number:question.source?.sourceQuestionNumber??null,grading_method:result.method||null,ai_reason:result.aiReason||null,lesson:state.lesson,plan_id:state.plan?.id||null,practice_type:practiceType,skipped:!!skipped,source:skipped?'skip':'test-prep-v2'}
+    metadata:{app_rev:'2.14',renderer_rev:'central-v2',form:question.form,mastery_key:question.masteryKey,variant_question_id:String(question.id),source_code:question.source?.code||null,source_id:question.source?.sourceId||null,source_question_number:question.source?.sourceQuestionNumber??null,grading_method:result.method||null,ai_reason:result.aiReason||null,lesson:state.lesson,plan_id:state.plan?.id||null,practice_type:practiceType,skipped:!!skipped,source:skipped?'skip':'test-prep-v2'}
   };
   outbox.push(attempt);saveOutbox();saveSessionRecord();emit('attempt_queued',{client_attempt_id:attempt.client_attempt_id,session_id:session.id,question_id:attempt.question_id,practice_type:practiceType});
   const urgent=attempt.metadata.source==='wrong-review';
