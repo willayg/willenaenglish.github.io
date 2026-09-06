@@ -1,6 +1,6 @@
 import {FORMS,parseCorrection} from './question-model.js';
 
-const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]));
+const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const display=v=>String(v??'')
   .replace(/\\+r\\+n/g,'\n')
   .replace(/\\+n/g,'\n')
