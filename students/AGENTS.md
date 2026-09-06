@@ -24,3 +24,11 @@ There is also exactly ONE browser/history navigation owner for Test Prep v2:
 Only that file may call `history.pushState`, `history.replaceState`, or listen to `popstate`.
 
 Do not add workflow-specific Back handlers, history stacks, `navigation-fix.js`, `back-fix.js`, or another `popstate` listener. UI Back controls must request the canonical navigator's `back()` behavior. If device/browser Back is wrong, fix `navigation.js` or the single route renderer in `app.js`.
+
+## TEST PREP V2 STATS
+
+Do not make browser code read `test_prep_attempts` directly for Test Prep cards or graphs.
+
+Student attempt history for Test Prep v2 comes from the existing authenticated Test Prep student backend (`test-prep-student-rev47e`, currently through its `me` response). `stats-client.js` may combine that backend history with the public curriculum/content pool to calculate current coverage and accuracy, but it must not create a second student-history access path.
+
+Do not add a new stats endpoint, RLS workaround, direct raw-attempt query, Netlify function, or stats patch file to fix a card. Fix the existing Test Prep student backend or `stats-client.js`, whichever owns the broken responsibility.
