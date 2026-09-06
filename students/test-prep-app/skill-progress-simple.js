@@ -5,8 +5,7 @@ function install(){
  const s=document.createElement('style');
  s.id='tpSimpleSkillProgressStyle';
  s.textContent=`
- #assignmentHome .tp-stop-pct small{display:none!important}
- #assignmentHome .tp-mastery-note,
+ #assignmentHome .tp-stop-pct small:not([data-skill-accuracy-label]):not([data-skill-coverage-count]){display:none!important}
  #assignmentHome .tp-seosul-mastery-explain,
  #assignmentHome .seosul-progress-detail{display:none!important}
  `;
