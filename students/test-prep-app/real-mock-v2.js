@@ -10,7 +10,7 @@ const VOCAB_FIELDS='id,source_id,source_question_number,source_page,section,ques
 const $=(s,r=document)=>r.querySelector(s),$$=(s,r=document)=>[...r.querySelectorAll(s)];
 const norm=v=>String(v||'').trim().toLowerCase();
 
-function revBadge(){if(document.getElementById('tp-rev52a-badge'))return;const b=document.createElement('div');b.id='tp-rev52a-badge';b.textContent='REV 52a';b.style.cssText='position:fixed;right:10px;bottom:10px;z-index:2147483647;padding:4px 8px;border-radius:999px;background:#203039;color:#fff;font:800 10px/1.2 Poppins,sans-serif;letter-spacing:.04em;opacity:.82;pointer-events:none';document.body.appendChild(b)}
+function revBadge(){if(document.getElementById('tp-rev52b-badge'))return;const b=document.createElement('div');b.id='tp-rev52b-badge';b.textContent='REV 52b';b.style.cssText='position:fixed;right:10px;bottom:10px;z-index:2147483647;padding:4px 8px;border-radius:999px;background:#203039;color:#fff;font:800 10px/1.2 Poppins,sans-serif;letter-spacing:.04em;opacity:.82;pointer-events:none';document.body.appendChild(b)}
 function plans(){return window.WillenaTestPrepAuth?.state?.plans||[]}
 function planById(id){return plans().find(p=>String(p.id)===String(id))||null}
 function scopeFor(plan){const rows=plan?.group?.scope?.lessons;return Array.isArray(rows)?rows.filter(x=>x?.lesson):[]}
@@ -37,4 +37,4 @@ async function launch(btn,planId){if(btn.disabled)return;const plan=planById(pla
 function inject(){styles();const home=$('#assignmentHome');if(!home)return;for(const current of $$('.tp-exam46-all',home)){if(current.nextElementSibling?.classList?.contains('tp-real-mock-v2'))continue;const section=current.closest('.tp-exam-section'),first=section?.querySelector('.tp-lesson-card[data-lesson-plan]'),planId=first?.dataset.lessonPlan;if(!planId||!planById(planId))continue;const b=button(planId);b.onclick=()=>launch(b,planId);current.insertAdjacentElement('afterend',b)}}
 function boot(){revBadge();inject();const root=$('#assignmentHome')||document.body;new MutationObserver(()=>queueMicrotask(inject)).observe(root,{childList:true,subtree:true});window.addEventListener('testprep:student-state-refresh',()=>setTimeout(inject,0));window.addEventListener('popstate',()=>setTimeout(inject,0))}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
-console.log('[REV52a] REAL MOCK V2 EXPERIMENT varied vocab ready');
+console.log('[REV52b] REAL MOCK V2 EXPERIMENT varied vocab ready');
