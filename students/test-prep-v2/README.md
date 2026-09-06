@@ -23,15 +23,16 @@ The lab also imports the canonical `question-model.js`. Passage sentence preproc
 ## Module ownership
 
 - `question-model.js` — standard question contract + source adaptation
-- `question-renderer.js` — the only module allowed to create question answer UI
+- `question-renderer.js` — the only module allowed to create graded question answer UI
 - `question-grader.js` — exact, structured, constraint and configured Luna grading
 - `passage-utils.js` — shared passage/sentence parsing
+- `vocab-learning.js` — vocabulary stage workflow, lexical loading, card self-checks, unlock state and vocab progress only; graded Korean/English/spelling questions still call the central renderer
 - content/source modules — question generation/loading only
 - `tracking-client.js` — ALL Test Prep v2 attempt/session persistence and sync
 - `stats-client.js` — the only UI-facing Test Prep stats interpretation layer
 - `app.js` — student plan / lesson / practice controller
 
-## V2.12 status
+## V2.13 status
 
 Included:
 
@@ -46,11 +47,41 @@ Included:
 - Reading multiple choice
 - stored authored written-response questions
 - central grading
+- hardened attempt/session tracking from V2.12
 - existing plan/lesson summary stats through one stats module
 
-### V2.12 tracking hardening
+### V2.13 vocabulary learning parity
 
-`tracking-client.js` now owns:
+The old vocabulary learning sequence is intentionally preserved:
+
+1. Cards
+2. Korean → English
+3. English → Korean
+4. Spelling
+
+Preserved behavior:
+
+- card answer reveal
+- browser English TTS on cards
+- `예 / 아니요` card self-check
+- words marked `아니요` repeat until cleared
+- Korean → English stays locked until cards are complete
+- English → Korean stays locked until Korean → English is complete
+- Spelling stays locked until English → Korean is complete
+- non-card stages save correctly cleared lexical-entry IDs
+- incorrect/uncleared words are the only words required on the next pass
+- completed stages remain permanently unlocked
+- returning to vocabulary resumes the first unfinished stage
+- completing Spelling marks the Vocabulary workflow complete
+- existing `test_prep_vocab_progress` and `test_prep_vocab_self_checks` data are reused rather than replaced
+- Korean → English, English → Korean and Spelling attempts are recorded through the V2.12 tracking client
+- graded vocabulary interactions use `question-renderer.js`; the old vocab choice/spelling renderer and MutationObserver patch stack were not carried over
+
+The card view is workflow UI rather than a graded question. It is allowed to own its reveal/self-check controls, but it must not implement a second graded question renderer.
+
+## V2.12 tracking hardening retained
+
+`tracking-client.js` owns:
 
 - local persistent attempt outbox
 - batched attempt upload
@@ -69,8 +100,9 @@ There is no second tracker or tracking patch file.
 
 Not yet migrated:
 
-- vocabulary lexical generator
-- vocabulary learning workflow
+- vocabulary exam/test generator (V2.14)
+- full authored written-response parity
+- Ask Willi helper UI
 - 본문 activity workflow
 - 수행평가 workflow
 - new 오답 state flow
