@@ -1,5 +1,5 @@
-import {QuestionRenderer} from '../test-prep-v2/question-renderer.js';
-import {gradeQuestion} from '../test-prep-v2/question-grader.js';
+import {QuestionRenderer} from '../test-prep-v2/question-renderer.js?v=2.14a';
+import {gradeQuestion} from '../test-prep-v2/question-grader.js?v=2.14a';
 
 const STORAGE_KEY='willena-real-mock-v2-manifest';
 const RESET_KEY='willena-real-mock-v2-reset-request';
