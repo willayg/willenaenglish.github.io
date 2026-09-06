@@ -29,28 +29,30 @@ The lab also imports the canonical `question-model.js`. Passage sentence preproc
 - `vocab-learning.js` — vocabulary stage workflow, lexical loading, card self-checks, unlock state and vocab progress only; graded Korean/English/spelling questions still call the central renderer
 - content/source modules — question generation/loading only
 - `tracking-client.js` — ALL Test Prep v2 attempt/session persistence and sync
-- `stats-client.js` — the only UI-facing Test Prep stats interpretation layer
+- `stats-client.js` — the only owner of Test Prep card metrics
 - `app.js` — student plan / lesson / practice controller
 
-## V2.13 status
+## V2.13a card metrics
 
-Included:
+Do not label lesson/skill card percentages as mastery.
 
-- student auth and assigned plans
-- Test Prep visual shell / curved header
-- exam and lesson cards
-- lesson journey presentation
-- responsive/mobile layout
-- source badges and central question styling
-- Communication multiple choice
-- Grammar multiple choice
-- Reading multiple choice
-- stored authored written-response questions
-- central grading
-- hardened attempt/session tracking from V2.12
-- existing plan/lesson summary stats through one stats module
+Card metrics are:
 
-### V2.13 vocabulary learning parity
+- **Questions complete** = unique current questions attempted / current available questions.
+- **Coverage** = questions complete / available questions. Rings and progress bars show coverage.
+- **Accuracy** = each unique question contributes only its latest answer.
+- A later right answer overwrites an earlier wrong answer for card accuracy.
+- A later wrong answer overwrites an earlier right answer for card accuracy.
+- If 40 or fewer unique questions have been attempted, accuracy uses all of them.
+- If more than 40 unique questions have been attempted, accuracy uses the 40 unique questions with the most recent latest-attempt timestamps.
+- Repeated raw attempts on one question must never give that question extra weight.
+- Attempts for questions that are no longer in the current available lesson pool must not inflate questions-complete counts.
+
+`stats-client.js` owns this calculation. Do not recalculate these metrics independently in cards, teacher pages, or future widgets.
+
+For the vocabulary learning section, current lexical entries are the available-question identities. Flashcard reveal/self-check steps are learning workflow and do not count as graded questions; Korean→English, English→Korean, and Spelling responses do.
+
+## V2.13 vocabulary learning parity
 
 The old vocabulary learning sequence is intentionally preserved:
 
