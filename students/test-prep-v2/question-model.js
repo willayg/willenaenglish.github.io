@@ -8,7 +8,7 @@ export function cleanAnswers(value){
 export function sourceCode(row){
   const s=String(row?.student_source_label||'').toLowerCase();
   if(s.includes('z reference')||s.includes('zocbo'))return'Z';
-  if(s.includes('b reference')||s.includes('book reference'))return'B';
+  if(s.includes('b reference')||s.includes('book reference')||s.includes('서술형'))return'B';
   if(s.includes('willena')||String(row?.content_status||'').toLowerCase()==='willena_published')return'W';
   return'';
 }
@@ -53,9 +53,10 @@ export function adaptStored(row){
   const form=detectForm({...row,choices});
   const answer=normalizeCorrect(row,choices,form);
   const metadata=row?.metadata&&typeof row.metadata==='object'?row.metadata:{};
+  const id=String(row?.id||'');
   return {
-    id:String(row?.id||''),
-    masteryKey:`stored:${String(row?.id||'')}`,
+    id,
+    masteryKey:String(row?.masteryKey||metadata.mastery_key||`stored:${id}`),
     bookId:row?.book_id||null,
     unitId:row?.unit_id||null,
     skill:String(row?.section||'').toLowerCase(),
@@ -70,6 +71,7 @@ export function adaptStored(row){
     prompt:String(row?.prompt_text||''),
     context:row?.context&&typeof row.context==='object'?row.context:{},
     choices,
+    chips:(Array.isArray(row?.chips)?row.chips:[]).map(x=>String(x)),
     answer,
     grading:{
       mode:String(metadata.grading_mode||'exact_normalized'),
