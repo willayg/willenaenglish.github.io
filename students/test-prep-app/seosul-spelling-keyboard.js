@@ -4,18 +4,21 @@ let active=null,hardware=false,caps=false,repeatDelay=null,repeatTimer=null,repe
 const $=(s,r=document)=>r.querySelector(s),$$=(s,r=document)=>[...r.querySelectorAll(s)];
 const rows=()=>[['q','w','e','r','t','y','u','i','o','p'],['a','s','d','f','g','h','j','k','l'],['z','x','c','v','b','n','m']];
 function isEnglishQuestion(){const m=$('#seosulModel');if(!m)return false;const t=String(m.textContent||'').replace('모범 답안','').trim();return !!t&&/[A-Za-z]/.test(t)&&!/[가-힣]/.test(t)}
-function isEnglishTqt(){const m=$('#tqtModel');return !!m&&/[A-Za-z]/.test(String(m.textContent||''))}
+function isEnglishTqt(){const m=$('#tqtModel');if(!m)return false;const t=String(m.textContent||'').replace('모범 답안','').trim();return !!t&&/[A-Za-z]/.test(t)&&!/[가-힣]/.test(t)}
 function visible(el){return !!el&&!el.disabled&&el.offsetParent!==null}
 function isReview(el=active){return !!window.__WillenaReviewV49Active&&!!el?.closest?.('#assignmentHome')}
+function reviewRequestsKorean(){const p=$('#assignmentHome .tp49-prompt');return /우리말|한국어/.test(String(p?.textContent||''))}
+function nativeReviewInput(el){if(!el||!isReview(el))return false;if(el.dataset?.willenaKeyboard==='native')return true;return el.classList?.contains('tp49-input')&&reviewRequestsKorean()}
+function unlockNative(el){if(!el)return;el.classList.remove('tp-seosul-caret');el.dataset.willenaKeyboard='native';el.setAttribute('inputmode','text');el.removeAttribute('autocapitalize');if(reviewRequestsKorean())el.setAttribute('lang','ko')}
 function candidates(){
- if(window.__WillenaReviewV49Active){const review=$$('#assignmentHome .tp49-input,#assignmentHome .wcri-input,#assignmentHome .wcri-textarea').filter(visible);if(review.length)return review}
+ if(window.__WillenaReviewV49Active){const all=$$('#assignmentHome .tp49-input,#assignmentHome .wcri-input,#assignmentHome .wcri-textarea').filter(visible);all.filter(nativeReviewInput).forEach(unlockNative);const review=all.filter(el=>!nativeReviewInput(el)&&(el.dataset?.willenaKeyboard==='app'||el.getAttribute('inputmode')==='none'));if(review.length)return review}
  const vocab=$('#testPrepVocabPractice #vpSpell'),vocabTest=$('#testPrepVocabTestUpgrade #vtuInput,#testPrepVocabTestPractice #vtuInput,#vtuInput');
  if(visible(vocab))return[vocab];if(visible(vocabTest))return[vocabTest];
  if(isEnglishTqt()){const parts=$$('#card .tqt-input').filter(visible);if(parts.length)return parts;const tqt=$('#card #tqtAnswer');if(visible(tqt))return[tqt]}
- if(!isEnglishQuestion())return[];const split=$$('#card .seosul-split-input').filter(x=>!x.disabled);if(split.length)return split;const ta=$('#card #seosulAnswer');return visible(ta)?[ta]:[]
+ if(!isEnglishQuestion())return[];const shared=$$('#card .wcri-input,#card .wcri-textarea').filter(visible);if(shared.length)return shared;const split=$$('#card .seosul-split-input').filter(x=>!x.disabled&&visible(x));if(split.length)return split;const ta=$('#card #seosulAnswer');return visible(ta)?[ta]:[]
 }
 function kb(){return $('#tpSeosulAppKeyboard')}
-function lock(el){if(!el)return;el.readOnly=false;el.removeAttribute('readonly');el.setAttribute('inputmode','none');el.setAttribute('autocomplete','off');el.setAttribute('autocorrect','off');el.setAttribute('autocapitalize','off');el.setAttribute('spellcheck','false');el.classList.add('tp-seosul-caret')}
+function lock(el){if(!el)return;el.readOnly=false;el.removeAttribute('readonly');el.dataset.willenaKeyboard='app';el.setAttribute('inputmode','none');el.setAttribute('autocomplete','off');el.setAttribute('autocorrect','off');el.setAttribute('autocapitalize','off');el.setAttribute('spellcheck','false');el.classList.add('tp-seosul-caret')}
 function range(){if(!active)return{start:0,end:0};const len=(active.value||'').length;let start=typeof active.selectionStart==='number'?active.selectionStart:len,end=typeof active.selectionEnd==='number'?active.selectionEnd:start;start=Math.max(0,Math.min(len,start));end=Math.max(start,Math.min(len,end));return{start,end}}
 function restoreCaret(pos){if(!active)return;try{if(document.activeElement!==active)active.focus({preventScroll:true});active.setSelectionRange(pos,pos)}catch(_){try{active.setSelectionRange(pos,pos)}catch(__){}}}
 function replaceSelection(text){if(!active||active.disabled)return;const v=active.value||'',{start,end}=range(),next=v.slice(0,start)+text+v.slice(end),pos=start+text.length;active.value=next;active.dispatchEvent(new Event('input',{bubbles:true}));restoreCaret(pos)}
@@ -77,13 +80,13 @@ function ensure(){addStyle();const inputs=candidates();if(!inputs.length){cleanu
  k.querySelector('.vp-kb-hide').onclick=hide;
  hide();
 }
-const TARGET_SELECTOR='#card .tqt-input,#card #tqtAnswer,#card .seosul-split-input,#card #seosulAnswer,#testPrepVocabPractice #vpSpell,#vtuInput,#assignmentHome .tp49-input,#assignmentHome .wcri-input,#assignmentHome .wcri-textarea';
+const TARGET_SELECTOR='#card .tqt-input,#card #tqtAnswer,#card .seosul-split-input,#card #seosulAnswer,#card .wcri-input,#card .wcri-textarea,#testPrepVocabPractice #vpSpell,#vtuInput,#assignmentHome .tp49-input,#assignmentHome .wcri-input,#assignmentHome .wcri-textarea';
 function chooseTarget(e){const el=e.target?.closest?.(TARGET_SELECTOR);if(!el||!candidates().includes(el))return;active=el;lock(el);ensure();setTimeout(()=>{try{el.focus({preventScroll:true})}catch(_){el.focus()}show()},0)}
-function syncFocusedTarget(e){const el=e.target;if(!el||!candidates().includes(el))return;active=el;lock(el);if(isReview(el)||el.id==='vpSpell'||el.id==='vtuInput'||isTqt(el))show()}
+function syncFocusedTarget(e){const el=e.target;if(!el||!candidates().includes(el))return;active=el;lock(el);if(isReview(el)||el.id==='vpSpell'||el.id==='vtuInput'||isTqt(el)||(el.closest?.('#card')&&isEnglishQuestion()))show()}
 function hardwareKey(e){const inputs=candidates();if(!inputs.length)return;if(e.ctrlKey||e.metaKey||e.altKey)return;const t=e.target;if(t&&/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName)&&!inputs.includes(t))return;if(inputs.includes(t))active=t;if(!active)active=inputs[0];let handled=true;if(/^[a-zA-Z]$/.test(e.key))replaceSelection(e.key);else if(e.key==='Backspace')backspace();else if(e.key===' ')replaceSelection(' ');else if(e.key==='Enter')submit();else handled=false;if(!handled)return;e.preventDefault();hardware=true;hide()}
 function cleanup(){if(candidates().length)return;stopRepeat();$('#tpSeosulAppKeyboard')?.remove();document.body.classList.remove('tp-seosul-kb-open');active=null;caps=false}
 function inspect(){ensure();cleanup()}
 function boot(){addStyle();document.addEventListener('pointerdown',chooseTarget,true);document.addEventListener('touchstart',chooseTarget,{capture:true,passive:true});document.addEventListener('focusin',syncFocusedTarget,true);document.addEventListener('keydown',hardwareKey,true);new MutationObserver(()=>queueMicrotask(inspect)).observe(document.body,{childList:true,subtree:true});inspect()}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
-console.log('[REV49f] shared Willena keyboard includes REV49 review inputs');
+console.log('[REV49h] Willena keyboard is English-only; Korean responses use device keyboard');
 })();
