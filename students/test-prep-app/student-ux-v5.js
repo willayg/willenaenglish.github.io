@@ -136,6 +136,7 @@ async function hydrateHome(allPlans,run){
 }
 
 function renderHome(){
+ if(route().tp==='practice')history.replaceState({tp:'home'},'',location.href);
  showHomeSurface();const h=home();if(!h)return;
  const all=plans();
  h.innerHTML=`${wrongMount()}${taskShelf(all)}${all.length?all.map(plan=>`<section class="tp-exam-section">${planHead(plan)}<div class="tp-lessons">${scopeFor(plan).map(l=>lessonCard(plan,l)).join('')}</div></section>`).join(''):'<div class="tp-review-empty">지정된 시험 대비가 없습니다.</div>'}`;
@@ -158,6 +159,11 @@ async function hydrateLesson(plan,l,skills,run){
  }));
 }
 function renderLesson(planId,lesson,focusSkill=null){
+ const r=route();
+ if(r.tp==='practice'){
+   if(r.returnTo==='home'){history.replaceState({tp:'home'},'',location.href);renderHome();return}
+   history.replaceState({tp:'lesson',planId:String(planId),lesson:String(lesson),skill:focusSkill||r.skill||null},'',location.href);
+ }
  showHomeSurface();const h=home(),plan=findPlan(planId);if(!h||!plan){setRoute({tp:'home'},{replace:true});return}
  const l=scopeFor(plan).find(x=>String(x.lesson)===String(lesson));if(!l){setRoute({tp:'home'},{replace:true});return}
  const skills=skillRows(plan,l);
@@ -209,9 +215,10 @@ function toHome({replaceEntry=false}={}){setRoute({tp:'home'},{replace:replaceEn
 function toWrong({replaceEntry=false}={}){setRoute({tp:'wrong'},{replace:replaceEntry})}
 function back(){const s=route();if(s.tp==='lesson'||s.tp==='wrong')toHome({replaceEntry:true});else if(s.tp==='practice')returnFromPractice(window.WillenaAssignedTestPrep?.selection);else history.back()}
 function start(){if(started)return;started=true;if(!history.state?.tp)history.replaceState({tp:'home'},'',location.href);window.addEventListener('popstate',()=>renderRoute(normalizeRoute()));window.addEventListener('testprep:student-state-refresh',()=>{const s=route();if(s.tp!=='practice')renderRoute(s)});renderRoute(normalizeRoute())}
+function renderState(s){if(!started){start();return}renderRoute(s||normalizeRoute())}
 
 window.WillenaTestPrepUX={start,renderHome,renderLesson,showWrongCenter,openPractice,returnFromPractice,renderRoute};
-window.WillenaTestPrepNavigation={toHome,toWrong,back,renderState:renderRoute,get state(){return route()}};
+window.WillenaTestPrepNavigation={toHome,toWrong,back,renderState,get state(){return route()}};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>{if(state()?.user)start()},{once:true});else if(state()?.user)start();
 console.log('[REV51] clean test-prep home/lesson/navigation owner');
 })();
