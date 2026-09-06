@@ -1,10 +1,11 @@
 import {detectForm,isAuthoredWritten,FORMS} from './question-model.js';
+import {loadVocabularyTestAvailableIds} from './vocab-test-source.js?v=2.14.0';
 
 const CONTENT='https://gxwfsqxyuufqtitspfqg.supabase.co';
 const CONTENT_KEY=['sb_publishable_','G-FYhHfDL4OGdL892gY1Zg_','epdbEeqO'].join('');
 const TRACK='https://fiieuiktlsivwfgyivai.supabase.co';
 const TRACK_KEY='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
-const ACTIVE=['vocabulary','communication','grammar','reading','constructed_response'];
+const ACTIVE=['vocabulary','vocab_test','communication','grammar','reading','constructed_response'];
 const cache=new Map();
 
 const token=()=>window.WillenaAPI?.getLocalAccessToken?.()||localStorage.getItem('sb_access_token')||'';
@@ -40,6 +41,7 @@ function scopeFor(plan){
   if(Array.isArray(rows)&&rows.length)return rows.filter(x=>x?.lesson);
   return(plan?.units||[]).map(lesson=>({lesson,sections:plan?.practice_types||[]}));
 }
+function sectionsFor(row){const sections=new Set((row?.sections||[]).map(norm));if(sections.has('vocabulary'))sections.add('vocab_test');return sections}
 async function resolveUnits(plan){
   const scope=scopeFor(plan),map=new Map(scope.filter(x=>x.unit_id).map(x=>[String(x.lesson),String(x.unit_id)]));
   if(map.size===scope.length)return map;
@@ -68,7 +70,9 @@ async function availableForUnit(unitId){
     if(['communication','grammar','reading'].includes(section)&&[FORMS.choice,FORMS.multi].includes(form))available[section].add(id);
     if(isAuthoredWritten(row)&&[FORMS.write,FORMS.multipart,FORMS.correction].includes(form))available.constructed_response.add(id);
   }
-  available.vocabulary=await usableLexicalIds(unitId);
+  const [vocabulary,vocabTest]=await Promise.all([usableLexicalIds(unitId),loadVocabularyTestAvailableIds(unitId)]);
+  available.vocabulary=vocabulary;
+  available.vocab_test=vocabTest;
   return available;
 }
 function currentCompleted(ids,available){
@@ -93,7 +97,7 @@ export async function loadCardStats(plan,_studentId,{force=false}={}){
   const promise=(async()=>{
     const scope=scopeFor(plan),unitMap=await resolveUnits(plan),rpcRows=await cardStats(plan.id),rpcByLesson=new Map(rpcRows.map(x=>[String(x.unit_key||''),x])),lessons={};
     for(const row of scope){
-      const lesson=String(row.lesson),unitId=unitMap.get(lesson),available=unitId?await availableForUnit(unitId):emptyAvailable(),sections=new Set((row.sections||[]).map(norm)),rpc=rpcByLesson.get(lesson)||null,payload=statPayload(rpc),practices={};
+      const lesson=String(row.lesson),unitId=unitMap.get(lesson),available=unitId?await availableForUnit(unitId):emptyAvailable(),sections=sectionsFor(row),rpc=rpcByLesson.get(lesson)||null,payload=statPayload(rpc),practices={};
       for(const practice of ACTIVE){
         const set=sections.has(practice)?available[practice]:new Set(),ps=payload.byPractice?.[practice]||null,completed=currentCompleted(ps?.attempted_question_ids,set);
         practices[practice]=fromRpc(ps,set.size,completed);
@@ -117,4 +121,5 @@ export function reviewCounts(plan){
 // Card history uses the same authenticated test_prep_card_stats RPC as v1.
 // No browser read of test_prep_attempts exists here.
 // Coverage intersects RPC attempted IDs with the current usable content pool.
+// vocab_test is derived from vocabulary scope, matching the v1 station model.
 // Accuracy currently inherits v1's RPC recent window (latest 50 unique questions).
