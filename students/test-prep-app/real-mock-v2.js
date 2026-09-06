@@ -6,6 +6,7 @@ const $=(s,r=document)=>r.querySelector(s),$$=(s,r=document)=>[...r.querySelecto
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const norm=v=>String(v||'').trim().toLowerCase();
 
+function revBadge(){if(document.getElementById('tp-rev52a-badge'))return;const b=document.createElement('div');b.id='tp-rev52a-badge';b.textContent='REV 52a';b.style.cssText='position:fixed;right:10px;bottom:10px;z-index:2147483647;padding:4px 8px;border-radius:999px;background:#203039;color:#fff;font:800 10px/1.2 Poppins,sans-serif;letter-spacing:.04em;opacity:.82;pointer-events:none';document.body.appendChild(b)}
 function plans(){return window.WillenaTestPrepAuth?.state?.plans||[]}
 function planById(id){return plans().find(p=>String(p.id)===String(id))||null}
 function scopeFor(plan){const rows=plan?.group?.scope?.lessons;return Array.isArray(rows)?rows.filter(x=>x?.lesson):[]}
@@ -77,6 +78,6 @@ function styles(){if($('#realMockV2Styles'))return;const s=document.createElemen
 function button(planId){const b=document.createElement('button');b.type='button';b.className='tp-real-mock-v2';b.dataset.realMockPlan=planId;b.innerHTML=`<span class="tp-real-mock-v2-icon">25</span><span class="tp-real-mock-v2-copy"><b>실전모의고사</b><small>4 어휘 · 5 의사소통 · 6 문법 · 6 독해 · 4 서술형 · V2 renderer</small></span><span class="tp-real-mock-v2-go">EXPERIMENT →</span>`;return b}
 async function launch(btn,planId){if(btn.disabled)return;const plan=planById(planId);if(!plan)return alert('시험 범위를 찾지 못했습니다.');btn.disabled=true;const go=$('.tp-real-mock-v2-go',btn),old=go?.textContent;if(go)go.textContent='BUILDING';try{const manifest=await buildManifest(plan);sessionStorage.setItem(STORAGE_KEY,JSON.stringify(manifest));location.href='./real-mock-v2.html'}catch(e){console.error('[real mock v2] build failed',e);alert(e?.message||'실전모의고사를 만들지 못했습니다.');btn.disabled=false;if(go)go.textContent=old||'EXPERIMENT →'}}
 function inject(){styles();const home=$('#assignmentHome');if(!home)return;for(const current of $$('.tp-exam46-all',home)){if(current.nextElementSibling?.classList?.contains('tp-real-mock-v2'))continue;const section=current.closest('.tp-exam-section'),first=section?.querySelector('.tp-lesson-card[data-lesson-plan]'),planId=first?.dataset.lessonPlan;if(!planId||!planById(planId))continue;const b=button(planId);b.onclick=()=>launch(b,planId);current.insertAdjacentElement('afterend',b)}}
-function boot(){inject();const root=$('#assignmentHome')||document.body;new MutationObserver(()=>queueMicrotask(inject)).observe(root,{childList:true,subtree:true});window.addEventListener('testprep:student-state-refresh',()=>setTimeout(inject,0));window.addEventListener('popstate',()=>setTimeout(inject,0))}
+function boot(){revBadge();inject();const root=$('#assignmentHome')||document.body;new MutationObserver(()=>queueMicrotask(inject)).observe(root,{childList:true,subtree:true});window.addEventListener('testprep:student-state-refresh',()=>setTimeout(inject,0));window.addEventListener('popstate',()=>setTimeout(inject,0))}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
-console.log('[REAL MOCK V2 EXPERIMENT] staging-only launcher ready');
+console.log('[REV52a] REAL MOCK V2 EXPERIMENT staging-only launcher ready');
