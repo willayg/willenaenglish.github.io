@@ -1,6 +1,6 @@
 # Willena Test Prep v2
 
-## V2.11 rule
+## Non-negotiable renderer rule
 
 No renderer patch files.
 
@@ -20,23 +20,23 @@ Do not copy or reimplement renderer functions in the lab. A rendering fix made i
 
 The lab also imports the canonical `question-model.js`. Passage sentence preprocessing lives in `passage-utils.js` so abbreviation handling such as `Dr.` cannot drift between the lab and the app.
 
-## Current modules
+## Module ownership
 
-- `question-model.js` — standard question contract + stored-question adapter
+- `question-model.js` — standard question contract + source adaptation
 - `question-renderer.js` — the only module allowed to create question answer UI
 - `question-grader.js` — exact, structured, constraint and configured Luna grading
-- `passage-utils.js` — shared passage/sentence parsing used by diagnostics and future 본문 workflow
-- `content-source.js` — current stored middle-school question source
-- `tracking-client.js` — sessions and attempts using the existing Test Prep backend
+- `passage-utils.js` — shared passage/sentence parsing
+- content/source modules — question generation/loading only
+- `tracking-client.js` — ALL Test Prep v2 attempt/session persistence and sync
 - `stats-client.js` — the only UI-facing Test Prep stats interpretation layer
 - `app.js` — student plan / lesson / practice controller
 
-## V2.11 scope
+## V2.12 status
 
 Included:
 
 - student auth and assigned plans
-- current Test Prep visual shell / curved header
+- Test Prep visual shell / curved header
 - exam and lesson cards
 - lesson journey presentation
 - responsive/mobile layout
@@ -46,12 +46,29 @@ Included:
 - Reading multiple choice
 - stored authored written-response questions
 - central grading
-- attempt/session tracking
 - existing plan/lesson summary stats through one stats module
+
+### V2.12 tracking hardening
+
+`tracking-client.js` now owns:
+
+- local persistent attempt outbox
+- batched attempt upload
+- timer and size-triggered flushing
+- retry when connectivity returns
+- recovery of unsent attempts after reload
+- active-time measurement that pauses when the page is hidden/unfocused
+- persisted active session identity for abrupt reload recovery
+- pending session-close persistence so a failed final network request is retried later
+- attempt flushing before a session is closed
+- stable `client_attempt_id` values so backend duplicate protection can work
+- one automatic token refresh/retry after an unauthorized API response
+- `app_rev`, central renderer revision, source, mastery key and grading method in attempt metadata
+
+There is no second tracker or tracking patch file.
 
 Not yet migrated:
 
-- offline attempt outbox / tracking hardening (V2.12)
 - vocabulary lexical generator
 - vocabulary learning workflow
 - 본문 activity workflow
