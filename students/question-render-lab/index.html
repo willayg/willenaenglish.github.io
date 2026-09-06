@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <title>Question Renderer Lab</title>
-<link rel="stylesheet" href="./lab.css?v=rev6">
+<link rel="stylesheet" href="./lab.css?v=rev7">
 </head>
 <body>
 <div class="shell">
@@ -13,9 +13,10 @@
     <div class="field"><label>Skill</label><select id="skill"></select></div>
     <div class="field"><label>Textbook</label><select id="book"></select></div>
     <div class="field"><label>Question form</label><select id="form"></select></div>
+    <div class="field"><label>Feature</label><select id="feature"><option value="all">All questions</option><option value="underline">Underlined</option><option value="blank">Fill in the blank</option></select></div>
   </div>
   <div class="meta">
-    <span class="rev-badge">REV 6</span>
+    <span class="rev-badge">REV 7</span>
     <span class="rev-badge">SHARED RENDERER</span>
     <span id="sourceBadge" class="source-badge" hidden></span>
     <span id="bookTitle" class="book-title"></span>
@@ -29,6 +30,6 @@
   <button class="check" id="check">Check Answer</button>
   <button class="next" id="next">Next Question →</button>
 </div>
-<script type="module" src="./lab.js?v=rev6"></script>
+<script type="module" src="./lab.js?v=rev7"></script>
 </body>
 </html>
