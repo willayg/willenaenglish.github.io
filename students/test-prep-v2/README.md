@@ -1,6 +1,6 @@
 # Willena Test Prep v2
 
-## V2.1 rule
+## V2.11 rule
 
 No renderer patch files.
 
@@ -31,23 +31,27 @@ The lab also imports the canonical `question-model.js`. Passage sentence preproc
 - `stats-client.js` — the only UI-facing Test Prep stats interpretation layer
 - `app.js` — student plan / lesson / practice controller
 
-## V2.1 scope
+## V2.11 scope
 
 Included:
 
 - student auth and assigned plans
-- lesson scope
+- current Test Prep visual shell / curved header
+- exam and lesson cards
+- lesson journey presentation
+- responsive/mobile layout
+- source badges and central question styling
 - Communication multiple choice
 - Grammar multiple choice
 - Reading multiple choice
 - stored authored written-response questions
-- W / Z / B source badges
 - central grading
 - attempt/session tracking
 - existing plan/lesson summary stats through one stats module
 
 Not yet migrated:
 
+- offline attempt outbox / tracking hardening (V2.12)
 - vocabulary lexical generator
 - vocabulary learning workflow
 - 본문 activity workflow
@@ -55,6 +59,5 @@ Not yet migrated:
 - new 오답 state flow
 - flags
 - smart question selection / balancing
-- offline attempt outbox
 
 Those systems should be migrated as sources/workflows around the central renderer, not as new renderers.
