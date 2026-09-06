@@ -6,7 +6,9 @@ const rows=()=>[['q','w','e','r','t','y','u','i','o','p'],['a','s','d','f','g','
 function isEnglishQuestion(){const m=$('#seosulModel');if(!m)return false;const t=String(m.textContent||'').replace('모범 답안','').trim();return !!t&&/[A-Za-z]/.test(t)&&!/[가-힣]/.test(t)}
 function isEnglishTqt(){const m=$('#tqtModel');return !!m&&/[A-Za-z]/.test(String(m.textContent||''))}
 function visible(el){return !!el&&!el.disabled&&el.offsetParent!==null}
+function isReview(el=active){return !!window.__WillenaReviewV49Active&&!!el?.closest?.('#assignmentHome')}
 function candidates(){
+ if(window.__WillenaReviewV49Active){const review=$$('#assignmentHome .tp49-input,#assignmentHome .wcri-input,#assignmentHome .wcri-textarea').filter(visible);if(review.length)return review}
  const vocab=$('#testPrepVocabPractice #vpSpell'),vocabTest=$('#testPrepVocabTestUpgrade #vtuInput,#testPrepVocabTestPractice #vtuInput,#vtuInput');
  if(visible(vocab))return[vocab];if(visible(vocabTest))return[vocabTest];
  if(isEnglishTqt()){const parts=$$('#card .tqt-input').filter(visible);if(parts.length)return parts;const tqt=$('#card #tqtAnswer');if(visible(tqt))return[tqt]}
@@ -22,13 +24,13 @@ function backspace(){if(!active||active.disabled)return;const v=active.value||''
 function stopRepeat(){if(repeatDelay){clearTimeout(repeatDelay);repeatDelay=null}if(repeatTimer){clearInterval(repeatTimer);repeatTimer=null}if(repeatFastTimer){clearTimeout(repeatFastTimer);repeatFastTimer=null}}
 function startRepeat(){stopRepeat();backspace();repeatDelay=setTimeout(()=>{repeatTimer=setInterval(backspace,50);repeatFastTimer=setTimeout(()=>{if(repeatTimer){clearInterval(repeatTimer);repeatTimer=setInterval(backspace,30)}},600)},240)}
 function isTqt(el=active){return !!el&&(el.id==='tqtAnswer'||el.classList?.contains('tqt-input'))}
-function submit(){const b=active?.id==='vpSpell'?$('#testPrepVocabPractice #vpNext'):active?.id==='vtuInput'?$('#vtuNext'):isTqt()?$('#tqtCheck'):$('#seosulCheck');if(b&&!b.disabled){b.click();return true}return false}
+function submit(){const b=isReview()?$('#tp49Check'):active?.id==='vpSpell'?$('#testPrepVocabPractice #vpNext'):active?.id==='vtuInput'?$('#vtuNext'):isTqt()?$('#tqtCheck'):$('#seosulCheck');if(b&&!b.disabled){b.click();return true}return false}
 function renderCaps(){const k=kb();if(!k)return;k.querySelectorAll('[data-key].letter').forEach(b=>b.textContent=caps?b.dataset.key.toUpperCase():b.dataset.key.toLowerCase());const shift=k.querySelector('[data-key="shift"]');if(shift){shift.classList.toggle('on',caps);shift.setAttribute('aria-pressed',String(caps));shift.textContent='⇧'}}
 function toggleCaps(){caps=!caps;renderCaps()}
 function haptic(key){setTimeout(()=>{try{if(!navigator.vibrate)return;navigator.vibrate((key==='enter'||key==='backspace')?7:3)}catch(_){}},0)}
 function addStyle(){if($('#tpSeosulCompactKbStyle'))return;const s=document.createElement('style');s.id='tpSeosulCompactKbStyle';s.textContent=`
-#card .tp-seosul-caret,#testPrepVocabPractice .tp-seosul-caret,#vtuInput.tp-seosul-caret{caret-color:#19777e!important;cursor:text!important}
-#card .tp-seosul-caret:focus,#testPrepVocabPractice .tp-seosul-caret:focus,#vtuInput.tp-seosul-caret:focus{caret-color:#19777e!important}
+#card .tp-seosul-caret,#testPrepVocabPractice .tp-seosul-caret,#vtuInput.tp-seosul-caret,#assignmentHome .tp-seosul-caret{caret-color:#19777e!important;cursor:text!important}
+#card .tp-seosul-caret:focus,#testPrepVocabPractice .tp-seosul-caret:focus,#vtuInput.tp-seosul-caret:focus,#assignmentHome .tp-seosul-caret:focus{caret-color:#19777e!important}
 #tpSeosulAppKeyboard{box-sizing:border-box;background:#eef3f5;border-top:1px solid #d7e0e3;padding:28px 10px 10px;z-index:11900}
 #tpSeosulAppKeyboard .vp-kb-hide{position:absolute;top:7px;right:10px;border:1px solid #c9d8dc;border-radius:999px;background:#fff;color:#4e656d;font-weight:800;padding:5px 10px;font-size:12px;line-height:1.2}
 #tpSeosulAppKeyboard .vp-kb-row{display:flex;justify-content:center;gap:5px;margin:5px 0}
@@ -75,13 +77,13 @@ function ensure(){addStyle();const inputs=candidates();if(!inputs.length){cleanu
  k.querySelector('.vp-kb-hide').onclick=hide;
  hide();
 }
-const TARGET_SELECTOR='#card .tqt-input,#card #tqtAnswer,#card .seosul-split-input,#card #seosulAnswer,#testPrepVocabPractice #vpSpell,#vtuInput';
+const TARGET_SELECTOR='#card .tqt-input,#card #tqtAnswer,#card .seosul-split-input,#card #seosulAnswer,#testPrepVocabPractice #vpSpell,#vtuInput,#assignmentHome .tp49-input,#assignmentHome .wcri-input,#assignmentHome .wcri-textarea';
 function chooseTarget(e){const el=e.target?.closest?.(TARGET_SELECTOR);if(!el||!candidates().includes(el))return;active=el;lock(el);ensure();setTimeout(()=>{try{el.focus({preventScroll:true})}catch(_){el.focus()}show()},0)}
-function syncFocusedTarget(e){const el=e.target;if(!el||!candidates().includes(el))return;active=el;lock(el);if(el.id==='vpSpell'||el.id==='vtuInput'||isTqt(el))show()}
+function syncFocusedTarget(e){const el=e.target;if(!el||!candidates().includes(el))return;active=el;lock(el);if(isReview(el)||el.id==='vpSpell'||el.id==='vtuInput'||isTqt(el))show()}
 function hardwareKey(e){const inputs=candidates();if(!inputs.length)return;if(e.ctrlKey||e.metaKey||e.altKey)return;const t=e.target;if(t&&/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName)&&!inputs.includes(t))return;if(inputs.includes(t))active=t;if(!active)active=inputs[0];let handled=true;if(/^[a-zA-Z]$/.test(e.key))replaceSelection(e.key);else if(e.key==='Backspace')backspace();else if(e.key===' ')replaceSelection(' ');else if(e.key==='Enter')submit();else handled=false;if(!handled)return;e.preventDefault();hardware=true;hide()}
 function cleanup(){if(candidates().length)return;stopRepeat();$('#tpSeosulAppKeyboard')?.remove();document.body.classList.remove('tp-seosul-kb-open');active=null;caps=false}
 function inspect(){ensure();cleanup()}
 function boot(){addStyle();document.addEventListener('pointerdown',chooseTarget,true);document.addEventListener('touchstart',chooseTarget,{capture:true,passive:true});document.addEventListener('focusin',syncFocusedTarget,true);document.addEventListener('keydown',hardwareKey,true);new MutationObserver(()=>queueMicrotask(inspect)).observe(document.body,{childList:true,subtree:true});inspect()}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
-console.log('[REV46f] Willena keyboard includes native text questions');
+console.log('[REV49f] shared Willena keyboard includes REV49 review inputs');
 })();
