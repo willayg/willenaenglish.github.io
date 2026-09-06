@@ -20,13 +20,15 @@ function cleanDialogueCard(){
   }
 
   if(instruction){
-    let text=String(instruction.textContent||'').trim();
-    text=text
+    const before=String(instruction.textContent||'').trim();
+    let text=before
       .replace(/\s*\([^)]*\b사용\b[^)]*\)\s*$/u,'')
       .replace(/\s*\([^)]*use[^)]*\)\s*$/i,'')
       .trim();
     if(!text)text='대화의 빈칸에 들어갈 말을 쓰세요.';
-    instruction.textContent=text;
+    // Critical: only mutate the DOM when something actually changed.
+    // The old unconditional textContent write recursively re-triggered this observer.
+    if(before!==text)instruction.textContent=text;
   }
 }
 
@@ -34,10 +36,13 @@ function boot(){
   cleanDialogueCard();
   const card=document.getElementById('card');
   if(!card)return;
-  const observer=new MutationObserver(cleanDialogueCard);
-  observer.observe(card,{subtree:true,childList:true,characterData:true});
+  // Question changes replace child nodes, so childList is enough. Avoid watching
+  // characterData here: this helper itself edits instruction text when needed.
+  const observer=new MutationObserver(()=>queueMicrotask(cleanDialogueCard));
+  observer.observe(card,{subtree:true,childList:true});
 }
 
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});
 else boot();
+console.log('[REV49k] dialogue cleanup is idempotent; no self-triggering observer loop');
 })();
