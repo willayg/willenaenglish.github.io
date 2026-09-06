@@ -32,11 +32,12 @@ function closePractice(){
 function notifyPracticeLeft(){try{window.dispatchEvent(new CustomEvent('testprep:practice-left'))}catch(_){}}
 function renderState(state){
  const ux=window.WillenaTestPrepUX;if(!ux)return false;const s=state?.tp?state:{tp:'home'};const leftPractice=s.tp!=='practice'&&closePractice();
- if(s.tp==='lesson'&&s.planId&&s.lesson){if(window.WillenaStudentsRev2?.renderJourney)window.WillenaStudentsRev2.renderJourney(s.planId,s.lesson);else ux.renderLesson?.(s.planId,s.lesson,s.skill||null)}
+ if(s.tp==='lesson'&&s.planId&&s.lesson)ux.renderLesson?.(s.planId,s.lesson,s.skill||null);
  else if(s.tp==='wrong')ux.showWrongCenter?.();
  else if(s.tp==='home')ux.renderHome?.();
  if(leftPractice)notifyPracticeLeft();return true
 }
+function renderCanonicalLesson(){const s=navState();if(s.tp==='lesson'&&s.planId&&s.lesson)window.WillenaTestPrepUX?.renderLesson?.(s.planId,s.lesson,s.skill||null)}
 function smartBack(){
  const cur=navState();
  if(cur.tp==='lesson'){const h={tp:'home'};replace(h);renderState(h);return}
@@ -64,8 +65,8 @@ function restoreCurrent(){const s=navState();remember(s);if(s.tp==='home'||s.tp=
 function back(){smartBack()}
 function toWrong({replaceEntry=false}={}){const s={tp:'wrong'};if(replaceEntry)replace(s);else push(s);renderState(s)}
 function toHome({replaceEntry=false}={}){const s={tp:'home'};if(replaceEntry)replace(s);else push(s);renderState(s)}
-function boot(){if(booted)return;booted=true;ensureInitial();normalizeColdState();remember(navState());document.addEventListener('click',clickCapture,true);window.addEventListener('popstate',onPop);restoreCurrent()}
+function boot(){if(booted)return;booted=true;ensureInitial();normalizeColdState();remember(navState());document.addEventListener('click',clickCapture,true);window.addEventListener('popstate',onPop);window.addEventListener('testprep:student-state-refresh',()=>queueMicrotask(renderCanonicalLesson));restoreCurrent()}
 window.WillenaTestPrepNavigation={push,replace,back,toWrong,toHome,renderState,get state(){return navState()}};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
-console.log('[REV48e] navigation has no legacy review-practice route');
+console.log('[REV50d] navigation uses canonical student UX lesson renderer');
 })();
