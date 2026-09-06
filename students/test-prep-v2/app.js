@@ -3,7 +3,7 @@ import {gradeQuestion} from './question-grader.js';
 import {resolveContentIds,loadStoredSkill,loadStoredWritten,shuffle} from './content-source.js';
 import {initTracking,refreshTrackingState,setTrackingContext,startSession,recordAttempt,completeSession,trackingState} from './tracking-client.js?v=2.12.0';
 import {startVocabularyLearning} from './vocab-learning.js?v=2.13.0';
-import {loadCardStats,invalidateCardStats,formatCardMetric,formatAccuracy,reviewCounts} from './stats-client.js?v=2.13b-statsfix1';
+import {loadCardStats,invalidateCardStats,formatCardMetric,formatAccuracy,reviewCounts} from './stats-client.js?v=2.13a';
 import {initNavigation,navigate,replaceRoute,back,currentRoute} from './navigation.js?v=2.13b';
 
 const $=s=>document.querySelector(s),esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
