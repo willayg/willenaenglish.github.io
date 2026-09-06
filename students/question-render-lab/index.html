@@ -15,7 +15,7 @@
     <div class="field"><label>Textbook</label><select id="book"></select></div>
     <div class="field"><label>Question form</label><select id="form"></select></div>
   </div>
-  <div class="meta"><span class="rev-badge">REV 4</span><span id="bookBadge" class="book-badge" hidden></span><span id="bookTitle" class="book-title"></span><span id="countPill">0 questions</span></div>
+  <div class="meta"><span class="rev-badge">REV 5</span><span id="bookBadge" class="book-badge" hidden></span><span id="bookTitle" class="book-title"></span><span id="countPill">0 questions</span></div>
   <main class="card" id="card"><div class="empty">Loading…</div></main>
 </div>
 <div class="nav"><span class="status" id="position">Question —</span><button id="prev">← Previous</button><button class="check" id="check">Check Answer</button><button class="next" id="next">Next Question →</button></div>
@@ -140,9 +140,17 @@ function performanceVariants(q){
 }
 async function loadPerformance(){return (await fetchRows('performance')).flatMap(performanceVariants)}
 
+const SENTENCE_DOT='\uE000';
+function protectSentenceDots(value){
+ let s=String(value||'');
+ s=s.replace(/\b(Mr|Mrs|Ms|Dr|Prof|St|Jr|Sr)\./gi,(_,a)=>`${a}${SENTENCE_DOT}`);
+ s=s.replace(/\b(e\.g|i\.e|a\.m|p\.m|U\.S|U\.K)\./gi,m=>m.replace(/\./g,SENTENCE_DOT));
+ s=s.replace(/(\d)\.(\d)/g,`$1${SENTENCE_DOT}$2`);
+ return s;
+}
 function splitSentences(body,translations=[]){
  const text=String(body||'').replace(/\r/g,'').trim();if(!text)return[];
- const parts=text.split(/\n+/).flatMap(line=>line.match(/[^.!?]+[.!?]+(?:["'”’])?|[^.!?]+$/g)||[]).map(x=>x.trim()).filter(x=>x&&/[A-Za-z]/.test(x));
+ const parts=text.split(/\n+/).flatMap(line=>(protectSentenceDots(line).match(/[^.!?]+[.!?]+(?:["'”’])?|[^.!?]+$/g)||[]).map(x=>x.trim().split(SENTENCE_DOT).join('.'))).filter(x=>x&&/[A-Za-z]/.test(x));
  return parts.map((text,i)=>({text,ko:String(translations[i]||'')}));
 }
 async function loadSentences(){
