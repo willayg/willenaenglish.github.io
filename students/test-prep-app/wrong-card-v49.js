@@ -23,7 +23,7 @@ function installStyles(){
  `;document.head.appendChild(s);
 }
 function counts(rows){const now=rows.filter(due).length,total=rows.length;return{now,later:total-now,total}}
-function statsHtml(now,later,total){return`<span class="tp49-wrong-stats"><span class="tp49-wrong-stat"><strong data-wrong-now>${now}</strong><small>지금 할 문제</small></span><span class="tp49-wrong-stat"><strong data-wrong-later>${later}</strong><small>나중에 할 문제</small></span><span class="tp49-wrong-stat"><strong data-wrong-total>${total}</strong><small>총 남은 문제</small></span></span>`}
+function statsHtml(now,later,total){return`<span class="tp49-wrong-stats"><span class="tp49-wrong-stat"><strong data-wrong-now>${now}</strong><small>지금 할 문제</small></span><span class="tp49-wrong-stat"><strong data-wrong-later>${later}</strong><small>1시간 후 재복습</small></span><span class="tp49-wrong-stat"><strong data-wrong-total>${total}</strong><small>총 남은 문제</small></span></span>`}
 async function load(){
  const t=token();if(!t)throw new Error('로그인이 필요합니다.');
  const r=await fetch(REVIEW_EDGE,{headers:{Authorization:`Bearer ${t}`,apikey:REVIEW_KEY},cache:'no-store'});
@@ -56,5 +56,5 @@ window.addEventListener('testprep:review-finished',queueServerRefresh);
 window.addEventListener('testprep:tracking',e=>{if(e?.detail?.type==='session_completed')queueServerRefresh()});
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(()=>refresh({initial:true}),80),{once:true});else setTimeout(()=>refresh({initial:true}),80);
 window.WillenaWrongCardV49={refresh,load,get cachedRows(){return cachedRows}};
-console.log('[REV49t] cyan-border pink-text wrong-answer card');
+console.log('[REV49u] delayed-review label: 1시간 후 재복습');
 })();
