@@ -31,6 +31,14 @@ function skillsFor(plan,l){
  });
 }
 function statPayload(stat){const raw=stat&&stat.attempted_question_ids;if(raw&&typeof raw==='object'&&!Array.isArray(raw))return raw.by_practice&&typeof raw.by_practice==='object'?raw.by_practice:{};return {};}
+function summaryKey(plan,l){return String(plan.id)+'::'+String(l.lesson)}
+function setDiagnostic(text,stateName){
+ const el=document.getElementById('tpLessonDataDiagnostic');if(!el)return;
+ el.textContent=text;
+ el.dataset.state=stateName||'';
+ el.style.background=stateName==='ok'?'#e7f7ef':stateName==='error'?'#fdebec':'#eef3f5';
+ el.style.color=stateName==='ok'?'#176b45':stateName==='error'?'#a32732':'#40545d';
+}
 async function cardStats(planId){
  const token=(window.WillenaAPI&&window.WillenaAPI.getLocalAccessToken&&window.WillenaAPI.getLocalAccessToken())||localStorage.getItem('sb_access_token')||'';
  if(!token)return[];
@@ -39,7 +47,7 @@ async function cardStats(planId){
  const x=await r.json();return Array.isArray(x)?x:[];
 }
 async function contentSummary(plan,l){
- const key=String(plan.id)+'::'+String(l.lesson);if(summaryCache.has(key))return summaryCache.get(key);
+ const key=summaryKey(plan,l);if(summaryCache.has(key))return summaryCache.get(key);
  const p=(async()=>{
    const r=await fetch(CONTENT+'/rest/v1/rpc/test_prep_lesson_content_summary',{method:'POST',headers:{apikey:CONTENT_KEY,Authorization:'Bearer '+CONTENT_KEY,'Content-Type':'application/json'},body:JSON.stringify({p_book_key:plan.book_key||null,p_book_label:plan.book_label||null,p_lesson:l.lesson||null,p_unit_id:l.unit_id?String(l.unit_id):null}),cache:'no-store'});
    if(!r.ok)throw new Error(await r.text());
@@ -49,11 +57,24 @@ async function contentSummary(plan,l){
 }
 function ensureLiteStyles(){
  if(document.getElementById('tpFix4LiteStyles'))return;
- const s=document.createElement('style');s.id='tpFix4LiteStyles';s.textContent='\n.tp-fix4-metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;align-items:center;min-width:142px;transform:translateX(-24px)}.tp-fix4-metric{display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:0}.tp-fix4-metric+.tp-fix4-metric{border-left:1px solid var(--tp-line);padding-left:10px}.tp-fix4-metric b{font-size:21px;line-height:1;font-weight:800;letter-spacing:-.035em;white-space:nowrap}.tp-fix4-metric small{margin-top:6px;font-size:10px;font-weight:800}.tp-fix4-completion b,.tp-fix4-completion small{color:var(--tp-cyan-dark,#19777e)}.tp-fix4-average b,.tp-fix4-average small{color:var(--tp-pink,#d65a88)}.tp-stop .tp-mini,.tp-stop-pct{display:none!important}@media(max-width:620px){.tp-fix4-metrics{min-width:118px;gap:6px;transform:translateX(-16px)}.tp-fix4-metric+.tp-fix4-metric{padding-left:6px}.tp-fix4-metric b{font-size:18px}.tp-fix4-metric small{font-size:9px}}';document.head.appendChild(s);
+ const s=document.createElement('style');s.id='tpFix4LiteStyles';s.textContent='\n.tp-fix4-metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;align-items:center;min-width:142px;transform:translateX(-24px)}.tp-fix4-metric{display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:0}.tp-fix4-metric+.tp-fix4-metric{border-left:1px solid var(--tp-line);padding-left:10px}.tp-fix4-metric b{font-size:21px;line-height:1;font-weight:800;letter-spacing:-.035em;white-space:nowrap}.tp-fix4-metric small{margin-top:6px;font-size:10px;font-weight:800}.tp-fix4-completion b,.tp-fix4-completion small{color:var(--tp-cyan-dark,#19777e)}.tp-fix4-average b,.tp-fix4-average small{color:var(--tp-pink,#d65a88)}.tp-lesson-data-diagnostic{display:inline-flex;align-items:center;margin-top:10px;padding:5px 9px;border-radius:999px;font:800 10px/1.2 Poppins,sans-serif;letter-spacing:.01em;background:#eef3f5;color:#40545d}.tp-stop .tp-mini,.tp-stop-pct{display:none!important}@media(max-width:620px){.tp-fix4-metrics{min-width:118px;gap:6px;transform:translateX(-16px)}.tp-fix4-metric+.tp-fix4-metric{padding-left:6px}.tp-fix4-metric b{font-size:18px}.tp-fix4-metric small{font-size:9px}.tp-lesson-data-diagnostic{font-size:9px}}';document.head.appendChild(s);
 }
 async function hydrateLiteStats(plan,l,skills){
  let stats=[],totals={};
- try{[stats,totals]=await Promise.all([cardStats(plan.id),contentSummary(plan,l)])}catch(e){console.warn('[Fix4/Supabase summary] stats',e);return;}
+ const cached=summaryCache.has(summaryKey(plan,l));
+ const started=performance&&performance.now?performance.now():Date.now();
+ setDiagnostic(cached?'Totals: SUPABASE RPC · cached':'Totals: SUPABASE RPC · loading…','loading');
+ try{
+   [stats,totals]=await Promise.all([cardStats(plan.id),contentSummary(plan,l)]);
+   const ended=performance&&performance.now?performance.now():Date.now();
+   const ms=Math.max(0,Math.round(ended-started));
+   setDiagnostic(cached?'Totals: SUPABASE RPC · cached':'Totals: SUPABASE RPC · '+ms+' ms','ok');
+   console.log('[REV52m] lesson totals source: SUPABASE RPC', {lesson:l.lesson,ms:ms,cached:cached,totals:totals});
+ }catch(e){
+   setDiagnostic('Totals: SUPABASE RPC · FAILED','error');
+   console.warn('[REV52m] Supabase lesson summary failed',e);
+   return;
+ }
  const stat=stats.find(x=>String(x.unit_key)===String(l.lesson))||null,by=statPayload(stat);
  skills.forEach(s=>{
    const row=document.querySelector('.tp-stop[data-safe-skill="'+CSS.escape(String(s.k))+'"]');if(!row)return;
@@ -70,7 +91,7 @@ function renderSafeLesson(planId,lesson,opts){
  const q=document.getElementById('assignedQuizPane');if(q)q.style.display='none';h.style.display='block';
  ensureLiteStyles();
  const skills=skillsFor(plan,l);
- h.innerHTML='<button class="tp-back" type="button">← 시험 대비</button><div class="tp-lesson-head"><div><h1>'+esc(l.lesson)+'</h1><p>'+esc(plan.book_label||'')+' · 학습 지도</p></div></div><div class="tp-subway">'+skills.map((s,i)=>'<div class="tp-stop" data-safe-skill="'+esc(s.k)+'"><div class="tp-station">'+(i+1)+'</div><div class="tp-stop-copy"><b>'+esc(s.label)+'</b><small>'+esc(s.desc)+'</small></div><div class="tp-fix4-metrics"><span class="tp-fix4-metric tp-fix4-completion"><b data-fix4-completion>—</b><small>완료</small></span><span class="tp-fix4-metric tp-fix4-average"><b data-fix4-average>—</b><small>평균</small></span></div></div>').join('')+'</div>';
+ h.innerHTML='<button class="tp-back" type="button">← 시험 대비</button><div class="tp-lesson-head"><div><h1>'+esc(l.lesson)+'</h1><p>'+esc(plan.book_label||'')+' · 학습 지도</p><span id="tpLessonDataDiagnostic" class="tp-lesson-data-diagnostic">Totals: SUPABASE RPC · waiting</span></div></div><div class="tp-subway">'+skills.map((s,i)=>'<div class="tp-stop" data-safe-skill="'+esc(s.k)+'"><div class="tp-station">'+(i+1)+'</div><div class="tp-stop-copy"><b>'+esc(s.label)+'</b><small>'+esc(s.desc)+'</small></div><div class="tp-fix4-metrics"><span class="tp-fix4-metric tp-fix4-completion"><b data-fix4-completion>—</b><small>완료</small></span><span class="tp-fix4-metric tp-fix4-average"><b data-fix4-average>—</b><small>평균</small></span></div></div>').join('')+'</div>';
  const back=h.querySelector('.tp-back');if(back)back.onclick=()=>window.WillenaTestPrepNavigation&&window.WillenaTestPrepNavigation.toHome&&window.WillenaTestPrepNavigation.toHome({replaceEntry:true});
  h.querySelectorAll('[data-safe-skill]').forEach(row=>{row.onclick=()=>window.WillenaTestPrepUX&&window.WillenaTestPrepUX.openPractice&&window.WillenaTestPrepUX.openPractice(plan.id,l.lesson,row.dataset.safeSkill,'lesson');});
  try{
@@ -107,5 +128,5 @@ function installReturnHooks(){
 }
 if(!installReturnHooks()){const t=setInterval(()=>{if(installReturnHooks())clearInterval(t)},100);setTimeout(()=>clearInterval(t),5000);}
 window.addEventListener('popstate',function(){setTimeout(function(){const s=history.state||{};if(s.tp==='lesson'&&s.planId&&s.lesson)renderSafeLesson(s.planId,s.lesson,{replace:true});},0);});
-console.log('[Test Prep] REV52l lightweight lesson route uses Supabase content summary');
+console.log('[Test Prep] REV52m Supabase lesson-summary diagnostic active');
 })();
