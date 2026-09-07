@@ -81,9 +81,9 @@ function resolveSpec(item,q){
   const sentence=answer||qAns[0]||snapText[0]||'';
   return{mode:'unscramble',answers:sentence?[sentence]:[],display:sentence?[sentence]:[]};
  }
- const snap=arr(item?.correct_answer_snapshot),allQAns=arr(q?.correct_answer),numericSource=snap.filter(numeric).length?snap.filter(numeric):allQAns.filter(numeric);
+ const snap=arr(item?.correct_answer_snapshot),allQAns=arr(q?.correct_answer),numericSource=allQAns.filter(numeric).length?allQAns.filter(numeric):snap.filter(numeric);
  const choiceMode=choices.length>0&&(mode.includes('choice')||mode.includes('select')||mode==='single'||mode==='multi'||numericSource.length>0);
- if(choiceMode){let correctIndices=numericSource;if(!correctIndices.length){const texts=(snap.length?snap:allQAns).map(norm);correctIndices=choices.map((c,i)=>texts.includes(norm(choiceText(c)))?String(i+1):null).filter(Boolean)}return{mode:correctIndices.length>1||mode.includes('multi')?'multi':'choice',answers:correctIndices,display:correctIndices.map(n=>choiceText(choices[Number(n)-1])).filter(Boolean)}}
+ if(choiceMode){let correctIndices=numericSource;if(!correctIndices.length){const texts=(allQAns.length?allQAns:snap).map(norm);correctIndices=choices.map((c,i)=>texts.includes(norm(choiceText(c)))?String(i+1):null).filter(Boolean)}return{mode:correctIndices.length>1||mode.includes('multi')?'multi':'choice',answers:correctIndices,display:correctIndices.map(n=>choiceText(choices[Number(n)-1])).filter(Boolean)}}
  let answers=[];if(answer)answers=[answer];if(!answers.length)answers=qAns;if(!answers.length)answers=snapText;return{mode:'text',answers,display:answers};
 }
 function ctx(label,value){if(value==null||value==='')return'';if(Array.isArray(value))return`<div class="tp49-context">${label?`<b>${esc(label)}</b>`:''}${value.map(v=>`<div>${htmlText(typeof v==='string'?v:JSON.stringify(v))}</div>`).join('')}</div>`;if(typeof value==='object')return`<div class="tp49-context">${label?`<b>${esc(label)}</b>`:''}${Object.entries(value).map(([k,v])=>`<div><strong>${esc(k)}</strong> ${htmlText(typeof v==='string'?v:JSON.stringify(v))}</div>`).join('')}</div>`;return`<div class="tp49-context">${label?`<b>${esc(label)}</b>`:''}${htmlText(value)}</div>`}
