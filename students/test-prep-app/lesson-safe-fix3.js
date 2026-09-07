@@ -12,7 +12,6 @@ const STATIONS=[
 const TRACK='https://fiieuiktlsivwfgyivai.supabase.co';
 const TRACK_KEY=['sb_publishable_','e-K50PquV9gHdfmefG6tmg_o-vVSl0e'].join('');
 const CONTENT='https://gxwfsqxyuufqtitspfqg.supabase.co';
-const CONTENT_HOST='gxwfsqxyuufqtitspfqg.supabase.co';
 const CONTENT_KEY=['sb_publishable_','G-FYhHfDL4OGdL892gY1Zg_','epdbEeqO'].join('');
 const norm=s=>String(s||'').trim().toLowerCase();
 const esc=s=>String(s==null?'':s).replace(/[&<>\"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[c]));
@@ -81,21 +80,15 @@ async function hydrateLiteStats(plan,l,skills){
    const ms=Math.max(0,Math.round(ended-started));
    setDiagnostic(cached?'Totals: SUPABASE RPC · cached':'Totals: SUPABASE RPC · '+ms+' ms','ok');
    paintLiteMetrics(l,skills,totals,null);
-   console.log('[REV52u] lesson totals source: SUPABASE RPC',{lesson:l.lesson,ms:ms,cached:cached,totals:totals});
  }catch(e){
    setDiagnostic('Totals: SUPABASE RPC · FAILED','error');
-   console.warn('[REV52u] Supabase lesson summary failed',e);
+   console.warn('[REV53] Supabase lesson summary failed',e);
    return;
  }
  try{
-   const stats=await Promise.race([
-     cardStats(plan.id),
-     new Promise(resolve=>setTimeout(()=>resolve([]),1800))
-   ]);
+   const stats=await Promise.race([cardStats(plan.id),new Promise(resolve=>setTimeout(()=>resolve([]),1800))]);
    paintLiteMetrics(l,skills,totals,stats);
- }catch(e){
-   console.warn('[REV52u] tracking stats unavailable; keeping content totals',e);
- }
+ }catch(e){console.warn('[REV53] tracking stats unavailable; keeping content totals',e);}
 }
 function renderSafeLesson(planId,lesson,opts){
  opts=opts||{};
@@ -106,41 +99,15 @@ function renderSafeLesson(planId,lesson,opts){
  ensureLiteStyles();
  const skills=skillsFor(plan,l);
  h.innerHTML='<button class="tp-back" type="button">← 시험 대비</button><div class="tp-lesson-head"><div><h1>'+esc(l.lesson)+'</h1><p>'+esc(plan.book_label||'')+' · 학습 지도</p><span id="tpLessonDataDiagnostic" class="tp-lesson-data-diagnostic">Totals: SUPABASE RPC · waiting</span></div></div><div class="tp-subway">'+skills.map((s,i)=>'<div class="tp-stop" data-safe-skill="'+esc(s.k)+'"><div class="tp-station">'+(i+1)+'</div><div class="tp-stop-copy"><b>'+esc(s.label)+'</b><small>'+esc(s.desc)+'</small></div><div class="tp-fix4-metrics"><span class="tp-fix4-metric tp-fix4-completion"><b data-fix4-completion>—</b><small>완료</small></span><span class="tp-fix4-metric tp-fix4-average"><b data-fix4-average>—</b><small>평균</small></span></div></div>').join('')+'</div>';
- const back=h.querySelector('.tp-back');if(back)back.onclick=()=>window.WillenaTestPrepNavigation&&window.WillenaTestPrepNavigation.toHome&&window.WillenaTestPrepNavigation.toHome({replaceEntry:true});
- h.querySelectorAll('[data-safe-skill]').forEach(row=>{row.onclick=()=>window.WillenaTestPrepUX&&window.WillenaTestPrepUX.openPractice&&window.WillenaTestPrepUX.openPractice(plan.id,l.lesson,row.dataset.safeSkill,'lesson');});
+ const back=h.querySelector('.tp-back');if(back)back.onclick=()=>window.WillenaTestPrepNavigation?.toHome?.({replaceEntry:true});
+ h.querySelectorAll('[data-safe-skill]').forEach(row=>{row.onclick=()=>window.WillenaTestPrepUX?.openPractice?.(plan.id,l.lesson,row.dataset.safeSkill,'lesson');});
  try{
-   const route={tp:'lesson',planId:String(plan.id),lesson:String(l.lesson),safeFix4:true};
+   const route={tp:'lesson',planId:String(plan.id),lesson:String(l.lesson),skill:opts.skill||null,safeFix4:true};
    if(opts.replace)history.replaceState(route,'',location.href);else if(!history.state||history.state.tp!=='lesson'||String(history.state.planId)!==String(plan.id)||String(history.state.lesson)!==String(l.lesson))history.pushState(route,'',location.href);else history.replaceState(route,'',location.href);
- }catch(_){ }
+ }catch(_){}
  hydrateLiteStats(plan,l,skills);
  return true;
 }
 window.WillenaLessonSafeFix4={renderSafeLesson};
-const nativeFetch=window.fetch.bind(window);
-window.fetch=function(input,init){
- try{
-   const u=typeof input==='string'?input:(input&&input.url)||'';
-   if(history.state&&history.state.tp==='lesson'&&u.indexOf(CONTENT_HOST)!==-1&&u.indexOf('/rpc/test_prep_lesson_content_summary')===-1){return Promise.resolve(new Response('[]',{status:200,headers:{'Content-Type':'application/json'}}));}
- }catch(_){ }
- return nativeFetch(input,init);
-};
-document.addEventListener('click',function(e){
- const card=e.target&&e.target.closest&&e.target.closest('.tp-lesson-card');if(!card)return;
- const planId=card.dataset.lessonPlan,lesson=card.dataset.lesson;if(!planId||!lesson)return;
- e.preventDefault();e.stopPropagation();if(e.stopImmediatePropagation)e.stopImmediatePropagation();renderSafeLesson(planId,lesson);
-},true);
-function cleanupPractice(){
- try{window.WillenaVocabPractice&&window.WillenaVocabPractice.restore&&window.WillenaVocabPractice.restore()}catch(_){}
- try{window.WillenaVocabTestPractice&&window.WillenaVocabTestPractice.restore&&window.WillenaVocabTestPractice.restore()}catch(_){}
- try{window.WillenaSentencePractice&&window.WillenaSentencePractice.restore&&window.WillenaSentencePractice.restore()}catch(_){}
-}
-function installReturnHooks(){
- const ux=window.WillenaTestPrepUX,nav=window.WillenaTestPrepNavigation;if(!ux||!nav)return false;
- if(!ux.__fix4OriginalReturn&&ux.returnFromPractice){ux.__fix4OriginalReturn=ux.returnFromPractice;ux.returnFromPractice=function(selection){const s=history.state||{},planId=(selection&&selection.plan&&selection.plan.id)||s.planId,lesson=(selection&&selection.lesson)||s.lesson;cleanupPractice();if(s.tp==='practice'){history.back();return;}if(planId&&lesson){renderSafeLesson(planId,lesson,{replace:true});return;}return ux.__fix4OriginalReturn(selection);};}
- if(!nav.__fix4OriginalBack&&nav.back){nav.__fix4OriginalBack=nav.back;nav.back=function(){const s=history.state||{};if(s.tp==='practice'){cleanupPractice();history.back();return;}return nav.__fix4OriginalBack();};}
- return true;
-}
-if(!installReturnHooks()){const t=setInterval(()=>{if(installReturnHooks())clearInterval(t)},100);setTimeout(()=>clearInterval(t),5000);}
-window.addEventListener('popstate',function(){setTimeout(function(){const s=history.state||{};if(s.tp==='lesson'&&s.planId&&s.lesson)renderSafeLesson(s.planId,s.lesson,{replace:true});},0);});
-console.log('[Test Prep] REV52u Supabase totals hydrate independently of tracking stats');
+console.log('[Test Prep] REV53: lesson renderer has no navigation/fetch ownership');
 })();
