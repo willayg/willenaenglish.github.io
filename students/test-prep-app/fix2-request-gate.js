@@ -7,6 +7,13 @@ var originalFetch=window.fetch.bind(window);
 var active=0;
 var queue=[];
 
+function bumpRev(){
+  try{
+    var el=document.querySelector('[id^="tp-rev"][id$="-badge"]');
+    if(el){el.id='tp-rev52l-badge';el.textContent='REV 52l';}
+  }catch(_){}
+}
+
 function requestUrl(input){
   try{
     if(typeof input==='string')return input;
@@ -67,7 +74,6 @@ function renderSafeRoute(opts){
   return !!safe.renderSafeLesson(s.planId,s.lesson,Object.assign({replace:true},opts||{}));
 }
 
-/* Register before student-ux-v5 so Back never reaches the heavy lesson renderer. */
 window.addEventListener('popstate',function(e){
   var s=history.state||{};
   if(s.tp!=='lesson'||!s.planId||!s.lesson)return;
@@ -80,11 +86,8 @@ window.addEventListener('popstate',function(e){
   })();
 });
 
-/* A browser refresh preserves history.state. On reload, student-ux used to see
-   tp=lesson and begin its old heavy hydration before the lightweight renderer
-   was installed. Keep content GETs inert above and hand that preserved route to
-   the safe renderer as soon as auth + lesson-safe are ready. */
 function recoverInitialLesson(){
+  bumpRev();
   if(!onLessonRoute())return;
   var tries=0;
   (function retry(){
@@ -93,6 +96,7 @@ function recoverInitialLesson(){
   })();
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',recoverInitialLesson,{once:true});else recoverInitialLesson();
+bumpRev();
 
 console.log('[Test Prep] REV52l request gate: refresh-safe lesson route + max 2 content GETs');
 })();
