@@ -1,7 +1,7 @@
 (function(){
 'use strict';
 const $=(s,r=document)=>r.querySelector(s),$$=(s,r=document)=>[...r.querySelectorAll(s)];
-const FIELD='#card .seosul-split-input,#card #seosulAnswer,#testPrepVocabPractice #vpSpell';
+const FIELD='#card .seosul-split-input,#card #seosulAnswer,#card .wcri-input,#card .wcri-textarea,#testPrepVocabPractice #vpSpell,#testPrepVocabTestUpgrade #vtuInput,#testPrepVocabTestPractice #vtuInput,#vtuInput,#assignmentHome .tp49-input,#assignmentHome .wcri-input,#assignmentHome .wcri-textarea';
 const PUNCT=['.',',','?','!','\'','-','~'];
 let lastActive=null;
 function addStyle(){if($('#tpSeosulPunctStyle'))return;const s=document.createElement('style');s.id='tpSeosulPunctStyle';s.textContent=`
