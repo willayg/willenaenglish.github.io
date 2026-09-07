@@ -13,6 +13,7 @@ load('naesin-core-fresh.js')
   .then(()=>load('naesin-scope-v2.js'))
   .then(()=>load('naesin-stats-rescue.js'))
   .then(()=>load('naesin-lesson-progress.js'))
+  .then(()=>load('naesin-grammar-tracking.js'))
   .then(()=>load('naesin-student-stats.js'))
   .catch(e=>console.error('[naesin-loader]',e));
 })();
