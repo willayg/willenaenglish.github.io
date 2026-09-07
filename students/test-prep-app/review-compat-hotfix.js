@@ -35,12 +35,14 @@ function cleanReviewItem(item){
 window.fetch=async function(input,init){
  const url=typeof input==='string'?input:String(input?.url||'');
  const res=await nativeFetch(input,init);
- if(!res.ok||(!url.includes(CONTENT_Q)&&!url.includes(REVIEW_EDGE)))return res;
+ const reviewEdge=url.includes(REVIEW_EDGE);
+ const reviewContent=url.includes(CONTENT_Q)&&window.__WillenaReviewV49Active===true;
+ if(!res.ok||(!reviewEdge&&!reviewContent))return res;
  try{
   const data=await res.clone().json();
-  if(url.includes(CONTENT_Q)){
+  if(reviewContent){
    if(Array.isArray(data))data.forEach(cleanQuestion);else cleanQuestion(data);
-  }else if(url.includes(REVIEW_EDGE)&&Array.isArray(data?.reviews)){
+  }else if(reviewEdge&&Array.isArray(data?.reviews)){
    data.reviews.forEach(cleanReviewItem);
   }
   const headers=new Headers(res.headers);headers.set('content-type','application/json');
