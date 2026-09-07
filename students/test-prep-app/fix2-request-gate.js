@@ -7,11 +7,13 @@ var originalFetch=window.fetch.bind(window);
 var active=0;
 var queue=[];
 var refreshLesson=null;
+var selectionDescriptor=null;
+var selectionOverrideInstalled=false;
 
 function bumpRev(){
   try{
     var el=document.querySelector('[id^="tp-rev"][id$="-badge"]');
-    if(el){el.id='tp-rev52o-badge';el.textContent='REV 52o';}
+    if(el){el.id='tp-rev52p-badge';el.textContent='REV 52p';}
   }catch(_){}
 }
 
@@ -49,14 +51,47 @@ function onLessonRoute(){
   return !!lessonState(history.state);
 }
 
-/* history.state survives a hard refresh. Quarantine a persisted lesson route
-   before student-ux-v5.js loads, so the old heavy lesson renderer never sees
-   tp:'lesson' during startup. The lightweight renderer restores it after auth. */
+function installSelectionOverride(){
+  if(selectionOverrideInstalled||!refreshLesson)return;
+  var assigned=window.WillenaAssignedTestPrep;
+  if(!assigned)return;
+  try{
+    selectionDescriptor=Object.getOwnPropertyDescriptor(assigned,'selection')||null;
+    Object.defineProperty(assigned,'selection',{
+      configurable:true,
+      enumerable:true,
+      get:function(){
+        if(refreshLesson)return {__lessonRecovery:true};
+        return selectionDescriptor&&selectionDescriptor.get?selectionDescriptor.get.call(assigned):null;
+      }
+    });
+    selectionOverrideInstalled=true;
+  }catch(_){}
+}
+
+function restoreSelectionOverride(){
+  if(!selectionOverrideInstalled)return;
+  try{
+    var assigned=window.WillenaAssignedTestPrep;
+    if(assigned&&selectionDescriptor)Object.defineProperty(assigned,'selection',selectionDescriptor);
+  }catch(_){}
+  selectionOverrideInstalled=false;
+  selectionDescriptor=null;
+}
+
+/* A persisted lesson route must not become home during startup. Home startup
+   begins its own lesson-card hydration and that work can continue after the
+   safe lesson renderer appears, which is what produced the skeleton + freeze.
+   Park the route as a harmless practice state and temporarily make selection
+   truthy so student-ux normalizeRoute leaves it alone. */
 function quarantineInitialLesson(){
   var s=lessonState(history.state);
   if(!s)return false;
   refreshLesson={tp:'lesson',planId:String(s.planId),lesson:String(s.lesson),skill:s.skill||null,safeFix4:true};
-  try{history.replaceState({tp:'home',tpLessonRecovery:true},'',location.href);}catch(_){}
+  installSelectionOverride();
+  try{
+    history.replaceState({tp:'practice',planId:String(s.planId),lesson:String(s.lesson),returnTo:'lesson',tpLessonRecovery:true},'',location.href);
+  }catch(_){}
   return true;
 }
 quarantineInitialLesson();
@@ -99,10 +134,6 @@ function renderSafeState(s,opts){
   return !!safe.renderSafeLesson(s.planId,s.lesson,Object.assign({replace:true},opts||{}));
 }
 
-function renderSafeRoute(opts){
-  return renderSafeState(history.state,opts);
-}
-
 window.addEventListener('popstate',function(e){
   var s=lessonState(history.state);
   if(!s)return;
@@ -118,18 +149,20 @@ window.addEventListener('popstate',function(e){
 function recoverInitialLesson(){
   bumpRev();
   if(!refreshLesson)return;
+  installSelectionOverride();
   var target=refreshLesson;
   var tries=0;
   (function retry(){
     if(renderSafeState(target,{fromRefresh:true})){
       refreshLesson=null;
+      restoreSelectionOverride();
       return;
     }
-    if(++tries<240)setTimeout(retry,25);
+    if(++tries<320)setTimeout(retry,25);
   })();
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',recoverInitialLesson,{once:true});else recoverInitialLesson();
 bumpRev();
 
-console.log('[Test Prep] REV52o request gate: quarantined lesson refresh + max 2 content GETs');
+console.log('[Test Prep] REV52p request gate: lesson refresh parked without home hydration');
 })();
