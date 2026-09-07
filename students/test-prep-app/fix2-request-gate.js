@@ -10,7 +10,7 @@ var queue=[];
 function bumpRev(){
   try{
     var el=document.querySelector('[id^="tp-rev"][id$="-badge"]');
-    if(el){el.id='tp-rev52l-badge';el.textContent='REV 52l';}
+    if(el){el.id='tp-rev52n-badge';el.textContent='REV 52n';}
   }catch(_){}
 }
 
@@ -29,6 +29,14 @@ function methodOf(input,init){
 function isContentGet(input,init){
   var url=requestUrl(input);
   return methodOf(input,init)==='GET'&&url.indexOf(CONTENT_HOST)===0;
+}
+
+function isHeavyLessonGet(input,init){
+  if(!isContentGet(input,init))return false;
+  var url=requestUrl(input);
+  return url.indexOf('/source_content_occurrences?')!==-1 ||
+         url.indexOf('/passages?')!==-1 ||
+         url.indexOf('/test_prep_questions?')!==-1;
 }
 
 function onLessonRoute(){
@@ -50,7 +58,10 @@ function done(){
 }
 
 window.fetch=function(input,init){
-  if(isContentGet(input,init)&&onLessonRoute()){
+  /* On a hard refresh history.state can still say lesson before auth/plans have
+     bootstrapped. Only suppress the known heavy lesson hydrator reads; allow
+     books/units/bootstrap requests through so the shell can actually start. */
+  if(onLessonRoute()&&isHeavyLessonGet(input,init)){
     return Promise.resolve(new Response('[]',{status:200,headers:{'Content-Type':'application/json'}}));
   }
   if(!isContentGet(input,init))return originalFetch(input,init);
@@ -98,5 +109,5 @@ function recoverInitialLesson(){
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',recoverInitialLesson,{once:true});else recoverInitialLesson();
 bumpRev();
 
-console.log('[Test Prep] REV52l request gate: refresh-safe lesson route + max 2 content GETs');
+console.log('[Test Prep] REV52n request gate: bootstrap-safe lesson refresh + max 2 content GETs');
 })();
