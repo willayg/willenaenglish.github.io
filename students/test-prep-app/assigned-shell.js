@@ -10,7 +10,7 @@ addScript('./vocab-practice.js?v=20260827-vocab9','data-testprep-vocab-practice'
 addScript('./vocab-test-practice.js?v=20260827-vocabtest3','data-testprep-vocab-test-practice');
 addScript('./sentence-practice.js?v=20260827-sentence8','data-testprep-sentence-practice');
 
-const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]));
+const esc=s=>String(s??'').replace(/[&<>\"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot',"'":'&#39;'}[c]));
 
 function headerIdentity(){
   const authUser=window.WillenaTestPrepAuth?.state?.user||null;
