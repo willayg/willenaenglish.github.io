@@ -1,3 +1,10 @@
+// Student session repair bootstrap.
+if (typeof window !== 'undefined' && window.location.hostname === 'students.willenaenglish.com') {
+  import('/students/auth-refresh.js?v=20260726a')
+    .then((mod) => mod.ensureStudentAuthRefresh())
+    .catch((error) => console.debug('[student-session] bootstrap failed', error));
+}
+
 // Reusable Student Header Web Component
 // Usage: <student-header home-href="/index.html" home-label="Home"></student-header>
 const WA_AUDIO_SOUND_KEY = 'wa.audio.sound.enabled';

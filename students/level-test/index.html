@@ -8,21 +8,21 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>Willena Student Level Test</title>
-<link rel="icon" href="/Assets/Images/Logo.png?v=20260730-3">
+<link rel="icon" href="/Assets/Images/Logo.png?v=20260901-leveltest1">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/free-level-test/styles/app.css?v=20260730-7">
-<link rel="stylesheet" href="/free-level-test/styles/reading-layout.css?v=20260730-1">
-<link rel="stylesheet" href="/free-level-test/styles/welcome-overrides.css?v=20260730-3">
-<link rel="stylesheet" href="/free-level-test/styles/bright-theme-overrides.css?v=20260730-3">
-<link rel="stylesheet" href="/free-level-test/styles/setup-no-selection.css?v=20260730-2">
-<link rel="stylesheet" href="/free-level-test/styles/listening.css?v=20260730-4">
-<link rel="stylesheet" href="/free-level-test/styles/premium-ui.css?v=20260813-startfit1">
-<link rel="stylesheet" href="/free-level-test/styles/question-polish.css?v=20260801-1">
-<link rel="stylesheet" href="/free-level-test/styles/question-review-flag.css?v=20260801-5">
-<link rel="stylesheet" href="/free-level-test/styles/full-test-sections.css?v=20260731-1">
-<link rel="stylesheet" href="/free-level-test/styles/loading-transitions.css?v=20260731-2">
+<link rel="stylesheet" href="/free-level-test/styles/app.css?v=20260901-leveltest1">
+<link rel="stylesheet" href="/free-level-test/styles/reading-layout.css?v=20260901-leveltest1">
+<link rel="stylesheet" href="/free-level-test/styles/welcome-overrides.css?v=20260901-leveltest1">
+<link rel="stylesheet" href="/free-level-test/styles/bright-theme-overrides.css?v=20260901-leveltest1">
+<link rel="stylesheet" href="/free-level-test/styles/setup-no-selection.css?v=20260901-leveltest1">
+<link rel="stylesheet" href="/free-level-test/styles/listening.css?v=20260901-leveltest1">
+<link rel="stylesheet" href="/free-level-test/styles/premium-ui.css?v=20260901-leveltest1">
+<link rel="stylesheet" href="/free-level-test/styles/question-polish.css?v=20260901-leveltest1">
+<link rel="stylesheet" href="/free-level-test/styles/question-review-flag.css?v=20260901-leveltest1">
+<link rel="stylesheet" href="/free-level-test/styles/full-test-sections.css?v=20260901-leveltest1">
+<link rel="stylesheet" href="/free-level-test/styles/loading-transitions.css?v=20260901-leveltest1">
 <style>
 html.auth-pending .app-shell{visibility:hidden}
 .question-meter-toggle{display:none!important}
@@ -30,8 +30,8 @@ html.auth-pending .app-shell{visibility:hidden}
 .leave-guard[hidden]{display:none}.leave-guard{position:fixed;inset:0;z-index:12000;display:grid;place-items:center;padding:20px;background:rgba(12,29,48,.68);backdrop-filter:blur(5px)}.leave-guard-card{width:min(440px,100%);padding:30px 24px 24px;border-radius:26px;background:#fff;color:#17243f;text-align:center;box-shadow:0 24px 80px rgba(9,27,45,.28)}.leave-guard-icon{width:68px;height:68px;margin:0 auto 16px;border-radius:50%;display:grid;place-items:center;background:#fff1d6;color:#f0a126;font-size:34px;font-weight:800}.leave-guard-card h2{margin:0 0 10px;font-size:clamp(24px,6vw,30px)}.leave-guard-card p{margin:0 0 24px;color:#66758e;line-height:1.6;font-weight:600}.leave-guard-actions{display:grid;grid-template-columns:1fr 1fr;gap:12px}.leave-guard-actions button{min-height:56px;border:0;border-radius:16px;padding:10px 14px;font:800 16px/1.25 Poppins,sans-serif;cursor:pointer}.leave-guard-stay{background:#28bec9;color:#fff}.leave-guard-exit{background:#eef2f6;color:#536178}@media(max-width:430px){.leave-guard-actions{grid-template-columns:1fr}.leave-guard-stay{order:-1}}
 </style>
 <script>document.documentElement.classList.add('auth-pending');</script>
-<script src="/students/api-gateway.js"></script>
-<script src="/js/api-config.js?v=20260113c"></script>
+<script src="/students/api-gateway.js?v=20260901-leveltest1"></script>
+<script src="/js/api-config.js?v=20260901-leveltest1"></script>
 </head>
 <body>
 <div id="leaveGuard" class="leave-guard" role="dialog" aria-modal="true" aria-labelledby="leaveGuardTitle" aria-describedby="leaveGuardText" hidden>
@@ -47,30 +47,30 @@ html.auth-pending .app-shell{visibility:hidden}
 </div>
 <div class="app-shell">
 <header class="app-header">
-<img src="/Assets/Images/Logo.png?v=20260730-3" alt="Willena English Academy" class="brand-logo">
+<img src="/Assets/Images/Logo.png?v=20260901-leveltest1" alt="Willena English Academy" class="brand-logo">
 <div class="brand-copy"><strong>Willena English</strong><span id="brandSubtitle">Student level test</span></div>
 <button id="languageBtn" class="header-button language-legacy-trigger" type="button">English</button>
 </header>
 <main id="app" class="app-main" aria-live="polite"></main>
 <footer id="footerText">Willena English · Student assessment</footer>
 </div>
-<script src="./level-test.js?v=20260814-noflash1"></script>
-<script src="/shared/learning-engine/activity-schema.js?v=20260808-1"></script>
-<script src="/shared/learning-engine/scoring.js?v=20260808-1"></script>
-<script src="/shared/learning-engine/assessment-adapter.js?v=20260808-1"></script>
-<script src="/free-level-test/js/assessment-loader-classic.js?v=20260812-eligibility2"></script>
-<script src="/free-level-test/js/question-type-limits.js?v=20260802-1"></script>
-<script src="/free-level-test/js/dialogue-tts.js?v=20260730-3"></script>
-<script src="/free-level-test/js/adaptive-calibration-loader.js?v=20260811-adaptive2"></script>
-<script src="/free-level-test/js/level-result-consistency.js?v=20260803-5"></script>
-<script src="/free-level-test/js/canonical-answer-scoring.js?v=20260808-shared1"></script>
-<script src="/free-level-test/js/test-recording.js?v=20260807-state4"></script>
-<script src="./recorder-begin-guard.js?v=20260807-race3"></script>
-<script src="/free-level-test/js/scramble-token-letter-fix.js?v=20260801-1"></script>
-<script src="/free-level-test/js/loading-transitions.js?v=20260731-2"></script>
-<script src="/free-level-test/js/reading-layout.js?v=20260807-emoji1"></script>
-<script src="/free-level-test/js/listening-compact.js?v=20260730-5"></script>
-<script src="/free-level-test/js/question-review-flag.js?v=20260801-2"></script>
-<script src="/free-level-test/js/question-feedback-header.js?v=20260814-points3"></script>
+<script src="./level-test.js?v=20260901-leveltest1"></script>
+<script src="/shared/learning-engine/activity-schema.js?v=20260901-leveltest1"></script>
+<script src="/shared/learning-engine/scoring.js?v=20260901-leveltest1"></script>
+<script src="/shared/learning-engine/assessment-adapter.js?v=20260901-leveltest1"></script>
+<script src="/free-level-test/js/assessment-loader-classic.js?v=20260901-leveltest1"></script>
+<script src="/free-level-test/js/question-type-limits.js?v=20260901-leveltest1"></script>
+<script src="/free-level-test/js/dialogue-tts.js?v=20260901-leveltest1"></script>
+<script src="/free-level-test/js/adaptive-calibration-loader.js?v=20260901-leveltest1"></script>
+<script src="/free-level-test/js/level-result-consistency.js?v=20260901-leveltest1"></script>
+<script src="/free-level-test/js/canonical-answer-scoring.js?v=20260901-leveltest1"></script>
+<script src="/free-level-test/js/test-recording.js?v=20260901-leveltest1"></script>
+<script src="./recorder-begin-guard.js?v=20260901-leveltest1"></script>
+<script src="/free-level-test/js/scramble-token-letter-fix.js?v=20260901-leveltest1"></script>
+<script src="/free-level-test/js/loading-transitions.js?v=20260901-leveltest1"></script>
+<script src="/free-level-test/js/reading-layout.js?v=20260901-leveltest1"></script>
+<script src="/free-level-test/js/listening-compact.js?v=20260901-leveltest1"></script>
+<script src="/free-level-test/js/question-review-flag.js?v=20260901-leveltest1"></script>
+<script src="/free-level-test/js/question-feedback-header.js?v=20260901-leveltest1"></script>
 </body>
 </html>
