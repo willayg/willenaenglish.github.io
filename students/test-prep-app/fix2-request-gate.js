@@ -15,10 +15,18 @@ function requestUrl(input){
   return '';
 }
 
-function shouldGate(input,init){
+function methodOf(input,init){
+  return String((init&&init.method)||((input&&input.method)||'GET')).toUpperCase();
+}
+
+function isContentGet(input,init){
   var url=requestUrl(input);
-  var method=(init&&init.method)||((input&&input.method)||'GET');
-  return String(method).toUpperCase()==='GET'&&url.indexOf(CONTENT_HOST)===0;
+  return methodOf(input,init)==='GET'&&url.indexOf(CONTENT_HOST)===0;
+}
+
+function onLessonRoute(){
+  var s=history.state||{};
+  return s.tp==='lesson'&&s.planId&&s.lesson;
 }
 
 function pump(){
@@ -35,39 +43,56 @@ function done(){
 }
 
 window.fetch=function(input,init){
-  if(!shouldGate(input,init))return originalFetch(input,init);
+  if(isContentGet(input,init)&&onLessonRoute()){
+    return Promise.resolve(new Response('[]',{status:200,headers:{'Content-Type':'application/json'}}));
+  }
+  if(!isContentGet(input,init))return originalFetch(input,init);
   return new Promise(function(resolve,reject){
     queue.push({input:input,init:init,resolve:resolve,reject:reject});
     pump();
   });
 };
 
-/* This file loads before student-ux-v5.js. Register first so browser Back into a
-   lesson never reaches the old heavy popstate renderer on low-memory tablets. */
+function cleanupPractice(){
+  try{window.WillenaVocabPractice&&window.WillenaVocabPractice.restore&&window.WillenaVocabPractice.restore();}catch(_){}
+  try{window.WillenaVocabTestPractice&&window.WillenaVocabTestPractice.restore&&window.WillenaVocabTestPractice.restore();}catch(_){}
+  try{window.WillenaSentencePractice&&window.WillenaSentencePractice.restore&&window.WillenaSentencePractice.restore();}catch(_){}
+}
+
+function renderSafeRoute(opts){
+  var s=history.state||{};
+  if(s.tp!=='lesson'||!s.planId||!s.lesson)return false;
+  var safe=window.WillenaLessonSafeFix4;
+  if(!safe||!safe.renderSafeLesson)return false;
+  return !!safe.renderSafeLesson(s.planId,s.lesson,Object.assign({replace:true},opts||{}));
+}
+
+/* Register before student-ux-v5 so Back never reaches the heavy lesson renderer. */
 window.addEventListener('popstate',function(e){
   var s=history.state||{};
   if(s.tp!=='lesson'||!s.planId||!s.lesson)return;
   if(e.stopImmediatePropagation)e.stopImmediatePropagation();
-  try{window.WillenaVocabPractice&&window.WillenaVocabPractice.restore&&window.WillenaVocabPractice.restore();}catch(_){}
-  try{window.WillenaVocabTestPractice&&window.WillenaVocabTestPractice.restore&&window.WillenaVocabTestPractice.restore();}catch(_){}
-  try{window.WillenaSentencePractice&&window.WillenaSentencePractice.restore&&window.WillenaSentencePractice.restore();}catch(_){}
+  cleanupPractice();
   var tries=0;
-  (function renderSafe(){
-    var safe=window.WillenaLessonSafeFix4;
-    if(safe&&safe.renderSafeLesson){safe.renderSafeLesson(s.planId,s.lesson,{replace:true,fromPopstate:true});return;}
-    if(++tries<80)setTimeout(renderSafe,25);
+  (function retry(){
+    if(renderSafeRoute({fromPopstate:true}))return;
+    if(++tries<120)setTimeout(retry,25);
   })();
 });
 
-function badge(){
-  if(document.getElementById('tpFix2Badge'))return;
-  var el=document.createElement('div');
-  el.id='tpFix2Badge';
-  el.textContent='Fix2';
-  el.style.cssText='position:fixed;right:5px;bottom:4px;z-index:99999;padding:2px 4px;border-radius:5px;background:rgba(0,0,0,.38);color:#fff;font:700 8px/1.1 Arial,sans-serif;letter-spacing:.2px;opacity:.65;pointer-events:none';
-  document.body.appendChild(el);
+/* A browser refresh preserves history.state. On reload, student-ux used to see
+   tp=lesson and begin its old heavy hydration before the lightweight renderer
+   was installed. Keep content GETs inert above and hand that preserved route to
+   the safe renderer as soon as auth + lesson-safe are ready. */
+function recoverInitialLesson(){
+  if(!onLessonRoute())return;
+  var tries=0;
+  (function retry(){
+    if(renderSafeRoute({fromRefresh:true}))return;
+    if(++tries<200)setTimeout(retry,25);
+  })();
 }
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',recoverInitialLesson,{once:true});else recoverInitialLesson();
 
-if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',badge,{once:true});else badge();
-console.log('[Test Prep] Fix2 active: content requests capped at 2 concurrent + early lesson popstate guard');
+console.log('[Test Prep] REV52l request gate: refresh-safe lesson route + max 2 content GETs');
 })();
