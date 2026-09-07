@@ -4,7 +4,7 @@ on:
     branches: [staging]
 jobs:
   patch:
-    if: github.event.head_commit.message == 'Install naesin tracker patch'
+    if: github.event.head_commit.message == 'Run teacher recent accuracy patch'
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -12,51 +12,52 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: staging
-      - name: Add naesin mode to teacher tracker
+      - name: Make teacher recent accuracy match Test Prep
+        shell: bash
         run: |
           python - <<'PY'
           from pathlib import Path
-          p=Path('Teachers/tools/student_tracker/student_tracker.html')
+          import re
+
+          p=Path('Teachers/dashboard-v2/naesin-lesson-progress.js')
           s=p.read_text(encoding='utf-8')
-          tag='<script src="./naesin-dashboard.js?v=20260825-1"></script>'
-          if tag not in s:
-              s=s.replace('</body>', '  '+tag+'\n</body>')
+
+          helper="""async function teacherRecentStats(planId){
+  const t=token();if(!planId||!t)return[];
+  const r=await fetch('https://fiieuiktlsivwfgyivai.supabase.co/rest/v1/rpc/test_prep_teacher_card_stats',{method:'POST',headers:{Authorization:`Bearer ${t}`,apikey:TRACKING_KEY,'Content-Type':'application/json'},body:JSON.stringify({p_plan_id:planId}),credentials:'omit',cache:'no-store'});
+  if(!r.ok)throw new Error(`Recent stats ${r.status}`);
+  const rows=await r.json().catch(()=>[]);return Array.isArray(rows)?rows:[];
+}
+function mergeTeacherRecentStats(d,rows){
+  const map=d?.summary?.by_lesson_practice;if(!map||!Array.isArray(rows))return;
+  rows.forEach(row=>{let box=row?.attempted_question_ids?.by_practice;if(typeof box==='string'){try{box=JSON.parse(box)}catch{box=null}}if(!box||typeof box!=='object')return;Object.entries(box).forEach(([practice,stats])=>{const key=`${row.unit_key}||${practice}`,target=map[key];if(!target||!stats||typeof stats!=='object')return;target.recent_accuracy=stats.recent_accuracy??null;target.recent_count=Number(stats.recent_count||0);});});
+}"""
+
+          new_fetch="""async function fetchAll(){const h=authHeaders();const [d,groups,w]=await Promise.all([json(`${INSIGHTS}?${new URLSearchParams({action:'student_detail',student_id:ctx.sid,group_id:ctx.gid})}`,{headers:h,credentials:'omit'}),json(`${GROUP}?action=teacher_groups`,{headers:h,credentials:'omit'}),json(`${WRONG}?${new URLSearchParams({student_id:ctx.sid})}`,{headers:h,credentials:'omit'}).catch(()=>({items:[]}))]);detail=d;group=(groups.groups||[]).find(x=>String(x.group?.id)===String(ctx.gid))?.group||null;wrongItems=w.items||[];if(!group)throw new Error('시험 범위를 찾지 못했습니다.');const planId=detail?.exams?.[0]?.plan_id||null;if(planId){const recent=await teacherRecentStats(planId).catch(e=>{console.warn('teacher recent stats unavailable',e);return[]});mergeTeacherRecentStats(detail,recent);}}"""
+
+          if 'function teacherRecentStats(planId)' not in s:
+              m=re.search(r'^async function fetchAll\(\)\{.*$',s,re.M)
+              if not m: raise SystemExit('fetchAll line not found')
+              s=s[:m.start()]+helper+'\n'+new_fetch+s[m.end():]
+          else:
+              s=re.sub(r'^async function fetchAll\(\)\{.*$',new_fetch,s,count=1,flags=re.M)
+          p.write_text(s,encoding='utf-8')
+
+          p=Path('Teachers/dashboard-v2/index.html')
+          s=p.read_text(encoding='utf-8')
+          if 'naesin-lesson-progress.js?v=' in s:
+              s=re.sub(r'(naesin-lesson-progress\.js\?v=)[^"\']+',r'\g<1>20260908-recentexact1',s,count=1)
+          elif 'naesin-lesson-progress.js' in s:
+              s=s.replace('naesin-lesson-progress.js','naesin-lesson-progress.js?v=20260908-recentexact1',1)
+          else:
+              raise SystemExit('naesin lesson script reference not found')
           p.write_text(s,encoding='utf-8')
           PY
-      - name: Add auth and progress hooks to test prep
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-          p=Path('students/test-prep/index.html')
-          s=p.read_text(encoding='utf-8')
-          marker='<script>\nconst U='
-          inject='<script src="/students/api-gateway.js?v=20260825-testprep1"></script>\n<script src="/js/api-config.js?v=20260825-testprep1"></script>\n<script src="./auth-tracking.js?v=20260825-1"></script>\n<script>\nconst U='
-          if 'auth-tracking.js?v=20260825-1' not in s:
-              if marker not in s:
-                  raise SystemExit('test prep script marker not found')
-              s=s.replace(marker,inject,1)
-          hook="if(ok)score++;else wrongIds.push(q.id);"
-          hook2="if(ok)score++;else wrongIds.push(q.id);window.WillenaTestPrepAuth?.recordAttempt({practice_type:section,question_id:q.id,selected_answer:mine,correct_answer:ans,is_correct:ok,source_question_number:q.source_question_number,question_type:q.question_type,source_label:q.student_source_label});"
-          if 'recordAttempt({practice_type:section' not in s:
-              if hook not in s: raise SystemExit('attempt hook marker not found')
-              s=s.replace(hook,hook2,1)
-          result='function result(){bar.style.width=\'100%\';'
-          result2="function result(){window.WillenaTestPrepAuth?.completeSession(score,questions.length,wrongIds);bar.style.width='100%';"
-          if 'completeSession(score,questions.length,wrongIds)' not in s:
-              if result not in s: raise SystemExit('result hook marker not found')
-              s=s.replace(result,result2,1)
-          old='load();\n</script>'
-          if 'WillenaTestPrepAuth.ready.then' not in s:
-              pos=s.rfind(old)
-              if pos<0: raise SystemExit('final load marker not found')
-              s=s[:pos]+"window.WillenaTestPrepAuth.ready.then(ok=>{if(ok)load()});\n</script>"+s[pos+len(old):]
-          p.write_text(s,encoding='utf-8')
-          PY
-      - name: Commit patched pages
+      - name: Commit patched dashboard
         run: |
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add Teachers/tools/student_tracker/student_tracker.html students/test-prep/index.html
+          git add Teachers/dashboard-v2/naesin-lesson-progress.js Teachers/dashboard-v2/index.html
           git diff --cached --quiet && exit 0
-          git commit -m "Enable authenticated naesin tracking"
+          git commit -m "Fix teacher recent accuracy to match Test Prep"
           git push origin HEAD:staging
