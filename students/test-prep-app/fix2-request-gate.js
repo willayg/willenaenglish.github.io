@@ -9,11 +9,12 @@ var queue=[];
 var refreshLesson=null;
 var selectionDescriptor=null;
 var selectionOverrideInstalled=false;
+var recoveryStarted=false;
 
 function bumpRev(){
   try{
     var el=document.querySelector('[id^="tp-rev"][id$="-badge"]');
-    if(el){el.id='tp-rev52p-badge';el.textContent='REV 52p';}
+    if(el){el.id='tp-rev52q-badge';el.textContent='REV 52q';}
   }catch(_){}
 }
 
@@ -79,11 +80,6 @@ function restoreSelectionOverride(){
   selectionDescriptor=null;
 }
 
-/* A persisted lesson route must not become home during startup. Home startup
-   begins its own lesson-card hydration and that work can continue after the
-   safe lesson renderer appears, which is what produced the skeleton + freeze.
-   Park the route as a harmless practice state and temporarily make selection
-   truthy so student-ux normalizeRoute leaves it alone. */
 function quarantineInitialLesson(){
   var s=lessonState(history.state);
   if(!s)return false;
@@ -110,6 +106,9 @@ function done(){
 }
 
 window.fetch=function(input,init){
+  /* During a hard lesson refresh the route is already quarantined away from
+     the heavy renderer. Let bootstrap/auth/content setup run untouched. */
+  if(refreshLesson)return originalFetch(input,init);
   if(onLessonRoute()&&isHeavyLessonGet(input,init)){
     return Promise.resolve(new Response('[]',{status:200,headers:{'Content-Type':'application/json'}}));
   }
@@ -142,27 +141,53 @@ window.addEventListener('popstate',function(e){
   var tries=0;
   (function retry(){
     if(renderSafeState(s,{fromPopstate:true}))return;
-    if(++tries<120)setTimeout(retry,25);
+    if(++tries<80)setTimeout(retry,100);
   })();
 });
 
-function recoverInitialLesson(){
+function showRecoverySurface(){
+  try{
+    var h=document.getElementById('assignmentHome');
+    var q=document.getElementById('assignedQuizPane');
+    if(q)q.style.display='none';
+    if(h){h.style.display='block';h.innerHTML='<div class="tp-shell-loading">Lesson을 다시 여는 중...</div>';}
+  }catch(_){}
+}
+
+function finishRecovery(target){
+  if(!refreshLesson)return true;
+  installSelectionOverride();
+  if(!renderSafeState(target,{fromRefresh:true}))return false;
+  refreshLesson=null;
+  restoreSelectionOverride();
+  return true;
+}
+
+function recoverAfterAuth(){
+  if(recoveryStarted||!refreshLesson)return;
+  recoveryStarted=true;
+  showRecoverySurface();
+  var target=refreshLesson;
+  var auth=window.WillenaTestPrepAuth;
+  var ready=auth&&auth.ready;
+  Promise.resolve(ready).catch(function(){}).then(function(){
+    var tries=0;
+    (function retry(){
+      if(finishRecovery(target))return;
+      if(++tries<120)setTimeout(retry,100);
+    })();
+  });
+}
+
+function bootRecovery(){
   bumpRev();
   if(!refreshLesson)return;
   installSelectionOverride();
-  var target=refreshLesson;
-  var tries=0;
-  (function retry(){
-    if(renderSafeState(target,{fromRefresh:true})){
-      refreshLesson=null;
-      restoreSelectionOverride();
-      return;
-    }
-    if(++tries<320)setTimeout(retry,25);
-  })();
+  recoverAfterAuth();
 }
-if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',recoverInitialLesson,{once:true});else recoverInitialLesson();
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bootRecovery,{once:true});else bootRecovery();
+window.addEventListener('testprep:student-state-refresh',function(){if(refreshLesson)recoverAfterAuth();});
 bumpRev();
 
-console.log('[Test Prep] REV52p request gate: lesson refresh parked without home hydration');
+console.log('[Test Prep] REV52q request gate: lesson refresh waits for auth before safe restore');
 })();
