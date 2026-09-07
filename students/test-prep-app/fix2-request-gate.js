@@ -7,6 +7,13 @@ var originalFetch=window.fetch.bind(window);
 var active=0;
 var queue=[];
 
+function bumpRev(){
+  try{
+    var el=document.querySelector('[id^="tp-rev"][id$="-badge"]');
+    if(el){el.id='tp-rev52n-badge';el.textContent='REV 52n';}
+  }catch(_){}
+}
+
 function requestUrl(input){
   try{
     if(typeof input==='string')return input;
@@ -15,10 +22,26 @@ function requestUrl(input){
   return '';
 }
 
-function shouldGate(input,init){
+function methodOf(input,init){
+  return String((init&&init.method)||((input&&input.method)||'GET')).toUpperCase();
+}
+
+function isContentGet(input,init){
   var url=requestUrl(input);
-  var method=(init&&init.method)||((input&&input.method)||'GET');
-  return String(method).toUpperCase()==='GET'&&url.indexOf(CONTENT_HOST)===0;
+  return methodOf(input,init)==='GET'&&url.indexOf(CONTENT_HOST)===0;
+}
+
+function isHeavyLessonGet(input,init){
+  if(!isContentGet(input,init))return false;
+  var url=requestUrl(input);
+  return url.indexOf('/source_content_occurrences?')!==-1 ||
+         url.indexOf('/passages?')!==-1 ||
+         url.indexOf('/test_prep_questions?')!==-1;
+}
+
+function onLessonRoute(){
+  var s=history.state||{};
+  return s.tp==='lesson'&&s.planId&&s.lesson;
 }
 
 function pump(){
@@ -35,39 +58,56 @@ function done(){
 }
 
 window.fetch=function(input,init){
-  if(!shouldGate(input,init))return originalFetch(input,init);
+  /* On a hard refresh history.state can still say lesson before auth/plans have
+     bootstrapped. Only suppress the known heavy lesson hydrator reads; allow
+     books/units/bootstrap requests through so the shell can actually start. */
+  if(onLessonRoute()&&isHeavyLessonGet(input,init)){
+    return Promise.resolve(new Response('[]',{status:200,headers:{'Content-Type':'application/json'}}));
+  }
+  if(!isContentGet(input,init))return originalFetch(input,init);
   return new Promise(function(resolve,reject){
     queue.push({input:input,init:init,resolve:resolve,reject:reject});
     pump();
   });
 };
 
-/* This file loads before student-ux-v5.js. Register first so browser Back into a
-   lesson never reaches the old heavy popstate renderer on low-memory tablets. */
+function cleanupPractice(){
+  try{window.WillenaVocabPractice&&window.WillenaVocabPractice.restore&&window.WillenaVocabPractice.restore();}catch(_){}
+  try{window.WillenaVocabTestPractice&&window.WillenaVocabTestPractice.restore&&window.WillenaVocabTestPractice.restore();}catch(_){}
+  try{window.WillenaSentencePractice&&window.WillenaSentencePractice.restore&&window.WillenaSentencePractice.restore();}catch(_){}
+}
+
+function renderSafeRoute(opts){
+  var s=history.state||{};
+  if(s.tp!=='lesson'||!s.planId||!s.lesson)return false;
+  var safe=window.WillenaLessonSafeFix4;
+  if(!safe||!safe.renderSafeLesson)return false;
+  return !!safe.renderSafeLesson(s.planId,s.lesson,Object.assign({replace:true},opts||{}));
+}
+
 window.addEventListener('popstate',function(e){
   var s=history.state||{};
   if(s.tp!=='lesson'||!s.planId||!s.lesson)return;
   if(e.stopImmediatePropagation)e.stopImmediatePropagation();
-  try{window.WillenaVocabPractice&&window.WillenaVocabPractice.restore&&window.WillenaVocabPractice.restore();}catch(_){}
-  try{window.WillenaVocabTestPractice&&window.WillenaVocabTestPractice.restore&&window.WillenaVocabTestPractice.restore();}catch(_){}
-  try{window.WillenaSentencePractice&&window.WillenaSentencePractice.restore&&window.WillenaSentencePractice.restore();}catch(_){}
+  cleanupPractice();
   var tries=0;
-  (function renderSafe(){
-    var safe=window.WillenaLessonSafeFix4;
-    if(safe&&safe.renderSafeLesson){safe.renderSafeLesson(s.planId,s.lesson,{replace:true,fromPopstate:true});return;}
-    if(++tries<80)setTimeout(renderSafe,25);
+  (function retry(){
+    if(renderSafeRoute({fromPopstate:true}))return;
+    if(++tries<120)setTimeout(retry,25);
   })();
 });
 
-function badge(){
-  if(document.getElementById('tpFix2Badge'))return;
-  var el=document.createElement('div');
-  el.id='tpFix2Badge';
-  el.textContent='Fix2';
-  el.style.cssText='position:fixed;right:5px;bottom:4px;z-index:99999;padding:2px 4px;border-radius:5px;background:rgba(0,0,0,.38);color:#fff;font:700 8px/1.1 Arial,sans-serif;letter-spacing:.2px;opacity:.65;pointer-events:none';
-  document.body.appendChild(el);
+function recoverInitialLesson(){
+  bumpRev();
+  if(!onLessonRoute())return;
+  var tries=0;
+  (function retry(){
+    if(renderSafeRoute({fromRefresh:true}))return;
+    if(++tries<200)setTimeout(retry,25);
+  })();
 }
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',recoverInitialLesson,{once:true});else recoverInitialLesson();
+bumpRev();
 
-if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',badge,{once:true});else badge();
-console.log('[Test Prep] Fix2 active: content requests capped at 2 concurrent + early lesson popstate guard');
+console.log('[Test Prep] REV52n request gate: bootstrap-safe lesson refresh + max 2 content GETs');
 })();
