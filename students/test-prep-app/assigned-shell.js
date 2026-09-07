@@ -13,9 +13,10 @@ addScript('./sentence-practice.js?v=20260827-sentence8','data-testprep-sentence-
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]));
 
 function headerIdentity(){
+  const authUser=window.WillenaTestPrepAuth?.state?.user||null;
   return {
-    name:localStorage.getItem('user_name')||sessionStorage.getItem('user_name')||localStorage.getItem('username')||sessionStorage.getItem('username')||'Student',
-    avatar:localStorage.getItem('selectedEmojiAvatar')||sessionStorage.getItem('selectedEmojiAvatar')||localStorage.getItem('avatar')||sessionStorage.getItem('avatar')||'🙂'
+    name:authUser?.name||authUser?.korean_name||authUser?.username||'Student',
+    avatar:authUser?.avatar||'🙂'
   };
 }
 function renderHeaderValues(values={}){
@@ -72,6 +73,7 @@ async function ensureProfileMenuStyles(){
 }
 async function logoutStudent(){
   try{
+    window.WillenaTestPrepAuth?.clearLegacySharedState?.();
     const keys=['user_name','username','name','user_id','userId','student_id','profile_id','selectedEmojiAvatar','avatar','user_role','sb_access_token'];
     for(const key of keys){localStorage.removeItem(key);sessionStorage.removeItem(key)}
     const opts='Path=/; Max-Age=0; SameSite=Lax';
