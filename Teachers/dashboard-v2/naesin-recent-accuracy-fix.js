@@ -13,15 +13,23 @@ function authHeader(init){
   if(h&&typeof h==='object')return h.Authorization||h.authorization||'';
   return'';
 }
+function lessonNo(v){const m=norm(v).match(/\blesson\s*(\d+)\b/);return m?m[1]:'';}
+function sameLesson(a,b){
+  const na=norm(a),nb=norm(b);
+  if(na===nb)return true;
+  if(na.startsWith(nb+' —')||nb.startsWith(na+' —'))return true;
+  const aa=lessonNo(a),bb=lessonNo(b);
+  return !!aa&&aa===bb;
+}
 function findTarget(map,unitKey,practice){
   const exact=map?.[`${unitKey}||${practice}`];
   if(exact)return exact;
-  const nu=norm(unitKey),np=norm(practice);
+  const np=norm(practice);
   for(const [k,v] of Object.entries(map||{})){
     const cut=k.lastIndexOf('||');
     if(cut<0)continue;
     const lesson=k.slice(0,cut),p=k.slice(cut+2);
-    if(norm(lesson)===nu&&norm(p)===np)return v;
+    if(norm(p)===np&&sameLesson(lesson,unitKey))return v;
   }
   return null;
 }
@@ -36,10 +44,20 @@ window.fetch=async function(input,init){
     if(!map)return response;
     const u=new URL(url,location.origin),gid=u.searchParams.get('group_id')||'';
     const exams=Array.isArray(payload?.exams)?payload.exams:[];
-    const exam=exams.find(x=>!gid||String(x?.group_id||'')===String(gid))||exams[0];
+    const exam=exams.find(x=>gid&&String(x?.group_id||'')===String(gid))||(!gid&&exams.length===1?exams[0]:null);
     const planId=exam?.plan_id;
     const auth=authHeader(init);
     if(!planId||!auth)return response;
+
+    // Discard values injected by the older dashboard bridge. They may belong to
+    // another active plan when a student has more than one Test Prep exam.
+    for(const target of Object.values(map)){
+      if(target&&typeof target==='object'){
+        target.recent_accuracy=null;
+        target.recent_count=0;
+      }
+    }
+
     const rr=await nativeFetch(`${TRACKING_URL}/rest/v1/rpc/test_prep_teacher_card_stats`,{
       method:'POST',
       headers:{Authorization:auth,apikey:TRACKING_KEY,'Content-Type':'application/json'},
