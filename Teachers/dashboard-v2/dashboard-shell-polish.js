@@ -4,6 +4,55 @@ const $=(s,r=document)=>r.querySelector(s),$$=(s,r=document)=>[...r.querySelecto
 const AUTH='/.netlify/functions/supabase_auth';
 const UTILITIES_PIN_HASH='082c48954f6c56528dbc3cb0f313bfb6285e8db431cb492217831697ab319d76';
 const UTILITIES_SESSION_KEY='willena_utilities_unlocked';
+const TRACKING_URL='https://fiieuiktlsivwfgyivai.supabase.co';
+const TRACKING_KEY='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
+function installTestPrepRecentAccuracyBridge(){
+  if(window.__WillenaTeacherRecentAccuracyBridge)return;
+  window.__WillenaTeacherRecentAccuracyBridge=true;
+  const nativeFetch=window.fetch.bind(window);
+  window.fetch=async function(input,init){
+    const url=typeof input==='string'?input:(input&&input.url)||'';
+    const isDetail=url.includes('/functions/v1/test-prep-teacher-insights')&&url.includes('action=student_detail');
+    const response=await nativeFetch(input,init);
+    if(!isDetail||!response.ok)return response;
+    try{
+      const payload=await response.clone().json();
+      const planId=payload?.exams?.[0]?.plan_id;
+      const map=payload?.summary?.by_lesson_practice;
+      if(!planId||!map)return response;
+      let auth='';
+      const h=init?.headers;
+      if(h instanceof Headers)auth=h.get('Authorization')||'';
+      else if(Array.isArray(h)){const hit=h.find(([k])=>String(k).toLowerCase()==='authorization');auth=hit?.[1]||'';}
+      else if(h&&typeof h==='object')auth=h.Authorization||h.authorization||'';
+      if(!auth)return response;
+      const rr=await nativeFetch(`${TRACKING_URL}/rest/v1/rpc/test_prep_teacher_card_stats`,{
+        method:'POST',
+        headers:{Authorization:auth,apikey:TRACKING_KEY,'Content-Type':'application/json'},
+        body:JSON.stringify({p_plan_id:planId}),
+        credentials:'omit',
+        cache:'no-store'
+      });
+      if(!rr.ok)return response;
+      const rows=await rr.json().catch(()=>[]);
+      if(!Array.isArray(rows))return response;
+      for(const row of rows){
+        let byPractice=row?.attempted_question_ids?.by_practice;
+        if(typeof byPractice==='string'){try{byPractice=JSON.parse(byPractice)}catch{byPractice=null}}
+        if(!byPractice||typeof byPractice!=='object')continue;
+        for(const [practice,stats] of Object.entries(byPractice)){
+          const target=map[`${row.unit_key}||${practice}`];
+          if(!target||!stats||typeof stats!=='object')continue;
+          target.recent_accuracy=stats.recent_accuracy??null;
+          target.recent_count=Number(stats.recent_count||0);
+        }
+      }
+      const headers=new Headers(response.headers);headers.set('content-type','application/json');
+      return new Response(JSON.stringify(payload),{status:response.status,statusText:response.statusText,headers});
+    }catch(e){console.warn('[teacher recent accuracy] hydration failed',e);return response;}
+  };
+}
+installTestPrepRecentAccuracyBridge();
 function loadPolish(){if($('#dashboardV2Polish'))return;const l=document.createElement('link');l.id='dashboardV2Polish';l.rel='stylesheet';l.href='./dashboard-v2-polish.css?v='+Date.now();document.head.appendChild(l)}
 function prefetchPage(href,id){if($('#'+id))return;const l=document.createElement('link');l.id=id;l.rel='prefetch';l.as='document';l.href=href;document.head.appendChild(l)}
 async function warmAdmin(){prefetchPage('/Teachers/admin/','prefetchAdminDashboard');try{await window.WillenaAPI?.fetch?.('/.netlify/functions/teacher_admin?action=list_students',{credentials:'include'})}catch{}}
