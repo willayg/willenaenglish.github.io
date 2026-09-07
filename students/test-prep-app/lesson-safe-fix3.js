@@ -49,7 +49,7 @@ async function contentSummary(plan,l){
 }
 function ensureLiteStyles(){
  if(document.getElementById('tpFix4LiteStyles'))return;
- const s=document.createElement('style');s.id='tpFix4LiteStyles';s.textContent='\n.tp-fix4-metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:center;min-width:150px;transform:translateX(-32px)}.tp-fix4-metric{display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:0}.tp-fix4-metric+.tp-fix4-metric{border-left:1px solid var(--tp-line);padding-left:12px}.tp-fix4-metric b{font-size:30px;line-height:1;font-weight:800;letter-spacing:-.04em;white-space:nowrap}.tp-fix4-metric small{margin-top:7px;font-size:11px;font-weight:800}.tp-fix4-completion b,.tp-fix4-completion small{color:var(--tp-cyan-dark,#19777e)}.tp-fix4-average b,.tp-fix4-average small{color:var(--tp-pink,#d65a88)}.tp-stop .tp-mini,.tp-stop-pct{display:none!important}@media(max-width:620px){.tp-fix4-metrics{min-width:128px;gap:8px;transform:translateX(-24px)}.tp-fix4-metric+.tp-fix4-metric{padding-left:8px}.tp-fix4-metric b{font-size:25px}.tp-fix4-metric small{font-size:10px}}';document.head.appendChild(s);
+ const s=document.createElement('style');s.id='tpFix4LiteStyles';s.textContent='\n.tp-fix4-metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;align-items:center;min-width:142px;transform:translateX(-24px)}.tp-fix4-metric{display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:0}.tp-fix4-metric+.tp-fix4-metric{border-left:1px solid var(--tp-line);padding-left:10px}.tp-fix4-metric b{font-size:21px;line-height:1;font-weight:800;letter-spacing:-.035em;white-space:nowrap}.tp-fix4-metric small{margin-top:6px;font-size:10px;font-weight:800}.tp-fix4-completion b,.tp-fix4-completion small{color:var(--tp-cyan-dark,#19777e)}.tp-fix4-average b,.tp-fix4-average small{color:var(--tp-pink,#d65a88)}.tp-stop .tp-mini,.tp-stop-pct{display:none!important}@media(max-width:620px){.tp-fix4-metrics{min-width:118px;gap:6px;transform:translateX(-16px)}.tp-fix4-metric+.tp-fix4-metric{padding-left:6px}.tp-fix4-metric b{font-size:18px}.tp-fix4-metric small{font-size:9px}}';document.head.appendChild(s);
 }
 async function hydrateLiteStats(plan,l,skills){
  let stats=[],totals={};
@@ -107,5 +107,5 @@ function installReturnHooks(){
 }
 if(!installReturnHooks()){const t=setInterval(()=>{if(installReturnHooks())clearInterval(t)},100);setTimeout(()=>clearInterval(t),5000);}
 window.addEventListener('popstate',function(){setTimeout(function(){const s=history.state||{};if(s.tp==='lesson'&&s.planId&&s.lesson)renderSafeLesson(s.planId,s.lesson,{replace:true});},0);});
-console.log('[Test Prep] REV52k lightweight lesson route uses Supabase content summary');
+console.log('[Test Prep] REV52l lightweight lesson route uses Supabase content summary');
 })();
