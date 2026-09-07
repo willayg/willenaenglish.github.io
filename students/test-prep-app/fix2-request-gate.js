@@ -42,6 +42,23 @@ window.fetch=function(input,init){
   });
 };
 
+/* This file loads before student-ux-v5.js. Register first so browser Back into a
+   lesson never reaches the old heavy popstate renderer on low-memory tablets. */
+window.addEventListener('popstate',function(e){
+  var s=history.state||{};
+  if(s.tp!=='lesson'||!s.planId||!s.lesson)return;
+  if(e.stopImmediatePropagation)e.stopImmediatePropagation();
+  try{window.WillenaVocabPractice&&window.WillenaVocabPractice.restore&&window.WillenaVocabPractice.restore();}catch(_){}
+  try{window.WillenaVocabTestPractice&&window.WillenaVocabTestPractice.restore&&window.WillenaVocabTestPractice.restore();}catch(_){}
+  try{window.WillenaSentencePractice&&window.WillenaSentencePractice.restore&&window.WillenaSentencePractice.restore();}catch(_){}
+  var tries=0;
+  (function renderSafe(){
+    var safe=window.WillenaLessonSafeFix4;
+    if(safe&&safe.renderSafeLesson){safe.renderSafeLesson(s.planId,s.lesson,{replace:true,fromPopstate:true});return;}
+    if(++tries<80)setTimeout(renderSafe,25);
+  })();
+});
+
 function badge(){
   if(document.getElementById('tpFix2Badge'))return;
   var el=document.createElement('div');
@@ -52,5 +69,5 @@ function badge(){
 }
 
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',badge,{once:true});else badge();
-console.log('[Test Prep] Fix2 active: content requests capped at 2 concurrent');
+console.log('[Test Prep] Fix2 active: content requests capped at 2 concurrent + early lesson popstate guard');
 })();
