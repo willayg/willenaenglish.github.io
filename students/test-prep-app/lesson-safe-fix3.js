@@ -68,6 +68,8 @@ function renderSafeLesson(planId,lesson,opts){
  return true;
 }
 
+window.WillenaLessonSafeFix4={renderSafeLesson};
+
 /* Prevent the original lesson hydrator from downloading large curriculum result sets on old devices. Practice requests are untouched. */
 const nativeFetch=window.fetch.bind(window);
 window.fetch=function(input,init){
@@ -86,16 +88,22 @@ document.addEventListener('click',function(e){
  renderSafeLesson(planId,lesson);
 },true);
 
-/* Make activity return use the same lightweight lesson route. */
+function cleanupPractice(){
+ try{window.WillenaVocabPractice&&window.WillenaVocabPractice.restore&&window.WillenaVocabPractice.restore()}catch(_){}
+ try{window.WillenaVocabTestPractice&&window.WillenaVocabTestPractice.restore&&window.WillenaVocabTestPractice.restore()}catch(_){}
+ try{window.WillenaSentencePractice&&window.WillenaSentencePractice.restore&&window.WillenaSentencePractice.restore()}catch(_){}
+}
+
+/* Consume the real browser history entry when leaving practice. Do not replace practice with another lesson entry. */
 function installReturnHooks(){
  const ux=window.WillenaTestPrepUX,nav=window.WillenaTestPrepNavigation;if(!ux||!nav)return false;
- if(!ux.__fix4OriginalReturn&&ux.returnFromPractice){ux.__fix4OriginalReturn=ux.returnFromPractice;ux.returnFromPractice=function(selection){const s=history.state||{},planId=(selection&&selection.plan&&selection.plan.id)||s.planId,lesson=(selection&&selection.lesson)||s.lesson;if(planId&&lesson){try{window.WillenaVocabPractice&&window.WillenaVocabPractice.restore&&window.WillenaVocabPractice.restore()}catch(_){}try{window.WillenaVocabTestPractice&&window.WillenaVocabTestPractice.restore&&window.WillenaVocabTestPractice.restore()}catch(_){}try{window.WillenaSentencePractice&&window.WillenaSentencePractice.restore&&window.WillenaSentencePractice.restore()}catch(_){}renderSafeLesson(planId,lesson,{replace:true});return;}return ux.__fix4OriginalReturn(selection);};}
- if(!nav.__fix4OriginalBack&&nav.back){nav.__fix4OriginalBack=nav.back;nav.back=function(){const s=history.state||{};if(s.tp==='practice'&&s.planId&&s.lesson){renderSafeLesson(s.planId,s.lesson,{replace:true});return;}return nav.__fix4OriginalBack();};}
+ if(!ux.__fix4OriginalReturn&&ux.returnFromPractice){ux.__fix4OriginalReturn=ux.returnFromPractice;ux.returnFromPractice=function(selection){const s=history.state||{},planId=(selection&&selection.plan&&selection.plan.id)||s.planId,lesson=(selection&&selection.lesson)||s.lesson;cleanupPractice();if(s.tp==='practice'){history.back();return;}if(planId&&lesson){renderSafeLesson(planId,lesson,{replace:true});return;}return ux.__fix4OriginalReturn(selection);};}
+ if(!nav.__fix4OriginalBack&&nav.back){nav.__fix4OriginalBack=nav.back;nav.back=function(){const s=history.state||{};if(s.tp==='practice'){cleanupPractice();history.back();return;}return nav.__fix4OriginalBack();};}
  return true;
 }
 if(!installReturnHooks()){const t=setInterval(()=>{if(installReturnHooks())clearInterval(t)},100);setTimeout(()=>clearInterval(t),5000);}
 
-/* Browser popstate can invoke the original renderer first; immediately replace its lesson result with the lightweight route. */
+/* Fallback only. The pre-navigation guard now intercepts lesson popstate before the original heavy renderer. */
 window.addEventListener('popstate',function(){setTimeout(function(){const s=history.state||{};if(s.tp==='lesson'&&s.planId&&s.lesson)renderSafeLesson(s.planId,s.lesson,{replace:true});},0);});
 
 const badge=document.createElement('div');badge.textContent='Fix4';badge.style.cssText='position:fixed;right:4px;bottom:4px;z-index:99999;font:600 8px/1 Arial,sans-serif;padding:2px 3px;border-radius:3px;background:rgba(0,0,0,.45);color:#fff;pointer-events:none;opacity:.65';document.addEventListener('DOMContentLoaded',()=>document.body.appendChild(badge),{once:true});if(document.body)document.body.appendChild(badge);
