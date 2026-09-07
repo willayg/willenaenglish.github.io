@@ -14,7 +14,7 @@ var recoveryStarted=false;
 function bumpRev(){
   try{
     var el=document.querySelector('[id^="tp-rev"][id$="-badge"]');
-    if(el){el.id='tp-rev52r-badge';el.textContent='REV 52r';}
+    if(el){el.id='tp-rev52s-badge';el.textContent='REV 52s';}
   }catch(_){}
 }
 function requestUrl(input){try{if(typeof input==='string')return input;if(input&&typeof input.url==='string')return input.url}catch(e){}return ''}
@@ -59,6 +59,23 @@ window.fetch=function(input,init){
 
 function cleanupPractice(){try{window.WillenaVocabPractice&&window.WillenaVocabPractice.restore&&window.WillenaVocabPractice.restore()}catch(_){}try{window.WillenaVocabTestPractice&&window.WillenaVocabTestPractice.restore&&window.WillenaVocabTestPractice.restore()}catch(_){}try{window.WillenaSentencePractice&&window.WillenaSentencePractice.restore&&window.WillenaSentencePractice.restore()}catch(_){}}
 function renderSafeState(s,opts){s=lessonState(s);if(!s)return false;var safe=window.WillenaLessonSafeFix4;if(!safe||!safe.renderSafeLesson)return false;return !!safe.renderSafeLesson(s.planId,s.lesson,Object.assign({replace:true},opts||{}))}
+
+/* This listener is registered before student-ux-v5 loads. Once a safe lesson is
+   visible, later auth/state-refresh events must not hand the route back to the
+   old renderLesson() hydrator. That old listener was replacing the Supabase
+   pill a few ms after recovery and starting the tablet-killing lesson fanout. */
+window.addEventListener('testprep:student-state-refresh',function(e){
+  var s=lessonState(history.state);
+  if(refreshLesson){
+    if(e&&e.stopImmediatePropagation)e.stopImmediatePropagation();
+    recoverAfterAuth();
+    return;
+  }
+  if(!s||s.safeFix4!==true)return;
+  if(e&&e.stopImmediatePropagation)e.stopImmediatePropagation();
+  setTimeout(function(){renderSafeState(s,{fromStateRefresh:true})},0);
+});
+
 window.addEventListener('popstate',function(e){var s=lessonState(history.state);if(!s)return;if(e.stopImmediatePropagation)e.stopImmediatePropagation();cleanupPractice();var tries=0;(function retry(){if(renderSafeState(s,{fromPopstate:true}))return;if(++tries<80)setTimeout(retry,100)})()});
 function showRecoverySurface(){try{var h=document.getElementById('assignmentHome'),q=document.getElementById('assignedQuizPane');if(q)q.style.display='none';if(h){h.style.display='block';h.innerHTML='<div class="tp-shell-loading">Lesson을 다시 여는 중...</div>'}}catch(_){}}
 function finishRecovery(target){
@@ -73,7 +90,6 @@ function recoverAfterAuth(){
 }
 function bootRecovery(){bumpRev();if(!refreshLesson)return;installSelectionOverride();recoverAfterAuth()}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bootRecovery,{once:true});else bootRecovery();
-window.addEventListener('testprep:student-state-refresh',function(){if(refreshLesson)recoverAfterAuth()});
 bumpRev();
-console.log('[Test Prep] REV52r: legacy home shell blocked during lesson cold boot');
+console.log('[Test Prep] REV52s: safe lesson owns state refresh after cold boot');
 })();
