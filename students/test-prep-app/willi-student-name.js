@@ -6,7 +6,7 @@ function injectGrammarContext(){const section=String(window.WillenaTestPrepQuest
 
 document.addEventListener('click',e=>{if(e.target instanceof Element&&e.target.closest('#check'))setTimeout(injectGrammarContext,0)},false);
 
-function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]))}
+function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function inlineMarkdown(v){
   let s=esc(v);
   s=s.replace(/`([^`]+)`/g,'<code>$1</code>');
