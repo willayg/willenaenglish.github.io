@@ -42,16 +42,16 @@ function renderPassage(){
   const p=active();if(!p)return;
   const next=resumeOrder(p),done=next>p.sentences.length,ready=p.translationReady;
   ctx.mode='study';ctx.sessionActive=false;ctx.renderer=null;
-  ctx.host.innerHTML=`<button class="back pw-back" data-passage-back>← ${esc(ctx.lesson)}</button><div class="pw-wrap"><div class="pw-head"><div><div class="pw-eyebrow">본문</div><h2>${esc(p.title)}</h2><p>${p.sentences.length}문장 · 교과서 순서</p></div><button class="pw-translation" type="button" id="pwTranslation">${ctx.showKo?'우리말 숨기기':'우리말 보기'}</button></div>${passageSwitcher()}<div class="pw-reading">${p.sentences.map(s=>`<div class="pw-line"><span class="pw-num">${s.order}</span><div class="pw-line-copy">${s.speaker?`<b class="pw-speaker">${esc(s.speaker)}:</b> `:''}<span>${esc(s.text)}</span>${s.translationKo?`<div class="pw-ko ${ctx.showKo?'show':''}">${esc(s.translationKo)}</div>`:''}</div></div>`).join('')}</div><div class="pw-actions">${ready?`<button class="pw-primary" id="pwStart">${done?'처음부터 다시 학습':'${next}번 문장부터 이어서 학습'}</button>`:`<div class="pw-unavailable">문장별 우리말 해석이 아직 준비되지 않아 순서 학습은 사용할 수 없습니다.</div>`}</div></div>`;
+  ctx.host.innerHTML=`<button class="back pw-back" data-passage-back>← ${esc(ctx.lesson)}</button><div class="pw-wrap"><div class="pw-head"><div><div class="pw-eyebrow">본문</div><h2>${esc(p.title)}</h2><p>${p.sentences.length}문장 · 교과서 순서</p></div><button class="pw-translation" type="button" id="pwTranslation">${ctx.showKo?'우리말 숨기기':'우리말 보기'}</button></div>${passageSwitcher()}<div class="pw-reading">${p.sentences.map(s=>`<div class="pw-line"><span class="pw-num">${s.order}</span><div class="pw-line-copy">${s.speaker?`<b class="pw-speaker">${esc(s.speaker)}:</b> `:''}<span>${esc(s.text)}</span>${s.translationKo?`<div class="pw-ko ${ctx.showKo?'show':''}">${esc(s.translationKo)}</div>`:''}</div></div>`).join('')}</div><div class="pw-actions">${ready?`<button class="pw-primary" id="pwStart"></button>`:`<div class="pw-unavailable">문장별 우리말 해석이 아직 준비되지 않아 순서 학습은 사용할 수 없습니다.</div>`}</div></div>`;
   const start=ctx.host.querySelector('#pwStart');if(start){start.textContent=done?'처음부터 다시 학습':`${next}번 문장부터 이어서 학습`;start.onclick=()=>startOrdered(p,{restart:done})}
   ctx.host.querySelector('#pwTranslation')?.addEventListener('click',()=>{ctx.showKo=!ctx.showKo;renderPassage()});
   bindBack();wireSwitcher();
 }
-async function startOrdered(p,{restart=false}={}){
+async function startOrdered(p,{restart=false,startOrder=null,replay=false}={}){
   if(!p?.translationReady)return;
-  const first=restart?1:resumeOrder(p);if(first>p.sentences.length){renderPassage();return}
+  const isReplay=!!(restart||replay),first=startOrder==null?(restart?1:resumeOrder(p)):Math.max(1,Number(startOrder)||1);if(first>p.sentences.length){renderPassage();return}
   const last=Math.min(p.sentences.length,first+BATCH_SIZE-1);
-  ctx.passage=p;ctx.mode='ordered';ctx.queue=p.sentences.filter(s=>s.order>=first&&s.order<=last);ctx.index=0;ctx.correct=0;ctx.wrongIds=[];ctx.answered=0;ctx.checked=false;ctx.sessionActive=true;ctx.sessionStart=first;ctx.sessionEnd=last;
+  ctx.passage=p;ctx.mode='ordered';ctx.replay=isReplay;ctx.queue=p.sentences.filter(s=>s.order>=first&&s.order<=last);ctx.index=0;ctx.correct=0;ctx.wrongIds=[];ctx.answered=0;ctx.checked=false;ctx.sessionActive=true;ctx.sessionStart=first;ctx.sessionEnd=last;
   await startSession('passage');renderQuestion();
 }
 function questionHeader(s){const p=active(),overall=s.order/p.sentences.length*100;return `<button class="back pw-back" data-passage-back>← 본문</button><div class="pw-practice-head"><div><div class="pw-eyebrow">순서 학습</div><h2>${esc(p.title)}</h2><p>${s.order} / ${p.sentences.length} · ${ctx.sessionStart}–${ctx.sessionEnd}번 문장</p></div><strong>${Math.round(overall)}%</strong></div><div class="progress"><i style="width:${overall}%"></i></div>`}
@@ -81,16 +81,16 @@ async function closeSession(){
   try{await completeSession({correct:ctx.correct,total:ctx.answered,wrongIds:ctx.wrongIds})}catch(e){console.warn('[v2 passage] session close failed',e)}
 }
 async function finishBatch(){
-  if(!ctx)return;ctx.host.innerHTML='<div class="pw-wrap"><div class="loading">학습 기록을 저장하는 중...</div></div>';await closeSession();ctx.progress=await loadProgress();const p=active(),next=resumeOrder(p),finished=next>p.sentences.length;
+  if(!ctx)return;ctx.host.innerHTML='<div class="pw-wrap"><div class="loading">학습 기록을 저장하는 중...</div></div>';await closeSession();ctx.progress=await loadProgress();const p=active(),next=ctx.replay?ctx.sessionEnd+1:resumeOrder(p),finished=next>p.sentences.length,replay=ctx.replay;
   ctx.mode='result';ctx.host.innerHTML=`<button class="back pw-back" data-passage-back>← 본문</button><div class="pw-wrap"><div class="card result pw-result"><div class="score">${ctx.correct}/${Math.max(1,ctx.answered)}</div><h2>${finished?'본문 순서 학습 완료':'이번 묶음 완료'}</h2><div class="statline">${finished?'끝까지 학습했어요.':`${next}번 문장부터 이어집니다.`}</div><div class="pw-result-actions">${finished?'<button class="pw-secondary" id="pwRestart">처음부터 다시</button>':`<button class="pw-primary" id="pwContinue">${next}번부터 계속 →</button>`}<button class="pw-secondary" id="pwRead">본문 보기</button></div></div></div>`;
-  ctx.host.querySelector('#pwContinue')?.addEventListener('click',()=>startOrdered(p));ctx.host.querySelector('#pwRestart')?.addEventListener('click',()=>startOrdered(p,{restart:true}));ctx.host.querySelector('#pwRead').onclick=renderPassage;bindBack(renderPassage);
+  ctx.host.querySelector('#pwContinue')?.addEventListener('click',()=>startOrdered(p,replay?{startOrder:next,replay:true}:{}));ctx.host.querySelector('#pwRestart')?.addEventListener('click',()=>startOrdered(p,{restart:true}));ctx.host.querySelector('#pwRead').onclick=renderPassage;bindBack(renderPassage);
 }
 async function renderPassageAfterClose(){await closeSession();ctx.progress=await loadProgress();renderPassage()}
 async function exit(){await closeSession();const fn=ctx?.onExit;ctx=null;fn?.()}
 
 export async function startPassageLearning({host,plan,lesson,unitId,onExit}={}){
   if(!host||!plan?.id||!unitId)throw new Error('본문 학습을 시작할 수 없습니다.');
-  ctx={host,plan,lesson:String(lesson||'Lesson'),unitId:String(unitId),onExit,passages:[],passage:null,progress:new Map(),showKo:false,mode:'loading',sessionActive:false,renderer:null,index:0,correct:0,answered:0,wrongIds:[]};
+  ctx={host,plan,lesson:String(lesson||'Lesson'),unitId:String(unitId),onExit,passages:[],passage:null,progress:new Map(),showKo:false,mode:'loading',sessionActive:false,replay:false,renderer:null,index:0,correct:0,answered:0,wrongIds:[]};
   host.innerHTML='<div class="pw-wrap"><div class="loading">본문을 불러오는 중...</div></div>';
   const [passages,progress]=await Promise.all([loadPassages(unitId),loadProgress()]);if(!ctx)return;
   ctx.passages=passages;ctx.progress=progress;ctx.passage=passages[0]||null;
