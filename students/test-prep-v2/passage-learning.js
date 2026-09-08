@@ -1,7 +1,7 @@
 import {QuestionRenderer} from './question-renderer.js';
 import {gradeQuestion} from './question-grader.js';
 import {recordAttempt,startSession,completeSession,trackingState} from './tracking-client.js';
-import {loadPassages,passageQuestion} from './passage-source.js?v=2.18.1';
+import {loadPassages,passageQuestion} from './passage-source.js?v=2.18.0';
 
 const TRACK='https://fiieuiktlsivwfgyivai.supabase.co';
 const TRACK_KEY='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
