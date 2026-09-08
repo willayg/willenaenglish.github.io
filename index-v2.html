@@ -175,8 +175,8 @@
       <a class="social-card instagram" href="https://www.instagram.com/willena_academy/" target="_blank" rel="noopener noreferrer">
         <div class="social-left"><div class="social-icon">IG</div><div class="social-text"><strong>Instagram</strong><span>@willena_academy</span></div></div><span class="social-arrow">↗</span>
       </a>
-      <a class="social-card naver" href="#" id="naverPlaceholder">
-        <div class="social-left"><div class="social-icon">N</div><div class="social-text"><strong>Naver Blog</strong><span>윌레나 교육 이야기</span></div></div><span class="pending">URL TO CONNECT</span>
+      <a class="social-card naver" href="https://blog.naver.com/willena_english" target="_blank" rel="noopener noreferrer">
+        <div class="social-left"><div class="social-icon">N</div><div class="social-text"><strong>Naver Blog</strong><span>윌레나 교육 이야기</span></div></div><span class="social-arrow">↗</span>
       </a>
     </div></section>
 
@@ -206,7 +206,6 @@
     const mobileMenu=document.getElementById('mobileMenu');
     menuButton.addEventListener('click',()=>{const open=mobileMenu.classList.toggle('open');menuButton.setAttribute('aria-expanded',String(open))});
     mobileMenu.querySelectorAll('a').forEach(link=>link.addEventListener('click',()=>{mobileMenu.classList.remove('open');menuButton.setAttribute('aria-expanded','false')}));
-    document.getElementById('naverPlaceholder').addEventListener('click',e=>{e.preventDefault();window.alert('Naver Blog URL만 연결하면 됩니다. 현재는 staging mockup용 자리입니다.')});
   </script>
 </body>
 </html>
