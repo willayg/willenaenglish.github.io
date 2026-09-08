@@ -4,14 +4,26 @@ import {resolveContentIds,loadStoredSkill,loadStoredWritten,shuffle} from './con
 import {loadVocabularyTest} from './vocab-test-source.js?v=2.14.0';
 import {initTracking,refreshTrackingState,setTrackingContext,startSession,recordAttempt,completeSession,trackingState} from './tracking-client.js?v=2.14.0';
 import {startVocabularyLearning} from './vocab-learning.js?v=2.13.0';
-import {loadCardStats,invalidateCardStats,formatCardMetric,formatAccuracy,reviewCounts} from './stats-client.js?v=2.14.0';
+import {loadCardStats,invalidateCardStats,getStatsDiagnostics,formatCardMetric,formatAccuracy,reviewCounts} from './stats-client.js?v=2.15a';
 import {initNavigation,navigate,replaceRoute,back,currentRoute} from './navigation.js?v=2.13b';
 
 const $=s=>document.querySelector(s),esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const root=$('#screen'),bottom=$('#bottom'),userEl=$('#user');
 let state={plan:null,lesson:null,ids:null,practice:null,queue:[],index:0,score:0,wrongIds:[],checked:false,startedAt:0,renderer:null,cardStats:new Map(),lastResult:null};
+const PERF={start:performance.now(),auth:null,ui:null,stats:null};
 const PRACTICES={vocabulary:{label:'단어 학습',desc:'카드 · 뜻 · 철자',kind:'vocab-learning'},vocab_test:{label:'어휘 시험',desc:'정의 · 문맥 · 철자',kind:'vocab-test'},communication:{label:'Communication',desc:'핵심 대화 표현',kind:'stored'},grammar:{label:'Grammar',desc:'핵심 문법',kind:'stored'},reading:{label:'Reading',desc:'본문 이해',kind:'stored'},constructed_response:{label:'서술형',desc:'저장된 영작 · 교정 · 다답형',kind:'written'}};
 
+function fmtMs(v){if(v==null)return'…';return v<1000?`${Math.round(v)}ms`:`${(v/1000).toFixed(2)}s`}
+function ensurePerfHud(){
+  if($('#tpSpeedHud'))return;
+  const el=document.createElement('div');el.id='tpSpeedHud';
+  el.style.cssText='position:fixed;left:12px;bottom:58px;z-index:2147483645;padding:4px 7px;border-radius:8px;background:rgba(32,48,57,.82);color:#fff;font:700 8px/1.35 Poppins,sans-serif;letter-spacing:.01em;pointer-events:none;opacity:.78;white-space:nowrap';
+  document.body.appendChild(el);
+}
+function updatePerfHud(){
+  ensurePerfHud();const d=getStatsDiagnostics();const el=$('#tpSpeedHud');if(!el)return;
+  el.textContent=`AUTH ${fmtMs(PERF.auth)} · UI ${fmtMs(PERF.ui)} · STATS ${fmtMs(PERF.stats)} · CACHE ${d.unitCacheHits}/${d.unitCacheMisses}`;
+}
 function scopeFor(plan){const lessons=plan?.group?.scope?.lessons;if(Array.isArray(lessons)&&lessons.length)return lessons.filter(x=>x?.lesson);return(plan?.units||[]).map(lesson=>({lesson,sections:plan?.practice_types||[]}))}
 function sectionsFor(plan,lesson){const row=scopeFor(plan).find(x=>String(x.lesson)===String(lesson)),sections=new Set((row?.sections||[]).map(x=>String(x).toLowerCase()));if(sections.has('vocabulary'))sections.add('vocab_test');return sections}
 function planById(id){return(trackingState().plans||[]).find(p=>String(p.id)===String(id))||null}
@@ -19,8 +31,9 @@ function trackingId(q){return String(q?.tracking?.questionId||q?.id||'')}
 function setBottom(html=''){bottom.innerHTML=html;bottom.hidden=!html}
 function error(message){root.innerHTML=`<div class="error">${esc(message)}</div>`;setBottom('')}
 function updateUser(){const u=trackingState().user;userEl.textContent=u?.name||u?.username||'Student'}
-function ring(p){const n=Math.max(0,Math.min(100,Math.round(Number(p)||0)));return `<span class="ring" style="--p:${n}%"><b>${n}%</b></span>`}
+function ring(p,label=null){const n=Math.max(0,Math.min(100,Math.round(Number(p)||0)));return `<span class="ring" style="--p:${n}%"><b>${label==null?`${n}%`:esc(label)}</b></span>`}
 function emptyStat(){return{completed:0,total:0,coverage:0,accuracy:0,accuracySample:0}}
+function hasCardData(plan){return state.cardStats.has(String(plan?.id||''))}
 function cardData(plan){return state.cardStats.get(String(plan?.id||''))||{plan:emptyStat(),lessons:{}}}
 function practiceRouteMatches(practice,planId=state.plan?.id,lesson=state.lesson){const r=currentRoute();return r.view==='practice'&&String(r.planId)===String(planId)&&String(r.lesson)===String(lesson)&&String(r.practice)===String(practice)}
 async function loadPlanCardStats(plan,{force=false}={}){try{const data=await loadCardStats(plan,trackingState().user?.id,{force});state.cardStats.set(String(plan.id),data);return data}catch(e){console.warn('[test-prep-v2] card stats failed',e);const fallback={plan:emptyStat(),lessons:{}};state.cardStats.set(String(plan.id),fallback);return fallback}}
@@ -29,17 +42,17 @@ async function preloadCardStats(){const plans=trackingState().plans||[];await Pr
 
 function renderHome(){
   state={...state,plan:null,lesson:null,practice:null,queue:[],index:0,renderer:null};const plans=trackingState().plans||[];setBottom('');
-  root.innerHTML=`<div class="heading"><div><h2>내 시험 대비</h2><p>학교 시험 범위를 선택하세요.</p></div></div>${plans.length?plans.map(p=>{const s=cardData(p).plan,r=reviewCounts(p),school=p.group?.school||'학교 시험';return `<button class="exam-card" data-plan="${esc(p.id)}"><div class="exam-head"><div><span class="exam-school">${esc(school)}</span><h3 class="exam-title">${esc(p.exam_name||'시험 대비')}</h3><div class="exam-book">${esc(p.book_label||'')}</div></div>${ring(s.coverage)}</div><div class="exam-meta"><span class="pill">${esc(formatCardMetric(s))}</span><span class="pill">${esc(formatAccuracy(s))}</span>${p.exam_date?`<span class="pill">${esc(p.exam_date)}</span>`:''}${r.now?`<span class="pill">오답 지금 ${r.now}</span>`:''}${r.later?`<span class="pill">나중 ${r.later}</span>`:''}</div></button>`}).join(''):'<div class="empty">지정된 시험 대비가 없습니다.</div>'}`;
+  root.innerHTML=`<div class="heading"><div><h2>내 시험 대비</h2><p>학교 시험 범위를 선택하세요.</p></div></div>${plans.length?plans.map(p=>{const loaded=hasCardData(p),s=cardData(p).plan,r=reviewCounts(p),school=p.group?.school||'학교 시험';return `<button class="exam-card" data-plan="${esc(p.id)}"><div class="exam-head"><div><span class="exam-school">${esc(school)}</span><h3 class="exam-title">${esc(p.exam_name||'시험 대비')}</h3><div class="exam-book">${esc(p.book_label||'')}</div></div>${loaded?ring(s.coverage):ring(0,'…')}</div><div class="exam-meta">${loaded?`<span class="pill">${esc(formatCardMetric(s))}</span><span class="pill">${esc(formatAccuracy(s))}</span>`:'<span class="pill">통계 불러오는 중…</span>'}${p.exam_date?`<span class="pill">${esc(p.exam_date)}</span>`:''}${r.now?`<span class="pill">오답 지금 ${r.now}</span>`:''}${r.later?`<span class="pill">나중 ${r.later}</span>`:''}</div></button>`}).join(''):'<div class="empty">지정된 시험 대비가 없습니다.</div>'}`;
   root.querySelectorAll('[data-plan]').forEach(b=>b.onclick=()=>navigate({view:'plan',planId:b.dataset.plan}));
 }
 function renderLessons(plan){
-  state.plan=plan;state.lesson=null;state.practice=null;const lessons=scopeFor(plan),data=cardData(plan);setBottom('');
-  root.innerHTML=`<button class="back" id="homeBack">← 시험 대비</button><div class="heading"><div><h2>${esc(plan.book_label||'')}</h2><p>${esc(plan.exam_name||'Lesson 선택')}</p></div></div>${lessons.length?`<div class="grid">${lessons.map(l=>{const s=data.lessons?.[String(l.lesson)]?.summary||emptyStat();return `<button class="tile" data-lesson="${esc(l.lesson)}"><div class="exam-head"><div><h3>${esc(l.lesson)}</h3><p>${esc((l.sections||[]).join(' · '))}</p><span class="metric">${esc(formatCardMetric(s))} · ${esc(formatAccuracy(s))}</span></div>${ring(s.coverage)}</div></button>`}).join('')}</div>`:'<div class="empty">Lesson 범위가 없습니다.</div>'}`;
+  state.plan=plan;state.lesson=null;state.practice=null;const lessons=scopeFor(plan),data=cardData(plan),loaded=hasCardData(plan);setBottom('');
+  root.innerHTML=`<button class="back" id="homeBack">← 시험 대비</button><div class="heading"><div><h2>${esc(plan.book_label||'')}</h2><p>${esc(plan.exam_name||'Lesson 선택')}</p></div></div>${lessons.length?`<div class="grid">${lessons.map(l=>{const s=data.lessons?.[String(l.lesson)]?.summary||emptyStat();return `<button class="tile" data-lesson="${esc(l.lesson)}"><div class="exam-head"><div><h3>${esc(l.lesson)}</h3><p>${esc((l.sections||[]).join(' · '))}</p><span class="metric">${loaded?`${esc(formatCardMetric(s))} · ${esc(formatAccuracy(s))}`:'통계 불러오는 중…'}</span></div>${loaded?ring(s.coverage):ring(0,'…')}</div></button>`}).join('')}</div>`:'<div class="empty">Lesson 범위가 없습니다.</div>'}`;
   $('#homeBack').onclick=back;root.querySelectorAll('[data-lesson]').forEach(b=>b.onclick=()=>navigate({view:'lesson',planId:plan.id,lesson:b.dataset.lesson}));
 }
 function renderLesson(plan,lesson){
-  state.plan=plan;state.lesson=lesson;state.practice=null;state.renderer=null;const sections=sectionsFor(plan,lesson),data=cardData(plan).lessons?.[String(lesson)]||{summary:emptyStat(),practices:{}},available=Object.entries(PRACTICES).filter(([k])=>sections.has(k));setBottom('');
-  root.innerHTML=`<button class="back" id="lessonBack">← ${esc(plan.book_label||'시험 대비')}</button><div class="lesson-head"><div class="heading"><div><h2>${esc(lesson)}</h2><p>${esc(plan.book_label||'')}</p></div></div></div>${available.length?`<div class="journey">${available.map(([k,p],i)=>{const s=data.practices?.[k]||emptyStat();return `<div class="journey-stop" data-practice="${k}"><div class="station">${i+1}</div><div class="stop-copy"><b>${esc(p.label)}</b><small>${esc(p.desc)}</small><div class="mini"><i style="width:${s.coverage}%"></i></div></div><div class="stop-stat">${s.completed} / ${s.total}<small>${s.accuracySample?`${s.accuracy}% accuracy`:'— accuracy'}</small></div></div>`}).join('')}</div>`:'<div class="empty">이 Lesson에 활성화된 영역이 없습니다.</div>'}`;
+  state.plan=plan;state.lesson=lesson;state.practice=null;state.renderer=null;const sections=sectionsFor(plan,lesson),data=cardData(plan).lessons?.[String(lesson)]||{summary:emptyStat(),practices:{}},loaded=hasCardData(plan),available=Object.entries(PRACTICES).filter(([k])=>sections.has(k));setBottom('');
+  root.innerHTML=`<button class="back" id="lessonBack">← ${esc(plan.book_label||'시험 대비')}</button><div class="lesson-head"><div class="heading"><div><h2>${esc(lesson)}</h2><p>${esc(plan.book_label||'')}</p></div></div></div>${available.length?`<div class="journey">${available.map(([k,p],i)=>{const s=data.practices?.[k]||emptyStat();return `<div class="journey-stop" data-practice="${k}"><div class="station">${i+1}</div><div class="stop-copy"><b>${esc(p.label)}</b><small>${esc(p.desc)}</small><div class="mini"><i style="width:${loaded?s.coverage:0}%"></i></div></div><div class="stop-stat">${loaded?`${s.completed} / ${s.total}`:'…'}<small>${loaded?(s.accuracySample?`${s.accuracy}% accuracy`:'— accuracy'):'loading'}</small></div></div>`}).join('')}</div>`:'<div class="empty">이 Lesson에 활성화된 영역이 없습니다.</div>'}`;
   $('#lessonBack').onclick=back;root.querySelectorAll('[data-practice]').forEach(b=>b.onclick=()=>navigate({view:'practice',planId:plan.id,lesson,practice:b.dataset.practice}));
 }
 
@@ -54,9 +67,9 @@ async function startPracticeRoute(plan,lesson,practice){
     }
     let pool=config.kind==='vocab-test'?await loadVocabularyTest(ids.unitId,{count:20}):config.kind==='written'?await loadStoredWritten(ids.unitId):await loadStoredSkill(ids.unitId,practice);if(!practiceRouteMatches(practice,plan.id,lesson))return;
     if(config.kind!=='vocab-test'){pool=shuffle(pool);if(pool.length>20)pool=pool.slice(0,20)}
-    if(!pool.length){root.innerHTML=`<button class="back" id="emptyBack">← ${esc(lesson)}</button><div class="empty">이 영역에 사용할 v2.14 문제가 없습니다.</div>`;$('#emptyBack').onclick=back;return}
+    if(!pool.length){root.innerHTML=`<button class="back" id="emptyBack">← ${esc(lesson)}</button><div class="empty">이 영역에 사용할 v2.15 문제가 없습니다.</div>`;$('#emptyBack').onclick=back;return}
     state.queue=pool;await startSession(practice);if(!practiceRouteMatches(practice,plan.id,lesson))return;renderQuestion();
-  }catch(e){if(!practiceRouteMatches(practice,plan.id,lesson))return;console.error('[test-prep-v2] start failed',e);error(e.message||'문제를 불러오지 못했습니다.')}
+  }catch(e){if(!practiceRouteMatches(state.practice))return;console.error('[test-prep-v2] start failed',e);error(e.message||'문제를 불러오지 못했습니다.')}
 }
 function current(){return state.queue[state.index]||null}
 function headerFor(q){const code=q.source?.code||'',source=code?`<span class="badge ${code.toLowerCase()}" title="${code==='Z'?'Zocbo':code==='W'?'Willena authored':'Book reference'}">${code}</span>`:'';return `<div class="practice-head"><div><button class="back" id="practiceBack">← ${esc(state.lesson)}</button><div class="practice-meta">${source}<span>${esc(state.plan.book_label||'')}</span><span>·</span><span>${esc(PRACTICES[state.practice]?.label||state.practice)}</span></div></div><strong>${state.index+1} / ${state.queue.length}</strong></div><div class="progress"><i style="width:${Math.round(state.index/Math.max(1,state.queue.length)*100)}%"></i></div>`}
@@ -94,13 +107,20 @@ async function renderRoute(route){
   if(route.view==='practice'){await startPracticeRoute(plan,route.lesson,route.practice);return}
   if(route.view==='result'){renderResult(plan,route)}
 }
+async function refreshVisibleStats(){
+  const route=currentRoute();
+  if(route&&['home','plan','lesson'].includes(route.view))await renderRoute(route);
+}
 
 async function boot(){
   try{
-    root.innerHTML='<div class="loading">Test Prep v2.14를 준비하는 중...</div>';await initTracking();updateUser();await preloadCardStats();
+    ensurePerfHud();updatePerfHud();
+    root.innerHTML='<div class="loading">Test Prep v2.15를 준비하는 중...</div>';
+    await initTracking();PERF.auth=performance.now()-PERF.start;updateUser();updatePerfHud();
     let route=initNavigation({render:renderRoute,beforeRouteChange,initialRoute:{view:'home'}});
     if(route.view==='practice'||route.view==='result'){route={view:'lesson',planId:route.planId,lesson:route.lesson};await replaceRoute(route,{render:false})}
-    await renderRoute(route);
-  }catch(e){console.error('[test-prep-v2] boot failed',e);error(e.message||'앱을 시작하지 못했습니다.')}
+    await renderRoute(route);PERF.ui=performance.now()-PERF.start;updatePerfHud();
+    preloadCardStats().then(async()=>{PERF.stats=performance.now()-PERF.start;updatePerfHud();await refreshVisibleStats()}).catch(e=>{console.warn('[test-prep-v2] background stats failed',e);PERF.stats=performance.now()-PERF.start;updatePerfHud()});
+  }catch(e){console.error('[test-prep-v2] boot failed',e);error(e.message||'앱을 시작하지 못했습니다.');updatePerfHud()}
 }
 boot();
