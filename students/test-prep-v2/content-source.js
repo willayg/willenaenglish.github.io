@@ -7,6 +7,7 @@ const FIELDS='id,source_id,source_question_number,source_page,section,question_t
 const idCache=new Map();
 const rowCache=new Map();
 const bookCache=new Map();
+const unitCache=new Map();
 
 async function get(path,range){
   const headers={...HEAD};if(range)headers.Range=range;
@@ -22,15 +23,24 @@ async function resolveBookId(label){
   const promise=get(`/rest/v1/content_books?select=id,title&title=eq.${encodeURIComponent(key)}&limit=1`).then(rows=>rows[0]?.id||null).catch(e=>{bookCache.delete(key);throw e});
   bookCache.set(key,promise);return promise;
 }
+async function resolveUnit(unitId){
+  const key=String(unitId||'');if(!key)return null;if(unitCache.has(key))return unitCache.get(key);
+  const promise=get(`/rest/v1/content_units?select=id,book_id,title,unit_type&id=eq.${encodeURIComponent(key)}&limit=1`).then(rows=>rows[0]||null).catch(e=>{unitCache.delete(key);throw e});
+  unitCache.set(key,promise);return promise;
+}
 export async function resolveContentIds(plan,lesson){
-  const cacheKey=`${plan?.book_label||''}|${lesson||''}`;if(idCache.has(cacheKey))return idCache.get(cacheKey);
+  const scope=(plan?.group?.scope?.lessons||[]).find(x=>String(x.lesson)===String(lesson));
+  const scopeUnit=scope?.unit_id?String(scope.unit_id):'';
+  const cacheKey=`${plan?.book_label||''}|${lesson||''}|${scopeUnit}`;if(idCache.has(cacheKey))return idCache.get(cacheKey);
   const promise=(async()=>{
-    const scope=(plan?.group?.scope?.lessons||[]).find(x=>String(x.lesson)===String(lesson));
-    let unitId=scope?.unit_id||null;
+    if(scopeUnit){
+      const unit=await resolveUnit(scopeUnit);
+      if(unit?.id&&unit?.book_id)return{bookId:unit.book_id,unitId:unit.id,unitType:unit.unit_type||'textbook'};
+    }
     const bookId=await resolveBookId(plan?.book_label||'');
-    if(!unitId&&bookId){const units=await get(`/rest/v1/content_units?select=id,title&book_id=eq.${encodeURIComponent(bookId)}&title=eq.${encodeURIComponent(lesson)}&limit=1`);unitId=units[0]?.id||null}
-    if(!bookId||!unitId)throw new Error('교재 또는 Lesson을 콘텐츠 DB에서 찾지 못했습니다.');
-    return{bookId,unitId};
+    let unitId=null;
+    if(bookId){const units=await get(`/rest/v1/content_units?select=id,book_id,title,unit_type&book_id=eq.${encodeURIComponent(bookId)}&title=eq.${encodeURIComponent(lesson)}&limit=1`);if(units[0]){unitCache.set(String(units[0].id),Promise.resolve(units[0]));unitId=units[0].id;return{bookId:units[0].book_id||bookId,unitId,unitType:units[0].unit_type||'textbook'}}}
+    throw new Error('교재 또는 Lesson을 콘텐츠 DB에서 찾지 못했습니다.');
   })().catch(e=>{idCache.delete(cacheKey);throw e});
   idCache.set(cacheKey,promise);return promise;
 }
@@ -41,8 +51,9 @@ async function rawRows(unitId,extra=''){
   rowCache.set(key,promise);return promise;
 }
 export async function loadStoredSkill(unitId,section){
-  const rows=await rawRows(unitId,`&section=eq.${encodeURIComponent(section)}`);
-  return rows.map(adaptStored).filter(q=>q.form===FORMS.choice||q.form===FORMS.multi);
+  const [rows,unit]=await Promise.all([rawRows(unitId,`&section=eq.${encodeURIComponent(section)}`),resolveUnit(unitId)]);
+  const external=String(unit?.unit_type||'')==='external_passage';
+  return rows.filter(row=>!isAuthoredWritten(row)).map(adaptStored).filter(q=>q.form===FORMS.choice||q.form===FORMS.multi||(external&&[FORMS.write,FORMS.multipart,FORMS.correction].includes(q.form)));
 }
 export async function loadStoredWritten(unitId){
   const rows=await rawRows(unitId,'&answer_mode=eq.text');
