@@ -29,6 +29,20 @@ If Test Prep, Dashboard, Daily Study, 오답, or another student app needs a sta
 
 A temporary compatibility shim may exist inside an older app, but it must delegate to `students/shared/student-stats.js`. It must not contain a second implementation.
 
+## STUDENT REVIEW / 오답: ONE CANONICAL QUEUE OWNER
+
+The canonical browser-side review queue client is:
+
+`students/shared/student-review.js`
+
+It is the only student-app client that should request and normalize canonical wrong-answer/review queues.
+
+The backend owns review truth: current exam scope, canonical identity, due-now vs later timing, cleared state, and which canonical mastery/question is due. Apps must not reconstruct those rules from local attempts or the legacy `test_prep_question_state` table.
+
+Do NOT create app-local review queue builders, due-date calculations, legacy-ID dedupers, or competing 오답 state engines. Test Prep V2 may render the queue through its own route/controller and canonical question renderer, but it must receive the queue from `students/shared/student-review.js`.
+
+If another student app later needs 오답/review, extend the shared review contract rather than copying Test Prep V2's flow.
+
 ## DESIGN FOR MORE THAN 내신
 
 This folder may grow into a broader student platform layer.
@@ -46,6 +60,10 @@ Before creating a new shared module:
 
 ## CURRENT CONTRACT
 
-`student-stats.js` currently provides the canonical frontend gateway for student statistics. Test Prep V2 should consume it through its thin compatibility shim while migration is underway. Future migrations should point other student apps at the same shared owner.
+`student-stats.js` provides the canonical frontend gateway for student statistics.
 
-If a statistical rule changes, fix the shared backend/client once. Do not patch each consuming app separately.
+`student-review.js` provides the canonical frontend gateway for review queues and review timing/state.
+
+Test Prep V2 consumes these shared owners while keeping rendering and route control in its existing canonical V2 modules.
+
+If a statistical or review-state rule changes, fix the shared backend/client once. Do not patch each consuming app separately.
