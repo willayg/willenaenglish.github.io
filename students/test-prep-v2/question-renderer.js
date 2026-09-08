@@ -37,6 +37,29 @@ function marked(value,under=[]){
   for(const [a,b] of merged){out+=textHtml(src.slice(p,a))+`<span class="u">${textHtml(src.slice(a,b))}</span>`;p=b}
   return out+textHtml(src.slice(p));
 }
+function markerOnly(value){return /^[ⓐ-ⓩ①-⑳]+$/u.test(display(value).trim())}
+function promptHtml(question){
+  const src=display(question?.prompt||''),under=spans(question?.context||{});
+  if(!src||!under.length)return textHtml(src);
+  const markers=under.filter(markerOnly).filter(x=>src.includes(x));
+  if(markers.length){
+    const hits=markers.map(marker=>({marker,start:src.indexOf(marker)})).filter(x=>x.start>=0).sort((a,b)=>a.start-b.start);
+    let out='',p=0;
+    for(let i=0;i<hits.length;i++){
+      const cur=hits[i],next=hits[i+1]?.start??src.length;
+      const bodyStart=cur.start+cur.marker.length;
+      let bodyEnd=next;
+      while(bodyEnd>bodyStart&&/\s/.test(src[bodyEnd-1]))bodyEnd--;
+      out+=textHtml(src.slice(p,bodyStart));
+      if(bodyEnd>bodyStart)out+=`<span class="u">${textHtml(src.slice(bodyStart,bodyEnd))}</span>`;
+      out+=textHtml(src.slice(bodyEnd,next));
+      p=next;
+    }
+    if(p<src.length)out+=textHtml(src.slice(p));
+    return out;
+  }
+  return marked(src,under);
+}
 function printable(value){
   if(value==null)return'';
   if(typeof value==='string'||typeof value==='number'||typeof value==='boolean')return String(value);
@@ -68,11 +91,11 @@ export class QuestionRenderer{
   render(question,{onChange}={}){
     this.question=question;this.state={selected:new Set(),order:[],blank:[]};this.disabled=false;this.onChange=typeof onChange==='function'?onChange:null;
     const controls=this.controls(question);
-    this.host.innerHTML=`<div class="prompt">${textHtml(question.prompt||'')}</div><div class="context">${contextHtml(question)}</div><div data-answer>${controls}</div><div class="feedback" data-feedback></div>`;
+    this.host.innerHTML=`<div class="prompt">${promptHtml(question)}</div><div class="context">${contextHtml(question)}</div><div data-answer>${controls}</div><div class="feedback" data-feedback></div>`;
     this.bind(question);this.emit();return this;
   }
   controls(q){
-    if(q.form===FORMS.choice||q.form===FORMS.multi){const under=spans(q.context);return `<div class="choices">${q.choices.map((x,i)=>`<button type="button" class="choice" data-choice="${i+1}"><span>${numberMark(i)}</span> ${marked(x,under)}</button>`).join('')}</div>`}
+    if(q.form===FORMS.choice||q.form===FORMS.multi)return `<div class="choices">${q.choices.map((x,i)=>`<button type="button" class="choice" data-choice="${i+1}"><span>${numberMark(i)}</span> ${textHtml(x)}</button>`).join('')}</div>`;
     if(q.form===FORMS.write)return `<textarea class="answer" data-write autocomplete="off" spellcheck="false" placeholder="답을 입력하세요"></textarea>`;
     if(q.form===FORMS.multipart){const marks=['ⓐ','ⓑ','ⓒ','ⓓ','ⓔ','ⓕ'];return `<div class="structured">${answerParts(q).map((_,i)=>`<div class="part-row"><div class="row-label">${marks[i]||i+1}</div><input class="text-input" data-part="${i}" autocomplete="off" spellcheck="false" placeholder="답 ${i+1}"></div>`).join('')}</div>`}
     if(q.form===FORMS.correction){const marks=['ⓐ','ⓑ','ⓒ','ⓓ','ⓔ','ⓕ'];return `<div class="structured">${answerParts(q).map((a,i)=>{parseCorrection(a);return `<div class="correction-row"><div class="row-label">${marks[i]||i+1}</div><input class="text-input" data-wrong="${i}" autocomplete="off" spellcheck="false" placeholder="틀린 부분"><div class="arrow">→</div><input class="text-input" data-right="${i}" autocomplete="off" spellcheck="false" placeholder="고친 부분"></div>`}).join('')}</div>`}
