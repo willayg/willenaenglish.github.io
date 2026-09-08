@@ -48,6 +48,41 @@ export async function loadStoredWritten(unitId){
   const rows=await rawRows(unitId,'&answer_mode=eq.text');
   return rows.filter(isAuthoredWritten).map(adaptStored).filter(q=>[FORMS.write,FORMS.multipart,FORMS.correction].includes(q.form));
 }
+export function reviewQuestionFromItem(item){
+  if(!item?.canonicalId||!item?.content)return null;
+  const practice=String(item.practiceType||'').toLowerCase();
+  if(item.contentKind==='vocab'||String(item.canonicalId).startsWith('vocab:')){
+    const v=item.content||{},word=String(v.canonical_text||String(item.canonicalId).slice(6)||'').trim();
+    if(!word)return null;
+    const context={};
+    if(v.translation_ko)context.korean=v.translation_ko;
+    if(v.definition_en)context.definition=v.definition_en;
+    return{
+      id:`review:${item.canonicalId}`,
+      masteryKey:String(item.canonicalId),
+      bookId:null,
+      unitId:item.unitId||null,
+      skill:practice||'vocab_test',
+      form:FORMS.write,
+      source:{code:'',label:'오답 복습',sourceId:null,sourceQuestionNumber:null,page:null},
+      prompt:'다음 뜻에 맞는 영어 단어 또는 표현을 쓰세요.',
+      context,
+      choices:[],
+      chips:[],
+      answer:[word],
+      grading:{mode:'exact_normalized',aiAllowed:false,constraints:{wordCount:0,noContractions:false,contractionRequired:false,answerOrderIrrelevant:false,alternatives:false}},
+      tracking:{practiceType:practice||'vocab_test',questionId:String(item.canonicalId),questionType:'vocab_review',targets:[]},
+      metadata:{review_mode:true,canonical_id:String(item.canonicalId),lexical_entry_id:v.id||null}
+    };
+  }
+  const q=adaptStored(item.content);
+  if(q.form===FORMS.unsupported)return null;
+  q.masteryKey=String(item.canonicalId);
+  q.skill=practice||q.skill;
+  q.tracking={...(q.tracking||{}),practiceType:practice||q.tracking?.practiceType||'',questionId:String(item.canonicalId)};
+  q.metadata={...(q.metadata||{}),review_mode:true,canonical_id:String(item.canonicalId)};
+  return q;
+}
 export function shuffle(items){
   const a=[...items];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a;
 }
