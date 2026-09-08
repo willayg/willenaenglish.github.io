@@ -1,161 +1,85 @@
-import {detectForm,isAuthoredWritten,FORMS} from './question-model.js';
-import {loadVocabularyTestAvailableIds} from './vocab-test-source.js?v=2.14.0';
-
-const CONTENT='https://gxwfsqxyuufqtitspfqg.supabase.co';
-const CONTENT_KEY=['sb_publishable_','G-FYhHfDL4OGdL892gY1Zg_','epdbEeqO'].join('');
-const TRACK='https://fiieuiktlsivwfgyivai.supabase.co';
-const TRACK_KEY='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
-const ACTIVE=['vocabulary','vocab_test','communication','grammar','reading','constructed_response'];
-const UNIT_CACHE_PREFIX='willena_tp_v2_unit_available_v2:';
-const UNIT_CACHE_TTL=15*60*1000;
+const EDGE='https://fiieuiktlsivwfgyivai.supabase.co/functions/v1/test-prep-stats-v1';
+const API_KEY='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
+const LEGACY_FLAG='willena_tp_stats_source';
 const cache=new Map();
-const unitCache=new Map();
-const unitMapCache=new Map();
-const diag={unitCacheHits:0,unitCacheMisses:0,unitLoads:0};
+const reviewCache=new Map();
+const diag={dbRequests:0,cacheHits:0,cacheMisses:0,lastMs:null,lastSyncedAt:null,source:'canonical-db-v1'};
 
 const token=()=>window.WillenaAPI?.getLocalAccessToken?.()||localStorage.getItem('sb_access_token')||'';
-const pct=(n,d)=>d?Math.max(0,Math.min(100,Math.round((Number(n)||0)/(Number(d)||1)*100))):0;
-const norm=s=>String(s??'').trim().toLowerCase();
+const routedFetch=(url,opts={})=>window.WillenaAPI?.fetch?window.WillenaAPI.fetch(url,{credentials:'include',cache:'no-store',...opts}):fetch(url,{credentials:'include',cache:'no-store',...opts});
 const number=v=>Number.isFinite(Number(v))?Number(v):0;
+const pct=(n,d)=>d?Math.max(0,Math.min(100,Math.round(number(n)/Math.max(1,number(d))*100))):0;
 
-async function contentGet(path,range=''){
-  const headers={apikey:CONTENT_KEY,Authorization:`Bearer ${CONTENT_KEY}`};if(range)headers.Range=range;
-  const r=await fetch(CONTENT+path,{headers,cache:'no-store'});if(!r.ok)throw new Error(await r.text());return r.json();
-}
-async function contentPaged(path){
-  const out=[];
-  for(let start=0;start<10000;start+=1000){const rows=await contentGet(path,`${start}-${start+999}`);out.push(...rows);if(rows.length<1000)break}
-  return out;
-}
-async function cardStats(planId){
-  const t=token();if(!t)return[];
-  const r=await fetch(`${TRACK}/rest/v1/rpc/test_prep_card_stats`,{
-    method:'POST',headers:{apikey:TRACK_KEY,Authorization:`Bearer ${t}`,'Content-Type':'application/json'},
-    body:JSON.stringify({p_plan_id:String(planId)}),cache:'no-store'
-  });
-  if(!r.ok)throw new Error(await r.text());
-  const rows=await r.json();return Array.isArray(rows)?rows:[];
-}
-function statPayload(stat){
-  const raw=stat?.attempted_question_ids;
-  if(raw&&typeof raw==='object'&&!Array.isArray(raw))return{all:Array.isArray(raw.all)?raw.all:[],byPractice:raw.by_practice&&typeof raw.by_practice==='object'?raw.by_practice:{}};
-  return{all:Array.isArray(raw)?raw:[],byPractice:{}};
-}
-function scopeFor(plan){
-  const rows=plan?.group?.scope?.lessons;
-  if(Array.isArray(rows)&&rows.length)return rows.filter(x=>x?.lesson);
-  return(plan?.units||[]).map(lesson=>({lesson,sections:plan?.practice_types||[]}));
-}
-function sectionsFor(row){const sections=new Set((row?.sections||[]).map(norm));if(sections.has('vocabulary'))sections.add('vocab_test');return sections}
-async function resolveUnits(plan){
-  const scope=scopeFor(plan),map=new Map(scope.filter(x=>x.unit_id).map(x=>[String(x.lesson),String(x.unit_id)]));
-  if(map.size===scope.length)return map;
-  const bookKey=String(plan?.book_label||'');
-  if(unitMapCache.has(bookKey)){
-    const cached=unitMapCache.get(bookKey);for(const row of scope)if(!map.has(String(row.lesson))&&cached.has(String(row.lesson)))map.set(String(row.lesson),cached.get(String(row.lesson)));return map;
-  }
-  const books=await contentGet(`/rest/v1/content_books?select=id,title&title=eq.${encodeURIComponent(bookKey)}&limit=1`),bookId=books?.[0]?.id;
-  if(!bookId)return map;
-  const units=await contentPaged(`/rest/v1/content_units?select=id,title&book_id=eq.${encodeURIComponent(bookId)}`),byTitle=new Map(units.map(x=>[String(x.title),String(x.id)]));
-  unitMapCache.set(bookKey,byTitle);
-  for(const row of scope)if(!map.has(String(row.lesson))&&byTitle.has(String(row.lesson)))map.set(String(row.lesson),byTitle.get(String(row.lesson)));
-  return map;
-}
-function emptyAvailable(){return Object.fromEntries(ACTIVE.map(k=>[k,new Set()]));}
-function serializeAvailable(available){return Object.fromEntries(ACTIVE.map(k=>[k,[...(available?.[k]||[])]]));}
-function hydrateAvailable(raw){const out=emptyAvailable();for(const k of ACTIVE)out[k]=new Set(Array.isArray(raw?.[k])?raw[k].map(String):[]);return out}
-function readUnitStorage(unitId){
+async function refreshToken(){
   try{
-    const raw=JSON.parse(localStorage.getItem(UNIT_CACHE_PREFIX+unitId)||'null');
-    if(!raw||!raw.savedAt||Date.now()-Number(raw.savedAt)>UNIT_CACHE_TTL)return null;
-    return hydrateAvailable(raw.available);
-  }catch(_){return null}
+    const r=await routedFetch(`/.netlify/functions/supabase_auth?action=refresh&_=${Date.now()}`),d=await r.json().catch(()=>({}));
+    if(r.ok&&d?.success&&d.access_token){window.WillenaAPI?.setLocalTokens?.(d.access_token,d.refresh_token||'');return d.access_token}
+  }catch(_){ }
+  return'';
 }
-function writeUnitStorage(unitId,available){try{localStorage.setItem(UNIT_CACHE_PREFIX+unitId,JSON.stringify({savedAt:Date.now(),available:serializeAvailable(available)}))}catch(_){}}
-async function usableLexicalIds(unitId){
-  const occ=await contentPaged(`/rest/v1/source_content_occurrences?select=lexical_entry_id&unit_id=eq.${encodeURIComponent(unitId)}&occurrence_type=eq.lexical_entry&skill=eq.vocabulary`);
-  const ids=[...new Set(occ.map(x=>String(x.lexical_entry_id||'')).filter(Boolean))];if(!ids.length)return new Set();
-  const rows=[];
-  for(let i=0;i<ids.length;i+=100)rows.push(...await contentGet(`/rest/v1/lexical_entries?select=id,canonical_text,translation_ko&id=in.${encodeURIComponent('('+ids.slice(i,i+100).join(',')+')')}`));
-  const seen=new Set(),usable=new Set();
-  for(const row of rows){const word=norm(row.canonical_text);if(!word||!String(row.translation_ko||'').trim()||seen.has(word))continue;seen.add(word);usable.add(String(row.id))}
-  return usable;
+async function access(){return token()||await refreshToken()}
+async function requestCanonical(planId){
+  let accessToken=await access();
+  if(!accessToken)throw new Error('AUTH_REQUIRED');
+  const run=t=>fetch(EDGE,{method:'POST',headers:{apikey:API_KEY,Authorization:`Bearer ${t}`,'Content-Type':'application/json'},body:JSON.stringify({plan_id:String(planId)}),cache:'no-store',credentials:'omit'});
+  const started=performance.now();diag.dbRequests++;
+  let r=await run(accessToken);
+  if(r.status===401){accessToken=await refreshToken();if(accessToken)r=await run(accessToken)}
+  const text=await r.text();let data={};
+  try{data=JSON.parse(text)}catch(_){throw new Error(`Invalid canonical stats response (${r.status})`)}
+  diag.lastMs=performance.now()-started;
+  if(r.status===401)throw new Error('AUTH_REQUIRED');
+  if(!r.ok||data?.ok===false)throw new Error(data?.error||data?.detail||`Canonical stats failed (${r.status})`);
+  diag.lastSyncedAt=data?.synced_at||null;
+  return data;
 }
-async function buildAvailableForUnit(unitId){
-  diag.unitLoads++;
-  const available=emptyAvailable();
-  const [rows,vocabulary,vocabTestRaw]=await Promise.all([
-    contentPaged(`/rest/v1/test_prep_questions?select=${encodeURIComponent('id,section,answer_mode,choices,correct_answer,metadata,replacement_needed,student_usable')}&unit_id=eq.${encodeURIComponent(unitId)}&student_usable=eq.true`),
-    usableLexicalIds(unitId),
-    loadVocabularyTestAvailableIds(unitId)
-  ]);
-  for(const row of rows){
-    if(row.replacement_needed===true)continue;
-    const section=norm(row.section),form=detectForm(row),id=String(row.id||'');if(!id)continue;
-    if(['communication','grammar','reading'].includes(section)&&[FORMS.choice,FORMS.multi].includes(form))available[section].add(id);
-    if(isAuthoredWritten(row)&&[FORMS.write,FORMS.multipart,FORMS.correction].includes(form))available.constructed_response.add(id);
+function stat(s={}){
+  const total=Math.max(0,number(s.total)),completed=Math.max(0,Math.min(total,number(s.completed))),sample=Math.max(0,number(s.recent_count));
+  return{completed,total,coverage:pct(completed,total),accuracy:sample&&s.recent_accuracy!=null?Math.round(number(s.recent_accuracy)):0,accuracySample:sample,remaining:Math.max(0,total-completed)};
+}
+function adapt(payload){
+  const s=payload?.stats||{},lessons={};
+  for(const l of Array.isArray(s.lessons)?s.lessons:[]){
+    const practices={};
+    for(const p of Array.isArray(l?.practices)?l.practices:[])practices[String(p.practice_type||'')]=stat(p);
+    lessons[String(l.lesson||'')]={summary:stat(l),practices,unitId:l.unit_id||null};
   }
-  available.vocabulary=vocabulary;
-  available.vocab_test=vocabTestRaw instanceof Set?vocabTestRaw:new Set((vocabTestRaw||[]).map(String));
-  writeUnitStorage(unitId,available);
-  return available;
+  const review=s.review&&typeof s.review==='object'?s.review:{status:'unavailable',wrong_now:0,wrong_later:0,cleared:0};
+  return{plan:stat(s.summary||{}),lessons,review,meta:{source:'canonical-db-v1',version:s.version||'v1',snapshotSynced:number(payload?.snapshot_synced),aliasesRefreshed:number(payload?.aliases_refreshed),syncedAt:payload?.synced_at||s?.content?.synced_at||null,contentRevision:s?.content?.revision||null,missingUnits:number(s?.content?.missing_units)}};
 }
-async function availableForUnit(unitId){
-  const key=String(unitId||'');if(!key)return emptyAvailable();
-  if(unitCache.has(key)){diag.unitCacheHits++;return unitCache.get(key)}
-  const stored=readUnitStorage(key);
-  if(stored){diag.unitCacheHits++;unitCache.set(key,Promise.resolve(stored));return stored}
-  diag.unitCacheMisses++;
-  const promise=buildAvailableForUnit(key).catch(e=>{unitCache.delete(key);throw e});
-  unitCache.set(key,promise);return promise;
-}
-function currentCompleted(ids,available){
-  const unique=new Set((Array.isArray(ids)?ids:[]).map(String));let n=0;
-  for(const id of unique)if(available.has(id))n++;
-  return n;
-}
-function fromRpc(stat,total,completed){
-  const sample=Math.max(0,number(stat?.recent_count));
-  const hasAccuracy=sample>0&&stat?.recent_accuracy!=null;
-  return{completed,total,coverage:pct(completed,total),accuracy:hasAccuracy?Math.round(number(stat.recent_accuracy)):0,accuracySample:sample};
-}
-function aggregatePlan(lessonStats){
-  const total=lessonStats.reduce((n,x)=>n+x.total,0),completed=lessonStats.reduce((n,x)=>n+x.completed,0);
-  const weighted=lessonStats.filter(x=>x.accuracySample>0),sample=weighted.reduce((n,x)=>n+x.accuracySample,0);
-  const accuracy=sample?Math.round(weighted.reduce((n,x)=>n+x.accuracy*x.accuracySample,0)/sample):0;
-  return{completed,total,coverage:pct(completed,total),accuracy,accuracySample:sample};
-}
-export async function loadCardStats(plan,_studentId,{force=false}={}){
-  const key=String(plan?.id||'');if(!key)return{plan:fromRpc(null,0,0),lessons:{}};
-  if(!force&&cache.has(key))return cache.get(key);
-  const promise=(async()=>{
-    const scope=scopeFor(plan);
-    const [unitMap,rpcRows]=await Promise.all([resolveUnits(plan),cardStats(plan.id)]);
-    const rpcByLesson=new Map(rpcRows.map(x=>[String(x.unit_key||''),x]));
-    const lessonPairs=await Promise.all(scope.map(async row=>{
-      const lesson=String(row.lesson),unitId=unitMap.get(lesson),available=unitId?await availableForUnit(unitId):emptyAvailable(),sections=sectionsFor(row),rpc=rpcByLesson.get(lesson)||null,payload=statPayload(rpc),practices={};
-      for(const practice of ACTIVE){
-        const set=sections.has(practice)?available[practice]:new Set(),ps=payload.byPractice?.[practice]||null,completed=currentCompleted(ps?.attempted_question_ids,set);
-        practices[practice]=fromRpc(ps,set.size,completed);
-      }
-      const activeStats=ACTIVE.filter(p=>sections.has(p)).map(p=>practices[p]),total=activeStats.reduce((n,x)=>n+x.total,0),completed=activeStats.reduce((n,x)=>n+x.completed,0);
-      return[lesson,{summary:fromRpc(rpc,total,completed),practices}];
-    }));
-    const lessons=Object.fromEntries(lessonPairs);
-    return{plan:aggregatePlan(Object.values(lessons).map(x=>x.summary)),lessons};
-  })().catch(e=>{cache.delete(key);throw e});
+async function legacyModule(){return import('./stats-client-legacy-v2.15a.js?v=2.15a')}
+function useLegacy(){try{return localStorage.getItem(LEGACY_FLAG)==='legacy'}catch(_){return false}}
+
+export async function loadCardStats(plan,studentId,{force=false}={}){
+  if(useLegacy()){
+    const legacy=await legacyModule();
+    return legacy.loadCardStats(plan,studentId,{force});
+  }
+  const key=String(plan?.id||'');
+  if(!key)return{plan:stat(),lessons:{},review:{status:'unavailable',wrong_now:0,wrong_later:0,cleared:0}};
+  if(force){cache.delete(key);reviewCache.delete(key)}
+  if(cache.has(key)){diag.cacheHits++;return cache.get(key)}
+  diag.cacheMisses++;
+  const promise=requestCanonical(key).then(payload=>{
+    const data=adapt(payload);reviewCache.set(key,data.review);return data;
+  }).catch(e=>{cache.delete(key);reviewCache.delete(key);throw e});
   cache.set(key,promise);return promise;
 }
-export function invalidateCardStats(planId){if(planId)cache.delete(String(planId));else cache.clear();}
-export function getStatsDiagnostics(){return{...diag,unitCacheEntries:unitCache.size,planCacheEntries:cache.size};}
-export function formatCardMetric(stat){return`${number(stat?.completed)} / ${number(stat?.total)} questions`;}
-export function formatAccuracy(stat){return stat?.accuracySample?`${stat.accuracy}% accuracy`:'— accuracy';}
+export function invalidateCardStats(planId){
+  if(planId){const key=String(planId);cache.delete(key);reviewCache.delete(key)}else{cache.clear();reviewCache.clear()}
+}
+export function getStatsDiagnostics(){return{...diag,unitCacheHits:diag.cacheHits,unitCacheMisses:diag.cacheMisses,planCacheEntries:cache.size};}
+export function formatCardMetric(s){return`${number(s?.completed)} / ${number(s?.total)} questions`;}
+export function formatAccuracy(s){return s?.accuracySample?`${number(s.accuracy)}% accuracy`:'— accuracy';}
 export function reviewCounts(plan){
-  const s=plan?.summary||{},now=number(s.due_review_count??s.wrong_now??s.review_now),unresolved=number(s.unresolved_wrong);
-  const later=unresolved?Math.max(0,unresolved-now):number(s.wrong_later??s.review_later);
-  return{now,later,cleared:number(s.corrected??s.cleared_wrong??s.review_cleared)};
+  if(useLegacy()){
+    const s=plan?.summary||{},now=number(s.due_review_count??s.wrong_now??s.review_now),unresolved=number(s.unresolved_wrong);
+    return{now,later:unresolved?Math.max(0,unresolved-now):number(s.wrong_later??s.review_later),cleared:number(s.corrected??s.cleared_wrong??s.review_cleared)};
+  }
+  const r=reviewCache.get(String(plan?.id||''))||{};
+  return{now:number(r.wrong_now),later:number(r.wrong_later),cleared:number(r.cleared),nextReviewAt:r.next_review_at||null,status:r.status||'unavailable'};
 }
 
-// v2.15 speed architecture: first paint no longer waits for this module.
-// Student stats remain live via test_prep_card_stats; stable unit availability is cached for 15 minutes.
-// Lesson availability loads in parallel and duplicate unit work is deduplicated in memory.
+// v2.16 canonical stats client.
+// DB owns current content identity, totals, completion, recent accuracy and review counts.
+// Set localStorage.willena_tp_stats_source='legacy' for an emergency rollback to the preserved v2.15a client.
