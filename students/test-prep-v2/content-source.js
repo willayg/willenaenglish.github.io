@@ -28,8 +28,14 @@ async function resolveUnit(unitId){
   const promise=get(`/rest/v1/content_units?select=id,book_id,title,unit_type&id=eq.${encodeURIComponent(key)}&limit=1`).then(rows=>rows[0]||null).catch(e=>{unitCache.delete(key);throw e});
   unitCache.set(key,promise);return promise;
 }
+function assignedScopeRows(plan){
+  const scope=plan?.group?.scope||{};
+  const lessons=Array.isArray(scope.lessons)?scope.lessons.filter(x=>x?.lesson):[];
+  const external=Array.isArray(scope.external_passages)?scope.external_passages.map(x=>({...x,lesson:x?.lesson||x?.label||x?.unit_label||''})).filter(x=>x.lesson&&x.unit_id):[];
+  return [...lessons,...external];
+}
 export async function resolveContentIds(plan,lesson){
-  const scope=(plan?.group?.scope?.lessons||[]).find(x=>String(x.lesson)===String(lesson));
+  const scope=assignedScopeRows(plan).find(x=>String(x.lesson)===String(lesson));
   const scopeUnit=scope?.unit_id?String(scope.unit_id):'';
   const cacheKey=`${plan?.book_label||''}|${lesson||''}|${scopeUnit}`;if(idCache.has(cacheKey))return idCache.get(cacheKey);
   const promise=(async()=>{
