@@ -1,5 +1,5 @@
 const APP='willena-test-prep-v2';
-const VIEWS=new Set(['home','plan','lesson','practice','result']);
+const VIEWS=new Set(['home','plan','lesson','practice','result','review']);
 let renderRoute=null,beforeChange=null,current=null,started=false;
 
 const text=v=>v==null?null:String(v);
