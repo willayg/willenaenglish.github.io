@@ -72,7 +72,7 @@ export class QuestionRenderer{
     this.bind(question);this.emit();return this;
   }
   controls(q){
-    if(q.form===FORMS.choice||q.form===FORMS.multi)return `<div class="choices">${q.choices.map((x,i)=>`<button type="button" class="choice" data-choice="${i+1}"><span>${numberMark(i)}</span> ${textHtml(x)}</button>`).join('')}</div>`;
+    if(q.form===FORMS.choice||q.form===FORMS.multi){const under=spans(q.context);return `<div class="choices">${q.choices.map((x,i)=>`<button type="button" class="choice" data-choice="${i+1}"><span>${numberMark(i)}</span> ${marked(x,under)}</button>`).join('')}</div>`}
     if(q.form===FORMS.write)return `<textarea class="answer" data-write autocomplete="off" spellcheck="false" placeholder="답을 입력하세요"></textarea>`;
     if(q.form===FORMS.multipart){const marks=['ⓐ','ⓑ','ⓒ','ⓓ','ⓔ','ⓕ'];return `<div class="structured">${answerParts(q).map((_,i)=>`<div class="part-row"><div class="row-label">${marks[i]||i+1}</div><input class="text-input" data-part="${i}" autocomplete="off" spellcheck="false" placeholder="답 ${i+1}"></div>`).join('')}</div>`}
     if(q.form===FORMS.correction){const marks=['ⓐ','ⓑ','ⓒ','ⓓ','ⓔ','ⓕ'];return `<div class="structured">${answerParts(q).map((a,i)=>{parseCorrection(a);return `<div class="correction-row"><div class="row-label">${marks[i]||i+1}</div><input class="text-input" data-wrong="${i}" autocomplete="off" spellcheck="false" placeholder="틀린 부분"><div class="arrow">→</div><input class="text-input" data-right="${i}" autocomplete="off" spellcheck="false" placeholder="고친 부분"></div>`}).join('')}</div>`}
