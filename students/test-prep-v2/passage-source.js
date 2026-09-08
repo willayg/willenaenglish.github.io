@@ -18,6 +18,11 @@ function shuffled(items){
   return a;
 }
 function tokens(text){return String(text||'').trim().split(/\s+/).filter(Boolean)}
+function cueTranslation(sentence){
+  const raw=String(sentence?.translationKo||'').trim();
+  if(!raw||!sentence?.speaker)return raw;
+  return raw.replace(/^[^:：\n]{1,30}[:：]\s*/,'').trim()||raw;
+}
 function normalizeRow(row){
   return{
     occurrenceId:String(row.occurrence_id||''),
@@ -58,7 +63,7 @@ export async function passageAvailable(unitId){return (await loadPassages(unitId
 export function invalidatePassages(unitId){if(unitId)cache.delete(String(unitId));else cache.clear()}
 
 export function passageQuestion(sentence,passage){
-  const chips=shuffled(tokens(sentence?.text||''));
+  const chips=shuffled(tokens(sentence?.text||'')),korean=cueTranslation(sentence);
   if(!sentence?.occurrenceId||!sentence?.text||!chips.length)return null;
   return{
     id:String(sentence.occurrenceId),
@@ -69,7 +74,7 @@ export function passageQuestion(sentence,passage){
     form:FORMS.chunks,
     source:{code:'',label:`본문 · ${passage?.title||sentence.passageTitle||'본문'}`,sourceId:sentence.passageId||passage?.id||null,sourceQuestionNumber:sentence.order||null,page:sentence.page??passage?.page??null},
     prompt:'다음 우리말 문장을 영어 문장으로 완성하세요.',
-    context:{korean:sentence.translationKo},
+    context:{korean},
     choices:[],
     chips,
     answer:[String(sentence.text)],
