@@ -1,0 +1,37 @@
+name: Fix AI Willi spelling once
+
+on:
+  push:
+    branches:
+      - staging
+    paths:
+      - .github/workflows/fix-ai-willi-spelling-once.yml
+
+permissions:
+  contents: write
+
+jobs:
+  fix-spelling:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: staging
+      - name: Normalize AI Willi spelling
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('index-v2.html')
+          s = p.read_text(encoding='utf-8')
+          s = s.replace('AI WILLi', 'AI Willi')
+          s = s.replace('WILLi', 'Willi')
+          p.write_text(s, encoding='utf-8')
+          PY
+          rm .github/workflows/fix-ai-willi-spelling-once.yml
+      - name: Commit spelling fix
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index-v2.html .github/workflows/fix-ai-willi-spelling-once.yml
+          git commit -m "Normalize AI Willi spelling"
+          git push origin HEAD:staging
