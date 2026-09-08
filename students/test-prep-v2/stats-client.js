@@ -6,7 +6,12 @@ const CONTENT_KEY=['sb_publishable_','G-FYhHfDL4OGdL892gY1Zg_','epdbEeqO'].join(
 const TRACK='https://fiieuiktlsivwfgyivai.supabase.co';
 const TRACK_KEY='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
 const ACTIVE=['vocabulary','vocab_test','communication','grammar','reading','constructed_response'];
+const UNIT_CACHE_PREFIX='willena_tp_v2_unit_available_v2:';
+const UNIT_CACHE_TTL=15*60*1000;
 const cache=new Map();
+const unitCache=new Map();
+const unitMapCache=new Map();
+const diag={unitCacheHits:0,unitCacheMisses:0,unitLoads:0};
 
 const token=()=>window.WillenaAPI?.getLocalAccessToken?.()||localStorage.getItem('sb_access_token')||'';
 const pct=(n,d)=>d?Math.max(0,Math.min(100,Math.round((Number(n)||0)/(Number(d)||1)*100))):0;
@@ -45,13 +50,28 @@ function sectionsFor(row){const sections=new Set((row?.sections||[]).map(norm));
 async function resolveUnits(plan){
   const scope=scopeFor(plan),map=new Map(scope.filter(x=>x.unit_id).map(x=>[String(x.lesson),String(x.unit_id)]));
   if(map.size===scope.length)return map;
-  const books=await contentGet(`/rest/v1/content_books?select=id,title&title=eq.${encodeURIComponent(plan?.book_label||'')}&limit=1`),bookId=books?.[0]?.id;
+  const bookKey=String(plan?.book_label||'');
+  if(unitMapCache.has(bookKey)){
+    const cached=unitMapCache.get(bookKey);for(const row of scope)if(!map.has(String(row.lesson))&&cached.has(String(row.lesson)))map.set(String(row.lesson),cached.get(String(row.lesson)));return map;
+  }
+  const books=await contentGet(`/rest/v1/content_books?select=id,title&title=eq.${encodeURIComponent(bookKey)}&limit=1`),bookId=books?.[0]?.id;
   if(!bookId)return map;
   const units=await contentPaged(`/rest/v1/content_units?select=id,title&book_id=eq.${encodeURIComponent(bookId)}`),byTitle=new Map(units.map(x=>[String(x.title),String(x.id)]));
+  unitMapCache.set(bookKey,byTitle);
   for(const row of scope)if(!map.has(String(row.lesson))&&byTitle.has(String(row.lesson)))map.set(String(row.lesson),byTitle.get(String(row.lesson)));
   return map;
 }
 function emptyAvailable(){return Object.fromEntries(ACTIVE.map(k=>[k,new Set()]));}
+function serializeAvailable(available){return Object.fromEntries(ACTIVE.map(k=>[k,[...(available?.[k]||[])]]));}
+function hydrateAvailable(raw){const out=emptyAvailable();for(const k of ACTIVE)out[k]=new Set(Array.isArray(raw?.[k])?raw[k].map(String):[]);return out}
+function readUnitStorage(unitId){
+  try{
+    const raw=JSON.parse(localStorage.getItem(UNIT_CACHE_PREFIX+unitId)||'null');
+    if(!raw||!raw.savedAt||Date.now()-Number(raw.savedAt)>UNIT_CACHE_TTL)return null;
+    return hydrateAvailable(raw.available);
+  }catch(_){return null}
+}
+function writeUnitStorage(unitId,available){try{localStorage.setItem(UNIT_CACHE_PREFIX+unitId,JSON.stringify({savedAt:Date.now(),available:serializeAvailable(available)}))}catch(_){}}
 async function usableLexicalIds(unitId){
   const occ=await contentPaged(`/rest/v1/source_content_occurrences?select=lexical_entry_id&unit_id=eq.${encodeURIComponent(unitId)}&occurrence_type=eq.lexical_entry&skill=eq.vocabulary`);
   const ids=[...new Set(occ.map(x=>String(x.lexical_entry_id||'')).filter(Boolean))];if(!ids.length)return new Set();
@@ -61,19 +81,33 @@ async function usableLexicalIds(unitId){
   for(const row of rows){const word=norm(row.canonical_text);if(!word||!String(row.translation_ko||'').trim()||seen.has(word))continue;seen.add(word);usable.add(String(row.id))}
   return usable;
 }
-async function availableForUnit(unitId){
+async function buildAvailableForUnit(unitId){
+  diag.unitLoads++;
   const available=emptyAvailable();
-  const rows=await contentPaged(`/rest/v1/test_prep_questions?select=${encodeURIComponent('id,section,answer_mode,choices,correct_answer,metadata,replacement_needed,student_usable')}&unit_id=eq.${encodeURIComponent(unitId)}&student_usable=eq.true`);
+  const [rows,vocabulary,vocabTestRaw]=await Promise.all([
+    contentPaged(`/rest/v1/test_prep_questions?select=${encodeURIComponent('id,section,answer_mode,choices,correct_answer,metadata,replacement_needed,student_usable')}&unit_id=eq.${encodeURIComponent(unitId)}&student_usable=eq.true`),
+    usableLexicalIds(unitId),
+    loadVocabularyTestAvailableIds(unitId)
+  ]);
   for(const row of rows){
     if(row.replacement_needed===true)continue;
     const section=norm(row.section),form=detectForm(row),id=String(row.id||'');if(!id)continue;
     if(['communication','grammar','reading'].includes(section)&&[FORMS.choice,FORMS.multi].includes(form))available[section].add(id);
     if(isAuthoredWritten(row)&&[FORMS.write,FORMS.multipart,FORMS.correction].includes(form))available.constructed_response.add(id);
   }
-  const [vocabulary,vocabTest]=await Promise.all([usableLexicalIds(unitId),loadVocabularyTestAvailableIds(unitId)]);
   available.vocabulary=vocabulary;
-  available.vocab_test=vocabTest;
+  available.vocab_test=vocabTestRaw instanceof Set?vocabTestRaw:new Set((vocabTestRaw||[]).map(String));
+  writeUnitStorage(unitId,available);
   return available;
+}
+async function availableForUnit(unitId){
+  const key=String(unitId||'');if(!key)return emptyAvailable();
+  if(unitCache.has(key)){diag.unitCacheHits++;return unitCache.get(key)}
+  const stored=readUnitStorage(key);
+  if(stored){diag.unitCacheHits++;unitCache.set(key,Promise.resolve(stored));return stored}
+  diag.unitCacheMisses++;
+  const promise=buildAvailableForUnit(key).catch(e=>{unitCache.delete(key);throw e});
+  unitCache.set(key,promise);return promise;
 }
 function currentCompleted(ids,available){
   const unique=new Set((Array.isArray(ids)?ids:[]).map(String));let n=0;
@@ -95,21 +129,25 @@ export async function loadCardStats(plan,_studentId,{force=false}={}){
   const key=String(plan?.id||'');if(!key)return{plan:fromRpc(null,0,0),lessons:{}};
   if(!force&&cache.has(key))return cache.get(key);
   const promise=(async()=>{
-    const scope=scopeFor(plan),unitMap=await resolveUnits(plan),rpcRows=await cardStats(plan.id),rpcByLesson=new Map(rpcRows.map(x=>[String(x.unit_key||''),x])),lessons={};
-    for(const row of scope){
+    const scope=scopeFor(plan);
+    const [unitMap,rpcRows]=await Promise.all([resolveUnits(plan),cardStats(plan.id)]);
+    const rpcByLesson=new Map(rpcRows.map(x=>[String(x.unit_key||''),x]));
+    const lessonPairs=await Promise.all(scope.map(async row=>{
       const lesson=String(row.lesson),unitId=unitMap.get(lesson),available=unitId?await availableForUnit(unitId):emptyAvailable(),sections=sectionsFor(row),rpc=rpcByLesson.get(lesson)||null,payload=statPayload(rpc),practices={};
       for(const practice of ACTIVE){
         const set=sections.has(practice)?available[practice]:new Set(),ps=payload.byPractice?.[practice]||null,completed=currentCompleted(ps?.attempted_question_ids,set);
         practices[practice]=fromRpc(ps,set.size,completed);
       }
       const activeStats=ACTIVE.filter(p=>sections.has(p)).map(p=>practices[p]),total=activeStats.reduce((n,x)=>n+x.total,0),completed=activeStats.reduce((n,x)=>n+x.completed,0);
-      lessons[lesson]={summary:fromRpc(rpc,total,completed),practices};
-    }
+      return[lesson,{summary:fromRpc(rpc,total,completed),practices}];
+    }));
+    const lessons=Object.fromEntries(lessonPairs);
     return{plan:aggregatePlan(Object.values(lessons).map(x=>x.summary)),lessons};
   })().catch(e=>{cache.delete(key);throw e});
   cache.set(key,promise);return promise;
 }
 export function invalidateCardStats(planId){if(planId)cache.delete(String(planId));else cache.clear();}
+export function getStatsDiagnostics(){return{...diag,unitCacheEntries:unitCache.size,planCacheEntries:cache.size};}
 export function formatCardMetric(stat){return`${number(stat?.completed)} / ${number(stat?.total)} questions`;}
 export function formatAccuracy(stat){return stat?.accuracySample?`${stat.accuracy}% accuracy`:'— accuracy';}
 export function reviewCounts(plan){
@@ -118,8 +156,6 @@ export function reviewCounts(plan){
   return{now,later,cleared:number(s.corrected??s.cleared_wrong??s.review_cleared)};
 }
 
-// Card history uses the same authenticated test_prep_card_stats RPC as v1.
-// No browser read of test_prep_attempts exists here.
-// Coverage intersects RPC attempted IDs with the current usable content pool.
-// vocab_test is derived from vocabulary scope, matching the v1 station model.
-// Accuracy currently inherits v1's RPC recent window (latest 50 unique questions).
+// v2.15 speed architecture: first paint no longer waits for this module.
+// Student stats remain live via test_prep_card_stats; stable unit availability is cached for 15 minutes.
+// Lesson availability loads in parallel and duplicate unit work is deduplicated in memory.
