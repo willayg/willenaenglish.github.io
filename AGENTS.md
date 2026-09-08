@@ -26,6 +26,24 @@ Some existing frontend code may still contain historical `/.netlify/functions/..
 
 ---
 
+# STUDENT SHARED PLATFORM
+
+For any work under `students/`, read `students/AGENTS.md`.
+
+`students/shared/` is the cross-app student platform layer, not a Test Prep/내신-only folder.
+
+The canonical browser-side owner for student statistics is:
+
+`students/shared/student-stats.js`
+
+All student apps must use that shared stats owner instead of creating app-specific totals, completion, accuracy, progress, or review calculations. The backend/database owns the actual numerical truth; the shared module is the single frontend gateway for those numbers.
+
+If a new student stats domain is needed, extend the shared stats contract/backend and expose it through `students/shared/`. Do not create competing stats engines in individual apps.
+
+Read `students/shared/AGENTS.md` before changing shared student platform code.
+
+---
+
 # READ THIS BEFORE TOUCHING TEST PREP V2 OR THE RENDER LAB
 
 If you duplicate the question renderer, you have broken the architecture.
@@ -129,8 +147,8 @@ If yes, stop and use the existing owner.
 - `app.js` — the single route-to-screen renderer/controller; it requests navigation but does not own browser history
 - content/source modules — question generation/loading only
 - `tracking-client.js` — attempts/sessions only
-- stats module/service — Test Prep metrics only
-- review service — wrong-answer state/queue only
+- `students/shared/student-stats.js` — canonical frontend gateway for ALL student stats; Test Prep must consume it rather than owning stats logic
+- review workflow/UI — may consume canonical review stats/state but must not invent a second statistical truth
 
 A module may call another owner. It may not reimplement that owner's job.
 
