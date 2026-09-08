@@ -22,12 +22,12 @@ async function paged(path){const rows=[];for(let start=0;start<10000;start+=1000
 const selectedBookIds=()=>$('#book').value==='*'?middleBooks.map(x=>String(x.id)):[$('#book').value];
 const inFilter=ids=>`in.(${ids.join(',')})`;
 const selectedSkill=()=>SKILLS.find(x=>x.id===$('#skill').value);
-const rowFields='id,book_id,unit_id,source_id,source_question_number,source_page,section,question_type,prompt_text,context,choices,correct_answer,answer_mode,student_source_label,content_status,metadata,targets,replacement_needed';
+const rowFields='id,book_id,unit_id,source_id,source_question_number,source_page,section,question_type,prompt_text,context,choices,correct_answer,answer_mode,student_source_label,content_status,metadata,targets,replacement_needed,created_at';
 async function fetchRows(section='',answerMode=''){
   const ids=selectedBookIds(),sf=section?`&section=eq.${encodeURIComponent(section)}`:'',af=answerMode?`&answer_mode=eq.${encodeURIComponent(answerMode)}`:'';
   return (await paged(`/rest/v1/test_prep_questions?select=${encodeURIComponent(rowFields)}&student_usable=eq.true${sf}${af}&book_id=${inFilter(ids)}`)).filter(r=>r.replacement_needed!==true);
 }
-const adaptRows=rows=>rows.map(adaptStored);
+const adaptRows=rows=>rows.map(row=>({...adaptStored(row),_createdAt:row.created_at||null}));
 async function loadUnits(){const ids=selectedBookIds(),rows=await paged(`/rest/v1/content_units?select=id,book_id,title&book_id=${inFilter(ids)}`);unitBookMap=new Map(rows.map(r=>[String(r.id),String(r.book_id)]));return rows}
 
 async function fetchLexical(ids){const out=[];for(let i=0;i<ids.length;i+=100)out.push(...await get(`/rest/v1/lexical_entries?select=id,canonical_text,translation_ko,definition_en,part_of_speech&id=${inFilter(ids.slice(i,i+100))}`));return out}
@@ -57,12 +57,12 @@ function performanceVariants(row){
   ];
   const ws=words(target);if(ws.length>=3){const picks=[Math.floor(ws.length/3),Math.floor(ws.length*2/3)].filter((x,i,a)=>x>=0&&x<ws.length&&a.indexOf(x)===i),missing=picks.map(i=>ws[i].replace(/^[“"'(]+|[”"'),.!?;:]+$/g,'')),masked=ws.map((w,i)=>picks.includes(i)?w.replace(/[A-Za-z][A-Za-z'-]*/,'_____'):w).join(' ');variants.push({...base,id:`${row.id}:blanks`,form:FORMS.blanks,prompt_text:'빈칸을 완성하세요.',context:{korean:ko,masked},correct_answer:missing,chips:[...missing].reverse()})}
   if(chunks.length>1)variants.push({...base,id:`${row.id}:chunks`,form:FORMS.chunks,prompt_text:'청크 배열',context:{korean:ko},correct_answer:[target],chips:chunks});
-  return variants.map(adaptStored);
+  return variants.map(v=>({...adaptStored(v),_createdAt:row.created_at||null}));
 }
 async function loadPerformance(){return(await fetchRows('performance')).flatMap(performanceVariants)}
 async function loadSentences(){
-  const units=await loadUnits(),wanted=new Set(units.map(u=>String(u.id))),rows=await paged('/rest/v1/passages?select=id,title,body,source_key,metadata&status=eq.published&order=source_key.asc'),out=[];
-  for(const p of rows){const unitId=String(p.metadata?.unit_id||'');if(!wanted.has(unitId))continue;const bookId=unitBookMap.get(unitId)||null,translations=Array.isArray(p.metadata?.sentence_translations_ko)?p.metadata.sentence_translations_ko:[];for(const s of splitPassageSentences(p.body,p.title,p.id,translations))out.push(adaptStored({id:`lab:sentence:${p.id}:${s.sentenceIndex}`,book_id:bookId,unit_id:unitId,section:'sentences',question_type:'sentence_unscramble',prompt_text:'다음 우리말 문장을 영어로 완성하세요.',context:{korean:s.ko||'',speaker:s.speaker||'',passage:s.passageTitle||''},correct_answer:[s.text],form:FORMS.order,chips:words(s.text),student_source_label:'Book Reference'}))}
+  const units=await loadUnits(),wanted=new Set(units.map(u=>String(u.id))),rows=await paged('/rest/v1/passages?select=id,title,body,source_key,metadata,created_at&status=eq.published&order=source_key.asc'),out=[];
+  for(const p of rows){const unitId=String(p.metadata?.unit_id||'');if(!wanted.has(unitId))continue;const bookId=unitBookMap.get(unitId)||null,translations=Array.isArray(p.metadata?.sentence_translations_ko)?p.metadata.sentence_translations_ko:[];for(const s of splitPassageSentences(p.body,p.title,p.id,translations))out.push({...adaptStored({id:`lab:sentence:${p.id}:${s.sentenceIndex}`,book_id:bookId,unit_id:unitId,section:'sentences',question_type:'sentence_unscramble',prompt_text:'다음 우리말 문장을 영어로 완성하세요.',context:{korean:s.ko||'',speaker:s.speaker||'',passage:s.passageTitle||''},correct_answer:[s.text],form:FORMS.order,chips:words(s.text),student_source_label:'Book Reference'}),_createdAt:p.created_at||null})}
   return out;
 }
 
@@ -70,6 +70,13 @@ function textTree(value){if(value==null)return'';if(typeof value==='string'||typ
 function hasUnderline(q){const c=q?.context||{};return Boolean(String(c.underlined||'').trim()||(Array.isArray(c.underlined_spans)&&c.underlined_spans.length)||/밑줄|underlin/i.test(`${q?.prompt||''} ${q?.tracking?.questionType||''}`))}
 function hasBlank(q){const hay=`${q?.prompt||''} ${q?.tracking?.questionType||''} ${textTree(q?.context||{})}`;return q?.form===FORMS.blanks||/빈칸|blank|cloze/i.test(hay)||/_{2,}/.test(hay)}
 function featureMatch(q){const f=$('#feature').value;if(f==='underline')return hasUnderline(q);if(f==='blank')return hasBlank(q);return true}
+function dateAddedCutoff(){
+  const v=$('#dateAdded')?.value||'all';if(v==='all')return null;
+  const now=new Date();if(v==='today')return new Date(now.getFullYear(),now.getMonth(),now.getDate()).getTime();
+  const days=v==='24h'?1:v==='3d'?3:v==='7d'?7:v==='30d'?30:0;return days?now.getTime()-days*86400000:null;
+}
+function dateAddedMatch(q){const cutoff=dateAddedCutoff();if(cutoff==null)return true;const t=Date.parse(q?._createdAt||'');return Number.isFinite(t)&&t>=cutoff}
+function filteredPool(){return all.filter(q=>featureMatch(q)&&dateAddedMatch(q))}
 
 async function loadSkill(){
   const s=selectedSkill();$('#card').innerHTML='<div class="empty">Loading…</div>';$('#book').disabled=false;
@@ -77,10 +84,10 @@ async function loadSkill(){
   setForms();
 }
 function setForms(){
-  const pool=all.filter(featureMatch),current=$('#form').value,counts=new Map();for(const q of pool)counts.set(q.form,(counts.get(q.form)||0)+1);
+  const pool=filteredPool(),current=$('#form').value,counts=new Map();for(const q of pool)counts.set(q.form,(counts.get(q.form)||0)+1);
   $('#form').innerHTML=[...counts.entries()].map(([f,n])=>`<option value="${esc(f)}">${esc(FORM_LABELS[f]||f)} · ${n}</option>`).join('');if(current&&counts.has(current))$('#form').value=current;applyForm();
 }
-function applyForm(){visible=all.filter(q=>featureMatch(q)&&q.form===$('#form').value);index=0;render()}
+function applyForm(){visible=filteredPool().filter(q=>q.form===$('#form').value).sort((a,b)=>Date.parse(b?._createdAt||0)-Date.parse(a?._createdAt||0));index=0;render()}
 function meta(q){const code=q?.source?.code||'',badge=$('#sourceBadge');badge.hidden=!code;badge.textContent=code;badge.title=code==='Z'?'Zocbo':code==='W'?'Willena authored':code==='B'?'Book reference':'';$('#bookTitle').textContent=q?.bookId?bookMap.get(String(q.bookId))||'':'';$('#count').textContent=`${visible.length} question${visible.length===1?'':'s'}`;$('#position').textContent=q?`Question ${index+1} of ${visible.length}`:'Question —'}
 function render(){
   const q=visible[index];meta(q);$('#prev').disabled=index<=0;$('#next').disabled=!q||index>=visible.length-1;$('#check').disabled=!q||q.form===FORMS.learn||q.form===FORMS.unsupported;
@@ -92,7 +99,7 @@ async function boot(){
   try{
     middleBooks=await get('/rest/v1/content_books?select=id,title,school_grade&school_grade=in.(1,2,3)&order=school_grade.asc,title.asc');bookMap=new Map(middleBooks.map(b=>[String(b.id),b.title]));
     $('#skill').innerHTML=SKILLS.map(s=>`<option value="${s.id}">${esc(s.name)}</option>`).join('');$('#book').innerHTML=`<option value="*">All middle school</option>${middleBooks.map(b=>`<option value="${esc(b.id)}">${esc(b.title)}</option>`).join('')}`;
-    $('#skill').onchange=loadSkill;$('#book').onchange=loadSkill;$('#form').onchange=applyForm;$('#feature').onchange=setForms;$('#prev').onclick=()=>{if(index>0){index--;render()}};$('#next').onclick=()=>{if(index<visible.length-1){index++;render()}};$('#check').onclick=check;
+    $('#skill').onchange=loadSkill;$('#book').onchange=loadSkill;$('#form').onchange=applyForm;$('#feature').onchange=setForms;$('#dateAdded').onchange=setForms;$('#prev').onclick=()=>{if(index>0){index--;render()}};$('#next').onclick=()=>{if(index<visible.length-1){index++;render()}};$('#check').onclick=check;
     document.addEventListener('keydown',e=>{if(/INPUT|TEXTAREA|SELECT/.test(document.activeElement?.tagName||''))return;if(e.key==='ArrowLeft')$('#prev').click();if(e.key==='ArrowRight')$('#next').click();if(e.key==='Enter'&&!$('#check').disabled)$('#check').click()});await loadSkill();
   }catch(e){console.error('[renderer lab]',e);$('#card').innerHTML=`<div class="empty">${esc(e.message||'Failed to load')}</div>`}
 }
