@@ -79,8 +79,9 @@ export function setTrackingContext(plan,lesson){
 }
 export async function startSession(practiceType){
   const practice=String(practiceType||'').toLowerCase();
-  if(state.session&&state.practice===practice)return state.session;
-  if(state.session&&state.practice!==practice)await completeSession({correct:0,total:0,wrongIds:[]});
+  const sameLiveContext=state.session&&state.practice===practice&&String(state.session?.unit_key||'')===String(state.lesson||'');
+  if(sameLiveContext)return state.session;
+  if(state.session)await completeSession({correct:0,total:0,wrongIds:[]});
   await flushPendingSessionCloses('before-start');
   if(!state.plan)throw new Error('No active test-prep plan.');
   const recovered=recoverSession(practice);if(recovered)return recovered;
