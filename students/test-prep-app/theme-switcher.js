@@ -38,8 +38,22 @@ function addDock(){
   syncDock();
 }
 
+function addStagingSwitcher(){
+  if(document.getElementById('tpStagingSwitcher'))return;
+  const style=document.createElement('style');
+  style.textContent='.tp-staging-switcher{position:fixed;left:12px;bottom:12px;z-index:2147483646;display:flex;align-items:center;gap:6px;padding:5px;border:1px solid rgba(32,48,57,.14);border-radius:999px;background:rgba(255,255,255,.94);box-shadow:0 4px 18px rgba(32,48,57,.12);font:800 11px/1 Poppins,sans-serif;backdrop-filter:blur(10px)}.tp-staging-switcher a,.tp-staging-switcher span{display:inline-flex;align-items:center;justify-content:center;min-width:28px;height:28px;padding:0 9px;border-radius:999px;text-decoration:none;color:#526168;background:#eef4f5;box-sizing:border-box}.tp-staging-switcher .active{color:#fff;background:#07888d}@media(max-width:620px){.tp-staging-switcher{left:8px;bottom:8px}.tp-staging-switcher a,.tp-staging-switcher span{height:26px;min-width:26px;padding:0 8px;font-size:10px}}';
+  document.head.appendChild(style);
+  const nav=document.createElement('div');
+  nav.id='tpStagingSwitcher';
+  nav.className='tp-staging-switcher';
+  nav.setAttribute('aria-label','Staging test prep switcher');
+  nav.innerHTML='<span class="active" aria-current="page" title="Test Prep A">A</span><a href="../test-prep-v2/" title="Test Prep V2">B</a>';
+  document.body.appendChild(nav);
+}
+
 function boot(){
   addDock();
+  addStagingSwitcher();
   let saved='cyan';
   try{saved=localStorage.getItem(STORAGE_KEY)||'cyan'}catch(_){}
   applyTheme(saved,false);
