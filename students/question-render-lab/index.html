@@ -15,10 +15,10 @@
     <div class="field"><label>Textbook</label><select id="book"></select></div>
     <div class="field"><label>Question form</label><select id="form"></select></div>
     <div class="field"><label>Feature</label><select id="feature"><option value="all">All questions</option><option value="underline">Underlined</option><option value="blank">Fill in the blank</option></select></div>
-    <div class="field"><label>Date added</label><select id="dateAdded"><option value="all">All dates</option><option value="today">Today</option><option value="24h">Last 24 hours</option><option value="3d">Last 3 days</option><option value="7d">Last 7 days</option><option value="30d">Last 30 days</option></select></div>
+    <div class="field"><label>Date added / modified</label><select id="dateAdded"><option value="all">All dates</option><optgroup label="Date added"><option value="created:today">Added today</option><option value="created:24h">Added in last 24 hours</option><option value="created:3d">Added in last 3 days</option><option value="created:7d">Added in last 7 days</option><option value="created:30d">Added in last 30 days</option></optgroup><optgroup label="Date modified"><option value="modified:today">Modified today</option><option value="modified:24h">Modified in last 24 hours</option><option value="modified:3d">Modified in last 3 days</option><option value="modified:7d">Modified in last 7 days</option><option value="modified:30d">Modified in last 30 days</option></optgroup></select></div>
   </div>
   <div class="meta">
-    <span class="rev-badge">REV 10</span>
+    <span class="rev-badge">REV 11</span>
     <span class="rev-badge">SHARED RENDERER</span>
     <span id="sourceBadge" class="source-badge" hidden></span>
     <span id="bookTitle" class="book-title"></span>
@@ -32,6 +32,6 @@
   <button class="check" id="check">Check Answer</button>
   <button class="next" id="next">Next Question →</button>
 </div>
-<script type="module" src="./lab.js?v=rev10"></script>
+<script type="module" src="./lab.js?v=rev11"></script>
 </body>
 </html>
