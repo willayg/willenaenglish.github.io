@@ -68,3 +68,15 @@ There is also exactly ONE browser/history navigation owner for Test Prep v2:
 Only that file may call `history.pushState`, `history.replaceState`, or listen to `popstate`.
 
 Do not add workflow-specific Back handlers, history stacks, `navigation-fix.js`, `back-fix.js`, or another `popstate` listener. UI Back controls must request the canonical navigator's `back()` behavior. If device/browser Back is wrong, fix `navigation.js` or the single route renderer in `app.js`.
+
+## TEST PREP V2 PRIMARY ACTION STYLE
+
+Important/confirm/continue actions must not use white text on a teal fill.
+
+The canonical V2 action treatment is:
+
+- white background
+- light cyan border
+- pink text
+
+The canonical action colors live in `students/test-prep-v2/styles.css` as `--action-bg`, `--action-border`, and `--action-text`. Workflow CSS should consume those variables instead of inventing its own primary-button colors.
