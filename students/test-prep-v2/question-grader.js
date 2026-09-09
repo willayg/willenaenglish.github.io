@@ -6,6 +6,35 @@ const asArray=v=>Array.isArray(v)?v:[v];
 const CIRCLED_NUM=['①','②','③','④','⑤','⑥','⑦','⑧','⑨','⑩','⑪','⑫','⑬','⑭','⑮','⑯','⑰','⑱','⑲','⑳'];
 function correctionLabel(v){const s=String(v||'').trim().replace(/:$/,'');const n=CIRCLED_NUM.indexOf(s);if(n>=0)return String(n+1);const m=s.match(/^\d+$/);return m?String(Number(s)):s.toLowerCase()}
 function correctionNorm(v){const p=parseCorrection(v);return p?`${correctionLabel(p.label||p.prefix)}|${norm(p.wrong)}|${norm(p.right)}`:norm(v)}
+function correctionTokens(v){const s=norm(v).replace(/[.!?,;:()]+/g,' ');return s.split(/\s+/).filter(Boolean)}
+function expandedCorrectionEquivalent(referenceWrong,referenceRight,studentWrong,studentRight){
+  const rw=correctionTokens(referenceWrong),rr=correctionTokens(referenceRight),sw=correctionTokens(studentWrong),sr=correctionTokens(studentRight);
+  if(!rw.length||!rr.length||!sw.length||!sr.length)return false;
+  if(sw.length===rw.length&&sr.length===rr.length&&sw.every((x,i)=>x===rw[i])&&sr.every((x,i)=>x===rr[i]))return true;
+  if(sw.length<rw.length)return false;
+  for(let i=0;i<=sw.length-rw.length;i++){
+    if(!rw.every((x,j)=>sw[i+j]===x))continue;
+    const expected=[...sw.slice(0,i),...rr,...sw.slice(i+rw.length)];
+    if(expected.length===sr.length&&expected.every((x,j)=>x===sr[j]))return true;
+  }
+  return false;
+}
+function correctionPairEquivalent(reference,student,{requireLabel=false}={}){
+  const r=parseCorrection(reference),s=parseCorrection(student);if(!r||!s)return false;
+  if(requireLabel&&correctionLabel(r.label||r.prefix)!==correctionLabel(s.label||s.prefix))return false;
+  return expandedCorrectionEquivalent(r.wrong,r.right,s.wrong,s.right);
+}
+function correctionArrayEquivalent(referenceAnswers,studentAnswers,{requireLabel=false,orderIrrelevant=false}={}){
+  const refs=asArray(referenceAnswers),mine=asArray(studentAnswers);if(refs.length!==mine.length)return false;
+  if(!orderIrrelevant&&!requireLabel)return refs.every((r,i)=>correctionPairEquivalent(r,mine[i]));
+  const used=new Set();
+  for(const r of refs){
+    let hit=-1;
+    for(let i=0;i<mine.length;i++){if(used.has(i))continue;if(correctionPairEquivalent(r,mine[i],{requireLabel})){hit=i;break}}
+    if(hit<0)return false;used.add(hit);
+  }
+  return true;
+}
 
 function checkConstraints(question,response){
   const c=question?.grading?.constraints||{},parts=Array.isArray(response)?response:[response],text=parts.join('\n');
@@ -26,8 +55,9 @@ function exact(question,response){
   const target=(question.answer||[]).map(norm).filter(Boolean),mine=normalizeResponse(question,response),c=question?.grading?.constraints||{};
   if(question.form===FORMS.choice)return Array.isArray(mine)&&mine.length===1&&target.includes(mine[0]);
   if(question.form===FORMS.multi){const a=[...mine].sort(),b=[...target].sort();return a.length===b.length&&a.every((x,i)=>x===b[i])}
-  if(question.form===FORMS.identifiedCorrection){const a=[...mine].sort(),b=(question.answer||[]).map(correctionNorm).filter(Boolean).sort();return a.length===b.length&&a.every((x,i)=>x===b[i])}
-  if(question.form===FORMS.multipart||question.form===FORMS.correction||question.form===FORMS.blanks){let a=[...mine],b=[...target];if(c.answerOrderIrrelevant){a.sort();b.sort()}return a.length===b.length&&a.every((x,i)=>x===b[i])}
+  if(question.form===FORMS.identifiedCorrection)return correctionArrayEquivalent(question.answer,response,{requireLabel:true,orderIrrelevant:true});
+  if(question.form===FORMS.correction)return correctionArrayEquivalent(question.answer,response,{orderIrrelevant:!!c.answerOrderIrrelevant});
+  if(question.form===FORMS.multipart||question.form===FORMS.blanks){let a=[...mine],b=[...target];if(c.answerOrderIrrelevant){a.sort();b.sort()}return a.length===b.length&&a.every((x,i)=>x===b[i])}
   if(c.alternatives)return target.includes(String(mine));
   return target.some(a=>a===String(mine));
 }
