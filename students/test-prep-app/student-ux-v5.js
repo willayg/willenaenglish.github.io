@@ -14,8 +14,10 @@ function plans(){return state()?.plans||[]}
 function home(){return $('#assignmentHome')}
 function quiz(){return $('#assignedQuizPane')}
 function scopeFor(plan){
- const ls=plan?.group?.scope?.lessons;
- if(Array.isArray(ls)&&ls.length)return ls.filter(x=>x?.lesson);
+ const scope=plan?.group?.scope||{};
+ const lessons=Array.isArray(scope.lessons)?scope.lessons.filter(x=>x?.lesson):[];
+ const external=Array.isArray(scope.external_passages)?scope.external_passages.map(x=>({...x,lesson:x?.lesson||x?.label||x?.unit_label||''})).filter(x=>x.lesson&&x.unit_id):[];
+ if(lessons.length||external.length){const seen=new Set();return [...lessons,...external].filter(x=>{const k=String(x?.unit_id||x?.lesson||'');if(!k||seen.has(k))return false;seen.add(k);return true})}
  return (plan?.units||[]).map(lesson=>({lesson,sections:plan.practice_types||[]}));
 }
 function activeTasks(plan){return(plan?.tasks||[]).filter(t=>t.active!==false&&!t.completed_at&&Number(t.progress?.remaining)>0)}
