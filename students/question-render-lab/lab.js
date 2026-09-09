@@ -1,7 +1,7 @@
-// TEST HARNESS ONLY. Rendering MUST come from the shared Test Prep v2 modules below.
+// TEST HARNESS ONLY. Rendering and grading MUST come from the canonical modules below.
 import {FORMS,adaptStored} from '../test-prep-v2/question-model.js';
 import {QuestionRenderer} from '../test-prep-v2/question-renderer.js';
-import {gradeQuestion} from '../test-prep-v2/question-grader.js';
+import {gradeQuestion} from '../shared/question-grader.js?v=2.0.0';
 import {splitPassageSentences} from '../test-prep-v2/passage-utils.js';
 
 const API='https://gxwfsqxyuufqtitspfqg.supabase.co';
@@ -10,7 +10,7 @@ const HEAD={apikey:KEY,Authorization:`Bearer ${KEY}`};
 const $=s=>document.querySelector(s);
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]));
 const norm=v=>String(v??'').normalize('NFKC').toLowerCase().replace(/[’‘]/g,"'").replace(/[“”"]/g,'').replace(/[.!?,;:]+$/g,'').replace(/\s+/g,' ').trim();
-const FORM_LABELS={choice:'Multiple choice',multi:'Multi-select',write:'Written answer',multipart:'Multi-part answer',correction:'Correction',order:'Word order',chunks:'Chunk order',blanks:'Fill blanks with words',learn:'Learn / read only',unsupported:'Unsupported shape'};
+const FORM_LABELS={choice:'Multiple choice',multi:'Multi-select',write:'Written answer',multipart:'Multi-part answer',correction:'Correction',identified_correction:'Identified correction',order:'Word order',chunks:'Chunk order',blanks:'Fill blanks with words',learn:'Learn / read only',unsupported:'Unsupported shape'};
 const SKILLS=[['communication','Communication','stored'],['grammar','Grammar','stored'],['reading','Reading','stored'],['vocabulary','Vocabulary','vocab'],['constructed','서술형','written'],['performance','수행평가','performance'],['sentences','본문','sentences']].map(([id,name,kind])=>({id,name,kind}));
 let middleBooks=[],bookMap=new Map(),unitBookMap=new Map(),all=[],visible=[],index=0,renderer=null;
 
@@ -97,7 +97,7 @@ function render(){
   if(!q){$('#card').innerHTML='<div class="empty">No questions match these filters.</div>';renderer=null;return}
   renderer=new QuestionRenderer($('#card')).render(q,{onChange:(_,has)=>{if(q.form!==FORMS.learn)$('#check').disabled=!has}});
 }
-async function check(){const q=visible[index];if(!q||!renderer)return;$('#check').disabled=true;const safe={...q,grading:{...(q.grading||{}),aiAllowed:false}},result=await gradeQuestion(safe,renderer.getResponse());renderer.showFeedback(result);$('#check').disabled=false}
+async function check(){const q=visible[index];if(!q||!renderer)return;$('#check').disabled=true;const result=await gradeQuestion(q,renderer.getResponse());renderer.showFeedback(result);$('#check').disabled=false}
 async function boot(){
   try{
     middleBooks=await get('/rest/v1/content_books?select=id,title,school_grade&school_grade=in.(1,2,3)&order=school_grade.asc,title.asc');bookMap=new Map(middleBooks.map(b=>[String(b.id),b.title]));
