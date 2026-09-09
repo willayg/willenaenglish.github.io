@@ -1,3 +1,5 @@
+import {aiWilliMessage} from '../shared/ai-willi/ai-willi-messages.js?v=1.0.0';
+
 // Shared interactive question-session engine for Test Prep v2.
 // Owns the common render -> grade/skip -> record -> advance mechanics.
 // Route/workflow-specific behavior stays in app.js through callbacks.
@@ -52,7 +54,8 @@ export function createQuestionSession({
     if(checkedState.get()){indexState.set(indexState.get()+1);render();return}
     const entry=getEntry(),q=getQuestion(entry),renderer=rendererState.get();if(!q||!renderer)return;
     const response=renderer.getResponse(),btn=document.getElementById(buttonIds.check);if(!btn)return;
-    btn.disabled=true;btn.textContent=q.grading?.aiAllowed&&q.grading?.mode==='ai_semantic_strict'?'Checking…':'Check Answer';renderer.setDisabled(true);
+    const usesAiWilli=q.grading?.aiAllowed&&q.grading?.mode==='ai_semantic_strict';
+    btn.disabled=true;btn.textContent=usesAiWilli?aiWilliMessage('grader','waiting'):'Check Answer';renderer.setDisabled(true);
     const result=await gradeQuestion(q,response);if(!isActive())return;
     result.responseTimeMs=Date.now()-startedAtState.get();checkedState.set(true);
     if(result.correct)onCorrect(entry,q,result);else onWrong(entry,q,result);
