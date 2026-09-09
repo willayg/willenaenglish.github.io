@@ -59,11 +59,11 @@ async function rawRows(unitId,extra=''){
 export async function loadStoredSkill(unitId,section){
   const [rows,unit]=await Promise.all([rawRows(unitId,`&section=eq.${encodeURIComponent(section)}`),resolveUnit(unitId)]);
   const external=String(unit?.unit_type||'')==='external_passage';
-  return rows.filter(row=>!isAuthoredWritten(row)).map(adaptStored).filter(q=>q.form===FORMS.choice||q.form===FORMS.multi||(external&&[FORMS.write,FORMS.multipart,FORMS.correction].includes(q.form)));
+  return rows.filter(row=>!isAuthoredWritten(row)).map(adaptStored).filter(q=>q.form===FORMS.choice||q.form===FORMS.multi||(external&&[FORMS.write,FORMS.multipart,FORMS.correction,FORMS.identifiedCorrection].includes(q.form)));
 }
 export async function loadStoredWritten(unitId){
   const rows=await rawRows(unitId,'&answer_mode=eq.text');
-  return rows.filter(isAuthoredWritten).map(adaptStored).filter(q=>[FORMS.write,FORMS.multipart,FORMS.correction].includes(q.form));
+  return rows.filter(isAuthoredWritten).map(adaptStored).filter(q=>[FORMS.write,FORMS.multipart,FORMS.correction,FORMS.identifiedCorrection].includes(q.form));
 }
 export function reviewQuestionFromItem(item){
   if(!item?.canonicalId||!item?.content)return null;
