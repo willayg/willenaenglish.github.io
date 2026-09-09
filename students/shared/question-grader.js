@@ -1,4 +1,6 @@
 import {resolveQuestionGradingPolicy} from './question-grading-policy.js?v=2.0.0';
+import {gradeWithAiWilli} from './ai-willi/ai-willi-grader.js?v=1.0.0';
+import {aiWilliMessage} from './ai-willi/ai-willi-messages.js?v=1.0.0';
 
 const FORMS={choice:'choice',multi:'multi',write:'write',multipart:'multipart',correction:'correction',identifiedCorrection:'identified_correction',order:'order',chunks:'chunks',blanks:'blanks',learn:'learn',unsupported:'unsupported'};
 const CIRCLED_NUM=['①','②','③','④','⑤','⑥','⑦','⑧','⑨','⑩','⑪','⑫','⑬','⑭','⑮','⑯','⑰','⑱','⑲','⑳'];
@@ -83,26 +85,6 @@ function exact(question,response,policy){
   if(c.alternatives)return target.includes(String(mine));
   return target.some(a=>a===String(mine));
 }
-function responseText(response){return Array.isArray(response)?response.map((x,i)=>`${i+1}. ${String(x??'')}`).join('\n'):String(response??'')}
-function parseVerdict(text){
-  const raw=String(text||'').trim().replace(/^```(?:json)?\s*/i,'').replace(/\s*```$/,'');
-  const parsed=JSON.parse(raw);if(typeof parsed.correct!=='boolean')throw new Error('Invalid AI verdict');return parsed;
-}
-
-async function aiGrade(question,response,policy){
-  const system=`You are the strict final adjudicator for a Korean middle-school English assessment. Do not give partial credit.\n\nPOLICY FAMILY: ${policy.family}\nPOLICY RULE: ${policy.semanticRule}\n\nThe app has already enforced deterministic hard constraints that it can prove locally. You must still enforce every condition visible in the question/context, including required grammar, supplied words or expressions, word form instructions, completeness, and source meaning. For Korean free-response answers, judge content meaning rather than exact Korean wording, spacing, particles, or stylistic naturalness. Do not require the model-answer wording when the policy permits semantic equivalence. If the task asks the student to create an original sentence, the reference is an example rather than a mandatory meaning. If uncertain, reject. Return JSON only. If correct, explanation_ko must be an empty string.`;
-  const user=`QUESTION TYPE:\n${question?.tracking?.questionType||''}\n\nQUESTION FORM:\n${question.form||''}\n\nQUESTION:\n${question.prompt||''}\n\nCONTEXT AND CONDITIONS:\n${JSON.stringify(question.context||{})}\n\nCANONICAL HARD CONSTRAINTS:\n${JSON.stringify(policy.constraints||{})}\n\nREFERENCE ANSWER PARTS:\n${(question.answer||[]).map((a,i)=>`${i+1}. ${a}`).join('\n')}\n\nSTUDENT RESPONSE:\n${responseText(response)}`;
-  const body={endpoint:'chat/completions',payload:{model:'gpt-5.6-luna',messages:[{role:'system',content:system},{role:'user',content:user}],reasoning_effort:'low',max_completion_tokens:260,response_format:{type:'json_object'}}};
-  const fetcher=window.WillenaAPI&&typeof window.WillenaAPI.fetch==='function'?window.WillenaAPI.fetch.bind(window.WillenaAPI):fetch;
-  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),15000);
-  try{
-    const r=await fetcher('/.netlify/functions/openai_proxy',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),signal:controller.signal});
-    if(!r.ok)throw new Error(`AI HTTP ${r.status}`);
-    const payload=await r.json(),data=payload?.data||payload,text=data?.choices?.[0]?.message?.content||payload?.result||'';
-    if(!text)throw new Error('Empty AI verdict');
-    return parseVerdict(text);
-  }finally{clearTimeout(timer)}
-}
 
 export async function gradeQuestion(question,response){
   const policy=resolveQuestionGradingPolicy(question);
@@ -111,11 +93,11 @@ export async function gradeQuestion(question,response){
   if(exact(question,response,policy))return{correct:true,message:'',correctAnswer:question.answer,method:'exact',gradingPolicy:policy};
   if(policy.aiAllowed){
     try{
-      const verdict=await aiGrade(question,response,policy),correct=verdict.correct===true;
-      return{correct,message:correct?'':(verdict.explanation_ko||verdict.reason||'정답을 확인해 보세요.'),correctAnswer:question.answer,method:'luna',aiReason:verdict.reason||null,aiReasonCode:verdict.reason_code||null,gradingPolicy:policy};
+      const verdict=await gradeWithAiWilli(question,response,policy),correct=verdict.correct===true;
+      return{correct,message:correct?'':(verdict.explanationKo||verdict.reason||'정답을 확인해 보세요.'),correctAnswer:question.answer,method:'ai_willi',aiReason:verdict.reason||null,aiReasonCode:verdict.reasonCode||null,gradingPolicy:policy};
     }catch(e){
-      console.warn('[shared grader] AI failed closed',{questionId:question?.id||null,type:question?.tracking?.questionType||null,error:e?.message||String(e)});
-      return{correct:false,message:'AI 확인에 실패했습니다. 다시 시도해 주세요.',correctAnswer:question.answer,method:'ai_failed',gradingPolicy:policy};
+      console.warn('[shared grader] AI Willi failed closed',{questionId:question?.id||null,type:question?.tracking?.questionType||null,error:e?.message||String(e)});
+      return{correct:false,message:aiWilliMessage('grader','failed'),correctAnswer:question.answer,method:'ai_willi_failed',gradingPolicy:policy};
     }
   }
   return{correct:false,message:'정답을 확인해 보세요.',correctAnswer:question.answer,method:'exact',gradingPolicy:policy};
