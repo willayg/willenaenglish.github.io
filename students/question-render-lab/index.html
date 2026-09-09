@@ -21,12 +21,12 @@
     <div class="field"><label>Auto audit</label><button id="auditAll" type="button">Audit All DB</button></div>
   </div>
   <div class="meta">
-    <span class="rev-badge">REV 19</span>
+    <span class="rev-badge">REV 20</span>
     <span class="rev-badge">SHARED RENDERER · V2.20.1</span>
     <span class="rev-badge">SHARED GRADING POLICY · V2</span>
     <span class="rev-badge">SHARED GRADER · LUNA</span>
     <span class="rev-badge">SHARED KEYBOARD</span>
-    <span id="auditSummary" class="rev-badge">AUDIT · not run</span>
+    <span id="auditSummary" class="rev-badge">AUDIT · module not loaded</span>
     <span id="sourceBadge" class="source-badge" hidden></span>
     <span id="bookTitle" class="book-title"></span>
     <span id="count">0 questions</span>
@@ -40,12 +40,20 @@
   <button class="check" id="check">Check Answer</button>
   <button class="next" id="next">Next Question →</button>
 </div>
+<script>
+window.addEventListener('DOMContentLoaded',()=>{
+  const b=document.getElementById('auditAll'),s=document.getElementById('auditSummary');
+  if(b)b.addEventListener('click',()=>{
+    if(!window.__auditUiLoaded&&s)s.textContent='AUDIT ERROR · audit module did not load';
+  });
+});
+</script>
 <script type="module">
 import {installWillenaKeyboard} from '../shared/willena-keyboard.js?v=1.0.0';
 installWillenaKeyboard({submitSelector:'#check'});
 </script>
-<script src="./flag-rpc-bridge.js?v=1"></script>
-<script type="module" src="./audit-ui.js?v=1"></script>
+<script src="./flag-rpc-bridge.js?v=3"></script>
+<script type="module" src="./audit-ui.js?v=3"></script>
 <script type="module" src="./lab.js?v=rev17"></script>
 </body>
 </html>
