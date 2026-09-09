@@ -28,6 +28,10 @@ function formatAiWilliText(value){
   return out.join('');
 }
 
+function thinkingHtml(){
+  return `<div class="ai-willi-thinking" role="status" aria-label="AI Willi is thinking"><span></span><span></span><span></span></div>`;
+}
+
 function ensureStyles(){
   if(document.getElementById(STYLE_ID))return;
   const s=document.createElement('style');s.id=STYLE_ID;s.textContent=`
@@ -43,18 +47,23 @@ function ensureStyles(){
 .ai-willi-message ul{margin:6px 0 10px;padding-left:22px}.ai-willi-message li{margin:4px 0}
 .ai-willi-message strong{font-weight:900;color:#263d44}.ai-willi-message code{font-family:inherit;font-weight:800;background:#e9f7f8;border-radius:5px;padding:1px 4px}
 .ai-willi-subhead{margin:10px 0 5px;font-weight:900;color:#263d44}.ai-willi-numbered{margin:5px 0}
+.ai-willi-thinking{display:flex;align-items:center;gap:5px;min-width:46px;height:22px;padding:0 2px}
+.ai-willi-thinking span{display:block;width:7px;height:7px;border-radius:50%;background:#ee5f91;opacity:.35;animation:aiWilliDot 1.05s ease-in-out infinite}
+.ai-willi-thinking span:nth-child(2){animation-delay:.14s}.ai-willi-thinking span:nth-child(3){animation-delay:.28s}
 .ai-willi-action{margin-top:11px;display:inline-flex;align-items:center;justify-content:center;min-height:42px;padding:0 15px;border:1.5px solid #86d9df;border-radius:12px;background:#fff;color:#d9467d;font:800 13px/1.2 Poppins,system-ui,sans-serif;cursor:pointer}
 .ai-willi-action:disabled,.ai-willi-refine:disabled{opacity:.48;cursor:default}
 .ai-willi-refinements{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
 .ai-willi-refine{min-height:38px;padding:0 12px;border:1.5px solid #b7dfe3;border-radius:999px;background:#fff;color:#31545d;font:800 12px/1.2 Poppins,system-ui,sans-serif;cursor:pointer;touch-action:manipulation}
 .ai-willi-refine:hover:not(:disabled){border-color:#86d9df;background:#f9feff}
 .ai-willi-refine.used{background:#eef3f4;color:#8b999e;border-color:#d9e2e4}
-.ai-willi-card.waiting .ai-willi-mark{animation:aiWilliPulse 1s ease-in-out infinite alternate}
+.ai-willi-card.waiting .ai-willi-mark{animation:aiWilliPulse .8s ease-in-out infinite alternate}
 .ai-willi-card.error{border-color:#efccd8;background:#fff7f9}
 .feedback .ai-willi-feedback-head{display:flex;align-items:center;gap:7px;margin-bottom:7px;color:#d9467d;font:800 12px/1.2 Poppins,system-ui,sans-serif}
 .feedback .ai-willi-feedback-head .ai-willi-mark{width:22px;height:22px;font-size:13px}
-@keyframes aiWilliPulse{from{transform:scale(.92);opacity:.65}to{transform:scale(1.06);opacity:1}}
-@media(min-width:600px) and (max-width:1100px){.ai-willi-card{padding:17px 18px;border-radius:18px}.ai-willi-head,.ai-willi-action{font-size:15px}.ai-willi-message{font-size:15px;line-height:1.7}.ai-willi-turn.student{font-size:14px}.ai-willi-refine{font-size:14px;min-height:42px;padding:0 15px}}
+@keyframes aiWilliPulse{from{transform:scale(.92);opacity:.65}to{transform:scale(1.07);opacity:1}}
+@keyframes aiWilliDot{0%,60%,100%{transform:translateY(0) scale(.82);opacity:.3}30%{transform:translateY(-5px) scale(1.08);opacity:1}}
+@media(prefers-reduced-motion:reduce){.ai-willi-card.waiting .ai-willi-mark,.ai-willi-thinking span{animation:none}.ai-willi-thinking span{opacity:.7}}
+@media(min-width:600px) and (max-width:1100px){.ai-willi-card{padding:17px 18px;border-radius:18px}.ai-willi-head,.ai-willi-action{font-size:15px}.ai-willi-message{font-size:15px;line-height:1.7}.ai-willi-turn.student{font-size:14px}.ai-willi-refine{font-size:14px;min-height:42px;padding:0 15px}.ai-willi-thinking span{width:8px;height:8px}}
 `;
   document.head.appendChild(s);
 }
@@ -72,6 +81,7 @@ export function showAiWilliStatus(container,{role='grader',message=null}={}){
   container.querySelector('[data-ai-willi-status]')?.remove();
   const el=document.createElement('div');el.className='ai-willi-card waiting';el.dataset.aiWilliStatus='1';
   el.innerHTML=cardHtml(message||aiWilliMessage(role,'waiting'));
+  const msg=el.querySelector('.ai-willi-message');if(msg)msg.innerHTML=thinkingHtml();
   const anchor=container.querySelector('#questionHost,.question-card');
   if(anchor?.parentNode)anchor.insertAdjacentElement('afterend',el);else container.appendChild(el);
   return el;
@@ -101,7 +111,7 @@ export function mountAiWilliHelper({container,question,response,result,section,l
   const appendStudent=label=>{thread?.insertAdjacentHTML('beforeend',`<div class="ai-willi-turn student">${esc(label)}</div>`)};
   const appendWilli=(text,{waiting=false}={})=>{
     const turn=document.createElement('div');turn.className='ai-willi-turn willi';
-    turn.innerHTML=`<div class="ai-willi-message">${waiting?esc(text):formatAiWilliText(text)}</div>`;
+    turn.innerHTML=`<div class="ai-willi-message">${waiting?thinkingHtml():formatAiWilliText(text)}</div>`;
     thread?.appendChild(turn);return turn;
   };
   const setBusy=value=>{
@@ -129,7 +139,7 @@ export function mountAiWilliHelper({container,question,response,result,section,l
     setBusy(true);el.classList.remove('error');
     const isInitial=mode==='initial';
     if(!isInitial){usedModes.add(mode);appendStudent(REFINEMENTS[mode]||mode);showRefinements()}
-    const waitingTurn=appendWilli(aiWilliMessage('helper','waiting'),{waiting:true});
+    const waitingTurn=appendWilli('',{waiting:true});
     try{
       const answer=await helpWithAiWilli({question,response,result,section,lesson,practiceType,existingExplanation,mode,previousExplanation:conversationText()});
       const text=String(answer?.text||'').trim()||aiWilliMessage('helper','failed');
