@@ -2,14 +2,14 @@ export const AI_WILLI_NAME='AI Willi';
 
 export const AI_WILLI_MESSAGES={
   grader:{
-    idle:'AI Willi',
-    waiting:'AI Willi is checking your answer…',
-    failed:'AI Willi could not check your answer. Please try again.'
+    idle:'AI Willi로 확인',
+    waiting:'AI Willi가 답을 확인하고 있어요…',
+    failed:'AI Willi가 답을 확인하지 못했어요. 다시 시도해 주세요.'
   },
   helper:{
-    idle:'Ask AI Willi',
-    waiting:'AI Willi is thinking…',
-    failed:'AI Willi could not help right now. Please try again.'
+    idle:'AI Willi에게 물어보기',
+    waiting:'AI Willi가 생각하고 있어요…',
+    failed:'AI Willi가 지금 답하지 못했어요. 다시 시도해 주세요.'
   }
 };
 
