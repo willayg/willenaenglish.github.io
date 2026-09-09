@@ -1,5 +1,5 @@
 // TEST HARNESS ONLY. Audits canonical questions with the real V2 renderer.
-// This module deliberately does not judge pedagogy; it only reports structural/render risks.
+// Fail is deliberately narrow: genuinely unusable canonical/render output only.
 
 export const AUDIT_STATUS={PASS:'pass',WARNING:'warning',FAIL:'fail'};
 
@@ -12,6 +12,10 @@ const treeText=value=>{
   return'';
 };
 const add=(out,severity,code,message)=>out.push({severity,code,message});
+const answersFor=q=>Array.isArray(q?.answer)?q.answer:
+  Array.isArray(q?.correctAnswer)?q.correctAnswer:
+  Array.isArray(q?.correct_answer)?q.correct_answer:
+  q?.correctAnswer!=null?[q.correctAnswer]:q?.correct_answer!=null?[q.correct_answer]:[];
 
 export function auditStructure(q){
   const findings=[];
@@ -25,10 +29,8 @@ export function auditStructure(q){
   const prompt=text(q.prompt||q.prompt_text).trim();
   if(q.form!=='learn'&&!prompt)add(findings,AUDIT_STATUS.WARNING,'EMPTY_PROMPT','Interactive question has no visible prompt.');
 
-  const answers=Array.isArray(q.correctAnswer)?q.correctAnswer:
-    Array.isArray(q.correct_answer)?q.correct_answer:
-    q.correctAnswer!=null?[q.correctAnswer]:q.correct_answer!=null?[q.correct_answer]:[];
-  if(q.form!=='learn'&&answers.filter(v=>text(v).trim()).length===0){
+  const answers=answersFor(q);
+  if(q.form!=='learn'&&q.form!=='unsupported'&&answers.filter(v=>text(v).trim()).length===0){
     add(findings,AUDIT_STATUS.FAIL,'MISSING_ANSWER','Interactive question has no canonical answer.');
   }
 
@@ -47,31 +49,60 @@ export function auditStructure(q){
   if(/\s\/\s|\/\s|\s\//.test(hay))add(findings,AUDIT_STATUS.WARNING,'SLASH_MARKUP','Contains slash-delimited text; inspect answer-slot behavior.');
   if(/_{2,}/.test(hay))add(findings,AUDIT_STATUS.WARNING,'UNDERSCORE_BLANKS','Contains underscore blanks; inspect blank rendering.');
   if(/<[^>]+>/.test(hay))add(findings,AUDIT_STATUS.WARNING,'HTML_MARKUP','Contains HTML-like markup.');
-  if(/undefined|null|\[object Object\]/i.test(hay))add(findings,AUDIT_STATUS.FAIL,'LEAKED_VALUE','Question data contains undefined/null/object placeholder text.');
+  if(/undefined|null|\[object Object\]/i.test(hay))add(findings,AUDIT_STATUS.WARNING,'SUSPICIOUS_STORED_VALUE','Stored question data contains placeholder-like text; inspect visually.');
 
-  if(q.form==='multipart'){
-    const parts=Array.isArray(q.parts)?q.parts:Array.isArray(q.context?.parts)?q.context.parts:[];
-    if(parts.length<2)add(findings,AUDIT_STATUS.WARNING,'MULTIPART_WITHOUT_PARTS','Multipart form exposes fewer than two structured parts.');
+  if(q.form==='multipart'&&answers.length<2){
+    add(findings,AUDIT_STATUS.WARNING,'MULTIPART_SINGLE_ANSWER','Multipart form has fewer than two canonical answer parts.');
   }
-  if((q.form==='order'||q.form==='chunks'||q.form==='blanks')&&Array.isArray(q.chips)&&q.chips.length===0){
-    add(findings,AUDIT_STATUS.FAIL,'EMPTY_CHIPS',`${q.form} form has an empty chip list.`);
+  if((q.form==='order'||q.form==='chunks'||q.form==='blanks')&&(!Array.isArray(q.chips)||q.chips.length===0)){
+    add(findings,AUDIT_STATUS.FAIL,'EMPTY_CHIPS',`${q.form} form has no chips to interact with.`);
   }
   return findings;
 }
 
-function interactiveCount(root){
-  return root.querySelectorAll('input, textarea, select, button[data-answer], [contenteditable="true"], .choice-option, .answer-choice, .chip, .word-chip').length;
+function requiredControlCheck(q,root){
+  const count=selector=>root.querySelectorAll(selector).length;
+  const expectedAnswers=answersFor(q).filter(v=>text(v).trim()).length;
+
+  if(q.form==='choice'||q.form==='multi'){
+    const actual=count('[data-choice]');
+    return actual>0?null:`Expected choice buttons; found ${actual}.`;
+  }
+  if(q.form==='write'){
+    const actual=count('[data-write]');
+    return actual===1?null:`Expected one written-answer control; found ${actual}.`;
+  }
+  if(q.form==='multipart'){
+    const actual=count('[data-part]');
+    return actual>0&&actual===expectedAnswers?null:`Expected ${expectedAnswers} multipart field(s); found ${actual}.`;
+  }
+  if(q.form==='correction'){
+    const wrong=count('[data-wrong]'),right=count('[data-right]');
+    return wrong>0&&wrong===expectedAnswers&&right===expectedAnswers?null:`Expected ${expectedAnswers} correction row(s); found ${wrong} wrong / ${right} right fields.`;
+  }
+  if(q.form==='identified_correction'){
+    const label=count('[data-correction-label]'),wrong=count('[data-wrong]'),right=count('[data-right]');
+    return label>0&&label===expectedAnswers&&wrong===expectedAnswers&&right===expectedAnswers?null:`Expected ${expectedAnswers} identified-correction row(s); found ${label} labels / ${wrong} wrong / ${right} right fields.`;
+  }
+  if(q.form==='order'||q.form==='chunks'||q.form==='blanks'){
+    const chips=count('[data-chip]'),build=count('[data-build]');
+    return chips>0&&build===1?null:`Expected interactive chips/build area; found ${chips} chip(s), ${build} build area(s).`;
+  }
+  return null;
 }
 
 export function auditRenderedDom(q,root){
   const findings=[];
-  const domText=text(root?.textContent);
-  if(!root) return [{severity:AUDIT_STATUS.FAIL,code:'NO_RENDER_ROOT',message:'Renderer did not receive a DOM root.'}];
-  if(/undefined|null|\[object Object\]/i.test(domText))add(findings,AUDIT_STATUS.FAIL,'DOM_LEAKED_VALUE','Rendered UI exposes undefined/null/object placeholder text.');
-  if(q.form!=='learn'&&q.form!=='unsupported'&&interactiveCount(root)===0){
-    add(findings,AUDIT_STATUS.FAIL,'NO_ANSWER_CONTROL','Renderer produced no detectable answer control.');
-  }
+  if(!root)return [{severity:AUDIT_STATUS.FAIL,code:'NO_RENDER_ROOT',message:'Renderer did not receive a DOM root.'}];
   if(!root.children.length)add(findings,AUDIT_STATUS.FAIL,'EMPTY_RENDER','Renderer produced an empty container.');
+
+  const domText=text(root.textContent);
+  if(/undefined|null|\[object Object\]/i.test(domText))add(findings,AUDIT_STATUS.WARNING,'DOM_SUSPICIOUS_TEXT','Rendered UI exposes placeholder-like text; inspect visually.');
+
+  if(q.form!=='learn'&&q.form!=='unsupported'){
+    const problem=requiredControlCheck(q,root);
+    if(problem)add(findings,AUDIT_STATUS.FAIL,'REQUIRED_CONTROL_MISSING',problem);
+  }
   return findings;
 }
 
