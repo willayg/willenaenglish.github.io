@@ -15,10 +15,11 @@
     <div class="field"><label>Textbook</label><select id="book"></select></div>
     <div class="field"><label>Question form</label><select id="form"></select></div>
     <div class="field"><label>Feature</label><select id="feature"><option value="all">All questions</option><option value="underline">Underlined</option><option value="blank">Fill in the blank</option></select></div>
+    <div class="field"><label>Flag status</label><select id="flagged"><option value="all">All questions</option><option value="flagged">Flagged only</option></select></div>
     <div class="field"><label>Date added / modified</label><select id="dateAdded"><option value="all">All dates</option><optgroup label="Date added"><option value="created:today">Added today</option><option value="created:24h">Added in last 24 hours</option><option value="created:3d">Added in last 3 days</option><option value="created:7d">Added in last 7 days</option><option value="created:30d">Added in last 30 days</option></optgroup><optgroup label="Date modified"><option value="modified:today">Modified today</option><option value="modified:24h">Modified in last 24 hours</option><option value="modified:3d">Modified in last 3 days</option><option value="modified:7d">Modified in last 7 days</option><option value="modified:30d">Modified in last 30 days</option></optgroup></select></div>
   </div>
   <div class="meta">
-    <span class="rev-badge">REV 16</span>
+    <span class="rev-badge">REV 17</span>
     <span class="rev-badge">SHARED RENDERER · V2.20.1</span>
     <span class="rev-badge">SHARED GRADING POLICY · V2</span>
     <span class="rev-badge">SHARED GRADER · LUNA</span>
@@ -39,6 +40,6 @@
 import {installWillenaKeyboard} from '../shared/willena-keyboard.js?v=1.0.0';
 installWillenaKeyboard({submitSelector:'#check'});
 </script>
-<script type="module" src="./lab.js?v=rev16"></script>
+<script type="module" src="./lab.js?v=rev17"></script>
 </body>
 </html>
