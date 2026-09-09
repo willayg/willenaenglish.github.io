@@ -2,9 +2,10 @@ import {QuestionRenderer} from './question-renderer.js';
 import {gradeQuestion} from './question-grader.js';
 import {createQuestionSession} from './question-session.js?v=1.0.1';
 import {loadPracticeContent} from './practice-loader.js?v=1.0.0';
+import {createPerfDebug} from './perf-debug.js?v=1.0.0';
 import {resolveContentIds,reviewQuestionFromItem} from './content-source.js?v=2.24.0';
 import {initTracking,refreshTrackingState,setTrackingContext,startSession,recordAttempt,completeSession,trackingState} from './tracking-client.js?v=2.17a';
-import {startVocabularyLearning} from './vocab-learning.js?v=2.13.0';
+import {startVocabularyLearning} from './vocab-learning.js?v=2.14.0';
 import {passageAvailable} from './passage-source.js?v=2.18.0';
 import {startPassageLearning,stopPassageLearning} from './passage-learning.js?v=2.18.0';
 import {loadCardStats,invalidateCardStats,getStatsDiagnostics,formatCardMetric,formatAccuracy,reviewCounts} from './stats-client.js?v=2.16a';
@@ -14,7 +15,7 @@ import {initNavigation,navigate,replaceRoute,back,currentRoute} from './navigati
 const $=s=>document.querySelector(s),esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const root=$('#screen'),bottom=$('#bottom'),userEl=$('#user');
 let state={plan:null,lesson:null,ids:null,practice:null,queue:[],index:0,score:0,wrongIds:[],checked:false,startedAt:0,renderer:null,cardStats:new Map(),lastResult:null,reviewData:null};
-const PERF={start:performance.now(),auth:null,ui:null,stats:null};
+const perf=createPerfDebug({getStatsDiagnostics});
 const PRACTICES={
   vocabulary:{label:'단어 학습',desc:'카드 · 뜻 · 철자',kind:'vocab-learning'},
   vocab_test:{label:'어휘 시험',desc:'정의 · 문맥 · 철자',kind:'vocab-test'},
@@ -25,17 +26,6 @@ const PRACTICES={
   constructed_response:{label:'서술형',desc:'저장된 영작 · 교정 · 다답형',kind:'written'}
 };
 
-function fmtMs(v){if(v==null)return'…';return v<1000?`${Math.round(v)}ms`:`${(v/1000).toFixed(2)}s`}
-function ensurePerfHud(){
-  if($('#tpSpeedHud'))return;
-  const el=document.createElement('div');el.id='tpSpeedHud';
-  el.style.cssText='position:fixed;left:12px;bottom:58px;z-index:2147483645;padding:4px 7px;border-radius:8px;background:rgba(32,48,57,.82);color:#fff;font:700 8px/1.35 Poppins,sans-serif;letter-spacing:.01em;pointer-events:none;opacity:.78;white-space:nowrap';
-  document.body.appendChild(el);
-}
-function updatePerfHud(){
-  ensurePerfHud();const d=getStatsDiagnostics();const el=$('#tpSpeedHud');if(!el)return;
-  el.textContent=`AUTH ${fmtMs(PERF.auth)} · UI ${fmtMs(PERF.ui)} · STATS ${fmtMs(PERF.stats)} · CACHE ${d.unitCacheHits}/${d.unitCacheMisses}`;
-}
 function scopeFor(plan){const lessons=plan?.group?.scope?.lessons;if(Array.isArray(lessons)&&lessons.length)return lessons.filter(x=>x?.lesson);return(plan?.units||[]).map(lesson=>({lesson,sections:plan?.practice_types||[]}))}
 function sectionsFor(plan,lesson){const row=scopeFor(plan).find(x=>String(x.lesson)===String(lesson)),sections=new Set((row?.sections||[]).map(x=>String(x).toLowerCase()));if(sections.has('vocabulary'))sections.add('vocab_test');return sections}
 function planById(id){return(trackingState().plans||[]).find(p=>String(p.id)===String(id))||null}
@@ -212,14 +202,14 @@ async function refreshVisibleStats(){
 
 async function boot(){
   try{
-    ensurePerfHud();updatePerfHud();
-    root.innerHTML='<div class="loading">Test Prep v2.23을 준비하는 중...</div>';
-    await initTracking();PERF.auth=performance.now()-PERF.start;updateUser();updatePerfHud();
+    perf.update();
+    root.innerHTML='<div class="loading">Test Prep v2.25을 준비하는 중...</div>';
+    await initTracking();perf.mark('auth');updateUser();
     let route=initNavigation({render:renderRoute,beforeRouteChange,initialRoute:{view:'home'}});
     if(route.view==='practice'||route.view==='result'){route={view:'lesson',planId:route.planId,lesson:route.lesson};await replaceRoute(route,{render:false})}
     if(route.view==='review'){route={view:'plan',planId:route.planId};await replaceRoute(route,{render:false})}
-    await renderRoute(route);PERF.ui=performance.now()-PERF.start;updatePerfHud();
-    preloadCardStats().then(async()=>{PERF.stats=performance.now()-PERF.start;updatePerfHud();await refreshVisibleStats()}).catch(e=>{console.warn('[test-prep-v2] background stats failed',e);PERF.stats=performance.now()-PERF.start;updatePerfHud()});
-  }catch(e){console.error('[test-prep-v2] boot failed',e);error(e.message||'앱을 시작하지 못했습니다.');updatePerfHud()}
+    await renderRoute(route);perf.mark('ui');
+    preloadCardStats().then(async()=>{perf.mark('stats');await refreshVisibleStats()}).catch(e=>{console.warn('[test-prep-v2] background stats failed',e);perf.mark('stats')});
+  }catch(e){console.error('[test-prep-v2] boot failed',e);error(e.message||'앱을 시작하지 못했습니다.');perf.update()}
 }
 boot();
