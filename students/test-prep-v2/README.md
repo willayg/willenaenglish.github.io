@@ -37,6 +37,24 @@ The lab also imports the canonical `question-model.js`. `passage-utils.js` remai
 - `navigation.js` — the only browser/history navigation owner
 - `app.js` — student plan / lesson / practice route controller
 
+## V2.20 authored 서술형 workflow
+
+Authored written responses are normal canonical questions, not a second 서술형 engine.
+
+Production rules:
+
+- Stored authored text questions adapt into `write`, `multipart`, `correction`, or `identified_correction` forms in `question-model.js`.
+- Packed answers such as `read / to` become multiple required inputs only when the stored question context proves there are the same number of blanks. This avoids treating slash-separated alternatives as multiple parts by guesswork.
+- Multi-part questions require every answer field before submission.
+- Ordinary correction questions render `wrong → right` fields for each required correction.
+- Questions that require the student to identify which numbered/lettered items are wrong use `identified_correction`; the correct item labels are never prefilled or revealed by the renderer.
+- English, Korean, symbol-only and mixed written answers carry input-language metadata on their rendered controls. This is the integration contract for the future shared Willena keyboard; there is no 서술형-specific keyboard.
+- Explicit whole-answer and per-part word-count conditions are enforced centrally by `question-grader.js` when they can be safely derived from stored structured conditions.
+- Contraction-required and no-contraction conditions are enforced centrally.
+- Exact grading runs first. Configured `ai_semantic_strict` grading can then adjudicate `write`, `multipart`, `correction`, and `identified_correction` forms. AI grading remains strict, requires every requested part, and fails closed.
+- Structured model answers are displayed by the central renderer after an incorrect response.
+- Attempts, wrong-answer state and later review continue through `tracking-client.js` and the canonical shared review backend. There is no 서술형-only correction queue.
+
 ## V2.18 textbook 본문 workflow
 
 본문 is a workflow, not a second question engine.
@@ -103,11 +121,11 @@ There is no second tracker or tracking patch file.
 
 ## Remaining major work
 
-- full authored written-response parity
+- shared Willena keyboard integrated directly with the central renderer
 - Ask Willi helper UI
 - 수행평가 workflow
 - 실전모의고사 workflow
 - student question flags
 - canonical smart question selection / balancing / sequencing
 
-Those systems should be migrated as sources/workflows around the central renderer and shared backend contracts, not as new renderers or app-local truth engines.
+Those systems should be migrated as shared services, sources, or workflows around the central renderer and shared backend contracts, not as new renderers or app-local truth engines.
