@@ -13,6 +13,10 @@ async function get(path,range){
   const headers={...HEAD};if(range)headers.Range=range;
   const r=await fetch(API+path,{headers,cache:'no-store'});if(!r.ok)throw new Error(await r.text());return r.json();
 }
+export async function contentDbRpc(name,body={}){
+  const r=await fetch(`${API}/rest/v1/rpc/${encodeURIComponent(name)}`,{method:'POST',headers:{...HEAD,'Content-Type':'application/json'},body:JSON.stringify(body),cache:'no-store'});
+  if(!r.ok)throw new Error(await r.text());return r.json();
+}
 async function paged(path){
   const out=[];
   for(let start=0;start<10000;start+=1000){const rows=await get(path,`${start}-${start+999}`);out.push(...rows);if(rows.length<1000)break}
