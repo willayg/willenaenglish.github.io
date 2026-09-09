@@ -1,6 +1,6 @@
 import {QuestionRenderer} from './question-renderer.js';
 import {gradeQuestion} from './question-grader.js';
-import {createQuestionSession} from './question-session.js?v=1.0.1';
+import {createQuestionSession} from './question-session.js?v=1.0.2';
 import {loadPracticeContent} from './practice-loader.js?v=1.0.0';
 import {createPerfDebug} from './perf-debug.js?v=1.0.0';
 import {resolveContentIds,reviewQuestionFromItem} from './content-source.js?v=2.24.0';
