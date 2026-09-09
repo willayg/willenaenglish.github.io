@@ -27,12 +27,10 @@ function expandContractions(v){
 }
 function normExact(v){return expandContractions(v)}
 function searchable(v){return normBasic(v).replace(/[^a-z0-9가-힣'\-]+/gi,' ').replace(/\s+/g,' ').trim()}
-function containsPhrase(text,phrase){
-  const t=` ${searchable(text)} `,p=searchable(phrase);if(!p)return true;return t.includes(` ${p} `);
-}
+function containsPhrase(text,phrase){const t=` ${searchable(text)} `,p=searchable(phrase);if(!p)return true;return t.includes(` ${p} `)}
 function correctionLabel(v){const s=String(v||'').trim().replace(/:$/,'');const n=CIRCLED_NUM.indexOf(s);if(n>=0)return String(n+1);const m=s.match(/^\d+$/);return m?String(Number(s)):s.toLowerCase()}
 function correctionNorm(v){const p=parseCorrection(v);return p?`${correctionLabel(p.label||p.prefix)}|${normExact(p.wrong)}|${normExact(p.right)}`:normExact(v)}
-function correctionTokens(v){const s=normExact(v).replace(/[.!?,;:()]+/g,' ');return s.split(/\s+/).filter(Boolean)}
+function correctionTokens(v){return normExact(v).replace(/[.!?,;:()]+/g,' ').split(/\s+/).filter(Boolean)}
 function expandedCorrectionEquivalent(referenceWrong,referenceRight,studentWrong,studentRight){
   const rw=correctionTokens(referenceWrong),rr=correctionTokens(referenceRight),sw=correctionTokens(studentWrong),sr=correctionTokens(studentRight);
   if(!rw.length||!rr.length||!sw.length||!sr.length)return false;
@@ -86,25 +84,23 @@ function exact(question,response,policy){
   return target.some(a=>a===String(mine));
 }
 function responseText(response){return Array.isArray(response)?response.map((x,i)=>`${i+1}. ${String(x??'')}`).join('\n'):String(response??'')}
-function outputText(data){
-  if(typeof data?.output_text==='string'&&data.output_text.trim())return data.output_text;
-  for(const item of data?.output||[])for(const c of item?.content||[])if(c?.type==='output_text'&&c.text)return c.text;
-  return data?.choices?.[0]?.message?.content||'';
-}
 function parseVerdict(text){
-  const raw=String(text||'').trim().replace(/^```(?:json)?\s*/i,'').replace(/\s*```$/,'');const p=JSON.parse(raw);
-  if(typeof p.correct!=='boolean')throw new Error('Invalid AI verdict');return p;
+  const raw=String(text||'').trim().replace(/^```(?:json)?\s*/i,'').replace(/\s*```$/,'');
+  const parsed=JSON.parse(raw);if(typeof parsed.correct!=='boolean')throw new Error('Invalid AI verdict');return parsed;
 }
 
 async function aiGrade(question,response,policy){
-  const system=`You are the strict final adjudicator for a Korean middle-school English assessment. Do not give partial credit.\n\nPOLICY FAMILY: ${policy.family}\nPOLICY RULE: ${policy.semanticRule}\n\nThe app has already enforced deterministic hard constraints that it can prove locally. You must still enforce every condition visible in the question/context, including required grammar, supplied words or expressions, word form instructions, completeness, and source meaning. For Korean free-response answers, judge content meaning rather than exact Korean wording, spacing, particles, or stylistic naturalness. Do not require the model-answer wording when the policy permits semantic equivalence. If the task asks the student to create an original sentence, the reference is an example rather than a mandatory meaning. If uncertain, reject.\n\nReturn JSON only with: {"correct":true|false,"reason_code":"correct_alternative|grammar|meaning|completeness|task|word_choice|word_order|missing_required_word|extra_information|other","reason":"short internal English reason","explanation_ko":"short student-facing Korean explanation"}. If correct, explanation_ko must be an empty string.`;
+  const system=`You are the strict final adjudicator for a Korean middle-school English assessment. Do not give partial credit.\n\nPOLICY FAMILY: ${policy.family}\nPOLICY RULE: ${policy.semanticRule}\n\nThe app has already enforced deterministic hard constraints that it can prove locally. You must still enforce every condition visible in the question/context, including required grammar, supplied words or expressions, word form instructions, completeness, and source meaning. For Korean free-response answers, judge content meaning rather than exact Korean wording, spacing, particles, or stylistic naturalness. Do not require the model-answer wording when the policy permits semantic equivalence. If the task asks the student to create an original sentence, the reference is an example rather than a mandatory meaning. If uncertain, reject. Return JSON only. If correct, explanation_ko must be an empty string.`;
   const user=`QUESTION TYPE:\n${question?.tracking?.questionType||''}\n\nQUESTION FORM:\n${question.form||''}\n\nQUESTION:\n${question.prompt||''}\n\nCONTEXT AND CONDITIONS:\n${JSON.stringify(question.context||{})}\n\nCANONICAL HARD CONSTRAINTS:\n${JSON.stringify(policy.constraints||{})}\n\nREFERENCE ANSWER PARTS:\n${(question.answer||[]).map((a,i)=>`${i+1}. ${a}`).join('\n')}\n\nSTUDENT RESPONSE:\n${responseText(response)}`;
-  const body={endpoint:'responses',payload:{model:'gpt-5.6-luna',input:[{role:'system',content:[{type:'input_text',text:system}]},{role:'user',content:[{type:'input_text',text:user}]}],reasoning:{effort:'low'},max_output_tokens:260}};
+  const body={endpoint:'chat/completions',payload:{model:'gpt-5.6-luna',messages:[{role:'system',content:system},{role:'user',content:user}],reasoning_effort:'low',max_completion_tokens:260,response_format:{type:'json_object'}}};
   const fetcher=window.WillenaAPI&&typeof window.WillenaAPI.fetch==='function'?window.WillenaAPI.fetch.bind(window.WillenaAPI):fetch;
-  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),12000);
+  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),15000);
   try{
     const r=await fetcher('/.netlify/functions/openai_proxy',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),signal:controller.signal});
-    if(!r.ok)throw new Error(`AI HTTP ${r.status}`);const payload=await r.json(),data=payload?.data||payload;return parseVerdict(outputText(data));
+    if(!r.ok)throw new Error(`AI HTTP ${r.status}`);
+    const payload=await r.json(),data=payload?.data||payload,text=data?.choices?.[0]?.message?.content||payload?.result||'';
+    if(!text)throw new Error('Empty AI verdict');
+    return parseVerdict(text);
   }finally{clearTimeout(timer)}
 }
 
