@@ -33,6 +33,8 @@ The lab also imports the canonical `question-model.js`. `passage-utils.js` remai
 - `tracking-client.js` — ALL Test Prep v2 attempt/session persistence and sync
 - `students/shared/student-stats.js` — canonical browser gateway for student statistics; backend owns statistical truth
 - `students/shared/student-review.js` — canonical browser gateway for 오답/review queues; backend owns review truth
+- `students/shared/willena-keyboard.js` — the single shared Willena text-entry keyboard for renderer-owned English/mixed written controls; no workflow-specific keyboards
+- `students/shared/question-flags.js` — the single shared student question-reporting UI and persistence client; no workflow-specific flaggers or DOM-scraping flag patches
 - `stats-client.js` — temporary Test Prep compatibility shim delegating to shared student stats
 - `navigation.js` — the only browser/history navigation owner
 - `app.js` — student plan / lesson / practice route controller
@@ -48,12 +50,30 @@ Production rules:
 - Multi-part questions require every answer field before submission.
 - Ordinary correction questions render `wrong → right` fields for each required correction.
 - Questions that require the student to identify which numbered/lettered items are wrong use `identified_correction`; the correct item labels are never prefilled or revealed by the renderer.
-- English, Korean, symbol-only and mixed written answers carry input-language metadata on their rendered controls. This is the integration contract for the future shared Willena keyboard; there is no 서술형-specific keyboard.
+- English, Korean, symbol-only and mixed written answers carry input-language metadata on their rendered controls. `students/shared/willena-keyboard.js` consumes that contract; there is no 서술형-specific keyboard.
 - Explicit whole-answer and per-part word-count conditions are enforced centrally by `question-grader.js` when they can be safely derived from stored structured conditions.
 - Contraction-required and no-contraction conditions are enforced centrally.
 - Exact grading runs first. Configured `ai_semantic_strict` grading can then adjudicate `write`, `multipart`, `correction`, and `identified_correction` forms. AI grading remains strict, requires every requested part, and fails closed.
 - Structured model answers are displayed by the central renderer after an incorrect response.
 - Attempts, wrong-answer state and later review continue through `tracking-client.js` and the canonical shared review backend. There is no 서술형-only correction queue.
+
+## V2.22 shared question flags
+
+Student question reporting is one shared utility around the canonical renderer, not a separate flag implementation in each workflow.
+
+Production rules:
+
+- `students/shared/question-flags.js` owns the flag button, modal, reason list, optional note, persistence, duplicate guard and submitted state.
+- Test Prep installs the module once at boot and passes the canonical `QuestionRenderer` plus a route/tracking context provider.
+- The flag utility decorates renderer instances from outside `question-renderer.js`; question rendering remains owned by the renderer itself.
+- Every graded V2 workflow that uses `QuestionRenderer` inherits the same flag control automatically, including stored skills, vocabulary questions, textbook sentence practice, 서술형 and 오답 review.
+- The flag remains usable after the graded answer controls are locked so a student can report a bad answer key or rendering problem after checking an answer.
+- Reports are stored in the existing Tracking DB `test_prep_practice_flags` table under the authenticated student identity.
+- The report snapshot includes canonical question identity when available, source/question metadata, plan/lesson/practice context, prompt/context/choices, current response and the app revision.
+- Generated variants retain their underlying canonical item ID in the snapshot but use a variant-aware `source_id` where needed so, for example, a vocabulary spelling flag does not incorrectly mark another vocabulary mode as already reported.
+- A local 24-hour duplicate guard prevents accidental repeat submissions for the same student/item variant. It is UI protection only; the Tracking DB remains the durable reporting record.
+- The old app's DOM scraping, app-specific selectors and whole-page `MutationObserver` flag installation are not migrated.
+- “Report + replace question” is intentionally not owned by the flag module. Replacement/selection belongs to the canonical sequencing service so flagging does not create a second question-selection engine.
 
 ## V2.18 textbook 본문 workflow
 
@@ -121,11 +141,9 @@ There is no second tracker or tracking patch file.
 
 ## Remaining major work
 
-- shared Willena keyboard integrated directly with the central renderer
 - Ask Willi helper UI
 - 수행평가 workflow
 - 실전모의고사 workflow
-- student question flags
 - canonical smart question selection / balancing / sequencing
 
 Those systems should be migrated as shared services, sources, or workflows around the central renderer and shared backend contracts, not as new renderers or app-local truth engines.
