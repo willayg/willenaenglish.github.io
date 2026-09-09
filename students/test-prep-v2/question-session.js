@@ -1,4 +1,5 @@
 import {aiWilliMessage} from '../shared/ai-willi/ai-willi-messages.js?v=1.0.0';
+import {showAiWilliStatus,clearAiWilliStatus,decorateAiWilliFeedback,mountAiWilliHelper} from '../shared/ai-willi/ai-willi-ui.js?v=1.0.0';
 
 // Shared interactive question-session engine for Test Prep v2.
 // Owns the common render -> grade/skip -> record -> advance mechanics.
@@ -56,10 +57,12 @@ export function createQuestionSession({
     const response=renderer.getResponse(),btn=document.getElementById(buttonIds.check);if(!btn)return;
     const usesAiWilli=q.grading?.aiAllowed&&q.grading?.mode==='ai_semantic_strict';
     btn.disabled=true;btn.textContent=usesAiWilli?aiWilliMessage('grader','waiting'):'Check Answer';renderer.setDisabled(true);
-    const result=await gradeQuestion(q,response);if(!isActive())return;
+    if(usesAiWilli)showAiWilliStatus(root,{role:'grader'});
+    const result=await gradeQuestion(q,response);clearAiWilliStatus(root);if(!isActive())return;
     result.responseTimeMs=Date.now()-startedAtState.get();checkedState.set(true);
     if(result.correct)onCorrect(entry,q,result);else onWrong(entry,q,result);
-    renderer.showFeedback(result);
+    renderer.showFeedback(result);decorateAiWilliFeedback(root,result);
+    if(!result.correct)mountAiWilliHelper({container:root,question:q,response,result,section:q.skill,practiceType:getPracticeType(entry,q)});
     try{await recordAttempt({question:q,response,result,practiceType:getPracticeType(entry,q),...getAttemptExtras(entry,q,false)})}
     catch(e){console.warn(`[test-prep-v2] ${logLabel} tracking failed`,e)}
     if(!isActive())return;
