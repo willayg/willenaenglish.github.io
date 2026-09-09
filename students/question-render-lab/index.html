@@ -17,13 +17,16 @@
     <div class="field"><label>Feature</label><select id="feature"><option value="all">All questions</option><option value="underline">Underlined</option><option value="blank">Fill in the blank</option></select></div>
     <div class="field"><label>Flag status</label><select id="flagged"><option value="all">All questions</option><option value="flagged">Flagged only</option></select></div>
     <div class="field"><label>Date added / modified</label><select id="dateAdded"><option value="all">All dates</option><optgroup label="Date added"><option value="created:today">Added today</option><option value="created:24h">Added in last 24 hours</option><option value="created:3d">Added in last 3 days</option><option value="created:7d">Added in last 7 days</option><option value="created:30d">Added in last 30 days</option></optgroup><optgroup label="Date modified"><option value="modified:today">Modified today</option><option value="modified:24h">Modified in last 24 hours</option><option value="modified:3d">Modified in last 3 days</option><option value="modified:7d">Modified in last 7 days</option><option value="modified:30d">Modified in last 30 days</option></optgroup></select></div>
+    <div class="field"><label>Audit status</label><select id="auditStatus"><option value="all">All audit results</option><option value="fail">Fail</option><option value="warning">Warning</option><option value="pass">Pass</option><option value="not-run">Not audited</option></select></div>
+    <div class="field"><label>Auto audit</label><button id="auditAll" type="button">Audit All Loaded</button></div>
   </div>
   <div class="meta">
-    <span class="rev-badge">REV 17</span>
+    <span class="rev-badge">REV 18</span>
     <span class="rev-badge">SHARED RENDERER · V2.20.1</span>
     <span class="rev-badge">SHARED GRADING POLICY · V2</span>
     <span class="rev-badge">SHARED GRADER · LUNA</span>
     <span class="rev-badge">SHARED KEYBOARD</span>
+    <span id="auditSummary" class="rev-badge">AUDIT · not run</span>
     <span id="sourceBadge" class="source-badge" hidden></span>
     <span id="bookTitle" class="book-title"></span>
     <span id="count">0 questions</span>
@@ -40,6 +43,6 @@
 import {installWillenaKeyboard} from '../shared/willena-keyboard.js?v=1.0.0';
 installWillenaKeyboard({submitSelector:'#check'});
 </script>
-<script type="module" src="./lab.js?v=rev17"></script>
+<script type="module" src="./lab.js?v=rev18"></script>
 </body>
 </html>
