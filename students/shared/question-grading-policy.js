@@ -1,4 +1,4 @@
-export const GRADING_POLICY_VERSION='2.0.0';
+export const GRADING_POLICY_VERSION='2.0.1';
 
 const AI_FORMS=new Set(['write','multipart']);
 const TRANSLATION_TYPES=new Set([
@@ -43,7 +43,7 @@ function familyFor(type){
 
 function semanticRule(family){
   if(family==='translation')return 'Judge whether the response accurately expresses the required Korean/source meaning in grammatical standard English while obeying every stated condition. Different wording and harmless word-order variation are allowed. A required grammar form or supplied condition may not be ignored.';
-  if(family==='reading_answer')return 'Judge the answer against the passage and question. Accept a clear paraphrase or a fuller answer when every required fact is correct. Reject missing required facts, contradictions, invented facts, or answers that only mention a related idea.';
+  if(family==='reading_answer')return 'Judge the answer against the passage and the exact question being asked. Accept a concise paraphrase when it gives the decisive answer, cause, reason, referent, or fact needed to answer the question, even if it is less specific than the model answer or omits nonessential descriptive detail. The model answer is evidence, not a checklist. Only require every listed detail when the prompt explicitly asks for multiple facts, a list, a number, an exact item, or another specifically requested detail. Reject contradictions, invented facts, answers that miss the decisive point, or answers that are too vague to answer the question.';
   if(family==='dialogue')return 'Judge whether the response is fully grammatical, natural standard English and unquestionably fits the exact dialogue and communicative function. Different wording is allowed only when it satisfies the stated cue or condition.';
   if(family==='composition')return 'Judge the task itself rather than requiring the model sentence. The reference is an example where the prompt allows original wording. Require grammatical standard English and every supplied word, meaning, grammar target, fact, or condition that the task asks for.';
   return 'Require deterministic equivalence to the reference answer.';
