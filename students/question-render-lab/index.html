@@ -21,7 +21,7 @@
     <div class="field"><label>Auto audit</label><button id="auditAll" type="button">Audit All DB</button></div>
   </div>
   <div class="meta">
-    <span class="rev-badge">REV 21</span>
+    <span class="rev-badge">REV 22</span>
     <span class="rev-badge">SHARED RENDERER · V2.20.1</span>
     <span class="rev-badge">SHARED GRADING POLICY · V2</span>
     <span class="rev-badge">SHARED GRADER · LUNA</span>
@@ -40,6 +40,7 @@
   <button class="check" id="check">Check Answer</button>
   <button class="next" id="next">Next Question →</button>
 </div>
+<script src="./keyboard-submit-guard.js?v=1"></script>
 <script type="module">
 import {installWillenaKeyboard} from '../shared/willena-keyboard.js?v=1.0.0';
 installWillenaKeyboard({submitSelector:'#check'});
