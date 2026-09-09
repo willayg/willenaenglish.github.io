@@ -62,6 +62,18 @@ function normalizeChoices(raw){
   return (Array.isArray(raw)?raw:[]).map(x=>typeof x==='string'?x:String(x?.text??x?.label??'').trim()).filter(Boolean);
 }
 
+// DB authors sometimes use /, ~, or a spaced hyphen as visual blank separators.
+// Those marks are instructions to the renderer, not spelling the student should need to type.
+// Preserve real word-internal hyphens (e.g. well-known).
+export function normalizeTypedAnswerNotation(value){
+  return String(value??'')
+    .replace(/\s*~\s*/g,' ')
+    .replace(/\s*\/\s*/g,' ')
+    .replace(/\s+[-–—]\s+/g,' ')
+    .replace(/\s+/g,' ')
+    .trim();
+}
+
 function normalizeCorrect(row,choices,form){
   let answers=expandedAnswers(row).answers;
   if([FORMS.choice,FORMS.multi].includes(form)){
@@ -70,6 +82,8 @@ function normalizeCorrect(row,choices,form){
       const i=choices.findIndex(x=>String(x).trim().toLowerCase()===a.toLowerCase());
       return i>=0?String(i+1):a;
     });
+  }else if([FORMS.write,FORMS.multipart].includes(form)){
+    answers=answers.map(normalizeTypedAnswerNotation);
   }
   return answers;
 }
