@@ -1,5 +1,6 @@
 import {QuestionRenderer} from './question-renderer.js';
 import {gradeQuestion} from './question-grader.js';
+import {createQuestionSession} from './question-session.js?v=1.0.0';
 import {resolveContentIds,loadStoredSkill,loadStoredWritten,reviewQuestionFromItem} from './content-source.js?v=2.17a';
 import {loadVocabularyTest} from './vocab-test-source.js?v=2.14.0';
 import {initTracking,refreshTrackingState,setTrackingContext,startSession,recordAttempt,completeSession,trackingState} from './tracking-client.js?v=2.17a';
@@ -40,6 +41,7 @@ function scopeFor(plan){const lessons=plan?.group?.scope?.lessons;if(Array.isArr
 function sectionsFor(plan,lesson){const row=scopeFor(plan).find(x=>String(x.lesson)===String(lesson)),sections=new Set((row?.sections||[]).map(x=>String(x).toLowerCase()));if(sections.has('vocabulary'))sections.add('vocab_test');return sections}
 function planById(id){return(trackingState().plans||[]).find(p=>String(p.id)===String(id))||null}
 function trackingId(q){return String(q?.tracking?.questionId||q?.id||'')}
+function fieldState(key){return{get:()=>state[key],set:value=>{state[key]=value}}}
 function setBottom(html=''){bottom.innerHTML=html;bottom.hidden=!html}
 function error(message){root.innerHTML=`<div class="error">${esc(message)}</div>`;setBottom('')}
 function updateUser(){const u=trackingState().user;userEl.textContent=u?.name||u?.username||'Student'}
@@ -106,14 +108,22 @@ async function startPracticeRoute(plan,lesson,practice){
   }catch(e){if(!practiceRouteMatches(state.practice))return;console.error('[test-prep-v2] start failed',e);error(e.message||'문제를 불러오지 못했습니다.')}
 }
 function current(){return state.queue[state.index]||null}
-function headerFor(q){const code=q.source?.code||'',source=code?`<span class="badge ${code.toLowerCase()}" title="${code==='Z'?'Zocbo':code==='W'?'Willena authored':'Book reference'}">${code}</span>`:'';return `<div class="practice-head"><div><button class="back" id="practiceBack">← ${esc(state.lesson)}</button><div class="practice-meta">${source}<span>${esc(state.plan.book_label||'')}</span><span>·</span><span>${esc(PRACTICES[state.practice]?.label||state.practice)}</span></div></div><strong>${state.index+1} / ${state.queue.length}</strong></div><div class="progress"><i style="width:${Math.round(state.index/Math.max(1,state.queue.length)*100)}%"></i></div>`}
-function renderQuestion(){
-  if(!practiceRouteMatches(state.practice))return;if(state.index>=state.queue.length)return finishPractice();const q=current();state.checked=false;state.startedAt=Date.now();root.innerHTML=`${headerFor(q)}<div class="question-card" id="questionHost"></div>`;state.renderer=new QuestionRenderer($('#questionHost')).render(q,{onChange:(_,has)=>{const check=$('#checkAnswer');if(check&&!state.checked)check.disabled=!has}});$('#practiceBack').onclick=back;setBottom(`<button id="skipQuestion">Skip</button><button class="primary" id="checkAnswer" disabled>Check Answer</button>`);$('#skipQuestion').onclick=skipQuestion;$('#checkAnswer').onclick=checkAnswer;
+function headerFor(q){const code=q.source?.code||'',source=code?`<span class="badge ${code.toLowerCase()}" title="${code==='Z'?'Zocbo':code==='W'?'Willena authored':'Book reference'}">${code}</span>`:'';return `<div class="practice-head"><div><button class="back" id="practiceBack" data-session-back>← ${esc(state.lesson)}</button><div class="practice-meta">${source}<span>${esc(state.plan.book_label||'')}</span><span>·</span><span>${esc(PRACTICES[state.practice]?.label||state.practice)}</span></div></div><strong>${state.index+1} / ${state.queue.length}</strong></div><div class="progress"><i style="width:${Math.round(state.index/Math.max(1,state.queue.length)*100)}%"></i></div>`}
+let practiceQuestionSession=null;
+function getPracticeQuestionSession(){
+  if(practiceQuestionSession)return practiceQuestionSession;
+  practiceQuestionSession=createQuestionSession({
+    root,bottom,Renderer:QuestionRenderer,gradeQuestion,recordAttempt,
+    isActive:()=>practiceRouteMatches(state.practice),getEntry:current,getQuestion:q=>q,renderHeader:(_,q)=>headerFor(q),getPracticeType:()=>state.practice,
+    getWrongId:(_,q)=>trackingId(q),onCorrect:()=>{state.score++},onWrong:(_,q)=>{state.wrongIds.push(trackingId(q))},onFinished:finishPractice,onBack:back,
+    checkedState:fieldState('checked'),indexState:fieldState('index'),startedAtState:fieldState('startedAt'),rendererState:fieldState('renderer'),queueLength:()=>state.queue.length,
+    buttonIds:{skip:'skipQuestion',check:'checkAnswer'},logLabel:'practice'
+  });
+  return practiceQuestionSession;
 }
-async function checkAnswer(){
-  if(!practiceRouteMatches(state.practice))return;if(state.checked){state.index++;renderQuestion();return}const q=current(),response=state.renderer.getResponse(),btn=$('#checkAnswer');btn.disabled=true;btn.textContent=q.grading?.aiAllowed&&q.grading?.mode==='ai_semantic_strict'?'Checking…':'Check Answer';state.renderer.setDisabled(true);const result=await gradeQuestion(q,response);if(!practiceRouteMatches(state.practice))return;result.responseTimeMs=Date.now()-state.startedAt;state.checked=true;if(result.correct)state.score++;else state.wrongIds.push(trackingId(q));state.renderer.showFeedback(result);try{await recordAttempt({question:q,response,result,practiceType:state.practice})}catch(e){console.warn('[test-prep-v2] tracking failed',e)}if(!practiceRouteMatches(state.practice))return;btn.disabled=false;btn.textContent=state.index===state.queue.length-1?'Finish':'Next Question →';const skip=$('#skipQuestion');if(skip)skip.disabled=true;
-}
-async function skipQuestion(){if(state.checked||!practiceRouteMatches(state.practice))return;const q=current(),response=state.renderer?.getResponse()??null,result={correct:false,method:'skipped',responseTimeMs:Date.now()-state.startedAt};state.wrongIds.push(trackingId(q));try{await recordAttempt({question:q,response,result,practiceType:state.practice,skipped:true})}catch(e){console.warn('[test-prep-v2] skip tracking failed',e)}if(!practiceRouteMatches(state.practice))return;state.index++;renderQuestion()}
+function renderQuestion(){return getPracticeQuestionSession().render()}
+async function checkAnswer(){return getPracticeQuestionSession().check()}
+async function skipQuestion(){return getPracticeQuestionSession().skip()}
 async function finishPractice(){
   const route=currentRoute();if(route.view!=='practice')return;setBottom('');try{await completeSession({correct:state.score,total:state.queue.length,wrongIds:state.wrongIds});await refreshTrackingState();const fresh=planById(state.plan.id);if(fresh)state.plan=fresh;await refreshPlanCardStats(state.plan)}catch(e){console.warn('[test-prep-v2] finish/refresh failed',e)}
   if(!practiceRouteMatches(state.practice,route.planId,route.lesson))return;const pct=state.queue.length?Math.round(state.score/state.queue.length*100):0;state.lastResult={planId:route.planId,lesson:route.lesson,practice:route.practice,score:state.score,total:state.queue.length,wrong:state.wrongIds.length,pct};await replaceRoute({view:'result',planId:route.planId,lesson:route.lesson,practice:route.practice});
@@ -143,16 +153,23 @@ function renderReviewWaiting(plan,data){
   root.innerHTML=`<button class="back" id="reviewWaitBack">← ${esc(plan.book_label||'시험 범위')}</button><div class="heading"><div><h2>오답 복습</h2><p>${esc(plan.exam_name||'전체 시험 범위')}</p></div></div><div class="review-panel">${reviewOverview(data)}<div class="review-message"><h3>${esc(title)}</h3><p>${esc(copy)}</p></div></div>`;$('#reviewWaitBack').onclick=back;
 }
 function currentReview(){return state.queue[state.index]||null}
-function reviewHeader(item,q){const code=q.source?.code||'',source=code?`<span class="badge ${code.toLowerCase()}">${code}</span>`:'';const label=PRACTICES[item.practiceType]?.label||item.practiceType;return `<div class="practice-head"><div><button class="back" id="reviewBack">← 오답</button><div class="practice-meta">${source}<span>${esc(item.lesson)}</span><span>·</span><span>${esc(label)}</span></div></div><strong>${state.index+1} / ${state.queue.length}</strong></div><div class="progress"><i style="width:${Math.round(state.index/Math.max(1,state.queue.length)*100)}%"></i></div>`}
-function renderReviewQuestion(){
-  if(!reviewRouteMatches())return;if(state.index>=state.queue.length)return finishReview();const row=currentReview(),item=row.item,q=row.question;state.lesson=item.lesson;state.practice=item.practiceType;state.checked=false;state.startedAt=Date.now();setTrackingContext(state.plan,item.lesson);root.innerHTML=`${reviewHeader(item,q)}<div class="question-card" id="questionHost"></div>`;state.renderer=new QuestionRenderer($('#questionHost')).render(q,{onChange:(_,has)=>{const check=$('#checkReview');if(check&&!state.checked)check.disabled=!has}});$('#reviewBack').onclick=back;setBottom(`<button id="skipReview">Skip</button><button class="primary" id="checkReview" disabled>Check Answer</button>`);$('#skipReview').onclick=skipReviewQuestion;$('#checkReview').onclick=checkReviewAnswer;
+function reviewHeader(item,q){const code=q.source?.code||'',source=code?`<span class="badge ${code.toLowerCase()}">${code}</span>`:'';const label=PRACTICES[item.practiceType]?.label||item.practiceType;return `<div class="practice-head"><div><button class="back" id="reviewBack" data-session-back>← 오답</button><div class="practice-meta">${source}<span>${esc(item.lesson)}</span><span>·</span><span>${esc(label)}</span></div></div><strong>${state.index+1} / ${state.queue.length}</strong></div><div class="progress"><i style="width:${Math.round(state.index/Math.max(1,state.queue.length)*100)}%"></i></div>`}
+let reviewQuestionSession=null;
+function getReviewQuestionSession(){
+  if(reviewQuestionSession)return reviewQuestionSession;
+  reviewQuestionSession=createQuestionSession({
+    root,bottom,Renderer:QuestionRenderer,gradeQuestion,recordAttempt,
+    isActive:()=>reviewRouteMatches(),getEntry:currentReview,getQuestion:row=>row?.question,renderHeader:(row,q)=>reviewHeader(row.item,q),getPracticeType:row=>row.item.practiceType,
+    getWrongId:row=>row.item.canonicalId,getAttemptExtras:row=>({source:'wrong-review',metadata:{review_stage_before:row.item.reviewStage,canonical_id:row.item.canonicalId}}),
+    onBeforeRender:row=>{state.lesson=row.item.lesson;state.practice=row.item.practiceType;setTrackingContext(state.plan,row.item.lesson)},onCorrect:()=>{state.score++},onWrong:row=>{state.wrongIds.push(row.item.canonicalId)},onFinished:finishReview,onBack:back,
+    checkedState:fieldState('checked'),indexState:fieldState('index'),startedAtState:fieldState('startedAt'),rendererState:fieldState('renderer'),queueLength:()=>state.queue.length,
+    buttonIds:{skip:'skipReview',check:'checkReview'},logLabel:'review'
+  });
+  return reviewQuestionSession;
 }
-async function checkReviewAnswer(){
-  if(!reviewRouteMatches())return;if(state.checked){state.index++;renderReviewQuestion();return}const row=currentReview(),item=row.item,q=row.question,response=state.renderer.getResponse(),btn=$('#checkReview');btn.disabled=true;btn.textContent=q.grading?.aiAllowed&&q.grading?.mode==='ai_semantic_strict'?'Checking…':'Check Answer';state.renderer.setDisabled(true);const result=await gradeQuestion(q,response);if(!reviewRouteMatches())return;result.responseTimeMs=Date.now()-state.startedAt;state.checked=true;if(result.correct)state.score++;else state.wrongIds.push(item.canonicalId);state.renderer.showFeedback(result);try{await recordAttempt({question:q,response,result,practiceType:item.practiceType,source:'wrong-review',metadata:{review_stage_before:item.reviewStage,canonical_id:item.canonicalId}})}catch(e){console.warn('[test-prep-v2] review tracking failed',e)}if(!reviewRouteMatches())return;btn.disabled=false;btn.textContent=state.index===state.queue.length-1?'Finish':'Next Question →';const skip=$('#skipReview');if(skip)skip.disabled=true;
-}
-async function skipReviewQuestion(){
-  if(state.checked||!reviewRouteMatches())return;const row=currentReview(),item=row.item,q=row.question,response=state.renderer?.getResponse()??null,result={correct:false,method:'skipped',responseTimeMs:Date.now()-state.startedAt};state.wrongIds.push(item.canonicalId);try{await recordAttempt({question:q,response,result,practiceType:item.practiceType,skipped:true,source:'wrong-review',metadata:{review_stage_before:item.reviewStage,canonical_id:item.canonicalId}})}catch(e){console.warn('[test-prep-v2] review skip tracking failed',e)}if(!reviewRouteMatches())return;state.index++;renderReviewQuestion();
-}
+function renderReviewQuestion(){return getReviewQuestionSession().render()}
+async function checkReviewAnswer(){return getReviewQuestionSession().check()}
+async function skipReviewQuestion(){return getReviewQuestionSession().skip()}
 async function finishReview(){
   const route=currentRoute();if(route.view!=='review')return;const answered=state.queue.length,correct=state.score;setBottom('');root.innerHTML='<div class="loading">오답 결과를 정리하는 중...</div>';
   let data=state.reviewData;
