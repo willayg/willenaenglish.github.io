@@ -1,9 +1,32 @@
-import {helpWithAiWilli} from './ai-willi-helper.js?v=1.1.0';
+import {helpWithAiWilli} from './ai-willi-helper.js?v=1.2.0';
 import {AI_WILLI_NAME,aiWilliMessage} from './ai-willi-messages.js?v=1.0.0';
 
 const STYLE_ID='aiWilliSharedStyles';
 const MAX_FOLLOWUPS=2;
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+function formatAiWilliText(value){
+  const src=String(value??'').replace(/\r\n?/g,'\n').trim();
+  if(!src)return'';
+  const inline=s=>esc(s).replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/`([^`]+)`/g,'<code>$1</code>');
+  const lines=src.split('\n');
+  const out=[];
+  let list=[];
+  const flush=()=>{if(!list.length)return;out.push(`<ul>${list.map(x=>`<li>${inline(x)}</li>`).join('')}</ul>`);list=[]};
+  for(const raw of lines){
+    const line=raw.trim();
+    if(!line){flush();continue}
+    const bullet=line.match(/^[-•]\s+(.+)$/);
+    if(bullet){list.push(bullet[1]);continue}
+    flush();
+    const numbered=line.match(/^\d+[.)]\s+(.+)$/);
+    if(numbered){out.push(`<div class="ai-willi-numbered">${inline(line)}</div>`);continue}
+    if(/^#{1,3}\s+/.test(line)){out.push(`<div class="ai-willi-subhead">${inline(line.replace(/^#{1,3}\s+/,''))}</div>`);continue}
+    out.push(`<p>${inline(line)}</p>`);
+  }
+  flush();
+  return out.join('');
+}
 
 function ensureStyles(){
   if(document.getElementById(STYLE_ID))return;
@@ -11,11 +34,15 @@ function ensureStyles(){
 .ai-willi-card{margin:14px 0 0;padding:14px 15px;border:1.5px solid #bfe7ea;border-radius:16px;background:linear-gradient(180deg,#f7feff 0%,#f0fbfc 100%);color:#263d44;box-shadow:0 5px 18px rgba(36,92,99,.07);font-family:Poppins,system-ui,sans-serif}
 .ai-willi-head{display:flex;align-items:center;gap:8px;color:#ee5f91;font-weight:800;font-size:13px;line-height:1.2}
 .ai-willi-mark{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:#ffe8f2;color:#ee5f91;font-size:15px;flex:0 0 auto}
-.ai-willi-message{margin-top:9px;font-size:13px;line-height:1.65;font-weight:600;white-space:pre-wrap;color:#344d55}
+.ai-willi-message{margin-top:9px;font-size:13px;line-height:1.65;font-weight:600;color:#344d55}
+.ai-willi-message p{margin:0 0 9px}.ai-willi-message p:last-child{margin-bottom:0}
+.ai-willi-message ul{margin:6px 0 10px;padding-left:22px}.ai-willi-message li{margin:4px 0}
+.ai-willi-message strong{font-weight:900;color:#263d44}.ai-willi-message code{font-family:inherit;font-weight:800;background:#e9f7f8;border-radius:5px;padding:1px 4px}
+.ai-willi-subhead{margin:10px 0 5px;font-weight:900;color:#263d44}.ai-willi-numbered{margin:5px 0}
 .ai-willi-action{margin-top:11px;display:inline-flex;align-items:center;justify-content:center;min-height:42px;padding:0 15px;border:1.5px solid #86d9df;border-radius:12px;background:#fff;color:#d9467d;font:800 13px/1.2 Poppins,system-ui,sans-serif;cursor:pointer}
 .ai-willi-action:disabled,.ai-willi-refine:disabled{opacity:.55;cursor:default}
 .ai-willi-refinements{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
-.ai-willi-refine{min-height:38px;padding:0 12px;border:1.5px solid #b7dfe3;border-radius:999px;background:#fff;color:#31545d;font:800 12px/1.2 Poppins,system-ui,sans-serif;cursor:pointer}
+.ai-willi-refine{min-height:38px;padding:0 12px;border:1.5px solid #b7dfe3;border-radius:999px;background:#fff;color:#31545d;font:800 12px/1.2 Poppins,system-ui,sans-serif;cursor:pointer;touch-action:manipulation}
 .ai-willi-refine:hover{border-color:#86d9df;background:#f9feff}
 .ai-willi-refine-note{margin-top:8px;color:#71868d;font-size:11px;font-weight:700}
 .ai-willi-card.waiting .ai-willi-mark{animation:aiWilliPulse 1s ease-in-out infinite alternate}
@@ -70,27 +97,36 @@ export function mountAiWilliHelper({container,question,response,result,section,l
     busy=!!value;el.classList.toggle('waiting',busy);
     el.querySelectorAll('button').forEach(b=>b.disabled=busy);
   };
-  const showRefinements=()=>{if(refineBox)refineBox.innerHTML=refinementHtml(followupsUsed)};
   const run=async mode=>{
-    if(busy)return;setBusy(true);el.classList.remove('error');
+    if(busy)return;
+    setBusy(true);el.classList.remove('error');
     const prior=previousExplanation;
     message.textContent=aiWilliMessage('helper','waiting');
     try{
       const answer=await helpWithAiWilli({question,response,result,section,lesson,practiceType,existingExplanation,mode,previousExplanation:prior});
       const text=String(answer?.text||'').trim()||aiWilliMessage('helper','failed');
-      previousExplanation=text;message.textContent=text;el.classList.remove('error');
+      previousExplanation=text;
+      message.innerHTML=formatAiWilliText(text);
+      el.classList.remove('error');
       if(mode!=='initial')followupsUsed=Math.min(MAX_FOLLOWUPS,followupsUsed+1);
-      askBtn?.remove();showRefinements();
+      askBtn?.remove();
+      showRefinements();
     }catch(e){
       console.warn('[AI Willi helper] failed',e);el.classList.add('error');message.textContent=aiWilliMessage('helper','failed');
     }finally{setBusy(false)}
   };
+  const showRefinements=()=>{
+    if(!refineBox)return;
+    refineBox.innerHTML=refinementHtml(followupsUsed);
+    refineBox.querySelectorAll('[data-ai-willi-refine]').forEach(btn=>{
+      btn.onclick=ev=>{
+        ev.preventDefault();ev.stopPropagation();
+        if(busy||followupsUsed>=MAX_FOLLOWUPS)return;
+        run(btn.dataset.aiWilliRefine||'simple');
+      };
+    });
+  };
 
-  askBtn.onclick=()=>run('initial');
-  refineBox.addEventListener('click',e=>{
-    const btn=e.target instanceof Element?e.target.closest('[data-ai-willi-refine]'):null;
-    if(!btn||busy||followupsUsed>=MAX_FOLLOWUPS)return;
-    run(btn.dataset.aiWilliRefine||'simple');
-  });
+  askBtn.onclick=ev=>{ev.preventDefault();ev.stopPropagation();run('initial')};
   return el;
 }
