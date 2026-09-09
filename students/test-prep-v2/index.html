@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>Willena Test Prep v2.25.0</title>
+<title>Willena Test Prep v2.25.1</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -14,7 +14,7 @@
 <link rel="stylesheet" href="./loading-screen.css?v=2.15b">
 <link rel="stylesheet" href="./vocab-learning.css?v=2.18.3">
 <link rel="stylesheet" href="./passage-learning.css?v=2.18.2">
-<script type="importmap">{"imports":{"./question-model.js":"./question-model.js?v=2.24.0","./question-renderer.js":"./question-renderer.js?v=2.20.0","./question-grader.js":"../shared/question-grader.js?v=2.0.1","./tracking-client.js":"./tracking-client.js?v=2.17a","./content-source.js":"./content-source.js?v=2.24.0","./content-source.js?v=2.17a":"./content-source.js?v=2.24.0","./stats-client.js":"./stats-client.js?v=2.16a"}}</script>
+<script type="importmap">{"imports":{"./question-model.js":"./question-model.js?v=2.24.0","./question-renderer.js":"./question-renderer.js?v=2.20.0","./question-grader.js":"../shared/question-grader.js?v=2.1.0","./tracking-client.js":"./tracking-client.js?v=2.17a","./content-source.js":"./content-source.js?v=2.24.0","./content-source.js?v=2.17a":"./content-source.js?v=2.24.0","./stats-client.js":"./stats-client.js?v=2.16a"}}</script>
 <style>
 html,body{width:100%;max-width:100%;overflow-x:hidden}
 .student-header{width:100vw;max-width:none;margin-left:0;margin-right:0;left:0;right:auto}
@@ -31,7 +31,7 @@ html,body{width:100%;max-width:100%;overflow-x:hidden}
   <div class="header-inner">
     <div class="header-profile">
       <div class="student-name" id="user">Student</div>
-      <span class="version-pill">TEST PREP · V2.25.0</span>
+      <span class="version-pill">TEST PREP · V2.25.1</span>
     </div>
     <div class="header-brand">
       <div class="header-title">Willena Test Prep</div>
@@ -62,10 +62,10 @@ installQuestionFlags({
   Renderer:QuestionRenderer,
   contextProvider:()=>{
     const t=trackingState(),r=currentRoute?.()||{};
-    return{studentId:t.user?.id||null,planId:r.planId||t.plan?.id||null,lesson:r.lesson||t.lesson||null,practiceType:r.practice||t.practice||null,reviewMode:r.view==='review',appRevision:'2.25.0'};
+    return{studentId:t.user?.id||null,planId:r.planId||t.plan?.id||null,lesson:r.lesson||t.lesson||null,practiceType:r.practice||t.practice||null,reviewMode:r.view==='review',appRevision:'2.25.1'};
   }
 });
 </script>
-<script type="module" src="./app.js?v=2.25.0"></script>
+<script type="module" src="./app.js?v=2.25.1"></script>
 </body>
 </html>
