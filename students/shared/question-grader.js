@@ -1,5 +1,5 @@
-import {resolveQuestionGradingPolicy} from './question-grading-policy.js?v=2.0.0';
-import {gradeWithAiWilli} from './ai-willi/ai-willi-grader.js?v=1.0.0';
+import {resolveQuestionGradingPolicy} from './question-grading-policy.js?v=2.0.1';
+import {gradeWithAiWilli} from './ai-willi/ai-willi-grader.js?v=1.0.1';
 import {aiWilliMessage} from './ai-willi/ai-willi-messages.js?v=1.0.0';
 
 const FORMS={choice:'choice',multi:'multi',write:'write',multipart:'multipart',correction:'correction',identifiedCorrection:'identified_correction',order:'order',chunks:'chunks',blanks:'blanks',learn:'learn',unsupported:'unsupported'};
@@ -33,17 +33,23 @@ function containsPhrase(text,phrase){const t=` ${searchable(text)} `,p=searchabl
 function correctionLabel(v){const s=String(v||'').trim().replace(/:$/,'');const n=CIRCLED_NUM.indexOf(s);if(n>=0)return String(n+1);const m=s.match(/^\d+$/);return m?String(Number(s)):s.toLowerCase()}
 function correctionNorm(v){const p=parseCorrection(v);return p?`${correctionLabel(p.label||p.prefix)}|${normExact(p.wrong)}|${normExact(p.right)}`:normExact(v)}
 function correctionTokens(v){return normExact(v).replace(/[.!?,;:()]+/g,' ').split(/\s+/).filter(Boolean)}
+function sameTokens(a,b){return a.length===b.length&&a.every((x,i)=>x===b[i])}
+function replaceTokenSequence(base,from,to){
+  if(!base.length||!from.length)return null;
+  for(let i=0;i<=base.length-from.length;i++){
+    if(!from.every((x,j)=>base[i+j]===x))continue;
+    return[...base.slice(0,i),...to,...base.slice(i+from.length)];
+  }
+  return null;
+}
 function expandedCorrectionEquivalent(referenceWrong,referenceRight,studentWrong,studentRight){
   const rw=correctionTokens(referenceWrong),rr=correctionTokens(referenceRight),sw=correctionTokens(studentWrong),sr=correctionTokens(studentRight);
   if(!rw.length||!rr.length||!sw.length||!sr.length)return false;
-  if(sw.length===rw.length&&sr.length===rr.length&&sw.every((x,i)=>x===rw[i])&&sr.every((x,i)=>x===rr[i]))return true;
-  if(sw.length<rw.length)return false;
-  for(let i=0;i<=sw.length-rw.length;i++){
-    if(!rw.every((x,j)=>sw[i+j]===x))continue;
-    const expected=[...sw.slice(0,i),...rr,...sw.slice(i+rw.length)];
-    if(expected.length===sr.length&&expected.every((x,j)=>x===sr[j]))return true;
-  }
-  return false;
+  if(sameTokens(sw,rw)&&sameTokens(sr,rr))return true;
+  const studentExpanded=replaceTokenSequence(sw,rw,rr);
+  if(studentExpanded&&sameTokens(studentExpanded,sr))return true;
+  const referenceEdited=replaceTokenSequence(rw,sw,sr);
+  return !!referenceEdited&&sameTokens(referenceEdited,rr);
 }
 function correctionPairEquivalent(reference,student,{requireLabel=false}={}){
   const r=parseCorrection(reference),s=parseCorrection(student);if(!r||!s)return false;
