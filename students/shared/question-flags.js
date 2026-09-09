@@ -11,7 +11,8 @@ function token(){return window.WillenaAPI?.getLocalAccessToken?.()||localStorage
 function readStore(){try{const v=JSON.parse(localStorage.getItem(STORE)||'{}');return v&&typeof v==='object'&&!Array.isArray(v)?v:{}}catch(_){return{}}}
 function writeStore(v){try{localStorage.setItem(STORE,JSON.stringify(v))}catch(_){}}
 function pruneStore(){const src=readStore(),cut=now()-DUPLICATE_MS*7,out={};for(const [k,v] of Object.entries(src)){if(Number(v?.at)||0>=cut)out[k]=v}writeStore(out);return out}
-function sourceId(q){return String(q?.tracking?.questionId||q?.id||q?.masteryKey||'').trim()}
+function canonicalId(q){return String(q?.tracking?.questionId||q?.id||q?.masteryKey||'').trim()}
+function sourceId(q){const base=canonicalId(q);if(!base)return'';const mode=String(q?.metadata?.vocab_mode||'').trim(),type=String(q?.tracking?.questionType||'').trim();return mode?`${base}:${type||mode}`:base}
 function duplicateKey(studentId,q){const id=sourceId(q);return studentId&&id?`${studentId}:${id}`:''}
 function recentlyFlagged(studentId,q){const key=duplicateKey(studentId,q);if(!key)return false;const row=readStore()[key];return !!row&&now()-Number(row.at||0)<DUPLICATE_MS}
 function markFlagged(studentId,q,meta={}){const key=duplicateKey(studentId,q);if(!key)return;const store=pruneStore();store[key]={at:now(),reason:meta.reason||null};writeStore(store)}
@@ -58,7 +59,7 @@ function sourceType(q,c){
 }
 function snapshotOf(q,renderer,c){
   let response=null;try{response=renderer?.getResponse?.()??null}catch(_){}
-  return{app:'test-prep-v2',app_revision:c.appRevision||null,page:location.pathname,review_mode:!!c.reviewMode,plan_id:c.planId||null,lesson:c.lesson||null,practice_type:c.practiceType||q?.tracking?.practiceType||q?.skill||null,question_id:sourceId(q)||null,mastery_key:q?.masteryKey||null,skill:q?.skill||null,form:q?.form||null,question_type:q?.tracking?.questionType||null,source:q?.source||null,prompt:q?.prompt||null,context:q?.context||{},choices:Array.isArray(q?.choices)?q.choices:[],correct_answer:Array.isArray(q?.answer)?q.answer:[],targets:Array.isArray(q?.tracking?.targets)?q.tracking.targets:[],student_response:response,metadata:q?.metadata||{}};
+  return{app:'test-prep-v2',app_revision:c.appRevision||null,page:location.pathname,review_mode:!!c.reviewMode,plan_id:c.planId||null,lesson:c.lesson||null,practice_type:c.practiceType||q?.tracking?.practiceType||q?.skill||null,question_id:canonicalId(q)||null,mastery_key:q?.masteryKey||null,skill:q?.skill||null,form:q?.form||null,question_type:q?.tracking?.questionType||null,source:q?.source||null,prompt:q?.prompt||null,context:q?.context||{},choices:Array.isArray(q?.choices)?q.choices:[],correct_answer:Array.isArray(q?.answer)?q.answer:[],targets:Array.isArray(q?.tracking?.targets)?q.tracking.targets:[],student_response:response,metadata:q?.metadata||{}};
 }
 async function postFlag(payload,access){return fetch(`${DB}/rest/v1/${TABLE}`,{method:'POST',headers:{apikey:API_KEY,Authorization:`Bearer ${access}`,'Content-Type':'application/json',Prefer:'return=minimal'},body:JSON.stringify(payload)})}
 async function send(){
