@@ -12,7 +12,6 @@ export function createQuestionSession({
   getQuestion,
   renderHeader,
   getPracticeType,
-  getWrongId,
   getAttemptExtras=()=>({}),
   onBeforeRender=()=>{},
   onCorrect=()=>{},
