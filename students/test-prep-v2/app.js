@@ -1,15 +1,14 @@
 import {QuestionRenderer} from './question-renderer.js';
 import {gradeQuestion} from './question-grader.js';
-import {createQuestionSession} from './question-session.js?v=1.0.0';
-import {resolveContentIds,loadStoredSkill,loadStoredWritten,reviewQuestionFromItem} from './content-source.js?v=2.17a';
-import {loadVocabularyTest} from './vocab-test-source.js?v=2.14.0';
+import {createQuestionSession} from './question-session.js?v=1.0.1';
+import {loadPracticeContent} from './practice-loader.js?v=1.0.0';
+import {resolveContentIds,reviewQuestionFromItem} from './content-source.js?v=2.24.0';
 import {initTracking,refreshTrackingState,setTrackingContext,startSession,recordAttempt,completeSession,trackingState} from './tracking-client.js?v=2.17a';
 import {startVocabularyLearning} from './vocab-learning.js?v=2.13.0';
 import {passageAvailable} from './passage-source.js?v=2.18.0';
 import {startPassageLearning,stopPassageLearning} from './passage-learning.js?v=2.18.0';
 import {loadCardStats,invalidateCardStats,getStatsDiagnostics,formatCardMetric,formatAccuracy,reviewCounts} from './stats-client.js?v=2.16a';
 import {loadReviewQueue,refreshReviewQueue} from '../shared/student-review.js?v=1.0.0';
-import {buildQuestionQueue} from '../shared/question-sequencer.js?v=1.0.0';
 import {initNavigation,navigate,replaceRoute,back,currentRoute} from './navigation.js?v=2.17a';
 
 const $=s=>document.querySelector(s),esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -92,19 +91,19 @@ async function startPracticeRoute(plan,lesson,practice){
   state.plan=plan;state.lesson=lesson;state.practice=practice;state.queue=[];state.index=0;state.score=0;state.wrongIds=[];state.checked=false;state.renderer=null;root.innerHTML='<div class="loading">문제를 불러오는 중...</div>';setBottom('');
   try{
     const ids=await resolveContentIds(plan,lesson);if(!practiceRouteMatches(practice,plan.id,lesson))return;state.ids=ids;setTrackingContext(plan,lesson);
-    if(config.kind==='vocab-learning'){
+    const loaded=await loadPracticeContent({kind:config.kind,practice,unitId:ids.unitId,studentId:trackingState().user?.id||null,planId:plan.id,lesson,count:20});
+    if(!practiceRouteMatches(practice,plan.id,lesson))return;
+    if(loaded.mode==='workflow'&&loaded.kind==='vocab-learning'){
       root.innerHTML='<div id="vocabActivityHost"></div>';const host=$('#vocabActivityHost');
       await startVocabularyLearning({host,plan,lesson,unitId:ids.unitId,onExit:back});return;
     }
-    if(config.kind==='passage-learning'){
+    if(loaded.mode==='workflow'&&loaded.kind==='passage-learning'){
       root.innerHTML='<div id="passageActivityHost"></div>';const host=$('#passageActivityHost');
       await startPassageLearning({host,plan,lesson,unitId:ids.unitId,onExit:back});return;
     }
-    let pool=config.kind==='vocab-test'?await loadVocabularyTest(ids.unitId,{count:1000}):config.kind==='written'?await loadStoredWritten(ids.unitId):await loadStoredSkill(ids.unitId,practice);if(!practiceRouteMatches(practice,plan.id,lesson))return;
-    if(!pool.length){root.innerHTML=`<button class="back" id="emptyBack">← ${esc(lesson)}</button><div class="empty">이 영역에 사용할 문제가 없습니다.</div>`;$('#emptyBack').onclick=back;return}
-    pool=await buildQuestionQueue(pool,{studentId:trackingState().user?.id||null,planId:plan.id,lesson,practiceType:practice,count:20});if(!practiceRouteMatches(practice,plan.id,lesson))return;
-    if(!pool.length){root.innerHTML=`<button class="back" id="emptyBack">← ${esc(lesson)}</button><div class="empty">선택할 수 있는 문제가 없습니다.</div>`;$('#emptyBack').onclick=back;return}
-    state.queue=pool;await startSession(practice);if(!practiceRouteMatches(practice,plan.id,lesson))return;renderQuestion();
+    if(!loaded.rawCount){root.innerHTML=`<button class="back" id="emptyBack">← ${esc(lesson)}</button><div class="empty">이 영역에 사용할 문제가 없습니다.</div>`;$('#emptyBack').onclick=back;return}
+    if(!loaded.pool.length){root.innerHTML=`<button class="back" id="emptyBack">← ${esc(lesson)}</button><div class="empty">선택할 수 있는 문제가 없습니다.</div>`;$('#emptyBack').onclick=back;return}
+    state.queue=loaded.pool;await startSession(practice);if(!practiceRouteMatches(practice,plan.id,lesson))return;renderQuestion();
   }catch(e){if(!practiceRouteMatches(state.practice))return;console.error('[test-prep-v2] start failed',e);error(e.message||'문제를 불러오지 못했습니다.')}
 }
 function current(){return state.queue[state.index]||null}
@@ -115,7 +114,7 @@ function getPracticeQuestionSession(){
   practiceQuestionSession=createQuestionSession({
     root,bottom,Renderer:QuestionRenderer,gradeQuestion,recordAttempt,
     isActive:()=>practiceRouteMatches(state.practice),getEntry:current,getQuestion:q=>q,renderHeader:(_,q)=>headerFor(q),getPracticeType:()=>state.practice,
-    getWrongId:(_,q)=>trackingId(q),onCorrect:()=>{state.score++},onWrong:(_,q)=>{state.wrongIds.push(trackingId(q))},onFinished:finishPractice,onBack:back,
+    onCorrect:()=>{state.score++},onWrong:(_,q)=>{state.wrongIds.push(trackingId(q))},onFinished:finishPractice,onBack:back,
     checkedState:fieldState('checked'),indexState:fieldState('index'),startedAtState:fieldState('startedAt'),rendererState:fieldState('renderer'),queueLength:()=>state.queue.length,
     buttonIds:{skip:'skipQuestion',check:'checkAnswer'},logLabel:'practice'
   });
@@ -160,7 +159,7 @@ function getReviewQuestionSession(){
   reviewQuestionSession=createQuestionSession({
     root,bottom,Renderer:QuestionRenderer,gradeQuestion,recordAttempt,
     isActive:()=>reviewRouteMatches(),getEntry:currentReview,getQuestion:row=>row?.question,renderHeader:(row,q)=>reviewHeader(row.item,q),getPracticeType:row=>row.item.practiceType,
-    getWrongId:row=>row.item.canonicalId,getAttemptExtras:row=>({source:'wrong-review',metadata:{review_stage_before:row.item.reviewStage,canonical_id:row.item.canonicalId}}),
+    getAttemptExtras:row=>({source:'wrong-review',metadata:{review_stage_before:row.item.reviewStage,canonical_id:row.item.canonicalId}}),
     onBeforeRender:row=>{state.lesson=row.item.lesson;state.practice=row.item.practiceType;setTrackingContext(state.plan,row.item.lesson)},onCorrect:()=>{state.score++},onWrong:row=>{state.wrongIds.push(row.item.canonicalId)},onFinished:finishReview,onBack:back,
     checkedState:fieldState('checked'),indexState:fieldState('index'),startedAtState:fieldState('startedAt'),rendererState:fieldState('renderer'),queueLength:()=>state.queue.length,
     buttonIds:{skip:'skipReview',check:'checkReview'},logLabel:'review'
