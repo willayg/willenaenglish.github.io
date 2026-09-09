@@ -1,7 +1,8 @@
-import {helpWithAiWilli} from './ai-willi-helper.js?v=1.0.0';
+import {helpWithAiWilli} from './ai-willi-helper.js?v=1.1.0';
 import {AI_WILLI_NAME,aiWilliMessage} from './ai-willi-messages.js?v=1.0.0';
 
 const STYLE_ID='aiWilliSharedStyles';
+const MAX_FOLLOWUPS=2;
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
 function ensureStyles(){
@@ -12,19 +13,29 @@ function ensureStyles(){
 .ai-willi-mark{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:#ffe8f2;color:#ee5f91;font-size:15px;flex:0 0 auto}
 .ai-willi-message{margin-top:9px;font-size:13px;line-height:1.65;font-weight:600;white-space:pre-wrap;color:#344d55}
 .ai-willi-action{margin-top:11px;display:inline-flex;align-items:center;justify-content:center;min-height:42px;padding:0 15px;border:1.5px solid #86d9df;border-radius:12px;background:#fff;color:#d9467d;font:800 13px/1.2 Poppins,system-ui,sans-serif;cursor:pointer}
-.ai-willi-action:disabled{opacity:.6;cursor:default}
+.ai-willi-action:disabled,.ai-willi-refine:disabled{opacity:.55;cursor:default}
+.ai-willi-refinements{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.ai-willi-refine{min-height:38px;padding:0 12px;border:1.5px solid #b7dfe3;border-radius:999px;background:#fff;color:#31545d;font:800 12px/1.2 Poppins,system-ui,sans-serif;cursor:pointer}
+.ai-willi-refine:hover{border-color:#86d9df;background:#f9feff}
+.ai-willi-refine-note{margin-top:8px;color:#71868d;font-size:11px;font-weight:700}
 .ai-willi-card.waiting .ai-willi-mark{animation:aiWilliPulse 1s ease-in-out infinite alternate}
 .ai-willi-card.error{border-color:#efccd8;background:#fff7f9}
 .feedback .ai-willi-feedback-head{display:flex;align-items:center;gap:7px;margin-bottom:7px;color:#d9467d;font:800 12px/1.2 Poppins,system-ui,sans-serif}
 .feedback .ai-willi-feedback-head .ai-willi-mark{width:22px;height:22px;font-size:13px}
 @keyframes aiWilliPulse{from{transform:scale(.92);opacity:.65}to{transform:scale(1.06);opacity:1}}
-@media(min-width:600px) and (max-width:1100px){.ai-willi-card{padding:17px 18px;border-radius:18px}.ai-willi-head,.ai-willi-action{font-size:15px}.ai-willi-message{font-size:15px;line-height:1.7}}
+@media(min-width:600px) and (max-width:1100px){.ai-willi-card{padding:17px 18px;border-radius:18px}.ai-willi-head,.ai-willi-action{font-size:15px}.ai-willi-message{font-size:15px;line-height:1.7}.ai-willi-refine{font-size:14px;min-height:42px;padding:0 15px}.ai-willi-refine-note{font-size:13px}}
 `;
   document.head.appendChild(s);
 }
 
 function cardHtml(message,{action=false}={}){
-  return `<div class="ai-willi-head"><span class="ai-willi-mark">✦</span><span>${esc(AI_WILLI_NAME)}</span></div><div class="ai-willi-message" data-ai-willi-message>${esc(message)}</div>${action?`<button type="button" class="ai-willi-action" data-ai-willi-ask>${esc(aiWilliMessage('helper','idle'))}</button>`:''}`;
+  return `<div class="ai-willi-head"><span class="ai-willi-mark">✦</span><span>${esc(AI_WILLI_NAME)}</span></div><div class="ai-willi-message" data-ai-willi-message>${esc(message)}</div>${action?`<button type="button" class="ai-willi-action" data-ai-willi-ask>${esc(aiWilliMessage('helper','idle'))}</button>`:''}<div data-ai-willi-refinements></div>`;
+}
+
+function refinementHtml(used){
+  const left=Math.max(0,MAX_FOLLOWUPS-used);
+  if(left<=0)return `<div class="ai-willi-refine-note">AI Willi follow-ups complete.</div>`;
+  return `<div class="ai-willi-refinements"><button type="button" class="ai-willi-refine" data-ai-willi-refine="examples">More examples</button><button type="button" class="ai-willi-refine" data-ai-willi-refine="simple">More simple</button><button type="button" class="ai-willi-refine" data-ai-willi-refine="details">More details</button></div><div class="ai-willi-refine-note">${left} follow-up${left===1?'':'s'} left</div>`;
 }
 
 export function showAiWilliStatus(container,{role='grader',message=null}={}){
@@ -52,15 +63,34 @@ export function mountAiWilliHelper({container,question,response,result,section,l
   el.innerHTML=cardHtml('이 문제를 더 이해하고 싶으면 AI Willi에게 물어보세요.',{action:true});
   const anchor=container.querySelector('#questionHost,.question-card');
   if(anchor?.parentNode)anchor.insertAdjacentElement('afterend',el);else container.appendChild(el);
-  const btn=el.querySelector('[data-ai-willi-ask]'),message=el.querySelector('[data-ai-willi-message]');
-  btn.onclick=async()=>{
-    if(btn.disabled)return;btn.disabled=true;el.classList.add('waiting');message.textContent=aiWilliMessage('helper','waiting');
-    try{
-      const answer=await helpWithAiWilli({question,response,result,section,lesson,practiceType,existingExplanation});
-      el.classList.remove('waiting','error');message.textContent=String(answer?.text||'').trim()||aiWilliMessage('helper','failed');btn.remove();
-    }catch(e){
-      console.warn('[AI Willi helper] failed',e);el.classList.remove('waiting');el.classList.add('error');message.textContent=aiWilliMessage('helper','failed');btn.disabled=false;
-    }
+  const askBtn=el.querySelector('[data-ai-willi-ask]'),message=el.querySelector('[data-ai-willi-message]'),refineBox=el.querySelector('[data-ai-willi-refinements]');
+  let previousExplanation='',followupsUsed=0,busy=false;
+
+  const setBusy=value=>{
+    busy=!!value;el.classList.toggle('waiting',busy);
+    el.querySelectorAll('button').forEach(b=>b.disabled=busy);
   };
+  const showRefinements=()=>{if(refineBox)refineBox.innerHTML=refinementHtml(followupsUsed)};
+  const run=async mode=>{
+    if(busy)return;setBusy(true);el.classList.remove('error');
+    const prior=previousExplanation;
+    message.textContent=aiWilliMessage('helper','waiting');
+    try{
+      const answer=await helpWithAiWilli({question,response,result,section,lesson,practiceType,existingExplanation,mode,previousExplanation:prior});
+      const text=String(answer?.text||'').trim()||aiWilliMessage('helper','failed');
+      previousExplanation=text;message.textContent=text;el.classList.remove('error');
+      if(mode!=='initial')followupsUsed=Math.min(MAX_FOLLOWUPS,followupsUsed+1);
+      askBtn?.remove();showRefinements();
+    }catch(e){
+      console.warn('[AI Willi helper] failed',e);el.classList.add('error');message.textContent=aiWilliMessage('helper','failed');
+    }finally{setBusy(false)}
+  };
+
+  askBtn.onclick=()=>run('initial');
+  refineBox.addEventListener('click',e=>{
+    const btn=e.target instanceof Element?e.target.closest('[data-ai-willi-refine]'):null;
+    if(!btn||busy||followupsUsed>=MAX_FOLLOWUPS)return;
+    run(btn.dataset.aiWilliRefine||'simple');
+  });
   return el;
 }
