@@ -152,7 +152,13 @@ function activePracticeState(){return history.state?.tp==='practice'&&quiz.style
 function showHomeSurface(){if(activePracticeState())return false;quiz.style.display='none';home.style.display='block';return true}
 function renderHome(){if(activePracticeState())return false;restorePractice();selection=null;showHomeSurface();home.innerHTML='<div class="tp-shell-loading">시험 대비를 불러오는 중...</div>';return true}
 async function contentGet(path){const r=await fetch(CONTENT+path,{headers:HEAD,cache:'no-store'});if(!r.ok)throw new Error(await r.text());return r.json()}
-function assignedScopeUnit(plan,lesson){const rows=plan?.group?.scope?.lessons;if(!Array.isArray(rows))return null;return rows.find(x=>String(x?.lesson||x?.label||x?.unit_label||'')===String(lesson))||null}
+function assignedScopeUnit(plan,lesson){
+  const scope=plan?.group?.scope||{};
+  const lessons=Array.isArray(scope.lessons)?scope.lessons:[];
+  const external=Array.isArray(scope.external_passages)?scope.external_passages:[];
+  const rows=[...lessons,...external];
+  return rows.find(x=>String(x?.lesson||x?.label||x?.unit_label||'')===String(lesson))||null;
+}
 async function resolveIds(plan,lesson){
   const scoped=assignedScopeUnit(plan,lesson),unitId=scoped?.unit_id?String(scoped.unit_id):'';
   if(unitId){const units=await contentGet(`/rest/v1/content_units?select=id,book_id,title&id=eq.${encodeURIComponent(unitId)}&limit=1`);if(units[0]?.id&&units[0]?.book_id)return{bookId:units[0].book_id,unitId:units[0].id}}
