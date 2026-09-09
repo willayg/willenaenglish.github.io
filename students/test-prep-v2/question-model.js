@@ -1,3 +1,5 @@
+import {applyQuestionGradingPolicy} from '../shared/question-grading-policy.js?v=2.0.0';
+
 export const FORMS={choice:'choice',multi:'multi',write:'write',multipart:'multipart',correction:'correction',identifiedCorrection:'identified_correction',order:'order',chunks:'chunks',blanks:'blanks',learn:'learn',unsupported:'unsupported'};
 
 export function cleanAnswers(value){
@@ -127,7 +129,7 @@ export function adaptStored(row){
   const metadata=row?.metadata&&typeof row.metadata==='object'?row.metadata:{};
   const id=String(row?.id||'');
   const partWordCounts=inferPartWordCounts(row,answer.length),wordCount=inferGlobalWordCount(row,answer.length);
-  return {
+  const question={
     id,
     masteryKey:String(row?.masteryKey||metadata.mastery_key||`stored:${id}`),
     bookId:row?.book_id||null,
@@ -152,8 +154,6 @@ export function adaptStored(row){
       multiline:form===FORMS.write
     },
     grading:{
-      mode:String(metadata.grading_mode||'exact_normalized'),
-      aiAllowed:metadata.ai_allowed===true||metadata.ai_allowed==='true',
       constraints:{
         wordCount,
         partWordCounts,
@@ -170,6 +170,7 @@ export function adaptStored(row){
     },
     metadata
   };
+  return applyQuestionGradingPolicy(question);
 }
 
 export function isAuthoredWritten(row){
