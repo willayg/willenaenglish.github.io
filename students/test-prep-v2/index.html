@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>Willena Test Prep v2.20.1</title>
+<title>Willena Test Prep v2.21</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -28,7 +28,7 @@
   <div class="header-inner">
     <div class="header-profile">
       <div class="student-name" id="user">Student</div>
-      <span class="version-pill">TEST PREP · V2.20.1</span>
+      <span class="version-pill">TEST PREP · V2.21</span>
     </div>
     <div class="header-brand">
       <div class="header-title">Willena Test Prep</div>
@@ -48,6 +48,10 @@
 </div>
 <script src="/students/api-gateway.js?v=2.13b"></script>
 <script src="/js/api-config.js?v=2.13b"></script>
-<script type="module" src="./app.js?v=2.20.1"></script>
+<script type="module">
+import {installWillenaKeyboard} from '../shared/willena-keyboard.js?v=1.0.0';
+installWillenaKeyboard({submitSelector:'#bottom button.primary,.vp-next,.pw-question-actions .pw-primary'});
+</script>
+<script type="module" src="./app.js?v=2.20.0"></script>
 </body>
 </html>
