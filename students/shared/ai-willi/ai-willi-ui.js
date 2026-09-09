@@ -1,6 +1,6 @@
 import {helpWithAiWilli} from './ai-willi-helper.js?v=1.3.0';
 import {AI_WILLI_NAME,aiWilliMessage} from './ai-willi-messages.js?v=1.0.0';
-import {getCachedAiWilliExplanation,saveAiWilliExplanation,rateAiWilliExplanation} from './ai-willi-cache.js?v=1.0.0';
+import {getCachedAiWilliExplanation,saveAiWilliExplanation,rateAiWilliExplanation} from './ai-willi-cache.js?v=1.1.0';
 
 const STYLE_ID='aiWilliSharedStyles';
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
