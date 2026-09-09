@@ -6,10 +6,10 @@ function systemPrompt(section){
 }
 
 function refinementInstruction(mode){
-  if(mode==='examples')return `The student did not fully understand the previous explanation. Explain the SAME point again using more concrete examples. Give 2-4 short, level-appropriate English examples with brief Korean explanations. Do not merely repeat the previous explanation.`;
-  if(mode==='simple')return `The student did not fully understand the previous explanation. Explain the SAME point more simply. Use shorter Korean sentences, easier vocabulary, and one clear rule or idea at a time. Assume the student is confused by the previous wording.`;
-  if(mode==='details')return `The student wants more detail. Explain the SAME point more thoroughly, including the important rule, why the wrong answer fails, why the correct answer works, and any useful contrast or exception that directly applies. Stay focused on this question.`;
-  return `Give the student a clear first explanation. Keep it concise enough for a middle-school student, usually 4-7 short paragraphs or bullets.`;
+  if(mode==='examples')return `학생이 이전 설명을 충분히 이해하지 못했습니다. 같은 핵심 내용을 더 구체적인 예시를 사용해서 다시 설명하세요. 학생 수준에 맞는 짧은 영어 예문을 2~4개 제시하고, 각 예문을 짧고 쉬운 한국어로 설명하세요. 이전 설명을 그대로 반복하지 마세요.`;
+  if(mode==='simple')return `학생이 이전 설명을 이해하기 어려워합니다. 같은 핵심 내용을 더 쉽고 단순하게 다시 설명하세요. 짧은 한국어 문장과 쉬운 단어를 사용하고, 한 번에 하나의 규칙이나 개념만 설명하세요. 학생이 이전 표현 때문에 혼란스러웠다고 생각하고 더 쉬운 방식으로 풀어 주세요.`;
+  if(mode==='details')return `학생이 더 자세한 설명을 원합니다. 같은 핵심 내용을 더 깊이 있게 설명하세요. 중요한 규칙, 학생의 답이 왜 맞지 않는지, 정답이 왜 맞는지, 그리고 이 문제에 직접 도움이 되는 비교나 예외가 있다면 함께 설명하세요. 이 문제와 관련 없는 내용으로 넓히지 마세요.`;
+  return `학생에게 첫 번째 설명을 명확하게 제공하세요. 한국 중학생이 읽기 쉽게 간결하게 설명하고, 보통 4~7개의 짧은 문단이나 불릿 정도면 충분합니다.`;
 }
 
 export async function helpWithAiWilli({question,response,result,section,lesson,practiceType,existingExplanation,mode='initial',previousExplanation=''}={}){
@@ -31,7 +31,7 @@ export async function helpWithAiWilli({question,response,result,section,lesson,p
   const {text}=await callAiWilli({
     messages:[
       {role:'system',content:systemPrompt(context.section)},
-      {role:'user',content:`${refinementInstruction(mode)}\n\nUse only the supplied question context below.\n\n${JSON.stringify(context,null,2)}`}
+      {role:'user',content:`${refinementInstruction(mode)}\n\n아래에 제공된 실제 문제 정보만 사용해서 설명하세요.\n\n${JSON.stringify(context,null,2)}`}
     ],
     reasoningEffort:'low',
     maxCompletionTokens:mode==='details'?900:mode==='examples'?800:650
