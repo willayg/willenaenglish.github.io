@@ -4,7 +4,7 @@ import {getCachedAiWilliExplanation,saveAiWilliExplanation,rateAiWilliExplanatio
 
 const STYLE_ID='aiWilliSharedStyles';
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const REFINEMENTS={examples:'More examples',simple:'More simple',details:'More details'};
+const REFINEMENTS={examples:'예시 더 보기',simple:'더 쉽게 설명',details:'더 자세히 설명'};
 
 function formatAiWilliText(value){
   const src=String(value??'').replace(/\r\n?/g,'\n').trim();
