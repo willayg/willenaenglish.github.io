@@ -19,7 +19,13 @@ const clamp=n=>Math.max(0,Math.min(100,Math.round(Number(n)||0)));
 const summaryCache=new Map();
 function state(){return window.WillenaTestPrepAuth&&window.WillenaTestPrepAuth.state}
 function findPlan(id){return ((state()&&state().plans)||[]).find(p=>String(p.id)===String(id))||null}
-function scopeFor(plan){const ls=plan&&plan.group&&plan.group.scope&&plan.group.scope.lessons;if(Array.isArray(ls)&&ls.length)return ls.filter(x=>x&&x.lesson);return ((plan&&plan.units)||[]).map(lesson=>({lesson:lesson,sections:plan.practice_types||[]}));}
+function scopeFor(plan){
+ const scope=plan&&plan.group&&plan.group.scope||{};
+ const lessons=Array.isArray(scope.lessons)?scope.lessons.filter(x=>x&&x.lesson):[];
+ const external=Array.isArray(scope.external_passages)?scope.external_passages.map(x=>({...x,lesson:x&&x.lesson||x&&x.label||x&&x.unit_label||''})).filter(x=>x.lesson&&x.unit_id):[];
+ if(lessons.length||external.length){const seen=new Set();return [...lessons,...external].filter(x=>{const k=String(x&&x.unit_id||x&&x.lesson||'');if(!k||seen.has(k))return false;seen.add(k);return true})}
+ return ((plan&&plan.units)||[]).map(lesson=>({lesson:lesson,sections:plan.practice_types||[]}));
+}
 function skillsFor(plan,l){
  const sections=new Set(((l&&l.sections)||[]).map(norm));
  const strict=!!(plan&&plan.group&&plan.group.scope&&plan.group.scope.scope_controls_v2===true);
