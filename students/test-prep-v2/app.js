@@ -1,6 +1,6 @@
 import {QuestionRenderer} from './question-renderer.js';
 import {gradeQuestion} from './question-grader.js';
-import {resolveContentIds,loadStoredSkill,loadStoredWritten,reviewQuestionFromItem,shuffle} from './content-source.js?v=2.17a';
+import {resolveContentIds,loadStoredSkill,loadStoredWritten,reviewQuestionFromItem} from './content-source.js?v=2.17a';
 import {loadVocabularyTest} from './vocab-test-source.js?v=2.14.0';
 import {initTracking,refreshTrackingState,setTrackingContext,startSession,recordAttempt,completeSession,trackingState} from './tracking-client.js?v=2.17a';
 import {startVocabularyLearning} from './vocab-learning.js?v=2.13.0';
@@ -8,6 +8,7 @@ import {passageAvailable} from './passage-source.js?v=2.18.0';
 import {startPassageLearning,stopPassageLearning} from './passage-learning.js?v=2.18.0';
 import {loadCardStats,invalidateCardStats,getStatsDiagnostics,formatCardMetric,formatAccuracy,reviewCounts} from './stats-client.js?v=2.16a';
 import {loadReviewQueue,refreshReviewQueue} from '../shared/student-review.js?v=1.0.0';
+import {buildQuestionQueue} from '../shared/question-sequencer.js?v=1.0.0';
 import {initNavigation,navigate,replaceRoute,back,currentRoute} from './navigation.js?v=2.17a';
 
 const $=s=>document.querySelector(s),esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -97,9 +98,10 @@ async function startPracticeRoute(plan,lesson,practice){
       root.innerHTML='<div id="passageActivityHost"></div>';const host=$('#passageActivityHost');
       await startPassageLearning({host,plan,lesson,unitId:ids.unitId,onExit:back});return;
     }
-    let pool=config.kind==='vocab-test'?await loadVocabularyTest(ids.unitId,{count:20}):config.kind==='written'?await loadStoredWritten(ids.unitId):await loadStoredSkill(ids.unitId,practice);if(!practiceRouteMatches(practice,plan.id,lesson))return;
-    if(config.kind!=='vocab-test'){pool=shuffle(pool);if(pool.length>20)pool=pool.slice(0,20)}
-    if(!pool.length){root.innerHTML=`<button class="back" id="emptyBack">← ${esc(lesson)}</button><div class="empty">이 영역에 사용할 v2.18 문제가 없습니다.</div>`;$('#emptyBack').onclick=back;return}
+    let pool=config.kind==='vocab-test'?await loadVocabularyTest(ids.unitId,{count:1000}):config.kind==='written'?await loadStoredWritten(ids.unitId):await loadStoredSkill(ids.unitId,practice);if(!practiceRouteMatches(practice,plan.id,lesson))return;
+    if(!pool.length){root.innerHTML=`<button class="back" id="emptyBack">← ${esc(lesson)}</button><div class="empty">이 영역에 사용할 문제가 없습니다.</div>`;$('#emptyBack').onclick=back;return}
+    pool=await buildQuestionQueue(pool,{studentId:trackingState().user?.id||null,planId:plan.id,lesson,practiceType:practice,count:20});if(!practiceRouteMatches(practice,plan.id,lesson))return;
+    if(!pool.length){root.innerHTML=`<button class="back" id="emptyBack">← ${esc(lesson)}</button><div class="empty">선택할 수 있는 문제가 없습니다.</div>`;$('#emptyBack').onclick=back;return}
     state.queue=pool;await startSession(practice);if(!practiceRouteMatches(practice,plan.id,lesson))return;renderQuestion();
   }catch(e){if(!practiceRouteMatches(state.practice))return;console.error('[test-prep-v2] start failed',e);error(e.message||'문제를 불러오지 못했습니다.')}
 }
@@ -195,7 +197,7 @@ async function refreshVisibleStats(){
 async function boot(){
   try{
     ensurePerfHud();updatePerfHud();
-    root.innerHTML='<div class="loading">Test Prep v2.18을 준비하는 중...</div>';
+    root.innerHTML='<div class="loading">Test Prep v2.23을 준비하는 중...</div>';
     await initTracking();PERF.auth=performance.now()-PERF.start;updateUser();updatePerfHud();
     let route=initNavigation({render:renderRoute,beforeRouteChange,initialRoute:{view:'home'}});
     if(route.view==='practice'||route.view==='result'){route={view:'lesson',planId:route.planId,lesson:route.lesson};await replaceRoute(route,{render:false})}
