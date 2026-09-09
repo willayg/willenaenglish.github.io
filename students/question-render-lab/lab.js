@@ -12,7 +12,7 @@ const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const norm=v=>String(v??'').normalize('NFKC').toLowerCase().replace(/[’‘]/g,"'").replace(/[“”"]/g,'').replace(/[.!?,;:]+$/g,'').replace(/\s+/g,' ').trim();
 const FORM_LABELS={choice:'Multiple choice',multi:'Multi-select',write:'Written answer',multipart:'Multi-part answer',correction:'Correction',identified_correction:'Identified correction',order:'Word order',chunks:'Chunk order',blanks:'Fill blanks with words',learn:'Learn / read only',unsupported:'Unsupported shape'};
 const SKILLS=[['communication','Communication','stored'],['grammar','Grammar','stored'],['reading','Reading','stored'],['vocabulary','Vocabulary','vocab'],['constructed','서술형','written'],['performance','수행평가','performance'],['sentences','본문','sentences']].map(([id,name,kind])=>({id,name,kind}));
-let middleBooks=[],bookMap=new Map(),unitBookMap=new Map(),all=[],visible=[],index=0,renderer=null;
+let middleBooks=[],bookMap=new Map(),unitBookMap=new Map(),flaggedQuestionIds=new Set(),all=[],visible=[],index=0,renderer=null;
 
 async function get(path,range=''){
   const headers={...HEAD};if(range)headers.Range=range;
@@ -23,11 +23,15 @@ const selectedBookIds=()=>$('#book').value==='*'?middleBooks.map(x=>String(x.id)
 const inFilter=ids=>`in.(${ids.join(',')})`;
 const selectedSkill=()=>SKILLS.find(x=>x.id===$('#skill').value);
 const rowFields='id,book_id,unit_id,source_id,source_question_number,source_page,section,question_type,prompt_text,context,choices,correct_answer,answer_mode,student_source_label,content_status,metadata,targets,replacement_needed,created_at,updated_at';
+async function loadOpenFlags(){
+  const rows=await paged('/rest/v1/test_prep_question_flags?select=question_id&status=eq.open');
+  flaggedQuestionIds=new Set(rows.map(r=>String(r.question_id||'')).filter(Boolean));
+}
 async function fetchRows(section='',answerMode=''){
   const ids=selectedBookIds(),sf=section?`&section=eq.${encodeURIComponent(section)}`:'',af=answerMode?`&answer_mode=eq.${encodeURIComponent(answerMode)}`:'';
   return (await paged(`/rest/v1/test_prep_questions?select=${encodeURIComponent(rowFields)}&student_usable=eq.true${sf}${af}&book_id=${inFilter(ids)}`)).filter(r=>r.replacement_needed!==true);
 }
-const adaptRows=rows=>rows.map(row=>({...adaptStored(row),_createdAt:row.created_at||null,_updatedAt:row.updated_at||row.created_at||null}));
+const adaptRows=rows=>rows.map(row=>({...adaptStored(row),_createdAt:row.created_at||null,_updatedAt:row.updated_at||row.created_at||null,_flagged:flaggedQuestionIds.has(String(row.id))}));
 async function loadUnits(){const ids=selectedBookIds(),rows=await paged(`/rest/v1/content_units?select=id,book_id,title&book_id=${inFilter(ids)}`);unitBookMap=new Map(rows.map(r=>[String(r.id),String(r.book_id)]));return rows}
 
 async function fetchLexical(ids){const out=[];for(let i=0;i<ids.length;i+=100)out.push(...await get(`/rest/v1/lexical_entries?select=id,canonical_text,translation_ko,definition_en,part_of_speech&id=${inFilter(ids.slice(i,i+100))}`));return out}
@@ -57,12 +61,12 @@ function performanceVariants(row){
   ];
   const ws=words(target);if(ws.length>=3){const picks=[Math.floor(ws.length/3),Math.floor(ws.length*2/3)].filter((x,i,a)=>x>=0&&x<ws.length&&a.indexOf(x)===i),missing=picks.map(i=>ws[i].replace(/^[“"'(]+|[”"'),.!?;:]+$/g,'')),masked=ws.map((w,i)=>picks.includes(i)?w.replace(/[A-Za-z][A-Za-z'-]*/,'_____'):w).join(' ');variants.push({...base,id:`${row.id}:blanks`,form:FORMS.blanks,prompt_text:'빈칸을 완성하세요.',context:{korean:ko,masked},correct_answer:missing,chips:[...missing].reverse()})}
   if(chunks.length>1)variants.push({...base,id:`${row.id}:chunks`,form:FORMS.chunks,prompt_text:'청크 배열',context:{korean:ko},correct_answer:[target],chips:chunks});
-  return variants.map(v=>({...adaptStored(v),_createdAt:row.created_at||null,_updatedAt:row.updated_at||row.created_at||null}));
+  return variants.map(v=>({...adaptStored(v),_createdAt:row.created_at||null,_updatedAt:row.updated_at||row.created_at||null,_flagged:flaggedQuestionIds.has(String(row.id))}));
 }
 async function loadPerformance(){return(await fetchRows('performance')).flatMap(performanceVariants)}
 async function loadSentences(){
   const units=await loadUnits(),wanted=new Set(units.map(u=>String(u.id))),rows=await paged('/rest/v1/passages?select=id,title,body,source_key,metadata,created_at,updated_at&status=eq.published&order=source_key.asc'),out=[];
-  for(const p of rows){const unitId=String(p.metadata?.unit_id||'');if(!wanted.has(unitId))continue;const bookId=unitBookMap.get(unitId)||null,translations=Array.isArray(p.metadata?.sentence_translations_ko)?p.metadata.sentence_translations_ko:[];for(const s of splitPassageSentences(p.body,p.title,p.id,translations))out.push({...adaptStored({id:`lab:sentence:${p.id}:${s.sentenceIndex}`,book_id:bookId,unit_id:unitId,section:'sentences',question_type:'sentence_unscramble',prompt_text:'다음 우리말 문장을 영어로 완성하세요.',context:{korean:s.ko||'',speaker:s.speaker||'',passage:s.passageTitle||''},correct_answer:[s.text],form:FORMS.order,chips:words(s.text),student_source_label:'Book Reference'}),_createdAt:p.created_at||null,_updatedAt:p.updated_at||p.created_at||null})}
+  for(const p of rows){const unitId=String(p.metadata?.unit_id||'');if(!wanted.has(unitId))continue;const bookId=unitBookMap.get(unitId)||null,translations=Array.isArray(p.metadata?.sentence_translations_ko)?p.metadata.sentence_translations_ko:[];for(const s of splitPassageSentences(p.body,p.title,p.id,translations))out.push({...adaptStored({id:`lab:sentence:${p.id}:${s.sentenceIndex}`,book_id:bookId,unit_id:unitId,section:'sentences',question_type:'sentence_unscramble',prompt_text:'다음 우리말 문장을 영어로 완성하세요.',context:{korean:s.ko||'',speaker:s.speaker||'',passage:s.passageTitle||''},correct_answer:[s.text],form:FORMS.order,chips:words(s.text),student_source_label:'Book Reference'}),_createdAt:p.created_at||null,_updatedAt:p.updated_at||p.created_at||null,_flagged:false})}
   return out;
 }
 
@@ -70,6 +74,7 @@ function textTree(value){if(value==null)return'';if(typeof value==='string'||typ
 function hasUnderline(q){const c=q?.context||{};return Boolean(String(c.underlined||'').trim()||(Array.isArray(c.underlined_spans)&&c.underlined_spans.length)||/밑줄|underlin/i.test(`${q?.prompt||''} ${q?.tracking?.questionType||''}`))}
 function hasBlank(q){const hay=`${q?.prompt||''} ${q?.tracking?.questionType||''} ${textTree(q?.context||{})}`;return q?.form===FORMS.blanks||/빈칸|blank|cloze/i.test(hay)||/_{2,}/.test(hay)}
 function featureMatch(q){const f=$('#feature').value;if(f==='underline')return hasUnderline(q);if(f==='blank')return hasBlank(q);return true}
+function flagMatch(q){return ($('#flagged')?.value||'all')!=='flagged'||q?._flagged===true}
 function selectedDateFilter(){
   const raw=$('#dateAdded')?.value||'all';if(raw==='all')return null;
   const [field,v]=raw.includes(':')?raw.split(':',2):['created',raw];
@@ -79,7 +84,7 @@ function selectedDateFilter(){
 }
 function dateMatch(q){const f=selectedDateFilter();if(!f)return true;const raw=f.field==='modified'?q?._updatedAt:q?._createdAt;const t=Date.parse(raw||'');return Number.isFinite(t)&&t>=f.cutoff}
 function sortTime(q){const f=selectedDateFilter();const raw=f?.field==='modified'?q?._updatedAt:q?._createdAt;const t=Date.parse(raw||'');return Number.isFinite(t)?t:0}
-function filteredPool(){return all.filter(q=>featureMatch(q)&&dateMatch(q))}
+function filteredPool(){return all.filter(q=>featureMatch(q)&&flagMatch(q)&&dateMatch(q))}
 
 async function loadSkill(){
   const s=selectedSkill();$('#card').innerHTML='<div class="empty">Loading…</div>';$('#book').disabled=false;
@@ -100,9 +105,9 @@ function render(){
 async function check(){const q=visible[index];if(!q||!renderer)return;$('#check').disabled=true;const result=await gradeQuestion(q,renderer.getResponse());renderer.showFeedback(result);$('#check').disabled=false}
 async function boot(){
   try{
-    middleBooks=await get('/rest/v1/content_books?select=id,title,school_grade&school_grade=in.(1,2,3)&order=school_grade.asc,title.asc');bookMap=new Map(middleBooks.map(b=>[String(b.id),b.title]));
+    [middleBooks]=await Promise.all([get('/rest/v1/content_books?select=id,title,school_grade&school_grade=in.(1,2,3)&order=school_grade.asc,title.asc'),loadOpenFlags()]);bookMap=new Map(middleBooks.map(b=>[String(b.id),b.title]));
     $('#skill').innerHTML=SKILLS.map(s=>`<option value="${s.id}">${esc(s.name)}</option>`).join('');$('#book').innerHTML=`<option value="*">All middle school</option>${middleBooks.map(b=>`<option value="${esc(b.id)}">${esc(b.title)}</option>`).join('')}`;
-    $('#skill').onchange=loadSkill;$('#book').onchange=loadSkill;$('#form').onchange=applyForm;$('#feature').onchange=setForms;$('#dateAdded').onchange=setForms;$('#prev').onclick=()=>{if(index>0){index--;render()}};$('#next').onclick=()=>{if(index<visible.length-1){index++;render()}};$('#check').onclick=check;
+    $('#skill').onchange=loadSkill;$('#book').onchange=loadSkill;$('#form').onchange=applyForm;$('#feature').onchange=setForms;$('#flagged').onchange=setForms;$('#dateAdded').onchange=setForms;$('#prev').onclick=()=>{if(index>0){index--;render()}};$('#next').onclick=()=>{if(index<visible.length-1){index++;render()}};$('#check').onclick=check;
     document.addEventListener('keydown',e=>{if(/INPUT|TEXTAREA|SELECT/.test(document.activeElement?.tagName||''))return;if(e.key==='ArrowLeft')$('#prev').click();if(e.key==='ArrowRight')$('#next').click();if(e.key==='Enter'&&!$('#check').disabled)$('#check').click()});await loadSkill();
   }catch(e){console.error('[renderer lab]',e);$('#card').innerHTML=`<div class="empty">${esc(e.message||'Failed to load')}</div>`}
 }
