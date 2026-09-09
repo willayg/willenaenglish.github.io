@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <title>Question Renderer Lab</title>
 <link rel="stylesheet" href="./lab.css?v=rev12">
-<script type="importmap">{"imports":{"../test-prep-v2/question-model.js":"../test-prep-v2/question-model.js?v=2.24.0","../test-prep-v2/question-renderer.js":"../test-prep-v2/question-renderer.js?v=2.20.0"}}</script>
+<script type="importmap">{"imports":{"../test-prep-v2/question-model.js":"../test-prep-v2/question-model.js?v=2.24.0","../test-prep-v2/question-renderer.js":"../test-prep-v2/question-renderer.js?v=2.20.0","../shared/question-grader.js?v=2.0.0":"../shared/question-grader.js?v=2.0.1"}}</script>
 </head>
 <body>
 <div class="shell">
@@ -18,7 +18,7 @@
     <div class="field"><label>Date added / modified</label><select id="dateAdded"><option value="all">All dates</option><optgroup label="Date added"><option value="created:today">Added today</option><option value="created:24h">Added in last 24 hours</option><option value="created:3d">Added in last 3 days</option><option value="created:7d">Added in last 7 days</option><option value="created:30d">Added in last 30 days</option></optgroup><optgroup label="Date modified"><option value="modified:today">Modified today</option><option value="modified:24h">Modified in last 24 hours</option><option value="modified:3d">Modified in last 3 days</option><option value="modified:7d">Modified in last 7 days</option><option value="modified:30d">Modified in last 30 days</option></optgroup></select></div>
   </div>
   <div class="meta">
-    <span class="rev-badge">REV 15</span>
+    <span class="rev-badge">REV 16</span>
     <span class="rev-badge">SHARED RENDERER · V2.20.1</span>
     <span class="rev-badge">SHARED GRADING POLICY · V2</span>
     <span class="rev-badge">SHARED GRADER · LUNA</span>
@@ -39,6 +39,6 @@
 import {installWillenaKeyboard} from '../shared/willena-keyboard.js?v=1.0.0';
 installWillenaKeyboard({submitSelector:'#check'});
 </script>
-<script type="module" src="./lab.js?v=rev15"></script>
+<script type="module" src="./lab.js?v=rev16"></script>
 </body>
 </html>
