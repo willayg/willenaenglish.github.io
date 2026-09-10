@@ -1,4 +1,4 @@
-import {contentDbRpc} from '../test-prep-v2/content-source.js?v=2.24.3';
+import {contentDbRpc} from './content-db.js?v=1.0.0';
 
 const NAME='AI Willi';
 const VERSION='v3';
@@ -61,7 +61,7 @@ async function rateCached(explanationId,helpful){if(!explanationId)return null;c
 
 function formatText(value){const src=String(value??'').replace(/\r\n?/g,'\n').trim();if(!src)return'';const inline=s=>esc(s).replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/`([^`]+)`/g,'<code>$1</code>'),lines=src.split('\n'),out=[];let list=[];const flush=()=>{if(!list.length)return;out.push(`<ul>${list.map(x=>`<li>${inline(x)}</li>`).join('')}</ul>`);list=[]};for(const raw of lines){const line=raw.trim();if(!line){flush();continue}const bullet=line.match(/^[-•]\s+(.+)$/);if(bullet){list.push(bullet[1]);continue}flush();const numbered=line.match(/^\d+[.)]\s+(.+)$/);if(numbered){out.push(`<div class="ai-willi-numbered">${inline(line)}</div>`);continue}if(/^#{1,3}\s+/.test(line)){out.push(`<div class="ai-willi-subhead">${inline(line.replace(/^#{1,3}\s+/,''))}</div>`);continue}out.push(`<p>${inline(line)}</p>`)}flush();return out.join('')}
 function thinkingHtml(){return `<div class="ai-willi-thinking" role="status"><span></span><span></span><span></span></div>`}
-function thumbSvg(up=true){return up?'<svg viewBox="0 0 24 24"><path d="M7 10v10H4V10h3Zm2 10V10l4-7c1.2.2 2 1.3 1.8 2.5L14.2 9H19c1.2 0 2.1 1.1 1.8 2.3l-1.6 6.8c-.2 1.1-1.2 1.9-2.3 1.9H9Z"/></svg>':'<svg viewBox="0 0 24 24"><path d="M7 14V4H4v10h3Zm2-10v10l4 7c1.2-.2 2-1.3 1.8-2.5L14.2 15H19c1.2 0 2.1-1.1 1.8-2.3l-1.6-6.8C19 4.8 18 4 16.9 4H9Z"/></svg>'}
+function thumbSvg(up=true){return up?'<svg viewBox="0 0 24 24"><path d="M7 10v10H4V10h3Zm2 10V10l4-7c1.2.2 2 1.3 1.8 2.5L14.2 9H19c1.2 0 2.1 1.1 1.8 2.3l-1.6 6.8c-.2 1.1-1.2 1.9-2.3 1.9H9Z"/></svg>':'<svg viewBox="0 0 24 24"><path d="M7 14V4H4v10l4 7c1.2-.2 2-1.3 1.8-2.5L14.2 15H19c1.2 0 2.1-1.1 1.8-2.3l-1.6-6.8C19 4.8 18 4 16.9 4H9Z"/></svg>'}
 function ratedKey(id){return`aiWilliRated:${id}`}
 function alreadyRated(id){try{return localStorage.getItem(ratedKey(id))||''}catch(_){return''}}
 function markRated(id,value){try{localStorage.setItem(ratedKey(id),value)}catch(_){}}
