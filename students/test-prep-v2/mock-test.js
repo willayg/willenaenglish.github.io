@@ -3,8 +3,9 @@ import {gradeQuestion} from './question-grader.js';
 import {setTrackingContext,startSession,recordAttempt,completeSession,refreshTrackingState} from './tracking-client.js';
 import {invalidateCardStats,loadCardStats} from './stats-client.js';
 import {setNavigationGuard} from './navigation.js?v=2.18.0';
-import {buildMockTestPaper,MOCK_TEST_BLUEPRINT,MOCK_TEST_MINUTES,MOCK_TEST_TOTAL} from './mock-test-source.js?v=1.2.0';
+import {buildMockTestPaper,MOCK_TEST_BLUEPRINT,MOCK_TEST_MINUTES,MOCK_TEST_TOTAL} from './mock-test-source.js?v=1.2.2';
 import {renderMockTestResults} from './mock-test-results.js?v=1.0.0';
+import {confirmMockTestSubmit} from './mock-test-submit.js?v=1.0.0';
 
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const LABELS={vocabulary:'어휘',communication:'대화',grammar:'문법',reading:'독해',constructed_response:'서술형'};
@@ -18,7 +19,7 @@ let currentPlanId=null;
 function ensureStyles(){
   if(document.querySelector('link[data-mock-test-style]'))return;
   const link=document.createElement('link');
-  link.rel='stylesheet';link.href='./mock-test.css?v=1.3.0';link.dataset.mockTestStyle='1';document.head.appendChild(link);
+  link.rel='stylesheet';link.href='./mock-test.css?v=1.4.0';link.dataset.mockTestStyle='1';document.head.appendChild(link);
 }
 ensureStyles();
 
@@ -123,7 +124,10 @@ async function persistResults(snapshot,exam){
 }
 async function finishExam(reason='manual'){
   const exam=activeExam;if(!exam||exam.finished)return;
-  if(reason==='manual'&&!window.confirm(`답안을 제출하시겠습니까?\n현재 ${answeredCount(exam)} / ${exam.paper.total}문항에 답했습니다.`))return;
+  if(reason==='manual'){
+    const confirmed=await confirmMockTestSubmit({host:exam.host,answered:answeredCount(exam),total:exam.paper.total});
+    if(!confirmed||!activeExam||activeExam!==exam||exam.finished)return;
+  }
   exam.finished=true;if(exam.timer)clearTimeout(exam.timer);exam.timer=null;clearExamGuards();clearSeed(exam.plan.id);
   const raw=submissionSnapshot(reason);exam.host.innerHTML='<div class="loading">답안을 채점하는 중...</div>';
   try{
