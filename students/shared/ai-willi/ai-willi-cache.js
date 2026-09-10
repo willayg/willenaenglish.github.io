@@ -43,7 +43,7 @@ export async function getCachedAiWilliExplanation({questionId,mode,response,root
   return Array.isArray(rows)?rows[0]||null:null;
 }
 
-export async function saveAiWilliExplanation({questionId,section,mode,response,text,rootExplanationId=null,version=AI_WILLI_EXPLANATION_VERSION}={}){
+export async function saveAiWilliExplanation({questionId,section,mode,response,text,vocabulary=[],rootExplanationId=null,version=AI_WILLI_EXPLANATION_VERSION}={}){
   if(!questionId||!mode||!String(text||'').trim())return null;
   const rows=await contentDbRpc('save_test_prep_ai_explanation',{
     p_question_id:questionId,
@@ -52,7 +52,8 @@ export async function saveAiWilliExplanation({questionId,section,mode,response,t
     p_answer_fingerprint:answerFingerprint(response),
     p_explanation_version:version,
     p_explanation_text:String(text).trim(),
-    p_root_explanation_id:rootExplanationId
+    p_root_explanation_id:rootExplanationId,
+    p_vocabulary:Array.isArray(vocabulary)?vocabulary:[]
   });
   return Array.isArray(rows)?rows[0]||null:null;
 }
