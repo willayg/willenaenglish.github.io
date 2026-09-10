@@ -20,6 +20,7 @@ export function createQuestionSession({
   onWrong=()=>{},
   onFinished=()=>{},
   onBack=()=>{},
+  onSnapshot=()=>{},
   checkedState,
   indexState,
   startedAtState,
@@ -29,18 +30,20 @@ export function createQuestionSession({
   logLabel='practice'
 }){
   const setBottom=html=>{bottom.innerHTML=html;bottom.hidden=!html};
+  const snapshot=()=>{try{onSnapshot()}catch(e){console.warn(`[test-prep-v2] ${logLabel} snapshot failed`,e)}};
 
   function render(){
     if(!isActive())return;
     if(indexState.get()>=queueLength())return onFinished();
     const entry=getEntry(),q=getQuestion(entry);
     if(!q)return onFinished();
-    checkedState.set(false);startedAtState.set(Date.now());onBeforeRender(entry,q);
+    checkedState.set(false);startedAtState.set(Date.now());onBeforeRender(entry,q);snapshot();
     root.innerHTML=`${renderHeader(entry,q)}<div class="question-card" id="questionHost"></div>`;
     const host=root.querySelector('#questionHost');
     const renderer=new Renderer(host).render(q,{onChange:(_,has)=>{
       const check=document.getElementById(buttonIds.check);
       if(check&&!checkedState.get())check.disabled=!has;
+      snapshot();
     }});
     rendererState.set(renderer);
     const backButton=root.querySelector('[data-session-back]');if(backButton)backButton.onclick=onBack;
@@ -51,7 +54,7 @@ export function createQuestionSession({
 
   async function check(){
     if(!isActive())return;
-    if(checkedState.get()){indexState.set(indexState.get()+1);render();return}
+    if(checkedState.get()){indexState.set(indexState.get()+1);snapshot();render();return}
     const entry=getEntry(),q=getQuestion(entry),renderer=rendererState.get();if(!q||!renderer)return;
     const response=renderer.getResponse(),btn=document.getElementById(buttonIds.check);if(!btn)return;
     const usesAiWilli=q.grading?.aiAllowed&&q.grading?.mode==='ai_semantic_strict';
@@ -66,7 +69,7 @@ export function createQuestionSession({
     catch(e){console.warn(`[test-prep-v2] ${logLabel} tracking failed`,e)}
     if(!isActive())return;
     btn.disabled=false;btn.textContent=indexState.get()===queueLength()-1?'Finish':'Next Question →';
-    const skipButton=document.getElementById(buttonIds.skip);if(skipButton)skipButton.disabled=true;
+    const skipButton=document.getElementById(buttonIds.skip);if(skipButton)skipButton.disabled=true;snapshot();
   }
 
   async function skip(){
@@ -76,7 +79,7 @@ export function createQuestionSession({
     onWrong(entry,q,result);
     try{await recordAttempt({question:q,response,result,practiceType:getPracticeType(entry,q),skipped:true,...getAttemptExtras(entry,q,true)})}
     catch(e){console.warn(`[test-prep-v2] ${logLabel} skip tracking failed`,e)}
-    if(!isActive())return;indexState.set(indexState.get()+1);render();
+    if(!isActive())return;indexState.set(indexState.get()+1);snapshot();render();
   }
 
   return{render,check,skip};
