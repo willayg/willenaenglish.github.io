@@ -10,7 +10,8 @@ import {passageAvailable} from './passage-source.js?v=2.18.0';
 import {startPassageLearning,stopPassageLearning} from './passage-learning.js?v=2.18.0';
 import {loadCardStats,invalidateCardStats,getStatsDiagnostics,formatCardMetric,formatAccuracy,reviewCounts} from './stats-client.js?v=2.16a';
 import {loadReviewQueue,refreshReviewQueue} from '../shared/student-review.js?v=1.0.0';
-import {initNavigation,navigate,replaceRoute,back,currentRoute} from './navigation.js?v=2.17a';
+import {renderMockTestPreflight,stopMockTest} from './mock-test.js?v=1.0.0';
+import {initNavigation,navigate,replaceRoute,back,currentRoute} from './navigation.js?v=2.18.0';
 
 const $=s=>document.querySelector(s),esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const root=$('#screen'),bottom=$('#bottom'),userEl=$('#user');
@@ -41,9 +42,13 @@ function cardData(plan){return state.cardStats.get(String(plan?.id||''))||{plan:
 function lessonRouteMatches(planId=state.plan?.id,lesson=state.lesson){const r=currentRoute();return r.view==='lesson'&&String(r.planId)===String(planId)&&String(r.lesson)===String(lesson)}
 function practiceRouteMatches(practice,planId=state.plan?.id,lesson=state.lesson){const r=currentRoute();return r.view==='practice'&&String(r.planId)===String(planId)&&String(r.lesson)===String(lesson)&&String(r.practice)===String(practice)}
 function reviewRouteMatches(planId=state.plan?.id){const r=currentRoute();return r.view==='review'&&String(r.planId)===String(planId)}
+function mockRouteMatches(planId=state.plan?.id){const r=currentRoute();return r.view==='mock'&&String(r.planId)===String(planId)}
 async function loadPlanCardStats(plan,{force=false}={}){try{const data=await loadCardStats(plan,trackingState().user?.id,{force});state.cardStats.set(String(plan.id),data);return data}catch(e){console.warn('[test-prep-v2] card stats failed',e);const fallback={plan:emptyStat(),lessons:{}};state.cardStats.set(String(plan.id),fallback);return fallback}}
 async function refreshPlanCardStats(plan){invalidateCardStats(plan?.id);return loadPlanCardStats(plan,{force:true})}
 async function preloadCardStats(){const plans=trackingState().plans||[];await Promise.all(plans.map(p=>loadPlanCardStats(p)))}
+function mockCard(){
+  return `<button class="wrong-card" type="button" data-mock><span class="wrong-copy"><b>실전모의고사</b><small>25문항 · 45분 · 제출 후 채점</small></span><span class="wrong-stats"><span class="wrong-stat"><strong>25</strong><small>문항</small></span><span class="wrong-stat"><strong>45</strong><small>분</small></span></span><span class="wrong-cta">시험지 구성 →</span></button>`;
+}
 function reviewCard(plan,loaded){
   const r=reviewCounts(plan),total=(Number(r.now)||0)+(Number(r.later)||0),disabled=!loaded||!total;
   return `<button class="wrong-card" type="button" data-review ${disabled?'disabled':''}><span class="wrong-copy"><b>전체 범위 오답</b></span><span class="wrong-stats"><span class="wrong-stat"><strong>${loaded?r.now:'—'}</strong><small>지금 할 문제</small></span><span class="wrong-stat"><strong>${loaded?r.later:'—'}</strong><small>1시간 후 재복습</small></span><span class="wrong-stat"><strong>${loaded?total:'—'}</strong><small>총 남은 문제</small></span></span><span class="wrong-cta">${loaded?(total?'복습 시작 →':'오답 없음'):'불러오는 중…'}</span></button>`;
@@ -56,8 +61,8 @@ function renderHome(){
 }
 function renderLessons(plan){
   state.plan=plan;state.lesson=null;state.practice=null;const lessons=scopeFor(plan),data=cardData(plan),loaded=hasCardData(plan);setBottom('');
-  root.innerHTML=`<button class="back" id="homeBack">← 시험 대비</button><div class="heading"><div><h2>${esc(plan.book_label||'')}</h2><p>${esc(plan.exam_name||'Lesson 선택')}</p></div></div>${reviewCard(plan,loaded)}${lessons.length?`<div class="grid">${lessons.map(l=>{const s=data.lessons?.[String(l.lesson)]?.summary||emptyStat();return `<button class="tile" data-lesson="${esc(l.lesson)}"><div class="exam-head"><div><h3>${esc(l.lesson)}</h3><p>${esc((l.sections||[]).join(' · '))}</p><span class="metric">${loaded?`${esc(formatCardMetric(s))} · ${esc(formatAccuracy(s))}`:'통계 불러오는 중…'}</span></div>${loaded?ring(s.coverage):ring(0,'…')}</div></button>`}).join('')}</div>`:'<div class="empty">Lesson 범위가 없습니다.</div>'}`;
-  $('#homeBack').onclick=back;root.querySelector('[data-review]')?.addEventListener('click',()=>navigate({view:'review',planId:plan.id}));root.querySelectorAll('[data-lesson]').forEach(b=>b.onclick=()=>navigate({view:'lesson',planId:plan.id,lesson:b.dataset.lesson}));
+  root.innerHTML=`<button class="back" id="homeBack">← 시험 대비</button><div class="heading"><div><h2>${esc(plan.book_label||'')}</h2><p>${esc(plan.exam_name||'Lesson 선택')}</p></div></div>${mockCard()}${reviewCard(plan,loaded)}${lessons.length?`<div class="grid">${lessons.map(l=>{const s=data.lessons?.[String(l.lesson)]?.summary||emptyStat();return `<button class="tile" data-lesson="${esc(l.lesson)}"><div class="exam-head"><div><h3>${esc(l.lesson)}</h3><p>${esc((l.sections||[]).join(' · '))}</p><span class="metric">${loaded?`${esc(formatCardMetric(s))} · ${esc(formatAccuracy(s))}`:'통계 불러오는 중…'}</span></div>${loaded?ring(s.coverage):ring(0,'…')}</div></button>`}).join('')}</div>`:'<div class="empty">Lesson 범위가 없습니다.</div>'}`;
+  $('#homeBack').onclick=back;root.querySelector('[data-mock]')?.addEventListener('click',()=>navigate({view:'mock',planId:plan.id}));root.querySelector('[data-review]')?.addEventListener('click',()=>navigate({view:'review',planId:plan.id}));root.querySelectorAll('[data-lesson]').forEach(b=>b.onclick=()=>navigate({view:'lesson',planId:plan.id,lesson:b.dataset.lesson}));
 }
 async function renderLesson(plan,lesson){
   state.plan=plan;state.lesson=lesson;state.practice=null;state.renderer=null;
@@ -183,13 +188,20 @@ function beforeRouteChange(previous,next){
   }
   if(previous?.view==='review'&&next?.view!=='review'){
     completeSession({correct:state.score,total:state.index+(state.checked?1:0),wrongIds:state.wrongIds}).catch(e=>console.warn('[test-prep-v2] review leave close failed',e));
-    state.renderer=null;setBottom('');
+    state.renderer=null;setBottom('');return;
+  }
+  if(previous?.view==='mock'&&next?.view!=='mock'){
+    stopMockTest();state.renderer=null;setBottom('');
   }
 }
 async function renderRoute(route){
   if(route.view==='home'){renderHome();return}
   const plan=planById(route.planId);if(!plan){await replaceRoute({view:'home'});return}
   if(route.view==='plan'){renderLessons(plan);return}
+  if(route.view==='mock'){
+    state.plan=plan;state.lesson=null;state.practice=null;state.renderer=null;setBottom('');
+    await renderMockTestPreflight({host:root,plan,studentId:trackingState().user?.id||null,onBack:back});return;
+  }
   if(route.view==='lesson'){await renderLesson(plan,route.lesson);return}
   if(route.view==='practice'){await startPracticeRoute(plan,route.lesson,route.practice);return}
   if(route.view==='review'){await startReviewRoute(plan);return}
