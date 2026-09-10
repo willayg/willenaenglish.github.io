@@ -1,6 +1,5 @@
 import {resolveQuestionGradingPolicy} from './question-grading-policy.js?v=2.0.1';
-import {gradeWithAiWilli} from './ai-willi/ai-willi-grader.js?v=1.0.1';
-import {aiWilliMessage} from './ai-willi/ai-willi-messages.js?v=1.0.0';
+import {gradeWithAiWilli,aiWilliMessage} from './ai-willi.js?v=1.0.1';
 
 const FORMS={choice:'choice',multi:'multi',write:'write',multipart:'multipart',correction:'correction',identifiedCorrection:'identified_correction',order:'order',chunks:'chunks',blanks:'blanks',learn:'learn',unsupported:'unsupported'};
 const CIRCLED_NUM=['①','②','③','④','⑤','⑥','⑦','⑧','⑨','⑩','⑪','⑫','⑬','⑭','⑮','⑯','⑰','⑱','⑲','⑳'];
