@@ -75,10 +75,6 @@
 .mock-review-answers>div{display:grid;grid-template-columns:54px 1fr;gap:10px;align-items:start}
 .mock-review-answers span{font-size:11px;font-weight:800;color:#849197}
 .mock-review-answers b{font-size:12px;line-height:1.5;color:#26383f;word-break:break-word}
-.mock-review-willi{margin-top:12px}
-.mock-review-willi-trigger{display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:0 14px;border:1.5px solid #86d9df;border-radius:12px;background:#fff;color:#d9467d;font:800 12px/1.2 Poppins,system-ui,sans-serif;cursor:pointer}
-.mock-review-willi-trigger:hover{background:#f7feff}
-.mock-review-willi>.ai-willi-card{margin-top:0}
 .mock-result-sync{margin-top:14px;padding:12px 14px;border-radius:12px;background:#f2fbfc;font-size:12px;font-weight:700;color:#64787f;text-align:center}
 
 @media(max-width:620px){
@@ -98,5 +94,4 @@
   .mock-exam-nav>[data-mock-next]{grid-column:2;grid-row:2}
   .mock-results-score strong{font-size:50px}
   .mock-result-section summary{grid-template-columns:1fr auto 42px 18px;padding:13px 12px}
-  .mock-review-willi-trigger{width:100%}
 }
