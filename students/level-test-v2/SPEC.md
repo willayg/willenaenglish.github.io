@@ -24,6 +24,7 @@ The test must measure actual English ability across skills, avoid wasting time o
 8. New code should have clear ownership. Do not recreate the patch-heavy architecture of the old free level test.
 9. Existing assessment content may be reused where it is good enough, but the old application architecture is not the foundation of v2.
 10. Face-to-face mode should feel fast and natural on a tablet in a real consultation.
+11. Renderer renders. Grader grades. Selector selects. Calculator calculates. Session stores. App orchestrates. No module may silently become a second owner of another module's responsibility.
 
 ## 3. Test modes
 
@@ -51,21 +52,24 @@ If Willena keeps a public self-service level test, it should use the same assess
 
 The intended face-to-face flow is:
 
-1. Identify/create/select student or visitor session.
-2. Teacher opens Speaking Assessment.
-3. Teacher navigates freely between speaking levels.
-4. Teacher asks any useful prompts from those levels.
-5. Teacher may optionally score individual answers with the 5-point rubric.
-6. Teacher may optionally record individual spoken answers.
-7. The app calculates a recommended speaking/starting level from available evidence.
-8. Teacher gives an overall teacher-impression Speaking level.
-9. App displays its recommended computerized-test starting level.
-10. Teacher accepts or overrides that starting level.
-11. Student begins the computerized adaptive assessment at the teacher-selected starting level.
-12. Reading, Listening and language-knowledge sections adapt independently enough to locate the student's ceiling/floor efficiently.
-13. Any Writing assessment is handled according to the writing model defined later in this spec/project.
-14. Assessment finishes and saves all skill results, teacher judgments, recommendations and overrides.
-15. Student sees a simple completion screen; teacher/admin can access the detailed result.
+1. Show the same initial visitor/start experience as the current visitor level test unless deliberately redesigned later.
+2. Enter/create the visitor/student identity details needed for the assessment session.
+3. Enter the parent phone number.
+4. Create or resume the assessment session.
+5. Teacher opens Speaking Assessment.
+6. Teacher navigates freely between speaking levels.
+7. Teacher asks any useful prompts from those levels.
+8. Teacher may optionally score individual answers with the 5-point rubric.
+9. Teacher may optionally record individual spoken answers.
+10. The app calculates a recommended speaking/starting level from available evidence.
+11. Teacher gives an overall teacher-impression Speaking level.
+12. App displays its recommended computerized-test starting level.
+13. Teacher accepts or overrides that starting level.
+14. Student begins the computerized adaptive assessment at the teacher-selected starting level.
+15. Reading, Listening and language-knowledge sections adapt independently enough to locate the student's ceiling/floor efficiently.
+16. Any Writing assessment is handled according to the writing model defined later in this spec/project.
+17. Assessment finishes and saves all skill results, teacher judgments, recommendations and overrides.
+18. Student sees a simple completion screen; teacher/admin can access the detailed result.
 
 ## 5. Speaking Assessment
 
@@ -225,7 +229,20 @@ The computerized test must use `teacher_selected_start_level`.
 
 School grade and years of study must not determine this starting level in face-to-face mode.
 
-## 6. Student background information
+## 6. Student and parent information
+
+The initial visitor process should remain visually and behaviorally familiar to the current visitor level test unless deliberately redesigned later. The key change is that the old grade/years-study calibration questions are no longer used to calculate ability.
+
+The intake must collect a parent phone number before the Speaking Assessment begins.
+
+Parent phone requirements:
+
+- parent phone is required for face-to-face visitor sessions unless staff intentionally provide a future bypass;
+- Korean mobile numbers should display in a familiar readable format such as `010-1234-5678`;
+- store a normalized canonical phone value in addition to any formatted display value where useful;
+- the phone number belongs to the visitor/prospective-student identity and assessment session so staff can find the assessment later;
+- duplicate phone matches should not automatically merge students without an explicit identity rule;
+- phone data must never influence ability, scoring or question selection.
 
 Grade or school year may still be recorded because it can be useful administratively, for parent reports or for interpreting unusual results.
 
@@ -483,6 +500,8 @@ Possible fields:
 - id
 - student_id nullable for visitor
 - visitor/student identifying fields as appropriate
+- parent_phone_normalized
+- parent_phone_display nullable
 - mode
 - status
 - teacher_id
@@ -530,21 +549,21 @@ Do not store only final percentages and discard the assessment evidence.
 
 ## 17. Architecture
 
-Create Level Test v2 as a clean application rather than extending the old free-level-test patch stack.
+Create Level Test v2 as a clean modular application rather than extending the old free-level-test patch stack.
 
 Initial location:
 
 `students/level-test-v2/`
 
-Suggested module ownership:
+The architecture must follow a single-owner model. Each subsystem has one canonical implementation and other modules call it rather than duplicating its logic.
 
 ### `app.js`
 
-Top-level workflow/controller. Renders/coordinates stages but does not own every subsystem's internal logic.
+Top-level workflow/controller. It owns orchestration and route-to-screen composition only. It may ask other modules to load, render, grade, select, calculate or persist, but must not reproduce their algorithms.
 
 ### `assessment-session.js`
 
-Canonical client-side session state and persistence contract. Coordinates loading/saving the session.
+Canonical assessment session state and persistence contract. Owns session lifecycle, resume state, current phase, saved evidence references and persistence coordination. It does not calculate student ability.
 
 ### `speaking-assessment.js`
 
@@ -554,41 +573,153 @@ Teacher-facing Speaking workflow: prompt navigation, rubric evidence, recordings
 
 Pure recommendation/scoring logic for Speaking evidence. Keep this separate enough to test without the UI.
 
-### `adaptive-engine.js`
-
-Owns ability estimates, question selection strategy, movement between levels, confidence and stopping rules.
-
 ### `question-source.js`
 
-Canonical loading/filtering interface for level-test assessment content from Supabase/backend.
+The only owner for loading/filtering eligible level-test assessment content from Supabase/backend. It answers questions such as what items are available and eligible. It does not decide which eligible question is pedagogically best to show next.
+
+This separation is deliberate: source loading and adaptive selection are different responsibilities.
 
 ### `question-model.js`
 
-Normalizes source items into the v2 assessment question model.
+The only owner for converting database/source records into one canonical Level Test v2 question shape. The renderer and grader consume the canonical model rather than learning arbitrary database schemas.
 
 ### `question-renderer.js`
 
-Owns computerized question rendering. Do not create type-specific patch renderers later.
+The only computerized question rendering engine.
+
+It must follow the same architectural idea as the Test Prep v2 renderer/render lab: a normalized question enters the renderer; the renderer displays it and captures the student's response.
+
+The renderer must not:
+
+- choose the next question;
+- alter ability estimates;
+- calculate the student's level;
+- query the assessment bank directly;
+- contain adaptive rules;
+- duplicate grading rules that belong to the grader.
+
+All supported computerized question forms must flow through this canonical renderer. Do not create `reading-renderer.js`, `listening-render-fix.js`, `grammar-renderer.js` or DOM patch layers later.
+
+A Level Test v2 render lab/test harness should eventually be able to load the exact same `question-model.js` and `question-renderer.js` modules so that a question inspected in the lab is rendered by the production implementation, not a copy.
 
 ### `question-grader.js`
 
-Owns deterministic question grading rules where applicable.
+The only owner for deterministic computerized grading rules where applicable. It takes the canonical question plus student response and returns grading evidence. It does not select the next question or calculate the final skill level.
+
+### `question-selection.js`
+
+The only owner for deciding which eligible computerized question should be shown next.
+
+Inputs may include:
+
+- current skill being assessed;
+- current estimated ability for that skill;
+- confidence/evidence state;
+- prior attempts;
+- levels already sampled;
+- question forms/types already sampled;
+- unused eligible items from `question-source.js`;
+- coverage/diversity requirements;
+- configured difficulty/jump rules.
+
+It returns a question selection decision plus, in diagnostics mode, the reason for that choice.
+
+It must not calculate the final level itself. It consumes the current state provided by the calculation engine.
+
+### `calculation-engine.js`
+
+The only owner for assessment mathematics and placement calculations.
+
+It owns:
+
+- ability estimates;
+- skill-level estimates;
+- evidence weighting;
+- confidence;
+- movement recommendations between difficulty bands;
+- stopping/continuation decisions based on evidence;
+- incorporating the teacher-selected starting level as initial calibration;
+- combining skill evidence into final results according to the explicitly configured policy.
+
+It must be testable independently from the UI and question renderer.
+
+The question selection engine may ask it for the current estimate and whether more evidence is needed, but selection logic must not create a competing calculation formula.
 
 ### `skill-scoring.js`
 
-Converts accumulated adaptive evidence into skill-level results.
+If retained as a separate module, it must be a clear subcomponent/dependency of the calculation engine rather than a second calculation owner. It may provide pure skill-scoring helpers, but the calculation engine remains the canonical public owner of assessment calculations.
 
 ### `navigation.js`
 
-One owner for browser/device navigation and resume-safe route state inside v2.
+The only owner for browser/device navigation and resume-safe route state inside Level Test v2.
 
-### `styles.css`
+It owns:
 
-Base v2 UI/design system. Additional CSS should be organized by real responsibility, not `*-fix.css` patch files.
+- browser history interaction;
+- back behavior;
+- route/stage restoration;
+- safe handoff between teacher and student phases where navigation state is involved.
 
-Module names are proposed, not sacred. Responsibility boundaries are the important part.
+Other modules request navigation; they must not add independent `popstate` listeners, private history stacks or back-button fixes.
 
-## 18. Shared platform integration
+### `test-config.js`
+
+The canonical configuration owner for assessment constants and policy values that should not be scattered through application code.
+
+Examples:
+
+- level definitions and display names;
+- skill definitions;
+- rubric definitions;
+- minimum evidence requirements;
+- maximum safety limits;
+- confidence thresholds;
+- jump/step constraints;
+- question-form coverage rules;
+- listening playback policy;
+- adaptive stopping thresholds;
+- final-level policy values.
+
+No magic numbers for core assessment policy should be hidden in UI/controller files.
+
+### `diagnostics.js`
+
+Development/staging diagnostics for understanding the adaptive path. This is not a second engine and must only observe/explain canonical engine decisions.
+
+For each computerized question it should be possible in staging/debug mode to inspect:
+
+- skill;
+- estimated ability before the question;
+- confidence before;
+- selected item id;
+- item level/difficulty/type/form;
+- why the selector chose it;
+- student result;
+- estimated ability after;
+- confidence after;
+- whether the engine chose to continue, move up, move down or stop;
+- why the skill/test eventually stopped.
+
+This is essential for tuning Reading and Listening and identifying bad assessment items.
+
+## 18. Styling and CSS architecture
+
+CSS must be separated by real responsibility from the beginning. Do not create a growing stack of overrides and patch stylesheets.
+
+Proposed structure:
+
+- `styles/base.css` — design tokens, typography, resets, global shell primitives;
+- `styles/setup.css` — initial visitor/intake screens including parent phone entry;
+- `styles/speaking.css` — teacher Speaking workspace and rubric controls;
+- `styles/test.css` — computerized assessment shell, progress, section transitions;
+- `styles/questions.css` — canonical question-renderer presentation styles;
+- `styles/results.css` — teacher/admin result and completion presentation.
+
+Additional files are allowed when they represent a genuinely distinct responsibility. Files named around fixes/overrides such as `question-fix.css`, `mobile-overrides.css`, `listening-fix.css` should be treated as an architectural warning sign. Fix the owning stylesheet/component instead.
+
+Visual design and assessment logic must remain separate. CSS classes must not encode scoring/calculation behavior.
+
+## 19. Shared platform integration
 
 Before implementing cross-app concerns, check `students/shared/` and the repository architecture rules.
 
@@ -596,7 +727,7 @@ Do not create duplicate implementations for concerns already owned by the shared
 
 Level Test v2 may have assessment-specific session/scoring logic, but generic student identity, shared header/platform behavior or general student statistics should use canonical shared owners where appropriate.
 
-## 19. Backend architecture
+## 20. Backend architecture
 
 Follow repository rules:
 
@@ -607,7 +738,7 @@ Follow repository rules:
 
 Existing legacy `/.netlify/functions/...`-shaped frontend routes are historical gateway mappings and are not a model for new backend work.
 
-## 20. UI requirements — teacher Speaking stage
+## 21. UI requirements — teacher Speaking stage
 
 Optimized for tablet/mobile landscape or portrait use during an interview.
 
@@ -628,7 +759,7 @@ Required elements:
 
 The screen should not pressure the teacher to complete every row or prompt.
 
-## 21. UI requirements — computerized stage
+## 22. UI requirements — computerized stage
 
 Student-facing UI should be simple, large, calm and consistent.
 
@@ -644,7 +775,7 @@ Requirements:
 - deliberate exit protection during an active assessment;
 - no teacher-only scoring/recommendation controls visible to the student.
 
-## 22. Completion behavior
+## 23. Completion behavior
 
 Face-to-face student view:
 
@@ -663,7 +794,7 @@ Teacher/admin result:
 - recordings/notes where saved;
 - indication of overrides.
 
-## 23. Relationship to the old level test
+## 24. Relationship to the old level test
 
 The existing free/visitor level test should remain intact while v2 is developed and tested.
 
@@ -673,19 +804,20 @@ V2 may reuse:
 - useful shared assessment utilities after review;
 - proven audio/TTS techniques;
 - reporting concepts worth preserving;
-- existing Supabase content.
+- existing Supabase content;
+- useful interaction behavior from the current visitor intake/start experience where it remains appropriate.
 
 V2 should not inherit by default:
 
 - grade/years-based starting ability;
-- the old fixed setup wizard;
+- the old fixed setup wizard as the assessment architecture;
 - patch-file architecture;
 - hidden monkeypatch/interception patterns;
 - assumptions that every skill fits one generic multiple-choice item model;
 - fixed question counts as the primary stopping mechanism;
 - weak Reading/Listening item-selection behavior.
 
-## 24. Validation plan
+## 25. Validation plan
 
 Before replacing the old visitor flow, compare v2 with real or representative students.
 
@@ -701,13 +833,16 @@ For each pilot assessment, review:
 - whether the teacher felt constrained by the Speaking interface;
 - whether the final placement matches teacher judgment after seeing the student perform.
 
-The system should make it possible to inspect these disagreements rather than hiding them.
+The diagnostics mode should make it possible to inspect these disagreements and the exact adaptive path rather than hiding them.
 
-## 25. Current decisions locked for v2
+## 26. Current decisions locked for v2
 
 The following are considered agreed requirements unless deliberately changed later:
 
 - build a clean Level Test v2 rather than bolt major new behavior onto the old visitor test;
+- keep the initial visitor/start experience familiar to the current visitor level test;
+- collect a parent phone number during visitor intake;
+- phone/grade/background data never influences ability unless a future policy explicitly changes this;
 - Speaking interview is an assessed skill;
 - Speaking interview also calibrates the starting point for the computerized assessment;
 - teachers see level-based banks of possible speaking questions;
@@ -721,9 +856,15 @@ The following are considered agreed requirements unless deliberately changed lat
 - the teacher-selected level is the actual starting level used by the adaptive engine;
 - grade and years studied do not calibrate face-to-face testing;
 - Reading and Listening require a substantive difficulty/content overhaul;
-- final reporting preserves individual skill results and teacher/app decisions.
+- final reporting preserves individual skill results and teacher/app decisions;
+- Level Test v2 is modular and uses one canonical owner for rendering, grading, question loading, question selection, calculations, navigation, session state and configuration;
+- question rendering is a proper standalone engine based on a canonical question model, following the same single-source principle used by the Test Prep v2 render lab;
+- source loading and question selection are separate modules;
+- the calculation engine is separate from the question-selection engine;
+- CSS is separated by responsibility rather than accumulated through fix/override files;
+- staging diagnostics must expose enough of the adaptive decision path to tune the assessment intelligently.
 
-## 26. Items still to finalize
+## 27. Items still to finalize
 
 These do not block creation of the v2 architecture but should be confirmed before their specific feature is implemented:
 
@@ -736,10 +877,34 @@ These do not block creation of the v2 architecture but should be confirmed befor
 - Writing assessment workflow;
 - final overall-level combination policy;
 - recording retention/storage policy and whether recordings are enabled by default;
-- exact staff result/report UI.
+- exact staff result/report UI;
+- exact visitor identity fields retained from the old initial process besides parent phone number;
+- exact duplicate/prospective-student matching policy for parent phone numbers.
 
-## 27. Definition of success
+## 28. Architectural invariants
 
-Level Test v2 succeeds when a teacher can quickly interview an unfamiliar student, use flexible professional judgment, hand the device to the student at an appropriate difficulty, and receive a trustworthy skill profile without forcing the student through large amounts of obviously easy or irrelevant material.
+These rules are intended to stop Level Test v2 from degrading into another patch stack.
 
-The system should feel like an assessment tool built around a teacher's expertise, with adaptive software extending that expertise rather than replacing it.
+1. There is exactly one canonical question model.
+2. There is exactly one canonical computerized question renderer.
+3. There is exactly one computerized grader.
+4. There is exactly one question-source/data-loading owner.
+5. There is exactly one adaptive question-selection owner.
+6. There is exactly one public calculation/ability engine.
+7. There is exactly one assessment-session owner.
+8. There is exactly one browser/history navigation owner.
+9. Core policy values come from canonical configuration, not scattered magic numbers.
+10. Render/test labs import the production renderer/model rather than copying them.
+11. No DOM-after-render patches are allowed as a substitute for fixing the canonical renderer.
+12. No `*-fix.js`, `*-patch.js`, `*-override.js` or equivalent compatibility layers should be added without first determining why the owning module cannot be fixed directly.
+13. Debug/diagnostic code observes canonical decisions; it never changes scoring or selection behavior.
+14. Database schema details terminate at source/model boundaries and do not leak throughout the renderer/calculation/UI.
+15. Assessment calculations terminate at the calculation engine and do not leak into screen controllers or CSS.
+
+Short form: **Renderer renders. Grader grades. Selector selects. Calculator calculates. Session stores. App orchestrates.**
+
+## 29. Definition of success
+
+Level Test v2 succeeds when a teacher can quickly identify a visitor, capture the parent's phone number, interview an unfamiliar student, use flexible professional judgment, hand the device to the student at an appropriate difficulty, and receive a trustworthy skill profile without forcing the student through large amounts of obviously easy or irrelevant material.
+
+The system should feel like an assessment tool built around a teacher's expertise, with adaptive software extending that expertise rather than replacing it. Its codebase should also remain understandable enough that changing question rendering, selection rules, calculation rules or styling later does not require editing unrelated systems.
