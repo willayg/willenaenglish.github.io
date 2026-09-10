@@ -1,4 +1,4 @@
-import {resolveContentIds,loadStoredSkill,loadStoredWritten} from './content-source.js?v=2.24.1';
+import {resolveContentIds,loadStoredSkill,loadStoredWritten} from './content-source.js?v=2.24.2';
 import {loadVocabularyTest} from './vocab-test-source.js?v=2.14.0';
 import {FORMS} from './question-model.js';
 
@@ -25,7 +25,14 @@ const LABELS={
 
 const text=v=>String(v??'').trim();
 const canonicalId=q=>text(q?.tracking?.questionId||q?.masteryKey||q?.id);
-const objectiveQuestion=q=>q?.form===FORMS.choice||q?.form===FORMS.multi;
+const questionType=q=>text(q?.tracking?.questionType||q?.metadata?.mode||q?.form||'unknown');
+const sourceCode=q=>text(q?.source?.code).toUpperCase();
+function objectiveQuestion(q){
+  if(!(q?.form===FORMS.choice||q?.form===FORMS.multi))return false;
+  const choices=Array.isArray(q?.choices)?q.choices:[],answers=Array.isArray(q?.answer)?q.answer:[];
+  if(choices.length<2||!answers.length||!text(q?.prompt))return false;
+  return answers.every(a=>{const n=Number(a);return Number.isInteger(n)&&n>=1&&n<=choices.length});
+}
 
 function hash32(value){
   let h=2166136261;
@@ -74,10 +81,10 @@ async function loadRowPools(plan,row){
     promise.then(qs=>({entries:(qs||[]).map(q=>entry(bucket,lesson,unitId,q)),error:null}))
       .catch(e=>({entries:[],error:{lesson,bucket,message:e?.message||String(e)}}))
   );
-  if(sections.has('vocabulary')||sections.has('vocab_test'))add('vocabulary',loadVocabularyTest(unitId,{count:60}).then(qs=>qs.filter(objectiveQuestion)));
-  if(sections.has('communication'))add('communication',loadStoredSkill(unitId,'communication').then(qs=>qs.filter(objectiveQuestion)));
-  if(sections.has('grammar'))add('grammar',loadStoredSkill(unitId,'grammar').then(qs=>qs.filter(objectiveQuestion)));
-  if(sections.has('reading'))add('reading',loadStoredSkill(unitId,'reading').then(qs=>qs.filter(objectiveQuestion)));
+  if(sections.has('vocabulary')||sections.has('vocab_test'))add('vocabulary',loadVocabularyTest(unitId,{count:80}).then(qs=>qs.filter(objectiveQuestion)));
+  if(sections.has('communication'))add('communication',loadStoredSkill(unitId,'communication',{trustedOnly:true}).then(qs=>qs.filter(objectiveQuestion)));
+  if(sections.has('grammar'))add('grammar',loadStoredSkill(unitId,'grammar',{trustedOnly:true}).then(qs=>qs.filter(objectiveQuestion)));
+  if(sections.has('reading'))add('reading',loadStoredSkill(unitId,'reading',{trustedOnly:true}).then(qs=>qs.filter(objectiveQuestion)));
   if(sections.has('constructed_response'))add('constructed_response',loadStoredWritten(unitId));
   const parts=await Promise.all(jobs);
   return{entries:parts.flatMap(x=>x.entries),errors:parts.map(x=>x.error).filter(Boolean)};
@@ -113,32 +120,52 @@ export async function buildMockTestPaper({plan,studentId=null,seed=null}={}){
   for(const key of Object.keys(pools))pools[key]=stableShuffle(uniqueEntries(pools[key]),`${paperSeed}|${key}`);
 
   const selected=[];const used=new Set();const shortage={};
-  const take=(bucket,count,{fallbackFor=null}={})=>{
-    let n=0;
-    for(const e of pools[bucket]){
-      const id=canonicalId(e.question);if(!id||used.has(id))continue;
-      selected.push({...e,slot:fallbackFor||bucket});used.add(id);n++;
-      if(n>=count)break;
+  const addSelected=(e,slot)=>{
+    const id=canonicalId(e?.question);if(!id||used.has(id))return false;
+    selected.push({...e,slot});used.add(id);return true;
+  };
+  const unused=(bucket)=>pools[bucket].filter(e=>!used.has(canonicalId(e.question)));
+  const takePlain=(bucket,count,{fallbackFor=null}={})=>{
+    let n=0;for(const e of unused(bucket)){if(addSelected(e,fallbackFor||bucket))n++;if(n>=count)break}return n;
+  };
+  const takeVocabDiverse=(count)=>{
+    const candidates=unused('vocabulary'),groups=new Map();
+    for(const e of candidates){const type=questionType(e.question);if(!groups.has(type))groups.set(type,[]);groups.get(type).push(e)}
+    const types=[...groups.keys()].sort((a,b)=>seededRank(`${paperSeed}|vocab-types`,a)-seededRank(`${paperSeed}|vocab-types`,b));
+    let n=0,round=0;
+    while(n<count&&types.length){
+      let progress=false;
+      for(const type of types){const group=groups.get(type)||[],e=group[round];if(e&&addSelected(e,'vocabulary')){n++;progress=true;if(n>=count)break}}
+      if(!progress)break;round++;
     }
+    if(n<count)n+=takePlain('vocabulary',count-n);
+    return n;
+  };
+  const takeSourceBalanced=(bucket,count)=>{
+    const candidates=unused(bucket),willena=candidates.filter(e=>sourceCode(e.question)==='W'),other=candidates.filter(e=>sourceCode(e.question)!=='W');
+    const maxWillena=Math.ceil(count/2),needOther=Math.min(other.length,count-maxWillena);let n=0;
+    for(const e of other.slice(0,needOther))if(addSelected(e,bucket))n++;
+    for(const e of willena){if(n>=count||selected.filter(x=>x.bucket===bucket&&sourceCode(x.question)==='W').length>=maxWillena)break;if(addSelected(e,bucket))n++}
+    if(n<count){for(const e of candidates){if(n>=count)break;if(addSelected(e,bucket))n++}}
     return n;
   };
 
   for(const bucket of OBJECTIVE_BUCKETS){
-    const wanted=MOCK_TEST_BLUEPRINT[bucket],got=take(bucket,wanted);
+    const wanted=MOCK_TEST_BLUEPRINT[bucket];
+    const got=bucket==='vocabulary'?takeVocabDiverse(wanted):takeSourceBalanced(bucket,wanted);
     if(got<wanted)shortage[bucket]=wanted-got;
   }
 
   const writtenWanted=MOCK_TEST_BLUEPRINT.constructed_response;
-  const writtenGot=take('constructed_response',writtenWanted);
+  const writtenGot=takePlain('constructed_response',writtenWanted);
   const writtenFallbackNeeded=Math.max(0,writtenWanted-writtenGot);let writtenFallbackUsed=0;
   if(writtenFallbackNeeded){
     const leftovers=stableShuffle(
-      OBJECTIVE_BUCKETS.flatMap(bucket=>pools[bucket].filter(e=>!used.has(canonicalId(e.question)))),
+      OBJECTIVE_BUCKETS.flatMap(bucket=>unused(bucket)),
       `${paperSeed}|written-fallback`
     );
     for(const e of leftovers){
-      const id=canonicalId(e.question);if(!id||used.has(id))continue;
-      selected.push({...e,slot:'constructed_response_fallback'});used.add(id);writtenFallbackUsed++;
+      if(addSelected(e,'constructed_response_fallback'))writtenFallbackUsed++;
       if(writtenFallbackUsed>=writtenFallbackNeeded)break;
     }
   }
@@ -151,7 +178,7 @@ export async function buildMockTestPaper({plan,studentId=null,seed=null}={}){
   const selectedCounts=countsByBucket(ordered);
 
   return{
-    version:'1.0.2',
+    version:'1.1.0',
     seed:paperSeed,
     planId:String(plan.id),
     total:ordered.length,
