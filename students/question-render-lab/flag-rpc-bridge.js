@@ -1,4 +1,4 @@
-// Bridge any direct flag-table read to the narrow SECURITY DEFINER RPC.
+// Bridge direct flag-table reads to the narrow RPC, while allowing the lab flagger to POST new flags.
 // Also captures the Render Lab's already-authorized REST connection for test-harness helpers.
 (() => {
   const originalFetch = window.fetch.bind(window);
@@ -20,7 +20,8 @@
       } catch {}
     }
 
-    if (parsed.pathname !== FLAG_TABLE_PATH) return originalFetch(input, init);
+    const method = String(init.method || (typeof input !== 'string' ? input.method : '') || 'GET').toUpperCase();
+    if (parsed.pathname !== FLAG_TABLE_PATH || method !== 'GET') return originalFetch(input, init);
 
     const rpcUrl = `${parsed.origin}${RPC_PATH}`;
     const headers = new Headers(init.headers || (typeof input !== 'string' ? input.headers : undefined) || {});
