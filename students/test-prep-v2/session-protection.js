@@ -1,34 +1,30 @@
-const DEFAULT_MESSAGE='학습을 종료하시겠습니까?\n완료한 답변과 학습 기록은 저장되어 있지만, 현재 진행 중인 활동은 종료됩니다.';
+const DEFAULT_MESSAGE='학습을 종료하시겠습니까?\n완료한 답변과 현재 진행 상황은 저장됩니다. 나중에 같은 활동을 열면 이어서 할 수 있습니다.';
 
-let active=null;
+let enabled=false;
+let message=DEFAULT_MESSAGE;
 let beforeUnloadInstalled=false;
 
 function beforeUnload(event){
-  if(!active?.isProtected?.())return;
+  if(!enabled)return;
   event.preventDefault();
   event.returnValue='';
 }
-
 function ensureBeforeUnload(){
   if(beforeUnloadInstalled)return;
   window.addEventListener('beforeunload',beforeUnload);
   beforeUnloadInstalled=true;
 }
 
-export function protectSession({isProtected=()=>true,message=DEFAULT_MESSAGE,onConfirm=()=>{}}={}){
+export function setSessionProtection(active,{exitMessage=DEFAULT_MESSAGE}={}){
   ensureBeforeUnload();
-  const token=Symbol('session-protection');
-  active={token,isProtected,message,onConfirm};
-  return()=>{if(active?.token===token)active=null};
+  enabled=!!active;
+  message=exitMessage||DEFAULT_MESSAGE;
 }
 
 export function confirmSessionExit(){
-  if(!active?.isProtected?.())return true;
-  const ok=window.confirm(active.message||DEFAULT_MESSAGE);
-  if(ok){try{active.onConfirm?.()}catch(e){console.warn('[test-prep-v2] session exit confirmation hook failed',e)}}
-  return ok;
+  if(!enabled)return true;
+  return window.confirm(message);
 }
 
-export function hasProtectedSession(){return !!active?.isProtected?.()}
-
-export function clearSessionProtection(){active=null}
+export function hasProtectedSession(){return enabled}
+export function clearSessionProtection(){enabled=false}
