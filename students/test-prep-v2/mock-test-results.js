@@ -3,7 +3,7 @@ import {FORMS} from './question-model.js';
 
 const LABELS={vocabulary:'어휘',communication:'대화',grammar:'문법',reading:'독해',constructed_response:'서술형'};
 const ORDER=['vocabulary','communication','grammar','reading','constructed_response'];
-const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]));
 const arr=v=>Array.isArray(v)?v:(v==null||v===''?[]:[v]);
 
 function choiceAnswerText(question,value){
@@ -30,7 +30,7 @@ function sectionStats(snapshot){
 }
 function statusText(item){return item.answered?(item.result?.correct?'정답':'오답'):'미응답'}
 function mountWilliTrigger(card,item){
-  if(!card||!item?.answered||item?.result?.correct)return;
+  if(!card||item?.result?.correct)return;
   const wrap=document.createElement('div');wrap.className='mock-review-willi';
   wrap.innerHTML='<button type="button" class="mock-review-willi-trigger">✦ Willi에게 설명 듣기</button>';
   card.appendChild(wrap);
@@ -39,13 +39,13 @@ function mountWilliTrigger(card,item){
     if(button.disabled)return;
     button.disabled=true;button.textContent='Willi 불러오는 중...';
     try{
-      const {mountAiWilliHelper}=await import('../shared/ai-willi/ai-willi-ui.js?v=1.6.0');
+      const {mountAiWilliHelper}=await import('../shared/ai-willi/ai-willi-ui.js?v=1.7.0');
       button.remove();
       mountAiWilliHelper({
         container:wrap,
         question:item.question,
         response:item.response,
-        result:item.result,
+        result:item.result||{correct:false,method:'unanswered'},
         section:item.bucket,
         lesson:item.lesson,
         practiceType:practiceTypeFor(item)
