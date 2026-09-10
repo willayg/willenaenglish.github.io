@@ -6,14 +6,15 @@ function systemPrompt(section){
 }
 
 function refinementInstruction(mode){
-  if(mode==='examples')return `학생이 이전 설명을 충분히 이해하지 못했습니다. 같은 핵심 내용을 더 구체적인 예시를 사용해서 다시 설명하세요. 학생 수준에 맞는 짧은 영어 예문을 2~4개 제시하고, 각 예문을 짧고 쉬운 한국어로 설명하세요. 이전 설명을 그대로 반복하지 마세요.`;
-  if(mode==='simple')return `학생이 이전 설명을 이해하기 어려워합니다. 같은 핵심 내용을 더 쉽고 단순하게 다시 설명하세요. 짧은 한국어 문장과 쉬운 단어를 사용하고, 한 번에 하나의 규칙이나 개념만 설명하세요. 학생이 이전 표현 때문에 혼란스러웠다고 생각하고 더 쉬운 방식으로 풀어 주세요.`;
+  if(mode==='vocab')return `설명은 길게 하지 마세요. 이 문제를 이해하는 데 도움이 되는 어려운 영어 단어와 표현만 골라 주세요.`;
+  if(mode==='examples')return `학생이 예시를 더 보고 싶어 합니다. 같은 핵심 내용을 더 구체적인 예시를 사용해서 설명하세요. 학생 수준에 맞는 짧은 영어 예문을 2~4개 제시하고, 각 예문을 짧고 쉬운 한국어로 설명하세요. 이전 설명을 그대로 반복하지 마세요.`;
   if(mode==='details')return `학생이 더 자세한 설명을 원합니다. 같은 핵심 내용을 더 깊이 있게 설명하세요. 중요한 규칙, 학생의 답이 왜 맞지 않는지, 정답이 왜 맞는지, 그리고 이 문제에 직접 도움이 되는 비교나 예외가 있다면 함께 설명하세요. 이 문제와 관련 없는 내용으로 넓히지 마세요.`;
-  return `학생에게 첫 번째 설명을 명확하게 제공하세요. 한국 중학생이 읽기 쉽게 간결하게 설명하고, 보통 4~7개의 짧은 문단이나 불릿 정도면 충분합니다.`;
+  if(mode==='simple')return `학생이 이전 설명을 이해하기 어려워합니다. 같은 핵심 내용을 더 쉽고 단순하게 다시 설명하세요. 짧은 한국어 문장과 쉬운 단어를 사용하고, 한 번에 하나의 규칙이나 개념만 설명하세요.`;
+  return `학생에게 첫 번째 설명을 아주 쉽고 단순하게 제공하세요. 짧은 한국어 문장과 쉬운 단어를 사용하고, 한 번에 하나의 핵심 규칙이나 개념만 설명하세요. 먼저 왜 틀렸는지와 왜 정답이 맞는지를 쉽게 이해시키는 것이 목표입니다. 보통 3~6개의 짧은 문단이나 불릿이면 충분합니다.`;
 }
 
 function vocabInstruction(mode){
-  if(mode!=='initial')return `vocabulary에는 빈 배열 []을 반환하세요.`;
+  if(mode!=='vocab')return `vocabulary에는 빈 배열 []을 반환하세요.`;
   return `vocabulary에는 이 실제 문제와 지문/대화/선택지에 나온 영어 중 한국 중학생에게 어려울 가능성이 높고 문제 이해에 도움이 되는 단어 또는 표현만 3~6개 고르세요. 단순히 모든 단어를 나열하지 마세요. 쉬운 기초어는 제외하세요. 구동사나 고정 표현이 더 유용하면 한 덩어리로 고르세요. 각 항목은 term, meaning_ko, note_ko를 포함하세요. meaning_ko는 짧은 한국어 뜻, note_ko는 이 문제 문맥에서의 의미나 쓰임을 한 문장 이내로 설명하세요. 적절한 어려운 어휘가 거의 없으면 3개를 억지로 채우지 말고 더 적게 반환해도 됩니다.`;
 }
 
@@ -30,10 +31,10 @@ function normalizeVocabulary(value){
   return out;
 }
 
-function appendVocabulary(text,vocabulary){
-  if(!Array.isArray(vocabulary)||!vocabulary.length)return String(text||'').trim();
+function vocabularyText(vocabulary){
+  if(!Array.isArray(vocabulary)||!vocabulary.length)return `### 핵심 단어\n이 문제에는 따로 뽑을 만한 어려운 핵심 단어가 많지 않아요.`;
   const lines=vocabulary.map(v=>`- ${v.term} — ${v.meaning_ko}${v.note_ko?` · ${v.note_ko}`:''}`);
-  return `${String(text||'').trim()}\n\n### 핵심 단어\n${lines.join('\n')}`.trim();
+  return `### 핵심 단어\n${lines.join('\n')}`;
 }
 
 export async function helpWithAiWilli({question,response,result,section,lesson,practiceType,existingExplanation,mode='initial',previousExplanation=''}={}){
@@ -55,15 +56,16 @@ export async function helpWithAiWilli({question,response,result,section,lesson,p
   const {text:raw}=await callAiWilli({
     messages:[
       {role:'system',content:`${systemPrompt(context.section)} Return only valid JSON with this shape: {"explanation":"...","vocabulary":[{"term":"...","meaning_ko":"...","note_ko":"..."}]}. Do not wrap the JSON in markdown.`},
-      {role:'user',content:`${refinementInstruction(mode)}\n\n${vocabInstruction(mode)}\n\n아래에 제공된 실제 문제 정보만 사용해서 설명하세요.\n\n${JSON.stringify(context,null,2)}`}
+      {role:'user',content:`${refinementInstruction(mode)}\n\n${vocabInstruction(mode)}\n\n아래에 제공된 실제 문제 정보만 사용하세요.\n\n${JSON.stringify(context,null,2)}`}
     ],
     reasoningEffort:'low',
-    maxCompletionTokens:mode==='details'?1000:mode==='examples'?900:800,
+    maxCompletionTokens:mode==='details'?1000:mode==='examples'?900:mode==='vocab'?500:700,
     responseFormat:{type:'json_object'}
   });
   let parsed;
   try{parsed=parseAiWilliJson(raw)}catch(_){parsed={explanation:raw,vocabulary:[]}}
-  const vocabulary=mode==='initial'?normalizeVocabulary(parsed?.vocabulary):[];
+  const vocabulary=mode==='vocab'?normalizeVocabulary(parsed?.vocabulary):[];
   const explanation=String(parsed?.explanation||raw||'').trim();
-  return{text:appendVocabulary(explanation,vocabulary),explanation,vocabulary,mode};
+  const text=mode==='vocab'?vocabularyText(vocabulary):explanation;
+  return{text,explanation,vocabulary,mode};
 }
