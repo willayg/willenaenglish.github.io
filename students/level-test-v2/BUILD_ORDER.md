@@ -8,18 +8,18 @@ Use this file as the canonical build sequence. Check items off as they are compl
 
 ## Phase 1 — Shell and visual parity
 
-- [ ] Create `index.html` and the basic Level Test v2 app shell.
-- [ ] Reproduce the current visitor/free level test visual appearance as closely as practical.
-- [ ] Copy/recreate the effective current styles rather than redesigning the interface.
-- [ ] Split styles by responsibility from the start:
-  - [ ] `styles/base.css`
-  - [ ] `styles/setup.css`
-  - [ ] `styles/speaking.css`
-  - [ ] `styles/test.css`
-  - [ ] `styles/questions.css`
-  - [ ] `styles/results.css`
-- [ ] Match current typography, colors, cards, buttons, spacing, header/logo treatment, progress UI, question layouts, listening controls, reading layout, transitions, responsive behavior and completion screen.
-- [ ] Confirm V2 feels visually familiar before adding major new assessment behavior.
+- [x] Create `index.html` and the basic Level Test v2 app shell.
+- [x] Reproduce the current visitor/free level test visual appearance as closely as practical.
+- [x] Copy/recreate the effective current styles rather than redesigning the interface.
+- [x] Split styles by responsibility from the start:
+  - [x] `styles/base.css`
+  - [x] `styles/setup.css`
+  - [x] `styles/speaking.css`
+  - [x] `styles/test.css`
+  - [x] `styles/questions.css`
+  - [x] `styles/results.css`
+- [x] Match current typography, colors, cards, buttons, spacing, header/logo treatment, progress UI, question layouts, listening controls, reading layout, transitions, responsive behavior and completion screen.
+- [x] Confirm V2 feels visually familiar before adding major new assessment behavior.
 
 ## Phase 2 — Visitor intake
 
@@ -314,7 +314,7 @@ Use this file as the canonical build sequence. Check items off as they are compl
 
 The first major working milestone is:
 
-- [ ] Current-look V2 shell exists.
+- [x] Current-look V2 shell exists.
 - [ ] Visitor enters required details + parent phone.
 - [ ] Teacher completes a usable Speaking interview.
 - [ ] App recommends a starting level.
