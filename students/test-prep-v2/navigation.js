@@ -1,4 +1,4 @@
-import {confirmSessionExit,setSessionProtection} from './session-protection.js?v=1.2.0';
+import {confirmSessionExit,setSessionProtection} from './session-protection.js?v=1.3.0';
 
 const APP='willena-test-prep-v2';
 const VIEWS=new Set(['home','plan','lesson','practice','result','review','mock']);
@@ -48,7 +48,7 @@ export function initNavigation({render,beforeRouteChange,initialRoute={view:'hom
   renderRoute=render;beforeChange=typeof beforeRouteChange==='function'?beforeRouteChange:null;started=true;
   let route=fromHistory(history.state);
   if(!route){route=normalize(initialRoute);history.replaceState(packed(route),'',location.href)}
-  current=route;setSessionProtection(route.view==='practice');window.addEventListener('popstate',onPop);return route;
+  current=route;setSessionProtection(false);window.addEventListener('popstate',onPop);return route;
 }
 export async function navigate(route){
   const next=normalize(route);if(!valid(next))throw new Error('Invalid Test Prep route.');
@@ -60,7 +60,7 @@ export async function replaceRoute(route,{render=true}={}){
   const next=normalize(route);if(!valid(next))throw new Error('Invalid Test Prep route.');
   const prev=current;if(!await allowed(prev,next,'replace'))return prev;
   history.replaceState(packed(next),'',location.href);
-  if(!render){current=next;setSessionProtection(next.view==='practice');return next}
+  if(!render){current=next;setSessionProtection(false);return next}
   return renderAccepted(next,'replace',prev);
 }
 export function back(){history.back()}
