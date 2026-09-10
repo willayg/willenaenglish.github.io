@@ -34,13 +34,13 @@ Use this file as the canonical build sequence. Check items off as they are compl
 
 ## Phase 3 — Assessment session foundation
 
-- [ ] Create `assessment-session.js`.
-- [ ] Define one canonical assessment-session state shape.
-- [ ] Persist current phase and progress.
-- [ ] Support refresh/reload recovery.
-- [ ] Support teacher-to-student handoff without losing state.
-- [ ] Define session states such as created, speaking in progress, speaking complete, student test in progress, complete and abandoned.
-- [ ] Ensure session code does not calculate ability or choose questions.
+- [x] Create `assessment-session.js`.
+- [x] Define one canonical assessment-session state shape.
+- [x] Persist current phase and progress.
+- [x] Support refresh/reload recovery.
+- [x] Support teacher-to-student handoff without losing state.
+- [x] Define session states such as created, speaking in progress, speaking complete, student test in progress, complete and abandoned.
+- [x] Ensure session code does not calculate ability or choose questions.
 
 ## Phase 4 — Navigation owner
 
