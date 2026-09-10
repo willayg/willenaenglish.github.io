@@ -8,7 +8,7 @@ let previewPaper=null;
 function ensureStyles(){
   if(document.querySelector('link[data-mock-test-style]'))return;
   const link=document.createElement('link');
-  link.rel='stylesheet';link.href='./mock-test.css?v=1.0.0';link.dataset.mockTestStyle='1';document.head.appendChild(link);
+  link.rel='stylesheet';link.href='./mock-test.css?v=1.0.1';link.dataset.mockTestStyle='1';document.head.appendChild(link);
 }
 ensureStyles();
 
@@ -51,7 +51,7 @@ export async function renderMockTestPreflight({host,plan,studentId=null,onBack=(
     const paper=await buildMockTestPaper({plan,studentId,seed});
     if(token!==activeToken)return null;
     previewPaper=paper;
-    host.innerHTML=`<div class="mock-preflight"><button class="back" type="button" data-mock-back>← ${esc(plan.book_label||'시험 범위')}</button><div class="heading"><div><h2>실전모의고사</h2><p>${MOCK_TEST_MINUTES}분 제한 · 제출 후 한 번에 채점</p></div></div><section class="mock-summary-card"><div class="mock-summary-head"><div><span class="mock-summary-eyebrow">시험 구성</span><h3 class="mock-summary-title">${paper.ready?'시험지가 준비됐어요':'시험지 구성을 확인해 주세요'}</h3><p class="mock-summary-copy">${esc(plan.exam_name||'현재 시험 범위')} · 총 ${paper.total||MOCK_TEST_TOTAL}문항</p></div><span class="mock-ready ${paper.ready?'':'is-warning'}">${paper.ready?'준비 완료':'확인 필요'}</span></div>${countsHtml(paper)}${diagnosticsHtml(paper)}</section><div class="mock-actions"><button class="review-secondary" type="button" data-mock-regenerate>시험지 다시 구성</button><button class="review-primary" type="button" data-mock-start disabled>시험 시작 · Stage 2에서 연결</button></div></div>`;
+    host.innerHTML=`<div class="mock-preflight"><button class="back" type="button" data-mock-back>← ${esc(plan.book_label||'시험 범위')}</button><div class="heading"><div><h2>실전모의고사</h2><p>${MOCK_TEST_TOTAL}문항 · ${MOCK_TEST_MINUTES}분</p></div></div><section class="mock-summary-card"><div class="mock-summary-head"><div><span class="mock-summary-eyebrow">시험 구성</span><h3 class="mock-summary-title">${esc(plan.exam_name||'현재 시험 범위')}</h3><p class="mock-summary-copy">답안은 마지막에 한 번에 제출하고 채점합니다.</p></div><span class="mock-ready ${paper.ready?'':'is-warning'}">${paper.ready?'준비 완료':'확인 필요'}</span></div>${countsHtml(paper)}${diagnosticsHtml(paper)}</section><div class="mock-actions"><button class="review-secondary" type="button" data-mock-regenerate>시험지 다시 구성</button><button class="review-primary" type="button" data-mock-start disabled>시험 시작 · Stage 2에서 연결</button></div></div>`;
     host.querySelector('[data-mock-back]').onclick=onBack;
     host.querySelector('[data-mock-regenerate]').onclick=async()=>{
       host.innerHTML='<div class="loading">새 시험지를 구성하는 중...</div>';
