@@ -1,10 +1,10 @@
-import {QuestionRenderer} from './question-renderer.js';
-import {gradeQuestion} from './question-grader.js';
-import {setTrackingContext,startSession,recordAttempt,completeSession,refreshTrackingState} from './tracking-client.js';
-import {invalidateCardStats,loadCardStats} from './stats-client.js';
-import {setNavigationGuard} from './navigation.js?v=2.18.0';
+import {QuestionRenderer} from './question-renderer.js?v=2.20.6';
+import {gradeQuestion} from '../shared/question-grader.js?v=2.1.2';
+import {setTrackingContext,startSession,recordAttempt,completeSession,refreshTrackingState} from './tracking-client.js?v=2.17a';
+import {invalidateCardStats,loadCardStats} from './stats-client.js?v=2.16a';
+import {setNavigationGuard} from './navigation.js?v=2.19.0';
 import {buildMockTestPaper,MOCK_TEST_BLUEPRINT,MOCK_TEST_MINUTES,MOCK_TEST_TOTAL} from './mock-test-source.js?v=1.2.2';
-import {renderMockTestResults} from './mock-test-results.js?v=1.1.0';
+import {renderMockTestResults} from './mock-test-results.js?v=1.1.2';
 import {confirmMockTestSubmit} from './mock-test-submit.js?v=1.0.0';
 
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
