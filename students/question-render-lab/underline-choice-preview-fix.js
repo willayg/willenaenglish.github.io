@@ -18,4 +18,17 @@ QuestionRenderer.prototype.controls=function(q){
   if(!perChoice)return originalControls.call(this,q);
   return `<div class="choices">${q.choices.map((x,i)=>`<button type="button" class="choice" data-choice="${i+1}"><span>${numberMark(i)}</span> ${marked(x,[perChoice[i]])}</button>`).join('')}</div>`;
 };
+
+const originalRender=QuestionRenderer.prototype.render;
+QuestionRenderer.prototype.render=function(q,...args){
+  const result=originalRender.call(this,q,...args);
+  if(Array.isArray(q?.context?.underlined_by_choice)){
+    this.host.querySelectorAll('.context-block').forEach(block=>{
+      const label=block.querySelector('.context-label')?.textContent?.trim().toLowerCase();
+      if(label==='underlined by choice')block.remove();
+    });
+  }
+  return result;
+};
+
 console.log('[Render Lab] per-choice underline preview fix ready');
