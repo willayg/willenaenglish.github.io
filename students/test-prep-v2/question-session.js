@@ -31,6 +31,8 @@ export function createQuestionSession({
 }){
   const setBottom=html=>{bottom.innerHTML=html;bottom.hidden=!html};
   let restoredRouteKey='';
+  let grading=false;
+  let nextPointerArmed=false;
   const routeKey=route=>route?`${route.planId}|${route.lesson}|${route.practice}`:'';
 
   function restoreOnce(){
@@ -57,6 +59,7 @@ export function createQuestionSession({
     const entry=getEntry(),q=getQuestion(entry);
     if(!q){clearActivitySnapshotFor(currentActivityRoute());return onFinished()}
     saveActivityPosition(indexState.get());
+    grading=false;nextPointerArmed=false;
     checkedState.set(false);startedAtState.set(Date.now());onBeforeRender(entry,q);
     root.innerHTML=`${renderHeader(entry,q)}<div class="question-card" id="questionHost"></div>`;
     const host=root.querySelector('#questionHost');
@@ -68,19 +71,31 @@ export function createQuestionSession({
     const backButton=root.querySelector('[data-session-back]');if(backButton)backButton.onclick=onBack;
     setBottom(`<button id="${buttonIds.skip}">Skip</button><button class="primary" id="${buttonIds.check}" disabled>Check Answer</button>`);
     document.getElementById(buttonIds.skip).onclick=skip;
-    document.getElementById(buttonIds.check).onclick=check;
+    const checkButton=document.getElementById(buttonIds.check);
+    checkButton.addEventListener('pointerdown',()=>{if(checkedState.get())nextPointerArmed=true});
+    checkButton.addEventListener('keydown',e=>{if(checkedState.get()&&(e.key==='Enter'||e.key===' '))nextPointerArmed=true});
+    checkButton.onclick=check;
   }
 
   async function check(){
     if(!isActive())return;
-    if(checkedState.get()){indexState.set(indexState.get()+1);render();return}
+    if(checkedState.get()){
+      if(!nextPointerArmed)return;
+      nextPointerArmed=false;
+      indexState.set(indexState.get()+1);render();return;
+    }
+    if(grading)return;
     const entry=getEntry(),q=getQuestion(entry),renderer=rendererState.get();if(!q||!renderer)return;
     const response=renderer.getResponse(),btn=document.getElementById(buttonIds.check);if(!btn)return;
+    grading=true;
     const usesAiWilli=q.grading?.aiAllowed&&q.grading?.mode==='ai_semantic_strict';
     btn.disabled=true;btn.textContent=usesAiWilli?aiWilliMessage('grader','waiting'):'Check Answer';renderer.setDisabled(true);
     if(usesAiWilli)showAiWilliStatus(root,{role:'grader'});
-    const result=await gradeQuestion(q,response);clearAiWilliStatus(root);if(!isActive())return;
-    result.responseTimeMs=Date.now()-startedAtState.get();checkedState.set(true);
+    let result;
+    try{result=await gradeQuestion(q,response)}
+    catch(e){grading=false;clearAiWilliStatus(root);renderer.setDisabled(false);btn.disabled=false;throw e}
+    clearAiWilliStatus(root);if(!isActive()){grading=false;return}
+    result.responseTimeMs=Date.now()-startedAtState.get();checkedState.set(true);grading=false;nextPointerArmed=false;
     const answeredIndex=indexState.get();
     if(result.correct)onCorrect(entry,q,result);else onWrong(entry,q,result);
     renderer.showFeedback(result);decorateAiWilliFeedback(root,result);
@@ -94,7 +109,7 @@ export function createQuestionSession({
   }
 
   async function skip(){
-    if(checkedState.get()||!isActive())return;
+    if(checkedState.get()||grading||!isActive())return;
     const entry=getEntry(),q=getQuestion(entry),renderer=rendererState.get();if(!q)return;
     const response=renderer?.getResponse()??null,result={correct:false,method:'skipped',responseTimeMs:Date.now()-startedAtState.get()};
     const answeredIndex=indexState.get();onWrong(entry,q,result);
