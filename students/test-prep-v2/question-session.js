@@ -39,13 +39,12 @@ export function createQuestionSession({
     restoredRouteKey=key;
     const saved=restoreActivityProgress(route);if(!saved)return;
     const target=Math.max(0,Math.min(queueLength(),saved.resumeIndex||0));
-    const original=indexState.get();
     for(const outcome of saved.outcomes||[]){
       const i=Number(outcome.index);if(!Number.isFinite(i)||i<0||i>=target||i>=queueLength())continue;
       indexState.set(i);const entry=getEntry(),q=getQuestion(entry);if(!q)continue;
       if(outcome.correct)onCorrect(entry,q,{correct:true,resumed:true});else onWrong(entry,q,{correct:false,resumed:true});
     }
-    indexState.set(target||original&&target===0?target:target);checkedState.set(false);rendererState.set(null);
+    indexState.set(target);checkedState.set(false);rendererState.set(null);
   }
   function saveOutcome(index,correct,resumeIndex){
     try{saveActivityProgress({resumeIndex,outcome:{index,correct}})}catch(e){console.warn(`[test-prep-v2] ${logLabel} local session save failed`,e)}
