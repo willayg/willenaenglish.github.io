@@ -17,13 +17,13 @@
     <div class="field"><label>Feature</label><select id="feature"><option value="all">All questions</option><option value="underline">Underlined</option><option value="blank">Fill in the blank</option></select></div>
     <div class="field"><label>Flag status</label><select id="flagged"><option value="all">All questions</option><option value="flagged">Flagged only</option></select></div>
     <div class="field"><label>Student availability</label><select id="availability"><option value="all">All</option><option value="usable">Usable</option><option value="unusable">Unusable</option></select></div>
-    <div class="field"><label>Underline audit type</label><select id="underlineIssue"><option value="all">All issue types</option><option value="answer_choices_stored_as_passage_target">Passage target missing</option><option value="whole_choice_spans">Whole-choice underline</option><option value="single_target">Single target</option><option value="per_choice_targets">Per-choice targets</option><option value="missing_underline_metadata">Missing underline data</option><option value="multi_target_other">Multiple-target oddity</option><option value="underlined_by_choice">Explicit per-choice targets</option></select></div>
+    <div class="field"><label>Underline audit type</label><select id="underlineIssue"><option value="all">All issue types</option><option value="answer_choices_stored_as_passage_target">Passage target missing</option><option value="malformed_missing_source_target">Malformed / source target missing</option><option value="whole_choice_spans">Whole-choice underline</option><option value="single_target">Single target</option><option value="per_choice_targets">Per-choice targets</option><option value="missing_underline_metadata">Missing underline data</option><option value="multi_target_other">Multiple-target oddity</option><option value="underlined_by_choice">Explicit per-choice targets</option></select></div>
     <div class="field"><label>Date added / modified</label><select id="dateAdded"><option value="all">All dates</option><optgroup label="Date added"><option value="created:today">Added today</option><option value="created:24h">Added in last 24 hours</option><option value="created:3d">Added in last 3 days</option><option value="created:7d">Added in last 7 days</option><option value="created:30d">Added in last 30 days</option></optgroup><optgroup label="Date modified"><option value="modified:today">Modified today</option><option value="modified:24h">Modified in last 24 hours</option><option value="modified:3d">Modified in last 3 days</option><option value="modified:7d">Modified in last 7 days</option><option value="modified:30d">Modified in last 30 days</option></optgroup></select></div>
     <div class="field"><label>Audit status</label><select id="auditStatus"><option value="all">All audit results</option><option value="fail">Fail</option><option value="warning">Warning</option><option value="pass">Pass</option></select></div>
     <div class="field"><label>Auto audit</label><button id="auditAll" type="button">Audit All DB</button></div>
   </div>
   <div class="meta">
-    <span class="rev-badge">REV 28</span>
+    <span class="rev-badge">REV 29</span>
     <span class="rev-badge">CANONICAL RENDERER · V2.20.4</span>
     <span class="rev-badge">SHARED GRADING POLICY · V2</span>
     <span class="rev-badge">SHARED GRADER · LUNA</span>
@@ -51,7 +51,7 @@ installWillenaKeyboard({submitSelector:'#check'});
 <script src="./audit-direct.js?v=1"></script>
 <script type="module" src="./render-lab-flagger.js?v=1"></script>
 <script type="module" src="./underline-choice-preview-fix.js?v=1"></script>
-<script type="module" src="./render-lab-availability.js?v=1"></script>
+<script type="module" src="./render-lab-availability.js?v=2"></script>
 <script type="module" src="./lab.js?v=rev20"></script>
 </body>
 </html>
