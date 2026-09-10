@@ -1,5 +1,4 @@
 import {resolveContentIds,loadStoredSkill,loadStoredWritten} from './content-source.js?v=2.24.2';
-import {loadVocabularyTest} from './vocab-test-source.js?v=2.14.0';
 import {FORMS} from './question-model.js';
 
 export const MOCK_TEST_BLUEPRINT=Object.freeze({
@@ -81,7 +80,7 @@ async function loadRowPools(plan,row){
     promise.then(qs=>({entries:(qs||[]).map(q=>entry(bucket,lesson,unitId,q)),error:null}))
       .catch(e=>({entries:[],error:{lesson,bucket,message:e?.message||String(e)}}))
   );
-  if(sections.has('vocabulary')||sections.has('vocab_test'))add('vocabulary',loadVocabularyTest(unitId,{count:80}).then(qs=>qs.filter(objectiveQuestion)));
+  if(sections.has('vocabulary')||sections.has('vocab_test'))add('vocabulary',loadStoredSkill(unitId,'vocabulary',{trustedOnly:true}).then(qs=>qs.filter(q=>sourceCode(q)==='W'&&objectiveQuestion(q))));
   if(sections.has('communication'))add('communication',loadStoredSkill(unitId,'communication',{trustedOnly:true}).then(qs=>qs.filter(objectiveQuestion)));
   if(sections.has('grammar'))add('grammar',loadStoredSkill(unitId,'grammar',{trustedOnly:true}).then(qs=>qs.filter(objectiveQuestion)));
   if(sections.has('reading'))add('reading',loadStoredSkill(unitId,'reading',{trustedOnly:true}).then(qs=>qs.filter(objectiveQuestion)));
@@ -178,7 +177,7 @@ export async function buildMockTestPaper({plan,studentId=null,seed=null}={}){
   const selectedCounts=countsByBucket(ordered);
 
   return{
-    version:'1.1.0',
+    version:'1.1.1',
     seed:paperSeed,
     planId:String(plan.id),
     total:ordered.length,
