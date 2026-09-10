@@ -23,14 +23,14 @@ Use this file as the canonical build sequence. Check items off as they are compl
 
 ## Phase 2 — Visitor intake
 
-- [ ] Reproduce the current initial visitor/start experience.
-- [ ] Add required student/visitor identity fields.
-- [ ] Add parent phone number entry.
-- [ ] Normalize Korean phone numbers for storage.
-- [ ] Preserve a readable display format such as `010-1234-5678`.
-- [ ] Ensure phone number never influences scoring, level estimates or question selection.
-- [ ] Remove grade/years-study as calibration inputs.
-- [ ] Keep grade only if useful as administrative information.
+- [x] Reproduce the current initial visitor/start experience.
+- [x] Add required student/visitor identity fields.
+- [x] Add parent phone number entry.
+- [x] Normalize Korean phone numbers for storage.
+- [x] Preserve a readable display format such as `010-1234-5678`.
+- [x] Ensure phone number never influences scoring, level estimates or question selection.
+- [x] Remove grade/years-study as calibration inputs.
+- [x] Keep grade only if useful as administrative information.
 
 ## Phase 3 — Assessment session foundation
 
@@ -315,7 +315,7 @@ Use this file as the canonical build sequence. Check items off as they are compl
 The first major working milestone is:
 
 - [x] Current-look V2 shell exists.
-- [ ] Visitor enters required details + parent phone.
+- [x] Visitor enters required details + parent phone.
 - [ ] Teacher completes a usable Speaking interview.
 - [ ] App recommends a starting level.
 - [ ] Teacher can override it.
