@@ -1,17 +1,17 @@
-import {QuestionRenderer} from './question-renderer.js';
-import {gradeQuestion} from './question-grader.js';
-import {createQuestionSession} from './question-session.js?v=1.0.2';
+import {QuestionRenderer} from './question-renderer.js?v=2.20.6';
+import {gradeQuestion} from '../shared/question-grader.js?v=2.1.2';
+import {createQuestionSession} from './question-session.js?v=1.6.2';
 import {loadPracticeContent} from './practice-loader.js?v=1.0.0';
 import {createPerfDebug} from './perf-debug.js?v=1.0.0';
-import {resolveContentIds,reviewQuestionFromItem} from './content-source.js?v=2.24.0';
+import {resolveContentIds,reviewQuestionFromItem} from './content-source.js?v=2.24.3';
 import {initTracking,refreshTrackingState,setTrackingContext,startSession,recordAttempt,completeSession,trackingState} from './tracking-client.js?v=2.17a';
-import {startVocabularyLearning} from './vocab-learning.js?v=2.14.0';
+import {startVocabularyLearning} from './vocab-learning.js?v=2.14.1';
 import {passageAvailable} from './passage-source.js?v=2.18.0';
-import {startPassageLearning,stopPassageLearning} from './passage-learning.js?v=2.18.0';
+import {startPassageLearning,stopPassageLearning} from './passage-learning.js?v=2.18.1';
 import {loadCardStats,invalidateCardStats,getStatsDiagnostics,formatCardMetric,formatAccuracy,reviewCounts} from './stats-client.js?v=2.16a';
 import {loadReviewQueue,refreshReviewQueue} from '../shared/student-review.js?v=1.0.0';
-import {renderMockTestPreflight,stopMockTest} from './mock-test.js?v=1.0.3';
-import {initNavigation,navigate,replaceRoute,back,currentRoute} from './navigation.js?v=2.18.0';
+import {renderMockTestPreflight,stopMockTest} from './mock-test-proxy.js?v=1.0.0';
+import {initNavigation,navigate,replaceRoute,back,currentRoute} from './navigation.js?v=2.19.0';
 
 const $=s=>document.querySelector(s),esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const root=$('#screen'),bottom=$('#bottom'),userEl=$('#user');
