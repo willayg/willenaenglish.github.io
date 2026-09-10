@@ -8,8 +8,6 @@ let repeatDelay=null;
 let repeatTimer=null;
 let repeatFastTimer=null;
 let detachWatch=0;
-let unblockFrame=0;
-let blockedInteractionTargets=[];
 
 const ROWS=[
   ['q','w','e','r','t','y','u','i','o','p'],
@@ -27,49 +25,17 @@ function isVisible(el){return !!el&&!el.disabled&&el.isConnected&&el.offsetParen
 function answerScope(){return active?.closest?.('[data-answer]')||null}
 function currentFields(){const scope=answerScope();return scope?qa('[data-willena-text-entry]',scope).filter(isVisible):[]}
 
-function rememberBlocked(el){
-  if(!el?.style||blockedInteractionTargets.some(x=>x.el===el))return;
-  blockedInteractionTargets.push({el,pointerEvents:el.style.pointerEvents});
-  el.style.pointerEvents='none';
-}
-function restoreInteractionTargets(){
-  cancelAnimationFrame(unblockFrame);unblockFrame=0;
-  for(const item of blockedInteractionTargets){
-    if(item.el?.isConnected)item.el.style.pointerEvents=item.pointerEvents;
-  }
-  blockedInteractionTargets=[];
-}
-function blockInteractionTargets(){
-  restoreInteractionTargets();
-  const scope=answerScope();
-  if(scope){
-    qa('button,a[href],[role="button"],select,[data-build],[data-choice],[data-chip]',scope).forEach(rememberBlocked);
-  }
-  if(submitSelector){
-    for(const el of qa(submitSelector)){
-      const footer=el.closest('nav,.bottom,[data-footer],[data-answer-footer]');
-      rememberBlocked(footer||el);
-    }
-  }
-}
-function releaseInteractionTargetsAfterTap(){
-  cancelAnimationFrame(unblockFrame);
-  unblockFrame=requestAnimationFrame(()=>{
-    unblockFrame=requestAnimationFrame(()=>restoreInteractionTargets());
-  });
-}
-
 function ensureStyles(){
   if(q('#willenaSharedKeyboardStyles'))return;
   const s=document.createElement('style');
   s.id='willenaSharedKeyboardStyles';
   s.textContent=`
 [data-willena-keyboard="app"]{caret-color:#19777e!important;cursor:text!important}
-#willenaSharedKeyboard{box-sizing:border-box;background:#eef3f5;border-top:1px solid #d7e0e3;padding:28px 10px 10px;z-index:11900}
+#willenaSharedKeyboard{box-sizing:border-box;background:#eef3f5;border-top:1px solid #d7e0e3;padding:28px 10px 10px;z-index:11900;pointer-events:auto;touch-action:manipulation}
 #willenaSharedKeyboard[hidden]{display:none!important}
 #willenaSharedKeyboard .wkb-hide{position:absolute;top:7px;right:10px;border:1px solid #c9d8dc;border-radius:999px;background:#fff;color:#4e656d;font-weight:800;padding:5px 10px;font-size:12px;line-height:1.2}
 #willenaSharedKeyboard .wkb-row{display:flex;justify-content:center;gap:5px;margin:5px 0}
-#willenaSharedKeyboard .wkb-key{min-width:0;flex:1;max-width:72px;height:42px;border:1px solid #cbd6da;border-radius:9px;background:#fff;color:#24383f;font-size:18px;font-weight:800;box-shadow:0 1px 2px rgba(0,0,0,.06);transition:transform .035s ease,background-color .035s ease,box-shadow .035s ease,border-color .035s ease}
+#willenaSharedKeyboard .wkb-key{min-width:0;flex:1;max-width:72px;height:42px;border:1px solid #cbd6da;border-radius:9px;background:#fff;color:#24383f;font-size:18px;font-weight:800;box-shadow:0 1px 2px rgba(0,0,0,.06);transition:transform .035s ease,background-color .035s ease,box-shadow .035s ease,border-color .035s ease;touch-action:manipulation}
 #willenaSharedKeyboard .wkb-key:active,#willenaSharedKeyboard .wkb-key.is-pressed{transform:translateY(1px) scale(.975);background:#d7e6e9;border-color:#a9c1c7;box-shadow:inset 0 1px 3px rgba(0,0,0,.12)}
 #willenaSharedKeyboard .wkb-key.wide{max-width:none;font-size:14px}
 #willenaSharedKeyboard .wkb-key.shift{max-width:72px;background:#f7fbfc;color:#526970}
@@ -157,47 +123,34 @@ function startRepeat(){
     },600);
   },240);
 }
-function haptic(key){
-  setTimeout(()=>{try{navigator.vibrate?.((key==='enter'||key==='backspace')?7:3)}catch(_){ }},0);
-}
+function haptic(key){setTimeout(()=>{try{navigator.vibrate?.((key==='enter'||key==='backspace')?7:3)}catch(_){}},0)}
 function renderCaps(){
   if(!keyboard)return;
   qa('[data-key].letter',keyboard).forEach(b=>b.textContent=caps?b.dataset.key.toUpperCase():b.dataset.key.toLowerCase());
   const shift=q('[data-key="shift"]',keyboard);
   if(shift){shift.classList.toggle('on',caps);shift.setAttribute('aria-pressed',String(caps))}
 }
-function setSymbolPanel(open){
-  const panel=keyboard&&q('.wkb-symbol-panel',keyboard);
-  if(panel)panel.hidden=!open;
-}
+function setSymbolPanel(open){const panel=keyboard&&q('.wkb-symbol-panel',keyboard);if(panel)panel.hidden=!open}
 
 function currentSubmitButton(){
   if(!submitSelector)return null;
-  const candidates=qa(submitSelector).filter(isVisible);
-  return candidates.find(b=>!b.disabled)||null;
+  return qa(submitSelector).filter(isVisible).find(b=>!b.disabled)||null;
 }
 function updateEnter(){
   if(!keyboard)return;
-  const enter=q('[data-key="enter"]',keyboard);
-  if(!enter)return;
-  const fields=currentFields(),submit=currentSubmitButton();
-  const hasEmpty=fields.some(x=>!String(x.value||'').trim());
+  const enter=q('[data-key="enter"]',keyboard);if(!enter)return;
+  const fields=currentFields(),submit=currentSubmitButton(),hasEmpty=fields.some(x=>!String(x.value||'').trim());
   enter.textContent=submit?'확인':(fields.length>1&&hasEmpty?'다음':'확인');
   enter.setAttribute('aria-disabled',String(!submit&&!(fields.length>1&&hasEmpty)));
 }
 function focusField(el){
   if(!isVisible(el)||!isAppField(el))return false;
-  active=el;
-  prepareField(el);
+  active=el;prepareField(el);
   try{el.focus({preventScroll:true})}catch(_){el.focus()}
-  updateEnter();
-  setSymbolPanel(el.dataset.willenaTextEntry==='correction-label');
-  keepVisible();
-  return true;
+  updateEnter();setSymbolPanel(el.dataset.willenaTextEntry==='correction-label');keepVisible();return true;
 }
 function focusNextEmpty(){
-  const fields=currentFields().filter(isAppField);
-  if(!fields.length)return false;
+  const fields=currentFields().filter(isAppField);if(!fields.length)return false;
   const start=Math.max(0,fields.indexOf(active));
   for(let step=1;step<=fields.length;step++){
     const el=fields[(start+step)%fields.length];
@@ -205,17 +158,19 @@ function focusNextEmpty(){
   }
   return false;
 }
-function submitOrNext(){
+function submitOrNext({deferHide=false}={}){
   const submit=currentSubmitButton();
-  if(submit){
-    hideWillenaKeyboard();
-    if(typeof submitHandler==='function'){
-      try{submitHandler(submit,active);return true}catch(_){return false}
-    }
-    submit.click();
-    return true;
+  if(!submit)return focusNextEmpty();
+  const field=active;
+  let ok=true;
+  if(typeof submitHandler==='function'){
+    try{submitHandler(submit,field)}catch(_){ok=false}
+  }else submit.click();
+  if(ok){
+    if(deferHide)setTimeout(hideWillenaKeyboard,0);
+    else hideWillenaKeyboard();
   }
-  return focusNextEmpty();
+  return ok;
 }
 
 function keepVisible(){
@@ -246,48 +201,48 @@ function ensureKeyboard(){
   const rowHtml=ROWS.map((row,i)=>`<div class="wkb-row ${i===2?'third':''}">${i===2?'<button type="button" class="wkb-key shift" data-key="shift" aria-pressed="false">⇧</button>':''}${row.map(x=>`<button type="button" class="wkb-key letter" data-key="${x}">${x}</button>`).join('')}${i===2?'<button type="button" class="wkb-key backspace" data-key="backspace">⌫</button>':''}</div>`).join('');
   const symbolHtml=SYMBOLS.map(x=>`<button type="button" data-symbol="${x==="'"?'&#39;':x}">${x==="'"?'&#39;':x}</button>`).join('');
   keyboard.innerHTML=`<button type="button" class="wkb-hide">키보드 숨기기</button>${rowHtml}<div class="wkb-row bottom"><button type="button" class="wkb-key wide space" data-key="space">space</button><button type="button" class="wkb-key wide symbols" data-key="symbols">.,?</button><button type="button" class="wkb-key wide enter" data-key="enter">확인</button><div class="wkb-symbol-panel" hidden>${symbolHtml}</div></div>`;
-  document.body.appendChild(keyboard);
-  renderCaps();
+  document.body.appendChild(keyboard);renderCaps();
 
   keyboard.addEventListener('pointerdown',e=>{
-    const keyBtn=e.target.closest('[data-key]');
-    const symbolBtn=e.target.closest('[data-symbol]');
+    const keyBtn=e.target.closest('[data-key]'),symbolBtn=e.target.closest('[data-symbol]');
     if(!keyBtn&&!symbolBtn)return;
-    e.preventDefault();
-    e.stopPropagation();
+    e.preventDefault();e.stopImmediatePropagation();
     if(symbolBtn){
-      haptic('symbol');
-      const symbol=symbolBtn.dataset.symbol||'';
-      replaceSelection(symbol);
-      if(active?.dataset?.willenaTextEntry==='correction-label'&&/^\d$/.test(symbol))focusNextEmpty();
-      else setSymbolPanel(false);
+      haptic('symbol');const symbol=symbolBtn.dataset.symbol||'';replaceSelection(symbol);
+      if(active?.dataset?.willenaTextEntry==='correction-label'&&/^\d$/.test(symbol))focusNextEmpty();else setSymbolPanel(false);
       return;
     }
-    const key=keyBtn.dataset.key;
-    keyBtn.classList.add('is-pressed');
-    haptic(key);
-    if(key==='backspace'){startRepeat();keyBtn.dataset.downHandled='1'}
-    else if(key==='space'){replaceSelection(' ');keyBtn.dataset.downHandled='1'}
-    else if(key==='shift'){caps=!caps;renderCaps();keyBtn.dataset.downHandled='1'}
-    else if(key==='symbols'){setSymbolPanel(q('.wkb-symbol-panel',keyboard)?.hidden!==false);keyBtn.dataset.downHandled='1'}
-    else if(key==='enter'){submitOrNext();keyBtn.dataset.downHandled='1'}
-    else if(keyBtn.classList.contains('letter')){replaceSelection(caps?key.toUpperCase():key);keyBtn.dataset.downHandled='1'}
+    const key=keyBtn.dataset.key;keyBtn.classList.add('is-pressed');haptic(key);keyBtn.dataset.downHandled='1';
+    if(key==='backspace')startRepeat();
+    else if(key==='space')replaceSelection(' ');
+    else if(key==='shift'){caps=!caps;renderCaps()}
+    else if(key==='symbols')setSymbolPanel(q('.wkb-symbol-panel',keyboard)?.hidden!==false);
+    else if(key==='enter')keyBtn.dataset.submitOnUp='1';
+    else if(keyBtn.classList.contains('letter'))replaceSelection(caps?key.toUpperCase():key);
   });
-  const end=e=>{
+
+  keyboard.addEventListener('pointerup',e=>{
+    const b=e.target.closest?.('[data-key]');
+    if(!b)return;
+    e.preventDefault();e.stopImmediatePropagation();stopRepeat();b.classList.remove('is-pressed');
+    if(b.dataset.submitOnUp==='1'){
+      delete b.dataset.submitOnUp;
+      submitOrNext({deferHide:true});
+    }
+  });
+  const cancel=e=>{
     stopRepeat();
     const b=e.target.closest?.('[data-key]');
-    if(b)b.classList.remove('is-pressed');
+    if(b){b.classList.remove('is-pressed');delete b.dataset.submitOnUp}
     e.stopPropagation();
   };
-  keyboard.addEventListener('pointerup',end);
-  keyboard.addEventListener('pointercancel',end);
-  keyboard.addEventListener('pointerleave',end,true);
+  keyboard.addEventListener('pointercancel',cancel);
+  keyboard.addEventListener('pointerleave',cancel,true);
   keyboard.addEventListener('click',e=>{
     const b=e.target.closest('[data-key]');
     if(b?.dataset.downHandled==='1'){
       delete b.dataset.downHandled;
-      e.preventDefault();
-      e.stopImmediatePropagation();
+      e.preventDefault();e.stopImmediatePropagation();
     }
   });
   q('.wkb-hide',keyboard).onclick=hideWillenaKeyboard;
@@ -311,90 +266,46 @@ function prepareField(el){
 }
 function showFor(el){
   if(!isAppField(el)||!isVisible(el))return;
-  ensureKeyboard();
-  active=el;
-  prepareField(el);
-  keyboard.hidden=false;
-  document.body.classList.add('willena-kb-open');
-  blockInteractionTargets();
-  updateEnter();
-  setSymbolPanel(el.dataset.willenaTextEntry==='correction-label');
-  keepVisible();
-  watchDetach();
+  ensureKeyboard();active=el;prepareField(el);keyboard.hidden=false;document.body.classList.add('willena-kb-open');
+  updateEnter();setSymbolPanel(el.dataset.willenaTextEntry==='correction-label');keepVisible();watchDetach();
 }
 function onPointerDown(e){
   if(keyboard?.contains(e.target))return;
   const el=e.target.closest?.('[data-willena-text-entry]');
   if(el){
     prepareField(el);
-    if(isAppField(el))setTimeout(()=>showFor(el),0);
-    else hideWillenaKeyboard();
+    if(isAppField(el))setTimeout(()=>showFor(el),0);else hideWillenaKeyboard();
     return;
   }
   if(keyboard&&!keyboard.hidden)hideWillenaKeyboard();
 }
 function onFocusIn(e){
-  const el=e.target;
-  if(!isRendererField(el))return;
-  active=el;
-  prepareField(el);
-  if(isAppField(el))showFor(el);else hideWillenaKeyboard();
+  const el=e.target;if(!isRendererField(el))return;
+  active=el;prepareField(el);if(isAppField(el))showFor(el);else hideWillenaKeyboard();
 }
-function onInput(e){
-  if(!isRendererField(e.target))return;
-  active=e.target;
-  updateEnter();
-}
+function onInput(e){if(!isRendererField(e.target))return;active=e.target;updateEnter()}
 function onKeyDown(e){
-  const el=e.target;
-  if(!isAppField(el))return;
-  active=el;
+  const el=e.target;if(!isAppField(el))return;active=el;
   if(e.ctrlKey||e.metaKey||e.altKey)return;
-  if(e.key==='Enter'&&!e.shiftKey){
-    e.preventDefault();
-    e.stopImmediatePropagation();
-    submitOrNext();
-    return;
-  }
+  if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();e.stopImmediatePropagation();submitOrNext();return}
   if(e.key.length===1||e.key==='Backspace'||e.key==='Delete'||e.key.startsWith('Arrow'))hideWillenaKeyboard();
 }
 
 export function hideWillenaKeyboard(){
-  stopRepeat();
-  cancelAnimationFrame(detachWatch);
-  detachWatch=0;
-  if(keyboard){
-    keyboard.hidden=true;
-    setSymbolPanel(false);
-  }
+  stopRepeat();cancelAnimationFrame(detachWatch);detachWatch=0;
+  if(keyboard){keyboard.hidden=true;setSymbolPanel(false)}
   document.body.classList.remove('willena-kb-open');
-  releaseInteractionTargetsAfterTap();
 }
 
 export function installWillenaKeyboard({root=document,submitSelector:selector='',onSubmit=null}={}){
-  uninstallWillenaKeyboard();
-  installedRoot=root||document;
-  submitSelector=String(selector||'');
-  submitHandler=typeof onSubmit==='function'?onSubmit:null;
-  ensureKeyboard();
-  installedRoot.addEventListener('pointerdown',onPointerDown,true);
-  installedRoot.addEventListener('focusin',onFocusIn,true);
-  installedRoot.addEventListener('input',onInput,true);
-  installedRoot.addEventListener('keydown',onKeyDown,true);
+  uninstallWillenaKeyboard();installedRoot=root||document;submitSelector=String(selector||'');submitHandler=typeof onSubmit==='function'?onSubmit:null;
+  ensureKeyboard();installedRoot.addEventListener('pointerdown',onPointerDown,true);installedRoot.addEventListener('focusin',onFocusIn,true);installedRoot.addEventListener('input',onInput,true);installedRoot.addEventListener('keydown',onKeyDown,true);
   return{hide:hideWillenaKeyboard,uninstall:uninstallWillenaKeyboard};
 }
 
 export function uninstallWillenaKeyboard(){
   if(installedRoot){
-    installedRoot.removeEventListener('pointerdown',onPointerDown,true);
-    installedRoot.removeEventListener('focusin',onFocusIn,true);
-    installedRoot.removeEventListener('input',onInput,true);
-    installedRoot.removeEventListener('keydown',onKeyDown,true);
+    installedRoot.removeEventListener('pointerdown',onPointerDown,true);installedRoot.removeEventListener('focusin',onFocusIn,true);installedRoot.removeEventListener('input',onInput,true);installedRoot.removeEventListener('keydown',onKeyDown,true);
   }
-  hideWillenaKeyboard();
-  restoreInteractionTargets();
-  installedRoot=null;
-  submitSelector='';
-  submitHandler=null;
-  active=null;
+  hideWillenaKeyboard();installedRoot=null;submitSelector='';submitHandler=null;active=null;
 }
