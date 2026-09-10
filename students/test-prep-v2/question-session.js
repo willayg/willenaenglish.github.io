@@ -1,5 +1,4 @@
-import {aiWilliMessage} from '../shared/ai-willi/ai-willi-messages.js?v=1.0.0';
-import {showAiWilliStatus,clearAiWilliStatus,decorateAiWilliFeedback,mountAiWilliHelper} from '../shared/ai-willi/ai-willi-ui.js?v=1.8.0';
+import {aiWilliMessage,showAiWilliStatus,clearAiWilliStatus,decorateAiWilliFeedback,mountAiWilliHelper} from '../shared/ai-willi.js?v=1.0.0';
 
 // Shared interactive question-session engine for Test Prep v2.
 // Owns the common render -> grade/skip -> record -> advance mechanics.
