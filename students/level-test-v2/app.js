@@ -1,4 +1,4 @@
-import {createVisitorIntake} from './visitor-intake.js';
+import {createVisitorIntake} from './visitor-intake.js?v=20260911-phase2b';
 
 const app=document.querySelector('#app');
 const subtitle=document.querySelector('#brandSubtitle');
