@@ -9,7 +9,7 @@ let repeatTimer=null;
 let repeatFastTimer=null;
 let detachWatch=0;
 let unblockFrame=0;
-let blockedSubmitTargets=[];
+let blockedInteractionTargets=[];
 
 const ROWS=[
   ['q','w','e','r','t','y','u','i','o','p'],
@@ -27,26 +27,35 @@ function isVisible(el){return !!el&&!el.disabled&&el.isConnected&&el.offsetParen
 function answerScope(){return active?.closest?.('[data-answer]')||null}
 function currentFields(){const scope=answerScope();return scope?qa('[data-willena-text-entry]',scope).filter(isVisible):[]}
 
-function restoreSubmitTargets(){
+function rememberBlocked(el){
+  if(!el?.style||blockedInteractionTargets.some(x=>x.el===el))return;
+  blockedInteractionTargets.push({el,pointerEvents:el.style.pointerEvents});
+  el.style.pointerEvents='none';
+}
+function restoreInteractionTargets(){
   cancelAnimationFrame(unblockFrame);unblockFrame=0;
-  for(const item of blockedSubmitTargets){
+  for(const item of blockedInteractionTargets){
     if(item.el?.isConnected)item.el.style.pointerEvents=item.pointerEvents;
   }
-  blockedSubmitTargets=[];
+  blockedInteractionTargets=[];
 }
-function blockSubmitTargets(){
-  restoreSubmitTargets();
-  if(!submitSelector)return;
-  for(const el of qa(submitSelector)){
-    if(!el?.style)continue;
-    blockedSubmitTargets.push({el,pointerEvents:el.style.pointerEvents});
-    el.style.pointerEvents='none';
+function blockInteractionTargets(){
+  restoreInteractionTargets();
+  const scope=answerScope();
+  if(scope){
+    qa('button,a[href],[role="button"],select,[data-build],[data-choice],[data-chip]',scope).forEach(rememberBlocked);
+  }
+  if(submitSelector){
+    for(const el of qa(submitSelector)){
+      const footer=el.closest('nav,.bottom,[data-footer],[data-answer-footer]');
+      rememberBlocked(footer||el);
+    }
   }
 }
-function releaseSubmitTargetsAfterTap(){
+function releaseInteractionTargetsAfterTap(){
   cancelAnimationFrame(unblockFrame);
   unblockFrame=requestAnimationFrame(()=>{
-    unblockFrame=requestAnimationFrame(()=>restoreSubmitTargets());
+    unblockFrame=requestAnimationFrame(()=>restoreInteractionTargets());
   });
 }
 
@@ -307,7 +316,7 @@ function showFor(el){
   prepareField(el);
   keyboard.hidden=false;
   document.body.classList.add('willena-kb-open');
-  blockSubmitTargets();
+  blockInteractionTargets();
   updateEnter();
   setSymbolPanel(el.dataset.willenaTextEntry==='correction-label');
   keepVisible();
@@ -359,7 +368,7 @@ export function hideWillenaKeyboard(){
     setSymbolPanel(false);
   }
   document.body.classList.remove('willena-kb-open');
-  releaseSubmitTargetsAfterTap();
+  releaseInteractionTargetsAfterTap();
 }
 
 export function installWillenaKeyboard({root=document,submitSelector:selector='',onSubmit=null}={}){
@@ -383,7 +392,7 @@ export function uninstallWillenaKeyboard(){
     installedRoot.removeEventListener('keydown',onKeyDown,true);
   }
   hideWillenaKeyboard();
-  restoreSubmitTargets();
+  restoreInteractionTargets();
   installedRoot=null;
   submitSelector='';
   submitHandler=null;
