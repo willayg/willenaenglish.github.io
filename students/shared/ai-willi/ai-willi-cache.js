@@ -46,6 +46,20 @@ function vocabularyFromText(text){
   return out;
 }
 
+function textWithVocabulary(text,vocabulary){
+  const src=String(text||'').trim();
+  if(!src||src.includes('### 핵심 단어')||!Array.isArray(vocabulary)||!vocabulary.length)return src;
+  const lines=vocabulary.slice(0,6).map(v=>`- ${String(v?.term||'').trim()} — ${String(v?.meaning_ko||'').trim()}${String(v?.note_ko||'').trim()?` · ${String(v.note_ko).trim()}`:''}`).filter(x=>!/^\-\s+—/.test(x));
+  return lines.length?`${src}\n\n### 핵심 단어\n${lines.join('\n')}`:src;
+}
+
+function decorateRecord(record,mode){
+  if(!record)return null;
+  const vocabulary=Array.isArray(record.vocabulary)?record.vocabulary:[];
+  if(mode==='initial'&&!vocabulary.length)return null;
+  return {...record,vocabulary,explanation_text:textWithVocabulary(record.explanation_text,vocabulary)};
+}
+
 export async function getCachedAiWilliExplanation({questionId,mode,response,rootExplanationId=null,version=AI_WILLI_EXPLANATION_VERSION}={}){
   if(!questionId||!mode)return null;
   const rows=await contentDbRpc('get_test_prep_ai_explanation',{
@@ -55,7 +69,7 @@ export async function getCachedAiWilliExplanation({questionId,mode,response,root
     p_explanation_version:version,
     p_root_explanation_id:rootExplanationId
   });
-  return Array.isArray(rows)?rows[0]||null:null;
+  return decorateRecord(Array.isArray(rows)?rows[0]||null:null,mode);
 }
 
 export async function saveAiWilliExplanation({questionId,section,mode,response,text,vocabulary=[],rootExplanationId=null,version=AI_WILLI_EXPLANATION_VERSION}={}){
@@ -71,7 +85,7 @@ export async function saveAiWilliExplanation({questionId,section,mode,response,t
     p_root_explanation_id:rootExplanationId,
     p_vocabulary:mode==='initial'?vocab:[]
   });
-  return Array.isArray(rows)?rows[0]||null:null;
+  return decorateRecord(Array.isArray(rows)?rows[0]||null:null,mode);
 }
 
 export async function rateAiWilliExplanation(explanationId,helpful){
