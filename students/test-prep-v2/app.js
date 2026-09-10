@@ -11,7 +11,7 @@ import {startPassageLearning,stopPassageLearning} from './passage-learning.js?v=
 import {loadCardStats,invalidateCardStats,getStatsDiagnostics,formatCardMetric,formatAccuracy,reviewCounts} from './stats-client.js?v=2.16a';
 import {loadReviewQueue,refreshReviewQueue} from '../shared/student-review.js?v=1.0.0';
 import {renderMockTestPreflight,stopMockTest} from './mock-test.js?v=1.4.3';
-import {initNavigation,navigate,replaceRoute,back,currentRoute} from './navigation.js?v=2.20.0';
+import {initNavigation,navigate,replaceRoute,back,currentRoute} from './navigation.js?v=2.21.0';
 
 const $=s=>document.querySelector(s),esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]));
 const root=$('#screen'),bottom=$('#bottom'),userEl=$('#user');
