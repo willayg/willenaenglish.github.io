@@ -1,5 +1,6 @@
 import {QuestionRenderer} from './question-renderer.js';
 import {FORMS} from './question-model.js';
+import {mountAiWilliHelper} from '../shared/ai-willi/ai-willi-ui.js?v=1.6.0';
 
 const LABELS={vocabulary:'어휘',communication:'대화',grammar:'문법',reading:'독해',constructed_response:'서술형'};
 const ORDER=['vocabulary','communication','grammar','reading','constructed_response'];
@@ -20,6 +21,7 @@ function answerText(question,value){
   const values=arr(value).map(x=>String(x??'').trim()).filter(Boolean);
   return values.length?values.join(' / '):'미응답';
 }
+function practiceTypeFor(item){return item?.bucket==='vocabulary'?'vocab_test':String(item?.bucket||'')}
 function sectionStats(snapshot){
   const out={};for(const key of ORDER)out[key]={correct:0,total:0,items:[]};
   for(const item of snapshot?.items||[]){
@@ -28,6 +30,25 @@ function sectionStats(snapshot){
   return out;
 }
 function statusText(item){return item.answered?(item.result?.correct?'정답':'오답'):'미응답'}
+function mountWilliTrigger(card,item){
+  if(!card||!item?.answered||item?.result?.correct)return;
+  const wrap=document.createElement('div');wrap.className='mock-review-willi';
+  wrap.innerHTML='<button type="button" class="mock-review-willi-trigger">✦ Willi에게 설명 듣기</button>';
+  card.appendChild(wrap);
+  const button=wrap.querySelector('button');
+  button.onclick=()=>{
+    button.disabled=true;button.remove();
+    mountAiWilliHelper({
+      container:wrap,
+      question:item.question,
+      response:item.response,
+      result:item.result,
+      section:item.bucket,
+      lesson:item.lesson,
+      practiceType:practiceTypeFor(item)
+    });
+  };
+}
 function renderQuestionItem(host,item){
   const card=document.createElement('article');
   card.className=`mock-review-question ${item.result?.correct?'is-correct':'is-wrong'}${item.answered?'':' is-unanswered'}`;
@@ -44,6 +65,7 @@ function renderQuestionItem(host,item){
       if(selected.has(key)&&!correct.has(key))btn.classList.add('wrong');
     });
   }
+  mountWilliTrigger(card,item);
 }
 function sectionHtml(key,s){
   const pct=s.total?Math.round(s.correct/s.total*100):0;
