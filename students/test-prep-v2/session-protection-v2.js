@@ -1,4 +1,4 @@
-const DEFAULT_MESSAGE='학습을 종료하시겠습니까?\n완료한 답변과 학습 기록은 저장되어 있지만, 현재 진행 중인 활동은 종료됩니다.';
+const DEFAULT_MESSAGE='학습을 종료하시겠습니까?\n완료한 답변과 현재 진행 상황은 저장됩니다. 나중에 같은 활동을 열면 이어서 할 수 있습니다.';
 
 let enabled=false;
 let message=DEFAULT_MESSAGE;
