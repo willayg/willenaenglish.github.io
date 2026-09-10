@@ -64,19 +64,22 @@ function rowSections(plan,row){
 function entry(bucket,lesson,unitId,question){return{bucket,lesson:String(lesson),unitId:String(unitId),question}}
 
 async function loadRowPools(plan,row){
-  const lesson=text(row?.lesson);if(!lesson)return[];
+  const lesson=text(row?.lesson);if(!lesson)return{entries:[],errors:[]};
   const sections=rowSections(plan,row);
   const ids=await resolveContentIds(plan,lesson);
-  const unitId=ids?.unitId;if(!unitId)return[];
+  const unitId=ids?.unitId;if(!unitId)return{entries:[],errors:[]};
   const jobs=[];
-  if(sections.has('vocabulary')||sections.has('vocab_test'))jobs.push(
-    loadVocabularyTest(unitId,{count:60}).then(qs=>qs.filter(objectiveQuestion).map(q=>entry('vocabulary',lesson,unitId,q)))
+  const add=(bucket,promise)=>jobs.push(
+    promise.then(qs=>({entries:(qs||[]).map(q=>entry(bucket,lesson,unitId,q)),error:null}))
+      .catch(e=>({entries:[],error:{lesson,bucket,message:e?.message||String(e)}}))
   );
-  if(sections.has('communication'))jobs.push(loadStoredSkill(unitId,'communication').then(qs=>qs.map(q=>entry('communication',lesson,unitId,q))));
-  if(sections.has('grammar'))jobs.push(loadStoredSkill(unitId,'grammar').then(qs=>qs.map(q=>entry('grammar',lesson,unitId,q))));
-  if(sections.has('reading'))jobs.push(loadStoredSkill(unitId,'reading').then(qs=>qs.map(q=>entry('reading',lesson,unitId,q))));
-  if(sections.has('constructed_response'))jobs.push(loadStoredWritten(unitId).then(qs=>qs.map(q=>entry('constructed_response',lesson,unitId,q))));
-  const groups=await Promise.all(jobs);return groups.flat();
+  if(sections.has('vocabulary')||sections.has('vocab_test'))add('vocabulary',loadVocabularyTest(unitId,{count:60}).then(qs=>qs.filter(objectiveQuestion)));
+  if(sections.has('communication'))add('communication',loadStoredSkill(unitId,'communication').then(qs=>qs.filter(objectiveQuestion)));
+  if(sections.has('grammar'))add('grammar',loadStoredSkill(unitId,'grammar').then(qs=>qs.filter(objectiveQuestion)));
+  if(sections.has('reading'))add('reading',loadStoredSkill(unitId,'reading').then(qs=>qs.filter(objectiveQuestion)));
+  if(sections.has('constructed_response'))add('constructed_response',loadStoredWritten(unitId));
+  const parts=await Promise.all(jobs);
+  return{entries:parts.flatMap(x=>x.entries),errors:parts.map(x=>x.error).filter(Boolean)};
 }
 
 function countsByBucket(entries){
@@ -94,8 +97,10 @@ export async function buildMockTestPaper({plan,studentId=null,seed=null}={}){
   const settled=await Promise.allSettled(rows.map(row=>loadRowPools(plan,row)));
   const loadErrors=[];let loaded=[];
   settled.forEach((result,index)=>{
-    if(result.status==='fulfilled')loaded.push(...result.value);
-    else loadErrors.push({lesson:text(rows[index]?.lesson),message:result.reason?.message||String(result.reason||'load failed')});
+    if(result.status==='fulfilled'){
+      loaded.push(...result.value.entries);
+      loadErrors.push(...result.value.errors);
+    }else loadErrors.push({lesson:text(rows[index]?.lesson),bucket:'scope',message:result.reason?.message||String(result.reason||'load failed')});
   });
   loaded=uniqueEntries(loaded);
 
@@ -121,7 +126,7 @@ export async function buildMockTestPaper({plan,studentId=null,seed=null}={}){
 
   const writtenWanted=MOCK_TEST_BLUEPRINT.constructed_response;
   const writtenGot=take('constructed_response',writtenWanted);
-  let writtenFallbackNeeded=Math.max(0,writtenWanted-writtenGot),writtenFallbackUsed=0;
+  const writtenFallbackNeeded=Math.max(0,writtenWanted-writtenGot);let writtenFallbackUsed=0;
   if(writtenFallbackNeeded){
     const leftovers=stableShuffle(
       OBJECTIVE_BUCKETS.flatMap(bucket=>pools[bucket].filter(e=>!used.has(canonicalId(e.question)))),
@@ -142,7 +147,7 @@ export async function buildMockTestPaper({plan,studentId=null,seed=null}={}){
   const selectedCounts=countsByBucket(mixed);
 
   return{
-    version:'1.0.0',
+    version:'1.0.1',
     seed:paperSeed,
     planId:String(plan.id),
     total:mixed.length,
