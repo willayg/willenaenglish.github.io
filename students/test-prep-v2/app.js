@@ -10,7 +10,7 @@ import {passageAvailable} from './passage-source.js?v=2.18.0';
 import {startPassageLearning,stopPassageLearning} from './passage-learning.js?v=2.18.0';
 import {loadCardStats,invalidateCardStats,getStatsDiagnostics,formatCardMetric,formatAccuracy,reviewCounts} from './stats-client.js?v=2.16a';
 import {loadReviewQueue,refreshReviewQueue} from '../shared/student-review.js?v=1.0.0';
-import {renderMockTestPreflight,stopMockTest} from './mock-test.js?v=1.0.0';
+import {renderMockTestPreflight,stopMockTest} from './mock-test.js?v=1.0.3';
 import {initNavigation,navigate,replaceRoute,back,currentRoute} from './navigation.js?v=2.18.0';
 
 const $=s=>document.querySelector(s),esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -47,7 +47,7 @@ async function loadPlanCardStats(plan,{force=false}={}){try{const data=await loa
 async function refreshPlanCardStats(plan){invalidateCardStats(plan?.id);return loadPlanCardStats(plan,{force:true})}
 async function preloadCardStats(){const plans=trackingState().plans||[];await Promise.all(plans.map(p=>loadPlanCardStats(p)))}
 function mockCard(){
-  return `<button class="wrong-card" type="button" data-mock><span class="wrong-copy"><b>실전모의고사</b><small>25문항 · 45분 · 제출 후 채점</small></span><span class="wrong-stats"><span class="wrong-stat"><strong>25</strong><small>문항</small></span><span class="wrong-stat"><strong>45</strong><small>분</small></span></span><span class="wrong-cta">시험지 구성 →</span></button>`;
+  return `<button class="wrong-card mock-entry-card" type="button" data-mock><span class="wrong-copy"><b>실전모의고사</b><small>25문항 · 45분 · 제출 후 채점</small></span><span class="wrong-cta">시험지 구성 →</span></button>`;
 }
 function reviewCard(plan,loaded){
   const r=reviewCounts(plan),total=(Number(r.now)||0)+(Number(r.later)||0),disabled=!loaded||!total;
@@ -61,7 +61,7 @@ function renderHome(){
 }
 function renderLessons(plan){
   state.plan=plan;state.lesson=null;state.practice=null;const lessons=scopeFor(plan),data=cardData(plan),loaded=hasCardData(plan);setBottom('');
-  root.innerHTML=`<button class="back" id="homeBack">← 시험 대비</button><div class="heading"><div><h2>${esc(plan.book_label||'')}</h2><p>${esc(plan.exam_name||'Lesson 선택')}</p></div></div>${mockCard()}${reviewCard(plan,loaded)}${lessons.length?`<div class="grid">${lessons.map(l=>{const s=data.lessons?.[String(l.lesson)]?.summary||emptyStat();return `<button class="tile" data-lesson="${esc(l.lesson)}"><div class="exam-head"><div><h3>${esc(l.lesson)}</h3><p>${esc((l.sections||[]).join(' · '))}</p><span class="metric">${loaded?`${esc(formatCardMetric(s))} · ${esc(formatAccuracy(s))}`:'통계 불러오는 중…'}</span></div>${loaded?ring(s.coverage):ring(0,'…')}</div></button>`}).join('')}</div>`:'<div class="empty">Lesson 범위가 없습니다.</div>'}`;
+  root.innerHTML=`<button class="back" id="homeBack">← 시험 대비</button><div class="heading"><div><h2>${esc(plan.book_label||'')}</h2><p>${esc(plan.exam_name||'Lesson 선택')}</p></div></div>${reviewCard(plan,loaded)}${lessons.length?`<div class="grid">${lessons.map(l=>{const s=data.lessons?.[String(l.lesson)]?.summary||emptyStat();return `<button class="tile" data-lesson="${esc(l.lesson)}"><div class="exam-head"><div><h3>${esc(l.lesson)}</h3><p>${esc((l.sections||[]).join(' · '))}</p><span class="metric">${loaded?`${esc(formatCardMetric(s))} · ${esc(formatAccuracy(s))}`:'통계 불러오는 중…'}</span></div>${loaded?ring(s.coverage):ring(0,'…')}</div></button>`}).join('')}</div>`:'<div class="empty">Lesson 범위가 없습니다.</div>'}${mockCard()}`;
   $('#homeBack').onclick=back;root.querySelector('[data-mock]')?.addEventListener('click',()=>navigate({view:'mock',planId:plan.id}));root.querySelector('[data-review]')?.addEventListener('click',()=>navigate({view:'review',planId:plan.id}));root.querySelectorAll('[data-lesson]').forEach(b=>b.onclick=()=>navigate({view:'lesson',planId:plan.id,lesson:b.dataset.lesson}));
 }
 async function renderLesson(plan,lesson){
