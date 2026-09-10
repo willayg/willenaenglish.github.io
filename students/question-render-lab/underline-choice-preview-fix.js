@@ -19,16 +19,37 @@ QuestionRenderer.prototype.controls=function(q){
   return `<div class="choices">${q.choices.map((x,i)=>`<button type="button" class="choice" data-choice="${i+1}"><span>${numberMark(i)}</span> ${marked(x,[perChoice[i]])}</button>`).join('')}</div>`;
 };
 
+function hideInternalUnderlineMetadata(host){
+  if(!host)return;
+  host.querySelectorAll('.context-block').forEach(block=>{
+    const raw=block.querySelector('.context-label')?.textContent||'';
+    const label=raw.trim().toLowerCase().replace(/[_-]+/g,' ').replace(/\s+/g,' ');
+    if(label==='underlined by choice')block.remove();
+  });
+}
+
 const originalRender=QuestionRenderer.prototype.render;
 QuestionRenderer.prototype.render=function(q,...args){
   const result=originalRender.call(this,q,...args);
   if(Array.isArray(q?.context?.underlined_by_choice)){
-    this.host.querySelectorAll('.context-block').forEach(block=>{
-      const label=block.querySelector('.context-label')?.textContent?.trim().toLowerCase();
-      if(label==='underlined by choice')block.remove();
-    });
+    hideInternalUnderlineMetadata(this.host);
+    queueMicrotask(()=>hideInternalUnderlineMetadata(this.host));
   }
   return result;
 };
 
-console.log('[Render Lab] per-choice underline preview fix ready');
+// Defensive: if another render-layer patch inserts/rebuilds context after render,
+// strip this internal metadata block as soon as it appears.
+const observer=new MutationObserver(records=>{
+  for(const record of records){
+    for(const node of record.addedNodes){
+      if(node.nodeType!==1)continue;
+      const host=node.closest?.('#card')||node.querySelector?.('#card');
+      if(host)hideInternalUnderlineMetadata(host);
+      else if(node.matches?.('.context-block')||node.querySelector?.('.context-block'))hideInternalUnderlineMetadata(document.getElementById('card'));
+    }
+  }
+});
+observer.observe(document.documentElement,{childList:true,subtree:true});
+
+console.log('[Render Lab] per-choice underline engine: inline targets on, metadata box hidden');
