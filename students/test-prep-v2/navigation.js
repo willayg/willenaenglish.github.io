@@ -1,4 +1,4 @@
-import {confirmSessionExit,setSessionProtection} from './session-protection-v2.js?v=1.0.0';
+import {confirmSessionExit,setSessionProtection} from './session-protection.js?v=1.1.0';
 
 const APP='willena-test-prep-v2';
 const VIEWS=new Set(['home','plan','lesson','practice','result','review','mock']);
