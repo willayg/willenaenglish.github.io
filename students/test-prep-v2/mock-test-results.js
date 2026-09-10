@@ -1,5 +1,6 @@
 import {QuestionRenderer} from './question-renderer.js';
 import {FORMS} from './question-model.js';
+import {mountAiWilliHelper} from '../shared/ai-willi/ai-willi-ui.js?v=1.8.0';
 
 const LABELS={vocabulary:'어휘',communication:'대화',grammar:'문법',reading:'독해',constructed_response:'서술형'};
 const ORDER=['vocabulary','communication','grammar','reading','constructed_response'];
@@ -29,33 +30,6 @@ function sectionStats(snapshot){
   return out;
 }
 function statusText(item){return item.answered?(item.result?.correct?'정답':'오답'):'미응답'}
-function mountWilliTrigger(card,item){
-  if(!card||item?.result?.correct)return;
-  const wrap=document.createElement('div');wrap.className='mock-review-willi';
-  wrap.innerHTML='<button type="button" class="mock-review-willi-trigger">✦ Willi에게 설명 듣기</button>';
-  card.appendChild(wrap);
-  const button=wrap.querySelector('button');
-  button.onclick=async()=>{
-    if(button.disabled)return;
-    button.disabled=true;button.textContent='Willi 불러오는 중...';
-    try{
-      const {mountAiWilliHelper}=await import('../shared/ai-willi/ai-willi-ui.js?v=1.7.0');
-      button.remove();
-      mountAiWilliHelper({
-        container:wrap,
-        question:item.question,
-        response:item.response,
-        result:item.result||{correct:false,method:'unanswered'},
-        section:item.bucket,
-        lesson:item.lesson,
-        practiceType:practiceTypeFor(item)
-      });
-    }catch(error){
-      console.warn('[mock-results] AI Willi load failed',error);
-      button.disabled=false;button.textContent='✦ Willi에게 설명 듣기';
-    }
-  };
-}
 function renderQuestionItem(host,item){
   const card=document.createElement('article');
   card.className=`mock-review-question ${item.result?.correct?'is-correct':'is-wrong'}${item.answered?'':' is-unanswered'}`;
@@ -72,7 +46,17 @@ function renderQuestionItem(host,item){
       if(selected.has(key)&&!correct.has(key))btn.classList.add('wrong');
     });
   }
-  mountWilliTrigger(card,item);
+  if(!item.result?.correct){
+    mountAiWilliHelper({
+      container:card,
+      question:item.question,
+      response:item.response,
+      result:item.result||{correct:false,method:'unanswered'},
+      section:item.bucket,
+      lesson:item.lesson,
+      practiceType:practiceTypeFor(item)
+    });
+  }
 }
 function sectionHtml(key,s){
   const pct=s.total?Math.round(s.correct/s.total*100):0;
