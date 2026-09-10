@@ -158,7 +158,7 @@ function focusNextEmpty(){
   }
   return false;
 }
-function submitOrNext({deferHide=false}={}){
+function submitOrNext({hide=true}={}){
   const submit=currentSubmitButton();
   if(!submit)return focusNextEmpty();
   const field=active;
@@ -166,10 +166,7 @@ function submitOrNext({deferHide=false}={}){
   if(typeof submitHandler==='function'){
     try{submitHandler(submit,field)}catch(_){ok=false}
   }else submit.click();
-  if(ok){
-    if(deferHide)setTimeout(hideWillenaKeyboard,0);
-    else hideWillenaKeyboard();
-  }
+  if(ok&&hide)hideWillenaKeyboard();
   return ok;
 }
 
@@ -227,22 +224,27 @@ function ensureKeyboard(){
     e.preventDefault();e.stopImmediatePropagation();stopRepeat();b.classList.remove('is-pressed');
     if(b.dataset.submitOnUp==='1'){
       delete b.dataset.submitOnUp;
-      submitOrNext({deferHide:true});
+      if(submitOrNext({hide:false}))b.dataset.hideOnClick='1';
     }
   });
   const cancel=e=>{
     stopRepeat();
     const b=e.target.closest?.('[data-key]');
-    if(b){b.classList.remove('is-pressed');delete b.dataset.submitOnUp}
+    if(b){b.classList.remove('is-pressed');delete b.dataset.submitOnUp;delete b.dataset.hideOnClick}
     e.stopPropagation();
   };
   keyboard.addEventListener('pointercancel',cancel);
   keyboard.addEventListener('pointerleave',cancel,true);
   keyboard.addEventListener('click',e=>{
     const b=e.target.closest('[data-key]');
-    if(b?.dataset.downHandled==='1'){
+    if(!b)return;
+    const handled=b.dataset.downHandled==='1';
+    const hideAfter=b.dataset.hideOnClick==='1';
+    if(handled||hideAfter){
       delete b.dataset.downHandled;
+      delete b.dataset.hideOnClick;
       e.preventDefault();e.stopImmediatePropagation();
+      if(hideAfter)hideWillenaKeyboard();
     }
   });
   q('.wkb-hide',keyboard).onclick=hideWillenaKeyboard;
