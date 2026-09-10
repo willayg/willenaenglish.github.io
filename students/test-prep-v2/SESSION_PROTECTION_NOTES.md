@@ -1,1 +1,0 @@
-Temporary implementation notes for Test Prep v2 session protection and resume work. Logic lives in dedicated modules; app.js/index.html should only contain minimal integration hooks.
