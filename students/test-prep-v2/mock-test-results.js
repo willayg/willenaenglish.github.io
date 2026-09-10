@@ -1,6 +1,5 @@
 import {QuestionRenderer} from './question-renderer.js';
 import {FORMS} from './question-model.js';
-import {mountAiWilliHelper} from '../shared/ai-willi/ai-willi-ui.js?v=1.6.0';
 
 const LABELS={vocabulary:'어휘',communication:'대화',grammar:'문법',reading:'독해',constructed_response:'서술형'};
 const ORDER=['vocabulary','communication','grammar','reading','constructed_response'];
@@ -36,17 +35,25 @@ function mountWilliTrigger(card,item){
   wrap.innerHTML='<button type="button" class="mock-review-willi-trigger">✦ Willi에게 설명 듣기</button>';
   card.appendChild(wrap);
   const button=wrap.querySelector('button');
-  button.onclick=()=>{
-    button.disabled=true;button.remove();
-    mountAiWilliHelper({
-      container:wrap,
-      question:item.question,
-      response:item.response,
-      result:item.result,
-      section:item.bucket,
-      lesson:item.lesson,
-      practiceType:practiceTypeFor(item)
-    });
+  button.onclick=async()=>{
+    if(button.disabled)return;
+    button.disabled=true;button.textContent='Willi 불러오는 중...';
+    try{
+      const {mountAiWilliHelper}=await import('../shared/ai-willi/ai-willi-ui.js?v=1.6.0');
+      button.remove();
+      mountAiWilliHelper({
+        container:wrap,
+        question:item.question,
+        response:item.response,
+        result:item.result,
+        section:item.bucket,
+        lesson:item.lesson,
+        practiceType:practiceTypeFor(item)
+      });
+    }catch(error){
+      console.warn('[mock-results] AI Willi load failed',error);
+      button.disabled=false;button.textContent='✦ Willi에게 설명 듣기';
+    }
   };
 }
 function renderQuestionItem(host,item){
