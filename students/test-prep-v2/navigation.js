@@ -1,3 +1,5 @@
+import {confirmSessionExit} from './session-protection.js?v=1.0.0';
+
 const APP='willena-test-prep-v2';
 const VIEWS=new Set(['home','plan','lesson','practice','result','review','mock']);
 let renderRoute=null,beforeChange=null,current=null,started=false,navigationGuard=null;
@@ -22,6 +24,7 @@ function packed(route){return{app:APP,route:normalize(route)}}
 function fromHistory(state){return state?.app===APP&&valid(state.route)?normalize(state.route):null}
 function same(a,b){return JSON.stringify(normalize(a))===JSON.stringify(normalize(b))}
 function allowed(prev,next,source){
+  if(prev?.view==='practice'&&next?.view!=='practice'&&!confirmSessionExit())return false;
   if(!navigationGuard)return true;
   try{return navigationGuard(prev,next,{source})!==false}
   catch(e){console.warn('[test-prep-v2 navigation] guard failed',e);return true}
