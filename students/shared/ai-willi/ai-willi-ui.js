@@ -1,10 +1,10 @@
-import {helpWithAiWilli} from './ai-willi-helper.js?v=1.3.0';
+import {helpWithAiWilli} from './ai-willi-helper.js?v=1.4.0';
 import {AI_WILLI_NAME,aiWilliMessage} from './ai-willi-messages.js?v=1.0.0';
-import {getCachedAiWilliExplanation,saveAiWilliExplanation,rateAiWilliExplanation} from './ai-willi-cache.js?v=1.1.0';
+import {getCachedAiWilliExplanation,saveAiWilliExplanation,rateAiWilliExplanation} from './ai-willi-cache.js?v=1.2.0';
 
 const STYLE_ID='aiWilliSharedStyles';
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const REFINEMENTS={examples:'예시 더 보기',simple:'더 쉽게 설명',details:'더 자세히 설명'};
+const REFINEMENTS={vocab:'핵심 단어',details:'더 자세히 설명',examples:'예시 더 보기'};
 
 function formatAiWilliText(value){
   const src=String(value??'').replace(/\r\n?/g,'\n').trim();
@@ -125,7 +125,7 @@ export function mountAiWilliHelper({container,question,response,result,section,l
       if(!text){
         const answer=await helpWithAiWilli({question,response,result,section,lesson,practiceType,existingExplanation,mode,previousExplanation:isInitial?'':initialExplanationText});
         text=String(answer?.text||'').trim()||aiWilliMessage('helper','failed');
-        record=await saveAiWilliExplanation({questionId,section:sectionName,mode,response,text,rootExplanationId:isInitial?null:rootExplanationId});
+        record=await saveAiWilliExplanation({questionId,section:sectionName,mode,response,text,vocabulary:answer?.vocabulary||[],rootExplanationId:isInitial?null:rootExplanationId});
       }
       waitingTurn.querySelector('.ai-willi-message').innerHTML=formatAiWilliText(text);attachVote(waitingTurn,record?.id);
       if(isInitial){rootExplanationId=record?.id||null;initialExplanationText=text}
