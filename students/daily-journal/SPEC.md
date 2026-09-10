@@ -1,6 +1,6 @@
-# Willena Daily Journal — Product & Technical Spec
+# Willena Daily Journal — Product, Technical Spec & Build Plan
 
-Status: Draft v0.1  
+Status: Draft v0.2  
 Target: Staging first  
 App path: `/students/daily-journal/`
 
@@ -8,47 +8,39 @@ App path: `/students/daily-journal/`
 
 Build a daily journaling app that helps Willena students become better writers without replacing their own voice.
 
-The app should encourage students to write regularly about their real day, thoughts, feelings, interests, or anything they choose. AI should correct the English while preserving the student's original meaning, emotional tone, vocabulary level, and personal style as much as possible.
+The student writes an authentic diary about today or anything they choose, reaches a required sentence target, receives restrained AI correction, reviews the corrected English, then reads every corrected sentence aloud using STT. Both the exact original and corrected writing are saved for teacher viewing.
 
-The finished activity combines:
-
-1. Free writing
-2. AI-assisted correction
-3. Student review of corrections
-4. Speaking the corrected version aloud using STT
-5. Saving both the original and corrected diary for teacher viewing
-
-The app should feel like a daily mission rather than a test.
+The app should feel like a daily mission, not a test.
 
 ---
 
-## 2. Core Principles
+## 2. Core Product Rules
 
 ### Preserve the student's voice
 
 AI correction must make the smallest reasonable changes needed for clear, correct English.
 
-It should:
+It must:
 
 - preserve factual details
 - preserve opinions and feelings
-- preserve the student's intended meaning
+- preserve intended meaning
 - preserve age-appropriate/simple vocabulary when it works
 - fix grammar, spelling, capitalization, punctuation, word form, tense, articles, prepositions, and clearly unnatural English
-- avoid rewriting simple child English into polished adult prose
-- never invent new events, feelings, reasons, people, or details
+- avoid rewriting child English into polished adult prose
+- never invent events, feelings, reasons, people, or details
 
 ### Writing comes before correction
 
-Students should finish their own writing before AI correction is shown. The app must not interrupt free writing with live grammar warnings.
+Students finish their own writing before correction appears. No live grammar warnings while composing.
 
 ### Original writing is never destroyed
 
-Always save the exact original submission as well as the corrected version.
+Save the exact original submission separately from every corrected/reviewed representation.
 
 ### Completion matters more than scoring
 
-Do not give students a daily numeric AI writing score in the first version. Reward completion, consistency, improvement, and speaking practice instead.
+No daily numeric AI writing score in v1. The emphasis is writing, improvement, speaking, and completion.
 
 ---
 
@@ -56,48 +48,35 @@ Do not give students a daily numeric AI writing score in the first version. Rewa
 
 ### Step 1 — Daily Mission
 
-Landing screen presents a writing mission.
-
 Default mission:
 
 > Write about your day.
 
-Optional supporting prompts may include:
+Optional idea prompts can include what happened, how the student felt, who they spent time with, and what they want to remember.
 
-- What happened today?
-- What made you happy, annoyed, excited, surprised, or tired?
-- Who did you spend time with?
-- What do you want to remember about today?
-
-Students should also have:
+Always provide:
 
 > Write about anything
 
-The mission should encourage ideas without forcing a topic.
+The prompts help students start; they do not constrain the diary topic.
 
 ### Step 2 — Sentence Target
 
-Each journal session has a required sentence target between 6 and 20 sentences.
+Each session requires between 6 and 20 sentences.
 
-The target should be configurable by student, class, level, or teacher assignment rather than hard-coded into the writing engine.
+Suggested starting defaults:
 
-Suggested defaults:
+- Beginner: 6
+- Elementary: 8
+- Lower-intermediate: 10
+- Intermediate: 12
+- Stronger writers: 15–20
 
-- Beginner: 6 sentences
-- Elementary: 8 sentences
-- Lower-intermediate: 10 sentences
-- Intermediate: 12 sentences
-- Stronger writers: 15–20 sentences
+The target must be configurable rather than hard-coded.
 
-UI should clearly show progress, for example:
-
-> 5 / 8 sentences
-
-Sentence counting should be tolerant of children's punctuation and should not depend only on periods.
+Show live progress such as `5 / 8 sentences`. Sentence counting must be tolerant of children's punctuation and must not rely only on full stops.
 
 ### Step 3 — Free Writing
-
-Student writes the full diary before correction.
 
 Requirements:
 
@@ -106,20 +85,17 @@ Requirements:
 - sentence progress indicator
 - no live AI correction
 - no red grammar marks while composing
-- session survives ordinary refresh/navigation where possible
-- clear submit action once the sentence target is reached
-
-The student may write more than the target.
+- refresh/navigation recovery where practical
+- submit enabled when target is reached
+- student may exceed the target
 
 ### Step 4 — AI Correction
 
-When the student submits the diary, the app sends the writing to the AI correction service.
+Submitting sends the student's writing to Luna through Willena's existing OpenAI pathway.
 
-Target model: Luna through the OpenAI API, subject to the API/model configuration used by Willena at implementation time.
+The AI returns structured data, not HTML.
 
-The AI response should be structured data, not generated HTML.
-
-Expected output concept:
+Conceptual response:
 
 ```json
 {
@@ -134,12 +110,6 @@ Expected output concept:
           "original": "go",
           "corrected": "went",
           "reason": "Past tense"
-        },
-        {
-          "type": "grammar",
-          "original": "go school",
-          "corrected": "go to school",
-          "reason": "Use 'to' before school here"
         }
       ]
     }
@@ -147,47 +117,60 @@ Expected output concept:
 }
 ```
 
-The server must validate AI output before saving/displaying it.
+The client validates the expected shape before using/saving the result. A malformed AI response must fail safely without losing the original diary.
 
 ### Step 5 — Correction Review
 
-Show corrections sentence by sentence.
+Review one sentence at a time.
 
-Example presentation:
+Show:
 
-**Your sentence**  
-Today I go school and I was very tired.
+- **Your sentence** — the exact original
+- **Better English** — corrected version
+- changed word/phrase emphasis
+- a short child-friendly explanation when useful
 
-**Better English**  
-Today I **went to** school and I was very tired.
+Avoid an aggressive red/error-heavy interface. If a sentence needs no correction, say so rather than manufacturing a change.
 
-Small explanation:
+At the end show the complete corrected diary.
 
-> `go → went` because you are talking about something that already happened.
+### Step 6 — Speak the Corrected Diary
 
-Requirements:
+The student must read each corrected sentence aloud.
 
-- visually emphasize changed words/phrases
-- avoid overwhelming red/error-heavy styling
-- retain access to the original sentence
-- use concise explanations a student can understand
-- allow moving through corrections one sentence at a time
-- if a sentence needs no changes, explicitly celebrate that rather than fabricating a correction
+STT validation should tolerate:
 
-At the end, show the complete corrected diary.
+- punctuation/capitalization differences
+- contractions
+- minor STT mistakes
+- harmless filler
+- common child-pronunciation/STT variation
+
+Initial experiment: roughly 80–85% normalized similarity with extra importance given to content words. This must remain configurable after real student testing.
+
+If accepted, advance. If not, ask for another attempt. After repeated difficulty provide support such as TTS and never trap a student indefinitely because recognition fails.
+
+### Step 7 — Completion
+
+Example:
+
+> Diary Complete  
+> 10 sentences written  
+> 7 sentences improved  
+> 10 sentences spoken
+
+Points/streaks may be added later but are not required for v1.
 
 ---
 
-## 4. AI Correction Rules
+## 4. AI Correction Contract
 
-The correction prompt/service must explicitly instruct the model to follow these rules.
-
-### Required behavior
+The journal correction prompt must explicitly require:
 
 1. Keep the student's meaning.
 2. Keep the student's feelings and opinions.
 3. Do not add facts.
-4. Do not remove meaningful facts unless necessary for intelligibility.
+4. Do not remove meaningful facts unless required for intelligibility.
 5. Prefer the smallest possible correction.
 6. Keep vocabulary near the student's demonstrated level.
 7. Keep simple sentences simple when they are valid.
@@ -197,128 +180,100 @@ The correction prompt/service must explicitly instruct the model to follow these
 11. Keep sentence order unless a small structural repair is necessary.
 12. Return machine-readable structured output only.
 
-### Example
-
-Student:
-
-> Today I go school and I was very tired. My friend make me angry because he take my pencil. But lunch was delicious.
-
-Good correction:
+Example good correction:
 
 > Today I went to school and I was very tired. My friend made me angry because he took my pencil. But lunch was delicious.
 
-Bad correction:
+Example bad correction:
 
 > I attended school today despite feeling rather exhausted. I became frustrated when a classmate unexpectedly took my pencil, although lunchtime improved my mood.
 
-The bad version changes the student's voice and should be prevented by prompt design and validation.
+The second version changes the child's voice and must be avoided.
 
 ---
 
-## 5. Speaking / STT Stage
+## 5. Existing OpenAI Pathway — Reuse, Do Not Rebuild
 
-After correction review, students must read the corrected diary aloud.
+Staging already has the shared OpenAI proxy:
 
-The speaking stage uses one corrected sentence at a time.
+```text
+/.netlify/functions/openai_proxy
+```
 
-Example:
+Implementation file:
 
-> Sentence 3 of 8
->
-> My friend made me angry because he took my pencil.
->
-> 🎙 Speak this sentence
+```text
+netlify/functions/openai_proxy.js
+```
 
-The student speaks and STT returns a transcript.
+Existing Willena tools call this through:
 
-### Matching behavior
+```js
+WillenaAPI.fetch('/.netlify/functions/openai_proxy', ...)
+```
 
-Do not require perfect transcript equality.
+The proxy already holds the server-side OpenAI credential (`OPENAI_API`) and forwards requests to the OpenAI API. It supports a generic request shape using `endpoint` plus `payload` as well as older convenience behavior.
 
-Speech validation should tolerate:
+### Journal decision
 
-- minor STT mistakes
-- punctuation differences
-- contractions
-- harmless filler
-- common child pronunciation variation
-- capitalization differences
+**Do not build another OpenAI proxy, Edge Function, API-key system, or browser-side OpenAI client for Daily Journal.**
 
-It should primarily determine whether the student attempted and substantially reproduced the corrected sentence.
+Daily Journal will reuse the existing shared proxy through `WillenaAPI.fetch`.
 
-Initial target for experimentation: approximately 80–85% normalized similarity, with extra weight on meaningful/content words.
+The old convenience request shape that sends only `{ prompt }` currently builds its own `chat/completions` payload and hard-codes `gpt-3.5-turbo`. Daily Journal should therefore **not use the legacy prompt shortcut**.
 
-This threshold must be configurable after testing with actual Willena students.
+Instead, Daily Journal should call the existing proxy's generic `endpoint + payload` pathway so the journal request can explicitly use Luna and the required structured correction messages/options.
 
-### Retry behavior
+Conceptually:
 
-If accepted:
+```js
+WillenaAPI.fetch('/.netlify/functions/openai_proxy', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    endpoint: 'chat/completions',
+    payload: {
+      model: LUNA_MODEL,
+      messages: JOURNAL_MESSAGES,
+      // structured-output configuration used by the selected model/API
+    }
+  })
+});
+```
 
-> ✓ Nice!
+`LUNA_MODEL` should use the actual model identifier/configuration available to the existing Willena OpenAI account at build time. We do not need a new infrastructure pathway merely to select it.
 
-Advance to the next sentence.
+The new journal-specific code is limited to:
 
-If not accepted:
+- journal correction instructions
+- request payload
+- structured response contract
+- validation/error handling
 
-> Try that sentence one more time.
-
-After repeated difficulty, allow support such as:
-
-- TTS listen button
-- slower playback if supported
-- another attempt
-
-Do not trap a student forever because STT cannot understand them. A teacher-configurable or sensible fallback must exist.
-
----
-
-## 6. Completion Screen
-
-Example:
-
-> Diary Complete
->
-> 10 sentences written  
-> 7 sentences improved  
-> 10 sentences spoken
-
-Future integration may award Willena points and streaks, but the journal data model should not depend on the points system.
-
-Potential later features:
-
-- daily streak
-- weekly writing goal
-- personal diary history
-- favorite entry
-- teacher encouragement
-- monthly improvement summary
+Existing proxy, API-key handling, CORS/API routing, and `WillenaAPI.fetch` infrastructure remain shared.
 
 ---
 
-## 7. Persistence and Resume
+## 6. Persistence and Resume
 
-Journal sessions should persist during the activity.
-
-Draft/session state should include at minimum:
+Persist enough state to restore an interrupted activity:
 
 - student
 - mission/prompt
-- sentence target
+- target
 - current original draft
-- corrected result once generated
+- corrected result after correction
 - correction-review position
 - speaking progress
-- timestamps
+- timestamps/status
 
-If the student accidentally refreshes or returns to the dashboard, the app should restore the unfinished session where practical.
-
-A completed diary must remain immutable as the historical original submission. Later teacher notes or AI metadata should not overwrite the original student text.
+Completed original writing is historical data and must never be overwritten by AI output or later teacher metadata.
 
 ---
 
-## 8. Data Model — Initial Proposal
+## 7. Initial Data Model
 
-Exact naming should be reconciled with the existing Supabase schema before implementation.
+Exact columns should be reconciled with the current Supabase schema during the database step.
 
 ### `journal_entries`
 
@@ -330,12 +285,7 @@ Exact naming should be reconciled with the existing Supabase schema before imple
 - `original_text`
 - `corrected_text`
 - `original_sentence_count`
-- `status`
-  - `draft`
-  - `correcting`
-  - `review`
-  - `speaking`
-  - `completed`
+- `status`: `draft | correcting | review | speaking | completed`
 - `ai_model`
 - `ai_metadata` jsonb
 - `started_at`
@@ -369,15 +319,13 @@ Exact naming should be reconciled with the existing Supabase schema before imple
 - `accepted`
 - `created_at`
 
-Potential raw audio storage should NOT be assumed. Only store audio if there is a clear educational requirement, privacy policy, retention rule, and implementation decision to do so.
+Raw audio is not part of v1 unless a separate educational/privacy decision is made.
 
 ---
 
-## 9. Teacher View
+## 8. Teacher View
 
-Teachers need a simple journal dashboard.
-
-Initial overview should show recent completion status, for example:
+Teacher overview should show, at minimum:
 
 | Student | Today | Sentences | Corrections | Speaking |
 |---|---|---:|---:|---|
@@ -385,7 +333,7 @@ Initial overview should show recent completion status, for example:
 | Liam | Writing | 4 / 8 | — | — |
 | Jenny | Not started | — | — | — |
 
-Selecting a completed entry should show:
+Opening an entry shows:
 
 - date
 - mission/prompt
@@ -393,92 +341,33 @@ Selecting a completed entry should show:
 - corrected diary
 - sentence-by-sentence changes
 - speaking completion
-- relevant AI correction categories
-- timestamps
+- timestamps/status
 
-Teachers should be able to see the student's authentic original English at all times.
-
-### Future teacher analytics
-
-Later versions may aggregate recurring patterns such as:
-
-- past tense
-- articles
-- subject/verb agreement
-- capitalization
-- spelling
-- prepositions
-- sentence fragments
-
-Example future insight:
-
-> Past-tense errors: September 34% → October 18% → November 9%
-
-Do not build analytics before the underlying correction categories are reliable.
+Future aggregate grammar analytics can come later after the correction categories prove reliable.
 
 ---
 
-## 10. Student Safety / Privacy / AI Handling
+## 9. Privacy and Access
 
-Because student writing may contain personal information or feelings:
+Student journals may contain personal information and feelings.
 
-- send only data required for correction
-- do not expose API keys in client-side JavaScript
-- AI calls must go through a protected server-side endpoint / Edge Function
-- enforce authenticated student identity server-side
-- use row-level security appropriate to students and teachers
-- students should only access their own journal entries
-- teachers should only access students they are authorized to view
-- AI must not invent psychological interpretations of diary content
-- correction feedback should focus on English, not judge the student's emotions or personal life
+Requirements:
 
-A separate safeguarding/escalation policy can be designed if journals are ever intentionally monitored for safety concerns. That is outside the v1 writing-correction scope and should not be silently delegated to the language model.
+- send only correction-relevant content to the AI
+- use existing server-side OpenAI proxy; never expose the API key in browser code
+- authenticate student identity using existing Willena patterns
+- appropriate Supabase RLS/access rules
+- student can access only their own journal data
+- authorized teacher can view the appropriate students
+- AI correction focuses on English and does not invent psychological interpretations
 
----
-
-## 11. Technical Architecture — Proposed
-
-```text
-Student Journal UI
-        ↓
-Supabase draft persistence
-        ↓
-Protected correction endpoint / Edge Function
-        ↓
-OpenAI Luna
-        ↓
-Structured correction validation
-        ↓
-Supabase journal + sentence records
-        ↓
-Student correction review
-        ↓
-STT sentence practice
-        ↓
-Completion saved
-        ↓
-Teacher journal dashboard
-```
-
-The browser must never contain the OpenAI secret key.
-
-Where possible, reuse existing Willena modules for:
-
-- student authentication
-- student header / navigation
-- session persistence patterns
-- shared styling / theme
-- TTS/STT utilities already proven in other student apps
-- Supabase client helpers
-- teacher authorization
-
-Do not duplicate those systems inside the journal app unnecessarily.
+A separate safeguarding/escalation system is outside v1 and must not be silently delegated to the language model.
 
 ---
 
-## 12. Suggested Folder Structure
+## 10. App Structure
 
-Initial target:
+Initial folder:
 
 ```text
 students/daily-journal/
@@ -495,65 +384,233 @@ students/daily-journal/
 └── README.md
 ```
 
-Server-side correction logic should live with the project's existing server/Edge Function architecture rather than under the public student folder.
-
-This structure is provisional until the existing staging architecture is inspected before implementation.
+Where practical reuse existing Willena modules/patterns for student auth, shared student header/navigation, styling/theme, Supabase access, STT/TTS, and teacher authorization.
 
 ---
 
-## 13. MVP Scope
+# 11. BUILD PLAN
 
-The first working staging version should include:
+The first objective is a complete vertical slice on **staging**. Do not add secondary features before the write → correct → review → speak → teacher-view loop works reliably.
 
-- authenticated student opens Daily Journal
-- daily/default mission plus “write about anything”
-- configurable sentence target from 6–20
-- writing editor
-- reliable sentence progress count
-- autosaved draft
-- submit for correction
-- Luna correction with strict voice-preservation rules
-- structured original/corrected sentence data
-- sentence-by-sentence correction review
-- complete corrected diary
-- STT reading of every corrected sentence
-- tolerant speech matching
-- completion state
-- Supabase persistence
-- teacher can view original + corrected submission and speaking completion
-- refresh/resume behavior
+## Phase 1 — Inspect and Lock Reusable Pieces
 
-Not required for first MVP:
+No feature implementation yet.
 
-- sophisticated writing scores
+Identify the exact staging files/modules to reuse for:
+
+- student authentication/current student ID
+- shared student header/navigation
+- Supabase client/data access
+- STT
+- TTS
+- `WillenaAPI.fetch`
+- teacher authentication/student visibility
+
+OpenAI is already resolved: reuse `/.netlify/functions/openai_proxy` through `WillenaAPI.fetch` using its generic endpoint/payload mode.
+
+**Output:** short implementation map in this spec/README with exact file names and dependencies.
+
+## Phase 2 — Database Foundation
+
+Create the journal persistence layer and access rules.
+
+Build:
+
+- `journal_entries`
+- `journal_sentences`
+- `journal_speech_attempts`
+- indexes/relationships required for student/date lookups
+- RLS/access policies following existing Willena conventions
+
+Test independently:
+
+- student can create/update own draft
+- another student cannot read it
+- authorized teacher can read it
+- original submission is not overwritten by correction
+
+**Milestone:** journal data can safely survive reload before any AI UI exists.
+
+## Phase 3 — Writing Mission + Editor
+
+Build the first student-facing vertical slice:
+
+- Daily Journal page using the shared student shell/header
+- “Write about your day” mission
+- “Write about anything” option
+- optional idea prompts
+- target between 6 and 20
+- large writing editor
+- robust sentence counter
+- autosave
+- resume unfinished draft
+- submit when target reached
+
+Do not add correction UI yet.
+
+**Milestone:** student can start a diary, write it, refresh/leave/reopen, and get the same draft back.
+
+## Phase 4 — Luna Correction Through Existing Proxy
+
+Add `journal-api.js` around the **existing** OpenAI proxy.
+
+Build only the journal-specific layer:
+
+- correction system/developer instructions
+- Luna payload through generic `endpoint + payload`
+- structured sentence response
+- response validation
+- retry/error state
+- persistence of exact original + corrected output
+
+Test especially for over-rewriting. Use deliberately messy real child-style English and verify that facts, feelings, vocabulary level, and sentence personality remain intact.
+
+**Milestone:** submitting a diary reliably produces a minimally corrected structured version without creating new AI infrastructure.
+
+## Phase 5 — Correction Review Experience
+
+Build:
+
+- sentence-by-sentence review
+- original sentence
+- corrected sentence
+- changed text emphasis
+- brief explanation
+- “no change needed” state
+- forward/back navigation
+- final complete corrected diary
+- persisted review position
+
+**Milestone:** a student can understand what was fixed without feeling that AI rewrote their diary.
+
+## Phase 6 — STT Read-Back
+
+Reuse the existing Willena STT/TTS pathway rather than making another speech system.
+
+Build:
+
+- one corrected sentence at a time
+- microphone interaction
+- transcript normalization
+- configurable approximate matching
+- content-word-aware acceptance
+- retry state
+- TTS listen support where available
+- sensible fallback after repeated recognition failure
+- speaking progress persistence
+
+The activity cannot be marked fully completed until the speaking stage has been completed/fallback-resolved.
+
+**Milestone:** a student can read the corrected diary aloud from beginning to end without STT becoming punitive.
+
+## Phase 7 — Completion + History
+
+Build:
+
+- completion screen
+- sentences written
+- sentences corrected/improved
+- sentences spoken
+- save final completion timestamp
+- student recent-journal/history entry if appropriate to the current student UX
+
+Do not add scores, streak economy, or detailed analytics yet.
+
+## Phase 8 — Teacher View
+
+Add a simple teacher-facing view using the existing teacher auth/navigation patterns.
+
+Build:
+
+- recent/today journal list by student
+- not started / writing / correction / speaking / complete status
+- target vs written count
+- original diary
+- corrected diary
+- sentence-level changes
+- speech completion
+- date/history navigation
+
+Teacher must always be able to see the child's authentic original writing.
+
+**Milestone:** teacher can immediately tell who wrote, what they originally wrote, how it was corrected, and whether they spoke it.
+
+## Phase 9 — Staging Hardening
+
+Test the complete journey on actual staging, especially mobile/tablet.
+
+Cases:
+
+- refresh during writing
+- leave and return
+- refresh during correction/review
+- slow/failed AI request
+- malformed AI response
+- double-tap submit
+- diary longer than target
+- weak/missing punctuation
+- zero corrections needed
+- microphone permission denied
+- STT false negatives
+- reload halfway through speaking
+- student isolation/RLS
+- teacher visibility
+- duplicate diary/session prevention
+
+Then test correction quality across multiple Willena levels.
+
+**Milestone:** full journey is reliable enough for a small real-student trial.
+
+## Phase 10 — Small Student Trial, Then Tune
+
+Trial with a small group before production rollout.
+
+Tune from evidence:
+
+- sentence counting
+- target defaults
+- correction prompt strictness
+- Luna output consistency
+- correction explanation length
+- STT similarity threshold
+- retry/fallback behavior
+- mobile spacing/text size
+
+Only after this should we consider production deployment or secondary features.
+
+---
+
+## 12. Explicitly Out of Scope for the First Build
+
+- new OpenAI proxy/API infrastructure
+- numeric AI writing score
 - leaderboards
-- detailed analytics
-- streak economy
+- detailed grammar trend analytics
 - parent reports
+- streak economy
 - raw audio storage
 - AI-generated diary content
-- AI rewriting before the student has written
+- live correction while the child is writing
+- production deployment before staging validation
 
 ---
 
-## 14. Decisions to Resolve During Build
+## 13. Definition of Done for v1
 
-These should be answered by inspecting current staging patterns and testing rather than guessed in advance:
+v1 is done when, on staging:
 
-- exact existing student header/navigation module to reuse
-- exact Supabase tables/RLS conventions
-- whether an existing Edge Function/OpenAI proxy should be extended
-- exact Luna API model identifier/configuration
-- existing STT/TTS module that should be reused
-- how sentence targets are assigned: student profile, class, level, teacher assignment, or default
-- exact teacher dashboard integration point
-- best normalized speech-matching algorithm and threshold for Korean ESL learners
-- whether students can edit their original diary after seeing corrections (default recommendation: no; create a separate revision field if revision becomes a learning step)
-
----
-
-## 15. Definition of Success for v1
-
-A student can open the app, write an authentic diary of the required length, receive restrained and useful English corrections, understand what changed, successfully read the corrected sentences aloud, finish the mission, leave/reopen without losing work, and have both their original and corrected writing available to an authorized teacher.
+1. An authenticated student can open Daily Journal.
+2. They receive a mission and sentence target between 6 and 20.
+3. Their draft autosaves and survives reload/navigation.
+4. They can submit authentic writing after meeting the target.
+5. Luna corrects it through the existing `openai_proxy` pathway.
+6. Correction preserves the student's facts, feelings, meaning, and approximate voice.
+7. The exact original remains stored separately.
+8. Student can review every corrected sentence.
+9. Student can read every corrected sentence through STT with tolerant matching.
+10. The activity records completion.
+11. An authorized teacher can see the original, correction, and speaking/completion state.
+12. Other students cannot access the entry.
+13. The complete flow survives normal refresh/error conditions without losing the diary.
 
 The AI's role is to improve the student's English — not replace the student's writing.
