@@ -23,10 +23,12 @@ html,body{width:100%;max-width:100%;overflow-x:hidden}
 .staging-switcher{position:fixed;left:12px;bottom:12px;z-index:2147483646;display:flex;align-items:center;gap:6px;padding:5px;border:1px solid rgba(32,48,57,.14);border-radius:999px;background:rgba(255,255,255,.94);box-shadow:0 4px 18px rgba(32,48,57,.12);font:800 11px/1 Poppins,sans-serif;backdrop-filter:blur(10px)}
 .staging-switcher a,.staging-switcher span{display:inline-flex;align-items:center;justify-content:center;min-width:28px;height:28px;padding:0 9px;border-radius:999px;text-decoration:none;color:#526168;background:#eef4f5;box-sizing:border-box}
 .staging-switcher .active{color:#ee5f91;background:#fff;border:1.5px solid #9de2e7}.staging-switcher .lab{color:#7d2850;background:#ffe8f2}
-@media(max-width:620px){.staging-switcher{left:8px;bottom:8px}.staging-switcher a,.staging-switcher span{height:26px;min-width:26px;padding:0 8px;font-size:10px}}
+.renderer-rev-pill{position:fixed;top:10px;right:12px;z-index:2147483647;padding:7px 11px;border:1px solid rgba(32,48,57,.28);border-radius:999px;background:rgba(255,255,255,.96);color:#263238;font:800 12px/1 Poppins,sans-serif;box-shadow:0 2px 8px rgba(0,0,0,.12);pointer-events:none;backdrop-filter:blur(8px)}
+@media(max-width:620px){.staging-switcher{left:8px;bottom:8px}.staging-switcher a,.staging-switcher span{height:26px;min-width:26px;padding:0 8px;font-size:10px}.renderer-rev-pill{top:8px;right:8px;font-size:10px;padding:6px 9px}}
 </style>
 </head>
 <body>
+<div class="renderer-rev-pill">RENDERER · V2.20.6</div>
 <header class="student-header">
   <div class="header-orb"></div>
   <div class="header-inner">
