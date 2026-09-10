@@ -1,3 +1,4 @@
+:root{--mock-shell-width:760px}
 .screen:has(> [data-mock]){display:flex;flex-direction:column}
 .screen:has(> [data-mock])>[data-mock]{order:99;margin-top:26px}
 [data-mock].wrong-card{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:18px 20px;background:#fff;border:2px solid #10bfd0;box-shadow:none}
@@ -7,9 +8,9 @@
 [data-mock] .wrong-stats{display:none!important}
 [data-mock] .wrong-cta{margin-left:auto;font-size:12px;color:#567078;font-weight:800;white-space:nowrap}
 
-.mock-preflight{max-width:760px;margin:0 auto}
+.mock-preflight,.mock-exam,.mock-results{width:min(var(--mock-shell-width),100%);max-width:none;margin-left:auto;margin-right:auto;box-sizing:border-box}
 .mock-preflight .heading{margin-bottom:18px}
-.mock-summary-card{padding:24px;border:2px solid #10bfd0;border-radius:20px;background:#fff;box-shadow:0 6px 22px rgba(32,48,57,.06)}
+.mock-summary-card{width:100%;box-sizing:border-box;padding:24px;border:2px solid #10bfd0;border-radius:20px;background:#fff;box-shadow:0 6px 22px rgba(32,48,57,.06)}
 .mock-summary-head{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;padding-bottom:20px;border-bottom:1px solid rgba(16,191,208,.28)}
 .mock-summary-eyebrow{display:block;margin-bottom:5px;font-size:11px;font-weight:800;letter-spacing:.06em;color:#87979d}
 .mock-summary-title{margin:0;font-size:21px;line-height:1.25;color:#203039}
@@ -24,7 +25,7 @@
 .mock-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:18px}
 .mock-actions .review-primary{min-width:180px}
 
-.mock-exam{max-width:820px;margin:0 auto;padding-bottom:26px}
+.mock-exam{padding-bottom:26px}
 .mock-exam-top{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:14px}
 .mock-timer{display:flex;align-items:baseline;gap:8px;padding:9px 13px;border:2px solid #10bfd0;border-radius:14px;background:#fff}
 .mock-timer span{font-size:11px;font-weight:700;color:#7b898f}
@@ -34,7 +35,9 @@
 .mock-exam-status>strong{font-size:14px;color:#526168}
 .mock-section-pill{display:inline-flex;align-items:center;min-height:30px;padding:0 12px;border-radius:999px;background:#eafbfd;color:#147783;font-size:12px;font-weight:800}
 .mock-progress{margin-bottom:16px}
-.mock-question-card{padding:22px;border:2px solid #10bfd0;border-radius:20px;background:#fff;box-shadow:0 6px 22px rgba(32,48,57,.05)}
+.mock-question-card{width:100%;box-sizing:border-box;padding:22px;border:2px solid #10bfd0;border-radius:20px;background:#fff;box-shadow:0 6px 22px rgba(32,48,57,.05)}
+.mock-question-deck,.mock-question-panel{min-width:0;width:100%;box-sizing:border-box}
+.mock-question-panel{overflow-wrap:anywhere}
 .mock-question-panel[hidden]{display:none!important}
 .mock-question-panel .feedback{display:none!important}
 .mock-exam-nav{display:grid;grid-template-columns:minmax(110px,1fr) auto minmax(110px,1fr);align-items:center;gap:12px;margin-top:16px}
@@ -42,8 +45,8 @@
 .mock-exam-nav>[data-mock-prev]{justify-self:stretch}
 .mock-exam-nav>[data-mock-answered]{font-size:12px;font-weight:800;color:#6f7e84;text-align:center;white-space:nowrap}
 
-.mock-results{max-width:760px;margin:0 auto;padding-bottom:28px}
-.mock-results-hero{padding:26px 22px;margin-bottom:18px;border:2px solid #10bfd0;border-radius:22px;background:#fff;text-align:center;box-shadow:0 6px 22px rgba(32,48,57,.05)}
+.mock-results{padding-bottom:28px}
+.mock-results-hero{width:100%;box-sizing:border-box;padding:26px 22px;margin-bottom:18px;border:2px solid #10bfd0;border-radius:22px;background:#fff;text-align:center;box-shadow:0 6px 22px rgba(32,48,57,.05)}
 .mock-results-score{display:flex;align-items:baseline;justify-content:center;gap:6px;margin-top:6px}
 .mock-results-score strong{font-size:58px;line-height:1;color:#203039;letter-spacing:-.04em}
 .mock-results-score span{font-size:20px;font-weight:800;color:#7b898f}
@@ -65,6 +68,7 @@
 .mock-review-question-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px;font-size:12px;font-weight:800;color:#607178}
 .mock-review-question.is-correct .mock-review-question-head strong{color:#19865a}
 .mock-review-question.is-wrong .mock-review-question-head strong,.mock-review-question.is-unanswered .mock-review-question-head strong{color:#c45252}
+.mock-review-render{min-width:0;overflow-wrap:anywhere}
 .mock-review-render .feedback{display:none!important}
 .mock-review-render button:disabled,.mock-review-render input:disabled,.mock-review-render textarea:disabled{opacity:1}
 .mock-review-answers{display:grid;gap:8px;margin-top:12px;padding-top:12px;border-top:1px solid rgba(32,48,57,.10)}
