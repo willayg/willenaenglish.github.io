@@ -9,7 +9,7 @@ const textHtml=v=>esc(display(v)).replace(/\n/g,'<br>');
 const LABELS={korean:'우리말',korean_b:'우리말',definition:'영영풀이',initial:'주어진 철자',sentence:'문장',sentences:'문장',dialogue:'대화',passage:'윗글',source_passage:'원문',rewritten:'바꿔 쓴 글',question:'질문',questions:'질문',conditions:'조건',words:'보기',given:'보기',provided_words:'보기',word_bank:'보기',bank:'보기',options:'보기',choices:'보기',segments:'보기',rules:'규칙',relation:'관계',base_word:'주어진 단어',setup:'조건',items:'문장',pairs:'보기',clues:'문제 단서',statements:'문장',claims:'설명',table:'표',source:'자료',source_sentence:'문장',source_phrase:'표현',phrase:'표현',example:'예문',incorrect:'고칠 문장',original:'원문',comparison:'비교',target:'대상',pattern:'형식',word_count:'단어 수',given_sentence:'보기',masked:'문장'};
 const PREFERRED=['korean','korean_b','definition','initial','base_word','setup','sentence','sentences','dialogue','passage','source_passage','rewritten','question','questions','conditions','words','given','provided_words','word_bank','bank','options','choices','segments','rules','relation','given_sentence','items','pairs','clues','statements','claims','table','source','source_sentence','source_phrase','phrase','example','incorrect','original','comparison','target','pattern','word_count','masked'];
 const COMPACT_LIST_KEYS=new Set(['words','given','provided_words','word_bank','bank','options']);
-const HIDDEN_CONTEXT_KEYS=new Set(['underlined','underlined_spans','underlined_by_choice','chunks','target_en','prompt_ko','passage_anchor','source_anchor','transcription_status','transcript_status','source_page']);
+const HIDDEN_CONTEXT_KEYS=new Set(['underlined','underlined_spans','chunks','target_en','prompt_ko','passage_anchor','source_anchor','transcription_status','transcript_status','source_page']);
 const MARKS=['ⓐ','ⓑ','ⓒ','ⓓ','ⓔ','ⓕ','ⓖ','ⓗ'];
 
 function hiddenContextKey(key){return HIDDEN_CONTEXT_KEYS.has(key)||/(^|_)id$/i.test(String(key||''))}
@@ -88,13 +88,6 @@ function contextHtml(question){
 }
 function answerParts(question){return Array.isArray(question?.answer)?question.answer:[]}
 function numberMark(i){return ['①','②','③','④','⑤','⑥','⑦','⑧'][i]||String(i+1)}
-function choiceUnderlines(q,i){
-  const list=q?.context?.underlined_by_choice;
-  if(!Array.isArray(list))return[];
-  const target=list[i];
-  if(Array.isArray(target))return target.map(display).filter(Boolean);
-  return target==null?[]:[display(target)].filter(Boolean);
-}
 function inputLanguage(q){return String(q?.input?.language||'mixed')}
 function inputAttrs(q,kind='text'){
   const lang=inputLanguage(q),nativeLang=lang==='ko'?'ko':lang==='en'?'en':'';
@@ -148,10 +141,10 @@ export class QuestionRenderer{
     this.bind(question);this.emit();applyBoldMarkup(this.host);return this;
   }
   controls(q){
-    if(q.form===FORMS.choice||q.form===FORMS.multi)return `<div class="choices">${q.choices.map((x,i)=>`<button type="button" class="choice" data-choice="${i+1}"><span>${numberMark(i)}</span> ${marked(x,choiceUnderlines(q,i))}</button>`).join('')}</div>`;
+    if(q.form===FORMS.choice||q.form===FORMS.multi)return `<div class="choices">${q.choices.map((x,i)=>`<button type="button" class="choice" data-choice="${i+1}"><span>${numberMark(i)}</span> ${textHtml(x)}</button>`).join('')}</div>`;
     if(q.form===FORMS.write)return `<textarea class="answer" data-write ${inputAttrs(q,'write')} placeholder="${esc(placeholder(q))}"></textarea>`;
     if(q.form===FORMS.multipart)return `<div class="structured">${answerParts(q).map((_,i)=>`<div class="part-row"><div class="row-label">${MARKS[i]||i+1}</div><input class="text-input" data-part="${i}" ${inputAttrs(q,'part')} placeholder="${esc(placeholder(q,`답 ${i+1}`))}"></div>`).join('')}</div>`;
-    if(q.form===FORMS.correction)return `<div class="structured">${answerParts(q).map((a,i)=>{parseCorrection(a);return `<div class="correction-row"><div class="row-label">${MARKS[i]||i+1}</div><input class="text-input" data-wrong="${i}" ${inputAttrs(q,'correction-wrong')} placeholder="틀린 부분"><div class="arrow">→</div><input class="text-input" data-right="${i}" ${inputAttrs(q,'correction-right')} placeholder="고친 부분"></div>`).join('')}</div>`;
+    if(q.form===FORMS.correction)return `<div class="structured">${answerParts(q).map((a,i)=>{parseCorrection(a);return `<div class="correction-row"><div class="row-label">${MARKS[i]||i+1}</div><input class="text-input" data-wrong="${i}" ${inputAttrs(q,'correction-wrong')} placeholder="틀린 부분"><div class="arrow">→</div><input class="text-input" data-right="${i}" ${inputAttrs(q,'correction-right')} placeholder="고친 부분"></div>`}).join('')}</div>`;
     if(q.form===FORMS.identifiedCorrection)return `<div class="structured">${answerParts(q).map((_,i)=>`<div class="correction-row"><input class="text-input" style="text-align:center;padding-left:4px;padding-right:4px" data-correction-label="${i}" ${inputAttrs(q,'correction-label')} placeholder="번호"><input class="text-input" data-wrong="${i}" ${inputAttrs(q,'correction-wrong')} placeholder="틀린 부분"><div class="arrow">→</div><input class="text-input" data-right="${i}" ${inputAttrs(q,'correction-right')} placeholder="고친 부분"></div>`).join('')}</div>`;
     if(q.form===FORMS.order||q.form===FORMS.chunks){const chips=Array.isArray(q.chips)?q.chips:[];return `<div class="build" data-build></div><div class="chips" data-pool>${chips.map((x,i)=>`<button type="button" class="chip" data-chip="${i}">${esc(x)}</button>`).join('')}</div>`}
     if(q.form===FORMS.blanks){const masked=String(q.context?.masked||'');const chips=Array.isArray(q.chips)?q.chips:[];return `<div class="masked">${textHtml(masked)}</div><div class="build" data-build></div><div class="chips" data-pool>${chips.map((x,i)=>`<button type="button" class="chip" data-chip="${i}">${esc(x)}</button>`).join('')}</div>`}
