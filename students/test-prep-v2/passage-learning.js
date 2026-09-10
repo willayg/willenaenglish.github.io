@@ -1,6 +1,6 @@
-import {QuestionRenderer} from './question-renderer.js';
-import {gradeQuestion} from './question-grader.js';
-import {recordAttempt,startSession,completeSession,trackingState} from './tracking-client.js';
+import {QuestionRenderer} from './question-renderer.js?v=2.20.6';
+import {gradeQuestion} from '../shared/question-grader.js?v=2.1.2';
+import {recordAttempt,startSession,completeSession,trackingState} from './tracking-client.js?v=2.17a';
 import {loadPassages,passageQuestion} from './passage-source.js?v=2.18.0';
 
 const TRACK='https://fiieuiktlsivwfgyivai.supabase.co';
