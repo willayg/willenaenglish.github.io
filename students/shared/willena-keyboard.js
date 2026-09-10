@@ -8,6 +8,8 @@ let repeatDelay=null;
 let repeatTimer=null;
 let repeatFastTimer=null;
 let detachWatch=0;
+let unblockFrame=0;
+let blockedSubmitTargets=[];
 
 const ROWS=[
   ['q','w','e','r','t','y','u','i','o','p'],
@@ -24,6 +26,29 @@ function isAppField(el){return isRendererField(el)&&language(el)!=='ko'&&languag
 function isVisible(el){return !!el&&!el.disabled&&el.isConnected&&el.offsetParent!==null}
 function answerScope(){return active?.closest?.('[data-answer]')||null}
 function currentFields(){const scope=answerScope();return scope?qa('[data-willena-text-entry]',scope).filter(isVisible):[]}
+
+function restoreSubmitTargets(){
+  cancelAnimationFrame(unblockFrame);unblockFrame=0;
+  for(const item of blockedSubmitTargets){
+    if(item.el?.isConnected)item.el.style.pointerEvents=item.pointerEvents;
+  }
+  blockedSubmitTargets=[];
+}
+function blockSubmitTargets(){
+  restoreSubmitTargets();
+  if(!submitSelector)return;
+  for(const el of qa(submitSelector)){
+    if(!el?.style)continue;
+    blockedSubmitTargets.push({el,pointerEvents:el.style.pointerEvents});
+    el.style.pointerEvents='none';
+  }
+}
+function releaseSubmitTargetsAfterTap(){
+  cancelAnimationFrame(unblockFrame);
+  unblockFrame=requestAnimationFrame(()=>{
+    unblockFrame=requestAnimationFrame(()=>restoreSubmitTargets());
+  });
+}
 
 function ensureStyles(){
   if(q('#willenaSharedKeyboardStyles'))return;
@@ -220,6 +245,7 @@ function ensureKeyboard(){
     const symbolBtn=e.target.closest('[data-symbol]');
     if(!keyBtn&&!symbolBtn)return;
     e.preventDefault();
+    e.stopPropagation();
     if(symbolBtn){
       haptic('symbol');
       const symbol=symbolBtn.dataset.symbol||'';
@@ -242,6 +268,7 @@ function ensureKeyboard(){
     stopRepeat();
     const b=e.target.closest?.('[data-key]');
     if(b)b.classList.remove('is-pressed');
+    e.stopPropagation();
   };
   keyboard.addEventListener('pointerup',end);
   keyboard.addEventListener('pointercancel',end);
@@ -280,6 +307,7 @@ function showFor(el){
   prepareField(el);
   keyboard.hidden=false;
   document.body.classList.add('willena-kb-open');
+  blockSubmitTargets();
   updateEnter();
   setSymbolPanel(el.dataset.willenaTextEntry==='correction-label');
   keepVisible();
@@ -331,6 +359,7 @@ export function hideWillenaKeyboard(){
     setSymbolPanel(false);
   }
   document.body.classList.remove('willena-kb-open');
+  releaseSubmitTargetsAfterTap();
 }
 
 export function installWillenaKeyboard({root=document,submitSelector:selector='',onSubmit=null}={}){
@@ -354,6 +383,7 @@ export function uninstallWillenaKeyboard(){
     installedRoot.removeEventListener('keydown',onKeyDown,true);
   }
   hideWillenaKeyboard();
+  restoreSubmitTargets();
   installedRoot=null;
   submitSelector='';
   submitHandler=null;
