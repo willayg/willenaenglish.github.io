@@ -3,7 +3,8 @@ import {adaptStored,isAuthoredWritten,FORMS} from './question-model.js';
 const API='https://gxwfsqxyuufqtitspfqg.supabase.co';
 const KEY=['sb_publishable_','G-FYhHfDL4OGdL892gY1Zg_','epdbEeqO'].join('');
 const HEAD={apikey:KEY,Authorization:`Bearer ${KEY}`};
-const FIELDS='id,source_id,source_question_number,source_page,section,question_type,prompt_text,context,choices,correct_answer,targets,answer_mode,context_type,difficulty,student_source_label,content_status,metadata,book_id,unit_id,replacement_needed';
+const FIELDS='id,source_id,source_question_number,source_page,section,question_type,prompt_text,context,choices,correct_answer,targets,answer_mode,context_type,difficulty,student_source_label,content_status,metadata,book_id,unit_id,replacement_needed,qa_status';
+const TRUSTED_QA=new Set(['published','answer_key_verified','verified','reviewed']);
 const idCache=new Map();
 const rowCache=new Map();
 const bookCache=new Map();
@@ -60,10 +61,11 @@ async function rawRows(unitId,extra=''){
   const promise=paged(path).then(rows=>rows.filter(x=>x.replacement_needed!==true)).catch(e=>{rowCache.delete(key);throw e});
   rowCache.set(key,promise);return promise;
 }
-export async function loadStoredSkill(unitId,section){
+export async function loadStoredSkill(unitId,section,{trustedOnly=false}={}){
   const [rows,unit]=await Promise.all([rawRows(unitId,`&section=eq.${encodeURIComponent(section)}`),resolveUnit(unitId)]);
   const external=String(unit?.unit_type||'')==='external_passage';
-  return rows.filter(row=>!isAuthoredWritten(row)).map(adaptStored).filter(q=>q.form===FORMS.choice||q.form===FORMS.multi||(external&&[FORMS.write,FORMS.multipart,FORMS.correction,FORMS.identifiedCorrection].includes(q.form)));
+  const eligible=trustedOnly?rows.filter(row=>TRUSTED_QA.has(String(row?.qa_status||'').toLowerCase())):rows;
+  return eligible.filter(row=>!isAuthoredWritten(row)).map(adaptStored).filter(q=>q.form===FORMS.choice||q.form===FORMS.multi||(external&&[FORMS.write,FORMS.multipart,FORMS.correction,FORMS.identifiedCorrection].includes(q.form)));
 }
 export async function loadStoredWritten(unitId){
   const rows=await rawRows(unitId,'&answer_mode=eq.text');
