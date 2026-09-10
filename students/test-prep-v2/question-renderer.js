@@ -115,6 +115,22 @@ function modelAnswerHtml(q,answers){
   if(q?.form===FORMS.multipart||q?.form===FORMS.correction||q?.form===FORMS.identifiedCorrection)return `<div class="model-list">${a.map((x,i)=>`<div><b>${MARKS[i]||i+1}</b><span>${textHtml(x)}</span></div>`).join('')}</div>`;
   return textHtml(a.join(' / '));
 }
+function replaceInlineBoldInTextNode(node){
+  const value=node.nodeValue||'';if(!value.includes('**'))return;
+  const re=/\*\*([^*]+?)\*\*/g;let m,last=0,changed=false;const frag=document.createDocumentFragment();
+  while((m=re.exec(value))){changed=true;if(m.index>last)frag.appendChild(document.createTextNode(value.slice(last,m.index)));const strong=document.createElement('strong');strong.textContent=m[1];frag.appendChild(strong);last=re.lastIndex}
+  if(!changed)return;if(last<value.length)frag.appendChild(document.createTextNode(value.slice(last)));node.replaceWith(frag);
+}
+function fixSplitBoldMarkers(root){
+  for(const el of [...root.querySelectorAll('.u')]){
+    const prev=el.previousSibling,next=el.nextSibling;if(prev?.nodeType!==Node.TEXT_NODE||next?.nodeType!==Node.TEXT_NODE)continue;
+    const left=prev.nodeValue||'',right=next.nodeValue||'';if(!left.endsWith('**')||!right.startsWith('**'))continue;
+    prev.nodeValue=left.slice(0,-2);next.nodeValue=right.slice(2);const strong=document.createElement('strong');el.replaceWith(strong);strong.appendChild(el);
+  }
+}
+function applyBoldMarkup(root){
+  if(!root)return;fixSplitBoldMarkers(root);const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT),nodes=[];while(walker.nextNode())nodes.push(walker.currentNode);nodes.forEach(replaceInlineBoldInTextNode);
+}
 
 export class QuestionRenderer{
   constructor(host){this.host=host;this.question=null;this.state={};this.disabled=false;this.onChange=null}
@@ -122,7 +138,7 @@ export class QuestionRenderer{
     this.question=question;this.state={selected:new Set(),order:[],blank:[]};this.disabled=false;this.onChange=typeof onChange==='function'?onChange:null;
     const controls=this.controls(question);
     this.host.innerHTML=`<div class="prompt">${promptHtml(question)}</div><div class="context">${contextHtml(question)}</div>${guidanceHtml(question)}<div data-answer>${controls}</div><div class="feedback" data-feedback></div>`;
-    this.bind(question);this.emit();return this;
+    this.bind(question);this.emit();applyBoldMarkup(this.host);return this;
   }
   controls(q){
     if(q.form===FORMS.choice||q.form===FORMS.multi)return `<div class="choices">${q.choices.map((x,i)=>`<button type="button" class="choice" data-choice="${i+1}"><span>${numberMark(i)}</span> ${textHtml(x)}</button>`).join('')}</div>`;
@@ -182,6 +198,7 @@ export class QuestionRenderer{
       const right=new Set((Array.isArray(this.question.answer)?this.question.answer:[]).map(String)),selected=this.state.selected;
       this.host.querySelectorAll('[data-choice]').forEach(btn=>{const k=String(btn.dataset.choice);btn.classList.remove('selected');if(right.has(k))btn.classList.add('correct');else if(selected.has(k))btn.classList.add('wrong')});
     }
+    applyBoldMarkup(this.host);
   }
   setDisabled(disabled=true){this.disabled=!!disabled;this.host.querySelectorAll('button,input,textarea').forEach(x=>x.disabled=this.disabled);return this}
 }
