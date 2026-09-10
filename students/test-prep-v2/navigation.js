@@ -1,4 +1,4 @@
-import {confirmSessionExit,setSessionProtection} from './session-protection.js?v=1.1.0';
+import {confirmSessionExit,setSessionProtection} from './session-protection.js?v=1.2.0';
 
 const APP='willena-test-prep-v2';
 const VIEWS=new Set(['home','plan','lesson','practice','result','review','mock']);
@@ -23,10 +23,10 @@ function valid(route){
 function packed(route){return{app:APP,route:normalize(route)}}
 function fromHistory(state){return state?.app===APP&&valid(state.route)?normalize(state.route):null}
 function same(a,b){return JSON.stringify(normalize(a))===JSON.stringify(normalize(b))}
-function allowed(prev,next,source){
-  if(prev?.view==='practice'&&next?.view!=='practice'&&!confirmSessionExit())return false;
+async function allowed(prev,next,source){
+  if(prev?.view==='practice'&&next?.view!=='practice'&&!await confirmSessionExit())return false;
   if(!navigationGuard)return true;
-  try{return navigationGuard(prev,next,{source})!==false}
+  try{return await navigationGuard(prev,next,{source})!==false}
   catch(e){console.warn('[test-prep-v2 navigation] guard failed',e);return true}
 }
 function notifyBefore(prev,next,source){
@@ -35,10 +35,10 @@ function notifyBefore(prev,next,source){
 function renderAccepted(next,source,prev){
   current=next;setSessionProtection(next.view==='practice');notifyBefore(prev,next,source);return renderRoute?.(next,{source,previous:prev});
 }
-function onPop(event){
+async function onPop(event){
   const next=fromHistory(event.state);if(!next)return;
   const prev=current;
-  if(!allowed(prev,next,'popstate')){history.go(1);return}
+  if(!await allowed(prev,next,'popstate')){history.forward();return}
   renderAccepted(next,'popstate',prev);
 }
 
@@ -50,18 +50,18 @@ export function initNavigation({render,beforeRouteChange,initialRoute={view:'hom
   if(!route){route=normalize(initialRoute);history.replaceState(packed(route),'',location.href)}
   current=route;setSessionProtection(route.view==='practice');window.addEventListener('popstate',onPop);return route;
 }
-export function navigate(route){
+export async function navigate(route){
   const next=normalize(route);if(!valid(next))throw new Error('Invalid Test Prep route.');
-  if(same(current,next))return Promise.resolve(current);
-  const prev=current;if(!allowed(prev,next,'push'))return Promise.resolve(prev);
-  history.pushState(packed(next),'',location.href);return Promise.resolve(renderAccepted(next,'push',prev));
+  if(same(current,next))return current;
+  const prev=current;if(!await allowed(prev,next,'push'))return prev;
+  history.pushState(packed(next),'',location.href);return renderAccepted(next,'push',prev);
 }
-export function replaceRoute(route,{render=true}={}){
+export async function replaceRoute(route,{render=true}={}){
   const next=normalize(route);if(!valid(next))throw new Error('Invalid Test Prep route.');
-  const prev=current;if(!allowed(prev,next,'replace'))return Promise.resolve(prev);
+  const prev=current;if(!await allowed(prev,next,'replace'))return prev;
   history.replaceState(packed(next),'',location.href);
-  if(!render){current=next;setSessionProtection(next.view==='practice');return Promise.resolve(next)}
-  return Promise.resolve(renderAccepted(next,'replace',prev));
+  if(!render){current=next;setSessionProtection(next.view==='practice');return next}
+  return renderAccepted(next,'replace',prev);
 }
 export function back(){history.back()}
 export function currentRoute(){return current?{...current}:{view:'home'}}
