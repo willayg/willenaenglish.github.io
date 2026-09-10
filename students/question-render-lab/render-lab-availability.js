@@ -45,7 +45,7 @@ async function setUsable(q,next,button){
   }catch(e){console.error('[render lab availability]',e);button.textContent=old;button.disabled=false;toast('Could not update availability',true)}
 }
 
-function issueLabel(type){return ({answer_choices_stored_as_passage_target:'Passage target missing',whole_choice_spans:'Whole-choice underline',single_target:'Single target',per_choice_targets:'Per-choice targets',missing_underline_metadata:'Missing underline data',multi_target_other:'Multiple-target oddity',underlined_by_choice:'Explicit per-choice targets'})[type]||type||''}
+function issueLabel(type){return ({answer_choices_stored_as_passage_target:'Passage target missing',malformed_missing_source_target:'Malformed / source target missing',whole_choice_spans:'Whole-choice underline',single_target:'Single target',per_choice_targets:'Per-choice targets',missing_underline_metadata:'Missing underline data',multi_target_other:'Multiple-target oddity',underlined_by_choice:'Explicit per-choice targets'})[type]||type||''}
 function updateAvailability(q){
   const bar=document.querySelector('#card .rl-flag-bar');if(!bar)return;
   bar.querySelector('.rl-usable-btn')?.remove();bar.querySelector('.rl-issue-pill')?.remove();
