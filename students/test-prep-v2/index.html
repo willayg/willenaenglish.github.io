@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>Willena Test Prep v2.25.36</title>
+<title>Willena Test Prep v2.25.37</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -33,7 +33,7 @@ html,body{width:100%;max-width:100%;overflow-x:hidden}
   <div class="header-inner">
     <div class="header-profile">
       <div class="student-name" id="user">Student</div>
-      <span class="version-pill">TEST PREP · V2.25.36</span>
+      <span class="version-pill">TEST PREP · V2.25.37</span>
     </div>
     <div class="header-brand">
       <div class="header-title">Willena Test Prep</div>
@@ -57,14 +57,14 @@ html,body{width:100%;max-width:100%;overflow-x:hidden}
 import {QuestionRenderer} from './question-renderer.js?v=2.20.6';
 import {trackingState} from './tracking-client.js?v=2.17a';
 import {currentRoute} from './navigation.js?v=2.20.0';
-import {installWillenaKeyboard} from '../shared/willena-keyboard.js?v=1.0.0';
+import {installWillenaKeyboard} from '../shared/willena-keyboard.js?v=1.1.0';
 import {installQuestionFlags} from '../shared/question-flags.js?v=1.0.0';
 installWillenaKeyboard({submitSelector:'#bottom button.primary,.vp-next,.pw-question-actions .pw-primary'});
 installQuestionFlags({
   Renderer:QuestionRenderer,
   contextProvider:()=>{
     const t=trackingState(),r=currentRoute?.()||{};
-    return{studentId:t.user?.id||null,planId:r.planId||t.plan?.id||null,lesson:r.lesson||t.lesson||null,practiceType:r.practice||t.practice||null,reviewMode:r.view==='review',appRevision:'2.25.36'};
+    return{studentId:t.user?.id||null,planId:r.planId||t.plan?.id||null,lesson:r.lesson||t.lesson||null,practiceType:r.practice||t.practice||null,reviewMode:r.view==='review',appRevision:'2.25.37'};
   }
 });
 </script>
