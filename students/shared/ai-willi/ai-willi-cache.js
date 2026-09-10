@@ -61,28 +61,29 @@ function decorateRecord(record,mode){
 
 export async function getCachedAiWilliExplanation({questionId,mode,response,rootExplanationId=null,version=AI_WILLI_EXPLANATION_VERSION}={}){
   if(!questionId||!mode)return null;
+  const isVocab=mode==='vocab';
   const rows=await contentDbRpc('get_test_prep_ai_explanation',{
     p_question_id:questionId,
     p_mode:mode,
-    p_answer_fingerprint:answerFingerprint(response),
+    p_answer_fingerprint:isVocab?'':answerFingerprint(response),
     p_explanation_version:version,
-    p_root_explanation_id:rootExplanationId
+    p_root_explanation_id:isVocab?null:rootExplanationId
   });
   return decorateRecord(Array.isArray(rows)?rows[0]||null:null,mode);
 }
 
 export async function saveAiWilliExplanation({questionId,section,mode,response,text,vocabulary=[],rootExplanationId=null,version=AI_WILLI_EXPLANATION_VERSION}={}){
   if(!questionId||!mode||!String(text||'').trim())return null;
-  const vocab=Array.isArray(vocabulary)&&vocabulary.length?vocabulary:vocabularyFromText(text);
+  const vocab=Array.isArray(vocabulary)&&vocabulary.length?vocabulary:vocabularyFromText(text),isVocab=mode==='vocab';
   const rows=await contentDbRpc('save_test_prep_ai_explanation',{
     p_question_id:questionId,
     p_section:String(section||''),
     p_mode:mode,
-    p_answer_fingerprint:answerFingerprint(response),
+    p_answer_fingerprint:isVocab?'':answerFingerprint(response),
     p_explanation_version:version,
     p_explanation_text:String(text).trim(),
-    p_root_explanation_id:rootExplanationId,
-    p_vocabulary:mode==='vocab'?vocab:[]
+    p_root_explanation_id:isVocab?null:rootExplanationId,
+    p_vocabulary:isVocab?vocab:[]
   });
   return decorateRecord(Array.isArray(rows)?rows[0]||null:null,mode);
 }
