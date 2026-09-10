@@ -108,7 +108,7 @@ function showQuestion(index){
   const current=ensureQuestionPanel(exam.index);
   for(const panel of exam.panels.values())panel.hidden=panel!==current;
   updateExamChrome();
-  exam.host.scrollTo?.({top:0,behavior:'instant'});
+  exam.host.scrollTo?.({top:0,behavior:'auto'});
 }
 function submissionSnapshot(reason){
   const exam=activeExam;if(!exam)return null;
@@ -127,7 +127,7 @@ function submissionSnapshot(reason){
 function renderSubmitted(snapshot){
   const exam=activeExam;if(!exam)return;
   const timedOut=snapshot?.reason==='timeout';
-  exam.host.innerHTML=`<div class="mock-preflight"><div class="mock-summary-card mock-finished-card"><span class="mock-summary-eyebrow">${timedOut?'시간 종료':'답안 제출'}</span><h2>${timedOut?'45분이 종료되었습니다.':'답안을 제출했습니다.'}</h2><p>${snapshot.answered} / ${snapshot.total}문항 답변</p><div class="mock-summary-note">Stage 2에서는 시험 진행 화면까지만 연결되어 있습니다. 채점 · 통계 · 오답 저장은 다음 단계에서 이 제출 데이터에 연결합니다.</div><button class="review-primary" type="button" data-mock-finished-back>시험 범위로 돌아가기</button></div></div>`;
+  exam.host.innerHTML=`<div class="mock-preflight"><div class="mock-summary-card mock-finished-card"><span class="mock-summary-eyebrow">${timedOut?'시간 종료':'답안 제출'}</span><h2>${timedOut?'45분이 종료되었습니다.':'답안을 제출했습니다.'}</h2><p>${snapshot.answered} / ${snapshot.total}문항 답변</p><div class="mock-summary-note">채점 · 통계 · 오답 저장은 다음 단계에서 이 제출 데이터에 연결합니다.</div><button class="review-primary" type="button" data-mock-finished-back>시험 범위로 돌아가기</button></div></div>`;
   exam.host.querySelector('[data-mock-finished-back]').onclick=exam.onBack;
 }
 function finishExam(reason='manual'){
@@ -155,8 +155,8 @@ function startExam({host,plan,paper,onBack}){
 
 export async function renderMockTestPreflight({host,plan,studentId=null,onBack=()=>{}}={}){
   if(!host||!plan?.id)return null;
-  const token=++activeToken;
   if(activeExam)stopMockTest();
+  const token=++activeToken;
   host.innerHTML='<div class="loading">실전모의고사 시험지를 구성하는 중...</div>';
   try{
     const paper=await buildMockTestPaper({plan,studentId,seed:getSeed(plan.id)});
