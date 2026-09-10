@@ -38,9 +38,7 @@ function renderAccepted(next,source,prev){
 function onPop(event){
   const next=fromHistory(event.state);if(!next)return;
   const prev=current;
-  if(!allowed(prev,next,'popstate')){
-    history.pushState(packed(prev||{view:'home'}),'',location.href);return;
-  }
+  if(!allowed(prev,next,'popstate')){history.go(1);return}
   renderAccepted(next,'popstate',prev);
 }
 
