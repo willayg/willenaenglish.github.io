@@ -25,6 +25,7 @@ The test must measure actual English ability across skills, avoid wasting time o
 9. Existing assessment content may be reused where it is good enough, but the old application architecture is not the foundation of v2.
 10. Face-to-face mode should feel fast and natural on a tablet in a real consultation.
 11. Renderer renders. Grader grades. Selector selects. Calculator calculates. Session stores. App orchestrates. No module may silently become a second owner of another module's responsibility.
+12. Level Test v2 must look and feel like the current visitor level test. The rebuild is architectural and assessment-focused, not a visual redesign.
 
 ## 3. Test modes
 
@@ -719,6 +720,55 @@ Additional files are allowed when they represent a genuinely distinct responsibi
 
 Visual design and assessment logic must remain separate. CSS classes must not encode scoring/calculation behavior.
 
+### 18.1 Visual parity with the current level test
+
+Level Test v2 is **not** a visual redesign. Its default appearance and interaction feel must deliberately match the current visitor/free level test as closely as practical.
+
+Before building new v2 styling, the implementation must inspect and copy the current level-test styling that produces the existing look. This includes all styles that materially affect the user-visible experience, including styles currently split across the old level-test CSS files and override files. The fact that the old application accumulated styles in multiple files does not mean v2 should import that patch stack forever; instead, the effective styles should be copied/consolidated into the clean v2 responsibility-based CSS structure.
+
+The visual-parity requirement includes, where applicable:
+
+- page background and overall spacing;
+- Willena logo size/placement and branding treatment;
+- header appearance;
+- typography, font sizes, weights and line heights;
+- card shapes, borders, radii and shadows;
+- pink/cyan/white color treatment;
+- setup/welcome screen appearance;
+- button sizes, shapes, states and spacing;
+- question-card layout;
+- answer-choice presentation and selected states;
+- progress indicators;
+- listening/audio controls;
+- reading passage layout;
+- loading and screen-transition feel;
+- language controls;
+- mobile/tablet responsive behavior;
+- completion-screen styling;
+- other visible details that make the current test feel like the current Willena level test.
+
+The new Speaking Assessment and parent-phone screen should use the same visual language so that they feel like native parts of the existing level test rather than a separate admin application.
+
+Where v2 introduces a genuinely new interaction with no old equivalent, use the current level test's existing design language to extend it. Do not introduce a new design system merely because the architecture is new.
+
+Visual parity should be checked side-by-side during implementation. Obvious differences in spacing, typography, colors, controls, card treatment or overall feel should be treated as regressions unless the difference is required by a new v2 function.
+
+### 18.2 Copy styles, not architectural debt
+
+The goal is to preserve the current rendered appearance while cleaning up ownership.
+
+Therefore:
+
+- copy/reproduce the effective current styles into v2;
+- preserve the current visual output;
+- reorganize those styles into the v2 CSS ownership structure;
+- do not keep a dependency on the old app's entire CSS patch chain merely to achieve parity;
+- do not redesign components during the migration unless explicitly requested;
+- do not make aesthetic "improvements" by default;
+- if an old override is necessary to reproduce the current appearance, fold its effective rule into the appropriate v2 stylesheet rather than creating another override file.
+
+In short: **new architecture underneath, same Level Test look and feel on top.**
+
 ## 19. Shared platform integration
 
 Before implementing cross-app concerns, check `students/shared/` and the repository architecture rules.
@@ -759,9 +809,11 @@ Required elements:
 
 The screen should not pressure the teacher to complete every row or prompt.
 
+The Speaking stage must visually inherit the same typography, colors, card treatment, button language, spacing and overall visual tone as the current level test.
+
 ## 22. UI requirements — computerized stage
 
-Student-facing UI should be simple, large, calm and consistent.
+Student-facing UI should preserve the current level test's look and feel while using the new v2 renderer and adaptive architecture.
 
 Requirements:
 
@@ -773,7 +825,8 @@ Requirements:
 - clean section/skill transitions where helpful;
 - safe refresh/resume behavior;
 - deliberate exit protection during an active assessment;
-- no teacher-only scoring/recommendation controls visible to the student.
+- no teacher-only scoring/recommendation controls visible to the student;
+- question presentation should visually match the current level test unless a specific question type requires a new layout.
 
 ## 23. Completion behavior
 
@@ -805,7 +858,8 @@ V2 may reuse:
 - proven audio/TTS techniques;
 - reporting concepts worth preserving;
 - existing Supabase content;
-- useful interaction behavior from the current visitor intake/start experience where it remains appropriate.
+- useful interaction behavior from the current visitor intake/start experience where it remains appropriate;
+- the complete effective visual styling and interaction language of the current level test.
 
 V2 should not inherit by default:
 
@@ -816,6 +870,8 @@ V2 should not inherit by default:
 - assumptions that every skill fits one generic multiple-choice item model;
 - fixed question counts as the primary stopping mechanism;
 - weak Reading/Listening item-selection behavior.
+
+The old app is the visual reference and a source of proven behavior/content, not the architectural chassis.
 
 ## 25. Validation plan
 
@@ -831,7 +887,8 @@ For each pilot assessment, review:
 - obvious too-easy or too-hard items;
 - number of questions required;
 - whether the teacher felt constrained by the Speaking interface;
-- whether the final placement matches teacher judgment after seeing the student perform.
+- whether the final placement matches teacher judgment after seeing the student perform;
+- side-by-side visual parity with the current visitor level test on phone and tablet layouts.
 
 The diagnostics mode should make it possible to inspect these disagreements and the exact adaptive path rather than hiding them.
 
@@ -841,6 +898,10 @@ The following are considered agreed requirements unless deliberately changed lat
 
 - build a clean Level Test v2 rather than bolt major new behavior onto the old visitor test;
 - keep the initial visitor/start experience familiar to the current visitor level test;
+- Level Test v2 must visually look and feel like the current visitor/free level test rather than introducing a redesign;
+- current effective level-test styles are to be copied/reproduced in v2 and reorganized into clean responsibility-based CSS files;
+- new v2 screens such as parent phone and teacher Speaking assessment must extend the same visual language;
+- visual parity should be checked side-by-side and unrequested aesthetic changes are not part of the rebuild;
 - collect a parent phone number during visitor intake;
 - phone/grade/background data never influences ability unless a future policy explicitly changes this;
 - Speaking interview is an assessed skill;
@@ -900,6 +961,7 @@ These rules are intended to stop Level Test v2 from degrading into another patch
 13. Debug/diagnostic code observes canonical decisions; it never changes scoring or selection behavior.
 14. Database schema details terminate at source/model boundaries and do not leak throughout the renderer/calculation/UI.
 15. Assessment calculations terminate at the calculation engine and do not leak into screen controllers or CSS.
+16. Visual parity with the current level test is a product requirement; architecture cleanup must not be used as an excuse to redesign the interface.
 
 Short form: **Renderer renders. Grader grades. Selector selects. Calculator calculates. Session stores. App orchestrates.**
 
@@ -908,3 +970,5 @@ Short form: **Renderer renders. Grader grades. Selector selects. Calculator calc
 Level Test v2 succeeds when a teacher can quickly identify a visitor, capture the parent's phone number, interview an unfamiliar student, use flexible professional judgment, hand the device to the student at an appropriate difficulty, and receive a trustworthy skill profile without forcing the student through large amounts of obviously easy or irrelevant material.
 
 The system should feel like an assessment tool built around a teacher's expertise, with adaptive software extending that expertise rather than replacing it. Its codebase should also remain understandable enough that changing question rendering, selection rules, calculation rules or styling later does not require editing unrelated systems.
+
+Visually, a student or parent familiar with the current level test should immediately recognize v2 as the same Willena level-test experience. The major differences should be better assessment behavior and the new teacher-led Speaking workflow, not a new aesthetic.
