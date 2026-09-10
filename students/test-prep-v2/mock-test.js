@@ -1,4 +1,4 @@
-import {buildMockTestPaper,MOCK_TEST_BLUEPRINT,MOCK_TEST_MINUTES,MOCK_TEST_TOTAL} from './mock-test-source.js?v=1.0.0';
+import {buildMockTestPaper,MOCK_TEST_BLUEPRINT,MOCK_TEST_MINUTES,MOCK_TEST_TOTAL} from './mock-test-source.js?v=1.0.1';
 
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const LABELS={vocabulary:'어휘',communication:'대화',grammar:'문법',reading:'독해',constructed_response:'서술형'};
@@ -41,7 +41,7 @@ function diagnosticsHtml(paper){
   const messages=[];
   if(paper.writtenFallback?.used)messages.push(`서술형 부족분 ${paper.writtenFallback.used}문항을 객관식으로 대체했습니다.`);
   if(Object.keys(paper.shortages||{}).length)messages.push(`부족: ${Object.entries(paper.shortages).map(([k,v])=>`${LABELS[k]||k} ${v}`).join(' · ')}`);
-  if(paper.loadErrors?.length)messages.push(`불러오기 실패: ${paper.loadErrors.map(x=>x.lesson||'범위').join(', ')}`);
+  if(paper.loadErrors?.length)messages.push(`불러오기 실패: ${paper.loadErrors.map(x=>`${x.lesson||'범위'}${x.bucket&&x.bucket!=='scope'?` ${LABELS[x.bucket]||x.bucket}`:''}`).join(', ')}`);
   if(!messages.length)return'<div class="pill" style="margin-top:10px">구성 조건 충족 ✓</div>';
   return`<div class="statline" style="margin-top:10px">${messages.map(esc).join('<br>')}</div>`;
 }
@@ -61,11 +61,16 @@ export async function renderMockTestPreflight({host,plan,studentId=null,onBack=(
     const paper=await buildMockTestPaper({plan,studentId,seed});
     if(token!==activeToken)return null;
     previewPaper=paper;
-    host.innerHTML=`<button class="back" type="button" data-mock-back>← ${esc(plan.book_label||'시험 범위')}</button><div class="heading"><div><h2>실전모의고사</h2><p>${MOCK_TEST_TOTAL}문항 · ${MOCK_TEST_MINUTES}분 · 제출 전 피드백 없음</p></div></div><div class="wrong-card" style="cursor:default"><span class="wrong-copy"><b>${paper.ready?'시험지 구성 완료':'시험지 구성을 확인해 주세요'}</b><small>${esc(plan.exam_name||'현재 시험 범위')}</small></span>${blueprintHtml(paper)}${diagnosticsHtml(paper)}</div>${questionList(paper)}<div class="review-actions" style="margin-top:18px"><button class="review-secondary" type="button" data-mock-regenerate>시험지 다시 구성</button><button class="review-primary" type="button" data-mock-start ${paper.ready?'':'disabled'}>시험 시작 · Stage 2에서 연결</button></div>`;
+    host.innerHTML=`<button class="back" type="button" data-mock-back>← ${esc(plan.book_label||'시험 범위')}</button><div class="heading"><div><h2>실전모의고사</h2><p>${MOCK_TEST_TOTAL}문항 · ${MOCK_TEST_MINUTES}분 · 제출 전 피드백 없음</p></div></div><div class="wrong-card" style="cursor:default"><span class="wrong-copy"><b>${paper.ready?'시험지 구성 완료':'시험지 구성을 확인해 주세요'}</b><small>${esc(plan.exam_name||'현재 시험 범위')}</small></span>${blueprintHtml(paper)}${diagnosticsHtml(paper)}</div>${questionList(paper)}<div class="review-actions" style="margin-top:18px"><button class="review-secondary" type="button" data-mock-regenerate>시험지 다시 구성</button><button class="review-primary" type="button" data-mock-start disabled>시험 시작 · Stage 2에서 연결</button></div>`;
     host.querySelector('[data-mock-back]').onclick=onBack;
     host.querySelector('[data-mock-regenerate]').onclick=async()=>{
       host.innerHTML='<div class="loading">새 시험지를 구성하는 중...</div>';
-      try{await render(resetSeed(plan.id))}catch(e){if(token===activeToken)host.innerHTML=`<button class="back" type="button" data-mock-back>← 시험 범위</button><div class="error">${esc(e.message||'시험지를 구성하지 못했습니다.')}</div>`}
+      try{await render(resetSeed(plan.id))}
+      catch(e){
+        if(token!==activeToken)return;
+        host.innerHTML=`<button class="back" type="button" data-mock-back>← 시험 범위</button><div class="error">${esc(e.message||'시험지를 구성하지 못했습니다.')}</div>`;
+        host.querySelector('[data-mock-back]').onclick=onBack;
+      }
     };
     return paper;
   };
