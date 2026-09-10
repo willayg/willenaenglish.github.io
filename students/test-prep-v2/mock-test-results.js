@@ -1,6 +1,6 @@
 import {QuestionRenderer} from './question-renderer.js';
 import {FORMS} from './question-model.js';
-import {mountAiWilliHelper} from '../shared/ai-willi/ai-willi-ui.js?v=1.8.0';
+import {mountAiWilliHelper} from '../shared/ai-willi.js?v=1.0.0';
 
 const LABELS={vocabulary:'어휘',communication:'대화',grammar:'문법',reading:'독해',constructed_response:'서술형'};
 const ORDER=['vocabulary','communication','grammar','reading','constructed_response'];
