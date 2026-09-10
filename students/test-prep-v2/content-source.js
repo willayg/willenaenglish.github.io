@@ -1,8 +1,6 @@
 import {adaptStored,isAuthoredWritten,FORMS} from './question-model.js';
+import {contentDbGet} from '../shared/content-db.js?v=1.0.0';
 
-const API='https://gxwfsqxyuufqtitspfqg.supabase.co';
-const KEY=['sb_publishable_','G-FYhHfDL4OGdL892gY1Zg_','epdbEeqO'].join('');
-const HEAD={apikey:KEY,Authorization:`Bearer ${KEY}`};
 const FIELDS='id,source_id,source_question_number,source_page,section,question_type,prompt_text,context,choices,correct_answer,targets,answer_mode,context_type,difficulty,student_source_label,content_status,metadata,book_id,unit_id,replacement_needed,qa_status';
 const TRUSTED_QA=new Set(['published','answer_key_verified','verified','reviewed']);
 const TEXT_FORMS=new Set([FORMS.write,FORMS.multipart,FORMS.correction,FORMS.identifiedCorrection]);
@@ -11,14 +9,7 @@ const rowCache=new Map();
 const bookCache=new Map();
 const unitCache=new Map();
 
-async function get(path,range){
-  const headers={...HEAD};if(range)headers.Range=range;
-  const r=await fetch(API+path,{headers,cache:'no-store'});if(!r.ok)throw new Error(await r.text());return r.json();
-}
-export async function contentDbRpc(name,body={}){
-  const r=await fetch(`${API}/rest/v1/rpc/${encodeURIComponent(name)}`,{method:'POST',headers:{...HEAD,'Content-Type':'application/json'},body:JSON.stringify(body),cache:'no-store'});
-  if(!r.ok)throw new Error(await r.text());return r.json();
-}
+async function get(path,range){return contentDbGet(path,{range})}
 async function paged(path){
   const out=[];
   for(let start=0;start<10000;start+=1000){const rows=await get(path,`${start}-${start+999}`);out.push(...rows);if(rows.length<1000)break}
