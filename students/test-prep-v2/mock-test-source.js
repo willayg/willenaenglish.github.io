@@ -14,6 +14,7 @@ export const MOCK_TEST_TOTAL=25;
 export const MOCK_TEST_MINUTES=45;
 
 const OBJECTIVE_BUCKETS=['vocabulary','communication','grammar','reading'];
+const SECTION_ORDER=[...OBJECTIVE_BUCKETS,'constructed_response'];
 const LABELS={
   vocabulary:'어휘',
   communication:'대화',
@@ -87,6 +88,9 @@ function countsByBucket(entries){
   for(const e of entries||[])if(Object.hasOwn(out,e.bucket))out[e.bucket]++;
   return out;
 }
+function orderedPaper(entries){
+  return SECTION_ORDER.flatMap(bucket=>entries.filter(e=>e.bucket===bucket));
+}
 
 export async function buildMockTestPaper({plan,studentId=null,seed=null}={}){
   if(!plan?.id)throw new Error('MOCK_TEST_PLAN_REQUIRED');
@@ -142,17 +146,17 @@ export async function buildMockTestPaper({plan,studentId=null,seed=null}={}){
   const objectiveShortage=Object.values(shortage).reduce((a,b)=>a+b,0);
   const unresolvedWritten=Math.max(0,writtenFallbackNeeded-writtenFallbackUsed);
   const ready=selected.length===MOCK_TEST_TOTAL&&objectiveShortage===0&&unresolvedWritten===0;
-  const mixed=stableShuffle(selected,`${paperSeed}|final-order`).map((e,index)=>({...e,number:index+1}));
+  const ordered=orderedPaper(selected).map((e,index)=>({...e,number:index+1}));
   const availability=Object.fromEntries(Object.entries(pools).map(([k,v])=>[k,v.length]));
-  const selectedCounts=countsByBucket(mixed);
+  const selectedCounts=countsByBucket(ordered);
 
   return{
-    version:'1.0.1',
+    version:'1.0.2',
     seed:paperSeed,
     planId:String(plan.id),
-    total:mixed.length,
+    total:ordered.length,
     ready,
-    questions:mixed,
+    questions:ordered,
     blueprint:{...MOCK_TEST_BLUEPRINT},
     availability,
     selectedCounts,
