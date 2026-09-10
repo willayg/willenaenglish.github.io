@@ -8,6 +8,7 @@ let repeatDelay=null;
 let repeatTimer=null;
 let repeatFastTimer=null;
 let detachWatch=0;
+let submitGesturePending=false;
 
 const ROWS=[
   ['q','w','e','r','t','y','u','i','o','p'],
@@ -182,7 +183,10 @@ function watchDetach(){
   cancelAnimationFrame(detachWatch);
   const tick=()=>{
     if(!keyboard||keyboard.hidden){detachWatch=0;return}
-    if(!active?.isConnected||active.disabled){hideWillenaKeyboard();detachWatch=0;return}
+    if(!active?.isConnected||active.disabled){
+      if(submitGesturePending){detachWatch=requestAnimationFrame(tick);return}
+      hideWillenaKeyboard();detachWatch=0;return;
+    }
     detachWatch=requestAnimationFrame(tick);
   };
   detachWatch=requestAnimationFrame(tick);
@@ -224,11 +228,13 @@ function ensureKeyboard(){
     e.preventDefault();e.stopImmediatePropagation();stopRepeat();b.classList.remove('is-pressed');
     if(b.dataset.submitOnUp==='1'){
       delete b.dataset.submitOnUp;
+      submitGesturePending=true;
       if(submitOrNext({hide:false}))b.dataset.hideOnClick='1';
+      else submitGesturePending=false;
     }
   });
   const cancel=e=>{
-    stopRepeat();
+    stopRepeat();submitGesturePending=false;
     const b=e.target.closest?.('[data-key]');
     if(b){b.classList.remove('is-pressed');delete b.dataset.submitOnUp;delete b.dataset.hideOnClick}
     e.stopPropagation();
@@ -244,7 +250,7 @@ function ensureKeyboard(){
       delete b.dataset.downHandled;
       delete b.dataset.hideOnClick;
       e.preventDefault();e.stopImmediatePropagation();
-      if(hideAfter)hideWillenaKeyboard();
+      if(hideAfter){submitGesturePending=false;hideWillenaKeyboard()}
     }
   });
   q('.wkb-hide',keyboard).onclick=hideWillenaKeyboard;
@@ -294,6 +300,7 @@ function onKeyDown(e){
 }
 
 export function hideWillenaKeyboard(){
+  submitGesturePending=false;
   stopRepeat();cancelAnimationFrame(detachWatch);detachWatch=0;
   if(keyboard){keyboard.hidden=true;setSymbolPanel(false)}
   document.body.classList.remove('willena-kb-open');
