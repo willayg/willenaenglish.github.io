@@ -1,30 +1,17 @@
 import {showConfirmDialog} from './shared-confirm-dialog.js?v=1.0.0';
 
 let enabled=false;
-let beforeUnloadInstalled=false;
-
-function beforeUnload(event){
-  if(!enabled)return;
-  event.preventDefault();
-  event.returnValue='';
-}
-function ensureBeforeUnload(){
-  if(beforeUnloadInstalled)return;
-  window.addEventListener('beforeunload',beforeUnload);
-  beforeUnloadInstalled=true;
-}
 
 export function setSessionProtection(active){
-  ensureBeforeUnload();
   enabled=!!active;
 }
 
 export async function confirmSessionExit(){
   if(!enabled)return true;
   return showConfirmDialog({
-    title:'Are you sure you want to exit?',
-    cancelLabel:'Cancel',
-    confirmLabel:'Exit',
+    title:'학습을 종료하시겠습니까?',
+    cancelLabel:'계속하기',
+    confirmLabel:'종료',
     tone:'danger'
   });
 }
