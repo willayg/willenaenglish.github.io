@@ -1,46 +1,48 @@
 const KEY='willena_testprep_v2_activity_snapshot';
-const VERSION=1;
+const VERSION=2;
 const MAX_AGE_MS=12*60*60*1000;
 
-function readRaw(){
-  try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(_){return null}
-}
-function writeRaw(value){
-  try{localStorage.setItem(KEY,JSON.stringify(value));return true}catch(e){console.warn('[test-prep-v2] activity snapshot save failed',e);return false}
-}
+function readRaw(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(_){return null}}
+function writeRaw(value){try{localStorage.setItem(KEY,JSON.stringify(value));return true}catch(e){console.warn('[test-prep-v2] activity snapshot save failed',e);return false}}
 function removeRaw(){try{localStorage.removeItem(KEY)}catch(_){}}
+function clone(value){try{return structuredClone(value)}catch(_){try{return JSON.parse(JSON.stringify(value))}catch(__){return value}}}
+function sameRoute(a,b){return !!(a&&b&&String(a.planId)===String(b.planId)&&String(a.lesson)===String(b.lesson)&&String(a.practice)===String(b.practice))}
 function usable(snapshot){
-  if(!snapshot||snapshot.version!==VERSION||!snapshot.savedAt||!snapshot.route)return false;
+  if(!snapshot||snapshot.version!==VERSION||!snapshot.savedAt||!snapshot.route||!Array.isArray(snapshot.queue)||!snapshot.queue.length)return false;
   const age=Date.now()-new Date(snapshot.savedAt).getTime();
   return Number.isFinite(age)&&age>=0&&age<=MAX_AGE_MS;
 }
-function clone(value){try{return structuredClone(value)}catch(_){try{return JSON.parse(JSON.stringify(value))}catch(__){return value}}}
+function activeRoute(){
+  const state=history.state;
+  return state?.app==='willena-test-prep-v2'&&state?.route?.view==='practice'?clone(state.route):null;
+}
+function readUsable(){const snapshot=readRaw();if(!usable(snapshot)){if(snapshot)removeRaw();return null}return snapshot}
 
-export function saveActivitySnapshot({route,queue,index=0,score=0,wrongIds=[],checked=false,response=null,startedAt=0}={}){
+export function loadActivitySnapshot(route=activeRoute()){
+  const snapshot=readUsable();return snapshot&&sameRoute(snapshot.route,route)?clone(snapshot):null;
+}
+
+export function saveActivityQueue(route,queue){
   if(!route?.planId||!route?.lesson||!route?.practice||!Array.isArray(queue)||!queue.length)return false;
-  return writeRaw({version:VERSION,savedAt:new Date().toISOString(),route:clone(route),queue:clone(queue),index:Math.max(0,Number(index)||0),score:Number(score)||0,wrongIds:Array.isArray(wrongIds)?[...wrongIds]:[],checked:!!checked,response:clone(response),startedAt:Number(startedAt)||0});
+  const existing=readUsable();
+  if(existing&&sameRoute(existing.route,route))return true;
+  return writeRaw({version:VERSION,savedAt:new Date().toISOString(),route:clone(route),queue:clone(queue),resumeIndex:0,outcomes:[]});
 }
 
-export function loadActivitySnapshot(route){
-  const snapshot=readRaw();
-  if(!usable(snapshot)){if(snapshot)removeRaw();return null}
-  if(route){
-    const a=snapshot.route,b=route;
-    if(String(a.planId)!==String(b.planId)||String(a.lesson)!==String(b.lesson)||String(a.practice)!==String(b.practice))return null;
+export function saveActivityProgress({resumeIndex,outcome}={}){
+  const route=activeRoute(),snapshot=loadActivitySnapshot(route);if(!snapshot)return false;
+  if(outcome){
+    const index=Math.max(0,Number(outcome.index)||0);
+    snapshot.outcomes=(snapshot.outcomes||[]).filter(x=>Number(x.index)!==index);
+    snapshot.outcomes.push({index,correct:!!outcome.correct});
+    snapshot.outcomes.sort((a,b)=>a.index-b.index);
   }
-  return clone(snapshot);
+  if(resumeIndex!=null)snapshot.resumeIndex=Math.max(0,Math.min(snapshot.queue.length,Number(resumeIndex)||0));
+  snapshot.savedAt=new Date().toISOString();return writeRaw(snapshot);
 }
 
-export function hasActivitySnapshot(route){return !!loadActivitySnapshot(route)}
+export function restoreActivityProgress(route=activeRoute()){const snapshot=loadActivitySnapshot(route);return snapshot?{queue:clone(snapshot.queue),resumeIndex:Number(snapshot.resumeIndex)||0,outcomes:clone(snapshot.outcomes||[])}:null}
+export function hasActivitySnapshot(route=activeRoute()){return !!loadActivitySnapshot(route)}
 export function clearActivitySnapshot(){removeRaw()}
-
-export function clearActivitySnapshotFor(route){
-  const snapshot=readRaw();if(!snapshot)return;
-  if(!route){removeRaw();return}
-  const a=snapshot.route;
-  if(String(a?.planId)===String(route.planId)&&String(a?.lesson)===String(route.lesson)&&String(a?.practice)===String(route.practice))removeRaw();
-}
-
-export function activitySnapshotInfo(){
-  const snapshot=readRaw();return usable(snapshot)?{route:clone(snapshot.route),index:snapshot.index,savedAt:snapshot.savedAt}:null;
-}
+export function clearActivitySnapshotFor(route=activeRoute()){const snapshot=readUsable();if(snapshot&&sameRoute(snapshot.route,route))removeRaw()}
+export function currentActivityRoute(){return activeRoute()}
