@@ -14,46 +14,72 @@ export const MOCK_TEST_MINUTES=45;
 
 const OBJECTIVE_BUCKETS=['vocabulary','communication','grammar','reading'];
 const SECTION_ORDER=[...OBJECTIVE_BUCKETS,'constructed_response'];
-const LABELS={
-  vocabulary:'어휘',
-  communication:'대화',
-  grammar:'문법',
-  reading:'독해',
-  constructed_response:'서술형'
-};
+const LABELS={vocabulary:'어휘',communication:'대화',grammar:'문법',reading:'독해',constructed_response:'서술형'};
+const VOCAB_TYPES=new Set([
+  'expression_usage_mismatch','incorrect_usage','expression_definition','contextual_expression','contextual_word_multi','contextual_word_usage',
+  'definition_mismatch','underlined_implication','underlined_meaning','vocab_context_pair','vocab_definition','vocabulary_context','word_definition',
+  'word_meaning','word_meaning_odd_one_out','meaning_mismatch','expression_replacement','vocabulary'
+]);
+const UNDERLINE_KEYS=new Set(['underlined','underlined_spans']);
 
 const text=v=>String(v??'').trim();
 const canonicalId=q=>text(q?.tracking?.questionId||q?.masteryKey||q?.id);
-const questionType=q=>text(q?.tracking?.questionType||q?.metadata?.mode||q?.form||'unknown');
+const questionType=q=>text(q?.tracking?.questionType||q?.metadata?.mode||q?.form||'unknown').toLowerCase();
 const sourceCode=q=>text(q?.source?.code).toUpperCase();
+function flattenVisible(value,key=''){
+  if(UNDERLINE_KEYS.has(key)||value==null)return'';
+  if(typeof value==='string'||typeof value==='number'||typeof value==='boolean')return String(value);
+  if(Array.isArray(value))return value.map(x=>flattenVisible(x)).join(' ');
+  if(typeof value==='object')return Object.entries(value).map(([k,v])=>flattenVisible(v,k)).join(' ');
+  return'';
+}
+function underlineSpans(q){
+  const c=q?.context&&typeof q.context==='object'&&!Array.isArray(q.context)?q.context:{},out=[];
+  if(c.underlined)out.push(text(c.underlined));
+  if(Array.isArray(c.underlined_spans))out.push(...c.underlined_spans.map(text));
+  return [...new Set(out.filter(Boolean))];
+}
+function underlineLooksRenderable(q){
+  const prompt=text(q?.prompt);if(!prompt.includes('밑줄'))return true;
+  const spans=underlineSpans(q);if(!spans.length)return false;
+  const body=`${prompt} ${flattenVisible(q?.context||{})}`;
+  const choices=(Array.isArray(q?.choices)?q.choices:[]).map(text);
+  const bodyMatch=spans.some(s=>body.includes(s));
+  const choiceMatch=spans.some(s=>choices.some(c=>c.includes(s)));
+  const mirrorsChoices=spans.length===choices.length&&spans.every((s,i)=>s===choices[i]);
+  if(/(?:글|윗글|대화)/.test(prompt)&&mirrorsChoices&&!bodyMatch)return false;
+  return bodyMatch||choiceMatch;
+}
 function objectiveQuestion(q){
   if(!(q?.form===FORMS.choice||q?.form===FORMS.multi))return false;
   const choices=Array.isArray(q?.choices)?q.choices:[],answers=Array.isArray(q?.answer)?q.answer:[];
-  if(choices.length<2||!answers.length||!text(q?.prompt))return false;
+  if(choices.length<2||!answers.length||!text(q?.prompt)||!underlineLooksRenderable(q))return false;
   return answers.every(a=>{const n=Number(a);return Number.isInteger(n)&&n>=1&&n<=choices.length});
 }
-
-function hash32(value){
-  let h=2166136261;
-  for(const ch of String(value||'')){h=Math.imul(h^ch.charCodeAt(0),16777619)}
-  return h>>>0;
+function authoredVocabQuestion(q){return sourceCode(q)==='W'&&objectiveQuestion(q)&&(q?.skill==='vocabulary'||VOCAB_TYPES.has(questionType(q)))}
+function vocabFamily(q){
+  const type=questionType(q);
+  if(['expression_usage_mismatch','incorrect_usage','contextual_expression','contextual_word_multi','contextual_word_usage','vocab_context_pair'].includes(type))return'usage';
+  if(['expression_definition','definition_mismatch','vocab_definition','word_definition'].includes(type))return'definition';
+  if(['vocabulary_context','underlined_meaning','underlined_implication','word_meaning','word_meaning_odd_one_out','meaning_mismatch'].includes(type))return'meaning';
+  if(type==='expression_replacement')return'replacement';
+  return type||'other';
 }
+
+function hash32(value){let h=2166136261;for(const ch of String(value||'')){h=Math.imul(h^ch.charCodeAt(0),16777619)}return h>>>0}
 function seededRank(seed,key){return hash32(`${seed}|${key}`)}
 function stableShuffle(items,seed){
   return [...items].sort((a,b)=>{
-    const ak=`${a.bucket}|${a.lesson}|${canonicalId(a.question)}`;
-    const bk=`${b.bucket}|${b.lesson}|${canonicalId(b.question)}`;
-    const d=seededRank(seed,ak)-seededRank(seed,bk);
-    return d||ak.localeCompare(bk);
+    const ak=`${a.bucket}|${a.lesson}|${canonicalId(a.question)}`,bk=`${b.bucket}|${b.lesson}|${canonicalId(b.question)}`;
+    const d=seededRank(seed,ak)-seededRank(seed,bk);return d||ak.localeCompare(bk);
   });
 }
 function uniqueEntries(items){
   const seen=new Set();
-  return (items||[]).filter(entry=>{
-    const id=canonicalId(entry.question);
-    if(!id||seen.has(id))return false;
-    seen.add(id);return true;
-  });
+  return (items||[]).filter(entry=>{const id=canonicalId(entry.question);if(!id||seen.has(id))return false;seen.add(id);return true});
+}
+function uniqueQuestions(items){
+  const seen=new Set();return(items||[]).filter(q=>{const id=canonicalId(q);if(!id||seen.has(id))return false;seen.add(id);return true});
 }
 function scopeRows(plan){
   const scope=plan?.group?.scope||{};
@@ -70,17 +96,21 @@ function rowSections(plan,row){
 }
 function entry(bucket,lesson,unitId,question){return{bucket,lesson:String(lesson),unitId:String(unitId),question}}
 
+async function loadAuthoredVocab(unitId){
+  const parts=await Promise.all([
+    loadStoredSkill(unitId,'vocabulary',{trustedOnly:true}),
+    loadStoredSkill(unitId,'reading',{trustedOnly:true}),
+    loadStoredSkill(unitId,'communication',{trustedOnly:true})
+  ]);
+  return uniqueQuestions(parts.flat()).filter(authoredVocabQuestion);
+}
 async function loadRowPools(plan,row){
   const lesson=text(row?.lesson);if(!lesson)return{entries:[],errors:[]};
-  const sections=rowSections(plan,row);
-  const ids=await resolveContentIds(plan,lesson);
-  const unitId=ids?.unitId;if(!unitId)return{entries:[],errors:[]};
+  const sections=rowSections(plan,row),ids=await resolveContentIds(plan,lesson),unitId=ids?.unitId;
+  if(!unitId)return{entries:[],errors:[]};
   const jobs=[];
-  const add=(bucket,promise)=>jobs.push(
-    promise.then(qs=>({entries:(qs||[]).map(q=>entry(bucket,lesson,unitId,q)),error:null}))
-      .catch(e=>({entries:[],error:{lesson,bucket,message:e?.message||String(e)}}))
-  );
-  if(sections.has('vocabulary')||sections.has('vocab_test'))add('vocabulary',loadStoredSkill(unitId,'vocabulary',{trustedOnly:true}).then(qs=>qs.filter(q=>sourceCode(q)==='W'&&objectiveQuestion(q))));
+  const add=(bucket,promise)=>jobs.push(promise.then(qs=>({entries:(qs||[]).map(q=>entry(bucket,lesson,unitId,q)),error:null})).catch(e=>({entries:[],error:{lesson,bucket,message:e?.message||String(e)}})));
+  if(sections.has('vocabulary')||sections.has('vocab_test'))add('vocabulary',loadAuthoredVocab(unitId));
   if(sections.has('communication'))add('communication',loadStoredSkill(unitId,'communication',{trustedOnly:true}).then(qs=>qs.filter(objectiveQuestion)));
   if(sections.has('grammar'))add('grammar',loadStoredSkill(unitId,'grammar',{trustedOnly:true}).then(qs=>qs.filter(objectiveQuestion)));
   if(sections.has('reading'))add('reading',loadStoredSkill(unitId,'reading',{trustedOnly:true}).then(qs=>qs.filter(objectiveQuestion)));
@@ -94,23 +124,17 @@ function countsByBucket(entries){
   for(const e of entries||[])if(Object.hasOwn(out,e.bucket))out[e.bucket]++;
   return out;
 }
-function orderedPaper(entries){
-  return SECTION_ORDER.flatMap(bucket=>entries.filter(e=>e.bucket===bucket));
-}
+function orderedPaper(entries){return SECTION_ORDER.flatMap(bucket=>entries.filter(e=>e.bucket===bucket))}
 
 export async function buildMockTestPaper({plan,studentId=null,seed=null}={}){
   if(!plan?.id)throw new Error('MOCK_TEST_PLAN_REQUIRED');
-  const paperSeed=text(seed)||`${plan.id}|${studentId||'anon'}|${Date.now()}`;
-  const rows=scopeRows(plan);
+  const paperSeed=text(seed)||`${plan.id}|${studentId||'anon'}|${Date.now()}`,rows=scopeRows(plan);
   if(!rows.length)throw new Error('시험 범위가 없습니다.');
 
-  const settled=await Promise.allSettled(rows.map(row=>loadRowPools(plan,row)));
-  const loadErrors=[];let loaded=[];
+  const settled=await Promise.allSettled(rows.map(row=>loadRowPools(plan,row)),),loadErrors=[];let loaded=[];
   settled.forEach((result,index)=>{
-    if(result.status==='fulfilled'){
-      loaded.push(...result.value.entries);
-      loadErrors.push(...result.value.errors);
-    }else loadErrors.push({lesson:text(rows[index]?.lesson),bucket:'scope',message:result.reason?.message||String(result.reason||'load failed')});
+    if(result.status==='fulfilled'){loaded.push(...result.value.entries);loadErrors.push(...result.value.errors)}
+    else loadErrors.push({lesson:text(rows[index]?.lesson),bucket:'scope',message:result.reason?.message||String(result.reason||'load failed')});
   });
   loaded=uniqueEntries(loaded);
 
@@ -118,23 +142,18 @@ export async function buildMockTestPaper({plan,studentId=null,seed=null}={}){
   for(const e of loaded)if(pools[e.bucket])pools[e.bucket].push(e);
   for(const key of Object.keys(pools))pools[key]=stableShuffle(uniqueEntries(pools[key]),`${paperSeed}|${key}`);
 
-  const selected=[];const used=new Set();const shortage={};
-  const addSelected=(e,slot)=>{
-    const id=canonicalId(e?.question);if(!id||used.has(id))return false;
-    selected.push({...e,slot});used.add(id);return true;
-  };
-  const unused=(bucket)=>pools[bucket].filter(e=>!used.has(canonicalId(e.question)));
-  const takePlain=(bucket,count,{fallbackFor=null}={})=>{
-    let n=0;for(const e of unused(bucket)){if(addSelected(e,fallbackFor||bucket))n++;if(n>=count)break}return n;
-  };
-  const takeVocabDiverse=(count)=>{
+  const selected=[],used=new Set(),shortage={};
+  const addSelected=(e,slot)=>{const id=canonicalId(e?.question);if(!id||used.has(id))return false;selected.push({...e,slot});used.add(id);return true};
+  const unused=bucket=>pools[bucket].filter(e=>!used.has(canonicalId(e.question)));
+  const takePlain=(bucket,count,{fallbackFor=null}={})=>{let n=0;for(const e of unused(bucket)){if(addSelected(e,fallbackFor||bucket))n++;if(n>=count)break}return n};
+  const takeVocabDiverse=count=>{
     const candidates=unused('vocabulary'),groups=new Map();
-    for(const e of candidates){const type=questionType(e.question);if(!groups.has(type))groups.set(type,[]);groups.get(type).push(e)}
-    const types=[...groups.keys()].sort((a,b)=>seededRank(`${paperSeed}|vocab-types`,a)-seededRank(`${paperSeed}|vocab-types`,b));
+    for(const e of candidates){const family=vocabFamily(e.question);if(!groups.has(family))groups.set(family,[]);groups.get(family).push(e)}
+    const families=[...groups.keys()].sort((a,b)=>seededRank(`${paperSeed}|vocab-families`,a)-seededRank(`${paperSeed}|vocab-families`,b));
     let n=0,round=0;
-    while(n<count&&types.length){
+    while(n<count&&families.length){
       let progress=false;
-      for(const type of types){const group=groups.get(type)||[],e=group[round];if(e&&addSelected(e,'vocabulary')){n++;progress=true;if(n>=count)break}}
+      for(const family of families){const e=(groups.get(family)||[])[round];if(e&&addSelected(e,'vocabulary')){n++;progress=true;if(n>=count)break}}
       if(!progress)break;round++;
     }
     if(n<count)n+=takePlain('vocabulary',count-n);
@@ -150,45 +169,23 @@ export async function buildMockTestPaper({plan,studentId=null,seed=null}={}){
   };
 
   for(const bucket of OBJECTIVE_BUCKETS){
-    const wanted=MOCK_TEST_BLUEPRINT[bucket];
-    const got=bucket==='vocabulary'?takeVocabDiverse(wanted):takeSourceBalanced(bucket,wanted);
+    const wanted=MOCK_TEST_BLUEPRINT[bucket],got=bucket==='vocabulary'?takeVocabDiverse(wanted):takeSourceBalanced(bucket,wanted);
     if(got<wanted)shortage[bucket]=wanted-got;
   }
 
-  const writtenWanted=MOCK_TEST_BLUEPRINT.constructed_response;
-  const writtenGot=takePlain('constructed_response',writtenWanted);
+  const writtenWanted=MOCK_TEST_BLUEPRINT.constructed_response,writtenGot=takePlain('constructed_response',writtenWanted);
   const writtenFallbackNeeded=Math.max(0,writtenWanted-writtenGot);let writtenFallbackUsed=0;
   if(writtenFallbackNeeded){
-    const leftovers=stableShuffle(
-      OBJECTIVE_BUCKETS.flatMap(bucket=>unused(bucket)),
-      `${paperSeed}|written-fallback`
-    );
-    for(const e of leftovers){
-      if(addSelected(e,'constructed_response_fallback'))writtenFallbackUsed++;
-      if(writtenFallbackUsed>=writtenFallbackNeeded)break;
-    }
+    const leftovers=stableShuffle(OBJECTIVE_BUCKETS.flatMap(bucket=>unused(bucket)),`${paperSeed}|written-fallback`);
+    for(const e of leftovers){if(addSelected(e,'constructed_response_fallback'))writtenFallbackUsed++;if(writtenFallbackUsed>=writtenFallbackNeeded)break}
   }
 
-  const objectiveShortage=Object.values(shortage).reduce((a,b)=>a+b,0);
-  const unresolvedWritten=Math.max(0,writtenFallbackNeeded-writtenFallbackUsed);
+  const objectiveShortage=Object.values(shortage).reduce((a,b)=>a+b,0),unresolvedWritten=Math.max(0,writtenFallbackNeeded-writtenFallbackUsed);
   const ready=selected.length===MOCK_TEST_TOTAL&&objectiveShortage===0&&unresolvedWritten===0;
   const ordered=orderedPaper(selected).map((e,index)=>({...e,number:index+1}));
-  const availability=Object.fromEntries(Object.entries(pools).map(([k,v])=>[k,v.length]));
-  const selectedCounts=countsByBucket(ordered);
-
   return{
-    version:'1.1.1',
-    seed:paperSeed,
-    planId:String(plan.id),
-    total:ordered.length,
-    ready,
-    questions:ordered,
-    blueprint:{...MOCK_TEST_BLUEPRINT},
-    availability,
-    selectedCounts,
-    writtenFallback:{needed:writtenFallbackNeeded,used:writtenFallbackUsed},
-    shortages:{...shortage,...(unresolvedWritten?{constructed_response_fallback:unresolvedWritten}:{})},
-    loadErrors,
-    labels:{...LABELS}
+    version:'1.2.0',seed:paperSeed,planId:String(plan.id),total:ordered.length,ready,questions:ordered,
+    blueprint:{...MOCK_TEST_BLUEPRINT},availability:Object.fromEntries(Object.entries(pools).map(([k,v])=>[k,v.length])),selectedCounts:countsByBucket(ordered),
+    writtenFallback:{needed:writtenFallbackNeeded,used:writtenFallbackUsed},shortages:{...shortage,...(unresolvedWritten?{constructed_response_fallback:unresolvedWritten}:{})},loadErrors,labels:{...LABELS}
   };
 }
