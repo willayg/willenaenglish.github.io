@@ -13,6 +13,7 @@ let previewPaper=null;
 let activeExam=null;
 let lastSubmission=null;
 let clearNavigationGuard=null;
+let currentPlanId=null;
 
 function ensureStyles(){
   if(document.querySelector('link[data-mock-test-style]'))return;
@@ -21,7 +22,7 @@ function ensureStyles(){
 }
 ensureStyles();
 
-function seedKey(planId){return`willenaMockPaperSeed:${planId}`}
+function seedKey(planId){return`willenaMockPaperSeed:v2:${planId}`}
 function makeSeed(planId){
   const raw=globalThis.crypto?.randomUUID?.()||`${Date.now()}-${Math.random()}`;
   return`${planId}|${raw}`;
@@ -32,6 +33,9 @@ function getSeed(planId){
     if(!seed){seed=makeSeed(planId);sessionStorage.setItem(seedKey(planId),seed)}
     return seed;
   }catch(_){return makeSeed(planId)}
+}
+function clearSeed(planId){
+  try{if(planId)sessionStorage.removeItem(seedKey(planId))}catch(_){}
 }
 function cloneValue(value){
   if(value==null)return value;
@@ -197,7 +201,7 @@ async function persistResults(snapshot,exam){
 async function finishExam(reason='manual'){
   const exam=activeExam;if(!exam||exam.finished)return;
   if(reason==='manual'&&!window.confirm(`답안을 제출하시겠습니까?\n현재 ${answeredCount(exam)} / ${exam.paper.total}문항에 답했습니다.`))return;
-  exam.finished=true;if(exam.timer)clearTimeout(exam.timer);exam.timer=null;clearExamGuards();
+  exam.finished=true;if(exam.timer)clearTimeout(exam.timer);exam.timer=null;clearExamGuards();clearSeed(exam.plan.id);
   const raw=submissionSnapshot(reason);
   exam.host.innerHTML='<div class="loading">답안을 채점하는 중...</div>';
   try{
@@ -235,6 +239,7 @@ function startExam({host,plan,paper,studentId,onBack}){
 export async function renderMockTestPreflight({host,plan,studentId=null,onBack=()=>{}}={}){
   if(!host||!plan?.id)return null;
   if(activeExam)stopMockTest();
+  currentPlanId=String(plan.id);
   const token=++activeToken;
   host.innerHTML='<div class="loading">실전모의고사 시험지를 구성하는 중...</div>';
   try{
@@ -254,9 +259,10 @@ export async function renderMockTestPreflight({host,plan,studentId=null,onBack=(
 }
 
 export function stopMockTest(){
+  const planId=activeExam?.plan?.id||currentPlanId;
   activeToken++;
   if(activeExam?.timer)clearTimeout(activeExam.timer);
-  clearExamGuards();activeExam=null;previewPaper=null;
+  clearExamGuards();clearSeed(planId);activeExam=null;previewPaper=null;currentPlanId=null;
 }
 export function getMockPreviewPaper(){return previewPaper}
 export function getMockSubmission(){return lastSubmission?cloneValue(lastSubmission):null}
