@@ -1,4 +1,4 @@
-import {confirmSessionExit} from './session-protection.js?v=1.0.0';
+import {confirmSessionExit,setSessionProtection} from './session-protection-v2.js?v=1.0.0';
 
 const APP='willena-test-prep-v2';
 const VIEWS=new Set(['home','plan','lesson','practice','result','review','mock']);
@@ -33,7 +33,7 @@ function notifyBefore(prev,next,source){
   try{beforeChange?.(prev,next,{source})}catch(e){console.warn('[test-prep-v2 navigation] leave hook failed',e)}
 }
 function renderAccepted(next,source,prev){
-  current=next;notifyBefore(prev,next,source);return renderRoute?.(next,{source,previous:prev});
+  current=next;setSessionProtection(next.view==='practice');notifyBefore(prev,next,source);return renderRoute?.(next,{source,previous:prev});
 }
 function onPop(event){
   const next=fromHistory(event.state);if(!next)return;
@@ -50,7 +50,7 @@ export function initNavigation({render,beforeRouteChange,initialRoute={view:'hom
   renderRoute=render;beforeChange=typeof beforeRouteChange==='function'?beforeRouteChange:null;started=true;
   let route=fromHistory(history.state);
   if(!route){route=normalize(initialRoute);history.replaceState(packed(route),'',location.href)}
-  current=route;window.addEventListener('popstate',onPop);return route;
+  current=route;setSessionProtection(route.view==='practice');window.addEventListener('popstate',onPop);return route;
 }
 export function navigate(route){
   const next=normalize(route);if(!valid(next))throw new Error('Invalid Test Prep route.');
@@ -62,7 +62,7 @@ export function replaceRoute(route,{render=true}={}){
   const next=normalize(route);if(!valid(next))throw new Error('Invalid Test Prep route.');
   const prev=current;if(!allowed(prev,next,'replace'))return Promise.resolve(prev);
   history.replaceState(packed(next),'',location.href);
-  if(!render){current=next;return Promise.resolve(next)}
+  if(!render){current=next;setSessionProtection(next.view==='practice');return Promise.resolve(next)}
   return Promise.resolve(renderAccepted(next,'replace',prev));
 }
 export function back(){history.back()}
