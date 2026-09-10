@@ -1,4 +1,4 @@
-import {resolveContentIds,loadStoredSkill,loadStoredWritten} from './content-source.js?v=2.24.2';
+import {resolveContentIds,loadStoredSkill,loadStoredWritten} from './content-source.js?v=2.24.3';
 import {FORMS} from './question-model.js';
 
 export const MOCK_TEST_BLUEPRINT=Object.freeze({
@@ -12,10 +12,11 @@ export const MOCK_TEST_BLUEPRINT=Object.freeze({
 export const MOCK_TEST_TOTAL=25;
 export const MOCK_TEST_MINUTES=45;
 
-const OBJECTIVE_BUCKETS=['vocabulary','communication','grammar','reading'];
-const SECTION_ORDER=[...OBJECTIVE_BUCKETS,'constructed_response'];
+const CORE_BUCKETS=['vocabulary','communication','grammar','reading'];
+const SECTION_ORDER=[...CORE_BUCKETS,'constructed_response'];
 const LABELS={vocabulary:'어휘',communication:'대화',grammar:'문법',reading:'독해',constructed_response:'서술형'};
 const UNDERLINE_KEYS=new Set(['underlined','underlined_spans']);
+const VOCAB_FORMS=new Set([FORMS.choice,FORMS.multi,FORMS.write,FORMS.multipart,FORMS.correction,FORMS.identifiedCorrection]);
 
 const text=v=>String(v??'').trim();
 const canonicalId=q=>text(q?.tracking?.questionId||q?.masteryKey||q?.id);
@@ -51,16 +52,19 @@ function objectiveQuestion(q){
   if(choices.length<2||!answers.length||!text(q?.prompt)||!underlineLooksRenderable(q))return false;
   return answers.every(a=>{const n=Number(a);return Number.isInteger(n)&&n>=1&&n<=choices.length});
 }
-function authoredVocabQuestion(q){return q?.skill==='vocabulary'&&objectiveQuestion(q)}
+function storedVocabQuestion(q){
+  const answers=Array.isArray(q?.answer)?q.answer:[];
+  return q?.skill==='vocabulary'&&VOCAB_FORMS.has(q?.form)&&answers.some(a=>text(a))&&!!text(q?.prompt)&&underlineLooksRenderable(q);
+}
 function vocabFamily(q){
   const type=questionType(q);
-  if(['expression_usage_mismatch','incorrect_usage','meaning_mismatch'].includes(type))return'usage';
-  if(['vocab_definition_choice','definition_sentence_match','expression_definition','definition_mismatch','vocab_definition','word_definition'].includes(type))return'definition';
-  if(['blank_choice','common_blank_choice','bilingual_blank_choice','expression_blank_choice','dialogue_blank_choice'].includes(type))return'blank';
-  if(['vocab_relation_odd_one_out'].includes(type))return'relation';
-  if(['reference_word_choice','word_meaning_odd_one_out','vocabulary_context','underlined_meaning','underlined_implication','word_meaning'].includes(type))return'meaning';
+  if(['expression_usage_mismatch','incorrect_usage'].includes(type))return'usage';
+  if(['vocab_definition_choice','definition_sentence_match','expression_definition','definition_mismatch','vocab_definition','word_definition','definition_blank_write','vocab_definition_initial_write','vocab_definition_context_write'].includes(type))return'definition';
+  if(['blank_choice','common_blank_choice','common_blank_write','bilingual_blank_choice','bilingual_blank_write','expression_blank_choice','dialogue_blank_choice'].includes(type))return'blank';
+  if(['vocab_relation_odd_one_out','vocab_relation_write','relation_completion_write'].includes(type))return'relation';
+  if(['meaning_mismatch','reference_word_choice','word_meaning_odd_one_out','vocabulary_context','underlined_meaning','underlined_implication','word_meaning'].includes(type))return'meaning';
   if(type==='expression_replacement')return'replacement';
-  return type||'other';
+  return type||q?.form||'other';
 }
 
 function hash32(value){let h=2166136261;for(const ch of String(value||'')){h=Math.imul(h^ch.charCodeAt(0),16777619)}return h>>>0}
@@ -90,9 +94,9 @@ function rowSections(plan,row){
 }
 function entry(bucket,lesson,unitId,question){return{bucket,lesson:String(lesson),unitId:String(unitId),question}}
 
-async function loadAuthoredVocab(unitId){
-  const questions=await loadStoredSkill(unitId,'vocabulary',{trustedOnly:true});
-  return questions.filter(authoredVocabQuestion);
+async function loadStoredVocab(unitId){
+  const questions=await loadStoredSkill(unitId,'vocabulary',{trustedOnly:true,includeText:true});
+  return questions.filter(storedVocabQuestion);
 }
 async function loadRowPools(plan,row){
   const lesson=text(row?.lesson);if(!lesson)return{entries:[],errors:[]};
@@ -100,7 +104,7 @@ async function loadRowPools(plan,row){
   if(!unitId)return{entries:[],errors:[]};
   const jobs=[];
   const add=(bucket,promise)=>jobs.push(promise.then(qs=>({entries:(qs||[]).map(q=>entry(bucket,lesson,unitId,q)),error:null})).catch(e=>({entries:[],error:{lesson,bucket,message:e?.message||String(e)}})));
-  if(sections.has('vocabulary')||sections.has('vocab_test'))add('vocabulary',loadAuthoredVocab(unitId));
+  if(sections.has('vocabulary')||sections.has('vocab_test'))add('vocabulary',loadStoredVocab(unitId));
   if(sections.has('communication'))add('communication',loadStoredSkill(unitId,'communication',{trustedOnly:true}).then(qs=>qs.filter(objectiveQuestion)));
   if(sections.has('grammar'))add('grammar',loadStoredSkill(unitId,'grammar',{trustedOnly:true}).then(qs=>qs.filter(objectiveQuestion)));
   if(sections.has('reading'))add('reading',loadStoredSkill(unitId,'reading',{trustedOnly:true}).then(qs=>qs.filter(objectiveQuestion)));
@@ -158,7 +162,7 @@ export async function buildMockTestPaper({plan,studentId=null,seed=null}={}){
     return n;
   };
 
-  for(const bucket of OBJECTIVE_BUCKETS){
+  for(const bucket of CORE_BUCKETS){
     const wanted=MOCK_TEST_BLUEPRINT[bucket],got=bucket==='vocabulary'?takeVocabDiverse(wanted):takeSourceBalanced(bucket,wanted);
     if(got<wanted)shortage[bucket]=wanted-got;
   }
@@ -166,15 +170,15 @@ export async function buildMockTestPaper({plan,studentId=null,seed=null}={}){
   const writtenWanted=MOCK_TEST_BLUEPRINT.constructed_response,writtenGot=takePlain('constructed_response',writtenWanted);
   const writtenFallbackNeeded=Math.max(0,writtenWanted-writtenGot);let writtenFallbackUsed=0;
   if(writtenFallbackNeeded){
-    const leftovers=stableShuffle(OBJECTIVE_BUCKETS.flatMap(bucket=>unused(bucket)),`${paperSeed}|written-fallback`);
+    const leftovers=stableShuffle(CORE_BUCKETS.flatMap(bucket=>unused(bucket)),`${paperSeed}|written-fallback`);
     for(const e of leftovers){if(addSelected(e,'constructed_response_fallback'))writtenFallbackUsed++;if(writtenFallbackUsed>=writtenFallbackNeeded)break}
   }
 
-  const objectiveShortage=Object.values(shortage).reduce((a,b)=>a+b,0),unresolvedWritten=Math.max(0,writtenFallbackNeeded-writtenFallbackUsed);
-  const ready=selected.length===MOCK_TEST_TOTAL&&objectiveShortage===0&&unresolvedWritten===0;
+  const coreShortage=Object.values(shortage).reduce((a,b)=>a+b,0),unresolvedWritten=Math.max(0,writtenFallbackNeeded-writtenFallbackUsed);
+  const ready=selected.length===MOCK_TEST_TOTAL&&coreShortage===0&&unresolvedWritten===0;
   const ordered=orderedPaper(selected).map((e,index)=>({...e,number:index+1}));
   return{
-    version:'1.2.1',seed:paperSeed,planId:String(plan.id),total:ordered.length,ready,questions:ordered,
+    version:'1.2.2',seed:paperSeed,planId:String(plan.id),total:ordered.length,ready,questions:ordered,
     blueprint:{...MOCK_TEST_BLUEPRINT},availability:Object.fromEntries(Object.entries(pools).map(([k,v])=>[k,v.length])),selectedCounts:countsByBucket(ordered),
     writtenFallback:{needed:writtenFallbackNeeded,used:writtenFallbackUsed},shortages:{...shortage,...(unresolvedWritten?{constructed_response_fallback:unresolvedWritten}:{})},loadErrors,labels:{...LABELS}
   };
