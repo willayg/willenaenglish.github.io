@@ -1,5 +1,5 @@
 import {aiWilliMessage,showAiWilliStatus,clearAiWilliStatus,decorateAiWilliFeedback,mountAiWilliHelper} from '../shared/ai-willi.js?v=1.1.0';
-import {restoreActivityProgress,saveActivityProgress,clearActivitySnapshotFor,currentActivityRoute} from './activity-session-store.js?v=2.0.0';
+import {restoreActivityProgress,saveActivityPosition,saveActivityOutcome,clearActivitySnapshotFor,currentActivityRoute} from './activity-session-store.js?v=3.0.0';
 
 // Shared interactive question-session engine for Test Prep v2.
 // Owns the common render -> grade/skip -> record -> advance mechanics.
@@ -36,19 +36,15 @@ export function createQuestionSession({
   function restoreOnce(){
     const route=currentActivityRoute(),key=routeKey(route);if(!route||!key)return;
     const saved=restoreActivityProgress(route);if(!saved)return;
-    const target=Math.max(0,Math.min(queueLength(),saved.resumeIndex||0));
-    const alreadyRestored=key===restoredRouteKey&&indexState.get()!==0;
-    if(alreadyRestored)return;
+    if(key===restoredRouteKey&&indexState.get()!==0)return;
     restoredRouteKey=key;
+    const target=Math.max(0,Math.min(queueLength()-1,saved.currentIndex||0));
     for(const outcome of saved.outcomes||[]){
       const i=Number(outcome.index);if(!Number.isFinite(i)||i<0||i>=target||i>=queueLength())continue;
       indexState.set(i);const entry=getEntry(),q=getQuestion(entry);if(!q)continue;
       if(outcome.correct)onCorrect(entry,q,{correct:true,resumed:true});else onWrong(entry,q,{correct:false,resumed:true});
     }
     indexState.set(target);checkedState.set(false);rendererState.set(null);
-  }
-  function saveOutcome(index,correct,resumeIndex){
-    try{saveActivityProgress({resumeIndex,outcome:{index,correct}})}catch(e){console.warn(`[test-prep-v2] ${logLabel} local session save failed`,e)}
   }
 
   function render(){
@@ -60,6 +56,7 @@ export function createQuestionSession({
     }
     const entry=getEntry(),q=getQuestion(entry);
     if(!q){clearActivitySnapshotFor(currentActivityRoute());return onFinished()}
+    saveActivityPosition(indexState.get());
     checkedState.set(false);startedAtState.set(Date.now());onBeforeRender(entry,q);
     root.innerHTML=`${renderHeader(entry,q)}<div class="question-card" id="questionHost"></div>`;
     const host=root.querySelector('#questionHost');
@@ -91,7 +88,7 @@ export function createQuestionSession({
     try{await recordAttempt({question:q,response,result,practiceType:getPracticeType(entry,q),...getAttemptExtras(entry,q,false)})}
     catch(e){console.warn(`[test-prep-v2] ${logLabel} tracking failed`,e)}
     if(!isActive())return;
-    saveOutcome(answeredIndex,!!result.correct,answeredIndex+1);
+    saveActivityOutcome(answeredIndex,!!result.correct);
     btn.disabled=false;btn.textContent=indexState.get()===queueLength()-1?'Finish':'Next Question →';
     const skipButton=document.getElementById(buttonIds.skip);if(skipButton)skipButton.disabled=true;
   }
@@ -103,7 +100,9 @@ export function createQuestionSession({
     const answeredIndex=indexState.get();onWrong(entry,q,result);
     try{await recordAttempt({question:q,response,result,practiceType:getPracticeType(entry,q),skipped:true,...getAttemptExtras(entry,q,true)})}
     catch(e){console.warn(`[test-prep-v2] ${logLabel} skip tracking failed`,e)}
-    if(!isActive())return;indexState.set(answeredIndex+1);saveOutcome(answeredIndex,false,answeredIndex+1);render();
+    if(!isActive())return;
+    saveActivityOutcome(answeredIndex,false);
+    indexState.set(answeredIndex+1);render();
   }
 
   return{render,check,skip};
