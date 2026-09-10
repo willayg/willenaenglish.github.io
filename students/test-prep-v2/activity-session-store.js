@@ -1,5 +1,5 @@
 const KEY='willena_testprep_v2_activity_snapshot';
-const VERSION=2;
+const VERSION=3;
 const MAX_AGE_MS=12*60*60*1000;
 
 function readRaw(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(_){return null}}
@@ -17,6 +17,7 @@ function activeRoute(){
   return state?.app==='willena-test-prep-v2'&&state?.route?.view==='practice'?clone(state.route):null;
 }
 function readUsable(){const snapshot=readRaw();if(!usable(snapshot)){if(snapshot)removeRaw();return null}return snapshot}
+function writeSnapshot(snapshot){snapshot.savedAt=new Date().toISOString();return writeRaw(snapshot)}
 
 export function loadActivitySnapshot(route=activeRoute()){
   const snapshot=readUsable();return snapshot&&sameRoute(snapshot.route,route)?clone(snapshot):null;
@@ -26,23 +27,28 @@ export function saveActivityQueue(route,queue){
   if(!route?.planId||!route?.lesson||!route?.practice||!Array.isArray(queue)||!queue.length)return false;
   const existing=readUsable();
   if(existing&&sameRoute(existing.route,route))return true;
-  return writeRaw({version:VERSION,savedAt:new Date().toISOString(),route:clone(route),queue:clone(queue),resumeIndex:0,outcomes:[]});
+  return writeSnapshot({version:VERSION,route:clone(route),queue:clone(queue),currentIndex:0,outcomes:[]});
 }
 
-export function saveActivityProgress({resumeIndex,outcome}={}){
+export function saveActivityPosition(index){
   const route=activeRoute(),snapshot=loadActivitySnapshot(route);if(!snapshot)return false;
-  if(outcome){
-    const index=Math.max(0,Number(outcome.index)||0);
-    snapshot.outcomes=(snapshot.outcomes||[]).filter(x=>Number(x.index)!==index);
-    snapshot.outcomes.push({index,correct:!!outcome.correct});
-    snapshot.outcomes.sort((a,b)=>a.index-b.index);
-  }
-  if(resumeIndex!=null)snapshot.resumeIndex=Math.max(0,Math.min(snapshot.queue.length,Number(resumeIndex)||0));
-  snapshot.savedAt=new Date().toISOString();return writeRaw(snapshot);
+  snapshot.currentIndex=Math.max(0,Math.min(snapshot.queue.length-1,Number(index)||0));
+  return writeSnapshot(snapshot);
 }
 
-export function restoreActivityProgress(route=activeRoute()){const snapshot=loadActivitySnapshot(route);return snapshot?{queue:clone(snapshot.queue),resumeIndex:Number(snapshot.resumeIndex)||0,outcomes:clone(snapshot.outcomes||[])}:null}
-export function hasActivitySnapshot(route=activeRoute()){return !!loadActivitySnapshot(route)}
+export function saveActivityOutcome(index,correct){
+  const route=activeRoute(),snapshot=loadActivitySnapshot(route);if(!snapshot)return false;
+  const n=Math.max(0,Number(index)||0);
+  snapshot.outcomes=(snapshot.outcomes||[]).filter(x=>Number(x.index)!==n);
+  snapshot.outcomes.push({index:n,correct:!!correct});
+  snapshot.outcomes.sort((a,b)=>a.index-b.index);
+  return writeSnapshot(snapshot);
+}
+
+export function restoreActivityProgress(route=activeRoute()){
+  const snapshot=loadActivitySnapshot(route);
+  return snapshot?{queue:clone(snapshot.queue),currentIndex:Number(snapshot.currentIndex)||0,outcomes:clone(snapshot.outcomes||[])}:null;
+}
 export function clearActivitySnapshot(){removeRaw()}
 export function clearActivitySnapshotFor(route=activeRoute()){const snapshot=readUsable();if(snapshot&&sameRoute(snapshot.route,route))removeRaw()}
 export function currentActivityRoute(){return activeRoute()}
