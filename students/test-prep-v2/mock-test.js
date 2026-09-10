@@ -4,7 +4,7 @@ import {setTrackingContext,startSession,recordAttempt,completeSession,refreshTra
 import {invalidateCardStats,loadCardStats} from './stats-client.js';
 import {setNavigationGuard} from './navigation.js?v=2.18.0';
 import {buildMockTestPaper,MOCK_TEST_BLUEPRINT,MOCK_TEST_MINUTES,MOCK_TEST_TOTAL} from './mock-test-source.js?v=1.2.2';
-import {renderMockTestResults} from './mock-test-results.js?v=1.0.0';
+import {renderMockTestResults} from './mock-test-results.js?v=1.1.0';
 import {confirmMockTestSubmit} from './mock-test-submit.js?v=1.0.0';
 
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -19,7 +19,7 @@ let currentPlanId=null;
 function ensureStyles(){
   if(document.querySelector('link[data-mock-test-style]'))return;
   const link=document.createElement('link');
-  link.rel='stylesheet';link.href='./mock-test.css?v=1.4.0';link.dataset.mockTestStyle='1';document.head.appendChild(link);
+  link.rel='stylesheet';link.href='./mock-test.css?v=1.4.1';link.dataset.mockTestStyle='1';document.head.appendChild(link);
 }
 ensureStyles();
 
