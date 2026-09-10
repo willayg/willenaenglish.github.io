@@ -11,7 +11,7 @@ const $=s=>document.querySelector(s);
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]));
 const norm=v=>String(v??'').normalize('NFKC').toLowerCase().replace(/[’‘]/g,"'").replace(/[“”"]/g,'').replace(/[.!?,;:]+$/g,'').replace(/\s+/g,' ').trim();
 const FORM_LABELS={choice:'Multiple choice',multi:'Multi-select',write:'Written answer',multipart:'Multi-part answer',correction:'Correction',identified_correction:'Identified correction',order:'Word order',chunks:'Chunk order',blanks:'Fill blanks with words',learn:'Learn / read only',unsupported:'Unsupported shape'};
-const SKILLS=[['communication','Communication','stored'],['grammar','Grammar','stored'],['reading','Reading','stored'],['vocabulary','Vocabulary','vocab'],['constructed','서술형','written'],['performance','수행평가','performance'],['sentences','본문','sentences']].map(([id,name,kind])=>({id,name,kind}));
+const SKILLS=[['*','All subjects','all'],['communication','Communication','stored'],['grammar','Grammar','stored'],['reading','Reading','stored'],['vocabulary','Vocabulary','vocab'],['constructed','서술형','written'],['performance','수행평가','performance'],['sentences','본문','sentences']].map(([id,name,kind])=>({id,name,kind}));
 let middleBooks=[],bookMap=new Map(),unitBookMap=new Map(),flaggedQuestionIds=new Set(),all=[],visible=[],index=0,renderer=null;
 
 async function get(path,range=''){
@@ -85,10 +85,22 @@ function selectedDateFilter(){
 function dateMatch(q){const f=selectedDateFilter();if(!f)return true;const raw=f.field==='modified'?q?._updatedAt:q?._createdAt;const t=Date.parse(raw||'');return Number.isFinite(t)&&t>=f.cutoff}
 function sortTime(q){const f=selectedDateFilter();const raw=f?.field==='modified'?q?._updatedAt:q?._createdAt;const t=Date.parse(raw||'');return Number.isFinite(t)?t:0}
 function filteredPool(){return all.filter(q=>featureMatch(q)&&flagMatch(q)&&dateMatch(q))}
+const dedupeQuestions=rows=>{const seen=new Set();return rows.filter(q=>{const k=String(q?.id??'');if(!k||seen.has(k))return false;seen.add(k);return true})};
 
 async function loadSkill(){
   const s=selectedSkill();$('#card').innerHTML='<div class="empty">Loading…</div>';$('#book').disabled=false;
-  if(s.kind==='stored')all=adaptRows(await fetchRows(s.id));else if(s.kind==='written')all=adaptRows(await fetchRows('','text'));else if(s.kind==='vocab')all=await loadVocabulary();else if(s.kind==='performance')all=await loadPerformance();else if(s.kind==='sentences')all=await loadSentences();else all=[];
+  if(s.kind==='all'){
+    const groups=await Promise.all([
+      fetchRows('communication').then(adaptRows),
+      fetchRows('grammar').then(adaptRows),
+      fetchRows('reading').then(adaptRows),
+      loadVocabulary(),
+      fetchRows('','text').then(adaptRows),
+      loadPerformance(),
+      loadSentences()
+    ]);
+    all=dedupeQuestions(groups.flat());
+  }else if(s.kind==='stored')all=adaptRows(await fetchRows(s.id));else if(s.kind==='written')all=adaptRows(await fetchRows('','text'));else if(s.kind==='vocab')all=await loadVocabulary();else if(s.kind==='performance')all=await loadPerformance();else if(s.kind==='sentences')all=await loadSentences();else all=[];
   setForms();
 }
 function setForms(){
