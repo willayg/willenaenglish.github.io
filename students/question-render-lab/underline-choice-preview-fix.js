@@ -18,4 +18,20 @@ QuestionRenderer.prototype.controls=function(q){
   if(!perChoice)return originalControls.call(this,q);
   return `<div class="choices">${q.choices.map((x,i)=>`<button type="button" class="choice" data-choice="${i+1}"><span>${numberMark(i)}</span> ${marked(x,[perChoice[i]])}</button>`).join('')}</div>`;
 };
+
+// Renderer v2.20.4 does not know that underlined_by_choice is renderer metadata,
+// so it exposes the raw targets as a generic context block. Keep the canonical
+// renderer untouched and strip that lab-only leakage after render.
+const originalRender=QuestionRenderer.prototype.render;
+QuestionRenderer.prototype.render=function(q,...args){
+  const result=originalRender.call(this,q,...args);
+  if(Array.isArray(q?.context?.underlined_by_choice)){
+    for(const block of this.host.querySelectorAll('.context-block')){
+      const label=block.querySelector('.context-label')?.textContent?.trim().toLowerCase();
+      if(label==='underlined by choice')block.remove();
+    }
+  }
+  return result;
+};
+
 console.log('[Render Lab] per-choice underline preview fix ready');
