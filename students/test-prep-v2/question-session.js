@@ -34,11 +34,12 @@ export function createQuestionSession({
   const routeKey=route=>route?`${route.planId}|${route.lesson}|${route.practice}`:'';
 
   function restoreOnce(){
-    const route=currentActivityRoute(),key=routeKey(route);
-    if(!route||!key||key===restoredRouteKey)return;
-    restoredRouteKey=key;
+    const route=currentActivityRoute(),key=routeKey(route);if(!route||!key)return;
     const saved=restoreActivityProgress(route);if(!saved)return;
     const target=Math.max(0,Math.min(queueLength(),saved.resumeIndex||0));
+    const alreadyRestored=key===restoredRouteKey&&indexState.get()!==0;
+    if(alreadyRestored)return;
+    restoredRouteKey=key;
     for(const outcome of saved.outcomes||[]){
       const i=Number(outcome.index);if(!Number.isFinite(i)||i<0||i>=target||i>=queueLength())continue;
       indexState.set(i);const entry=getEntry(),q=getQuestion(entry);if(!q)continue;
