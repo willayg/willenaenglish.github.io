@@ -44,26 +44,26 @@ Use this file as the canonical build sequence. Check items off as they are compl
 
 ## Phase 4 — Navigation owner
 
-- [ ] Create `navigation.js`.
-- [ ] Make it the only owner of browser history and Back behavior inside Level Test v2.
-- [ ] Support resume-safe route/stage restoration.
-- [ ] Prevent additional `popstate` listeners or private history stacks elsewhere.
-- [ ] Validate browser/device Back behavior early.
+- [x] Create `navigation.js`.
+- [x] Make it the only owner of browser history and Back behavior inside Level Test v2.
+- [x] Support resume-safe route/stage restoration.
+- [x] Prevent additional `popstate` listeners or private history stacks elsewhere.
+- [x] Validate browser/device Back behavior early.
 
 ## Phase 5 — Speaking assessment UI
 
-- [ ] Create `speaking-assessment.js`.
-- [ ] Display a bank of suggested teacher questions for the current level.
-- [ ] Add swipe navigation between levels.
-- [ ] Add visible Previous Level / Next Level buttons.
-- [ ] Add a direct level jump selector.
-- [ ] Allow the teacher to ask none, one, several or all questions.
-- [ ] Allow optional scoring of individual responses.
-- [ ] Add the 5-point rubric control.
-- [ ] Allow revisiting questions and levels freely.
-- [ ] Add optional recording controls/hooks.
-- [ ] Add teacher overall impression level selector.
-- [ ] Keep the workflow fast enough for a live consultation.
+- [x] Create `speaking-assessment.js`.
+- [x] Display a bank of suggested teacher questions for the current level.
+- [x] Add swipe navigation between levels.
+- [x] Add visible Previous Level / Next Level buttons.
+- [x] Add a direct level jump selector.
+- [x] Allow the teacher to ask none, one, several or all questions.
+- [x] Allow optional scoring of individual responses.
+- [x] Add the 5-point rubric control.
+- [x] Allow revisiting questions and levels freely.
+- [x] Add optional recording controls/hooks.
+- [x] Add teacher overall impression level selector.
+- [x] Keep the workflow fast enough for a live consultation.
 
 ## Phase 6 — Speaking prompt bank
 
@@ -316,7 +316,7 @@ The first major working milestone is:
 
 - [x] Current-look V2 shell exists.
 - [x] Visitor enters required details + parent phone.
-- [ ] Teacher completes a usable Speaking interview.
+- [x] Teacher completes a usable Speaking interview.
 - [ ] App recommends a starting level.
 - [ ] Teacher can override it.
 - [ ] Student begins at the teacher-selected level.
