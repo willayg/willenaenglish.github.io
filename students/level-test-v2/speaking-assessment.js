@@ -1,16 +1,100 @@
 const DEFAULT_PROMPTS={
-  1:['What is your name?','How old are you?','What color do you like?'],
-  2:['Tell me about your family.','What do you do after school?','What food do you like and why?'],
-  3:['Tell me about your school day.','What did you do yesterday?','What are you good at?'],
-  4:['Describe a fun weekend.','What makes a good friend?','What would you like to learn?'],
-  5:['Tell me about a problem you solved.','Which is better: studying alone or with friends? Why?','Describe a place you would like to visit.'],
-  6:['Tell me about something you recently learned.','What makes a class interesting?','Explain a rule you think is important.'],
-  7:['Describe a difficult decision you made.','How has technology changed learning?','What is one thing you would improve about your town?'],
-  8:['Do schools give students enough independence? Explain.','Describe an experience that changed your opinion.','What makes communication effective?'],
-  9:['Should success be measured by results or effort?','Explain a social issue young people face.','How can people disagree productively?'],
-  10:['Discuss a change in society that has both benefits and drawbacks.','What responsibilities come with freedom?','Explain how context can change the meaning of a message.'],
-  11:['Evaluate whether competition generally improves performance.','Discuss a situation where the obvious solution may not be the best one.','How should we judge the reliability of information?'],
-  12:['Defend a nuanced position on whether technological progress necessarily improves quality of life.','Explain how assumptions can distort decision-making.','Discuss the trade-offs involved in standardizing education.']
+  1:[
+    'What is your name?',
+    'How old are you?',
+    'What color do you like?',
+    'Do you like pizza?',
+    'What animal do you like?',
+    'Who is in your family?'
+  ],
+  2:[
+    'Tell me about your family.',
+    'What do you do after school?',
+    'What food do you like and why?',
+    'What is your favorite game?',
+    'Tell me about your best friend.',
+    'What do you usually do on weekends?'
+  ],
+  3:[
+    'Tell me about your school day.',
+    'What did you do yesterday?',
+    'What are you good at?',
+    'What do you want to do this weekend?',
+    'Describe your classroom.',
+    'Tell me about a time you were very happy.'
+  ],
+  4:[
+    'Describe a fun weekend.',
+    'What makes a good friend?',
+    'What would you like to learn?',
+    'Tell me about a movie, book, or show you like.',
+    'What is something difficult for you at school?',
+    'If you could have any pet, what would you choose and why?'
+  ],
+  5:[
+    'Tell me about a problem you solved.',
+    'Which is better: studying alone or with friends? Why?',
+    'Describe a place you would like to visit.',
+    'What is one rule at school you think is important?',
+    'Tell me about something you are proud of.',
+    'If you could change one thing about your daily routine, what would it be?'
+  ],
+  6:[
+    'Tell me about something you recently learned.',
+    'What makes a class interesting?',
+    'Explain a rule you think is important.',
+    'Describe a person who has taught you something important.',
+    'What are the advantages of having a hobby?',
+    'If you had an extra hour every day, how would you use it?'
+  ],
+  7:[
+    'Describe a difficult decision you made.',
+    'How has technology changed learning?',
+    'What is one thing you would improve about your town?',
+    'Tell me about a time your plan did not work and what you did next.',
+    'Do students learn more from success or failure? Explain.',
+    'What qualities make someone a good leader?'
+  ],
+  8:[
+    'Do schools give students enough independence? Explain.',
+    'Describe an experience that changed your opinion.',
+    'What makes communication effective?',
+    'Should students have more choice about what they study?',
+    'How can people solve conflicts fairly?',
+    'What is one modern convenience people rely on too much?'
+  ],
+  9:[
+    'Should success be measured by results or effort?',
+    'Explain a social issue young people face.',
+    'How can people disagree productively?',
+    'Do social media platforms help or harm communication overall?',
+    'When should people follow rules, and when is it reasonable to challenge them?',
+    'What is more important for learning: curiosity, discipline, or talent? Why?'
+  ],
+  10:[
+    'Discuss a change in society that has both benefits and drawbacks.',
+    'What responsibilities come with freedom?',
+    'Explain how context can change the meaning of a message.',
+    'Should schools prioritize practical skills or academic knowledge?',
+    'How should people balance personal goals with responsibilities to others?',
+    'Can technology solve most environmental problems, or are lifestyle changes more important?'
+  ],
+  11:[
+    'Evaluate whether competition generally improves performance.',
+    'Discuss a situation where the obvious solution may not be the best one.',
+    'How should we judge the reliability of information?',
+    'To what extent should governments limit individual choice for the public good?',
+    'Is it possible to be truly objective when making important decisions?',
+    'What makes an argument persuasive rather than merely confident?'
+  ],
+  12:[
+    'Defend a nuanced position on whether technological progress necessarily improves quality of life.',
+    'Explain how assumptions can distort decision-making.',
+    'Discuss the trade-offs involved in standardizing education.',
+    'To what extent should societies preserve traditions that conflict with changing social values?',
+    'Is equality of opportunity enough to create a fair society? Why or why not?',
+    'Discuss whether uncertainty should make decision-makers more cautious or more adaptable.'
+  ]
 };
 
 export const SPEAKING_RUBRIC=[
