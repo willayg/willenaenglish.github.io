@@ -85,11 +85,19 @@
   align-items:center;
   min-height:118px;
 }
-/* Connector rules exist in the base and card refresh styles with different geometry.
-   Disable them here so the numbered stations stand alone cleanly on every viewport. */
+/* Single authoritative journey connector. Starts at the bottom of one station
+   and runs to the next row boundary, where the next station begins. */
 .journey-stop:not(:last-child)::before{
-  content:none!important;
-  display:none!important;
+  content:''!important;
+  display:block!important;
+  position:absolute;
+  left:27px;
+  top:56px;
+  bottom:0;
+  width:4px;
+  border-radius:999px;
+  background:rgba(238,95,145,.16)!important;
+  z-index:0;
 }
 .stop-metrics{
   display:grid;
@@ -148,6 +156,11 @@
     gap:12px;
     min-height:110px;
   }
+  .journey-stop:not(:last-child)::before{
+    left:24px;
+    top:50px;
+    bottom:0;
+  }
   .stop-copy b{font-size:20px}
   .stop-copy small{font-size:11px}
   .stop-metrics{gap:11px}
@@ -165,6 +178,11 @@
   .station{
     width:46px;
     height:46px;
+  }
+  .journey-stop:not(:last-child)::before{
+    left:21px;
+    top:46px;
+    bottom:0;
   }
   .stop-copy b{font-size:18px}
   .stop-copy small{font-size:10px}
