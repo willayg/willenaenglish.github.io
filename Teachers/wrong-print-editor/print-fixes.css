@@ -1,17 +1,54 @@
 @media print{
-  /* Reliable page-centre divider: fixed elements repeat on each printed page in Chromium/Android. */
+  /* Reserve a real header band on every printed page. Chromium repeats fixed elements. */
+  @page{size:A4;margin:27mm 12mm 13mm}
+
+  .print-head{
+    position:fixed!important;
+    top:-20mm!important;
+    left:0!important;
+    right:0!important;
+    height:15mm;
+    margin:0!important;
+    padding:0 0 5mm!important;
+    background:#fff;
+    z-index:20!important;
+    align-items:flex-start;
+    justify-content:space-between;
+    border-bottom:2px solid #42b9cc;
+  }
+
+  /* Longer, reliable centre divider repeated on every printed page. */
   body::after{
     content:"";
     position:fixed;
-    top:34mm;
-    bottom:13mm;
+    top:-1mm;
+    bottom:-9mm;
     left:50%;
     width:0;
-    border-left:1px solid #d9dde4;
+    border-left:1px solid #cfd5dd;
     pointer-events:none;
     z-index:0;
   }
-  .workspace,.print-head,.cards,.answer-key{position:relative;z-index:1}
-  /* The page divider now handles the centre rule; avoid a second, unreliable CSS-column rule. */
-  .vocab-table{column-rule:none!important}
+  .workspace,.cards,.answer-key{position:relative;z-index:1}
+
+  /* Question numbering restarts for each skill, matching the answer-key sections. */
+  .skill-section{counter-reset:printq}
+  .vocab-table{counter-reset:none!important;column-rule:none!important}
+  .vocab-num:before{
+    counter-increment:printq!important;
+    content:counter(printq) "."!important;
+  }
+  .question-card{
+    position:relative;
+    padding-left:28px!important;
+  }
+  .question-card::before{
+    counter-increment:printq;
+    content:counter(printq) ".";
+    position:absolute;
+    left:8px;
+    top:9px;
+    font:800 8.5pt/1 Poppins,"Noto Sans KR",sans-serif;
+    color:#343844;
+  }
 }
