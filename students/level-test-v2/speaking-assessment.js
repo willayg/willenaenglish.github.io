@@ -1,102 +1,18 @@
 const LEVEL_LABELS={1:'Starter 1',2:'Starter 2',3:'Level 1',4:'Level 2',5:'Level 3',6:'Level 4',7:'Level 5',8:'Level 6',9:'Level 7',10:'Level 8',11:'Level 9',12:'Level 10'};
 
 const DEFAULT_PROMPTS={
-  1:[
-    'What is your name?',
-    'How old are you?',
-    'What color do you like?',
-    'What is this?',
-    'What animal is this?',
-    'What do you see?'
-  ],
-  2:[
-    'Do you like pizza?',
-    'What food do you like?',
-    'What do you want?',
-    'Can you ride a bike?',
-    'What can you do?',
-    'Do you have a pencil?'
-  ],
-  3:[
-    'What is in your school bag?',
-    'Where is your pencil?',
-    'Is there a computer in your classroom?',
-    'How many students are in your class?',
-    'Can your friend swim?',
-    'Are you tired today?'
-  ],
-  4:[
-    'What are you doing now?',
-    'What is your teacher doing?',
-    'What is your friend doing?',
-    'What does your friend have?',
-    'What does your mom or dad want?',
-    'Are the students studying now?'
-  ],
-  5:[
-    'What do you do after school?',
-    'How do you go to school?',
-    'What do you do in the morning?',
-    'What does your best friend look like?',
-    'Are there any books in your room?',
-    'What school subject do you like?'
-  ],
-  6:[
-    'What did you do yesterday?',
-    'Where did you go last weekend?',
-    'What are you going to do this weekend?',
-    'What should you do when you have a headache?',
-    'Which is bigger, an elephant or a dog?',
-    'What should students do to stay healthy?'
-  ],
-  7:[
-    'Have you ever ridden a horse?',
-    'Have you ever been to another city or country?',
-    'What do you want to be when you grow up?',
-    'How do I get from your classroom to the front door?',
-    'If it rains tomorrow, what will you do?',
-    'What must you do if you want to get good grades?'
-  ],
-  8:[
-    'How long have you studied English?',
-    'What have you been doing a lot recently?',
-    'Tell me about something you have already finished today.',
-    'What is something you do not have to do on weekends?',
-    'Tell me about something that makes you bored or excited.',
-    'What advice would you give a friend who wants to improve their English?'
-  ],
-  9:[
-    'Tell me something your teacher said recently.',
-    'What had you done before you came to school today?',
-    'Tell me about something you should have done differently.',
-    'Tell me about something you did even though it was difficult.',
-    'Describe something you own that is very useful.',
-    'Tell me about a person who has helped you a lot.'
-  ],
-  10:[
-    'What will happen unless you study for a test?',
-    'Tell me about a rule that students are expected to follow.',
-    'Tell me about something you were asked to do recently.',
-    'Look at an empty classroom after school. What must have happened?',
-    'What might happen if someone forgets an important deadline?',
-    'Explain a school rule using “unless”.'
-  ],
-  11:[
-    'What did you use to do when you were younger?',
-    'What are you used to doing every day now?',
-    'Ask me politely where something in the school is.',
-    'Tell me about something you find difficult to do.',
-    'What makes information believable?',
-    'Give a claim about school life and support it with an example.'
-  ],
-  12:[
-    'Tell me about something you could have done differently this week.',
-    'Tell me about something you needn’t have worried about.',
-    'What must have happened if a student arrived with no books or bag?',
-    'Report something people believe about technology or school.',
-    'Give an opinion and explain what evidence would support it.',
-    'Explain one possible implication of using AI for schoolwork.'
-  ]
+  1:['What is your name?','How old are you?','What color do you like?'],
+  2:['Do you like pizza?','What food do you like?','Can you ride a bike?'],
+  3:['Where is your pencil?','Is there a computer in your classroom?','Can your friend swim?'],
+  4:['What are you doing now?','What is your teacher doing?','What does your friend have?'],
+  5:['What do you do after school?','How do you go to school?','What school subject do you like?'],
+  6:['What did you do yesterday?','What are you going to do this weekend?','What should you do when you have a headache?'],
+  7:['Have you ever ridden a horse?','What do you want to be when you grow up?','If it rains tomorrow, what will you do?'],
+  8:['How long have you studied English?','Tell me about something you have already finished today.','What is something you do not have to do on weekends?'],
+  9:['Tell me something your teacher said recently.','Tell me about something you should have done differently.','Describe something you own that is very useful.'],
+  10:['What will happen unless you study for a test?','Tell me about a rule that students are expected to follow.','Tell me about something you were asked to do recently.'],
+  11:['What did you use to do when you were younger?','What are you used to doing every day now?','Tell me about something you find difficult to do.'],
+  12:['Tell me about something you could have done differently this week.','Tell me about something you needn’t have worried about.','What must have happened if a student arrived with no books or bag?']
 };
 
 export const SPEAKING_RUBRIC=[
