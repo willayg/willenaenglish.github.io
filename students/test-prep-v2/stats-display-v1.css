@@ -80,24 +80,37 @@
 .stop-copy .mini{
   display:none;
 }
+.journey{
+  position:relative;
+}
+/* Kill all legacy per-row connector segments. */
+.journey-stop:not(:last-child)::before{
+  content:none!important;
+  display:none!important;
+}
+/* One continuous spine behind every numbered station. */
+.journey::before{
+  content:'';
+  position:absolute;
+  left:46px;
+  top:52px;
+  bottom:52px;
+  width:4px;
+  border-radius:999px;
+  background:rgba(238,95,145,.16);
+  z-index:0;
+  pointer-events:none;
+}
 .journey-stop{
   grid-template-columns:58px minmax(0,1fr) 230px;
   align-items:center;
   min-height:118px;
+  position:relative;
+  z-index:1;
 }
-/* Single authoritative journey connector. Starts at the bottom of one station
-   and runs to the next row boundary, where the next station begins. */
-.journey-stop:not(:last-child)::before{
-  content:''!important;
-  display:block!important;
-  position:absolute;
-  left:27px;
-  top:56px;
-  bottom:0;
-  width:4px;
-  border-radius:999px;
-  background:rgba(238,95,145,.16)!important;
-  z-index:0;
+.station{
+  position:relative;
+  z-index:2;
 }
 .stop-metrics{
   display:grid;
@@ -156,10 +169,10 @@
     gap:12px;
     min-height:110px;
   }
-  .journey-stop:not(:last-child)::before{
-    left:24px;
-    top:50px;
-    bottom:0;
+  .journey::before{
+    left:38px;
+    top:45px;
+    bottom:45px;
   }
   .stop-copy b{font-size:20px}
   .stop-copy small{font-size:11px}
@@ -179,10 +192,10 @@
     width:46px;
     height:46px;
   }
-  .journey-stop:not(:last-child)::before{
-    left:21px;
-    top:46px;
-    bottom:0;
+  .journey::before{
+    left:33px;
+    top:41px;
+    bottom:41px;
   }
   .stop-copy b{font-size:18px}
   .stop-copy small{font-size:10px}
