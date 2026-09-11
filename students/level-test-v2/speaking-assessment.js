@@ -1,99 +1,101 @@
+const LEVEL_LABELS={1:'Starter 1',2:'Starter 2',3:'Level 1',4:'Level 2',5:'Level 3',6:'Level 4',7:'Level 5',8:'Level 6',9:'Level 7',10:'Level 8',11:'Level 9',12:'Level 10'};
+
 const DEFAULT_PROMPTS={
   1:[
     'What is your name?',
     'How old are you?',
     'What color do you like?',
-    'Do you like cats?',
-    'What is this? (point to an object)',
-    'Who is in your family?'
+    'What is this?',
+    'What animal is this?',
+    'What do you see?'
   ],
   2:[
-    'What do you like to eat?',
-    'What do you do after school?',
-    'Tell me about your family.',
-    'What is your favorite game?',
-    'What do you do on Sunday?',
-    'What can you do well?'
+    'Do you like pizza?',
+    'What food do you like?',
+    'What do you want?',
+    'Can you ride a bike?',
+    'What can you do?',
+    'Do you have a pencil?'
   ],
   3:[
-    'Tell me about your classroom.',
-    'What time do you get up?',
-    'What did you do yesterday?',
-    'What are you going to do this weekend?',
-    'Tell me about your best friend.',
-    'What do you like doing with your family?'
+    'What is in your school bag?',
+    'Where is your pencil?',
+    'Is there a computer in your classroom?',
+    'How many students are in your class?',
+    'Can your friend swim?',
+    'Are you tired today?'
   ],
   4:[
-    'Tell me about your school day.',
-    'What did you eat for dinner yesterday?',
-    'Tell me about a fun weekend.',
-    'What do you want to do during vacation?',
-    'Describe your room at home.',
-    'Which school subject do you like best? Why?'
+    'What are you doing now?',
+    'What is your teacher doing?',
+    'What is your friend doing?',
+    'What does your friend have?',
+    'What does your mom or dad want?',
+    'Are the students studying now?'
   ],
   5:[
-    'Tell me about a movie or cartoon you like.',
-    'Describe a place you like to visit.',
-    'What happened the last time you met your friends?',
-    'What are you planning to do next weekend?',
-    'Which is better, summer or winter? Why?',
-    'What makes a good friend?'
+    'What do you do after school?',
+    'How do you go to school?',
+    'What do you do in the morning?',
+    'What does your best friend look like?',
+    'Are there any books in your room?',
+    'What school subject do you like?'
   ],
   6:[
-    'Tell me about something you learned recently.',
-    'Describe a trip or day out you remember well.',
-    'What do you do when you have a lot of homework?',
-    'If a friend feels sad, what can you do?',
-    'Which is better, studying at home or at school? Why?',
-    'What is something you want to get better at?'
+    'What did you do yesterday?',
+    'Where did you go last weekend?',
+    'What are you going to do this weekend?',
+    'What should you do when you have a headache?',
+    'Which is bigger, an elephant or a dog?',
+    'What should students do to stay healthy?'
   ],
   7:[
-    'Tell me about a time something did not go as planned.',
-    'Describe a goal you have and how you can reach it.',
-    'What makes a class interesting?',
-    'Do you prefer working alone or in a group? Why?',
-    'Tell me about a useful app or device you use.',
-    'What would you change about your school day?'
+    'Have you ever ridden a horse?',
+    'Have you ever been to another city or country?',
+    'What do you want to be when you grow up?',
+    'How do I get from your classroom to the front door?',
+    'If it rains tomorrow, what will you do?',
+    'What must you do if you want to get good grades?'
   ],
   8:[
-    'Tell me about a decision you made recently.',
-    'What are the good and bad things about using smartphones?',
-    'How can students help a new student feel comfortable?',
-    'Do students need homework every day? Why or why not?',
-    'Describe a skill you would like to learn in the future.',
-    'What can people do to stay healthy?'
+    'How long have you studied English?',
+    'What have you been doing a lot recently?',
+    'Tell me about something you have already finished today.',
+    'What is something you do not have to do on weekends?',
+    'Tell me about something that makes you bored or excited.',
+    'What advice would you give a friend who wants to improve their English?'
   ],
   9:[
-    'Tell me about a time you changed your mind about something.',
-    'What are the advantages and disadvantages of studying online?',
-    'Should students be allowed to use phones in class? Explain.',
-    'What makes someone a good team member?',
-    'What is one problem young people have today?',
-    'Would you rather live in a big city or a small town? Why?'
+    'Tell me something your teacher said recently.',
+    'What had you done before you came to school today?',
+    'Tell me about something you should have done differently.',
+    'Tell me about something you did even though it was difficult.',
+    'Describe something you own that is very useful.',
+    'Tell me about a person who has helped you a lot.'
   ],
   10:[
-    'Describe a challenge you faced and how you dealt with it.',
-    'Do you think school prepares students well for adult life? Why or why not?',
-    'What are some good and bad effects of social media?',
-    'Should students have more choice in what they study?',
-    'What is one thing you would improve in your community?',
-    'Is it better to be very talented or very hardworking? Explain.'
+    'What will happen unless you study for a test?',
+    'Tell me about a rule that students are expected to follow.',
+    'Tell me about something you were asked to do recently.',
+    'Look at an empty classroom after school. What must have happened?',
+    'What might happen if someone forgets an important deadline?',
+    'Explain a school rule using “unless”.'
   ],
   11:[
-    'Tell me about an experience that taught you an important lesson.',
-    'How has technology changed the way students learn?',
-    'What makes information online trustworthy?',
-    'Should schools focus more on practical skills? Why or why not?',
-    'What are some benefits and problems of competition?',
-    'When people disagree, what helps them communicate well?'
+    'What did you use to do when you were younger?',
+    'What are you used to doing every day now?',
+    'Ask me politely where something in the school is.',
+    'Tell me about something you find difficult to do.',
+    'What makes information believable?',
+    'Give a claim about school life and support it with an example.'
   ],
   12:[
-    'Describe an issue that matters to young people and explain your view.',
-    'How should people balance personal goals with responsibilities to others?',
-    'What are the benefits and risks of depending heavily on technology?',
-    'Should schools treat all students the same, or adapt more to individual needs?',
-    'What makes a strong argument when people have different opinions?',
-    'What is one change you think would improve education, and why?'
+    'Tell me about something you could have done differently this week.',
+    'Tell me about something you needn’t have worried about.',
+    'What must have happened if a student arrived with no books or bag?',
+    'Report something people believe about technology or school.',
+    'Give an opinion and explain what evidence would support it.',
+    'Explain one possible implication of using AI for schoolwork.'
   ]
 };
 
@@ -124,11 +126,11 @@ export function createSpeakingAssessment({host,session,lang='ko',prompts=DEFAULT
   function render(){
     const list=prompts[level]||[];
     host.innerHTML=`<section class="speaking-workspace">
-      <div class="speaking-topline"><div><div class="eyebrow">${tx('선생님 말하기 평가','Teacher Speaking Assessment')}</div><h2>${tx('말하기 레벨 확인','Speaking level check')}</h2></div><select class="speaking-jump" aria-label="Level">${Array.from({length:12},(_,i)=>`<option value="${i+1}" ${i+1===level?'selected':''}>Level ${i+1}</option>`).join('')}</select></div>
-      <div class="speaking-level-bar"><button type="button" class="btn btn-ghost" data-level-prev ${level===1?'disabled':''}>← ${tx('이전 레벨','Previous')}</button><div class="speaking-level">Level ${level}</div><button type="button" class="btn btn-ghost" data-level-next ${level===12?'disabled':''}>${tx('다음 레벨','Next')} →</button></div>
+      <div class="speaking-topline"><div><div class="eyebrow">${tx('선생님 말하기 평가','Teacher Speaking Assessment')}</div><h2>${tx('말하기 레벨 확인','Speaking level check')}</h2></div><select class="speaking-jump" aria-label="Level">${Array.from({length:12},(_,i)=>`<option value="${i+1}" ${i+1===level?'selected':''}>${LEVEL_LABELS[i+1]}</option>`).join('')}</select></div>
+      <div class="speaking-level-bar"><button type="button" class="btn btn-ghost" data-level-prev ${level===1?'disabled':''}>← ${tx('이전','Previous')}</button><div class="speaking-level">${LEVEL_LABELS[level]}</div><button type="button" class="btn btn-ghost" data-level-next ${level===12?'disabled':''}>${tx('다음','Next')} →</button></div>
       <p class="speaking-help">${tx('필요한 질문만 사용하세요. 질문을 건너뛰어도 불이익이 없습니다.','Use as many or as few prompts as useful. Skipped prompts are neutral.')}</p>
       <div class="speaking-prompts">${list.map((prompt,i)=>`<article class="speaking-prompt-card"><div class="speaking-prompt-text">${prompt}</div><div class="speaking-rubric" aria-label="Score">${SPEAKING_RUBRIC.map(r=>`<button type="button" data-prompt="${i}" data-score="${r.score}" class="${selectedScore(i)===r.score?'is-selected':''}" title="${r.detail}">${r.label}</button>`).join('')}</div><div class="speaking-prompt-actions"><button type="button" class="record-hook" data-record="${i}">● ${tx('녹음','Record')}</button><span>${tx('선택 사항','Optional')}</span></div></article>`).join('')}</div>
-      <div class="speaking-teacher-panel"><label>${tx('선생님 전체 말하기 판단','Teacher overall speaking impression')}<select id="teacherSpeakingLevel"><option value="">—</option>${Array.from({length:12},(_,i)=>`<option value="${i+1}" ${Number(teacherLevel)===i+1?'selected':''}>Level ${i+1}</option>`).join('')}</select></label><label>${tx('메모','Notes')}<textarea id="speakingNotes" rows="3" placeholder="${tx('선택 사항','Optional')}">${notes||''}</textarea></label></div>
+      <div class="speaking-teacher-panel"><label>${tx('선생님 전체 말하기 판단','Teacher overall speaking impression')}<select id="teacherSpeakingLevel"><option value="">—</option>${Array.from({length:12},(_,i)=>`<option value="${i+1}" ${Number(teacherLevel)===i+1?'selected':''}>${LEVEL_LABELS[i+1]}</option>`).join('')}</select></label><label>${tx('메모','Notes')}<textarea id="speakingNotes" rows="3" placeholder="${tx('선택 사항','Optional')}">${notes||''}</textarea></label></div>
       <div class="actions"><button type="button" class="btn btn-ghost" data-speaking-back>${tx('뒤로','Back')}</button><button type="button" class="btn btn-primary" data-speaking-complete>${tx('말하기 평가 완료','Complete speaking')}</button></div>
     </section>`;
     bind();
