@@ -1,28 +1,28 @@
 @media print{
-  /* Reserve a real header band on every printed page. Chromium repeats fixed elements. */
-  @page{size:A4;margin:27mm 12mm 13mm}
+  /* Give the repeated header its own physical space at the top of every page. */
+  @page{size:A4;margin:30mm 12mm 13mm}
 
   .print-head{
     position:fixed!important;
-    top:-20mm!important;
-    left:0!important;
-    right:0!important;
-    height:15mm;
+    top:4mm!important;
+    left:12mm!important;
+    right:12mm!important;
+    height:17mm!important;
     margin:0!important;
-    padding:0 0 5mm!important;
-    background:#fff;
+    padding:0 0 4mm!important;
+    background:#fff!important;
     z-index:20!important;
-    align-items:flex-start;
-    justify-content:space-between;
-    border-bottom:2px solid #42b9cc;
+    align-items:flex-start!important;
+    justify-content:space-between!important;
+    border-bottom:2px solid #42b9cc!important;
   }
 
-  /* Longer, reliable centre divider repeated on every printed page. */
+  /* Long centre divider, clear of the repeated header and extending to the footer area. */
   body::after{
     content:"";
     position:fixed;
-    top:-1mm;
-    bottom:-9mm;
+    top:24mm;
+    bottom:8mm;
     left:50%;
     width:0;
     border-left:1px solid #cfd5dd;
