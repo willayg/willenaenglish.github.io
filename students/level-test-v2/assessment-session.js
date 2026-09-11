@@ -41,12 +41,14 @@ export function createEmptySession(){
       app_recommendation:null,
       app_confidence:null,
       teacher_level:null,
+      teacher_level_cap:null,
       teacher_notes:null,
       recordings:[]
     },
     calibration:{
       recommended_start_level:null,
-      teacher_selected_start_level:null
+      teacher_selected_start_level:null,
+      teacher_level_cap:null
     },
     computerized:{
       current_skill:null,
