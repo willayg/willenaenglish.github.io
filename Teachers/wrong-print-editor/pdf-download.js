@@ -33,8 +33,9 @@ function buildAnswerKey(source){
 function normalizeSentenceBreaks(clone){
   clone.querySelectorAll('.context,.prompt').forEach(el=>{
     const text=el.textContent||'';
-    if(!text.includes('|'))return;
-    el.textContent=text.replace(/\s*\|\s*/g,'\n');
+    // Stored items use more than one visual pipe character. Treat all of them as separators.
+    const normalized=text.replace(/\s*[|｜∣│¦]\s*/g,'\n');
+    if(normalized!==text)el.textContent=normalized;
   });
 }
 
