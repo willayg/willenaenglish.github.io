@@ -38,6 +38,22 @@ function normalizeSentenceBreaks(clone){
   });
 }
 
+function prepareSections(clone){
+  [...clone.querySelectorAll('.skill-section')].forEach((sec,i)=>{
+    if(i>0)sec.classList.add('pdf-section-break');
+    const label=(sec.querySelector('.skill-heading')?.textContent||'').trim().toLowerCase();
+    const isBody=label==='본문'||label==='sentences'||label.includes('본문');
+    if(!isBody)return;
+    sec.classList.add('pdf-sentences-section');
+    sec.querySelectorAll('.question-card').forEach(card=>{
+      if(card.querySelector('.pdf-writing-space'))return;
+      const space=document.createElement('div');
+      space.className='pdf-writing-space';
+      card.appendChild(space);
+    });
+  });
+}
+
 function makeQuestionRows(clone){
   clone.querySelectorAll('.skill-grid').forEach(grid=>{
     const children=[...grid.children];
@@ -79,6 +95,7 @@ function makeExportNode(){
   if(!$('#showMeta')?.checked)clone.querySelectorAll('.tag').forEach(el=>el.remove());
   clone.querySelectorAll('.print-blank').forEach(el=>el.style.display='block');
   normalizeSentenceBreaks(clone);
+  prepareSections(clone);
   makeQuestionRows(clone);
 
   const root=document.createElement('div');
@@ -88,13 +105,14 @@ function makeExportNode(){
     .pdf-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;border-bottom:2px solid #42b9cc;padding:0 0 5mm;margin:0 0 5mm}
     .pdf-brand{display:flex;align-items:center;gap:10px}.pdf-brand img{width:30mm;height:auto}.pdf-brand h1{font:800 18pt/1.1 Poppins,"Noto Sans KR",sans-serif;margin:0 0 2px}.pdf-brand p{margin:0;color:#666;font-size:8.5pt}
     .pdf-student{display:flex;flex-direction:column;text-align:right;font-size:8.5pt;color:#555}.pdf-student b{color:#222;font-size:11pt}
-    .cards{display:block}.skill-section{margin:0 0 4mm;counter-reset:pdfq}.skill-heading{font:800 14pt/1.1 Poppins,"Noto Sans KR",sans-serif;margin:0 0 3mm}.skill-grid{display:block!important}.skill-end{height:1px;background:#4d5260;margin:3mm 0 4mm}
+    .cards{display:block}.skill-section{margin:0 0 4mm;counter-reset:pdfq}.skill-section.pdf-section-break{break-before:page!important;page-break-before:always!important}.skill-heading{font:800 14pt/1.1 Poppins,"Noto Sans KR",sans-serif;margin:0 0 3mm}.skill-grid{display:block!important}.skill-end{height:1px;background:#4d5260;margin:3mm 0 4mm}
     .pdf-question-table{width:100%;table-layout:fixed;border-collapse:collapse;margin:0 0 2.5mm;break-inside:avoid!important;page-break-inside:avoid!important;-webkit-region-break-inside:avoid!important}
     .pdf-question-table tr{break-inside:avoid!important;page-break-inside:avoid!important}
     .pdf-question-cell{width:50%;vertical-align:top;padding:0}
     .pdf-question-left{padding-right:1.25mm}.pdf-question-right{padding-left:1.25mm}
     .question-card{position:relative;width:100%;box-shadow:none!important;border:1px solid #dfe3ea!important;border-radius:2mm!important;margin:0!important;padding:2.5mm 2.5mm 3mm 7.5mm!important;break-inside:avoid!important;page-break-inside:avoid!important;background:#fff!important}.question-card:before{counter-increment:pdfq;content:counter(pdfq) ".";position:absolute;left:2.5mm;top:2.6mm;font:800 8.5pt/1 Poppins,"Noto Sans KR",sans-serif;color:#343844}
     .card-top{display:block}.tags{display:flex;gap:1mm;flex-wrap:wrap}.tag{font-size:7pt;padding:1mm 1.5mm;border-radius:10mm;background:#f0f2f6;color:#656b7b}.prompt{font-size:9.5pt;margin:2mm 0 1.5mm;font-weight:700;white-space:pre-wrap}.context{font-size:8.5pt;padding:1.5mm 2mm;margin:1.5mm 0;line-height:1.4;background:#f6f7fa;border-radius:2mm;white-space:pre-wrap}.choices{font-size:8.5pt;margin:1.5mm 0 0;padding-left:5mm}.choices li{padding:.4mm 0}
+    .pdf-sentences-section .question-card{min-height:42mm}.pdf-writing-space{height:24mm;margin-top:3mm;background:#fff}
     .vocab-span{display:block;width:100%;break-inside:auto}.vocab-list-card{border:0!important;box-shadow:none!important;padding:0!important;background:transparent!important}.vocab-list-head h3{font:800 11pt/1.2 Poppins,"Noto Sans KR",sans-serif;margin:0 0 1.5mm}.vocab-list-head p{display:none}.vocab-table{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;column-gap:10mm;border-top:1px solid #e8ebef;position:relative}.vocab-table:after{content:"";position:absolute;top:0;bottom:0;left:50%;border-left:1px solid #cfd5dd}.vocab-row{display:grid!important;grid-template-columns:7mm minmax(0,1fr) minmax(24mm,.9fr);gap:2mm;align-items:center;padding:1.6mm 0;border-bottom:1px solid #edf0f3;break-inside:avoid}.vocab-num:before{counter-increment:pdfq;content:counter(pdfq) "."}.vocab-num{font-weight:800;text-align:right}.vocab-ko{font-size:8.8pt;font-weight:700}.vocab-write{display:block}.print-blank{display:block!important;border-bottom:1px solid #5e6470;height:5mm;width:100%}
     .pdf-answer-key{break-before:page;page-break-before:always;margin-top:0}.pdf-answer-key h2{font:800 15pt/1.1 Poppins,"Noto Sans KR",sans-serif;margin:0 0 4mm;border-bottom:2px solid #42b9cc;padding-bottom:2mm}.pdf-answer-skill h3{margin:4mm 0 2mm}.pdf-answer-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.5mm 5mm}.pdf-answer-grid div{padding:1.5mm 0;border-bottom:1px solid #eee;font-size:9pt}
   </style>${headerHtml()}<div class="cards"></div>${buildAnswerKey(source)}`;
@@ -117,7 +135,7 @@ async function downloadPdf(){
       image:{type:'jpeg',quality:.98},
       html2canvas:{scale:2,useCORS:true,backgroundColor:'#ffffff'},
       jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},
-      pagebreak:{mode:['css','legacy'],avoid:['.pdf-question-table','.pdf-question-table tr','.question-card','.vocab-row']}
+      pagebreak:{mode:['css','legacy'],before:['.pdf-section-break','.pdf-answer-key'],avoid:['.pdf-question-table','.pdf-question-table tr','.question-card','.vocab-row']}
     }).from(node).save();
   }catch(e){console.error('[wrong-print-editor] PDF download failed',e);alert(`PDF 만들기 실패: ${e.message||e}`)}finally{host?.remove();btn.disabled=false;btn.textContent=old}
 }
