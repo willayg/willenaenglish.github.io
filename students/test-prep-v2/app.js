@@ -1,13 +1,12 @@
 import {QuestionRenderer} from './question-renderer.js?v=2.20.6';
 import {gradeQuestion} from '../shared/question-grader.js?v=2.1.2';
 import {createQuestionSession} from './question-session.js?v=2.0.1';
-import {loadPracticeContent} from './practice-loader.js?v=2.0.1';
+import {loadPracticeContent} from './practice-loader.js?v=2.0.2';
 import {createPerfDebug} from './perf-debug.js?v=1.0.0';
 import {resolveContentIds,reviewQuestionFromItem} from './content-source.js?v=2.24.3';
 import {initTracking,refreshTrackingState,setTrackingContext,startSession,recordAttempt,completeSession,trackingState} from './tracking-client.js?v=2.17a';
 import {startVocabularyLearning} from './vocab-learning.js?v=2.14.1';
-import {passageAvailable} from './passage-source.js?v=2.18.0';
-import {startPassageLearning,stopPassageLearning} from './passage-learning.js?v=2.18.1';
+import {startSentencePracticeV1,stopSentencePracticeV1} from './sentence-practice-v1.js?v=1.0.0';
 import {loadCardStats,invalidateCardStats,getStatsDiagnostics,formatCardMetric,formatAccuracy,reviewCounts} from './stats-client.js?v=2.16a';
 import {loadReviewQueue,refreshReviewQueue} from '../shared/student-review.js?v=1.0.0';
 import {renderMockTestPreflight,stopMockTest} from './mock-test.js?v=1.4.3';
@@ -22,13 +21,13 @@ const PRACTICES={
   vocab_test:{label:'어휘 시험',desc:'정의 · 문맥 · 철자',kind:'vocab-test'},
   communication:{label:'Communication',desc:'핵심 대화 표현',kind:'stored'},
   grammar:{label:'Grammar',desc:'핵심 문법',kind:'stored'},
-  passage:{label:'본문',desc:'교과서 순서 · 문장 완성',kind:'passage-learning'},
+  sentences:{label:'본문외우기',desc:'본문 문장 완성',kind:'sentence-v1'},
   reading:{label:'Reading',desc:'본문 이해',kind:'stored'},
   constructed_response:{label:'서술형',desc:'저장된 영작 · 교정 · 다답형',kind:'written'}
 };
 
 function scopeFor(plan){const lessons=plan?.group?.scope?.lessons;if(Array.isArray(lessons)&&lessons.length)return lessons.filter(x=>x?.lesson);return(plan?.units||[]).map(lesson=>({lesson,sections:plan?.practice_types||[]}))}
-function sectionsFor(plan,lesson){const row=scopeFor(plan).find(x=>String(x.lesson)===String(lesson)),sections=new Set((row?.sections||[]).map(x=>String(x).toLowerCase()));if(sections.has('vocabulary'))sections.add('vocab_test');return sections}
+function sectionsFor(plan,lesson){const row=scopeFor(plan).find(x=>String(x.lesson)===String(lesson)),sections=new Set((row?.sections||[]).map(x=>String(x).toLowerCase()));if(sections.has('vocabulary'))sections.add('vocab_test');sections.add('sentences');return sections}
 function planById(id){return(trackingState().plans||[]).find(p=>String(p.id)===String(id))||null}
 function trackingId(q){return String(q?.tracking?.questionId||q?.id||'')}
 function fieldState(key){return{get:()=>state[key],set:value=>{state[key]=value}}}
@@ -67,17 +66,9 @@ function renderLessons(plan){
 async function renderLesson(plan,lesson){
   state.plan=plan;state.lesson=lesson;state.practice=null;state.renderer=null;
   const sections=sectionsFor(plan,lesson),data=cardData(plan).lessons?.[String(lesson)]||{summary:emptyStat(),practices:{}},loaded=hasCardData(plan);setBottom('');
-  if(sections.has('reading')){
-    try{
-      let unitId=data.unitId||null;
-      if(!unitId){const ids=await resolveContentIds(plan,lesson);unitId=ids.unitId}
-      if(!lessonRouteMatches(plan.id,lesson))return;
-      if(unitId&&await passageAvailable(unitId))sections.add('passage');
-    }catch(e){console.warn('[test-prep-v2] passage availability failed',e)}
-  }
   if(!lessonRouteMatches(plan.id,lesson))return;
   const available=Object.entries(PRACTICES).filter(([k])=>sections.has(k));
-  root.innerHTML=`<button class="back" id="lessonBack">← ${esc(plan.book_label||'시험 대비')}</button><div class="lesson-head"><div class="heading"><div><h2>${esc(lesson)}</h2><p>${esc(plan.book_label||'')}</p></div></div></div>${available.length?`<div class="journey">${available.map(([k,p],i)=>{const workflow=k==='passage',s=data.practices?.[k]||emptyStat();return `<div class="journey-stop" data-practice="${k}"><div class="station">${i+1}</div><div class="stop-copy"><b>${esc(p.label)}</b><small>${esc(p.desc)}</small>${workflow?'':`<div class="mini"><i style="width:${loaded?s.coverage:0}%"></i></div>`}</div><div class="stop-stat">${workflow?'순서 학습':(loaded?`${s.completed} / ${s.total}`:'…')}<small>${workflow?'서버 저장':(loaded?(s.accuracySample?`${s.accuracy}% accuracy`:'— accuracy'):'loading')}</small></div></div>`}).join('')}</div>`:'<div class="empty">이 Lesson에 활성화된 영역이 없습니다.</div>'}`;
+  root.innerHTML=`<button class="back" id="lessonBack">← ${esc(plan.book_label||'시험 대비')}</button><div class="lesson-head"><div class="heading"><div><h2>${esc(lesson)}</h2><p>${esc(plan.book_label||'')}</p></div></div></div>${available.length?`<div class="journey">${available.map(([k,p],i)=>{const s=data.practices?.[k]||emptyStat();return `<div class="journey-stop" data-practice="${k}"><div class="station">${i+1}</div><div class="stop-copy"><b>${esc(p.label)}</b><small>${esc(p.desc)}</small><div class="mini"><i style="width:${loaded?s.coverage:0}%"></i></div></div><div class="stop-stat">${loaded?`${s.completed} / ${s.total}`:'…'}<small>${loaded?(s.accuracySample?`${s.accuracy}% accuracy`:'— accuracy'):'loading'}</small></div></div>`}).join('')}</div>`:'<div class="empty">이 Lesson에 활성화된 영역이 없습니다.</div>'}`;
   $('#lessonBack').onclick=back;root.querySelectorAll('[data-practice]').forEach(b=>b.onclick=()=>navigate({view:'practice',planId:plan.id,lesson,practice:b.dataset.practice}));
 }
 
@@ -86,15 +77,15 @@ async function startPracticeRoute(plan,lesson,practice){
   state.plan=plan;state.lesson=lesson;state.practice=practice;state.queue=[];state.index=0;state.score=0;state.wrongIds=[];state.checked=false;state.renderer=null;root.innerHTML='<div class="loading">문제를 불러오는 중...</div>';setBottom('');
   try{
     const ids=await resolveContentIds(plan,lesson);if(!practiceRouteMatches(practice,plan.id,lesson))return;state.ids=ids;setTrackingContext(plan,lesson);
+    if(practice==='sentences'){
+      root.innerHTML='<div id="sentencePracticeHost"></div>';const host=$('#sentencePracticeHost');
+      await startSentencePracticeV1({host,plan,lesson,unitId:ids.unitId,onExit:back});return;
+    }
     const loaded=await loadPracticeContent({kind:config.kind,practice,unitId:ids.unitId,studentId:trackingState().user?.id||null,planId:plan.id,lesson,count:20});
     if(!practiceRouteMatches(practice,plan.id,lesson))return;
     if(loaded.mode==='workflow'&&loaded.kind==='vocab-learning'){
       root.innerHTML='<div id="vocabActivityHost"></div>';const host=$('#vocabActivityHost');
       await startVocabularyLearning({host,plan,lesson,unitId:ids.unitId,onExit:back});return;
-    }
-    if(loaded.mode==='workflow'&&loaded.kind==='passage-learning'){
-      root.innerHTML='<div id="passageActivityHost"></div>';const host=$('#passageActivityHost');
-      await startPassageLearning({host,plan,lesson,unitId:ids.unitId,onExit:back});return;
     }
     if(!loaded.rawCount){root.innerHTML=`<button class="back" id="emptyBack">← ${esc(lesson)}</button><div class="empty">이 영역에 사용할 문제가 없습니다.</div>`;$('#emptyBack').onclick=back;return}
     if(!loaded.pool.length){root.innerHTML=`<button class="back" id="emptyBack">← ${esc(lesson)}</button><div class="empty">선택할 수 있는 문제가 없습니다.</div>`;$('#emptyBack').onclick=back;return}
@@ -181,7 +172,7 @@ function renderReviewDone(plan,data,answered,correct){
 function beforeRouteChange(previous,next){
   if(previous?.view==='practice'&&next?.view!=='practice'){
     try{window.speechSynthesis?.cancel?.()}catch(_){ }
-    if(previous.practice==='passage')stopPassageLearning().catch(e=>console.warn('[test-prep-v2] passage leave close failed',e));
+    if(previous.practice==='sentences')stopSentencePracticeV1().catch(e=>console.warn('[test-prep-v2] sentences leave close failed',e));
     else if(previous.practice==='vocabulary')completeSession({correct:0,total:0,wrongIds:[]}).catch(e=>console.warn('[test-prep-v2] vocab leave close failed',e));
     else completeSession({correct:state.score,total:state.index+(state.checked?1:0),wrongIds:state.wrongIds}).catch(e=>console.warn('[test-prep-v2] practice leave close failed',e));
     state.renderer=null;setBottom('');return;
