@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<title>오답 Print Test Editor · Willena</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./styles.css?v=1.0.0">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand"><img src="/Assets/Images/Logo.png" alt="Willena"><div><h1>오답 Print Test Editor</h1><p id="studentMeta">학생 오답을 불러오는 중…</p></div></div>
+  <div class="top-actions"><button id="restoreAll" class="btn ghost" type="button">모두 복구</button><button id="printBtn" class="btn primary" type="button" disabled>Print / PDF</button></div>
+</header>
+<main class="layout">
+  <aside class="sidebar">
+    <section class="panel stats"><div><strong id="includedCount">0</strong><span>포함</span></div><div><strong id="removedCount">0</strong><span>제외</span></div><div><strong id="totalCount">0</strong><span>전체</span></div></section>
+    <section class="panel settings">
+      <h2>프린트 설정</h2>
+      <label class="check"><input id="answerKey" type="checkbox" checked><span>마지막 페이지에 정답지 포함</span></label>
+      <label class="check"><input id="showMeta" type="checkbox" checked><span>Lesson / 유형 표시</span></label>
+      <p>여기서 제외한 문제는 학생의 실제 오답 기록에서는 삭제되지 않습니다.</p>
+    </section>
+    <section class="panel removed-panel">
+      <h2>제외된 문제</h2>
+      <div id="removedList" class="removed-list"><div class="empty-small">아직 없습니다.</div></div>
+    </section>
+  </aside>
+  <section class="workspace">
+    <div class="workspace-head"><div><h2>프린트할 문제</h2><p>문제가 이상하면 <b>이 프린트에서 제외</b>를 누르세요.</p></div><button id="reloadBtn" class="btn ghost" type="button">다시 불러오기</button></div>
+    <div id="status" class="status">오답을 불러오는 중…</div>
+    <div id="cards" class="cards"></div>
+  </section>
+</main>
+<script src="/students/api-gateway.js?v=2.13b"></script>
+<script src="/js/api-config.js?v=2.13b"></script>
+<script src="./app.js?v=1.0.0"></script>
+</body>
+</html>
