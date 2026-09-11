@@ -3,97 +3,97 @@ const DEFAULT_PROMPTS={
     'What is your name?',
     'How old are you?',
     'What color do you like?',
-    'Do you like pizza?',
-    'What animal do you like?',
+    'Do you like cats?',
+    'What is this? (point to an object)',
     'Who is in your family?'
   ],
   2:[
-    'Tell me about your family.',
+    'What do you like to eat?',
     'What do you do after school?',
-    'What food do you like and why?',
+    'Tell me about your family.',
     'What is your favorite game?',
-    'Tell me about your best friend.',
-    'What do you usually do on weekends?'
+    'What do you do on Sunday?',
+    'What can you do well?'
   ],
   3:[
-    'Tell me about your school day.',
+    'Tell me about your classroom.',
+    'What time do you get up?',
     'What did you do yesterday?',
-    'What are you good at?',
-    'What do you want to do this weekend?',
-    'Describe your classroom.',
-    'Tell me about a time you were very happy.'
+    'What are you going to do this weekend?',
+    'Tell me about your best friend.',
+    'What do you like doing with your family?'
   ],
   4:[
-    'Describe a fun weekend.',
-    'What makes a good friend?',
-    'What would you like to learn?',
-    'Tell me about a movie, book, or show you like.',
-    'What is something difficult for you at school?',
-    'If you could have any pet, what would you choose and why?'
+    'Tell me about your school day.',
+    'What did you eat for dinner yesterday?',
+    'Tell me about a fun weekend.',
+    'What do you want to do during vacation?',
+    'Describe your room at home.',
+    'Which school subject do you like best? Why?'
   ],
   5:[
-    'Tell me about a problem you solved.',
-    'Which is better: studying alone or with friends? Why?',
-    'Describe a place you would like to visit.',
-    'What is one rule at school you think is important?',
-    'Tell me about something you are proud of.',
-    'If you could change one thing about your daily routine, what would it be?'
+    'Tell me about a movie or cartoon you like.',
+    'Describe a place you like to visit.',
+    'What happened the last time you met your friends?',
+    'What are you planning to do next weekend?',
+    'Which is better, summer or winter? Why?',
+    'What makes a good friend?'
   ],
   6:[
-    'Tell me about something you recently learned.',
-    'What makes a class interesting?',
-    'Explain a rule you think is important.',
-    'Describe a person who has taught you something important.',
-    'What are the advantages of having a hobby?',
-    'If you had an extra hour every day, how would you use it?'
+    'Tell me about something you learned recently.',
+    'Describe a trip or day out you remember well.',
+    'What do you do when you have a lot of homework?',
+    'If a friend feels sad, what can you do?',
+    'Which is better, studying at home or at school? Why?',
+    'What is something you want to get better at?'
   ],
   7:[
-    'Describe a difficult decision you made.',
-    'How has technology changed learning?',
-    'What is one thing you would improve about your town?',
-    'Tell me about a time your plan did not work and what you did next.',
-    'Do students learn more from success or failure? Explain.',
-    'What qualities make someone a good leader?'
+    'Tell me about a time something did not go as planned.',
+    'Describe a goal you have and how you can reach it.',
+    'What makes a class interesting?',
+    'Do you prefer working alone or in a group? Why?',
+    'Tell me about a useful app or device you use.',
+    'What would you change about your school day?'
   ],
   8:[
-    'Do schools give students enough independence? Explain.',
-    'Describe an experience that changed your opinion.',
-    'What makes communication effective?',
-    'Should students have more choice about what they study?',
-    'How can people solve conflicts fairly?',
-    'What is one modern convenience people rely on too much?'
+    'Tell me about a decision you made recently.',
+    'What are the good and bad things about using smartphones?',
+    'How can students help a new student feel comfortable?',
+    'Do students need homework every day? Why or why not?',
+    'Describe a skill you would like to learn in the future.',
+    'What can people do to stay healthy?'
   ],
   9:[
-    'Should success be measured by results or effort?',
-    'Explain a social issue young people face.',
-    'How can people disagree productively?',
-    'Do social media platforms help or harm communication overall?',
-    'When should people follow rules, and when is it reasonable to challenge them?',
-    'What is more important for learning: curiosity, discipline, or talent? Why?'
+    'Tell me about a time you changed your mind about something.',
+    'What are the advantages and disadvantages of studying online?',
+    'Should students be allowed to use phones in class? Explain.',
+    'What makes someone a good team member?',
+    'What is one problem young people have today?',
+    'Would you rather live in a big city or a small town? Why?'
   ],
   10:[
-    'Discuss a change in society that has both benefits and drawbacks.',
-    'What responsibilities come with freedom?',
-    'Explain how context can change the meaning of a message.',
-    'Should schools prioritize practical skills or academic knowledge?',
-    'How should people balance personal goals with responsibilities to others?',
-    'Can technology solve most environmental problems, or are lifestyle changes more important?'
+    'Describe a challenge you faced and how you dealt with it.',
+    'Do you think school prepares students well for adult life? Why or why not?',
+    'What are some good and bad effects of social media?',
+    'Should students have more choice in what they study?',
+    'What is one thing you would improve in your community?',
+    'Is it better to be very talented or very hardworking? Explain.'
   ],
   11:[
-    'Evaluate whether competition generally improves performance.',
-    'Discuss a situation where the obvious solution may not be the best one.',
-    'How should we judge the reliability of information?',
-    'To what extent should governments limit individual choice for the public good?',
-    'Is it possible to be truly objective when making important decisions?',
-    'What makes an argument persuasive rather than merely confident?'
+    'Tell me about an experience that taught you an important lesson.',
+    'How has technology changed the way students learn?',
+    'What makes information online trustworthy?',
+    'Should schools focus more on practical skills? Why or why not?',
+    'What are some benefits and problems of competition?',
+    'When people disagree, what helps them communicate well?'
   ],
   12:[
-    'Defend a nuanced position on whether technological progress necessarily improves quality of life.',
-    'Explain how assumptions can distort decision-making.',
-    'Discuss the trade-offs involved in standardizing education.',
-    'To what extent should societies preserve traditions that conflict with changing social values?',
-    'Is equality of opportunity enough to create a fair society? Why or why not?',
-    'Discuss whether uncertainty should make decision-makers more cautious or more adaptable.'
+    'Describe an issue that matters to young people and explain your view.',
+    'How should people balance personal goals with responsibilities to others?',
+    'What are the benefits and risks of depending heavily on technology?',
+    'Should schools treat all students the same, or adapt more to individual needs?',
+    'What makes a strong argument when people have different opinions?',
+    'What is one change you think would improve education, and why?'
   ]
 };
 
