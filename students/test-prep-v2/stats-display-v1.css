@@ -85,6 +85,12 @@
   align-items:center;
   min-height:118px;
 }
+/* Connector rules exist in the base and card refresh styles with different geometry.
+   Disable them here so the numbered stations stand alone cleanly on every viewport. */
+.journey-stop:not(:last-child)::before{
+  content:none!important;
+  display:none!important;
+}
 .stop-metrics{
   display:grid;
   grid-template-columns:minmax(0,1fr) 1px minmax(0,.8fr);
@@ -159,10 +165,6 @@
   .station{
     width:46px;
     height:46px;
-  }
-  .journey-stop:not(:last-child):before{
-    left:21px;
-    top:46px;
   }
   .stop-copy b{font-size:18px}
   .stop-copy small{font-size:10px}
