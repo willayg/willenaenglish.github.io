@@ -6,6 +6,23 @@ if(root){
   const number=v=>Number(String(v||'').replace(/,/g,'').trim());
   const clamp=v=>Math.max(0,Math.min(100,Math.round(Number(v)||0)));
 
+  function upgradeExamCard(card){
+    if(card.dataset.v1ExamAccuracyReady==='1')return;
+    const ring=card.querySelector('.ring');
+    if(!ring)return;
+    const accuracyPill=[...card.querySelectorAll('.exam-meta .pill')].find(el=>/%\s*accuracy/i.test(el.textContent||''));
+    if(!accuracyPill)return;
+    const match=(accuracyPill.textContent||'').match(/(\d+)%\s*accuracy/i);
+    if(!match)return;
+
+    const accuracy=clamp(match[1]);
+    ring.style.setProperty('--p',`${accuracy}%`);
+    const ringValue=ring.querySelector('b');
+    if(ringValue)ringValue.textContent=`${accuracy}%`;
+    ring.setAttribute('aria-label',`최근 정확도 ${accuracy}%`);
+    card.dataset.v1ExamAccuracyReady='1';
+  }
+
   function upgradeLessonCard(card){
     if(card.dataset.v1StatsReady==='1')return;
     const metric=card.querySelector('.metric');
@@ -59,6 +76,7 @@ if(root){
   }
 
   function upgrade(){
+    root.querySelectorAll('.exam-card[data-plan]').forEach(upgradeExamCard);
     root.querySelectorAll('.tile[data-lesson]').forEach(upgradeLessonCard);
     root.querySelectorAll('.journey-stop').forEach(upgradeJourneyRow);
   }
