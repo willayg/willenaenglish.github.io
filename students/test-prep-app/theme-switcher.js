@@ -38,8 +38,22 @@ function addDock(){
   syncDock();
 }
 
+function addVersionSwitch(){
+  if(document.getElementById('tpVersionSwitch'))return;
+  const style=document.createElement('style');
+  style.textContent='.tp-version-switch{position:fixed;top:16px;right:18px;z-index:2147483000;display:flex;gap:3px;padding:4px;background:rgba(255,255,255,.9);border:1.5px solid var(--tp-line,#9de2e7);border-radius:999px;box-shadow:0 5px 18px rgba(20,90,100,.12);font:800 12px/1 Poppins,sans-serif}.tp-version-switch a,.tp-version-switch span{display:grid;place-items:center;width:30px;height:30px;border-radius:999px;text-decoration:none}.tp-version-switch .active{background:var(--tp-cyan-dark,#07888d);color:#fff}.tp-version-switch a{color:var(--tp-cyan-dark,#07888d)}.tp-version-switch a:hover{background:var(--tp-soft,#e9fbfc)}';
+  document.head.appendChild(style);
+  const nav=document.createElement('nav');
+  nav.id='tpVersionSwitch';
+  nav.className='tp-version-switch';
+  nav.setAttribute('aria-label','Test Prep version');
+  nav.innerHTML='<span class="active" aria-current="page" title="Test Prep A">A</span><a href="../test-prep-v2/" title="Test Prep B" aria-label="Open Test Prep B">B</a>';
+  document.body.appendChild(nav);
+}
+
 function boot(){
   addDock();
+  addVersionSwitch();
   let saved='cyan';
   try{saved=localStorage.getItem(STORAGE_KEY)||'cyan'}catch(_){}
   applyTheme(saved,false);
