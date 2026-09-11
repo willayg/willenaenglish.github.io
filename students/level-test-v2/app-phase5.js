@@ -1,6 +1,6 @@
 import {createVisitorIntake} from './visitor-intake.js?v=20260911-phase5';
 import {createNavigator} from './navigation.js?v=20260911-phase5';
-import {createSpeakingAssessment} from './speaking-assessment.js?v=20260911-phase5';
+import {createSpeakingAssessment} from './speaking-assessment.js?v=20260911-phase5q2';
 import {
   SESSION_PHASE,
   SESSION_STATUS,
