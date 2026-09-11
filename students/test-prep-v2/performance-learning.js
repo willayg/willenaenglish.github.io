@@ -15,6 +15,7 @@ const STAGES=[
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]));
 const shuffle=list=>{const a=[...(list||[])];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
 const words=text=>String(text||'').trim().split(/\s+/).filter(Boolean);
+const hasContraction=text=>/[A-Za-z]+['’][A-Za-z]+/.test(String(text||''));
 
 let active=null;
 
@@ -26,7 +27,7 @@ function setBottom(html=''){if(!active?.bottom)return;active.bottom.innerHTML=ht
 function shellTitle(){return active.assignment.title||active.data.set.title||'수행평가'}
 
 function makeQuestion(item,stageIndex){
-  const stage=STAGES[stageIndex],target=String(item.target_en||'').trim(),chunks=Array.isArray(item.chunks)&&item.chunks.length?item.chunks.filter(Boolean):words(target);
+  const stage=STAGES[stageIndex],target=String(item.target_en||'').trim(),chunks=Array.isArray(item.chunks)&&item.chunks.length?item.chunks.filter(Boolean):words(target),contraction=hasContraction(target);
   const base={
     id:`performance:${item.id}:${stage.key}`,
     masteryKey:`performance:${item.id}`,
@@ -35,6 +36,7 @@ function makeQuestion(item,stageIndex){
     prompt:stageIndex===5?'우리말을 보고 영어 문장을 완벽하게 쓰세요.':stageIndex===4?'우리말을 보고 영어 문장을 직접 쓰세요.':'다음 문장을 연습하세요.',
     context:{korean:item.prompt_ko||'',target_en:target},
     choices:[],chips:[],answer:[target],input:{language:'en'},
+    grading:{constraints:{contractionRequired:contraction,noContractions:!contraction}},
     tracking:{practiceType:'performance',questionId:`performance:${item.id}:${stage.key}`,questionType:`performance_${stage.key}`,targets:['performance_assessment','sentence_memorization']},
     metadata:{grading_policy_override:'exact',assessment_id:active.data.set.id,assignment_id:active.assignment.id,performance_item_id:item.id,item_number:item.item_number,performance_stage:stage.key}
   };
