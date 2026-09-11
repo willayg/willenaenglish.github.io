@@ -9,6 +9,8 @@ const avatarButton=document.getElementById('studentAvatar');
 const menu=document.getElementById('studentProfileMenu');
 const profileButton=document.getElementById('studentProfileOpen');
 const dashboardButton=document.getElementById('studentDashboardOpen');
+const testPrepAButton=document.getElementById('studentTestPrepA');
+const testPrepBButton=document.getElementById('studentTestPrepB');
 const logoutButton=document.getElementById('studentLogout');
 
 function fallbackAvatar(name){
@@ -43,6 +45,8 @@ document.addEventListener('click',()=>setMenu(false));
 document.addEventListener('keydown',event=>{if(event.key==='Escape')setMenu(false)});
 profileButton?.addEventListener('click',()=>openStudentProfile());
 dashboardButton?.addEventListener('click',()=>{window.location.href='/students/dashboard-v2/'});
+testPrepAButton?.addEventListener('click',()=>{window.location.href='../test-prep-app/'});
+testPrepBButton?.addEventListener('click',()=>setMenu(false));
 logoutButton?.addEventListener('click',()=>logoutStudent());
 
 startStudentHeaderData();
