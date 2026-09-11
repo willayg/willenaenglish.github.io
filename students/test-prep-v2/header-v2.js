@@ -1,18 +1,49 @@
 import {startStudentHeaderData,subscribeStudentHeaderData} from '../shared/student-header-data.js?v=1.0.0';
+import {logoutStudent,openStudentProfile} from '../shared/student-header-actions.js?v=1.0.0';
 
 const header=document.querySelector('.student-header');
 const nameEl=document.getElementById('user');
+const pointsEl=document.getElementById('headerPoints');
+const starsEl=document.getElementById('headerStars');
+const avatarButton=document.getElementById('studentAvatar');
+const menu=document.getElementById('studentProfileMenu');
+const profileButton=document.getElementById('studentProfileOpen');
+const dashboardButton=document.getElementById('studentDashboardOpen');
+const logoutButton=document.getElementById('studentLogout');
+
+function fallbackAvatar(name){
+  const value=String(name||'Student').trim();
+  return value.charAt(0).toUpperCase()||'S';
+}
 
 function renderStudentHeader(data){
-  if(nameEl&&data.name)nameEl.textContent=data.name;
+  const name=data.name||'Student';
+  if(nameEl)nameEl.textContent=name;
+  if(pointsEl)pointsEl.textContent=typeof data.points==='number'?data.points.toLocaleString():'—';
+  if(starsEl)starsEl.textContent=typeof data.stars==='number'?data.stars.toLocaleString():'—';
+  if(avatarButton)avatarButton.textContent=data.avatar||fallbackAvatar(name);
   if(header){
     header.dataset.studentHeaderShared='1';
     if(data.userId)header.dataset.studentId=String(data.userId);
-    if(typeof data.points==='number')header.dataset.points=String(data.points);
-    if(typeof data.stars==='number')header.dataset.stars=String(data.stars);
-    if(data.avatar)header.dataset.avatar=String(data.avatar);
   }
 }
+
+function setMenu(open){
+  if(!menu||!avatarButton)return;
+  menu.hidden=!open;
+  avatarButton.setAttribute('aria-expanded',open?'true':'false');
+}
+
+avatarButton?.addEventListener('click',event=>{
+  event.stopPropagation();
+  setMenu(menu?.hidden!==false);
+});
+menu?.addEventListener('click',event=>event.stopPropagation());
+document.addEventListener('click',()=>setMenu(false));
+document.addEventListener('keydown',event=>{if(event.key==='Escape')setMenu(false)});
+profileButton?.addEventListener('click',()=>openStudentProfile());
+dashboardButton?.addEventListener('click',()=>{window.location.href='/students/dashboard-v2/'});
+logoutButton?.addEventListener('click',()=>logoutStudent());
 
 startStudentHeaderData();
 subscribeStudentHeaderData(renderStudentHeader);
