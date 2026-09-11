@@ -188,7 +188,7 @@
   left:27px;
   top:55px;
   width:5px;
-  background:linear-gradient(var(--cyan),var(--pink));
+  background:rgba(238,95,145,.20);
 }
 .station{
   width:56px;
