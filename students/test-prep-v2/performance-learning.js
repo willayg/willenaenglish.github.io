@@ -41,26 +41,33 @@ async function persist(item,newLevel,lastCorrect){
   return row;
 }
 
-function renderOverview(){
-  if(!active)return;
-  setBottom('');
-  const {host,data}=active,total=data.items.length,arranged=arrangedCount(),written=writtenCount();
-  host.innerHTML=`<div class="pa-shell"><button class="back" data-pa-exit>← 시험 범위</button><div class="pa-hero"><div><span class="pa-kicker">수행평가</span><h2>${esc(title())}</h2><p>${esc(active.assignment.unit_key||'')} · 배열 ${arranged}/${total}${written?` · 직접쓰기 ${written}/${total}`:''}</p></div><div class="pa-progress-ring"><b>${total?Math.round(arranged/total*100):0}%</b><small>배열</small></div></div><div class="pa-overall"><i style="width:${total?Math.round(arranged/total*100):0}%"></i></div><div class="pa-items">${data.items.map(item=>{const level=levelFor(item);return `<div class="pa-item ${level>=1?'done':''}"><span class="pa-num">${item.item_number}</span><span class="pa-copy"><b>${esc(item.prompt_ko||`문장 ${item.item_number}`)}</b><small>${level>=2?'✓ 배열 · 직접쓰기 완료':level>=1?'✓ 배열 완료':'배열 연습 전'}</small></span><span class="pa-actions"><button type="button" data-pa-mode="order" data-pa-item="${esc(item.id)}">배열</button><button type="button" class="secondary" data-pa-mode="write" data-pa-item="${esc(item.id)}">쓰기 <em>선택</em></button></span></div>`}).join('')}</div></div>`;
-  host.querySelector('[data-pa-exit]').onclick=()=>active?.onExit?.();
-  host.querySelectorAll('[data-pa-mode]').forEach(btn=>btn.onclick=()=>renderItem(btn.dataset.paItem,btn.dataset.paMode));
+function startWhole(mode){
+  if(!active?.data?.items?.length)return;
+  active.run={mode,index:0};
+  renderItem(active.data.items[0].id,mode);
 }
 
-function nextItem(item){
-  const i=active.data.items.findIndex(x=>String(x.id)===String(item.id));
-  return i>=0?active.data.items[i+1]||null:null;
+function renderOverview(){
+  if(!active)return;
+  active.run=null;
+  setBottom('');
+  const {host,data}=active,total=data.items.length,arranged=arrangedCount(),written=writtenCount();
+  host.innerHTML=`<div class="pa-shell"><button class="back" data-pa-exit>← 시험 범위</button><div class="pa-master-actions"><button type="button" class="pa-master pa-master-order" data-pa-master="order"><span>전체 배열 시작</span><small>1번 문장부터 처음부터</small></button><button type="button" class="pa-master pa-master-write" data-pa-master="write"><span>전체 쓰기 시작</span><small>선택 · 1번 문장부터</small></button></div><div class="pa-hero"><div><span class="pa-kicker">수행평가</span><h2>${esc(title())}</h2><p>${esc(active.assignment.unit_key||'')} · 배열 ${arranged}/${total}${written?` · 쓰기 ${written}/${total}`:''}</p></div><div class="pa-progress-ring"><b>${total?Math.round(arranged/total*100):0}%</b><small>배열</small></div></div><div class="pa-overall"><i style="width:${total?Math.round(arranged/total*100):0}%"></i></div><div class="pa-items">${data.items.map(item=>{const level=levelFor(item);return `<div class="pa-item ${level>=1?'done':''}"><span class="pa-num">${item.item_number}</span><span class="pa-copy"><b>${esc(item.prompt_ko||`문장 ${item.item_number}`)}</b><small>${level>=2?'✓ 배열 · 쓰기 완료':level>=1?'✓ 배열 완료':'연습 전'}</small></span><span class="pa-actions"><button type="button" data-pa-mode="order" data-pa-item="${esc(item.id)}">배열</button><button type="button" class="secondary" data-pa-mode="write" data-pa-item="${esc(item.id)}">쓰기 <em>선택</em></button></span></div>`}).join('')}</div></div>`;
+  host.querySelector('[data-pa-exit]').onclick=()=>active?.onExit?.();
+  host.querySelectorAll('[data-pa-master]').forEach(btn=>btn.onclick=()=>startWhole(btn.dataset.paMaster));
+  host.querySelectorAll('[data-pa-mode]').forEach(btn=>btn.onclick=()=>{active.run=null;renderItem(btn.dataset.paItem,btn.dataset.paMode)});
 }
+
+function itemIndex(item){return active.data.items.findIndex(x=>String(x.id)===String(item.id))}
+function nextItem(item){const i=itemIndex(item);return i>=0?active.data.items[i+1]||null:null}
 
 function renderItem(itemId,mode='order'){
   if(!active)return;
   const item=active.data.items.find(x=>String(x.id)===String(itemId));if(!item)return;
-  const q=makeQuestion(item,mode),host=active.host;
+  const q=makeQuestion(item,mode),host=active.host,index=itemIndex(item),whole=active.run?.mode===mode;
+  if(whole)active.run.index=index;
   active.current={item,mode,question:q,startedAt:Date.now(),renderer:null,checked:false};
-  host.innerHTML=`<div class="pa-shell"><button class="back" data-pa-back>← 수행평가</button><div class="pa-question-head"><div><span class="pa-kicker">문장 ${item.item_number}</span><h2>${mode==='write'?'직접 쓰기':'문장 배열'}</h2></div><strong>${mode==='write'?'선택 연습':'기본 연습'}</strong></div><div class="card pa-question-card"><div id="paRenderer"></div></div></div>`;
+  host.innerHTML=`<div class="pa-shell"><button class="back" data-pa-back>← 수행평가</button><div class="pa-question-head"><div><span class="pa-kicker">${whole?`${index+1} / ${active.data.items.length}`:`문장 ${item.item_number}`}</span><h2>${mode==='write'?'문장 쓰기':'문장 배열'}</h2></div><strong>${mode==='write'?'선택 연습':'기본 연습'}</strong></div><div class="card pa-question-card"><div id="paRenderer"></div></div></div>`;
   host.querySelector('[data-pa-back]').onclick=renderOverview;
   active.current.renderer=new QuestionRenderer(host.querySelector('#paRenderer')).render(q);
   setBottom('<button class="secondary" id="paList">목록</button><button class="primary" id="paCheck">확인</button>');
@@ -82,10 +89,11 @@ async function checkCurrent(){
   if(result.correct)active.correct++;
   if(result.correct){
     await persist(cur.item,cur.mode==='write'?2:1,true);
-    const next=nextItem(cur.item);
+    const next=nextItem(cur.item),whole=active.run?.mode===cur.mode;
     setBottom(`<button class="secondary" id="paOverview">목록</button>${next?`<button class="primary" id="paNext">다음 문장 →</button>`:'<button class="primary" id="paNext">완료 →</button>'}`);
     active.bottom.querySelector('#paOverview').onclick=renderOverview;
     active.bottom.querySelector('#paNext').onclick=()=>next?renderItem(next.id,cur.mode):renderOverview();
+    if(!whole)active.run=null;
   }else{
     await persist(cur.item,levelFor(cur.item),false);
     setBottom('<button class="secondary" id="paOverview">목록</button><button class="primary" id="paRetry">다시 해보기</button>');
@@ -99,7 +107,7 @@ export async function startPerformanceLearning({host,bottom,plan,assignment,stud
   await stopPerformanceLearning({silent:true});
   host.innerHTML='<div class="loading">수행평가를 준비하는 중...</div>';
   const [data,progress]=await Promise.all([loadPerformanceAssessment(assignment),loadPerformanceProgress(assignment.id)]);
-  active={host,bottom,plan,assignment,studentId,onExit,data,progress,current:null,correct:0,total:0};
+  active={host,bottom,plan,assignment,studentId,onExit,data,progress,current:null,run:null,correct:0,total:0};
   setTrackingContext(plan,assignment.unit_key||data.set.title||'수행평가');
   await startSession('performance');
   renderOverview();
