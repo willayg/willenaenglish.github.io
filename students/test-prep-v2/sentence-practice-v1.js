@@ -6,7 +6,7 @@ const CONTENT='https://gxwfsqxyuufqtitspfqg.supabase.co';
 const KEY=['sb_publishable_','G-FYhHfDL4OGdL892gY1Zg_','epdbEeqO'].join('');
 const HEAD={apikey:KEY,Authorization:`Bearer ${KEY}`};
 const DOT='\uE000';
-const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]));
 
 let ctx=null;
 
@@ -100,7 +100,7 @@ export async function startSentencePracticeV1({host,plan,lesson,unitId,onExit}={
   host.innerHTML='<div class="loading">본문 문장을 불러오는 중...</div>';
   const items=await loadItems(unitId);if(!ctx)return;
   if(!items.length){host.innerHTML=`<button class="back" id="spv1EmptyBack">← ${esc(ctx.lesson)}</button><div class="empty">이 Lesson에는 준비된 본문 문장이 없습니다.</div>`;host.querySelector('#spv1EmptyBack').onclick=()=>{const fn=ctx?.onExit;ctx=null;fn?.()};return}
-  ctx.queue=shuffle(items).slice(0,20);
+  ctx.queue=items.slice(0,20);
   await startSession('sentences');if(!ctx)return;ctx.sessionOpen=true;render();
 }
 export async function stopSentencePracticeV1(){
