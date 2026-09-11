@@ -30,6 +30,14 @@ function buildAnswerKey(source){
   return html?`<section class="pdf-answer-key"><h2>정답지</h2>${html}</section>`:'';
 }
 
+function normalizeSentenceBreaks(clone){
+  clone.querySelectorAll('.context,.prompt').forEach(el=>{
+    const text=el.textContent||'';
+    if(!text.includes('|'))return;
+    el.textContent=text.replace(/\s*\|\s*/g,'\n');
+  });
+}
+
 function makeQuestionRows(clone){
   clone.querySelectorAll('.skill-grid').forEach(grid=>{
     const children=[...grid.children];
@@ -63,6 +71,7 @@ function makeExportNode(){
   clone.querySelectorAll('.status,.remove-btn,.answers,.raw-note,.editor-answer').forEach(el=>el.remove());
   if(!$('#showMeta')?.checked)clone.querySelectorAll('.tag').forEach(el=>el.remove());
   clone.querySelectorAll('.print-blank').forEach(el=>el.style.display='block');
+  normalizeSentenceBreaks(clone);
   makeQuestionRows(clone);
 
   const root=document.createElement('div');
