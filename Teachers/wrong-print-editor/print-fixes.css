@@ -2,24 +2,27 @@
   /* Reserve a real top band on every printed page. */
   @page{size:A4;margin:34mm 12mm 13mm}
 
-  /* Chromium repeats fixed elements on every page. Keep the header anchored at the
-     content top, then translate it upward INTO the reserved page margin instead of
-     laying it over the printable content. */
+  /* Android/Chromium print preview is unreliable when a repeated fixed header is
+     moved with transform. Anchor it directly into the reserved page margin instead. */
   .print-head{
     position:fixed!important;
-    top:0!important;
+    top:-26mm!important;
     left:0!important;
     right:0!important;
     height:18mm!important;
-    transform:translateY(-25mm)!important;
+    transform:none!important;
     margin:0!important;
     padding:0 0 4mm!important;
     background:#fff!important;
-    z-index:20!important;
+    z-index:9999!important;
     align-items:flex-start!important;
     justify-content:space-between!important;
     border-bottom:2px solid #42b9cc!important;
+    break-inside:avoid!important;
   }
+
+  /* Do not make the header's fragmented parent a stacking context. */
+  .workspace{position:static!important;z-index:auto!important}
 
   /* Centre divider starts with the actual printable content, below the header band. */
   body::after{
@@ -33,7 +36,7 @@
     pointer-events:none;
     z-index:0;
   }
-  .workspace,.cards,.answer-key{position:relative;z-index:1}
+  .cards,.answer-key{position:relative;z-index:1}
 
   /* Question numbering restarts for each skill, matching the answer-key sections. */
   .skill-section{counter-reset:printq}
