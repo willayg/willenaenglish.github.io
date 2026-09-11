@@ -1,6 +1,6 @@
-import {QuestionRenderer} from './question-renderer.js';
-import {gradeQuestion} from './question-grader.js';
-import {recordAttempt,startSession,completeSession,trackingState} from './tracking-client.js';
+import {QuestionRenderer} from './question-renderer.js?v=2.20.6';
+import {gradeQuestion} from '../shared/question-grader.js?v=2.1.2';
+import {recordAttempt,startSession,completeSession,trackingState} from './tracking-client.js?v=2.17a';
 
 const CONTENT='https://gxwfsqxyuufqtitspfqg.supabase.co';
 const CONTENT_KEY=['sb_publishable_','G-FYhHfDL4OGdL892gY1Zg_','epdbEeqO'].join('');
@@ -12,7 +12,7 @@ const COMPLETE={'ko-en':'ko_en_complete','en-ko':'en_ko_complete',spelling:'spel
 const CLEARED={'ko-en':'ko_en_cleared','en-ko':'en_ko_cleared',spelling:'spelling_cleared'};
 
 const norm=s=>String(s??'').trim().toLowerCase().replace(/[’‘]/g,"'").replace(/\s+/g,' ');
-const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]));
 const uniq=a=>[...new Set((Array.isArray(a)?a:[]).map(String).filter(Boolean))];
 const shuffle=a=>{const b=[...a];for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]]}return b};
 const token=()=>window.WillenaAPI?.getLocalAccessToken?.()||localStorage.getItem('sb_access_token')||'';
@@ -85,13 +85,15 @@ function question(item,mode){
 }
 function renderQuestion(){
   if(ctx.index>=ctx.queue.length)return finishRound();const item=ctx.queue[ctx.index],q=question(item,ctx.mode);ctx.question=q;ctx.answered=false;ctx.startedAt=Date.now();
-  shell(`<div class="vp-card"><div id="vpQuestionHost"></div></div><button class="vp-next" id="vpNext" disabled>${ctx.mode==='spelling'?'정답 확인':'다음'}</button>`,LABEL[ctx.mode]);
-  const next=ctx.host.querySelector('#vpNext');ctx.renderer=new QuestionRenderer(ctx.host.querySelector('#vpQuestionHost')).render(q,{onChange:(_,has)=>{if(ctx.mode==='spelling'&&!ctx.answered)next.disabled=!has;if(ctx.mode!=='spelling'&&has&&!ctx.answered)grade()}});next.disabled=true;
-  next.onclick=()=>{if(ctx.mode==='spelling'&&!ctx.answered)return grade();if(!ctx.answered)return;ctx.index++;renderQuestion()};
+  shell(`<div class="vp-card"><div id="vpQuestionHost"></div></div><button class="vp-next" id="vpNext" disabled>정답 확인</button>`,LABEL[ctx.mode]);
+  const next=ctx.host.querySelector('#vpNext');
+  ctx.renderer=new QuestionRenderer(ctx.host.querySelector('#vpQuestionHost')).render(q,{onChange:(_,has)=>{if(!ctx.answered)next.disabled=!has}});
+  next.disabled=true;
+  next.onclick=()=>{if(!ctx.answered)return grade();ctx.index++;renderQuestion()};
   if(ctx.mode==='spelling'){const input=ctx.host.querySelector('[data-write]');input?.focus();input?.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();if(!ctx.answered)grade();else{ctx.index++;renderQuestion()}}})}
 }
 async function grade(){
-  if(ctx.answered||!ctx.renderer)return;const response=ctx.renderer.getResponse();if(ctx.mode==='spelling'&&!String(response||'').trim())return;ctx.answered=true;const result=await gradeQuestion(ctx.question,response);result.responseTimeMs=Date.now()-ctx.startedAt;ctx.renderer.setDisabled(true);ctx.renderer.showFeedback(result);
+  if(ctx.answered||!ctx.renderer)return;const response=ctx.renderer.getResponse();if((ctx.mode==='spelling'||ctx.mode==='ko-en'||ctx.mode==='en-ko')&&(response==null||String(response).trim()===''))return;ctx.answered=true;const result=await gradeQuestion(ctx.question,response);result.responseTimeMs=Date.now()-ctx.startedAt;ctx.renderer.setDisabled(true);ctx.renderer.showFeedback(result);
   if(result.correct){ctx.score++;const key=CLEARED[ctx.mode],set=new Set(uniq(ctx.progress[key]));set.add(String(ctx.question.id));await saveProgress({[key]:[...set]})}else ctx.wrong.add(String(ctx.question.id));
   try{await recordAttempt({question:ctx.question,response,result,practiceType:'vocabulary'})}catch(e){console.warn('[v2.13 vocab] attempt queue failed',e)}
   const next=ctx.host.querySelector('#vpNext');if(next){next.disabled=false;next.textContent=ctx.index===ctx.queue.length-1?'끝내기':'다음'}

@@ -79,8 +79,9 @@ export function setTrackingContext(plan,lesson){
 }
 export async function startSession(practiceType){
   const practice=String(practiceType||'').toLowerCase();
-  if(state.session&&state.practice===practice)return state.session;
-  if(state.session&&state.practice!==practice)await completeSession({correct:0,total:0,wrongIds:[]});
+  const sameLiveContext=state.session&&state.practice===practice&&String(state.session?.unit_key||'')===String(state.lesson||'');
+  if(sameLiveContext)return state.session;
+  if(state.session)await completeSession({correct:0,total:0,wrongIds:[]});
   await flushPendingSessionCloses('before-start');
   if(!state.plan)throw new Error('No active test-prep plan.');
   const recovered=recoverSession(practice);if(recovered)return recovered;
@@ -102,7 +103,7 @@ export async function flushAttemptBatch(reason='manual'){
         const d=await edge('batch_attempts',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({session_id:sessionId,attempts})});
         const ack=new Set((d.results||[]).filter(r=>r?.success&&r.client_attempt_id).map(r=>String(r.client_attempt_id)));
         if(ack.size){outbox=outbox.filter(a=>!ack.has(String(a.client_attempt_id)));saved+=ack.size;saveOutbox();emit('attempts_saved',{session_id:sessionId,count:ack.size,reason})}
-      }catch(e){console.warn('[v2.12 tracking] batch save failed',e);emit('sync_error',{kind:'attempts',session_id:sessionId,error:String(e?.message||e)})}
+      }catch(e){console.warn('[v2 tracking] batch save failed',e);emit('sync_error',{kind:'attempts',session_id:sessionId,error:String(e?.message||e)})}
     }
     return{saved,remaining:outbox.length};
   })().finally(()=>{flushPromise=null;if(outbox.length)scheduleFlush()});
@@ -134,21 +135,25 @@ export async function flushPendingSessionCloses(reason='manual'){
       try{
         await edge('complete_session',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(req)});
         pendingCloses=pendingCloses.filter(x=>String(x.session_id)!==sid);savePendingCloses();closed++;emit('session_completed',{...req,reason});
-      }catch(e){console.warn('[v2.12 tracking] session close failed',e);emit('sync_error',{kind:'session',session_id:sid,error:String(e?.message||e)})}
+      }catch(e){console.warn('[v2 tracking] session close failed',e);emit('sync_error',{kind:'session',session_id:sid,error:String(e?.message||e)})}
     }
     return{closed,remaining:pendingCloses.length};
   })().finally(()=>{closePromise=null});
   return closePromise;
 }
 
-export async function recordAttempt({question,response,result,practiceType,skipped=false}){
+export async function recordAttempt({question,response,result,practiceType,skipped=false,source='test-prep-v2',metadata={}}){
   const session=await startSession(practiceType);if(!session)return null;
+  const trackedQuestionId=String(question.tracking?.questionId||question.id);
+  const attemptSource=skipped&&source==='test-prep-v2'?'skip':String(source||'test-prep-v2');
+  const extra=metadata&&typeof metadata==='object'?metadata:{};
   const attempt={
-    client_attempt_id:uuid(),session_id:session.id,question_id:String(question.id),selected_answer:response,correct_answer:question.answer,is_correct:!!result.correct,
+    client_attempt_id:uuid(),session_id:session.id,question_id:trackedQuestionId,selected_answer:response,correct_answer:question.answer,is_correct:!!result.correct,
     question_type:question.tracking?.questionType||null,targets:Array.isArray(question.tracking?.targets)?question.tracking.targets:[],response_time_ms:Number(result.responseTimeMs)||0,
-    metadata:{app_rev:'2.12',renderer_rev:'central-v2',form:question.form,mastery_key:question.masteryKey,source_code:question.source?.code||null,source_id:question.source?.sourceId||null,source_question_number:question.source?.sourceQuestionNumber??null,grading_method:result.method||null,ai_reason:result.aiReason||null,lesson:state.lesson,plan_id:state.plan?.id||null,practice_type:practiceType,skipped:!!skipped,source:skipped?'skip':'test-prep-v2'}
+    metadata:{app_rev:'2.17',renderer_rev:'central-v2',form:question.form,mastery_key:question.masteryKey,variant_question_id:String(question.id),source_code:question.source?.code||null,source_id:question.source?.sourceId||null,source_question_number:question.source?.sourceQuestionNumber??null,grading_method:result.method||null,ai_reason:result.aiReason||null,lesson:state.lesson,plan_id:state.plan?.id||null,practice_type:practiceType,skipped:!!skipped,...extra,source:attemptSource}
   };
-  outbox.push(attempt);saveOutbox();saveSessionRecord();emit('attempt_queued',{client_attempt_id:attempt.client_attempt_id,session_id:session.id,question_id:attempt.question_id,practice_type:practiceType});
+  if(attemptSource==='wrong-review')attempt.metadata.review_mode=true;
+  outbox.push(attempt);saveOutbox();saveSessionRecord();emit('attempt_queued',{client_attempt_id:attempt.client_attempt_id,session_id:session.id,question_id:attempt.question_id,practice_type:practiceType,source:attemptSource});
   const urgent=attempt.metadata.source==='wrong-review';
   if(urgent)await flushAttemptBatch('review');else if(outbox.length>=BATCH_SIZE)flushAttemptBatch('size');else scheduleFlush();
   return{queued:true,client_attempt_id:attempt.client_attempt_id};

@@ -1,0 +1,36 @@
+.student-header.tp-v1-header{position:relative;overflow:visible;width:100vw;max-width:100vw;min-height:184px;margin-bottom:59px;background:linear-gradient(112deg,var(--header-a,#baf8fb),var(--header-b,#65e3eb) 52%,var(--header-c,#39c9d6));color:var(--heading,#064e57);isolation:isolate;z-index:20}
+.tp-v1-header .header-inner{position:relative;z-index:4;max-width:1120px;margin:0 auto;padding:27px 30px 66px;display:flex;align-items:center;justify-content:space-between;gap:24px}
+.tp-v1-header .header-profile{display:flex;flex-direction:column;align-items:flex-start;gap:10px}
+.tp-v1-header .student-name{font-size:30px;font-weight:800;line-height:1;letter-spacing:-.035em}
+.tp-v1-header .header-counters{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.tp-v1-header .header-pill{display:inline-flex;align-items:center;gap:6px;min-height:34px;padding:7px 12px;border-radius:999px;background:rgba(255,255,255,.68);border:1.5px solid rgba(6,78,87,.34);font-size:14px;font-weight:800;line-height:1;backdrop-filter:blur(7px)}
+.tp-v1-header .header-points{color:var(--heading,#064e57)}
+.tp-v1-header .header-stars{color:#a87600}
+.tp-v1-header .header-symbol{width:18px;height:18px;border-radius:50%;display:grid;place-items:center;background:currentColor;color:#fff;font-size:12px;font-weight:900}
+.tp-v1-header .header-star{font-size:18px;line-height:1}
+.tp-v1-header .header-brand{display:flex;align-items:center;gap:18px}
+.tp-v1-header .header-title{font-size:32px;font-weight:800;line-height:1;letter-spacing:-.035em}
+.tp-v1-header .profile-menu-wrap{position:relative;z-index:8}
+.tp-v1-header .header-avatar{width:62px;height:62px;border:0;border-radius:20px;background:rgba(255,255,255,.94);display:grid;place-items:center;font-size:32px;font-weight:800;color:var(--heading,#064e57);box-shadow:0 8px 24px rgba(15,80,90,.12);cursor:pointer;padding:0}
+.tp-v1-header .header-avatar[aria-expanded="true"]{box-shadow:0 0 0 3px rgba(255,255,255,.65),0 10px 28px rgba(15,80,90,.17)}
+.tp-v1-header .profile-menu{position:absolute;right:0;top:calc(100% + 10px);width:210px;padding:8px;background:rgba(255,255,255,.97);border:1px solid rgba(157,226,231,.8);border-radius:18px;box-shadow:0 16px 42px rgba(21,70,78,.18);backdrop-filter:blur(14px);color:var(--ink,#203039)}
+.tp-v1-header .profile-menu[hidden]{display:none}
+.tp-v1-header .profile-menu-item{width:100%;display:flex;align-items:center;gap:10px;padding:11px 12px;border:0;border-radius:12px;background:transparent;color:var(--ink,#203039);font-size:12px;font-weight:700;text-decoration:none;text-align:left;cursor:pointer}
+.tp-v1-header .profile-menu-item:hover,.tp-v1-header .profile-menu-item:focus-visible{background:var(--soft,#e9fbfc);outline:none}
+.tp-v1-header .profile-menu-icon{width:24px;height:24px;border-radius:8px;background:#e9fbfc;color:var(--cyan-dark,#07888d);display:grid;place-items:center;font-size:13px;font-weight:900;flex:0 0 24px}
+.tp-v1-header .profile-menu-divider{height:1px;background:rgba(157,226,231,.55);margin:6px 4px}
+.tp-v1-header .profile-logout{color:var(--pink,#ee5f91)}
+.tp-v1-header .profile-logout .profile-menu-icon{background:#fff0f6;color:var(--pink,#ee5f91)}
+.tp-v1-header .header-orb{position:absolute;z-index:1;width:218px;height:218px;left:52px;top:-72px;border-radius:50%;background:rgba(255,255,255,.28)}
+.tp-v1-header .header-curve{position:absolute;z-index:3;left:-6%;width:112%;height:94px;bottom:-59px;background:var(--page,#f3feff);border-radius:50% 50% 0 0/100% 100% 0 0;pointer-events:none}
+@media(max-width:680px){
+  .student-header.tp-v1-header{min-height:158px}
+  .tp-v1-header .header-inner{padding:22px 18px 58px;gap:14px}
+  .tp-v1-header .student-name{font-size:24px}
+  .tp-v1-header .header-title{display:none}
+  .tp-v1-header .header-avatar{width:52px;height:52px;border-radius:17px;font-size:27px}
+  .tp-v1-header .header-pill{min-height:30px;padding:6px 9px;font-size:12px}
+  .tp-v1-header .header-symbol{width:16px;height:16px;font-size:10px}
+  .tp-v1-header .header-star{font-size:16px}
+  .tp-v1-header .header-orb{left:-30px}
+}

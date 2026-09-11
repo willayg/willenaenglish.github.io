@@ -6,25 +6,56 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>Willena Test Prep v2.13b</title>
+<title>Willena Test Prep v2.25.64</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="./styles.css?v=2.11.0">
-<link rel="stylesheet" href="./vocab-learning.css?v=2.13.0">
-<script type="importmap">{"imports":{"./tracking-client.js":"./tracking-client.js?v=2.12.0"}}</script>
+<link rel="stylesheet" href="./styles.css?v=2.21.2">
+<link rel="stylesheet" href="./header-v2.css?v=1.0.0">
+<link rel="stylesheet" href="./card-style-v2.css?v=1.0.0">
+<link rel="stylesheet" href="./stats-display-v1.css?v=1.0.3">
+<link rel="stylesheet" href="./loading-screen.css?v=2.15b">
+<link rel="stylesheet" href="./vocab-learning.css?v=2.18.3">
+<link rel="stylesheet" href="./mock-test.css?v=1.4.2" data-mock-test-style>
+<style>
+html,body{width:100%;max-width:100%;overflow-x:hidden}
+.student-header{width:100vw;max-width:none;margin-left:0;margin-right:0;left:0;right:auto}
+.student-header .header-curve{left:0;right:0;width:100%;max-width:none}
+.app-version{padding:18px 12px 28px;text-align:center;color:#91a0a6;font:700 10px/1 Poppins,sans-serif;letter-spacing:.08em;text-transform:uppercase}
+</style>
+<script type="importmap">
+{
+  "imports": {
+    "/students/test-prep-v2/sentence-practice-v1.js?v=1.2.0": "/students/test-prep-v2/sentence-practice-v1.js?v=1.3.0"
+  }
+}
+</script>
 </head>
 <body>
-<header class="student-header">
+<header class="student-header tp-v1-header">
   <div class="header-orb"></div>
   <div class="header-inner">
     <div class="header-profile">
       <div class="student-name" id="user">Student</div>
-      <span class="version-pill">TEST PREP · V2.13b</span>
+      <div class="header-counters" aria-label="Student rewards">
+        <span class="header-pill header-points"><span class="header-symbol" aria-hidden="true">P</span><span id="headerPoints">—</span></span>
+        <span class="header-pill header-stars"><span class="header-star" aria-hidden="true">★</span><span id="headerStars">—</span></span>
+      </div>
     </div>
     <div class="header-brand">
       <div class="header-title">Willena Test Prep</div>
-      <div class="header-mark">W</div>
+      <div class="profile-menu-wrap">
+        <button class="header-avatar" id="studentAvatar" type="button" aria-label="Student menu" aria-expanded="false" aria-controls="studentProfileMenu">S</button>
+        <div class="profile-menu" id="studentProfileMenu" hidden>
+          <button class="profile-menu-item" id="studentProfileOpen" type="button"><span class="profile-menu-icon" aria-hidden="true">☺</span><span>Profile</span></button>
+          <button class="profile-menu-item" id="studentDashboardOpen" type="button"><span class="profile-menu-icon" aria-hidden="true">⌂</span><span>Dashboard</span></button>
+          <div class="profile-menu-divider"></div>
+          <button class="profile-menu-item" id="studentTestPrepA" type="button"><span class="profile-menu-icon" aria-hidden="true">A</span><span>Test Prep A</span></button>
+          <button class="profile-menu-item" id="studentTestPrepB" type="button"><span class="profile-menu-icon" aria-hidden="true">B</span><span>Test Prep B</span></button>
+          <div class="profile-menu-divider"></div>
+          <button class="profile-menu-item profile-logout" id="studentLogout" type="button"><span class="profile-menu-icon" aria-hidden="true">↪</span><span>Log out</span></button>
+        </div>
+      </div>
     </div>
   </div>
   <div class="header-curve"></div>
@@ -33,8 +64,26 @@
   <main class="screen" id="screen"><div class="loading">Loading…</div></main>
 </div>
 <nav class="bottom" id="bottom" hidden></nav>
+<div class="app-version">Test Prep · v2.25.64</div>
 <script src="/students/api-gateway.js?v=2.13b"></script>
 <script src="/js/api-config.js?v=2.13b"></script>
-<script type="module" src="./app.js?v=2.13b-statsfix1"></script>
+<script type="module" src="./header-v2.js?v=1.2.0"></script>
+<script type="module">
+import {QuestionRenderer} from './question-renderer.js?v=2.20.6';
+import {trackingState} from './tracking-client.js?v=2.17a';
+import {currentRoute} from './navigation.js?v=2.21.0';
+import {installWillenaKeyboard} from '../shared/willena-keyboard.js?v=1.5.0';
+import {installQuestionFlags} from '../shared/question-flags.js?v=1.0.0';
+installWillenaKeyboard({submitSelector:'#bottom button.primary,.vp-next'});
+installQuestionFlags({
+  Renderer:QuestionRenderer,
+  contextProvider:()=>{
+    const t=trackingState(),r=currentRoute?.()||{};
+    return{studentId:t.user?.id||null,planId:r.planId||t.plan?.id||null,lesson:r.lesson||t.lesson||null,practiceType:r.practice||t.practice||null,reviewMode:r.view==='review',appRevision:'2.25.64'};
+  }
+});
+</script>
+<script type="module" src="./app.js?v=2.25.64"></script>
+<script type="module" src="./stats-display-v1.js?v=1.3.1"></script>
 </body>
 </html>
