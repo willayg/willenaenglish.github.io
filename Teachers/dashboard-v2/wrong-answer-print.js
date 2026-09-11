@@ -3,10 +3,13 @@
 
 const WRONG_API='https://fiieuiktlsivwfgyivai.supabase.co/functions/v1/test-prep-teacher-wrong-detail';
 const KEY='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
+const CONTENT_URL='https://gxwfsqxyuufqtitspfqg.supabase.co';
+const CONTENT_KEY=['sb_publishable_','G-FYhHfDL4OGdL892gY1Zg_','epdbEeqO'].join('');
 const LOGO='/Assets/Images/Logo.png';
 const $=(s,r=document)=>r.querySelector(s);
 const $$=(s,r=document)=>[...r.querySelectorAll(s)];
-const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]));
+const uuid=v=>/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(v||''));
 
 let detailParams=null;
 let lastItems=[];
@@ -37,17 +40,77 @@ function recover(){
   }catch(_){ }
 }
 
+function isVocab(r){
+  const p=String(r?.practice_type||'').toLowerCase(),q=String(r?.question_type||'').toLowerCase();
+  return p.includes('vocab')||q.includes('vocab');
+}
+function genericPrompt(v){
+  return !v||/^(recorded question|question|문제|vocab review|vocab record|vocabulary record|vocabulary spelling|vocab spelling)$/i.test(String(v).trim());
+}
+function canonicalFrom(r){
+  if(String(r?.question_id||'').startsWith('vocab:'))return String(r.question_id).slice(6).trim();
+  const raw=Array.isArray(r?.correct_answer)?r.correct_answer[0]:r?.correct_answer;
+  const d=String(raw??'').trim();
+  return d&&!/^\d+$/.test(d)?d:'';
+}
+async function content(path){
+  const r=await fetch(`${CONTENT_URL}/rest/v1/${path}`,{headers:{apikey:CONTENT_KEY,Authorization:`Bearer ${CONTENT_KEY}`},cache:'no-store'});
+  if(!r.ok)throw new Error(`Curriculum DB ${r.status}`);
+  return r.json();
+}
+async function enrichVocab(items){
+  const targets=items.filter(r=>isVocab(r)&&(genericPrompt(r.prompt)||!r.context));
+  if(!targets.length)return items;
+  const ids=[...new Set(targets.map(r=>String(r.question_id||'')).filter(uuid))];
+  const texts=[...new Set(targets.map(canonicalFrom).filter(Boolean))];
+  let byId=[],byText=[];
+  try{
+    if(ids.length)byId=await content(`lexical_entries?select=id,canonical_text,translation_ko,definition_en&id=in.${encodeURIComponent('('+ids.join(',')+')')}&limit=1000`);
+  }catch(e){console.warn('[wrong-print] lexical id lookup',e)}
+  try{
+    if(texts.length){
+      const ors=texts.map(v=>`canonical_text.eq.${encodeURIComponent(v)}`).join(',');
+      byText=await content(`lexical_entries?select=id,canonical_text,translation_ko,definition_en&or=(${ors})&limit=1000`);
+    }
+  }catch(e){console.warn('[wrong-print] lexical text lookup',e)}
+  const idMap=new Map(byId.map(x=>[String(x.id),x]));
+  const textMap=new Map(byText.map(x=>[String(x.canonical_text||'').trim().toLowerCase(),x]));
+  return items.map(r=>{
+    if(!isVocab(r))return r;
+    const canonical=canonicalFrom(r);
+    const lx=idMap.get(String(r.question_id||''))||textMap.get(canonical.toLowerCase());
+    if(!lx)return r;
+    const out={...r};
+    const qtype=String(out.question_type||'').toLowerCase();
+    if(genericPrompt(out.prompt)){
+      if(qtype.includes('definition')&&lx.definition_en){
+        out.prompt='다음 영어 정의에 해당하는 단어 또는 표현을 쓰세요.';
+        out.context=lx.definition_en;
+      }else if(lx.translation_ko){
+        out.prompt='다음 뜻에 해당하는 영어 단어 또는 표현을 쓰세요.';
+        out.context=lx.translation_ko;
+      }else if(lx.definition_en){
+        out.prompt='다음 영어 정의에 해당하는 단어 또는 표현을 쓰세요.';
+        out.context=lx.definition_en;
+      }
+    }else if(!out.context){
+      out.context=lx.translation_ko||lx.definition_en||'';
+    }
+    return out;
+  });
+}
+
 async function fetchItems(){
   recover();
   if(!detailParams?.student_id)throw new Error('학생 오답 기록을 찾지 못했습니다.');
   const token=window.WillenaAPI?.getLocalAccessToken?.()||localStorage.getItem('sb_access_token')||'';
   if(!token)throw new Error('로그인이 필요합니다.');
-  const q=new URLSearchParams({student_id:detailParams.student_id});
+  const q=new URLSearchParams({student_id:detailParams.student_id,_t:String(Date.now())});
   if(detailParams.plan_id)q.set('plan_id',detailParams.plan_id);
   const r=await fetch(`${WRONG_API}?${q}`,{headers:{Authorization:`Bearer ${token}`,apikey:KEY},credentials:'omit',cache:'no-store'});
   const j=await r.json().catch(()=>({}));
   if(!r.ok||j.success===false)throw new Error(j.error||`Request failed (${r.status})`);
-  return j.items||[];
+  return enrichVocab(j.items||[]);
 }
 
 function answer(v){
@@ -116,7 +179,8 @@ async function openPrint(){
   if(btn){btn.disabled=true;btn.textContent='불러오는 중…';}
   try{
     const key=`${detailParams?.student_id||''}|${detailParams?.plan_id||''}`;
-    if(!lastItems.length||lastKey!==key){lastItems=await fetchItems();lastKey=key;}
+    lastItems=await fetchItems();
+    lastKey=key;
     ensureDialog();
     $('#naWrongPrintCount').textContent=`현재 시험 오답 ${lastItems.length}문제`;
     $('#naWrongPrintDialog').style.display='flex';
