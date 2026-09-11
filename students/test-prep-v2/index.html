@@ -6,11 +6,12 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>Willena Test Prep v2.25.49</title>
+<title>Willena Test Prep v2.25.50</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="./styles.css?v=2.21.2">
+<link rel="stylesheet" href="./header-v2.css?v=1.0.0">
 <link rel="stylesheet" href="./loading-screen.css?v=2.15b">
 <link rel="stylesheet" href="./vocab-learning.css?v=2.18.3">
 <link rel="stylesheet" href="./passage-learning.css?v=2.18.2">
@@ -28,16 +29,27 @@ html,body{width:100%;max-width:100%;overflow-x:hidden}
 </head>
 <body>
 <div class="renderer-rev-pill">RENDERER · V2.20.6</div>
-<header class="student-header">
+<header class="student-header tp-v1-header">
   <div class="header-orb"></div>
   <div class="header-inner">
     <div class="header-profile">
       <div class="student-name" id="user">Student</div>
-      <span class="version-pill">TEST PREP · V2.25.49</span>
+      <div class="header-counters" aria-label="Student rewards">
+        <span class="header-pill header-points"><span class="header-symbol" aria-hidden="true">P</span><span id="headerPoints">—</span></span>
+        <span class="header-pill header-stars"><span class="header-star" aria-hidden="true">★</span><span id="headerStars">—</span></span>
+      </div>
     </div>
     <div class="header-brand">
       <div class="header-title">Willena Test Prep</div>
-      <div class="header-mark">W</div>
+      <div class="profile-menu-wrap">
+        <button class="header-avatar" id="studentAvatar" type="button" aria-label="Student menu" aria-expanded="false" aria-controls="studentProfileMenu">S</button>
+        <div class="profile-menu" id="studentProfileMenu" hidden>
+          <button class="profile-menu-item" id="studentProfileOpen" type="button"><span class="profile-menu-icon" aria-hidden="true">☺</span><span>Profile</span></button>
+          <button class="profile-menu-item" id="studentDashboardOpen" type="button"><span class="profile-menu-icon" aria-hidden="true">⌂</span><span>Dashboard</span></button>
+          <div class="profile-menu-divider"></div>
+          <button class="profile-menu-item profile-logout" id="studentLogout" type="button"><span class="profile-menu-icon" aria-hidden="true">↪</span><span>Log out</span></button>
+        </div>
+      </div>
     </div>
   </div>
   <div class="header-curve"></div>
@@ -53,7 +65,7 @@ html,body{width:100%;max-width:100%;overflow-x:hidden}
 </div>
 <script src="/students/api-gateway.js?v=2.13b"></script>
 <script src="/js/api-config.js?v=2.13b"></script>
-<script type="module" src="./header-v2.js?v=1.0.0"></script>
+<script type="module" src="./header-v2.js?v=1.1.0"></script>
 <script type="module">
 import {QuestionRenderer} from './question-renderer.js?v=2.20.6';
 import {trackingState} from './tracking-client.js?v=2.17a';
@@ -65,7 +77,7 @@ installQuestionFlags({
   Renderer:QuestionRenderer,
   contextProvider:()=>{
     const t=trackingState(),r=currentRoute?.()||{};
-    return{studentId:t.user?.id||null,planId:r.planId||t.plan?.id||null,lesson:r.lesson||t.lesson||null,practiceType:r.practice||t.practice||null,reviewMode:r.view==='review',appRevision:'2.25.49'};
+    return{studentId:t.user?.id||null,planId:r.planId||t.plan?.id||null,lesson:r.lesson||t.lesson||null,practiceType:r.practice||t.practice||null,reviewMode:r.view==='review',appRevision:'2.25.50'};
   }
 });
 </script>
