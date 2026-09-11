@@ -1,0 +1,17 @@
+@media print{
+  /* Reliable page-centre divider: fixed elements repeat on each printed page in Chromium/Android. */
+  body::after{
+    content:"";
+    position:fixed;
+    top:34mm;
+    bottom:13mm;
+    left:50%;
+    width:0;
+    border-left:1px solid #d9dde4;
+    pointer-events:none;
+    z-index:0;
+  }
+  .workspace,.print-head,.cards,.answer-key{position:relative;z-index:1}
+  /* The page divider now handles the centre rule; avoid a second, unreliable CSS-column rule. */
+  .vocab-table{column-rule:none!important}
+}
