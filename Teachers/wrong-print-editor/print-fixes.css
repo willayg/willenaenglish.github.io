@@ -1,13 +1,17 @@
 @media print{
-  /* Give the repeated header its own physical space at the top of every page. */
-  @page{size:A4;margin:30mm 12mm 13mm}
+  /* Reserve a real top band on every printed page. */
+  @page{size:A4;margin:34mm 12mm 13mm}
 
+  /* Chromium repeats fixed elements on every page. Keep the header anchored at the
+     content top, then translate it upward INTO the reserved page margin instead of
+     laying it over the printable content. */
   .print-head{
     position:fixed!important;
-    top:4mm!important;
-    left:12mm!important;
-    right:12mm!important;
-    height:17mm!important;
+    top:0!important;
+    left:0!important;
+    right:0!important;
+    height:18mm!important;
+    transform:translateY(-25mm)!important;
     margin:0!important;
     padding:0 0 4mm!important;
     background:#fff!important;
@@ -17,12 +21,12 @@
     border-bottom:2px solid #42b9cc!important;
   }
 
-  /* Long centre divider, clear of the repeated header and extending to the footer area. */
+  /* Centre divider starts with the actual printable content, below the header band. */
   body::after{
     content:"";
     position:fixed;
-    top:24mm;
-    bottom:8mm;
+    top:0;
+    bottom:-5mm;
     left:50%;
     width:0;
     border-left:1px solid #cfd5dd;
