@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>Willena Test Prep v2.25.50</title>
+<title>Willena Test Prep v2.25.51</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -20,15 +20,10 @@
 html,body{width:100%;max-width:100%;overflow-x:hidden}
 .student-header{width:100vw;max-width:none;margin-left:0;margin-right:0;left:0;right:auto}
 .student-header .header-curve{left:0;right:0;width:100%;max-width:none}
-.staging-switcher{position:fixed;left:12px;bottom:12px;z-index:2147483646;display:flex;align-items:center;gap:6px;padding:5px;border:1px solid rgba(32,48,57,.14);border-radius:999px;background:rgba(255,255,255,.94);box-shadow:0 4px 18px rgba(32,48,57,.12);font:800 11px/1 Poppins,sans-serif;backdrop-filter:blur(10px)}
-.staging-switcher a,.staging-switcher span{display:inline-flex;align-items:center;justify-content:center;min-width:28px;height:28px;padding:0 9px;border-radius:999px;text-decoration:none;color:#526168;background:#eef4f5;box-sizing:border-box}
-.staging-switcher .active{color:#ee5f91;background:#fff;border:1.5px solid #9de2e7}.staging-switcher .lab{color:#7d2850;background:#ffe8f2}
-.renderer-rev-pill{position:fixed;top:10px;right:12px;z-index:2147483647;padding:7px 11px;border:1px solid rgba(32,48,57,.28);border-radius:999px;background:rgba(255,255,255,.96);color:#263238;font:800 12px/1 Poppins,sans-serif;box-shadow:0 2px 8px rgba(0,0,0,.12);pointer-events:none;backdrop-filter:blur(8px)}
-@media(max-width:620px){.staging-switcher{left:8px;bottom:8px}.staging-switcher a,.staging-switcher span{height:26px;min-width:26px;padding:0 8px;font-size:10px}.renderer-rev-pill{top:8px;right:8px;font-size:10px;padding:6px 9px}}
+.app-version{padding:18px 12px 28px;text-align:center;color:#91a0a6;font:700 10px/1 Poppins,sans-serif;letter-spacing:.08em;text-transform:uppercase}
 </style>
 </head>
 <body>
-<div class="renderer-rev-pill">RENDERER · V2.20.6</div>
 <header class="student-header tp-v1-header">
   <div class="header-orb"></div>
   <div class="header-inner">
@@ -47,6 +42,9 @@ html,body{width:100%;max-width:100%;overflow-x:hidden}
           <button class="profile-menu-item" id="studentProfileOpen" type="button"><span class="profile-menu-icon" aria-hidden="true">☺</span><span>Profile</span></button>
           <button class="profile-menu-item" id="studentDashboardOpen" type="button"><span class="profile-menu-icon" aria-hidden="true">⌂</span><span>Dashboard</span></button>
           <div class="profile-menu-divider"></div>
+          <button class="profile-menu-item" id="studentTestPrepA" type="button"><span class="profile-menu-icon" aria-hidden="true">A</span><span>Test Prep A</span></button>
+          <button class="profile-menu-item" id="studentTestPrepB" type="button"><span class="profile-menu-icon" aria-hidden="true">B</span><span>Test Prep B</span></button>
+          <div class="profile-menu-divider"></div>
           <button class="profile-menu-item profile-logout" id="studentLogout" type="button"><span class="profile-menu-icon" aria-hidden="true">↪</span><span>Log out</span></button>
         </div>
       </div>
@@ -58,14 +56,10 @@ html,body{width:100%;max-width:100%;overflow-x:hidden}
   <main class="screen" id="screen"><div class="loading">Loading…</div></main>
 </div>
 <nav class="bottom" id="bottom" hidden></nav>
-<div class="staging-switcher" aria-label="Staging test prep switcher">
-  <a href="../test-prep-app/" title="Test Prep A">A</a>
-  <span class="active" aria-current="page" title="Test Prep V2">B</span>
-  <a class="lab" href="../question-render-lab/" title="Question Render Lab">LAB</a>
-</div>
+<div class="app-version">Test Prep · v2.25.51</div>
 <script src="/students/api-gateway.js?v=2.13b"></script>
 <script src="/js/api-config.js?v=2.13b"></script>
-<script type="module" src="./header-v2.js?v=1.1.0"></script>
+<script type="module" src="./header-v2.js?v=1.2.0"></script>
 <script type="module">
 import {QuestionRenderer} from './question-renderer.js?v=2.20.6';
 import {trackingState} from './tracking-client.js?v=2.17a';
@@ -77,7 +71,7 @@ installQuestionFlags({
   Renderer:QuestionRenderer,
   contextProvider:()=>{
     const t=trackingState(),r=currentRoute?.()||{};
-    return{studentId:t.user?.id||null,planId:r.planId||t.plan?.id||null,lesson:r.lesson||t.lesson||null,practiceType:r.practice||t.practice||null,reviewMode:r.view==='review',appRevision:'2.25.50'};
+    return{studentId:t.user?.id||null,planId:r.planId||t.plan?.id||null,lesson:r.lesson||t.lesson||null,practiceType:r.practice||t.practice||null,reviewMode:r.view==='review',appRevision:'2.25.51'};
   }
 });
 </script>
