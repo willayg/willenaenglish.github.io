@@ -4,11 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <title>오답 Print Test Editor · Willena</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="./styles.css?v=1.0.0">
+<link rel="stylesheet" href="./styles.css?v=1.1.0">
 </head>
 <body>
 <header class="topbar">
@@ -22,6 +24,7 @@
       <h2>프린트 설정</h2>
       <label class="check"><input id="answerKey" type="checkbox" checked><span>마지막 페이지에 정답지 포함</span></label>
       <label class="check"><input id="showMeta" type="checkbox" checked><span>Lesson / 유형 표시</span></label>
+      <p>복원된 Vocabulary는 한국어 → 영어 단어 시험으로 단순화됩니다. 실제 원문 문제가 남아 있는 Vocabulary는 그대로 출력합니다.</p>
       <p>여기서 제외한 문제는 학생의 실제 오답 기록에서는 삭제되지 않습니다.</p>
     </section>
     <section class="panel removed-panel">
@@ -37,6 +40,6 @@
 </main>
 <script src="/students/api-gateway.js?v=2.13b"></script>
 <script src="/js/api-config.js?v=2.13b"></script>
-<script src="./app.js?v=1.0.0"></script>
+<script src="./app.js?v=1.1.0"></script>
 </body>
 </html>
