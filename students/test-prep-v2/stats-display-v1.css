@@ -1,0 +1,173 @@
+/* V1-style statistics presentation for Test Prep V2. */
+
+/* Lesson cards: recent accuracy owns the ring; completion gets its own bar. */
+.tile .exam-head{
+  align-items:center;
+  gap:18px;
+}
+.tile .exam-head>div{
+  min-width:0;
+  flex:1 1 auto;
+}
+.tile .metric{
+  display:block;
+  margin-top:14px;
+  font-size:13px;
+  font-weight:700;
+  color:var(--muted)!important;
+}
+.tile .ring{
+  position:relative;
+  width:96px;
+  height:96px;
+  flex:0 0 96px;
+  background:conic-gradient(var(--cyan-dark) var(--p),var(--track) 0);
+}
+.tile .ring:after{inset:11px}
+.tile .ring b{
+  font-size:21px;
+  color:var(--ink);
+}
+.lesson-card-ring-label{
+  display:none;
+}
+.lesson-card-completion{
+  margin-top:16px;
+  max-width:360px;
+}
+.lesson-card-completion-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:14px;
+  color:var(--muted);
+  font-size:11px;
+  font-weight:800;
+}
+.lesson-card-completion-head strong{
+  color:var(--cyan-dark);
+  font-size:12px;
+}
+.tile:nth-child(3n+2) .lesson-card-completion-head strong{color:var(--pink)}
+.lesson-card-completion-track{
+  height:8px;
+  margin-top:8px;
+  overflow:hidden;
+  border-radius:999px;
+  background:var(--track);
+}
+.lesson-card-completion-track i{
+  display:block;
+  height:100%;
+  border-radius:inherit;
+  background:linear-gradient(90deg,var(--cyan),var(--cyan-dark));
+}
+.tile:nth-child(3n+2) .lesson-card-completion-track i{
+  background:linear-gradient(90deg,#ff9fc1,var(--pink));
+}
+.tile:nth-child(3n) .lesson-card-completion-track i{
+  background:linear-gradient(90deg,#cfc4ff,#8f7ae6);
+}
+
+/* Journey rows: V1 two-stat treatment. */
+.stop-copy small{
+  display:block;
+  margin-top:7px;
+  color:var(--muted);
+  font-size:12px;
+  line-height:1.35;
+}
+.stop-copy .mini{
+  display:none;
+}
+.journey-stop{
+  grid-template-columns:58px minmax(0,1fr) 230px;
+  align-items:center;
+  min-height:118px;
+}
+.stop-metrics{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 1px minmax(0,.8fr);
+  align-items:center;
+  gap:18px;
+  min-width:0;
+}
+.stop-metric{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  min-width:0;
+}
+.stop-metric strong{
+  white-space:nowrap;
+  font-size:28px;
+  line-height:1;
+  font-weight:800;
+  letter-spacing:-.045em;
+}
+.stop-metric strong span{
+  margin:0 2px;
+  font-size:.78em;
+}
+.stop-metric small{
+  margin-top:8px;
+  font-size:10px;
+  line-height:1;
+  font-weight:800;
+}
+.stop-completion strong,.stop-completion small{
+  color:var(--cyan-dark);
+}
+.stop-accuracy strong,.stop-accuracy small{
+  color:var(--pink);
+}
+.stop-metric-divider{
+  width:1px;
+  height:54px;
+  background:rgba(103,212,218,.48);
+}
+
+@media(max-width:680px){
+  .tile .ring{
+    width:86px;
+    height:86px;
+    flex-basis:86px;
+  }
+  .tile .ring b{font-size:19px}
+  .tile .metric{font-size:12px}
+  .lesson-card-completion{margin-top:14px}
+  .journey-stop{
+    grid-template-columns:52px minmax(0,1fr) 184px;
+    gap:12px;
+    min-height:110px;
+  }
+  .stop-copy b{font-size:20px}
+  .stop-copy small{font-size:11px}
+  .stop-metrics{gap:11px}
+  .stop-metric strong{font-size:23px}
+  .stop-metric small{font-size:9px}
+  .stop-metric-divider{height:48px}
+}
+
+@media(max-width:480px){
+  .journey{padding:18px 12px}
+  .journey-stop{
+    grid-template-columns:46px minmax(0,1fr) 150px;
+    gap:9px;
+  }
+  .station{
+    width:46px;
+    height:46px;
+  }
+  .journey-stop:not(:last-child):before{
+    left:21px;
+    top:46px;
+  }
+  .stop-copy b{font-size:18px}
+  .stop-copy small{font-size:10px}
+  .stop-metrics{gap:7px}
+  .stop-metric strong{font-size:19px}
+  .stop-metric small{font-size:8px}
+  .stop-metric-divider{height:42px}
+}
