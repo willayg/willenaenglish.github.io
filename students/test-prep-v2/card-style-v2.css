@@ -1,0 +1,257 @@
+/* Test Prep V2 card visual refresh.
+   Presentation only: keeps app flow/markup intact while reducing text density. */
+
+/* Page headings */
+.heading h2,
+.lesson-head .heading h2{
+  font-size:34px;
+  line-height:1.1;
+  font-weight:800;
+  letter-spacing:-.04em;
+  color:var(--ink);
+}
+.heading p{
+  margin-top:8px;
+  max-width:42ch;
+  font-size:13px;
+  line-height:1.5;
+  color:var(--muted);
+}
+
+/* Home exam cards: larger title, less chrome, stronger color */
+.exam-card{
+  position:relative;
+  overflow:hidden;
+  min-height:170px;
+  padding:28px 30px;
+  border:2px solid color-mix(in srgb,var(--cyan) 55%,white);
+  border-radius:28px;
+  background:
+    radial-gradient(circle at 100% 0,rgba(103,212,218,.16) 0 92px,transparent 93px),
+    linear-gradient(135deg,#ffffff 0%,#f7feff 100%);
+  box-shadow:0 14px 30px rgba(21,170,181,.11);
+}
+.exam-card:nth-of-type(even){
+  border-color:color-mix(in srgb,var(--pink) 42%,white);
+  background:
+    radial-gradient(circle at 100% 0,rgba(238,95,145,.13) 0 92px,transparent 93px),
+    linear-gradient(135deg,#ffffff 0%,#fff9fc 100%);
+}
+.exam-school{
+  display:inline-flex;
+  align-items:center;
+  min-height:28px;
+  padding:6px 10px;
+  border-radius:999px;
+  background:var(--soft);
+  color:var(--cyan-dark);
+  font-size:11px;
+  font-weight:800;
+}
+.exam-card:nth-of-type(even) .exam-school{
+  background:#fff0f6;
+  color:var(--pink);
+}
+.exam-title{
+  margin-top:10px;
+  font-size:30px;
+  line-height:1.1;
+  font-weight:800;
+  letter-spacing:-.04em;
+}
+.exam-book{
+  margin-top:9px;
+  font-size:13px;
+  font-weight:700;
+  color:var(--muted);
+}
+.exam-meta{
+  margin-top:18px;
+  gap:7px;
+}
+.exam-meta .pill{
+  min-height:30px;
+  padding:6px 10px;
+  border:0;
+  background:rgba(255,255,255,.86);
+  color:var(--cyan-dark);
+  font-size:10px;
+  box-shadow:inset 0 0 0 1px rgba(157,226,231,.85);
+}
+.exam-card:nth-of-type(even) .exam-meta .pill{
+  color:var(--pink);
+  box-shadow:inset 0 0 0 1px rgba(238,95,145,.22);
+}
+.exam-card .ring{
+  width:88px;
+  height:88px;
+  flex-basis:88px;
+  background:conic-gradient(var(--pink) var(--p),rgba(255,255,255,.78) 0);
+}
+.exam-card .ring:after{inset:10px}
+.exam-card .ring b{font-size:16px}
+
+/* Lesson selection cards: make the lesson name the action */
+.grid{
+  gap:18px;
+}
+.tile{
+  position:relative;
+  min-height:156px;
+  padding:24px;
+  border:0;
+  border-radius:26px;
+  background:linear-gradient(145deg,#ffffff 0%,#effcfd 100%);
+  box-shadow:0 12px 28px rgba(21,170,181,.12),inset 0 0 0 2px rgba(103,212,218,.42);
+  overflow:hidden;
+}
+.tile:nth-child(3n+2){
+  background:linear-gradient(145deg,#ffffff 0%,#fff2f7 100%);
+  box-shadow:0 12px 28px rgba(238,95,145,.10),inset 0 0 0 2px rgba(238,95,145,.24);
+}
+.tile:nth-child(3n){
+  background:linear-gradient(145deg,#ffffff 0%,#f4f1ff 100%);
+  box-shadow:0 12px 28px rgba(117,92,210,.08),inset 0 0 0 2px rgba(154,137,225,.22);
+}
+.tile:before{
+  content:'';
+  position:absolute;
+  width:92px;
+  height:92px;
+  right:-24px;
+  top:-28px;
+  border-radius:50%;
+  background:rgba(103,212,218,.16);
+}
+.tile:nth-child(3n+2):before{background:rgba(238,95,145,.14)}
+.tile:nth-child(3n):before{background:rgba(154,137,225,.14)}
+.tile h3{
+  position:relative;
+  z-index:1;
+  margin:0;
+  font-size:27px;
+  line-height:1.1;
+  font-weight:800;
+  letter-spacing:-.035em;
+}
+/* Low-value section list was making each lesson card read like documentation. */
+.tile p{display:none}
+.tile .metric{
+  position:relative;
+  z-index:1;
+  display:inline-block;
+  margin-top:14px;
+  font-size:12px;
+  font-weight:800;
+  color:var(--cyan-dark);
+}
+.tile:nth-child(3n+2) .metric{color:var(--pink)}
+.tile .ring{
+  width:82px;
+  height:82px;
+  flex-basis:82px;
+}
+.tile .ring b{font-size:15px}
+
+/* Review / mock cards: turn them into strong actions instead of text blocks */
+.wrong-card,
+.mock-entry-card{
+  border-radius:28px;
+}
+.wrong-copy b{
+  font-size:34px;
+  line-height:1.05;
+  letter-spacing:-.035em;
+}
+.mock-entry-card .wrong-copy small{
+  display:none;
+}
+.wrong-cta{
+  font-size:13px;
+  padding:10px 20px;
+}
+.wrong-stat strong{font-size:31px}
+.wrong-stat small{font-size:10px}
+
+/* Practice journey: larger action names, less microcopy */
+.journey{
+  padding:24px 20px;
+  border-radius:26px;
+}
+.journey-stop{
+  min-height:108px;
+  grid-template-columns:58px minmax(0,1fr) 112px;
+  gap:16px;
+  padding-bottom:15px;
+}
+.journey-stop:not(:last-child):before{
+  left:27px;
+  top:55px;
+  width:5px;
+  background:linear-gradient(var(--cyan),var(--pink));
+}
+.station{
+  width:56px;
+  height:56px;
+  border-width:5px;
+  font-size:14px;
+  background:#fff;
+  border-color:rgba(103,212,218,.5);
+  color:var(--cyan-dark);
+}
+.journey-stop:nth-child(even) .station{
+  border-color:rgba(238,95,145,.36);
+  color:var(--pink);
+}
+.stop-copy{
+  padding-top:3px;
+}
+.stop-copy b{
+  display:block;
+  font-size:22px;
+  line-height:1.15;
+  font-weight:800;
+  letter-spacing:-.025em;
+}
+/* Hide the explanatory sentence: label + progress is enough here. */
+.stop-copy small{display:none}
+.mini{
+  height:7px;
+  max-width:320px;
+  margin-top:13px;
+}
+.stop-stat{
+  padding-top:4px;
+  font-size:16px;
+  line-height:1.15;
+  color:var(--cyan-dark);
+}
+.stop-stat small{
+  margin-top:6px;
+  font-size:9px;
+  text-transform:uppercase;
+  letter-spacing:.04em;
+}
+
+/* Mobile: keep the same hierarchy, just scale down */
+@media(max-width:680px){
+  .heading h2,
+  .lesson-head .heading h2{font-size:29px}
+  .heading p{font-size:12px}
+  .exam-card{min-height:152px;padding:22px 20px}
+  .exam-title{font-size:26px}
+  .exam-book{font-size:12px}
+  .exam-card .ring{width:76px;height:76px;flex-basis:76px}
+  .grid{gap:14px}
+  .tile{min-height:136px;padding:20px}
+  .tile h3{font-size:24px}
+  .tile .metric{font-size:11px}
+  .tile .ring{width:72px;height:72px;flex-basis:72px}
+  .wrong-copy b{font-size:29px}
+  .journey{padding:20px 15px}
+  .journey-stop{grid-template-columns:52px minmax(0,1fr) 90px;gap:11px;min-height:98px}
+  .journey-stop:not(:last-child):before{left:24px;top:50px}
+  .station{width:50px;height:50px;font-size:13px}
+  .stop-copy b{font-size:19px}
+  .stop-stat{font-size:14px}
+}
