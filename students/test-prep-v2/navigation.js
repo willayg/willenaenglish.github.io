@@ -11,7 +11,11 @@ function normalize(route={}){
   if(view!=='home')out.planId=text(route.planId);
   if(['lesson','practice','result'].includes(view))out.lesson=text(route.lesson);
   if(['practice','result'].includes(view))out.practice=text(route.practice);
-  if(view==='performance')out.assignmentId=text(route.assignmentId);
+  if(view==='performance'){
+    out.assignmentId=text(route.assignmentId);
+    if(route.performanceMode)out.performanceMode=text(route.performanceMode);
+    if(route.performanceItemId)out.performanceItemId=text(route.performanceItemId);
+  }
   return out;
 }
 function valid(route){
@@ -20,6 +24,8 @@ function valid(route){
   if(['lesson','practice','result'].includes(route.view)&&!route.lesson)return false;
   if(['practice','result'].includes(route.view)&&!route.practice)return false;
   if(route.view==='performance'&&!route.assignmentId)return false;
+  if(route.view==='performance'&&route.performanceMode&&!['order','write'].includes(route.performanceMode))return false;
+  if(route.view==='performance'&&route.performanceItemId&&!route.performanceMode)return false;
   return true;
 }
 function packed(route){return{app:APP,route:normalize(route)}}
