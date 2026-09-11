@@ -1,6 +1,6 @@
 import {createVisitorIntake} from './visitor-intake.js?v=20260911-phase5';
 import {createNavigator} from './navigation.js?v=20260911-phase5';
-import {createSpeakingAssessment} from './speaking-assessment-3q.js?v=20260912-phase5q6';
+import {createSpeakingAssessment} from './speaking-assessment-3q.js?v=20260912-efl1';
 import {
   SESSION_PHASE,
   SESSION_STATUS,
@@ -12,7 +12,7 @@ import {
   beginSpeaking,
   markSpeakingComplete,
   setSessionPhase
-} from './assessment-session.js?v=20260911-phase5';
+} from './assessment-session.js?v=20260912-efl1';
 
 const app=document.querySelector('#app');
 const subtitle=document.querySelector('#brandSubtitle');
@@ -38,12 +38,15 @@ function visitorSummary(){const v=session?.visitor||{};return `<div class="candi
 function renderWelcome(){
   document.body.classList.add('welcome-mode');
   const resumable=isResumableSession(session);
-  screen(`<div class="welcome-layout"><img class="welcome-logo" src="/Assets/Images/Logo.png?v=20260912-phase5q4" alt="Willena English Academy"><div class="welcome-panel"><h1>${tx('title')}</h1><div class="welcome-resume-stack"><button class="welcome-start" id="welcomeStart" type="button">${tx('start')}</button>${resumable?`<button class="welcome-resume-link" id="resumeTest" type="button">${tx('resume')}</button>`:''}</div></div></div>`);
+  screen(`<div class="welcome-layout"><img class="welcome-logo" src="/Assets/Images/Logo.png?v=20260912-efl1" alt="Willena English Academy"><div class="welcome-panel"><h1>${tx('title')}</h1><div class="welcome-resume-stack"><button class="welcome-start" id="welcomeStart" type="button">${tx('start')}</button>${resumable?`<button class="welcome-resume-link" id="resumeTest" type="button">${tx('resume')}</button>`:''}</div></div></div>`);
 }
 function renderIntake(){clearView();document.body.classList.remove('welcome-mode');app.innerHTML='<div class="candidate-flow-host"></div>';activeView=createVisitorIntake({host:app.querySelector('.candidate-flow-host'),lang,onCancel:()=>navigator.back(),onComplete:data=>{session=createAssessmentSession(data);navigator.go('handoff');}});}
 function renderHandoff(){document.body.classList.remove('welcome-mode');screen(`<div class="eyebrow">Level Test v2</div><h2>${tx('handoff')}</h2><p class="lead">${tx('handoffText')}</p>${visitorSummary()}<div class="actions"><button class="btn btn-ghost" id="editIntake" type="button">${tx('edit')}</button><button class="btn btn-primary" id="startSpeaking" type="button">${tx('continue')}</button></div>`);}
-function renderSpeaking(){clearView();document.body.classList.remove('welcome-mode');app.innerHTML='<div class="speaking-flow-host"></div>';activeView=createSpeakingAssessment({host:app.querySelector('.speaking-flow-host'),session,lang,onChange:speaking=>{session=saveAssessmentSession({...session,speaking:{...(session.speaking||{}),...speaking}});},onBack:()=>navigator.back(),onComplete:speaking=>{session=saveAssessmentSession({...session,speaking:{...(session.speaking||{}),...speaking}});session=markSpeakingComplete(session);navigator.go('speaking-complete');}});}
-function renderSpeakingComplete(){document.body.classList.remove('welcome-mode');screen(`<div class="eyebrow">Level Test v2</div><h2>${tx('done')}</h2><p class="lead">${tx('doneText')}</p>${visitorSummary()}<div class="candidate-summary"><div><small>${lang==='ko'?'선생님 말하기 레벨':'Teacher speaking level'}</small><strong>${session?.speaking?.teacher_level||'—'}</strong></div><div><small>${lang==='ko'?'채점한 응답':'Scored responses'}</small><strong>${session?.speaking?.evidence?.length||0}</strong></div></div><div class="actions"><button class="btn btn-ghost" id="backToSpeaking" type="button">${tx('back')}</button></div>`);}
+function saveSpeakingState(speaking){
+  session=saveAssessmentSession({...session,speaking:{...(session.speaking||{}),...speaking},calibration:{...(session.calibration||{}),teacher_level_cap:speaking.teacher_level_cap??null}});
+}
+function renderSpeaking(){clearView();document.body.classList.remove('welcome-mode');app.innerHTML='<div class="speaking-flow-host"></div>';activeView=createSpeakingAssessment({host:app.querySelector('.speaking-flow-host'),session,lang,onChange:saveSpeakingState,onBack:()=>navigator.back(),onComplete:speaking=>{saveSpeakingState(speaking);session=markSpeakingComplete(session);navigator.go('speaking-complete');}});}
+function renderSpeakingComplete(){document.body.classList.remove('welcome-mode');const cap=session?.calibration?.teacher_level_cap;screen(`<div class="eyebrow">Level Test v2</div><h2>${tx('done')}</h2><p class="lead">${tx('doneText')}</p>${visitorSummary()}<div class="candidate-summary"><div><small>${lang==='ko'?'선생님 말하기 레벨':'Teacher speaking level'}</small><strong>${session?.speaking?.teacher_level||'—'}</strong></div><div><small>${lang==='ko'?'컴퓨터 테스트 최대 레벨':'Computerized-test cap'}</small><strong>${cap||'—'}</strong></div><div><small>${lang==='ko'?'채점한 응답':'Scored responses'}</small><strong>${session?.speaking?.evidence?.length||0}</strong></div></div><div class="actions"><button class="btn btn-ghost" id="backToSpeaking" type="button">${tx('back')}</button></div>`);}
 
 function renderRoute(route){if(route==='welcome')return renderWelcome();if(route==='intake')return renderIntake();if(route==='handoff')return renderHandoff();if(route==='speaking')return renderSpeaking();if(route==='speaking-complete')return renderSpeakingComplete();renderWelcome();}
 
