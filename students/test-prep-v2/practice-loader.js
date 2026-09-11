@@ -14,7 +14,7 @@ export async function loadPracticeContent({
   lesson=null,
   count=20
 }){
-  if(kind==='vocab-learning'||kind==='passage-learning'){
+  if(kind==='vocab-learning'){
     return {mode:'workflow',kind,unitId};
   }
 
