@@ -1,6 +1,9 @@
 // Test Prep V2 stats presentation adapter.
 // Keeps canonical stats/tracking untouched; reshapes rendered stats to the V1 visual language.
 
+import {getLessonStats} from '../shared/student-stats.js?v=1.0.0';
+import {currentRoute} from './navigation.js?v=2.21.0';
+
 const root=document.getElementById('screen');
 if(root){
   const number=v=>Number(String(v||'').replace(/,/g,'').trim());
@@ -56,22 +59,44 @@ if(root){
     card.dataset.v1StatsReady='1';
   }
 
+  function renderJourneyMetrics(stat,completed,total,accuracyValue){
+    stat.className='stop-metrics';
+    stat.innerHTML=`<span class="stop-metric stop-completion"><strong>${completed}<span>/</span>${total}</strong><small>완료</small></span><span class="stop-metric-divider" aria-hidden="true"></span><span class="stop-metric stop-accuracy"><strong>${accuracyValue}</strong><small>평균</small></span>`;
+  }
+
+  function passageStats(){
+    const route=currentRoute?.()||{};
+    if(!route.planId||!route.lesson)return null;
+    return getLessonStats(route.planId,route.lesson)?.practices?.passage||null;
+  }
+
   function upgradeJourneyRow(row){
     if(row.dataset.v1StatsReady==='1')return;
     const stat=row.querySelector('.stop-stat');
     if(!stat)return;
+
+    // Passage used to be rendered as the special text "순서 학습 / 서버 저장" even
+    // though passage-learning records normal attempts. Pull its canonical cached stats
+    // here so it displays exactly like the other journey rows.
+    if(row.dataset.practice==='passage'){
+      const s=passageStats();
+      if(!s)return;
+      const accuracyValue=s.accuracySample?`${clamp(s.accuracy)}%`:'—';
+      renderJourneyMetrics(stat,number(s.completed),number(s.total),accuracyValue);
+      row.dataset.v1StatsReady='1';
+      return;
+    }
+
     const raw=stat.childNodes[0]?.textContent?.trim()||'';
     const small=stat.querySelector('small');
     const accuracyText=small?.textContent||'';
     const count=raw.match(/([\d,]+)\s*\/\s*([\d,]+)/);
     const accuracy=accuracyText.match(/(\d+)%\s*accuracy/i);
-    if(!count)return; // Leave passage/workflow rows alone.
+    if(!count)return;
 
     const completed=count[1],total=count[2];
     const accuracyValue=accuracy?`${clamp(accuracy[1])}%`:'—';
-
-    stat.className='stop-metrics';
-    stat.innerHTML=`<span class="stop-metric stop-completion"><strong>${completed}<span>/</span>${total}</strong><small>완료</small></span><span class="stop-metric-divider" aria-hidden="true"></span><span class="stop-metric stop-accuracy"><strong>${accuracyValue}</strong><small>평균</small></span>`;
+    renderJourneyMetrics(stat,completed,total,accuracyValue);
     row.dataset.v1StatsReady='1';
   }
 
