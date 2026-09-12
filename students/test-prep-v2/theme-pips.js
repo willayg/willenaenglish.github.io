@@ -9,6 +9,9 @@ const THEMES={
   },
   pink:{
     '--cyan':'#f5b8d2','--cyan-dark':'#d54685','--pink':'#d83b7b','--ink':'#4a2c39','--muted':'#8b7480','--page':'#fff7fb','--card':'#ffffff','--soft':'#ffe8f2','--line':'#f5b8d2','--track':'#f8dfeb','--accent':'#ed5c9d','--header-a':'#ffd7e8','--header-b':'#ff9fc8','--header-c':'#f775ad','--heading':'#7d2850','--action-bg':'#ffffff','--action-border':'#f5b8d2','--action-text':'#d83b7b','--shadow':'0 12px 28px rgba(213,70,133,.10)','--card-accent':'#24cfe8','--card-accent-dark':'#087e85','--card-soft':'#edfbfc','--card-line':'#9de2e7','--card-shadow':'rgba(21,170,181,.12)'
+  },
+  dark:{
+    '--cyan':'#65d7df','--cyan-dark':'#7fe7ed','--pink':'#ff76ad','--ink':'#edf5f6','--muted':'#9aabb1','--page':'#10171b','--card':'#182126','--soft':'#202d33','--line':'#33474f','--track':'#293940','--accent':'#65d7df','--header-a':'#233239','--header-b':'#19272d','--header-c':'#111f24','--heading':'#effcfd','--action-bg':'#1b252a','--action-border':'#4b6670','--action-text':'#ff82b3','--shadow':'0 14px 34px rgba(0,0,0,.28)','--card-accent':'#24cfe8','--card-accent-dark':'#8beaf5','--card-soft':'#1c2a30','--card-line':'#2d7180','--card-shadow':'rgba(0,0,0,.30)'
   }
 };
 
@@ -36,7 +39,8 @@ function addThemePips(){
   dock.innerHTML=[
     ['cyan','Cyan'],
     ['sunbeam','Sunbeam'],
-    ['pink','Pink']
+    ['pink','Pink'],
+    ['dark','Dark']
   ].map(([theme,label])=>`<button type="button" class="tp2-theme-pip" data-theme="${theme}" aria-label="${label} 테마" title="${label}" aria-pressed="false"></button>`).join('');
   dock.addEventListener('click',(event)=>{
     const button=event.target.closest('.tp2-theme-pip');
