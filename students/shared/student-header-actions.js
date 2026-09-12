@@ -1,6 +1,16 @@
 // Shared student header actions. No visual assumptions.
 
-export async function logoutStudent({redirect='/students/login.html'}={}){
+function currentStudentReturnPath(){
+  try{
+    const path=`${window.location.pathname||''}${window.location.search||''}${window.location.hash||''}`;
+    if(path.startsWith('/'))return path;
+  }catch{}
+  return '/students/dashboard-v2/';
+}
+
+export async function logoutStudent({redirect=null}={}){
+  const returnPath=currentStudentReturnPath();
+  try{localStorage.setItem('student_return_after_login',returnPath)}catch{}
   try{window.WillenaAPI?.clearLocalTokens?.()}catch{}
   try{
     if(window.WillenaAPI?.fetch){
@@ -8,7 +18,8 @@ export async function logoutStudent({redirect='/students/login.html'}={}){
     }
   }catch(e){console.warn('[student-header-actions] logout request failed',e)}
   try{window.dispatchEvent(new CustomEvent('auth:changed',{detail:{loggedIn:false}}))}catch{}
-  if(redirect)window.location.href=redirect;
+  const destination=redirect||`/students/signin.html?next=${encodeURIComponent(returnPath)}`;
+  if(destination)window.location.href=destination;
 }
 
 export function openStudentProfile(){window.location.href='/students/profile.html'}
