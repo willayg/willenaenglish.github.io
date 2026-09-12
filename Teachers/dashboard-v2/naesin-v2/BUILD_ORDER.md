@@ -131,24 +131,51 @@ The old Naesin V1 remains available side by side.
 
 ## Phase 5 — Shared student overview
 
-Status: **NEXT**
+Status: **DONE**
 
-Wire student click to the fixed-size detail modal.
+Shared overview wrapper added:
 
-Use shared backend fields for:
+- `public.test_prep_student_overview_v1(plan_id)`
 
-- 요약
-- recent 150
-- all-time unique accuracy
-- skill recent 50 vs total
+Teacher edge endpoint added:
+
+- `test-prep-teacher-student-overview-v2?plan_id=...`
+
+The wrapper reuses `test_prep_plan_stats_bundle_v1(plan_id)` for all accuracy, completion, lesson and wrong-count calculations. It adds only a backend 10-day activity count aggregate.
+
+Implemented client flow:
+
+- clicking a matrix student opens the fixed-size V2 detail modal
+- modal remains the same size while tabs switch
+- `요약` is live
+- `활동` is live
+- other tabs remain mounted as placeholders for their later phases
+- student overview responses are cached per plan for the dashboard session
+
+`요약` now shows:
+
+- recent 150 accuracy + count
+- all-time unique accuracy + count
+- current wrong count
+- active study days in the last 10 days
+- recent 50 vs all-time accuracy for every skill
+- completion counts per skill
+- lesson recent vs all-time summary
 - last activity
-- lesson summary
 
-Add activity-by-day backend output if it is not already available through the shared path.
+`활동` now shows:
 
-The client should only draw charts; it should not calculate accuracy.
+- last 10 calendar days
+- attempts per day
+- total attempts
+- active days
+- line chart rendered client-side from backend counts
+
+The client does not calculate accuracy or dedupe attempts.
 
 ## Phase 6 — 레슨 진도
+
+Status: **NEXT**
 
 Use the shared stats bundle directly.
 
