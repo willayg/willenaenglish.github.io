@@ -263,7 +263,7 @@ Status: **DONE**
 
 The create/edit/archive flow is deliberately isolated from the stats/rendering modules.
 
-Architecture:
+Current architecture after the R11.5 cleanup:
 
 ```text
 Naesin V2 main screen
@@ -271,31 +271,62 @@ Naesin V2 main screen
 naesin-v2-editor.js
   ↓ owns modal state, validation, student/book/scope UI
 naesin-v2-editor-api.js
-  ↓ owns network/catalog mutations only
+  ↓ owns network/catalog access only
   ├── teacher_admin → student roster
   ├── Content DB → books / lessons / available sections
-  └── test-prep-groups → create_group / update_group / archive_group
+  └── test-prep-groups-v2 → one save_group request
+                         ↓
+              public.test_prep_save_group_v2(...)
+                         ↓ one PostgreSQL transaction
+                 ├── test_prep_groups.scope
+                 │    ├── lessons[]
+                 │    └── external_passages[]
+                 ├── upsert active student plans
+                 └── deactivate removed student plans
 ```
 
-Styling is isolated in:
+Save rules:
+
+- create and edit use the same `save_group` endpoint
+- the browser sends textbook lessons and external passages together in one payload
+- there is no second `set_external_passages` write in the V2 editor path
+- the Edge Function performs authentication / teacher ownership checks and remains a thin wrapper
+- `public.test_prep_save_group_v2(...)` is service-role only and owns normalization + the atomic group/plan mutation
+- `(group_id, student_id)` is unique for grouped test-prep plans, enabling deterministic plan upsert
+- if any plan write fails, the group/scope mutation rolls back with it
+- the browser only checks the returned saved scope; verification never performs another write
+- assignments remain separate in `test-prep-assignments-v2` because homework/task delivery is a different domain
+
+Validation:
+
+- live save verified with an attached Mars 외부지문
+- the same external passage is present in `test_prep_groups.scope.external_passages`
+- all active member plans include the external passage in their `units`
+- a forced foreign-key failure was tested and the group/scope change rolled back successfully
+
+Styling remains isolated in:
 
 - `naesin-v2-editor.css`
 
 The editor does **not** know how stats are calculated and the matrix does **not** know how forms are saved.
 
-Implemented:
+Implemented UI/functionality:
 
 - `+ 시험 대비 추가` opens the real V2 editor
 - `수정` opens the same editor with school/date/term/exam/book/student/scope values prefilled
-- searchable student picker
+- student roster stays hidden until the teacher types in the search field
 - book picker from the content catalog
 - lesson + section scope controls based on actual usable question coverage
-- create via `create_group`
-- update via `update_group`
-- archive confirmation via new `archive_group`
+- optional external passages alongside the main textbook
+- archive confirmation
 - archiving preserves historical records while deactivating the group, active plans, and active tasks
 - save/archive invalidates V2 caches and refreshes the matrix
 - no inline styling in the editor
+
+Legacy note:
+
+- the older `test-prep-groups` endpoint remains available for V1 / rollback compatibility until Phase 9
+- Naesin V2 editor mutations no longer use its `create_group`, `update_group`, or `set_external_passages` paths
 
 ## Phase 9 — Simplify old teacher endpoints
 
