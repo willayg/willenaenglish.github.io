@@ -11,6 +11,7 @@ function normalize(route={}){
   if(view!=='home')out.planId=text(route.planId);
   if(['lesson','practice','result'].includes(view))out.lesson=text(route.lesson);
   if(['practice','result'].includes(view))out.practice=text(route.practice);
+  if(view==='practice'&&route.taskId)out.taskId=text(route.taskId);
   if(view==='performance'){
     out.assignmentId=text(route.assignmentId);
     if(route.performanceMode)out.performanceMode=text(route.performanceMode);

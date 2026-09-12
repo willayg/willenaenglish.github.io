@@ -142,15 +142,41 @@ export async function flushPendingSessionCloses(reason='manual'){
   return closePromise;
 }
 
+function vocabSnapshot(question,practiceType){
+  const practice=String(practiceType||question?.tracking?.practiceType||'').toLowerCase();
+  const qtype=String(question?.tracking?.questionType||'').toLowerCase();
+  const skill=String(question?.skill||'').toLowerCase();
+  if(!practice.includes('vocab')&&!qtype.includes('vocab')&&skill!=='vocabulary')return null;
+  const context=question?.context&&typeof question.context==='object'&&!Array.isArray(question.context)?question.context:{};
+  const source=question?.source&&typeof question.source==='object'?question.source:{};
+  const metadata=question?.metadata&&typeof question.metadata==='object'&&!Array.isArray(question.metadata)?question.metadata:{};
+  return{
+    version:1,
+    id:String(question?.id||''),
+    mastery_key:String(question?.masteryKey||''),
+    skill:question?.skill||'vocabulary',
+    form:question?.form||null,
+    prompt:String(question?.prompt||''),
+    context,
+    choices:Array.isArray(question?.choices)?question.choices:[],
+    answer:Array.isArray(question?.answer)?question.answer:(question?.answer==null?[]:[question.answer]),
+    source:{code:source.code||null,label:source.label||null,sourceId:source.sourceId||null,sourceQuestionNumber:source.sourceQuestionNumber??null,page:source.page??null},
+    tracking:{practiceType:question?.tracking?.practiceType||practiceType||null,questionType:question?.tracking?.questionType||null,targets:Array.isArray(question?.tracking?.targets)?question.tracking.targets:[]},
+    metadata
+  };
+}
+
 export async function recordAttempt({question,response,result,practiceType,skipped=false,source='test-prep-v2',metadata={}}){
   const session=await startSession(practiceType);if(!session)return null;
   const trackedQuestionId=String(question.tracking?.questionId||question.id);
   const attemptSource=skipped&&source==='test-prep-v2'?'skip':String(source||'test-prep-v2');
   const extra=metadata&&typeof metadata==='object'?metadata:{};
+  const snapshot=vocabSnapshot(question,practiceType);
+  const questionMeta=snapshot&&question?.metadata&&typeof question.metadata==='object'&&!Array.isArray(question.metadata)?question.metadata:{};
   const attempt={
     client_attempt_id:uuid(),session_id:session.id,question_id:trackedQuestionId,selected_answer:response,correct_answer:question.answer,is_correct:!!result.correct,
     question_type:question.tracking?.questionType||null,targets:Array.isArray(question.tracking?.targets)?question.tracking.targets:[],response_time_ms:Number(result.responseTimeMs)||0,
-    metadata:{app_rev:'2.17',renderer_rev:'central-v2',form:question.form,mastery_key:question.masteryKey,variant_question_id:String(question.id),source_code:question.source?.code||null,source_id:question.source?.sourceId||null,source_question_number:question.source?.sourceQuestionNumber??null,grading_method:result.method||null,ai_reason:result.aiReason||null,lesson:state.lesson,plan_id:state.plan?.id||null,practice_type:practiceType,skipped:!!skipped,...extra,source:attemptSource}
+    metadata:{app_rev:'2.17',renderer_rev:'central-v2',form:question.form,mastery_key:question.masteryKey,variant_question_id:String(question.id),source_code:question.source?.code||null,source_id:question.source?.sourceId||null,source_question_number:question.source?.sourceQuestionNumber??null,grading_method:result.method||null,ai_reason:result.aiReason||null,lesson:state.lesson,plan_id:state.plan?.id||null,practice_type:practiceType,skipped:!!skipped,...questionMeta,...(snapshot?{question_snapshot:snapshot}:{}),...extra,source:attemptSource}
   };
   if(attemptSource==='wrong-review')attempt.metadata.review_mode=true;
   outbox.push(attempt);saveOutbox();saveSessionRecord();emit('attempt_queued',{client_attempt_id:attempt.client_attempt_id,session_id:session.id,question_id:attempt.question_id,practice_type:practiceType,source:attemptSource});
