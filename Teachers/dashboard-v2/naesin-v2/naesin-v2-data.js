@@ -1,11 +1,14 @@
 (function(){
 'use strict';
 
-const EDGE='https://fiieuiktlsivwfgyivai.supabase.co/functions/v1/test-prep-teacher-matrix-v2';
+const MATRIX_EDGE='https://fiieuiktlsivwfgyivai.supabase.co/functions/v1/test-prep-teacher-matrix-v2';
+const GROUP_EDGE='https://fiieuiktlsivwfgyivai.supabase.co/functions/v1/test-prep-groups';
 const API_KEY='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
 const matrixCache=new Map();
 const latestMatrix=new Map();
-const diag={requests:0,cacheHits:0,cacheMisses:0,lastMs:null,source:'test-prep-teacher-matrix-v2'};
+let groupsPromise=null;
+let latestGroups=[];
+const diag={requests:0,cacheHits:0,cacheMisses:0,lastMs:null,source:'shared-naesin-v2-data'};
 
 const token=()=>window.WillenaAPI?.getLocalAccessToken?.()||localStorage.getItem('sb_access_token')||'';
 const routedFetch=(url,opts={})=>window.WillenaAPI?.fetch
@@ -26,12 +29,12 @@ async function refreshToken(){
 
 async function accessToken(){return token()||await refreshToken()}
 
-async function requestMatrix(groupId){
+async function authedJson(url,opts={}){
   let access=await accessToken();
   if(!access)throw new Error('AUTH_REQUIRED');
-  const run=t=>fetch(`${EDGE}?group_id=${encodeURIComponent(groupId)}`,{
-    method:'GET',
-    headers:{apikey:API_KEY,Authorization:`Bearer ${t}`},
+  const run=t=>fetch(url,{
+    ...opts,
+    headers:{apikey:API_KEY,Authorization:`Bearer ${t}`,...(opts.headers||{})},
     cache:'no-store',
     credentials:'omit'
   });
@@ -42,8 +45,25 @@ async function requestMatrix(groupId){
   const payload=await r.json().catch(()=>({}));
   diag.lastMs=performance.now()-started;
   if(r.status===401)throw new Error('AUTH_REQUIRED');
-  if(!r.ok||payload?.success===false)throw new Error(payload?.error||`Teacher matrix failed (${r.status})`);
+  if(!r.ok||payload?.success===false)throw new Error(payload?.error||`Naesin data request failed (${r.status})`);
+  return payload;
+}
+
+async function requestMatrix(groupId){
+  const payload=await authedJson(`${MATRIX_EDGE}?group_id=${encodeURIComponent(groupId)}`);
   return payload.matrix||null;
+}
+
+async function loadGroups({force=false}={}){
+  if(force){groupsPromise=null;latestGroups=[]}
+  if(groupsPromise){diag.cacheHits++;return groupsPromise}
+  diag.cacheMisses++;
+  groupsPromise=authedJson(`${GROUP_EDGE}?action=teacher_groups`).then(payload=>{
+    const rows=Array.isArray(payload.groups)?payload.groups:[];
+    latestGroups=rows.filter(item=>(item?.group||item)?.active!==false);
+    return latestGroups;
+  }).catch(error=>{groupsPromise=null;latestGroups=[];throw error});
+  return groupsPromise;
 }
 
 async function loadGroupMatrix(groupId,{force=false}={}){
@@ -64,20 +84,28 @@ async function loadGroupMatrix(groupId,{force=false}={}){
   return promise;
 }
 
+function getCachedGroups(){return latestGroups}
 function getCachedGroupMatrix(groupId){return latestMatrix.get(String(groupId||''))||null}
 function invalidateGroupMatrix(groupId){
   const key=String(groupId||'');
   if(key){matrixCache.delete(key);latestMatrix.delete(key)}
   else{matrixCache.clear();latestMatrix.clear()}
 }
-function getDiagnostics(){return{...diag,cacheEntries:matrixCache.size}}
+function invalidateGroups(){groupsPromise=null;latestGroups=[]}
+function invalidateAll(){invalidateGroups();invalidateGroupMatrix()}
+function getDiagnostics(){return{...diag,cacheEntries:matrixCache.size,groupsCached:latestGroups.length}}
 
 window.NaesinV2Data={
-  version:'matrix-v1',
+  version:'p4-data-1',
+  loadGroups,
+  refreshGroups:()=>loadGroups({force:true}),
+  getCachedGroups,
   loadGroupMatrix,
   refreshGroupMatrix:(groupId)=>loadGroupMatrix(groupId,{force:true}),
   getCachedGroupMatrix,
   invalidateGroupMatrix,
+  invalidateGroups,
+  invalidateAll,
   getDiagnostics
 };
 })();
