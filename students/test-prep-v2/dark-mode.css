@@ -1,0 +1,73 @@
+/* Test Prep V2 normal dark theme. Kept separate so the whole dark build is easy to roll back. */
+html[data-test-prep-theme="dark"]{color-scheme:dark}
+html[data-test-prep-theme="dark"] body{background:var(--page);color:var(--ink)}
+
+html[data-test-prep-theme="dark"] .exam-card,
+html[data-test-prep-theme="dark"] .exam-card:nth-of-type(even),
+html[data-test-prep-theme="dark"] .tile,
+html[data-test-prep-theme="dark"] .tile:nth-child(3n+2),
+html[data-test-prep-theme="dark"] .tile:nth-child(3n){
+  background:var(--card);
+  border-color:var(--card-line);
+  box-shadow:0 14px 30px var(--card-shadow),inset 0 0 0 1px color-mix(in srgb,var(--card-line) 70%,transparent);
+}
+html[data-test-prep-theme="dark"] .tile:before,
+html[data-test-prep-theme="dark"] .tile:nth-child(3n+2):before,
+html[data-test-prep-theme="dark"] .tile:nth-child(3n):before{
+  background:color-mix(in srgb,var(--card-accent) 14%,transparent);
+}
+html[data-test-prep-theme="dark"] .exam-school{background:var(--soft);color:var(--card-accent)}
+html[data-test-prep-theme="dark"] .exam-meta .pill,
+html[data-test-prep-theme="dark"] .pill,
+html[data-test-prep-theme="dark"] .stat-pill{
+  background:var(--soft);color:var(--ink);border-color:var(--line);box-shadow:none;
+}
+html[data-test-prep-theme="dark"] .exam-card .ring,
+html[data-test-prep-theme="dark"] .tile .ring{background:conic-gradient(var(--card-accent) var(--p),var(--track) 0)}
+
+html[data-test-prep-theme="dark"] .journey,
+html[data-test-prep-theme="dark"] .screen>.question-card,
+html[data-test-prep-theme="dark"] .screen>.card,
+html[data-test-prep-theme="dark"] .review-panel{
+  background:var(--card);border-color:var(--line);box-shadow:var(--shadow);color:var(--ink)
+}
+html[data-test-prep-theme="dark"] .station{background:var(--card);color:var(--card-accent);border-color:var(--card-line)}
+html[data-test-prep-theme="dark"] .context-block,
+html[data-test-prep-theme="dark"] .context-item,
+html[data-test-prep-theme="dark"] .choice,
+html[data-test-prep-theme="dark"] .chip,
+html[data-test-prep-theme="dark"] .answer,
+html[data-test-prep-theme="dark"] .text-input{
+  background:#1b252a;color:var(--ink);border-color:#38505a
+}
+html[data-test-prep-theme="dark"] .choice.selected{background:#20343a;border-color:var(--card-accent)}
+html[data-test-prep-theme="dark"] .choice.correct{background:#1c3528;border-color:#4f9b70}
+html[data-test-prep-theme="dark"] .choice.wrong{background:#3a2327;border-color:#b9636d}
+html[data-test-prep-theme="dark"] .build{background:#141d21;border-color:#38505a}
+html[data-test-prep-theme="dark"] .feedback.ok{background:#1b3428;color:#a8e1bc}
+html[data-test-prep-theme="dark"] .feedback.bad,
+html[data-test-prep-theme="dark"] .error{background:#3a2327;color:#f2b6bc}
+
+html[data-test-prep-theme="dark"] .wrong-card,
+html[data-test-prep-theme="dark"] .mock-entry-card{
+  background:#182126;border-color:#24cfe8;color:#ff72aa;box-shadow:0 12px 30px rgba(0,0,0,.28)
+}
+html[data-test-prep-theme="dark"] .wrong-cta{background:#11181c;color:#ff72aa;border-color:#24cfe8}
+html[data-test-prep-theme="dark"] .review-overview>div{background:#202b30}
+html[data-test-prep-theme="dark"] .review-secondary{background:#1b252a;color:var(--ink);border-color:var(--line)}
+
+html[data-test-prep-theme="dark"] .bottom{background:rgba(17,24,28,.96);border-top-color:#30434b}
+html[data-test-prep-theme="dark"] .bottom button{background:#1b252a;color:var(--ink);border-color:#405963}
+html[data-test-prep-theme="dark"] .bottom .primary{background:#202d33;color:#ff82b3;border-color:#5a7884}
+
+html[data-test-prep-theme="dark"] .tp-v1-header .header-pill,
+html[data-test-prep-theme="dark"] .tp-v1-header .header-avatar{background:rgba(20,31,36,.82);color:var(--heading);border-color:rgba(110,220,228,.24)}
+html[data-test-prep-theme="dark"] .tp-v1-header .profile-menu{background:rgba(24,33,38,.98);border-color:#38505a;color:var(--ink)}
+html[data-test-prep-theme="dark"] .tp-v1-header .profile-menu-item{color:var(--ink)}
+html[data-test-prep-theme="dark"] .tp-v1-header .profile-menu-item:hover,
+html[data-test-prep-theme="dark"] .tp-v1-header .profile-menu-item:focus-visible{background:#223138}
+html[data-test-prep-theme="dark"] .tp-v1-header .profile-menu-icon{background:#20343a;color:#7ee7ee}
+html[data-test-prep-theme="dark"] .tp-v1-header .profile-logout{color:#ff82b3}
+html[data-test-prep-theme="dark"] .tp-v1-header .profile-logout .profile-menu-icon{background:#3a2230;color:#ff82b3}
+
+html[data-test-prep-theme="dark"] .app-version{color:#71848c}
