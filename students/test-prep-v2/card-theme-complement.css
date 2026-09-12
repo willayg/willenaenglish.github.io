@@ -1,0 +1,58 @@
+/* Theme-linked complementary card palette.
+   Header/page use the selected theme; primary content cards use its opposite-wheel accent. */
+.exam-card,
+.exam-card:nth-of-type(even){
+  border-color:var(--card-line,#f1aaa6);
+  background:
+    radial-gradient(circle at 100% 0,color-mix(in srgb,var(--card-accent,#e56f69) 18%,transparent) 0 92px,transparent 93px),
+    linear-gradient(135deg,#ffffff 0%,var(--card-soft,#fff0ed) 100%);
+  box-shadow:0 14px 30px var(--card-shadow,rgba(210,84,78,.12));
+}
+.exam-school,
+.exam-card:nth-of-type(even) .exam-school{
+  background:var(--card-soft,#fff0ed);
+  color:var(--card-accent-dark,#a63e39);
+}
+.exam-meta .pill,
+.exam-card:nth-of-type(even) .exam-meta .pill{
+  color:var(--card-accent-dark,#a63e39);
+  box-shadow:inset 0 0 0 1px var(--card-line,#f1aaa6);
+}
+.exam-card .ring{
+  background:conic-gradient(var(--card-accent,#e56f69) var(--p),rgba(255,255,255,.8) 0);
+}
+
+.tile,
+.tile:nth-child(3n+2),
+.tile:nth-child(3n){
+  background:linear-gradient(145deg,#ffffff 0%,var(--card-soft,#fff0ed) 100%);
+  box-shadow:0 12px 28px var(--card-shadow,rgba(210,84,78,.12)),inset 0 0 0 2px var(--card-line,#f1aaa6);
+}
+.tile:before,
+.tile:nth-child(3n+2):before,
+.tile:nth-child(3n):before{
+  background:color-mix(in srgb,var(--card-accent,#e56f69) 18%,transparent);
+}
+.tile .metric,
+.tile:nth-child(3n+2) .metric,
+.tile:nth-child(3n) .metric{
+  color:var(--card-accent-dark,#a63e39);
+}
+.tile .ring{
+  background:conic-gradient(var(--card-accent,#e56f69) var(--p),var(--track) 0);
+}
+
+/* Keep journey cards coherent with the same complementary family. */
+.journey{
+  border-color:var(--card-line,#f1aaa6);
+  box-shadow:0 12px 28px var(--card-shadow,rgba(210,84,78,.12));
+}
+.journey-stop:not(:last-child):before{
+  background:color-mix(in srgb,var(--card-accent,#e56f69) 24%,transparent);
+}
+.station,
+.journey-stop:nth-child(even) .station{
+  border-color:color-mix(in srgb,var(--card-accent,#e56f69) 52%,white);
+  color:var(--card-accent-dark,#a63e39);
+}
+.stop-stat{color:var(--card-accent-dark,#a63e39)}
