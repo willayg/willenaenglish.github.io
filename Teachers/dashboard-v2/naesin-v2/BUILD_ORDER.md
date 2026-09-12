@@ -175,21 +175,33 @@ The client does not calculate accuracy or dedupe attempts.
 
 ## Phase 6 — 레슨 진도
 
-Status: **NEXT**
+Status: **DONE**
 
-Use the shared stats bundle directly.
+Uses the existing shared student overview / canonical stats bundle directly. No additional raw-attempt or content database call was added.
 
-Build:
+Implemented:
 
-- lesson ring rows
-- recent / total / wrong
+- lesson overview rows with completion ring graphs
+- lesson title + available skill chips + inline metrics
+- 완료 / 최근 / 전체 / 오답 shown on each lesson row
 - clickable lesson rows
-- V1-style practice journey
-- 완료 / 최근 / 전체 inline metrics
+- expandable V1-style numbered practice journey
+- practice-level completion bar
+- practice-level 완료 / 최근 / 전체 metrics inline
+- practice-level current wrong count when present
+- mobile layout for lesson rows and expanded practice journey
 
-Reuse snapshot totals and canonical stats. Do not query the content database from the browser.
+Source data remains:
+
+- `stats.lessons[]`
+- `stats.lessons[].practices[]`
+- `stats.review.lessons[]`
+
+Snapshot totals and canonical accuracy calculations remain backend-owned.
 
 ## Phase 7 — 오답
+
+Status: **NEXT**
 
 Reuse the canonical wrong state layer:
 
