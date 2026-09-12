@@ -92,7 +92,7 @@ function driveSetup(){
    if(!holder)continue;
    var token=key+':'+value;if(lastDrive===token)return;
    var option=holder.querySelector('[data-value="'+value+'"]');
-   if(option){lastDrive=token;ctx.setup[key]=Number(value);option.click();setTimeout(function(){lastDrive=''},260);return}
+   if(option){lastDrive=token;ctx.setup[key]=Number(value);option.click();return}
   }
  },80);
 }
