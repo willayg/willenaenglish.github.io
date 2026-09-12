@@ -31,9 +31,9 @@ function assignedScopeRows(plan){
   const external=Array.isArray(scope.external_passages)?scope.external_passages.map(x=>({...x,lesson:x?.lesson||x?.label||x?.unit_label||''})).filter(x=>x.lesson&&x.unit_id):[];
   return [...lessons,...external];
 }
-export async function resolveContentIds(plan,lesson){
+export async function resolveContentIds(plan,lesson,unitIdOverride=null){
   const scope=assignedScopeRows(plan).find(x=>String(x.lesson)===String(lesson));
-  const scopeUnit=scope?.unit_id?String(scope.unit_id):'';
+  const scopeUnit=unitIdOverride?String(unitIdOverride):(scope?.unit_id?String(scope.unit_id):'');
   const cacheKey=`${plan?.book_label||''}|${lesson||''}|${scopeUnit}`;if(idCache.has(cacheKey))return idCache.get(cacheKey);
   const promise=(async()=>{
     if(scopeUnit){
