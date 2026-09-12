@@ -1,5 +1,5 @@
 import {startStudentHeaderData,subscribeStudentHeaderData} from '../shared/student-header-data.js?v=1.0.0';
-import {logoutStudent,openStudentProfile} from '../shared/student-header-actions.js?v=1.0.0';
+import {logoutStudent,openStudentProfile} from '../shared/student-header-actions.js?v=1.0.1';
 
 const header=document.querySelector('.student-header');
 const nameEl=document.getElementById('user');
