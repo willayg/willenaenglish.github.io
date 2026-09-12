@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>Willena Test Prep v2.25.92</title>
+<title>Willena Test Prep v2.25.93</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -20,12 +20,12 @@
 <link rel="stylesheet" href="./performance-learning.css?v=2.2.0">
 <link rel="stylesheet" href="./mock-test.css?v=1.4.2" data-mock-test-style>
 <link rel="stylesheet" href="./assignment-cards.css?v=1.0.2">
-<link rel="stylesheet" href="./theme-pips.css?v=2.25.92">
+<link rel="stylesheet" href="./theme-pips.css?v=2.25.93">
 <link rel="stylesheet" href="./dark-mode.css?v=2.25.87">
 <link rel="stylesheet" href="./v2-25-88-fixes.css?v=2.25.88">
 <link rel="stylesheet" href="./cyberpunk-mode.css?v=2.25.90">
 <link rel="stylesheet" href="./theme-overrides-2.25.91.css?v=2.25.91">
-<link rel="stylesheet" href="./big-text-mode.css?v=2.25.92">
+<link rel="stylesheet" href="./question-renderer-accessibility.css?v=2.25.93">
 <style>
 html,body{width:100%;max-width:100%;overflow-x:hidden}
 .student-header{width:100vw;max-width:none;margin-left:0;margin-right:0;left:0;right:auto}
@@ -37,6 +37,8 @@ html,body{width:100%;max-width:100%;overflow-x:hidden}
 <script type="importmap">
 {
   "imports": {
+    "/students/test-prep-v2/question-renderer.js?v=2.20.6": "/students/test-prep-v2/question-renderer-accessible.js?v=2.25.93",
+    "/students/test-prep-v2/question-renderer.js": "/students/test-prep-v2/question-renderer-accessible.js?v=2.25.93",
     "/students/test-prep-v2/sentence-practice-v1.js?v=1.2.0": "/students/test-prep-v2/sentence-practice-v1.js?v=1.3.0",
     "/students/test-prep-v2/tracking-client.js?v=2.17a": "/students/test-prep-v2/tracking-client.js?v=2.17b",
     "/students/test-prep-v2/navigation.js?v=2.21.0": "/students/test-prep-v2/navigation.js?v=2.21.3",
@@ -63,6 +65,7 @@ html,body{width:100%;max-width:100%;overflow-x:hidden}
         <div class="profile-menu" id="studentProfileMenu" hidden>
           <button class="profile-menu-item" id="studentProfileOpen" type="button"><span class="profile-menu-icon" aria-hidden="true">☺</span><span>Profile</span></button>
           <button class="profile-menu-item" id="studentDashboardOpen" type="button"><span class="profile-menu-icon" aria-hidden="true">⌂</span><span>Dashboard</span></button>
+          <button class="profile-menu-item" id="studentBigTextToggle" type="button" aria-pressed="false"><span class="profile-menu-icon" aria-hidden="true">Aa</span><span id="studentBigTextLabel">큰 글자 꺼짐</span></button>
           <div class="profile-menu-divider"></div>
           <button class="profile-menu-item" id="studentTestPrepA" type="button"><span class="profile-menu-icon" aria-hidden="true">A</span><span>Test Prep A</span></button>
           <button class="profile-menu-item" id="studentTestPrepB" type="button"><span class="profile-menu-icon" aria-hidden="true">B</span><span>Test Prep B</span></button>
@@ -78,11 +81,11 @@ html,body{width:100%;max-width:100%;overflow-x:hidden}
   <main class="screen" id="screen"><div class="loading">Loading…</div></main>
 </div>
 <nav class="bottom" id="bottom" hidden></nav>
-<div class="app-version">Test Prep · v2.25.92</div>
+<div class="app-version">Test Prep · v2.25.93</div>
 <script src="/students/api-gateway.js?v=2.13b"></script>
 <script src="/js/api-config.js?v=2.13b"></script>
-<script type="module" src="./theme-pips.js?v=2.25.92"></script>
-<script type="module" src="./header-v2.js?v=1.2.1"></script>
+<script type="module" src="./theme-pips.js?v=2.25.93"></script>
+<script type="module" src="./header-v2.js?v=1.3.0"></script>
 <script type="module">
 import {QuestionRenderer} from './question-renderer.js?v=2.20.6';
 import {trackingState} from './tracking-client.js?v=2.17a';
@@ -90,9 +93,9 @@ import {currentRoute} from './navigation.js?v=2.21.3';
 import {installWillenaKeyboard} from '../shared/willena-keyboard.js?v=1.5.0';
 import {installQuestionFlags} from '../shared/question-flags.js?v=1.0.0';
 installWillenaKeyboard({submitSelector:'#bottom button.primary,.vp-next'});
-installQuestionFlags({Renderer:QuestionRenderer,contextProvider:()=>{const t=trackingState(),r=currentRoute?.()||{};return{studentId:t.user?.id||null,planId:r.planId||t.plan?.id||null,lesson:r.lesson||t.lesson||null,practiceType:r.practice||t.practice||null,reviewMode:r.view==='review',appRevision:'2.25.92'};}});
+installQuestionFlags({Renderer:QuestionRenderer,contextProvider:()=>{const t=trackingState(),r=currentRoute?.()||{};return{studentId:t.user?.id||null,planId:r.planId||t.plan?.id||null,lesson:r.lesson||t.lesson||null,practiceType:r.practice||t.practice||null,reviewMode:r.view==='review',appRevision:'2.25.93'};}});
 </script>
-<script type="module" src="./app.js?v=2.25.92"></script>
+<script type="module" src="./app.js?v=2.25.93"></script>
 <script type="module" src="./stats-display-v1.js?v=1.3.1"></script>
 </body>
 </html>
