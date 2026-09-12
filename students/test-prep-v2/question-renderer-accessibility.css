@@ -1,0 +1,12 @@
+/* Renderer-owned large text mode. Only enlarges active question content. */
+.willena-question-renderer.willena-big-text .prompt{font-size:clamp(22px,4.2vw,28px)!important;line-height:1.62!important}
+.willena-question-renderer.willena-big-text .context-value,
+.willena-question-renderer.willena-big-text .context-item,
+.willena-question-renderer.willena-big-text .masked,
+.willena-question-renderer.willena-big-text .learn{font-size:clamp(20px,3.8vw,25px)!important;line-height:1.72!important}
+.willena-question-renderer.willena-big-text .choice{font-size:clamp(19px,3.6vw,23px)!important;line-height:1.58!important;min-height:58px}
+.willena-question-renderer.willena-big-text .answer,
+.willena-question-renderer.willena-big-text .text-input{font-size:clamp(20px,3.8vw,24px)!important;line-height:1.52!important}
+.willena-question-renderer.willena-big-text .chip,
+.willena-question-renderer.willena-big-text .build{font-size:clamp(19px,3.6vw,23px)!important;line-height:1.58!important}
+.willena-question-renderer.willena-big-text .feedback{font-size:clamp(18px,3.2vw,22px)!important;line-height:1.68!important}
