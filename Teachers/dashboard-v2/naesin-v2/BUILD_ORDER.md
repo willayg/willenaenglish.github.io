@@ -101,28 +101,37 @@ Rules retained:
 
 ## Phase 4 — Teacher Naesin V2 main screen
 
-Status: **NEXT**
+Status: **DONE**
 
-Replace the current skeleton content with real active test groups.
+The skeleton has been replaced with the real active-test screen.
 
-Load sequence:
+Implemented load sequence:
 
-1. load lightweight group/config/member data
-2. render test shells immediately
-3. load matrix bundle per visible group
-4. fill student rows as results arrive
+1. load active group/config/member shells from `test-prep-groups`
+2. render test sections immediately
+3. load the shared matrix bundle independently for each visible group
+4. fill student rows as each group result arrives
 
-Build the V19 UX/UI:
+Implemented UI:
 
-- active test sections
-- test title/meta/D-day
-- three-dot menu: 수정 / 보관 only
-- student matrix
-- stable horizontal scrolling on narrow screens
+- full-width active test sections
+- school / term / exam / book / date / D-day header
+- three-dot menu with `수정` / `보관` only
+- student matrix with Korean skill labels
+- recent 50 accuracy + sample count per skill
+- recent 150 accuracy + sample count for overall
+- large student-name drill-down button
+- horizontal matrix scrolling on narrow screens
+- per-group loading, retry, empty and error states
+- dashboard-session group/matrix cache in `naesin-v2-data.js`
 
-Keep old Naesin V1 running side by side.
+Teacher V2 only renders values from the shared backend. It does not derive accuracy from raw attempts.
+
+The old Naesin V1 remains available side by side.
 
 ## Phase 5 — Shared student overview
+
+Status: **NEXT**
 
 Wire student click to the fixed-size detail modal.
 
