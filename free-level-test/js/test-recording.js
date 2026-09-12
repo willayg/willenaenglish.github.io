@@ -139,7 +139,10 @@ document.addEventListener('click',function(e){
 },true);
 var observer=new MutationObserver(function(){var card=document.querySelector('.question-card');if(card)lastQuestionAt=Date.now();finishIfReady()});
 observer.observe(document.documentElement,{subtree:true,childList:true});
-window.addEventListener('willena:candidate-ready',function(){ensureBank()});
+window.addEventListener('willena:candidate-ready',function(){
+ ensureBank();
+ ensureAttempt().catch(function(error){console.warn('[level-test-recording] attempt start failed',error)});
+});
 window.addEventListener('online',function(){
  if(recoveredFinishedTest){recoverFinishedTest().catch(function(){})}
  else if(finishRequested){finishIfReady().catch(function(){})}
