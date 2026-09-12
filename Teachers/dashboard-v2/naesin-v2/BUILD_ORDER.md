@@ -41,51 +41,67 @@ Important compatibility rule:
 
 ## Phase 2 — Student V2 parity check
 
-Before building teacher matrix logic, verify Student V2 can consume the shared fields correctly.
+Status: **DONE**
 
-Check the same plan against current Student V2 and the shared stats bundle:
+Student V2 already routes canonical stats through:
+
+- `/students/shared/student-stats.js`
+- `test-prep-stats-v1`
+- `public.test_prep_plan_stats_v1(plan_id)`
+
+The shared Student stats adapter now exposes the Phase 1 fields without creating a second calculation engine:
 
 - overall recent 150
 - all-time unique accuracy
 - recent 50 per skill
-- lesson progress
-- lesson-practice progress
-- wrong counts
+- all-time unique skill accuracy
+- last activity
+- lesson / lesson-practice unique accuracy
 
-Do not create separate calculations in Student V2. Student V2 should display the shared backend result.
+Existing Student V2 display fields remain backward compatible.
 
 ## Phase 3 — Teacher group matrix backend
 
-Build a lightweight teacher/group wrapper around the shared plan stats core.
+Status: **DONE**
 
-Input:
+Shared wrapper added:
 
-- `group_id`
+- `public.test_prep_group_matrix_v1(group_id)`
 
-Return:
+Teacher edge endpoint added:
 
-- group configuration
-- members / student identity
+- `test-prep-teacher-matrix-v2?group_id=...`
+
+The wrapper does **not** recalculate attempts. It calls the shared canonical plan bundle for each active plan in the group.
+
+Matrix result per student includes:
+
+- student identity
 - plan id
-- one shared-stats result per plan, reduced to matrix-ready fields
-
-Matrix result per student should include:
-
-- student id / name
-- plan id
-- each skill recent 50 accuracy + count
-- overall recent 150 accuracy + count
-- all-time unique accuracy
-- current wrong count
+- `skills[]` with recent 50 + all-time unique stats
+- overall recent 150 + all-time unique stats
+- current wrong counts
 - last activity
+- content snapshot status
 
-Rules:
+The V2 browser adapter now exposes:
 
-- do not scan raw attempts in the browser
-- do not reproduce dedupe logic in the group wrapper
-- the wrapper should consume the canonical shared stats function
+- `NaesinV2Data.loadGroupMatrix(groupId)`
+- `NaesinV2Data.refreshGroupMatrix(groupId)`
+- `NaesinV2Data.getCachedGroupMatrix(groupId)`
+- `NaesinV2Data.invalidateGroupMatrix(groupId)`
+
+Validation completed against a live active group with multiple students.
+
+Rules retained:
+
+- no raw attempt scan in the browser
+- no duplicated dedupe logic
+- group wrapper consumes the canonical shared stats engine
 
 ## Phase 4 — Teacher Naesin V2 main screen
+
+Status: **NEXT**
 
 Replace the current skeleton content with real active test groups.
 
