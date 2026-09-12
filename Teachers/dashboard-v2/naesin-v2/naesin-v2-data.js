@@ -4,9 +4,10 @@
 const MATRIX_EDGE='https://fiieuiktlsivwfgyivai.supabase.co/functions/v1/test-prep-teacher-matrix-v2';
 const OVERVIEW_EDGE='https://fiieuiktlsivwfgyivai.supabase.co/functions/v1/test-prep-teacher-student-overview-v2';
 const WRONG_EDGE='https://fiieuiktlsivwfgyivai.supabase.co/functions/v1/test-prep-teacher-wrong-detail';
+const GRAMMAR_EDGE='https://fiieuiktlsivwfgyivai.supabase.co/functions/v1/test-prep-grammar-tracking';
 const GROUP_EDGE='https://fiieuiktlsivwfgyivai.supabase.co/functions/v1/test-prep-groups';
 const API_KEY='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
-const matrixCache=new Map(),latestMatrix=new Map(),overviewCache=new Map(),latestOverview=new Map(),wrongCache=new Map(),latestWrong=new Map();
+const matrixCache=new Map(),latestMatrix=new Map(),overviewCache=new Map(),latestOverview=new Map(),wrongCache=new Map(),latestWrong=new Map(),grammarCache=new Map(),latestGrammar=new Map();
 let groupsPromise=null,latestGroups=[];
 const diag={requests:0,cacheHits:0,cacheMisses:0,lastMs:null,source:'shared-naesin-v2-data'};
 
@@ -18,22 +19,26 @@ async function authedJson(url,opts={}){let access=await accessToken();if(!access
 async function requestMatrix(groupId){const payload=await authedJson(`${MATRIX_EDGE}?group_id=${encodeURIComponent(groupId)}`);return payload.matrix||null}
 async function requestOverview(planId){const payload=await authedJson(`${OVERVIEW_EDGE}?plan_id=${encodeURIComponent(planId)}`);return payload.overview||null}
 async function requestWrong(studentId,planId){const qs=new URLSearchParams({student_id:String(studentId||''),_t:String(Date.now())});if(planId)qs.set('plan_id',String(planId));const payload=await authedJson(`${WRONG_EDGE}?${qs}`);return{items:Array.isArray(payload.items)?payload.items:[],meta:payload.meta||{},raw:payload}}
+async function requestGrammar(groupId,studentId){const qs=new URLSearchParams({action:'student',group_id:String(groupId||''),student_id:String(studentId||''),_t:String(Date.now())});return authedJson(`${GRAMMAR_EDGE}?${qs}`)}
 
 async function loadGroups({force=false}={}){if(force){groupsPromise=null;latestGroups=[]}if(groupsPromise){diag.cacheHits++;return groupsPromise}diag.cacheMisses++;groupsPromise=authedJson(`${GROUP_EDGE}?action=teacher_groups`).then(payload=>{const rows=Array.isArray(payload.groups)?payload.groups:[];latestGroups=rows.filter(item=>(item?.group||item)?.active!==false);return latestGroups}).catch(error=>{groupsPromise=null;latestGroups=[];throw error});return groupsPromise}
 async function loadGroupMatrix(groupId,{force=false}={}){const key=String(groupId||'');if(!key)throw new Error('group_id required');if(force){matrixCache.delete(key);latestMatrix.delete(key)}if(matrixCache.has(key)){diag.cacheHits++;return matrixCache.get(key)}diag.cacheMisses++;const promise=requestMatrix(key).then(matrix=>{latestMatrix.set(key,matrix);return matrix}).catch(error=>{matrixCache.delete(key);latestMatrix.delete(key);throw error});matrixCache.set(key,promise);return promise}
 async function loadStudentOverview(planId,{force=false}={}){const key=String(planId||'');if(!key)throw new Error('plan_id required');if(force){overviewCache.delete(key);latestOverview.delete(key)}if(overviewCache.has(key)){diag.cacheHits++;return overviewCache.get(key)}diag.cacheMisses++;const promise=requestOverview(key).then(overview=>{latestOverview.set(key,overview);return overview}).catch(error=>{overviewCache.delete(key);latestOverview.delete(key);throw error});overviewCache.set(key,promise);return promise}
 async function loadWrongDetail(studentId,planId,{force=false}={}){const key=`${String(studentId||'')}|${String(planId||'')}`;if(!studentId)throw new Error('student_id required');if(force){wrongCache.delete(key);latestWrong.delete(key)}if(wrongCache.has(key)){diag.cacheHits++;return wrongCache.get(key)}diag.cacheMisses++;const promise=requestWrong(studentId,planId).then(data=>{latestWrong.set(key,data);return data}).catch(error=>{wrongCache.delete(key);latestWrong.delete(key);throw error});wrongCache.set(key,promise);return promise}
+async function loadGrammarTracking(groupId,studentId,{force=false}={}){const key=`${String(groupId||'')}|${String(studentId||'')}`;if(!groupId)throw new Error('group_id required');if(!studentId)throw new Error('student_id required');if(force){grammarCache.delete(key);latestGrammar.delete(key)}if(grammarCache.has(key)){diag.cacheHits++;return grammarCache.get(key)}diag.cacheMisses++;const promise=requestGrammar(groupId,studentId).then(data=>{latestGrammar.set(key,data);return data}).catch(error=>{grammarCache.delete(key);latestGrammar.delete(key);throw error});grammarCache.set(key,promise);return promise}
 
 function getCachedGroups(){return latestGroups}
 function getCachedGroupMatrix(groupId){return latestMatrix.get(String(groupId||''))||null}
 function getCachedStudentOverview(planId){return latestOverview.get(String(planId||''))||null}
 function getCachedWrongDetail(studentId,planId){return latestWrong.get(`${String(studentId||'')}|${String(planId||'')}`)||null}
+function getCachedGrammarTracking(groupId,studentId){return latestGrammar.get(`${String(groupId||'')}|${String(studentId||'')}`)||null}
 function invalidateGroupMatrix(groupId){const key=String(groupId||'');if(key){matrixCache.delete(key);latestMatrix.delete(key)}else{matrixCache.clear();latestMatrix.clear()}}
 function invalidateStudentOverview(planId){const key=String(planId||'');if(key){overviewCache.delete(key);latestOverview.delete(key)}else{overviewCache.clear();latestOverview.clear()}}
 function invalidateWrongDetail(studentId,planId){if(studentId){const key=`${String(studentId)}|${String(planId||'')}`;wrongCache.delete(key);latestWrong.delete(key)}else{wrongCache.clear();latestWrong.clear()}}
+function invalidateGrammarTracking(groupId,studentId){if(groupId&&studentId){const key=`${String(groupId)}|${String(studentId)}`;grammarCache.delete(key);latestGrammar.delete(key)}else{grammarCache.clear();latestGrammar.clear()}}
 function invalidateGroups(){groupsPromise=null;latestGroups=[]}
-function invalidateAll(){invalidateGroups();invalidateGroupMatrix();invalidateStudentOverview();invalidateWrongDetail()}
-function getDiagnostics(){return{...diag,matrixCacheEntries:matrixCache.size,overviewCacheEntries:overviewCache.size,wrongCacheEntries:wrongCache.size,groupsCached:latestGroups.length}}
+function invalidateAll(){invalidateGroups();invalidateGroupMatrix();invalidateStudentOverview();invalidateWrongDetail();invalidateGrammarTracking()}
+function getDiagnostics(){return{...diag,matrixCacheEntries:matrixCache.size,overviewCacheEntries:overviewCache.size,wrongCacheEntries:wrongCache.size,grammarCacheEntries:grammarCache.size,groupsCached:latestGroups.length}}
 
-window.NaesinV2Data={version:'p7-data-1',loadGroups,refreshGroups:()=>loadGroups({force:true}),getCachedGroups,loadGroupMatrix,refreshGroupMatrix:(groupId)=>loadGroupMatrix(groupId,{force:true}),getCachedGroupMatrix,invalidateGroupMatrix,loadStudentOverview,refreshStudentOverview:(planId)=>loadStudentOverview(planId,{force:true}),getCachedStudentOverview,invalidateStudentOverview,loadWrongDetail,refreshWrongDetail:(studentId,planId)=>loadWrongDetail(studentId,planId,{force:true}),getCachedWrongDetail,invalidateWrongDetail,invalidateGroups,invalidateAll,getDiagnostics};
+window.NaesinV2Data={version:'p8-data-1',loadGroups,refreshGroups:()=>loadGroups({force:true}),getCachedGroups,loadGroupMatrix,refreshGroupMatrix:(groupId)=>loadGroupMatrix(groupId,{force:true}),getCachedGroupMatrix,invalidateGroupMatrix,loadStudentOverview,refreshStudentOverview:(planId)=>loadStudentOverview(planId,{force:true}),getCachedStudentOverview,invalidateStudentOverview,loadWrongDetail,refreshWrongDetail:(studentId,planId)=>loadWrongDetail(studentId,planId,{force:true}),getCachedWrongDetail,invalidateWrongDetail,loadGrammarTracking,refreshGrammarTracking:(groupId,studentId)=>loadGrammarTracking(groupId,studentId,{force:true}),getCachedGrammarTracking,invalidateGrammarTracking,invalidateGroups,invalidateAll,getDiagnostics};
 })();
