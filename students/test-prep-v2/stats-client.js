@@ -1,4 +1,4 @@
-import * as SharedStats from '../shared/student-stats.js?v=1.0.0';
+import * as SharedStats from '../shared/student-stats.js?v=1.1.0';
 
 const LEGACY_FLAG='willena_tp_stats_source';
 const useLegacy=()=>{try{return localStorage.getItem(LEGACY_FLAG)==='legacy'}catch(_){return false}};
