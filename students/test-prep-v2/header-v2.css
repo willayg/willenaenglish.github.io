@@ -1,5 +1,6 @@
 .student-header.tp-v1-header{position:relative;overflow:visible;width:100vw;max-width:100vw;min-height:184px;margin-bottom:59px;background:linear-gradient(112deg,var(--header-a,#baf8fb),var(--header-b,#65e3eb) 52%,var(--header-c,#39c9d6));color:var(--heading,#064e57);isolation:isolate;z-index:20}
-.tp-v1-header .header-inner{position:relative;z-index:4;max-width:1120px;margin:0 auto;padding:27px 30px 66px;display:flex;align-items:center;justify-content:space-between;gap:24px}
+.tp-v1-header .header-inner{position:relative;z-index:40;max-width:1120px;margin:0 auto;padding:27px 30px 66px;display:flex;align-items:center;justify-content:space-between;gap:24px;pointer-events:none}
+.tp-v1-header .header-counters,.tp-v1-header .profile-menu-wrap{pointer-events:auto}
 .tp-v1-header .header-profile{display:flex;flex-direction:column;align-items:flex-start;gap:10px}
 .tp-v1-header .student-name{font-size:30px;font-weight:800;line-height:1;letter-spacing:-.035em}
 .tp-v1-header .header-counters{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
