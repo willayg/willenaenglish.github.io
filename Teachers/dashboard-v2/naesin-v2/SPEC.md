@@ -119,13 +119,11 @@ As of 2026-09-12 the shared stats core has also been extended with:
 
 ### Lesson / practice fields
 
-Lesson and lesson-practice stats now also expose final-state unique accuracy fields so Teacher V2 and Student V2 can display the same totals.
+Lesson and lesson-practice stats also expose final-state unique accuracy fields so Teacher V2 and Student V2 can display the same totals.
 
 ### Backward compatibility
 
 Existing fields remain available for older consumers.
-
-In particular:
 
 - legacy `summary.recent_count` / `summary.recent_accuracy` remain present
 - V2 overall UI should use `summary.recent150_count` / `summary.recent150_accuracy`
@@ -226,6 +224,27 @@ Reuse where suitable:
 - `test_prep_plan_stats_bundle_v1`
 - `test_prep_review_stats_v1`
 
+### Teacher matrix wrapper
+
+Phase 3 added the thin teacher matrix path:
+
+- RPC: `public.test_prep_group_matrix_v1(group_id)`
+- Edge endpoint: `test-prep-teacher-matrix-v2?group_id=...`
+
+The wrapper does not perform its own accuracy, recency, or deduplication calculations. For every active plan in the group it consumes the shared `test_prep_plan_stats_bundle_v1` result and returns matrix-ready fields.
+
+Returned member data includes:
+
+- student identity
+- plan id
+- `summary` including recent 150 and all-time unique accuracy
+- `skills[]` including recent 50 and all-time unique skill accuracy
+- canonical review counts
+- last activity
+- content snapshot state
+
+`naesin-v2-data.js` calls this endpoint and may cache the response in memory for the current dashboard session.
+
 `test-prep-teacher-insights` contains useful legacy behavior but should not remain the canonical calculation path for V2 because it performs live attempt/content aggregation that now overlaps the shared snapshot/RPC system.
 
 ### Students
@@ -242,7 +261,7 @@ Load in layers:
 
 1. group/config/member data
 2. render visible test shells
-3. load matrix-ready stats per group through a thin teacher wrapper
+3. load matrix-ready stats per group through `test-prep-teacher-matrix-v2`
 4. fill rows as group results arrive
 
 ### Student detail
@@ -257,13 +276,14 @@ Load heavy data on demand:
 
 ### Client cache
 
-`naesin-v2-data.js` may keep an in-memory cache for the current dashboard session:
+`naesin-v2-data.js` keeps an in-memory group-matrix cache and may later add caches for detail views.
 
-- groups
-- group matrix responses
-- student detail responses
-- wrong detail responses
-- grammar pattern responses
+Current matrix API:
+
+- `NaesinV2Data.loadGroupMatrix(groupId)`
+- `NaesinV2Data.refreshGroupMatrix(groupId)`
+- `NaesinV2Data.getCachedGroupMatrix(groupId)`
+- `NaesinV2Data.invalidateGroupMatrix(groupId)`
 
 This cache is for avoiding repeat requests only. It is not a source of truth and must not contain duplicated stats logic.
 
@@ -493,10 +513,10 @@ The authoritative sequence is maintained in `BUILD_ORDER.md`.
 
 High-level order:
 
-1. shared stats core
-2. Student V2 parity check
-3. teacher group matrix wrapper
-4. real Naesin V2 main screen
+1. shared stats core — DONE
+2. Student V2 parity check — DONE
+3. teacher group matrix wrapper — DONE
+4. real Naesin V2 main screen — NEXT
 5. shared student overview
 6. lesson progress
 7. wrong answers
@@ -547,17 +567,29 @@ Naesin V2 is ready when:
 
 ## 26. Current Shared-Core Status
 
-Phase 1 of `BUILD_ORDER.md` is complete.
+Phases 1–3 of `BUILD_ORDER.md` are complete.
 
-The shared `test_prep_plan_stats_v1` function now exposes the additional V2 metrics while retaining legacy fields for compatibility.
+Current verified shared path:
 
-Validation was run across all 16 currently active test-prep plans; all returned:
+```text
+Student / Teacher plan
+  ↓
+public.test_prep_plan_stats_v1
+  ↓
+public.test_prep_plan_stats_bundle_v1
+  ↓
+Student V2 shared adapter
+  or
+public.test_prep_group_matrix_v1
+  ↓
+test-prep-teacher-matrix-v2
+  ↓
+NaesinV2Data.loadGroupMatrix()
+```
 
-- `skills`
-- `summary.recent150_accuracy`
-- `summary.unique_accuracy`
+The teacher matrix wrapper was validated against a live active group containing multiple students and returned shared-backend skill, recent-150, unique-accuracy, wrong-count, and last-activity values.
 
-The next build phase is Student V2 parity verification before the teacher group-matrix wrapper is added.
+The next build phase is the real Teacher Naesin V2 main screen.
 
 ## 27. UX/UI Reference
 
