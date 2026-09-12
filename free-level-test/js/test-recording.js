@@ -141,7 +141,7 @@ var observer=new MutationObserver(function(){var card=document.querySelector('.q
 observer.observe(document.documentElement,{subtree:true,childList:true});
 window.addEventListener('willena:candidate-ready',function(){
  ensureBank();
- ensureAttempt().catch(function(error){console.warn('[level-test-recording] attempt start failed',error)});
+ beginNewAttempt().catch(function(error){console.warn('[level-test-recording] attempt start failed',error)});
 });
 window.addEventListener('online',function(){
  if(recoveredFinishedTest){recoverFinishedTest().catch(function(){})}
