@@ -79,9 +79,7 @@ function mountView(){
     </div>`;
   ws.appendChild(sec);
 
-  q('#na2Add',sec)?.addEventListener('click',()=>{
-    window.alert('Naesin V2 editor skeleton — next build step.');
-  });
+  q('#na2Add',sec)?.addEventListener('click',()=>window.NaesinV2Editor?.openCreate?.());
 }
 
 function mount(){
