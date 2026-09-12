@@ -132,8 +132,14 @@ function renderActivity(){
     </section>`;
 }
 
+function renderLessons(){
+  const body=q('#na2DetailBody');
+  body.innerHTML='<div class="na2-lessons-tab"><div class="na2-lessons-head"><div><h3>레슨 진도</h3><p>레슨을 눌러 학습 영역별 진행 상황을 확인하세요.</p></div><span>완료 · 최근 · 전체 · 오답</span></div><div id="na2LessonJourneyMount"></div></div>';
+  window.NaesinV2LessonJourney?.render?.(q('#na2LessonJourneyMount'),current.data);
+}
+
 function renderPlaceholder(tab){
-  const copy={wrong:['오답','P7에서 현재 오답과 프린트 기능을 연결합니다.'],lessons:['레슨 진도','P6에서 레슨 링과 학습 여정을 연결합니다.'],grammar:['문법 패턴','P8에서 문법 패턴별 통계를 연결합니다.']}[tab]||['준비 중',''];
+  const copy={wrong:['오답','P7에서 현재 오답과 프린트 기능을 연결합니다.'],grammar:['문법 패턴','P8에서 문법 패턴별 통계를 연결합니다.']}[tab]||['준비 중',''];
   q('#na2DetailBody').innerHTML=`<div class="na2-tab-placeholder"><strong>${copy[0]}</strong><span>${copy[1]}</span></div>`;
 }
 
@@ -143,6 +149,7 @@ function setTab(tab){
   if(!current.data)return;
   if(current.tab==='summary')renderSummary();
   else if(current.tab==='activity')renderActivity();
+  else if(current.tab==='lessons')renderLessons();
   else renderPlaceholder(current.tab);
 }
 
@@ -166,5 +173,5 @@ async function open(studentId,planId,groupId){
   }
 }
 
-window.NaesinV2StudentDetail={open,close,version:'p5-overview-1'};
+window.NaesinV2StudentDetail={open,close,version:'p6-lessons-1'};
 })();
