@@ -1,0 +1,81 @@
+/* v2.25.88 targeted visual fixes: lesson rings + dark-mode contrast. */
+
+/* Actual Lesson 5 / Lesson 6 cards: the ring source was stats-display-v1.css, not the theme card layer. */
+.lesson-unit-card .ring{
+  background:conic-gradient(#24cfe8 var(--p),var(--track) 0)!important;
+}
+
+/* Normal dark mode: keep lesson/journey circles dark inside with a bright cyan edge. */
+html[data-test-prep-theme="dark"] .lesson-unit-card .ring,
+html[data-test-prep-theme="dark"] .journey .ring{
+  background:conic-gradient(#24cfe8 var(--p),#30434b 0)!important;
+}
+html[data-test-prep-theme="dark"] .lesson-unit-card .ring:after,
+html[data-test-prep-theme="dark"] .journey .ring:after{background:#182126!important}
+html[data-test-prep-theme="dark"] .station{
+  background:#182126!important;
+  color:#e8fcff!important;
+  border-color:#24cfe8!important;
+}
+html[data-test-prep-theme="dark"] .journey::before{background:rgba(255,118,173,.28)!important}
+html[data-test-prep-theme="dark"] .stop-completion strong,
+html[data-test-prep-theme="dark"] .stop-completion small{color:#8beaf5!important}
+html[data-test-prep-theme="dark"] .stop-metric-divider{background:rgba(36,207,232,.42)!important}
+
+/* Mock-test entry button text was inheriting hard-coded light-theme grays. */
+html[data-test-prep-theme="dark"] [data-mock].wrong-card .wrong-copy b{color:#f4f8fa!important}
+html[data-test-prep-theme="dark"] [data-mock].wrong-card .wrong-copy small{color:#b8c6cb!important}
+html[data-test-prep-theme="dark"] [data-mock] .wrong-cta{color:#dce8eb!important;background:#11181c!important;border-color:#24cfe8!important}
+
+/* Mock-test engine itself has its own white surfaces. */
+html[data-test-prep-theme="dark"] .mock-summary-card,
+html[data-test-prep-theme="dark"] .mock-question-card,
+html[data-test-prep-theme="dark"] .mock-results-hero,
+html[data-test-prep-theme="dark"] .mock-result-section,
+html[data-test-prep-theme="dark"] .mock-review-question,
+html[data-test-prep-theme="dark"] .mock-timer,
+html[data-test-prep-theme="dark"] .mock-section-count{
+  background:#182126!important;
+  color:#edf5f6!important;
+  border-color:#2d7180!important;
+  box-shadow:none!important;
+}
+html[data-test-prep-theme="dark"] .mock-summary-title,
+html[data-test-prep-theme="dark"] .mock-timer strong,
+html[data-test-prep-theme="dark"] .mock-results-score strong,
+html[data-test-prep-theme="dark"] .mock-result-section summary strong,
+html[data-test-prep-theme="dark"] .mock-review-answers b{color:#edf5f6!important}
+html[data-test-prep-theme="dark"] .mock-summary-copy,
+html[data-test-prep-theme="dark"] .mock-summary-eyebrow,
+html[data-test-prep-theme="dark"] .mock-section-count span,
+html[data-test-prep-theme="dark"] .mock-exam-status>strong,
+html[data-test-prep-theme="dark"] .mock-exam-nav>[data-mock-answered],
+html[data-test-prep-theme="dark"] .mock-result-section summary span,
+html[data-test-prep-theme="dark"] .mock-review-question-head,
+html[data-test-prep-theme="dark"] .mock-review-answers span{color:#aebdc2!important}
+html[data-test-prep-theme="dark"] .mock-section-pill,
+html[data-test-prep-theme="dark"] .mock-ready{background:#20343a!important;color:#8beaf5!important}
+html[data-test-prep-theme="dark"] .mock-result-section-body{border-top-color:#33474f!important}
+html[data-test-prep-theme="dark"] .mock-result-sync{background:#202b30!important;color:#b8c6cb!important}
+
+/* Shared question-flagging UI is injected dynamically, so theme it from the app layer. */
+html[data-test-prep-theme="dark"] .wqf-overlay{background:rgba(4,8,11,.72)!important}
+html[data-test-prep-theme="dark"] .wqf-modal{
+  background:#182126!important;
+  color:#edf5f6!important;
+  border-color:#24cfe8!important;
+  box-shadow:0 18px 60px rgba(0,0,0,.55)!important;
+}
+html[data-test-prep-theme="dark"] .wqf-modal p{color:#aebdc2!important}
+html[data-test-prep-theme="dark"] .wqf-reason,
+html[data-test-prep-theme="dark"] .wqf-note,
+html[data-test-prep-theme="dark"] .wqf-actions button{
+  background:#202b30!important;
+  color:#edf5f6!important;
+  border-color:#46616b!important;
+}
+html[data-test-prep-theme="dark"] .wqf-reason{color:#ff82b3!important}
+html[data-test-prep-theme="dark"] .wqf-reason.on{background:#3a2230!important;border-color:#ff76ad!important}
+html[data-test-prep-theme="dark"] .wqf-note:focus{border-color:#24cfe8!important;box-shadow:0 0 0 3px rgba(36,207,232,.14)!important}
+html[data-test-prep-theme="dark"] .wqf-actions .send{color:#ff82b3!important}
+html[data-test-prep-theme="dark"] .wqf-button{background:#182126!important;border-color:#24cfe8!important;color:#ff82b3!important}
