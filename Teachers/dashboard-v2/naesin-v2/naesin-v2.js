@@ -2,7 +2,7 @@
 'use strict';
 
 const VIEW='naesin-v2';
-const REV='R7';
+const REV='R8';
 const ICON='./naesin-v2/naesin-v2-icon.svg';
 const PRACTICES=[
   ['vocabulary','단어 학습'],
@@ -201,7 +201,7 @@ function mount(){
   mountMobileNav();
   mountView();
   document.addEventListener('click',e=>{if(!e.target.closest('.na2-menu-wrap'))qa('.na2-menu').forEach(m=>m.hidden=true)});
-  window.NaesinV2={show,mount,refresh:()=>ensureLoaded({force:true}),version:'r7'};
+  window.NaesinV2={show,mount,refresh:()=>ensureLoaded({force:true}),version:'r8'};
   console.info(`[Naesin V2] ${REV} mounted`);
 }
 
