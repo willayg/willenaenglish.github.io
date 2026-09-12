@@ -1,6 +1,8 @@
 (function(){
 'use strict';
 var sourceUrl='./js/app-classic.js?v=20260731-4';
+window.WillenaVisitorV2Config=window.WillenaVisitorV2Config||{};
+window.WillenaVisitorV2Config.bankReady=false;
 function replaceOnce(source,from,to,label){
  if(source.indexOf(from)<0)throw new Error('Visitor adaptive calibration patch failed: '+label);
  return source.replace(from,to);
@@ -9,6 +11,10 @@ fetch(sourceUrl,{cache:'no-store'}).then(function(response){
  if(!response.ok)throw new Error('Could not load test engine ('+response.status+').');
  return response.text();
 }).then(function(source){
+ source=replaceOnce(source,
+  'loadQuestionBank().then(function(x){bank=x})',
+  'loadQuestionBank().then(function(x){bank=x;window.WillenaVisitorV2Config.bankReady=true})',
+  'question bank readiness');
  source=replaceOnce(source,
   'var S={view:"setup",setupStep:0,setup:{grade:null,years:null,listening:null,length:null},ability:2,maxQ:30,used:new Set(),answers:[],current:null,selected:null,scramblePool:[],wrongByLevel:{},typeCounts:{},lowLevelCounts:{total:0,grammar:0},translationCount:0,playsLeft:0,isSpeaking:false};',
   'var S={view:"setup",setupStep:0,setup:{grade:null,years:null,listening:null,length:null},ability:2,startAbility:2,sectionBaseAbility:2,maxQ:30,fullMode:false,sectionIndex:0,sectionQuestionCount:0,sectionStartAnswer:0,used:new Set(),answers:[],current:null,selected:null,scramblePool:[],wrongByLevel:{},typeCounts:{},lowLevelCounts:{total:0,grammar:0},translationCount:0,playsLeft:0,isSpeaking:false};',

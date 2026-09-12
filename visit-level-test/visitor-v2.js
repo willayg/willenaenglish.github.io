@@ -63,12 +63,28 @@ function render(){
  var go=overlay.querySelector('#visitorV2Go');if(go)go.onclick=beginStudentTest;
 }
 
-function driveSetup(){
+function stopDrive(){
  if(driveTimer)clearInterval(driveTimer);
+ driveTimer=null;lastDrive='';
+}
+
+function showStartupError(){
+ stopDrive();
+ if(!overlay)return;
+ overlay.innerHTML='<div class="visitor-v2-wrap"><section class="visitor-v2-card visitor-v2-handoff" role="alert"><h2>'+(isKo()?'테스트를 불러오지 못했어요':'Could not load the test')+'</h2><p>'+(isKo()?'페이지를 새로고침한 뒤 다시 시작해 주세요.':'Please refresh the page and start again.')+'</p><button type="button" class="visitor-v2-go" id="visitorV2Refresh">'+(isKo()?'새로고침':'Refresh')+'</button></section></div>';
+ overlay.querySelector('#visitorV2Refresh').onclick=function(){location.reload()};
+}
+
+function driveSetup(){
+ stopDrive();
  var ctx=ensureContext(),candidate=window.WillenaProspectiveCandidate||{};
+ var startedAt=Date.now();
  driveTimer=setInterval(function(){
   var card=document.querySelector('.question-card');
-  if(card){clearInterval(driveTimer);driveTimer=null;if(overlay){overlay.remove();overlay=null}return}
+  if(card){stopDrive();if(overlay){overlay.remove();overlay=null}return}
+  if(document.querySelector('#app .error')||Date.now()-startedAt>=45000){showStartupError();return}
+  // Do not start an empty test while the question bank is still loading.
+  if(!window.WillenaVisitorV2Config.bankReady)return;
   var actions=[['grade',candidate.setup_grade],['years',0],['listening',1],['length',50]];
   for(var i=0;i<actions.length;i++){
    var key=actions[i][0],value=actions[i][1];if(value==null)continue;
