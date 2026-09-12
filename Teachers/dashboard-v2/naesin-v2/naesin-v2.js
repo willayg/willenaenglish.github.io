@@ -2,7 +2,7 @@
 'use strict';
 
 const VIEW='naesin-v2';
-const REV='R11';
+const REV='R11.1';
 const ICON='./naesin-v2/naesin-v2-icon.svg';
 const PRACTICES=[
   ['vocabulary','단어 학습'],
@@ -40,6 +40,6 @@ function statCell(row){if(!row||!Number(row.recent_count))return '<td class="na2
 function studentRow(member){const skills=skillMap(member),s=member?.student||{},summary=member?.summary||{};return `<tr data-student-id="${esc(member.student_id||s.id||'')}" data-plan-id="${esc(member.plan_id||'')}"><td class="na2-student-cell"><button type="button" class="na2-student-btn" data-student><span>${esc(nameOf(s))}</span><i>›</i></button></td><td class="na2-stat na2-overall"><strong class="${scoreClass(summary.recent150_accuracy)}">${esc(pct(summary.recent150_accuracy))}</strong><small>${esc(summary.recent150_count||0)}문항</small></td>${PRACTICES.map(([k])=>statCell(skills.get(k))).join('')}</tr>`}
 async function loadMatrixInto(test,groupId){const tbody=q('tbody',test);if(!tbody)return;try{const matrix=await window.NaesinV2Data?.loadGroupMatrix?.(groupId),members=Array.isArray(matrix?.members)?matrix.members:[];tbody.innerHTML=members.length?members.map(studentRow).join(''):'<tr><td colspan="9" class="na2-no-students">학생이 없습니다.</td></tr>';qa('[data-student]',tbody).forEach(btn=>btn.addEventListener('click',()=>{const tr=btn.closest('tr');window.NaesinV2StudentDetail?.open?.(tr?.dataset.studentId,tr?.dataset.planId,groupId)}))}catch(e){tbody.innerHTML=`<tr><td colspan="9" class="na2-matrix-error">통계를 불러오지 못했습니다. <button type="button" data-retry-matrix>다시 시도</button></td></tr>`;q('[data-retry-matrix]',tbody)?.addEventListener('click',()=>{window.NaesinV2Data?.invalidateGroupMatrix?.(groupId);tbody.innerHTML='<tr class="na2-matrix-loading"><td colspan="9">학생 통계를 불러오는 중…</td></tr>';loadMatrixInto(test,groupId)})}}
 async function ensureLoaded({force=false}={}){if(state.loading)return;if(state.loaded&&!force)return;state.loading=true;state.error=null;renderLoading();try{state.groups=await window.NaesinV2Data?.loadGroups?.({force})||[];state.loaded=true;renderGroups()}catch(e){state.error=e;state.loaded=false;renderError(e.message)}finally{state.loading=false}}
-function mount(){mountDesktopNav();mountMobileNav();mountView();document.addEventListener('click',e=>{if(!e.target.closest('.na2-menu-wrap'))qa('.na2-menu').forEach(m=>m.hidden=true)});window.NaesinV2={show,mount,refresh:()=>ensureLoaded({force:true}),version:'r11'};console.info(`[Naesin V2] ${REV} mounted`)}
+function mount(){mountDesktopNav();mountMobileNav();mountView();document.addEventListener('click',e=>{if(!e.target.closest('.na2-menu-wrap'))qa('.na2-menu').forEach(m=>m.hidden=true)});window.NaesinV2={show,mount,refresh:()=>ensureLoaded({force:true}),version:'r11.1'};console.info(`[Naesin V2] ${REV} mounted`)}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',mount,{once:true});else mount();
 })();
