@@ -22,6 +22,7 @@ async function loadExternalPassages({force=false}={}){if(force)externalPromise=n
 async function loadStudents({force=false}={}){if(force)studentsPromise=null;if(studentsPromise)return studentsPromise;studentsPromise=routedFetch(STUDENT_API).then(async r=>{const j=await r.json().catch(()=>({}));if(!r.ok||j.success===false)throw new Error(j.error||`학생 목록 ${r.status}`);return j.students||[]}).catch(e=>{studentsPromise=null;throw e});return studentsPromise}
 function createGroup(payload){return groupPost('create_group',payload)}
 function updateGroup(groupId,payload){return groupPost('update_group',{...payload,group_id:groupId})}
+function setExternalPassages(groupId,external_passages){return groupPost('set_external_passages',{group_id:groupId,external_passages})}
 function archiveGroup(groupId){return groupPost('archive_group',{group_id:groupId})}
-window.NaesinV2EditorApi={version:'r11.3',loadCatalog,loadExternalPassages,loadStudents,createGroup,updateGroup,archiveGroup};
+window.NaesinV2EditorApi={version:'r11.4.3',loadCatalog,loadExternalPassages,loadStudents,createGroup,updateGroup,setExternalPassages,archiveGroup};
 })();
