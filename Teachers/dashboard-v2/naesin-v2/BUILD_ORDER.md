@@ -231,24 +231,35 @@ The V2 browser does not recalculate wrong-state identity; it consumes the existi
 
 ## Phase 8 — 문법 패턴
 
-Status: **NEXT**
+Status: **DONE**
 
-Reuse `test-prep-grammar-tracking`, but align its metric definitions with the canonical shared stats rules.
+`test-prep-grammar-tracking` was upgraded for V2 so grammar-target metrics follow the same recent/final-state interpretation as the canonical stats system instead of the old 3-day window.
 
-Remove the old 3-day interpretation of “recent” for V2.
+Implemented metric rules:
 
-Target output:
+- latest answer wins for the same question
+- recent = latest 50 unique questions within that grammar target
+- all-time = final state per unique question within that grammar target
+- current wrong count comes from unresolved question state
+- repeat wrong count comes from question-state wrong history
 
-- target/pattern
-- recent unique accuracy
-- all-time unique accuracy
+Implemented UI:
+
+- target/pattern rows grouped by lesson
+- recent unique accuracy + count
+- all-time unique accuracy + count
 - current wrong count
 - repeat wrong count
-- exact matching wrong questions
+- green / amber / pink accuracy colors
+- pattern rows are clickable
+- clicking a pattern reveals exact currently unresolved matching wrong questions
+- grammar response cached per group + student for the dashboard session
 
-Pattern rows remain clickable.
+The browser only renders the backend result. It does not scan attempts or calculate target accuracy locally.
 
 ## Phase 9 — Simplify old teacher endpoints
+
+Status: **NEXT**
 
 Only after V2 is verified:
 
@@ -271,6 +282,34 @@ For the same student + plan, Teacher V2 and Student V2 must show identical value
 - canonical wrong counts
 
 If they disagree, fix the backend source of truth. Do not patch either UI with local calculation logic.
+
+## Later feature notes — print + AI
+
+Keep these out of the core metric phases until the shared data paths are stable, but leave room in the UI/modules for them.
+
+### More print options
+
+Potential later additions:
+
+- print only selected wrong-answer types
+- print only selected lessons / grammar patterns
+- choose number of questions
+- choose worksheet difficulty / amount of writing space
+- include or exclude answers, metadata, Korean support, and explanations
+- combine unresolved wrong questions with fresh similar practice
+- teacher presets for common print formats
+- direct PDF should continue to reuse the standalone print engine rather than creating a second renderer
+
+### AI-assisted teacher options
+
+Potential later additions:
+
+- explain why a student is repeatedly missing a grammar pattern
+- summarize the most important weaknesses from actual tracked evidence
+- suggest a short targeted lesson / homework set
+- generate fresh practice based on selected wrong questions or grammar targets
+- generate parent-facing summaries from the same numbers
+- AI output must remain advisory and must not silently change stored scores, canonical stats, or wrong-state data
 
 ## Architecture rule
 
