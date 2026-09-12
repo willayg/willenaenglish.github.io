@@ -11,114 +11,49 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/students/theme.css">
-  <link rel="stylesheet" href="./styles.css?v=20260913-1">
+  <link rel="stylesheet" href="./styles.css?v=20260913-2">
   <script src="/students/api-gateway.js"></script>
   <script src="/js/api-config.js?v=20260113c"></script>
   <script type="module" src="/students/components/student-header.js"></script>
 </head>
 <body>
-  <div class="journal-app">
-    <student-header title="My Journal" show-id="false" show-home="false" show-points="true" show-logout="true"></student-header>
+<div class="journal-app">
+  <student-header title="My Journal" show-id="false" show-home="false" show-points="true" show-logout="true"></student-header>
+  <main class="journal-shell" id="journalApp" aria-busy="true">
+    <section class="journal-hero">
+      <div><span class="eyebrow">TODAY'S WRITING</span><h1>Write about your day.</h1><p>Or write about anything you want.</p></div>
+      <div class="goal-pill"><strong id="progressCount">0 / 6</strong><span>sentences</span></div>
+    </section>
+    <section class="progress-track"><div id="progressBar"></div></section>
 
-    <main class="journal-shell" id="journalApp" aria-busy="true">
-      <section class="journal-hero">
-        <div>
-          <span class="eyebrow">TODAY'S WRITING</span>
-          <h1>Tell me about your day.</h1>
-          <p id="missionText">Write about today, or write about anything you want.</p>
-        </div>
-        <div class="goal-pill" aria-label="Sentence goal">
-          <strong id="progressCount">0 / 6</strong>
-          <span>sentences</span>
-        </div>
-      </section>
+    <section id="loadingCard" class="journal-card state-card"><div class="loader-mark">W</div><p>Opening your journal…</p></section>
 
-      <section class="progress-track" aria-label="Journal progress">
-        <div id="progressBar"></div>
-      </section>
+    <section id="writeCard" class="journal-card" hidden>
+      <div class="step-head"><span class="step-number">✎</span><div><span class="step-label">WRITE FIRST</span><h2>This is your journal.</h2></div></div>
+      <textarea id="journalInput" rows="12" maxlength="6000" autocomplete="off" autocapitalize="sentences" spellcheck="true" placeholder="Today I…"></textarea>
+      <div class="card-actions"><span id="writeHint" class="quiet">No corrections while you write. Just say what you want to say.</span><button id="submitBtn" class="primary-btn" type="button" disabled>Finish writing</button></div>
+    </section>
 
-      <section id="loadingCard" class="journal-card state-card">
-        <div class="loader-mark">W</div>
-        <p>Opening your journal…</p>
-      </section>
+    <section id="reviewCard" class="journal-card" hidden>
+      <div class="step-head"><span class="step-number" id="reviewNumber">1</span><div><span class="step-label">REVIEW</span><h2>See what changed.</h2></div></div>
+      <div class="compare-grid"><div class="sentence-panel original-panel"><span>Your sentence</span><p id="originalText"></p></div><div class="sentence-panel corrected-panel"><span>Better English</span><p id="correctedText"></p></div></div>
+      <p id="correctionNote" class="correction-note"></p>
+      <div class="choice-actions"><button id="reviewBackBtn" class="secondary-btn" type="button">Back</button><button id="reviewNextBtn" class="primary-btn" type="button">Next</button></div>
+    </section>
 
-      <section id="writeCard" class="journal-card" hidden>
-        <div class="step-head">
-          <span class="step-number" id="sentenceNumber">1</span>
-          <div>
-            <span class="step-label">WRITE</span>
-            <h2>Write one sentence.</h2>
-          </div>
-        </div>
-        <textarea id="sentenceInput" rows="4" maxlength="420" autocomplete="off" autocapitalize="sentences" spellcheck="true" placeholder="Today I…"></textarea>
-        <div class="card-actions">
-          <span id="charHint" class="quiet">Say what you really mean. The AI will only help fix the English.</span>
-          <button id="checkBtn" class="primary-btn" type="button">Check my sentence</button>
-        </div>
-      </section>
+    <section id="speakCard" class="journal-card speak-card" hidden>
+      <div class="step-head"><span class="step-number">🎤</span><div><span class="step-label">SPEAK</span><h2>Read it out loud.</h2></div></div>
+      <div class="speak-target" id="speakTarget"></div>
+      <button id="micBtn" class="mic-btn" type="button" aria-pressed="false"><span class="mic-icon">🎙️</span><span id="micLabel">Tap and speak</span></button>
+      <div id="speechFeedback" class="speech-feedback" aria-live="polite"></div>
+      <div class="choice-actions speak-actions"><button id="skipSpeakBtn" class="text-btn" type="button">Skip after trouble</button><button id="nextSpeakBtn" class="primary-btn" type="button" hidden>Next sentence</button></div>
+    </section>
 
-      <section id="reviewCard" class="journal-card" hidden>
-        <div class="step-head">
-          <span class="step-number">✓</span>
-          <div>
-            <span class="step-label">AI CHECK</span>
-            <h2>Is this what you meant?</h2>
-          </div>
-        </div>
-        <div class="compare-grid">
-          <div class="sentence-panel original-panel">
-            <span>Your sentence</span>
-            <p id="originalText"></p>
-          </div>
-          <div class="sentence-panel corrected-panel">
-            <span>Suggested English</span>
-            <p id="correctedText"></p>
-          </div>
-        </div>
-        <p id="correctionNote" class="correction-note"></p>
-        <div class="choice-actions">
-          <button id="keepBtn" class="secondary-btn" type="button">Keep mine</button>
-          <button id="useBtn" class="primary-btn" type="button">Use correction</button>
-        </div>
-      </section>
+    <section id="doneCard" class="journal-card done-card" hidden><div class="done-icon">★</div><span class="step-label">JOURNAL COMPLETE</span><h2>You wrote something real today.</h2><p id="doneSummary"></p><div id="finishedSentences" class="finished-sentences"></div><button id="newJournalBtn" class="secondary-btn" type="button">Start again</button></section>
 
-      <section id="speakCard" class="journal-card speak-card" hidden>
-        <div class="step-head">
-          <span class="step-number">🎤</span>
-          <div>
-            <span class="step-label">SPEAK</span>
-            <h2>Now say your sentence.</h2>
-          </div>
-        </div>
-        <div class="speak-target" id="speakTarget"></div>
-        <button id="micBtn" class="mic-btn" type="button" aria-pressed="false">
-          <span class="mic-icon">🎙️</span>
-          <span id="micLabel">Tap and speak</span>
-        </button>
-        <div id="speechFeedback" class="speech-feedback" aria-live="polite"></div>
-        <div class="choice-actions speak-actions">
-          <button id="skipSpeakBtn" class="text-btn" type="button">Skip speaking</button>
-          <button id="nextBtn" class="primary-btn" type="button" hidden>Next sentence</button>
-        </div>
-      </section>
-
-      <section id="doneCard" class="journal-card done-card" hidden>
-        <div class="done-icon">★</div>
-        <span class="step-label">JOURNAL COMPLETE</span>
-        <h2>You wrote about something real today.</h2>
-        <p id="doneSummary"></p>
-        <div id="finishedSentences" class="finished-sentences"></div>
-        <button id="newJournalBtn" class="secondary-btn" type="button">Start again</button>
-      </section>
-
-      <section id="errorCard" class="journal-card state-card error-card" hidden>
-        <h2>Something went wrong.</h2>
-        <p id="errorText">Please try again.</p>
-        <button id="retryBtn" class="secondary-btn" type="button">Try again</button>
-      </section>
-    </main>
-  </div>
-
-  <script src="./app.js?v=20260913-1"></script>
+    <section id="errorCard" class="journal-card state-card error-card" hidden><h2>Something went wrong.</h2><p id="errorText">Your writing is still saved.</p><button id="retryBtn" class="secondary-btn" type="button">Back to my writing</button></section>
+  </main>
+</div>
+<script src="./app.js?v=20260913-2"></script>
 </body>
 </html>
