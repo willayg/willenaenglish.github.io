@@ -2,405 +2,128 @@
   'use strict';
 
   const DEFAULT_GOAL = 6;
-  const STORAGE_PREFIX = 'willena-daily-journal:v1:';
+  const STORAGE_PREFIX = 'willena-daily-journal:v2:';
+  const LUNA_MODEL = 'gpt-5.6-luna';
   const app = document.getElementById('journalApp');
   const els = {
-    loading: document.getElementById('loadingCard'),
-    write: document.getElementById('writeCard'),
-    review: document.getElementById('reviewCard'),
-    speak: document.getElementById('speakCard'),
-    done: document.getElementById('doneCard'),
-    error: document.getElementById('errorCard'),
-    errorText: document.getElementById('errorText'),
-    input: document.getElementById('sentenceInput'),
-    check: document.getElementById('checkBtn'),
-    sentenceNumber: document.getElementById('sentenceNumber'),
-    original: document.getElementById('originalText'),
-    corrected: document.getElementById('correctedText'),
-    note: document.getElementById('correctionNote'),
-    keep: document.getElementById('keepBtn'),
-    use: document.getElementById('useBtn'),
-    speakTarget: document.getElementById('speakTarget'),
-    mic: document.getElementById('micBtn'),
-    micLabel: document.getElementById('micLabel'),
-    speechFeedback: document.getElementById('speechFeedback'),
-    skipSpeak: document.getElementById('skipSpeakBtn'),
-    next: document.getElementById('nextBtn'),
-    count: document.getElementById('progressCount'),
-    bar: document.getElementById('progressBar'),
-    doneSummary: document.getElementById('doneSummary'),
-    finished: document.getElementById('finishedSentences'),
-    restart: document.getElementById('newJournalBtn'),
-    retry: document.getElementById('retryBtn')
+    loading: document.getElementById('loadingCard'), write: document.getElementById('writeCard'), review: document.getElementById('reviewCard'),
+    speak: document.getElementById('speakCard'), done: document.getElementById('doneCard'), error: document.getElementById('errorCard'),
+    errorText: document.getElementById('errorText'), input: document.getElementById('journalInput'), submit: document.getElementById('submitBtn'),
+    count: document.getElementById('progressCount'), bar: document.getElementById('progressBar'), reviewNumber: document.getElementById('reviewNumber'),
+    original: document.getElementById('originalText'), corrected: document.getElementById('correctedText'), note: document.getElementById('correctionNote'),
+    reviewBack: document.getElementById('reviewBackBtn'), reviewNext: document.getElementById('reviewNextBtn'), speakTarget: document.getElementById('speakTarget'),
+    mic: document.getElementById('micBtn'), micLabel: document.getElementById('micLabel'), speechFeedback: document.getElementById('speechFeedback'),
+    skipSpeak: document.getElementById('skipSpeakBtn'), nextSpeak: document.getElementById('nextSpeakBtn'), doneSummary: document.getElementById('doneSummary'),
+    finished: document.getElementById('finishedSentences'), restart: document.getElementById('newJournalBtn'), retry: document.getElementById('retryBtn')
   };
 
   let userId = null;
-  let state = createState();
-  let pendingCorrection = null;
+  let state = freshState();
   let recognition = null;
-  let isListening = false;
+  let listening = false;
 
-  function todayKey() {
-    const d = new Date();
-    return [d.getFullYear(), String(d.getMonth() + 1).padStart(2, '0'), String(d.getDate()).padStart(2, '0')].join('-');
-  }
-
-  function createState() {
-    return { date: todayKey(), goal: DEFAULT_GOAL, sentences: [], draft: '', completed: false, updatedAt: Date.now() };
-  }
-
-  function storageKey() {
-    return STORAGE_PREFIX + userId + ':' + todayKey();
-  }
-
-  function apiFetch(path, options) {
-    const fn = window.WillenaAPI && typeof window.WillenaAPI.fetch === 'function'
-      ? window.WillenaAPI.fetch.bind(window.WillenaAPI)
-      : window.fetch.bind(window);
-    return fn(path, Object.assign({ credentials: 'include', cache: 'no-store' }, options || {}));
-  }
+  function dayKey() { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+  function freshState() { return { date: dayKey(), goal: DEFAULT_GOAL, originalText: '', sentences: [], status: 'draft', reviewIndex: 0, speakIndex: 0, updatedAt: Date.now() }; }
+  function key() { return `${STORAGE_PREFIX}${userId}:${dayKey()}`; }
+  function apiFetch(path, options) { const fn = window.WillenaAPI?.fetch ? window.WillenaAPI.fetch.bind(window.WillenaAPI) : window.fetch.bind(window); return fn(path, Object.assign({ credentials:'include', cache:'no-store' }, options || {})); }
 
   async function authenticate() {
-    let response = await apiFetch('/.netlify/functions/supabase_auth?action=whoami&_=' + Date.now());
-    let data = await response.json().catch(() => ({}));
-    if (response.ok && data.success && data.user_id) return data.user_id;
-
-    const refresh = await apiFetch('/.netlify/functions/supabase_auth?action=refresh&_=' + Date.now()).catch(() => null);
-    const refreshed = refresh ? await refresh.json().catch(() => ({})) : {};
-    if (refresh && refresh.ok && refreshed.success && refreshed.access_token && window.WillenaAPI?.setLocalTokens) {
-      window.WillenaAPI.setLocalTokens(refreshed.access_token, '');
-      response = await apiFetch('/.netlify/functions/supabase_auth?action=whoami&_=' + Date.now());
-      data = await response.json().catch(() => ({}));
-      if (response.ok && data.success && data.user_id) return data.user_id;
-    }
-
+    const r = await apiFetch('/.netlify/functions/supabase_auth?action=whoami&_=' + Date.now());
+    const d = await r.json().catch(() => ({}));
+    if (r.ok && d.success && d.user_id) return d.user_id;
     const next = encodeURIComponent(location.pathname + location.search + location.hash);
     location.replace('/students/signin.html?next=' + next);
-    throw new Error('Sign in required.');
+    throw new Error('Sign in required');
   }
 
-  function loadState() {
-    try {
-      const raw = localStorage.getItem(storageKey());
-      if (!raw) return createState();
-      const saved = JSON.parse(raw);
-      if (!saved || saved.date !== todayKey() || !Array.isArray(saved.sentences)) return createState();
-      return Object.assign(createState(), saved, { goal: Number(saved.goal) || DEFAULT_GOAL });
-    } catch (_) {
-      return createState();
-    }
+  function load() { try { const x = JSON.parse(localStorage.getItem(key()) || 'null'); return x && x.date === dayKey() ? Object.assign(freshState(), x) : freshState(); } catch (_) { return freshState(); } }
+  function save() { state.updatedAt = Date.now(); try { localStorage.setItem(key(), JSON.stringify(state)); } catch (_) {} }
+  function show(which) { ['loading','write','review','speak','done','error'].forEach(k => els[k].hidden = k !== which); }
+
+  function countSentences(text) {
+    const clean = String(text || '').replace(/\r/g,'\n').trim();
+    if (!clean) return 0;
+    const punctuated = clean.match(/[^.!?\n]+(?:[.!?]+|$)/g) || [];
+    const lines = clean.split(/\n+/).map(s => s.trim()).filter(Boolean);
+    const chunks = punctuated.map(s => s.trim()).filter(s => /[A-Za-z0-9]/.test(s));
+    return Math.max(chunks.length, lines.length === 1 && !/[.!?]/.test(clean) ? 1 : 0);
   }
 
-  function saveState() {
-    state.updatedAt = Date.now();
-    try { localStorage.setItem(storageKey(), JSON.stringify(state)); } catch (_) {}
+  function updateWritingProgress() {
+    const n = countSentences(els.input.value);
+    els.count.textContent = `${n} / ${state.goal}`;
+    els.bar.style.width = `${Math.min(100, n / state.goal * 100)}%`;
+    els.submit.disabled = n < state.goal;
+    els.submit.textContent = n < state.goal ? `${state.goal - n} more sentence${state.goal - n === 1 ? '' : 's'}` : 'Finish writing';
   }
 
-  function show(name) {
-    ['loading', 'write', 'review', 'speak', 'done', 'error'].forEach(key => {
-      if (els[key]) els[key].hidden = key !== name;
+  function renderWrite() { els.input.value = state.originalText || ''; updateWritingProgress(); show('write'); app.setAttribute('aria-busy','false'); setTimeout(() => els.input.focus(), 80); }
+
+  function parseCorrection(raw) {
+    const cleaned = String(raw || '').trim().replace(/^```(?:json)?\s*/i,'').replace(/\s*```$/,'');
+    const parsed = JSON.parse(cleaned);
+    if (!parsed || !Array.isArray(parsed.sentences) || !parsed.sentences.length) throw new Error('The AI response was incomplete.');
+    return parsed.sentences.map((s, i) => {
+      if (!s || typeof s.original !== 'string' || typeof s.corrected !== 'string') throw new Error('The AI response had an invalid sentence.');
+      return { order: i + 1, original: s.original.trim(), corrected: s.corrected.trim(), changes: Array.isArray(s.changes) ? s.changes : [], speechCompleted:false, speechAttempts:0, speechBestScore:0, transcript:'' };
     });
   }
 
-  function updateProgress() {
-    const done = state.sentences.length;
-    els.count.textContent = done + ' / ' + state.goal;
-    els.bar.style.width = Math.min(100, (done / state.goal) * 100) + '%';
-    els.sentenceNumber.textContent = Math.min(state.goal, done + 1);
+  async function correctWholeDiary(text) {
+    const system = `You are an English writing coach for Korean ESL children. Correct the student's entire diary sentence by sentence. Preserve every fact, feeling, opinion, detail, sentence personality, and age-appropriate word that already works. Make the smallest reasonable changes needed for clear, correct American English. Fix genuine grammar, spelling, capitalization, punctuation, word form, tense, articles, prepositions, and clearly unnatural wording. Never invent or embellish. Never turn child English into polished adult prose. Return ONLY valid JSON in this exact shape: {"sentences":[{"order":1,"original":"exact original sentence","corrected":"minimally corrected sentence","changes":[{"type":"grammar","original":"...","corrected":"...","reason":"very short child-friendly reason"}]}]}. Keep sentence order. If no correction is needed, corrected must equal original and changes must be [].`;
+    const r = await apiFetch('/.netlify/functions/openai_proxy', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ endpoint:'chat/completions', payload:{ model:LUNA_MODEL, messages:[{role:'system',content:system},{role:'user',content:text}], temperature:0.1, max_tokens:2200 } }) });
+    if (!r.ok) throw new Error(`AI correction failed (${r.status}).`);
+    const result = await r.json(); const data = result?.data || result; if (data?.error) throw new Error(data.error.message || 'AI correction failed.');
+    return parseCorrection(data?.choices?.[0]?.message?.content);
   }
 
-  function renderWrite() {
-    if (state.completed || state.sentences.length >= state.goal) return finishJournal();
-    pendingCorrection = null;
-    updateProgress();
-    els.input.value = state.draft || '';
-    show('write');
-    setTimeout(() => els.input.focus(), 70);
+  async function submitDiary() {
+    const text = els.input.value.trim(); const n = countSentences(text); if (n < state.goal) return;
+    state.originalText = text; state.status = 'correcting'; save(); els.submit.disabled = true; els.submit.textContent = 'Checking your English…';
+    try { state.sentences = await correctWholeDiary(text); state.status = 'review'; state.reviewIndex = 0; save(); renderReview(); }
+    catch (e) { showError((e.message || 'Could not check your journal.') + ' Your original writing is still saved.'); }
   }
 
-  function normalizeSpaces(text) {
-    return String(text || '').trim().replace(/\s+/g, ' ');
+  function renderReview() {
+    const s = state.sentences[state.reviewIndex]; if (!s) return beginSpeaking();
+    els.reviewNumber.textContent = `${state.reviewIndex + 1}/${state.sentences.length}`; els.original.textContent = s.original; els.corrected.textContent = s.corrected;
+    const reasons = (s.changes || []).map(c => c.reason).filter(Boolean); els.note.textContent = s.corrected === s.original ? 'Looks good — no change needed.' : (reasons.join(' · ') || 'A small English correction.');
+    els.reviewBack.disabled = state.reviewIndex === 0; els.reviewNext.textContent = state.reviewIndex === state.sentences.length - 1 ? 'Start speaking' : 'Next'; show('review');
   }
 
-  function cleanupModelText(text) {
-    return String(text || '').trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
+  function nextReview(delta) { state.reviewIndex = Math.max(0, Math.min(state.sentences.length - 1, state.reviewIndex + delta)); save(); renderReview(); }
+  function forwardReview() { if (state.reviewIndex >= state.sentences.length - 1) beginSpeaking(); else nextReview(1); }
+  function beginSpeaking() { state.status = 'speaking'; state.speakIndex = Math.max(0, state.speakIndex || 0); save(); renderSpeak(); }
+
+  function renderSpeak() {
+    const s = state.sentences[state.speakIndex]; if (!s) return finish();
+    els.speakTarget.textContent = s.corrected; els.speechFeedback.textContent = `Sentence ${state.speakIndex + 1} of ${state.sentences.length}`; els.speechFeedback.className='speech-feedback'; els.nextSpeak.hidden = !s.speechCompleted; els.micLabel.textContent = speechSupported() ? 'Tap and speak' : 'Speech not supported'; show('speak');
   }
 
-  function parseCorrection(content, original) {
-    const cleaned = cleanupModelText(content);
-    try {
-      const parsed = JSON.parse(cleaned);
-      return {
-        corrected: normalizeSpaces(parsed.corrected || parsed.sentence || original),
-        note: normalizeSpaces(parsed.note || '')
-      };
-    } catch (_) {
-      const line = cleaned.split('\n').map(s => s.trim()).find(Boolean) || original;
-      return { corrected: normalizeSpaces(line.replace(/^corrected\s*:\s*/i, '')), note: '' };
-    }
-  }
+  function speechSupported() { return !!(window.SpeechRecognition || window.webkitSpeechRecognition); }
+  function words(text) { return String(text||'').toLowerCase().replace(/[^a-z0-9' ]+/g,' ').replace(/\s+/g,' ').trim().split(' ').filter(Boolean); }
+  function scoreSpeech(target, heard) { const a=words(target), b=words(heard); if(!a.length) return 0; const counts={}; b.forEach(w=>counts[w]=(counts[w]||0)+1); let hit=0; a.forEach(w=>{if(counts[w]>0){hit++;counts[w]--;}}); return Math.round(hit/a.length*100); }
+  function stopMic() { listening=false; els.mic.classList.remove('listening'); els.mic.setAttribute('aria-pressed','false'); els.micLabel.textContent='Try again'; }
 
-  async function correctSentence(original) {
-    const systemPrompt = [
-      'You are an English writing coach for Korean ESL children.',
-      'Correct one student sentence while preserving the student\'s exact intended meaning, personality, details, and emotional tone.',
-      'Make the smallest useful correction. Do not make the sentence more sophisticated unless necessary for natural English.',
-      'Use American English.',
-      'Never add facts or ideas the student did not write.',
-      'If the sentence is already natural and correct, return it unchanged.',
-      'Return ONLY compact JSON with exactly two string fields: corrected and note.',
-      'The note should be very short and child-friendly. If no correction is needed, note should say: Looks good!'
-    ].join(' ');
-
-    const response = await apiFetch('/.netlify/functions/openai_proxy', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        endpoint: 'chat/completions',
-        payload: {
-          model: 'gpt-4o-mini',
-          messages: [
-            { role: 'system', content: systemPrompt },
-            { role: 'user', content: original }
-          ],
-          temperature: 0.15,
-          max_tokens: 180
-        }
-      })
-    });
-
-    if (!response.ok) throw new Error('AI check failed (' + response.status + ').');
-    const result = await response.json();
-    const data = result && result.data ? result.data : result;
-    if (data.error) throw new Error(data.error.message || 'AI check failed.');
-    const content = data.choices?.[0]?.message?.content;
-    if (!content) throw new Error('The AI returned no correction.');
-    return parseCorrection(content, original);
-  }
-
-  async function checkCurrentSentence() {
-    const original = normalizeSpaces(els.input.value);
-    if (!original) {
-      els.input.focus();
-      return;
-    }
-    state.draft = original;
-    saveState();
-    els.check.disabled = true;
-    els.check.textContent = 'Checking…';
-    try {
-      const result = await correctSentence(original);
-      pendingCorrection = { original, corrected: result.corrected || original, note: result.note || '' };
-      els.original.textContent = original;
-      els.corrected.textContent = pendingCorrection.corrected;
-      els.note.textContent = pendingCorrection.note;
-      show('review');
-    } catch (error) {
-      showError(error.message || 'Could not check the sentence.');
-    } finally {
-      els.check.disabled = false;
-      els.check.textContent = 'Check my sentence';
-    }
-  }
-
-  function chooseSentence(useCorrection) {
-    if (!pendingCorrection) return;
-    const finalText = useCorrection ? pendingCorrection.corrected : pendingCorrection.original;
-    const entry = {
-      original: pendingCorrection.original,
-      corrected: pendingCorrection.corrected,
-      final: finalText,
-      usedCorrection: !!useCorrection,
-      note: pendingCorrection.note || '',
-      spoken: false,
-      transcript: '',
-      createdAt: Date.now()
-    };
-    state.sentences.push(entry);
-    state.draft = '';
-    saveState();
-    updateProgress();
-    openSpeaking(entry);
-  }
-
-  function openSpeaking(entry) {
-    els.speakTarget.textContent = entry.final;
-    els.speechFeedback.textContent = 'Read the sentence out loud.';
-    els.speechFeedback.className = 'speech-feedback';
-    els.next.hidden = true;
-    els.mic.disabled = false;
-    els.micLabel.textContent = speechRecognitionSupported() ? 'Tap and speak' : 'Speaking is not supported on this browser';
-    show('speak');
-  }
-
-  function speechRecognitionSupported() {
-    return !!(window.SpeechRecognition || window.webkitSpeechRecognition);
-  }
-
-  function simplifyForMatch(text) {
-    return String(text || '').toLowerCase().replace(/[^a-z0-9' ]+/g, ' ').replace(/\s+/g, ' ').trim();
-  }
-
-  function speechScore(target, heard) {
-    const targetWords = simplifyForMatch(target).split(' ').filter(Boolean);
-    const heardWords = new Set(simplifyForMatch(heard).split(' ').filter(Boolean));
-    if (!targetWords.length) return 0;
-    return Math.round((targetWords.filter(w => heardWords.has(w)).length / targetWords.length) * 100);
-  }
-
-  function stopRecognitionUI() {
-    isListening = false;
-    els.mic.classList.remove('listening');
-    els.mic.setAttribute('aria-pressed', 'false');
-    els.micLabel.textContent = 'Try again';
-  }
-
-  function startSpeaking() {
-    if (!speechRecognitionSupported()) {
-      els.speechFeedback.textContent = 'Your browser does not support speech recognition. You can skip this step.';
-      els.next.hidden = false;
-      return;
-    }
-    if (isListening && recognition) {
-      recognition.stop();
-      return;
-    }
-
-    const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    recognition = new Recognition();
-    recognition.lang = 'en-US';
-    recognition.interimResults = true;
-    recognition.continuous = false;
-    recognition.maxAlternatives = 1;
-    let finalTranscript = '';
-
-    recognition.onstart = function () {
-      isListening = true;
-      els.mic.classList.add('listening');
-      els.mic.setAttribute('aria-pressed', 'true');
-      els.micLabel.textContent = 'Listening…';
-      els.speechFeedback.textContent = 'Go ahead.';
-      els.speechFeedback.className = 'speech-feedback';
-    };
-
-    recognition.onresult = function (event) {
-      let interim = '';
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        const piece = event.results[i][0].transcript;
-        if (event.results[i].isFinal) finalTranscript += piece;
-        else interim += piece;
-      }
-      const heard = normalizeSpaces(finalTranscript || interim);
-      if (heard) els.speechFeedback.textContent = 'I heard: “' + heard + '”';
-    };
-
-    recognition.onerror = function (event) {
-      stopRecognitionUI();
-      const friendly = event.error === 'not-allowed'
-        ? 'Microphone permission is off. You can allow it or skip speaking.'
-        : 'I could not hear that clearly. Try again.';
-      els.speechFeedback.textContent = friendly;
-      els.next.hidden = false;
-    };
-
-    recognition.onend = function () {
-      stopRecognitionUI();
-      const heard = normalizeSpaces(finalTranscript);
-      if (!heard) {
-        if (!els.speechFeedback.textContent.startsWith('Microphone')) {
-          els.speechFeedback.textContent = 'I did not catch that. Try again.';
-        }
-        els.next.hidden = false;
-        return;
-      }
-      const entry = state.sentences[state.sentences.length - 1];
-      const score = speechScore(entry.final, heard);
-      entry.spoken = true;
-      entry.transcript = heard;
-      entry.speechMatch = score;
-      saveState();
-      if (score >= 70) {
-        els.speechFeedback.textContent = 'Nice! I heard: “' + heard + '”';
-        els.speechFeedback.className = 'speech-feedback good';
-      } else {
-        els.speechFeedback.textContent = 'I heard: “' + heard + '” — you can try once more or continue.';
-      }
-      els.next.hidden = false;
-    };
-
+  function startMic() {
+    if (!speechSupported()) { els.speechFeedback.textContent='This browser cannot use speech recognition. You can use the fallback.'; els.nextSpeak.hidden=false; return; }
+    if (listening && recognition) { recognition.stop(); return; }
+    const R=window.SpeechRecognition||window.webkitSpeechRecognition; recognition=new R(); recognition.lang='en-US'; recognition.interimResults=true; recognition.continuous=false; let final='';
+    recognition.onstart=()=>{listening=true;els.mic.classList.add('listening');els.mic.setAttribute('aria-pressed','true');els.micLabel.textContent='Listening…';};
+    recognition.onresult=e=>{let interim='';for(let i=e.resultIndex;i<e.results.length;i++){const t=e.results[i][0].transcript;if(e.results[i].isFinal)final+=t;else interim+=t;}const heard=(final||interim).trim();if(heard)els.speechFeedback.textContent=`I heard: “${heard}”`;};
+    recognition.onerror=()=>{stopMic(); const s=state.sentences[state.speakIndex]; s.speechAttempts=(s.speechAttempts||0)+1; save(); els.speechFeedback.textContent='I could not hear that clearly. Try again.'; if(s.speechAttempts>=2)els.nextSpeak.hidden=false;};
+    recognition.onend=()=>{stopMic();if(!final.trim())return;const s=state.sentences[state.speakIndex];const score=scoreSpeech(s.corrected,final);s.speechAttempts=(s.speechAttempts||0)+1;s.speechBestScore=Math.max(s.speechBestScore||0,score);s.transcript=final.trim();if(score>=80){s.speechCompleted=true;els.speechFeedback.textContent=`Nice! I heard: “${final.trim()}”`;els.speechFeedback.className='speech-feedback good';els.nextSpeak.hidden=false;}else{els.speechFeedback.textContent=`I heard: “${final.trim()}” — try it once more.`;if(s.speechAttempts>=3)els.nextSpeak.hidden=false;}save();};
     recognition.start();
   }
 
-  function skipSpeaking() {
-    const entry = state.sentences[state.sentences.length - 1];
-    if (entry) {
-      entry.spoken = false;
-      entry.skippedSpeaking = true;
-      saveState();
-    }
-    advance();
-  }
+  function fallbackSpeak() { const s=state.sentences[state.speakIndex]; if(s){s.speechCompleted=true;s.fallback=true;save();} advanceSpeak(); }
+  function advanceSpeak() { if(state.speakIndex>=state.sentences.length-1)finish();else{state.speakIndex++;save();renderSpeak();} }
+  function finish() { state.status='completed'; save(); const changed=state.sentences.filter(s=>s.original!==s.corrected).length; const spoken=state.sentences.filter(s=>s.speechCompleted).length; els.doneSummary.textContent=`${state.sentences.length} sentences written · ${changed} improved · ${spoken} spoken`; els.finished.innerHTML=''; state.sentences.forEach((s,i)=>{const d=document.createElement('div');d.textContent=`${i+1}. ${s.corrected}`;els.finished.appendChild(d);}); els.count.textContent=`${state.sentences.length} / ${state.goal}`; els.bar.style.width='100%'; show('done'); }
+  function reset() { if(!confirm('Start today’s journal again?'))return; state=freshState();save();renderWrite(); }
+  function showError(msg){els.errorText.textContent=msg;show('error');}
 
-  function advance() {
-    if (state.sentences.length >= state.goal) finishJournal();
-    else renderWrite();
-  }
+  function wire(){els.input.addEventListener('input',()=>{state.originalText=els.input.value;save();updateWritingProgress();});els.submit.addEventListener('click',submitDiary);els.reviewBack.addEventListener('click',()=>nextReview(-1));els.reviewNext.addEventListener('click',forwardReview);els.mic.addEventListener('click',startMic);els.skipSpeak.addEventListener('click',fallbackSpeak);els.nextSpeak.addEventListener('click',advanceSpeak);els.restart.addEventListener('click',reset);els.retry.addEventListener('click',renderWrite);}
 
-  function finishJournal() {
-    state.completed = true;
-    state.draft = '';
-    saveState();
-    updateProgress();
-    els.doneSummary.textContent = 'You finished ' + state.sentences.length + ' sentences today.';
-    els.finished.innerHTML = '';
-    state.sentences.forEach((entry, index) => {
-      const row = document.createElement('div');
-      row.textContent = (index + 1) + '. ' + entry.final;
-      els.finished.appendChild(row);
-    });
-    show('done');
-  }
-
-  function resetJournal() {
-    if (!confirm('Start today\'s journal again? Your current browser copy will be replaced.')) return;
-    state = createState();
-    saveState();
-    renderWrite();
-  }
-
-  function showError(message) {
-    els.errorText.textContent = message || 'Please try again.';
-    show('error');
-  }
-
-  function wireEvents() {
-    els.input.addEventListener('input', function () {
-      state.draft = els.input.value;
-      saveState();
-    });
-    els.check.addEventListener('click', checkCurrentSentence);
-    els.keep.addEventListener('click', () => chooseSentence(false));
-    els.use.addEventListener('click', () => chooseSentence(true));
-    els.mic.addEventListener('click', startSpeaking);
-    els.skipSpeak.addEventListener('click', skipSpeaking);
-    els.next.addEventListener('click', advance);
-    els.restart.addEventListener('click', resetJournal);
-    els.retry.addEventListener('click', renderWrite);
-  }
-
-  async function boot() {
-    try {
-      userId = await authenticate();
-      state = loadState();
-      wireEvents();
-      updateProgress();
-      app.setAttribute('aria-busy', 'false');
-      if (state.completed || state.sentences.length >= state.goal) finishJournal();
-      else renderWrite();
-    } catch (error) {
-      if (!/Sign in required/.test(error.message || '')) showError(error.message || 'Could not open your journal.');
-    }
-  }
-
+  async function boot(){try{userId=await authenticate();state=load();wire();app.setAttribute('aria-busy','false');if(state.status==='completed')finish();else if(state.status==='review'&&state.sentences.length)renderReview();else if(state.status==='speaking'&&state.sentences.length)renderSpeak();else renderWrite();}catch(e){if(!/Sign in required/.test(e.message||''))showError(e.message||'Could not open your journal.');}}
   boot();
 })();
