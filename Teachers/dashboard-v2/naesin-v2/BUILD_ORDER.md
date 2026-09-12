@@ -201,32 +201,37 @@ Snapshot totals and canonical accuracy calculations remain backend-owned.
 
 ## Phase 7 — 오답
 
-Status: **NEXT**
+Status: **DONE**
 
-Reuse the canonical wrong state layer:
+Reuses the existing canonical wrong-detail path on demand:
 
 - `test_prep_question_state`
 - `test_prep_review_stats_v1`
-- existing wrong-detail backend where suitable
+- `test-prep-teacher-wrong-detail`
 
-Return on demand only:
+Implemented in the student detail modal:
 
-- exact unresolved wrong questions
+- current unresolved wrong-answer count and exact list
 - question type distribution
-- repeat-wrong count
-- lesson / skill metadata
-- selected answer
+- Korean + English question-type labels
+- repeat-wrong count when historical repeat fields are available from the backend
+- lesson / type metadata
+- exact prompt and available context
+- selected student answer
 - correct answer
-- print-ready identifiers
+- session cache per student + plan
 
-Wire:
+Print integration:
 
-- 오답 프린트 편집
-- PDF 만들기
+- `오답 프린트 편집` opens the existing standalone wrong-print editor with the current student and plan
+- `PDF 만들기` uses the same existing wrong-print editor/PDF engine through an auto-PDF launch mode
+- no second PDF engine was created in Naesin V2
 
-Do not rebuild the PDF engine.
+The V2 browser does not recalculate wrong-state identity; it consumes the existing wrong-detail endpoint.
 
 ## Phase 8 — 문법 패턴
+
+Status: **NEXT**
 
 Reuse `test-prep-grammar-tracking`, but align its metric definitions with the canonical shared stats rules.
 
