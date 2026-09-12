@@ -1,6 +1,6 @@
 (function(){
 'use strict';
-const GROUP_API='https://fiieuiktlsivwfgyivai.supabase.co/functions/v1/test-prep-groups';
+const GROUP_API='https://fiieuiktlsivwfgyivai.supabase.co/functions/v1/test-prep-groups-v2';
 const TRACKING_KEY='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
 const CONTENT_URL='https://gxwfsqxyuufqtitspfqg.supabase.co';
 const CONTENT_KEY=['sb_publishable_','G-FYhHfDL4OGdL892gY1Zg_','epdbEeqO'].join('');
@@ -20,9 +20,8 @@ async function loadBase({force=false}={}){if(force){catalogPromise=null;external
 async function loadCatalog({force=false}={}){const d=await loadBase({force});return d.books}
 async function loadExternalPassages({force=false}={}){if(force)externalPromise=null;if(externalPromise)return externalPromise;externalPromise=loadBase({force}).then(d=>d.external);return externalPromise}
 async function loadStudents({force=false}={}){if(force)studentsPromise=null;if(studentsPromise)return studentsPromise;studentsPromise=routedFetch(STUDENT_API).then(async r=>{const j=await r.json().catch(()=>({}));if(!r.ok||j.success===false)throw new Error(j.error||`학생 목록 ${r.status}`);return j.students||[]}).catch(e=>{studentsPromise=null;throw e});return studentsPromise}
-function createGroup(payload){return groupPost('create_group',payload)}
-function updateGroup(groupId,payload){return groupPost('update_group',{...payload,group_id:groupId})}
-function setExternalPassages(groupId,external_passages){return groupPost('set_external_passages',{group_id:groupId,external_passages})}
+function createGroup(payload){return groupPost('save_group',payload)}
+function updateGroup(groupId,payload){return groupPost('save_group',{...payload,group_id:groupId})}
 function archiveGroup(groupId){return groupPost('archive_group',{group_id:groupId})}
-window.NaesinV2EditorApi={version:'r11.4.3',loadCatalog,loadExternalPassages,loadStudents,createGroup,updateGroup,setExternalPassages,archiveGroup};
+window.NaesinV2EditorApi={version:'r11.5',loadCatalog,loadExternalPassages,loadStudents,createGroup,updateGroup,archiveGroup};
 })();
