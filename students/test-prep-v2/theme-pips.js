@@ -1,61 +1,13 @@
 const STORAGE_KEY='willena-testprep-theme';
 
 const THEMES={
-  cyan:{
-    '--cyan':'#67d4da','--cyan-dark':'#07888d','--pink':'#ee5f91','--ink':'#203039','--muted':'#7c8b92','--page':'#f3feff','--card':'#ffffff','--soft':'#e9fbfc','--line':'#9de2e7','--track':'#dff3f5','--accent':'#15aab5','--header-a':'#baf8fb','--header-b':'#65e3eb','--header-c':'#39c9d6','--heading':'#064e57','--action-bg':'#ffffff','--action-border':'#9de2e7','--action-text':'#ee5f91','--shadow':'0 12px 28px rgba(21,170,181,.10)','--card-accent':'#ee5f91','--card-accent-dark':'#b62d65','--card-soft':'#fff0f6','--card-line':'#f2a7c4','--card-shadow':'rgba(213,70,133,.12)'
-  },
-  sunbeam:{
-    '--cyan':'#f0cc6d','--cyan-dark':'#c58b00','--pink':'#ef4e87','--ink':'#40341d','--muted':'#857a64','--page':'#fffdf5','--card':'#ffffff','--soft':'#fff4c8','--line':'#f0cc6d','--track':'#f5eccd','--accent':'#e6a400','--header-a':'#ffe67b','--header-b':'#ffc24c','--header-c':'#ffb130','--heading':'#4c3500','--action-bg':'#ffffff','--action-border':'#f0cc6d','--action-text':'#ef4e87','--shadow':'0 12px 28px rgba(197,139,0,.10)','--card-accent':'#f28a2a','--card-accent-dark':'#b45100','--card-soft':'#fff2e4','--card-line':'#f5ae67','--card-shadow':'rgba(211,104,17,.15)'
-  },
-  pink:{
-    '--cyan':'#f5b8d2','--cyan-dark':'#d54685','--pink':'#d83b7b','--ink':'#4a2c39','--muted':'#8b7480','--page':'#fff7fb','--card':'#ffffff','--soft':'#ffe8f2','--line':'#f5b8d2','--track':'#f8dfeb','--accent':'#ed5c9d','--header-a':'#ffd7e8','--header-b':'#ff9fc8','--header-c':'#f775ad','--heading':'#7d2850','--action-bg':'#ffffff','--action-border':'#f5b8d2','--action-text':'#d83b7b','--shadow':'0 12px 28px rgba(213,70,133,.10)','--card-accent':'#4fcbd3','--card-accent-dark':'#087e85','--card-soft':'#edfbfc','--card-line':'#9de2e7','--card-shadow':'rgba(21,170,181,.12)'
-  },
-  dark:{
-    '--cyan':'#65d7df','--cyan-dark':'#7fe7ed','--pink':'#ff76ad','--ink':'#edf5f6','--muted':'#9aabb1','--page':'#10171b','--card':'#182126','--soft':'#202d33','--line':'#33474f','--track':'#293940','--accent':'#65d7df','--header-a':'#233239','--header-b':'#19272d','--header-c':'#111f24','--heading':'#effcfd','--action-bg':'#1b252a','--action-border':'#4b6670','--action-text':'#ff82b3','--shadow':'0 14px 34px rgba(0,0,0,.28)','--card-accent':'#24cfe8','--card-accent-dark':'#8beaf5','--card-soft':'#1c2a30','--card-line':'#2d7180','--card-shadow':'rgba(0,0,0,.30)'
-  }
+  cyan:{'--cyan':'#67d4da','--cyan-dark':'#07888d','--pink':'#ee5f91','--ink':'#203039','--muted':'#7c8b92','--page':'#f3feff','--card':'#ffffff','--soft':'#e9fbfc','--line':'#9de2e7','--track':'#dff3f5','--accent':'#15aab5','--header-a':'#baf8fb','--header-b':'#65e3eb','--header-c':'#39c9d6','--heading':'#064e57','--action-bg':'#ffffff','--action-border':'#9de2e7','--action-text':'#ee5f91','--shadow':'0 12px 28px rgba(21,170,181,.10)','--card-accent':'#ee5f91','--card-accent-dark':'#b62d65','--card-soft':'#fff0f6','--card-line':'#f2a7c4','--card-shadow':'rgba(213,70,133,.12)'},
+  sunbeam:{'--cyan':'#f0cc6d','--cyan-dark':'#c58b00','--pink':'#ef4e87','--ink':'#40341d','--muted':'#857a64','--page':'#fffdf5','--card':'#ffffff','--soft':'#fff4c8','--line':'#f0cc6d','--track':'#f5eccd','--accent':'#e6a400','--header-a':'#ffe67b','--header-b':'#ffc24c','--header-c':'#ffb130','--heading':'#4c3500','--action-bg':'#ffffff','--action-border':'#f0cc6d','--action-text':'#ef4e87','--shadow':'0 12px 28px rgba(197,139,0,.10)','--card-accent':'#f28a2a','--card-accent-dark':'#b45100','--card-soft':'#fff2e4','--card-line':'#f5ae67','--card-shadow':'rgba(211,104,17,.15)'},
+  pink:{'--cyan':'#f5b8d2','--cyan-dark':'#d54685','--pink':'#d83b7b','--ink':'#4a2c39','--muted':'#8b7480','--page':'#fff7fb','--card':'#ffffff','--soft':'#ffe8f2','--line':'#f5b8d2','--track':'#f8dfeb','--accent':'#ed5c9d','--header-a':'#ffd7e8','--header-b':'#ff9fc8','--header-c':'#f775ad','--heading':'#7d2850','--action-bg':'#ffffff','--action-border':'#f5b8d2','--action-text':'#d83b7b','--shadow':'0 12px 28px rgba(213,70,133,.10)','--card-accent':'#4fcbd3','--card-accent-dark':'#087e85','--card-soft':'#edfbfc','--card-line':'#9de2e7','--card-shadow':'rgba(21,170,181,.12)'},
+  dark:{'--cyan':'#65d7df','--cyan-dark':'#7fe7ed','--pink':'#ff76ad','--ink':'#edf5f6','--muted':'#9aabb1','--page':'#10171b','--card':'#182126','--soft':'#202d33','--line':'#33474f','--track':'#293940','--accent':'#65d7df','--header-a':'#233239','--header-b':'#19272d','--header-c':'#111f24','--heading':'#effcfd','--action-bg':'#1b252a','--action-border':'#4b6670','--action-text':'#ff82b3','--shadow':'0 14px 34px rgba(0,0,0,.28)','--card-accent':'#24cfe8','--card-accent-dark':'#8beaf5','--card-soft':'#1c2a30','--card-line':'#2d7180','--card-shadow':'rgba(0,0,0,.30)'},
+  cyberpunk:{'--cyan':'#35e8ff','--cyan-dark':'#6cf2ff','--pink':'#ff4fb5','--ink':'#f8f1ff','--muted':'#bea8c9','--page':'#0b0613','--card':'#160d24','--soft':'#251238','--line':'#6c357f','--track':'#3b224f','--accent':'#35e8ff','--header-a':'#2b0d46','--header-b':'#471266','--header-c':'#171031','--heading':'#fff2ff','--action-bg':'#211131','--action-border':'#35e8ff','--action-text':'#ff61bd','--shadow':'0 14px 38px rgba(0,0,0,.42)','--card-accent':'#ff4fb5','--card-accent-dark':'#ff8ad0','--card-soft':'#251238','--card-line':'#8d3fbb','--card-shadow':'rgba(91,25,137,.30)'}
 };
-
-function applyTheme(name,{save=true}={}){
-  const chosen=THEMES[name]?name:'cyan';
-  const root=document.documentElement;
-  for(const [key,value] of Object.entries(THEMES[chosen])) root.style.setProperty(key,value);
-  root.dataset.testPrepTheme=chosen;
-  document.querySelectorAll('.tp2-theme-pip').forEach((button)=>{
-    button.setAttribute('aria-pressed',String(button.dataset.theme===chosen));
-  });
-  if(save){
-    try{localStorage.setItem(STORAGE_KEY,chosen)}catch{}
-  }
-}
-
-function addThemePips(){
-  const header=document.querySelector('.student-header.tp-v1-header');
-  if(!header||document.getElementById('tp2ThemeDock')) return;
-  const dock=document.createElement('div');
-  dock.id='tp2ThemeDock';
-  dock.className='tp2-theme-dock';
-  dock.setAttribute('role','group');
-  dock.setAttribute('aria-label','색상 테마');
-  dock.innerHTML=[
-    ['cyan','Cyan'],
-    ['sunbeam','Sunbeam'],
-    ['pink','Pink'],
-    ['dark','Dark']
-  ].map(([theme,label])=>`<button type="button" class="tp2-theme-pip" data-theme="${theme}" aria-label="${label} 테마" title="${label}" aria-pressed="false"></button>`).join('');
-  dock.addEventListener('click',(event)=>{
-    const button=event.target.closest('.tp2-theme-pip');
-    if(button) applyTheme(button.dataset.theme);
-  });
-  header.appendChild(dock);
-}
-
-function boot(){
-  addThemePips();
-  let saved='cyan';
-  try{saved=localStorage.getItem(STORAGE_KEY)||'cyan'}catch{}
-  applyTheme(saved,{save:false});
-}
-
-window.WillenaTestPrepV2Theme={apply:applyTheme};
-if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot,{once:true});
-else boot();
+function applyTheme(name,{save=true}={}){const chosen=THEMES[name]?name:'cyan',root=document.documentElement;for(const [key,value] of Object.entries(THEMES[chosen]))root.style.setProperty(key,value);root.dataset.testPrepTheme=chosen;document.querySelectorAll('.tp2-theme-pip').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.theme===chosen)));if(save){try{localStorage.setItem(STORAGE_KEY,chosen)}catch{}}}
+function addThemePips(){const header=document.querySelector('.student-header.tp-v1-header');if(!header||document.getElementById('tp2ThemeDock'))return;const dock=document.createElement('div');dock.id='tp2ThemeDock';dock.className='tp2-theme-dock';dock.setAttribute('role','group');dock.setAttribute('aria-label','색상 테마');dock.innerHTML=[['cyan','Cyan'],['sunbeam','Sunbeam'],['pink','Pink'],['dark','Dark'],['cyberpunk','Cyberpunk']].map(([theme,label])=>`<button type="button" class="tp2-theme-pip" data-theme="${theme}" aria-label="${label} 테마" title="${label}" aria-pressed="false"></button>`).join('');dock.addEventListener('click',event=>{const button=event.target.closest('.tp2-theme-pip');if(button)applyTheme(button.dataset.theme)});header.appendChild(dock)}
+function boot(){addThemePips();let saved='cyan';try{saved=localStorage.getItem(STORAGE_KEY)||'cyan'}catch{}applyTheme(saved,{save:false})}
+window.WillenaTestPrepV2Theme={apply:applyTheme};if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
