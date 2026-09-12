@@ -8,6 +8,10 @@ The module should preserve the working data flows from the current Naesin implem
 
 The visual and interaction source of truth is `UX_UI_GUIDE.html`. That file is a UX/UI guide only. It contains fake data and prototype logic. Production code must not be copied as one monolithic file.
 
+Naesin V2 must share the same canonical backend calculations as Student V2. Teacher and student surfaces should be different views over the same stats engine, not separate calculation systems.
+
+See also `BUILD_ORDER.md` for the implementation sequence.
+
 ## 2. Core Product Principles
 
 1. **Numbers first** — show real counts, percentages, dates, attempts, and wrong-answer data. Avoid interpretive labels such as “Needs attention” or “Strong”.
@@ -15,12 +19,15 @@ The visual and interaction source of truth is `UX_UI_GUIDE.html`. That file is a
 3. **Fast drill-down** — main page → student → lesson / wrong answers / grammar pattern, without unnecessary intermediate screens.
 4. **Stable layout** — student detail modal uses a fixed viewport size. Switching tabs must not resize or jump the modal.
 5. **No patch architecture** — do not monkey-patch `fetch`, depend on MutationObserver repair logic, or layer V2 on top of the V1 DOM. V2 should mount and own its UI cleanly.
+6. **One calculation engine** — Student V2 and Teacher Naesin V2 use the same backend accuracy, recency, deduplication, lesson, and skill calculations.
+7. **Client renders; backend calculates** — the browser should not download large attempt sets and recreate stats logic.
 
 ## 3. Module Structure
 
 ```text
 Teachers/dashboard-v2/naesin-v2/
 ├── SPEC.md
+├── BUILD_ORDER.md
 ├── UX_UI_GUIDE.html
 ├── naesin-v2.js
 ├── naesin-v2.css
@@ -37,47 +44,236 @@ Teachers/dashboard-v2/naesin-v2/
 
 **`naesin-v2.css`** — all module styles and responsive rules. Avoid production dependence on inline layout styles.
 
-**`naesin-v2-data.js`** — API access, data normalization, recent-question calculations, canonical question deduplication, lesson/skill aggregates.
+**`naesin-v2-data.js`** — API access, request orchestration, client-side response cache, loading/error state. It must not own canonical accuracy or deduplication calculations.
 
 **`naesin-v2-editor.js`** — add test, edit test, student picker, textbook selector, lesson/section scope editor, archive test.
 
 **`naesin-v2-student-detail.js`** — fixed-size student modal, summary, wrong answers, activity, grammar patterns, tab state.
 
-**`naesin-v2-lesson-journey.js`** — lesson overview rings, lesson click-through, V1-style activity journey, completion/recent/total metrics.
+**`naesin-v2-lesson-journey.js`** — lesson overview rings, lesson click-through, V1-style activity journey, completion/recent/total rendering.
 
 **`naesin-v2-print.js`** — bridge from student wrong answers to the existing wrong-print editor/direct-PDF flow.
 
-## 4. Existing Backend / Data Sources
+## 4. Shared Backend Architecture
 
 ### Tracking Supabase
 
 Project: `fiieuiktlsivwfgyivai`
 
-Reuse current Dashboard V2 endpoints where possible:
+The permanent source-of-truth path is:
 
-- `test-prep-groups`
-- `test-prep-teacher-insights`
-- `test-prep-teacher-wrong-detail`
+```text
+Content DB
+  ↓
+test_prep_content_snapshot_v1
+  ↓
+canonical identity / aliases
+  ↓
+test_prep_plan_stats_v1
+  ↓
+shared thin wrappers
+  ├── Student V2
+  └── Teacher Naesin V2
+```
+
+### Canonical shared stats function
+
+`public.test_prep_plan_stats_v1(plan_id)` is the shared calculation engine.
+
+It must remain usable by both student and teacher surfaces. Do not clone its calculations into teacher-only or student-only functions.
+
+Current shared outputs include:
+
+- content snapshot status
+- summary completion
+- lesson completion
+- lesson-practice completion
+- lesson recent accuracy
+- practice recent accuracy
+- review/wrong-state bundle through `test_prep_plan_stats_bundle_v1`
+
+As of 2026-09-12 the shared stats core has also been extended with:
+
+### Summary fields
+
+- `recent150_count`
+- `recent150_accuracy`
+- `unique_count`
+- `unique_correct`
+- `unique_accuracy`
+- `last_activity`
+
+### Whole-plan skill fields
+
+`skills[]` now provides each practice type with:
+
+- `total`
+- `completed`
+- `remaining`
+- `recent_count` — latest 50 unique for that skill
+- `recent_accuracy`
+- `unique_count`
+- `unique_correct`
+- `unique_accuracy`
+- `last_activity`
+
+### Lesson / practice fields
+
+Lesson and lesson-practice stats now also expose final-state unique accuracy fields so Teacher V2 and Student V2 can display the same totals.
+
+### Backward compatibility
+
+Existing fields remain available for older consumers.
+
+In particular:
+
+- legacy `summary.recent_count` / `summary.recent_accuracy` remain present
+- V2 overall UI should use `summary.recent150_count` / `summary.recent150_accuracy`
+- V2 skill recent values use latest 50 unique questions
+
+Do not silently reinterpret the old summary fields in existing consumers.
+
+## 5. Content Snapshot / Identity Layer
 
 ### Content Supabase
 
 Project: `gxwfsqxyuufqtitspfqg`
 
-Used for books, units/lessons, test prep questions, source content occurrences, section availability, and lesson totals.
+Content is synchronized into tracking through `test_prep_content_snapshot_v1`.
+
+The snapshot stores:
+
+- unit identity
+- book identity
+- practice IDs
+- totals
+- lexical identity map
+- content revision
+- sync time
+- unit type
+
+Teacher V2 should not query the content project directly for normal dashboard rendering.
+
+### Question identity
+
+Canonical identity resolution belongs on the backend.
+
+Current resolution path includes:
+
+1. `attempt.canonical_id`
+2. `test_prep_identity_aliases_v1`
+3. lexical mapping where applicable
+4. fallback `question_id`
+
+The browser must not recreate alias resolution.
+
+## 6. Accuracy / Deduplication Rules
+
+These rules are backend rules shared by Student V2 and Teacher V2.
+
+### Latest-answer rule
+
+For a unique question:
+
+1. collect all attempts for the scoped plan
+2. resolve canonical identity
+3. keep the newest attempt
+4. use that final state for accuracy
+
+So:
+
+- wrong → later right = right
+- right → later wrong = wrong
+
+### Recent 50 by skill
+
+For a given practice type:
+
+1. resolve canonical identities
+2. keep the newest attempt per unique question
+3. sort those final states newest-first
+4. take latest 50
+5. calculate accuracy
+
+### Recent overall
+
+For the whole test-prep plan:
+
+1. resolve canonical identity
+2. dedupe globally by canonical question
+3. keep newest final state
+4. sort newest-first
+5. take latest 150
+6. calculate accuracy
+
+This is not time-based recency.
+
+### All-time unique accuracy
+
+All-time accuracy uses one latest final state per unique canonical question.
+
+The UI must not calculate this independently.
+
+## 7. Existing Endpoints / Services
+
+Reuse where suitable:
+
+- `test-prep-groups`
+- `test-prep-stats-v1`
+- `test-prep-teacher-wrong-detail`
+- `test-prep-grammar-tracking`
+- `test_prep_plan_stats_v1`
+- `test_prep_plan_stats_bundle_v1`
+- `test_prep_review_stats_v1`
+
+`test-prep-teacher-insights` contains useful legacy behavior but should not remain the canonical calculation path for V2 because it performs live attempt/content aggregation that now overlaps the shared snapshot/RPC system.
 
 ### Students
 
-Reuse the current authenticated student-list route:
+Reuse the current authenticated student-list route where appropriate:
 
 `/.netlify/functions/teacher_admin?action=list_students`
 
-## 5. Main Naesin Page
+## 8. Loading / Data Ownership
+
+### Main dashboard
+
+Load in layers:
+
+1. group/config/member data
+2. render visible test shells
+3. load matrix-ready stats per group through a thin teacher wrapper
+4. fill rows as group results arrive
+
+### Student detail
+
+Load heavy data on demand:
+
+- 요약 — shared stats bundle
+- 활동 — backend daily aggregate
+- 레슨 진도 — shared lesson/practice stats
+- 오답 — on-demand exact wrong details
+- 문법 패턴 — on-demand grammar-target details
+
+### Client cache
+
+`naesin-v2-data.js` may keep an in-memory cache for the current dashboard session:
+
+- groups
+- group matrix responses
+- student detail responses
+- wrong detail responses
+- grammar pattern responses
+
+This cache is for avoiding repeat requests only. It is not a source of truth and must not contain duplicated stats logic.
+
+## 9. Main Naesin Page
 
 ### Header
 
 Show:
 
-- `내신`
+- `내신 V2`
 - `진행 중인 시험`
 - `+ 시험 대비 추가`
 
@@ -98,7 +294,7 @@ Three-dot menu contains only:
 
 Archive removes the test from the active list but preserves all historical student data. Require confirmation.
 
-## 6. Add / Edit Test Flow
+## 10. Add / Edit Test Flow
 
 Preserve the current Dashboard V2 flow.
 
@@ -120,7 +316,7 @@ Edit mode preloads school, exam date, term, exam type, assigned students, textbo
 
 Do not save unless school and date exist, at least one student is selected, and at least one lesson/section is selected.
 
-## 7. Main Student Matrix
+## 11. Main Student Matrix
 
 Columns:
 
@@ -138,20 +334,15 @@ Student name is the main drill-down target: white fill, thicker subtle border, r
 
 ### Skill statistics
 
-For each skill use the latest **50 unique questions**. Repeated attempts on the same question collapse to one, with the newest attempt winning.
-
-Question identity:
-
-1. `canonical_id`
-2. fallback `question_id`
-
-So wrong → later right counts right only, and right → later wrong counts wrong only.
+Each skill displays the shared backend `skills[].recent_accuracy` and `skills[].recent_count`, based on latest 50 unique questions.
 
 ### Overall recent accuracy
 
-Use the latest **150 unique questions globally**, with the same newest-attempt-wins deduplication rule. This is not time-based recency.
+Display shared backend `summary.recent150_accuracy` and `summary.recent150_count`.
 
-## 8. Student Detail Modal
+Do not calculate either value in the browser.
+
+## 12. Student Detail Modal
 
 The modal has a fixed footprint so tabs do not resize it.
 
@@ -167,15 +358,20 @@ Tabs:
 - 레슨 진도
 - 문법 패턴
 
-## 9. 요약 Tab
+## 13. 요약 Tab
 
-Numeric KPI cards should include recent accuracy, total accuracy, wrong count, and active practice days in the last 10 days.
+Numeric KPI cards should include:
+
+- recent 150 accuracy
+- all-time unique accuracy
+- wrong count
+- active practice days in the last 10 days
 
 First major chart is a line chart for the last 10 days, with x-axis labels like `Fri 9/11` and counts above non-zero points.
 
-Skill comparison shows `최근 50` vs `전체`.
+Skill comparison shows shared backend `최근 50` vs `전체` unique accuracy.
 
-## 10. 오답 Tab
+## 14. 오답 Tab
 
 Top actions:
 
@@ -190,11 +386,15 @@ Wrong-type rows show Korean label, English/raw label beneath, count, and proport
 
 Exact wrong questions show lesson/skill metadata, prompt, context when available, choices when applicable, student answer, correct answer, and wrong count.
 
-## 11. 활동 Tab
+Wrong-state logic should come from the canonical backend review/question-state layer, not inferred from client-side attempt arrays.
 
-Show a 10-day line chart, total attempts, active days, and recent activity counts. Avoid unnecessary decorative charts.
+## 15. 활동 Tab
 
-## 12. 레슨 진도 Tab
+Show a 10-day line chart, total attempts, active days, and recent activity counts.
+
+The backend should return daily aggregates. The client only renders the chart.
+
+## 16. 레슨 진도 Tab
 
 Each lesson is a horizontal row using a circular ring, lesson title, skill chips, 최근, 전체, and 오답.
 
@@ -202,7 +402,9 @@ All stats stay inline with the ring. Do not show `고유 문제` text. Use horiz
 
 Each lesson row is clickable and opens its lesson journey.
 
-## 13. Lesson Journey
+Lesson/practice calculations come from the shared stats bundle.
+
+## 17. Lesson Journey
 
 This intentionally follows the current V1 Naesin lesson journey because that interaction is already approved.
 
@@ -212,8 +414,9 @@ For each available practice type show, in order:
 2. 어휘 문제
 3. 의사소통
 4. 문법
-5. 독해
-6. 서술형
+5. 본문
+6. 독해
+7. 서술형
 
 Only show practices actually available for the lesson.
 
@@ -225,13 +428,15 @@ Keep metrics inline:
 
 Completion includes numerator/denominator where available. Use the V1-style numbered circular journey inside the cleaner V2 visual system.
 
-## 14. 문법 패턴 Tab
+## 18. 문법 패턴 Tab
 
 Show a table with 패턴, 최근, 전체, 오답.
 
 Pattern rows are clickable. Clicking a grammar pattern reveals the student’s wrong questions for that exact pattern, including prompt, lesson, selected answer, correct answer, and repeat wrong count when available.
 
-## 15. Label Rules
+`test-prep-grammar-tracking` can be reused, but V2 should align its recency definitions with the shared canonical rules instead of the legacy 3-day definition.
+
+## 19. Label Rules
 
 | Internal key | UI label |
 |---|---|
@@ -245,39 +450,7 @@ Pattern rows are clickable. Clicking a grammar pattern reveals the student’s w
 
 `sentences` must display as `본문`. Avoid old `본문외우기` in the new main UI. Wrong-type names may show Korean + English.
 
-## 16. Accuracy / Deduplication Rules
-
-Centralize this logic in `naesin-v2-data.js`.
-
-Unique question key:
-
-```js
-canonical_id || question_id
-```
-
-Latest-answer rule:
-
-1. group by unique question key
-2. keep newest attempt only
-3. calculate accuracy from those final states
-
-Recent 50 by skill:
-
-1. dedupe by question
-2. sort latest unique states newest-first
-3. take latest 50
-4. calculate accuracy
-
-Recent overall:
-
-1. dedupe globally by question
-2. sort newest-first
-3. take latest 150
-4. calculate accuracy
-
-All-time accuracy should also use one final state per unique question unless a view explicitly states otherwise.
-
-## 17. Responsive Behavior
+## 20. Responsive Behavior
 
 Desktop is primary, but mobile must remain usable.
 
@@ -288,7 +461,7 @@ Desktop is primary, but mobile must remain usable.
 - editor becomes one-column on narrow screens
 - buttons retain touch-sized hit areas
 
-## 18. Visual Rules
+## 21. Visual Rules
 
 Use `UX_UI_GUIDE.html` as the visual source of truth.
 
@@ -306,7 +479,7 @@ Core visual language:
 
 Containers should have visibly stronger borders than table separators.
 
-## 19. Printing Integration
+## 22. Printing Integration
 
 Naesin V2 should not create a second PDF engine.
 
@@ -314,32 +487,41 @@ Use the existing wrong-print editor/direct-PDF path.
 
 The student 오답 tab should be able to pass student id, exam/group id, selected wrong questions or all current wrong questions, and lesson/skill filters where applicable.
 
-## 20. Migration Strategy
+## 23. Build / Migration Strategy
 
-Do not rewrite V1 in place.
+The authoritative sequence is maintained in `BUILD_ORDER.md`.
 
-Recommended sequence:
+High-level order:
 
-1. build V2 in isolated folder
-2. reuse current API endpoints
-3. reproduce add/edit flow
-4. build active test matrix
-5. build student detail shell
-6. add summary/activity
-7. add wrong answers
-8. add lesson progress
-9. copy approved V1 lesson-journey behavior into the clean V2 module
-10. add grammar-pattern drill-down
-11. wire print actions
-12. switch Dashboard V2 navigation to V2
-13. leave old Naesin code temporarily for rollback
-14. remove patch modules only after V2 is verified
+1. shared stats core
+2. Student V2 parity check
+3. teacher group matrix wrapper
+4. real Naesin V2 main screen
+5. shared student overview
+6. lesson progress
+7. wrong answers
+8. grammar patterns
+9. simplify duplicated legacy teacher calculations
+10. cross-surface parity test
 
-## 21. Non-Goals
+Do not rewrite V1 in place. Existing Naesin remains available side by side while V2 is built and verified.
 
-Do not build a second content database, rebuild the wrong-print PDF engine, add teacher interpretation labels, add unnecessary test-menu options, add fetch interception, add mutation-observer repair scripts, or copy the prototype into production as one file.
+## 24. Non-Goals
 
-## 22. Acceptance Criteria
+Do not:
+
+- build a second content database
+- clone the canonical stats calculations for teachers
+- clone the canonical stats calculations for students
+- rebuild the wrong-print PDF engine
+- add teacher interpretation labels
+- add unnecessary test-menu options
+- add fetch interception
+- add mutation-observer repair scripts
+- copy the prototype into production as one file
+- calculate recent/all-time accuracy from raw attempts in the browser
+
+## 25. Acceptance Criteria
 
 Naesin V2 is ready when:
 
@@ -347,8 +529,9 @@ Naesin V2 is ready when:
 - add test works
 - edit test works
 - archive works
-- matrix shows real recent skill stats
-- overall recent uses latest 150 unique questions
+- matrix shows real shared-backend recent skill stats
+- overall recent uses shared-backend latest 150 unique questions
+- Teacher V2 and Student V2 show the same values for the same plan
 - clicking a student opens a fixed-size modal
 - all five tabs render real student data
 - wrong types show Korean + English
@@ -362,7 +545,21 @@ Naesin V2 is ready when:
 - mobile remains usable
 - UI matches `UX_UI_GUIDE.html` closely
 
-## 23. UX/UI Reference
+## 26. Current Shared-Core Status
+
+Phase 1 of `BUILD_ORDER.md` is complete.
+
+The shared `test_prep_plan_stats_v1` function now exposes the additional V2 metrics while retaining legacy fields for compatibility.
+
+Validation was run across all 16 currently active test-prep plans; all returned:
+
+- `skills`
+- `summary.recent150_accuracy`
+- `summary.unique_accuracy`
+
+The next build phase is Student V2 parity verification before the teacher group-matrix wrapper is added.
+
+## 27. UX/UI Reference
 
 `UX_UI_GUIDE.html` is the approved visual prototype as of 2026-09-12.
 
