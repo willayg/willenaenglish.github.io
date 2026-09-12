@@ -1,0 +1,84 @@
+/* v2.25.91 targeted theme fixes: review actions, mock submit modal, AI Willi. */
+
+/* Cyberpunk: remove remaining white review/action surfaces. */
+html[data-test-prep-theme="cyberpunk"] .review-primary,
+html[data-test-prep-theme="cyberpunk"] .review-secondary,
+html[data-test-prep-theme="cyberpunk"] .wrong-cta,
+html[data-test-prep-theme="cyberpunk"] [data-review] .wrong-cta{
+  background:#211131!important;
+  color:#f8f1ff!important;
+  border-color:#603576!important;
+  box-shadow:0 0 0 1px rgba(53,232,255,.08),0 0 16px rgba(110,44,165,.10)!important;
+}
+html[data-test-prep-theme="cyberpunk"] .review-primary{color:#ff61bd!important;border-color:#35e8ff!important}
+html[data-test-prep-theme="cyberpunk"] .review-secondary:hover,
+html[data-test-prep-theme="cyberpunk"] .review-primary:hover,
+html[data-test-prep-theme="cyberpunk"] .wrong-cta:hover{
+  background:#301448!important;color:#fff!important;border-color:#35e8ff!important;
+}
+
+/* Mock-test submit modal is injected after page load, so use specific !important overrides. */
+html[data-test-prep-theme="cyberpunk"] .mock-submit-overlay{background:rgba(5,2,10,.82)!important}
+html[data-test-prep-theme="cyberpunk"] .mock-submit-dialog{
+  background:#160d24!important;color:#f8f1ff!important;border-color:#35e8ff!important;
+  box-shadow:0 0 30px rgba(53,232,255,.14),0 22px 70px rgba(0,0,0,.62)!important;
+}
+html[data-test-prep-theme="cyberpunk"] .mock-submit-count{background:#251238!important;color:#35e8ff!important}
+html[data-test-prep-theme="cyberpunk"] .mock-submit-dialog h2{color:#f8f1ff!important}
+html[data-test-prep-theme="cyberpunk"] .mock-submit-dialog p{color:#d6c1df!important}
+html[data-test-prep-theme="cyberpunk"] .mock-submit-dialog small{color:#aa91b8!important}
+html[data-test-prep-theme="cyberpunk"] .mock-submit-actions button{background:#211131!important;color:#f8f1ff!important;border-color:#603576!important}
+html[data-test-prep-theme="cyberpunk"] .mock-submit-actions [data-mock-submit-confirm]{color:#ff61bd!important;border-color:#35e8ff!important}
+
+/* AI Willi — normal dark mode. Shared AI styles are injected dynamically, so these deliberately win. */
+html[data-test-prep-theme="dark"] .ai-willi-card{
+  background:linear-gradient(180deg,#182126,#141d21)!important;color:#edf5f6!important;border-color:#38505a!important;
+  box-shadow:0 8px 24px rgba(0,0,0,.24)!important;
+}
+html[data-test-prep-theme="dark"] .ai-willi-head{color:#ff82b3!important}
+html[data-test-prep-theme="dark"] .ai-willi-mark{background:#3a2230!important;color:#ff82b3!important}
+html[data-test-prep-theme="dark"] .ai-willi-turn.willi{background:#1b252a!important;border-color:#38505a!important}
+html[data-test-prep-theme="dark"] .ai-willi-turn.student{background:#20343a!important;border-color:#405963!important;color:#d8eef0!important}
+html[data-test-prep-theme="dark"] .ai-willi-message{color:#e5f0f1!important}
+html[data-test-prep-theme="dark"] .ai-willi-message code{background:#20343a!important;color:#a9f1f5!important}
+html[data-test-prep-theme="dark"] .ai-willi-vote{border-top-color:#30434b!important}
+html[data-test-prep-theme="dark"] .ai-willi-vote button{color:#9fb0b6!important}
+html[data-test-prep-theme="dark"] .ai-willi-vote button.on{background:#20343a!important;color:#ff82b3!important}
+html[data-test-prep-theme="dark"] .ai-willi-vote-note{color:#9aabb1!important}
+html[data-test-prep-theme="dark"] .ai-willi-action,
+html[data-test-prep-theme="dark"] .ai-willi-refine{background:#1b252a!important;color:#ff82b3!important;border-color:#405963!important}
+html[data-test-prep-theme="dark"] .ai-willi-refine{color:#d8eef0!important}
+html[data-test-prep-theme="dark"] .ai-willi-refine.used{background:#20292e!important;color:#71848c!important;border-color:#30434b!important}
+html[data-test-prep-theme="dark"] .ai-willi-card.error{background:#2f1d22!important;border-color:#74434f!important}
+
+/* AI Willi — cyberpunk gets its own visual language, not just generic dark. */
+html[data-test-prep-theme="cyberpunk"] .ai-willi-card{
+  background:linear-gradient(180deg,#1b0e2b,#12091e)!important;color:#f8f1ff!important;border-color:#8d3fbb!important;
+  box-shadow:0 0 0 1px rgba(53,232,255,.10),0 0 26px rgba(121,49,179,.18)!important;
+}
+html[data-test-prep-theme="cyberpunk"] .ai-willi-head{color:#ff61bd!important}
+html[data-test-prep-theme="cyberpunk"] .ai-willi-mark{background:#351447!important;color:#35e8ff!important;box-shadow:0 0 12px rgba(53,232,255,.14)!important}
+html[data-test-prep-theme="cyberpunk"] .ai-willi-turn.willi{background:#211131!important;border-color:#58306e!important}
+html[data-test-prep-theme="cyberpunk"] .ai-willi-turn.student{background:#301448!important;border-color:#7d3f9c!important;color:#f8f1ff!important}
+html[data-test-prep-theme="cyberpunk"] .ai-willi-message{color:#f3eafa!important}
+html[data-test-prep-theme="cyberpunk"] .ai-willi-message code{background:#301448!important;color:#35e8ff!important}
+html[data-test-prep-theme="cyberpunk"] .ai-willi-vote{border-top-color:#4a265f!important}
+html[data-test-prep-theme="cyberpunk"] .ai-willi-vote button{color:#bea8c9!important}
+html[data-test-prep-theme="cyberpunk"] .ai-willi-vote button.on{background:#301448!important;color:#ff61bd!important}
+html[data-test-prep-theme="cyberpunk"] .ai-willi-vote-note{color:#aa91b8!important}
+html[data-test-prep-theme="cyberpunk"] .ai-willi-action,
+html[data-test-prep-theme="cyberpunk"] .ai-willi-refine{background:#211131!important;color:#f8f1ff!important;border-color:#603576!important}
+html[data-test-prep-theme="cyberpunk"] .ai-willi-action{color:#ff61bd!important;border-color:#35e8ff!important}
+html[data-test-prep-theme="cyberpunk"] .ai-willi-refine:hover{background:#301448!important;border-color:#35e8ff!important}
+html[data-test-prep-theme="cyberpunk"] .ai-willi-refine.used{background:#1a1024!important;color:#806e89!important;border-color:#3b2447!important}
+html[data-test-prep-theme="cyberpunk"] .ai-willi-card.error{background:#321126!important;border-color:#ff4fb5!important}
+
+/* Normal dark submit modal too, so it does not flash white. */
+html[data-test-prep-theme="dark"] .mock-submit-overlay{background:rgba(7,11,13,.72)!important}
+html[data-test-prep-theme="dark"] .mock-submit-dialog{background:#182126!important;color:#edf5f6!important;border-color:#4b6670!important;box-shadow:0 22px 70px rgba(0,0,0,.50)!important}
+html[data-test-prep-theme="dark"] .mock-submit-count{background:#20343a!important;color:#8beaf5!important}
+html[data-test-prep-theme="dark"] .mock-submit-dialog h2{color:#edf5f6!important}
+html[data-test-prep-theme="dark"] .mock-submit-dialog p{color:#c0d0d4!important}
+html[data-test-prep-theme="dark"] .mock-submit-dialog small{color:#8fa1a8!important}
+html[data-test-prep-theme="dark"] .mock-submit-actions button{background:#1b252a!important;color:#edf5f6!important;border-color:#405963!important}
+html[data-test-prep-theme="dark"] .mock-submit-actions [data-mock-submit-confirm]{color:#ff82b3!important;border-color:#65d7df!important}
