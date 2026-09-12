@@ -2,6 +2,7 @@
 'use strict';
 
 const VIEW='naesin-v2';
+const REV='R6';
 const ICON='./naesin-v2/naesin-v2-icon.svg';
 const PRACTICES=[
   ['vocabulary','단어 학습'],
@@ -77,7 +78,7 @@ function mountView(){
     <div class="na2-shell">
       <div class="na2-head">
         <div>
-          <h1>내신 V2</h1>
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><h1>내신 V2</h1><span style="display:inline-flex;align-items:center;padding:4px 8px;border-radius:999px;background:#eef8fa;color:#278d98;font-size:11px;font-weight:900;border:1px solid #bfe3e8">${REV}</span></div>
           <p>진행 중인 시험</p>
         </div>
         <button class="na2-add" id="na2Add" type="button">+ 시험 대비 추가</button>
@@ -200,8 +201,8 @@ function mount(){
   mountMobileNav();
   mountView();
   document.addEventListener('click',e=>{if(!e.target.closest('.na2-menu-wrap'))qa('.na2-menu').forEach(m=>m.hidden=true)});
-  window.NaesinV2={show,mount,refresh:()=>ensureLoaded({force:true}),version:'p4-main-1'};
-  console.info('[Naesin V2] P4 main screen mounted');
+  window.NaesinV2={show,mount,refresh:()=>ensureLoaded({force:true}),version:'r6'};
+  console.info(`[Naesin V2] ${REV} mounted`);
 }
 
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',mount,{once:true});
