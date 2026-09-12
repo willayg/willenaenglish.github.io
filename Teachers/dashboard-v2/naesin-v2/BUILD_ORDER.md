@@ -257,6 +257,46 @@ Implemented UI:
 
 The browser only renders the backend result. It does not scan attempts or calculate target accuracy locally.
 
+## Phase 8.5 — V2 test management editor
+
+Status: **DONE**
+
+The create/edit/archive flow is deliberately isolated from the stats/rendering modules.
+
+Architecture:
+
+```text
+Naesin V2 main screen
+  ↓ only calls openCreate / openEdit / archive
+naesin-v2-editor.js
+  ↓ owns modal state, validation, student/book/scope UI
+naesin-v2-editor-api.js
+  ↓ owns network/catalog mutations only
+  ├── teacher_admin → student roster
+  ├── Content DB → books / lessons / available sections
+  └── test-prep-groups → create_group / update_group / archive_group
+```
+
+Styling is isolated in:
+
+- `naesin-v2-editor.css`
+
+The editor does **not** know how stats are calculated and the matrix does **not** know how forms are saved.
+
+Implemented:
+
+- `+ 시험 대비 추가` opens the real V2 editor
+- `수정` opens the same editor with school/date/term/exam/book/student/scope values prefilled
+- searchable student picker
+- book picker from the content catalog
+- lesson + section scope controls based on actual usable question coverage
+- create via `create_group`
+- update via `update_group`
+- archive confirmation via new `archive_group`
+- archiving preserves historical records while deactivating the group, active plans, and active tasks
+- save/archive invalidates V2 caches and refreshes the matrix
+- no inline styling in the editor
+
 ## Phase 9 — Simplify old teacher endpoints
 
 Status: **NEXT**
