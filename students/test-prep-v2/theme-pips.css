@@ -1,6 +1,6 @@
 .tp2-theme-dock{position:absolute;left:50%;bottom:18px;transform:translateX(-50%);z-index:30;display:flex;align-items:center;gap:8px;padding:7px 10px;border:1.5px solid rgba(255,255,255,.82);border-radius:999px;background:rgba(255,255,255,.68);box-shadow:0 8px 22px rgba(20,70,80,.12);backdrop-filter:blur(10px)}
 .tp2-theme-pip{width:20px;height:20px;border-radius:50%;border:2px solid rgba(255,255,255,.96);padding:0;box-shadow:0 0 0 1px rgba(40,70,75,.16);cursor:pointer;transition:transform .15s ease,box-shadow .15s ease}
-.tp2-theme-pip[data-theme="cyan"]{background:#39c9d6}.tp2-theme-pip[data-theme="sunbeam"]{background:#ffc24c}.tp2-theme-pip[data-theme="pink"]{background:#f775ad}.tp2-theme-pip[data-theme="dark"]{background:#182126}
+.tp2-theme-pip[data-theme="cyan"]{background:#39c9d6}.tp2-theme-pip[data-theme="sunbeam"]{background:#ffc24c}.tp2-theme-pip[data-theme="pink"]{background:#f775ad}.tp2-theme-pip[data-theme="dark"]{background:#182126}.tp2-theme-pip[data-theme="cyberpunk"]{background:linear-gradient(135deg,#4c1768 0 48%,#35e8ff 49% 63%,#ff4fb5 64%)}
 .tp2-theme-pip:hover{transform:scale(1.1)}
 .tp2-theme-pip[aria-pressed="true"]{box-shadow:0 0 0 2px var(--heading),0 0 0 4px rgba(255,255,255,.92);transform:scale(1.08)}
 .tp2-theme-pip:focus-visible{outline:3px solid rgba(255,255,255,.95);outline-offset:3px}
