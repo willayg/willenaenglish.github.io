@@ -2,10 +2,13 @@
 'use strict';
 
 const MATRIX_EDGE='https://fiieuiktlsivwfgyivai.supabase.co/functions/v1/test-prep-teacher-matrix-v2';
+const OVERVIEW_EDGE='https://fiieuiktlsivwfgyivai.supabase.co/functions/v1/test-prep-teacher-student-overview-v2';
 const GROUP_EDGE='https://fiieuiktlsivwfgyivai.supabase.co/functions/v1/test-prep-groups';
 const API_KEY='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
 const matrixCache=new Map();
 const latestMatrix=new Map();
+const overviewCache=new Map();
+const latestOverview=new Map();
 let groupsPromise=null;
 let latestGroups=[];
 const diag={requests:0,cacheHits:0,cacheMisses:0,lastMs:null,source:'shared-naesin-v2-data'};
@@ -54,6 +57,11 @@ async function requestMatrix(groupId){
   return payload.matrix||null;
 }
 
+async function requestOverview(planId){
+  const payload=await authedJson(`${OVERVIEW_EDGE}?plan_id=${encodeURIComponent(planId)}`);
+  return payload.overview||null;
+}
+
 async function loadGroups({force=false}={}){
   if(force){groupsPromise=null;latestGroups=[]}
   if(groupsPromise){diag.cacheHits++;return groupsPromise}
@@ -84,19 +92,43 @@ async function loadGroupMatrix(groupId,{force=false}={}){
   return promise;
 }
 
+async function loadStudentOverview(planId,{force=false}={}){
+  const key=String(planId||'');
+  if(!key)throw new Error('plan_id required');
+  if(force){overviewCache.delete(key);latestOverview.delete(key)}
+  if(overviewCache.has(key)){diag.cacheHits++;return overviewCache.get(key)}
+  diag.cacheMisses++;
+  const promise=requestOverview(key).then(overview=>{
+    latestOverview.set(key,overview);
+    return overview;
+  }).catch(error=>{
+    overviewCache.delete(key);
+    latestOverview.delete(key);
+    throw error;
+  });
+  overviewCache.set(key,promise);
+  return promise;
+}
+
 function getCachedGroups(){return latestGroups}
 function getCachedGroupMatrix(groupId){return latestMatrix.get(String(groupId||''))||null}
+function getCachedStudentOverview(planId){return latestOverview.get(String(planId||''))||null}
 function invalidateGroupMatrix(groupId){
   const key=String(groupId||'');
   if(key){matrixCache.delete(key);latestMatrix.delete(key)}
   else{matrixCache.clear();latestMatrix.clear()}
 }
+function invalidateStudentOverview(planId){
+  const key=String(planId||'');
+  if(key){overviewCache.delete(key);latestOverview.delete(key)}
+  else{overviewCache.clear();latestOverview.clear()}
+}
 function invalidateGroups(){groupsPromise=null;latestGroups=[]}
-function invalidateAll(){invalidateGroups();invalidateGroupMatrix()}
-function getDiagnostics(){return{...diag,cacheEntries:matrixCache.size,groupsCached:latestGroups.length}}
+function invalidateAll(){invalidateGroups();invalidateGroupMatrix();invalidateStudentOverview()}
+function getDiagnostics(){return{...diag,matrixCacheEntries:matrixCache.size,overviewCacheEntries:overviewCache.size,groupsCached:latestGroups.length}}
 
 window.NaesinV2Data={
-  version:'p4-data-1',
+  version:'p5-data-1',
   loadGroups,
   refreshGroups:()=>loadGroups({force:true}),
   getCachedGroups,
@@ -104,6 +136,10 @@ window.NaesinV2Data={
   refreshGroupMatrix:(groupId)=>loadGroupMatrix(groupId,{force:true}),
   getCachedGroupMatrix,
   invalidateGroupMatrix,
+  loadStudentOverview,
+  refreshStudentOverview:(planId)=>loadStudentOverview(planId,{force:true}),
+  getCachedStudentOverview,
+  invalidateStudentOverview,
   invalidateGroups,
   invalidateAll,
   getDiagnostics
