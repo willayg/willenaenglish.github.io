@@ -1,0 +1,224 @@
+# Naesin V2 Build Order
+
+This file defines the implementation order for Naesin V2. The goal is to keep Teacher V2 and Student V2 on the same backend calculations so both surfaces update together.
+
+## Phase 1 — Shared stats core
+
+Status: **DONE**
+
+Shared backend function:
+
+- `public.test_prep_plan_stats_v1(plan_id)`
+
+Keep this as the canonical calculation engine rather than cloning teacher-only and student-only stats logic.
+
+Completed additions:
+
+- preserve existing fields for backward compatibility
+- canonical latest-answer-wins deduplication
+- overall latest 150 unique questions
+  - `summary.recent150_count`
+  - `summary.recent150_accuracy`
+- all-time unique final-state accuracy
+  - `summary.unique_count`
+  - `summary.unique_correct`
+  - `summary.unique_accuracy`
+- `summary.last_activity`
+- whole-plan `skills[]` aggregation
+  - latest 50 unique per skill
+  - all-time unique accuracy per skill
+  - completed / total / remaining
+  - last activity per skill
+- lesson and lesson-practice all-time unique accuracy fields
+
+Validation completed against all 16 currently active plans.
+
+Important compatibility rule:
+
+- existing `summary.recent_count` / `summary.recent_accuracy` remain available for older consumers
+- V2 overall UI should use `recent150_count` / `recent150_accuracy`
+- skill recent values remain latest 50 unique questions
+
+## Phase 2 — Student V2 parity check
+
+Before building teacher matrix logic, verify Student V2 can consume the shared fields correctly.
+
+Check the same plan against current Student V2 and the shared stats bundle:
+
+- overall recent 150
+- all-time unique accuracy
+- recent 50 per skill
+- lesson progress
+- lesson-practice progress
+- wrong counts
+
+Do not create separate calculations in Student V2. Student V2 should display the shared backend result.
+
+## Phase 3 — Teacher group matrix backend
+
+Build a lightweight teacher/group wrapper around the shared plan stats core.
+
+Input:
+
+- `group_id`
+
+Return:
+
+- group configuration
+- members / student identity
+- plan id
+- one shared-stats result per plan, reduced to matrix-ready fields
+
+Matrix result per student should include:
+
+- student id / name
+- plan id
+- each skill recent 50 accuracy + count
+- overall recent 150 accuracy + count
+- all-time unique accuracy
+- current wrong count
+- last activity
+
+Rules:
+
+- do not scan raw attempts in the browser
+- do not reproduce dedupe logic in the group wrapper
+- the wrapper should consume the canonical shared stats function
+
+## Phase 4 — Teacher Naesin V2 main screen
+
+Replace the current skeleton content with real active test groups.
+
+Load sequence:
+
+1. load lightweight group/config/member data
+2. render test shells immediately
+3. load matrix bundle per visible group
+4. fill student rows as results arrive
+
+Build the V19 UX/UI:
+
+- active test sections
+- test title/meta/D-day
+- three-dot menu: 수정 / 보관 only
+- student matrix
+- stable horizontal scrolling on narrow screens
+
+Keep old Naesin V1 running side by side.
+
+## Phase 5 — Shared student overview
+
+Wire student click to the fixed-size detail modal.
+
+Use shared backend fields for:
+
+- 요약
+- recent 150
+- all-time unique accuracy
+- skill recent 50 vs total
+- last activity
+- lesson summary
+
+Add activity-by-day backend output if it is not already available through the shared path.
+
+The client should only draw charts; it should not calculate accuracy.
+
+## Phase 6 — 레슨 진도
+
+Use the shared stats bundle directly.
+
+Build:
+
+- lesson ring rows
+- recent / total / wrong
+- clickable lesson rows
+- V1-style practice journey
+- 완료 / 최근 / 전체 inline metrics
+
+Reuse snapshot totals and canonical stats. Do not query the content database from the browser.
+
+## Phase 7 — 오답
+
+Reuse the canonical wrong state layer:
+
+- `test_prep_question_state`
+- `test_prep_review_stats_v1`
+- existing wrong-detail backend where suitable
+
+Return on demand only:
+
+- exact unresolved wrong questions
+- question type distribution
+- repeat-wrong count
+- lesson / skill metadata
+- selected answer
+- correct answer
+- print-ready identifiers
+
+Wire:
+
+- 오답 프린트 편집
+- PDF 만들기
+
+Do not rebuild the PDF engine.
+
+## Phase 8 — 문법 패턴
+
+Reuse `test-prep-grammar-tracking`, but align its metric definitions with the canonical shared stats rules.
+
+Remove the old 3-day interpretation of “recent” for V2.
+
+Target output:
+
+- target/pattern
+- recent unique accuracy
+- all-time unique accuracy
+- current wrong count
+- repeat wrong count
+- exact matching wrong questions
+
+Pattern rows remain clickable.
+
+## Phase 9 — Simplify old teacher endpoints
+
+Only after V2 is verified:
+
+- remove raw-attempt aggregation from the Teacher V2 path
+- make `teacher_groups` configuration-focused
+- stop using `test-prep-teacher-insights` for calculations already supplied by the shared stats core
+
+Do not remove V1 dependencies until rollback is no longer needed.
+
+## Phase 10 — Cross-surface parity test
+
+For the same student + plan, Teacher V2 and Student V2 must show identical values for:
+
+- recent 150 overall
+- all-time unique accuracy
+- recent 50 per skill
+- all-time skill accuracy
+- lesson progress
+- practice progress
+- canonical wrong counts
+
+If they disagree, fix the backend source of truth. Do not patch either UI with local calculation logic.
+
+## Architecture rule
+
+The permanent direction is:
+
+```text
+Content DB
+  ↓
+test_prep_content_snapshot_v1
+  ↓
+canonical identity / aliases
+  ↓
+test_prep_plan_stats_v1
+  ↓
+shared thin wrappers
+  ├── Student V2
+  └── Teacher Naesin V2
+```
+
+One calculation engine. Multiple views.
