@@ -7,6 +7,7 @@ const diag={requests:0,cacheHits:0,cacheMisses:0,lastMs:null,lastSyncedAt:null,s
 const token=()=>window.WillenaAPI?.getLocalAccessToken?.()||localStorage.getItem('sb_access_token')||'';
 const routedFetch=(url,opts={})=>window.WillenaAPI?.fetch?window.WillenaAPI.fetch(url,{credentials:'include',cache:'no-store',...opts}):fetch(url,{credentials:'include',cache:'no-store',...opts});
 const num=v=>Number.isFinite(Number(v))?Number(v):0;
+const maybeNum=v=>v==null?null:(Number.isFinite(Number(v))?Number(v):null);
 const pct=(done,total)=>total?Math.max(0,Math.min(100,Math.round(num(done)/Math.max(1,num(total))*100))):0;
 const planKey=planOrId=>String(typeof planOrId==='object'?(planOrId?.id||''):(planOrId||''));
 
@@ -48,7 +49,13 @@ function stat(row={}){
     remaining:Math.max(0,total-completed),
     coverage:pct(completed,total),
     accuracy:sample&&row.recent_accuracy!=null?Math.round(num(row.recent_accuracy)):0,
-    accuracySample:sample
+    accuracySample:sample,
+    recentCount:sample,
+    recentAccuracy:maybeNum(row.recent_accuracy),
+    uniqueCount:Math.max(0,num(row.unique_count??row.completed)),
+    uniqueCorrect:Math.max(0,num(row.unique_correct)),
+    uniqueAccuracy:maybeNum(row.unique_accuracy),
+    lastActivity:row.last_activity||null
   };
 }
 
@@ -76,8 +83,21 @@ function normalize(payload){
     nextReviewAt:reviewRaw.next_review_at||null,
     lessons:Array.isArray(reviewRaw.lessons)?reviewRaw.lessons:[]
   };
+  const skills={};
+  for(const row of Array.isArray(raw.skills)?raw.skills:[]){
+    const key=String(row.practice_type||'');
+    if(key)skills[key]=stat(row);
+  }
+  const plan=stat(raw.summary||{});
+  plan.recent150Count=Math.max(0,num(raw.summary?.recent150_count));
+  plan.recent150Accuracy=maybeNum(raw.summary?.recent150_accuracy);
+  plan.uniqueCount=Math.max(0,num(raw.summary?.unique_count));
+  plan.uniqueCorrect=Math.max(0,num(raw.summary?.unique_correct));
+  plan.uniqueAccuracy=maybeNum(raw.summary?.unique_accuracy);
+  plan.lastActivity=raw.summary?.last_activity||null;
   return{
-    plan:stat(raw.summary||{}),
+    plan,
+    skills,
     lessons,
     review,
     meta:{
@@ -117,6 +137,7 @@ export async function loadPlanStats(planOrId,{force=false}={}){
 export async function refreshPlanStats(planOrId){return loadPlanStats(planOrId,{force:true})}
 export function getCachedPlanStats(planOrId){return latest.get(planKey(planOrId))||null}
 export function getLessonStats(planOrId,lesson){return getCachedPlanStats(planOrId)?.lessons?.[String(lesson)]||null}
+export function getSkillStats(planOrId,practice){return getCachedPlanStats(planOrId)?.skills?.[String(practice)]||null}
 export function getReviewCounts(planOrId){
   const r=getCachedPlanStats(planOrId)?.review||{};
   return{now:num(r.wrongNow),later:num(r.wrongLater),cleared:num(r.cleared),nextReviewAt:r.nextReviewAt||null,status:r.status||'unavailable'};
