@@ -56,6 +56,35 @@ function create(options){
   var result=probabilities(rows,highest)[0];
   return result?result.level:1;
  }
+ function speakingFromAttempt(){
+  var setup=attempt.setup&&typeof attempt.setup==='object'?attempt.setup:{};
+  var teacher=Number(setup.teacher_speaking_level);
+  var recommended=Number(setup.speaking_recommended_level||setup.speaking_level);
+  var rawEstimate=Number(setup.speaking_estimate);
+  var hasTeacher=Number.isFinite(teacher)&&teacher>0;
+  var hasRecommended=Number.isFinite(recommended)&&recommended>0;
+  var hasEstimate=Number.isFinite(rawEstimate)&&rawEstimate>0;
+  if(!hasTeacher&&!hasRecommended&&!hasEstimate)return null;
+  var level=clampLevel(hasTeacher?teacher:(hasRecommended?recommended:Math.round(rawEstimate)),1);
+  var evidenceRows=Array.isArray(setup.speaking_evidence)?setup.speaking_evidence:[];
+  var evidenceCount=Math.max(Number(setup.speaking_evidence_count)||0,evidenceRows.length);
+  var confidenceKey=String(setup.speaking_confidence||'').toLowerCase();
+  var confidence=hasTeacher?96:(confidenceKey==='high'?90:confidenceKey==='medium'?74:confidenceKey==='low'?58:Math.min(88,52+evidenceCount*6));
+  return{
+   assessed:true,
+   rows:[],
+   level:level,
+   plus:false,
+   confidence:confidence,
+   accuracy:null,
+   anchor:null,
+   source:hasTeacher?'teacher_speaking_level':'speaking_assessment',
+   speaking_estimate:hasEstimate?rawEstimate:null,
+   evidence_count:evidenceCount,
+   speaking_confidence:confidenceKey||null,
+   teacher_level:hasTeacher?teacher:null
+  };
+ }
  function evidenceOverall(){
   var scores=ASSESSED_SKILLS.map(function(skill){
    var rows=evidence.filter(function(row){return(row.skill||skillFor(row.type))===skill});
@@ -72,6 +101,10 @@ function create(options){
   return Number.isFinite(stored)&&stored>0?clampLevel(stored,1):levelFromRows(evidence);
  }
  function estimate(skill){
+  if(skill==='speaking'){
+   var savedSpeaking=speakingFromAttempt();
+   if(savedSpeaking)return savedSpeaking;
+  }
   var rows=evidence.filter(function(row){return(row.skill||skillFor(row.type))===skill});
   if(rows.length<3)return{assessed:false,rows:rows,plus:false,confidence:0};
   var others=evidence.filter(function(row){return(row.skill||skillFor(row.type))!==skill});
