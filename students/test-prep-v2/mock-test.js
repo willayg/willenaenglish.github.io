@@ -3,7 +3,7 @@ import {gradeQuestion} from '../shared/question-grader.js?v=2.1.2';
 import {setTrackingContext,startSession,recordAttempt,completeSession,refreshTrackingState} from './tracking-client.js?v=2.17a';
 import {invalidateCardStats,loadCardStats} from './stats-client.js?v=2.16a';
 import {setNavigationGuard} from './navigation.js?v=2.19.0';
-import {buildMockTestPaper,MOCK_TEST_BLUEPRINT,MOCK_TEST_MINUTES,MOCK_TEST_TOTAL} from './mock-test-source.js?v=1.2.2';
+import {buildMockTestPaper,MOCK_TEST_BLUEPRINT,MOCK_TEST_MINUTES,MOCK_TEST_TOTAL} from './mock-test-source.js?v=1.2.3';
 import {renderMockTestResults} from './mock-test-results.js?v=1.1.2';
 import {confirmMockTestSubmit} from './mock-test-submit.js?v=1.0.0';
 import {mountMockTestHistory,saveMockTestSnapshot} from './mock-test-history.js?v=2.25.99';
@@ -24,13 +24,46 @@ function ensureStyles(){
 }
 ensureStyles();
 
+function mockDiagEnabled(){
+  try{
+    const params=new URLSearchParams(location.search),value=String(params.get('mockdiag')||'').toLowerCase();
+    return ['1','true','on','yes'].includes(value)||String(params.get('diag')||'').toLowerCase()==='mock';
+  }catch(_){return false}
+}
+function diagnosticFields(entry,plan){
+  const q=entry?.question||{},source=q?.source||{},tracking=q?.tracking||{},metadata=q?.metadata||{};
+  return [
+    ['book',plan?.book_label||'—'],
+    ['pool',LABELS[entry?.bucket]||entry?.bucket||'—'],
+    ['scope',entry?.lesson||'—'],
+    ['unit',entry?.unitId||'—'],
+    ['source',source?.label||source?.code||'—'],
+    ['sourceId',source?.sourceId||metadata?.source_id||metadata?.source_question_id||'—'],
+    ['type',tracking?.questionType||metadata?.mode||q?.form||'—'],
+    ['questionId',tracking?.questionId||q?.masteryKey||q?.id||'—']
+  ];
+}
+function diagnosticRowHtml(entry,plan,index=null){
+  const prefix=index==null?'':`#${index+1} `;
+  return `<div style="padding:7px 0;border-bottom:1px solid rgba(0,0,0,.08);font:600 11px/1.45 ui-monospace,SFMono-Regular,Consolas,monospace;word-break:break-word"><strong>${esc(prefix)}${esc(LABELS[entry?.bucket]||entry?.bucket||'pool')}</strong> · ${diagnosticFields(entry,plan).map(([k,v])=>`${esc(k)}=${esc(v)}`).join(' · ')}</div>`;
+}
+function paperDiagnosticsHtml(paper,plan){
+  if(!mockDiagEnabled())return'';
+  const availability=Object.entries(paper?.availability||{}).map(([k,v])=>`${LABELS[k]||k}:${v}`).join(' · ');
+  return `<details open style="margin-top:14px;padding:12px;border:1px dashed #8295a1;border-radius:12px;background:rgba(255,255,255,.65)"><summary style="cursor:pointer;font-weight:800">MOCK DIAGNOSTICS · pool totals ${esc(availability)}</summary><div style="margin-top:8px">${(paper?.questions||[]).map((entry,index)=>diagnosticRowHtml(entry,plan,index)).join('')}</div></details>`;
+}
+function questionDiagnosticsHtml(entry,plan){
+  if(!mockDiagEnabled())return'';
+  return `<details open style="margin:0 0 12px;padding:10px;border:1px dashed #8295a1;border-radius:10px;background:rgba(255,255,255,.7)"><summary style="cursor:pointer;font-weight:800">DIAG · ${esc(entry?.lesson||'scope')} · ${esc(LABELS[entry?.bucket]||entry?.bucket||'pool')}</summary>${diagnosticRowHtml(entry,plan)}</details>`;
+}
+
 function seedKey(planId){return`willenaMockPaperSeed:v2:${planId}`}
 function makeSeed(planId){const raw=globalThis.crypto?.randomUUID?.()||`${Date.now()}-${Math.random()}`;return`${planId}|${raw}`}
 function getSeed(planId){
   try{let seed=sessionStorage.getItem(seedKey(planId));if(!seed){seed=makeSeed(planId);sessionStorage.setItem(seedKey(planId),seed)}return seed}
   catch(_){return makeSeed(planId)}
 }
-function clearSeed(planId){try{if(planId)sessionStorage.removeItem(seedKey(planId))}catch(_){}}
+function clearSeed(planId){try{if(planId)sessionStorage.removeItem(seedKey(planId))}catch(_){} }
 function cloneValue(value){if(value==null)return value;try{return structuredClone(value)}catch(_){try{return JSON.parse(JSON.stringify(value))}catch(__){return value}}}
 function countsHtml(paper){
   return `<div class="mock-section-counts">${Object.keys(MOCK_TEST_BLUEPRINT).map(key=>{
@@ -81,7 +114,9 @@ function ensureQuestionPanel(index){
   if(exam.panels.has(index))return exam.panels.get(index);
   const entry=exam.paper.questions[index],panel=document.createElement('section');
   panel.className='mock-question-panel';panel.hidden=true;panel.dataset.mockQuestion=String(index);exam.deck.appendChild(panel);
-  const renderer=new QuestionRenderer(panel);
+  const diag=questionDiagnosticsHtml(entry,exam.plan);if(diag)panel.insertAdjacentHTML('beforeend',diag);
+  const renderHost=document.createElement('div');panel.appendChild(renderHost);
+  const renderer=new QuestionRenderer(renderHost);
   renderer.render(entry.question,{onChange:(response,hasResponse)=>{
     if(!activeExam||activeExam!==exam||exam.finished)return;
     if(hasResponse){exam.responses.set(index,cloneValue(response));exam.answered.add(index)}else{exam.responses.delete(index);exam.answered.delete(index)}
@@ -169,7 +204,7 @@ export async function renderMockTestPreflight({host,plan,studentId=null,onBack=(
   host.innerHTML='<div class="loading">실전모의고사 시험지를 구성하는 중...</div>';
   try{
     const paper=await buildMockTestPaper({plan,studentId,seed:getSeed(plan.id)});if(token!==activeToken)return null;previewPaper=paper;
-    host.innerHTML=`<div class="mock-preflight"><button class="back" type="button" data-mock-back>← ${esc(plan.book_label||'시험 범위')}</button><div class="heading"><div><h2>실전모의고사</h2><p>${MOCK_TEST_TOTAL}문항 · ${MOCK_TEST_MINUTES}분</p></div></div><section class="mock-summary-card"><div class="mock-summary-head"><div><span class="mock-summary-eyebrow">시험 구성</span><h3 class="mock-summary-title">${esc(plan.exam_name||'현재 시험 범위')}</h3><p class="mock-summary-copy">답안은 마지막에 한 번에 제출하고 채점합니다.</p></div><span class="mock-ready ${paper.ready?'':'is-warning'}">${paper.ready?'준비 완료':'확인 필요'}</span></div>${countsHtml(paper)}${diagnosticsHtml(paper)}</section><div class="mock-actions"><button class="review-primary" type="button" data-mock-start ${paper.ready?'':'disabled'}>시험 시작</button></div></div>`;
+    host.innerHTML=`<div class="mock-preflight"><button class="back" type="button" data-mock-back>← ${esc(plan.book_label||'시험 범위')}</button><div class="heading"><div><h2>실전모의고사</h2><p>${MOCK_TEST_TOTAL}문항 · ${MOCK_TEST_MINUTES}분</p></div></div><section class="mock-summary-card"><div class="mock-summary-head"><div><span class="mock-summary-eyebrow">시험 구성</span><h3 class="mock-summary-title">${esc(plan.exam_name||'현재 시험 범위')}</h3><p class="mock-summary-copy">답안은 마지막에 한 번에 제출하고 채점합니다.</p></div><span class="mock-ready ${paper.ready?'':'is-warning'}">${paper.ready?'준비 완료':'확인 필요'}</span></div>${countsHtml(paper)}${diagnosticsHtml(paper)}${paperDiagnosticsHtml(paper,plan)}</section><div class="mock-actions"><button class="review-primary" type="button" data-mock-start ${paper.ready?'':'disabled'}>시험 시작</button></div></div>`;
     host.querySelector('[data-mock-back]').onclick=onBack;host.querySelector('[data-mock-start]').onclick=()=>startExam({host,plan,paper,studentId,onBack});
     await mountMockTestHistory({host,plan,onOpenHistory:()=>renderMockTestPreflight({host,plan,studentId,onBack})});
     return paper;
