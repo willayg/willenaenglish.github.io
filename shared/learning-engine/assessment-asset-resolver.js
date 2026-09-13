@@ -52,6 +52,7 @@ var registry={
   sandwich:{url:NOTO+'emoji_u1f96a.svg'},
   'fork-knife':{url:NOTO+'emoji_u1f374.svg'},
   'juice-box':{url:NOTO+'emoji_u1f9c3.svg'},
+  water:{url:NOTO+'emoji_u1f4a7.svg'},
   hamburger:{url:NOTO+'emoji_u1f354.svg'},
   'rice-ball':{url:NOTO+'emoji_u1f359.svg'},
   sun:{url:NOTO+'emoji_u2600.svg'},
