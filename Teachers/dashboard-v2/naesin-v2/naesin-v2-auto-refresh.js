@@ -1,7 +1,7 @@
 (function(){
 'use strict';
 
-const REV='AR1.0';
+const REV='AR1.1';
 const INTERVAL_MS=20000;
 const MIN_REFRESH_GAP_MS=2500;
 const ACTIVE_VIEW_ID='view-naesin-v2';
@@ -18,11 +18,13 @@ async function refresh(reason='interval'){
   if(running||document.hidden||!isActive())return false;
   const now=Date.now();
   if(now-lastRefreshAt<MIN_REFRESH_GAP_MS)return false;
-  const run=window.NaesinV2?.refreshVisibleMatrices;
-  if(typeof run!=='function')return false;
+  const jobs=[];
+  if(typeof window.NaesinV2?.refreshVisibleMatrices==='function')jobs.push(window.NaesinV2.refreshVisibleMatrices());
+  if(typeof window.NaesinV2StudentDetail?.refreshCurrent==='function')jobs.push(window.NaesinV2StudentDetail.refreshCurrent());
+  if(!jobs.length)return false;
   running=true;
   try{
-    await run();
+    await Promise.allSettled(jobs);
     lastRefreshAt=Date.now();
     window.dispatchEvent(new CustomEvent('naesin-v2:auto-refreshed',{detail:{reason,at:lastRefreshAt}}));
     return true;
