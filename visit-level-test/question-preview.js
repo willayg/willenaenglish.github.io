@@ -8,7 +8,7 @@ window.WillenaQuestionPreviewKey=requested;
 
 var root=document.querySelector('#app');
 if(!root)return;
-var question=null,bankReady=false,appReady=false,rendering=false;
+var question=null,bankReady=false,appReady=true,rendering=false;
 var bank=[],previewBank=[],currentIndex=-1;
 var observer=null;
 
@@ -51,8 +51,14 @@ function installStyle(){
  if(document.getElementById('visitorQuestionPreviewStyle'))return;
  var s=document.createElement('style');
  s.id='visitorQuestionPreviewStyle';
- s.textContent='.candidate-flow,.visitor-v2-overlay{display:none!important}.visitor-question-preview{width:min(900px,100%);margin:0 auto}.visitor-question-preview-bar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:0 0 14px;padding:11px 14px;border:1px dashed #b9cad4;border-radius:14px;background:#f7fafc;color:#64748b;font:600 12px/1.4 Poppins,system-ui,sans-serif}.visitor-question-preview-bar strong{color:#17243f}.visitor-question-preview-tools{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.visitor-question-preview button.preview-tool{border:0;border-radius:10px;padding:8px 12px;font:700 12px Poppins,system-ui,sans-serif;cursor:pointer}.visitor-question-preview button.preview-tool:disabled{opacity:.35;cursor:default}.visitor-question-preview-nav{background:#e9f5f7;color:#176b72}.visitor-question-preview-answer{background:#17243f;color:#fff}.visitor-question-preview-answerbox{margin:0 0 14px;padding:12px 14px;border-radius:14px;background:#eefaf7;color:#176b57;font:700 14px Poppins,system-ui,sans-serif}.visitor-question-preview .choice.selected{outline:3px solid rgba(37,185,197,.28);border-color:#25b9c5}.visitor-question-preview .scramble-bank{margin-top:14px}@media(max-width:520px){.visitor-question-preview-tools{width:100%;display:grid;grid-template-columns:1fr 1fr}.visitor-question-preview-answer{grid-column:1/-1}}';
+ s.textContent='.candidate-flow,.visitor-v2-overlay{display:none!important}.visitor-question-preview{width:min(900px,100%);margin:0 auto}.visitor-question-preview-bar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:0 0 14px;padding:11px 14px;border:1px dashed #b9cad4;border-radius:14px;background:#f7fafc;color:#64748b;font:600 12px/1.4 Poppins,system-ui,sans-serif}.visitor-question-preview-bar strong{color:#17243f}.visitor-question-preview-tools{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.visitor-question-preview button.preview-tool{border:0;border-radius:10px;padding:8px 12px;font:700 12px Poppins,system-ui,sans-serif;cursor:pointer}.visitor-question-preview button.preview-tool:disabled{opacity:.35;cursor:default}.visitor-question-preview-nav{background:#e9f5f7;color:#176b72}.visitor-question-preview-answer{background:#17243f;color:#fff}.visitor-question-preview-answerbox{margin:0 0 14px;padding:12px 14px;border-radius:14px;background:#eefaf7;color:#176b57;font:700 14px Poppins,system-ui,sans-serif}.visitor-question-preview .choice.selected{outline:3px solid rgba(37,185,197,.28);border-color:#25b9c5}.visitor-question-preview .scramble-bank{margin-top:14px}.visitor-question-preview-loading{width:min(900px,100%);margin:0 auto;padding:36px 24px;text-align:center;color:#64748b;font:700 14px Poppins,system-ui,sans-serif}@media(max-width:520px){.visitor-question-preview-tools{width:100%;display:grid;grid-template-columns:1fr 1fr}.visitor-question-preview-answer{grid-column:1/-1}}';
  document.head.appendChild(s);
+}
+function renderLoading(){
+ if(rendering)return;
+ rendering=true;installStyle();document.body.classList.remove('welcome-mode');
+ root.innerHTML='<section class="screen screen-safe-in screen-safe-ready"><div class="visitor-question-preview-loading">Loading question…</div></section>';
+ rendering=false;
 }
 function optionHtml(q){
  return '<div class="choices">'+(q.choices||[]).map(function(c){return '<button class="choice" type="button" data-value="'+esc(c)+'">'+esc(c)+'</button>'}).join('')+'</div>';
@@ -66,7 +72,7 @@ function scrambleHtml(q){
 }
 function normalHtml(q){return '<p class="prompt">'+esc(q.q||q.prompt)+'</p>'+optionHtml(q)}
 function renderError(message){
- rendering=true;document.body.classList.remove('welcome-mode');
+ rendering=true;installStyle();document.body.classList.remove('welcome-mode');
  root.innerHTML='<section class="screen screen-safe-in screen-safe-ready"><div class="visitor-question-preview"><div class="visitor-question-preview-bar"><strong>Question preview</strong><span>'+esc(requested)+'</span></div><div class="question-card"><p class="prompt">'+esc(message)+'</p></div></div></section>';
  rendering=false;
 }
@@ -104,16 +110,18 @@ window.addEventListener('keydown',function(e){
  if(e.key==='ArrowRight'&&currentIndex>=0&&currentIndex<previewBank.length-1){e.preventDefault();selectIndex(currentIndex+1)}
 });
 
-function markAppReady(){if(appReady)return;appReady=true;renderPreview()}
+renderLoading();
 observer=new MutationObserver(function(){
  if(rendering)return;
- if(!appReady&&(root.querySelector('#welcomeStart')||root.querySelector('.setup-options')||root.querySelector('.question-card')))markAppReady();
- else if(appReady&&!root.querySelector('.visitor-question-preview'))renderPreview();
+ if(!bankReady){
+  if(!root.querySelector('.visitor-question-preview-loading'))renderLoading();
+  return;
+ }
+ if(!root.querySelector('.visitor-question-preview'))renderPreview();
 });
 observer.observe(root,{childList:true,subtree:true});
-setTimeout(markAppReady,1800);
 
-if(typeof window.loadQuestionBank!=='function'){renderError('Question bank loader is not available.');return}
+if(typeof window.loadQuestionBank!=='function'){bankReady=true;renderError('Question bank loader is not available.');return}
 window.loadQuestionBank().then(function(items){
  question=findQuestion(items,requested);buildPreviewBank(items,question);bankReady=true;updateUrl();renderPreview();
 }).catch(function(error){bankReady=true;question=null;renderError(error&&error.message||'Could not load the question bank.')});
