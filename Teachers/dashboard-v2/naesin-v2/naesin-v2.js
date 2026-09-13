@@ -2,8 +2,9 @@
 'use strict';
 
 const VIEW='naesin-v2';
-const REV='R12.1';
+const REV='R12.3';
 const ICON='./naesin-v2/naesin-v2-icon.svg';
+const AUTO_REFRESH_SRC='./naesin-v2/naesin-v2-auto-refresh.js?v=20260913-ar1';
 const PRACTICES=[
   ['vocabulary','단어 학습'],
   ['vocab_test','어휘 문제'],
@@ -15,6 +16,7 @@ const PRACTICES=[
 ];
 
 const state={groups:[],loading:false,loaded:false,error:null};
+let matrixRefreshPromise=null;
 function q(s,r=document){return r.querySelector(s)}
 function qa(s,r=document){return [...r.querySelectorAll(s)]}
 function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
@@ -26,6 +28,7 @@ function dday(date){if(!date)return '—';const end=new Date(`${String(date).sli
 function formatDate(date){if(!date)return '—';const d=new Date(`${String(date).slice(0,10)}T00:00:00`);if(Number.isNaN(d.getTime()))return '—';return d.toLocaleDateString('ko-KR',{month:'numeric',day:'numeric'})}
 function nameOf(s){return s?.korean_name||s?.name||s?.username||'Student'}
 function groupOf(item){return item?.group||item||{}}
+function isActive(){return !!q(`#view-${VIEW}`)?.classList.contains('active')}
 function show(){qa('.workspace>.view').forEach(v=>v.classList.toggle('active',v.id===`view-${VIEW}`));qa('.nav,.mobile-tab').forEach(b=>b.classList.toggle('active',b.dataset.view===VIEW));ensureLoaded()}
 function mountDesktopNav(){const rail=q('.rail');if(!rail||rail.querySelector(`[data-view="${VIEW}"]`))return;const spacer=q('.rail-spacer',rail),btn=document.createElement('button');btn.className='nav';btn.dataset.view=VIEW;btn.innerHTML=`<span class="nav-icon na2-nav-icon"><img src="${ICON}" alt=""></span><span>내신 V2</span>`;btn.addEventListener('click',show);rail.insertBefore(btn,spacer||null)}
 function mountMobileNav(){const tabs=q('.mobile-tabs');if(!tabs||tabs.querySelector(`[data-view="${VIEW}"]`))return;const btn=document.createElement('button');btn.className='mobile-tab';btn.dataset.view=VIEW;btn.innerHTML=`<img class="na2-mobile-icon" src="${ICON}" alt="">내신 V2`;btn.addEventListener('click',show);const apps=q('[data-view="apps"]',tabs);tabs.insertBefore(btn,apps||null)}
@@ -38,8 +41,10 @@ function renderGroups(){const box=q('#na2Tests');if(!box)return;if(!state.groups
 function skillMap(member){const map=new Map();(member?.skills||[]).forEach(s=>map.set(String(s.practice_type||''),s));return map}
 function statCell(row){if(!row||!Number(row.recent_count))return '<td class="na2-stat empty"><strong>—</strong><small>0문항</small></td>';return `<td class="na2-stat"><strong class="${scoreClass(row.recent_accuracy)}">${esc(pct(row.recent_accuracy))}</strong><small>${esc(row.recent_count)}문항</small></td>`}
 function studentRow(member){const skills=skillMap(member),s=member?.student||{},summary=member?.summary||{};return `<tr data-student-id="${esc(member.student_id||s.id||'')}" data-plan-id="${esc(member.plan_id||'')}"><td class="na2-student-cell"><button type="button" class="na2-student-btn" data-student><span>${esc(nameOf(s))}</span><i>›</i></button></td><td class="na2-stat na2-overall"><strong class="${scoreClass(summary.recent150_accuracy)}">${esc(pct(summary.recent150_accuracy))}</strong><small>${esc(summary.recent150_count||0)}문항</small></td>${PRACTICES.map(([k])=>statCell(skills.get(k))).join('')}</tr>`}
-async function loadMatrixInto(test,groupId){const tbody=q('tbody',test);if(!tbody)return;try{const matrix=await window.NaesinV2Data?.loadGroupMatrix?.(groupId),members=Array.isArray(matrix?.members)?matrix.members:[];tbody.innerHTML=members.length?members.map(studentRow).join(''):'<tr><td colspan="9" class="na2-no-students">학생이 없습니다.</td></tr>';qa('[data-student]',tbody).forEach(btn=>btn.addEventListener('click',()=>{const tr=btn.closest('tr');window.NaesinV2StudentDetail?.open?.(tr?.dataset.studentId,tr?.dataset.planId,groupId)}))}catch(e){tbody.innerHTML=`<tr><td colspan="9" class="na2-matrix-error">통계를 불러오지 못했습니다. <button type="button" data-retry-matrix>다시 시도</button></td></tr>`;q('[data-retry-matrix]',tbody)?.addEventListener('click',()=>{window.NaesinV2Data?.invalidateGroupMatrix?.(groupId);tbody.innerHTML='<tr class="na2-matrix-loading"><td colspan="9">학생 통계를 불러오는 중…</td></tr>';loadMatrixInto(test,groupId)})}}
+async function loadMatrixInto(test,groupId,{force=false}={}){const tbody=q('tbody',test);if(!tbody)return;try{const matrix=force?await window.NaesinV2Data?.refreshGroupMatrix?.(groupId):await window.NaesinV2Data?.loadGroupMatrix?.(groupId),members=Array.isArray(matrix?.members)?matrix.members:[];tbody.innerHTML=members.length?members.map(studentRow).join(''):'<tr><td colspan="9" class="na2-no-students">학생이 없습니다.</td></tr>';qa('[data-student]',tbody).forEach(btn=>btn.addEventListener('click',()=>{const tr=btn.closest('tr');window.NaesinV2StudentDetail?.open?.(tr?.dataset.studentId,tr?.dataset.planId,groupId)}))}catch(e){if(force){console.warn('[Naesin V2] silent matrix refresh failed',groupId,e);return}tbody.innerHTML=`<tr><td colspan="9" class="na2-matrix-error">통계를 불러오지 못했습니다. <button type="button" data-retry-matrix>다시 시도</button></td></tr>`;q('[data-retry-matrix]',tbody)?.addEventListener('click',()=>{window.NaesinV2Data?.invalidateGroupMatrix?.(groupId);tbody.innerHTML='<tr class="na2-matrix-loading"><td colspan="9">학생 통계를 불러오는 중…</td></tr>';loadMatrixInto(test,groupId)})}}
+async function refreshVisibleMatrices(){if(!isActive())return{skipped:true};if(matrixRefreshPromise)return matrixRefreshPromise;const root=q(`#view-${VIEW}`)||document,tests=qa('.na2-test',root);if(!tests.length)return{skipped:true};matrixRefreshPromise=Promise.allSettled(tests.map(test=>loadMatrixInto(test,test.dataset.groupId,{force:true}))).finally(()=>{matrixRefreshPromise=null});return matrixRefreshPromise}
 async function ensureLoaded({force=false}={}){if(state.loading)return;if(state.loaded&&!force)return;state.loading=true;state.error=null;renderLoading();try{state.groups=await window.NaesinV2Data?.loadGroups?.({force})||[];state.loaded=true;renderGroups()}catch(e){state.error=e;state.loaded=false;renderError(e.message)}finally{state.loading=false}}
-function mount(){mountDesktopNav();mountMobileNav();mountView();document.addEventListener('click',e=>{if(!e.target.closest('.na2-menu-wrap'))qa('.na2-menu').forEach(m=>m.hidden=true)});window.NaesinV2={show,mount,refresh:()=>ensureLoaded({force:true}),version:'r12.1'};console.info(`[Naesin V2] ${REV} mounted`)}
+function loadAutoRefreshModule(){if(document.querySelector('script[data-na2-auto-refresh]'))return;const script=document.createElement('script');script.src=AUTO_REFRESH_SRC;script.async=false;script.dataset.na2AutoRefresh='1';document.head.appendChild(script)}
+function mount(){mountDesktopNav();mountMobileNav();mountView();document.addEventListener('click',e=>{if(!e.target.closest('.na2-menu-wrap'))qa('.na2-menu').forEach(m=>m.hidden=true)});window.NaesinV2={show,mount,refresh:()=>ensureLoaded({force:true}),refreshVisibleMatrices,isActive,version:'r12.3'};loadAutoRefreshModule();console.info(`[Naesin V2] ${REV} mounted`)}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',mount,{once:true});else mount();
 })();
