@@ -8,7 +8,7 @@ import {renderMockTestResults} from './mock-test-results.js?v=1.1.2';
 import {confirmMockTestSubmit} from './mock-test-submit.js?v=1.0.0';
 import {mountMockTestHistory,saveMockTestSnapshot} from './mock-test-history.js?v=2.25.99';
 
-const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]));
 const LABELS={vocabulary:'어휘',communication:'대화',grammar:'문법',reading:'독해',constructed_response:'서술형'};
 let activeToken=0;
 let previewPaper=null;
@@ -30,31 +30,22 @@ function mockDiagEnabled(){
     return ['1','true','on','yes'].includes(value)||String(params.get('diag')||'').toLowerCase()==='mock';
   }catch(_){return false}
 }
-function diagnosticFields(entry,plan){
-  const q=entry?.question||{},source=q?.source||{},tracking=q?.tracking||{},metadata=q?.metadata||{};
-  return [
-    ['book',plan?.book_label||'—'],
-    ['pool',LABELS[entry?.bucket]||entry?.bucket||'—'],
-    ['scope',entry?.lesson||'—'],
-    ['unit',entry?.unitId||'—'],
-    ['source',source?.label||source?.code||'—'],
-    ['sourceId',source?.sourceId||metadata?.source_id||metadata?.source_question_id||'—'],
-    ['type',tracking?.questionType||metadata?.mode||q?.form||'—'],
-    ['questionId',tracking?.questionId||q?.masteryKey||q?.id||'—']
-  ];
+function externalScopeRow(entry,plan){
+  const rows=Array.isArray(plan?.group?.scope?.external_passages)?plan.group.scope.external_passages:[];
+  return rows.find(row=>{
+    const lesson=String(row?.lesson||row?.label||row?.unit_label||'');
+    return (entry?.unitId&&String(row?.unit_id||'')===String(entry.unitId))||(entry?.lesson&&lesson===String(entry.lesson));
+  })||null;
 }
-function diagnosticRowHtml(entry,plan,index=null){
-  const prefix=index==null?'':`#${index+1} `;
-  return `<div style="padding:7px 0;border-bottom:1px solid rgba(0,0,0,.08);font:600 11px/1.45 ui-monospace,SFMono-Regular,Consolas,monospace;word-break:break-word"><strong>${esc(prefix)}${esc(LABELS[entry?.bucket]||entry?.bucket||'pool')}</strong> · ${diagnosticFields(entry,plan).map(([k,v])=>`${esc(k)}=${esc(v)}`).join(' · ')}</div>`;
-}
-function paperDiagnosticsHtml(paper,plan){
-  if(!mockDiagEnabled())return'';
-  const availability=Object.entries(paper?.availability||{}).map(([k,v])=>`${LABELS[k]||k}:${v}`).join(' · ');
-  return `<details open style="margin-top:14px;padding:12px;border:1px dashed #8295a1;border-radius:12px;background:rgba(255,255,255,.65)"><summary style="cursor:pointer;font-weight:800">MOCK DIAGNOSTICS · pool totals ${esc(availability)}</summary><div style="margin-top:8px">${(paper?.questions||[]).map((entry,index)=>diagnosticRowHtml(entry,plan,index)).join('')}</div></details>`;
+function diagnosticSource(entry,plan){
+  const q=entry?.question||{},meta=q?.metadata||{},ctx=q?.context||{},external=externalScopeRow(entry,plan);
+  if(external)return String(external.label||external.lesson||external.unit_label||entry?.lesson||'외부지문');
+  return String(meta.source_title||meta.passage_title||ctx.title||plan?.book_label||q?.source?.label||'—');
 }
 function questionDiagnosticsHtml(entry,plan){
   if(!mockDiagEnabled())return'';
-  return `<details open style="margin:0 0 12px;padding:10px;border:1px dashed #8295a1;border-radius:10px;background:rgba(255,255,255,.7)"><summary style="cursor:pointer;font-weight:800">DIAG · ${esc(entry?.lesson||'scope')} · ${esc(LABELS[entry?.bucket]||entry?.bucket||'pool')}</summary>${diagnosticRowHtml(entry,plan)}</details>`;
+  const lesson=entry?.lesson||'범위',source=diagnosticSource(entry,plan),pool=LABELS[entry?.bucket]||entry?.bucket||'pool';
+  return `<div style="margin:0 0 12px;padding:10px 12px;border-radius:10px;background:#111827;color:#fff;font:700 12px/1.4 Poppins,system-ui,sans-serif;display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span style="color:#67e8f9">DIAG</span><span>${esc(lesson)}</span><span style="opacity:.45">•</span><span>${esc(source)}</span><span style="margin-left:auto;opacity:.65">${esc(pool)}</span></div>`;
 }
 
 function seedKey(planId){return`willenaMockPaperSeed:v2:${planId}`}
@@ -204,7 +195,7 @@ export async function renderMockTestPreflight({host,plan,studentId=null,onBack=(
   host.innerHTML='<div class="loading">실전모의고사 시험지를 구성하는 중...</div>';
   try{
     const paper=await buildMockTestPaper({plan,studentId,seed:getSeed(plan.id)});if(token!==activeToken)return null;previewPaper=paper;
-    host.innerHTML=`<div class="mock-preflight"><button class="back" type="button" data-mock-back>← ${esc(plan.book_label||'시험 범위')}</button><div class="heading"><div><h2>실전모의고사</h2><p>${MOCK_TEST_TOTAL}문항 · ${MOCK_TEST_MINUTES}분</p></div></div><section class="mock-summary-card"><div class="mock-summary-head"><div><span class="mock-summary-eyebrow">시험 구성</span><h3 class="mock-summary-title">${esc(plan.exam_name||'현재 시험 범위')}</h3><p class="mock-summary-copy">답안은 마지막에 한 번에 제출하고 채점합니다.</p></div><span class="mock-ready ${paper.ready?'':'is-warning'}">${paper.ready?'준비 완료':'확인 필요'}</span></div>${countsHtml(paper)}${diagnosticsHtml(paper)}${paperDiagnosticsHtml(paper,plan)}</section><div class="mock-actions"><button class="review-primary" type="button" data-mock-start ${paper.ready?'':'disabled'}>시험 시작</button></div></div>`;
+    host.innerHTML=`<div class="mock-preflight"><button class="back" type="button" data-mock-back>← ${esc(plan.book_label||'시험 범위')}</button><div class="heading"><div><h2>실전모의고사</h2><p>${MOCK_TEST_TOTAL}문항 · ${MOCK_TEST_MINUTES}분</p></div></div><section class="mock-summary-card"><div class="mock-summary-head"><div><span class="mock-summary-eyebrow">시험 구성</span><h3 class="mock-summary-title">${esc(plan.exam_name||'현재 시험 범위')}</h3><p class="mock-summary-copy">답안은 마지막에 한 번에 제출하고 채점합니다.</p></div><span class="mock-ready ${paper.ready?'':'is-warning'}">${paper.ready?'준비 완료':'확인 필요'}</span></div>${countsHtml(paper)}${diagnosticsHtml(paper)}</section><div class="mock-actions"><button class="review-primary" type="button" data-mock-start ${paper.ready?'':'disabled'}>시험 시작</button></div></div>`;
     host.querySelector('[data-mock-back]').onclick=onBack;host.querySelector('[data-mock-start]').onclick=()=>startExam({host,plan,paper,studentId,onBack});
     await mountMockTestHistory({host,plan,onOpenHistory:()=>renderMockTestPreflight({host,plan,studentId,onBack})});
     return paper;
