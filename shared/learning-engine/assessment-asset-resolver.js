@@ -17,6 +17,7 @@ var registry={
   book:{url:NOTO+'emoji_u1f4d6.svg'},
   'soccer-ball':{url:NOTO+'emoji_u26bd.svg'},
   car:{url:NOTO+'emoji_u1f697.svg'},
+  bus:{url:NOTO+'emoji_u1f68c.svg'},
   chair:{url:NOTO+'emoji_u1fa91.svg'},
   running:{url:NOTO+'emoji_u1f3c3.svg'},
   walking:{url:NOTO+'emoji_u1f6b6.svg'},
