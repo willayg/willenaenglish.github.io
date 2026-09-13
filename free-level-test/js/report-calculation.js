@@ -46,10 +46,48 @@ function probabilities(rows,maxLevel){
  var total=weighted.reduce(function(sum,row){return sum+row.w},0)||1;
  return weighted.map(function(row){return{level:row.level,pct:row.w/total*100}}).sort(function(a,b){return b.pct-a.pct});
 }
+function canonicalApi(){return typeof globalThis!=='undefined'?globalThis.WillenaAssessmentCalculation:null}
+function confidencePercent(value){
+ var key=String(value||'').toLowerCase();
+ if(key==='teacher')return 96;
+ if(key==='high')return 90;
+ if(key==='medium')return 74;
+ if(key==='low')return 58;
+ return 0;
+}
+function canonicalSnapshot(attempt,responses){
+ var metadata=attempt&&attempt.metadata&&typeof attempt.metadata==='object'?attempt.metadata:{};
+ var stored=metadata.placement_calculation&&typeof metadata.placement_calculation==='object'?metadata.placement_calculation:null;
+ var version=String(metadata.calculation_version||stored&&stored.calculation_version||'');
+ if(version!=='placement-v1')return null;
+ if(stored&&stored.calculation_version==='placement-v1')return stored;
+ var api=canonicalApi();
+ if(!api||typeof api.calculate!=='function')return null;
+ try{return api.calculate({responses:responses,attempt:attempt,minimumComputerSkills:5})}catch(_){return null}
+}
+function canonicalSkill(result){
+ if(!result)return null;
+ return{
+  assessed:result.assessed===true,
+  rows:[],
+  level:Number.isFinite(Number(result.level))?clampLevel(result.level,1):null,
+  plus:false,
+  confidence:confidencePercent(result.confidence),
+  accuracy:Number.isFinite(Number(result.accuracy))?Number(result.accuracy):null,
+  anchor:null,
+  estimate:Number.isFinite(Number(result.estimate))?Number(result.estimate):null,
+  source:result.source||'placement-v1',
+  evidence_count:Number(result.items)||0,
+  speaking_confidence:result.skill==='speaking'?result.confidence:null,
+  teacher_level:Number.isFinite(Number(result.teacher_level))?Number(result.teacher_level):null
+ };
+}
 function create(options){
  options=options||{};
  var attempt=options.attempt||{};
- var evidence=Array.isArray(options.evidence)?options.evidence.slice():evidenceFromResponses(options.responses);
+ var rawResponses=Array.isArray(options.responses)?options.responses:[];
+ var evidence=Array.isArray(options.evidence)?options.evidence.slice():evidenceFromResponses(rawResponses);
+ var canonical=canonicalSnapshot(attempt,rawResponses);
  function levelFromRows(rows){
   if(!rows.length)return clampLevel(attempt.recommended_level||attempt.display_level,1);
   var highest=Math.min(MAX_LEVEL,Math.max.apply(null,rows.map(function(row){return Number(row.level)||1}).concat([1])));
@@ -95,12 +133,17 @@ function create(options){
   return clampLevel(Math.floor(scores.reduce(function(sum,x){return sum+x},0)/scores.length),1);
  }
  function overall(){
+  if(canonical&&canonical.ready&&Number.isFinite(Number(canonical.final_level)))return clampLevel(canonical.final_level,1);
   var fromEvidence=evidenceOverall();
   if(fromEvidence)return fromEvidence;
   var stored=Number(attempt.recommended_level||attempt.display_level);
   return Number.isFinite(stored)&&stored>0?clampLevel(stored,1):levelFromRows(evidence);
  }
  function estimate(skill){
+  if(canonical&&canonical.skills&&canonical.skills[skill]){
+   var canonicalResult=canonicalSkill(canonical.skills[skill]);
+   if(canonicalResult)return canonicalResult;
+  }
   if(skill==='speaking'){
    var savedSpeaking=speakingFromAttempt();
    if(savedSpeaking)return savedSpeaking;
@@ -125,7 +168,7 @@ function create(options){
   var confidence=Math.round(Math.min(92,42+rows.length*7+fit.pct*.15));
   return{assessed:true,rows:rows,level:level,plus:plus,confidence:confidence,accuracy:accuracy,anchor:anchor};
  }
- return{attempt:attempt,evidence:evidence,MAX_LEVEL:MAX_LEVEL,assessed:ASSESSED_SKILLS.slice(),all:ALL_SKILLS.slice(),skillFor:skillFor,overall:overall,estimate:estimate,levelFromRows:levelFromRows};
+ return{attempt:attempt,evidence:evidence,canonical:canonical,MAX_LEVEL:MAX_LEVEL,assessed:ASSESSED_SKILLS.slice(),all:ALL_SKILLS.slice(),skillFor:skillFor,overall:overall,estimate:estimate,levelFromRows:levelFromRows};
 }
 return{MAX_LEVEL:MAX_LEVEL,ASSESSED_SKILLS:ASSESSED_SKILLS,ALL_SKILLS:ALL_SKILLS,skillFor:skillFor,evidenceFromResponses:evidenceFromResponses,create:create};
 });
