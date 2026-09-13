@@ -1,0 +1,23 @@
+/* Dashboard rev1.01 compact path layout.
+   Loaded after the legacy dashboard styles. !important is intentional here:
+   students/dashboard.html contains legacy inline <style> rules for .node spacing. */
+@media (min-width:700px){
+  .page{width:min(100%,760px)!important}
+  .hero{padding:12px 10px 16px!important}
+  .path-stage{min-height:790px!important}
+  .path-layout{padding:22px 18px 8px!important}
+  .node{width:220px!important;margin-bottom:-36px!important}
+  .node:nth-child(odd){margin-left:6%!important;margin-right:auto!important}
+  .node:nth-child(even){margin-left:auto!important;margin-right:6%!important}
+  .node-card{width:204px!important;height:204px!important}
+  .node.pink .node-card,.node.cyan .node-card{border-width:24px!important}
+  .node-card:after{inset:-24px!important;padding:24px!important}
+}
+@media (min-width:980px){
+  .page{width:min(100%,760px)!important}
+  .path-stage{min-height:770px!important}
+  .path-layout{padding:20px 18px 8px!important}
+  .node{width:220px!important;margin-bottom:-42px!important}
+  .node:nth-child(odd){margin-left:7%!important}
+  .node:nth-child(even){margin-right:7%!important}
+}
