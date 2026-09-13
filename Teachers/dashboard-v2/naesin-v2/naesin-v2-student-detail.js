@@ -3,11 +3,13 @@
 const LABELS={vocabulary:'단어 학습',vocab_test:'어휘 문제',grammar:'문법',sentences:'본문',communication:'의사소통',reading:'독해',constructed_response:'서술형'};
 const ORDER=['vocabulary','vocab_test','grammar','sentences','communication','reading','constructed_response'];
 let current={studentId:null,planId:null,groupId:null,data:null,wrongData:null,wrongLoading:false,grammarData:null,grammarLoading:false,tab:'lessons'};
+let refreshPromise=null;
 const q=(s,r=document)=>r.querySelector(s),qa=(s,r=document)=>[...r.querySelectorAll(s)];
 const esc=v=>String(v??'').replace(/[&<>\"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[c])),n=v=>Number.isFinite(Number(v))?Number(v):0,maybePct=v=>v==null?'—':`${Math.round(Number(v)||0)}%`,scoreClass=v=>v==null?'':Number(v)>=80?'score-good':Number(v)>=50?'score-mid':'score-low',examType=v=>v==='final'?'기말고사':'중간고사',nameOf=s=>s?.korean_name||s?.name||s?.username||'Student';
 function fmtDate(v){if(!v)return'—';const d=new Date(v);return Number.isNaN(d.getTime())?'—':d.toLocaleString('ko-KR',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'})}
 function mount(){if(q('#na2DetailBg'))return;const bg=document.createElement('div');bg.className='na2-detail-bg';bg.id='na2DetailBg';bg.innerHTML=`<section class="na2-detail-modal" role="dialog" aria-modal="true" aria-labelledby="na2DetailName"><header class="na2-detail-head"><div class="na2-detail-title"><h2 id="na2DetailName">학생</h2><p id="na2DetailMeta"></p></div><button class="na2-detail-close" id="na2DetailClose" type="button" aria-label="닫기">×</button></header><nav class="na2-detail-tabs" id="na2DetailTabs"><button type="button" data-tab="lessons" class="active">레슨 진도</button><button type="button" data-tab="summary">요약</button><button type="button" data-tab="wrong">오답</button><button type="button" data-tab="activity">활동</button><button type="button" data-tab="grammar">문법 패턴</button></nav><div class="na2-detail-body" id="na2DetailBody"><div class="na2-detail-loading">불러오는 중…</div></div></section>`;document.body.appendChild(bg);q('#na2DetailClose').onclick=close;bg.addEventListener('click',e=>{if(e.target===bg)close()});q('#na2DetailTabs').addEventListener('click',e=>{const b=e.target.closest('[data-tab]');if(b)setTab(b.dataset.tab)});document.addEventListener('keydown',e=>{if(e.key==='Escape'&&bg.classList.contains('open'))close()})}
 function openBg(){mount();q('#na2DetailBg').classList.add('open');document.body.classList.add('na2-modal-open')}
+function isOpen(){return !!q('#na2DetailBg')?.classList.contains('open')}
 function close(){q('#na2DetailBg')?.classList.remove('open');document.body.classList.remove('na2-modal-open')}
 function setHeader(data){const student=data?.student||{},group=data?.group||{},stats=data?.stats||{};q('#na2DetailName').textContent=nameOf(student);q('#na2DetailMeta').textContent=[group.school,group.term?`${group.term}학기 ${examType(group.exam_type)}`:null,group.book_label||stats.book_label].filter(Boolean).join(' · ')}
 function metricCard(value,label,sub='',cls=''){return `<div class="na2-kpi"><strong class="${esc(cls)}">${esc(value)}</strong><span>${esc(label)}</span>${sub?`<small>${esc(sub)}</small>`:''}</div>`}
@@ -30,7 +32,40 @@ async function renderWrong(){const body=q('#na2DetailBody');if(current.wrongData
 function grammarWrongCard(r){const ctx=contextText(r.context);return `<article class="na2-grammar-wrong"><div class="na2-exact-meta"><span>${esc(r.lesson||'Lesson')}</span><span>${esc(typeKo(r.question_type||'grammar'))}</span>${n(r.wrong_count)>1?`<span class="repeat">${n(r.wrong_count)}회 오답</span>`:''}</div><p>${esc(r.prompt||'Recorded question')}</p>${ctx?`<div class="na2-exact-context">${esc(ctx)}</div>`:''}<div class="na2-answer-row"><div class="na2-answer-box"><small>학생 답</small><strong>${esc(answer(r.selected_answer))}</strong></div><div class="na2-answer-box ok"><small>정답</small><strong>${esc(answer(r.correct_answer))}</strong></div></div></article>`}
 function paintGrammar(){const body=q('#na2DetailBody'),d=current.grammarData||{},rows=Array.isArray(d.targets)?d.targets:[],wrongs=Array.isArray(d.wrong_questions)?d.wrong_questions:[];if(!rows.length){body.innerHTML='<div class="na2-detail-empty">이 시험 범위에 연결된 문법 패턴 데이터가 없습니다.</div>';return}body.innerHTML=`<div class="na2-grammar-head"><div><h3>문법 패턴</h3><p>최근 = 이 패턴의 최신 50개 고유 문제 · 같은 문제는 가장 최근 답만 반영</p></div><span>${rows.length}개 패턴</span></div><div class="na2-grammar-list">${rows.map((r,i)=>`<button type="button" class="na2-grammar-row" data-grammar-index="${i}"><span class="na2-grammar-copy"><b>${esc(r.target)}</b><small>${esc(r.lesson||'')}</small></span><span class="na2-grammar-metric"><b class="${scoreClass(r.recent_accuracy)}">${esc(maybePct(r.recent_accuracy))}</b><small>최근 ${n(r.recent_count)}문항</small></span><span class="na2-grammar-metric"><b class="${scoreClass(r.unique_accuracy)}">${esc(maybePct(r.unique_accuracy))}</b><small>전체 ${n(r.unique_count)}문항</small></span><span class="na2-grammar-metric wrong"><b>${n(r.current_wrong)}</b><small>현재 오답</small></span><span class="na2-grammar-metric repeat"><b>${n(r.repeated_wrong)}</b><small>반복 오답</small></span><i>›</i></button><div class="na2-grammar-expand" data-grammar-expand="${i}" hidden></div>`).join('')}</div>`;qa('[data-grammar-index]',body).forEach(btn=>btn.addEventListener('click',()=>{const i=Number(btn.dataset.grammarIndex),r=rows[i],panel=q(`[data-grammar-expand="${i}"]`,body);if(!panel)return;const matching=wrongs.filter(w=>String(w.lesson)===String(r.lesson)&&String(w.target)===String(r.target));const opening=panel.hidden;qa('.na2-grammar-expand',body).forEach(x=>x.hidden=true);if(opening){panel.innerHTML=matching.length?matching.map(grammarWrongCard).join(''):'<div class="na2-grammar-no-wrong">현재 남아 있는 오답이 없습니다.</div>';panel.hidden=false}}))}
 async function renderGrammar(){const body=q('#na2DetailBody');if(current.grammarData){paintGrammar();return}if(current.grammarLoading)return;current.grammarLoading=true;body.innerHTML='<div class="na2-detail-loading">문법 패턴을 불러오는 중…</div>';try{const data=await window.NaesinV2Data?.loadGrammarTracking?.(current.groupId,current.studentId);if(current.tab!=='grammar')return;current.grammarData=data;paintGrammar()}catch(e){if(current.tab!=='grammar')return;body.innerHTML=`<div class="na2-detail-error"><b>문법 패턴을 불러오지 못했습니다.</b><span>${esc(e.message||'Unknown error')}</span><button type="button" data-grammar-retry>다시 시도</button></div>`;q('[data-grammar-retry]',body)?.addEventListener('click',()=>{window.NaesinV2Data?.invalidateGrammarTracking?.(current.groupId,current.studentId);current.grammarData=null;renderGrammar()})}finally{current.grammarLoading=false}}
-function setTab(tab){current.tab=tab||'lessons';qa('#na2DetailTabs [data-tab]').forEach(b=>b.classList.toggle('active',b.dataset.tab===current.tab));if(!current.data)return;if(current.tab==='lessons')renderLessons();else if(current.tab==='summary')renderSummary();else if(current.tab==='wrong')renderWrong();else if(current.tab==='activity')renderActivity();else if(current.tab==='grammar')renderGrammar()}
+function renderCurrentTab(){if(!current.data)return;if(current.tab==='lessons')renderLessons();else if(current.tab==='summary')renderSummary();else if(current.tab==='wrong')renderWrong();else if(current.tab==='activity')renderActivity();else if(current.tab==='grammar')renderGrammar()}
+function setTab(tab){current.tab=tab||'lessons';qa('#na2DetailTabs [data-tab]').forEach(b=>b.classList.toggle('active',b.dataset.tab===current.tab));renderCurrentTab()}
+async function refreshCurrent(){
+  if(!isOpen()||!current.planId)return{skipped:true};
+  if(refreshPromise)return refreshPromise;
+  const snapshot={studentId:current.studentId,planId:current.planId,groupId:current.groupId,tab:current.tab};
+  const body=q('#na2DetailBody'),scrollTop=body?.scrollTop||0;
+  refreshPromise=(async()=>{
+    const jobs=[window.NaesinV2Data?.refreshStudentOverview?.(snapshot.planId)];
+    if(snapshot.tab==='wrong'&&!current.wrongLoading)jobs.push(window.NaesinV2Data?.refreshWrongDetail?.(snapshot.studentId,snapshot.planId));
+    else if(snapshot.tab==='grammar'&&!current.grammarLoading)jobs.push(window.NaesinV2Data?.refreshGrammarTracking?.(snapshot.groupId,snapshot.studentId));
+    const results=await Promise.allSettled(jobs);
+    if(!isOpen()||String(current.planId)!==String(snapshot.planId))return{stale:true};
+    if(results[0]?.status==='fulfilled'&&results[0].value){current.data=results[0].value;setHeader(current.data)}
+    if(snapshot.tab==='wrong'){
+      const extra=results[1];
+      if(extra?.status==='fulfilled')current.wrongData=extra.value;
+    }else if(current.wrongData){
+      current.wrongData=null;
+      window.NaesinV2Data?.invalidateWrongDetail?.(snapshot.studentId,snapshot.planId);
+    }
+    if(snapshot.tab==='grammar'){
+      const extra=results[1];
+      if(extra?.status==='fulfilled')current.grammarData=extra.value;
+    }else if(current.grammarData){
+      current.grammarData=null;
+      window.NaesinV2Data?.invalidateGrammarTracking?.(snapshot.groupId,snapshot.studentId);
+    }
+    renderCurrentTab();
+    requestAnimationFrame(()=>{const fresh=q('#na2DetailBody');if(fresh)fresh.scrollTop=scrollTop});
+    return{updated:true,tab:current.tab};
+  })().catch(error=>{console.warn('[Naesin V2 Student Detail] silent refresh failed',error);return{error:true}}).finally(()=>{refreshPromise=null});
+  return refreshPromise;
+}
 async function open(studentId,planId,groupId){current={studentId,planId,groupId,data:null,wrongData:null,wrongLoading:false,grammarData:null,grammarLoading:false,tab:'lessons'};openBg();q('#na2DetailName').textContent='학생';q('#na2DetailMeta').textContent='불러오는 중…';qa('#na2DetailTabs [data-tab]').forEach(b=>b.classList.toggle('active',b.dataset.tab==='lessons'));q('#na2DetailBody').innerHTML='<div class="na2-detail-loading">학생 통계를 불러오는 중…</div>';try{const data=await window.NaesinV2Data?.loadStudentOverview?.(planId);if(String(current.planId)!==String(planId))return;current.data=data;setHeader(data);renderLessons()}catch(e){if(String(current.planId)!==String(planId))return;q('#na2DetailBody').innerHTML=`<div class="na2-detail-error"><b>학생 정보를 불러오지 못했습니다.</b><span>${esc(e.message||'Unknown error')}</span><button type="button" id="na2DetailRetry">다시 시도</button></div>`;q('#na2DetailRetry')?.addEventListener('click',()=>{window.NaesinV2Data?.invalidateStudentOverview?.(planId);open(studentId,planId,groupId)})}}
-window.NaesinV2StudentDetail={open,close,version:'r12.2'};
+window.NaesinV2StudentDetail={open,close,refreshCurrent,isOpen,version:'r12.3'};
 })();
