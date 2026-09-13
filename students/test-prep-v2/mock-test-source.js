@@ -1,4 +1,5 @@
 import {resolveContentIds,loadStoredSkill,loadStoredWritten} from './content-source.js?v=2.24.3';
+import {loadVocabularyTest} from './vocab-test-source.js?v=2.14.0';
 import {FORMS} from './question-model.js';
 
 export const MOCK_TEST_BLUEPRINT=Object.freeze({
@@ -16,7 +17,6 @@ const CORE_BUCKETS=['vocabulary','communication','grammar','reading'];
 const SECTION_ORDER=[...CORE_BUCKETS,'constructed_response'];
 const LABELS={vocabulary:'어휘',communication:'대화',grammar:'문법',reading:'독해',constructed_response:'서술형'};
 const UNDERLINE_KEYS=new Set(['underlined','underlined_spans']);
-const VOCAB_FORMS=new Set([FORMS.choice,FORMS.multi,FORMS.write,FORMS.multipart,FORMS.correction,FORMS.identifiedCorrection]);
 
 const text=v=>String(v??'').trim();
 const canonicalId=q=>text(q?.tracking?.questionId||q?.masteryKey||q?.id);
@@ -52,17 +52,22 @@ function objectiveQuestion(q){
   if(choices.length<2||!answers.length||!text(q?.prompt)||!underlineLooksRenderable(q))return false;
   return answers.every(a=>{const n=Number(a);return Number.isInteger(n)&&n>=1&&n<=choices.length});
 }
-function storedVocabQuestion(q){
+function vocabQuestion(q){
   const answers=Array.isArray(q?.answer)?q.answer:[];
-  return q?.skill==='vocabulary'&&VOCAB_FORMS.has(q?.form)&&answers.some(a=>text(a))&&!!text(q?.prompt)&&underlineLooksRenderable(q);
+  if(!text(q?.prompt)||!answers.some(a=>text(a))||!underlineLooksRenderable(q))return false;
+  if(q?.form===FORMS.choice||q?.form===FORMS.multi){
+    const choices=Array.isArray(q?.choices)?q.choices:[];
+    return choices.length>=2&&answers.every(a=>{const n=Number(a);return Number.isInteger(n)&&n>=1&&n<=choices.length});
+  }
+  return [FORMS.write,FORMS.multipart,FORMS.correction,FORMS.identifiedCorrection].includes(q?.form);
 }
 function vocabFamily(q){
   const type=questionType(q);
   if(['expression_usage_mismatch','incorrect_usage'].includes(type))return'usage';
-  if(['vocab_definition_choice','definition_sentence_match','expression_definition','definition_mismatch','vocab_definition','word_definition','definition_blank_write','vocab_definition_initial_write','vocab_definition_context_write'].includes(type))return'definition';
-  if(['blank_choice','common_blank_choice','common_blank_write','bilingual_blank_choice','bilingual_blank_write','expression_blank_choice','dialogue_blank_choice'].includes(type))return'blank';
-  if(['vocab_relation_odd_one_out','vocab_relation_write','relation_completion_write'].includes(type))return'relation';
-  if(['meaning_mismatch','reference_word_choice','word_meaning_odd_one_out','vocabulary_context','underlined_meaning','underlined_implication','word_meaning'].includes(type))return'meaning';
+  if(['vocab_definition_choice','definition_sentence_match','expression_definition','definition_mismatch','vocab_definition','word_definition','definition_blank_write','vocab_definition_initial_write','vocab_definition_context_write','vocab_definition_match','vocab_definition_write','vocab_false_definition_spot','vocab_correct_definition_spot'].includes(type))return'definition';
+  if(['blank_choice','common_blank_choice','common_blank_write','bilingual_blank_choice','bilingual_blank_write','expression_blank_choice','dialogue_blank_choice','vocab_context_bilingual_choice','vocab_context_choice_generated','vocab_source_context_choice','vocab_source_context_write'].includes(type))return'blank';
+  if(['vocab_relation_odd_one_out','vocab_relation_write','relation_completion_write','word_relation_completion'].includes(type))return'relation';
+  if(['meaning_mismatch','reference_word_choice','word_meaning_odd_one_out','vocabulary_context','underlined_meaning','underlined_implication','word_meaning','vocab_ko_en_choice','vocab_ko_en_write'].includes(type))return'meaning';
   if(type==='expression_replacement')return'replacement';
   return type||q?.form||'other';
 }
@@ -94,20 +99,16 @@ function rowSections(plan,row){
 }
 function entry(bucket,lesson,unitId,question){return{bucket,lesson:String(lesson),unitId:String(unitId),question}}
 
-async function loadStoredVocab(unitId){
-  const questions=await loadStoredSkill(unitId,'vocabulary',{trustedOnly:true,includeText:true});
-  return questions.filter(storedVocabQuestion);
-}
 async function loadRowPools(plan,row){
   const lesson=text(row?.lesson);if(!lesson)return{entries:[],errors:[]};
   const sections=rowSections(plan,row),ids=await resolveContentIds(plan,lesson),unitId=ids?.unitId;
   if(!unitId)return{entries:[],errors:[]};
   const jobs=[];
   const add=(bucket,promise)=>jobs.push(promise.then(qs=>({entries:(qs||[]).map(q=>entry(bucket,lesson,unitId,q)),error:null})).catch(e=>({entries:[],error:{lesson,bucket,message:e?.message||String(e)}})));
-  if(sections.has('vocabulary')||sections.has('vocab_test'))add('vocabulary',loadStoredVocab(unitId));
-  if(sections.has('communication'))add('communication',loadStoredSkill(unitId,'communication',{trustedOnly:true}).then(qs=>qs.filter(objectiveQuestion)));
-  if(sections.has('grammar'))add('grammar',loadStoredSkill(unitId,'grammar',{trustedOnly:true}).then(qs=>qs.filter(objectiveQuestion)));
-  if(sections.has('reading'))add('reading',loadStoredSkill(unitId,'reading',{trustedOnly:true}).then(qs=>qs.filter(objectiveQuestion)));
+  if(sections.has('vocabulary')||sections.has('vocab_test'))add('vocabulary',loadVocabularyTest(unitId,{count:1000}).then(qs=>qs.filter(vocabQuestion)));
+  if(sections.has('communication'))add('communication',loadStoredSkill(unitId,'communication').then(qs=>qs.filter(objectiveQuestion)));
+  if(sections.has('grammar'))add('grammar',loadStoredSkill(unitId,'grammar').then(qs=>qs.filter(objectiveQuestion)));
+  if(sections.has('reading'))add('reading',loadStoredSkill(unitId,'reading').then(qs=>qs.filter(objectiveQuestion)));
   if(sections.has('constructed_response'))add('constructed_response',loadStoredWritten(unitId));
   const parts=await Promise.all(jobs);
   return{entries:parts.flatMap(x=>x.entries),errors:parts.map(x=>x.error).filter(Boolean)};
@@ -178,7 +179,7 @@ export async function buildMockTestPaper({plan,studentId=null,seed=null}={}){
   const ready=selected.length===MOCK_TEST_TOTAL&&coreShortage===0&&unresolvedWritten===0;
   const ordered=orderedPaper(selected).map((e,index)=>({...e,number:index+1}));
   return{
-    version:'1.2.2',seed:paperSeed,planId:String(plan.id),total:ordered.length,ready,questions:ordered,
+    version:'1.2.3',seed:paperSeed,planId:String(plan.id),total:ordered.length,ready,questions:ordered,
     blueprint:{...MOCK_TEST_BLUEPRINT},availability:Object.fromEntries(Object.entries(pools).map(([k,v])=>[k,v.length])),selectedCounts:countsByBucket(ordered),
     writtenFallback:{needed:writtenFallbackNeeded,used:writtenFallbackUsed},shortages:{...shortage,...(unresolvedWritten?{constructed_response_fallback:unresolvedWritten}:{})},loadErrors,labels:{...LABELS}
   };
