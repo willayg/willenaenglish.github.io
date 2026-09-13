@@ -14,7 +14,7 @@ function mount(seed){
   lang:lang,
   state:seed||{current_level:3},
   onChange:function(state){renderState(state)},
-  onVisual:function(detail){showEvent('Visual hook fired — Phase 10 will attach Noto assets here.',detail)},
+  onVisual:function(detail){showEvent('Noto visual hook fired.',detail)},
   onRecord:function(detail){showEvent('Recording hook fired.',detail)},
   onBack:function(state){showEvent('Back hook fired.',state)},
   onComplete:function(state){showEvent('Speaking complete hook fired.',state);renderState(state)}
