@@ -9,6 +9,7 @@ var saveFailed=false;
 var testActive=false;
 var allowPageExit=false;
 var leaveGuardOpen=false;
+var sharedNavigation=null;
 var setupSnapshot={grade:null,years:null,listening:null,length:null};
 window.WillenaLevelTestContext={mode:'student',student:null,setup:setupSnapshot};
 var nativeFetch=window.fetch.bind(window);
@@ -19,12 +20,13 @@ var lastSessionRefresh=0;
 var sessionRefreshTimer=null;
 try{var previous=Number(sessionStorage.getItem('willenaLevelGreeting')||'-1');greetingIndex=(previous+1)%3;sessionStorage.setItem('willenaLevelGreeting',String(greetingIndex))}catch(error){greetingIndex=Math.floor(Math.random()*3)}
 window.fetch=function(input,init){var url=typeof input==='string'?input:(input&&input.url)||'';var resolved=new URL(url,location.href);if(/(?:^|\/)students\/level-test\/js\/app-classic\.js(?:\?|$)/.test(resolved.pathname+resolved.search)||/^\.\/js\/app-classic\.js(?:\?|$)/.test(url)){return nativeFetch('/free-level-test/js/app-classic.js?v=20260731-4',init)}return nativeFetch(input,init)};
-function signin(){allowPageExit=true;location.replace('/students/signin.html?next='+encodeURIComponent('/students/level-test/'))}
+function navigation(){if(sharedNavigation)return sharedNavigation;var owner=window.WillenaAssessmentNavigation;if(owner&&typeof owner.create==='function')sharedNavigation=owner.create({mode:'student',exitUrl:'/students/dashboard.html'});return sharedNavigation}
+function signin(){var nav=navigation();if(nav)nav.permitExit();else allowPageExit=true;location.replace('/students/signin.html?next='+encodeURIComponent('/students/level-test/'))}
 function leaveGuard(){return document.getElementById('leaveGuard')}
-function showLeaveGuard(){if(!testActive||completed||leaveGuardOpen)return;var modal=leaveGuard();if(!modal)return;leaveGuardOpen=true;modal.hidden=false;document.body.style.overflow='hidden';var stay=document.getElementById('leaveGuardStay');if(stay)setTimeout(function(){stay.focus()},0)}
-function hideLeaveGuard(){var modal=leaveGuard();leaveGuardOpen=false;if(modal)modal.hidden=true;document.body.style.overflow=''}
-function activateLeaveGuard(){if(testActive||completed)return;testActive=true;history.pushState({willenaLevelTestGuard:true},'',location.href)}
-function deactivateLeaveGuard(){testActive=false;allowPageExit=true;hideLeaveGuard()}
+function showLeaveGuard(){var nav=navigation();if(nav){nav.show();return}if(!testActive||completed||leaveGuardOpen)return;var modal=leaveGuard();if(!modal)return;leaveGuardOpen=true;modal.hidden=false;document.body.style.overflow='hidden';var stay=document.getElementById('leaveGuardStay');if(stay)setTimeout(function(){stay.focus()},0)}
+function hideLeaveGuard(){var nav=navigation();if(nav){nav.hide();return}var modal=leaveGuard();leaveGuardOpen=false;if(modal)modal.hidden=true;document.body.style.overflow=''}
+function activateLeaveGuard(){var nav=navigation();if(nav){nav.activate();return}if(testActive||completed)return;testActive=true;history.pushState({willenaLevelTestGuard:true},'',location.href)}
+function deactivateLeaveGuard(){var nav=navigation();if(nav){nav.deactivate();return}testActive=false;allowPageExit=true;hideLeaveGuard()}
 window.addEventListener('popstate',function(){if(!testActive||completed||allowPageExit)return;history.pushState({willenaLevelTestGuard:true},'',location.href);showLeaveGuard()});
 window.addEventListener('beforeunload',function(event){if(!testActive||completed||allowPageExit)return;event.preventDefault();event.returnValue=''});
 document.addEventListener('click',function(event){if(event.target&&event.target.id==='leaveGuardStay'){hideLeaveGuard();return}if(event.target&&event.target.id==='leaveGuardExit'){deactivateLeaveGuard();location.href='/students/dashboard.html'}});
