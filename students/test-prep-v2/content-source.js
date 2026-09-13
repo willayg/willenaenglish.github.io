@@ -4,6 +4,7 @@ import {contentDbGet} from '../shared/content-db.js?v=1.0.0';
 const FIELDS='id,source_id,source_question_number,source_page,section,question_type,prompt_text,context,choices,correct_answer,targets,answer_mode,context_type,difficulty,student_source_label,content_status,metadata,book_id,unit_id,replacement_needed,qa_status';
 const TRUSTED_QA=new Set(['published','answer_key_verified','verified','reviewed']);
 const TEXT_FORMS=new Set([FORMS.write,FORMS.multipart,FORMS.correction,FORMS.identifiedCorrection]);
+const WRITTEN_SECTIONS=new Set(['communication','grammar','reading','constructed_response']);
 const idCache=new Map();
 const rowCache=new Map();
 const bookCache=new Map();
@@ -61,7 +62,10 @@ export async function loadStoredSkill(unitId,section,{trustedOnly=false,includeT
 }
 export async function loadStoredWritten(unitId){
   const rows=await rawRows(unitId,'&answer_mode=eq.text');
-  return rows.filter(isAuthoredWritten).map(adaptStored).filter(q=>[FORMS.write,FORMS.multipart,FORMS.correction,FORMS.identifiedCorrection].includes(q.form));
+  return rows
+    .filter(row=>WRITTEN_SECTIONS.has(String(row?.section||'').toLowerCase()))
+    .map(adaptStored)
+    .filter(q=>TEXT_FORMS.has(q.form));
 }
 export function reviewQuestionFromItem(item){
   if(!item?.canonicalId||!item?.content)return null;
