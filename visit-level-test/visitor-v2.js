@@ -1,18 +1,25 @@
 (function(){
 'use strict';
 var VERSION='adaptive-2026-09-v2';
-var overlay=null,speakingLevel=null,startLevel=null,driveTimer=null,lastDrive='';
-window.WillenaVisitorV2Config=window.WillenaVisitorV2Config||{enabled:false,version:VERSION,speakingLevel:null,teacherStartLevel:null};
+var FLOW_VERSION='shared-speaking-phase11';
+var overlay=null,speakingInstance=null,speakingState=null,driveTimer=null,lastDrive='';
+window.WillenaVisitorV2Config=window.WillenaVisitorV2Config||{};
+window.WillenaVisitorV2Config.enabled=false;
+window.WillenaVisitorV2Config.version=VERSION;
+if(typeof window.WillenaVisitorV2Config.bankReady!=='boolean')window.WillenaVisitorV2Config.bankReady=false;
 
 function isKo(){return(document.documentElement.lang||'ko').toLowerCase().indexOf('ko')===0}
-function publicLabel(level){level=Number(level)||1;return level<=2?'Starter '+level:'Public Level '+(level-2)}
 function studentName(){return String(window.WillenaProspectiveCandidate&&window.WillenaProspectiveCandidate.student_name||'').trim()}
+function candidateId(){return String(window.WillenaProspectiveCandidate&&window.WillenaProspectiveCandidate.id||'visitor')}
+function speakingKey(){return'willena_visitor_speaking_v1:'+candidateId()}
 function ensureContext(){
  var ctx=window.WillenaLevelTestContext=window.WillenaLevelTestContext||{mode:'visitor',setup:{}};
  ctx.mode='visitor';
- ctx.setup=Object.assign({},ctx.setup||{},{source:'willena-visitor',visitor_version:VERSION});
+ ctx.setup=Object.assign({},ctx.setup||{},{source:'willena-visitor',visitor_version:VERSION,visitor_flow:FLOW_VERSION});
  return ctx;
 }
+function loadSpeaking(){try{return JSON.parse(sessionStorage.getItem(speakingKey())||'null')}catch(_){return null}}
+function saveSpeaking(state){speakingState=state;try{sessionStorage.setItem(speakingKey(),JSON.stringify(state))}catch(_){}}
 ensureContext();
 
 function installStyle(){
@@ -20,76 +27,63 @@ function installStyle(){
  var style=document.createElement('style');
  style.id='visitor-v2-style';
  style.textContent='\
-.visitor-v2-overlay{position:fixed;inset:0;z-index:100500;background:linear-gradient(180deg,#effcfd 0%,#fff5f8 100%);overflow:auto;padding:18px;font-family:Poppins,system-ui,sans-serif}.visitor-v2-wrap{width:min(900px,100%);margin:0 auto;padding:18px 0 38px}.visitor-v2-card{background:#fff;border:1px solid #dbe8ee;border-radius:30px;padding:clamp(24px,4vw,40px);box-shadow:0 22px 65px rgba(38,66,88,.13)}.visitor-v2-kicker{display:inline-flex;align-items:center;gap:8px;padding:7px 12px;border-radius:999px;background:#eefbfc;color:#178f99;font-size:12px;font-weight:800;letter-spacing:.04em;text-transform:uppercase}.visitor-v2-card h1{margin:14px 0 8px;color:#17243f;font-size:clamp(28px,5vw,42px);line-height:1.15}.visitor-v2-lead{margin:0 0 24px;color:#6d7d96;line-height:1.65;font-weight:500}.visitor-v2-guide{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:18px 0 28px}.visitor-v2-guide div{border:1px solid #e1e9ee;border-radius:18px;padding:14px;background:#fbfdfe}.visitor-v2-guide strong{display:block;color:#17243f;margin-bottom:5px}.visitor-v2-guide span{display:block;color:#71809a;font-size:13px;line-height:1.45}.visitor-v2-label{margin:0 0 10px;color:#17243f;font-weight:800}.visitor-v2-levels{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:9px}.visitor-v2-level{min-height:68px;border:1px solid #d8e4ea;border-radius:16px;background:#fff;color:#17243f;font:800 19px Poppins,system-ui,sans-serif;cursor:pointer;transition:.15s}.visitor-v2-level small{display:block;margin-top:2px;color:#8792a7;font-size:10px;font-weight:700}.visitor-v2-level:hover{transform:translateY(-1px);border-color:#66d7df}.visitor-v2-level.selected{border-color:#25b9c5;background:#effcfd;box-shadow:0 0 0 3px rgba(37,185,197,.12)}.visitor-v2-start{margin-top:24px;padding:18px;border-radius:20px;background:#f8fafc;border:1px solid #e3e9ee;display:flex;align-items:center;justify-content:space-between;gap:14px}.visitor-v2-start-copy strong{display:block;color:#17243f}.visitor-v2-start-copy span{display:block;color:#7a879b;font-size:13px;margin-top:3px}.visitor-v2-stepper{display:flex;align-items:center;gap:10px}.visitor-v2-stepper button{width:42px;height:42px;border:0;border-radius:13px;background:#fff;color:#17243f;font-size:22px;font-weight:800;box-shadow:0 2px 8px rgba(30,50,70,.1);cursor:pointer}.visitor-v2-stepper output{min-width:128px;text-align:center;color:#17243f;font-weight:800}.visitor-v2-actions{display:flex;justify-content:flex-end;margin-top:24px}.visitor-v2-go{min-height:58px;border:0;border-radius:17px;padding:0 25px;background:linear-gradient(135deg,#66d7df,#25b9c5);color:#fff;font:800 16px Poppins,system-ui,sans-serif;cursor:pointer;box-shadow:0 10px 24px rgba(37,185,197,.22)}.visitor-v2-go:disabled{opacity:.45;cursor:not-allowed;box-shadow:none}.visitor-v2-handoff{text-align:center;padding:36px 8px}.visitor-v2-handoff h2{color:#17243f;margin:12px 0 8px}.visitor-v2-handoff p{color:#71809a}.visitor-v2-spinner{width:48px;height:48px;margin:0 auto;border:5px solid #dff4f6;border-top-color:#25b9c5;border-radius:50%;animation:v2spin .8s linear infinite}@keyframes v2spin{to{transform:rotate(360deg)}}@media(max-width:720px){.visitor-v2-guide{grid-template-columns:1fr 1fr}.visitor-v2-levels{grid-template-columns:repeat(4,minmax(0,1fr))}.visitor-v2-start{align-items:flex-start;flex-direction:column}.visitor-v2-stepper{width:100%;justify-content:space-between}}';
+.visitor-v2-overlay{position:fixed;inset:0;z-index:100500;background:linear-gradient(180deg,#effcfd 0%,#fff5f8 100%);overflow:auto;padding:18px;font-family:Poppins,system-ui,sans-serif}.visitor-v2-wrap{width:min(1020px,100%);margin:0 auto;padding:18px 0 38px}.visitor-v2-intro{margin:0 auto 14px;padding:15px 18px;border:1px solid #dbe8ee;border-radius:18px;background:rgba(255,255,255,.9);color:#17243f}.visitor-v2-intro strong{display:block;font-size:16px}.visitor-v2-intro span{display:block;margin-top:4px;color:#71809a;font-size:12px;line-height:1.5}.visitor-v2-overlay .willena-speaking-record{display:none}.visitor-v2-overlay .willena-speaking-actions [data-back]{display:none}.visitor-v2-overlay .willena-speaking-actions{display:flex;justify-content:flex-end}.visitor-v2-card{background:#fff;border:1px solid #dbe8ee;border-radius:30px;padding:clamp(24px,4vw,40px);box-shadow:0 22px 65px rgba(38,66,88,.13)}.visitor-v2-handoff{text-align:center;padding:42px 12px}.visitor-v2-handoff h2{color:#17243f;margin:12px 0 8px}.visitor-v2-handoff p{color:#71809a;line-height:1.55}.visitor-v2-spinner{width:48px;height:48px;margin:0 auto;border:5px solid #dff4f6;border-top-color:#25b9c5;border-radius:50%;animation:v2spin .8s linear infinite}.visitor-v2-go{min-height:58px;border:0;border-radius:17px;padding:0 25px;background:linear-gradient(135deg,#66d7df,#25b9c5);color:#fff;font:800 16px Poppins,system-ui,sans-serif;cursor:pointer;box-shadow:0 10px 24px rgba(37,185,197,.22)}@keyframes v2spin{to{transform:rotate(360deg)}}@media(max-width:650px){.visitor-v2-overlay{padding:9px}.visitor-v2-wrap{padding:8px 0 24px}.visitor-v2-intro{padding:11px 13px;margin-bottom:8px}.visitor-v2-intro strong{font-size:14px}.visitor-v2-intro span{font-size:10px}.visitor-v2-overlay .willena-speaking-actions{display:block}.visitor-v2-overlay .willena-speaking-actions [data-complete]{width:100%}}';
  document.head.appendChild(style);
 }
 
-function guideHtml(){
- var ko=isKo();
- var rows=ko?[
-  ['1–2','이름, 인사, What is this? 같은 아주 기본적인 대답'],
-  ['3–4','Where is the pencil? / What is she doing? / What do you like?'],
-  ['5–6','학교 가는 방법, 어제 한 일, 간단한 조언 말하기'],
-  ['7–8','사람 묘사, 경험 말하기, 간단한 이유 설명'],
-  ['9–10','가정 상황, 선택 비교, 조금 길게 설명하기'],
-  ['11–12','의견을 근거와 함께 말하고 복잡한 생각 설명하기']
- ]:[
-  ['1–2','Name, greetings, and very basic answers such as “What is this?”'],
-  ['3–4','Where is the pencil? / What is she doing? / What do you like?'],
-  ['5–6','Routines, yesterday, and simple advice'],
-  ['7–8','Describe a person, talk about experience, give a reason'],
-  ['9–10','Hypothetical situations, compare choices, explain at length'],
-  ['11–12','Support an opinion and explain more complex ideas']
- ];
- return rows.map(function(r){return'<div><strong>Internal '+r[0]+'</strong><span>'+r[1]+'</span></div>'}).join('');
+function destroySpeaking(){if(speakingInstance){speakingInstance.destroy();speakingInstance=null}}
+function introHtml(){
+ var name=studentName();
+ if(isKo())return'<div class="visitor-v2-intro"><strong>'+(name?name+' 학생 말하기 평가':'학생 말하기 평가')+'</strong><span>필요한 질문만 사용하고 답변을 1–5점으로 채점하세요. 앱 추천 레벨을 그대로 사용하거나 컴퓨터 테스트 시작 레벨을 직접 바꿀 수 있습니다.</span></div>';
+ return'<div class="visitor-v2-intro"><strong>'+(name?'Speaking check · '+name:'Student speaking check')+'</strong><span>Use only the prompts you need and score responses from 1–5. Accept the recommended computer-test start level or override it.</span></div>';
 }
-
-function render(){
+function renderSpeaking(){
  installStyle();
+ var module=window.WillenaAssessmentSpeaking;
+ if(!module||typeof module.create!=='function'){
+  console.error('[VisitorPhase11] shared speaking module missing');
+  showStartupError();return;
+ }
+ destroySpeaking();
  if(!overlay){overlay=document.createElement('div');overlay.className='visitor-v2-overlay';document.body.appendChild(overlay)}
- var ko=isKo(),name=studentName();
- overlay.innerHTML='<div class="visitor-v2-wrap"><section class="visitor-v2-card">'+
-  '<span class="visitor-v2-kicker">Visitor test · '+VERSION+'</span>'+
-  '<h1>'+(ko?'선생님 말하기 체크':'Teacher speaking check')+'</h1>'+
-  '<p class="visitor-v2-lead">'+(ko?(name?name+' 학생과 2–4분 정도 영어로 이야기한 뒤, 학생이 <strong>편하게 사용할 수 있는</strong> 가장 높은 내부 레벨을 선택하세요.':'학생과 2–4분 정도 영어로 이야기한 뒤, 학생이 <strong>편하게 사용할 수 있는</strong> 가장 높은 내부 레벨을 선택하세요.'):(name?'Talk with '+name+' in English for about 2–4 minutes. Choose the highest internal level the student can <strong>use comfortably</strong>.':'Talk with the student in English for about 2–4 minutes. Choose the highest internal level they can <strong>use comfortably</strong>.'))+'</p>'+
-  '<div class="visitor-v2-guide">'+guideHtml()+'</div>'+
-  '<p class="visitor-v2-label">'+(ko?'말하기 내부 레벨':'Speaking internal level')+'</p>'+
-  '<div class="visitor-v2-levels">'+Array.from({length:12},function(_,i){var n=i+1;return'<button type="button" class="visitor-v2-level '+(speakingLevel===n?'selected':'')+'" data-v2-level="'+n+'">'+n+'<small>'+publicLabel(n)+'</small></button>'}).join('')+'</div>'+
-  '<div class="visitor-v2-start"><div class="visitor-v2-start-copy"><strong>'+(ko?'컴퓨터 테스트 시작 레벨':'Computer test starting level')+'</strong><span>'+(ko?'기본값은 말하기 레벨입니다. 필요하면 선생님이 조정할 수 있어요.':'Defaults to the speaking level. Adjust it if your overall judgment is different.')+'</span></div><div class="visitor-v2-stepper"><button type="button" data-v2-step="-1" '+(!startLevel||startLevel<=1?'disabled':'')+'>−</button><output>'+(startLevel?'Internal '+startLevel:'—')+'</output><button type="button" data-v2-step="1" '+(!startLevel||startLevel>=12?'disabled':'')+'>+</button></div></div>'+
-  '<div class="visitor-v2-actions"><button type="button" class="visitor-v2-go" id="visitorV2Go" '+(speakingLevel?'':'disabled')+'>'+(ko?'학생 테스트 시작':'Start student test')+'</button></div>'+
-  '</section></div>';
- overlay.querySelectorAll('[data-v2-level]').forEach(function(btn){btn.onclick=function(){speakingLevel=Number(btn.dataset.v2Level);startLevel=speakingLevel;render()}});
- overlay.querySelectorAll('[data-v2-step]').forEach(function(btn){btn.onclick=function(){if(!startLevel)return;startLevel=Math.max(1,Math.min(12,startLevel+Number(btn.dataset.v2Step)));render()}});
- var go=overlay.querySelector('#visitorV2Go');if(go)go.onclick=beginStudentTest;
+ overlay.innerHTML='<div class="visitor-v2-wrap">'+introHtml()+'<div id="visitorSpeakingHost"></div></div>';
+ var seed=loadSpeaking()||{current_level:3};
+ speakingInstance=module.create({
+  host:overlay.querySelector('#visitorSpeakingHost'),
+  lang:isKo()?'ko':'en',
+  state:seed,
+  onChange:function(state){saveSpeaking(state)},
+  onComplete:function(state){saveSpeaking(state);beginStudentTest(state)}
+ });
+ speakingState=speakingInstance.getState();saveSpeaking(speakingState);
 }
 
-function stopDrive(){
- if(driveTimer)clearInterval(driveTimer);
- driveTimer=null;lastDrive='';
-}
-
+function stopDrive(){if(driveTimer)clearInterval(driveTimer);driveTimer=null;lastDrive=''}
 function showStartupError(){
- stopDrive();
- if(!overlay)return;
+ stopDrive();installStyle();
+ if(!overlay){overlay=document.createElement('div');overlay.className='visitor-v2-overlay';document.body.appendChild(overlay)}
+ destroySpeaking();
  overlay.innerHTML='<div class="visitor-v2-wrap"><section class="visitor-v2-card visitor-v2-handoff" role="alert"><h2>'+(isKo()?'테스트를 불러오지 못했어요':'Could not load the test')+'</h2><p>'+(isKo()?'페이지를 새로고침한 뒤 다시 시작해 주세요.':'Please refresh the page and start again.')+'</p><button type="button" class="visitor-v2-go" id="visitorV2Refresh">'+(isKo()?'새로고침':'Refresh')+'</button></section></div>';
  overlay.querySelector('#visitorV2Refresh').onclick=function(){location.reload()};
+}
+function handoff(startLevel){
+ destroySpeaking();
+ if(!overlay)return;
+ overlay.innerHTML='<div class="visitor-v2-wrap"><section class="visitor-v2-card visitor-v2-handoff"><div class="visitor-v2-spinner"></div><h2>'+(isKo()?'학생 테스트를 준비하고 있어요':'Preparing the student test')+'</h2><p>'+(isKo()?'컴퓨터 테스트 시작 레벨: 내부 '+startLevel+'<br>잠시 후 학생에게 기기를 넘겨 주세요.':'Computer test starting level: Internal '+startLevel+'<br>You can hand the device to the student in a moment.')+'</p></section></div>';
 }
 
 function driveSetup(){
  stopDrive();
- var ctx=ensureContext(),candidate=window.WillenaProspectiveCandidate||{};
- var startedAt=Date.now();
+ var ctx=ensureContext(),candidate=window.WillenaProspectiveCandidate||{},startedAt=Date.now();
  driveTimer=setInterval(function(){
   var card=document.querySelector('.question-card');
   if(card){stopDrive();if(overlay){overlay.remove();overlay=null}return}
   if(document.querySelector('#app .error')||Date.now()-startedAt>=45000){showStartupError();return}
-  // Do not start an empty test while the question bank is still loading.
   if(!window.WillenaVisitorV2Config.bankReady)return;
   var actions=[['grade',candidate.setup_grade],['years',0],['listening',1],['length',50]];
   for(var i=0;i<actions.length;i++){
    var key=actions[i][0],value=actions[i][1];if(value==null)continue;
-   var holder=document.querySelector('.setup-options[data-key="'+key+'"]');
-   if(!holder)continue;
+   var holder=document.querySelector('.setup-options[data-key="'+key+'"]');if(!holder)continue;
    var token=key+':'+value;if(lastDrive===token)return;
    var option=holder.querySelector('[data-value="'+value+'"]');
    if(option){lastDrive=token;ctx.setup[key]=Number(value);option.click();return}
@@ -97,20 +91,36 @@ function driveSetup(){
  },80);
 }
 
-function beginStudentTest(){
- if(!speakingLevel||!startLevel)return;
+function beginStudentTest(state){
+ state=state||speakingState||{};
+ var rec=state.recommendation||{},startLevel=Number(state.teacher_selected_start_level),speakingLevel=Number(state.teacher_level)||Number(rec.recommended_level)||startLevel;
+ if(!Number.isFinite(startLevel)||startLevel<1||startLevel>12)return;
+ if(!Number.isFinite(speakingLevel)||speakingLevel<1||speakingLevel>12)speakingLevel=startLevel;
  var cfg=window.WillenaVisitorV2Config;
- cfg.enabled=true;cfg.version=VERSION;cfg.speakingLevel=speakingLevel;cfg.teacherStartLevel=startLevel;
+ cfg.enabled=true;cfg.version=VERSION;cfg.speakingLevel=speakingLevel;cfg.teacherStartLevel=startLevel;cfg.speakingState=state;
  var ctx=ensureContext(),candidate=window.WillenaProspectiveCandidate||{};
  ctx.setup=Object.assign({},ctx.setup||{}, {
-  source:'willena-visitor',visitor_version:VERSION,teacher_prior:true,
-  speaking_level:speakingLevel,teacher_start_level:startLevel,
+  source:'willena-visitor',visitor_version:VERSION,visitor_flow:FLOW_VERSION,teacher_prior:true,
+  speaking_level:speakingLevel,
+  speaking_recommended_level:Number(rec.recommended_level)||null,
+  speaking_estimate:Number(rec.estimate)||null,
+  speaking_confidence:rec.confidence||null,
+  speaking_evidence_count:Number(rec.evidence_count)||0,
+  speaking_evidence:Array.isArray(state.evidence)?state.evidence:[],
+  teacher_speaking_level:Number(state.teacher_level)||null,
+  teacher_start_level:startLevel,
+  teacher_start_overridden:state.teacher_start_overridden===true,
+  teacher_notes:String(state.teacher_notes||''),
   grade:Number(candidate.setup_grade)||null,listening:1,length:50
  });
- try{sessionStorage.setItem('willena_visitor_v2_teacher_assessment',JSON.stringify({version:VERSION,speaking_level:speakingLevel,teacher_start_level:startLevel,at:new Date().toISOString()}))}catch(_){}
- if(overlay){overlay.innerHTML='<div class="visitor-v2-wrap"><section class="visitor-v2-card visitor-v2-handoff"><div class="visitor-v2-spinner"></div><h2>'+(isKo()?'학생 테스트를 준비하고 있어요':'Preparing the student test')+'</h2><p>'+(isKo()?'잠시 후 학생에게 기기를 넘겨 주세요.':'You can hand the device to the student in a moment.')+'</p></section></div>'}
- driveSetup();
+ try{sessionStorage.setItem('willena_visitor_v2_teacher_assessment',JSON.stringify({version:VERSION,flow:FLOW_VERSION,speaking:state,at:new Date().toISOString()}))}catch(_){}
+ handoff(startLevel);
+ var recorder=window.WillenaLevelTestRecorder;
+ if(recorder&&typeof recorder.syncSetup==='function'){
+  recorder.syncSetup().catch(function(error){console.warn('[VisitorPhase11] speaking setup sync failed',error)}).then(driveSetup,driveSetup);
+ }else driveSetup();
 }
 
-window.addEventListener('willena:candidate-ready',function(){setTimeout(render,0)});
+window.addEventListener('willena:candidate-ready',function(){setTimeout(renderSpeaking,0)});
+new MutationObserver(function(){if(speakingInstance)speakingInstance.setLanguage(isKo()?'ko':'en')}).observe(document.documentElement,{attributes:true,attributeFilter:['lang']});
 })();
