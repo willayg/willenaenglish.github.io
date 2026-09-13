@@ -33,7 +33,34 @@ export function createQuestionSession({
   let restoredRouteKey='';
   let grading=false;
   let nextPointerArmed=false;
+  let questionActiveMs=0;
+  let questionActiveTick=0;
+  let questionWallStartedAt=0;
   const routeKey=route=>route?`${route.planId}|${route.lesson}|${route.practice}`:'';
+  const questionIsForeground=()=>!document.hidden&&document.hasFocus();
+
+  function syncQuestionTimer(){
+    const now=performance.now();
+    if(questionActiveTick)questionActiveMs+=Math.max(0,now-questionActiveTick);
+    questionActiveTick=questionWallStartedAt&&questionIsForeground()?now:0;
+  }
+  function startQuestionTimer(){
+    questionActiveMs=0;
+    questionWallStartedAt=Date.now();
+    questionActiveTick=questionIsForeground()?performance.now():0;
+    startedAtState.set(questionWallStartedAt);
+  }
+  function snapshotQuestionTimer(){
+    syncQuestionTimer();
+    return{
+      activeMs:Math.max(0,Math.round(questionActiveMs)),
+      wallMs:Math.max(0,Date.now()-questionWallStartedAt)
+    };
+  }
+  function handleQuestionActivityChange(){if(questionWallStartedAt&&!checkedState.get())syncQuestionTimer()}
+  document.addEventListener('visibilitychange',handleQuestionActivityChange);
+  window.addEventListener('focus',handleQuestionActivityChange);
+  window.addEventListener('blur',handleQuestionActivityChange);
 
   function restoreOnce(){
     const route=currentActivityRoute(),key=routeKey(route);if(!route||!key)return;
@@ -60,7 +87,7 @@ export function createQuestionSession({
     if(!q){clearActivitySnapshotFor(currentActivityRoute());return onFinished()}
     saveActivityPosition(indexState.get());
     grading=false;nextPointerArmed=false;
-    checkedState.set(false);startedAtState.set(Date.now());onBeforeRender(entry,q);
+    checkedState.set(false);startQuestionTimer();onBeforeRender(entry,q);
     root.innerHTML=`${renderHeader(entry,q)}<div class="question-card" id="questionHost"></div>`;
     const host=root.querySelector('#questionHost');
     const renderer=new Renderer(host).render(q,{onChange:(_,has)=>{
@@ -87,6 +114,7 @@ export function createQuestionSession({
     if(grading)return;
     const entry=getEntry(),q=getQuestion(entry),renderer=rendererState.get();if(!q||!renderer)return;
     const response=renderer.getResponse(),btn=document.getElementById(buttonIds.check);if(!btn)return;
+    const timing=snapshotQuestionTimer();
     grading=true;
     const usesAiWilli=q.grading?.aiAllowed&&q.grading?.mode==='ai_semantic_strict';
     btn.disabled=true;btn.textContent=usesAiWilli?aiWilliMessage('grader','waiting'):'Check Answer';renderer.setDisabled(true);
@@ -95,7 +123,10 @@ export function createQuestionSession({
     try{result=await gradeQuestion(q,response)}
     catch(e){grading=false;clearAiWilliStatus(root);renderer.setDisabled(false);btn.disabled=false;throw e}
     clearAiWilliStatus(root);if(!isActive()){grading=false;return}
-    result.responseTimeMs=Date.now()-startedAtState.get();checkedState.set(true);grading=false;nextPointerArmed=false;
+    result.responseTimeMs=timing.activeMs;
+    result.wallResponseTimeMs=timing.wallMs;
+    result.timingVersion='question-active-v1';
+    checkedState.set(true);grading=false;nextPointerArmed=false;
     const answeredIndex=indexState.get();
     if(result.correct)onCorrect(entry,q,result);else onWrong(entry,q,result);
     renderer.showFeedback(result);decorateAiWilliFeedback(root,result);
@@ -111,7 +142,8 @@ export function createQuestionSession({
   async function skip(){
     if(checkedState.get()||grading||!isActive())return;
     const entry=getEntry(),q=getQuestion(entry),renderer=rendererState.get();if(!q)return;
-    const response=renderer?.getResponse()??null,result={correct:false,method:'skipped',responseTimeMs:Date.now()-startedAtState.get()};
+    const timing=snapshotQuestionTimer();
+    const response=renderer?.getResponse()??null,result={correct:false,method:'skipped',responseTimeMs:timing.activeMs,wallResponseTimeMs:timing.wallMs,timingVersion:'question-active-v1'};
     const answeredIndex=indexState.get();onWrong(entry,q,result);
     try{await recordAttempt({question:q,response,result,practiceType:getPracticeType(entry,q),skipped:true,...getAttemptExtras(entry,q,true)})}
     catch(e){console.warn(`[test-prep-v2] ${logLabel} skip tracking failed`,e)}
