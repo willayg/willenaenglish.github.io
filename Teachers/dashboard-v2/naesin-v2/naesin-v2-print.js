@@ -5,4 +5,5 @@ function urlFor(ctx={},autoPdf=false){const q=new URLSearchParams();if(ctx.stude
 function openEditor(ctx){window.open(urlFor(ctx,false),'_blank','noopener')}
 function makePdf(ctx){window.open(urlFor(ctx,true),'_blank')}
 window.NaesinV2Print={openEditor,makePdf,version:'r9.1-p7'};
+const responseTimeScript=document.createElement('script');responseTimeScript.src='./naesin-v2-response-time.js?v=20260914-rt1';responseTimeScript.defer=true;document.head.appendChild(responseTimeScript);
 })();
