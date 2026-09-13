@@ -5,7 +5,6 @@
   const MIN_GOAL = 6;
   const MAX_GOAL = 20;
   const STORAGE_PREFIX = 'willena-daily-journal:v5:';
-  const AUTH_WORKER = 'https://supabase-auth.willena.workers.dev';
   const WRITING_AI_WORKER = 'https://willena-openai-proxy.willena.workers.dev';
 
   const app = document.getElementById('journalApp');
@@ -50,9 +49,13 @@
   function saveLocal() { state.updatedAt = Date.now(); try { localStorage.setItem(key(), JSON.stringify(state)); } catch (_) {} }
   function clearLocal() { try { localStorage.removeItem(key()); } catch (_) {} }
   function show(which) { ['loading','write','review','speak','done','error'].forEach(k => { els[k].hidden = k !== which; }); }
+  function apiFetch(path, options) {
+    const fn = window.WillenaAPI?.fetch ? window.WillenaAPI.fetch.bind(window.WillenaAPI) : window.fetch.bind(window);
+    return fn(path, Object.assign({ credentials:'include', cache:'no-store' }, options || {}));
+  }
 
   async function authenticate() {
-    const r = await fetch(`${AUTH_WORKER}?action=whoami&_=${Date.now()}`, { credentials:'include', cache:'no-store' });
+    const r = await apiFetch('/.netlify/functions/supabase_auth?action=whoami&_=' + Date.now());
     const d = await r.json().catch(() => ({}));
     if (r.ok && d.success && d.user_id) return d.user_id;
     const next = encodeURIComponent(location.pathname + location.search + location.hash);
