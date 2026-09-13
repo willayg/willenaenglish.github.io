@@ -87,7 +87,7 @@ export function createQuestionSession({
     if(!q){clearActivitySnapshotFor(currentActivityRoute());return onFinished()}
     saveActivityPosition(indexState.get());
     grading=false;nextPointerArmed=false;
-    checkedState.set(false);startQuestionTimer();onBeforeRender(entry,q);
+    checkedState.set(false);onBeforeRender(entry,q);
     root.innerHTML=`${renderHeader(entry,q)}<div class="question-card" id="questionHost"></div>`;
     const host=root.querySelector('#questionHost');
     const renderer=new Renderer(host).render(q,{onChange:(_,has)=>{
@@ -102,6 +102,7 @@ export function createQuestionSession({
     checkButton.addEventListener('pointerdown',()=>{if(checkedState.get())nextPointerArmed=true});
     checkButton.addEventListener('keydown',e=>{if(checkedState.get()&&(e.key==='Enter'||e.key===' '))nextPointerArmed=true});
     checkButton.onclick=check;
+    startQuestionTimer();
   }
 
   async function check(){
