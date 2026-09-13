@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>Willena Test Prep v2.25.96</title>
+<title>Willena Test Prep v2.25.97</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -40,6 +40,7 @@ html,body{width:100%;max-width:100%;overflow-x:hidden}
     "/students/test-prep-v2/question-renderer.js?v=2.20.6": "/students/test-prep-v2/question-renderer-accessible.js?v=2.25.93",
     "/students/test-prep-v2/question-renderer.js": "/students/test-prep-v2/question-renderer-accessible.js?v=2.25.93",
     "/students/test-prep-v2/perf-debug.js?v=1.0.0": "/students/test-prep-v2/perf-debug.js?v=1.0.1",
+    "/students/test-prep-v2/mock-test.js?v=1.4.3": "/students/test-prep-v2/mock-test-history-wrapper.js?v=2.25.97",
     "/students/test-prep-v2/sentence-practice-v1.js?v=1.2.0": "/students/test-prep-v2/sentence-practice-v1.js?v=1.3.0",
     "/students/test-prep-v2/tracking-client.js?v=2.17a": "/students/test-prep-v2/tracking-client.js?v=2.17b",
     "/students/test-prep-v2/navigation.js?v=2.21.0": "/students/test-prep-v2/navigation.js?v=2.21.3",
@@ -82,7 +83,7 @@ html,body{width:100%;max-width:100%;overflow-x:hidden}
   <main class="screen" id="screen"><div class="loading">Loading…</div></main>
 </div>
 <nav class="bottom" id="bottom" hidden></nav>
-<div class="app-version">Test Prep · v2.25.96</div>
+<div class="app-version">Test Prep · v2.25.97</div>
 <script src="/students/api-gateway.js?v=2.13b"></script>
 <script src="/js/api-config.js?v=2.13b"></script>
 <script type="module" src="./theme-pips.js?v=2.25.93"></script>
@@ -94,9 +95,9 @@ import {currentRoute} from './navigation.js?v=2.21.3';
 import {installWillenaKeyboard} from '../shared/willena-keyboard.js?v=1.5.0';
 import {installQuestionFlags} from '../shared/question-flags.js?v=1.0.0';
 installWillenaKeyboard({submitSelector:'#bottom button.primary,.vp-next'});
-installQuestionFlags({Renderer:QuestionRenderer,contextProvider:()=>{const t=trackingState(),r=currentRoute?.()||{};return{studentId:t.user?.id||null,planId:r.planId||t.plan?.id||null,lesson:r.lesson||t.lesson||null,practiceType:r.practice||t.practice||null,reviewMode:r.view==='review',appRevision:'2.25.96'};}});
+installQuestionFlags({Renderer:QuestionRenderer,contextProvider:()=>{const t=trackingState(),r=currentRoute?.()||{};return{studentId:t.user?.id||null,planId:r.planId||t.plan?.id||null,lesson:r.lesson||t.lesson||null,practiceType:r.practice||t.practice||null,reviewMode:r.view==='review',appRevision:'2.25.97'};}});
 </script>
-<script type="module" src="./app.js?v=2.25.96"></script>
+<script type="module" src="./app.js?v=2.25.97"></script>
 <script type="module" src="./stats-display-v1.js?v=1.3.1"></script>
 </body>
 </html>
