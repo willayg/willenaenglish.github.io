@@ -124,15 +124,20 @@ function finishPayload(a,completedFrom,totalQuestions){
  if(internal()&&totalQuestions>0&&answers.length!==totalQuestions){
   return Promise.reject(new Error('Recorder state mismatch: '+answers.length+' answers for '+totalQuestions+' questions.'));
  }
- var placement=canonicalPlacement(),level=placement?placement.final_level:parseInternalLevel(),finalAbility=placement?placement.final_ability:level;
+ var placement=canonicalPlacement(),level=placement?placement.final_level:parseInternalLevel();
  if(placement&&level){
   window.WillenaInternalResultLevel=level;
   window.WillenaStoredInternalLevel=level;
   try{sessionStorage.setItem('willena_internal_result_level',String(level))}catch(_){}
  }
  var metadata={completed_from:completedFrom,page_language:document.documentElement.lang||'ko'};
- if(placement){metadata.calculation_version=placement.calculation_version;metadata.placement_calculation=placement}
- return post({action:'finish',attempt_id:a.id,session_token:a.session_token,answers:answers,final_ability:finalAbility,recommended_level:level,display_level:level,duration_seconds:startAt?Math.round((Date.now()-startAt)/1000):null,total_questions:totalQuestions,metadata:metadata});
+ var payload={action:'finish',attempt_id:a.id,session_token:a.session_token,answers:answers,recommended_level:level,display_level:level,duration_seconds:startAt?Math.round((Date.now()-startAt)/1000):null,total_questions:totalQuestions,metadata:metadata};
+ if(placement){
+  metadata.calculation_version=placement.calculation_version;
+  metadata.placement_calculation=placement;
+  payload.final_ability=placement.final_ability;
+ }
+ return post(payload);
 }
 function finishWithStaleRecovery(completedFrom,totalQuestions){
  return ensureAttempt().then(function(a){return finishPayload(a,completedFrom,totalQuestions)}).catch(function(error){
