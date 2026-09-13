@@ -18,7 +18,13 @@ function previewUrl(q){return '/visit-level-test/?question='+encodeURIComponent(
 function qSearch(q){return [sourceKey(q),q?.prompt,q?.q,q?.context,q?.meaning,q?.answerValue,q?.a,q?.stimulus?.text,q?.metadata?.transcript,q?.skill,typeName(q)].map(text).join(' ').toLowerCase()}
 function skillRank(v){const i=SKILL_ORDER.indexOf(text(v));return i<0?99:i}
 
-async function api(url){const r=await fetch(url,{credentials:'include',cache:'no-store'});let j={};try{j=await r.json()}catch{}if(!r.ok)throw Error(j.error||`Request failed (${r.status})`);return j}
+async function api(url){
+  const resolved=window.WillenaAPI?.getApiUrl?window.WillenaAPI.getApiUrl(url):url;
+  const r=await fetch(resolved,{credentials:'include',cache:'no-store'});
+  let j={};try{j=await r.json()}catch{}
+  if(!r.ok)throw Error(j.error||`Request failed (${r.status})`);
+  return j;
+}
 async function requireTeacher(){
   try{
     const who=await api(AUTH+'?action=whoami');
