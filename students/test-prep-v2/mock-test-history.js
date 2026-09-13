@@ -30,7 +30,7 @@ function dateLabel(value){
 }
 function ensureStyle(){
   if(document.querySelector('link[data-mock-history-style]'))return;
-  const link=document.createElement('link');link.rel='stylesheet';link.href='./mock-test-history.css?v=2.25.97';link.dataset.mockHistoryStyle='1';document.head.appendChild(link);
+  const link=document.createElement('link');link.rel='stylesheet';link.href='./mock-test-history.css?v=2.25.100';link.dataset.mockHistoryStyle='1';document.head.appendChild(link);
 }
 export async function saveMockTestSnapshot(planId,snapshot){
   if(!planId||!snapshot?.seed||savedSeeds.has(String(snapshot.seed)))return null;
@@ -38,18 +38,22 @@ export async function saveMockTestSnapshot(planId,snapshot){
   try{return await request(planId,{method:'POST',body:{snapshot}})}catch(e){savedSeeds.delete(String(snapshot.seed));throw e}
 }
 export async function loadMockTestHistory(planId){const d=await request(planId);return Array.isArray(d.tests)?d.tests:[]}
+function rowHtml(t,i){
+  const inner=`<span class="mock-history-date">${esc(dateLabel(t.submittedAt))}</span><strong>${Number(t.correct)||0} / ${Number(t.total)||0}</strong><b>${Number(t.pct)||0}%</b><span class="mock-history-action">${t.reviewable?'시험지 보기 →':'점수 기록만 있음'}</span>`;
+  return t.reviewable?`<button type="button" class="mock-history-row" data-history-index="${i}">${inner}</button>`:`<div class="mock-history-row is-score-only">${inner}</div>`;
+}
 export async function mountMockTestHistory({host,plan,onOpenHistory=()=>{}}={}){
   if(!host||!plan?.id)return;
   ensureStyle();
   const preflight=host.querySelector('.mock-preflight');if(!preflight)return;
   preflight.querySelector('[data-mock-history]')?.remove();
   const section=document.createElement('section');section.className='mock-history';section.dataset.mockHistory='1';section.innerHTML='<div class="mock-history-head"><div><span>지난 모의고사</span><h3>시험 기록</h3></div><small>불러오는 중...</small></div>';
-  preflight.appendChild(section);
+  const actions=preflight.querySelector('.mock-actions');if(actions)preflight.insertBefore(section,actions);else preflight.appendChild(section);
   try{
     const tests=await loadMockTestHistory(plan.id);
     if(!section.isConnected)return;
     if(!tests.length){section.innerHTML='<div class="mock-history-head"><div><span>지난 모의고사</span><h3>시험 기록</h3></div></div><div class="mock-history-empty">아직 완료한 모의고사가 없습니다.</div>';return}
-    section.innerHTML=`<div class="mock-history-head"><div><span>지난 모의고사</span><h3>시험 기록</h3></div><small>${tests.length}회</small></div><div class="mock-history-list">${tests.map((t,i)=>`<button type="button" class="mock-history-row" data-history-index="${i}" ${t.reviewable?'':'disabled'}><span class="mock-history-date">${esc(dateLabel(t.submittedAt))}</span><strong>${Number(t.correct)||0} / ${Number(t.total)||0}</strong><b>${Number(t.pct)||0}%</b><span class="mock-history-action">${t.reviewable?'시험지 보기 →':'점수 기록만 있음'}</span></button>`).join('')}</div>`;
+    section.innerHTML=`<div class="mock-history-head"><div><span>지난 모의고사</span><h3>시험 기록</h3></div><small>${tests.length}회</small></div><div class="mock-history-list">${tests.map(rowHtml).join('')}</div>`;
     section.querySelectorAll('[data-history-index]').forEach(btn=>btn.addEventListener('click',()=>{
       const test=tests[Number(btn.dataset.historyIndex)];if(!test?.reviewable||!test.snapshot)return;
       renderMockTestResults({host,snapshot:test.snapshot,plan,onBack:onOpenHistory});
