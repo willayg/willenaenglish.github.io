@@ -47,6 +47,10 @@ function questionDiagnosticsHtml(entry,plan){
   const lesson=entry?.lesson||'범위',source=diagnosticSource(entry,plan),pool=LABELS[entry?.bucket]||entry?.bucket||'pool';
   return `<div style="margin:0 0 12px;padding:10px 12px;border-radius:10px;background:#111827;color:#fff;font:700 12px/1.4 Poppins,system-ui,sans-serif;display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span style="color:#67e8f9">DIAG</span><span>${esc(lesson)}</span><span style="opacity:.45">•</span><span>${esc(source)}</span><span style="margin-left:auto;opacity:.65">${esc(pool)}</span></div>`;
 }
+function diagnosticQuestionListHtml(paper,plan){
+  if(!mockDiagEnabled())return'';
+  return `<aside class="mock-diag-list" style="position:sticky;top:12px;max-height:calc(100vh - 24px);overflow:auto;padding:14px;border-radius:14px;background:#111827;color:#fff;box-shadow:0 14px 34px rgba(15,23,42,.22)"><div style="font:800 14px/1.2 Poppins,system-ui,sans-serif;margin-bottom:10px;color:#67e8f9">TEST QUESTIONS · ${paper?.total||0}</div>${(paper?.questions||[]).map((entry,index)=>{const lesson=entry?.lesson||'범위',source=diagnosticSource(entry,plan),pool=LABELS[entry?.bucket]||entry?.bucket||'pool',prompt=String(entry?.question?.prompt||'').replace(/\s+/g,' ').trim();return `<button type="button" data-mock-diag-jump="${index}" style="width:100%;display:block;text-align:left;border:0;border-top:1px solid rgba(255,255,255,.12);padding:9px 4px;background:transparent;color:#fff;cursor:pointer;font:600 11px/1.35 Poppins,system-ui,sans-serif"><span style="display:flex;gap:6px;align-items:center"><strong style="color:#67e8f9">#${index+1}</strong><span style="opacity:.7">${esc(pool)}</span></span><span style="display:block;margin-top:3px">${esc(lesson)}</span><span style="display:block;opacity:.72">${esc(source)}</span>${prompt?`<span style="display:block;margin-top:4px;opacity:.48;font-weight:500">${esc(prompt.slice(0,90))}${prompt.length>90?'…':''}</span>`:''}</button>`}).join('')}</aside>`;
+}
 
 function seedKey(planId){return`willenaMockPaperSeed:v2:${planId}`}
 function makeSeed(planId){const raw=globalThis.crypto?.randomUUID?.()||`${Date.now()}-${Math.random()}`;return`${planId}|${raw}`}
@@ -92,6 +96,7 @@ function updateExamChrome(){
   if(answered)answered.textContent=`답변 ${answeredCount(exam)} / ${exam.paper.total}`;
   if(prev)prev.disabled=exam.index<=0;
   if(next)next.textContent=exam.index>=exam.paper.total-1?'시험 제출':'다음';
+  host.querySelectorAll('[data-mock-diag-jump]').forEach((button,i)=>{button.style.background=i===exam.index?'rgba(103,232,249,.14)':'transparent';button.style.borderRadius=i===exam.index?'8px':'0'});
 }
 function tickTimer(){
   const exam=activeExam;if(!exam||exam.finished)return;
@@ -182,10 +187,13 @@ function startExam({host,plan,paper,studentId,onBack}){
   if(activeExam&&!activeExam.finished)stopMockTest();
   activeExam={host,plan,paper,studentId,onBack,index:0,startedAt:Date.now(),endAt:Date.now()+MOCK_TEST_MINUTES*60000,panels:new Map(),renderers:new Map(),responses:new Map(),answered:new Set(),deck:null,timer:null,finished:false};
   lastSubmission=null;installExamGuards();
-  host.innerHTML=`<div class="mock-exam"><div class="mock-exam-top"><button class="back" type="button" data-mock-exit>← 시험 종료</button><div class="mock-timer"><span>남은 시간</span><strong data-mock-timer>${MOCK_TEST_MINUTES}:00</strong></div></div><div class="mock-exam-status"><span class="mock-section-pill" data-mock-section></span><strong data-mock-number></strong></div><div class="progress mock-progress"><i data-mock-progress></i></div><div class="mock-question-card"><div class="mock-question-deck" data-mock-deck></div></div><div class="mock-exam-nav"><button class="review-secondary" type="button" data-mock-prev>이전</button><span data-mock-answered>답변 0 / ${paper.total}</span><button class="review-primary" type="button" data-mock-next>다음</button></div></div>`;
+  const examHtml=`<div class="mock-exam"><div class="mock-exam-top"><button class="back" type="button" data-mock-exit>← 시험 종료</button><div class="mock-timer"><span>남은 시간</span><strong data-mock-timer>${MOCK_TEST_MINUTES}:00</strong></div></div><div class="mock-exam-status"><span class="mock-section-pill" data-mock-section></span><strong data-mock-number></strong></div><div class="progress mock-progress"><i data-mock-progress></i></div><div class="mock-question-card"><div class="mock-question-deck" data-mock-deck></div></div><div class="mock-exam-nav"><button class="review-secondary" type="button" data-mock-prev>이전</button><span data-mock-answered>답변 0 / ${paper.total}</span><button class="review-primary" type="button" data-mock-next>다음</button></div></div>`;
+  if(mockDiagEnabled())host.innerHTML=`<style>.mock-diag-layout{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:18px;align-items:start}.mock-diag-layout>.mock-exam{min-width:0}@media(max-width:980px){.mock-diag-layout{grid-template-columns:1fr}.mock-diag-list{position:static!important;max-height:360px!important;order:2}}</style><div class="mock-diag-layout">${examHtml}${diagnosticQuestionListHtml(paper,plan)}</div>`;
+  else host.innerHTML=examHtml;
   activeExam.deck=host.querySelector('[data-mock-deck]');host.querySelector('[data-mock-exit]').onclick=onBack;
   host.querySelector('[data-mock-prev]').onclick=()=>showQuestion(activeExam.index-1);
   host.querySelector('[data-mock-next]').onclick=()=>{if(!activeExam||activeExam.finished)return;if(activeExam.index>=activeExam.paper.total-1){finishExam('manual');return}showQuestion(activeExam.index+1)};
+  host.querySelectorAll('[data-mock-diag-jump]').forEach(button=>button.onclick=()=>showQuestion(Number(button.dataset.mockDiagJump)||0));
   showQuestion(0);tickTimer();
 }
 
