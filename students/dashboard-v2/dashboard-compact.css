@@ -1,16 +1,16 @@
-/* rev1.02 wide-screen layout override.
-   Goal: wider dashboard on large screens, but tighter vertical spacing between path rings. */
+/* rev1.03 wide-screen layout override.
+   Keep the dashboard wide, tighten only the vertical spacing between path rings. */
 
 @media (min-width:700px){
   .page{width:min(100%,1180px)!important}
-  .path-stage{min-height:900px!important}
-  .path-layout{padding-top:34px!important;padding-bottom:10px!important}
-  .node{margin-bottom:-18px!important}
+  .path-stage{min-height:860px!important}
+  .path-layout{padding:26px 24px 10px!important}
+  .node{margin-bottom:-34px!important}
 }
 
 @media (min-width:1200px){
   .page{width:min(100%,1360px)!important}
-  .path-stage{min-height:860px!important}
-  .path-layout{padding-top:30px!important;padding-bottom:8px!important}
-  .node{margin-bottom:-24px!important}
+  .path-stage{min-height:820px!important}
+  .path-layout{padding:20px 32px 8px!important}
+  .node{margin-bottom:-52px!important}
 }
