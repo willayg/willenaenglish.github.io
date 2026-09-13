@@ -49,13 +49,14 @@ function renderList(){
   const host=$('#questionList');
   $('#count').textContent=`${filtered.length} of ${bank.length} questions`;
   if(!filtered.length){host.innerHTML='<div class="empty">No questions match these filters.</div>';updatePreview(null);return}
-  if(!filtered.some(q=>sourceKey(q)===currentId))currentId=sourceKey(filtered[0]);
+  const selectionChanged=!filtered.some(q=>sourceKey(q)===currentId);
+  if(selectionChanged)currentId=sourceKey(filtered[0]);
   host.innerHTML=filtered.map((q,i)=>{
     const id=sourceKey(q),visual=isVisual(q);
     return `<button class="question-row ${id===currentId?'active':''}" type="button" data-id="${esc(id)}"><span class="question-index">${i+1}</span><span class="question-copy"><strong>${esc(id)}</strong><p>${esc(q.prompt||q.q||'Untitled question')}</p><span class="row-badges"><span>L${esc(q.level)}</span><span>${esc(label(q.skill||typeName(q)))}</span>${visual?'<span class="visual">IMAGE</span>':''}</span></span></button>`;
   }).join('');
   $$('.question-row',host).forEach(b=>b.addEventListener('click',()=>selectQuestion(b.dataset.id)));
-  updatePreview(filtered.find(q=>sourceKey(q)===currentId)||filtered[0],false);
+  updatePreview(filtered.find(q=>sourceKey(q)===currentId)||filtered[0],selectionChanged);
 }
 function applyFilters(){
   const level=$('#levelFilter').value;
@@ -80,7 +81,7 @@ function updatePreview(q,load=true){
     currentId='';
     $('#currentTitle').textContent='Question —';
     $('#currentSub').textContent='No matching question';
-    frame.removeAttribute('src');
+    frame.src='about:blank';
     loading.classList.remove('hidden');
     loading.textContent='No question selected';
     $('#prevBtn').disabled=true;$('#nextBtn').disabled=true;open.href='#';
