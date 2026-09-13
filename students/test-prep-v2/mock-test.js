@@ -6,6 +6,7 @@ import {setNavigationGuard} from './navigation.js?v=2.19.0';
 import {buildMockTestPaper,MOCK_TEST_BLUEPRINT,MOCK_TEST_MINUTES,MOCK_TEST_TOTAL} from './mock-test-source.js?v=1.2.2';
 import {renderMockTestResults} from './mock-test-results.js?v=1.1.2';
 import {confirmMockTestSubmit} from './mock-test-submit.js?v=1.0.0';
+import {mountMockTestHistory,saveMockTestSnapshot} from './mock-test-history.js?v=2.25.99';
 
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const LABELS={vocabulary:'어휘',communication:'대화',grammar:'문법',reading:'독해',constructed_response:'서술형'};
@@ -96,7 +97,7 @@ function showQuestion(index){
 }
 function submissionSnapshot(reason){
   const exam=activeExam;if(!exam)return null;
-  return{version:'1.2.0',reason,planId:String(exam.plan.id),seed:exam.paper.seed,startedAt:new Date(exam.startedAt).toISOString(),submittedAt:new Date().toISOString(),total:exam.paper.total,answered:answeredCount(exam),items:exam.paper.questions.map((entry,index)=>({number:index+1,bucket:entry.bucket,slot:entry.slot,lesson:entry.lesson,unitId:entry.unitId,question:entry.question,response:exam.responses.has(index)?cloneValue(exam.responses.get(index)):null,answered:exam.answered.has(index)}))};
+  return{version:'1.2.1',reason,planId:String(exam.plan.id),seed:exam.paper.seed,startedAt:new Date(exam.startedAt).toISOString(),submittedAt:new Date().toISOString(),total:exam.paper.total,answered:answeredCount(exam),items:exam.paper.questions.map((entry,index)=>({number:index+1,bucket:entry.bucket,slot:entry.slot,lesson:entry.lesson,unitId:entry.unitId,question:entry.question,response:exam.responses.has(index)?cloneValue(exam.responses.get(index)):null,answered:exam.answered.has(index)}))};
 }
 function practiceTypeFor(item){return item.bucket==='vocabulary'?'vocab_test':item.bucket}
 function canonicalId(question){return String(question?.tracking?.questionId||question?.masteryKey||question?.id||'')}
@@ -106,6 +107,13 @@ async function gradeSnapshot(snapshot){
     const result=await gradeQuestion(item.question,item.response);return{...item,result:{...result,responseTimeMs:0}};
   }));
   const correct=items.filter(x=>x.result.correct).length;return{...snapshot,items,correct,wrong:items.length-correct,pct:items.length?Math.round(correct/items.length*100):0};
+}
+async function saveArchive(snapshot,planId){
+  let error=null;
+  for(let attempt=0;attempt<3;attempt++){
+    try{return await saveMockTestSnapshot(planId,snapshot)}catch(e){error=e;if(attempt<2)await new Promise(r=>setTimeout(r,350*(attempt+1)))}
+  }
+  throw error||new Error('Mock test archive save failed');
 }
 async function persistResults(snapshot,exam){
   const groups=new Map();
@@ -129,11 +137,14 @@ async function finishExam(reason='manual'){
     if(!confirmed||!activeExam||activeExam!==exam||exam.finished)return;
   }
   exam.finished=true;if(exam.timer)clearTimeout(exam.timer);exam.timer=null;clearExamGuards();clearSeed(exam.plan.id);
-  const raw=submissionSnapshot(reason);exam.host.innerHTML='<div class="loading">답안을 채점하는 중...</div>';
+  const raw=submissionSnapshot(reason);exam.host.innerHTML='<div class="loading">답안을 채점하고 저장하는 중...</div>';
   try{
     lastSubmission=await gradeSnapshot(raw);
+    let archiveSaved=true;
+    try{await saveArchive(lastSubmission,exam.plan.id)}catch(e){archiveSaved=false;console.warn('[mock-test] archive save failed',e)}
     renderMockTestResults({host:exam.host,snapshot:lastSubmission,plan:exam.plan,onBack:exam.onBack});
-    persistResults(lastSubmission,exam).then(()=>{const el=exam.host.querySelector('[data-mock-sync]');if(el)el.textContent=`오답 ${lastSubmission.wrong}문항과 통계에 반영했습니다.`}).catch(e=>{console.warn('[mock-test] result sync failed',e);const el=exam.host.querySelector('[data-mock-sync]');if(el)el.textContent='결과는 채점됐습니다. 저장 동기화가 지연되고 있습니다.'});
+    if(!archiveSaved){const el=exam.host.querySelector('[data-mock-sync]');if(el)el.textContent='시험 결과 저장에 실패했습니다. 네트워크를 확인한 뒤 다시 시도해 주세요.'}
+    persistResults(lastSubmission,exam).then(()=>{const el=exam.host.querySelector('[data-mock-sync]');if(el&&archiveSaved)el.textContent=`시험 기록 저장 완료 · 오답 ${lastSubmission.wrong}문항과 통계에 반영했습니다.`}).catch(e=>{console.warn('[mock-test] result sync failed',e);const el=exam.host.querySelector('[data-mock-sync]');if(el&&archiveSaved)el.textContent='시험 기록은 저장됐습니다. 오답/통계 동기화가 지연되고 있습니다.'});
   }catch(e){
     console.error('[mock-test] grading failed',e);
     exam.host.innerHTML=`<div class="mock-summary-card"><h2>채점을 완료하지 못했습니다.</h2><p>${esc(e.message||'잠시 후 다시 시도해 주세요.')}</p><button class="review-primary" type="button" data-mock-finished-back>시험 범위로 돌아가기</button></div>`;
@@ -159,7 +170,9 @@ export async function renderMockTestPreflight({host,plan,studentId=null,onBack=(
   try{
     const paper=await buildMockTestPaper({plan,studentId,seed:getSeed(plan.id)});if(token!==activeToken)return null;previewPaper=paper;
     host.innerHTML=`<div class="mock-preflight"><button class="back" type="button" data-mock-back>← ${esc(plan.book_label||'시험 범위')}</button><div class="heading"><div><h2>실전모의고사</h2><p>${MOCK_TEST_TOTAL}문항 · ${MOCK_TEST_MINUTES}분</p></div></div><section class="mock-summary-card"><div class="mock-summary-head"><div><span class="mock-summary-eyebrow">시험 구성</span><h3 class="mock-summary-title">${esc(plan.exam_name||'현재 시험 범위')}</h3><p class="mock-summary-copy">답안은 마지막에 한 번에 제출하고 채점합니다.</p></div><span class="mock-ready ${paper.ready?'':'is-warning'}">${paper.ready?'준비 완료':'확인 필요'}</span></div>${countsHtml(paper)}${diagnosticsHtml(paper)}</section><div class="mock-actions"><button class="review-primary" type="button" data-mock-start ${paper.ready?'':'disabled'}>시험 시작</button></div></div>`;
-    host.querySelector('[data-mock-back]').onclick=onBack;host.querySelector('[data-mock-start]').onclick=()=>startExam({host,plan,paper,studentId,onBack});return paper;
+    host.querySelector('[data-mock-back]').onclick=onBack;host.querySelector('[data-mock-start]').onclick=()=>startExam({host,plan,paper,studentId,onBack});
+    await mountMockTestHistory({host,plan,onOpenHistory:()=>renderMockTestPreflight({host,plan,studentId,onBack})});
+    return paper;
   }catch(e){
     if(token!==activeToken)return null;console.error('[mock-test] preflight failed',e);
     host.innerHTML=`<button class="back" type="button" data-mock-back>← ${esc(plan.book_label||'시험 범위')}</button><div class="error">${esc(e.message||'시험지를 구성하지 못했습니다.')}</div>`;
