@@ -3,7 +3,7 @@ import {gradeQuestion} from '../shared/question-grader.js?v=2.1.2';
 import {setTrackingContext,startSession,recordAttempt,completeSession,refreshTrackingState} from './tracking-client.js?v=2.17a';
 import {invalidateCardStats,loadCardStats} from './stats-client.js?v=2.16a';
 import {setNavigationGuard} from './navigation.js?v=2.19.0';
-import {buildMockTestPaper,MOCK_TEST_BLUEPRINT,MOCK_TEST_MINUTES,MOCK_TEST_TOTAL} from './mock-test-source.js?v=1.2.3';
+import {buildMockTestPaper,MOCK_TEST_BLUEPRINT,MOCK_TEST_MINUTES,MOCK_TEST_TOTAL} from './mock-test-source.js?v=1.3.0';
 import {renderMockTestResults} from './mock-test-results.js?v=1.1.2';
 import {confirmMockTestSubmit} from './mock-test-submit.js?v=1.0.0';
 import {mountMockTestHistory,saveMockTestSnapshot} from './mock-test-history.js?v=2.25.99';
@@ -47,9 +47,16 @@ function questionDiagnosticsHtml(entry,plan){
   const lesson=entry?.lesson||'범위',source=diagnosticSource(entry,plan),pool=LABELS[entry?.bucket]||entry?.bucket||'pool';
   return `<div style="margin:0 0 12px;padding:10px 12px;border-radius:10px;background:#111827;color:#fff;font:700 12px/1.4 Poppins,system-ui,sans-serif;display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span style="color:#67e8f9">DIAG</span><span>${esc(lesson)}</span><span style="opacity:.45">•</span><span>${esc(source)}</span><span style="margin-left:auto;opacity:.65">${esc(pool)}</span></div>`;
 }
+function unitPoolSummaryHtml(paper){
+  const diagnostics=paper?.unitDiagnostics||{};
+  return Object.entries(diagnostics).map(([bucket,rows])=>{
+    const bits=(rows||[]).map(row=>`${row.lesson}: ${row.selected}/${row.available}`).join(' · ');
+    return bits?`<div style="padding:5px 0;border-top:1px solid rgba(255,255,255,.1);font:600 10px/1.35 Poppins,system-ui,sans-serif"><span style="color:#67e8f9">${esc(LABELS[bucket]||bucket)}</span> ${esc(bits)}</div>`:'';
+  }).join('');
+}
 function diagnosticQuestionListHtml(paper,plan){
   if(!mockDiagEnabled())return'';
-  return `<aside class="mock-diag-list" style="position:sticky;top:12px;max-height:calc(100vh - 24px);overflow:auto;padding:14px;border-radius:14px;background:#111827;color:#fff;box-shadow:0 14px 34px rgba(15,23,42,.22)"><div style="font:800 14px/1.2 Poppins,system-ui,sans-serif;margin-bottom:10px;color:#67e8f9">TEST QUESTIONS · ${paper?.total||0}</div>${(paper?.questions||[]).map((entry,index)=>{const lesson=entry?.lesson||'범위',source=diagnosticSource(entry,plan),pool=LABELS[entry?.bucket]||entry?.bucket||'pool',prompt=String(entry?.question?.prompt||'').replace(/\s+/g,' ').trim();return `<button type="button" data-mock-diag-jump="${index}" style="width:100%;display:block;text-align:left;border:0;border-top:1px solid rgba(255,255,255,.12);padding:9px 4px;background:transparent;color:#fff;cursor:pointer;font:600 11px/1.35 Poppins,system-ui,sans-serif"><span style="display:flex;gap:6px;align-items:center"><strong style="color:#67e8f9">#${index+1}</strong><span style="opacity:.7">${esc(pool)}</span></span><span style="display:block;margin-top:3px">${esc(lesson)}</span><span style="display:block;opacity:.72">${esc(source)}</span>${prompt?`<span style="display:block;margin-top:4px;opacity:.48;font-weight:500">${esc(prompt.slice(0,90))}${prompt.length>90?'…':''}</span>`:''}</button>`}).join('')}</aside>`;
+  return `<aside class="mock-diag-list" style="position:sticky;top:12px;max-height:calc(100vh - 24px);overflow:auto;padding:14px;border-radius:14px;background:#111827;color:#fff;box-shadow:0 14px 34px rgba(15,23,42,.22)"><div style="font:800 14px/1.2 Poppins,system-ui,sans-serif;margin-bottom:8px;color:#67e8f9">TEST QUESTIONS · ${paper?.total||0}</div><div style="margin-bottom:8px">${unitPoolSummaryHtml(paper)}</div>${(paper?.questions||[]).map((entry,index)=>{const lesson=entry?.lesson||'범위',source=diagnosticSource(entry,plan),pool=LABELS[entry?.bucket]||entry?.bucket||'pool',prompt=String(entry?.question?.prompt||'').replace(/\s+/g,' ').trim();return `<button type="button" data-mock-diag-jump="${index}" style="width:100%;display:block;text-align:left;border:0;border-top:1px solid rgba(255,255,255,.12);padding:9px 4px;background:transparent;color:#fff;cursor:pointer;font:600 11px/1.35 Poppins,system-ui,sans-serif"><span style="display:flex;gap:6px;align-items:center"><strong style="color:#67e8f9">#${index+1}</strong><span style="opacity:.7">${esc(pool)}</span></span><span style="display:block;margin-top:3px">${esc(lesson)}</span><span style="display:block;opacity:.72">${esc(source)}</span>${prompt?`<span style="display:block;margin-top:4px;opacity:.48;font-weight:500">${esc(prompt.slice(0,90))}${prompt.length>90?'…':''}</span>`:''}</button>`}).join('')}</aside>`;
 }
 
 function seedKey(planId){return`willenaMockPaperSeed:v2:${planId}`}
@@ -128,7 +135,7 @@ function showQuestion(index){
 }
 function submissionSnapshot(reason){
   const exam=activeExam;if(!exam)return null;
-  return{version:'1.2.1',reason,planId:String(exam.plan.id),seed:exam.paper.seed,startedAt:new Date(exam.startedAt).toISOString(),submittedAt:new Date().toISOString(),total:exam.paper.total,answered:answeredCount(exam),items:exam.paper.questions.map((entry,index)=>({number:index+1,bucket:entry.bucket,slot:entry.slot,lesson:entry.lesson,unitId:entry.unitId,question:entry.question,response:exam.responses.has(index)?cloneValue(exam.responses.get(index)):null,answered:exam.answered.has(index)}))};
+  return{version:'1.3.0',reason,planId:String(exam.plan.id),seed:exam.paper.seed,startedAt:new Date(exam.startedAt).toISOString(),submittedAt:new Date().toISOString(),total:exam.paper.total,answered:answeredCount(exam),items:exam.paper.questions.map((entry,index)=>({number:index+1,bucket:entry.bucket,slot:entry.slot,lesson:entry.lesson,unitId:entry.unitId,question:entry.question,response:exam.responses.has(index)?cloneValue(exam.responses.get(index)):null,answered:exam.answered.has(index)}))};
 }
 function practiceTypeFor(item){return item.bucket==='vocabulary'?'vocab_test':item.bucket}
 function canonicalId(question){return String(question?.tracking?.questionId||question?.masteryKey||question?.id||'')}
