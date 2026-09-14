@@ -10,7 +10,8 @@ const nameEl=document.getElementById('user');
 const pointsEl=document.getElementById('headerPoints');
 const starsEl=document.getElementById('headerStars');
 const avatarEl=document.getElementById('studentAvatar');
-const PROGRESS_URL='/.netlify/functions/grammar_foundations_progress';
+const PROGRESS_EDGE='https://fiieuiktlsivwfgyivai.supabase.co/functions/v1/grammar-foundations-student-v1';
+const PROGRESS_API_KEY='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
 const CATALOG_URL='https://gxwfsqxyuufqtitspfqg.supabase.co/functions/v1/grammar-foundations-catalog';
 let modules=[];
 let progressMap=new Map();
@@ -19,6 +20,7 @@ let state={module:null,stage:null,index:0,score:0,renderer:null,checked:false,re
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const koTitle=x=>x?.koreanTitle||x?.title||'';
 const enTitle=x=>x?.englishTitle||'';
+const token=()=>window.WillenaAPI?.getLocalAccessToken?.()||localStorage.getItem('sb_access_token')||'';
 function setBottom(html=''){bottom.innerHTML=html;bottom.hidden=!html}
 function currentQuestion(){return state.stage?.questions?.[state.index]||null}
 function progressKey(moduleId,stageId){return `${moduleId}:${stageId}`}
@@ -32,9 +34,28 @@ function findModule(id){return modules.find(m=>m.id===id)||null}
 function findStage(mod,id){return mod?.stages?.find(s=>s.id===id)||null}
 function passScore(mod){return Number(mod?.passScore)||8}
 
-async function apiFetch(url,options){
-  if(window.WillenaAPI?.fetch)return window.WillenaAPI.fetch(url,options);
-  return fetch(url,{credentials:'include',...options});
+async function refreshToken(){
+  try{
+    const routed=window.WillenaAPI?.fetch?window.WillenaAPI.fetch.bind(window.WillenaAPI):fetch;
+    const res=await routed(`/.netlify/functions/supabase_auth?action=refresh&_=${Date.now()}`,{credentials:'include',cache:'no-store'});
+    const data=await res.json().catch(()=>({}));
+    if(res.ok&&data?.success&&data.access_token){window.WillenaAPI?.setLocalTokens?.(data.access_token,data.refresh_token||'');return data.access_token}
+  }catch(e){console.warn('[grammar-foundations] token refresh failed',e)}
+  return '';
+}
+async function requestProgressEdge(action,options,access){
+  const headers={...(options.headers||{}),Authorization:`Bearer ${access}`,apikey:PROGRESS_API_KEY};
+  return fetch(`${PROGRESS_EDGE}?action=${encodeURIComponent(action)}`,{...options,headers,cache:'no-store',credentials:'omit'});
+}
+async function progressEdge(action,options={}){
+  let access=token()||await refreshToken();
+  if(!access)throw new Error('AUTH_REQUIRED');
+  let res=await requestProgressEdge(action,options,access);
+  if(res.status===401){access=await refreshToken();if(!access)throw new Error('AUTH_REQUIRED');res=await requestProgressEdge(action,options,access)}
+  const text=await res.text();let data={};
+  try{data=JSON.parse(text)}catch{throw new Error(`Invalid progress response (${res.status})`)}
+  if(!res.ok||data.success===false)throw new Error(data.error||`Progress request failed (${res.status})`);
+  return data;
 }
 async function loadCatalog(){
   const res=await fetch(`${CATALOG_URL}?_=${Date.now()}`,{cache:'no-store'});
@@ -45,19 +66,15 @@ async function loadCatalog(){
 }
 async function loadProgress(){
   try{
-    const res=await apiFetch(`${PROGRESS_URL}?_=${Date.now()}`);
-    if(!res.ok)throw new Error(`progress ${res.status}`);
-    const data=await res.json();
+    const data=await progressEdge('progress');
     progressMap=new Map((data.progress||[]).map(row=>[progressKey(row.module_id,row.stage_id),row]));
   }catch(e){console.warn('[grammar-foundations] progress load failed',e);progressMap=new Map()}
 }
 async function saveStageResult(){
   const required=passScore(state.module);
-  const payload={module_id:state.module.id,stage_id:state.stage.id,score:state.score,total:state.stage.questions.length,passed:state.score>=required,results:state.results};
+  const payload={module_id:state.module.id,stage_id:state.stage.id,score:state.score,total:state.stage.questions.length,required_score:required,results:state.results};
   try{
-    const res=await apiFetch(PROGRESS_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
-    if(!res.ok)throw new Error(`save ${res.status}`);
-    const data=await res.json();
+    const data=await progressEdge('save_stage',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
     if(data.progress)progressMap.set(progressKey(data.progress.module_id,data.progress.stage_id),data.progress);
     return true;
   }catch(e){console.error('[grammar-foundations] progress save failed',e);return false}
