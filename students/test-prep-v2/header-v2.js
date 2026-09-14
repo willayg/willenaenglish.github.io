@@ -17,6 +17,12 @@ const bigTextLabel=document.getElementById('studentBigTextLabel');
 const testPrepAButton=document.getElementById('studentTestPrepA');
 const testPrepBButton=document.getElementById('studentTestPrepB');
 const logoutButton=document.getElementById('studentLogout');
+const headerTitle=document.querySelector('.header-title');
+
+if(headerTitle){
+  headerTitle.setAttribute('aria-label','Willena Test Prep');
+  headerTitle.innerHTML='<svg viewBox="0 0 32 32" width="30" height="30" aria-hidden="true" focusable="false" style="display:block"><circle cx="16" cy="16" r="12" fill="none" stroke="currentColor" stroke-width="2.4"/><circle cx="16" cy="16" r="7" fill="none" stroke="currentColor" stroke-width="2.4"/><circle cx="16" cy="16" r="2.5" fill="currentColor"/></svg>';
+}
 
 function fallbackAvatar(name){
   const value=String(name||'Student').trim();
