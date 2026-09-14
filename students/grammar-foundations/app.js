@@ -15,7 +15,7 @@ const PROGRESS_API_KEY='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
 const CATALOG_URL='https://gxwfsqxyuufqtitspfqg.supabase.co/functions/v1/grammar-foundations-catalog';
 let modules=[];
 let progressMap=new Map();
-let state={module:null,stage:null,index:0,score:0,renderer:null,checked:false,results:[]};
+let state={group:null,module:null,stage:null,index:0,score:0,renderer:null,checked:false,results:[]};
 
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const koTitle=x=>x?.koreanTitle||x?.title||'';
@@ -33,6 +33,19 @@ function currentStage(mod){for(let i=0;i<mod.stages.length;i++){if(!stageProgres
 function findModule(id){return modules.find(m=>m.id===id)||null}
 function findStage(mod,id){return mod?.stages?.find(s=>s.id===id)||null}
 function passScore(mod){return Number(mod?.passScore)||8}
+function groupNumber(mod){return Number(mod?.groupNumber)||1}
+function groups(){
+  const map=new Map();
+  modules.forEach(mod=>{const n=groupNumber(mod);if(!map.has(n))map.set(n,[]);map.get(n).push(mod)});
+  return [...map.entries()].sort((a,b)=>a[0]-b[0]).map(([number,items])=>({number,items:items.sort((a,b)=>(Number(a.groupOrder)||0)-(Number(b.groupOrder)||0))}));
+}
+function groupStats(group){
+  const allStages=group.items.flatMap(m=>m.stages.map(s=>({module:m,stage:s})));
+  const passed=allStages.filter(x=>stageProgress(x.module.id,x.stage.id)?.passed).length;
+  const total=allStages.length;
+  const pct=total?Math.round(passed/total*100):0;
+  return {passed,total,pct,sets:group.items.length};
+}
 
 async function refreshToken(){
   try{
@@ -80,12 +93,28 @@ async function saveStageResult(){
   }catch(e){console.error('[grammar-foundations] progress save failed',e);return false}
 }
 
+function stepCard(group){
+  const stats=groupStats(group);
+  const names=group.items.map(koTitle).filter(Boolean).join(' · ');
+  return `<button class="gf-step-card exam-card" data-open-group="${group.number}">
+    <div class="gf-target-head exam-head">
+      <div class="gf-target-copy">
+        <div class="exam-school">GRAMMAR FOUNDATIONS</div>
+        <h2 class="exam-title">Step ${group.number}</h2>
+        <div class="exam-book">${esc(names)}</div>
+        <div class="exam-meta"><span class="pill">${stats.sets} grammar sets</span><span class="pill">${stats.passed}/${stats.total} levels complete</span></div>
+      </div>
+      <div class="ring gf-ring" style="--p:${stats.pct}%"><b>${stats.pct}%</b></div>
+    </div>
+    <span class="gf-open-hint">Open Step ${group.number} →</span>
+  </button>`;
+}
 function lessonCard(mod){
   const pct=modulePct(mod),done=passedCount(mod),next=currentStage(mod),required=passScore(mod);
   return `<button class="gf-lesson-card exam-card" data-open-module="${esc(mod.id)}">
     <div class="gf-target-head exam-head">
       <div class="gf-target-copy">
-        <div class="exam-school">${esc(mod.lesson||'Grammar Foundations')}</div>
+        <div class="exam-school">${esc(mod.lesson||`Step ${groupNumber(mod)}`)}</div>
         <h2 class="exam-title">${esc(koTitle(mod))}</h2>
         <div class="exam-book">${esc(enTitle(mod))} · ${done}/${mod.stages.length} levels complete</div>
         <div class="exam-meta"><span class="pill">${done===mod.stages.length?'Complete':next?`Next: Level ${next.number}`:'No levels'}</span><span class="pill">${required}/10 to pass</span></div>
@@ -111,21 +140,34 @@ function stageCard(mod,s,index){
   </button>`;
 }
 function showHome(){
-  state={module:null,stage:null,index:0,score:0,renderer:null,checked:false,results:[]};
+  state={group:null,module:null,stage:null,index:0,score:0,renderer:null,checked:false,results:[]};
   setBottom('');
-  root.innerHTML=`<div class="gf-kicker">Middle School Grammar Foundations</div><h1 class="gf-title">중학교 문법 기초</h1><p class="gf-subtitle">문법 항목을 골라 단계별로 완성하세요.</p><div class="gf-targets">${modules.map(lessonCard).join('')}</div>`;
+  root.innerHTML=`<h1 class="gf-title">중학교 문법 기초</h1><div class="gf-kicker gf-title-en">Middle School Grammar Foundations</div><p class="gf-subtitle">Step을 골라 문법을 차근차근 완성하세요.</p><div class="gf-targets gf-step-grid">${groups().map(stepCard).join('')}</div>`;
+  root.querySelectorAll('[data-open-group]').forEach(btn=>btn.onclick=()=>showGroup(Number(btn.dataset.openGroup)));
+}
+function showGroup(number){
+  const group=groups().find(g=>g.number===Number(number));
+  if(!group)return showHome();
+  state={group:group.number,module:null,stage:null,index:0,score:0,renderer:null,checked:false,results:[]};
+  setBottom('');
+  const stats=groupStats(group);
+  root.innerHTML=`<button class="back" id="groupBack">← Grammar Foundations</button>
+    <div class="gf-step-heading"><div><div class="gf-kicker">GRAMMAR FOUNDATIONS</div><h1 class="gf-title">Step ${group.number}</h1><p class="gf-subtitle">${stats.sets}개 문법 항목 · ${stats.passed}/${stats.total} levels complete</p></div><div class="ring gf-ring" style="--p:${stats.pct}%"><b>${stats.pct}%</b></div></div>
+    <div class="gf-targets">${group.items.map(lessonCard).join('')}</div>`;
+  document.getElementById('groupBack').onclick=showHome;
   root.querySelectorAll('[data-open-module]').forEach(btn=>btn.onclick=()=>showModule(findModule(btn.dataset.openModule)));
 }
 function showModule(mod){
-  if(!mod)return showHome();
-  state={module:mod,stage:null,index:0,score:0,renderer:null,checked:false,results:[]};
+  if(!mod)return state.group?showGroup(state.group):showHome();
+  const group=groupNumber(mod);
+  state={group,module:mod,stage:null,index:0,score:0,renderer:null,checked:false,results:[]};
   setBottom('');
   const pct=modulePct(mod),done=passedCount(mod),required=passScore(mod),next=currentStage(mod);
-  root.innerHTML=`<button class="back" id="moduleBack">← Grammar Foundations</button>
+  root.innerHTML=`<button class="back" id="moduleBack">← Step ${group}</button>
     <section class="gf-module-overview exam-card">
       <div class="gf-target-head exam-head">
         <div class="gf-target-copy">
-          <div class="exam-school">${esc(mod.lesson||'Grammar Foundations')}</div>
+          <div class="exam-school">Step ${group}</div>
           <h2 class="exam-title">${esc(koTitle(mod))}</h2>
           <div class="exam-book">${esc(enTitle(mod))} · ${done}/${mod.stages.length} levels complete</div>
           <div class="exam-meta"><span class="pill">${done===mod.stages.length?'Complete':next?`Next: Level ${next.number}`:'No levels'}</span><span class="pill">${required}/10 to pass</span></div>
@@ -135,16 +177,16 @@ function showModule(mod){
     </section>
     <div class="gf-level-heading"><div><div class="gf-kicker">Lesson levels</div><h2>Choose a level</h2></div><span>${done}/${mod.stages.length} complete</span></div>
     <div class="gf-stage-grid">${mod.stages.map((s,i)=>stageCard(mod,s,i)).join('')}</div>`;
-  document.getElementById('moduleBack').onclick=showHome;
+  document.getElementById('moduleBack').onclick=()=>showGroup(group);
   root.querySelectorAll('[data-stage]:not([disabled])').forEach(btn=>btn.onclick=()=>{const selected=findModule(btn.dataset.module);openGuide(selected,findStage(selected,btn.dataset.stage))});
 }
 function openGuide(mod,stage){
   const idx=mod?.stages?.findIndex(s=>s.id===stage?.id)??-1;
   if(!mod||!stage||idx<0||!stageUnlocked(mod,idx))return showModule(mod);
-  state.module=mod;state.stage=stage;state.index=0;state.score=0;state.results=[];state.renderer=null;state.checked=false;
+  state.group=groupNumber(mod);state.module=mod;state.stage=stage;state.index=0;state.score=0;state.results=[];state.renderer=null;state.checked=false;
   setBottom('');
   const row=stageProgress(mod.id,stage.id);
-  root.innerHTML=`<button class="back" id="guideBack">← ${esc(koTitle(mod))}</button><div class="gf-guide"><div class="gf-kicker">${esc(koTitle(mod))} · ${esc(enTitle(mod))} · Level ${stage.number}</div><h2>${esc(koTitle(stage))}</h2><p>${esc(enTitle(stage))}</p>${stage.subtitle?`<p>${esc(stage.subtitle)}</p>`:''}${row?`<div class="gf-guide-score">Best ${row.best_score}/${row.total} · ${row.attempt_count} attempt${row.attempt_count===1?'':'s'}</div>`:''}<div class="gf-rule">${esc(stage.guide?.rule||'')}</div><div class="gf-example-list">${(stage.guide?.examples||[]).map(x=>`<div class="gf-example">${esc(x)}</div>`).join('')}</div><div class="gf-actions"><button class="gf-btn secondary" id="backModule">목록</button><button class="gf-btn primary" id="startStage">${stage.questions.length}문제 시작 →</button></div></div>`;
+  root.innerHTML=`<button class="back" id="guideBack">← ${esc(koTitle(mod))}</button><div class="gf-guide"><div class="gf-kicker">Step ${state.group} · Level ${stage.number}</div><h2>${esc(koTitle(stage))}</h2><p>${esc(enTitle(stage))}</p>${stage.subtitle?`<p>${esc(stage.subtitle)}</p>`:''}${row?`<div class="gf-guide-score">Best ${row.best_score}/${row.total} · ${row.attempt_count} attempt${row.attempt_count===1?'':'s'}</div>`:''}<div class="gf-rule">${esc(stage.guide?.rule||'')}</div><div class="gf-example-list">${(stage.guide?.examples||[]).map(x=>`<div class="gf-example">${esc(x)}</div>`).join('')}</div><div class="gf-actions"><button class="gf-btn secondary" id="backModule">목록</button><button class="gf-btn primary" id="startStage">${stage.questions.length}문제 시작 →</button></div></div>`;
   document.getElementById('guideBack').onclick=()=>showModule(mod);
   document.getElementById('backModule').onclick=()=>showModule(mod);
   document.getElementById('startStage').onclick=startStage;
@@ -154,7 +196,7 @@ function renderQuestion(){
   const q=currentQuestion();if(!q)return showResult();
   state.checked=false;
   const pct=Math.round((state.index/state.stage.questions.length)*100);
-  root.innerHTML=`<button class="back" id="questionBack">← Level ${state.stage.number}</button><div class="gf-question-head"><div><div class="gf-kicker">${esc(koTitle(state.module))} · Level ${state.stage.number}</div><b>${esc(koTitle(state.stage))}</b><small>${esc(enTitle(state.stage))}</small></div><span class="gf-progress">${state.index+1} / ${state.stage.questions.length}</span></div><div class="progress gf-round-progress"><i style="width:${pct}%"></i></div><div class="gf-question-card" id="questionHost"></div>`;
+  root.innerHTML=`<button class="back" id="questionBack">← Level ${state.stage.number}</button><div class="gf-question-head"><div><div class="gf-kicker">Step ${state.group} · ${esc(koTitle(state.module))} · Level ${state.stage.number}</div><b>${esc(koTitle(state.stage))}</b><small>${esc(enTitle(state.stage))}</small></div><span class="gf-progress">${state.index+1} / ${state.stage.questions.length}</span></div><div class="progress gf-round-progress"><i style="width:${pct}%"></i></div><div class="gf-question-card" id="questionHost"></div>`;
   document.getElementById('questionBack').onclick=()=>openGuide(state.module,state.stage);
   const host=document.getElementById('questionHost');
   const renderer=new QuestionRenderer(host).render(q,{onChange:(_,has)=>{const btn=document.getElementById('checkAnswer');if(btn&&!state.checked)btn.disabled=!has}});
@@ -180,10 +222,10 @@ async function checkAnswer(){
 async function showResult(){
   const required=passScore(state.module),passed=state.score>=required,total=state.stage.questions.length;
   setBottom('');
-  root.innerHTML=`<div class="gf-result"><div class="gf-kicker">${esc(koTitle(state.module))} · ${esc(koTitle(state.stage))}</div><div class="gf-score">${state.score}/${total}</div><div class="gf-pass">${passed?'Passed ✓':'Redo this level'}</div><p id="saveStatus">Saving progress…</p></div>`;
+  root.innerHTML=`<div class="gf-result"><div class="gf-kicker">Step ${state.group} · ${esc(koTitle(state.module))} · ${esc(koTitle(state.stage))}</div><div class="gf-score">${state.score}/${total}</div><div class="gf-pass">${passed?'Passed ✓':'Redo this level'}</div><p id="saveStatus">Saving progress…</p></div>`;
   const saved=await saveStageResult();
   const row=stageProgress(state.module.id,state.stage.id),next=nextStage();
-  root.innerHTML=`<div class="gf-result"><div class="gf-kicker">${esc(koTitle(state.module))} · ${esc(enTitle(state.module))} · Level ${state.stage.number}</div><h2>${esc(koTitle(state.stage))}</h2><p>${esc(enTitle(state.stage))}</p><div class="gf-score">${state.score}/${total}</div><div class="gf-pass">${passed?'Passed ✓':'Redo this level'}</div><p>${passed?'좋아요. 다음 단계로 넘어갈 준비가 됐어요.':`통과하려면 ${required}/${total} 이상이 필요해요.`}</p>${row?`<div class="gf-result-best">Best ${row.best_score}/${row.total} · ${row.attempt_count} attempts</div>`:''}${saved?'':'<div class="gf-save-warning">Progress could not be saved. You can retry this round.</div>'}<div class="gf-result-actions"><button class="gf-btn secondary" id="resultModule">레벨 목록</button>${passed&&next?'<button class="gf-btn secondary" id="nextGuide">다음 레벨 보기</button>':''}<button class="gf-btn primary" id="redoStage">${passed?'다시 풀기':'Redo →'}</button></div></div>`;
+  root.innerHTML=`<div class="gf-result"><div class="gf-kicker">Step ${state.group} · ${esc(koTitle(state.module))} · Level ${state.stage.number}</div><h2>${esc(koTitle(state.stage))}</h2><p>${esc(enTitle(state.stage))}</p><div class="gf-score">${state.score}/${total}</div><div class="gf-pass">${passed?'Passed ✓':'Redo this level'}</div><p>${passed?'좋아요. 다음 단계로 넘어갈 준비가 됐어요.':`통과하려면 ${required}/${total} 이상이 필요해요.`}</p>${row?`<div class="gf-result-best">Best ${row.best_score}/${row.total} · ${row.attempt_count} attempts</div>`:''}${saved?'':'<div class="gf-save-warning">Progress could not be saved. You can retry this round.</div>'}<div class="gf-result-actions"><button class="gf-btn secondary" id="resultModule">레벨 목록</button>${passed&&next?'<button class="gf-btn secondary" id="nextGuide">다음 레벨 보기</button>':''}<button class="gf-btn primary" id="redoStage">${passed?'다시 풀기':'Redo →'}</button></div></div>`;
   document.getElementById('resultModule').onclick=()=>showModule(state.module);
   document.getElementById('redoStage').onclick=()=>openGuide(state.module,state.stage);
   if(passed&&next)document.getElementById('nextGuide').onclick=()=>openGuide(state.module,next);
