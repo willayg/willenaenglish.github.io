@@ -33,6 +33,7 @@ export function createQuestionSession({
   let restoredRouteKey='';
   let grading=false;
   let nextPointerArmed=false;
+  let finishing=false;
   let questionActiveMs=0;
   let questionActiveTick=0;
   let questionWallStartedAt=0;
@@ -62,6 +63,11 @@ export function createQuestionSession({
   window.addEventListener('focus',handleQuestionActivityChange);
   window.addEventListener('blur',handleQuestionActivityChange);
 
+  function showFinishingState(){
+    if(!isActive())return;
+    setBottom(`<button id="${buttonIds.skip}" disabled>Skip</button><button class="primary" id="${buttonIds.check}" disabled>Finishing…</button>`);
+  }
+
   function restoreOnce(){
     const route=currentActivityRoute(),key=routeKey(route);if(!route||!key)return;
     const saved=restoreActivityProgress(route);if(!saved)return;
@@ -80,11 +86,27 @@ export function createQuestionSession({
     if(!isActive())return;
     restoreOnce();
     if(indexState.get()>=queueLength()){
+      if(finishing)return;
+      finishing=true;
       clearActivitySnapshotFor(currentActivityRoute());
-      return onFinished();
+      showFinishingState();
+      const done=onFinished();
+      queueMicrotask(()=>{if(finishing&&isActive()&&(bottom.hidden||!bottom.querySelector(`#${buttonIds.check}`)))showFinishingState()});
+      Promise.resolve(done).finally(()=>{finishing=false});
+      return done;
     }
+    finishing=false;
     const entry=getEntry(),q=getQuestion(entry);
-    if(!q){clearActivitySnapshotFor(currentActivityRoute());return onFinished()}
+    if(!q){
+      if(finishing)return;
+      finishing=true;
+      clearActivitySnapshotFor(currentActivityRoute());
+      showFinishingState();
+      const done=onFinished();
+      queueMicrotask(()=>{if(finishing&&isActive()&&(bottom.hidden||!bottom.querySelector(`#${buttonIds.check}`)))showFinishingState()});
+      Promise.resolve(done).finally(()=>{finishing=false});
+      return done;
+    }
     saveActivityPosition(indexState.get());
     grading=false;nextPointerArmed=false;
     checkedState.set(false);startQuestionTimer();onBeforeRender(entry,q);
@@ -111,7 +133,7 @@ export function createQuestionSession({
       nextPointerArmed=false;
       indexState.set(indexState.get()+1);render();return;
     }
-    if(grading)return;
+    if(grading||finishing)return;
     const entry=getEntry(),q=getQuestion(entry),renderer=rendererState.get();if(!q||!renderer)return;
     const response=renderer.getResponse(),btn=document.getElementById(buttonIds.check);if(!btn)return;
     const timing=snapshotQuestionTimer();
@@ -140,7 +162,7 @@ export function createQuestionSession({
   }
 
   async function skip(){
-    if(checkedState.get()||grading||!isActive())return;
+    if(checkedState.get()||grading||finishing||!isActive())return;
     const entry=getEntry(),q=getQuestion(entry),renderer=rendererState.get();if(!q)return;
     const timing=snapshotQuestionTimer();
     const response=renderer?.getResponse()??null,result={correct:false,method:'skipped',responseTimeMs:timing.activeMs,wallResponseTimeMs:timing.wallMs,timingVersion:'question-active-v1'};
