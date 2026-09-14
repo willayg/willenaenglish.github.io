@@ -8,6 +8,13 @@
 .rail .nav:not(.active) .nav-icon svg{opacity:.92!important}
 .rail-collapse-toggle{width:40px!important;height:36px!important;color:#2b7f89!important;font-weight:900!important}
 
+/* Collapsed sidebar: keep a tiny label under every icon. */
+.layout:not(.sidebar-expanded) .rail .nav{flex-direction:column!important;justify-content:center!important;gap:3px!important;padding:7px 3px!important;min-height:62px!important}
+.layout:not(.sidebar-expanded) .rail .nav>span:last-child{display:block!important;max-width:58px!important;overflow:hidden!important;text-overflow:ellipsis!important;font-size:8px!important;line-height:1.05!important;font-weight:700!important;letter-spacing:-.02em!important;text-align:center!important;color:#66727a!important}
+.layout:not(.sidebar-expanded) .rail .nav.active>span:last-child{color:#315b63!important}
+.layout.sidebar-expanded .rail .nav{flex-direction:row!important}
+.layout.sidebar-expanded .rail .nav>span:last-child{font-size:inherit!important;line-height:inherit!important;text-align:left!important}
+
 /* Header user + bell + burger as one attached pill, anchored in the topbar */
 .top-actions #burger-menu-mount .burger-menu{position:relative!important;display:flex!important;align-items:stretch!important;gap:0!important;border-radius:14px!important;background:#fff!important;box-shadow:none!important;border:1px solid rgba(255,255,255,.16)!important;overflow:visible!important}
 .top-actions #burger-menu-mount .burger-user-label{display:flex!important;height:40px!important;padding:0 13px!important;border:0!important;border-radius:14px 0 0 14px!important;background:#fff!important;color:#37434d!important;box-shadow:none!important;font-size:.72rem!important}
