@@ -95,7 +95,7 @@ html,body{width:100%;max-width:100%;overflow-x:hidden}
 import {QuestionRenderer} from './question-renderer.js?v=2.20.6';
 import {trackingState} from './tracking-client.js?v=2.17a';
 import {currentRoute} from './navigation.js?v=2.21.3';
-import {installWillenaKeyboard} from '../shared/willena-keyboard.js?v=1.5.0';
+import {installWillenaKeyboard} from '../shared/willena-keyboard.js?v=1.5.1';
 import {installQuestionFlags} from '../shared/question-flags.js?v=1.0.0';
 installWillenaKeyboard({submitSelector:'#bottom button.primary,.vp-next'});
 installQuestionFlags({Renderer:QuestionRenderer,contextProvider:()=>{const t=trackingState(),r=currentRoute?.()||{};return{studentId:t.user?.id||null,planId:r.planId||t.plan?.id||null,lesson:r.lesson||t.lesson||null,practiceType:r.practice||t.practice||null,reviewMode:r.view==='review',appRevision:'2.25.104'};}});
