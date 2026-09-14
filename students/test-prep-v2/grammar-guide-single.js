@@ -41,9 +41,7 @@ function simplifyPanel(panel){
   const keys=availableKeysFromPanel(panel);
   if(!keys.length)return;
   panel.dataset.ggSingleReady='1';
-  const titles=keys.map(key=>GUIDES[key]?.title).filter(Boolean);
-  const preview=titles.slice(0,3).join(' · ')+(titles.length>3?` · +${titles.length-3}`:'');
-  panel.innerHTML=`<button type="button" class="grammar-guide-single" data-gg-open-lesson><span><b>문법 설명</b><small>${preview}</small></span><span class="gg-single-meta"><em>${keys.length}</em><b>보기 →</b></span></button>`;
+  panel.innerHTML='<button type="button" class="grammar-guide-single" data-gg-open-lesson><b>문법 설명</b></button>';
   panel.querySelector('[data-gg-open-lesson]')?.addEventListener('click',event=>{
     event.preventDefault();
     event.stopPropagation();
