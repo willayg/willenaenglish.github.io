@@ -1,12 +1,6 @@
 import * as BaseRenderer from './question-renderer.js?v=2.20.6-base';
 export * from './question-renderer.js?v=2.20.6-base';
-
-const BIG_TEXT_KEY='willena-testprep-big-text';
-const BIG_TEXT_EVENT='willena:test-prep-big-text';
-
-function bigTextEnabled(){
-  try{return localStorage.getItem(BIG_TEXT_KEY)==='1'}catch{return false}
-}
+import {bigTextEnabled,STUDENT_BIG_TEXT_EVENT} from '../shared/student-accessibility.js?v=1.0.0';
 
 function applyTextMode(host){
   if(!host)return;
@@ -18,7 +12,7 @@ export class QuestionRenderer extends BaseRenderer.QuestionRenderer{
   constructor(host){
     super(host);
     this.__willenaTextModeListener=()=>applyTextMode(this.host);
-    window.addEventListener(BIG_TEXT_EVENT,this.__willenaTextModeListener);
+    window.addEventListener(STUDENT_BIG_TEXT_EVENT,this.__willenaTextModeListener);
     applyTextMode(this.host);
   }
   render(...args){
@@ -28,5 +22,5 @@ export class QuestionRenderer extends BaseRenderer.QuestionRenderer{
   }
 }
 
-export const QUESTION_RENDERER_BIG_TEXT_KEY=BIG_TEXT_KEY;
-export const QUESTION_RENDERER_BIG_TEXT_EVENT=BIG_TEXT_EVENT;
+export const QUESTION_RENDERER_BIG_TEXT_KEY='willena-student-big-text';
+export const QUESTION_RENDERER_BIG_TEXT_EVENT=STUDENT_BIG_TEXT_EVENT;
