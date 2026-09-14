@@ -52,23 +52,31 @@ async function saveStageResult(){
 
 function stageCard(mod,s,index){
   const row=stageProgress(mod.id,s.id),unlocked=stageUnlocked(mod,index),passed=Boolean(row?.passed),pct=stagePct(row);
-  const status=passed?`Passed · best ${row.best_score}/${row.total}`:row?`Latest ${row.latest_score}/${row.total}`:unlocked?'Ready':'Locked';
+  const status=passed?`Passed · ${row.best_score}/${row.total}`:row?`Best ${row.best_score}/${row.total}`:unlocked?'Ready':'Locked';
   const cls=passed?' passed':unlocked?' active':' locked';
-  return `<button class="gf-stage-row${cls}" data-stage="${esc(s.id)}" ${unlocked?'':'disabled'}>
-    <div class="gf-stage-dot">${passed?'✓':s.number}</div>
-    <div class="gf-stage-copy"><strong>${esc(s.title)}</strong><span>${esc(s.subtitle)}</span><div class="mini"><i style="width:${pct}%"></i></div></div>
-    <div class="gf-stage-status"><b>${esc(status)}</b>${row?`<small>${row.attempt_count} attempt${row.attempt_count===1?'':'s'}</small>`:''}</div>
+  return `<button class="gf-stage-card tile${cls}" data-stage="${esc(s.id)}" ${unlocked?'':'disabled'}>
+    <div class="gf-stage-card-copy">
+      <div class="gf-stage-label">STAGE ${s.number}</div>
+      <h3>${esc(s.title)}</h3>
+      <span class="metric">${esc(status)}</span>
+      ${row?`<small>${row.attempt_count} attempt${row.attempt_count===1?'':'s'}</small>`:''}
+    </div>
+    <div class="ring gf-stage-ring" style="--p:${pct}%"><b>${pct}%</b></div>
   </button>`;
 }
 function moduleCard(mod){
   const pct=modulePct(mod),done=passedCount(mod),next=currentStage(mod);
-  return `<section class="gf-target-card">
-    <div class="gf-target-head">
-      <div class="gf-target-copy"><div class="gf-kicker">${esc(mod.lesson)}</div><h2>${esc(mod.title)}</h2><p>${esc(mod.koreanTitle)}</p></div>
+  return `<section class="gf-target-card exam-card">
+    <div class="gf-target-head exam-head">
+      <div class="gf-target-copy">
+        <div class="exam-school">${esc(mod.lesson)}</div>
+        <h2 class="exam-title">${esc(mod.title)}</h2>
+        <div class="exam-book">${esc(mod.koreanTitle)} · ${done}/${mod.stages.length} stages passed</div>
+        <div class="exam-meta"><span class="pill">${done===mod.stages.length?'Target complete':`Next: Stage ${next.number}`}</span><span class="pill">8/10 to pass</span></div>
+      </div>
       <div class="ring gf-ring" style="--p:${pct}%"><b>${pct}%</b></div>
     </div>
-    <div class="gf-target-summary"><strong>${done} / ${mod.stages.length} stages passed</strong><span>${done===mod.stages.length?'Target complete':`Next: Stage ${next.number} · ${esc(next.title)}`}</span></div>
-    <div class="gf-stage-list">${mod.stages.map((s,i)=>stageCard(mod,s,i)).join('')}</div>
+    <div class="gf-stage-grid">${mod.stages.map((s,i)=>stageCard(mod,s,i)).join('')}</div>
     <button class="gf-continue" data-continue="${esc(next.id)}">${done===mod.stages.length?'Practice again':'Continue'} →</button>
   </section>`;
 }
