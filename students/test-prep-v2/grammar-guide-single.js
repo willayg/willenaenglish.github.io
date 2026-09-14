@@ -1,5 +1,6 @@
 import './grammar-guide-lessons.js?v=1.0.0';
 import './grammar-guide-deep.js?v=1.0.0';
+import {attachQuestionExamples} from './grammar-guide-question-examples.js?v=1.0.0';
 import {GUIDES,resolveGuideKeys,openGuide} from './grammar-guide.js?v=2.1.0';
 
 let activeKeys=[];
@@ -33,8 +34,10 @@ function decorateOverlay(){
 function showAt(index){
   if(index<0||index>=activeKeys.length)return;
   activeIndex=index;
-  openGuide(activeKeys[activeIndex]);
+  const key=activeKeys[activeIndex];
+  openGuide(key);
   decorateOverlay();
+  attachQuestionExamples(key);
 }
 
 function simplifyPanel(panel){
