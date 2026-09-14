@@ -8,6 +8,7 @@ const LABELS={grammar:'문법',reading:'독해',vocab_test:'어휘 문제',commu
 let context={studentId:null,planId:null};
 let installed=false;
 const cache=new Map();
+const htmlCache=new Map();
 
 const q=(s,r=document)=>r.querySelector(s);
 const esc=v=>String(v??'').replace(/[&<>\"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[c]));
@@ -15,30 +16,33 @@ const num=v=>Number.isFinite(Number(v))?Number(v):0;
 const sec=ms=>{const value=Number(ms);if(!Number.isFinite(value)||value<=0)return'—';const seconds=value/1000;return seconds<10?`${seconds.toFixed(1)}초`:`${Math.round(seconds)}초`};
 const pct=v=>v==null?'—':`${Math.round(Number(v)||0)}%`;
 const token=()=>window.WillenaAPI?.getLocalAccessToken?.()||localStorage.getItem('sb_access_token')||'';
+const cacheKey=()=>`${context.studentId||''}|${context.planId||''}`;
 
 function styles(){
   if(q('#na2ResponseTimeStyles'))return;
   const s=document.createElement('style');
   s.id='na2ResponseTimeStyles';
   s.textContent=`
-  .na2-response-time{margin:16px 0 18px;padding:18px;border:1px solid rgba(31,71,78,.12);border-radius:18px;background:linear-gradient(180deg,#fff,#f8fbfb)}
-  .na2-response-time-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:14px}
-  .na2-response-time-head h3{margin:0;color:#203039;font-size:17px;line-height:1.25}
-  .na2-response-time-head p{margin:5px 0 0;color:#708087;font-size:12px;line-height:1.4}
-  .na2-response-scope{flex:0 0 auto;padding:5px 9px;border-radius:999px;background:#e9f5f5;color:#19777e;font-size:10px;font-weight:800}
-  .na2-response-overall{display:flex;align-items:end;gap:10px;margin-bottom:14px;padding:13px 14px;border-radius:14px;background:#f1f7f7}
-  .na2-response-overall strong{font-size:28px;line-height:1;color:#173f45}
-  .na2-response-overall span{font-size:12px;font-weight:700;color:#607278}
-  .na2-response-skills{display:grid;gap:8px}
-  .na2-response-row{display:grid;grid-template-columns:minmax(90px,1fr) 86px minmax(180px,1.6fr) 96px;align-items:center;gap:12px;padding:11px 12px;border:1px solid rgba(31,71,78,.09);border-radius:13px;background:#fff}
-  .na2-response-row .skill{font-size:13px;font-weight:800;color:#243d42}
-  .na2-response-row .median{font-size:17px;font-weight:800;color:#19777e}
-  .na2-response-row .split{font-size:11px;color:#65777c;line-height:1.45}
-  .na2-response-row .sample{text-align:right;font-size:10px;color:#87969a}
-  .na2-response-row .sample b{display:block;color:#586b70;font-size:11px}
+  .na2-response-time{margin:18px 0 0;padding:18px;border:1px solid rgba(31,71,78,.11);border-radius:18px;background:#fff}
+  .na2-response-time-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px}
+  .na2-response-time-head h3{margin:0;color:#203039;font-size:18px;line-height:1.25}
+  .na2-response-time-head p{margin:5px 0 0;color:#718187;font-size:12px;line-height:1.45}
+  .na2-response-scope{flex:0 0 auto;padding:5px 9px;border-radius:999px;background:#eaf6f6;color:#19777e;font-size:10px;font-weight:800}
+  .na2-response-skills{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .na2-response-card{padding:15px 16px;border:1px solid rgba(31,71,78,.09);border-radius:15px;background:#f9fbfb}
+  .na2-response-main{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+  .na2-response-main b{font-size:14px;color:#253f45}
+  .na2-response-main strong{font-size:25px;line-height:1;color:#167780;white-space:nowrap}
+  .na2-response-caption{margin-top:5px;color:#6f8085;font-size:11px;font-weight:700}
+  .na2-response-split{display:flex;gap:12px;flex-wrap:wrap;margin-top:12px;padding-top:10px;border-top:1px solid rgba(31,71,78,.08);font-size:11px;color:#65777c}
+  .na2-response-split span b{color:#314e54}
+  .na2-response-flags{display:flex;gap:7px;flex-wrap:wrap;margin-top:9px}
+  .na2-response-flag{padding:4px 7px;border-radius:999px;background:#eef3f3;color:#607277;font-size:10px;font-weight:700}
+  .na2-response-flag.fast{background:#eef7f5;color:#34776e}
+  .na2-response-flag.slow{background:#f8f2eb;color:#8a6944}
   .na2-response-time-empty{padding:16px;text-align:center;color:#7a8a8f;font-size:12px}
-  .na2-response-time-note{margin-top:10px;color:#839196;font-size:10px;line-height:1.45}
-  @media(max-width:680px){.na2-response-row{grid-template-columns:1fr 72px;gap:6px 10px}.na2-response-row .split{grid-column:1/2}.na2-response-row .sample{grid-column:2/3;grid-row:1/3;align-self:center}}
+  .na2-response-time-note{margin-top:12px;color:#87959a;font-size:10px;line-height:1.5}
+  @media(max-width:680px){.na2-response-skills{grid-template-columns:1fr}.na2-response-card{padding:14px}.na2-response-main strong{font-size:23px}}
   `;
   document.head.appendChild(s);
 }
@@ -79,23 +83,40 @@ function selectScope(rows,planId){
 
 function timingHtml(rows,scopeLabel){
   const map=new Map(rows.map(r=>[r.practice_type==null?'__overall__':r.practice_type,r]));
-  const overall=map.get('__overall__');
   const skills=ORDER.map(key=>({key,row:map.get(key)})).filter(x=>x.row&&num(x.row.valid_attempt_count)>0);
-  if(!overall&&!skills.length)return `<section class="na2-response-time"><div class="na2-response-time-head"><div><h3>응답 속도</h3><p>학생이 문제를 읽고 답을 제출하기까지의 중앙값입니다.</p></div><span class="na2-response-scope">${esc(scopeLabel)}</span></div><div class="na2-response-time-empty">아직 응답 시간 데이터가 없습니다.</div></section>`;
-  const overallHtml=overall&&num(overall.valid_attempt_count)>0?`<div class="na2-response-overall"><strong>${esc(sec(overall.median_response_ms))}</strong><span>전체 중앙값 · ${num(overall.valid_attempt_count)}문항</span></div>`:'';
-  const skillHtml=skills.length?`<div class="na2-response-skills">${skills.map(({key,row})=>{const count=num(row.valid_attempt_count),low=count<5?'표본 적음':'';return `<div class="na2-response-row"><span class="skill">${esc(LABELS[key]||key)}</span><span class="median">${esc(sec(row.median_response_ms))}</span><span class="split">정답 ${esc(sec(row.median_correct_ms))} · 오답 ${esc(sec(row.median_wrong_ms))}<br>5초 미만 ${esc(pct(row.fast_under_5s_pct))} · 60초 초과 ${esc(pct(row.slow_over_60s_pct))}</span><span class="sample"><b>N=${count}</b>${esc(low)}</span></div>`}).join('')}</div>`:'<div class="na2-response-time-empty">영역별 응답 시간 표본이 아직 부족합니다.</div>';
-  return `<section class="na2-response-time"><div class="na2-response-time-head"><div><h3>응답 속도</h3><p>평균이 아니라 중앙값입니다. 10분을 넘긴 기록은 중앙값에서 제외합니다.</p></div><span class="na2-response-scope">${esc(scopeLabel)}</span></div>${overallHtml}${skillHtml}<div class="na2-response-time-note">단어 학습(vocabulary) 드릴은 기존 기록 방식이 달라 현재 영역별 표에서 제외했습니다. 10분 초과 기록은 별도 idle/outlier로 보관됩니다.</div></section>`;
+  if(!skills.length)return `<section class="na2-response-time"><div class="na2-response-time-head"><div><h3>문제 풀이 속도</h3><p>각 영역에서 한 문제를 푸는 데 걸리는 보통 시간을 보여줍니다.</p></div><span class="na2-response-scope">${esc(scopeLabel)}</span></div><div class="na2-response-time-empty">아직 응답 시간 데이터가 없습니다.</div></section>`;
+  const cards=skills.map(({key,row})=>{
+    const count=num(row.valid_attempt_count),low=count<10;
+    return `<article class="na2-response-card"><div class="na2-response-main"><b>${esc(LABELS[key]||key)}</b><strong>${esc(sec(row.median_response_ms))}</strong></div><div class="na2-response-caption">보통 응답 시간 · ${count}문항${low?' · 표본 적음':''}</div><div class="na2-response-split"><span>정답일 때 <b>${esc(sec(row.median_correct_ms))}</b></span><span>오답일 때 <b>${esc(sec(row.median_wrong_ms))}</b></span></div><div class="na2-response-flags"><span class="na2-response-flag fast">아주 빠른 답 &lt;5초 ${esc(pct(row.fast_under_5s_pct))}</span><span class="na2-response-flag slow">긴 고민 &gt;60초 ${esc(pct(row.slow_over_60s_pct))}</span></div></article>`;
+  }).join('');
+  return `<section class="na2-response-time"><div class="na2-response-time-head"><div><h3>문제 풀이 속도</h3><p><b>중앙값</b>을 사용합니다. 즉, 극단적으로 빠르거나 느린 몇 문제보다 학생의 ‘보통 속도’를 보여줍니다.</p></div><span class="na2-response-scope">${esc(scopeLabel)}</span></div><div class="na2-response-skills">${cards}</div><div class="na2-response-time-note">10분을 넘긴 기록은 보통 응답 시간 계산에서 제외합니다. 단어 학습 드릴은 예전 기록 방식이 달라 이 표에서는 제외했습니다.</div></section>`;
+}
+
+function ensureMount(){
+  const body=q('#na2DetailBody'),active=q('#na2DetailTabs [data-tab="activity"].active');
+  if(!body||!active)return null;
+  let mount=q('#na2ResponseTimeMount',body);
+  const chartSection=q('.na2-detail-section',body);
+  if(!mount){mount=document.createElement('div');mount.id='na2ResponseTimeMount'}
+  if(chartSection&&mount.previousElementSibling!==chartSection)chartSection.insertAdjacentElement('afterend',mount);
+  else if(!chartSection&&!mount.isConnected)body.appendChild(mount);
+  return mount;
 }
 
 async function render({force=false}={}){
   if(!context.studentId)return;
-  const body=q('#na2DetailBody'),active=q('#na2DetailTabs [data-tab="activity"].active');
-  if(!body||!active)return;
-  q('#na2ResponseTimeMount',body)?.remove();
-  const mount=document.createElement('div');mount.id='na2ResponseTimeMount';
-  const chartSection=q('.na2-detail-section',body);if(chartSection)body.insertBefore(mount,chartSection);else body.appendChild(mount);
-  mount.innerHTML='<section class="na2-response-time"><div class="na2-response-time-empty">응답 속도를 불러오는 중…</div></section>';
-  try{const rows=await fetchRows(context.studentId,context.planId,{force});if(!mount.isConnected||!q('#na2DetailTabs [data-tab="activity"].active'))return;const scope=selectScope(rows,context.planId);mount.innerHTML=timingHtml(scope.rows,scope.label)}catch(e){if(mount.isConnected)mount.innerHTML=`<section class="na2-response-time"><div class="na2-response-time-empty">${esc(e.message||'응답 시간 데이터를 불러오지 못했습니다.')}</div></section>`}
+  const mount=ensureMount();
+  if(!mount)return;
+  const key=cacheKey();
+  if(htmlCache.has(key))mount.innerHTML=htmlCache.get(key);
+  else mount.innerHTML='<section class="na2-response-time"><div class="na2-response-time-empty">응답 속도를 불러오는 중…</div></section>';
+  try{
+    const rows=await fetchRows(context.studentId,context.planId,{force});
+    if(!q('#na2DetailTabs [data-tab="activity"].active'))return;
+    const liveMount=ensureMount();if(!liveMount)return;
+    const scope=selectScope(rows,context.planId),html=timingHtml(scope.rows,scope.label);
+    htmlCache.set(key,html);liveMount.innerHTML=html;
+  }catch(e){const liveMount=ensureMount();if(liveMount&&!htmlCache.has(key))liveMount.innerHTML=`<section class="na2-response-time"><div class="na2-response-time-empty">${esc(e.message||'응답 시간 데이터를 불러오지 못했습니다.')}</div></section>`}
 }
 
 function install(){
@@ -103,11 +124,19 @@ function install(){
   installed=true;styles();
   const api=window.NaesinV2StudentDetail,originalOpen=api.open,originalRefresh=api.refreshCurrent;
   api.open=function(studentId,planId,groupId){context={studentId,planId};return originalOpen.call(api,studentId,planId,groupId)};
-  if(typeof originalRefresh==='function')api.refreshCurrent=async function(){const result=await originalRefresh.apply(api,arguments);if(q('#na2DetailTabs [data-tab="activity"].active'))setTimeout(()=>render({force:true}),0);return result};
+  if(typeof originalRefresh==='function')api.refreshCurrent=async function(){
+    const key=cacheKey(),saved=htmlCache.get(key)||'';
+    const result=await originalRefresh.apply(api,arguments);
+    if(q('#na2DetailTabs [data-tab="activity"].active')){
+      const mount=ensureMount();if(mount&&saved)mount.innerHTML=saved;
+      render({force:false});
+    }
+    return result;
+  };
   document.addEventListener('click',e=>{const tab=e.target.closest?.('#na2DetailTabs [data-tab="activity"]');if(tab)setTimeout(()=>render(),0)});
   return true;
 }
 
 if(!install()){let tries=0;const timer=setInterval(()=>{if(install()||++tries>50)clearInterval(timer)},100)}
-window.NaesinV2ResponseTime={render,clearCache:()=>cache.clear(),version:'1.0.0'};
+window.NaesinV2ResponseTime={render,clearCache:()=>{cache.clear();htmlCache.clear()},version:'1.1.0'};
 })();
