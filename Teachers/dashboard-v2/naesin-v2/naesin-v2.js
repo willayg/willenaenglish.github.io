@@ -2,7 +2,7 @@
 'use strict';
 
 const VIEW='naesin-v2';
-const REV='R12.6';
+const REV='R12.8';
 const ICON='./naesin-v2/naesin-v2-icon.svg';
 const AUTO_REFRESH_SRC='./naesin-v2/naesin-v2-auto-refresh.js?v=20260913-ar2';
 const PRACTICES=[
@@ -45,6 +45,6 @@ async function loadMatrixInto(test,groupId,{force=false}={}){const tbody=q('tbod
 async function refreshVisibleMatrices(){if(!isActive())return{skipped:true};if(matrixRefreshPromise)return matrixRefreshPromise;const root=q(`#view-${VIEW}`)||document,tests=qa('.na2-test',root);if(!tests.length)return{skipped:true};matrixRefreshPromise=Promise.allSettled(tests.map(test=>loadMatrixInto(test,test.dataset.groupId,{force:true}))).finally(()=>{matrixRefreshPromise=null});return matrixRefreshPromise}
 async function ensureLoaded({force=false}={}){if(state.loading)return;if(state.loaded&&!force)return;state.loading=true;state.error=null;renderLoading();try{state.groups=await window.NaesinV2Data?.loadGroups?.({force})||[];state.loaded=true;renderGroups()}catch(e){state.error=e;state.loaded=false;renderError(e.message)}finally{state.loading=false}}
 function loadAutoRefreshModule(){if(document.querySelector('script[data-na2-auto-refresh]'))return;const script=document.createElement('script');script.src=AUTO_REFRESH_SRC;script.async=false;script.dataset.na2AutoRefresh='1';document.head.appendChild(script)}
-function mount(){mountDesktopNav();mountMobileNav();mountView();document.addEventListener('click',e=>{if(!e.target.closest('.na2-menu-wrap'))qa('.na2-menu').forEach(m=>m.hidden=true)});window.NaesinV2={show,mount,refresh:()=>ensureLoaded({force:true}),refreshVisibleMatrices,isActive,version:'r12.6'};loadAutoRefreshModule();console.info(`[Naesin V2] ${REV} mounted`)}
+function mount(){mountDesktopNav();mountMobileNav();mountView();document.addEventListener('click',e=>{if(!e.target.closest('.na2-menu-wrap'))qa('.na2-menu').forEach(m=>m.hidden=true)});window.NaesinV2={show,mount,refresh:()=>ensureLoaded({force:true}),refreshVisibleMatrices,isActive,version:'r12.8'};loadAutoRefreshModule();console.info(`[Naesin V2] ${REV} mounted`)}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',mount,{once:true});else mount();
 })();
