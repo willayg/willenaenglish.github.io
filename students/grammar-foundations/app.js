@@ -17,6 +17,8 @@ let progressMap=new Map();
 let state={module:null,stage:null,index:0,score:0,renderer:null,checked:false,results:[]};
 
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const koTitle=x=>x?.koreanTitle||x?.title||'';
+const enTitle=x=>x?.englishTitle||'';
 function setBottom(html=''){bottom.innerHTML=html;bottom.hidden=!html}
 function currentQuestion(){return state.stage?.questions?.[state.index]||null}
 function progressKey(moduleId,stageId){return `${moduleId}:${stageId}`}
@@ -67,8 +69,8 @@ function lessonCard(mod){
     <div class="gf-target-head exam-head">
       <div class="gf-target-copy">
         <div class="exam-school">${esc(mod.lesson||'Grammar Foundations')}</div>
-        <h2 class="exam-title">${esc(mod.title)}</h2>
-        <div class="exam-book">${esc(mod.koreanTitle)} · ${done}/${mod.stages.length} levels complete</div>
+        <h2 class="exam-title">${esc(koTitle(mod))}</h2>
+        <div class="exam-book">${esc(enTitle(mod))} · ${done}/${mod.stages.length} levels complete</div>
         <div class="exam-meta"><span class="pill">${done===mod.stages.length?'Complete':next?`Next: Level ${next.number}`:'No levels'}</span><span class="pill">${required}/10 to pass</span></div>
       </div>
       <div class="ring gf-ring" style="--p:${pct}%"><b>${pct}%</b></div>
@@ -83,7 +85,8 @@ function stageCard(mod,s,index){
   return `<button class="gf-stage-card tile${cls}" data-module="${esc(mod.id)}" data-stage="${esc(s.id)}" ${unlocked?'':'disabled'}>
     <div class="gf-stage-card-copy">
       <div class="gf-stage-label">LEVEL ${s.number}</div>
-      <h3>${esc(s.title)}</h3>
+      <h3>${esc(koTitle(s))}</h3>
+      <small>${esc(enTitle(s))}</small>
       <span class="metric">${esc(status)}</span>
       ${row?`<small>${row.attempt_count} attempt${row.attempt_count===1?'':'s'}</small>`:''}
     </div>
@@ -106,8 +109,8 @@ function showModule(mod){
       <div class="gf-target-head exam-head">
         <div class="gf-target-copy">
           <div class="exam-school">${esc(mod.lesson||'Grammar Foundations')}</div>
-          <h2 class="exam-title">${esc(mod.title)}</h2>
-          <div class="exam-book">${esc(mod.koreanTitle)} · ${done}/${mod.stages.length} levels complete</div>
+          <h2 class="exam-title">${esc(koTitle(mod))}</h2>
+          <div class="exam-book">${esc(enTitle(mod))} · ${done}/${mod.stages.length} levels complete</div>
           <div class="exam-meta"><span class="pill">${done===mod.stages.length?'Complete':next?`Next: Level ${next.number}`:'No levels'}</span><span class="pill">${required}/10 to pass</span></div>
         </div>
         <div class="ring gf-ring" style="--p:${pct}%"><b>${pct}%</b></div>
@@ -124,7 +127,7 @@ function openGuide(mod,stage){
   state.module=mod;state.stage=stage;state.index=0;state.score=0;state.results=[];state.renderer=null;state.checked=false;
   setBottom('');
   const row=stageProgress(mod.id,stage.id);
-  root.innerHTML=`<button class="back" id="guideBack">← ${esc(mod.title)}</button><div class="gf-guide"><div class="gf-kicker">${esc(mod.title)} · Level ${stage.number}</div><h2>${esc(stage.title)}</h2><p>${esc(stage.subtitle)}</p>${row?`<div class="gf-guide-score">Best ${row.best_score}/${row.total} · ${row.attempt_count} attempt${row.attempt_count===1?'':'s'}</div>`:''}<div class="gf-rule">${esc(stage.guide?.rule||'')}</div><div class="gf-example-list">${(stage.guide?.examples||[]).map(x=>`<div class="gf-example">${esc(x)}</div>`).join('')}</div><div class="gf-actions"><button class="gf-btn secondary" id="backModule">목록</button><button class="gf-btn primary" id="startStage">${stage.questions.length}문제 시작 →</button></div></div>`;
+  root.innerHTML=`<button class="back" id="guideBack">← ${esc(koTitle(mod))}</button><div class="gf-guide"><div class="gf-kicker">${esc(koTitle(mod))} · ${esc(enTitle(mod))} · Level ${stage.number}</div><h2>${esc(koTitle(stage))}</h2><p>${esc(enTitle(stage))}</p>${stage.subtitle?`<p>${esc(stage.subtitle)}</p>`:''}${row?`<div class="gf-guide-score">Best ${row.best_score}/${row.total} · ${row.attempt_count} attempt${row.attempt_count===1?'':'s'}</div>`:''}<div class="gf-rule">${esc(stage.guide?.rule||'')}</div><div class="gf-example-list">${(stage.guide?.examples||[]).map(x=>`<div class="gf-example">${esc(x)}</div>`).join('')}</div><div class="gf-actions"><button class="gf-btn secondary" id="backModule">목록</button><button class="gf-btn primary" id="startStage">${stage.questions.length}문제 시작 →</button></div></div>`;
   document.getElementById('guideBack').onclick=()=>showModule(mod);
   document.getElementById('backModule').onclick=()=>showModule(mod);
   document.getElementById('startStage').onclick=startStage;
@@ -134,7 +137,7 @@ function renderQuestion(){
   const q=currentQuestion();if(!q)return showResult();
   state.checked=false;
   const pct=Math.round((state.index/state.stage.questions.length)*100);
-  root.innerHTML=`<button class="back" id="questionBack">← Level ${state.stage.number}</button><div class="gf-question-head"><div><div class="gf-kicker">${esc(state.module.title)} · Level ${state.stage.number}</div><b>${esc(state.stage.title)}</b></div><span class="gf-progress">${state.index+1} / ${state.stage.questions.length}</span></div><div class="progress gf-round-progress"><i style="width:${pct}%"></i></div><div class="gf-question-card" id="questionHost"></div>`;
+  root.innerHTML=`<button class="back" id="questionBack">← Level ${state.stage.number}</button><div class="gf-question-head"><div><div class="gf-kicker">${esc(koTitle(state.module))} · Level ${state.stage.number}</div><b>${esc(koTitle(state.stage))}</b><small>${esc(enTitle(state.stage))}</small></div><span class="gf-progress">${state.index+1} / ${state.stage.questions.length}</span></div><div class="progress gf-round-progress"><i style="width:${pct}%"></i></div><div class="gf-question-card" id="questionHost"></div>`;
   document.getElementById('questionBack').onclick=()=>openGuide(state.module,state.stage);
   const host=document.getElementById('questionHost');
   const renderer=new QuestionRenderer(host).render(q,{onChange:(_,has)=>{const btn=document.getElementById('checkAnswer');if(btn&&!state.checked)btn.disabled=!has}});
@@ -160,10 +163,10 @@ async function checkAnswer(){
 async function showResult(){
   const required=passScore(state.module),passed=state.score>=required,total=state.stage.questions.length;
   setBottom('');
-  root.innerHTML=`<div class="gf-result"><div class="gf-kicker">${esc(state.module.title)} · Level ${state.stage.number}</div><div class="gf-score">${state.score}/${total}</div><div class="gf-pass">${passed?'Passed ✓':'Redo this level'}</div><p id="saveStatus">Saving progress…</p></div>`;
+  root.innerHTML=`<div class="gf-result"><div class="gf-kicker">${esc(koTitle(state.module))} · ${esc(koTitle(state.stage))}</div><div class="gf-score">${state.score}/${total}</div><div class="gf-pass">${passed?'Passed ✓':'Redo this level'}</div><p id="saveStatus">Saving progress…</p></div>`;
   const saved=await saveStageResult();
   const row=stageProgress(state.module.id,state.stage.id),next=nextStage();
-  root.innerHTML=`<div class="gf-result"><div class="gf-kicker">${esc(state.module.title)} · Level ${state.stage.number}</div><div class="gf-score">${state.score}/${total}</div><div class="gf-pass">${passed?'Passed ✓':'Redo this level'}</div><p>${passed?'좋아요. 다음 단계로 넘어갈 준비가 됐어요.':`통과하려면 ${required}/${total} 이상이 필요해요.`}</p>${row?`<div class="gf-result-best">Best ${row.best_score}/${row.total} · ${row.attempt_count} attempts</div>`:''}${saved?'':'<div class="gf-save-warning">Progress could not be saved. You can retry this round.</div>'}<div class="gf-result-actions"><button class="gf-btn secondary" id="resultModule">레벨 목록</button>${passed&&next?'<button class="gf-btn secondary" id="nextGuide">다음 레벨 보기</button>':''}<button class="gf-btn primary" id="redoStage">${passed?'다시 풀기':'Redo →'}</button></div></div>`;
+  root.innerHTML=`<div class="gf-result"><div class="gf-kicker">${esc(koTitle(state.module))} · ${esc(enTitle(state.module))} · Level ${state.stage.number}</div><h2>${esc(koTitle(state.stage))}</h2><p>${esc(enTitle(state.stage))}</p><div class="gf-score">${state.score}/${total}</div><div class="gf-pass">${passed?'Passed ✓':'Redo this level'}</div><p>${passed?'좋아요. 다음 단계로 넘어갈 준비가 됐어요.':`통과하려면 ${required}/${total} 이상이 필요해요.`}</p>${row?`<div class="gf-result-best">Best ${row.best_score}/${row.total} · ${row.attempt_count} attempts</div>`:''}${saved?'':'<div class="gf-save-warning">Progress could not be saved. You can retry this round.</div>'}<div class="gf-result-actions"><button class="gf-btn secondary" id="resultModule">레벨 목록</button>${passed&&next?'<button class="gf-btn secondary" id="nextGuide">다음 레벨 보기</button>':''}<button class="gf-btn primary" id="redoStage">${passed?'다시 풀기':'Redo →'}</button></div></div>`;
   document.getElementById('resultModule').onclick=()=>showModule(state.module);
   document.getElementById('redoStage').onclick=()=>openGuide(state.module,state.stage);
   if(passed&&next)document.getElementById('nextGuide').onclick=()=>openGuide(state.module,next);
