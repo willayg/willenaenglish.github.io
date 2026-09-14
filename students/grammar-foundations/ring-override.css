@@ -1,3 +1,10 @@
 .gf-stage-card.passed .gf-stage-ring{
   background:conic-gradient(#9de2e7 var(--p), var(--track,#dff3f5) 0) !important;
 }
+.gf-step-card.exam-card{background:linear-gradient(145deg,#fff 0%,#eefcfd 100%);border-color:#9de2e7;box-shadow:0 14px 30px rgba(21,170,181,.11)}
+.gf-step-card .exam-title{font-size:34px}
+.gf-step-card .exam-book{max-width:680px;line-height:1.55}
+.gf-step-heading{display:flex;align-items:center;justify-content:space-between;gap:20px;margin:4px 2px 8px}
+.gf-step-heading .gf-title{margin-bottom:4px}
+.gf-title-en{margin-top:4px}
+@media(max-width:680px){.gf-step-card .exam-title{font-size:29px}.gf-step-heading{align-items:flex-start}.gf-step-heading .gf-ring{width:70px;height:70px;flex-basis:70px}}
