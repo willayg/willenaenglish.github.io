@@ -64,9 +64,18 @@
 .drawer .statline span{background:#fff!important;border:1.2px solid #d2e9ed!important;color:#52666a!important}
 .drawer .rating{border:1px solid rgba(79,185,200,.14)!important}
 
+/* Branded teacher/admin loading treatment, based on Test Prep V2. */
+#studentList>.empty,#drawerBody>.empty,.na2-tests>.na2-empty,.na2-matrix-loading td{min-height:220px!important;padding:48px 18px 38px!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;text-align:center!important;color:#6f7d84!important;font-size:12px!important;font-weight:700!important}
+#studentList>.empty::before,#drawerBody>.empty::before,.na2-tests>.na2-empty::before,.na2-matrix-loading td::before{content:'';width:190px;height:72px;margin-bottom:18px;display:block;background:#4fb9c8;-webkit-mask:url('/Assets/Images/Logo.png') center/contain no-repeat;mask:url('/Assets/Images/Logo.png') center/contain no-repeat;filter:drop-shadow(0 8px 18px rgba(79,185,200,.20))}
+#studentList>.empty::after,#drawerBody>.empty::after,.na2-tests>.na2-empty::after,.na2-matrix-loading td::after{content:'';width:110px;height:5px;margin-top:16px;border-radius:999px;background:linear-gradient(90deg,rgba(79,185,200,.14) 0 25%,#4fb9c8 45% 55%,rgba(79,185,200,.14) 75% 100%);background-size:220% 100%;animation:teacherLoadSweep 1.15s ease-in-out infinite}
+@keyframes teacherLoadSweep{0%{background-position:100% 0}100%{background-position:-100% 0}}
+
 @media(max-width:700px){
   .top-actions #burger-menu-mount .burger-user-label{display:none!important}
   .top-actions #burger-menu-mount .hw-notif-btn{border-radius:14px 0 0 14px!important}
   #view-naesin .na-actions .na-btn{padding:9px 11px!important}
   #view-students .student-list{padding:7px!important}
+  #studentList>.empty,#drawerBody>.empty,.na2-tests>.na2-empty,.na2-matrix-loading td{min-height:180px!important;padding-top:34px!important}
+  #studentList>.empty::before,#drawerBody>.empty::before,.na2-tests>.na2-empty::before,.na2-matrix-loading td::before{width:160px;height:62px}
 }
+@media(prefers-reduced-motion:reduce){#studentList>.empty::after,#drawerBody>.empty::after,.na2-tests>.na2-empty::after,.na2-matrix-loading td::after{animation:none;background:#bfe8ed}}
