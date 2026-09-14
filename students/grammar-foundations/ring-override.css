@@ -1,0 +1,3 @@
+.gf-stage-card.passed .gf-stage-ring{
+  background:conic-gradient(#9de2e7 var(--p), var(--track,#dff3f5) 0) !important;
+}
