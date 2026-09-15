@@ -4,6 +4,8 @@ export function createStudentHistoryNavigation({appId,views,normalize,validate,r
   if(!appId)throw new Error('Navigation requires appId.');
   if(typeof render!=='function')throw new Error('Navigation requires render(route).');
   const allowedViews=new Set(views||[]);
+  const grammarFoundations=appId==='willena-grammar-foundations';
+  const NAV_VERSION=grammarFoundations?'gf-hierarchy-v2':'default-v1';
   let current=null;
   let started=false;
   let reverting=false;
@@ -14,32 +16,27 @@ export function createStudentHistoryNavigation({appId,views,normalize,validate,r
   };
   const norm=route=>(normalize||defaultNormalize)(route||{});
   const valid=route=>Boolean(route&&allowedViews.has(route.view)&&(typeof validate!=='function'||validate(route)!==false));
-  const pack=route=>({app:appId,route:norm(route)});
-  const unpack=state=>state?.app===appId&&valid(state.route)?norm(state.route):null;
+  const pack=route=>({app:appId,navVersion:NAV_VERSION,route:norm(route)});
+  const unpack=state=>state?.app===appId&&(!grammarFoundations||state?.navVersion===NAV_VERSION)&&valid(state.route)?norm(state.route):null;
   const same=(a,b)=>JSON.stringify(norm(a))===JSON.stringify(norm(b));
-  const isGrammarFoundations=appId==='willena-grammar-foundations';
 
-  function compactTransition(prev,next,requestedReplace){
-    if(!isGrammarFoundations||requestedReplace)return requestedReplace;
-    const a=prev?.view,b=next?.view;
-    return (a==='guide'&&b==='practice')||
-      (a==='practice'&&b==='result')||
-      (a==='result'&&b==='guide')||
-      (a==='challenge'&&b==='challenge-result')||
-      (a==='challenge-result'&&b==='challenge');
+  function depth(route){
+    if(!grammarFoundations)return 0;
+    const view=route?.view;
+    if(view==='home')return 0;
+    if(view==='group')return 1;
+    if(view==='module')return 2;
+    if(['guide','practice','result','challenge','challenge-result'].includes(view))return 3;
+    return 0;
   }
-
-  function compactPoppedRoute(prev,next){
-    if(!isGrammarFoundations||!prev||!next)return next;
-    const shouldReturnToModule=(
-      (prev.view==='practice'&&next.view==='guide')||
-      (prev.view==='result'&&(next.view==='practice'||next.view==='guide'))||
-      (prev.view==='challenge-result'&&next.view==='challenge')
-    );
-    if(shouldReturnToModule&&prev.moduleId){
-      return norm({view:'module',moduleId:prev.moduleId});
+  function fallbackParent(route){
+    if(!grammarFoundations||!route)return null;
+    if(['guide','practice','result','challenge','challenge-result'].includes(route.view)&&route.moduleId){
+      return norm({view:'module',moduleId:route.moduleId});
     }
-    return next;
+    if(route.view==='module')return norm({view:'home'});
+    if(route.view==='group')return norm({view:'home'});
+    return null;
   }
 
   async function allowed(prev,next,source){
@@ -55,14 +52,21 @@ export function createStudentHistoryNavigation({appId,views,normalize,validate,r
   async function onPop(event){
     if(reverting){reverting=false;return}
     let next=unpack(event.state);
-    if(!next)return;
     const prev=current;
-    if(!await allowed(prev,next,'popstate')){reverting=true;history.forward();return}
-    const compacted=compactPoppedRoute(prev,next);
-    if(!same(compacted,next)){
-      next=compacted;
-      history.replaceState(pack(next),'',location.href);
+
+    // Old Grammar Foundations history entries are deliberately discarded.
+    // If the browser lands on one, replace it with the canonical parent instead
+    // of exposing an old guide/result/question route to the student.
+    if(grammarFoundations&&!next){
+      const parent=fallbackParent(prev);
+      if(!parent)return;
+      if(!await allowed(prev,parent,'popstate')){reverting=true;history.forward();return}
+      history.replaceState(pack(parent),'',location.href);
+      accept(parent,'popstate',prev);
+      return;
     }
+    if(!next)return;
+    if(!await allowed(prev,next,'popstate')){reverting=true;history.forward();return}
     accept(next,'popstate',prev);
   }
 
@@ -70,21 +74,47 @@ export function createStudentHistoryNavigation({appId,views,normalize,validate,r
     if(started)throw new Error(`${appId} navigation initialized twice.`);
     started=true;
     let route=unpack(history.state);
-    if(!route){route=norm(initialRoute);history.replaceState(pack(route),'',location.href)}
+    if(!route){
+      route=norm(initialRoute);
+      history.replaceState(pack(route),'',location.href);
+    }
     current=route;
     window.addEventListener('popstate',onPop);
     return route;
   }
+
   async function navigate(route,{replace=false}={}){
     const next=norm(route);
     if(!valid(next))throw new Error(`Invalid ${appId} route.`);
     if(same(current,next))return current;
     const prev=current;
-    const useReplace=compactTransition(prev,next,replace);
-    if(!await allowed(prev,next,useReplace?'replace':'push'))return prev;
-    if(useReplace)history.replaceState(pack(next),'',location.href);else history.pushState(pack(next),'',location.href);
-    return accept(next,useReplace?'replace':'push',prev);
+
+    if(grammarFoundations&&!replace){
+      const from=depth(prev),to=depth(next);
+
+      // A level guide, the quiz itself and its result are one navigation tier.
+      // Moving between them must never add browser history.
+      if(to===from&&to===3){
+        if(!await allowed(prev,next,'replace'))return prev;
+        history.replaceState(pack(next),'',location.href);
+        return accept(next,'replace',prev);
+      }
+
+      // Returning to an ancestor consumes history; it never pushes a new copy of
+      // that ancestor after a result screen.
+      if(to<from){
+        if(!await allowed(prev,next,'back'))return prev;
+        history.go(-(from-to));
+        return prev;
+      }
+    }
+
+    if(!await allowed(prev,next,replace?'replace':'push'))return prev;
+    if(replace)history.replaceState(pack(next),'',location.href);
+    else history.pushState(pack(next),'',location.href);
+    return accept(next,replace?'replace':'push',prev);
   }
+
   function replace(route,{renderRoute=true}={}){
     const next=norm(route);
     if(!valid(next))throw new Error(`Invalid ${appId} route.`);
@@ -93,7 +123,14 @@ export function createStudentHistoryNavigation({appId,views,normalize,validate,r
     current=next;
     return renderRoute?accept(next,'replace',prev):next;
   }
-  function back(){history.back()}
+
+  function back(){
+    if(!grammarFoundations){history.back();return}
+    const parent=fallbackParent(current);
+    if(!parent){history.back();return}
+    const delta=Math.max(1,depth(current)-depth(parent));
+    history.go(-delta);
+  }
   function route(){return current?{...current}:null}
   function destroy(){window.removeEventListener('popstate',onPop);started=false;current=null}
 
