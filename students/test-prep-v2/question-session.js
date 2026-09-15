@@ -63,26 +63,20 @@ export function createQuestionSession({
   window.addEventListener('blur',handleQuestionActivityChange);
 
   function showFinishOverlay(){
-    if(logLabel!=='practice'||root.querySelector('[data-practice-finish-overlay]'))return;
-    const overlay=document.createElement('div');
-    overlay.dataset.practiceFinishOverlay='1';
-    overlay.setAttribute('role','status');
-    overlay.setAttribute('aria-live','polite');
-    overlay.innerHTML='<div class="practice-finish-card"><span class="practice-finish-spinner" aria-hidden="true"></span><strong>점수를 계산하는 중...</strong><small>학습 결과를 저장하고 있어요.</small></div>';
-    overlay.style.cssText='position:fixed;inset:0;z-index:9998;display:grid;place-items:center;padding:24px;background:rgba(15,23,42,.38);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px)';
-    const card=overlay.firstElementChild;
-    card.style.cssText='min-width:min(320px,calc(100vw - 48px));display:flex;flex-direction:column;align-items:center;gap:12px;padding:28px 24px;border-radius:22px;background:var(--card-bg,var(--surface,#fff));color:var(--text-color,var(--text,#24383f));box-shadow:0 18px 50px rgba(0,0,0,.22);text-align:center;font-family:Poppins,sans-serif';
-    const spinner=card.querySelector('.practice-finish-spinner');
-    spinner.style.cssText='width:46px;height:46px;border-radius:50%;border:5px solid currentColor;border-right-color:transparent;opacity:.78;animation:practiceFinishSpin .75s linear infinite';
-    card.querySelector('strong').style.cssText='font-size:20px;line-height:1.3;font-weight:800';
-    card.querySelector('small').style.cssText='font-size:13px;line-height:1.4;font-weight:600;opacity:.62';
-    if(!document.getElementById('practiceFinishOverlayStyle')){
+    if(logLabel!=='practice'||document.getElementById('practiceFinishOverlay'))return;
+    const styleId='practiceFinishOverlayStyle';
+    if(!document.getElementById(styleId)){
       const style=document.createElement('style');
-      style.id='practiceFinishOverlayStyle';
-      style.textContent='@keyframes practiceFinishSpin{to{transform:rotate(360deg)}}@media(prefers-reduced-motion:reduce){.practice-finish-spinner{animation:none!important}}';
+      style.id=styleId;
+      style.textContent='@keyframes practiceFinishSpin{to{transform:rotate(360deg)}}#practiceFinishOverlay{position:fixed;inset:0;z-index:9998;display:flex;align-items:center;justify-content:center;background:rgba(15,23,42,.42);backdrop-filter:blur(3px)}#practiceFinishOverlay .pfo-card{display:flex;flex-direction:column;align-items:center;gap:12px;min-width:280px;padding:28px 24px;border-radius:22px;background:var(--card-bg,#fff);color:var(--text-color,#24383f);box-shadow:0 18px 50px rgba(0,0,0,.22);font-family:Poppins,sans-serif;text-align:center}#practiceFinishOverlay .pfo-spinner{width:46px;height:46px;border:5px solid currentColor;border-right-color:transparent;border-radius:50%;animation:practiceFinishSpin .75s linear infinite;opacity:.75}#practiceFinishOverlay strong{font-size:20px}#practiceFinishOverlay small{font-size:13px;opacity:.65}@media(prefers-reduced-motion:reduce){#practiceFinishOverlay .pfo-spinner{animation:none}}';
       document.head.appendChild(style);
     }
-    root.appendChild(overlay);
+    const overlay=document.createElement('div');
+    overlay.id='practiceFinishOverlay';
+    overlay.setAttribute('role','status');
+    overlay.setAttribute('aria-live','polite');
+    overlay.innerHTML='<div class="pfo-card"><span class="pfo-spinner" aria-hidden="true"></span><strong>점수를 계산하는 중...</strong><small>학습 결과를 저장하고 있어요.</small></div>';
+    document.body.appendChild(overlay);
   }
 
   function restoreOnce(){
@@ -104,11 +98,10 @@ export function createQuestionSession({
     restoreOnce();
     if(indexState.get()>=queueLength()){
       clearActivitySnapshotFor(currentActivityRoute());
-      showFinishOverlay();
       return onFinished();
     }
     const entry=getEntry(),q=getQuestion(entry);
-    if(!q){clearActivitySnapshotFor(currentActivityRoute());showFinishOverlay();return onFinished()}
+    if(!q){clearActivitySnapshotFor(currentActivityRoute());return onFinished()}
     saveActivityPosition(indexState.get());
     grading=false;nextPointerArmed=false;
     checkedState.set(false);onBeforeRender(entry,q);
@@ -153,14 +146,17 @@ export function createQuestionSession({
     result.timingVersion='question-active-v1';
     checkedState.set(true);grading=false;nextPointerArmed=false;
     const answeredIndex=indexState.get();
+    const isLastQuestion=answeredIndex===queueLength()-1;
     if(result.correct)onCorrect(entry,q,result);else onWrong(entry,q,result);
     renderer.showFeedback(result);decorateAiWilliFeedback(root,result);
     if(!result.correct)mountAiWilliHelper({container:root,question:q,response,result,section:q.skill,practiceType:getPracticeType(entry,q)});
+    if(isLastQuestion)showFinishOverlay();
     try{await recordAttempt({question:q,response,result,practiceType:getPracticeType(entry,q),...getAttemptExtras(entry,q,false)})}
     catch(e){console.warn(`[test-prep-v2] ${logLabel} tracking failed`,e)}
     if(!isActive())return;
     saveActivityOutcome(answeredIndex,!!result.correct);
-    btn.disabled=false;btn.textContent=indexState.get()===queueLength()-1?'Finish':'Next Question →';
+    if(isLastQuestion){indexState.set(answeredIndex+1);render();return}
+    btn.disabled=false;btn.textContent='Next Question →';
     const skipButton=document.getElementById(buttonIds.skip);if(skipButton)skipButton.disabled=true;
   }
 
@@ -170,6 +166,8 @@ export function createQuestionSession({
     const timing=snapshotQuestionTimer();
     const response=renderer?.getResponse()??null,result={correct:false,method:'skipped',responseTimeMs:timing.activeMs,wallResponseTimeMs:timing.wallMs,timingVersion:'question-active-v1'};
     const answeredIndex=indexState.get();onWrong(entry,q,result);
+    const isLastQuestion=answeredIndex===queueLength()-1;
+    if(isLastQuestion)showFinishOverlay();
     try{await recordAttempt({question:q,response,result,practiceType:getPracticeType(entry,q),skipped:true,...getAttemptExtras(entry,q,true)})}
     catch(e){console.warn(`[test-prep-v2] ${logLabel} skip tracking failed`,e)}
     if(!isActive())return;
