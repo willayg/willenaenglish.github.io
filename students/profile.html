@@ -12,8 +12,11 @@
 <link rel="stylesheet" href="/students/dashboard-v2/dashboard-theme-pips.css?v=20260915p6d">
 <link rel="stylesheet" href="/students/profile-v2.css?v=20260916p3">
 <link rel="stylesheet" href="/students/profile-v2-rewards.css?v=20260915p1">
+<link rel="stylesheet" href="/students/dashboard-v2/shared-header-menu.css?v=20260916p1">
 <script src="/students/api-gateway.js"></script>
 <script src="/js/api-config.js?v=20260113c"></script>
+<script src="/students/language.js"></script>
+<script src="/students/theme.js"></script>
 </head>
 <body>
 <div class="page">
@@ -28,7 +31,7 @@
       <strong id="headerName">Student</strong>
       <span id="headerClass">Willena English</span>
     </div>
-    <button class="avatar" type="button" aria-label="Change avatar">S</button>
+    <button class="avatar" type="button" aria-label="Open settings">S</button>
   </header>
 
   <main class="profile-main">
@@ -42,7 +45,7 @@
         <div class="profile-top">
           <button class="profile-avatar-button skeleton" id="profileAvatar" type="button" aria-label="Change avatar">🙂</button>
           <div class="profile-summary">
-            <strong class="skeleton" id="profileName">Student</strong>
+            <strong class="skeleton" id="profileHeroName">Student</strong>
             <span class="skeleton" id="profileClassSummary">Willena English</span>
             <button class="change-avatar" id="changeAvatar" type="button">Change avatar</button>
           </div>
@@ -87,8 +90,10 @@
   </main>
 
   <div class="footer-logo" role="img" aria-label="Willena English"></div>
-  <div class="profile-revision">profile v2.0 · rev5.01</div>
+  <div class="profile-revision">profile v2.0 · rev5.02</div>
 </div>
+
+<div id="settingsModal" class="settings-modal" aria-hidden="true"><div class="settings-dialog" role="dialog" aria-modal="true" aria-labelledby="settingsTitle"><div class="settings-top"><h3 id="settingsTitle">Settings</h3><button class="modal-close" id="closeSettings" type="button" aria-label="Close settings">×</button></div><div class="profile-card"><div class="profile-avatar" id="settingsProfileAvatar">S</div><div class="profile-copy"><strong id="profileName">Student</strong><span>Willena English</span></div></div><div class="settings-group"><div class="setting-row"><div class="setting-copy"><strong>Profile</strong><span>Name, class and account information</span></div><button class="settings-action" id="profileEditBtn" type="button">Edit</button></div><div class="setting-row"><div class="setting-copy"><strong>Language</strong><span>Dashboard interface language</span></div><select class="setting-select" id="languageSelect"><option value="en">English</option><option value="ko">한국어</option></select></div></div><div class="settings-group"><div class="setting-row"><div class="setting-copy"><strong>Music</strong><span>Dashboard and activity music</span></div><label class="switch"><input id="musicToggle" type="checkbox"><span class="switch-track"></span></label></div><div class="setting-row"><div class="setting-copy"><strong>Dark mode</strong><span>Use the darker Willena theme</span></div><label class="switch"><input id="darkToggle" type="checkbox"><span class="switch-track"></span></label></div><div class="setting-row"><div class="setting-copy"><strong>Animations</strong><span>Border shine and bouncing background shapes</span></div><label class="switch"><input id="motionToggle" type="checkbox" checked><span class="switch-track"></span></label></div></div><button class="settings-action danger" id="logoutBig" type="button">Log out</button></div></div>
 
 <div class="avatar-modal" id="avatarModal" aria-hidden="true">
   <div class="avatar-dialog" role="dialog" aria-modal="true" aria-labelledby="avatarTitle">
@@ -105,6 +110,7 @@
 </div>
 
 <script src="/students/dashboard-v2/dashboard-theme-pips.js?v=20260915p6b"></script>
-<script src="/students/profile-v2.js?v=20260916p5"></script>
+<script src="/students/dashboard-v2/shared-header-menu.js?v=20260916p1"></script>
+<script src="/students/profile-v2.js?v=20260916p6"></script>
 </body>
 </html>
