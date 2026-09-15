@@ -1,10 +1,11 @@
 (function(){
 'use strict';
 
-const REV='AR1.1';
+const REV='AR1.2';
 const INTERVAL_MS=20000;
 const MIN_REFRESH_GAP_MS=2500;
 const ACTIVE_VIEW_ID='view-naesin-v2';
+const REVIEW_COUNTS_SRC='./naesin-v2-review-counts.js?v=20260915-p1';
 
 let timer=null;
 let running=false;
@@ -68,9 +69,14 @@ window.addEventListener('focus',()=>{
   if(isActive())refreshSoon('window-focus',250);
 });
 
+function mountReviewCounts(){
+  import(REVIEW_COUNTS_SRC).catch(error=>console.warn('[Naesin V2 Auto Refresh] review counts module failed',error));
+}
+
 function mount(){
   watchActivation();
   start();
+  mountReviewCounts();
   window.NaesinV2AutoRefresh={
     version:REV,
     intervalMs:INTERVAL_MS,
