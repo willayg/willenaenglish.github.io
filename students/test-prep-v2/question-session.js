@@ -78,6 +78,12 @@ export function createQuestionSession({
     overlay.innerHTML='<div class="pfo-card"><span class="pfo-spinner" aria-hidden="true"></span><strong>점수를 계산하는 중...</strong><small>학습 결과를 저장하고 있어요.</small></div>';
     document.body.appendChild(overlay);
   }
+  function removeFinishOverlay(){document.getElementById('practiceFinishOverlay')?.remove()}
+  function finishSession(){
+    const finished=onFinished();
+    Promise.resolve(finished).finally(removeFinishOverlay);
+    return finished;
+  }
 
   function restoreOnce(){
     const route=currentActivityRoute(),key=routeKey(route);if(!route||!key)return;
@@ -98,10 +104,10 @@ export function createQuestionSession({
     restoreOnce();
     if(indexState.get()>=queueLength()){
       clearActivitySnapshotFor(currentActivityRoute());
-      return onFinished();
+      return finishSession();
     }
     const entry=getEntry(),q=getQuestion(entry);
-    if(!q){clearActivitySnapshotFor(currentActivityRoute());return onFinished()}
+    if(!q){clearActivitySnapshotFor(currentActivityRoute());return finishSession()}
     saveActivityPosition(indexState.get());
     grading=false;nextPointerArmed=false;
     checkedState.set(false);onBeforeRender(entry,q);
