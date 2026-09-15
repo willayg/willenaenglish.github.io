@@ -1,0 +1,10 @@
+(()=>{
+'use strict';
+const reduce=window.matchMedia?.('(prefers-reduced-motion: reduce)');
+let items=[],last=performance.now(),raf=0;
+function build(){items=[];document.querySelectorAll('.layer.far .shape,.layer.mid .shape').forEach((el,i)=>{const layer=el.parentElement;if(!layer)return;const lw=layer.clientWidth,lh=layer.clientHeight,w=el.offsetWidth,h=el.offsetHeight,baseX=el.offsetLeft,baseY=el.offsetTop;if(baseY>lh-h||baseX>lw-w)return;const speed=(layer.classList.contains('far')?18:26)+(i%5)*1.8;const angle=((i*47)%260+35)*Math.PI/180;let vx=Math.cos(angle)*speed,vy=Math.sin(angle)*speed;if(Math.abs(vx)<7)vx=Math.sign(vx||1)*7;if(Math.abs(vy)<7)vy=Math.sign(vy||1)*7;items.push({el,layer,x:0,y:0,vx,vy,baseX,baseY,w,h})})}
+function clampBounce(p,dt){const lw=p.layer.clientWidth,lh=p.layer.clientHeight;if(!lw||!lh)return;p.x+=p.vx*dt;p.y+=p.vy*dt;let minX=-p.baseX,maxX=lw-p.baseX-p.w,minY=-p.baseY,maxY=lh-p.baseY-p.h;if(maxX<minX||maxY<minY)return;if(p.x<=minX){p.x=minX;p.vx=Math.abs(p.vx)}else if(p.x>=maxX){p.x=maxX;p.vx=-Math.abs(p.vx)}if(p.y<=minY){p.y=minY;p.vy=Math.abs(p.vy)}else if(p.y>=maxY){p.y=maxY;p.vy=-Math.abs(p.vy)}p.el.style.translate=`${p.x.toFixed(2)}px ${p.y.toFixed(2)}px`}
+function tick(now){const dt=Math.min(.04,(now-last)/1000);last=now;if(!document.body.classList.contains('no-motion')&&!reduce?.matches)items.forEach(p=>clampBounce(p,dt));raf=requestAnimationFrame(tick)}
+function reset(){cancelAnimationFrame(raf);document.querySelectorAll('.shape').forEach(el=>el.style.translate='0 0');build();last=performance.now();raf=requestAnimationFrame(tick)}
+let resizeTimer=0;window.addEventListener('resize',()=>{clearTimeout(resizeTimer);resizeTimer=setTimeout(reset,120)});if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',reset,{once:true});else reset();
+})();
