@@ -35,18 +35,31 @@
     </div>
     <div class="header-brand">
       <div class="header-title">Grammar Foundations</div>
-      <button class="header-avatar" id="studentAvatar" type="button" aria-label="Student">S</button>
+      <div class="profile-menu-wrap">
+        <button class="header-avatar" id="studentAvatar" type="button" aria-label="Student menu" aria-expanded="false" aria-controls="studentProfileMenu">S</button>
+        <div class="profile-menu" id="studentProfileMenu" hidden>
+          <button class="profile-menu-item" id="studentProfileOpen" type="button"><span class="profile-menu-icon" aria-hidden="true">☺</span><span>Profile</span></button>
+          <button class="profile-menu-item" id="studentDashboardOpen" type="button"><span class="profile-menu-icon" aria-hidden="true">⌂</span><span>Dashboard</span></button>
+          <button class="profile-menu-item" id="studentBigTextToggle" type="button" aria-pressed="false"><span class="profile-menu-icon" aria-hidden="true">Aa</span><span id="studentBigTextLabel">큰 글자 꺼짐</span></button>
+          <div class="profile-menu-divider"></div>
+          <button class="profile-menu-item" id="studentTestPrepA" type="button"><span class="profile-menu-icon" aria-hidden="true">A</span><span>Test Prep A</span></button>
+          <button class="profile-menu-item" id="studentTestPrepB" type="button"><span class="profile-menu-icon" aria-hidden="true">B</span><span>Test Prep B</span></button>
+          <div class="profile-menu-divider"></div>
+          <button class="profile-menu-item profile-logout" id="studentLogout" type="button"><span class="profile-menu-icon" aria-hidden="true">↪</span><span>Log out</span></button>
+        </div>
+      </div>
     </div>
   </div>
   <div class="header-curve"></div>
 </header>
 <main class="gf-app" id="screen" data-willena-keyboard-safe><div class="loading">Loading…</div></main>
 <nav class="gf-bottom" id="bottom" hidden></nav>
-<div class="app-version">Grammar Foundations · v0.117</div>
+<div class="app-version">Grammar Foundations · v0.118</div>
 <script src="/students/api-gateway.js?v=2.13b"></script>
 <script src="/js/api-config.js?v=2.13b"></script>
 <script src="./auth-refresh.js?v=0.117"></script>
 <script type="module" src="../test-prep-v2/theme-pips.js?v=2.25.93"></script>
+<script type="module" src="../test-prep-v2/header-v2.js?v=1.3.0"></script>
 <script src="./rewards-sync.js?v=0.114"></script>
 <script type="module" src="./app.js?v=0.116"></script>
 </body>
