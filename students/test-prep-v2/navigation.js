@@ -33,7 +33,8 @@ function packed(route){return{app:APP,route:normalize(route)}}
 function fromHistory(state){return state?.app===APP&&valid(state.route)?normalize(state.route):null}
 function same(a,b){return JSON.stringify(normalize(a))===JSON.stringify(normalize(b))}
 async function allowed(prev,next,source){
-  if(prev?.view==='practice'&&next?.view!=='practice'&&!await confirmSessionExit())return false;
+  const completedPractice=prev?.view==='practice'&&next?.view==='result';
+  if(prev?.view==='practice'&&next?.view!=='practice'&&!completedPractice&&!await confirmSessionExit())return false;
   if(!navigationGuard)return true;
   try{return await navigationGuard(prev,next,{source})!==false}
   catch(e){console.warn('[test-prep-v2 navigation] guard failed',e);return true}
