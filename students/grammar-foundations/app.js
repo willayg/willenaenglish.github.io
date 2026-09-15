@@ -5,6 +5,7 @@ import {installWillenaKeyboard,hideWillenaKeyboard} from '../shared/willena-keyb
 import {startStudentHeaderData,subscribeStudentHeaderData} from '../shared/student-header-data.js?v=1.0.0';
 import {createStudentHistoryNavigation} from '../shared/student-history-navigation.js?v=1.0.0';
 import {createStudentSessionResume} from '../shared/student-session-resume.js?v=1.0.0';
+import {confirmSessionExit,setSessionProtection} from '../test-prep-v2/session-protection.js?v=1.3.0';
 
 const root=document.getElementById('screen');
 const bottom=document.getElementById('bottom');
@@ -179,6 +180,7 @@ function renderPractice(mod,stage,{source}={}){
   state.group=groupNumber(mod);state.module=mod;state.stage=stage;
   if(state.index>=stage.questions.length)state.index=Math.max(0,stage.questions.length-1);
   saveRoundSnapshot(state.index);
+  setSessionProtection(true);
   renderQuestion();
 }
 function renderQuestion(){
@@ -208,7 +210,7 @@ async function checkAnswer(){
 }
 async function renderResult(mod,stage){
   if(!mod||!stage)return nav.replace({view:'home'});
-  state.group=groupNumber(mod);state.module=mod;state.stage=stage;setBottom('');sessionStore.clear();
+  state.group=groupNumber(mod);state.module=mod;state.stage=stage;setBottom('');sessionStore.clear();setSessionProtection(false);
   const required=passScore(mod),passed=state.score>=required,total=stage.questions.length;
   root.innerHTML=`<div class="gf-result"><div class="gf-kicker">Step ${state.group} · ${esc(koTitle(mod))} · ${esc(koTitle(stage))}</div><div class="gf-score">${state.score}/${total}</div><div class="gf-pass">${passed?'Passed ✓':'Redo this level'}</div><p id="saveStatus">${state.resultSaved?'Progress saved':'Saving progress…'}</p></div>`;
   let saved=state.resultSaved;
@@ -238,10 +240,13 @@ function validateRoute(route){
 }
 async function navigationGuard(prev,next){
   if(prev?.view!=='practice'||next?.view==='result'||!sessionStore.isActive())return true;
-  return sessionStore.confirmExit('진행 중인 학습은 저장되어 있습니다. 지금 나가도 다음에 이어서 할 수 있어요. 나가시겠어요?');
+  setSessionProtection(true);
+  return confirmSessionExit();
 }
 function renderRoute(route,meta={}){
-  hideWillenaKeyboard();window.scrollTo({top:0,behavior:'auto'});
+  hideWillenaKeyboard();
+  if(route.view!=='practice')setSessionProtection(false);
+  window.scrollTo({top:0,behavior:'auto'});
   if(route.view==='home')return renderHome();
   if(route.view==='group')return renderGroup(route.group);
   const mod=findModule(route.moduleId);
