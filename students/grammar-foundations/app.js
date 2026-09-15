@@ -4,6 +4,7 @@ import {mountAiWilliHelper,decorateAiWilliFeedback} from '../shared/ai-willi.js?
 import {installWillenaKeyboard,hideWillenaKeyboard} from '../shared/willena-keyboard.js?v=1.5.1';
 import {startStudentHeaderData,subscribeStudentHeaderData} from '../shared/student-header-data.js?v=1.0.0';
 import {createStudentHistoryNavigation} from '../shared/student-history-navigation.js?v=1.0.0';
+import {createStudentSessionResume} from '../shared/student-session-resume.js?v=1.0.0';
 
 const root=document.getElementById('screen');
 const bottom=document.getElementById('bottom');
@@ -18,6 +19,8 @@ let modules=[];
 let progressMap=new Map();
 let state={group:null,module:null,stage:null,index:0,score:0,renderer:null,checked:false,results:[],resultSaved:false};
 let nav=null;
+const sessionStore=createStudentSessionResume({appId:'grammar-foundations'});
+sessionStore.installBeforeUnload();
 
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const koTitle=x=>x?.koreanTitle||x?.title||'';
@@ -50,6 +53,29 @@ function groupStats(group){
 }
 function resetRound(mod=null,stage=null){
   state={group:mod?groupNumber(mod):state.group,module:mod,stage,index:0,score:0,renderer:null,checked:false,results:[],resultSaved:false};
+}
+function saveRoundSnapshot(resumeIndex=state.index){
+  if(!state.module||!state.stage)return null;
+  return sessionStore.save({
+    kind:'foundation',moduleId:state.module.id,stageId:state.stage.id,
+    index:Math.max(0,Number(resumeIndex)||0),score:Number(state.score)||0,
+    results:Array.isArray(state.results)?state.results:[],total:state.stage.questions.length
+  });
+}
+function restoreRound(mod,stage){
+  const row=sessionStore.load();
+  if(!row||String(row.moduleId)!==String(mod?.id)||String(row.stageId)!==String(stage?.id))return false;
+  const index=Math.max(0,Math.min(Number(row.index)||0,stage.questions.length));
+  if(index>=stage.questions.length){sessionStore.clear();return false}
+  state={group:groupNumber(mod),module:mod,stage,index,score:Number(row.score)||0,renderer:null,checked:false,results:Array.isArray(row.results)?row.results:[],resultSaved:false};
+  sessionStore.setActive(true);
+  return true;
+}
+function resumeRoute(){
+  const row=sessionStore.load();if(!row)return null;
+  const mod=findModule(row.moduleId),stage=findStage(mod,row.stageId),idx=mod?.stages?.findIndex(s=>s.id===stage?.id)??-1;
+  if(!mod||!stage||idx<0||!stageUnlocked(mod,idx)){sessionStore.clear();return null}
+  return restoreRound(mod,stage)?{view:'practice',moduleId:mod.id,stageId:stage.id}:null;
 }
 
 async function refreshToken(){
@@ -108,7 +134,8 @@ function lessonCard(mod){
 }
 function stageCard(mod,s,index){
   const row=stageProgress(mod.id,s.id),unlocked=stageUnlocked(mod,index),passed=Boolean(row?.passed),pct=stagePct(row);
-  const status=passed?`Passed · ${row.best_score}/${row.total}`:row?`Best ${row.best_score}/${row.total}`:unlocked?'Ready':'Locked';
+  const saved=sessionStore.load(),inProgress=Boolean(saved&&String(saved.moduleId)===String(mod.id)&&String(saved.stageId)===String(s.id));
+  const status=inProgress?`In progress · ${Math.min(Number(saved.index)||0,s.questions.length)}/${s.questions.length}`:passed?`Passed · ${row.best_score}/${row.total}`:row?`Best ${row.best_score}/${row.total}`:unlocked?'Ready':'Locked';
   const cls=passed?' passed':unlocked?' active':' locked';
   return `<button class="gf-stage-card tile${cls}" data-module="${esc(mod.id)}" data-stage="${esc(s.id)}" ${unlocked?'':'disabled'}><div class="gf-stage-card-copy"><div class="gf-stage-label">LEVEL ${s.number}</div><h3>${esc(koTitle(s))}</h3><small>${esc(enTitle(s))}</small><span class="metric">${esc(status)}</span>${row?`<small>${row.attempt_count} attempt${row.attempt_count===1?'':'s'}</small>`:''}</div><div class="ring gf-stage-ring" style="--p:${pct}%"><b>${pct}%</b></div></button>`;
 }
@@ -136,17 +163,22 @@ function renderModule(mod){
 }
 function renderGuide(mod,stage){
   const idx=mod?.stages?.findIndex(s=>s.id===stage?.id)??-1;if(!mod||!stage||idx<0||!stageUnlocked(mod,idx))return nav.replace({view:'module',moduleId:mod?.id});
-  resetRound(mod,stage);setBottom('');const row=stageProgress(mod.id,stage.id);
-  root.innerHTML=`<button class="back" id="guideBack">← ${esc(koTitle(mod))}</button><div class="gf-guide"><div class="gf-kicker">Step ${state.group} · Level ${stage.number}</div><h2>${esc(koTitle(stage))}</h2><p>${esc(enTitle(stage))}</p>${stage.subtitle?`<p>${esc(stage.subtitle)}</p>`:''}${row?`<div class="gf-guide-score">Best ${row.best_score}/${row.total} · ${row.attempt_count} attempt${row.attempt_count===1?'':'s'}</div>`:''}<div class="gf-rule">${esc(stage.guide?.rule||'')}</div><div class="gf-example-list">${(stage.guide?.examples||[]).map(x=>`<div class="gf-example">${esc(x)}</div>`).join('')}</div><div class="gf-actions"><button class="gf-btn secondary" id="backModule">목록</button><button class="gf-btn primary" id="startStage">${stage.questions.length}문제 시작 →</button></div></div>`;
+  resetRound(mod,stage);setBottom('');const row=stageProgress(mod.id,stage.id),hasResume=sessionStore.matches(mod.id,stage.id),saved=sessionStore.load();
+  const startLabel=hasResume?`이어하기 · ${Math.min(Number(saved?.index)||0,stage.questions.length)}/${stage.questions.length}`:`${stage.questions.length}문제 시작 →`;
+  root.innerHTML=`<button class="back" id="guideBack">← ${esc(koTitle(mod))}</button><div class="gf-guide"><div class="gf-kicker">Step ${state.group} · Level ${stage.number}</div><h2>${esc(koTitle(stage))}</h2><p>${esc(enTitle(stage))}</p>${stage.subtitle?`<p>${esc(stage.subtitle)}</p>`:''}${row?`<div class="gf-guide-score">Best ${row.best_score}/${row.total} · ${row.attempt_count} attempt${row.attempt_count===1?'':'s'}</div>`:''}${hasResume?'<div class="gf-guide-score">진행 중인 학습이 저장되어 있어요.</div>':''}<div class="gf-rule">${esc(stage.guide?.rule||'')}</div><div class="gf-example-list">${(stage.guide?.examples||[]).map(x=>`<div class="gf-example">${esc(x)}</div>`).join('')}</div><div class="gf-actions"><button class="gf-btn secondary" id="backModule">목록</button><button class="gf-btn primary" id="startStage">${startLabel}</button></div></div>`;
   document.getElementById('guideBack').onclick=()=>nav.back();
   document.getElementById('backModule').onclick=()=>nav.navigate({view:'module',moduleId:mod.id});
-  document.getElementById('startStage').onclick=()=>{resetRound(mod,stage);nav.navigate({view:'practice',moduleId:mod.id,stageId:stage.id})};
+  document.getElementById('startStage').onclick=()=>nav.navigate({view:'practice',moduleId:mod.id,stageId:stage.id});
 }
 function renderPractice(mod,stage,{source}={}){
   if(!mod||!stage)return nav.replace({view:'home'});
-  if(state.module?.id!==mod.id||state.stage?.id!==stage.id||source==='push'){resetRound(mod,stage)}
+  const same=state.module?.id===mod.id&&state.stage?.id===stage.id;
+  if(!same||source==='push'||source==='init'){
+    if(!restoreRound(mod,stage)){resetRound(mod,stage);saveRoundSnapshot(0)}
+  }
   state.group=groupNumber(mod);state.module=mod;state.stage=stage;
   if(state.index>=stage.questions.length)state.index=Math.max(0,stage.questions.length-1);
+  saveRoundSnapshot(state.index);
   renderQuestion();
 }
 function renderQuestion(){
@@ -161,7 +193,7 @@ function renderQuestion(){
 async function checkAnswer(){
   const q=currentQuestion(),renderer=state.renderer,btn=document.getElementById('checkAnswer');if(!q||!renderer||!btn)return;
   if(state.checked){
-    state.index+=1;
+    state.index+=1;saveRoundSnapshot(state.index);
     if(state.index>=state.stage.questions.length){await nav.navigate({view:'result',moduleId:state.module.id,stageId:state.stage.id});return}
     renderQuestion();return;
   }
@@ -169,13 +201,14 @@ async function checkAnswer(){
   try{result=await gradeQuestion(q,response)}catch(e){console.error('[grammar-foundations] grading failed',e);btn.disabled=false;renderer.setDisabled(false);return}
   state.checked=true;if(result.correct)state.score+=1;
   state.results.push({questionId:q.id,sourceKey:q.metadata?.sourceKey||null,correct:!!result.correct,response});
+  saveRoundSnapshot(state.index+1);
   renderer.showFeedback(result);decorateAiWilliFeedback(root,result);
   if(!result.correct)mountAiWilliHelper({container:root,question:q,response,result,section:'grammar',practiceType:'grammar_foundations'});
   btn.disabled=false;btn.textContent=state.index===state.stage.questions.length-1?'Finish':'Next Question →';
 }
 async function renderResult(mod,stage){
   if(!mod||!stage)return nav.replace({view:'home'});
-  state.group=groupNumber(mod);state.module=mod;state.stage=stage;setBottom('');
+  state.group=groupNumber(mod);state.module=mod;state.stage=stage;setBottom('');sessionStore.clear();
   const required=passScore(mod),passed=state.score>=required,total=stage.questions.length;
   root.innerHTML=`<div class="gf-result"><div class="gf-kicker">Step ${state.group} · ${esc(koTitle(mod))} · ${esc(koTitle(stage))}</div><div class="gf-score">${state.score}/${total}</div><div class="gf-pass">${passed?'Passed ✓':'Redo this level'}</div><p id="saveStatus">${state.resultSaved?'Progress saved':'Saving progress…'}</p></div>`;
   let saved=state.resultSaved;
@@ -203,6 +236,10 @@ function validateRoute(route){
   if(['guide','practice','result'].includes(route.view)&&!route.stageId)return false;
   return true;
 }
+async function navigationGuard(prev,next){
+  if(prev?.view!=='practice'||next?.view==='result'||!sessionStore.isActive())return true;
+  return sessionStore.confirmExit('진행 중인 학습은 저장되어 있습니다. 지금 나가도 다음에 이어서 할 수 있어요. 나가시겠어요?');
+}
 function renderRoute(route,meta={}){
   hideWillenaKeyboard();window.scrollTo({top:0,behavior:'auto'});
   if(route.view==='home')return renderHome();
@@ -228,8 +265,9 @@ async function boot(){
   root.innerHTML='<div class="loading">Loading Grammar Foundations…</div>';
   try{
     await Promise.all([loadCatalog(),loadProgress()]);
-    nav=createStudentHistoryNavigation({appId:'willena-grammar-foundations',views:['home','group','module','guide','practice','result'],normalize:normalizeRoute,validate:validateRoute,render:renderRoute,onBeforeChange:()=>hideWillenaKeyboard()});
-    const initial=nav.init({view:'home'});renderRoute(initial,{source:'init'});
+    const resume=resumeRoute();
+    nav=createStudentHistoryNavigation({appId:'willena-grammar-foundations',views:['home','group','module','guide','practice','result'],normalize:normalizeRoute,validate:validateRoute,render:renderRoute,guard:navigationGuard,onBeforeChange:()=>hideWillenaKeyboard()});
+    const initial=nav.init(resume||{view:'home'});renderRoute(initial,{source:'init'});
   }catch(e){
     console.error('[grammar-foundations] boot failed',e);setBottom('');
     root.innerHTML=`<div class="gf-result"><div class="gf-pass">Could not load lessons</div><p>${esc(e.message||e)}</p><div class="gf-result-actions"><button class="gf-btn primary" id="retryBoot">Try again</button></div></div>`;
