@@ -21,6 +21,14 @@
 <link rel="stylesheet" href="../shared/willena-keyboard-safe.css?v=1.0.0">
 <link rel="stylesheet" href="./styles.css?v=0.108">
 <link rel="stylesheet" href="./ring-override.css?v=0.110">
+<link rel="stylesheet" href="./ui-cleanup.css?v=0.120">
+<script type="importmap">
+{
+  "imports": {
+    "/students/shared/student-history-navigation.js?v=1.0.0": "/students/shared/student-history-navigation.js?v=1.0.1"
+  }
+}
+</script>
 </head>
 <body>
 <header class="student-header tp-v1-header">
@@ -53,15 +61,16 @@
   <div class="header-curve"></div>
 </header>
 <main class="gf-app" id="screen" data-willena-keyboard-safe><div class="loading">Loading…</div></main>
-<nav class="gf-bottom" id="bottom" hidden></nav>
-<div class="app-version">Grammar Foundations · v0.119</div>
+<nav class="gf-bottom bottom" id="bottom" hidden></nav>
+<div class="app-version">Grammar Foundations · v0.120</div>
 <script src="/students/api-gateway.js?v=2.13b"></script>
 <script src="/js/api-config.js?v=2.13b"></script>
 <script src="./auth-refresh.js?v=0.119"></script>
 <script src="./pass-threshold-fix.js?v=0.119"></script>
+<script src="./ui-shared-bridge.js?v=0.120"></script>
 <script type="module" src="../test-prep-v2/theme-pips.js?v=2.25.93"></script>
 <script type="module" src="../test-prep-v2/header-v2.js?v=1.3.0"></script>
 <script src="./rewards-sync.js?v=0.114"></script>
-<script type="module" src="./app.js?v=0.116"></script>
+<script type="module" src="./app.js?v=0.120"></script>
 </body>
 </html>
