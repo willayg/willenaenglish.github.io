@@ -62,6 +62,29 @@ export function createQuestionSession({
   window.addEventListener('focus',handleQuestionActivityChange);
   window.addEventListener('blur',handleQuestionActivityChange);
 
+  function showFinishOverlay(){
+    if(logLabel!=='practice'||root.querySelector('[data-practice-finish-overlay]'))return;
+    const overlay=document.createElement('div');
+    overlay.dataset.practiceFinishOverlay='1';
+    overlay.setAttribute('role','status');
+    overlay.setAttribute('aria-live','polite');
+    overlay.innerHTML='<div class="practice-finish-card"><span class="practice-finish-spinner" aria-hidden="true"></span><strong>점수를 계산하는 중...</strong><small>학습 결과를 저장하고 있어요.</small></div>';
+    overlay.style.cssText='position:fixed;inset:0;z-index:9998;display:grid;place-items:center;padding:24px;background:rgba(15,23,42,.38);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px)';
+    const card=overlay.firstElementChild;
+    card.style.cssText='min-width:min(320px,calc(100vw - 48px));display:flex;flex-direction:column;align-items:center;gap:12px;padding:28px 24px;border-radius:22px;background:var(--card-bg,var(--surface,#fff));color:var(--text-color,var(--text,#24383f));box-shadow:0 18px 50px rgba(0,0,0,.22);text-align:center;font-family:Poppins,sans-serif';
+    const spinner=card.querySelector('.practice-finish-spinner');
+    spinner.style.cssText='width:46px;height:46px;border-radius:50%;border:5px solid currentColor;border-right-color:transparent;opacity:.78;animation:practiceFinishSpin .75s linear infinite';
+    card.querySelector('strong').style.cssText='font-size:20px;line-height:1.3;font-weight:800';
+    card.querySelector('small').style.cssText='font-size:13px;line-height:1.4;font-weight:600;opacity:.62';
+    if(!document.getElementById('practiceFinishOverlayStyle')){
+      const style=document.createElement('style');
+      style.id='practiceFinishOverlayStyle';
+      style.textContent='@keyframes practiceFinishSpin{to{transform:rotate(360deg)}}@media(prefers-reduced-motion:reduce){.practice-finish-spinner{animation:none!important}}';
+      document.head.appendChild(style);
+    }
+    root.appendChild(overlay);
+  }
+
   function restoreOnce(){
     const route=currentActivityRoute(),key=routeKey(route);if(!route||!key)return;
     const saved=restoreActivityProgress(route);if(!saved)return;
@@ -81,10 +104,11 @@ export function createQuestionSession({
     restoreOnce();
     if(indexState.get()>=queueLength()){
       clearActivitySnapshotFor(currentActivityRoute());
+      showFinishOverlay();
       return onFinished();
     }
     const entry=getEntry(),q=getQuestion(entry);
-    if(!q){clearActivitySnapshotFor(currentActivityRoute());return onFinished()}
+    if(!q){clearActivitySnapshotFor(currentActivityRoute());showFinishOverlay();return onFinished()}
     saveActivityPosition(indexState.get());
     grading=false;nextPointerArmed=false;
     checkedState.set(false);onBeforeRender(entry,q);
