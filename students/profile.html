@@ -10,7 +10,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/students/dashboard-v2/dashboard-header-p4.css?v=20260915p4d">
 <link rel="stylesheet" href="/students/dashboard-v2/dashboard-theme-pips.css?v=20260915p6d">
-<link rel="stylesheet" href="/students/profile-v2.css?v=20260915p2">
+<link rel="stylesheet" href="/students/profile-v2.css?v=20260916p3">
 <link rel="stylesheet" href="/students/profile-v2-rewards.css?v=20260915p1">
 <script src="/students/api-gateway.js"></script>
 <script src="/js/api-config.js?v=20260113c"></script>
@@ -18,12 +18,17 @@
 <body>
 <div class="page">
   <header class="header">
-    <div class="header-left" aria-hidden="true"></div>
+    <div class="header-left">
+      <div class="header-metrics">
+        <div class="points-pill stars-pill" id="headerStars">⭐ —</div>
+        <div class="points-pill" id="headerPoints">+ —</div>
+      </div>
+    </div>
     <div class="header-identity">
       <strong id="headerName">Student</strong>
       <span id="headerClass">Willena English</span>
     </div>
-    <button class="avatar" type="button" aria-label="Change avatar">🙂</button>
+    <button class="avatar" type="button" aria-label="Change avatar">S</button>
   </header>
 
   <main class="profile-main">
@@ -82,7 +87,7 @@
   </main>
 
   <div class="footer-logo" role="img" aria-label="Willena English"></div>
-  <div class="profile-revision">profile v2.0 · rev5</div>
+  <div class="profile-revision">profile v2.0 · rev5.01</div>
 </div>
 
 <div class="avatar-modal" id="avatarModal" aria-hidden="true">
@@ -100,6 +105,6 @@
 </div>
 
 <script src="/students/dashboard-v2/dashboard-theme-pips.js?v=20260915p6b"></script>
-<script src="/students/profile-v2.js?v=20260915p4"></script>
+<script src="/students/profile-v2.js?v=20260916p5"></script>
 </body>
 </html>
