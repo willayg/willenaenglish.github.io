@@ -82,3 +82,26 @@ html[data-test-prep-theme="cyberpunk"] #willenaSharedKeyboard .wkb-row.bottom .e
 html[data-test-prep-theme="cyberpunk"] #willenaSharedKeyboard .wkb-symbol-panel{background:#160d24!important;border-color:#8d3fbb!important;box-shadow:0 10px 32px rgba(0,0,0,.55),0 0 18px rgba(255,79,181,.10)!important}
 html[data-test-prep-theme="cyberpunk"] #willenaSharedKeyboard .wkb-symbol-panel button{background:#211131!important;color:#f8f1ff!important;border-color:#603576!important}
 html[data-test-prep-theme="cyberpunk"] #willenaSharedKeyboard .wkb-symbol-panel button:active{background:#301448!important;color:#35e8ff!important;border-color:#35e8ff!important}
+
+/* Compact calculator-style symbol pad */
+#willenaSharedKeyboard .wkb-symbol-panel{
+  display:grid!important;
+  grid-template-columns:repeat(6,44px);
+  gap:6px!important;
+  width:auto!important;
+  max-width:none!important;
+  padding:8px!important;
+  justify-content:center!important;
+  align-items:center;
+}
+#willenaSharedKeyboard .wkb-symbol-panel[hidden]{display:none!important}
+#willenaSharedKeyboard .wkb-symbol-panel button{
+  width:44px!important;
+  height:40px!important;
+  min-width:44px!important;
+  flex:none!important;
+}
+@media(max-width:520px){
+  #willenaSharedKeyboard .wkb-symbol-panel{grid-template-columns:repeat(5,42px);gap:5px!important}
+  #willenaSharedKeyboard .wkb-symbol-panel button{width:42px!important;height:38px!important;min-width:42px!important}
+}
