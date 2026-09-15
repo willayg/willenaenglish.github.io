@@ -1,198 +1,91 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title data-i18n="Profile">Profile</title>
-  <!-- Student auth API gateway - MUST load before api-config.js -->
-  <script src="/students/api-gateway.js"></script>
-  <script src="/js/api-config.js?v=20260113c"></script>
-  <script>
-    // Redirect to Netlify-hosted version if third-party cookies are KNOWN to be blocked
-    // This handles Safari, Samsung Internet, and Brave which always block cross-origin cookies
-    (function() {
-      if (window.WillenaAPI && WillenaAPI.shouldRedirectImmediately && WillenaAPI.shouldRedirectImmediately()) {
-        const netlifyUrl = WillenaAPI.getNetlifyUrl(window.location.pathname + window.location.search);
-        console.log('[Profile] Redirecting to Netlify for cookie support:', netlifyUrl);
-        window.location.replace(netlifyUrl);
-        return;
-      }
-    })();
-
-    // Cookie-based identity fetch
-    async function getProfileInfo() {
-      try {
-        // Get user id from cookie session
-        const who = await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=whoami');
-        const whoRes = await who.json();
-        if (!whoRes.success || !whoRes.user_id) {
-          // For cross-origin scenarios, if whoami fails, redirect to Netlify version
-          if (WillenaAPI.isCrossOrigin) {
-            console.log('[Profile] whoami failed in cross-origin mode - redirecting to Netlify');
-            WillenaAPI.markCookiesFailed && WillenaAPI.markCookiesFailed();
-            const netlifyUrl = WillenaAPI.getNetlifyUrl(window.location.pathname + window.location.search);
-            location.replace(netlifyUrl);
-            return { error: 'Redirecting...' };
-          }
-          // Redirect to login with return URL
-          const next = encodeURIComponent(location.pathname + location.search + location.hash);
-          location.replace('/students/login.html?next=' + next);
-          return { error: 'Sign in required. No valid session.' };
-        }
-        // Get profile info
-        const res = await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=get_profile');
-        const profile = await res.json();
-        if (!profile.success) {
-          return { error: 'Could not fetch profile information.' };
-        }
-        return profile;
-      } catch (e) {
-        return { error: 'Network or server error.' };
-      }
-    }
-  </script>
-  <script type="module" src="/students/student_profile.js?v=20260115"></script>
-  <script type="module" src="/students/avatar.js?v=20260115"></script>
-  <script type="module" src="/students/components/student-header.js"></script>
-  <script src="/students/language.js"></script>
-  <link rel="stylesheet" href="/students/theme.css">
-  <script src="/students/theme.js"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
-  <!-- Material Icons for menu buttons -->
-  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-  <link rel="stylesheet" href="profile.css">
-  <style>
-    /* Match screenshot styling: title on the right, soft shadow text */
-    student-header::part(page-title) { margin-left: auto; text-align: right; }
-    student-header::part(page-title-text) {
-      font-weight: 800;
-      font-size: 1.6rem;
-      color: #ffffff;
-      /* Cyan glow */
-      text-shadow:
-        0 0 2px rgba(0, 200, 255, 0.9),
-        0 0 6px rgba(0, 200, 255, 0.6),
-        0 0 12px rgba(0, 200, 255, 0.35);
-    }
-    /* Hide Home in the header bar */
-    student-header::part(home-button) { display: none; }
-  </style>
-  <meta name="robots" content="noindex" />
-  <meta name="description" content="Student profile: progress, badges, and recent activity across games." />
-  <link rel="icon" href="/Logo.png" />
-  <base href="/students/">
-  </head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Profile · Willena English</title>
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/students/dashboard-v2/dashboard-header-p4.css?v=20260915p4c">
+<link rel="stylesheet" href="/students/dashboard-v2/dashboard-theme-pips.css?v=20260915p6d">
+<link rel="stylesheet" href="/students/profile-v2.css?v=20260915p1">
+<script src="/students/api-gateway.js"></script>
+<script src="/js/api-config.js?v=20260113c"></script>
+</head>
 <body>
-  <!-- Loading overlay spinner -->
-  <div id="loadingOverlay" class="loading-overlay" aria-hidden="true">
-    <div class="spinner"></div>
-    <div class="loading-text">Loading…</div>
-  </div>
-  <student-header title="Profile" show-id="false" show-home="false" show-points="false" data-i18n="Profile"></student-header>
-  <nav class="toolbar" aria-label="Quick actions">
-  <button class="tb-link primary" id="btnHome" data-i18n="Home">Home</button>
-  <button class="tb-link" id="btnGames" data-i18n="Games">Games</button>
-  <button class="tb-link" id="btnWordArcade" data-i18n="English Arcade">English Arcade</button>
-  <button class="tb-link" id="btnGrammarArcade" title="Coming soon" disabled data-i18n="Grammar Arcade">Grammar Arcade</button>
-  </nav>
-  <div class="profile-wrap">
-  <main class="grid cols-3 profile-grid">
-  <!-- Mobile-first hero block to match screenshot -->
-  <section class="card span-2 profile-hero" id="profileHero">
-      <div class="avatar-hero">
-        <div class="avatar-ring">
-          <div class="avatar-panda" id="pfHeroAvatar">🐼</div>
+<div class="page">
+  <header class="header">
+    <div class="header-left">
+      <div class="header-metrics">
+        <div class="points-pill stars-pill" id="headerStars">⭐ —</div>
+        <div class="points-pill" id="headerPoints">+ —</div>
+      </div>
+    </div>
+    <div class="header-identity">
+      <strong id="headerName">Student</strong>
+      <span id="headerClass">Willena English</span>
+    </div>
+    <button class="avatar" type="button" aria-label="Change avatar">🙂</button>
+  </header>
+
+  <main class="profile-main">
+    <section class="profile-intro">
+      <h1>Profile</h1>
+      <p>Your Willena account</p>
+    </section>
+
+    <section class="profile-frame pink">
+      <div class="profile-card">
+        <div class="profile-top">
+          <button class="profile-avatar-button skeleton" id="profileAvatar" type="button" aria-label="Change avatar">🙂</button>
+          <div class="profile-summary">
+            <strong class="skeleton" id="profileName">Student</strong>
+            <span class="skeleton" id="profileClassSummary">Willena English</span>
+            <button class="change-avatar" id="changeAvatar" type="button">Change avatar</button>
+          </div>
         </div>
+        <div class="profile-fields">
+          <div class="profile-row"><span class="label">English Name</span><span class="value skeleton" id="pfNameEn">Loading</span></div>
+          <div class="profile-row"><span class="label">Korean Name</span><span class="value skeleton" id="pfNameKo">Loading</span></div>
+          <div class="profile-row"><span class="label">Class</span><span class="value skeleton" id="pfClass">Loading</span></div>
+          <div class="profile-row"><span class="label">Email</span><span class="value skeleton" id="pfEmail">Loading</span></div>
+        </div>
+        <div class="status" id="profileStatus" aria-live="polite"></div>
       </div>
-      <div class="info-panel">
-  <div class="info-row"><span class="label" data-i18n="English Name">English Name</span><span class="value" id="pfNameEn">Jim</span></div>
-  <div class="info-row"><span class="label" data-i18n="Korean Name">Korean Name</span><span class="value" id="pfNameKo">봉수</span></div>
-  <div class="info-row"><span class="label" data-i18n="Class">Class</span><span class="value" id="pfClass">Sydney</span></div>
-  <div class="info-row"><span class="label" data-i18n="Email">Email</span><span class="value" id="pfEmail">Jim@jim.com</span></div>
-      </div>
-  </section>
-  <section class="card span-2 awards" id="awardsSection">
-  <h2 class="awards-title" data-i18n="Your Awards">Your Awards</h2>
-      <div class="awards-grid">
-  <div class="award a-points"><div class="award-label" data-i18n="Points">Points</div><div class="award-value" id="awardPoints">0</div></div>
-  <div class="award a-medals"><div class="award-label" data-i18n="Super Score">Super Score</div><div class="award-value" id="awardMedals">0</div></div>
-  <div class="award a-stars"><div class="award-label" data-i18n="Stars">Stars</div><div class="award-value" id="awardStars">0</div></div>
-  <div class="award a-badges"><div class="award-label" data-i18n="Badges">Badges</div><div class="award-value" id="awardBadges">0</div></div>
-      </div>
-  </section>
-  <section class="card span-2 badges" id="badgesSection">
-  <h2 class="badges-title" data-i18n="Your Badges">Your Badges</h2>
-      <div class="badges-grid" id="badgesContainer">
-        <script defer src="/students/badges.js?v=20260815-dailystreak1"></script>
-  <div class="mut" id="badgesEmpty" data-i18n="Loading…">Loading…</div>
-  <div class="mut" id="badgesLoaded" style="display:none;" data-i18n="No badges earned yet.">No badges earned yet.</div>
-      </div>
-  </section>
-  
-  <!-- Challenging Words section temporarily removed
-  <section class="card span-2" id="challengingSection">
-      <h2>Challenging Words</h2>
-      <div id="challengingContainer" class="cw-container">
-        <div id="challengingList" class="cw-list">
-          <div class="mut" id="challengingEmpty">Loading…</div>
+    </section>
+
+    <section class="profile-frame cyan">
+      <div class="profile-card">
+        <h2 class="section-title">Account</h2>
+        <p class="account-note">Your name, class and email are managed by Willena. You can change your avatar here anytime.</p>
+        <div class="action-row">
+          <button class="profile-action primary" id="backDashboard" type="button">Back to dashboard</button>
         </div>
       </div>
     </section>
-  -->
-
-  <!-- Removed: By Mode, Recent Sessions, Recent Attempts for faster initial load -->
   </main>
-  </div>
-  <!-- Avatar Picker Modal: scrollable, styled like profile cards -->
-  <div id="avatarModal" class="modal-overlay" aria-hidden="true">
-    <div class="modal card avatar-modal" role="dialog" aria-modal="true" aria-labelledby="avatarModalTitle">
-      <header>
-        <h3 id="avatarModalTitle">Choose your avatar</h3>
-        <div class="spacer"></div>
-        <button id="avatarClose" class="btn-ghost" aria-label="Close">✕</button>
-      </header>
-      <div class="content" style="max-height:340px;overflow-y:auto;">
-        <div id="emojiGrid" class="emoji-grid"></div>
-      </div>
-      <div class="actions">
-        <button id="avatarCancel" class="btn-ghost">Cancel</button>
-        <button id="avatarSave" class="btn-primary">Save</button>
-      </div>
+
+  <div class="footer-logo" role="img" aria-label="Willena English"></div>
+  <div class="profile-revision">profile v2.0 · rev1</div>
+</div>
+
+<div class="avatar-modal" id="avatarModal" aria-hidden="true">
+  <div class="avatar-dialog" role="dialog" aria-modal="true" aria-labelledby="avatarTitle">
+    <div class="avatar-dialog-head">
+      <h2 id="avatarTitle">Choose your avatar</h2>
+      <button class="avatar-close" id="avatarClose" type="button" aria-label="Close">×</button>
+    </div>
+    <div class="emoji-grid" id="emojiGrid"></div>
+    <div class="avatar-actions">
+      <button class="avatar-cancel" id="avatarCancel" type="button">Cancel</button>
+      <button class="avatar-save" id="avatarSave" type="button">Save</button>
     </div>
   </div>
-  <script>
-    // Lightweight page wiring; data loads in student_profile.js
-    window.addEventListener('DOMContentLoaded', async () => {
-      const homeBtn = document.getElementById('btnHome');
-      if (homeBtn) homeBtn.onclick = () => { window.location.href = '/index.html'; };
-      const gamesBtn = document.getElementById('btnGames');
-      if (gamesBtn) gamesBtn.onclick = () => { window.location.href = '/playzone.html'; };
-      const wordArcadeBtn = document.getElementById('btnWordArcade');
-      if (wordArcadeBtn) wordArcadeBtn.onclick = () => { window.location.href = '/Games/english_arcade/index.html'; };
-      const grammarBtn = document.getElementById('btnGrammarArcade');
-      if (grammarBtn) grammarBtn.onclick = () => { /* coming soon */ };
+</div>
 
-      // Load profile info from cookie session
-      const profile = await getProfileInfo();
-      const avatarEl = document.getElementById('pfAvatar');
-      if (avatarEl) avatarEl.textContent = (profile && profile.avatar) ? profile.avatar : '🙂';
-      if (profile && profile.error) {
-        const grid = document.getElementById('kpiGrid');
-        if (grid) grid.insertAdjacentHTML('afterend', `<div class="error mt-8">${profile.error}</div>`);
-        return;
-      }
-      if (!profile || !profile.name) {
-        const grid = document.getElementById('kpiGrid');
-        if (grid) grid.insertAdjacentHTML('afterend', '<div class="error mt-8">Sign in to see your progress.</div>');
-        return;
-      }
-      // Optionally update name, etc. here
-      const pfName = document.getElementById('pfName');
-      if (pfName && profile.name) pfName.textContent = profile.name;
-      // Medal logic fully removed.
-    });
-  </script>
+<script src="/students/dashboard-v2/dashboard-theme-pips.js?v=20260915p6b"></script>
+<script src="/students/profile-v2.js?v=20260915p1"></script>
 </body>
 </html>
