@@ -1,11 +1,11 @@
 (function(){
 'use strict';
 
-const REV='AR1.3';
+const REV='AR1.31';
 const INTERVAL_MS=20000;
 const MIN_REFRESH_GAP_MS=2500;
 const ACTIVE_VIEW_ID='view-naesin-v2';
-const REVIEW_COUNTS_SRC='./naesin-v2-review-counts.js?v=20260915-r13-1-silent';
+const REVIEW_COUNTS_SRC='./naesin-v2-review-counts.js?v=20260915-r13-01-silent';
 
 let timer=null;
 let running=false;
