@@ -5,7 +5,9 @@ function tokenSubject(){
     const token=window.WillenaAPI?.getLocalAccessToken?.()||localStorage.getItem('sb_access_token')||'';
     const payload=token.split('.')[1];
     if(!payload)return'local';
-    const json=decodeURIComponent(atob(payload.replace(/-/g,'+').replace(/_/g,'/')).split('').map(c=>`%${('00'+c.charCodeAt(0).toString(16)).slice(-2)}`).join(''));
+    const normalized=payload.replace(/-/g,'+').replace(/_/g,'/');
+    const padded=normalized+'='.repeat((4-normalized.length%4)%4);
+    const json=decodeURIComponent(atob(padded).split('').map(c=>`%${('00'+c.charCodeAt(0).toString(16)).slice(-2)}`).join(''));
     return safeJsonParse(json)?.sub||'local';
   }catch{return'local'}
 }
@@ -33,7 +35,9 @@ export function createStudentSessionResume({appId,maxAgeMs=7*24*60*60*1000}={}){
   function matches(moduleId,stageId){const row=load();return Boolean(row&&String(row.moduleId)===String(moduleId)&&String(row.stageId)===String(stageId))}
 
   function confirmExit(message='진행 중인 학습이 저장되어 있습니다. 지금 나가도 다음에 이어서 할 수 있어요. 나가시겠어요?'){
-    return window.confirm(message);
+    const ok=window.confirm(message);
+    if(ok)active=false;
+    return ok;
   }
   function installBeforeUnload(){
     const handler=e=>{if(!active)return;e.preventDefault();e.returnValue=''};
