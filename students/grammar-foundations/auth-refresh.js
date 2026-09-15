@@ -1,6 +1,6 @@
 (function(){
   'use strict';
-  const ENDPOINT='https://supabase-auth.willena.workers.dev?action=refresh';
+  const ENDPOINT='https://api.willenaenglish.com/.netlify/functions/supabase_auth?action=refresh';
   const INTERVAL_MS=35*60*1000;
   let inFlight=null;
 
