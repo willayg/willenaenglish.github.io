@@ -57,3 +57,28 @@ html[data-test-prep-theme="cyberpunk"] .tp-vocab-reopen{color:#bea8c9!important}
 html[data-test-prep-theme="cyberpunk"] .vocab-unlock{background:#160d24!important;color:#f8f1ff!important;border:1px solid #8d3fbb!important;box-shadow:0 0 28px rgba(53,232,255,.12),0 18px 60px rgba(0,0,0,.60)!important}
 html[data-test-prep-theme="cyberpunk"] .vocab-unlock h3{color:#f8f1ff!important}
 html[data-test-prep-theme="cyberpunk"] .vocab-unlock p{color:#bea8c9!important}
+
+/* Shared Willena keyboard: dark theme */
+html[data-test-prep-theme="dark"] #willenaSharedKeyboard{background:#11191d!important;border-color:#30434b!important;box-shadow:0 -8px 28px rgba(0,0,0,.38)!important}
+html[data-test-prep-theme="dark"] #willenaSharedKeyboard .wkb-hide{background:#1b252a!important;color:#b9c8cd!important;border-color:#405963!important}
+html[data-test-prep-theme="dark"] #willenaSharedKeyboard .wkb-key{background:#1b252a!important;color:#eef5f7!important;border-color:#405963!important;box-shadow:0 1px 2px rgba(0,0,0,.28)!important}
+html[data-test-prep-theme="dark"] #willenaSharedKeyboard .wkb-key:active,
+html[data-test-prep-theme="dark"] #willenaSharedKeyboard .wkb-key.is-pressed{background:#26373e!important;border-color:#64808b!important}
+html[data-test-prep-theme="dark"] #willenaSharedKeyboard .wkb-key.shift{background:#202b30!important;color:#b9c8cd!important}
+html[data-test-prep-theme="dark"] #willenaSharedKeyboard .wkb-key.shift.on{background:#20343a!important;color:#7ee7ee!important;border-color:#67d4da!important}
+html[data-test-prep-theme="dark"] #willenaSharedKeyboard .wkb-row.bottom .enter{background:#202d33!important;color:#ff82b3!important;border-color:#67d4da!important}
+html[data-test-prep-theme="dark"] #willenaSharedKeyboard .wkb-symbol-panel{background:#182126!important;border-color:#405963!important;box-shadow:0 10px 30px rgba(0,0,0,.45)!important}
+html[data-test-prep-theme="dark"] #willenaSharedKeyboard .wkb-symbol-panel button{background:#202b30!important;color:#eef5f7!important;border-color:#405963!important}
+
+/* Shared Willena keyboard: cyberpunk theme */
+html[data-test-prep-theme="cyberpunk"] #willenaSharedKeyboard{background:#0d0716!important;border-color:#8d3fbb!important;box-shadow:0 -8px 30px rgba(0,0,0,.55),0 0 24px rgba(110,44,165,.18)!important}
+html[data-test-prep-theme="cyberpunk"] #willenaSharedKeyboard .wkb-hide{background:#211131!important;color:#bea8c9!important;border-color:#603576!important}
+html[data-test-prep-theme="cyberpunk"] #willenaSharedKeyboard .wkb-key{background:#1d102d!important;color:#f8f1ff!important;border-color:#603576!important;box-shadow:0 0 0 1px rgba(53,232,255,.05)!important}
+html[data-test-prep-theme="cyberpunk"] #willenaSharedKeyboard .wkb-key:active,
+html[data-test-prep-theme="cyberpunk"] #willenaSharedKeyboard .wkb-key.is-pressed{background:#301448!important;border-color:#35e8ff!important;box-shadow:0 0 12px rgba(53,232,255,.14)!important}
+html[data-test-prep-theme="cyberpunk"] #willenaSharedKeyboard .wkb-key.shift{background:#211131!important;color:#bea8c9!important}
+html[data-test-prep-theme="cyberpunk"] #willenaSharedKeyboard .wkb-key.shift.on{background:#301448!important;color:#35e8ff!important;border-color:#35e8ff!important}
+html[data-test-prep-theme="cyberpunk"] #willenaSharedKeyboard .wkb-row.bottom .enter{background:#2a123d!important;color:#ff61bd!important;border-color:#35e8ff!important;box-shadow:0 0 14px rgba(53,232,255,.12)!important}
+html[data-test-prep-theme="cyberpunk"] #willenaSharedKeyboard .wkb-symbol-panel{background:#160d24!important;border-color:#8d3fbb!important;box-shadow:0 10px 32px rgba(0,0,0,.55),0 0 18px rgba(255,79,181,.10)!important}
+html[data-test-prep-theme="cyberpunk"] #willenaSharedKeyboard .wkb-symbol-panel button{background:#211131!important;color:#f8f1ff!important;border-color:#603576!important}
+html[data-test-prep-theme="cyberpunk"] #willenaSharedKeyboard .wkb-symbol-panel button:active{background:#301448!important;color:#35e8ff!important;border-color:#35e8ff!important}
