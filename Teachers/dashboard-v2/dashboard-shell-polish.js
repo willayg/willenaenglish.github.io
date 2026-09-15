@@ -2,7 +2,7 @@
 'use strict';
 const $=(s,r=document)=>r.querySelector(s),$$=(s,r=document)=>[...r.querySelectorAll(s)];
 const AUTH='/.netlify/functions/supabase_auth';
-const UTILITIES_PIN_HASH='082c48954f6c56528dbc3cb0f313bfb6285e8db431cb492217831697ab319d76';
+const UTILITIES_PIN_HASH='1a6ff8f796ed193a72c5d8a3f8a4e173ced67372fd4a282f6f5c38c1da8af010';
 const UTILITIES_SESSION_KEY='willena_utilities_unlocked';
 const TRACKING_URL='https://fiieuiktlsivwfgyivai.supabase.co';
 const TRACKING_KEY='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
