@@ -17,6 +17,30 @@ export function createStudentHistoryNavigation({appId,views,normalize,validate,r
   const pack=route=>({app:appId,route:norm(route)});
   const unpack=state=>state?.app===appId&&valid(state.route)?norm(state.route):null;
   const same=(a,b)=>JSON.stringify(norm(a))===JSON.stringify(norm(b));
+  const isGrammarFoundations=appId==='willena-grammar-foundations';
+
+  function compactTransition(prev,next,requestedReplace){
+    if(!isGrammarFoundations||requestedReplace)return requestedReplace;
+    const a=prev?.view,b=next?.view;
+    return (a==='guide'&&b==='practice')||
+      (a==='practice'&&b==='result')||
+      (a==='result'&&b==='guide')||
+      (a==='challenge'&&b==='challenge-result')||
+      (a==='challenge-result'&&b==='challenge');
+  }
+
+  function compactPoppedRoute(prev,next){
+    if(!isGrammarFoundations||!prev||!next)return next;
+    const shouldReturnToModule=(
+      (prev.view==='practice'&&next.view==='guide')||
+      (prev.view==='result'&&(next.view==='practice'||next.view==='guide'))||
+      (prev.view==='challenge-result'&&next.view==='challenge')
+    );
+    if(shouldReturnToModule&&prev.moduleId){
+      return norm({view:'module',moduleId:prev.moduleId});
+    }
+    return next;
+  }
 
   async function allowed(prev,next,source){
     if(typeof guard!=='function')return true;
@@ -30,10 +54,15 @@ export function createStudentHistoryNavigation({appId,views,normalize,validate,r
   }
   async function onPop(event){
     if(reverting){reverting=false;return}
-    const next=unpack(event.state);
+    let next=unpack(event.state);
     if(!next)return;
     const prev=current;
     if(!await allowed(prev,next,'popstate')){reverting=true;history.forward();return}
+    const compacted=compactPoppedRoute(prev,next);
+    if(!same(compacted,next)){
+      next=compacted;
+      history.replaceState(pack(next),'',location.href);
+    }
     accept(next,'popstate',prev);
   }
 
@@ -51,9 +80,10 @@ export function createStudentHistoryNavigation({appId,views,normalize,validate,r
     if(!valid(next))throw new Error(`Invalid ${appId} route.`);
     if(same(current,next))return current;
     const prev=current;
-    if(!await allowed(prev,next,replace?'replace':'push'))return prev;
-    if(replace)history.replaceState(pack(next),'',location.href);else history.pushState(pack(next),'',location.href);
-    return accept(next,replace?'replace':'push',prev);
+    const useReplace=compactTransition(prev,next,replace);
+    if(!await allowed(prev,next,useReplace?'replace':'push'))return prev;
+    if(useReplace)history.replaceState(pack(next),'',location.href);else history.pushState(pack(next),'',location.href);
+    return accept(next,useReplace?'replace':'push',prev);
   }
   function replace(route,{renderRoute=true}={}){
     const next=norm(route);
