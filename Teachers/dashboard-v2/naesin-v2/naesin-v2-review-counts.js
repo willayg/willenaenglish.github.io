@@ -1,4 +1,4 @@
-import { fetchReviewStats } from '/students/shared/student-review.js';
+import { loadReviewQueue, invalidateReviewQueue } from '/students/shared/student-review.js';
 
 const CACHE_MS=15000;
 const cache=new Map();
@@ -23,16 +23,16 @@ function installStyles(){
 async function getStats(planId){
   const hit=cache.get(planId),now=Date.now();
   if(hit&&now-hit.at<CACHE_MS)return hit.value;
-  const value=await fetchReviewStats(planId);
+  const value=await loadReviewQueue(planId,{limit:1});
   cache.set(planId,{at:now,value});
   return value;
 }
 
 function renderCell(td,stats){
-  const counts=stats?.counts||{};
-  const active=Math.max(0,Number(counts.active)||0);
-  const waiting=Math.max(0,Number(counts.waiting)||0);
-  const total=Math.max(0,Number(counts.total)||0);
+  const summary=stats?.summary||{};
+  const active=Math.max(0,Number(summary.now)||0);
+  const waiting=Math.max(0,Number(summary.later)||0);
+  const total=Math.max(0,Number(summary.total)||0);
   td.classList.toggle('na2-review-empty',total===0);
   td.innerHTML=`<strong>${esc(total)}</strong><small><span class="na2-review-active">활성 ${esc(active)}</span> · 대기 ${esc(waiting)}</small>`;
 }
@@ -77,8 +77,14 @@ function mount(){
     const observer=new MutationObserver(patchAll);
     observer.observe(root,{childList:true,subtree:true});
   }
-  window.addEventListener('naesin-v2:auto-refreshed',()=>{cache.clear();patchAll()});
-  console.info('[Naesin V2 Review Counts] shared student-review source mounted');
+  window.addEventListener('naesin-v2:auto-refreshed',()=>{
+    cache.clear();
+    document.querySelectorAll('.na2-matrix tbody tr[data-plan-id]').forEach(tr=>{
+      if(tr.dataset.planId)invalidateReviewQueue(tr.dataset.planId);
+    });
+    patchAll();
+  });
+  console.info('[Naesin V2 Review Counts] canonical student-review source mounted');
 }
 
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',mount,{once:true});else mount();
