@@ -1,10 +1,8 @@
 (function(){
 'use strict';
 
-const REV='AR1.32';
+const REV='AR1.33';
 const ACTIVE_VIEW_ID='view-naesin-v2';
-const REVIEW_COUNTS_SRC='./naesin-v2-review-counts.js?v=20260915-r13-01-silent';
-
 let running=false;
 
 function view(){return document.getElementById(ACTIVE_VIEW_ID)}
@@ -49,21 +47,10 @@ function mountRefreshButton(){
   head.insertBefore(btn,add||null);
 }
 
-function mountReviewCounts(){
-  import(REVIEW_COUNTS_SRC).catch(error=>console.warn('[Naesin V2 Manual Refresh] review counts module failed',error));
-}
-
 function mount(){
   mountRefreshButton();
-  mountReviewCounts();
-  window.NaesinV2AutoRefresh={
-    version:REV,
-    intervalMs:null,
-    refreshNow:()=>refresh('manual'),
-    start:()=>false,
-    stop:()=>true
-  };
-  console.info(`[Naesin V2 Manual Refresh] ${REV} mounted (auto refresh disabled)`);
+  window.NaesinV2AutoRefresh={version:REV,intervalMs:null,refreshNow:()=>refresh('manual'),start:()=>false,stop:()=>true};
+  console.info(`[Naesin V2 Manual Refresh] ${REV} mounted (auto refresh disabled, review hydration disabled)`);
 }
 
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',mount,{once:true});else mount();
