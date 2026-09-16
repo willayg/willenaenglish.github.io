@@ -2,9 +2,9 @@
 'use strict';
 
 const VIEW='naesin-v2';
-const REV='14.01';
+const REV='14.02';
 const ICON='./naesin-v2/naesin-v2-icon.svg';
-const AUTO_REFRESH_SRC='./naesin-v2/naesin-v2-auto-refresh.js?v=20260917-r14-01';
+const AUTO_REFRESH_SRC='./naesin-v2/naesin-v2-auto-refresh.js?v=20260917-r14-02';
 const PRACTICES=[
   ['vocabulary','단어 학습'],
   ['vocab_test','어휘 문제'],
