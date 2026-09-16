@@ -1,11 +1,12 @@
 (function(){
 'use strict';
 
-const REV='AR1.41';
+const REV='AR1.42';
 const ACTIVE_VIEW_ID='view-naesin-v2';
 const INTERVAL_MS=20000;
 let running=false;
 let timer=null;
+let lastRunAt=0;
 
 function view(){return document.getElementById(ACTIVE_VIEW_ID)}
 function isActive(){return !!(window.NaesinV2?.isActive?.()||view()?.classList.contains('active'))}
@@ -20,7 +21,8 @@ async function refresh(reason='manual'){
   running=true;
   try{
     await Promise.allSettled(jobs);
-    window.dispatchEvent(new CustomEvent('naesin-v2:refreshed',{detail:{reason,at:Date.now()}}));
+    lastRunAt=Date.now();
+    window.dispatchEvent(new CustomEvent('naesin-v2:refreshed',{detail:{reason,at:lastRunAt}}));
     return true;
   }catch(error){
     console.warn('[Naesin V2 Auto Refresh] refresh failed',error);
@@ -28,15 +30,14 @@ async function refresh(reason='manual'){
   }finally{running=false}
 }
 
-function stop(){
-  if(timer){clearInterval(timer);timer=null}
-  return true;
+function schedule(){
+  if(timer)clearTimeout(timer);
+  timer=setTimeout(async()=>{
+    try{if(canPoll())await refresh('interval')}finally{schedule()}
+  },INTERVAL_MS);
 }
-function start(){
-  if(timer)return true;
-  timer=setInterval(()=>{if(canPoll())refresh('interval')},INTERVAL_MS);
-  return true;
-}
+function stop(){if(timer){clearTimeout(timer);timer=null}return true}
+function start(){if(!timer)schedule();return true}
 
 function mountRefreshButton(){
   const root=view(),head=root?.querySelector('.na2-head');
@@ -49,8 +50,10 @@ function mountRefreshButton(){
 function mount(){
   mountRefreshButton();
   start();
-  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&isActive())refresh('visible')});
-  window.NaesinV2AutoRefresh={version:REV,intervalMs:INTERVAL_MS,refreshNow:()=>refresh('manual'),start,stop};
+  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&isActive())void refresh('visible')});
+  window.addEventListener('naesin-v2:shown',()=>{void refresh('shown')});
+  if(canPoll())void refresh('mount');
+  window.NaesinV2AutoRefresh={version:REV,intervalMs:INTERVAL_MS,refreshNow:()=>refresh('manual'),start,stop,getLastRunAt:()=>lastRunAt};
   console.info(`[Naesin V2 Auto Refresh] ${REV} mounted (${INTERVAL_MS/1000}s snapshot polling while visible)`);
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',mount,{once:true});else mount();
