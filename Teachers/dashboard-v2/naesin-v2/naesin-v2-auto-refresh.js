@@ -1,24 +1,17 @@
 (function(){
 'use strict';
 
-const REV='AR1.31';
-const INTERVAL_MS=20000;
-const MIN_REFRESH_GAP_MS=2500;
+const REV='AR1.32';
 const ACTIVE_VIEW_ID='view-naesin-v2';
 const REVIEW_COUNTS_SRC='./naesin-v2-review-counts.js?v=20260915-r13-01-silent';
 
-let timer=null;
 let running=false;
-let lastRefreshAt=0;
-let activationTimer=null;
 
 function view(){return document.getElementById(ACTIVE_VIEW_ID)}
 function isActive(){return !!(window.NaesinV2?.isActive?.()||view()?.classList.contains('active'))}
 
-async function refresh(reason='interval'){
-  if(running||document.hidden||!isActive())return false;
-  const now=Date.now();
-  if(now-lastRefreshAt<MIN_REFRESH_GAP_MS)return false;
+async function refresh(reason='manual'){
+  if(running||!isActive())return false;
   const jobs=[];
   if(typeof window.NaesinV2?.refreshVisibleMatrices==='function')jobs.push(window.NaesinV2.refreshVisibleMatrices());
   if(typeof window.NaesinV2StudentDetail?.refreshCurrent==='function')jobs.push(window.NaesinV2StudentDetail.refreshCurrent());
@@ -26,65 +19,51 @@ async function refresh(reason='interval'){
   running=true;
   try{
     await Promise.allSettled(jobs);
-    lastRefreshAt=Date.now();
-    window.dispatchEvent(new CustomEvent('naesin-v2:auto-refreshed',{detail:{reason,at:lastRefreshAt}}));
+    window.dispatchEvent(new CustomEvent('naesin-v2:manual-refreshed',{detail:{reason,at:Date.now()}}));
     return true;
   }catch(error){
-    console.warn('[Naesin V2 Auto Refresh] refresh failed',error);
+    console.warn('[Naesin V2 Manual Refresh] refresh failed',error);
     return false;
   }finally{
     running=false;
   }
 }
 
-function refreshSoon(reason,delay=500){
-  clearTimeout(activationTimer);
-  activationTimer=setTimeout(()=>refresh(reason),delay);
-}
-
-function start(){
-  if(timer)return;
-  timer=setInterval(()=>refresh('interval'),INTERVAL_MS);
-}
-
-function stop(){
-  if(timer){clearInterval(timer);timer=null}
-  clearTimeout(activationTimer);
-  activationTimer=null;
-}
-
-function watchActivation(){
-  const el=view();
-  if(!el)return;
-  const observer=new MutationObserver(()=>{
-    if(el.classList.contains('active'))refreshSoon('view-opened',900);
+function mountRefreshButton(){
+  const root=view();
+  const head=root?.querySelector('.na2-head');
+  if(!head||head.querySelector('[data-na2-refresh]'))return;
+  const add=head.querySelector('#na2Add');
+  const btn=document.createElement('button');
+  btn.type='button';
+  btn.className='na2-add na2-refresh';
+  btn.dataset.na2Refresh='1';
+  btn.textContent='↻ 새로고침';
+  btn.addEventListener('click',async()=>{
+    if(running)return;
+    const old=btn.textContent;
+    btn.disabled=true;
+    btn.textContent='새로고침 중…';
+    try{await refresh('button')}finally{btn.disabled=false;btn.textContent=old}
   });
-  observer.observe(el,{attributes:true,attributeFilter:['class']});
+  head.insertBefore(btn,add||null);
 }
-
-document.addEventListener('visibilitychange',()=>{
-  if(!document.hidden&&isActive())refreshSoon('tab-visible',250);
-});
-window.addEventListener('focus',()=>{
-  if(isActive())refreshSoon('window-focus',250);
-});
 
 function mountReviewCounts(){
-  import(REVIEW_COUNTS_SRC).catch(error=>console.warn('[Naesin V2 Auto Refresh] review counts module failed',error));
+  import(REVIEW_COUNTS_SRC).catch(error=>console.warn('[Naesin V2 Manual Refresh] review counts module failed',error));
 }
 
 function mount(){
-  watchActivation();
-  start();
+  mountRefreshButton();
   mountReviewCounts();
   window.NaesinV2AutoRefresh={
     version:REV,
-    intervalMs:INTERVAL_MS,
+    intervalMs:null,
     refreshNow:()=>refresh('manual'),
-    start,
-    stop
+    start:()=>false,
+    stop:()=>true
   };
-  console.info(`[Naesin V2 Auto Refresh] ${REV} mounted (${INTERVAL_MS/1000}s)`);
+  console.info(`[Naesin V2 Manual Refresh] ${REV} mounted (auto refresh disabled)`);
 }
 
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',mount,{once:true});else mount();
