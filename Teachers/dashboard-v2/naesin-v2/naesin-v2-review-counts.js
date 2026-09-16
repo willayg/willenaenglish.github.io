@@ -2,7 +2,13 @@
 // The student wrong-answer system itself is unchanged; only per-row dashboard loading is paused.
 (function(){
 'use strict';
-const REV='R13.03-P1-OFF';
+const REV='R13.03';
+function bumpVisibleRev(){
+  const fixed=document.getElementById('teacherDashboardRev');
+  if(fixed)fixed.textContent=`REV ${REV}`;
+  const badge=document.querySelector('#view-naesin-v2 .na2-rev-badge');
+  if(badge)badge.textContent=REV;
+}
 function hideReviewColumn(){
   if(document.getElementById('na2-p1-hide-review'))return;
   const style=document.createElement('style');
@@ -11,6 +17,7 @@ function hideReviewColumn(){
   document.head.appendChild(style);
 }
 function mount(){
+  bumpVisibleRev();
   hideReviewColumn();
   console.info(`[Naesin V2 Review Counts] ${REV} hydration disabled for P1`);
 }
