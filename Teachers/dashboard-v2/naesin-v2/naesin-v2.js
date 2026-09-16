@@ -2,9 +2,8 @@
 'use strict';
 
 const VIEW='naesin-v2';
-const REV='14.02';
+const REV='14.04';
 const ICON='./naesin-v2/naesin-v2-icon.svg';
-const AUTO_REFRESH_SRC='./naesin-v2/naesin-v2-auto-refresh.js?v=20260917-r14-02';
 const PRACTICES=[
   ['vocabulary','단어 학습'],
   ['vocab_test','어휘 문제'],
@@ -30,7 +29,6 @@ function nameOf(s){return s?.korean_name||s?.name||s?.username||'Student'}
 function groupOf(item){return item?.group||item||{}}
 function isActive(){return !!q(`#view-${VIEW}`)?.classList.contains('active')}
 function show(){qa('.workspace>.view').forEach(v=>v.classList.toggle('active',v.id===`view-${VIEW}`));qa('.nav,.mobile-tab').forEach(b=>b.classList.toggle('active',b.dataset.view===VIEW));ensureLoaded()}
-function applyVersion(){const el=document.getElementById('teacherDashboardRev');if(!el)return;el.textContent=`v${REV}`;el.style.cssText='position:fixed;right:10px;bottom:4px;z-index:2147483647;background:transparent;color:rgba(255,255,255,.72);padding:0;font:700 9px/1.2 Poppins,sans-serif;letter-spacing:.04em;pointer-events:none'}
 function mountDesktopNav(){const rail=q('.rail');if(!rail||rail.querySelector(`[data-view="${VIEW}"]`))return;const spacer=q('.rail-spacer',rail),btn=document.createElement('button');btn.className='nav';btn.dataset.view=VIEW;btn.innerHTML=`<span class="nav-icon na2-nav-icon"><img src="${ICON}" alt=""></span><span>내신 V2</span>`;btn.addEventListener('click',show);rail.insertBefore(btn,spacer||null)}
 function mountMobileNav(){const tabs=q('.mobile-tabs');if(!tabs||tabs.querySelector(`[data-view="${VIEW}"]`))return;const btn=document.createElement('button');btn.className='mobile-tab';btn.dataset.view=VIEW;btn.innerHTML=`<img class="na2-mobile-icon" src="${ICON}" alt="">내신 V2`;btn.addEventListener('click',show);const apps=q('[data-view="apps"]',tabs);tabs.insertBefore(btn,apps||null)}
 function mountView(){const ws=q('.workspace');if(!ws||q(`#view-${VIEW}`))return;const sec=document.createElement('section');sec.className='view na2-view';sec.id=`view-${VIEW}`;sec.innerHTML=`<div class="na2-shell"><div class="na2-head"><div><h1>내신 V2</h1><p>진행 중인 시험</p></div><button class="na2-add" id="na2Add" type="button">+ 시험 대비 추가</button></div><div class="na2-tests" id="na2Tests"><div class="na2-empty">불러오는 중…</div></div></div>`;ws.appendChild(sec);q('#na2Add',sec)?.addEventListener('click',()=>window.NaesinV2Editor?.openCreate?.())}
@@ -50,7 +48,6 @@ function renderGroups(){const box=q('#na2Tests');if(!box)return;if(!state.groups
 function paintMatrix(test,item){const tbody=q('tbody',test);if(!tbody)return;tbody.innerHTML=matrixBody(item);bindMatrixRows(test,test.dataset.groupId);window.dispatchEvent(new CustomEvent('naesin-v2:matrix-rendered',{detail:{groupId:test.dataset.groupId}}))}
 async function refreshVisibleMatrices(){if(!isActive())return{skipped:true};if(matrixRefreshPromise)return matrixRefreshPromise;matrixRefreshPromise=(async()=>{const groups=await window.NaesinV2Data?.refreshGroups?.()||[];state.groups=groups;state.loaded=true;const byId=new Map(groups.map(item=>[String(groupOf(item).id||''),item]));const tests=qa('.na2-test',q(`#view-${VIEW}`)||document);if(tests.length!==groups.length){renderGroups();return{updated:true,repainted:true}}for(const test of tests){const item=byId.get(String(test.dataset.groupId||''));if(item)paintMatrix(test,item)}return{updated:true}})().catch(e=>{console.warn('[Naesin V2] snapshot refresh failed',e);return{error:true}}).finally(()=>{matrixRefreshPromise=null});return matrixRefreshPromise}
 async function ensureLoaded({force=false}={}){if(state.loading)return;if(state.loaded&&!force)return;state.loading=true;state.error=null;renderLoading();try{state.groups=await window.NaesinV2Data?.loadGroups?.({force})||[];state.loaded=true;renderGroups()}catch(e){state.error=e;state.loaded=false;renderError(e.message)}finally{state.loading=false}}
-function loadAutoRefreshModule(){if(document.querySelector('script[data-na2-auto-refresh]'))return;const script=document.createElement('script');script.src=AUTO_REFRESH_SRC;script.async=false;script.dataset.na2AutoRefresh='1';document.head.appendChild(script)}
-function mount(){mountDesktopNav();mountMobileNav();mountView();applyVersion();document.addEventListener('click',e=>{if(!e.target.closest('.na2-menu-wrap'))qa('.na2-menu').forEach(m=>m.hidden=true)});window.NaesinV2={show,mount,refresh:()=>ensureLoaded({force:true}),refreshVisibleMatrices,isActive,version:`r${REV}`};loadAutoRefreshModule();console.info(`[Naesin V2] R${REV} mounted`)}
+function mount(){mountDesktopNav();mountMobileNav();mountView();document.addEventListener('click',e=>{if(!e.target.closest('.na2-menu-wrap'))qa('.na2-menu').forEach(m=>m.hidden=true)});window.NaesinV2={show,mount,refresh:()=>ensureLoaded({force:true}),refreshVisibleMatrices,isActive,version:`r${REV}`};console.info(`[Naesin V2] R${REV} mounted`)}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',mount,{once:true});else mount();
 })();
