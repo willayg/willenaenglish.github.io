@@ -1,18 +1,18 @@
-import { loadReviewQueue, invalidateReviewQueue } from '/students/shared/student-review.js';
-
-const REV='R13.02';
-const CACHE_MS=15000;
-const cache=new Map();
-const lastRendered=new Map();
-
-function installStyles(){if(document.getElementById('na2-review-count-styles'))return;const style=document.createElement('style');style.id='na2-review-count-styles';style.textContent=`.na2-matrix th.na2-review-head{min-width:118px}.na2-review-cell{min-width:118px;text-align:center}.na2-review-cell strong{display:block;font-size:20px;line-height:1.15;color:#203039}.na2-review-cell small{display:block;margin-top:5px;white-space:nowrap;color:#7b8c94;font-size:11px;font-weight:700}.na2-review-cell .na2-review-active{color:#e94d78}.na2-review-cell.na2-review-empty strong{color:#9aaab1}`;document.head.appendChild(style)}
-function bumpVisibleRev(){const fixed=document.getElementById('teacherDashboardRev');if(fixed&&fixed.textContent!==`REV ${REV}`)fixed.textContent=`REV ${REV}`;const badge=document.querySelector('#view-naesin-v2 .na2-rev-badge');if(badge&&badge.textContent!==REV)badge.textContent=REV}
-function countsOf(stats){const s=stats?.summary||{};return{active:Math.max(0,Number(s.now)||0),waiting:Math.max(0,Number(s.later)||0),total:Math.max(0,Number(s.total)||0)}}
-async function getStats(planId,{force=false}={}){const now=Date.now(),hit=cache.get(planId);if(!force&&hit&&now-hit.at<CACHE_MS)return hit.value;if(force)invalidateReviewQueue(planId);const value=await loadReviewQueue(planId,{limit:1,force});cache.set(planId,{at:now,value});return value}
-function renderCounts(td,counts){const prev=td.dataset.reviewCounts,next=`${counts.active}|${counts.waiting}|${counts.total}`;td.classList.toggle('na2-review-empty',counts.total===0);if(prev===next)return false;td.querySelector('[data-review-total]').textContent=String(counts.total);td.querySelector('[data-review-active]').textContent=String(counts.active);td.querySelector('[data-review-waiting]').textContent=String(counts.waiting);td.dataset.reviewCounts=next;return true}
-async function hydrateRow(tr,{force=false}={}){const planId=tr?.dataset?.planId,td=tr?.querySelector('.na2-review-cell');if(!planId||!td||tr.dataset.reviewLoading==='1')return;const remembered=lastRendered.get(planId);if(remembered)renderCounts(td,remembered);tr.dataset.reviewLoading='1';try{const stats=await getStats(planId,{force}),counts=countsOf(stats);lastRendered.set(planId,counts);renderCounts(td,counts);tr.dataset.reviewLoaded='1'}catch(error){console.warn('[Naesin V2 Review Counts] failed',planId,error);if(!remembered&&!td.dataset.reviewCounts){td.querySelector('[data-review-total]').textContent='—';td.querySelector('[data-review-active]').textContent='—';td.querySelector('[data-review-waiting]').textContent='—'}}finally{delete tr.dataset.reviewLoading}}
-function hydrateRows(root=document,{force=false}={}){root.querySelectorAll?.('.na2-matrix tbody tr[data-plan-id]').forEach(tr=>hydrateRow(tr,{force}))}
-function hydrateGroup(groupId,{force=false}={}){const test=document.querySelector(`.na2-test[data-group-id="${CSS.escape(String(groupId||''))}"]`);if(test)hydrateRows(test,{force});else hydrateRows(document,{force})}
-function silentRefreshAll(){cache.clear();hydrateRows(document,{force:true})}
-function mount(){installStyles();bumpVisibleRev();hydrateRows();window.addEventListener('naesin-v2:matrix-rendered',event=>hydrateGroup(event.detail?.groupId));window.addEventListener('naesin-v2:auto-refreshed',silentRefreshAll);console.info(`[Naesin V2 Review Counts] ${REV} native-cell canonical refresh mounted`)}
+// P1 performance rollback: teacher matrix review hydration intentionally disabled.
+// The student wrong-answer system itself is unchanged; only per-row dashboard loading is paused.
+(function(){
+'use strict';
+const REV='R13.03-P1-OFF';
+function hideReviewColumn(){
+  if(document.getElementById('na2-p1-hide-review'))return;
+  const style=document.createElement('style');
+  style.id='na2-p1-hide-review';
+  style.textContent='.na2-matrix .na2-review-head,.na2-matrix .na2-review-cell{display:none!important}';
+  document.head.appendChild(style);
+}
+function mount(){
+  hideReviewColumn();
+  console.info(`[Naesin V2 Review Counts] ${REV} hydration disabled for P1`);
+}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',mount,{once:true});else mount();
+})();
