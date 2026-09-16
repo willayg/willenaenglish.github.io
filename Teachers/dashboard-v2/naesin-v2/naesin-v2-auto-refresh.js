@@ -1,7 +1,7 @@
 (function(){
 'use strict';
 
-const REV='AR1.33';
+const REV='AR1.34';
 const ACTIVE_VIEW_ID='view-naesin-v2';
 let running=false;
 
@@ -27,6 +27,14 @@ async function refresh(reason='manual'){
   }
 }
 
+function hideReviewColumn(){
+  if(document.getElementById('na2-p1-hide-review'))return;
+  const style=document.createElement('style');
+  style.id='na2-p1-hide-review';
+  style.textContent='.na2-matrix .na2-review-head,.na2-matrix .na2-review-cell{display:none!important}';
+  document.head.appendChild(style);
+}
+
 function mountRefreshButton(){
   const root=view();
   const head=root?.querySelector('.na2-head');
@@ -48,9 +56,10 @@ function mountRefreshButton(){
 }
 
 function mount(){
+  hideReviewColumn();
   mountRefreshButton();
   window.NaesinV2AutoRefresh={version:REV,intervalMs:null,refreshNow:()=>refresh('manual'),start:()=>false,stop:()=>true};
-  console.info(`[Naesin V2 Manual Refresh] ${REV} mounted (auto refresh disabled, review hydration disabled)`);
+  console.info(`[Naesin V2 Manual Refresh] ${REV} mounted (auto refresh disabled, review matrix disabled)`);
 }
 
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',mount,{once:true});else mount();
