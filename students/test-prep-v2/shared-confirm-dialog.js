@@ -4,7 +4,7 @@ function ensureStyles(){
   if(document.querySelector('link[data-shared-confirm-style]'))return;
   const link=document.createElement('link');
   link.rel='stylesheet';
-  link.href='./shared-confirm-dialog.css?v=1.0.0';
+  link.href=new URL('./shared-confirm-dialog.css?v=1.0.1',import.meta.url).href;
   link.dataset.sharedConfirmStyle='1';
   document.head.appendChild(link);
 }
