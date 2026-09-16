@@ -5,7 +5,7 @@ export function createStudentHistoryNavigation({appId,views,normalize,validate,r
   if(typeof render!=='function')throw new Error('Navigation requires render(route).');
   const allowedViews=new Set(views||[]);
   const grammarFoundations=appId==='willena-grammar-foundations';
-  const NAV_VERSION=grammarFoundations?'gf-history-v3':'default-v1';
+  const NAV_VERSION=grammarFoundations?'gf-history-v4':'default-v1';
   let current=null;
   let started=false;
   let reverting=false;
@@ -17,9 +17,28 @@ export function createStudentHistoryNavigation({appId,views,normalize,validate,r
   const norm=route=>(normalize||defaultNormalize)(route||{});
   const valid=route=>Boolean(route&&allowedViews.has(route.view)&&(typeof validate!=='function'||validate(route)!==false));
   const pack=route=>({app:appId,navVersion:NAV_VERSION,route:norm(route)});
-  // Accept older states for this app so an already-open tab can migrate cleanly.
-  const unpack=state=>state?.app===appId&&valid(state.route)?norm(state.route):null;
   const same=(a,b)=>JSON.stringify(norm(a))===JSON.stringify(norm(b));
+
+  // Only current-version interactive states are trusted. Older GF quiz/guide
+  // entries can contain a route without the live JS/session state required to
+  // render it correctly, so they must never be resurrected as activities.
+  const unpack=state=>{
+    if(state?.app!==appId||!valid(state.route))return null;
+    if(!grammarFoundations||state?.navVersion===NAV_VERSION)return norm(state.route);
+    const legacy=norm(state.route);
+    if(['home','group','module'].includes(legacy.view))return legacy;
+    return null;
+  };
+
+  function safeLegacyTarget(state,prev){
+    if(!grammarFoundations||state?.app!==appId)return null;
+    const raw=state?.route;
+    if(!raw||!valid(raw))return null;
+    const legacy=norm(raw);
+    if(['home','group','module'].includes(legacy.view))return legacy;
+    const moduleId=legacy.moduleId||prev?.moduleId;
+    return moduleId?norm({view:'module',moduleId}):null;
+  }
 
   async function allowed(prev,next,source){
     if(typeof guard!=='function')return true;
@@ -33,18 +52,26 @@ export function createStudentHistoryNavigation({appId,views,normalize,validate,r
   }
   async function onPop(event){
     if(reverting){reverting=false;return}
-    const next=unpack(event.state);
     const prev=current;
-    // A popstate that belongs to another page/app is browser history, not ours.
-    // Do not manufacture a replacement route or alter the history stack.
+    let next=unpack(event.state);
+    let recoveredLegacy=false;
+
+    // If Back lands on an old GF activity entry, convert that history slot to
+    // the lesson journey instead of rendering a dead/stale quiz shell.
+    if(!next&&grammarFoundations){
+      next=safeLegacyTarget(event.state,prev);
+      recoveredLegacy=Boolean(next);
+    }
     if(!next)return;
+
     if(!await allowed(prev,next,'popstate')){
       reverting=true;
       history.forward();
       return;
     }
-    // Migrate older same-app state in place without adding another entry.
-    if(event.state?.navVersion!==NAV_VERSION)history.replaceState(pack(next),'',location.href);
+    if(recoveredLegacy||event.state?.navVersion!==NAV_VERSION){
+      history.replaceState(pack(next),'',location.href);
+    }
     return accept(next,'popstate',prev);
   }
 
@@ -53,6 +80,8 @@ export function createStudentHistoryNavigation({appId,views,normalize,validate,r
     started=true;
     let route=unpack(history.state);
     if(!route){
+      // A reload on an obsolete activity route starts from the supplied safe
+      // initial/resume route and replaces that obsolete history entry in place.
       route=norm(initialRoute);
       history.replaceState(pack(route),'',location.href);
     }else if(history.state?.navVersion!==NAV_VERSION){
@@ -98,8 +127,8 @@ export function createStudentHistoryNavigation({appId,views,normalize,validate,r
     return renderRoute?accept(next,'replace',prev):next;
   }
 
-  // In-app Back intentionally delegates to the browser. There is one history
-  // source of truth for UI buttons, Android Back, browser Back and swipe-back.
+  // One history source of truth for UI Back, Android Back, browser Back and
+  // swipe-back. No screen-depth arithmetic and no synthetic popstate events.
   function back(){history.back()}
   function route(){return current?{...current}:null}
   function destroy(){window.removeEventListener('popstate',onPop);started=false;current=null}
