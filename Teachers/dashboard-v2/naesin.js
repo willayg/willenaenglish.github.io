@@ -13,4 +13,11 @@ if(!document.getElementById('grammarFoundationsTeacherScript')){
   s.defer=true;
   document.head.appendChild(s);
 }
+if(!document.getElementById('teacherAppsV2Script')){
+  const s=document.createElement('script');
+  s.id='teacherAppsV2Script';
+  s.src='./teacher-apps-v2.js?v=1.0.0';
+  s.defer=true;
+  document.head.appendChild(s);
+}
 })();
