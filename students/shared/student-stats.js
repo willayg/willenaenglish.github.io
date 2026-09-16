@@ -1,10 +1,9 @@
-const EDGE='https://fiieuiktlsivwfgyivai.supabase.co/functions/v1/test-prep-stats-v1';
 const SNAPSHOT_RPC='https://fiieuiktlsivwfgyivai.supabase.co/rest/v1/rpc/test_prep_student_snapshot_fast_v1';
 const API_KEY='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
 const cache=new Map();
 const latest=new Map();
-let snapshotLabPromise=null,snapshotLabLatest=null;
-const diag={requests:0,cacheHits:0,cacheMisses:0,lastMs:null,lastSyncedAt:null,snapshotRequests:0,snapshotLastMs:null,source:'shared-canonical-stats-v1'};
+let snapshotPromise=null,snapshotLatest=null;
+const diag={requests:0,cacheHits:0,cacheMisses:0,lastMs:null,lastSyncedAt:null,source:'shared-snapshot-stats-v1'};
 
 const token=()=>window.WillenaAPI?.getLocalAccessToken?.()||localStorage.getItem('sb_access_token')||'';
 const routedFetch=(url,opts={})=>window.WillenaAPI?.fetch?window.WillenaAPI.fetch(url,{credentials:'include',cache:'no-store',...opts}):fetch(url,{credentials:'include',cache:'no-store',...opts});
@@ -25,33 +24,18 @@ async function refreshToken(){
 }
 async function accessToken(){return token()||await refreshToken()}
 
-async function requestPlan(planId){
-  let access=await accessToken();
-  if(!access)throw new Error('AUTH_REQUIRED');
-  const run=t=>fetch(EDGE,{method:'POST',headers:{apikey:API_KEY,Authorization:`Bearer ${t}`,'Content-Type':'application/json'},body:JSON.stringify({plan_id:String(planId)}),cache:'no-store',credentials:'omit'});
-  const started=performance.now();diag.requests++;
-  let r=await run(access);
-  if(r.status===401){access=await refreshToken();if(access)r=await run(access)}
-  const text=await r.text();let payload={};
-  try{payload=JSON.parse(text)}catch(_){throw new Error(`Invalid canonical stats response (${r.status})`)}
-  diag.lastMs=performance.now()-started;
-  if(r.status===401)throw new Error('AUTH_REQUIRED');
-  if(!r.ok||payload?.ok===false)throw new Error(payload?.error||payload?.detail||`Canonical stats failed (${r.status})`);
-  diag.lastSyncedAt=payload?.synced_at||null;
-  return payload;
-}
-
 async function requestSnapshotPlans(){
   let access=await accessToken();
   if(!access)throw new Error('AUTH_REQUIRED');
   const run=t=>fetch(SNAPSHOT_RPC,{method:'POST',headers:{apikey:API_KEY,Authorization:`Bearer ${t}`,'Content-Type':'application/json'},body:'{}',cache:'no-store',credentials:'omit'});
-  const started=performance.now();diag.snapshotRequests++;
+  const started=performance.now();diag.requests++;
   let r=await run(access);
   if(r.status===401){access=await refreshToken();if(access)r=await run(access)}
   const payload=await r.json().catch(()=>({}));
-  diag.snapshotLastMs=performance.now()-started;
+  diag.lastMs=performance.now()-started;
   if(r.status===401)throw new Error('AUTH_REQUIRED');
   if(!r.ok)throw new Error(payload?.message||payload?.error||`Student snapshot failed (${r.status})`);
+  diag.lastSyncedAt=payload?.generated_at||null;
   return payload;
 }
 
@@ -75,35 +59,31 @@ function stat(row={}){
   };
 }
 
-function normalize(payload){
-  const raw=payload?.stats||{};
+function normalizeSnapshotPlan(raw={}){
   const lessons={};
   for(const lesson of Array.isArray(raw.lessons)?raw.lessons:[]){
     const practices={};
     for(const p of Array.isArray(lesson?.practices)?lesson.practices:[]){
-      practices[String(p.practice_type||'')]=stat(p);
+      const key=String(p.practice_type||'');
+      if(key)practices[key]=stat(p);
     }
-    lessons[String(lesson.lesson||'')]={
-      summary:stat(lesson),
-      practices,
-      unitId:lesson.unit_id||null,
-      lesson:String(lesson.lesson||'')
-    };
+    lessons[String(lesson.lesson||'')]={summary:stat(lesson),practices,unitId:lesson.unit_id||null,lesson:String(lesson.lesson||'')};
   }
-  const reviewRaw=raw.review&&typeof raw.review==='object'?raw.review:{};
-  const review={
-    status:reviewRaw.status||'unavailable',
-    wrongNow:num(reviewRaw.wrong_now),
-    wrongLater:num(reviewRaw.wrong_later),
-    cleared:num(reviewRaw.cleared),
-    nextReviewAt:reviewRaw.next_review_at||null,
-    lessons:Array.isArray(reviewRaw.lessons)?reviewRaw.lessons:[]
-  };
   const skills={};
   for(const row of Array.isArray(raw.skills)?raw.skills:[]){
     const key=String(row.practice_type||'');
     if(key)skills[key]=stat(row);
   }
+  const reviewRaw=raw.review&&typeof raw.review==='object'?raw.review:{};
+  const review={
+    status:'snapshot',
+    wrongNow:num(reviewRaw.active),
+    wrongLater:num(reviewRaw.waiting),
+    total:num(reviewRaw.total),
+    cleared:num(reviewRaw.cleared),
+    nextReviewAt:reviewRaw.next_review_at||null,
+    items:Array.isArray(reviewRaw.items)?reviewRaw.items:[]
+  };
   const plan=stat(raw.summary||{});
   plan.recent150Count=Math.max(0,num(raw.summary?.recent150_count));
   plan.recent150Accuracy=maybeNum(raw.summary?.recent150_accuracy);
@@ -112,59 +92,52 @@ function normalize(payload){
   plan.uniqueAccuracy=maybeNum(raw.summary?.unique_accuracy);
   plan.lastActivity=raw.summary?.last_activity||null;
   return{
-    plan,
-    skills,
-    lessons,
-    review,
+    plan,skills,lessons,review,
+    activity:raw.activity||{},
+    responseTimes:Array.isArray(raw.response_times)?raw.response_times:[],
+    grammarPatterns:Array.isArray(raw.grammar_patterns)?raw.grammar_patterns:[],
+    today:raw.today||{},
     meta:{
-      source:'shared-canonical-stats-v1',
-      version:raw.version||'v1',
+      source:'shared-snapshot-stats-v1',
+      version:raw.snapshot_version||'snapshot',
       planId:raw.plan_id||null,
       studentId:raw.student_id||null,
-      bookKey:raw.book_key||null,
-      bookLabel:raw.book_label||null,
-      snapshotSynced:num(payload?.snapshot_synced),
-      aliasesRefreshed:num(payload?.aliases_refreshed),
-      syncedAt:payload?.synced_at||raw?.content?.synced_at||null,
-      contentRevision:raw?.content?.revision||null,
-      missingUnits:num(raw?.content?.missing_units)
+      bookKey:raw.group?.book_key||null,
+      bookLabel:raw.group?.book_label||null,
+      syncedAt:raw.snapshot_updated_at||null,
+      stale:raw.stale===true
     },
-    raw:payload
+    raw
   };
 }
+function emptyNormalized(planId=''){return normalizeSnapshotPlan({plan_id:planId,summary:{},skills:[],lessons:[],review:{}})}
+
+export async function loadSnapshotPlans({force=false}={}){
+  if(force){snapshotPromise=null;snapshotLatest=null;cache.clear();latest.clear()}
+  if(snapshotPromise){diag.cacheHits++;return snapshotPromise}
+  diag.cacheMisses++;
+  snapshotPromise=requestSnapshotPlans().then(payload=>{snapshotLatest=payload;return payload}).catch(error=>{snapshotPromise=null;snapshotLatest=null;throw error});
+  return snapshotPromise;
+}
+export async function refreshSnapshotPlans(){return loadSnapshotPlans({force:true})}
+export function getCachedSnapshotPlans(){return snapshotLatest}
+export function invalidateSnapshotPlans(){snapshotPromise=null;snapshotLatest=null;cache.clear();latest.clear()}
 
 export async function loadPlanStats(planOrId,{force=false}={}){
   const key=planKey(planOrId);
-  if(!key)return normalize({stats:{}});
-  if(force){cache.delete(key);latest.delete(key)}
+  if(!key)return emptyNormalized();
+  if(force){cache.delete(key);latest.delete(key);invalidateSnapshotPlans()}
   if(cache.has(key)){diag.cacheHits++;return cache.get(key)}
   diag.cacheMisses++;
-  const promise=requestPlan(key).then(payload=>{
-    const data=normalize(payload);
+  const promise=loadSnapshotPlans().then(payload=>{
+    const raw=(Array.isArray(payload?.plans)?payload.plans:[]).find(p=>String(p.plan_id)===key);
+    const data=raw?normalizeSnapshotPlan(raw):emptyNormalized(key);
     latest.set(key,data);
     return data;
-  }).catch(error=>{
-    cache.delete(key);latest.delete(key);throw error;
-  });
+  }).catch(error=>{cache.delete(key);latest.delete(key);throw error});
   cache.set(key,promise);
   return promise;
 }
-
-export async function loadSnapshotPlans({force=false}={}){
-  if(force){snapshotLabPromise=null;snapshotLabLatest=null}
-  if(snapshotLabPromise){diag.cacheHits++;return snapshotLabPromise}
-  diag.cacheMisses++;
-  snapshotLabPromise=requestSnapshotPlans().then(payload=>{
-    snapshotLabLatest=payload;
-    return payload;
-  }).catch(error=>{
-    snapshotLabPromise=null;snapshotLabLatest=null;throw error;
-  });
-  return snapshotLabPromise;
-}
-export async function refreshSnapshotPlans(){return loadSnapshotPlans({force:true})}
-export function getCachedSnapshotPlans(){return snapshotLabLatest}
-export function invalidateSnapshotPlans(){snapshotLabPromise=null;snapshotLabLatest=null}
 
 export async function refreshPlanStats(planOrId){return loadPlanStats(planOrId,{force:true})}
 export function getCachedPlanStats(planOrId){return latest.get(planKey(planOrId))||null}
@@ -178,15 +151,12 @@ export function invalidatePlanStats(planOrId){
   const key=planKey(planOrId);
   if(key){cache.delete(key);latest.delete(key)}else{cache.clear();latest.clear()}
 }
-export function clearStatsCache(){invalidatePlanStats('')}
-export function getStatsDiagnostics(){return{...diag,cacheEntries:cache.size,snapshotCached:!!snapshotLabLatest};}
+export function clearStatsCache(){invalidatePlanStats('');invalidateSnapshotPlans()}
+export function getStatsDiagnostics(){return{...diag,cacheEntries:cache.size,snapshotCached:!!snapshotLatest};}
 export function formatCardMetric(s){return`${num(s?.completed)} / ${num(s?.total)} questions`;}
 export function formatAccuracy(s){return s?.accuracySample?`${num(s.accuracy)}% accuracy`:'— accuracy';}
 
-// Compatibility aliases for existing student apps while they migrate.
+// Compatibility exports for existing student apps during migration.
 export async function loadCardStats(plan,_studentId,{force=false}={}){return loadPlanStats(plan,{force})}
 export function invalidateCardStats(planOrId){return invalidatePlanStats(planOrId)}
 export function reviewCounts(planOrId){return getReviewCounts(planOrId)}
-
-// Canonical rule: this module never derives totals from content in the browser.
-// All identities, scope, completion, recent accuracy and review counts come from the shared backend.
