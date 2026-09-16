@@ -1,8 +1,10 @@
 import '../test-prep-v2/grammar-guide-extra.js?v=1.0.0';
 import '../test-prep-v2/grammar-guide-single.js?v=1.2.1';
-import {GUIDES,resolveGuideKeys,openGuide} from '../test-prep-v2/grammar-guide.js?v=2.1.0';
+import {GUIDES,resolveGuideKeys,openGuide,closeGuide} from '../test-prep-v2/grammar-guide.js?v=2.1.0';
 
 const root=document.getElementById('screen');
+const APP_ID='willena-grammar-foundations';
+let activeExplainerRoute='';
 
 const FALLBACK_KEYS={
   be_present:'be-present',
@@ -55,6 +57,9 @@ const FALLBACK_KEYS={
   mixed_transformations:'sentence-transformation'
 };
 
+function navigation(){return window.__willenaGrammarFoundationsNavigation||null}
+function route(){return history.state?.app===APP_ID?history.state?.route:null}
+
 function guideKeyFor(moduleId){
   const id=String(moduleId||'').trim();
   if(!id)return null;
@@ -68,7 +73,10 @@ function guideKeyFor(moduleId){
 }
 
 function moduleIdFromPage(){
-  return root?.querySelector('[data-stage][data-module]')?.dataset.module||history.state?.route?.moduleId||'';
+  return root?.querySelector('[data-stage][data-module]')?.dataset.module||route()?.moduleId||'';
+}
+function firstStageId(moduleId){
+  return root?.querySelector(`[data-module="${CSS.escape(String(moduleId))}"][data-stage]`)?.dataset.stage||'';
 }
 
 function installExplainerButton(){
@@ -78,13 +86,14 @@ function installExplainerButton(){
   if(!moduleId)return;
   const key=guideKeyFor(moduleId);
   const guide=key?GUIDES[key]:null;
+  const stageId=firstStageId(moduleId);
   const button=document.createElement('button');
   button.type='button';
   button.className='gf-lesson-explainer';
+  button.dataset.module=moduleId;
+  button.dataset.stage=stageId;
   button.innerHTML=`<span class="gf-explainer-icon" aria-hidden="true">Aa</span><span class="gf-explainer-copy"><small>LESSON GUIDE</small><b>문법 설명 보기</b><span>${guide?.title||'이 문법의 핵심 설명'}</span></span><span class="gf-explainer-arrow" aria-hidden="true">→</span>`;
-  if(guide){
-    button.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();openGuide(key)});
-  }else{
+  if(!guide||!stageId){
     button.disabled=true;
     button.title='이 문법 설명은 아직 Test Prep 설명 목록에 없습니다.';
     button.querySelector('.gf-explainer-copy span').textContent='설명 준비 중';
@@ -122,21 +131,55 @@ function installJourney(){
   }
 }
 
-function navigation(){return window.__willenaGrammarFoundationsNavigation||null}
+// The app's existing `guide` route is now the real history entry for the full
+// Test Prep grammar explainer. The old mini-guide can render underneath, but it
+// is never the student's destination; closing/back returns to the lesson journey.
+function ensureExplainerRoute(){
+  const r=route();
+  if(r?.view!=='guide'||!r.moduleId||!root?.querySelector('.gf-guide'))return;
+  const key=guideKeyFor(r.moduleId);
+  if(!key)return;
+  const routeKey=`${r.moduleId}:${r.stageId}:${key}`;
+  if(activeExplainerRoute===routeKey&&document.querySelector('.grammar-guide-overlay'))return;
+  activeExplainerRoute=routeKey;
+  openGuide(key);
+}
 
-function skipLegacyGuide(){
-  const route=history.state?.route;
-  if(history.state?.app!=='willena-grammar-foundations'||route?.view!=='guide'||!route.moduleId||!route.stageId||!root?.querySelector('.gf-guide'))return;
-  navigation()?.replace({view:'practice',moduleId:route.moduleId,stageId:route.stageId});
+function leaveExplainerViaHistory(){
+  const r=route();
+  if(r?.view!=='guide')return false;
+  closeGuide();
+  activeExplainerRoute='';
+  navigation()?.back();
+  return true;
 }
 
 function enhance(){
   installExplainerButton();
   installJourney();
-  skipLegacyGuide();
+  ensureExplainerRoute();
 }
 
 document.addEventListener('click',event=>{
+  const explainer=event.target.closest?.('.gf-lesson-explainer');
+  if(explainer&&!explainer.disabled){
+    const nav=navigation();
+    if(!nav)return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    nav.navigate({view:'guide',moduleId:explainer.dataset.module,stageId:explainer.dataset.stage});
+    return;
+  }
+
+  const guideClose=event.target.closest?.('[data-gg-close]');
+  const overlayBackdrop=event.target.classList?.contains('grammar-guide-overlay');
+  if((guideClose||overlayBackdrop)&&route()?.view==='guide'){
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    leaveExplainerViaHistory();
+    return;
+  }
+
   const card=event.target.closest?.('.gf-stage-card[data-stage][data-module],.gf-journey-stop[data-stage][data-module]');
   if(!card||card.hasAttribute('disabled'))return;
   const nav=navigation();
@@ -145,6 +188,21 @@ document.addEventListener('click',event=>{
   event.stopImmediatePropagation();
   nav.navigate({view:'practice',moduleId:card.dataset.module,stageId:card.dataset.stage});
 },true);
+
+window.addEventListener('keydown',event=>{
+  if(event.key!=='Escape'||route()?.view!=='guide')return;
+  event.preventDefault();
+  event.stopImmediatePropagation();
+  leaveExplainerViaHistory();
+},true);
+
+window.addEventListener('popstate',event=>{
+  const next=event.state?.app===APP_ID?event.state?.route:null;
+  if(next?.view!=='guide'){
+    closeGuide();
+    activeExplainerRoute='';
+  }
+});
 
 const observer=new MutationObserver(enhance);
 observer.observe(root||document.documentElement,{childList:true,subtree:true});
