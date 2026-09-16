@@ -9,14 +9,14 @@ console.info('[naesin-v1] legacy loader disabled');
 if(!document.getElementById('grammarFoundationsTeacherScript')){
   const s=document.createElement('script');
   s.id='grammarFoundationsTeacherScript';
-  s.src='./grammar-foundations-teacher.js?v=1.2.0';
+  s.src='./grammar-foundations-teacher.js?v=20260917-r14-03';
   s.defer=true;
   document.head.appendChild(s);
 }
 if(!document.getElementById('teacherAppsV2Script')){
   const s=document.createElement('script');
   s.id='teacherAppsV2Script';
-  s.src='./teacher-apps-v2.js?v=1.0.0';
+  s.src='./teacher-apps-v2.js?v=20260917-r14-03';
   s.defer=true;
   document.head.appendChild(s);
 }
