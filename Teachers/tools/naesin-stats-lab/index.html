@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Naesin Stats Lab</title>
+<script src="/js/api-config.js"></script>
+<style>
+:root{font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#24343a;background:#f3f7f8}*{box-sizing:border-box}body{margin:0}.top{position:sticky;top:0;z-index:5;background:#31434b;color:#fff;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;gap:16px}.top h1{margin:0;font-size:20px}.top .meta{font-size:12px;opacity:.8}.wrap{max-width:1500px;margin:0 auto;padding:22px}.summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:18px}.kpi,.card{background:#fff;border:1px solid #dce9eb;border-radius:18px;box-shadow:0 6px 20px rgba(34,65,72,.06)}.kpi{padding:15px 17px}.kpi b{display:block;font-size:24px}.kpi span{display:block;margin-top:4px;color:#7b8b91;font-size:12px;font-weight:700}.toolbar{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:16px}.toolbar button{border:1px solid #9dd7dc;background:#fff;color:#267f88;border-radius:12px;padding:10px 14px;font-weight:800;cursor:pointer}.status{font-size:13px;color:#708187}.groups{display:grid;gap:16px}.card{overflow:hidden}.head{padding:16px 18px;border-bottom:1px solid #e6eff1;display:flex;justify-content:space-between;gap:14px;align-items:flex-start}.head h2{margin:0;font-size:20px}.sub{margin-top:5px;color:#74858b;font-size:12px;font-weight:700}.fresh{font-size:11px;font-weight:800;color:#4b777d;white-space:nowrap}.scroll{overflow-x:auto}.matrix{width:100%;min-width:1040px;border-collapse:collapse;table-layout:fixed}.matrix th,.matrix td{padding:12px 10px;border-bottom:1px solid #edf2f3;border-right:1px solid #edf2f3;text-align:center}.matrix th{background:#f7fbfb;color:#60737a;font-size:12px}.matrix th:first-child,.matrix td:first-child{width:175px;text-align:left;position:sticky;left:0;background:#fff;z-index:2}.matrix th:first-child{background:#f7fbfb;z-index:3}.student{font-weight:850}.score{font-size:18px;font-weight:900}.good{color:#22937e}.mid{color:#ce9229}.low{color:#d65481}.muted{color:#9aa7ab}.small{display:block;margin-top:4px;color:#8b999e;font-size:10px;font-weight:700}.loading{min-height:300px;display:grid;place-items:center;color:#708187;font-weight:800}.err{padding:28px;text-align:center;color:#b13d62;font-weight:800}@media(max-width:800px){.summary{grid-template-columns:repeat(2,minmax(0,1fr))}.wrap{padding:14px}.top{padding:13px 14px}}
+</style>
+</head>
+<body>
+<header class="top"><div><h1>Naesin Stats Lab</h1><div class="meta">Clean-room prototype · one authenticated request · one render</div></div><div id="rev">LAB 1.00</div></header>
+<main class="wrap">
+<section class="summary"><div class="kpi"><b id="loadMs">—</b><span>network + DB ms</span></div><div class="kpi"><b id="groupCount">—</b><span>groups</span></div><div class="kpi"><b id="studentCount">—</b><span>student plans</span></div><div class="kpi"><b id="snapshotAge">—</b><span>oldest snapshot age</span></div></section>
+<div class="toolbar"><div class="status" id="status">Loading one snapshot payload…</div><button id="reload" type="button">Reload snapshot</button></div>
+<section class="groups" id="groups"><div class="card loading">Loading all groups together…</div></section>
+</main>
+<script>
+(()=>{
+'use strict';
+const RPC='https://fiieuiktlsivwfgyivai.supabase.co/rest/v1/rpc/test_prep_teacher_dashboard_fast_v1';
+const API_KEY='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
+const practices=[['vocabulary','단어 학습'],['vocab_test','어휘 문제'],['grammar','문법'],['sentences','본문'],['communication','의사소통'],['reading','독해'],['constructed_response','서술형']];
+const $=s=>document.querySelector(s);
+const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const token=()=>window.WillenaAPI?.getLocalAccessToken?.()||localStorage.getItem('sb_access_token')||'';
+async function refreshToken(){try{const f=window.WillenaAPI?.fetch||fetch;const r=await f('/.netlify/functions/supabase_auth?action=refresh&_='+Date.now(),{credentials:'include',cache:'no-store'});const d=await r.json().catch(()=>({}));if(r.ok&&d?.success&&d.access_token){window.WillenaAPI?.setLocalTokens?.(d.access_token,d.refresh_token||'');return d.access_token}}catch{}return''}
+async function accessToken(){return token()||await refreshToken()}
+function scoreClass(n){n=Number(n);return !Number.isFinite(n)?'muted':n>=80?'good':n>=50?'mid':'low'}
+function pct(n){return Number.isFinite(Number(n))?Math.round(Number(n))+'%':'—'}
+function skillMap(m){return new Map((m?.skills||[]).map(x=>[String(x.practice_type||''),x]))}
+function fmtAge(iso){if(!iso)return'—';const ms=Date.now()-new Date(iso).getTime();if(ms<60000)return Math.max(0,Math.round(ms/1000))+'s';if(ms<3600000)return Math.round(ms/60000)+'m';return (ms/3600000).toFixed(1)+'h'}
+function groupCard(item){const g=item.group||{},members=item.members||[];const dates=members.map(m=>m.snapshot_updated_at).filter(Boolean).sort();const freshest=dates[0]||null;const headers=practices.map(([,l])=>`<th>${esc(l)}</th>`).join('');const rows=members.map(m=>{const map=skillMap(m),s=m.student||{},sum=m.summary||{},today=m.today||{};const cells=practices.map(([k])=>{const x=map.get(k);return `<td><span class="score ${scoreClass(x?.recent_accuracy)}">${pct(x?.recent_accuracy)}</span><span class="small">${Number(x?.recent_count||0)}문항</span></td>`}).join('');return `<tr><td><span class="student">${esc(s.korean_name||s.name||s.username||'Student')}</span></td><td><span class="score ${scoreClass(sum.recent150_accuracy)}">${pct(sum.recent150_accuracy)}</span><span class="small">${Number(sum.recent150_count||0)}문항</span></td>${cells}<td><span class="score">${Number(today.questions||0)}</span><span class="small">${pct(today.accuracy)} 정확도</span></td></tr>`}).join('');return `<article class="card"><div class="head"><div><h2>${esc(g.school||'학교')}</h2><div class="sub">${esc(g.term||'')}학기 · ${esc(g.exam_type||'')} · ${esc(g.book_label||g.book_key||'')} · ${members.length}명</div></div><div class="fresh">snapshot ${fmtAge(freshest)} old</div></div><div class="scroll"><table class="matrix"><thead><tr><th>학생</th><th>전체 최근</th>${headers}<th>오늘 활동</th></tr></thead><tbody>${rows||'<tr><td colspan="10">No students</td></tr>'}</tbody></table></div></article>`}
+async function load(){const box=$('#groups');box.innerHTML='<div class="card loading">Loading all groups together…</div>';$('#status').textContent='Fetching one authenticated payload…';const t0=performance.now();let access=await accessToken();if(!access){location.href='/Teachers/login.html?redirect='+encodeURIComponent(location.pathname);return}let r=await fetch(RPC,{method:'POST',headers:{apikey:API_KEY,Authorization:'Bearer '+access,'Content-Type':'application/json'},body:'{}',cache:'no-store',credentials:'omit'});if(r.status===401){access=await refreshToken();if(access)r=await fetch(RPC,{method:'POST',headers:{apikey:API_KEY,Authorization:'Bearer '+access,'Content-Type':'application/json'},body:'{}',cache:'no-store',credentials:'omit'})}const payload=await r.json().catch(()=>({}));const ms=Math.round(performance.now()-t0);if(!r.ok){box.innerHTML=`<div class="card err">${esc(payload.message||payload.error||'Request failed '+r.status)}</div>`;$('#status').textContent='Failed';return}const groups=Array.isArray(payload.groups)?payload.groups:[];const members=groups.flatMap(g=>g.members||[]);const times=members.map(m=>m.snapshot_updated_at).filter(Boolean).sort();$('#loadMs').textContent=ms;$('#groupCount').textContent=groups.length;$('#studentCount').textContent=members.length;$('#snapshotAge').textContent=fmtAge(times[0]);$('#status').textContent=`One request returned ${groups.length} groups / ${members.length} plans. Rendering all cards now.`;box.innerHTML=groups.map(groupCard).join('')||'<div class="card loading">No active groups.</div>'}
+$('#reload').onclick=load;load();
+})();
+</script>
+</body>
+</html>
