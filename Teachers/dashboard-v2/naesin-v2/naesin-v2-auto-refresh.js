@@ -1,7 +1,7 @@
 (function(){
 'use strict';
 
-const REV='AR1.34';
+const REV='AR1.40';
 const ACTIVE_VIEW_ID='view-naesin-v2';
 let running=false;
 
@@ -22,45 +22,21 @@ async function refresh(reason='manual'){
   }catch(error){
     console.warn('[Naesin V2 Manual Refresh] refresh failed',error);
     return false;
-  }finally{
-    running=false;
-  }
-}
-
-function hideReviewColumn(){
-  if(document.getElementById('na2-p1-hide-review'))return;
-  const style=document.createElement('style');
-  style.id='na2-p1-hide-review';
-  style.textContent='.na2-matrix .na2-review-head,.na2-matrix .na2-review-cell{display:none!important}';
-  document.head.appendChild(style);
+  }finally{running=false}
 }
 
 function mountRefreshButton(){
-  const root=view();
-  const head=root?.querySelector('.na2-head');
+  const root=view(),head=root?.querySelector('.na2-head');
   if(!head||head.querySelector('[data-na2-refresh]'))return;
-  const add=head.querySelector('#na2Add');
-  const btn=document.createElement('button');
-  btn.type='button';
-  btn.className='na2-add na2-refresh';
-  btn.dataset.na2Refresh='1';
-  btn.textContent='↻ 새로고침';
-  btn.addEventListener('click',async()=>{
-    if(running)return;
-    const old=btn.textContent;
-    btn.disabled=true;
-    btn.textContent='새로고침 중…';
-    try{await refresh('button')}finally{btn.disabled=false;btn.textContent=old}
-  });
+  const add=head.querySelector('#na2Add'),btn=document.createElement('button');
+  btn.type='button';btn.className='na2-add na2-refresh';btn.dataset.na2Refresh='1';btn.textContent='↻ 새로고침';
+  btn.addEventListener('click',async()=>{if(running)return;const old=btn.textContent;btn.disabled=true;btn.textContent='새로고침 중…';try{await refresh('button')}finally{btn.disabled=false;btn.textContent=old}});
   head.insertBefore(btn,add||null);
 }
-
 function mount(){
-  hideReviewColumn();
   mountRefreshButton();
   window.NaesinV2AutoRefresh={version:REV,intervalMs:null,refreshNow:()=>refresh('manual'),start:()=>false,stop:()=>true};
-  console.info(`[Naesin V2 Manual Refresh] ${REV} mounted (auto refresh disabled, review matrix disabled)`);
+  console.info(`[Naesin V2 Manual Refresh] ${REV} mounted (snapshot-backed, auto refresh disabled)`);
 }
-
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',mount,{once:true});else mount();
 })();
