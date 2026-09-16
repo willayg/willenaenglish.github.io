@@ -2,7 +2,7 @@
 'use strict';
 
 const VIEW='naesin-v2';
-const REV='14.04';
+const REV='14.05';
 const ICON='./naesin-v2/naesin-v2-icon.svg';
 const PRACTICES=[
   ['vocabulary','단어 학습'],
