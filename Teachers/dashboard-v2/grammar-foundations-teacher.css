@@ -48,11 +48,15 @@
 .gf-detail-module summary{list-style:none;display:grid;grid-template-columns:1fr auto;align-items:center;gap:12px;padding:13px 15px;cursor:pointer}
 .gf-detail-module summary::-webkit-details-marker{display:none}
 .gf-detail-module summary:hover{background:#fbfeff}
+.gf-detail-module.active-module>summary{background:#fff8e9;border-left:4px solid #ef9d49;padding-left:11px}
+.gf-detail-module.complete-module>summary{background:#f8fcf9}
 .gf-detail-module-title{font-weight:800;font-size:.82rem}
 .gf-detail-module-en{margin-top:2px;font-size:.62rem;color:var(--muted)}
 .gf-detail-module-progress{text-align:right}
 .gf-detail-module-progress b{display:block;font-size:.83rem;color:#287b85}
 .gf-detail-module-progress span{display:block;font-size:.57rem;color:var(--muted)}
+.gf-detail-module-flag{display:inline-flex!important;align-items:center;justify-content:center;margin:0 0 4px auto;padding:3px 7px;border-radius:999px;background:#fff0d6;color:#9b611f!important;font-size:.52rem!important;font-weight:900;letter-spacing:.04em}
+.gf-detail-module-flag.complete{background:#eaf8ef;color:#2d8052!important}
 .gf-detail-levels{padding:0 12px 12px;background:#fbfcfd}
 .gf-detail-level{display:grid;grid-template-columns:28px 1fr auto;align-items:center;gap:9px;padding:10px 8px;border-top:1px solid #edf1f3}
 .gf-detail-level-marker{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;background:#f0f2f4;color:#9aa1a7;font-size:.7rem;font-weight:900}
