@@ -1,8 +1,10 @@
 const EDGE='https://fiieuiktlsivwfgyivai.supabase.co/functions/v1/test-prep-stats-v1';
+const SNAPSHOT_RPC='https://fiieuiktlsivwfgyivai.supabase.co/rest/v1/rpc/test_prep_student_snapshot_fast_v1';
 const API_KEY='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
 const cache=new Map();
 const latest=new Map();
-const diag={requests:0,cacheHits:0,cacheMisses:0,lastMs:null,lastSyncedAt:null,source:'shared-canonical-stats-v1'};
+let snapshotLabPromise=null,snapshotLabLatest=null;
+const diag={requests:0,cacheHits:0,cacheMisses:0,lastMs:null,lastSyncedAt:null,snapshotRequests:0,snapshotLastMs:null,source:'shared-canonical-stats-v1'};
 
 const token=()=>window.WillenaAPI?.getLocalAccessToken?.()||localStorage.getItem('sb_access_token')||'';
 const routedFetch=(url,opts={})=>window.WillenaAPI?.fetch?window.WillenaAPI.fetch(url,{credentials:'include',cache:'no-store',...opts}):fetch(url,{credentials:'include',cache:'no-store',...opts});
@@ -36,6 +38,20 @@ async function requestPlan(planId){
   if(r.status===401)throw new Error('AUTH_REQUIRED');
   if(!r.ok||payload?.ok===false)throw new Error(payload?.error||payload?.detail||`Canonical stats failed (${r.status})`);
   diag.lastSyncedAt=payload?.synced_at||null;
+  return payload;
+}
+
+async function requestSnapshotPlans(){
+  let access=await accessToken();
+  if(!access)throw new Error('AUTH_REQUIRED');
+  const run=t=>fetch(SNAPSHOT_RPC,{method:'POST',headers:{apikey:API_KEY,Authorization:`Bearer ${t}`,'Content-Type':'application/json'},body:'{}',cache:'no-store',credentials:'omit'});
+  const started=performance.now();diag.snapshotRequests++;
+  let r=await run(access);
+  if(r.status===401){access=await refreshToken();if(access)r=await run(access)}
+  const payload=await r.json().catch(()=>({}));
+  diag.snapshotLastMs=performance.now()-started;
+  if(r.status===401)throw new Error('AUTH_REQUIRED');
+  if(!r.ok)throw new Error(payload?.message||payload?.error||`Student snapshot failed (${r.status})`);
   return payload;
 }
 
@@ -134,6 +150,22 @@ export async function loadPlanStats(planOrId,{force=false}={}){
   return promise;
 }
 
+export async function loadSnapshotPlans({force=false}={}){
+  if(force){snapshotLabPromise=null;snapshotLabLatest=null}
+  if(snapshotLabPromise){diag.cacheHits++;return snapshotLabPromise}
+  diag.cacheMisses++;
+  snapshotLabPromise=requestSnapshotPlans().then(payload=>{
+    snapshotLabLatest=payload;
+    return payload;
+  }).catch(error=>{
+    snapshotLabPromise=null;snapshotLabLatest=null;throw error;
+  });
+  return snapshotLabPromise;
+}
+export async function refreshSnapshotPlans(){return loadSnapshotPlans({force:true})}
+export function getCachedSnapshotPlans(){return snapshotLabLatest}
+export function invalidateSnapshotPlans(){snapshotLabPromise=null;snapshotLabLatest=null}
+
 export async function refreshPlanStats(planOrId){return loadPlanStats(planOrId,{force:true})}
 export function getCachedPlanStats(planOrId){return latest.get(planKey(planOrId))||null}
 export function getLessonStats(planOrId,lesson){return getCachedPlanStats(planOrId)?.lessons?.[String(lesson)]||null}
@@ -147,7 +179,7 @@ export function invalidatePlanStats(planOrId){
   if(key){cache.delete(key);latest.delete(key)}else{cache.clear();latest.clear()}
 }
 export function clearStatsCache(){invalidatePlanStats('')}
-export function getStatsDiagnostics(){return{...diag,cacheEntries:cache.size};}
+export function getStatsDiagnostics(){return{...diag,cacheEntries:cache.size,snapshotCached:!!snapshotLabLatest};}
 export function formatCardMetric(s){return`${num(s?.completed)} / ${num(s?.total)} questions`;}
 export function formatAccuracy(s){return s?.accuracySample?`${num(s.accuracy)}% accuracy`:'— accuracy';}
 
