@@ -1,5 +1,21 @@
 // Overlay animation for tool cards with delay
 window.addEventListener('DOMContentLoaded', function() {
+  // Lightweight utility link for the Naesin snapshot-engine lab.
+  // Keep this injected here so we do not have to touch the large legacy teacher dashboard file.
+  const toolArea = document.querySelector('.content-area');
+  if (toolArea && !toolArea.querySelector('a[href="/Teachers/tools/naesin-stats-lab/"]')) {
+    const lab = document.createElement('a');
+    lab.className = 'tool-card';
+    lab.dataset.tags = 'all activities utilities';
+    lab.href = '/Teachers/tools/naesin-stats-lab/';
+    lab.innerHTML = [
+      '<div class="tool-title">Naesin Stats Lab</div>',
+      '<div aria-hidden="true" style="font-size:4.8em;line-height:1;margin:.22em 0 .18em">📊</div>',
+      '<div class="tool-overlay">Open the fast snapshot-backed 내신 statistics lab.</div>'
+    ].join('');
+    toolArea.appendChild(lab);
+  }
+
   document.querySelectorAll('.tool-card').forEach(function(card) {
     let timer = null;
     const overlay = card.querySelector('.tool-overlay');
