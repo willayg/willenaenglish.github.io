@@ -5,7 +5,7 @@ export function createStudentHistoryNavigation({appId,views,normalize,validate,r
   if(typeof render!=='function')throw new Error('Navigation requires render(route).');
   const allowedViews=new Set(views||[]);
   const grammarFoundations=appId==='willena-grammar-foundations';
-  const NAV_VERSION=grammarFoundations?'gf-hierarchy-v2':'default-v1';
+  const NAV_VERSION=grammarFoundations?'gf-history-v3':'default-v1';
   let current=null;
   let started=false;
   let reverting=false;
@@ -17,27 +17,9 @@ export function createStudentHistoryNavigation({appId,views,normalize,validate,r
   const norm=route=>(normalize||defaultNormalize)(route||{});
   const valid=route=>Boolean(route&&allowedViews.has(route.view)&&(typeof validate!=='function'||validate(route)!==false));
   const pack=route=>({app:appId,navVersion:NAV_VERSION,route:norm(route)});
-  const unpack=state=>state?.app===appId&&(!grammarFoundations||state?.navVersion===NAV_VERSION)&&valid(state.route)?norm(state.route):null;
+  // Accept older states for this app so an already-open tab can migrate cleanly.
+  const unpack=state=>state?.app===appId&&valid(state.route)?norm(state.route):null;
   const same=(a,b)=>JSON.stringify(norm(a))===JSON.stringify(norm(b));
-
-  function depth(route){
-    if(!grammarFoundations)return 0;
-    const view=route?.view;
-    if(view==='home')return 0;
-    if(view==='group')return 1;
-    if(view==='module')return 2;
-    if(['guide','practice','result','challenge','challenge-result'].includes(view))return 3;
-    return 0;
-  }
-  function fallbackParent(route){
-    if(!grammarFoundations||!route)return null;
-    if(['guide','practice','result','challenge','challenge-result'].includes(route.view)&&route.moduleId){
-      return norm({view:'module',moduleId:route.moduleId});
-    }
-    if(route.view==='module')return norm({view:'home'});
-    if(route.view==='group')return norm({view:'home'});
-    return null;
-  }
 
   async function allowed(prev,next,source){
     if(typeof guard!=='function')return true;
@@ -51,23 +33,19 @@ export function createStudentHistoryNavigation({appId,views,normalize,validate,r
   }
   async function onPop(event){
     if(reverting){reverting=false;return}
-    let next=unpack(event.state);
+    const next=unpack(event.state);
     const prev=current;
-
-    // Old Grammar Foundations history entries are deliberately discarded.
-    // If the browser lands on one, replace it with the canonical parent instead
-    // of exposing an old guide/result/question route to the student.
-    if(grammarFoundations&&!next){
-      const parent=fallbackParent(prev);
-      if(!parent)return;
-      if(!await allowed(prev,parent,'popstate')){reverting=true;history.forward();return}
-      history.replaceState(pack(parent),'',location.href);
-      accept(parent,'popstate',prev);
+    // A popstate that belongs to another page/app is browser history, not ours.
+    // Do not manufacture a replacement route or alter the history stack.
+    if(!next)return;
+    if(!await allowed(prev,next,'popstate')){
+      reverting=true;
+      history.forward();
       return;
     }
-    if(!next)return;
-    if(!await allowed(prev,next,'popstate')){reverting=true;history.forward();return}
-    accept(next,'popstate',prev);
+    // Migrate older same-app state in place without adding another entry.
+    if(event.state?.navVersion!==NAV_VERSION)history.replaceState(pack(next),'',location.href);
+    return accept(next,'popstate',prev);
   }
 
   function init(initialRoute){
@@ -77,10 +55,26 @@ export function createStudentHistoryNavigation({appId,views,normalize,validate,r
     if(!route){
       route=norm(initialRoute);
       history.replaceState(pack(route),'',location.href);
+    }else if(history.state?.navVersion!==NAV_VERSION){
+      history.replaceState(pack(route),'',location.href);
     }
     current=route;
     window.addEventListener('popstate',onPop);
     return route;
+  }
+
+  function completionReplacement(prev,next){
+    if(!grammarFoundations||!prev||!next)return false;
+    if(prev.view==='practice'&&next.view==='result'){
+      return String(prev.moduleId)===String(next.moduleId)&&String(prev.stageId)===String(next.stageId);
+    }
+    if(prev.view==='challenge'&&next.view==='challenge-result'){
+      return String(prev.moduleId)===String(next.moduleId);
+    }
+    if(prev.view==='guide'&&next.view==='practice'){
+      return String(prev.moduleId)===String(next.moduleId)&&String(prev.stageId)===String(next.stageId);
+    }
+    return false;
   }
 
   async function navigate(route,{replace=false}={}){
@@ -88,31 +82,11 @@ export function createStudentHistoryNavigation({appId,views,normalize,validate,r
     if(!valid(next))throw new Error(`Invalid ${appId} route.`);
     if(same(current,next))return current;
     const prev=current;
-
-    if(grammarFoundations&&!replace){
-      const from=depth(prev),to=depth(next);
-
-      // A level guide, the quiz itself and its result are one navigation tier.
-      // Moving between them must never add browser history.
-      if(to===from&&to===3){
-        if(!await allowed(prev,next,'replace'))return prev;
-        history.replaceState(pack(next),'',location.href);
-        return accept(next,'replace',prev);
-      }
-
-      // Returning to an ancestor consumes history; it never pushes a new copy of
-      // that ancestor after a result screen.
-      if(to<from){
-        if(!await allowed(prev,next,'back'))return prev;
-        history.go(-(from-to));
-        return prev;
-      }
-    }
-
-    if(!await allowed(prev,next,replace?'replace':'push'))return prev;
-    if(replace)history.replaceState(pack(next),'',location.href);
+    const shouldReplace=replace||completionReplacement(prev,next);
+    if(!await allowed(prev,next,shouldReplace?'replace':'push'))return prev;
+    if(shouldReplace)history.replaceState(pack(next),'',location.href);
     else history.pushState(pack(next),'',location.href);
-    return accept(next,replace?'replace':'push',prev);
+    return accept(next,shouldReplace?'replace':'push',prev);
   }
 
   function replace(route,{renderRoute=true}={}){
@@ -124,15 +98,13 @@ export function createStudentHistoryNavigation({appId,views,normalize,validate,r
     return renderRoute?accept(next,'replace',prev):next;
   }
 
-  function back(){
-    if(!grammarFoundations){history.back();return}
-    const parent=fallbackParent(current);
-    if(!parent){history.back();return}
-    const delta=Math.max(1,depth(current)-depth(parent));
-    history.go(-delta);
-  }
+  // In-app Back intentionally delegates to the browser. There is one history
+  // source of truth for UI buttons, Android Back, browser Back and swipe-back.
+  function back(){history.back()}
   function route(){return current?{...current}:null}
   function destroy(){window.removeEventListener('popstate',onPop);started=false;current=null}
 
-  return {init,navigate,replace,back,currentRoute:route,isAppState:state=>Boolean(unpack(state)),destroy,text};
+  const api={init,navigate,replace,back,currentRoute:route,isAppState:state=>Boolean(unpack(state)),destroy,text};
+  if(grammarFoundations)window.__willenaGrammarFoundationsNavigation=api;
+  return api;
 }
