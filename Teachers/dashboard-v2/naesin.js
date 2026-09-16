@@ -9,7 +9,7 @@ console.info('[naesin-v1] legacy loader disabled');
 if(!document.getElementById('grammarFoundationsTeacherScript')){
   const s=document.createElement('script');
   s.id='grammarFoundationsTeacherScript';
-  s.src='./grammar-foundations-teacher.js?v=1.0.0';
+  s.src='./grammar-foundations-teacher.js?v=1.1.0';
   s.defer=true;
   document.head.appendChild(s);
 }
