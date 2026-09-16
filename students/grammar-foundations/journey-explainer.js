@@ -3,8 +3,6 @@ import '../test-prep-v2/grammar-guide-single.js?v=1.2.1';
 import {GUIDES,resolveGuideKeys,openGuide} from '../test-prep-v2/grammar-guide.js?v=2.1.0';
 
 const root=document.getElementById('screen');
-const APP_ID='willena-grammar-foundations';
-const NAV_VERSION='gf-hierarchy-v2';
 
 const FALLBACK_KEYS={
   be_present:'be-present',
@@ -124,20 +122,12 @@ function installJourney(){
   }
 }
 
-function practiceState(moduleId,stageId){
-  return {app:APP_ID,navVersion:NAV_VERSION,route:{view:'practice',moduleId:String(moduleId),stageId:String(stageId)}};
-}
-
-function openPractice(moduleId,stageId,{replace=false}={}){
-  const next=practiceState(moduleId,stageId);
-  if(replace)history.replaceState(next,'',location.href);else history.pushState(next,'',location.href);
-  window.dispatchEvent(new PopStateEvent('popstate',{state:next}));
-}
+function navigation(){return window.__willenaGrammarFoundationsNavigation||null}
 
 function skipLegacyGuide(){
-  const route=history.state?.app===APP_ID?history.state?.route:null;
-  if(route?.view!=='guide'||!route.moduleId||!route.stageId||!root?.querySelector('.gf-guide'))return;
-  openPractice(route.moduleId,route.stageId,{replace:true});
+  const route=history.state?.route;
+  if(history.state?.app!=='willena-grammar-foundations'||route?.view!=='guide'||!route.moduleId||!route.stageId||!root?.querySelector('.gf-guide'))return;
+  navigation()?.replace({view:'practice',moduleId:route.moduleId,stageId:route.stageId});
 }
 
 function enhance(){
@@ -149,9 +139,11 @@ function enhance(){
 document.addEventListener('click',event=>{
   const card=event.target.closest?.('.gf-stage-card[data-stage][data-module],.gf-journey-stop[data-stage][data-module]');
   if(!card||card.hasAttribute('disabled'))return;
+  const nav=navigation();
+  if(!nav)return;
   event.preventDefault();
   event.stopImmediatePropagation();
-  openPractice(card.dataset.module,card.dataset.stage);
+  nav.navigate({view:'practice',moduleId:card.dataset.module,stageId:card.dataset.stage});
 },true);
 
 const observer=new MutationObserver(enhance);
