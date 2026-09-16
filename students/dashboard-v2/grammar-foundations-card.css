@@ -1,0 +1,8 @@
+/* Grammar Foundations dashboard node */
+.path-stage{min-height:1320px}
+.grammar-foundations-link{gap:8px;align-content:center}
+.grammar-foundations-svg{width:72px;height:58px;display:block;color:var(--pink);margin-bottom:2px}
+.grammar-foundations-node h2{font-size:22px;line-height:1.02}
+@media(min-width:700px){.path-stage{min-height:1380px}.grammar-foundations-svg{width:78px;height:62px}.grammar-foundations-node h2{font-size:24px}}
+@media(min-width:980px){.path-stage{min-height:1450px}.grammar-foundations-svg{width:82px;height:65px}.grammar-foundations-node h2{font-size:25px}}
+@media(max-width:600px){.path-stage{min-height:1240px}.grammar-foundations-svg{width:64px;height:50px}.grammar-foundations-node h2{font-size:19px}}

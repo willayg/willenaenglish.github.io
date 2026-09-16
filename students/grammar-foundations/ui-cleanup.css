@@ -1,0 +1,78 @@
+/* Grammar Foundations UI cleanup — intentionally leans on Test Prep v2 shared styles. */
+
+/* Stronger visual language: interactive cards should clearly look interactive. */
+.gf-app{
+  --card-border:3px;
+  --line:#67d4da;
+  --shadow:0 14px 32px rgba(21,170,181,.16);
+}
+
+.gf-step-card.exam-card,
+.gf-lesson-card.exam-card,
+.gf-stage-card.tile{
+  border:3px solid var(--line) !important;
+  background:var(--card,#fff) !important;
+  box-shadow:var(--shadow) !important;
+}
+
+.gf-step-card.exam-card:hover,
+.gf-lesson-card.exam-card:hover,
+.gf-stage-card.tile:not(.locked):hover{
+  transform:translateY(-2px);
+  box-shadow:0 18px 38px rgba(21,170,181,.20) !important;
+}
+
+.gf-stage-card.passed{
+  border-color:#69b98a !important;
+  background:#fff !important;
+  box-shadow:0 14px 30px rgba(31,138,84,.13) !important;
+}
+
+.gf-stage-card.locked{
+  border-color:#cbd9dd !important;
+  box-shadow:none !important;
+}
+
+/* The module overview is information, not an action. Do not make it speak the language of a card/button. */
+.gf-module-overview.exam-card{
+  border:0 !important;
+  background:transparent !important;
+  box-shadow:none !important;
+  border-radius:0 !important;
+  padding:4px 2px 10px !important;
+}
+.gf-module-overview.exam-card:hover{transform:none !important}
+
+/* The canonical renderer already owns the question surface. Remove the second GF card around it. */
+.gf-question-card{
+  background:transparent !important;
+  border:0 !important;
+  border-radius:0 !important;
+  box-shadow:none !important;
+  padding:0 !important;
+}
+
+/* Keep explanatory/result surfaces distinct, but give them the same stronger line weight. */
+.gf-guide,.gf-result{
+  border:3px solid var(--line) !important;
+  box-shadow:var(--shadow) !important;
+}
+.gf-example{border:1.5px solid #d5e9eb}
+
+/* Footer uses Test Prep's .bottom styles. GF only supplies safe-area width behavior. */
+.gf-bottom.bottom{
+  padding-left:max(14px,env(safe-area-inset-left));
+  padding-right:max(14px,env(safe-area-inset-right));
+}
+.gf-bottom.bottom button{width:min(680px,100%)}
+
+/* Shared Test Prep action classes are attached by ui-shared-bridge.js. */
+.gf-actions .review-primary,.gf-actions .review-secondary,
+.gf-result-actions .review-primary,.gf-result-actions .review-secondary{
+  min-height:48px;
+}
+
+@media(max-width:720px){
+  .gf-step-card.exam-card,.gf-lesson-card.exam-card,.gf-stage-card.tile{border-width:3px !important}
+  .gf-module-overview.exam-card{padding:2px 0 8px !important}
+}

@@ -1,0 +1,22 @@
+/* Shared layout contract for apps using willena-keyboard.js.
+   Mark the scrollable/content wrapper with data-willena-keyboard-safe.
+   The keyboard already toggles body.willena-kb-open and keeps the active
+   renderer field visible; this supplies the same bottom breathing room that
+   Test Prep v2 gets from its .app wrapper. */
+[data-willena-keyboard-safe]{
+  transition:padding-bottom .14s ease;
+}
+body.willena-kb-open [data-willena-keyboard-safe]{
+  padding-bottom:350px!important;
+}
+body.willena-kb-open{
+  scroll-padding-bottom:360px;
+}
+@media (min-width:700px) and (pointer:coarse){
+  body.willena-kb-open [data-willena-keyboard-safe]{
+    padding-bottom:410px!important;
+  }
+  body.willena-kb-open{
+    scroll-padding-bottom:420px;
+  }
+}
