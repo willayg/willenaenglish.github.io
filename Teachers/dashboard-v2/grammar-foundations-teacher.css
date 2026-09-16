@@ -1,0 +1,20 @@
+#view-grammar-foundations .gf-teacher-intro{display:flex;align-items:flex-end;justify-content:space-between;gap:14px}
+#view-grammar-foundations .gf-teacher-copy p{margin:5px 0 0;color:var(--muted);font-size:.78rem}
+#view-grammar-foundations .gf-teacher-panel .panel-head{min-height:60px}
+#view-grammar-foundations .gf-teacher-list{max-height:calc(100vh - 225px);overflow:auto}
+#view-grammar-foundations .gf-teacher-row{display:grid;grid-template-columns:minmax(180px,1.5fr) minmax(135px,.8fr) minmax(125px,.72fr) minmax(145px,.82fr);align-items:center;gap:14px;padding:14px 16px;border-bottom:1px solid #f0f1f4;background:#fff}
+#view-grammar-foundations .gf-teacher-row:last-child{border-bottom:0}
+#view-grammar-foundations .gf-teacher-name{font-weight:700;font-size:.92rem}
+#view-grammar-foundations .gf-teacher-ko{margin-top:2px;color:var(--muted);font-size:.69rem}
+#view-grammar-foundations .gf-teacher-class{margin-top:4px;color:#9aa0aa;font-size:.62rem}
+#view-grammar-foundations .gf-teacher-stat strong{display:block;font-size:1rem;line-height:1.15}
+#view-grammar-foundations .gf-teacher-stat span{display:block;margin-top:3px;color:var(--muted);font-size:.65rem}
+#view-grammar-foundations .gf-teacher-accuracy strong{font-size:1.12rem;color:#287b85}
+#view-grammar-foundations .gf-teacher-last strong{font-size:.82rem}
+#view-grammar-foundations .gf-teacher-loading{padding:34px 16px;text-align:center;color:var(--muted)}
+#view-grammar-foundations .gf-teacher-error{padding:30px 16px;text-align:center;color:#9c3c43}
+#view-grammar-foundations .gf-teacher-empty{padding:34px 16px;text-align:center;color:var(--muted)}
+.rail .nav[data-view="grammar-foundations"] .nav-icon{color:#ec6494}
+.rail .nav[data-view="grammar-foundations"].active .nav-icon{background:#fff1f6;color:#ec6494}
+@media(max-width:980px){#view-grammar-foundations .gf-teacher-row{grid-template-columns:minmax(160px,1.4fr) 1fr .8fr}#view-grammar-foundations .gf-teacher-last{display:none}}
+@media(max-width:700px){#view-grammar-foundations .gf-teacher-copy p{font-size:.7rem}#view-grammar-foundations .gf-teacher-list{max-height:none}#view-grammar-foundations .gf-teacher-row{grid-template-columns:minmax(120px,1.35fr) .9fr .78fr;gap:9px;padding:12px}#view-grammar-foundations .gf-teacher-name{font-size:.86rem}#view-grammar-foundations .gf-teacher-stat strong{font-size:.9rem}#view-grammar-foundations .gf-teacher-stat span{font-size:.59rem}.mobile-tab[data-view="grammar-foundations"] b{color:#f58db3}}
