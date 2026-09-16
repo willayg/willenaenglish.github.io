@@ -44,6 +44,8 @@ function mount(){
   if(!grid)return false;
   mountStyle();
   grid.innerHTML=APPS.map(card).join('');
+  const rev=document.getElementById('teacherDashboardRev');
+  if(rev)rev.textContent='REV r13.08';
   return true;
 }
 function boot(){
