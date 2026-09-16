@@ -33,9 +33,7 @@ async function authedJson(url,opts={}){
   return payload;
 }
 
-async function requestDashboard(){
-  return authedJson(DASHBOARD_RPC,{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
-}
+async function requestDashboard(){return authedJson(DASHBOARD_RPC,{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'})}
 async function loadDashboard({force=false}={}){
   if(force){
     if(dashboardRefreshPromise){diag.cacheHits++;return dashboardRefreshPromise}
@@ -51,31 +49,26 @@ async function loadDashboard({force=false}={}){
 
 function groupsOf(payload){return Array.isArray(payload?.groups)?payload.groups:[]}
 function groupItem(groupId,payload=latestDashboard){return groupsOf(payload).find(x=>String(x?.group?.id||'')===String(groupId||''))||null}
-function memberByPlan(planId,payload=latestDashboard){
-  for(const item of groupsOf(payload))for(const m of Array.isArray(item?.members)?item.members:[])if(String(m?.plan_id||'')===String(planId||''))return{item,member:m};
-  return null;
-}
-function memberByGroupStudent(groupId,studentId,payload=latestDashboard){
-  const item=groupItem(groupId,payload);if(!item)return null;
-  const member=(item.members||[]).find(m=>String(m?.student_id||m?.student?.id||'')===String(studentId||''));
-  return member?{item,member}:null;
+function memberByPlan(planId,payload=latestDashboard){for(const item of groupsOf(payload))for(const m of Array.isArray(item?.members)?item.members:[])if(String(m?.plan_id||'')===String(planId||''))return{item,member:m};return null}
+function memberByGroupStudent(groupId,studentId,payload=latestDashboard){const item=groupItem(groupId,payload);if(!item)return null;const member=(item.members||[]).find(m=>String(m?.student_id||m?.student?.id||'')===String(studentId||''));return member?{item,member}:null}
+function reviewLessons(items){
+  const by=new Map();
+  for(const row of Array.isArray(items)?items:[]){
+    const key=String(row?.unit_id||row?.unit_key||row?.lesson||'');if(!key)continue;
+    const cur=by.get(key)||{unit_id:row?.unit_id||null,lesson:row?.unit_key||row?.lesson||key,wrong_now:0,wrong_later:0,total:0};
+    cur.total++;if(row?.is_waiting)cur.wrong_later++;else cur.wrong_now++;by.set(key,cur);
+  }
+  return [...by.values()];
 }
 function reviewForOverview(review={}){
-  return{wrong_now:num(review.active),wrong_later:num(review.waiting),total:num(review.total),cleared:num(review.cleared),next_review_at:review.next_review_at||null,status:'snapshot'};
+  return{wrong_now:num(review.active),wrong_later:num(review.waiting),total:num(review.total),cleared:num(review.cleared),next_review_at:review.next_review_at||null,status:'snapshot',lessons:reviewLessons(review.items)};
 }
 function overviewFrom(item,member){
   if(!item||!member)return null;
   return{
     student:member.student||{},
     group:item.group||{},
-    stats:{
-      summary:member.summary||{},
-      skills:Array.isArray(member.skills)?member.skills:[],
-      lessons:Array.isArray(member.lessons)?member.lessons:[],
-      review:reviewForOverview(member.review||{}),
-      response_times:Array.isArray(member.response_times)?member.response_times:[],
-      grammar_patterns:Array.isArray(member.grammar_patterns)?member.grammar_patterns:[]
-    },
+    stats:{summary:member.summary||{},skills:Array.isArray(member.skills)?member.skills:[],lessons:Array.isArray(member.lessons)?member.lessons:[],review:reviewForOverview(member.review||{}),response_times:Array.isArray(member.response_times)?member.response_times:[],grammar_patterns:Array.isArray(member.grammar_patterns)?member.grammar_patterns:[]},
     activity:member.activity||{},
     response_times:Array.isArray(member.response_times)?member.response_times:[],
     grammar_patterns:Array.isArray(member.grammar_patterns)?member.grammar_patterns:[],
@@ -88,18 +81,13 @@ async function loadGroups({force=false}={}){const d=await loadDashboard({force})
 async function loadGroupMatrix(groupId,{force=false}={}){const d=await loadDashboard({force});const item=groupItem(groupId,d);if(!item)throw new Error('group not found');return{group:item.group||{},member_count:item.member_count??(item.members||[]).length,members:Array.isArray(item.members)?item.members:[]}}
 async function loadStudentOverview(planId,{force=false}={}){const d=await loadDashboard({force});const hit=memberByPlan(planId,d);if(!hit)throw new Error('plan not found');return overviewFrom(hit.item,hit.member)}
 
-async function requestWrong(studentId,planId){
-  const qs=new URLSearchParams({student_id:String(studentId||''),_t:String(Date.now())});if(planId)qs.set('plan_id',String(planId));
-  const payload=await authedJson(`${WRONG_EDGE}?${qs}`);
-  return{items:Array.isArray(payload.items)?payload.items:[],meta:payload.meta||{},raw:payload};
-}
+async function requestWrong(studentId,planId){const qs=new URLSearchParams({student_id:String(studentId||''),_t:String(Date.now())});if(planId)qs.set('plan_id',String(planId));const payload=await authedJson(`${WRONG_EDGE}?${qs}`);return{items:Array.isArray(payload.items)?payload.items:[],meta:payload.meta||{},raw:payload}}
 async function loadWrongDetail(studentId,planId,{force=false}={}){
   const key=`${String(studentId||'')}|${String(planId||'')}`;if(!studentId)throw new Error('student_id required');
   if(force){wrongCache.delete(key);latestWrong.delete(key)}
   if(wrongCache.has(key)){diag.cacheHits++;return wrongCache.get(key)}
   diag.cacheMisses++;
-  const promise=requestWrong(studentId,planId).then(data=>{latestWrong.set(key,data);return data}).catch(error=>{wrongCache.delete(key);latestWrong.delete(key);throw error});
-  wrongCache.set(key,promise);return promise;
+  const promise=requestWrong(studentId,planId).then(data=>{latestWrong.set(key,data);return data}).catch(error=>{wrongCache.delete(key);latestWrong.delete(key);throw error});wrongCache.set(key,promise);return promise;
 }
 
 async function loadGrammarTracking(groupId,studentId,{force=false}={}){
@@ -108,13 +96,11 @@ async function loadGrammarTracking(groupId,studentId,{force=false}={}){
   if(grammarCache.has(key)){diag.cacheHits++;return grammarCache.get(key)}
   diag.cacheMisses++;
   const promise=(async()=>{
-    const d=await loadDashboard({force});
-    const hit=memberByGroupStudent(groupId,studentId,d);if(!hit)throw new Error('student plan not found');
+    const d=await loadDashboard({force}),hit=memberByGroupStudent(groupId,studentId,d);if(!hit)throw new Error('student plan not found');
     const targets=(Array.isArray(hit.member.grammar_patterns)?hit.member.grammar_patterns:[]).filter(r=>num(r.recent_count)>0||num(r.unique_count)>0||num(r.current_wrong)>0);
     let wrong_questions=[];
     try{const wrong=await loadWrongDetail(studentId,hit.member.plan_id,{force});wrong_questions=Array.isArray(wrong?.items)?wrong.items.filter(x=>String(x?.practice_type||x?.section||x?.question_type||'').toLowerCase().includes('grammar')||x?.target):[]}catch(_){wrong_questions=[]}
-    const data={targets,wrong_questions,snapshot_version:hit.member.snapshot_version||null,snapshot_updated_at:hit.member.snapshot_updated_at||null};
-    latestGrammar.set(key,data);return data;
+    const data={targets,wrong_questions,snapshot_version:hit.member.snapshot_version||null,snapshot_updated_at:hit.member.snapshot_updated_at||null};latestGrammar.set(key,data);return data;
   })().catch(error=>{grammarCache.delete(key);latestGrammar.delete(key);throw error});
   grammarCache.set(key,promise);return promise;
 }
@@ -133,13 +119,5 @@ function invalidateGroups(){invalidateDashboard()}
 function invalidateAll(){invalidateDashboard();invalidateWrongDetail();invalidateGrammarTracking()}
 function getDiagnostics(){return{...diag,source:'naesin-snapshot-fast-v1',dashboardCached:!!latestDashboard,wrongCacheEntries:wrongCache.size,grammarCacheEntries:grammarCache.size,groupCount:groupsOf(latestDashboard).length,version:latestDashboard?.version||null,dirtyCount:latestDashboard?.dirty_count??null}}
 
-window.NaesinV2Data={
-  version:'snapshot-fast-v1',
-  loadGroups,refreshGroups:()=>loadGroups({force:true}),getCachedGroups,
-  loadGroupMatrix,refreshGroupMatrix:(groupId)=>loadGroupMatrix(groupId,{force:true}),getCachedGroupMatrix,invalidateGroupMatrix,
-  loadStudentOverview,refreshStudentOverview:(planId)=>loadStudentOverview(planId,{force:true}),getCachedStudentOverview,invalidateStudentOverview,
-  loadWrongDetail,refreshWrongDetail:(studentId,planId)=>loadWrongDetail(studentId,planId,{force:true}),getCachedWrongDetail,invalidateWrongDetail,
-  loadGrammarTracking,refreshGrammarTracking:(groupId,studentId)=>loadGrammarTracking(groupId,studentId,{force:true}),getCachedGrammarTracking,invalidateGrammarTracking,
-  invalidateGroups,invalidateAll,getDiagnostics
-};
+window.NaesinV2Data={version:'snapshot-fast-v1',loadGroups,refreshGroups:()=>loadGroups({force:true}),getCachedGroups,loadGroupMatrix,refreshGroupMatrix:(groupId)=>loadGroupMatrix(groupId,{force:true}),getCachedGroupMatrix,invalidateGroupMatrix,loadStudentOverview,refreshStudentOverview:(planId)=>loadStudentOverview(planId,{force:true}),getCachedStudentOverview,invalidateStudentOverview,loadWrongDetail,refreshWrongDetail:(studentId,planId)=>loadWrongDetail(studentId,planId,{force:true}),getCachedWrongDetail,invalidateWrongDetail,loadGrammarTracking,refreshGrammarTracking:(groupId,studentId)=>loadGrammarTracking(groupId,studentId,{force:true}),getCachedGrammarTracking,invalidateGrammarTracking,invalidateGroups,invalidateAll,getDiagnostics};
 })();
