@@ -37,10 +37,70 @@
     'get_sentence_audio_urls'
   ]);
 
+  const ROSTER_CACHE_KEY = 'willena:teacher-roster:v1';
+  const ROSTER_CACHE_MAX_AGE_MS = 10 * 60 * 1000;
+  let rosterCacheServedThisPage = false;
+
   function extractFunctionName(input) {
     const s = String(input || '');
     const m = s.match(/\/\.netlify\/functions\/([^\/?#]+)/);
     return m ? m[1] : '';
+  }
+
+  function parseRequestUrl(input) {
+    try {
+      if (input instanceof Request) return new URL(input.url, window.location.origin);
+      return new URL(String(input || ''), window.location.origin);
+    } catch {
+      return null;
+    }
+  }
+
+  function isRosterRequest(input, options = {}) {
+    const method = String(options.method || (input instanceof Request ? input.method : 'GET') || 'GET').toUpperCase();
+    if (method !== 'GET') return false;
+    const url = parseRequestUrl(input);
+    if (!url || !url.pathname.includes('/.netlify/functions/teacher_admin')) return false;
+    return url.searchParams.get('action') === 'list_students';
+  }
+
+  function isTeacherAdminMutation(input, options = {}) {
+    const method = String(options.method || (input instanceof Request ? input.method : 'GET') || 'GET').toUpperCase();
+    if (method === 'GET' || method === 'HEAD') return false;
+    const url = parseRequestUrl(input);
+    return !!(url && url.pathname.includes('/.netlify/functions/teacher_admin'));
+  }
+
+  function readRosterCache() {
+    try {
+      const raw = sessionStorage.getItem(ROSTER_CACHE_KEY);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      if (!parsed || !parsed.saved_at || !parsed.payload || !Array.isArray(parsed.payload.students)) return null;
+      if ((Date.now() - Number(parsed.saved_at)) > ROSTER_CACHE_MAX_AGE_MS) return null;
+      return parsed;
+    } catch {
+      return null;
+    }
+  }
+
+  function writeRosterCache(payload) {
+    try {
+      if (!payload || payload.success === false || !Array.isArray(payload.students)) return;
+      sessionStorage.setItem(ROSTER_CACHE_KEY, JSON.stringify({ saved_at: Date.now(), payload }));
+    } catch {}
+  }
+
+  function clearRosterCache() {
+    try { sessionStorage.removeItem(ROSTER_CACHE_KEY); } catch {}
+  }
+
+  async function cacheRosterResponse(response) {
+    try {
+      if (!response || !response.ok) return;
+      const payload = await response.clone().json();
+      writeRosterCache(payload);
+    } catch {}
   }
 
   // Detect if we're on a CF Pages domain
@@ -86,6 +146,9 @@
 
     // WillenaAPI is loaded - patch it
     const origGetApiUrl = window.WillenaAPI.getApiUrl;
+    const origFetch = typeof window.WillenaAPI.fetch === 'function'
+      ? window.WillenaAPI.fetch.bind(window.WillenaAPI)
+      : null;
     
     window.WillenaAPI.getApiUrl = function(path) {
       const url = origGetApiUrl(path);
@@ -123,6 +186,40 @@
       
       return url;
     };
+
+    // Teacher/admin roster fast path. Scope this narrowly to the one basic
+    // directory request used by Admin. The first roster request in a page can
+    // render from a recent session cache immediately while a fresh copy is
+    // fetched in the background for the next load. Explicit later refreshes
+    // still go to the network. Any teacher_admin mutation invalidates the cache.
+    if (origFetch && host === 'teachers.willenaenglish.com') {
+      window.WillenaAPI.fetch = async function(input, options = {}) {
+        if (isRosterRequest(input, options)) {
+          const cached = !rosterCacheServedThisPage ? readRosterCache() : null;
+          if (cached) {
+            rosterCacheServedThisPage = true;
+            Promise.resolve(origFetch(input, { ...options, cache: 'no-store' }))
+              .then(async response => { await cacheRosterResponse(response); })
+              .catch(() => {});
+            return new Response(JSON.stringify(cached.payload), {
+              status: 200,
+              headers: {
+                'Content-Type': 'application/json',
+                'X-Willena-Roster-Cache': 'session'
+              }
+            });
+          }
+          const response = await origFetch(input, options);
+          rosterCacheServedThisPage = true;
+          await cacheRosterResponse(response);
+          return response;
+        }
+
+        const response = await origFetch(input, options);
+        if (isTeacherAdminMutation(input, options) && response?.ok) clearRosterCache();
+        return response;
+      };
+    }
 
     // Update BASE_URL to reflect the gateway
     window.WillenaAPI.BASE_URL = window.__CF_API_GATEWAY;
