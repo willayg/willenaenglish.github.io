@@ -10,20 +10,14 @@
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/Teachers/dashboard-v2/dashboard-v2.css?v=20260917-r14-08">
 <link rel="stylesheet" href="/Teachers/dashboard-v2/dashboard-v2-polish.css?v=20260917-r14-07">
-<link rel="stylesheet" href="./admin-v2.css?v=1.02">
+<link rel="stylesheet" href="./admin-v2.css?v=1.05">
 </head>
 <body>
 <header class="topbar">
   <div class="brand"><img src="/Assets/Images/Logo.png" alt="Willena"><div><b>Willena</b><small>Admin workspace</small></div></div>
-  <div class="title">
-    <div class="teacher-app-switch" aria-label="Teacher and admin apps">
-      <a href="/Teachers/dashboard-v2/">Teacher</a>
-      <a class="active" href="/Teachers/admin-v2/">Admin</a>
-    </div>
-  </div>
+  <div class="title"><div class="teacher-app-switch" aria-label="Teacher and admin apps"><a href="/Teachers/dashboard-v2/">Teacher</a><a class="active" href="/Teachers/admin-v2/">Admin</a></div></div>
   <div class="top-actions"><span class="teacher-name" id="adminName">Admin</span><div id="burger-menu-mount"></div></div>
 </header>
-
 <div class="layout" id="adminLayout">
   <aside class="rail">
     <button class="rail-collapse-toggle" id="railCollapseToggle" type="button" aria-label="Expand sidebar" aria-expanded="false"><span>›</span></button>
@@ -32,45 +26,25 @@
     <button class="nav" data-view="level-tests"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="5" y="3.5" width="14" height="17" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg></span><span>Level Tests</span></button>
     <div class="rail-spacer"></div>
   </aside>
-
   <main class="workspace">
     <section class="view active" id="view-students">
-      <div class="page-head">
-        <div><h1>Students</h1></div>
-        <div class="filters">
-          <select class="control" id="classFilter"><option value="">All classes</option></select>
-          <select class="control" id="gradeFilter"><option value="">All grades</option></select>
-          <input class="control search" id="studentSearch" type="search" placeholder="Search student…">
-          <button class="control" id="studentRefresh" type="button">Refresh</button>
-        </div>
-      </div>
-      <div class="panel">
-        <div class="panel-head"><div><div class="panel-title">Students</div><div class="panel-sub" id="studentStatus">Loading…</div></div><span class="count-pill" id="studentCount">0 students</span></div>
-        <div class="student-list" id="studentList"><div class="empty">Loading students…</div></div>
-      </div>
+      <div class="page-head"><div><h1>Students</h1></div><div class="filters">
+        <select class="control" id="classFilter"><option value="">All classes</option></select>
+        <select class="control" id="gradeFilter"><option value="">All grades</option></select>
+        <input class="control search" id="studentSearch" type="search" placeholder="Search student…">
+        <button class="control" id="studentRefresh" type="button">Refresh</button>
+        <button class="control admin-primary" id="addStudent" type="button">+ Add student</button>
+      </div></div>
+      <div class="panel"><div class="panel-head"><div><div class="panel-title">Students</div><div class="panel-sub" id="studentStatus">Loading…</div></div><span class="count-pill" id="studentCount">0 students</span></div><div class="student-list" id="studentList"><div class="empty">Loading students…</div></div></div>
     </section>
-
-    <section class="view" id="view-classes">
-      <div class="page-head"><div><h1>Classes</h1></div></div>
-      <div class="panel admin-v2-placeholder"><div class="empty"><strong>Classes</strong><span>This section will lazy-load only when opened.</span></div></div>
-    </section>
-
-    <section class="view" id="view-level-tests">
-      <div class="page-head"><div><h1>Level Tests</h1></div></div>
-      <div class="panel admin-v2-placeholder"><div class="empty"><strong>Level Tests</strong><span>This section will stay lazy and reuse the existing test tools.</span></div></div>
-    </section>
+    <section class="view" id="view-classes"><div class="page-head"><div><h1>Classes</h1></div></div><div class="panel admin-v2-placeholder"><div class="empty"><strong>Classes</strong><span>This section will lazy-load only when opened.</span></div></div></section>
+    <section class="view" id="view-level-tests"><div class="page-head"><div><h1>Level Tests</h1></div></div><div class="panel admin-v2-placeholder"><div class="empty"><strong>Level Tests</strong><span>This section will stay lazy and reuse the existing test tools.</span></div></div></section>
   </main>
 </div>
-
-<nav class="mobile-tabs">
-  <button class="mobile-tab active" data-view="students"><b>◎</b>Students</button>
-  <button class="mobile-tab" data-view="classes"><b>▦</b>Classes</button>
-  <button class="mobile-tab" data-view="level-tests"><b>◫</b>Tests</button>
-</nav>
-
+<nav class="mobile-tabs"><button class="mobile-tab active" data-view="students"><b>◎</b>Students</button><button class="mobile-tab" data-view="classes"><b>▦</b>Classes</button><button class="mobile-tab" data-view="level-tests"><b>◫</b>Tests</button></nav>
 <div class="drawer-bg" id="studentDrawerBg"><aside class="drawer"><div class="drawer-head"><div class="drawer-head-main"><div class="drawer-name" id="drawerName">Student</div><div class="drawer-meta" id="drawerMeta"></div></div><button class="close" id="closeStudentDrawer" type="button">×</button></div><div class="drawer-body" id="drawerBody"></div></aside></div>
 <div class="admin-v2-boot hidden" id="adminV2Boot" aria-live="polite"><img src="/Assets/Images/Logo.png" alt="Willena"><span>Checking admin access…</span></div>
-<div class="admin-v2-rev">Admin V2 · 1.04</div>
-<script type="module" src="./admin-v2.js?v=1.04"></script>
+<div class="admin-v2-rev">Admin V2 · 1.05</div>
+<script type="module" src="./admin-v2.js?v=1.05"></script>
 </body>
 </html>
