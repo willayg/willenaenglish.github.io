@@ -61,16 +61,15 @@
   if (window.location.pathname.startsWith('/Teachers/admin-v2/')) {
     const stampRevision = () => {
       const el = document.querySelector('.admin-v2-rev');
-      if (el) el.textContent = 'Admin V2 · 1.11';
+      if (el) el.textContent = 'Admin V2 · 1.12';
     };
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', stampRevision, { once: true });
     else stampRevision();
   }
 
-  // Admin V2 reuses the mature legacy Level Tests module. That module calls
-  // /.netlify/functions/admin_classes?action=... via window.api(). The current
-  // API gateway exposes the real level-test backend at /level-test-admin, so
-  // translate only those legacy calls here instead of touching the old module.
+  // Admin V2 reuses the mature legacy Level Tests module. Translate its
+  // historical admin_classes requests to the live level-test-admin edge function,
+  // which now supports the same list/detail/archive contract.
   if (window.location.pathname.startsWith('/Teachers/admin-v2/') && typeof window.api !== 'function') {
     window.api = async function(path, options = {}) {
       let requestPath = path;
