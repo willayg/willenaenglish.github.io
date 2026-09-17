@@ -4,5 +4,11 @@
 # Preserve Netlify functions
 /.netlify/functions/*       /.netlify/functions/:splat                         200
 
+# Admin V2 promotion. Keep the legacy app available without copying its large index.
+/Teachers/admin-v1-archived/  /Teachers/admin/index.html                        200
+/Teachers/admin-v1-archived   /Teachers/admin/index.html                        200
+/Teachers/admin/               /Teachers/admin-v2/                              302
+/Teachers/admin                /Teachers/admin-v2/                              302
+
 # Note: Static assets are served automatically by Cloudflare Pages
 # No redirect rules needed for .js, .css, .html, etc.
