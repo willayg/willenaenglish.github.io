@@ -1,5 +1,5 @@
 const KEY='willena_testprep_v2_activity_snapshot';
-const VERSION=3;
+const VERSION=4;
 const MAX_AGE_MS=12*60*60*1000;
 
 function readRaw(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(_){return null}}
@@ -32,7 +32,8 @@ export function saveActivityQueue(route,queue){
 
 export function saveActivityPosition(index){
   const route=activeRoute(),snapshot=loadActivitySnapshot(route);if(!snapshot)return false;
-  snapshot.currentIndex=Math.max(0,Math.min(snapshot.queue.length-1,Number(index)||0));
+  // queue.length is a valid sentinel meaning every question has already been answered.
+  snapshot.currentIndex=Math.max(0,Math.min(snapshot.queue.length,Number(index)||0));
   return writeSnapshot(snapshot);
 }
 
