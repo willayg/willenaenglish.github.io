@@ -1,9 +1,20 @@
 import {aiWilliMessage,showAiWilliStatus,clearAiWilliStatus,decorateAiWilliFeedback,mountAiWilliHelper} from '../shared/ai-willi.js?v=1.1.0';
+import {mountVocabAiWilli} from './ai-willi-vocab.js?v=1.0.1';
 import {restoreActivityProgress,saveActivityPosition,saveActivityOutcome,clearActivitySnapshotFor,currentActivityRoute} from './activity-session-store.js?v=3.0.0';
 
 // Shared interactive question-session engine for Test Prep v2.
 // Owns the common render -> grade/skip -> record -> advance mechanics.
 // Route/workflow-specific behavior stays in app.js through callbacks.
+function vocabItemFromQuestion(question){
+  const m=question?.metadata||{};
+  return{
+    id:m.lexical_entry_id||null,
+    canonical_text:m.canonical_text||'',
+    translation_ko:m.translation_ko||'',
+    definition_en:m.definition_en||''
+  };
+}
+
 export function createQuestionSession({
   root,
   bottom,
@@ -138,6 +149,7 @@ export function createQuestionSession({
     if(grading)return;
     const entry=getEntry(),q=getQuestion(entry),renderer=rendererState.get();if(!q||!renderer)return;
     const response=renderer.getResponse(),btn=document.getElementById(buttonIds.check);if(!btn)return;
+    const practiceType=getPracticeType(entry,q);
     const timing=snapshotQuestionTimer();
     grading=true;
     const usesAiWilli=q.grading?.aiAllowed&&q.grading?.mode==='ai_semantic_strict';
@@ -155,9 +167,12 @@ export function createQuestionSession({
     const isLastQuestion=answeredIndex===queueLength()-1;
     if(result.correct)onCorrect(entry,q,result);else onWrong(entry,q,result);
     renderer.showFeedback(result);decorateAiWilliFeedback(root,result);
-    if(!result.correct)mountAiWilliHelper({container:root,question:q,response,result,section:q.skill,practiceType:getPracticeType(entry,q)});
+    if(!result.correct){
+      if(practiceType==='vocab_test')mountVocabAiWilli({container:root,item:vocabItemFromQuestion(q),question:q,response,result,mode:q?.metadata?.mode||q?.tracking?.questionType||'vocab_test'});
+      else mountAiWilliHelper({container:root,question:q,response,result,section:q.skill,practiceType});
+    }
     if(isLastQuestion)showFinishOverlay();
-    try{await recordAttempt({question:q,response,result,practiceType:getPracticeType(entry,q),...getAttemptExtras(entry,q,false)})}
+    try{await recordAttempt({question:q,response,result,practiceType,...getAttemptExtras(entry,q,false)})}
     catch(e){console.warn(`[test-prep-v2] ${logLabel} tracking failed`,e)}
     if(!isActive())return;
     saveActivityOutcome(answeredIndex,!!result.correct);
