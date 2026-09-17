@@ -36,27 +36,48 @@
   #view-level-tests .level-test-level{font-size:.82rem}
 }
 
-/* Drawer action bar: compact, useful, not three giant bars. */
+/* Match the rest of Admin V2: restrained secondary, teal primary, compact danger. */
 .level-test-drawer-actions{
   display:grid!important;
   grid-template-columns:auto minmax(0,1fr) minmax(0,1fr)!important;
   gap:8px!important;
   padding:10px 14px max(10px,env(safe-area-inset-bottom))!important;
+  background:rgba(255,255,255,.98)!important;
+  border-top:1px solid var(--line)!important;
+  box-shadow:0 -8px 24px rgba(30,30,42,.06)!important;
 }
 .level-test-drawer-actions .btn{
-  min-height:40px!important;
-  height:40px!important;
-  padding:7px 12px!important;
-  border-radius:10px!important;
-  font-size:.72rem!important;
-  line-height:1!important;
+  min-height:42px!important;
+  height:42px!important;
+  padding:8px 14px!important;
+  border:1.5px solid #9fdce3!important;
+  border-radius:11px!important;
+  background:#fff!important;
+  color:#267985!important;
+  box-shadow:none!important;
+  font:800 .72rem/1 Poppins,system-ui,sans-serif!important;
   white-space:nowrap;
 }
+.level-test-drawer-actions .btn:hover{background:#f2fbfc!important}
+.level-test-drawer-actions .btn.primary{
+  background:#2b7f89!important;
+  border-color:#2b7f89!important;
+  color:#fff!important;
+}
+.level-test-drawer-actions .btn.primary:hover{background:#236d76!important}
+.level-test-drawer-actions .level-test-archive-action{
+  background:#fff7f9!important;
+  border-color:#efb4c7!important;
+  color:#a94869!important;
+}
+.level-test-drawer-actions .level-test-archive-action.is-restore{
+  background:#f2fbfc!important;
+  border-color:#9fdce3!important;
+  color:#267985!important;
+}
+.level-test-drawer-actions .btn:disabled{opacity:.48!important;cursor:not-allowed!important}
 
 @media (max-width:560px){
-  .level-test-drawer-actions{
-    grid-template-columns:auto minmax(0,1fr)!important;
-  }
+  .level-test-drawer-actions{grid-template-columns:auto minmax(0,1fr)!important}
   .level-test-drawer-actions #levelTestFullResults{grid-column:1/-1}
-  .level-test-drawer-actions .btn{min-height:42px!important;height:42px!important}
 }
