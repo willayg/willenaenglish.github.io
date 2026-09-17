@@ -12,7 +12,7 @@
 <link rel="stylesheet" href="/Teachers/dashboard-v2/dashboard-v2-polish.css?v=20260917-r14-07">
 <link rel="stylesheet" href="/Teachers/admin/admin-level-tests.css?v=20260813-archive1">
 <link rel="stylesheet" href="/Teachers/admin/admin-level-test-pips.css?v=20260812-pips3">
-<link rel="stylesheet" href="./admin-v2.css?v=1.07">
+<link rel="stylesheet" href="./admin-v2.css?v=1.08">
 </head>
 <body>
 <header class="topbar">
@@ -41,7 +41,7 @@
     </section>
 
     <section class="view" id="view-classes">
-      <div class="page-head"><div><h1>Classes</h1></div><div class="admin-class-toolbar"><button class="control" id="classRefreshV2" type="button">Refresh</button><button class="control admin-primary" id="classAddV2" type="button">+ Add class</button></div></div>
+      <div class="page-head"><div><h1>Classes</h1></div><div class="admin-class-toolbar"><span class="class-order-status" id="classOrderStatusV2"></span><button class="control class-order-toolbar-button" id="classOrderEditV2" type="button">Edit order</button><button class="control class-order-toolbar-button" id="classOrderCancelV2" type="button" hidden>Cancel</button><button class="control admin-primary class-order-toolbar-button" id="classOrderDoneV2" type="button" hidden>Done</button><button class="control" id="classRefreshV2" type="button">Refresh</button><button class="control admin-primary" id="classAddV2" type="button">+ Add class</button></div></div>
       <div class="class-grid" id="classGridV2"><div class="empty">Open Classes to load class management.</div></div>
     </section>
 
@@ -64,7 +64,7 @@
 <div class="level-test-drawer" id="levelTestDrawer" aria-hidden="true"><button class="level-test-drawer-backdrop" data-close-level-test aria-label="Close"></button><aside><div class="level-test-drawer-head"><div><span class="level-test-source" id="levelTestDetailSource"></span><h2 id="levelTestDetailName">Level test</h2><p id="levelTestDetailMeta"></p></div><button class="close" data-close-level-test>×</button></div><div class="level-test-drawer-body" id="levelTestDetailBody"></div><div class="level-test-drawer-actions"><button class="btn level-test-archive-action" id="levelTestArchive" disabled>Archive</button><button class="btn" id="levelTestFullReport" disabled>Full report</button><button class="btn primary" id="levelTestFullResults" disabled>Full test results</button></div><section class="level-test-results" id="levelTestResults" aria-hidden="true"><div class="level-test-results-head"><button class="btn" id="levelTestResultsBack">← Mini report</button><div><h2>Full test results</h2><p id="levelTestResultsMeta"></p></div></div><div id="levelTestResultsBody"></div></section></aside></div>
 
 <div class="admin-v2-boot hidden" id="adminV2Boot" aria-live="polite"><img src="/Assets/Images/Logo.png" alt="Willena"><span>Checking admin access…</span></div>
-<div class="admin-v2-rev">Admin V2 · 1.07</div>
-<script type="module" src="./admin-v2.js?v=1.07"></script>
+<div class="admin-v2-rev">Admin V2 · 1.08</div>
+<script type="module" src="./admin-v2.js?v=1.08"></script>
 </body>
 </html>
