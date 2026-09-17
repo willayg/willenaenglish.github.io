@@ -34,7 +34,21 @@ function open(){
   bg.addEventListener('click',e=>{if(e.target===bg||e.target.closest('[data-close-visitor-qr]'))close()});
   bg.querySelector('#visitorQrCopy')?.addEventListener('click',e=>copyLink(e.currentTarget));
 }
-function bind(){document.getElementById('visitorQrButton')?.addEventListener('click',open)}
+function bind(){
+  const toolbar=document.querySelector('#view-level-tests .level-test-toolbar');
+  if(!toolbar)return;
+  let button=document.getElementById('visitorQrButton');
+  if(!button){
+    button=document.createElement('button');
+    button.type='button';
+    button.id='visitorQrButton';
+    button.className='btn visitor-qr-button';
+    button.innerHTML='<span aria-hidden="true">▦</span> Visitor QR';
+    const refresh=document.getElementById('levelTestRefresh');
+    toolbar.insertBefore(button,refresh||null);
+  }
+  button.addEventListener('click',open);
+}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bind,{once:true});else bind();
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.getElementById('visitorQrModalBg'))close()});
 })();
