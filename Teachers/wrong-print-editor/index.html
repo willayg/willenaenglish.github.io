@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="./styles.css?v=1.2.1">
+<link rel="stylesheet" href="./styles.css?v=1.3.0">
 <link rel="stylesheet" href="./print-fixes.css?v=1.0.5">
 </head>
 <body>
@@ -21,6 +21,10 @@
 <main class="layout">
   <aside class="sidebar">
     <section class="panel stats"><div><strong id="includedCount">0</strong><span>포함</span></div><div><strong id="removedCount">0</strong><span>제외</span></div><div><strong id="totalCount">0</strong><span>전체</span></div></section>
+    <section class="panel filter-panel">
+      <div class="panel-title-row"><h2>영역 선택</h2><small>클릭해서 포함 / 제외</small></div>
+      <div id="skillFilters" class="skill-filters"><div class="empty-small">영역을 불러오는 중…</div></div>
+    </section>
     <section class="panel settings">
       <h2>프린트 설정</h2>
       <label class="check"><input id="answerKey" type="checkbox" checked><span>마지막 페이지에 정답지 포함</span></label>
@@ -29,19 +33,19 @@
       <p>여기서 제외한 문제는 학생의 실제 오답 기록에서는 삭제되지 않습니다.</p>
     </section>
     <section class="panel removed-panel">
-      <h2>제외된 문제</h2>
+      <h2>개별 제외된 문제</h2>
       <div id="removedList" class="removed-list"><div class="empty-small">아직 없습니다.</div></div>
     </section>
   </aside>
   <section class="workspace">
-    <div class="workspace-head"><div><h2>프린트할 문제</h2><p>문제가 이상하면 <b>이 프린트에서 제외</b>를 누르세요.</p></div><button id="reloadBtn" class="btn ghost" type="button">다시 불러오기</button></div>
+    <div class="workspace-head"><div><h2>프린트할 문제</h2><p>영역 카드를 끄거나, 개별 문제에서 <b>이 프린트에서 제외</b>를 누르세요.</p></div><button id="reloadBtn" class="btn ghost" type="button">다시 불러오기</button></div>
     <div id="status" class="status">오답을 불러오는 중…</div>
     <div id="cards" class="cards"></div>
   </section>
 </main>
 <script src="/students/api-gateway.js?v=2.13b"></script>
 <script src="/js/api-config.js?v=2.13b"></script>
-<script src="./app.js?v=1.3.1-linebreaks"></script>
+<script src="./app.js?v=1.4.0-skill-filters"></script>
 <script src="./pdf-download.js?v=1.1.6"></script>
 </body>
 </html>
