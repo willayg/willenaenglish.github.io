@@ -1,4 +1,4 @@
-import { loadStudentRoster } from '/Teachers/shared/student-roster.js?v=20260917-p2';
+import { loadStudentRoster } from '/Teachers/shared/student-roster.js?v=20260917-p21';
 
 const $=(s,r=document)=>r.querySelector(s);
 const $$=(s,r=document)=>[...r.querySelectorAll(s)];
@@ -61,6 +61,12 @@ function renderStudents(){
   $$('.student-row',list).forEach(row=>row.addEventListener('click',()=>openStudent(row.dataset.studentId)));
 }
 
+function acceptRoster(roster,{fresh=false}={}){
+  state.students=roster?.students||[];
+  buildFilters();applyFilters();
+  if(fresh)$('#studentStatus').textContent=`${state.students.length} total · updated`;
+}
+
 function field(label,v,full=false){return `<div class="admin-profile-field${full?' full':''}"><small>${esc(label)}</small><b>${esc(value(v))}</b></div>`}
 function openStudent(id){
   const s=state.students.find(x=>String(x.id)===String(id));if(!s)return;
@@ -74,20 +80,31 @@ function openStudent(id){
 }
 function closeStudent(){state.selected=null;$('#studentDrawerBg').classList.remove('open')}
 
-async function loadStudents(force=false){
-  $('#studentStatus').textContent='Loading…';
-  if(force)$('#studentList').innerHTML='<div class="empty">Refreshing students…</div>';
-  try{
-    const roster=await loadStudentRoster({force,repairSession:true});
-    state.students=roster.students||[];
-    buildFilters();applyFilters();
-  }catch(error){
-    console.error('[Admin V2] roster/authorization failed',error);
-    if(Number(error.status)===403){location.replace('/Teachers/dashboard-v2/');return}
-    if(Number(error.status)===401){location.replace(loginUrl());return}
+function handleLoadError(error){
+  console.error('[Admin V2] roster/authorization failed',error);
+  if(Number(error.status)===403){location.replace('/Teachers/dashboard-v2/');return}
+  if(Number(error.status)===401){location.replace(loginUrl());return}
+  if(!state.students.length){
     $('#studentStatus').textContent='Could not load students';
     $('#studentList').innerHTML=`<div class="empty">${esc(error.message)}</div>`;
   }
+}
+
+async function loadStudents(force=false){
+  if(force){
+    $('#studentStatus').textContent='Refreshing…';
+    $('#studentList').innerHTML='<div class="empty">Refreshing students…</div>';
+  }else if(!state.students.length){
+    $('#studentStatus').textContent='Loading…';
+  }
+  try{
+    const roster=await loadStudentRoster({
+      force,
+      repairSession:true,
+      onRefresh:fresh=>acceptRoster(fresh,{fresh:true})
+    });
+    acceptRoster(roster,{fresh:force||roster?.source==='network'});
+  }catch(error){handleLoadError(error)}
 }
 
 async function mountBurger(){
@@ -113,8 +130,6 @@ function bindStudents(){
 
 function boot(){
   bindNavigation();bindStudents();
-  // Shell is safe to show immediately; protected student data arrives only after
-  // the admin-only roster endpoint authorizes the request.
   $('#adminV2Boot')?.classList.add('hidden');
   loadStudents(false);
   mountBurger();
