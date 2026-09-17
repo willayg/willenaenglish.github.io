@@ -1,4 +1,4 @@
-import {showConfirmDialog} from './shared-confirm-dialog.js?v=1.0.0';
+import {showConfirmDialog} from './shared-confirm-dialog.js?v=1.0.1';
 
 let enabled=false;
 
