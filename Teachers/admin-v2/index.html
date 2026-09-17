@@ -5,15 +5,15 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <title>Willena Admin V2</title>
-<script src="/students/api-gateway.js?v=20260917-adminv2-118"></script>
-<script src="/js/api-config.js?v=20260917-adminv2-118"></script>
+<script src="/students/api-gateway.js?v=20260917-adminv2-119"></script>
+<script src="/js/api-config.js?v=20260917-adminv2-119"></script>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/Teachers/dashboard-v2/dashboard-v2.css?v=20260917-r14-08">
 <link rel="stylesheet" href="/Teachers/dashboard-v2/dashboard-v2-polish.css?v=20260917-r14-07">
 <link rel="stylesheet" href="/Teachers/admin/admin-level-tests.css?v=20260813-archive1">
 <link rel="stylesheet" href="/Teachers/admin/admin-level-test-pips.css?v=20260812-pips3">
-<link rel="stylesheet" href="./admin-v2.css?v=1.18">
-<link rel="stylesheet" href="./admin-v2-level-tests.css?v=1.18">
+<link rel="stylesheet" href="./admin-v2.css?v=1.19">
+<link rel="stylesheet" href="./admin-v2-level-tests.css?v=1.19">
 </head>
 <body>
 <header class="topbar">
@@ -31,25 +31,11 @@
   </aside>
   <main class="workspace">
     <section class="view active" id="view-students">
-      <div class="page-head"><div><h1>Students</h1></div><div class="filters">
-        <select class="control" id="classFilter"><option value="">All classes</option></select>
-        <select class="control" id="gradeFilter"><option value="">All grades</option></select>
-        <input class="control search" id="studentSearch" type="search" placeholder="Search student…">
-        <button class="control" id="studentRefresh" type="button">Refresh</button>
-        <button class="control admin-primary" id="addStudent" type="button">+ Add student</button>
-      </div></div>
+      <div class="page-head"><div><h1>Students</h1></div><div class="filters"><select class="control" id="classFilter"><option value="">All classes</option></select><select class="control" id="gradeFilter"><option value="">All grades</option></select><input class="control search" id="studentSearch" type="search" placeholder="Search student…"><button class="control" id="studentRefresh" type="button">Refresh</button><button class="control admin-primary" id="addStudent" type="button">+ Add student</button></div></div>
       <div class="panel"><div class="panel-head"><div><div class="panel-title">Students</div><div class="panel-sub" id="studentStatus">Loading…</div></div><span class="count-pill" id="studentCount">0 students</span></div><div class="student-list" id="studentList"><div class="empty">Loading students…</div></div></div>
     </section>
-    <section class="view" id="view-classes">
-      <div class="page-head"><div><h1>Classes</h1></div><div class="admin-class-toolbar"><span class="class-order-status" id="classOrderStatusV2"></span><button class="control class-order-toolbar-button" id="classOrderEditV2" type="button">Edit order</button><button class="control class-order-toolbar-button" id="classOrderCancelV2" type="button" hidden>Cancel</button><button class="control admin-primary class-order-toolbar-button" id="classOrderDoneV2" type="button" hidden>Done</button><button class="control" id="classRefreshV2" type="button">Refresh</button><button class="control admin-primary" id="classAddV2" type="button">+ Add class</button></div></div>
-      <div class="class-grid" id="classGridV2"><div class="empty">Open Classes to load class management.</div></div>
-    </section>
-    <section class="view" id="view-level-tests">
-      <div class="page-head"><div><h1>Level Tests</h1></div></div>
-      <div class="level-test-toolbar"><div class="search"><input id="levelTestSearch" placeholder="Search student, class or school"></div><button class="btn" id="levelTestRefresh">Refresh</button></div>
-      <div class="level-test-filters" id="levelTestFilters" aria-label="Filter level tests"><button class="active" data-test-filter="all">All</button><button data-test-filter="prospective">Online test</button><button data-test-filter="internal">Willena Student</button><button data-test-filter="visitor">Face-to-face test</button><button class="new-filter" data-test-filter="new"><i></i> New <b id="levelTestNewCount">0</b></button><button class="archived-filter" data-test-filter="archived">Archived <b id="levelTestArchivedCount">0</b></button></div>
-      <div class="panel level-test-table-wrap"><table class="level-test-table"><thead><tr><th>Name</th><th>Date</th><th>Level</th><th>Status</th><th>Source</th></tr></thead><tbody id="levelTestRows"><tr><td colspan="5" class="empty">Open Level Tests to load records.</td></tr></tbody></table></div>
-    </section>
+    <section class="view" id="view-classes"><div class="page-head"><div><h1>Classes</h1></div><div class="admin-class-toolbar"><span class="class-order-status" id="classOrderStatusV2"></span><button class="control class-order-toolbar-button" id="classOrderEditV2" type="button">Edit order</button><button class="control class-order-toolbar-button" id="classOrderCancelV2" type="button" hidden>Cancel</button><button class="control admin-primary class-order-toolbar-button" id="classOrderDoneV2" type="button" hidden>Done</button><button class="control" id="classRefreshV2" type="button">Refresh</button><button class="control admin-primary" id="classAddV2" type="button">+ Add class</button></div></div><div class="class-grid" id="classGridV2"><div class="empty">Open Classes to load class management.</div></div></section>
+    <section class="view" id="view-level-tests"><div class="page-head"><div><h1>Level Tests</h1></div></div><div class="level-test-toolbar"><div class="search"><input id="levelTestSearch" placeholder="Search student, class or school"></div><button class="btn" id="levelTestRefresh">Refresh</button></div><div class="level-test-filters" id="levelTestFilters" aria-label="Filter level tests"><button class="active" data-test-filter="all">All</button><button data-test-filter="prospective">Online test</button><button data-test-filter="internal">Willena Student</button><button data-test-filter="visitor">Face-to-face test</button><button class="new-filter" data-test-filter="new"><i></i> New <b id="levelTestNewCount">0</b></button><button class="archived-filter" data-test-filter="archived">Archived <b id="levelTestArchivedCount">0</b></button></div><div class="panel level-test-table-wrap"><table class="level-test-table"><thead><tr><th>Name</th><th>Date</th><th>Level</th><th>Status</th><th>Source</th></tr></thead><tbody id="levelTestRows"><tr><td colspan="5" class="empty">Open Level Tests to load records.</td></tr></tbody></table></div></section>
   </main>
 </div>
 <nav class="mobile-tabs"><button class="mobile-tab active" data-view="students"><b>◎</b>Students</button><button class="mobile-tab" data-view="classes"><b>▦</b>Classes</button><button class="mobile-tab" data-view="level-tests" data-page="levelTests"><b>◫</b>Tests</button></nav>
@@ -58,8 +44,8 @@
 <div class="admin-class-backdrop" id="classDrawerBgV2"></div><aside class="admin-class-drawer" id="classDrawerV2"><div class="admin-class-head"><div><h2 id="classDrawerTitleV2">Class</h2><p id="classDrawerMetaV2"></p></div><button id="classDrawerCloseV2" type="button">×</button></div><div class="admin-class-body" id="classDrawerBodyV2"></div></aside>
 <div class="level-test-drawer" id="levelTestDrawer" aria-hidden="true"><button class="level-test-drawer-backdrop" data-close-level-test aria-label="Close"></button><aside><div class="level-test-drawer-head"><div><span class="level-test-source" id="levelTestDetailSource"></span><h2 id="levelTestDetailName">Level test</h2><p id="levelTestDetailMeta"></p></div><button class="close" data-close-level-test>×</button></div><div class="level-test-drawer-body" id="levelTestDetailBody"></div><div class="level-test-drawer-actions"><button class="btn level-test-archive-action" id="levelTestArchive" disabled>Archive</button><button class="btn" id="levelTestFullReport" disabled>Full report</button><button class="btn primary" id="levelTestFullResults" disabled>Full test results</button></div><section class="level-test-results" id="levelTestResults" aria-hidden="true"><div class="level-test-results-head"><button class="btn" id="levelTestResultsBack">← Mini report</button><div><h2>Full test results</h2><p id="levelTestResultsMeta"></p></div></div><div id="levelTestResultsBody"></div></section></aside></div>
 <div class="admin-v2-boot hidden" id="adminV2Boot" aria-live="polite"><img src="/Assets/Images/Logo.png" alt="Willena"><span>Checking admin access…</span></div>
-<div class="admin-v2-rev">Admin V2 · 1.18</div>
-<script src="/free-level-test/js/report-calculation.js?v=1.18"></script>
-<script type="module" src="./admin-v2.js?v=1.18"></script>
+<div class="admin-v2-rev">Admin V2 · 1.19</div>
+<script src="/free-level-test/js/report-calculation.js?v=1.19"></script>
+<script type="module" src="./admin-v2.js?v=1.19"></script>
 </body>
 </html>
