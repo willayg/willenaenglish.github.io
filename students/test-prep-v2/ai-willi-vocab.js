@@ -31,22 +31,22 @@ function answerText(question){
   return String(a??'');
 }
 async function quickExplain({item,question,response,mode}){
-  const target=String(item?.canonical_text||'').trim(),meaning=String(item?.translation_ko||'').trim();
-  const system=`You are AI Willi, a concise vocabulary tutor for Korean middle-school students. Answer in Korean. This is vocabulary practice, not a grammar lesson. Keep the first explanation very short: normally 2-4 short sentences. Explain the target word's core meaning and how it is used in this question. Briefly say why the correct answer fits. Do not give a long grammar explanation, a word list, headings, tables, or extra study advice.`;
-  const user=`TARGET WORD: ${target}\nKNOWN KOREAN MEANING: ${meaning}\nPRACTICE MODE: ${mode}\nQUESTION: ${question?.prompt||''}\nCHOICES: ${JSON.stringify(question?.choices||[])}\nSTUDENT ANSWER: ${responseText(response,question)}\nCORRECT ANSWER: ${answerText(question)}`;
+  const target=String(item?.canonical_text||question?.metadata?.canonical_text||'').trim(),meaning=String(item?.translation_ko||question?.metadata?.translation_ko||'').trim(),definition=String(item?.definition_en||question?.metadata?.definition_en||'').trim();
+  const system=`You are AI Willi, a concise vocabulary tutor for Korean middle-school students. Answer in Korean. This is a vocabulary test, not a grammar lesson. Keep the first explanation very short: normally 2-4 short sentences. Explain the relevant word or expression and why the correct answer fits this question. If the question compares several word-definition pairs, explain only the decisive pair or distinction needed to understand the answer. Do not give a long grammar explanation, a word list, headings, tables, or extra study advice.`;
+  const user=`TARGET WORD OR EXPRESSION: ${target}\nKNOWN KOREAN MEANING: ${meaning}\nKNOWN ENGLISH DEFINITION: ${definition}\nPRACTICE MODE: ${mode}\nQUESTION: ${question?.prompt||''}\nCONTEXT: ${JSON.stringify(question?.context||{})}\nCHOICES: ${JSON.stringify(question?.choices||[])}\nSTUDENT ANSWER: ${responseText(response,question)}\nCORRECT ANSWER: ${answerText(question)}`;
   return callAi([{role:'system',content:system},{role:'user',content:user}],240);
 }
 async function examples({item,question,previous}){
-  const target=String(item?.canonical_text||'').trim(),meaning=String(item?.translation_ko||'').trim();
-  const system=`You are AI Willi, a concise vocabulary tutor for Korean middle-school students. Give exactly 3 short, natural English example sentences using the target word, each followed by a short Korean meaning. Keep them easy and varied. No introduction, grammar lecture, table, or extra notes.`;
-  const user=`TARGET WORD: ${target}\nKOREAN MEANING: ${meaning}\nQUESTION CONTEXT: ${question?.prompt||''}\nPREVIOUS EXPLANATION: ${previous||''}`;
+  const target=String(item?.canonical_text||question?.metadata?.canonical_text||'').trim(),meaning=String(item?.translation_ko||question?.metadata?.translation_ko||'').trim();
+  const system=`You are AI Willi, a concise vocabulary tutor for Korean middle-school students. Give exactly 3 short, natural English example sentences using the main target word or expression from the question, each followed by a short Korean meaning. Keep them easy and varied. If the question contains several words, use the word or expression that is decisive for the correct answer. No introduction, grammar lecture, table, or extra notes.`;
+  const user=`TARGET WORD OR EXPRESSION: ${target}\nKOREAN MEANING: ${meaning}\nQUESTION: ${question?.prompt||''}\nCONTEXT: ${JSON.stringify(question?.context||{})}\nCHOICES: ${JSON.stringify(question?.choices||[])}\nCORRECT ANSWER: ${answerText(question)}\nPREVIOUS EXPLANATION: ${previous||''}`;
   return callAi([{role:'system',content:system},{role:'user',content:user}],280);
 }
 
-export function mountVocabAiWilli({container,item,question,response,result,mode}={}){
-  if(!container||!item||!question||result?.correct)return null;ensureStyles();container.querySelector('[data-ai-willi-vocab]')?.remove();
+export function mountVocabAiWilli({container,item={},question,response,result,mode}={}){
+  if(!container||!question||result?.correct)return null;ensureStyles();container.querySelector('[data-ai-willi-vocab]')?.remove();
   const el=document.createElement('div');el.className='ai-willi-vocab';el.dataset.aiWilliVocab='1';el.innerHTML=`<div class="ai-willi-vocab-head"><span class="ai-willi-vocab-mark">✦</span><span>AI Willi</span></div><div class="ai-willi-vocab-text">이 단어가 헷갈렸다면 짧게 설명해 줄게요.</div><div class="ai-willi-vocab-actions"><button type="button" data-vocab-willi-ask>AI Willi에게 물어보기</button></div>`;
-  const anchor=container.querySelector('#vpQuestionHost')?.closest('.vp-card')||container.querySelector('#vpQuestionHost');if(anchor?.parentNode)anchor.insertAdjacentElement('afterend',el);else container.appendChild(el);
+  const anchor=container.querySelector('#vpQuestionHost')?.closest('.vp-card')||container.querySelector('#questionHost')?.closest('.question-card')||container.querySelector('#vpQuestionHost,#questionHost,.question-card');if(anchor?.parentNode)anchor.insertAdjacentElement('afterend',el);else container.appendChild(el);
   const text=el.querySelector('.ai-willi-vocab-text'),actions=el.querySelector('.ai-willi-vocab-actions'),ask=el.querySelector('[data-vocab-willi-ask]');let busy=false,initial='';
   const setBusy=v=>{busy=!!v;el.querySelectorAll('button').forEach(b=>b.disabled=busy)};
   ask.onclick=async()=>{if(busy)return;setBusy(true);text.innerHTML=thinking();try{initial=await quickExplain({item,question,response,mode});text.textContent=initial;actions.innerHTML='<button type="button" data-vocab-willi-examples>예문 보기</button>';const b=actions.querySelector('[data-vocab-willi-examples]');b.onclick=async()=>{if(busy)return;setBusy(true);const prior=text.textContent;text.innerHTML=`${esc(prior)}\n\n${thinking()}`;try{const more=await examples({item,question,previous:initial});text.textContent=`${initial}\n\n${more}`;b.remove()}catch(e){console.warn('[AI Willi vocab examples] failed',e);text.textContent=prior}finally{setBusy(false)}}}catch(e){console.warn('[AI Willi vocab] failed',e);text.textContent='지금은 설명을 불러오지 못했어요. 다시 시도해 주세요.'}finally{setBusy(false)}};
