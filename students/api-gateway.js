@@ -36,7 +36,7 @@
   if(window.location.pathname.startsWith('/Teachers/admin-v2/')){
     const stampRevision=()=>{
       const el=document.querySelector('.admin-v2-rev');
-      if(el)el.textContent='Admin V2 · 1.20';
+      if(el)el.textContent='Admin V2 · 1.21';
     };
     if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',stampRevision,{once:true});
     else stampRevision();
