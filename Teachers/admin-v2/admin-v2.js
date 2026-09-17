@@ -35,7 +35,7 @@ function selectField(label,id,options,current=''){return `<label class="admin-fo
 
 function setView(view){$$('.view').forEach(section=>section.classList.toggle('active',section.id===`view-${view}`));$$('[data-view]').forEach(button=>button.classList.toggle('active',button.dataset.view===view))}
 async function ensureClasses(){
-  if(!classesModulePromise)classesModulePromise=import('./admin-v2-classes.js?v=1.07').then(mod=>mod.mountClasses());
+  if(!classesModulePromise)classesModulePromise=import('./admin-v2-classes.js?v=1.08').then(mod=>mod.mountClasses());
   return classesModulePromise;
 }
 async function ensureLevelTests(){
