@@ -10,7 +10,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/Teachers/dashboard-v2/dashboard-v2.css?v=20260917-r14-08">
 <link rel="stylesheet" href="/Teachers/dashboard-v2/dashboard-v2-polish.css?v=20260917-r14-07">
-<link rel="stylesheet" href="./admin-v2.css?v=1.05">
+<link rel="stylesheet" href="./admin-v2.css?v=1.06">
 </head>
 <body>
 <header class="topbar">
@@ -42,9 +42,13 @@
   </main>
 </div>
 <nav class="mobile-tabs"><button class="mobile-tab active" data-view="students"><b>◎</b>Students</button><button class="mobile-tab" data-view="classes"><b>▦</b>Classes</button><button class="mobile-tab" data-view="level-tests"><b>◫</b>Tests</button></nav>
+
 <div class="drawer-bg" id="studentDrawerBg"><aside class="drawer"><div class="drawer-head"><div class="drawer-head-main"><div class="drawer-name" id="drawerName">Student</div><div class="drawer-meta" id="drawerMeta"></div></div><button class="close" id="closeStudentDrawer" type="button">×</button></div><div class="drawer-body" id="drawerBody"></div></aside></div>
+
+<div class="drawer-bg" id="addStudentDrawerBg"><aside class="drawer admin-add-drawer"><div class="drawer-head"><div class="drawer-head-main"><div class="drawer-name">Add student</div><div class="drawer-meta">Create a new student account</div></div><button class="close" id="closeAddStudentDrawer" type="button">×</button></div><div class="drawer-body"><form id="addStudentForm" class="admin-add-form" novalidate><div class="detail"><h3>Student details</h3><div class="admin-form-grid"><label class="admin-form-field"><span>English name</span><input id="addName" type="text"></label><label class="admin-form-field"><span>Korean name</span><input id="addKorean" type="text"></label><label class="admin-form-field"><span>Username</span><input id="addUsername" type="text" autocomplete="off"></label><label class="admin-form-field"><span>Temporary password</span><input id="addPassword" type="text" autocomplete="new-password"></label><label class="admin-form-field"><span>Class</span><select id="addClass"><option value="">No class</option></select></label><label class="admin-form-field"><span>Grade</span><input id="addGrade" type="text"></label><label class="admin-form-field"><span>School</span><input id="addSchool" type="text"></label><label class="admin-form-field"><span>Phone</span><input id="addPhone" type="text"></label></div><p class="admin-form-note">Username uses lowercase letters, numbers, dots, dashes or underscores.</p><div class="admin-modal-error" id="addStudentError"></div><div class="admin-add-actions"><button type="button" class="secondary" id="cancelAddStudent">Cancel</button><button type="submit" class="primary" id="createStudentButton">Create student</button></div></div></form></div></aside></div>
+
 <div class="admin-v2-boot hidden" id="adminV2Boot" aria-live="polite"><img src="/Assets/Images/Logo.png" alt="Willena"><span>Checking admin access…</span></div>
-<div class="admin-v2-rev">Admin V2 · 1.05</div>
-<script type="module" src="./admin-v2.js?v=1.05"></script>
+<div class="admin-v2-rev">Admin V2 · 1.06</div>
+<script type="module" src="./admin-v2.js?v=1.06"></script>
 </body>
 </html>
