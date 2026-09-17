@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>Willena Admin V2</title>
+<script src="/js/api-config.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/Teachers/dashboard-v2/dashboard-v2.css?v=20260917-r14-08">
+<link rel="stylesheet" href="/Teachers/dashboard-v2/dashboard-v2-polish.css?v=20260917-r14-07">
+<link rel="stylesheet" href="./admin-v2.css?v=1.01">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand"><img src="/Assets/Images/Logo.png" alt="Willena"><div><b>Willena</b><small>Admin workspace</small></div></div>
+  <div class="title">
+    <div class="teacher-app-switch" aria-label="Teacher and admin apps">
+      <a href="/Teachers/dashboard-v2/">Teacher</a>
+      <a class="active" href="/Teachers/admin-v2/">Admin</a>
+    </div>
+  </div>
+  <div class="top-actions"><span class="teacher-name" id="adminName">Admin</span><div id="burger-menu-mount"></div></div>
+</header>
+
+<div class="layout" id="adminLayout">
+  <aside class="rail">
+    <button class="rail-collapse-toggle" id="railCollapseToggle" type="button" aria-label="Expand sidebar" aria-expanded="false"><span>›</span></button>
+    <button class="nav active" data-view="students"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2.4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2"/></svg></span><span>Students</span></button>
+    <button class="nav" data-view="classes"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 4v16M16 4v16M4 9h16M4 15h16"/></svg></span><span>Classes</span></button>
+    <button class="nav" data-view="level-tests"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="5" y="3.5" width="14" height="17" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg></span><span>Level Tests</span></button>
+    <div class="rail-spacer"></div>
+  </aside>
+
+  <main class="workspace">
+    <section class="view active" id="view-students">
+      <div class="page-head"><div><h1>Students</h1></div></div>
+      <div class="panel admin-v2-placeholder"><div class="empty"><strong>Admin V2 shell ready</strong><span>Student management plugs into the shared roster in P2.</span></div></div>
+    </section>
+
+    <section class="view" id="view-classes">
+      <div class="page-head"><div><h1>Classes</h1></div></div>
+      <div class="panel admin-v2-placeholder"><div class="empty"><strong>Classes</strong><span>This section will lazy-load only when opened.</span></div></div>
+    </section>
+
+    <section class="view" id="view-level-tests">
+      <div class="page-head"><div><h1>Level Tests</h1></div></div>
+      <div class="panel admin-v2-placeholder"><div class="empty"><strong>Level Tests</strong><span>This section will stay lazy and reuse the existing test tools.</span></div></div>
+    </section>
+  </main>
+</div>
+
+<nav class="mobile-tabs">
+  <button class="mobile-tab active" data-view="students"><b>◎</b>Students</button>
+  <button class="mobile-tab" data-view="classes"><b>▦</b>Classes</button>
+  <button class="mobile-tab" data-view="level-tests"><b>◫</b>Tests</button>
+</nav>
+
+<div class="admin-v2-boot" id="adminV2Boot" aria-live="polite"><img src="/Assets/Images/Logo.png" alt="Willena"><span>Checking admin access…</span></div>
+<div class="admin-v2-rev">Admin V2 · 1.01</div>
+<script type="module" src="./admin-v2.js?v=1.01"></script>
+</body>
+</html>
