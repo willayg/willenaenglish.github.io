@@ -1,0 +1,79 @@
+name: Promote Teacher Dashboard V2 once
+
+on:
+  push:
+    branches: [teachers]
+    paths:
+      - '.github/workflows/promote-teacher-dashboard-v2-once.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout teachers branch
+        uses: actions/checkout@v4
+        with:
+          ref: teachers
+          fetch-depth: 0
+
+      - name: Promote dashboard v2 and archive v1
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          git fetch origin staging
+
+          # Preserve the current production teacher dashboard as V1.
+          mkdir -p Teachers/dashboard-v1-archived
+          cp Teachers/index.html Teachers/dashboard-v1-archived/index.html
+
+          # Bring over the complete V2 dashboard package exactly as it exists on staging.
+          rm -rf Teachers/dashboard-v2
+          git checkout origin/staging -- Teachers/dashboard-v2
+
+          # Make V2 the main /Teachers/ index while keeping all of its relative assets
+          # resolving from the dashboard-v2 package.
+          cp Teachers/dashboard-v2/index.html Teachers/index.html
+
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path('Teachers/index.html')
+          html = path.read_text(encoding='utf-8')
+
+          # Root index now lives one level above dashboard-v2, so preserve the original
+          # relative URL behavior with a base URL pointing at the promoted package.
+          if '<base href="/Teachers/dashboard-v2/">' not in html:
+              html = html.replace('<head>', '<head>\n<base href="/Teachers/dashboard-v2/">', 1)
+
+          # Add a deliberately small archive link in the Apps view.
+          marker = '</div></section>\n</main></div>'
+          archive_link = (
+              '<div style="margin-top:14px;font-size:12px;opacity:.68">'
+              '<a href="/Teachers/dashboard-v1-archived/" '
+              'style="color:inherit;text-decoration:underline;text-underline-offset:2px">'
+              'Dashboard V1 (ARCHIVED)</a></div>'
+          )
+          apps_anchor = '<section class="view" id="view-apps">'
+          apps_pos = html.find(apps_anchor)
+          if apps_pos == -1:
+              raise SystemExit('Apps section not found in Teacher Dashboard V2 index')
+          marker_pos = html.find(marker, apps_pos)
+          if marker_pos == -1:
+              raise SystemExit('Could not locate end of Apps section')
+          html = html[:marker_pos] + archive_link + html[marker_pos:]
+
+          path.write_text(html, encoding='utf-8')
+          PY
+
+          # Remove this one-shot workflow from the resulting branch.
+          git rm .github/workflows/promote-teacher-dashboard-v2-once.yml
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Teachers/index.html Teachers/dashboard-v1-archived/index.html Teachers/dashboard-v2
+          git commit -m "Promote Teacher Dashboard V2 to main teachers index"
+          git push origin teachers
