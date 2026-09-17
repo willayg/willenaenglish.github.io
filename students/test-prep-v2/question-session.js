@@ -1,5 +1,5 @@
 import {aiWilliMessage,showAiWilliStatus,clearAiWilliStatus,decorateAiWilliFeedback,mountAiWilliHelper} from '../shared/ai-willi.js?v=1.1.0';
-import {mountVocabAiWilli} from './ai-willi-vocab.js?v=1.0.1';
+import {mountVocabAiWilli} from './ai-willi-vocab.js?v=1.0.2';
 import {restoreActivityProgress,saveActivityPosition,saveActivityOutcome,clearActivitySnapshotFor,currentActivityRoute} from './activity-session-store.js?v=3.0.0';
 
 // Shared interactive question-session engine for Test Prep v2.
