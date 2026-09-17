@@ -36,15 +36,11 @@
   if(window.location.pathname.startsWith('/Teachers/admin-v2/')){
     const stampRevision=()=>{
       const el=document.querySelector('.admin-v2-rev');
-      if(el)el.textContent='Admin V2 · 1.16';
+      if(el)el.textContent='Admin V2 · 1.17';
     };
     if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',stampRevision,{once:true});
     else stampRevision();
 
-    // Legacy Admin modules call window.api(...). For admin_classes, bypass
-    // WillenaAPI.fetch so a stale localStorage bearer cannot override the fresh
-    // shared sb_access cookie. The API gateway will derive Authorization from
-    // the cookie when forwarding to ADMIN_CLASSES. Retry once after session repair.
     if(typeof window.api!=='function'){
       window.api=async function(path,options={}){
         const raw=String(path||'');
