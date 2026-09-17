@@ -36,18 +36,41 @@
   if(window.location.pathname.startsWith('/Teachers/admin-v2/')){
     const stampRevision=()=>{
       const el=document.querySelector('.admin-v2-rev');
-      if(el)el.textContent='Admin V2 · 1.13';
+      if(el)el.textContent='Admin V2 · 1.14';
     };
     if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',stampRevision,{once:true});
     else stampRevision();
 
-    // Legacy Admin modules call window.api(...). Keep that contract, but do not
-    // rewrite admin_classes. The production gateway already binds admin_classes
-    // directly to the ADMIN_CLASSES worker.
+    // Legacy Admin modules call window.api(...). For admin_classes, bypass
+    // WillenaAPI.fetch so a stale localStorage bearer cannot override the fresh
+    // shared sb_access cookie. The API gateway will derive Authorization from
+    // the cookie when forwarding to ADMIN_CLASSES. Retry once after session repair.
     if(typeof window.api!=='function'){
       window.api=async function(path,options={}){
-        const fn=window.WillenaAPI?.fetch||window.fetch.bind(window);
-        const response=await fn(path,{credentials:'include',cache:'no-store',...options});
+        const raw=String(path||'');
+        const isAdminClasses=extractFunctionName(raw)==='admin_classes';
+        let response;
+
+        if(isAdminClasses){
+          const absolute=/^https?:\/\//i.test(raw)?raw:window.__CF_API_GATEWAY+raw;
+          const requestOptions={credentials:'include',cache:'no-store',...options};
+          if(requestOptions.headers){
+            const headers=new Headers(requestOptions.headers);
+            headers.delete('Authorization');
+            headers.delete('authorization');
+            requestOptions.headers=headers;
+          }
+          response=await window.fetch(absolute,requestOptions);
+
+          if(response.status===401&&typeof window.ensureTeacherSession==='function'){
+            const repaired=await window.ensureTeacherSession();
+            if(repaired?.success)response=await window.fetch(absolute,requestOptions);
+          }
+        }else{
+          const fn=window.WillenaAPI?.fetch||window.fetch.bind(window);
+          response=await fn(path,{credentials:'include',cache:'no-store',...options});
+        }
+
         let data={};
         try{data=await response.json()}catch{}
         if(!response.ok||data?.success===false){
