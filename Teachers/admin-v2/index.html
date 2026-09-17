@@ -10,7 +10,9 @@
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/Teachers/dashboard-v2/dashboard-v2.css?v=20260917-r14-08">
 <link rel="stylesheet" href="/Teachers/dashboard-v2/dashboard-v2-polish.css?v=20260917-r14-07">
-<link rel="stylesheet" href="./admin-v2.css?v=1.06">
+<link rel="stylesheet" href="/Teachers/admin/admin-level-tests.css?v=20260813-archive1">
+<link rel="stylesheet" href="/Teachers/admin/admin-level-test-pips.css?v=20260812-pips3">
+<link rel="stylesheet" href="./admin-v2.css?v=1.07">
 </head>
 <body>
 <header class="topbar">
@@ -23,7 +25,7 @@
     <button class="rail-collapse-toggle" id="railCollapseToggle" type="button" aria-label="Expand sidebar" aria-expanded="false"><span>›</span></button>
     <button class="nav active" data-view="students"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2.4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2"/></svg></span><span>Students</span></button>
     <button class="nav" data-view="classes"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 4v16M16 4v16M4 9h16M4 15h16"/></svg></span><span>Classes</span></button>
-    <button class="nav" data-view="level-tests"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="5" y="3.5" width="14" height="17" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg></span><span>Level Tests</span></button>
+    <button class="nav" data-view="level-tests" data-page="levelTests"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="5" y="3.5" width="14" height="17" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg></span><span>Level Tests</span></button>
     <div class="rail-spacer"></div>
   </aside>
   <main class="workspace">
@@ -37,18 +39,32 @@
       </div></div>
       <div class="panel"><div class="panel-head"><div><div class="panel-title">Students</div><div class="panel-sub" id="studentStatus">Loading…</div></div><span class="count-pill" id="studentCount">0 students</span></div><div class="student-list" id="studentList"><div class="empty">Loading students…</div></div></div>
     </section>
-    <section class="view" id="view-classes"><div class="page-head"><div><h1>Classes</h1></div></div><div class="panel admin-v2-placeholder"><div class="empty"><strong>Classes</strong><span>This section will lazy-load only when opened.</span></div></div></section>
-    <section class="view" id="view-level-tests"><div class="page-head"><div><h1>Level Tests</h1></div></div><div class="panel admin-v2-placeholder"><div class="empty"><strong>Level Tests</strong><span>This section will stay lazy and reuse the existing test tools.</span></div></div></section>
+
+    <section class="view" id="view-classes">
+      <div class="page-head"><div><h1>Classes</h1></div><div class="admin-class-toolbar"><button class="control" id="classRefreshV2" type="button">Refresh</button><button class="control admin-primary" id="classAddV2" type="button">+ Add class</button></div></div>
+      <div class="class-grid" id="classGridV2"><div class="empty">Open Classes to load class management.</div></div>
+    </section>
+
+    <section class="view" id="view-level-tests">
+      <div class="page-head"><div><h1>Level Tests</h1></div></div>
+      <div class="level-test-toolbar"><div class="search"><input id="levelTestSearch" placeholder="Search student, class or school"></div><button class="btn" id="levelTestRefresh">Refresh</button></div>
+      <div class="level-test-filters" id="levelTestFilters" aria-label="Filter level tests"><button class="active" data-test-filter="all">All</button><button data-test-filter="prospective">Online test</button><button data-test-filter="internal">Willena Student</button><button data-test-filter="visitor">Face-to-face test</button><button class="new-filter" data-test-filter="new"><i></i> New <b id="levelTestNewCount">0</b></button><button class="archived-filter" data-test-filter="archived">Archived <b id="levelTestArchivedCount">0</b></button></div>
+      <div class="panel level-test-table-wrap"><table class="level-test-table"><thead><tr><th>Name</th><th>Date</th><th>Level</th><th>Status</th><th>Source</th></tr></thead><tbody id="levelTestRows"><tr><td colspan="5" class="empty">Open Level Tests to load records.</td></tr></tbody></table></div>
+    </section>
   </main>
 </div>
-<nav class="mobile-tabs"><button class="mobile-tab active" data-view="students"><b>◎</b>Students</button><button class="mobile-tab" data-view="classes"><b>▦</b>Classes</button><button class="mobile-tab" data-view="level-tests"><b>◫</b>Tests</button></nav>
+<nav class="mobile-tabs"><button class="mobile-tab active" data-view="students"><b>◎</b>Students</button><button class="mobile-tab" data-view="classes"><b>▦</b>Classes</button><button class="mobile-tab" data-view="level-tests" data-page="levelTests"><b>◫</b>Tests</button></nav>
 
 <div class="drawer-bg" id="studentDrawerBg"><aside class="drawer"><div class="drawer-head"><div class="drawer-head-main"><div class="drawer-name" id="drawerName">Student</div><div class="drawer-meta" id="drawerMeta"></div></div><button class="close" id="closeStudentDrawer" type="button">×</button></div><div class="drawer-body" id="drawerBody"></div></aside></div>
 
-<div class="drawer-bg" id="addStudentDrawerBg"><aside class="drawer admin-add-drawer"><div class="drawer-head"><div class="drawer-head-main"><div class="drawer-name">Add student</div><div class="drawer-meta">Create a new student account</div></div><button class="close" id="closeAddStudentDrawer" type="button">×</button></div><div class="drawer-body"><form id="addStudentForm" class="admin-add-form" novalidate><div class="detail"><h3>Student details</h3><div class="admin-form-grid"><label class="admin-form-field"><span>English name</span><input id="addName" type="text"></label><label class="admin-form-field"><span>Korean name</span><input id="addKorean" type="text"></label><label class="admin-form-field"><span>Username</span><input id="addUsername" type="text" autocomplete="off"></label><label class="admin-form-field"><span>Temporary password</span><input id="addPassword" type="text" autocomplete="new-password"></label><label class="admin-form-field"><span>Class</span><select id="addClass"><option value="">No class</option></select></label><label class="admin-form-field"><span>Grade</span><input id="addGrade" type="text"></label><label class="admin-form-field"><span>School</span><input id="addSchool" type="text"></label><label class="admin-form-field"><span>Phone</span><input id="addPhone" type="text"></label></div><p class="admin-form-note">Username uses lowercase letters, numbers, dots, dashes or underscores.</p><div class="admin-modal-error" id="addStudentError"></div><div class="admin-add-actions"><button type="button" class="secondary" id="cancelAddStudent">Cancel</button><button type="submit" class="primary" id="createStudentButton">Create student</button></div></div></form></div></aside></div>
+<div class="drawer-bg" id="addStudentDrawerBg"><aside class="drawer admin-add-drawer"><div class="drawer-head"><div class="drawer-head-main"><div class="drawer-name">Add student</div><div class="drawer-meta">Create a new student account</div></div><button class="close" id="closeAddStudentDrawer" type="button">×</button></div><div class="drawer-body"><form id="addStudentForm" class="admin-add-form" novalidate><div class="detail"><h3>Student details</h3><div class="admin-form-grid"><label class="admin-form-field"><span>English name</span><input id="addName" type="text"></label><label class="admin-form-field"><span>Korean name</span><input id="addKorean" type="text"></label><label class="admin-form-field"><span>Username</span><input id="addUsername" type="text" autocomplete="off"></label><label class="admin-form-field"><span>Temporary password</span><input id="addPassword" type="text" autocomplete="new-password"></label><label class="admin-form-field"><span>Class</span><select id="addClass"><option value="">No class</option></select></label><label class="admin-form-field"><span>Grade</span><input id="addGrade" type="text"></label><label class="admin-form-field"><span>School</span><input id="addSchool" type="text"></label><label class="admin-form-field"><span>Phone</span><input id="addPhone" type="text"></label></div><p class="admin-form-note">Username uses lowercase letters, numbers, dots, dashes or underscores.</p><div class="admin-modal-error" id="addStudentError"></div></div></form></div><div class="admin-add-foot"><button type="button" class="cancel" id="cancelAddStudent">Cancel</button><button type="submit" form="addStudentForm" class="create" id="createStudentButton">Create student</button></div></aside></div>
+
+<div class="admin-class-backdrop" id="classDrawerBgV2"></div><aside class="admin-class-drawer" id="classDrawerV2"><div class="admin-class-head"><div><h2 id="classDrawerTitleV2">Class</h2><p id="classDrawerMetaV2"></p></div><button id="classDrawerCloseV2" type="button">×</button></div><div class="admin-class-body" id="classDrawerBodyV2"></div></aside>
+
+<div class="level-test-drawer" id="levelTestDrawer" aria-hidden="true"><button class="level-test-drawer-backdrop" data-close-level-test aria-label="Close"></button><aside><div class="level-test-drawer-head"><div><span class="level-test-source" id="levelTestDetailSource"></span><h2 id="levelTestDetailName">Level test</h2><p id="levelTestDetailMeta"></p></div><button class="close" data-close-level-test>×</button></div><div class="level-test-drawer-body" id="levelTestDetailBody"></div><div class="level-test-drawer-actions"><button class="btn level-test-archive-action" id="levelTestArchive" disabled>Archive</button><button class="btn" id="levelTestFullReport" disabled>Full report</button><button class="btn primary" id="levelTestFullResults" disabled>Full test results</button></div><section class="level-test-results" id="levelTestResults" aria-hidden="true"><div class="level-test-results-head"><button class="btn" id="levelTestResultsBack">← Mini report</button><div><h2>Full test results</h2><p id="levelTestResultsMeta"></p></div></div><div id="levelTestResultsBody"></div></section></aside></div>
 
 <div class="admin-v2-boot hidden" id="adminV2Boot" aria-live="polite"><img src="/Assets/Images/Logo.png" alt="Willena"><span>Checking admin access…</span></div>
-<div class="admin-v2-rev">Admin V2 · 1.06</div>
-<script type="module" src="./admin-v2.js?v=1.06"></script>
+<div class="admin-v2-rev">Admin V2 · 1.07</div>
+<script type="module" src="./admin-v2.js?v=1.07"></script>
 </body>
 </html>
