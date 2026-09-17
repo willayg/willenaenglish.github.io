@@ -1,0 +1,11 @@
+/* Admin V2 intentionally inherits the Teacher dashboard shell and component language. */
+.admin-v2-placeholder{min-height:240px}
+.admin-v2-placeholder .empty{min-height:240px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px}
+.admin-v2-placeholder .empty strong{font-size:1rem;color:var(--ink)}
+.admin-v2-placeholder .empty span{font-size:.76rem;color:var(--muted)}
+.admin-v2-boot{position:fixed;inset:0;z-index:1000;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;color:var(--muted);font-size:.78rem;font-weight:700}
+.admin-v2-boot img{width:170px;max-height:72px;object-fit:contain;filter:drop-shadow(0 8px 18px rgba(79,185,200,.18))}
+.admin-v2-boot.hidden{display:none}
+.admin-v2-rev{position:fixed;right:12px;bottom:8px;z-index:2147483647;color:#7b8c93;font:700 9px/1.2 Poppins,sans-serif;letter-spacing:.04em;pointer-events:none}
+.rail .nav-icon svg{stroke:currentColor;stroke-width:2.2;fill:none}
+@media(max-width:700px){.admin-v2-placeholder,.admin-v2-placeholder .empty{min-height:190px}.admin-v2-rev{bottom:68px}}
