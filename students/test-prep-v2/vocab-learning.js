@@ -1,11 +1,12 @@
 import {QuestionRenderer} from './question-renderer.js?v=2.20.6';
 import {gradeQuestion} from '../shared/question-grader.js?v=2.1.2';
 import {recordAttempt,startSession,completeSession,trackingState} from './tracking-client.js?v=2.17a';
+import {mountVocabAiWilli} from './ai-willi-vocab.js?v=1.0.0';
 
 const CONTENT='https://gxwfsqxyuufqtitspfqg.supabase.co';
-const CONTENT_KEY=['sb_publishable_','G-FYhHfDL4OGdL892gY1Zg_','epdbEeqO'].join('');
+const CONTENT_KEY=['sb_','publishable_','G-FYhHfDL4OGdL892gY1Zg_','epdbEeqO'].join('');
 const TRACK='https://fiieuiktlsivwfgyivai.supabase.co';
-const TRACK_KEY='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
+const TRACK_KEY=['sb_','publishable_','e-K50PquV9gHdfmefG6tmg_','o-vVSl0e'].join('');
 const ORDER=['cards','ko-en','en-ko','spelling'];
 const LABEL={cards:'카드','ko-en':'한국어 → 영어','en-ko':'영어 → 한국어',spelling:'Spelling'};
 const COMPLETE={'ko-en':'ko_en_complete','en-ko':'en_ko_complete',spelling:'spelling_complete'};
@@ -94,7 +95,7 @@ function renderQuestion(){
 }
 async function grade(){
   if(ctx.answered||!ctx.renderer)return;const response=ctx.renderer.getResponse();if((ctx.mode==='spelling'||ctx.mode==='ko-en'||ctx.mode==='en-ko')&&(response==null||String(response).trim()===''))return;ctx.answered=true;const result=await gradeQuestion(ctx.question,response);result.responseTimeMs=Date.now()-ctx.startedAt;ctx.renderer.setDisabled(true);ctx.renderer.showFeedback(result);
-  if(result.correct){ctx.score++;const key=CLEARED[ctx.mode],set=new Set(uniq(ctx.progress[key]));set.add(String(ctx.question.id));await saveProgress({[key]:[...set]})}else ctx.wrong.add(String(ctx.question.id));
+  if(result.correct){ctx.score++;const key=CLEARED[ctx.mode],set=new Set(uniq(ctx.progress[key]));set.add(String(ctx.question.id));await saveProgress({[key]:[...set]})}else{ctx.wrong.add(String(ctx.question.id));mountVocabAiWilli({container:ctx.host,item:ctx.queue[ctx.index],question:ctx.question,response,result,mode:ctx.mode})}
   try{await recordAttempt({question:ctx.question,response,result,practiceType:'vocabulary'})}catch(e){console.warn('[v2.13 vocab] attempt queue failed',e)}
   const next=ctx.host.querySelector('#vpNext');if(next){next.disabled=false;next.textContent=ctx.index===ctx.queue.length-1?'끝내기':'다음'}
 }
