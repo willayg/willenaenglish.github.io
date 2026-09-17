@@ -37,103 +37,10 @@
     'get_sentence_audio_urls'
   ]);
 
-  const ROSTER_CACHE_KEY = 'willena:teacher-roster:v1';
-  const ROSTER_CACHE_MAX_AGE_MS = 10 * 60 * 1000;
-  let rosterCacheServedThisPage = false;
-  let confirmedAdminUserId = null;
-  let prefetchedProfileUserId = null;
-  let profilePrefetchPromise = null;
-  let rosterPrefetchPromise = null;
-
   function extractFunctionName(input) {
     const s = String(input || '');
     const m = s.match(/\/\.netlify\/functions\/([^\/?#]+)/);
     return m ? m[1] : '';
-  }
-
-  function parseRequestUrl(input) {
-    try {
-      if (input instanceof Request) return new URL(input.url, window.location.origin);
-      return new URL(String(input || ''), window.location.origin);
-    } catch {
-      return null;
-    }
-  }
-
-  function requestMethod(input, options = {}) {
-    return String(options.method || (input instanceof Request ? input.method : 'GET') || 'GET').toUpperCase();
-  }
-
-  function authAction(input, options = {}) {
-    if (requestMethod(input, options) !== 'GET') return null;
-    const url = parseRequestUrl(input);
-    if (!url || !url.pathname.includes('/.netlify/functions/supabase_auth')) return null;
-    const action = url.searchParams.get('action');
-    return action === 'whoami' || action === 'get_profile' ? action : null;
-  }
-
-  function requestedProfileUserId(input) {
-    const url = parseRequestUrl(input);
-    return url ? (url.searchParams.get('user_id') || '') : '';
-  }
-
-  function isRosterRequest(input, options = {}) {
-    if (requestMethod(input, options) !== 'GET') return false;
-    const url = parseRequestUrl(input);
-    if (!url || !url.pathname.includes('/.netlify/functions/teacher_admin')) return false;
-    return url.searchParams.get('action') === 'list_students';
-  }
-
-  function isTeacherAdminMutation(input, options = {}) {
-    const method = requestMethod(input, options);
-    if (method === 'GET' || method === 'HEAD') return false;
-    const url = parseRequestUrl(input);
-    return !!(url && url.pathname.includes('/.netlify/functions/teacher_admin'));
-  }
-
-  function jsonResponse(payload, extraHeaders = {}) {
-    return new Response(JSON.stringify(payload), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json', ...extraHeaders }
-    });
-  }
-
-  function readRosterCache() {
-    try {
-      const raw = sessionStorage.getItem(ROSTER_CACHE_KEY);
-      if (!raw) return null;
-      const parsed = JSON.parse(raw);
-      if (!parsed || !parsed.saved_at || !parsed.payload || !Array.isArray(parsed.payload.students)) return null;
-      if ((Date.now() - Number(parsed.saved_at)) > ROSTER_CACHE_MAX_AGE_MS) return null;
-      return parsed;
-    } catch {
-      return null;
-    }
-  }
-
-  function writeRosterCache(payload) {
-    try {
-      if (!payload || payload.success === false || !Array.isArray(payload.students)) return;
-      sessionStorage.setItem(ROSTER_CACHE_KEY, JSON.stringify({ saved_at: Date.now(), payload }));
-    } catch {}
-  }
-
-  function clearRosterCache() {
-    try { sessionStorage.removeItem(ROSTER_CACHE_KEY); } catch {}
-  }
-
-  async function cacheRosterResponse(response) {
-    try {
-      if (!response || !response.ok) return;
-      const payload = await response.clone().json();
-      writeRosterCache(payload);
-    } catch {}
-  }
-
-  function clearStartupPrefetch() {
-    prefetchedProfileUserId = null;
-    profilePrefetchPromise = null;
-    rosterPrefetchPromise = null;
   }
 
   // Detect if we're on a CF Pages domain
@@ -179,9 +86,6 @@
 
     // WillenaAPI is loaded - patch it
     const origGetApiUrl = window.WillenaAPI.getApiUrl;
-    const origFetch = typeof window.WillenaAPI.fetch === 'function'
-      ? window.WillenaAPI.fetch.bind(window.WillenaAPI)
-      : null;
     
     window.WillenaAPI.getApiUrl = function(path) {
       const url = origGetApiUrl(path);
@@ -219,101 +123,6 @@
       
       return url;
     };
-
-    if (origFetch && host === 'teachers.willenaenglish.com') {
-      function startAdminPrefetch(userId) {
-        const id = String(userId || '').trim();
-        if (!id) return;
-        if (!profilePrefetchPromise || prefetchedProfileUserId !== id) {
-          prefetchedProfileUserId = id;
-          profilePrefetchPromise = Promise.resolve(origFetch(
-            `/.netlify/functions/supabase_auth?action=get_profile&user_id=${encodeURIComponent(id)}&_prefetch=${Date.now()}`,
-            { credentials:'include', cache:'no-store' }
-          )).catch(() => null);
-        }
-        if (!rosterPrefetchPromise && !readRosterCache()) {
-          rosterPrefetchPromise = Promise.resolve(origFetch(
-            '/.netlify/functions/teacher_admin?action=list_students',
-            { credentials:'include', cache:'no-store', headers:{'Content-Type':'application/json'} }
-          )).then(async response => {
-            await cacheRosterResponse(response);
-            return response;
-          }).catch(() => null);
-        }
-      }
-
-      window.WillenaAPI.fetch = async function(input, options = {}) {
-        const action = authAction(input, options);
-
-        if (action === 'whoami') {
-          let guessedUserId = '';
-          try { guessedUserId = localStorage.getItem('userId') || ''; } catch {}
-          if (guessedUserId) startAdminPrefetch(guessedUserId);
-
-          const response = await origFetch(input, options);
-          try {
-            const payload = await response.clone().json();
-            if (response.ok && payload?.user_id) {
-              const actualId = String(payload.user_id);
-              confirmedAdminUserId = actualId;
-              try { localStorage.setItem('userId', actualId); } catch {}
-              if (guessedUserId && guessedUserId !== actualId) clearStartupPrefetch();
-              startAdminPrefetch(actualId);
-            } else {
-              confirmedAdminUserId = null;
-              clearStartupPrefetch();
-            }
-          } catch {
-            confirmedAdminUserId = null;
-            clearStartupPrefetch();
-          }
-          return response;
-        }
-
-        if (action === 'get_profile') {
-          const requestedId = requestedProfileUserId(input);
-          if (confirmedAdminUserId && requestedId === confirmedAdminUserId && prefetchedProfileUserId === requestedId && profilePrefetchPromise) {
-            const prefetched = await profilePrefetchPromise;
-            if (prefetched?.ok) return prefetched.clone();
-          }
-          return origFetch(input, options);
-        }
-
-        if (isRosterRequest(input, options)) {
-          const cached = !rosterCacheServedThisPage ? readRosterCache() : null;
-          if (cached) {
-            rosterCacheServedThisPage = true;
-            if (!rosterPrefetchPromise) {
-              rosterPrefetchPromise = Promise.resolve(origFetch(input, { ...options, cache:'no-store' }))
-                .then(async response => { await cacheRosterResponse(response); return response; })
-                .catch(() => null);
-            }
-            return jsonResponse(cached.payload, { 'X-Willena-Roster-Cache':'session' });
-          }
-
-          if (rosterPrefetchPromise) {
-            const prefetched = await rosterPrefetchPromise;
-            if (prefetched?.ok) {
-              rosterCacheServedThisPage = true;
-              await cacheRosterResponse(prefetched);
-              return prefetched.clone();
-            }
-          }
-
-          const response = await origFetch(input, options);
-          rosterCacheServedThisPage = true;
-          await cacheRosterResponse(response);
-          return response;
-        }
-
-        const response = await origFetch(input, options);
-        if (isTeacherAdminMutation(input, options) && response?.ok) {
-          clearRosterCache();
-          rosterPrefetchPromise = null;
-        }
-        return response;
-      };
-    }
 
     // Update BASE_URL to reflect the gateway
     window.WillenaAPI.BASE_URL = window.__CF_API_GATEWAY;
