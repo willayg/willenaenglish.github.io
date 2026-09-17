@@ -4,6 +4,8 @@ const $=(s,r=document)=>r.querySelector(s);
 const $$=(s,r=document)=>[...r.querySelectorAll(s)];
 const ADMIN='/.netlify/functions/teacher_admin';
 const state={students:[],filtered:[],selected:null};
+let classesModulePromise=null;
+let levelTestsPromise=null;
 
 function loginUrl(){return `/Teachers/login.html?redirect=${encodeURIComponent(location.pathname+location.search)}`}
 function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
@@ -32,8 +34,28 @@ function input(label,id,val='',type='text',extra=''){return `<label class="admin
 function selectField(label,id,options,current=''){return `<label class="admin-form-field"><span>${esc(label)}</span><select id="${id}">${options.map(([v,l])=>`<option value="${esc(v)}"${String(v)===String(current)?' selected':''}>${esc(l)}</option>`).join('')}</select></label>`}
 
 function setView(view){$$('.view').forEach(section=>section.classList.toggle('active',section.id===`view-${view}`));$$('[data-view]').forEach(button=>button.classList.toggle('active',button.dataset.view===view))}
+async function ensureClasses(){
+  if(!classesModulePromise)classesModulePromise=import('./admin-v2-classes.js?v=1.07').then(mod=>mod.mountClasses());
+  return classesModulePromise;
+}
+async function ensureLevelTests(){
+  if(levelTestsPromise)return levelTestsPromise;
+  levelTestsPromise=new Promise((resolve,reject)=>{
+    if(window.__adminV2LevelTestsLoaded){$('#levelTestRefresh')?.click();resolve();return}
+    const script=document.createElement('script');script.src='/Teachers/admin/admin-level-tests.js?v=20260917-adminv2-p4';script.async=true;
+    script.onload=()=>{window.__adminV2LevelTestsLoaded=true;$('#levelTestRefresh')?.click();resolve()};
+    script.onerror=()=>reject(new Error('Could not load Level Tests'));
+    document.head.appendChild(script);
+  });
+  return levelTestsPromise;
+}
+function activateView(view){
+  setView(view);
+  if(view==='classes')ensureClasses().catch(error=>{$('#classGridV2').innerHTML=`<div class="empty">${esc(error.message)}</div>`});
+  if(view==='level-tests')ensureLevelTests().catch(error=>{$('#levelTestRows').innerHTML=`<tr><td colspan="5" class="empty">${esc(error.message)}</td></tr>`});
+}
 function bindNavigation(){
-  $$('[data-view]').forEach(button=>button.addEventListener('click',()=>setView(button.dataset.view)));
+  $$('[data-view]').forEach(button=>button.addEventListener('click',()=>activateView(button.dataset.view)));
   const layout=$('#adminLayout'),toggle=$('#railCollapseToggle');toggle?.addEventListener('click',()=>{const expanded=layout.classList.toggle('sidebar-expanded');toggle.setAttribute('aria-expanded',String(expanded));toggle.setAttribute('aria-label',expanded?'Collapse sidebar':'Expand sidebar')})
 }
 function buildFilters(){
