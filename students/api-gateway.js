@@ -39,7 +39,10 @@
 
   const ROSTER_CACHE_KEY = 'willena:teacher-roster:v1';
   const ROSTER_CACHE_MAX_AGE_MS = 10 * 60 * 1000;
+  const ADMIN_BOOTSTRAP_URL = 'https://api.willenaenglish.com/.netlify/functions/teacher_admin_bootstrap';
   let rosterCacheServedThisPage = false;
+  let adminBootstrapPromise = null;
+  let adminBootstrapPayload = null;
 
   function extractFunctionName(input) {
     const s = String(input || '');
@@ -69,6 +72,29 @@
     if (method === 'GET' || method === 'HEAD') return false;
     const url = parseRequestUrl(input);
     return !!(url && url.pathname.includes('/.netlify/functions/teacher_admin'));
+  }
+
+  function adminStartupAction(input, options = {}) {
+    const method = String(options.method || (input instanceof Request ? input.method : 'GET') || 'GET').toUpperCase();
+    if (method !== 'GET') return null;
+    const url = parseRequestUrl(input);
+    if (!url) return null;
+    if (url.pathname.includes('/.netlify/functions/supabase_auth')) {
+      const action = url.searchParams.get('action');
+      if (action === 'whoami') return 'whoami';
+      if (action === 'get_profile') return 'get_profile';
+    }
+    if (url.pathname.includes('/.netlify/functions/teacher_admin') && url.searchParams.get('action') === 'list_students') {
+      return 'list_students';
+    }
+    return null;
+  }
+
+  function jsonResponse(payload, extraHeaders = {}) {
+    return new Response(JSON.stringify(payload), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json', ...extraHeaders }
+    });
   }
 
   function readRosterCache() {
@@ -187,13 +213,55 @@
       return url;
     };
 
-    // Teacher/admin roster fast path. Scope this narrowly to the one basic
-    // directory request used by Admin. The first roster request in a page can
-    // render from a recent session cache immediately while a fresh copy is
-    // fetched in the background for the next load. Explicit later refreshes
-    // still go to the network. Any teacher_admin mutation invalidates the cache.
     if (origFetch && host === 'teachers.willenaenglish.com') {
+      async function loadAdminBootstrap() {
+        if (adminBootstrapPayload) return adminBootstrapPayload;
+        if (adminBootstrapPromise) return adminBootstrapPromise;
+        adminBootstrapPromise = fetch(ADMIN_BOOTSTRAP_URL, {
+          credentials: 'include',
+          cache: 'no-store',
+          headers: { 'Accept': 'application/json' }
+        }).then(async response => {
+          const payload = await response.json().catch(() => ({}));
+          if (!response.ok || payload?.success === false) {
+            const error = new Error(payload?.error || `Bootstrap failed (${response.status})`);
+            error.status = response.status;
+            throw error;
+          }
+          adminBootstrapPayload = payload;
+          writeRosterCache({ success:true, students:payload.students || [], cached_at:payload.cached_at || null });
+          return payload;
+        }).catch(error => {
+          adminBootstrapPromise = null;
+          adminBootstrapPayload = null;
+          throw error;
+        });
+        return adminBootstrapPromise;
+      }
+
       window.WillenaAPI.fetch = async function(input, options = {}) {
+        const startupAction = adminStartupAction(input, options);
+        if (startupAction) {
+          try {
+            const boot = await loadAdminBootstrap();
+            const user = boot.user || {};
+            if (startupAction === 'whoami') {
+              return jsonResponse({ success:true, user_id:user.user_id || user.id || null }, { 'X-Willena-Admin-Bootstrap':'whoami' });
+            }
+            if (startupAction === 'get_profile') {
+              return jsonResponse({ success:true, profile:user }, { 'X-Willena-Admin-Bootstrap':'profile' });
+            }
+            if (startupAction === 'list_students') {
+              rosterCacheServedThisPage = true;
+              return jsonResponse({ success:true, students:boot.students || [], cached_at:boot.cached_at || null }, { 'X-Willena-Admin-Bootstrap':'roster' });
+            }
+          } catch (error) {
+            // Preserve the existing auth refresh/fallback flow. A 401 here means
+            // the page should perform its normal refresh-token sequence.
+            if (startupAction !== 'list_students') return origFetch(input, options);
+          }
+        }
+
         if (isRosterRequest(input, options)) {
           const cached = !rosterCacheServedThisPage ? readRosterCache() : null;
           if (cached) {
@@ -201,13 +269,7 @@
             Promise.resolve(origFetch(input, { ...options, cache: 'no-store' }))
               .then(async response => { await cacheRosterResponse(response); })
               .catch(() => {});
-            return new Response(JSON.stringify(cached.payload), {
-              status: 200,
-              headers: {
-                'Content-Type': 'application/json',
-                'X-Willena-Roster-Cache': 'session'
-              }
-            });
+            return jsonResponse(cached.payload, { 'X-Willena-Roster-Cache': 'session' });
           }
           const response = await origFetch(input, options);
           rosterCacheServedThisPage = true;
@@ -216,7 +278,11 @@
         }
 
         const response = await origFetch(input, options);
-        if (isTeacherAdminMutation(input, options) && response?.ok) clearRosterCache();
+        if (isTeacherAdminMutation(input, options) && response?.ok) {
+          clearRosterCache();
+          adminBootstrapPayload = null;
+          adminBootstrapPromise = null;
+        }
         return response;
       };
     }
