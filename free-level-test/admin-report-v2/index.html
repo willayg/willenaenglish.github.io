@@ -8,9 +8,36 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>Willena English Student Report</title>
-<link rel="icon" href="/Assets/Images/Logo.png?v=20260917-report118">
-<script src="/students/api-gateway.js?v=20260917-adminv2-118"></script>
-<script src="/js/api-config.js?v=20260917-adminv2-118"></script>
+<link rel="icon" href="/Assets/Images/Logo.png?v=20260917-report119">
+<script src="/students/api-gateway.js?v=20260917-adminv2-119"></script>
+<script src="/js/api-config.js?v=20260917-adminv2-119"></script>
+<script>
+(function(){
+  function isAdminClasses(input){return /\/\.netlify\/functions\/admin_classes(?:\?|$)/.test(String(input||''))}
+  async function repairSession(){
+    try{
+      let r=await fetch('https://api.willenaenglish.com/.netlify/functions/supabase_auth?action=refresh&_='+Date.now(),{credentials:'include',cache:'no-store'});
+      return r.ok;
+    }catch(_){return false}
+  }
+  function install(){
+    if(!window.WillenaAPI||typeof window.WillenaAPI.fetch!=='function'){setTimeout(install,10);return}
+    if(window.WillenaAPI.__adminReportCookieAuth)return;
+    var original=window.WillenaAPI.fetch.bind(window.WillenaAPI);
+    window.WillenaAPI.fetch=async function(input,options){
+      if(!isAdminClasses(input))return original(input,options);
+      var absolute='https://api.willenaenglish.com'+String(input);
+      var opts=Object.assign({credentials:'include',cache:'no-store'},options||{});
+      var headers=new Headers(opts.headers||{});headers.delete('Authorization');headers.delete('authorization');opts.headers=headers;
+      var response=await fetch(absolute,opts);
+      if(response.status===401&&await repairSession())response=await fetch(absolute,opts);
+      return response;
+    };
+    window.WillenaAPI.__adminReportCookieAuth=true;
+  }
+  install();
+})();
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -38,11 +65,11 @@
 </style>
 </head>
 <body>
-<div class="app-shell"><header class="app-header"><img src="/Assets/Images/Logo.png?v=20260917-report118" alt="Willena English" class="brand-logo"><div class="brand-copy"><strong>Willena English</strong><span id="brandSubtitle">학생 리포트</span></div><div class="language-segmented" role="group" aria-label="Language"><button type="button" data-language-choice="ko" class="is-active">한국어</button><button type="button" data-language-choice="en">English</button></div></header><main id="app" class="app-main" aria-live="polite"><section class="screen shared-report-loading">보고서를 불러오는 중입니다…</section></main><footer id="footerText">Willena English · Student Report</footer></div>
-<script type="module">import{ensureAuthRefresh}from'/Teachers/auth-refresh.js?v=20260917-report118';ensureAuthRefresh();</script>
+<div class="app-shell"><header class="app-header"><img src="/Assets/Images/Logo.png?v=20260917-report119" alt="Willena English" class="brand-logo"><div class="brand-copy"><strong>Willena English</strong><span id="brandSubtitle">학생 리포트</span></div><div class="language-segmented" role="group" aria-label="Language"><button type="button" data-language-choice="ko" class="is-active">한국어</button><button type="button" data-language-choice="en">English</button></div></header><main id="app" class="app-main" aria-live="polite"><section class="screen shared-report-loading">보고서를 불러오는 중입니다…</section></main><footer id="footerText">Willena English · Student Report</footer></div>
+<script type="module">import{ensureAuthRefresh}from'/Teachers/auth-refresh.js?v=20260917-report119';ensureAuthRefresh();</script>
 <script src="https://staging.willenaenglish.com/free-level-test/js/canonical-answer-scoring.js?v=20260806-score3"></script>
 <script src="https://staging.willenaenglish.com/shared/learning-engine/assessment-calculation.js?v=20260913-placement1"></script>
-<script src="/free-level-test/js/report-calculation.js?v=1.18"></script>
+<script src="/free-level-test/js/report-calculation.js?v=1.19"></script>
 <script src="https://staging.willenaenglish.com/free-level-test/admin-report/shared-report.js?v=20260913-speaking1"></script>
 <script src="https://staging.willenaenglish.com/free-level-test/admin-report/stored-level-authority.js?v=20260806-score3"></script>
 <script src="https://staging.willenaenglish.com/free-level-test/js/segmented-skill-report.js?v=20260812-pips1"></script>
