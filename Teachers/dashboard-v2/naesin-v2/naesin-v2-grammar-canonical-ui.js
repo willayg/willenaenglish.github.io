@@ -39,6 +39,7 @@ const KO={
   passive_voice:'수동태',
   have_to:'have to',
   infinitive_to:'to부정사',
+  irregular_verbs:'불규칙 동사',
   ask_to:'ask + 목적어 + to부정사',
   want_to:'want + to부정사',
   verb_to_infinitive:'동사 + to부정사',
@@ -60,6 +61,7 @@ const n=v=>Number.isFinite(Number(v))?Number(v):0;
 const human=v=>String(v||'').replace(/[_-]+/g,' ').replace(/\s+/g,' ').trim();
 const key=v=>String(v||'').trim().toLowerCase();
 const lessonKey=v=>String(v||'').trim();
+const koLabel=v=>KO[key(v)]||`기타 문법 · ${human(v)}`;
 
 function grammarRows(){
   const d=window.NaesinV2StudentDetail?.getCurrentData?.()||{};
@@ -117,8 +119,7 @@ function decorateRows(){
     btn.dataset.canonicalTarget=String(r.target||'');
     btn.dataset.canonicalLesson=String(r.lesson||'');
     const copy=$('.na2-grammar-copy',btn);if(!copy)return;
-    const ko=KO[key(r.target)]||'기타 문법 패턴';
-    copy.innerHTML=`<b class="na2-grammar-ko">${esc(ko)}</b><small class="na2-grammar-en">${esc(human(r.target))}</small><em class="na2-grammar-lesson">${esc(r.lesson||'')}</em>`;
+    copy.innerHTML=`<b class="na2-grammar-ko">${esc(koLabel(r.target))}</b><small class="na2-grammar-en">${esc(human(r.target))}</small><em class="na2-grammar-lesson">${esc(r.lesson||'')}</em>`;
   });
 }
 
@@ -139,7 +140,7 @@ async function openCanonical(btn){
     const data=await window.NaesinV2Data?.loadWrongDetail?.(ctx.studentId,ctx.planId)||{items:[]};
     const items=(Array.isArray(data.items)?data.items:[]).filter(w=>matchesRow(w,row));
     if(items.length){
-      panel.innerHTML=`<div class="na2-canonical-expand-head"><b>${esc(KO[key(row.target)]||human(row.target))}</b><span>현재 오답 ${items.length}문항</span></div>${items.map(wrongCard).join('')}`;
+      panel.innerHTML=`<div class="na2-canonical-expand-head"><b>${esc(koLabel(row.target))}</b><span>현재 오답 ${items.length}문항</span></div>${items.map(wrongCard).join('')}`;
     }else{
       panel.innerHTML=n(row.current_wrong)>0
         ?`<div class="na2-detail-error"><b>오답 ${n(row.current_wrong)}개가 집계되어 있지만 문제 상세를 연결하지 못했습니다.</b><span>이 행의 원본 태그 연결을 확인해야 합니다.</span></div>`
@@ -165,15 +166,13 @@ function installStyles(){
   if($('#na2CanonicalGrammarStyles'))return;
   const st=document.createElement('style');st.id='na2CanonicalGrammarStyles';st.textContent=`
     .na2-grammar-copy{display:flex!important;flex-direction:column!important;align-items:flex-start!important;min-width:220px}
-    .na2-grammar-copy .na2-grammar-ko{font-size:1.05rem!important;line-height:1.2!important;font-weight:800!important;color:#24323b!important;letter-spacing:-.02em}
+    .na2-grammar-copy .na2-grammar-ko{font-size:1.08rem!important;line-height:1.2!important;font-weight:800!important;color:#24323b!important;letter-spacing:-.02em}
     .na2-grammar-copy .na2-grammar-en{font-size:.72rem!important;line-height:1.25!important;color:#5f7380!important;margin-top:4px!important;font-weight:650!important}
     .na2-grammar-copy .na2-grammar-lesson{font-style:normal!important;font-size:.62rem!important;color:#9aa6ad!important;margin-top:3px!important}
     .na2-grammar-row.open{background:#f2fbfc!important}
     .na2-canonical-expand-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 4px 12px;color:#52636d;font-size:.72rem}
-    .na2-canonical-expand-head b{font-size:.84rem;color:#26363f}
-    #burger-menu-mount #burger-menu-template-inserted{display:flex!important;align-items:center!important}
-    #burger-menu-mount .burger-menu{display:flex!important;flex-direction:row!important;align-items:center!important;position:relative!important;top:auto!important;right:auto!important;box-shadow:none!important}
-    @media(max-width:760px){.na2-grammar-copy{min-width:150px}.na2-grammar-copy .na2-grammar-ko{font-size:.94rem!important}}
+    .na2-canonical-expand-head b{font-size:.9rem;color:#26363f}
+    @media(max-width:760px){.na2-grammar-copy{min-width:150px}.na2-grammar-copy .na2-grammar-ko{font-size:.96rem!important}}
   `;document.head.appendChild(st);
 }
 
