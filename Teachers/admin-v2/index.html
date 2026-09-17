@@ -5,7 +5,8 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <title>Willena Admin V2</title>
-<script src="/js/api-config.js"></script>
+<script src="/students/api-gateway.js?v=20260917-adminv2-103"></script>
+<script src="/js/api-config.js?v=20260917-adminv2-103"></script>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/Teachers/dashboard-v2/dashboard-v2.css?v=20260917-r14-08">
 <link rel="stylesheet" href="/Teachers/dashboard-v2/dashboard-v2-polish.css?v=20260917-r14-07">
@@ -40,11 +41,11 @@
           <select class="control" id="classFilter"><option value="">All classes</option></select>
           <select class="control" id="gradeFilter"><option value="">All grades</option></select>
           <input class="control search" id="studentSearch" type="search" placeholder="Search student…">
-          <button class="control" id="studentRefresh">Refresh</button>
+          <button class="control" id="studentRefresh" type="button">Refresh</button>
         </div>
       </div>
       <div class="panel">
-        <div class="panel-head"><div><div class="panel-title">Student directory</div><div class="panel-sub" id="studentStatus"></div></div><span class="count-pill" id="studentCount">0 students</span></div>
+        <div class="panel-head"><div><div class="panel-title">Students</div><div class="panel-sub" id="studentStatus">Loading…</div></div><span class="count-pill" id="studentCount">0 students</span></div>
         <div class="student-list" id="studentList"><div class="empty">Loading students…</div></div>
       </div>
     </section>
@@ -67,10 +68,9 @@
   <button class="mobile-tab" data-view="level-tests"><b>◫</b>Tests</button>
 </nav>
 
-<div class="drawer-bg" id="studentDrawerBg"><aside class="drawer"><div class="drawer-head"><div class="drawer-head-main"><div class="drawer-name" id="drawerName">Student</div><div class="drawer-meta" id="drawerMeta"></div></div><button class="close" id="closeStudentDrawer">×</button></div><div class="drawer-body" id="drawerBody"></div></aside></div>
-
-<div class="admin-v2-boot" id="adminV2Boot" aria-live="polite"><img src="/Assets/Images/Logo.png" alt="Willena"><span>Loading student directory…</span></div>
-<div class="admin-v2-rev">Admin V2 · 1.02</div>
-<script type="module" src="./admin-v2.js?v=1.02"></script>
+<div class="drawer-bg" id="studentDrawerBg"><aside class="drawer"><div class="drawer-head"><div class="drawer-head-main"><div class="drawer-name" id="drawerName">Student</div><div class="drawer-meta" id="drawerMeta"></div></div><button class="close" id="closeStudentDrawer" type="button">×</button></div><div class="drawer-body" id="drawerBody"></div></aside></div>
+<div class="admin-v2-boot hidden" id="adminV2Boot" aria-live="polite"><img src="/Assets/Images/Logo.png" alt="Willena"><span>Checking admin access…</span></div>
+<div class="admin-v2-rev">Admin V2 · 1.03</div>
+<script type="module" src="./admin-v2.js?v=1.03"></script>
 </body>
 </html>
