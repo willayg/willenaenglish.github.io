@@ -71,8 +71,26 @@
   // Admin V2 so other apps are unaffected. WillenaAPI is resolved at call time.
   if (window.location.pathname.startsWith('/Teachers/admin-v2/') && typeof window.api !== 'function') {
     window.api = async function(path, options = {}) {
+      let requestPath = path;
+      try {
+        const raw = String(path || '');
+        if (raw.startsWith('/.netlify/functions/admin_classes')) {
+          const url = new URL(raw, window.location.origin);
+          const action = url.searchParams.get('action');
+          if (action) {
+            const params = new URLSearchParams(url.search);
+            params.delete('action');
+            params.set('gateway_service', 'admin_classes');
+            params.set('admin_action', action);
+            requestPath = '/.netlify/functions/supabase_auth?' + params.toString();
+          }
+        }
+      } catch (error) {
+        console.warn('[Admin V2] Could not rewrite legacy admin request', error);
+      }
+
       const fn = window.WillenaAPI?.fetch || window.fetch.bind(window);
-      const response = await fn(path, { credentials: 'include', cache: 'no-store', ...options });
+      const response = await fn(requestPath, { credentials: 'include', cache: 'no-store', ...options });
       let data = {};
       try { data = await response.json(); } catch {}
       if (!response.ok || data?.success === false) {
