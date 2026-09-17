@@ -1,4 +1,4 @@
-/* Dashboard V2 targeted polish: sidebar icons, top command pill, and shared outlined UI. */
+/* Dashboard V2 targeted polish: sidebar icons and shared outlined UI. */
 
 /* Sidebar icons: larger, darker, more vivid */
 .rail .nav{min-height:52px!important}
@@ -14,16 +14,6 @@
 .layout:not(.sidebar-expanded) .rail .nav.active>span:last-child{color:#315b63!important}
 .layout.sidebar-expanded .rail .nav{flex-direction:row!important;overflow:hidden!important}
 .layout.sidebar-expanded .rail .nav>span:last-child{font-size:inherit!important;line-height:inherit!important;text-align:left!important;width:auto!important;max-width:none!important}
-
-/* Header user + bell + burger as one attached pill, anchored in the topbar */
-.top-actions #burger-menu-mount .burger-menu{position:relative!important;display:flex!important;align-items:stretch!important;gap:0!important;border-radius:14px!important;background:#fff!important;box-shadow:none!important;border:1px solid rgba(255,255,255,.16)!important;overflow:visible!important}
-.top-actions #burger-menu-mount .burger-user-label{display:flex!important;height:40px!important;padding:0 13px!important;border:0!important;border-radius:14px 0 0 14px!important;background:#fff!important;color:#37434d!important;box-shadow:none!important;font-size:.72rem!important}
-.top-actions #burger-menu-mount .hw-notif-wrap,.top-actions #burger-menu-mount .burger-dropdown-wrap{display:flex!important;margin:0!important}
-.top-actions #burger-menu-mount .hw-notif-btn,.top-actions #burger-menu-mount .burger-btn{width:40px!important;height:40px!important;margin:0!important;border-radius:0!important;background:#4fb9c8!important;color:#fff!important;box-shadow:none!important;border:0!important}
-.top-actions #burger-menu-mount .hw-notif-btn{border-left:1px solid rgba(255,255,255,.28)!important}
-.top-actions #burger-menu-mount .burger-btn{border-left:1px solid rgba(255,255,255,.28)!important;border-radius:0 14px 14px 0!important}
-.top-actions #burger-menu-mount .hw-notif-btn:hover,.top-actions #burger-menu-mount .burger-btn:hover{background:#3aa9b8!important}
-.top-actions #burger-menu-mount .burger-dropdown{top:calc(100% + 7px)!important;right:0!important}
 
 /* Naesin: white-fill / cyan-outline button language */
 #view-naesin .na-add{background:#fff!important;color:#267985!important;border:1.7px solid #83cfda!important;border-radius:14px!important;padding:12px 17px!important;min-height:46px!important;font-weight:800!important;box-shadow:0 3px 9px rgba(79,185,200,.08)!important}
@@ -71,8 +61,6 @@
 @keyframes teacherLoadSweep{0%{background-position:100% 0}100%{background-position:-100% 0}}
 
 @media(max-width:700px){
-  .top-actions #burger-menu-mount .burger-user-label{display:none!important}
-  .top-actions #burger-menu-mount .hw-notif-btn{border-radius:14px 0 0 14px!important}
   #view-naesin .na-actions .na-btn{padding:9px 11px!important}
   #view-students .student-list{padding:7px!important}
   #studentList>.empty,#drawerBody>.empty,.na2-tests>.na2-empty,.na2-matrix-loading td{min-height:180px!important;padding-top:34px!important}
