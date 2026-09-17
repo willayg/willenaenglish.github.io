@@ -6,7 +6,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>Willena Test Prep v2.25.114</title>
+<title>Willena Test Prep v2.25.133</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -21,12 +21,15 @@
 <link rel="stylesheet" href="./mock-test.css?v=1.4.2" data-mock-test-style>
 <link rel="stylesheet" href="./assignment-cards.css?v=1.0.2">
 <link rel="stylesheet" href="./theme-pips.css?v=2.25.95">
-<link rel="stylesheet" href="./dark-mode.css?v=2.25.112">
+<link rel="stylesheet" href="./dark-mode.css?v=2.25.87">
 <link rel="stylesheet" href="./v2-25-88-fixes.css?v=2.25.88">
-<link rel="stylesheet" href="./cyberpunk-mode.css?v=2.25.112">
+<link rel="stylesheet" href="./cyberpunk-mode.css?v=2.25.90">
 <link rel="stylesheet" href="./theme-overrides-2.25.91.css?v=2.25.91">
+<link rel="stylesheet" href="./theme-runtime-practice-fixes.css?v=20260915-2">
 <link rel="stylesheet" href="./question-renderer-accessibility.css?v=2.25.93">
-<link rel="stylesheet" href="./grammar-guide.css?v=1.0.0">
+<link rel="stylesheet" href="./grammar-guide.css?v=2.0.0">
+<link rel="stylesheet" href="./grammar-guide-single.css?v=1.0.1">
+<link rel="stylesheet" href="./grammar-guide-question-examples.css?v=1.0.1">
 <style>
 html,body{width:100%;max-width:100%;overflow-x:hidden}
 .student-header{width:100vw;max-width:none;margin-left:0;margin-right:0;left:0;right:auto}
@@ -40,17 +43,19 @@ html,body{width:100%;max-width:100%;overflow-x:hidden}
   "imports": {
     "/students/test-prep-v2/question-renderer.js?v=2.20.6": "/students/test-prep-v2/question-renderer-accessible.js?v=2.25.93",
     "/students/test-prep-v2/question-renderer.js": "/students/test-prep-v2/question-renderer-accessible.js?v=2.25.93",
-    "/students/test-prep-v2/question-session.js?v=2.0.1": "/students/test-prep-v2/question-session.js?v=2.0.4",
+    "/students/test-prep-v2/question-session.js?v=2.0.1": "/students/test-prep-v2/question-session.js?v=2.0.7",
     "/students/test-prep-v2/practice-loader.js?v=2.0.2": "/students/test-prep-v2/practice-loader.js?v=2.0.3",
     "/students/test-prep-v2/perf-debug.js?v=1.0.0": "/students/test-prep-v2/perf-debug.js?v=1.0.1",
-    "/students/test-prep-v2/mock-test.js?v=1.4.3": "/students/test-prep-v2/mock-test.js?v=1.4.4",
-    "/students/test-prep-v2/mock-test-source.js?v=1.2.2": "/students/test-prep-v2/mock-test-source.js?v=1.2.3",
+    "/students/test-prep-v2/mock-test.js?v=1.4.3": "/students/test-prep-v2/mock-test.js?v=1.4.8",
+    "/students/test-prep-v2/content-source.js?v=2.24.0": "/students/test-prep-v2/content-source.js?v=2.24.5",
+    "/students/test-prep-v2/content-source.js?v=2.24.4": "/students/test-prep-v2/content-source.js?v=2.24.5",
     "/students/test-prep-v2/mock-test-history.js?v=2.25.99": "/students/test-prep-v2/mock-test-history.js?v=2.25.101",
     "/students/test-prep-v2/sentence-practice-v1.js?v=1.2.0": "/students/test-prep-v2/sentence-practice-v1.js?v=1.3.0",
     "/students/test-prep-v2/tracking-client.js?v=2.17a": "/students/test-prep-v2/tracking-client.js?v=2.17b",
-    "/students/test-prep-v2/navigation.js?v=2.21.0": "/students/test-prep-v2/navigation.js?v=2.21.3",
+    "/students/test-prep-v2/navigation.js?v=2.21.0": "/students/test-prep-v2/navigation.js?v=2.21.4",
+    "/students/test-prep-v2/navigation.js?v=2.21.3": "/students/test-prep-v2/navigation.js?v=2.21.4",
     "/students/test-prep-v2/performance-learning.js?v=1.0.0": "/students/test-prep-v2/performance-learning.js?v=2.2.0",
-    "/students/test-prep-v2/stats-client.js?v=2.16a": "/students/test-prep-v2/stats-client.js?v=2.17.0"
+    "/students/test-prep-v2/vocab-learning.js?v=2.14.1": "/students/test-prep-v2/vocab-learning.js?v=2.14.2"
   }
 }
 </script>
@@ -89,22 +94,25 @@ html,body{width:100%;max-width:100%;overflow-x:hidden}
   <main class="screen" id="screen"><div class="loading">Loading…</div></main>
 </div>
 <nav class="bottom" id="bottom" hidden></nav>
-<div class="app-version">Test Prep · v2.25.114</div>
+<div class="app-version">Test Prep · v2.25.133</div>
 <script src="/students/api-gateway.js?v=2.13b"></script>
 <script src="/js/api-config.js?v=2.13b"></script>
 <script type="module" src="./theme-pips.js?v=2.25.93"></script>
-<script type="module" src="./header-v2.js?v=1.3.0"></script>
-<script type="module" src="./grammar-guide.js?v=1.0.0"></script>
+<script type="module" src="./header-v2.js?v=1.3.5"></script>
+<script type="module" src="./grammar-guide.js?v=2.1.0"></script>
+<script type="module" src="./grammar-guide-single.js?v=1.2.1"></script>
 <script type="module">
 import {QuestionRenderer} from './question-renderer.js?v=2.20.6';
 import {trackingState} from './tracking-client.js?v=2.17a';
-import {currentRoute} from './navigation.js?v=2.21.3';
+import {currentRoute} from './navigation.js?v=2.21.4';
 import {installWillenaKeyboard} from '../shared/willena-keyboard.js?v=1.5.1';
 import {installQuestionFlags} from '../shared/question-flags.js?v=1.0.0';
-installWillenaKeyboard({submitSelector:'#bottom button.primary,.vp-next'});
-installQuestionFlags({Renderer:QuestionRenderer,contextProvider:()=>{const t=trackingState(),r=currentRoute?.()||{};return{studentId:t.user?.id||null,planId:r.planId||t.plan?.id||null,lesson:r.lesson||t.lesson||null,practiceType:r.practice||t.practice||null,reviewMode:r.view==='review',appRevision:'2.25.114'};}});
+import {installChoiceShufflePlugin} from './question-choice-shuffle-plugin.js?v=1.0.0';
+installWillenaKeyboard({submitSelector:'#bottom button.primary,.vp-next,[data-mock-next]'});
+installChoiceShufflePlugin({Renderer:QuestionRenderer});
+installQuestionFlags({Renderer:QuestionRenderer,contextProvider:()=>{const t=trackingState(),r=currentRoute?.()||{};return{studentId:t.user?.id||null,planId:r.planId||t.plan?.id||null,lesson:r.lesson||t.lesson||null,practiceType:r.practice||t.practice||null,reviewMode:r.view==='review',appRevision:'2.25.133'};}});
 </script>
-<script type="module" src="./app.js?v=2.25.114"></script>
+<script type="module" src="./app.js?v=2.25.133"></script>
 <script type="module" src="./stats-display-v1.js?v=1.3.1"></script>
 </body>
 </html>
