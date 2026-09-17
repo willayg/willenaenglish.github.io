@@ -14,6 +14,7 @@
 
   const NETLIFY_ORIGIN = 'https://students.willenaenglish.com';
   const SENTENCE_GATEWAY = 'https://willena-proxy.willena.workers.dev';
+  const LEVEL_TEST_ADMIN = 'https://api.willenaenglish.com/level-test-admin';
   const NETLIFY_ONLY_FUNCTIONS = new Set([
     'verify_student',
     'set_student_password',
@@ -60,15 +61,16 @@
   if (window.location.pathname.startsWith('/Teachers/admin-v2/')) {
     const stampRevision = () => {
       const el = document.querySelector('.admin-v2-rev');
-      if (el) el.textContent = 'Admin V2 · 1.09';
+      if (el) el.textContent = 'Admin V2 · 1.11';
     };
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', stampRevision, { once: true });
     else stampRevision();
   }
 
-  // Admin V2 reuses a few mature legacy Admin modules. Those modules expect
-  // a global window.api helper. Keep this compatibility bridge scoped only to
-  // Admin V2 so other apps are unaffected. WillenaAPI is resolved at call time.
+  // Admin V2 reuses the mature legacy Level Tests module. That module calls
+  // /.netlify/functions/admin_classes?action=... via window.api(). The current
+  // API gateway exposes the real level-test backend at /level-test-admin, so
+  // translate only those legacy calls here instead of touching the old module.
   if (window.location.pathname.startsWith('/Teachers/admin-v2/') && typeof window.api !== 'function') {
     window.api = async function(path, options = {}) {
       let requestPath = path;
@@ -76,17 +78,10 @@
         const raw = String(path || '');
         if (raw.startsWith('/.netlify/functions/admin_classes')) {
           const url = new URL(raw, window.location.origin);
-          const action = url.searchParams.get('action');
-          if (action) {
-            const params = new URLSearchParams(url.search);
-            params.delete('action');
-            params.set('gateway_service', 'admin_classes');
-            params.set('admin_action', action);
-            requestPath = '/.netlify/functions/supabase_auth?' + params.toString();
-          }
+          requestPath = LEVEL_TEST_ADMIN + url.search;
         }
       } catch (error) {
-        console.warn('[Admin V2] Could not rewrite legacy admin request', error);
+        console.warn('[Admin V2] Could not rewrite legacy level-test request', error);
       }
 
       const fn = window.WillenaAPI?.fetch || window.fetch.bind(window);
