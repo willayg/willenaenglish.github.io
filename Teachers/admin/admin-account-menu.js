@@ -62,10 +62,31 @@
       }
     }catch(e){console.warn('[Admin shell] Shared burger failed',e)}
   }
+
+  function mountRosterFastPaint(){
+    const loadingText=document.getElementById('loadingText'),loading=document.getElementById('loading');
+    if(!loadingText||!loading)return;
+    let done=false;
+    const tryPaint=()=>{
+      if(done||!/Loading students/i.test(loadingText.textContent||''))return;
+      try{
+        const raw=sessionStorage.getItem('willena:teacher-roster:v1');if(!raw)return;
+        const cached=JSON.parse(raw),saved=Number(cached?.saved_at||0),rows=cached?.payload?.students;
+        if(!saved||Date.now()-saved>10*60*1000||!Array.isArray(rows))return;
+        students=rows.filter(s=>s.role==='student').map(s=>({...s,class:normClass(s.class)}));
+        buildFilters();apply();renderClasses();refreshCounts();
+        loading.style.display='none';done=true;observer.disconnect();
+        console.info('[Admin] Painted cached roster while live refresh continues');
+      }catch(e){console.warn('[Admin] Cached roster fast paint skipped',e)}
+    };
+    const observer=new MutationObserver(tryPaint);observer.observe(loadingText,{childList:true,characterData:true,subtree:true});tryPaint();
+  }
+
   function mount(){
     buildShell();
     const oldTop=document.querySelector('.main>.top');if(!oldTop)return;
     prefetchTeacher();
+    mountRosterFastPaint();
     const switchHost=document.getElementById('adminTeacherSwitchHost')||oldTop;
     if(!document.getElementById('adminAppSwitch')){const sw=document.createElement('div');sw.className='admin-app-switch';sw.id='adminAppSwitch';sw.setAttribute('aria-label','Teacher and admin apps');sw.innerHTML='<a id="teacherSwitchLink" href="/Teachers/dashboard-v2/">Teacher</a><a class="active" href="/Teachers/admin/">Admin</a>';switchHost.appendChild(sw);sw.querySelector('#teacherSwitchLink')?.addEventListener('pointerenter',prefetchTeacher,{once:true})}
     mountSharedBurger();
