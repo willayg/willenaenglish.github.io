@@ -1,5 +1,5 @@
 import {aiWilliMessage,showAiWilliStatus,clearAiWilliStatus,decorateAiWilliFeedback,mountAiWilliHelper} from '../shared/ai-willi.js?v=1.1.0';
-import {restoreActivityProgress,saveActivityPosition,saveActivityOutcome,clearActivitySnapshotFor,currentActivityRoute} from './activity-session-store.js?v=3.0.0';
+import {restoreActivityProgress,saveActivityPosition,saveActivityOutcome,clearActivitySnapshotFor,currentActivityRoute} from './activity-session-store.js?v=4.0.0';
 
 // Shared interactive question-session engine for Test Prep v2.
 // Owns the common render -> grade/skip -> record -> advance mechanics.
@@ -73,7 +73,7 @@ export function createQuestionSession({
     const saved=restoreActivityProgress(route);if(!saved)return;
     if(key===restoredRouteKey&&indexState.get()!==0)return;
     restoredRouteKey=key;
-    const target=Math.max(0,Math.min(queueLength()-1,saved.currentIndex||0));
+    const target=Math.max(0,Math.min(queueLength(),saved.currentIndex||0));
     for(const outcome of saved.outcomes||[]){
       const i=Number(outcome.index);if(!Number.isFinite(i)||i<0||i>=target||i>=queueLength())continue;
       indexState.set(i);const entry=getEntry(),q=getQuestion(entry);if(!q)continue;
@@ -153,10 +153,16 @@ export function createQuestionSession({
     if(result.correct)onCorrect(entry,q,result);else onWrong(entry,q,result);
     renderer.showFeedback(result);decorateAiWilliFeedback(root,result);
     if(!result.correct)mountAiWilliHelper({container:root,question:q,response,result,section:q.skill,practiceType:getPracticeType(entry,q)});
+
+    // Persist the answer locally before any remote tracking call. Once feedback has
+    // been shown, leaving/re-entering must resume on the next question, not allow
+    // the just-answered question to be attempted again.
+    saveActivityOutcome(answeredIndex,!!result.correct);
+    saveActivityPosition(answeredIndex+1);
+
     try{await recordAttempt({question:q,response,result,practiceType:getPracticeType(entry,q),...getAttemptExtras(entry,q,false)})}
     catch(e){console.warn(`[test-prep-v2] ${logLabel} tracking failed`,e)}
     if(!isActive())return;
-    saveActivityOutcome(answeredIndex,!!result.correct);
     btn.disabled=false;btn.textContent=indexState.get()===queueLength()-1?'Finish':'Next Question →';
     const skipButton=document.getElementById(buttonIds.skip);if(skipButton)skipButton.disabled=true;
   }
@@ -167,10 +173,15 @@ export function createQuestionSession({
     const timing=snapshotQuestionTimer();
     const response=renderer?.getResponse()??null,result={correct:false,method:'skipped',responseTimeMs:timing.activeMs,wallResponseTimeMs:timing.wallMs,timingVersion:'question-active-v1'};
     const answeredIndex=indexState.get();onWrong(entry,q,result);
+
+    // A skipped question is also consumed. Save that fact before remote tracking
+    // so backing out during a slow request cannot make the same question reappear.
+    saveActivityOutcome(answeredIndex,false);
+    saveActivityPosition(answeredIndex+1);
+
     try{await recordAttempt({question:q,response,result,practiceType:getPracticeType(entry,q),skipped:true,...getAttemptExtras(entry,q,true)})}
     catch(e){console.warn(`[test-prep-v2] ${logLabel} skip tracking failed`,e)}
     if(!isActive())return;
-    saveActivityOutcome(answeredIndex,false);
     indexState.set(answeredIndex+1);render();
   }
 
