@@ -28,10 +28,6 @@
     'translate',
     'define_word'
   ]);
-  // These Netlify-only functions MUST route through api.willenaenglish.com
-  // (not students.willenaenglish.com which is a CF Pages domain and can't serve
-  // .netlify/functions). The gateway proxy at api falls through to
-  // willenaenglish.netlify.app where the real functions live.
   const FORCE_GATEWAY_FUNCTIONS = new Set([
     'upsert_sentences_batch',
     'get_sentence_audio_urls'
@@ -43,7 +39,6 @@
     return m ? m[1] : '';
   }
 
-  // Detect if we're on a CF Pages domain
   const host = typeof window !== 'undefined' ? window.location.hostname : '';
   const isCFPages = host === 'staging.willenaenglish.com' ||
                     host === 'cf.willenaenglish.com' ||
@@ -51,20 +46,25 @@
                     host === 'students.willenaenglish.com' ||
                     host.endsWith('.pages.dev');
 
-  // If NOT on CF Pages, do nothing - let api-config.js handle it
   if (!isCFPages) {
-    // Backward compatibility: some pages still wait on this flag.
-    // Mark ready on non-CF domains so auth gates do not deadlock.
     window.__STUDENTS_GATEWAY_PATCHED = true;
     console.log('[CFGateway] Not a CF Pages domain, skipping gateway patch');
     return;
   }
 
-  // Set API gateway immediately, before anything else loads
   window.__CF_API_GATEWAY = 'https://api.willenaenglish.com';
   window.__CF_GATEWAY_PATCHED = false;
-  // Backward compatibility alias used by legacy auth gates
   window.__STUDENTS_GATEWAY_PATCHED = false;
+
+  // Make the visible Admin revision prove that this exact gateway build is running.
+  if (window.location.pathname.startsWith('/Teachers/admin-v2/')) {
+    const stampRevision = () => {
+      const el = document.querySelector('.admin-v2-rev');
+      if (el) el.textContent = 'Admin V2 · 1.09';
+    };
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', stampRevision, { once: true });
+    else stampRevision();
+  }
 
   // Admin V2 reuses a few mature legacy Admin modules. Those modules expect
   // a global window.api helper. Keep this compatibility bridge scoped only to
@@ -102,38 +102,30 @@
     };
   }
 
-  // Wait for WillenaAPI to load, then override it
-  const maxWaitTime = 5000; // 5 seconds max wait
+  const maxWaitTime = 5000;
   const startTime = Date.now();
   
   function patchWillenaAPI() {
-    if (window.__CF_GATEWAY_PATCHED) return; // Already done
+    if (window.__CF_GATEWAY_PATCHED) return;
     
     if (!window.WillenaAPI || !window.WillenaAPI.getApiUrl) {
       if (Date.now() - startTime < maxWaitTime) {
-        // WillenaAPI not loaded yet, try again soon
         setTimeout(patchWillenaAPI, 10);
         return;
       }
-      // Timeout - WillenaAPI didn't load
       console.error('[CFGateway] WillenaAPI failed to load after 5s');
       return;
     }
 
-    // WillenaAPI is loaded - patch it
     const origGetApiUrl = window.WillenaAPI.getApiUrl;
     
     window.WillenaAPI.getApiUrl = function(path) {
       const url = origGetApiUrl(path);
       const fn = extractFunctionName(path) || extractFunctionName(url);
 
-      // Force sentence functions through the CF API gateway which proxies
-      // to willenaenglish.netlify.app. Direct NETLIFY_ORIGIN (students.*)
-      // is a CF Pages domain and cannot serve .netlify/functions.
       if (fn && FORCE_GATEWAY_FUNCTIONS.has(fn)) {
         const gateway = SENTENCE_GATEWAY;
         if (/^https?:\/\//i.test(url)) {
-          // Already absolute — rewrite to gateway
           const fnPath = '/.netlify/functions/' + fn;
           const qIndex = url.indexOf('?');
           return gateway + fnPath + (qIndex >= 0 ? url.slice(qIndex) : '');
@@ -143,14 +135,12 @@
         return gateway + '/.netlify/functions/' + fn;
       }
 
-      // HARD BYPASS: Netlify-only functions must always hit Netlify origin.
       if (fn && NETLIFY_ONLY_FUNCTIONS.has(fn)) {
         if (/^https?:\/\//i.test(url)) return url;
         if (url.startsWith('/.netlify/functions/')) return NETLIFY_ORIGIN + url;
         if (String(path || '').startsWith('/.netlify/functions/')) return NETLIFY_ORIGIN + String(path);
       }
       
-      // If it's a relative netlify path, prepend the CF gateway
       if (url.startsWith('/.netlify/functions/')) {
         const fullUrl = window.__CF_API_GATEWAY + url;
         console.log('[CFGateway] Routing to CF API gateway:', fullUrl);
@@ -160,20 +150,16 @@
       return url;
     };
 
-    // Update BASE_URL to reflect the gateway
     window.WillenaAPI.BASE_URL = window.__CF_API_GATEWAY;
     window.__CF_GATEWAY_PATCHED = true;
-    // Keep legacy flag in sync for older pages (play.html/index.html)
     window.__STUDENTS_GATEWAY_PATCHED = true;
     
     console.log('[CFGateway] ✓ API routing configured for CF Pages domain:', host);
     console.log('[CFGateway] All API calls will use:', window.__CF_API_GATEWAY);
   }
 
-  // Try patching IMMEDIATELY (synchronous) - api-config.js may have already loaded
   patchWillenaAPI();
   
-  // Also keep trying rapidly in case api-config.js loads right after us
   const rapidPatch = setInterval(() => {
     if (window.__CF_GATEWAY_PATCHED) {
       clearInterval(rapidPatch);
@@ -182,6 +168,5 @@
     patchWillenaAPI();
   }, 5);
   
-  // Stop rapid polling after 500ms
   setTimeout(() => clearInterval(rapidPatch), 500);
 })();
