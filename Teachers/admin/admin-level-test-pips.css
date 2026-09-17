@@ -1,0 +1,56 @@
+.level-test-mini-segments {
+  display: flex;
+  align-items: stretch;
+  gap: clamp(3px, .8vw, 5px);
+}
+
+.level-test-mini-segments i {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.level-test-mini-segments i.is-starter {
+  flex-grow: .3;
+  min-width: 6px;
+}
+
+.level-test-mini-placement-pips {
+  width: 100%;
+  margin: 18px auto 0;
+}
+
+.level-test-mini-placement-pips i {
+  height: 12px;
+}
+
+.level-test-mini-placement-stages {
+  display: grid;
+  grid-template-columns: 1fr 2fr 2fr 3fr 3fr 2fr;
+  gap: 2px;
+  margin-top: 7px;
+  color: var(--report-muted);
+  font-size: clamp(8px, 1.7vw, 10px);
+  font-weight: 700;
+  line-height: 1.15;
+  text-align: center;
+}
+
+.level-test-mini-placement-stages span {
+  min-width: 0;
+  white-space: nowrap;
+}
+
+@media (max-width: 480px) {
+  .level-test-mini-segments {
+    gap: 3px;
+  }
+
+  .level-test-mini-segments i.is-starter {
+    min-width: 5px;
+  }
+
+  .level-test-mini-placement-stages {
+    font-size: 8px;
+    letter-spacing: -.025em;
+  }
+}
