@@ -53,8 +53,6 @@ function installTestPrepRecentAccuracyBridge(){
   };
 }
 installTestPrepRecentAccuracyBridge();
-function loadPolish(){if($('#dashboardV2Polish'))return;const l=document.createElement('link');l.id='dashboardV2Polish';l.rel='stylesheet';l.href='./dashboard-v2-polish.css?v='+Date.now();document.head.appendChild(l)}
-function loadGrammarCanonicalUi(){if($('#na2GrammarCanonicalUi'))return;const s=document.createElement('script');s.id='na2GrammarCanonicalUi';s.src='./naesin-v2/naesin-v2-grammar-canonical-ui.js?v=20260917-p3';s.defer=true;document.head.appendChild(s)}
 function prefetchPage(href,id){if($('#'+id))return;const l=document.createElement('link');l.id=id;l.rel='prefetch';l.as='document';l.href=href;document.head.appendChild(l)}
 async function warmAdmin(){prefetchPage('/Teachers/admin/','prefetchAdminDashboard');try{await window.WillenaAPI?.fetch?.('/.netlify/functions/teacher_admin?action=list_students',{credentials:'include'})}catch{}}
 async function getRole(){try{const f=window.WillenaAPI?.fetch||fetch;const who=await f(AUTH+'?action=whoami',{credentials:'include',cache:'no-store'});const w=await who.json().catch(()=>({}));if(!who.ok||!w.user_id)return'';const rr=await f(AUTH+'?action=get_role&user_id='+encodeURIComponent(w.user_id),{credentials:'include',cache:'no-store'});const r=await rr.json().catch(()=>({}));return String(r.role||'').toLowerCase()}catch{return''}}
@@ -76,6 +74,6 @@ function mountUtilities(){const rail=$('.rail'),main=$('.workspace');if(!rail||!
 <a class="app-card utility-card" href="/Teachers/tools/control-room/"><span class="chip">ADMIN</span><h3>Control Room</h3><p>Teacher-side controls and checks.</p></a>
 <a class="app-card utility-card" href="/Teachers/tools/book-quiz/"><span class="chip">TOOL</span><h3>Book Quiz</h3><p>Book quiz utility.</p></a>
 </div>`;main.appendChild(view);const st=document.createElement('style');st.textContent='.utility-card{display:block;color:inherit;text-decoration:none;cursor:pointer}.utility-card:hover{transform:translateY(-1px)}';document.head.appendChild(st);const openView=()=>{$$('.view').forEach(x=>x.classList.toggle('active',x===view));$$('[data-view]').forEach(x=>x.classList.toggle('active',x===btn))};btn.onclick=()=>utilitiesUnlocked()?openView():showUtilitiesGate(openView);refreshRailIcons()}
-function boot(){loadPolish();loadGrammarCanonicalUi();mountSwitch();mountRailToggle();mountUtilities();refreshRailIcons();const rail=$('.rail');if(rail)new MutationObserver(refreshRailIcons).observe(rail,{childList:true,subtree:true})}
+function boot(){mountSwitch();mountRailToggle();mountUtilities();refreshRailIcons();const rail=$('.rail');if(rail)new MutationObserver(refreshRailIcons).observe(rail,{childList:true,subtree:true})}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
