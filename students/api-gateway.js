@@ -66,6 +66,24 @@
   // Backward compatibility alias used by legacy auth gates
   window.__STUDENTS_GATEWAY_PATCHED = false;
 
+  // Admin V2 reuses a few mature legacy Admin modules. Those modules expect
+  // a global window.api helper. Keep this compatibility bridge scoped only to
+  // Admin V2 so other apps are unaffected. WillenaAPI is resolved at call time.
+  if (window.location.pathname.startsWith('/Teachers/admin-v2/') && typeof window.api !== 'function') {
+    window.api = async function(path, options = {}) {
+      const fn = window.WillenaAPI?.fetch || window.fetch.bind(window);
+      const response = await fn(path, { credentials: 'include', cache: 'no-store', ...options });
+      let data = {};
+      try { data = await response.json(); } catch {}
+      if (!response.ok || data?.success === false) {
+        const error = new Error(data?.error || `Request failed (${response.status})`);
+        error.status = response.status;
+        throw error;
+      }
+      return data;
+    };
+  }
+
   // Wait for WillenaAPI to load, then override it
   const maxWaitTime = 5000; // 5 seconds max wait
   const startTime = Date.now();
