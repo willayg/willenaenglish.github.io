@@ -1,0 +1,6 @@
+/* R12.2 — teacher lesson progress rings match Student Test Prep ring dimensions. */
+.na2-guide-ring{width:76px;height:76px}
+.na2-guide-ring b{font-size:14px}
+.na2-guide-ring-block{min-width:76px}
+@media(max-width:800px){.na2-guide-ring{width:76px;height:76px}.na2-guide-ring b{font-size:14px}}
+@media(max-width:600px){.na2-guide-journey-stop{grid-template-columns:82px minmax(0,1fr)}.na2-guide-ring{width:76px;height:76px}.na2-guide-ring b{font-size:14px}.na2-guide-ring-block>small{font-size:10px}}

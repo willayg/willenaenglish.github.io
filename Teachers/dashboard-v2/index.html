@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<base href="/Teachers/dashboard-v2/">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Teacher Dashboard V2</title>
@@ -27,7 +26,7 @@
 <div class="panel"><div class="panel-head"><div><div class="panel-title" id="panelTitle">Students</div><div class="panel-sub" id="statusText"></div></div><span class="count-pill" id="studentCount">0 students</span></div><div class="student-list" id="studentList"><div class="empty">Loading…</div></div></div>
 </section>
 <section class="view" id="view-classes"><div class="page-head"><div><h1>Classes</h1></div><div class="filters"><select class="control" id="classDaysSelect"><option value="30">Last 30 days</option><option value="14">Last 14 days</option><option value="60">Last 60 days</option><option value="90">Last 90 days</option></select><button class="control" id="classRefreshBtn">Refresh</button></div></div><div class="class-grid" id="classGrid"><div class="empty">Open Classes to load class breakdowns.</div></div></section>
-<section class="view" id="view-apps"><div class="page-head"><div><h1>Teacher apps</h1></div></div><div class="app-grid"><div class="app-card"><span class="chip">LIVE</span><h3>Student tracking</h3><p>Study habits, learning evidence, mistakes, skill performance and proof of work.</p></div><div class="app-card"><span class="chip">LIVE</span><h3>Class overview</h3><p>Class-level learning and study-habit signals that link directly back to students.</p></div><div class="app-card"><span class="chip">READY</span><h3>More teacher tools</h3><p>Homework, assessments and classroom tools can be added here.</p></div><div style="margin-top:14px;font-size:12px;opacity:.68"><a href="/Teachers/dashboard-v1-archived/" style="color:inherit;text-decoration:underline;text-underline-offset:2px">Dashboard V1 (ARCHIVED)</a></div></div></section>
+<section class="view" id="view-apps"><div class="page-head"><div><h1>Teacher apps</h1></div></div><div class="app-grid"><div class="app-card"><span class="chip">LIVE</span><h3>Student tracking</h3><p>Study habits, learning evidence, mistakes, skill performance and proof of work.</p></div><div class="app-card"><span class="chip">LIVE</span><h3>Class overview</h3><p>Class-level learning and study-habit signals that link directly back to students.</p></div><div class="app-card"><span class="chip">READY</span><h3>More teacher tools</h3><p>Homework, assessments and classroom tools can be added here.</p></div></div></section>
 </main></div>
 <nav class="mobile-tabs"><button class="mobile-tab active" data-view="students"><b>◎</b>Students</button><button class="mobile-tab" data-view="classes"><b>▦</b>Classes</button><button class="mobile-tab" data-view="apps"><b>＋</b>Apps</button></nav>
 <div class="drawer-bg" id="drawerBg"><aside class="drawer"><div class="drawer-head"><div class="drawer-head-main"><div class="drawer-name" id="drawerName">Student</div><div class="drawer-meta" id="drawerMeta"></div></div><button class="close" id="closeDrawer">×</button></div><div class="drawer-body" id="drawerBody"><div class="empty">Loading…</div></div></aside></div>

@@ -1,0 +1,9 @@
+(function(){
+'use strict';
+const BASE='/Teachers/wrong-print-editor/';
+function urlFor(ctx={},autoPdf=false){const q=new URLSearchParams();if(ctx.studentId)q.set('student_id',ctx.studentId);if(ctx.planId)q.set('plan_id',ctx.planId);if(ctx.student)q.set('student',ctx.student);if(ctx.exam)q.set('exam',ctx.exam);if(autoPdf){q.set('auto_pdf','1');q.set('auto_close','1')}return `${BASE}?${q.toString()}`}
+function openEditor(ctx){window.open(urlFor(ctx,false),'_blank','noopener')}
+function makePdf(ctx){window.open(urlFor(ctx,true),'_blank')}
+window.NaesinV2Print={openEditor,makePdf,version:'r9.1-p7'};
+const responseTimeScript=document.createElement('script');responseTimeScript.src='./naesin-v2-response-time.js?v=20260914-rt1';responseTimeScript.defer=true;document.head.appendChild(responseTimeScript);
+})();
