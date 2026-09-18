@@ -1,6 +1,9 @@
 import {resolveQuestionGradingPolicy} from './question-grading-policy.js?v=2.0.1';
 import {gradeWithAiWilli,aiWilliMessage} from './ai-willi.js?v=1.0.2';
 
+export const GRADER_VERSION='2.1.3-audit';
+const stamp=result=>({...result,graderVersion:GRADER_VERSION});
+
 const FORMS={choice:'choice',multi:'multi',write:'write',multipart:'multipart',correction:'correction',identifiedCorrection:'identified_correction',order:'order',chunks:'chunks',blanks:'blanks',learn:'learn',unsupported:'unsupported'};
 const CIRCLED_NUM=['①','②','③','④','⑤','⑥','⑦','⑧','⑨','⑩','⑪','⑫','⑬','⑭','⑮','⑯','⑰','⑱','⑲','⑳'];
 const asArray=v=>Array.isArray(v)?v:[v];
@@ -94,18 +97,18 @@ function exact(question,response,policy){
 export async function gradeQuestion(question,response){
   const policy=resolveQuestionGradingPolicy(question);
   const constraint=checkConstraints(question,response,policy);
-  if(!constraint.ok)return{correct:false,message:constraint.message,correctAnswer:question.answer,method:'constraint',gradingPolicy:policy};
-  if(exact(question,response,policy))return{correct:true,message:'',correctAnswer:question.answer,method:'exact',gradingPolicy:policy};
+  if(!constraint.ok)return stamp({correct:false,message:constraint.message,correctAnswer:question.answer,method:'constraint',gradingPolicy:policy});
+  if(exact(question,response,policy))return stamp({correct:true,message:'',correctAnswer:question.answer,method:'exact',gradingPolicy:policy});
   if(policy.aiAllowed){
     try{
       const verdict=await gradeWithAiWilli(question,response,policy),correct=verdict.correct===true;
-      return{correct,message:correct?'':(verdict.explanationKo||verdict.reason||'정답을 확인해 보세요.'),correctAnswer:question.answer,method:'ai_willi',aiReason:verdict.reason||null,aiReasonCode:verdict.reasonCode||null,gradingPolicy:policy};
+      return stamp({correct,message:correct?'':(verdict.explanationKo||verdict.reason||'정답을 확인해 보세요.'),correctAnswer:question.answer,method:'ai_willi',aiReason:verdict.reason||null,aiReasonCode:verdict.reasonCode||null,gradingPolicy:policy});
     }catch(e){
       console.warn('[shared grader] AI Willi failed closed',{questionId:question?.id||null,type:question?.tracking?.questionType||null,error:e?.message||String(e)});
-      return{correct:false,message:aiWilliMessage('grader','failed'),correctAnswer:question.answer,method:'ai_willi_failed',gradingPolicy:policy};
+      return stamp({correct:false,message:aiWilliMessage('grader','failed'),correctAnswer:question.answer,method:'ai_willi_failed',gradingPolicy:policy});
     }
   }
-  return{correct:false,message:'정답을 확인해 보세요.',correctAnswer:question.answer,method:'exact',gradingPolicy:policy};
+  return stamp({correct:false,message:'정답을 확인해 보세요.',correctAnswer:question.answer,method:'exact',gradingPolicy:policy});
 }
 
 export {resolveQuestionGradingPolicy};
