@@ -1,4 +1,4 @@
-import {GRADER_VERSION} from '../shared/question-grader.js?v=2.1.5';
+import {GRADER_VERSION} from '../shared/question-grader.js?v=2.2.0';
 const EDGE='https://fiieuiktlsivwfgyivai.supabase.co/functions/v1/test-prep-student-rev47e';
 const API_KEY='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
 const LOGIN='/students/signin.html?next='+encodeURIComponent('/students/test-prep-v2/');
