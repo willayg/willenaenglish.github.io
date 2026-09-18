@@ -85,7 +85,7 @@ function question(item,mode){
   return{id:String(item.id),masteryKey:`lexical:${item.id}`,skill:'vocabulary',form:'choice',source:{code:'',label:'lesson_vocabulary'},prompt:String(mode==='ko-en'?item.translation_ko:item.canonical_text),context:{},choices,answer:[String(choices.indexOf(answer)+1)],grading:{mode:'exact_normalized',aiAllowed:false,constraints:{}},tracking:{practiceType:'vocabulary',questionType:`vocabulary_${mode}`,targets:['vocabulary',item.part_of_speech||item.entry_type||'lexical_item']},metadata:{vocab_mode:mode}};
 }
 function renderQuestion(){
-  if(ctx.index>=ctx.queue.length)return finishRound();const item=ctx.queue[ctx.index],q=question(item,ctx.mode);ctx.question=q;ctx.answered=false;ctx.warningShown=false;ctx.startedAt=Date.now();
+  if(ctx.index>=ctx.queue.length)return finishRound();const item=ctx.queue[ctx.index],q=question(item,ctx.mode);ctx.question=q;ctx.answered=false;ctx.grading=false;ctx.warningShown=false;ctx.startedAt=Date.now();
   shell(`<div class="vp-card"><div id="vpQuestionHost"></div></div><button class="vp-next" id="vpNext" disabled>정답 확인</button>`,LABEL[ctx.mode]);
   const next=ctx.host.querySelector('#vpNext');
   ctx.renderer=new QuestionRenderer(ctx.host.querySelector('#vpQuestionHost')).render(q,{onChange:(_,has)=>{if(!ctx.answered)next.disabled=!has}});
@@ -94,17 +94,24 @@ function renderQuestion(){
   if(ctx.mode==='spelling'){const input=ctx.host.querySelector('[data-write]');input?.focus();input?.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();if(!ctx.answered)grade();else{ctx.index++;renderQuestion()}}})}
 }
 async function grade(){
-  if(ctx.answered||!ctx.renderer)return;const response=ctx.renderer.getResponse();if((ctx.mode==='spelling'||ctx.mode==='ko-en'||ctx.mode==='en-ko')&&(response==null||String(response).trim()===''))return;
-  const result=await gradeQuestion(ctx.question,response,{suppressWarnings:!!ctx.warningShown});result.responseTimeMs=Date.now()-ctx.startedAt;
+  if(ctx.answered||ctx.grading||!ctx.renderer)return;
+  const questionAtSubmit=ctx.question,rendererAtSubmit=ctx.renderer,itemAtSubmit=ctx.queue[ctx.index],indexAtSubmit=ctx.index;
+  const response=rendererAtSubmit.getResponse();if((ctx.mode==='spelling'||ctx.mode==='ko-en'||ctx.mode==='en-ko')&&(response==null||String(response).trim()===''))return;
+  ctx.grading=true;
+  let result;
+  try{result=await gradeQuestion(questionAtSubmit,response,{suppressWarnings:!!ctx.warningShown})}
+  catch(e){ctx.grading=false;throw e}
+  result.responseTimeMs=Date.now()-ctx.startedAt;
+  if(ctx.question!==questionAtSubmit||ctx.index!==indexAtSubmit){ctx.grading=false;return}
   if(result.warning){
-    ctx.warningShown=true;ctx.renderer.showFeedback(result);ctx.renderer.setDisabled(false);
+    ctx.warningShown=true;ctx.grading=false;rendererAtSubmit.showFeedback(result);rendererAtSubmit.setDisabled(false);
     const next=ctx.host.querySelector('#vpNext');if(next){next.disabled=false;next.textContent='다시 확인'}
     ctx.host.querySelector('[data-write]')?.focus();return;
   }
-  ctx.answered=true;ctx.renderer.setDisabled(true);ctx.renderer.showFeedback(result);
-  if(result.correct){ctx.score++;const key=CLEARED[ctx.mode],set=new Set(uniq(ctx.progress[key]));set.add(String(ctx.question.id));await saveProgress({[key]:[...set]})}else{ctx.wrong.add(String(ctx.question.id));mountVocabAiWilli({container:ctx.host,item:ctx.queue[ctx.index],question:ctx.question,response,result,mode:ctx.mode})}
-  try{await recordAttempt({question:ctx.question,response,result,practiceType:'vocabulary'})}catch(e){console.warn('[v2.13 vocab] attempt queue failed',e)}
-  const next=ctx.host.querySelector('#vpNext');if(next){next.disabled=false;next.textContent=ctx.index===ctx.queue.length-1?'끝내기':'다음'}
+  ctx.answered=true;ctx.grading=false;rendererAtSubmit.setDisabled(true);rendererAtSubmit.showFeedback(result);
+  if(result.correct){ctx.score++;const key=CLEARED[ctx.mode],set=new Set(uniq(ctx.progress[key]));set.add(String(questionAtSubmit.id));await saveProgress({[key]:[...set]})}else{ctx.wrong.add(String(questionAtSubmit.id));mountVocabAiWilli({container:ctx.host,item:itemAtSubmit,question:questionAtSubmit,response,result,mode:ctx.mode})}
+  try{await recordAttempt({question:questionAtSubmit,response,result,practiceType:'vocabulary'})}catch(e){console.warn('[v2.13 vocab] attempt queue failed',e)}
+  const next=ctx.host.querySelector('#vpNext');if(next){next.disabled=false;next.textContent=indexAtSubmit===ctx.queue.length-1?'끝내기':'다음'}
 }
 async function finishRound(){
   await saveChain;await completeSession({correct:ctx.score,total:ctx.queue.length,wrongIds:[...ctx.wrong]});const wasComplete=complete(ctx.mode),pending=remaining(ctx.mode);
@@ -127,7 +134,7 @@ function showDone(){ctx.mode='cards';ctx.queue=[];ctx.index=0;shell(`<div class=
 async function exit(){if(!ctx)return;try{if(ctx.mode!=='cards')await completeSession({correct:ctx.score,total:ctx.index+(ctx.answered?1:0),wrongIds:[...ctx.wrong]})}catch(e){console.warn('[v2.13 vocab] close session failed',e)}const cb=ctx.onExit;ctx=null;cb?.()}
 
 export async function startVocabularyLearning({host,plan,lesson,unitId,onExit}){
-  if(!host||!plan?.id||!lesson||!unitId)throw new Error('Vocabulary practice could not start.');ctx={host,plan,lesson,unitId,onExit,items:[],progress:blankProgress(),cardKnown:new Map(),cardUnknown:new Set(),cardRepeat:false,mode:'cards',queue:[],index:0,score:0,wrong:new Set(),answered:false,warningShown:false,renderer:null,question:null,startedAt:0,cardShownAt:0};host.innerHTML='<div class="loading">단어를 불러오는 중...</div>';
+  if(!host||!plan?.id||!lesson||!unitId)throw new Error('Vocabulary practice could not start.');ctx={host,plan,lesson,unitId,onExit,items:[],progress:blankProgress(),cardKnown:new Map(),cardUnknown:new Set(),cardRepeat:false,mode:'cards',queue:[],index:0,score:0,wrong:new Set(),answered:false,grading:false,warningShown:false,renderer:null,question:null,startedAt:0,cardShownAt:0};host.innerHTML='<div class="loading">단어를 불러오는 중...</div>';
   ctx.items=await loadItems(unitId);if(!ctx.items.length){host.innerHTML='<div class="empty">이 Lesson에 사용할 Vocabulary가 없습니다.</div>';return}
   [ctx.progress,ctx.cardKnown]=await Promise.all([loadProgress(),loadCardChecks()]);if(!ctx.progress.cards_complete&&ctx.items.every(x=>ctx.cardKnown.get(norm(x.canonical_text))===true))await saveProgress({cards_complete:true});await saveChain;
   if(ctx.progress.spelling_complete){showDone();return}await startMode(firstUnfinished()||'cards');
