@@ -44,6 +44,7 @@ export function createQuestionSession({
   let restoredRouteKey='';
   let grading=false;
   let nextPointerArmed=false;
+  let warningShown=false;
   let questionActiveMs=0;
   let questionActiveTick=0;
   let questionWallStartedAt=0;
@@ -120,7 +121,7 @@ export function createQuestionSession({
     const entry=getEntry(),q=getQuestion(entry);
     if(!q){clearActivitySnapshotFor(currentActivityRoute());return finishSession()}
     saveActivityPosition(indexState.get());
-    grading=false;nextPointerArmed=false;
+    grading=false;nextPointerArmed=false;warningShown=false;
     checkedState.set(false);onBeforeRender(entry,q);
     root.innerHTML=`${renderHeader(entry,q)}<div class="question-card" id="questionHost"></div>`;
     const host=root.querySelector('#questionHost');
@@ -156,12 +157,19 @@ export function createQuestionSession({
     btn.disabled=true;btn.textContent=usesAiWilli?aiWilliMessage('grader','waiting'):'Check Answer';renderer.setDisabled(true);
     if(usesAiWilli)showAiWilliStatus(root,{role:'grader'});
     let result;
-    try{result=await gradeQuestion(q,response)}
+    try{result=await gradeQuestion(q,response,{suppressWarnings:warningShown})}
     catch(e){grading=false;clearAiWilliStatus(root);renderer.setDisabled(false);btn.disabled=false;throw e}
     clearAiWilliStatus(root);if(!isActive()){grading=false;return}
     result.responseTimeMs=timing.activeMs;
     result.wallResponseTimeMs=timing.wallMs;
     result.timingVersion='question-active-v1';
+    if(result.warning){
+      warningShown=true;grading=false;nextPointerArmed=false;
+      renderer.showFeedback(result);renderer.setDisabled(false);
+      btn.disabled=false;btn.textContent='다시 확인';
+      renderer.host?.querySelector?.('input,textarea')?.focus?.();
+      return;
+    }
     checkedState.set(true);grading=false;nextPointerArmed=false;
     const answeredIndex=indexState.get();
     const isLastQuestion=answeredIndex===queueLength()-1;
