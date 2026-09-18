@@ -10,6 +10,8 @@ const OLIVIA_ID='70a422d5-9587-481e-9f05-4a3c3aeb96b1';
 export function questionAllowedForStudent(question,studentId=null){
   if(String(studentId||'')!==OLIVIA_ID)return true;
   if(String(question?.source?.code||'').toUpperCase()!=='W')return true;
+  const skill=String(question?.skill||question?.tracking?.practiceType||'').toLowerCase();
+  if(skill==='reading'||skill==='grammar')return false;
   const meta=question?.metadata&&typeof question.metadata==='object'?question.metadata:{};
   const targets=Array.isArray(question?.tracking?.targets)?question.tracking.targets.map(x=>String(x).toLowerCase()):[];
   const shadow=!!meta.shadow_of||meta.olivia_targeted===true||meta.olivia_targeted==='true'||targets.includes('shadow_practice');
