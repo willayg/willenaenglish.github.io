@@ -1,5 +1,5 @@
 import {QuestionRenderer} from './question-renderer.js?v=2.20.6';
-import {gradeQuestion} from '../shared/question-grader.js?v=2.1.2';
+import {gradeQuestion} from '../shared/question-grader.js?v=2.1.3';
 import {createQuestionSession} from './question-session.js?v=2.0.1';
 import {loadPracticeContent,questionAllowedForStudent} from './practice-loader.js?v=2.0.4';
 import {createPerfDebug} from './perf-debug.js?v=1.0.0';
