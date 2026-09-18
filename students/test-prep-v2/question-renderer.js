@@ -189,67 +189,102 @@ export class QuestionRenderer{
     if(q.form===FORMS.learn)return answerParts(q)[0]||'';
     return null;
   }
-  showWarningToast(message){
-    document.querySelectorAll('.grader-warning-toast,.grader-thinking-toast').forEach(x=>x.remove());
-    const toast=document.createElement('div');
-    toast.className='grader-warning-toast';
-    toast.setAttribute('role','status');
-    toast.setAttribute('aria-live','polite');
-    toast.textContent=String(message||'한 번 더 확인해 보세요.');
-    Object.assign(toast.style,{
-      position:'fixed',left:'12px',right:'12px',zIndex:'10000',
-      maxWidth:'720px',margin:'0 auto',padding:'12px 16px',
-      borderRadius:'14px',background:'#fff7d6',color:'#6b4f00',
-      border:'2px solid #f0c94d',boxShadow:'0 8px 24px rgba(0,0,0,.18)',
-      fontWeight:'700',fontSize:'15px',lineHeight:'1.35',textAlign:'center'
-    });
-    const place=()=>{
-      const header=document.querySelector('.student-header');
-      const headerBottom=header?.getBoundingClientRect?.().bottom||0;
-      const vv=window.visualViewport;
-      const viewportTop=vv?.offsetTop||0;
-      toast.style.top=Math.max(viewportTop+10,headerBottom+8)+'px';
-    };
-    place();document.body.appendChild(toast);
-    window.visualViewport?.addEventListener('resize',place,{once:true});
-    window.visualViewport?.addEventListener('scroll',place,{once:true});
-    const clear=()=>toast.remove();
-    this.host.querySelectorAll('input,textarea').forEach(el=>el.addEventListener('input',clear,{once:true}));
+  removeGraderOverlay(){
+    const overlay=document.querySelector('.grader-blocking-overlay');
+    if(!overlay)return;
+    const bodyOverflow=overlay.dataset.bodyOverflow??'';
+    const htmlOverflow=overlay.dataset.htmlOverflow??'';
+    overlay.remove();
+    document.body.style.overflow=bodyOverflow;
+    document.documentElement.style.overflow=htmlOverflow;
   }
-  showThinking(message='✦ AI Willi가 답을 확인하고 있어요…'){
-    document.querySelectorAll('.grader-warning-toast,.grader-thinking-toast').forEach(x=>x.remove());
-    const toast=document.createElement('div');
-    toast.className='grader-thinking-toast';
-    toast.setAttribute('role','status');
-    toast.setAttribute('aria-live','polite');
-    toast.textContent=String(message);
-    Object.assign(toast.style,{
-      position:'fixed',left:'12px',right:'12px',zIndex:'10000',
-      maxWidth:'720px',margin:'0 auto',padding:'12px 16px',
-      borderRadius:'14px',background:'#fff0f6',color:'#9d174d',
-      border:'2px solid #f4a7c5',boxShadow:'0 8px 24px rgba(0,0,0,.18)',
-      fontWeight:'800',fontSize:'15px',lineHeight:'1.35',textAlign:'center'
+  ensureGraderOverlayStyles(){
+    if(document.getElementById('graderBlockingOverlayStyles'))return;
+    const style=document.createElement('style');
+    style.id='graderBlockingOverlayStyles';
+    style.textContent=`
+      @keyframes graderOverlaySpin{to{transform:rotate(360deg)}}
+      @keyframes graderOverlayPulse{0%,100%{opacity:.55}50%{opacity:1}}
+      .grader-blocking-overlay{position:fixed;inset:0;z-index:2147483000;display:flex;align-items:center;justify-content:center;padding:22px;background:rgba(11,23,31,.78);backdrop-filter:blur(8px);overscroll-behavior:none;touch-action:none}
+      .grader-blocking-card{width:min(92vw,520px);padding:30px 24px 26px;border-radius:26px;background:#fff;color:#263d44;box-shadow:0 24px 70px rgba(0,0,0,.32);text-align:center;font-family:Poppins,system-ui,sans-serif}
+      .grader-blocking-mark{display:flex;align-items:center;justify-content:center;width:58px;height:58px;margin:0 auto 18px;border-radius:50%;background:#ffe8f2;color:#d9467d;font-size:28px;font-weight:900}
+      .grader-blocking-spinner{width:58px;height:58px;margin:0 auto 20px;border:6px solid #f8c9da;border-top-color:#d9467d;border-radius:50%;animation:graderOverlaySpin .8s linear infinite}
+      .grader-blocking-title{margin:0;font-size:22px;line-height:1.3;font-weight:900;color:#263d44}
+      .grader-blocking-message{margin:13px 0 0;font-size:17px;line-height:1.6;font-weight:700;color:#405961;white-space:pre-wrap}
+      .grader-blocking-wait{margin-top:14px;font-size:13px;font-weight:700;color:#7a8d94;animation:graderOverlayPulse 1.2s ease-in-out infinite}
+      .grader-blocking-action{width:100%;min-height:52px;margin-top:24px;padding:0 18px;border:0;border-radius:15px;background:#ee5f91;color:#fff;font:800 16px Poppins,system-ui,sans-serif;cursor:pointer}
+      .grader-blocking-action:focus-visible{outline:3px solid rgba(238,95,145,.35);outline-offset:3px}
+      @media(prefers-reduced-motion:reduce){.grader-blocking-spinner,.grader-blocking-wait{animation:none}}
+    `;
+    document.head.appendChild(style);
+  }
+  mountGraderOverlay({mode='thinking',title='',message='',onDismiss=null}={}){
+    this.removeGraderOverlay();
+    this.ensureGraderOverlayStyles();
+    const overlay=document.createElement('div');
+    overlay.className='grader-blocking-overlay';
+    overlay.dataset.bodyOverflow=document.body.style.overflow||'';
+    overlay.dataset.htmlOverflow=document.documentElement.style.overflow||'';
+    overlay.setAttribute('role',mode==='thinking'?'status':'dialog');
+    overlay.setAttribute('aria-modal','true');
+    overlay.setAttribute('aria-live','polite');
+    const card=document.createElement('div');
+    card.className='grader-blocking-card';
+    if(mode==='thinking'){
+      card.innerHTML='<div class="grader-blocking-spinner" aria-hidden="true"></div><h2 class="grader-blocking-title"></h2><div class="grader-blocking-message"></div><div class="grader-blocking-wait">잠시만 기다려 주세요…</div>';
+    }else{
+      card.innerHTML='<div class="grader-blocking-mark" aria-hidden="true">✦</div><h2 class="grader-blocking-title"></h2><div class="grader-blocking-message"></div><button class="grader-blocking-action" type="button">다시 써보기</button>';
+    }
+    card.querySelector('.grader-blocking-title').textContent=String(title||'');
+    card.querySelector('.grader-blocking-message').textContent=String(message||'');
+    overlay.appendChild(card);
+    document.body.style.overflow='hidden';
+    document.documentElement.style.overflow='hidden';
+    document.body.appendChild(overlay);
+    if(mode!=='thinking'){
+      const btn=card.querySelector('.grader-blocking-action');
+      btn.addEventListener('click',()=>{
+        this.removeGraderOverlay();
+        onDismiss?.();
+      });
+      requestAnimationFrame(()=>btn.focus());
+    }
+    return overlay;
+  }
+  showWarningToast(message,result={}){
+    const semantic=result?.warningType==='vocab_semantic_target';
+    const typo=result?.warningType==='vocab_typo';
+    const title=semantic?'AI Willi 힌트':typo?'거의 맞았어요!':'한 번 더 확인해 보세요';
+    this.mountGraderOverlay({
+      mode:'hint',
+      title,
+      message:String(message||'한 번 더 확인해 보세요.'),
+      onDismiss:()=>{
+        const input=this.host.querySelector('input,textarea');
+        input?.focus?.();
+        if(input&&typeof input.setSelectionRange==='function'){
+          const n=String(input.value||'').length;
+          try{input.setSelectionRange(n,n)}catch{}
+        }
+      }
     });
-    const place=()=>{
-      const header=document.querySelector('.student-header');
-      const headerBottom=header?.getBoundingClientRect?.().bottom||0;
-      const vv=window.visualViewport;
-      const viewportTop=vv?.offsetTop||0;
-      toast.style.top=Math.max(viewportTop+10,headerBottom+8)+'px';
-    };
-    place();document.body.appendChild(toast);
-    window.visualViewport?.addEventListener('resize',place,{once:true});
-    window.visualViewport?.addEventListener('scroll',place,{once:true});
+  }
+  showThinking(message='AI Willi가 답을 확인하고 있어요…'){
+    this.mountGraderOverlay({
+      mode:'thinking',
+      title:'AI Willi가 답을 확인하고 있어요…',
+      message:'입력한 답이 목표 표현과 뜻이 비슷한지 확인하는 중이에요.'
+    });
   }
   clearThinking(){
-    document.querySelectorAll('.grader-thinking-toast').forEach(x=>x.remove());
+    this.removeGraderOverlay();
   }
   showFeedback(result){
     const f=this.host.querySelector('[data-feedback]');if(!f)return;
-    document.querySelectorAll('.grader-warning-toast').forEach(x=>x.remove());
+    this.removeGraderOverlay();
     f.className=`feedback show ${result.warning?'warn':(result.correct?'ok':'bad')}`;
     const answers=Array.isArray(result.correctAnswer)?result.correctAnswer:[result.correctAnswer].filter(x=>x!=null);
-    if(result.warning){const msg=result.message||'한 번 더 확인해 보세요.';f.innerHTML=textHtml(msg);this.showWarningToast(msg);return}
+    if(result.warning){const msg=result.message||'한 번 더 확인해 보세요.';f.innerHTML=textHtml(msg);this.showWarningToast(msg,result);return}
     f.innerHTML=result.correct?'정답입니다!':`${textHtml(result.message||'정답을 확인해 보세요.')}${answers.length?`<div class="model"><b>모범 답안</b>${modelAnswerHtml(this.question,answers)}</div>`:''}`;
     if([FORMS.choice,FORMS.multi].includes(this.question?.form)){
       const right=new Set((Array.isArray(this.question.answer)?this.question.answer:[]).map(String)),selected=this.state.selected;
