@@ -157,8 +157,11 @@ export function createQuestionSession({
     btn.disabled=true;btn.textContent=usesAiWilli?aiWilliMessage('grader','waiting'):'Check Answer';renderer.setDisabled(true);
     if(usesAiWilli)showAiWilliStatus(root,{role:'grader'});
     let result;
-    try{result=await gradeQuestion(q,response,{suppressWarnings:warningShown})}
-    catch(e){grading=false;clearAiWilliStatus(root);renderer.setDisabled(false);btn.disabled=false;throw e}
+    try{result=await gradeQuestion(q,response,{suppressWarnings:warningShown,onSemanticCheck:active=>{
+      if(active){btn.disabled=true;btn.textContent='✦ AI Willi가 답을 확인하고 있어요…';renderer.showThinking?.()}
+      else renderer.clearThinking?.();
+    }})}
+    catch(e){grading=false;clearAiWilliStatus(root);renderer.clearThinking?.();renderer.setDisabled(false);btn.disabled=false;throw e}
     clearAiWilliStatus(root);if(!isActive()){grading=false;return}
     result.responseTimeMs=timing.activeMs;
     result.wallResponseTimeMs=timing.wallMs;
