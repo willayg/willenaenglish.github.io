@@ -32,6 +32,20 @@ export async function gradeWithAiWilli(question,response,policy){
   return{correct:verdict.correct===true,explanationKo:String(verdict.explanation_ko||''),reason:String(verdict.reason||''),reasonCode:String(verdict.reason_code||'')};
 }
 
+export async function classifyVocabSemanticNearMatch(question,response){
+  const target=String(question?.metadata?.canonical_text||question?.answer?.[0]||'').trim();
+  const meaning=String(question?.metadata?.translation_ko||question?.context?.korean||'').trim();
+  const definition=String(question?.metadata?.definition_en||question?.context?.definition||'').trim();
+  const student=String(response??'').trim();
+  if(!target||!student)return{nearMatch:false,reasonCode:'missing_input'};
+  const system=`You are a strict semantic classifier for Korean middle-school English vocabulary practice. The target word or expression is authoritative. Decide only whether the student's English response has essentially the same meaning as the target in this vocabulary item but uses a different English word or expression. This is NOT correctness grading and you must never mark the response correct. Return near_match=true only for genuine synonym, near-synonym, or equivalent expression cases such as "be known for" vs "be famous for" or "recently" vs "lately". Return near_match=false for spelling mistakes, spacing mistakes, inflection/word-form mistakes, broader/narrower meanings, related but different concepts, incomplete expressions, opposite meanings, or uncertain cases. Use the supplied Korean meaning/English definition only as context. Return JSON only with keys near_match, reason_code.`;
+  const user=`TARGET: ${target}\nKOREAN MEANING: ${meaning}\nENGLISH DEFINITION: ${definition}\nSTUDENT RESPONSE: ${student}`;
+  const text=await callAiWilli({messages:[{role:'system',content:system},{role:'user',content:user}],maxCompletionTokens:120,responseFormat:{type:'json_object'}});
+  const verdict=parseJson(text);
+  if(typeof verdict?.near_match!=='boolean')throw new Error('AI_WILLI_INVALID_VOCAB_NEAR_MATCH');
+  return{nearMatch:verdict.near_match===true,reasonCode:String(verdict.reason_code||'')};
+}
+
 function tutorSystemPrompt(section){
   if(String(section||'').toLowerCase()==='reading')return `You are AI Willi, a clear and supportive English reading tutor for Korean middle-school students. Explain in Korean, using English only for short quotations, expressions, or example sentences. Base the explanation only on the supplied question, passage/context, answers, grading result, and existing explanation. First identify what the question is testing, then explain why the student's answer did not work and what evidence makes the correct answer work. Do not invent the student's reasoning. Keep the answer easy to scan. Avoid unnecessary greetings, tables, and markdown bold markers.`;
   return `You are AI Willi, a clear and supportive English tutor for Korean middle-school students. Explain in Korean, using English only for grammar labels, short expressions, or example sentences. Base the explanation only on the supplied question, context, answers, grading result, and existing explanation. First identify the key grammar or language point, then explain why the student's answer did not work and why the accepted answer works. Do not invent the student's reasoning. Keep the answer easy to scan. Avoid unnecessary greetings, tables, and markdown bold markers.`;
