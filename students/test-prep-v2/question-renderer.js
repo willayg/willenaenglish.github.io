@@ -205,15 +205,20 @@ export class QuestionRenderer{
     style.textContent=`
       @keyframes graderOverlaySpin{to{transform:rotate(360deg)}}
       @keyframes graderOverlayPulse{0%,100%{opacity:.55}50%{opacity:1}}
-      .grader-blocking-overlay{position:fixed;inset:0;z-index:2147483000;display:flex;align-items:center;justify-content:center;padding:22px;background:rgba(11,23,31,.78);backdrop-filter:blur(8px);overscroll-behavior:none;touch-action:none}
-      .grader-blocking-card{width:min(92vw,520px);padding:30px 24px 26px;border-radius:26px;background:#fff;color:#263d44;box-shadow:0 24px 70px rgba(0,0,0,.32);text-align:center;font-family:Poppins,system-ui,sans-serif}
-      .grader-blocking-mark{display:flex;align-items:center;justify-content:center;width:58px;height:58px;margin:0 auto 18px;border-radius:50%;background:#ffe8f2;color:#d9467d;font-size:28px;font-weight:900}
-      .grader-blocking-spinner{width:58px;height:58px;margin:0 auto 20px;border:6px solid #f8c9da;border-top-color:#d9467d;border-radius:50%;animation:graderOverlaySpin .8s linear infinite}
-      .grader-blocking-title{margin:0;font-size:22px;line-height:1.3;font-weight:900;color:#263d44}
-      .grader-blocking-message{margin:13px 0 0;font-size:17px;line-height:1.6;font-weight:700;color:#405961;white-space:pre-wrap}
-      .grader-blocking-wait{margin-top:14px;font-size:13px;font-weight:700;color:#7a8d94;animation:graderOverlayPulse 1.2s ease-in-out infinite}
-      .grader-blocking-action{width:100%;min-height:52px;margin-top:24px;padding:0 18px;border:0;border-radius:15px;background:#ee5f91;color:#fff;font:800 16px Poppins,system-ui,sans-serif;cursor:pointer}
-      .grader-blocking-action:focus-visible{outline:3px solid rgba(238,95,145,.35);outline-offset:3px}
+      .grader-blocking-overlay{position:fixed;inset:0;z-index:2147483000;display:flex;align-items:center;justify-content:center;padding:22px;background:
+        linear-gradient(rgba(5,10,18,.94),rgba(5,10,18,.94)),
+        repeating-linear-gradient(0deg,rgba(49,226,255,.035) 0,rgba(49,226,255,.035) 1px,transparent 1px,transparent 4px);
+        backdrop-filter:blur(10px);overscroll-behavior:none;touch-action:none}
+      .grader-blocking-card{position:relative;overflow:hidden;width:min(92vw,520px);padding:30px 24px 26px;border-radius:22px;background:#08111d;color:#e8fbff;border:1px solid rgba(61,224,255,.62);box-shadow:0 0 0 1px rgba(255,63,190,.12),0 0 32px rgba(28,215,255,.18),0 24px 70px rgba(0,0,0,.55);text-align:center;font-family:Poppins,system-ui,sans-serif}
+      .grader-blocking-card:before{content:'';position:absolute;inset:0;pointer-events:none;background:linear-gradient(120deg,transparent 0 42%,rgba(47,231,255,.06) 50%,transparent 58%)}
+      .grader-blocking-mark{display:flex;align-items:center;justify-content:center;width:60px;height:60px;margin:0 auto 18px;border-radius:14px;background:rgba(255,61,190,.08);color:#ff65c3;border:1px solid rgba(255,101,195,.58);box-shadow:0 0 24px rgba(255,61,190,.22);font-size:30px;font-weight:900}
+      .grader-blocking-spinner{width:62px;height:62px;margin:0 auto 20px;border:5px solid rgba(43,222,255,.14);border-top-color:#35e3ff;border-right-color:#ff5bc1;border-radius:50%;box-shadow:0 0 24px rgba(53,227,255,.18);animation:graderOverlaySpin .75s linear infinite}
+      .grader-blocking-title{position:relative;margin:0;font-size:22px;line-height:1.3;font-weight:900;color:#f4fdff;text-shadow:0 0 18px rgba(53,227,255,.18)}
+      .grader-blocking-message{position:relative;margin:15px 0 0;font-size:17px;line-height:1.65;font-weight:700;color:#b9d7df;white-space:pre-wrap}
+      .grader-blocking-wait{position:relative;margin-top:15px;font-size:13px;font-weight:800;letter-spacing:.04em;color:#57eaff;animation:graderOverlayPulse 1.15s ease-in-out infinite}
+      .grader-blocking-action{position:relative;width:100%;min-height:52px;margin-top:24px;padding:0 18px;border:1px solid #3ce6ff;border-radius:13px;background:linear-gradient(90deg,#0b2531,#161c3a);color:#eaffff;box-shadow:0 0 18px rgba(60,230,255,.14);font:800 16px Poppins,system-ui,sans-serif;cursor:pointer}
+      .grader-blocking-action:active{transform:translateY(1px)}
+      .grader-blocking-action:focus-visible{outline:3px solid rgba(60,230,255,.28);outline-offset:3px}
       @media(prefers-reduced-motion:reduce){.grader-blocking-spinner,.grader-blocking-wait{animation:none}}
     `;
     document.head.appendChild(style);
