@@ -1,7 +1,7 @@
 import {resolveQuestionGradingPolicy} from './question-grading-policy.js?v=2.0.1';
 import {gradeWithAiWilli,aiWilliMessage} from './ai-willi.js?v=1.0.2';
 
-export const GRADER_VERSION='2.1.4';
+export const GRADER_VERSION='2.1.5';
 const stamp=result=>({...result,graderVersion:GRADER_VERSION});
 
 const FORMS={choice:'choice',multi:'multi',write:'write',multipart:'multipart',correction:'correction',identifiedCorrection:'identified_correction',order:'order',chunks:'chunks',blanks:'blanks',learn:'learn',unsupported:'unsupported'};
@@ -51,6 +51,90 @@ function missingTargetSpacesEquivalent(question,response){
     let valid=true;
     for(const boundary of mine.boundaries){if(!target.boundaries.has(boundary)){valid=false;break}}
     if(valid)return true;
+  }
+  return false;
+}
+
+function slashVariants(value){
+  const base=normExact(value);
+  if(!base.includes('/'))return[base];
+  const tokens=base.split(' ');let variants=[''];
+  for(const token of tokens){
+    const options=token.includes('/')?token.split('/').map(x=>x.trim()).filter(Boolean):[token];
+    if(!options.length)return[base];
+    const next=[];
+    for(const prefix of variants)for(const option of options){
+      next.push((prefix+' '+option).trim());
+      if(next.length>=16)break;
+    }
+    variants=next.slice(0,16);
+  }
+  return variants;
+}
+function slashAlternativeEquivalent(question,response){
+  if(!isTypedVocabWrite(question))return false;
+  const mine=normExact(response);
+  return (question.answer||[]).some(raw=>slashVariants(raw).some(v=>v===mine));
+}
+function possessivePlaceholderEquivalent(question,response){
+  if(!isTypedVocabWrite(question))return false;
+  const mine=normExact(response);
+  const possessives=["my","your","his","her","our","their","one's"];
+  for(const raw of question.answer||[]){
+    const target=normExact(raw);
+    if(!/\bone's\b/.test(target))continue;
+    for(const p of possessives)if(target.replace(/\bone's\b/g,p)===mine)return true;
+  }
+  return false;
+}
+function vocabMarkerNorm(value){
+  return normExact(value).replace(/\s*~\s*/g,' ').replace(/\s+/g,' ').trim();
+}
+function harmlessVocabSymbolEquivalent(question,response){
+  if(!isTypedVocabWrite(question))return false;
+  const mine=vocabMarkerNorm(response);
+  return (question.answer||[]).some(raw=>{
+    const target=vocabMarkerNorm(raw);
+    return target!==normExact(raw)&&target===mine;
+  });
+}
+function vocabPartOfSpeech(question){
+  const meta=String(question?.metadata?.part_of_speech||question?.metadata?.entry_type||'').toLowerCase();
+  const targets=(question?.tracking?.targets||[]).map(x=>String(x||'').toLowerCase()).join(' ');
+  return(meta+' '+targets).trim();
+}
+function isNounLikeVocab(question){
+  if(!isTypedVocabWrite(question))return false;
+  return /(^|[^a-z])noun([^a-z]|$)/.test(vocabPartOfSpeech(question));
+}
+function stripLeadingArticle(value){
+  return normExact(value).replace(/^(?:a|an|the)\s+/,'').trim();
+}
+function articleEquivalent(question,response){
+  if(!isNounLikeVocab(question))return false;
+  const mine=normExact(response),mineBare=stripLeadingArticle(mine);
+  for(const raw of question.answer||[]){
+    const target=normExact(raw),targetBare=stripLeadingArticle(target);
+    if(target===targetBare&&mine===mineBare)continue;
+    if(targetBare&&targetBare===mineBare&&target!==mine)return true;
+  }
+  return false;
+}
+function regularPlural(word){
+  const w=String(word||'').toLowerCase();
+  if(!/^[a-z]+$/.test(w)||w.length<2)return null;
+  if(/[^aeiou]y$/.test(w))return w.slice(0,-1)+'ies';
+  if(/(?:s|x|z|ch|sh)$/.test(w))return w+'es';
+  return w+'s';
+}
+function regularPluralEquivalent(question,response){
+  if(!isNounLikeVocab(question))return false;
+  const mine=normExact(response);
+  if(!/^[a-z]+$/.test(mine))return false;
+  for(const raw of question.answer||[]){
+    const target=normExact(raw);
+    if(!/^[a-z]+$/.test(target))continue;
+    if(regularPlural(target)===mine||regularPlural(mine)===target)return true;
   }
   return false;
 }
@@ -124,6 +208,11 @@ export async function gradeQuestion(question,response){
   if(!constraint.ok)return stamp({correct:false,message:constraint.message,correctAnswer:question.answer,method:'constraint',gradingPolicy:policy});
   if(exact(question,response,policy))return stamp({correct:true,message:'',correctAnswer:question.answer,method:'exact',gradingPolicy:policy});
   if(missingTargetSpacesEquivalent(question,response))return stamp({correct:true,message:'',correctAnswer:question.answer,method:'vocab_missing_space',gradingPolicy:policy});
+  if(slashAlternativeEquivalent(question,response))return stamp({correct:true,message:'',correctAnswer:question.answer,method:'vocab_slash_alternative',gradingPolicy:policy});
+  if(possessivePlaceholderEquivalent(question,response))return stamp({correct:true,message:'',correctAnswer:question.answer,method:'vocab_possessive_placeholder',gradingPolicy:policy});
+  if(harmlessVocabSymbolEquivalent(question,response))return stamp({correct:true,message:'',correctAnswer:question.answer,method:'vocab_symbol_marker',gradingPolicy:policy});
+  if(articleEquivalent(question,response))return stamp({correct:true,message:'',correctAnswer:question.answer,method:'vocab_article_variant',gradingPolicy:policy});
+  if(regularPluralEquivalent(question,response))return stamp({correct:true,message:'',correctAnswer:question.answer,method:'vocab_regular_plural',gradingPolicy:policy});
   if(policy.aiAllowed){
     try{
       const verdict=await gradeWithAiWilli(question,response,policy),correct=verdict.correct===true;
