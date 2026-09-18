@@ -40,7 +40,7 @@ function isStandaloneVocabMeaningQuestion(question){
   if(['translation_blank','bilingual_blank_write','sentence_transformation','common_blank','common_word_text','definition_blank_write'].includes(type))return false;
   return String(question?.mastery_key||question?.masteryKey||question?.metadata?.mastery_key||'').toLowerCase().startsWith('vocab:')
     || !!question?.metadata?.lexical_entry_id
-    || type.startsWith('vocab_');
+    || type.startsWith('vocab');
 }
 function normVocabLoose(v){
   return normExact(v)
