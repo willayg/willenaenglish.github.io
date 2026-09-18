@@ -38,7 +38,7 @@ pre{background:#f4f4f4;padding:14px;border-radius:10px;white-space:pre-wrap}
 <p><button id="run">Grade</button></p>
 <pre id="out">Ready.</pre>
 <script type="module">
-import {gradeQuestion,GRADER_VERSION} from '../shared/question-grader.js?v=2.2.0';
+import {gradeQuestion,GRADER_VERSION} from '../shared/question-grader.js?v=2.2.1';
 const $=id=>document.getElementById(id);
 for(const b of document.querySelectorAll('[data-t]'))b.onclick=()=>{$('target').value=b.dataset.t;$('answer').value=b.dataset.a;$('pos').value=b.dataset.p||'';run()};
 async function run(){
