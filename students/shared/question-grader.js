@@ -1,7 +1,7 @@
 import {resolveQuestionGradingPolicy} from './question-grading-policy.js?v=2.0.1';
 import {gradeWithAiWilli,aiWilliMessage} from './ai-willi.js?v=1.0.2';
 
-export const GRADER_VERSION='2.1.3-audit';
+export const GRADER_VERSION='2.1.4';
 const stamp=result=>({...result,graderVersion:GRADER_VERSION});
 
 const FORMS={choice:'choice',multi:'multi',write:'write',multipart:'multipart',correction:'correction',identifiedCorrection:'identified_correction',order:'order',chunks:'chunks',blanks:'blanks',learn:'learn',unsupported:'unsupported'};
@@ -30,6 +30,30 @@ function expandContractions(v){
   return s.replace(/\s+/g,' ').trim();
 }
 function normExact(v){return expandContractions(v)}
+function isTypedVocabWrite(question){
+  if(String(question?.form||'').toLowerCase()!==FORMS.write)return false;
+  const practice=String(question?.tracking?.practiceType||question?.metadata?.practice_type||'').toLowerCase();
+  const type=String(question?.tracking?.questionType||question?.questionType||question?.metadata?.question_type||'').toLowerCase();
+  return practice==='vocabulary'||practice==='vocab_test'||type.startsWith('vocab');
+}
+function spaceBoundaries(value){
+  const s=normExact(value),out=new Set();let pos=0;
+  for(const ch of s){if(ch===' ')out.add(pos);else pos++}
+  return{flat:s.replace(/ /g,''),boundaries:out,count:out.size};
+}
+function missingTargetSpacesEquivalent(question,response){
+  if(!isTypedVocabWrite(question))return false;
+  const mine=spaceBoundaries(response);
+  if(!mine.flat)return false;
+  for(const raw of question.answer||[]){
+    const target=spaceBoundaries(raw);
+    if(target.flat!==mine.flat||mine.count>=target.count)continue;
+    let valid=true;
+    for(const boundary of mine.boundaries){if(!target.boundaries.has(boundary)){valid=false;break}}
+    if(valid)return true;
+  }
+  return false;
+}
 function searchable(v){return normBasic(v).replace(/[^a-z0-9가-힣'\-]+/gi,' ').replace(/\s+/g,' ').trim()}
 function containsPhrase(text,phrase){const t=` ${searchable(text)} `,p=searchable(phrase);if(!p)return true;return t.includes(` ${p} `)}
 function correctionLabel(v){const s=String(v||'').trim().replace(/:$/,'');const n=CIRCLED_NUM.indexOf(s);if(n>=0)return String(n+1);const m=s.match(/^\d+$/);return m?String(Number(s)):s.toLowerCase()}
@@ -99,6 +123,7 @@ export async function gradeQuestion(question,response){
   const constraint=checkConstraints(question,response,policy);
   if(!constraint.ok)return stamp({correct:false,message:constraint.message,correctAnswer:question.answer,method:'constraint',gradingPolicy:policy});
   if(exact(question,response,policy))return stamp({correct:true,message:'',correctAnswer:question.answer,method:'exact',gradingPolicy:policy});
+  if(missingTargetSpacesEquivalent(question,response))return stamp({correct:true,message:'',correctAnswer:question.answer,method:'vocab_missing_space',gradingPolicy:policy});
   if(policy.aiAllowed){
     try{
       const verdict=await gradeWithAiWilli(question,response,policy),correct=verdict.correct===true;
