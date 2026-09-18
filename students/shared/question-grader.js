@@ -27,6 +27,73 @@ function expandContractions(v){
   return s.replace(/\s+/g,' ').trim();
 }
 function normExact(v){return expandContractions(v)}
+function questionTypeOf(question){return String(question?.tracking?.questionType||question?.questionType||question?.metadata?.question_type||'').trim().toLowerCase()}
+function isTypedVocabQuestion(question){
+  if(String(question?.form||'').toLowerCase()!==FORMS.write)return false;
+  const practice=String(question?.tracking?.practiceType||question?.metadata?.practice_type||question?.skill||'').toLowerCase();
+  const mastery=String(question?.mastery_key||question?.masteryKey||question?.metadata?.mastery_key||'').toLowerCase();
+  return practice==='vocab_test'||practice==='vocabulary'||mastery.startsWith('vocab:')||!!question?.metadata?.lexical_entry_id;
+}
+function isStandaloneVocabMeaningQuestion(question){
+  if(!isTypedVocabQuestion(question))return false;
+  const type=questionTypeOf(question);
+  if(['translation_blank','bilingual_blank_write','sentence_transformation','common_blank','common_word_text','definition_blank_write'].includes(type))return false;
+  return String(question?.mastery_key||question?.masteryKey||question?.metadata?.mastery_key||'').toLowerCase().startsWith('vocab:')
+    || !!question?.metadata?.lexical_entry_id
+    || type.startsWith('vocab_');
+}
+function normVocabLoose(v){
+  return normExact(v)
+    .replace(/[~–—_.,!?;:()[\]{}"'“”‘’`]/g,' ')
+    .replace(/-/g,' ')
+    .replace(/\s+/g,' ')
+    .trim();
+}
+function compactVocab(v){return normVocabLoose(v).replace(/[\s/]+/g,'')}
+function expandSlashAlternatives(value){
+  const s=normExact(value).replace(/\s*\/\s*/g,'/');
+  const tokens=s.split(/\s+/).filter(Boolean);
+  let variants=[''];
+  for(const token of tokens){
+    const parts=token.includes('/')?token.split('/').filter(Boolean):[token];
+    const next=[];
+    for(const prefix of variants)for(const part of parts)next.push((prefix+' '+part).trim());
+    variants=next;
+    if(variants.length>16)return[normExact(value)];
+  }
+  return variants.length?variants:[normExact(value)];
+}
+function stripArticles(v){return normVocabLoose(v).split(/\s+/).filter(w=>w&&!['a','an','the'].includes(w)).join(' ')}
+function oneSimpleNumberDifference(a,b){
+  const aw=normVocabLoose(a).split(/\s+/).filter(Boolean),bw=normVocabLoose(b).split(/\s+/).filter(Boolean);
+  if(aw.length!==bw.length||!aw.length)return false;
+  let diffs=0;
+  for(let i=0;i<aw.length;i++){
+    if(aw[i]===bw[i])continue;
+    const x=aw[i],y=bw[i];
+    const simple=(x.length>3&&x===y+'s')||(y.length>3&&y===x+'s');
+    if(!simple)return false;
+    diffs++;
+  }
+  return diffs===1;
+}
+function vocabLenientEquivalent(question,response){
+  if(!isTypedVocabQuestion(question))return null;
+  const mine=normExact(response);
+  if(!mine)return null;
+  const targets=(question.answer||[]).map(String).filter(Boolean);
+  for(const raw of targets){
+    for(const alt of expandSlashAlternatives(raw)){
+      if(normExact(alt)===mine)return{type:'slash_alternative',matched:alt};
+      if(compactVocab(alt)===compactVocab(mine))return{type:'punctuation_or_spacing',matched:alt};
+      if(isStandaloneVocabMeaningQuestion(question)){
+        if(stripArticles(alt)===stripArticles(mine)&&stripArticles(alt))return{type:'article_variation',matched:alt};
+        if(oneSimpleNumberDifference(alt,mine))return{type:'singular_plural',matched:alt};
+      }
+    }
+  }
+  return null;
+}
 function searchable(v){return normBasic(v).replace(/[^a-z0-9가-힣'\-]+/gi,' ').replace(/\s+/g,' ').trim()}
 function containsPhrase(text,phrase){const t=` ${searchable(text)} `,p=searchable(phrase);if(!p)return true;return t.includes(` ${p} `)}
 function correctionLabel(v){const s=String(v||'').trim().replace(/:$/,'');const n=CIRCLED_NUM.indexOf(s);if(n>=0)return String(n+1);const m=s.match(/^\d+$/);return m?String(Number(s)):s.toLowerCase()}
@@ -96,6 +163,8 @@ export async function gradeQuestion(question,response){
   const constraint=checkConstraints(question,response,policy);
   if(!constraint.ok)return{correct:false,message:constraint.message,correctAnswer:question.answer,method:'constraint',gradingPolicy:policy};
   if(exact(question,response,policy))return{correct:true,message:'',correctAnswer:question.answer,method:'exact',gradingPolicy:policy};
+  const lenient=vocabLenientEquivalent(question,response);
+  if(lenient)return{correct:true,message:'',correctAnswer:question.answer,method:'lenient_vocab',leniencyType:lenient.type,leniencyMatched:lenient.matched,gradingPolicy:policy};
   if(policy.aiAllowed){
     try{
       const verdict=await gradeWithAiWilli(question,response,policy),correct=verdict.correct===true;
