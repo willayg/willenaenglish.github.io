@@ -32,6 +32,17 @@ export async function gradeWithAiWilli(question,response,policy){
   return{correct:verdict.correct===true,explanationKo:String(verdict.explanation_ko||''),reason:String(verdict.reason||''),reasonCode:String(verdict.reason_code||'')};
 }
 
+export async function classifyVocabSemanticNearMatch(question,response){
+  const target=(question?.answer||[]).map(x=>String(x??'').trim()).filter(Boolean);
+  const student=graderResponseText(response).trim();
+  if(!target.length||!student)return{nearMatch:false,reason:'missing_input'};
+  const system=`You are classifying a Korean middle-school vocabulary practice response. The REFERENCE ANSWER is the specific target word or phrase the student is expected to learn. Decide only whether the STUDENT RESPONSE has essentially the same meaning as the target but uses a different English word or phrase. Examples of near matches: "be known for" vs "be famous for", "recently" vs "lately", "throw away" vs "throw out". Do NOT call spelling mistakes, inflection changes, missing required structural words, related-but-different concepts, or merely plausible translations near matches. The target remains required; a near match is NOT correct. Return JSON only: {"near_match":boolean,"reason":"short English reason"}.`;
+  const user=`KOREAN PROMPT:\n${String(question?.prompt||question?.context?.korean||'')}\n\nREFERENCE ANSWER:\n${target.join(' | ')}\n\nSTUDENT RESPONSE:\n${student}`;
+  const text=await callAiWilli({messages:[{role:'system',content:system},{role:'user',content:user}],maxCompletionTokens:160,responseFormat:{type:'json_object'}});
+  const verdict=parseJson(text);
+  return{nearMatch:verdict?.near_match===true,reason:String(verdict?.reason||'')};
+}
+
 function tutorSystemPrompt(section){
   if(String(section||'').toLowerCase()==='reading')return `You are AI Willi, a clear and supportive English reading tutor for Korean middle-school students. Explain in Korean, using English only for short quotations, expressions, or example sentences. Base the explanation only on the supplied question, passage/context, answers, grading result, and existing explanation. First identify what the question is testing, then explain why the student's answer did not work and what evidence makes the correct answer work. Do not invent the student's reasoning. Keep the answer easy to scan. Avoid unnecessary greetings, tables, and markdown bold markers.`;
   return `You are AI Willi, a clear and supportive English tutor for Korean middle-school students. Explain in Korean, using English only for grammar labels, short expressions, or example sentences. Base the explanation only on the supplied question, context, answers, grading result, and existing explanation. First identify the key grammar or language point, then explain why the student's answer did not work and why the accepted answer works. Do not invent the student's reasoning. Keep the answer easy to scan. Avoid unnecessary greetings, tables, and markdown bold markers.`;
