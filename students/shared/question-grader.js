@@ -1,7 +1,7 @@
 import {resolveQuestionGradingPolicy} from './question-grading-policy.js?v=2.0.1';
 import {gradeWithAiWilli,aiWilliMessage,classifyVocabSemanticNearMatch} from './ai-willi.js?v=1.0.3';
 
-export const GRADER_VERSION='2.3.3';
+export const GRADER_VERSION='2.4.0';
 const stamp=result=>({...result,graderVersion:GRADER_VERSION});
 
 const FORMS={choice:'choice',multi:'multi',write:'write',multipart:'multipart',correction:'correction',identifiedCorrection:'identified_correction',order:'order',chunks:'chunks',blanks:'blanks',learn:'learn',unsupported:'unsupported'};
@@ -185,6 +185,21 @@ function maskedTargetHint(question){
     });
   }).join('');
 }
+function obviousSemanticJunk(response){
+  const raw=normExact(response);
+  if(!raw)return true;
+  if(/[^a-z\s'\-]/i.test(raw))return true;
+  const compact=raw.replace(/[^a-z]/gi,'').toLowerCase();
+  if(!compact)return true;
+  if(compact.length===1)return true;
+  if(/^(.)\1{2,}$/.test(compact))return true;
+  if(compact.length>=4&&!/[aeiouy]/.test(compact))return true;
+  const keyboardRuns=['qwerty','asdf','zxcv','poiuy','lkjh','mnbv','qwer','asdf','zxcv','hjkl'];
+  if(keyboardRuns.some(run=>run.includes(compact)||compact.includes(run)))return true;
+  const tokens=raw.split(/\s+/).filter(Boolean);
+  if(tokens.length&&tokens.every(t=>t.replace(/[^a-z]/gi,'').length<=1))return true;
+  return false;
+}
 function semanticWarningEligible(question){
   if(!isTypedVocabWrite(question))return false;
   const practice=String(question?.tracking?.practiceType||'').toLowerCase();
@@ -289,7 +304,7 @@ export async function gradeQuestion(question,response,options={}){
   if(articleEquivalent(question,response))return stamp({correct:true,message:'',correctAnswer:question.answer,method:'vocab_article_variant',gradingPolicy:policy});
   if(regularPluralEquivalent(question,response))return stamp({correct:true,message:'',correctAnswer:question.answer,method:'vocab_regular_plural',gradingPolicy:policy});
   if(!options.suppressWarnings&&safeTypoNearMiss(question,response))return stamp({correct:false,warning:true,warningType:'vocab_typo',message:'⚠️ 거의 맞았어요! 철자나 띄어쓰기를 한 번 더 확인해 보세요.',correctAnswer:question.answer,method:'vocab_typo_warning',gradingPolicy:policy});
-  if(!options.suppressWarnings&&semanticWarningEligible(question)){
+  if(!options.suppressWarnings&&semanticWarningEligible(question)&&!obviousSemanticJunk(response)){
     try{
       options.onSemanticCheck?.(true);
       const verdict=await classifyVocabSemanticNearMatch(question,response);
