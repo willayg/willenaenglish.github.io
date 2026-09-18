@@ -1,6 +1,6 @@
 import {QuestionRenderer} from './question-renderer.js?v=2.20.8';
-import {gradeQuestion} from '../shared/question-grader.js?v=2.2.2';
-import {recordAttempt,startSession,completeSession,trackingState} from './tracking-client.js?v=2.17e';
+import {gradeQuestion} from '../shared/question-grader.js?v=2.3.0';
+import {recordAttempt,startSession,completeSession,trackingState} from './tracking-client.js?v=2.17f';
 import {mountVocabAiWilli} from './ai-willi-vocab.js?v=1.0.0';
 
 const CONTENT='https://gxwfsqxyuufqtitspfqg.supabase.co';
@@ -28,7 +28,7 @@ async function trackGet(path){const t=token();if(!t)throw new Error('AUTH_REQUIR
 async function loadItems(unitId){
   const occ=await contentGet(`/rest/v1/source_content_occurrences?select=lexical_entry_id,source_text,metadata&unit_id=eq.${encodeURIComponent(unitId)}&occurrence_type=eq.lexical_entry&skill=eq.vocabulary&order=source_text.asc`);
   const ids=[...new Set((occ||[]).map(x=>x.lexical_entry_id).filter(Boolean))];if(!ids.length)return[];
-  const lex=await contentGet(`/rest/v1/lexical_entries?select=id,canonical_text,translation_ko,entry_type,part_of_speech&id=in.${encodeURIComponent('('+ids.join(',')+')')}`),byId=new Map((lex||[]).map(x=>[String(x.id),x])),seen=new Set(),out=[];
+  const lex=await contentGet(`/rest/v1/lexical_entries?select=id,canonical_text,translation_ko,definition_en,entry_type,part_of_speech&id=in.${encodeURIComponent('('+ids.join(',')+')')}`),byId=new Map((lex||[]).map(x=>[String(x.id),x])),seen=new Set(),out=[];
   for(const o of occ||[]){const x=byId.get(String(o.lexical_entry_id)),k=norm(x?.canonical_text);if(!x?.canonical_text||!x?.translation_ko||!k||seen.has(k))continue;seen.add(k);out.push(x)}return out;
 }
 async function loadProgress(){
@@ -80,7 +80,7 @@ function finishCards(){
 }
 function distractors(item,field){const seen=new Set(),pool=[];for(const x of shuffle(ctx.items)){if(String(x.id)===String(item.id))continue;const v=String(x[field]||'').trim(),k=norm(v);if(!v||seen.has(k)||k===norm(item[field]))continue;seen.add(k);pool.push(v)}return shuffle([item[field],...pool.slice(0,3)])}
 function question(item,mode){
-  if(mode==='spelling')return{id:String(item.id),masteryKey:`lexical:${item.id}`,skill:'vocabulary',form:'write',source:{code:'',label:'lesson_vocabulary'},prompt:String(item.translation_ko),context:{},choices:[],answer:[String(item.canonical_text)],grading:{mode:'exact_normalized',aiAllowed:false,constraints:{}},tracking:{practiceType:'vocabulary',questionType:'vocabulary_spelling',targets:['vocabulary',item.part_of_speech||item.entry_type||'lexical_item']},metadata:{vocab_mode:'spelling',part_of_speech:item.part_of_speech||null,entry_type:item.entry_type||null,canonical_text:item.canonical_text}};
+  if(mode==='spelling')return{id:String(item.id),masteryKey:`lexical:${item.id}`,skill:'vocabulary',form:'write',source:{code:'',label:'lesson_vocabulary'},prompt:String(item.translation_ko),context:{},choices:[],answer:[String(item.canonical_text)],grading:{mode:'exact_normalized',aiAllowed:false,constraints:{}},tracking:{practiceType:'vocabulary',questionType:'vocabulary_spelling',targets:['vocabulary',item.part_of_speech||item.entry_type||'lexical_item']},metadata:{vocab_mode:'spelling',part_of_speech:item.part_of_speech||null,entry_type:item.entry_type||null,canonical_text:item.canonical_text,translation_ko:item.translation_ko||null,definition_en:item.definition_en||null}};
   const field=mode==='ko-en'?'canonical_text':'translation_ko',choices=distractors(item,field),answer=mode==='ko-en'?item.canonical_text:item.translation_ko;
   return{id:String(item.id),masteryKey:`lexical:${item.id}`,skill:'vocabulary',form:'choice',source:{code:'',label:'lesson_vocabulary'},prompt:String(mode==='ko-en'?item.translation_ko:item.canonical_text),context:{},choices,answer:[String(choices.indexOf(answer)+1)],grading:{mode:'exact_normalized',aiAllowed:false,constraints:{}},tracking:{practiceType:'vocabulary',questionType:`vocabulary_${mode}`,targets:['vocabulary',item.part_of_speech||item.entry_type||'lexical_item']},metadata:{vocab_mode:mode}};
 }
