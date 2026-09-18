@@ -157,7 +157,8 @@ function introducedDouble(response,target){
   const diff=[];for(let i=0;i<response.length;i++)if(response[i]!==target[i])diff.push(i);
   if(diff.length!==1)return false;
   const i=diff[0];
-  return (i>0&&response[i]===response[i-1]&&target[i]!==target[i-1])||(i<response.length-1&&response[i]===response[i+1]&&target[i]!==target[i+1]);
+  const doubled=(i>0&&response[i]===response[i-1]&&target[i]!==target[i-1])||(i<response.length-1&&response[i]===response[i+1]&&target[i]!==target[i+1]);
+  return doubled&&!/[aeiou]/.test(response[i]);
 }
 function safeTypoNearMiss(question,response){
   if(!isTypedVocabWrite(question))return false;
