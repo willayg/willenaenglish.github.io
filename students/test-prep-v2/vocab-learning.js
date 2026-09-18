@@ -99,8 +99,12 @@ async function grade(){
   const response=rendererAtSubmit.getResponse();if((ctx.mode==='spelling'||ctx.mode==='ko-en'||ctx.mode==='en-ko')&&(response==null||String(response).trim()===''))return;
   ctx.grading=true;
   let result;
-  try{result=await gradeQuestion(questionAtSubmit,response,{suppressWarnings:!!ctx.warningShown})}
-  catch(e){ctx.grading=false;throw e}
+  try{result=await gradeQuestion(questionAtSubmit,response,{suppressWarnings:!!ctx.warningShown,onSemanticCheck:active=>{
+    const next=ctx.host.querySelector('#vpNext');
+    if(active){if(next){next.disabled=true;next.textContent='✦ AI Willi가 답을 확인하고 있어요…'}rendererAtSubmit.showThinking?.()}
+    else rendererAtSubmit.clearThinking?.();
+  }})}
+  catch(e){ctx.grading=false;rendererAtSubmit.clearThinking?.();throw e}
   result.responseTimeMs=Date.now()-ctx.startedAt;
   if(ctx.question!==questionAtSubmit||ctx.index!==indexAtSubmit){ctx.grading=false;return}
   if(result.warning){
