@@ -1,7 +1,7 @@
 import {resolveQuestionGradingPolicy} from './question-grading-policy.js?v=2.0.1';
 import {gradeWithAiWilli,aiWilliMessage} from './ai-willi.js?v=1.0.2';
 
-export const GRADER_VERSION='2.2.1';
+export const GRADER_VERSION='2.2.2';
 const stamp=result=>({...result,graderVersion:GRADER_VERSION});
 
 const FORMS={choice:'choice',multi:'multi',write:'write',multipart:'multipart',correction:'correction',identifiedCorrection:'identified_correction',order:'order',chunks:'chunks',blanks:'blanks',learn:'learn',unsupported:'unsupported'};
@@ -160,8 +160,22 @@ function introducedDouble(response,target){
   const doubled=(i>0&&response[i]===response[i-1]&&target[i]!==target[i-1])||(i<response.length-1&&response[i]===response[i+1]&&target[i]!==target[i+1]);
   return doubled&&!/[aeiou]/.test(response[i]);
 }
+function insertedSpaceNearMiss(question,response){
+  if(!isTypedVocabWrite(question))return false;
+  const mine=normExact(response);
+  if((mine.match(/ /g)||[]).length!==1)return false;
+  const parts=mine.split(' ');
+  if(parts.some(x=>x.length<2))return false;
+  for(const raw of question.answer||[]){
+    const target=normExact(raw);
+    if(target.includes(' '))continue;
+    if(parts.join('')===target)return true;
+  }
+  return false;
+}
 function safeTypoNearMiss(question,response){
   if(!isTypedVocabWrite(question))return false;
+  if(insertedSpaceNearMiss(question,response))return true;
   const mine=typoWord(response);
   if(!mine||mine.includes(' ')||mine.length<3)return false;
   for(const raw of question.answer||[]){
