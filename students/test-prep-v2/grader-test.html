@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Willena Grader Test</title>
+<style>
+body{font-family:system-ui,sans-serif;max-width:760px;margin:32px auto;padding:0 16px}
+label{display:block;font-weight:700;margin-top:14px}
+input,select,button{font:inherit;padding:10px 12px;margin-top:6px}
+input{width:100%;box-sizing:border-box}
+button{cursor:pointer}
+pre{background:#f4f4f4;padding:14px;border-radius:10px;white-space:pre-wrap}
+.quick{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+</style>
+</head>
+<body>
+<h1>Grader Test</h1>
+<p>No DB write. This calls the shared student grader directly.</p>
+<label>Target</label><input id="target" value="get worse">
+<label>Student answer</label><input id="answer" value="getworse">
+<label>Part of speech</label>
+<select id="pos"><option value="">Other / unknown</option><option value="noun">noun</option></select>
+<div class="quick">
+<button data-t="have a good/great time" data-a="have a great time">Slash</button>
+<button data-t="do one's best" data-a="do my best">Possessive</button>
+<button data-t="put ~ in danger" data-a="put in danger">~ marker</button>
+<button data-t="apple" data-a="apples" data-p="noun">Plural</button>
+<button data-t="a flood" data-a="flood" data-p="noun">Article</button>
+<button data-t="waste" data-a="w a s t e">Reject extra spaces</button>
+<button data-t="be famous for" data-a="be known for">Reject synonym</button>
+</div>
+<p><button id="run">Grade</button></p>
+<pre id="out">Ready.</pre>
+<script type="module">
+import {gradeQuestion,GRADER_VERSION} from '../shared/question-grader.js?v=2.1.5';
+const $=id=>document.getElementById(id);
+for(const b of document.querySelectorAll('[data-t]'))b.onclick=()=>{$('target').value=b.dataset.t;$('answer').value=b.dataset.a;$('pos').value=b.dataset.p||'';run()};
+async function run(){
+ const pos=$('pos').value;
+ const q={id:'grader-test',skill:'vocabulary',form:'write',answer:[$('target').value],grading:{mode:'exact_normalized',aiAllowed:false,constraints:{}},tracking:{practiceType:'vocabulary',questionType:'vocabulary_spelling',targets:['vocabulary',pos||'lexical_item']},metadata:{part_of_speech:pos||null}};
+ const r=await gradeQuestion(q,$('answer').value);
+ $('out').textContent=JSON.stringify({grader:GRADER_VERSION,target:$('target').value,answer:$('answer').value,correct:r.correct,method:r.method,message:r.message},null,2);
+}
+$('run').onclick=run;
+run();
+</script>
+</body>
+</html>
