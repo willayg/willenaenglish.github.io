@@ -1,7 +1,9 @@
+import './grammar-guide-lessons.js?v=1.0.0';
 import {startStudentHeaderData,subscribeStudentHeaderData} from '../shared/student-header-data.js?v=1.0.0';
 import {logoutStudent,openStudentProfile} from '../shared/student-header-actions.js?v=1.0.1';
-import {bigTextEnabled,setBigTextEnabled} from '../shared/student-accessibility.js?v=1.0.0';
 
+const BIG_TEXT_KEY='willena-testprep-big-text';
+const BIG_TEXT_EVENT='willena:test-prep-big-text';
 const header=document.querySelector('.student-header');
 const nameEl=document.getElementById('user');
 const pointsEl=document.getElementById('headerPoints');
@@ -15,20 +17,27 @@ const bigTextLabel=document.getElementById('studentBigTextLabel');
 const testPrepAButton=document.getElementById('studentTestPrepA');
 const testPrepBButton=document.getElementById('studentTestPrepB');
 const logoutButton=document.getElementById('studentLogout');
+const headerTitle=document.querySelector('.header-title');
+
+if(headerTitle){
+  headerTitle.setAttribute('aria-label','Willena Test Prep');
+  headerTitle.innerHTML='<svg viewBox="0 0 32 32" width="30" height="30" aria-hidden="true" focusable="false" style="display:block"><circle cx="16" cy="16" r="12" fill="none" stroke="currentColor" stroke-width="2.4"/><circle cx="16" cy="16" r="7" fill="none" stroke="currentColor" stroke-width="2.4"/><circle cx="16" cy="16" r="2.5" fill="currentColor"/></svg>';
+}
 
 function fallbackAvatar(name){
   const value=String(name||'Student').trim();
   return value.charAt(0).toUpperCase()||'S';
 }
+function bigTextEnabled(){try{return localStorage.getItem(BIG_TEXT_KEY)==='1'}catch{return false}}
 function renderBigTextSetting(){
   const on=bigTextEnabled();
   if(bigTextButton)bigTextButton.setAttribute('aria-pressed',String(on));
   if(bigTextLabel)bigTextLabel.textContent=`큰 글자 ${on?'켜짐':'꺼짐'}`;
 }
-function setMenu(open){
-  if(!menu||!avatarButton)return;
-  menu.hidden=!open;
-  avatarButton.setAttribute('aria-expanded',open?'true':'false');
+function setBigText(enabled){
+  try{localStorage.setItem(BIG_TEXT_KEY,enabled?'1':'0')}catch{}
+  renderBigTextSetting();
+  window.dispatchEvent(new CustomEvent(BIG_TEXT_EVENT,{detail:{enabled:!!enabled}}));
 }
 function renderStudentHeader(data){
   const name=data.name||'Student';
@@ -38,6 +47,11 @@ function renderStudentHeader(data){
   if(avatarButton)avatarButton.textContent=data.avatar||fallbackAvatar(name);
   if(header){header.dataset.studentHeaderShared='1';if(data.userId)header.dataset.studentId=String(data.userId)}
 }
+function setMenu(open){
+  if(!menu||!avatarButton)return;
+  menu.hidden=!open;
+  avatarButton.setAttribute('aria-expanded',open?'true':'false');
+}
 
 avatarButton?.addEventListener('click',event=>{event.stopPropagation();setMenu(menu?.hidden!==false)});
 menu?.addEventListener('click',event=>event.stopPropagation());
@@ -45,7 +59,7 @@ document.addEventListener('click',()=>setMenu(false));
 document.addEventListener('keydown',event=>{if(event.key==='Escape')setMenu(false)});
 profileButton?.addEventListener('click',()=>openStudentProfile());
 dashboardButton?.addEventListener('click',()=>{window.location.href='/students/dashboard-v2/'});
-bigTextButton?.addEventListener('click',()=>{setBigTextEnabled(!bigTextEnabled());renderBigTextSetting();setMenu(false)});
+bigTextButton?.addEventListener('click',()=>{setBigText(!bigTextEnabled());setMenu(false)});
 testPrepAButton?.addEventListener('click',()=>{window.location.href='../test-prep-app/'});
 testPrepBButton?.addEventListener('click',()=>setMenu(false));
 logoutButton?.addEventListener('click',()=>logoutStudent());

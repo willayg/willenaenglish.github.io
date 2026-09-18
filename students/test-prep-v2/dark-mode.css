@@ -71,32 +71,3 @@ html[data-test-prep-theme="dark"] .tp-v1-header .profile-logout{color:#ff82b3}
 html[data-test-prep-theme="dark"] .tp-v1-header .profile-logout .profile-menu-icon{background:#3a2230;color:#ff82b3}
 
 html[data-test-prep-theme="dark"] .app-version{color:#71848c}
-
-/* 본문외우기 + 단어학습: theme runtime/light-only components. */
-html[data-test-prep-theme="dark"] .spv1-card,
-html[data-test-prep-theme="dark"] .spv1-result,
-html[data-test-prep-theme="dark"] .vp-wrap{background:#182126;color:var(--ink);border-color:#38505a;box-shadow:0 14px 30px rgba(0,0,0,.28)}
-html[data-test-prep-theme="dark"] .spv1-answer{background:#141d21;border-color:#405963}
-html[data-test-prep-theme="dark"] .spv1-bank,
-html[data-test-prep-theme="dark"] .vp-card{background:#1b252a;border-color:#38505a}
-html[data-test-prep-theme="dark"] .spv1-word,
-html[data-test-prep-theme="dark"] .spv1-actions button,
-html[data-test-prep-theme="dark"] .spv1-result button,
-html[data-test-prep-theme="dark"] .vp-mode,
-html[data-test-prep-theme="dark"] .vp-next,
-html[data-test-prep-theme="dark"] .vp-reveal,
-html[data-test-prep-theme="dark"] .vp-selfcheck-btn,
-html[data-test-prep-theme="dark"] .vp-card-audio{background:#202b30;color:var(--ink);border-color:#405963}
-html[data-test-prep-theme="dark"] .spv1-actions .primary,
-html[data-test-prep-theme="dark"] .spv1-result button,
-html[data-test-prep-theme="dark"] .vp-mode,
-html[data-test-prep-theme="dark"] .vp-next,
-html[data-test-prep-theme="dark"] .vp-reveal,
-html[data-test-prep-theme="dark"] .vp-selfcheck-btn,
-html[data-test-prep-theme="dark"] .vp-card-audio{color:#ff82b3}
-html[data-test-prep-theme="dark"] .vp-mode.active{background:#20343a}
-html[data-test-prep-theme="dark"] .tp-vocab-done-mark{background:#1c3528;color:#a8e1bc}
-html[data-test-prep-theme="dark"] .tp-vocab-reopen{color:#9fb3ba}
-html[data-test-prep-theme="dark"] .vocab-unlock{background:#182126;color:var(--ink);box-shadow:0 18px 60px rgba(0,0,0,.48)}
-html[data-test-prep-theme="dark"] .vocab-unlock h3{color:var(--ink)}
-html[data-test-prep-theme="dark"] .vocab-unlock p{color:var(--muted)}

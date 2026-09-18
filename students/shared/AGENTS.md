@@ -43,22 +43,6 @@ Do NOT create app-local review queue builders, due-date calculations, legacy-ID 
 
 If another student app later needs 오답/review, extend the shared review contract rather than copying Test Prep V2's flow.
 
-## SHARED STUDENT QUESTION UI
-
-New student apps that need the same question UI as Test Prep should import:
-
-`students/shared/student-question-renderer.js`
-
-This is the stable public renderer path for student apps. It currently delegates to the proven Test Prep V2 renderer, so new apps must not copy that renderer or import Test Prep internals directly. The implementation can later move fully into `students/shared/` without changing consuming apps.
-
-The canonical cross-app large-text setting is:
-
-`students/shared/student-accessibility.js`
-
-Use its helpers rather than creating app-specific localStorage keys or events. It includes compatibility with the older Test Prep large-text setting.
-
-AI feedback/help is already shared through `students/shared/ai-willi.js`. Grading is shared through `students/shared/question-grader.js`, and typed-answer keyboard behavior is shared through `students/shared/willena-keyboard.js`. New student apps should consume these existing owners rather than fork them.
-
 ## DESIGN FOR MORE THAN 내신
 
 This folder may grow into a broader student platform layer.
@@ -80,12 +64,6 @@ Before creating a new shared module:
 
 `student-review.js` provides the canonical frontend gateway for review queues and review timing/state.
 
-`student-question-renderer.js` provides the stable shared question-renderer import for student apps.
+Test Prep V2 consumes these shared owners while keeping rendering and route control in its existing canonical V2 modules.
 
-`student-accessibility.js` owns cross-app student accessibility preferences such as large text.
-
-`ai-willi.js`, `question-grader.js`, and `willena-keyboard.js` are existing shared owners that new student apps should reuse.
-
-Test Prep V2 consumes these shared owners while keeping rendering workflow and route control in its existing canonical V2 modules.
-
-If a statistical, review-state, accessibility, grading, AI-helper, or shared-question-UI rule changes, fix the shared owner once. Do not patch each consuming app separately.
+If a statistical or review-state rule changes, fix the shared backend/client once. Do not patch each consuming app separately.

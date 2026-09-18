@@ -14,32 +14,3 @@ html[data-test-prep-theme="cyberpunk"] .wrong-card,html[data-test-prep-theme="cy
 html[data-test-prep-theme="cyberpunk"] .mock-summary-card,html[data-test-prep-theme="cyberpunk"] .mock-question-card,html[data-test-prep-theme="cyberpunk"] .mock-results-hero,html[data-test-prep-theme="cyberpunk"] .mock-result-section,html[data-test-prep-theme="cyberpunk"] .mock-review-question,html[data-test-prep-theme="cyberpunk"] .mock-timer,html[data-test-prep-theme="cyberpunk"] .mock-section-count{background:#160d24!important;color:#f8f1ff!important;border-color:#8d3fbb!important;box-shadow:none!important}html[data-test-prep-theme="cyberpunk"] .mock-summary-title,html[data-test-prep-theme="cyberpunk"] .mock-timer strong,html[data-test-prep-theme="cyberpunk"] .mock-results-score strong,html[data-test-prep-theme="cyberpunk"] .mock-result-section summary strong,html[data-test-prep-theme="cyberpunk"] .mock-review-answers b{color:#f8f1ff!important}html[data-test-prep-theme="cyberpunk"] .mock-summary-copy,html[data-test-prep-theme="cyberpunk"] .mock-summary-eyebrow,html[data-test-prep-theme="cyberpunk"] .mock-section-count span,html[data-test-prep-theme="cyberpunk"] .mock-exam-status>strong,html[data-test-prep-theme="cyberpunk"] .mock-exam-nav>[data-mock-answered],html[data-test-prep-theme="cyberpunk"] .mock-result-section summary span,html[data-test-prep-theme="cyberpunk"] .mock-review-question-head,html[data-test-prep-theme="cyberpunk"] .mock-review-answers span{color:#bea8c9!important}html[data-test-prep-theme="cyberpunk"] .mock-section-pill,html[data-test-prep-theme="cyberpunk"] .mock-ready{background:#251238!important;color:#35e8ff!important}html[data-test-prep-theme="cyberpunk"] .mock-result-sync{background:#251238!important;color:#cfb9da!important}
 html[data-test-prep-theme="cyberpunk"] .bottom{background:rgba(11,6,19,.96)!important;border-top-color:#4a265f!important}html[data-test-prep-theme="cyberpunk"] .bottom button{background:#1d102d!important;color:#f8f1ff!important;border-color:#603576!important}html[data-test-prep-theme="cyberpunk"] .bottom .primary{background:#2a123d!important;color:#ff61bd!important;border-color:#35e8ff!important}
 html[data-test-prep-theme="cyberpunk"] .wqf-overlay{background:rgba(5,2,10,.78)!important}html[data-test-prep-theme="cyberpunk"] .wqf-modal{background:#160d24!important;color:#f8f1ff!important;border-color:#35e8ff!important;box-shadow:0 0 28px rgba(53,232,255,.12),0 18px 60px rgba(0,0,0,.60)!important}html[data-test-prep-theme="cyberpunk"] .wqf-modal p{color:#bea8c9!important}html[data-test-prep-theme="cyberpunk"] .wqf-reason,html[data-test-prep-theme="cyberpunk"] .wqf-note,html[data-test-prep-theme="cyberpunk"] .wqf-actions button{background:#211131!important;color:#f8f1ff!important;border-color:#62377a!important}html[data-test-prep-theme="cyberpunk"] .wqf-reason{color:#ff61bd!important}html[data-test-prep-theme="cyberpunk"] .wqf-reason.on{background:#3a1644!important;border-color:#ff4fb5!important}html[data-test-prep-theme="cyberpunk"] .wqf-note:focus{border-color:#35e8ff!important;box-shadow:0 0 0 3px rgba(53,232,255,.13)!important}html[data-test-prep-theme="cyberpunk"] .wqf-actions .send{color:#ff61bd!important}html[data-test-prep-theme="cyberpunk"] .wqf-button{background:#160d24!important;border-color:#35e8ff!important;color:#ff4fb5!important}
-
-/* 본문외우기 + 단어학습: theme runtime/light-only components. */
-html[data-test-prep-theme="cyberpunk"] .spv1-card,
-html[data-test-prep-theme="cyberpunk"] .spv1-result,
-html[data-test-prep-theme="cyberpunk"] .vp-wrap{background:#160d24!important;color:#f8f1ff!important;border-color:#8d3fbb!important;box-shadow:0 0 0 1px rgba(255,70,181,.16),0 14px 36px rgba(0,0,0,.42),0 0 24px rgba(110,44,165,.16)!important}
-html[data-test-prep-theme="cyberpunk"] .spv1-answer{background:#12091d!important;border-color:#603576!important}
-html[data-test-prep-theme="cyberpunk"] .spv1-bank,
-html[data-test-prep-theme="cyberpunk"] .vp-card{background:#1d102d!important;border-color:#58306e!important}
-html[data-test-prep-theme="cyberpunk"] .spv1-word,
-html[data-test-prep-theme="cyberpunk"] .spv1-actions button,
-html[data-test-prep-theme="cyberpunk"] .spv1-result button,
-html[data-test-prep-theme="cyberpunk"] .vp-mode,
-html[data-test-prep-theme="cyberpunk"] .vp-next,
-html[data-test-prep-theme="cyberpunk"] .vp-reveal,
-html[data-test-prep-theme="cyberpunk"] .vp-selfcheck-btn,
-html[data-test-prep-theme="cyberpunk"] .vp-card-audio{background:#211131!important;color:#f8f1ff!important;border-color:#603576!important;box-shadow:0 0 0 1px rgba(53,232,255,.08)!important}
-html[data-test-prep-theme="cyberpunk"] .spv1-actions .primary,
-html[data-test-prep-theme="cyberpunk"] .spv1-result button,
-html[data-test-prep-theme="cyberpunk"] .vp-mode,
-html[data-test-prep-theme="cyberpunk"] .vp-next,
-html[data-test-prep-theme="cyberpunk"] .vp-reveal,
-html[data-test-prep-theme="cyberpunk"] .vp-selfcheck-btn,
-html[data-test-prep-theme="cyberpunk"] .vp-card-audio{color:#ff61bd!important}
-html[data-test-prep-theme="cyberpunk"] .vp-mode.active{background:#301448!important;border-color:#35e8ff!important;color:#35e8ff!important}
-html[data-test-prep-theme="cyberpunk"] .tp-vocab-done-mark{background:#163228!important;color:#55ce85!important}
-html[data-test-prep-theme="cyberpunk"] .tp-vocab-reopen{color:#bea8c9!important}
-html[data-test-prep-theme="cyberpunk"] .vocab-unlock{background:#160d24!important;color:#f8f1ff!important;border:1px solid #8d3fbb!important;box-shadow:0 0 28px rgba(53,232,255,.12),0 18px 60px rgba(0,0,0,.60)!important}
-html[data-test-prep-theme="cyberpunk"] .vocab-unlock h3{color:#f8f1ff!important}
-html[data-test-prep-theme="cyberpunk"] .vocab-unlock p{color:#bea8c9!important}
