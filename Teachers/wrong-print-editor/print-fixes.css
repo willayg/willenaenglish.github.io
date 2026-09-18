@@ -1,0 +1,61 @@
+@media print{
+  /* Reserve a real top band on every printed page. */
+  @page{size:A4;margin:34mm 12mm 13mm}
+
+  /* Android/Chromium print preview is unreliable when a repeated fixed header is
+     moved with transform. Anchor it directly into the reserved page margin instead. */
+  .print-head{
+    position:fixed!important;
+    top:-26mm!important;
+    left:0!important;
+    right:0!important;
+    height:18mm!important;
+    transform:none!important;
+    margin:0!important;
+    padding:0 0 4mm!important;
+    background:#fff!important;
+    z-index:9999!important;
+    align-items:flex-start!important;
+    justify-content:space-between!important;
+    border-bottom:2px solid #42b9cc!important;
+    break-inside:avoid!important;
+  }
+
+  /* Do not make the header's fragmented parent a stacking context. */
+  .workspace{position:static!important;z-index:auto!important}
+
+  /* Centre divider starts with the actual printable content, below the header band. */
+  body::after{
+    content:"";
+    position:fixed;
+    top:0;
+    bottom:-5mm;
+    left:50%;
+    width:0;
+    border-left:1px solid #cfd5dd;
+    pointer-events:none;
+    z-index:0;
+  }
+  .cards,.answer-key{position:relative;z-index:1}
+
+  /* Question numbering restarts for each skill, matching the answer-key sections. */
+  .skill-section{counter-reset:printq}
+  .vocab-table{counter-reset:none!important;column-rule:none!important}
+  .vocab-num:before{
+    counter-increment:printq!important;
+    content:counter(printq) "."!important;
+  }
+  .question-card{
+    position:relative;
+    padding-left:28px!important;
+  }
+  .question-card::before{
+    counter-increment:printq;
+    content:counter(printq) ".";
+    position:absolute;
+    left:8px;
+    top:9px;
+    font:800 8.5pt/1 Poppins,"Noto Sans KR",sans-serif;
+    color:#343844;
+  }
+}
