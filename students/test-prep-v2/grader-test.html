@@ -28,18 +28,19 @@ pre{background:#f4f4f4;padding:14px;border-radius:10px;white-space:pre-wrap}
 <button data-t="apple" data-a="apples" data-p="noun">Plural</button>
 <button data-t="a flood" data-a="flood" data-p="noun">Article</button>
 <button data-t="waste" data-a="w a s t e">Reject extra spaces</button>
-<button data-t="be famous for" data-a="be known for">Reject synonym</button>
+<button data-t="be famous for" data-a="be known for">Semantic: known/famous</button>
 <button data-t="rarely" data-a="rarly">Typo: rarly</button>
 <button data-t="campaign" data-a="cmpain">Typo: cmpain</button>
 <button data-t="planet" data-a="ppanet">Typo: ppanet</button>
 <button data-t="underground" data-a="under ground">Spacing: underground</button>
 <button data-t="sweat" data-a="sweet">Reject real word</button>
 <button data-t="lose" data-a="lost">Reject form/word</button>
+<button data-t="lately" data-a="recently">Semantic: lately/recently</button>
 </div>
 <p><button id="run">Grade</button></p>
 <pre id="out">Ready.</pre>
 <script type="module">
-import {gradeQuestion,GRADER_VERSION} from '../shared/question-grader.js?v=2.2.2';
+import {gradeQuestion,GRADER_VERSION} from '../shared/question-grader.js?v=2.3.0';
 const $=id=>document.getElementById(id);
 for(const b of document.querySelectorAll('[data-t]'))b.onclick=()=>{$('target').value=b.dataset.t;$('answer').value=b.dataset.a;$('pos').value=b.dataset.p||'';run()};
 async function run(){
