@@ -189,11 +189,39 @@ export class QuestionRenderer{
     if(q.form===FORMS.learn)return answerParts(q)[0]||'';
     return null;
   }
+  showWarningToast(message){
+    document.querySelectorAll('.grader-warning-toast').forEach(x=>x.remove());
+    const toast=document.createElement('div');
+    toast.className='grader-warning-toast';
+    toast.setAttribute('role','status');
+    toast.setAttribute('aria-live','polite');
+    toast.textContent=String(message||'한 번 더 확인해 보세요.');
+    Object.assign(toast.style,{
+      position:'fixed',left:'12px',right:'12px',zIndex:'10000',
+      maxWidth:'720px',margin:'0 auto',padding:'12px 16px',
+      borderRadius:'14px',background:'#fff7d6',color:'#6b4f00',
+      border:'2px solid #f0c94d',boxShadow:'0 8px 24px rgba(0,0,0,.18)',
+      fontWeight:'700',fontSize:'15px',lineHeight:'1.35',textAlign:'center'
+    });
+    const place=()=>{
+      const header=document.querySelector('.student-header');
+      const headerBottom=header?.getBoundingClientRect?.().bottom||0;
+      const vv=window.visualViewport;
+      const viewportTop=vv?.offsetTop||0;
+      toast.style.top=Math.max(viewportTop+10,headerBottom+8)+'px';
+    };
+    place();document.body.appendChild(toast);
+    window.visualViewport?.addEventListener('resize',place,{once:true});
+    window.visualViewport?.addEventListener('scroll',place,{once:true});
+    const clear=()=>toast.remove();
+    this.host.querySelectorAll('input,textarea').forEach(el=>el.addEventListener('input',clear,{once:true}));
+  }
   showFeedback(result){
     const f=this.host.querySelector('[data-feedback]');if(!f)return;
+    document.querySelectorAll('.grader-warning-toast').forEach(x=>x.remove());
     f.className=`feedback show ${result.warning?'warn':(result.correct?'ok':'bad')}`;
     const answers=Array.isArray(result.correctAnswer)?result.correctAnswer:[result.correctAnswer].filter(x=>x!=null);
-    if(result.warning){f.innerHTML=textHtml(result.message||'한 번 더 확인해 보세요.');return}
+    if(result.warning){const msg=result.message||'한 번 더 확인해 보세요.';f.innerHTML=textHtml(msg);this.showWarningToast(msg);return}
     f.innerHTML=result.correct?'정답입니다!':`${textHtml(result.message||'정답을 확인해 보세요.')}${answers.length?`<div class="model"><b>모범 답안</b>${modelAnswerHtml(this.question,answers)}</div>`:''}`;
     if([FORMS.choice,FORMS.multi].includes(this.question?.form)){
       const right=new Set((Array.isArray(this.question.answer)?this.question.answer:[]).map(String)),selected=this.state.selected;
