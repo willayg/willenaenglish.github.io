@@ -1,7 +1,7 @@
 import {resolveQuestionGradingPolicy} from './question-grading-policy.js?v=2.0.1';
 import {gradeWithAiWilli,aiWilliMessage,classifyVocabSemanticNearMatch} from './ai-willi.js?v=1.0.3';
 
-export const GRADER_VERSION='2.3.1';
+export const GRADER_VERSION='2.3.2';
 const stamp=result=>({...result,graderVersion:GRADER_VERSION});
 
 const FORMS={choice:'choice',multi:'multi',write:'write',multipart:'multipart',correction:'correction',identifiedCorrection:'identified_correction',order:'order',chunks:'chunks',blanks:'blanks',learn:'learn',unsupported:'unsupported'};
@@ -173,6 +173,14 @@ function insertedSpaceNearMiss(question,response){
   }
   return false;
 }
+function maskedTargetHint(question){
+  const raw=String(question?.metadata?.canonical_text||question?.answer?.[0]||'').trim();
+  if(!raw)return'';
+  return raw.replace(/[A-Za-z]+/g,word=>{
+    if(!word)return word;
+    return word[0]+word.slice(1).replace(/[A-Za-z]/g,'_');
+  });
+}
 function semanticWarningEligible(question){
   if(!isTypedVocabWrite(question))return false;
   const practice=String(question?.tracking?.practiceType||'').toLowerCase();
@@ -281,7 +289,11 @@ export async function gradeQuestion(question,response,options={}){
     try{
       options.onSemanticCheck?.(true);
       const verdict=await classifyVocabSemanticNearMatch(question,response);
-      if(verdict.nearMatch)return stamp({correct:false,warning:true,warningType:'vocab_semantic_target',message:'뜻은 비슷하지만 목표 표현이 달라요. 목표 표현을 다시 써 보세요.',correctAnswer:question.answer,method:'vocab_semantic_target_warning',semanticReasonCode:verdict.reasonCode||null,gradingPolicy:policy});
+      if(verdict.nearMatch){
+        const hint=maskedTargetHint(question);
+        const message=hint?`뜻은 비슷해요! 이번에는 ${hint} 표현을 써 보세요.`:'뜻은 비슷하지만 목표 표현이 달라요. 목표 표현을 다시 써 보세요.';
+        return stamp({correct:false,warning:true,warningType:'vocab_semantic_target',message,maskedTargetHint:hint||null,correctAnswer:question.answer,method:'vocab_semantic_target_warning',semanticReasonCode:verdict.reasonCode||null,gradingPolicy:policy});
+      }
     }catch(e){
       console.warn('[shared grader] vocab semantic warning classifier failed closed',{questionId:question?.id||null,error:e?.message||String(e)});
     }finally{
