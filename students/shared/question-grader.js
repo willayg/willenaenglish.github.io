@@ -1,5 +1,5 @@
 import {resolveQuestionGradingPolicy} from './question-grading-policy.js?v=2.0.1';
-import {gradeWithAiWilli,aiWilliMessage} from './ai-willi.js?v=1.0.2';
+import {gradeWithAiWilli,classifyVocabSemanticNearMatch,aiWilliMessage} from './ai-willi.js?v=1.0.3';
 
 const FORMS={choice:'choice',multi:'multi',write:'write',multipart:'multipart',correction:'correction',identifiedCorrection:'identified_correction',order:'order',chunks:'chunks',blanks:'blanks',learn:'learn',unsupported:'unsupported'};
 const CIRCLED_NUM=['①','②','③','④','⑤','⑥','⑦','⑧','⑨','⑩','⑪','⑫','⑬','⑭','⑮','⑯','⑰','⑱','⑲','⑳'];
@@ -77,6 +77,13 @@ function oneSimpleNumberDifference(a,b){
   }
   return diffs===1;
 }
+function normalizePossessivePlaceholder(v){
+  return normVocabLoose(v).replace(/\b(?:one's|my|your|his|her|our|their)\b/g,'{poss}');
+}
+function possessivePlaceholderEquivalent(a,b){
+  const aa=normalizePossessivePlaceholder(a),bb=normalizePossessivePlaceholder(b);
+  return aa.includes('{poss}')&&aa===bb;
+}
 function vocabLenientEquivalent(question,response){
   if(!isTypedVocabQuestion(question))return null;
   const mine=normExact(response);
@@ -89,6 +96,7 @@ function vocabLenientEquivalent(question,response){
       if(isStandaloneVocabMeaningQuestion(question)){
         if(stripArticles(alt)===stripArticles(mine)&&stripArticles(alt))return{type:'article_variation',matched:alt};
         if(oneSimpleNumberDifference(alt,mine))return{type:'singular_plural',matched:alt};
+        if(possessivePlaceholderEquivalent(alt,mine))return{type:'possessive_placeholder',matched:alt};
       }
     }
   }
@@ -165,6 +173,12 @@ export async function gradeQuestion(question,response){
   if(exact(question,response,policy))return{correct:true,message:'',correctAnswer:question.answer,method:'exact',gradingPolicy:policy};
   const lenient=vocabLenientEquivalent(question,response);
   if(lenient)return{correct:true,message:'',correctAnswer:question.answer,method:'lenient_vocab',leniencyType:lenient.type,leniencyMatched:lenient.matched,gradingPolicy:policy};
+  if(isStandaloneVocabMeaningQuestion(question)){
+    try{
+      const semantic=await classifyVocabSemanticNearMatch(question,response);
+      if(semantic.nearMatch)return{correct:false,warning:true,warningType:'semantic_target',message:'뜻은 비슷하지만 목표 표현이 달라요. 목표 표현을 다시 써 보세요.',correctAnswer:question.answer,method:'semantic_vocab_near_match',semanticReason:semantic.reason||null,gradingPolicy:policy};
+    }catch(e){console.warn('[shared grader] vocab semantic near-match check failed',{questionId:question?.id||null,error:e?.message||String(e)})}
+  }
   if(policy.aiAllowed){
     try{
       const verdict=await gradeWithAiWilli(question,response,policy),correct=verdict.correct===true;
