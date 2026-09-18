@@ -1,5 +1,5 @@
-import {QuestionRenderer} from './question-renderer.js?v=2.20.6';
-import {gradeQuestion} from '../shared/question-grader.js?v=2.1.5';
+import {QuestionRenderer} from './question-renderer.js?v=2.20.7';
+import {gradeQuestion} from '../shared/question-grader.js?v=2.2.0';
 import {recordAttempt,startSession,completeSession,trackingState} from './tracking-client.js?v=2.17d';
 import {mountVocabAiWilli} from './ai-willi-vocab.js?v=1.0.0';
 
