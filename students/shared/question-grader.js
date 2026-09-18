@@ -1,7 +1,7 @@
 import {resolveQuestionGradingPolicy} from './question-grading-policy.js?v=2.0.1';
 import {gradeWithAiWilli,aiWilliMessage,classifyVocabSemanticNearMatch} from './ai-willi.js?v=1.0.3';
 
-export const GRADER_VERSION='2.3.0';
+export const GRADER_VERSION='2.3.1';
 const stamp=result=>({...result,graderVersion:GRADER_VERSION});
 
 const FORMS={choice:'choice',multi:'multi',write:'write',multipart:'multipart',correction:'correction',identifiedCorrection:'identified_correction',order:'order',chunks:'chunks',blanks:'blanks',learn:'learn',unsupported:'unsupported'};
@@ -279,10 +279,13 @@ export async function gradeQuestion(question,response,options={}){
   if(!options.suppressWarnings&&safeTypoNearMiss(question,response))return stamp({correct:false,warning:true,warningType:'vocab_typo',message:'⚠️ 거의 맞았어요! 철자나 띄어쓰기를 한 번 더 확인해 보세요.',correctAnswer:question.answer,method:'vocab_typo_warning',gradingPolicy:policy});
   if(!options.suppressWarnings&&semanticWarningEligible(question)){
     try{
+      options.onSemanticCheck?.(true);
       const verdict=await classifyVocabSemanticNearMatch(question,response);
       if(verdict.nearMatch)return stamp({correct:false,warning:true,warningType:'vocab_semantic_target',message:'뜻은 비슷하지만 목표 표현이 달라요. 목표 표현을 다시 써 보세요.',correctAnswer:question.answer,method:'vocab_semantic_target_warning',semanticReasonCode:verdict.reasonCode||null,gradingPolicy:policy});
     }catch(e){
       console.warn('[shared grader] vocab semantic warning classifier failed closed',{questionId:question?.id||null,error:e?.message||String(e)});
+    }finally{
+      options.onSemanticCheck?.(false);
     }
   }
   if(policy.aiAllowed){
