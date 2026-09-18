@@ -1,7 +1,7 @@
 import {resolveQuestionGradingPolicy} from './question-grading-policy.js?v=2.0.1';
 import {gradeWithAiWilli,aiWilliMessage} from './ai-willi.js?v=1.0.2';
 
-export const GRADER_VERSION='2.1.5';
+export const GRADER_VERSION='2.2.0';
 const stamp=result=>({...result,graderVersion:GRADER_VERSION});
 
 const FORMS={choice:'choice',multi:'multi',write:'write',multipart:'multipart',correction:'correction',identifiedCorrection:'identified_correction',order:'order',chunks:'chunks',blanks:'blanks',learn:'learn',unsupported:'unsupported'};
@@ -139,6 +139,46 @@ function regularPluralEquivalent(question,response){
   return false;
 }
 function searchable(v){return normBasic(v).replace(/[^a-z0-9가-힣'\-]+/gi,' ').replace(/\s+/g,' ').trim()}
+function typoWord(v){return normExact(v).replace(/[^a-z]/g,'')}
+function isSubsequence(shorter,longer){
+  let i=0;for(const ch of longer){if(ch===shorter[i])i++;if(i===shorter.length)return true}return i===shorter.length;
+}
+function omittedSuffix(shorter,longer){
+  if(!longer.startsWith(shorter))return'';
+  return longer.slice(shorter.length);
+}
+function adjacentTransposition(a,b){
+  if(a.length!==b.length)return false;
+  const diff=[];for(let i=0;i<a.length;i++)if(a[i]!==b[i])diff.push(i);
+  return diff.length===2&&diff[1]===diff[0]+1&&a[diff[0]]===b[diff[1]]&&a[diff[1]]===b[diff[0]];
+}
+function introducedDouble(response,target){
+  if(response.length!==target.length)return false;
+  const diff=[];for(let i=0;i<response.length;i++)if(response[i]!==target[i])diff.push(i);
+  if(diff.length!==1)return false;
+  const i=diff[0];
+  return (i>0&&response[i]===response[i-1]&&target[i]!==target[i-1])||(i<response.length-1&&response[i]===response[i+1]&&target[i]!==target[i+1]);
+}
+function safeTypoNearMiss(question,response){
+  if(!isTypedVocabWrite(question))return false;
+  const mine=typoWord(response);
+  if(!mine||mine.includes(' ')||mine.length<3)return false;
+  for(const raw of question.answer||[]){
+    const target=typoWord(raw);
+    if(!target||target===mine||target.length<4)continue;
+    const gap=target.length-mine.length;
+    if(gap===1&&isSubsequence(mine,target)){
+      const suffix=omittedSuffix(mine,target);
+      if(!['s','d'].includes(suffix))return true;
+    }
+    if(gap===2&&target.length>=7&&isSubsequence(mine,target)){
+      const suffix=omittedSuffix(mine,target);
+      if(!['ly','ed','es','er'].includes(suffix))return true;
+    }
+    if(gap===0&&(adjacentTransposition(mine,target)||introducedDouble(mine,target)))return true;
+  }
+  return false;
+}
 function containsPhrase(text,phrase){const t=` ${searchable(text)} `,p=searchable(phrase);if(!p)return true;return t.includes(` ${p} `)}
 function correctionLabel(v){const s=String(v||'').trim().replace(/:$/,'');const n=CIRCLED_NUM.indexOf(s);if(n>=0)return String(n+1);const m=s.match(/^\d+$/);return m?String(Number(s)):s.toLowerCase()}
 function correctionNorm(v){const p=parseCorrection(v);return p?`${correctionLabel(p.label||p.prefix)}|${normExact(p.wrong)}|${normExact(p.right)}`:normExact(v)}
@@ -202,7 +242,7 @@ function exact(question,response,policy){
   return target.some(a=>a===String(mine));
 }
 
-export async function gradeQuestion(question,response){
+export async function gradeQuestion(question,response,options={}){
   const policy=resolveQuestionGradingPolicy(question);
   const constraint=checkConstraints(question,response,policy);
   if(!constraint.ok)return stamp({correct:false,message:constraint.message,correctAnswer:question.answer,method:'constraint',gradingPolicy:policy});
@@ -213,6 +253,7 @@ export async function gradeQuestion(question,response){
   if(harmlessVocabSymbolEquivalent(question,response))return stamp({correct:true,message:'',correctAnswer:question.answer,method:'vocab_symbol_marker',gradingPolicy:policy});
   if(articleEquivalent(question,response))return stamp({correct:true,message:'',correctAnswer:question.answer,method:'vocab_article_variant',gradingPolicy:policy});
   if(regularPluralEquivalent(question,response))return stamp({correct:true,message:'',correctAnswer:question.answer,method:'vocab_regular_plural',gradingPolicy:policy});
+  if(!options.suppressWarnings&&safeTypoNearMiss(question,response))return stamp({correct:false,warning:true,warningType:'vocab_typo',message:'⚠️ 거의 맞았어요! 철자나 띄어쓰기를 한 번 더 확인해 보세요.',correctAnswer:question.answer,method:'vocab_typo_warning',gradingPolicy:policy});
   if(policy.aiAllowed){
     try{
       const verdict=await gradeWithAiWilli(question,response,policy),correct=verdict.correct===true;
