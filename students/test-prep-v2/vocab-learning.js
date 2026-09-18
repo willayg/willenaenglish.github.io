@@ -1,5 +1,5 @@
 import {QuestionRenderer} from './question-renderer.js?v=2.20.6';
-import {gradeQuestion} from '../shared/question-grader.js?v=2.1.4';
+import {gradeQuestion} from '../shared/question-grader.js?v=2.1.5';
 import {recordAttempt,startSession,completeSession,trackingState} from './tracking-client.js?v=2.17c';
 import {mountVocabAiWilli} from './ai-willi-vocab.js?v=1.0.0';
 
@@ -80,7 +80,7 @@ function finishCards(){
 }
 function distractors(item,field){const seen=new Set(),pool=[];for(const x of shuffle(ctx.items)){if(String(x.id)===String(item.id))continue;const v=String(x[field]||'').trim(),k=norm(v);if(!v||seen.has(k)||k===norm(item[field]))continue;seen.add(k);pool.push(v)}return shuffle([item[field],...pool.slice(0,3)])}
 function question(item,mode){
-  if(mode==='spelling')return{id:String(item.id),masteryKey:`lexical:${item.id}`,skill:'vocabulary',form:'write',source:{code:'',label:'lesson_vocabulary'},prompt:String(item.translation_ko),context:{},choices:[],answer:[String(item.canonical_text)],grading:{mode:'exact_normalized',aiAllowed:false,constraints:{}},tracking:{practiceType:'vocabulary',questionType:'vocabulary_spelling',targets:['vocabulary',item.part_of_speech||item.entry_type||'lexical_item']},metadata:{vocab_mode:'spelling'}};
+  if(mode==='spelling')return{id:String(item.id),masteryKey:`lexical:${item.id}`,skill:'vocabulary',form:'write',source:{code:'',label:'lesson_vocabulary'},prompt:String(item.translation_ko),context:{},choices:[],answer:[String(item.canonical_text)],grading:{mode:'exact_normalized',aiAllowed:false,constraints:{}},tracking:{practiceType:'vocabulary',questionType:'vocabulary_spelling',targets:['vocabulary',item.part_of_speech||item.entry_type||'lexical_item']},metadata:{vocab_mode:'spelling',part_of_speech:item.part_of_speech||null,entry_type:item.entry_type||null,canonical_text:item.canonical_text}};
   const field=mode==='ko-en'?'canonical_text':'translation_ko',choices=distractors(item,field),answer=mode==='ko-en'?item.canonical_text:item.translation_ko;
   return{id:String(item.id),masteryKey:`lexical:${item.id}`,skill:'vocabulary',form:'choice',source:{code:'',label:'lesson_vocabulary'},prompt:String(mode==='ko-en'?item.translation_ko:item.canonical_text),context:{},choices,answer:[String(choices.indexOf(answer)+1)],grading:{mode:'exact_normalized',aiAllowed:false,constraints:{}},tracking:{practiceType:'vocabulary',questionType:`vocabulary_${mode}`,targets:['vocabulary',item.part_of_speech||item.entry_type||'lexical_item']},metadata:{vocab_mode:mode}};
 }
