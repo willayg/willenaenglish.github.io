@@ -1,7 +1,7 @@
 // Canonical practice loader/orchestrator for Test Prep v2.
 // Owns practice-type content selection and ordinary question sequencing.
 import {loadStoredSkill,loadStoredWritten} from './content-source.js?v=2.24.0';
-import {loadVocabularyTest} from './vocab-test-source.js?v=2.14.0';
+import {loadVocabularyTest} from './vocab-test-source.js?v=2.14.1';
 import {buildQuestionQueue} from '../shared/question-sequencer.js?v=1.0.1';
 import {loadActivitySnapshot,saveActivityQueue,clearActivitySnapshotFor} from './activity-session-store.js?v=4.0.0';
 
