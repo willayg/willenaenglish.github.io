@@ -191,8 +191,9 @@ export class QuestionRenderer{
   }
   showFeedback(result){
     const f=this.host.querySelector('[data-feedback]');if(!f)return;
-    f.className=`feedback show ${result.correct?'ok':'bad'}`;
+    f.className=`feedback show ${result.warning?'warn':(result.correct?'ok':'bad')}`;
     const answers=Array.isArray(result.correctAnswer)?result.correctAnswer:[result.correctAnswer].filter(x=>x!=null);
+    if(result.warning){f.innerHTML=textHtml(result.message||'한 번 더 확인해 보세요.');return}
     f.innerHTML=result.correct?'정답입니다!':`${textHtml(result.message||'정답을 확인해 보세요.')}${answers.length?`<div class="model"><b>모범 답안</b>${modelAnswerHtml(this.question,answers)}</div>`:''}`;
     if([FORMS.choice,FORMS.multi].includes(this.question?.form)){
       const right=new Set((Array.isArray(this.question.answer)?this.question.answer:[]).map(String)),selected=this.state.selected;
