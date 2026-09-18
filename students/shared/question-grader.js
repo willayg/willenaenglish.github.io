@@ -1,7 +1,7 @@
 import {resolveQuestionGradingPolicy} from './question-grading-policy.js?v=2.0.1';
 import {gradeWithAiWilli,aiWilliMessage,classifyVocabSemanticNearMatch} from './ai-willi.js?v=1.0.3';
 
-export const GRADER_VERSION='2.3.2';
+export const GRADER_VERSION='2.3.3';
 const stamp=result=>({...result,graderVersion:GRADER_VERSION});
 
 const FORMS={choice:'choice',multi:'multi',write:'write',multipart:'multipart',correction:'correction',identifiedCorrection:'identified_correction',order:'order',chunks:'chunks',blanks:'blanks',learn:'learn',unsupported:'unsupported'};
@@ -176,10 +176,14 @@ function insertedSpaceNearMiss(question,response){
 function maskedTargetHint(question){
   const raw=String(question?.metadata?.canonical_text||question?.answer?.[0]||'').trim();
   if(!raw)return'';
-  return raw.replace(/[A-Za-z]+/g,word=>{
-    if(!word)return word;
-    return word[0]+word.slice(1).replace(/[A-Za-z]/g,'_');
-  });
+  return raw.split(/(\s+)/).map(token=>{
+    if(/^\s+$/.test(token))return token;
+    let revealed=false;
+    return token.replace(/[A-Za-z]/g,ch=>{
+      if(!revealed){revealed=true;return ch}
+      return'_';
+    });
+  }).join('');
 }
 function semanticWarningEligible(question){
   if(!isTypedVocabWrite(question))return false;
