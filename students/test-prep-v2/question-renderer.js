@@ -190,7 +190,7 @@ export class QuestionRenderer{
     return null;
   }
   showWarningToast(message){
-    document.querySelectorAll('.grader-warning-toast').forEach(x=>x.remove());
+    document.querySelectorAll('.grader-warning-toast,.grader-thinking-toast').forEach(x=>x.remove());
     const toast=document.createElement('div');
     toast.className='grader-warning-toast';
     toast.setAttribute('role','status');
@@ -215,6 +215,34 @@ export class QuestionRenderer{
     window.visualViewport?.addEventListener('scroll',place,{once:true});
     const clear=()=>toast.remove();
     this.host.querySelectorAll('input,textarea').forEach(el=>el.addEventListener('input',clear,{once:true}));
+  }
+  showThinking(message='✦ AI Willi가 답을 확인하고 있어요…'){
+    document.querySelectorAll('.grader-warning-toast,.grader-thinking-toast').forEach(x=>x.remove());
+    const toast=document.createElement('div');
+    toast.className='grader-thinking-toast';
+    toast.setAttribute('role','status');
+    toast.setAttribute('aria-live','polite');
+    toast.textContent=String(message);
+    Object.assign(toast.style,{
+      position:'fixed',left:'12px',right:'12px',zIndex:'10000',
+      maxWidth:'720px',margin:'0 auto',padding:'12px 16px',
+      borderRadius:'14px',background:'#fff0f6',color:'#9d174d',
+      border:'2px solid #f4a7c5',boxShadow:'0 8px 24px rgba(0,0,0,.18)',
+      fontWeight:'800',fontSize:'15px',lineHeight:'1.35',textAlign:'center'
+    });
+    const place=()=>{
+      const header=document.querySelector('.student-header');
+      const headerBottom=header?.getBoundingClientRect?.().bottom||0;
+      const vv=window.visualViewport;
+      const viewportTop=vv?.offsetTop||0;
+      toast.style.top=Math.max(viewportTop+10,headerBottom+8)+'px';
+    };
+    place();document.body.appendChild(toast);
+    window.visualViewport?.addEventListener('resize',place,{once:true});
+    window.visualViewport?.addEventListener('scroll',place,{once:true});
+  }
+  clearThinking(){
+    document.querySelectorAll('.grader-thinking-toast').forEach(x=>x.remove());
   }
   showFeedback(result){
     const f=this.host.querySelector('[data-feedback]');if(!f)return;
