@@ -1,5 +1,7 @@
 import {GRADER_VERSION} from '../shared/question-grader.js?v=2.4.1';
+import {FN} from '../scripts/api-base.js?v=20260115';
 const EDGE='https://fiieuiktlsivwfgyivai.supabase.co/functions/v1/test-prep-student-rev47e';
+const POINTS_ENDPOINT=FN('log_word_attempt');
 const API_KEY='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
 const LOGIN='/students/signin.html?next='+encodeURIComponent('/students/test-prep-v2/');
 const OUTBOX_KEY='willena_testprep_v2_attempt_outbox';
@@ -107,6 +109,41 @@ export async function startSession(practiceType){
   state.session=d.session||null;state.practice=practice;state.startedAt=Date.now();beginActive(0);saveSessionRecord();emit('session_started',{session_id:state.session?.id||null,plan_id:state.plan.id,lesson:state.lesson,practice_type:practice});return state.session;
 }
 
+async function mirrorAttemptsToArcadePoints(sessionId,attempts){
+  if(!Array.isArray(attempts)||!attempts.length)return false;
+  const rows=attempts.map((a,index)=>({
+    word:String(a.question_id||a.client_attempt_id||`test-prep-${index+1}`),
+    is_correct:a.is_correct===true,
+    answer:a.selected_answer??null,
+    correct_answer:a.correct_answer??null,
+    points:a.is_correct===true?1:0,
+    attempt_index:index,
+    duration_ms:Number(a.response_time_ms)||0,
+    extra:{
+      source:'test-prep-v2',
+      practice_type:a?.metadata?.practice_type||null,
+      lesson:a?.metadata?.lesson||null,
+      plan_id:a?.metadata?.plan_id||null,
+      test_prep_client_attempt_id:a.client_attempt_id||null
+    }
+  }));
+  try{
+    const res=await fetch(POINTS_ENDPOINT,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      credentials:'include',
+      cache:'no-store',
+      body:JSON.stringify({event_type:'attempts_batch',session_id:sessionId,mode:'test_prep',attempts:rows})
+    });
+    if(!res.ok)throw new Error(`points path failed (${res.status})`);
+    try{window.dispatchEvent(new CustomEvent('points:refresh',{detail:{source:'test-prep-v2'}}))}catch(_){}
+    return true;
+  }catch(e){
+    console.warn('[v2 tracking] Arcade points mirror failed',e);
+    return false;
+  }
+}
+
 function scheduleFlush(){if(flushTimer||!outbox.length)return;flushTimer=setTimeout(()=>{flushTimer=null;flushAttemptBatch('timer')},FLUSH_DELAY)}
 export async function flushAttemptBatch(reason='manual'){
   if(flushPromise)return flushPromise;
@@ -123,9 +160,7 @@ export async function flushAttemptBatch(reason='manual'){
         if(ack.size){
           const savedAttempts=attempts.filter(a=>ack.has(String(a.client_attempt_id)));
           outbox=outbox.filter(a=>!ack.has(String(a.client_attempt_id)));saved+=ack.size;saveOutbox();emit('attempts_saved',{session_id:sessionId,count:ack.size,reason});
-          if(savedAttempts.some(a=>a?.is_correct===true)){
-            try{window.dispatchEvent(new CustomEvent('points:refresh',{detail:{source:'test-prep-v2'}}))}catch(_){}
-          }
+          await mirrorAttemptsToArcadePoints(sessionId,savedAttempts);
         }
       }catch(e){console.warn('[v2 tracking] batch save failed',e);emit('sync_error',{kind:'attempts',session_id:sessionId,error:String(e?.message||e)})}
     }
