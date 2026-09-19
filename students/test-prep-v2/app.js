@@ -1,4 +1,4 @@
-import {QuestionRenderer} from './question-renderer.js?v=2.20.13';
+import {QuestionRenderer} from './question-renderer.js?v=2.20.12';
 import {gradeQuestion} from '../shared/question-grader.js?v=2.4.1';
 import {createQuestionSession} from './question-session.js?v=2.0.9';
 import {loadPracticeContent,questionAllowedForStudent} from './practice-loader.js?v=2.0.5';
