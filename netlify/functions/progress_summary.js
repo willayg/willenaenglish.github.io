@@ -1099,6 +1099,98 @@ exports.handler = async (event) => {
     // ---------- OVERVIEW ----------
     if (section === 'overview') {
       const debugFlag = (event.queryStringParameters && event.queryStringParameters.debug) ? true : false;
+      const forceLegacyOverview = !!(event.queryStringParameters && (
+        event.queryStringParameters.legacy_overview === '1' ||
+        event.queryStringParameters.raw_overview === '1'
+      ));
+
+      // P2: snapshot-first overview. Preserve the legacy implementation below as an
+      // automatic fallback and as an explicit rollback path via ?legacy_overview=1.
+      if (!forceLegacyOverview) {
+        try {
+          const snapshotSelect = 'attempts, correct, accuracy, points, best_streak, lists_explored, perfect_runs, mastered, mastered_lists, words_discovered, words_mastered, sessions_played, stars, badges_count, favorite_list, hardest_word, last_activity, source_attempt_rows, source_session_rows, snapshot_version, updated_at';
+          let { data: snapshot, error: snapshotErr } = await adminClient
+            .from('student_progress_snapshot_v1')
+            .select(snapshotSelect)
+            .eq('user_id', userId)
+            .maybeSingle();
+
+          if (snapshotErr) throw snapshotErr;
+
+          // Cheap freshness check: only fetch the newest timestamps, never history.
+          const [{ data: latestAttempt, error: latestAttemptErr }, { data: latestSession, error: latestSessionErr }] = await Promise.all([
+            adminClient
+              .from('progress_attempts')
+              .select('created_at')
+              .eq('user_id', userId)
+              .order('created_at', { ascending: false })
+              .limit(1)
+              .maybeSingle(),
+            adminClient
+              .from('progress_sessions')
+              .select('started_at, ended_at')
+              .eq('user_id', userId)
+              .order('started_at', { ascending: false })
+              .limit(1)
+              .maybeSingle()
+          ]);
+
+          if (latestAttemptErr) throw latestAttemptErr;
+          if (latestSessionErr) throw latestSessionErr;
+
+          const latestAttemptTs = latestAttempt?.created_at ? new Date(latestAttempt.created_at).getTime() : 0;
+          const latestSessionTs = Math.max(
+            latestSession?.started_at ? new Date(latestSession.started_at).getTime() : 0,
+            latestSession?.ended_at ? new Date(latestSession.ended_at).getTime() : 0
+          );
+          const latestRawTs = Math.max(latestAttemptTs, latestSessionTs);
+          const snapshotActivityTs = snapshot?.last_activity ? new Date(snapshot.last_activity).getTime() : 0;
+          const needsRefresh = !snapshot || (latestRawTs > snapshotActivityTs);
+
+          if (needsRefresh) {
+            const { data: refreshed, error: refreshErr } = await adminClient.rpc(
+              'refresh_student_progress_snapshot_v1',
+              { p_user_id: userId }
+            );
+            if (refreshErr) throw refreshErr;
+            snapshot = Array.isArray(refreshed) ? refreshed[0] : refreshed;
+          }
+
+          if (snapshot) {
+            const overviewPayload = {
+              stars: Number(snapshot.stars) || 0,
+              lists_explored: Number(snapshot.lists_explored) || 0,
+              perfect_runs: Number(snapshot.perfect_runs) || 0,
+              mastered: Number(snapshot.mastered) || 0,
+              mastered_lists: Number(snapshot.mastered_lists) || 0,
+              best_streak: Number(snapshot.best_streak) || 0,
+              words_discovered: Number(snapshot.words_discovered) || 0,
+              words_mastered: Number(snapshot.words_mastered) || 0,
+              sessions_played: Number(snapshot.sessions_played) || 0,
+              badges_count: Number(snapshot.badges_count) || 0,
+              favorite_list: snapshot.favorite_list || null,
+              hardest_word: snapshot.hardest_word || null,
+              points: Number(snapshot.points) || 0
+            };
+            if (debugFlag) {
+              overviewPayload.meta = {
+                source: 'student_progress_snapshot_v1',
+                snapshot_version: Number(snapshot.snapshot_version) || 1,
+                snapshot_updated_at: snapshot.updated_at || null,
+                snapshot_last_activity: snapshot.last_activity || null,
+                raw_latest_activity: latestRawTs ? new Date(latestRawTs).toISOString() : null,
+                refreshed: needsRefresh,
+                source_attempt_rows: Number(snapshot.source_attempt_rows) || 0,
+                source_session_rows: Number(snapshot.source_session_rows) || 0
+              };
+            }
+            return json(200, overviewPayload);
+          }
+        } catch (snapshotOverviewErr) {
+          console.warn('[progress_summary] overview snapshot path failed; using legacy fallback:', snapshotOverviewErr && snapshotOverviewErr.message);
+        }
+      }
+
       // First get counts to know how many pages to fetch
       const PAGE = 1000;
       const [{ count: sessCount, error: sessCntErr }, { count: attCount, error: attCntErr }] = await Promise.all([
