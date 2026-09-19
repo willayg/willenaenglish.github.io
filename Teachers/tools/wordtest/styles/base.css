@@ -19,7 +19,7 @@ body {
 
 /* Layout variables for sticky bars */
 :root {
-  --header-height: 45px;
+  --header-height: var(--th-height, 64px);
   --actions-height: 30px;
   --menubar-height: 40px;
 }
