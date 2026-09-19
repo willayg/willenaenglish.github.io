@@ -133,6 +133,7 @@
     }catch{}
     try{
       ['userId','userRole','role','username','userEmail','name'].forEach(k=>localStorage.removeItem(k));
+      window.WillenaAPI?.clearLocalTokens?.();
     }catch{}
     location.replace('/Teachers/login.html?redirect='+encodeURIComponent(next));
   };
