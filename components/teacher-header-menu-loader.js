@@ -1,10 +1,7 @@
-const TEMPLATE_URL='/components/burger-menu.html?v=20260919-header-menu-1';
-const MODULE_URL='/components/burger-menu.js?v=20260919-header-menu-1';
+const TEMPLATE_URL='/components/burger-menu.html?v=20260919-header-menu-2';
+const MODULE_URL='/components/burger-menu.js?v=20260919-header-menu-2';
 
-export async function mountTeacherHeaderMenu(targetSelector){
-  const target=document.querySelector(targetSelector);
-  if(!target)throw new Error('Teacher header menu mount not found: '+targetSelector);
-
+export async function mountTeacherHeaderMenu(){
   if(!document.getElementById('burger-menu-template')){
     const response=await fetch(TEMPLATE_URL,{cache:'no-store'});
     if(!response.ok)throw new Error('Could not load teacher header menu template');
@@ -17,5 +14,5 @@ export async function mountTeacherHeaderMenu(targetSelector){
 
   const mod=await import(MODULE_URL);
   if(typeof mod.insertBurgerMenu!=='function')throw new Error('Teacher header menu module is invalid');
-  mod.insertBurgerMenu(targetSelector);
+  mod.insertBurgerMenu();
 }
