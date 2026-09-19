@@ -9,6 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="./dashboard-v2.css?v=20260919-r14-14">
 <link id="dashboardV2Polish" rel="stylesheet" href="./dashboard-v2-polish.css?v=20260917-r14-07">
+<link rel="stylesheet" href="/components/teacher-header/teacher-header.css?v=20260919-p2-1">
 <link rel="stylesheet" href="./naesin-v2/naesin-v2.css?v=20260912-r12-2">
 <link rel="stylesheet" href="./naesin-v2/naesin-v2-p6.css?v=20260912-r12-2">
 <link rel="stylesheet" href="./naesin-v2/naesin-v2-p7.css?v=20260912-r12-2">
@@ -18,7 +19,12 @@
 <script src="./dashboard-shell-polish.js?v=20260917-r14-09" defer></script>
 </head>
 <body>
-<header class="topbar"><div class="brand"><img src="/Assets/Images/Logo.png" alt="Willena"><div><b>Willena</b><small>Teacher workspace</small></div></div><div class="title">Teacher Dashboard V2</div><div class="top-actions"><span class="teacher-name" id="teacherName">Teacher</span></div></header>
+<div id="teacher-header"></div>
+<script type="module">
+import { mountTeacherHeader } from '/components/teacher-header/teacher-header.js?v=20260919-p2-1';
+mountTeacherHeader({ target:'#teacher-header', mode:'dashboard', activeApp:'teacher' })
+  .catch((e)=>console.error('Teacher header init failed', e));
+</script>
 <div class="layout">
 <aside class="rail"><button class="nav active" data-view="students"><span class="nav-icon">◎</span><span>Students</span></button><button class="nav" data-view="classes"><span class="nav-icon">▦</span><span>Classes</span></button><button class="nav" data-view="apps"><span class="nav-icon">＋</span><span>Apps</span></button><div class="rail-spacer"></div></aside>
 <main class="workspace">
@@ -88,9 +94,6 @@ $('#classSelect').onchange=loadClass;$('#daysSelect').onchange=loadClass;$('#ref
 <script src="./naesin-v2/naesin-v2-assignment.js?v=20260912-r12-2"></script>
 <script src="./naesin-v2/naesin-v2.js?v=20260917-r14-05"></script>
 <script data-na2-auto-refresh src="./naesin-v2/naesin-v2-auto-refresh.js?v=20260917-r14-03"></script>
-<script type="module">
-import { mountTeacherHeaderMenu } from '/components/teacher-header-menu-loader.js?v=20260919-header-menu-5';
-mountTeacherHeaderMenu().catch((e) => console.error('Burger menu init failed', e));
-</script>
+
 </body>
 </html>
