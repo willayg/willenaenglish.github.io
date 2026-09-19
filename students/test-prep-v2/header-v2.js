@@ -58,7 +58,7 @@ menu?.addEventListener('click',event=>event.stopPropagation());
 document.addEventListener('click',()=>setMenu(false));
 document.addEventListener('keydown',event=>{if(event.key==='Escape')setMenu(false)});
 profileButton?.addEventListener('click',()=>openStudentProfile());
-dashboardButton?.addEventListener('click',()=>{window.location.href='/students/index.html'});
+dashboardButton?.addEventListener('click',()=>{window.location.href='https://students.willenaenglish.com/students/dashboard'});
 bigTextButton?.addEventListener('click',()=>{setBigText(!bigTextEnabled());setMenu(false)});
 testPrepAButton?.addEventListener('click',()=>{window.location.href='../test-prep-app/'});
 testPrepBButton?.addEventListener('click',()=>setMenu(false));
