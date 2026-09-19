@@ -18,7 +18,7 @@
 <script src="./dashboard-shell-polish.js?v=20260917-r14-09" defer></script>
 </head>
 <body>
-<header class="topbar"><div class="brand"><img src="/Assets/Images/Logo.png" alt="Willena"><div><b>Willena</b><small>Teacher workspace</small></div></div><div class="title">Teacher Dashboard V2</div><div class="top-actions"><span class="teacher-name" id="teacherName">Teacher</span><div id="burger-menu-mount"></div></div></header>
+<header class="topbar"><div class="brand"><img src="/Assets/Images/Logo.png" alt="Willena"><div><b>Willena</b><small>Teacher workspace</small></div></div><div class="title">Teacher Dashboard V2</div><div class="top-actions"><span class="teacher-name" id="teacherName">Teacher</span></div></header>
 <div class="layout">
 <aside class="rail"><button class="nav active" data-view="students"><span class="nav-icon">◎</span><span>Students</span></button><button class="nav" data-view="classes"><span class="nav-icon">▦</span><span>Classes</span></button><button class="nav" data-view="apps"><span class="nav-icon">＋</span><span>Apps</span></button><div class="rail-spacer"></div></aside>
 <main class="workspace">
@@ -32,7 +32,6 @@
 <nav class="mobile-tabs"><button class="mobile-tab active" data-view="students"><b>◎</b>Students</button><button class="mobile-tab" data-view="classes"><b>▦</b>Classes</button><button class="mobile-tab" data-view="apps"><b>＋</b>Apps</button></nav>
 <div class="drawer-bg" id="drawerBg"><aside class="drawer"><div class="drawer-head"><div class="drawer-head-main"><div class="drawer-name" id="drawerName">Student</div><div class="drawer-meta" id="drawerMeta"></div></div><button class="close" id="closeDrawer">×</button></div><div class="drawer-body" id="drawerBody"><div class="empty">Loading…</div></div></aside></div>
 <div id="naesinV2Rev" style="position:fixed;right:12px;bottom:8px;z-index:2147483647;color:#7b8c93;font:700 9px/1.2 Poppins,sans-serif;letter-spacing:.04em;pointer-events:none">v14.11</div>
-<script type="module" src="/components/burger-menu.js?v=20260917-r14-07"></script>
 <script>
 const $=(s,r=document)=>r.querySelector(s),$$=(s,r=document)=>[...r.querySelectorAll(s)];
 const FN=n=>`/.netlify/functions/${n}`;
@@ -61,7 +60,6 @@ function normalizeAnswer(value,skill=''){
 }
 async function api(url){const resolved=window.WillenaAPI?window.WillenaAPI.getApiUrl(url):url;const r=await fetch(resolved,{credentials:'include'});let j={};try{j=await r.json()}catch{}if(!r.ok||j.success===false)throw Error(j.error||`Request failed (${r.status})`);return j}
 async function auth(){try{const who=await api(`${FN('supabase_auth')}?action=whoami`);if(!who.user_id)throw Error('No session');const role=await api(`${FN('supabase_auth')}?action=get_role&user_id=${encodeURIComponent(who.user_id)}`);if(!['teacher','admin'].includes(String(role.role||'').toLowerCase())){location.href='/Teachers/access-student.html?next='+encodeURIComponent(location.pathname+location.search);return false}try{const p=await api(`${FN('supabase_auth')}?action=get_profile&user_id=${encodeURIComponent(who.user_id)}`);$('#teacherName').textContent=p.name||p.username||'Teacher'}catch{}return true}catch{location.href=`/Teachers/login.html?redirect=${encodeURIComponent(location.pathname+location.search)}`;return false}}
-async function mountBurger(){try{if(!document.getElementById('burger-menu-template')){const r=await fetch('/components/burger-menu.html?v=20260917-r14-07');const w=document.createElement('div');w.innerHTML=await r.text();if(w.firstElementChild)document.body.appendChild(w.firstElementChild)}let n=0;(function tick(){if(typeof window.insertBurgerMenu==='function')window.insertBurgerMenu('#burger-menu-mount');else if(n++<30)setTimeout(tick,50)})()}catch(e){console.warn(e)}}
 function endpoint(section,params={}){const q=new URLSearchParams({section,...params});return `${FN('progress_summary')}?${q}`}
 async function loadClasses(){try{const j=await api(endpoint('teacher_classes'));state.classes=j.classes||[];$('#classSelect').innerHTML='<option value="">Select class</option>'+state.classes.map(c=>`<option value="${esc(c.name)}">${esc(c.name)} (${c.student_count})</option>`).join('');if(state.classes.length){state.className=state.classes[0].name;$('#classSelect').value=state.className;await loadClass()}}catch(e){$('#classSelect').innerHTML='<option>Could not load classes</option>';$('#studentList').innerHTML=`<div class="empty">${esc(e.message)}</div>`;$('#statusText').textContent='Could not load students.'}}
 async function loadClass(){const name=$('#classSelect').value;if(!name)return;state.className=name;state.days=Number($('#daysSelect').value)||30;$('#studentList').innerHTML='<div class="empty">Loading…</div>';$('#statusText').textContent='';try{const j=await api(endpoint('teacher_class_insights',{class:name,days:String(state.days)}));state.students=j.students||[];renderStudents()}catch(e){$('#studentList').innerHTML=`<div class="empty">${esc(e.message)}</div>`;$('#statusText').textContent='Could not load student data.'}}
@@ -77,7 +75,7 @@ async function loadClassOverview(force=false){const days=Number($('#classDaysSel
 async function openClassFromOverview(name,days){$('#classSelect').value=name;$('#daysSelect').value=String(days);state.className=name;state.days=days;switchView('students');await loadClass()}
 function switchView(v){$$('.view').forEach(x=>x.classList.toggle('active',x.id===`view-${v}`));$$('[data-view]').forEach(x=>x.classList.toggle('active',x.dataset.view===v));if(v==='classes')loadClassOverview()}
 $('#classSelect').onchange=loadClass;$('#daysSelect').onchange=loadClass;$('#refreshBtn').onclick=loadClass;$('#searchInput').oninput=renderStudents;$('#classDaysSelect').onchange=()=>loadClassOverview(true);$('#classRefreshBtn').onclick=()=>loadClassOverview(true);$('#closeDrawer').onclick=()=>$('#drawerBg').classList.remove('open');$('#drawerBg').onclick=e=>{if(e.target===$('#drawerBg'))$('#drawerBg').classList.remove('open')};$$('[data-view]').forEach(b=>b.onclick=()=>switchView(b.dataset.view));
-(async()=>{if(await auth()){mountBurger();loadClasses()}})();
+(async()=>{if(await auth()){loadClasses()}})();
 </script>
 <script src="./naesin.js?v=20260917-r14-03"></script>
 <script src="./naesin-v2/naesin-v2-data.js?v=20260917-r14-03"></script>
