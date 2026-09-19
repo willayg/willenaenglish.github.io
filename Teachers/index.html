@@ -89,22 +89,8 @@ $('#classSelect').onchange=loadClass;$('#daysSelect').onchange=loadClass;$('#ref
 <script src="./naesin-v2/naesin-v2.js?v=20260917-r14-05"></script>
 <script data-na2-auto-refresh src="./naesin-v2/naesin-v2-auto-refresh.js?v=20260917-r14-03"></script>
 <script type="module">
-(async () => {
-  const v = '20260330b';
-  try {
-    if (!document.getElementById('burger-menu-template')) {
-      const resp = await fetch(`/components/burger-menu.html?v=${v}`);
-      const html = await resp.text();
-      const tempDiv = document.createElement('div');
-      tempDiv.innerHTML = html;
-      document.body.appendChild(tempDiv.firstElementChild);
-    }
-    const mod = await import(`/components/burger-menu.js?v=${v}`);
-    if (mod && mod.insertBurgerMenu) mod.insertBurgerMenu();
-  } catch (e) {
-    console.error('Burger menu init failed', e);
-  }
-})();
+import { mountTeacherHeaderMenu } from '/components/teacher-header-menu-loader.js?v=20260919-header-menu-3';
+mountTeacherHeaderMenu().catch((e) => console.error('Burger menu init failed', e));
 </script>
 </body>
 </html>
