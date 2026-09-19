@@ -1,7 +1,7 @@
-import './grammar-guide-lessons.js?v=1.0.1';
-import './grammar-guide-deep.js?v=1.0.1';
-import {attachQuestionExamples} from './grammar-guide-question-examples.js?v=1.0.2';
-import {GUIDES,resolveGuideKeys,openGuide} from './grammar-guide.js?v=2.1.2';
+import './grammar-guide-lessons.js?v=1.0.0';
+import './grammar-guide-deep.js?v=1.0.0';
+import {attachQuestionExamples} from './grammar-guide-question-examples.js?v=1.0.1';
+import {GUIDES,resolveGuideKeys,openGuide} from './grammar-guide.js?v=2.1.0';
 
 let activeKeys=[];
 let activeIndex=0;
