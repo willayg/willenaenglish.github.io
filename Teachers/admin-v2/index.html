@@ -10,17 +10,19 @@
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/Teachers/dashboard-v2/dashboard-v2.css?v=20260919-r14-14">
 <link rel="stylesheet" href="/Teachers/dashboard-v2/dashboard-v2-polish.css?v=20260917-r14-07">
+<link rel="stylesheet" href="/components/teacher-header/teacher-header.css?v=20260919-p2-1">
 <link rel="stylesheet" href="/Teachers/admin/admin-level-tests.css?v=20260813-archive1">
 <link rel="stylesheet" href="/Teachers/admin/admin-level-test-pips.css?v=20260812-pips3">
 <link rel="stylesheet" href="./admin-v2.css?v=1.25">
 <link rel="stylesheet" href="./admin-v2-level-tests.css?v=1.25">
 </head>
 <body>
-<header class="topbar">
-  <div class="brand"><img src="/Assets/Images/Logo.png" alt="Willena"><div><b>Willena</b><small>Admin workspace</small></div></div>
-  <div class="title"><div class="teacher-app-switch" aria-label="Teacher and admin apps"><a href="/Teachers/dashboard-v2/">Teacher</a><a class="active" href="/Teachers/admin-v2/">Admin</a></div></div>
-  <div class="top-actions"><span class="teacher-name" id="adminName">Admin</span></div>
-</header>
+<div id="teacher-header"></div>
+<script type="module">
+import { mountTeacherHeader } from '/components/teacher-header/teacher-header.js?v=20260919-p2-1';
+mountTeacherHeader({ target:'#teacher-header', mode:'dashboard', activeApp:'admin' })
+  .catch((e)=>console.error('Teacher header init failed', e));
+</script>
 <div class="layout" id="adminLayout">
   <aside class="rail">
     <button class="rail-collapse-toggle" id="railCollapseToggle" type="button" aria-label="Expand sidebar" aria-expanded="false"><span>›</span></button>
@@ -49,9 +51,6 @@
 <script src="/free-level-test/js/report-calculation.js?v=1.25"></script>
 <script src="./admin-v2-visitor-qr.js?v=1.25"></script>
 <script type="module" src="./admin-v2.js?v=1.25"></script>
-<script type="module">
-import { mountTeacherHeaderMenu } from '/components/teacher-header-menu-loader.js?v=20260919-header-menu-5';
-mountTeacherHeaderMenu().catch((e) => console.error('Burger menu init failed', e));
-</script>
+
 </body>
 </html>
