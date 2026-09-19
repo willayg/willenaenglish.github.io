@@ -8,18 +8,18 @@
 <script src="/students/api-gateway.js?v=20260917-adminv2-120"></script>
 <script src="/js/api-config.js?v=20260917-adminv2-120"></script>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/Teachers/dashboard-v2/dashboard-v2.css?v=20260919-r14-13">
+<link rel="stylesheet" href="/Teachers/dashboard-v2/dashboard-v2.css?v=20260919-r14-14">
 <link rel="stylesheet" href="/Teachers/dashboard-v2/dashboard-v2-polish.css?v=20260917-r14-07">
 <link rel="stylesheet" href="/Teachers/admin/admin-level-tests.css?v=20260813-archive1">
 <link rel="stylesheet" href="/Teachers/admin/admin-level-test-pips.css?v=20260812-pips3">
-<link rel="stylesheet" href="./admin-v2.css?v=1.23">
-<link rel="stylesheet" href="./admin-v2-level-tests.css?v=1.23">
+<link rel="stylesheet" href="./admin-v2.css?v=1.24">
+<link rel="stylesheet" href="./admin-v2-level-tests.css?v=1.24">
 </head>
 <body>
 <header class="topbar">
   <div class="brand"><img src="/Assets/Images/Logo.png" alt="Willena"><div><b>Willena</b><small>Admin workspace</small></div></div>
   <div class="title"><div class="teacher-app-switch" aria-label="Teacher and admin apps"><a href="/Teachers/dashboard-v2/">Teacher</a><a class="active" href="/Teachers/admin-v2/">Admin</a></div></div>
-  <div class="top-actions"><span class="teacher-name" id="adminName">Admin</span><div class="header-menu-mount" id="adminHeaderMenuMount"></div></div>
+  <div class="top-actions"><span class="teacher-name" id="adminName">Admin</span></div>
 </header>
 <div class="layout" id="adminLayout">
   <aside class="rail">
@@ -44,13 +44,13 @@
 <div class="admin-class-backdrop" id="classDrawerBgV2"></div><aside class="admin-class-drawer" id="classDrawerV2"><div class="admin-class-head"><div><h2 id="classDrawerTitleV2">Class</h2><p id="classDrawerMetaV2"></p></div><button id="classDrawerCloseV2" type="button">×</button></div><div class="admin-class-body" id="classDrawerBodyV2"></div></aside>
 <div class="level-test-drawer" id="levelTestDrawer" aria-hidden="true"><button class="level-test-drawer-backdrop" data-close-level-test aria-label="Close"></button><aside><div class="level-test-drawer-head"><div><span class="level-test-source" id="levelTestDetailSource"></span><h2 id="levelTestDetailName">Level test</h2><p id="levelTestDetailMeta"></p></div><button class="close" data-close-level-test>×</button></div><div class="level-test-drawer-body" id="levelTestDetailBody"></div><div class="level-test-drawer-actions"><button class="btn level-test-archive-action" id="levelTestArchive" disabled>Archive</button><button class="btn" id="levelTestFullReport" disabled>Full report</button><button class="btn primary" id="levelTestFullResults" disabled>Full test results</button></div><section class="level-test-results" id="levelTestResults" aria-hidden="true"><div class="level-test-results-head"><button class="btn" id="levelTestResultsBack">← Mini report</button><div><h2>Full test results</h2><p id="levelTestResultsMeta"></p></div></div><div id="levelTestResultsBody"></div></section></aside></div>
 <div class="admin-v2-boot hidden" id="adminV2Boot" aria-live="polite"><img src="/Assets/Images/Logo.png" alt="Willena"><span>Checking admin access…</span></div>
-<div class="admin-v2-rev">Admin V2 · 1.23</div>
-<script src="/free-level-test/js/report-calculation.js?v=1.23"></script>
-<script src="./admin-v2-visitor-qr.js?v=1.23"></script>
-<script type="module" src="./admin-v2.js?v=1.23"></script>
+<div class="admin-v2-rev">Admin V2 · 1.24</div>
+<script src="/free-level-test/js/report-calculation.js?v=1.24"></script>
+<script src="./admin-v2-visitor-qr.js?v=1.24"></script>
+<script type="module" src="./admin-v2.js?v=1.24"></script>
 <script type="module">
-import { mountTeacherHeaderMenu } from '/components/teacher-header-menu-loader.js?v=20260919-header-menu-1';
-mountTeacherHeaderMenu('#adminHeaderMenuMount').catch(error=>console.warn('[Admin header menu]',error));
+import { mountTeacherHeaderMenu } from '/components/teacher-header-menu-loader.js?v=20260919-header-menu-2';
+mountTeacherHeaderMenu().catch(error=>console.warn('[Admin header menu]',error));
 </script>
 </body>
 </html>
