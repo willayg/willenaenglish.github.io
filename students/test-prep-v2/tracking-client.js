@@ -111,22 +111,24 @@ export async function startSession(practiceType){
 
 async function mirrorAttemptsToArcadePoints(sessionId,attempts){
   if(!Array.isArray(attempts)||!attempts.length)return false;
-  const rows=attempts.map((a,index)=>({
+  const rows=attempts.filter(a=>a?.is_correct===true).map((a,index)=>({
     word:String(a.question_id||a.client_attempt_id||`test-prep-${index+1}`),
-    is_correct:a.is_correct===true,
+    is_correct:true,
     answer:a.selected_answer??null,
     correct_answer:a.correct_answer??null,
-    points:a.is_correct===true?1:0,
+    points:2,
     attempt_index:index,
     duration_ms:Number(a.response_time_ms)||0,
     extra:{
-      source:'test-prep-v2',
+      source:'test_prep',
       practice_type:a?.metadata?.practice_type||null,
       lesson:a?.metadata?.lesson||null,
       plan_id:a?.metadata?.plan_id||null,
-      test_prep_client_attempt_id:a.client_attempt_id||null
+      question_type:a?.question_type||a?.metadata?.question_type||null,
+      test_prep_attempt_id:a.client_attempt_id||null
     }
   }));
+  if(!rows.length)return true;
   try{
     const res=await fetch(POINTS_ENDPOINT,{
       method:'POST',
