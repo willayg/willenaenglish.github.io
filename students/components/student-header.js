@@ -734,7 +734,7 @@ class StudentHeader extends HTMLElement {
           <div class="menu-anchor">
             <button class="avatar avatar-btn" id="avatarBtn" part="avatar" aria-haspopup="menu" aria-expanded="false" title="Account">${avatar}</button>
             <div class="dropdown" id="avatarMenu" role="menu" aria-label="Account menu">
-              <a class="dd-item" role="menuitem" href="/students/dashboard.html" data-i18n="Dashboard">
+              <a class="dd-item" role="menuitem" href="/students/" data-i18n="Dashboard">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right:4px"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8v-10h-8v10zm0-18v6h8V3h-8z" fill="#19777e"/></svg>
                 Dashboard
               </a>
