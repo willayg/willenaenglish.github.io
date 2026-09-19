@@ -178,11 +178,20 @@ function openGuide(key){const guide=GUIDES[key];if(!guide)return;closeGuide();ov
 async function lessonTargets(){
   const route=currentRoute?.()||{};
   if(route.view!=='lesson'||!route.planId||!route.lesson)return null;
+
+  const journey=document.querySelector('.journey[data-unit-id]');
+  const renderedUnitId=String(journey?.dataset?.unitId||'').trim();
+  if(renderedUnitId){
+    const rows=await contentDbGet(`/rest/v1/content_units?select=id,metadata&id=eq.${encodeURIComponent(renderedUnitId)}&limit=1`);
+    const stated=Array.isArray(rows?.[0]?.metadata?.main_grammar_points)?rows[0].metadata.main_grammar_points:[];
+    return {route,plan:null,ids:{unitId:renderedUnitId},targets:[...new Set(stated.map(String))]};
+  }
+
   const plan=(trackingState().plans||[]).find(p=>String(p.id)===String(route.planId));
   if(!plan)return null;
   const ids=await resolveContentIds(plan,route.lesson);
   if(!ids?.unitId)return {route,plan,ids,targets:[]};
-  const rows=await contentDbGet(`/rest/v1/content_units?select=metadata&id=eq.${encodeURIComponent(ids.unitId)}&limit=1`);
+  const rows=await contentDbGet(`/rest/v1/content_units?select=id,metadata&id=eq.${encodeURIComponent(ids.unitId)}&limit=1`);
   const stated=Array.isArray(rows?.[0]?.metadata?.main_grammar_points)?rows[0].metadata.main_grammar_points:[];
   return {route,plan,ids,targets:[...new Set(stated.map(String))]};
 }
