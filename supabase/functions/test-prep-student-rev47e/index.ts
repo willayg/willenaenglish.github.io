@@ -42,6 +42,31 @@ async function processAttempt(admin:any,uid:string,s:any,b:any){
  const row={session_id:s.id,student_id:uid,plan_id:s.plan_id,book_key:s.book_key,unit_key:s.unit_key,question_id:qid,practice_type:s.practice_type,question_type:b.question_type?String(b.question_type):null,targets:arr(b.targets),selected_answer:b.selected_answer??null,correct_answer_snapshot:b.correct_answer??null,is_correct:!!b.is_correct,attempt_number:attemptNo,is_retry:retry,corrected_previous:!!b.is_correct&&!!ps.unresolved,response_time_ms:Math.max(0,Math.round(n(b.response_time_ms)))||null,metadata,client_attempt_id:clientId};
  let ir=await admin.from('test_prep_attempts').insert(row).select('id,attempted_at,attempt_number,is_retry,corrected_previous,response_time_ms').single();
  if(ir.error){if(clientId&&ir.error.code==='23505'){const ex=await admin.from('test_prep_attempts').select('id,attempted_at,attempt_number,is_retry,corrected_previous,response_time_ms').eq('student_id',uid).eq('client_attempt_id',clientId).maybeSingle();if(ex.error)throw ex.error;if(ex.data)return{success:true,duplicate:true,client_attempt_id:clientId,attempt:ex.data,review:null}}throw ir.error}
+ if(b.is_correct){
+   const stringifyAnswer=(v:any)=>Array.isArray(v)?v.map((x:any)=>String(x)).join(', '):(v==null?null:String(v));
+   const pointRow={
+     user_id:uid,
+     session_id:String(s.id),
+     mode:'test_prep',
+     word:qid,
+     is_correct:true,
+     answer:stringifyAnswer(b.selected_answer),
+     correct_answer:stringifyAnswer(b.correct_answer),
+     points:2,
+     attempt_index:attemptNo,
+     duration_ms:Math.max(0,Math.round(n(b.response_time_ms)))||null,
+     extra:{
+       source:'test_prep',
+       lesson:metadata?.lesson||s.unit_key||null,
+       plan_id:s.plan_id,
+       practice_type:s.practice_type,
+       question_type:b.question_type?String(b.question_type):null,
+       test_prep_attempt_id:String(ir.data.id)
+     }
+   };
+   const pr=await admin.from('progress_attempts').insert(pointRow);
+   if(pr.error&&pr.error.code!=='23505')throw pr.error;
+ }
  const now=new Date().toISOString();let state:any;
  if(!b.is_correct){
    state={...ps,student_id:uid,plan_id:s.plan_id,question_id:qid,practice_type:s.practice_type,unit_key:s.unit_key,question_type:b.question_type||ps.question_type||null,targets:arr(b.targets).length?arr(b.targets):arr(ps.targets),attempt_count:attemptNo,wrong_count:n(ps.wrong_count)+1,correct_review_streak:0,review_stage:0,unresolved:true,first_wrong_at:ps.first_wrong_at||now,last_wrong_at:now,last_attempt_at:now,corrected_at:null,next_review_at:review?plusMinutes(60):now,metadata};
