@@ -1,7 +1,6 @@
 import {GRADER_VERSION} from '../shared/question-grader.js?v=2.4.1';
-import {FN} from '../scripts/api-base.js?v=20260115';
+import {logAttempt as logArcadeAttempt,flushAttempts as flushArcadeAttempts} from '../records.js?v=20260919-testprep1';
 const EDGE='https://fiieuiktlsivwfgyivai.supabase.co/functions/v1/test-prep-student-rev47e';
-const POINTS_ENDPOINT=FN('log_word_attempt');
 const API_KEY='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
 const LOGIN='/students/signin.html?next='+encodeURIComponent('/students/test-prep-v2/');
 const OUTBOX_KEY='willena_testprep_v2_attempt_outbox';
@@ -110,35 +109,33 @@ export async function startSession(practiceType){
 }
 
 async function mirrorAttemptsToArcadePoints(sessionId,attempts){
-  if(!Array.isArray(attempts)||!attempts.length)return false;
-  const rows=attempts.filter(a=>a?.is_correct===true).map((a,index)=>({
-    word:String(a.question_id||a.client_attempt_id||`test-prep-${index+1}`),
-    is_correct:true,
-    answer:a.selected_answer??null,
-    correct_answer:a.correct_answer??null,
-    points:2,
-    attempt_index:index,
-    duration_ms:Number(a.response_time_ms)||0,
-    extra:{
-      source:'test_prep',
-      practice_type:a?.metadata?.practice_type||null,
-      lesson:a?.metadata?.lesson||null,
-      plan_id:a?.metadata?.plan_id||null,
-      question_type:a?.question_type||a?.metadata?.question_type||null,
-      test_prep_attempt_id:a.client_attempt_id||null
-    }
-  }));
-  if(!rows.length)return true;
+  if(!Array.isArray(attempts)||!attempts.length)return true;
+  const correct=attempts.filter(a=>a?.is_correct===true);
+  if(!correct.length)return true;
   try{
-    const res=await fetch(POINTS_ENDPOINT,{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      credentials:'include',
-      cache:'no-store',
-      body:JSON.stringify({event_type:'attempts_batch',session_id:sessionId,mode:'test_prep',attempts:rows})
-    });
-    if(!res.ok)throw new Error(`points path failed (${res.status})`);
-    try{window.dispatchEvent(new CustomEvent('points:refresh',{detail:{source:'test-prep-v2'}}))}catch(_){}
+    for(let index=0;index<correct.length;index++){
+      const a=correct[index];
+      await logArcadeAttempt({
+        session_id:sessionId,
+        mode:'test_prep',
+        word:String(a.question_id||a.client_attempt_id||`test-prep-${index+1}`),
+        is_correct:true,
+        answer:a.selected_answer??null,
+        correct_answer:a.correct_answer??null,
+        points:2,
+        attempt_index:index,
+        duration_ms:Number(a.response_time_ms)||0,
+        extra:{
+          source:'test_prep',
+          practice_type:a?.metadata?.practice_type||null,
+          lesson:a?.metadata?.lesson||null,
+          plan_id:a?.metadata?.plan_id||null,
+          question_type:a?.question_type||a?.metadata?.question_type||null,
+          test_prep_attempt_id:a.client_attempt_id||null
+        }
+      });
+    }
+    await flushArcadeAttempts();
     return true;
   }catch(e){
     console.warn('[v2 tracking] Arcade points mirror failed',e);
@@ -241,9 +238,6 @@ export async function recordAttempt({question,response,result,practiceType,skipp
   };
   if(attemptSource==='wrong-review')attempt.metadata.review_mode=true;
   outbox.push(attempt);saveOutbox();saveSessionRecord();emit('attempt_queued',{client_attempt_id:attempt.client_attempt_id,session_id:session.id,question_id:attempt.question_id,practice_type:practiceType,source:attemptSource});
-  if(attempt.is_correct){
-    try{window.dispatchEvent(new CustomEvent('points:optimistic-bump',{detail:{delta:1,source:'test-prep-v2'}}))}catch(_){}
-  }
   const urgent=attempt.metadata.source==='wrong-review';
   if(urgent)await flushAttemptBatch('review');else if(outbox.length>=BATCH_SIZE)flushAttemptBatch('size');else scheduleFlush();
   return{queued:true,client_attempt_id:attempt.client_attempt_id};
