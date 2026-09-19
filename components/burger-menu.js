@@ -5,7 +5,7 @@ if (typeof window !== 'undefined' && window.location.hostname === 'teachers.will
   const isPublicTeacherAuthPage = /^\/Teachers\/(?:login|signup)(?:\.html)?\/?$/i.test(teacherPath);
   if (!isPublicTeacherAuthPage && !window.__willenaTeacherRoleGuardPromise) {
     window.__willenaTeacherRoleGuardPromise = (async () => {
-      const studentHome = 'https://students.willenaenglish.com/';
+      const studentMismatch = '/Teachers/access-student.html?next=' + encodeURIComponent(window.location.pathname + window.location.search);
       try {
         const api = window.WillenaAPI?.fetch
           ? window.WillenaAPI.fetch.bind(window.WillenaAPI)
@@ -21,7 +21,7 @@ if (typeof window !== 'undefined' && window.location.hostname === 'teachers.will
         const roleData = await roleRes.json().catch(() => ({}));
         const role = String(roleData?.role || '').toLowerCase();
         if (!['teacher', 'admin'].includes(role)) {
-          window.location.replace(studentHome);
+          window.location.replace(studentMismatch);
           return false;
         }
         return true;
