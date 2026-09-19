@@ -160,7 +160,7 @@
         const result = await res.json();
         if (!result.success || result.approved !== true || !['teacher','admin'].includes(String(result.role || '').toLowerCase())) {
           if (result.success && String(result.role || '').toLowerCase() === 'student') {
-            window.location.href = 'https://students.willenaenglish.com/';
+            window.location.href = '/Teachers/access-student.html?next=' + encodeURIComponent(location.pathname + location.search);
           } else {
             window.location.href = '/Teachers/components/access-denied.html';
           }
