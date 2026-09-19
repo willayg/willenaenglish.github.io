@@ -58,7 +58,7 @@ menu?.addEventListener('click',event=>event.stopPropagation());
 document.addEventListener('click',()=>setMenu(false));
 document.addEventListener('keydown',event=>{if(event.key==='Escape')setMenu(false)});
 profileButton?.addEventListener('click',()=>openStudentProfile());
-dashboardButton?.addEventListener('click',()=>{window.location.href='/students/dashboard-v2/'});
+dashboardButton?.addEventListener('click',()=>{window.location.href='/students/index.html'});
 bigTextButton?.addEventListener('click',()=>{setBigText(!bigTextEnabled());setMenu(false)});
 testPrepAButton?.addEventListener('click',()=>{window.location.href='../test-prep-app/'});
 testPrepBButton?.addEventListener('click',()=>setMenu(false));
