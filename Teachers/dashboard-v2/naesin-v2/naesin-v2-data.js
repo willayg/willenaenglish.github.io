@@ -26,8 +26,13 @@ async function authedJson(url,opts={}){
   const run=t=>fetch(url,{...opts,headers:{apikey:API_KEY,Authorization:`Bearer ${t}`,...(opts.headers||{})},cache:'no-store',credentials:'omit'}),started=performance.now();
   diag.requests++;
   let r=await run(access);
-  if(r.status===401){access=await refreshToken();if(access)r=await run(access)}
-  const payload=await r.json().catch(()=>({}));diag.lastMs=performance.now()-started;
+  let payload=await r.json().catch(()=>({}));
+  const staleRole=r.status===403&&String(payload?.error||payload?.message||'').toLowerCase().includes('teacher_access_required');
+  if(r.status===401||staleRole){
+    access=await refreshToken();
+    if(access){r=await run(access);payload=await r.json().catch(()=>({}))}
+  }
+  diag.lastMs=performance.now()-started;
   if(r.status===401)throw new Error('AUTH_REQUIRED');
   if(!r.ok||payload?.success===false)throw new Error(payload?.error||payload?.message||`Naesin data request failed (${r.status})`);
   return payload;
