@@ -1560,7 +1560,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     const roleRes = await WillenaAPI.fetch(`/.netlify/functions/supabase_auth?action=get_role&user_id=${encodeURIComponent(who.user_id)}`);
     const role = await roleRes.json();
     const r = String(role?.role || '').toLowerCase();
-    if (!['teacher','admin'].includes(r)) throw new Error('forbidden');
+    if (!['teacher','admin'].includes(r)) {
+      if (r === 'student') {
+        window.location.href = 'https://students.willenaenglish.com/';
+        return;
+      }
+      throw new Error('forbidden');
+    }
     IS_ADMIN = (r === 'admin');
   } catch {
     const msg = 'Not signed in. Please log in as a teacher.';
