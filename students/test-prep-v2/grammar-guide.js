@@ -1,5 +1,5 @@
 import {currentRoute} from './navigation.js?v=2.21.3';
-import {trackingState} from './tracking-client.js?v=2.17a';
+import {trackingState} from './tracking-client.js?v=2.17t';
 import {resolveContentIds} from './content-source.js?v=2.24.4';
 import {contentDbGet} from '../shared/content-db.js?v=1.0.0';
 
@@ -196,10 +196,18 @@ function renderLauncher(panel,keys,rawTargets){
   panel.title=`Lesson grammar targets: ${rawTargets.join(', ')}`;
 }
 
-async function hydratePanel(stop,panel,token){
+async function hydratePanel(stop,panel,token,attempt=0){
   try{
     const context=await lessonTargets();
-    if(token!==installToken||!stop.isConnected||!context)return;
+    if(token!==installToken||!stop.isConnected)return;
+    if(!context){
+      if(attempt<1){
+        setTimeout(()=>hydratePanel(stop,panel,token,attempt+1),180);
+      }else if(panel.isConnected){
+        panel.innerHTML='<div class="gg-launch-empty"><b>문법 설명</b><small>문법 정보를 불러오지 못했습니다.</small></div>';
+      }
+      return;
+    }
     const route=currentRoute?.()||{};
     if(route.view!=='lesson'||String(route.planId)!==String(context.route.planId)||String(route.lesson)!==String(context.route.lesson))return;
     const keys=resolveGuideKeys(context.targets);
