@@ -1329,6 +1329,13 @@ exports.handler = async (event) => {
           }
 
           if (snapshot) {
+            // Global points include legacy Arcade points plus Test Prep point events.
+            // Keep this server-side so only one number leaves Supabase.
+            let authoritativePoints = Number(snapshot.points) || 0;
+            try {
+              const { data: pointTotal, error: pointErr } = await adminClient.rpc('sum_points_for_user', { uid: userId });
+              if (!pointErr && Number.isFinite(Number(pointTotal))) authoritativePoints = Number(pointTotal);
+            } catch {}
             const overviewPayload = {
               stars: Number(snapshot.stars) || 0,
               lists_explored: Number(snapshot.lists_explored) || 0,
@@ -1342,7 +1349,7 @@ exports.handler = async (event) => {
               badges_count: Number(snapshot.badges_count) || 0,
               favorite_list: snapshot.favorite_list || null,
               hardest_word: snapshot.hardest_word || null,
-              points: Number(snapshot.points) || 0
+              points: authoritativePoints
             };
             if (debugFlag) {
               overviewPayload.meta = {
