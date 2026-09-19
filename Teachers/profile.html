@@ -25,7 +25,7 @@
     const roleRes=await api('/.netlify/functions/supabase_auth?action=get_role&user_id='+encodeURIComponent(who.user_id),{cache:'no-store'});
     const roleData=await roleRes.json().catch(()=>({}));
     const role=String(roleData?.role||'').toLowerCase();
-    location.replace(['teacher','admin'].includes(role)?'/Teachers/index.html':studentHome);
+    location.replace(['teacher','admin'].includes(role)?'/Teachers/index.html':'/Teachers/access-student.html?next='+encodeURIComponent('/Teachers/index.html'));
   }catch{
     location.replace('/Teachers/login.html');
   }
