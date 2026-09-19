@@ -10,23 +10,47 @@ function apiFetch(url, options = {}) {
   return f(url, { credentials: 'include', cache: 'no-store', ...options });
 }
 
-async function getIdentity() {
+function getStoredIdentity() {
   let role = '';
   let name = '';
+  try {
+    role = String(localStorage.getItem('userRole') || localStorage.getItem('role') || '').trim().toLowerCase();
+    name = String(localStorage.getItem('username') || localStorage.getItem('name') || '').trim();
+    if (!name) {
+      const email = String(localStorage.getItem('userEmail') || '').trim();
+      if (email.includes('@')) name = email.split('@')[0];
+    }
+  } catch {}
+  return { role, name };
+}
+
+async function getIdentity() {
+  const stored = getStoredIdentity();
+  let role = stored.role;
+  let name = stored.name;
+
   try {
     const whoRes = await apiFetch(AUTH_URL + '?action=whoami');
     const who = await whoRes.json().catch(() => ({}));
     if (!whoRes.ok || !who?.user_id) return { role, name };
 
-    const [roleRes, profileRes] = await Promise.all([
-      apiFetch(AUTH_URL + '?action=get_role&user_id=' + encodeURIComponent(who.user_id)),
-      apiFetch(AUTH_URL + '?action=get_profile&user_id=' + encodeURIComponent(who.user_id))
-    ]);
+    const roleRes = await apiFetch(AUTH_URL + '?action=get_role&user_id=' + encodeURIComponent(who.user_id));
     const roleData = await roleRes.json().catch(() => ({}));
-    const profile = await profileRes.json().catch(() => ({}));
-    role = String(roleData?.role || profile?.role || '').toLowerCase();
-    name = String(profile?.name || profile?.username || '').trim();
+    role = String(roleData?.role || role || '').trim().toLowerCase();
+
+    // Use the same proven name endpoint as the legacy shared burger.
+    const nameRes = await apiFetch(AUTH_URL + '?action=get_profile_name&_=' + Date.now());
+    const nameData = await nameRes.json().catch(() => ({}));
+    const freshName = String(nameData?.name || nameData?.profile_name || '').trim();
+    if (nameRes.ok && freshName) {
+      name = freshName;
+      try { localStorage.setItem('username', freshName); } catch {}
+    }
+    if (role) {
+      try { localStorage.setItem('userRole', role); } catch {}
+    }
   } catch {}
+
   return { role, name };
 }
 
