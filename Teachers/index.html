@@ -7,7 +7,7 @@
 <title>Teacher Dashboard V2</title>
 <script src="/js/api-config.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="./dashboard-v2.css?v=20260919-r14-13">
+<link rel="stylesheet" href="./dashboard-v2.css?v=20260919-r14-14">
 <link id="dashboardV2Polish" rel="stylesheet" href="./dashboard-v2-polish.css?v=20260917-r14-07">
 <link rel="stylesheet" href="./naesin-v2/naesin-v2.css?v=20260912-r12-2">
 <link rel="stylesheet" href="./naesin-v2/naesin-v2-p6.css?v=20260912-r12-2">
@@ -18,7 +18,7 @@
 <script src="./dashboard-shell-polish.js?v=20260917-r14-09" defer></script>
 </head>
 <body>
-<header class="topbar"><div class="brand"><img src="/Assets/Images/Logo.png" alt="Willena"><div><b>Willena</b><small>Teacher workspace</small></div></div><div class="title">Teacher Dashboard V2</div><div class="top-actions"><span class="teacher-name" id="teacherName">Teacher</span><div class="header-menu-mount" id="teacherHeaderMenuMount"></div></div></header>
+<header class="topbar"><div class="brand"><img src="/Assets/Images/Logo.png" alt="Willena"><div><b>Willena</b><small>Teacher workspace</small></div></div><div class="title">Teacher Dashboard V2</div><div class="top-actions"><span class="teacher-name" id="teacherName">Teacher</span></div></header>
 <div class="layout">
 <aside class="rail"><button class="nav active" data-view="students"><span class="nav-icon">◎</span><span>Students</span></button><button class="nav" data-view="classes"><span class="nav-icon">▦</span><span>Classes</span></button><button class="nav" data-view="apps"><span class="nav-icon">＋</span><span>Apps</span></button><div class="rail-spacer"></div></aside>
 <main class="workspace">
@@ -31,7 +31,7 @@
 </main></div>
 <nav class="mobile-tabs"><button class="mobile-tab active" data-view="students"><b>◎</b>Students</button><button class="mobile-tab" data-view="classes"><b>▦</b>Classes</button><button class="mobile-tab" data-view="apps"><b>＋</b>Apps</button></nav>
 <div class="drawer-bg" id="drawerBg"><aside class="drawer"><div class="drawer-head"><div class="drawer-head-main"><div class="drawer-name" id="drawerName">Student</div><div class="drawer-meta" id="drawerMeta"></div></div><button class="close" id="closeDrawer">×</button></div><div class="drawer-body" id="drawerBody"><div class="empty">Loading…</div></div></aside></div>
-<div id="naesinV2Rev" style="position:fixed;right:12px;bottom:8px;z-index:2147483647;color:#7b8c93;font:700 9px/1.2 Poppins,sans-serif;letter-spacing:.04em;pointer-events:none">v14.13</div>
+<div id="naesinV2Rev" style="position:fixed;right:12px;bottom:8px;z-index:2147483647;color:#7b8c93;font:700 9px/1.2 Poppins,sans-serif;letter-spacing:.04em;pointer-events:none">v14.14</div>
 <script>
 const $=(s,r=document)=>r.querySelector(s),$$=(s,r=document)=>[...r.querySelectorAll(s)];
 const FN=n=>`/.netlify/functions/${n}`;
@@ -89,8 +89,8 @@ $('#classSelect').onchange=loadClass;$('#daysSelect').onchange=loadClass;$('#ref
 <script src="./naesin-v2/naesin-v2.js?v=20260917-r14-05"></script>
 <script data-na2-auto-refresh src="./naesin-v2/naesin-v2-auto-refresh.js?v=20260917-r14-03"></script>
 <script type="module">
-import { mountTeacherHeaderMenu } from '/components/teacher-header-menu-loader.js?v=20260919-header-menu-1';
-mountTeacherHeaderMenu('#teacherHeaderMenuMount').catch(error=>console.warn('[Teacher header menu]',error));
+import { mountTeacherHeaderMenu } from '/components/teacher-header-menu-loader.js?v=20260919-header-menu-2';
+mountTeacherHeaderMenu().catch(error=>console.warn('[Teacher header menu]',error));
 </script>
 </body>
 </html>
