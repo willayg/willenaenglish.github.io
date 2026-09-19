@@ -293,6 +293,9 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password })
       });
+      if (result.access_token) {
+        window.WillenaAPI?.setLocalTokens?.(result.access_token, result.refresh_token || '');
+      }
       return result.user;
     }
     
