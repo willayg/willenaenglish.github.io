@@ -1,7 +1,7 @@
 import {QuestionRenderer} from './question-renderer.js?v=2.20.11';
 import {gradeQuestion} from '../shared/question-grader.js?v=2.4.1';
 import {recordAttempt,startSession,completeSession,trackingState} from './tracking-client.js?v=2.17k';
-import {mountVocabAiWilli} from './ai-willi-vocab.js?v=1.0.0';
+import {mountVocabAiWilli} from './ai-willi-vocab.js?v=1.0.1';
 
 const CONTENT='https://gxwfsqxyuufqtitspfqg.supabase.co';
 const CONTENT_KEY=['sb_','publishable_','G-FYhHfDL4OGdL892gY1Zg_','epdbEeqO'].join('');
