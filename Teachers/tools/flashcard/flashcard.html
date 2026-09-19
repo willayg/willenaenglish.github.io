@@ -47,37 +47,17 @@
     }
     </style>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Caveat:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/components/teacher-header/teacher-header.css?v=20260919-p3-1">
 </head>
 <body>
-    <!-- Load shared burger menu component -->
+    <div id="teacher-header"></div>
     <script type="module">
-    import { insertBurgerMenu } from '/components/burger-menu.js?v=20260330d';
-      async function ensureBurgerMenuTemplate() {
-        if (!document.getElementById('burger-menu-template')) {
-                const resp = await fetch('/components/burger-menu.html?v=20260330d');
-          const html = await resp.text();
-          const tempDiv = document.createElement('div');
-          tempDiv.innerHTML = html;
-          document.body.appendChild(tempDiv.firstElementChild);
-        }
-      }
-      document.addEventListener('DOMContentLoaded', async function() {
-        await ensureBurgerMenuTemplate();
-        insertBurgerMenu('#burger-menu-mount');
-      });
+      import { mountTeacherHeader } from '/components/teacher-header/teacher-header.js?v=20260919-p3-1';
+      mountTeacherHeader({ target:'#teacher-header', mode:'tool', title:"Flashcard Builder" })
+        .catch((e)=>console.error('Teacher header init failed', e));
     </script>
-    <div class="container">
+<div class="container">
         <div class="app-card">
-            <!-- Header -->
-            <div class="header" style="position:relative; z-index:100; min-height:64px; display:flex; align-items:center;">
-                <div class="logo">
-                    <img src="../../../Assets/Images/Logo.png" alt="Willena" class="logo-img">
-                </div>
-                <h1 style="flex:1; text-align:center; margin:0;">Flashcard Generator</h1>
-                <!-- Burger Menu Component (vertically centered in header, inside container) -->
-                <div id="burger-menu-mount" style="position:absolute; top:50%; right:16px; transform:translateY(-50%); z-index:9999;"></div>
-            </div>
-
             <!-- Top Action Bar -->
             <div class="top-actions">
                 <span class="action-link" id="newBtn">New</span>
