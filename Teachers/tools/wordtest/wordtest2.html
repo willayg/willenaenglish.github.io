@@ -73,8 +73,15 @@
       }
     }
     </style>
+    <link rel="stylesheet" href="/components/teacher-header/teacher-header.css?v=20260919-p3-1">
 </head>
 <body>
+    <div id="teacher-header"></div>
+    <script type="module">
+      import { mountTeacherHeader } from '/components/teacher-header/teacher-header.js?v=20260919-p3-1';
+      mountTeacherHeader({ target:'#teacher-header', mode:'tool', title:"Word Builder" })
+        .catch((e)=>console.error('Teacher header init failed', e));
+    </script>
   <script>
     // Access control: only allow approved users
     (async function() {
@@ -99,33 +106,8 @@
       }
     })();
   </script>
-    <!-- Load shared burger menu component -->
-    <script type="module">
-      import { insertBurgerMenu } from '/components/burger-menu.js?v=20260330d';
-      async function ensureBurgerMenuTemplate() {
-        if (!document.getElementById('burger-menu-template')) {
-          const resp = await fetch('/components/burger-menu.html?v=20260330d');
-          const html = await resp.text();
-          const tempDiv = document.createElement('div');
-          tempDiv.innerHTML = html;
-          document.body.appendChild(tempDiv.firstElementChild);
-        }
-      }
-      document.addEventListener('DOMContentLoaded', async function() {
-        await ensureBurgerMenuTemplate();
-        insertBurgerMenu('#burger-menu-mount');
-      });
-    </script>
-    <div class="container">
+<div class="container">
         <div class="app-card">
-            <!-- Header -->
-            <div class="header">
-        <div class="logo">
-          <img src="../../../Assets/Images/Logo.png" alt="Willena" class="logo-img">
-        </div>
-        <h1>Word Builder</h1>
-            </div>
-
             <!-- Top Action Bar -->
             <div class="top-actions">
                 <span class="action-link" id="newBtn">New</span>
@@ -177,8 +159,7 @@
                   if (assignHomeworkBtn) assignHomeworkBtn.addEventListener('click', function() { openGameBuilder(true); });
                 });
                 </script>
-                <div id="burger-menu-mount" class="burger-menu-dark" style="display:inline-block;vertical-align:middle;margin-right:12px;"></div>
-                <script>
+<script>
                 // New button logic: reload page to fully reset worksheet
                 document.addEventListener('DOMContentLoaded', function() {
                   const newBtn = document.getElementById('newBtn');
