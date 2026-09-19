@@ -897,6 +897,27 @@ exports.handler = async (event) => {
 
     // ---------- KPI ----------
     if (section === 'kpi') {
+      const forceLegacyKpi = !!(event.queryStringParameters && event.queryStringParameters.legacy_kpi === '1');
+      if (!forceLegacyKpi) {
+        try {
+          const { data: snapshot, error: snapshotErr } = await adminClient
+            .from('student_progress_snapshot_v1')
+            .select('attempts, accuracy, best_streak')
+            .eq('user_id', userId)
+            .maybeSingle();
+          if (snapshotErr) throw snapshotErr;
+          if (snapshot) {
+            return json(200, {
+              attempts: Number(snapshot.attempts) || 0,
+              accuracy: snapshot.accuracy == null ? null : Number(snapshot.accuracy),
+              best_streak: Number(snapshot.best_streak) || 0
+            });
+          }
+        } catch (e) {
+          console.warn('[progress_summary] kpi snapshot path failed; using legacy fallback:', e && e.message);
+        }
+      }
+
       const { data: attempts, error: e1 } = await scope(
         supabase
           .from('progress_attempts')
@@ -905,8 +926,8 @@ exports.handler = async (event) => {
 
       if (e1) return json(400, { error: e1.message });
 
-  const attemptsCount = attempts?.length || 0;
-  const correct = attempts?.filter(a => a.is_correct)?.length || 0;
+      const attemptsCount = attempts?.length || 0;
+      const correct = attempts?.filter(a => a.is_correct)?.length || 0;
 
       const { data: ordered, error: e2 } = await scope(
         supabase
@@ -929,6 +950,27 @@ exports.handler = async (event) => {
 
     // ---------- MODES ----------
     if (section === 'modes') {
+      const forceLegacyModes = !!(event.queryStringParameters && event.queryStringParameters.legacy_modes === '1');
+      if (!forceLegacyModes) {
+        try {
+          const { data: snapshot, error: snapshotErr } = await adminClient
+            .from('student_progress_snapshot_v1')
+            .select('mode_stats')
+            .eq('user_id', userId)
+            .maybeSingle();
+          if (snapshotErr) throw snapshotErr;
+          if (snapshot && Array.isArray(snapshot.mode_stats)) {
+            return json(200, snapshot.mode_stats.map(row => ({
+              mode: row.mode || 'unknown',
+              correct: Number(row.correct) || 0,
+              total: Number(row.total) || 0
+            })));
+          }
+        } catch (e) {
+          console.warn('[progress_summary] modes snapshot path failed; using legacy fallback:', e && e.message);
+        }
+      }
+
       const { data, error } = await scope(
         supabase
           .from('progress_attempts')
@@ -950,6 +992,21 @@ exports.handler = async (event) => {
     // ---------- SESSIONS ----------
     if (section === 'sessions') {
       const list_name = (event.queryStringParameters && event.queryStringParameters.list_name) || null;
+      const forceLegacySessions = !!(event.queryStringParameters && event.queryStringParameters.legacy_sessions === '1');
+
+      if (!forceLegacySessions) {
+        try {
+          const { data: sessionRows, error: sessionRpcErr } = await adminClient.rpc(
+            'progress_summary_sessions_v1',
+            { p_user_id: userId, p_list_name: list_name }
+          );
+          if (sessionRpcErr) throw sessionRpcErr;
+          if (Array.isArray(sessionRows)) return json(200, sessionRows);
+        } catch (e) {
+          console.warn('[progress_summary] sessions RPC path failed; using legacy fallback:', e && e.message);
+        }
+      }
+
       let query = scope(
         supabase
           .from('progress_sessions')
@@ -1055,6 +1112,29 @@ exports.handler = async (event) => {
 
     // ---------- BADGES ----------
     if (section === 'badges') {
+      const forceLegacyBadges = !!(event.queryStringParameters && event.queryStringParameters.legacy_badges === '1');
+      if (!forceLegacyBadges) {
+        try {
+          const { data: snapshot, error: snapshotErr } = await adminClient
+            .from('student_progress_snapshot_v1')
+            .select('badge_ids')
+            .eq('user_id', userId)
+            .maybeSingle();
+          if (snapshotErr) throw snapshotErr;
+          if (snapshot && Array.isArray(snapshot.badge_ids)) {
+            const catalog = {
+              first_correct: { id: 'first_correct', name: 'First Steps', emoji: '🥇' },
+              streak_5: { id: 'streak_5', name: 'Hot Streak', emoji: '🔥' },
+              hundred_correct: { id: 'hundred_correct', name: 'Century', emoji: '💯' },
+              perfect_round: { id: 'perfect_round', name: 'Perfectionist', emoji: '🌟' }
+            };
+            return json(200, snapshot.badge_ids.map(id => catalog[id]).filter(Boolean));
+          }
+        } catch (e) {
+          console.warn('[progress_summary] badges snapshot path failed; using legacy fallback:', e && e.message);
+        }
+      }
+
       const [{ data: attempts, error: eA }, { data: sessions, error: eS }] = await Promise.all([
         scope(supabase.from('progress_attempts').select('is_correct, created_at')),
         scope(supabase.from('progress_sessions').select('summary'))
