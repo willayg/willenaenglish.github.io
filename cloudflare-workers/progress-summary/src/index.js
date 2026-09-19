@@ -194,43 +194,56 @@ function buildStarsByUserMap(sessions) {
 // Aggregate points for user IDs
 async function aggregatePointsForIds(env, ids, firstOfMonthIso) {
   if (!ids || !ids.length) return new Map();
-  
+
   const totals = new Map();
-  const batchSize = 1000; // Supabase default limit
-  
-  // Process in chunks of users to avoid IN query limits
   const chunkSize = 100;
+
+  // All-time totals come from the tiny per-student snapshot.
+  if (!firstOfMonthIso) {
+    for (let i = 0; i < ids.length; i += chunkSize) {
+      const chunk = ids.slice(i, i + chunkSize);
+      try {
+        const data = await supabaseSelect(
+          env,
+          'student_points_snapshot_v1',
+          `user_id=in.(${chunk.join(',')})&select=user_id,total_points`
+        );
+        (data || []).forEach(row => {
+          if (!row || !row.user_id) return;
+          totals.set(row.user_id, Number(row.total_points) || 0);
+        });
+      } catch (e) {
+        console.error('[progress-summary] Points snapshot fetch error:', e.message);
+      }
+    }
+    return totals;
+  }
+
+  // Month-filtered totals still need the dated attempt rows.
+  const batchSize = 1000;
   for (let i = 0; i < ids.length; i += chunkSize) {
     const chunk = ids.slice(i, i + chunkSize);
-    
-    // Paginate through all attempts for this chunk of users
     let offset = 0;
     while (true) {
-      let query = `user_id=in.(${chunk.join(',')})&points=not.is.null&select=user_id,points&order=id.asc&limit=${batchSize}&offset=${offset}`;
-      if (firstOfMonthIso) {
-        query += `&created_at=gte.${firstOfMonthIso}`;
-      }
-      
+      const query = `user_id=in.(${chunk.join(',')})&points=not.is.null&created_at=gte.${firstOfMonthIso}&select=user_id,points&order=id.asc&limit=${batchSize}&offset=${offset}`;
       try {
         const data = await supabaseSelect(env, 'progress_attempts', query);
         if (!data || data.length === 0) break;
-        
+
         (data || []).forEach(row => {
           if (!row || !row.user_id) return;
-          const value = Number(row.points) || 0;
-          totals.set(row.user_id, (totals.get(row.user_id) || 0) + value);
+          totals.set(row.user_id, (totals.get(row.user_id) || 0) + (Number(row.points) || 0));
         });
-        
-        // If we got less than batchSize, we've reached the end
+
         if (data.length < batchSize) break;
         offset += batchSize;
       } catch (e) {
-        console.error('[progress-summary] Points aggregation error:', e.message);
+        console.error('[progress-summary] Monthly points aggregation error:', e.message);
         break;
       }
     }
   }
-  
+
   return totals;
 }
 
