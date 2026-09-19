@@ -72,9 +72,9 @@ export function insertBurgerMenu(targetSelector = 'body') {
         .burger-dropdown a { display: block; padding: 12px 16px; text-decoration: none; color: #333; border-bottom: 1px solid #eee; }
         .burger-dropdown a:hover { background: #f1f1f1; }
         .burger-dropdown a:last-child { border-bottom: none; }
-        .burger-menu > .hw-notif-wrap, .burger-menu > .burger-dropdown-wrap { flex: 0 0 42px; width: 42px; height: 38px; }
+        .burger-menu > .hw-notif-wrap, .burger-menu > .burger-dropdown-wrap { flex: 0 0 auto; width: auto; height: auto; }
         .burger-menu > .burger-user-label { flex-shrink: 1; }
-        .burger-menu .burger-btn, .burger-menu .hw-notif-btn { display: inline-flex !important; width: 42px !important; height: 38px !important; max-width: none !important; }
+        .burger-menu .burger-btn, .burger-menu .hw-notif-btn { display: inline-flex !important; width: 42px !important; height: 38px !important; max-width: none !important; margin: 0 !important; }
         .hw-notif-wrap { position: relative; z-index: 10002; }
         .hw-notif-badge { display: none; position: absolute; top: -5px; right: -5px; background: #ef4444; color: white; font-size: 11px; font-weight: 700; min-width: 18px; height: 18px; border-radius: 9px; align-items: center; justify-content: center; padding: 0 3px; pointer-events: none; z-index: 10003; }
         .hw-notif-panel { display: none; position: absolute; top: calc(100% + 8px); right: 0; width: 320px; max-height: 480px; overflow-y: auto; background: white; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.18); z-index: 10000; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
@@ -129,7 +129,7 @@ export function insertBurgerMenu(targetSelector = 'body') {
         .hw-status-done-badge, .hw-status-pending-badge { flex-shrink: 0; border-radius: 999px; padding: 4px 8px; font-size: 11px; font-weight: 700; }
         .hw-status-done-badge { background: #eef2f7; color: #374151; }
         .hw-status-pending-badge { background: #f3f4f6; color: #6b7280; }
-        @media (max-width: 700px) { .burger-menu { flex-direction: row !important; flex-wrap: nowrap !important; } .burger-menu > .hw-notif-wrap, .burger-menu > .burger-dropdown-wrap { flex-basis: 40px; width: 40px; height: 36px; } .burger-menu .burger-btn, .burger-menu .hw-notif-btn { width: 40px !important; height: 36px !important; } .burger-user-label { height: 36px; max-width: 100px; padding: 0 10px; font-size: 11px; } .hw-status-modal-backdrop { padding: 12px; } .hw-status-lists { grid-template-columns: 1fr; } .hw-status-list + .hw-status-list { border-left: none; border-top: 1px solid #eef2f7; } .hw-notif-footer { flex-direction: column; } .hw-status-toolbar { align-items: stretch; } .hw-status-toolbar-select { width: 100%; } .hw-status-summary { margin-left: 0; width: 100%; white-space: normal; } }
+        @media (max-width: 700px) { .burger-menu { flex-direction: row !important; flex-wrap: nowrap !important; gap: 0 !important; } .burger-menu > .hw-notif-wrap, .burger-menu > .burger-dropdown-wrap { flex: 0 0 auto; width: auto; height: auto; } .burger-menu .burger-btn, .burger-menu .hw-notif-btn { width: 40px !important; height: 36px !important; } .burger-user-label { height: 36px; max-width: 100px; padding: 0 10px; font-size: 11px; } .hw-status-modal-backdrop { padding: 12px; } .hw-status-lists { grid-template-columns: 1fr; } .hw-status-list + .hw-status-list { border-left: none; border-top: 1px solid #eef2f7; } .hw-notif-footer { flex-direction: column; } .hw-status-toolbar { align-items: stretch; } .hw-status-toolbar-select { width: 100%; } .hw-status-summary { margin-left: 0; width: 100%; white-space: normal; } }
       </style>
       <div class="burger-menu">
         <div class="burger-user-label" id="burgerUserLabel"></div>
