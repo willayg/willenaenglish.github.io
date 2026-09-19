@@ -54,7 +54,13 @@ async function edge(action,opts={}){
   if(r.status===401)throw new Error('AUTH_REQUIRED');if(!r.ok||data.success===false)throw new Error(data.error||`Request failed (${r.status})`);return data;
 }
 
-function syncStateFromMe(d){state.user=d.user||null;state.plans=Array.isArray(d.plans)?d.plans:[];return state}
+function syncStateFromMe(d){
+  state.user=d.user||null;state.plans=Array.isArray(d.plans)?d.plans:[];
+  if(typeof d?.global_points==='number'){
+    try{window.dispatchEvent(new CustomEvent('points:update',{detail:{total:d.global_points,source:'test-prep-v2-me'}}))}catch(_){}
+  }
+  return state
+}
 export async function initTracking(){
   try{
     const d=await edge('me');syncStateFromMe(d);
@@ -123,7 +129,9 @@ export async function flushAttemptBatch(reason='manual'){
         if(ack.size){
           const savedAttempts=attempts.filter(a=>ack.has(String(a.client_attempt_id)));
           outbox=outbox.filter(a=>!ack.has(String(a.client_attempt_id)));saved+=ack.size;saveOutbox();emit('attempts_saved',{session_id:sessionId,count:ack.size,reason});
-          if(savedAttempts.some(a=>a?.is_correct===true)){
+          if(typeof d?.global_points==='number'){
+            try{window.dispatchEvent(new CustomEvent('points:update',{detail:{total:d.global_points,source:'test-prep-v2-batch'}}))}catch(_){}
+          }else if(savedAttempts.some(a=>a?.is_correct===true)){
             try{window.dispatchEvent(new CustomEvent('points:refresh',{detail:{source:'test-prep-v2'}}))}catch(_){}
           }
         }
