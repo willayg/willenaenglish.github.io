@@ -120,10 +120,10 @@
   .th-brand-copy{display:none}
   .th-switch a{padding:6px 9px;font-size:.65rem}
   .th-tool-title{max-width:34vw;font-size:.82rem}
-  .th-user-name{display:none!important}
 }
 
 @media(max-width:460px){
+  .th-user-name{display:none!important}
   .teacher-header{gap:6px;padding-inline:8px}
   .th-brand img{width:38px}
   .th-switch a{padding:6px 8px;font-size:.61rem}
