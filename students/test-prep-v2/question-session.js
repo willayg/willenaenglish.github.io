@@ -1,4 +1,4 @@
-import {aiWilliMessage,showAiWilliStatus,clearAiWilliStatus,decorateAiWilliFeedback,mountAiWilliHelper} from '../shared/ai-willi.js?v=1.1.0';
+import {aiWilliMessage,showAiWilliStatus,clearAiWilliStatus,decorateAiWilliFeedback,mountAiWilliHelper} from '../shared/ai-willi.js?v=1.1.1';
 import {mountVocabAiWilli} from './ai-willi-vocab.js?v=1.0.2';
 import {restoreActivityProgress,saveActivityPosition,saveActivityOutcome,clearActivitySnapshotFor,currentActivityRoute} from './activity-session-store.js?v=4.0.0';
 
