@@ -1,3 +1,39 @@
+// Shared teacher-domain role guard.
+// Any authenticated student who reaches a teacher page is returned to the student app.
+if (typeof window !== 'undefined' && window.location.hostname === 'teachers.willenaenglish.com') {
+  const teacherPath = window.location.pathname || '';
+  const isPublicTeacherAuthPage = /^\/Teachers\/(?:login|signup)(?:\.html)?\/?$/i.test(teacherPath);
+  if (!isPublicTeacherAuthPage && !window.__willenaTeacherRoleGuardPromise) {
+    window.__willenaTeacherRoleGuardPromise = (async () => {
+      const studentHome = 'https://students.willenaenglish.com/';
+      try {
+        const api = window.WillenaAPI?.fetch
+          ? window.WillenaAPI.fetch.bind(window.WillenaAPI)
+          : (url, options = {}) => fetch(url, { credentials: 'include', ...options });
+        const whoRes = await api('/.netlify/functions/supabase_auth?action=whoami', { cache: 'no-store' });
+        const who = await whoRes.json().catch(() => ({}));
+        if (!whoRes.ok || !who?.success || !who?.user_id) {
+          const redirect = encodeURIComponent(window.location.pathname + window.location.search);
+          window.location.replace('/Teachers/login.html?redirect=' + redirect);
+          return false;
+        }
+        const roleRes = await api('/.netlify/functions/supabase_auth?action=get_role&user_id=' + encodeURIComponent(who.user_id), { cache: 'no-store' });
+        const roleData = await roleRes.json().catch(() => ({}));
+        const role = String(roleData?.role || '').toLowerCase();
+        if (!['teacher', 'admin'].includes(role)) {
+          window.location.replace(studentHome);
+          return false;
+        }
+        return true;
+      } catch {
+        const redirect = encodeURIComponent(window.location.pathname + window.location.search);
+        window.location.replace('/Teachers/login.html?redirect=' + redirect);
+        return false;
+      }
+    })();
+  }
+}
+
 // Teacher-only session repair bootstrap.
 // This shared component is loaded by the teacher dashboard and most teacher tools.
 if (typeof window !== 'undefined' && window.location.hostname === 'teachers.willenaenglish.com') {
