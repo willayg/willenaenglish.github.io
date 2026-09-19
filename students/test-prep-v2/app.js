@@ -4,7 +4,7 @@ import {createQuestionSession} from './question-session.js?v=2.0.9';
 import {loadPracticeContent,questionAllowedForStudent} from './practice-loader.js?v=2.0.5';
 import {createPerfDebug} from './perf-debug.js?v=1.0.0';
 import {resolveContentIds,reviewQuestionFromItem} from './content-source.js?v=2.24.4';
-import {initTracking,refreshTrackingState,setTrackingContext,startSession,recordAttempt,completeSession,trackingState} from './tracking-client.js?v=2.17k';
+import {initTracking,refreshTrackingState,refreshPlanSnapshot,setTrackingContext,startSession,recordAttempt,completeSession,trackingState} from './tracking-client.js?v=2.17l';
 import {startVocabularyLearning} from './vocab-learning.js?v=2.14.7';
 import {startSentencePracticeV1,stopSentencePracticeV1} from './sentence-practice-v1.js?v=1.2.0';
 import {loadCardStats,invalidateCardStats,getStatsDiagnostics,formatCardMetric,formatAccuracy,reviewCounts} from './stats-client.js?v=2.16a';
@@ -65,6 +65,7 @@ async function renderLesson(plan,lesson){state.plan=plan;state.lesson=lesson;sta
 
 async function refreshAfterSentencePractice(){
   try{
+    if(state.plan?.id)await refreshPlanSnapshot(state.plan.id);
     await refreshTrackingState();
     const fresh=planById(state.plan?.id);
     if(fresh)state.plan=fresh;
@@ -77,6 +78,7 @@ async function refreshAfterPracticeExit({sessionClosed=false}={}){
   const planId=state.plan?.id;
   try{
     if(!sessionClosed)await completeSession({correct:state.score,total:state.index+(state.checked?1:0),wrongIds:state.wrongIds});
+    if(planId)await refreshPlanSnapshot(planId);
     await refreshTrackingState();
     const fresh=planById(planId);
     if(fresh)state.plan=fresh;
