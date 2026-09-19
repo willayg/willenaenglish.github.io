@@ -1,5 +1,5 @@
-const TEMPLATE_URL='/components/burger-menu.html?v=20260919-header-menu-2';
-const MODULE_URL='/components/burger-menu.js?v=20260919-header-menu-2';
+const TEMPLATE_URL='/components/burger-menu.html?v=20260919-header-menu-3';
+const MODULE_URL='/components/burger-menu.js?v=20260919-header-menu-3';
 
 export async function mountTeacherHeaderMenu(){
   if(!document.getElementById('burger-menu-template')){
