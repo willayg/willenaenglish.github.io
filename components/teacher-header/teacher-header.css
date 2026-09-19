@@ -5,6 +5,8 @@
   --th-height:64px;
 }
 
+#teacher-header{width:100%;min-height:var(--th-height)}
+
 .teacher-header{
   width:100%;
   height:var(--th-height);
@@ -108,6 +110,7 @@
 
 @media(max-width:760px){
   :root{--th-height:62px}
+  #teacher-header{min-height:var(--th-height)}
   .teacher-header{
     grid-template-columns:auto 1fr auto;
     gap:8px;
