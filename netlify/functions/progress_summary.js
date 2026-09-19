@@ -322,6 +322,27 @@ function normalizeGlobalCachePayload(payload) {
   return null;
 }
 
+async function fetchCompactLeaderboard(adminClient, { className = null, timeframe = 'all', userId = null, topN = 15 } = {}) {
+  const { data, error } = await adminClient.rpc('progress_leaderboard_compact_v1', {
+    p_class: className,
+    p_timeframe: timeframe,
+    p_user_id: userId,
+    p_top_n: topN
+  });
+  if (error) throw error;
+  return (Array.isArray(data) ? data : []).map(row => ({
+    user_id: row.user_id,
+    name: row.name || row.username || 'Student',
+    avatar: row.avatar || null,
+    class: row.class_name || className || null,
+    points: Number(row.total_points) || 0,
+    stars: Number(row.total_stars) || 0,
+    superScore: Number(row.super_score) || 0,
+    rank: Number(row.rank) || null,
+    self: row.user_id === userId
+  }));
+}
+
 function formatClassLeaderboardResponse(payload, userId) {
   const leaderboard = Array.isArray(payload?.leaderboard) ? payload.leaderboard : [];
   const condensed = leaderboard.slice(0, 5).map(entry => ({ ...entry, self: entry.user_id === userId }));
@@ -470,6 +491,21 @@ exports.handler = async (event) => {
         // Exclude single-letter class names (test profiles)
         if (className.length === 1) return json(200, { success: true, leaderboard: [], class: null });
 
+        const forceLegacyLeaderboard = !!(event.queryStringParameters && event.queryStringParameters.legacy_leaderboard === '1');
+        if (!forceLegacyLeaderboard) {
+          try {
+            const leaderboard = await fetchCompactLeaderboard(adminClient, {
+              className,
+              timeframe: 'all',
+              userId,
+              topN: 5
+            });
+            return json(200, { success: true, class: className, leaderboard });
+          } catch (e) {
+            console.warn('[progress_summary] leaderboard_class compact RPC failed; using legacy fallback:', e && e.message);
+          }
+        }
+
         const { data: classmates, error: clsErr } = await adminClient
           .from('profiles')
           .select('id, name, username, avatar')
@@ -544,6 +580,27 @@ exports.handler = async (event) => {
         const className = meProf.class || null;
         if (!className) return timedJsonNoCache(200, { success: true, leaderboard: [], class: null }, startMs);
         if (className.length === 1) return timedJsonNoCache(200, { success: true, leaderboard: [], class: null }, startMs);
+
+        const forceLegacyLeaderboard = !!(event.queryStringParameters && event.queryStringParameters.legacy_leaderboard === '1');
+        if (!forceLegacyLeaderboard) {
+          try {
+            const leaderboard = await fetchCompactLeaderboard(adminClient, {
+              className,
+              timeframe,
+              userId,
+              topN: 5
+            });
+            return timedJsonNoCache(200, {
+              success: true,
+              class: className,
+              timeframe,
+              cached_at: new Date().toISOString(),
+              leaderboard
+            }, startMs);
+          } catch (e) {
+            console.warn('[progress_summary] leaderboard_stars_class compact RPC failed; using legacy fallback:', e && e.message);
+          }
+        }
 
         const cacheKey = classLeaderboardCacheKey(className, timeframe);
         // Skip cache if bypass_cache=1 is passed (admin/testing use)
@@ -657,6 +714,26 @@ exports.handler = async (event) => {
         const bypassCache = event.queryStringParameters && (event.queryStringParameters.bypass_cache === '1' || event.queryStringParameters.bypass_cache === 'true');
         const firstOfMonthIso = timeframe === 'month' ? getMonthStartIso() : null;
         const cacheKey = globalLeaderboardCacheKey(timeframe);
+        const forceLegacyLeaderboard = !!(event.queryStringParameters && event.queryStringParameters.legacy_leaderboard === '1');
+
+        if (!forceLegacyLeaderboard) {
+          try {
+            const leaderboard = await fetchCompactLeaderboard(adminClient, {
+              className: null,
+              timeframe,
+              userId,
+              topN: 15
+            });
+            return json(200, {
+              success: true,
+              timeframe,
+              cached_at: new Date().toISOString(),
+              leaderboard
+            });
+          } catch (e) {
+            console.warn('[progress_summary] leaderboard_stars_global compact RPC failed; using legacy fallback:', e && e.message);
+          }
+        }
 
         // Skip cache if bypass_cache=1 is passed (admin/testing use)
         if (!bypassCache) {
@@ -830,6 +907,21 @@ exports.handler = async (event) => {
     // ---------- GLOBAL LEADERBOARD ----------
     if (section === 'leaderboard_global') {
       try {
+        const forceLegacyLeaderboard = !!(event.queryStringParameters && event.queryStringParameters.legacy_leaderboard === '1');
+        if (!forceLegacyLeaderboard) {
+          try {
+            const leaderboard = await fetchCompactLeaderboard(adminClient, {
+              className: null,
+              timeframe: 'all',
+              userId,
+              topN: 5
+            });
+            return json(200, { success: true, leaderboard });
+          } catch (e) {
+            console.warn('[progress_summary] leaderboard_global compact RPC failed; using legacy fallback:', e && e.message);
+          }
+        }
+
         // Prefer DB cache for global leaderboard points (fast path in production)
         try {
           const { data: dbCache, error: dbErr } = await adminClient
