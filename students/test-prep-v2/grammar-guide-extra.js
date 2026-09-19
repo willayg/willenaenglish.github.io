@@ -1,4 +1,4 @@
-import {GUIDES} from './grammar-guide.js?v=2.0.0';
+import {GUIDES} from './grammar-guide.js?v=2.1.1';
 
 const g=(title,summary,formula,sections,exam,memory)=>({title,summary,formula,sections,exam,memory});
 const ex=(prompt,choices,answer,explanation)=>({prompt,choices,answer,explanation});
