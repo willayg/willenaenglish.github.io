@@ -29,8 +29,12 @@
       try {
         const res = await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=get_profile&user_id=' + encodeURIComponent(userId));
         const result = await res.json();
-        if (!result.success || result.approved !== true) {
-          window.location.href = '/Teachers/components/access-denied.html';
+        if (!result.success || result.approved !== true || !['teacher','admin'].includes(String(result.role || '').toLowerCase())) {
+          if (result.success && String(result.role || '').toLowerCase() === 'student') {
+            window.location.href = 'https://students.willenaenglish.com/';
+          } else {
+            window.location.href = '/Teachers/components/access-denied.html';
+          }
           return;
         }
       } catch (e) {
