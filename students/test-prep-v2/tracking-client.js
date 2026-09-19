@@ -120,7 +120,13 @@ export async function flushAttemptBatch(reason='manual'){
       try{
         const d=await edge('batch_attempts',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({session_id:sessionId,attempts})});
         const ack=new Set((d.results||[]).filter(r=>r?.success&&r.client_attempt_id).map(r=>String(r.client_attempt_id)));
-        if(ack.size){outbox=outbox.filter(a=>!ack.has(String(a.client_attempt_id)));saved+=ack.size;saveOutbox();emit('attempts_saved',{session_id:sessionId,count:ack.size,reason})}
+        if(ack.size){
+          const savedAttempts=attempts.filter(a=>ack.has(String(a.client_attempt_id)));
+          outbox=outbox.filter(a=>!ack.has(String(a.client_attempt_id)));saved+=ack.size;saveOutbox();emit('attempts_saved',{session_id:sessionId,count:ack.size,reason});
+          if(savedAttempts.some(a=>a?.is_correct===true)){
+            try{window.dispatchEvent(new CustomEvent('points:refresh',{detail:{source:'test-prep-v2'}}))}catch(_){}
+          }
+        }
       }catch(e){console.warn('[v2 tracking] batch save failed',e);emit('sync_error',{kind:'attempts',session_id:sessionId,error:String(e?.message||e)})}
     }
     return{saved,remaining:outbox.length};
@@ -198,6 +204,9 @@ export async function recordAttempt({question,response,result,practiceType,skipp
   };
   if(attemptSource==='wrong-review')attempt.metadata.review_mode=true;
   outbox.push(attempt);saveOutbox();saveSessionRecord();emit('attempt_queued',{client_attempt_id:attempt.client_attempt_id,session_id:session.id,question_id:attempt.question_id,practice_type:practiceType,source:attemptSource});
+  if(attempt.is_correct){
+    try{window.dispatchEvent(new CustomEvent('points:optimistic-bump',{detail:{delta:1,source:'test-prep-v2'}}))}catch(_){}
+  }
   const urgent=attempt.metadata.source==='wrong-review';
   if(urgent)await flushAttemptBatch('review');else if(outbox.length>=BATCH_SIZE)flushAttemptBatch('size');else scheduleFlush();
   return{queued:true,client_attempt_id:attempt.client_attempt_id};
