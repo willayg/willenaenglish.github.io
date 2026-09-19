@@ -213,9 +213,9 @@ export class QuestionRenderer{
       .grader-blocking-card:before{content:'';position:absolute;inset:0;pointer-events:none;background:linear-gradient(120deg,transparent 0 42%,rgba(47,231,255,.06) 50%,transparent 58%)}
       .grader-blocking-mark{display:flex;align-items:center;justify-content:center;width:60px;height:60px;margin:0 auto 18px;border-radius:14px;background:rgba(255,61,190,.08);color:#ff65c3;border:1px solid rgba(255,101,195,.58);box-shadow:0 0 24px rgba(255,61,190,.22);font-size:30px;font-weight:900}
       .grader-blocking-spinner{width:62px;height:62px;margin:0 auto 20px;border:5px solid rgba(43,222,255,.14);border-top-color:#35e3ff;border-right-color:#ff5bc1;border-radius:50%;box-shadow:0 0 24px rgba(53,227,255,.18);animation:graderOverlaySpin .75s linear infinite}
-      .grader-blocking-title{position:relative;margin:0;font-size:26px;line-height:1.3;font-weight:900;color:#f4fdff;text-shadow:0 0 18px rgba(53,227,255,.18)}
-      .grader-blocking-message{position:relative;margin:15px 0 0;font-size:20px;line-height:1.7;font-weight:700;color:#b9d7df;white-space:pre-wrap}
-      .grader-blocking-wait{position:relative;margin-top:15px;font-size:15px;font-weight:800;letter-spacing:.04em;color:#57eaff;animation:graderOverlayPulse 1.15s ease-in-out infinite}
+      .grader-blocking-title{position:relative;margin:0;font-size:28px;line-height:1.28;font-weight:900;color:#f4fdff;text-shadow:0 0 18px rgba(53,227,255,.18)}
+      .grader-blocking-message{position:relative;margin:16px 0 0;font-size:23px;line-height:1.65;font-weight:700;color:#b9d7df;white-space:pre-wrap}
+      .grader-blocking-wait{position:relative;margin-top:16px;font-size:16px;font-weight:800;letter-spacing:.04em;color:#57eaff;animation:graderOverlayPulse 1.15s ease-in-out infinite}
       .grader-blocking-action{position:relative;width:100%;min-height:52px;margin-top:24px;padding:0 18px;border:1px solid #3ce6ff;border-radius:13px;background:linear-gradient(90deg,#0b2531,#161c3a);color:#eaffff;box-shadow:0 0 18px rgba(60,230,255,.14);font:800 16px Poppins,system-ui,sans-serif;cursor:pointer}
       .grader-blocking-action:active{transform:translateY(1px)}
       .grader-blocking-action:focus-visible{outline:3px solid rgba(60,230,255,.28);outline-offset:3px}
