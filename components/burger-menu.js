@@ -63,6 +63,7 @@ export function insertBurgerMenu(targetSelector = 'body') {
     fallback.innerHTML = `
       <style>
         .burger-menu { position: fixed; top: 10px; right: 10px; z-index: 9999; display: flex !important; flex-direction: row !important; flex-wrap: nowrap !important; align-items: stretch; width: max-content; max-width: calc(100vw - 20px); border-radius: 12px; overflow: visible; box-shadow: 0 10px 22px rgba(15, 23, 42, 0.22); isolation: isolate; }
+        .burger-menu.burger-menu--embedded { position: relative !important; top: auto !important; right: auto !important; margin: 0 !important; box-shadow: 0 4px 12px rgba(15, 23, 42, 0.14); }
         .burger-user-label { display: none; flex: 0 1 auto; height: 38px; box-sizing: border-box; max-width: 140px; padding: 0 12px; background: rgba(255,255,255,0.96); color: #334155; border: 1px solid rgba(15, 23, 42, 0.08); border-right: none; border-radius: 12px 0 0 12px; font-size: 12px; font-weight: 700; align-items: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; box-shadow: 0 10px 22px rgba(15, 23, 42, 0.12); }
         .burger-btn, .hw-notif-btn { width: 42px; height: 38px; border: none; background: linear-gradient(180deg, #19d2df 0%, #00b4c6 100%); color: white; cursor: pointer; font-size: 16px; line-height: 1; display: inline-flex; align-items: center; justify-content: center; padding: 0; }
         .hw-notif-btn { border-radius: 0; }
@@ -194,7 +195,11 @@ export function insertBurgerMenu(targetSelector = 'body') {
 
   // Insert at the top of the target element
   const target = document.querySelector(targetSelector) || document.body;
-  if (target) target.insertBefore(wrapper, target.firstChild);
+  if (target) {
+    target.insertBefore(wrapper, target.firstChild);
+    const menu = wrapper.querySelector('.burger-menu');
+    if (menu && target !== document.body) menu.classList.add('burger-menu--embedded');
+  }
 
   // Dropdown logic
   const burgerBtn = wrapper.querySelector('.burger-btn');
