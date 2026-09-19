@@ -96,7 +96,18 @@ function renderQuestion(){return getPracticeQuestionSession().render()}
 async function checkAnswer(){return getPracticeQuestionSession().check()}
 async function skipQuestion(){return getPracticeQuestionSession().skip()}
 async function finishPractice(){const route=currentRoute();if(route.view!=='practice')return;setBottom('');try{await completeSession({correct:state.score,total:state.queue.length,wrongIds:state.wrongIds});if(state.plan?.id)await refreshPlanSnapshot(state.plan.id);await refreshTrackingState();const fresh=planById(state.plan.id);if(fresh)state.plan=fresh;await refreshPlanCardStats(state.plan)}catch(e){console.warn('[test-prep-v2] finish/refresh failed',e)}if(!practiceRouteMatches(state.practice,route.planId,route.lesson))return;const pct=state.queue.length?Math.round(state.score/state.queue.length*100):0;state.lastResult={planId:route.planId,lesson:route.lesson,practice:route.practice,score:state.score,total:state.queue.length,wrong:state.wrongIds.length,pct};await replaceRoute({view:'result',planId:route.planId,lesson:route.lesson,practice:route.practice})}
-function renderResult(plan,route){const r=state.lastResult;if(!r||String(r.planId)!==String(route.planId)||String(r.lesson)!==String(route.lesson)||String(r.practice)!==String(route.practice)){replaceRoute({view:'lesson',planId:route.planId,lesson:route.lesson});return}state.plan=plan;state.lesson=route.lesson;state.practice=null;setBottom('');root.innerHTML=`<div class="card result"><div class="score">${r.score}/${r.total}</div><h2>${r.pct>=80?'좋아요!':'한 번 더 확인해 보세요.'}</h2><div class="statline">정답률 ${r.pct}% · 틀린/건너뛴 문제 ${r.wrong}개</div><div style="margin-top:22px"><button class="tile" id="resultBack" style="text-align:center;min-height:auto">${esc(route.lesson)}로 돌아가기</button></div></div>`;$('#resultBack').onclick=back}
+async function returnToLessonFresh(plan,route){
+  const btn=$('#resultBack');if(btn){btn.disabled=true;btn.textContent='업데이트 중...'}
+  try{
+    if(plan?.id)await refreshPlanSnapshot(plan.id);
+    await refreshTrackingState();
+    const fresh=planById(plan?.id);
+    if(fresh)state.plan=fresh;
+    if(state.plan)await refreshPlanCardStats(state.plan);
+  }catch(e){console.warn('[test-prep-v2] result-back refresh failed',e)}
+  await replaceRoute({view:'lesson',planId:route.planId,lesson:route.lesson});
+}
+function renderResult(plan,route){const r=state.lastResult;if(!r||String(r.planId)!==String(route.planId)||String(r.lesson)!==String(route.lesson)||String(r.practice)!==String(route.practice)){replaceRoute({view:'lesson',planId:route.planId,lesson:route.lesson});return}state.plan=plan;state.lesson=route.lesson;state.practice=null;setBottom('');root.innerHTML=`<div class="card result"><div class="score">${r.score}/${r.total}</div><h2>${r.pct>=80?'좋아요!':'한 번 더 확인해 보세요.'}</h2><div class="statline">정답률 ${r.pct}% · 틀린/건너뛴 문제 ${r.wrong}개</div><div style="margin-top:22px"><button class="tile" id="resultBack" style="text-align:center;min-height:auto">${esc(route.lesson)}로 돌아가기</button></div></div>`;$('#resultBack').onclick=()=>returnToLessonFresh(plan,route)}
 
 function reviewWaitText(iso){if(!iso)return'';const ms=new Date(iso).getTime()-Date.now();if(!Number.isFinite(ms)||ms<=0)return'곧 다시 복습할 수 있어요.';const mins=Math.max(1,Math.ceil(ms/60000));return mins>=60?`약 ${Math.ceil(mins/60)}시간 후 다시 복습할 수 있어요.`:`약 ${mins}분 후 다시 복습할 수 있어요.`}
 function reviewOverview(data){const s=data?.summary||{};return `<div class="review-overview"><div><b>${s.now||0}</b><span>지금</span></div><div><b>${s.later||0}</b><span>나중</span></div><div><b>${s.cleared||0}</b><span>완료</span></div></div>`}
