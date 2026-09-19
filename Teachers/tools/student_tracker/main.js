@@ -19,7 +19,7 @@ const userRoleReady = new Promise((resolve) => { userRoleReadyResolve = resolve;
     const roleJson = await roleRes.json().catch(() => ({}));
     const role = String(roleJson?.role || '').toLowerCase();
     if (!['teacher','admin'].includes(role)) {
-      location.href = '/Teachers/profile.html';
+      location.href = 'https://students.willenaenglish.com/';
       return;
     }
     userRole = role;
