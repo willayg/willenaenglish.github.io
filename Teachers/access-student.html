@@ -1,38 +1,118 @@
 <!doctype html>
-<html lang="en">
+<html lang="ko">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <title>Teacher tools</title>
+  <title>교사용 페이지 - Willena English</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
   <script src="/js/api-config.js"></script>
   <style>
-    :root{font-family:Poppins,system-ui,-apple-system,Segoe UI,sans-serif;color:#272638;background:#f6f7fb}
-    *{box-sizing:border-box}
-    body{margin:0;min-height:100vh;display:grid;place-items:center;padding:24px;background:linear-gradient(145deg,#f8fafc,#eef2ff)}
-    .card{width:min(520px,100%);background:#fff;border:1px solid #dfe3ea;border-radius:24px;padding:32px;box-shadow:0 18px 55px rgba(30,41,59,.12)}
-    .logo{height:46px;width:auto;margin-bottom:24px}
-    h1{margin:0 0 10px;font-size:1.8rem;color:#39384a}
-    p{margin:0 0 24px;color:#667085;line-height:1.55}
-    .account{display:none;margin:-8px 0 22px;padding:10px 12px;border-radius:12px;background:#f4f2ff;color:#5546c8;font-weight:700}
-    .actions{display:grid;gap:12px}
-    .btn{width:100%;min-height:50px;border-radius:12px;border:1px solid transparent;font:700 1rem/1 Poppins,system-ui,sans-serif;cursor:pointer}
-    .primary{background:#5a4ad1;color:#fff}
-    .secondary{background:#fff;color:#39384a;border-color:#cfd5df}
-    .status{min-height:20px;margin-top:14px;font-size:.9rem;color:#667085;text-align:center}
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body {
+      font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;
+      background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:20px;
+    }
+    .login-container {
+      background:white;
+      border-radius:16px;
+      box-shadow:0 20px 50px rgba(0,0,0,.1);
+      padding:40px;
+      width:100%;
+      max-width:400px;
+      position:relative;
+      overflow:hidden;
+    }
+    .login-container::before {
+      content:'';
+      position:absolute;
+      top:0;
+      left:0;
+      right:0;
+      height:4px;
+      background:linear-gradient(90deg,#667eea,#764ba2);
+    }
+    .logo {
+      text-align:center;
+      margin-bottom:32px;
+    }
+    .logo h1 {
+      color:#1a202c;
+      font-size:28px;
+      font-weight:600;
+      margin-bottom:8px;
+      line-height:1.35;
+    }
+    .logo p {
+      color:#718096;
+      font-size:14px;
+      line-height:1.6;
+    }
+    .account {
+      display:none;
+      padding:12px 16px;
+      border-radius:8px;
+      margin-bottom:20px;
+      font-size:14px;
+      text-align:center;
+      background:#edf2f7;
+      color:#4a5568;
+      border:1px solid #e2e8f0;
+      font-weight:500;
+    }
+    .action-btn {
+      width:100%;
+      padding:14px;
+      border-radius:8px;
+      font-size:16px;
+      font-weight:600;
+      cursor:pointer;
+      transition:all .2s;
+    }
+    .primary {
+      background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);
+      color:white;
+      border:none;
+      margin-bottom:12px;
+    }
+    .primary:hover { transform:translateY(-1px); box-shadow:0 10px 25px rgba(102,126,234,.3); }
+    .secondary {
+      background:white;
+      color:#4a5568;
+      border:2px solid #e2e8f0;
+    }
+    .secondary:hover { border-color:#cbd5e0; background:#f7fafc; }
+    .status {
+      min-height:20px;
+      margin-top:16px;
+      color:#718096;
+      font-size:13px;
+      text-align:center;
+    }
+    @media (max-width:480px) {
+      .login-container { padding:30px 20px; margin:10px; }
+    }
   </style>
 </head>
 <body>
-  <main class="card">
-    <img class="logo" src="/Assets/Images/Logo.png" alt="Willena">
-    <h1>You’re signed in as a student</h1>
-    <p>Teacher tools are only available to teacher and admin accounts.</p>
-    <div class="account" id="accountName"></div>
-    <div class="actions">
-      <button class="btn primary" id="studentBtn">Go to Student App</button>
-      <button class="btn secondary" id="teacherBtn">Log out &amp; sign in as a teacher</button>
+  <div class="login-container">
+    <div class="logo">
+      <h1>학생 계정으로 로그인되어 있습니다</h1>
+      <p>교사용 페이지는 선생님 또는 관리자 계정으로만 이용할 수 있습니다.</p>
     </div>
+
+    <div class="account" id="accountName"></div>
+
+    <button type="button" class="action-btn primary" id="studentBtn">학생 페이지로 이동</button>
+    <button type="button" class="action-btn secondary" id="teacherBtn">로그아웃하고 선생님 계정으로 로그인</button>
+
     <div class="status" id="status"></div>
-  </main>
+  </div>
+
 <script>
 (function(){
   const studentHome='https://students.willenaenglish.com/';
@@ -40,9 +120,11 @@
   const rawNext=params.get('next')||'/Teachers/index.html';
   const next=(rawNext.startsWith('/Teachers/')&&!/^https?:/i.test(rawNext))?rawNext:'/Teachers/index.html';
   const status=document.getElementById('status');
+
   document.getElementById('studentBtn').onclick=()=>{location.href=studentHome};
+
   document.getElementById('teacherBtn').onclick=async()=>{
-    status.textContent='Signing out…';
+    status.textContent='로그아웃 중...';
     try{
       const api=window.WillenaAPI?.fetch
         ? window.WillenaAPI.fetch.bind(window.WillenaAPI)
@@ -54,6 +136,7 @@
     }catch{}
     location.replace('/Teachers/login.html?redirect='+encodeURIComponent(next));
   };
+
   (async()=>{
     try{
       const api=window.WillenaAPI?.fetch
@@ -64,7 +147,7 @@
       const name=String(j?.name||j?.username||'').trim();
       if(r.ok&&name){
         const el=document.getElementById('accountName');
-        el.textContent='Current account: '+name;
+        el.textContent='현재 로그인 계정: '+name;
         el.style.display='block';
       }
     }catch{}
