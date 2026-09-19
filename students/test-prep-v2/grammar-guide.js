@@ -1,5 +1,5 @@
 import {currentRoute} from './navigation.js?v=2.21.3';
-import {trackingState} from './tracking-client.js?v=2.17t';
+import {trackingState} from './tracking-client.js?v=2.17a';
 import {resolveContentIds} from './content-source.js?v=2.24.4';
 import {contentDbGet} from '../shared/content-db.js?v=1.0.0';
 
@@ -178,24 +178,14 @@ function openGuide(key){const guide=GUIDES[key];if(!guide)return;closeGuide();ov
 async function lessonTargets(){
   const route=currentRoute?.()||{};
   if(route.view!=='lesson'||!route.planId||!route.lesson)return null;
-
-  const journey=document.querySelector('.journey[data-unit-id]');
-  const renderedUnitId=String(journey?.dataset?.unitId||'').trim();
-  if(renderedUnitId){
-    const rows=await contentDbGet(`/rest/v1/content_units?select=id,metadata&id=eq.${encodeURIComponent(renderedUnitId)}&limit=1`);
-    const stated=Array.isArray(rows?.[0]?.metadata?.main_grammar_points)?rows[0].metadata.main_grammar_points:[];
-    return {route,plan:null,ids:{unitId:renderedUnitId},targets:[...new Set(stated.map(String))]};
-  }
-
   const plan=(trackingState().plans||[]).find(p=>String(p.id)===String(route.planId));
   if(!plan)return null;
   const ids=await resolveContentIds(plan,route.lesson);
   if(!ids?.unitId)return {route,plan,ids,targets:[]};
-  const rows=await contentDbGet(`/rest/v1/content_units?select=id,metadata&id=eq.${encodeURIComponent(ids.unitId)}&limit=1`);
+  const rows=await contentDbGet(`/rest/v1/content_units?select=metadata&id=eq.${encodeURIComponent(ids.unitId)}&limit=1`);
   const stated=Array.isArray(rows?.[0]?.metadata?.main_grammar_points)?rows[0].metadata.main_grammar_points:[];
   return {route,plan,ids,targets:[...new Set(stated.map(String))]};
 }
-
 function renderLauncher(panel,keys,rawTargets){
   const available=keys.filter(key=>GUIDES[key]);
   const pending=keys.filter(key=>!GUIDES[key]);
@@ -205,18 +195,10 @@ function renderLauncher(panel,keys,rawTargets){
   panel.title=`Lesson grammar targets: ${rawTargets.join(', ')}`;
 }
 
-async function hydratePanel(stop,panel,token,attempt=0){
+async function hydratePanel(stop,panel,token){
   try{
     const context=await lessonTargets();
-    if(token!==installToken||!stop.isConnected)return;
-    if(!context){
-      if(attempt<1){
-        setTimeout(()=>hydratePanel(stop,panel,token,attempt+1),180);
-      }else if(panel.isConnected){
-        panel.innerHTML='<div class="gg-launch-empty"><b>문법 설명</b><small>문법 정보를 불러오지 못했습니다.</small></div>';
-      }
-      return;
-    }
+    if(token!==installToken||!stop.isConnected||!context)return;
     const route=currentRoute?.()||{};
     if(route.view!=='lesson'||String(route.planId)!==String(context.route.planId)||String(route.lesson)!==String(context.route.lesson))return;
     const keys=resolveGuideKeys(context.targets);
@@ -226,7 +208,6 @@ async function hydratePanel(stop,panel,token,attempt=0){
     if(token===installToken&&panel.isConnected)panel.innerHTML='<div class="gg-launch-empty"><b>문법 설명</b><small>문법 정보를 불러오지 못했습니다.</small></div>';
   }
 }
-
 function installGuidePanel(){
   const stop=document.querySelector('.journey-stop[data-practice="grammar"]');
   if(!stop||stop.dataset.grammarGuideInstalled==='1')return;
