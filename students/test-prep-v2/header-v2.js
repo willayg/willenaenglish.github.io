@@ -1,5 +1,5 @@
 import './grammar-guide-lessons.js?v=1.0.0';
-import {startStudentHeaderData,subscribeStudentHeaderData} from '../shared/student-header-data.js?v=1.0.0';
+import {startStudentHeaderData,subscribeStudentHeaderData} from '../shared/student-header-data.js?v=1.0.1';
 import {logoutStudent,openStudentProfile} from '../shared/student-header-actions.js?v=1.0.1';
 
 const BIG_TEXT_KEY='willena-testprep-big-text';
