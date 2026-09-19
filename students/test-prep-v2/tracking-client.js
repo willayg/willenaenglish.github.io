@@ -1,5 +1,4 @@
 import {GRADER_VERSION} from '../shared/question-grader.js?v=2.4.1';
-import {logAttempt as logArcadeAttempt,flushAttempts as flushArcadeAttempts} from '../records.js?v=20260919-testprep1';
 const EDGE='https://fiieuiktlsivwfgyivai.supabase.co/functions/v1/test-prep-student-rev47e';
 const API_KEY='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
 const LOGIN='/students/signin.html?next='+encodeURIComponent('/students/test-prep-v2/');
@@ -108,41 +107,6 @@ export async function startSession(practiceType){
   state.session=d.session||null;state.practice=practice;state.startedAt=Date.now();beginActive(0);saveSessionRecord();emit('session_started',{session_id:state.session?.id||null,plan_id:state.plan.id,lesson:state.lesson,practice_type:practice});return state.session;
 }
 
-async function mirrorAttemptsToArcadePoints(sessionId,attempts){
-  if(!Array.isArray(attempts)||!attempts.length)return true;
-  const correct=attempts.filter(a=>a?.is_correct===true);
-  if(!correct.length)return true;
-  try{
-    for(let index=0;index<correct.length;index++){
-      const a=correct[index];
-      await logArcadeAttempt({
-        session_id:sessionId,
-        mode:'test_prep',
-        word:String(a.question_id||a.client_attempt_id||`test-prep-${index+1}`),
-        is_correct:true,
-        answer:a.selected_answer??null,
-        correct_answer:a.correct_answer??null,
-        points:2,
-        attempt_index:index,
-        duration_ms:Number(a.response_time_ms)||0,
-        extra:{
-          source:'test_prep',
-          practice_type:a?.metadata?.practice_type||null,
-          lesson:a?.metadata?.lesson||null,
-          plan_id:a?.metadata?.plan_id||null,
-          question_type:a?.question_type||a?.metadata?.question_type||null,
-          test_prep_attempt_id:a.client_attempt_id||null
-        }
-      });
-    }
-    await flushArcadeAttempts();
-    return true;
-  }catch(e){
-    console.warn('[v2 tracking] Arcade points mirror failed',e);
-    return false;
-  }
-}
-
 function scheduleFlush(){if(flushTimer||!outbox.length)return;flushTimer=setTimeout(()=>{flushTimer=null;flushAttemptBatch('timer')},FLUSH_DELAY)}
 export async function flushAttemptBatch(reason='manual'){
   if(flushPromise)return flushPromise;
@@ -159,7 +123,9 @@ export async function flushAttemptBatch(reason='manual'){
         if(ack.size){
           const savedAttempts=attempts.filter(a=>ack.has(String(a.client_attempt_id)));
           outbox=outbox.filter(a=>!ack.has(String(a.client_attempt_id)));saved+=ack.size;saveOutbox();emit('attempts_saved',{session_id:sessionId,count:ack.size,reason});
-          await mirrorAttemptsToArcadePoints(sessionId,savedAttempts);
+          if(savedAttempts.some(a=>a?.is_correct===true)){
+            try{window.dispatchEvent(new CustomEvent('points:refresh',{detail:{source:'test-prep-v2'}}))}catch(_){}
+          }
         }
       }catch(e){console.warn('[v2 tracking] batch save failed',e);emit('sync_error',{kind:'attempts',session_id:sessionId,error:String(e?.message||e)})}
     }
@@ -238,6 +204,9 @@ export async function recordAttempt({question,response,result,practiceType,skipp
   };
   if(attemptSource==='wrong-review')attempt.metadata.review_mode=true;
   outbox.push(attempt);saveOutbox();saveSessionRecord();emit('attempt_queued',{client_attempt_id:attempt.client_attempt_id,session_id:session.id,question_id:attempt.question_id,practice_type:practiceType,source:attemptSource});
+  if(attempt.is_correct){
+    try{window.dispatchEvent(new CustomEvent('points:optimistic-bump',{detail:{delta:2,source:'test-prep-v2'}}))}catch(_){}
+  }
   const urgent=attempt.metadata.source==='wrong-review';
   if(urgent)await flushAttemptBatch('review');else if(outbox.length>=BATCH_SIZE)flushAttemptBatch('size');else scheduleFlush();
   return{queued:true,client_attempt_id:attempt.client_attempt_id};
