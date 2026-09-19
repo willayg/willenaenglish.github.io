@@ -64,6 +64,23 @@ export async function initTracking(){
 }
 export async function refreshTrackingState(){const d=await edge('me');return syncStateFromMe(d)}
 
+export async function refreshPlanSnapshot(planId){
+  const id=String(planId||'');if(!id)return null;
+  let access=token()||await refreshToken();if(!access)throw new Error('AUTH_REQUIRED');
+  const call=async bearer=>fetch('https://fiieuiktlsivwfgyivai.supabase.co/rest/v1/rpc/test_prep_student_refresh_plan_snapshot_v1',{
+    method:'POST',
+    headers:{apikey:API_KEY,Authorization:`Bearer ${bearer}`,'Content-Type':'application/json'},
+    body:JSON.stringify({p_plan_id:id}),
+    cache:'no-store',
+    credentials:'omit'
+  });
+  let r=await call(access);
+  if(r.status===401){access=await refreshToken();if(!access)throw new Error('AUTH_REQUIRED');r=await call(access)}
+  const body=await r.json().catch(()=>null);
+  if(!r.ok)throw new Error(body?.message||body?.error||`Snapshot refresh failed (${r.status})`);
+  return body;
+}
+
 function sameContext(record,practiceType){
   return !!(record?.session&&String(record.planId||'')===String(state.plan?.id||'')&&String(record.lesson||'')===String(state.lesson||'')&&String(record.practice||'')===String(practiceType||''));
 }
