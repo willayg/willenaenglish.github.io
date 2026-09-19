@@ -1,5 +1,5 @@
-import {currentRoute} from './navigation.js?v=2.21.3';
-import {trackingState} from './tracking-client.js?v=2.17a';
+import {currentRoute} from './navigation.js?v=2.21.0';
+import {trackingState} from './tracking-client.js?v=2.17t';
 import {resolveContentIds} from './content-source.js?v=2.24.4';
 import {contentDbGet} from '../shared/content-db.js?v=1.0.0';
 
