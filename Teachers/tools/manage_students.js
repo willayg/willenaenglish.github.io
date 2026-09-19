@@ -1562,7 +1562,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const r = String(role?.role || '').toLowerCase();
     if (!['teacher','admin'].includes(r)) {
       if (r === 'student') {
-        window.location.href = 'https://students.willenaenglish.com/';
+        window.location.href = '/Teachers/access-student.html?next=' + encodeURIComponent(location.pathname + location.search);
         return;
       }
       throw new Error('forbidden');
