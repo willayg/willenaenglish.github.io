@@ -207,8 +207,8 @@ export async function recordAttempt({question,response,result,practiceType,skipp
   if(attempt.is_correct){
     try{window.dispatchEvent(new CustomEvent('points:optimistic-bump',{detail:{delta:2,source:'test-prep-v2'}}))}catch(_){}
   }
-  const urgent=attempt.metadata.source==='wrong-review';
-  if(urgent)await flushAttemptBatch('review');else if(outbox.length>=BATCH_SIZE)flushAttemptBatch('size');else scheduleFlush();
+  const urgent=attempt.metadata.source==='wrong-review'||attempt.is_correct===true;
+  if(urgent)await flushAttemptBatch(attempt.is_correct===true?'correct':'review');else if(outbox.length>=BATCH_SIZE)flushAttemptBatch('size');else scheduleFlush();
   return{queued:true,client_attempt_id:attempt.client_attempt_id};
 }
 
