@@ -118,7 +118,7 @@
       try {
         const res = await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=get_profile&user_id=' + encodeURIComponent(userId));
         const result = await res.json();
-        if (!result.success || result.approved !== true) { location.href = '/Teachers/components/access-denied.html'; }
+        if (!result.success || result.approved !== true || !['teacher','admin'].includes(String(result.role || '').toLowerCase())) { location.href = String(result.role || '').toLowerCase() === 'student' ? 'https://students.willenaenglish.com/' : '/Teachers/components/access-denied.html'; }
       } catch { location.href = '/Teachers/login.html'; }
     })();
   </script>
