@@ -1,6 +1,13 @@
 <template id="burger-menu-template">
   <style>
     .burger-menu { position: fixed; top: 10px; right: 10px; z-index: 9999; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; display: flex !important; flex-direction: row !important; flex-wrap: nowrap !important; align-items: stretch; width: max-content; max-width: calc(100vw - 20px); border-radius: 12px; overflow: visible; box-shadow: 0 10px 22px rgba(15, 23, 42, 0.22); isolation: isolate; }
+    .burger-menu.burger-menu--embedded {
+      position: relative !important;
+      top: auto !important;
+      right: auto !important;
+      margin: 0 !important;
+      box-shadow: 0 4px 12px rgba(15, 23, 42, 0.14);
+    }
     .burger-user-label {
       display: none;
       flex: 0 1 auto;
@@ -272,6 +279,8 @@
 
     @media (max-width: 700px) {
       .burger-menu { flex-direction: row !important; flex-wrap: nowrap !important; gap: 0 !important; }
+      .burger-menu.burger-menu--embedded { position: relative !important; top: auto !important; right: auto !important; }
+
       .burger-menu > .hw-notif-wrap,
       .burger-menu > .burger-dropdown-wrap { flex: 0 0 auto; width: auto; height: auto; }
       .burger-menu .burger-btn,
