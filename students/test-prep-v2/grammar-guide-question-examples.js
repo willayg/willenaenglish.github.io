@@ -2,7 +2,7 @@ import {currentRoute} from './navigation.js?v=2.21.3';
 import {trackingState} from './tracking-client.js?v=2.17a';
 import {resolveContentIds} from './content-source.js?v=2.24.4';
 import {contentDbGet} from '../shared/content-db.js?v=1.0.0';
-import {resolveGuideKeys} from './grammar-guide.js?v=2.1.0';
+import {resolveGuideKeys} from './grammar-guide.js?v=2.1.1';
 
 const esc=value=>String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
 const cache=new Map();
