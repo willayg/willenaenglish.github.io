@@ -29,7 +29,7 @@ const PRACTICES={
 };
 
 function scopeFor(plan){const scope=plan?.group?.scope||{},lessons=Array.isArray(scope.lessons)?scope.lessons.filter(x=>x?.lesson).map(x=>({...x,external:false})):[],external=Array.isArray(scope.external_passages)?scope.external_passages.map(x=>({...x,lesson:x?.lesson||x?.label||x?.unit_label||'',external:true})).filter(x=>x.lesson&&x.unit_id):[];if(lessons.length||external.length)return[...lessons,...external];return(plan?.units||[]).map(lesson=>({lesson,sections:plan?.practice_types||[],external:false}))}
-function sectionsFor(plan,lesson){const row=scopeFor(plan).find(x=>String(x.lesson)===String(lesson)),sections=new Set((row?.sections||[]).map(x=>String(x).toLowerCase()));if(sections.has('vocabulary'))sections.add('vocab_test');if(!row?.external)sections.add('sentences');return sections}
+function sectionsFor(plan,lesson){const row=scopeFor(plan).find(x=>String(x.lesson)===String(lesson)),sections=new Set((row?.sections||[]).map(x=>String(x).toLowerCase()));if(sections.has('vocabulary'))sections.add('vocab_test');sections.add('sentences');return sections}
 function planById(id){return(trackingState().plans||[]).find(p=>String(p.id)===String(id))||null}
 function taskById(plan,id){return (plan?.tasks||[]).find(t=>String(t.id)===String(id))||null}
 function taskIsExternal(plan,task){return scopeFor(plan).some(x=>x.external&&String(x.unit_id||'')===String(task?.unit_id||''))}
