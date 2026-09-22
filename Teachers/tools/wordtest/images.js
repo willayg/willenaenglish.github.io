@@ -1,5 +1,5 @@
-import { getPlaceholderImage, getPixabaySearchUrl, renderImage, showImageLoadingSpinner, hideImageLoadingSpinner } from './images-utils.js';
-import { createEnableImageDragAndDrop } from './images-dnd.js';
+import { getPlaceholderImage, getPixabaySearchUrl, renderImage, showImageLoadingSpinner, hideImageLoadingSpinner } from './images-utils.js?v=20260922-wb2011';
+import { createEnableImageDragAndDrop } from './images-dnd.js?v=20260922-wb2011';
 // Preserve global used by inline handlers (no behavior change)
 if (!window.getPixabaySearchUrl) {
     window.getPixabaySearchUrl = getPixabaySearchUrl;
