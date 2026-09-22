@@ -1,7 +1,7 @@
 // worksheet.js - Worksheet data management functions
-import { cleanWord } from './utils.js';
+import { cleanWord } from './utils.js?v=20260923-imgstate2';
 // Pull current image choices from the images module for robust saving of auto-filled images
-import { imageAlternatives, currentImageIndex } from './images.js?v=20260923-imgstate1';
+import { imageAlternatives, currentImageIndex } from './images.js?v=20260923-imgstate2';
 
 export function highlightDuplicates() {
     const wordsTextarea = document.getElementById('wordListTextarea');
