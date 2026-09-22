@@ -51,3 +51,15 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: npx wrangler deploy
+
+      - name: Smoke test direct asset worker
+        shell: bash
+        run: |
+          echo "=== direct worker ==="
+          curl -i --fail-with-body https://word-builder-assets.willena.workers.dev/health
+
+      - name: Smoke test API gateway asset route
+        shell: bash
+        run: |
+          echo "=== API gateway ==="
+          curl -i --fail-with-body https://api.willenaenglish.com/.netlify/functions/worksheet_assets/health
