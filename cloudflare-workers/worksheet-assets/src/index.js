@@ -8,12 +8,31 @@ const ALLOWED_TYPES = new Set([
 
 const MAX_SOURCE_BYTES = 8 * 1024 * 1024;
 
-function json(body, status = 200) {
+const ALLOWED_ORIGINS = new Set([
+  'https://staging.willenaenglish.com',
+  'https://teachers.willenaenglish.com',
+  'https://students.willenaenglish.com',
+  'https://willenaenglish.com',
+  'https://www.willenaenglish.com'
+]);
+
+function corsHeaders(request) {
+  const origin = request?.headers?.get('Origin') || '';
+  return {
+    'Access-Control-Allow-Origin': ALLOWED_ORIGINS.has(origin) ? origin : 'https://staging.willenaenglish.com',
+    'Access-Control-Allow-Methods': 'POST,GET,OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type',
+    'Vary': 'Origin'
+  };
+}
+
+function json(body, status = 200, request = null) {
   return new Response(JSON.stringify(body), {
     status,
     headers: {
       'Content-Type': 'application/json; charset=utf-8',
-      'Cache-Control': 'no-store'
+      'Cache-Control': 'no-store',
+      ...corsHeaders(request)
     }
   });
 }
@@ -125,22 +144,22 @@ async function persistAsset(env, source) {
 async function handlePost(request, env) {
   let body;
   try { body = await request.json(); }
-  catch { return json({ success: false, error: 'Invalid JSON body' }, 400); }
+  catch { return json({ success: false, error: 'Invalid JSON body' }, 400, request); }
 
   // Single-image API for the eventual generic asset service.
   if (body && body.source) {
     try {
       const asset = await persistAsset(env, body.source);
-      return json({ success: true, asset });
+      return json({ success: true, asset }, 200, request);
     } catch (err) {
-      return json({ success: false, error: String(err?.message || err) }, 400);
+      return json({ success: false, error: String(err?.message || err) }, 400, request);
     }
   }
 
   // Batch form for Word Builder save flows.
   if (body && Array.isArray(body.assets)) {
     if (body.assets.length > 50) {
-      return json({ success: false, error: 'Too many assets in one request' }, 400);
+      return json({ success: false, error: 'Too many assets in one request' }, 400, request);
     }
 
     const assets = [];
@@ -154,18 +173,22 @@ async function handlePost(request, env) {
           success: false,
           error: String(err?.message || err),
           input_key: item.key ?? null
-        }, 400);
+        }, 400, request);
       }
     }
-    return json({ success: true, assets });
+    return json({ success: true, assets }, 200, request);
   }
 
-  return json({ success: false, error: 'Expected source or assets[]' }, 400);
+  return json({ success: false, error: 'Expected source or assets[]' }, 400, request);
 }
 
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
+
+    if (request.method === 'OPTIONS') {
+      return new Response(null, { status: 204, headers: corsHeaders(request) });
+    }
 
     if (request.method === 'GET' && url.pathname === '/health') {
       return json({
@@ -173,11 +196,11 @@ export default {
         service: 'worksheet-assets',
         r2_bound: !!env.WORKSHEET_ASSETS,
         public_base_configured: !!env.R2_PUBLIC_BASE
-      });
+      }, 200, request);
     }
 
     if (request.method !== 'POST') {
-      return json({ success: false, error: 'Method not allowed' }, 405);
+      return json({ success: false, error: 'Method not allowed' }, 405, request);
     }
 
     return handlePost(request, env);
