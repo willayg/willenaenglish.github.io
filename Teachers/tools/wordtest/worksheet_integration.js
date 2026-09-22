@@ -1,12 +1,12 @@
-import { state } from './state.js';
-import { updatePreview, updatePreviewPreservingImages } from './preview.js';
-import { resetImageState } from './images.js?v=20260923-imgstate1';
+import { state } from './state.js?v=20260923-imgstate2';
+import { updatePreview, updatePreviewPreservingImages } from './preview.js?v=20260923-imgstate2';
+import { resetImageState } from './images.js?v=20260923-imgstate2';
 import {
     highlightDuplicates as worksheetHighlightDuplicates,
     getCurrentWorksheetData as worksheetGetCurrentWorksheetData,
     loadWorksheet as worksheetLoadWorksheet,
     updateCurrentWordsFromTextarea as worksheetUpdateCurrentWordsFromTextarea
-} from './worksheet.js?v=20260923-imgstate1';
+} from './worksheet.js?v=20260923-imgstate2';
 
 const currentWords = state.currentWords;
 const currentSettings = state.currentSettings;
