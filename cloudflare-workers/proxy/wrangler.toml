@@ -3,8 +3,9 @@ main = "src/index.js"
 compatibility_date = "2025-12-08"
 workers_dev = true
 
-# Service bindings to route requests to other CF Workers
-# These allow calling other workers without going through the network
+# api.willenaenglish.com is already routed to this Worker in Cloudflare.
+# Do not declare routes here: the deployment token updates Worker code/bindings only.
+
 [[services]]
 binding = "SUPABASE_AUTH"
 service = "supabase-auth"
@@ -26,9 +27,24 @@ binding = "GET_AUDIO_URLS"
 service = "get-audio-urls"
 
 [[services]]
+binding = "PIXABAY"
+service = "pixabay"
+
+[[services]]
+binding = "STUDENT_LEVEL_TEST"
+service = "student-level-test"
+
+[[services]]
 binding = "ADMIN_CLASSES"
 service = "admin-classes"
 
-# Fallback for non-CF functions
+[[services]]
+binding = "DAILY_STUDY_V2"
+service = "daily-study-v2"
+
+[[services]]
+binding = "WORKSHEET_ASSETS"
+service = "word-builder-assets"
+
 [vars]
 NETLIFY_BASE = "https://willenaenglish.netlify.app"
