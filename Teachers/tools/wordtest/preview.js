@@ -1,7 +1,7 @@
-import { state } from './state.js?v=20260922-wb2011';
-import { enableImageDragAndDrop, renderImage, getImageUrl, getPlaceholderImage } from './images.js?v=20260923-imgstate1';
-import { hideRandomLetters } from './behaviors.js?v=20260922-wb2011';
-import { generateWorksheetHTML as rendererGenerateWorksheetHTML } from './renderer.js?v=20260922-wb2011';
+import { state } from './state.js?v=20260923-imgstate2';
+import { enableImageDragAndDrop, renderImage, getImageUrl, getPlaceholderImage } from './images.js?v=20260923-imgstate2';
+import { hideRandomLetters } from './behaviors.js?v=20260923-imgstate2';
+import { generateWorksheetHTML as rendererGenerateWorksheetHTML } from './renderer.js?v=20260923-imgstate2';
 
 const currentWords = state.currentWords;
 const currentSettings = state.currentSettings;
@@ -41,30 +41,11 @@ export async function updatePreviewPreservingImages() {
         return;
     }
 
-    // Preserve by (word,index) from the drop-zone dataset (not from <img>)
-    const existingImages = new Map();
-    previewArea.querySelectorAll('.image-drop-zone').forEach(zone => {
-        const word = zone.getAttribute('data-word');
-        const idx = zone.getAttribute('data-index');
-        const img = zone.querySelector('img');
-        if (!word || idx === null || idx === undefined || !img) return;
-        const key = `${String(word).toLowerCase()}_${String(idx)}`;
-        existingImages.set(key, img.src);
-    });
-
+    // Rebuild entirely from the authoritative saved image state.
+    // Never preserve DOM image state here; stale DOM was able to overwrite a newer selection.
     const worksheetHTML = await generateWorksheetHTML(title, currentWords);
     previewArea.innerHTML = worksheetHTML;
     ensurePreviewHint(previewArea);
-
-    previewArea.querySelectorAll('.image-drop-zone').forEach(zone => {
-        const word = zone.getAttribute('data-word');
-        const idx = zone.getAttribute('data-index');
-        if (!word || idx === null || idx === undefined) return;
-        const key = `${String(word).toLowerCase()}_${String(idx)}`;
-        const img = zone.querySelector('img');
-        const saved = existingImages.get(key) || (window.savedImageData && window.savedImageData[key] && window.savedImageData[key].src);
-        if (img && saved) img.src = saved;
-    });
 
     enableImageDragAndDrop(updatePreviewPreservingImages);
     addWordCellInteractivity(previewArea);
