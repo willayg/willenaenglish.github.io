@@ -7,3 +7,10 @@
 @media print{
   .explanation{break-inside:avoid;background:#fff;border-color:#d6dee8}
 }
+
+.answer-key-item{break-inside:avoid}
+.answer-explanation{margin-top:4px;padding-left:18px;color:#475569;line-height:1.45;white-space:pre-wrap}
+.answer-explanation b{color:#2b6cb0;margin-right:5px}
+@media print{
+  .answer-explanation{font-size:9.5pt}
+}
