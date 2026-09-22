@@ -42,5 +42,9 @@ service = "admin-classes"
 binding = "DAILY_STUDY_V2"
 service = "daily-study-v2"
 
+[[services]]
+binding = "WORKSHEET_ASSETS"
+service = "worksheet-assets"
+
 [vars]
 NETLIFY_BASE = "https://willenaenglish.netlify.app"
