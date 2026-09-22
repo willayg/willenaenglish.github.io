@@ -124,7 +124,7 @@
                 </div>
                 <div class="header-title">
                     <h1>Word Builder</h1>
-                    <div id="wordBuilderRevision">v2.00.10</div>
+                    <div id="wordBuilderRevision">v2.00.12</div>
                 </div>
                 <div class="header-right">
                     <div id="burger-menu-mount" class="burger-menu-dark"></div>
@@ -641,7 +641,7 @@
       }
     };
     </script>
-    <script type="module" src="wordtest.js?v=20260110c"></script>
+    <script type="module" src="wordtest.js?v=20260923-imgstate1"></script>
     <script>
     // Click event for image search using shared image picker modal
     document.addEventListener('DOMContentLoaded', function() {
@@ -675,29 +675,14 @@
               filter: filter,
               context: { word: word, index: dataIndex, targetElement: zone },
               onSelect: function(imageUrl, ctx) {
-                var target = ctx && ctx.targetElement ? ctx.targetElement : zone;
-                // Persist into module state so it survives resize/rebuilds
                 if (window.wordtestSetSelectedImage) {
                   try { window.wordtestSetSelectedImage(ctx.word, ctx.index, imageUrl); } catch (ex) {}
                 }
-
-                // Update DOM in-place (ensure only one <img>)
-                var container = target.querySelector('div') || target;
-                try {
-                  container.querySelectorAll('img').forEach(function(n){ n.remove(); });
-                } catch (_) {}
-                var newImg = document.createElement('img');
-                newImg.src = imageUrl;
-                newImg.alt = (ctx && ctx.word) ? ctx.word : 'Image';
-                newImg.style.cssText = 'display:block;width:100%;height:100%;object-fit:cover;';
-                container.appendChild(newImg);
-
-                // Also mirror to savedImageData for compatibility
-                try {
-                  var key = (ctx.word || '').toLowerCase() + '_' + String(ctx.index);
-                  window.savedImageData = window.savedImageData || {};
-                  window.savedImageData[key] = { src: imageUrl, word: ctx.word, index: Number(ctx.index) };
-                } catch (_) {}
+                // Re-render from the authoritative image state. This prevents old
+                // emoji/alternative DOM from surviving underneath the new image.
+                if (typeof window.updateWordtestPreview === 'function') {
+                  window.updateWordtestPreview();
+                }
               }
             });
           }
