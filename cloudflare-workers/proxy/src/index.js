@@ -17,10 +17,11 @@ const FUNCTION_TO_BINDING = {
   pixabay: 'PIXABAY',
   student_level_test: 'STUDENT_LEVEL_TEST',
   admin_classes: 'ADMIN_CLASSES',
+  worksheet_assets: 'WORKSHEET_ASSETS',
 };
 
 const PREFER_CF_WORKER = new Set(Object.keys(FUNCTION_TO_BINDING).filter(function(name){ return name !== 'supabase_auth'; }));
-const CLOUDFLARE_ONLY = new Set(['student_level_test', 'admin_classes']);
+const CLOUDFLARE_ONLY = new Set(['student_level_test', 'admin_classes', 'worksheet_assets']);
 
 const ALLOWED_ORIGINS = new Set([
   'https://willenaenglish.netlify.app',
