@@ -2,7 +2,7 @@
 // Keep this file tiny: wire up globals and bootstrap the app.
 
 import { initWordtest } from './init.js';
-import { updatePreview } from './preview.js';
+import { updatePreview } from './preview.js?v=20260923-imgstate1';
 import { printFile, generatePDF } from './print.js';
 import { getCurrentWorksheetData, loadWorksheet } from './worksheet_integration.js?v=20260923-imgstate1';
 import { cycleImage, setSelectedImage } from './images.js?v=20260923-imgstate1';
