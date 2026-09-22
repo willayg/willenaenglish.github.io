@@ -1,4 +1,4 @@
-import { initializeImageModule } from './images.js?v=20260922-wb2011';
+import { initializeImageModule } from './images.js?v=20260923-imgstate1';
 import { setMaskWordPairs, setHideRandomLetters } from './behaviors.js?v=20260922-wb2011';
 
 export async function loadModules() {
