@@ -242,7 +242,7 @@
         const checkEndpoint = worksheet.worksheet_type === 'wordtest'
           ? '/.netlify/functions/admin_classes?action=word_builder_list&all=1&limit=1000'
           : '/.netlify/functions/supabase_auth?action=list_worksheets&fields=user_id,title,username';
-        const checkRes = filterType === 'wordtest'
+        const checkRes = worksheet.worksheet_type === 'wordtest'
           ? await wordBuilderApiFetch(checkEndpoint)
           : await WillenaAPI.fetch(checkEndpoint);
         const checkData = await checkRes.json();
@@ -605,10 +605,15 @@
               : '/.netlify/functions/supabase_auth?action=delete_worksheet';
             const res = filterType === 'wordtest'
               ? await wordBuilderApiFetch(deleteEndpoint, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ id })
-            });
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ id })
+                })
+              : await WillenaAPI.fetch(deleteEndpoint, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ id })
+                });
             const result = await res.json();
             if (result.success) {
               deletedCount++;
