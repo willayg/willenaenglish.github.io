@@ -1,11 +1,11 @@
-import { loadModules } from './loader.js?v=20260922-wb2011';
-import { setupEventListeners, setupAIEventListeners } from './events.js?v=20260922-wb2011';
-import { extractWords } from './word_ops.js?v=20260922-wb2011';
-import { updatePreview, updatePreviewStyles } from './preview.js?v=20260923-imgstate1';
-import { clearAll } from './worksheet_integration.js?v=20260923-imgstate1';
-import { updateFont, updateFontSize, increaseFontSize, decreaseFontSize, updateImageGap, updateImageSize, updateLayout } from './controls.js?v=20260922-wb2011';
-import { state } from './state.js?v=20260922-wb2011';
-import { printFile, generatePDF } from './print.js?v=20260922-wb2011';
+import { loadModules } from './loader.js?v=20260923-imgstate2';
+import { setupEventListeners, setupAIEventListeners } from './events.js?v=20260923-imgstate2';
+import { extractWords } from './word_ops.js?v=20260923-imgstate2';
+import { updatePreview, updatePreviewStyles } from './preview.js?v=20260923-imgstate2';
+import { clearAll } from './worksheet_integration.js?v=20260923-imgstate2';
+import { updateFont, updateFontSize, increaseFontSize, decreaseFontSize, updateImageGap, updateImageSize, updateLayout } from './controls.js?v=20260923-imgstate2';
+import { state } from './state.js?v=20260923-imgstate2';
+import { printFile, generatePDF } from './print.js?v=20260923-imgstate2';
 
 function makeDraggable() {
     const toolbar = document.getElementById('floatingToolbar');
