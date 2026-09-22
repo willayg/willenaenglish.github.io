@@ -271,6 +271,9 @@
     } else {
       alert('Error saving worksheet: ' + (result.error || 'Unknown error'));
     }
+  } catch (err) {
+    console.error('[WorksheetManager] save failed:', err);
+    alert('Save failed: ' + (err?.message || 'Unknown error'));
   } finally {
     hideSpinner();
   }
