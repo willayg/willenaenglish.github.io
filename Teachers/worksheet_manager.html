@@ -127,6 +127,16 @@
     document.getElementById('saveUI').style.display = mode === 'save' ? 'block' : 'none';
     document.getElementById('loadUI').style.display = mode === 'load' ? 'block' : 'none';
 
+    async function wordBuilderApiFetch(path, options = {}) {
+      const url = window.WillenaAPI?.getApiUrl ? window.WillenaAPI.getApiUrl(path) : path;
+      const opts = { credentials: 'include', cache: 'no-store', ...options };
+      const headers = new Headers(opts.headers || {});
+      headers.delete('Authorization');
+      headers.delete('authorization');
+      opts.headers = headers;
+      return window.fetch(url, opts);
+    }
+
     async function persistWordBuilderImagesToR2(worksheet) {
       if (!worksheet || worksheet.worksheet_type !== 'wordtest' || !worksheet.images) return worksheet;
       let images;
@@ -232,7 +242,9 @@
         const checkEndpoint = worksheet.worksheet_type === 'wordtest'
           ? '/.netlify/functions/admin_classes?action=word_builder_list&all=1&limit=1000'
           : '/.netlify/functions/supabase_auth?action=list_worksheets&fields=user_id,title,username';
-        const checkRes = await WillenaAPI.fetch(checkEndpoint);
+        const checkRes = filterType === 'wordtest'
+          ? await wordBuilderApiFetch(checkEndpoint)
+          : await WillenaAPI.fetch(checkEndpoint);
         const checkData = await checkRes.json();
         if (checkData.success && Array.isArray(checkData.data)) {
           const found = checkData.data.find(ws => ws.title === worksheet.title && ws.username === worksheet.username);
@@ -260,11 +272,17 @@
     const saveEndpoint = worksheet.worksheet_type === 'wordtest'
       ? '/.netlify/functions/admin_classes?action=word_builder_save'
       : '/.netlify/functions/supabase_auth?action=save_worksheet';
-    const res = await WillenaAPI.fetch(saveEndpoint, {
+    const res = worksheet.worksheet_type === 'wordtest'
+      ? await wordBuilderApiFetch(saveEndpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(worksheet)
-    });
+    })
+      : await WillenaAPI.fetch(saveEndpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(worksheet)
+        });
     const result = await res.json();
     if (result.success) {
       alert(existingId ? 'Worksheet updated!' : 'Worksheet saved!');
@@ -459,7 +477,9 @@
           const fullEndpoint = isContentWordBuilder
             ? `/.netlify/functions/admin_classes?action=word_builder_get&id=${encodeURIComponent(ws.user_id)}`
             : `/.netlify/functions/supabase_auth?action=list_worksheets&id=${ws.user_id}`;
-          const fullRes = await WillenaAPI.fetch(fullEndpoint);
+          const fullRes = filterType === 'wordtest'
+            ? await wordBuilderApiFetch(fullEndpoint)
+            : await WillenaAPI.fetch(fullEndpoint);
           const fullResult = await fullRes.json();
           const fullWorksheet = isContentWordBuilder ? fullResult.worksheet : (fullResult.data && fullResult.data[0]);
           
@@ -583,7 +603,8 @@
             const deleteEndpoint = filterType === 'wordtest'
               ? '/.netlify/functions/admin_classes?action=word_builder_delete'
               : '/.netlify/functions/supabase_auth?action=delete_worksheet';
-            const res = await WillenaAPI.fetch(deleteEndpoint, {
+            const res = filterType === 'wordtest'
+              ? await wordBuilderApiFetch(deleteEndpoint, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ id })
@@ -764,7 +785,7 @@
     const listEndpoint = filterType === 'wordtest'
       ? `/.netlify/functions/admin_classes?action=word_builder_list&all=1&${queryParams}`
       : `/.netlify/functions/supabase_auth?action=list_worksheets&${queryParams}`;
-    WillenaAPI.fetch(listEndpoint)
+    (filterType === 'wordtest' ? wordBuilderApiFetch(listEndpoint) : WillenaAPI.fetch(listEndpoint))
       .then(res => res.json())
       .then(result => {
         console.log('Loaded worksheets:', result);
@@ -862,7 +883,9 @@
         const filterEndpoint = filterType === 'wordtest'
           ? '/.netlify/functions/admin_classes?action=word_builder_list&all=1&limit=1000'
           : '/.netlify/functions/supabase_auth?action=list_worksheets&fields=username,book&limit=10000';
-        const res = await WillenaAPI.fetch(filterEndpoint);
+        const res = filterType === 'wordtest'
+          ? await wordBuilderApiFetch(filterEndpoint)
+          : await WillenaAPI.fetch(filterEndpoint);
         const data = await res.json();
         if (data.success && Array.isArray(data.data)) {
           const teacherSet = new Set();
@@ -991,11 +1014,17 @@ async function saveWorksheet() {
     const saveEndpoint = worksheet.worksheet_type === 'wordtest'
       ? '/.netlify/functions/admin_classes?action=word_builder_save'
       : '/.netlify/functions/supabase_auth?action=save_worksheet';
-    const res = await WillenaAPI.fetch(saveEndpoint, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(worksheet)
-    });
+    const res = worksheet.worksheet_type === 'wordtest'
+      ? await wordBuilderApiFetch(saveEndpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(worksheet)
+        })
+      : await WillenaAPI.fetch(saveEndpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(worksheet)
+        });
     const result = await res.json();
     if (result.error) {
       alert('Error saving worksheet: ' + result.error);
