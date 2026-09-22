@@ -61,7 +61,7 @@ async function supabaseFetchAll(base, key, path, init={}, pageSize=1000) {
   return out;
 }
 
-async function requireAdmin(req, env) {
+async function requireApprovedUser(req, env) {
   const token = bearer(req);
   if (!token) throw Object.assign(new Error('Not signed in'), { status: 401 });
   const userRes = await fetch(`${env.SCORES_SUPABASE_URL}/auth/v1/user`, {
@@ -75,13 +75,19 @@ async function requireAdmin(req, env) {
   const rows = await supabaseFetch(
     env.SCORES_SUPABASE_URL,
     env.SCORES_SUPABASE_SERVICE_ROLE_KEY,
-    `/rest/v1/profiles?id=eq.${encodeURIComponent(user.id)}&select=id,role,approved&limit=1`
+    `/rest/v1/profiles?id=eq.${encodeURIComponent(user.id)}&select=id,role,approved,username,name&limit=1`
   );
   const profile = rows?.[0];
-  if (!profile || String(profile.role).toLowerCase() !== 'admin' || profile.approved === false) {
+  if (!profile || profile.approved === false) throw Object.assign(new Error('Account not approved'), { status: 403 });
+  return { user, profile };
+}
+
+async function requireAdmin(req, env) {
+  const actor = await requireApprovedUser(req, env);
+  if (String(actor.profile.role).toLowerCase() !== 'admin') {
     throw Object.assign(new Error('Admins only'), { status: 403 });
   }
-  return user;
+  return actor.user;
 }
 
 function cleanLevel(raw, hasBooks) {
@@ -461,6 +467,254 @@ async function updateClass(env, body) {
   return found;
 }
 
+
+function wbNorm(value) {
+  return String(value ?? '').trim().replace(/[\u2018\u2019]/g, "'").replace(/\s+/g, ' ').toLowerCase();
+}
+function wbParseJson(value, fallback={}) {
+  if (value && typeof value === 'object') return value;
+  try { return value ? JSON.parse(value) : fallback; } catch { return fallback; }
+}
+function wbCanAccess(row, actor) {
+  const isAdmin = String(actor.profile.role || '').toLowerCase() === 'admin';
+  if (isAdmin) return true;
+  if (row.created_by && String(row.created_by) === String(actor.user.id)) return true;
+  const username = String(actor.profile.username || '').trim().toLowerCase();
+  return !row.created_by && username && String(row.creator_username || '').trim().toLowerCase() === username;
+}
+async function wbBookUnitMaps(env, collections) {
+  const bookIds = [...new Set((collections || []).map(r => r.book_id).filter(Boolean))];
+  const unitIds = [...new Set((collections || []).map(r => r.unit_id).filter(Boolean))];
+  const books = bookIds.length ? await supabaseFetch(env.CONTENT_SUPABASE_URL, env.CONTENT_SUPABASE_SERVICE_ROLE_KEY,
+    `/rest/v1/content_books?id=in.(${bookIds.map(encodeURIComponent).join(',')})&select=id,title`) : [];
+  const units = unitIds.length ? await supabaseFetch(env.CONTENT_SUPABASE_URL, env.CONTENT_SUPABASE_SERVICE_ROLE_KEY,
+    `/rest/v1/content_units?id=in.(${unitIds.map(encodeURIComponent).join(',')})&select=id,unit_number,title`) : [];
+  return {
+    books: new Map((books || []).map(r => [String(r.id), r])),
+    units: new Map((units || []).map(r => [String(r.id), r])),
+  };
+}
+function wbLegacyRow(row, maps) {
+  const meta = row.metadata && typeof row.metadata === 'object' ? row.metadata : {};
+  const legacy = meta.legacy && typeof meta.legacy === 'object' ? meta.legacy : {};
+  const book = maps.books.get(String(row.book_id || ''));
+  const unit = maps.units.get(String(row.unit_id || ''));
+  return {
+    _content_db: true,
+    user_id: row.id,
+    title: row.name || '',
+    username: row.creator_username || legacy.username || '',
+    created_at: row.created_at,
+    updated_at: row.updated_at,
+    worksheet_type: 'wordtest',
+    layout: meta.layout || 'default',
+    book: book?.title || legacy.book || '',
+    unit: unit?.unit_number != null ? String(unit.unit_number) : (legacy.unit || ''),
+    language_point: legacy.language_point || [],
+    notes: legacy.notes || '',
+  };
+}
+async function listWordBuilders(env, actor, params) {
+  const rows = await supabaseFetchAll(env.CONTENT_SUPABASE_URL, env.CONTENT_SUPABASE_SERVICE_ROLE_KEY,
+    '/rest/v1/collections?collection_type=eq.word_builder&select=id,name,created_by,creator_username,created_at,updated_at,book_id,unit_id,metadata&order=updated_at.desc');
+  const allRequested = params.get('all') === '1';
+  let filtered = (rows || []).filter(row => (allRequested && String(actor.profile.role).toLowerCase() === 'admin') || wbCanAccess(row, actor));
+  const maps = await wbBookUnitMaps(env, filtered);
+  filtered = filtered.map(row => wbLegacyRow(row, maps));
+  const createdBy = String(params.get('created_by') || '').trim().toLowerCase();
+  const search = String(params.get('search') || '').trim().toLowerCase();
+  const book = String(params.get('book') || '').trim().toLowerCase();
+  const unit = String(params.get('unit') || '').trim().toLowerCase();
+  const layout = String(params.get('layout') || '').trim().toLowerCase();
+  if (createdBy) filtered = filtered.filter(r => String(r.username || '').toLowerCase() === createdBy);
+  if (search) filtered = filtered.filter(r => [r.title,r.book,r.unit].some(v => String(v || '').toLowerCase().includes(search)));
+  if (book) filtered = filtered.filter(r => String(r.book || '').toLowerCase().includes(book));
+  if (unit) filtered = filtered.filter(r => String(r.unit || '').toLowerCase().includes(unit));
+  if (layout) filtered = filtered.filter(r => String(r.layout || '').toLowerCase() === layout);
+  const total = filtered.length;
+  const offset = Math.max(0, Number(params.get('offset')) || 0);
+  const limit = Math.min(1000, Math.max(1, Number(params.get('limit')) || 50));
+  return { data: filtered.slice(offset, offset + limit), total };
+}
+async function getWordBuilder(env, actor, id) {
+  const collections = await supabaseFetch(env.CONTENT_SUPABASE_URL, env.CONTENT_SUPABASE_SERVICE_ROLE_KEY,
+    `/rest/v1/collections?id=eq.${encodeURIComponent(id)}&collection_type=eq.word_builder&select=id,name,created_by,creator_username,created_at,updated_at,book_id,unit_id,metadata&limit=1`);
+  const row = collections?.[0];
+  if (!row) throw Object.assign(new Error('Word Builder file not found'), { status: 404 });
+  if (!wbCanAccess(row, actor)) throw Object.assign(new Error('Not allowed'), { status: 403 });
+  const items = await supabaseFetch(env.CONTENT_SUPABASE_URL, env.CONTENT_SUPABASE_SERVICE_ROLE_KEY,
+    `/rest/v1/collection_items?collection_id=eq.${encodeURIComponent(id)}&select=id,content_id,position,settings&order=position.asc,created_at.asc`);
+  const lexIds = [...new Set((items || []).map(i => i.content_id).filter(Boolean))];
+  const lexical = lexIds.length ? await supabaseFetch(env.CONTENT_SUPABASE_URL, env.CONTENT_SUPABASE_SERVICE_ROLE_KEY,
+    `/rest/v1/lexical_entries?id=in.(${lexIds.map(encodeURIComponent).join(',')})&select=id,canonical_text,translation_ko`) : [];
+  const lexMap = new Map((lexical || []).map(x => [String(x.id), x]));
+  const maps = await wbBookUnitMaps(env, [row]);
+  const base = wbLegacyRow(row, maps);
+  const meta = row.metadata || {};
+  const words = [];
+  const images = {};
+  (items || []).forEach((item, index) => {
+    const lex = lexMap.get(String(item.content_id)) || {};
+    const st = item.settings && typeof item.settings === 'object' ? item.settings : {};
+    const eng = st.display_english || lex.canonical_text || '';
+    const kor = st.display_korean || lex.translation_ko || '';
+    words.push(`${eng}, ${kor}`);
+    if (st.image) images[`${String(eng).toLowerCase()}_${index}`] = { ...st.image, word: eng, index };
+  });
+  const fallbackImages = meta.legacy_images_snapshot && typeof meta.legacy_images_snapshot === 'object' ? meta.legacy_images_snapshot : {};
+  return {
+    ...base,
+    words,
+    settings: JSON.stringify(meta.worksheet_settings || {}),
+    images: JSON.stringify(Object.keys(images).length ? images : fallbackImages),
+    passage_text: meta.passage_text || '',
+  };
+}
+async function wbResolveBookUnit(env, bookText, unitText) {
+  const book = String(bookText || '').trim();
+  let bookId = null, unitId = null;
+  if (book) {
+    const rows = await supabaseFetch(env.CONTENT_SUPABASE_URL, env.CONTENT_SUPABASE_SERVICE_ROLE_KEY,
+      `/rest/v1/content_books?title=ilike.${encodeURIComponent(book)}&select=id,title&limit=2`);
+    if (rows?.length === 1) bookId = rows[0].id;
+  }
+  const unit = String(unitText || '').trim();
+  if (bookId && /^\d+$/.test(unit)) {
+    const rows = await supabaseFetch(env.CONTENT_SUPABASE_URL, env.CONTENT_SUPABASE_SERVICE_ROLE_KEY,
+      `/rest/v1/content_units?book_id=eq.${encodeURIComponent(bookId)}&unit_number=eq.${Number(unit)}&select=id&limit=1`);
+    if (rows?.[0]) unitId = rows[0].id;
+  }
+  return { bookId, unitId };
+}
+async function saveWordBuilder(env, actor, body) {
+  const words = Array.isArray(body.words) ? body.words : String(body.words || '').split('\n').filter(Boolean);
+  const parsed = words.map(line => {
+    const text = String(line || '').trim();
+    const comma = text.indexOf(',');
+    const eng = (comma >= 0 ? text.slice(0, comma) : text).trim();
+    const kor = (comma >= 0 ? text.slice(comma + 1) : text).trim();
+    return { line: text, eng, kor };
+  }).filter(x => x.eng);
+  const allLex = await supabaseFetchAll(env.CONTENT_SUPABASE_URL, env.CONTENT_SUPABASE_SERVICE_ROLE_KEY,
+    '/rest/v1/lexical_entries?select=id,canonical_text,normalized_text,translation_ko,entry_type');
+  let lexMap = new Map();
+  for (const row of allLex || []) {
+    const key = wbNorm(row.normalized_text || row.canonical_text);
+    if (!lexMap.has(key)) lexMap.set(key, []);
+    lexMap.get(key).push(row);
+  }
+  const missing = [];
+  const seenMissing = new Set();
+  for (const w of parsed) {
+    const key = wbNorm(w.eng);
+    if (!lexMap.has(key) && !seenMissing.has(key)) {
+      seenMissing.add(key);
+      missing.push({
+        canonical_text: w.eng,
+        entry_type: /\s/.test(w.eng) ? 'fixed_expression' : 'word',
+        translation_ko: w.kor || null,
+        metadata: { source: 'word_builder', authored_from_teacher_tool: true },
+        status: 'review',
+      });
+    }
+  }
+  if (missing.length) {
+    await supabaseFetch(env.CONTENT_SUPABASE_URL, env.CONTENT_SUPABASE_SERVICE_ROLE_KEY, '/rest/v1/lexical_entries', {
+      method: 'POST',
+      headers: { Prefer: 'resolution=ignore-duplicates,return=minimal' },
+      body: JSON.stringify(missing),
+    });
+    const refreshed = await supabaseFetchAll(env.CONTENT_SUPABASE_URL, env.CONTENT_SUPABASE_SERVICE_ROLE_KEY,
+      '/rest/v1/lexical_entries?select=id,canonical_text,normalized_text,translation_ko,entry_type');
+    lexMap = new Map();
+    for (const row of refreshed || []) {
+      const key = wbNorm(row.normalized_text || row.canonical_text);
+      if (!lexMap.has(key)) lexMap.set(key, []);
+      lexMap.get(key).push(row);
+    }
+  }
+  const settings = wbParseJson(body.settings, {});
+  const images = wbParseJson(body.images, {});
+  const imageByIndex = new Map();
+  Object.values(images || {}).forEach(img => {
+    if (img && Number.isFinite(Number(img.index))) imageByIndex.set(Number(img.index), img);
+  });
+  const { bookId, unitId } = await wbResolveBookUnit(env, body.book, body.unit);
+  const metadata = {
+    source_app: 'word_builder',
+    storage_schema_version: 3,
+    layout: body.layout || 'default',
+    worksheet_settings: settings,
+    passage_text: body.passage_text || '',
+    legacy: {
+      book: body.book || null,
+      unit: body.unit || null,
+      notes: body.notes || null,
+      language_point: Array.isArray(body.language_point) ? body.language_point : (body.language_point ? [body.language_point] : []),
+      username: actor.profile.username || null,
+    },
+  };
+  let collectionId = String(body.user_id || '').trim();
+  if (collectionId) {
+    const current = await supabaseFetch(env.CONTENT_SUPABASE_URL, env.CONTENT_SUPABASE_SERVICE_ROLE_KEY,
+      `/rest/v1/collections?id=eq.${encodeURIComponent(collectionId)}&collection_type=eq.word_builder&select=id,created_by,creator_username&limit=1`);
+    if (!current?.[0]) collectionId = '';
+    else if (!wbCanAccess(current[0], actor)) throw Object.assign(new Error('Not allowed'), { status: 403 });
+  }
+  if (collectionId) {
+    await supabaseFetch(env.CONTENT_SUPABASE_URL, env.CONTENT_SUPABASE_SERVICE_ROLE_KEY,
+      `/rest/v1/collections?id=eq.${encodeURIComponent(collectionId)}`, {
+        method: 'PATCH',
+        headers: { Prefer: 'return=minimal' },
+        body: JSON.stringify({
+          name: body.title || 'Untitled Word Builder',
+          book_id: bookId, unit_id: unitId, metadata,
+          created_by: actor.user.id, creator_username: actor.profile.username || null,
+        }),
+      });
+  } else {
+    const created = await supabaseFetch(env.CONTENT_SUPABASE_URL, env.CONTENT_SUPABASE_SERVICE_ROLE_KEY, '/rest/v1/collections', {
+      method: 'POST',
+      headers: { Prefer: 'return=representation' },
+      body: JSON.stringify([{
+        name: body.title || 'Untitled Word Builder',
+        slug: `word-builder-${crypto.randomUUID()}`,
+        collection_type: 'word_builder',
+        book_id: bookId, unit_id: unitId, metadata, status: 'draft',
+        created_by: actor.user.id, creator_username: actor.profile.username || null,
+      }]),
+    });
+    collectionId = created?.[0]?.id;
+  }
+  if (!collectionId) throw new Error('Failed to save Word Builder collection');
+  await supabaseFetch(env.CONTENT_SUPABASE_URL, env.CONTENT_SUPABASE_SERVICE_ROLE_KEY,
+    `/rest/v1/collection_items?collection_id=eq.${encodeURIComponent(collectionId)}`, { method: 'DELETE' });
+  const itemRows = parsed.map((w, index) => {
+    const candidates = lexMap.get(wbNorm(w.eng)) || [];
+    const exact = candidates.find(x => wbNorm(x.translation_ko) === wbNorm(w.kor));
+    const lex = exact || candidates[0];
+    if (!lex) throw new Error(`Could not resolve lexical entry: ${w.eng}`);
+    const itemSettings = { display_english: w.eng, display_korean: w.kor, legacy_word_line: w.line };
+    if (imageByIndex.has(index)) itemSettings.image = imageByIndex.get(index);
+    return { collection_id: collectionId, content_type: 'lexical_entry', content_id: lex.id, position: index + 1, section_name: 'Vocabulary', settings: itemSettings };
+  });
+  if (itemRows.length) {
+    await supabaseFetch(env.CONTENT_SUPABASE_URL, env.CONTENT_SUPABASE_SERVICE_ROLE_KEY, '/rest/v1/collection_items', {
+      method: 'POST', headers: { Prefer: 'return=minimal' }, body: JSON.stringify(itemRows),
+    });
+  }
+  return { id: collectionId };
+}
+async function deleteWordBuilder(env, actor, id) {
+  const rows = await supabaseFetch(env.CONTENT_SUPABASE_URL, env.CONTENT_SUPABASE_SERVICE_ROLE_KEY,
+    `/rest/v1/collections?id=eq.${encodeURIComponent(id)}&collection_type=eq.word_builder&select=id,created_by,creator_username&limit=1`);
+  const row = rows?.[0];
+  if (!row) throw Object.assign(new Error('Word Builder file not found'), { status: 404 });
+  if (!wbCanAccess(row, actor)) throw Object.assign(new Error('Not allowed'), { status: 403 });
+  await supabaseFetch(env.CONTENT_SUPABASE_URL, env.CONTENT_SUPABASE_SERVICE_ROLE_KEY,
+    `/rest/v1/collections?id=eq.${encodeURIComponent(id)}`, { method: 'DELETE' });
+}
+
 export default {
   async fetch(req, env) {
     const origin = req.headers.get('Origin') || '';
@@ -469,9 +723,31 @@ export default {
       if (!env.SCORES_SUPABASE_SERVICE_ROLE_KEY || !env.CONTENT_SUPABASE_SERVICE_ROLE_KEY) {
         return json(origin, 503, { success: false, error: 'Worker secrets are not configured' });
       }
-      await requireAdmin(req, env);
       const url = new URL(req.url);
       const action = url.searchParams.get('action') || '';
+      if (action.startsWith('word_builder_')) {
+        const actor = await requireApprovedUser(req, env);
+        if (req.method === 'GET' && action === 'word_builder_list') {
+          const result = await listWordBuilders(env, actor, url.searchParams);
+          return json(origin, 200, { success: true, ...result });
+        }
+        if (req.method === 'GET' && action === 'word_builder_get') {
+          return json(origin, 200, { success: true, worksheet: await getWordBuilder(env, actor, url.searchParams.get('id') || '') });
+        }
+        if (req.method === 'POST' && action === 'word_builder_save') {
+          const body = await req.json().catch(() => null);
+          if (!body) return json(origin, 400, { success: false, error: 'Invalid JSON' });
+          return json(origin, 200, { success: true, ...(await saveWordBuilder(env, actor, body)) });
+        }
+        if (req.method === 'POST' && action === 'word_builder_delete') {
+          const body = await req.json().catch(() => null);
+          if (!body?.id) return json(origin, 400, { success: false, error: 'Missing id' });
+          await deleteWordBuilder(env, actor, body.id);
+          return json(origin, 200, { success: true });
+        }
+        return json(origin, 405, { success: false, error: 'Method not allowed' });
+      }
+      await requireAdmin(req, env);
       if (req.method === 'GET' && action === 'search_books') return json(origin, 200, { success: true, books: await searchBooks(env, url.searchParams.get('q')) });
       if (req.method === 'GET' && action === 'list_level_tests') return json(origin, 200, { success: true, tests: await listLevelTests(env) });
       if (req.method === 'GET' && action === 'list_archived_level_tests') return json(origin, 200, { success: true, tests: await listLevelTests(env, true) });
