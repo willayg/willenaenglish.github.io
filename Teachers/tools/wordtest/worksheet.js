@@ -1,7 +1,7 @@
 // worksheet.js - Worksheet data management functions
 import { cleanWord } from './utils.js';
 // Pull current image choices from the images module for robust saving of auto-filled images
-import { imageAlternatives, currentImageIndex } from './images.js';
+import { imageAlternatives, currentImageIndex } from './images.js?v=20260923-imgstate1';
 
 export function highlightDuplicates() {
     const wordsTextarea = document.getElementById('wordListTextarea');
@@ -58,70 +58,34 @@ export function getCurrentWorksheetData(currentWords, currentSettings) {
         ? currentWords.map(w => `${w.eng}, ${w.kor}`)
         : (document.getElementById('wordListTextarea')?.value || '').split('\n').filter(w => w.trim());
     
-    // Capture current image state from the preview
+    // Capture the authoritative image state. Preserve R2 metadata when present.
     const imageData = {};
-    const previewArea = document.getElementById('previewArea');
-    if (previewArea) {
-        console.log('Preview area found, looking for images...');
-        
-        // Look for all image drop zones - these have the data attributes
-        const dropZones = previewArea.querySelectorAll('.image-drop-zone');
-        console.log('Found image drop zones:', dropZones.length);
-        
-        dropZones.forEach((zone, index) => {
-            const word = zone.getAttribute('data-word');
-            const dataIndex = zone.getAttribute('data-index');
-            console.log(`Drop zone ${index}: word="${word}", index="${dataIndex}"`);
-            
-            if (word && dataIndex !== null) {
-                const key = `${word.toLowerCase()}_${dataIndex}`;
-                
-                // Check for images inside the drop zone
-                const img = zone.querySelector('img');
-                if (img) {
-                    console.log(`  - Found image with src: ${img.src.substring(0, 100)}...`);
-                    imageData[key] = {
-                        src: img.src,
-                        word: word,
-                        index: parseInt(dataIndex)
-                    };
-                }
-            }
-        });
-        
-        console.log('Final captured image data for saving:', imageData);
-        console.log('Number of images captured:', Object.keys(imageData).length);
-    } else {
-        console.log('No preview area found!');
+    const wordsArr = Array.isArray(currentWords) ? currentWords : [];
+    for (let i = 0; i < wordsArr.length; i++) {
+        const eng = (wordsArr[i]?.eng || wordsArr[i]?._originalEng || '').trim();
+        if (!eng) continue;
+        const key = `${eng.toLowerCase()}_${i}`;
+        const saved = window.savedImageData && window.savedImageData[key];
+        if (saved && saved.src && saved.src !== 'emoji' && !saved.emoji) {
+            imageData[key] = { ...saved, word: eng, index: i };
+        }
     }
 
-    // Fallback: also capture currently selected images from images module state
-    // This ensures auto-filled image URLs are saved even if DOM scan misses them
-    try {
-        const wordsArr = Array.isArray(currentWords) ? currentWords : [];
-        for (let i = 0; i < wordsArr.length; i++) {
-            const eng = (wordsArr[i]?.eng || wordsArr[i]?._originalEng || '').trim();
-            if (!eng) continue;
-            const key = `${eng.toLowerCase()}_${i}`;
-            if (!imageData[key] && imageAlternatives && currentImageIndex) {
-                const alts = imageAlternatives[key] || [];
-                const idx = currentImageIndex[key] || 0;
-                const choice = alts[idx];
-                if (choice) {
-                    if (typeof choice === 'string' && (choice.startsWith('http') || choice.startsWith('data:image/'))) {
-                        imageData[key] = {
-                            src: choice,
-                            word: eng,
-                            index: i
-                        };
-                    }
-                }
+    // DOM is a fallback only. It may reflect a freshly dropped/selected image before state settles.
+    const previewArea = document.getElementById('previewArea');
+    if (previewArea) {
+        previewArea.querySelectorAll('.image-drop-zone').forEach(zone => {
+            const word = zone.getAttribute('data-word');
+            const dataIndex = zone.getAttribute('data-index');
+            const img = zone.querySelector('img');
+            if (!word || dataIndex === null || !img || !img.src) return;
+            const key = `${word.toLowerCase()}_${dataIndex}`;
+            if (!imageData[key] || imageData[key].src !== img.src) {
+                imageData[key] = { src: img.src, word, index: parseInt(dataIndex) };
             }
-        }
-    } catch (e) {
-        console.warn('Image state fallback capture failed:', e);
+        });
     }
-    
+
     // Only save worksheet_type, title, passage_text, words, layout, settings, and imageData
     // settings: font, fontSize, imageSize, imageGap, testMode, numLettersToHide, difficulty
     const settings = {
