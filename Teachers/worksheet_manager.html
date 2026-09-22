@@ -145,10 +145,9 @@
       }
       if (!assets.length) return worksheet;
 
-      const res = await fetch('https://worksheet-assets.willenaenglish.com', {
+      const res = await WillenaAPI.fetch('/.netlify/functions/worksheet_assets', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'omit',
         body: JSON.stringify({ assets })
       });
       if (!res.ok) throw new Error('Image persistence failed (' + res.status + ')');
@@ -1033,6 +1032,6 @@ async function loadWorksheet() {
 
   </script>
 
-  <div id="wordBuilderManagerRevision" style="position:fixed;right:8px;bottom:5px;z-index:10000;font:10px/1.2 Arial,sans-serif;color:rgba(60,70,85,.55);background:rgba(255,255,255,.72);padding:2px 5px;border-radius:4px;pointer-events:none;user-select:none;">v2.00.06</div>
+  <div id="wordBuilderManagerRevision" style="position:fixed;right:8px;bottom:5px;z-index:10000;font:10px/1.2 Arial,sans-serif;color:rgba(60,70,85,.55);background:rgba(255,255,255,.72);padding:2px 5px;border-radius:4px;pointer-events:none;user-select:none;">v2.00.07</div>
 </body>
 </html>
