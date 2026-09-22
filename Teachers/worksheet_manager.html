@@ -145,16 +145,16 @@
       }
       if (!assets.length) return worksheet;
 
-      const res = await WillenaAPI.fetch('/.netlify/functions/upload-images', {
+      const res = await WillenaAPI.fetch('/.netlify/functions/worksheet_assets', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ worksheetAssets: assets })
+        body: JSON.stringify({ assets })
       });
       if (!res.ok) throw new Error('Image persistence failed (' + res.status + ')');
       const result = await res.json().catch(() => null);
-      if (!result || !Array.isArray(result.worksheetAssets)) throw new Error('Image persistence returned invalid data');
+      if (!result || result.success !== true || !Array.isArray(result.assets)) throw new Error(result?.error || 'Image persistence returned invalid data');
 
-      const byKey = new Map(result.worksheetAssets.map(x => [String(x.input_key), x]));
+      const byKey = new Map(result.assets.map(x => [String(x.input_key), x]));
       for (const asset of assets) {
         const saved = byKey.get(String(asset.key));
         if (!saved || !saved.url || !saved.asset_key || !saved.sha256) throw new Error('Image persistence incomplete for ' + asset.key);
