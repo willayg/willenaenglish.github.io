@@ -1,9 +1,9 @@
 import { state } from './state.js';
-import { updatePreview, updatePreviewStyles } from './preview.js';
+import { updatePreview, updatePreviewStyles } from './preview.js?v=20260923-imgstate1';
 import { extractWordsWithAI } from './ai.js';
 import { ensureFontsLoaded } from './style.js';
-import { updateCurrentWordsFromTextarea } from './worksheet_integration.js';
-import { highlightDuplicates as worksheetHighlightDuplicates } from './worksheet.js';
+import { updateCurrentWordsFromTextarea } from './worksheet_integration.js?v=20260923-imgstate1';
+import { highlightDuplicates as worksheetHighlightDuplicates } from './worksheet.js?v=20260923-imgstate1';
 
 const currentWords = state.currentWords;
 
