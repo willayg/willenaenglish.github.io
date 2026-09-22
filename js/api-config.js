@@ -19,7 +19,7 @@
   const NETLIFY_ONLY_FUNCTIONS = [
     'verify_student','set_student_password','debug_student_data','openai_proxy','google_vision_proxy',
     'supabase_proxy','supabase_proxy_fixed','teacher_admin','test_admin','eleven_labs_proxy',
-    'upsert_sentences_batch','get_sentence_audio_urls','translate','define_word',
+    'upsert_sentences_batch','get_sentence_audio_urls','translate','define_word','upload-images',
   ];
 
   const currentHost = window.location.hostname;
