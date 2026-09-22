@@ -1,4 +1,4 @@
-name = "worksheet-assets"
+name = "word-builder-assets"
 main = "src/index.js"
 compatibility_date = "2025-12-08"
 workers_dev = false
