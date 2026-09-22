@@ -120,12 +120,6 @@ export async function updatePreviewStyles() {
             }
         });
 
-        // Update emoji placeholders (font-size based)
-        const emojiEls = previewRoot.querySelectorAll('.image-drop-zone div[style*="font-size"]');
-        emojiEls.forEach(el => {
-            el.style.fontSize = Math.round(currentSettings.imageSize * 0.8) + 'px';
-        });
-
         // Update generic placeholders with width/height inline styles
         const placeholders = previewRoot.querySelectorAll('.image-drop-zone div[style*="width"]');
         placeholders.forEach(el => {
