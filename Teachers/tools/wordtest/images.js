@@ -1,4 +1,4 @@
-import { emojiMap, getPlaceholderImage, getPixabaySearchUrl, renderImage, showImageLoadingSpinner, hideImageLoadingSpinner } from './images-utils.js';
+import { getPlaceholderImage, getPixabaySearchUrl, renderImage, showImageLoadingSpinner, hideImageLoadingSpinner } from './images-utils.js';
 import { createEnableImageDragAndDrop } from './images-dnd.js';
 // Preserve global used by inline handlers (no behavior change)
 if (!window.getPixabaySearchUrl) {
@@ -39,14 +39,9 @@ async function getImageUrl(word, index, refresh = false, currentSettings = { ima
     return imageAlternatives[wordKey][currentIndex] || getPlaceholderImage(index, null, currentSettings);
 }
 
-// Load multiple image alternatives for a word (emoji first, 6 English, blank last)
+// Load image alternatives for a word (provider image + blank fallback)
 async function loadImageAlternatives(word, wordKey, kor = null, currentSettings = { imageSize: 50 }) {
     const alternatives = [];
-    // Only add emoji if available
-    const emoji = emojiMap[word.toLowerCase()];
-    if (emoji) {
-        alternatives.push(`<div style="font-size: ${currentSettings.imageSize * 0.8}px; line-height: 1;">${emoji}</div>`);
-    }
     // Try to get ONE image from provider or Netlify fallback
     try {
         let imageUrl = null;
@@ -71,15 +66,13 @@ async function loadImageAlternatives(word, wordKey, kor = null, currentSettings 
         }
         if (imageUrl && imageUrl.startsWith('http')) {
             alternatives.push(imageUrl);
-        } else if (imageUrl && imageUrl.length === 1) {
-            alternatives.push(`<div style="font-size: ${currentSettings.imageSize * 0.8}px; line-height: 1;">${imageUrl}</div>`);
         }
     } catch (error) {
         console.warn('Error getting image for:', word, error);
     }
     // Add blank option last - just a white empty box
     alternatives.push('<div style="width:' + currentSettings.imageSize + 'px;height:' + currentSettings.imageSize + 'px;background:#fff;border-radius:8px;border:2px solid #ddd;"></div>');
-    imageAlternatives[wordKey] = alternatives.slice(0, 2); // Only emoji (if any) and first image
+    imageAlternatives[wordKey] = alternatives.slice(0, 2); // Provider image and blank fallback
 }
 
 // Cycle to next image for a specific word
@@ -207,8 +200,6 @@ async function addMoreImageAlternatives(word, wordKey, kor = null, currentSettin
                 }
                 if (imageUrl && imageUrl.startsWith('http')) {
                     newAlternatives.push(imageUrl);
-                } else if (imageUrl && imageUrl.length === 1) {
-                    newAlternatives.push(`<div style="font-size: ${currentSettings.imageSize * 0.8}px; line-height: 1;">${imageUrl}</div>`);
                 }
             } catch (error) {
                 console.warn('Error getting new image for:', newSearchTerms[i], error);
@@ -243,24 +234,13 @@ async function refreshImageForWord(word, index, forceNewKey = false, kor = null,
     showImageLoadingSpinner(word, index);
     
     if (forceNewKey) {
-        // When refreshing images on right-click, preserve the emoji if it exists
-        const existingEmoji = imageAlternatives[wordKey] && imageAlternatives[wordKey][0] && 
-                              imageAlternatives[wordKey][0].includes('<div') && 
-                              imageAlternatives[wordKey][0].includes('font-size') ? 
-                              imageAlternatives[wordKey][0] : null;
-        
         // Reset imageAlternatives and currentImageIndex for this slot
         imageAlternatives[wordKey] = [];
         currentImageIndex[wordKey] = 0;
-        
-        // If we had an emoji, preserve it
-        if (existingEmoji) {
-            imageAlternatives[wordKey].push(existingEmoji);
-        }
     }
 
     try {
-        // Fetch new images (6 English + emoji + blank)
+        // Fetch a new provider image plus blank fallback
         await loadImageAlternatives(word, wordKey, kor, currentSettings);
     } finally {
         // Hide loading spinner
@@ -366,7 +346,6 @@ async function clearAllImages(updatePreviewCallback) {
 
 // Export all functions
 export {
-  emojiMap,
   imageAlternatives,
   currentImageIndex,
   getPlaceholderImage,
