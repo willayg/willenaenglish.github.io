@@ -633,6 +633,47 @@ async function saveWordBuilder(env, actor, body) {
       lexMap.get(key).push(row);
     }
   }
+  const senses = await supabaseFetchAll(env.CONTENT_SUPABASE_URL, env.CONTENT_SUPABASE_SERVICE_ROLE_KEY,
+    '/rest/v1/lexical_senses?select=id,lexical_entry_id,translation_ko,normalized_translation_ko');
+  let senseMap = new Map();
+  for (const row of senses || []) {
+    senseMap.set(String(row.lexical_entry_id) + '|' + wbNorm(row.normalized_translation_ko || row.translation_ko), row);
+  }
+  const missingSenses = [];
+  const seenSenseKeys = new Set();
+  for (const w of parsed) {
+    if (!w.kor) continue;
+    const candidates = lexMap.get(wbNorm(w.eng)) || [];
+    const exact = candidates.find(x => wbNorm(x.translation_ko) === wbNorm(w.kor));
+    const lex = exact || candidates[0];
+    if (!lex) continue;
+    const key = String(lex.id) + '|' + wbNorm(w.kor);
+    if (!senseMap.has(key) && !seenSenseKeys.has(key)) {
+      seenSenseKeys.add(key);
+      missingSenses.push({
+        lexical_entry_id: lex.id,
+        translation_ko: w.kor,
+        is_primary: false,
+        source: 'word_builder',
+        metadata: { authored_from_teacher_tool: true },
+        status: 'review',
+      });
+    }
+  }
+  if (missingSenses.length) {
+    await supabaseFetch(env.CONTENT_SUPABASE_URL, env.CONTENT_SUPABASE_SERVICE_ROLE_KEY, '/rest/v1/lexical_senses', {
+      method: 'POST',
+      headers: { Prefer: 'resolution=ignore-duplicates,return=minimal' },
+      body: JSON.stringify(missingSenses),
+    });
+    const refreshedSenses = await supabaseFetchAll(env.CONTENT_SUPABASE_URL, env.CONTENT_SUPABASE_SERVICE_ROLE_KEY,
+      '/rest/v1/lexical_senses?select=id,lexical_entry_id,translation_ko,normalized_translation_ko');
+    senseMap = new Map();
+    for (const row of refreshedSenses || []) {
+      senseMap.set(String(row.lexical_entry_id) + '|' + wbNorm(row.normalized_translation_ko || row.translation_ko), row);
+    }
+  }
+
   const settings = wbParseJson(body.settings, {});
   const images = wbParseJson(body.images, {});
   const imageByIndex = new Map();
@@ -696,7 +737,8 @@ async function saveWordBuilder(env, actor, body) {
     if (!lex) throw new Error(`Could not resolve lexical entry: ${w.eng}`);
     const itemSettings = { display_english: w.eng, display_korean: w.kor, legacy_word_line: w.line };
     if (imageByIndex.has(index)) itemSettings.image = imageByIndex.get(index);
-    return { collection_id: collectionId, content_type: 'lexical_entry', content_id: lex.id, position: index + 1, section_name: 'Vocabulary', settings: itemSettings };
+    const sense = w.kor ? senseMap.get(String(lex.id) + '|' + wbNorm(w.kor)) : null;
+    return { collection_id: collectionId, content_type: 'lexical_entry', content_id: lex.id, lexical_sense_id: sense?.id || null, position: index + 1, section_name: 'Vocabulary', settings: itemSettings };
   });
   if (itemRows.length) {
     await supabaseFetch(env.CONTENT_SUPABASE_URL, env.CONTENT_SUPABASE_SERVICE_ROLE_KEY, '/rest/v1/collection_items', {
