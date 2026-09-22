@@ -1,11 +1,11 @@
 // Word Worksheet Generator - Slim entry point
 // Keep this file tiny: wire up globals and bootstrap the app.
 
-import { initWordtest } from './init.js';
-import { updatePreview } from './preview.js';
-import { printFile, generatePDF } from './print.js';
-import { getCurrentWorksheetData, loadWorksheet } from './worksheet_integration.js';
-import { cycleImage, setSelectedImage } from './images.js';
+import { initWordtest } from './init.js?v=20260923-imgstate2';
+import { updatePreview } from './preview.js?v=20260923-imgstate2';
+import { printFile, generatePDF } from './print.js?v=20260923-imgstate2';
+import { getCurrentWorksheetData, loadWorksheet } from './worksheet_integration.js?v=20260923-imgstate2';
+import { cycleImage, setSelectedImage } from './images.js?v=20260923-imgstate2';
 
 // Expose a minimal surface for inline handlers and external pages
 window.cycleImage = (word, index) => cycleImage(word, index, updatePreview);
