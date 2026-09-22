@@ -86,18 +86,6 @@ export function getCurrentWorksheetData(currentWords, currentSettings) {
                         index: parseInt(dataIndex)
                     };
                 }
-                
-                // Check for emoji/div elements (but not the drag instructions)
-                const emojiDiv = zone.querySelector('div[style*="font-size"]:not(.drag-instructions)');
-                if (emojiDiv && !img) { // Only capture emoji if there's no image
-                    console.log(`  - Found emoji div: "${emojiDiv.textContent}"`);
-                    imageData[key] = {
-                        src: 'emoji',
-                        emoji: emojiDiv.textContent.trim(),
-                        word: word,
-                        index: parseInt(dataIndex)
-                    };
-                }
             }
         });
         
@@ -108,7 +96,7 @@ export function getCurrentWorksheetData(currentWords, currentSettings) {
     }
 
     // Fallback: also capture currently selected images from images module state
-    // This ensures auto-filled images (emoji or fetched URLs) are saved even if DOM scan misses them
+    // This ensures auto-filled image URLs are saved even if DOM scan misses them
     try {
         const wordsArr = Array.isArray(currentWords) ? currentWords : [];
         for (let i = 0; i < wordsArr.length; i++) {
@@ -120,21 +108,7 @@ export function getCurrentWorksheetData(currentWords, currentSettings) {
                 const idx = currentImageIndex[key] || 0;
                 const choice = alts[idx];
                 if (choice) {
-                    if (typeof choice === 'string' && choice.startsWith('<div')) {
-                        // Treat emoji divs (with font-size) as emoji; ignore plain blank placeholders
-                        if (/font-size:\s*\d+px/i.test(choice)) {
-                            // Extract inner text content between tags as the emoji character
-                            const emojiMatch = choice.replace(/<[^>]*>/g, '').trim();
-                            if (emojiMatch) {
-                                imageData[key] = {
-                                    src: 'emoji',
-                                    emoji: emojiMatch,
-                                    word: eng,
-                                    index: i
-                                };
-                            }
-                        }
-                    } else if (typeof choice === 'string' && (choice.startsWith('http') || choice.startsWith('data:image/'))) {
+                    if (typeof choice === 'string' && (choice.startsWith('http') || choice.startsWith('data:image/'))) {
                         imageData[key] = {
                             src: choice,
                             word: eng,
@@ -234,6 +208,11 @@ export function loadWorksheet(worksheet, currentWords, currentSettings) {
     if (worksheet.images) {
         try {
             imageData = typeof worksheet.images === 'string' ? JSON.parse(worksheet.images) : worksheet.images;
+            if (imageData && typeof imageData === 'object') {
+                imageData = Object.fromEntries(
+                    Object.entries(imageData).filter(([, value]) => value && value.src !== 'emoji' && !value.emoji)
+                );
+            }
         } catch (e) {
             console.warn('Failed to parse image data:', e);
             imageData = {};
