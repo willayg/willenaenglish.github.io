@@ -1,5 +1,5 @@
 import { state } from './state.js?v=20260922-wb2011';
-import { enableImageDragAndDrop, renderImage, getImageUrl, getPlaceholderImage } from './images.js?v=20260922-wb2011';
+import { enableImageDragAndDrop, renderImage, getImageUrl, getPlaceholderImage } from './images.js?v=20260923-imgstate1';
 import { hideRandomLetters } from './behaviors.js?v=20260922-wb2011';
 import { generateWorksheetHTML as rendererGenerateWorksheetHTML } from './renderer.js?v=20260922-wb2011';
 
