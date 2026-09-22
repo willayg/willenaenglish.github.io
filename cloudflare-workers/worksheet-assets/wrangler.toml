@@ -1,0 +1,12 @@
+name = "word-builder-assets"
+main = "src/index.js"
+compatibility_date = "2025-12-08"
+workers_dev = true
+
+[vars]
+R2_PUBLIC_BASE = "https://pub-83853c84fe974140804e77f50de8c523.r2.dev"
+
+[[r2_buckets]]
+binding = "WORKSHEET_ASSETS"
+bucket_name = "images"
+preview_bucket_name = "images"
