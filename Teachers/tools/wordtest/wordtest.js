@@ -4,8 +4,8 @@
 import { initWordtest } from './init.js';
 import { updatePreview } from './preview.js';
 import { printFile, generatePDF } from './print.js';
-import { getCurrentWorksheetData, loadWorksheet } from './worksheet_integration.js';
-import { cycleImage, setSelectedImage } from './images.js';
+import { getCurrentWorksheetData, loadWorksheet } from './worksheet_integration.js?v=20260923-imgstate1';
+import { cycleImage, setSelectedImage } from './images.js?v=20260923-imgstate1';
 
 // Expose a minimal surface for inline handlers and external pages
 window.cycleImage = (word, index) => cycleImage(word, index, updatePreview);
