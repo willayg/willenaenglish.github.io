@@ -5,9 +5,9 @@
   <title>Worksheet Manager</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <!-- API gateway for CF Pages routing - MUST load before api-config.js -->
-  <script src="/students/api-gateway.js?v=20260116"></script>
+  <script src="/students/api-gateway.js?v=20260922-p43"></script>
   <!-- Netlify redirect removed - now using Cloudflare -->
-  <script src="/js/api-config.js?v=20260108"></script>
+  <script src="/js/api-config.js?v=20260922-p43"></script>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;700&display=swap" rel="stylesheet">
   <style>
@@ -1031,5 +1031,7 @@ async function loadWorksheet() {
     }
 
   </script>
+
+  <div id="wordBuilderManagerRevision" style="position:fixed;right:8px;bottom:5px;z-index:10000;font:10px/1.2 Arial,sans-serif;color:rgba(60,70,85,.55);background:rgba(255,255,255,.72);padding:2px 5px;border-radius:4px;pointer-events:none;user-select:none;">v2.00.03</div>
 </body>
 </html>
