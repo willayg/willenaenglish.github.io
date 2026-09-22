@@ -1,5 +1,5 @@
 import { state } from './state.js?v=20260922-wb2011';
-import { updatePreview, updatePreviewStyles } from './preview.js?v=20260922-wb2011';
+import { updatePreview, updatePreviewStyles } from './preview.js?v=20260923-imgstate1';
 import {
     updateFont as uiUpdateFont,
     updateFontSize as uiUpdateFontSize,
