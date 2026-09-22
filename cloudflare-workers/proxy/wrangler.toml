@@ -44,7 +44,7 @@ service = "daily-study-v2"
 
 [[services]]
 binding = "WORKSHEET_ASSETS"
-service = "worksheet-assets"
+service = "word-builder-assets"
 
 [vars]
 NETLIFY_BASE = "https://willenaenglish.netlify.app"
