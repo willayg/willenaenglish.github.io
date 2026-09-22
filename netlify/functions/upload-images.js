@@ -74,7 +74,7 @@ exports.handler = async (event) => {
   const url = new URL(event.rawUrl || `http://localhost${event.path}`);
   const forceFlag = body.force === true || body.force === 1 || body.force === '1' || body.forceRecompress === true || body.forceRecompress === 1 || body.forceRecompress === '1' || url.searchParams.get('force') === '1';
   const gameId = sanitizeId(body.gameId) || genId();
-  const out = { gameId, words: [], cover: null };
+  const out = { gameId, words: [], cover: null, worksheetAssets: [] };
 
   async function processAndPush(src, keyPrefix, baseName, pushCb){
   const r = await processImage(src, keyPrefix, baseName, s3, R2_BUCKET_NAME, R2_PUBLIC_BASE || null, { force: forceFlag });
@@ -90,8 +90,65 @@ exports.handler = async (event) => {
       await processAndPush(w.source, `words/${gameId}`, `w${w.index}`, (r)=> out.words.push({ index: w.index, url: r.publicUrl }));
     }
   }
+
+  // Word Builder / worksheet asset mode: content-addressed R2 storage.
+  // This is additive and does not change the existing game-builder paths above.
+  if (Array.isArray(body.worksheetAssets)) {
+    for (const asset of body.worksheetAssets) {
+      if (!asset || !asset.key || !asset.source) continue;
+      const r = await processWorksheetAsset(asset.source, s3, R2_BUCKET_NAME, R2_PUBLIC_BASE || null, { force: forceFlag });
+      if (r) out.worksheetAssets.push({ input_key: String(asset.key), ...r });
+    }
+  }
   return { statusCode: 200, headers: corsHeaders, body: JSON.stringify(out) };
 };
+
+async function processWorksheetAsset(src, s3, bucket, publicBase, opts = {}) {
+  try {
+    const { buffer: originalBuffer } = await fetchToBuffer(src);
+    let finalBuffer = originalBuffer;
+    let mime = detectImageType(originalBuffer).mime;
+    let ext = detectImageType(originalBuffer).ext;
+
+    // Match the existing image pipeline's conservative sizing/compression where Sharp is available.
+    if (Sharp) {
+      let meta = {};
+      try { meta = await Sharp(originalBuffer).metadata(); } catch {}
+      const hasAlpha = !!meta.hasAlpha;
+      try {
+        let pipeline = Sharp(originalBuffer).rotate().resize(800, 800, { fit: 'inside', withoutEnlargement: true });
+        if (hasAlpha) {
+          finalBuffer = await pipeline.webp({ quality: 82, effort: 4 }).toBuffer();
+          mime = 'image/webp';
+          ext = 'webp';
+        } else {
+          finalBuffer = await pipeline.jpeg({ quality: 82, progressive: true, mozjpeg: true }).toBuffer();
+          mime = 'image/jpeg';
+          ext = 'jpg';
+        }
+      } catch (e) {
+        console.warn('[upload-images] worksheet compression failed; using original bytes', e?.message);
+      }
+    }
+
+    const sha256 = crypto.createHash('sha256').update(finalBuffer).digest('hex');
+    const key = `worksheets/assets/sha256/${sha256.slice(0,2)}/${sha256}.${ext}`;
+    if (opts.force || !(await exists(s3, bucket, key))) {
+      await s3.send(new PutObjectCommand({
+        Bucket: bucket,
+        Key: key,
+        Body: finalBuffer,
+        ContentType: mime,
+        CacheControl: 'public, max-age=31536000, immutable'
+      }));
+    }
+    const publicUrl = publicBase ? join(publicBase, key) : `/.netlify/functions/image_proxy?key=${encodeURIComponent(key)}`;
+    return { url: publicUrl, asset_key: key, sha256, mime_type: mime, bytes: finalBuffer.length };
+  } catch (e) {
+    console.warn('[upload-images] worksheet asset failed', e?.message);
+    return null;
+  }
+}
 
 async function processImage(src, keyPrefix, baseName, s3, bucket, publicBase, opts = {}) {
   try {
