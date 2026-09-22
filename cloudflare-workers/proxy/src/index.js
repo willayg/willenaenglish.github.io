@@ -1,11 +1,12 @@
 /**
- * Cloudflare Worker: API Gateway + Set-Cookie domain rewrite
- *
- * Main API gateway at api.willenaenglish.com.
+ * Cloudflare Worker: API gateway and cookie-domain rewrite.
+ * Daily Study V2 is Cloudflare-only and uses a direct /api/daily-study route.
  */
 
 const NETLIFY_BASE = 'https://willenaenglish.netlify.app';
 const COOKIE_DOMAIN = '.willenaenglish.com';
+const TEST_PREP_EDGE = 'https://fiieuiktlsivwfgyivai.supabase.co/functions/v1/test-prep-teacher';
+const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
 
 const FUNCTION_TO_BINDING = {
   supabase_auth: 'SUPABASE_AUTH',
@@ -13,18 +14,14 @@ const FUNCTION_TO_BINDING = {
   log_word_attempt: 'LOG_WORD_ATTEMPT',
   progress_summary: 'PROGRESS_SUMMARY',
   get_audio_urls: 'GET_AUDIO_URLS',
+  pixabay: 'PIXABAY',
+  student_level_test: 'STUDENT_LEVEL_TEST',
   admin_classes: 'ADMIN_CLASSES',
+  worksheet_assets: 'WORKSHEET_ASSETS',
 };
 
-const PREFER_CF_WORKER = {
-  // Emergency rollback: use the previously working Netlify auth backend.
-  supabase_auth: false,
-  homework_api: true,
-  log_word_attempt: true,
-  progress_summary: true,
-  get_audio_urls: true,
-  admin_classes: true,
-};
+const PREFER_CF_WORKER = new Set(Object.keys(FUNCTION_TO_BINDING).filter(function(name){ return name !== 'supabase_auth'; }));
+const CLOUDFLARE_ONLY = new Set(['student_level_test', 'admin_classes', 'worksheet_assets']);
 
 const ALLOWED_ORIGINS = new Set([
   'https://willenaenglish.netlify.app',
@@ -32,10 +29,10 @@ const ALLOWED_ORIGINS = new Set([
   'https://willenaenglish-github-io.pages.dev',
   'https://willenaenglish.com',
   'https://www.willenaenglish.com',
+  'https://cf.willenaenglish.com',
+  'https://staging.willenaenglish.com',
   'https://teachers.willenaenglish.com',
   'https://students.willenaenglish.com',
-  'https://staging.willenaenglish.com',
-  'https://cf.willenaenglish.com',
   'https://api.willenaenglish.com',
 ]);
 
@@ -45,14 +42,12 @@ function extractFunctionName(pathname) {
 }
 
 function corsHeaders(origin) {
-  const allow = ALLOWED_ORIGINS.has(origin) ? origin : 'https://willenaenglish.com';
+  const allow = ALLOWED_ORIGINS.has(origin) ? origin : 'https://students.willenaenglish.com';
   return {
     'Access-Control-Allow-Origin': allow,
     'Access-Control-Allow-Credentials': 'true',
     'Access-Control-Allow-Methods': 'GET,POST,DELETE,OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-    'Cache-Control': 'private, max-age=0, no-store',
-    'Vary': 'Origin',
   };
 }
 
@@ -61,140 +56,233 @@ function accessTokenFromCookie(cookieHeader) {
   return match ? decodeURIComponent(match[1]) : '';
 }
 
+function bearerToken(headers) {
+  const value = String(headers.get('Authorization') || '').trim();
+  return /^Bearer\s+/i.test(value) ? value.replace(/^Bearer\s+/i, '').trim() : '';
+}
+
+async function authenticatedUserId(request, env) {
+  const auth = env?.SUPABASE_AUTH;
+  if (!auth || typeof auth.fetch !== 'function') return '';
+  const url = new URL(request.url);
+  url.pathname = '/';
+  url.search = '?action=whoami';
+  const headers = new Headers(request.headers);
+
+  if (!accessTokenFromCookie(headers.get('Cookie'))) {
+    const token = bearerToken(headers);
+    if (token) headers.set('Cookie', `sb_access=${encodeURIComponent(token)}`);
+  }
+
+  const response = await auth.fetch(new Request(url.toString(), {
+    method: 'GET',
+    headers,
+  }));
+  if (!response.ok) return '';
+  const data = await response.json().catch(() => null);
+  return data && data.success && data.user_id ? String(data.user_id) : '';
+}
+
+async function routeDailyStudy(request, env) {
+  const binding = env?.DAILY_STUDY_V2;
+  if (!binding || typeof binding.fetch !== 'function') {
+    return new Response(JSON.stringify({ success:false, error:'Daily Study service unavailable' }), {
+      status:503,
+      headers:{'content-type':'application/json; charset=utf-8'}
+    });
+  }
+
+  const userId = await authenticatedUserId(request, env);
+  if (!userId) {
+    return new Response(JSON.stringify({ success:false, error:'Not signed in' }), {
+      status:401,
+      headers:{'content-type':'application/json; charset=utf-8'}
+    });
+  }
+
+  const headers = new Headers(request.headers);
+  headers.set('X-Willena-Authenticated-User', userId);
+  headers.delete('Authorization');
+  const response = await binding.fetch(new Request(request.url, {
+    method: request.method,
+    headers,
+    body: request.method !== 'GET' && request.method !== 'HEAD' ? request.body : undefined,
+  }));
+  const responseHeaders = new Headers(response.headers);
+  responseHeaders.set('X-Willena-Upstream', 'cloudflare:daily-study-v2');
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers: responseHeaders,
+  });
+}
+
 async function routeToCFWorker(request, binding, functionName, url) {
   const workerUrl = new URL(request.url);
   const remainingPath = url.pathname.replace(/^\/?\.?netlify\/functions\/[^/?]+\/?/, '/') || '/';
-  workerUrl.pathname = remainingPath === '' ? '/' : remainingPath;
-  workerUrl.search = url.search;
+  workerUrl.pathname = remainingPath || '/';
+  console.log(`[proxy] Cloudflare Worker ${functionName}: ${workerUrl.pathname}${workerUrl.search}`);
 
-  const workerHeaders = new Headers(request.headers);
-  workerHeaders.set('X-Willena-Original-Origin', request.headers.get('Origin') || '');
-  workerHeaders.set('X-Willena-Gateway-Host', url.hostname);
-
-  if (functionName === 'admin_classes' && !workerHeaders.get('Authorization')) {
-    const token = accessTokenFromCookie(workerHeaders.get('Cookie'));
-    if (token) workerHeaders.set('Authorization', `Bearer ${token}`);
+  const headers = new Headers(request.headers);
+  if (functionName === 'admin_classes' && !headers.get('Authorization')) {
+    const token = accessTokenFromCookie(headers.get('Cookie'));
+    if (token) headers.set('Authorization', `Bearer ${token}`);
   }
 
-  const workerRequest = new Request(workerUrl.toString(), {
+  const response = await binding.fetch(new Request(workerUrl.toString(), {
     method: request.method,
-    headers: workerHeaders,
+    headers,
     body: request.method !== 'GET' && request.method !== 'HEAD' ? request.body : undefined,
+  }));
+  const responseHeaders = new Headers(response.headers);
+  responseHeaders.set('X-Willena-Upstream', `cloudflare:${functionName}`);
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers: responseHeaders,
   });
+}
 
-  return binding.fetch(workerRequest);
+async function routeTestPrepTeacher(request, url) {
+  const headers = new Headers(request.headers);
+  let token = bearerToken(headers);
+  if (!token) token = accessTokenFromCookie(headers.get('Cookie'));
+  if (!token) {
+    return new Response(JSON.stringify({ success:false, error:'Not signed in' }), {
+      status:401,
+      headers:{'content-type':'application/json; charset=utf-8'}
+    });
+  }
+
+  headers.set('Authorization', `Bearer ${token}`);
+  headers.set('apikey', SUPABASE_PUBLISHABLE_KEY);
+  headers.delete('Cookie');
+  headers.delete('Host');
+  headers.delete('Content-Length');
+  headers.delete('cf-connecting-ip');
+
+  const target = TEST_PREP_EDGE + (url.search || '');
+  console.log(`[proxy] Supabase Edge test_prep_api: ${url.search || ''}`);
+  const response = await fetch(new Request(target, {
+    method: request.method,
+    headers,
+    body: request.method !== 'GET' && request.method !== 'HEAD' ? request.body : undefined,
+    redirect: 'manual',
+  }));
+  const responseHeaders = new Headers(response.headers);
+  responseHeaders.set('X-Willena-Upstream', 'supabase:test-prep-teacher');
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers: responseHeaders,
+  });
 }
 
 async function routeToNetlify(request, url) {
   const backendUrl = NETLIFY_BASE + url.pathname + url.search;
-  const reqHeaders = new Headers(request.headers);
-  reqHeaders.delete('cf-connecting-ip');
-
-  const backendReq = new Request(backendUrl, {
+  console.log(`[proxy] Legacy Netlify route: ${backendUrl}`);
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.delete('cf-connecting-ip');
+  return fetch(new Request(backendUrl, {
     method: request.method,
-    headers: reqHeaders,
+    headers: requestHeaders,
     body: request.method !== 'GET' && request.method !== 'HEAD' ? request.body : undefined,
-    redirect: 'follow'
-  });
-
-  return fetch(backendReq);
+    redirect: 'follow',
+  }));
 }
 
 function rewriteResponse(response, origin) {
-  const newHeaders = new Headers();
-
+  const headers = new Headers();
   for (const [key, value] of response.headers) {
-    if (key.toLowerCase() !== 'set-cookie') newHeaders.append(key, value);
+    if (key.toLowerCase() !== 'set-cookie') headers.append(key, value);
   }
 
-  for (const [key, value] of response.headers) {
-    if (key.toLowerCase() === 'set-cookie') {
-      let cookie = value.trim();
-      if (/;\s*Domain=/i.test(cookie)) {
-        cookie = cookie.replace(/;\s*Domain=[^;]+/i, `; Domain=${COOKIE_DOMAIN}`);
-      } else {
-        cookie += `; Domain=${COOKIE_DOMAIN}`;
-      }
-      if (!/;\s*SameSite=/i.test(cookie)) cookie += '; SameSite=None';
-      if (!/;\s*Secure/i.test(cookie)) cookie += '; Secure';
-      newHeaders.append('Set-Cookie', cookie);
-    }
+  let cookies = [];
+  try {
+    if (typeof response.headers?.getSetCookie === 'function') cookies = response.headers.getSetCookie();
+  } catch (_) {
+    cookies = [];
   }
 
-  const cors = corsHeaders(origin);
-  for (const [key, value] of Object.entries(cors)) newHeaders.set(key, value);
+  for (const rawCookie of cookies) {
+    let cookie = String(rawCookie || '').trim();
+    if (!cookie) continue;
+    if (/;\s*Domain=/i.test(cookie)) cookie = cookie.replace(/;\s*Domain=[^;]+/i, `; Domain=${COOKIE_DOMAIN}`);
+    else cookie += `; Domain=${COOKIE_DOMAIN}`;
+    if (!/;\s*SameSite=/i.test(cookie)) cookie += '; SameSite=None';
+    if (!/;\s*Secure/i.test(cookie)) cookie += '; Secure';
+    headers.append('Set-Cookie', cookie);
+  }
 
+  for (const [key, value] of Object.entries(corsHeaders(origin))) headers.set(key, value);
   return new Response(response.body, {
     status: response.status,
     statusText: response.statusText,
-    headers: newHeaders
+    headers,
   });
 }
 
 async function handleRequest(request, env) {
   const url = new URL(request.url);
   const origin = request.headers.get('Origin') || '';
-
-  if (request.method === 'OPTIONS') {
-    return new Response(null, { status: 204, headers: corsHeaders(origin) });
-  }
+  if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: corsHeaders(origin) });
 
   try {
+    if (url.pathname === '/api/daily-study' || url.pathname === '/api/daily-study/') {
+      const response = await routeDailyStudy(request, env);
+      return rewriteResponse(response, origin);
+    }
+
     if (url.pathname.startsWith('/audio/')) {
-      const binding = env && env.GET_AUDIO_URLS;
-      if (binding && typeof binding.fetch === 'function') {
-        const workerRequest = new Request(request.url, {
-          method: request.method,
-          headers: request.headers,
-        });
-        return rewriteResponse(await binding.fetch(workerRequest), origin);
+      const binding = env?.GET_AUDIO_URLS;
+      if (!binding || typeof binding.fetch !== 'function') {
+        return new Response('Audio service unavailable', { status: 503, headers: corsHeaders(origin) });
       }
-      return new Response('Audio service unavailable', { status: 503, headers: corsHeaders(origin) });
+      const response = await binding.fetch(new Request(request.url, {
+        method: request.method,
+        headers: request.headers,
+      }));
+      return rewriteResponse(response, origin);
     }
 
     const functionName = extractFunctionName(url.pathname);
     let response;
 
-    // Reuse the already-live supabase_auth gateway route as an internal transport
-    // for admin level-test calls. The auth Worker itself is bypassed here.
-    if (functionName === 'supabase_auth' && url.searchParams.get('gateway_service') === 'admin_classes') {
-      const binding = env && env.ADMIN_CLASSES;
-      if (!binding || typeof binding.fetch !== 'function') {
-        response = new Response(JSON.stringify({ success: false, error: 'Admin level-test service unavailable' }), {
+    if (functionName === 'test_prep_api') {
+      response = await routeTestPrepTeacher(request, url);
+    } else if (functionName && PREFER_CF_WORKER.has(functionName)) {
+      const bindingName = FUNCTION_TO_BINDING[functionName];
+      const binding = env?.[bindingName];
+      if (binding && typeof binding.fetch === 'function') {
+        response = await routeToCFWorker(request, binding, functionName, url);
+      } else if (CLOUDFLARE_ONLY.has(functionName)) {
+        console.error(`[proxy] Missing required Cloudflare binding: ${bindingName}`);
+        response = new Response(JSON.stringify({
+          success: false,
+          error: 'This service is temporarily unavailable because its Cloudflare Worker binding is missing.',
+        }), {
           status: 503,
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'content-type': 'application/json; charset=utf-8' },
         });
       } else {
-        const targetUrl = new URL(url.toString());
-        targetUrl.searchParams.delete('gateway_service');
-        const adminAction = targetUrl.searchParams.get('admin_action');
-        if (adminAction) {
-          targetUrl.searchParams.set('action', adminAction);
-          targetUrl.searchParams.delete('admin_action');
-        }
-        response = await routeToCFWorker(request, binding, 'admin_classes', targetUrl);
+        response = await routeToNetlify(request, url);
       }
-    } else if (functionName && PREFER_CF_WORKER[functionName]) {
-      const bindingName = FUNCTION_TO_BINDING[functionName];
-      const binding = env && env[bindingName];
-      response = binding && typeof binding.fetch === 'function'
-        ? await routeToCFWorker(request, binding, functionName, url)
-        : await routeToNetlify(request, url);
     } else {
       response = await routeToNetlify(request, url);
     }
 
     return rewriteResponse(response, origin);
-  } catch (err) {
-    return new Response(
-      JSON.stringify({ success: false, error: String(err?.message || err) }),
-      { status: 520, headers: { 'Content-Type': 'application/json', ...corsHeaders(origin) } }
-    );
+  } catch (error) {
+    console.error('[proxy] Error:', error);
+    return new Response(JSON.stringify({ success: false, error: String(error?.message || error) }), {
+      status: 520,
+      headers: { 'content-type': 'application/json', ...corsHeaders(origin) },
+    });
   }
 }
 
 export default {
-  async fetch(request, env, ctx) {
+  fetch(request, env) {
     return handleRequest(request, env);
-  }
+  },
 };
