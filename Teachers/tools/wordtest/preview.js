@@ -1,7 +1,7 @@
-import { state } from './state.js';
-import { enableImageDragAndDrop, renderImage, getImageUrl, getPlaceholderImage } from './images.js';
-import { hideRandomLetters } from './behaviors.js';
-import { generateWorksheetHTML as rendererGenerateWorksheetHTML } from './renderer.js';
+import { state } from './state.js?v=20260922-wb2011';
+import { enableImageDragAndDrop, renderImage, getImageUrl, getPlaceholderImage } from './images.js?v=20260922-wb2011';
+import { hideRandomLetters } from './behaviors.js?v=20260922-wb2011';
+import { generateWorksheetHTML as rendererGenerateWorksheetHTML } from './renderer.js?v=20260922-wb2011';
 
 const currentWords = state.currentWords;
 const currentSettings = state.currentSettings;
