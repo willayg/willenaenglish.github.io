@@ -1,11 +1,11 @@
-import { loadModules } from './loader.js';
-import { setupEventListeners, setupAIEventListeners } from './events.js';
-import { extractWords } from './word_ops.js';
-import { updatePreview, updatePreviewStyles } from './preview.js';
-import { clearAll } from './worksheet_integration.js';
-import { updateFont, updateFontSize, increaseFontSize, decreaseFontSize, updateImageGap, updateImageSize, updateLayout } from './controls.js';
-import { state } from './state.js';
-import { printFile, generatePDF } from './print.js';
+import { loadModules } from './loader.js?v=20260922-wb2011';
+import { setupEventListeners, setupAIEventListeners } from './events.js?v=20260922-wb2011';
+import { extractWords } from './word_ops.js?v=20260922-wb2011';
+import { updatePreview, updatePreviewStyles } from './preview.js?v=20260922-wb2011';
+import { clearAll } from './worksheet_integration.js?v=20260922-wb2011';
+import { updateFont, updateFontSize, increaseFontSize, decreaseFontSize, updateImageGap, updateImageSize, updateLayout } from './controls.js?v=20260922-wb2011';
+import { state } from './state.js?v=20260922-wb2011';
+import { printFile, generatePDF } from './print.js?v=20260922-wb2011';
 
 function makeDraggable() {
     const toolbar = document.getElementById('floatingToolbar');
