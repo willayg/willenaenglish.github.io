@@ -27,6 +27,7 @@ body.vocab-session-open{overflow:hidden}
 .vocab-progress-fill{height:100%;width:0;background:linear-gradient(90deg,var(--cyan-strong),var(--pink));transition:width .22s ease}
 .vocab-session-main{overflow:auto;padding:clamp(18px,4vw,34px) 16px calc(24px + env(safe-area-inset-bottom))}
 .vocab-question-wrap{width:min(720px,100%);margin:0 auto}
+.vocab-instruction[hidden]{display:none!important}
 .vocab-instruction{display:inline-block;max-width:100%;margin:0 0 12px;padding:9px 13px;border:1px solid #dfecee;border-radius:13px;background:#fff;color:#55747a;font-weight:750;font-size:.9rem;box-shadow:0 2px 8px rgba(28,72,78,.04)}
 .vocab-question-wrap .question-card{background:#f8fcfc;border:1px solid var(--line);border-radius:22px;padding:clamp(18px,4vw,28px);box-shadow:var(--shadow)}
 .vocab-question-wrap .prompt{margin:0 0 22px;color:#244f56;font-size:clamp(2rem,7vw,3.8rem);line-height:1.08;font-weight:900;letter-spacing:-.035em;text-align:center}
