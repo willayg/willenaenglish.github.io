@@ -5,7 +5,7 @@ import {loadPracticeContent,questionAllowedForStudent} from './practice-loader.j
 import {createPerfDebug} from './perf-debug.js?v=1.0.0';
 import {resolveContentIds,reviewQuestionFromItem} from './content-source.js?v=2.24.4';
 import {initTracking,refreshTrackingState,refreshPlanSnapshot,setTrackingContext,startSession,recordAttempt,completeSession,trackingState} from './tracking-client.js?v=2.17t';
-import {startVocabularyLearning} from './vocab-learning.js?v=2.14.7';
+import {startVocabularyLearning} from './vocab-learning.js?v=2.14.8';
 import {startSentencePracticeV1,stopSentencePracticeV1} from './sentence-practice-v1.js?v=1.2.0';
 import {loadCardStats,invalidateCardStats,getStatsDiagnostics,formatCardMetric,formatAccuracy,reviewCounts} from './stats-client.js?v=2.16a';
 import {loadReviewQueue,refreshReviewQueue} from '../shared/student-review.js?v=1.0.0';
