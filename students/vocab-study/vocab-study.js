@@ -236,6 +236,7 @@ function resetQuestionChrome(){
   state.checked=false;state.nextReadyAt=0;
   actionBtn.disabled=true;actionBtn.textContent='Check Answer';actionBtn.classList.remove('is-next');
   answerNote.hidden=true;answerNote.innerHTML='';
+  instructionEl.hidden=false;
   bottomEl.hidden=false;questionStage.hidden=false;
 }
 function renderQuestion(){
@@ -317,6 +318,7 @@ function finishSession(){
     return item?activityWord(item):key;
   }).filter(Boolean);
   questionStage.hidden=false;
+  instructionEl.hidden=true;
   instructionEl.textContent='';
   root.innerHTML=
     '<section class="vocab-finish">'+
