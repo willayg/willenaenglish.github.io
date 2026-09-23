@@ -990,7 +990,7 @@
               teacherSelectEl.appendChild(opt);
             });
           }
-          const bookArr = Array.from(bookSet)          const bookArr = Array.from(bookSet).filter(Boolean).sort((a,b)=>a.localeCompare(b,'en',{sensitivity:'base'}));
+          const bookArr = Array.from(bookSet).filter(Boolean).sort((a,b)=>a.localeCompare(b,'en',{sensitivity:'base'}));
           const bookSelectEl = document.getElementById('bookFilter');
             if (bookSelectEl) {
               bookArr.forEach(bk => {
@@ -1142,6 +1142,6 @@ async function loadWorksheet() {
 
   </script>
 
-  <div id="wordBuilderManagerRevision" style="position:fixed;right:8px;bottom:5px;z-index:10000;font:10px/1.2 Arial,sans-serif;color:rgba(60,70,85,.55);background:rgba(255,255,255,.72);padding:2px 5px;border-radius:4px;pointer-events:none;user-select:none;">v2.00.10</div>
+  <div id="wordBuilderManagerRevision" style="position:fixed;right:8px;bottom:5px;z-index:10000;font:10px/1.2 Arial,sans-serif;color:rgba(60,70,85,.55);background:rgba(255,255,255,.72);padding:2px 5px;border-radius:4px;pointer-events:none;user-select:none;">v2.00.11</div>
 </body>
 </html>
