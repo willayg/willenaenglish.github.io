@@ -124,6 +124,26 @@
   const vocabOnlyParam = params.get('vocab_only');
   const requireWordsParam = params.get('require_words');
 
+  // Word Builder creator identity: UUID is authoritative; names are display-only.
+  function getCurrentUserId() {
+    return String(localStorage.getItem('userId') || '').trim();
+  }
+
+  function getCurrentUsername() {
+    let username = String(localStorage.getItem('username') || '').trim();
+    if (!username) {
+      const email = localStorage.getItem('userEmail');
+      if (email) username = String(email).split('@')[0];
+    }
+    return username;
+  }
+
+  let wordBuilderCurrentUser = {
+    id: getCurrentUserId(),
+    username: getCurrentUsername(),
+    name: getCurrentUsername()
+  };
+
     document.getElementById('saveUI').style.display = mode === 'save' ? 'block' : 'none';
     document.getElementById('loadUI').style.display = mode === 'load' ? 'block' : 'none';
 
@@ -247,7 +267,14 @@
           : await WillenaAPI.fetch(checkEndpoint);
         const checkData = await checkRes.json();
         if (checkData.success && Array.isArray(checkData.data)) {
-          const found = checkData.data.find(ws => ws.title === worksheet.title && ws.username === worksheet.username);
+          const currentCreatorId = getCurrentUserId();
+          const found = checkData.data.find(ws => {
+            if (ws.title !== worksheet.title) return false;
+            if (worksheet.worksheet_type === 'wordtest' && currentCreatorId) {
+              return String(ws.creator_id || '') === currentCreatorId;
+            }
+            return ws.username === worksheet.username;
+          });
           if (found) {
             existingId = found.user_id;
             duplicateFound = true;
@@ -330,7 +357,8 @@
     const deduped = [];
     const seen = {};
     data.forEach(ws => {
-      const key = `${ws.title}|${ws.worksheet_type}|${ws.username || ''}`;
+      const creatorKey = ws.creator_id || ws.username || '';
+      const key = `${ws.title}|${ws.worksheet_type}|${creatorKey}`;
       if (!seen[key] || (ws.updated_at && ws.updated_at > seen[key].updated_at)) {
         seen[key] = ws;
       }
@@ -464,7 +492,10 @@
       }
 
       // Permission: Only allow selection if admin or creator
-      const canDelete = isAdmin || (ws.username && ws.username === currentUser);
+      const currentUserId = getCurrentUserId();
+      const canDelete = isAdmin ||
+        (ws.creator_id && currentUserId && String(ws.creator_id) === currentUserId) ||
+        (!ws.creator_id && ws.username && ws.username === currentUser);
 
       const tr = document.createElement('tr');
       tr.className = 'hover:bg-blue-50 cursor-pointer';
@@ -575,7 +606,10 @@
     table.appendChild(tbody);
 
     // Add Delete Selected trash can button if user can delete at least one worksheet
-    const canDeleteAny = deduped.some(ws => isAdmin || (ws.username && ws.username === currentUser));
+    const currentUserId = getCurrentUserId();
+    const canDeleteAny = deduped.some(ws => isAdmin ||
+      (ws.creator_id && currentUserId && String(ws.creator_id) === currentUserId) ||
+      (!ws.creator_id && ws.username && ws.username === currentUser));
     if (canDeleteAny) {
       const deleteBtn = document.createElement('button');
       // Plain text 'Delete Selected' in Poppins font, no button style
@@ -716,19 +750,26 @@
       queryParams += `&type=${filterType}`;
     }
 
-  // Teacher filtering logic (created_by param expected by backend)
+  // Teacher filtering: Word Builder uses creator UUID; names are display/fallback only.
     const teacherSelect = document.getElementById('teacherFilter');
     let teacherValue = teacherSelect ? teacherSelect.value : '';
-    // Blank value => restrict to current user. __ALL__ => no teacher filter.
+    // Blank value => My Worksheets. __ALL__ => no teacher filter.
     if (teacherValue === '') {
-      let currentUser = localStorage.getItem('username') || '';
-      if (!currentUser) {
-        const email = localStorage.getItem('userEmail');
-        if (email) currentUser = email.split('@')[0];
+      const currentUserId = getCurrentUserId();
+      const currentUsername = getCurrentUsername();
+      if (filterType === 'wordtest' && currentUserId) {
+        queryParams += `&creator_id=${encodeURIComponent(currentUserId)}`;
+      } else if (currentUsername) {
+        queryParams += `&created_by=${encodeURIComponent(currentUsername)}`;
       }
-      if (currentUser) queryParams += `&created_by=${encodeURIComponent(currentUser)}`;
     } else if (teacherValue !== '__ALL__') {
-      queryParams += `&created_by=${encodeURIComponent(teacherValue)}`;
+      if (filterType === 'wordtest' && teacherValue.startsWith('id:')) {
+        queryParams += `&creator_id=${encodeURIComponent(teacherValue.slice(3))}`;
+      } else if (teacherValue.startsWith('name:')) {
+        queryParams += `&creator_username=${encodeURIComponent(teacherValue.slice(5))}`;
+      } else {
+        queryParams += `&created_by=${encodeURIComponent(teacherValue)}`;
+      }
     }
 
     // Book filter
@@ -795,6 +836,14 @@
       .then(result => {
         console.log('Loaded worksheets:', result);
         if (result.success) {
+          if (filterType === 'wordtest' && result.current_user && result.current_user.id) {
+            wordBuilderCurrentUser = {
+              id: String(result.current_user.id || ''),
+              username: String(result.current_user.username || ''),
+              name: String(result.current_user.name || result.current_user.username || '')
+            };
+            try { localStorage.setItem('userId', wordBuilderCurrentUser.id); } catch (_) {}
+          }
           // Optionally filter client-side to only rows with words when requested
           let data = result.data || [];
           if (requireWordsParam) {
@@ -893,29 +942,55 @@
           : await WillenaAPI.fetch(filterEndpoint);
         const data = await res.json();
         if (data.success && Array.isArray(data.data)) {
-          const teacherSet = new Set();
+          if (filterType === 'wordtest' && data.current_user && data.current_user.id) {
+            wordBuilderCurrentUser = {
+              id: String(data.current_user.id || ''),
+              username: String(data.current_user.username || ''),
+              name: String(data.current_user.name || data.current_user.username || '')
+            };
+            try { localStorage.setItem('userId', wordBuilderCurrentUser.id); } catch (_) {}
+          }
+
+          const teacherMap = new Map();
           const bookSet = new Set();
           data.data.forEach(ws => {
-            if (ws.username) teacherSet.add(ws.username.trim());
             if (ws.book) bookSet.add(ws.book.trim());
+            const creatorId = String(ws.creator_id || '').trim();
+            const username = String(ws.username || '').trim();
+
+            if (filterType === 'wordtest' && creatorId) {
+              const key = `id:${creatorId}`;
+              const isCurrent = creatorId === String(wordBuilderCurrentUser.id || '');
+              const label = isCurrent
+                ? (wordBuilderCurrentUser.name || wordBuilderCurrentUser.username || username || 'You')
+                : (username || 'Unknown teacher');
+              const existing = teacherMap.get(key);
+              if (!existing || isCurrent) teacherMap.set(key, { value: key, label, isCurrent });
+            } else if (username) {
+              const key = `name:${username.toLowerCase()}`;
+              if (!teacherMap.has(key)) {
+                teacherMap.set(key, { value: `name:${username}`, label: username, isCurrent: false });
+              }
+            }
           });
-          const currentUserName = (localStorage.getItem('username') || (localStorage.getItem('userEmail') ? localStorage.getItem('userEmail').split('@')[0] : '') || '').trim();
-          const teacherArr = Array.from(teacherSet).sort((a,b)=>a.localeCompare(b,'en',{sensitivity:'base'}));
+
+          const teacherArr = Array.from(teacherMap.values())
+            .sort((a,b)=>a.label.localeCompare(b.label,'en',{sensitivity:'base'}));
           const teacherSelectEl = document.getElementById('teacherFilter');
           if (teacherSelectEl) {
-            // Preserve first option (My Worksheets)
-            // Add All Teachers option
             const allOpt = document.createElement('option');
-            allOpt.value='__ALL__'; allOpt.textContent='All Teachers';
+            allOpt.value='__ALL__';
+            allOpt.textContent='All Teachers';
             teacherSelectEl.appendChild(allOpt);
+
             teacherArr.forEach(t => {
               const opt = document.createElement('option');
-              opt.value = t; opt.textContent = t === currentUserName ? `${t} (You)` : t;
+              opt.value = t.value;
+              opt.textContent = t.isCurrent ? `${t.label} (You)` : t.label;
               teacherSelectEl.appendChild(opt);
             });
-            // Ensure dropdown default remains My Worksheets (blank) if current user present
           }
-          const bookArr = Array.from(bookSet).filter(Boolean).sort((a,b)=>a.localeCompare(b,'en',{sensitivity:'base'}));
+          const bookArr = Array.from(bookSet)          const bookArr = Array.from(bookSet).filter(Boolean).sort((a,b)=>a.localeCompare(b,'en',{sensitivity:'base'}));
           const bookSelectEl = document.getElementById('bookFilter');
             if (bookSelectEl) {
               bookArr.forEach(bk => {
@@ -1067,6 +1142,6 @@ async function loadWorksheet() {
 
   </script>
 
-  <div id="wordBuilderManagerRevision" style="position:fixed;right:8px;bottom:5px;z-index:10000;font:10px/1.2 Arial,sans-serif;color:rgba(60,70,85,.55);background:rgba(255,255,255,.72);padding:2px 5px;border-radius:4px;pointer-events:none;user-select:none;">v2.00.09</div>
+  <div id="wordBuilderManagerRevision" style="position:fixed;right:8px;bottom:5px;z-index:10000;font:10px/1.2 Arial,sans-serif;color:rgba(60,70,85,.55);background:rgba(255,255,255,.72);padding:2px 5px;border-radius:4px;pointer-events:none;user-select:none;">v2.00.10</div>
 </body>
 </html>
