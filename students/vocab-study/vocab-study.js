@@ -111,7 +111,7 @@ async function resolveBookAndUnit(){
   var assignment=list.find(function(x){return String(x.book_id)===String(wanted);})||a.assignment||list[0];
 
   var loaded=await Promise.all([
-    content('content_books?select=id,title,book_title,public_level,internal_level_id&id=eq.'+encodeURIComponent(assignment.book_id)+'&status=in.(review,published)'),
+    content('content_books?select=id,public_level,internal_level_id&id=eq.'+encodeURIComponent(assignment.book_id)+'&status=in.(review,published)'),
     content('content_units?select=id,unit_number,title,metadata&book_id=eq.'+encodeURIComponent(assignment.book_id)+'&status=in.(review,published)&order=unit_number.asc')
   ]);
 
@@ -121,7 +121,7 @@ async function resolveBookAndUnit(){
 
   var book=Object.assign({},assignment,{
     book_id:assignment.book_id,
-    book_title:txt(assignment.book_title||meta.book_title||meta.title||'Vocabulary'),
+    book_title:txt(assignment.book_title||assignment.title||'Vocabulary'),
     public_level:Number(meta.public_level)||null,
     internal_level_id:Number(meta.internal_level_id)||null
   });
