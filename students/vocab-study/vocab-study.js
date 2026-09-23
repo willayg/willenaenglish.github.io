@@ -361,10 +361,10 @@ function ensureEngine(){
   state.engine=new global.WillenaActivityEngine(root,{
     onAnswer:function(){
       state.answered=true;
-    },
-    onNext:next,
-    nextLabel:function(){
-      return state.index>=state.sessionItems.length-1?'완료':'다음 →';
+      if(nextBtn){
+        nextBtn.hidden=false;
+        nextBtn.textContent=state.index>=state.sessionItems.length-1?'완료':'다음';
+      }
     }
   });
   return state.engine;
@@ -450,7 +450,7 @@ async function boot(){
         if(unitTitleEl)unitTitleEl.textContent='Choose a book above.';
         if(startBtn)startBtn.disabled=true;
         global.WillenaVocabStudy={
-          version:'p2-shared-footer-20260923',
+          version:'p2-admin-preview-rolefix-20260923',
           adminMode:true
         };
         return;
@@ -468,10 +468,10 @@ async function boot(){
 
     if(startBtn)startBtn.addEventListener('click',startSession);
     if(closeBtn)closeBtn.addEventListener('click',closeSession);
-    if(nextBtn)nextBtn.hidden=true;
+    if(nextBtn)nextBtn.addEventListener('click',next);
 
     global.WillenaVocabStudy={
-      version:'p2-shared-footer-20260923',
+      version:'p2-admin-preview-rolefix-20260923',
       getState:function(){return state;},
       start:startSession,
       close:closeSession
@@ -480,7 +480,7 @@ async function boot(){
     try{
       global.dispatchEvent(new CustomEvent('willena:vocab-study-ready',{
         detail:{
-          version:'p2-shared-footer-20260923',
+          version:'p2-admin-preview-rolefix-20260923',
           bookId:state.book.book_id,
           unitId:state.unit.id,
           itemCount:state.items.length
