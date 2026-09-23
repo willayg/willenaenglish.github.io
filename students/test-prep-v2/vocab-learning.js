@@ -135,13 +135,27 @@ async function finishRound(){
   const next=ORDER[ORDER.indexOf(ctx.mode)+1];modal('다음 단계가 열렸어요!',`${LABEL[ctx.mode]}의 모든 단어를 끝냈어요. ${LABEL[next]} 단계가 영구적으로 열렸습니다.`,`${LABEL[next]} 시작`,()=>startMode(next));
 }
 async function startMode(mode,{practiceAgain=false}={}){
-  if(!ctx||!unlocked(mode))return false;await saveChain;
-  const previous=ctx.mode;if(previous&&previous!=='cards'&&previous!==mode)await completeSession({correct:ctx.score,total:ctx.index+(ctx.answered?1:0),wrongIds:[...ctx.wrong]});
-  ctx.mode=mode;ctx.index=0;ctx.score=0;ctx.wrong=new Set();ctx.answered=false;ctx.renderer=null;ctx.question=null;
-  if(mode==='cards'){ctx.cardUnknown=new Set();ctx.cardRepeat=false;const pending=practiceAgain||complete('cards')?ctx.items:ctx.items.filter(x=>ctx.cardKnown.get(norm(x.canonical_text))!==true);ctx.queue=shuffle(pending.length?pending:ctx.items);renderCard();return true}
-  const ids=practiceAgain||complete(mode)?ctx.items.map(x=>String(x.id)):remaining(mode),wanted=new Set(ids);ctx.queue=shuffle(ctx.items.filter(x=>wanted.has(String(x.id))));
-  if(!ctx.queue.length){await saveProgress({[COMPLETE[mode]]:true});const next=ORDER[ORDER.indexOf(mode)+1];if(next)modal('다음 단계가 열렸어요!',`${LABEL[mode]}을 완료했어요. ${LABEL[next]} 단계가 열렸습니다.`,`${LABEL[next]} 시작`,()=>startMode(next));else modal('Vocabulary 완료!','모든 단계를 완료했어요.','레슨으로 돌아가기',exit);return false}
-  await startSession('vocabulary');renderQuestion();return true;
+  if(!ctx||!unlocked(mode))return false;
+  try{
+    await saveChain;
+    const previous=ctx.mode;
+    if(previous&&previous!=='cards'&&previous!==mode)await completeSession({correct:ctx.score,total:ctx.index+(ctx.answered?1:0),wrongIds:[...ctx.wrong]});
+    ctx.mode=mode;ctx.index=0;ctx.score=0;ctx.wrong=new Set();ctx.answered=false;ctx.renderer=null;ctx.question=null;
+    if(mode==='cards'){ctx.cardUnknown=new Set();ctx.cardRepeat=false;const pending=practiceAgain||complete('cards')?ctx.items:ctx.items.filter(x=>ctx.cardKnown.get(norm(x.canonical_text))!==true);ctx.queue=shuffle(pending.length?pending:ctx.items);renderCard();return true}
+    const ids=practiceAgain||complete(mode)?ctx.items.map(x=>String(x.id)):remaining(mode),wanted=new Set(ids);ctx.queue=shuffle(ctx.items.filter(x=>wanted.has(String(x.id))));
+    if(!ctx.queue.length){await saveProgress({[COMPLETE[mode]]:true});const next=ORDER[ORDER.indexOf(mode)+1];if(next)modal('다음 단계가 열렸어요!',`${LABEL[mode]}을 완료했어요. ${LABEL[next]} 단계가 열렸습니다.`,`${LABEL[next]} 시작`,()=>startMode(next));else modal('Vocabulary 완료!','모든 단계를 완료했어요.','레슨으로 돌아가기',exit);return false}
+    shell(`<div class="vp-result"><h2>${esc(LABEL[mode])}</h2><p>학습을 준비하고 있어요…</p></div>`,LABEL[mode]);
+    await startSession('vocabulary');
+    renderQuestion();
+    return true;
+  }catch(e){
+    console.error('[v2.15 vocab] mode start failed',mode,e);
+    if(!ctx)return false;
+    ctx.mode=mode;ctx.queue=[];ctx.index=0;ctx.renderer=null;ctx.question=null;
+    shell(`<div class="vp-result"><h2>학습을 시작하지 못했어요</h2><p>연결을 확인한 뒤 다시 시도해 주세요.</p><button class="vp-next" id="vpRetryMode" type="button">다시 시도</button></div>`,LABEL[mode]);
+    const retry=ctx.host.querySelector('#vpRetryMode');if(retry)retry.onclick=()=>startMode(mode,{practiceAgain});
+    return false;
+  }
 }
 function showDone(){ctx.mode='cards';ctx.queue=[];ctx.index=0;shell(`<div class="vp-result tp-vocab-done"><div class="tp-vocab-done-mark">✓</div><h2>Vocabulary 완료</h2><p>카드부터 Spelling까지 모두 끝냈어요. 틀렸던 단어가 있다면 오답 복습에는 그대로 남아 있습니다.</p><button type="button" class="tp-vocab-reopen" id="vpReopen">다시 학습하기</button></div>`);ctx.host.querySelector('#vpReopen').onclick=()=>startMode('cards',{practiceAgain:true})}
 async function exit(){if(!ctx)return;try{if(ctx.mode!=='cards')await completeSession({correct:ctx.score,total:ctx.index+(ctx.answered?1:0),wrongIds:[...ctx.wrong]})}catch(e){console.warn('[v2.13 vocab] close session failed',e)}const cb=ctx.onExit;ctx=null;cb?.()}
