@@ -20,6 +20,8 @@ var closeBtn=document.getElementById('vocabStudyClose');
 var nextBtn=document.getElementById('vocabStudyNext');
 var progressEl=document.getElementById('vocabStudyProgress');
 var titleEl=document.getElementById('vocabStudyTitle');
+var adminPickerEl=document.getElementById('vocabAdminPicker');
+var adminBookSelect=document.getElementById('vocabAdminBookSelect');
 
 var state={
   book:null,
@@ -28,7 +30,9 @@ var state={
   sessionItems:[],
   index:0,
   answered:false,
-  engine:null
+  engine:null,
+  adminMode:false,
+  adminRole:false
 };
 
 function txt(v){return String(v==null?'':v).trim();}
@@ -95,6 +99,77 @@ function resolveUnit(rows,assignment){
   return rows.find(function(u){
     return String(u.id)===String(hint)||String(u.unit_number)===String(n);
   })||rows[0];
+}
+
+async function whoami(){
+  return api('/.netlify/functions/supabase_auth?action=whoami&_='+Date.now());
+}
+
+function adminParams(){
+  var p=new URLSearchParams(location.search);
+  return{
+    enabled:p.get('admin')==='1',
+    bookId:txt(p.get('book_id')),
+    unit:txt(p.get('unit'))
+  };
+}
+
+async function requireAdminMode(){
+  var params=adminParams();
+  if(!params.enabled)return params;
+  var who=await whoami();
+  var role=txt(who&&who.role).toLowerCase();
+  if(role!=='admin')throw new Error('Admin preview is restricted to administrators.');
+  state.adminMode=true;
+  state.adminRole=true;
+  return params;
+}
+
+async function loadAdminCatalog(selectedId){
+  if(!state.adminMode||!adminBookSelect)return;
+  var books=await content('content_books?select=id,title,public_level,internal_level_id&status=in.(review,published)&order=title.asc');
+  adminBookSelect.innerHTML='<option value="">Choose a book…</option>'+books.map(function(b){
+    var level=Number(b.public_level)||Number(b.internal_level_id)||'';
+    return '<option value="'+String(b.id).replace(/"/g,'&quot;')+'"'+(String(b.id)===String(selectedId)?' selected':'')+'>'+String(b.title||'Untitled book')+(level?' · L'+level:'')+'</option>';
+  }).join('');
+  adminPickerEl.hidden=false;
+  adminBookSelect.addEventListener('change',function(){
+    var id=txt(adminBookSelect.value);
+    if(!id)return;
+    var p=new URLSearchParams(location.search);
+    p.set('admin','1');
+    p.set('book_id',id);
+    p.delete('unit');
+    location.search=p.toString();
+  });
+}
+
+async function resolveAdminBookAndUnit(params){
+  if(!params.bookId)throw new Error('Choose a book above to start admin preview.');
+  var loaded=await Promise.all([
+    content('content_books?select=id,title,public_level,internal_level_id&id=eq.'+encodeURIComponent(params.bookId)+'&status=in.(review,published)'),
+    content('content_units?select=id,unit_number,title,metadata&book_id=eq.'+encodeURIComponent(params.bookId)+'&status=in.(review,published)&order=unit_number.asc')
+  ]);
+  var meta=arr(loaded[0])[0];
+  if(!meta)throw new Error('That book could not be found.');
+  var units=arr(loaded[1]);
+  if(!units.length)throw new Error('That book has no available units.');
+  var unit=null;
+  if(params.unit){
+    unit=units.find(function(u){
+      return String(u.id)===String(params.unit)||String(u.unit_number)===String(params.unit);
+    })||null;
+  }
+  unit=unit||units[0];
+  return{
+    book:{
+      book_id:meta.id,
+      book_title:txt(meta.title||'Vocabulary'),
+      public_level:Number(meta.public_level)||null,
+      internal_level_id:Number(meta.internal_level_id)||null
+    },
+    unit:unit
+  };
 }
 
 async function resolveBookAndUnit(){
@@ -351,7 +426,25 @@ async function boot(){
       throw new Error('Shared Study components failed to load.');
     }
 
-    var resolved=await resolveBookAndUnit();
+    var params=await requireAdminMode();
+    if(state.adminMode){
+      await loadAdminCatalog(params.bookId);
+      if(!params.bookId){
+        setStatus('관리자 미리보기 · 교재를 선택하세요.');
+        if(bookTitleEl)bookTitleEl.textContent='Admin preview';
+        if(unitTitleEl)unitTitleEl.textContent='Choose a book above.';
+        if(startBtn)startBtn.disabled=true;
+        global.WillenaVocabStudy={
+          version:'p2-admin-preview-20260923',
+          adminMode:true
+        };
+        return;
+      }
+    }
+
+    var resolved=state.adminMode
+      ?await resolveAdminBookAndUnit(params)
+      :await resolveBookAndUnit();
     state.book=resolved.book;
     state.unit=resolved.unit;
     state.items=await loadVocabularyItems(state.book,state.unit);
@@ -363,7 +456,7 @@ async function boot(){
     if(nextBtn)nextBtn.addEventListener('click',next);
 
     global.WillenaVocabStudy={
-      version:'p2-vocab-session-20260923',
+      version:'p2-admin-preview-20260923',
       getState:function(){return state;},
       start:startSession,
       close:closeSession
@@ -372,7 +465,7 @@ async function boot(){
     try{
       global.dispatchEvent(new CustomEvent('willena:vocab-study-ready',{
         detail:{
-          version:'p2-vocab-session-20260923',
+          version:'p2-admin-preview-20260923',
           bookId:state.book.book_id,
           unitId:state.unit.id,
           itemCount:state.items.length
