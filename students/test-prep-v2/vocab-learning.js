@@ -61,7 +61,7 @@ async function saveCardCheck(item,knew,responseMs){
   const payload={student_id:student,plan_id:ctx.plan.id,lesson:ctx.lesson,lexical_entry_id:item.id,knew:!!knew,repeat_phase:!!ctx.cardRepeat,response_time_ms:Math.max(0,Math.round(responseMs||0)),metadata:{canonical_text:item.canonical_text,translation_ko:item.translation_ko||null,book_label:ctx.plan.book_label||null,source:'test-prep-v2-vocab-card'}};
   try{const r=await trackFetch(`/rest/v1/test_prep_vocab_self_checks`,{method:'POST',headers:{'Content-Type':'application/json',Prefer:'return=minimal'},body:JSON.stringify(payload)});if(!r.ok)throw new Error(await r.text());return true}catch(e){console.warn('[v2.13 vocab] self-check save failed',e);return false}
 }
-function unlocked(mode){if(mode==='cards')return true;if(mode==='ko-en')return !!ctx.progress.cards_complete;if(mode==='en-ko')return !!ctx.progress.ko_en_complete;if(mode==='spelling')return !!ctx.progress.en_ko_complete;return false}
+function unlocked(mode){return ORDER.includes(mode)}
 function complete(mode){return mode==='cards'?!!ctx.progress.cards_complete:!!ctx.progress[COMPLETE[mode]]}
 function remaining(mode){if(mode==='cards')return ctx.items.filter(x=>ctx.cardKnown.get(norm(x.canonical_text))!==true).map(x=>String(x.id));const cleared=new Set(uniq(ctx.progress[CLEARED[mode]]));return ctx.items.filter(x=>!cleared.has(String(x.id))).map(x=>String(x.id))}
 function firstUnfinished(){if(!ctx.progress.cards_complete)return'cards';if(!ctx.progress.ko_en_complete)return'ko-en';if(!ctx.progress.en_ko_complete)return'en-ko';if(!ctx.progress.spelling_complete)return'spelling';return null}
