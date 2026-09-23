@@ -1,6 +1,6 @@
 import {QuestionRenderer} from './question-renderer.js?v=2.20.11';
 import {gradeQuestion} from '../shared/question-grader.js?v=2.4.1';
-import {recordAttempt,startSession,completeSession,trackingState,refreshTrackingState} from './tracking-client.js?v=2.17k';
+import {recordAttempt,startSession,completeSession,trackingState,refreshTrackingState} from './tracking-client.js?v=2.17t';
 import {mountVocabAiWilli} from './ai-willi-vocab.js?v=1.0.0';
 
 const CONTENT='https://gxwfsqxyuufqtitspfqg.supabase.co';
