@@ -502,6 +502,7 @@ function wbLegacyRow(row, maps) {
   return {
     _content_db: true,
     user_id: row.id,
+    creator_id: row.created_by || null,
     title: row.name || '',
     username: row.creator_username || legacy.username || '',
     created_at: row.created_at,
@@ -521,12 +522,14 @@ async function listWordBuilders(env, actor, params) {
   let filtered = (rows || []).filter(row => (allRequested && String(actor.profile.role).toLowerCase() === 'admin') || wbCanAccess(row, actor));
   const maps = await wbBookUnitMaps(env, filtered);
   filtered = filtered.map(row => wbLegacyRow(row, maps));
-  const createdBy = String(params.get('created_by') || '').trim().toLowerCase();
+  const creatorId = String(params.get('creator_id') || '').trim();
+  const creatorUsername = String(params.get('creator_username') || params.get('created_by') || '').trim().toLowerCase();
   const search = String(params.get('search') || '').trim().toLowerCase();
   const book = String(params.get('book') || '').trim().toLowerCase();
   const unit = String(params.get('unit') || '').trim().toLowerCase();
   const layout = String(params.get('layout') || '').trim().toLowerCase();
-  if (createdBy) filtered = filtered.filter(r => String(r.username || '').toLowerCase() === createdBy);
+  if (creatorId) filtered = filtered.filter(r => String(r.creator_id || '') === creatorId);
+  if (creatorUsername) filtered = filtered.filter(r => String(r.username || '').toLowerCase() === creatorUsername);
   if (search) filtered = filtered.filter(r => [r.title,r.book,r.unit].some(v => String(v || '').toLowerCase().includes(search)));
   if (book) filtered = filtered.filter(r => String(r.book || '').toLowerCase().includes(book));
   if (unit) filtered = filtered.filter(r => String(r.unit || '').toLowerCase().includes(unit));
@@ -534,7 +537,15 @@ async function listWordBuilders(env, actor, params) {
   const total = filtered.length;
   const offset = Math.max(0, Number(params.get('offset')) || 0);
   const limit = Math.min(1000, Math.max(1, Number(params.get('limit')) || 50));
-  return { data: filtered.slice(offset, offset + limit), total };
+  return {
+    data: filtered.slice(offset, offset + limit),
+    total,
+    current_user: {
+      id: actor.user.id,
+      username: actor.profile.username || '',
+      name: actor.profile.name || actor.profile.username || ''
+    }
+  };
 }
 async function getWordBuilder(env, actor, id) {
   const collections = await supabaseFetch(env.CONTENT_SUPABASE_URL, env.CONTENT_SUPABASE_SERVICE_ROLE_KEY,
