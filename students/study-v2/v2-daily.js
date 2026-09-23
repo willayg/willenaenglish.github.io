@@ -401,22 +401,22 @@ function showError(error){console.warn('[Daily Study] open',error);openShell(lan
 function showCurrent(){
   paint();setHeader();if(!session)return;if(session.status==='completed'||resolvedCount()>=TARGET){finish();return;}
   var item=currentItem();if(!item){if(root)root.innerHTML='<div class="smart-finish"><h2>'+(langKo()?'오늘의 문제를 모두 사용했어요.':'Daily question pool exhausted.')+'</h2><p>'+(langKo()?'담당 선생님에게 알려 주세요.':'Please tell your teacher.')+'</p></div>';return;}
-  current=prepareActivity(item);answerLocked=false;if(!global.WillenaActivityEngine)throw new Error('Activity engine is not ready.');if(!engine)engine=new global.WillenaActivityEngine(root,{onAnswer:function(){}});engine.setActivity(current);sourceBadge(current);if(panel)panel.scrollTop=0;
+  current=prepareActivity(item);answerLocked=false;nextAfterAnswer=null;if(!global.WillenaActivityEngine)throw new Error('Activity engine is not ready.');if(!engine)engine=new global.WillenaActivityEngine(root,{onAnswer:onEngineAnswer,onNext:function(){var action=nextAfterAnswer;nextAfterAnswer=null;if(action)action();},nextLabel:function(){return nextAfterAnswer===finish?(langKo()?'완료':'Done'):(langKo()?'계속 →':'Continue →');}});engine.setActivity(current);sourceBadge(current);if(panel)panel.scrollTop=0;
 }
-function replaceCheck(label,handler){var check=root&&root.querySelector('.activity-check');if(!check)return;var b=check.cloneNode(true);b.disabled=false;b.textContent=label;check.replaceWith(b);b.addEventListener('click',handler,{once:true});}
 var PENDING_PREFIX='willena-study-v2-daily-pending:v1:';
 var pendingSync=null;
+var nextAfterAnswer=null;
 function pendingKey(){return PENDING_PREFIX+(uid()||'anon')+':'+activeTrack()+':'+activeDate();}
 function loadPending(){try{var q=JSON.parse(localStorage.getItem(pendingKey())||'[]');return Array.isArray(q)?q:[];}catch(_){return[];}}
 function savePending(q){try{if(q&&q.length)localStorage.setItem(pendingKey(),JSON.stringify(q));else localStorage.removeItem(pendingKey());}catch(_){}}
 function queueAnswer(correct){var entry={daily_key:dailyKey(current),correct:!!correct,date:activeDate(),track:activeTrack(),ts:Date.now()};var q=loadPending();if(!q.some(function(x){return String(x.daily_key)===String(entry.daily_key);})){q.push(entry);savePending(q);}return entry;}
 function optimisticApply(entry){if(!session||!entry)return;if(!Array.isArray(session.resolved_keys))session.resolved_keys=[];if(entry.correct&&session.resolved_keys.indexOf(entry.daily_key)<0)session.resolved_keys.push(entry.daily_key);session.cursor=Math.min(arr(session.plan).length,(Number(session.cursor)||0)+1);if(session.resolved_keys.length>=TARGET)session.status='completed';paint();setHeader();}
 async function flushPending(){if(pendingSync)return pendingSync;pendingSync=(async function(){var q=loadPending(),lastData=null;while(q.length){var item=q[0];try{var data=await request('POST',{action:'answer',daily_key:item.daily_key,correct:!!item.correct});if(!data||data.success===false)throw new Error(data&&data.error||'Daily answer was not saved.');lastData=data;q.shift();savePending(q);}catch(error){console.warn('[Daily Study] queued save will retry',error);break;}}if(!q.length&&lastData&&lastData.session){sessionFrom(lastData);if(IS_STAGING)renderTestPanel();}return q.length===0;})();try{return await pendingSync;}finally{pendingSync=null;}}
-async function onAnswer(e){
+async function onEngineAnswer(d){
   if(!document.body.classList.contains('study-v2-daily-mode')||!current||answerLocked)return;
-  var d=e.detail||{},a=d.activity||{},r=d.result||{};if(String(a.id)!==String(current.id))return;answerLocked=true;
+  d=d||{};var a=d.activity||{},r=d.result||{};if(String(a.id)!==String(current.id))return;answerLocked=true;
   var willComplete=!!r.correct&&(resolvedCount()+1)>=TARGET;
-  replaceCheck(willComplete?(langKo()?'완료':'Done'):(langKo()?'계속':'Continue'),willComplete?finish:showCurrent);
+  nextAfterAnswer=willComplete?finish:showCurrent;
   var entry=queueAnswer(!!r.correct);optimisticApply(entry);
   flushPending();
 }
@@ -508,7 +508,6 @@ async function handleTestAction(action){
 }
 
 function bind(){
-  global.addEventListener('willena:activity-answer',onAnswer);
   global.addEventListener('willena:content-mastery-updated',function(){refreshCanonicalMastery();});
   global.addEventListener('focus',syncCard);
   document.addEventListener('visibilitychange',function(){if(!document.hidden)syncCard();});
