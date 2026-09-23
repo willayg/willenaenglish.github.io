@@ -111,7 +111,8 @@ async function showItem(){
   var overlay=session.overlay;
   var next=overlay.querySelector('#aiCoachPracticeNext');
   session.answered=false;
-  if(next)next.hidden=true;
+  next.disabled=true;
+  next.textContent=isKo()?'다음':'Next';
   overlay.querySelector('#aiCoachPracticeProgress').textContent=(session.index+1)+' / '+session.items.length;
   item=await repairConversationPrompt(item);
   if(!session)return;
@@ -137,14 +138,14 @@ function open(plan){
   var overlay=ensureOverlay();
   var root=overlay.querySelector('#aiCoachActivityRoot');
   var next=overlay.querySelector('#aiCoachPracticeNext');
-  if(next)next.hidden=true;
   session={items:safeItems,index:0,overlay:overlay,answered:false,engine:null,homeY:homeY,pointsSessionId:coachSessionId(),planType:text(plan.type)};
   session.engine=new global.WillenaActivityEngine(root,{onAnswer:function(detail){
     if(!session)return;
     awardCoachPoints(detail);
     session.answered=true;
-  },onNext:advance,nextLabel:function(){
-    return session&&session.index>=session.items.length-1?(isKo()?'완료':'Finish'):(isKo()?'다음 →':'Next →');
+    next.disabled=false;
+    next.textContent=session.index>=session.items.length-1?(isKo()?'완료':'Finish'):(isKo()?'다음':'Next');
+    scrollActionIntoView(overlay,next);
   }});
   overlay.querySelector('#aiCoachPracticeTitle').textContent=plan.title||(isKo()?'AI 코치 연습':'AI Coach Practice');
   document.documentElement.style.overflow='hidden';
