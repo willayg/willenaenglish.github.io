@@ -1,6 +1,6 @@
 import {QuestionRenderer} from './question-renderer.js?v=2.20.6';
 import {gradeQuestion} from '../shared/question-grader.js?v=2.1.2';
-import {recordAttempt,startSession,completeSession,trackingState} from './tracking-client.js?v=2.17a';
+import {recordAttempt,startSession,completeSession,trackingState,refreshTrackingState} from './tracking-client.js?v=2.17a';
 import {mountVocabAiWilli} from './ai-willi-vocab.js?v=1.0.0';
 
 const CONTENT='https://gxwfsqxyuufqtitspfqg.supabase.co';
@@ -24,7 +24,16 @@ let ctx=null;
 let saveChain=Promise.resolve();
 
 async function contentGet(path){const r=await fetch(CONTENT+path,{headers:{apikey:CONTENT_KEY,Authorization:`Bearer ${CONTENT_KEY}`},cache:'no-store'});if(!r.ok)throw new Error(await r.text());return r.json()}
-async function trackGet(path){const t=token();if(!t)throw new Error('AUTH_REQUIRED');const r=await fetch(TRACK+path,{headers:{apikey:TRACK_KEY,Authorization:`Bearer ${t}`},cache:'no-store'});if(!r.ok)throw new Error(await r.text());return r.json()}
+async function trackFetch(path,opts={}){
+  let t=token();
+  if(!t){try{await refreshTrackingState()}catch(_){}t=token()}
+  if(!t)throw new Error('AUTH_REQUIRED');
+  const request=access=>fetch(TRACK+path,{...opts,headers:{...(opts.headers||{}),apikey:TRACK_KEY,Authorization:`Bearer ${access}`},cache:'no-store'});
+  let r=await request(t);
+  if(r.status===401){try{await refreshTrackingState()}catch(_){}t=token();if(t)r=await request(t)}
+  return r;
+}
+async function trackGet(path){const r=await trackFetch(path);if(!r.ok)throw new Error(await r.text());return r.json()}
 async function loadItems(unitId){
   const occ=await contentGet(`/rest/v1/source_content_occurrences?select=lexical_entry_id,source_text,metadata&unit_id=eq.${encodeURIComponent(unitId)}&occurrence_type=eq.lexical_entry&skill=eq.vocabulary&order=source_text.asc`);
   const ids=[...new Set((occ||[]).map(x=>x.lexical_entry_id).filter(Boolean))];if(!ids.length)return[];
@@ -43,14 +52,14 @@ async function loadCardChecks(){
 }
 function saveProgress(patch={}){
   if(!ctx)return Promise.resolve(false);ctx.progress=normalizeProgress({...ctx.progress,...patch});
-  const student=trackingState().user?.id,t=token();if(!student||!ctx.plan?.id||!ctx.lesson||!t)return Promise.resolve(false);
+  const student=trackingState().user?.id;if(!student||!ctx.plan?.id||!ctx.lesson)return Promise.resolve(false);
   const snapshot={student_id:student,plan_id:ctx.plan.id,lesson:ctx.lesson,...ctx.progress,updated_at:new Date().toISOString()};
-  saveChain=saveChain.then(async()=>{const r=await fetch(`${TRACK}/rest/v1/test_prep_vocab_progress?on_conflict=student_id,plan_id,lesson`,{method:'POST',headers:{apikey:TRACK_KEY,Authorization:`Bearer ${t}`,'Content-Type':'application/json',Prefer:'resolution=merge-duplicates,return=minimal'},body:JSON.stringify(snapshot)});if(!r.ok)throw new Error(await r.text());window.dispatchEvent(new CustomEvent('testprep:vocab-progress-changed',{detail:snapshot}));return true}).catch(e=>{console.warn('[v2.13 vocab] progress save failed',e);return false});return saveChain;
+  saveChain=saveChain.then(async()=>{const r=await trackFetch(`/rest/v1/test_prep_vocab_progress?on_conflict=student_id,plan_id,lesson`,{method:'POST',headers:{'Content-Type':'application/json',Prefer:'resolution=merge-duplicates,return=minimal'},body:JSON.stringify(snapshot)});if(!r.ok)throw new Error(await r.text());window.dispatchEvent(new CustomEvent('testprep:vocab-progress-changed',{detail:snapshot}));return true}).catch(e=>{console.warn('[v2.13 vocab] progress save failed',e);return false});return saveChain;
 }
 async function saveCardCheck(item,knew,responseMs){
-  const student=trackingState().user?.id,t=token();if(!student||!ctx?.plan?.id||!ctx.lesson||!item?.id||!t)return false;
+  const student=trackingState().user?.id;if(!student||!ctx?.plan?.id||!ctx.lesson||!item?.id)return false;
   const payload={student_id:student,plan_id:ctx.plan.id,lesson:ctx.lesson,lexical_entry_id:item.id,knew:!!knew,repeat_phase:!!ctx.cardRepeat,response_time_ms:Math.max(0,Math.round(responseMs||0)),metadata:{canonical_text:item.canonical_text,translation_ko:item.translation_ko||null,book_label:ctx.plan.book_label||null,source:'test-prep-v2-vocab-card'}};
-  try{const r=await fetch(`${TRACK}/rest/v1/test_prep_vocab_self_checks`,{method:'POST',headers:{apikey:TRACK_KEY,Authorization:`Bearer ${t}`,'Content-Type':'application/json',Prefer:'return=minimal'},body:JSON.stringify(payload)});if(!r.ok)throw new Error(await r.text());return true}catch(e){console.warn('[v2.13 vocab] self-check save failed',e);return false}
+  try{const r=await trackFetch(`/rest/v1/test_prep_vocab_self_checks`,{method:'POST',headers:{'Content-Type':'application/json',Prefer:'return=minimal'},body:JSON.stringify(payload)});if(!r.ok)throw new Error(await r.text());return true}catch(e){console.warn('[v2.13 vocab] self-check save failed',e);return false}
 }
 function unlocked(mode){if(mode==='cards')return true;if(mode==='ko-en')return !!ctx.progress.cards_complete;if(mode==='en-ko')return !!ctx.progress.ko_en_complete;if(mode==='spelling')return !!ctx.progress.en_ko_complete;return false}
 function complete(mode){return mode==='cards'?!!ctx.progress.cards_complete:!!ctx.progress[COMPLETE[mode]]}
