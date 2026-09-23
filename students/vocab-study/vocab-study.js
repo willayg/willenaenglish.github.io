@@ -116,10 +116,24 @@ function adminParams(){
 
 async function requireAdminMode(){
   var params=adminParams();
+  if(adminPickerEl){
+    adminPickerEl.hidden=true;
+    adminPickerEl.style.display='none';
+  }
   if(!params.enabled)return params;
+
   var who=await whoami();
-  var role=txt(who&&who.role).toLowerCase();
-  if(role!=='admin')throw new Error('Admin preview is restricted to administrators.');
+  if(!who||!who.success||!who.user_id){
+    throw new Error('Admin preview requires a signed-in administrator.');
+  }
+
+  var roleData=await api('/.netlify/functions/supabase_auth?action=get_role&user_id='+encodeURIComponent(who.user_id)+'&_='+Date.now());
+  var role=txt(roleData&&roleData.role).toLowerCase();
+
+  if(role!=='admin'){
+    throw new Error('Admin preview is restricted to administrators.');
+  }
+
   state.adminMode=true;
   state.adminRole=true;
   return params;
@@ -133,6 +147,7 @@ async function loadAdminCatalog(selectedId){
     return '<option value="'+String(b.id).replace(/"/g,'&quot;')+'"'+(String(b.id)===String(selectedId)?' selected':'')+'>'+String(b.title||'Untitled book')+(level?' · L'+level:'')+'</option>';
   }).join('');
   adminPickerEl.hidden=false;
+  adminPickerEl.style.display='';
   adminBookSelect.addEventListener('change',function(){
     var id=txt(adminBookSelect.value);
     if(!id)return;
@@ -435,7 +450,7 @@ async function boot(){
         if(unitTitleEl)unitTitleEl.textContent='Choose a book above.';
         if(startBtn)startBtn.disabled=true;
         global.WillenaVocabStudy={
-          version:'p2-admin-preview-20260923',
+          version:'p2-admin-preview-rolefix-20260923',
           adminMode:true
         };
         return;
@@ -456,7 +471,7 @@ async function boot(){
     if(nextBtn)nextBtn.addEventListener('click',next);
 
     global.WillenaVocabStudy={
-      version:'p2-admin-preview-20260923',
+      version:'p2-admin-preview-rolefix-20260923',
       getState:function(){return state;},
       start:startSession,
       close:closeSession
@@ -465,7 +480,7 @@ async function boot(){
     try{
       global.dispatchEvent(new CustomEvent('willena:vocab-study-ready',{
         detail:{
-          version:'p2-admin-preview-20260923',
+          version:'p2-admin-preview-rolefix-20260923',
           bookId:state.book.book_id,
           unitId:state.unit.id,
           itemCount:state.items.length
