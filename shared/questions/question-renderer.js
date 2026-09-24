@@ -136,6 +136,7 @@ export class QuestionRenderer{
   constructor(host){this.host=host;this.question=null;this.state={};this.disabled=false;this.onChange=null}
   render(question,{onChange}={}){
     this.question=question;this.state={selected:new Set(),order:[],blank:[]};this.disabled=false;this.onChange=typeof onChange==='function'?onChange:null;
+    if(question?.form===FORMS.spellingCoach)this.ensureSpellingCoachStyles();
     const controls=this.controls(question);
     this.host.innerHTML=`<div class="prompt">${promptHtml(question)}</div><div class="context">${contextHtml(question)}</div>${guidanceHtml(question)}<div data-answer>${controls}</div><div class="feedback" data-feedback></div>`;
     this.bind(question);this.emit();applyBoldMarkup(this.host);return this;
@@ -152,7 +153,7 @@ export class QuestionRenderer{
     if(q.form===FORMS.spellingCoach){
       const target=answerParts(q)[0]||q.context?.target_en||'';
       const audio=String(q.context?.audio_text||target||'');
-      return `${audio?`<button type="button" class="activity-audio" data-spelling-audio data-audio-text="${esc(audio)}">▶ Hear English</button>`:''}<div class="learn" data-spelling-target>${textHtml(target)}</div><input class="text-input" data-spelling-input ${inputAttrs(q,'spelling-coach')} placeholder="${esc(placeholder(q))}">`;
+      return `${audio?`<button type="button" class="activity-audio" data-spelling-audio data-audio-text="${esc(audio)}">▶ Hear English</button>`:''}<div class="learn" data-spelling-target>${textHtml(target)}</div><input class="text-input spelling-coach-input" data-spelling-input ${inputAttrs(q,'spelling-coach')} placeholder="${esc(placeholder(q))}">`;
     }
     return `<div class="error">Unsupported question form: ${esc(q.form||'unknown')}</div>`;
   }
@@ -206,6 +207,36 @@ export class QuestionRenderer{
     if(q.form===FORMS.learn)return answerParts(q)[0]||'';
     if(q.form===FORMS.spellingCoach)return this.host.querySelector('[data-spelling-input]')?.value.trim()||'';
     return null;
+  }
+  ensureSpellingCoachStyles(){
+    if(document.getElementById('willenaSpellingCoachStyles'))return;
+    const style=document.createElement('style');
+    style.id='willenaSpellingCoachStyles';
+    style.textContent=`
+      .spelling-coach-input{
+        width:100%;
+        min-height:72px;
+        padding:16px 22px;
+        border:3px solid #dcebed;
+        border-radius:22px;
+        background:#fff;
+        color:#173f46;
+        font:800 clamp(1.25rem,4vw,1.8rem) Poppins,system-ui,sans-serif;
+        text-align:center;
+        outline:none;
+        box-shadow:0 8px 22px rgba(34,106,116,.07);
+        transition:border-color .14s ease,box-shadow .14s ease,background .14s ease;
+      }
+      .spelling-coach-input:focus{
+        border-color:#66d6df;
+        background:#fbfeff;
+        box-shadow:0 0 0 5px rgba(102,214,223,.16),0 10px 26px rgba(34,106,116,.08);
+      }
+      @media(max-width:560px){
+        .spelling-coach-input{min-height:68px;padding:14px 18px;border-radius:20px;font-size:1.35rem}
+      }
+    `;
+    document.head.appendChild(style);
   }
   removeGraderOverlay(){
     const overlay=document.querySelector('.grader-blocking-overlay');
