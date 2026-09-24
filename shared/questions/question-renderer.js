@@ -1,4 +1,4 @@
-import {FORMS,parseCorrection} from './question-types.js';
+import {FORMS,parseCorrection} from './question-types.js?v=20260924-spelling1';
 
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const display=v=>String(v??'')
@@ -151,7 +151,8 @@ export class QuestionRenderer{
     if(q.form===FORMS.learn)return `<div class="learn">${textHtml(answerParts(q)[0]||q.context?.target_en||'')}</div>`;
     if(q.form===FORMS.spellingCoach){
       const target=answerParts(q)[0]||q.context?.target_en||'';
-      return `<div class="learn" data-spelling-target>${textHtml(target)}</div><input class="text-input" data-spelling-input ${inputAttrs(q,'spelling-coach')} placeholder="${esc(placeholder(q))}">`;
+      const audio=String(q.context?.audio_text||target||'');
+      return `${audio?`<button type="button" class="activity-audio" data-spelling-audio data-audio-text="${esc(audio)}">▶ Hear English</button>`:''}<div class="learn" data-spelling-target>${textHtml(target)}</div><input class="text-input" data-spelling-input ${inputAttrs(q,'spelling-coach')} placeholder="${esc(placeholder(q))}">`;
     }
     return `<div class="error">Unsupported question form: ${esc(q.form||'unknown')}</div>`;
   }
@@ -165,6 +166,12 @@ export class QuestionRenderer{
       const input=this.host.querySelector('[data-spelling-input]');
       const target=this.host.querySelector('[data-spelling-target]');
       input?.addEventListener('input',()=>{if(target)target.hidden=!!input.value;});
+      this.host.querySelector('[data-spelling-audio]')?.addEventListener('click',e=>{
+        const word=String(e.currentTarget?.dataset?.audioText||'').trim();
+        if(!word||!('speechSynthesis' in window))return;
+        try{speechSynthesis.cancel();const utterance=new SpeechSynthesisUtterance(word);utterance.lang='en-US';speechSynthesis.speak(utterance)}catch{}
+      });
+      requestAnimationFrame(()=>input?.focus?.());
     }
     if([FORMS.order,FORMS.chunks,FORMS.blanks].includes(q.form)){
       this.host.querySelectorAll('[data-chip]').forEach(btn=>btn.addEventListener('click',()=>{if(this.disabled)return;const i=Number(btn.dataset.chip);if(this.state.order.includes(i)){this.state.order=this.state.order.filter(x=>x!==i)}else this.state.order.push(i);this.syncOrder();this.emit()}));
