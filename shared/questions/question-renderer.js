@@ -149,6 +149,10 @@ export class QuestionRenderer{
     if(q.form===FORMS.order||q.form===FORMS.chunks){const chips=Array.isArray(q.chips)?q.chips:[];return `<div class="build" data-build></div><div class="chips" data-pool>${chips.map((x,i)=>`<button type="button" class="chip" data-chip="${i}">${esc(x)}</button>`).join('')}</div>`}
     if(q.form===FORMS.blanks){const masked=String(q.context?.masked||'');const chips=Array.isArray(q.chips)?q.chips:[];return `<div class="masked">${textHtml(masked)}</div><div class="build" data-build></div><div class="chips" data-pool>${chips.map((x,i)=>`<button type="button" class="chip" data-chip="${i}">${esc(x)}</button>`).join('')}</div>`}
     if(q.form===FORMS.learn)return `<div class="learn">${textHtml(answerParts(q)[0]||q.context?.target_en||'')}</div>`;
+    if(q.form===FORMS.spellingCoach){
+      const target=answerParts(q)[0]||q.context?.target_en||'';
+      return `<div class="learn" data-spelling-target>${textHtml(target)}</div><input class="text-input" data-spelling-input ${inputAttrs(q,'spelling-coach')} placeholder="${esc(placeholder(q))}">`;
+    }
     return `<div class="error">Unsupported question form: ${esc(q.form||'unknown')}</div>`;
   }
   bind(q){
@@ -157,6 +161,11 @@ export class QuestionRenderer{
       return;
     }
     this.host.querySelectorAll('input,textarea').forEach(el=>el.addEventListener('input',()=>this.emit()));
+    if(q.form===FORMS.spellingCoach){
+      const input=this.host.querySelector('[data-spelling-input]');
+      const target=this.host.querySelector('[data-spelling-target]');
+      input?.addEventListener('input',()=>{if(target)target.hidden=!!input.value;});
+    }
     if([FORMS.order,FORMS.chunks,FORMS.blanks].includes(q.form)){
       this.host.querySelectorAll('[data-chip]').forEach(btn=>btn.addEventListener('click',()=>{if(this.disabled)return;const i=Number(btn.dataset.chip);if(this.state.order.includes(i)){this.state.order=this.state.order.filter(x=>x!==i)}else this.state.order.push(i);this.syncOrder();this.emit()}));
       this.host.querySelector('[data-build]')?.addEventListener('click',e=>{const btn=e.target.closest('[data-built]');if(!btn||this.disabled)return;const i=Number(btn.dataset.built);this.state.order=this.state.order.filter(x=>x!==i);this.syncOrder();this.emit()});
@@ -176,6 +185,7 @@ export class QuestionRenderer{
     if(q.form===FORMS.correction){const fields=[...this.host.querySelectorAll('[data-wrong],[data-right]')];return fields.length>0&&fields.every(x=>x.value.trim())}
     if(q.form===FORMS.identifiedCorrection){const fields=[...this.host.querySelectorAll('[data-correction-label],[data-wrong],[data-right]')];return fields.length>0&&fields.every(x=>x.value.trim())}
     if([FORMS.order,FORMS.chunks,FORMS.blanks].includes(q.form))return this.state.order.length>0;
+    if(q.form===FORMS.spellingCoach)return !!this.host.querySelector('[data-spelling-input]')?.value.trim();
     return q.form===FORMS.learn;
   }
   getResponse(){
@@ -187,6 +197,7 @@ export class QuestionRenderer{
     if(q.form===FORMS.identifiedCorrection)return answerParts(q).map((_,i)=>{const label=this.host.querySelector(`[data-correction-label="${i}"]`)?.value.trim().replace(/:$/,'')||'',wrong=this.host.querySelector(`[data-wrong="${i}"]`)?.value.trim()||'',right=this.host.querySelector(`[data-right="${i}"]`)?.value.trim()||'';return `${label}: ${wrong} → ${right}`});
     if([FORMS.order,FORMS.chunks,FORMS.blanks].includes(q.form)){const chips=[...this.host.querySelectorAll('[data-chip]')];const values=this.state.order.map(i=>chips[i]?.textContent.trim()||'');return q.form===FORMS.blanks?values:values.join(' ')}
     if(q.form===FORMS.learn)return answerParts(q)[0]||'';
+    if(q.form===FORMS.spellingCoach)return this.host.querySelector('[data-spelling-input]')?.value.trim()||'';
     return null;
   }
   removeGraderOverlay(){
