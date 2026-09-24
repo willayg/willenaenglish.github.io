@@ -13,10 +13,10 @@
 <link rel="stylesheet" href="/students/study/study.css?v=20260808-7">
 <link rel="stylesheet" href="/students/study/study-overrides.css?v=20260808-1">
 <link rel="stylesheet" href="/students/study-v2/v2.css?v=20260814-daily1">
-<link rel="stylesheet" href="./vocab-study.css?v=20260924-flow1">
+<link rel="stylesheet" href="./vocab-study.css?v=20260924-flow2">
 <script src="/students/api-gateway.js?v=20260808-study1"></script>
 <script src="/js/api-config.js?v=20260113c"></script>
-<script src="./auth-guard.js?v=20260924-flow1"></script>
+<script src="./auth-guard.js?v=20260924-flow2"></script>
 <script type="module" src="/students/components/student-header.js?v=20260814-studyv2header2"></script>
 </head>
 <body>
@@ -34,6 +34,11 @@
         <select id="vocabAdminBookSelect" aria-label="Choose book">
           <option value="">Choose a book…</option>
         </select>
+      </section>
+
+      <section id="vocabBookPicker" class="vocab-book-picker" hidden>
+        <span class="vocab-picker-label">교재 선택</span>
+        <div id="vocabBookChoices" class="vocab-book-choices" role="group" aria-label="Choose assigned book"></div>
       </section>
 
       <h2 id="vocabBookTitle">Loading…</h2>
@@ -75,6 +80,6 @@
 </div>
 
 <script src="/students/study/study-question-bank.js?v=20260822-conversationfix1"></script>
-<script type="module" src="./vocab-study.js?v=20260924-flow1"></script>
+<script type="module" src="./vocab-study.js?v=20260924-flow2"></script>
 </body>
 </html>
