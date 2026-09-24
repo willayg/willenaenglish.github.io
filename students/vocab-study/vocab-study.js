@@ -1,4 +1,4 @@
-import {QuestionRenderer} from '/shared/questions/question-renderer.js?v=20260924-spelling2';
+import {QuestionRenderer} from '/shared/questions/question-renderer.js?v=20260924-spelling3';
 
 const SESSION_SIZE=12;
 const CONTENT_URL='https://gxwfsqxyuufqtitspfqg.supabase.co';
@@ -480,6 +480,7 @@ function spellingCoachQuestion(word,index){
     prompt:word.ko,
     context:{target_en:word.word,audio_text:word.word},
     answer:[word.word],
+    hints:{scramble:true},
     input:{language:'en'},
     grading:{constraints:{}}
   };
@@ -618,7 +619,7 @@ async function boot(){
     spellingPreviewBtn?.addEventListener('click',openSpellingPreview);
     closeBtn.addEventListener('click',closeSession);
     actionBtn.addEventListener('click',()=>state.spellingPractice?checkSpellingCoach():checkCurrent());
-    window.WillenaVocabStudy={version:'0.005',getState:()=>state,start:startSession,openSpellingPreview,close:closeSession};
+    window.WillenaVocabStudy={version:'0.006',getState:()=>state,start:startSession,openSpellingPreview,close:closeSession};
   }catch(error){
     console.error('[Vocab Study] boot',error);
     setStatus(error?.message||'불러오지 못했습니다. 새로고침해 주세요.');
