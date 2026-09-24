@@ -13,6 +13,7 @@ const bookTitleEl=el('vocabBookTitle');
 const unitTitleEl=el('vocabUnitTitle');
 const itemCountEl=el('vocabItemCount');
 const startBtn=el('vocabStudyStart');
+const spellingPreviewBtn=el('vocabSpellingPreview');
 const sessionEl=el('vocabStudySession');
 const sessionMain=el('vocabSessionMain');
 const root=el('vocabActivityRoot');
@@ -333,6 +334,7 @@ function renderHome(){
   const words=new Set(state.items.map(activityKey).filter(Boolean)).size;
   itemCountEl.textContent=(words||state.items.length)+' words';
   startBtn.disabled=!state.items.length;
+  if(spellingPreviewBtn)spellingPreviewBtn.disabled=!spellingPreviewWords(state.items).length;
   setStatus(state.items.length?'준비됐어요.':'이 단원에는 사용할 수 있는 단어 문제가 없어요.');
 }
 function updateProgress(){
@@ -399,6 +401,59 @@ function checkCurrent(){
   actionBtn.textContent=state.index>=state.queue.length-1?'Finish':'Next';
   updateProgress();
 }
+function spellingPreviewWords(items){
+  const map=new Map();
+  arr(items).forEach(item=>{
+    const m=item?.metadata||{};
+    const word=txt(m.canonical_lookup||m.canonical_text||activityWord(item));
+    const ko=txt(m.translation_ko||(txt(item?.stimulus?.context)==='한국어 뜻을 고르세요.'?item?.answer:''));
+    if(!word||!ko||!/[A-Za-z]/.test(word))return;
+    const key=word.toLowerCase()+'|'+ko;
+    if(!map.has(key))map.set(key,{word,ko});
+  });
+  return [...map.values()].slice(0,10);
+}
+function playPreviewWord(word){
+  if(!('speechSynthesis' in window))return;
+  try{
+    speechSynthesis.cancel();
+    const utterance=new SpeechSynthesisUtterance(word);
+    utterance.lang='en-US';
+    speechSynthesis.speak(utterance);
+  }catch(_){}
+}
+function openSpellingPreview(){
+  const words=spellingPreviewWords(state.items);if(!words.length)return;
+  titleEl.textContent=state.book.book_title+' · Unit '+state.unit.unit_number+' · Spelling';
+  progressEl.textContent='Practice';
+  progressFill.style.width='0%';
+  instructionEl.hidden=true;
+  answerNote.hidden=true;
+  bottomEl.hidden=true;
+  questionStage.hidden=false;
+  root.innerHTML=
+    '<section class="practice-panel">'+
+      '<div class="practice-toolbar">'+
+        '<div><span class="eyebrow">SPELLING PRACTICE</span><h2>단어를 보고 들어보세요</h2><small class="section-note">먼저 '+words.length+'개 단어를 익혀보세요.</small></div>'+
+      '</div>'+
+      '<div class="lesson-word-grid">'+
+        words.map((w,i)=>
+          '<div class="lesson-word">'+
+            '<button class="speak-mini" type="button" data-preview-word="'+i+'" aria-label="'+escapeHtml(w.word)+' 듣기">▶</button>'+
+            '<div><strong>'+escapeHtml(w.word)+'</strong><span>'+escapeHtml(w.ko)+'</span></div>'+
+          '</div>'
+        ).join('')+
+      '</div>'+
+      '<div class="activity-actions"><button class="primary-button" type="button" disabled>Start Spelling</button></div>'+
+    '</section>';
+  root.querySelectorAll('[data-preview-word]').forEach(btn=>btn.addEventListener('click',()=>{
+    const w=words[Number(btn.dataset.previewWord)];if(w)playPreviewWord(w.word);
+  }));
+  sessionEl.hidden=false;
+  document.body.classList.add('vocab-session-open');
+  sessionMain.scrollTop=0;
+}
+
 function escapeHtml(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function startSession(items=null){
   const source=items&&items.length?items:state.items;if(!source.length)return;
@@ -451,7 +506,7 @@ function finishSession(){
 }
 function closeSession(){
   document.body.classList.remove('vocab-session-open');
-  sessionEl.hidden=true;root.innerHTML='';answerNote.hidden=true;bottomEl.hidden=false;
+  sessionEl.hidden=true;root.innerHTML='';answerNote.hidden=true;bottomEl.hidden=false;instructionEl.hidden=false;
   state.queue=[];state.index=0;state.checked=false;state.renderer=null;
   try{window.scrollTo({top:0,behavior:'auto'})}catch(_){}
 }
@@ -479,13 +534,14 @@ async function boot(){
       renderHome();
     }
     startBtn.addEventListener('click',()=>startSession());
+    spellingPreviewBtn?.addEventListener('click',openSpellingPreview);
     closeBtn.addEventListener('click',closeSession);
     actionBtn.addEventListener('click',checkCurrent);
-    window.WillenaVocabStudy={version:'0.003',getState:()=>state,start:startSession,close:closeSession};
+    window.WillenaVocabStudy={version:'0.004',getState:()=>state,start:startSession,openSpellingPreview,close:closeSession};
   }catch(error){
     console.error('[Vocab Study] boot',error);
     setStatus(error?.message||'불러오지 못했습니다. 새로고침해 주세요.');
-    bookTitleEl.textContent='Could not load vocabulary';unitTitleEl.textContent='Please try again.';startBtn.disabled=true;
+    bookTitleEl.textContent='Could not load vocabulary';unitTitleEl.textContent='Please try again.';startBtn.disabled=true;if(spellingPreviewBtn)spellingPreviewBtn.disabled=true;
   }
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
