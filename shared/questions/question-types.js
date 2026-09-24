@@ -1,6 +1,6 @@
 // Universal Willena question form definitions.
 // Extracted from Test Prep without changing behavior.
-export const FORMS={choice:'choice',multi:'multi',write:'write',multipart:'multipart',correction:'correction',identifiedCorrection:'identified_correction',order:'order',chunks:'chunks',blanks:'blanks',learn:'learn',unsupported:'unsupported'};
+export const FORMS={choice:'choice',multi:'multi',write:'write',multipart:'multipart',correction:'correction',identifiedCorrection:'identified_correction',order:'order',chunks:'chunks',blanks:'blanks',learn:'learn',spellingCoach:'spelling_coach',unsupported:'unsupported'};
 
 export function parseCorrection(value){
   const raw=String(value||'').trim(),m=raw.match(/^(.+?)\s*→\s*(.+)$/);
