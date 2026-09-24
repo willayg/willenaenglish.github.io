@@ -31,7 +31,7 @@ const bookPickerEl=el('vocabBookPicker');
 const bookChoicesEl=el('vocabBookChoices');
 
 const state={
-  book:null,unit:null,items:[],assignments:[],
+  book:null,unit:null,items:[],assignments:[],books:[],activeIndex:0,
   queue:[],index:0,checked:false,renderer:null,
   outcomes:new Map(),reviewKeys:new Set(),retryCounts:new Map(),
   adminMode:false,nextReadyAt:0
@@ -130,41 +130,56 @@ async function resolveAdminBookAndUnit(params){
   unit=unit||units[0];
   return{book:{book_id:meta.id,book_title:txt(meta.title||'Vocabulary'),public_level:Number(meta.public_level)||null,internal_level_id:Number(meta.internal_level_id)||null},unit};
 }
-async function resolveBookAndUnit(){
-  const me=await profile();const className=txt(me.class);if(!className)throw new Error('No active class is assigned.');
-  const a=await assignments(className);
-  const list=Array.isArray(a.assignments)&&a.assignments.length?a.assignments:(a.assignment?[a.assignment]:[]);
-  if(!list.length)throw new Error('No active book is assigned.');
-  let wanted='';try{wanted=localStorage.getItem(ACTIVE_BOOK_KEY)||''}catch(_){}
-  const assignment=list.find(x=>String(x.book_id)===String(wanted))||a.assignment||list[0];
+async function loadAssignedBook(assignment){
+  if(!assignment?.book_id)return null;
   const [books,units]=await Promise.all([
     content('content_books?select=id,public_level,internal_level_id&id=eq.'+encodeURIComponent(assignment.book_id)+'&status=in.(review,published)'),
     content('content_units?select=id,unit_number,title,metadata&book_id=eq.'+encodeURIComponent(assignment.book_id)+'&status=in.(review,published)&order=unit_number.asc')
   ]);
-  const meta=books[0]||{},unit=resolveUnit(units,assignment);if(!unit)throw new Error('No unit is available for this book.');
-  return{book:Object.assign({},assignment,{book_id:assignment.book_id,book_title:txt(assignment.book_title||assignment.title||'Vocabulary'),public_level:Number(meta.public_level)||null,internal_level_id:Number(meta.internal_level_id)||null}),unit,assignments:list};
+  const meta=books[0]||{},unit=resolveUnit(units,assignment);
+  if(!unit)return null;
+  const book=Object.assign({},assignment,{book_id:assignment.book_id,book_title:txt(assignment.book_title||assignment.title||'Vocabulary'),public_level:Number(meta.public_level)||null,internal_level_id:Number(meta.internal_level_id)||null});
+  const items=await loadVocabularyItems(book,unit);
+  return{book,unit,items};
+}
+async function resolveAssignedBooks(){
+  const me=await profile();const className=txt(me.class);if(!className)throw new Error('No active class is assigned.');
+  const a=await assignments(className);
+  const list=(Array.isArray(a.assignments)&&a.assignments.length?a.assignments:(a.assignment?[a.assignment]:[])).filter(x=>x&&x.book_id);
+  if(!list.length)throw new Error('No active book is assigned.');
+  const loaded=(await Promise.all(list.map(loadAssignedBook))).filter(Boolean);
+  if(!loaded.length)throw new Error('No assigned book has available vocabulary units.');
+  let wanted='';try{wanted=localStorage.getItem(ACTIVE_BOOK_KEY)||''}catch(_){}
+  const fallback=a.assignment&&a.assignment.book_id;
+  let activeIndex=loaded.findIndex(x=>String(x.book.book_id)===String(wanted||fallback));
+  if(activeIndex<0)activeIndex=0;
+  return{books:loaded,assignments:list,activeIndex};
+}
+function activateBook(index){
+  const loaded=state.books[index];if(!loaded)return;
+  state.activeIndex=index;state.book=loaded.book;state.unit=loaded.unit;state.items=loaded.items;
+  try{localStorage.setItem(ACTIVE_BOOK_KEY,state.book.book_id)}catch(_){}
+  renderHome();
 }
 
 function renderBookPicker(){
   if(!bookPickerEl||!bookChoicesEl)return;
-  const list=arr(state.assignments);
+  const list=arr(state.books);
   if(state.adminMode||list.length<2){
     bookPickerEl.hidden=true;
     bookChoicesEl.innerHTML='';
     return;
   }
-  bookChoicesEl.innerHTML=list.map(a=>{
-    const id=String(a.book_id||'');
-    const title=txt(a.book_title||a.title||'Book');
-    const active=state.book&&String(state.book.book_id)===id;
-    return '<button class="vocab-book-choice'+(active?' is-active':'')+'" type="button" data-book-id="'+escapeHtml(id)+'">'+escapeHtml(title)+'</button>';
+  bookChoicesEl.innerHTML=list.map((loaded,i)=>{
+    const title=txt(loaded?.book?.book_title||'Book');
+    const active=i===state.activeIndex;
+    return '<button class="vocab-book-choice'+(active?' is-active':'')+'" type="button" data-book-index="'+i+'">'+escapeHtml(title)+'</button>';
   }).join('');
-  bookChoicesEl.querySelectorAll('[data-book-id]').forEach(btn=>{
+  bookChoicesEl.querySelectorAll('[data-book-index]').forEach(btn=>{
     btn.addEventListener('click',()=>{
-      const id=txt(btn.dataset.bookId);
-      if(!id||state.book&&String(state.book.book_id)===String(id))return;
-      try{localStorage.setItem(ACTIVE_BOOK_KEY,id)}catch(_){}
-      location.reload();
+      const index=Number(btn.dataset.bookIndex);
+      if(!Number.isInteger(index)||index===state.activeIndex)return;
+      activateBook(index);
     });
   });
   bookPickerEl.hidden=false;
@@ -387,13 +402,21 @@ async function boot(){
         bookTitleEl.textContent='Admin preview';unitTitleEl.textContent='Choose a book above.';startBtn.disabled=true;return;
       }
     }
-    const resolved=state.adminMode?await resolveAdminBookAndUnit(params):await resolveBookAndUnit();
-    state.book=resolved.book;state.unit=resolved.unit;state.assignments=resolved.assignments||[];state.items=await loadVocabularyItems(state.book,state.unit);
-    renderHome();
+    if(state.adminMode){
+      const resolved=await resolveAdminBookAndUnit(params);
+      state.book=resolved.book;state.unit=resolved.unit;state.items=await loadVocabularyItems(state.book,state.unit);
+      renderHome();
+    }else{
+      const resolved=await resolveAssignedBooks();
+      state.books=resolved.books;state.assignments=resolved.assignments;state.activeIndex=resolved.activeIndex;
+      const active=state.books[state.activeIndex];
+      state.book=active.book;state.unit=active.unit;state.items=active.items;
+      renderHome();
+    }
     startBtn.addEventListener('click',()=>startSession());
     closeBtn.addEventListener('click',closeSession);
     actionBtn.addEventListener('click',checkCurrent);
-    window.WillenaVocabStudy={version:'staging-flow2-20260924',getState:()=>state,start:startSession,close:closeSession};
+    window.WillenaVocabStudy={version:'staging-flow3-20260924',getState:()=>state,start:startSession,close:closeSession};
   }catch(error){
     console.error('[Vocab Study] boot',error);
     setStatus(error?.message||'불러오지 못했습니다. 새로고침해 주세요.');
