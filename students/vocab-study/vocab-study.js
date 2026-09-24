@@ -190,7 +190,40 @@ async function loadSourceVocabulary(unitId){
   const ids=unique(occ.map(o=>o.lexical_entry_id));if(!ids.length)return[];
   const rows=await content('lexical_entries?select=id,canonical_text,translation_ko,emoji&id=in.'+encodeURIComponent('('+ids.join(',')+')')+'&status=in.(review,published)');
   const by={};rows.forEach(r=>by[r.id]=r);
-  return occ.map(o=>{const e=by[o.lexical_entry_id];return e?{id:e.id,occurrenceId:o.id,word:txt(e.canonical_text||o.source_text),ko:txt(e.translation_ko),emoji:e.emoji||null}:null}).filter(x=>x&&x.word&&x.ko);
+  return occ.map(o=>{const e=by[o.lexical_entry_id];return e?{id:e.id,occurrenceId:o.id,word:txt(e.canonical_text||o.source_text),ko:txt(e.translation_ko),emoji:e.emoji||null,source:'source_content'}:null}).filter(x=>x&&x.word&&x.ko);
+}
+function legacyUnitNumbers(meta){
+  const raw=txt(meta?.legacy?.unit);
+  return [...raw.matchAll(/\d+/g)].map(m=>Number(m[0])).filter(Number.isFinite);
+}
+async function loadWordBuilderVocabulary(book,unit){
+  const collections=await content('collections?select=id,unit_id,metadata&collection_type=eq.word_builder&book_id=eq.'+encodeURIComponent(book.book_id));
+  const unitNumber=Number(unit.unit_number);
+  const matched=collections.filter(row=>
+    String(row.unit_id||'')===String(unit.id)||
+    (!row.unit_id&&legacyUnitNumbers(row.metadata).includes(unitNumber))
+  );
+  const collectionIds=unique(matched.map(row=>row.id));if(!collectionIds.length)return[];
+  const items=await content('collection_items?select=id,collection_id,content_id,settings&content_type=eq.lexical_entry&collection_id=in.'+encodeURIComponent('('+collectionIds.join(',')+')'));
+  const lexIds=unique(items.map(row=>row.content_id));if(!lexIds.length)return[];
+  const rows=await content('lexical_entries?select=id,canonical_text,translation_ko,emoji&id=in.'+encodeURIComponent('('+lexIds.join(',')+')')+'&status=in.(review,published)');
+  const by={};rows.forEach(r=>by[r.id]=r);
+  return items.map(item=>{
+    const e=by[item.content_id];if(!e)return null;
+    const settings=item.settings&&typeof item.settings==='object'?item.settings:{};
+    const word=txt(settings.display_english||e.canonical_text);
+    const ko=txt(settings.display_korean||e.translation_ko);
+    return word&&ko?{id:e.id,occurrenceId:'wb-'+item.id,word,ko,emoji:e.emoji||null,source:'word_builder'}:null;
+  }).filter(Boolean);
+}
+function mergeVocabularyPairs(...groups){
+  const map=new Map();
+  groups.flat().forEach(item=>{
+    if(!item?.word||!item?.ko)return;
+    const key=txt(item.word).toLowerCase()+'|'+txt(item.ko);
+    if(!map.has(key)||item.source==='word_builder')map.set(key,item);
+  });
+  return [...map.values()];
 }
 function sourceVocabularyActivities(book,unit,items){
   const out=[],koPool=unique(items.map(x=>x.ko)),enPool=unique(items.map(x=>x.word));
@@ -217,11 +250,12 @@ async function loadVocabularyItems(book,unit){
     ?window.WillenaStudyQuestionBank.loadUnit(null,{bookId:book.book_id,unitId:unit.id,bookTitle:book.book_title,unitNumber:Number(unit.unit_number)}).catch(e=>{console.warn('[Vocab Study] authored bank unavailable',e);return[]})
     :Promise.resolve([]);
   const sourcePromise=loadSourceVocabulary(unit.id).catch(e=>{console.warn('[Vocab Study] source vocabulary unavailable',e);return[]});
-  const [authoredRows,sourceRows]=await Promise.all([authoredPromise,sourcePromise]);
-  const authored=arr(authoredRows).filter(a=>a&&a.skill==='vocabulary');
-  // Authored questions are the source of truth. Generated questions are fallback only.
-  if(authored.length)return authored;
-  return sourceVocabularyActivities(book,unit,arr(sourceRows));
+  const wordBuilderPromise=loadWordBuilderVocabulary(book,unit).catch(e=>{console.warn('[Vocab Study] Word Builder vocabulary unavailable',e);return[]});
+  const [authoredRows,sourceRows,wordBuilderRows]=await Promise.all([authoredPromise,sourcePromise,wordBuilderPromise]);
+  const lexicalPairs=mergeVocabularyPairs(arr(sourceRows),arr(wordBuilderRows));
+  // The vocab app's default mode is simple Korean <-> English practice from canonical lexical data.
+  if(lexicalPairs.length)return sourceVocabularyActivities(book,unit,lexicalPairs);
+  return arr(authoredRows).filter(a=>a&&a.skill==='vocabulary');
 }
 
 function activityKey(item){
@@ -416,7 +450,7 @@ async function boot(){
     startBtn.addEventListener('click',()=>startSession());
     closeBtn.addEventListener('click',closeSession);
     actionBtn.addEventListener('click',checkCurrent);
-    window.WillenaVocabStudy={version:'0.001',getState:()=>state,start:startSession,close:closeSession};
+    window.WillenaVocabStudy={version:'0.002',getState:()=>state,start:startSession,close:closeSession};
   }catch(error){
     console.error('[Vocab Study] boot',error);
     setStatus(error?.message||'불러오지 못했습니다. 새로고침해 주세요.');
