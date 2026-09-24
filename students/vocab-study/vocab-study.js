@@ -416,7 +416,7 @@ async function boot(){
     startBtn.addEventListener('click',()=>startSession());
     closeBtn.addEventListener('click',closeSession);
     actionBtn.addEventListener('click',checkCurrent);
-    window.WillenaVocabStudy={version:'staging-flow3-20260924',getState:()=>state,start:startSession,close:closeSession};
+    window.WillenaVocabStudy={version:'0.001',getState:()=>state,start:startSession,close:closeSession};
   }catch(error){
     console.error('[Vocab Study] boot',error);
     setStatus(error?.message||'불러오지 못했습니다. 새로고침해 주세요.');
