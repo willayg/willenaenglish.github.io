@@ -27,9 +27,11 @@ const questionStage=el('vocabQuestionStage');
 const bottomEl=el('vocabSessionBottom');
 const adminPickerEl=el('vocabAdminPicker');
 const adminBookSelect=el('vocabAdminBookSelect');
+const bookPickerEl=el('vocabBookPicker');
+const bookChoicesEl=el('vocabBookChoices');
 
 const state={
-  book:null,unit:null,items:[],
+  book:null,unit:null,items:[],assignments:[],
   queue:[],index:0,checked:false,renderer:null,
   outcomes:new Map(),reviewKeys:new Set(),retryCounts:new Map(),
   adminMode:false,nextReadyAt:0
@@ -140,7 +142,32 @@ async function resolveBookAndUnit(){
     content('content_units?select=id,unit_number,title,metadata&book_id=eq.'+encodeURIComponent(assignment.book_id)+'&status=in.(review,published)&order=unit_number.asc')
   ]);
   const meta=books[0]||{},unit=resolveUnit(units,assignment);if(!unit)throw new Error('No unit is available for this book.');
-  return{book:Object.assign({},assignment,{book_id:assignment.book_id,book_title:txt(assignment.book_title||assignment.title||'Vocabulary'),public_level:Number(meta.public_level)||null,internal_level_id:Number(meta.internal_level_id)||null}),unit};
+  return{book:Object.assign({},assignment,{book_id:assignment.book_id,book_title:txt(assignment.book_title||assignment.title||'Vocabulary'),public_level:Number(meta.public_level)||null,internal_level_id:Number(meta.internal_level_id)||null}),unit,assignments:list};
+}
+
+function renderBookPicker(){
+  if(!bookPickerEl||!bookChoicesEl)return;
+  const list=arr(state.assignments);
+  if(state.adminMode||list.length<2){
+    bookPickerEl.hidden=true;
+    bookChoicesEl.innerHTML='';
+    return;
+  }
+  bookChoicesEl.innerHTML=list.map(a=>{
+    const id=String(a.book_id||'');
+    const title=txt(a.book_title||a.title||'Book');
+    const active=state.book&&String(state.book.book_id)===id;
+    return '<button class="vocab-book-choice'+(active?' is-active':'')+'" type="button" data-book-id="'+escapeHtml(id)+'">'+escapeHtml(title)+'</button>';
+  }).join('');
+  bookChoicesEl.querySelectorAll('[data-book-id]').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      const id=txt(btn.dataset.bookId);
+      if(!id||state.book&&String(state.book.book_id)===String(id))return;
+      try{localStorage.setItem(ACTIVE_BOOK_KEY,id)}catch(_){}
+      location.reload();
+    });
+  });
+  bookPickerEl.hidden=false;
 }
 
 async function loadSourceVocabulary(unitId){
@@ -220,6 +247,7 @@ function activityToQuestion(item){
 }
 function renderHome(){
   if(!state.book||!state.unit)return;
+  renderBookPicker();
   bookTitleEl.textContent=state.book.book_title;
   unitTitleEl.textContent='Unit '+state.unit.unit_number+(state.unit.title?' · '+state.unit.title:'');
   const words=new Set(state.items.map(activityKey).filter(Boolean)).size;
@@ -360,12 +388,12 @@ async function boot(){
       }
     }
     const resolved=state.adminMode?await resolveAdminBookAndUnit(params):await resolveBookAndUnit();
-    state.book=resolved.book;state.unit=resolved.unit;state.items=await loadVocabularyItems(state.book,state.unit);
+    state.book=resolved.book;state.unit=resolved.unit;state.assignments=resolved.assignments||[];state.items=await loadVocabularyItems(state.book,state.unit);
     renderHome();
     startBtn.addEventListener('click',()=>startSession());
     closeBtn.addEventListener('click',closeSession);
     actionBtn.addEventListener('click',checkCurrent);
-    window.WillenaVocabStudy={version:'staging-flow1-20260924',getState:()=>state,start:startSession,close:closeSession};
+    window.WillenaVocabStudy={version:'staging-flow2-20260924',getState:()=>state,start:startSession,close:closeSession};
   }catch(error){
     console.error('[Vocab Study] boot',error);
     setStatus(error?.message||'불러오지 못했습니다. 새로고침해 주세요.');
