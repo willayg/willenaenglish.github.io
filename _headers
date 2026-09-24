@@ -1,3 +1,6 @@
+/Teachers/index.html
+  Cache-Control: no-store, no-cache, must-revalidate, max-age=0
+
 # Teacher dashboard v2 changes frequently during active development.
 # Do not let Cloudflare/browser keep an old shell that points at stale assets.
 /Teachers/dashboard-v2/*
