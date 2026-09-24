@@ -1,6 +1,7 @@
 import {QuestionRenderer} from '/shared/questions/question-renderer.js?v=20260924-universal1';
 
 const SESSION_SIZE=12;
+const SPELLING_BATCH_SIZE=10;
 const CONTENT_URL='https://gxwfsqxyuufqtitspfqg.supabase.co';
 const CONTENT_KEY=['sb_publishable_','G-FYhHfDL4OGdL892gY1Zg_','epdbEeqO'].join('');
 const OP_URL='https://fiieuiktlsivwfgyivai.supabase.co';
@@ -13,6 +14,7 @@ const bookTitleEl=el('vocabBookTitle');
 const unitTitleEl=el('vocabUnitTitle');
 const itemCountEl=el('vocabItemCount');
 const startBtn=el('vocabStudyStart');
+const spellingStartBtn=el('vocabSpellingStart');
 const sessionEl=el('vocabStudySession');
 const sessionMain=el('vocabSessionMain');
 const root=el('vocabActivityRoot');
@@ -29,11 +31,14 @@ const adminPickerEl=el('vocabAdminPicker');
 const adminBookSelect=el('vocabAdminBookSelect');
 const bookPickerEl=el('vocabBookPicker');
 const bookChoicesEl=el('vocabBookChoices');
+const unitPickerEl=el('vocabUnitPicker');
+const unitChoicesEl=el('vocabUnitChoices');
 
 const state={
-  book:null,unit:null,items:[],assignments:[],books:[],activeIndex:0,
+  book:null,unit:null,units:[],items:[],assignments:[],books:[],activeIndex:0,
   queue:[],index:0,checked:false,renderer:null,
   outcomes:new Map(),reviewKeys:new Set(),retryCounts:new Map(),
+  spelling:null,
   adminMode:false,nextReadyAt:0
 };
 
@@ -128,7 +133,7 @@ async function resolveAdminBookAndUnit(params){
   if(!units.length)throw new Error('That book has no available units.');
   let unit=params.unit?units.find(u=>String(u.id)===String(params.unit)||String(u.unit_number)===String(params.unit)):null;
   unit=unit||units[0];
-  return{book:{book_id:meta.id,book_title:txt(meta.title||'Vocabulary'),public_level:Number(meta.public_level)||null,internal_level_id:Number(meta.internal_level_id)||null},unit};
+  return{book:{book_id:meta.id,book_title:txt(meta.title||'Vocabulary'),public_level:Number(meta.public_level)||null,internal_level_id:Number(meta.internal_level_id)||null},unit,units};
 }
 async function loadAssignedBook(assignment){
   if(!assignment?.book_id)return null;
@@ -140,7 +145,7 @@ async function loadAssignedBook(assignment){
   if(!unit)return null;
   const book=Object.assign({},assignment,{book_id:assignment.book_id,book_title:txt(assignment.book_title||assignment.title||'Vocabulary'),public_level:Number(meta.public_level)||null,internal_level_id:Number(meta.internal_level_id)||null});
   const items=await loadVocabularyItems(book,unit);
-  return{book,unit,items};
+  return{book,unit,units,items};
 }
 async function resolveAssignedBooks(){
   const me=await profile();const className=txt(me.class);if(!className)throw new Error('No active class is assigned.');
@@ -157,11 +162,43 @@ async function resolveAssignedBooks(){
 }
 function activateBook(index){
   const loaded=state.books[index];if(!loaded)return;
-  state.activeIndex=index;state.book=loaded.book;state.unit=loaded.unit;state.items=loaded.items;
+  state.activeIndex=index;state.book=loaded.book;state.unit=loaded.unit;state.units=arr(loaded.units);state.items=loaded.items;
   try{localStorage.setItem(ACTIVE_BOOK_KEY,state.book.book_id)}catch(_){}
   renderHome();
 }
 
+async function selectUnit(unitId){
+  const unit=state.units.find(u=>String(u.id)===String(unitId));if(!unit||String(unit.id)===String(state.unit?.id))return;
+  if(startBtn)startBtn.disabled=true;
+  if(spellingStartBtn)spellingStartBtn.disabled=true;
+  setStatus('단어를 불러오는 중...');
+  try{
+    const items=await loadVocabularyItems(state.book,unit);
+    state.unit=unit;state.items=items;
+    if(!state.adminMode){
+      const loaded=state.books[state.activeIndex];
+      if(loaded){loaded.unit=unit;loaded.items=items}
+      try{localStorage.setItem('willena-study-v2-unit:'+state.book.book_id,String(unit.id))}catch(_){}
+    }
+    renderHome();
+  }catch(error){
+    console.error('[Vocab Study] unit switch',error);
+    setStatus(error?.message||'단원을 불러오지 못했습니다.');
+    renderHome();
+  }
+}
+function renderUnitPicker(){
+  if(!unitPickerEl||!unitChoicesEl)return;
+  const units=arr(state.units);
+  if(units.length<2){unitPickerEl.hidden=true;unitChoicesEl.innerHTML='';return}
+  unitChoicesEl.innerHTML=units.map(unit=>{
+    const active=String(unit.id)===String(state.unit?.id);
+    const label='Unit '+unit.unit_number+(unit.title?' · '+unit.title:'');
+    return '<button class="vocab-unit-choice'+(active?' is-active':'')+'" type="button" data-unit-id="'+escapeHtml(unit.id)+'">'+escapeHtml(label)+'</button>';
+  }).join('');
+  unitChoicesEl.querySelectorAll('[data-unit-id]').forEach(btn=>btn.addEventListener('click',()=>selectUnit(btn.dataset.unitId)));
+  unitPickerEl.hidden=false;
+}
 function renderBookPicker(){
   if(!bookPickerEl||!bookChoicesEl)return;
   const list=arr(state.books);
@@ -297,11 +334,13 @@ function activityToQuestion(item){
 function renderHome(){
   if(!state.book||!state.unit)return;
   renderBookPicker();
+  renderUnitPicker();
   bookTitleEl.textContent=state.book.book_title;
   unitTitleEl.textContent='Unit '+state.unit.unit_number+(state.unit.title?' · '+state.unit.title:'');
   const words=new Set(state.items.map(activityKey).filter(Boolean)).size;
   itemCountEl.textContent=(words||state.items.length)+' words';
   startBtn.disabled=!state.items.length;
+  if(spellingStartBtn)spellingStartBtn.disabled=!spellingWordsFromItems(state.items).length;
   setStatus(state.items.length?'준비됐어요.':'이 단원에는 사용할 수 있는 단어 문제가 없어요.');
 }
 function updateProgress(){
@@ -368,6 +407,168 @@ function checkCurrent(){
   actionBtn.textContent=state.index>=state.queue.length-1?'Finish':'Next';
   updateProgress();
 }
+
+function spellingWordsFromItems(items){
+  const map=new Map();
+  arr(items).forEach(item=>{
+    const m=item?.metadata||{};
+    const word=txt(m.canonical_lookup||m.canonical_text||activityWord(item));
+    const ko=txt(m.translation_ko||(item?.stimulus?.context==='한국어 뜻을 고르세요.'?item.answer:''));
+    if(!word||!ko||!/[A-Za-z]/.test(word))return;
+    const key=word.toLowerCase()+'|'+ko;
+    if(!map.has(key))map.set(key,{id:txt(item.sourceId||item.id),word,ko});
+  });
+  return [...map.values()];
+}
+function spellingChunks(word){
+  const clean=txt(word).replace(/\s+/g,' ');
+  if(clean.includes(' '))return clean.split(' ').filter(Boolean);
+  if(clean.length<=4)return clean.match(/.{1,2}/g)||[clean];
+  const size=clean.length>=9?3:2;
+  return clean.match(new RegExp('.{1,'+size+'}','g'))||[clean];
+}
+function spellingScramble(word){
+  const chars=word.split(''),original=chars.join('');
+  for(let i=chars.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[chars[i],chars[j]]=[chars[j],chars[i]]}
+  if(chars.join('')===original&&chars.length>1)chars.push(chars.shift());
+  return chars;
+}
+function playWordAudio(word){
+  if(!('speechSynthesis' in window))return;
+  try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(word);u.lang='en-US';speechSynthesis.speak(u)}catch(_){}
+}
+function spellingBatch(){
+  const s=state.spelling;if(!s)return[];
+  return s.allWords.slice(s.batchStart,s.batchStart+SPELLING_BATCH_SIZE);
+}
+function startSpellingSession(){
+  const words=shuffle(spellingWordsFromItems(state.items));if(!words.length)return;
+  state.spelling={allWords:words,batchStart:0,batch:[],index:0,points:0,hintLevel:0,answer:'',attempts:0,results:[]};
+  titleEl.textContent=state.book.book_title+' · Unit '+state.unit.unit_number+' · Spelling';
+  sessionEl.hidden=false;document.body.classList.add('vocab-session-open');
+  instructionEl.hidden=true;answerNote.hidden=true;bottomEl.hidden=true;questionStage.hidden=false;
+  beginSpellingBatch();
+}
+function beginSpellingBatch(){
+  const s=state.spelling;if(!s)return;
+  s.batch=spellingBatch();s.index=0;
+  if(!s.batch.length)return finishSpellingSession();
+  renderSpellingWord();
+}
+function spellingKeyboard(){
+  const rows=['QWERTYUIOP','ASDFGHJKL','ZXCVBNM'];
+  return '<div class="spelling-keyboard">'+rows.map(row=>'<div class="spelling-key-row">'+[...row].map(letter=>'<button type="button" class="spelling-key" data-spell-key="'+letter.toLowerCase()+'">'+letter+'</button>').join('')+'</div>').join('')+
+    '<div class="spelling-key-row spelling-key-row-actions"><button type="button" class="spelling-key spelling-key-wide" data-spell-key="backspace">⌫</button><button type="button" class="spelling-key spelling-key-wide" data-spell-key="clear">Clear</button></div></div>';
+}
+function renderSpellingWord(){
+  const s=state.spelling;if(!s)return;
+  if(s.index>=s.batch.length)return finishSpellingBatch();
+  const w=s.batch[s.index];s.hintLevel=0;s.answer='';s.attempts=0;
+  const absolute=s.batchStart+s.index+1,total=s.allWords.length;
+  progressEl.textContent=absolute+' / '+total;
+  progressFill.style.width=((absolute-1)/Math.max(1,total)*100)+'%';
+  root.innerHTML=
+    '<section class="spelling-coach">'+
+      '<div class="spelling-ko">'+escapeHtml(w.ko)+'</div>'+
+      '<button id="spellingAudio" class="spelling-audio" type="button">🔊 Hear English</button>'+
+      '<div class="spelling-study-label">Look, remember, then type</div>'+
+      '<div id="spellingTarget" class="spelling-target">'+escapeHtml(w.word)+'</div>'+
+      '<div id="spellingAnswer" class="spelling-answer" aria-live="polite"><span>Start typing…</span></div>'+
+      '<div id="spellingHintArea" class="spelling-hint-area">Try it from memory first.</div>'+
+      spellingKeyboard()+
+      '<div class="spelling-controls">'+
+        '<button id="spellingHint" class="spelling-hint-btn" type="button">Hint 1</button>'+
+        '<button id="spellingCheck" class="spelling-check-btn" type="button" disabled>Check</button>'+
+      '</div>'+
+      '<div id="spellingFeedback" class="spelling-feedback" aria-live="polite"></div>'+
+      '<div class="spelling-score"><span id="spellingSupport">No help</span><strong>'+s.points+' pts</strong></div>'+
+    '</section>';
+  el('spellingAudio')?.addEventListener('click',()=>playWordAudio(w.word));
+  root.querySelectorAll('[data-spell-key]').forEach(btn=>btn.addEventListener('click',()=>spellingKey(btn.dataset.spellKey)));
+  el('spellingHint')?.addEventListener('click',spellingHint);
+  el('spellingCheck')?.addEventListener('click',checkSpelling);
+  sessionMain.scrollTop=0;
+}
+function updateSpellingAnswer(){
+  const s=state.spelling;if(!s)return;
+  const target=el('spellingTarget'),display=el('spellingAnswer'),check=el('spellingCheck');
+  if(s.answer){
+    target?.classList.add('is-hidden');
+    if(display)display.innerHTML='<strong>'+escapeHtml(s.answer)+'</strong>';
+  }else{
+    if(s.hintLevel===0)target?.classList.remove('is-hidden');
+    if(display)display.innerHTML='<span>Start typing…</span>';
+  }
+  if(check)check.disabled=!s.answer;
+}
+function spellingKey(key){
+  const s=state.spelling;if(!s)return;
+  if(key==='backspace')s.answer=s.answer.slice(0,-1);
+  else if(key==='clear')s.answer='';
+  else if(/^[a-z]$/.test(key))s.answer+=key;
+  updateSpellingAnswer();
+}
+function spellingHint(){
+  const s=state.spelling;if(!s)return;
+  const w=s.batch[s.index],target=el('spellingTarget'),area=el('spellingHintArea'),btn=el('spellingHint'),support=el('spellingSupport');
+  target?.classList.add('is-hidden');
+  if(s.hintLevel===0){
+    s.hintLevel=1;
+    const letters=spellingScramble(w.word).map(ch=>'<span>'+escapeHtml(ch)+'</span>').join('');
+    if(area)area.innerHTML='<small>SCRAMBLED LETTERS</small><div class="spelling-letter-hint">'+letters+'</div>';
+    if(btn)btn.textContent='Hint 2';
+    if(support)support.textContent='Letter help';
+  }else if(s.hintLevel===1){
+    s.hintLevel=2;
+    const chunks=shuffle(spellingChunks(w.word)).map(ch=>'<span>'+escapeHtml(ch)+'</span>').join('');
+    if(area)area.innerHTML='<small>WORD CHUNKS</small><div class="spelling-chunk-hint">'+chunks+'</div>';
+    if(btn){btn.textContent='No more hints';btn.disabled=true}
+    if(support)support.textContent='Chunk help';
+  }
+}
+function checkSpelling(){
+  const s=state.spelling;if(!s||!s.answer)return;
+  const w=s.batch[s.index],feedback=el('spellingFeedback');
+  s.attempts++;
+  if(s.answer.trim().toLowerCase()!==w.word.trim().toLowerCase()){
+    if(feedback)feedback.textContent='Not quite. Try again or use a hint.';
+    return;
+  }
+  const earned=s.hintLevel===0?10:s.hintLevel===1?7:4;
+  s.points+=earned;
+  s.results.push({id:w.id,word:w.word,ko:w.ko,correct:true,hintsUsed:s.hintLevel,attempts:s.attempts,points:earned});
+  if(feedback)feedback.textContent='✓ Correct · +'+earned+' points';
+  root.querySelectorAll('button').forEach(b=>b.disabled=true);
+  setTimeout(()=>{s.index++;renderSpellingWord()},500);
+}
+function finishSpellingBatch(){
+  const s=state.spelling;if(!s)return;
+  const completed=Math.min(s.batchStart+s.batch.length,s.allWords.length);
+  const remaining=Math.max(0,s.allWords.length-completed);
+  progressEl.textContent=completed+' / '+s.allWords.length;
+  progressFill.style.width=(completed/Math.max(1,s.allWords.length)*100)+'%';
+  root.innerHTML='<section class="vocab-finish">'+
+    '<span class="eyebrow">SPELLING BATCH COMPLETE</span>'+
+    '<h2>'+s.points+' pts</h2>'+
+    '<p>You finished '+s.batch.length+' words.</p>'+
+    '<div class="vocab-finish-actions">'+
+      (remaining?'<button id="spellingNextBatch" class="vocab-review-btn" type="button">Next '+Math.min(SPELLING_BATCH_SIZE,remaining)+' words</button>':'')+
+      '<button id="spellingDone" class="vocab-done-btn" type="button">Finish</button>'+
+    '</div></section>';
+  el('spellingNextBatch')?.addEventListener('click',()=>{s.batchStart+=s.batch.length;beginSpellingBatch()});
+  el('spellingDone')?.addEventListener('click',closeSession);
+}
+function finishSpellingSession(){closeSession()}
+function spellingPhysicalKey(event){
+  if(!state.spelling||sessionEl.hidden)return;
+  const tag=event.target?.tagName;
+  if(tag==='INPUT'||tag==='TEXTAREA'||tag==='SELECT')return;
+  if(/^[a-zA-Z]$/.test(event.key)){event.preventDefault();spellingKey(event.key.toLowerCase())}
+  else if(event.key==='Backspace'){event.preventDefault();spellingKey('backspace')}
+  else if(event.key==='Enter'&&state.spelling.answer){event.preventDefault();checkSpelling()}
+}
+document.addEventListener('keydown',spellingPhysicalKey);
+
 function escapeHtml(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function startSession(items=null){
   const source=items&&items.length?items:state.items;if(!source.length)return;
@@ -421,7 +622,7 @@ function finishSession(){
 function closeSession(){
   document.body.classList.remove('vocab-session-open');
   sessionEl.hidden=true;root.innerHTML='';answerNote.hidden=true;bottomEl.hidden=false;
-  state.queue=[];state.index=0;state.checked=false;state.renderer=null;
+  state.queue=[];state.index=0;state.checked=false;state.renderer=null;state.spelling=null;
   try{window.scrollTo({top:0,behavior:'auto'})}catch(_){}
 }
 async function boot(){
@@ -438,23 +639,24 @@ async function boot(){
     }
     if(state.adminMode){
       const resolved=await resolveAdminBookAndUnit(params);
-      state.book=resolved.book;state.unit=resolved.unit;state.items=await loadVocabularyItems(state.book,state.unit);
+      state.book=resolved.book;state.unit=resolved.unit;state.units=arr(resolved.units);state.items=await loadVocabularyItems(state.book,state.unit);
       renderHome();
     }else{
       const resolved=await resolveAssignedBooks();
       state.books=resolved.books;state.assignments=resolved.assignments;state.activeIndex=resolved.activeIndex;
       const active=state.books[state.activeIndex];
-      state.book=active.book;state.unit=active.unit;state.items=active.items;
+      state.book=active.book;state.unit=active.unit;state.units=arr(active.units);state.items=active.items;
       renderHome();
     }
     startBtn.addEventListener('click',()=>startSession());
+    spellingStartBtn?.addEventListener('click',startSpellingSession);
     closeBtn.addEventListener('click',closeSession);
     actionBtn.addEventListener('click',checkCurrent);
-    window.WillenaVocabStudy={version:'0.002',getState:()=>state,start:startSession,close:closeSession};
+    window.WillenaVocabStudy={version:'0.003',getState:()=>state,start:startSession,startSpelling:startSpellingSession,close:closeSession};
   }catch(error){
     console.error('[Vocab Study] boot',error);
     setStatus(error?.message||'불러오지 못했습니다. 새로고침해 주세요.');
-    bookTitleEl.textContent='Could not load vocabulary';unitTitleEl.textContent='Please try again.';startBtn.disabled=true;
+    bookTitleEl.textContent='Could not load vocabulary';unitTitleEl.textContent='Please try again.';startBtn.disabled=true;if(spellingStartBtn)spellingStartBtn.disabled=true;
   }
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
