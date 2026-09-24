@@ -14,6 +14,12 @@ body.vocab-session-open{overflow:hidden}
 .vocab-admin{margin-top:14px;padding:16px;border:2px dashed #bfe5e8;border-radius:20px;background:rgba(255,255,255,.72)}
 .vocab-admin[hidden]{display:none!important}.vocab-admin .eyebrow{color:var(--pink)}
 .vocab-admin select{width:100%;margin-top:10px;border:2px solid var(--line);border-radius:14px;background:#fff;padding:12px 14px;color:var(--ink);font:700 .9rem Poppins,sans-serif}
+.vocab-book-picker{margin-top:20px;padding:14px;border:2px solid #dff2f4;border-radius:18px;background:#f8fcfc}
+.vocab-book-picker[hidden]{display:none!important}
+.vocab-picker-label{display:block;margin-bottom:9px;color:#55747a;font-weight:800;font-size:.78rem}
+.vocab-book-choices{display:flex;gap:9px;flex-wrap:wrap}
+.vocab-book-choice{flex:1 1 180px;min-height:46px;border:2px solid var(--line);border-radius:14px;background:#fff;color:var(--ink);padding:10px 13px;font:800 .88rem Poppins,sans-serif;cursor:pointer}
+.vocab-book-choice.is-active{border-color:var(--pink);background:#fff3f9;color:var(--pink-dark)}
 
 .vocab-session{position:fixed;inset:0;z-index:10000;display:grid;grid-template-rows:auto 1fr auto;background:linear-gradient(180deg,#dff7f8 0,#effafb 34%,#f7fafb 100%)}
 .vocab-session[hidden]{display:none!important}
