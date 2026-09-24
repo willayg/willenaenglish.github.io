@@ -1,4 +1,4 @@
-import {QuestionRenderer} from '/shared/questions/question-renderer.js?v=20260924-universal1';
+import {QuestionRenderer} from '/shared/questions/question-renderer.js?v=20260924-spelling1';
 
 const SESSION_SIZE=12;
 const CONTENT_URL='https://gxwfsqxyuufqtitspfqg.supabase.co';
@@ -37,6 +37,7 @@ const state={
   book:null,unit:null,units:[],items:[],assignments:[],books:[],activeIndex:0,
   queue:[],index:0,checked:false,renderer:null,
   outcomes:new Map(),reviewKeys:new Set(),retryCounts:new Map(),
+  spellingPractice:null,
   adminMode:false,nextReadyAt:0
 };
 
@@ -434,6 +435,7 @@ function playPreviewWord(word){
 }
 function openSpellingPreview(){
   const words=spellingPreviewWords(state.items);if(!words.length)return;
+  state.spellingPractice={words,index:0};
   titleEl.textContent=state.book.book_title+' · Unit '+state.unit.unit_number+' · Spelling';
   progressEl.textContent='Practice';
   progressFill.style.width='0%';
@@ -454,14 +456,83 @@ function openSpellingPreview(){
           '</div>'
         ).join('')+
       '</div>'+
-      '<div class="activity-actions"><button class="primary-button" type="button" disabled>Start Spelling</button></div>'+
+      '<div class="activity-actions"><button id="vocabStartSpelling" class="primary-button" type="button">Start Spelling</button></div>'+
     '</section>';
   root.querySelectorAll('[data-preview-word]').forEach(btn=>btn.addEventListener('click',()=>{
     const w=words[Number(btn.dataset.previewWord)];if(w)playPreviewWord(w.word);
   }));
+  el('vocabStartSpelling')?.addEventListener('click',startSpellingPractice);
   sessionEl.hidden=false;
   document.body.classList.add('vocab-session-open');
   sessionMain.scrollTop=0;
+}
+
+function startSpellingPractice(){
+  const practice=state.spellingPractice;
+  if(!practice?.words?.length)return;
+  practice.index=0;
+  renderSpellingCoach();
+}
+function spellingCoachQuestion(word,index){
+  return{
+    id:'vocab-spelling-coach-'+index,
+    form:'spelling_coach',
+    prompt:word.ko,
+    context:{target_en:word.word,audio_text:word.word},
+    answer:[word.word],
+    input:{language:'en'},
+    grading:{constraints:{}}
+  };
+}
+function renderSpellingCoach(){
+  const practice=state.spellingPractice;
+  if(!practice||practice.index>=practice.words.length)return finishSpellingPractice();
+  const word=practice.words[practice.index];
+  const current=practice.index+1,total=practice.words.length;
+  progressEl.textContent=current+' / '+total;
+  progressFill.style.width=((current-1)/Math.max(1,total)*100)+'%';
+  instructionEl.hidden=true;
+  bottomEl.hidden=false;
+  answerNote.hidden=true;
+  actionBtn.disabled=true;
+  actionBtn.textContent='Check Answer';
+  actionBtn.classList.remove('is-next');
+  root.innerHTML='<div class="question-card" id="vocabQuestionHost"></div>';
+  const host=el('vocabQuestionHost');
+  state.renderer=new QuestionRenderer(host).render(spellingCoachQuestion(word,practice.index),{
+    onChange:(_,has)=>{actionBtn.disabled=!has}
+  });
+  host.querySelector('[data-spelling-input]')?.addEventListener('keydown',e=>{
+    if(e.key==='Enter'&&state.renderer?.hasResponse()){e.preventDefault();checkSpellingCoach()}
+  });
+  sessionMain.scrollTop=0;
+}
+function checkSpellingCoach(){
+  const practice=state.spellingPractice,renderer=state.renderer;
+  if(!practice||!renderer)return;
+  const word=practice.words[practice.index];
+  const response=txt(renderer.getResponse());
+  if(!response)return;
+  const correct=response.toLowerCase()===word.word.toLowerCase();
+  if(!correct){
+    renderer.showFeedback({correct:false,correctAnswer:[],message:'다시 해보세요.'});
+    return;
+  }
+  renderer.setDisabled(true);
+  renderer.showFeedback({correct:true,correctAnswer:[word.word]});
+  actionBtn.disabled=true;
+  setTimeout(()=>{practice.index++;renderSpellingCoach()},350);
+}
+function finishSpellingPractice(){
+  progressEl.textContent='완료';
+  progressFill.style.width='100%';
+  bottomEl.hidden=true;
+  root.innerHTML=
+    '<section class="practice-panel">'+
+      '<div class="practice-toolbar"><div><span class="eyebrow">SPELLING</span><h2>끝!</h2><small class="section-note">이번 '+state.spellingPractice.words.length+'개 단어를 모두 입력했어요.</small></div></div>'+
+      '<div class="activity-actions"><button id="vocabSpellingDone" class="primary-button" type="button">Finish</button></div>'+
+    '</section>';
+  el('vocabSpellingDone')?.addEventListener('click',closeSession);
 }
 
 function escapeHtml(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
@@ -517,7 +588,7 @@ function finishSession(){
 function closeSession(){
   document.body.classList.remove('vocab-session-open');
   sessionEl.hidden=true;root.innerHTML='';answerNote.hidden=true;bottomEl.hidden=false;instructionEl.hidden=false;
-  state.queue=[];state.index=0;state.checked=false;state.renderer=null;
+  state.queue=[];state.index=0;state.checked=false;state.renderer=null;state.spellingPractice=null;
   try{window.scrollTo({top:0,behavior:'auto'})}catch(_){}
 }
 async function boot(){
@@ -546,8 +617,8 @@ async function boot(){
     startBtn.addEventListener('click',()=>startSession());
     spellingPreviewBtn?.addEventListener('click',openSpellingPreview);
     closeBtn.addEventListener('click',closeSession);
-    actionBtn.addEventListener('click',checkCurrent);
-    window.WillenaVocabStudy={version:'0.004',getState:()=>state,start:startSession,openSpellingPreview,close:closeSession};
+    actionBtn.addEventListener('click',()=>state.spellingPractice?checkSpellingCoach():checkCurrent());
+    window.WillenaVocabStudy={version:'0.005',getState:()=>state,start:startSession,openSpellingPreview,close:closeSession};
   }catch(error){
     console.error('[Vocab Study] boot',error);
     setStatus(error?.message||'불러오지 못했습니다. 새로고침해 주세요.');
