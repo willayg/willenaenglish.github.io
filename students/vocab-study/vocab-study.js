@@ -1,4 +1,4 @@
-import {QuestionRenderer} from '/shared/questions/question-renderer.js?v=20260924-spelling1';
+import {QuestionRenderer} from '/shared/questions/question-renderer.js?v=20260924-spelling2';
 
 const SESSION_SIZE=12;
 const CONTENT_URL='https://gxwfsqxyuufqtitspfqg.supabase.co';
