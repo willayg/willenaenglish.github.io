@@ -451,9 +451,29 @@ function startSpellingSession(){
 }
 function beginSpellingBatch(){
   const s=state.spelling;if(!s)return;
-  s.batch=spellingBatch();s.index=0;
+  s.batch=spellingBatch();s.index=0;s.answer='';
   if(!s.batch.length)return finishSpellingSession();
-  renderSpellingWord();
+  renderSpellingPractice();
+}
+function renderSpellingPractice(){
+  const s=state.spelling;if(!s)return;
+  progressEl.textContent='Practice';
+  progressFill.style.width=(s.batchStart/Math.max(1,s.allWords.length)*100)+'%';
+  root.innerHTML='<section class="spelling-practice">'+
+    '<span class="eyebrow">SPELLING PRACTICE</span>'+
+    '<h2>Study these '+s.batch.length+' words</h2>'+
+    '<p>Look at each spelling and tap a word to hear it. When you start the quiz, the word will disappear as soon as you type.</p>'+
+    '<div class="spelling-practice-list">'+s.batch.map((w,i)=>
+      '<button type="button" class="spelling-practice-word" data-practice-word="'+i+'">'+
+        '<strong>'+escapeHtml(w.word)+'</strong><span>'+escapeHtml(w.ko)+'</span><em>🔊</em>'+
+      '</button>').join('')+'</div>'+
+    '<button id="spellingBeginQuiz" class="spelling-practice-start" type="button">Start Spelling</button>'+
+    '</section>';
+  root.querySelectorAll('[data-practice-word]').forEach(btn=>btn.addEventListener('click',()=>{
+    const w=s.batch[Number(btn.dataset.practiceWord)];if(w)playWordAudio(w.word);
+  }));
+  el('spellingBeginQuiz')?.addEventListener('click',()=>{s.index=0;renderSpellingWord()});
+  sessionMain.scrollTop=0;
 }
 function spellingKeyboard(){
   const rows=['QWERTYUIOP','ASDFGHJKL','ZXCVBNM'];
@@ -543,6 +563,7 @@ function checkSpelling(){
 }
 function finishSpellingBatch(){
   const s=state.spelling;if(!s)return;
+  s.answer='';
   const completed=Math.min(s.batchStart+s.batch.length,s.allWords.length);
   const remaining=Math.max(0,s.allWords.length-completed);
   progressEl.textContent=completed+' / '+s.allWords.length;
@@ -560,7 +581,7 @@ function finishSpellingBatch(){
 }
 function finishSpellingSession(){closeSession()}
 function spellingPhysicalKey(event){
-  if(!state.spelling||sessionEl.hidden)return;
+  if(!state.spelling||sessionEl.hidden||!el('spellingAnswer'))return;
   const tag=event.target?.tagName;
   if(tag==='INPUT'||tag==='TEXTAREA'||tag==='SELECT')return;
   if(/^[a-zA-Z]$/.test(event.key)){event.preventDefault();spellingKey(event.key.toLowerCase())}
