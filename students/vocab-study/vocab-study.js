@@ -334,7 +334,7 @@ function renderHome(){
   const words=new Set(state.items.map(activityKey).filter(Boolean)).size;
   itemCountEl.textContent=(words||state.items.length)+' words';
   startBtn.disabled=!state.items.length;
-  if(spellingPreviewBtn)spellingPreviewBtn.disabled=!spellingPreviewWords(state.items).length;
+  if(spellingPreviewBtn)spellingPreviewBtn.disabled=!state.items.length;
   setStatus(state.items.length?'준비됐어요.':'이 단원에는 사용할 수 있는 단어 문제가 없어요.');
 }
 function updateProgress(){
@@ -405,8 +405,18 @@ function spellingPreviewWords(items){
   const map=new Map();
   arr(items).forEach(item=>{
     const m=item?.metadata||{};
-    const word=txt(m.canonical_lookup||m.canonical_text||activityWord(item));
-    const ko=txt(m.translation_ko||(txt(item?.stimulus?.context)==='한국어 뜻을 고르세요.'?item?.answer:''));
+    const prompt=txt(item?.stimulus?.prompt).replace(/^\S+\s{2}/,'');
+    const answer=txt(item?.answer);
+    let word=txt(m.canonical_lookup||m.canonical_text);
+    let ko=txt(m.translation_ko);
+    if(!word){
+      if(/[A-Za-z]/.test(answer))word=answer;
+      else if(/[A-Za-z]/.test(prompt))word=prompt;
+    }
+    if(!ko){
+      if(answer&&!/[A-Za-z]/.test(answer))ko=answer;
+      else if(prompt&&!/[A-Za-z]/.test(prompt))ko=prompt;
+    }
     if(!word||!ko||!/[A-Za-z]/.test(word))return;
     const key=word.toLowerCase()+'|'+ko;
     if(!map.has(key))map.set(key,{word,ko});
