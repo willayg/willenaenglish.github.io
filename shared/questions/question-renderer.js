@@ -87,6 +87,17 @@ function contextHtml(question){
   return out.filter(Boolean).join('');
 }
 function answerParts(question){return Array.isArray(question?.answer)?question.answer:[]}
+function scrambledLetters(value){
+  const chars=[...String(value||'')].filter(ch=>/[A-Za-z]/.test(ch));
+  if(chars.length<2)return chars;
+  const original=chars.join('').toLowerCase();
+  for(let attempt=0;attempt<8;attempt++){
+    const a=chars.slice();
+    for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}
+    if(a.join('').toLowerCase()!==original)return a;
+  }
+  return chars.slice().reverse();
+}
 function numberMark(i){return ['①','②','③','④','⑤','⑥','⑦','⑧'][i]||String(i+1)}
 function inputLanguage(q){return String(q?.input?.language||'mixed')}
 function inputAttrs(q,kind='text'){
@@ -153,7 +164,9 @@ export class QuestionRenderer{
     if(q.form===FORMS.spellingCoach){
       const target=answerParts(q)[0]||q.context?.target_en||'';
       const audio=String(q.context?.audio_text||target||'');
-      return `${audio?`<button type="button" class="activity-audio" data-spelling-audio data-audio-text="${esc(audio)}">▶ Hear English</button>`:''}<div class="learn" data-spelling-target>${textHtml(target)}</div><input class="text-input spelling-coach-input" data-spelling-input ${inputAttrs(q,'spelling-coach')} placeholder="${esc(placeholder(q))}">`;
+      const scramble=!!q.hints?.scramble;
+      const hint=scramble?scrambledLetters(target):[];
+      return `${audio?`<button type="button" class="activity-audio" data-spelling-audio data-audio-text="${esc(audio)}">▶ Hear English</button>`:''}<div class="learn" data-spelling-target>${textHtml(target)}</div><input class="text-input spelling-coach-input" data-spelling-input ${inputAttrs(q,'spelling-coach')} placeholder="${esc(placeholder(q))}">${scramble?`<div class="spelling-coach-hint-row"><button type="button" class="spelling-coach-hint-button" data-spelling-hint="scramble">Hint 1 · Letters</button><div class="spelling-coach-scramble" data-spelling-scramble hidden>${hint.map(ch=>`<span>${esc(ch)}</span>`).join('')}</div></div>`:''}`;
     }
     return `<div class="error">Unsupported question form: ${esc(q.form||'unknown')}</div>`;
   }
@@ -172,6 +185,13 @@ export class QuestionRenderer{
         if(!word||!('speechSynthesis' in window))return;
         try{speechSynthesis.cancel();const utterance=new SpeechSynthesisUtterance(word);utterance.lang='en-US';speechSynthesis.speak(utterance)}catch{}
       });
+      this.host.querySelector('[data-spelling-hint="scramble"]')?.addEventListener('click',e=>{
+        if(this.disabled)return;
+        const panel=this.host.querySelector('[data-spelling-scramble]');
+        if(panel)panel.hidden=false;
+        e.currentTarget.hidden=true;
+        this.state.spellingHintLevel=Math.max(Number(this.state.spellingHintLevel||0),1);
+      });
       requestAnimationFrame(()=>input?.focus?.());
     }
     if([FORMS.order,FORMS.chunks,FORMS.blanks].includes(q.form)){
@@ -185,6 +205,7 @@ export class QuestionRenderer{
     chips.forEach((b,i)=>b.classList.toggle('used',this.state.order.includes(i)));
   }
   emit(){this.onChange?.(this.getResponse(),this.hasResponse())}
+  getSupportLevel(){return Number(this.state.spellingHintLevel||0)}
   hasResponse(){
     const q=this.question;if(!q)return false;
     if(q.form===FORMS.choice||q.form===FORMS.multi)return this.state.selected.size>0;
@@ -231,6 +252,17 @@ export class QuestionRenderer{
         border-color:#66d6df;
         background:#fbfeff;
         box-shadow:0 0 0 5px rgba(102,214,223,.16),0 10px 26px rgba(34,106,116,.08);
+      }
+      .spelling-coach-hint-row{margin-top:16px;text-align:center}
+      .spelling-coach-hint-button{
+        min-height:44px;padding:0 16px;border:2px solid #ffd1e8;border-radius:15px;
+        background:#fff;color:#e60076;font:800 .86rem Poppins,system-ui,sans-serif;cursor:pointer
+      }
+      .spelling-coach-scramble{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin-top:14px}
+      .spelling-coach-scramble[hidden]{display:none}
+      .spelling-coach-scramble span{
+        min-width:38px;height:42px;padding:0 9px;display:grid;place-items:center;border:2px solid #dcebed;
+        border-radius:12px;background:#f8fcfc;color:#173f46;font:800 1.05rem Poppins,system-ui,sans-serif
       }
       @media(max-width:560px){
         .spelling-coach-input{min-height:68px;padding:14px 18px;border-radius:20px;font-size:1.35rem}
