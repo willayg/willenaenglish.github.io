@@ -1,7 +1,7 @@
 # Vocabulary Study — Design & Architecture Spec
 
 **App:** `students/vocab-study/`  
-**Current staging version:** `0.038`  
+**Current staging version:** `0.040`  
 **Status:** Active implementation  
 **Purpose:** Define the product behavior, study flow, renderer responsibilities, tracking model, mastery model, and modular architecture for the next generation Vocabulary Study app.
 
@@ -538,7 +538,7 @@ Stars are awarded from the student's final session percentage:
 
 A result below 60% is not good enough for a star award.
 
-Stars are awarded through the existing Willena `progress_sessions` stars system and shown on the Vocabulary Study completion screen. The visual award uses the shared `students/components/student-reward-celebration.js` component so other student apps can reuse the same animated percentage / stars / points treatment. Repeating the same book/unit/mode can improve the recorded best star result, but it must not stack unlimited duplicate stars for the same list + mode.
+Stars are awarded through the existing Willena `progress_sessions` stars system and shown on the Vocabulary Study completion screen. Vocabulary Study follows the same Cloudflare `log-word-attempt` session lifecycle as English Arcade: `session_start` creates the reward session row and `session_end` finalizes its summary and stars. The visual award uses the shared `students/components/student-reward-celebration.js` component so other student apps can reuse the same animated percentage / stars / points treatment. Repeating the same book/unit/mode can improve the recorded best star result, but it must not stack unlimited duplicate stars for the same list + mode.
 
 The star result is a motivational session reward and does not alter unit progress, Golden Unit Badges, or streak calculations.
 
