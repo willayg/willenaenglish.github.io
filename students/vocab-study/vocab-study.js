@@ -2,7 +2,7 @@ import {QuestionRenderer} from '/shared/questions/question-renderer.js?v=2026092
 import {getSpellingTarget} from './spelling-targets.js?v=20260925-v0019';
 import {isSpeakableTarget,matchSpeakingTarget} from './speaking-match.js?v=20260925-v0022';
 import {getAssignment,setAssignment,getBookMeta,setBookMeta,getVocabulary,setVocabulary,background} from './vocab-startup-cache.js?v=20260925-v0001';
-import {snapshotPercent,loadVocabSnapshot} from './vocab-progress-snapshot.js?v=20260925-v0001';
+import {snapshotPercent,loadVocabSnapshot} from './vocab-progress-snapshot.js?v=20260925-v0002';
 import {coachAttempt,repeatUntilCorrect,appendRetry,uniquePassedCount,wrongAttemptCount} from './vocab-pass-flow.js?v=20260925-v0001';
 
 const SESSION_SIZE=12;
