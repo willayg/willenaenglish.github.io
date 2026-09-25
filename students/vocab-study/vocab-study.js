@@ -664,7 +664,7 @@ async function boot(){
     spellingPreviewBtn?.addEventListener('click',openSpellingPreview);
     closeBtn.addEventListener('click',closeSession);
     actionBtn.addEventListener('click',()=>state.spellingPractice?checkSpellingCoach():checkCurrent());
-    window.WillenaVocabStudy={version:'0.010',getState:()=>state,start:startSession,openSpellingPreview,close:closeSession};
+    window.WillenaVocabStudy={version:'0.011',getState:()=>state,start:startSession,openSpellingPreview,close:closeSession};
   }catch(error){
     console.error('[Vocab Study] boot',error);
     setStatus(error?.message||'불러오지 못했습니다. 새로고침해 주세요.');
