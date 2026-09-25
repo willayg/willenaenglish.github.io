@@ -234,13 +234,23 @@ function legacyUnitNumbers(meta){
   const raw=txt(meta?.legacy?.unit);
   return [...raw.matchAll(/\d+/g)].map(m=>Number(m[0])).filter(Number.isFinite);
 }
+function isWordTestCollection(row){
+  const name=txt(row?.name).toLowerCase();
+  const languagePoint=txt(row?.metadata?.legacy?.language_point).toLowerCase();
+  const unitNumbers=legacyUnitNumbers(row?.metadata);
+  return name.includes('word test')||
+    name.includes('wordtest')||
+    languagePoint.includes('word test')||
+    unitNumbers.length>1;
+}
 async function loadWordBuilderVocabulary(book,unit){
-  const collections=await content('collections?select=id,unit_id,metadata&collection_type=eq.word_builder&book_id=eq.'+encodeURIComponent(book.book_id));
+  const collections=await content('collections?select=id,name,unit_id,metadata&collection_type=eq.word_builder&book_id=eq.'+encodeURIComponent(book.book_id));
   const unitNumber=Number(unit.unit_number);
-  const matched=collections.filter(row=>
-    String(row.unit_id||'')===String(unit.id)||
-    (!row.unit_id&&legacyUnitNumbers(row.metadata).includes(unitNumber))
-  );
+  const matched=collections.filter(row=>{
+    if(isWordTestCollection(row))return false;
+    return String(row.unit_id||'')===String(unit.id)||
+      (!row.unit_id&&legacyUnitNumbers(row.metadata).includes(unitNumber));
+  });
   const collectionIds=unique(matched.map(row=>row.id));if(!collectionIds.length)return[];
   const items=await content('collection_items?select=id,collection_id,content_id,settings&content_type=eq.lexical_entry&collection_id=in.'+encodeURIComponent('('+collectionIds.join(',')+')'));
   const lexIds=unique(items.map(row=>row.content_id));if(!lexIds.length)return[];
@@ -705,7 +715,7 @@ async function boot(){
     document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!wordModalEl?.hidden)closeWordList()});
     closeBtn.addEventListener('click',closeSession);
     actionBtn.addEventListener('click',()=>state.spellingPractice?checkSpellingCoach():checkCurrent());
-    window.WillenaVocabStudy={version:'0.014',getState:()=>state,start:startSession,openSpellingPreview,close:closeSession};
+    window.WillenaVocabStudy={version:'0.015',getState:()=>state,start:startSession,openSpellingPreview,close:closeSession};
   }catch(error){
     console.error('[Vocab Study] boot',error);
     setStatus(error?.message||'불러오지 못했습니다. 새로고침해 주세요.');
