@@ -64,11 +64,14 @@ class StudentPointTokens {
 
   bumpTarget(target){
     if(!target?.pill)return;
-    const pill=target.pill;
-    pill.style.animation='none';
-    void pill.offsetWidth;
-    pill.style.animation='willena-point-target-bump .38s cubic-bezier(.2,.9,.35,1.3)';
-    setTimeout(()=>{if(pill)pill.style.animation='';},420);
+    try{
+      target.pill.animate([
+        {transform:'scale(1)'},
+        {transform:'scale(1.2)',offset:.45},
+        {transform:'scale(.96)',offset:.72},
+        {transform:'scale(1)'}
+      ],{duration:380,easing:'cubic-bezier(.2,.9,.35,1.3)'});
+    }catch(_){}
   }
 
   spark(x,y,dx,dy,delay){
