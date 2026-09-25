@@ -1,7 +1,7 @@
 # Vocabulary Study — Design & Architecture Spec
 
 **App:** `students/vocab-study/`  
-**Current staging version:** `0.036`  
+**Current staging version:** `0.037`  
 **Status:** Active implementation  
 **Purpose:** Define the product behavior, study flow, renderer responsibilities, tracking model, mastery model, and modular architecture for the next generation Vocabulary Study app.
 
@@ -509,7 +509,7 @@ This allows the visual design to change without rewriting the study engine.
 - session source
 - reliable response timing
 
-### Pass 2 — Willena points + stars
+### Pass 2 — Willena points + stars — implemented in v0.037
 
 Vocabulary Study should award more points than the generic Study default because the activities require sustained effort.
 
@@ -521,7 +521,7 @@ Vocabulary Study should award more points than the generic Study default because
 
 These rewards should flow through the existing Willena points system rather than creating a Vocabulary Study-only balance.
 
-Retries, repeated practice, and assisted attempts remain fully tracked so reward rules can distinguish genuine work from easy farming if needed.
+Retries, repeated practice, and assisted attempts remain fully tracked. Attempt points are awarded on every recorded attempt, including retries. Star percentages are calculated from the first attempt on each target so forced correction retries do not inflate the session grade.
 
 #### Stars per completed session
 
@@ -538,7 +538,7 @@ Stars are awarded from the student's final session percentage:
 
 A result below 60% is not good enough for a star award.
 
-Stars should be awarded through the existing Willena stars system and shown clearly on the Vocabulary Study completion screen.
+Stars are awarded through the existing Willena `progress_sessions` stars system and shown on the Vocabulary Study completion screen. Repeating the same book/unit/mode can improve the recorded best star result, but it must not stack unlimited duplicate stars for the same list + mode.
 
 The star result is a motivational session reward and does not alter unit progress, Golden Unit Badges, or streak calculations.
 
