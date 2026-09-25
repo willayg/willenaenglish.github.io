@@ -1,5 +1,5 @@
 import {QuestionRenderer} from '/shared/questions/question-renderer.js?v=20260925-speaking2';
-import {capturePointOrigin,showPointAward} from '/students/components/student-point-feedback.js?v=20260926-v0001';
+import {capturePointOrigin,showPointAward} from '/students/components/student-point-feedback.js?v=20260926-v0002';
 import {getSpellingTarget} from './spelling-targets.js?v=20260925-v0019';
 import {isSpeakableTarget,matchSpeakingTarget} from './speaking-match.js?v=20260925-v0022';
 import {getAssignment,setAssignment,getBookMeta,setBookMeta,getVocabulary,setVocabulary,background} from './vocab-startup-cache.js?v=20260925-v0001';
@@ -1481,7 +1481,7 @@ async function boot(){
       renderSkillProgress();
     });
     reportStartupPerf();
-    window.WillenaVocabStudy={version:'0.046',getState:()=>state,start:startSession,openSpellingMenu,openSpellingPreview,openSpellingTest,openSpeakingSession,close:closeSession};
+    window.WillenaVocabStudy={version:'0.047',getState:()=>state,start:startSession,openSpellingMenu,openSpellingPreview,openSpellingTest,openSpeakingSession,close:closeSession};
   }catch(error){
     console.error('[Vocab Study] boot',error);
     setStatus(error?.message||'불러오지 못했습니다. 새로고침해 주세요.');

@@ -1,4 +1,4 @@
-const STYLE_ID='willena-point-feedback-style-v1';
+const STYLE_ID='willena-point-feedback-style-v2';
 
 function ensureStyles(){
   if(document.getElementById(STYLE_ID))return;
@@ -16,27 +16,8 @@ function ensureStyles(){
       transform:translate(-50%,-50%);
       will-change:transform,opacity;
     }
-    .willena-point-feedback-spark{
-      position:fixed;left:0;top:0;z-index:2147482999;pointer-events:none;
-      width:7px;height:7px;border-radius:50%;background:#ffd54f;
-      box-shadow:0 0 0 1px rgba(126,88,0,.1);
-      will-change:transform,opacity;
-    }
   `;
   (document.head||document.documentElement).appendChild(style);
-}
-
-function pointsPill(){
-  try{
-    const header=document.querySelector('student-header');
-    const pill=header?.shadowRoot?.querySelector('.points-pill');
-    if(!pill)return null;
-    const rect=pill.getBoundingClientRect();
-    if(!rect.width&&!rect.height)return null;
-    return {pill,x:rect.left+rect.width/2,y:rect.top+rect.height/2};
-  }catch(_){
-    return null;
-  }
 }
 
 export function capturePointOrigin(sourceElement){
@@ -59,60 +40,22 @@ function reducedMotion(){
   try{return !!window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;}catch(_){return false;}
 }
 
-function burst(x,y,count=4,radius=26){
-  if(reducedMotion()||typeof Element.prototype.animate!=='function')return;
-  ensureStyles();
-  for(let i=0;i<count;i++){
-    const spark=document.createElement('i');
-    spark.className='willena-point-feedback-spark';
-    spark.style.left=x+'px';
-    spark.style.top=y+'px';
-    document.body.appendChild(spark);
-    const angle=(Math.PI*2*i/count)-Math.PI/2;
-    const dx=Math.cos(angle)*radius;
-    const dy=Math.sin(angle)*radius;
-    const animation=spark.animate([
-      {transform:'translate(-50%,-50%) scale(.35)',opacity:0},
-      {transform:'translate(-50%,-50%) scale(1)',opacity:1,offset:.22},
-      {transform:`translate(calc(-50% + ${dx}px),calc(-50% + ${dy}px)) scale(.25)`,opacity:0}
-    ],{duration:420,delay:i*18,easing:'cubic-bezier(.2,.8,.3,1)'});
-    animation.finished.finally(()=>spark.remove());
-  }
-}
-
-function landPoints(value){
+function applyPoints(value){
   window.dispatchEvent(new CustomEvent('points:optimistic-bump',{
     detail:{delta:value,source:'point-feedback'}
   }));
-  requestAnimationFrame(()=>{
-    const current=pointsPill();
-    if(!current?.pill||typeof current.pill.animate!=='function')return;
-    current.pill.animate([
-      {transform:'scale(1)'},
-      {transform:'scale(1.24)',offset:.38},
-      {transform:'scale(.95)',offset:.68},
-      {transform:'scale(1)'}
-    ],{duration:410,easing:'cubic-bezier(.2,.9,.35,1.25)'});
-    burst(current.x,current.y,3,18);
-  });
 }
 
 export function showPointAward({amount=0,origin=null}={}){
   const value=Math.max(0,Math.round(Number(amount)||0));
   if(!value)return Promise.resolve(false);
 
-  const target=pointsPill();
-  if(!target){
-    landPoints(value);
-    return Promise.resolve(false);
-  }
-
   const start=origin&&Number.isFinite(origin.x)&&Number.isFinite(origin.y)
     ? origin
     : capturePointOrigin(null);
 
   if(reducedMotion()||typeof Element.prototype.animate!=='function'){
-    landPoints(value);
+    applyPoints(value);
     return Promise.resolve(true);
   }
 
@@ -125,31 +68,24 @@ export function showPointAward({amount=0,origin=null}={}){
   token.style.top=start.y+'px';
   document.body.appendChild(token);
 
-  burst(start.x,start.y,4,24);
-
-  const dx=target.x-start.x;
-  const dy=target.y-start.y;
-  const lift=Math.min(92,Math.max(42,Math.abs(dy)*.18));
-
   const animation=token.animate([
-    {transform:'translate(-50%,-50%) scale(.58)',opacity:0,offset:0},
-    {transform:'translate(-50%,-50%) scale(1.18)',opacity:1,offset:.16},
-    {transform:`translate(calc(-50% + ${dx*.42}px),calc(-50% + ${dy*.34-lift}px)) scale(1.05)`,opacity:1,offset:.52},
-    {transform:`translate(calc(-50% + ${dx*.78}px),calc(-50% + ${dy*.74-lift*.28}px)) scale(.82)`,opacity:.95,offset:.79},
-    {transform:`translate(calc(-50% + ${dx}px),calc(-50% + ${dy}px)) scale(.38)`,opacity:.08,offset:1}
+    {transform:'translate(-50%,-50%) translateY(8px) scale(.78)',opacity:0,offset:0},
+    {transform:'translate(-50%,-50%) translateY(0) scale(1.06)',opacity:1,offset:.18},
+    {transform:'translate(-50%,-50%) translateY(-32px) scale(1)',opacity:1,offset:.55},
+    {transform:'translate(-50%,-50%) translateY(-72px) scale(.92)',opacity:0,offset:1}
   ],{
-    duration:820,
+    duration:760,
     easing:'cubic-bezier(.2,.72,.25,1)',
     fill:'forwards'
   });
 
   return animation.finished.then(()=>{
     token.remove();
-    landPoints(value);
+    applyPoints(value);
     return true;
   }).catch(()=>{
     token.remove();
-    landPoints(value);
+    applyPoints(value);
     return false;
   });
 }

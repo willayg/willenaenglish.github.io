@@ -1,7 +1,7 @@
 # Vocabulary Study — Design & Architecture Spec
 
 **App:** `students/vocab-study/`  
-**Current staging version:** `0.046`  
+**Current staging version:** `0.047`  
 **Status:** Active implementation  
 **Purpose:** Define the product behavior, study flow, renderer responsibilities, tracking model, mastery model, and modular architecture for the next generation Vocabulary Study app.
 
@@ -571,7 +571,7 @@ Spelling Coach is practice/support rather than a scored mode. It awards **points
 
 The two v0.045 point-token experiments were removed. Vocabulary Study now has one shared visual service: `students/components/student-point-feedback.js`.
 
-For a positive award, Vocabulary Study captures the answer-card position when the attempt is submitted and attaches a unique feedback id to that recorded attempt. The token is shown only when `willena:study-recording` confirms that the matching attempt was actually recorded. A single `+N` token then travels from the captured answer position to the real points pill in the shared student header. On landing, the existing optimistic points event fires once and the current points pill receives a short collection bounce.
+For a positive award, Vocabulary Study captures the answer-card position when the attempt is submitted and attaches a unique feedback id to that recorded attempt. The token is shown only when `willena:study-recording` confirms that the matching attempt was actually recorded. A single `+N` token appears at the captured answer position, floats straight upward roughly 70 px, and fades away. When the float completes, the existing optimistic points event fires once. The token no longer travels to the shared header.
 
 Incorrect and zero-point attempts never create feedback. Spelling Coach keeps its 3 / 2 / 1 hint-sensitive values. Reduced-motion users receive the confirmed point update without the travel animation. The shared service owns all token CSS and animation behavior; Vocabulary Study contains only the scoring and confirmed-save wiring.
 
