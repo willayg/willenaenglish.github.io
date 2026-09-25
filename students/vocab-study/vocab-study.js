@@ -95,15 +95,15 @@ function renderSkillProgress(){
   setSkillRing(speakingRingEl,masteryBySkill(state.masteryItems,'speaking',speakingIds));
 }
 async function loadSkillProgress(){
-  if(state.adminMode||!state.book?.book_id||!state.unit?.id){
-    state.masteryItems=[];
-    renderSkillProgress();
-    return;
-  }
+  const bookId=state.book?.book_id,unitId=state.unit?.id;
+  state.masteryItems=[];
+  renderSkillProgress();
+  if(state.adminMode||!bookId||!unitId)return;
   const recorder=window.WillenaStudyProgress;
   if(!recorder||typeof recorder.getContentMastery!=='function')return;
   try{
-    const data=await recorder.getContentMastery(state.book.book_id,state.unit.id);
+    const data=await recorder.getContentMastery(bookId,unitId);
+    if(String(bookId)!==String(state.book?.book_id)||String(unitId)!==String(state.unit?.id))return;
     state.masteryItems=arr(data?.items);
     renderSkillProgress();
   }catch(error){
