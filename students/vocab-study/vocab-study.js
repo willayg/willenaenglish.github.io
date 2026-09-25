@@ -143,8 +143,9 @@ async function completeRewardSession(){
 }
 function rewardSummaryHtml(reward=state.rewardSession){
   if(!reward)return'';
-  const stars=Math.max(0,Number(reward.stars)||0);
-  return '<div class="vocab-reward-summary"><strong>'+rewardPercent(reward)+'%</strong><span>'+('★'.repeat(stars)||'No stars')+' · +'+Math.max(0,Number(reward.points)||0)+' points</span></div>';
+  const stars=Math.max(0,Math.min(5,Number(reward.stars)||0));
+  const points=Math.max(0,Number(reward.points)||0);
+  return '<student-reward-celebration percent="'+rewardPercent(reward)+'" stars="'+stars+'" points="'+points+'" label="SESSION REWARD"></student-reward-celebration>';
 }
 
 function perfNow(){return window.performance?.now?.()||Date.now()}
