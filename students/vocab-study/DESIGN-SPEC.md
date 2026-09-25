@@ -1,7 +1,7 @@
 # Vocabulary Study — Design & Architecture Spec
 
 **App:** `students/vocab-study/`  
-**Current staging version:** `0.047`  
+**Current staging version:** `0.048`  
 **Status:** Active implementation  
 **Purpose:** Define the product behavior, study flow, renderer responsibilities, tracking model, mastery model, and modular architecture for the next generation Vocabulary Study app.
 
@@ -571,7 +571,7 @@ Spelling Coach is practice/support rather than a scored mode. It awards **points
 
 The two v0.045 point-token experiments were removed. Vocabulary Study now has one shared visual service: `students/components/student-point-feedback.js`.
 
-For a positive award, Vocabulary Study captures the answer-card position when the attempt is submitted and attaches a unique feedback id to that recorded attempt. The token is shown only when `willena:study-recording` confirms that the matching attempt was actually recorded. A single `+N` token appears at the captured answer position, floats straight upward roughly 70 px, and fades away. When the float completes, the existing optimistic points event fires once. The token no longer travels to the shared header.
+For a positive award, Vocabulary Study shows visual feedback immediately when the answer is checked; it does not wait for the network recorder. Pointer/touch coordinates from the Check Answer press are captured so the `+N` appears where the student touched. Keyboard submission falls back to the active answer field. The feedback is plain text rather than a pill: +1/+2 use cyan and +3/+4 use pink. It rises slowly about 80 px over roughly 1.4 seconds and fades away. The optimistic points event fires immediately while the canonical recorder continues independently.
 
 Incorrect and zero-point attempts never create feedback. Spelling Coach keeps its 3 / 2 / 1 hint-sensitive values. Reduced-motion users receive the confirmed point update without the travel animation. The shared service owns all token CSS and animation behavior; Vocabulary Study contains only the scoring and confirmed-save wiring.
 

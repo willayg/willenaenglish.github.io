@@ -1,21 +1,20 @@
-const STYLE_ID='willena-point-feedback-style-v2';
+const STYLE_ID='willena-point-feedback-style-v3';
 
 function ensureStyles(){
   if(document.getElementById(STYLE_ID))return;
   const style=document.createElement('style');
   style.id=STYLE_ID;
   style.textContent=`
-    .willena-point-feedback-token{
+    .willena-point-feedback-text{
       position:fixed;left:0;top:0;z-index:2147483000;pointer-events:none;
-      min-width:44px;height:44px;padding:0 11px;border-radius:999px;
-      display:flex;align-items:center;justify-content:center;
-      background:linear-gradient(180deg,#fff8bf 0%,#ffd54f 100%);
-      border:2px solid #e7ae18;color:#765500;
-      box-shadow:0 8px 22px rgba(87,65,0,.24),inset 0 1px 0 rgba(255,255,255,.8);
-      font:900 16px/1 Poppins,system-ui,sans-serif;
+      font:900 22px/1 Poppins,system-ui,sans-serif;
+      letter-spacing:-.02em;
+      text-shadow:0 2px 8px rgba(0,0,0,.12);
       transform:translate(-50%,-50%);
       will-change:transform,opacity;
     }
+    .willena-point-feedback-text.is-cyan{color:#22d3ee}
+    .willena-point-feedback-text.is-pink{color:#f472b6}
   `;
   (document.head||document.documentElement).appendChild(style);
 }
@@ -54,14 +53,15 @@ export function showPointAward({amount=0,origin=null}={}){
     ? origin
     : capturePointOrigin(null);
 
+  applyPoints(value);
+
   if(reducedMotion()||typeof Element.prototype.animate!=='function'){
-    applyPoints(value);
     return Promise.resolve(true);
   }
 
   ensureStyles();
-  const token=document.createElement('div');
-  token.className='willena-point-feedback-token';
+  const token=document.createElement('span');
+  token.className='willena-point-feedback-text '+(value>=3?'is-pink':'is-cyan');
   token.textContent='+'+value;
   token.setAttribute('aria-hidden','true');
   token.style.left=start.x+'px';
@@ -69,23 +69,21 @@ export function showPointAward({amount=0,origin=null}={}){
   document.body.appendChild(token);
 
   const animation=token.animate([
-    {transform:'translate(-50%,-50%) translateY(8px) scale(.78)',opacity:0,offset:0},
-    {transform:'translate(-50%,-50%) translateY(0) scale(1.06)',opacity:1,offset:.18},
-    {transform:'translate(-50%,-50%) translateY(-32px) scale(1)',opacity:1,offset:.55},
-    {transform:'translate(-50%,-50%) translateY(-72px) scale(.92)',opacity:0,offset:1}
+    {transform:'translate(-50%,-50%) translateY(0) scale(.96)',opacity:0,offset:0},
+    {transform:'translate(-50%,-50%) translateY(-8px) scale(1)',opacity:1,offset:.12},
+    {transform:'translate(-50%,-50%) translateY(-42px) scale(1)',opacity:1,offset:.62},
+    {transform:'translate(-50%,-50%) translateY(-82px) scale(.96)',opacity:0,offset:1}
   ],{
-    duration:760,
-    easing:'cubic-bezier(.2,.72,.25,1)',
+    duration:1400,
+    easing:'cubic-bezier(.22,.65,.3,1)',
     fill:'forwards'
   });
 
   return animation.finished.then(()=>{
     token.remove();
-    applyPoints(value);
     return true;
   }).catch(()=>{
     token.remove();
-    applyPoints(value);
     return false;
   });
 }
