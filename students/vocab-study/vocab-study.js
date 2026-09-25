@@ -1,6 +1,7 @@
 import {QuestionRenderer} from '/shared/questions/question-renderer.js?v=20260925-speaking2';
 import {getSpellingTarget} from './spelling-targets.js?v=20260925-v0019';
 import {isSpeakableTarget,matchSpeakingTarget} from './speaking-match.js?v=20260925-v0022';
+import {getAssignment,setAssignment,getBookMeta,setBookMeta,getVocabulary,setVocabulary,background} from './vocab-startup-cache.js?v=20260925-v0001';
 
 const SESSION_SIZE=12;
 const CONTENT_URL='https://gxwfsqxyuufqtitspfqg.supabase.co';
@@ -96,6 +97,9 @@ function showStartupPerf(rows,total){
         '<span>'+escapeHtml(row.label)+'</span><b>'+row.ms+' ms</b>'+
       '</div>'
     ).join('');
+}
+function markPerf(label,ms=0){
+  startupPerf.entries.push({label,ms});
 }
 function reportStartupPerf(){
   const total=Math.round((perfNow()-startupPerf.startedAt)*10)/10;
@@ -201,16 +205,28 @@ async function api(url,opts){
 }
 async function profile(){return timed('auth/profile',()=>api('/.netlify/functions/progress_summary?section=my_progress&_='+Date.now()))}
 async function whoami(){return api('/.netlify/functions/supabase_auth?action=whoami&_='+Date.now())}
-async function assignments(className){
-  return timed('assignment lookup',async()=>{
-    const r=await fetch(OP_URL+'/rest/v1/rpc/get_study_assignment_for_class',{
-      method:'POST',headers:{apikey:OP_KEY,Authorization:'Bearer '+OP_KEY,'Content-Type':'application/json'},
-      body:JSON.stringify({p_class_name:className}),cache:'no-store'
-    });
-    const d=await r.json().catch(()=>({}));
-    if(!r.ok||!d.success)throw new Error(d.error||'Could not load assigned books.');
-    return d;
+async function fetchAssignmentsNetwork(className){
+  const r=await fetch(OP_URL+'/rest/v1/rpc/get_study_assignment_for_class',{
+    method:'POST',headers:{apikey:OP_KEY,Authorization:'Bearer '+OP_KEY,'Content-Type':'application/json'},
+    body:JSON.stringify({p_class_name:className}),cache:'no-store'
   });
+  const d=await r.json().catch(()=>({}));
+  if(!r.ok||!d.success)throw new Error(d.error||'Could not load assigned books.');
+  return d;
+}
+async function assignments(className){
+  const cached=getAssignment(className);
+  if(cached){
+    markPerf('assignment cache',0);
+    background(async()=>{
+      const fresh=await fetchAssignmentsNetwork(className);
+      setAssignment(className,fresh);
+    },'assignment revalidate');
+    return cached;
+  }
+  const fresh=await timed('assignment lookup',()=>fetchAssignmentsNetwork(className));
+  setAssignment(className,fresh);
+  return fresh;
 }
 async function content(path){
   const out=[];let offset=0;const pageSize=1000;
@@ -277,31 +293,70 @@ async function resolveAdminBookAndUnit(params){
   unit=unit||units[0];
   return{book:{book_id:meta.id,book_title:txt(meta.title||'Vocabulary'),public_level:Number(meta.public_level)||null,internal_level_id:Number(meta.internal_level_id)||null},unit,units};
 }
+async function fetchBookMetaNetwork(id){
+  const [books,units]=await Promise.all([
+    content('content_books?select=id,public_level,internal_level_id&id=eq.'+encodeURIComponent(id)+'&status=in.(review,published)'),
+    content('content_units?select=id,unit_number,title,metadata&book_id=eq.'+encodeURIComponent(id)+'&status=in.(review,published)&order=unit_number.asc')
+  ]);
+  return{books,units};
+}
+async function loadBookMeta(id){
+  const cached=getBookMeta(id);
+  if(cached){
+    markPerf('book/unit metadata cache '+id,0);
+    background(async()=>setBookMeta(id,await fetchBookMetaNetwork(id)),'book metadata revalidate');
+    return cached;
+  }
+  const fresh=await timed('book/unit metadata '+id,()=>fetchBookMetaNetwork(id));
+  setBookMeta(id,fresh);
+  return fresh;
+}
+async function loadUnitVocabulary(book,unit){
+  const cached=getVocabulary(book.book_id,unit.id);
+  if(cached){
+    markPerf('vocabulary cache '+book.book_id+' unit '+unit.id,0);
+    background(async()=>setVocabulary(book.book_id,unit.id,await loadVocabularyItems(book,unit)),'vocabulary revalidate');
+    return cached;
+  }
+  const fresh=await timed('vocabulary '+book.book_id+' unit '+unit.id,()=>loadVocabularyItems(book,unit));
+  setVocabulary(book.book_id,unit.id,fresh);
+  return fresh;
+}
 async function loadAssignedBook(assignment){
   if(!assignment?.book_id)return null;
   const id=assignment.book_id;
-  const [books,units]=await timed('book/unit metadata '+id,()=>Promise.all([
-    content('content_books?select=id,public_level,internal_level_id&id=eq.'+encodeURIComponent(id)+'&status=in.(review,published)'),
-    content('content_units?select=id,unit_number,title,metadata&book_id=eq.'+encodeURIComponent(id)+'&status=in.(review,published)&order=unit_number.asc')
-  ]));
+  const metaPayload=await loadBookMeta(id);
+  const books=arr(metaPayload?.books),units=arr(metaPayload?.units);
   const meta=books[0]||{},unit=resolveUnit(units,assignment);
   if(!unit)return null;
   const book=Object.assign({},assignment,{book_id:id,book_title:txt(assignment.book_title||assignment.title||'Vocabulary'),public_level:Number(meta.public_level)||null,internal_level_id:Number(meta.internal_level_id)||null});
-  const items=await timed('vocabulary '+id+' unit '+unit.id,()=>loadVocabularyItems(book,unit));
+  const items=await loadUnitVocabulary(book,unit);
   return{book,unit,units,items};
+}
+async function hydrateSecondaryBooks(list,activeBookId){
+  const remaining=list.filter(item=>String(item?.book_id)!==String(activeBookId));
+  if(!remaining.length)return;
+  background(async()=>{
+    const loaded=(await Promise.all(remaining.map(loadAssignedBook))).filter(Boolean);
+    if(!loaded.length)return;
+    const current=state.books.find(item=>String(item?.book?.book_id)===String(activeBookId));
+    state.books=[...(current?[current]:[]),...loaded];
+    state.activeIndex=0;
+    renderBookPicker();
+  },'secondary books');
 }
 async function resolveAssignedBooks(){
   const me=await profile();const className=txt(me.class);if(!className)throw new Error('No active class is assigned.');
   const a=await assignments(className);
   const list=(Array.isArray(a.assignments)&&a.assignments.length?a.assignments:(a.assignment?[a.assignment]:[])).filter(x=>x&&x.book_id);
   if(!list.length)throw new Error('No active book is assigned.');
-  const loaded=(await Promise.all(list.map(loadAssignedBook))).filter(Boolean);
-  if(!loaded.length)throw new Error('No assigned book has available vocabulary units.');
   let wanted='';try{wanted=localStorage.getItem(ACTIVE_BOOK_KEY)||''}catch(_){}
   const fallback=a.assignment&&a.assignment.book_id;
-  let activeIndex=loaded.findIndex(x=>String(x.book.book_id)===String(wanted||fallback));
-  if(activeIndex<0)activeIndex=0;
-  return{books:loaded,assignments:list,activeIndex};
+  let activeAssignment=list.find(x=>String(x.book_id)===String(wanted||fallback));
+  if(!activeAssignment)activeAssignment=list[0];
+  const active=await loadAssignedBook(activeAssignment);
+  if(!active)throw new Error('No assigned book has available vocabulary units.');
+  return{books:[active],assignments:list,activeIndex:0,deferredAssignments:list};
 }
 function activateBook(index){
   const loaded=state.books[index];if(!loaded)return;
@@ -317,7 +372,7 @@ async function selectUnit(id){
   if(spellingPreviewBtn)spellingPreviewBtn.disabled=true;
   setStatus('단어를 불러오는 중...');
   try{
-    const items=await loadVocabularyItems(state.book,unit);
+    const items=await loadUnitVocabulary(state.book,unit);
     state.unit=unit;
     state.items=items;
     const loaded=state.books[state.activeIndex];
@@ -1173,6 +1228,7 @@ async function boot(){
       const active=state.books[state.activeIndex];
       state.book=active.book;state.unit=active.unit;state.units=arr(active.units);state.items=active.items;
       renderHome();
+      hydrateSecondaryBooks(resolved.deferredAssignments,state.book.book_id);
     }
     startBtn.addEventListener('click',()=>startSession());
     spellingPreviewBtn?.addEventListener('click',openSpellingMenu);
@@ -1190,7 +1246,7 @@ async function boot(){
       renderSkillProgress();
     });
     reportStartupPerf();
-    window.WillenaVocabStudy={version:'0.027',getState:()=>state,start:startSession,openSpellingMenu,openSpellingPreview,openSpellingTest,openSpeakingSession,close:closeSession};
+    window.WillenaVocabStudy={version:'0.028',getState:()=>state,start:startSession,openSpellingMenu,openSpellingPreview,openSpellingTest,openSpeakingSession,close:closeSession};
   }catch(error){
     console.error('[Vocab Study] boot',error);
     setStatus(error?.message||'불러오지 못했습니다. 새로고침해 주세요.');
