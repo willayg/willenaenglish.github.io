@@ -2,6 +2,7 @@ import {QuestionRenderer} from '/shared/questions/question-renderer.js?v=2026092
 import {getSpellingTarget} from './spelling-targets.js?v=20260925-v0019';
 import {isSpeakableTarget,matchSpeakingTarget} from './speaking-match.js?v=20260925-v0022';
 import {getAssignment,setAssignment,getBookMeta,setBookMeta,getVocabulary,setVocabulary,background} from './vocab-startup-cache.js?v=20260925-v0001';
+import {snapshotPercent,loadVocabSnapshot} from './vocab-progress-snapshot.js?v=20260925-v0001';
 
 const SESSION_SIZE=12;
 const CONTENT_URL='https://gxwfsqxyuufqtitspfqg.supabase.co';
@@ -51,7 +52,7 @@ const state={
   outcomes:new Map(),reviewKeys:new Set(),retryCounts:new Map(),
   spellingPractice:null,spellingTest:null,speakingSession:null,
   adminMode:false,nextReadyAt:0,questionStartedAt:0,
-  masteryItems:[]
+  progressSnapshot:null
 };
 
 function txt(v){return String(v==null?'':v).trim()}
@@ -119,41 +120,26 @@ function setSkillRing(ring,value){
   const label=ring.querySelector('span');
   if(label)label.textContent=pct+'%';
 }
-function masteryBySkill(items,skill,eligibleIds){
-  const ids=new Set(arr(eligibleIds).map(txt).filter(Boolean));
-  if(!ids.size)return 0;
-  let total=0;
-  arr(items).forEach(item=>{
-    if(txt(item?.skill)!==skill)return;
-    if(txt(item?.content_type)!=='lexical_entry')return;
-    const id=txt(item?.content_id);
-    if(!ids.has(id))return;
-    total+=Math.max(0,Math.min(100,Number(item?.mastery_score)||0));
-  });
-  return total/ids.size;
-}
 function renderSkillProgress(){
   const vocabIds=unitVocabularyWords(state.items).map(w=>w.id).filter(isUuid);
   const spellingIds=spellingWords(state.items).map(w=>w.id).filter(isUuid);
   const speakingIds=speakingWords(state.items).map(w=>w.id).filter(isUuid);
-  setSkillRing(quizRingEl,masteryBySkill(state.masteryItems,'vocabulary',vocabIds));
-  setSkillRing(spellingRingEl,masteryBySkill(state.masteryItems,'spelling',spellingIds));
-  setSkillRing(speakingRingEl,masteryBySkill(state.masteryItems,'speaking',speakingIds));
+  setSkillRing(quizRingEl,snapshotPercent(state.progressSnapshot,'vocabulary',vocabIds));
+  setSkillRing(spellingRingEl,snapshotPercent(state.progressSnapshot,'spelling',spellingIds));
+  setSkillRing(speakingRingEl,snapshotPercent(state.progressSnapshot,'speaking',speakingIds));
 }
 async function loadSkillProgress(){
   const bookId=state.book?.book_id,unitId=state.unit?.id;
-  state.masteryItems=[];
+  state.progressSnapshot=null;
   renderSkillProgress();
   if(state.adminMode||!bookId||!unitId)return;
-  const recorder=window.WillenaStudyProgress;
-  if(!recorder||typeof recorder.getContentMastery!=='function')return;
   try{
-    const data=await timed('progress snapshot source '+bookId+' unit '+unitId,()=>recorder.getContentMastery(bookId,unitId));
+    const data=await timed('progress snapshot '+bookId+' unit '+unitId,()=>loadVocabSnapshot(bookId,unitId));
     if(String(bookId)!==String(state.book?.book_id)||String(unitId)!==String(state.unit?.id))return;
-    state.masteryItems=arr(data?.items);
+    state.progressSnapshot=data||null;
     renderSkillProgress();
   }catch(error){
-    console.warn('[Vocab Study] progress unavailable',error);
+    console.warn('[Vocab Study] progress snapshot unavailable',error);
   }
 }
 
@@ -1243,14 +1229,14 @@ async function boot(){
     document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!wordModalEl?.hidden)closeWordList()});
     closeBtn.addEventListener('click',closeSession);
     actionBtn.addEventListener('click',()=>state.speakingSession?checkSpeaking():state.spellingTest?checkSpellingTest():state.spellingPractice?checkSpellingCoach():checkCurrent());
-    window.addEventListener('willena:content-mastery-updated',event=>{
+    window.addEventListener('willena:vocab-snapshot-updated',event=>{
       const detail=event?.detail||{};
       if(String(detail.book_id)!==String(state.book?.book_id)||String(detail.unit_id)!==String(state.unit?.id))return;
-      state.masteryItems=arr(detail.data?.items);
+      state.progressSnapshot=detail.data||null;
       renderSkillProgress();
     });
     reportStartupPerf();
-    window.WillenaVocabStudy={version:'0.029',getState:()=>state,start:startSession,openSpellingMenu,openSpellingPreview,openSpellingTest,openSpeakingSession,close:closeSession};
+    window.WillenaVocabStudy={version:'0.030',getState:()=>state,start:startSession,openSpellingMenu,openSpellingPreview,openSpellingTest,openSpeakingSession,close:closeSession};
   }catch(error){
     console.error('[Vocab Study] boot',error);
     setStatus(error?.message||'불러오지 못했습니다. 새로고침해 주세요.');
