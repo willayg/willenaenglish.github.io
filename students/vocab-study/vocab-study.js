@@ -1,4 +1,5 @@
 import {QuestionRenderer} from '/shared/questions/question-renderer.js?v=20260925-spelling7';
+import {getSpellingTarget} from './spelling-targets.js?v=20260925-v0019';
 
 const SESSION_SIZE=12;
 const CONTENT_URL='https://gxwfsqxyuufqtitspfqg.supabase.co';
@@ -491,8 +492,14 @@ function checkCurrent(){
   actionBtn.textContent=state.index>=state.queue.length-1?'Finish':'Next';
   updateProgress();
 }
+function spellingWords(items){
+  return unitVocabularyWords(items).map(word=>{
+    const spellingTarget=getSpellingTarget(word.word);
+    return spellingTarget?Object.assign({},word,{spellingTarget}):null;
+  }).filter(Boolean);
+}
 function spellingPreviewWords(items){
-  return unitVocabularyWords(items).slice(0,10);
+  return spellingWords(items).slice(0,10);
 }
 function playPreviewWord(word){
   if(!('speechSynthesis' in window))return;
@@ -515,7 +522,7 @@ function recordSpellingAttempt(practice,word,renderer,correct){
   practice.currentAttemptCount+=1;
   const attempt={
     lexicalEntryId:word.id||null,
-    word:word.word,
+    word:word.spellingTarget||word.word,
     ko:word.ko,
     correct:!!correct,
     supportLevel:Number(renderer?.getSupportLevel?.()||0),
@@ -573,7 +580,7 @@ function openSpellingMenu(){
   sessionMain.scrollTop=0;
 }
 function spellingTestWords(items){
-  return shuffle(unitVocabularyWords(items)).slice(0,10);
+  return shuffle(spellingWords(items)).slice(0,10);
 }
 function openSpellingTest(){
   const words=spellingTestWords(state.items);if(!words.length)return;
@@ -595,7 +602,7 @@ function spellingTestQuestion(word,index){
     form:'write',
     prompt:word.ko,
     context:{},
-    answer:[word.word],
+    answer:[word.spellingTarget||word.word],
     input:{language:'en'},
     grading:{constraints:{}}
   };
@@ -633,12 +640,13 @@ function checkSpellingTest(){
   const word=test.words[test.index];
   const response=txt(renderer.getResponse());
   if(!response)return;
-  const correct=response.toLowerCase()===word.word.toLowerCase();
-  test.results.push({lexicalEntryId:word.id||null,word:word.word,ko:word.ko,response,correct});
+  const target=word.spellingTarget||word.word;
+  const correct=response.toLowerCase()===target.toLowerCase();
+  test.results.push({lexicalEntryId:word.id||null,word:target,ko:word.ko,response,correct});
   renderer.setDisabled(true);
   renderer.showFeedback({
     correct,
-    correctAnswer:[word.word],
+    correctAnswer:[target],
     message:correct?'정답입니다!':'정답을 확인해 보세요.'
   });
   test.checked=true;
@@ -691,14 +699,14 @@ function openSpellingPreview(){
         words.map((w,i)=>
           '<div class="lesson-word">'+
             '<button class="speak-mini" type="button" data-preview-word="'+i+'" aria-label="'+escapeHtml(w.word)+' 듣기">▶</button>'+
-            '<div><strong>'+escapeHtml(w.word)+'</strong><span>'+escapeHtml(w.ko)+'</span></div>'+
+            '<div><strong>'+escapeHtml(w.spellingTarget||w.word)+'</strong><span>'+escapeHtml(w.ko)+'</span></div>'+
           '</div>'
         ).join('')+
       '</div>'+
       '<div class="activity-actions"><button id="vocabStartSpelling" class="primary-button" type="button">Start Spelling</button></div>'+
     '</section>';
   root.querySelectorAll('[data-preview-word]').forEach(btn=>btn.addEventListener('click',()=>{
-    const w=words[Number(btn.dataset.previewWord)];if(w)playPreviewWord(w.word);
+    const w=words[Number(btn.dataset.previewWord)];if(w)playPreviewWord(w.spellingTarget||w.word);
   }));
   el('vocabStartSpelling')?.addEventListener('click',startSpellingPractice);
   sessionEl.hidden=false;
@@ -720,8 +728,8 @@ function spellingCoachQuestion(word,index){
     id:'vocab-spelling-coach-'+index,
     form:'spelling_coach',
     prompt:word.ko,
-    context:{target_en:word.word,audio_text:word.word},
-    answer:[word.word],
+    context:{target_en:word.spellingTarget||word.word,audio_text:word.spellingTarget||word.word},
+    answer:[word.spellingTarget||word.word],
     hints:{scramble:true,chunks:true},
     input:{language:'en'},
     grading:{constraints:{}}
@@ -756,14 +764,15 @@ function checkSpellingCoach(){
   const word=practice.words[practice.index];
   const response=txt(renderer.getResponse());
   if(!response)return;
-  const correct=response.toLowerCase()===word.word.toLowerCase();
+  const target=word.spellingTarget||word.word;
+  const correct=response.toLowerCase()===target.toLowerCase();
   recordSpellingAttempt(practice,word,renderer,correct);
   if(!correct){
     renderer.showFeedback({correct:false,correctAnswer:[],message:'다시 해보세요.'});
     return;
   }
   renderer.setDisabled(true);
-  renderer.showFeedback({correct:true,correctAnswer:[word.word]});
+  renderer.showFeedback({correct:true,correctAnswer:[target]});
   actionBtn.disabled=true;
   setTimeout(()=>{practice.index++;renderSpellingCoach()},350);
 }
@@ -875,7 +884,7 @@ async function boot(){
     document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!wordModalEl?.hidden)closeWordList()});
     closeBtn.addEventListener('click',closeSession);
     actionBtn.addEventListener('click',()=>state.spellingTest?checkSpellingTest():state.spellingPractice?checkSpellingCoach():checkCurrent());
-    window.WillenaVocabStudy={version:'0.018',getState:()=>state,start:startSession,openSpellingMenu,openSpellingPreview,openSpellingTest,close:closeSession};
+    window.WillenaVocabStudy={version:'0.019',getState:()=>state,start:startSession,openSpellingMenu,openSpellingPreview,openSpellingTest,close:closeSession};
   }catch(error){
     console.error('[Vocab Study] boot',error);
     setStatus(error?.message||'불러오지 못했습니다. 새로고침해 주세요.');
