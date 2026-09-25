@@ -6,7 +6,7 @@ export function snapshotPercent(snapshot,skill,eligibleIds){
   const total=arr(eligibleIds).map(txt).filter(Boolean).length;
   if(!total)return 0;
   const block=snapshot&&snapshot[skill]||{};
-  return clampPercent((Number(block.mastery_sum)||0)/total);
+  return clampPercent((Number(block.passed_count)||0)*100/total);
 }
 
 export async function loadVocabSnapshot(bookId,unitId){
