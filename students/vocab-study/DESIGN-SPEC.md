@@ -1,7 +1,7 @@
 # Vocabulary Study — Design & Architecture Spec
 
 **App:** `students/vocab-study/`  
-**Current staging version:** `0.043`  
+**Current staging version:** `0.044`  
 **Status:** Active implementation  
 **Purpose:** Define the product behavior, study flow, renderer responsibilities, tracking model, mastery model, and modular architecture for the next generation Vocabulary Study app.
 
@@ -553,12 +553,19 @@ Vocabulary Study should award more points than the generic Study default because
 #### Points per recorded attempt
 
 - Multiple-choice vocabulary: **2 points**
-- Spelling Coach / Spelling Test: **4 points**
+- Spelling Test: **4 points**
 - Speaking: **4 points**
+- Spelling Coach uses support-sensitive points:
+  - correct with **0 hints**: **3 points**
+  - correct with **1 hint**: **2 points**
+  - correct with **2+ hints**: **1 point**
+  - incorrect Coach attempt: **0 points**
 
 These rewards should flow through the existing Willena points system rather than creating a Vocabulary Study-only balance.
 
 Retries, repeated practice, and assisted attempts remain fully tracked. Attempt points are awarded on every recorded attempt, including retries. Session-star percentages are calculated from the first attempt on each target, and persistent skill-card scores use the same clean-pass principle so forced correction retries do not inflate either result.
+
+Spelling Coach is practice/support rather than a scored mode. It awards **points only** and does **not** create a star-bearing reward session.
 
 #### Stars per completed session
 
@@ -575,7 +582,7 @@ Stars are awarded from the student's final session percentage:
 
 A result below 60% is not good enough for a star award.
 
-Stars are awarded through the existing Willena `progress_sessions` stars system and shown on the Vocabulary Study completion screen. Vocabulary Study finalizes reward sessions through the same authenticated Cloudflare Study progress path already used by its canonical attempt recorder. The deployed `progress_summary?section=study_attempt` endpoint passes a reward-only payload into `record_study_attempt_v1`, which writes the completed `progress_sessions` star row without creating a fake study attempt. The visual award uses the shared `students/components/student-reward-celebration.js` component so other student apps can reuse the same animated percentage / stars / points treatment. Repeating the same book/unit/mode can improve the recorded best star result, but it must not stack unlimited duplicate stars for the same list + mode.
+Stars are awarded through the existing Willena `progress_sessions` stars system and shown on scored Vocabulary Study completion screens. Spelling Coach is excluded from star awards. Vocabulary Study finalizes reward sessions through the same authenticated Cloudflare Study progress path already used by its canonical attempt recorder. The deployed `progress_summary?section=study_attempt` endpoint passes a reward-only payload into `record_study_attempt_v1`, which writes the completed `progress_sessions` star row without creating a fake study attempt. The visual award uses the shared `students/components/student-reward-celebration.js` component so other student apps can reuse the same animated percentage / stars / points treatment. Repeating the same book/unit/mode can improve the recorded best star result, but it must not stack unlimited duplicate stars for the same list + mode.
 
 The star result is a motivational session reward and does not alter unit progress, Golden Unit Badges, or streak calculations.
 
