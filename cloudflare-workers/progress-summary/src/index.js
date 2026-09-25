@@ -468,6 +468,18 @@ export default {
         return jsonResponse(result, 200, origin);
       }
 
+      if (section === 'study_vocab_snapshot') {
+        const bookId = url.searchParams.get('book_id');
+        const unitId = url.searchParams.get('unit_id');
+        if (!bookId || !unitId) return jsonResponse({ success:false, error:'book_id and unit_id are required' }, 400, origin);
+        const result = await supabaseRpc(env, 'get_student_vocab_unit_snapshot_v1', {
+          p_student_id: userId,
+          p_book_id: bookId,
+          p_unit_id: unitId,
+        });
+        return jsonResponse(result, 200, origin);
+      }
+
       if (section === 'adaptive_state') {
         const result = await supabaseRpc(env, 'get_adaptive_study_state_v1', { p_student_id: userId });
         return jsonResponse(result, 200, origin);
