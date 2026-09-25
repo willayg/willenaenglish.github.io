@@ -98,6 +98,19 @@ function scrambledLetters(value){
   }
   return chars.slice().reverse();
 }
+function spellingChunks(value){
+  return String(value||'').trim().split(/\s+/).filter(Boolean).map(word=>{
+    const chars=[...word];
+    if(chars.length<=3)return [word];
+    if(chars.length<=6){
+      const cut=Math.ceil(chars.length/2);
+      return [chars.slice(0,cut).join(''),chars.slice(cut).join('')];
+    }
+    const first=Math.ceil(chars.length/3);
+    const second=Math.ceil((chars.length-first)/2)+first;
+    return [chars.slice(0,first).join(''),chars.slice(first,second).join(''),chars.slice(second).join('')];
+  });
+}
 function numberMark(i){return ['①','②','③','④','⑤','⑥','⑦','⑧'][i]||String(i+1)}
 function inputLanguage(q){return String(q?.input?.language||'mixed')}
 function inputAttrs(q,kind='text'){
@@ -165,8 +178,11 @@ export class QuestionRenderer{
       const target=answerParts(q)[0]||q.context?.target_en||'';
       const audio=String(q.context?.audio_text||target||'');
       const scramble=q.hints?.scramble!==false;
+      const chunks=q.hints?.chunks!==false;
       const hint=scramble?scrambledLetters(target):[];
-      return `${audio?`<button type="button" class="activity-audio" data-spelling-audio data-audio-text="${esc(audio)}">▶ Hear English</button>`:''}<div class="learn" data-spelling-target>${textHtml(target)}</div>${scramble?`<div class="spelling-coach-hint-row"><button type="button" class="spelling-coach-hint-button" data-spelling-hint="scramble">Hint 1 · Letters</button><div class="spelling-coach-scramble" data-spelling-scramble hidden>${hint.map(ch=>`<span>${esc(ch)}</span>`).join('')}</div></div>`:''}<input class="text-input spelling-coach-input" data-spelling-input ${inputAttrs(q,'spelling-coach')} placeholder="${esc(placeholder(q))}">`;
+      const chunkGroups=chunks?spellingChunks(target):[];
+      const chunkHtml=chunkGroups.map(group=>`<div class="spelling-coach-chunk-word">${group.map(part=>`<span>${esc(part)}</span>`).join('')}</div>`).join('');
+      return `${audio?`<button type="button" class="activity-audio" data-spelling-audio data-audio-text="${esc(audio)}">▶ Hear English</button>`:''}<div class="learn" data-spelling-target>${textHtml(target)}</div>${scramble?`<div class="spelling-coach-hint-row"><button type="button" class="spelling-coach-hint-button" data-spelling-hint="scramble">Hint 1 · Letters</button><div class="spelling-coach-scramble" data-spelling-scramble hidden>${hint.map(ch=>`<span>${esc(ch)}</span>`).join('')}</div>${chunks?`<button type="button" class="spelling-coach-hint-button spelling-coach-hint-2" data-spelling-hint="chunks" hidden>Hint 2 · Chunks</button><div class="spelling-coach-chunks" data-spelling-chunks hidden>${chunkHtml}</div>`:''}</div>`:''}<input class="text-input spelling-coach-input" data-spelling-input ${inputAttrs(q,'spelling-coach')} placeholder="${esc(placeholder(q))}">`;
     }
     return `<div class="error">Unsupported question form: ${esc(q.form||'unknown')}</div>`;
   }
@@ -188,9 +204,18 @@ export class QuestionRenderer{
       this.host.querySelector('[data-spelling-hint="scramble"]')?.addEventListener('click',e=>{
         if(this.disabled)return;
         const panel=this.host.querySelector('[data-spelling-scramble]');
+        const hint2=this.host.querySelector('[data-spelling-hint="chunks"]');
         if(panel)panel.hidden=false;
+        if(hint2)hint2.hidden=false;
         e.currentTarget.hidden=true;
         this.state.spellingHintLevel=Math.max(Number(this.state.spellingHintLevel||0),1);
+      });
+      this.host.querySelector('[data-spelling-hint="chunks"]')?.addEventListener('click',e=>{
+        if(this.disabled)return;
+        const panel=this.host.querySelector('[data-spelling-chunks]');
+        if(panel)panel.hidden=false;
+        e.currentTarget.hidden=true;
+        this.state.spellingHintLevel=Math.max(Number(this.state.spellingHintLevel||0),2);
       });
       requestAnimationFrame(()=>input?.focus?.());
     }
@@ -253,7 +278,7 @@ export class QuestionRenderer{
         background:#fbfeff;
         box-shadow:0 0 0 5px rgba(102,214,223,.16),0 10px 26px rgba(34,106,116,.08);
       }
-      .spelling-coach-hint-row{margin-top:16px;text-align:center}
+      .spelling-coach-hint-row{margin:16px 0 28px;text-align:center}
       .spelling-coach-hint-button{
         min-height:44px;padding:0 16px;border:2px solid #ffd1e8;border-radius:15px;
         background:#fff;color:#e60076;font:800 .86rem Poppins,system-ui,sans-serif;cursor:pointer
@@ -263,6 +288,14 @@ export class QuestionRenderer{
       .spelling-coach-scramble span{
         min-width:38px;height:42px;padding:0 9px;display:grid;place-items:center;border:2px solid #dcebed;
         border-radius:12px;background:#f8fcfc;color:#173f46;font:800 1.05rem Poppins,system-ui,sans-serif
+      }
+      .spelling-coach-hint-2{margin-top:14px}
+      .spelling-coach-chunks{display:flex;flex-wrap:wrap;justify-content:center;gap:12px;margin-top:14px}
+      .spelling-coach-chunks[hidden]{display:none}
+      .spelling-coach-chunk-word{display:flex;gap:6px}
+      .spelling-coach-chunk-word span{
+        min-height:42px;padding:0 12px;display:grid;place-items:center;border:2px solid #bfe5e8;
+        border-radius:12px;background:#e9fbfc;color:#315e64;font:800 1rem Poppins,system-ui,sans-serif
       }
       @media(max-width:560px){
         .spelling-coach-input{min-height:68px;padding:14px 18px;border-radius:20px;font-size:1.35rem}
