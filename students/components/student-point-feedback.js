@@ -7,7 +7,7 @@ function ensureStyles(){
   style.textContent=`
     .willena-point-feedback-text{
       position:fixed;left:0;top:0;z-index:2147483000;pointer-events:none;
-      font:900 22px/1 Poppins,system-ui,sans-serif;
+      font:900 28px/1 Poppins,system-ui,sans-serif;
       letter-spacing:-.02em;
       text-shadow:0 2px 8px rgba(0,0,0,.12);
       transform:translate(-50%,-50%);
