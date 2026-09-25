@@ -181,7 +181,13 @@ export class QuestionRenderer{
       const chunks=q.hints?.chunks!==false;
       const hint=scramble?scrambledLetters(target):[];
       const chunkGroups=chunks?spellingChunks(target):[];
-      const chunkHtml=chunkGroups.map(group=>`<div class="spelling-coach-chunk-word">${group.map(part=>`<span>${esc(part)}</span>`).join('')}</div>`).join('');
+      const shuffledChunkGroups=chunkGroups.map(group=>{
+        const out=group.slice();
+        for(let i=out.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[out[i],out[j]]=[out[j],out[i]]}
+        if(out.length>1&&out.join('')===group.join(''))[out[0],out[1]]=[out[1],out[0]];
+        return out;
+      });
+      const chunkHtml=shuffledChunkGroups.map(group=>`<div class="spelling-coach-chunk-word">${group.map(part=>`<span>${esc(part)}</span>`).join('')}</div>`).join('');
       return `${audio?`<button type="button" class="activity-audio" data-spelling-audio data-audio-text="${esc(audio)}">▶ Hear English</button>`:''}<div class="learn" data-spelling-target>${textHtml(target)}</div>${scramble?`<div class="spelling-coach-hint-row"><button type="button" class="spelling-coach-hint-button" data-spelling-hint="scramble">Hint 1 · Letters</button><div class="spelling-coach-scramble" data-spelling-scramble hidden>${hint.map(ch=>`<span>${esc(ch)}</span>`).join('')}</div>${chunks?`<button type="button" class="spelling-coach-hint-button spelling-coach-hint-2" data-spelling-hint="chunks" hidden>Hint 2 · Chunks</button><div class="spelling-coach-chunks" data-spelling-chunks hidden>${chunkHtml}</div>`:''}</div>`:''}<input class="text-input spelling-coach-input" data-spelling-input ${inputAttrs(q,'spelling-coach')} placeholder="${esc(placeholder(q))}">`;
     }
     return `<div class="error">Unsupported question form: ${esc(q.form||'unknown')}</div>`;
