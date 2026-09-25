@@ -13,7 +13,8 @@ export function repeatUntilCorrect(correct){
 
 export function appendRetry(queue,word){
   if(!Array.isArray(queue)||!word)return;
-  queue.push(Object.assign({},word,{__vocabRepeat:true}));
+  const retryCount=Math.max(0,Number(word.__vocabRetryCount)||0)+1;
+  queue.push(Object.assign({},word,{__vocabRepeat:true,__vocabRetryCount:retryCount}));
 }
 
 export function uniquePassedCount(results){
