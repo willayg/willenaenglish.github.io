@@ -63,6 +63,24 @@ function shuffle(items){
 }
 function setStatus(message){if(statusEl)statusEl.textContent=message}
 
+function perfNow(){return window.performance?.now?.()||Date.now()}
+const startupPerf={startedAt:perfNow(),entries:[]};
+async function timed(label,fn){
+  const start=perfNow();
+  try{return await fn()}
+  finally{
+    const ms=Math.round((perfNow()-start)*10)/10;
+    startupPerf.entries.push({label,ms});
+    console.info('[Vocab Study perf]',label,ms+'ms');
+  }
+}
+function reportStartupPerf(){
+  const total=Math.round((perfNow()-startupPerf.startedAt)*10)/10;
+  const rows=startupPerf.entries.concat([{label:'TOTAL BOOT',ms:total}]);
+  console.table(rows);
+  window.WillenaVocabStudyPerf={totalMs:total,entries:rows.slice()};
+}
+
 function ringPercent(value){
   return Math.max(0,Math.min(100,Math.round(Number(value)||0)));
 }
@@ -102,7 +120,7 @@ async function loadSkillProgress(){
   const recorder=window.WillenaStudyProgress;
   if(!recorder||typeof recorder.getContentMastery!=='function')return;
   try{
-    const data=await recorder.getContentMastery(bookId,unitId);
+    const data=await timed('progress snapshot source '+bookId+' unit '+unitId,()=>recorder.getContentMastery(bookId,unitId));
     if(String(bookId)!==String(state.book?.book_id)||String(unitId)!==String(state.unit?.id))return;
     state.masteryItems=arr(data?.items);
     renderSkillProgress();
@@ -157,16 +175,18 @@ async function api(url,opts){
   if(!r.ok||(d&&d.success===false))throw new Error(d&&d.error||('Request failed ('+r.status+').'));
   return d;
 }
-async function profile(){return api('/.netlify/functions/progress_summary?section=my_progress&_='+Date.now())}
+async function profile(){return timed('auth/profile',()=>api('/.netlify/functions/progress_summary?section=my_progress&_='+Date.now()))}
 async function whoami(){return api('/.netlify/functions/supabase_auth?action=whoami&_='+Date.now())}
 async function assignments(className){
-  const r=await fetch(OP_URL+'/rest/v1/rpc/get_study_assignment_for_class',{
-    method:'POST',headers:{apikey:OP_KEY,Authorization:'Bearer '+OP_KEY,'Content-Type':'application/json'},
-    body:JSON.stringify({p_class_name:className}),cache:'no-store'
+  return timed('assignment lookup',async()=>{
+    const r=await fetch(OP_URL+'/rest/v1/rpc/get_study_assignment_for_class',{
+      method:'POST',headers:{apikey:OP_KEY,Authorization:'Bearer '+OP_KEY,'Content-Type':'application/json'},
+      body:JSON.stringify({p_class_name:className}),cache:'no-store'
+    });
+    const d=await r.json().catch(()=>({}));
+    if(!r.ok||!d.success)throw new Error(d.error||'Could not load assigned books.');
+    return d;
   });
-  const d=await r.json().catch(()=>({}));
-  if(!r.ok||!d.success)throw new Error(d.error||'Could not load assigned books.');
-  return d;
 }
 async function content(path){
   const out=[];let offset=0;const pageSize=1000;
@@ -235,14 +255,15 @@ async function resolveAdminBookAndUnit(params){
 }
 async function loadAssignedBook(assignment){
   if(!assignment?.book_id)return null;
-  const [books,units]=await Promise.all([
-    content('content_books?select=id,public_level,internal_level_id&id=eq.'+encodeURIComponent(assignment.book_id)+'&status=in.(review,published)'),
-    content('content_units?select=id,unit_number,title,metadata&book_id=eq.'+encodeURIComponent(assignment.book_id)+'&status=in.(review,published)&order=unit_number.asc')
-  ]);
+  const id=assignment.book_id;
+  const [books,units]=await timed('book/unit metadata '+id,()=>Promise.all([
+    content('content_books?select=id,public_level,internal_level_id&id=eq.'+encodeURIComponent(id)+'&status=in.(review,published)'),
+    content('content_units?select=id,unit_number,title,metadata&book_id=eq.'+encodeURIComponent(id)+'&status=in.(review,published)&order=unit_number.asc')
+  ]));
   const meta=books[0]||{},unit=resolveUnit(units,assignment);
   if(!unit)return null;
-  const book=Object.assign({},assignment,{book_id:assignment.book_id,book_title:txt(assignment.book_title||assignment.title||'Vocabulary'),public_level:Number(meta.public_level)||null,internal_level_id:Number(meta.internal_level_id)||null});
-  const items=await loadVocabularyItems(book,unit);
+  const book=Object.assign({},assignment,{book_id:id,book_title:txt(assignment.book_title||assignment.title||'Vocabulary'),public_level:Number(meta.public_level)||null,internal_level_id:Number(meta.internal_level_id)||null});
+  const items=await timed('vocabulary '+id+' unit '+unit.id,()=>loadVocabularyItems(book,unit));
   return{book,unit,units,items};
 }
 async function resolveAssignedBooks(){
@@ -1144,7 +1165,8 @@ async function boot(){
       state.masteryItems=arr(detail.data?.items);
       renderSkillProgress();
     });
-    window.WillenaVocabStudy={version:'0.025',getState:()=>state,start:startSession,openSpellingMenu,openSpellingPreview,openSpellingTest,openSpeakingSession,close:closeSession};
+    reportStartupPerf();
+    window.WillenaVocabStudy={version:'0.026',getState:()=>state,start:startSession,openSpellingMenu,openSpellingPreview,openSpellingTest,openSpeakingSession,close:closeSession};
   }catch(error){
     console.error('[Vocab Study] boot',error);
     setStatus(error?.message||'불러오지 못했습니다. 새로고침해 주세요.');
