@@ -91,29 +91,8 @@ function startRewardSession(mode){
     completed:false,
     rewardSessionId,
     listName,
-    startPromise:null
+    startedAt:new Date().toISOString()
   };
-  state.rewardSession.startPromise=api('/.netlify/functions/log_word_attempt',{
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({
-      event_type:'session_start',
-      session_id:rewardSessionId,
-      mode:'vocab_'+txt(mode),
-      list_name:listName,
-      list_size:null,
-      extra:{
-        completed:false,
-        book_id:state.book?.book_id||null,
-        unit_id:state.unit?.id||null,
-        vocab_mode:txt(mode),
-        reward_scheme:'vocab-study-v1'
-      }
-    })
-  }).catch(error=>{
-    console.warn('[Vocab Study] reward session start failed',error);
-    return null;
-  });
 }
 function noteRewardAttempt(correct,retryCount,points){
   const reward=state.rewardSession;
@@ -135,28 +114,36 @@ async function completeRewardSession(){
   reward.stars=starsForPercent(reward.percent);
   const listName=reward.listName||('Vocabulary · '+txt(state.book?.book_title||state.book?.book_id||'Book')+' · Unit '+txt(state.unit?.unit_number||state.unit?.id||''));
   try{
-    if(reward.startPromise)await reward.startPromise;
-    await api('/.netlify/functions/log_word_attempt',{
+    await api('/.netlify/functions/progress_summary?section=study_attempt&_='+Date.now(),{
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
-        event_type:'session_end',
-        session_id:reward.rewardSessionId,
-        mode:'vocab_'+reward.mode,
-        list_name:listName,
-        list_size:reward.firstTotal,
-        extra:{
-          completed:true,
-          stars:reward.stars,
-          accuracy:reward.firstTotal?reward.firstCorrect/reward.firstTotal:0,
-          percent:reward.percent,
-          score:reward.firstCorrect,
-          total:reward.firstTotal,
-          points_earned:reward.points,
+        payload:{
+          reward_only:true,
+          session_id:reward.rewardSessionId,
+          client_attempt_id:(window.crypto?.randomUUID?.()||('reward-'+Date.now()+'-'+Math.random().toString(16).slice(2))),
           book_id:state.book?.book_id||null,
           unit_id:state.unit?.id||null,
-          vocab_mode:reward.mode,
-          reward_scheme:'vocab-study-v1'
+          skill:'vocabulary',
+          response_type:'reward',
+          activity_id:'vocab-reward',
+          reward_mode:'vocab_'+reward.mode,
+          reward_list_name:listName,
+          reward_list_size:reward.firstTotal,
+          reward_started_at:reward.startedAt||new Date().toISOString(),
+          reward_summary:{
+            completed:true,
+            stars:reward.stars,
+            accuracy:reward.firstTotal?reward.firstCorrect/reward.firstTotal:0,
+            percent:reward.percent,
+            score:reward.firstCorrect,
+            total:reward.firstTotal,
+            points_earned:reward.points,
+            book_id:state.book?.book_id||null,
+            unit_id:state.unit?.id||null,
+            vocab_mode:reward.mode,
+            reward_scheme:'vocab-study-v1'
+          }
         }
       })
     });
