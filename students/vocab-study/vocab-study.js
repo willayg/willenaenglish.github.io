@@ -12,6 +12,11 @@ const statusEl=el('vocabStudyStatus');
 const bookTitleEl=el('vocabBookTitle');
 const unitTitleEl=el('vocabUnitTitle');
 const itemCountEl=el('vocabItemCount');
+const wordListOpenBtn=el('vocabWordListOpen');
+const wordModalEl=el('vocabWordModal');
+const wordModalCloseBtn=el('vocabWordModalClose');
+const wordModalListEl=el('vocabWordModalList');
+const wordModalMetaEl=el('vocabWordModalMeta');
 const startBtn=el('vocabStudyStart');
 const spellingPreviewBtn=el('vocabSpellingPreview');
 const sessionEl=el('vocabStudySession');
@@ -327,6 +332,46 @@ function activityToQuestion(item){
     grading:{constraints:{}},metadata:item.metadata||{}
   };
 }
+function unitVocabularyWords(items){
+  const map=new Map();
+  arr(items).forEach(item=>{
+    const m=item?.metadata||{};
+    const prompt=txt(item?.stimulus?.prompt).replace(/^\S+\s{2}/,'');
+    const answer=txt(item?.answer);
+    let word=txt(m.canonical_lookup||m.canonical_text);
+    let ko=txt(m.translation_ko);
+    if(!word){
+      if(/[A-Za-z]/.test(answer))word=answer;
+      else if(/[A-Za-z]/.test(prompt))word=prompt;
+    }
+    if(!ko){
+      if(answer&&!/[A-Za-z]/.test(answer))ko=answer;
+      else if(prompt&&!/[A-Za-z]/.test(prompt))ko=prompt;
+    }
+    if(!word||!ko||!/[A-Za-z]/.test(word))return;
+    const key=word.toLowerCase()+'|'+ko;
+    if(!map.has(key))map.set(key,{word,ko});
+  });
+  return [...map.values()];
+}
+function openWordList(){
+  const words=unitVocabularyWords(state.items);if(!words.length||!wordModalEl)return;
+  wordModalMetaEl.textContent='Unit '+state.unit.unit_number+' · '+words.length+' words';
+  wordModalListEl.innerHTML=words.map(w=>
+    '<div class="vocab-word-row"><strong>'+escapeHtml(w.word)+'</strong><span>'+escapeHtml(w.ko)+'</span></div>'
+  ).join('');
+  wordModalEl.hidden=false;
+  wordModalEl.setAttribute('aria-hidden','false');
+  document.body.classList.add('vocab-modal-open');
+  wordModalCloseBtn?.focus();
+}
+function closeWordList(){
+  if(!wordModalEl)return;
+  wordModalEl.hidden=true;
+  wordModalEl.setAttribute('aria-hidden','true');
+  document.body.classList.remove('vocab-modal-open');
+  wordListOpenBtn?.focus();
+}
 function renderHome(){
   if(!state.book||!state.unit)return;
   renderBookPicker();
@@ -335,6 +380,7 @@ function renderHome(){
   unitTitleEl.textContent='Unit '+state.unit.unit_number+(state.unit.title?' · '+state.unit.title:'');
   const words=new Set(state.items.map(activityKey).filter(Boolean)).size;
   itemCountEl.textContent=(words||state.items.length)+' words';
+  if(wordListOpenBtn)wordListOpenBtn.disabled=!state.items.length;
   startBtn.disabled=!state.items.length;
   if(spellingPreviewBtn)spellingPreviewBtn.disabled=!state.items.length;
   setStatus(state.items.length?'준비됐어요.':'이 단원에는 사용할 수 있는 단어 문제가 없어요.');
@@ -404,26 +450,7 @@ function checkCurrent(){
   updateProgress();
 }
 function spellingPreviewWords(items){
-  const map=new Map();
-  arr(items).forEach(item=>{
-    const m=item?.metadata||{};
-    const prompt=txt(item?.stimulus?.prompt).replace(/^\S+\s{2}/,'');
-    const answer=txt(item?.answer);
-    let word=txt(m.canonical_lookup||m.canonical_text);
-    let ko=txt(m.translation_ko);
-    if(!word){
-      if(/[A-Za-z]/.test(answer))word=answer;
-      else if(/[A-Za-z]/.test(prompt))word=prompt;
-    }
-    if(!ko){
-      if(answer&&!/[A-Za-z]/.test(answer))ko=answer;
-      else if(prompt&&!/[A-Za-z]/.test(prompt))ko=prompt;
-    }
-    if(!word||!ko||!/[A-Za-z]/.test(word))return;
-    const key=word.toLowerCase()+'|'+ko;
-    if(!map.has(key))map.set(key,{word,ko});
-  });
-  return [...map.values()].slice(0,10);
+  return unitVocabularyWords(items).slice(0,10);
 }
 function playPreviewWord(word){
   if(!('speechSynthesis' in window))return;
@@ -662,9 +689,13 @@ async function boot(){
     }
     startBtn.addEventListener('click',()=>startSession());
     spellingPreviewBtn?.addEventListener('click',openSpellingPreview);
+    wordListOpenBtn?.addEventListener('click',openWordList);
+    wordModalCloseBtn?.addEventListener('click',closeWordList);
+    wordModalEl?.addEventListener('click',e=>{if(e.target===wordModalEl)closeWordList()});
+    document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!wordModalEl?.hidden)closeWordList()});
     closeBtn.addEventListener('click',closeSession);
     actionBtn.addEventListener('click',()=>state.spellingPractice?checkSpellingCoach():checkCurrent());
-    window.WillenaVocabStudy={version:'0.012',getState:()=>state,start:startSession,openSpellingPreview,close:closeSession};
+    window.WillenaVocabStudy={version:'0.013',getState:()=>state,start:startSession,openSpellingPreview,close:closeSession};
   }catch(error){
     console.error('[Vocab Study] boot',error);
     setStatus(error?.message||'불러오지 못했습니다. 새로고침해 주세요.');
