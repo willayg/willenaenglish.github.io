@@ -1,7 +1,7 @@
 # Vocabulary Study — Design & Architecture Spec
 
 **App:** `students/vocab-study/`  
-**Current staging version:** `0.041`  
+**Current staging version:** `0.042`  
 **Status:** Active implementation  
 **Purpose:** Define the product behavior, study flow, renderer responsibilities, tracking model, mastery model, and modular architecture for the next generation Vocabulary Study app.
 
@@ -245,20 +245,55 @@ The goal is:
 - allow straightforward review
 - show clear progress without repeatedly hounding students after they have demonstrated competence
 
-Progress may still be tracked separately by mode, for example:
+### Clean-pass scoring — implemented in v0.042
+
+Student-facing skill percentages are **clean-pass scores**, not eventual-completion scores.
+
+A word counts as a clean pass when the student answers it correctly on a fresh attempt:
+
+- `retry_count = 0`
+- the answer is correct
+- for Spelling Coach, no hint/support was required
+
+A correction retry inside the same run is still useful and still completes the activity flow, but it **does not convert the word into a clean pass** for the skill card.
+
+Example:
+
+```text
+9 spelling-test words
+8 correct first try
+1 wrong → corrected on retry
+
+activity completion: 9 / 9
+card score:          8 / 9 = 89%
+stars:               ★★★☆☆
+retry queue:          1 word
+```
+
+The word that needed a retry remains in `review_needed`. On a later session, that word is served again as a fresh attempt. If the student then gets it right cleanly, it becomes passed and leaves the retry queue.
+
+This means correction retries help the student finish the current activity without falsely turning the visible score into 100%.
+
+Progress is tracked separately by mode, for example:
 
 ```text
 elephant
 
-quiz             passed
-spelling coach   passed
-spelling test    passed
-speaking         passed
+quiz             clean / retry needed
+spelling coach   clean / retry needed
+spelling test    clean / retry needed
+speaking         clean / retry needed
 ```
 
-The exact visible percentages can remain simple coverage / completion percentages.
+For the main home cards:
 
-Historical attempt data should still be retained because it is useful for teacher insight, future recommendations, streaks, badges, and fair rewards. Retaining the data does **not** mean the app must force a spaced-review schedule.
+- **Quiz** percentage = clean quiz passes ÷ eligible quiz words
+- **Spelling** percentage = clean **Spelling Test** passes ÷ eligible spelling words
+- **Speaking** percentage = clean speaking passes ÷ eligible speaking words
+- Spelling Coach remains practice/support and does not inflate the main Spelling score.
+- Each card shows its percentage, 0–5 stars using the normal Vocabulary Study star thresholds, clean-pass count, and outstanding retry count.
+
+Historical attempt data is retained because it is useful for teacher insight, future recommendations, streaks, badges, and fair rewards. Retaining the data does **not** mean the app must force a spaced-review schedule.
 
 ## 8. Progress Roll-Up
 
@@ -276,9 +311,11 @@ unit overall progress
 book completion view
 ```
 
-The current progress rings and snapshots are the practical source for student-facing completion.
+The current progress rings and snapshots are the practical source for student-facing clean-pass scores and retry queues.
 
-A unit can display a simple percentage and completed-word count. We do not need a hidden complex mastery score to justify that percentage.
+The per-word state keeps `passed` and `review_needed` separate from raw attempt history. Immediate correction retries do not clear `review_needed`; a later fresh clean attempt does.
+
+A unit can display a simple percentage, clean-word count, stars, and words still needing retry. We do not need a hidden complex mastery score to justify that percentage.
 
 ## 9. What Counts as 100%
 
@@ -521,7 +558,7 @@ Vocabulary Study should award more points than the generic Study default because
 
 These rewards should flow through the existing Willena points system rather than creating a Vocabulary Study-only balance.
 
-Retries, repeated practice, and assisted attempts remain fully tracked. Attempt points are awarded on every recorded attempt, including retries. Star percentages are calculated from the first attempt on each target so forced correction retries do not inflate the session grade.
+Retries, repeated practice, and assisted attempts remain fully tracked. Attempt points are awarded on every recorded attempt, including retries. Session-star percentages are calculated from the first attempt on each target, and persistent skill-card scores use the same clean-pass principle so forced correction retries do not inflate either result.
 
 #### Stars per completed session
 
@@ -541,6 +578,14 @@ A result below 60% is not good enough for a star award.
 Stars are awarded through the existing Willena `progress_sessions` stars system and shown on the Vocabulary Study completion screen. Vocabulary Study finalizes reward sessions through the same authenticated Cloudflare Study progress path already used by its canonical attempt recorder. The deployed `progress_summary?section=study_attempt` endpoint passes a reward-only payload into `record_study_attempt_v1`, which writes the completed `progress_sessions` star row without creating a fake study attempt. The visual award uses the shared `students/components/student-reward-celebration.js` component so other student apps can reuse the same animated percentage / stars / points treatment. Repeating the same book/unit/mode can improve the recorded best star result, but it must not stack unlimited duplicate stars for the same list + mode.
 
 The star result is a motivational session reward and does not alter unit progress, Golden Unit Badges, or streak calculations.
+
+### Clean-pass cards + targeted retry — implemented in v0.042
+- clean-pass percentage instead of eventual-pass percentage
+- correction retries do not inflate the persistent card score
+- later fresh attempts can clear `review_needed`
+- completed words that still need a clean retry are served as targeted retry practice
+- Quiz / Spelling / Speaking cards show stars, clean count, and retry count
+- main Spelling score is based on Spelling Test; Spelling Coach remains practice
 
 ### Pass 3 — Streaks + Golden Unit Badges
 - study-day streak
