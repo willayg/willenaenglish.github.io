@@ -6,10 +6,16 @@ body.vocab-session-open{overflow:hidden}
 .vocab-home-card{margin-top:18px;background:#fff;border:2px solid #dff2f4;border-radius:28px;padding:clamp(24px,5vw,42px);box-shadow:var(--shadow)}
 .vocab-home-card .eyebrow{color:var(--pink)}
 .vocab-home-card h1{margin:7px 0 8px;color:#315e64;font-size:clamp(2rem,6vw,3.6rem);line-height:1.05;letter-spacing:-.04em}
-.vocab-home-card h2{margin:20px 0 5px;font-size:clamp(1.35rem,3.5vw,1.9rem);color:var(--ink)}
+.vocab-home-card h2{margin:20px 0 5px;font-size:clamp(1.05rem,2.6vw,1.35rem);color:var(--ink)}
 .vocab-home-card p{margin:0;color:var(--muted);font-weight:650}
-.vocab-home-meta{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:22px}
-.vocab-count-pill{display:inline-flex;align-items:center;min-height:38px;padding:0 13px;border-radius:999px;background:var(--cyan-soft);color:var(--cyan-strong);font-weight:800;font-size:.86rem}
+.vocab-home-meta{display:flex;justify-content:center;align-items:center;margin-top:22px}
+.vocab-word-card{
+  min-width:180px;min-height:58px;padding:0 22px;border:2px solid #dff2f4;border-radius:18px;
+  background:#f8fcfc;color:#315e64;font:900 1rem Poppins,system-ui,sans-serif;cursor:pointer;
+  box-shadow:0 6px 18px rgba(34,106,116,.05);transition:border-color .14s ease,transform .14s ease,box-shadow .14s ease
+}
+.vocab-word-card:hover:not(:disabled){border-color:var(--cyan-strong);transform:translateY(-1px);box-shadow:0 9px 22px rgba(34,106,116,.09)}
+.vocab-word-card:disabled{opacity:.45;cursor:default}
 .vocab-start{width:100%;min-height:56px;margin-top:24px;border:3px solid var(--pink);border-radius:17px;background:#fff;color:var(--pink);font-weight:900;font-size:1.03rem;cursor:pointer}
 .vocab-start:disabled{opacity:.4;cursor:not-allowed}
 .vocab-admin{margin-top:14px;padding:16px;border:2px dashed #bfe5e8;border-radius:20px;background:rgba(255,255,255,.72)}
@@ -50,6 +56,33 @@ body.vocab-session-open{overflow:hidden}
 .vocab-skill-spelling{--skill-color:var(--pink)}
 .vocab-skill-pronunciation{--skill-color:#8c79d9;background:#faf9ff;border-style:dashed}
 .vocab-skill-pronunciation .vocab-skill-copy b{color:#8c79d9}
+
+.vocab-word-modal{
+  position:fixed;inset:0;z-index:12000;display:grid;place-items:center;padding:20px;
+  background:rgba(18,47,53,.52);backdrop-filter:blur(7px)
+}
+.vocab-word-modal[hidden]{display:none!important}
+.vocab-word-modal-card{
+  width:min(680px,100%);max-height:min(78vh,720px);display:grid;grid-template-rows:auto 1fr;
+  overflow:hidden;border:2px solid #dff2f4;border-radius:24px;background:#fff;box-shadow:0 24px 70px rgba(16,52,58,.24)
+}
+.vocab-word-modal-head{
+  display:flex;align-items:center;justify-content:space-between;gap:16px;padding:18px 20px;border-bottom:1px solid var(--line)
+}
+.vocab-word-modal-head strong{display:block;color:#244f56;font-size:1.12rem}
+.vocab-word-modal-head small{display:block;margin-top:3px;color:var(--muted);font-weight:700}
+.vocab-word-modal-close{
+  flex:0 0 42px;width:42px;height:42px;border:2px solid var(--line);border-radius:14px;background:#fff;color:var(--pink);
+  font:900 1.4rem/1 Poppins,system-ui,sans-serif;cursor:pointer
+}
+.vocab-word-modal-list{overflow:auto;padding:10px 14px 16px}
+.vocab-word-row{
+  display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;align-items:center;
+  padding:11px 8px;border-bottom:1px solid #edf4f5
+}
+.vocab-word-row:last-child{border-bottom:0}
+.vocab-word-row strong{color:#244f56;font-size:.96rem}
+.vocab-word-row span{color:#607b80;font-weight:700;text-align:right}
 
 .vocab-session{position:fixed;inset:0;z-index:10000;display:grid;grid-template-rows:auto 1fr auto;background:linear-gradient(180deg,#dff7f8 0,#effafb 34%,#f7fafb 100%)}
 .vocab-session[hidden]{display:none!important}
@@ -112,6 +145,11 @@ body.vocab-session-open{overflow:hidden}
   .vocab-skill-card{min-height:112px;padding:15px 16px}
   .vocab-skill-ring{flex-basis:66px;width:66px;height:66px}
   .vocab-skill-ring::before{width:52px;height:52px}
+  .vocab-word-card{width:min(320px,100%);min-height:54px}
+  .vocab-word-modal{padding:10px}
+  .vocab-word-modal-card{max-height:84vh;border-radius:20px}
+  .vocab-word-row{grid-template-columns:1fr;gap:2px}
+  .vocab-word-row span{text-align:left}
   .vocab-session-main{padding:16px 10px 24px}
   .vocab-question-wrap .question-card{padding:18px 14px}
   .vocab-question-wrap .choices{grid-template-columns:1fr}
