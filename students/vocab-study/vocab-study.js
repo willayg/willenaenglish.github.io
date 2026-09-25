@@ -74,11 +74,35 @@ async function timed(label,fn){
     console.info('[Vocab Study perf]',label,ms+'ms');
   }
 }
+function perfOverlayEnabled(){
+  try{return new URLSearchParams(location.search).get('perf')==='1'}catch(_){return false}
+}
+function showStartupPerf(rows,total){
+  if(!perfOverlayEnabled())return;
+  let panel=document.getElementById('vocabPerfPanel');
+  if(!panel){
+    panel=document.createElement('section');
+    panel.id='vocabPerfPanel';
+    panel.style.cssText='position:fixed;left:10px;right:10px;bottom:10px;z-index:99999;max-height:52vh;overflow:auto;background:#102f35;color:#fff;border-radius:16px;padding:14px 16px;box-shadow:0 12px 36px rgba(0,0,0,.3);font:600 12px/1.45 Poppins,sans-serif';
+    document.body.appendChild(panel);
+  }
+  panel.innerHTML=
+    '<div style="display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:8px">'+
+      '<strong style="font-size:14px">Vocab Study startup</strong>'+
+      '<strong>'+total+' ms</strong>'+
+    '</div>'+
+    rows.map(row=>
+      '<div style="display:flex;justify-content:space-between;gap:14px;border-top:1px solid rgba(255,255,255,.12);padding:6px 0">'+
+        '<span>'+escapeHtml(row.label)+'</span><b>'+row.ms+' ms</b>'+
+      '</div>'
+    ).join('');
+}
 function reportStartupPerf(){
   const total=Math.round((perfNow()-startupPerf.startedAt)*10)/10;
   const rows=startupPerf.entries.concat([{label:'TOTAL BOOT',ms:total}]);
   console.table(rows);
   window.WillenaVocabStudyPerf={totalMs:total,entries:rows.slice()};
+  showStartupPerf(rows,total);
 }
 
 function ringPercent(value){
@@ -1166,7 +1190,7 @@ async function boot(){
       renderSkillProgress();
     });
     reportStartupPerf();
-    window.WillenaVocabStudy={version:'0.026',getState:()=>state,start:startSession,openSpellingMenu,openSpellingPreview,openSpellingTest,openSpeakingSession,close:closeSession};
+    window.WillenaVocabStudy={version:'0.027',getState:()=>state,start:startSession,openSpellingMenu,openSpellingPreview,openSpellingTest,openSpeakingSession,close:closeSession};
   }catch(error){
     console.error('[Vocab Study] boot',error);
     setStatus(error?.message||'불러오지 못했습니다. 새로고침해 주세요.');
