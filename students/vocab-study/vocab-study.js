@@ -809,6 +809,7 @@ function renderSpellingTestQuestion(){
   state.renderer=new QuestionRenderer(host).render(spellingTestQuestion(word,test.index),{
     onChange:(_,has)=>{if(!test.checked)actionBtn.disabled=!has}
   });
+  state.questionStartedAt=Date.now();
   host.querySelector('[data-write]')?.focus();
   sessionMain.scrollTop=0;
 }
@@ -1083,7 +1084,7 @@ async function boot(){
     document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!wordModalEl?.hidden)closeWordList()});
     closeBtn.addEventListener('click',closeSession);
     actionBtn.addEventListener('click',()=>state.speakingSession?checkSpeaking():state.spellingTest?checkSpellingTest():state.spellingPractice?checkSpellingCoach():checkCurrent());
-    window.WillenaVocabStudy={version:'0.023',getState:()=>state,start:startSession,openSpellingMenu,openSpellingPreview,openSpellingTest,openSpeakingSession,close:closeSession};
+    window.WillenaVocabStudy={version:'0.024',getState:()=>state,start:startSession,openSpellingMenu,openSpellingPreview,openSpellingTest,openSpeakingSession,close:closeSession};
   }catch(error){
     console.error('[Vocab Study] boot',error);
     setStatus(error?.message||'불러오지 못했습니다. 새로고침해 주세요.');
