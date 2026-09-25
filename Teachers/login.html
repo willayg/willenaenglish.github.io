@@ -223,8 +223,6 @@
   <script type="module">
     import { ensureAuthRefresh } from '/Teachers/auth-refresh.js';
 
-    ensureAuthRefresh();
-
     // Use WillenaAPI to get correct endpoint (Cloudflare worker on custom domains)
     const AUTH_URL = window.WillenaAPI.getApiUrl('/.netlify/functions/supabase_auth');
     
@@ -348,13 +346,19 @@
 
         const normalizedRole = String(role || '').toLowerCase();
         if (!['teacher', 'admin'].includes(normalizedRole)) {
+          localStorage.removeItem('userId');
+          localStorage.removeItem('profile_id');
+          localStorage.removeItem('userRole');
           throw new Error('Teacher access only. Please use the student login page.');
         }
         
-        // Store user data
+        // Store teacher identity only after the active auth session is confirmed.
         localStorage.setItem('userId', user.id);
         localStorage.setItem('profile_id', profileId);
         localStorage.setItem('userRole', normalizedRole);
+
+        // Start token refresh only for a confirmed teacher/admin session.
+        ensureAuthRefresh();
         
         showMessage(`Welcome back! Redirecting...`, 'success');
         
@@ -392,14 +396,40 @@
           console.warn('⚠ Auth service missing environment variables');
         }
         if (debugData.session && debugData.session.user && debugData.session.user.id) {
-          // Already logged in, perform quick redirect
-          const params = new URLSearchParams(location.search);
-          const redirect = params.get('redirect');
-          if (redirect && redirect.startsWith('/') && !/^https?:/i.test(redirect)) {
-            window.location.replace(redirect);
+          const activeUserId = debugData.session.user.id;
+          let activeRole = '';
+
+          try {
+            activeRole = String(await getUserRole(activeUserId) || '').toLowerCase();
+          } catch (roleError) {
+            console.warn('Could not resolve active session role:', roleError);
+          }
+
+          if (['teacher', 'admin'].includes(activeRole)) {
+            const profileId = await getProfileId(activeUserId).catch(() => activeUserId);
+            localStorage.setItem('userId', activeUserId);
+            localStorage.setItem('profile_id', profileId);
+            localStorage.setItem('userRole', activeRole);
+
+            ensureAuthRefresh();
+
+            const params = new URLSearchParams(location.search);
+            const redirect = params.get('redirect');
+            if (redirect && redirect.startsWith('/') && !/^https?:/i.test(redirect)) {
+              window.location.replace(redirect);
+            } else {
+              window.location.replace(
+                activeRole === 'admin'
+                  ? '/Teachers/tools/feedback-admin.html'
+                  : '/Teachers/index.html'
+              );
+            }
           } else {
-            // Already logged in and no specific redirect: go to Teacher dashboard
-            window.location.replace('/Teachers/index.html');
+            // Student cookie session: clear stale teacher browser state and stay on login.
+            localStorage.removeItem('userId');
+            localStorage.removeItem('profile_id');
+            localStorage.removeItem('userRole');
+            console.info('Non-teacher session detected; staying on Teacher Login.');
           }
         }
       } catch (error) {
