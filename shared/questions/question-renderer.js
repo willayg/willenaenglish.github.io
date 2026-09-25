@@ -1,4 +1,4 @@
-import {FORMS,parseCorrection} from './question-types.js?v=20260924-spelling1';
+import {FORMS,parseCorrection} from './question-types.js?v=20260925-speaking1';
 
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const display=v=>String(v??'')
@@ -161,6 +161,7 @@ export class QuestionRenderer{
   render(question,{onChange}={}){
     this.question=question;this.state={selected:new Set(),order:[],blank:[]};this.disabled=false;this.onChange=typeof onChange==='function'?onChange:null;
     if(question?.form===FORMS.spellingCoach)this.ensureSpellingCoachStyles();
+    if(question?.form===FORMS.speaking)this.ensureSpeakingStyles();
     const controls=this.controls(question);
     this.host.innerHTML=`<div class="prompt">${promptHtml(question)}</div><div class="context">${contextHtml(question)}</div>${guidanceHtml(question)}<div data-answer>${controls}</div><div class="feedback" data-feedback></div>`;
     this.bind(question);this.emit();applyBoldMarkup(this.host);return this;
@@ -174,6 +175,13 @@ export class QuestionRenderer{
     if(q.form===FORMS.order||q.form===FORMS.chunks){const chips=Array.isArray(q.chips)?q.chips:[];return `<div class="build" data-build></div><div class="chips" data-pool>${chips.map((x,i)=>`<button type="button" class="chip" data-chip="${i}">${esc(x)}</button>`).join('')}</div>`}
     if(q.form===FORMS.blanks){const masked=String(q.context?.masked||'');const chips=Array.isArray(q.chips)?q.chips:[];return `<div class="masked">${textHtml(masked)}</div><div class="build" data-build></div><div class="chips" data-pool>${chips.map((x,i)=>`<button type="button" class="chip" data-chip="${i}">${esc(x)}</button>`).join('')}</div>`}
     if(q.form===FORMS.learn)return `<div class="learn">${textHtml(answerParts(q)[0]||q.context?.target_en||'')}</div>`;
+    if(q.form===FORMS.speaking){
+      return `<div class="speaking-control">
+        <button type="button" class="speaking-mic" data-speaking-mic aria-label="영어로 말하기">🎤</button>
+        <div class="speaking-status" data-speaking-status>마이크를 누르고 영어로 말해 보세요.</div>
+        <div class="speaking-transcript" data-speaking-transcript hidden></div>
+      </div>`;
+    }
     if(q.form===FORMS.spellingCoach){
       const target=answerParts(q)[0]||q.context?.target_en||'';
       const audio=String(q.context?.audio_text||target||'');
@@ -198,6 +206,55 @@ export class QuestionRenderer{
       return;
     }
     this.host.querySelectorAll('input,textarea').forEach(el=>el.addEventListener('input',()=>this.emit()));
+    if(q.form===FORMS.speaking){
+      const mic=this.host.querySelector('[data-speaking-mic]');
+      const status=this.host.querySelector('[data-speaking-status]');
+      const transcript=this.host.querySelector('[data-speaking-transcript]');
+      const Recognition=window.SpeechRecognition||window.webkitSpeechRecognition;
+      if(!Recognition){
+        if(mic)mic.disabled=true;
+        if(status)status.textContent='이 브라우저에서는 음성 인식을 사용할 수 없어요.';
+        return;
+      }
+      const recognition=new Recognition();
+      this.speechRecognition=recognition;
+      recognition.lang='en-US';
+      recognition.interimResults=false;
+      recognition.maxAlternatives=1;
+      recognition.continuous=false;
+      const setListening=on=>{
+        mic?.classList.toggle('is-listening',!!on);
+        if(status)status.textContent=on?'듣고 있어요… 영어로 말해 보세요.':'마이크를 누르고 영어로 말해 보세요.';
+      };
+      recognition.onstart=()=>setListening(true);
+      recognition.onend=()=>setListening(false);
+      recognition.onerror=e=>{
+        setListening(false);
+        if(status)status.textContent=e?.error==='not-allowed'?'마이크 권한이 필요해요.':'잘 듣지 못했어요. 다시 눌러 말해 보세요.';
+      };
+      recognition.onresult=e=>{
+        const value=String(e?.results?.[0]?.[0]?.transcript||'').trim();
+        this.state.speakingTranscript=value;
+        if(transcript){
+          transcript.hidden=!value;
+          transcript.textContent=value?('“'+value+'”'):'';
+        }
+        if(status)status.textContent=value?'이렇게 들었어요.':'잘 듣지 못했어요. 다시 말해 보세요.';
+        this.emit();
+      };
+      mic?.addEventListener('click',()=>{
+        if(this.disabled)return;
+        try{
+          if(mic.classList.contains('is-listening'))recognition.stop();
+          else{
+            this.state.speakingTranscript='';
+            if(transcript){transcript.hidden=true;transcript.textContent=''}
+            recognition.start();
+          }
+        }catch{}
+      });
+      return;
+    }
     if(q.form===FORMS.spellingCoach){
       const input=this.host.querySelector('[data-spelling-input]');
       this.host.querySelectorAll('[data-spelling-audio]').forEach(btn=>btn.addEventListener('click',e=>{
@@ -252,6 +309,7 @@ export class QuestionRenderer{
     if(q.form===FORMS.identifiedCorrection){const fields=[...this.host.querySelectorAll('[data-correction-label],[data-wrong],[data-right]')];return fields.length>0&&fields.every(x=>x.value.trim())}
     if([FORMS.order,FORMS.chunks,FORMS.blanks].includes(q.form))return this.state.order.length>0;
     if(q.form===FORMS.spellingCoach)return !!this.host.querySelector('[data-spelling-input]')?.value.trim();
+    if(q.form===FORMS.speaking)return !!String(this.state.speakingTranscript||'').trim();
     return q.form===FORMS.learn;
   }
   getResponse(){
@@ -264,7 +322,32 @@ export class QuestionRenderer{
     if([FORMS.order,FORMS.chunks,FORMS.blanks].includes(q.form)){const chips=[...this.host.querySelectorAll('[data-chip]')];const values=this.state.order.map(i=>chips[i]?.textContent.trim()||'');return q.form===FORMS.blanks?values:values.join(' ')}
     if(q.form===FORMS.learn)return answerParts(q)[0]||'';
     if(q.form===FORMS.spellingCoach)return this.host.querySelector('[data-spelling-input]')?.value.trim()||'';
+    if(q.form===FORMS.speaking)return String(this.state.speakingTranscript||'').trim();
     return null;
+  }
+  ensureSpeakingStyles(){
+    if(document.getElementById('willenaSpeakingStyles'))return;
+    const style=document.createElement('style');
+    style.id='willenaSpeakingStyles';
+    style.textContent=`
+      .speaking-control{display:grid;justify-items:center;gap:14px;padding:8px 0 4px}
+      .speaking-mic{
+        width:96px;height:96px;border-radius:50%;border:3px solid #8c79d9;background:#fff;color:#6e5bc6;
+        display:grid;place-items:center;font-size:2.2rem;cursor:pointer;box-shadow:0 10px 28px rgba(95,75,180,.14);
+        transition:transform .14s ease,box-shadow .14s ease,background .14s ease
+      }
+      .speaking-mic:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 14px 32px rgba(95,75,180,.20)}
+      .speaking-mic.is-listening{background:#f1edff;box-shadow:0 0 0 8px rgba(140,121,217,.12),0 14px 32px rgba(95,75,180,.20)}
+      .speaking-mic:disabled{opacity:.45;cursor:default}
+      .speaking-status{color:#607b80;font:750 .9rem Poppins,system-ui,sans-serif;text-align:center}
+      .speaking-transcript{
+        min-width:min(100%,360px);padding:12px 16px;border:1px solid #ddd8f5;border-radius:14px;background:#faf9ff;
+        color:#443b72;font:800 1rem Poppins,system-ui,sans-serif;text-align:center
+      }
+      .speaking-transcript[hidden]{display:none}
+      @media(max-width:560px){.speaking-mic{width:88px;height:88px}}
+    `;
+    document.head.appendChild(style);
   }
   ensureSpellingCoachStyles(){
     if(document.getElementById('willenaSpellingCoachStyles'))return;
@@ -438,5 +521,5 @@ export class QuestionRenderer{
     }
     applyBoldMarkup(this.host);
   }
-  setDisabled(disabled=true){this.disabled=!!disabled;this.host.querySelectorAll('button,input,textarea').forEach(x=>x.disabled=this.disabled);return this}
+  setDisabled(disabled=true){this.disabled=!!disabled;if(this.disabled&&this.speechRecognition){try{this.speechRecognition.stop()}catch{}}this.host.querySelectorAll('button,input,textarea').forEach(x=>x.disabled=this.disabled);return this}
 }
