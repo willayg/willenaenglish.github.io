@@ -22,6 +22,9 @@ const wordModalMetaEl=el('vocabWordModalMeta');
 const startBtn=el('vocabStudyStart');
 const spellingPreviewBtn=el('vocabSpellingPreview');
 const pronunciationStartBtn=el('vocabPronunciationStart');
+const quizRingEl=startBtn?.querySelector('.vocab-skill-ring');
+const spellingRingEl=spellingPreviewBtn?.querySelector('.vocab-skill-ring');
+const speakingRingEl=pronunciationStartBtn?.querySelector('.vocab-skill-ring');
 const sessionEl=el('vocabStudySession');
 const sessionMain=el('vocabSessionMain');
 const root=el('vocabActivityRoot');
@@ -46,7 +49,8 @@ const state={
   queue:[],index:0,checked:false,renderer:null,
   outcomes:new Map(),reviewKeys:new Set(),retryCounts:new Map(),
   spellingPractice:null,spellingTest:null,speakingSession:null,
-  adminMode:false,nextReadyAt:0,questionStartedAt:0
+  adminMode:false,nextReadyAt:0,questionStartedAt:0,
+  masteryItems:[]
 };
 
 function txt(v){return String(v==null?'':v).trim()}
@@ -58,6 +62,54 @@ function shuffle(items){
   return a;
 }
 function setStatus(message){if(statusEl)statusEl.textContent=message}
+
+function ringPercent(value){
+  return Math.max(0,Math.min(100,Math.round(Number(value)||0)));
+}
+function setSkillRing(ring,value){
+  if(!ring)return;
+  const pct=ringPercent(value);
+  ring.style.setProperty('--progress',pct);
+  const label=ring.querySelector('span');
+  if(label)label.textContent=pct+'%';
+}
+function masteryBySkill(items,skill,eligibleIds){
+  const ids=new Set(arr(eligibleIds).map(txt).filter(Boolean));
+  if(!ids.size)return 0;
+  let total=0;
+  arr(items).forEach(item=>{
+    if(txt(item?.skill)!==skill)return;
+    if(txt(item?.content_type)!=='lexical_entry')return;
+    const id=txt(item?.content_id);
+    if(!ids.has(id))return;
+    total+=Math.max(0,Math.min(100,Number(item?.mastery_score)||0));
+  });
+  return total/ids.size;
+}
+function renderSkillProgress(){
+  const vocabIds=unitVocabularyWords(state.items).map(w=>w.id).filter(isUuid);
+  const spellingIds=spellingWords(state.items).map(w=>w.id).filter(isUuid);
+  const speakingIds=speakingWords(state.items).map(w=>w.id).filter(isUuid);
+  setSkillRing(quizRingEl,masteryBySkill(state.masteryItems,'vocabulary',vocabIds));
+  setSkillRing(spellingRingEl,masteryBySkill(state.masteryItems,'spelling',spellingIds));
+  setSkillRing(speakingRingEl,masteryBySkill(state.masteryItems,'speaking',speakingIds));
+}
+async function loadSkillProgress(){
+  if(state.adminMode||!state.book?.book_id||!state.unit?.id){
+    state.masteryItems=[];
+    renderSkillProgress();
+    return;
+  }
+  const recorder=window.WillenaStudyProgress;
+  if(!recorder||typeof recorder.getContentMastery!=='function')return;
+  try{
+    const data=await recorder.getContentMastery(state.book.book_id,state.unit.id);
+    state.masteryItems=arr(data?.items);
+    renderSkillProgress();
+  }catch(error){
+    console.warn('[Vocab Study] progress unavailable',error);
+  }
+}
 
 
 function isUuid(value){return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(txt(value))}
@@ -469,6 +521,8 @@ function renderHome(){
   if(spellingPreviewBtn)spellingPreviewBtn.disabled=!state.items.length;
   if(pronunciationStartBtn)pronunciationStartBtn.disabled=!speakingWords(state.items).length;
   setStatus(state.items.length?'준비됐어요.':'이 단원에는 사용할 수 있는 단어 문제가 없어요.');
+  renderSkillProgress();
+  loadSkillProgress();
 }
 function updateProgress(){
   const total=Math.max(1,state.queue.length),current=Math.min(state.index+1,total);
@@ -1084,7 +1138,13 @@ async function boot(){
     document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!wordModalEl?.hidden)closeWordList()});
     closeBtn.addEventListener('click',closeSession);
     actionBtn.addEventListener('click',()=>state.speakingSession?checkSpeaking():state.spellingTest?checkSpellingTest():state.spellingPractice?checkSpellingCoach():checkCurrent());
-    window.WillenaVocabStudy={version:'0.024',getState:()=>state,start:startSession,openSpellingMenu,openSpellingPreview,openSpellingTest,openSpeakingSession,close:closeSession};
+    window.addEventListener('willena:content-mastery-updated',event=>{
+      const detail=event?.detail||{};
+      if(String(detail.book_id)!==String(state.book?.book_id)||String(detail.unit_id)!==String(state.unit?.id))return;
+      state.masteryItems=arr(detail.data?.items);
+      renderSkillProgress();
+    });
+    window.WillenaVocabStudy={version:'0.025',getState:()=>state,start:startSession,openSpellingMenu,openSpellingPreview,openSpellingTest,openSpeakingSession,close:closeSession};
   }catch(error){
     console.error('[Vocab Study] boot',error);
     setStatus(error?.message||'불러오지 못했습니다. 새로고침해 주세요.');
