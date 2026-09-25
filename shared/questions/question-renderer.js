@@ -188,7 +188,7 @@ export class QuestionRenderer{
         return out;
       });
       const chunkHtml=shuffledChunkGroups.map(group=>`<div class="spelling-coach-chunk-word">${group.map(part=>`<span>${esc(part)}</span>`).join('')}</div>`).join('');
-      return `${audio?`<button type="button" class="activity-audio" data-spelling-audio data-audio-text="${esc(audio)}">▶ Hear English</button>`:''}<div class="learn" data-spelling-target>${textHtml(target)}</div>${scramble?`<div class="spelling-coach-hint-row"><button type="button" class="spelling-coach-hint-button" data-spelling-hint="scramble">Hint 1 · Letters</button><div class="spelling-coach-scramble" data-spelling-scramble hidden>${hint.map(ch=>`<span>${esc(ch)}</span>`).join('')}</div>${chunks?`<button type="button" class="spelling-coach-hint-button spelling-coach-hint-2" data-spelling-hint="chunks" hidden>Hint 2 · Chunks</button><div class="spelling-coach-chunks" data-spelling-chunks hidden>${chunkHtml}</div>`:''}</div>`:''}<input class="text-input spelling-coach-input" data-spelling-input ${inputAttrs(q,'spelling-coach')} placeholder="${esc(placeholder(q))}">`;
+      return `${scramble?`<div class="spelling-coach-hint-row"><button type="button" class="spelling-coach-hint-button" data-spelling-hint="scramble">Hint 1 · Letters</button><div class="spelling-coach-scramble" data-spelling-scramble hidden>${hint.map(ch=>`<span>${esc(ch)}</span>`).join('')}</div>${chunks?`<button type="button" class="spelling-coach-hint-button spelling-coach-hint-2" data-spelling-hint="chunks" hidden>Hint 2 · Chunks</button><div class="spelling-coach-chunks" data-spelling-chunks hidden>${chunkHtml}</div>`:''}</div>`:''}<input class="text-input spelling-coach-input" data-spelling-input ${inputAttrs(q,'spelling-coach')} placeholder="${esc(placeholder(q))}"><div class="spelling-study-modal" data-spelling-study-modal role="dialog" aria-modal="true" aria-label="Study target word"><div class="spelling-study-card"><span class="spelling-study-label">STUDY THE WORD</span><strong class="spelling-study-target">${textHtml(target)}</strong>${audio?`<button type="button" class="activity-audio spelling-study-audio" data-spelling-audio data-audio-text="${esc(audio)}">▶ Hear English</button>`:''}<button type="button" class="spelling-study-ready" data-spelling-ready>Ready · 시작</button></div></div>`;
     }
     return `<div class="error">Unsupported question form: ${esc(q.form||'unknown')}</div>`;
   }
@@ -200,13 +200,19 @@ export class QuestionRenderer{
     this.host.querySelectorAll('input,textarea').forEach(el=>el.addEventListener('input',()=>this.emit()));
     if(q.form===FORMS.spellingCoach){
       const input=this.host.querySelector('[data-spelling-input]');
-      const target=this.host.querySelector('[data-spelling-target]');
-      input?.addEventListener('input',()=>{if(target)target.hidden=!!input.value;});
-      this.host.querySelector('[data-spelling-audio]')?.addEventListener('click',e=>{
+      this.host.querySelectorAll('[data-spelling-audio]').forEach(btn=>btn.addEventListener('click',e=>{
         const word=String(e.currentTarget?.dataset?.audioText||'').trim();
         if(!word||!('speechSynthesis' in window))return;
         try{speechSynthesis.cancel();const utterance=new SpeechSynthesisUtterance(word);utterance.lang='en-US';speechSynthesis.speak(utterance)}catch{}
+      }));
+      const modal=this.host.querySelector('[data-spelling-study-modal]');
+      const ready=this.host.querySelector('[data-spelling-ready]');
+      if(input)input.disabled=true;
+      ready?.addEventListener('click',()=>{
+        if(modal)modal.remove();
+        if(input){input.disabled=false;input.focus()}
       });
+      ready?.focus?.();
       this.host.querySelector('[data-spelling-hint="scramble"]')?.addEventListener('click',e=>{
         if(this.disabled)return;
         const panel=this.host.querySelector('[data-spelling-scramble]');
@@ -223,7 +229,7 @@ export class QuestionRenderer{
         e.currentTarget.hidden=true;
         this.state.spellingHintLevel=Math.max(Number(this.state.spellingHintLevel||0),2);
       });
-      requestAnimationFrame(()=>input?.focus?.());
+      requestAnimationFrame(()=>ready?.focus?.());
     }
     if([FORMS.order,FORMS.chunks,FORMS.blanks].includes(q.form)){
       this.host.querySelectorAll('[data-chip]').forEach(btn=>btn.addEventListener('click',()=>{if(this.disabled)return;const i=Number(btn.dataset.chip);if(this.state.order.includes(i)){this.state.order=this.state.order.filter(x=>x!==i)}else this.state.order.push(i);this.syncOrder();this.emit()}));
@@ -283,6 +289,21 @@ export class QuestionRenderer{
         border-color:#66d6df;
         background:#fbfeff;
         box-shadow:0 0 0 5px rgba(102,214,223,.16),0 10px 26px rgba(34,106,116,.08);
+      }
+      .spelling-study-modal{
+        position:fixed;inset:0;z-index:2147482000;display:grid;place-items:center;padding:22px;
+        background:rgba(18,47,53,.58);backdrop-filter:blur(8px)
+      }
+      .spelling-study-card{
+        width:min(92vw,520px);padding:30px 24px 26px;border-radius:26px;background:#fff;
+        border:2px solid #dff2f4;box-shadow:0 24px 70px rgba(16,52,58,.24);text-align:center
+      }
+      .spelling-study-label{display:block;color:#e60076;font:800 .78rem Poppins,system-ui,sans-serif;letter-spacing:.08em}
+      .spelling-study-target{display:block;margin:12px 0 18px;color:#244f56;font:900 clamp(2rem,9vw,4rem) Poppins,system-ui,sans-serif;line-height:1.05;letter-spacing:-.03em}
+      .spelling-study-audio{margin:0 auto 16px}
+      .spelling-study-ready{
+        width:100%;min-height:56px;border:3px solid #e60076;border-radius:18px;background:#fff;color:#e60076;
+        font:900 1rem Poppins,system-ui,sans-serif;cursor:pointer
       }
       .spelling-coach-hint-row{margin:16px 0 28px;text-align:center}
       .spelling-coach-hint-button{
