@@ -2,7 +2,7 @@ import {QuestionRenderer} from '/shared/questions/question-renderer.js?v=2026092
 import {getSpellingTarget} from './spelling-targets.js?v=20260925-v0019';
 import {isSpeakableTarget,matchSpeakingTarget} from './speaking-match.js?v=20260925-v0022';
 import {getAssignment,setAssignment,getBookMeta,setBookMeta,getVocabulary,setVocabulary,background} from './vocab-startup-cache.js?v=20260925-v0001';
-import {snapshotPercent,loadVocabSnapshot,nextSkillTargets} from './vocab-progress-snapshot.js?v=20260925-v0003';
+import {snapshotPercent,loadVocabSnapshot,nextSkillTargets} from './vocab-progress-snapshot.js?v=20260925-v0004';
 import {coachAttempt,repeatUntilCorrect,appendRetry,uniquePassedCount,wrongAttemptCount} from './vocab-pass-flow.js?v=20260925-v0001';
 
 const CONTENT_URL='https://gxwfsqxyuufqtitspfqg.supabase.co';
@@ -715,7 +715,7 @@ function speakingWords(items){
 }
 async function openSpeakingSession(){
   await ensureProgressSnapshot();
-  const words=shuffle(nextSkillTargets(state.progressSnapshot,'speaking',speakingWords(state.items)));if(!words.length)return;
+  const words=shuffle(nextSkillTargets(state.progressSnapshot,'speaking',speakingWords(state.items),item=>item?.id,'speaking'));if(!words.length)return;
   state.spellingPractice=null;
   state.spellingTest=null;
   state.speakingSession={words,index:0,results:[],checked:false,initialTotal:words.length};
@@ -925,7 +925,7 @@ function spellingTestWords(items){
 }
 async function openSpellingTest(){
   await ensureProgressSnapshot();
-  const words=shuffle(nextSkillTargets(state.progressSnapshot,'spelling',spellingTestWords(state.items)));if(!words.length)return;
+  const words=shuffle(nextSkillTargets(state.progressSnapshot,'spelling',spellingTestWords(state.items),item=>item?.id,'spelling_test'));if(!words.length)return;
   state.spellingPractice=null;
   state.spellingTest={words,index:0,results:[],checked:false,initialTotal:words.length};
   titleEl.textContent=state.book.book_title+' · Unit '+state.unit.unit_number+' · Spelling Test';
@@ -1040,7 +1040,7 @@ function finishSpellingTest(){
 
 async function openSpellingPreview(){
   await ensureProgressSnapshot();
-  const words=nextSkillTargets(state.progressSnapshot,'spelling',spellingPreviewWords(state.items));if(!words.length)return;
+  const words=nextSkillTargets(state.progressSnapshot,'spelling',spellingPreviewWords(state.items),item=>item?.id,'spelling_coach');if(!words.length)return;
   state.spellingPractice=createSpellingPractice(words);
   titleEl.textContent=state.book.book_title+' · Unit '+state.unit.unit_number+' · Spelling';
   progressEl.textContent='Practice';
@@ -1188,7 +1188,7 @@ async function startSession(items=null){
   let source=items&&items.length?items:null;
   if(!source){
     await ensureProgressSnapshot();
-    source=nextSkillTargets(state.progressSnapshot,'vocabulary',state.items,activityKey);
+    source=nextSkillTargets(state.progressSnapshot,'vocabulary',state.items,activityKey,'quiz');
   }
   if(!source.length)return;
   state.queue=buildSession(source);
@@ -1290,7 +1290,7 @@ async function boot(){
       renderSkillProgress();
     });
     reportStartupPerf();
-    window.WillenaVocabStudy={version:'0.033',getState:()=>state,start:startSession,openSpellingMenu,openSpellingPreview,openSpellingTest,openSpeakingSession,close:closeSession};
+    window.WillenaVocabStudy={version:'0.034',getState:()=>state,start:startSession,openSpellingMenu,openSpellingPreview,openSpellingTest,openSpeakingSession,close:closeSession};
   }catch(error){
     console.error('[Vocab Study] boot',error);
     setStatus(error?.message||'불러오지 못했습니다. 새로고침해 주세요.');
