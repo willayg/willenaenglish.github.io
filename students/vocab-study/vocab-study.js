@@ -3,7 +3,7 @@ import {getSpellingTarget} from './spelling-targets.js?v=20260925-v0019';
 import {isSpeakableTarget,matchSpeakingTarget} from './speaking-match.js?v=20260925-v0022';
 import {getAssignment,setAssignment,getBookMeta,setBookMeta,getVocabulary,setVocabulary,background} from './vocab-startup-cache.js?v=20260925-v0001';
 import {snapshotPercent,loadVocabSnapshot,nextSkillTargets} from './vocab-progress-snapshot.js?v=20260925-v0004';
-import {coachAttempt,repeatUntilCorrect,appendRetry,uniquePassedCount,wrongAttemptCount} from './vocab-pass-flow.js?v=20260925-v0001';
+import {coachAttempt,repeatUntilCorrect,appendRetry,uniquePassedCount,wrongAttemptCount} from './vocab-pass-flow.js?v=20260925-v0002';
 
 const CONTENT_URL='https://gxwfsqxyuufqtitspfqg.supabase.co';
 const CONTENT_KEY=['sb_publishable_','G-FYhHfDL4OGdL892gY1Zg_','epdbEeqO'].join('');
@@ -161,7 +161,7 @@ async function ensureProgressSnapshot(){
 
 
 function isUuid(value){return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(txt(value))}
-function recordVocabAttempt({skill,responseType,lexicalEntryId,activityId,prompt,studentAnswer,correctAnswer,correct,metadata}){
+function recordVocabAttempt({skill,responseType,lexicalEntryId,activityId,prompt,studentAnswer,correctAnswer,correct,metadata,hintsUsed=0,retryCount=0,attemptNumber=1,sessionSource='student'}){
   if(state.adminMode)return;
   const recorder=window.WillenaStudyProgress;
   if(!recorder||typeof recorder.record!=='function'){
@@ -195,7 +195,12 @@ function recordVocabAttempt({skill,responseType,lexicalEntryId,activityId,prompt
     },
     responseTimeMs:state.questionStartedAt?Math.max(0,Date.now()-state.questionStartedAt):0
   };
-  recorder.record(detail);
+  recorder.record(Object.assign({},detail,{
+    hintsUsed:Math.max(0,Number(hintsUsed)||0),
+    retryCount:Math.max(0,Number(retryCount)||0),
+    attemptNumber:Math.max(1,Number(attemptNumber)||1),
+    sessionSource:txt(sessionSource)||'student'
+  }));
 }
 
 async function api(url,opts){
@@ -673,6 +678,7 @@ function checkCurrent(){
   const key=activityKey(item);
   state.outcomes.set(key,correct);
   if(!correct){state.reviewKeys.add(key);scheduleRetry(item)}
+  const retryCount=item?.__vocabRetry?Math.max(1,Number(state.retryCounts.get(key)||1)):0;
   const selectedText=q.choices[Number(selected)-1]||selected;
   recordVocabAttempt({
     skill:'vocabulary',
@@ -688,7 +694,10 @@ function checkCurrent(){
       retry:!!item?.__vocabRetry,
       vocab_mode:'quiz',
       recorded_from:'vocab-study-quiz'
-    }
+    },
+    retryCount,
+    attemptNumber:retryCount+1,
+    sessionSource:'student'
   });
   renderer.setDisabled(true);
   renderer.showFeedback({
@@ -771,6 +780,7 @@ function checkSpeaking(){
   const alternatives=renderer.getSpeechAlternatives?.()||[response];
   const match=matchSpeakingTarget(target,alternatives);
   const correct=!!match.correct;
+  const retryCount=Math.max(0,Number(word.__vocabRetryCount)||0);
   session.results.push({
     lexicalEntryId:word.id||null,
     word:target,
@@ -794,7 +804,10 @@ function checkSpeaking(){
       stt_match:match.matchedBy||null,
       vocab_mode:'speaking',
       recorded_from:'vocab-study-speaking'
-    }
+    },
+    retryCount,
+    attemptNumber:retryCount+1,
+    sessionSource:'student'
   });
   if(repeatUntilCorrect(correct))appendRetry(session.words,word);
   renderer.setDisabled(true);
@@ -985,6 +998,7 @@ function checkSpellingTest(){
   if(!response)return;
   const target=word.spellingTarget||word.word;
   const correct=response.toLowerCase()===target.toLowerCase();
+  const retryCount=Math.max(0,Number(word.__vocabRetryCount)||0);
   test.results.push({lexicalEntryId:word.id||null,word:target,ko:word.ko,response,correct});
   recordVocabAttempt({
     skill:'spelling',
@@ -999,7 +1013,10 @@ function checkSpellingTest(){
       cold_test:true,
       vocab_mode:'spelling_test',
       recorded_from:'vocab-study-spelling-test'
-    }
+    },
+    retryCount,
+    attemptNumber:retryCount+1,
+    sessionSource:'student'
   });
   if(repeatUntilCorrect(correct))appendRetry(test.words,word);
   renderer.setDisabled(true);
@@ -1112,6 +1129,7 @@ function renderSpellingCoach(){
   state.renderer=new QuestionRenderer(host).render(spellingCoachQuestion(word,practice.index),{
     onChange:(_,has)=>{actionBtn.disabled=!has}
   });
+  state.questionStartedAt=Date.now();
   host.querySelector('[data-spelling-input]')?.addEventListener('keydown',e=>{
     if(e.key==='Enter'&&state.renderer?.hasResponse()){e.preventDefault();checkSpellingCoach()}
   });
@@ -1127,6 +1145,7 @@ function checkSpellingCoach(){
   const correct=response.toLowerCase()===target.toLowerCase();
   const result=recordSpellingAttempt(practice,word,renderer,correct);
   const supportLevel=Number(result?.supportLevel||0);
+  const retryCount=Math.max(0,Number(word.__vocabRetryCount)||0)+Math.max(0,Number(result?.attemptCount||1)-1);
   const flow=coachAttempt({correct,supportLevel});
   recordVocabAttempt({
     skill:'spelling',
@@ -1141,9 +1160,13 @@ function checkSpellingCoach(){
       vocab_mode:'spelling_coach',
       assisted:flow.assisted,
       support_level:supportLevel,
-      retry:!!word.__vocabRepeat,
+      retry:retryCount>0,
       recorded_from:'vocab-study-spelling-coach'
-    }
+    },
+    hintsUsed:supportLevel,
+    retryCount,
+    attemptNumber:retryCount+1,
+    sessionSource:'student'
   });
   if(!correct){
     renderer.showFeedback({correct:false,correctAnswer:[],message:'다시 해보세요.'});
