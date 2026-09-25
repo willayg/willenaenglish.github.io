@@ -1,8 +1,8 @@
 # Vocabulary Study — Design & Architecture Spec
 
 **App:** `students/vocab-study/`  
-**Current staging version:** `0.002`  
-**Status:** Active redesign / architecture definition  
+**Current staging version:** `0.036`  
+**Status:** Active implementation  
 **Purpose:** Define the product behavior, study flow, renderer responsibilities, tracking model, mastery model, and modular architecture for the next generation Vocabulary Study app.
 
 ---
@@ -197,9 +197,11 @@ The renderer should return a standardized result so tracking does not care which
 
 ## 6. Tracking System
 
-Every meaningful attempt should create a learning record.
+Every meaningful attempt creates a canonical learning record.
 
-At minimum, record:
+### Pass 1 tracking contract — implemented in v0.036
+
+At minimum, Vocabulary Study records:
 
 - student
 - lexical entry
@@ -208,123 +210,104 @@ At minimum, record:
 - study mode
 - session source
 - correct / incorrect
-- response
-- latency
+- student response
+- correct answer
+- response latency
 - hints used
+- support level where applicable
+- retry count
 - attempt number
 - timestamp
 
-The system should preserve raw attempts and derive mastery from them.
+The canonical `study_attempts` table already has first-class columns for:
 
-Do **not** store only a single unit percentage as the source of truth.
+- `attempt_number`
+- `hints_used`
+- `retry_count`
+- `response_time_ms`
 
----
+The server remains responsible for the canonical historical `attempt_number`. The app also sends a session-local attempt number in metadata so retries inside one activity can be reconstructed.
 
-## 7. Per-Word Mastery
+Vocabulary Study uses `session_source: "student"` by default. Future teacher-selected practice will use `session_source: "teacher"`. Recommended practice can later use `session_source: "adaptive"`.
 
-Mastery should exist at the smallest useful learning unit.
+Spelling Coach records its support level separately. Hint level and retry information must not be flattened into a simple correct/incorrect result.
 
-For vocabulary, track separate dimensions rather than one vague score.
+Raw attempts are preserved. UI progress is derived from those records rather than replacing them.
 
-Example:
+## 7. Simple Progress Model
+
+Vocabulary Study will deliberately use a simple progress model rather than a heavy spaced-repetition or Anki-style mastery system.
+
+The goal is:
+
+- give students useful practice
+- bring back unfinished or weak words
+- allow straightforward review
+- show clear progress without repeatedly hounding students after they have demonstrated competence
+
+Progress may still be tracked separately by mode, for example:
 
 ```text
 elephant
 
-recognition      0.95
-meaning_en_ko    0.90
-meaning_ko_en    0.72
-spelling         0.41
-speaking         0.65
+quiz             passed
+spelling coach   passed
+spelling test    passed
+speaking         passed
 ```
 
-Not every dimension needs to be visible to students.
+The exact visible percentages can remain simple coverage / completion percentages.
 
-Speaking may initially be optional for full unit completion until the mode is mature and universally available.
+Historical attempt data should still be retained because it is useful for teacher insight, future recommendations, streaks, badges, and fair rewards. Retaining the data does **not** mean the app must force a spaced-review schedule.
 
----
+## 8. Progress Roll-Up
 
-## 8. Mastery Roll-Up
-
-Mastery should roll upward:
+Progress rolls upward in a simple way:
 
 ```text
 attempts
   ↓
-word + skill mastery
+word + mode pass state
   ↓
-word mastery
+unit skill progress
   ↓
-unit mastery
+unit overall progress
   ↓
-book mastery
+book completion view
 ```
 
-The student-facing unit score can remain simple:
+The current progress rings and snapshots are the practical source for student-facing completion.
 
-```text
-Unit 1 — 78%
-14 / 18 words mastered
-```
-
-Suggested simple status language:
-
-```text
-0–24    New
-25–59   Learning
-60–89   Practiced
-90–99   Nearly mastered
-100     Mastered
-```
-
-These labels are UI-level summaries. The underlying mastery calculation can be more detailed.
-
----
+A unit can display a simple percentage and completed-word count. We do not need a hidden complex mastery score to justify that percentage.
 
 ## 9. What Counts as 100%
 
-A unit should **not** become 100% just because every word was answered correctly once.
+A unit reaches 100% when the configured required Vocabulary Study work for that unit is complete under the current progress rules.
 
-A word should reach mastery only after enough evidence.
+The app should not require endless review cycles to preserve 100%.
 
-A first implementation might require successful evidence in:
+The exact required modes can remain configurable as Vocabulary Study develops. The important product rule is that 100% should feel achievable and stable.
 
-- Recognition / meaning
-- Korean → English
-- Spelling
-- Recent review
+When a unit first reaches 100%, it earns a permanent **Golden Unit Badge**.
 
-Speaking can be added to the rule later.
+## 10. Golden Unit Badges and Achievements
 
-The exact formula should remain configurable.
-
----
-
-## 10. Medals and Achievements
-
-When a unit reaches 100% mastery, award a permanent achievement.
+Every unit that reaches 100% earns a permanent golden badge.
 
 Example:
 
-> 🏅 Unit Mastered — A Giant in the Forest
+> 🏅 Unit Mastered — Unit 4
 
-For a 16-unit book, the student can visually collect 16 unit medals.
+Important rules:
 
-Completing every unit can award a **Book Mastery badge**.
+- one golden badge per unit
+- award it the first time the unit reaches 100%
+- once earned, do not remove it
+- changing future progress rules must not erase a historical badge
+- unit selectors should eventually show earned golden badges
+- a book-level view can show the student's collection of golden units
 
-Important rule:
-
-**Do not remove a medal after it has been earned.**
-
-Mastery can later fall due to review decay or new evidence, but the achievement remains historical.
-
-Example:
-
-```text
-🏅 Mastered Unit 4
-Current mastery: 92%
-3 words due for review
-```
+A future Book Mastery badge may be awarded when all required units in a book have golden badges.
 
 Suggested achievement data:
 
@@ -338,55 +321,51 @@ unit_id
 earned_at
 ```
 
----
-
 ## 11. Streaks
 
-Streaks are motivational and must remain separate from mastery.
+Streaks are a core motivational feature and remain separate from unit progress.
 
-A streak should reward **meaningful completed study**, not opening the app or answering one question.
+Use a **study-day streak** rather than an aggressive calendar-review streak.
 
-Possible student UI:
+A streak should increment from meaningful completed vocabulary study, not from opening the app or answering one token question.
+
+Student UI should eventually show:
 
 ```text
 🔥 5 study-day streak
 Best: 17
 ```
 
-A Willena-specific **study-day streak** may be better than a strict calendar-day streak because weekends, school schedules, hagwon attendance, and vacations matter.
+Streaks must not inflate unit progress and should not force a student to repeat already-completed content simply to protect a streak.
 
-Streaks should never inflate mastery scores.
+## 12. Recommended for You — Later
 
----
+A Recommended for You layer is still planned, but it is **not part of the current six-pass build**.
 
-## 12. Recommendation Logic
+Useful future recommendations include:
 
-The recommendation engine should use tracking + mastery data.
-
-Examples:
-
-- weakest spelling items
-- words repeatedly missed
-- recently learned words due for review
+- unfinished unit work
+- weak quiz words
+- spelling items that still need practice
+- recent mistakes
 - nearly complete units
 - teacher-selected targets
-- unfinished assigned sessions
 
-The first version should prefer transparent deterministic scoring over opaque AI decisions.
+Keep the first recommendation logic simple, deterministic, and inspectable.
 
-AI may later help explain, summarize, or assemble recommendations, but the underlying evidence should stay inspectable.
-
----
+Do not turn recommendations into an aggressive spaced-repetition scheduler.
 
 ## 13. Content Sources
 
 The app should not need to know where vocabulary originally came from.
 
-Current possible sources include:
+Current / planned sources include:
 
 - normal `source_content_occurrences`
 - Word Builder teacher collections
-- test-prep / 내신 lexical content
+- teacher-selected current Word Test vocabulary
+- past Word Test vocabulary for review
+- test-prep lexical content
 - publisher-derived vocabulary
 - imported worksheet vocabulary
 
@@ -519,23 +498,50 @@ This allows the visual design to change without rewriting the study engine.
 
 ---
 
-## 18. Near-Term Build Order
+## 18. Current Six-Pass Build Order
 
-Recommended implementation order:
+### Pass 1 — Tracking foundation
+- real `hints_used`
+- support level
+- retry count
+- canonical attempt number
+- session-local attempt number
+- session source
+- reliable response timing
 
-1. Finalize the redesigned home / session-selection UX.
-2. Extract a shared vocabulary-source layer.
-3. Define the common study-plan object.
-4. Add spelling-helper mode to the universal renderer.
-5. Add standardized attempt tracking.
-6. Add simple per-mode mastery.
-7. Add adaptive recommendations.
-8. Add unit mastery percentages.
-9. Add unit medals / book badges.
-10. Add speaking mode.
-11. Refine mastery and recommendation formulas from real student data.
+### Pass 2 — Willena points + stars
+- award through the existing Willena points / stars system
+- reward meaningful work
+- prevent easy farming through retries or reopening completed work
+- show earned rewards on completion
 
----
+### Pass 3 — Streaks + Golden Unit Badges
+- study-day streak
+- best streak
+- permanent golden badge when a unit reaches 100%
+- badge visibility in unit / book UI
+
+### Pass 4 — Teacher-selected Word Test practice
+- teacher-selected targets
+- `session_source: "teacher"`
+- reuse the same Vocabulary Study engine and renderer
+
+### Pass 5 — Past Word Tests
+- stop filtering useful historical Word Test vocabulary
+- expose past tests as review material
+- preserve canonical lexical IDs and deduplicate appropriately
+
+### Pass 6 — Major UI pass
+- clearer current book and unit
+- stronger Quiz / Spelling / Speaking cards
+- visible streak, points, stars, and golden badges
+- better word-list and completion screens
+- clear areas for Current Study / Teacher Practice / Review
+- better multiple-book handling
+- mobile-first polish
+
+### Later — Recommended for You
+Build this after the tracking and content foundations have produced enough useful real-world data.
 
 ## 19. Product Rule Summary
 
@@ -545,9 +551,9 @@ Recommended implementation order:
 - All three use one study engine.
 - Renderer handles **how**, planner handles **what**.
 - Track performance at lexical-entry + mode level.
-- Derive unit and book mastery from lower-level evidence.
-- 100% mastery earns a permanent medal.
-- Streaks motivate consistency but do not affect mastery.
+- Keep progress simple; do not force Anki-style spaced review.
+- 100% unit progress earns a permanent Golden Unit Badge.
+- Streaks motivate consistency but do not affect unit progress.
 - Teacher worksheet vocab and canonical lexical content should be reusable across apps.
 - Storage details should move out of the vocab UI layer over time.
 
