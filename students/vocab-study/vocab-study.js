@@ -170,6 +170,7 @@ async function selectUnit(id){
   const unit=state.units.find(u=>String(u.id)===String(id));
   if(!unit||String(unit.id)===String(state.unit?.id))return;
   startBtn.disabled=true;
+  if(spellingPreviewBtn)spellingPreviewBtn.disabled=true;
   setStatus('단어를 불러오는 중...');
   try{
     const items=await loadVocabularyItems(state.book,unit);
@@ -663,7 +664,7 @@ async function boot(){
     spellingPreviewBtn?.addEventListener('click',openSpellingPreview);
     closeBtn.addEventListener('click',closeSession);
     actionBtn.addEventListener('click',()=>state.spellingPractice?checkSpellingCoach():checkCurrent());
-    window.WillenaVocabStudy={version:'0.009',getState:()=>state,start:startSession,openSpellingPreview,close:closeSession};
+    window.WillenaVocabStudy={version:'0.010',getState:()=>state,start:startSession,openSpellingPreview,close:closeSession};
   }catch(error){
     console.error('[Vocab Study] boot',error);
     setStatus(error?.message||'불러오지 못했습니다. 새로고침해 주세요.');
