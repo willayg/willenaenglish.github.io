@@ -2,10 +2,9 @@ import {QuestionRenderer} from '/shared/questions/question-renderer.js?v=2026092
 import {getSpellingTarget} from './spelling-targets.js?v=20260925-v0019';
 import {isSpeakableTarget,matchSpeakingTarget} from './speaking-match.js?v=20260925-v0022';
 import {getAssignment,setAssignment,getBookMeta,setBookMeta,getVocabulary,setVocabulary,background} from './vocab-startup-cache.js?v=20260925-v0001';
-import {snapshotPercent,loadVocabSnapshot} from './vocab-progress-snapshot.js?v=20260925-v0002';
+import {snapshotPercent,loadVocabSnapshot,nextSkillTargets} from './vocab-progress-snapshot.js?v=20260925-v0003';
 import {coachAttempt,repeatUntilCorrect,appendRetry,uniquePassedCount,wrongAttemptCount} from './vocab-pass-flow.js?v=20260925-v0001';
 
-const SESSION_SIZE=12;
 const CONTENT_URL='https://gxwfsqxyuufqtitspfqg.supabase.co';
 const CONTENT_KEY=['sb_publishable_','G-FYhHfDL4OGdL892gY1Zg_','epdbEeqO'].join('');
 const OP_URL='https://fiieuiktlsivwfgyivai.supabase.co';
@@ -141,6 +140,22 @@ async function loadSkillProgress(){
     renderSkillProgress();
   }catch(error){
     console.warn('[Vocab Study] progress snapshot unavailable',error);
+  }
+}
+async function ensureProgressSnapshot(){
+  if(state.adminMode)return state.progressSnapshot;
+  if(state.progressSnapshot)return state.progressSnapshot;
+  const bookId=state.book?.book_id,unitId=state.unit?.id;
+  if(!bookId||!unitId)return null;
+  try{
+    const data=await loadVocabSnapshot(bookId,unitId);
+    if(String(bookId)!==String(state.book?.book_id)||String(unitId)!==String(state.unit?.id))return null;
+    state.progressSnapshot=data||null;
+    renderSkillProgress();
+    return state.progressSnapshot;
+  }catch(error){
+    console.warn('[Vocab Study] progress snapshot unavailable',error);
+    return null;
   }
 }
 
@@ -529,7 +544,7 @@ function activityWord(item){
   const prompt=txt(item?.stimulus?.prompt).replace(/^\S+\s{2}/,'');
   return /[A-Za-z]/.test(prompt)?prompt:txt(item?.answer||prompt);
 }
-function buildSession(items,size=SESSION_SIZE){
+function buildSession(items,size=Infinity){
   const groups=new Map();
   shuffle(items).forEach(item=>{
     const key=activityKey(item);if(!groups.has(key))groups.set(key,[]);
@@ -698,8 +713,9 @@ function speakingWords(items){
     return speakingTarget&&isSpeakableTarget(speakingTarget)?Object.assign({},word,{speakingTarget}):null;
   }).filter(Boolean);
 }
-function openSpeakingSession(){
-  const words=shuffle(speakingWords(state.items)).slice(0,10);if(!words.length)return;
+async function openSpeakingSession(){
+  await ensureProgressSnapshot();
+  const words=shuffle(nextSkillTargets(state.progressSnapshot,'speaking',speakingWords(state.items)));if(!words.length)return;
   state.spellingPractice=null;
   state.spellingTest=null;
   state.speakingSession={words,index:0,results:[],checked:false,initialTotal:words.length};
@@ -824,7 +840,7 @@ function spellingWords(items){
   }).filter(Boolean);
 }
 function spellingPreviewWords(items){
-  return spellingWords(items).slice(0,10);
+  return spellingWords(items);
 }
 function playPreviewWord(word){
   if(!('speechSynthesis' in window))return;
@@ -905,10 +921,11 @@ function openSpellingMenu(){
   sessionMain.scrollTop=0;
 }
 function spellingTestWords(items){
-  return shuffle(spellingWords(items)).slice(0,10);
+  return shuffle(spellingWords(items));
 }
-function openSpellingTest(){
-  const words=spellingTestWords(state.items);if(!words.length)return;
+async function openSpellingTest(){
+  await ensureProgressSnapshot();
+  const words=shuffle(nextSkillTargets(state.progressSnapshot,'spelling',spellingTestWords(state.items)));if(!words.length)return;
   state.spellingPractice=null;
   state.spellingTest={words,index:0,results:[],checked:false,initialTotal:words.length};
   titleEl.textContent=state.book.book_title+' · Unit '+state.unit.unit_number+' · Spelling Test';
@@ -1021,8 +1038,9 @@ function finishSpellingTest(){
   sessionMain.scrollTop=0;
 }
 
-function openSpellingPreview(){
-  const words=spellingPreviewWords(state.items);if(!words.length)return;
+async function openSpellingPreview(){
+  await ensureProgressSnapshot();
+  const words=nextSkillTargets(state.progressSnapshot,'spelling',spellingPreviewWords(state.items));if(!words.length)return;
   state.spellingPractice=createSpellingPractice(words);
   titleEl.textContent=state.book.book_title+' · Unit '+state.unit.unit_number+' · Spelling';
   progressEl.textContent='Practice';
@@ -1166,9 +1184,14 @@ function finishSpellingPractice(){
 }
 
 function escapeHtml(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-function startSession(items=null){
-  const source=items&&items.length?items:state.items;if(!source.length)return;
-  state.queue=buildSession(source,Math.min(SESSION_SIZE,source.length));
+async function startSession(items=null){
+  let source=items&&items.length?items:null;
+  if(!source){
+    await ensureProgressSnapshot();
+    source=nextSkillTargets(state.progressSnapshot,'vocabulary',state.items,activityKey);
+  }
+  if(!source.length)return;
+  state.queue=buildSession(source);
   state.index=0;state.outcomes=new Map();state.reviewKeys=new Set();state.retryCounts=new Map();
   titleEl.textContent=state.book.book_title+' · Unit '+state.unit.unit_number;
   sessionEl.hidden=false;document.body.classList.add('vocab-session-open');
@@ -1267,7 +1290,7 @@ async function boot(){
       renderSkillProgress();
     });
     reportStartupPerf();
-    window.WillenaVocabStudy={version:'0.032',getState:()=>state,start:startSession,openSpellingMenu,openSpellingPreview,openSpellingTest,openSpeakingSession,close:closeSession};
+    window.WillenaVocabStudy={version:'0.033',getState:()=>state,start:startSession,openSpellingMenu,openSpellingPreview,openSpellingTest,openSpeakingSession,close:closeSession};
   }catch(error){
     console.error('[Vocab Study] boot',error);
     setStatus(error?.message||'불러오지 못했습니다. 새로고침해 주세요.');
