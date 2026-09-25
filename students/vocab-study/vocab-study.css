@@ -138,6 +138,28 @@ body.vocab-session-open{overflow:hidden}
 .vocab-review-btn{border:2px solid var(--cyan);background:#fff;color:var(--cyan-strong)}
 .vocab-done-btn{border:2px solid var(--pink);background:#fff;color:var(--pink)}
 
+
+.spelling-mode-panel{
+  width:min(620px,100%);margin:0 auto;background:#fff;border:2px solid #dff2f4;border-radius:28px;
+  padding:clamp(24px,5vw,40px);box-shadow:var(--shadow)
+}
+.spelling-mode-head{text-align:center}
+.spelling-mode-head .eyebrow{color:var(--pink)}
+.spelling-mode-head h2{margin:7px 0 6px;color:#315e64;font-size:clamp(1.8rem,6vw,2.7rem);letter-spacing:-.035em}
+.spelling-mode-head p{margin:0;color:var(--muted);font-weight:700}
+.spelling-mode-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:24px}
+.spelling-mode-card{
+  min-height:170px;padding:20px;border:2px solid var(--line);border-radius:20px;background:#fff;color:#244f56;
+  text-align:left;display:flex;flex-direction:column;align-items:flex-start;cursor:pointer;
+  box-shadow:0 7px 20px rgba(34,106,116,.06);transition:transform .14s ease,border-color .14s ease,box-shadow .14s ease
+}
+.spelling-mode-card:hover:not(:disabled){transform:translateY(-2px);border-color:var(--pink);box-shadow:0 11px 26px rgba(34,106,116,.10)}
+.spelling-mode-card strong{font-size:1.15rem;line-height:1.2}
+.spelling-mode-card span{margin-top:8px;color:var(--muted);font-weight:700;line-height:1.5}
+.spelling-mode-card b{margin-top:auto;padding-top:18px;color:var(--pink);font-size:.82rem}
+.spelling-mode-card.is-disabled{background:#f8fbfb;border-style:dashed;cursor:default;opacity:.62}
+.spelling-mode-card.is-disabled b{color:#8aa0a4}
+
 @media(max-width:560px){
   .vocab-page{padding:14px 10px 36px}
   .vocab-home-card{border-radius:23px;padding:24px 19px}
@@ -156,4 +178,6 @@ body.vocab-session-open{overflow:hidden}
   .vocab-question-wrap .prompt{font-size:clamp(2rem,12vw,3rem)}
   .vocab-finish-stats{grid-template-columns:repeat(3,1fr)}
   .vocab-finish-actions{flex-direction:column}
+  .spelling-mode-grid{grid-template-columns:1fr}
+  .spelling-mode-card{min-height:140px}
 }
