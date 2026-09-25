@@ -3,6 +3,7 @@ import {getSpellingTarget} from './spelling-targets.js?v=20260925-v0019';
 import {isSpeakableTarget,matchSpeakingTarget} from './speaking-match.js?v=20260925-v0022';
 import {getAssignment,setAssignment,getBookMeta,setBookMeta,getVocabulary,setVocabulary,background} from './vocab-startup-cache.js?v=20260925-v0001';
 import {snapshotPercent,loadVocabSnapshot} from './vocab-progress-snapshot.js?v=20260925-v0001';
+import {coachAttempt,repeatUntilCorrect,appendRetry,uniquePassedCount,wrongAttemptCount} from './vocab-pass-flow.js?v=20260925-v0001';
 
 const SESSION_SIZE=12;
 const CONTENT_URL='https://gxwfsqxyuufqtitspfqg.supabase.co';
@@ -670,6 +671,7 @@ function checkCurrent(){
     metadata:{
       pair_form:item?.metadata?.pair_form||null,
       retry:!!item?.__vocabRetry,
+      vocab_mode:'quiz',
       recorded_from:'vocab-study-quiz'
     }
   });
@@ -700,7 +702,7 @@ function openSpeakingSession(){
   const words=shuffle(speakingWords(state.items)).slice(0,10);if(!words.length)return;
   state.spellingPractice=null;
   state.spellingTest=null;
-  state.speakingSession={words,index:0,results:[],checked:false};
+  state.speakingSession={words,index:0,results:[],checked:false,initialTotal:words.length};
   titleEl.textContent=state.book.book_title+' · Unit '+state.unit.unit_number+' · Speaking';
   sessionEl.hidden=false;
   document.body.classList.add('vocab-session-open');
@@ -774,9 +776,11 @@ function checkSpeaking(){
     metadata:{
       stt_alternatives:alternatives,
       stt_match:match.matchedBy||null,
+      vocab_mode:'speaking',
       recorded_from:'vocab-study-speaking'
     }
   });
+  if(repeatUntilCorrect(correct))appendRetry(session.words,word);
   renderer.setDisabled(true);
   renderer.showFeedback({
     correct,
@@ -790,9 +794,9 @@ function checkSpeaking(){
 }
 function finishSpeakingSession(){
   const session=state.speakingSession;
-  const correct=arr(session?.results).filter(r=>r.correct).length;
-  const total=session?.words?.length||0;
-  const review=Math.max(0,total-correct);
+  const passed=uniquePassedCount(session?.results);
+  const total=session?.initialTotal||0;
+  const retries=wrongAttemptCount(session?.results);
   progressEl.textContent='완료';
   progressFill.style.width='100%';
   instructionEl.hidden=true;
@@ -801,12 +805,11 @@ function finishSpeakingSession(){
   root.innerHTML=
     '<section class="vocab-finish">'+
       '<span class="eyebrow">SPEAKING COMPLETE</span>'+
-      '<h2>'+correct+' / '+total+'</h2>'+
-      '<p>말하기 연습이 끝났어요.</p>'+
+      '<h2>'+passed+' / '+total+'</h2>'+
+      '<p>틀린 단어는 맞힐 때까지 다시 말해 봤어요.</p>'+
       '<div class="vocab-finish-stats">'+
-        '<div><strong>'+total+'</strong><span>SPOKEN</span></div>'+
-        '<div><strong>'+correct+'</strong><span>CORRECT</span></div>'+
-        '<div><strong>'+review+'</strong><span>REVIEW</span></div>'+
+        '<div><strong>'+total+'</strong><span>PASSED</span></div>'+
+        '<div><strong>'+retries+'</strong><span>RETRIES</span></div>'+
       '</div>'+
       '<div class="vocab-finish-actions"><button id="vocabSpeakingDone" class="vocab-done-btn" type="button">Finish</button></div>'+
     '</section>';
@@ -884,9 +887,9 @@ function openSpellingMenu(){
       '</div>'+
       '<div class="spelling-mode-grid">'+
         '<button id="vocabSpellingTrainer" class="spelling-mode-card" type="button">'+
-          '<strong>Spelling Trainer</strong>'+
-          '<span>단어를 보고 듣고, 힌트를 사용하며 연습해요.</span>'+
-          '<b>Practice</b>'+
+          '<strong>Spelling Coach</strong>'+
+          '<span>힌트를 쓸 수 있어요. 도움을 받은 단어는 마지막에 한 번 더 해요.</span>'+
+          '<b>Coach</b>'+
         '</button>'+
         '<button id="vocabSpellingTest" class="spelling-mode-card" type="button">'+
           '<strong>Spelling Test</strong>'+
@@ -907,7 +910,7 @@ function spellingTestWords(items){
 function openSpellingTest(){
   const words=spellingTestWords(state.items);if(!words.length)return;
   state.spellingPractice=null;
-  state.spellingTest={words,index:0,results:[],checked:false};
+  state.spellingTest={words,index:0,results:[],checked:false,initialTotal:words.length};
   titleEl.textContent=state.book.book_title+' · Unit '+state.unit.unit_number+' · Spelling Test';
   instructionEl.hidden=false;
   instructionEl.textContent='우리말을 보고 영어 철자를 입력하세요.';
@@ -977,9 +980,11 @@ function checkSpellingTest(){
     correct,
     metadata:{
       cold_test:true,
+      vocab_mode:'spelling_test',
       recorded_from:'vocab-study-spelling-test'
     }
   });
+  if(repeatUntilCorrect(correct))appendRetry(test.words,word);
   renderer.setDisabled(true);
   renderer.showFeedback({
     correct,
@@ -993,9 +998,9 @@ function checkSpellingTest(){
 }
 function finishSpellingTest(){
   const test=state.spellingTest;
-  const correct=arr(test?.results).filter(r=>r.correct).length;
-  const total=test?.words?.length||0;
-  const missed=Math.max(0,total-correct);
+  const passed=uniquePassedCount(test?.results);
+  const total=test?.initialTotal||0;
+  const retries=wrongAttemptCount(test?.results);
   progressEl.textContent='완료';
   progressFill.style.width='100%';
   instructionEl.hidden=true;
@@ -1004,12 +1009,11 @@ function finishSpellingTest(){
   root.innerHTML=
     '<section class="vocab-finish">'+
       '<span class="eyebrow">SPELLING TEST COMPLETE</span>'+
-      '<h2>'+correct+' / '+total+'</h2>'+
-      '<p>철자 테스트가 끝났어요.</p>'+
+      '<h2>'+passed+' / '+total+'</h2>'+
+      '<p>모든 단어를 맞힐 때까지 다시 해봤어요.</p>'+
       '<div class="vocab-finish-stats">'+
-        '<div><strong>'+total+'</strong><span>TESTED</span></div>'+
-        '<div><strong>'+correct+'</strong><span>CORRECT</span></div>'+
-        '<div><strong>'+missed+'</strong><span>REVIEW</span></div>'+
+        '<div><strong>'+total+'</strong><span>PASSED</span></div>'+
+        '<div><strong>'+retries+'</strong><span>RETRIES</span></div>'+
       '</div>'+
       '<div class="vocab-finish-actions"><button id="vocabSpellingTestDone" class="vocab-done-btn" type="button">Finish</button></div>'+
     '</section>';
@@ -1103,13 +1107,37 @@ function checkSpellingCoach(){
   if(!response)return;
   const target=word.spellingTarget||word.word;
   const correct=response.toLowerCase()===target.toLowerCase();
-  recordSpellingAttempt(practice,word,renderer,correct);
+  const result=recordSpellingAttempt(practice,word,renderer,correct);
+  const supportLevel=Number(result?.supportLevel||0);
+  const flow=coachAttempt({correct,supportLevel});
+  recordVocabAttempt({
+    skill:'spelling',
+    responseType:'write',
+    lexicalEntryId:word.id,
+    activityId:'vocab-spelling-coach-'+word.id,
+    prompt:word.ko,
+    studentAnswer:response,
+    correctAnswer:target,
+    correct,
+    metadata:{
+      vocab_mode:'spelling_coach',
+      assisted:flow.assisted,
+      support_level:supportLevel,
+      retry:!!word.__vocabRepeat,
+      recorded_from:'vocab-study-spelling-coach'
+    }
+  });
   if(!correct){
     renderer.showFeedback({correct:false,correctAnswer:[],message:'다시 해보세요.'});
     return;
   }
+  if(flow.repeat)appendRetry(practice.words,word);
   renderer.setDisabled(true);
-  renderer.showFeedback({correct:true,correctAnswer:[target]});
+  renderer.showFeedback({
+    correct:true,
+    correctAnswer:[target],
+    message:flow.repeat?'도움을 받았어요. 마지막에 한 번 더 해볼게요.':'정답입니다!'
+  });
   actionBtn.disabled=true;
   setTimeout(()=>{practice.index++;renderSpellingCoach()},350);
 }
@@ -1236,7 +1264,7 @@ async function boot(){
       renderSkillProgress();
     });
     reportStartupPerf();
-    window.WillenaVocabStudy={version:'0.030',getState:()=>state,start:startSession,openSpellingMenu,openSpellingPreview,openSpellingTest,openSpeakingSession,close:closeSession};
+    window.WillenaVocabStudy={version:'0.031',getState:()=>state,start:startSession,openSpellingMenu,openSpellingPreview,openSpellingTest,openSpeakingSession,close:closeSession};
   }catch(error){
     console.error('[Vocab Study] boot',error);
     setStatus(error?.message||'불러오지 못했습니다. 새로고침해 주세요.');
