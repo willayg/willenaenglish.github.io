@@ -21,6 +21,7 @@ function getMonthStartIso() {
 
 function deriveStars(summary) {
   const s = summary || {};
+  if (typeof s.stars === 'number') return Math.max(0, Math.min(5, Math.floor(s.stars)));
   let acc = null;
   if (typeof s.accuracy === 'number') acc = s.accuracy;
   else if (typeof s.score === 'number' && typeof s.total === 'number' && s.total > 0) acc = s.score / s.total;
