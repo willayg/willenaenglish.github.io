@@ -888,29 +888,29 @@ function openSpellingMenu(){
   state.spellingPractice=null;
   state.renderer=null;
   titleEl.textContent=state.book.book_title+' · Unit '+state.unit.unit_number+' · Spelling';
-  progressEl.textContent='Choose';
+  progressEl.textContent='';
   progressFill.style.width='0%';
   instructionEl.hidden=true;
   answerNote.hidden=true;
   bottomEl.hidden=true;
   questionStage.hidden=false;
+
+  const total=Math.max(1,words.filter(w=>isUuid(w.id)).length);
+  const coachPassed=Number(state.progressSnapshot?.spelling?.coach_passed_count)||0;
+  const testPassed=Number(state.progressSnapshot?.spelling?.test_passed_count)||0;
+  const coachPct=Math.max(0,Math.min(100,Math.round(coachPassed*100/total)));
+  const testPct=Math.max(0,Math.min(100,Math.round(testPassed*100/total)));
+
   root.innerHTML=
     '<section class="spelling-mode-panel">'+
-      '<div class="spelling-mode-head">'+
-        '<span class="eyebrow">SPELLING</span>'+
-        '<h2>철자 연습</h2>'+
-        '<p>연습하거나 준비가 되면 테스트해 보세요.</p>'+
-      '</div>'+
       '<div class="spelling-mode-grid">'+
         '<button id="vocabSpellingTrainer" class="spelling-mode-card" type="button">'+
-          '<strong>Spelling Coach</strong>'+
-          '<span>힌트를 쓸 수 있어요. 도움을 받은 단어는 마지막에 한 번 더 해요.</span>'+
-          '<b>Coach</b>'+
+          '<span class="vocab-skill-ring spelling-mode-ring" style="--skill-color:var(--pink);--progress:'+coachPct+'"><span>'+coachPct+'%</span></span>'+
+          '<strong>철자 코치</strong>'+
         '</button>'+
         '<button id="vocabSpellingTest" class="spelling-mode-card" type="button">'+
-          '<strong>Spelling Test</strong>'+
-          '<span>도움 없이 철자를 써서 확인해요.</span>'+
-          '<b>Test</b>'+
+          '<span class="vocab-skill-ring spelling-mode-ring" style="--skill-color:var(--pink);--progress:'+testPct+'"><span>'+testPct+'%</span></span>'+
+          '<strong>철자 테스트</strong>'+
         '</button>'+
       '</div>'+
     '</section>';
@@ -1290,7 +1290,7 @@ async function boot(){
       renderSkillProgress();
     });
     reportStartupPerf();
-    window.WillenaVocabStudy={version:'0.034',getState:()=>state,start:startSession,openSpellingMenu,openSpellingPreview,openSpellingTest,openSpeakingSession,close:closeSession};
+    window.WillenaVocabStudy={version:'0.035',getState:()=>state,start:startSession,openSpellingMenu,openSpellingPreview,openSpellingTest,openSpeakingSession,close:closeSession};
   }catch(error){
     console.error('[Vocab Study] boot',error);
     setStatus(error?.message||'불러오지 못했습니다. 새로고침해 주세요.');
