@@ -52,7 +52,8 @@ const state={
   outcomes:new Map(),reviewKeys:new Set(),retryCounts:new Map(),
   spellingPractice:null,spellingTest:null,speakingSession:null,
   adminMode:false,nextReadyAt:0,questionStartedAt:0,
-  progressSnapshot:null
+  progressSnapshot:null,
+  rewardSession:null
 };
 
 function txt(v){return String(v==null?'':v).trim()}
@@ -64,6 +65,87 @@ function shuffle(items){
   return a;
 }
 function setStatus(message){if(statusEl)statusEl.textContent=message}
+
+function vocabPointValue(skill,responseType){
+  if(responseType==='multiple_choice')return 2;
+  if(skill==='spelling'||skill==='speaking')return 4;
+  return 0;
+}
+function starsForPercent(percent){
+  const p=Math.max(0,Math.min(100,Number(percent)||0));
+  if(p>=100)return 5;
+  if(p>=90)return 4;
+  if(p>=80)return 3;
+  if(p>=70)return 2;
+  if(p>=60)return 1;
+  return 0;
+}
+function startRewardSession(mode){
+  state.rewardSession={
+    mode:txt(mode),
+    firstTotal:0,
+    firstCorrect:0,
+    points:0,
+    completed:false,
+    rewardSessionId:(window.crypto?.randomUUID?.()||('vocab-'+Date.now()+'-'+Math.random().toString(16).slice(2)))
+  };
+}
+function noteRewardAttempt(correct,retryCount,points){
+  const reward=state.rewardSession;
+  if(!reward)return;
+  reward.points+=Math.max(0,Number(points)||0);
+  if(Math.max(0,Number(retryCount)||0)===0){
+    reward.firstTotal+=1;
+    if(correct)reward.firstCorrect+=1;
+  }
+}
+function rewardPercent(reward=state.rewardSession){
+  return reward?.firstTotal?Math.round(reward.firstCorrect*100/reward.firstTotal):0;
+}
+async function completeRewardSession(){
+  const reward=state.rewardSession;
+  if(!reward||reward.completed||state.adminMode)return reward;
+  reward.completed=true;
+  reward.percent=rewardPercent(reward);
+  reward.stars=starsForPercent(reward.percent);
+  const listName='Vocabulary · '+txt(state.book?.book_title||state.book?.book_id||'Book')+' · Unit '+txt(state.unit?.unit_number||state.unit?.id||'');
+  try{
+    const response=await fetch('/.netlify/functions/log_word_attempt',{
+      method:'POST',
+      credentials:'include',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        event_type:'session_end',
+        session_id:reward.rewardSessionId,
+        mode:'vocab_'+reward.mode,
+        list_name:listName,
+        list_size:reward.firstTotal,
+        extra:{
+          completed:true,
+          stars:reward.stars,
+          accuracy:reward.firstTotal?reward.firstCorrect/reward.firstTotal:0,
+          percent:reward.percent,
+          score:reward.firstCorrect,
+          total:reward.firstTotal,
+          points_earned:reward.points,
+          book_id:state.book?.book_id||null,
+          unit_id:state.unit?.id||null,
+          vocab_mode:reward.mode,
+          reward_scheme:'vocab-study-v1'
+        }
+      })
+    });
+    if(!response.ok)throw new Error('Reward session failed ('+response.status+')');
+  }catch(error){
+    console.warn('[Vocab Study] reward session save failed',error);
+  }
+  return reward;
+}
+function rewardSummaryHtml(reward=state.rewardSession){
+  if(!reward)return'';
+  const stars=Math.max(0,Number(reward.stars)||0);
+  return '<div class="vocab-reward-summary"><strong>'+rewardPercent(reward)+'%</strong><span>'+('★'.repeat(stars)||'No stars')+' · +'+Math.max(0,Number(reward.points)||0)+' points</span></div>';
+}
 
 function perfNow(){return window.performance?.now?.()||Date.now()}
 const startupPerf={startedAt:perfNow(),entries:[]};
@@ -163,6 +245,8 @@ async function ensureProgressSnapshot(){
 function isUuid(value){return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(txt(value))}
 function recordVocabAttempt({skill,responseType,lexicalEntryId,activityId,prompt,studentAnswer,correctAnswer,correct,metadata,hintsUsed=0,retryCount=0,attemptNumber=1,sessionSource='student'}){
   if(state.adminMode)return;
+  const pointValue=vocabPointValue(skill,responseType);
+  noteRewardAttempt(correct,retryCount,pointValue);
   const recorder=window.WillenaStudyProgress;
   if(!recorder||typeof recorder.record!=='function'){
     console.warn('[Vocab Study] canonical study recorder unavailable');
@@ -184,7 +268,8 @@ function recordVocabAttempt({skill,responseType,lexicalEntryId,activityId,prompt
         lexical_entry_id:lexicalId,
         mastery_content_type:'lexical_entry',
         mastery_content_id:lexicalId,
-        vocab_study:true
+        vocab_study:true,
+        points_override:pointValue
       },metadata||{})
     },
     result:{
@@ -728,6 +813,7 @@ async function openSpeakingSession(){
   state.spellingPractice=null;
   state.spellingTest=null;
   state.speakingSession={words,index:0,results:[],checked:false,initialTotal:words.length};
+  startRewardSession('speaking');
   titleEl.textContent=state.book.book_title+' · Unit '+state.unit.unit_number+' · Speaking';
   sessionEl.hidden=false;
   document.body.classList.add('vocab-session-open');
@@ -821,11 +907,12 @@ function checkSpeaking(){
   actionBtn.classList.add('is-next');
   actionBtn.textContent=session.index>=session.words.length-1?'Finish':'Next';
 }
-function finishSpeakingSession(){
+async function finishSpeakingSession(){
   const session=state.speakingSession;
   const passed=uniquePassedCount(session?.results);
   const total=session?.initialTotal||0;
   const retries=wrongAttemptCount(session?.results);
+  const reward=await completeRewardSession();
   progressEl.textContent='완료';
   progressFill.style.width='100%';
   instructionEl.hidden=true;
@@ -840,6 +927,7 @@ function finishSpeakingSession(){
         '<div><strong>'+total+'</strong><span>PASSED</span></div>'+
         '<div><strong>'+retries+'</strong><span>RETRIES</span></div>'+
       '</div>'+
+      rewardSummaryHtml(reward)+
       '<div class="vocab-finish-actions"><button id="vocabSpeakingDone" class="vocab-done-btn" type="button">Finish</button></div>'+
     '</section>';
   el('vocabSpeakingDone')?.addEventListener('click',closeSession);
@@ -941,6 +1029,7 @@ async function openSpellingTest(){
   const words=shuffle(nextSkillTargets(state.progressSnapshot,'spelling',spellingTestWords(state.items),item=>item?.id,'spelling_test'));if(!words.length)return;
   state.spellingPractice=null;
   state.spellingTest={words,index:0,results:[],checked:false,initialTotal:words.length};
+  startRewardSession('spelling_test');
   titleEl.textContent=state.book.book_title+' · Unit '+state.unit.unit_number+' · Spelling Test';
   instructionEl.hidden=false;
   instructionEl.textContent='우리말을 보고 영어 철자를 입력하세요.';
@@ -1030,11 +1119,12 @@ function checkSpellingTest(){
   actionBtn.classList.add('is-next');
   actionBtn.textContent=test.index>=test.words.length-1?'Finish':'Next';
 }
-function finishSpellingTest(){
+async function finishSpellingTest(){
   const test=state.spellingTest;
   const passed=uniquePassedCount(test?.results);
   const total=test?.initialTotal||0;
   const retries=wrongAttemptCount(test?.results);
+  const reward=await completeRewardSession();
   progressEl.textContent='완료';
   progressFill.style.width='100%';
   instructionEl.hidden=true;
@@ -1049,6 +1139,7 @@ function finishSpellingTest(){
         '<div><strong>'+total+'</strong><span>PASSED</span></div>'+
         '<div><strong>'+retries+'</strong><span>RETRIES</span></div>'+
       '</div>'+
+      rewardSummaryHtml(reward)+
       '<div class="vocab-finish-actions"><button id="vocabSpellingTestDone" class="vocab-done-btn" type="button">Finish</button></div>'+
     '</section>';
   el('vocabSpellingTestDone')?.addEventListener('click',closeSession);
@@ -1093,6 +1184,7 @@ async function openSpellingPreview(){
 function startSpellingPractice(){
   const practice=state.spellingPractice;
   if(!practice?.words?.length)return;
+  startRewardSession('spelling_coach');
   practice.index=0;
   practice.currentAttemptCount=0;
   practice.attempts=[];
@@ -1182,12 +1274,13 @@ function checkSpellingCoach(){
   actionBtn.disabled=true;
   setTimeout(()=>{practice.index++;renderSpellingCoach()},350);
 }
-function finishSpellingPractice(){
+async function finishSpellingPractice(){
   const practice=state.spellingPractice;
   const passedIds=new Set(arr(practice?.results).filter(r=>Number(r.supportLevel||0)===0).map(r=>txt(r.lexicalEntryId||r.word)).filter(Boolean));
   const supported=arr(practice?.results).filter(r=>Number(r.supportLevel||0)>0).length;
   const wrongs=arr(practice?.attempts).filter(r=>!r.correct).length;
   const total=practice?.initialTotal||0;
+  const reward=await completeRewardSession();
   progressEl.textContent='완료';
   progressFill.style.width='100%';
   bottomEl.hidden=true;
@@ -1201,6 +1294,7 @@ function finishSpellingPractice(){
         '<div><strong>'+supported+'</strong><span>HELPED</span></div>'+
         '<div><strong>'+wrongs+'</strong><span>RETRIES</span></div>'+
       '</div>'+
+      rewardSummaryHtml(reward)+
       '<div class="vocab-finish-actions"><button id="vocabSpellingDone" class="vocab-done-btn" type="button">Finish</button></div>'+
     '</section>';
   el('vocabSpellingDone')?.addEventListener('click',closeSession);
@@ -1215,6 +1309,7 @@ async function startSession(items=null){
   }
   if(!source.length)return;
   state.queue=buildSession(source);
+  startRewardSession('quiz');
   state.index=0;state.outcomes=new Map();state.reviewKeys=new Set();state.retryCounts=new Map();
   titleEl.textContent=state.book.book_title+' · Unit '+state.unit.unit_number;
   sessionEl.hidden=false;document.body.classList.add('vocab-session-open');
@@ -1226,7 +1321,8 @@ function reviewSession(){
   if(!reviewItems.length)return closeSession();
   startSession(reviewItems);
 }
-function finishSession(){
+async function finishSession(){
+  const reward=await completeRewardSession();
   progressFill.style.width='100%';
   progressEl.textContent='완료';
   bottomEl.hidden=true;
@@ -1250,6 +1346,7 @@ function finishSession(){
         '<div><strong>'+solid+'</strong><span>SOLID</span></div>'+
         '<div><strong>'+review.length+'</strong><span>REVIEW</span></div>'+
       '</div>'+
+      rewardSummaryHtml(reward)+
       (reviewWords.length?'<div class="vocab-review-words"><strong>한 번 더 볼 단어</strong><br>'+reviewWords.map(escapeHtml).join(' · ')+'</div>':'')+
       '<div class="vocab-finish-actions">'+
         (reviewWords.length?'<button id="vocabReviewAgain" class="vocab-review-btn" type="button">Review '+reviewWords.length+'</button>':'')+
@@ -1265,7 +1362,7 @@ function closeSession(){
   document.body.classList.remove('vocab-session-open');
   sessionEl.hidden=true;root.innerHTML='';answerNote.hidden=true;bottomEl.hidden=false;instructionEl.hidden=false;
   if(state.renderer?.setDisabled)state.renderer.setDisabled(true);
-  state.queue=[];state.index=0;state.checked=false;state.renderer=null;state.spellingPractice=null;state.spellingTest=null;state.speakingSession=null;
+  state.queue=[];state.index=0;state.checked=false;state.renderer=null;state.spellingPractice=null;state.spellingTest=null;state.speakingSession=null;state.rewardSession=null;
   try{window.scrollTo({top:0,behavior:'auto'})}catch(_){}
 }
 async function boot(){
