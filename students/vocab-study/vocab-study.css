@@ -21,6 +21,35 @@ body.vocab-session-open{overflow:hidden}
 .vocab-book-choice{flex:1 1 180px;min-height:46px;border:2px solid var(--line);border-radius:14px;background:#fff;color:var(--ink);padding:10px 13px;font:800 .88rem Poppins,sans-serif;cursor:pointer}
 .vocab-book-choice.is-active{border-color:var(--pink);background:#fff3f9;color:var(--pink-dark)}
 
+.vocab-skill-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:24px}
+.vocab-skill-card{
+  --skill-color:var(--cyan-strong);
+  display:flex;align-items:center;gap:14px;min-width:0;min-height:150px;padding:18px;
+  border:2px solid var(--line);border-radius:22px;background:#fff;color:var(--ink);text-align:left;
+  box-shadow:0 8px 24px rgba(34,106,116,.06);cursor:pointer;transition:transform .14s ease,border-color .14s ease,box-shadow .14s ease
+}
+.vocab-skill-card:hover:not(:disabled){transform:translateY(-2px);border-color:var(--skill-color);box-shadow:0 12px 28px rgba(34,106,116,.10)}
+.vocab-skill-card:active:not(:disabled){transform:translateY(0)}
+.vocab-skill-card:disabled{cursor:default}
+.vocab-skill-card:disabled:not(.vocab-skill-pronunciation){opacity:.45}
+.vocab-skill-ring{
+  flex:0 0 74px;width:74px;height:74px;border-radius:50%;
+  display:grid;place-items:center;
+  background:conic-gradient(var(--skill-color) calc(var(--progress,0)*1%),#e5eff0 0)
+}
+.vocab-skill-ring::before{
+  content:'';grid-area:1/1;width:58px;height:58px;border-radius:50%;background:#fff
+}
+.vocab-skill-ring span{grid-area:1/1;position:relative;z-index:1;color:#315e64;font-weight:900;font-size:.95rem}
+.vocab-skill-copy{display:flex;flex-direction:column;min-width:0}
+.vocab-skill-copy strong{font-size:1.15rem;line-height:1.2;color:#244f56}
+.vocab-skill-copy small{margin-top:5px;color:var(--muted);font-weight:700;line-height:1.35}
+.vocab-skill-copy b{margin-top:13px;color:var(--skill-color);font-size:.84rem}
+.vocab-skill-quiz{--skill-color:#2c9eaa}
+.vocab-skill-spelling{--skill-color:var(--pink)}
+.vocab-skill-pronunciation{--skill-color:#8c79d9;background:#faf9ff;border-style:dashed}
+.vocab-skill-pronunciation .vocab-skill-copy b{color:#8c79d9}
+
 .vocab-session{position:fixed;inset:0;z-index:10000;display:grid;grid-template-rows:auto 1fr auto;background:linear-gradient(180deg,#dff7f8 0,#effafb 34%,#f7fafb 100%)}
 .vocab-session[hidden]{display:none!important}
 .vocab-session-top{background:rgba(255,255,255,.92);border-bottom:1px solid var(--line);backdrop-filter:blur(12px);padding:calc(10px + env(safe-area-inset-top)) 16px 10px}
@@ -78,6 +107,10 @@ body.vocab-session-open{overflow:hidden}
 @media(max-width:560px){
   .vocab-page{padding:14px 10px 36px}
   .vocab-home-card{border-radius:23px;padding:24px 19px}
+  .vocab-skill-grid{grid-template-columns:1fr;gap:10px}
+  .vocab-skill-card{min-height:112px;padding:15px 16px}
+  .vocab-skill-ring{flex-basis:66px;width:66px;height:66px}
+  .vocab-skill-ring::before{width:52px;height:52px}
   .vocab-session-main{padding:16px 10px 24px}
   .vocab-question-wrap .question-card{padding:18px 14px}
   .vocab-question-wrap .choices{grid-template-columns:1fr}
