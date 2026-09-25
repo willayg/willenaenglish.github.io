@@ -535,6 +535,42 @@ function spellingSummary(practice){
   arr(practice?.results).forEach(result=>{if(Object.prototype.hasOwnProperty.call(counts,result.result))counts[result.result]++});
   return counts;
 }
+function openSpellingMenu(){
+  const words=unitVocabularyWords(state.items);if(!words.length)return;
+  state.spellingPractice=null;
+  state.renderer=null;
+  titleEl.textContent=state.book.book_title+' · Unit '+state.unit.unit_number+' · Spelling';
+  progressEl.textContent='Choose';
+  progressFill.style.width='0%';
+  instructionEl.hidden=true;
+  answerNote.hidden=true;
+  bottomEl.hidden=true;
+  questionStage.hidden=false;
+  root.innerHTML=
+    '<section class="spelling-mode-panel">'+
+      '<div class="spelling-mode-head">'+
+        '<span class="eyebrow">SPELLING</span>'+
+        '<h2>철자 연습</h2>'+
+        '<p>연습하거나 준비가 되면 테스트해 보세요.</p>'+
+      '</div>'+
+      '<div class="spelling-mode-grid">'+
+        '<button id="vocabSpellingTrainer" class="spelling-mode-card" type="button">'+
+          '<strong>Spelling Trainer</strong>'+
+          '<span>단어를 보고 듣고, 힌트를 사용하며 연습해요.</span>'+
+          '<b>Practice</b>'+
+        '</button>'+
+        '<button class="spelling-mode-card is-disabled" type="button" disabled>'+
+          '<strong>Spelling Test</strong>'+
+          '<span>도움 없이 철자를 써서 확인해요.</span>'+
+          '<b>Coming next</b>'+
+        '</button>'+
+      '</div>'+
+    '</section>';
+  el('vocabSpellingTrainer')?.addEventListener('click',openSpellingPreview);
+  sessionEl.hidden=false;
+  document.body.classList.add('vocab-session-open');
+  sessionMain.scrollTop=0;
+}
 function openSpellingPreview(){
   const words=spellingPreviewWords(state.items);if(!words.length)return;
   state.spellingPractice=createSpellingPractice(words);
@@ -731,14 +767,14 @@ async function boot(){
       renderHome();
     }
     startBtn.addEventListener('click',()=>startSession());
-    spellingPreviewBtn?.addEventListener('click',openSpellingPreview);
+    spellingPreviewBtn?.addEventListener('click',openSpellingMenu);
     wordListOpenBtn?.addEventListener('click',openWordList);
     wordModalCloseBtn?.addEventListener('click',closeWordList);
     wordModalEl?.addEventListener('click',e=>{if(e.target===wordModalEl)closeWordList()});
     document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!wordModalEl?.hidden)closeWordList()});
     closeBtn.addEventListener('click',closeSession);
     actionBtn.addEventListener('click',()=>state.spellingPractice?checkSpellingCoach():checkCurrent());
-    window.WillenaVocabStudy={version:'0.016',getState:()=>state,start:startSession,openSpellingPreview,close:closeSession};
+    window.WillenaVocabStudy={version:'0.017',getState:()=>state,start:startSession,openSpellingMenu,openSpellingPreview,close:closeSession};
   }catch(error){
     console.error('[Vocab Study] boot',error);
     setStatus(error?.message||'불러오지 못했습니다. 새로고침해 주세요.');
