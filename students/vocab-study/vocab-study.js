@@ -433,9 +433,40 @@ function playPreviewWord(word){
     speechSynthesis.speak(utterance);
   }catch(_){}
 }
+function createSpellingPractice(words){
+  return{words,index:0,currentAttemptCount:0,attempts:[],results:[]};
+}
+function classifySpellingResult(attempt){
+  if(attempt.attemptCount>1)return'retry';
+  if(attempt.supportLevel>0)return'supported';
+  return'clean';
+}
+function recordSpellingAttempt(practice,word,renderer,correct){
+  practice.currentAttemptCount+=1;
+  const attempt={
+    word:word.word,
+    ko:word.ko,
+    correct:!!correct,
+    supportLevel:Number(renderer?.getSupportLevel?.()||0),
+    attemptCount:practice.currentAttemptCount
+  };
+  practice.attempts.push(attempt);
+  if(correct){
+    const result=Object.assign({},attempt,{result:classifySpellingResult(attempt)});
+    practice.results.push(result);
+    practice.currentAttemptCount=0;
+    return result;
+  }
+  return attempt;
+}
+function spellingSummary(practice){
+  const counts={clean:0,supported:0,retry:0};
+  arr(practice?.results).forEach(result=>{if(Object.prototype.hasOwnProperty.call(counts,result.result))counts[result.result]++});
+  return counts;
+}
 function openSpellingPreview(){
   const words=spellingPreviewWords(state.items);if(!words.length)return;
-  state.spellingPractice={words,index:0};
+  state.spellingPractice=createSpellingPractice(words);
   titleEl.textContent=state.book.book_title+' · Unit '+state.unit.unit_number+' · Spelling';
   progressEl.textContent='Practice';
   progressFill.style.width='0%';
@@ -471,6 +502,9 @@ function startSpellingPractice(){
   const practice=state.spellingPractice;
   if(!practice?.words?.length)return;
   practice.index=0;
+  practice.currentAttemptCount=0;
+  practice.attempts=[];
+  practice.results=[];
   renderSpellingCoach();
 }
 function spellingCoachQuestion(word,index){
@@ -515,6 +549,7 @@ function checkSpellingCoach(){
   const response=txt(renderer.getResponse());
   if(!response)return;
   const correct=response.toLowerCase()===word.word.toLowerCase();
+  recordSpellingAttempt(practice,word,renderer,correct);
   if(!correct){
     renderer.showFeedback({correct:false,correctAnswer:[],message:'다시 해보세요.'});
     return;
@@ -525,13 +560,22 @@ function checkSpellingCoach(){
   setTimeout(()=>{practice.index++;renderSpellingCoach()},350);
 }
 function finishSpellingPractice(){
+  const practice=state.spellingPractice;
+  const summary=spellingSummary(practice);
   progressEl.textContent='완료';
   progressFill.style.width='100%';
   bottomEl.hidden=true;
   root.innerHTML=
-    '<section class="practice-panel">'+
-      '<div class="practice-toolbar"><div><span class="eyebrow">SPELLING</span><h2>끝!</h2><small class="section-note">이번 '+state.spellingPractice.words.length+'개 단어를 모두 입력했어요.</small></div></div>'+
-      '<div class="activity-actions"><button id="vocabSpellingDone" class="primary-button" type="button">Finish</button></div>'+
+    '<section class="vocab-finish">'+
+      '<span class="eyebrow">SPELLING COMPLETE</span>'+
+      '<h2>끝!</h2>'+
+      '<p>이번 '+practice.words.length+'개 단어를 모두 입력했어요.</p>'+
+      '<div class="vocab-finish-stats">'+
+        '<div><strong>'+summary.clean+'</strong><span>CLEAN</span></div>'+
+        '<div><strong>'+summary.supported+'</strong><span>SUPPORTED</span></div>'+
+        '<div><strong>'+summary.retry+'</strong><span>RETRY</span></div>'+
+      '</div>'+
+      '<div class="vocab-finish-actions"><button id="vocabSpellingDone" class="vocab-done-btn" type="button">Finish</button></div>'+
     '</section>';
   el('vocabSpellingDone')?.addEventListener('click',closeSession);
 }
@@ -619,7 +663,7 @@ async function boot(){
     spellingPreviewBtn?.addEventListener('click',openSpellingPreview);
     closeBtn.addEventListener('click',closeSession);
     actionBtn.addEventListener('click',()=>state.spellingPractice?checkSpellingCoach():checkCurrent());
-    window.WillenaVocabStudy={version:'0.008',getState:()=>state,start:startSession,openSpellingPreview,close:closeSession};
+    window.WillenaVocabStudy={version:'0.009',getState:()=>state,start:startSession,openSpellingPreview,close:closeSession};
   }catch(error){
     console.error('[Vocab Study] boot',error);
     setStatus(error?.message||'불러오지 못했습니다. 새로고침해 주세요.');
