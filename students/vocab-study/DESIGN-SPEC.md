@@ -567,6 +567,12 @@ Retries, repeated practice, and assisted attempts remain fully tracked. Attempt 
 
 Spelling Coach is practice/support rather than a scored mode. It awards **points only** and does **not** create a star-bearing reward session.
 
+### Shared point-token feedback — implemented in v0.045
+
+Every positive Vocabulary Study point award now calls the shared `students/components/student-point-award.js` service. A compact `+N` point token appears at the active question, arcs toward the real points pill in the shared student header, and the header total receives the existing optimistic point bump when the token lands. The header pill performs a short collection bounce at the same moment.
+
+The animation uses the actual awarded amount, including Spelling Coach's 3 / 2 / 1 hint-sensitive values. Zero-point attempts do not produce a token. Reduced-motion users receive the point update without the travel animation. This visual layer is shared so other student apps can reuse it without copying Vocabulary Study UI code.
+
 #### Stars per completed session
 
 Stars are awarded from the student's final session percentage:
