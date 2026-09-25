@@ -1,6 +1,6 @@
 import {QuestionRenderer} from '/shared/questions/question-renderer.js?v=20260925-speaking2';
 import {getSpellingTarget} from './spelling-targets.js?v=20260925-v0019';
-import {matchSpeakingTarget} from './speaking-match.js?v=20260925-v0021';
+import {isSpeakableTarget,matchSpeakingTarget} from './speaking-match.js?v=20260925-v0022';
 
 const SESSION_SIZE=12;
 const CONTENT_URL='https://gxwfsqxyuufqtitspfqg.supabase.co';
@@ -498,7 +498,7 @@ function checkCurrent(){
 function speakingWords(items){
   return unitVocabularyWords(items).map(word=>{
     const speakingTarget=getSpellingTarget(word.word);
-    return speakingTarget?Object.assign({},word,{speakingTarget}):null;
+    return speakingTarget&&isSpeakableTarget(speakingTarget)?Object.assign({},word,{speakingTarget}):null;
   }).filter(Boolean);
 }
 function openSpeakingSession(){
@@ -997,7 +997,7 @@ async function boot(){
     document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!wordModalEl?.hidden)closeWordList()});
     closeBtn.addEventListener('click',closeSession);
     actionBtn.addEventListener('click',()=>state.speakingSession?checkSpeaking():state.spellingTest?checkSpellingTest():state.spellingPractice?checkSpellingCoach():checkCurrent());
-    window.WillenaVocabStudy={version:'0.021',getState:()=>state,start:startSession,openSpellingMenu,openSpellingPreview,openSpellingTest,openSpeakingSession,close:closeSession};
+    window.WillenaVocabStudy={version:'0.022',getState:()=>state,start:startSession,openSpellingMenu,openSpellingPreview,openSpellingTest,openSpeakingSession,close:closeSession};
   }catch(error){
     console.error('[Vocab Study] boot',error);
     setStatus(error?.message||'불러오지 못했습니다. 새로고침해 주세요.');
