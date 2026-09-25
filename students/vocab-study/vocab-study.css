@@ -52,8 +52,6 @@ body.vocab-session-open{overflow:hidden}
 .vocab-skill-copy strong{font-size:1.15rem;line-height:1.2;color:#244f56}
 .vocab-skill-copy small{margin-top:5px;color:var(--muted);font-weight:700;line-height:1.35}
 .vocab-card-stars{display:block;margin-top:8px;color:#f0b323;font-size:1rem;font-weight:900;letter-spacing:.08em;line-height:1}
-.vocab-card-meta{display:block;margin-top:7px!important;font-size:.72rem;white-space:normal}
-.vocab-card-meta.has-retry{color:var(--pink-dark);font-weight:850}
 .vocab-skill-copy b{margin-top:13px;color:var(--skill-color);font-size:.84rem}
 .vocab-skill-quiz{--skill-color:#2c9eaa}
 .vocab-skill-spelling{--skill-color:var(--pink)}
