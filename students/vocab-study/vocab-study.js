@@ -69,7 +69,15 @@ function shuffle(items){
 }
 function setStatus(message){if(statusEl)statusEl.textContent=message}
 
-function vocabPointValue(skill,responseType){
+function vocabPointValue(skill,responseType,{correct=true,hintsUsed=0,metadata={}}={}){
+  const mode=txt(metadata?.vocab_mode);
+  if(mode==='spelling_coach'){
+    if(!correct)return 0;
+    const hints=Math.max(0,Number(hintsUsed)||0);
+    if(hints===0)return 3;
+    if(hints===1)return 2;
+    return 1;
+  }
   if(responseType==='multiple_choice')return 2;
   if(skill==='spelling'||skill==='speaking')return 4;
   return 0;
@@ -160,11 +168,11 @@ async function completeRewardSession(){
   }
   return reward;
 }
-function rewardSummaryHtml(reward=state.rewardSession){
+function rewardSummaryHtml(reward=state.rewardSession,{pointsOnly=false}={}){
   if(!reward)return'';
   const stars=Math.max(0,Math.min(5,Number(reward.stars)||0));
   const points=Math.max(0,Number(reward.points)||0);
-  return '<student-reward-celebration percent="'+rewardPercent(reward)+'" stars="'+stars+'" points="'+points+'" label="SESSION REWARD"></student-reward-celebration>';
+  return '<student-reward-celebration '+(pointsOnly?'points-only ':'')+'percent="'+rewardPercent(reward)+'" stars="'+stars+'" points="'+points+'" label="SESSION REWARD"></student-reward-celebration>';
 }
 
 function perfNow(){return window.performance?.now?.()||Date.now()}
@@ -279,7 +287,7 @@ async function ensureProgressSnapshot(){
 function isUuid(value){return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(txt(value))}
 function recordVocabAttempt({skill,responseType,lexicalEntryId,activityId,prompt,studentAnswer,correctAnswer,correct,metadata,hintsUsed=0,retryCount=0,attemptNumber=1,sessionSource='student'}){
   if(state.adminMode)return;
-  const pointValue=vocabPointValue(skill,responseType);
+  const pointValue=vocabPointValue(skill,responseType,{correct,hintsUsed,metadata});
   noteRewardAttempt(correct,retryCount,pointValue);
   const recorder=window.WillenaStudyProgress;
   if(!recorder||typeof recorder.record!=='function'){
@@ -1314,7 +1322,12 @@ async function finishSpellingPractice(){
   const supported=arr(practice?.results).filter(r=>Number(r.supportLevel||0)>0).length;
   const wrongs=arr(practice?.attempts).filter(r=>!r.correct).length;
   const total=practice?.initialTotal||0;
-  const reward=await completeRewardSession();
+  const reward=state.rewardSession;
+  if(reward){
+    reward.completed=true;
+    reward.stars=0;
+    reward.percent=rewardPercent(reward);
+  }
   progressEl.textContent='완료';
   progressFill.style.width='100%';
   bottomEl.hidden=true;
@@ -1328,7 +1341,7 @@ async function finishSpellingPractice(){
         '<div><strong>'+supported+'</strong><span>HELPED</span></div>'+
         '<div><strong>'+wrongs+'</strong><span>RETRIES</span></div>'+
       '</div>'+
-      rewardSummaryHtml(reward)+
+      rewardSummaryHtml(reward,{pointsOnly:true})+
       '<div class="vocab-finish-actions"><button id="vocabSpellingDone" class="vocab-done-btn" type="button">Finish</button></div>'+
     '</section>';
   el('vocabSpellingDone')?.addEventListener('click',closeSession);
@@ -1444,7 +1457,7 @@ async function boot(){
       renderSkillProgress();
     });
     reportStartupPerf();
-    window.WillenaVocabStudy={version:'0.043',getState:()=>state,start:startSession,openSpellingMenu,openSpellingPreview,openSpellingTest,openSpeakingSession,close:closeSession};
+    window.WillenaVocabStudy={version:'0.044',getState:()=>state,start:startSession,openSpellingMenu,openSpellingPreview,openSpellingTest,openSpeakingSession,close:closeSession};
   }catch(error){
     console.error('[Vocab Study] boot',error);
     setStatus(error?.message||'불러오지 못했습니다. 새로고침해 주세요.');
