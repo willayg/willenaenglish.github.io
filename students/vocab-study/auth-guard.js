@@ -14,8 +14,8 @@ async function whoami(){
   try{
     var r=await authFetch('/.netlify/functions/supabase_auth?action=whoami&_='+Date.now());
     var d=await r.json().catch(function(){return{}});
-    return !!(r.ok&&d&&d.success);
-  }catch(_){return false;}
+    return r.ok&&d&&d.success?d:null;
+  }catch(_){return null;}
 }
 async function recoverSession(){
   try{
@@ -28,10 +28,14 @@ async function recoverSession(){
   }catch(_){return false;}
 }
 async function guard(){
-  if(await whoami())return true;
-  if(await recoverSession()&&await whoami())return true;
+  var first=await whoami();
+  if(first)return first;
+  if(await recoverSession()){
+    var recovered=await whoami();
+    if(recovered)return recovered;
+  }
   location.replace(LOGIN);
-  return false;
+  return null;
 }
 window.WillenaVocabStudyAuthReady=guard();
 })();
