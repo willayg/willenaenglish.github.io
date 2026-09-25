@@ -50,7 +50,6 @@ class StudentHeader extends HTMLElement {
       if (typeof this._points === 'number') {
         this._points += delta;
         this.refresh();
-        requestAnimationFrame(() => this._animatePointsBounce());
       }
     } catch {}
   };
@@ -127,17 +126,6 @@ class StudentHeader extends HTMLElement {
   }
 
   refresh() { this.render(); }
-
-  _animatePointsBounce() {
-    try {
-      const pill = this.shadowRoot?.querySelector('.points-pill');
-      if (!pill) return;
-      pill.classList.remove('bounce');
-      void pill.offsetWidth;
-      pill.classList.add('bounce');
-      setTimeout(() => pill.classList.remove('bounce'), 460);
-    } catch {}
-  }
 
   // Trigger bounce animation on stars pill when stars are gained
   _animateStarsBounce() {
@@ -576,14 +564,6 @@ class StudentHeader extends HTMLElement {
   .info { display:flex; flex-direction:column; gap:2px; align-items:center; }
   .points-pill { display:inline-flex; align-items:center; gap:6px; padding:3px 8px; border-radius:999px; background:#f7fcfd; border:1px solid #a9d6e9; color:#19777e; font-weight:700; font-size:12px; line-height:1; width:max-content; }
   .points-pill svg { width:14px; height:14px; display:block; }
-  .points-pill.bounce { animation: pointBounce .42s cubic-bezier(.36,1.35,.5,1); }
-  @keyframes pointBounce {
-    0% { transform: scale(1); }
-    32% { transform: scale(1.28) rotate(-3deg); }
-    58% { transform: scale(.94) rotate(2deg); }
-    78% { transform: scale(1.08); }
-    100% { transform: scale(1); }
-  }
   .stars-pill { display:inline-flex; align-items:center; gap:6px; padding:3px 8px; border-radius:999px; background:#fffaf0; border:1px solid #e8d28a; color:#b8860b; font-weight:700; font-size:12px; line-height:1; width:max-content; }
   .stars-pill svg { width:14px; height:14px; display:block; }
   .stars-pill.bounce { animation: starBounce .5s cubic-bezier(.36,1.2,.5,1); }

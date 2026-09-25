@@ -1,5 +1,5 @@
 import {QuestionRenderer} from '/shared/questions/question-renderer.js?v=20260925-speaking2';
-import {awardStudentPoints} from '/students/components/student-point-award.js?v=20260925-v0001';
+import {capturePointOrigin,showPointAward} from '/students/components/student-point-feedback.js?v=20260926-v0001';
 import {getSpellingTarget} from './spelling-targets.js?v=20260925-v0019';
 import {isSpeakableTarget,matchSpeakingTarget} from './speaking-match.js?v=20260925-v0022';
 import {getAssignment,setAssignment,getBookMeta,setBookMeta,getVocabulary,setVocabulary,background} from './vocab-startup-cache.js?v=20260925-v0001';
@@ -71,9 +71,9 @@ function shuffle(items){
 function setStatus(message){if(statusEl)statusEl.textContent=message}
 
 function vocabPointValue(skill,responseType,{correct=true,hintsUsed=0,metadata={}}={}){
+  if(!correct)return 0;
   const mode=txt(metadata?.vocab_mode);
   if(mode==='spelling_coach'){
-    if(!correct)return 0;
     const hints=Math.max(0,Number(hintsUsed)||0);
     if(hints===0)return 3;
     if(hints===1)return 2;
@@ -295,16 +295,12 @@ function recordVocabAttempt({skill,responseType,lexicalEntryId,activityId,prompt
     console.warn('[Vocab Study] canonical study recorder unavailable');
     return;
   }
-  if(pointValue>0){
-    try{
-      awardStudentPoints({
-        amount:pointValue,
-        sourceElement:root.querySelector('.question-card')||root
-      });
-    }catch(error){
-      console.debug('[Vocab Study] point token unavailable',error);
-    }
-  }
+  const pointFeedbackId=pointValue>0
+    ? (window.crypto?.randomUUID?.()||('point-'+Date.now()+'-'+Math.random().toString(16).slice(2)))
+    : null;
+  const pointOrigin=pointFeedbackId
+    ? capturePointOrigin(root?.querySelector?.('.question-card')||root||actionBtn)
+    : null;
   const lexicalId=isUuid(lexicalEntryId)?txt(lexicalEntryId):null;
   const detail={
     activity:{
@@ -322,7 +318,8 @@ function recordVocabAttempt({skill,responseType,lexicalEntryId,activityId,prompt
         mastery_content_type:'lexical_entry',
         mastery_content_id:lexicalId,
         vocab_study:true,
-        points_override:pointValue
+        points_override:pointValue,
+        point_feedback_id:pointFeedbackId
       },metadata||{})
     },
     result:{
@@ -333,20 +330,28 @@ function recordVocabAttempt({skill,responseType,lexicalEntryId,activityId,prompt
     },
     responseTimeMs:state.questionStartedAt?Math.max(0,Date.now()-state.questionStartedAt):0
   };
+  let feedbackListener=null;
+  if(pointFeedbackId){
+    feedbackListener=(event)=>{
+      const eventId=event?.detail?.payload?.metadata?.point_feedback_id;
+      if(eventId!==pointFeedbackId)return;
+      window.removeEventListener('willena:study-recording',feedbackListener);
+      if(event?.detail?.status!=='recorded')return;
+      showPointAward({amount:pointValue,origin:pointOrigin}).catch(()=>{});
+    };
+    window.addEventListener('willena:study-recording',feedbackListener);
+    window.setTimeout(()=>{
+      if(!feedbackListener)return;
+      window.removeEventListener('willena:study-recording',feedbackListener);
+      feedbackListener=null;
+    },12000);
+  }
   recorder.record(Object.assign({},detail,{
     hintsUsed:Math.max(0,Number(hintsUsed)||0),
     retryCount:Math.max(0,Number(retryCount)||0),
     attemptNumber:Math.max(1,Number(attemptNumber)||1),
     sessionSource:txt(sessionSource)||'student'
   }));
-  if(pointValue>0){
-    try{
-      window.WillenaPointTokens?.award({
-        amount:pointValue,
-        sourceElement:root?.querySelector?.('.question-card')||root||actionBtn
-      });
-    }catch(_){}
-  }
 }
 
 async function api(url,opts){
@@ -1476,7 +1481,7 @@ async function boot(){
       renderSkillProgress();
     });
     reportStartupPerf();
-    window.WillenaVocabStudy={version:'0.045',getState:()=>state,start:startSession,openSpellingMenu,openSpellingPreview,openSpellingTest,openSpeakingSession,close:closeSession};
+    window.WillenaVocabStudy={version:'0.046',getState:()=>state,start:startSession,openSpellingMenu,openSpellingPreview,openSpellingTest,openSpeakingSession,close:closeSession};
   }catch(error){
     console.error('[Vocab Study] boot',error);
     setStatus(error?.message||'불러오지 못했습니다. 새로고침해 주세요.');
