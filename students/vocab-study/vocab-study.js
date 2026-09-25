@@ -81,14 +81,39 @@ function starsForPercent(percent){
   return 0;
 }
 function startRewardSession(mode){
+  const rewardSessionId=(window.crypto?.randomUUID?.()||('vocab-'+Date.now()+'-'+Math.random().toString(16).slice(2)));
+  const listName='Vocabulary · '+txt(state.book?.book_title||state.book?.book_id||'Book')+' · Unit '+txt(state.unit?.unit_number||state.unit?.id||'');
   state.rewardSession={
     mode:txt(mode),
     firstTotal:0,
     firstCorrect:0,
     points:0,
     completed:false,
-    rewardSessionId:(window.crypto?.randomUUID?.()||('vocab-'+Date.now()+'-'+Math.random().toString(16).slice(2)))
+    rewardSessionId,
+    listName,
+    startPromise:null
   };
+  state.rewardSession.startPromise=api('/.netlify/functions/log_word_attempt',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({
+      event_type:'session_start',
+      session_id:rewardSessionId,
+      mode:'vocab_'+txt(mode),
+      list_name:listName,
+      list_size:null,
+      extra:{
+        completed:false,
+        book_id:state.book?.book_id||null,
+        unit_id:state.unit?.id||null,
+        vocab_mode:txt(mode),
+        reward_scheme:'vocab-study-v1'
+      }
+    })
+  }).catch(error=>{
+    console.warn('[Vocab Study] reward session start failed',error);
+    return null;
+  });
 }
 function noteRewardAttempt(correct,retryCount,points){
   const reward=state.rewardSession;
@@ -108,8 +133,9 @@ async function completeRewardSession(){
   reward.completed=true;
   reward.percent=rewardPercent(reward);
   reward.stars=starsForPercent(reward.percent);
-  const listName='Vocabulary · '+txt(state.book?.book_title||state.book?.book_id||'Book')+' · Unit '+txt(state.unit?.unit_number||state.unit?.id||'');
+  const listName=reward.listName||('Vocabulary · '+txt(state.book?.book_title||state.book?.book_id||'Book')+' · Unit '+txt(state.unit?.unit_number||state.unit?.id||''));
   try{
+    if(reward.startPromise)await reward.startPromise;
     await api('/.netlify/functions/log_word_attempt',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
@@ -134,6 +160,11 @@ async function completeRewardSession(){
         }
       })
     });
+    try{
+      window.dispatchEvent(new CustomEvent('session:ended',{detail:{session_id:reward.rewardSessionId,mode:'vocab_'+reward.mode,list_name:listName,list_size:reward.firstTotal}}));
+      window.dispatchEvent(new CustomEvent('stars:refresh',{detail:{earned:reward.stars}}));
+      localStorage.setItem('stars:refresh',String(Date.now()));
+    }catch(_){}
   }catch(error){
     console.warn('[Vocab Study] reward session save failed',error);
   }
