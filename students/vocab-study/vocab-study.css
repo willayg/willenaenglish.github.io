@@ -1,7 +1,8 @@
 /* Vocabulary Study staging shell. Keeps the Study v2 visual language while using the universal QuestionRenderer. */
 html,body{min-height:100%;overscroll-behavior:none}
 body.vocab-session-open{overflow:hidden}
-.vocab-page{width:min(920px,100%);margin:0 auto;padding:28px 18px 56px}
+.vocab-page{width:min(920px,100%);margin:0 auto;padding:28px 18px 24px}
+.vocab-version{margin-top:10px;text-align:center;color:#9aadb1;font:700 .68rem Poppins,system-ui,sans-serif;letter-spacing:.02em}
 .vocab-home-card{margin-top:18px;background:#fff;border:2px solid #dff2f4;border-radius:28px;padding:clamp(24px,5vw,42px);box-shadow:var(--shadow)}
 .vocab-home-card .eyebrow{color:var(--pink)}
 .vocab-home-card h1{margin:7px 0 8px;color:#315e64;font-size:clamp(2rem,6vw,3.6rem);line-height:1.05;letter-spacing:-.04em}
