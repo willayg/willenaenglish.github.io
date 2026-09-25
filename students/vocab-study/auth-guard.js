@@ -3,6 +3,7 @@
 
 var NEXT='/students/vocab-study/';
 var LOGIN='/students/signin.html?next='+encodeURIComponent(NEXT);
+var guardStarted=(window.performance&&performance.now)?performance.now():Date.now();
 
 function authFetch(path,options){
   var fn=window.WillenaAPI&&typeof window.WillenaAPI.fetch==='function'
@@ -29,10 +30,10 @@ async function recoverSession(){
 }
 async function guard(){
   var first=await whoami();
-  if(first)return first;
+  if(first){first.auth_elapsed_ms=Math.round((((window.performance&&performance.now)?performance.now():Date.now())-guardStarted)*10)/10;return first;}
   if(await recoverSession()){
     var recovered=await whoami();
-    if(recovered)return recovered;
+    if(recovered){recovered.auth_elapsed_ms=Math.round((((window.performance&&performance.now)?performance.now():Date.now())-guardStarted)*10)/10;return recovered;}
   }
   location.replace(LOGIN);
   return null;
