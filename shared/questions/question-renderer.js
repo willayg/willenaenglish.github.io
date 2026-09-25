@@ -164,9 +164,9 @@ export class QuestionRenderer{
     if(q.form===FORMS.spellingCoach){
       const target=answerParts(q)[0]||q.context?.target_en||'';
       const audio=String(q.context?.audio_text||target||'');
-      const scramble=!!q.hints?.scramble;
+      const scramble=q.hints?.scramble!==false;
       const hint=scramble?scrambledLetters(target):[];
-      return `${audio?`<button type="button" class="activity-audio" data-spelling-audio data-audio-text="${esc(audio)}">▶ Hear English</button>`:''}<div class="learn" data-spelling-target>${textHtml(target)}</div><input class="text-input spelling-coach-input" data-spelling-input ${inputAttrs(q,'spelling-coach')} placeholder="${esc(placeholder(q))}">${scramble?`<div class="spelling-coach-hint-row"><button type="button" class="spelling-coach-hint-button" data-spelling-hint="scramble">Hint 1 · Letters</button><div class="spelling-coach-scramble" data-spelling-scramble hidden>${hint.map(ch=>`<span>${esc(ch)}</span>`).join('')}</div></div>`:''}`;
+      return `${audio?`<button type="button" class="activity-audio" data-spelling-audio data-audio-text="${esc(audio)}">▶ Hear English</button>`:''}<div class="learn" data-spelling-target>${textHtml(target)}</div>${scramble?`<div class="spelling-coach-hint-row"><button type="button" class="spelling-coach-hint-button" data-spelling-hint="scramble">Hint 1 · Letters</button><div class="spelling-coach-scramble" data-spelling-scramble hidden>${hint.map(ch=>`<span>${esc(ch)}</span>`).join('')}</div></div>`:''}<input class="text-input spelling-coach-input" data-spelling-input ${inputAttrs(q,'spelling-coach')} placeholder="${esc(placeholder(q))}">`;
     }
     return `<div class="error">Unsupported question form: ${esc(q.form||'unknown')}</div>`;
   }
