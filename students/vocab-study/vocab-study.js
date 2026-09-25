@@ -836,7 +836,7 @@ function playPreviewWord(word){
   }catch(_){}
 }
 function createSpellingPractice(words){
-  return{words,index:0,currentAttemptCount:0,attempts:[],results:[]};
+  return{words,index:0,currentAttemptCount:0,attempts:[],results:[],initialTotal:words.length};
 }
 function classifySpellingResult(attempt){
   if(attempt.attemptCount>1)return'retry';
@@ -1034,7 +1034,7 @@ function openSpellingPreview(){
   root.innerHTML=
     '<section class="practice-panel">'+
       '<div class="practice-toolbar">'+
-        '<div><span class="eyebrow">SPELLING PRACTICE</span><h2>단어를 보고 들어보세요</h2><small class="section-note">먼저 '+words.length+'개 단어를 익혀보세요.</small></div>'+
+        '<div><span class="eyebrow">SPELLING COACH</span><h2>단어를 보고 들어보세요</h2><small class="section-note">힌트를 쓴 단어는 마지막에 한 번 더 해요.</small></div>'+
       '</div>'+
       '<div class="lesson-word-grid">'+
         words.map((w,i)=>
@@ -1044,7 +1044,7 @@ function openSpellingPreview(){
           '</div>'
         ).join('')+
       '</div>'+
-      '<div class="activity-actions"><button id="vocabStartSpelling" class="primary-button" type="button">Start Spelling</button></div>'+
+      '<div class="activity-actions"><button id="vocabStartSpelling" class="primary-button" type="button">Start Coach</button></div>'+
     '</section>';
   root.querySelectorAll('[data-preview-word]').forEach(btn=>btn.addEventListener('click',()=>{
     const w=words[Number(btn.dataset.previewWord)];if(w)playPreviewWord(w.spellingTarget||w.word);
@@ -1143,19 +1143,22 @@ function checkSpellingCoach(){
 }
 function finishSpellingPractice(){
   const practice=state.spellingPractice;
-  const summary=spellingSummary(practice);
+  const passedIds=new Set(arr(practice?.results).filter(r=>Number(r.supportLevel||0)===0).map(r=>txt(r.lexicalEntryId||r.word)).filter(Boolean));
+  const supported=arr(practice?.results).filter(r=>Number(r.supportLevel||0)>0).length;
+  const wrongs=arr(practice?.attempts).filter(r=>!r.correct).length;
+  const total=practice?.initialTotal||0;
   progressEl.textContent='완료';
   progressFill.style.width='100%';
   bottomEl.hidden=true;
   root.innerHTML=
     '<section class="vocab-finish">'+
-      '<span class="eyebrow">SPELLING COMPLETE</span>'+
-      '<h2>끝!</h2>'+
-      '<p>이번 '+practice.words.length+'개 단어를 모두 입력했어요.</p>'+
+      '<span class="eyebrow">SPELLING COACH COMPLETE</span>'+
+      '<h2>'+passedIds.size+' / '+total+'</h2>'+
+      '<p>모든 단어를 도움 없이 한 번씩 완성했어요.</p>'+
       '<div class="vocab-finish-stats">'+
-        '<div><strong>'+summary.clean+'</strong><span>CLEAN</span></div>'+
-        '<div><strong>'+summary.supported+'</strong><span>SUPPORTED</span></div>'+
-        '<div><strong>'+summary.retry+'</strong><span>RETRY</span></div>'+
+        '<div><strong>'+total+'</strong><span>PASSED</span></div>'+
+        '<div><strong>'+supported+'</strong><span>HELPED</span></div>'+
+        '<div><strong>'+wrongs+'</strong><span>RETRIES</span></div>'+
       '</div>'+
       '<div class="vocab-finish-actions"><button id="vocabSpellingDone" class="vocab-done-btn" type="button">Finish</button></div>'+
     '</section>';
