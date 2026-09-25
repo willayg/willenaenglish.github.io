@@ -6,6 +6,11 @@ export function snapshotPercent(snapshot,skill,eligibleIds){
   const total=arr(eligibleIds).map(txt).filter(Boolean).length;
   if(!total)return 0;
   const block=snapshot&&snapshot[skill]||{};
+  if(skill==='spelling'){
+    const coach=Number(block.coach_passed_count)||0;
+    const test=Number(block.test_passed_count)||0;
+    return clampPercent((coach+test)*50/total);
+  }
   return clampPercent((Number(block.passed_count)||0)*100/total);
 }
 
@@ -18,19 +23,20 @@ export async function loadVocabSnapshot(bookId,unitId){
 }
 
 
-export function skillStateMap(snapshot,skill){
+export function skillStateMap(snapshot,skill,mode=null){
   const map=new Map();
   arr(snapshot?.states).forEach(row=>{
     if(txt(row?.skill)!==txt(skill))return;
+    if(mode&&txt(row?.mode)!==txt(mode))return;
     const id=txt(row?.lexical_entry_id);
     if(id)map.set(id,row);
   });
   return map;
 }
 
-export function nextSkillTargets(snapshot,skill,items,getId=item=>item?.id){
+export function nextSkillTargets(snapshot,skill,items,getId=item=>item?.id,mode=null){
   const source=arr(items).filter(Boolean);
-  const states=skillStateMap(snapshot,skill);
+  const states=skillStateMap(snapshot,skill,mode);
   const unseen=[];
   const incomplete=[];
   source.forEach(item=>{
