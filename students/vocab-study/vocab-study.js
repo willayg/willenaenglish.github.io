@@ -2,7 +2,7 @@ import {QuestionRenderer} from '/shared/questions/question-renderer.js?v=2026092
 import {getSpellingTarget} from './spelling-targets.js?v=20260925-v0019';
 import {isSpeakableTarget,matchSpeakingTarget} from './speaking-match.js?v=20260925-v0022';
 import {getAssignment,setAssignment,getBookMeta,setBookMeta,getVocabulary,setVocabulary,background} from './vocab-startup-cache.js?v=20260925-v0001';
-import {snapshotPercent,loadVocabSnapshot,nextSkillTargets} from './vocab-progress-snapshot.js?v=20260925-v0004';
+import {snapshotPercent,snapshotStars,snapshotRetryCount,snapshotPassedCount,loadVocabSnapshot,nextSkillTargets} from './vocab-progress-snapshot.js?v=20260925-v0005';
 import {coachAttempt,repeatUntilCorrect,appendRetry,uniquePassedCount,wrongAttemptCount} from './vocab-pass-flow.js?v=20260925-v0002';
 
 const CONTENT_URL='https://gxwfsqxyuufqtitspfqg.supabase.co';
@@ -27,6 +27,12 @@ const pronunciationStartBtn=el('vocabPronunciationStart');
 const quizRingEl=startBtn?.querySelector('.vocab-skill-ring');
 const spellingRingEl=spellingPreviewBtn?.querySelector('.vocab-skill-ring');
 const speakingRingEl=pronunciationStartBtn?.querySelector('.vocab-skill-ring');
+const quizStarsEl=el('vocabQuizStars');
+const spellingStarsEl=el('vocabSpellingStars');
+const speakingStarsEl=el('vocabSpeakingStars');
+const quizMetaEl=el('vocabQuizMeta');
+const spellingMetaEl=el('vocabSpellingMeta');
+const speakingMetaEl=el('vocabSpeakingMeta');
 const sessionEl=el('vocabStudySession');
 const sessionMain=el('vocabSessionMain');
 const root=el('vocabActivityRoot');
@@ -219,6 +225,26 @@ function setSkillRing(ring,value){
   const label=ring.querySelector('span');
   if(label)label.textContent=pct+'%';
 }
+function starsText(count){
+  const n=Math.max(0,Math.min(5,Math.round(Number(count)||0)));
+  return '★'.repeat(n)+'☆'.repeat(5-n);
+}
+function setSkillCardMeta({skill,ids,starsEl,metaEl}){
+  const total=ids.length;
+  const passed=snapshotPassedCount(state.progressSnapshot,skill);
+  const retry=snapshotRetryCount(state.progressSnapshot,skill);
+  const stars=snapshotStars(state.progressSnapshot,skill,ids);
+  if(starsEl){
+    starsEl.textContent=starsText(stars);
+    starsEl.setAttribute('aria-label',stars+' out of 5 stars');
+  }
+  if(metaEl){
+    const parts=[passed+' / '+total+' clean'];
+    if(retry>0)parts.push(retry+' to retry');
+    metaEl.textContent=parts.join(' · ');
+    metaEl.classList.toggle('has-retry',retry>0);
+  }
+}
 function renderSkillProgress(){
   const vocabIds=unitVocabularyWords(state.items).map(w=>w.id).filter(isUuid);
   const spellingIds=spellingWords(state.items).map(w=>w.id).filter(isUuid);
@@ -226,6 +252,9 @@ function renderSkillProgress(){
   setSkillRing(quizRingEl,snapshotPercent(state.progressSnapshot,'vocabulary',vocabIds));
   setSkillRing(spellingRingEl,snapshotPercent(state.progressSnapshot,'spelling',spellingIds));
   setSkillRing(speakingRingEl,snapshotPercent(state.progressSnapshot,'speaking',speakingIds));
+  setSkillCardMeta({skill:'vocabulary',ids:vocabIds,starsEl:quizStarsEl,metaEl:quizMetaEl});
+  setSkillCardMeta({skill:'spelling',ids:spellingIds,starsEl:spellingStarsEl,metaEl:spellingMetaEl});
+  setSkillCardMeta({skill:'speaking',ids:speakingIds,starsEl:speakingStarsEl,metaEl:speakingMetaEl});
 }
 async function loadSkillProgress(){
   const bookId=state.book?.book_id,unitId=state.unit?.id;
@@ -1427,7 +1456,7 @@ async function boot(){
       renderSkillProgress();
     });
     reportStartupPerf();
-    window.WillenaVocabStudy={version:'0.035',getState:()=>state,start:startSession,openSpellingMenu,openSpellingPreview,openSpellingTest,openSpeakingSession,close:closeSession};
+    window.WillenaVocabStudy={version:'0.042',getState:()=>state,start:startSession,openSpellingMenu,openSpellingPreview,openSpellingTest,openSpeakingSession,close:closeSession};
   }catch(error){
     console.error('[Vocab Study] boot',error);
     setStatus(error?.message||'불러오지 못했습니다. 새로고침해 주세요.');
