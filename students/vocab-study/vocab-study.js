@@ -1,4 +1,4 @@
-import {QuestionRenderer} from '/shared/questions/question-renderer.js?v=20260925-spelling7';
+import {QuestionRenderer} from '/shared/questions/question-renderer.js?v=20260925-speaking1';
 import {getSpellingTarget} from './spelling-targets.js?v=20260925-v0019';
 
 const SESSION_SIZE=12;
@@ -20,6 +20,7 @@ const wordModalListEl=el('vocabWordModalList');
 const wordModalMetaEl=el('vocabWordModalMeta');
 const startBtn=el('vocabStudyStart');
 const spellingPreviewBtn=el('vocabSpellingPreview');
+const pronunciationStartBtn=el('vocabPronunciationStart');
 const sessionEl=el('vocabStudySession');
 const sessionMain=el('vocabSessionMain');
 const root=el('vocabActivityRoot');
@@ -43,7 +44,7 @@ const state={
   book:null,unit:null,units:[],items:[],assignments:[],books:[],activeIndex:0,
   queue:[],index:0,checked:false,renderer:null,
   outcomes:new Map(),reviewKeys:new Set(),retryCounts:new Map(),
-  spellingPractice:null,spellingTest:null,
+  spellingPractice:null,spellingTest:null,speakingSession:null,
   adminMode:false,nextReadyAt:0
 };
 
@@ -426,6 +427,7 @@ function renderHome(){
   if(wordListOpenBtn)wordListOpenBtn.disabled=!state.items.length;
   startBtn.disabled=!state.items.length;
   if(spellingPreviewBtn)spellingPreviewBtn.disabled=!state.items.length;
+  if(pronunciationStartBtn)pronunciationStartBtn.disabled=!speakingWords(state.items).length;
   setStatus(state.items.length?'준비됐어요.':'이 단원에는 사용할 수 있는 단어 문제가 없어요.');
 }
 function updateProgress(){
@@ -492,6 +494,112 @@ function checkCurrent(){
   actionBtn.textContent=state.index>=state.queue.length-1?'Finish':'Next';
   updateProgress();
 }
+function speakingWords(items){
+  return unitVocabularyWords(items).map(word=>{
+    const speakingTarget=getSpellingTarget(word.word);
+    return speakingTarget?Object.assign({},word,{speakingTarget}):null;
+  }).filter(Boolean);
+}
+function speechComparable(value){
+  return String(value||'').toLowerCase()
+    .replace(/[’‘]/g,"'")
+    .replace(/[-–—]/g,' ')
+    .replace(/[^a-z0-9' ]+/g,' ')
+    .replace(/\s+/g,' ')
+    .trim();
+}
+function openSpeakingSession(){
+  const words=shuffle(speakingWords(state.items)).slice(0,10);if(!words.length)return;
+  state.spellingPractice=null;
+  state.spellingTest=null;
+  state.speakingSession={words,index:0,results:[],checked:false};
+  titleEl.textContent=state.book.book_title+' · Unit '+state.unit.unit_number+' · Speaking';
+  sessionEl.hidden=false;
+  document.body.classList.add('vocab-session-open');
+  renderSpeakingQuestion();
+}
+function speakingQuestion(word,index){
+  return{
+    id:'vocab-speaking-'+index,
+    form:'speaking',
+    prompt:word.ko,
+    context:{},
+    answer:[word.speakingTarget||word.word],
+    input:{language:'en'},
+    grading:{constraints:{}}
+  };
+}
+function renderSpeakingQuestion(){
+  const session=state.speakingSession;
+  if(!session||session.index>=session.words.length)return finishSpeakingSession();
+  const word=session.words[session.index],current=session.index+1,total=session.words.length;
+  session.checked=false;
+  progressEl.textContent=current+' / '+total;
+  progressFill.style.width=((current-1)/Math.max(1,total)*100)+'%';
+  instructionEl.hidden=false;
+  instructionEl.textContent='우리말을 보고 영어로 말해 보세요.';
+  answerNote.hidden=true;
+  bottomEl.hidden=false;
+  actionBtn.disabled=true;
+  actionBtn.textContent='Check Answer';
+  actionBtn.classList.remove('is-next');
+  root.innerHTML='<div class="question-card speaking-card" id="vocabQuestionHost"></div>';
+  const host=el('vocabQuestionHost');
+  state.renderer=new QuestionRenderer(host).render(speakingQuestion(word,session.index),{
+    onChange:(_,has)=>{if(!session.checked)actionBtn.disabled=!has}
+  });
+  sessionMain.scrollTop=0;
+}
+function checkSpeaking(){
+  const session=state.speakingSession,renderer=state.renderer;
+  if(!session||!renderer)return;
+  if(session.checked){
+    session.index++;
+    renderSpeakingQuestion();
+    return;
+  }
+  const word=session.words[session.index];
+  const response=txt(renderer.getResponse());if(!response)return;
+  const target=word.speakingTarget||word.word;
+  const correct=speechComparable(response)===speechComparable(target);
+  session.results.push({lexicalEntryId:word.id||null,word:target,ko:word.ko,response,correct});
+  renderer.setDisabled(true);
+  renderer.showFeedback({
+    correct,
+    correctAnswer:[target],
+    message:correct?'정답입니다!':'다시 확인해 보세요.'
+  });
+  session.checked=true;
+  actionBtn.disabled=false;
+  actionBtn.classList.add('is-next');
+  actionBtn.textContent=session.index>=session.words.length-1?'Finish':'Next';
+}
+function finishSpeakingSession(){
+  const session=state.speakingSession;
+  const correct=arr(session?.results).filter(r=>r.correct).length;
+  const total=session?.words?.length||0;
+  const review=Math.max(0,total-correct);
+  progressEl.textContent='완료';
+  progressFill.style.width='100%';
+  instructionEl.hidden=true;
+  answerNote.hidden=true;
+  bottomEl.hidden=true;
+  root.innerHTML=
+    '<section class="vocab-finish">'+
+      '<span class="eyebrow">SPEAKING COMPLETE</span>'+
+      '<h2>'+correct+' / '+total+'</h2>'+
+      '<p>말하기 연습이 끝났어요.</p>'+
+      '<div class="vocab-finish-stats">'+
+        '<div><strong>'+total+'</strong><span>SPOKEN</span></div>'+
+        '<div><strong>'+correct+'</strong><span>CORRECT</span></div>'+
+        '<div><strong>'+review+'</strong><span>REVIEW</span></div>'+
+      '</div>'+
+      '<div class="vocab-finish-actions"><button id="vocabSpeakingDone" class="vocab-done-btn" type="button">Finish</button></div>'+
+    '</section>';
+  el('vocabSpeakingDone')?.addEventListener('click',closeSession);
+  sessionMain.scrollTop=0;
+}
+
 function spellingWords(items){
   return unitVocabularyWords(items).map(word=>{
     const spellingTarget=getSpellingTarget(word.word);
@@ -850,7 +958,8 @@ function finishSession(){
 function closeSession(){
   document.body.classList.remove('vocab-session-open');
   sessionEl.hidden=true;root.innerHTML='';answerNote.hidden=true;bottomEl.hidden=false;instructionEl.hidden=false;
-  state.queue=[];state.index=0;state.checked=false;state.renderer=null;state.spellingPractice=null;state.spellingTest=null;
+  if(state.renderer?.setDisabled)state.renderer.setDisabled(true);
+  state.queue=[];state.index=0;state.checked=false;state.renderer=null;state.spellingPractice=null;state.spellingTest=null;state.speakingSession=null;
   try{window.scrollTo({top:0,behavior:'auto'})}catch(_){}
 }
 async function boot(){
@@ -878,13 +987,14 @@ async function boot(){
     }
     startBtn.addEventListener('click',()=>startSession());
     spellingPreviewBtn?.addEventListener('click',openSpellingMenu);
+    pronunciationStartBtn?.addEventListener('click',openSpeakingSession);
     wordListOpenBtn?.addEventListener('click',openWordList);
     wordModalCloseBtn?.addEventListener('click',closeWordList);
     wordModalEl?.addEventListener('click',e=>{if(e.target===wordModalEl)closeWordList()});
     document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!wordModalEl?.hidden)closeWordList()});
     closeBtn.addEventListener('click',closeSession);
-    actionBtn.addEventListener('click',()=>state.spellingTest?checkSpellingTest():state.spellingPractice?checkSpellingCoach():checkCurrent());
-    window.WillenaVocabStudy={version:'0.019',getState:()=>state,start:startSession,openSpellingMenu,openSpellingPreview,openSpellingTest,close:closeSession};
+    actionBtn.addEventListener('click',()=>state.speakingSession?checkSpeaking():state.spellingTest?checkSpellingTest():state.spellingPractice?checkSpellingCoach():checkCurrent());
+    window.WillenaVocabStudy={version:'0.020',getState:()=>state,start:startSession,openSpellingMenu,openSpellingPreview,openSpellingTest,openSpeakingSession,close:closeSession};
   }catch(error){
     console.error('[Vocab Study] boot',error);
     setStatus(error?.message||'불러오지 못했습니다. 새로고침해 주세요.');
