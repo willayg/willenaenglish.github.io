@@ -1,7 +1,7 @@
 # Vocabulary Study — Design & Architecture Spec
 
 **App:** `students/vocab-study/`  
-**Current staging version:** `0.044`  
+**Current staging version:** `0.045`  
 **Status:** Active implementation  
 **Purpose:** Define the product behavior, study flow, renderer responsibilities, tracking model, mastery model, and modular architecture for the next generation Vocabulary Study app.
 
@@ -561,7 +561,7 @@ Vocabulary Study should award more points than the generic Study default because
   - correct with **2+ hints**: **1 point**
   - incorrect Coach attempt: **0 points**
 
-These rewards should flow through the existing Willena points system rather than creating a Vocabulary Study-only balance.
+These rewards should flow through the existing Willena points system rather than creating a Vocabulary Study-only balance. Earned points use the shared `students/components/student-point-tokens.js` visual: a `+N` token pops from the activity, flies to the shared header points pill, and bumps the displayed total on arrival.
 
 Retries, repeated practice, and assisted attempts remain fully tracked. Attempt points are awarded on every recorded attempt, including retries. Session-star percentages are calculated from the first attempt on each target, and persistent skill-card scores use the same clean-pass principle so forced correction retries do not inflate either result.
 
