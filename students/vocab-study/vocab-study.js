@@ -543,7 +543,7 @@ function spellingSummary(practice){
   return counts;
 }
 function openSpellingMenu(){
-  const words=unitVocabularyWords(state.items);if(!words.length)return;
+  const words=spellingWords(state.items);if(!words.length)return;
   state.spellingPractice=null;
   state.renderer=null;
   titleEl.textContent=state.book.book_title+' · Unit '+state.unit.unit_number+' · Spelling';
@@ -698,7 +698,7 @@ function openSpellingPreview(){
       '<div class="lesson-word-grid">'+
         words.map((w,i)=>
           '<div class="lesson-word">'+
-            '<button class="speak-mini" type="button" data-preview-word="'+i+'" aria-label="'+escapeHtml(w.word)+' 듣기">▶</button>'+
+            '<button class="speak-mini" type="button" data-preview-word="'+i+'" aria-label="'+escapeHtml(w.spellingTarget||w.word)+' 듣기">▶</button>'+
             '<div><strong>'+escapeHtml(w.spellingTarget||w.word)+'</strong><span>'+escapeHtml(w.ko)+'</span></div>'+
           '</div>'
         ).join('')+
