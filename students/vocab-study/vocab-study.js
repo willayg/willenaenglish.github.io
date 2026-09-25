@@ -1,4 +1,5 @@
 import {QuestionRenderer} from '/shared/questions/question-renderer.js?v=20260925-speaking2';
+import {awardStudentPoints} from '/students/components/student-point-award.js?v=20260925-v0001';
 import {getSpellingTarget} from './spelling-targets.js?v=20260925-v0019';
 import {isSpeakableTarget,matchSpeakingTarget} from './speaking-match.js?v=20260925-v0022';
 import {getAssignment,setAssignment,getBookMeta,setBookMeta,getVocabulary,setVocabulary,background} from './vocab-startup-cache.js?v=20260925-v0001';
@@ -293,6 +294,16 @@ function recordVocabAttempt({skill,responseType,lexicalEntryId,activityId,prompt
   if(!recorder||typeof recorder.record!=='function'){
     console.warn('[Vocab Study] canonical study recorder unavailable');
     return;
+  }
+  if(pointValue>0){
+    try{
+      awardStudentPoints({
+        amount:pointValue,
+        sourceElement:root.querySelector('.question-card')||root
+      });
+    }catch(error){
+      console.debug('[Vocab Study] point token unavailable',error);
+    }
   }
   const lexicalId=isUuid(lexicalEntryId)?txt(lexicalEntryId):null;
   const detail={
