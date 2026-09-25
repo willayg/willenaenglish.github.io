@@ -5,11 +5,15 @@ class StudentRewardCelebration extends HTMLElement {
     super();
     this.attachShadow({mode:'open'});
     this._rendered=false;
+    this._hasPlayed=false;
   }
 
   connectedCallback(){
     this.render();
-    requestAnimationFrame(()=>this.play());
+    if(!this._hasPlayed){
+      this._hasPlayed=true;
+      requestAnimationFrame(()=>this.play());
+    }
   }
 
   attributeChangedCallback(){
