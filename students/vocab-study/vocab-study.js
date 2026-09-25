@@ -110,9 +110,8 @@ async function completeRewardSession(){
   reward.stars=starsForPercent(reward.percent);
   const listName='Vocabulary · '+txt(state.book?.book_title||state.book?.book_id||'Book')+' · Unit '+txt(state.unit?.unit_number||state.unit?.id||'');
   try{
-    const response=await fetch('/.netlify/functions/log_word_attempt',{
+    await api('/.netlify/functions/log_word_attempt',{
       method:'POST',
-      credentials:'include',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
         event_type:'session_end',
@@ -135,7 +134,6 @@ async function completeRewardSession(){
         }
       })
     });
-    if(!response.ok)throw new Error('Reward session failed ('+response.status+')');
   }catch(error){
     console.warn('[Vocab Study] reward session save failed',error);
   }
