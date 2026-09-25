@@ -160,6 +160,12 @@ body.vocab-session-open{overflow:hidden}
 .spelling-mode-card.is-disabled{background:#f8fbfb;border-style:dashed;cursor:default;opacity:.62}
 .spelling-mode-card.is-disabled b{color:#8aa0a4}
 
+.spelling-test-card .answer{
+  width:100%;min-height:64px;resize:none;border:2px solid var(--line);border-radius:16px;background:#fff;
+  color:#244f56;padding:16px 18px;font:800 1.15rem/1.35 Poppins,system-ui,sans-serif;outline:none
+}
+.spelling-test-card .answer:focus{border-color:var(--pink);box-shadow:0 0 0 3px rgba(222,91,148,.10)}
+
 @media(max-width:560px){
   .vocab-page{padding:14px 10px 36px}
   .vocab-home-card{border-radius:23px;padding:24px 19px}
