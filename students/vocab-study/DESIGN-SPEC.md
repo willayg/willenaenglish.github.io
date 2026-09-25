@@ -510,10 +510,37 @@ This allows the visual design to change without rewriting the study engine.
 - reliable response timing
 
 ### Pass 2 — Willena points + stars
-- award through the existing Willena points / stars system
-- reward meaningful work
-- prevent easy farming through retries or reopening completed work
-- show earned rewards on completion
+
+Vocabulary Study should award more points than the generic Study default because the activities require sustained effort.
+
+#### Points per recorded attempt
+
+- Multiple-choice vocabulary: **2 points**
+- Spelling Coach / Spelling Test: **4 points**
+- Speaking: **4 points**
+
+These rewards should flow through the existing Willena points system rather than creating a Vocabulary Study-only balance.
+
+Retries, repeated practice, and assisted attempts remain fully tracked so reward rules can distinguish genuine work from easy farming if needed.
+
+#### Stars per completed session
+
+Stars are awarded from the student's final session percentage:
+
+| Final result | Stars |
+| --- | ---: |
+| 100% | ⭐⭐⭐⭐⭐ **5** |
+| 90–99% | ⭐⭐⭐⭐ **4** |
+| 80–89% | ⭐⭐⭐ **3** |
+| 70–79% | ⭐⭐ **2** |
+| 60–69% | ⭐ **1** |
+| Below 60% | **0** |
+
+A result below 60% is not good enough for a star award.
+
+Stars should be awarded through the existing Willena stars system and shown clearly on the Vocabulary Study completion screen.
+
+The star result is a motivational session reward and does not alter unit progress, Golden Unit Badges, or streak calculations.
 
 ### Pass 3 — Streaks + Golden Unit Badges
 - study-day streak
