@@ -177,7 +177,7 @@ export class QuestionRenderer{
     if(q.form===FORMS.learn)return `<div class="learn">${textHtml(answerParts(q)[0]||q.context?.target_en||'')}</div>`;
     if(q.form===FORMS.speaking){
       return `<div class="speaking-control">
-        <button type="button" class="speaking-mic" data-speaking-mic aria-label="영어로 말하기">🎤</button>
+        <button type="button" class="speaking-mic" data-speaking-mic aria-label="영어로 말하기"><span class="speaking-mic-icon" aria-hidden="true"></span></button>
         <div class="speaking-status" data-speaking-status>마이크를 누르고 영어로 말해 보세요.</div>
         <div class="speaking-transcript" data-speaking-transcript hidden></div>
       </div>`;
@@ -220,7 +220,7 @@ export class QuestionRenderer{
       this.speechRecognition=recognition;
       recognition.lang='en-US';
       recognition.interimResults=false;
-      recognition.maxAlternatives=1;
+      recognition.maxAlternatives=5;
       recognition.continuous=false;
       const setListening=on=>{
         mic?.classList.toggle('is-listening',!!on);
@@ -233,8 +233,17 @@ export class QuestionRenderer{
         if(status)status.textContent=e?.error==='not-allowed'?'마이크 권한이 필요해요.':'잘 듣지 못했어요. 다시 눌러 말해 보세요.';
       };
       recognition.onresult=e=>{
-        const value=String(e?.results?.[0]?.[0]?.transcript||'').trim();
+        const result=e?.results?.[0];
+        const alternatives=[];
+        if(result&&typeof result.length==='number'){
+          for(let i=0;i<result.length;i++){
+            const value=String(result[i]?.transcript||'').trim();
+            if(value&&!alternatives.includes(value))alternatives.push(value);
+          }
+        }
+        const value=alternatives[0]||'';
         this.state.speakingTranscript=value;
+        this.state.speakingAlternatives=alternatives;
         if(transcript){
           transcript.hidden=!value;
           transcript.textContent=value?('“'+value+'”'):'';
@@ -248,6 +257,7 @@ export class QuestionRenderer{
           if(mic.classList.contains('is-listening'))recognition.stop();
           else{
             this.state.speakingTranscript='';
+            this.state.speakingAlternatives=[];
             if(transcript){transcript.hidden=true;transcript.textContent=''}
             recognition.start();
           }
@@ -300,6 +310,7 @@ export class QuestionRenderer{
   }
   emit(){this.onChange?.(this.getResponse(),this.hasResponse())}
   getSupportLevel(){return Number(this.state.spellingHintLevel||0)}
+  getSpeechAlternatives(){return Array.isArray(this.state.speakingAlternatives)?this.state.speakingAlternatives.slice():[]}
   hasResponse(){
     const q=this.question;if(!q)return false;
     if(q.form===FORMS.choice||q.form===FORMS.multi)return this.state.selected.size>0;
@@ -330,14 +341,26 @@ export class QuestionRenderer{
     const style=document.createElement('style');
     style.id='willenaSpeakingStyles';
     style.textContent=`
+      @keyframes speakingMicPulse{
+        0%{transform:scale(1.03);box-shadow:0 0 0 0 rgba(255,10,138,.18),0 12px 28px rgba(230,0,118,.16)}
+        100%{transform:scale(1.08);box-shadow:0 0 0 13px rgba(255,10,138,0),0 16px 34px rgba(230,0,118,.22)}
+      }
       .speaking-control{display:grid;justify-items:center;gap:14px;padding:8px 0 4px}
       .speaking-mic{
-        width:96px;height:96px;border-radius:50%;border:3px solid #8c79d9;background:#fff;color:#6e5bc6;
-        display:grid;place-items:center;font-size:2.2rem;cursor:pointer;box-shadow:0 10px 28px rgba(95,75,180,.14);
-        transition:transform .14s ease,box-shadow .14s ease,background .14s ease
+        box-sizing:border-box;width:96px;height:96px;border-radius:50%;border:3px solid #66d6df;background:#fff;color:#25b8c4;
+        display:grid;place-items:center;cursor:pointer;box-shadow:0 10px 28px rgba(37,184,196,.10);
+        transition:border-color .22s ease,border-width .22s ease,color .22s ease,transform .22s ease,box-shadow .22s ease,background .22s ease
       }
-      .speaking-mic:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 14px 32px rgba(95,75,180,.20)}
-      .speaking-mic.is-listening{background:#f1edff;box-shadow:0 0 0 8px rgba(140,121,217,.12),0 14px 32px rgba(95,75,180,.20)}
+      .speaking-mic-icon{
+        width:42px;height:42px;display:block;background:currentColor;
+        -webkit-mask:url('/shared/svgs/mic.svg?v=20260925-1') center/contain no-repeat;
+        mask:url('/shared/svgs/mic.svg?v=20260925-1') center/contain no-repeat
+      }
+      .speaking-mic:hover:not(:disabled):not(.is-listening){transform:translateY(-2px);box-shadow:0 14px 32px rgba(37,184,196,.15)}
+      .speaking-mic.is-listening{
+        border-width:6px;border-color:#ff0a8a;background:#fff7fb;color:#e60076;
+        animation:speakingMicPulse .72s ease-in-out infinite alternate
+      }
       .speaking-mic:disabled{opacity:.45;cursor:default}
       .speaking-status{color:#607b80;font:750 .9rem Poppins,system-ui,sans-serif;text-align:center}
       .speaking-transcript{
