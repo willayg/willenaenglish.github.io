@@ -231,8 +231,6 @@
   <script type="module">
     import { ensureAuthRefresh } from '/Teachers/auth-refresh.js';
 
-    ensureAuthRefresh();
-
     // Use WillenaAPI to get correct endpoint (Cloudflare worker on custom domains)
     const AUTH_URL = window.WillenaAPI.getApiUrl('/.netlify/functions/supabase_auth');
     
@@ -351,10 +349,22 @@
           getProfileId(user.id)
         ]);
         
-        // Store user data
+        // Only teacher/admin accounts may enter the Teachers app.
+        const normalizedRole = String(role || '').toLowerCase();
+        if (!['teacher', 'admin'].includes(normalizedRole)) {
+          localStorage.removeItem('userId');
+          localStorage.removeItem('profile_id');
+          localStorage.removeItem('userRole');
+          throw new Error('This account is not a teacher account.');
+        }
+
+        // Store teacher identity only after the active auth session is confirmed.
         localStorage.setItem('userId', user.id);
         localStorage.setItem('profile_id', profileId);
-        localStorage.setItem('userRole', role);
+        localStorage.setItem('userRole', normalizedRole);
+
+        // Start token refresh only for a confirmed teacher/admin session.
+        ensureAuthRefresh();
         
         showMessage(`Welcome back! Redirecting...`, 'success');
         
@@ -390,14 +400,38 @@
           console.warn('⚠ Auth service missing environment variables');
         }
         if (debugData.session && debugData.session.user && debugData.session.user.id) {
-          // Already logged in, perform quick redirect
-          const params = new URLSearchParams(location.search);
-          const redirect = params.get('redirect');
-          if (redirect && redirect.startsWith('/') && !/^https?:/i.test(redirect)) {
-            window.location.replace(redirect);
+          const activeUserId = debugData.session.user.id;
+
+          // A student session can share the same .willenaenglish.com auth cookies.
+          // Only auto-enter Teachers when the ACTIVE cookie session is teacher/admin.
+          let activeRole = '';
+          try {
+            activeRole = String(await getUserRole(activeUserId) || '').toLowerCase();
+          } catch (roleError) {
+            console.warn('Could not resolve active session role:', roleError);
+          }
+
+          if (['teacher', 'admin'].includes(activeRole)) {
+            const profileId = await getProfileId(activeUserId).catch(() => activeUserId);
+            localStorage.setItem('userId', activeUserId);
+            localStorage.setItem('profile_id', profileId);
+            localStorage.setItem('userRole', activeRole);
+
+            ensureAuthRefresh();
+
+            const params = new URLSearchParams(location.search);
+            const redirect = params.get('redirect');
+            if (redirect && redirect.startsWith('/') && !/^https?:/i.test(redirect)) {
+              window.location.replace(redirect);
+            } else {
+              window.location.replace('/Teachers/index.html');
+            }
           } else {
-            // Already logged in and no specific redirect: go to Teacher dashboard
-            window.location.replace('/Teachers/index.html');
+            // Keep stale teacher-local state from fighting with a student cookie session.
+            localStorage.removeItem('userId');
+            localStorage.removeItem('profile_id');
+            localStorage.removeItem('userRole');
+            console.info('Non-teacher session detected; staying on Teacher Login.');
           }
         }
       } catch (error) {
