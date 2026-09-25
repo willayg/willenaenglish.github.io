@@ -1,5 +1,6 @@
-import {QuestionRenderer} from '/shared/questions/question-renderer.js?v=20260925-speaking1';
+import {QuestionRenderer} from '/shared/questions/question-renderer.js?v=20260925-speaking2';
 import {getSpellingTarget} from './spelling-targets.js?v=20260925-v0019';
+import {matchSpeakingTarget} from './speaking-match.js?v=20260925-v0021';
 
 const SESSION_SIZE=12;
 const CONTENT_URL='https://gxwfsqxyuufqtitspfqg.supabase.co';
@@ -500,14 +501,6 @@ function speakingWords(items){
     return speakingTarget?Object.assign({},word,{speakingTarget}):null;
   }).filter(Boolean);
 }
-function speechComparable(value){
-  return String(value||'').toLowerCase()
-    .replace(/[’‘]/g,"'")
-    .replace(/[-–—]/g,' ')
-    .replace(/[^a-z0-9' ]+/g,' ')
-    .replace(/\s+/g,' ')
-    .trim();
-}
 function openSpeakingSession(){
   const words=shuffle(speakingWords(state.items)).slice(0,10);if(!words.length)return;
   state.spellingPractice=null;
@@ -561,8 +554,18 @@ function checkSpeaking(){
   const word=session.words[session.index];
   const response=txt(renderer.getResponse());if(!response)return;
   const target=word.speakingTarget||word.word;
-  const correct=speechComparable(response)===speechComparable(target);
-  session.results.push({lexicalEntryId:word.id||null,word:target,ko:word.ko,response,correct});
+  const alternatives=renderer.getSpeechAlternatives?.()||[response];
+  const match=matchSpeakingTarget(target,alternatives);
+  const correct=!!match.correct;
+  session.results.push({
+    lexicalEntryId:word.id||null,
+    word:target,
+    ko:word.ko,
+    response,
+    alternatives,
+    correct,
+    matchedBy:match.matchedBy
+  });
   renderer.setDisabled(true);
   renderer.showFeedback({
     correct,
@@ -994,7 +997,7 @@ async function boot(){
     document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!wordModalEl?.hidden)closeWordList()});
     closeBtn.addEventListener('click',closeSession);
     actionBtn.addEventListener('click',()=>state.speakingSession?checkSpeaking():state.spellingTest?checkSpellingTest():state.spellingPractice?checkSpellingCoach():checkCurrent());
-    window.WillenaVocabStudy={version:'0.020',getState:()=>state,start:startSession,openSpellingMenu,openSpellingPreview,openSpellingTest,openSpeakingSession,close:closeSession};
+    window.WillenaVocabStudy={version:'0.021',getState:()=>state,start:startSession,openSpellingMenu,openSpellingPreview,openSpellingTest,openSpeakingSession,close:closeSession};
   }catch(error){
     console.error('[Vocab Study] boot',error);
     setStatus(error?.message||'불러오지 못했습니다. 새로고침해 주세요.');
