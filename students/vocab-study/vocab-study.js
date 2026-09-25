@@ -203,7 +203,6 @@ async function api(url,opts){
   if(!r.ok||(d&&d.success===false))throw new Error(d&&d.error||('Request failed ('+r.status+').'));
   return d;
 }
-async function profile(){return timed('auth/profile',()=>api('/.netlify/functions/progress_summary?section=my_progress&_='+Date.now()))}
 async function whoami(){return api('/.netlify/functions/supabase_auth?action=whoami&_='+Date.now())}
 async function fetchAssignmentsNetwork(className){
   const r=await fetch(OP_URL+'/rest/v1/rpc/get_study_assignment_for_class',{
@@ -345,8 +344,8 @@ async function hydrateSecondaryBooks(list,activeBookId){
     renderBookPicker();
   },'secondary books');
 }
-async function resolveAssignedBooks(){
-  const me=await profile();const className=txt(me.class);if(!className)throw new Error('No active class is assigned.');
+async function resolveAssignedBooks(authData){
+  const className=txt(authData?.class);if(!className)throw new Error('No active class is assigned.');
   const a=await assignments(className);
   const list=(Array.isArray(a.assignments)&&a.assignments.length?a.assignments:(a.assignment?[a.assignment]:[])).filter(x=>x&&x.book_id);
   if(!list.length)throw new Error('No active book is assigned.');
@@ -1208,7 +1207,12 @@ function closeSession(){
 }
 async function boot(){
   try{
-    if(window.WillenaVocabStudyAuthReady){const ok=await window.WillenaVocabStudyAuthReady;if(!ok)return}
+    let authData=null;
+    if(window.WillenaVocabStudyAuthReady){
+      authData=await window.WillenaVocabStudyAuthReady;
+      if(!authData)return;
+      markPerf('auth/whoami',Number(authData.auth_elapsed_ms)||0);
+    }
     if(!window.WillenaStudyQuestionBank)throw new Error('Study question bank failed to load.');
     const params=await requireAdminMode();
     if(state.adminMode){
@@ -1223,7 +1227,7 @@ async function boot(){
       state.book=resolved.book;state.unit=resolved.unit;state.units=arr(resolved.units);state.items=await loadVocabularyItems(state.book,state.unit);
       renderHome();
     }else{
-      const resolved=await resolveAssignedBooks();
+      const resolved=await resolveAssignedBooks(authData);
       state.books=resolved.books;state.assignments=resolved.assignments;state.activeIndex=resolved.activeIndex;
       const active=state.books[state.activeIndex];
       state.book=active.book;state.unit=active.unit;state.units=arr(active.units);state.items=active.items;
@@ -1246,7 +1250,7 @@ async function boot(){
       renderSkillProgress();
     });
     reportStartupPerf();
-    window.WillenaVocabStudy={version:'0.028',getState:()=>state,start:startSession,openSpellingMenu,openSpellingPreview,openSpellingTest,openSpeakingSession,close:closeSession};
+    window.WillenaVocabStudy={version:'0.029',getState:()=>state,start:startSession,openSpellingMenu,openSpellingPreview,openSpellingTest,openSpeakingSession,close:closeSession};
   }catch(error){
     console.error('[Vocab Study] boot',error);
     setStatus(error?.message||'불러오지 못했습니다. 새로고침해 주세요.');
