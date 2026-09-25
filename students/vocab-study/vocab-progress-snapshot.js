@@ -7,11 +7,31 @@ export function snapshotPercent(snapshot,skill,eligibleIds){
   if(!total)return 0;
   const block=snapshot&&snapshot[skill]||{};
   if(skill==='spelling'){
-    const coach=Number(block.coach_passed_count)||0;
-    const test=Number(block.test_passed_count)||0;
-    return clampPercent((coach+test)*50/total);
+    return clampPercent((Number(block.test_passed_count)||0)*100/total);
   }
   return clampPercent((Number(block.passed_count)||0)*100/total);
+}
+
+export function snapshotStars(snapshot,skill,eligibleIds){
+  const percent=snapshotPercent(snapshot,skill,eligibleIds);
+  if(percent>=100)return 5;
+  if(percent>=90)return 4;
+  if(percent>=80)return 3;
+  if(percent>=70)return 2;
+  if(percent>=60)return 1;
+  return 0;
+}
+
+export function snapshotRetryCount(snapshot,skill){
+  const block=snapshot&&snapshot[skill]||{};
+  if(skill==='spelling')return Math.max(0,Number(block.test_review_count)||0);
+  return Math.max(0,Number(block.review_count)||0);
+}
+
+export function snapshotPassedCount(snapshot,skill){
+  const block=snapshot&&snapshot[skill]||{};
+  if(skill==='spelling')return Math.max(0,Number(block.test_passed_count)||0);
+  return Math.max(0,Number(block.passed_count)||0);
 }
 
 export async function loadVocabSnapshot(bookId,unitId){
