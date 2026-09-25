@@ -46,7 +46,7 @@ const state={
   queue:[],index:0,checked:false,renderer:null,
   outcomes:new Map(),reviewKeys:new Set(),retryCounts:new Map(),
   spellingPractice:null,spellingTest:null,speakingSession:null,
-  adminMode:false,nextReadyAt:0
+  adminMode:false,nextReadyAt:0,questionStartedAt:0
 };
 
 function txt(v){return String(v==null?'':v).trim()}
@@ -58,6 +58,45 @@ function shuffle(items){
   return a;
 }
 function setStatus(message){if(statusEl)statusEl.textContent=message}
+
+
+function isUuid(value){return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(txt(value))}
+function recordVocabAttempt({skill,responseType,lexicalEntryId,activityId,prompt,studentAnswer,correctAnswer,correct,metadata}){
+  if(state.adminMode)return;
+  const recorder=window.WillenaStudyProgress;
+  if(!recorder||typeof recorder.record!=='function'){
+    console.warn('[Vocab Study] canonical study recorder unavailable');
+    return;
+  }
+  const lexicalId=isUuid(lexicalEntryId)?txt(lexicalEntryId):null;
+  const detail={
+    activity:{
+      id:txt(activityId)||('vocab-study-'+skill),
+      skill:txt(skill),
+      sourceType:'lexical_entry',
+      sourceId:lexicalId,
+      stimulus:{type:'text',prompt:txt(prompt)},
+      response:{type:txt(responseType)},
+      answer:correctAnswer,
+      metadata:Object.assign({
+        book_id:state.book?.book_id||null,
+        unit_id:state.unit?.id||null,
+        lexical_entry_id:lexicalId,
+        mastery_content_type:'lexical_entry',
+        mastery_content_id:lexicalId,
+        vocab_study:true
+      },metadata||{})
+    },
+    result:{
+      selected:studentAnswer,
+      answer:correctAnswer,
+      correct:!!correct,
+      score:correct?1:0
+    },
+    responseTimeMs:state.questionStartedAt?Math.max(0,Date.now()-state.questionStartedAt):0
+  };
+  recorder.record(detail);
+}
 
 async function api(url,opts){
   const fn=window.WillenaAPI&&typeof window.WillenaAPI.fetch==='function'?window.WillenaAPI.fetch.bind(window.WillenaAPI):window.fetch.bind(window);
@@ -451,6 +490,7 @@ function renderQuestion(){
   root.innerHTML='<div class="question-card" id="vocabQuestionHost"></div>';
   const host=el('vocabQuestionHost');
   state.renderer=new QuestionRenderer(host).render(q,{onChange:(_,has)=>{if(!state.checked)actionBtn.disabled=!has}});
+  state.questionStartedAt=Date.now();
   updateProgress();
   sessionMain.scrollTop=0;
 }
@@ -478,6 +518,22 @@ function checkCurrent(){
   const key=activityKey(item);
   state.outcomes.set(key,correct);
   if(!correct){state.reviewKeys.add(key);scheduleRetry(item)}
+  const selectedText=q.choices[Number(selected)-1]||selected;
+  recordVocabAttempt({
+    skill:'vocabulary',
+    responseType:'multiple_choice',
+    lexicalEntryId:item?.metadata?.lexical_entry_id||item?.sourceId,
+    activityId:item?.id,
+    prompt:item?.stimulus?.prompt,
+    studentAnswer:selectedText,
+    correctAnswer:correctText,
+    correct,
+    metadata:{
+      pair_form:item?.metadata?.pair_form||null,
+      retry:!!item?.__vocabRetry,
+      recorded_from:'vocab-study-quiz'
+    }
+  });
   renderer.setDisabled(true);
   renderer.showFeedback({
     correct,
@@ -541,6 +597,7 @@ function renderSpeakingQuestion(){
   state.renderer=new QuestionRenderer(host).render(speakingQuestion(word,session.index),{
     onChange:(_,has)=>{if(!session.checked)actionBtn.disabled=!has}
   });
+  state.questionStartedAt=Date.now();
   sessionMain.scrollTop=0;
 }
 function checkSpeaking(){
@@ -565,6 +622,21 @@ function checkSpeaking(){
     alternatives,
     correct,
     matchedBy:match.matchedBy
+  });
+  recordVocabAttempt({
+    skill:'speaking',
+    responseType:'speech',
+    lexicalEntryId:word.id,
+    activityId:'vocab-speaking-'+word.id,
+    prompt:word.ko,
+    studentAnswer:response,
+    correctAnswer:target,
+    correct,
+    metadata:{
+      stt_alternatives:alternatives,
+      stt_match:match.matchedBy||null,
+      recorded_from:'vocab-study-speaking'
+    }
   });
   renderer.setDisabled(true);
   renderer.showFeedback({
@@ -754,6 +826,20 @@ function checkSpellingTest(){
   const target=word.spellingTarget||word.word;
   const correct=response.toLowerCase()===target.toLowerCase();
   test.results.push({lexicalEntryId:word.id||null,word:target,ko:word.ko,response,correct});
+  recordVocabAttempt({
+    skill:'spelling',
+    responseType:'write',
+    lexicalEntryId:word.id,
+    activityId:'vocab-spelling-test-'+word.id,
+    prompt:word.ko,
+    studentAnswer:response,
+    correctAnswer:target,
+    correct,
+    metadata:{
+      cold_test:true,
+      recorded_from:'vocab-study-spelling-test'
+    }
+  });
   renderer.setDisabled(true);
   renderer.showFeedback({
     correct,
@@ -997,7 +1083,7 @@ async function boot(){
     document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!wordModalEl?.hidden)closeWordList()});
     closeBtn.addEventListener('click',closeSession);
     actionBtn.addEventListener('click',()=>state.speakingSession?checkSpeaking():state.spellingTest?checkSpellingTest():state.spellingPractice?checkSpellingCoach():checkCurrent());
-    window.WillenaVocabStudy={version:'0.022',getState:()=>state,start:startSession,openSpellingMenu,openSpellingPreview,openSpellingTest,openSpeakingSession,close:closeSession};
+    window.WillenaVocabStudy={version:'0.023',getState:()=>state,start:startSession,openSpellingMenu,openSpellingPreview,openSpellingTest,openSpeakingSession,close:closeSession};
   }catch(error){
     console.error('[Vocab Study] boot',error);
     setStatus(error?.message||'불러오지 못했습니다. 새로고침해 주세요.');
