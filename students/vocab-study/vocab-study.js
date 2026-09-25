@@ -42,7 +42,7 @@ const state={
   book:null,unit:null,units:[],items:[],assignments:[],books:[],activeIndex:0,
   queue:[],index:0,checked:false,renderer:null,
   outcomes:new Map(),reviewKeys:new Set(),retryCounts:new Map(),
-  spellingPractice:null,
+  spellingPractice:null,spellingTest:null,
   adminMode:false,nextReadyAt:0
 };
 
@@ -559,18 +559,119 @@ function openSpellingMenu(){
           '<span>단어를 보고 듣고, 힌트를 사용하며 연습해요.</span>'+
           '<b>Practice</b>'+
         '</button>'+
-        '<button class="spelling-mode-card is-disabled" type="button" disabled>'+
+        '<button id="vocabSpellingTest" class="spelling-mode-card" type="button">'+
           '<strong>Spelling Test</strong>'+
           '<span>도움 없이 철자를 써서 확인해요.</span>'+
-          '<b>Coming next</b>'+
+          '<b>Test</b>'+
         '</button>'+
       '</div>'+
     '</section>';
   el('vocabSpellingTrainer')?.addEventListener('click',openSpellingPreview);
+  el('vocabSpellingTest')?.addEventListener('click',openSpellingTest);
   sessionEl.hidden=false;
   document.body.classList.add('vocab-session-open');
   sessionMain.scrollTop=0;
 }
+function spellingTestWords(items){
+  return shuffle(unitVocabularyWords(items)).slice(0,10);
+}
+function openSpellingTest(){
+  const words=spellingTestWords(state.items);if(!words.length)return;
+  state.spellingPractice=null;
+  state.spellingTest={words,index:0,results:[],checked:false};
+  titleEl.textContent=state.book.book_title+' · Unit '+state.unit.unit_number+' · Spelling Test';
+  instructionEl.hidden=false;
+  instructionEl.textContent='우리말을 보고 영어 철자를 입력하세요.';
+  answerNote.hidden=true;
+  questionStage.hidden=false;
+  bottomEl.hidden=false;
+  sessionEl.hidden=false;
+  document.body.classList.add('vocab-session-open');
+  renderSpellingTestQuestion();
+}
+function spellingTestQuestion(word,index){
+  return{
+    id:'vocab-spelling-test-'+index,
+    form:'write',
+    prompt:word.ko,
+    context:{},
+    answer:[word.word],
+    input:{language:'en'},
+    grading:{constraints:{}}
+  };
+}
+function renderSpellingTestQuestion(){
+  const test=state.spellingTest;
+  if(!test||test.index>=test.words.length)return finishSpellingTest();
+  const word=test.words[test.index],current=test.index+1,total=test.words.length;
+  test.checked=false;
+  progressEl.textContent=current+' / '+total;
+  progressFill.style.width=((current-1)/Math.max(1,total)*100)+'%';
+  instructionEl.hidden=false;
+  instructionEl.textContent='우리말을 보고 영어 철자를 입력하세요.';
+  answerNote.hidden=true;
+  bottomEl.hidden=false;
+  actionBtn.disabled=true;
+  actionBtn.textContent='Check Answer';
+  actionBtn.classList.remove('is-next');
+  root.innerHTML='<div class="question-card spelling-test-card" id="vocabQuestionHost"></div>';
+  const host=el('vocabQuestionHost');
+  state.renderer=new QuestionRenderer(host).render(spellingTestQuestion(word,test.index),{
+    onChange:(_,has)=>{if(!test.checked)actionBtn.disabled=!has}
+  });
+  host.querySelector('[data-write]')?.focus();
+  sessionMain.scrollTop=0;
+}
+function checkSpellingTest(){
+  const test=state.spellingTest,renderer=state.renderer;
+  if(!test||!renderer)return;
+  if(test.checked){
+    test.index++;
+    renderSpellingTestQuestion();
+    return;
+  }
+  const word=test.words[test.index];
+  const response=txt(renderer.getResponse());
+  if(!response)return;
+  const correct=response.toLowerCase()===word.word.toLowerCase();
+  test.results.push({lexicalEntryId:word.id||null,word:word.word,ko:word.ko,response,correct});
+  renderer.setDisabled(true);
+  renderer.showFeedback({
+    correct,
+    correctAnswer:[word.word],
+    message:correct?'정답입니다!':'정답을 확인해 보세요.'
+  });
+  test.checked=true;
+  actionBtn.disabled=false;
+  actionBtn.classList.add('is-next');
+  actionBtn.textContent=test.index>=test.words.length-1?'Finish':'Next';
+}
+function finishSpellingTest(){
+  const test=state.spellingTest;
+  const correct=arr(test?.results).filter(r=>r.correct).length;
+  const total=test?.words?.length||0;
+  const missed=Math.max(0,total-correct);
+  progressEl.textContent='완료';
+  progressFill.style.width='100%';
+  instructionEl.hidden=true;
+  answerNote.hidden=true;
+  bottomEl.hidden=true;
+  root.innerHTML=
+    '<section class="vocab-finish">'+
+      '<span class="eyebrow">SPELLING TEST COMPLETE</span>'+
+      '<h2>'+correct+' / '+total+'</h2>'+
+      '<p>철자 테스트가 끝났어요.</p>'+
+      '<div class="vocab-finish-stats">'+
+        '<div><strong>'+total+'</strong><span>TESTED</span></div>'+
+        '<div><strong>'+correct+'</strong><span>CORRECT</span></div>'+
+        '<div><strong>'+missed+'</strong><span>REVIEW</span></div>'+
+      '</div>'+
+      '<div class="vocab-finish-actions"><button id="vocabSpellingTestDone" class="vocab-done-btn" type="button">Finish</button></div>'+
+    '</section>';
+  el('vocabSpellingTestDone')?.addEventListener('click',closeSession);
+  sessionMain.scrollTop=0;
+}
+
 function openSpellingPreview(){
   const words=spellingPreviewWords(state.items);if(!words.length)return;
   state.spellingPractice=createSpellingPractice(words);
@@ -740,7 +841,7 @@ function finishSession(){
 function closeSession(){
   document.body.classList.remove('vocab-session-open');
   sessionEl.hidden=true;root.innerHTML='';answerNote.hidden=true;bottomEl.hidden=false;instructionEl.hidden=false;
-  state.queue=[];state.index=0;state.checked=false;state.renderer=null;state.spellingPractice=null;
+  state.queue=[];state.index=0;state.checked=false;state.renderer=null;state.spellingPractice=null;state.spellingTest=null;
   try{window.scrollTo({top:0,behavior:'auto'})}catch(_){}
 }
 async function boot(){
@@ -773,8 +874,8 @@ async function boot(){
     wordModalEl?.addEventListener('click',e=>{if(e.target===wordModalEl)closeWordList()});
     document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!wordModalEl?.hidden)closeWordList()});
     closeBtn.addEventListener('click',closeSession);
-    actionBtn.addEventListener('click',()=>state.spellingPractice?checkSpellingCoach():checkCurrent());
-    window.WillenaVocabStudy={version:'0.017',getState:()=>state,start:startSession,openSpellingMenu,openSpellingPreview,close:closeSession};
+    actionBtn.addEventListener('click',()=>state.spellingTest?checkSpellingTest():state.spellingPractice?checkSpellingCoach():checkCurrent());
+    window.WillenaVocabStudy={version:'0.018',getState:()=>state,start:startSession,openSpellingMenu,openSpellingPreview,openSpellingTest,close:closeSession};
   }catch(error){
     console.error('[Vocab Study] boot',error);
     setStatus(error?.message||'불러오지 못했습니다. 새로고침해 주세요.');
