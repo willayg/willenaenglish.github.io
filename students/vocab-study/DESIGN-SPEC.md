@@ -1,7 +1,7 @@
 # Vocabulary Study — Design & Architecture Spec
 
 **App:** `students/vocab-study/`  
-**Current staging version:** `0.042`  
+**Current staging version:** `0.043`  
 **Status:** Active implementation  
 **Purpose:** Define the product behavior, study flow, renderer responsibilities, tracking model, mastery model, and modular architecture for the next generation Vocabulary Study app.
 
@@ -291,7 +291,7 @@ For the main home cards:
 - **Spelling** percentage = clean **Spelling Test** passes ÷ eligible spelling words
 - **Speaking** percentage = clean speaking passes ÷ eligible speaking words
 - Spelling Coach remains practice/support and does not inflate the main Spelling score.
-- Each card shows its percentage, 0–5 stars using the normal Vocabulary Study star thresholds, clean-pass count, and outstanding retry count.
+- Each card shows its percentage and 0–5 stars using the normal Vocabulary Study star thresholds. Clean-pass and retry counts remain internal state and are not shown on the home cards.
 
 Historical attempt data is retained because it is useful for teacher insight, future recommendations, streaks, badges, and fair rewards. Retaining the data does **not** mean the app must force a spaced-review schedule.
 
@@ -584,7 +584,7 @@ The star result is a motivational session reward and does not alter unit progres
 - correction retries do not inflate the persistent card score
 - later fresh attempts can clear `review_needed`
 - completed words that still need a clean retry are served as targeted retry practice
-- Quiz / Spelling / Speaking cards show stars, clean count, and retry count
+- Quiz / Spelling / Speaking cards show stars; clean and retry counts remain hidden from the home card UI
 - main Spelling score is based on Spelling Test; Spelling Coach remains practice
 
 ### Pass 3 — Streaks + Golden Unit Badges
