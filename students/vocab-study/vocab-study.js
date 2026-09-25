@@ -223,6 +223,26 @@ function renderBookPicker(){
   bookPickerEl.hidden=false;
 }
 
+async function loadExplicitUnitVocabulary(unitId){
+  const targets=await content('unit_vocab_targets?select=lexical_entry_id,source_kind,source_collection_id,priority&unit_id=eq.'+encodeURIComponent(unitId)+'&active=eq.true&order=priority.desc');
+  const ids=unique(targets.map(row=>row.lexical_entry_id));if(!ids.length)return[];
+  const rows=await content('lexical_entries?select=id,canonical_text,translation_ko,emoji&id=in.'+encodeURIComponent('('+ids.join(',')+')')+'&status=in.(review,published)');
+  const by={};rows.forEach(r=>by[r.id]=r);
+  return targets.map(target=>{
+    const e=by[target.lexical_entry_id];if(!e)return null;
+    const word=txt(e.canonical_text),ko=txt(e.translation_ko);
+    return word&&ko?{
+      id:e.id,
+      occurrenceId:'unit-vocab-'+e.id,
+      word,ko,
+      emoji:e.emoji||null,
+      source:'unit_vocab_target',
+      sourceKind:txt(target.source_kind),
+      sourceCollectionId:target.source_collection_id||null,
+      priority:Number(target.priority)||0
+    }:null;
+  }).filter(Boolean);
+}
 async function loadSourceVocabulary(unitId){
   const occ=await content('source_content_occurrences?select=id,lexical_entry_id,source_text&unit_id=eq.'+encodeURIComponent(unitId)+'&occurrence_type=eq.lexical_entry&status=in.(review,published)');
   const ids=unique(occ.map(o=>o.lexical_entry_id));if(!ids.length)return[];
@@ -303,6 +323,10 @@ function sourceVocabularyActivities(book,unit,items){
   return out;
 }
 async function loadVocabularyItems(book,unit){
+  const explicitRows=await loadExplicitUnitVocabulary(unit.id).catch(e=>{console.warn('[Vocab Study] explicit unit vocabulary unavailable',e);return[]});
+  if(explicitRows.length)return sourceVocabularyActivities(book,unit,explicitRows);
+
+  // Fallback for units that have not yet been backfilled into the explicit unit-vocab layer.
   const authoredPromise=window.WillenaStudyQuestionBank
     ?window.WillenaStudyQuestionBank.loadUnit(null,{bookId:book.book_id,unitId:unit.id,bookTitle:book.book_title,unitNumber:Number(unit.unit_number)}).catch(e=>{console.warn('[Vocab Study] authored bank unavailable',e);return[]})
     :Promise.resolve([]);
@@ -310,7 +334,6 @@ async function loadVocabularyItems(book,unit){
   const wordBuilderPromise=loadWordBuilderVocabulary(book,unit).catch(e=>{console.warn('[Vocab Study] Word Builder vocabulary unavailable',e);return[]});
   const [authoredRows,sourceRows,wordBuilderRows]=await Promise.all([authoredPromise,sourcePromise,wordBuilderPromise]);
   const lexicalTargets=mergeVocabularyTargets(arr(sourceRows),arr(wordBuilderRows));
-  // One lexical_entry_id is one vocabulary target, regardless of worksheet/display variants.
   if(lexicalTargets.length)return sourceVocabularyActivities(book,unit,lexicalTargets);
   return arr(authoredRows).filter(a=>a&&a.skill==='vocabulary');
 }
@@ -715,7 +738,7 @@ async function boot(){
     document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!wordModalEl?.hidden)closeWordList()});
     closeBtn.addEventListener('click',closeSession);
     actionBtn.addEventListener('click',()=>state.spellingPractice?checkSpellingCoach():checkCurrent());
-    window.WillenaVocabStudy={version:'0.015',getState:()=>state,start:startSession,openSpellingPreview,close:closeSession};
+    window.WillenaVocabStudy={version:'0.016',getState:()=>state,start:startSession,openSpellingPreview,close:closeSession};
   }catch(error){
     console.error('[Vocab Study] boot',error);
     setStatus(error?.message||'불러오지 못했습니다. 새로고침해 주세요.');
