@@ -249,17 +249,26 @@ async function loadWordBuilderVocabulary(book,unit){
   return items.map(item=>{
     const e=by[item.content_id];if(!e)return null;
     const settings=item.settings&&typeof item.settings==='object'?item.settings:{};
-    const word=txt(settings.display_english||e.canonical_text);
-    const ko=txt(settings.display_korean||e.translation_ko);
-    return word&&ko?{id:e.id,occurrenceId:'wb-'+item.id,word,ko,emoji:e.emoji||null,source:'word_builder'}:null;
+    const word=txt(e.canonical_text||settings.display_english);
+    const ko=txt(e.translation_ko||settings.display_korean);
+    return word&&ko?{
+      id:e.id,
+      occurrenceId:'wb-'+item.id,
+      word,ko,
+      displayWord:txt(settings.display_english),
+      displayKo:txt(settings.display_korean),
+      emoji:e.emoji||null,
+      source:'word_builder'
+    }:null;
   }).filter(Boolean);
 }
-function mergeVocabularyPairs(...groups){
+function mergeVocabularyTargets(...groups){
   const map=new Map();
   groups.flat().forEach(item=>{
-    if(!item?.word||!item?.ko)return;
-    const key=txt(item.word).toLowerCase()+'|'+txt(item.ko);
-    if(!map.has(key)||item.source==='word_builder')map.set(key,item);
+    if(!item?.id||!item?.word||!item?.ko)return;
+    const key=txt(item.id);
+    const existing=map.get(key);
+    if(!existing||item.source==='source_content')map.set(key,item);
   });
   return [...map.values()];
 }
@@ -271,14 +280,14 @@ function sourceVocabularyActivities(book,unit,items){
       id:'vocab-study-en-ko-'+item.occurrenceId,sourceType:'lexical_entry',sourceId:item.id,skill:'vocabulary',
       stimulus:{type:'text',prompt:(item.emoji?item.emoji+'  ':'')+item.word,context:'한국어 뜻을 고르세요.'},
       response:{type:'multiple_choice',choices:koChoices},answer:item.ko,
-      metadata:{book_id:book.book_id,unit_id:unit.id,canonical_lookup:item.word,translation_ko:item.ko,pair_form:'en_ko',pool_source:'source_content'}
+      metadata:{book_id:book.book_id,unit_id:unit.id,lexical_entry_id:item.id,canonical_lookup:item.word,translation_ko:item.ko,pair_form:'en_ko',pool_source:item.source||'lexical_entry'}
     });
     const enChoices=shuffle(unique([item.word,...shuffle(enPool.filter(x=>x!==item.word)).slice(0,3)]));
     if(enChoices.length>=2)out.push({
       id:'vocab-study-ko-en-'+item.occurrenceId,sourceType:'lexical_entry',sourceId:item.id,skill:'vocabulary',
       stimulus:{type:'text',prompt:item.ko,context:'알맞은 영어 표현을 고르세요.'},
       response:{type:'multiple_choice',choices:enChoices},answer:item.word,
-      metadata:{book_id:book.book_id,unit_id:unit.id,canonical_lookup:item.word,translation_ko:item.ko,pair_form:'ko_en',pool_source:'source_content'}
+      metadata:{book_id:book.book_id,unit_id:unit.id,lexical_entry_id:item.id,canonical_lookup:item.word,translation_ko:item.ko,pair_form:'ko_en',pool_source:item.source||'lexical_entry'}
     });
   });
   return out;
@@ -290,15 +299,15 @@ async function loadVocabularyItems(book,unit){
   const sourcePromise=loadSourceVocabulary(unit.id).catch(e=>{console.warn('[Vocab Study] source vocabulary unavailable',e);return[]});
   const wordBuilderPromise=loadWordBuilderVocabulary(book,unit).catch(e=>{console.warn('[Vocab Study] Word Builder vocabulary unavailable',e);return[]});
   const [authoredRows,sourceRows,wordBuilderRows]=await Promise.all([authoredPromise,sourcePromise,wordBuilderPromise]);
-  const lexicalPairs=mergeVocabularyPairs(arr(sourceRows),arr(wordBuilderRows));
-  // The vocab app's default mode is simple Korean <-> English practice from canonical lexical data.
-  if(lexicalPairs.length)return sourceVocabularyActivities(book,unit,lexicalPairs);
+  const lexicalTargets=mergeVocabularyTargets(arr(sourceRows),arr(wordBuilderRows));
+  // One lexical_entry_id is one vocabulary target, regardless of worksheet/display variants.
+  if(lexicalTargets.length)return sourceVocabularyActivities(book,unit,lexicalTargets);
   return arr(authoredRows).filter(a=>a&&a.skill==='vocabulary');
 }
 
 function activityKey(item){
   const m=item?.metadata||{};
-  return txt(m.canonical_lookup||m.canonical_text||m.lexical_entry_id||item?.sourceId||item?.id);
+  return txt(m.lexical_entry_id||item?.sourceId||m.canonical_lookup||m.canonical_text||item?.id);
 }
 function activityWord(item){
   const m=item?.metadata||{};
@@ -349,8 +358,8 @@ function unitVocabularyWords(items){
       else if(prompt&&!/[A-Za-z]/.test(prompt))ko=prompt;
     }
     if(!word||!ko||!/[A-Za-z]/.test(word))return;
-    const key=word.toLowerCase()+'|'+ko;
-    if(!map.has(key))map.set(key,{word,ko});
+    const key=txt(m.lexical_entry_id||item?.sourceId)||(word.toLowerCase()+'|'+ko);
+    if(!map.has(key))map.set(key,{id:key,word,ko});
   });
   return [...map.values()];
 }
@@ -378,8 +387,8 @@ function renderHome(){
   renderUnits();
   bookTitleEl.textContent=state.book.book_title;
   unitTitleEl.textContent='Unit '+state.unit.unit_number+(state.unit.title?' · '+state.unit.title:'');
-  const words=new Set(state.items.map(activityKey).filter(Boolean)).size;
-  itemCountEl.textContent=(words||state.items.length)+' words';
+  const words=unitVocabularyWords(state.items);
+  itemCountEl.textContent=words.length+' words';
   if(wordListOpenBtn)wordListOpenBtn.disabled=!state.items.length;
   startBtn.disabled=!state.items.length;
   if(spellingPreviewBtn)spellingPreviewBtn.disabled=!state.items.length;
@@ -472,6 +481,7 @@ function classifySpellingResult(attempt){
 function recordSpellingAttempt(practice,word,renderer,correct){
   practice.currentAttemptCount+=1;
   const attempt={
+    lexicalEntryId:word.id||null,
     word:word.word,
     ko:word.ko,
     correct:!!correct,
@@ -695,7 +705,7 @@ async function boot(){
     document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!wordModalEl?.hidden)closeWordList()});
     closeBtn.addEventListener('click',closeSession);
     actionBtn.addEventListener('click',()=>state.spellingPractice?checkSpellingCoach():checkCurrent());
-    window.WillenaVocabStudy={version:'0.013',getState:()=>state,start:startSession,openSpellingPreview,close:closeSession};
+    window.WillenaVocabStudy={version:'0.014',getState:()=>state,start:startSession,openSpellingPreview,close:closeSession};
   }catch(error){
     console.error('[Vocab Study] boot',error);
     setStatus(error?.message||'불러오지 못했습니다. 새로고침해 주세요.');
