@@ -23,6 +23,19 @@ function finalMNVariant(a,b){
   return pair==='mn'||pair==='nm';
 }
 
+export function isSpeakableTarget(target){
+  const value=normalize(target);
+  if(!value)return false;
+
+  // Grammar fragments such as possessive "s" / "'s" are poor STT targets.
+  if(/^(?:s|'s)$/.test(value))return false;
+
+  // A single letter is too ambiguous for reliable browser speech recognition.
+  if(/^[a-z]$/.test(value))return false;
+
+  return true;
+}
+
 export function matchSpeakingTarget(target,transcripts){
   const wanted=normalize(target);
   const heard=(Array.isArray(transcripts)?transcripts:[transcripts])
