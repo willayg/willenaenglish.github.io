@@ -140,47 +140,57 @@ async function completeRewardSession(){
   reward.completed=true;
   reward.percent=rewardPercent(reward);
   reward.stars=starsForPercent(reward.percent);
-  const listName=reward.listName||('Vocabulary · '+txt(state.book?.book_title||state.book?.book_id||'Book')+' · Unit '+txt(state.unit?.unit_number||state.unit?.id||''));
+  const teacher=state.activeTeacherAssignment;
+  const listName=reward.listName||(
+    teacher
+      ?('Teacher Practice · '+txt(teacher?.assignment?.title||'Vocabulary'))
+      :('Vocabulary · '+txt(state.book?.book_title||state.book?.book_id||'Book')+' · Unit '+txt(state.unit?.unit_number||state.unit?.id||''))
+  );
   try{
-    await api('/.netlify/functions/progress_summary?section=study_attempt&_='+Date.now(),{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        payload:{
-          reward_only:true,
-          session_id:reward.rewardSessionId,
-          client_attempt_id:(window.crypto?.randomUUID?.()||('reward-'+Date.now()+'-'+Math.random().toString(16).slice(2))),
-          book_id:state.book?.book_id||null,
-          unit_id:state.unit?.id||null,
-          skill:'vocabulary',
-          response_type:'reward',
-          activity_id:'vocab-reward',
-          reward_mode:'vocab_'+reward.mode,
-          reward_list_name:listName,
-          reward_list_size:reward.firstTotal,
-          reward_started_at:reward.startedAt||new Date().toISOString(),
-          reward_summary:{
-            completed:true,
-            stars:reward.stars,
-            accuracy:reward.firstTotal?reward.firstCorrect/reward.firstTotal:0,
-            percent:reward.percent,
-            score:reward.firstCorrect,
-            total:reward.firstTotal,
-            points_earned:reward.points,
-            book_id:state.book?.book_id||null,
-            unit_id:state.unit?.id||null,
-            vocab_mode:reward.mode,
-            reward_scheme:'vocab-study-v1'
-          }
-        }
-      })
-    });
+    if(teacher&&state.pendingTeacherSaves.size){
+      await Promise.allSettled([...state.pendingTeacherSaves]);
+    }
+    const payload={
+      reward_only:true,
+      session_id:reward.rewardSessionId,
+      client_attempt_id:(window.crypto?.randomUUID?.()||('reward-'+Date.now()+'-'+Math.random().toString(16).slice(2))),
+      book_id:teacher?(teacher?.assignment?.book_id||null):(state.book?.book_id||null),
+      unit_id:teacher?(teacher?.assignment?.unit_id||null):(state.unit?.id||null),
+      skill:'vocabulary',
+      response_type:'reward',
+      activity_id:'vocab-reward',
+      reward_mode:'vocab_'+reward.mode,
+      reward_list_name:listName,
+      reward_list_size:reward.firstTotal,
+      reward_started_at:reward.startedAt||new Date().toISOString(),
+      reward_summary:{
+        completed:true,
+        stars:reward.stars,
+        accuracy:reward.firstTotal?reward.firstCorrect/reward.firstTotal:0,
+        percent:reward.percent,
+        score:reward.firstCorrect,
+        total:reward.firstTotal,
+        points_earned:reward.points,
+        book_id:teacher?(teacher?.assignment?.book_id||null):(state.book?.book_id||null),
+        unit_id:teacher?(teacher?.assignment?.unit_id||null):(state.unit?.id||null),
+        assignment_id:teacher?.assignment?.id||null,
+        session_source:teacher?'teacher':'student',
+        vocab_mode:reward.mode,
+        reward_scheme:'vocab-study-v1'
+      }
+    };
+    const endpoint=teacher
+      ?('/.netlify/functions/progress_summary?section=vocab_assignment_attempt&_='+Date.now())
+      :('/.netlify/functions/progress_summary?section=study_attempt&_='+Date.now());
+    const body=teacher?{assignment_id:teacher.assignment.id,payload}:{payload};
+    await api(endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
     try{
       window.dispatchEvent(new CustomEvent('session:ended',{detail:{session_id:reward.rewardSessionId,mode:'vocab_'+reward.mode,list_name:listName,list_size:reward.firstTotal}}));
       window.dispatchEvent(new CustomEvent('stars:refresh',{detail:{earned:reward.stars}}));
       localStorage.setItem('stars:refresh',String(Date.now()));
     }catch(_){}
-    await checkGoldenUnit();
+    if(teacher)await loadTeacherAssignments();
+    else await checkGoldenUnit();
   }catch(error){
     console.warn('[Vocab Study] reward session save failed',error);
   }
