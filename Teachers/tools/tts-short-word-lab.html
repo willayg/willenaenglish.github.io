@@ -27,7 +27,14 @@ button{cursor:pointer}button:hover{transform:translateY(-1px)}button:disabled{op
 <p class="sub">Fresh-vs-fresh pronunciation test. ElevenLabs is generated live on every click with <strong>no R2 access and no audio lookup</strong>. OpenAI is also generated live so you can compare the same word immediately.</p>
 
 <div class="voice-row">
-<label for="voiceSelect">OpenAI voice</label>
+<label for="modelSelect">OpenAI model</label>
+<select id="modelSelect">
+<option value="gpt-4o-mini-tts" selected>gpt-4o-mini-tts</option>
+<option value="gpt-4o-mini-tts-2025-12-15">gpt-4o-mini-tts-2025-12-15</option>
+<option value="tts-1-hd">tts-1-hd</option>
+<option value="tts-1">tts-1</option>
+</select>
+<label for="voiceSelect">Voice</label>
 <select id="voiceSelect">
 <option value="cedar" selected>Cedar</option>
 <option value="marin">Marin</option>
@@ -47,7 +54,7 @@ button{cursor:pointer}button:hover{transform:translateY(-1px)}button:disabled{op
 </div>
 
 <div class="badges">
-<span class="badge">OpenAI: gpt-4o-mini-tts</span>
+<span class="badge" id="openaiBadge">OpenAI: gpt-4o-mini-tts · Cedar</span>
 <span class="badge">ElevenLabs: LIVE generation only</span>
 <span class="badge">No R2 · No get_audio_urls</span>
 <span class="badge">30 short-word tests</span>
@@ -77,7 +84,10 @@ var ELEVEN=API_ORIGIN+'/.netlify/functions/eleven_labs_proxy';
 var OPENAI=API_ORIGIN+'/.netlify/functions/openai_proxy';
 var currentAudio=null,stopSequence=false;
 var grid=document.getElementById('grid');
+var modelSelect=document.getElementById('modelSelect');
 var voiceSelect=document.getElementById('voiceSelect');
+var openaiBadge=document.getElementById('openaiBadge');
+var LEGACY_VOICES=['alloy','ash','coral','echo','fable','onyx','nova','sage','shimmer'];
 
 var OPENAI_INSTRUCTIONS='Pronounce this English vocabulary item once, clearly and naturally. Warm, friendly and encouraging tone for a child learning English. Neutral American English. Slightly slower than normal conversation, but do not exaggerate. Do not add any other words or sounds.';
 
@@ -124,8 +134,16 @@ async function elevenLive(word){
 async function openAILive(word){
   busy('openai',word,true);
   var voice=voiceSelect.value||'cedar';
-  status('openai',word,'Generating '+voice+'…','live');
+  var model=modelSelect.value||'gpt-4o-mini-tts';
+  status('openai',word,'Generating '+model+' · '+voice+'…','live');
   try{
+    var payload={
+      model:model,
+      voice:voice,
+      input:word,
+      response_format:'mp3'
+    };
+    if(model.indexOf('gpt-4o-mini-tts')===0)payload.instructions=OPENAI_INSTRUCTIONS;
     var r=await fetch(OPENAI,{
       method:'POST',
       headers:{'Content-Type':'application/json'},
@@ -133,18 +151,12 @@ async function openAILive(word){
       cache:'no-store',
       body:JSON.stringify({
         endpoint:'audio/speech',
-        payload:{
-          model:'gpt-4o-mini-tts',
-          voice:voice,
-          input:word,
-          instructions:OPENAI_INSTRUCTIONS,
-          response_format:'mp3'
-        }
+        payload:payload
       })
     });
     var j=await r.json();
     if(!r.ok||!j.data)throw new Error((j.error&&j.error.message)||j.error||'OpenAI TTS failed');
-    status('openai',word,'Fresh OpenAI · '+voice,'ok');
+    status('openai',word,'Fresh OpenAI · '+model+' · '+voice,'ok');
     return b64Url(j.data);
   }finally{
     busy('openai',word,false);
@@ -154,7 +166,7 @@ async function openAILive(word){
 async function play(provider,word){
   try{
     var url=provider==='eleven'?await elevenLive(word):await openAILive(word);
-    var source=provider==='eleven'?'Fresh ElevenLabs':'Fresh OpenAI · '+voiceSelect.value;
+    var source=provider==='eleven'?'Fresh ElevenLabs':'Fresh OpenAI · '+modelSelect.value+' · '+voiceSelect.value;
     status(provider,word,'Playing · '+source,'ok');
     await playUrl(url);
     status(provider,word,source,'ok');
@@ -198,9 +210,21 @@ document.getElementById('stopBtn').onclick=function(){
   if(currentAudio){try{currentAudio.pause();currentAudio.currentTime=0;}catch(_){}currentAudio=null;}
 };
 
-voiceSelect.addEventListener('change',function(){
+function clearOpenAIStatuses(){
   document.querySelectorAll('[id^="s-openai-"]').forEach(function(el){el.textContent='';el.className='status';});
-});
+}
+function syncOpenAIControls(){
+  var legacy=modelSelect.value==='tts-1'||modelSelect.value==='tts-1-hd';
+  Array.prototype.forEach.call(voiceSelect.options,function(opt){
+    opt.disabled=legacy&&LEGACY_VOICES.indexOf(opt.value)<0;
+  });
+  if(legacy&&LEGACY_VOICES.indexOf(voiceSelect.value)<0)voiceSelect.value='nova';
+  if(openaiBadge)openaiBadge.textContent='OpenAI: '+modelSelect.value+' · '+voiceSelect.options[voiceSelect.selectedIndex].text;
+  clearOpenAIStatuses();
+}
+voiceSelect.addEventListener('change',syncOpenAIControls);
+modelSelect.addEventListener('change',syncOpenAIControls);
+syncOpenAIControls();
 })();
 </script>
 </body>
