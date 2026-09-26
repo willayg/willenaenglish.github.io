@@ -498,19 +498,66 @@ function recordVocabAttempt({skill,responseType,lexicalEntryId,activityId,prompt
   if(state.adminMode)return;
   const pointValue=vocabPointValue(skill,responseType,{correct,hintsUsed,metadata});
   noteRewardAttempt(correct,retryCount,pointValue);
+  const pointOrigin=pointValue>0
+    ? (state.pointTapOrigin||capturePointOrigin(root?.querySelector?.('.question-card')||root||actionBtn))
+    : null;
+  state.pointTapOrigin=null;
+  if(pointValue>0)showPointAward({amount:pointValue,origin:pointOrigin}).catch(()=>{});
+
+  const lexicalId=isUuid(lexicalEntryId)?txt(lexicalEntryId):null;
+  const teacher=state.activeTeacherAssignment;
+  const baseMeta=Object.assign({
+    book_id:teacher?(teacher?.assignment?.book_id||null):(state.book?.book_id||null),
+    unit_id:teacher?(teacher?.assignment?.unit_id||null):(state.unit?.id||null),
+    lexical_entry_id:lexicalId,
+    mastery_content_type:'lexical_entry',
+    mastery_content_id:lexicalId,
+    vocab_study:true,
+    points_override:pointValue,
+    assignment_id:teacher?.assignment?.id||null
+  },metadata||{});
+
+  if(teacher){
+    const payload={
+      session_id:state.rewardSession?.rewardSessionId||(window.crypto?.randomUUID?.()||('teacher-vocab-'+Date.now())),
+      client_attempt_id:(window.crypto?.randomUUID?.()||('teacher-attempt-'+Date.now()+'-'+Math.random().toString(16).slice(2))),
+      book_id:baseMeta.book_id,
+      unit_id:baseMeta.unit_id,
+      skill:txt(skill),
+      response_type:txt(responseType),
+      content_type:'lexical_entry',
+      content_id:lexicalId,
+      mastery_content_type:'lexical_entry',
+      mastery_content_id:lexicalId,
+      activity_id:txt(activityId)||('vocab-study-'+skill),
+      stimulus_snapshot:{type:'text',prompt:txt(prompt)},
+      student_answer:studentAnswer,
+      correct_answer:correctAnswer,
+      score:correct?1:0,
+      is_correct:!!correct,
+      response_time_ms:state.questionStartedAt?Math.max(0,Date.now()-state.questionStartedAt):0,
+      hints_used:Math.max(0,Number(hintsUsed)||0),
+      retry_count:Math.max(0,Number(retryCount)||0),
+      metadata:Object.assign({},baseMeta,{session_source:'teacher'}),
+      scoring_version:'activity-v1',
+      progress_version:'study-v1',
+      study_context:'independent'
+    };
+    const save=api('/.netlify/functions/progress_summary?section=vocab_assignment_attempt&_='+Date.now(),{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({assignment_id:teacher.assignment.id,payload})
+    }).catch(error=>console.warn('[Vocab Study] teacher assignment attempt save failed',error));
+    state.pendingTeacherSaves.add(save);
+    save.finally(()=>state.pendingTeacherSaves.delete(save));
+    return;
+  }
+
   const recorder=window.WillenaStudyProgress;
   if(!recorder||typeof recorder.record!=='function'){
     console.warn('[Vocab Study] canonical study recorder unavailable');
     return;
   }
-  const pointOrigin=pointValue>0
-    ? (state.pointTapOrigin||capturePointOrigin(root?.querySelector?.('.question-card')||root||actionBtn))
-    : null;
-  state.pointTapOrigin=null;
-  if(pointValue>0){
-    showPointAward({amount:pointValue,origin:pointOrigin}).catch(()=>{});
-  }
-  const lexicalId=isUuid(lexicalEntryId)?txt(lexicalEntryId):null;
   const detail={
     activity:{
       id:txt(activityId)||('vocab-study-'+skill),
@@ -520,22 +567,9 @@ function recordVocabAttempt({skill,responseType,lexicalEntryId,activityId,prompt
       stimulus:{type:'text',prompt:txt(prompt)},
       response:{type:txt(responseType)},
       answer:correctAnswer,
-      metadata:Object.assign({
-        book_id:state.book?.book_id||null,
-        unit_id:state.unit?.id||null,
-        lexical_entry_id:lexicalId,
-        mastery_content_type:'lexical_entry',
-        mastery_content_id:lexicalId,
-        vocab_study:true,
-        points_override:pointValue
-      },metadata||{})
+      metadata:baseMeta
     },
-    result:{
-      selected:studentAnswer,
-      answer:correctAnswer,
-      correct:!!correct,
-      score:correct?1:0
-    },
+    result:{selected:studentAnswer,answer:correctAnswer,correct:!!correct,score:correct?1:0},
     responseTimeMs:state.questionStartedAt?Math.max(0,Date.now()-state.questionStartedAt):0
   };
   recorder.record(Object.assign({},detail,{
@@ -545,6 +579,7 @@ function recordVocabAttempt({skill,responseType,lexicalEntryId,activityId,prompt
     sessionSource:txt(sessionSource)||'student'
   }));
 }
+
 
 async function api(url,opts){
   const fn=window.WillenaAPI&&typeof window.WillenaAPI.fetch==='function'?window.WillenaAPI.fetch.bind(window.WillenaAPI):window.fetch.bind(window);
