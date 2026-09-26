@@ -27,48 +27,41 @@ function phoneticWordKey(value){
   let word=normalize(value);
   if(!word||word.includes(' ')||word.length<3)return'';
 
-  // Common silent initials / endings and stable English sound groups.
+  // Normalize common English spelling patterns before phonetic encoding.
   word=word
     .replace(/^(?:kn|gn|pn)/,'n')
     .replace(/^wr/,'r')
+    .replace(/^wh/,'w')
     .replace(/mb$/,'m')
-    .replace(/(?:ight)/g,'It')
-    .replace(/(?:igh)/g,'I')
     .replace(/gh/g,'')
     .replace(/ph/g,'f')
     .replace(/ck/g,'k')
     .replace(/qu/g,'kw')
     .replace(/tch/g,'ch')
-    .replace(/dge/g,'j')
-    .replace(/tion/g,'shun')
-    .replace(/sion/g,'zhun')
-    .replace(/ower/g,'Aur')
-    .replace(/our/g,'Aur')
-    .replace(/ou(?=r)/g,'O')
-    .replace(/ee|ea/g,'E')
-    .replace(/oa/g,'O')
-    .replace(/oo/g,'U')
-    .replace(/ai|ay/g,'A')
-    .replace(/oi|oy/g,'Y')
-    .replace(/au|aw/g,'W');
+    .replace(/dge/g,'j');
 
-  // A final silent e should not distinguish otherwise matching pronunciations.
   if(word.length>3)word=word.replace(/e$/,'');
 
-  // Preserve a coarse vowel sound class instead of deleting all vowels.
-  word=word
-    .replace(/[a]/g,'A')
-    .replace(/[e]/g,'E')
-    .replace(/[i]/g,'I')
-    .replace(/[o]/g,'O')
-    .replace(/[u]/g,'U')
-    .replace(/c(?=[EIY])/g,'s')
-    .replace(/c/g,'k')
-    .replace(/x/g,'ks')
-    .replace(/q/g,'k')
-    .replace(/(.)\1+/g,'$1');
+  const first=word[0];
+  const code=ch=>{
+    if(/[bfpv]/.test(ch))return'1';
+    if(/[cgjkqsxz]/.test(ch))return'2';
+    if(/[dt]/.test(ch))return'3';
+    if(ch==='l')return'4';
+    if(/[mn]/.test(ch))return'5';
+    if(ch==='r')return'6';
+    return'';
+  };
 
-  return word.toLowerCase();
+  let out=first;
+  let previous=code(first);
+  for(let i=1;i<word.length;i++){
+    const current=code(word[i]);
+    if(current&&current!==previous)out+=current;
+    previous=current;
+    if(out.length>=4)break;
+  }
+  return (out+'000').slice(0,4);
 }
 
 function phoneticVariant(a,b){
