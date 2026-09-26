@@ -8,6 +8,7 @@ compatibility_date = "2024-01-01"
 [vars]
 # Non-secret config
 R2_PUBLIC_BASE = ""
+CONTENT_SUPABASE_URL = "https://gxwfsqxyuufqtitspfqg.supabase.co"
 
 # R2 bucket binding - MUCH faster than S3 API calls
 [[r2_buckets]]
