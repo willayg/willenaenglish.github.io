@@ -2,6 +2,10 @@ name: Diagnose Cloudflare Pages Secrets
 
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/diagnose-cloudflare-pages.yml'
 
 permissions:
   contents: read
