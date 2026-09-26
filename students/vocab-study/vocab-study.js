@@ -542,7 +542,12 @@ function openWordTestScreen(){
 function formatTeacherDue(value){
   const d=new Date(value||'');
   if(Number.isNaN(d.getTime()))return'';
-  try{return d.toLocaleDateString('en-US',{month:'short',day:'numeric'})}catch(_){return''}
+  const now=new Date();
+  const dueDay=new Date(d.getFullYear(),d.getMonth(),d.getDate());
+  const today=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+  const days=Math.round((dueDay-today)/86400000);
+  if(days===0)return'D-Day';
+  return days>0?'D-'+days:'D+'+Math.abs(days);
 }
 function teacherAssignmentWords(row){
   return arr(row?.targets).map((target,index)=>{
@@ -584,8 +589,9 @@ function renderTeacherAssignments(){
   if(teacherPracticeCountEl)teacherPracticeCountEl.textContent=state.teacherAssignments.length+' assignment'+(state.teacherAssignments.length===1?'':'s');
   teacherPracticeListEl.innerHTML=state.teacherAssignments.map((row,index)=>{
     const a=row.assignment||{},student=arr(row.students)[0]||{},modes=arr(a.required_modes);
-    const labels={quiz:'Quiz',spelling_test:'Spelling',speaking:'Speaking'};
+    const labels={quiz:'퀴즈',spelling_test:'철자',speaking:'말하기'};
     const modeClasses={quiz:'vocab-skill-quiz',spelling_test:'vocab-skill-spelling',speaking:'vocab-skill-pronunciation'};
+    const stepNumbers={quiz:1,spelling_test:2,speaking:3};
     const modeHtml=modes.map(mode=>{
       const m=student.modes?.[mode]||{};
       const complete=Number(m.total)>0&&Number(m.clean)>=Number(m.total);
@@ -593,11 +599,11 @@ function renderTeacherAssignments(){
       const stars=Math.max(0,Math.min(10,Number(m.stars)||0));
       return '<button class="vocab-teacher-mode vocab-skill-card '+escapeHtml(modeClasses[mode]||'')+(complete?' is-complete':'')+'" type="button" data-teacher-assignment="'+index+'" data-teacher-mode="'+escapeHtml(mode)+'">'+
         '<span class="vocab-skill-ring" style="--progress:'+progress+'"><span>'+progress+'%</span></span>'+
-        '<span class="vocab-skill-copy"><strong>'+escapeHtml(labels[mode]||mode)+'</strong><span class="vocab-teacher-stars" aria-label="'+stars+' out of 10 stars">★ '+stars+'/10</span></span>'+
+        '<span class="vocab-skill-copy"><small class="vocab-teacher-step">STEP '+(stepNumbers[mode]||'')+'</small><strong>'+escapeHtml(labels[mode]||mode)+'</strong><span class="vocab-teacher-stars" aria-label="'+stars+' out of 10 stars">★ '+stars+'/10</span></span>'+
       '</button>';
     }).join('');
     return '<article class="vocab-teacher-card">'+
-      '<div class="vocab-teacher-card-title"><strong>'+escapeHtml(a.title||'Vocabulary Practice')+'</strong><small>'+teacherAssignmentWords(row).length+' words'+(a.due_at?' · Due '+escapeHtml(formatTeacherDue(a.due_at)):'')+'</small></div>'+
+      '<div class="vocab-teacher-card-title"><strong>'+escapeHtml(a.title||'Vocabulary Practice')+'</strong><small>'+teacherAssignmentWords(row).length+' words'+(a.due_at?' · '+escapeHtml(formatTeacherDue(a.due_at)):'')+'</small></div>'+
       '<div class="vocab-teacher-modes">'+modeHtml+'</div>'+
     '</article>';
   }).join('');
