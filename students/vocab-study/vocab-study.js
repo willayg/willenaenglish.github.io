@@ -14,7 +14,6 @@ const ACTIVE_BOOK_KEY='willena-study-v2-active-book';
 
 const el=id=>document.getElementById(id);
 const statusEl=el('vocabStudyStatus');
-const bookTitleEl=el('vocabBookTitle');
 const unitTitleEl=el('vocabUnitTitle');
 const itemCountEl=el('vocabItemCount');
 const wordListOpenBtn=el('vocabWordListOpen');
@@ -48,7 +47,6 @@ const adminBookSelect=el('vocabAdminBookSelect');
 const bookPickerEl=el('vocabBookPicker');
 const bookChoicesEl=el('vocabBookChoices');
 const unitStripEl=el('vocabUnitStrip');
-const currentUnitLabelEl=el('vocabCurrentUnitLabel');
 const motivationEl=el('vocabMotivation');
 const streakCurrentEl=el('vocabStreakCurrent');
 const streakBestEl=el('vocabStreakBest');
@@ -984,12 +982,12 @@ async function selectUnit(id){
   }
 }
 function renderUnits(){
-  if(!unitStripEl||!currentUnitLabelEl)return;
+  if(!unitStripEl)return;
   const units=arr(state.units);
-  currentUnitLabelEl.textContent='현재 · Unit '+(state.unit?.unit_number||'—');
-  unitStripEl.innerHTML=units.map(u=>
-    '<button class="study-v2-unit'+(String(state.unit?.id)===String(u.id)?' is-current':'')+(isGoldenUnit(u.id)?' is-golden':'')+'" type="button" data-unit-id="'+escapeHtml(u.id)+'">Unit '+escapeHtml(u.unit_number)+(isGoldenUnit(u.id)?'<img class="vocab-unit-gold" src="/shared/svgs/golden-unit.svg" alt="Golden Unit">':'')+'</button>'
-  ).join('');
+  unitStripEl.innerHTML=units.map(u=>{
+    const golden=isGoldenUnit(u.id);
+    return '<button class="study-v2-unit'+(String(state.unit?.id)===String(u.id)?' is-current':'')+(golden?' is-golden':'')+'" type="button" data-unit-id="'+escapeHtml(u.id)+'">Unit '+escapeHtml(u.unit_number)+(golden?'<img class="vocab-unit-gold" src="/shared/svgs/golden-unit.svg" alt="Golden Unit">':'')+'</button>';
+  }).join('');
   unitStripEl.querySelectorAll('[data-unit-id]').forEach(btn=>btn.addEventListener('click',()=>selectUnit(btn.dataset.unitId)));
 }
 function renderBookPicker(){
@@ -1210,10 +1208,9 @@ function renderHome(){
   if(!state.book||!state.unit)return;
   renderBookPicker();
   renderUnits();
-  bookTitleEl.textContent=state.book.book_title;
   unitTitleEl.textContent='Unit '+state.unit.unit_number+(state.unit.title?' · '+state.unit.title:'');
   const words=unitVocabularyWords(state.items);
-  itemCountEl.textContent=words.length+' words';
+  itemCountEl.textContent='단어 '+words.length+'개 · 지금 보기';
   if(wordListOpenBtn)wordListOpenBtn.disabled=!state.items.length;
   startBtn.disabled=!state.items.length;
   if(spellingPreviewBtn)spellingPreviewBtn.disabled=!state.items.length;
