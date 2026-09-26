@@ -14,7 +14,7 @@
 <link rel="stylesheet" href="/students/study/study-overrides.css?v=20260808-1">
 <link rel="stylesheet" href="/students/study-v2/v2.css?v=20260814-daily1">
 <link rel="stylesheet" href="/students/shared/willena-keyboard-safe.css?v=1.0.0">
-<link rel="stylesheet" href="./vocab-study.css?v=20260926-v0088">
+<link rel="stylesheet" href="./vocab-study.css?v=20260926-v0091">
 <script src="/students/api-gateway.js?v=20260926-progress-summary-cf1"></script>
 <script src="/students/study/study-progress.js?v=20260926-assignment-canonical1"></script>
 <script src="/js/api-config.js?v=20260926-reverted-auth1"></script>
@@ -170,8 +170,16 @@
       </section>
     </section>
 
-    <div class="vocab-version">v0.090</div>
+    <div class="vocab-version">v0.091</div>
   </main>
+
+  <section id="vocabLoading" class="vocab-loading" hidden aria-hidden="true" aria-live="polite">
+    <div class="vocab-loading-card">
+      <div class="vocab-loading-logo" aria-hidden="true"></div>
+      <div class="vocab-loading-sweep" aria-hidden="true"></div>
+      <strong id="vocabLoadingText">불러오는 중...</strong>
+    </div>
+  </section>
 
   <section id="vocabWordModal" class="vocab-word-modal" hidden aria-hidden="true">
     <div class="vocab-word-modal-card" role="dialog" aria-modal="true" aria-labelledby="vocabWordModalTitle">
@@ -217,6 +225,6 @@
 </div>
 
 <script src="/students/study/study-question-bank.js?v=20260822-conversationfix1"></script>
-<script type="module" src="./vocab-study.js?v=20260926-v0090"></script>
+<script type="module" src="./vocab-study.js?v=20260926-v0091"></script>
 </body>
 </html>
