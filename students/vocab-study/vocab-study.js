@@ -26,6 +26,24 @@ const wordModalCloseBtn=el('vocabWordModalClose');
 const wordModalListEl=el('vocabWordModalList');
 const wordModalMetaEl=el('vocabWordModalMeta');
 let wordModalReturnFocus=null;
+const loadingEl=el('vocabLoading');
+const loadingTextEl=el('vocabLoadingText');
+let loadingDepth=0;
+function beginVocabLoading(message='불러오는 중...'){
+  loadingDepth+=1;
+  if(loadingTextEl)loadingTextEl.textContent=message;
+  if(loadingEl){loadingEl.hidden=false;loadingEl.setAttribute('aria-hidden','false')}
+}
+function endVocabLoading(){
+  loadingDepth=Math.max(0,loadingDepth-1);
+  if(!loadingDepth&&loadingEl){loadingEl.hidden=true;loadingEl.setAttribute('aria-hidden','true')}
+}
+async function withVocabLoading(message,fn){
+  beginVocabLoading(message);
+  try{return await fn()}
+  finally{endVocabLoading()}
+}
+
 const startBtn=el('vocabStudyStart');
 const spellingPreviewBtn=el('vocabSpellingPreview');
 const pronunciationStartBtn=el('vocabPronunciationStart');
@@ -98,6 +116,7 @@ const state={
   shellWired:false,
   activeTeacherAssignment:null,
   activeTeacherItems:[],
+  assignedSpellingRecovery:null,
   pendingTeacherRecords:new Set()
 };
 let navController=null;
@@ -139,12 +158,18 @@ function keepSpellingFieldVisible(field){
     if(!keyboard||keyboard.hidden||!field.isConnected)return;
     const kbRect=keyboard.getBoundingClientRect();
     const fieldRect=field.getBoundingClientRect();
+    const prompt=field.closest('.question-card')?.querySelector('.prompt');
+    const header=sessionEl?.querySelector('.vocab-session-top');
     const safeBottom=kbRect.top-24;
-    if(fieldRect.bottom>safeBottom){
-      sessionMain.scrollBy({
-        top:(fieldRect.bottom-safeBottom)+Math.min(120,Math.max(48,fieldRect.height)),
-        behavior:'smooth'
-      });
+    const safeTop=(header?.getBoundingClientRect().bottom||0)+14;
+    let delta=Math.max(0,fieldRect.bottom-safeBottom)+Math.min(84,Math.max(36,fieldRect.height*.55));
+    if(prompt){
+      const promptTop=prompt.getBoundingClientRect().top;
+      const maxDown=promptTop-safeTop;
+      if(promptTop-delta<safeTop)delta=maxDown;
+    }
+    if(Math.abs(delta)>1){
+      sessionMain.scrollBy({top:delta,behavior:'smooth'});
     }
   };
   setTimeout(adjust,60);
@@ -578,7 +603,7 @@ async function openBookById(bookId,{historyMode='push',unitId=''}={}){
     const assignment=state.assignments.find(item=>String(item?.book_id)===String(id));
     if(!assignment)return;
     setStatus('교재를 불러오는 중...');
-    const loaded=await loadAssignedBook(assignment);
+    const loaded=await withVocabLoading('교재를 불러오는 중...',()=>loadAssignedBook(assignment));
     if(!loaded)return;
     state.books.push(loaded);
     index=state.books.length-1;
@@ -845,6 +870,7 @@ function renderTeacherAssignments(){
 }
 async function loadTeacherAssignments(){
   if(state.adminMode)return[];
+  beginVocabLoading('워드 테스트를 불러오는 중...');
   try{
     const list=await api('/.netlify/functions/homework_api?action=list_assignments&mode=student&include_history=1&_='+Date.now());
     const envelopes=await resolveAssignmentBookIds(arr(list.assignments).filter(a=>txt(a?.source_type)==='vocab_study'));
@@ -880,6 +906,8 @@ async function loadTeacherAssignments(){
     renderOldWordTests();
     renderFrontMenu();
     return[];
+  }finally{
+    endVocabLoading();
   }
 }
 function teacherTitle(mode){
@@ -900,6 +928,7 @@ function startTeacherAssignment(row,mode,{historyMode='push'}={}){
   state.speakingSession=null;
   state.rewardSession=null;
   state.activeTeacherItems=[];
+  state.assignedSpellingRecovery=null;
   state.activeTeacherAssignment=row;
   state.progressSnapshot=null;
 
@@ -1216,7 +1245,7 @@ async function selectUnit(id,{updateHistory=true}={}){
   if(spellingPreviewBtn)spellingPreviewBtn.disabled=true;
   setStatus('단어를 불러오는 중...');
   try{
-    const items=await loadUnitVocabulary(state.book,unit);
+    const items=await withVocabLoading('단어를 불러오는 중...',()=>loadUnitVocabulary(state.book,unit));
     state.unit=unit;
     state.items=items;
     const loaded=state.books[state.activeIndex];
@@ -1967,6 +1996,42 @@ function checkSpellingTest(){
   actionBtn.classList.add('is-next');
   actionBtn.textContent=test.index>=test.words.length-1?'Finish':'Next';
 }
+function assignedSpellingWrongWords(test){
+  const wrongIds=new Set(arr(test?.results).filter(result=>result&&!result.correct).map(result=>txt(result.lexicalEntryId)).filter(Boolean));
+  if(!wrongIds.size)return[];
+  const seen=new Set();
+  return arr(test?.words).filter(word=>{
+    const id=txt(word?.id);
+    if(!id||!wrongIds.has(id)||seen.has(id))return false;
+    seen.add(id);
+    return true;
+  }).map(word=>Object.assign({},word,{__vocabRetryCount:0,__vocabRepeat:false}));
+}
+function startAssignedSpellingCoachReview(words){
+  const review=arr(words).filter(Boolean);
+  if(!review.length)return;
+  state.assignedSpellingRecovery={words:review.map(word=>Object.assign({},word))};
+  state.spellingTest=null;
+  state.speakingSession=null;
+  state.spellingPractice=createSpellingPractice(review.map(word=>{
+    const spellingTarget=word.spellingTarget||getSpellingTarget(word.word);
+    return spellingTarget?Object.assign({},word,{spellingTarget}):null;
+  }).filter(Boolean));
+  titleEl.textContent=teacherTitle('spelling_test')+' · Coach Review';
+  instructionEl.hidden=true;
+  answerNote.hidden=true;
+  questionStage.hidden=false;
+  bottomEl.hidden=false;
+  startSpellingPractice();
+}
+function retryAssignedSpellingReview(){
+  const words=arr(state.assignedSpellingRecovery?.words).map(word=>Object.assign({},word));
+  if(!words.length)return;
+  state.assignedSpellingRecovery=null;
+  state.spellingPractice=null;
+  openSpellingTest({teacherWords:words,historyMode:'none'});
+}
+
 async function finishSpellingTest(){
   playStudentSfx('complete');
   disableSpellingKeyboard();
@@ -1974,6 +2039,7 @@ async function finishSpellingTest(){
   const passed=uniquePassedCount(test?.results);
   const total=test?.initialTotal||0;
   const retries=wrongAttemptCount(test?.results);
+  const assignedWrongWords=state.activeTeacherAssignment?assignedSpellingWrongWords(test):[];
   const reward=await completeRewardSession();
   progressEl.textContent='완료';
   progressFill.style.width='100%';
@@ -1991,8 +2057,15 @@ async function finishSpellingTest(){
       '</div>'+
       rewardSummaryHtml(reward)+
       goldenAwardHtml()+
-      '<div class="vocab-finish-actions"><button id="vocabSpellingTestDone" class="vocab-done-btn" type="button">Finish</button></div>'+
+      (assignedWrongWords.length
+        ?'<div class="vocab-review-words"><strong>'+assignedWrongWords.length+'개 단어 복습</strong><br>틀린 단어를 철자 코치로 연습한 뒤 다시 시험해 볼 수 있어요.</div>'
+        :'')+
+      '<div class="vocab-finish-actions">'+
+        (assignedWrongWords.length?'<button id="vocabAssignedSpellCoach" class="vocab-review-btn" type="button">철자 코치로 복습</button>':'')+
+        '<button id="vocabSpellingTestDone" class="vocab-done-btn" type="button">Finish</button>'+
+      '</div>'+
     '</section>';
+  el('vocabAssignedSpellCoach')?.addEventListener('click',()=>startAssignedSpellingCoachReview(assignedWrongWords));
   el('vocabSpellingTestDone')?.addEventListener('click',closeSession);
   sessionMain.scrollTop=0;
 }
@@ -2159,8 +2232,12 @@ async function finishSpellingPractice(){
         '<div><strong>'+wrongs+'</strong><span>RETRIES</span></div>'+
       '</div>'+
       rewardSummaryHtml(reward,{pointsOnly:true})+
-      '<div class="vocab-finish-actions"><button id="vocabSpellingDone" class="vocab-done-btn" type="button">Finish</button></div>'+
+      '<div class="vocab-finish-actions">'+
+        (state.assignedSpellingRecovery?'<button id="vocabAssignedSpellRetry" class="vocab-review-btn" type="button">틀린 단어 다시 시험</button>':'')+
+        '<button id="vocabSpellingDone" class="vocab-done-btn" type="button">Finish</button>'+
+      '</div>'+
     '</section>';
+  el('vocabAssignedSpellRetry')?.addEventListener('click',retryAssignedSpellingReview);
   el('vocabSpellingDone')?.addEventListener('click',closeSession);
 }
 
@@ -2245,10 +2322,11 @@ async function closeSession({historyMode='back'}={}){
     try{await loadTeacherAssignments()}catch(error){console.warn('[Vocab Study] partial homework refresh failed',error)}
   }
 
-  state.queue=[];state.index=0;state.checked=false;state.renderer=null;state.spellingPractice=null;state.spellingTest=null;state.speakingSession=null;state.rewardSession=null;state.pendingGoldenAward=null;state.activeTeacherAssignment=null;state.activeTeacherItems=[];
+  state.queue=[];state.index=0;state.checked=false;state.renderer=null;state.spellingPractice=null;state.spellingTest=null;state.speakingSession=null;state.rewardSession=null;state.pendingGoldenAward=null;state.activeTeacherAssignment=null;state.activeTeacherItems=[];state.assignedSpellingRecovery=null;
   try{window.scrollTo({top:0,behavior:'auto'})}catch(_){}
 }
 async function boot(){
+  beginVocabLoading('단어 지니어스를 준비하는 중...');
   try{
     wireShellNavigation();
     if(frontWordTestCardEl)frontWordTestCardEl.hidden=true;
@@ -2315,13 +2393,15 @@ async function boot(){
     reportStartupPerf();
     preloadStudentSfx();
 
-window.WillenaVocabStudy={version:'0.090',getState:()=>state,start:startSession,openSpellingMenu,openSpellingPreview,openSpellingTest,openSpeakingSession,close:closeSession};
+window.WillenaVocabStudy={version:'0.091',getState:()=>state,start:startSession,openSpellingMenu,openSpellingPreview,openSpellingTest,openSpeakingSession,close:closeSession};
   }catch(error){
     console.error('[Vocab Study] boot',error);
     if(frontWordTestCardEl)frontWordTestCardEl.hidden=true;
     setMainScreen('home');
     setStatus(error?.message||'불러오지 못했습니다. 새로고침해 주세요.');
     if(unitTitleEl)unitTitleEl.textContent='Please try again.';startBtn.disabled=true;if(spellingPreviewBtn)spellingPreviewBtn.disabled=true;
+  }finally{
+    endVocabLoading();
   }
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
