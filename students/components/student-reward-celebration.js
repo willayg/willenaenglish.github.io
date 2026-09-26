@@ -1,5 +1,5 @@
 class StudentRewardCelebration extends HTMLElement {
-  static get observedAttributes(){return ['percent','stars','points','label','points-only'];}
+  static get observedAttributes(){return ['percent','stars','star-max','points','label','points-only'];}
 
   constructor(){
     super();
@@ -28,11 +28,12 @@ class StudentRewardCelebration extends HTMLElement {
 
   render(){
     const percent=Math.round(this.numberAttr('percent',0,100));
-    const stars=Math.round(this.numberAttr('stars',0,5));
+    const starMax=Math.round(this.numberAttr('star-max',1,10)||5);
+    const stars=Math.round(this.numberAttr('stars',0,starMax));
     const points=Math.max(0,Math.round(this.numberAttr('points',0,1000000)));
     const label=this.getAttribute('label')||'SESSION REWARD';
     const pointsOnly=this.hasAttribute('points-only');
-    const starHtml=Array.from({length:5},(_,i)=>
+    const starHtml=Array.from({length:starMax},(_,i)=>
       '<span class="star '+(i<stars?'earned':'empty')+'" data-star="'+i+'" aria-hidden="true">'+(i<stars?'★':'☆')+'</span>'
     ).join('');
 
@@ -42,7 +43,7 @@ class StudentRewardCelebration extends HTMLElement {
         .reward{border:2px solid var(--reward-border,#dff2f4);border-radius:22px;background:var(--reward-bg,#f9fcfc);padding:20px 18px;text-align:center;overflow:hidden}
         .label{font-size:.72rem;font-weight:900;letter-spacing:.12em;color:var(--reward-muted,#789095)}
         .percent{margin-top:4px;font-size:clamp(2.15rem,8vw,3.1rem);font-weight:900;line-height:1;color:var(--reward-text,#315e64)}
-        .stars{display:flex;justify-content:center;gap:7px;margin:14px 0 16px;font-size:clamp(2rem,8vw,2.8rem);line-height:1}
+        .stars{display:flex;justify-content:center;gap:7px;margin:14px 0 16px;font-size:clamp(1.45rem,6vw,2.8rem);line-height:1;flex-wrap:wrap}
         .star{display:inline-block;transform-origin:center}
         .star.earned{color:var(--reward-star,#f3b61f);text-shadow:0 2px 0 rgba(125,89,0,.09)}
         .star.empty{color:var(--reward-empty,#cbd6d8)}
@@ -77,13 +78,14 @@ class StudentRewardCelebration extends HTMLElement {
 
   play(){
     if(!this._rendered||this.hasAttribute('points-only'))return;
+    const starMax=Math.round(this.numberAttr('star-max',1,10)||5);
     const earned=[...this.shadowRoot.querySelectorAll('.star.earned')];
     earned.forEach(star=>star.classList.remove('pop','final-pop'));
     void this.shadowRoot.host.offsetWidth;
     earned.forEach((star,index)=>{
       const delay=index*170;
       setTimeout(()=>{
-        star.classList.add(index===earned.length-1&&earned.length===5?'final-pop':'pop');
+        star.classList.add(index===earned.length-1&&earned.length===starMax?'final-pop':'pop');
       },delay);
     });
   }
