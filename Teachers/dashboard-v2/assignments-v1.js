@@ -98,7 +98,7 @@
       : (a.class||'No class');
     return '<button type="button" class="assignment-card" data-assignment-id="'+esc(a.id)+'">'+
       '<div class="assignment-card-head">'+
-        '<div><strong>'+esc(a.title||'Vocabulary Study')+'</strong><span>'+esc(scope)+' · '+esc(required.map(x=>labels[x]||x).join(' · ')||'Vocabulary Study')+'</span></div>'+
+        '<div><strong>'+esc(a.title||'Vocabulary Study')+'</strong><span>'+esc(scope)+' · '+esc(required.map(x=>labels[x]||x).join(' · ')||'Vocabulary Study')+(assignmentWorkloadMode(a)==='split'?' · Split workload':'')+'</span></div>'+
         '<span class="assignment-state '+(isCurrent(a)?'is-current':'is-history')+'">'+(isCurrent(a)?'Current':(a.ended_at?'Cancelled':'History'))+'</span>'+
       '</div>'+
       '<div class="assignment-card-meta"><span>Due <b>'+esc(fmtDate(a.due_at))+'</b></span><span>Created <b>'+esc(fmtDate(a.created_at))+'</b></span></div>'+
@@ -141,6 +141,60 @@
     }
   }
 
+  function assignmentMeta(assignment){
+    return assignment?.list_meta&&typeof assignment.list_meta==='object'?assignment.list_meta:{};
+  }
+
+  function assignmentWorkloadMode(assignment){
+    return String(assignmentMeta(assignment).workload_mode||'all').toLowerCase()==='split'?'split':'all';
+  }
+
+  function assignmentModeTargetIds(assignment,mode){
+    if(assignmentWorkloadMode(assignment)!=='split')return null;
+    const ids=assignmentMeta(assignment)?.mode_target_ids?.[mode];
+    return Array.isArray(ids)?ids.map(String).filter(Boolean):[];
+  }
+
+  function assignmentModeTargetCount(assignment,mode,fallback=0){
+    const ids=assignmentModeTargetIds(assignment,mode);
+    return ids===null?Math.max(0,Number(fallback)||0):ids.length;
+  }
+
+  function adjustedStudentMode(assignment,student,mode){
+    const raw=student?.modes?.[mode]||{};
+    const total=assignmentModeTargetCount(assignment,mode,raw.total);
+    const clean=Math.min(total,Math.max(0,Number(raw.clean)||0));
+    const percent=total>0?Math.round(100*clean/total):0;
+    return{...raw,total,clean,percent};
+  }
+
+  function adjustedStudentSummary(assignment,student,modes){
+    const states=(modes||[]).map(mode=>adjustedStudentMode(assignment,student,mode));
+    const overall=states.length?Math.round(states.reduce((sum,m)=>sum+(Number(m.percent)||0),0)/states.length):0;
+    const complete=states.length>0&&states.every(m=>m.total>0&&m.clean>=m.total);
+    const started=states.some(m=>Number(m.clean)>0||Number(m.attempts)>0);
+    return{modes:states,overall,status:complete?'complete':started?'in_progress':'not_started'};
+  }
+
+  function shuffleCopy(items){
+    const out=items.slice();
+    for(let i=out.length-1;i>0;i--){
+      const j=Math.floor(Math.random()*(i+1));
+      [out[i],out[j]]=[out[j],out[i]];
+    }
+    return out;
+  }
+
+  function balancedModeSplit(targetIds,modes){
+    const active=(modes||[]).filter(Boolean);
+    const ids=shuffleCopy([...new Set((targetIds||[]).map(String).filter(Boolean))]);
+    const out={};
+    active.forEach(mode=>{out[mode]=[]});
+    if(!active.length)return out;
+    ids.forEach((id,index)=>out[active[index%active.length]].push(id));
+    return out;
+  }
+
   function avgMode(students,mode){
     const values=students.map(s=>Number(s?.modes?.[mode]?.percent)).filter(Number.isFinite);
     return values.length?Math.round(values.reduce((a,b)=>a+b,0)/values.length):0;
@@ -168,20 +222,31 @@
       (Array.isArray(state.selectedAssignment?.list_meta?.target_student_ids)?state.selectedAssignment.list_meta.target_student_ids:[]))
       .map(String));
     const students=targetIds.size?allStudents.filter(s=>targetIds.has(String(s?.student_id||''))):allStudents;
-    const modes=Array.isArray(a.required_modes)?a.required_modes:[];
+    const assignmentView={
+      ...(state.selectedAssignment||{}),
+      ...a,
+      list_meta:assignmentMeta(state.selectedAssignment||a)
+    };
+    const modes=Array.isArray(assignmentView?.list_meta?.required_modes)&&assignmentView.list_meta.required_modes.length
+      ?assignmentView.list_meta.required_modes
+      :(Array.isArray(a.required_modes)?a.required_modes:[]);
     const labels={quiz:'Quiz',spelling_test:'Spelling',speaking:'Speaking'};
-    const complete=students.filter(s=>s.status==='complete').length;
-    const started=students.filter(s=>s.status==='in_progress').length;
-    const overall=students.length?Math.round(students.reduce((sum,s)=>sum+(Number(s.completion_percent)||0),0)/students.length):0;
-    const modeStats=modes.map(mode=>
-      '<div class="assignment-kpi"><strong>'+avgMode(students,mode)+'%</strong><span>'+esc(labels[mode]||mode)+'</span></div>'
-    ).join('');
+    const summaries=students.map(student=>({student,summary:adjustedStudentSummary(assignmentView,student,modes)}));
+    const complete=summaries.filter(x=>x.summary.status==='complete').length;
+    const started=summaries.filter(x=>x.summary.status==='in_progress').length;
+    const overall=summaries.length?Math.round(summaries.reduce((sum,x)=>sum+x.summary.overall,0)/summaries.length):0;
+    const modeStats=modes.map(mode=>{
+      const values=summaries.map(x=>adjustedStudentMode(assignmentView,x.student,mode).percent);
+      const pct=values.length?Math.round(values.reduce((sum,value)=>sum+value,0)/values.length):0;
+      const count=assignmentModeTargetCount(assignmentView,mode,progress.target_count);
+      return '<div class="assignment-kpi"><strong>'+pct+'%</strong><span>'+esc(labels[mode]||mode)+' · '+count+' words</span></div>';
+    }).join('');
 
     detail.hidden=false;
     detail.innerHTML=
       '<div class="assignment-detail-head">'+
         '<button class="assignment-back" type="button" id="assignmentBackBtn">← Assignments</button>'+
-        '<div><h2>'+esc(a.title||'Vocabulary Study')+'</h2><p>'+esc(a.class||'')+' · '+progress.target_count+' words · Due '+esc(fmtDate(a.due_at))+'</p></div>'+
+        '<div><h2>'+esc(a.title||'Vocabulary Study')+'</h2><p>'+esc(a.class||'')+' · '+progress.target_count+' words'+(assignmentWorkloadMode(assignmentView)==='split'?' · Split workload':'')+' · Due '+esc(fmtDate(a.due_at))+'</p></div>'+
         '<div class="assignment-detail-actions">'+
           (isCurrent(state.selectedAssignment||a)
             ?'<button class="control" type="button" id="assignmentEditBtn">Edit</button><button class="control assignment-cancel-btn" type="button" id="assignmentCancelBtn">Cancel assignment</button>'
@@ -202,19 +267,18 @@
         modes.map(mode=>'<th>'+esc(labels[mode]||mode)+'</th>').join('')+
         '<th>Overall</th><th>Status</th>'+
       '</tr></thead><tbody>'+
-      students.map(s=>
-        '<tr class="assignment-student-row" data-student-id="'+esc(s.student_id)+'">'+
+      students.map(s=>{
+        const summary=adjustedStudentSummary(assignmentView,s,modes);
+        return '<tr class="assignment-student-row" data-student-id="'+esc(s.student_id)+'">'+
           '<td><strong>'+esc(s.name||s.korean_name||'Student')+'</strong>'+(s.korean_name&&s.korean_name!==s.name?'<small>'+esc(s.korean_name)+'</small>':'')+'</td>'+
           modes.map(mode=>{
-            const p=Number(s?.modes?.[mode]?.percent)||0;
-            const clean=Number(s?.modes?.[mode]?.clean)||0;
-            const total=Number(s?.modes?.[mode]?.total)||0;
-            return '<td><span class="assignment-pct '+pctClass(p)+'">'+p+'%</span><small>'+clean+'/'+total+'</small></td>';
+            const m=adjustedStudentMode(assignmentView,s,mode);
+            return '<td><span class="assignment-pct '+pctClass(m.percent)+'">'+m.percent+'%</span><small>'+m.clean+'/'+m.total+'</small></td>';
           }).join('')+
-          '<td><span class="assignment-pct '+pctClass(s.completion_percent)+'">'+(Number(s.completion_percent)||0)+'%</span></td>'+
-          '<td><span class="assignment-status '+esc(s.status||'not_started')+'">'+esc(statusLabel(s.status))+'</span></td>'+
-        '</tr>'
-      ).join('')+
+          '<td><span class="assignment-pct '+pctClass(summary.overall)+'">'+summary.overall+'%</span></td>'+
+          '<td><span class="assignment-status '+esc(summary.status)+'">'+esc(statusLabel(summary.status))+'</span></td>'+
+        '</tr>';
+      }).join('')+
       '</tbody></table></div>'+
       '<div id="assignmentStudentDetail" class="assignment-student-detail" hidden></div>';
 
@@ -232,6 +296,26 @@
     const panel=$('#assignmentManagePanel');
     if(!assignment||!panel)return;
     const required=Array.isArray(assignment?.list_meta?.required_modes)?assignment.list_meta.required_modes:[];
+    const initialWorkload=assignmentWorkloadMode(assignment);
+    let splitAllocation=initialWorkload==='split'
+      ?JSON.parse(JSON.stringify(assignmentMeta(assignment).mode_target_ids||{}))
+      :{};
+    let assignmentTargetIds=Array.isArray(state.progress?.targets)
+      ?state.progress.targets.map(target=>String(target?.lexical_entry_id||target?.id||'')).filter(Boolean)
+      :[];
+    if(!assignmentTargetIds.length&&initialWorkload==='split'){
+      assignmentTargetIds=[...new Set(Object.values(splitAllocation).flat().map(String).filter(Boolean))];
+    }
+    if(!assignmentTargetIds.length){
+      try{
+        const targetData=await api(route('vocab_assignment_progress',{assignment_id:id}));
+        assignmentTargetIds=Array.isArray(targetData?.targets)
+          ?targetData.targets.map(target=>String(target?.lexical_entry_id||target?.id||'')).filter(Boolean)
+          :[];
+      }catch(error){
+        console.warn('[Assignments] could not preload workload targets',error);
+      }
+    }
     const targetIds=new Set((Array.isArray(assignment?.list_meta?.target_student_ids)?assignment.list_meta.target_student_ids:[]).map(String));
     const targeted=targetIds.size>0;
 
@@ -246,6 +330,12 @@
           '<label><input type="checkbox" value="quiz"'+(required.includes('quiz')?' checked':'')+'> Quiz</label>'+
           '<label><input type="checkbox" value="spelling_test"'+(required.includes('spelling_test')?' checked':'')+'> Spelling</label>'+
           '<label><input type="checkbox" value="speaking"'+(required.includes('speaking')?' checked':'')+'> Speaking</label>'+
+        '</fieldset>'+
+        '<fieldset class="assignment-edit-workload"><legend>Workload</legend>'+
+          '<label><input type="radio" name="assignmentWorkload" value="all"'+(initialWorkload==='all'?' checked':'')+'> All words in every mode</label>'+
+          '<label><input type="radio" name="assignmentWorkload" value="split"'+(initialWorkload==='split'?' checked':'')+'> Split words between modes</label>'+
+          '<div id="assignmentWorkloadSummary" class="assignment-workload-summary"></div>'+
+          '<button type="button" class="control assignment-reshuffle-btn" id="assignmentReshuffleBtn">↻ Reshuffle split</button>'+
         '</fieldset>'+
         '<fieldset class="assignment-edit-target"><legend>Students</legend>'+
           '<label><input type="radio" name="assignmentTargetScope" value="class"'+(!targeted?' checked':'')+'> Entire class</label>'+
@@ -274,7 +364,43 @@
       picker.innerHTML='<div class="assignment-edit-loading">Could not load students: '+esc(error.message)+'</div>';
     }
 
-    $$('input[name="assignmentTargetScope"]',panel).forEach(input=>input.addEventListener('change',()=>{
+    const workloadSummary=$('#assignmentWorkloadSummary',panel);
+    const reshuffle=$('#assignmentReshuffleBtn',panel);
+    const editModes=()=>$('.assignment-edit-modes input:checked',panel).map(input=>input.value);
+    const editWorkload=()=>$('input[name="assignmentWorkload"]:checked',panel)?.value||'all';
+    const renderWorkload=({reshuffleSplit=false}={})=>{
+      const modes=editModes();
+      const workload=editWorkload();
+      if(workload==='split'){
+        const keys=Object.keys(splitAllocation||{});
+        if(reshuffleSplit||keys.length!==modes.length||modes.some(mode=>!keys.includes(mode))){
+          splitAllocation=balancedModeSplit(assignmentTargetIds,modes);
+        }
+      }
+      if(reshuffle)reshuffle.hidden=workload!=='split'||modes.length<2;
+      if(!workloadSummary)return;
+      if(workload!=='split'){
+        workloadSummary.innerHTML='<span>'+assignmentTargetIds.length+' words in every selected mode</span>';
+        return;
+      }
+      const labels={quiz:'Quiz',spelling_test:'Spelling',speaking:'Speaking'};
+      workloadSummary.innerHTML=modes.map(mode=>{
+        const count=Array.isArray(splitAllocation?.[mode])?splitAllocation[mode].length:0;
+        return '<span><b>'+esc(labels[mode]||mode)+'</b> '+count+' words'+(mode==='quiz'?' · '+(count*2)+' questions':'')+'</span>';
+      }).join('');
+    };
+    $('.assignment-edit-modes input',panel).forEach(input=>input.addEventListener('change',()=>renderWorkload({reshuffleSplit:true})));
+    $('input[name="assignmentWorkload"]',panel).forEach(input=>input.addEventListener('change',()=>renderWorkload({reshuffleSplit:input.value==='split'})));
+    reshuffle?.addEventListener('click',()=>{
+      const anyStarted=Array.isArray(state.progress?.students)&&state.progress.students.some(student=>
+        Object.values(student?.modes||{}).some(mode=>Number(mode?.attempts)>0||Number(mode?.clean)>0)
+      );
+      if(anyStarted&&!confirm('Students have already started this assignment. Reshuffling changes which words they need in each mode. Continue?'))return;
+      renderWorkload({reshuffleSplit:true});
+    });
+    renderWorkload();
+
+    $('input[name="assignmentTargetScope"]',panel).forEach(input=>input.addEventListener('change',()=>{
       const studentMode=$('input[name="assignmentTargetScope"]:checked',panel)?.value==='students';
       picker.hidden=!studentMode;
     }));
@@ -283,7 +409,9 @@
       e.preventDefault();
       const title=$('#assignmentEditTitle',panel)?.value.trim()||'';
       const dueAt=dueAtFromDate($('#assignmentEditDue',panel)?.value||'');
-      const modes=$$('.assignment-edit-modes input:checked',panel).map(input=>input.value);
+      const modes=$('.assignment-edit-modes input:checked',panel).map(input=>input.value);
+      const workload=editWorkload();
+      if(workload==='split')renderWorkload();
       const scope=$('input[name="assignmentTargetScope"]:checked',panel)?.value||'class';
       const studentIds=scope==='students'
         ?$$('.assignment-student-picker input:checked',panel).map(input=>input.value)
@@ -312,7 +440,11 @@
         const listMeta={
           required_modes:modes,
           target_student_ids:studentIds,
-          target_students:targetStudents
+          target_students:targetStudents,
+          workload_mode:workload,
+          workload_version:1,
+          mode_target_ids:workload==='split'?Object.fromEntries(modes.map(mode=>[mode,(splitAllocation[mode]||[]).slice()])):null,
+          mode_target_counts:workload==='split'?Object.fromEntries(modes.map(mode=>[mode,(splitAllocation[mode]||[]).length])):null
         };
 
         // The deployed homework API already supports metadata updates. Student targeting
