@@ -430,3 +430,5 @@ export default {
     }
   }
 };
+
+// deploy-bump: 2026-09-27 shimmer batch
