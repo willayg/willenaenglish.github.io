@@ -112,6 +112,46 @@ function disableSpellingKeyboard(){
   try{spellingKeyboard.uninstall()}catch(_){}
   spellingKeyboard=null;
 }
+function prepareSharedKeyboardField(field){
+  if(!field)return null;
+  field.setAttribute('inputmode','none');
+  field.setAttribute('autocomplete','off');
+  field.setAttribute('autocorrect','off');
+  field.setAttribute('autocapitalize','off');
+  field.setAttribute('spellcheck','false');
+  field.dataset.willenaKeyboard='app';
+  return field;
+}
+function keepSpellingFieldVisible(field){
+  if(!field||!sessionMain)return;
+  const adjust=()=>{
+    const keyboard=document.getElementById('willenaSharedKeyboard');
+    if(!keyboard||keyboard.hidden||!field.isConnected)return;
+    const kbRect=keyboard.getBoundingClientRect();
+    const fieldRect=field.getBoundingClientRect();
+    const safeBottom=kbRect.top-24;
+    if(fieldRect.bottom>safeBottom){
+      sessionMain.scrollBy({
+        top:(fieldRect.bottom-safeBottom)+Math.min(120,Math.max(48,fieldRect.height)),
+        behavior:'smooth'
+      });
+    }
+  };
+  setTimeout(adjust,60);
+  setTimeout(adjust,180);
+}
+function wireSpellingField(field,{focus=false}={}){
+  field=prepareSharedKeyboardField(field);
+  if(!field)return;
+  field.addEventListener('focus',()=>keepSpellingFieldVisible(field));
+  field.addEventListener('pointerdown',()=>setTimeout(()=>keepSpellingFieldVisible(field),80));
+  if(focus){
+    requestAnimationFrame(()=>{
+      try{field.focus({preventScroll:true})}catch(_){field.focus()}
+      keepSpellingFieldVisible(field);
+    });
+  }
+}
 
 function txt(v){return String(v==null?'':v).trim()}
 function arr(v){return Array.isArray(v)?v:[]}
@@ -1443,7 +1483,7 @@ async function openSpeakingSession({teacherWords=null,historyMode='push'}={}){
     await ensureProgressSnapshot();
     words=shuffle(nextSkillTargets(state.progressSnapshot,'speaking',speakingWords(state.items),item=>item?.id,'speaking'));
   }
-  if(!words.length)return;
+  if(!words.length){disableSpellingKeyboard();return}
   state.spellingPractice=null;
   state.spellingTest=null;
   state.speakingSession={words,index:0,results:[],checked:false,initialTotal:words.length};
@@ -1694,6 +1734,7 @@ function spellingTestWords(items){
   return shuffle(spellingWords(items));
 }
 async function openSpellingTest({teacherWords=null,historyMode=null}={}){
+  enableSpellingKeyboard();
   let words;
   if(teacherWords&&teacherWords.length){
     words=shuffle(teacherWords.map(w=>{
@@ -1751,7 +1792,8 @@ function renderSpellingTestQuestion(){
     onChange:(_,has)=>{if(!test.checked)actionBtn.disabled=!has}
   });
   state.questionStartedAt=Date.now();
-  host.querySelector('[data-write]')?.focus();
+  const spellingInput=host.querySelector('[data-write]');
+  wireSpellingField(spellingInput,{focus:true});
   sessionMain.scrollTop=0;
 }
 function checkSpellingTest(){
@@ -1906,7 +1948,9 @@ function renderSpellingCoach(){
     onChange:(_,has)=>{actionBtn.disabled=!has}
   });
   state.questionStartedAt=Date.now();
-  host.querySelector('[data-spelling-input]')?.addEventListener('keydown',e=>{
+  const spellingInput=host.querySelector('[data-spelling-input]');
+  wireSpellingField(spellingInput);
+  spellingInput?.addEventListener('keydown',e=>{
     if(e.key==='Enter'&&state.renderer?.hasResponse()){e.preventDefault();state.pointTapOrigin=capturePointOrigin(e.currentTarget);checkSpellingCoach()}
   });
   sessionMain.scrollTop=0;
@@ -2138,7 +2182,7 @@ async function boot(){
       renderSkillProgress();
     });
     reportStartupPerf();
-    window.WillenaVocabStudy={version:'0.084',getState:()=>state,start:startSession,openSpellingMenu,openSpellingPreview,openSpellingTest,openSpeakingSession,close:closeSession};
+    window.WillenaVocabStudy={version:'0.085',getState:()=>state,start:startSession,openSpellingMenu,openSpellingPreview,openSpellingTest,openSpeakingSession,close:closeSession};
   }catch(error){
     console.error('[Vocab Study] boot',error);
     if(frontWordTestCardEl)frontWordTestCardEl.hidden=true;
