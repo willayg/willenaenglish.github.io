@@ -85,7 +85,10 @@
     const detail=$('#assignmentDetail');
     if(!list)return;
     const rows=visibleAssignments();
-    if(detail)detail.hidden=true;
+    if(detail){
+      detail.hidden=true;
+      detail.innerHTML='';
+    }
     state.selectedAssignment=null;
     state.progress=null;
     state.studentDetail=null;
