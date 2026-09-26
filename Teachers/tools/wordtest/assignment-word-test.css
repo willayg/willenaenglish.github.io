@@ -71,3 +71,7 @@ body.wb-assign-open{overflow:hidden}
 @media(max-width:600px){
   .wb-assign-class-list{grid-template-columns:1fr;max-height:260px}
 }
+
+/* Pass 3: canonical book → class suggestion */
+.wb-assign-class-row.is-suggested{box-shadow:inset 0 0 0 1px #bfecef}
+.wb-assign-book-match{color:#2d8792!important;font-weight:800!important}
