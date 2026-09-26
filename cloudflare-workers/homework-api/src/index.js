@@ -645,6 +645,37 @@ export default {
         return jsonResponse(result, 200, origin);
       }
       
+      // ===== VOCABULARY STUDY STUDENT DETAIL =====
+      if (action === 'vocab_assignment_student_detail') {
+        const authUserId = await getUserIdFromRequest(request, env);
+        if (!authUserId) return jsonResponse({ success:false, error:'Not signed in' }, 401, origin);
+
+        const prof = await fetchProfile(env, authUserId);
+        const role = String(prof?.role || '').toLowerCase();
+        if (!prof || !['teacher','admin'].includes(role)) {
+          return jsonResponse({ success:false, error:'Teacher access required' }, 403, origin);
+        }
+
+        const assignmentId = url.searchParams.get('assignment_id') || url.searchParams.get('id');
+        const studentId = url.searchParams.get('student_id');
+        if (!assignmentId || !studentId) {
+          return jsonResponse({ success:false, error:'assignment_id and student_id are required' }, 400, origin);
+        }
+
+        const assignments = await supabaseSelect(env, 'homework_assignments', `id=eq.${assignmentId}&select=id,source_type`);
+        const assignment = assignments?.[0];
+        if (!assignment || String(assignment.source_type || '').toLowerCase() !== 'vocab_study') {
+          return jsonResponse({ success:false, error:'Vocabulary Study assignment not found' }, 404, origin);
+        }
+
+        const result = await supabaseRpc(env, 'get_vocab_assignment_student_detail_v1', {
+          p_assignment_id: assignmentId,
+          p_student_id: studentId,
+        });
+        if (!result?.success) return jsonResponse(result || { success:false, error:'Student detail unavailable' }, 404, origin);
+        return jsonResponse(result, 200, origin);
+      }
+
       // ===== CREATE RUN TOKEN =====
       if (action === 'create_run') {
         const authUserId = await getUserIdFromRequest(request, env);
