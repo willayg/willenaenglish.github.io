@@ -1,7 +1,7 @@
 # Vocabulary Study — Design & Architecture Spec
 
 **App:** `students/vocab-study/`  
-**Current staging version:** `0.051`  
+**Current staging version:** `0.055`  
 **Status:** Active implementation  
 **Purpose:** Define the product behavior, study flow, renderer responsibilities, tracking model, mastery model, and modular architecture for the next generation Vocabulary Study app.
 
@@ -646,17 +646,20 @@ The star result is a motivational session reward and does not alter unit progres
 - The old standalone **Assign Homework** → Game Builder handoff has been removed. **Build a Game** remains a separate tool flow.
 - Individual-student targeting remains available in the P4A schema/API but is deferred from this first save modal; P4B starts with whole-class assignment as requested.
 
-#### P4C — Student Teacher Practice — implemented in v0.051
+#### P4C — Student Teacher Practice — implemented in v0.055
 - Vocabulary Study loads the signed-in student's active `vocab_study` assignments from the Homework API.
 - A **Teacher Practice** block appears above self-study with title, due date, overall completion, and the required Quiz / Spelling / Speaking modes.
 - The assignment uses the exact canonical lexical targets saved by Word Builder.
 - Teacher Quiz, Spelling Test, and Speaking reuse the existing Vocabulary Study flows and universal renderer.
-- Every teacher attempt records `session_source: "teacher"` plus a first-class `assignment_id`.
-- Assignment-only attempts may have no single book/unit, so they are stored as independent assignment evidence instead of being falsely credited to the currently open unit.
-- The assignment recorder still awards normal Vocabulary Study points; scored teacher sessions also create normal reward sessions and count as meaningful streak study.
+- Teacher answers use the **same canonical `WillenaStudyProgress → record_study_attempt_v1` recorder as normal Vocabulary Study**. There is no separate homework-attempt endpoint or recorder.
+- Every teacher attempt carries `session_source: "teacher"` plus a first-class `assignment_id`.
+- Assignment-only attempts may have no single book/unit. The canonical recorder accepts `assignment_id` as the study context, records points/evidence, and deliberately skips unit-scoped mastery when book/unit are absent.
+- The unit-scoped vocabulary-state trigger ignores assignment-only attempts with no single unit; assignment progress is derived directly from `study_attempts.assignment_id`.
 - Server-side recording verifies the signed-in student belongs to the assignment class / optional target list and that the lexical entry belongs to the assignment.
-- Assignment progress reloads after session completion so the Teacher Practice card updates immediately.
-- Normal self-study continues to use the existing book/unit mastery recorder unchanged.
+- The existing canonical queue/retry/offline behavior also applies to homework attempts.
+- On leaving Teacher Practice, pending canonical saves are awaited and assignment progress reloads before clearing teacher context.
+- Normal self-study continues to require book + unit and uses the existing mastery path unchanged.
+- Audit fix in v0.055 removed the dead `vocab_assignment_attempt` Worker endpoint, deleted the dedicated assignment recorder RPC, and reverted the temporary global API bearer-auth workaround.
 
 #### P4D — Teacher Dashboard tracking
 - assignment list / class completion matrix
