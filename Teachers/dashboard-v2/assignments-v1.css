@@ -114,3 +114,12 @@
 @media(max-width:760px){
   .assignment-student-picker{grid-template-columns:1fr}
 }
+
+/* Split workload management */
+.assignment-edit-workload{margin:0;padding:10px 12px;border:1px solid #d9e7ea;border-radius:12px;background:#fff}
+.assignment-edit-workload>legend{padding:0 5px;color:#61777c;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.04em}
+.assignment-edit-workload>label{display:flex;align-items:center;gap:7px;margin:7px 12px 7px 0;color:#52676c;font-size:12px;font-weight:700}
+.assignment-workload-summary{display:flex;flex-wrap:wrap;gap:7px;margin-top:9px}
+.assignment-workload-summary span{padding:6px 8px;border:1px solid #e1eaec;border-radius:9px;background:#f8fbfb;color:#60777c;font-size:10px}
+.assignment-workload-summary b{color:#244f57}
+.assignment-reshuffle-btn{margin-top:9px}
