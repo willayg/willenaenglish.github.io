@@ -14,6 +14,7 @@
 .assignment-card-meta{display:flex;gap:20px;flex-wrap:wrap;margin-top:12px;color:#829397;font-size:11px}
 .assignment-card-meta b{color:#52676c}
 .assignment-detail{display:grid;gap:16px}
+.assignment-detail[hidden]{display:none!important}
 .assignment-detail-head{display:grid;grid-template-columns:auto 1fr auto;gap:14px;align-items:center}
 .assignment-detail-head h2{margin:0;color:#173f46;font-size:20px}
 .assignment-detail-head p{margin:3px 0 0;color:#7d9094;font-size:12px}
