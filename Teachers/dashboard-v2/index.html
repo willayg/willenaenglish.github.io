@@ -7,7 +7,7 @@
 <script src="/js/api-config.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="./dashboard-v2.css?v=20260917-r14-08">
-<link rel="stylesheet" href="./assignments-v1.css?v=20260926-p4d1">
+<link rel="stylesheet" href="./assignments-v1.css?v=20260926-p4d2">
 <link id="dashboardV2Polish" rel="stylesheet" href="./dashboard-v2-polish.css?v=20260917-r14-07">
 <link rel="stylesheet" href="./naesin-v2/naesin-v2.css?v=20260912-r12-2">
 <link rel="stylesheet" href="./naesin-v2/naesin-v2-p6.css?v=20260912-r12-2">
@@ -48,7 +48,7 @@
 </main></div>
 <nav class="mobile-tabs"><button class="mobile-tab active" data-view="students"><b>◎</b>Students</button><button class="mobile-tab" data-view="classes"><b>▦</b>Classes</button><button class="mobile-tab" data-view="assignments"><b>✓</b>Assignments</button><button class="mobile-tab" data-view="apps"><b>＋</b>Apps</button></nav>
 <div class="drawer-bg" id="drawerBg"><aside class="drawer"><div class="drawer-head"><div class="drawer-head-main"><div class="drawer-name" id="drawerName">Student</div><div class="drawer-meta" id="drawerMeta"></div></div><button class="close" id="closeDrawer">×</button></div><div class="drawer-body" id="drawerBody"><div class="empty">Loading…</div></div></aside></div>
-<div id="naesinV2Rev" style="position:fixed;right:12px;bottom:8px;z-index:2147483647;color:#7b8c93;font:700 9px/1.2 Poppins,sans-serif;letter-spacing:.04em;pointer-events:none">v14.10</div>
+<div id="naesinV2Rev" style="position:fixed;right:12px;bottom:8px;z-index:2147483647;color:#7b8c93;font:700 9px/1.2 Poppins,sans-serif;letter-spacing:.04em;pointer-events:none">v14.11</div>
 <script type="module" src="/components/burger-menu.js?v=20260917-r14-07"></script>
 <script>
 const $=(s,r=document)=>r.querySelector(s),$$=(s,r=document)=>[...r.querySelectorAll(s)];
@@ -96,7 +96,7 @@ function switchView(v){$$('.view').forEach(x=>x.classList.toggle('active',x.id==
 $('#classSelect').onchange=loadClass;$('#daysSelect').onchange=loadClass;$('#refreshBtn').onclick=loadClass;$('#searchInput').oninput=renderStudents;$('#classDaysSelect').onchange=()=>loadClassOverview(true);$('#classRefreshBtn').onclick=()=>loadClassOverview(true);$('#closeDrawer').onclick=()=>$('#drawerBg').classList.remove('open');$('#drawerBg').onclick=e=>{if(e.target===$('#drawerBg'))$('#drawerBg').classList.remove('open')};$$('[data-view]').forEach(b=>b.onclick=()=>switchView(b.dataset.view));
 (async()=>{if(await auth()){mountBurger();loadClasses()}})();
 </script>
-<script src="./assignments-v1.js?v=20260926-p4d1"></script>
+<script src="./assignments-v1.js?v=20260926-p4d2"></script>
 <script src="./naesin.js?v=20260917-r14-03"></script>
 <script src="./naesin-v2/naesin-v2-data.js?v=20260917-r14-03"></script>
 <script src="./naesin-v2/naesin-v2-editor-api.js?v=20260912-r12-2"></script>
