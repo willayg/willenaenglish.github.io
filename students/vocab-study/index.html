@@ -13,7 +13,7 @@
 <link rel="stylesheet" href="/students/study/study.css?v=20260808-7">
 <link rel="stylesheet" href="/students/study/study-overrides.css?v=20260808-1">
 <link rel="stylesheet" href="/students/study-v2/v2.css?v=20260814-daily1">
-<link rel="stylesheet" href="./vocab-study.css?v=20260926-v0070">
+<link rel="stylesheet" href="./vocab-study.css?v=20260926-v0071">
 <script src="/students/api-gateway.js?v=20260926-progress-summary-cf1"></script>
 <script src="/students/study/study-progress.js?v=20260926-assignment-canonical1"></script>
 <script src="/js/api-config.js?v=20260926-reverted-auth1"></script>
@@ -64,37 +64,15 @@
       </div>
 
       <section id="vocabBookPicker" class="vocab-book-picker" hidden>
-        <span class="vocab-picker-label">교재 선택</span>
         <div id="vocabBookChoices" class="vocab-book-choices" role="group" aria-label="Choose assigned book"></div>
       </section>
 
-      <h2 id="vocabBookTitle">Loading…</h2>
-      <p id="vocabUnitTitle">Finding your assigned unit</p>
-
-      <section id="vocabMotivation" class="vocab-motivation" hidden aria-label="Vocabulary achievements">
-        <div class="vocab-motivation-stat">
-          <img class="vocab-motivation-icon" src="/shared/svgs/streak.svg" alt="" aria-hidden="true">
-          <div><strong id="vocabStreakCurrent">0</strong><small>day streak</small></div>
-        </div>
-        <div class="vocab-motivation-stat">
-          <img class="vocab-motivation-icon" src="/shared/svgs/best-streak.svg" alt="" aria-hidden="true">
-          <div><strong id="vocabStreakBest">0</strong><small>best streak</small></div>
-        </div>
-        <div class="vocab-motivation-stat vocab-motivation-gold">
-          <img class="vocab-motivation-icon" src="/shared/svgs/golden-unit.svg" alt="" aria-hidden="true">
-          <div><strong id="vocabGoldenCount">0</strong><small>gold units</small></div>
-        </div>
-      </section>
-
-      <div class="study-v2-units">
-        <div class="study-v2-units-head">
-          <span>공부할 단원을 선택하세요</span>
-          <span id="vocabCurrentUnitLabel">현재 · Unit —</span>
-        </div>
+      <div class="study-v2-units vocab-unit-selector">
         <div id="vocabUnitStrip" class="study-v2-unit-strip" aria-label="Vocabulary units"></div>
       </div>
 
-      <div class="vocab-home-meta">
+      <div class="vocab-unit-summary">
+        <h2 id="vocabUnitTitle">Loading…</h2>
         <button class="vocab-word-card" id="vocabWordListOpen" type="button" disabled>
           <span id="vocabItemCount">—</span>
         </button>
@@ -127,6 +105,21 @@
             <span id="vocabSpeakingStars" class="vocab-card-stars" aria-label="0 out of 5 stars">★ 0/5</span>
           </span>
         </button>
+      </section>
+
+      <section id="vocabMotivation" class="vocab-motivation vocab-achievements" hidden aria-label="Vocabulary achievements">
+        <div class="vocab-motivation-stat">
+          <img class="vocab-motivation-icon" src="/shared/svgs/streak.svg" alt="" aria-hidden="true">
+          <div><strong id="vocabStreakCurrent">0</strong><small>day streak</small></div>
+        </div>
+        <div class="vocab-motivation-stat">
+          <img class="vocab-motivation-icon" src="/shared/svgs/best-streak.svg" alt="" aria-hidden="true">
+          <div><strong id="vocabStreakBest">0</strong><small>best streak</small></div>
+        </div>
+        <div class="vocab-motivation-stat vocab-motivation-gold">
+          <img class="vocab-motivation-icon" src="/shared/svgs/golden-unit.svg" alt="" aria-hidden="true">
+          <div><strong id="vocabGoldenCount">0</strong><small>gold units</small></div>
+        </div>
       </section>
     </section>
 
@@ -162,7 +155,7 @@
       </section>
     </section>
 
-    <div class="vocab-version">v0.070</div>
+    <div class="vocab-version">v0.071</div>
   </main>
 
   <section id="vocabWordModal" class="vocab-word-modal" hidden aria-hidden="true">
@@ -208,6 +201,6 @@
 </div>
 
 <script src="/students/study/study-question-bank.js?v=20260822-conversationfix1"></script>
-<script type="module" src="./vocab-study.js?v=20260926-v0070"></script>
+<script type="module" src="./vocab-study.js?v=20260926-v0071"></script>
 </body>
 </html>
