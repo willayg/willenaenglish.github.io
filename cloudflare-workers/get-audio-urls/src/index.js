@@ -151,7 +151,7 @@ async function handleShimmerBatch(request, env) {
   const jsonHeaders = { 'Content-Type':'application/json', 'Cache-Control':'no-store', ...cors };
 
   try {
-    if (origin && origin !== 'https://teachers.willenaenglish.com' && origin !== 'https://staging.willenaenglish.com') {
+    if (origin && origin !== 'https://teachers.willenaenglish.com' && origin !== 'https://staging.willenaenglish.com' && origin !== 'https://get-audio-urls.willena.workers.dev') {
       return new Response(JSON.stringify({ error: 'Forbidden origin' }), { status: 403, headers: jsonHeaders });
     }
     if (!env.AUDIO_BUCKET) {
