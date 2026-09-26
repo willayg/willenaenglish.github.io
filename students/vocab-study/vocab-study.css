@@ -771,3 +771,13 @@ body.willena-kb-open .vocab-session-main{
     min-height:84px;
   }
 }
+
+/* Willena loading screen */
+.vocab-loading{position:fixed;inset:0;z-index:13000;display:grid;place-items:center;background:rgba(247,252,252,.9);backdrop-filter:blur(7px)}
+.vocab-loading[hidden]{display:none!important}
+.vocab-loading-card{min-width:min(320px,82vw);display:flex;flex-direction:column;align-items:center;text-align:center;color:var(--muted);font-size:12px;font-weight:800}
+.vocab-loading-logo{width:210px;height:78px;background:var(--pink,#ee5f91);-webkit-mask:url('/Assets/Images/Logo.png') center/contain no-repeat;mask:url('/Assets/Images/Logo.png') center/contain no-repeat;filter:drop-shadow(0 8px 18px rgba(238,95,145,.2))}
+.vocab-loading-sweep{width:116px;height:5px;margin:18px 0;border-radius:999px;background:linear-gradient(90deg,rgba(21,170,181,.14) 0 25%,var(--cyan-strong,#15aab5) 45% 55%,rgba(21,170,181,.14) 75% 100%);background-size:220% 100%;animation:vocabLoadSweep 1.15s ease-in-out infinite}
+@keyframes vocabLoadSweep{0%{background-position:100% 0}100%{background-position:-100% 0}}
+@media(max-width:680px){.vocab-loading-logo{width:188px;height:70px}}
+@media(prefers-reduced-motion:reduce){.vocab-loading-sweep{animation:none}}
