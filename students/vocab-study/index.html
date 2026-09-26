@@ -13,7 +13,7 @@
 <link rel="stylesheet" href="/students/study/study.css?v=20260808-7">
 <link rel="stylesheet" href="/students/study/study-overrides.css?v=20260808-1">
 <link rel="stylesheet" href="/students/study-v2/v2.css?v=20260814-daily1">
-<link rel="stylesheet" href="./vocab-study.css?v=20260926-v0050">
+<link rel="stylesheet" href="./vocab-study.css?v=20260926-v0051">
 <script src="/students/api-gateway.js?v=20260808-study1"></script>
 <script src="/students/study/study-progress.js?v=20260925-vocab3"></script>
 <script src="/js/api-config.js?v=20260113c"></script>
@@ -34,6 +34,14 @@
         <select id="vocabAdminBookSelect" aria-label="Choose book">
           <option value="">Choose a book…</option>
         </select>
+      </section>
+
+      <section id="vocabTeacherPractice" class="vocab-teacher-practice" hidden aria-label="Teacher practice">
+        <div class="vocab-teacher-practice-head">
+          <div><span class="eyebrow">TEACHER PRACTICE</span><strong>선생님 숙제</strong></div>
+          <span id="vocabTeacherPracticeCount"></span>
+        </div>
+        <div id="vocabTeacherPracticeList" class="vocab-teacher-practice-list"></div>
       </section>
 
       <section id="vocabBookPicker" class="vocab-book-picker" hidden>
@@ -99,7 +107,7 @@
         </button>
       </section>
     </section>
-    <div class="vocab-version">v0.050</div>
+    <div class="vocab-version">v0.051</div>
   </main>
 
   <section id="vocabWordModal" class="vocab-word-modal" hidden aria-hidden="true">
@@ -145,6 +153,6 @@
 </div>
 
 <script src="/students/study/study-question-bank.js?v=20260822-conversationfix1"></script>
-<script type="module" src="./vocab-study.js?v=20260926-v0050"></script>
+<script type="module" src="./vocab-study.js?v=20260926-v0051"></script>
 </body>
 </html>
