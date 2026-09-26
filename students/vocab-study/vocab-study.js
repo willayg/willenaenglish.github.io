@@ -837,7 +837,7 @@ function renderTeacherAssignments(){
     teacherPracticeListEl.innerHTML='';
     if(wordTestEmptyEl){
       wordTestEmptyEl.hidden=false;
-      wordTestEmptyEl.innerHTML='<strong>워드 테스트를 불러오는 중이에요</strong><span>잠시만 기다려 주세요.</span>';
+      wordTestEmptyEl.innerHTML='<div class="vocab-wordtest-inline-loader" aria-hidden="true"><span class="vocab-wordtest-loader-ring"></span><span class="vocab-wordtest-loader-dot"></span></div><strong>워드 테스트를 불러오는 중이에요</strong><span>잠시만 기다려 주세요.</span>';
       wordTestEmptyEl.classList.add('is-loading');
     }
     return;
@@ -2430,7 +2430,7 @@ async function boot(){
     reportStartupPerf();
     preloadStudentSfx();
 
-window.WillenaVocabStudy={version:'0.094',getState:()=>state,start:startSession,openSpellingMenu,openSpellingPreview,openSpellingTest,openSpeakingSession,close:closeSession};
+window.WillenaVocabStudy={version:'0.095',getState:()=>state,start:startSession,openSpellingMenu,openSpellingPreview,openSpellingTest,openSpeakingSession,close:closeSession};
   }catch(error){
     console.error('[Vocab Study] boot',error);
     if(frontWordTestCardEl)frontWordTestCardEl.hidden=true;
