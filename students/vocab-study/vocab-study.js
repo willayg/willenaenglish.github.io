@@ -868,9 +868,9 @@ function renderTeacherAssignments(){
     if(row)openTeacherWordList(row,btn);
   }));
 }
-async function loadTeacherAssignments(){
+async function loadTeacherAssignments({showLoader=true}={}){
   if(state.adminMode)return[];
-  beginVocabLoading('워드 테스트를 불러오는 중...');
+  if(showLoader)beginVocabLoading('워드 테스트를 불러오는 중...');
   try{
     const list=await api('/.netlify/functions/homework_api?action=list_assignments&mode=student&include_history=1&_='+Date.now());
     const envelopes=await resolveAssignmentBookIds(arr(list.assignments).filter(a=>txt(a?.source_type)==='vocab_study'));
@@ -907,7 +907,7 @@ async function loadTeacherAssignments(){
     renderFrontMenu();
     return[];
   }finally{
-    endVocabLoading();
+    if(showLoader)endVocabLoading();
   }
 }
 function teacherTitle(mode){
@@ -2326,6 +2326,7 @@ async function closeSession({historyMode='back'}={}){
   try{window.scrollTo({top:0,behavior:'auto'})}catch(_){}
 }
 async function boot(){
+  let bootLoaderReleased=false;
   beginVocabLoading('단어 지니어스를 준비하는 중...');
   try{
     wireShellNavigation();
@@ -2360,9 +2361,17 @@ async function boot(){
       renderFrontMenu();
       setMainScreen('home');
       await startHistoryNavigation('home');
+
+      // The app is usable now. Do not block the whole UI on secondary
+      // books or teacher Word Test hydration.
+      endVocabLoading();
+      bootLoaderReleased=true;
+
       hydrateSecondaryBooks(resolved.deferredAssignments,state.book.book_id);
-      await loadTeacherAssignments();
-      renderFrontMenu();
+      background(async()=>{
+        await loadTeacherAssignments({showLoader:false});
+        renderFrontMenu();
+      },'teacher word tests');
     }
     startBtn.addEventListener('click',()=>startSession());
     spellingPreviewBtn?.addEventListener('click',openSpellingMenu);
@@ -2393,7 +2402,7 @@ async function boot(){
     reportStartupPerf();
     preloadStudentSfx();
 
-window.WillenaVocabStudy={version:'0.091',getState:()=>state,start:startSession,openSpellingMenu,openSpellingPreview,openSpellingTest,openSpeakingSession,close:closeSession};
+window.WillenaVocabStudy={version:'0.092',getState:()=>state,start:startSession,openSpellingMenu,openSpellingPreview,openSpellingTest,openSpeakingSession,close:closeSession};
   }catch(error){
     console.error('[Vocab Study] boot',error);
     if(frontWordTestCardEl)frontWordTestCardEl.hidden=true;
@@ -2401,7 +2410,7 @@ window.WillenaVocabStudy={version:'0.091',getState:()=>state,start:startSession,
     setStatus(error?.message||'불러오지 못했습니다. 새로고침해 주세요.');
     if(unitTitleEl)unitTitleEl.textContent='Please try again.';startBtn.disabled=true;if(spellingPreviewBtn)spellingPreviewBtn.disabled=true;
   }finally{
-    endVocabLoading();
+    if(!bootLoaderReleased)endVocabLoading();
   }
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
