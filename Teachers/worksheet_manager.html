@@ -427,6 +427,25 @@
         }
         window.close();
       } else {
+        if (worksheet.worksheet_type === 'wordtest' && window.opener && !window.opener.closed) {
+          try {
+            if (typeof window.opener.onWordBuilderPersisted === 'function') {
+              window.opener.onWordBuilderPersisted({
+                ...result,
+                success:true,
+                worksheet:{
+                  id:result.id || worksheet.user_id || null,
+                  title:worksheet.title || '',
+                  book:worksheet.book || '',
+                  book_id:worksheet.book_id || null,
+                  unit:worksheet.unit || ''
+                }
+              });
+            }
+          } catch (callbackError) {
+            console.warn('[WorksheetManager] save-state callback failed:', callbackError);
+          }
+        }
         alert(existingId ? 'Worksheet updated!' : 'Worksheet saved!');
         window.close();
       }
@@ -1260,6 +1279,6 @@ async function loadWorksheet() {
 
   </script>
 
-  <div id="wordBuilderManagerRevision" style="position:fixed;right:8px;bottom:5px;z-index:10000;font:10px/1.2 Arial,sans-serif;color:rgba(60,70,85,.55);background:rgba(255,255,255,.72);padding:2px 5px;border-radius:4px;pointer-events:none;user-select:none;">v2.00.12</div>
+  <div id="wordBuilderManagerRevision" style="position:fixed;right:8px;bottom:5px;z-index:10000;font:10px/1.2 Arial,sans-serif;color:rgba(60,70,85,.55);background:rgba(255,255,255,.72);padding:2px 5px;border-radius:4px;pointer-events:none;user-select:none;">v2.00.13</div>
 </body>
 </html>
