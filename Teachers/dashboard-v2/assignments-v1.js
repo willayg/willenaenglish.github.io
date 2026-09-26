@@ -71,9 +71,13 @@
   function assignmentCard(a){
     const required=Array.isArray(a?.list_meta?.required_modes)?a.list_meta.required_modes:[];
     const labels={quiz:'Quiz',spelling_test:'Spelling',speaking:'Speaking'};
+    const targetStudents=Array.isArray(a?.list_meta?.target_students)?a.list_meta.target_students:[];
+    const scope=targetStudents.length
+      ? targetStudents.map(s=>s?.name||s?.korean_name||'Student').filter(Boolean).join(', ')
+      : (a.class||'No class');
     return '<button type="button" class="assignment-card" data-assignment-id="'+esc(a.id)+'">'+
       '<div class="assignment-card-head">'+
-        '<div><strong>'+esc(a.title||'Vocabulary Study')+'</strong><span>'+esc(a.class||'No class')+' · '+esc(required.map(x=>labels[x]||x).join(' · ')||'Vocabulary Study')+'</span></div>'+
+        '<div><strong>'+esc(a.title||'Vocabulary Study')+'</strong><span>'+esc(scope)+' · '+esc(required.map(x=>labels[x]||x).join(' · ')||'Vocabulary Study')+'</span></div>'+
         '<span class="assignment-state '+(isCurrent(a)?'is-current':'is-history')+'">'+(isCurrent(a)?'Current':'History')+'</span>'+
       '</div>'+
       '<div class="assignment-card-meta"><span>Due <b>'+esc(fmtDate(a.due_at))+'</b></span><span>Created <b>'+esc(fmtDate(a.created_at))+'</b></span></div>'+
@@ -138,7 +142,11 @@
     const detail=$('#assignmentDetail');
     if(!detail)return;
     const a=progress.assignment||{};
-    const students=Array.isArray(progress.students)?progress.students:[];
+    const allStudents=Array.isArray(progress.students)?progress.students:[];
+    const targetIds=new Set((Array.isArray(a?.list_meta?.target_student_ids)?a.list_meta.target_student_ids:
+      (Array.isArray(state.selectedAssignment?.list_meta?.target_student_ids)?state.selectedAssignment.list_meta.target_student_ids:[]))
+      .map(String));
+    const students=targetIds.size?allStudents.filter(s=>targetIds.has(String(s?.student_id||''))):allStudents;
     const modes=Array.isArray(a.required_modes)?a.required_modes:[];
     const labels={quiz:'Quiz',spelling_test:'Spelling',speaking:'Speaking'};
     const complete=students.filter(s=>s.status==='complete').length;
