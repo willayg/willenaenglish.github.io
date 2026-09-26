@@ -423,7 +423,8 @@ async function supabaseRpc(env, functionName, body = {}) {
 
 async function replaceVocabTargets(env, assignmentId, targets) {
   const normalized = normalizeVocabTargets(targets);
-  await supabaseDelete(env, 'study_assignment_targets', `assignment_id=eq.${assignmentId}`);
+  const deleted = await supabaseDelete(env, 'study_assignment_targets', `assignment_id=eq.${assignmentId}`);
+  if (!deleted) throw new Error('Could not replace Vocabulary Study targets');
   if (!normalized.length) return [];
   const rows = normalized.map(target => ({ ...target, assignment_id: assignmentId }));
   return supabaseInsert(env, 'study_assignment_targets', rows);
@@ -505,6 +506,9 @@ export default {
         const requestedSourceType = String(source_type || sourceMeta.source_type || '').trim().toLowerCase();
         const isSavedGameAssignment = requestedSourceType === 'saved_game' || !!sourceMeta.game_id;
         const effectiveSourceType = requestedSourceType || (isSavedGameAssignment ? 'saved_game' : 'wordlist');
+        if (!['wordlist','saved_game','vocab_study'].includes(effectiveSourceType)) {
+          return jsonResponse({ success:false, error:'Unsupported assignment source_type' }, 400, origin);
+        }
         const isVocabStudyAssignment = effectiveSourceType === 'vocab_study';
         const effectiveListKey = list_key
           || (isSavedGameAssignment && sourceMeta.game_id ? `saved_game:${sourceMeta.game_id}` : '')
@@ -909,6 +913,17 @@ export default {
         }
         if (!isTeacher && targetStudentIds.length && !targetStudentIds.includes(authUserId)) {
           return jsonResponse({ success: false, error: 'Not authorized to view this assignment' }, 403, origin);
+        }
+
+        // Vocabulary Study assignments use canonical study_attempts clean-pass evidence,
+        // not the legacy English Arcade star/mode evaluator below.
+        if (String(assignment.source_type || '').toLowerCase() === 'vocab_study') {
+          const result = await supabaseRpc(env, 'get_vocab_assignment_progress_v1', { p_assignment_id: assignment.id });
+          if (!result?.success) return jsonResponse(result || { success:false, error:'Progress unavailable' }, 404, origin);
+          if (!isTeacher) {
+            result.students = (Array.isArray(result.students) ? result.students : []).filter(row => String(row?.student_id || '') === String(authUserId));
+          }
+          return jsonResponse(result, 200, origin);
         }
         
         // Determine category heuristically for expected mode counts
