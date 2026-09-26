@@ -661,11 +661,16 @@ The star result is a motivational session reward and does not alter unit progres
 - Normal self-study continues to require book + unit and uses the existing mastery path unchanged.
 - Audit fix in v0.055 removed the dead `vocab_assignment_attempt` Worker endpoint, deleted the dedicated assignment recorder RPC, and reverted the temporary global API bearer-auth workaround.
 
-#### P4D — Teacher Dashboard tracking
-- assignment list / class completion matrix
-- per-student Quiz / Spelling / Speaking clean-pass progress
-- words still needing clean retry
-- current and historical assignment views
+#### P4D — Teacher Dashboard tracking — implemented
+- Teacher Dashboard V2 now has a dedicated **Assignments** view on desktop and mobile.
+- Current / History filters separate live homework from ended or expired assignments.
+- Class filter narrows Vocabulary Study homework without affecting Students / Classes views.
+- Opening an assignment loads the canonical `assignment_progress` result and shows class overall completion, complete/in-progress counts, and average Quiz / Spelling / Speaking completion.
+- The student matrix shows each student's clean-pass percentage per required mode plus overall assignment status.
+- Clicking a student loads only that student's word-level detail through `get_vocab_assignment_student_detail_v1`, avoiding a large class-wide target payload.
+- Per-word detail shows Clean / Review / not-started state for each required mode plus wrong-attempt and total-attempt counts where review is needed.
+- Dashboard tracking reads the same `study_attempts.assignment_id` evidence used by the student Teacher Practice cards; there is no separate teacher progress store.
+- Dashboard shell revision: `v14.11`.
 
 ### Pass 5 — Past Word Tests
 - stop filtering useful historical Word Test vocabulary
