@@ -425,7 +425,7 @@ function renderFrontMenu(){
   frontBookListEl.innerHTML=books.length?books.map(row=>
     '<button class="vocab-front-book-card" type="button" data-front-book="'+escapeHtml(row.bookId)+'">'+
       '<span class="vocab-front-card-main">'+
-        '<span class="vocab-front-card-copy"><strong>'+escapeHtml(row.title)+'</strong><small>단원 · 퀴즈 · 철자 · 말하기</small></span>'+
+        '<span class="vocab-front-card-copy"><strong>'+escapeHtml(row.title)+'</strong></span>'+
       '</span>'+
       '<span class="vocab-front-arrow" aria-hidden="true">›</span>'+
     '</button>'
@@ -459,9 +459,9 @@ function renderFrontMenu(){
     if(frontWordTestMetaEl){
       if(current.length){
         const due=current.map(row=>row?.assignment?.due_at).filter(Boolean).sort()[0];
-        frontWordTestMetaEl.textContent='진행 중 '+current.length+'개'+(due?' · 다음 마감 '+formatTeacherDue(due):'');
+        frontWordTestMetaEl.textContent=due?formatTeacherDue(due):'';
       }else{
-        frontWordTestMetaEl.textContent=state.teacherAssignmentHistory.length?'지난 단어 시험 복습하기':'현재 숙제가 없어요';
+        frontWordTestMetaEl.textContent='';
       }
     }
   }
