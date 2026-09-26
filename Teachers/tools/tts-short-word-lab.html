@@ -8,108 +8,199 @@
 <style>
 :root{--bg:#f7fbfc;--card:#fff;--ink:#17252d;--muted:#63757e;--cyan:#c9f3f5;--cyan2:#55d5dd;--pink:#ffd0df;--pink2:#ff6fa4;--line:#dce8eb;--shadow:0 10px 26px rgba(23,37,45,.08)}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
-main{width:min(980px,calc(100% - 24px));margin:22px auto 50px}.hero{background:#fff;border:3px solid var(--cyan);border-radius:22px;padding:22px;box-shadow:var(--shadow)}
-h1{margin:0 0 7px;font-size:clamp(28px,5vw,44px);line-height:1.05}.sub{margin:0;color:var(--muted);max-width:800px}
-.badges,.toolbar{display:flex;gap:9px;flex-wrap:wrap;margin-top:14px}.badge{border:1px solid var(--line);background:#fff;padding:5px 9px;border-radius:999px;font-size:13px;color:var(--muted)}
-button{font:inherit;font-weight:800;background:#fff;color:var(--ink);border:3px solid var(--line);border-radius:14px;padding:11px 14px;cursor:pointer}
-button:hover{transform:translateY(-1px)}button:disabled{opacity:.5;cursor:wait;transform:none}.openai{border-color:var(--pink)}.openai:hover{border-color:var(--pink2)}.study{border-color:var(--cyan)}.study:hover{border-color:var(--cyan2)}
+main{width:min(1020px,calc(100% - 24px));margin:22px auto 50px}.hero{background:#fff;border:3px solid var(--cyan);border-radius:22px;padding:22px;box-shadow:var(--shadow)}
+h1{margin:0 0 7px;font-size:clamp(28px,5vw,44px);line-height:1.05}.sub{margin:0;color:var(--muted);max-width:860px}
+.badges,.toolbar,.voice-row{display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin-top:14px}.badge{border:1px solid var(--line);background:#fff;padding:5px 9px;border-radius:999px;font-size:13px;color:var(--muted)}
+button,select{font:inherit;font-weight:800;background:#fff;color:var(--ink);border:3px solid var(--line);border-radius:14px;padding:11px 14px}
+button{cursor:pointer}button:hover{transform:translateY(-1px)}button:disabled{opacity:.5;cursor:wait;transform:none}.openai{border-color:var(--pink)}.openai:hover{border-color:var(--pink2)}.eleven{border-color:var(--cyan)}.eleven:hover{border-color:var(--cyan2)}
+.voice-row label{font-weight:800}.voice-row select{padding:8px 12px;min-width:160px}
 .grid{display:grid;gap:11px;margin-top:16px}.card{display:grid;grid-template-columns:minmax(110px,.8fr) 1fr 1fr;gap:11px;align-items:center;background:#fff;border:3px solid var(--cyan);border-radius:18px;padding:13px 14px}
-.card:nth-child(even){border-color:var(--pink)}.word{font-size:27px;font-weight:900}.source{display:flex;flex-direction:column;gap:5px}.source button{width:100%}.status{min-height:18px;text-align:center;font-size:12px;color:var(--muted)}.ok{color:#26754b}.err{color:#b33a3a}
+.card:nth-child(even){border-color:var(--pink)}.word{font-size:27px;font-weight:900}.source{display:flex;flex-direction:column;gap:5px}.source button{width:100%}.status{min-height:18px;text-align:center;font-size:12px;color:var(--muted)}.ok{color:#26754b}.err{color:#b33a3a}.live{color:#945200}
 .note{margin-top:16px;padding:13px 15px;background:#fff;border:1px solid var(--line);border-radius:15px;color:var(--muted);font-size:13px}
-@media(max-width:680px){.card{grid-template-columns:1fr 1fr}.word{grid-column:1/-1;text-align:center}.hero{padding:17px}button{padding:12px 8px}}
+@media(max-width:680px){.card{grid-template-columns:1fr 1fr}.word{grid-column:1/-1;text-align:center}.hero{padding:17px}button{padding:12px 8px}.voice-row{align-items:stretch}.voice-row label{width:100%}.voice-row select{flex:1}}
 </style>
 </head>
 <body>
 <main>
 <section class="hero">
 <h1>TTS Short Word Lab</h1>
-<p class="sub">Compare OpenAI Coral against the exact Study V2 audio route. Study V2 checks the stored R2 clip first, then the normal audio lookup, then generates through your current ElevenLabs proxy if the word is missing.</p>
+<p class="sub">Fresh-vs-fresh pronunciation test. ElevenLabs is generated live on every click with <strong>no R2 access and no audio lookup</strong>. OpenAI is also generated live so you can compare the same word immediately.</p>
+
+<div class="voice-row">
+<label for="voiceSelect">OpenAI voice</label>
+<select id="voiceSelect">
+<option value="cedar" selected>Cedar</option>
+<option value="marin">Marin</option>
+<option value="nova">Nova</option>
+<option value="shimmer">Shimmer</option>
+<option value="alloy">Alloy</option>
+<option value="sage">Sage</option>
+<option value="verse">Verse</option>
+<option value="coral">Coral</option>
+</select>
+</div>
+
 <div class="toolbar">
 <button class="openai" id="allOpenAI">▶ Play all OpenAI</button>
-<button class="study" id="allStudy">▶ Play all Study V2 / ElevenLabs</button>
+<button class="eleven" id="allEleven">▶ Play all ElevenLabs LIVE</button>
 <button id="stopBtn">■ Stop</button>
 </div>
+
 <div class="badges">
-<span class="badge">OpenAI: gpt-4o-mini-tts · Coral</span>
-<span class="badge">Study V2: R2 → get_audio_urls → ElevenLabs</span>
-<span class="badge">14 short-word tests</span>
-<span class="badge">AI-generated voice</span>
+<span class="badge">OpenAI: gpt-4o-mini-tts</span>
+<span class="badge">ElevenLabs: LIVE generation only</span>
+<span class="badge">No R2 · No get_audio_urls</span>
+<span class="badge">30 short-word tests</span>
+<span class="badge">AI-generated voices</span>
 </div>
 </section>
+
 <section class="grid" id="grid"></section>
-<div class="note">OpenAI is instructed to pronounce only the target word, warmly and clearly, in neutral American English. Study V2 uses the same production audio path as the student app, including existing R2 clips.</div>
+
+<div class="note">
+OpenAI instruction: pronounce only the target word, clearly and naturally, warm/friendly, neutral American English, slightly slower than normal conversation. Every provider click makes a fresh API request; this page deliberately does not reuse R2 or cache generated audio.
+</div>
 </main>
+
 <script>
 (function(){
 'use strict';
-var WORDS=['new','flu','cook','root','cut','hit','pup','tail','them','then','full','pull','ship','sheep'];
+
+var WORDS=[
+'new','flu','cook','root','cut','hit','pup','tail','them','then',
+'full','pull','ship','sheep','bit','beat','sit','seat','fit','feet',
+'look','Luke','book','boot','put','pool','cup','cap','hat','hot'
+];
+
 var API_ORIGIN='https://api.willenaenglish.com';
-var AUDIO_LOOKUP=API_ORIGIN+'/.netlify/functions/get_audio_urls';
 var ELEVEN=API_ORIGIN+'/.netlify/functions/eleven_labs_proxy';
 var OPENAI=API_ORIGIN+'/.netlify/functions/openai_proxy';
-var openaiCache=new Map(),studyCache=new Map();
 var currentAudio=null,stopSequence=false;
 var grid=document.getElementById('grid');
-var OPENAI_INSTRUCTIONS='Pronounce this English vocabulary item once, clearly and naturally. Warm and friendly tone. Neutral American English. Slightly slower than normal conversation. Do not add any other words or sounds.';
+var voiceSelect=document.getElementById('voiceSelect');
 
-function r2Key(value){return String(value||'').trim().toLowerCase().replace(/\s+/g,'_').replace(/[^a-z0-9_\-]/g,'');}
-function directR2Url(word){var key=r2Key(word);return key?API_ORIGIN+'/audio/'+encodeURIComponent(key+'.mp3'):'';}
-function status(provider,word,msg,cls){var el=document.getElementById('s-'+provider+'-'+word);if(el){el.textContent=msg||'';el.className='status '+(cls||'');}}
-function busy(provider,word,on){var b=document.querySelector('button[data-provider="'+provider+'"][data-word="'+word+'"]');if(b)b.disabled=!!on;}
+var OPENAI_INSTRUCTIONS='Pronounce this English vocabulary item once, clearly and naturally. Warm, friendly and encouraging tone for a child learning English. Neutral American English. Slightly slower than normal conversation, but do not exaggerate. Do not add any other words or sounds.';
+
+function safeId(word){return word.toLowerCase().replace(/[^a-z0-9_-]/g,'_');}
+function status(provider,word,msg,cls){
+  var el=document.getElementById('s-'+provider+'-'+safeId(word));
+  if(el){el.textContent=msg||'';el.className='status '+(cls||'');}
+}
+function busy(provider,word,on){
+  var b=document.querySelector('button[data-provider="'+provider+'"][data-word="'+CSS.escape(word)+'"]');
+  if(b)b.disabled=!!on;
+}
 function b64Url(b64){return 'data:audio/mpeg;base64,'+b64;}
-function playUrl(url){return new Promise(function(resolve,reject){if(currentAudio){try{currentAudio.pause();}catch(_){}}var a=new Audio(url);currentAudio=a;a.onended=function(){if(currentAudio===a)currentAudio=null;resolve();};a.onerror=function(){if(currentAudio===a)currentAudio=null;reject(new Error('Audio playback failed'));};a.play().catch(reject);});}
-async function urlExists(url){try{var r=await fetch(url,{method:'HEAD',cache:'no-store',credentials:'include'});return r.ok;}catch(_){return false;}}
-async function studyV2Audio(word){
- if(studyCache.has(word))return studyCache.get(word);
- busy('study',word,true);status('study',word,'Checking R2…');
- try{
-   var direct=directR2Url(word);
-   if(direct&&await urlExists(direct)){studyCache.set(word,{url:direct,source:'R2 direct'});status('study',word,'R2 clip','ok');return studyCache.get(word);}
-   status('study',word,'Checking lookup…');
-   try{
-     var r=await fetch(AUDIO_LOOKUP,{method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',cache:'no-store',body:JSON.stringify({words:[word]})});
-     if(r.ok){
-       var d=await r.json();var info=d&&d.results&&d.results[word];
-       if(info&&info.exists&&info.url){studyCache.set(word,{url:info.url,source:'R2 lookup'});status('study',word,'R2 clip','ok');return studyCache.get(word);}
-     }
-   }catch(_){}
-   status('study',word,'Generating ElevenLabs…');
-   var er=await fetch(ELEVEN,{method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',cache:'no-store',body:JSON.stringify({text:word})});
-   var ej=await er.json();
-   if(!er.ok||!ej.audio)throw new Error(ej.details||ej.error||'ElevenLabs failed');
-   var out={url:b64Url(ej.audio),source:'ElevenLabs live'};studyCache.set(word,out);status('study',word,'ElevenLabs live','ok');return out;
- }finally{busy('study',word,false);}
+function playUrl(url){
+  return new Promise(function(resolve,reject){
+    if(currentAudio){try{currentAudio.pause();}catch(_){}}
+    var a=new Audio(url);currentAudio=a;
+    a.onended=function(){if(currentAudio===a)currentAudio=null;resolve();};
+    a.onerror=function(){if(currentAudio===a)currentAudio=null;reject(new Error('Audio playback failed'));};
+    a.play().catch(reject);
+  });
 }
-async function openAIAudio(word){
- if(openaiCache.has(word))return openaiCache.get(word);
- busy('openai',word,true);status('openai',word,'Generating…');
- try{
-  var r=await fetch(OPENAI,{method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',cache:'no-store',body:JSON.stringify({endpoint:'audio/speech',payload:{model:'gpt-4o-mini-tts',voice:'coral',input:word,instructions:OPENAI_INSTRUCTIONS,response_format:'mp3'}})});
-  var j=await r.json();
-  if(!r.ok||!j.data)throw new Error((j.error&&j.error.message)||j.error||'OpenAI TTS failed');
-  var url=b64Url(j.data);openaiCache.set(word,url);status('openai',word,'Ready','ok');return url;
- }finally{busy('openai',word,false);}
+
+async function elevenLive(word){
+  busy('eleven',word,true);
+  status('eleven',word,'Generating fresh…','live');
+  try{
+    var r=await fetch(ELEVEN,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      credentials:'include',
+      cache:'no-store',
+      body:JSON.stringify({text:word})
+    });
+    var j=await r.json();
+    if(!r.ok||!j.audio)throw new Error(j.details||j.error||'ElevenLabs failed');
+    status('eleven',word,'Fresh ElevenLabs','ok');
+    return b64Url(j.audio);
+  }finally{
+    busy('eleven',word,false);
+  }
 }
+
+async function openAILive(word){
+  busy('openai',word,true);
+  var voice=voiceSelect.value||'cedar';
+  status('openai',word,'Generating '+voice+'…','live');
+  try{
+    var r=await fetch(OPENAI,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      credentials:'include',
+      cache:'no-store',
+      body:JSON.stringify({
+        endpoint:'audio/speech',
+        payload:{
+          model:'gpt-4o-mini-tts',
+          voice:voice,
+          input:word,
+          instructions:OPENAI_INSTRUCTIONS,
+          response_format:'mp3'
+        }
+      })
+    });
+    var j=await r.json();
+    if(!r.ok||!j.data)throw new Error((j.error&&j.error.message)||j.error||'OpenAI TTS failed');
+    status('openai',word,'Fresh OpenAI · '+voice,'ok');
+    return b64Url(j.data);
+  }finally{
+    busy('openai',word,false);
+  }
+}
+
 async function play(provider,word){
- try{
-  var obj=provider==='study'?await studyV2Audio(word):{url:await openAIAudio(word),source:'OpenAI Coral'};
-  status(provider,word,'Playing · '+obj.source,'ok');
-  await playUrl(obj.url);
-  status(provider,word,obj.source,'ok');
- }catch(e){console.error(e);status(provider,word,e.message||'Failed','err');}
+  try{
+    var url=provider==='eleven'?await elevenLive(word):await openAILive(word);
+    var source=provider==='eleven'?'Fresh ElevenLabs':'Fresh OpenAI · '+voiceSelect.value;
+    status(provider,word,'Playing · '+source,'ok');
+    await playUrl(url);
+    status(provider,word,source,'ok');
+  }catch(e){
+    console.error('[TTS lab]',provider,word,e);
+    status(provider,word,e.message||'Failed','err');
+  }
 }
+
 WORDS.forEach(function(word){
- var c=document.createElement('article');c.className='card';
- c.innerHTML='<div class="word">'+word+'</div>'+
- '<div class="source"><button class="openai" data-provider="openai" data-word="'+word+'">OpenAI · Coral</button><div class="status" id="s-openai-'+word+'"></div></div>'+
- '<div class="source"><button class="study" data-provider="study" data-word="'+word+'">Study V2 / ElevenLabs</button><div class="status" id="s-study-'+word+'"></div></div>';
- grid.appendChild(c);
+  var id=safeId(word);
+  var c=document.createElement('article');c.className='card';
+  c.innerHTML=
+    '<div class="word">'+word+'</div>'+
+    '<div class="source"><button class="openai" data-provider="openai" data-word="'+word+'">OpenAI · selected voice</button><div class="status" id="s-openai-'+id+'"></div></div>'+
+    '<div class="source"><button class="eleven" data-provider="eleven" data-word="'+word+'">ElevenLabs · LIVE</button><div class="status" id="s-eleven-'+id+'"></div></div>';
+  grid.appendChild(c);
 });
-grid.addEventListener('click',function(e){var b=e.target.closest('button[data-provider]');if(!b)return;stopSequence=true;play(b.dataset.provider,b.dataset.word);});
-async function playAll(provider){stopSequence=false;for(var i=0;i<WORDS.length;i++){if(stopSequence)break;await play(provider,WORDS[i]);if(stopSequence)break;await new Promise(function(r){setTimeout(r,180);});}}
+
+grid.addEventListener('click',function(e){
+  var b=e.target.closest('button[data-provider]');
+  if(!b)return;
+  stopSequence=true;
+  play(b.dataset.provider,b.dataset.word);
+});
+
+async function playAll(provider){
+  stopSequence=false;
+  for(var i=0;i<WORDS.length;i++){
+    if(stopSequence)break;
+    await play(provider,WORDS[i]);
+    if(stopSequence)break;
+    await new Promise(function(r){setTimeout(r,180);});
+  }
+}
+
 document.getElementById('allOpenAI').onclick=function(){playAll('openai');};
-document.getElementById('allStudy').onclick=function(){playAll('study');};
-document.getElementById('stopBtn').onclick=function(){stopSequence=true;if(currentAudio){try{currentAudio.pause();currentAudio.currentTime=0;}catch(_){}currentAudio=null;}};
+document.getElementById('allEleven').onclick=function(){playAll('eleven');};
+document.getElementById('stopBtn').onclick=function(){
+  stopSequence=true;
+  if(currentAudio){try{currentAudio.pause();currentAudio.currentTime=0;}catch(_){}currentAudio=null;}
+};
+
+voiceSelect.addEventListener('change',function(){
+  document.querySelectorAll('[id^="s-openai-"]').forEach(function(el){el.textContent='';el.className='status';});
+});
 })();
 </script>
 </body>
