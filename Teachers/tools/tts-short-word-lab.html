@@ -16,8 +16,14 @@ button{cursor:pointer}button:hover{transform:translateY(-1px)}button:disabled{op
 .voice-row label{font-weight:800}.voice-row select{padding:8px 12px;min-width:160px}
 .grid{display:grid;gap:11px;margin-top:16px}.card{display:grid;grid-template-columns:minmax(110px,.8fr) 1fr 1fr;gap:11px;align-items:center;background:#fff;border:3px solid var(--cyan);border-radius:18px;padding:13px 14px}
 .card:nth-child(even){border-color:var(--pink)}.word{font-size:27px;font-weight:900}.source{display:flex;flex-direction:column;gap:5px}.source button{width:100%}.status{min-height:18px;text-align:center;font-size:12px;color:var(--muted)}.ok{color:#26754b}.err{color:#b33a3a}.live{color:#945200}
+.sentence-lab{margin-top:16px;background:#fff;border:3px solid var(--pink);border-radius:18px;padding:16px}
+.sentence-lab h2{margin:0 0 5px;font-size:20px}.sentence-lab p{margin:0;color:var(--muted);font-size:13px}
+.sentence-controls{display:grid;grid-template-columns:minmax(0,1fr) 220px auto;gap:9px;margin-top:12px;align-items:stretch}
+.sentence-controls textarea{width:100%;min-height:72px;resize:vertical;font:inherit;color:var(--ink);background:#fff;border:3px solid var(--line);border-radius:14px;padding:11px 12px}
+.sentence-controls select{width:100%}.sentence-controls button{min-width:110px}
+.sentence-status{min-height:20px;margin-top:8px;font-size:13px;color:var(--muted)}
 .note{margin-top:16px;padding:13px 15px;background:#fff;border:1px solid var(--line);border-radius:15px;color:var(--muted);font-size:13px}
-@media(max-width:680px){.card{grid-template-columns:1fr 1fr}.word{grid-column:1/-1;text-align:center}.hero{padding:17px}button{padding:12px 8px}.voice-row{align-items:stretch}.voice-row label{width:100%}.voice-row select{flex:1}}
+@media(max-width:680px){.card{grid-template-columns:1fr 1fr}.word{grid-column:1/-1;text-align:center}.hero{padding:17px}button{padding:12px 8px}.voice-row{align-items:stretch}.voice-row label{width:100%}.voice-row select{flex:1}.sentence-controls{grid-template-columns:1fr}.sentence-controls button{width:100%}}
 </style>
 </head>
 <body>
@@ -60,6 +66,20 @@ button{cursor:pointer}button:hover{transform:translateY(-1px)}button:disabled{op
 </div>
 </section>
 
+<section class="sentence-lab" aria-labelledby="sentenceLabTitle">
+<h2 id="sentenceLabTitle">Free text test</h2>
+<p>Type a sentence or phrase, choose OpenAI or ElevenLabs, and generate it fresh.</p>
+<div class="sentence-controls">
+<textarea id="sentenceInput" maxlength="1000" placeholder="Type something to hear…">The new cook put the book on the blue stool.</textarea>
+<select id="sentenceProvider" aria-label="Voice provider">
+<option value="openai">OpenAI · selected voice</option>
+<option value="eleven">ElevenLabs · LIVE</option>
+</select>
+<button class="openai" id="sentencePlay" type="button">▶ Play</button>
+</div>
+<div class="sentence-status" id="sentenceStatus" aria-live="polite"></div>
+</section>
+
 <section class="grid" id="grid"></section>
 
 <div class="note">
@@ -84,8 +104,13 @@ var currentAudio=null,stopSequence=false;
 var grid=document.getElementById('grid');
 var voiceSelect=document.getElementById('voiceSelect');
 var openaiBadge=document.getElementById('openaiBadge');
+var sentenceInput=document.getElementById('sentenceInput');
+var sentenceProvider=document.getElementById('sentenceProvider');
+var sentencePlay=document.getElementById('sentencePlay');
+var sentenceStatus=document.getElementById('sentenceStatus');
 
 var OPENAI_INSTRUCTIONS='Pronounce this English vocabulary item once, clearly and naturally. Warm, friendly and encouraging tone for a child learning English. Neutral American English. Slightly slower than normal conversation, but do not exaggerate. Do not add any other words or sounds.';
+var OPENAI_SENTENCE_INSTRUCTIONS='Read the text exactly as written in a warm, friendly, natural voice for a child learning English. Neutral American English. Speak clearly at a natural, slightly relaxed pace. Do not add commentary or extra words.';
 
 function safeId(word){return word.toLowerCase().replace(/[^a-z0-9_-]/g,'_');}
 function status(provider,word,msg,cls){
@@ -158,6 +183,63 @@ async function openAILive(word){
   }
 }
 
+
+async function sentenceOpenAI(textValue){
+  var voice=voiceSelect.value||'cedar';
+  var payload={
+    model:'gpt-4o-mini-tts',
+    voice:voice,
+    input:textValue,
+    instructions:OPENAI_SENTENCE_INSTRUCTIONS,
+    response_format:'mp3'
+  };
+  var r=await fetch(OPENAI,{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    credentials:'include',
+    cache:'no-store',
+    body:JSON.stringify({endpoint:'audio/speech',payload:payload})
+  });
+  var j=await r.json();
+  if(!r.ok||!j.data)throw new Error((j.error&&j.error.message)||j.error||'OpenAI TTS failed');
+  return b64Url(j.data);
+}
+
+async function sentenceEleven(textValue){
+  var r=await fetch(ELEVEN,{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    credentials:'include',
+    cache:'no-store',
+    body:JSON.stringify({text:textValue})
+  });
+  var j=await r.json();
+  if(!r.ok||!j.audio)throw new Error(j.details||j.error||'ElevenLabs failed');
+  return b64Url(j.audio);
+}
+
+async function playSentence(){
+  var textValue=String(sentenceInput.value||'').trim();
+  if(!textValue){sentenceStatus.textContent='Type something first.';sentenceInput.focus();return;}
+  sentencePlay.disabled=true;
+  var provider=sentenceProvider.value;
+  sentenceStatus.className='sentence-status live';
+  sentenceStatus.textContent=provider==='eleven'?'Generating fresh ElevenLabs…':'Generating OpenAI · '+voiceSelect.value+'…';
+  try{
+    var url=provider==='eleven'?await sentenceEleven(textValue):await sentenceOpenAI(textValue);
+    sentenceStatus.className='sentence-status ok';
+    sentenceStatus.textContent=provider==='eleven'?'Playing · Fresh ElevenLabs':'Playing · OpenAI · '+voiceSelect.value;
+    await playUrl(url);
+    sentenceStatus.textContent=provider==='eleven'?'Fresh ElevenLabs':'OpenAI · '+voiceSelect.value;
+  }catch(e){
+    console.error('[TTS sentence lab]',e);
+    sentenceStatus.className='sentence-status err';
+    sentenceStatus.textContent=e.message||'Generation failed';
+  }finally{
+    sentencePlay.disabled=false;
+  }
+}
+
 async function play(provider,word){
   try{
     var url=provider==='eleven'?await elevenLive(word):await openAILive(word);
@@ -198,6 +280,12 @@ async function playAll(provider){
   }
 }
 
+sentencePlay.addEventListener('click',playSentence);
+sentenceProvider.addEventListener('change',function(){
+  sentencePlay.className=sentenceProvider.value==='eleven'?'eleven':'openai';
+  sentenceStatus.textContent='';
+  sentenceStatus.className='sentence-status';
+});
 document.getElementById('allOpenAI').onclick=function(){playAll('openai');};
 document.getElementById('allEleven').onclick=function(){playAll('eleven');};
 document.getElementById('stopBtn').onclick=function(){
