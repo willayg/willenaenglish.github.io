@@ -1,3 +1,4 @@
+.vocab-front-wordtest[hidden],.vocab-front-book-card[hidden],.vocab-old-tests-card[hidden]{display:none!important}
 /* Vocabulary Study front menu + screen navigation */
 .vocab-front-menu{
   margin-top:18px;background:#fff;border:2px solid #dff2f4;border-radius:28px;
