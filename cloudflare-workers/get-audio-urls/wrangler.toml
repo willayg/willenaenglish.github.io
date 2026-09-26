@@ -27,6 +27,3 @@ preview_bucket_name = "tts-audio"
 port = 8787
 local_protocol = "http"
 
-[[services]]
-binding = "WILLENA_PROXY"
-service = "willena-proxy"
