@@ -106,10 +106,14 @@ function starsForPercent(percent){
   if(p>=60)return 1;
   return 0;
 }
+function wordTestStarsForPercent(percent){
+  const p=Math.max(0,Math.min(100,Number(percent)||0));
+  return Math.max(0,Math.min(10,Math.floor(p/10)));
+}
 function startRewardSession(mode){
   const rewardSessionId=(window.crypto?.randomUUID?.()||('vocab-'+Date.now()+'-'+Math.random().toString(16).slice(2)));
   const listName=state.activeTeacherAssignment
-    ?('Teacher Practice · '+txt(state.activeTeacherAssignment?.assignment?.title||'Vocabulary'))
+    ?('Word Test Study · '+txt(state.activeTeacherAssignment?.assignment?.title||'Vocabulary'))
     :('Vocabulary · '+txt(state.book?.book_title||state.book?.book_id||'Book')+' · Unit '+txt(state.unit?.unit_number||state.unit?.id||''));
   state.rewardSession={
     mode:txt(mode),
@@ -139,11 +143,11 @@ async function completeRewardSession(){
   if(!reward||reward.completed||state.adminMode)return reward;
   reward.completed=true;
   reward.percent=rewardPercent(reward);
-  reward.stars=starsForPercent(reward.percent);
   const teacher=state.activeTeacherAssignment;
+  reward.stars=teacher?wordTestStarsForPercent(reward.percent):starsForPercent(reward.percent);
   const listName=reward.listName||(
     teacher
-      ?('Teacher Practice · '+txt(teacher?.assignment?.title||'Vocabulary'))
+      ?('Word Test Study · '+txt(teacher?.assignment?.title||'Vocabulary'))
       :('Vocabulary · '+txt(state.book?.book_title||state.book?.book_id||'Book')+' · Unit '+txt(state.unit?.unit_number||state.unit?.id||''))
   );
   try{
@@ -176,7 +180,8 @@ async function completeRewardSession(){
         assignment_id:teacher?.assignment?.id||null,
         session_source:teacher?'teacher':'student',
         vocab_mode:reward.mode,
-        reward_scheme:'vocab-study-v1'
+        reward_scheme:teacher?'word-test-study-v1':'vocab-study-v1',
+        star_cap:teacher?10:5
       }
     };
     payload.assignment_id=teacher?.assignment?.id||null;
@@ -199,9 +204,10 @@ async function completeRewardSession(){
 }
 function rewardSummaryHtml(reward=state.rewardSession,{pointsOnly=false}={}){
   if(!reward)return'';
-  const stars=Math.max(0,Math.min(5,Number(reward.stars)||0));
+  const starMax=state.activeTeacherAssignment?10:5;
+  const stars=Math.max(0,Math.min(starMax,Number(reward.stars)||0));
   const points=Math.max(0,Number(reward.points)||0);
-  return '<student-reward-celebration '+(pointsOnly?'points-only ':'')+'percent="'+rewardPercent(reward)+'" stars="'+stars+'" points="'+points+'" label="SESSION REWARD"></student-reward-celebration>';
+  return '<student-reward-celebration '+(pointsOnly?'points-only ':'')+'percent="'+rewardPercent(reward)+'" stars="'+stars+'" star-max="'+starMax+'" points="'+points+'" label="'+(state.activeTeacherAssignment?'WORD TEST STUDY':'SESSION REWARD')+'"></student-reward-celebration>';
 }
 
 function perfNow(){return window.performance?.now?.()||Date.now()}
@@ -377,9 +383,10 @@ function renderTeacherAssignments(){
       const m=student.modes?.[mode]||{};
       const complete=Number(m.total)>0&&Number(m.clean)>=Number(m.total);
       const progress=Number(m.total)>0?Math.round(100*Number(m.clean||0)/Number(m.total)):0;
+      const stars=Math.max(0,Math.min(10,Number(m.stars)||0));
       return '<button class="vocab-teacher-mode vocab-skill-card '+escapeHtml(modeClasses[mode]||'')+(complete?' is-complete':'')+'" type="button" data-teacher-assignment="'+index+'" data-teacher-mode="'+escapeHtml(mode)+'">'+
         '<span class="vocab-skill-ring" style="--progress:'+progress+'"><span>'+progress+'%</span></span>'+
-        '<span class="vocab-skill-copy"><strong>'+escapeHtml(labels[mode]||mode)+'</strong></span>'+
+        '<span class="vocab-skill-copy"><strong>'+escapeHtml(labels[mode]||mode)+'</strong><span class="vocab-teacher-stars" aria-label="'+stars+' out of 10 stars">★ '+stars+'/10</span></span>'+
       '</button>';
     }).join('');
     return '<article class="vocab-teacher-card">'+
@@ -417,7 +424,7 @@ async function loadTeacherAssignments(){
   }
 }
 function teacherTitle(mode){
-  const title=txt(state.activeTeacherAssignment?.assignment?.title||'Teacher Practice');
+  const title=txt(state.activeTeacherAssignment?.assignment?.title||'Word Test Study');
   const suffix={quiz:'Quiz',spelling_test:'Spelling Test',speaking:'Speaking'}[mode]||'Practice';
   return title+' · '+suffix;
 }
@@ -1725,7 +1732,7 @@ async function boot(){
       renderSkillProgress();
     });
     reportStartupPerf();
-    window.WillenaVocabStudy={version:'0.056',getState:()=>state,start:startSession,openSpellingMenu,openSpellingPreview,openSpellingTest,openSpeakingSession,close:closeSession};
+    window.WillenaVocabStudy={version:'0.057',getState:()=>state,start:startSession,openSpellingMenu,openSpellingPreview,openSpellingTest,openSpeakingSession,close:closeSession};
   }catch(error){
     console.error('[Vocab Study] boot',error);
     setStatus(error?.message||'불러오지 못했습니다. 새로고침해 주세요.');
