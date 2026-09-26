@@ -13,7 +13,7 @@
 <link rel="stylesheet" href="/students/study/study.css?v=20260808-7">
 <link rel="stylesheet" href="/students/study/study-overrides.css?v=20260808-1">
 <link rel="stylesheet" href="/students/study-v2/v2.css?v=20260814-daily1">
-<link rel="stylesheet" href="./vocab-study.css?v=20260926-v0057">
+<link rel="stylesheet" href="./vocab-study.css?v=20260926-v0058">
 <script src="/students/api-gateway.js?v=20260926-progress-summary-cf1"></script>
 <script src="/students/study/study-progress.js?v=20260926-assignment-canonical1"></script>
 <script src="/js/api-config.js?v=20260926-reverted-auth1"></script>
@@ -26,7 +26,7 @@
   <student-header title="Vocabulary Study" show-id="false" show-home="true" home-href="/students/" home-label="Home" show-points="true" show-logout="true"></student-header>
 
   <main class="vocab-page">
-    <section class="vocab-home-card">
+    <section id="vocabFrontMenu" class="vocab-front-menu">
       <p id="vocabStudyStatus">불러오는 중...</p>
 
       <section id="vocabAdminPicker" class="vocab-admin" hidden>
@@ -36,13 +36,28 @@
         </select>
       </section>
 
-      <section id="vocabTeacherPractice" class="vocab-teacher-practice" hidden aria-label="Word Test Study">
-        <div class="vocab-teacher-practice-head">
-          <div><span class="eyebrow">WORD TEST STUDY</span><strong>Word Test Study</strong></div>
-          <span id="vocabTeacherPracticeCount"></span>
+      <button id="vocabFrontWordTestCard" class="vocab-front-wordtest" type="button" hidden>
+        <span class="vocab-front-card-copy">
+          <span class="eyebrow">WORD TEST STUDY</span>
+          <strong>Word Test Study</strong>
+          <small id="vocabFrontWordTestMeta">Homework and review</small>
+        </span>
+        <span class="vocab-front-arrow" aria-hidden="true">›</span>
+      </button>
+
+      <section class="vocab-front-books" aria-label="Your books">
+        <div class="vocab-front-section-head">
+          <div><span class="eyebrow">YOUR BOOKS</span><strong>Choose a book</strong></div>
         </div>
-        <div id="vocabTeacherPracticeList" class="vocab-teacher-practice-list"></div>
+        <div id="vocabFrontBookList" class="vocab-front-book-list"></div>
       </section>
+    </section>
+
+    <section id="vocabBookScreen" class="vocab-home-card vocab-subscreen" hidden>
+      <div class="vocab-subscreen-head">
+        <button id="vocabBookBack" class="vocab-screen-back" type="button">← Home</button>
+        <span>Book Study</span>
+      </div>
 
       <section id="vocabBookPicker" class="vocab-book-picker" hidden>
         <span class="vocab-picker-label">교재 선택</span>
@@ -107,7 +122,43 @@
         </button>
       </section>
     </section>
-    <div class="vocab-version">v0.057</div>
+
+    <section id="vocabWordTestScreen" class="vocab-home-card vocab-subscreen" hidden>
+      <div class="vocab-subscreen-head">
+        <button id="vocabWordTestBack" class="vocab-screen-back" type="button">← Home</button>
+        <span>Word Test Study</span>
+      </div>
+
+      <section id="vocabTeacherPractice" class="vocab-teacher-practice" hidden aria-label="Word Test Study">
+        <div class="vocab-teacher-practice-head">
+          <div><span class="eyebrow">CURRENT</span><strong>Current assignments</strong></div>
+          <span id="vocabTeacherPracticeCount"></span>
+        </div>
+        <div id="vocabTeacherPracticeList" class="vocab-teacher-practice-list"></div>
+      </section>
+
+      <section id="vocabWordTestEmpty" class="vocab-wordtest-empty" hidden>
+        <strong>No current word tests</strong>
+        <span>Old word tests are still available below.</span>
+      </section>
+
+      <section class="vocab-old-tests">
+        <button id="vocabOldTestsOpen" class="vocab-old-tests-card" type="button">
+          <span>
+            <span class="eyebrow">REVIEW</span>
+            <strong>Old Word Tests</strong>
+            <small id="vocabOldTestsMeta">Review earlier tests by book</small>
+          </span>
+          <span class="vocab-front-arrow" aria-hidden="true">›</span>
+        </button>
+        <div id="vocabOldTestsPanel" class="vocab-old-tests-panel" hidden>
+          <div id="vocabOldTestsBooks" class="vocab-old-tests-books"></div>
+          <div id="vocabOldTestsList" class="vocab-old-tests-list"></div>
+        </div>
+      </section>
+    </section>
+
+    <div class="vocab-version">v0.058</div>
   </main>
 
   <section id="vocabWordModal" class="vocab-word-modal" hidden aria-hidden="true">
@@ -153,6 +204,6 @@
 </div>
 
 <script src="/students/study/study-question-bank.js?v=20260822-conversationfix1"></script>
-<script type="module" src="./vocab-study.js?v=20260926-v0057"></script>
+<script type="module" src="./vocab-study.js?v=20260926-v0058"></script>
 </body>
 </html>
