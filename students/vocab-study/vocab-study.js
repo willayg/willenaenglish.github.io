@@ -988,7 +988,7 @@ function renderUnits(){
   const units=arr(state.units);
   currentUnitLabelEl.textContent='현재 · Unit '+(state.unit?.unit_number||'—');
   unitStripEl.innerHTML=units.map(u=>
-    '<button class="study-v2-unit'+(String(state.unit?.id)===String(u.id)?' is-current':'')+'" type="button" data-unit-id="'+escapeHtml(u.id)+'">Unit '+escapeHtml(u.unit_number)+(isGoldenUnit(u.id)?'<img class="vocab-unit-gold" src="/shared/svgs/golden-unit.svg" alt="Golden Unit">':'')+'</button>'
+    '<button class="study-v2-unit'+(String(state.unit?.id)===String(u.id)?' is-current':'')+(isGoldenUnit(u.id)?' is-golden':'')+'" type="button" data-unit-id="'+escapeHtml(u.id)+'">Unit '+escapeHtml(u.unit_number)+(isGoldenUnit(u.id)?'<img class="vocab-unit-gold" src="/shared/svgs/golden-unit.svg" alt="Golden Unit">':'')+'</button>'
   ).join('');
   unitStripEl.querySelectorAll('[data-unit-id]').forEach(btn=>btn.addEventListener('click',()=>selectUnit(btn.dataset.unitId)));
 }
