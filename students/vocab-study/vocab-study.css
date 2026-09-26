@@ -133,7 +133,7 @@ body.vocab-session-open{overflow:hidden}
 .vocab-motivation-stat div{min-width:0;display:flex;flex-direction:column}
 .vocab-motivation-stat strong{color:#315e64;font-size:1rem;line-height:1.05}
 .vocab-motivation-stat small{margin-top:3px;color:#789095;font-size:.68rem;font-weight:800;white-space:nowrap}
-.vocab-motivation-gold{background:#fffaf0;border-color:#f2ddb0}
+.vocab-motivation-gold{background:#fffaf0;border:3px solid #e8c86c}
 .vocab-unit-gold{display:inline-block;width:18px;height:18px;margin-left:5px;vertical-align:-4px}
 .vocab-golden-award{
   margin-top:18px;padding:16px 18px;border:2px solid #e8c86c;border-radius:18px;
@@ -198,10 +198,17 @@ body.vocab-session-open{overflow:hidden}
 .vocab-book-choice{flex:1 1 180px;min-height:46px;border:3px solid #c9f1f4;border-radius:14px;background:#fff;color:var(--ink);padding:10px 13px;font:800 .88rem Poppins,sans-serif;cursor:pointer}
 .vocab-book-choice.is-active{border-color:var(--pink);background:#fff3f9;color:var(--pink-dark)}
 
-.vocab-skill-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:24px}
+#vocabBookScreen{border:4px solid #bfecef}
+.vocab-skill-grid{
+  position:relative;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;margin-top:24px
+}
+.vocab-skill-grid::before{
+  content:'';position:absolute;z-index:0;left:8%;right:8%;top:50%;height:6px;
+  transform:translateY(-50%);border-radius:999px;background:#f7d7e6
+}
 .vocab-skill-card{
   --skill-color:var(--cyan-strong);
-  display:flex;align-items:center;gap:14px;min-width:0;min-height:150px;padding:18px;
+  position:relative;z-index:1;display:flex;align-items:center;gap:14px;min-width:0;min-height:150px;padding:18px;
   border:3px solid #c9f1f4;border-radius:22px;background:#fff;color:var(--ink);text-align:left;
   box-shadow:0 8px 24px rgba(34,106,116,.06);cursor:pointer;transition:transform .14s ease,border-color .14s ease,box-shadow .14s ease
 }
@@ -221,7 +228,11 @@ body.vocab-session-open{overflow:hidden}
 .vocab-skill-copy{display:flex;flex-direction:column;min-width:0}
 .vocab-skill-copy strong{font-size:1.15rem;line-height:1.2;color:#244f56}
 .vocab-skill-copy small{margin-top:5px;color:var(--muted);font-weight:700;line-height:1.35}
-.vocab-card-stars{display:block;margin-top:8px;color:#f0b323;font-size:1rem;font-weight:900;letter-spacing:.08em;line-height:1}
+.vocab-skill-step{
+  margin:0 0 4px!important;color:#d96b9e!important;font-size:.61rem!important;font-weight:900!important;
+  letter-spacing:.12em!important;line-height:1!important
+}
+.vocab-card-stars{display:block;margin-top:8px;color:#f0b323;font-size:.9rem;font-weight:900;letter-spacing:.02em;line-height:1}
 .vocab-skill-copy b{margin-top:13px;color:var(--skill-color);font-size:.84rem}
 .vocab-skill-quiz{--skill-color:#2c9eaa}
 .vocab-skill-spelling{--skill-color:var(--pink);border-color:#f0b7d2}
@@ -342,7 +353,12 @@ body.vocab-session-open{overflow:hidden}
   .vocab-home-card{border-radius:23px;padding:24px 19px}
   .vocab-motivation{grid-template-columns:1fr 1fr}
   .vocab-motivation-gold{grid-column:1/-1}
-  .vocab-skill-grid{grid-template-columns:1fr;gap:10px}
+  #vocabBookScreen{border-width:4px}
+  .vocab-skill-grid{grid-template-columns:1fr;gap:16px}
+  .vocab-skill-grid::before{
+    left:50%;right:auto;top:7%;bottom:7%;width:6px;height:auto;
+    transform:translateX(-50%)
+  }
   .vocab-skill-card{min-height:112px;padding:15px 16px}
   .vocab-skill-ring{flex-basis:66px;width:66px;height:66px}
   .vocab-skill-ring::before{width:52px;height:52px}
