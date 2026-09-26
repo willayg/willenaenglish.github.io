@@ -6,7 +6,7 @@ import {
     getCurrentWorksheetData as worksheetGetCurrentWorksheetData,
     loadWorksheet as worksheetLoadWorksheet,
     updateCurrentWordsFromTextarea as worksheetUpdateCurrentWordsFromTextarea
-} from './worksheet.js?v=20260923-imgstate2';
+} from './worksheet.js?v=20260926-book1';
 
 const currentWords = state.currentWords;
 const currentSettings = state.currentSettings;
