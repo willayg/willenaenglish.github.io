@@ -801,3 +801,12 @@ body.willena-kb-open .vocab-session-main{
   margin:2px 0 8px;
   align-self:flex-start;
 }
+
+/* Past Word Test review actions */
+.vocab-old-test-row{display:block}
+.vocab-old-test-summary{display:flex;align-items:center;justify-content:space-between;gap:14px}
+.vocab-old-test-summary>span{flex:0 0 auto;color:#d49b12;font-size:.76rem;font-weight:900}
+.vocab-old-review-modes{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:12px;padding-top:11px;border-top:1px solid #e7f2f3}
+.vocab-old-review-modes>span{margin-right:2px;color:#789095;font-size:.68rem;font-weight:900}
+.vocab-old-review-mode{min-height:36px;padding:7px 12px;border:2px solid #c9f1f4;border-radius:12px;background:#fff;color:#315e64;font:900 .72rem Poppins,system-ui,sans-serif;cursor:pointer}
+.vocab-old-review-mode:active{border-color:var(--pink);color:var(--pink);transform:scale(.98)}
