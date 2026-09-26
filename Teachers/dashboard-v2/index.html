@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Teacher Dashboard V2</title>
+  <script src="/js/api-config.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --ink:#333244;--shell:#39384a;--muted:#7b8292;--line:#e6e8ee;--panel:#fff;--soft:#f6f7f9;
+      --pink:#ed5f91;--pink-soft:#fff0f6;--cyan:#5ac9d8;--cyan-soft:#eefbfc;--blue:#627fe5;--blue-soft:#f0f3ff;
+      --orange:#f2a24f;--orange-soft:#fff7ed;--green:#55b982;--green-soft:#eefaf3;--red:#e66c73;--red-soft:#fff1f2;
+      --shadow:0 10px 30px rgba(40,40,60,.08);--radius:22px;
+    }
+    *{box-sizing:border-box} html,body{margin:0;min-height:100%;background:#f2f3f6;color:var(--ink);font-family:Poppins,Arial,sans-serif}
+    button,input,select{font:inherit}.app{min-height:100vh;display:flex;flex-direction:column}
+    .topbar{min-height:76px;background:var(--shell);color:white;display:flex;align-items:center;gap:16px;padding:12px 20px;position:sticky;top:0;z-index:20;box-shadow:0 4px 18px rgba(0,0,0,.13)}
+    .brand{display:flex;align-items:center;gap:12px;min-width:220px}.brand img{height:44px;width:auto}.brand-title{font-weight:700;font-size:1.05rem}.brand-sub{font-size:.72rem;opacity:.7;margin-top:2px}
+    .top-title{flex:1;text-align:center;font-size:1.35rem;font-weight:600}.top-actions{display:flex;align-items:center;gap:10px;min-width:220px;justify-content:flex-end}.teacher-name{font-size:.86rem;opacity:.9}
+    #burger-menu-mount{min-width:38px;min-height:38px}
+    .body{width:min(1500px,100%);margin:0 auto;padding:18px;display:grid;grid-template-columns:230px minmax(0,1fr);gap:18px;flex:1}
+    .rail{background:var(--shell);border-radius:26px;color:white;padding:14px;box-shadow:var(--shadow);height:calc(100vh - 112px);position:sticky;top:94px;display:flex;flex-direction:column;gap:8px}
+    .nav-btn{border:0;background:transparent;color:#d9dbe4;padding:13px 14px;border-radius:14px;text-align:left;cursor:pointer;font-weight:600;display:flex;align-items:center;gap:10px}.nav-btn:hover{background:rgba(255,255,255,.08)}.nav-btn.active{background:white;color:var(--shell)}
+    .nav-icon{width:28px;height:28px;border-radius:9px;background:rgba(255,255,255,.12);display:grid;place-items:center;font-size:.9rem}.nav-btn.active .nav-icon{background:#eef0f5}.nav-spacer{flex:1}.rail-note{font-size:.72rem;line-height:1.45;color:#b9bdc9;padding:12px}
+    .workspace{min-width:0}.page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;margin:2px 0 16px}.page-head h1{margin:0;font-size:1.65rem}.page-head p{margin:4px 0 0;color:var(--muted);font-size:.88rem}
+    .filters{display:flex;gap:8px;flex-wrap:wrap}.control{background:white;border:1px solid var(--line);border-radius:12px;padding:10px 12px;color:var(--ink);min-height:42px}.search{min-width:220px}.refresh{cursor:pointer;font-weight:600}
+    .summary-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:14px}.summary-card{background:white;border:1px solid var(--line);border-radius:18px;padding:15px;box-shadow:0 3px 12px rgba(40,40,60,.04)}.summary-label{font-size:.76rem;color:var(--muted);font-weight:600}.summary-value{font-size:1.6rem;font-weight:700;margin-top:4px}.summary-sub{font-size:.72rem;color:var(--muted);margin-top:4px}
+    .attention-card{border-left:5px solid var(--orange)}.streak-card{border-left:5px solid var(--pink)}.proof-card{border-left:5px solid var(--cyan)}.accuracy-card{border-left:5px solid var(--blue)}
+    .content-grid{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(320px,.6fr);gap:14px}.panel{background:white;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}.panel-head{padding:15px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:10px}.panel-title{font-weight:700}.panel-sub{font-size:.74rem;color:var(--muted);margin-top:2px}
+    .student-list{max-height:calc(100vh - 310px);overflow:auto}.student-row{display:grid;grid-template-columns:minmax(145px,1.35fr) .65fr .65fr .65fr .72fr;align-items:center;gap:10px;padding:13px 16px;border-bottom:1px solid #f0f1f4;cursor:pointer;transition:.15s}.student-row:hover{background:#fafafd}.student-row:last-child{border-bottom:0}.student-name{font-weight:600}.student-ko{font-size:.72rem;color:var(--muted);margin-top:2px}.metric{font-size:.8rem}.metric strong{display:block;font-size:.93rem}.metric span{color:var(--muted);font-size:.69rem}.pill{display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:5px 8px;font-size:.68rem;font-weight:700;white-space:nowrap}.pill.good{background:var(--green-soft);color:#287d50}.pill.watch{background:var(--orange-soft);color:#a45b14}.pill.risk{background:var(--red-soft);color:#a33a43}.pill.neutral{background:#f1f2f5;color:#697080}
+    .attention-list{padding:8px 10px 12px}.attention-item{padding:12px;border-radius:14px;margin:7px 0;background:var(--soft);cursor:pointer}.attention-item:hover{background:#f0f1f5}.attention-top{display:flex;align-items:center;justify-content:space-between;gap:8px}.attention-name{font-weight:700;font-size:.86rem}.attention-reason{font-size:.74rem;color:var(--muted);margin-top:5px;line-height:1.45}
+    .empty{padding:34px 18px;text-align:center;color:var(--muted)}.loading{opacity:.65;pointer-events:none}
+    .view{display:none}.view.active{display:block}.module-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}.module-card{background:white;border:1px solid var(--line);border-radius:20px;padding:18px;min-height:150px;box-shadow:var(--shadow)}.module-card h3{margin:8px 0 5px}.module-card p{color:var(--muted);font-size:.82rem;line-height:1.5}.module-chip{font-size:.69rem;font-weight:700;color:var(--blue);background:var(--blue-soft);display:inline-block;padding:5px 8px;border-radius:999px}
+    .drawer-backdrop{position:fixed;inset:0;background:rgba(31,31,44,.35);z-index:50;opacity:0;pointer-events:none;transition:.2s}.drawer-backdrop.open{opacity:1;pointer-events:auto}.drawer{position:absolute;top:0;right:0;height:100%;width:min(680px,96vw);background:#f7f8fa;box-shadow:-15px 0 40px rgba(0,0,0,.18);transform:translateX(100%);transition:.24s;overflow-y:auto}.drawer-backdrop.open .drawer{transform:translateX(0)}
+    .drawer-head{background:var(--shell);color:white;padding:18px 20px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:3}.drawer-head-main{flex:1}.drawer-name{font-weight:700;font-size:1.2rem}.drawer-meta{font-size:.76rem;opacity:.75;margin-top:2px}.close-btn{border:0;background:rgba(255,255,255,.12);color:white;width:38px;height:38px;border-radius:12px;cursor:pointer;font-size:1.1rem}
+    .drawer-body{padding:14px}.student-hero{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-bottom:12px}.mini{background:white;border:1px solid var(--line);border-radius:15px;padding:12px}.mini b{font-size:1.15rem}.mini span{display:block;color:var(--muted);font-size:.68rem;margin-top:3px}
+    .detail-card{background:white;border:1px solid var(--line);border-radius:18px;padding:15px;margin-bottom:11px}.detail-card h3{margin:0 0 10px;font-size:.93rem}.skill-row{display:grid;grid-template-columns:1fr 80px;gap:10px;align-items:center;padding:8px 0;border-top:1px solid #f1f2f4}.skill-row:first-of-type{border-top:0}.skill-name{font-size:.8rem}.skill-note{font-size:.68rem;color:var(--muted);margin-top:2px}.bar{height:8px;background:#eceef2;border-radius:999px;overflow:hidden}.bar i{display:block;height:100%;background:var(--blue);border-radius:999px}
+    .proof-line{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 0;border-top:1px solid #f0f1f4;font-size:.78rem}.proof-line:first-of-type{border-top:0}.proof-time{color:var(--muted);font-size:.68rem}.status-dot{width:8px;height:8px;border-radius:50%;display:inline-block;background:var(--green);margin-right:6px}
+    .mobile-tabs{display:none}
+    @media(max-width:1050px){.body{grid-template-columns:86px minmax(0,1fr)}.rail{padding:10px}.nav-btn{justify-content:center;padding:12px 8px}.nav-btn span.label,.rail-note{display:none}.brand{min-width:160px}.top-actions{min-width:140px}.summary-grid{grid-template-columns:repeat(2,1fr)}.content-grid{grid-template-columns:1fr}.attention-panel{order:-1}.student-list{max-height:none}.module-grid{grid-template-columns:repeat(2,1fr)}}
+    @media(max-width:700px){.topbar{min-height:62px;padding:8px 10px}.brand img{height:36px}.brand-title,.brand-sub,.teacher-name{display:none}.brand{min-width:auto}.top-title{font-size:1rem;text-align:left}.top-actions{min-width:auto}.body{display:block;padding:10px 10px 74px}.rail{display:none}.page-head{align-items:flex-start;flex-direction:column}.filters{width:100%}.control{flex:1;min-width:0}.search{flex-basis:100%;width:100%}.summary-grid{grid-template-columns:repeat(2,1fr);gap:8px}.summary-card{padding:12px}.summary-value{font-size:1.28rem}.content-grid{display:block}.attention-panel{margin-bottom:10px}.student-row{grid-template-columns:minmax(125px,1fr) .6fr .65fr;padding:12px}.student-row .hide-mobile{display:none}.module-grid{grid-template-columns:1fr}.mobile-tabs{position:fixed;display:flex;bottom:0;left:0;right:0;height:64px;background:var(--shell);z-index:40;justify-content:space-around;padding-bottom:env(safe-area-inset-bottom)}.mobile-tab{border:0;background:transparent;color:#c9ccd7;font-size:.66rem;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-width:72px}.mobile-tab.active{color:white;font-weight:700}.mobile-tab b{font-size:1rem}.student-hero{grid-template-columns:repeat(2,1fr)}.drawer{width:100vw}}
+  </style>
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <div class="brand"><img src="/Assets/Images/Logo.png" alt="Willena"><div><div class="brand-title">Willena</div><div class="brand-sub">Teacher workspace</div></div></div>
+    <div class="top-title">Teacher Dashboard V2</div>
+    <div class="top-actions"><span class="teacher-name" id="teacherName">Teacher</span><div id="burger-menu-mount"></div></div>
+  </header>
+  <main class="body">
+    <aside class="rail">
+      <button class="nav-btn active" data-view="students"><span class="nav-icon">◎</span><span class="label">Students</span></button>
+      <button class="nav-btn" data-view="homework"><span class="nav-icon">✓</span><span class="label">Homework</span></button>
+      <button class="nav-btn" data-view="assessments"><span class="nav-icon">A</span><span class="label">Assessments</span></button>
+      <button class="nav-btn" data-view="apps"><span class="nav-icon">＋</span><span class="label">Apps</span></button>
+      <div class="nav-spacer"></div>
+      <div class="rail-note">V2 is designed as the teacher home for student progress, evidence, intervention and future teacher apps.</div>
+    </aside>
+
+    <section class="workspace">
+      <div class="view active" id="view-students">
+        <div class="page-head">
+          <div><h1>Student tracking</h1><p>Effort, proof, mastery, growth and who needs attention.</p></div>
+          <div class="filters">
+            <select id="classSelect" class="control"><option value="">Loading classes…</option></select>
+            <select id="timeSelect" class="control"><option value="month">Last 30 days</option><option value="all">All time</option></select>
+            <input id="searchInput" class="control search" type="search" placeholder="Search student…">
+            <button id="refreshBtn" class="control refresh">Refresh</button>
+          </div>
+        </div>
+
+        <div class="summary-grid">
+          <div class="summary-card attention-card"><div class="summary-label">Needs attention</div><div class="summary-value" id="sumAttention">—</div><div class="summary-sub">Low activity or accuracy</div></div>
+          <div class="summary-card streak-card"><div class="summary-label">Active students</div><div class="summary-value" id="sumActive">—</div><div class="summary-sub">With recorded study activity</div></div>
+          <div class="summary-card proof-card"><div class="summary-label">Proof of work</div><div class="summary-value" id="sumSessions">—</div><div class="summary-sub">Recorded sessions / attempts</div></div>
+          <div class="summary-card accuracy-card"><div class="summary-label">Class accuracy</div><div class="summary-value" id="sumAccuracy">—</div><div class="summary-sub">Across tracked work</div></div>
+        </div>
+
+        <div class="content-grid">
+          <div class="panel">
+            <div class="panel-head"><div><div class="panel-title" id="studentsTitle">Students</div><div class="panel-sub" id="statusText">Choose a class to begin.</div></div><span class="pill neutral" id="studentCount">0 students</span></div>
+            <div class="student-list" id="studentList"><div class="empty">Loading student data…</div></div>
+          </div>
+          <div class="panel attention-panel">
+            <div class="panel-head"><div><div class="panel-title">Teacher attention</div><div class="panel-sub">Students worth looking at first.</div></div></div>
+            <div class="attention-list" id="attentionList"><div class="empty">No signals yet.</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="view" id="view-homework">
+        <div class="page-head"><div><h1>Homework</h1><p>Assignment proof and completion will live here.</p></div></div>
+        <div class="module-grid"><div class="module-card"><span class="module-chip">COMING INTO V2</span><h3>Completion proof</h3><p>See what was assigned, started, completed, skipped or late without opening a separate tracker.</p></div><div class="module-card"><span class="module-chip">PLANNED</span><h3>Class assignment view</h3><p>One view for today's homework status across the whole class.</p></div></div>
+      </div>
+      <div class="view" id="view-assessments">
+        <div class="page-head"><div><h1>Assessments</h1><p>Level tests, achievement tests and teacher assessment history.</p></div></div>
+        <div class="module-grid"><div class="module-card"><span class="module-chip">PLANNED</span><h3>Assessment timeline</h3><p>Bring formal tests into the same student profile as daily Study V2 performance.</p></div><div class="module-card"><span class="module-chip">PLANNED</span><h3>Growth view</h3><p>Compare assessment outcomes with ongoing skill mastery and classroom evidence.</p></div></div>
+      </div>
+      <div class="view" id="view-apps">
+        <div class="page-head"><div><h1>Teacher apps</h1><p>Dashboard V2 is built to become the launch point for more teacher tools.</p></div></div>
+        <div class="module-grid"><div class="module-card"><span class="module-chip">FOUNDATION</span><h3>Student tracking</h3><p>The first V2 module. Connected to the existing teacher progress engine.</p></div><div class="module-card"><span class="module-chip">NEXT</span><h3>More tools</h3><p>Future teacher apps can slot into this shell without becoming separate UI islands.</p></div></div>
+      </div>
+    </section>
+  </main>
+</div>
+<nav class="mobile-tabs">
+  <button class="mobile-tab active" data-view="students"><b>◎</b>Students</button><button class="mobile-tab" data-view="homework"><b>✓</b>Homework</button><button class="mobile-tab" data-view="assessments"><b>A</b>Tests</button><button class="mobile-tab" data-view="apps"><b>＋</b>Apps</button>
+</nav>
+
+<div class="drawer-backdrop" id="drawerBackdrop">
+  <aside class="drawer" role="dialog" aria-modal="true" aria-label="Student details">
+    <div class="drawer-head"><div class="drawer-head-main"><div class="drawer-name" id="drawerName">Student</div><div class="drawer-meta" id="drawerMeta">Loading…</div></div><button class="close-btn" id="closeDrawer">×</button></div>
+    <div class="drawer-body" id="drawerBody"><div class="empty">Loading student details…</div></div>
+  </aside>
+</div>
+
+<script type="module" src="/components/burger-menu.js"></script>
+<script>
+const $ = (s,r=document)=>r.querySelector(s); const $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
+const FN = name => `/.netlify/functions/${name}`;
+const state={classes:[],students:[],selectedClass:'',timeframe:'month',student:null,role:null};
+
+async function apiJson(url){
+  const resolved=window.WillenaAPI?window.WillenaAPI.getApiUrl(url):url;
+  const r=await fetch(resolved,{credentials:'include'}); let j={}; try{j=await r.json()}catch{}
+  if(r.status===401) throw new Error('unauthorized'); if(!r.ok) throw new Error(j.error||`Request failed (${r.status})`); return j;
+}
+
+async function auth(){
+  const userId=localStorage.getItem('userId');
+  if(!userId){location.href=`/Teachers/login.html?redirect=${encodeURIComponent(location.pathname+location.search)}`;return false;}
+  try{
+    const j=await apiJson(`${FN('supabase_auth')}?action=get_profile&user_id=${encodeURIComponent(userId)}`);
+    const role=String(j.role||'').toLowerCase();
+    if(!j.success||j.approved!==true||!['teacher','admin'].includes(role)){location.href='/Teachers/profile.html';return false;}
+    state.role=role; $('#teacherName').textContent=j.name||j.username||'Teacher'; return true;
+  }catch(e){location.href=`/Teachers/login.html?redirect=${encodeURIComponent(location.pathname+location.search)}`;return false;}
+}
+
+async function mountBurger(){
+  try{
+    if(!document.getElementById('burger-menu-template')){const r=await fetch('/components/burger-menu.html?v=20260219'); const html=await r.text(); const wrap=document.createElement('div'); wrap.innerHTML=html; if(wrap.firstElementChild)document.body.appendChild(wrap.firstElementChild);}
+    let tries=0; const tick=()=>{if(typeof window.insertBurgerMenu==='function')window.insertBurgerMenu('#burger-menu-mount');else if(tries++<30)setTimeout(tick,50)}; tick();
+  }catch(e){console.warn('Burger menu unavailable',e)}
+}
+
+function switchView(view){
+  $$('.view').forEach(v=>v.classList.toggle('active',v.id===`view-${view}`));
+  $$('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===view));
+}
+
+function className(c){return typeof c==='string'?c:(c&&c.name)||''}
+async function loadClasses(){
+  const sel=$('#classSelect');
+  try{
+    const j=await apiJson(`${FN('progress_teacher_summary')}?action=classes_list`);
+    state.classes=Array.isArray(j.classes)?j.classes:[];
+    sel.innerHTML='<option value="">Select class</option>'+state.classes.map(c=>{const n=className(c);return `<option value="${escapeHtml(n)}">${escapeHtml(n)}</option>`}).join('');
+    if(state.classes.length){state.selectedClass=className(state.classes[0]);sel.value=state.selectedClass;await loadStudents();}
+    else{$('#studentList').innerHTML='<div class="empty">No classes found.</div>'}
+  }catch(e){sel.innerHTML='<option value="">Could not load classes</option>';$('#studentList').innerHTML='<div class="empty">Could not load classes.</div>'}
+}
+
+function normalizeStudent(r){
+  const accuracy=Number(r.accuracy)||0, attempts=Number(r.attempts)||Number(r.questions)||0, sessions=Number(r.sessions)||0, points=Number(r.points)||0, stars=Number(r.stars)||0;
+  return {...r,name:r.name||'Unknown',korean_name:r.korean_name||'',accuracy,attempts,sessions,points,stars};
+}
+function signalFor(s){
+  if((s.attempts||s.sessions||s.points)>0 && s.accuracy<60)return {type:'risk',label:'Needs help',reason:`Accuracy is ${s.accuracy}% across recorded work.`};
+  if((s.attempts||s.sessions||s.points)===0)return {type:'watch',label:'No activity',reason:'No recorded study activity in this timeframe.'};
+  if(s.accuracy>=90)return {type:'good',label:'Thriving',reason:`Strong ${s.accuracy}% accuracy.`};
+  if(s.accuracy<75)return {type:'watch',label:'Watch',reason:`Accuracy is ${s.accuracy}%; worth checking repeated mistakes.`};
+  return {type:'neutral',label:'Steady',reason:'No urgent signal from current summary data.'};
+}
+
+async function loadStudents(){
+  const cls=$('#classSelect').value; if(!cls){state.students=[];renderStudents();return;} state.selectedClass=cls; state.timeframe=$('#timeSelect').value||'month';
+  $('#studentList').innerHTML='<div class="empty">Loading students…</div>'; $('#statusText').textContent='Loading tracked work…';
+  try{
+    const j=await apiJson(`${FN('progress_teacher_summary')}?action=leaderboard&class=${encodeURIComponent(cls)}&timeframe=${encodeURIComponent(state.timeframe)}`);
+    state.students=(j.success&&Array.isArray(j.leaderboard)?j.leaderboard:[]).map(normalizeStudent); renderStudents();
+  }catch(e){$('#studentList').innerHTML='<div class="empty">Could not load student progress.</div>';$('#statusText').textContent=e.message;}
+}
+
+function renderStudents(){
+  const q=($('#searchInput').value||'').trim().toLowerCase(); const list=state.students.filter(s=>!q||(s.name||'').toLowerCase().includes(q)||(s.korean_name||'').toLowerCase().includes(q));
+  $('#studentsTitle').textContent=state.selectedClass?`${state.selectedClass} students`:'Students'; $('#studentCount').textContent=`${list.length} student${list.length===1?'':'s'}`;
+  $('#statusText').textContent=state.selectedClass?`${state.timeframe==='month'?'Last 30 days':'All-time'} Study V2 / tracked activity summary.`:'Choose a class to begin.';
+  if(!list.length){$('#studentList').innerHTML='<div class="empty">No tracked students for this filter.</div>';renderSummary([]);renderAttention([]);return;}
+  $('#studentList').innerHTML=list.map(s=>{const sig=signalFor(s);const proof=s.sessions?`${s.sessions} sessions`:(s.attempts?`${s.attempts} attempts`:`${s.points} pts`);return `<div class="student-row" data-uid="${escapeHtml(s.user_id||'')}"><div><div class="student-name">${escapeHtml(s.name)}</div><div class="student-ko">${escapeHtml(s.korean_name||'')}</div></div><div class="metric"><strong>${s.accuracy}%</strong><span>accuracy</span></div><div class="metric"><strong>${escapeHtml(proof)}</strong><span>proof</span></div><div class="metric hide-mobile"><strong>${s.stars||0}</strong><span>stars</span></div><div class="hide-mobile"><span class="pill ${sig.type}">${sig.label}</span></div></div>`}).join('');
+  $$('.student-row').forEach(row=>row.addEventListener('click',()=>openStudent(row.dataset.uid))); renderSummary(state.students);renderAttention(state.students);
+}
+
+function renderSummary(list){
+  const active=list.filter(s=>(s.attempts||s.sessions||s.points)>0).length; const attention=list.filter(s=>['risk','watch'].includes(signalFor(s).type)).length; const sessions=list.reduce((n,s)=>n+(s.sessions||s.attempts||0),0); const withAcc=list.filter(s=>s.accuracy>0); const avg=withAcc.length?Math.round(withAcc.reduce((n,s)=>n+s.accuracy,0)/withAcc.length):0;
+  $('#sumAttention').textContent=attention;$('#sumActive').textContent=active;$('#sumSessions').textContent=sessions;$('#sumAccuracy').textContent=withAcc.length?`${avg}%`:'—';
+}
+function renderAttention(list){
+  const targets=list.map(s=>({s,sig:signalFor(s)})).filter(x=>['risk','watch'].includes(x.sig.type)).sort((a,b)=>(a.sig.type==='risk'?-1:1)-(b.sig.type==='risk'?-1:1)).slice(0,8);
+  $('#attentionList').innerHTML=targets.length?targets.map(({s,sig})=>`<div class="attention-item" data-uid="${escapeHtml(s.user_id||'')}"><div class="attention-top"><div class="attention-name">${escapeHtml(s.name)}</div><span class="pill ${sig.type}">${sig.label}</span></div><div class="attention-reason">${escapeHtml(sig.reason)}</div></div>`).join(''):'<div class="empty">No urgent signals in this class.</div>';
+  $$('.attention-item').forEach(x=>x.addEventListener('click',()=>openStudent(x.dataset.uid)));
+}
+
+function findValue(obj,keys,fallback=0){for(const k of keys){if(obj&&obj[k]!=null)return obj[k]}return fallback}
+function extractArray(obj,keys){for(const k of keys){if(Array.isArray(obj&&obj[k]))return obj[k]}return []}
+async function openStudent(uid){
+  const base=state.students.find(s=>String(s.user_id)===String(uid))||{}; state.student=base; $('#drawerName').textContent=base.name||'Student';$('#drawerMeta').textContent=`${state.selectedClass} · ${state.timeframe==='month'?'Last 30 days':'All time'}`;$('#drawerBody').innerHTML='<div class="empty">Loading student details…</div>';$('#drawerBackdrop').classList.add('open');
+  try{
+    const j=await apiJson(`${FN('progress_teacher_summary')}?action=student_details&user_id=${encodeURIComponent(uid)}&timeframe=${encodeURIComponent(state.timeframe)}`); renderStudentDetail(j,base);
+  }catch(e){renderStudentDetail({},base);}
+}
+function renderStudentDetail(j,base){
+  const d=(j&&j.student)||j||{}; const acc=Number(findValue(d,['accuracy'],base.accuracy||0))||0; const attempts=Number(findValue(d,['attempts','questions','total_attempts'],base.attempts||0))||0; const sessions=Number(findValue(d,['sessions','session_count'],base.sessions||0))||0; const points=Number(findValue(d,['points'],base.points||0))||0;
+  const activity=extractArray(d,['daily_activity','activity','sessions_list','recent_sessions','recent_activity']); const games=extractArray(d,['games','modes','by_mode','mode_stats']);
+  const sig=signalFor({...base,accuracy:acc,attempts,sessions,points});
+  let strengths=[],struggles=[]; games.forEach(g=>{const name=g.name||g.mode||g.game||g.skill||'Activity';const a=Number(g.accuracy)||0; if(a>=85)strengths.push({name,a}); else if(a&&a<70)struggles.push({name,a});});
+  if(!strengths.length&&acc>=85)strengths=[{name:'Overall tracked work',a:acc}]; if(!struggles.length&&acc&&acc<70)struggles=[{name:'Overall tracked work',a:acc}];
+  $('#drawerBody').innerHTML=`
+    <div class="student-hero"><div class="mini"><b>${acc}%</b><span>accuracy</span></div><div class="mini"><b>${sessions}</b><span>sessions</span></div><div class="mini"><b>${attempts}</b><span>attempts</span></div><div class="mini"><b>${points}</b><span>points</span></div></div>
+    <div class="detail-card"><h3>Teacher signal</h3><span class="pill ${sig.type}">${sig.label}</span><p style="font-size:.78rem;color:var(--muted);line-height:1.5;margin:9px 0 0">${escapeHtml(sig.reason)}</p></div>
+    <div class="detail-card"><h3>Strengths</h3>${strengths.length?strengths.slice(0,5).map(x=>skillHtml(x.name,x.a,'Strong performance in tracked work.')).join(''):'<div class="empty" style="padding:14px">More skill-level evidence will appear here as Study V2 mastery data is connected.</div>'}</div>
+    <div class="detail-card"><h3>Struggles</h3>${struggles.length?struggles.slice(0,5).map(x=>skillHtml(x.name,x.a,'Worth checking for repeated mistakes.')).join(''):'<div class="empty" style="padding:14px">No clear struggle signal in the current summary.</div>'}</div>
+    <div class="detail-card"><h3>Proof of work</h3>${activity.length?activity.slice(0,12).map(a=>`<div class="proof-line"><div><span class="status-dot"></span>${escapeHtml(a.name||a.mode||a.game||a.title||'Study activity')}<div class="proof-time">${escapeHtml(a.date||a.created_at||a.completed_at||'Recorded activity')}</div></div><b>${escapeHtml(String(a.score||a.accuracy||a.points||''))}</b></div>`).join(''):`<div class="proof-line"><div><span class="status-dot"></span>Tracked activity<div class="proof-time">Summary evidence from the current progress engine</div></div><b>${sessions||attempts||points||0}</b></div>`}</div>`;
+}
+function skillHtml(name,a,note){return `<div class="skill-row"><div><div class="skill-name">${escapeHtml(name)}</div><div class="skill-note">${escapeHtml(note)}</div></div><div><div style="font-size:.72rem;text-align:right;margin-bottom:3px">${a}%</div><div class="bar"><i style="width:${Math.max(0,Math.min(100,a))}%"></i></div></div></div>`}
+function escapeHtml(v){return String(v==null?'':v).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))}
+
+$('#closeDrawer').addEventListener('click',()=>$('#drawerBackdrop').classList.remove('open'));$('#drawerBackdrop').addEventListener('click',e=>{if(e.target===$('#drawerBackdrop'))$('#drawerBackdrop').classList.remove('open')});
+$$('[data-view]').forEach(b=>b.addEventListener('click',()=>switchView(b.dataset.view)));$('#classSelect').addEventListener('change',loadStudents);$('#timeSelect').addEventListener('change',loadStudents);$('#searchInput').addEventListener('input',renderStudents);$('#refreshBtn').addEventListener('click',loadStudents);
+(async()=>{const ok=await auth();if(!ok)return;mountBurger();loadClasses();})();
+</script>
+</body>
+</html>
