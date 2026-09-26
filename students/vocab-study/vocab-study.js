@@ -426,7 +426,10 @@ function renderFrontMenu(){
   const books=frontBookRows();
   frontBookListEl.innerHTML=books.length?books.map(row=>
     '<button class="vocab-front-book-card" type="button" data-front-book="'+escapeHtml(row.bookId)+'">'+
-      '<span><span class="eyebrow">교재 공부</span><strong>'+escapeHtml(row.title)+'</strong><small>단원 · 퀴즈 · 철자 · 말하기</small></span>'+
+      '<span class="vocab-front-card-main">'+
+        '<img class="vocab-front-card-icon" src="/shared/svgs/book-study.svg" alt="" aria-hidden="true">'+
+        '<span class="vocab-front-card-copy"><span class="eyebrow">교재 공부</span><strong>'+escapeHtml(row.title)+'</strong><small>단원 · 퀴즈 · 철자 · 말하기</small></span>'+
+      '</span>'+
       '<span class="vocab-front-arrow" aria-hidden="true">›</span>'+
     '</button>'
   ).join(''):'<div class="vocab-front-empty">No assigned books found.</div>';
@@ -438,8 +441,14 @@ function renderFrontMenu(){
       const student=arr(row?.students)[0]||{};
       const modes=arr(assignment.required_modes).length?arr(assignment.required_modes):['quiz','spelling_test','speaking'];
       modes.forEach(mode=>{
-        const value=Number(student?.modes?.[mode]?.percent);
-        if(Number.isFinite(value))modePercents.push(Math.max(0,Math.min(100,value)));
+        const modeState=student?.modes?.[mode]||{};
+        const explicit=Number(modeState.percent);
+        const total=Number(modeState.total);
+        const clean=Number(modeState.clean);
+        const value=Number.isFinite(explicit)
+          ? explicit
+          : (Number.isFinite(total)&&total>0&&Number.isFinite(clean)?100*clean/total:0);
+        modePercents.push(Math.max(0,Math.min(100,value)));
       });
     });
     const overall=modePercents.length?Math.round(modePercents.reduce((sum,value)=>sum+value,0)/modePercents.length):0;
