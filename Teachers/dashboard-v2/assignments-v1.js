@@ -301,21 +301,59 @@
       note.textContent='';
 
       try{
-        const data=await api(route('update_assignment'),{
+        const targetStudents=scope==='students'
+          ?classStudents.filter(student=>studentIds.includes(String(student.user_id||student.id||''))).map(student=>({
+              id:String(student.user_id||student.id||''),
+              name:student.name||student.korean_name||'Student',
+              korean_name:student.korean_name||null
+            }))
+          :[];
+
+        const listMeta={
+          required_modes:modes,
+          target_student_ids:studentIds,
+          target_students:targetStudents
+        };
+
+        // The deployed homework API already supports metadata updates. Student targeting
+        // and required modes live in list_meta, so do not require the newer worker action.
+        const metaData=await api(route('update_assignment_meta'),{
           method:'POST',
           headers:{'Content-Type':'application/json'},
           body:JSON.stringify({
             assignment_id:id,
-            title,
-            due_at:dueAt,
-            required_modes:modes,
-            target_student_ids:studentIds
+            list_meta:listMeta
           })
         });
-        if(data.assignment){
+
+        // Title/due-date editing needs the newer full update endpoint. Only call it when
+        // those values actually changed, so ordinary student-target edits work everywhere.
+        const originalTitle=String(assignment.title||'').trim();
+        const originalDue=dateInputValue(assignment.due_at);
+        const requestedDue=$('#assignmentEditDue',panel)?.value||'';
+        let finalAssignment=metaData.assignment||assignment;
+
+        if(title!==originalTitle||requestedDue!==originalDue){
+          try{
+            const fullData=await api(route('update_assignment'),{
+              method:'POST',
+              headers:{'Content-Type':'application/json'},
+              body:JSON.stringify({assignment_id:id,title,due_at:dueAt})
+            });
+            if(fullData.assignment)finalAssignment=fullData.assignment;
+          }catch(fullError){
+            if(String(fullError.message||'').toLowerCase().includes('invalid action')){
+              note.textContent='Student settings saved. Title/due-date editing needs the newer homework API deployment.';
+            }else{
+              throw fullError;
+            }
+          }
+        }
+
+        if(finalAssignment){
           const idx=state.assignments.findIndex(x=>String(x.id)===String(id));
-          if(idx>=0)state.assignments[idx]=data.assignment;
-          state.selectedAssignment=data.assignment;
+          if(idx>=0)state.assignments[idx]=finalAssignment;
+          state.selectedAssignment=finalAssignment;
         }
         panel.hidden=true;
         panel.innerHTML='';
