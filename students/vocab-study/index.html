@@ -13,7 +13,7 @@
 <link rel="stylesheet" href="/students/study/study.css?v=20260808-7">
 <link rel="stylesheet" href="/students/study/study-overrides.css?v=20260808-1">
 <link rel="stylesheet" href="/students/study-v2/v2.css?v=20260814-daily1">
-<link rel="stylesheet" href="./vocab-study.css?v=20260926-v0059">
+<link rel="stylesheet" href="./vocab-study.css?v=20260926-v0060">
 <script src="/students/api-gateway.js?v=20260926-progress-summary-cf1"></script>
 <script src="/students/study/study-progress.js?v=20260926-assignment-canonical1"></script>
 <script src="/js/api-config.js?v=20260926-reverted-auth1"></script>
@@ -38,16 +38,16 @@
 
       <button id="vocabFrontWordTestCard" class="vocab-front-wordtest" type="button" hidden>
         <span class="vocab-front-card-copy">
-          <span class="eyebrow">WORD TEST STUDY</span>
-          <strong>Word Test Study</strong>
-          <small id="vocabFrontWordTestMeta">Homework and review</small>
+          <span class="eyebrow">단어 시험</span>
+          <strong>단어 시험 공부</strong>
+          <small id="vocabFrontWordTestMeta">숙제와 복습</small>
         </span>
         <span class="vocab-front-arrow" aria-hidden="true">›</span>
       </button>
 
       <section class="vocab-front-books" aria-label="Your books">
         <div class="vocab-front-section-head">
-          <div><span class="eyebrow">YOUR BOOKS</span><strong>Choose a book</strong></div>
+          <div><span class="eyebrow">내 교재</span><strong>교재를 선택하세요</strong></div>
         </div>
         <div id="vocabFrontBookList" class="vocab-front-book-list"></div>
       </section>
@@ -55,8 +55,8 @@
 
     <section id="vocabBookScreen" class="vocab-home-card vocab-subscreen" hidden>
       <div class="vocab-subscreen-head">
-        <button id="vocabBookBack" class="vocab-screen-back" type="button">← Home</button>
-        <span>Book Study</span>
+        <button id="vocabBookBack" class="vocab-screen-back" type="button">← 홈</button>
+        <span>교재 공부</span>
       </div>
 
       <section id="vocabBookPicker" class="vocab-book-picker" hidden>
@@ -125,29 +125,29 @@
 
     <section id="vocabWordTestScreen" class="vocab-home-card vocab-subscreen" hidden>
       <div class="vocab-subscreen-head">
-        <button id="vocabWordTestBack" class="vocab-screen-back" type="button">← Home</button>
-        <span>Word Test Study</span>
+        <button id="vocabWordTestBack" class="vocab-screen-back" type="button">← 홈</button>
+        <span>단어 시험 공부</span>
       </div>
 
       <section id="vocabTeacherPractice" class="vocab-teacher-practice" hidden aria-label="Word Test Study">
         <div class="vocab-teacher-practice-head">
-          <div><span class="eyebrow">CURRENT</span><strong>Current assignments</strong></div>
+          <div><span class="eyebrow">현재</span><strong>진행 중인 단어 시험</strong></div>
           <span id="vocabTeacherPracticeCount"></span>
         </div>
         <div id="vocabTeacherPracticeList" class="vocab-teacher-practice-list"></div>
       </section>
 
       <section id="vocabWordTestEmpty" class="vocab-wordtest-empty" hidden>
-        <strong>No current word tests</strong>
-        <span>Old word tests are still available below.</span>
+        <strong>진행 중인 단어 시험이 없어요</strong>
+        <span>지난 단어 시험은 아래에서 다시 볼 수 있어요.</span>
       </section>
 
       <section class="vocab-old-tests">
         <button id="vocabOldTestsOpen" class="vocab-old-tests-card" type="button">
           <span>
-            <span class="eyebrow">REVIEW</span>
-            <strong>Old Word Tests</strong>
-            <small id="vocabOldTestsMeta">Review earlier tests by book</small>
+            <span class="eyebrow">복습</span>
+            <strong>지난 단어 시험</strong>
+            <small id="vocabOldTestsMeta">교재별로 지난 시험 복습하기</small>
           </span>
           <span class="vocab-front-arrow" aria-hidden="true">›</span>
         </button>
@@ -158,7 +158,7 @@
       </section>
     </section>
 
-    <div class="vocab-version">v0.059</div>
+    <div class="vocab-version">v0.060</div>
   </main>
 
   <section id="vocabWordModal" class="vocab-word-modal" hidden aria-hidden="true">
@@ -204,6 +204,6 @@
 </div>
 
 <script src="/students/study/study-question-bank.js?v=20260822-conversationfix1"></script>
-<script type="module" src="./vocab-study.js?v=20260926-v0059"></script>
+<script type="module" src="./vocab-study.js?v=20260926-v0060"></script>
 </body>
 </html>
