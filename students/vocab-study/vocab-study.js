@@ -2023,13 +2023,13 @@ async function boot(){
       renderSkillProgress();
     });
     reportStartupPerf();
-    window.WillenaVocabStudy={version:'0.062',getState:()=>state,start:startSession,openSpellingMenu,openSpellingPreview,openSpellingTest,openSpeakingSession,close:closeSession};
+    window.WillenaVocabStudy={version:'0.078',getState:()=>state,start:startSession,openSpellingMenu,openSpellingPreview,openSpellingTest,openSpeakingSession,close:closeSession};
   }catch(error){
     console.error('[Vocab Study] boot',error);
     if(frontWordTestCardEl)frontWordTestCardEl.hidden=true;
     setMainScreen('home');
     setStatus(error?.message||'불러오지 못했습니다. 새로고침해 주세요.');
-    bookTitleEl.textContent='Could not load vocabulary';unitTitleEl.textContent='Please try again.';startBtn.disabled=true;if(spellingPreviewBtn)spellingPreviewBtn.disabled=true;
+    if(unitTitleEl)unitTitleEl.textContent='Please try again.';startBtn.disabled=true;if(spellingPreviewBtn)spellingPreviewBtn.disabled=true;
   }
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
