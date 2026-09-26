@@ -484,9 +484,9 @@
       renderList();
     });
     $('#assignmentRefreshBtn')?.addEventListener('click',()=>loadAssignments(true));
-    $$$('[data-assignment-status]').forEach(btn=>btn.addEventListener('click',()=>{
+    $('[data-assignment-status]').forEach(btn=>btn.addEventListener('click',()=>{
       state.filter=btn.dataset.assignmentStatus||'current';
-      $$$('[data-assignment-status]').forEach(x=>x.classList.toggle('active',x===btn));
+      $('[data-assignment-status]').forEach(x=>x.classList.toggle('active',x===btn));
       renderList();
     }));
     $$('[data-view="assignments"]').forEach(btn=>btn.addEventListener('click',()=>loadAssignments()));
