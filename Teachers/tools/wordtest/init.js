@@ -139,6 +139,9 @@ export function initWordtest() {
         document.getElementById('loadBtn')?.addEventListener('click', () => {
             window.open('/Teachers/worksheet_manager.html?mode=load&type=wordtest', 'WorksheetManager', 'width=1200,height=700,resizable=yes,scrollbars=yes');
         });
+        document.getElementById('assignWordTestBtn')?.addEventListener('click', () => {
+            window.open('/Teachers/worksheet_manager.html?mode=save&type=wordtest&after=assign', 'WorksheetManager', 'width=1200,height=760,resizable=yes,scrollbars=yes');
+        });
         document.getElementById('printBtn')?.addEventListener('click', () => printFile());
         document.getElementById('pdfBtn')?.addEventListener('click', () => generatePDF());
         // Optional dedicated retry-failed button if present
