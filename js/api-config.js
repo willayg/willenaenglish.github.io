@@ -1,6 +1,6 @@
 /**
  * API Configuration - Simple and Deterministic
- * VERSION: 2026-09-03 ADMIN_CREATE_STUDENT_SUCCESS_RESPONSE
+ * VERSION: 2026-09-26 CF_GATEWAY_BEARER_AUTH
  */
 (function() {
   'use strict';
@@ -131,8 +131,7 @@
     }
 
     const existingAuth = fetchOptions.headers && (fetchOptions.headers.Authorization || fetchOptions.headers.authorization);
-    const isWillenaApiGateway = url.startsWith(CF_API_GATEWAY + '/');
-    if (!existingAuth && !isWillenaApiGateway) {
+    if (!existingAuth) {
       let localToken = null;
       try { localToken = localStorage.getItem('sb_access_token') || null; } catch (e) {}
       if (!isCrossOriginToStudents && localToken && localToken.includes('.') && localToken.length > 50) {
