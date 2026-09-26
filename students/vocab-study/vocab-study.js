@@ -525,7 +525,7 @@ function renderOldWordTests(){
     const starTotal=modes.reduce((sum,mode)=>sum+Math.max(0,Number(student?.modes?.[mode]?.stars)||0),0);
     const starMax=modes.length*10;
     return '<article class="vocab-old-test-row">'+
-      '<div><strong>'+escapeHtml(a.title||'Word Test')+'</strong><small>'+teacherAssignmentWords(row).length+' words'+(a.due_at?' · '+escapeHtml(formatTeacherDue(a.due_at)):'')+'</small></div>'+
+      '<div><strong>'+escapeHtml(a.title||'Word Test')+'</strong><small>'+teacherAssignmentWords(row).length+' words'+(a.due_at?' · '+escapeHtml(formatTeacherHistoryDate(a.due_at)):'')+'</small></div>'+
       '<span>★ '+starTotal+'/'+starMax+'</span>'+
     '</article>';
   }).join('');
@@ -548,6 +548,11 @@ function formatTeacherDue(value){
   const days=Math.round((dueDay-today)/86400000);
   if(days===0)return'D-Day';
   return days>0?'D-'+days:'D+'+Math.abs(days);
+}
+function formatTeacherHistoryDate(value){
+  const d=new Date(value||'');
+  if(Number.isNaN(d.getTime()))return'';
+  try{return d.toLocaleDateString('en-US',{month:'short',day:'numeric'})}catch(_){return''}
 }
 function teacherAssignmentWords(row){
   return arr(row?.targets).map((target,index)=>{
