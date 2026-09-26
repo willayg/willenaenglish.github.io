@@ -8,6 +8,26 @@ body.vocab-session-open{overflow:hidden}
 .vocab-home-card h1{margin:7px 0 8px;color:#315e64;font-size:clamp(2rem,6vw,3.6rem);line-height:1.05;letter-spacing:-.04em}
 .vocab-home-card h2{margin:20px 0 5px;font-size:clamp(1.05rem,2.6vw,1.35rem);color:var(--ink)}
 .vocab-home-card p{margin:0;color:var(--muted);font-weight:650}
+.vocab-motivation{
+  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:18px
+}
+.vocab-motivation[hidden]{display:none!important}
+.vocab-motivation-stat{
+  min-width:0;display:flex;align-items:center;justify-content:center;gap:9px;
+  min-height:58px;padding:10px 12px;border:1px solid #dff2f4;border-radius:16px;background:#f8fcfc
+}
+.vocab-motivation-stat>span{font-size:1.35rem;line-height:1}
+.vocab-motivation-stat div{min-width:0;display:flex;flex-direction:column}
+.vocab-motivation-stat strong{color:#315e64;font-size:1rem;line-height:1.05}
+.vocab-motivation-stat small{margin-top:3px;color:#789095;font-size:.68rem;font-weight:800;white-space:nowrap}
+.vocab-motivation-gold{background:#fffaf0;border-color:#f2ddb0}
+.vocab-unit-gold{margin-left:5px;font-size:.9em;vertical-align:1px}
+.vocab-golden-award{
+  margin-top:18px;padding:16px 18px;border:2px solid #e8c86c;border-radius:18px;
+  background:linear-gradient(180deg,#fffdf5,#fff8df);color:#735817;font-weight:800
+}
+.vocab-golden-award strong{display:block;margin-bottom:3px;color:#9a6c00;font-size:1.05rem}
+
 .vocab-home-meta{display:flex;justify-content:center;align-items:center;margin-top:22px}
 .vocab-word-card{
   min-width:180px;min-height:58px;padding:0 22px;border:2px solid #dff2f4;border-radius:18px;
@@ -170,6 +190,8 @@ body.vocab-session-open{overflow:hidden}
 @media(max-width:560px){
   .vocab-page{padding:14px 10px 36px}
   .vocab-home-card{border-radius:23px;padding:24px 19px}
+  .vocab-motivation{grid-template-columns:1fr 1fr}
+  .vocab-motivation-gold{grid-column:1/-1}
   .vocab-skill-grid{grid-template-columns:1fr;gap:10px}
   .vocab-skill-card{min-height:112px;padding:15px 16px}
   .vocab-skill-ring{flex-basis:66px;width:66px;height:66px}

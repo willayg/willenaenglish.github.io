@@ -449,7 +449,37 @@ export default {
         return jsonResponse(result, 200, origin);
       }
 
+      if (section === 'vocab_golden_unit') {
+        if (request.method !== 'POST') return jsonResponse({ error: 'Method Not Allowed' }, 405, origin);
+        const body = await request.json().catch(() => null);
+        const bookId = body && body.book_id;
+        const unitId = body && body.unit_id;
+        const quizTotal = Number(body && body.quiz_total);
+        const spellingTotal = Number(body && body.spelling_total);
+        const speakingTotal = Number(body && body.speaking_total);
+        if (!bookId || !unitId || !Number.isInteger(quizTotal) || !Number.isInteger(spellingTotal) || !Number.isInteger(speakingTotal)) {
+          return jsonResponse({ success:false, error:'book_id, unit_id and eligible totals are required' }, 400, origin);
+        }
+        const result = await supabaseRpc(env, 'award_vocab_golden_unit_v1', {
+          p_student_id: userId,
+          p_book_id: bookId,
+          p_unit_id: unitId,
+          p_quiz_total: quizTotal,
+          p_spelling_total: spellingTotal,
+          p_speaking_total: speakingTotal,
+        });
+        return jsonResponse(result, 200, origin);
+      }
+
       if (request.method !== 'GET') return jsonResponse({ error: 'Method Not Allowed' }, 405, origin);
+
+      if (section === 'vocab_motivation') {
+        const result = await supabaseRpc(env, 'get_vocab_motivation_snapshot_v1', {
+          p_student_id: userId,
+          p_book_id: url.searchParams.get('book_id') || null,
+        });
+        return jsonResponse(result, 200, origin);
+      }
 
       if (section === 'study_progress') {
         const result = await supabaseRpc(env, 'get_study_progress_v1', {

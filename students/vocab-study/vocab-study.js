@@ -49,6 +49,10 @@ const bookPickerEl=el('vocabBookPicker');
 const bookChoicesEl=el('vocabBookChoices');
 const unitStripEl=el('vocabUnitStrip');
 const currentUnitLabelEl=el('vocabCurrentUnitLabel');
+const motivationEl=el('vocabMotivation');
+const streakCurrentEl=el('vocabStreakCurrent');
+const streakBestEl=el('vocabStreakBest');
+const goldenCountEl=el('vocabGoldenCount');
 
 const state={
   book:null,unit:null,units:[],items:[],assignments:[],books:[],activeIndex:0,
@@ -58,7 +62,9 @@ const state={
   adminMode:false,nextReadyAt:0,questionStartedAt:0,
   progressSnapshot:null,
   rewardSession:null,
-  pointTapOrigin:null
+  pointTapOrigin:null,
+  motivation:null,
+  pendingGoldenAward:null
 };
 
 function txt(v){return String(v==null?'':v).trim()}
@@ -165,6 +171,7 @@ async function completeRewardSession(){
       window.dispatchEvent(new CustomEvent('stars:refresh',{detail:{earned:reward.stars}}));
       localStorage.setItem('stars:refresh',String(Date.now()));
     }catch(_){}
+    await checkGoldenUnit();
   }catch(error){
     console.warn('[Vocab Study] reward session save failed',error);
   }
@@ -220,6 +227,85 @@ function reportStartupPerf(){
   console.table(rows);
   window.WillenaVocabStudyPerf={totalMs:total,entries:rows.slice()};
   showStartupPerf(rows,total);
+}
+
+function goldenUnits(){
+  return arr(state.motivation?.golden_units);
+}
+function isGoldenUnit(unitId){
+  return goldenUnits().some(row=>String(row?.unit_id)===String(unitId));
+}
+function renderMotivation(){
+  if(!motivationEl)return;
+  if(state.adminMode||!state.motivation){
+    motivationEl.hidden=true;
+    return;
+  }
+  motivationEl.hidden=false;
+  if(streakCurrentEl)streakCurrentEl.textContent=String(Math.max(0,Number(state.motivation.current_streak)||0));
+  if(streakBestEl)streakBestEl.textContent=String(Math.max(0,Number(state.motivation.best_streak)||0));
+  if(goldenCountEl)goldenCountEl.textContent=String(goldenUnits().length);
+}
+async function loadMotivation(bookId=state.book?.book_id){
+  if(state.adminMode||!bookId){
+    state.motivation=null;
+    renderMotivation();
+    return null;
+  }
+  try{
+    const data=await api('/.netlify/functions/progress_summary?section=vocab_motivation&book_id='+encodeURIComponent(bookId)+'&_='+Date.now());
+    if(String(bookId)!==String(state.book?.book_id))return data;
+    state.motivation=data||null;
+    renderMotivation();
+    renderUnits();
+    return data;
+  }catch(error){
+    console.warn('[Vocab Study] motivation snapshot unavailable',error);
+    return null;
+  }
+}
+function eligibleSkillTotals(){
+  return{
+    quiz:unitVocabularyWords(state.items).map(w=>w.id).filter(isUuid).length,
+    spelling:spellingWords(state.items).map(w=>w.id).filter(isUuid).length,
+    speaking:speakingWords(state.items).map(w=>w.id).filter(isUuid).length
+  };
+}
+async function checkGoldenUnit(){
+  if(state.adminMode||!state.book?.book_id||!state.unit?.id)return null;
+  const totals=eligibleSkillTotals();
+  if(totals.quiz<=0||totals.spelling<=0)return null;
+  try{
+    const result=await api('/.netlify/functions/progress_summary?section=vocab_golden_unit&_='+Date.now(),{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        book_id:state.book.book_id,
+        unit_id:state.unit.id,
+        quiz_total:totals.quiz,
+        spelling_total:totals.spelling,
+        speaking_total:totals.speaking
+      })
+    });
+    if(result?.earned_now){
+      state.pendingGoldenAward={
+        unitId:state.unit.id,
+        unitNumber:state.unit.unit_number,
+        earnedAt:result?.achievement?.earned_at||new Date().toISOString()
+      };
+    }
+    await loadMotivation(state.book.book_id);
+    return result;
+  }catch(error){
+    console.warn('[Vocab Study] golden unit check unavailable',error);
+    return null;
+  }
+}
+function goldenAwardHtml(){
+  const award=state.pendingGoldenAward;
+  if(!award)return'';
+  state.pendingGoldenAward=null;
+  return '<div class="vocab-golden-award"><strong>🏅 Golden Unit earned!</strong><span>Unit '+escapeHtml(award.unitNumber||'')+' is mastered.</span></div>';
 }
 
 function ringPercent(value){
@@ -532,7 +618,7 @@ function renderUnits(){
   const units=arr(state.units);
   currentUnitLabelEl.textContent='현재 · Unit '+(state.unit?.unit_number||'—');
   unitStripEl.innerHTML=units.map(u=>
-    '<button class="study-v2-unit'+(String(state.unit?.id)===String(u.id)?' is-current':'')+'" type="button" data-unit-id="'+escapeHtml(u.id)+'">Unit '+escapeHtml(u.unit_number)+'</button>'
+    '<button class="study-v2-unit'+(String(state.unit?.id)===String(u.id)?' is-current':'')+'" type="button" data-unit-id="'+escapeHtml(u.id)+'">Unit '+escapeHtml(u.unit_number)+(isGoldenUnit(u.id)?'<span class="vocab-unit-gold" aria-label="Golden Unit">🏅</span>':'')+'</button>'
   ).join('');
   unitStripEl.querySelectorAll('[data-unit-id]').forEach(btn=>btn.addEventListener('click',()=>selectUnit(btn.dataset.unitId)));
 }
@@ -764,7 +850,9 @@ function renderHome(){
   if(pronunciationStartBtn)pronunciationStartBtn.disabled=!speakingWords(state.items).length;
   setStatus(state.items.length?'준비됐어요.':'이 단원에는 사용할 수 있는 단어 문제가 없어요.');
   renderSkillProgress();
+  renderMotivation();
   loadSkillProgress();
+  loadMotivation(state.book.book_id);
 }
 function updateProgress(){
   const total=Math.max(1,state.queue.length),current=Math.min(state.index+1,total);
@@ -979,6 +1067,7 @@ async function finishSpeakingSession(){
         '<div><strong>'+retries+'</strong><span>RETRIES</span></div>'+
       '</div>'+
       rewardSummaryHtml(reward)+
+      goldenAwardHtml()+
       '<div class="vocab-finish-actions"><button id="vocabSpeakingDone" class="vocab-done-btn" type="button">Finish</button></div>'+
     '</section>';
   el('vocabSpeakingDone')?.addEventListener('click',closeSession);
@@ -1403,6 +1492,7 @@ async function finishSession(){
         '<div><strong>'+review.length+'</strong><span>REVIEW</span></div>'+
       '</div>'+
       rewardSummaryHtml(reward)+
+      goldenAwardHtml()+
       (reviewWords.length?'<div class="vocab-review-words"><strong>한 번 더 볼 단어</strong><br>'+reviewWords.map(escapeHtml).join(' · ')+'</div>':'')+
       '<div class="vocab-finish-actions">'+
         (reviewWords.length?'<button id="vocabReviewAgain" class="vocab-review-btn" type="button">Review '+reviewWords.length+'</button>':'')+
@@ -1418,7 +1508,7 @@ function closeSession(){
   document.body.classList.remove('vocab-session-open');
   sessionEl.hidden=true;root.innerHTML='';answerNote.hidden=true;bottomEl.hidden=false;instructionEl.hidden=false;
   if(state.renderer?.setDisabled)state.renderer.setDisabled(true);
-  state.queue=[];state.index=0;state.checked=false;state.renderer=null;state.spellingPractice=null;state.spellingTest=null;state.speakingSession=null;state.rewardSession=null;
+  state.queue=[];state.index=0;state.checked=false;state.renderer=null;state.spellingPractice=null;state.spellingTest=null;state.speakingSession=null;state.rewardSession=null;state.pendingGoldenAward=null;
   try{window.scrollTo({top:0,behavior:'auto'})}catch(_){}
 }
 async function boot(){
@@ -1476,7 +1566,7 @@ async function boot(){
       renderSkillProgress();
     });
     reportStartupPerf();
-    window.WillenaVocabStudy={version:'0.048',getState:()=>state,start:startSession,openSpellingMenu,openSpellingPreview,openSpellingTest,openSpeakingSession,close:closeSession};
+    window.WillenaVocabStudy={version:'0.049',getState:()=>state,start:startSession,openSpellingMenu,openSpellingPreview,openSpellingTest,openSpeakingSession,close:closeSession};
   }catch(error){
     console.error('[Vocab Study] boot',error);
     setStatus(error?.message||'불러오지 못했습니다. 새로고침해 주세요.');

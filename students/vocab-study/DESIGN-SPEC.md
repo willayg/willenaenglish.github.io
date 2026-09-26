@@ -1,7 +1,7 @@
 # Vocabulary Study — Design & Architecture Spec
 
 **App:** `students/vocab-study/`  
-**Current staging version:** `0.048`  
+**Current staging version:** `0.049`  
 **Status:** Active implementation  
 **Purpose:** Define the product behavior, study flow, renderer responsibilities, tracking model, mastery model, and modular architecture for the next generation Vocabulary Study app.
 
@@ -375,6 +375,14 @@ Best: 17
 
 Streaks must not inflate unit progress and should not force a student to repeat already-completed content simply to protect a streak.
 
+### Pass 3 implementation note — v0.049
+
+A meaningful Vocabulary Study day is any Korea-local calendar day with at least one completed scored Vocabulary Study reward session. Spelling Coach alone does not advance the streak because it is support/practice rather than a scored completion.
+
+The current streak remains intact through the following day so a student does not lose the displayed streak before that day has finished; if no qualifying study occurs by the next calendar day, the current streak resets to zero. Best streak is retained from historical completed sessions.
+
+Golden Unit awards use the existing clean-pass snapshot as the source of truth. The server refreshes the unit snapshot before deciding whether the unit qualifies and performs an idempotent insert into `student_achievements`.
+
 ## 12. Recommended for You — Later
 
 A Recommended for You layer is still planned, but it is **not part of the current six-pass build**.
@@ -561,7 +569,7 @@ Vocabulary Study should award more points than the generic Study default because
   - correct with **2+ hints**: **1 point**
   - incorrect Coach attempt: **0 points**
 
-These rewards flow through the existing Willena points system rather than creating a Vocabulary Study-only balance. Visual point feedback is separate from scoring and runs only after the canonical recorder confirms that the attempt was recorded.
+These rewards flow through the existing Willena points system rather than creating a Vocabulary Study-only balance. Visual point feedback is separate from scoring and appears immediately when a correct point-bearing answer is checked; canonical recording continues independently.
 
 Retries, repeated practice, and assisted attempts remain fully tracked. Attempt points are awarded on every recorded attempt, including retries. Session-star percentages are calculated from the first attempt on each target, and persistent skill-card scores use the same clean-pass principle so forced correction retries do not inflate either result.
 
@@ -602,11 +610,14 @@ The star result is a motivational session reward and does not alter unit progres
 - Quiz / Spelling / Speaking cards show stars; clean and retry counts remain hidden from the home card UI
 - main Spelling score is based on Spelling Test; Spelling Coach remains practice
 
-### Pass 3 — Streaks + Golden Unit Badges
-- study-day streak
-- best streak
-- permanent golden badge when a unit reaches 100%
-- badge visibility in unit / book UI
+### Pass 3 — Streaks + Golden Unit Badges — implemented in v0.049
+- Vocabulary Study uses a Korea-local study-day streak derived from completed scored Vocabulary Study sessions (Quiz, Spelling Test, or Speaking), not from individual answers or opening the app.
+- The home screen shows the current streak, best streak, and Golden Unit count.
+- A Golden Unit is awarded when all eligible Quiz words and Spelling Test words have clean passes, plus all eligible Speaking words when that unit has speakable targets.
+- Golden Unit awards are stored permanently in `student_achievements`; later progress-rule changes do not remove an earned badge.
+- Unit selectors show a gold medal on earned units.
+- The first award produces a one-time completion-screen callout.
+- Streaks and achievements are served through authenticated progress-summary Worker endpoints and remain separate from points/stars.
 
 ### Pass 4 — Teacher-selected Word Test practice
 - teacher-selected targets
