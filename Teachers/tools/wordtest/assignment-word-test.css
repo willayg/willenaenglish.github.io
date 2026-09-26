@@ -75,3 +75,14 @@ body.wb-assign-open{overflow:hidden}
 /* Pass 3: canonical book → class suggestion */
 .wb-assign-class-row.is-suggested{box-shadow:inset 0 0 0 1px #bfecef}
 .wb-assign-book-match{color:#2d8792!important;font-weight:800!important}
+
+/* Split workload assignment */
+.wb-assign-workload{margin:12px 0 0;padding:12px;border:1px solid #d7e6e8;border-radius:14px;background:#fbfdfd}
+.wb-assign-workload legend{padding:0 5px;color:#547075;font-size:12px;font-weight:800}
+.wb-assign-workload>label{display:flex;align-items:center;gap:8px;margin:7px 0;color:#456167;font-size:12px;font-weight:700}
+.wb-assign-workload-summary{display:grid;gap:6px;margin-top:10px}
+.wb-assign-workload-summary>div{display:flex;justify-content:space-between;gap:12px;padding:8px 10px;border-radius:10px;background:#fff;border:1px solid #e2ecee;font-size:11px}
+.wb-assign-workload-summary strong{color:#234f57}
+.wb-assign-workload-summary span,.wb-workload-all{color:#6d8388}
+.wb-workload-all{display:block!important}
+.wb-assign-reshuffle{margin-top:9px;padding:7px 10px;border:1px solid #bfecef;border-radius:9px;background:#fff;color:#257884;font:700 11px Poppins,Arial,sans-serif;cursor:pointer}
