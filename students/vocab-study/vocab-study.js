@@ -5,6 +5,7 @@ import {isSpeakableTarget,matchSpeakingTarget} from './speaking-match.js?v=20260
 import {getAssignment,setAssignment,getBookMeta,setBookMeta,getVocabulary,setVocabulary,background} from './vocab-startup-cache.js?v=20260925-v0001';
 import {snapshotPercent,snapshotStars,loadVocabSnapshot,nextSkillTargets} from './vocab-progress-snapshot.js?v=20260925-v0005';
 import {coachAttempt,repeatUntilCorrect,appendRetry,uniquePassedCount,wrongAttemptCount} from './vocab-pass-flow.js?v=20260925-v0002';
+import {createVocabHistoryNavigation} from './navigation-history.js?v=20260926-v0001';
 
 const CONTENT_URL='https://gxwfsqxyuufqtitspfqg.supabase.co';
 const CONTENT_KEY=['sb_publishable_','G-FYhHfDL4OGdL892gY1Zg_','epdbEeqO'].join('');
@@ -94,6 +95,7 @@ const state={
   activeTeacherItems:[],
   pendingTeacherRecords:new Set()
 };
+let navController=null;
 
 function txt(v){return String(v==null?'':v).trim()}
 function arr(v){return Array.isArray(v)?v:[]}
@@ -362,13 +364,13 @@ function goldenAwardHtml(){
 function wireShellNavigation(){
   if(state.shellWired)return;
   state.shellWired=true;
-  frontWordTestCardEl?.addEventListener('click',openWordTestScreen);
-  bookBackBtn?.addEventListener('click',()=>setMainScreen('home'));
-  wordTestBackBtn?.addEventListener('click',()=>setMainScreen('home'));
+  frontWordTestCardEl?.addEventListener('click',()=>openWordTestScreen({historyMode:'push'}));
+  bookBackBtn?.addEventListener('click',()=>navigateBackHome());
+  wordTestBackBtn?.addEventListener('click',()=>navigateBackHome());
   frontBookListEl?.addEventListener('click',event=>{
     const btn=event.target?.closest?.('[data-front-book]');
     if(!btn||!frontBookListEl.contains(btn))return;
-    openBookById(btn.dataset.frontBook).catch(error=>{
+    openBookById(btn.dataset.frontBook,{historyMode:'push'}).catch(error=>{
       console.error('[Vocab Study] book navigation failed',error);
       setStatus(error?.message||'교재를 열지 못했습니다.');
     });
@@ -385,6 +387,40 @@ function setMainScreen(screen){
   if(bookScreenEl)bookScreenEl.hidden=screen!=='book';
   if(wordTestScreenEl)wordTestScreenEl.hidden=screen!=='wordtest';
   try{window.scrollTo({top:0,behavior:'auto'})}catch(_){}
+}
+function currentBookRoute(){
+  return{
+    screen:'book',
+    bookId:txt(state.book?.book_id),
+    unitId:txt(state.unit?.id)
+  };
+}
+function writeNavigation(route,mode='replace'){
+  if(!navController||navController.applying)return;
+  if(mode==='push')navController.push(route);
+  else navController.replace(route);
+}
+function navigateBackHome(){
+  if(navController)navController.back({screen:'home'});
+  else setMainScreen('home');
+}
+async function applyNavigationRoute(route){
+  const screen=route?.screen||'home';
+  if(screen==='book'){
+    const bookId=txt(route.bookId)||txt(state.book?.book_id);
+    await openBookById(bookId,{historyMode:'none',unitId:route.unitId});
+    return;
+  }
+  if(screen==='wordtest'){
+    openWordTestScreen({historyMode:'none'});
+    return;
+  }
+  setMainScreen('home');
+}
+async function startHistoryNavigation(initialScreen='home'){
+  if(navController)return;
+  navController=createVocabHistoryNavigation({applyRoute:applyNavigationRoute});
+  await navController.start(initialScreen==='book'?currentBookRoute():{screen:'home'});
 }
 function frontBookRows(){
   const seen=new Set(),rows=[];
@@ -412,7 +448,7 @@ function frontBookRows(){
   });
   return rows;
 }
-async function openBookById(bookId){
+async function openBookById(bookId,{historyMode='push',unitId=''}={}){
   const id=txt(bookId);if(!id)return;
   let index=state.books.findIndex(item=>String(item?.book?.book_id)===String(id));
   if(index<0){
@@ -424,8 +460,13 @@ async function openBookById(bookId){
     state.books.push(loaded);
     index=state.books.length-1;
   }
-  activateBook(index);
+  activateBook(index,{updateHistory:false});
+  const wantedUnit=txt(unitId);
+  if(wantedUnit&&String(state.unit?.id)!==String(wantedUnit)){
+    await selectUnit(wantedUnit,{updateHistory:false});
+  }
   setMainScreen('book');
+  if(historyMode!=='none')writeNavigation(currentBookRoute(),historyMode);
 }
 function renderFrontMenu(){
   if(!frontBookListEl)return;
@@ -540,10 +581,11 @@ function renderOldWordTests(){
     renderOldWordTests();
   }));
 }
-function openWordTestScreen(){
+function openWordTestScreen({historyMode='push'}={}){
   renderTeacherAssignments();
   renderOldWordTests();
   setMainScreen('wordtest');
+  if(historyMode!=='none')writeNavigation({screen:'wordtest'},historyMode);
 }
 function formatTeacherDue(value){
   const d=new Date(value||'');
@@ -961,15 +1003,16 @@ async function resolveAssignedBooks(authData){
   if(!active)throw new Error('No assigned book has available vocabulary units.');
   return{books:[active],assignments:list,activeIndex:0,deferredAssignments:list};
 }
-function activateBook(index){
+function activateBook(index,{updateHistory=true}={}){
   const loaded=state.books[index];if(!loaded)return;
   state.activeIndex=index;state.book=loaded.book;state.unit=loaded.unit;state.units=arr(loaded.units);state.items=loaded.items;
   try{localStorage.setItem(ACTIVE_BOOK_KEY,state.book.book_id)}catch(_){}
   renderHome();
   renderFrontMenu();
+  if(updateHistory&&state.activeScreen==='book')writeNavigation(currentBookRoute(),'replace');
 }
 
-async function selectUnit(id){
+async function selectUnit(id,{updateHistory=true}={}){
   const unit=state.units.find(u=>String(u.id)===String(id));
   if(!unit||String(unit.id)===String(state.unit?.id))return;
   startBtn.disabled=true;
@@ -983,6 +1026,7 @@ async function selectUnit(id){
     if(loaded){loaded.unit=unit;loaded.items=items}
     try{localStorage.setItem('willena-study-v2-unit:'+state.book.book_id,unit.id)}catch(_){}
     renderHome();
+    if(updateHistory&&state.activeScreen==='book')writeNavigation(currentBookRoute(),'replace');
   }catch(error){
     console.error('[Vocab Study] unit switch',error);
     setStatus(error?.message||'단원을 불러오지 못했습니다.');
@@ -1015,7 +1059,7 @@ function renderBookPicker(){
     btn.addEventListener('click',()=>{
       const index=Number(btn.dataset.bookIndex);
       if(!Number.isInteger(index)||index===state.activeIndex)return;
-      activateBook(index);
+      activateBook(index,{updateHistory:true});
     });
   });
   bookPickerEl.hidden=false;
@@ -1931,7 +1975,7 @@ async function boot(){
       await loadAdminCatalog(params.bookId);
       if(!params.bookId){
         setStatus('관리자 미리보기 · 교재를 선택하세요.');
-        bookTitleEl.textContent='Admin preview';unitTitleEl.textContent='Choose a book above.';startBtn.disabled=true;return;
+        unitTitleEl.textContent='Choose a book above.';startBtn.disabled=true;return;
       }
     }
     if(state.adminMode){
@@ -1939,6 +1983,7 @@ async function boot(){
       state.book=resolved.book;state.unit=resolved.unit;state.units=arr(resolved.units);state.items=await loadVocabularyItems(state.book,state.unit);
       renderHome();
       setMainScreen('book');
+      await startHistoryNavigation('book');
     }else{
       const resolved=await resolveAssignedBooks(authData);
       state.books=resolved.books;state.assignments=resolved.assignments;state.activeIndex=resolved.activeIndex;
@@ -1947,6 +1992,7 @@ async function boot(){
       renderHome();
       renderFrontMenu();
       setMainScreen('home');
+      await startHistoryNavigation('home');
       hydrateSecondaryBooks(resolved.deferredAssignments,state.book.book_id);
       await loadTeacherAssignments();
       renderFrontMenu();
