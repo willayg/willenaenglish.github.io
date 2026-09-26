@@ -27,6 +27,20 @@
     return d.toLocaleDateString(undefined,{month:'short',day:'numeric',year:d.getFullYear()!==new Date().getFullYear()?'numeric':undefined});
   }
 
+  function dateInputValue(v){
+    if(!v)return'';
+    const d=new Date(v);
+    if(Number.isNaN(d.getTime()))return'';
+    const local=new Date(d.getTime()-d.getTimezoneOffset()*60000);
+    return local.toISOString().slice(0,10);
+  }
+
+  function dueAtFromDate(v){
+    if(!v)return null;
+    const d=new Date(String(v)+'T23:59:59');
+    return Number.isNaN(d.getTime())?null:d.toISOString();
+  }
+
   function route(action,params={}){
     const q=new URLSearchParams({action,...params});
     return '/.netlify/functions/homework_api?'+q.toString();
@@ -161,8 +175,13 @@
       '<div class="assignment-detail-head">'+
         '<button class="assignment-back" type="button" id="assignmentBackBtn">← Assignments</button>'+
         '<div><h2>'+esc(a.title||'Vocabulary Study')+'</h2><p>'+esc(a.class||'')+' · '+progress.target_count+' words · Due '+esc(fmtDate(a.due_at))+'</p></div>'+
-        '<button class="control" type="button" id="assignmentDetailRefresh">Refresh</button>'+
+        '<div class="assignment-detail-actions">'+
+          (isCurrent(state.selectedAssignment||a)?'<button class="control" type="button" id="assignmentEditBtn">Edit</button><button class="control assignment-cancel-btn" type="button" id="assignmentCancelBtn">Cancel assignment</button>':'')+
+          '<button class="control assignment-delete-btn" type="button" id="assignmentDeleteBtn">Delete</button>'+
+          '<button class="control" type="button" id="assignmentDetailRefresh">Refresh</button>'+
+        '</div>'+
       '</div>'+
+      '<div id="assignmentManagePanel" class="assignment-manage-panel" hidden></div>'+
       '<div class="assignment-kpis">'+
         '<div class="assignment-kpi"><strong>'+overall+'%</strong><span>Class overall</span></div>'+
         '<div class="assignment-kpi"><strong>'+complete+'/'+students.length+'</strong><span>Complete</span></div>'+
@@ -192,7 +211,98 @@
 
     $('#assignmentBackBtn')?.addEventListener('click',renderList);
     $('#assignmentDetailRefresh')?.addEventListener('click',()=>openAssignment(a.id,true));
-    $$('.assignment-student-row',detail).forEach(row=>row.addEventListener('click',()=>openStudentDetail(a.id,row.dataset.studentId)));
+    $('#assignmentEditBtn')?.addEventListener('click',()=>showAssignmentEdit(a.id));
+    $('#assignmentCancelBtn')?.addEventListener('click',()=>cancelAssignment(a.id));
+    $('#assignmentDeleteBtn')?.addEventListener('click',()=>deleteAssignment(a.id));
+    $('.assignment-student-row',detail).forEach(row=>row.addEventListener('click',()=>openStudentDetail(a.id,row.dataset.studentId)));
+  }
+
+  function showAssignmentEdit(id){
+    const assignment=state.assignments.find(x=>String(x.id)===String(id))||state.selectedAssignment;
+    const panel=$('#assignmentManagePanel');
+    if(!assignment||!panel)return;
+    const required=Array.isArray(assignment?.list_meta?.required_modes)?assignment.list_meta.required_modes:[];
+    panel.hidden=false;
+    panel.innerHTML=
+      '<form id="assignmentEditForm" class="assignment-edit-form">'+
+        '<div class="assignment-edit-grid">'+
+          '<label><span>Title</span><input id="assignmentEditTitle" type="text" value="'+esc(assignment.title||'')+'" required></label>'+
+          '<label><span>Due date</span><input id="assignmentEditDue" type="date" value="'+esc(dateInputValue(assignment.due_at))+'" required></label>'+
+        '</div>'+
+        '<fieldset class="assignment-edit-modes"><legend>Required sections</legend>'+
+          '<label><input type="checkbox" value="quiz"'+(required.includes('quiz')?' checked':'')+'> Quiz</label>'+
+          '<label><input type="checkbox" value="spelling_test"'+(required.includes('spelling_test')?' checked':'')+'> Spelling</label>'+
+          '<label><input type="checkbox" value="speaking"'+(required.includes('speaking')?' checked':'')+'> Speaking</label>'+
+        '</fieldset>'+
+        '<div class="assignment-edit-note" id="assignmentEditNote"></div>'+
+        '<div class="assignment-edit-actions"><button type="button" class="control" id="assignmentEditClose">Cancel</button><button type="submit" class="control assignment-save-btn">Save changes</button></div>'+
+      '</form>';
+    $('#assignmentEditClose',panel)?.addEventListener('click',()=>{panel.hidden=true;panel.innerHTML=''});
+    $('#assignmentEditForm',panel)?.addEventListener('submit',async e=>{
+      e.preventDefault();
+      const title=$('#assignmentEditTitle',panel)?.value.trim()||'';
+      const dueAt=dueAtFromDate($('#assignmentEditDue',panel)?.value||'');
+      const modes=$('.assignment-edit-modes input:checked',panel).map(input=>input.value);
+      const note=$('#assignmentEditNote',panel);
+      if(!title){note.textContent='Enter a title.';return}
+      if(!dueAt){note.textContent='Choose a valid due date.';return}
+      if(!modes.length){note.textContent='Choose at least one required section.';return}
+      const submit=$('.assignment-save-btn',panel);
+      submit.disabled=true;
+      submit.textContent='Saving…';
+      note.textContent='';
+      try{
+        const data=await api(route('update_assignment'),{
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({assignment_id:id,title,due_at:dueAt,required_modes:modes})
+        });
+        if(data.assignment){
+          const idx=state.assignments.findIndex(x=>String(x.id)===String(id));
+          if(idx>=0)state.assignments[idx]=data.assignment;
+          state.selectedAssignment=data.assignment;
+        }
+        panel.hidden=true;
+        panel.innerHTML='';
+        state.loaded=false;
+        await loadAssignments(true);
+        await openAssignment(id,true);
+      }catch(error){
+        note.textContent='Could not save changes: '+error.message;
+        submit.disabled=false;
+        submit.textContent='Save changes';
+      }
+    });
+  }
+
+  async function cancelAssignment(id){
+    const assignment=state.assignments.find(x=>String(x.id)===String(id))||state.selectedAssignment;
+    if(!assignment)return;
+    if(!confirm('Cancel this assignment?\n\nStudents will no longer see it as current work. Existing progress will be kept.'))return;
+    try{
+      await api(route('end_assignment'),{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({assignment_id:id})
+      });
+      state.loaded=false;
+      await loadAssignments(true);
+    }catch(error){
+      alert('Could not cancel assignment: '+error.message);
+    }
+  }
+
+  async function deleteAssignment(id){
+    const assignment=state.assignments.find(x=>String(x.id)===String(id))||state.selectedAssignment;
+    if(!assignment)return;
+    if(!confirm('Delete this assignment permanently?\n\nThis removes the assignment record. This cannot be undone.'))return;
+    try{
+      await api(route('delete_assignment',{id}),{method:'DELETE'});
+      state.loaded=false;
+      await loadAssignments(true);
+    }catch(error){
+      alert('Could not delete assignment: '+error.message);
+    }
   }
 
   async function openAssignment(id,force=false){
