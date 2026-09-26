@@ -689,7 +689,249 @@ The star result is a motivational session reward and does not alter unit progres
 ### Later — Recommended for You
 Build this after the tracking and content foundations have produced enough useful real-world data.
 
-## 19. Product Rule Summary
+## 19. Challenge Mode — Planned
+
+Challenge Mode is a future self-directed vocabulary feature designed as a short, repeatable progression loop rather than another book/unit workflow.
+
+It should reuse the existing Vocabulary Study renderer, word modal, spelling keyboard, speaking matcher, reward feedback, tracking, and mastery evidence wherever possible.
+
+### 19.1 Home-screen placement
+
+On the front page, Challenge Mode should appear:
+
+```text
+Word Test
+Books
+──────── subtle divider
+Challenge Mode card
+──────── subtle divider
+Achievements / streak / gold units
+```
+
+The Challenge Mode card should be visually distinct enough to feel like a separate activity, but it should remain consistent with the cyan / pink Vocabulary Study card system.
+
+### 19.2 Difficulty choice
+
+Opening Challenge Mode presents two choices:
+
+#### NORMAL
+Serve vocabulary appropriate to the student's canonical Willena level.
+
+The level source must be the student's actual stored level, not the currently selected book and not whichever book the student studied most recently.
+
+Before implementation, audit where the canonical student level is currently stored and exposed to the student app.
+
+#### CHALLENGE
+Serve vocabulary from the existing middle-school vocabulary pool.
+
+Do not create a second manually maintained Challenge vocabulary list if the canonical lexical/content system already contains a suitable middle-school pool.
+
+Before implementation, audit the existing content database and vocabulary sources to identify the cleanest reusable middle-school lexical pool.
+
+### 19.3 Batch size and selection
+
+Each Challenge Mode run uses exactly **6 words**.
+
+The six words are selected once at the beginning of the run and remain fixed for the whole run.
+
+Selection flow:
+
+```text
+eligible pool
+  ↓
+remove fully mastered Challenge Mode words
+  ↓
+avoid recently served words where possible
+  ↓
+randomly choose 6
+```
+
+Suggested recent-word behavior:
+
+- avoid approximately the last 12 served words when enough alternatives exist
+- relax the cooldown automatically when the remaining eligible pool is small
+- do not permanently exclude failed words; they should return in future runs
+- do not immediately force a failed word into the very next batch unless the pool is too small to avoid it
+
+### 19.4 Student flow
+
+A Challenge Mode run follows this sequence:
+
+```text
+Choose NORMAL / CHALLENGE
+        ↓
+6-word preview
+        ↓
+STEP 1 · Quiz
+        ↓
+STEP 2 · Spelling
+        ↓
+STEP 3 · Speaking
+        ↓
+Results
+```
+
+The six-word preview should reuse the current word modal / word-card design:
+
+- English
+- Korean
+- shared headphone SVG / audio button
+- clear start action
+
+The preview should make the selected six words explicit before testing begins.
+
+### 19.5 Activity size
+
+Each word receives one activity in each scored section:
+
+- 6 Quiz items
+- 6 Spelling items
+- 6 Speaking items
+
+A normal complete run therefore contains **18 scored answers** before any correction retries.
+
+The goal is a short challenge session, not a full unit-length study session.
+
+### 19.6 Clean mastery rule
+
+Challenge Mode mastery is intentionally stricter than eventual completion.
+
+A word is retired from future Challenge Mode selection only when the student gets that word **cleanly correct in all three sections**:
+
+```text
+Quiz clean
++ Spelling clean
++ Speaking clean
+= Challenge word mastered
+```
+
+"Clean" means the first fresh attempt for that section is correct under the normal Vocabulary Study clean-pass rules.
+
+Correction retries are still useful for finishing the current activity, but they **must not** convert the word into a Challenge mastery pass.
+
+Examples:
+
+```text
+dog
+Quiz      correct first try
+Spelling  correct first try
+Speaking  correct first try
+→ MASTERED → remove from future Challenge Mode batches
+```
+
+```text
+telescope
+Quiz      correct first try
+Spelling  wrong → corrected on retry
+Speaking  correct first try
+→ NOT MASTERED → remains eligible for a future batch
+```
+
+Once a word is fully mastered for Challenge Mode, it should not be served again in that same Challenge pool unless a future product rule explicitly introduces a reset/review mechanism.
+
+### 19.7 Normal and Challenge mastery pools
+
+NORMAL and CHALLENGE should be treated as distinct selection contexts.
+
+At minimum, Challenge progress needs to know:
+
+```text
+student
+lexical entry
+pool / difficulty
+quiz_clean
+spelling_clean
+speaking_clean
+mastered_at
+last_served_at
+```
+
+Before creating a new database table, audit whether the existing canonical `study_attempts`, per-word progress snapshots, and mastery evidence can derive this state reliably.
+
+Prefer deriving Challenge mastery from existing canonical attempts if that remains simple and performant.
+
+Create dedicated persisted Challenge state only if the current evidence model cannot support:
+
+- fast exclusion of mastered words
+- recent-word cooldown
+- distinction between NORMAL and CHALLENGE pools
+- stable cross-device progress
+
+Do **not** rely on `localStorage` for mastery. Challenge progress must survive browser/device changes.
+
+### 19.8 Reuse existing systems
+
+Challenge Mode should not introduce parallel implementations of systems already present.
+
+Reuse:
+
+- universal question renderer
+- Vocabulary Study Quiz flow
+- Spelling Test flow
+- shared Willena keyboard
+- Speaking flow
+- phonetic STT matcher
+- word modal / headphone cards
+- canonical attempt recorder
+- points / reward feedback
+- history navigation
+- clean-pass logic
+
+Suggested module boundaries:
+
+```text
+students/vocab-study/
+  challenge-mode.js       selection + six-word session orchestration
+  challenge-progress.js   mastery / recent-word state if a dedicated layer is needed
+```
+
+The main `vocab-study.js` should only orchestrate entry/exit and connect Challenge Mode to the existing systems.
+
+### 19.9 Navigation
+
+Challenge Mode should participate in the same device/browser history model as the rest of Vocabulary Study.
+
+Expected behavior:
+
+```text
+Home
+ → Challenge level select
+ → 6-word preview
+ → Quiz / Spelling / Speaking
+```
+
+Device Back should step out of the current activity cleanly without dumping the student out of the app.
+
+Avoid creating history entries for every individual word.
+
+### 19.10 Results
+
+The completion screen should show:
+
+- six selected words
+- which words became fully mastered this run
+- which words remain eligible for a future run
+- section results for Quiz / Spelling / Speaking
+- normal points / reward feedback where appropriate
+
+Do not imply that a word is mastered merely because the student eventually corrected it during the run.
+
+### 19.11 Open implementation questions
+
+Resolve these before building:
+
+1. Where is the student's canonical Willena level stored and how should Vocabulary Study read it?
+2. Which existing lexical/content source should define the NORMAL level pool?
+3. Which existing lexical/content source should define the middle-school CHALLENGE pool?
+4. Can current `study_attempts` / snapshot evidence derive Challenge mastery efficiently, or is a compact persisted Challenge progress table justified?
+5. Should NORMAL and CHALLENGE mastery be independent if the same lexical entry appears in both pools?
+6. What reward/star treatment should Challenge Mode use? Do not decide this implicitly while building the first UI.
+
+Challenge Mode is **planned only**. Do not start implementation until the content-pool and student-level sources have been audited.
+
+---
+
+## 20. Product Rule Summary
 
 - Teacher recommendations come first.
 - Adaptive recommendations come second.
@@ -705,7 +947,7 @@ Build this after the tracking and content foundations have produced enough usefu
 
 ---
 
-## 20. Current Architecture Note
+## 21. Current Architecture Note
 
 As of v0.002, Vocabulary Study is still a relatively small app, but data loading, session logic, rendering coordination, and source-specific logic are concentrated in `vocab-study.js`.
 
