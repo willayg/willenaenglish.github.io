@@ -30,7 +30,15 @@
     <div id="saveUI" style="display:none;">
       <form id="saveWorksheetForm" class="space-y-2">
         <input type="text" id="worksheetTitle" placeholder="Worksheet Title" class="border p-1 w-full" required>
-        <input type="text" id="worksheetBook" placeholder="Book" class="border p-1 w-full">
+        <div class="space-y-1">
+          <label for="worksheetBookSelect" class="block text-xs font-medium text-gray-600">Book</label>
+          <select id="worksheetBookSelect" class="border p-1 w-full">
+            <option value="">Choose a linked book…</option>
+          </select>
+          <input type="text" id="worksheetBook" placeholder="Or enter book manually" class="border p-1 w-full">
+          <input type="hidden" id="worksheetBookId" value="">
+          <div id="worksheetBookLinkStatus" class="text-xs text-gray-500"></div>
+        </div>
         <input type="text" id="worksheetUnit" placeholder="Unit" class="border p-1 w-full">
         <input type="text" id="worksheetLanguagePoint" placeholder="Language Point" class="border p-1 w-full">
         <textarea id="worksheetNotes" placeholder="Notes (optional)" class="border p-1 w-full"></textarea>
@@ -147,6 +155,83 @@
     document.getElementById('saveUI').style.display = mode === 'save' ? 'block' : 'none';
     document.getElementById('loadUI').style.display = mode === 'load' ? 'block' : 'none';
 
+    const CONTENT_DB_URL='https://gxwfsqxyuufqtitspfqg.supabase.co';
+    const CONTENT_DB_KEY=['sb_publishable_','G-FYhHfDL4OGdL892gY1Zg_','epdbEeqO'].join('');
+    let worksheetBookCatalog=[];
+
+    function setBookLinkStatus(book=null){
+      const status=document.getElementById('worksheetBookLinkStatus');
+      if(!status)return;
+      status.textContent=book?'Linked to: '+book.title:'Manual book entry';
+      status.className='text-xs '+(book?'text-teal-700':'text-gray-500');
+    }
+
+    function syncBookSelectionFromText(){
+      const input=document.getElementById('worksheetBook');
+      const select=document.getElementById('worksheetBookSelect');
+      const idInput=document.getElementById('worksheetBookId');
+      if(!input||!select||!idInput)return;
+      const value=String(input.value||'').trim().toLowerCase();
+      const match=worksheetBookCatalog.find(book=>String(book.title||'').trim().toLowerCase()===value);
+      if(match){
+        select.value=String(match.id);
+        idInput.value=String(match.id);
+        setBookLinkStatus(match);
+      }else{
+        select.value='';
+        idInput.value='';
+        setBookLinkStatus(null);
+      }
+    }
+
+    async function loadWorksheetBookCatalog(){
+      if(mode!=='save')return;
+      const select=document.getElementById('worksheetBookSelect');
+      if(!select)return;
+      try{
+        const url=CONTENT_DB_URL+'/rest/v1/content_books?select=id,title,public_level,internal_level_id,status&status=in.(review,published)&order=title.asc';
+        const res=await fetch(url,{
+          headers:{
+            apikey:CONTENT_DB_KEY,
+            Authorization:'Bearer '+CONTENT_DB_KEY
+          },
+          cache:'no-store'
+        });
+        if(!res.ok)throw new Error('Book list failed ('+res.status+')');
+        const rows=await res.json();
+        worksheetBookCatalog=Array.isArray(rows)?rows:[];
+        select.innerHTML='<option value="">Choose a linked book…</option>'+
+          worksheetBookCatalog.map(book=>{
+            const level=Number(book.public_level)||Number(book.internal_level_id)||'';
+            const label=String(book.title||'Untitled')+(level?' · L'+level:'');
+            return '<option value="'+String(book.id).replace(/"/g,'&quot;')+'">'+
+              label.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')+
+              '</option>';
+          }).join('');
+        syncBookSelectionFromText();
+      }catch(error){
+        console.warn('[WorksheetManager] could not load content book catalog',error);
+        select.innerHTML='<option value="">Book list unavailable — use manual entry</option>';
+        setBookLinkStatus(null);
+      }
+    }
+
+    document.getElementById('worksheetBookSelect')?.addEventListener('change',event=>{
+      const id=String(event.target.value||'');
+      const book=worksheetBookCatalog.find(row=>String(row.id)===id)||null;
+      const input=document.getElementById('worksheetBook');
+      const idInput=document.getElementById('worksheetBookId');
+      if(book&&input&&idInput){
+        input.value=book.title||'';
+        idInput.value=String(book.id);
+        setBookLinkStatus(book);
+      }else if(idInput){
+        idInput.value='';
+        setBookLinkStatus(null);
+      }
+    });
+    document.getElementById('worksheetBook')?.addEventListener('input',syncBookSelectionFromText);
+
     async function wordBuilderApiFetch(path, options = {}) {
       const url = window.WillenaAPI?.getApiUrl ? window.WillenaAPI.getApiUrl(path) : path;
       const opts = { credentials: 'include', cache: 'no-store', ...options };
@@ -210,7 +295,8 @@
     const worksheet = window.opener.getCurrentWorksheetData();
     worksheet.title = document.getElementById('worksheetTitle').value;
     worksheet.notes = document.getElementById('worksheetNotes').value;
-    worksheet.book = document.getElementById('worksheetBook').value;
+    worksheet.book = document.getElementById('worksheetBook').value.trim();
+    worksheet.book_id = document.getElementById('worksheetBookId').value || null;
     worksheet.unit = document.getElementById('worksheetUnit').value;
     worksheet.language_point = document.getElementById('worksheetLanguagePoint').value.trim();
 
@@ -1078,6 +1164,8 @@
         console.warn('Failed to get worksheet data for auto-fill:', e);
       }
     }
+
+    if (mode === 'save') loadWorksheetBookCatalog();
 
     function getCurrentWorksheetData() {
       // This should get data from the actual wordtest.js window
