@@ -210,6 +210,39 @@
     }
   };
 
+  function shuffleCopy(items){
+    const copy=items.slice();
+    for(let i=copy.length-1;i>0;i--){
+      const j=Math.floor(Math.random()*(i+1));
+      [copy[i],copy[j]]=[copy[j],copy[i]];
+    }
+    return copy;
+  }
+
+  function buildModeSplit(targets,modes){
+    const active=(Array.isArray(modes)?modes:[]).filter(Boolean);
+    const ids=shuffleCopy((Array.isArray(targets)?targets:[])
+      .map(target=>String(target?.lexical_entry_id||'').trim())
+      .filter(Boolean));
+    const out={};
+    active.forEach(mode=>{out[mode]=[]});
+    if(!active.length)return out;
+    ids.forEach((id,index)=>out[active[index%active.length]].push(id));
+    return out;
+  }
+
+  function workloadSummaryHtml(mode,split,total,modes){
+    const labels={quiz:'Quiz',spelling_test:'Spelling',speaking:'Speaking'};
+    if(mode!=='split'){
+      return '<div class="wb-workload-all">'+total+' words in every selected mode</div>';
+    }
+    return (modes||[]).map(key=>{
+      const count=Array.isArray(split?.[key])?split[key].length:0;
+      const detail=key==='quiz'?' · '+(count*2)+' questions':'';
+      return '<div><strong>'+esc(labels[key]||key)+'</strong><span>'+count+' words'+detail+'</span></div>';
+    }).join('');
+  }
+
   function selectedClassNames(overlay){
     return [...overlay.querySelectorAll('.wb-assign-class-check:checked')]
       .map(input=>String(input.value||'').trim())
@@ -248,6 +281,12 @@
           '<label><input type="checkbox" value="quiz" checked> Quiz</label>'+
           '<label><input type="checkbox" value="spelling_test" checked> Spelling</label>'+
           '<label><input type="checkbox" value="speaking" checked> Speaking</label>'+
+        '</fieldset>'+
+        '<fieldset class="wb-assign-workload"><legend>Workload</legend>'+
+          '<label><input type="radio" name="wbAssignWorkload" value="all" checked> All words in every mode</label>'+
+          '<label><input type="radio" name="wbAssignWorkload" value="split"> Split words between modes</label>'+
+          '<div class="wb-assign-workload-summary" id="wbAssignWorkloadSummary"></div>'+
+          '<button class="wb-assign-reshuffle" type="button" id="wbAssignReshuffle" hidden>↻ Reshuffle split</button>'+
         '</fieldset>'+
         '<div class="wb-assign-note" id="wbAssignNote"></div>'+
         '<div class="wb-assign-actions">'+
@@ -299,9 +338,31 @@
     const titleEl=overlay.querySelector('#wbAssignSavedTitle');
     const noteEl=overlay.querySelector('#wbAssignNote');
     const submitBtn=overlay.querySelector('#wbAssignSubmit');
+    const workloadSummary=overlay.querySelector('#wbAssignWorkloadSummary');
+    const reshuffleBtn=overlay.querySelector('#wbAssignReshuffle');
     const worksheet=saveResult?.worksheet||{};
     const targets=Array.isArray(saveResult?.targets)?saveResult.targets:[];
     const collectionId=saveResult?.id||worksheet.id||'';
+    let splitAllocation={};
+
+    const activeModes=()=>[...overlay.querySelectorAll('.wb-assign-modes input:checked')].map(input=>input.value);
+    const workloadMode=()=>overlay.querySelector('input[name="wbAssignWorkload"]:checked')?.value||'all';
+    const renderWorkload=({reshuffle=false}={})=>{
+      const modes=activeModes();
+      const mode=workloadMode();
+      if(mode==='split'){
+        if(reshuffle||!Object.keys(splitAllocation).length){
+          splitAllocation=buildModeSplit(targets,modes);
+        }else{
+          const currentKeys=Object.keys(splitAllocation);
+          if(currentKeys.length!==modes.length||modes.some(key=>!currentKeys.includes(key))){
+            splitAllocation=buildModeSplit(targets,modes);
+          }
+        }
+      }
+      if(workloadSummary)workloadSummary.innerHTML=workloadSummaryHtml(mode,splitAllocation,targets.length,modes);
+      if(reshuffleBtn)reshuffleBtn.hidden=mode!=='split'||modes.length<2;
+    };
 
     titleEl.textContent=(worksheet.title||saveResult?.title||'Saved worksheet')+' · '+targets.length+' words';
     dueInput.value=tomorrowIsoDate(7);
@@ -314,6 +375,18 @@
     studentField.hidden=true;
     const classScope=overlay.querySelector('input[name="wbAssignScope"][value="class"]');
     if(classScope)classScope.checked=true;
+    const allWorkload=overlay.querySelector('input[name="wbAssignWorkload"][value="all"]');
+    if(allWorkload)allWorkload.checked=true;
+    splitAllocation={};
+    renderWorkload({reshuffle:true});
+
+    overlay.querySelectorAll('.wb-assign-modes input').forEach(input=>{
+      input.onchange=()=>renderWorkload({reshuffle:true});
+    });
+    overlay.querySelectorAll('input[name="wbAssignWorkload"]').forEach(input=>{
+      input.onchange=()=>renderWorkload({reshuffle:input.value==='split'});
+    });
+    if(reshuffleBtn)reshuffleBtn.onclick=()=>renderWorkload({reshuffle:true});
 
     overlay.hidden=false;
     document.body.classList.add('wb-assign-open');
@@ -413,6 +486,8 @@
       const scope=overlay.querySelector('input[name="wbAssignScope"]:checked')?.value||'class';
       const dueAt=dueAtFromDate(dueInput.value);
       const modes=[...overlay.querySelectorAll('.wb-assign-modes input:checked')].map(x=>x.value);
+      const selectedWorkload=workloadMode();
+      if(selectedWorkload==='split')renderWorkload();
 
       if(!classNames.length){noteEl.textContent='Choose at least one class.';return}
       if(scope==='student'&&classNames.length!==1){
@@ -446,8 +521,18 @@
           source_app:'word_builder',
           word_builder_collection_id:collectionId,
           source_book_id:worksheet.book_id||saveResult?.book_id||null,
-          required_modes:modes
+          required_modes:modes,
+          workload_mode:selectedWorkload,
+          workload_version:1
         };
+        if(selectedWorkload==='split'){
+          listMeta.mode_target_ids=Object.fromEntries(
+            modes.map(mode=>[mode,Array.isArray(splitAllocation[mode])?splitAllocation[mode].slice():[]])
+          );
+          listMeta.mode_target_counts=Object.fromEntries(
+            modes.map(mode=>[mode,Array.isArray(splitAllocation[mode])?splitAllocation[mode].length:0])
+          );
+        }
         if(selectedStudent){
           const studentId=String(selectedStudent.user_id||selectedStudent.id||'');
           listMeta.target_student_ids=[studentId];
