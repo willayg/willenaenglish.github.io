@@ -7,7 +7,7 @@
     <!-- API gateway for CF Pages routing - MUST load before api-config.js -->
     <script src="/students/api-gateway.js?v=20260116"></script>
     <script src="/js/api-config.js?v=20260110"></script>
-    <link rel="stylesheet" href="./assignment-after-save.css?v=20260926-p4b1">
+    <link rel="stylesheet" href="./assignment-word-test.css?v=20260926-v1">
     <!-- Shared Image Picker Modal (loaded as regular script for inline handlers) -->
     <script src="/Teachers/tools/shared/image-picker-modal.js?v=20260110"></script>
     <script>
@@ -125,7 +125,7 @@
                 </div>
                 <div class="header-title">
                     <h1>Word Builder</h1>
-                    <div id="wordBuilderRevision">v2.00.13</div>
+                    <div id="wordBuilderRevision">v2.00.14</div>
                 </div>
                 <div class="header-right">
                     <div id="burger-menu-mount" class="burger-menu-dark"></div>
@@ -137,21 +137,24 @@
                 <span class="action-link" id="newBtn">New</span>
                 <span class="action-link" id="loadBtn">Load</span>
                 <span class="action-link" id="saveBtn">Save</span>
+                <span class="action-link" id="assignWordTestBtn">Assign Word Test</span>
                 <span class="action-link" id="printBtn">Print</span>
                 <span class="action-link" id="pdfBtn">PDF</span>
                 <span class="action-link" id="moreBtn" style="position:relative;left:-10px;">More</span>
                   <span class="action-link" id="buildGameBtn">Build a Game</span>
                 <script>
-                // Word Builder handoff logic: Build a Game stays separate from the save/assignment flow.
+                // Word Builder handoff logic: Build a Game remains separate from Word Test assignment.
                 document.addEventListener('DOMContentLoaded', function() {
                   const buildGameBtn = document.getElementById('buildGameBtn');
                   function openGameBuilder() {
                     const ta = document.getElementById('wordListTextarea');
                     const wordList = ta?.value.trim();
                     const title = document.getElementById('titleInput')?.value.trim();
+                    // Prefer worksheet metadata if available (loaded from DB)
                     let meta = (window._loadedWorksheetMeta || {});
                     let book = meta.book || document.getElementById('bookInput')?.value?.trim() || '';
                     let unit = meta.unit || document.getElementById('unitInput')?.value?.trim() || '';
+                    // Capture full worksheet data to preserve images
                     let ws = null;
                     try { ws = (typeof window.getCurrentWorksheetData === 'function') ? window.getCurrentWorksheetData() : null; } catch(_){}
                     if (!wordList && !(ws && ws.words && ((Array.isArray(ws.words) && ws.words.length) || (typeof ws.words === 'string' && ws.words.trim())))) {
@@ -160,16 +163,16 @@
                     }
                     const payload = {
                       title: title || (ws?.title || ''),
+                      // Keep backward compatibility: include wordList string
                       wordList: wordList || (Array.isArray(ws?.words) ? ws.words.join('\n') : (typeof ws?.words === 'string' ? ws.words : '')),
+                      // Also include structured fields for richer import
                       words: ws?.words || null,
                       images: ws?.images || null,
                       book,
                       unit
                     };
-                    try {
-                      localStorage.setItem('gameBuilderWordList', JSON.stringify(payload));
-                      localStorage.removeItem('gameBuilderOpenHomeworkAssignment');
-                    } catch (e) {}
+                    try { localStorage.setItem('gameBuilderWordList', JSON.stringify(payload)); } catch (e) {}
+                    try { localStorage.removeItem('gameBuilderOpenHomeworkAssignment'); } catch (e) {}
                     window.open('/Teachers/tools/game-builder/index.html', '_blank');
                   }
                   if (buildGameBtn) buildGameBtn.addEventListener('click', openGameBuilder);
@@ -634,8 +637,8 @@
       }
     };
     </script>
-    <script src="./assignment-after-save.js?v=20260926-p4b1"></script>
-    <script type="module" src="wordtest.js?v=20260926-p4b1"></script>
+    <script src="./assignment-word-test.js?v=20260926-v1"></script>
+    <script type="module" src="wordtest.js?v=20260926-assign1"></script>
     <script>
     // Click event for image search using shared image picker modal
     document.addEventListener('DOMContentLoaded', function() {
