@@ -1,11 +1,14 @@
 const NAV_KEY='willenaVocabNav';
 
 function cleanRoute(route={}){
-  const screen=['home','book','wordtest'].includes(route.screen)?route.screen:'home';
+  const screen=['home','book','wordtest','activity'].includes(route.screen)?route.screen:'home';
   return {
     screen,
     bookId:route.bookId?String(route.bookId):'',
-    unitId:route.unitId?String(route.unitId):''
+    unitId:route.unitId?String(route.unitId):'',
+    parentScreen:['book','wordtest'].includes(route.parentScreen)?route.parentScreen:'',
+    activityKind:route.activityKind?String(route.activityKind):'',
+    teacherAssignmentId:route.teacherAssignmentId?String(route.teacherAssignmentId):''
   };
 }
 function stateFor(route){
@@ -57,6 +60,9 @@ export function createVocabHistoryNavigation({applyRoute}={}){
     get applying(){return applying},
     current(){
       return history.state?.[NAV_KEY]?cleanRoute(history.state.route):{screen:'home'};
+    },
+    isActivity(){
+      return this.current().screen==='activity';
     }
   };
 }
