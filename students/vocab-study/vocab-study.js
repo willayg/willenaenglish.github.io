@@ -595,14 +595,8 @@ function renderFrontMenu(){
       const student=arr(row?.students)[0]||{};
       const modes=arr(assignment.required_modes).length?arr(assignment.required_modes):['quiz','spelling_test','speaking'];
       modes.forEach(mode=>{
-        const modeState=student?.modes?.[mode]||{};
-        const explicit=Number(modeState.percent);
-        const total=Number(modeState.total);
-        const clean=Number(modeState.clean);
-        const value=Number.isFinite(explicit)
-          ? explicit
-          : (Number.isFinite(total)&&total>0&&Number.isFinite(clean)?100*clean/total:0);
-        modePercents.push(Math.max(0,Math.min(100,value)));
+        const modeState=teacherModeProgress(row,student,mode);
+        modePercents.push(Math.max(0,Math.min(100,Number(modeState.percent)||0)));
       });
     });
     const overall=modePercents.length?Math.round(modePercents.reduce((sum,value)=>sum+value,0)/modePercents.length):0;
@@ -710,14 +704,38 @@ function formatTeacherHistoryDate(value){
   if(Number.isNaN(d.getTime()))return'';
   try{return d.toLocaleDateString('en-US',{month:'short',day:'numeric'})}catch(_){return''}
 }
-function teacherAssignmentWords(row){
+function teacherWorkloadMode(row){
+  return txt(row?.assignment?.list_meta?.workload_mode||'all').toLowerCase()==='split'?'split':'all';
+}
+function teacherModeTargetIds(row,mode){
+  if(teacherWorkloadMode(row)!=='split')return null;
+  const raw=row?.assignment?.list_meta?.mode_target_ids?.[mode];
+  const ids=arr(raw).map(txt).filter(Boolean);
+  return new Set(ids);
+}
+function teacherAssignmentWords(row,mode=''){
+  const allowed=mode?teacherModeTargetIds(row,mode):null;
   return arr(row?.targets).map((target,index)=>{
     const id=txt(target?.lexical_entry_id),word=txt(target?.english),ko=txt(target?.korean);
-    return id&&word&&ko?{id,word,ko,position:Number(target?.position)||index}:null;
+    if(!id||!word||!ko)return null;
+    if(allowed&& !allowed.has(id))return null;
+    return{id,word,ko,position:Number(target?.position)||index};
   }).filter(Boolean);
 }
-function teacherAssignmentActivities(row){
-  const items=teacherAssignmentWords(row);
+function teacherModeWordCount(row,mode){
+  return teacherAssignmentWords(row,mode).length;
+}
+function teacherModeProgress(row,student,mode){
+  const raw=student?.modes?.[mode]||{};
+  const split=teacherWorkloadMode(row)==='split';
+  const expected=split?teacherModeWordCount(row,mode):Number(raw.total);
+  const total=Number.isFinite(expected)&&expected>0?expected:0;
+  const clean=Math.min(total,Math.max(0,Number(raw.clean)||0));
+  const percent=total>0?Math.round(100*clean/total):0;
+  return{...raw,total,clean,percent,complete:total>0&&clean>=total};
+}
+function teacherAssignmentActivities(row,mode='quiz'){
+  const items=teacherAssignmentWords(row,mode);
   const koPool=unique(items.map(x=>x.ko)),enPool=unique(items.map(x=>x.word)),out=[];
   items.forEach((item,index)=>{
     const koChoices=shuffle(unique([item.ko,...shuffle(koPool.filter(x=>x!==item.ko)).slice(0,3)]));
@@ -754,13 +772,14 @@ function renderTeacherAssignments(){
     const modeClasses={quiz:'vocab-skill-quiz',spelling_test:'vocab-skill-spelling',speaking:'vocab-skill-pronunciation'};
     const stepNumbers={quiz:1,spelling_test:2,speaking:3};
     const modeHtml=modes.map(mode=>{
-      const m=student.modes?.[mode]||{};
-      const complete=Number(m.total)>0&&Number(m.clean)>=Number(m.total);
-      const progress=Number(m.total)>0?Math.round(100*Number(m.clean||0)/Number(m.total)):0;
+      const m=teacherModeProgress(row,student,mode);
+      const complete=m.complete;
+      const progress=m.percent;
       const stars=Math.max(0,Math.min(10,Number(m.stars)||0));
+      const modeCount=teacherModeWordCount(row,mode);
       return '<button class="vocab-teacher-mode vocab-skill-card '+escapeHtml(modeClasses[mode]||'')+(complete?' is-complete':'')+'" type="button" data-teacher-assignment="'+index+'" data-teacher-mode="'+escapeHtml(mode)+'">'+
         '<span class="vocab-skill-ring" style="--progress:'+progress+'"><span>'+progress+'%</span></span>'+
-        '<span class="vocab-skill-copy"><small class="vocab-teacher-step">STEP '+(stepNumbers[mode]||'')+'</small><strong>'+escapeHtml(labels[mode]||mode)+'</strong><span class="vocab-teacher-stars" aria-label="'+stars+' out of 10 stars">★ '+stars+'/10</span></span>'+
+        '<span class="vocab-skill-copy"><small class="vocab-teacher-step">STEP '+(stepNumbers[mode]||'')+'</small><strong>'+escapeHtml(labels[mode]||mode)+'</strong><span class="vocab-teacher-mode-count">'+modeCount+' words</span><span class="vocab-teacher-stars" aria-label="'+stars+' out of 10 stars">★ '+stars+'/10</span></span>'+
       '</button>';
     }).join('');
     const wordCount=teacherAssignmentWords(row).length;
@@ -826,10 +845,10 @@ function teacherTitle(mode){
   return title+' · '+suffix;
 }
 function startTeacherAssignment(row,mode,{historyMode='push'}={}){
-  const words=teacherAssignmentWords(row);
+  const words=teacherAssignmentWords(row,mode);
   if(!words.length)return;
   state.activeTeacherAssignment=row;
-  state.activeTeacherItems=teacherAssignmentActivities(row);
+  state.activeTeacherItems=teacherAssignmentActivities(row,mode);
   state.progressSnapshot=null;
   if(mode==='quiz')startSession(state.activeTeacherItems,{teacher:true,historyMode});
   else if(mode==='spelling_test')openSpellingTest({teacherWords:words,historyMode});
@@ -2222,7 +2241,7 @@ async function boot(){
       renderSkillProgress();
     });
     reportStartupPerf();
-    window.WillenaVocabStudy={version:'0.086',getState:()=>state,start:startSession,openSpellingMenu,openSpellingPreview,openSpellingTest,openSpeakingSession,close:closeSession};
+    window.WillenaVocabStudy={version:'0.087',getState:()=>state,start:startSession,openSpellingMenu,openSpellingPreview,openSpellingTest,openSpeakingSession,close:closeSession};
   }catch(error){
     console.error('[Vocab Study] boot',error);
     if(frontWordTestCardEl)frontWordTestCardEl.hidden=true;
