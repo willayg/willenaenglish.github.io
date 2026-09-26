@@ -6,6 +6,7 @@ import {getAssignment,setAssignment,getBookMeta,setBookMeta,getVocabulary,setVoc
 import {snapshotPercent,snapshotStars,loadVocabSnapshot,nextSkillTargets} from './vocab-progress-snapshot.js?v=20260925-v0005';
 import {coachAttempt,repeatUntilCorrect,appendRetry,uniquePassedCount,wrongAttemptCount} from './vocab-pass-flow.js?v=20260925-v0002';
 import {createVocabHistoryNavigation} from './navigation-history.js?v=20260926-v0002';
+import {installWillenaKeyboard} from '../shared/willena-keyboard.js?v=1.5.1';
 
 const CONTENT_URL='https://gxwfsqxyuufqtitspfqg.supabase.co';
 const CONTENT_KEY=['sb_publishable_','G-FYhHfDL4OGdL892gY1Zg_','epdbEeqO'].join('');
@@ -97,6 +98,20 @@ const state={
   pendingTeacherRecords:new Set()
 };
 let navController=null;
+let spellingKeyboard=null;
+
+function enableSpellingKeyboard(){
+  if(spellingKeyboard)return;
+  spellingKeyboard=installWillenaKeyboard({
+    root:sessionEl,
+    submitSelector:'#vocabStudyAction'
+  });
+}
+function disableSpellingKeyboard(){
+  if(!spellingKeyboard)return;
+  try{spellingKeyboard.uninstall()}catch(_){}
+  spellingKeyboard=null;
+}
 
 function txt(v){return String(v==null?'':v).trim()}
 function arr(v){return Array.isArray(v)?v:[]}
@@ -1785,6 +1800,7 @@ function checkSpellingTest(){
   actionBtn.textContent=test.index>=test.words.length-1?'Finish':'Next';
 }
 async function finishSpellingTest(){
+  disableSpellingKeyboard();
   const test=state.spellingTest;
   const passed=uniquePassedCount(test?.results);
   const total=test?.initialTotal||0;
@@ -1851,6 +1867,7 @@ async function openSpellingPreview({historyMode='replace'}={}){
 function startSpellingPractice(){
   const practice=state.spellingPractice;
   if(!practice?.words?.length)return;
+  enableSpellingKeyboard();
   startRewardSession('spelling_coach');
   practice.index=0;
   practice.currentAttemptCount=0;
@@ -1942,6 +1959,7 @@ function checkSpellingCoach(){
   setTimeout(()=>{practice.index++;renderSpellingCoach()},350);
 }
 async function finishSpellingPractice(){
+  disableSpellingKeyboard();
   const practice=state.spellingPractice;
   const passedIds=new Set(arr(practice?.results).filter(r=>Number(r.supportLevel||0)===0).map(r=>txt(r.lexicalEntryId||r.word)).filter(Boolean));
   const supported=arr(practice?.results).filter(r=>Number(r.supportLevel||0)>0).length;
@@ -2034,6 +2052,7 @@ async function finishSession(){
   sessionMain.scrollTop=0;
 }
 async function closeSession({historyMode='back'}={}){
+  disableSpellingKeyboard();
   if(speakingSkipBtn)speakingSkipBtn.hidden=true;
   if(historyMode==='back'&&navController?.current?.().screen==='activity'){
     navController.back(activityParentFromRoute(navController.current()));
@@ -2119,7 +2138,7 @@ async function boot(){
       renderSkillProgress();
     });
     reportStartupPerf();
-    window.WillenaVocabStudy={version:'0.083',getState:()=>state,start:startSession,openSpellingMenu,openSpellingPreview,openSpellingTest,openSpeakingSession,close:closeSession};
+    window.WillenaVocabStudy={version:'0.084',getState:()=>state,start:startSession,openSpellingMenu,openSpellingPreview,openSpellingTest,openSpeakingSession,close:closeSession};
   }catch(error){
     console.error('[Vocab Study] boot',error);
     if(frontWordTestCardEl)frontWordTestCardEl.hidden=true;
