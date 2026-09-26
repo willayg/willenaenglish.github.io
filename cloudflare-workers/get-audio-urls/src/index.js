@@ -243,6 +243,24 @@ async function handleShimmerBatch(request, env) {
 
 
 
+
+async function inspectAudioObject(env, word) {
+  const key = toKey(word);
+  const object = await env.AUDIO_BUCKET.get(key);
+  if (!object) return { exists:false, key };
+  const bytes = new Uint8Array(await object.arrayBuffer());
+  const head = Array.from(bytes.slice(0, 16)).map(b=>b.toString(16).padStart(2,'0')).join(' ');
+  const looksMp3 = (bytes[0]===0x49 && bytes[1]===0x44 && bytes[2]===0x33) || (bytes[0]===0xff && (bytes[1]&0xe0)===0xe0);
+  return {
+    exists:true,
+    key,
+    size:bytes.length,
+    content_type:object.httpMetadata?.contentType || null,
+    head_hex:head,
+    looks_mp3:looksMp3
+  };
+}
+
 function shimmerBatchUi() {
   return `<!doctype html>
 <html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -304,9 +322,27 @@ function renderPlayers(words){
     btn.type='button';
     btn.textContent='▶ Play';
     btn.addEventListener('click',async()=>{
-      audio.src=audioUrl(word);
-      nowPlaying.textContent='Playing: '+word;
-      try{await audio.play();}catch(e){nowPlaying.textContent='Could not play '+word+': '+e.message;}
+      nowPlaying.textContent='Loading: '+word;
+      try{
+        const r=await fetch(audioUrl(word),{cache:'no-store'});
+        if(!r.ok) throw new Error('HTTP '+r.status);
+        const buf=await r.arrayBuffer();
+        if(buf.byteLength<100) throw new Error('Audio file is too small ('+buf.byteLength+' bytes)');
+        const blob=new Blob([buf],{type:'audio/mpeg'});
+        const objectUrl=URL.createObjectURL(blob);
+        if(audio.dataset.objectUrl) URL.revokeObjectURL(audio.dataset.objectUrl);
+        audio.dataset.objectUrl=objectUrl;
+        audio.src=objectUrl;
+        nowPlaying.textContent='Playing: '+word+' · '+buf.byteLength+' bytes';
+        await audio.play();
+      }catch(e){
+        let extra='';
+        try{
+          const d=await fetch('/admin/audio-debug?word='+encodeURIComponent(word),{cache:'no-store'}).then(r=>r.json());
+          extra=' · '+JSON.stringify(d);
+        }catch(_){}
+        nowPlaying.textContent='Could not play '+word+': '+e.message+extra;
+      }
     });
     row.append(label,btn);
     players.appendChild(row);
@@ -350,6 +386,12 @@ export default {
     // Handle CORS preflight for all routes
     if (request.method === 'OPTIONS') {
       return new Response(null, { status: 200, headers: corsHeaders });
+    }
+
+    if (url.pathname === '/admin/audio-debug') {
+      const word = url.searchParams.get('word') || '';
+      const info = await inspectAudioObject(env, word);
+      return new Response(JSON.stringify(info), { status: 200, headers: { 'Content-Type':'application/json', 'Cache-Control':'no-store' } });
     }
 
     if (url.pathname === '/admin/shimmer-batch-ui') {
