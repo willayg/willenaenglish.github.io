@@ -621,9 +621,38 @@ The star result is a motivational session reward and does not alter unit progres
 - Streaks and achievements are served through authenticated progress-summary Worker endpoints and remain separate from points/stars.
 
 ### Pass 4 — Teacher-selected Word Test practice
-- teacher-selected targets
+
+#### P4A — Assignment foundation — implemented
+- Reuse `homework_assignments` as the generic assignment envelope rather than creating a second assignment system.
+- `homework_assignments.source_type` is authoritative and now supports `wordlist`, `saved_game`, and `vocab_study`.
+- Vocabulary Study assignments store canonical lexical targets in `study_assignment_targets` with stable English/Korean snapshots.
+- `study_attempts.assignment_id` is a first-class indexed field. The canonical recorder continues to receive the assignment id in activity metadata; a database trigger promotes it into the first-class column.
+- Teacher-selected practice will record `session_source: "teacher"` while reusing the existing Vocabulary Study engine and renderer.
+- `get_vocab_assignment_progress_v1` reports assignment progress from canonical clean-pass evidence: correct fresh attempts with `retry_count = 0`, separated by Quiz, Spelling Test, and Speaking.
+- Homework API can create Vocabulary Study assignments with targets, replace their targets, and return Vocabulary Study progress.
+- The generic `assignment_progress` endpoint dispatches `vocab_study` assignments to the clean-pass progress engine instead of the legacy English Arcade stars evaluator.
+- Teacher-mode assignment listing now requires authenticated approved teacher/admin access.
+- Students requesting assignment progress only receive their own progress row; teacher/admin requests can receive the class view.
+- Vocabulary Study assignments do not create English Arcade run tokens.
+
+#### P4B — Word Builder assignment controls
+- teacher-selected targets from the current Word Builder / Word Test list
+- class / optional student targeting
+- due date and required study modes
+- direct assignment creation without the old Game Builder handoff
+
+#### P4C — Student Teacher Practice
+- Teacher Practice section in Vocabulary Study
+- exact assigned lexical targets
 - `session_source: "teacher"`
-- reuse the same Vocabulary Study engine and renderer
+- `assignment_id` attached to every attempt
+- reuse the same Quiz / Spelling / Speaking engine and renderer
+
+#### P4D — Teacher Dashboard tracking
+- assignment list / class completion matrix
+- per-student Quiz / Spelling / Speaking clean-pass progress
+- words still needing clean retry
+- current and historical assignment views
 
 ### Pass 5 — Past Word Tests
 - stop filtering useful historical Word Test vocabulary
