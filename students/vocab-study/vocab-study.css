@@ -46,6 +46,7 @@ body.vocab-session-open{overflow:hidden}
 .vocab-teacher-mode.vocab-skill-card .vocab-skill-ring{flex-basis:66px;width:66px;height:66px}
 .vocab-teacher-mode.vocab-skill-card .vocab-skill-ring::before{width:52px;height:52px}
 .vocab-teacher-mode.vocab-skill-card .vocab-skill-copy strong{font-size:1rem}
+.vocab-teacher-stars{display:block;margin-top:7px;color:#f0b323;font-size:.78rem;font-weight:900;letter-spacing:.02em;line-height:1}
 .vocab-teacher-mode.is-complete{border-color:#b9dcc7}
 
 .vocab-home-meta{display:flex;justify-content:center;align-items:center;margin-top:22px}
