@@ -258,6 +258,58 @@ async function handleShimmerBatch(request, env) {
 }
 
 
+
+function shimmerBatchUi() {
+  return `<!doctype html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Shimmer Batch</title>
+<style>
+body{font:16px/1.45 system-ui;margin:0;background:#f7fbfc;color:#17252d}
+main{max-width:760px;margin:32px auto;padding:0 16px}
+.card{background:#fff;border:3px solid #c9f3f5;border-radius:20px;padding:20px}
+button{font:inherit;font-weight:800;padding:12px 16px;border:3px solid #ffd0df;border-radius:14px;background:#fff;cursor:pointer;margin:0 8px 8px 0}
+button:disabled{opacity:.5} progress{width:100%;height:22px;margin:14px 0 6px}
+pre{white-space:pre-wrap;background:#f4f7f8;padding:14px;border-radius:12px;min-height:120px}
+.small{color:#65757d;font-size:13px}
+</style></head><body><main><div class="card">
+<h1>Shimmer monosyllable replacement</h1>
+<p>Direct worker: published monosyllables → OpenAI <b>gpt-4o-mini-tts / Shimmer</b> → R2.</p>
+<p class="small">No Netlify. No Pages function. No proxy worker.</p>
+<button id="go">Run / resume batch</button>
+<button id="stop">Stop after current chunk</button>
+<button id="status">Refresh status</button>
+<progress id="bar" value="0" max="1"></progress>
+<div id="summary" class="small">Loading…</div>
+<pre id="out">Ready.</pre>
+</div></main>
+<script>
+const API='/admin/shimmer-batch';
+const out=document.getElementById('out'),go=document.getElementById('go'),bar=document.getElementById('bar'),summary=document.getElementById('summary');
+let running=false,stopRequested=false;
+function show(j){
+ const state=j.state||'unknown';
+ if(state==='classifying'){
+   const total=Number(j.source_count||0),done=Number(j.classified_count||0);
+   bar.max=Math.max(total,1);bar.value=Math.min(done,bar.max);
+   summary.textContent='Classifying '+done+' / '+total+' · '+(j.target_count||0)+' monosyllables found';
+ } else {
+   const total=Number(j.target_count||0),done=Number(j.completed_count||0);
+   bar.max=Math.max(total,1);bar.value=Math.min(done,bar.max);
+   summary.textContent=(j.openai_configured===false?'OPENAI_API NOT CONFIGURED · ':'')+(total?done+' / '+total+' complete · ':'')+state;
+ }
+ out.textContent=JSON.stringify(j,null,2);
+}
+async function req(method){
+ const r=await fetch(API,{method,cache:'no-store',headers:method==='POST'?{'Content-Type':'application/json'}:undefined,body:method==='POST'?'{}':undefined});
+ const t=await r.text(); let j={}; try{j=t?JSON.parse(t):{};}catch(_){throw new Error('Non-JSON '+r.status+': '+t.slice(0,200));}
+ if(!r.ok) throw new Error(j.error||('HTTP '+r.status)); return j;
+}
+async function status(){try{const j=await req('GET');show(j);return j}catch(e){out.textContent='Status error: '+e.message}}
+async function run(){if(running)return;running=true;stopRequested=false;go.disabled=true;try{while(!stopRequested){const j=await req('POST');show(j);if(['complete','complete_with_failures','error'].includes(j.state))break;await new Promise(r=>setTimeout(r,250));}}catch(e){out.textContent='Batch error: '+e.message+'\\n\\n'+out.textContent}finally{running=false;go.disabled=false}}
+go.onclick=run;document.getElementById('stop').onclick=()=>stopRequested=true;document.getElementById('status').onclick=status;status();
+</script></body></html>`;
+}
+
 export default {
   async fetch(request, env, ctx) {
     const startTime = Date.now();
@@ -269,6 +321,10 @@ export default {
     // Handle CORS preflight for all routes
     if (request.method === 'OPTIONS') {
       return new Response(null, { status: 200, headers: corsHeaders });
+    }
+
+    if (url.pathname === '/admin/shimmer-batch-ui') {
+      return new Response(shimmerBatchUi(), { status: 200, headers: { 'Content-Type':'text/html; charset=utf-8', 'Cache-Control':'no-store' } });
     }
 
     // Route: admin Shimmer monosyllable replacement batch (Cloudflare-only)
