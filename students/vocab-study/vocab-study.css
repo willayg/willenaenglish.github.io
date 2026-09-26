@@ -643,3 +643,15 @@ body.vocab-session-open{overflow:hidden}
   .vocab-coach-word-grid{grid-template-columns:1fr}
   .vocab-coach-word{min-height:84px}
 }
+
+/* v0.085 shared spelling keyboard integration */
+body.willena-kb-open .vocab-session-main{
+  padding-bottom:430px!important;
+  scroll-padding-bottom:440px!important;
+}
+@media (min-width:700px) and (pointer:coarse){
+  body.willena-kb-open .vocab-session-main{
+    padding-bottom:500px!important;
+    scroll-padding-bottom:510px!important;
+  }
+}
