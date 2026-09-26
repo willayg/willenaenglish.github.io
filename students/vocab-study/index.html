@@ -13,7 +13,7 @@
 <link rel="stylesheet" href="/students/study/study.css?v=20260808-7">
 <link rel="stylesheet" href="/students/study/study-overrides.css?v=20260808-1">
 <link rel="stylesheet" href="/students/study-v2/v2.css?v=20260814-daily1">
-<link rel="stylesheet" href="./vocab-study.css?v=20260926-v0061">
+<link rel="stylesheet" href="./vocab-study.css?v=20260926-v0062">
 <script src="/students/api-gateway.js?v=20260926-progress-summary-cf1"></script>
 <script src="/students/study/study-progress.js?v=20260926-assignment-canonical1"></script>
 <script src="/js/api-config.js?v=20260926-reverted-auth1"></script>
@@ -23,7 +23,7 @@
 </head>
 <body>
 <div class="study-app">
-  <student-header title="Vocabulary Study" show-id="false" show-home="true" home-href="/students/" home-label="Home" show-points="true" show-logout="true"></student-header>
+  <student-header title="단어 지니어스" show-id="false" show-home="false" show-points="true" show-logout="true"></student-header>
 
   <main class="vocab-page">
     <section id="vocabFrontMenu" class="vocab-front-menu">
@@ -42,7 +42,10 @@
           <strong>워드 테스트 연습</strong>
           <small id="vocabFrontWordTestMeta">숙제와 복습</small>
         </span>
-        <span class="vocab-front-arrow" aria-hidden="true">›</span>
+        <span class="vocab-front-wordtest-side">
+          <span id="vocabFrontWordTestRing" class="vocab-front-progress-ring" style="--progress:0" aria-label="0% 완료"><span>0%</span></span>
+          <span class="vocab-front-arrow" aria-hidden="true">›</span>
+        </span>
       </button>
 
       <section class="vocab-front-books" aria-label="Your books">
@@ -158,7 +161,7 @@
       </section>
     </section>
 
-    <div class="vocab-version">v0.061</div>
+    <div class="vocab-version">v0.062</div>
   </main>
 
   <section id="vocabWordModal" class="vocab-word-modal" hidden aria-hidden="true">
@@ -204,6 +207,6 @@
 </div>
 
 <script src="/students/study/study-question-bank.js?v=20260822-conversationfix1"></script>
-<script type="module" src="./vocab-study.js?v=20260926-v0061"></script>
+<script type="module" src="./vocab-study.js?v=20260926-v0062"></script>
 </body>
 </html>
