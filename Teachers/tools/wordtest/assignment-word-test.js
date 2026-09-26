@@ -3,6 +3,7 @@
 
   const HOMEWORK_PATH='/.netlify/functions/homework_api?action=create_assignment';
   const CLASSES_PATH='/.netlify/functions/progress_summary?section=teacher_classes';
+  const CLASS_BOOKS_PATH='/.netlify/functions/homework_api?action=teacher_class_books';
 
   function apiUrl(path){
     return window.WillenaAPI&&typeof window.WillenaAPI.getApiUrl==='function'
@@ -41,6 +42,11 @@
 
   async function loadClasses(){
     const data=await getJson(CLASSES_PATH);
+    return Array.isArray(data.classes)?data.classes:[];
+  }
+
+  async function loadClassBooks(){
+    const data=await getJson(CLASS_BOOKS_PATH);
     return Array.isArray(data.classes)?data.classes:[];
   }
 
@@ -360,17 +366,43 @@
     overlay.addEventListener('wb:classes-changed',classesChanged,{once:false});
 
     try{
-      classes=await loadClasses();
+      const [classRows,bookRows]=await Promise.all([
+        loadClasses(),
+        loadClassBooks().catch(error=>{
+          console.warn('[Word Builder] class-book suggestions unavailable',error);
+          return [];
+        })
+      ]);
+      const booksByName=new Map(bookRows.map(row=>[String(row.name||row.display_name||''),row]));
+      const linkedBookId=String(worksheet.book_id||saveResult?.book_id||'').trim();
+      const linkedBookTitle=String(worksheet.book||'').trim();
+      classes=classRows.map(c=>{
+        const bookRow=booksByName.get(String(c.name||''))||{};
+        const books=Array.isArray(bookRow.books)?bookRow.books:[];
+        const suggested=!!linkedBookId&&books.some(book=>String(book.book_id||'')===linkedBookId);
+        return {...c,books,suggested};
+      });
+      const suggestedCount=classes.filter(c=>c.suggested).length;
       classList.innerHTML=classes.length
         ?classes.map(c=>
-          '<label class="wb-assign-class-row">'+
-            '<input class="wb-assign-class-check" type="checkbox" value="'+esc(c.name)+'">'+
+          '<label class="wb-assign-class-row'+(c.suggested?' is-suggested':'')+'">'+
+            '<input class="wb-assign-class-check" type="checkbox" value="'+esc(c.name)+'"'+(c.suggested?' checked':'')+'>'+
             '<span><strong>'+esc(c.name)+'</strong>'+
               (Number(c.student_count)>=0?'<small>'+Number(c.student_count)+' students</small>':'')+
+              (c.suggested?'<small class="wb-assign-book-match">Book match</small>':'')+
             '</span>'+
           '</label>'
         ).join('')
         :'<div class="wb-assign-loading">No classes found</div>';
+
+      if(linkedBookId){
+        noteEl.textContent=suggestedCount
+          ?suggestedCount+' class'+(suggestedCount===1?'':'es')+' preselected for '+(linkedBookTitle||'the linked book')+'. You can change this.'
+          :'No current classes match '+(linkedBookTitle||'the linked book')+'. Choose classes manually.';
+      }else{
+        noteEl.textContent='No canonical book is linked to this Word Test. Choose classes manually.';
+      }
+      classesChanged();
     }catch(error){
       classList.innerHTML='<div class="wb-assign-loading">Could not load classes</div>';
       noteEl.textContent='Could not load classes: '+error.message;
