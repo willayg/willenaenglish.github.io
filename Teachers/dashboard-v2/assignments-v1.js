@@ -57,6 +57,13 @@
     return data;
   }
 
+  async function loadClassStudents(className){
+    if(!className)return[];
+    const q=new URLSearchParams({section:'teacher_class_insights',class:className,days:'30'});
+    const data=await api('/.netlify/functions/progress_summary?'+q.toString());
+    return Array.isArray(data.students)?data.students:[];
+  }
+
   function isCurrent(a){
     return a&&a.active!==false&&String(a.status||'active').toLowerCase()!=='ended'&&!a.ended_at;
   }
@@ -92,7 +99,7 @@
     return '<button type="button" class="assignment-card" data-assignment-id="'+esc(a.id)+'">'+
       '<div class="assignment-card-head">'+
         '<div><strong>'+esc(a.title||'Vocabulary Study')+'</strong><span>'+esc(scope)+' · '+esc(required.map(x=>labels[x]||x).join(' · ')||'Vocabulary Study')+'</span></div>'+
-        '<span class="assignment-state '+(isCurrent(a)?'is-current':'is-history')+'">'+(isCurrent(a)?'Current':'History')+'</span>'+
+        '<span class="assignment-state '+(isCurrent(a)?'is-current':'is-history')+'">'+(isCurrent(a)?'Current':(a.ended_at?'Cancelled':'History'))+'</span>'+
       '</div>'+
       '<div class="assignment-card-meta"><span>Due <b>'+esc(fmtDate(a.due_at))+'</b></span><span>Created <b>'+esc(fmtDate(a.created_at))+'</b></span></div>'+
     '</button>';
@@ -176,7 +183,9 @@
         '<button class="assignment-back" type="button" id="assignmentBackBtn">← Assignments</button>'+
         '<div><h2>'+esc(a.title||'Vocabulary Study')+'</h2><p>'+esc(a.class||'')+' · '+progress.target_count+' words · Due '+esc(fmtDate(a.due_at))+'</p></div>'+
         '<div class="assignment-detail-actions">'+
-          (isCurrent(state.selectedAssignment||a)?'<button class="control" type="button" id="assignmentEditBtn">Edit</button><button class="control assignment-cancel-btn" type="button" id="assignmentCancelBtn">Cancel assignment</button>':'')+
+          (isCurrent(state.selectedAssignment||a)
+            ?'<button class="control" type="button" id="assignmentEditBtn">Edit</button><button class="control assignment-cancel-btn" type="button" id="assignmentCancelBtn">Cancel assignment</button>'
+            :((state.selectedAssignment||a)?.ended_at?'<button class="control assignment-reactivate-btn" type="button" id="assignmentReactivateBtn">Reactivate</button>':''))+
           '<button class="control assignment-delete-btn" type="button" id="assignmentDeleteBtn">Delete</button>'+
           '<button class="control" type="button" id="assignmentDetailRefresh">Refresh</button>'+
         '</div>'+
@@ -213,15 +222,19 @@
     $('#assignmentDetailRefresh')?.addEventListener('click',()=>openAssignment(a.id,true));
     $('#assignmentEditBtn')?.addEventListener('click',()=>showAssignmentEdit(a.id));
     $('#assignmentCancelBtn')?.addEventListener('click',()=>cancelAssignment(a.id));
+    $('#assignmentReactivateBtn')?.addEventListener('click',()=>reactivateAssignment(a.id));
     $('#assignmentDeleteBtn')?.addEventListener('click',()=>deleteAssignment(a.id));
     $('.assignment-student-row',detail).forEach(row=>row.addEventListener('click',()=>openStudentDetail(a.id,row.dataset.studentId)));
   }
 
-  function showAssignmentEdit(id){
+  async function showAssignmentEdit(id){
     const assignment=state.assignments.find(x=>String(x.id)===String(id))||state.selectedAssignment;
     const panel=$('#assignmentManagePanel');
     if(!assignment||!panel)return;
     const required=Array.isArray(assignment?.list_meta?.required_modes)?assignment.list_meta.required_modes:[];
+    const targetIds=new Set((Array.isArray(assignment?.list_meta?.target_student_ids)?assignment.list_meta.target_student_ids:[]).map(String));
+    const targeted=targetIds.size>0;
+
     panel.hidden=false;
     panel.innerHTML=
       '<form id="assignmentEditForm" class="assignment-edit-form">'+
@@ -234,28 +247,70 @@
           '<label><input type="checkbox" value="spelling_test"'+(required.includes('spelling_test')?' checked':'')+'> Spelling</label>'+
           '<label><input type="checkbox" value="speaking"'+(required.includes('speaking')?' checked':'')+'> Speaking</label>'+
         '</fieldset>'+
+        '<fieldset class="assignment-edit-target"><legend>Students</legend>'+
+          '<label><input type="radio" name="assignmentTargetScope" value="class"'+(!targeted?' checked':'')+'> Entire class</label>'+
+          '<label><input type="radio" name="assignmentTargetScope" value="students"'+(targeted?' checked':'')+'> Selected students</label>'+
+          '<div id="assignmentStudentPicker" class="assignment-student-picker"'+(targeted?'':' hidden')+'><div class="assignment-edit-loading">Loading students…</div></div>'+
+        '</fieldset>'+
         '<div class="assignment-edit-note" id="assignmentEditNote"></div>'+
-        '<div class="assignment-edit-actions"><button type="button" class="control" id="assignmentEditClose">Cancel</button><button type="submit" class="control assignment-save-btn">Save changes</button></div>'+
+        '<div class="assignment-edit-actions"><button type="button" class="control" id="assignmentEditClose">Close</button><button type="submit" class="control assignment-save-btn">Save changes</button></div>'+
       '</form>';
+
     $('#assignmentEditClose',panel)?.addEventListener('click',()=>{panel.hidden=true;panel.innerHTML=''});
+
+    const picker=$('#assignmentStudentPicker',panel);
+    let classStudents=[];
+    try{
+      classStudents=await loadClassStudents(assignment.class||'');
+      picker.innerHTML=classStudents.length
+        ?classStudents.map(student=>{
+          const sid=String(student.user_id||student.id||'');
+          const name=student.name||student.korean_name||'Student';
+          const ko=student.korean_name&&student.korean_name!==student.name?' · '+student.korean_name:'';
+          return '<label class="assignment-student-check"><input type="checkbox" value="'+esc(sid)+'"'+(targetIds.has(sid)?' checked':'')+'><span>'+esc(name+ko)+'</span></label>';
+        }).join('')
+        :'<div class="assignment-edit-loading">No students found in '+esc(assignment.class||'this class')+'.</div>';
+    }catch(error){
+      picker.innerHTML='<div class="assignment-edit-loading">Could not load students: '+esc(error.message)+'</div>';
+    }
+
+    $$('input[name="assignmentTargetScope"]',panel).forEach(input=>input.addEventListener('change',()=>{
+      const studentMode=$('input[name="assignmentTargetScope"]:checked',panel)?.value==='students';
+      picker.hidden=!studentMode;
+    }));
+
     $('#assignmentEditForm',panel)?.addEventListener('submit',async e=>{
       e.preventDefault();
       const title=$('#assignmentEditTitle',panel)?.value.trim()||'';
       const dueAt=dueAtFromDate($('#assignmentEditDue',panel)?.value||'');
-      const modes=$('.assignment-edit-modes input:checked',panel).map(input=>input.value);
+      const modes=$$('.assignment-edit-modes input:checked',panel).map(input=>input.value);
+      const scope=$('input[name="assignmentTargetScope"]:checked',panel)?.value||'class';
+      const studentIds=scope==='students'
+        ?$$('.assignment-student-picker input:checked',panel).map(input=>input.value)
+        :[];
       const note=$('#assignmentEditNote',panel);
+
       if(!title){note.textContent='Enter a title.';return}
       if(!dueAt){note.textContent='Choose a valid due date.';return}
       if(!modes.length){note.textContent='Choose at least one required section.';return}
+      if(scope==='students'&&!studentIds.length){note.textContent='Choose at least one student.';return}
+
       const submit=$('.assignment-save-btn',panel);
       submit.disabled=true;
       submit.textContent='Saving…';
       note.textContent='';
+
       try{
         const data=await api(route('update_assignment'),{
           method:'POST',
           headers:{'Content-Type':'application/json'},
-          body:JSON.stringify({assignment_id:id,title,due_at:dueAt,required_modes:modes})
+          body:JSON.stringify({
+            assignment_id:id,
+            title,
+            due_at:dueAt,
+            required_modes:modes,
+            target_student_ids:studentIds
+          })
         });
         if(data.assignment){
           const idx=state.assignments.findIndex(x=>String(x.id)===String(id));
@@ -289,6 +344,25 @@
       await loadAssignments(true);
     }catch(error){
       alert('Could not cancel assignment: '+error.message);
+    }
+  }
+
+  async function reactivateAssignment(id){
+    const assignment=state.assignments.find(x=>String(x.id)===String(id))||state.selectedAssignment;
+    if(!assignment)return;
+    if(!confirm('Reactivate this assignment?\n\nStudents will see it as current work again.'))return;
+    try{
+      await api(route('reactivate_assignment'),{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({assignment_id:id})
+      });
+      state.loaded=false;
+      state.filter='current';
+      $('[data-assignment-status]').forEach(btn=>btn.classList.toggle('active',btn.dataset.assignmentStatus==='current'));
+      await loadAssignments(true);
+    }catch(error){
+      alert('Could not reactivate assignment: '+error.message);
     }
   }
 
