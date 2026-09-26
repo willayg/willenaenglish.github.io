@@ -2,6 +2,7 @@
  * Cloudflare Worker: homework-api
  * 
  * Drop-in replacement for Netlify function homework_api.js
+ * P4A: generic assignment envelope for English Arcade and Vocabulary Study.
  * Handles homework assignment CRUD operations
  */
 
