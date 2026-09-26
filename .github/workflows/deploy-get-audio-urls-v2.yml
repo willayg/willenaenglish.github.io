@@ -1,0 +1,40 @@
+name: Deploy Get Audio URLs Worker v2
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - 'cloudflare-workers/get-audio-urls/**'
+      - '.github/workflows/deploy-get-audio-urls-v2.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-get-audio-urls-worker-v2
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install
+        working-directory: cloudflare-workers/get-audio-urls
+        run: npm install
+
+      - name: Deploy Worker
+        working-directory: cloudflare-workers/get-audio-urls
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: npx wrangler deploy
