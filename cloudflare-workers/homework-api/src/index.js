@@ -786,10 +786,14 @@ export default {
           await autoExpireAssignmentsPastGrace(env, prof.class);
           
           const nowIso = new Date().toISOString();
+          const includeHistory = url.searchParams.get('include_history') === '1';
+          const query = includeHistory
+            ? `class=eq.${encodeURIComponent(prof.class)}&start_at=lte.${nowIso}&order=created_at.desc&select=*`
+            : `class=eq.${encodeURIComponent(prof.class)}&active=eq.true&start_at=lte.${nowIso}&order=due_at.asc&select=*`;
           const data = await supabaseSelect(
             env,
             'homework_assignments',
-            `class=eq.${encodeURIComponent(prof.class)}&active=eq.true&start_at=lte.${nowIso}&order=due_at.asc&select=*`
+            query
           );
           const assignmentsForStudent = (data || []).filter((assignment) => {
             const targetStudentIds = getAssignmentTargetStudentIds(assignment);
