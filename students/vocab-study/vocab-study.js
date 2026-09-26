@@ -56,6 +56,20 @@ const goldenCountEl=el('vocabGoldenCount');
 const teacherPracticeEl=el('vocabTeacherPractice');
 const teacherPracticeListEl=el('vocabTeacherPracticeList');
 const teacherPracticeCountEl=el('vocabTeacherPracticeCount');
+const frontMenuEl=el('vocabFrontMenu');
+const frontBookListEl=el('vocabFrontBookList');
+const frontWordTestCardEl=el('vocabFrontWordTestCard');
+const frontWordTestMetaEl=el('vocabFrontWordTestMeta');
+const bookScreenEl=el('vocabBookScreen');
+const bookBackBtn=el('vocabBookBack');
+const wordTestScreenEl=el('vocabWordTestScreen');
+const wordTestBackBtn=el('vocabWordTestBack');
+const wordTestEmptyEl=el('vocabWordTestEmpty');
+const oldTestsOpenBtn=el('vocabOldTestsOpen');
+const oldTestsPanelEl=el('vocabOldTestsPanel');
+const oldTestsBooksEl=el('vocabOldTestsBooks');
+const oldTestsListEl=el('vocabOldTestsList');
+const oldTestsMetaEl=el('vocabOldTestsMeta');
 
 const state={
   book:null,unit:null,units:[],items:[],assignments:[],books:[],activeIndex:0,
@@ -69,6 +83,9 @@ const state={
   motivation:null,
   pendingGoldenAward:null,
   teacherAssignments:[],
+  teacherAssignmentHistory:[],
+  wordTestBookFilter:'',
+  activeScreen:'home',
   activeTeacherAssignment:null,
   activeTeacherItems:[],
   pendingTeacherRecords:new Set()
@@ -334,6 +351,138 @@ function goldenAwardHtml(){
   return '<div class="vocab-golden-award"><img class="vocab-golden-award-icon" src="/shared/svgs/golden-unit.svg" alt=""><div><strong>Golden Unit earned!</strong><span>Unit '+escapeHtml(award.unitNumber||'')+' is mastered.</span></div></div>';
 }
 
+function setMainScreen(screen){
+  state.activeScreen=screen;
+  if(frontMenuEl)frontMenuEl.hidden=screen!=='home';
+  if(bookScreenEl)bookScreenEl.hidden=screen!=='book';
+  if(wordTestScreenEl)wordTestScreenEl.hidden=screen!=='wordtest';
+  try{window.scrollTo({top:0,behavior:'auto'})}catch(_){}
+}
+function frontBookRows(){
+  const seen=new Set(),rows=[];
+  arr(state.assignments).forEach((assignment,index)=>{
+    const id=txt(assignment?.book_id);
+    if(!id||seen.has(id))return;
+    seen.add(id);
+    const loaded=state.books.find(item=>String(item?.book?.book_id)===String(id));
+    rows.push({
+      bookId:id,
+      title:txt(loaded?.book?.book_title||assignment?.book_title||assignment?.title||'Book'),
+      assignment,
+      index
+    });
+  });
+  return rows;
+}
+async function openBookById(bookId){
+  const id=txt(bookId);if(!id)return;
+  let index=state.books.findIndex(item=>String(item?.book?.book_id)===String(id));
+  if(index<0){
+    const assignment=state.assignments.find(item=>String(item?.book_id)===String(id));
+    if(!assignment)return;
+    setStatus('교재를 불러오는 중...');
+    const loaded=await loadAssignedBook(assignment);
+    if(!loaded)return;
+    state.books.push(loaded);
+    index=state.books.length-1;
+  }
+  activateBook(index);
+  setMainScreen('book');
+}
+function renderFrontMenu(){
+  if(!frontBookListEl)return;
+  const books=frontBookRows();
+  frontBookListEl.innerHTML=books.length?books.map(row=>
+    '<button class="vocab-front-book-card" type="button" data-front-book="'+escapeHtml(row.bookId)+'">'+
+      '<span><span class="eyebrow">BOOK STUDY</span><strong>'+escapeHtml(row.title)+'</strong><small>Units · Quiz · Spelling · Speaking</small></span>'+
+      '<span class="vocab-front-arrow" aria-hidden="true">›</span>'+
+    '</button>'
+  ).join(''):'<div class="vocab-front-empty">No assigned books found.</div>';
+  frontBookListEl.querySelectorAll('[data-front-book]').forEach(btn=>btn.addEventListener('click',()=>openBookById(btn.dataset.frontBook)));
+  const current=arr(state.teacherAssignments);
+  if(frontWordTestCardEl){
+    frontWordTestCardEl.hidden=state.adminMode;
+    if(frontWordTestMetaEl){
+      if(current.length){
+        const due=current.map(row=>row?.assignment?.due_at).filter(Boolean).sort()[0];
+        frontWordTestMetaEl.textContent=current.length+' current assignment'+(current.length===1?'':'s')+(due?' · Next due '+formatTeacherDue(due):'');
+      }else{
+        frontWordTestMetaEl.textContent=state.teacherAssignmentHistory.length?'Review old word tests':'No current homework';
+      }
+    }
+  }
+}
+function assignmentBookId(row){
+  return txt(row?.assignment?.list_meta?.source_book_id||row?.assignment?.source_book_id||'');
+}
+async function resolveAssignmentBookIds(envelopes){
+  const rows=arr(envelopes);
+  const missing=rows.filter(a=>!txt(a?.list_meta?.source_book_id)&&txt(a?.list_meta?.word_builder_collection_id));
+  const ids=unique(missing.map(a=>a.list_meta.word_builder_collection_id));
+  if(ids.length){
+    try{
+      const collections=await content('collections?select=id,book_id&id=in.'+encodeURIComponent('('+ids.join(',')+')'));
+      const by={};arr(collections).forEach(row=>{by[txt(row.id)]=txt(row.book_id)});
+      rows.forEach(a=>{
+        const cid=txt(a?.list_meta?.word_builder_collection_id);
+        const bookId=by[cid];
+        if(bookId){
+          a.list_meta=Object.assign({},a.list_meta||{},{source_book_id:bookId});
+        }
+      });
+    }catch(error){
+      console.warn('[Vocab Study] assignment book lookup unavailable',error);
+    }
+  }
+  return rows;
+}
+function renderOldWordTests(){
+  if(!oldTestsBooksEl||!oldTestsListEl)return;
+  const history=arr(state.teacherAssignmentHistory);
+  const bookMap=new Map();
+  history.forEach(row=>{
+    const bookId=assignmentBookId(row)||'other';
+    if(!bookMap.has(bookId))bookMap.set(bookId,[]);
+    bookMap.get(bookId).push(row);
+  });
+  const knownBooks=frontBookRows();
+  const bookTitle=id=>{
+    const known=knownBooks.find(b=>String(b.bookId)===String(id));
+    if(known)return known.title;
+    const row=bookMap.get(id)?.[0];
+    return txt(row?.assignment?.title||'Other word tests').replace(/\s+Unit\b.*$/i,'')||'Other word tests';
+  };
+  const bookIds=[...bookMap.keys()];
+  if(oldTestsMetaEl)oldTestsMetaEl.textContent=history.length?(history.length+' old test'+(history.length===1?'':'s')+' · by book'):'No old word tests yet';
+  if(!history.length){
+    oldTestsBooksEl.innerHTML='';
+    oldTestsListEl.innerHTML='<div class="vocab-old-empty">Finished Word Tests will appear here.</div>';
+    return;
+  }
+  if(!state.wordTestBookFilter||!bookMap.has(state.wordTestBookFilter))state.wordTestBookFilter=bookIds[0]||'';
+  oldTestsBooksEl.innerHTML=bookIds.map(id=>
+    '<button class="vocab-old-book'+(String(id)===String(state.wordTestBookFilter)?' is-active':'')+'" type="button" data-old-book="'+escapeHtml(id)+'">'+escapeHtml(bookTitle(id))+'</button>'
+  ).join('');
+  const selected=bookMap.get(state.wordTestBookFilter)||[];
+  oldTestsListEl.innerHTML=selected.map((row,index)=>{
+    const a=row.assignment||{},student=arr(row.students)[0]||{},modes=arr(a.required_modes);
+    const starTotal=modes.reduce((sum,mode)=>sum+Math.max(0,Number(student?.modes?.[mode]?.stars)||0),0);
+    const starMax=modes.length*10;
+    return '<article class="vocab-old-test-row">'+
+      '<div><strong>'+escapeHtml(a.title||'Word Test')+'</strong><small>'+teacherAssignmentWords(row).length+' words'+(a.due_at?' · '+escapeHtml(formatTeacherDue(a.due_at)):'')+'</small></div>'+
+      '<span>★ '+starTotal+'/'+starMax+'</span>'+
+    '</article>';
+  }).join('');
+  oldTestsBooksEl.querySelectorAll('[data-old-book]').forEach(btn=>btn.addEventListener('click',()=>{
+    state.wordTestBookFilter=btn.dataset.oldBook||'';
+    renderOldWordTests();
+  }));
+}
+function openWordTestScreen(){
+  renderTeacherAssignments();
+  renderOldWordTests();
+  setMainScreen('wordtest');
+}
 function formatTeacherDue(value){
   const d=new Date(value||'');
   if(Number.isNaN(d.getTime()))return'';
@@ -371,9 +520,11 @@ function renderTeacherAssignments(){
   if(state.adminMode||!state.teacherAssignments.length){
     teacherPracticeEl.hidden=true;
     teacherPracticeListEl.innerHTML='';
+    if(wordTestEmptyEl)wordTestEmptyEl.hidden=state.adminMode;
     return;
   }
   teacherPracticeEl.hidden=false;
+  if(wordTestEmptyEl)wordTestEmptyEl.hidden=true;
   if(teacherPracticeCountEl)teacherPracticeCountEl.textContent=state.teacherAssignments.length+' assignment'+(state.teacherAssignments.length===1?'':'s');
   teacherPracticeListEl.innerHTML=state.teacherAssignments.map((row,index)=>{
     const a=row.assignment||{},student=arr(row.students)[0]||{},modes=arr(a.required_modes);
@@ -402,24 +553,39 @@ function renderTeacherAssignments(){
 async function loadTeacherAssignments(){
   if(state.adminMode)return[];
   try{
-    const list=await api('/.netlify/functions/homework_api?action=list_assignments&mode=student&_='+Date.now());
-    const envelopes=arr(list.assignments).filter(a=>txt(a?.source_type)==='vocab_study');
+    const list=await api('/.netlify/functions/homework_api?action=list_assignments&mode=student&include_history=1&_='+Date.now());
+    const envelopes=await resolveAssignmentBookIds(arr(list.assignments).filter(a=>txt(a?.source_type)==='vocab_study'));
     const hydrated=[];
     for(const assignment of envelopes){
       try{
         const row=await api('/.netlify/functions/homework_api?action=vocab_assignment_progress&assignment_id='+encodeURIComponent(assignment.id)+'&_='+Date.now());
-        if(row?.success)hydrated.push(row);
+        if(row?.success){
+          row.assignment=Object.assign({},row.assignment||{},{
+            list_meta:assignment.list_meta||{},
+            list_key:assignment.list_key||null,
+            active:assignment.active,
+            ended_at:assignment.ended_at||null,
+            status:assignment.status||row.assignment?.status
+          });
+          hydrated.push(row);
+        }
       }catch(error){
-        console.warn('[Vocab Study] teacher assignment unavailable',assignment?.id,error);
+        console.warn('[Vocab Study] word test assignment unavailable',assignment?.id,error);
       }
     }
-    state.teacherAssignments=hydrated;
+    state.teacherAssignments=hydrated.filter(row=>row?.assignment?.active!==false&&!row?.assignment?.ended_at);
+    state.teacherAssignmentHistory=hydrated.filter(row=>row?.assignment?.active===false||!!row?.assignment?.ended_at);
     renderTeacherAssignments();
-    return hydrated;
+    renderOldWordTests();
+    renderFrontMenu();
+    return state.teacherAssignments;
   }catch(error){
-    console.warn('[Vocab Study] teacher assignments unavailable',error);
+    console.warn('[Vocab Study] word test assignments unavailable',error);
     state.teacherAssignments=[];
+    state.teacherAssignmentHistory=[];
     renderTeacherAssignments();
+    renderOldWordTests();
+    renderFrontMenu();
     return[];
   }
 }
@@ -706,6 +872,7 @@ async function hydrateSecondaryBooks(list,activeBookId){
     state.books=[...(current?[current]:[]),...loaded];
     state.activeIndex=0;
     renderBookPicker();
+    renderFrontMenu();
   },'secondary books');
 }
 async function resolveAssignedBooks(authData){
@@ -726,6 +893,7 @@ function activateBook(index){
   state.activeIndex=index;state.book=loaded.book;state.unit=loaded.unit;state.units=arr(loaded.units);state.items=loaded.items;
   try{localStorage.setItem(ACTIVE_BOOK_KEY,state.book.book_id)}catch(_){}
   renderHome();
+  renderFrontMenu();
 }
 
 async function selectUnit(id){
@@ -986,7 +1154,6 @@ function renderHome(){
   setStatus(state.items.length?'준비됐어요.':'이 단원에는 사용할 수 있는 단어 문제가 없어요.');
   renderSkillProgress();
   renderMotivation();
-  renderTeacherAssignments();
   loadSkillProgress();
   loadMotivation(state.book.book_id);
 }
@@ -1697,15 +1864,26 @@ async function boot(){
       const resolved=await resolveAdminBookAndUnit(params);
       state.book=resolved.book;state.unit=resolved.unit;state.units=arr(resolved.units);state.items=await loadVocabularyItems(state.book,state.unit);
       renderHome();
+      setMainScreen('book');
     }else{
       const resolved=await resolveAssignedBooks(authData);
       state.books=resolved.books;state.assignments=resolved.assignments;state.activeIndex=resolved.activeIndex;
       const active=state.books[state.activeIndex];
       state.book=active.book;state.unit=active.unit;state.units=arr(active.units);state.items=active.items;
       renderHome();
+      renderFrontMenu();
+      setMainScreen('home');
       hydrateSecondaryBooks(resolved.deferredAssignments,state.book.book_id);
       loadTeacherAssignments();
     }
+    frontWordTestCardEl?.addEventListener('click',openWordTestScreen);
+    bookBackBtn?.addEventListener('click',()=>setMainScreen('home'));
+    wordTestBackBtn?.addEventListener('click',()=>setMainScreen('home'));
+    oldTestsOpenBtn?.addEventListener('click',()=>{
+      if(!oldTestsPanelEl)return;
+      oldTestsPanelEl.hidden=!oldTestsPanelEl.hidden;
+      if(!oldTestsPanelEl.hidden)renderOldWordTests();
+    });
     startBtn.addEventListener('click',()=>startSession());
     spellingPreviewBtn?.addEventListener('click',openSpellingMenu);
     pronunciationStartBtn?.addEventListener('click',openSpeakingSession);
@@ -1732,7 +1910,7 @@ async function boot(){
       renderSkillProgress();
     });
     reportStartupPerf();
-    window.WillenaVocabStudy={version:'0.057',getState:()=>state,start:startSession,openSpellingMenu,openSpellingPreview,openSpellingTest,openSpeakingSession,close:closeSession};
+    window.WillenaVocabStudy={version:'0.058',getState:()=>state,start:startSession,openSpellingMenu,openSpellingPreview,openSpellingTest,openSpeakingSession,close:closeSession};
   }catch(error){
     console.error('[Vocab Study] boot',error);
     setStatus(error?.message||'불러오지 못했습니다. 새로고침해 주세요.');
