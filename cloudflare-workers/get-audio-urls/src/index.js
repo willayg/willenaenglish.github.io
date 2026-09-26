@@ -87,42 +87,32 @@ async function fetchPublishedLexicalWords() {
 }
 
 async function classifyMonosyllableChunkCF(env, chunk) {
-  const openaiKey = env.OPENAI_API || env.OPENAI_KEY || env.OPENAI_API_KEY;
-  if (!openaiKey) throw new Error('OpenAI secret missing on Cloudflare worker (checked OPENAI_API, OPENAI_KEY, OPENAI_API_KEY)');
-  const resp = await fetch('https://api.openai.com/v1/chat/completions', {
+  const proxy = env.WILLENA_PROXY;
+  if (!proxy || typeof proxy.fetch !== 'function') throw new Error('WILLENA_PROXY binding unavailable');
+  const req = new Request('https://willena-internal/internal/openai-classify-monosyllables', {
     method: 'POST',
-    headers: { Authorization: 'Bearer ' + openaiKey, 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      model: 'gpt-4o-mini',
-      temperature: 0,
-      response_format: { type: 'json_object' },
-      messages: [
-        { role: 'system', content: 'You are a careful American English pronunciation lexicographer.' },
-        { role: 'user', content: 'Return JSON exactly as {"words":["..."]}. From the supplied English tokens, include every ordinary token pronounced as exactly ONE syllable in neutral American English. Include diphthongs and one-syllable homographs such as read, lead, live, wind, tear, close, use. Exclude abbreviations, obvious proper-name-only items, nonwords, and words normally two or more syllables. Preserve spelling exactly.\n\n' + JSON.stringify(chunk) }
-      ]
-    })
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ words: chunk })
   });
-  if (!resp.ok) throw new Error('OpenAI classification failed ' + resp.status + ': ' + (await resp.text()).slice(0,300));
+  const resp = await proxy.fetch(req);
+  if (!resp.ok) throw new Error('Internal classifier failed ' + resp.status + ': ' + (await resp.text()).slice(0,300));
   const data = await resp.json();
-  const parsed = JSON.parse(data?.choices?.[0]?.message?.content || '{}');
-  const allowed = new Set(chunk);
-  return (parsed.words || []).filter(w => allowed.has(w));
+  return Array.isArray(data.words) ? data.words : [];
 }
 
 async function generateShimmerWordCF(env, word) {
-  if (!env.OPENAI_API) throw new Error('OPENAI_API secret is missing on Cloudflare worker');
-  const resp = await fetch('https://api.openai.com/v1/audio/speech', {
+  const proxy = env.WILLENA_PROXY;
+  if (!proxy || typeof proxy.fetch !== 'function') throw new Error('WILLENA_PROXY binding unavailable');
+  const req = new Request('https://willena-internal/internal/openai-tts', {
     method: 'POST',
-    headers: { Authorization: 'Bearer ' + openaiKey, 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      model: 'gpt-4o-mini-tts',
-      voice: 'shimmer',
       input: word,
-      instructions: 'Pronounce this English vocabulary word once, clearly and naturally. Warm, friendly and encouraging tone for a child learning English. Neutral American English. Slightly slower than normal conversation, but do not exaggerate. Do not add any other words or sounds.',
-      response_format: 'mp3'
+      instructions: 'Pronounce this English vocabulary word once, clearly and naturally. Warm, friendly and encouraging tone for a child learning English. Neutral American English. Slightly slower than normal conversation, but do not exaggerate. Do not add any other words or sounds.'
     })
   });
-  if (!resp.ok) throw new Error('OpenAI TTS ' + word + ' failed ' + resp.status + ': ' + (await resp.text()).slice(0,300));
+  const resp = await proxy.fetch(req);
+  if (!resp.ok) throw new Error('Internal OpenAI TTS failed ' + resp.status + ': ' + (await resp.text()).slice(0,300));
   return await resp.arrayBuffer();
 }
 
