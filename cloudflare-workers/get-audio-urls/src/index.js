@@ -59,6 +59,164 @@ function getCacheKey(words) {
   return `audio-urls:${sorted}`;
 }
 
+
+const SHIMMER_BATCH_ID = 'shimmer-monosyllables-20260927-cf-v1';
+const SHIMMER_MARKER_KEY = '_batches/' + SHIMMER_BATCH_ID + '.json';
+const CONTENT_SUPABASE_URL = 'https://gxwfsqxyuufqtitspfqg.supabase.co';
+const CONTENT_SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_G-FYhHfDL4OGdL892gY1Zg_epdbEeqO';
+
+async function readBatchMarker(env) {
+  const obj = await env.AUDIO_BUCKET.get(SHIMMER_MARKER_KEY);
+  if (!obj) return null;
+  return JSON.parse(await obj.text());
+}
+
+async function saveBatchMarker(env, marker) {
+  marker.updated_at = new Date().toISOString();
+  await env.AUDIO_BUCKET.put(SHIMMER_MARKER_KEY, JSON.stringify(marker, null, 2), {
+    httpMetadata: { contentType: 'application/json', cacheControl: 'no-store' }
+  });
+}
+
+async function fetchPublishedLexicalWords() {
+  const all = [];
+  for (let offset = 0; ; offset += 1000) {
+    const url = CONTENT_SUPABASE_URL + '/rest/v1/lexical_entries?status=eq.published&select=canonical_text&order=canonical_text.asc&limit=1000&offset=' + offset;
+    const resp = await fetch(url, {
+      headers: {
+        apikey: CONTENT_SUPABASE_PUBLISHABLE_KEY,
+        Authorization: 'Bearer ' + CONTENT_SUPABASE_PUBLISHABLE_KEY
+      }
+    });
+    if (!resp.ok) throw new Error('Supabase lexical fetch failed ' + resp.status + ': ' + (await resp.text()).slice(0,300));
+    const rows = await resp.json();
+    all.push(...rows.map(r => String(r.canonical_text || '').trim()));
+    if (rows.length < 1000) break;
+  }
+  return [...new Set(all.filter(w => /^[A-Za-z]+$/.test(w) && w.length >= 2))].sort((a,b) => a.localeCompare(b));
+}
+
+async function classifyMonosyllablesCF(env, words) {
+  if (!env.OPENAI_API) throw new Error('OPENAI_API secret is missing on Cloudflare worker');
+  const selected = [];
+  for (let i = 0; i < words.length; i += 180) {
+    const chunk = words.slice(i, i + 180);
+    const resp = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + env.OPENAI_API, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        temperature: 0,
+        response_format: { type: 'json_object' },
+        messages: [
+          { role: 'system', content: 'You are a careful American English pronunciation lexicographer.' },
+          { role: 'user', content: 'Return JSON exactly as {"words":["..."]}. From the supplied English tokens, include every ordinary token pronounced as exactly ONE syllable in neutral American English. Include diphthongs and one-syllable homographs such as read, lead, live, wind, tear, close, use. Exclude abbreviations, obvious proper-name-only items, nonwords, and words normally two or more syllables. Preserve spelling exactly.\n\n' + JSON.stringify(chunk) }
+        ]
+      })
+    });
+    if (!resp.ok) throw new Error('OpenAI classification failed ' + resp.status + ': ' + (await resp.text()).slice(0,300));
+    const data = await resp.json();
+    const parsed = JSON.parse(data?.choices?.[0]?.message?.content || '{}');
+    const allowed = new Set(chunk);
+    for (const w of (parsed.words || [])) if (allowed.has(w)) selected.push(w);
+  }
+  return [...new Set(selected)].sort((a,b) => a.localeCompare(b));
+}
+
+async function generateShimmerWordCF(env, word) {
+  if (!env.OPENAI_API) throw new Error('OPENAI_API secret is missing on Cloudflare worker');
+  const resp = await fetch('https://api.openai.com/v1/audio/speech', {
+    method: 'POST',
+    headers: { Authorization: 'Bearer ' + env.OPENAI_API, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: 'gpt-4o-mini-tts',
+      voice: 'shimmer',
+      input: word,
+      instructions: 'Pronounce this English vocabulary word once, clearly and naturally. Warm, friendly and encouraging tone for a child learning English. Neutral American English. Slightly slower than normal conversation, but do not exaggerate. Do not add any other words or sounds.',
+      response_format: 'mp3'
+    })
+  });
+  if (!resp.ok) throw new Error('OpenAI TTS ' + word + ' failed ' + resp.status + ': ' + (await resp.text()).slice(0,300));
+  return await resp.arrayBuffer();
+}
+
+function publicBatchStatus(marker) {
+  if (!marker) return { batch_id: SHIMMER_BATCH_ID, state: 'not_started' };
+  return {
+    batch_id: marker.batch_id,
+    state: marker.state,
+    target_count: marker.targets?.length || 0,
+    completed_count: marker.completed?.length || 0,
+    failure_count: marker.failures?.length || 0,
+    failures: marker.failures || [],
+    last_chunk: marker.last_chunk || [],
+    started_at: marker.started_at,
+    updated_at: marker.updated_at,
+    finished_at: marker.finished_at
+  };
+}
+
+async function handleShimmerBatch(request, env) {
+  const origin = request.headers.get('Origin') || '';
+  const cors = getCorsHeaders(origin);
+  if (origin && origin !== 'https://teachers.willenaenglish.com' && origin !== 'https://staging.willenaenglish.com') {
+    return new Response(JSON.stringify({ error: 'Forbidden origin' }), { status: 403, headers: { 'Content-Type':'application/json', ...cors } });
+  }
+  if (!env.AUDIO_BUCKET) return new Response(JSON.stringify({ error:'R2 binding unavailable' }), { status:500, headers:{'Content-Type':'application/json', ...cors} });
+
+  if (request.method === 'GET') {
+    return new Response(JSON.stringify(publicBatchStatus(await readBatchMarker(env))), { status:200, headers:{'Content-Type':'application/json','Cache-Control':'no-store',...cors} });
+  }
+
+  if (request.method !== 'POST') return new Response(JSON.stringify({ error:'Method not allowed' }), { status:405, headers:{'Content-Type':'application/json',...cors} });
+
+  let marker = await readBatchMarker(env);
+  if (!marker) {
+    marker = { batch_id: SHIMMER_BATCH_ID, state:'preparing', started_at:new Date().toISOString(), completed:[], failures:[], targets:[] };
+    await saveBatchMarker(env, marker);
+    const words = await fetchPublishedLexicalWords();
+    marker.targets = await classifyMonosyllablesCF(env, words);
+    marker.state = 'ready';
+    marker.published_single_tokens = words.length;
+    await saveBatchMarker(env, marker);
+  }
+
+  if (marker.state === 'complete') {
+    return new Response(JSON.stringify(publicBatchStatus(marker)), { status:200, headers:{'Content-Type':'application/json','Cache-Control':'no-store',...cors} });
+  }
+
+  const completed = new Set(marker.completed || []);
+  const next = (marker.targets || []).filter(w => !completed.has(w)).slice(0, 4);
+  marker.state = 'running';
+  marker.last_chunk = [];
+
+  for (const word of next) {
+    try {
+      const audio = await generateShimmerWordCF(env, word);
+      await env.AUDIO_BUCKET.put(toKey(word), audio, {
+        httpMetadata: { contentType:'audio/mpeg', cacheControl:'public, max-age=300, must-revalidate' },
+        customMetadata: { tts_provider:'openai', tts_model:'gpt-4o-mini-tts', tts_voice:'shimmer', batch_id:SHIMMER_BATCH_ID }
+      });
+      marker.completed.push(word);
+      marker.failures = (marker.failures || []).filter(f => f.word !== word);
+      marker.last_chunk.push({ word, status:'ok' });
+    } catch (e) {
+      marker.failures = (marker.failures || []).filter(f => f.word !== word);
+      marker.failures.push({ word, error:String(e?.message || e).slice(0,300) });
+      marker.last_chunk.push({ word, status:'failed', error:String(e?.message || e).slice(0,160) });
+    }
+  }
+
+  const doneNow = new Set(marker.completed || []);
+  const remaining = (marker.targets || []).filter(w => !doneNow.has(w));
+  if (!remaining.length) {
+    marker.state = marker.failures?.length ? 'complete_with_failures' : 'complete';
+    marker.finished_at = new Date().toISOString();
+  }
+  await saveBatchMarker(env, marker);
+  return new Response(JSON.stringify(publicBatchStatus(marker)), { status:200, headers:{'Content-Type':'application/json','Cache-Control':'no-store',...cors} });
+}
+
 export default {
   async fetch(request, env, ctx) {
     const startTime = Date.now();
@@ -70,6 +228,11 @@ export default {
     // Handle CORS preflight for all routes
     if (request.method === 'OPTIONS') {
       return new Response(null, { status: 200, headers: corsHeaders });
+    }
+
+    // Route: admin Shimmer monosyllable replacement batch (Cloudflare-only)
+    if (url.pathname === '/admin/shimmer-batch') {
+      return handleShimmerBatch(request, env);
     }
 
     // Route: GET /audio/:filename - proxy audio files from R2
