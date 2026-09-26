@@ -7,6 +7,7 @@ import {snapshotPercent,snapshotStars,loadVocabSnapshot,nextSkillTargets} from '
 import {coachAttempt,repeatUntilCorrect,appendRetry,uniquePassedCount,wrongAttemptCount} from './vocab-pass-flow.js?v=20260925-v0002';
 import {createVocabHistoryNavigation} from './navigation-history.js?v=20260926-v0002';
 import {installWillenaKeyboard} from '../shared/willena-keyboard.js?v=1.5.1';
+import {playStudentSfx,preloadStudentSfx} from '../shared/student-sfx.js?v=20260926-v0001';
 
 const CONTENT_URL='https://gxwfsqxyuufqtitspfqg.supabase.co';
 const CONTENT_KEY=['sb_publishable_','G-FYhHfDL4OGdL892gY1Zg_','epdbEeqO'].join('');
@@ -755,6 +756,34 @@ function teacherAssignmentActivities(row,mode='quiz'){
   });
   return out;
 }
+function teacherStudentProgress(row){
+  return arr(row?.students)[0]||{};
+}
+function teacherCompletedQuizKeys(row){
+  const done=new Set();
+  arr(teacherStudentProgress(row)?.completed?.quiz).forEach(entry=>{
+    const id=txt(entry?.lexical_entry_id);
+    const pair=txt(entry?.pair_form);
+    if(id&&pair)done.add(id+'|'+pair);
+  });
+  return done;
+}
+function teacherCompletedWordIds(row,mode){
+  return new Set(arr(teacherStudentProgress(row)?.completed?.[mode]).map(txt).filter(Boolean));
+}
+function teacherRemainingActivities(row){
+  const done=teacherCompletedQuizKeys(row);
+  return teacherAssignmentActivities(row,'quiz').filter(item=>{
+    const id=txt(item?.metadata?.lexical_entry_id||item?.sourceId);
+    const pair=txt(item?.metadata?.pair_form);
+    return !done.has(id+'|'+pair);
+  });
+}
+function teacherRemainingWords(row,mode){
+  const done=teacherCompletedWordIds(row,mode);
+  return teacherAssignmentWords(row,mode).filter(word=>!done.has(txt(word?.id)));
+}
+
 function renderTeacherAssignments(){
   if(!teacherPracticeEl||!teacherPracticeListEl)return;
   if(state.adminMode||!state.teacherAssignments.length){
@@ -845,13 +874,19 @@ function teacherTitle(mode){
   return title+' · '+suffix;
 }
 function startTeacherAssignment(row,mode,{historyMode='push'}={}){
-  const words=teacherAssignmentWords(row,mode);
-  if(!words.length)return;
   state.activeTeacherAssignment=row;
-  state.activeTeacherItems=teacherAssignmentActivities(row,mode);
   state.progressSnapshot=null;
-  if(mode==='quiz')startSession(state.activeTeacherItems,{teacher:true,historyMode});
-  else if(mode==='spelling_test')openSpellingTest({teacherWords:words,historyMode});
+  if(mode==='quiz'){
+    const items=teacherRemainingActivities(row);
+    if(!items.length)return;
+    state.activeTeacherItems=items;
+    startSession(items,{teacher:true,historyMode});
+    return;
+  }
+  const words=teacherRemainingWords(row,mode);
+  if(!words.length)return;
+  state.activeTeacherItems=[];
+  if(mode==='spelling_test')openSpellingTest({teacherWords:words,historyMode});
   else if(mode==='speaking')openSpeakingSession({teacherWords:words,historyMode});
 }
 
@@ -1508,6 +1543,7 @@ function checkCurrent(){
     attemptNumber:retryCount+1,
     sessionSource:'student'
   });
+  playStudentSfx(correct?'correct':'wrong');
   renderer.setDisabled(true);
   renderer.showFeedback({
     correct,
@@ -1631,6 +1667,7 @@ function checkSpeaking(){
     sessionSource:'student'
   });
   if(repeatUntilCorrect(correct))appendRetry(session.words,word);
+  playStudentSfx(correct?'correct':'wrong');
   renderer.setDisabled(true);
   renderer.showFeedback({
     correct,
@@ -1671,6 +1708,7 @@ function skipSpeaking(){
   renderSpeakingQuestion();
 }
 async function finishSpeakingSession(){
+  playStudentSfx('complete');
   if(speakingSkipBtn)speakingSkipBtn.hidden=true;
   const session=state.speakingSession;
   const passed=uniquePassedCount(session?.results);
@@ -1889,6 +1927,7 @@ function checkSpellingTest(){
     sessionSource:'student'
   });
   if(repeatUntilCorrect(correct))appendRetry(test.words,word);
+  playStudentSfx(correct?'correct':'wrong');
   renderer.setDisabled(true);
   renderer.showFeedback({
     correct,
@@ -1901,6 +1940,7 @@ function checkSpellingTest(){
   actionBtn.textContent=test.index>=test.words.length-1?'Finish':'Next';
 }
 async function finishSpellingTest(){
+  playStudentSfx('complete');
   disableSpellingKeyboard();
   const test=state.spellingTest;
   const passed=uniquePassedCount(test?.results);
@@ -2048,10 +2088,12 @@ function checkSpellingCoach(){
     sessionSource:'student'
   });
   if(!correct){
+    playStudentSfx('wrong');
     renderer.showFeedback({correct:false,correctAnswer:[],message:'다시 해보세요.'});
     return;
   }
   if(flow.repeat)appendRetry(practice.words,word);
+  playStudentSfx('correct');
   renderer.setDisabled(true);
   renderer.showFeedback({
     correct:true,
@@ -2062,6 +2104,7 @@ function checkSpellingCoach(){
   setTimeout(()=>{practice.index++;renderSpellingCoach()},350);
 }
 async function finishSpellingPractice(){
+  playStudentSfx('complete');
   disableSpellingKeyboard();
   const practice=state.spellingPractice;
   const passedIds=new Set(arr(practice?.results).filter(r=>Number(r.supportLevel||0)===0).map(r=>txt(r.lexicalEntryId||r.word)).filter(Boolean));
@@ -2117,6 +2160,7 @@ function reviewSession(){
   startSession(reviewItems,{historyMode:'none'});
 }
 async function finishSession(){
+  playStudentSfx('complete');
   const reward=await completeRewardSession();
   progressFill.style.width='100%';
   progressEl.textContent='완료';
@@ -2241,7 +2285,9 @@ async function boot(){
       renderSkillProgress();
     });
     reportStartupPerf();
-    window.WillenaVocabStudy={version:'0.087',getState:()=>state,start:startSession,openSpellingMenu,openSpellingPreview,openSpellingTest,openSpeakingSession,close:closeSession};
+    preloadStudentSfx();
+
+window.WillenaVocabStudy={version:'0.088',getState:()=>state,start:startSession,openSpellingMenu,openSpellingPreview,openSpellingTest,openSpeakingSession,close:closeSession};
   }catch(error){
     console.error('[Vocab Study] boot',error);
     if(frontWordTestCardEl)frontWordTestCardEl.hidden=true;
