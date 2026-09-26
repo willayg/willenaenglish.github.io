@@ -902,14 +902,47 @@ export default {
           if (Number.isNaN(dueAt.getTime())) return jsonResponse({ success:false, error:'Invalid due date' }, 400, origin);
           updateFields.due_at = dueAt.toISOString();
         }
+        let nextMeta = existing.list_meta && typeof existing.list_meta === 'object' ? { ...existing.list_meta } : {};
+        let metaChanged = false;
+
         if (body.required_modes !== undefined) {
           const allowed = new Set(['quiz','spelling_test','speaking']);
           const modes = Array.isArray(body.required_modes)
             ? [...new Set(body.required_modes.map(String).filter(mode => allowed.has(mode)))]
             : [];
           if (!modes.length) return jsonResponse({ success:false, error:'Choose at least one practice mode' }, 400, origin);
-          updateFields.list_meta = { ...(existing.list_meta || {}), required_modes:modes };
+          nextMeta.required_modes = modes;
+          metaChanged = true;
         }
+
+        if (body.target_student_ids !== undefined) {
+          const requested = Array.isArray(body.target_student_ids)
+            ? [...new Set(body.target_student_ids.map(value => String(value || '').trim()).filter(Boolean))]
+            : [];
+          if (requested.length) {
+            const students = await supabaseSelect(
+              env,
+              'profiles',
+              `class=eq.${encodeURIComponent(existing.class || '')}&id=in.(${requested.join(',')})&select=id,name,korean_name`
+            );
+            const valid = Array.isArray(students) ? students : [];
+            if (valid.length !== requested.length) {
+              return jsonResponse({ success:false, error:'One or more selected students are not in this class' }, 400, origin);
+            }
+            nextMeta.target_student_ids = valid.map(student => student.id);
+            nextMeta.target_students = valid.map(student => ({
+              id:student.id,
+              name:student.name || student.korean_name || 'Student',
+              korean_name:student.korean_name || null
+            }));
+          } else {
+            delete nextMeta.target_student_ids;
+            delete nextMeta.target_students;
+          }
+          metaChanged = true;
+        }
+
+        if (metaChanged) updateFields.list_meta = nextMeta;
 
         if (!Object.keys(updateFields).length) {
           return jsonResponse({ success:false, error:'No editable fields supplied' }, 400, origin);
@@ -948,6 +981,38 @@ export default {
         return jsonResponse({ success: true, assignment: data[0] }, 200, origin);
       }
       
+      // ===== REACTIVATE ASSIGNMENT =====
+      if (action === 'reactivate_assignment') {
+        const authUserId = await getUserIdFromRequest(request, env);
+        if (!authUserId) return jsonResponse({ success:false, error:'Not signed in' }, 401, origin);
+
+        const prof = await fetchProfile(env, authUserId);
+        if (!prof || !['teacher','admin'].includes(String(prof.role || '').toLowerCase())) {
+          return jsonResponse({ success:false, error:'Only teachers can reactivate assignments' }, 403, origin);
+        }
+
+        const body = await request.json().catch(() => ({}));
+        const assignmentId = body.assignment_id || body.id || url.searchParams.get('assignment_id') || url.searchParams.get('id');
+        if (!assignmentId) return jsonResponse({ success:false, error:'Missing assignment id' }, 400, origin);
+
+        const rows = await supabaseSelect(env, 'homework_assignments', `id=eq.${assignmentId}&select=*`);
+        const existing = rows?.[0];
+        if (!existing) return jsonResponse({ success:false, error:'Assignment not found' }, 404, origin);
+
+        const dueMs = Date.parse(String(existing.due_at || ''));
+        if (Number.isFinite(dueMs) && dueMs < Date.now()) {
+          return jsonResponse({ success:false, error:'Move the due date into the future before reactivating this assignment' }, 400, origin);
+        }
+
+        let updated;
+        try {
+          updated = await supabaseUpdate(env, 'homework_assignments', `id=eq.${assignmentId}`, { active:true, ended_at:null });
+        } catch (err) {
+          updated = await supabaseUpdate(env, 'homework_assignments', `id=eq.${assignmentId}`, { active:true });
+        }
+        return jsonResponse({ success:true, assignment:updated?.[0] || null }, 200, origin);
+      }
+
       // ===== DELETE ASSIGNMENT =====
       if (action === 'delete_assignment') {
         const authUserId = await getUserIdFromRequest(request, env);
