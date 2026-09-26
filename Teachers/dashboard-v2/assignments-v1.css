@@ -63,3 +63,29 @@
   .assignment-card-head{display:block}
   .assignment-state{display:inline-block;margin-top:8px}
 }
+
+/* Assignment management controls */
+.assignment-detail-actions{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:8px}
+.assignment-cancel-btn{border-color:#e8b56b!important;color:#9a5b18!important;background:#fffaf2!important}
+.assignment-delete-btn{border-color:#efb2b2!important;color:#a73838!important;background:#fff7f7!important}
+.assignment-manage-panel{
+  border:1px solid #d9e7ea;border-radius:16px;background:#f8fbfb;padding:14px 16px
+}
+.assignment-manage-panel[hidden]{display:none!important}
+.assignment-edit-form{display:grid;gap:12px}
+.assignment-edit-grid{display:grid;grid-template-columns:2fr 1fr;gap:12px}
+.assignment-edit-form label>span,.assignment-edit-modes legend{
+  display:block;margin-bottom:5px;color:#61777c;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.04em
+}
+.assignment-edit-form input[type="text"],.assignment-edit-form input[type="date"]{
+  width:100%;box-sizing:border-box;border:1px solid #cbdcdf;border-radius:10px;background:#fff;padding:10px 11px;color:#173f46;font:inherit
+}
+.assignment-edit-modes{margin:0;padding:0;border:0}
+.assignment-edit-modes label{display:inline-flex;align-items:center;gap:6px;margin-right:16px;color:#52676c;font-size:12px;font-weight:700}
+.assignment-edit-note{min-height:18px;color:#a05f27;font-size:11px;font-weight:700}
+.assignment-edit-actions{display:flex;justify-content:flex-end;gap:8px}
+.assignment-save-btn{border-color:#bfecef!important;color:#237783!important;background:#f7fefe!important}
+@media(max-width:760px){
+  .assignment-detail-actions{grid-column:1/-1;justify-content:flex-start}
+  .assignment-edit-grid{grid-template-columns:1fr}
+}
