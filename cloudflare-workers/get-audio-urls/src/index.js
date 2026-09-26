@@ -87,10 +87,11 @@ async function fetchPublishedLexicalWords() {
 }
 
 async function classifyMonosyllableChunkCF(env, chunk) {
-  if (!env.OPENAI_API) throw new Error('OPENAI_API secret is missing on Cloudflare worker');
+  const openaiKey = env.OPENAI_API || env.OPENAI_KEY || env.OPENAI_API_KEY;
+  if (!openaiKey) throw new Error('OpenAI secret missing on Cloudflare worker (checked OPENAI_API, OPENAI_KEY, OPENAI_API_KEY)');
   const resp = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
-    headers: { Authorization: 'Bearer ' + env.OPENAI_API, 'Content-Type': 'application/json' },
+    headers: { Authorization: 'Bearer ' + openaiKey, 'Content-Type': 'application/json' },
     body: JSON.stringify({
       model: 'gpt-4o-mini',
       temperature: 0,
@@ -112,7 +113,7 @@ async function generateShimmerWordCF(env, word) {
   if (!env.OPENAI_API) throw new Error('OPENAI_API secret is missing on Cloudflare worker');
   const resp = await fetch('https://api.openai.com/v1/audio/speech', {
     method: 'POST',
-    headers: { Authorization: 'Bearer ' + env.OPENAI_API, 'Content-Type': 'application/json' },
+    headers: { Authorization: 'Bearer ' + openaiKey, 'Content-Type': 'application/json' },
     body: JSON.stringify({
       model: 'gpt-4o-mini-tts',
       voice: 'shimmer',
