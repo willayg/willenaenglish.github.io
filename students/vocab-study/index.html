@@ -13,7 +13,7 @@
 <link rel="stylesheet" href="/students/study/study.css?v=20260808-7">
 <link rel="stylesheet" href="/students/study/study-overrides.css?v=20260808-1">
 <link rel="stylesheet" href="/students/study-v2/v2.css?v=20260814-daily1">
-<link rel="stylesheet" href="./vocab-study.css?v=20260926-v0062">
+<link rel="stylesheet" href="./vocab-study.css?v=20260926-v0063">
 <script src="/students/api-gateway.js?v=20260926-progress-summary-cf1"></script>
 <script src="/students/study/study-progress.js?v=20260926-assignment-canonical1"></script>
 <script src="/js/api-config.js?v=20260926-reverted-auth1"></script>
@@ -37,10 +37,13 @@
       </section>
 
       <button id="vocabFrontWordTestCard" class="vocab-front-wordtest" type="button" hidden>
-        <span class="vocab-front-card-copy">
-          <span class="eyebrow">단어 시험</span>
-          <strong>워드 테스트 연습</strong>
-          <small id="vocabFrontWordTestMeta">숙제와 복습</small>
+        <span class="vocab-front-card-main">
+          <img class="vocab-front-card-icon vocab-front-card-icon-wordtest" src="/shared/svgs/word-test.svg" alt="" aria-hidden="true">
+          <span class="vocab-front-card-copy">
+            <span class="eyebrow">단어 시험</span>
+            <strong>워드 테스트 연습</strong>
+            <small id="vocabFrontWordTestMeta">숙제와 복습</small>
+          </span>
         </span>
         <span class="vocab-front-wordtest-side">
           <span id="vocabFrontWordTestRing" class="vocab-front-progress-ring" style="--progress:0" aria-label="0% 완료"><span>0%</span></span>
@@ -147,10 +150,13 @@
 
       <section class="vocab-old-tests">
         <button id="vocabOldTestsOpen" class="vocab-old-tests-card" type="button">
-          <span>
+          <span class="vocab-front-card-main">
+            <img class="vocab-front-card-icon" src="/shared/svgs/review-history.svg" alt="" aria-hidden="true">
+            <span>
             <span class="eyebrow">복습</span>
             <strong>지난 단어 시험</strong>
             <small id="vocabOldTestsMeta">교재별로 지난 시험 복습하기</small>
+            </span>
           </span>
           <span class="vocab-front-arrow" aria-hidden="true">›</span>
         </button>
@@ -161,7 +167,7 @@
       </section>
     </section>
 
-    <div class="vocab-version">v0.062</div>
+    <div class="vocab-version">v0.063</div>
   </main>
 
   <section id="vocabWordModal" class="vocab-word-modal" hidden aria-hidden="true">
@@ -207,6 +213,6 @@
 </div>
 
 <script src="/students/study/study-question-bank.js?v=20260822-conversationfix1"></script>
-<script type="module" src="./vocab-study.js?v=20260926-v0062"></script>
+<script type="module" src="./vocab-study.js?v=20260926-v0063"></script>
 </body>
 </html>
