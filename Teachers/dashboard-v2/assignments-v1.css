@@ -89,3 +89,28 @@
   .assignment-detail-actions{grid-column:1/-1;justify-content:flex-start}
   .assignment-edit-grid{grid-template-columns:1fr}
 }
+
+/* Pass 4: assignment targeting + reactivation */
+.assignment-reactivate-btn{border-color:#bfecef!important;color:#237783!important;background:#f7fefe!important}
+.assignment-edit-target{margin:0;padding:0;border:0}
+.assignment-edit-target>legend{
+  display:block;margin-bottom:5px;color:#61777c;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.04em
+}
+.assignment-edit-target>label{
+  display:inline-flex;align-items:center;gap:6px;margin:0 16px 8px 0;color:#52676c;font-size:12px;font-weight:700
+}
+.assignment-student-picker{
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;
+  max-height:220px;overflow:auto;padding:8px;border:1px solid #d9e7ea;border-radius:12px;background:#fff
+}
+.assignment-student-picker[hidden]{display:none!important}
+.assignment-student-check{
+  display:flex!important;align-items:center;gap:8px;margin:0!important;padding:8px 9px;border:1px solid #e1eaec;border-radius:10px;
+  background:#fbfdfd;text-transform:none!important;letter-spacing:0!important
+}
+.assignment-student-check:has(input:checked){border-color:#ee9abb;background:#fff8fb}
+.assignment-student-check span{margin:0!important;color:#425f65!important;font-size:11px!important;font-weight:700!important;text-transform:none!important;letter-spacing:0!important}
+.assignment-edit-loading{padding:8px;color:#7b8e92;font-size:11px}
+@media(max-width:760px){
+  .assignment-student-picker{grid-template-columns:1fr}
+}
