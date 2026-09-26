@@ -36,10 +36,7 @@
     const resolved=window.WillenaAPI&&typeof window.WillenaAPI.getApiUrl==='function'
       ?window.WillenaAPI.getApiUrl(path)
       :path;
-    const fetcher=window.WillenaAPI&&typeof window.WillenaAPI.fetch==='function'
-      ?window.WillenaAPI.fetch.bind(window.WillenaAPI)
-      :fetch;
-    const r=await fetcher(resolved,Object.assign({credentials:'include',cache:'no-store'},options));
+    const r=await fetch(resolved,Object.assign({credentials:'include',cache:'no-store'},options));
     let data={};
     try{data=await r.json()}catch(_){}
     if(!r.ok||data?.success===false)throw new Error(data?.error||('Request failed ('+r.status+')'));
