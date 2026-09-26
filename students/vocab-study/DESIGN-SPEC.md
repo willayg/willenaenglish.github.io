@@ -635,11 +635,16 @@ The star result is a motivational session reward and does not alter unit progres
 - Students requesting assignment progress only receive their own progress row; teacher/admin requests can receive the class view.
 - Vocabulary Study assignments do not create English Arcade run tokens.
 
-#### P4B — Word Builder assignment controls
-- teacher-selected targets from the current Word Builder / Word Test list
-- class / optional student targeting
-- due date and required study modes
-- direct assignment creation without the old Game Builder handoff
+#### P4B — Word Builder assignment controls — implemented
+- Word Builder keeps Save as the primary workflow. A successful Word Builder save returns the exact canonical lexical targets that were persisted.
+- The Worksheet Manager save popup calls `window.opener.onWordBuilderSaved(...)` after a successful Word Builder save and closes without an extra saved-alert step.
+- Word Builder then opens an optional **Assign for Vocabulary Study?** modal. **Not now** leaves the worksheet saved and creates no assignment.
+- The assignment modal loads the same authenticated teacher class list used by Teacher Dashboard.
+- Teachers choose class, due date, and required Quiz / Spelling / Speaking modes.
+- Assignment creation writes `source_type: "vocab_study"`, the saved Word Builder collection id, required modes, and the exact canonical lexical targets returned by save.
+- Saving an existing worksheet never silently edits or replaces an existing homework assignment; clicking Assign explicitly creates a new assignment.
+- The old standalone **Assign Homework** → Game Builder handoff has been removed. **Build a Game** remains a separate tool flow.
+- Individual-student targeting remains available in the P4A schema/API but is deferred from this first save modal; P4B starts with whole-class assignment as requested.
 
 #### P4C — Student Teacher Practice
 - Teacher Practice section in Vocabulary Study

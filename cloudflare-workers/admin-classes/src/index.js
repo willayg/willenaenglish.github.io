@@ -745,7 +745,18 @@ async function saveWordBuilder(env, actor, body) {
       method: 'POST', headers: { Prefer: 'return=minimal' }, body: JSON.stringify(itemRows),
     });
   }
-  return { id: collectionId };
+  const targets = itemRows.map((row, index) => ({
+    lexical_entry_id: row.content_id,
+    position: index,
+    english: row.settings?.display_english || '',
+    korean: row.settings?.display_korean || '',
+  }));
+  return {
+    id: collectionId,
+    title: body.title || 'Untitled Word Builder',
+    targets,
+    target_count: targets.length,
+  };
 }
 async function deleteWordBuilder(env, actor, id) {
   const rows = await supabaseFetch(env.CONTENT_SUPABASE_URL, env.CONTENT_SUPABASE_SERVICE_ROLE_KEY,

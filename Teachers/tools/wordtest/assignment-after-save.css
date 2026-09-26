@@ -1,0 +1,42 @@
+.wb-assign-overlay{
+  position:fixed;inset:0;z-index:100000;display:flex;align-items:center;justify-content:center;
+  padding:20px;background:rgba(15,23,42,.54);backdrop-filter:blur(4px)
+}
+.wb-assign-overlay[hidden]{display:none!important}
+body.wb-assign-open{overflow:hidden}
+.wb-assign-modal{
+  position:relative;width:min(520px,100%);max-height:min(720px,92vh);overflow:auto;
+  padding:28px;border:1px solid #dce9eb;border-radius:24px;background:#fff;
+  box-shadow:0 24px 70px rgba(15,23,42,.22);font-family:Poppins,Arial,sans-serif;color:#173f46
+}
+.wb-assign-close{
+  position:absolute;right:16px;top:14px;border:0;background:transparent;color:#6b7f83;
+  font-size:28px;line-height:1;cursor:pointer
+}
+.wb-assign-kicker{font-size:11px;font-weight:900;letter-spacing:.12em;color:#22b8c7}
+.wb-assign-modal h2{margin:7px 34px 6px 0;font-size:24px;line-height:1.18;color:#173f46}
+.wb-assign-copy{margin:0;color:#6f8387;font-size:14px;line-height:1.55}
+.wb-assign-saved-title{
+  margin:18px 0 16px;padding:12px 14px;border-radius:14px;background:#f5fbfc;
+  border:1px solid #dceff1;font-weight:800
+}
+.wb-assign-field{display:block;margin:14px 0}
+.wb-assign-field>span,.wb-assign-modes legend{display:block;margin-bottom:6px;font-size:12px;font-weight:800;color:#547075}
+.wb-assign-field select,.wb-assign-field input{
+  width:100%;box-sizing:border-box;padding:11px 12px;border:1px solid #cadcdf;border-radius:12px;
+  background:#fff;color:#173f46;font:inherit
+}
+.wb-assign-modes{margin:16px 0 8px;padding:0;border:0}
+.wb-assign-modes label{display:inline-flex;align-items:center;gap:6px;margin:0 18px 8px 0;font-size:14px;font-weight:700}
+.wb-assign-note{min-height:22px;margin-top:8px;color:#8b5d22;font-size:13px;font-weight:700}
+.wb-assign-note.is-success{color:#23704a}
+.wb-assign-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:16px}
+.wb-assign-actions button{padding:11px 16px;border-radius:12px;font:800 14px/1 Poppins,Arial,sans-serif;cursor:pointer}
+.wb-assign-secondary{border:1px solid #cbdcdf;background:#fff;color:#456167}
+.wb-assign-primary{border:1px solid #22b8c7;background:#22b8c7;color:#fff}
+.wb-assign-primary:disabled{opacity:.55;cursor:not-allowed}
+@media(max-width:600px){
+  .wb-assign-overlay{padding:12px;align-items:flex-end}
+  .wb-assign-modal{padding:24px 18px 20px;border-radius:22px 22px 14px 14px}
+  .wb-assign-actions{display:grid;grid-template-columns:1fr 1fr}
+}

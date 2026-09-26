@@ -267,8 +267,28 @@
     });
     const result = await res.json();
     if (result.success) {
-      alert(existingId ? 'Worksheet updated!' : 'Worksheet saved!');
-      window.close();
+      if (worksheet.worksheet_type === 'wordtest' && window.opener && !window.opener.closed) {
+        try {
+          if (typeof window.opener.onWordBuilderSaved === 'function') {
+            window.opener.onWordBuilderSaved({
+              ...result,
+              updated: !!existingId,
+              worksheet: {
+                id: result.id || worksheet.user_id || null,
+                title: worksheet.title || '',
+                book: worksheet.book || '',
+                unit: worksheet.unit || '',
+              }
+            });
+          }
+        } catch (callbackError) {
+          console.warn('[WorksheetManager] Word Builder save callback failed:', callbackError);
+        }
+        window.close();
+      } else {
+        alert(existingId ? 'Worksheet updated!' : 'Worksheet saved!');
+        window.close();
+      }
     } else {
       alert('Error saving worksheet: ' + (result.error || 'Unknown error'));
     }
