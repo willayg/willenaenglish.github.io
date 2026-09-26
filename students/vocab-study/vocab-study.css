@@ -789,3 +789,14 @@ body.willena-kb-open .vocab-session-main{
 .vocab-wordtest-loader-dot{position:absolute;width:8px;height:8px;left:13px;top:13px;border-radius:50%;background:var(--pink,#ee5f91);box-shadow:0 0 0 4px rgba(238,95,145,.1)}
 @keyframes vocabWordTestSpin{to{transform:rotate(360deg)}}
 @media(prefers-reduced-motion:reduce){.vocab-wordtest-loader-ring{animation:none}}
+
+/* Keep the inline Word Test loader circular in the loading card */
+.vocab-wordtest-empty.is-loading .vocab-wordtest-inline-loader{
+  flex:0 0 34px;
+  width:34px;
+  min-width:34px;
+  height:34px;
+  min-height:34px;
+  margin:2px 0 8px;
+  align-self:flex-start;
+}
