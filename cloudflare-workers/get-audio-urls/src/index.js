@@ -159,7 +159,9 @@ async function handleShimmerBatch(request, env) {
     }
 
     if (request.method === 'GET') {
-      return new Response(JSON.stringify(publicBatchStatus(await readBatchMarker(env))), { status:200, headers:jsonHeaders });
+      const status = publicBatchStatus(await readBatchMarker(env));
+      status.openai_configured = !!(env.OPENAI_API || env.OPENAI_KEY || env.OPENAI_API_KEY);
+      return new Response(JSON.stringify(status), { status:200, headers:jsonHeaders });
     }
     if (request.method !== 'POST') {
       return new Response(JSON.stringify({ error:'Method not allowed' }), { status:405, headers:jsonHeaders });
