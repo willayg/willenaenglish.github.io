@@ -86,6 +86,7 @@ const state={
   teacherAssignmentHistory:[],
   wordTestBookFilter:'',
   activeScreen:'home',
+  shellWired:false,
   activeTeacherAssignment:null,
   activeTeacherItems:[],
   pendingTeacherRecords:new Set()
@@ -351,6 +352,26 @@ function goldenAwardHtml(){
   return '<div class="vocab-golden-award"><img class="vocab-golden-award-icon" src="/shared/svgs/golden-unit.svg" alt=""><div><strong>Golden Unit earned!</strong><span>Unit '+escapeHtml(award.unitNumber||'')+' is mastered.</span></div></div>';
 }
 
+function wireShellNavigation(){
+  if(state.shellWired)return;
+  state.shellWired=true;
+  frontWordTestCardEl?.addEventListener('click',openWordTestScreen);
+  bookBackBtn?.addEventListener('click',()=>setMainScreen('home'));
+  wordTestBackBtn?.addEventListener('click',()=>setMainScreen('home'));
+  frontBookListEl?.addEventListener('click',event=>{
+    const btn=event.target?.closest?.('[data-front-book]');
+    if(!btn||!frontBookListEl.contains(btn))return;
+    openBookById(btn.dataset.frontBook).catch(error=>{
+      console.error('[Vocab Study] book navigation failed',error);
+      setStatus(error?.message||'교재를 열지 못했습니다.');
+    });
+  });
+  oldTestsOpenBtn?.addEventListener('click',()=>{
+    if(!oldTestsPanelEl)return;
+    oldTestsPanelEl.hidden=!oldTestsPanelEl.hidden;
+    if(!oldTestsPanelEl.hidden)renderOldWordTests();
+  });
+}
 function setMainScreen(screen){
   state.activeScreen=screen;
   if(frontMenuEl)frontMenuEl.hidden=screen!=='home';
@@ -360,14 +381,24 @@ function setMainScreen(screen){
 }
 function frontBookRows(){
   const seen=new Set(),rows=[];
+  arr(state.books).forEach((loaded,index)=>{
+    const id=txt(loaded?.book?.book_id);
+    if(!id||seen.has(id))return;
+    seen.add(id);
+    rows.push({
+      bookId:id,
+      title:txt(loaded?.book?.book_title||'Book'),
+      assignment:state.assignments.find(item=>String(item?.book_id)===String(id))||null,
+      index
+    });
+  });
   arr(state.assignments).forEach((assignment,index)=>{
     const id=txt(assignment?.book_id);
     if(!id||seen.has(id))return;
     seen.add(id);
-    const loaded=state.books.find(item=>String(item?.book?.book_id)===String(id));
     rows.push({
       bookId:id,
-      title:txt(loaded?.book?.book_title||assignment?.book_title||assignment?.title||'Book'),
+      title:txt(assignment?.book_title||assignment?.title||'Book'),
       assignment,
       index
     });
@@ -398,7 +429,6 @@ function renderFrontMenu(){
       '<span class="vocab-front-arrow" aria-hidden="true">›</span>'+
     '</button>'
   ).join(''):'<div class="vocab-front-empty">No assigned books found.</div>';
-  frontBookListEl.querySelectorAll('[data-front-book]').forEach(btn=>btn.addEventListener('click',()=>openBookById(btn.dataset.frontBook)));
   const current=arr(state.teacherAssignments);
   if(frontWordTestCardEl){
     frontWordTestCardEl.hidden=state.adminMode;
@@ -1845,6 +1875,8 @@ async function closeSession(){
 }
 async function boot(){
   try{
+    wireShellNavigation();
+    if(frontWordTestCardEl)frontWordTestCardEl.hidden=true;
     let authData=null;
     if(window.WillenaVocabStudyAuthReady){
       authData=await window.WillenaVocabStudyAuthReady;
@@ -1874,16 +1906,9 @@ async function boot(){
       renderFrontMenu();
       setMainScreen('home');
       hydrateSecondaryBooks(resolved.deferredAssignments,state.book.book_id);
-      loadTeacherAssignments();
+      await loadTeacherAssignments();
+      renderFrontMenu();
     }
-    frontWordTestCardEl?.addEventListener('click',openWordTestScreen);
-    bookBackBtn?.addEventListener('click',()=>setMainScreen('home'));
-    wordTestBackBtn?.addEventListener('click',()=>setMainScreen('home'));
-    oldTestsOpenBtn?.addEventListener('click',()=>{
-      if(!oldTestsPanelEl)return;
-      oldTestsPanelEl.hidden=!oldTestsPanelEl.hidden;
-      if(!oldTestsPanelEl.hidden)renderOldWordTests();
-    });
     startBtn.addEventListener('click',()=>startSession());
     spellingPreviewBtn?.addEventListener('click',openSpellingMenu);
     pronunciationStartBtn?.addEventListener('click',openSpeakingSession);
@@ -1910,9 +1935,11 @@ async function boot(){
       renderSkillProgress();
     });
     reportStartupPerf();
-    window.WillenaVocabStudy={version:'0.058',getState:()=>state,start:startSession,openSpellingMenu,openSpellingPreview,openSpellingTest,openSpeakingSession,close:closeSession};
+    window.WillenaVocabStudy={version:'0.059',getState:()=>state,start:startSession,openSpellingMenu,openSpellingPreview,openSpellingTest,openSpeakingSession,close:closeSession};
   }catch(error){
     console.error('[Vocab Study] boot',error);
+    if(frontWordTestCardEl)frontWordTestCardEl.hidden=true;
+    setMainScreen('home');
     setStatus(error?.message||'불러오지 못했습니다. 새로고침해 주세요.');
     bookTitleEl.textContent='Could not load vocabulary';unitTitleEl.textContent='Please try again.';startBtn.disabled=true;if(spellingPreviewBtn)spellingPreviewBtn.disabled=true;
   }
