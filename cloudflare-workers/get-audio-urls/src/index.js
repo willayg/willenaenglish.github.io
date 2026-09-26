@@ -1,3 +1,4 @@
+import { PUBLISHED_LEXICAL_WORDS } from './published-lexical-words.js';
 /**
  * Cloudflare Worker: get-audio-urls
  * 
@@ -63,7 +64,7 @@ function getCacheKey(words) {
 }
 
 
-const SHIMMER_BATCH_ID = 'shimmer-monosyllables-20260927-cf-v1';
+const SHIMMER_BATCH_ID = 'shimmer-monosyllables-20260927-cf-v2';
 const SHIMMER_MARKER_KEY = '_batches/' + SHIMMER_BATCH_ID + '.json';
 const CONTENT_SUPABASE_URL = 'https://gxwfsqxyuufqtitspfqg.supabase.co';
 const CONTENT_SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_G-FYhHfDL4OGdL892gY1Zg_epdbEeqO';
@@ -82,21 +83,7 @@ async function saveBatchMarker(env, marker) {
 }
 
 async function fetchPublishedLexicalWords() {
-  const all = [];
-  for (let offset = 0; ; offset += 1000) {
-    const url = CONTENT_SUPABASE_URL + '/rest/v1/lexical_entries?status=eq.published&select=canonical_text&order=canonical_text.asc&limit=1000&offset=' + offset;
-    const resp = await fetch(url, {
-      headers: {
-        apikey: CONTENT_SUPABASE_PUBLISHABLE_KEY,
-        Authorization: 'Bearer ' + CONTENT_SUPABASE_PUBLISHABLE_KEY
-      }
-    });
-    if (!resp.ok) throw new Error('Supabase lexical fetch failed ' + resp.status + ': ' + (await resp.text()).slice(0,300));
-    const rows = await resp.json();
-    all.push(...rows.map(r => String(r.canonical_text || '').trim()));
-    if (rows.length < 1000) break;
-  }
-  return [...new Set(all.filter(w => /^[A-Za-z]+$/.test(w) && w.length >= 2))].sort((a,b) => a.localeCompare(b));
+  return PUBLISHED_LEXICAL_WORDS.slice();
 }
 
 async function classifyMonosyllablesCF(env, words) {
