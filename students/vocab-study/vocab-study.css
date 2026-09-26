@@ -433,3 +433,12 @@ body.vocab-session-open{overflow:hidden}
   .vocab-unit-summary .vocab-word-card{width:100%;min-width:0}
   .vocab-achievements{margin-top:24px!important;padding-top:20px}
 }
+
+/* v0.074 front-card text lock: titles only; word-test deadline is the sole secondary line */
+.vocab-front-wordtest .eyebrow,
+.vocab-front-book-card .eyebrow,
+.vocab-front-wordtest small:not(#vocabFrontWordTestMeta),
+.vocab-front-book-card small{
+  display:none!important
+}
+#vocabFrontWordTestMeta:empty{display:none!important}
