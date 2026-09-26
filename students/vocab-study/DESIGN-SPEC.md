@@ -1,7 +1,7 @@
 # Vocabulary Study — Design & Architecture Spec
 
 **App:** `students/vocab-study/`  
-**Current staging version:** `0.049`  
+**Current staging version:** `0.050`  
 **Status:** Active implementation  
 **Purpose:** Define the product behavior, study flow, renderer responsibilities, tracking model, mastery model, and modular architecture for the next generation Vocabulary Study app.
 
@@ -615,8 +615,9 @@ The star result is a motivational session reward and does not alter unit progres
 - The home screen shows the current streak, best streak, and Golden Unit count.
 - A Golden Unit is awarded when all eligible Quiz words and Spelling Test words have clean passes, plus all eligible Speaking words when that unit has speakable targets.
 - Golden Unit awards are stored permanently in `student_achievements`; later progress-rule changes do not remove an earned badge.
-- Unit selectors show a gold medal on earned units.
-- The first award produces a one-time completion-screen callout.
+- Unit selectors show a reusable shared Golden Unit SVG on earned units.
+- The home streak, best-streak, and Golden Unit indicators use reusable assets from `/shared/svgs/` rather than emoji.
+- The first award produces a one-time completion-screen callout using the same shared Golden Unit SVG.
 - Streaks and achievements are served through authenticated progress-summary Worker endpoints and remain separate from points/stars.
 
 ### Pass 4 — Teacher-selected Word Test practice

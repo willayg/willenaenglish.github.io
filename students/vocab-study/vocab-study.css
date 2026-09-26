@@ -16,16 +16,18 @@ body.vocab-session-open{overflow:hidden}
   min-width:0;display:flex;align-items:center;justify-content:center;gap:9px;
   min-height:58px;padding:10px 12px;border:1px solid #dff2f4;border-radius:16px;background:#f8fcfc
 }
-.vocab-motivation-stat>span{font-size:1.35rem;line-height:1}
+.vocab-motivation-icon{flex:0 0 28px;width:28px;height:28px;display:block}
 .vocab-motivation-stat div{min-width:0;display:flex;flex-direction:column}
 .vocab-motivation-stat strong{color:#315e64;font-size:1rem;line-height:1.05}
 .vocab-motivation-stat small{margin-top:3px;color:#789095;font-size:.68rem;font-weight:800;white-space:nowrap}
 .vocab-motivation-gold{background:#fffaf0;border-color:#f2ddb0}
-.vocab-unit-gold{margin-left:5px;font-size:.9em;vertical-align:1px}
+.vocab-unit-gold{display:inline-block;width:18px;height:18px;margin-left:5px;vertical-align:-4px}
 .vocab-golden-award{
   margin-top:18px;padding:16px 18px;border:2px solid #e8c86c;border-radius:18px;
-  background:linear-gradient(180deg,#fffdf5,#fff8df);color:#735817;font-weight:800
+  background:linear-gradient(180deg,#fffdf5,#fff8df);color:#735817;font-weight:800;
+  display:flex;align-items:center;justify-content:center;gap:12px;text-align:left
 }
+.vocab-golden-award-icon{flex:0 0 36px;width:36px;height:36px}
 .vocab-golden-award strong{display:block;margin-bottom:3px;color:#9a6c00;font-size:1.05rem}
 
 .vocab-home-meta{display:flex;justify-content:center;align-items:center;margin-top:22px}

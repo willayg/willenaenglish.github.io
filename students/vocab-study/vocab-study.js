@@ -305,7 +305,7 @@ function goldenAwardHtml(){
   const award=state.pendingGoldenAward;
   if(!award)return'';
   state.pendingGoldenAward=null;
-  return '<div class="vocab-golden-award"><strong>🏅 Golden Unit earned!</strong><span>Unit '+escapeHtml(award.unitNumber||'')+' is mastered.</span></div>';
+  return '<div class="vocab-golden-award"><img class="vocab-golden-award-icon" src="/shared/svgs/golden-unit.svg" alt=""><div><strong>Golden Unit earned!</strong><span>Unit '+escapeHtml(award.unitNumber||'')+' is mastered.</span></div></div>';
 }
 
 function ringPercent(value){
@@ -618,7 +618,7 @@ function renderUnits(){
   const units=arr(state.units);
   currentUnitLabelEl.textContent='현재 · Unit '+(state.unit?.unit_number||'—');
   unitStripEl.innerHTML=units.map(u=>
-    '<button class="study-v2-unit'+(String(state.unit?.id)===String(u.id)?' is-current':'')+'" type="button" data-unit-id="'+escapeHtml(u.id)+'">Unit '+escapeHtml(u.unit_number)+(isGoldenUnit(u.id)?'<span class="vocab-unit-gold" aria-label="Golden Unit">🏅</span>':'')+'</button>'
+    '<button class="study-v2-unit'+(String(state.unit?.id)===String(u.id)?' is-current':'')+'" type="button" data-unit-id="'+escapeHtml(u.id)+'">Unit '+escapeHtml(u.unit_number)+(isGoldenUnit(u.id)?'<img class="vocab-unit-gold" src="/shared/svgs/golden-unit.svg" alt="Golden Unit">':'')+'</button>'
   ).join('');
   unitStripEl.querySelectorAll('[data-unit-id]').forEach(btn=>btn.addEventListener('click',()=>selectUnit(btn.dataset.unitId)));
 }
@@ -1567,7 +1567,7 @@ async function boot(){
       renderSkillProgress();
     });
     reportStartupPerf();
-    window.WillenaVocabStudy={version:'0.049',getState:()=>state,start:startSession,openSpellingMenu,openSpellingPreview,openSpellingTest,openSpeakingSession,close:closeSession};
+    window.WillenaVocabStudy={version:'0.050',getState:()=>state,start:startSession,openSpellingMenu,openSpellingPreview,openSpellingTest,openSpeakingSession,close:closeSession};
   }catch(error){
     console.error('[Vocab Study] boot',error);
     setStatus(error?.message||'불러오지 못했습니다. 새로고침해 주세요.');
