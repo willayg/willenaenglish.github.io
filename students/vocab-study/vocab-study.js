@@ -60,6 +60,7 @@ const frontMenuEl=el('vocabFrontMenu');
 const frontBookListEl=el('vocabFrontBookList');
 const frontWordTestCardEl=el('vocabFrontWordTestCard');
 const frontWordTestMetaEl=el('vocabFrontWordTestMeta');
+const frontWordTestRingEl=el('vocabFrontWordTestRing');
 const bookScreenEl=el('vocabBookScreen');
 const bookBackBtn=el('vocabBookBack');
 const wordTestScreenEl=el('vocabWordTestScreen');
@@ -430,6 +431,23 @@ function renderFrontMenu(){
     '</button>'
   ).join(''):'<div class="vocab-front-empty">No assigned books found.</div>';
   const current=arr(state.teacherAssignments);
+  if(frontWordTestRingEl){
+    const modePercents=[];
+    current.forEach(row=>{
+      const assignment=row?.assignment||{};
+      const student=arr(row?.students)[0]||{};
+      const modes=arr(assignment.required_modes).length?arr(assignment.required_modes):['quiz','spelling_test','speaking'];
+      modes.forEach(mode=>{
+        const value=Number(student?.modes?.[mode]?.percent);
+        if(Number.isFinite(value))modePercents.push(Math.max(0,Math.min(100,value)));
+      });
+    });
+    const overall=modePercents.length?Math.round(modePercents.reduce((sum,value)=>sum+value,0)/modePercents.length):0;
+    frontWordTestRingEl.style.setProperty('--progress',overall);
+    const ringLabel=frontWordTestRingEl.querySelector('span');
+    if(ringLabel)ringLabel.textContent=overall+'%';
+    frontWordTestRingEl.setAttribute('aria-label',overall+'% 완료');
+  }
   if(frontWordTestCardEl){
     frontWordTestCardEl.hidden=state.adminMode;
     if(frontWordTestMetaEl){
@@ -1935,7 +1953,7 @@ async function boot(){
       renderSkillProgress();
     });
     reportStartupPerf();
-    window.WillenaVocabStudy={version:'0.061',getState:()=>state,start:startSession,openSpellingMenu,openSpellingPreview,openSpellingTest,openSpeakingSession,close:closeSession};
+    window.WillenaVocabStudy={version:'0.062',getState:()=>state,start:startSession,openSpellingMenu,openSpellingPreview,openSpellingTest,openSpeakingSession,close:closeSession};
   }catch(error){
     console.error('[Vocab Study] boot',error);
     if(frontWordTestCardEl)frontWordTestCardEl.hidden=true;
