@@ -8,6 +8,7 @@
 <script src="/js/api-config.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="./dashboard-v2.css?v=20260919-r14-14">
+<link rel="stylesheet" href="./assignments-v1.css?v=20260926-p4d-main1">
 <link id="dashboardV2Polish" rel="stylesheet" href="./dashboard-v2-polish.css?v=20260917-r14-07">
 <link rel="stylesheet" href="/components/teacher-header/teacher-header.css?v=20260919-p2-3">
 <link rel="stylesheet" href="./naesin-v2/naesin-v2.css?v=20260912-r12-2">
@@ -26,18 +27,35 @@ mountTeacherHeader({ target:'#teacher-header', mode:'dashboard', activeApp:'teac
   .catch((e)=>console.error('Teacher header init failed', e));
 </script>
 <div class="layout">
-<aside class="rail"><button class="nav active" data-view="students"><span class="nav-icon">◎</span><span>Students</span></button><button class="nav" data-view="classes"><span class="nav-icon">▦</span><span>Classes</span></button><button class="nav" data-view="apps"><span class="nav-icon">＋</span><span>Apps</span></button><div class="rail-spacer"></div></aside>
+<aside class="rail"><button class="nav active" data-view="students"><span class="nav-icon">◎</span><span>Students</span></button><button class="nav" data-view="classes"><span class="nav-icon">▦</span><span>Classes</span></button><button class="nav" data-view="assignments"><span class="nav-icon">✓</span><span>Assignments</span></button><button class="nav" data-view="apps"><span class="nav-icon">＋</span><span>Apps</span></button><div class="rail-spacer"></div></aside>
 <main class="workspace">
 <section class="view active" id="view-students">
 <div class="page-head"><div><h1>Student tracking</h1></div><div class="filters"><select class="control" id="classSelect"><option>Loading classes…</option></select><select class="control" id="daysSelect"><option value="30">Last 30 days</option><option value="14">Last 14 days</option><option value="60">Last 60 days</option><option value="90">Last 90 days</option></select><input class="control search" id="searchInput" type="search" placeholder="Search student…"><button class="control" id="refreshBtn">Refresh</button></div></div>
 <div class="panel"><div class="panel-head"><div><div class="panel-title" id="panelTitle">Students</div><div class="panel-sub" id="statusText"></div></div><span class="count-pill" id="studentCount">0 students</span></div><div class="student-list" id="studentList"><div class="empty">Loading…</div></div></div>
 </section>
 <section class="view" id="view-classes"><div class="page-head"><div><h1>Classes</h1></div><div class="filters"><select class="control" id="classDaysSelect"><option value="30">Last 30 days</option><option value="14">Last 14 days</option><option value="60">Last 60 days</option><option value="90">Last 90 days</option></select><button class="control" id="classRefreshBtn">Refresh</button></div></div><div class="class-grid" id="classGrid"><div class="empty">Open Classes to load class breakdowns.</div></div></section>
+<section class="view" id="view-assignments">
+  <div class="page-head">
+    <div><h1>Assignments</h1><div class="panel-sub">Vocabulary Study homework progress</div></div>
+    <div class="filters">
+      <select class="control" id="assignmentClassFilter"><option value="">All classes</option></select>
+      <div class="assignment-status-tabs" role="group" aria-label="Assignment status">
+        <button type="button" class="assignment-status-tab active" data-assignment-status="current">Current</button>
+        <button type="button" class="assignment-status-tab" data-assignment-status="history">History</button>
+      </div>
+      <button class="control" id="assignmentRefreshBtn" type="button">Refresh</button>
+    </div>
+  </div>
+  <div id="assignmentWorkspace">
+    <div id="assignmentList" class="assignment-list"><div class="empty">Open Assignments to load homework.</div></div>
+    <div id="assignmentDetail" class="assignment-detail" hidden></div>
+  </div>
+</section>
 <section class="view" id="view-apps"><div class="page-head"><div><h1>Teacher apps</h1></div></div><div class="app-grid"><div class="app-card"><span class="chip">LIVE</span><h3>Student tracking</h3><p>Study habits, learning evidence, mistakes, skill performance and proof of work.</p></div><div class="app-card"><span class="chip">LIVE</span><h3>Class overview</h3><p>Class-level learning and study-habit signals that link directly back to students.</p></div><div class="app-card"><span class="chip">READY</span><h3>More teacher tools</h3><p>Homework, assessments and classroom tools can be added here.</p></div><div style="margin-top:14px;font-size:12px;opacity:.68"><a href="/Teachers/dashboard-v1-archived/" style="color:inherit;text-decoration:underline;text-underline-offset:2px">Dashboard V1 (ARCHIVED)</a></div></div></section>
 </main></div>
-<nav class="mobile-tabs"><button class="mobile-tab active" data-view="students"><b>◎</b>Students</button><button class="mobile-tab" data-view="classes"><b>▦</b>Classes</button><button class="mobile-tab" data-view="apps"><b>＋</b>Apps</button></nav>
+<nav class="mobile-tabs"><button class="mobile-tab active" data-view="students"><b>◎</b>Students</button><button class="mobile-tab" data-view="classes"><b>▦</b>Classes</button><button class="mobile-tab" data-view="assignments"><b>✓</b>Assignments</button><button class="mobile-tab" data-view="apps"><b>＋</b>Apps</button></nav>
 <div class="drawer-bg" id="drawerBg"><aside class="drawer"><div class="drawer-head"><div class="drawer-head-main"><div class="drawer-name" id="drawerName">Student</div><div class="drawer-meta" id="drawerMeta"></div></div><button class="close" id="closeDrawer">×</button></div><div class="drawer-body" id="drawerBody"><div class="empty">Loading…</div></div></aside></div>
-<div id="naesinV2Rev" style="position:fixed;right:12px;bottom:8px;z-index:2147483647;color:#7b8c93;font:700 9px/1.2 Poppins,sans-serif;letter-spacing:.04em;pointer-events:none">v14.25</div>
+<div id="naesinV2Rev" style="position:fixed;right:12px;bottom:8px;z-index:2147483647;color:#7b8c93;font:700 9px/1.2 Poppins,sans-serif;letter-spacing:.04em;pointer-events:none">v14.26</div>
 <script>
 const $=(s,r=document)=>r.querySelector(s),$$=(s,r=document)=>[...r.querySelectorAll(s)];
 const FN=n=>`/.netlify/functions/${n}`;
@@ -83,6 +101,7 @@ function switchView(v){$$('.view').forEach(x=>x.classList.toggle('active',x.id==
 $('#classSelect').onchange=loadClass;$('#daysSelect').onchange=loadClass;$('#refreshBtn').onclick=loadClass;$('#searchInput').oninput=renderStudents;$('#classDaysSelect').onchange=()=>loadClassOverview(true);$('#classRefreshBtn').onclick=()=>loadClassOverview(true);$('#closeDrawer').onclick=()=>$('#drawerBg').classList.remove('open');$('#drawerBg').onclick=e=>{if(e.target===$('#drawerBg'))$('#drawerBg').classList.remove('open')};$$('[data-view]').forEach(b=>b.onclick=()=>switchView(b.dataset.view));
 (async()=>{if(await auth()){loadClasses()}})();
 </script>
+<script src="./assignments-v1.js?v=20260926-p4d-main1"></script>
 <script src="./naesin.js?v=20260917-r14-03"></script>
 <script src="./naesin-v2/naesin-v2-data.js?v=20260917-r14-03"></script>
 <script src="./naesin-v2/naesin-v2-editor-api.js?v=20260924-r14-25"></script>
