@@ -59,6 +59,10 @@ const frontBookListEl=el('vocabFrontBookList');
 const frontWordTestCardEl=el('vocabFrontWordTestCard');
 const frontWordTestMetaEl=el('vocabFrontWordTestMeta');
 const frontWordTestRingEl=el('vocabFrontWordTestRing');
+const frontAchievementsEl=el('vocabFrontAchievements');
+const frontStreakCurrentEl=el('vocabFrontStreakCurrent');
+const frontStreakBestEl=el('vocabFrontStreakBest');
+const frontGoldenCountEl=el('vocabFrontGoldenCount');
 const bookScreenEl=el('vocabBookScreen');
 const bookBackBtn=el('vocabBookBack');
 const wordTestScreenEl=el('vocabWordTestScreen');
@@ -279,15 +283,19 @@ function isGoldenUnit(unitId){
   return goldenUnits().some(row=>String(row?.unit_id)===String(unitId));
 }
 function renderMotivation(){
-  if(!motivationEl)return;
-  if(state.adminMode||!state.motivation){
-    motivationEl.hidden=true;
-    return;
-  }
-  motivationEl.hidden=false;
-  if(streakCurrentEl)streakCurrentEl.textContent=String(Math.max(0,Number(state.motivation.current_streak)||0));
-  if(streakBestEl)streakBestEl.textContent=String(Math.max(0,Number(state.motivation.best_streak)||0));
-  if(goldenCountEl)goldenCountEl.textContent=String(goldenUnits().length);
+  const unavailable=state.adminMode||!state.motivation;
+  if(motivationEl)motivationEl.hidden=unavailable;
+  if(frontAchievementsEl)frontAchievementsEl.hidden=unavailable;
+  if(unavailable)return;
+  const current=String(Math.max(0,Number(state.motivation.current_streak)||0));
+  const best=String(Math.max(0,Number(state.motivation.best_streak)||0));
+  const gold=String(goldenUnits().length);
+  if(streakCurrentEl)streakCurrentEl.textContent=current;
+  if(streakBestEl)streakBestEl.textContent=best;
+  if(goldenCountEl)goldenCountEl.textContent=gold;
+  if(frontStreakCurrentEl)frontStreakCurrentEl.textContent=current;
+  if(frontStreakBestEl)frontStreakBestEl.textContent=best;
+  if(frontGoldenCountEl)frontGoldenCountEl.textContent=gold;
 }
 async function loadMotivation(bookId=state.book?.book_id){
   if(state.adminMode||!bookId){
