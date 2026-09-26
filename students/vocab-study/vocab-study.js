@@ -53,6 +53,9 @@ const motivationEl=el('vocabMotivation');
 const streakCurrentEl=el('vocabStreakCurrent');
 const streakBestEl=el('vocabStreakBest');
 const goldenCountEl=el('vocabGoldenCount');
+const teacherPracticeEl=el('vocabTeacherPractice');
+const teacherPracticeListEl=el('vocabTeacherPracticeList');
+const teacherPracticeCountEl=el('vocabTeacherPracticeCount');
 
 const state={
   book:null,unit:null,units:[],items:[],assignments:[],books:[],activeIndex:0,
@@ -64,7 +67,11 @@ const state={
   rewardSession:null,
   pointTapOrigin:null,
   motivation:null,
-  pendingGoldenAward:null
+  pendingGoldenAward:null,
+  teacherAssignments:[],
+  activeTeacherAssignment:null,
+  activeTeacherItems:[],
+  pendingTeacherSaves:new Set()
 };
 
 function txt(v){return String(v==null?'':v).trim()}
@@ -101,7 +108,9 @@ function starsForPercent(percent){
 }
 function startRewardSession(mode){
   const rewardSessionId=(window.crypto?.randomUUID?.()||('vocab-'+Date.now()+'-'+Math.random().toString(16).slice(2)));
-  const listName='Vocabulary · '+txt(state.book?.book_title||state.book?.book_id||'Book')+' · Unit '+txt(state.unit?.unit_number||state.unit?.id||'');
+  const listName=state.activeTeacherAssignment
+    ?('Teacher Practice · '+txt(state.activeTeacherAssignment?.assignment?.title||'Vocabulary'))
+    :('Vocabulary · '+txt(state.book?.book_title||state.book?.book_id||'Book')+' · Unit '+txt(state.unit?.unit_number||state.unit?.id||''));
   state.rewardSession={
     mode:txt(mode),
     firstTotal:0,
