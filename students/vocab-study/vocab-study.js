@@ -1544,6 +1544,15 @@ function skipSpeaking(){
     skipped:true,
     matchedBy:'skip'
   });
+  const skippedId=String(word.id||'');
+  const skippedWord=String(word.speakingTarget||word.word||'').toLowerCase();
+  session.words=session.words.filter((candidate,index)=>
+    index<=session.index||
+    !(
+      (skippedId&&String(candidate?.id||'')===skippedId)||
+      (!skippedId&&String(candidate?.speakingTarget||candidate?.word||'').toLowerCase()===skippedWord)
+    )
+  );
   session.index++;
   renderSpeakingQuestion();
 }
@@ -2110,7 +2119,7 @@ async function boot(){
       renderSkillProgress();
     });
     reportStartupPerf();
-    window.WillenaVocabStudy={version:'0.080',getState:()=>state,start:startSession,openSpellingMenu,openSpellingPreview,openSpellingTest,openSpeakingSession,close:closeSession};
+    window.WillenaVocabStudy={version:'0.081',getState:()=>state,start:startSession,openSpellingMenu,openSpellingPreview,openSpellingTest,openSpeakingSession,close:closeSession};
   }catch(error){
     console.error('[Vocab Study] boot',error);
     if(frontWordTestCardEl)frontWordTestCardEl.hidden=true;
