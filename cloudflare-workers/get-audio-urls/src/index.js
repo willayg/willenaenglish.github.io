@@ -41,7 +41,7 @@ function getCorsHeaders(origin) {
   const allowedOrigin = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
   return {
     'Access-Control-Allow-Origin': allowedOrigin,
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     'Access-Control-Allow-Credentials': 'true',
   };
@@ -64,7 +64,7 @@ function getCacheKey(words) {
 }
 
 
-const SHIMMER_BATCH_ID = 'shimmer-monosyllables-20260927-cf-v3';
+const SHIMMER_BATCH_ID = 'shimmer-monosyllables-20260927-cf-v4';
 const SHIMMER_MARKER_KEY = '_batches/' + SHIMMER_BATCH_ID + '.json';
 const CONTENT_SUPABASE_URL = 'https://gxwfsqxyuufqtitspfqg.supabase.co';
 const CONTENT_SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_G-FYhHfDL4OGdL892gY1Zg_epdbEeqO';
@@ -87,32 +87,43 @@ async function fetchPublishedLexicalWords() {
 }
 
 async function classifyMonosyllableChunkCF(env, chunk) {
-  const proxy = env.WILLENA_PROXY;
-  if (!proxy || typeof proxy.fetch !== 'function') throw new Error('WILLENA_PROXY binding unavailable');
-  const req = new Request('https://willena-internal/internal/openai-classify-monosyllables', {
+  const openaiKey = env.OPENAI_API || env.OPENAI_KEY || env.OPENAI_API_KEY;
+  if (!openaiKey) throw new Error('OpenAI secret missing on get-audio-urls worker');
+  const resp = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ words: chunk })
+    headers: { Authorization: 'Bearer ' + openaiKey, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: 'gpt-4o-mini',
+      temperature: 0,
+      response_format: { type: 'json_object' },
+      messages: [
+        { role: 'system', content: 'You are a careful American English pronunciation lexicographer.' },
+        { role: 'user', content: 'Return JSON exactly as {"words":["..."]}. From the supplied English tokens, include every ordinary token pronounced as exactly ONE syllable in neutral American English. Include diphthongs and one-syllable homographs such as read, lead, live, wind, tear, close, use. Exclude abbreviations, obvious proper-name-only items, nonwords, and words normally two or more syllables. Preserve spelling exactly.\n\n' + JSON.stringify(chunk) }
+      ]
+    })
   });
-  const resp = await proxy.fetch(req);
-  if (!resp.ok) throw new Error('Internal classifier failed ' + resp.status + ': ' + (await resp.text()).slice(0,300));
+  if (!resp.ok) throw new Error('OpenAI classification failed ' + resp.status + ': ' + (await resp.text()).slice(0,300));
   const data = await resp.json();
-  return Array.isArray(data.words) ? data.words : [];
+  const parsed = JSON.parse(data?.choices?.[0]?.message?.content || '{}');
+  const allowed = new Set(chunk);
+  return (parsed.words || []).filter(w => allowed.has(w));
 }
 
 async function generateShimmerWordCF(env, word) {
-  const proxy = env.WILLENA_PROXY;
-  if (!proxy || typeof proxy.fetch !== 'function') throw new Error('WILLENA_PROXY binding unavailable');
-  const req = new Request('https://willena-internal/internal/openai-tts', {
+  const openaiKey = env.OPENAI_API || env.OPENAI_KEY || env.OPENAI_API_KEY;
+  if (!openaiKey) throw new Error('OpenAI secret missing on get-audio-urls worker');
+  const resp = await fetch('https://api.openai.com/v1/audio/speech', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { Authorization: 'Bearer ' + openaiKey, 'Content-Type': 'application/json' },
     body: JSON.stringify({
+      model: 'gpt-4o-mini-tts',
+      voice: 'shimmer',
       input: word,
-      instructions: 'Pronounce this English vocabulary word once, clearly and naturally. Warm, friendly and encouraging tone for a child learning English. Neutral American English. Slightly slower than normal conversation, but do not exaggerate. Do not add any other words or sounds.'
+      instructions: 'Pronounce this English vocabulary word once, clearly and naturally. Warm, friendly and encouraging tone for a child learning English. Neutral American English. Slightly slower than normal conversation, but do not exaggerate. Do not add any other words or sounds.',
+      response_format: 'mp3'
     })
   });
-  const resp = await proxy.fetch(req);
-  if (!resp.ok) throw new Error('Internal OpenAI TTS failed ' + resp.status + ': ' + (await resp.text()).slice(0,300));
+  if (!resp.ok) throw new Error('OpenAI TTS ' + word + ' failed ' + resp.status + ': ' + (await resp.text()).slice(0,300));
   return await resp.arrayBuffer();
 }
 
@@ -245,134 +256,6 @@ async function handleShimmerBatch(request, env) {
 }
 
 
-const BROWSER_BATCH_ID = 'shimmer-browser-batch-20260927-v1';
-const BROWSER_MARKER_KEY = '_batches/' + BROWSER_BATCH_ID + '.json';
-
-async function readBrowserBatch(env) {
-  const obj = await env.AUDIO_BUCKET.get(BROWSER_MARKER_KEY);
-  if (!obj) return null;
-  return JSON.parse(await obj.text());
-}
-
-async function saveBrowserBatch(env, marker) {
-  marker.updated_at = new Date().toISOString();
-  await env.AUDIO_BUCKET.put(BROWSER_MARKER_KEY, JSON.stringify(marker, null, 2), {
-    httpMetadata: { contentType:'application/json', cacheControl:'no-store' }
-  });
-}
-
-async function handleBrowserBatch(request, env) {
-  const origin = request.headers.get('Origin') || '';
-  const cors = getCorsHeaders(origin);
-  const headers = { 'Content-Type':'application/json', 'Cache-Control':'no-store', ...cors };
-
-  if (origin && origin !== 'https://teachers.willenaenglish.com' && origin !== 'https://staging.willenaenglish.com') {
-    return new Response(JSON.stringify({ error:'Forbidden origin' }), { status:403, headers });
-  }
-
-  if (request.method === 'GET') {
-    const marker = await readBrowserBatch(env);
-    return new Response(JSON.stringify(marker || {
-      batch_id:BROWSER_BATCH_ID,
-      state:'not_started',
-      source_count:PUBLISHED_LEXICAL_WORDS.length,
-      classified_count:0,
-      target_count:0,
-      completed_count:0,
-      failures:[]
-    }), { status:200, headers });
-  }
-
-  if (request.method !== 'POST') {
-    return new Response(JSON.stringify({ error:'Method not allowed' }), { status:405, headers });
-  }
-
-  const ct = request.headers.get('content-type') || '';
-
-  if (ct.includes('application/octet-stream')) {
-    const word = String(new URL(request.url).searchParams.get('word') || '').trim();
-    if (!word) return new Response(JSON.stringify({ error:'Missing word' }), { status:400, headers });
-    const audio = await request.arrayBuffer();
-    if (!audio.byteLength) return new Response(JSON.stringify({ error:'Empty audio' }), { status:400, headers });
-
-    await env.AUDIO_BUCKET.put(toKey(word), audio, {
-      httpMetadata: { contentType:'audio/mpeg', cacheControl:'public, max-age=300, must-revalidate' },
-      customMetadata: { tts_provider:'openai', tts_model:'gpt-4o-mini-tts', tts_voice:'shimmer', batch_id:BROWSER_BATCH_ID }
-    });
-
-    let marker = await readBrowserBatch(env);
-    if (!marker) marker = {
-      batch_id:BROWSER_BATCH_ID,
-      state:'running',
-      source_count:PUBLISHED_LEXICAL_WORDS.length,
-      classified_count:0,
-      targets:[],
-      completed:[],
-      failures:[]
-    };
-    marker.completed = Array.isArray(marker.completed) ? marker.completed : [];
-    if (!marker.completed.includes(word)) marker.completed.push(word);
-    marker.completed_count = marker.completed.length;
-    await saveBrowserBatch(env, marker);
-    return new Response(JSON.stringify({ success:true, word, completed_count:marker.completed_count }), { status:200, headers });
-  }
-
-  const body = await request.json().catch(() => ({}));
-  const action = String(body.action || '');
-
-  if (action === 'init') {
-    let marker = await readBrowserBatch(env);
-    if (!marker) {
-      marker = {
-        batch_id:BROWSER_BATCH_ID,
-        state:'classifying',
-        source_count:PUBLISHED_LEXICAL_WORDS.length,
-        classified_count:0,
-        targets:[],
-        completed:[],
-        failures:[],
-        started_at:new Date().toISOString()
-      };
-      await saveBrowserBatch(env, marker);
-    }
-    return new Response(JSON.stringify(marker), { status:200, headers });
-  }
-
-  if (action === 'classification') {
-    let marker = await readBrowserBatch(env);
-    if (!marker) return new Response(JSON.stringify({ error:'Batch not initialized' }), { status:409, headers });
-    const selected = Array.isArray(body.selected) ? body.selected.map(String) : [];
-    marker.targets = Array.isArray(marker.targets) ? marker.targets : [];
-    marker.targets.push(...selected);
-    marker.targets = [...new Set(marker.targets)];
-    marker.classified_count = Math.min(Number(body.classified_count || marker.classified_count || 0), PUBLISHED_LEXICAL_WORDS.length);
-    marker.target_count = marker.targets.length;
-    marker.state = marker.classified_count >= PUBLISHED_LEXICAL_WORDS.length ? 'ready' : 'classifying';
-    await saveBrowserBatch(env, marker);
-    return new Response(JSON.stringify(marker), { status:200, headers });
-  }
-
-  if (action === 'failure') {
-    let marker = await readBrowserBatch(env);
-    if (!marker) return new Response(JSON.stringify({ error:'Batch not initialized' }), { status:409, headers });
-    marker.failures = Array.isArray(marker.failures) ? marker.failures : [];
-    marker.failures.push({ word:String(body.word||''), error:String(body.error||'Unknown error').slice(0,300) });
-    await saveBrowserBatch(env, marker);
-    return new Response(JSON.stringify(marker), { status:200, headers });
-  }
-
-  if (action === 'complete') {
-    let marker = await readBrowserBatch(env);
-    if (!marker) return new Response(JSON.stringify({ error:'Batch not initialized' }), { status:409, headers });
-    marker.state = marker.failures?.length ? 'complete_with_failures' : 'complete';
-    marker.finished_at = new Date().toISOString();
-    await saveBrowserBatch(env, marker);
-    return new Response(JSON.stringify(marker), { status:200, headers });
-  }
-
-  return new Response(JSON.stringify({ error:'Unknown action' }), { status:400, headers });
-}
-
 export default {
   async fetch(request, env, ctx) {
     const startTime = Date.now();
@@ -389,11 +272,6 @@ export default {
     // Route: admin Shimmer monosyllable replacement batch (Cloudflare-only)
     if (url.pathname === '/admin/shimmer-batch') {
       return handleShimmerBatch(request, env);
-    }
-
-    // Browser-orchestrated Shimmer batch. OpenAI runs in teachers Pages; this worker only stores R2 audio + progress.
-    if (url.pathname === '/admin/shimmer-browser-batch') {
-      return handleBrowserBatch(request, env);
     }
 
     // Route: GET /audio/:filename - proxy audio files from R2
