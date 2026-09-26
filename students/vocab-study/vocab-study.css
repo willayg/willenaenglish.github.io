@@ -1,4 +1,22 @@
 
+.vocab-front-card-main{
+  min-width:0;display:flex;align-items:center;gap:16px;flex:1 1 auto
+}
+.vocab-front-card-icon{
+  flex:0 0 60px;width:60px;height:60px;display:block;object-fit:contain
+}
+.vocab-front-card-icon-wordtest{flex-basis:68px;width:68px;height:68px}
+.vocab-front-card-copy{min-width:0;display:block}
+.vocab-front-book-card .vocab-front-card-icon{flex-basis:54px;width:54px;height:54px}
+@media (max-width:560px){
+  .vocab-front-card-main{gap:12px}
+  .vocab-front-card-icon{flex-basis:52px;width:52px;height:52px}
+  .vocab-front-card-icon-wordtest{flex-basis:58px;width:58px;height:58px}
+  .vocab-front-book-card .vocab-front-card-icon{flex-basis:48px;width:48px;height:48px}
+  .vocab-front-progress-ring{flex-basis:62px;width:62px;height:62px}
+  .vocab-front-progress-ring::before{width:48px;height:48px}
+}
+
 .vocab-front-wordtest-side{display:flex;align-items:center;gap:12px;flex:0 0 auto}
 .vocab-front-progress-ring{
   --ring-color:var(--pink);
@@ -36,7 +54,7 @@
   transform:translateY(-2px);border-color:var(--front-accent,var(--cyan-strong));
   box-shadow:0 12px 28px rgba(34,106,116,.10)
 }
-.vocab-front-card-copy,.vocab-front-book-card>span:first-child,.vocab-old-tests-card>span:first-child{
+.vocab-front-card-copy,.vocab-front-book-card .vocab-front-card-copy,.vocab-old-tests-card .vocab-front-card-copy{
   min-width:0;display:block
 }
 .vocab-front-card-copy .eyebrow,.vocab-front-book-card .eyebrow,.vocab-old-tests-card .eyebrow{
