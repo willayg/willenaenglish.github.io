@@ -1,13 +1,53 @@
 // Speaking-only transcript matching.
 // Keep this conservative: compensate for common browser STT slips without treating different words as generally equivalent.
 
+const NUMBER_WORDS={
+  '0':'zero','1':'one','2':'two','3':'three','4':'four','5':'five','6':'six','7':'seven','8':'eight','9':'nine','10':'ten',
+  '11':'eleven','12':'twelve','13':'thirteen','14':'fourteen','15':'fifteen','16':'sixteen','17':'seventeen','18':'eighteen','19':'nineteen','20':'twenty'
+};
+const ORDINAL_WORDS={
+  '1':'first','2':'second','3':'third','4':'fourth','5':'fifth','6':'sixth','7':'seventh','8':'eighth','9':'ninth','10':'tenth',
+  '11':'eleventh','12':'twelfth','13':'thirteenth','14':'fourteenth','15':'fifteenth','16':'sixteenth','17':'seventeenth','18':'eighteenth','19':'nineteenth','20':'twentieth'
+};
+const HOMOPHONE_GROUPS=[
+  ['new','knew'],
+  ['one','won'],
+  ['two','to','too'],
+  ['four','for'],
+  ['eight','ate'],
+  ['see','sea'],
+  ['sun','son'],
+  ['no','know'],
+  ['here','hear'],
+  ['right','write','rite']
+];
+
+function normalizeNumberToken(token){
+  const ordinal=token.match(/^(\d+)(?:st|nd|rd|th)$/);
+  if(ordinal&&ORDINAL_WORDS[ordinal[1]])return ORDINAL_WORDS[ordinal[1]];
+  if(NUMBER_WORDS[token])return NUMBER_WORDS[token];
+  return token;
+}
+
 function normalize(value){
   return String(value??'').toLowerCase()
     .replace(/[’‘]/g,"'")
     .replace(/[-–—]/g,' ')
     .replace(/[^a-z0-9' ]+/g,' ')
     .replace(/\s+/g,' ')
-    .trim();
+    .trim()
+    .split(' ')
+    .map(normalizeNumberToken)
+    .join(' ');
+}
+
+function homophoneVariant(a,b){
+  const left=normalize(a),right=normalize(b);
+  if(!left||!right)return false;
+  const aw=left.split(' '),bw=right.split(' ');
+  if(aw.length!==bw.length)return false;
+  const equivalent=(x,y)=>x===y||HOMOPHONE_GROUPS.some(group=>group.includes(x)&&group.includes(y));
+  return aw.every((word,index)=>equivalent(word,bw[index]));
 }
 
 function pluralVariant(a,b){
@@ -99,6 +139,9 @@ export function matchSpeakingTarget(target,transcripts){
 
   const exact=heard.find(item=>item.normalized===wanted);
   if(exact)return{correct:true,matchedBy:'exact',transcript:exact.raw};
+
+  const homophone=heard.find(item=>homophoneVariant(item.normalized,wanted));
+  if(homophone)return{correct:true,matchedBy:'homophone',transcript:homophone.raw};
 
   const plural=heard.find(item=>pluralVariant(item.normalized,wanted));
   if(plural)return{correct:true,matchedBy:'singular_plural',transcript:plural.raw};
