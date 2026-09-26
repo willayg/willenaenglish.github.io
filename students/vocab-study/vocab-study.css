@@ -30,6 +30,27 @@ body.vocab-session-open{overflow:hidden}
 .vocab-golden-award-icon{flex:0 0 36px;width:36px;height:36px}
 .vocab-golden-award strong{display:block;margin-bottom:3px;color:#9a6c00;font-size:1.05rem}
 
+.vocab-teacher-practice{margin:18px 0 6px;padding:18px;border:2px solid #f0d9e6;border-radius:22px;background:#fff8fc}
+.vocab-teacher-practice[hidden]{display:none!important}
+.vocab-teacher-practice-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:12px}
+.vocab-teacher-practice-head .eyebrow{display:block;margin-bottom:3px;font-size:.68rem;font-weight:900;letter-spacing:.1em;color:var(--pink)}
+.vocab-teacher-practice-head strong{display:block;color:#5a3c50;font-size:1.05rem}
+.vocab-teacher-practice-head>span{color:#9b7188;font-size:.75rem;font-weight:800}
+.vocab-teacher-practice-list{display:grid;gap:10px}
+.vocab-teacher-card{padding:14px;border:1px solid #efd8e5;border-radius:17px;background:#fff}
+.vocab-teacher-card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.vocab-teacher-card-title{min-width:0}
+.vocab-teacher-card-title strong{display:block;color:#4f3a48;font-size:.94rem;line-height:1.3}
+.vocab-teacher-card-title small{display:block;margin-top:3px;color:#907588;font-size:.72rem;font-weight:700}
+.vocab-teacher-percent{flex:0 0 auto;color:var(--pink);font-size:.83rem;font-weight:900}
+.vocab-teacher-progress{height:6px;margin:10px 0 12px;border-radius:999px;background:#f3e9ef;overflow:hidden}
+.vocab-teacher-progress span{display:block;height:100%;background:linear-gradient(90deg,var(--cyan-strong),var(--pink));border-radius:inherit}
+.vocab-teacher-modes{display:flex;gap:8px;flex-wrap:wrap}
+.vocab-teacher-mode{flex:1 1 105px;min-height:40px;border:2px solid #e6d5df;border-radius:12px;background:#fff;color:#614b59;padding:8px 10px;font:800 .78rem Poppins,system-ui,sans-serif;cursor:pointer}
+.vocab-teacher-mode:hover{border-color:var(--pink);color:var(--pink-dark)}
+.vocab-teacher-mode.is-complete{border-color:#b9dcc7;background:#f1faf5;color:#397650}
+.vocab-teacher-mode small{display:block;margin-top:2px;font-size:.66rem;font-weight:800;opacity:.8}
+
 .vocab-home-meta{display:flex;justify-content:center;align-items:center;margin-top:22px}
 .vocab-word-card{
   min-width:180px;min-height:58px;padding:0 22px;border:2px solid #dff2f4;border-radius:18px;
