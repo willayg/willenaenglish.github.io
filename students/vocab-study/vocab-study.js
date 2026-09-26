@@ -1007,6 +1007,7 @@ function renderHome(){
   setStatus(state.items.length?'준비됐어요.':'이 단원에는 사용할 수 있는 단어 문제가 없어요.');
   renderSkillProgress();
   renderMotivation();
+  renderTeacherAssignments();
   loadSkillProgress();
   loadMotivation(state.book.book_id);
 }
@@ -1102,14 +1103,23 @@ function speakingWords(items){
     return speakingTarget&&isSpeakableTarget(speakingTarget)?Object.assign({},word,{speakingTarget}):null;
   }).filter(Boolean);
 }
-async function openSpeakingSession(){
-  await ensureProgressSnapshot();
-  const words=shuffle(nextSkillTargets(state.progressSnapshot,'speaking',speakingWords(state.items),item=>item?.id,'speaking'));if(!words.length)return;
+async function openSpeakingSession({teacherWords=null}={}){
+  let words;
+  if(teacherWords&&teacherWords.length){
+    words=shuffle(teacherWords.map(w=>{
+      const speakingTarget=getSpellingTarget(w.word);
+      return speakingTarget&&isSpeakableTarget(speakingTarget)?Object.assign({},w,{speakingTarget}):null;
+    }).filter(Boolean));
+  }else{
+    await ensureProgressSnapshot();
+    words=shuffle(nextSkillTargets(state.progressSnapshot,'speaking',speakingWords(state.items),item=>item?.id,'speaking'));
+  }
+  if(!words.length)return;
   state.spellingPractice=null;
   state.spellingTest=null;
   state.speakingSession={words,index:0,results:[],checked:false,initialTotal:words.length};
   startRewardSession('speaking');
-  titleEl.textContent=state.book.book_title+' · Unit '+state.unit.unit_number+' · Speaking';
+  titleEl.textContent=state.activeTeacherAssignment?teacherTitle('speaking'):(state.book.book_title+' · Unit '+state.unit.unit_number+' · Speaking');
   sessionEl.hidden=false;
   document.body.classList.add('vocab-session-open');
   renderSpeakingQuestion();
@@ -1320,13 +1330,22 @@ function openSpellingMenu(){
 function spellingTestWords(items){
   return shuffle(spellingWords(items));
 }
-async function openSpellingTest(){
-  await ensureProgressSnapshot();
-  const words=shuffle(nextSkillTargets(state.progressSnapshot,'spelling',spellingTestWords(state.items),item=>item?.id,'spelling_test'));if(!words.length)return;
+async function openSpellingTest({teacherWords=null}={}){
+  let words;
+  if(teacherWords&&teacherWords.length){
+    words=shuffle(teacherWords.map(w=>{
+      const spellingTarget=getSpellingTarget(w.word);
+      return spellingTarget?Object.assign({},w,{spellingTarget}):null;
+    }).filter(Boolean));
+  }else{
+    await ensureProgressSnapshot();
+    words=shuffle(nextSkillTargets(state.progressSnapshot,'spelling',spellingTestWords(state.items),item=>item?.id,'spelling_test'));
+  }
+  if(!words.length)return;
   state.spellingPractice=null;
   state.spellingTest={words,index:0,results:[],checked:false,initialTotal:words.length};
   startRewardSession('spelling_test');
-  titleEl.textContent=state.book.book_title+' · Unit '+state.unit.unit_number+' · Spelling Test';
+  titleEl.textContent=state.activeTeacherAssignment?teacherTitle('spelling_test'):(state.book.book_title+' · Unit '+state.unit.unit_number+' · Spelling Test');
   instructionEl.hidden=false;
   instructionEl.textContent='우리말을 보고 영어 철자를 입력하세요.';
   answerNote.hidden=true;
@@ -1603,7 +1622,7 @@ async function finishSpellingPractice(){
 }
 
 function escapeHtml(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-async function startSession(items=null){
+async function startSession(items=null,{teacher=false}={}){
   let source=items&&items.length?items:null;
   if(!source){
     await ensureProgressSnapshot();
@@ -1613,13 +1632,14 @@ async function startSession(items=null){
   state.queue=buildSession(source);
   startRewardSession('quiz');
   state.index=0;state.outcomes=new Map();state.reviewKeys=new Set();state.retryCounts=new Map();
-  titleEl.textContent=state.book.book_title+' · Unit '+state.unit.unit_number;
+  titleEl.textContent=teacher?teacherTitle('quiz'):(state.book.book_title+' · Unit '+state.unit.unit_number);
   sessionEl.hidden=false;document.body.classList.add('vocab-session-open');
   renderQuestion();
 }
 function reviewSession(){
   const wanted=new Set(state.reviewKeys);
-  const reviewItems=state.items.filter(item=>wanted.has(activityKey(item)));
+  const source=state.activeTeacherAssignment?state.activeTeacherItems:state.items;
+  const reviewItems=source.filter(item=>wanted.has(activityKey(item)));
   if(!reviewItems.length)return closeSession();
   startSession(reviewItems);
 }
@@ -1665,7 +1685,7 @@ function closeSession(){
   document.body.classList.remove('vocab-session-open');
   sessionEl.hidden=true;root.innerHTML='';answerNote.hidden=true;bottomEl.hidden=false;instructionEl.hidden=false;
   if(state.renderer?.setDisabled)state.renderer.setDisabled(true);
-  state.queue=[];state.index=0;state.checked=false;state.renderer=null;state.spellingPractice=null;state.spellingTest=null;state.speakingSession=null;state.rewardSession=null;state.pendingGoldenAward=null;
+  state.queue=[];state.index=0;state.checked=false;state.renderer=null;state.spellingPractice=null;state.spellingTest=null;state.speakingSession=null;state.rewardSession=null;state.pendingGoldenAward=null;state.activeTeacherAssignment=null;state.activeTeacherItems=[];
   try{window.scrollTo({top:0,behavior:'auto'})}catch(_){}
 }
 async function boot(){
@@ -1696,6 +1716,7 @@ async function boot(){
       state.book=active.book;state.unit=active.unit;state.units=arr(active.units);state.items=active.items;
       renderHome();
       hydrateSecondaryBooks(resolved.deferredAssignments,state.book.book_id);
+      loadTeacherAssignments();
     }
     startBtn.addEventListener('click',()=>startSession());
     spellingPreviewBtn?.addEventListener('click',openSpellingMenu);
@@ -1723,7 +1744,7 @@ async function boot(){
       renderSkillProgress();
     });
     reportStartupPerf();
-    window.WillenaVocabStudy={version:'0.050',getState:()=>state,start:startSession,openSpellingMenu,openSpellingPreview,openSpellingTest,openSpeakingSession,close:closeSession};
+    window.WillenaVocabStudy={version:'0.051',getState:()=>state,start:startSession,openSpellingMenu,openSpellingPreview,openSpellingTest,openSpeakingSession,close:closeSession};
   }catch(error){
     console.error('[Vocab Study] boot',error);
     setStatus(error?.message||'불러오지 못했습니다. 새로고침해 주세요.');
