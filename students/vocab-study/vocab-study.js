@@ -111,6 +111,7 @@ const state={
   pendingGoldenAward:null,
   teacherAssignments:[],
   teacherAssignmentHistory:[],
+  teacherAssignmentsLoading:true,
   wordTestBookFilter:'',
   activeScreen:'home',
   shellWired:false,
@@ -825,14 +826,37 @@ function teacherRemainingWords(row,mode){
 
 function renderTeacherAssignments(){
   if(!teacherPracticeEl||!teacherPracticeListEl)return;
-  if(state.adminMode||!state.teacherAssignments.length){
+  if(state.adminMode){
     teacherPracticeEl.hidden=true;
     teacherPracticeListEl.innerHTML='';
-    if(wordTestEmptyEl)wordTestEmptyEl.hidden=state.adminMode;
+    if(wordTestEmptyEl)wordTestEmptyEl.hidden=true;
+    return;
+  }
+  if(state.teacherAssignmentsLoading){
+    teacherPracticeEl.hidden=true;
+    teacherPracticeListEl.innerHTML='';
+    if(wordTestEmptyEl){
+      wordTestEmptyEl.hidden=false;
+      wordTestEmptyEl.innerHTML='<strong>워드 테스트를 불러오는 중이에요</strong><span>잠시만 기다려 주세요.</span>';
+      wordTestEmptyEl.classList.add('is-loading');
+    }
+    return;
+  }
+  if(!state.teacherAssignments.length){
+    teacherPracticeEl.hidden=true;
+    teacherPracticeListEl.innerHTML='';
+    if(wordTestEmptyEl){
+      wordTestEmptyEl.hidden=false;
+      wordTestEmptyEl.innerHTML='<strong>진행 중인 단어 시험이 없어요</strong><span>지난 단어 시험은 아래에서 다시 볼 수 있어요.</span>';
+      wordTestEmptyEl.classList.remove('is-loading');
+    }
     return;
   }
   teacherPracticeEl.hidden=false;
-  if(wordTestEmptyEl)wordTestEmptyEl.hidden=true;
+  if(wordTestEmptyEl){
+    wordTestEmptyEl.hidden=true;
+    wordTestEmptyEl.classList.remove('is-loading');
+  }
   if(teacherPracticeCountEl)teacherPracticeCountEl.textContent=state.teacherAssignments.length+' assignment'+(state.teacherAssignments.length===1?'':'s');
   teacherPracticeListEl.innerHTML=state.teacherAssignments.map((row,index)=>{
     const a=row.assignment||{},student=arr(row.students)[0]||{},modes=arr(a.required_modes);
@@ -870,6 +894,8 @@ function renderTeacherAssignments(){
 }
 async function loadTeacherAssignments({showLoader=true}={}){
   if(state.adminMode)return[];
+  state.teacherAssignmentsLoading=true;
+  renderTeacherAssignments();
   if(showLoader)beginVocabLoading('워드 테스트를 불러오는 중...');
   try{
     const list=await api('/.netlify/functions/homework_api?action=list_assignments&mode=student&include_history=1&_='+Date.now());
@@ -907,6 +933,8 @@ async function loadTeacherAssignments({showLoader=true}={}){
     renderFrontMenu();
     return[];
   }finally{
+    state.teacherAssignmentsLoading=false;
+    renderTeacherAssignments();
     if(showLoader)endVocabLoading();
   }
 }
@@ -2402,7 +2430,7 @@ async function boot(){
     reportStartupPerf();
     preloadStudentSfx();
 
-window.WillenaVocabStudy={version:'0.092',getState:()=>state,start:startSession,openSpellingMenu,openSpellingPreview,openSpellingTest,openSpeakingSession,close:closeSession};
+window.WillenaVocabStudy={version:'0.093',getState:()=>state,start:startSession,openSpellingMenu,openSpellingPreview,openSpellingTest,openSpeakingSession,close:closeSession};
   }catch(error){
     console.error('[Vocab Study] boot',error);
     if(frontWordTestCardEl)frontWordTestCardEl.hidden=true;
