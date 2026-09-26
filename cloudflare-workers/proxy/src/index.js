@@ -199,6 +199,13 @@ function rewriteResponse(response, origin) {
 
   let cookies = [];
   try {
+    // Private service-binding-only TTS route. Public api.willenaenglish.com requests never use this hostname.
+    if (url.hostname === 'willena-internal' && url.pathname === '/internal/openai-tts') {
+      return handleInternalOpenAITTS(request, env);
+    }
+    if (url.hostname === 'willena-internal' && url.pathname === '/internal/openai-classify-monosyllables') {
+      return handleInternalMonosyllableClassification(request, env);
+    }
     if (typeof response.headers?.getSetCookie === 'function') cookies = response.headers.getSetCookie();
   } catch (_) {
     cookies = [];
@@ -219,6 +226,82 @@ function rewriteResponse(response, origin) {
     status: response.status,
     statusText: response.statusText,
     headers,
+  });
+}
+
+
+async function handleInternalMonosyllableClassification(request, env) {
+  const key = env.OPENAI_API || env.OPENAI_KEY || env.OPENAI_API_KEY;
+  if (!key) return new Response(JSON.stringify({ error:'OpenAI secret unavailable on API gateway' }), { status:500, headers:{'content-type':'application/json'} });
+  const body = await request.json().catch(() => ({}));
+  const words = Array.isArray(body.words) ? body.words : [];
+  if (!words.length) return new Response(JSON.stringify({ error:'Missing words' }), { status:400, headers:{'content-type':'application/json'} });
+  const resp = await fetch('https://api.openai.com/v1/chat/completions', {
+    method:'POST',
+    headers:{ Authorization:'Bearer '+key, 'Content-Type':'application/json' },
+    body:JSON.stringify({
+      model:'gpt-4o-mini',
+      temperature:0,
+      response_format:{ type:'json_object' },
+      messages:[
+        { role:'system', content:'You are a careful American English pronunciation lexicographer.' },
+        { role:'user', content:'Return JSON exactly as {"words":["..."]}. From the supplied English tokens, include every ordinary token pronounced as exactly ONE syllable in neutral American English. Include diphthongs and one-syllable homographs such as read, lead, live, wind, tear, close, use. Exclude abbreviations, obvious proper-name-only items, nonwords, and words normally two or more syllables. Preserve spelling exactly.\n\n'+JSON.stringify(words) }
+      ]
+    })
+  });
+  if (!resp.ok) return new Response(JSON.stringify({ error:'OpenAI classification failed', status:resp.status, detail:(await resp.text()).slice(0,500) }), { status:502, headers:{'content-type':'application/json'} });
+  const data = await resp.json();
+  const parsed = JSON.parse(data?.choices?.[0]?.message?.content || '{}');
+  const allowed = new Set(words);
+  const selected = (parsed.words || []).filter(w => allowed.has(w));
+  return new Response(JSON.stringify({ words:selected }), { status:200, headers:{'content-type':'application/json'} });
+}
+
+async function handleInternalOpenAITTS(request, env) {
+  const key = env.OPENAI_API || env.OPENAI_KEY || env.OPENAI_API_KEY;
+  if (!key) {
+    return new Response(JSON.stringify({ error: 'OpenAI secret unavailable on API gateway' }), {
+      status: 500,
+      headers: { 'content-type': 'application/json' },
+    });
+  }
+  if (request.method !== 'POST') {
+    return new Response(JSON.stringify({ error: 'Method not allowed' }), {
+      status: 405,
+      headers: { 'content-type': 'application/json' },
+    });
+  }
+  const body = await request.json().catch(() => ({}));
+  const input = String(body.input || '').trim();
+  if (!input) {
+    return new Response(JSON.stringify({ error: 'Missing input' }), {
+      status: 400,
+      headers: { 'content-type': 'application/json' },
+    });
+  }
+  const resp = await fetch('https://api.openai.com/v1/audio/speech', {
+    method: 'POST',
+    headers: {
+      Authorization: 'Bearer ' + key,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: 'gpt-4o-mini-tts',
+      voice: 'shimmer',
+      input,
+      instructions: String(body.instructions || 'Pronounce this English vocabulary word once, clearly and naturally. Neutral American English. Do not add any other words or sounds.'),
+      response_format: 'mp3',
+    }),
+  });
+  if (!resp.ok) {
+    return new Response(JSON.stringify({ error: 'OpenAI TTS failed', status: resp.status, detail: (await resp.text()).slice(0, 500) }), {
+      status: 502,
+      headers: { 'content-type': 'application/json' },
+    });
+  }
+  return new Response(resp.body, {
+    status: 200,
+    headers: { 'content-type': 'audio/mpeg', 'cache-control': 'no-store' },
   });
 }
 
