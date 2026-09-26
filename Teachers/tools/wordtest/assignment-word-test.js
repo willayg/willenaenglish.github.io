@@ -204,6 +204,12 @@
     }
   };
 
+  function selectedClassNames(overlay){
+    return [...overlay.querySelectorAll('.wb-assign-class-check:checked')]
+      .map(input=>String(input.value||'').trim())
+      .filter(Boolean);
+  }
+
   function ensureModal(){
     let overlay=document.getElementById('wordBuilderAssignOverlay');
     if(overlay)return overlay;
@@ -217,14 +223,20 @@
         '<button class="wb-assign-close" type="button" aria-label="Close">×</button>'+
         '<div class="wb-assign-kicker">WORD TEST</div>'+
         '<h2 id="wbAssignTitle">Assign Word Test</h2>'+
-        '<p class="wb-assign-copy">Choose who should receive this test and which sections they should complete.</p>'+
+        '<p class="wb-assign-copy">Choose one or more classes, then choose which sections students should complete.</p>'+
         '<div class="wb-assign-saved-title" id="wbAssignSavedTitle"></div>'+
-        '<label class="wb-assign-field"><span>Class</span><select id="wbAssignClass"><option value="">Loading classes…</option></select></label>'+
+        '<fieldset class="wb-assign-class-field"><legend>Classes</legend>'+
+          '<div class="wb-assign-class-actions">'+
+            '<button type="button" id="wbAssignSelectAll">Select all</button>'+
+            '<button type="button" id="wbAssignClearAll">Clear</button>'+
+          '</div>'+
+          '<div class="wb-assign-class-list" id="wbAssignClassList"><div class="wb-assign-loading">Loading classes…</div></div>'+
+        '</fieldset>'+
         '<fieldset class="wb-assign-scope"><legend>Assign to</legend>'+
-          '<label><input type="radio" name="wbAssignScope" value="class" checked> Entire class</label>'+
+          '<label><input type="radio" name="wbAssignScope" value="class" checked> Entire selected classes</label>'+
           '<label><input type="radio" name="wbAssignScope" value="student"> One student</label>'+
         '</fieldset>'+
-        '<label class="wb-assign-field" id="wbAssignStudentField" hidden><span>Student</span><select id="wbAssignStudent"><option value="">Choose a class first…</option></select></label>'+
+        '<label class="wb-assign-field" id="wbAssignStudentField" hidden><span>Student</span><select id="wbAssignStudent"><option value="">Select one class first…</option></select></label>'+
         '<label class="wb-assign-field"><span>Due date</span><input id="wbAssignDue" type="date"></label>'+
         '<fieldset class="wb-assign-modes"><legend>Practice</legend>'+
           '<label><input type="checkbox" value="quiz" checked> Quiz</label>'+
@@ -248,18 +260,33 @@
     overlay.querySelector('#wbAssignCancel')?.addEventListener('click',close);
     overlay.addEventListener('click',e=>{if(e.target===overlay)close()});
 
-    const scopeInputs=[...overlay.querySelectorAll('input[name="wbAssignScope"]')];
-    scopeInputs.forEach(input=>input.addEventListener('change',()=>{
+    const refreshScopeUi=()=>{
       const studentMode=overlay.querySelector('input[name="wbAssignScope"]:checked')?.value==='student';
-      overlay.querySelector('#wbAssignStudentField').hidden=!studentMode;
-    }));
+      const selected=selectedClassNames(overlay);
+      const studentField=overlay.querySelector('#wbAssignStudentField');
+      studentField.hidden=!studentMode;
+      if(studentMode&&selected.length!==1){
+        const select=overlay.querySelector('#wbAssignStudent');
+        select.innerHTML='<option value="">Select exactly one class first…</option>';
+      }
+    };
+
+    overlay.querySelectorAll('input[name="wbAssignScope"]').forEach(input=>input.addEventListener('change',refreshScopeUi));
+    overlay.querySelector('#wbAssignSelectAll')?.addEventListener('click',()=>{
+      overlay.querySelectorAll('.wb-assign-class-check').forEach(input=>{input.checked=true});
+      overlay.dispatchEvent(new CustomEvent('wb:classes-changed'));
+    });
+    overlay.querySelector('#wbAssignClearAll')?.addEventListener('click',()=>{
+      overlay.querySelectorAll('.wb-assign-class-check').forEach(input=>{input.checked=false});
+      overlay.dispatchEvent(new CustomEvent('wb:classes-changed'));
+    });
 
     return overlay;
   }
 
   async function openAssignmentModal(saveResult){
     const overlay=ensureModal();
-    const classSelect=overlay.querySelector('#wbAssignClass');
+    const classList=overlay.querySelector('#wbAssignClassList');
     const studentSelect=overlay.querySelector('#wbAssignStudent');
     const studentField=overlay.querySelector('#wbAssignStudentField');
     const dueInput=overlay.querySelector('#wbAssignDue');
@@ -270,16 +297,14 @@
     const targets=Array.isArray(saveResult?.targets)?saveResult.targets:[];
     const collectionId=saveResult?.id||worksheet.id||'';
 
-    titleEl.textContent=worksheet.title||saveResult?.title||'Saved worksheet';
+    titleEl.textContent=(worksheet.title||saveResult?.title||'Saved worksheet')+' · '+targets.length+' words';
     dueInput.value=tomorrowIsoDate(7);
     noteEl.classList.remove('is-success');
-    noteEl.textContent=targets.length
-      ?targets.length+' saved word'+(targets.length===1?'':'s')
-      :'No assignable vocabulary targets were returned.';
+    noteEl.textContent='';
     submitBtn.disabled=!collectionId||!targets.length;
     submitBtn.textContent='Assign Word Test';
-    classSelect.innerHTML='<option value="">Loading classes…</option>';
-    studentSelect.innerHTML='<option value="">Choose a class first…</option>';
+    classList.innerHTML='<div class="wb-assign-loading">Loading classes…</div>';
+    studentSelect.innerHTML='<option value="">Select one class first…</option>';
     studentField.hidden=true;
     const classScope=overlay.querySelector('input[name="wbAssignScope"][value="class"]');
     if(classScope)classScope.checked=true;
@@ -287,15 +312,20 @@
     overlay.hidden=false;
     document.body.classList.add('wb-assign-open');
 
+    let classes=[];
     let currentStudents=[];
 
-    const refreshStudents=async()=>{
-      const className=classSelect.value;
+    const loadSelectedClassStudents=async()=>{
+      const scope=overlay.querySelector('input[name="wbAssignScope"]:checked')?.value||'class';
+      const selected=selectedClassNames(overlay);
       currentStudents=[];
-      studentSelect.innerHTML=className?'<option value="">Loading students…</option>':'<option value="">Choose a class first…</option>';
-      if(!className)return;
+      if(scope!=='student'||selected.length!==1){
+        studentSelect.innerHTML='<option value="">Select exactly one class first…</option>';
+        return;
+      }
+      studentSelect.innerHTML='<option value="">Loading students…</option>';
       try{
-        currentStudents=await loadStudents(className);
+        currentStudents=await loadStudents(selected[0]);
         studentSelect.innerHTML='<option value="">Choose a student…</option>'+
           currentStudents.map(student=>{
             const id=String(student.user_id||student.id||'');
@@ -309,27 +339,54 @@
         noteEl.textContent='Could not load students: '+error.message;
       }
     };
-    classSelect.onchange=refreshStudents;
+
+    const classesChanged=()=>{
+      const selected=selectedClassNames(overlay);
+      const scope=overlay.querySelector('input[name="wbAssignScope"]:checked')?.value||'class';
+      if(scope==='student'&&selected.length!==1){
+        noteEl.textContent=selected.length>1
+          ?'Individual student assignment can only use one class at a time.'
+          :'Select one class to choose a student.';
+      }else if(noteEl.textContent.includes('Individual student assignment')||noteEl.textContent.includes('Select one class')){
+        noteEl.textContent='';
+      }
+      loadSelectedClassStudents();
+    };
+    overlay.onchange=e=>{
+      if(e.target?.classList?.contains('wb-assign-class-check')||e.target?.name==='wbAssignScope'){
+        classesChanged();
+      }
+    };
+    overlay.addEventListener('wb:classes-changed',classesChanged,{once:false});
 
     try{
-      const classes=await loadClasses();
-      classSelect.innerHTML='<option value="">Choose a class…</option>'+
-        classes.map(c=>'<option value="'+esc(c.name)+'">'+esc(c.name)+
-          (Number(c.student_count)>=0?' ('+Number(c.student_count)+')':'')+
-          '</option>').join('');
-      if(!classes.length)classSelect.innerHTML='<option value="">No classes found</option>';
+      classes=await loadClasses();
+      classList.innerHTML=classes.length
+        ?classes.map(c=>
+          '<label class="wb-assign-class-row">'+
+            '<input class="wb-assign-class-check" type="checkbox" value="'+esc(c.name)+'">'+
+            '<span><strong>'+esc(c.name)+'</strong>'+
+              (Number(c.student_count)>=0?'<small>'+Number(c.student_count)+' students</small>':'')+
+            '</span>'+
+          '</label>'
+        ).join('')
+        :'<div class="wb-assign-loading">No classes found</div>';
     }catch(error){
-      classSelect.innerHTML='<option value="">Could not load classes</option>';
+      classList.innerHTML='<div class="wb-assign-loading">Could not load classes</div>';
       noteEl.textContent='Could not load classes: '+error.message;
     }
 
     submitBtn.onclick=async()=>{
-      const className=classSelect.value;
+      const classNames=selectedClassNames(overlay);
       const scope=overlay.querySelector('input[name="wbAssignScope"]:checked')?.value||'class';
       const dueAt=dueAtFromDate(dueInput.value);
       const modes=[...overlay.querySelectorAll('.wb-assign-modes input:checked')].map(x=>x.value);
 
-      if(!className){noteEl.textContent='Choose a class.';return}
+      if(!classNames.length){noteEl.textContent='Choose at least one class.';return}
+      if(scope==='student'&&classNames.length!==1){
+        noteEl.textContent='Choose exactly one class for an individual student assignment.';
+        return;
+      }
       if(scope==='student'&&!studentSelect.value){noteEl.textContent='Choose a student.';return}
       if(!dueAt){noteEl.textContent='Choose a valid due date.';return}
       if(!modes.length){noteEl.textContent='Choose at least one practice mode.';return}
@@ -339,10 +396,20 @@
         :null;
 
       submitBtn.disabled=true;
-      submitBtn.textContent='Assigning…';
+      submitBtn.textContent=classNames.length>1?'Assigning '+classNames.length+' classes…':'Assigning…';
       noteEl.textContent='';
 
-      try{
+      const normalizedTargets=targets.map((target,index)=>({
+        lexical_entry_id:target.lexical_entry_id,
+        position:Number.isFinite(Number(target.position))?Number(target.position):index,
+        english:target.english||'',
+        korean:target.korean||''
+      }));
+
+      const succeeded=[];
+      const failed=[];
+
+      for(const className of classNames){
         const listMeta={
           source_app:'word_builder',
           word_builder_collection_id:collectionId,
@@ -367,47 +434,55 @@
           list_key:'word_builder:'+collectionId,
           list_title:worksheet.title||saveResult?.title||null,
           list_meta:listMeta,
-          targets:targets.map((target,index)=>({
-            lexical_entry_id:target.lexical_entry_id,
-            position:Number.isFinite(Number(target.position))?Number(target.position):index,
-            english:target.english||'',
-            korean:target.korean||''
-          })),
+          targets:normalizedTargets,
           start_at:new Date().toISOString(),
           due_at:dueAt,
           goal_type:'clean_pass',
           goal_value:100
         };
 
-        const data=await getJson(HOMEWORK_PATH,{
-          method:'POST',
-          headers:{'Content-Type':'application/json'},
-          body:JSON.stringify(payload)
-        });
+        try{
+          const data=await getJson(HOMEWORK_PATH,{
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body:JSON.stringify(payload)
+          });
+          succeeded.push({className,data});
+          window.dispatchEvent(new CustomEvent('wordbuilder:assignment-created',{
+            detail:{assignment:data.assignment||null,collection_id:collectionId,class_name:className}
+          }));
+        }catch(error){
+          failed.push({className,error});
+        }
+      }
 
-        const who=selectedStudent
-          ?(selectedStudent.name||selectedStudent.korean_name||'student')
-          :className;
-        noteEl.textContent='Assigned to '+who+'.';
-        noteEl.classList.add('is-success');
-        submitBtn.textContent='Assigned';
-
-        window.dispatchEvent(new CustomEvent('wordbuilder:assignment-created',{
-          detail:{assignment:data.assignment||null,collection_id:collectionId}
-        }));
-
-        setTimeout(()=>{
-          overlay.hidden=true;
-          document.body.classList.remove('wb-assign-open');
-          noteEl.classList.remove('is-success');
-          submitBtn.textContent='Assign Word Test';
-          submitBtn.disabled=false;
-        },850);
-      }catch(error){
-        noteEl.textContent='Could not assign: '+error.message;
+      if(failed.length){
+        const failedNames=failed.map(x=>x.className).join(', ');
+        if(succeeded.length){
+          noteEl.textContent='Assigned to '+succeeded.length+' class'+(succeeded.length===1?'':'es')+
+            '. Failed: '+failedNames+'.';
+        }else{
+          noteEl.textContent='Could not assign: '+failedNames+'.';
+        }
         submitBtn.disabled=false;
         submitBtn.textContent='Assign Word Test';
+        return;
       }
+
+      const who=selectedStudent
+        ?(selectedStudent.name||selectedStudent.korean_name||'student')
+        :(classNames.length===1?classNames[0]:classNames.length+' classes');
+      noteEl.textContent='Assigned to '+who+'.';
+      noteEl.classList.add('is-success');
+      submitBtn.textContent='Assigned';
+
+      setTimeout(()=>{
+        overlay.hidden=true;
+        document.body.classList.remove('wb-assign-open');
+        noteEl.classList.remove('is-success');
+        submitBtn.textContent='Assign Word Test';
+        submitBtn.disabled=false;
+      },850);
     };
   }
 
