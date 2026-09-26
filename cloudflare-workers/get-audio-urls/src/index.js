@@ -244,6 +244,26 @@ async function handleShimmerBatch(request, env) {
 
 
 
+
+async function serveBatchAudio(env, word) {
+  const key = toKey(word);
+  const object = await env.AUDIO_BUCKET.get(key);
+  if (!object) {
+    return new Response('Audio not found: ' + key, {
+      status: 404,
+      headers: { 'Content-Type':'text/plain', 'Cache-Control':'no-store' }
+    });
+  }
+  return new Response(object.body, {
+    status: 200,
+    headers: {
+      'Content-Type':'audio/mpeg',
+      'Cache-Control':'no-store',
+      'Content-Disposition':'inline; filename="' + key + '"'
+    }
+  });
+}
+
 async function inspectAudioObject(env, word) {
   const key = toKey(word);
   const object = await env.AUDIO_BUCKET.get(key);
@@ -302,7 +322,7 @@ const players=document.getElementById('players'),audio=document.getElementById('
 let running=false,stopRequested=false;
 
 function audioUrl(word){
-  return '/audio/' + encodeURIComponent(String(word).trim().toLowerCase().replace(/\s+/g,'_').replace(/[^a-z0-9_\-]/g,'')) + '.mp3?batch=' + Date.now();
+  return '/admin/batch-audio?word=' + encodeURIComponent(word) + '&batch=' + Date.now();
 }
 function renderPlayers(words){
   const list=Array.isArray(words)?words.slice().reverse():[];
@@ -392,6 +412,11 @@ export default {
       const word = url.searchParams.get('word') || '';
       const info = await inspectAudioObject(env, word);
       return new Response(JSON.stringify(info), { status: 200, headers: { 'Content-Type':'application/json', 'Cache-Control':'no-store' } });
+    }
+
+    if (url.pathname === '/admin/batch-audio') {
+      const word = url.searchParams.get('word') || '';
+      return serveBatchAudio(env, word);
     }
 
     if (url.pathname === '/admin/shimmer-batch-ui') {
