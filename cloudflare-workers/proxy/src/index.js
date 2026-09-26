@@ -199,13 +199,6 @@ function rewriteResponse(response, origin) {
 
   let cookies = [];
   try {
-    // Private service-binding-only TTS route. Public api.willenaenglish.com requests never use this hostname.
-    if (url.hostname === 'willena-internal' && url.pathname === '/internal/openai-tts') {
-      return handleInternalOpenAITTS(request, env);
-    }
-    if (url.hostname === 'willena-internal' && url.pathname === '/internal/openai-classify-monosyllables') {
-      return handleInternalMonosyllableClassification(request, env);
-    }
     if (typeof response.headers?.getSetCookie === 'function') cookies = response.headers.getSetCookie();
   } catch (_) {
     cookies = [];
@@ -311,6 +304,14 @@ async function handleRequest(request, env) {
   if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: corsHeaders(origin) });
 
   try {
+    // Private service-binding routes used by internal Cloudflare workers.
+    if (url.pathname === '/internal/openai-tts') {
+      return handleInternalOpenAITTS(request, env);
+    }
+    if (url.pathname === '/internal/openai-classify-monosyllables') {
+      return handleInternalMonosyllableClassification(request, env);
+    }
+
     if (url.pathname === '/api/daily-study' || url.pathname === '/api/daily-study/') {
       const response = await routeDailyStudy(request, env);
       return rewriteResponse(response, origin);
