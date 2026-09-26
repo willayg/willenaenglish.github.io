@@ -553,3 +553,93 @@ body.vocab-session-open{overflow:hidden}
 @media(max-width:560px){
   .vocab-skip-action{min-width:76px;min-height:42px;padding:7px 11px;font-size:.76rem}
 }
+
+/* v0.083 spelling coach preview refresh */
+.vocab-coach-preview{
+  width:min(900px,100%);
+  margin:0 auto;
+  padding:clamp(22px,4vw,34px);
+  border:4px solid #bfecef!important;
+  border-radius:28px;
+  background:#fff;
+}
+.vocab-coach-toolbar{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:18px;
+  margin-bottom:22px;
+}
+.vocab-coach-heading{min-width:0}
+.vocab-coach-heading h2{margin:6px 0 4px;color:#244f56}
+.vocab-coach-start{
+  flex:0 0 auto;
+  min-height:48px;
+  padding:10px 18px;
+  border:3px solid #bfecef;
+  border-radius:16px;
+  background:#fff;
+  color:var(--pink);
+  font-size:.95rem;
+  font-weight:900;
+  cursor:pointer;
+}
+.vocab-coach-start:active{transform:scale(.98)}
+.vocab-coach-word-grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:12px;
+}
+.vocab-coach-word{
+  min-width:0;
+  min-height:92px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:14px;
+  padding:14px 16px 14px 20px;
+  border:2px solid #d8eaec;
+  border-radius:18px;
+  background:#fbfefe;
+}
+.vocab-coach-word-copy{min-width:0}
+.vocab-coach-word-copy strong{
+  display:block;
+  color:#244f56;
+  font-size:1.12rem;
+  line-height:1.2;
+}
+.vocab-coach-word-copy span{
+  display:block;
+  margin-top:4px;
+  color:#6f858a;
+  font-size:.86rem;
+  font-weight:700;
+}
+.vocab-coach-audio{
+  flex:0 0 58px;
+  width:58px;
+  height:58px;
+  display:grid;
+  place-items:center;
+  padding:0;
+  border:3px solid #bfecef;
+  border-radius:16px;
+  background:#fff;
+  cursor:pointer;
+}
+.vocab-coach-audio img{
+  width:28px;
+  height:28px;
+  display:block;
+}
+.vocab-coach-audio:active{
+  border-color:var(--pink);
+  background:#fff7fb;
+}
+@media(max-width:560px){
+  .vocab-coach-toolbar{align-items:stretch;flex-direction:column}
+  .vocab-coach-start{align-self:flex-start}
+  .vocab-coach-word-grid{grid-template-columns:1fr}
+  .vocab-coach-word{min-height:84px}
+}
