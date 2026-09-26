@@ -378,7 +378,7 @@
       const linkedBookTitle=String(worksheet.book||'').trim();
       classes=classRows.map(c=>{
         const bookRow=booksByName.get(String(c.name||''))||{};
-        const books=Array.isArray(bookRow.books)?bookRow.books:[];
+        const books=Array.isArray(bookRow.books)?bookRow.books:(Array.isArray(c.books)?c.books:[]);
         const suggested=!!linkedBookId&&books.some(book=>String(book.book_id||'')===linkedBookId);
         return {...c,books,suggested};
       });
