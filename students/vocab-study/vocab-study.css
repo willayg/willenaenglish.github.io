@@ -243,7 +243,8 @@ body.vocab-session-open{overflow:hidden}
 }
 .vocab-card-stars{display:block;margin-top:8px;color:#f0b323;font-size:.9rem;font-weight:900;letter-spacing:.02em;line-height:1}
 .vocab-skill-copy b{margin-top:13px;color:var(--skill-color);font-size:.84rem}
-.vocab-skill-quiz{--skill-color:#2c9eaa}
+.vocab-skill-quiz{--skill-color:#2c9eaa;border-color:#c9f1f4}
+.vocab-skill-quiz:hover:not(:disabled){border-color:#bfecef}
 .vocab-skill-spelling{--skill-color:var(--pink);border-color:#f0b7d2}
 .vocab-skill-pronunciation{--skill-color:#8c79d9;background:#faf9ff;border-style:dashed}
 .vocab-skill-pronunciation .vocab-skill-copy b{color:#8c79d9}
