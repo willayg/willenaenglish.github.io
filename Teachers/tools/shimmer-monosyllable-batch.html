@@ -16,64 +16,191 @@ pre{white-space:pre-wrap;background:#f4f7f8;padding:14px;border-radius:12px;min-
 <body><main><div class="card">
 <h1>Shimmer monosyllable replacement</h1>
 <p>Published English monosyllables → OpenAI <b>gpt-4o-mini-tts / Shimmer</b> → overwrite word-level R2 MP3s.</p>
-<p class="small">This now runs in small resumable chunks so failures are visible. It includes diphthongs and one-syllable homographs.</p>
+<p class="small">OpenAI runs through this Cloudflare Pages site. R2 storage/progress runs through the audio worker. No Netlify.</p>
 <button id="go">Run / resume batch</button>
-<button id="stop">Stop after current chunk</button>
+<button id="stop">Stop after current item</button>
 <button id="status">Refresh status</button>
 <progress id="bar" value="0" max="1"></progress>
 <div id="summary" class="small">Not started.</div>
 <pre id="out">Ready.</pre>
 </div></main>
 <script>
-const API='https://get-audio-urls.willena.workers.dev/admin/shimmer-batch';
+const STATE_API='https://get-audio-urls.willena.workers.dev/admin/shimmer-browser-batch';
+const OPENAI_API='/api/openai-tts';
+const WORDS_URL='./published-lexical-words.json';
+
 const out=document.getElementById('out');
 const go=document.getElementById('go');
 const stop=document.getElementById('stop');
 const statusBtn=document.getElementById('status');
 const bar=document.getElementById('bar');
 const summary=document.getElementById('summary');
-let running=false, stopRequested=false;
+let running=false, stopRequested=false, sourceWords=null;
 
-function show(j){
- const total=Number(j.target_count||0), done=Number(j.completed_count||0);
- bar.max=Math.max(total,1); bar.value=Math.min(done,bar.max);
- summary.textContent= total ? done+' / '+total+' complete · '+(j.failure_count||0)+' failures · '+j.state : 'State: '+j.state;
- out.textContent=JSON.stringify(j,null,2);
-}
-async function getStatus(){
- try{
-  const r=await fetch(API,{method:'GET',cache:'no-store',credentials:'include'});
-  const j=await r.json();
-  show(j);
-  return j;
- }catch(e){
-  out.textContent='Status error: '+e.message;
-  return null;
- }
-}
-async function step(){
- const r=await fetch(API,{method:'POST',cache:'no-store',credentials:'include',headers:{'Content-Type':'application/json'},body:'{}'});
+async function jsonFetch(url, options={}){
+ const r=await fetch(url,{cache:'no-store',...options});
+ const text=await r.text();
  let j={};
- try{j=await r.json();}catch(_){}
- if(!r.ok) throw new Error(j.error||('HTTP '+r.status));
- show(j);
+ try{j=text?JSON.parse(text):{};}catch(_){throw new Error('Non-JSON response '+r.status+': '+text.slice(0,240));}
+ if(!r.ok) throw new Error(j.error||j.detail||('HTTP '+r.status));
  return j;
 }
+
+async function loadWords(){
+ if(sourceWords)return sourceWords;
+ sourceWords=await jsonFetch(WORDS_URL);
+ return sourceWords;
+}
+
+function show(j){
+ const state=j.state||'unknown';
+ if(state==='classifying'){
+   const total=Number(j.source_count||2181), done=Number(j.classified_count||0);
+   bar.max=Math.max(total,1); bar.value=Math.min(done,bar.max);
+   summary.textContent='Classifying '+done+' / '+total+' · '+(j.target_count||0)+' monosyllables found';
+ }else{
+   const total=Number(j.target_count||0), done=Number(j.completed_count||(j.completed||[]).length||0);
+   bar.max=Math.max(total,1); bar.value=Math.min(done,bar.max);
+   summary.textContent= total ? done+' / '+total+' audio files complete · '+((j.failures||[]).length)+' failures · '+state : 'State: '+state;
+ }
+ out.textContent=JSON.stringify(j,null,2);
+}
+
+async function getStatus(){
+ try{
+   const j=await jsonFetch(STATE_API,{method:'GET'});
+   show(j);
+   return j;
+ }catch(e){
+   out.textContent='Status error: '+e.message;
+   return null;
+ }
+}
+
+async function initBatch(){
+ return jsonFetch(STATE_API,{
+   method:'POST',
+   headers:{'Content-Type':'application/json'},
+   body:JSON.stringify({action:'init'})
+ });
+}
+
+async function classifyChunk(words){
+ return jsonFetch(OPENAI_API,{
+   method:'POST',
+   headers:{'Content-Type':'application/json'},
+   body:JSON.stringify({mode:'classify',words})
+ });
+}
+
+async function saveClassification(selected, classifiedCount){
+ return jsonFetch(STATE_API,{
+   method:'POST',
+   headers:{'Content-Type':'application/json'},
+   body:JSON.stringify({action:'classification',selected,classified_count:classifiedCount})
+ });
+}
+
+async function makeAudio(word){
+ const r=await fetch(OPENAI_API,{
+   method:'POST',
+   headers:{'Content-Type':'application/json'},
+   body:JSON.stringify({
+     mode:'tts',
+     input:word,
+     instructions:'Pronounce this English vocabulary word once, clearly and naturally. Warm, friendly and encouraging tone for a child learning English. Neutral American English. Slightly slower than normal conversation, but do not exaggerate. Do not add any other words or sounds.'
+   })
+ });
+ if(!r.ok){
+   const text=await r.text();
+   let msg=text;
+   try{const j=JSON.parse(text);msg=j.error+(j.detail?': '+j.detail:'');}catch(_){}
+   throw new Error(msg||('TTS HTTP '+r.status));
+ }
+ return r.arrayBuffer();
+}
+
+async function uploadAudio(word, buf){
+ const r=await fetch(STATE_API+'?word='+encodeURIComponent(word),{
+   method:'POST',
+   headers:{'Content-Type':'application/octet-stream'},
+   body:buf
+ });
+ const text=await r.text();
+ let j={};
+ try{j=text?JSON.parse(text):{};}catch(_){}
+ if(!r.ok) throw new Error(j.error||text||('Upload HTTP '+r.status));
+ return j;
+}
+
+async function recordFailure(word,error){
+ try{
+   await jsonFetch(STATE_API,{
+     method:'POST',
+     headers:{'Content-Type':'application/json'},
+     body:JSON.stringify({action:'failure',word,error:String(error).slice(0,300)})
+   });
+ }catch(_){}
+}
+
+async function finishBatch(){
+ return jsonFetch(STATE_API,{
+   method:'POST',
+   headers:{'Content-Type':'application/json'},
+   body:JSON.stringify({action:'complete'})
+ });
+}
+
 async function run(){
  if(running)return;
  running=true;stopRequested=false;go.disabled=true;
  try{
-  while(!stopRequested){
-   const j=await step();
-   if(j.state==='complete'||j.state==='complete_with_failures'||j.state==='error')break;
-   await new Promise(r=>setTimeout(r,250));
-  }
+   const words=await loadWords();
+   let state=await getStatus();
+   if(!state||state.state==='not_started') state=await initBatch();
+
+   while(!stopRequested && state.state==='classifying'){
+     const from=Number(state.classified_count||0);
+     const chunk=words.slice(from,from+140);
+     if(!chunk.length)break;
+     const result=await classifyChunk(chunk);
+     state=await saveClassification(result.words||[],from+chunk.length);
+     show(state);
+   }
+
+   if(stopRequested)return;
+   state=await getStatus();
+   if(!state)return;
+
+   const targets=Array.isArray(state.targets)?state.targets:[];
+   const done=new Set(Array.isArray(state.completed)?state.completed:[]);
+   const pending=targets.filter(w=>!done.has(w));
+
+   for(const word of pending){
+     if(stopRequested)break;
+     try{
+       summary.textContent='Generating '+word+' · '+done.size+' / '+targets.length+' complete';
+       const audio=await makeAudio(word);
+       await uploadAudio(word,audio);
+       done.add(word);
+     }catch(e){
+       await recordFailure(word,e.message||String(e));
+     }
+     state=await getStatus();
+     if(state)show(state);
+   }
+
+   if(!stopRequested){
+     state=await finishBatch();
+     show(state);
+   }
  }catch(e){
-  out.textContent='Batch error: '+e.message+'\n\n'+out.textContent;
+   out.textContent='Batch error: '+e.message+'\n\n'+out.textContent;
  }finally{
-  running=false;go.disabled=false;
+   running=false;go.disabled=false;
  }
 }
+
 go.onclick=run;
 stop.onclick=()=>{stopRequested=true;};
 statusBtn.onclick=getStatus;
