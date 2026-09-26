@@ -472,3 +472,63 @@ body.vocab-session-open{overflow:hidden}
   .vocab-front-card-copy strong,
   .vocab-front-book-card strong{font-size:1.28rem!important}
 }
+
+/* v0.076 compact front-page achievement container */
+.vocab-front-achievements{
+  display:grid!important;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:10px;
+  margin-top:28px!important;
+  padding:14px;
+  border:3px solid #dff2f4;
+  border-radius:20px;
+  background:#fbfefe;
+}
+.vocab-front-achievements[hidden]{display:none!important}
+.vocab-front-achievement{
+  min-width:0;
+  min-height:60px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:9px;
+  padding:9px 10px;
+  border:0!important;
+  border-radius:14px;
+  background:#f8fcfc;
+}
+.vocab-front-achievement img{
+  flex:0 0 28px!important;
+  width:28px!important;
+  height:28px!important;
+  max-width:28px!important;
+  max-height:28px!important;
+  object-fit:contain!important;
+  display:block!important;
+}
+.vocab-front-achievement-gold{
+  background:#fffaf0!important;
+  border:2px solid #e8c86c!important;
+}
+@media(max-width:560px){
+  .vocab-front-achievements{
+    grid-template-columns:repeat(3,minmax(0,1fr))!important;
+    gap:6px;
+    padding:10px;
+  }
+  .vocab-front-achievement{
+    min-height:54px;
+    padding:7px 5px;
+    gap:6px;
+  }
+  .vocab-front-achievement img{
+    flex-basis:24px!important;
+    width:24px!important;
+    height:24px!important;
+    max-width:24px!important;
+    max-height:24px!important;
+  }
+  .vocab-front-achievement strong{font-size:.92rem!important}
+  .vocab-front-achievement small{font-size:.56rem!important}
+  .vocab-front-achievement-gold{grid-column:auto!important}
+}
