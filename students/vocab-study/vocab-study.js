@@ -1681,10 +1681,19 @@ async function finishSession(){
   el('vocabDone')?.addEventListener('click',closeSession);
   sessionMain.scrollTop=0;
 }
-function closeSession(){
+async function closeSession(){
+  const wasTeacher=!!state.activeTeacherAssignment;
   document.body.classList.remove('vocab-session-open');
   sessionEl.hidden=true;root.innerHTML='';answerNote.hidden=true;bottomEl.hidden=false;instructionEl.hidden=false;
   if(state.renderer?.setDisabled)state.renderer.setDisabled(true);
+
+  if(wasTeacher&&state.pendingTeacherSaves.size){
+    try{await Promise.allSettled([...state.pendingTeacherSaves])}catch(_){}
+  }
+  if(wasTeacher){
+    try{await loadTeacherAssignments()}catch(error){console.warn('[Vocab Study] partial homework refresh failed',error)}
+  }
+
   state.queue=[];state.index=0;state.checked=false;state.renderer=null;state.spellingPractice=null;state.spellingTest=null;state.speakingSession=null;state.rewardSession=null;state.pendingGoldenAward=null;state.activeTeacherAssignment=null;state.activeTeacherItems=[];
   try{window.scrollTo({top:0,behavior:'auto'})}catch(_){}
 }
@@ -1744,7 +1753,7 @@ async function boot(){
       renderSkillProgress();
     });
     reportStartupPerf();
-    window.WillenaVocabStudy={version:'0.051',getState:()=>state,start:startSession,openSpellingMenu,openSpellingPreview,openSpellingTest,openSpeakingSession,close:closeSession};
+    window.WillenaVocabStudy={version:'0.052',getState:()=>state,start:startSession,openSpellingMenu,openSpellingPreview,openSpellingTest,openSpeakingSession,close:closeSession};
   }catch(error){
     console.error('[Vocab Study] boot',error);
     setStatus(error?.message||'불러오지 못했습니다. 새로고침해 주세요.');
