@@ -139,16 +139,28 @@ function safeParseSummary(input) {
 // Derive stars from session summary
 function deriveStars(summary) {
   const s = summary || {};
-  if (typeof s.stars === 'number') return Math.max(0, Math.min(5, Math.floor(s.stars)));
+  const isWordTestStudy = !!s.assignment_id || s.reward_scheme === 'word-test-study-v1' || Number(s.star_cap) === 10;
   let acc = null;
-  
+
   if (typeof s.accuracy === 'number') acc = s.accuracy;
+  else if (typeof s.percent === 'number') acc = s.percent / 100;
   else if (typeof s.score === 'number' && typeof s.total === 'number' && s.total > 0) {
     acc = s.score / s.total;
   } else if (typeof s.score === 'number' && typeof s.max === 'number' && s.max > 0) {
     acc = s.score / s.max;
   }
-  
+
+  // Assigned Word Test Study sections are worth up to 10 stars.
+  // Recalculate from saved accuracy so older assignment sessions are upgraded
+  // without backfilling or duplicating reward rows.
+  if (isWordTestStudy) {
+    if (acc !== null) return Math.max(0, Math.min(10, Math.floor(Math.max(0, Math.min(1, acc)) * 10 + 1e-9)));
+    if (typeof s.stars === 'number') return Math.max(0, Math.min(10, Math.floor(s.stars)));
+    return 0;
+  }
+
+  if (typeof s.stars === 'number') return Math.max(0, Math.min(5, Math.floor(s.stars)));
+
   if (acc !== null) {
     if (acc >= 1) return 5;
     if (acc >= 0.95) return 4;
@@ -157,8 +169,7 @@ function deriveStars(summary) {
     if (acc >= 0.60) return 1;
     return 0;
   }
-  
-  if (typeof s.stars === 'number') return s.stars;
+
   return 0;
 }
 
