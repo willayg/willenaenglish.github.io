@@ -1,7 +1,7 @@
 // Word Worksheet Generator - Slim entry point
 // Keep this file tiny: wire up globals and bootstrap the app.
 
-import { initWordtest } from './init.js?v=20260926-assign1';
+import { initWordtest } from './init.js?v=20260926-assign2';
 import { updatePreview } from './preview.js?v=20260923-imgstate2';
 import { printFile, generatePDF } from './print.js?v=20260923-imgstate2';
 import { getCurrentWorksheetData, loadWorksheet } from './worksheet_integration.js?v=20260923-imgstate2';
