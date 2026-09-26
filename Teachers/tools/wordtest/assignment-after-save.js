@@ -150,6 +150,7 @@
           list_meta: {
             source_app: 'word_builder',
             word_builder_collection_id: collectionId,
+            source_book_id: worksheet.book_id || saveResult?.book_id || null,
             required_modes: modes
           },
           targets: targets.map((target, index) => ({
