@@ -129,6 +129,8 @@
   const params = new URLSearchParams(window.location.search);
   const mode = params.get('mode'); // 'save' or 'load'
   const urlType = params.get('type'); // e.g., 'text', 'wordtest'
+  const afterAction = params.get('after') || '';
+  const assignAfterSave = mode === 'save' && urlType === 'wordtest' && afterAction === 'assign';
   const vocabOnlyParam = params.get('vocab_only');
   const requireWordsParam = params.get('require_words');
 
@@ -154,6 +156,11 @@
 
     document.getElementById('saveUI').style.display = mode === 'save' ? 'block' : 'none';
     document.getElementById('loadUI').style.display = mode === 'load' ? 'block' : 'none';
+    if (assignAfterSave) {
+      document.getElementById('managerTitle').textContent = 'Assign Word Test';
+      const submit = document.querySelector('#saveWorksheetForm button[type="submit"]');
+      if (submit) submit.textContent = 'Continue to Assign';
+    }
 
     const CONTENT_DB_URL='https://gxwfsqxyuufqtitspfqg.supabase.co';
     const CONTENT_DB_KEY=['sb_publishable_','G-FYhHfDL4OGdL892gY1Zg_','epdbEeqO'].join('');
@@ -398,8 +405,31 @@
         });
     const result = await res.json();
     if (result.success) {
-      alert(existingId ? 'Worksheet updated!' : 'Worksheet saved!');
-      window.close();
+      if (assignAfterSave && worksheet.worksheet_type === 'wordtest' && window.opener && !window.opener.closed) {
+        try {
+          if (typeof window.opener.onWordBuilderSaved === 'function') {
+            window.opener.onWordBuilderSaved({
+              ...result,
+              success:true,
+              updated:!!existingId,
+              worksheet:{
+                id:result.id || worksheet.user_id || null,
+                title:worksheet.title || '',
+                book:worksheet.book || '',
+                book_id:worksheet.book_id || null,
+                unit:worksheet.unit || ''
+              }
+            });
+          }
+        } catch (callbackError) {
+          console.warn('[WorksheetManager] Assign Word Test handoff failed:', callbackError);
+          alert('Worksheet saved, but the assignment window could not open.');
+        }
+        window.close();
+      } else {
+        alert(existingId ? 'Worksheet updated!' : 'Worksheet saved!');
+        window.close();
+      }
     } else {
       alert('Error saving worksheet: ' + (result.error || 'Unknown error'));
     }
@@ -1230,6 +1260,6 @@ async function loadWorksheet() {
 
   </script>
 
-  <div id="wordBuilderManagerRevision" style="position:fixed;right:8px;bottom:5px;z-index:10000;font:10px/1.2 Arial,sans-serif;color:rgba(60,70,85,.55);background:rgba(255,255,255,.72);padding:2px 5px;border-radius:4px;pointer-events:none;user-select:none;">v2.00.11</div>
+  <div id="wordBuilderManagerRevision" style="position:fixed;right:8px;bottom:5px;z-index:10000;font:10px/1.2 Arial,sans-serif;color:rgba(60,70,85,.55);background:rgba(255,255,255,.72);padding:2px 5px;border-radius:4px;pointer-events:none;user-select:none;">v2.00.12</div>
 </body>
 </html>
