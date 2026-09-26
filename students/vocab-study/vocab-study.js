@@ -1824,19 +1824,19 @@ async function openSpellingPreview({historyMode='replace'}={}){
   bottomEl.hidden=true;
   questionStage.hidden=false;
   root.innerHTML=
-    '<section class="practice-panel">'+
-      '<div class="practice-toolbar">'+
-        '<div><span class="eyebrow">SPELLING COACH</span><h2>단어를 보고 들어보세요</h2><small class="section-note">힌트를 쓴 단어는 마지막에 한 번 더 해요.</small></div>'+
+    '<section class="practice-panel vocab-coach-preview">'+
+      '<div class="practice-toolbar vocab-coach-toolbar">'+
+        '<div class="vocab-coach-heading"><span class="eyebrow">SPELLING COACH</span><h2>단어를 보고 들어보세요</h2><small class="section-note">힌트를 쓴 단어는 마지막에 한 번 더 해요.</small></div>'+
+        '<button id="vocabStartSpelling" class="vocab-coach-start" type="button">Start Coach</button>'+
       '</div>'+
-      '<div class="lesson-word-grid">'+
+      '<div class="lesson-word-grid vocab-coach-word-grid">'+
         words.map((w,i)=>
-          '<div class="lesson-word">'+
-            '<button class="speak-mini" type="button" data-preview-word="'+i+'" aria-label="'+escapeHtml(w.spellingTarget||w.word)+' 듣기">▶</button>'+
-            '<div><strong>'+escapeHtml(w.spellingTarget||w.word)+'</strong><span>'+escapeHtml(w.ko)+'</span></div>'+
+          '<div class="lesson-word vocab-coach-word">'+
+            '<div class="vocab-coach-word-copy"><strong>'+escapeHtml(w.spellingTarget||w.word)+'</strong><span>'+escapeHtml(w.ko)+'</span></div>'+
+            '<button class="speak-mini vocab-coach-audio" type="button" data-preview-word="'+i+'" aria-label="'+escapeHtml(w.spellingTarget||w.word)+' 듣기"><img src="/shared/svgs/headphones.svg?v=20260926-v0002" alt="" aria-hidden="true"></button>'+
           '</div>'
         ).join('')+
       '</div>'+
-      '<div class="activity-actions"><button id="vocabStartSpelling" class="primary-button" type="button">Start Coach</button></div>'+
     '</section>';
   root.querySelectorAll('[data-preview-word]').forEach(btn=>btn.addEventListener('click',()=>{
     const w=words[Number(btn.dataset.previewWord)];if(w)playPreviewWord(w.spellingTarget||w.word);
@@ -2119,7 +2119,7 @@ async function boot(){
       renderSkillProgress();
     });
     reportStartupPerf();
-    window.WillenaVocabStudy={version:'0.082',getState:()=>state,start:startSession,openSpellingMenu,openSpellingPreview,openSpellingTest,openSpeakingSession,close:closeSession};
+    window.WillenaVocabStudy={version:'0.083',getState:()=>state,start:startSession,openSpellingMenu,openSpellingPreview,openSpellingTest,openSpeakingSession,close:closeSession};
   }catch(error){
     console.error('[Vocab Study] boot',error);
     if(frontWordTestCardEl)frontWordTestCardEl.hidden=true;
