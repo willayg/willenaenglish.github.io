@@ -425,7 +425,7 @@ function renderFrontMenu(){
   frontBookListEl.innerHTML=books.length?books.map(row=>
     '<button class="vocab-front-book-card" type="button" data-front-book="'+escapeHtml(row.bookId)+'">'+
       '<span class="vocab-front-card-main">'+
-        '<span class="vocab-front-card-copy"><span class="eyebrow">교재 공부</span><strong>'+escapeHtml(row.title)+'</strong><small>단원 · 퀴즈 · 철자 · 말하기</small></span>'+
+        '<span class="vocab-front-card-copy"><strong>'+escapeHtml(row.title)+'</strong><small>단원 · 퀴즈 · 철자 · 말하기</small></span>'+
       '</span>'+
       '<span class="vocab-front-arrow" aria-hidden="true">›</span>'+
     '</button>'
