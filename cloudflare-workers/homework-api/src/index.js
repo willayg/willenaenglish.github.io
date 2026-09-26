@@ -2,6 +2,7 @@
  * Cloudflare Worker: homework-api
  * 
  * Drop-in replacement for Netlify function homework_api.js
+ * P4A: generic assignment envelope for English Arcade and Vocabulary Study.
  * Handles homework assignment CRUD operations
  */
 
@@ -309,6 +310,27 @@ function parseJsonMaybe(value) {
   try { return JSON.parse(value); } catch { return null; }
 }
 
+function isUuid(value) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(value || '').trim());
+}
+
+function normalizeVocabTargets(input) {
+  const seen = new Set();
+  const rows = [];
+  (Array.isArray(input) ? input : []).forEach((target, index) => {
+    const lexicalEntryId = String(target?.lexical_entry_id || target?.id || '').trim();
+    if (!isUuid(lexicalEntryId) || seen.has(lexicalEntryId)) return;
+    seen.add(lexicalEntryId);
+    rows.push({
+      lexical_entry_id: lexicalEntryId,
+      position: Number.isInteger(Number(target?.position)) ? Number(target.position) : index,
+      english_snapshot: String(target?.english ?? target?.word ?? '').trim().slice(0, 500) || null,
+      korean_snapshot: String(target?.korean ?? target?.ko ?? '').trim().slice(0, 500) || null,
+    });
+  });
+  return rows;
+}
+
 // Supabase REST helpers
 async function supabaseSelect(env, table, query, options = {}) {
   let url = `${env.SUPABASE_URL}/rest/v1/${table}?${query}`;
@@ -383,6 +405,32 @@ async function supabaseDelete(env, table, query) {
   return resp.ok;
 }
 
+async function supabaseRpc(env, functionName, body = {}) {
+  const resp = await fetch(`${env.SUPABASE_URL}/rest/v1/rpc/${functionName}`, {
+    method: 'POST',
+    headers: {
+      'apikey': env.SUPABASE_SERVICE_KEY,
+      'Authorization': `Bearer ${env.SUPABASE_SERVICE_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(body),
+  });
+  if (!resp.ok) {
+    const error = await resp.text();
+    throw new Error(`Supabase RPC ${functionName} failed: ${error}`);
+  }
+  return resp.json();
+}
+
+async function replaceVocabTargets(env, assignmentId, targets) {
+  const normalized = normalizeVocabTargets(targets);
+  const deleted = await supabaseDelete(env, 'study_assignment_targets', `assignment_id=eq.${assignmentId}`);
+  if (!deleted) throw new Error('Could not replace Vocabulary Study targets');
+  if (!normalized.length) return [];
+  const rows = normalized.map(target => ({ ...target, assignment_id: assignmentId }));
+  return supabaseInsert(env, 'study_assignment_targets', rows);
+}
+
 async function autoExpireAssignmentsPastGrace(env, className = null) {
   const now = new Date();
   const nowMs = now.getTime();
@@ -453,14 +501,25 @@ export default {
         const body = await request.json();
         const {
           class: className, title, description, list_key, list_title,
-          list_meta, start_at, due_at, goal_type, goal_value,
+          list_meta, start_at, due_at, goal_type, goal_value, source_type, targets,
         } = body;
         const sourceMeta = list_meta && typeof list_meta === 'object' ? { ...list_meta } : {};
-        const isSavedGameAssignment = String(sourceMeta.source_type || '').toLowerCase() === 'saved_game' || !!sourceMeta.game_id;
-        const effectiveListKey = list_key || (isSavedGameAssignment && sourceMeta.game_id ? `saved_game:${sourceMeta.game_id}` : '');
+        const requestedSourceType = String(source_type || sourceMeta.source_type || '').trim().toLowerCase();
+        const isSavedGameAssignment = requestedSourceType === 'saved_game' || !!sourceMeta.game_id;
+        const effectiveSourceType = requestedSourceType || (isSavedGameAssignment ? 'saved_game' : 'wordlist');
+        if (!['wordlist','saved_game','vocab_study'].includes(effectiveSourceType)) {
+          return jsonResponse({ success:false, error:'Unsupported assignment source_type' }, 400, origin);
+        }
+        const isVocabStudyAssignment = effectiveSourceType === 'vocab_study';
+        const effectiveListKey = list_key
+          || (isSavedGameAssignment && sourceMeta.game_id ? `saved_game:${sourceMeta.game_id}` : '')
+          || (isVocabStudyAssignment ? `vocab_study:${crypto.randomUUID()}` : '');
 
         if (isSavedGameAssignment && !sourceMeta.game_id) {
           return jsonResponse({ success: false, error: 'Custom saved-game homework requires list_meta.game_id' }, 400, origin);
+        }
+        if (isVocabStudyAssignment && !normalizeVocabTargets(targets).length) {
+          return jsonResponse({ success: false, error: 'Vocabulary Study assignments require at least one valid lexical target' }, 400, origin);
         }
 
         if (!className || !title || !effectiveListKey || !due_at) {
@@ -474,13 +533,14 @@ export default {
           class: className,
           title,
           description: description || null,
+          source_type: effectiveSourceType,
           list_key: effectiveListKey,
-          list_title: list_title || null,
+          list_title: list_title || title,
           list_meta: sourceMeta,
           start_at: start_at || new Date().toISOString(),
           due_at,
-          goal_type: goal_type || 'stars',
-          goal_value: goal_value || 5,
+          goal_type: goal_type || (isVocabStudyAssignment ? 'clean_pass' : 'stars'),
+          goal_value: goal_value ?? (isVocabStudyAssignment ? 100 : 5),
           active: true,
           created_by: prof.id,
         };
@@ -488,12 +548,22 @@ export default {
         const data = await supabaseInsert(env, 'homework_assignments', insertData);
         let assignment = data[0];
         let runToken = null;
+        let vocabTargets = [];
+
+        if (isVocabStudyAssignment && assignment?.id) {
+          try {
+            vocabTargets = await replaceVocabTargets(env, assignment.id, targets);
+          } catch (targetError) {
+            await supabaseDelete(env, 'homework_assignments', `id=eq.${assignment.id}`);
+            throw targetError;
+          }
+        }
 
         const existingTokens = Array.isArray(assignment?.list_meta?.run_tokens)
           ? assignment.list_meta.run_tokens.map(entry => entry?.token).filter(Boolean)
           : [];
 
-        if (!existingTokens.length && assignment?.id) {
+        if (!isVocabStudyAssignment && !existingTokens.length && assignment?.id) {
           runToken = generateRunToken(assignment.id);
           const updatedMeta = {
             ...(assignment.list_meta || {}),
@@ -507,9 +577,105 @@ export default {
           }
         }
 
-        return jsonResponse({ success: true, assignment, run_token: runToken }, 200, origin);
+        return jsonResponse({
+          success: true,
+          assignment,
+          run_token: runToken,
+          targets: isVocabStudyAssignment ? vocabTargets : undefined,
+          target_count: isVocabStudyAssignment ? vocabTargets.length : undefined,
+        }, 200, origin);
+      }
+
+      // ===== SET VOCABULARY STUDY TARGETS =====
+      if (action === 'set_vocab_targets') {
+        const authUserId = await getUserIdFromRequest(request, env);
+        if (!authUserId) return jsonResponse({ success:false, error:'Not signed in' }, 401, origin);
+        const prof = await fetchProfile(env, authUserId);
+        if (!prof || !['teacher','admin'].includes(String(prof.role || '').toLowerCase())) {
+          return jsonResponse({ success:false, error:'Only teachers can update Vocabulary Study targets' }, 403, origin);
+        }
+        const body = await request.json().catch(() => ({}));
+        const assignmentId = body.assignment_id || url.searchParams.get('assignment_id');
+        if (!assignmentId) return jsonResponse({ success:false, error:'Missing assignment_id' }, 400, origin);
+        const assignments = await supabaseSelect(env, 'homework_assignments', `id=eq.${assignmentId}&select=*`);
+        const assignment = assignments?.[0];
+        if (!assignment) return jsonResponse({ success:false, error:'Assignment not found' }, 404, origin);
+        if (String(assignment.source_type || '').toLowerCase() !== 'vocab_study') {
+          return jsonResponse({ success:false, error:'Assignment is not a Vocabulary Study assignment' }, 400, origin);
+        }
+        const isAdmin = String(prof.role || '').toLowerCase() === 'admin';
+        if (!isAdmin && String(assignment.created_by || '') !== String(authUserId)) {
+          return jsonResponse({ success:false, error:'Only the assigning teacher can replace these targets' }, 403, origin);
+        }
+        const normalized = normalizeVocabTargets(body.targets);
+        if (!normalized.length) return jsonResponse({ success:false, error:'At least one valid lexical target is required' }, 400, origin);
+        const rows = await replaceVocabTargets(env, assignmentId, normalized);
+        return jsonResponse({ success:true, assignment_id:assignmentId, targets:rows, target_count:rows.length }, 200, origin);
+      }
+
+      // ===== VOCABULARY STUDY ASSIGNMENT PROGRESS =====
+      if (action === 'vocab_assignment_progress') {
+        const authUserId = await getUserIdFromRequest(request, env);
+        if (!authUserId) return jsonResponse({ success:false, error:'Not signed in' }, 401, origin);
+        const prof = await fetchProfile(env, authUserId);
+        if (!prof) return jsonResponse({ success:false, error:'Profile not found' }, 403, origin);
+        const assignmentId = url.searchParams.get('assignment_id') || url.searchParams.get('id');
+        if (!assignmentId) return jsonResponse({ success:false, error:'Missing assignment_id' }, 400, origin);
+        const assignments = await supabaseSelect(env, 'homework_assignments', `id=eq.${assignmentId}&select=*`);
+        const assignment = assignments?.[0];
+        if (!assignment || String(assignment.source_type || '').toLowerCase() !== 'vocab_study') {
+          return jsonResponse({ success:false, error:'Vocabulary Study assignment not found' }, 404, origin);
+        }
+        const role = String(prof.role || '').toLowerCase();
+        const isTeacher = role === 'teacher' || role === 'admin';
+        if (!isTeacher) {
+          if (String(prof.class || '') !== String(assignment.class || '')) {
+            return jsonResponse({ success:false, error:'Not assigned to this class' }, 403, origin);
+          }
+          const targetStudentIds = getAssignmentTargetStudentIds(assignment);
+          if (targetStudentIds.length && !targetStudentIds.includes(authUserId)) {
+            return jsonResponse({ success:false, error:'Not assigned to this student' }, 403, origin);
+          }
+        }
+        const result = await supabaseRpc(env, 'get_vocab_assignment_progress_v1', { p_assignment_id: assignmentId });
+        if (!result?.success) return jsonResponse(result || { success:false, error:'Progress unavailable' }, 404, origin);
+        if (!isTeacher) {
+          result.students = (Array.isArray(result.students) ? result.students : []).filter(row => String(row?.student_id || '') === String(authUserId));
+        }
+        return jsonResponse(result, 200, origin);
       }
       
+      // ===== VOCABULARY STUDY STUDENT DETAIL =====
+      if (action === 'vocab_assignment_student_detail') {
+        const authUserId = await getUserIdFromRequest(request, env);
+        if (!authUserId) return jsonResponse({ success:false, error:'Not signed in' }, 401, origin);
+
+        const prof = await fetchProfile(env, authUserId);
+        const role = String(prof?.role || '').toLowerCase();
+        if (!prof || !['teacher','admin'].includes(role)) {
+          return jsonResponse({ success:false, error:'Teacher access required' }, 403, origin);
+        }
+
+        const assignmentId = url.searchParams.get('assignment_id') || url.searchParams.get('id');
+        const studentId = url.searchParams.get('student_id');
+        if (!assignmentId || !studentId) {
+          return jsonResponse({ success:false, error:'assignment_id and student_id are required' }, 400, origin);
+        }
+
+        const assignments = await supabaseSelect(env, 'homework_assignments', `id=eq.${assignmentId}&select=id,source_type`);
+        const assignment = assignments?.[0];
+        if (!assignment || String(assignment.source_type || '').toLowerCase() !== 'vocab_study') {
+          return jsonResponse({ success:false, error:'Vocabulary Study assignment not found' }, 404, origin);
+        }
+
+        const result = await supabaseRpc(env, 'get_vocab_assignment_student_detail_v1', {
+          p_assignment_id: assignmentId,
+          p_student_id: studentId,
+        });
+        if (!result?.success) return jsonResponse(result || { success:false, error:'Student detail unavailable' }, 404, origin);
+        return jsonResponse(result, 200, origin);
+      }
+
       // ===== CREATE RUN TOKEN =====
       if (action === 'create_run') {
         const authUserId = await getUserIdFromRequest(request, env);
@@ -620,10 +786,14 @@ export default {
           await autoExpireAssignmentsPastGrace(env, prof.class);
           
           const nowIso = new Date().toISOString();
+          const includeHistory = url.searchParams.get('include_history') === '1';
+          const query = includeHistory
+            ? `class=eq.${encodeURIComponent(prof.class)}&start_at=lte.${nowIso}&order=created_at.desc&select=*`
+            : `class=eq.${encodeURIComponent(prof.class)}&active=eq.true&start_at=lte.${nowIso}&order=due_at.asc&select=*`;
           const data = await supabaseSelect(
             env,
             'homework_assignments',
-            `class=eq.${encodeURIComponent(prof.class)}&active=eq.true&start_at=lte.${nowIso}&order=due_at.asc&select=*`
+            query
           );
           const assignmentsForStudent = (data || []).filter((assignment) => {
             const targetStudentIds = getAssignmentTargetStudentIds(assignment);
@@ -639,6 +809,14 @@ export default {
         }
         
         // Teacher mode
+        const authUserId = await getUserIdFromRequest(request, env);
+        if (!authUserId) {
+          return jsonResponse({ success: false, error: 'Not signed in' }, 401, origin);
+        }
+        const prof = await fetchProfile(env, authUserId);
+        if (!prof || !['teacher', 'admin'].includes(String(prof.role || '').toLowerCase()) || prof.approved === false) {
+          return jsonResponse({ success: false, error: 'Teacher access required' }, 403, origin);
+        }
         const className = url.searchParams.get('class');
         await autoExpireAssignmentsPastGrace(env, className || null);
         let query = 'order=created_at.desc&select=*';
@@ -771,6 +949,17 @@ export default {
         }
         if (!isTeacher && targetStudentIds.length && !targetStudentIds.includes(authUserId)) {
           return jsonResponse({ success: false, error: 'Not authorized to view this assignment' }, 403, origin);
+        }
+
+        // Vocabulary Study assignments use canonical study_attempts clean-pass evidence,
+        // not the legacy English Arcade star/mode evaluator below.
+        if (String(assignment.source_type || '').toLowerCase() === 'vocab_study') {
+          const result = await supabaseRpc(env, 'get_vocab_assignment_progress_v1', { p_assignment_id: assignment.id });
+          if (!result?.success) return jsonResponse(result || { success:false, error:'Progress unavailable' }, 404, origin);
+          if (!isTeacher) {
+            result.students = (Array.isArray(result.students) ? result.students : []).filter(row => String(row?.student_id || '') === String(authUserId));
+          }
+          return jsonResponse(result, 200, origin);
         }
         
         // Determine category heuristically for expected mode counts
