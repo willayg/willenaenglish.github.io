@@ -710,3 +710,11 @@ Build this after the tracking and content foundations have produced enough usefu
 As of v0.002, Vocabulary Study is still a relatively small app, but data loading, session logic, rendering coordination, and source-specific logic are concentrated in `vocab-study.js`.
 
 That is acceptable for the current prototype, but the planned UI redesign plus spelling helper, speaking, adaptive practice, tracking, mastery, medals, and streaks means the shared modules above should be introduced during the redesign rather than after all features have been added.
+
+### Word Test Study rewards
+- Assigned Vocabulary Study homework is presented to students as **Word Test Study**.
+- Each required section (Quiz, Spelling, Speaking) can earn **up to 10 stars** based on the completed section score: 100%=10, 90–99%=9, 80–89%=8, etc.
+- Stars are best-score-per-assignment-per-mode, so repeating a section can improve its award but cannot farm duplicate stars.
+- Normal independent Vocabulary Study keeps the existing 5-star session scale.
+- Word Test Study mode cards show both clean-pass progress in the ring and the best earned star award as `★ n/10`.
+- Global/header star totals interpret assignment reward sessions on the 10-star scale; older assignment sessions are derived from their saved accuracy without inserting duplicate reward rows.
