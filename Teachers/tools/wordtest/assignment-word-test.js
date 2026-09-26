@@ -283,8 +283,8 @@
           '<label><input type="checkbox" value="speaking" checked> Speaking</label>'+
         '</fieldset>'+
         '<fieldset class="wb-assign-workload"><legend>Workload</legend>'+
-          '<label><input type="radio" name="wbAssignWorkload" value="all" checked> All words in every mode</label>'+
-          '<label><input type="radio" name="wbAssignWorkload" value="split"> Split words between modes</label>'+
+          '<label><input type="radio" name="wbAssignWorkload" value="all"> All words in every mode</label>'+
+          '<label><input type="radio" name="wbAssignWorkload" value="split" checked> Split words between modes</label>'+
           '<div class="wb-assign-workload-summary" id="wbAssignWorkloadSummary"></div>'+
           '<button class="wb-assign-reshuffle" type="button" id="wbAssignReshuffle" hidden>↻ Reshuffle split</button>'+
         '</fieldset>'+
@@ -375,8 +375,8 @@
     studentField.hidden=true;
     const classScope=overlay.querySelector('input[name="wbAssignScope"][value="class"]');
     if(classScope)classScope.checked=true;
-    const allWorkload=overlay.querySelector('input[name="wbAssignWorkload"][value="all"]');
-    if(allWorkload)allWorkload.checked=true;
+    const splitWorkload=overlay.querySelector('input[name="wbAssignWorkload"][value="split"]');
+    if(splitWorkload)splitWorkload.checked=true;
     splitAllocation={};
     renderWorkload({reshuffle:true});
 
