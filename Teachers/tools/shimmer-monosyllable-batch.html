@@ -5,33 +5,77 @@
 <title>Shimmer Monosyllable Batch</title>
 <style>
 body{font:16px/1.45 system-ui;margin:0;background:#f7fbfc;color:#17252d}
-main{max-width:760px;margin:32px auto;padding:0 16px}.card{background:#fff;border:3px solid #c9f3f5;border-radius:20px;padding:20px}
-button{font:inherit;font-weight:800;padding:12px 16px;border:3px solid #ffd0df;border-radius:14px;background:#fff;cursor:pointer}
+main{max-width:760px;margin:32px auto;padding:0 16px}
+.card{background:#fff;border:3px solid #c9f3f5;border-radius:20px;padding:20px}
+button{font:inherit;font-weight:800;padding:12px 16px;border:3px solid #ffd0df;border-radius:14px;background:#fff;cursor:pointer;margin-right:8px;margin-bottom:8px}
+button:disabled{opacity:.5;cursor:wait}
+progress{width:100%;height:22px;margin:14px 0 6px}
 pre{white-space:pre-wrap;background:#f4f7f8;padding:14px;border-radius:12px;min-height:120px}
+.small{color:#65757d;font-size:13px}
 </style></head>
 <body><main><div class="card">
 <h1>Shimmer monosyllable replacement</h1>
-<p>One-time batch: published English monosyllables → OpenAI gpt-4o-mini-tts / Shimmer → overwrite word-level R2 MP3s.</p>
+<p>Published English monosyllables → OpenAI <b>gpt-4o-mini-tts / Shimmer</b> → overwrite word-level R2 MP3s.</p>
+<p class="small">This now runs in small resumable chunks so failures are visible. It includes diphthongs and one-syllable homographs.</p>
 <button id="go">Run / resume batch</button>
+<button id="stop">Stop after current chunk</button>
 <button id="status">Refresh status</button>
-<pre id="out">Not started from this page.</pre>
+<progress id="bar" value="0" max="1"></progress>
+<div id="summary" class="small">Not started.</div>
+<pre id="out">Ready.</pre>
 </div></main>
 <script>
-const API='https://api.willenaenglish.com/.netlify/functions/';
-const BATCH='shimmer-monosyllables-20260927-v1';
+const API='https://api.willenaenglish.com/.netlify/functions/regenerate_monosyllables';
 const out=document.getElementById('out');
-async function status(){
- try{const r=await fetch(API+'monosyllable_audio_status',{cache:'no-store'});out.textContent=JSON.stringify(await r.json(),null,2);}
- catch(e){out.textContent='Status error: '+e.message;}
+const go=document.getElementById('go');
+const stop=document.getElementById('stop');
+const statusBtn=document.getElementById('status');
+const bar=document.getElementById('bar');
+const summary=document.getElementById('summary');
+let running=false, stopRequested=false;
+
+function show(j){
+ const total=Number(j.target_count||0), done=Number(j.completed_count||0);
+ bar.max=Math.max(total,1); bar.value=Math.min(done,bar.max);
+ summary.textContent= total ? done+' / '+total+' complete · '+(j.failure_count||0)+' failures · '+j.state : 'State: '+j.state;
+ out.textContent=JSON.stringify(j,null,2);
 }
-document.getElementById('status').onclick=status;
-document.getElementById('go').onclick=async()=>{
- document.getElementById('go').disabled=true;out.textContent='Starting batch…';
+async function getStatus(){
  try{
-  const r=await fetch(API+'regenerate_monosyllables-background?batch='+encodeURIComponent(BATCH),{method:'GET',cache:'no-store'});
-  out.textContent='Trigger response: '+r.status+'\n'+await r.text()+'\n\nUse Refresh status to inspect progress.';
- }catch(e){out.textContent='Trigger error: '+e.message;}
- finally{document.getElementById('go').disabled=false;}
-};
-status();
+  const r=await fetch(API,{method:'GET',cache:'no-store',credentials:'include'});
+  const j=await r.json();
+  show(j);
+  return j;
+ }catch(e){
+  out.textContent='Status error: '+e.message;
+  return null;
+ }
+}
+async function step(){
+ const r=await fetch(API,{method:'POST',cache:'no-store',credentials:'include',headers:{'Content-Type':'application/json'},body:'{}'});
+ let j={};
+ try{j=await r.json();}catch(_){}
+ if(!r.ok) throw new Error(j.error||('HTTP '+r.status));
+ show(j);
+ return j;
+}
+async function run(){
+ if(running)return;
+ running=true;stopRequested=false;go.disabled=true;
+ try{
+  while(!stopRequested){
+   const j=await step();
+   if(j.state==='complete'||j.state==='complete_with_failures'||j.state==='error')break;
+   await new Promise(r=>setTimeout(r,250));
+  }
+ }catch(e){
+  out.textContent='Batch error: '+e.message+'\n\n'+out.textContent;
+ }finally{
+  running=false;go.disabled=false;
+ }
+}
+go.onclick=run;
+stop.onclick=()=>{stopRequested=true;};
+statusBtn.onclick=getStatus;
+getStatus();
 </script></body></html>
