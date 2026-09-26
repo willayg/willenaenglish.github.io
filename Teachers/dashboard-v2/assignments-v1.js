@@ -224,7 +224,7 @@
     $('#assignmentCancelBtn')?.addEventListener('click',()=>cancelAssignment(a.id));
     $('#assignmentReactivateBtn')?.addEventListener('click',()=>reactivateAssignment(a.id));
     $('#assignmentDeleteBtn')?.addEventListener('click',()=>deleteAssignment(a.id));
-    $('.assignment-student-row',detail).forEach(row=>row.addEventListener('click',()=>openStudentDetail(a.id,row.dataset.studentId)));
+    $$('.assignment-student-row',detail).forEach(row=>row.addEventListener('click',()=>openStudentDetail(a.id,row.dataset.studentId)));
   }
 
   async function showAssignmentEdit(id){
@@ -397,7 +397,7 @@
       });
       state.loaded=false;
       state.filter='current';
-      $('[data-assignment-status]').forEach(btn=>btn.classList.toggle('active',btn.dataset.assignmentStatus==='current'));
+      $$('[data-assignment-status]').forEach(btn=>btn.classList.toggle('active',btn.dataset.assignmentStatus==='current'));
       await loadAssignments(true);
     }catch(error){
       alert('Could not reactivate assignment: '+error.message);
@@ -484,9 +484,9 @@
       renderList();
     });
     $('#assignmentRefreshBtn')?.addEventListener('click',()=>loadAssignments(true));
-    $$('[data-assignment-status]').forEach(btn=>btn.addEventListener('click',()=>{
+    $$$('[data-assignment-status]').forEach(btn=>btn.addEventListener('click',()=>{
       state.filter=btn.dataset.assignmentStatus||'current';
-      $$('[data-assignment-status]').forEach(x=>x.classList.toggle('active',x===btn));
+      $$$('[data-assignment-status]').forEach(x=>x.classList.toggle('active',x===btn));
       renderList();
     }));
     $$('[data-view="assignments"]').forEach(btn=>btn.addEventListener('click',()=>loadAssignments()));
