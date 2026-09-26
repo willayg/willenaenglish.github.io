@@ -107,7 +107,14 @@ function enableSpellingKeyboard(){
   if(spellingKeyboard)return;
   spellingKeyboard=installWillenaKeyboard({
     root:sessionEl,
-    submitSelector:'#vocabStudyAction'
+    submitSelector:'#vocabStudyAction',
+    submitHandler:(submit,field)=>{
+      if(field){
+        field.dispatchEvent(new Event('input',{bubbles:true}));
+        field.dispatchEvent(new Event('change',{bubbles:true}));
+      }
+      if(submit&&!submit.disabled)submit.click();
+    }
   });
 }
 function disableSpellingKeyboard(){
@@ -146,8 +153,15 @@ function keepSpellingFieldVisible(field){
 function wireSpellingField(field,{focus=false}={}){
   field=prepareSharedKeyboardField(field);
   if(!field)return;
+  const syncSubmit=()=>{
+    if(!state.spellingTest&&!state.spellingPractice)return;
+    actionBtn.disabled=!String(field.value||'').trim();
+  };
+  field.addEventListener('input',syncSubmit);
+  field.addEventListener('change',syncSubmit);
   field.addEventListener('focus',()=>keepSpellingFieldVisible(field));
   field.addEventListener('pointerdown',()=>setTimeout(()=>keepSpellingFieldVisible(field),80));
+  syncSubmit();
   if(focus){
     requestAnimationFrame(()=>{
       try{field.focus({preventScroll:true})}catch(_){field.focus()}
@@ -2287,7 +2301,7 @@ async function boot(){
     reportStartupPerf();
     preloadStudentSfx();
 
-window.WillenaVocabStudy={version:'0.088',getState:()=>state,start:startSession,openSpellingMenu,openSpellingPreview,openSpellingTest,openSpeakingSession,close:closeSession};
+window.WillenaVocabStudy={version:'0.089',getState:()=>state,start:startSession,openSpellingMenu,openSpellingPreview,openSpellingTest,openSpeakingSession,close:closeSession};
   }catch(error){
     console.error('[Vocab Study] boot',error);
     if(frontWordTestCardEl)frontWordTestCardEl.hidden=true;
