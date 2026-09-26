@@ -46,3 +46,28 @@ body.wb-assign-open{overflow:hidden}
   .wb-assign-actions{display:grid;grid-template-columns:1fr 1fr}
   .wb-assign-modes label,.wb-assign-scope label{display:flex;margin-right:0}
 }
+/* Pass 2: multi-class Word Test assignment */
+.wb-assign-class-field{margin:16px 0 10px;padding:0;border:0}
+.wb-assign-class-field>legend{display:block;margin-bottom:6px;font-size:12px;font-weight:800;color:#547075}
+.wb-assign-class-actions{display:flex;gap:8px;margin:0 0 8px}
+.wb-assign-class-actions button{
+  padding:6px 10px;border:1px solid #cadcdf;border-radius:9px;background:#fff;color:#456167;
+  font:700 12px/1 Poppins,Arial,sans-serif;cursor:pointer
+}
+.wb-assign-class-list{
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;
+  max-height:230px;overflow:auto;padding:8px;border:1px solid #d7e6e8;border-radius:14px;background:#f9fcfc
+}
+.wb-assign-class-row{
+  display:flex;align-items:center;gap:10px;min-width:0;padding:10px 11px;border:1px solid #dce9eb;
+  border-radius:12px;background:#fff;cursor:pointer
+}
+.wb-assign-class-row:has(input:checked){border-color:#ee9abb;background:#fff8fb}
+.wb-assign-class-row input{flex:0 0 auto}
+.wb-assign-class-row span{min-width:0}
+.wb-assign-class-row strong{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px}
+.wb-assign-class-row small{display:block;margin-top:2px;color:#7b8e92;font-size:11px}
+.wb-assign-loading{padding:10px;color:#7b8e92;font-size:13px}
+@media(max-width:600px){
+  .wb-assign-class-list{grid-template-columns:1fr;max-height:260px}
+}
