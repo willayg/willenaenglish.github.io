@@ -449,6 +449,22 @@ export default {
         return jsonResponse(result, 200, origin);
       }
 
+      if (section === 'vocab_assignment_attempt') {
+        if (request.method !== 'POST') return jsonResponse({ error: 'Method Not Allowed' }, 405, origin);
+        const body = await request.json().catch(() => null);
+        const assignmentId = body && body.assignment_id;
+        const payload = body && body.payload;
+        if (!assignmentId || !payload || typeof payload !== 'object') {
+          return jsonResponse({ success:false, error:'assignment_id and payload are required' }, 400, origin);
+        }
+        const result = await supabaseRpc(env, 'record_vocab_assignment_attempt_v1', {
+          p_student_id: userId,
+          p_assignment_id: assignmentId,
+          p_payload: payload,
+        });
+        return jsonResponse(result, 200, origin);
+      }
+
       if (section === 'vocab_golden_unit') {
         if (request.method !== 'POST') return jsonResponse({ error: 'Method Not Allowed' }, 405, origin);
         const body = await request.json().catch(() => null);
