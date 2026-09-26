@@ -480,6 +480,50 @@ export default {
     }
     
     try {
+      // ===== TEACHER CLASS BOOKS =====
+      if (action === 'teacher_class_books') {
+        const authUserId = await getUserIdFromRequest(request, env);
+        if (!authUserId) return jsonResponse({ success:false, error:'Not signed in' }, 401, origin);
+        const prof = await fetchProfile(env, authUserId);
+        if (!prof || !['teacher','admin'].includes(String(prof.role || '').toLowerCase()) || prof.approved === false) {
+          return jsonResponse({ success:false, error:'Teacher access required' }, 403, origin);
+        }
+
+        const classes = await supabaseSelect(
+          env,
+          'classes',
+          'status=eq.active&select=id,name,display_name&order=name.asc'
+        );
+        const classIds = (classes || []).map(row => row.id).filter(Boolean);
+        let assignments = [];
+        if (classIds.length) {
+          assignments = await supabaseSelect(
+            env,
+            'class_book_assignments',
+            `class_id=in.(${classIds.join(',')})&status=eq.active&select=class_id,book_id,book_title,source_type,status,created_at`
+          );
+        }
+        const byClass = new Map();
+        for (const row of assignments || []) {
+          const key = String(row.class_id || '');
+          if (!byClass.has(key)) byClass.set(key, []);
+          byClass.get(key).push(row);
+        }
+        return jsonResponse({
+          success:true,
+          classes:(classes || []).map(row => ({
+            id:row.id,
+            name:row.name,
+            display_name:row.display_name || row.name,
+            books:(byClass.get(String(row.id)) || []).map(book => ({
+              book_id:book.book_id || null,
+              book_title:book.book_title || '',
+              source_type:book.source_type || null
+            }))
+          }))
+        }, 200, origin);
+      }
+
       // ===== CREATE ASSIGNMENT =====
       if (action === 'create_assignment') {
         const authUserId = await getUserIdFromRequest(request, env);
@@ -828,6 +872,53 @@ export default {
         return jsonResponse({ success: true, assignments: data || [] }, 200, origin);
       }
       
+      // ===== UPDATE ASSIGNMENT =====
+      if (action === 'update_assignment') {
+        const authUserId = await getUserIdFromRequest(request, env);
+        if (!authUserId) return jsonResponse({ success:false, error:'Not signed in' }, 401, origin);
+
+        const prof = await fetchProfile(env, authUserId);
+        if (!prof || !['teacher','admin'].includes(String(prof.role || '').toLowerCase())) {
+          return jsonResponse({ success:false, error:'Only teachers can update assignments' }, 403, origin);
+        }
+
+        const body = await request.json().catch(() => ({}));
+        const assignmentId = body.assignment_id || body.id || url.searchParams.get('assignment_id') || url.searchParams.get('id');
+        if (!assignmentId) return jsonResponse({ success:false, error:'Missing assignment id' }, 400, origin);
+
+        const existingRows = await supabaseSelect(env, 'homework_assignments', `id=eq.${assignmentId}&select=*`);
+        const existing = existingRows?.[0];
+        if (!existing) return jsonResponse({ success:false, error:'Assignment not found' }, 404, origin);
+
+        const updateFields = {};
+        if (body.title !== undefined) {
+          const title = String(body.title || '').trim();
+          if (!title) return jsonResponse({ success:false, error:'Title is required' }, 400, origin);
+          updateFields.title = title;
+          updateFields.list_title = title;
+        }
+        if (body.due_at !== undefined) {
+          const dueAt = new Date(body.due_at);
+          if (Number.isNaN(dueAt.getTime())) return jsonResponse({ success:false, error:'Invalid due date' }, 400, origin);
+          updateFields.due_at = dueAt.toISOString();
+        }
+        if (body.required_modes !== undefined) {
+          const allowed = new Set(['quiz','spelling_test','speaking']);
+          const modes = Array.isArray(body.required_modes)
+            ? [...new Set(body.required_modes.map(String).filter(mode => allowed.has(mode)))]
+            : [];
+          if (!modes.length) return jsonResponse({ success:false, error:'Choose at least one practice mode' }, 400, origin);
+          updateFields.list_meta = { ...(existing.list_meta || {}), required_modes:modes };
+        }
+
+        if (!Object.keys(updateFields).length) {
+          return jsonResponse({ success:false, error:'No editable fields supplied' }, 400, origin);
+        }
+
+        const updated = await supabaseUpdate(env, 'homework_assignments', `id=eq.${assignmentId}`, updateFields);
+        return jsonResponse({ success:true, assignment:updated?.[0] || null }, 200, origin);
+      }
+
       // ===== END ASSIGNMENT =====
       if (action === 'end_assignment') {
         const authUserId = await getUserIdFromRequest(request, env);
