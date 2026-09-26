@@ -4,7 +4,7 @@
 import { initWordtest } from './init.js?v=20260926-assign2';
 import { updatePreview } from './preview.js?v=20260923-imgstate2';
 import { printFile, generatePDF } from './print.js?v=20260923-imgstate2';
-import { getCurrentWorksheetData, loadWorksheet } from './worksheet_integration.js?v=20260923-imgstate2';
+import { getCurrentWorksheetData, loadWorksheet } from './worksheet_integration.js?v=20260926-book1';
 import { cycleImage, setSelectedImage } from './images.js?v=20260923-imgstate2';
 
 // Expose a minimal surface for inline handlers and external pages
