@@ -51,6 +51,159 @@
     return Array.isArray(data.students)?data.students:[];
   }
 
+
+  function wordBuilderApiFetch(path,options={}){
+    const url=window.WillenaAPI&&typeof window.WillenaAPI.getApiUrl==='function'
+      ?window.WillenaAPI.getApiUrl(path)
+      :path;
+    const opts={credentials:'include',cache:'no-store',...options};
+    const headers=new Headers(opts.headers||{});
+    headers.delete('Authorization');
+    headers.delete('authorization');
+    opts.headers=headers;
+    return window.fetch(url,opts);
+  }
+
+  async function persistImagesToR2(worksheet){
+    if(!worksheet||worksheet.worksheet_type!=='wordtest'||!worksheet.images)return worksheet;
+    let images;
+    try{images=typeof worksheet.images==='string'?JSON.parse(worksheet.images):worksheet.images}catch(_){return worksheet}
+    if(!images||typeof images!=='object')return worksheet;
+
+    const assets=[];
+    for(const [key,image] of Object.entries(images)){
+      if(!image||typeof image!=='object')continue;
+      const src=String(image.src||'').trim();
+      if(!src||src==='emoji'||image.emoji)continue;
+      if(!/^https?:/i.test(src)&&!src.startsWith('data:'))continue;
+      if(image.asset_key&&image.sha256&&image.mime_type&&image.bytes)continue;
+      assets.push({key,source:src});
+    }
+    if(!assets.length)return worksheet;
+
+    const res=await fetch('https://word-builder-assets.willena.workers.dev',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      credentials:'omit',
+      body:JSON.stringify({assets})
+    });
+    if(!res.ok)throw new Error('Image persistence failed ('+res.status+')');
+    const result=await res.json().catch(()=>null);
+    if(!result||result.success!==true||!Array.isArray(result.assets)){
+      throw new Error(result?.error||'Image persistence returned invalid data');
+    }
+    const byKey=new Map(result.assets.map(x=>[String(x.input_key),x]));
+    for(const asset of assets){
+      const saved=byKey.get(String(asset.key));
+      if(!saved||!saved.url||!saved.asset_key||!saved.sha256){
+        throw new Error('Image persistence incomplete for '+asset.key);
+      }
+      images[asset.key]={
+        ...(images[asset.key]||{}),
+        src:saved.url,
+        asset_key:saved.asset_key,
+        sha256:saved.sha256,
+        mime_type:saved.mime_type||null,
+        bytes:saved.bytes||null
+      };
+    }
+    worksheet.images=JSON.stringify(images);
+    return worksheet;
+  }
+
+  function currentWorksheetForSave(){
+    if(typeof window.getCurrentWorksheetData!=='function'){
+      throw new Error('Word Test data is not ready yet.');
+    }
+    const worksheet=window.getCurrentWorksheetData();
+    if(!worksheet||worksheet.worksheet_type!=='wordtest'){
+      throw new Error('No Word Test is open.');
+    }
+    const meta=window._loadedWorksheetMeta||{};
+    worksheet.book=String(meta.book||worksheet.book||'').trim();
+    worksheet.book_id=meta.book_id||worksheet.book_id||null;
+    worksheet.unit=String(meta.unit||worksheet.unit||'').trim();
+    worksheet.language_point=meta.language_point||worksheet.language_point||'';
+    worksheet.notes=meta.notes||worksheet.notes||'';
+    if(window._currentWorksheetId)worksheet.user_id=window._currentWorksheetId;
+    return worksheet;
+  }
+
+  async function ensureSavedWordTest(){
+    const worksheet=currentWorksheetForSave();
+    if(!Array.isArray(worksheet.words)||!worksheet.words.length){
+      throw new Error('Add some words before assigning this Word Test.');
+    }
+    await persistImagesToR2(worksheet);
+    const response=await wordBuilderApiFetch('/.netlify/functions/admin_classes?action=word_builder_save',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(worksheet)
+    });
+    const result=await response.json().catch(()=>({}));
+    if(!response.ok||result.success===false||!result.id){
+      throw new Error(result.error||('Could not save Word Test ('+response.status+')'));
+    }
+
+    window._currentWorksheetId=result.id;
+    window._loadedWorksheetMeta={
+      ...(window._loadedWorksheetMeta||{}),
+      title:worksheet.title||result.title||'',
+      book:worksheet.book||'',
+      book_id:worksheet.book_id||null,
+      unit:worksheet.unit||'',
+      language_point:worksheet.language_point||'',
+      notes:worksheet.notes||''
+    };
+
+    return {
+      ...result,
+      success:true,
+      worksheet:{
+        id:result.id,
+        title:worksheet.title||result.title||'',
+        book:worksheet.book||'',
+        book_id:worksheet.book_id||null,
+        unit:worksheet.unit||''
+      }
+    };
+  }
+
+  window.onWordBuilderPersisted=function(saveResult){
+    const id=saveResult?.id||saveResult?.worksheet?.id||'';
+    if(id)window._currentWorksheetId=id;
+    if(saveResult?.worksheet){
+      window._loadedWorksheetMeta={
+        ...(window._loadedWorksheetMeta||{}),
+        title:saveResult.worksheet.title||window._loadedWorksheetMeta?.title||'',
+        book:saveResult.worksheet.book||window._loadedWorksheetMeta?.book||'',
+        book_id:saveResult.worksheet.book_id||window._loadedWorksheetMeta?.book_id||null,
+        unit:saveResult.worksheet.unit||window._loadedWorksheetMeta?.unit||''
+      };
+    }
+  };
+
+  window.openWordBuilderAssignment=async function(){
+    const btn=document.getElementById('assignWordTestBtn');
+    const oldText=btn?.textContent||'Assign Word Test';
+    if(btn){
+      btn.setAttribute('aria-disabled','true');
+      btn.textContent='Preparing…';
+    }
+    try{
+      const saved=await ensureSavedWordTest();
+      await openAssignmentModal(saved);
+    }catch(error){
+      console.error('[Word Builder] could not prepare assignment',error);
+      alert('Could not prepare Word Test: '+(error?.message||'Unknown error'));
+    }finally{
+      if(btn){
+        btn.removeAttribute('aria-disabled');
+        btn.textContent=oldText;
+      }
+    }
+  };
+
   function ensureModal(){
     let overlay=document.getElementById('wordBuilderAssignOverlay');
     if(overlay)return overlay;
@@ -258,9 +411,10 @@
     };
   }
 
-  // Called only by Worksheet Manager's explicit ?after=assign flow.
+  // Backward-compatible handoff for any older save-and-assign callers.
   window.onWordBuilderSaved=function(saveResult){
     if(!saveResult||!saveResult.success)return;
+    window.onWordBuilderPersisted(saveResult);
     openAssignmentModal(saveResult).catch(error=>{
       console.error('[Word Builder] Assign Word Test modal failed:',error);
       alert('The word test was saved, but the assignment window could not open.');
