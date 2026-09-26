@@ -176,7 +176,7 @@ body.vocab-session-open{overflow:hidden}
 }
 .vocab-teacher-mode-count{display:block;margin-top:4px;color:#71898e;font-size:.68rem;font-weight:800;line-height:1.15}
 .vocab-teacher-stars{display:block;margin-top:7px;color:#f0b323;font-size:.78rem;font-weight:900;letter-spacing:.02em;line-height:1}
-.vocab-teacher-mode.is-complete{border-color:#b9dcc7}
+.vocab-teacher-mode.is-complete{border-color:#c9f1f4}
 @media(max-width:560px){
   #vocabWordTestScreen{border-width:4px}
   .vocab-teacher-modes{grid-template-columns:1fr;gap:16px}
