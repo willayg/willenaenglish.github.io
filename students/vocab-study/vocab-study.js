@@ -20,9 +20,11 @@ const unitTitleEl=el('vocabUnitTitle');
 const itemCountEl=el('vocabItemCount');
 const wordListOpenBtn=el('vocabWordListOpen');
 const wordModalEl=el('vocabWordModal');
+const wordModalTitleEl=el('vocabWordModalTitle');
 const wordModalCloseBtn=el('vocabWordModalClose');
 const wordModalListEl=el('vocabWordModalList');
 const wordModalMetaEl=el('vocabWordModalMeta');
+let wordModalReturnFocus=null;
 const startBtn=el('vocabStudyStart');
 const spellingPreviewBtn=el('vocabSpellingPreview');
 const pronunciationStartBtn=el('vocabPronunciationStart');
@@ -761,14 +763,22 @@ function renderTeacherAssignments(){
         '<span class="vocab-skill-copy"><small class="vocab-teacher-step">STEP '+(stepNumbers[mode]||'')+'</small><strong>'+escapeHtml(labels[mode]||mode)+'</strong><span class="vocab-teacher-stars" aria-label="'+stars+' out of 10 stars">★ '+stars+'/10</span></span>'+
       '</button>';
     }).join('');
+    const wordCount=teacherAssignmentWords(row).length;
     return '<article class="vocab-teacher-card">'+
-      '<div class="vocab-teacher-card-title"><strong>'+escapeHtml(a.title||'Vocabulary Practice')+'</strong><small>'+teacherAssignmentWords(row).length+' words'+(a.due_at?' · '+escapeHtml(formatTeacherDue(a.due_at)):'')+'</small></div>'+
+      '<div class="vocab-teacher-card-title">'+
+        '<div><strong>'+escapeHtml(a.title||'Vocabulary Practice')+'</strong><small>'+wordCount+' words'+(a.due_at?' · '+escapeHtml(formatTeacherDue(a.due_at)):'')+'</small></div>'+
+        '<button class="vocab-teacher-words" type="button" data-teacher-words="'+index+'">'+wordCount+' 단어 보기</button>'+
+      '</div>'+
       '<div class="vocab-teacher-modes">'+modeHtml+'</div>'+
     '</article>';
   }).join('');
   teacherPracticeListEl.querySelectorAll('[data-teacher-assignment]').forEach(btn=>btn.addEventListener('click',()=>{
     const row=state.teacherAssignments[Number(btn.dataset.teacherAssignment)];
     if(row)startTeacherAssignment(row,btn.dataset.teacherMode);
+  }));
+  teacherPracticeListEl.querySelectorAll('[data-teacher-words]').forEach(btn=>btn.addEventListener('click',()=>{
+    const row=state.teacherAssignments[Number(btn.dataset.teacherWords)];
+    if(row)openTeacherWordList(row,btn);
   }));
 }
 async function loadTeacherAssignments(){
@@ -1344,23 +1354,53 @@ function unitVocabularyWords(items){
   });
   return [...map.values()];
 }
-function openWordList(){
-  const words=unitVocabularyWords(state.items);if(!words.length||!wordModalEl)return;
-  wordModalMetaEl.textContent='Unit '+state.unit.unit_number+' · '+words.length+' words';
-  wordModalListEl.innerHTML=words.map(w=>
-    '<div class="vocab-word-row"><strong>'+escapeHtml(w.word)+'</strong><span>'+escapeHtml(w.ko)+'</span></div>'
+function renderWordModal(words,{meta='',title='단어 목록',opener=null}={}){
+  if(!words?.length||!wordModalEl)return;
+  wordModalReturnFocus=opener||document.activeElement||null;
+  if(wordModalTitleEl)wordModalTitleEl.textContent=title;
+  if(wordModalMetaEl)wordModalMetaEl.textContent=meta;
+  wordModalListEl.innerHTML=words.map((w,index)=>
+    '<div class="vocab-word-row">'+
+      '<div class="vocab-word-row-copy"><strong>'+escapeHtml(w.word)+'</strong><span>'+escapeHtml(w.ko)+'</span></div>'+
+      '<button class="vocab-word-audio" type="button" data-modal-word="'+index+'" aria-label="'+escapeHtml(w.word)+' 듣기">'+
+        '<img src="/shared/svgs/headphones.svg?v=20260926-v0002" alt="" aria-hidden="true">'+
+      '</button>'+
+    '</div>'
   ).join('');
+  wordModalListEl.querySelectorAll('[data-modal-word]').forEach(btn=>btn.addEventListener('click',()=>{
+    const word=words[Number(btn.dataset.modalWord)];
+    if(word)playPreviewWord(word.word);
+  }));
   wordModalEl.hidden=false;
   wordModalEl.setAttribute('aria-hidden','false');
   document.body.classList.add('vocab-modal-open');
   wordModalCloseBtn?.focus();
+}
+function openWordList(){
+  const words=unitVocabularyWords(state.items);if(!words.length)return;
+  renderWordModal(words,{
+    title:'단어 목록',
+    meta:'Unit '+state.unit.unit_number+' · '+words.length+' words',
+    opener:wordListOpenBtn
+  });
+}
+function openTeacherWordList(row,opener){
+  const words=teacherAssignmentWords(row);if(!words.length)return;
+  const title=txt(row?.assignment?.title||'Word Test');
+  renderWordModal(words,{
+    title:'단어 목록',
+    meta:title+' · '+words.length+' words',
+    opener
+  });
 }
 function closeWordList(){
   if(!wordModalEl)return;
   wordModalEl.hidden=true;
   wordModalEl.setAttribute('aria-hidden','true');
   document.body.classList.remove('vocab-modal-open');
-  wordListOpenBtn?.focus();
+  const target=wordModalReturnFocus;
+  wordModalReturnFocus=null;
+  if(target?.isConnected)target.focus();
 }
 function renderHome(){
   if(!state.book||!state.unit)return;
@@ -1368,7 +1408,7 @@ function renderHome(){
   renderUnits();
   unitTitleEl.textContent='Unit '+state.unit.unit_number+(state.unit.title?' · '+state.unit.title:'');
   const words=unitVocabularyWords(state.items);
-  itemCountEl.textContent='단어 '+words.length+'개 · 지금 보기';
+  itemCountEl.textContent=words.length+' 단어 보기';
   if(wordListOpenBtn)wordListOpenBtn.disabled=!state.items.length;
   startBtn.disabled=!state.items.length;
   if(spellingPreviewBtn)spellingPreviewBtn.disabled=!state.items.length;
@@ -2182,7 +2222,7 @@ async function boot(){
       renderSkillProgress();
     });
     reportStartupPerf();
-    window.WillenaVocabStudy={version:'0.085',getState:()=>state,start:startSession,openSpellingMenu,openSpellingPreview,openSpellingTest,openSpeakingSession,close:closeSession};
+    window.WillenaVocabStudy={version:'0.086',getState:()=>state,start:startSession,openSpellingMenu,openSpellingPreview,openSpellingTest,openSpeakingSession,close:closeSession};
   }catch(error){
     console.error('[Vocab Study] boot',error);
     if(frontWordTestCardEl)frontWordTestCardEl.hidden=true;
