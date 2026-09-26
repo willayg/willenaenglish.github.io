@@ -781,3 +781,11 @@ body.willena-kb-open .vocab-session-main{
 @keyframes vocabLoadSweep{0%{background-position:100% 0}100%{background-position:-100% 0}}
 @media(max-width:680px){.vocab-loading-logo{width:188px;height:70px}}
 @media(prefers-reduced-motion:reduce){.vocab-loading-sweep{animation:none}}
+
+/* Inline Word Test loading state */
+.vocab-wordtest-empty.is-loading{display:flex;flex-direction:column;align-items:flex-start;gap:7px}
+.vocab-wordtest-inline-loader{position:relative;width:34px;height:34px;margin-bottom:3px}
+.vocab-wordtest-loader-ring{position:absolute;inset:0;border:4px solid rgba(21,170,181,.16);border-top-color:var(--cyan-strong,#15aab5);border-radius:50%;animation:vocabWordTestSpin .8s linear infinite}
+.vocab-wordtest-loader-dot{position:absolute;width:8px;height:8px;left:13px;top:13px;border-radius:50%;background:var(--pink,#ee5f91);box-shadow:0 0 0 4px rgba(238,95,145,.1)}
+@keyframes vocabWordTestSpin{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.vocab-wordtest-loader-ring{animation:none}}
