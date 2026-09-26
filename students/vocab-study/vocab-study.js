@@ -888,8 +888,21 @@ function teacherTitle(mode){
   return title+' · '+suffix;
 }
 function startTeacherAssignment(row,mode,{historyMode='push'}={}){
+  // Assigned activities can be reopened from history navigation without closeSession
+  // reaching its normal state cleanup. Always clear competing activity state here
+  // so the shared Check Answer button routes to the mode the student actually opened.
+  state.queue=[];
+  state.index=0;
+  state.checked=false;
+  state.renderer=null;
+  state.spellingPractice=null;
+  state.spellingTest=null;
+  state.speakingSession=null;
+  state.rewardSession=null;
+  state.activeTeacherItems=[];
   state.activeTeacherAssignment=row;
   state.progressSnapshot=null;
+
   if(mode==='quiz'){
     const items=teacherRemainingActivities(row);
     if(!items.length)return;
@@ -897,9 +910,9 @@ function startTeacherAssignment(row,mode,{historyMode='push'}={}){
     startSession(items,{teacher:true,historyMode});
     return;
   }
+
   const words=teacherRemainingWords(row,mode);
   if(!words.length)return;
-  state.activeTeacherItems=[];
   if(mode==='spelling_test')openSpellingTest({teacherWords:words,historyMode});
   else if(mode==='speaking')openSpeakingSession({teacherWords:words,historyMode});
 }
@@ -1857,6 +1870,7 @@ async function openSpellingTest({teacherWords=null,historyMode=null}={}){
     words=shuffle(nextSkillTargets(state.progressSnapshot,'spelling',spellingTestWords(state.items),item=>item?.id,'spelling_test'));
   }
   if(!words.length)return;
+  state.speakingSession=null;
   state.spellingPractice=null;
   state.spellingTest={words,index:0,results:[],checked:false,initialTotal:words.length};
   startRewardSession('spelling_test');
@@ -2301,7 +2315,7 @@ async function boot(){
     reportStartupPerf();
     preloadStudentSfx();
 
-window.WillenaVocabStudy={version:'0.089',getState:()=>state,start:startSession,openSpellingMenu,openSpellingPreview,openSpellingTest,openSpeakingSession,close:closeSession};
+window.WillenaVocabStudy={version:'0.090',getState:()=>state,start:startSession,openSpellingMenu,openSpellingPreview,openSpellingTest,openSpeakingSession,close:closeSession};
   }catch(error){
     console.error('[Vocab Study] boot',error);
     if(frontWordTestCardEl)frontWordTestCardEl.hidden=true;
