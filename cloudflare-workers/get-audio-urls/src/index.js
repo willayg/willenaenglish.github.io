@@ -120,6 +120,7 @@ function publicBatchStatus(marker) {
     classified_count: marker.classify_index || 0,
     target_count: marker.targets?.length || 0,
     completed_count: marker.completed?.length || 0,
+    completed: marker.completed || [],
     failure_count: marker.failures?.length || 0,
     failures: marker.failures || [],
     last_chunk: marker.last_chunk || [],
@@ -254,6 +255,11 @@ button{font:inherit;font-weight:800;padding:12px 16px;border:3px solid #ffd0df;b
 button:disabled{opacity:.5} progress{width:100%;height:22px;margin:14px 0 6px}
 pre{white-space:pre-wrap;background:#f4f7f8;padding:14px;border-radius:12px;min-height:120px}
 .small{color:#65757d;font-size:13px}
+.players{margin-top:20px}
+.player-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid #e5edef}
+.player-word{font-weight:800;min-width:0;flex:1;overflow-wrap:anywhere}
+.play-btn{margin:0;padding:9px 14px;min-width:84px}
+.now-playing{margin-top:8px;font-size:13px;color:#65757d}
 </style></head><body><main><div class="card">
 <h1>Shimmer monosyllable replacement</h1>
 <p>Direct worker: published monosyllables → OpenAI <b>gpt-4o-mini-tts / Shimmer</b> → R2.</p>
@@ -263,12 +269,51 @@ pre{white-space:pre-wrap;background:#f4f7f8;padding:14px;border-radius:12px;min-
 <button id="status">Refresh status</button>
 <progress id="bar" value="0" max="1"></progress>
 <div id="summary" class="small">Loading…</div>
+<div class="players">
+  <h2>New Shimmer files</h2>
+  <div id="nowPlaying" class="now-playing">Nothing playing.</div>
+  <div id="players"><div class="small">Generated files will appear here.</div></div>
+  <audio id="audio" preload="none"></audio>
+</div>
 <pre id="out">Ready.</pre>
 </div></main>
 <script>
 const API='/admin/shimmer-batch';
 const out=document.getElementById('out'),go=document.getElementById('go'),bar=document.getElementById('bar'),summary=document.getElementById('summary');
+const players=document.getElementById('players'),audio=document.getElementById('audio'),nowPlaying=document.getElementById('nowPlaying');
 let running=false,stopRequested=false;
+
+function audioUrl(word){
+  return '/audio/' + encodeURIComponent(String(word).trim().toLowerCase().replace(/\s+/g,'_').replace(/[^a-z0-9_\-]/g,'')) + '.mp3?batch=' + Date.now();
+}
+function renderPlayers(words){
+  const list=Array.isArray(words)?words.slice().reverse():[];
+  if(!list.length){
+    players.innerHTML='<div class="small">Generated files will appear here.</div>';
+    return;
+  }
+  players.innerHTML='';
+  for(const word of list){
+    const row=document.createElement('div');
+    row.className='player-row';
+    const label=document.createElement('div');
+    label.className='player-word';
+    label.textContent=word;
+    const btn=document.createElement('button');
+    btn.className='play-btn';
+    btn.type='button';
+    btn.textContent='▶ Play';
+    btn.addEventListener('click',async()=>{
+      audio.src=audioUrl(word);
+      nowPlaying.textContent='Playing: '+word;
+      try{await audio.play();}catch(e){nowPlaying.textContent='Could not play '+word+': '+e.message;}
+    });
+    row.append(label,btn);
+    players.appendChild(row);
+  }
+}
+audio.addEventListener('ended',()=>{nowPlaying.textContent='Finished.';});
+
 function show(j){
  const state=j.state||'unknown';
  if(state==='classifying'){
@@ -280,6 +325,7 @@ function show(j){
    bar.max=Math.max(total,1);bar.value=Math.min(done,bar.max);
    summary.textContent=(j.openai_configured===false?'Student OpenAI endpoint unavailable · ':'')+(total?done+' / '+total+' complete · ':'')+state;
  }
+ renderPlayers(j.completed||[]);
  out.textContent=JSON.stringify(j,null,2);
 }
 async function req(method){
