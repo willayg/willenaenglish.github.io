@@ -125,6 +125,7 @@ export function loadWorksheet(worksheet, currentWords, currentSettings) {
     window._loadedWorksheetMeta = {
         title: worksheet.title || '',
         book: worksheet.book || '',
+        book_id: worksheet.book_id || null,
         unit: worksheet.unit || '',
         language_point: worksheet.language_point || '',
         notes: worksheet.notes || ''
