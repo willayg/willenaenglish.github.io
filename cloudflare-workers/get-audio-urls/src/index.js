@@ -25,6 +25,9 @@ const ALLOWED_ORIGINS = [
   'https://willenaenglish-github-io.pages.dev',
   // Cloudflare Pages deployment
   'https://cf.willenaenglish.com',
+  'https://teachers.willenaenglish.com',
+  'https://staging.willenaenglish.com',
+  'https://students.willenaenglish.com',
   'http://localhost:8888',
   'http://localhost:9000',
 ];
