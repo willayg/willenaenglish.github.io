@@ -71,7 +71,7 @@ const state={
   teacherAssignments:[],
   activeTeacherAssignment:null,
   activeTeacherItems:[],
-  pendingTeacherSaves:new Set()
+  pendingTeacherRecords:new Set()
 };
 
 function txt(v){return String(v==null?'':v).trim()}
@@ -147,8 +147,8 @@ async function completeRewardSession(){
       :('Vocabulary · '+txt(state.book?.book_title||state.book?.book_id||'Book')+' · Unit '+txt(state.unit?.unit_number||state.unit?.id||''))
   );
   try{
-    if(teacher&&state.pendingTeacherSaves.size){
-      await Promise.allSettled([...state.pendingTeacherSaves]);
+    if(teacher&&state.pendingTeacherRecords.size){
+      await Promise.allSettled([...state.pendingTeacherRecords]);
     }
     const payload={
       reward_only:true,
@@ -179,11 +179,12 @@ async function completeRewardSession(){
         reward_scheme:'vocab-study-v1'
       }
     };
-    const endpoint=teacher
-      ?('/.netlify/functions/progress_summary?section=vocab_assignment_attempt&_='+Date.now())
-      :('/.netlify/functions/progress_summary?section=study_attempt&_='+Date.now());
-    const body=teacher?{assignment_id:teacher.assignment.id,payload}:{payload};
-    await api(endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    payload.assignment_id=teacher?.assignment?.id||null;
+    await api('/.netlify/functions/progress_summary?section=study_attempt&_='+Date.now(),{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({payload})
+    });
     try{
       window.dispatchEvent(new CustomEvent('session:ended',{detail:{session_id:reward.rewardSessionId,mode:'vocab_'+reward.mode,list_name:listName,list_size:reward.firstTotal}}));
       window.dispatchEvent(new CustomEvent('stars:refresh',{detail:{earned:reward.stars}}));
@@ -517,47 +518,12 @@ function recordVocabAttempt({skill,responseType,lexicalEntryId,activityId,prompt
     assignment_id:teacher?.assignment?.id||null
   },metadata||{});
 
-  if(teacher){
-    const payload={
-      session_id:state.rewardSession?.rewardSessionId||(window.crypto?.randomUUID?.()||('teacher-vocab-'+Date.now())),
-      client_attempt_id:(window.crypto?.randomUUID?.()||('teacher-attempt-'+Date.now()+'-'+Math.random().toString(16).slice(2))),
-      book_id:baseMeta.book_id,
-      unit_id:baseMeta.unit_id,
-      skill:txt(skill),
-      response_type:txt(responseType),
-      content_type:'lexical_entry',
-      content_id:lexicalId,
-      mastery_content_type:'lexical_entry',
-      mastery_content_id:lexicalId,
-      activity_id:txt(activityId)||('vocab-study-'+skill),
-      stimulus_snapshot:{type:'text',prompt:txt(prompt)},
-      student_answer:studentAnswer,
-      correct_answer:correctAnswer,
-      score:correct?1:0,
-      is_correct:!!correct,
-      response_time_ms:state.questionStartedAt?Math.max(0,Date.now()-state.questionStartedAt):0,
-      hints_used:Math.max(0,Number(hintsUsed)||0),
-      retry_count:Math.max(0,Number(retryCount)||0),
-      metadata:Object.assign({},baseMeta,{session_source:'teacher'}),
-      scoring_version:'activity-v1',
-      progress_version:'study-v1',
-      study_context:'independent'
-    };
-    const save=api('/.netlify/functions/progress_summary?section=vocab_assignment_attempt&_='+Date.now(),{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({assignment_id:teacher.assignment.id,payload})
-    }).catch(error=>console.warn('[Vocab Study] teacher assignment attempt save failed',error));
-    state.pendingTeacherSaves.add(save);
-    save.finally(()=>state.pendingTeacherSaves.delete(save));
-    return;
-  }
-
   const recorder=window.WillenaStudyProgress;
   if(!recorder||typeof recorder.record!=='function'){
     console.warn('[Vocab Study] canonical study recorder unavailable');
     return;
   }
+
   const detail={
     activity:{
       id:txt(activityId)||('vocab-study-'+skill),
@@ -570,14 +536,18 @@ function recordVocabAttempt({skill,responseType,lexicalEntryId,activityId,prompt
       metadata:baseMeta
     },
     result:{selected:studentAnswer,answer:correctAnswer,correct:!!correct,score:correct?1:0},
-    responseTimeMs:state.questionStartedAt?Math.max(0,Date.now()-state.questionStartedAt):0
-  };
-  recorder.record(Object.assign({},detail,{
+    responseTimeMs:state.questionStartedAt?Math.max(0,Date.now()-state.questionStartedAt):0,
     hintsUsed:Math.max(0,Number(hintsUsed)||0),
     retryCount:Math.max(0,Number(retryCount)||0),
     attemptNumber:Math.max(1,Number(attemptNumber)||1),
-    sessionSource:txt(sessionSource)||'student'
-  }));
+    sessionSource:teacher?'teacher':(txt(sessionSource)||'student')
+  };
+
+  const save=recorder.record(detail);
+  if(teacher&&save&&typeof save.then==='function'){
+    state.pendingTeacherRecords.add(save);
+    save.finally(()=>state.pendingTeacherRecords.delete(save));
+  }
 }
 
 
@@ -1687,8 +1657,8 @@ async function closeSession(){
   sessionEl.hidden=true;root.innerHTML='';answerNote.hidden=true;bottomEl.hidden=false;instructionEl.hidden=false;
   if(state.renderer?.setDisabled)state.renderer.setDisabled(true);
 
-  if(wasTeacher&&state.pendingTeacherSaves.size){
-    try{await Promise.allSettled([...state.pendingTeacherSaves])}catch(_){}
+  if(wasTeacher&&state.pendingTeacherRecords.size){
+    try{await Promise.allSettled([...state.pendingTeacherRecords])}catch(_){}
   }
   if(wasTeacher){
     try{await loadTeacherAssignments()}catch(error){console.warn('[Vocab Study] partial homework refresh failed',error)}
@@ -1753,7 +1723,7 @@ async function boot(){
       renderSkillProgress();
     });
     reportStartupPerf();
-    window.WillenaVocabStudy={version:'0.053',getState:()=>state,start:startSession,openSpellingMenu,openSpellingPreview,openSpellingTest,openSpeakingSession,close:closeSession};
+    window.WillenaVocabStudy={version:'0.055',getState:()=>state,start:startSession,openSpellingMenu,openSpellingPreview,openSpellingTest,openSpeakingSession,close:closeSession};
   }catch(error){
     console.error('[Vocab Study] boot',error);
     setStatus(error?.message||'불러오지 못했습니다. 새로고침해 주세요.');
