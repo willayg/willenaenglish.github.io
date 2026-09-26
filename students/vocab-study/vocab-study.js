@@ -425,7 +425,7 @@ function renderFrontMenu(){
   const books=frontBookRows();
   frontBookListEl.innerHTML=books.length?books.map(row=>
     '<button class="vocab-front-book-card" type="button" data-front-book="'+escapeHtml(row.bookId)+'">'+
-      '<span><span class="eyebrow">BOOK STUDY</span><strong>'+escapeHtml(row.title)+'</strong><small>Units · Quiz · Spelling · Speaking</small></span>'+
+      '<span><span class="eyebrow">교재 공부</span><strong>'+escapeHtml(row.title)+'</strong><small>단원 · 퀴즈 · 철자 · 말하기</small></span>'+
       '<span class="vocab-front-arrow" aria-hidden="true">›</span>'+
     '</button>'
   ).join(''):'<div class="vocab-front-empty">No assigned books found.</div>';
@@ -435,9 +435,9 @@ function renderFrontMenu(){
     if(frontWordTestMetaEl){
       if(current.length){
         const due=current.map(row=>row?.assignment?.due_at).filter(Boolean).sort()[0];
-        frontWordTestMetaEl.textContent=current.length+' current assignment'+(current.length===1?'':'s')+(due?' · Next due '+formatTeacherDue(due):'');
+        frontWordTestMetaEl.textContent='진행 중 '+current.length+'개'+(due?' · 다음 마감 '+formatTeacherDue(due):'');
       }else{
-        frontWordTestMetaEl.textContent=state.teacherAssignmentHistory.length?'Review old word tests':'No current homework';
+        frontWordTestMetaEl.textContent=state.teacherAssignmentHistory.length?'지난 단어 시험 복습하기':'현재 숙제가 없어요';
       }
     }
   }
@@ -483,10 +483,10 @@ function renderOldWordTests(){
     return txt(row?.assignment?.title||'Other word tests').replace(/\s+Unit\b.*$/i,'')||'Other word tests';
   };
   const bookIds=[...bookMap.keys()];
-  if(oldTestsMetaEl)oldTestsMetaEl.textContent=history.length?(history.length+' old test'+(history.length===1?'':'s')+' · by book'):'No old word tests yet';
+  if(oldTestsMetaEl)oldTestsMetaEl.textContent=history.length?('지난 시험 '+history.length+'개 · 교재별 보기'):'지난 단어 시험이 없어요';
   if(!history.length){
     oldTestsBooksEl.innerHTML='';
-    oldTestsListEl.innerHTML='<div class="vocab-old-empty">Finished Word Tests will appear here.</div>';
+    oldTestsListEl.innerHTML='<div class="vocab-old-empty">완료한 단어 시험이 여기에 표시됩니다.</div>';
     return;
   }
   if(!state.wordTestBookFilter||!bookMap.has(state.wordTestBookFilter))state.wordTestBookFilter=bookIds[0]||'';
@@ -1935,7 +1935,7 @@ async function boot(){
       renderSkillProgress();
     });
     reportStartupPerf();
-    window.WillenaVocabStudy={version:'0.059',getState:()=>state,start:startSession,openSpellingMenu,openSpellingPreview,openSpellingTest,openSpeakingSession,close:closeSession};
+    window.WillenaVocabStudy={version:'0.060',getState:()=>state,start:startSession,openSpellingMenu,openSpellingPreview,openSpellingTest,openSpeakingSession,close:closeSession};
   }catch(error){
     console.error('[Vocab Study] boot',error);
     if(frontWordTestCardEl)frontWordTestCardEl.hidden=true;
