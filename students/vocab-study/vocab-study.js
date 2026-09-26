@@ -684,7 +684,7 @@ function setSkillRing(ring,value){
 }
 function starsText(count){
   const n=Math.max(0,Math.min(5,Math.round(Number(count)||0)));
-  return '★'.repeat(n)+'☆'.repeat(5-n);
+  return '★ '+n+'/5';
 }
 function setSkillCardStars({skill,ids,starsEl}){
   const stars=snapshotStars(state.progressSnapshot,skill,ids);
