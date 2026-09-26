@@ -317,6 +317,108 @@ function goldenAwardHtml(){
   return '<div class="vocab-golden-award"><img class="vocab-golden-award-icon" src="/shared/svgs/golden-unit.svg" alt=""><div><strong>Golden Unit earned!</strong><span>Unit '+escapeHtml(award.unitNumber||'')+' is mastered.</span></div></div>';
 }
 
+function formatTeacherDue(value){
+  const d=new Date(value||'');
+  if(Number.isNaN(d.getTime()))return'';
+  try{return d.toLocaleDateString('en-US',{month:'short',day:'numeric'})}catch(_){return''}
+}
+function teacherAssignmentWords(row){
+  return arr(row?.targets).map((target,index)=>{
+    const id=txt(target?.lexical_entry_id),word=txt(target?.english),ko=txt(target?.korean);
+    return id&&word&&ko?{id,word,ko,position:Number(target?.position)||index}:null;
+  }).filter(Boolean);
+}
+function teacherAssignmentActivities(row){
+  const items=teacherAssignmentWords(row);
+  const koPool=unique(items.map(x=>x.ko)),enPool=unique(items.map(x=>x.word)),out=[];
+  items.forEach((item,index)=>{
+    const koChoices=shuffle(unique([item.ko,...shuffle(koPool.filter(x=>x!==item.ko)).slice(0,3)]));
+    if(koChoices.length>=2)out.push({
+      id:'teacher-vocab-en-ko-'+item.id+'-'+index,sourceType:'lexical_entry',sourceId:item.id,skill:'vocabulary',
+      stimulus:{type:'text',prompt:item.word,context:'한국어 뜻을 고르세요.'},
+      response:{type:'multiple_choice',choices:koChoices},answer:item.ko,
+      metadata:{lexical_entry_id:item.id,canonical_lookup:item.word,translation_ko:item.ko,pair_form:'en_ko',pool_source:'teacher_assignment'}
+    });
+    const enChoices=shuffle(unique([item.word,...shuffle(enPool.filter(x=>x!==item.word)).slice(0,3)]));
+    if(enChoices.length>=2)out.push({
+      id:'teacher-vocab-ko-en-'+item.id+'-'+index,sourceType:'lexical_entry',sourceId:item.id,skill:'vocabulary',
+      stimulus:{type:'text',prompt:item.ko,context:'알맞은 영어 표현을 고르세요.'},
+      response:{type:'multiple_choice',choices:enChoices},answer:item.word,
+      metadata:{lexical_entry_id:item.id,canonical_lookup:item.word,translation_ko:item.ko,pair_form:'ko_en',pool_source:'teacher_assignment'}
+    });
+  });
+  return out;
+}
+function renderTeacherAssignments(){
+  if(!teacherPracticeEl||!teacherPracticeListEl)return;
+  if(state.adminMode||!state.teacherAssignments.length){
+    teacherPracticeEl.hidden=true;
+    teacherPracticeListEl.innerHTML='';
+    return;
+  }
+  teacherPracticeEl.hidden=false;
+  if(teacherPracticeCountEl)teacherPracticeCountEl.textContent=state.teacherAssignments.length+' assignment'+(state.teacherAssignments.length===1?'':'s');
+  teacherPracticeListEl.innerHTML=state.teacherAssignments.map((row,index)=>{
+    const a=row.assignment||{},student=arr(row.students)[0]||{},modes=arr(a.required_modes);
+    const pct=Math.max(0,Math.min(100,Number(student.completion_percent)||0));
+    const labels={quiz:'Quiz',spelling_test:'Spelling',speaking:'Speaking'};
+    const modeHtml=modes.map(mode=>{
+      const m=student.modes?.[mode]||{};
+      const complete=Number(m.total)>0&&Number(m.clean)>=Number(m.total);
+      const progress=Number(m.total)>0?Math.round(100*Number(m.clean||0)/Number(m.total)):0;
+      return '<button class="vocab-teacher-mode'+(complete?' is-complete':'')+'" type="button" data-teacher-assignment="'+index+'" data-teacher-mode="'+escapeHtml(mode)+'">'+escapeHtml(labels[mode]||mode)+'<small>'+progress+'%</small></button>';
+    }).join('');
+    return '<article class="vocab-teacher-card">'+
+      '<div class="vocab-teacher-card-top"><div class="vocab-teacher-card-title"><strong>'+escapeHtml(a.title||'Vocabulary Practice')+'</strong><small>'+teacherAssignmentWords(row).length+' words'+(a.due_at?' · Due '+escapeHtml(formatTeacherDue(a.due_at)):'')+'</small></div><span class="vocab-teacher-percent">'+pct+'%</span></div>'+
+      '<div class="vocab-teacher-progress"><span style="width:'+pct+'%"></span></div>'+
+      '<div class="vocab-teacher-modes">'+modeHtml+'</div>'+
+    '</article>';
+  }).join('');
+  teacherPracticeListEl.querySelectorAll('[data-teacher-assignment]').forEach(btn=>btn.addEventListener('click',()=>{
+    const row=state.teacherAssignments[Number(btn.dataset.teacherAssignment)];
+    if(row)startTeacherAssignment(row,btn.dataset.teacherMode);
+  }));
+}
+async function loadTeacherAssignments(){
+  if(state.adminMode)return[];
+  try{
+    const list=await api('/.netlify/functions/homework_api?action=list_assignments&mode=student&_='+Date.now());
+    const envelopes=arr(list.assignments).filter(a=>txt(a?.source_type)==='vocab_study');
+    const hydrated=[];
+    for(const assignment of envelopes){
+      try{
+        const row=await api('/.netlify/functions/homework_api?action=vocab_assignment_progress&assignment_id='+encodeURIComponent(assignment.id)+'&_='+Date.now());
+        if(row?.success)hydrated.push(row);
+      }catch(error){
+        console.warn('[Vocab Study] teacher assignment unavailable',assignment?.id,error);
+      }
+    }
+    state.teacherAssignments=hydrated;
+    renderTeacherAssignments();
+    return hydrated;
+  }catch(error){
+    console.warn('[Vocab Study] teacher assignments unavailable',error);
+    state.teacherAssignments=[];
+    renderTeacherAssignments();
+    return[];
+  }
+}
+function teacherTitle(mode){
+  const title=txt(state.activeTeacherAssignment?.assignment?.title||'Teacher Practice');
+  const suffix={quiz:'Quiz',spelling_test:'Spelling Test',speaking:'Speaking'}[mode]||'Practice';
+  return title+' · '+suffix;
+}
+function startTeacherAssignment(row,mode){
+  const words=teacherAssignmentWords(row);
+  if(!words.length)return;
+  state.activeTeacherAssignment=row;
+  state.activeTeacherItems=teacherAssignmentActivities(row);
+  state.progressSnapshot=null;
+  if(mode==='quiz')startSession(state.activeTeacherItems,{teacher:true});
+  else if(mode==='spelling_test')openSpellingTest({teacherWords:words});
+  else if(mode==='speaking')openSpeakingSession({teacherWords:words});
+}
+
 function ringPercent(value){
   return Math.max(0,Math.min(100,Math.round(Number(value)||0)));
 }
