@@ -1280,6 +1280,7 @@ async function finishSpellingTest(){
         '<div><strong>'+retries+'</strong><span>RETRIES</span></div>'+
       '</div>'+
       rewardSummaryHtml(reward)+
+      goldenAwardHtml()+
       '<div class="vocab-finish-actions"><button id="vocabSpellingTestDone" class="vocab-done-btn" type="button">Finish</button></div>'+
     '</section>';
   el('vocabSpellingTestDone')?.addEventListener('click',closeSession);
