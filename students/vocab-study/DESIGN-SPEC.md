@@ -1,7 +1,7 @@
 # Vocabulary Study — Design & Architecture Spec
 
 **App:** `students/vocab-study/`  
-**Current staging version:** `0.050`  
+**Current staging version:** `0.051`  
 **Status:** Active implementation  
 **Purpose:** Define the product behavior, study flow, renderer responsibilities, tracking model, mastery model, and modular architecture for the next generation Vocabulary Study app.
 
@@ -646,12 +646,17 @@ The star result is a motivational session reward and does not alter unit progres
 - The old standalone **Assign Homework** → Game Builder handoff has been removed. **Build a Game** remains a separate tool flow.
 - Individual-student targeting remains available in the P4A schema/API but is deferred from this first save modal; P4B starts with whole-class assignment as requested.
 
-#### P4C — Student Teacher Practice
-- Teacher Practice section in Vocabulary Study
-- exact assigned lexical targets
-- `session_source: "teacher"`
-- `assignment_id` attached to every attempt
-- reuse the same Quiz / Spelling / Speaking engine and renderer
+#### P4C — Student Teacher Practice — implemented in v0.051
+- Vocabulary Study loads the signed-in student's active `vocab_study` assignments from the Homework API.
+- A **Teacher Practice** block appears above self-study with title, due date, overall completion, and the required Quiz / Spelling / Speaking modes.
+- The assignment uses the exact canonical lexical targets saved by Word Builder.
+- Teacher Quiz, Spelling Test, and Speaking reuse the existing Vocabulary Study flows and universal renderer.
+- Every teacher attempt records `session_source: "teacher"` plus a first-class `assignment_id`.
+- Assignment-only attempts may have no single book/unit, so they are stored as independent assignment evidence instead of being falsely credited to the currently open unit.
+- The assignment recorder still awards normal Vocabulary Study points; scored teacher sessions also create normal reward sessions and count as meaningful streak study.
+- Server-side recording verifies the signed-in student belongs to the assignment class / optional target list and that the lexical entry belongs to the assignment.
+- Assignment progress reloads after session completion so the Teacher Practice card updates immediately.
+- Normal self-study continues to use the existing book/unit mastery recorder unchanged.
 
 #### P4D — Teacher Dashboard tracking
 - assignment list / class completion matrix
