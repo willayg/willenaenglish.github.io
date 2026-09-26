@@ -371,17 +371,19 @@ function renderTeacherAssignments(){
   if(teacherPracticeCountEl)teacherPracticeCountEl.textContent=state.teacherAssignments.length+' assignment'+(state.teacherAssignments.length===1?'':'s');
   teacherPracticeListEl.innerHTML=state.teacherAssignments.map((row,index)=>{
     const a=row.assignment||{},student=arr(row.students)[0]||{},modes=arr(a.required_modes);
-    const pct=Math.max(0,Math.min(100,Number(student.completion_percent)||0));
     const labels={quiz:'Quiz',spelling_test:'Spelling',speaking:'Speaking'};
+    const modeClasses={quiz:'vocab-skill-quiz',spelling_test:'vocab-skill-spelling',speaking:'vocab-skill-pronunciation'};
     const modeHtml=modes.map(mode=>{
       const m=student.modes?.[mode]||{};
       const complete=Number(m.total)>0&&Number(m.clean)>=Number(m.total);
       const progress=Number(m.total)>0?Math.round(100*Number(m.clean||0)/Number(m.total)):0;
-      return '<button class="vocab-teacher-mode'+(complete?' is-complete':'')+'" type="button" data-teacher-assignment="'+index+'" data-teacher-mode="'+escapeHtml(mode)+'">'+escapeHtml(labels[mode]||mode)+'<small>'+progress+'%</small></button>';
+      return '<button class="vocab-teacher-mode vocab-skill-card '+escapeHtml(modeClasses[mode]||'')+(complete?' is-complete':'')+'" type="button" data-teacher-assignment="'+index+'" data-teacher-mode="'+escapeHtml(mode)+'">'+
+        '<span class="vocab-skill-ring" style="--progress:'+progress+'"><span>'+progress+'%</span></span>'+
+        '<span class="vocab-skill-copy"><strong>'+escapeHtml(labels[mode]||mode)+'</strong></span>'+
+      '</button>';
     }).join('');
     return '<article class="vocab-teacher-card">'+
-      '<div class="vocab-teacher-card-top"><div class="vocab-teacher-card-title"><strong>'+escapeHtml(a.title||'Vocabulary Practice')+'</strong><small>'+teacherAssignmentWords(row).length+' words'+(a.due_at?' · Due '+escapeHtml(formatTeacherDue(a.due_at)):'')+'</small></div><span class="vocab-teacher-percent">'+pct+'%</span></div>'+
-      '<div class="vocab-teacher-progress"><span style="width:'+pct+'%"></span></div>'+
+      '<div class="vocab-teacher-card-title"><strong>'+escapeHtml(a.title||'Vocabulary Practice')+'</strong><small>'+teacherAssignmentWords(row).length+' words'+(a.due_at?' · Due '+escapeHtml(formatTeacherDue(a.due_at)):'')+'</small></div>'+
       '<div class="vocab-teacher-modes">'+modeHtml+'</div>'+
     '</article>';
   }).join('');
@@ -1723,7 +1725,7 @@ async function boot(){
       renderSkillProgress();
     });
     reportStartupPerf();
-    window.WillenaVocabStudy={version:'0.055',getState:()=>state,start:startSession,openSpellingMenu,openSpellingPreview,openSpellingTest,openSpeakingSession,close:closeSession};
+    window.WillenaVocabStudy={version:'0.056',getState:()=>state,start:startSession,openSpellingMenu,openSpellingPreview,openSpellingTest,openSpeakingSession,close:closeSession};
   }catch(error){
     console.error('[Vocab Study] boot',error);
     setStatus(error?.message||'불러오지 못했습니다. 새로고침해 주세요.');
