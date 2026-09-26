@@ -5,7 +5,7 @@ import {isSpeakableTarget,matchSpeakingTarget} from './speaking-match.js?v=20260
 import {getAssignment,setAssignment,getBookMeta,setBookMeta,getVocabulary,setVocabulary,background} from './vocab-startup-cache.js?v=20260925-v0001';
 import {snapshotPercent,snapshotStars,loadVocabSnapshot,nextSkillTargets} from './vocab-progress-snapshot.js?v=20260925-v0005';
 import {coachAttempt,repeatUntilCorrect,appendRetry,uniquePassedCount,wrongAttemptCount} from './vocab-pass-flow.js?v=20260925-v0002';
-import {createVocabHistoryNavigation} from './navigation-history.js?v=20260926-v0001';
+import {createVocabHistoryNavigation} from './navigation-history.js?v=20260926-v0002';
 
 const CONTENT_URL='https://gxwfsqxyuufqtitspfqg.supabase.co';
 const CONTENT_KEY=['sb_publishable_','G-FYhHfDL4OGdL892gY1Zg_','epdbEeqO'].join('');
@@ -406,6 +406,14 @@ function navigateBackHome(){
 }
 async function applyNavigationRoute(route){
   const screen=route?.screen||'home';
+  if(screen==='activity'){
+    if(sessionEl&&!sessionEl.hidden)return;
+    await reopenActivityRoute(route);
+    return;
+  }
+  if(sessionEl&&!sessionEl.hidden){
+    await closeSession({historyMode:'none'});
+  }
   if(screen==='book'){
     const bookId=txt(route.bookId)||txt(state.book?.book_id);
     await openBookById(bookId,{historyMode:'none',unitId:route.unitId});
@@ -421,6 +429,48 @@ async function startHistoryNavigation(initialScreen='home'){
   if(navController)return;
   navController=createVocabHistoryNavigation({applyRoute:applyNavigationRoute});
   await navController.start(initialScreen==='book'?currentBookRoute():{screen:'home'});
+}
+function activityParentRoute(){
+  const current=navController?.current?.()||{};
+  if(current.screen==='book'||current.screen==='wordtest')return current;
+  if(state.activeScreen==='wordtest')return{screen:'wordtest'};
+  return currentBookRoute();
+}
+function writeActivityNavigation(activityKind,mode='push'){
+  if(!navController||navController.applying||mode==='none')return;
+  const parent=activityParentRoute();
+  const route={
+    screen:'activity',
+    parentScreen:parent.screen==='wordtest'?'wordtest':'book',
+    bookId:txt(parent.bookId||state.book?.book_id),
+    unitId:txt(parent.unitId||state.unit?.id),
+    activityKind:txt(activityKind),
+    teacherAssignmentId:txt(state.activeTeacherAssignment?.assignment?.id)
+  };
+  if(mode==='replace')navController.replace(route);
+  else navController.push(route);
+}
+function activityParentFromRoute(route){
+  return route?.parentScreen==='wordtest'
+    ?{screen:'wordtest'}
+    :{screen:'book',bookId:txt(route?.bookId),unitId:txt(route?.unitId)};
+}
+async function reopenActivityRoute(route){
+  const teacherId=txt(route?.teacherAssignmentId);
+  const kind=txt(route?.activityKind);
+  if(teacherId){
+    const row=arr(state.teacherAssignments).find(item=>String(item?.assignment?.id)===String(teacherId));
+    if(row){
+      const mode=kind==='quiz'?'quiz':kind==='spelling_test'?'spelling_test':kind==='speaking'?'speaking':'';
+      if(mode){startTeacherAssignment(row,mode,{historyMode:'none'});return}
+    }
+  }
+  if(kind==='quiz'){await startSession(null,{historyMode:'none'});return}
+  if(kind==='spelling_menu'){openSpellingMenu({historyMode:'none'});return}
+  if(kind==='spelling_coach'){await openSpellingPreview({historyMode:'none'});return}
+  if(kind==='spelling_test'){await openSpellingTest({historyMode:'none'});return}
+  if(kind==='speaking'){await openSpeakingSession({historyMode:'none'});return}
+  await applyNavigationRoute(activityParentFromRoute(route));
 }
 function frontBookRows(){
   const seen=new Set(),rows=[];
@@ -709,15 +759,15 @@ function teacherTitle(mode){
   const suffix={quiz:'Quiz',spelling_test:'Spelling Test',speaking:'Speaking'}[mode]||'Practice';
   return title+' · '+suffix;
 }
-function startTeacherAssignment(row,mode){
+function startTeacherAssignment(row,mode,{historyMode='push'}={}){
   const words=teacherAssignmentWords(row);
   if(!words.length)return;
   state.activeTeacherAssignment=row;
   state.activeTeacherItems=teacherAssignmentActivities(row);
   state.progressSnapshot=null;
-  if(mode==='quiz')startSession(state.activeTeacherItems,{teacher:true});
-  else if(mode==='spelling_test')openSpellingTest({teacherWords:words});
-  else if(mode==='speaking')openSpeakingSession({teacherWords:words});
+  if(mode==='quiz')startSession(state.activeTeacherItems,{teacher:true,historyMode});
+  else if(mode==='spelling_test')openSpellingTest({teacherWords:words,historyMode});
+  else if(mode==='speaking')openSpeakingSession({teacherWords:words,historyMode});
 }
 
 function ringPercent(value){
@@ -1365,7 +1415,7 @@ function speakingWords(items){
     return speakingTarget&&isSpeakableTarget(speakingTarget)?Object.assign({},word,{speakingTarget}):null;
   }).filter(Boolean);
 }
-async function openSpeakingSession({teacherWords=null}={}){
+async function openSpeakingSession({teacherWords=null,historyMode='push'}={}){
   let words;
   if(teacherWords&&teacherWords.length){
     words=shuffle(teacherWords.map(w=>{
@@ -1384,6 +1434,7 @@ async function openSpeakingSession({teacherWords=null}={}){
   titleEl.textContent=state.activeTeacherAssignment?teacherTitle('speaking'):(state.book.book_title+' · Unit '+state.unit.unit_number+' · Speaking');
   sessionEl.hidden=false;
   document.body.classList.add('vocab-session-open');
+  writeActivityNavigation('speaking',historyMode);
   renderSpeakingQuestion();
 }
 function speakingQuestion(word,index){
@@ -1552,7 +1603,7 @@ function spellingSummary(practice){
   arr(practice?.results).forEach(result=>{if(Object.prototype.hasOwnProperty.call(counts,result.result))counts[result.result]++});
   return counts;
 }
-function openSpellingMenu(){
+function openSpellingMenu({historyMode='push'}={}){
   const words=spellingWords(state.items);if(!words.length)return;
   state.spellingPractice=null;
   state.renderer=null;
@@ -1583,16 +1634,17 @@ function openSpellingMenu(){
         '</button>'+
       '</div>'+
     '</section>';
-  el('vocabSpellingTrainer')?.addEventListener('click',openSpellingPreview);
-  el('vocabSpellingTest')?.addEventListener('click',openSpellingTest);
+  el('vocabSpellingTrainer')?.addEventListener('click',()=>openSpellingPreview({historyMode:'replace'}));
+  el('vocabSpellingTest')?.addEventListener('click',()=>openSpellingTest({historyMode:'replace'}));
   sessionEl.hidden=false;
   document.body.classList.add('vocab-session-open');
+  writeActivityNavigation('spelling_menu',historyMode);
   sessionMain.scrollTop=0;
 }
 function spellingTestWords(items){
   return shuffle(spellingWords(items));
 }
-async function openSpellingTest({teacherWords=null}={}){
+async function openSpellingTest({teacherWords=null,historyMode=null}={}){
   let words;
   if(teacherWords&&teacherWords.length){
     words=shuffle(teacherWords.map(w=>{
@@ -1615,6 +1667,8 @@ async function openSpellingTest({teacherWords=null}={}){
   bottomEl.hidden=false;
   sessionEl.hidden=false;
   document.body.classList.add('vocab-session-open');
+  const navMode=historyMode||(navController?.current?.().screen==='activity'?'replace':'push');
+  writeActivityNavigation('spelling_test',navMode);
   renderSpellingTestQuestion();
 }
 function spellingTestQuestion(word,index){
@@ -1724,7 +1778,7 @@ async function finishSpellingTest(){
   sessionMain.scrollTop=0;
 }
 
-async function openSpellingPreview(){
+async function openSpellingPreview({historyMode='replace'}={}){
   await ensureProgressSnapshot();
   const words=nextSkillTargets(state.progressSnapshot,'spelling',spellingPreviewWords(state.items),item=>item?.id,'spelling_coach');if(!words.length)return;
   state.spellingPractice=createSpellingPractice(words);
@@ -1756,6 +1810,7 @@ async function openSpellingPreview(){
   el('vocabStartSpelling')?.addEventListener('click',startSpellingPractice);
   sessionEl.hidden=false;
   document.body.classList.add('vocab-session-open');
+  writeActivityNavigation('spelling_coach',historyMode);
   sessionMain.scrollTop=0;
 }
 
@@ -1884,7 +1939,7 @@ async function finishSpellingPractice(){
 }
 
 function escapeHtml(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-async function startSession(items=null,{teacher=false}={}){
+async function startSession(items=null,{teacher=false,historyMode='push'}={}){
   let source=items&&items.length?items:null;
   if(!source){
     await ensureProgressSnapshot();
@@ -1896,6 +1951,7 @@ async function startSession(items=null,{teacher=false}={}){
   state.index=0;state.outcomes=new Map();state.reviewKeys=new Set();state.retryCounts=new Map();
   titleEl.textContent=teacher?teacherTitle('quiz'):(state.book.book_title+' · Unit '+state.unit.unit_number);
   sessionEl.hidden=false;document.body.classList.add('vocab-session-open');
+  writeActivityNavigation('quiz',historyMode);
   renderQuestion();
 }
 function reviewSession(){
@@ -1903,7 +1959,7 @@ function reviewSession(){
   const source=state.activeTeacherAssignment?state.activeTeacherItems:state.items;
   const reviewItems=source.filter(item=>wanted.has(activityKey(item)));
   if(!reviewItems.length)return closeSession();
-  startSession(reviewItems);
+  startSession(reviewItems,{historyMode:'none'});
 }
 async function finishSession(){
   const reward=await completeRewardSession();
@@ -1943,7 +1999,11 @@ async function finishSession(){
   el('vocabDone')?.addEventListener('click',closeSession);
   sessionMain.scrollTop=0;
 }
-async function closeSession(){
+async function closeSession({historyMode='back'}={}){
+  if(historyMode==='back'&&navController?.current?.().screen==='activity'){
+    navController.back(activityParentFromRoute(navController.current()));
+    return;
+  }
   const wasTeacher=!!state.activeTeacherAssignment;
   document.body.classList.remove('vocab-session-open');
   sessionEl.hidden=true;root.innerHTML='';answerNote.hidden=true;bottomEl.hidden=false;instructionEl.hidden=false;
@@ -2023,7 +2083,7 @@ async function boot(){
       renderSkillProgress();
     });
     reportStartupPerf();
-    window.WillenaVocabStudy={version:'0.078',getState:()=>state,start:startSession,openSpellingMenu,openSpellingPreview,openSpellingTest,openSpeakingSession,close:closeSession};
+    window.WillenaVocabStudy={version:'0.079',getState:()=>state,start:startSession,openSpellingMenu,openSpellingPreview,openSpellingTest,openSpeakingSession,close:closeSession};
   }catch(error){
     console.error('[Vocab Study] boot',error);
     if(frontWordTestCardEl)frontWordTestCardEl.hidden=true;
