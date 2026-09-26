@@ -1,3 +1,4 @@
+import {playStudentSfx} from '../shared/student-sfx.js?v=20260926-v0001';
 class StudentRewardCelebration extends HTMLElement {
   static get observedAttributes(){return ['percent','stars','star-max','points','label','points-only'];}
 
@@ -86,6 +87,7 @@ class StudentRewardCelebration extends HTMLElement {
       const delay=index*170;
       setTimeout(()=>{
         star.classList.add(index===earned.length-1&&earned.length===starMax?'final-pop':'pop');
+        playStudentSfx('star');
       },delay);
     });
   }
