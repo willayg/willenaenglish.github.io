@@ -1,7 +1,7 @@
 import {QuestionRenderer} from '/shared/questions/question-renderer.js?v=20260925-speaking2';
 import {capturePointOrigin,showPointAward} from '/students/components/student-point-feedback.js?v=20260926-v0003';
 import {getSpellingTarget} from './spelling-targets.js?v=20260925-v0019';
-import {isSpeakableTarget,matchSpeakingTarget} from './speaking-match.js?v=20260925-v0022';
+import {isSpeakableTarget,matchSpeakingTarget} from './speaking-match.js?v=20260926-v0023';
 import {getAssignment,setAssignment,getBookMeta,setBookMeta,getVocabulary,setVocabulary,background} from './vocab-startup-cache.js?v=20260925-v0001';
 import {snapshotPercent,snapshotStars,loadVocabSnapshot,nextSkillTargets} from './vocab-progress-snapshot.js?v=20260925-v0005';
 import {coachAttempt,repeatUntilCorrect,appendRetry,uniquePassedCount,wrongAttemptCount} from './vocab-pass-flow.js?v=20260925-v0002';
@@ -36,6 +36,7 @@ const sessionMain=el('vocabSessionMain');
 const root=el('vocabActivityRoot');
 const closeBtn=el('vocabStudyClose');
 const actionBtn=el('vocabStudyAction');
+const speakingSkipBtn=el('vocabSpeakingSkip');
 const progressEl=el('vocabStudyProgress');
 const progressFill=el('vocabProgressFill');
 const titleEl=el('vocabStudyTitle');
@@ -1330,6 +1331,7 @@ function updateProgress(){
 }
 function resetQuestionChrome(){
   state.checked=false;state.nextReadyAt=0;
+  if(speakingSkipBtn)speakingSkipBtn.hidden=true;
   actionBtn.disabled=true;actionBtn.textContent='Check Answer';actionBtn.classList.remove('is-next');
   answerNote.hidden=true;answerNote.innerHTML='';
   instructionEl.hidden=false;
@@ -1451,6 +1453,7 @@ function speakingQuestion(word,index){
 function renderSpeakingQuestion(){
   const session=state.speakingSession;
   if(!session||session.index>=session.words.length)return finishSpeakingSession();
+  if(speakingSkipBtn)speakingSkipBtn.hidden=false;
   const word=session.words[session.index],current=session.index+1,total=session.words.length;
   session.checked=false;
   progressEl.textContent=current+' / '+total;
@@ -1525,11 +1528,32 @@ function checkSpeaking(){
   actionBtn.classList.add('is-next');
   actionBtn.textContent=session.index>=session.words.length-1?'Finish':'Next';
 }
+function skipSpeaking(){
+  const session=state.speakingSession;
+  if(!session)return;
+  const word=session.words[session.index];
+  if(!word)return;
+  try{state.renderer?.speechRecognition?.stop?.()}catch(_){}
+  session.results.push({
+    lexicalEntryId:word.id||null,
+    word:word.speakingTarget||word.word,
+    ko:word.ko,
+    response:'',
+    alternatives:[],
+    correct:false,
+    skipped:true,
+    matchedBy:'skip'
+  });
+  session.index++;
+  renderSpeakingQuestion();
+}
 async function finishSpeakingSession(){
+  if(speakingSkipBtn)speakingSkipBtn.hidden=true;
   const session=state.speakingSession;
   const passed=uniquePassedCount(session?.results);
   const total=session?.initialTotal||0;
-  const retries=wrongAttemptCount(session?.results);
+  const skipped=(session?.results||[]).filter(result=>result?.skipped).length;
+  const retries=wrongAttemptCount((session?.results||[]).filter(result=>!result?.skipped));
   const reward=await completeRewardSession();
   progressEl.textContent='완료';
   progressFill.style.width='100%';
@@ -1542,8 +1566,9 @@ async function finishSpeakingSession(){
       '<h2>'+passed+' / '+total+'</h2>'+
       '<p>틀린 단어는 맞힐 때까지 다시 말해 봤어요.</p>'+
       '<div class="vocab-finish-stats">'+
-        '<div><strong>'+total+'</strong><span>PASSED</span></div>'+
+        '<div><strong>'+passed+' / '+total+'</strong><span>PASSED</span></div>'+
         '<div><strong>'+retries+'</strong><span>RETRIES</span></div>'+
+        '<div><strong>'+skipped+'</strong><span>SKIPPED</span></div>'+
       '</div>'+
       rewardSummaryHtml(reward)+
       goldenAwardHtml()+
@@ -2000,6 +2025,7 @@ async function finishSession(){
   sessionMain.scrollTop=0;
 }
 async function closeSession({historyMode='back'}={}){
+  if(speakingSkipBtn)speakingSkipBtn.hidden=true;
   if(historyMode==='back'&&navController?.current?.().screen==='activity'){
     navController.back(activityParentFromRoute(navController.current()));
     return;
@@ -2065,6 +2091,7 @@ async function boot(){
     wordModalEl?.addEventListener('click',e=>{if(e.target===wordModalEl)closeWordList()});
     document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!wordModalEl?.hidden)closeWordList()});
     closeBtn.addEventListener('click',closeSession);
+    speakingSkipBtn?.addEventListener('click',skipSpeaking);
     actionBtn.addEventListener('pointerdown',event=>{
       if(Number.isFinite(event.clientX)&&Number.isFinite(event.clientY)){
         state.pointTapOrigin={x:event.clientX,y:event.clientY};
@@ -2083,7 +2110,7 @@ async function boot(){
       renderSkillProgress();
     });
     reportStartupPerf();
-    window.WillenaVocabStudy={version:'0.079',getState:()=>state,start:startSession,openSpellingMenu,openSpellingPreview,openSpellingTest,openSpeakingSession,close:closeSession};
+    window.WillenaVocabStudy={version:'0.080',getState:()=>state,start:startSession,openSpellingMenu,openSpellingPreview,openSpellingTest,openSpeakingSession,close:closeSession};
   }catch(error){
     console.error('[Vocab Study] boot',error);
     if(frontWordTestCardEl)frontWordTestCardEl.hidden=true;
