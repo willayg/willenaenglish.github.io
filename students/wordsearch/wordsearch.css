@@ -502,3 +502,14 @@ body.system-kb-open .crossword-stage{
 .puzzle-tab:disabled,.new-btn:disabled,#retryBtn:disabled{
   opacity:.48;cursor:default;pointer-events:none
 }
+
+.boggle-drag-line{
+  stroke:#e75e9f!important;
+  stroke-width:10!important;
+  opacity:.72!important;
+  stroke-dasharray:none!important;
+}
+.boggle-solved-line{
+  stroke-width:9!important;
+  opacity:.62!important;
+}
