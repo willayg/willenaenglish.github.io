@@ -342,7 +342,13 @@ async function saveReward(){
 
 
 function makeCrossword(pool){
-  const candidates=shuffle(pool.filter(x=>x.ko&&x.clean.length>=3&&x.clean.length<=11));
+  const candidates=shuffle(pool.filter(x=>{
+    const raw=txt(x.display);
+    return x.ko &&
+      /^[A-Za-z]+$/.test(raw) &&
+      x.clean.length>=3 &&
+      x.clean.length<=11;
+  }));
   const SIZE=19;
   const target=Math.min(8,candidates.length);
 
