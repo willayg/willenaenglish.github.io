@@ -632,14 +632,16 @@ function pointToCell(clientX,clientY){
   const cells=[...gridEl.querySelectorAll('.cell')];
   if(!cells.length)return null;
 
-  // Choose the nearest tile center. This effectively removes the dead gaps
-  // between tiles and makes diagonals forgiving.
   let best=null,bestDist=Infinity;
   for(const el of cells){
     const rect=el.getBoundingClientRect();
     const cx=rect.left+rect.width/2;
     const cy=rect.top+rect.height/2;
-    const d=(clientX-cx)*(clientX-cx)+(clientY-cy)*(clientY-cy);
+    const radius=Math.min(rect.width,rect.height)*0.24;
+    const d=Math.hypot(clientX-cx,clientY-cy);
+
+    // Only the small center area around the letter counts as a hit.
+    if(d>radius)continue;
     if(d<bestDist){
       bestDist=d;
       best={row:Number(el.dataset.row),col:Number(el.dataset.col),el};
@@ -1211,12 +1213,15 @@ function wireGrid(){
   });
   gridEl.addEventListener('pointermove',e=>{
     if(!state.drag)return;
-    const point=state.mode==='boggle'
-      ?boggleCellFromPointer(e.clientX,e.clientY)
-      :pointToCell(e.clientX,e.clientY);
-    if(!point)return;
-    if(state.mode==='boggle')boggleMove(point,e);
-    else moveDrag(point);
+    if(state.mode==='boggle'){
+      const point=boggleCellFromPointer(e.clientX,e.clientY);
+      state.drag.pointer=e;
+      if(point)boggleMove(point,e);
+      else renderBoggleCanvas();
+      return;
+    }
+    const point=pointToCell(e.clientX,e.clientY);
+    if(point)moveDrag(point);
   });
   gridEl.addEventListener('pointerup',e=>{
     const point=state.mode==='boggle'
