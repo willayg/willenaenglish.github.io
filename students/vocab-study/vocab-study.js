@@ -1881,11 +1881,25 @@ function spellingPreviewWords(items){
 let vocabWordAudio=null;
 const vocabWordAudioCache=new Map();
 
+function cleanBrowserTtsText(text){
+  return txt(text)
+    .replace(/_+/g,' ')
+    .replace(/[~～]+/g,' ')
+    .replace(/[\\/|]+/g,' ')
+    .replace(/[()[\]{}<>]+/g,' ')
+    .replace(/[•·…]+/g,' ')
+    .replace(/[-–—]{2,}/g,' ')
+    .replace(/\s+/g,' ')
+    .trim();
+}
+
 function browserTtsWord(text){
   if(!('speechSynthesis' in window))return false;
   try{
+    const spoken=cleanBrowserTtsText(text);
+    if(!spoken)return false;
     speechSynthesis.cancel();
-    const utterance=new SpeechSynthesisUtterance(text);
+    const utterance=new SpeechSynthesisUtterance(spoken);
     utterance.lang='en-US';
     speechSynthesis.speak(utterance);
     return true;
