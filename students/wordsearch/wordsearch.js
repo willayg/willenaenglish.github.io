@@ -834,6 +834,8 @@ document.querySelectorAll('.puzzle-tab').forEach(btn=>{
 
   const isCrossword=state.mode==='crossword';
   const isBoggle=state.mode==='boggle';
+  wordGridStage?.classList.toggle('is-boggle',isBoggle);
+  wordGridStage?.classList.toggle('is-wordsearch',state.mode==='wordsearch');
   modeLabel.textContent=isCrossword?'CROSSWORD':(isBoggle?'BOGGLE':'WORD SEARCH');
   listEyebrow.textContent=isCrossword?'CLUES':(isBoggle?'FIND WORDS':'FIND THESE');
   listTitle.textContent=isCrossword?'Crossword':(isBoggle?'Meanings':'Words');
