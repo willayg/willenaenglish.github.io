@@ -15,7 +15,23 @@ async function whoami(){
   try{
     var r=await authFetch('/.netlify/functions/supabase_auth?action=whoami&_='+Date.now());
     var d=await r.json().catch(function(){return{}});
-    return r.ok&&d&&d.success?d:null;
+    if(!(r.ok&&d&&d.success))return null;
+
+    // whoami intentionally returns only identity basics. Vocab Study also needs
+    // the student's class to resolve assigned books, so hydrate it from profile.
+    if(!d.class){
+      try{
+        var pr=await authFetch('/.netlify/functions/supabase_auth?action=get_profile_name&_='+Date.now());
+        var pd=await pr.json().catch(function(){return{}});
+        if(pr.ok&&pd&&pd.success){
+          d.class=pd.class||d.class||null;
+          d.name=pd.name||d.name||null;
+          d.username=pd.username||d.username||null;
+          d.avatar=pd.avatar||d.avatar||null;
+        }
+      }catch(_){}
+    }
+    return d;
   }catch(_){return null;}
 }
 async function recoverSession(){
