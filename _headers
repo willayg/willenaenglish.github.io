@@ -1,3 +1,9 @@
+/Teachers/
+  Cache-Control: no-store, no-cache, must-revalidate, max-age=0
+
+/Teachers
+  Cache-Control: no-store, no-cache, must-revalidate, max-age=0
+
 /Teachers/index.html
   Cache-Control: no-store, no-cache, must-revalidate, max-age=0
 
