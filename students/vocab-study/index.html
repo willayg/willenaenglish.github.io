@@ -15,6 +15,7 @@
 <link rel="stylesheet" href="/students/study-v2/v2.css?v=20260814-daily1">
 <link rel="stylesheet" href="/students/shared/willena-keyboard-safe.css?v=1.0.0">
 <link rel="stylesheet" href="./vocab-study.css?v=20260926-v0099">
+<link rel="stylesheet" href="./theme-pips.css?v=20260927-v0001">
 <script src="/students/api-gateway.js?v=20260926-progress-summary-cf1"></script>
 <script src="/students/study/study-progress.js?v=20260926-assignment-canonical1"></script>
 <script src="/js/api-config.js?v=20260926-reverted-auth1"></script>
@@ -25,6 +26,14 @@
 <body>
 <div class="study-app">
   <student-header title="단어 지니어스" show-id="false" show-home="false" show-points="true" show-logout="true"></student-header>
+  <div id="vocabThemeDock" class="vocab-theme-dock" role="group" aria-label="색상 테마">
+    <button type="button" class="vocab-theme-pip" data-theme="cyan" aria-label="Cyan 테마" title="Cyan" aria-pressed="false"></button>
+    <button type="button" class="vocab-theme-pip" data-theme="sunbeam" aria-label="Sunbeam 테마" title="Sunbeam" aria-pressed="false"></button>
+    <button type="button" class="vocab-theme-pip" data-theme="pink" aria-label="Pink 테마" title="Pink" aria-pressed="false"></button>
+    <button type="button" class="vocab-theme-pip" data-theme="paper" aria-label="Paper 테마" title="Paper" aria-pressed="false"></button>
+    <button type="button" class="vocab-theme-pip" data-theme="dark" aria-label="Dark 테마" title="Dark" aria-pressed="false"></button>
+    <button type="button" class="vocab-theme-pip" data-theme="cyberpunk" aria-label="Cyberpunk 테마" title="Cyberpunk" aria-pressed="false"></button>
+  </div>
 
   <main class="vocab-page">
     <section id="vocabStartupError" hidden role="alert" style="padding:20px;margin-bottom:16px;border:3px solid #efb7d4;border-radius:20px;background:#fff;color:#214951">
@@ -175,7 +184,7 @@
       </section>
     </section>
 
-    <div class="vocab-version">v0.107</div>
+    <div class="vocab-version">v0.108</div>
   </main>
 
   <section id="vocabLoading" class="vocab-loading" hidden aria-hidden="true" aria-live="polite">
@@ -230,8 +239,9 @@
 </div>
 
 <script src="/students/study/study-question-bank.js?v=20260822-conversationfix1"></script>
+<script type="module" src="./theme-pips.js?v=20260927-v0001"></script>
 <script type="module">
-import('./vocab-study.js?v=20260927-v0107').catch(error=>{
+import('./vocab-study.js?v=20260927-v0108').catch(error=>{
   console.error('[Vocab Study] module load',error);
   const panel=document.getElementById('vocabStartupError');
   if(panel){panel.hidden=false;panel.querySelector('[data-startup-message]').textContent=error?.message||'Please refresh and try again.';}
