@@ -1,0 +1,54 @@
+/* Vocab hub: General Progress + Assignments */
+.vocab-hub-tabs{
+  display:inline-flex;gap:4px;padding:4px;margin:0 0 16px;
+  background:#e9edf1;border:1px solid #dfe4e8;border-radius:14px;
+}
+.vocab-hub-tab{
+  border:0;background:transparent;color:#6f7682;border-radius:10px;
+  padding:9px 15px;font-weight:700;font-size:.76rem;cursor:pointer;
+}
+.vocab-hub-tab.active{background:#fff;color:var(--ink);box-shadow:0 3px 10px rgba(30,40,55,.08)}
+.vocab-subview{display:none}.vocab-subview.active{display:block}
+.vocab-progress-toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-left:auto}
+.vocab-progress-panel{background:#fff;border:1px solid var(--line);border-radius:22px;box-shadow:var(--shadow);overflow:hidden}
+.vocab-progress-head{
+  display:grid;grid-template-columns:minmax(180px,1.35fr) repeat(3,minmax(92px,.7fr)) minmax(105px,.8fr) minmax(105px,.8fr);
+  gap:10px;padding:10px 16px;border-bottom:1px solid var(--line);
+  color:#89909a;font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;
+}
+.vocab-progress-list{min-height:160px}
+.vocab-progress-row{
+  display:grid;grid-template-columns:minmax(180px,1.35fr) repeat(3,minmax(92px,.7fr)) minmax(105px,.8fr) minmax(105px,.8fr);
+  align-items:center;gap:10px;padding:13px 16px;border-bottom:1px solid #f0f1f4;cursor:pointer;
+}
+.vocab-progress-row:last-child{border-bottom:0}.vocab-progress-row:hover{background:#fafbfd}
+.vocab-student-name{font-weight:650}.vocab-student-ko{font-size:.68rem;color:var(--muted);margin-top:2px}
+.vocab-skill-metric{display:flex;align-items:center;gap:8px;min-width:0}
+.vocab-skill-ring{
+  --pct:0;--ring:#4fb9c8;flex:0 0 38px;width:38px;height:38px;border-radius:50%;
+  background:conic-gradient(var(--ring) calc(var(--pct)*1%),#edf0f3 0);
+  display:grid;place-items:center;
+}
+.vocab-skill-ring::before{content:'';grid-area:1/1;width:28px;height:28px;border-radius:50%;background:#fff}
+.vocab-skill-ring b{grid-area:1/1;position:relative;font-size:.57rem;color:#4a525f}
+.vocab-skill-copy{min-width:0}.vocab-skill-copy strong{display:block;font-size:.76rem}.vocab-skill-copy small{display:block;color:var(--muted);font-size:.59rem;margin-top:2px}
+.vocab-skill-ring.spelling{--ring:#ec6494}.vocab-skill-ring.speaking{--ring:#8c79d9}
+.vocab-progress-stat strong{display:block;font-size:.86rem}.vocab-progress-stat span{display:block;font-size:.61rem;color:var(--muted);margin-top:2px}
+.vocab-progress-summary{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 14px}
+.vocab-summary-card{background:#fff;border:1px solid var(--line);border-radius:15px;padding:10px 13px;min-width:118px}
+.vocab-summary-card b{display:block;font-size:1rem}.vocab-summary-card span{font-size:.62rem;color:var(--muted)}
+.vocab-no-evidence{color:#a0a5ad;font-size:.7rem}
+
+@media(max-width:980px){
+  .vocab-progress-head{display:none}
+  .vocab-progress-row{grid-template-columns:minmax(150px,1.2fr) repeat(3,minmax(78px,.8fr))}
+  .vocab-progress-row>.vocab-progress-stat{display:none}
+}
+@media(max-width:700px){
+  .vocab-hub-tabs{display:flex;width:100%}.vocab-hub-tab{flex:1}
+  .vocab-progress-toolbar{width:100%}
+  .vocab-progress-toolbar .control{flex:1 1 120px}
+  .vocab-progress-row{grid-template-columns:1fr 1fr;gap:12px}
+  .vocab-progress-row>.vocab-student{grid-column:1/-1}
+  .vocab-progress-row>.vocab-skill-metric:nth-of-type(4){grid-column:1/-1}
+}
