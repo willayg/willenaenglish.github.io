@@ -1,4 +1,4 @@
-import {QuestionRenderer} from '/shared/questions/question-renderer.js?v=20260927-r2word1';
+import {QuestionRenderer} from '/shared/questions/question-renderer.js?v=20260925-speaking2';
 import {capturePointOrigin,showPointAward} from '/students/components/student-point-feedback.js?v=20260926-v0003';
 import {getSpellingTarget} from './spelling-targets.js?v=20260925-v0019';
 import {isSpeakableTarget,matchSpeakingTarget} from './speaking-match.js?v=20260926-v0025';
@@ -1878,44 +1878,15 @@ function spellingWords(items){
 function spellingPreviewWords(items){
   return spellingWords(items);
 }
-let vocabWordAudio=null;
-async function playPreviewWord(word){
-  const text=txt(word);
-  if(!text)return false;
-  try{
-    if(vocabWordAudio){
-      try{vocabWordAudio.pause()}catch(_){}
-      vocabWordAudio=null;
-    }
-    const url='https://get-audio-urls.willena.workers.dev/word-audio?word='+encodeURIComponent(text)+'&_='+Date.now();
-    const res=await fetch(url,{cache:'no-store'});
-    if(res.ok){
-      const blob=await res.blob();
-      if(blob.size>100){
-        vocabWordAudio=new Audio(URL.createObjectURL(blob));
-        vocabWordAudio.addEventListener('ended',()=>{
-          try{URL.revokeObjectURL(vocabWordAudio?.src||'')}catch(_){}
-          vocabWordAudio=null;
-        },{once:true});
-        await vocabWordAudio.play();
-        return true;
-      }
-    }
-  }catch(error){
-    console.debug('[Vocab Study] R2 word audio unavailable',text,error);
-  }
-  if(!('speechSynthesis' in window))return false;
+function playPreviewWord(word){
+  if(!('speechSynthesis' in window))return;
   try{
     speechSynthesis.cancel();
-    const utterance=new SpeechSynthesisUtterance(text);
+    const utterance=new SpeechSynthesisUtterance(word);
     utterance.lang='en-US';
     speechSynthesis.speak(utterance);
-    return true;
-  }catch(_){
-    return false;
-  }
+  }catch(_){}
 }
-window.WillenaPlayWordAudio=playPreviewWord;
 function createSpellingPractice(words){
   return{words,index:0,currentAttemptCount:0,attempts:[],results:[],initialTotal:words.length};
 }
@@ -2505,7 +2476,7 @@ async function boot(){
     reportStartupPerf();
     preloadStudentSfx();
 
-window.WillenaVocabStudy={version:'0.101',getState:()=>state,start:startSession,openSpellingMenu,openSpellingPreview,openSpellingTest,openSpeakingSession,close:closeSession};
+window.WillenaVocabStudy={version:'0.099',getState:()=>state,start:startSession,openSpellingMenu,openSpellingPreview,openSpellingTest,openSpeakingSession,close:closeSession};
   }catch(error){
     console.error('[Vocab Study] boot',error);
     if(frontWordTestCardEl)frontWordTestCardEl.hidden=true;
