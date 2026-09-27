@@ -1,4 +1,4 @@
-import {QuestionRenderer} from '/shared/questions/question-renderer.js?v=20260925-speaking2';
+import {QuestionRenderer} from '/shared/questions/question-renderer.js?v=20260927-r2word1';
 import {capturePointOrigin,showPointAward} from '/students/components/student-point-feedback.js?v=20260926-v0003';
 import {getSpellingTarget} from './spelling-targets.js?v=20260925-v0019';
 import {isSpeakableTarget,matchSpeakingTarget} from './speaking-match.js?v=20260926-v0025';
