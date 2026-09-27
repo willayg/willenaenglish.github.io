@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="./wordsearch.css?v=20260927-6">
+<link rel="stylesheet" href="./wordsearch.css?v=20260927-7">
 <script src="/students/api-gateway.js?v=20260926-progress-summary-cf1"></script>
 <script src="/js/api-config.js?v=20260926-reverted-auth1"></script>
 <script src="/students/vocab-study/auth-guard.js?v=20260925-v0004"></script>
@@ -38,7 +38,7 @@
       <button id="retryBtn" type="button">Try again</button>
     </section>
 
-    <section id="gameArea" class="game-layout" hidden>
+    <section id="gameArea" hidden>
       <div class="puzzle-card">
         <div class="puzzle-head">
           <div class="puzzle-status">
@@ -49,18 +49,18 @@
           <button id="newPuzzleBtn" class="new-btn" type="button">New Puzzle</button>
         </div>
 
+        <div class="clue-strip-wrap">
+          <div class="clue-strip-head">
+            <span id="listEyebrow" class="eyebrow">FIND THESE</span>
+            <strong id="listTitle">Words</strong>
+          </div>
+          <div id="wordList" class="word-list horizontal-strip" aria-label="Puzzle clues"></div>
+        </div>
+
         <div id="grid" class="word-grid" role="grid" aria-label="Word search puzzle"></div>
         <div id="crosswordGrid" class="crossword-grid" role="grid" aria-label="Crossword puzzle" hidden></div>
         <div id="dragHint" class="drag-hint">Drag in a straight line ↔ ↕ ↗ ↘</div>
       </div>
-
-      <aside class="words-card">
-        <div class="words-head">
-          <span id="listEyebrow" class="eyebrow">FIND THESE</span>
-          <strong id="listTitle">Word List</strong>
-        </div>
-        <div id="wordList" class="word-list"></div>
-      </aside>
     </section>
 
     <dialog id="completeCard" class="win-modal" aria-labelledby="winTitle">
@@ -77,6 +77,6 @@
     </dialog>
   </main>
 </div>
-<script type="module" src="./wordsearch.js?v=20260927-6"></script>
+<script type="module" src="./wordsearch.js?v=20260927-7"></script>
 </body>
 </html>
