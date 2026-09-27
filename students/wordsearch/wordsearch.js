@@ -37,9 +37,16 @@ function shuffle(items){
   return a;
 }
 function normalizeWord(word){return txt(word).toUpperCase().replace(/[^A-Z]/g,'')}
+function withTimeout(promise,ms=12000,label='Request'){
+  let timer;
+  return Promise.race([
+    Promise.resolve(promise),
+    new Promise((_,reject)=>{timer=setTimeout(()=>reject(new Error(label+' timed out.')),ms)})
+  ]).finally(()=>clearTimeout(timer));
+}
 function apiFetch(url,opts){
   const fn=window.WillenaAPI&&typeof window.WillenaAPI.fetch==='function'?window.WillenaAPI.fetch.bind(window.WillenaAPI):window.fetch.bind(window);
-  return fn(url,Object.assign({credentials:'include',cache:'no-store'},opts||{}));
+  return withTimeout(fn(url,Object.assign({credentials:'include',cache:'no-store'},opts||{})),12000,'Student API');
 }
 async function apiJson(url,opts){
   const r=await apiFetch(url,opts);
@@ -51,9 +58,9 @@ async function content(path){
   const out=[];let offset=0;const pageSize=1000;
   while(true){
     const sep=path.includes('?')?'&':'?';
-    const r=await fetch(CONTENT_URL+'/rest/v1/'+path+sep+'limit='+pageSize+'&offset='+offset,{
+    const r=await withTimeout(fetch(CONTENT_URL+'/rest/v1/'+path+sep+'limit='+pageSize+'&offset='+offset,{
       headers:{apikey:CONTENT_KEY,Authorization:'Bearer '+CONTENT_KEY},cache:'no-store'
-    });
+    }),12000,'Content DB');
     if(!r.ok)throw new Error('Content DB '+r.status);
     const rows=await r.json();
     if(!Array.isArray(rows))throw new Error('Content DB returned invalid data.');
@@ -64,11 +71,11 @@ async function content(path){
   return out;
 }
 async function assignedBooks(className){
-  const r=await fetch(OP_URL+'/rest/v1/rpc/get_study_assignment_for_class',{
+  const r=await withTimeout(fetch(OP_URL+'/rest/v1/rpc/get_study_assignment_for_class',{
     method:'POST',
     headers:{apikey:OP_KEY,Authorization:'Bearer '+OP_KEY,'Content-Type':'application/json'},
     body:JSON.stringify({p_class_name:className}),cache:'no-store'
-  });
+  }),12000,'Assigned book lookup');
   const d=await r.json().catch(()=>({}));
   if(!r.ok||!d.success)throw new Error(d.error||'Could not load assigned books.');
   const list=(Array.isArray(d.assignments)&&d.assignments.length?d.assignments:(d.assignment?[d.assignment]:[]))
@@ -355,13 +362,24 @@ function renderBooks(){
 async function boot(){
   preloadStudentSfx();showLoading();
   try{
-    const who=await apiJson('/.netlify/functions/supabase_auth?action=whoami&_='+Date.now());
+    let who=null;
+    if(window.WillenaVocabStudyAuthReady){
+      who=await withTimeout(window.WillenaVocabStudyAuthReady,15000,'Student sign-in');
+      if(!who)return;
+    }else{
+      who=await apiJson('/.netlify/functions/supabase_auth?action=whoami&_='+Date.now());
+    }
     state.auth=who;
-    if(!who?.success||!who?.class)throw new Error('Please sign in as a student first.');
+    if(!who?.success||!who?.class)throw new Error('No active student class was found.');
+    loadingCard.querySelector('strong').textContent='Finding your book…';
     state.books=await assignedBooks(who.class);
     renderBooks();
+    loadingCard.querySelector('strong').textContent='Loading puzzle words…';
     await buildForBook(bookSelect.value||state.books[0].book_id);
-  }catch(error){showError(error)}
+  }catch(error){
+    console.error('[Word Search boot]',error);
+    showError(error);
+  }
 }
 
 bookSelect.addEventListener('change',()=>buildForBook(bookSelect.value));
