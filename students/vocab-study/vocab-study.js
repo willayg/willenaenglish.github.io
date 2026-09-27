@@ -1,13 +1,13 @@
-import {QuestionRenderer} from '/shared/questions/question-renderer.js?v=20260927-icons1';
-import {capturePointOrigin,showPointAward} from '/students/components/student-point-feedback.js?v=20260926-v0003';
-import {getSpellingTarget} from './spelling-targets.js?v=20260925-v0019';
-import {isSpeakableTarget,matchSpeakingTarget} from './speaking-match.js?v=20260926-v0025';
-import {getAssignment,setAssignment,getBookMeta,setBookMeta,getVocabulary,setVocabulary,background} from './vocab-startup-cache.js?v=20260925-v0001';
-import {snapshotPercent,snapshotStars,loadVocabSnapshot,nextSkillTargets} from './vocab-progress-snapshot.js?v=20260925-v0005';
-import {coachAttempt,repeatUntilCorrect,appendRetry,uniquePassedCount,wrongAttemptCount} from './vocab-pass-flow.js?v=20260925-v0002';
-import {createVocabHistoryNavigation} from './navigation-history.js?v=20260926-v0002';
-import {installWillenaKeyboard} from '../shared/willena-keyboard.js?v=1.5.1';
-import {playStudentSfx,preloadStudentSfx} from '../shared/student-sfx.js?v=20260926-v0001';
+import {QuestionRenderer} from '/shared/questions/question-renderer.js?v=20260927-startup2';
+import {capturePointOrigin,showPointAward} from '/students/components/student-point-feedback.js?v=20260927-startup2';
+import {getSpellingTarget} from './spelling-targets.js?v=20260927-startup2';
+import {isSpeakableTarget,matchSpeakingTarget} from './speaking-match.js?v=20260927-startup2';
+import {getAssignment,setAssignment,getBookMeta,setBookMeta,getVocabulary,setVocabulary,background} from './vocab-startup-cache.js?v=20260927-startup2';
+import {snapshotPercent,snapshotStars,loadVocabSnapshot,nextSkillTargets} from './vocab-progress-snapshot.js?v=20260927-startup2';
+import {coachAttempt,repeatUntilCorrect,appendRetry,uniquePassedCount,wrongAttemptCount} from './vocab-pass-flow.js?v=20260927-startup2';
+import {createVocabHistoryNavigation} from './navigation-history.js?v=20260927-startup2';
+import {installWillenaKeyboard} from '../shared/willena-keyboard.js?v=20260927-startup2';
+import {playStudentSfx,preloadStudentSfx} from '../shared/student-sfx.js?v=20260927-startup2';
 
 const CONTENT_URL='https://gxwfsqxyuufqtitspfqg.supabase.co';
 const CONTENT_KEY=['sb_publishable_','G-FYhHfDL4OGdL892gY1Zg_','epdbEeqO'].join('');
@@ -2476,9 +2476,11 @@ async function boot(){
     reportStartupPerf();
     preloadStudentSfx();
 
-window.WillenaVocabStudy={version:'0.101',getState:()=>state,start:startSession,openSpellingMenu,openSpellingPreview,openSpellingTest,openSpeakingSession,close:closeSession};
+window.WillenaVocabStudy={version:'0.102',getState:()=>state,start:startSession,openSpellingMenu,openSpellingPreview,openSpellingTest,openSpeakingSession,close:closeSession};
   }catch(error){
     console.error('[Vocab Study] boot',error);
+    const startupError=el('vocabStartupError');
+    if(startupError){startupError.hidden=false;startupError.querySelector('[data-startup-message]').textContent=error?.message||'Please refresh and try again.';}
     if(frontWordTestCardEl)frontWordTestCardEl.hidden=true;
     setMainScreen('home');
     setStatus(error?.message||'불러오지 못했습니다. 새로고침해 주세요.');

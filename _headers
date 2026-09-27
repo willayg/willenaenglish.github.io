@@ -76,3 +76,14 @@
 # HTML files - allow caching but revalidate
 /*.html
   Cache-Control: public, max-age=3600, must-revalidate
+
+# Vocab startup must not reuse stale modules after deployment.
+/students/vocab-study/*
+  Cache-Control: no-store, no-cache, must-revalidate, max-age=0
+  Pragma: no-cache
+  Expires: 0
+
+/shared/questions/*
+  Cache-Control: no-store, no-cache, must-revalidate, max-age=0
+  Pragma: no-cache
+  Expires: 0
