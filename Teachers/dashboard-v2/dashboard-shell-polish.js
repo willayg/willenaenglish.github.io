@@ -6,7 +6,7 @@ const UTILITIES_PIN_HASH='1a6ff8f796ed193a72c5d8a3f8a4e173ced67372fd4a282f6f5c38
 const UTILITIES_SESSION_KEY='willena_utilities_unlocked';
 const TRACKING_URL='https://fiieuiktlsivwfgyivai.supabase.co';
 const TRACKING_KEY='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
-const NAV_ORDER=['apps','classes','students','naesin-v2','grammar-foundations','utilities'];
+const NAV_ORDER=['students','classes','vocab','apps','naesin-v2','grammar-foundations','utilities'];
 function installTestPrepRecentAccuracyBridge(){
   if(window.__WillenaTeacherRecentAccuracyBridge)return;
   window.__WillenaTeacherRecentAccuracyBridge=true;
