@@ -123,10 +123,6 @@
       openTab(assignmentLink?'assignments':'general');
     }));
     const params=new URLSearchParams(location.search);
-    if(params.has('assignmentWorkload')||params.has('assignmentTargetScope'))setTimeout(()=>{
-      try{if(typeof window.switchView==='function')window.switchView('vocab')}catch{}
-      openTab('assignments');
-    },0);
   }
   document.readyState==='loading'?document.addEventListener('DOMContentLoaded',init,{once:true}):init();
 })();
