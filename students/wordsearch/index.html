@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="./wordsearch.css?v=20260928-2">
+<link rel="stylesheet" href="./wordsearch.css?v=20260928-3">
 <script src="/students/api-gateway.js?v=20260926-progress-summary-cf1"></script>
 <script src="/js/api-config.js?v=20260926-reverted-auth1"></script>
 <script src="/students/vocab-study/auth-guard.js?v=20260925-v0004"></script>
@@ -22,14 +22,11 @@
   <student-header title="Word Games" show-id="false" show-home="false" show-points="true" show-logout="true"></student-header>
 
   <main class="page">
-    <div class="puzzle-nav-row">
-      <nav class="puzzle-tabs" aria-label="Puzzle type">
-        <button class="puzzle-tab active" type="button" data-mode="wordsearch">Word Search</button>
-        <button class="puzzle-tab" type="button" data-mode="crossword">Crossword</button>
-        <button class="puzzle-tab" type="button" data-mode="boggle">Boggle</button>
-      </nav>
-      <button id="helpBtn" class="help-btn" type="button" aria-haspopup="dialog">도움</button>
-    </div>
+    <nav class="puzzle-tabs" aria-label="Puzzle type">
+      <button class="puzzle-tab active" type="button" data-mode="wordsearch">Word Search</button>
+      <button class="puzzle-tab" type="button" data-mode="crossword">Crossword</button>
+      <button class="puzzle-tab" type="button" data-mode="boggle">Boggle</button>
+    </nav>
 
     <section id="loadingCard" class="message-card">
       <div class="loader" aria-hidden="true"></div>
@@ -58,8 +55,11 @@
 
         <div class="clue-strip-wrap">
           <div class="clue-strip-head">
-            <span id="listEyebrow" class="eyebrow">FIND THESE</span>
-            <strong id="listTitle">Words</strong>
+            <div class="clue-strip-title">
+              <span id="listEyebrow" class="eyebrow">FIND THESE</span>
+              <strong id="listTitle">Words</strong>
+            </div>
+            <button id="boggleHelpBtn" class="boggle-help-btn" type="button" aria-haspopup="dialog" hidden>설명</button>
           </div>
           <div id="wordList" class="word-list horizontal-strip" aria-label="Puzzle clues"></div>
         </div>
@@ -76,30 +76,60 @@
       </div>
     </section>
 
-    <dialog id="helpDialog" class="help-modal" aria-labelledby="helpTitle">
-      <div class="help-head">
+    <dialog id="boggleHelpDialog" class="boggle-help-modal" aria-labelledby="boggleHelpTitle">
+      <div class="boggle-help-head">
         <div>
-          <span class="complete-kicker">WORD GAMES</span>
-          <strong id="helpTitle">How to Play</strong>
+          <span class="boggle-help-kicker">BOGGLE</span>
+          <strong id="boggleHelpTitle">게임 방법</strong>
         </div>
-        <button id="helpCloseBtn" class="help-close" type="button" aria-label="Close help">×</button>
+        <button id="boggleHelpCloseBtn" class="boggle-help-close" type="button" aria-label="설명 닫기">×</button>
       </div>
-      <div class="help-games">
-        <section class="help-game">
-          <span class="help-icon">↔</span>
-          <div><strong>Word Search</strong><p>Find the English words and drag across them in a straight line. Words can go sideways, up and down, or diagonally.</p></div>
+
+      <div class="boggle-help-steps">
+        <section class="boggle-help-step">
+          <div class="boggle-help-copy">
+            <span class="boggle-step-num">1</span>
+            <div><strong>뜻과 글자 수를 확인해요</strong><p>힌트의 한국어 뜻과 영어 단어의 글자 수를 보고 어떤 단어인지 생각해 보세요.</p></div>
+          </div>
+          <div class="boggle-demo-card">
+            <span class="demo-meaning">고양이</span>
+            <span class="demo-length">3 letters</span>
+          </div>
         </section>
-        <section class="help-game">
-          <span class="help-icon">✎</span>
-          <div><strong>Crossword</strong><p>Use each clue to spell the English word. Clues can be Korean, scrambled letters, or audio. <b>Gimme</b> reveals one answer, but that word gives no point and costs 1 star.</p></div>
+
+        <section class="boggle-help-step">
+          <div class="boggle-help-copy">
+            <span class="boggle-step-num">2</span>
+            <div><strong>붙어 있는 글자를 이어요</strong><p>가로, 세로, 대각선으로 바로 붙어 있는 칸을 이어서 영어 단어를 만들어요.</p></div>
+          </div>
+          <div class="boggle-mini-board" aria-hidden="true">
+            <span>C</span><span>A</span><span>T</span>
+            <span>R</span><span>O</span><span>N</span>
+            <span>S</span><span>E</span><span>D</span>
+            <svg viewBox="0 0 300 300" preserveAspectRatio="none">
+              <path d="M50 50 L150 50 L250 50"></path>
+            </svg>
+          </div>
         </section>
-        <section class="help-game">
-          <span class="help-icon">⌁</span>
-          <div><strong>Boggle</strong><p>Use the Korean meaning and word length. Drag through touching letters to make the English word. You can move sideways, vertically, or diagonally, but you cannot use the same tile twice.</p></div>
+
+        <section class="boggle-help-step">
+          <div class="boggle-help-copy">
+            <span class="boggle-step-num">3</span>
+            <div><strong>대각선도 가능해요</strong><p>하지만 한 단어를 만들 때 같은 칸을 두 번 사용할 수는 없어요.</p></div>
+          </div>
+          <div class="boggle-mini-board diagonal-demo" aria-hidden="true">
+            <span>D</span><span>O</span><span>G</span>
+            <span>A</span><span>O</span><span>T</span>
+            <span>N</span><span>E</span><span>R</span>
+            <svg viewBox="0 0 300 300" preserveAspectRatio="none">
+              <path d="M50 50 L150 150 L250 250"></path>
+            </svg>
+          </div>
         </section>
       </div>
-      <div class="help-reward"><strong>Finish a game to earn up to 5 ★</strong><span>Correct words also earn points.</span></div>
-      <button id="helpGotItBtn" class="help-got-it" type="button">Got it</button>
+
+      <div class="boggle-help-note">단어를 찾으면 선이 남고, 찾은 단어마다 다른 색으로 표시돼요.</div>
+      <button id="boggleHelpGotItBtn" class="boggle-help-got-it" type="button">시작하기</button>
     </dialog>
 
     <dialog id="completeCard" class="win-modal" aria-labelledby="winTitle">
@@ -116,6 +146,6 @@
     </dialog>
   </main>
 </div>
-<script type="module" src="./wordsearch.js?v=20260928-2"></script>
+<script type="module" src="./wordsearch.js?v=20260928-3"></script>
 </body>
 </html>
