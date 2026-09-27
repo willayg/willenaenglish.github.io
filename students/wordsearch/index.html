@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="./wordsearch.css?v=20260928-1">
+<link rel="stylesheet" href="./wordsearch.css?v=20260928-2">
 <script src="/students/api-gateway.js?v=20260926-progress-summary-cf1"></script>
 <script src="/js/api-config.js?v=20260926-reverted-auth1"></script>
 <script src="/students/vocab-study/auth-guard.js?v=20260925-v0004"></script>
@@ -22,11 +22,14 @@
   <student-header title="Word Games" show-id="false" show-home="false" show-points="true" show-logout="true"></student-header>
 
   <main class="page">
-    <nav class="puzzle-tabs" aria-label="Puzzle type">
-      <button class="puzzle-tab active" type="button" data-mode="wordsearch">Word Search</button>
-      <button class="puzzle-tab" type="button" data-mode="crossword">Crossword</button>
-      <button class="puzzle-tab" type="button" data-mode="boggle">Boggle</button>
-    </nav>
+    <div class="puzzle-nav-row">
+      <nav class="puzzle-tabs" aria-label="Puzzle type">
+        <button class="puzzle-tab active" type="button" data-mode="wordsearch">Word Search</button>
+        <button class="puzzle-tab" type="button" data-mode="crossword">Crossword</button>
+        <button class="puzzle-tab" type="button" data-mode="boggle">Boggle</button>
+      </nav>
+      <button id="helpBtn" class="help-btn" type="button" aria-haspopup="dialog">도움</button>
+    </div>
 
     <section id="loadingCard" class="message-card">
       <div class="loader" aria-hidden="true"></div>
@@ -61,7 +64,10 @@
           <div id="wordList" class="word-list horizontal-strip" aria-label="Puzzle clues"></div>
         </div>
 
-        <div id="grid" class="word-grid" role="grid" aria-label="Word search puzzle"></div>
+        <div id="wordGridStage" class="word-grid-stage">
+          <div id="grid" class="word-grid" role="grid" aria-label="Word search puzzle"></div>
+          <svg id="boggleLines" class="boggle-lines" aria-hidden="true" hidden></svg>
+        </div>
         <div class="crossword-stage">
           <div id="crosswordGrid" class="crossword-grid" role="grid" aria-label="Crossword puzzle" hidden></div>
           <input id="crosswordEntry" class="crossword-entry" type="text" inputmode="text" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Crossword answer input">
@@ -69,6 +75,32 @@
         <div id="dragHint" class="drag-hint">Drag in a straight line ↔ ↕ ↗ ↘</div>
       </div>
     </section>
+
+    <dialog id="helpDialog" class="help-modal" aria-labelledby="helpTitle">
+      <div class="help-head">
+        <div>
+          <span class="complete-kicker">WORD GAMES</span>
+          <strong id="helpTitle">How to Play</strong>
+        </div>
+        <button id="helpCloseBtn" class="help-close" type="button" aria-label="Close help">×</button>
+      </div>
+      <div class="help-games">
+        <section class="help-game">
+          <span class="help-icon">↔</span>
+          <div><strong>Word Search</strong><p>Find the English words and drag across them in a straight line. Words can go sideways, up and down, or diagonally.</p></div>
+        </section>
+        <section class="help-game">
+          <span class="help-icon">✎</span>
+          <div><strong>Crossword</strong><p>Use each clue to spell the English word. Clues can be Korean, scrambled letters, or audio. <b>Gimme</b> reveals one answer, but that word gives no point and costs 1 star.</p></div>
+        </section>
+        <section class="help-game">
+          <span class="help-icon">⌁</span>
+          <div><strong>Boggle</strong><p>Use the Korean meaning and word length. Drag through touching letters to make the English word. You can move sideways, vertically, or diagonally, but you cannot use the same tile twice.</p></div>
+        </section>
+      </div>
+      <div class="help-reward"><strong>Finish a game to earn up to 5 ★</strong><span>Correct words also earn points.</span></div>
+      <button id="helpGotItBtn" class="help-got-it" type="button">Got it</button>
+    </dialog>
 
     <dialog id="completeCard" class="win-modal" aria-labelledby="winTitle">
       <div class="win-burst" aria-hidden="true">
@@ -84,6 +116,6 @@
     </dialog>
   </main>
 </div>
-<script type="module" src="./wordsearch.js?v=20260928-1"></script>
+<script type="module" src="./wordsearch.js?v=20260928-2"></script>
 </body>
 </html>
