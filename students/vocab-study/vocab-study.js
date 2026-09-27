@@ -276,9 +276,7 @@ async function completeRewardSession(){
       :('Vocabulary · '+txt(state.book?.book_title||state.book?.book_id||'Book')+' · Unit '+txt(state.unit?.unit_number||state.unit?.id||''))
   );
   try{
-    if(teacher&&state.pendingTeacherRecords.size){
-      await Promise.allSettled([...state.pendingTeacherRecords]);
-    }
+    const pendingTeacherSaves=teacher?[...state.pendingTeacherRecords]:[];
     const payload={
       reward_only:true,
       session_id:reward.rewardSessionId,
@@ -315,6 +313,9 @@ async function completeRewardSession(){
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({payload})
     });
+    if(pendingTeacherSaves.length){
+      await Promise.allSettled(pendingTeacherSaves);
+    }
     try{
       window.dispatchEvent(new CustomEvent('session:ended',{detail:{session_id:reward.rewardSessionId,mode:'vocab_'+reward.mode,list_name:listName,list_size:reward.firstTotal}}));
       window.dispatchEvent(new CustomEvent('stars:refresh',{detail:{earned:reward.stars}}));
