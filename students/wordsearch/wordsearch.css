@@ -323,7 +323,9 @@ body.system-kb-open .crossword-stage{
 }
 .help-btn:active{transform:translateY(1px)}
 
-.word-grid-stage{position:relative;width:fit-content;max-width:100%;margin-inline:auto}
+.word-grid-stage{position:relative;width:100%;max-width:100%;margin-inline:auto}
+.word-grid-stage.is-wordsearch{width:100%}
+.word-grid-stage.is-boggle{width:fit-content}
 .boggle-lines{
   position:absolute;inset:0;z-index:3;overflow:visible;pointer-events:none
 }
@@ -491,3 +493,8 @@ body.system-kb-open .crossword-stage{
 }
 .boggle-mini-board:not(.diagonal-demo) circle{stroke:#e75e9f}
 .boggle-mini-board.diagonal-demo circle{stroke:#31bccc}
+
+.word-grid-stage.is-wordsearch .word-grid{
+  width:100%;
+  max-width:100%;
+}
