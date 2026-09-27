@@ -6,28 +6,8 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Teacher Dashboard V2</title>
 <script src="/js/api-config.js"></script>
-<script>
-try{history.scrollRestoration='manual'}catch(_){}
-(function(){
-  const resetX=()=>{
-    const y=window.scrollY||document.documentElement.scrollTop||0;
-    if(window.scrollX)window.scrollTo(0,y);
-    if(document.documentElement)document.documentElement.scrollLeft=0;
-    if(document.body)document.body.scrollLeft=0;
-  };
-  resetX();
-  window.addEventListener('pageshow',resetX,{passive:true});
-  document.addEventListener('DOMContentLoaded',()=>{
-    resetX();
-    requestAnimationFrame(()=>{resetX();requestAnimationFrame(resetX)});
-    setTimeout(resetX,120);
-    setTimeout(resetX,400);
-  },{once:true});
-  window.addEventListener('load',resetX,{once:true,passive:true});
-})();
-</script>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="./dashboard-v2.css?v=20260927-r1427">
+<link rel="stylesheet" href="./dashboard-v2.css?v=20260927-startupfix1">
 <link rel="stylesheet" href="./assignments-v1.css?v=20260926-p4d-main1">
 <link rel="stylesheet" href="./vocab-v1.css?v=20260927-r1427">
 <link id="dashboardV2Polish" rel="stylesheet" href="./dashboard-v2-polish.css?v=20260927-r1427">
@@ -38,7 +18,7 @@ try{history.scrollRestoration='manual'}catch(_){}
 <link rel="stylesheet" href="./naesin-v2/naesin-v2-editor.css?v=20260924-r14-25">
 <link rel="stylesheet" href="./naesin-v2/naesin-v2-assignment.css?v=20260912-r12-2">
 <link rel="stylesheet" href="./naesin-v2/naesin-v2-r12-2.css?v=20260912-r12-2">
-<script src="./dashboard-shell-polish.js?v=20260927-r1427" defer></script>
+<script src="./dashboard-shell-polish.js?v=20260927-startupfix1" defer></script>
 </head>
 <body>
 <div id="teacher-header"></div>
@@ -109,7 +89,7 @@ mountTeacherHeader({ target:'#teacher-header', mode:'dashboard', activeApp:'teac
 </main></div>
 <nav class="mobile-tabs"><button class="mobile-tab active" data-view="students"><b>◎</b>Students</button><button class="mobile-tab" data-view="classes"><b>▦</b>Classes</button><button class="mobile-tab" data-view="vocab"><b>Aa</b>Vocab</button><button class="mobile-tab" data-view="apps"><b>＋</b>Apps</button></nav>
 <div class="drawer-bg" id="drawerBg"><aside class="drawer"><div class="drawer-head"><div class="drawer-head-main"><div class="drawer-name" id="drawerName">Student</div><div class="drawer-meta" id="drawerMeta"></div></div><button class="close" id="closeDrawer">×</button></div><div class="drawer-body" id="drawerBody"><div class="empty">Loading…</div></div></aside></div>
-<div id="naesinV2Rev" style="position:fixed;right:12px;bottom:8px;z-index:2147483647;color:#7b8c93;font:700 9px/1.2 Poppins,sans-serif;letter-spacing:.04em;pointer-events:none">v14.27</div>
+<div id="naesinV2Rev" style="position:fixed;right:12px;bottom:8px;z-index:2147483647;color:#7b8c93;font:700 9px/1.2 Poppins,sans-serif;letter-spacing:.04em;pointer-events:none">v14.28</div>
 <script>
 const $=(s,r=document)=>r.querySelector(s),$$=(s,r=document)=>[...r.querySelectorAll(s)];
 const FN=n=>`/.netlify/functions/${n}`;
