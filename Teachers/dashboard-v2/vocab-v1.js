@@ -117,7 +117,7 @@
     $('#vocabProgressDays')?.addEventListener('change',()=>load(true));
     $('#vocabProgressRefresh')?.addEventListener('click',()=>load(true));
     $('#vocabProgressSearch')?.addEventListener('input',render);
-    $('[data-view="vocab"]').forEach(b=>b.addEventListener('click',()=>openTab('general')));
+    $$('[data-view="vocab"]').forEach(b=>b.addEventListener('click',()=>openTab('general')));
   }
   document.readyState==='loading'?document.addEventListener('DOMContentLoaded',init,{once:true}):init();
 })();
