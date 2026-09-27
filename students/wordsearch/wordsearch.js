@@ -800,8 +800,7 @@ function makeCrossword(pool){
   throw new Error('I could not build a clean crossword from these words. Try a new puzzle.');
 }
 
-function setModeUI(){
-  function boggleHelpSeenKey(){
+function boggleHelpSeenKey(){
   const id=txt(state.auth?.user_id||state.auth?.id||state.auth?.student_id||'browser');
   return 'word-games-boggle-help-seen:'+id;
 }
@@ -826,6 +825,7 @@ function maybeShowFirstBoggleHelp(){
   if(!seen)setTimeout(()=>openBoggleHelp({markSeen:true}),180);
 }
 
+function setModeUI(){
 document.querySelectorAll('.puzzle-tab').forEach(btn=>{
     const active=btn.dataset.mode===state.mode;
     btn.classList.toggle('active',active);
