@@ -8,6 +8,8 @@ const OP_KEY='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
 const GRID_TARGET=12;
 const WORD_TARGET=10;
 const POINTS_PER_WORD=1;
+const BOGGLE_SIZE=5;
+const BOGGLE_TARGET=8;
 
 const $=id=>document.getElementById(id);
 const gridEl=$('grid');
@@ -308,7 +310,138 @@ function generatePuzzle(pool){
   throw new Error('I could not fit enough words into a puzzle. Try another book.');
 }
 
+
+function boggleNeighbors(row,col,size=BOGGLE_SIZE){
+  const out=[];
+  for(let dr=-1;dr<=1;dr++)for(let dc=-1;dc<=1;dc++){
+    if(!dr&&!dc)continue;
+    const r=row+dr,c=col+dc;
+    if(r>=0&&c>=0&&r<size&&c<size)out.push([r,c]);
+  }
+  return shuffle(out);
+}
+function bogglePlaceWord(board,entry){
+  const size=board.length;
+  const starts=shuffle(Array.from({length:size*size},(_,i)=>[Math.floor(i/size),i%size]));
+
+  function dfs(index,row,col,used,path){
+    const key=row+','+col;
+    if(used.has(key))return null;
+    const current=board[row][col];
+    if(current&&current!==entry.clean[index])return null;
+
+    const nextUsed=new Set(used);nextUsed.add(key);
+    const nextPath=path.concat([[row,col]]);
+    if(index===entry.clean.length-1)return nextPath;
+
+    for(const [nr,nc] of boggleNeighbors(row,col,size)){
+      const found=dfs(index+1,nr,nc,nextUsed,nextPath);
+      if(found)return found;
+    }
+    return null;
+  }
+
+  for(const [r,c] of starts){
+    const path=dfs(0,r,c,new Set(),[]);
+    if(!path)continue;
+    path.forEach(([pr,pc],i)=>{board[pr][pc]=entry.clean[i]});
+    return{...entry,coords:path};
+  }
+  return null;
+}
+function generateBoggle(pool){
+  const candidates=shuffle(pool.filter(x=>{
+    const raw=txt(x.display);
+    return x.ko&&/^[A-Za-z]+$/.test(raw)&&x.clean.length>=3&&x.clean.length<=7;
+  }));
+
+  for(let attempt=0;attempt<100;attempt++){
+    const board=Array.from({length:BOGGLE_SIZE},()=>Array(BOGGLE_SIZE).fill(''));
+    const placements=[];
+    const chosen=shuffle(candidates).slice(0,Math.min(60,candidates.length));
+
+    for(const entry of chosen){
+      if(placements.length>=BOGGLE_TARGET)break;
+      const placed=bogglePlaceWord(board,entry);
+      if(placed)placements.push(placed);
+    }
+    if(placements.length<6)continue;
+
+    fillGrid(board);
+    return{grid:board,size:BOGGLE_SIZE,placements};
+  }
+  throw new Error('I could not build a Boggle board from this vocabulary. Try a new puzzle.');
+}
+function renderBoggle(){
+  state.found.clear();
+  state.gimmes.clear();
+  state.drag=null;
+  state.sessionId=crypto.randomUUID?.()||('boggle-'+Date.now());
+  state.startedAt=new Date().toISOString();
+
+  gridEl.classList.add('boggle-grid');
+  gridEl.style.setProperty('--size',state.size);
+  gridEl.innerHTML='';
+  for(let r=0;r<state.size;r++)for(let c=0;c<state.size;c++){
+    const cell=document.createElement('button');
+    cell.type='button';cell.className='cell boggle-cell';cell.textContent=state.grid[r][c];
+    cell.dataset.row=r;cell.dataset.col=c;cell.setAttribute('role','gridcell');
+    gridEl.appendChild(cell);
+  }
+
+  wordListEl.innerHTML=state.placements.map((p,i)=>
+    '<div class="word-chip boggle-target" data-word-index="'+i+'">'+
+      '<strong>'+escapeHtml(p.ko||'단어')+'</strong>'+
+      '<small>'+p.clean.length+' letters</small>'+
+    '</div>'
+  ).join('');
+  updateProgress();
+}
+function isAdjacentCoord(a,b){
+  if(!a||!b)return false;
+  const dr=Math.abs(a[0]-b[0]),dc=Math.abs(a[1]-b[1]);
+  return dr<=1&&dc<=1&&(dr+dc)>0;
+}
+function boggleBegin(point){
+  const coords=[[point.row,point.col]];
+  state.drag={coords};
+  preview(coords);
+}
+function boggleMove(point){
+  if(!state.drag?.coords)return;
+  const coords=state.drag.coords;
+  const next=[point.row,point.col];
+  const last=coords[coords.length-1];
+  if(last&&last[0]===next[0]&&last[1]===next[1])return;
+
+  const existing=coords.findIndex(([r,c])=>r===next[0]&&c===next[1]);
+  if(existing>=0){
+    // Allow one-cell backtracking, but never reuse a cell deeper in the word.
+    if(existing===coords.length-2){
+      coords.pop();
+      preview(coords);
+    }
+    return;
+  }
+  if(!isAdjacentCoord(last,next))return;
+  coords.push(next);
+  preview(coords);
+}
+async function boggleEnd(originEl){
+  const coords=state.drag?.coords||[];
+  state.drag=null;clearPreview();
+  if(coords.length<3)return;
+  const letters=coords.map(([r,c])=>txt(cellAt(r,c)?.textContent).toUpperCase()).join('');
+  const index=state.placements.findIndex((p,i)=>!state.found.has(i)&&p.clean===letters);
+  if(index<0){
+    playStudentSfx('wrong');
+    return;
+  }
+  await markFound(index,originEl,coords);
+}
+
 function renderPuzzle(){
+  gridEl.classList.remove('boggle-grid');
   state.found.clear();
   state.gimmes.clear();
   state.drag=null;
@@ -383,11 +516,12 @@ async function endDrag(originEl){
   if(index<0)return;
   await markFound(index,originEl);
 }
-async function markFound(index,originEl){
+async function markFound(index,originEl,selectedCoords=null){
   if(state.found.has(index))return;
   state.found.add(index);
   const placement=state.placements[index];
-  placement.coords.forEach(([r,c])=>cellAt(r,c)?.classList.add('found'));
+  const paintCoords=selectedCoords||placement.coords;
+  paintCoords.forEach(([r,c])=>cellAt(r,c)?.classList.add('found'));
   const chip=wordListEl.querySelector('[data-word-index="'+index+'"]');
   chip?.classList.add('found','just-found');
   chip?.scrollIntoView?.({behavior:'smooth',block:'nearest',inline:'center'});
@@ -403,8 +537,8 @@ async function finishPuzzle(){
   playStudentSfx('complete');
   const points=earnedPuzzlePoints();
   const stars=earnedPuzzleStars();
-  completePoints.textContent=(state.mode==='crossword'?'Crossword complete!':'Word search complete!')+
-    ' You earned '+stars+' star'+(stars===1?'':'s')+'.';
+  const completeLabel=state.mode==='crossword'?'Crossword complete!':(state.mode==='boggle'?'Boggle complete!':'Word search complete!');
+  completePoints.textContent=completeLabel+' You earned '+stars+' star'+(stars===1?'':'s')+'.';
   rewardCelebration.innerHTML=
     '<student-reward-celebration percent="100" stars="'+stars+'" star-max="5" points="'+points+'" label="PUZZLE REWARD"></student-reward-celebration>';
   if(typeof completeCard.showModal==='function')completeCard.showModal();
@@ -450,7 +584,7 @@ async function saveReward(){
       });
     }
 
-    const listBase=state.mode==='crossword'?'Crossword':'Word Search';
+    const listBase=state.mode==='crossword'?'Crossword':(state.mode==='boggle'?'Boggle':'Word Search');
     const payload={
       reward_only:true,
       session_id:state.sessionId,
@@ -604,18 +738,25 @@ function makeCrossword(pool){
 }
 
 function setModeUI(){
-document.querySelectorAll('.puzzle-tab').forEach(btn=>{
+  document.querySelectorAll('.puzzle-tab').forEach(btn=>{
     const active=btn.dataset.mode===state.mode;
     btn.classList.toggle('active',active);
     btn.setAttribute('aria-selected',active?'true':'false');
   });
-  modeLabel.textContent=state.mode==='crossword'?'CROSSWORD':'WORD SEARCH';
-  listEyebrow.textContent=state.mode==='crossword'?'CLUES':'FIND THESE';
-  listTitle.textContent=state.mode==='crossword'?'Crossword':'Words';
-  gridEl.hidden=state.mode==='crossword';
-  crosswordGridEl.hidden=state.mode!=='crossword';
-  if(crosswordEntry)crosswordEntry.disabled=state.mode!=='crossword';
-  dragHint.textContent=state.mode==='crossword'?'Tap a clue, then type the English word.':'Drag in a straight line ↔ ↕ ↗ ↘';
+
+  const isCrossword=state.mode==='crossword';
+  const isBoggle=state.mode==='boggle';
+  modeLabel.textContent=isCrossword?'CROSSWORD':(isBoggle?'BOGGLE':'WORD SEARCH');
+  listEyebrow.textContent=isCrossword?'CLUES':(isBoggle?'FIND WORDS':'FIND THESE');
+  listTitle.textContent=isCrossword?'Crossword':(isBoggle?'Meanings':'Words');
+
+  gridEl.hidden=isCrossword;
+  crosswordGridEl.hidden=!isCrossword;
+  if(crosswordEntry)crosswordEntry.disabled=!isCrossword;
+
+  dragHint.textContent=isCrossword
+    ?'Tap a clue, then type the English word.'
+    :(isBoggle?'Drag through touching letters. Diagonals are allowed.':'Drag in a straight line ↔ ↕ ↗ ↘');
 }
 
 function renderCrossword(cw){
@@ -884,16 +1025,24 @@ function wireCrossword(){
 function wireGrid(){
   gridEl.addEventListener('pointerdown',e=>{
     const point=pointToCell(e.clientX,e.clientY);if(!point)return;
-    e.preventDefault();gridEl.setPointerCapture?.(e.pointerId);beginDrag(point);
+    e.preventDefault();gridEl.setPointerCapture?.(e.pointerId);
+    if(state.mode==='boggle')boggleBegin(point);
+    else beginDrag(point);
   });
   gridEl.addEventListener('pointermove',e=>{
     if(!state.drag)return;
-    const point=pointToCell(e.clientX,e.clientY);if(point)moveDrag(point);
+    const point=pointToCell(e.clientX,e.clientY);if(!point)return;
+    if(state.mode==='boggle')boggleMove(point);
+    else moveDrag(point);
   });
   gridEl.addEventListener('pointerup',e=>{
     const point=pointToCell(e.clientX,e.clientY);
-    if(point)moveDrag(point);
-    endDrag(point?.el||e.target);
+    if(point){
+      if(state.mode==='boggle')boggleMove(point);
+      else moveDrag(point);
+    }
+    if(state.mode==='boggle')boggleEnd(point?.el||e.target);
+    else endDrag(point?.el||e.target);
   });
   gridEl.addEventListener('pointercancel',()=>{state.drag=null;clearPreview()});
 }
@@ -926,16 +1075,24 @@ async function buildPuzzle(){
 
     state.book=null;
     state.words=state.pool;
-    if(state.mode==='crossword'){
+    if(state.mode==='crossword'||state.mode==='boggle'){
       loadingCard.querySelector('strong').textContent='Finding level vocabulary…';
       if(!state.studentLevel)state.studentLevel=await resolveStudentLevel(state.books);
       if(!state.crosswordPool.length&&state.studentLevel){
         state.crosswordPool=await loadLevelCrosswordWords(state.studentLevel);
       }
-      const crosswordSource=state.crosswordPool.length>=12?state.crosswordPool:state.pool;
-      loadingCard.querySelector('strong').textContent='Building your crossword…';
-      const cw=makeCrossword(crosswordSource);
-      renderCrossword(cw);
+      const levelSource=state.crosswordPool.length>=12?state.crosswordPool:state.pool;
+
+      if(state.mode==='crossword'){
+        loadingCard.querySelector('strong').textContent='Building your crossword…';
+        const cw=makeCrossword(levelSource);
+        renderCrossword(cw);
+      }else{
+        loadingCard.querySelector('strong').textContent='Building your Boggle board…';
+        const puzzle=generateBoggle(levelSource);
+        state.grid=puzzle.grid;state.size=puzzle.size;state.placements=puzzle.placements;
+        renderBoggle();setModeUI();
+      }
     }else{
       loadingCard.querySelector('strong').textContent='Building your word search…';
       const puzzle=generatePuzzle(state.pool);
