@@ -497,7 +497,11 @@ function renderBoggle(){
   gridEl.innerHTML='';
   for(let r=0;r<state.size;r++)for(let c=0;c<state.size;c++){
     const cell=document.createElement('button');
-    cell.type='button';cell.className='cell boggle-cell';cell.textContent=state.grid[r][c];
+    cell.type='button';cell.className='cell boggle-cell';
+    const letter=document.createElement('span');
+    letter.className='boggle-letter';
+    letter.textContent=state.grid[r][c];
+    cell.appendChild(letter);
     cell.dataset.row=r;cell.dataset.col=c;cell.setAttribute('role','gridcell');
     gridEl.appendChild(cell);
   }
