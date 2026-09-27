@@ -379,3 +379,13 @@ html[data-vocab-theme="dark"] .vocab-motivation-stat,
 html[data-vocab-theme="cyberpunk"] .vocab-motivation-stat{
   background:color-mix(in srgb,var(--vocab-card) 86%,var(--vocab-page))!important;
 }
+
+
+/* v0.111 book picker shell */
+html[data-vocab-theme] .vocab-book-picker{
+  background:color-mix(in srgb,var(--vocab-card) 88%,var(--vocab-page))!important;
+  border-color:var(--vocab-border)!important;
+}
+html[data-vocab-theme] .vocab-picker-label{
+  color:var(--muted)!important;
+}
