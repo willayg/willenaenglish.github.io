@@ -282,6 +282,7 @@ async function markFound(index,originEl){
   placement.coords.forEach(([r,c])=>cellAt(r,c)?.classList.add('found'));
   const chip=wordListEl.querySelector('[data-word-index="'+index+'"]');
   chip?.classList.add('found','just-found');
+  chip?.scrollIntoView?.({behavior:'smooth',block:'nearest',inline:'center'});
   setTimeout(()=>chip?.classList.remove('just-found'),450);
   updateProgress();
   playStudentSfx('correct');
@@ -465,7 +466,7 @@ function setModeUI(){
   });
   modeLabel.textContent=state.mode==='crossword'?'CROSSWORD':'WORD SEARCH';
   listEyebrow.textContent=state.mode==='crossword'?'CLUES':'FIND THESE';
-  listTitle.textContent=state.mode==='crossword'?'Korean Clues':'Word List';
+  listTitle.textContent=state.mode==='crossword'?'Crossword':'Words';
   gridEl.hidden=state.mode==='crossword';
   crosswordGridEl.hidden=state.mode!=='crossword';
   dragHint.textContent=state.mode==='crossword'?'Tap a clue, then type the English word.':'Drag in a straight line ↔ ↕ ↗ ↘';
@@ -524,7 +525,9 @@ function activateCrosswordWord(index){
   wordListEl.querySelectorAll('.crossword-clue.active').forEach(x=>x.classList.remove('active'));
   const p=state.placements[index];
   p.coords.forEach(([r,c])=>crosswordCell(r,c)?.classList.add('active'));
-  wordListEl.querySelector('[data-word-index="'+index+'"]')?.classList.add('active');
+  const activeClue=wordListEl.querySelector('[data-word-index="'+index+'"]');
+  activeClue?.classList.add('active');
+  activeClue?.scrollIntoView?.({behavior:'smooth',block:'nearest',inline:'center'});
 }
 async function checkCrosswordWord(index,origin){
   if(state.found.has(index))return;
