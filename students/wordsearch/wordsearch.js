@@ -378,11 +378,16 @@ function bogglePointForCell(row,col){
     y:rect.top-stageRect.top+rect.height/2
   };
 }
-function bogglePathD(coords){
-  const points=coords.map(([r,c])=>bogglePointForCell(r,c)).filter(Boolean);
-  if(!points.length)return'';
-  if(points.length===1)return'M '+points[0].x+' '+points[0].y;
-  return points.map((p,i)=>(i?'L ':'M ')+p.x+' '+p.y).join(' ');
+function bogglePointFromPointer(clientX,clientY){
+  if(!wordGridStage)return null;
+  const rect=wordGridStage.getBoundingClientRect();
+  return{x:clientX-rect.left,y:clientY-rect.top};
+}
+function bogglePathDFromPoints(points){
+  const clean=(points||[]).filter(p=>Number.isFinite(p?.x)&&Number.isFinite(p?.y));
+  if(!clean.length)return'';
+  if(clean.length===1)return'M '+clean[0].x+' '+clean[0].y;
+  return clean.map((p,i)=>(i?'L ':'M ')+p.x+' '+p.y).join(' ');
 }
 function sizeBoggleOverlay(){
   if(!boggleLines||!wordGridStage)return;
@@ -395,19 +400,21 @@ function renderBoggleLines(){
   if(!boggleLines)return;
   sizeBoggleOverlay();
   const pieces=[];
-  [...state.bogglePaths.entries()].forEach(([index,coords])=>{
+  [...state.bogglePaths.entries()].forEach(([index,path])=>{
     const color=BOGGLE_LINE_COLORS[index%BOGGLE_LINE_COLORS.length];
-    const d=bogglePathD(coords);
+    const d=bogglePathDFromPoints(path.points);
     if(d)pieces.push('<path class="boggle-solved-line" d="'+d+'" style="--line-color:'+color+'"></path>');
   });
-  if(state.mode==='boggle'&&state.drag?.coords?.length){
-    const d=bogglePathD(state.drag.coords);
+  if(state.mode==='boggle'&&state.drag?.trail?.length){
+    const d=bogglePathDFromPoints(state.drag.trail);
     if(d)pieces.push('<path class="boggle-drag-line" d="'+d+'"></path>');
   }
   boggleLines.innerHTML=pieces.join('');
 }
-function rememberBogglePath(index,coords){
-  state.bogglePaths.set(index,coords.map(([r,c])=>[r,c]));
+function rememberBogglePath(index,coords,trail){
+  const points=(trail&&trail.length?trail:coords.map(([r,c])=>bogglePointForCell(r,c)).filter(Boolean))
+    .map(p=>({x:p.x,y:p.y}));
+  state.bogglePaths.set(index,{coords:coords.map(([r,c])=>[r,c]),points});
   renderBoggleLines();
 }
 function generateBoggle(pool){
@@ -466,36 +473,51 @@ function isAdjacentCoord(a,b){
   const dr=Math.abs(a[0]-b[0]),dc=Math.abs(a[1]-b[1]);
   return dr<=1&&dc<=1&&(dr+dc)>0;
 }
-function boggleBegin(point){
+function boggleBegin(point,pointer){
   const coords=[[point.row,point.col]];
-  state.drag={coords};
+  const first=bogglePointFromPointer(pointer.clientX,pointer.clientY)||bogglePointForCell(point.row,point.col);
+  state.drag={coords,trail:first?[first]:[]};
   preview(coords);
   renderBoggleLines();
 }
-function boggleMove(point){
+function boggleMove(point,pointer){
   if(!state.drag?.coords)return;
   const coords=state.drag.coords;
   const next=[point.row,point.col];
   const last=coords[coords.length-1];
-  if(last&&last[0]===next[0]&&last[1]===next[1])return;
+
+  const freePoint=bogglePointFromPointer(pointer.clientX,pointer.clientY);
+  if(freePoint){
+    const trail=state.drag.trail||(state.drag.trail=[]);
+    const prev=trail[trail.length-1];
+    if(!prev||Math.hypot(freePoint.x-prev.x,freePoint.y-prev.y)>=4)trail.push(freePoint);
+  }
+
+  if(last&&last[0]===next[0]&&last[1]===next[1]){
+    renderBoggleLines();
+    return;
+  }
 
   const existing=coords.findIndex(([r,c])=>r===next[0]&&c===next[1]);
   if(existing>=0){
-    // Allow one-cell backtracking, but never reuse a cell deeper in the word.
     if(existing===coords.length-2){
       coords.pop();
       preview(coords);
-      renderBoggleLines();
     }
+    renderBoggleLines();
     return;
   }
-  if(!isAdjacentCoord(last,next))return;
+  if(!isAdjacentCoord(last,next)){
+    renderBoggleLines();
+    return;
+  }
   coords.push(next);
   preview(coords);
   renderBoggleLines();
 }
 async function boggleEnd(originEl){
   const coords=(state.drag?.coords||[]).map(([r,c])=>[r,c]);
+  const trail=(state.drag?.trail||[]).map(p=>({x:p.x,y:p.y}));
   state.drag=null;clearPreview();
   renderBoggleLines();
   if(coords.length<3)return;
@@ -505,7 +527,7 @@ async function boggleEnd(originEl){
     playStudentSfx('wrong');
     return;
   }
-  rememberBogglePath(index,coords);
+  rememberBogglePath(index,coords,trail);
   await markFound(index,originEl,coords);
 }
 
@@ -568,7 +590,23 @@ function pointToCell(clientX,clientY){
   const hit=document.elementFromPoint(clientX,clientY)?.closest?.('.cell');
   if(!hit||!gridEl.contains(hit))return null;
   return{row:Number(hit.dataset.row),col:Number(hit.dataset.col),el:hit};
+}function nearestBoggleCell(clientX,clientY){
+  const direct=pointToCell(clientX,clientY);
+  if(direct)return direct;
+  if(!gridEl)return null;
+  let best=null,bestDist=Infinity;
+  gridEl.querySelectorAll('.cell').forEach(el=>{
+    const rect=el.getBoundingClientRect();
+    const cx=rect.left+rect.width/2,cy=rect.top+rect.height/2;
+    const d=Math.hypot(clientX-cx,clientY-cy);
+    if(d<bestDist){
+      bestDist=d;
+      best={row:Number(el.dataset.row),col:Number(el.dataset.col),el};
+    }
+  });
+  return best;
 }
+
 function beginDrag(point){
   state.drag={start:{row:point.row,col:point.col},end:{row:point.row,col:point.col}};
   preview([[point.row,point.col]]);
@@ -1126,19 +1164,24 @@ function wireGrid(){
   gridEl.addEventListener('pointerdown',e=>{
     const point=pointToCell(e.clientX,e.clientY);if(!point)return;
     e.preventDefault();gridEl.setPointerCapture?.(e.pointerId);
-    if(state.mode==='boggle')boggleBegin(point);
+    if(state.mode==='boggle')boggleBegin(point,e);
     else beginDrag(point);
   });
   gridEl.addEventListener('pointermove',e=>{
     if(!state.drag)return;
-    const point=pointToCell(e.clientX,e.clientY);if(!point)return;
-    if(state.mode==='boggle')boggleMove(point);
+    const point=state.mode==='boggle'
+      ?nearestBoggleCell(e.clientX,e.clientY)
+      :pointToCell(e.clientX,e.clientY);
+    if(!point)return;
+    if(state.mode==='boggle')boggleMove(point,e);
     else moveDrag(point);
   });
   gridEl.addEventListener('pointerup',e=>{
-    const point=pointToCell(e.clientX,e.clientY);
+    const point=state.mode==='boggle'
+      ?nearestBoggleCell(e.clientX,e.clientY)
+      :pointToCell(e.clientX,e.clientY);
     if(point){
-      if(state.mode==='boggle')boggleMove(point);
+      if(state.mode==='boggle')boggleMove(point,e);
       else moveDrag(point);
     }
     if(state.mode==='boggle')boggleEnd(point?.el||e.target);
@@ -1254,7 +1297,10 @@ async function cheatFinishPuzzle(){
   }else{
     state.placements.forEach((p,index)=>{
       p.coords.forEach(([r,c])=>cellAt(r,c)?.classList.add('found'));
-      if(state.mode==='boggle')state.bogglePaths.set(index,p.coords.map(([r,c])=>[r,c]));
+      if(state.mode==='boggle'){
+        const points=p.coords.map(([r,c])=>bogglePointForCell(r,c)).filter(Boolean);
+        state.bogglePaths.set(index,{coords:p.coords.map(([r,c])=>[r,c]),points});
+      }
       wordListEl.querySelector('[data-word-index="'+index+'"]')?.classList.add('found');
     });
     if(state.mode==='boggle')renderBoggleLines();
