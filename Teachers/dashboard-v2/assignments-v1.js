@@ -93,12 +93,19 @@
     const required=Array.isArray(a?.list_meta?.required_modes)?a.list_meta.required_modes:[];
     const labels={quiz:'Quiz',spelling_test:'Spelling',speaking:'Speaking'};
     const targetStudents=Array.isArray(a?.list_meta?.target_students)?a.list_meta.target_students:[];
-    const scope=targetStudents.length
+    const className=a.class||'No class';
+    const targetLabel=targetStudents.length
       ? targetStudents.map(s=>s?.name||s?.korean_name||'Student').filter(Boolean).join(', ')
-      : (a.class||'No class');
+      : '';
+    const detailBits=[
+      a.title||'Vocabulary Study',
+      targetLabel?('Students: '+targetLabel):'',
+      required.map(x=>labels[x]||x).join(' · ')||'Vocabulary Study',
+      assignmentWorkloadMode(a)==='split'?'Split workload':''
+    ].filter(Boolean);
     return '<button type="button" class="assignment-card" data-assignment-id="'+esc(a.id)+'">'+
       '<div class="assignment-card-head">'+
-        '<div><strong>'+esc(a.title||'Vocabulary Study')+'</strong><span>'+esc(scope)+' · '+esc(required.map(x=>labels[x]||x).join(' · ')||'Vocabulary Study')+(assignmentWorkloadMode(a)==='split'?' · Split workload':'')+'</span></div>'+
+        '<div><strong>'+esc(className)+'</strong><span>'+esc(detailBits.join(' · '))+'</span></div>'+
         '<span class="assignment-state '+(isCurrent(a)?'is-current':'is-history')+'">'+(isCurrent(a)?'Current':(a.ended_at?'Cancelled':'History'))+'</span>'+
       '</div>'+
       '<div class="assignment-card-meta"><span>Due <b>'+esc(fmtDate(a.due_at))+'</b></span><span>Created <b>'+esc(fmtDate(a.created_at))+'</b></span></div>'+
