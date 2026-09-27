@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="./wordsearch.css?v=20260928-3">
+<link rel="stylesheet" href="./wordsearch.css?v=20260928-4">
 <script src="/students/api-gateway.js?v=20260926-progress-summary-cf1"></script>
 <script src="/js/api-config.js?v=20260926-reverted-auth1"></script>
 <script src="/students/vocab-study/auth-guard.js?v=20260925-v0004"></script>
@@ -107,7 +107,14 @@
             <span>R</span><span>O</span><span>N</span>
             <span>S</span><span>E</span><span>D</span>
             <svg viewBox="0 0 300 300" preserveAspectRatio="none">
-              <path d="M50 50 L150 50 L250 50"></path>
+              <defs>
+                <marker id="boggleArrowPink" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto" markerUnits="strokeWidth">
+                  <path d="M0,0 L10,5 L0,10 z" class="arrow-head"></path>
+                </marker>
+              </defs>
+              <path class="guide-path guide-pink" d="M50 50 L150 50 L244 50" marker-end="url(#boggleArrowPink)"></path>
+              <circle cx="50" cy="50" r="9"></circle>
+              <circle cx="150" cy="50" r="9"></circle>
             </svg>
           </div>
         </section>
@@ -122,7 +129,14 @@
             <span>A</span><span>O</span><span>T</span>
             <span>N</span><span>E</span><span>R</span>
             <svg viewBox="0 0 300 300" preserveAspectRatio="none">
-              <path d="M50 50 L150 150 L250 250"></path>
+              <defs>
+                <marker id="boggleArrowCyan" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto" markerUnits="strokeWidth">
+                  <path d="M0,0 L10,5 L0,10 z" class="arrow-head"></path>
+                </marker>
+              </defs>
+              <path class="guide-path guide-cyan" d="M50 50 L150 150 L244 244" marker-end="url(#boggleArrowCyan)"></path>
+              <circle cx="50" cy="50" r="9"></circle>
+              <circle cx="150" cy="150" r="9"></circle>
             </svg>
           </div>
         </section>
