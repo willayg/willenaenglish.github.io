@@ -462,34 +462,6 @@ function makeCrossword(pool){
 }
 
 function setModeUI(){
-  
-async function cheatFinishPuzzle(){
-  if(!CHEAT_MODE||!state.placements.length)return;
-  state.cheatCompletion=true;
-  state.found=new Set(state.placements.map((_,i)=>i));
-
-  if(state.mode==='crossword'){
-    state.placements.forEach((p,index)=>{
-      p.coords.forEach(([r,c],i)=>{
-        const input=crosswordCell(r,c)?.querySelector('input');
-        if(input)input.value=p.clean[i];
-        crosswordCell(r,c)?.classList.add('solved');
-      });
-      wordListEl.querySelector('[data-word-index="'+index+'"]')?.classList.add('found');
-    });
-  }else{
-    state.placements.forEach((p,index)=>{
-      p.coords.forEach(([r,c])=>cellAt(r,c)?.classList.add('found'));
-      wordListEl.querySelector('[data-word-index="'+index+'"]')?.classList.add('found');
-    });
-  }
-  updateProgress();
-  await finishPuzzle();
-}
-
-if(CHEAT_MODE)cheatFinishBtn.hidden=false;
-cheatFinishBtn?.addEventListener('click',cheatFinishPuzzle);
-
 document.querySelectorAll('.puzzle-tab').forEach(btn=>{
     const active=btn.dataset.mode===state.mode;
     btn.classList.toggle('active',active);
@@ -501,6 +473,7 @@ document.querySelectorAll('.puzzle-tab').forEach(btn=>{
   gridEl.hidden=state.mode==='crossword';
   crosswordGridEl.hidden=state.mode!=='crossword';
   dragHint.textContent=state.mode==='crossword'?'Tap a clue, then type the English word.':'Drag in a straight line ↔ ↕ ↗ ↘';
+}
 }
 
 function renderCrossword(cw){
@@ -693,6 +666,37 @@ async function boot(){
     showError(error);
   }
 }
+
+async function cheatFinishPuzzle(){
+  if(!CHEAT_MODE||!state.placements.length)return;
+  state.cheatCompletion=true;
+  state.found=new Set(state.placements.map((_,i)=>i));
+
+  if(state.mode==='crossword'){
+    state.placements.forEach((p,index)=>{
+      p.coords.forEach(([r,c],i)=>{
+        const input=crosswordCell(r,c)?.querySelector('input');
+        if(input)input.value=p.clean[i];
+        crosswordCell(r,c)?.classList.add('solved');
+      });
+      wordListEl.querySelector('[data-word-index="'+index+'"]')?.classList.add('found');
+    });
+  }else{
+    state.placements.forEach((p,index)=>{
+      p.coords.forEach(([r,c])=>cellAt(r,c)?.classList.add('found'));
+      wordListEl.querySelector('[data-word-index="'+index+'"]')?.classList.add('found');
+    });
+  }
+
+  updateProgress();
+  await finishPuzzle();
+}
+
+if(CHEAT_MODE&&cheatFinishBtn){
+  cheatFinishBtn.hidden=false;
+  cheatFinishBtn.addEventListener('click',cheatFinishPuzzle);
+}
+
 
 document.querySelectorAll('.puzzle-tab').forEach(btn=>btn.addEventListener('click',()=>{
   if(btn.dataset.mode===state.mode)return;
