@@ -67,3 +67,146 @@ html[data-vocab-theme="dark"] .vocab-theme-dock,
 html[data-vocab-theme="cyberpunk"] .vocab-theme-dock{background:rgba(20,20,28,.72);border-color:rgba(255,255,255,.22)}
 
 @media(max-width:680px){.vocab-theme-dock{margin-top:10px;gap:7px;padding:6px 9px}.vocab-theme-pip{width:18px;height:18px}}
+
+
+/* v0.109 complete theme coverage for mode surfaces + shared keyboard */
+html[data-vocab-theme] .vocab-session{
+  background:linear-gradient(180deg,var(--vocab-page-top) 0,var(--vocab-page) 38%,var(--vocab-page) 100%)!important;
+}
+html[data-vocab-theme] .vocab-session-top,
+html[data-vocab-theme] .vocab-session-bottom{
+  background:color-mix(in srgb,var(--vocab-card) 94%,transparent)!important;
+  border-color:var(--line)!important;
+}
+html[data-vocab-theme] .vocab-question-wrap .question-card,
+html[data-vocab-theme] .speaking-card,
+html[data-vocab-theme] .spelling-mode-panel,
+html[data-vocab-theme] .spelling-mode-card,
+html[data-vocab-theme] .spelling-test-card,
+html[data-vocab-theme] .vocab-coach-preview,
+html[data-vocab-theme] .vocab-coach-word,
+html[data-vocab-theme] .vocab-word-modal-card,
+html[data-vocab-theme] .vocab-word-modal-list,
+html[data-vocab-theme] .vocab-word-row,
+html[data-vocab-theme] #vocabBookScreen,
+html[data-vocab-theme] #vocabWordTestScreen{
+  background:var(--vocab-card)!important;
+  color:var(--ink)!important;
+  border-color:var(--vocab-border)!important;
+}
+html[data-vocab-theme] .vocab-question-wrap .prompt,
+html[data-vocab-theme] .spelling-mode-head h2,
+html[data-vocab-theme] .vocab-coach-heading h2,
+html[data-vocab-theme] .vocab-coach-word-copy strong,
+html[data-vocab-theme] .vocab-word-row strong,
+html[data-vocab-theme] .vocab-unit-summary h2,
+html[data-vocab-theme] .vocab-progress-copy strong,
+html[data-vocab-theme] .speaking-card .prompt{
+  color:var(--vocab-heading)!important;
+}
+html[data-vocab-theme] .vocab-book-choice,
+html[data-vocab-theme] .study-v2-unit,
+html[data-vocab-theme] .vocab-teacher-words,
+html[data-vocab-theme] .vocab-coach-start,
+html[data-vocab-theme] .vocab-coach-audio,
+html[data-vocab-theme] .vocab-skip-action,
+html[data-vocab-theme] .vocab-question-wrap .choice,
+html[data-vocab-theme] .spelling-test-card .answer,
+html[data-vocab-theme] .vocab-action,
+html[data-vocab-theme] .vocab-back{
+  background:var(--vocab-card)!important;
+  color:var(--ink)!important;
+  border-color:var(--vocab-border)!important;
+}
+html[data-vocab-theme] .vocab-book-choice.is-active,
+html[data-vocab-theme] .study-v2-unit.is-current{
+  background:color-mix(in srgb,var(--pink) 10%,var(--vocab-card))!important;
+  border-color:var(--pink)!important;
+  color:var(--pink-dark)!important;
+}
+html[data-vocab-theme] .spelling-mode-card.is-disabled{
+  background:color-mix(in srgb,var(--vocab-card) 88%,var(--vocab-page))!important;
+}
+html[data-vocab-theme] .vocab-front-progress-ring::before,
+html[data-vocab-theme] .spelling-mode-ring::before{
+  background:var(--vocab-card)!important;
+}
+html[data-vocab-theme] .vocab-front-progress-ring,
+html[data-vocab-theme] .spelling-mode-ring{
+  background:conic-gradient(var(--ring-color,var(--pink)) calc(var(--progress,0)*1%),var(--vocab-track) 0)!important;
+}
+html[data-vocab-theme] .vocab-word-modal-head{
+  background:var(--vocab-card)!important;
+  border-color:var(--line)!important;
+}
+html[data-vocab-theme] .vocab-answer-note{
+  background:color-mix(in srgb,var(--vocab-card) 92%,var(--vocab-page))!important;
+  color:var(--ink)!important;
+}
+html[data-vocab-theme] .vocab-question-wrap .choice.selected{
+  background:color-mix(in srgb,var(--pink) 12%,var(--vocab-card))!important;
+  color:var(--pink-dark)!important;
+}
+html[data-vocab-theme] .spelling-test-card .answer{
+  caret-color:var(--cyan-strong)!important;
+}
+html[data-vocab-theme] .vocab-unit-summary,
+html[data-vocab-theme] .vocab-book-choices,
+html[data-vocab-theme] .vocab-front-achievements{
+  border-color:var(--line)!important;
+}
+html[data-vocab-theme="dark"] .vocab-front-achievement,
+html[data-vocab-theme="cyberpunk"] .vocab-front-achievement{
+  background:color-mix(in srgb,var(--vocab-card) 90%,var(--vocab-page))!important;
+  color:var(--ink)!important;
+}
+
+/* Shared Willena keyboard is injected after this stylesheet, so use explicit
+   high-specificity !important theme overrides. */
+html[data-vocab-theme="dark"] body #willenaSharedKeyboard,
+html[data-vocab-theme="cyberpunk"] body #willenaSharedKeyboard{
+  background:var(--vocab-card)!important;
+  border-color:var(--vocab-border)!important;
+  box-shadow:0 -10px 30px rgba(0,0,0,.38)!important;
+}
+html[data-vocab-theme="dark"] body #willenaSharedKeyboard .wkb-key,
+html[data-vocab-theme="dark"] body #willenaSharedKeyboard .wkb-hide,
+html[data-vocab-theme="dark"] body #willenaSharedKeyboard .wkb-symbol-panel,
+html[data-vocab-theme="dark"] body #willenaSharedKeyboard .wkb-symbol-panel button,
+html[data-vocab-theme="cyberpunk"] body #willenaSharedKeyboard .wkb-key,
+html[data-vocab-theme="cyberpunk"] body #willenaSharedKeyboard .wkb-hide,
+html[data-vocab-theme="cyberpunk"] body #willenaSharedKeyboard .wkb-symbol-panel,
+html[data-vocab-theme="cyberpunk"] body #willenaSharedKeyboard .wkb-symbol-panel button{
+  background:var(--vocab-page-top)!important;
+  color:var(--ink)!important;
+  border-color:var(--vocab-border)!important;
+  box-shadow:0 2px 6px rgba(0,0,0,.24)!important;
+}
+html[data-vocab-theme="dark"] body #willenaSharedKeyboard .wkb-key:active,
+html[data-vocab-theme="dark"] body #willenaSharedKeyboard .wkb-key.is-pressed,
+html[data-vocab-theme="cyberpunk"] body #willenaSharedKeyboard .wkb-key:active,
+html[data-vocab-theme="cyberpunk"] body #willenaSharedKeyboard .wkb-key.is-pressed{
+  background:var(--soft)!important;
+  border-color:var(--cyan-strong)!important;
+}
+html[data-vocab-theme="dark"] body #willenaSharedKeyboard .wkb-key.shift,
+html[data-vocab-theme="cyberpunk"] body #willenaSharedKeyboard .wkb-key.shift{
+  background:var(--vocab-page)!important;
+  color:var(--muted)!important;
+}
+html[data-vocab-theme="dark"] body #willenaSharedKeyboard .wkb-key.shift.on,
+html[data-vocab-theme="cyberpunk"] body #willenaSharedKeyboard .wkb-key.shift.on{
+  background:var(--soft)!important;
+  border-color:var(--cyan-strong)!important;
+  color:var(--cyan-strong)!important;
+}
+html[data-vocab-theme="dark"] body #willenaSharedKeyboard .wkb-row.bottom .enter,
+html[data-vocab-theme="cyberpunk"] body #willenaSharedKeyboard .wkb-row.bottom .enter{
+  background:color-mix(in srgb,var(--pink) 12%,var(--vocab-card))!important;
+  border-color:var(--cyan-strong)!important;
+  color:var(--pink)!important;
+}
+html[data-vocab-theme="dark"] [data-willena-keyboard="app"],
+html[data-vocab-theme="cyberpunk"] [data-willena-keyboard="app"]{
+  caret-color:var(--cyan-strong)!important;
+}
