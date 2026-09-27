@@ -15,8 +15,8 @@ const $=id=>document.getElementById(id);
 const gridEl=$('grid');
 const wordGridStage=$('wordGridStage');
 const boggleLines=$('boggleLines');
-const helpBtn=$('helpBtn');
-const helpDialog=$('helpDialog');
+const boggleHelpBtn=$('boggleHelpBtn');
+const boggleHelpDialog=$('boggleHelpDialog');
 const crosswordGridEl=$('crosswordGrid');
 const crosswordEntry=$('crosswordEntry');
 const wordListEl=$('wordList');
@@ -801,7 +801,32 @@ function makeCrossword(pool){
 }
 
 function setModeUI(){
-  document.querySelectorAll('.puzzle-tab').forEach(btn=>{
+  function boggleHelpSeenKey(){
+  const id=txt(state.auth?.user_id||state.auth?.id||state.auth?.student_id||'browser');
+  return 'word-games-boggle-help-seen:'+id;
+}
+function markBoggleHelpSeen(){
+  try{localStorage.setItem(boggleHelpSeenKey(),'1')}catch(_){}
+}
+function openBoggleHelp({markSeen=true}={}){
+  if(!boggleHelpDialog)return;
+  if(markSeen)markBoggleHelpSeen();
+  if(typeof boggleHelpDialog.showModal==='function'){
+    if(!boggleHelpDialog.open)boggleHelpDialog.showModal();
+  }else boggleHelpDialog.setAttribute('open','');
+}
+function closeBoggleHelp(){
+  if(!boggleHelpDialog)return;
+  if(typeof boggleHelpDialog.close==='function'&&boggleHelpDialog.open)boggleHelpDialog.close();
+  else boggleHelpDialog.removeAttribute('open');
+}
+function maybeShowFirstBoggleHelp(){
+  let seen=false;
+  try{seen=localStorage.getItem(boggleHelpSeenKey())==='1'}catch(_){}
+  if(!seen)setTimeout(()=>openBoggleHelp({markSeen:true}),180);
+}
+
+document.querySelectorAll('.puzzle-tab').forEach(btn=>{
     const active=btn.dataset.mode===state.mode;
     btn.classList.toggle('active',active);
     btn.setAttribute('aria-selected',active?'true':'false');
@@ -817,6 +842,7 @@ function setModeUI(){
   crosswordGridEl.hidden=!isCrossword;
   if(boggleLines)boggleLines.hidden=!isBoggle;
   if(crosswordEntry)crosswordEntry.disabled=!isCrossword;
+  if(boggleHelpBtn)boggleHelpBtn.hidden=!isBoggle;
 
   dragHint.textContent=isCrossword
     ?'Tap a clue, then type the English word.'
@@ -1155,7 +1181,7 @@ async function buildPuzzle(){
         loadingCard.querySelector('strong').textContent='Building your Boggle board…';
         const puzzle=generateBoggle(levelSource);
         state.grid=puzzle.grid;state.size=puzzle.size;state.placements=puzzle.placements;
-        renderBoggle();setModeUI();
+        renderBoggle();setModeUI();maybeShowFirstBoggleHelp();
       }
     }else{
       loadingCard.querySelector('strong').textContent='Building your word search…';
@@ -1184,7 +1210,6 @@ async function boot(){
     loadingCard.querySelector('strong').textContent='Finding your books…';
     state.books=await assignedBooks(who.class);
     await buildPuzzle();
-    maybeShowFirstHelp();
   }catch(error){
     console.error('[Word Search boot]',error);
     showError(error);
@@ -1224,40 +1249,14 @@ if(CHEAT_MODE&&cheatFinishBtn){
 }
 
 
-function helpSeenKey(){
-  const id=txt(state.auth?.user_id||state.auth?.id||state.auth?.student_id||'browser');
-  return 'word-games-help-seen:'+id;
-}
-function markHelpSeen(){
-  try{localStorage.setItem(helpSeenKey(),'1')}catch(_){}
-}
-function openHelp({markSeen=true}={}){
-  if(!helpDialog)return;
-  if(markSeen)markHelpSeen();
-  if(typeof helpDialog.showModal==='function'){
-    if(!helpDialog.open)helpDialog.showModal();
-  }else helpDialog.setAttribute('open','');
-}
-function closeHelp(){
-  if(!helpDialog)return;
-  if(typeof helpDialog.close==='function'&&helpDialog.open)helpDialog.close();
-  else helpDialog.removeAttribute('open');
-}
-function maybeShowFirstHelp(){
-  let seen=false;
-  try{seen=localStorage.getItem(helpSeenKey())==='1'}catch(_){}
-  if(!seen)setTimeout(()=>openHelp({markSeen:true}),180);
-}
-
-
 document.querySelectorAll('.puzzle-tab').forEach(btn=>btn.addEventListener('click',()=>{
   if(btn.dataset.mode===state.mode)return;
   state.mode=btn.dataset.mode;setModeUI();buildPuzzle();
 }));
-helpBtn?.addEventListener('click',()=>openHelp({markSeen:true}));
-$('helpCloseBtn')?.addEventListener('click',closeHelp);
-$('helpGotItBtn')?.addEventListener('click',closeHelp);
-helpDialog?.addEventListener('click',e=>{if(e.target===helpDialog)closeHelp()});
+boggleHelpBtn?.addEventListener('click',()=>openBoggleHelp({markSeen:true}));
+$('boggleHelpCloseBtn')?.addEventListener('click',closeBoggleHelp);
+$('boggleHelpGotItBtn')?.addEventListener('click',closeBoggleHelp);
+boggleHelpDialog?.addEventListener('click',e=>{if(e.target===boggleHelpDialog)closeBoggleHelp()});
 $('newPuzzleBtn').addEventListener('click',()=>buildPuzzle());
 $('retryBtn').addEventListener('click',()=>buildPuzzle());
 $('playAgainBtn').addEventListener('click',()=>{closeWinModal();buildPuzzle()});
