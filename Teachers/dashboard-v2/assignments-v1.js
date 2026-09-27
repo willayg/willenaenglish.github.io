@@ -621,7 +621,8 @@
       $$('[data-assignment-status]').forEach(x=>x.classList.toggle('active',x===btn));
       renderList();
     }));
-    $$('[data-view="assignments"]').forEach(btn=>btn.addEventListener('click',()=>loadAssignments()));
+    $('[data-vocab-tab="assignments"]').forEach(btn=>btn.addEventListener('click',()=>loadAssignments()));
+    window.addEventListener('vocab:assignments-open',()=>loadAssignments());
   }
 
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',wire,{once:true});
