@@ -296,7 +296,7 @@ async function markFound(index,originEl){
 async function finishPuzzle(){
   playStudentSfx('complete');
   const points=state.found.size*POINTS_PER_WORD;
-  completePoints.textContent=(state.mode==='crossword'?'Crossword complete!':'Word search complete!')+(state.cheatCompletion?' Test celebration.':' You earned 5 stars.');
+  completePoints.textContent=(state.mode==='crossword'?'Crossword complete!':'Word search complete!')+' You earned 5 stars.';
   rewardCelebration.innerHTML=
     '<student-reward-celebration percent="100" stars="5" star-max="5" points="'+points+'" label="PUZZLE REWARD"></student-reward-celebration>';
   if(typeof completeCard.showModal==='function')completeCard.showModal();
@@ -304,7 +304,6 @@ async function finishPuzzle(){
   await saveReward();
 }
 async function saveReward(){
-  if(state.cheatCompletion)return;
   if(state.saving||!state.sessionId)return;
   state.saving=true;
   const points=state.found.size*POINTS_PER_WORD;
