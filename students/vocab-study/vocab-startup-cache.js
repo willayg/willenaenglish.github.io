@@ -1,4 +1,4 @@
-const PREFIX='willena-vocab-startup-v3:';
+const PREFIX='willena-vocab-startup-v1:';
 
 function now(){return Date.now()}
 function key(parts){return PREFIX+parts.map(v=>String(v??'')).join(':')}
