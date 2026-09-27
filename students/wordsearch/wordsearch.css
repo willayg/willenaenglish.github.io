@@ -186,3 +186,35 @@ h1{font-size:clamp(26px,5vw,42px);line-height:1.05;margin:5px 0 8px;letter-spaci
   .head-buttons{display:grid;gap:6px}
   .cheat-btn,.head-buttons .new-btn{font-size:11px;padding:0 8px}
 }
+
+.crossword-clue{
+  min-width:210px;
+  max-width:320px;
+  grid-template-columns:auto 1fr;
+  align-items:center;
+  padding:12px 14px;
+}
+.crossword-clue strong{
+  font-size:20px;
+  line-height:1;
+  color:#b84479;
+  min-width:42px;
+}
+.crossword-clue span{
+  font-size:17px;
+  line-height:1.2;
+  font-weight:900;
+  color:#315e64;
+}
+.crossword-clue.hint-scramble span{
+  letter-spacing:.12em;
+  font-size:18px;
+}
+.crossword-clue.hint-audio span{
+  color:#267481;
+}
+@media(max-width:430px){
+  .crossword-clue{min-width:190px;max-width:270px;padding:10px 12px}
+  .crossword-clue strong{font-size:18px;min-width:36px}
+  .crossword-clue span{font-size:16px}
+}
