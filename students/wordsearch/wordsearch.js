@@ -392,6 +392,40 @@ function pointInBoggleStage(clientX,clientY){
   if(!rect)return null;
   return{x:clientX-rect.left,y:clientY-rect.top};
 }
+function boggleCellCenter(row,col){
+  const el=cellAt(row,col);
+  const stageRect=wordGridStage?.getBoundingClientRect();
+  const rect=el?.getBoundingClientRect();
+  if(!stageRect||!rect)return null;
+  return{
+    x:rect.left-stageRect.left+rect.width/2,
+    y:rect.top-stageRect.top+rect.height/2
+  };
+}
+function snappedBogglePoints(coords,pointerTail=null){
+  const points=(coords||[]).map(([r,c])=>boggleCellCenter(r,c)).filter(Boolean);
+  if(pointerTail&&points.length){
+    const lastCoord=coords[coords.length-1];
+    const lastCenter=points[points.length-1];
+    const target=pointInBoggleStage(pointerTail.clientX,pointerTail.clientY);
+    if(target&&lastCoord){
+      const dx=target.x-lastCenter.x;
+      const dy=target.y-lastCenter.y;
+      const angle=Math.atan2(dy,dx);
+      const octant=Math.round(angle/(Math.PI/4));
+      const snappedAngle=octant*(Math.PI/4);
+      const len=Math.hypot(dx,dy);
+      if(len>4){
+        points.push({
+          x:lastCenter.x+Math.cos(snappedAngle)*len,
+          y:lastCenter.y+Math.sin(snappedAngle)*len
+        });
+      }
+    }
+  }
+  return points;
+}
+
 function drawCanvasPath(ctx,points,color,width,alpha=1){
   if(!ctx||!points?.length)return;
   ctx.save();
@@ -415,17 +449,14 @@ function renderBoggleCanvas(){
   ctx.clearRect(0,0,rect.width,rect.height);
 
   [...state.bogglePaths.entries()].forEach(([index,path])=>{
-    drawCanvasPath(ctx,path.points,BOGGLE_LINE_COLORS[index%BOGGLE_LINE_COLORS.length],11,.72);
+    drawCanvasPath(ctx,snappedBogglePoints(path.coords),BOGGLE_LINE_COLORS[index%BOGGLE_LINE_COLORS.length],11,.72);
   });
-  if(state.drag?.trail?.length){
-    drawCanvasPath(ctx,state.drag.trail,'#e75e9f',12,.86);
+  if(state.drag?.coords?.length){
+    drawCanvasPath(ctx,snappedBogglePoints(state.drag.coords,state.drag.pointer),'#e75e9f',12,.86);
   }
 }
-function rememberBogglePath(index,coords,trail){
-  state.bogglePaths.set(index,{
-    coords:coords.map(([r,c])=>[r,c]),
-    points:(trail||[]).map(p=>({x:p.x,y:p.y}))
-  });
+function rememberBogglePath(index,coords){
+  state.bogglePaths.set(index,{coords:coords.map(([r,c])=>[r,c])});
   renderBoggleCanvas();
 }
 
@@ -486,20 +517,14 @@ function isAdjacentCoord(a,b){
   return dr<=1&&dc<=1&&(dr+dc)>0;
 }
 function boggleBegin(point,pointer){
-  const first=pointInBoggleStage(pointer.clientX,pointer.clientY);
-  state.drag={coords:[[point.row,point.col]],trail:first?[first]:[]};
+  state.drag={coords:[[point.row,point.col]],pointer};
   preview(state.drag.coords);
   renderBoggleCanvas();
 }
 function boggleMove(point,pointer){
   if(!state.drag)return;
 
-  const free=pointInBoggleStage(pointer.clientX,pointer.clientY);
-  if(free){
-    const trail=state.drag.trail;
-    const prev=trail[trail.length-1];
-    if(!prev||Math.hypot(free.x-prev.x,free.y-prev.y)>2)trail.push(free);
-  }
+  state.drag.pointer=pointer;
 
   const coords=state.drag.coords;
   const last=coords[coords.length-1];
@@ -531,7 +556,6 @@ function boggleMove(point,pointer){
 }
 async function boggleEnd(originEl){
   const coords=(state.drag?.coords||[]).map(([r,c])=>[r,c]);
-  const trail=(state.drag?.trail||[]).map(p=>({x:p.x,y:p.y}));
   state.drag=null;clearPreview();
   renderBoggleCanvas();
   if(coords.length<3)return;
@@ -541,7 +565,7 @@ async function boggleEnd(originEl){
     playStudentSfx('wrong');
     return;
   }
-  rememberBogglePath(index,coords,trail);
+  rememberBogglePath(index,coords);
   await markFound(index,originEl,coords);
 }
 
@@ -1316,13 +1340,7 @@ async function cheatFinishPuzzle(){
     state.placements.forEach((p,index)=>{
       p.coords.forEach(([r,c])=>cellAt(r,c)?.classList.add('found'));
       if(state.mode==='boggle'){
-        const points=p.coords.map(([r,c])=>{
-          const el=cellAt(r,c);
-          const stageRect=wordGridStage.getBoundingClientRect();
-          const rect=el?.getBoundingClientRect();
-          return rect?{x:rect.left-stageRect.left+rect.width/2,y:rect.top-stageRect.top+rect.height/2}:null;
-        }).filter(Boolean);
-        state.bogglePaths.set(index,{coords:p.coords.map(([r,c])=>[r,c]),points});
+        state.bogglePaths.set(index,{coords:p.coords.map(([r,c])=>[r,c])});
       }
       wordListEl.querySelector('[data-word-index="'+index+'"]')?.classList.add('found');
     });
