@@ -552,3 +552,19 @@ body.system-kb-open .crossword-stage{
   pointer-events:none!important;
 }
 .word-grid-stage.is-boggle .boggle-canvas[hidden]{display:none!important}
+
+.word-grid.boggle-grid .boggle-cell{
+  position:relative!important;
+  z-index:2!important;
+}
+.word-grid.boggle-grid .boggle-letter{
+  position:relative;
+  z-index:70;
+  display:inline-block;
+  pointer-events:none;
+  color:inherit;
+  text-shadow:0 1px 0 rgba(255,255,255,.55);
+}
+.word-grid-stage.is-boggle .boggle-canvas{
+  z-index:50!important;
+}
