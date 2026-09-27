@@ -115,6 +115,10 @@ function safeParseSummary(input) {
 // Derive stars from session summary
 function deriveStars(summary) {
   const s = summary || {};
+  // Explicit reward stars are authoritative. This is required for activities
+  // such as puzzle gimmes where completion can still be 100% but the star
+  // reward is intentionally reduced.
+  if (typeof s.stars === 'number') return s.stars;
   let acc = null;
   
   if (typeof s.accuracy === 'number') acc = s.accuracy;
@@ -132,8 +136,6 @@ function deriveStars(summary) {
     if (acc >= 0.60) return 1;
     return 0;
   }
-  
-  if (typeof s.stars === 'number') return s.stars;
   return 0;
 }
 
