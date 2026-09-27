@@ -328,86 +328,121 @@ async function saveReward(){
 
 
 function makeCrossword(pool){
-  const candidates=shuffle(pool.filter(x=>x.ko&&x.clean.length>=3&&x.clean.length<=10));
-  const SIZE=17;
-  for(let attempt=0;attempt<60;attempt++){
+  const candidates=shuffle(pool.filter(x=>x.ko&&x.clean.length>=3&&x.clean.length<=11));
+  const SIZE=19;
+  const target=Math.min(8,candidates.length);
+
+  for(let attempt=0;attempt<100;attempt++){
     const board=Array.from({length:SIZE},()=>Array(SIZE).fill(null));
     const placed=[];
     const first=candidates[attempt%candidates.length];
     if(!first)break;
-    const row=Math.floor(SIZE/2),col=Math.floor((SIZE-first.clean.length)/2);
+
+    const row=Math.floor(SIZE/2);
+    const col=Math.floor((SIZE-first.clean.length)/2);
     const firstCoords=[];
-    for(let i=0;i<first.clean.length;i++){board[row][col+i]=first.clean[i];firstCoords.push([row,col+i])}
+    for(let i=0;i<first.clean.length;i++){
+      board[row][col+i]=first.clean[i];
+      firstCoords.push([row,col+i]);
+    }
     placed.push({...first,row,col,dr:0,dc:1,coords:firstCoords,direction:'Across'});
 
     for(const entry of shuffle(candidates.filter(x=>x.id!==first.id))){
-      if(placed.length>=8)break;
-      let found=null;
-      const opts=[];
+      if(placed.length>=target)break;
+      const options=[];
+
       for(const existing of placed){
         for(let ei=0;ei<existing.clean.length;ei++){
-          const ch=existing.clean[ei];
           for(let ni=0;ni<entry.clean.length;ni++){
-            if(entry.clean[ni]!==ch)continue;
-            const dr=existing.dr===0?1:0,dc=existing.dr===0?0:1;
+            if(existing.clean[ei]!==entry.clean[ni])continue;
+
+            const dr=existing.dr===0?1:0;
+            const dc=existing.dr===0?0:1;
             const crossR=existing.row+existing.dr*ei;
             const crossC=existing.col+existing.dc*ei;
-            const sr=crossR-dr*ni,sc=crossC-dc*ni;
-            opts.push({sr,sc,dr,dc});
+            const sr=crossR-dr*ni;
+            const sc=crossC-dc*ni;
+            options.push({sr,sc,dr,dc});
           }
         }
       }
-      for(const opt of shuffle(opts)){
+
+      let chosen=null;
+      for(const opt of shuffle(options)){
         const {sr,sc,dr,dc}=opt;
-        const er=sr+dr*(entry.clean.length-1),ec=sc+dc*(entry.clean.length-1);
+        const er=sr+dr*(entry.clean.length-1);
+        const ec=sc+dc*(entry.clean.length-1);
         if(sr<0||sc<0||er>=SIZE||ec>=SIZE)continue;
-        let ok=true,crosses=0;
+
+        let ok=true;
+        let crosses=0;
         for(let i=0;i<entry.clean.length;i++){
-          const r=sr+dr*i,c=sc+dc*i,cur=board[r][c];
+          const r=sr+dr*i;
+          const c=sc+dc*i;
+          const cur=board[r][c];
           if(cur&&cur!==entry.clean[i]){ok=false;break}
           if(cur===entry.clean[i])crosses++;
-          if(!cur){
-            if(dr===0){
-              if((r>0&&board[r-1][c])||(r<SIZE-1&&board[r+1][c])){ok=false;break}
-            }else{
-              if((c>0&&board[r][c-1])||(c<SIZE-1&&board[r][c+1])){ok=false;break}
-            }
-          }
         }
         if(!ok||crosses<1)continue;
-        const beforeR=sr-dr,beforeC=sc-dc,afterR=er+dr,afterC=ec+dc;
+
+        const beforeR=sr-dr,beforeC=sc-dc;
+        const afterR=er+dr,afterC=ec+dc;
         if(beforeR>=0&&beforeR<SIZE&&beforeC>=0&&beforeC<SIZE&&board[beforeR][beforeC])continue;
         if(afterR>=0&&afterR<SIZE&&afterC>=0&&afterC<SIZE&&board[afterR][afterC])continue;
-        found=opt;break;
+
+        chosen=opt;
+        break;
       }
-      if(!found)continue;
+
+      if(!chosen)continue;
+
       const coords=[];
       for(let i=0;i<entry.clean.length;i++){
-        const r=found.sr+found.dr*i,c=found.sc+found.dc*i;
-        board[r][c]=entry.clean[i];coords.push([r,c]);
+        const r=chosen.sr+chosen.dr*i;
+        const c=chosen.sc+chosen.dc*i;
+        board[r][c]=entry.clean[i];
+        coords.push([r,c]);
       }
-      placed.push({...entry,row:found.sr,col:found.sc,dr:found.dr,dc:found.dc,coords,direction:found.dr===0?'Across':'Down'});
+      placed.push({
+        ...entry,
+        row:chosen.sr,col:chosen.sc,
+        dr:chosen.dr,dc:chosen.dc,
+        coords,
+        direction:chosen.dr===0?'Across':'Down'
+      });
     }
-    if(placed.length<6)continue;
+
+    if(placed.length<5)continue;
 
     let minR=SIZE,maxR=0,minC=SIZE,maxC=0;
-    placed.forEach(p=>p.coords.forEach(([r,c])=>{minR=Math.min(minR,r);maxR=Math.max(maxR,r);minC=Math.min(minC,c);maxC=Math.max(maxC,c)}));
-    const startMap=new Map(),cells=new Map();
+    placed.forEach(p=>p.coords.forEach(([r,c])=>{
+      minR=Math.min(minR,r);maxR=Math.max(maxR,r);
+      minC=Math.min(minC,c);maxC=Math.max(maxC,c);
+    }));
+
+    const startMap=new Map();
+    const cells=new Map();
     placed.forEach((p,i)=>{
-      const k=p.row+','+p.col;
-      if(!startMap.has(k))startMap.set(k,[]);
-      startMap.get(k).push(i);
+      const startKey=p.row+','+p.col;
+      if(!startMap.has(startKey))startMap.set(startKey,[]);
+      startMap.get(startKey).push(i);
+
       p.coords.forEach(([r,c],letterIndex)=>{
-        const ck=r+','+c;
-        if(!cells.has(ck))cells.set(ck,{r,c,solution:p.clean[letterIndex],words:[]});
-        cells.get(ck).words.push(i);
+        const key=r+','+c;
+        if(!cells.has(key))cells.set(key,{r,c,solution:p.clean[letterIndex],words:[]});
+        cells.get(key).words.push(i);
       });
     });
-    const starts=[...startMap.keys()].map(k=>k.split(',').map(Number)).sort((a,b)=>a[0]-b[0]||a[1]-b[1]);
+
+    const starts=[...startMap.keys()]
+      .map(k=>k.split(',').map(Number))
+      .sort((a,b)=>a[0]-b[0]||a[1]-b[1]);
     const numberFor=new Map(starts.map((rc,i)=>[rc.join(','),i+1]));
     placed.forEach(p=>p.number=numberFor.get(p.row+','+p.col));
+
     return{placed,cells,minR,maxR,minC,maxC};
   }
+
   throw new Error('I could not build a crossword from these words. Try a new puzzle.');
 }
 
