@@ -31,8 +31,8 @@ const cheatFinishBtn=$('cheatFinishBtn');
 const CHEAT_MODE=new URLSearchParams(location.search).get('cheat')==='1';
 
 const state={
-  auth:null,books:[],book:null,words:[],pool:[],crosswordPool:[],studentLevel:null,grid:[],size:GRID_TARGET,placements:[],
-  found:new Set(),drag:null,sessionId:null,startedAt:null,saving:false,mode:'wordsearch',activeCrossword:null,crosswordCursor:0,cheatCompletion:false
+  auth:null,books:[],book:null,words:[],pool:[],crosswordPool:[],studentLevel:null,rewardContext:null,grid:[],size:GRID_TARGET,placements:[],
+  found:new Set(),gimmes:new Set(),drag:null,sessionId:null,startedAt:null,saving:false,mode:'wordsearch',activeCrossword:null,crosswordCursor:0,cheatCompletion:false
 };
 
 function txt(v){return String(v??'').trim()}
@@ -310,6 +310,7 @@ function generatePuzzle(pool){
 
 function renderPuzzle(){
   state.found.clear();
+  state.gimmes.clear();
   state.drag=null;
   state.sessionId=crypto.randomUUID?.()||('wordsearch-'+Date.now());
   state.startedAt=new Date().toISOString();
@@ -327,10 +328,16 @@ function renderPuzzle(){
   updateProgress();
 }
 function escapeHtml(v){return txt(v).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+function earnedPuzzlePoints(){
+  return Math.max(0,(state.found.size-state.gimmes.size)*POINTS_PER_WORD);
+}
+function earnedPuzzleStars(){
+  return Math.max(0,5-state.gimmes.size);
+}
 function updateProgress(){
   const verb=state.mode==='crossword'?'solved':'found';
   progressEl.textContent=state.found.size+' / '+state.placements.length+' '+verb;
-  sessionPointsEl.textContent='+'+(state.found.size*POINTS_PER_WORD)+' pts';
+  sessionPointsEl.textContent='+'+earnedPuzzlePoints()+' pts';
 }
 function cellAt(row,col){return gridEl.querySelector('.cell[data-row="'+row+'"][data-col="'+col+'"]')}
 function coordsBetween(start,end){
@@ -394,182 +401,206 @@ async function markFound(index,originEl){
 }
 async function finishPuzzle(){
   playStudentSfx('complete');
-  const points=state.found.size*POINTS_PER_WORD;
-  completePoints.textContent=(state.mode==='crossword'?'Crossword complete!':'Word search complete!')+' You earned 5 stars.';
+  const points=earnedPuzzlePoints();
+  const stars=earnedPuzzleStars();
+  completePoints.textContent=(state.mode==='crossword'?'Crossword complete!':'Word search complete!')+
+    ' You earned '+stars+' star'+(stars===1?'':'s')+'.';
   rewardCelebration.innerHTML=
-    '<student-reward-celebration percent="100" stars="5" star-max="5" points="'+points+'" label="PUZZLE REWARD"></student-reward-celebration>';
+    '<student-reward-celebration percent="100" stars="'+stars+'" star-max="5" points="'+points+'" label="PUZZLE REWARD"></student-reward-celebration>';
   if(typeof completeCard.showModal==='function')completeCard.showModal();
   else completeCard.setAttribute('open','');
   await saveReward();
 }
+async function resolvePuzzleRewardContext(){
+  if(state.rewardContext)return state.rewardContext;
+  const book=state.books[0];
+  if(!book?.book_id)throw new Error('No assigned book available for puzzle rewards.');
+  const units=await content('content_units?select=id,unit_number&book_id=eq.'+
+    encodeURIComponent(book.book_id)+'&status=in.(review,published)&order=unit_number.asc&limit=1');
+  const unit=units[0];
+  if(!unit?.id)throw new Error('No assigned unit available for puzzle rewards.');
+  state.rewardContext={book_id:book.book_id,unit_id:unit.id};
+  return state.rewardContext;
+}
 async function saveReward(){
   if(state.saving||!state.sessionId)return;
   state.saving=true;
-  const points=state.found.size*POINTS_PER_WORD;
+  const points=earnedPuzzlePoints();
+  const stars=earnedPuzzleStars();
   try{
+    const ctx=await resolvePuzzleRewardContext();
+
+    if(points>0){
+      const pointPayload={
+        session_id:state.sessionId,
+        client_attempt_id:crypto.randomUUID?.()||('puzzle-points-'+Date.now()),
+        book_id:ctx.book_id,
+        unit_id:ctx.unit_id,
+        skill:'puzzle',
+        response_type:'completion',
+        activity_id:state.mode+'-completion',
+        content_type:'puzzle',
+        is_correct:true,
+        score:1,
+        study_context:'independent',
+        metadata:{points_override:points,puzzle_mode:state.mode,gimmes_used:state.gimmes.size}
+      };
+      await apiJson('/.netlify/functions/progress_summary?section=study_attempt&_='+Date.now(),{
+        method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({payload:pointPayload})
+      });
+    }
+
+    const listBase=state.mode==='crossword'?'Crossword':'Word Search';
     const payload={
       reward_only:true,
       session_id:state.sessionId,
       client_attempt_id:crypto.randomUUID?.()||((state.mode||'wordsearch')+'-reward-'+Date.now()),
-      book_id:null,
-      unit_id:null,
-      skill:'vocabulary',
+      book_id:ctx.book_id,
+      unit_id:ctx.unit_id,
+      skill:'puzzle',
       response_type:'reward',
       activity_id:state.mode,
       reward_mode:state.mode,
-      reward_list_name:state.mode==='crossword'?'Crossword':'Word Search',
+      reward_list_name:listBase+' · '+state.sessionId,
       reward_list_size:state.placements.length,
       reward_started_at:state.startedAt,
       reward_summary:{
-        completed:true,stars:5,accuracy:1,percent:100,
-        score:state.placements.length,total:state.placements.length,
-        points_earned:points,book_id:null,unit_id:null,
+        completed:true,stars,accuracy:1,percent:100,
+        score:state.placements.length-state.gimmes.size,total:state.placements.length,
+        points_earned:points,book_id:ctx.book_id,unit_id:ctx.unit_id,
         assignment_id:null,session_source:'student',vocab_mode:state.mode,
-        reward_scheme:(state.mode||'wordsearch')+'-v1',star_cap:5
+        reward_scheme:(state.mode||'wordsearch')+'-v2',star_cap:5,
+        gimmes_used:state.gimmes.size
       }
     };
     await apiJson('/.netlify/functions/progress_summary?section=study_attempt&_='+Date.now(),{
       method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({payload})
     });
     window.dispatchEvent(new CustomEvent('session:ended',{detail:{session_id:state.sessionId,mode:state.mode,list_size:state.placements.length}}));
-    window.dispatchEvent(new CustomEvent('stars:refresh',{detail:{earned:5}}));
+    window.dispatchEvent(new CustomEvent('stars:refresh',{detail:{earned:stars}}));
+    window.dispatchEvent(new CustomEvent('points:refresh',{detail:{earned:points}}));
     try{localStorage.setItem('stars:refresh',String(Date.now()))}catch(_){}
   }catch(error){
-    console.warn('[Word Search] reward save failed',error);
+    console.warn('[Word Games] reward save failed',error);
   }finally{state.saving=false}
 }
-
 
 function makeCrossword(pool){
   const candidates=shuffle(pool.filter(x=>{
     const raw=txt(x.display);
-    return x.ko &&
-      /^[A-Za-z]+$/.test(raw) &&
-      x.clean.length>=3 &&
-      x.clean.length<=11;
+    return x.ko&&/^[A-Za-z]+$/.test(raw)&&x.clean.length>=3&&x.clean.length<=10;
   }));
   const SIZE=19;
   const target=Math.min(8,candidates.length);
 
-  for(let attempt=0;attempt<100;attempt++){
-    const board=Array.from({length:SIZE},()=>Array(SIZE).fill(null));
+  function newBoard(){
+    return Array.from({length:SIZE},()=>Array.from({length:SIZE},()=>null));
+  }
+  function put(board,word,row,col,dr,dc){
+    const coords=[];
+    for(let i=0;i<word.length;i++){
+      const r=row+dr*i,c=col+dc*i;
+      if(!board[r][c])board[r][c]={letter:word[i],dirs:new Set()};
+      board[r][c].dirs.add(dr===0?'A':'D');
+      coords.push([r,c]);
+    }
+    return coords;
+  }
+  function validPlacement(board,word,row,col,dr,dc){
+    const er=row+dr*(word.length-1),ec=col+dc*(word.length-1);
+    if(row<0||col<0||er<0||ec<0||er>=SIZE||ec>=SIZE)return false;
+
+    const beforeR=row-dr,beforeC=col-dc,afterR=er+dr,afterC=ec+dc;
+    if(beforeR>=0&&beforeR<SIZE&&beforeC>=0&&beforeC<SIZE&&board[beforeR][beforeC])return false;
+    if(afterR>=0&&afterR<SIZE&&afterC>=0&&afterC<SIZE&&board[afterR][afterC])return false;
+
+    const dir=dr===0?'A':'D';
+    const perpendicular=dr===0?'D':'A';
+    let crossings=0;
+
+    for(let i=0;i<word.length;i++){
+      const r=row+dr*i,c=col+dc*i,cell=board[r][c];
+      if(cell){
+        if(cell.letter!==word[i])return false;
+        if(cell.dirs.has(dir))return false;
+        if(!cell.dirs.has(perpendicular))return false;
+        crossings++;
+        if(crossings>1)return false;
+      }else{
+        if(dr===0){
+          if((r>0&&board[r-1][c])||(r<SIZE-1&&board[r+1][c]))return false;
+        }else{
+          if((c>0&&board[r][c-1])||(c<SIZE-1&&board[r][c+1]))return false;
+        }
+      }
+    }
+    return crossings===1;
+  }
+
+  for(let attempt=0;attempt<140;attempt++){
+    const board=newBoard();
     const placed=[];
     const first=candidates[attempt%candidates.length];
     if(!first)break;
-
-    const row=Math.floor(SIZE/2);
-    const col=Math.floor((SIZE-first.clean.length)/2);
-    const firstCoords=[];
-    for(let i=0;i<first.clean.length;i++){
-      board[row][col+i]=first.clean[i];
-      firstCoords.push([row,col+i]);
-    }
+    const row=Math.floor(SIZE/2),col=Math.floor((SIZE-first.clean.length)/2);
+    const firstCoords=put(board,first.clean,row,col,0,1);
     placed.push({...first,row,col,dr:0,dc:1,coords:firstCoords,direction:'Across'});
 
     for(const entry of shuffle(candidates.filter(x=>x.id!==first.id))){
       if(placed.length>=target)break;
       const options=[];
-
       for(const existing of placed){
+        const dr=existing.dr===0?1:0,dc=existing.dr===0?0:1;
         for(let ei=0;ei<existing.clean.length;ei++){
+          const crossR=existing.row+existing.dr*ei;
+          const crossC=existing.col+existing.dc*ei;
           for(let ni=0;ni<entry.clean.length;ni++){
             if(existing.clean[ei]!==entry.clean[ni])continue;
-
-            const dr=existing.dr===0?1:0;
-            const dc=existing.dr===0?0:1;
-            const crossR=existing.row+existing.dr*ei;
-            const crossC=existing.col+existing.dc*ei;
-            const sr=crossR-dr*ni;
-            const sc=crossC-dc*ni;
-            options.push({sr,sc,dr,dc});
+            const sr=crossR-dr*ni,sc=crossC-dc*ni;
+            if(validPlacement(board,entry.clean,sr,sc,dr,dc)){
+              options.push({sr,sc,dr,dc});
+            }
           }
         }
       }
-
-      let chosen=null;
-      for(const opt of shuffle(options)){
-        const {sr,sc,dr,dc}=opt;
-        const er=sr+dr*(entry.clean.length-1);
-        const ec=sc+dc*(entry.clean.length-1);
-        if(sr<0||sc<0||er>=SIZE||ec>=SIZE)continue;
-
-        let ok=true;
-        let crosses=0;
-        for(let i=0;i<entry.clean.length;i++){
-          const r=sr+dr*i;
-          const c=sc+dc*i;
-          const cur=board[r][c];
-          if(cur&&cur!==entry.clean[i]){ok=false;break}
-          if(cur===entry.clean[i])crosses++;
-        }
-        if(!ok||crosses<1)continue;
-
-        const beforeR=sr-dr,beforeC=sc-dc;
-        const afterR=er+dr,afterC=ec+dc;
-        if(beforeR>=0&&beforeR<SIZE&&beforeC>=0&&beforeC<SIZE&&board[beforeR][beforeC])continue;
-        if(afterR>=0&&afterR<SIZE&&afterC>=0&&afterC<SIZE&&board[afterR][afterC])continue;
-
-        chosen=opt;
-        break;
-      }
-
-      if(!chosen)continue;
-
-      const coords=[];
-      for(let i=0;i<entry.clean.length;i++){
-        const r=chosen.sr+chosen.dr*i;
-        const c=chosen.sc+chosen.dc*i;
-        board[r][c]=entry.clean[i];
-        coords.push([r,c]);
-      }
+      if(!options.length)continue;
+      const chosen=shuffle(options)[0];
+      const coords=put(board,entry.clean,chosen.sr,chosen.sc,chosen.dr,chosen.dc);
       placed.push({
-        ...entry,
-        row:chosen.sr,col:chosen.sc,
-        dr:chosen.dr,dc:chosen.dc,
-        coords,
+        ...entry,row:chosen.sr,col:chosen.sc,dr:chosen.dr,dc:chosen.dc,coords,
         direction:chosen.dr===0?'Across':'Down'
       });
     }
 
-    if(placed.length<5)continue;
+    if(placed.length<6)continue;
 
     let minR=SIZE,maxR=0,minC=SIZE,maxC=0;
     placed.forEach(p=>p.coords.forEach(([r,c])=>{
-      minR=Math.min(minR,r);maxR=Math.max(maxR,r);
-      minC=Math.min(minC,c);maxC=Math.max(maxC,c);
+      minR=Math.min(minR,r);maxR=Math.max(maxR,r);minC=Math.min(minC,c);maxC=Math.max(maxC,c);
     }));
 
-    const startMap=new Map();
-    const cells=new Map();
+    const startMap=new Map(),cells=new Map();
     placed.forEach((p,i)=>{
       const startKey=p.row+','+p.col;
       if(!startMap.has(startKey))startMap.set(startKey,[]);
       startMap.get(startKey).push(i);
-
       p.coords.forEach(([r,c],letterIndex)=>{
         const key=r+','+c;
         if(!cells.has(key))cells.set(key,{r,c,solution:p.clean[letterIndex],words:[]});
         cells.get(key).words.push(i);
       });
     });
-
-    const starts=[...startMap.keys()]
-      .map(k=>k.split(',').map(Number))
-      .sort((a,b)=>a[0]-b[0]||a[1]-b[1]);
+    const starts=[...startMap.keys()].map(k=>k.split(',').map(Number)).sort((a,b)=>a[0]-b[0]||a[1]-b[1]);
     const numberFor=new Map(starts.map((rc,i)=>[rc.join(','),i+1]));
     placed.forEach(p=>{
       p.number=numberFor.get(p.row+','+p.col);
       const types=['scramble','audio','korean'];
       p.hintType=types[Math.floor(Math.random()*types.length)];
-      if(p.hintType==='scramble')p.hintText=scrambleLetters(p.clean);
-      else if(p.hintType==='korean')p.hintText=p.ko;
-      else p.hintText='▶ Play word';
+      p.hintText=p.hintType==='scramble'?scrambleLetters(p.clean):(p.hintType==='korean'?p.ko:'▶ Play word');
     });
-
     return{placed,cells,minR,maxR,minC,maxC};
   }
-
-  throw new Error('I could not build a crossword from these words. Try a new puzzle.');
+  throw new Error('I could not build a clean crossword from these words. Try a new puzzle.');
 }
 
 function setModeUI(){
@@ -589,6 +620,7 @@ document.querySelectorAll('.puzzle-tab').forEach(btn=>{
 
 function renderCrossword(cw){
   state.found.clear();
+  state.gimmes.clear();
   state.drag=null;
   state.activeCrossword=null;
   state.sessionId=crypto.randomUUID?.()||('crossword-'+Date.now());
@@ -624,10 +656,13 @@ function renderCrossword(cw){
   const ordered=state.placements.map((p,i)=>({...p,index:i})).sort((a,b)=>a.number-b.number||a.direction.localeCompare(b.direction));
   wordListEl.innerHTML=ordered.map(p=>{
     const arrow=p.direction==='Across'?'→':'↓';
-    return '<button type="button" class="crossword-clue hint-'+p.hintType+'" data-word-index="'+p.index+'" data-hint-type="'+p.hintType+'">'+
-      '<strong>'+p.number+' '+arrow+'</strong>'+
-      '<span>'+escapeHtml(p.hintText)+'</span>'+
-    '</button>';
+    return '<div class="crossword-clue hint-'+p.hintType+'" data-word-index="'+p.index+'" data-hint-type="'+p.hintType+'">'+
+      '<button type="button" class="crossword-clue-main" data-clue-word="'+p.index+'">'+
+        '<strong>'+p.number+' '+arrow+'</strong>'+
+        '<span>'+escapeHtml(p.hintText)+'</span>'+
+      '</button>'+
+      '<button type="button" class="gimme-btn" data-gimme-word="'+p.index+'">Gimme</button>'+
+    '</div>';
   }).join('');
   updateProgress();
   setModeUI();
@@ -692,7 +727,7 @@ async function checkCrosswordWord(index,origin){
   if(!solved)return;
   state.found.add(index);
   p.coords.forEach(([r,c])=>crosswordCell(r,c)?.classList.add('solved'));
-  const clue=wordListEl.querySelector('[data-word-index="'+index+'"]');
+  const clue=wordListEl.querySelector('.crossword-clue[data-word-index="'+index+'"]');
   clue?.classList.add('found');
   updateProgress();
   playStudentSfx('correct');
@@ -723,14 +758,37 @@ function eraseCrosswordLetter(){
     if(prev)setCellLetter(...prev,'');
   }
 }
+async function useCrosswordGimme(index,origin){
+  if(state.mode!=='crossword'||state.found.has(index))return;
+  const p=state.placements[index];
+  if(!p)return;
+  state.gimmes.add(index);
+  p.coords.forEach(([r,c],i)=>{
+    setCellLetter(r,c,p.clean[i]);
+    crosswordCell(r,c)?.classList.add('solved','gimme');
+  });
+  state.found.add(index);
+  const clue=wordListEl.querySelector('.crossword-clue[data-word-index="'+index+'"]');
+  clue?.classList.add('found','used-gimme');
+  updateProgress();
+  playStudentSfx('correct');
+  if(state.found.size===state.placements.length)await finishPuzzle();
+}
 function wireCrossword(){
   wordListEl.addEventListener('click',e=>{
-    const clue=e.target.closest('.crossword-clue');
-    if(!clue)return;
-    const index=Number(clue.dataset.wordIndex);
+    const gimme=e.target.closest('[data-gimme-word]');
+    if(gimme){
+      e.stopPropagation();
+      useCrosswordGimme(Number(gimme.dataset.gimmeWord),gimme);
+      return;
+    }
+    const main=e.target.closest('[data-clue-word]');
+    if(!main)return;
+    const index=Number(main.dataset.clueWord);
+    const clue=main.closest('.crossword-clue');
     activateCrosswordWord(index);
     const p=state.placements[index];
-    if(clue.dataset.hintType==='audio'&&p)speakHintWord(p.display);
+    if(clue?.dataset.hintType==='audio'&&p)speakHintWord(p.display);
   });
 
   crosswordGridEl.addEventListener('pointerdown',e=>{
@@ -869,6 +927,7 @@ async function boot(){
 async function cheatFinishPuzzle(){
   if(!CHEAT_MODE||!state.placements.length)return;
   state.cheatCompletion=true;
+  state.gimmes.clear();
   state.found=new Set(state.placements.map((_,i)=>i));
 
   if(state.mode==='crossword'){
