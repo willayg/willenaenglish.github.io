@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<title>Word Search</title>
+<link rel="icon" href="/Assets/Images/Logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./wordsearch.css?v=20260927-1">
+<script src="/students/api-gateway.js?v=20260926-progress-summary-cf1"></script>
+<script src="/js/api-config.js?v=20260926-reverted-auth1"></script>
+<script src="/students/vocab-study/auth-guard.js?v=20260925-v0004"></script>
+<script type="module" src="/students/components/student-header.js?v=20260927-vocabtheme1"></script>
+</head>
+<body>
+<div class="app-shell">
+  <student-header title="Word Search" show-id="false" show-home="false" show-points="true" show-logout="true"></student-header>
+
+  <main class="page">
+    <section class="top-card">
+      <div class="top-copy">
+        <span class="eyebrow">WORD GAME</span>
+        <h1>Find the hidden words</h1>
+        <p>Words come from your English book. Drag from the first letter to the last.</p>
+      </div>
+      <div class="top-actions">
+        <label class="book-field">
+          <span>Book</span>
+          <select id="bookSelect" aria-label="Choose book"></select>
+        </label>
+        <button id="newPuzzleBtn" class="new-btn" type="button">New Puzzle</button>
+      </div>
+    </section>
+
+    <section id="loadingCard" class="message-card">
+      <div class="loader" aria-hidden="true"></div>
+      <strong>Building your puzzle…</strong>
+    </section>
+
+    <section id="errorCard" class="message-card error" hidden>
+      <strong>Couldn't build the puzzle.</strong>
+      <span id="errorMessage"></span>
+      <button id="retryBtn" type="button">Try again</button>
+    </section>
+
+    <section id="gameArea" class="game-layout" hidden>
+      <div class="puzzle-card">
+        <div class="puzzle-head">
+          <div>
+            <span id="bookLabel" class="eyebrow">YOUR BOOK</span>
+            <strong id="puzzleProgress">0 / 10 found</strong>
+          </div>
+          <span id="sessionPoints" class="session-points">+0 pts</span>
+        </div>
+        <div id="grid" class="word-grid" role="grid" aria-label="Word search puzzle"></div>
+        <div class="drag-hint">Drag in a straight line ↔ ↕ ↗ ↘</div>
+      </div>
+
+      <aside class="words-card">
+        <div class="words-head">
+          <span class="eyebrow">FIND THESE</span>
+          <strong>Word List</strong>
+        </div>
+        <div id="wordList" class="word-list"></div>
+      </aside>
+    </section>
+
+    <section id="completeCard" class="complete-card" hidden>
+      <span class="complete-kicker">PUZZLE COMPLETE</span>
+      <strong>Nice work!</strong>
+      <span id="completePoints">You found every word.</span>
+      <button id="playAgainBtn" type="button">Make Another Puzzle</button>
+    </section>
+  </main>
+</div>
+<script type="module" src="./wordsearch.js?v=20260927-1"></script>
+</body>
+</html>
