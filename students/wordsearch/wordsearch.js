@@ -686,6 +686,43 @@ function firstEditableIndex(p){
   const empty=p.coords.findIndex(([r,c])=>!cellLetter(r,c));
   return empty>=0?empty:0;
 }
+function systemKeyboardInset(){
+  const vv=window.visualViewport;
+  if(!vv)return 0;
+  return Math.max(0,Math.round(window.innerHeight-vv.height-vv.offsetTop));
+}
+function updateSystemKeyboardSpace(){
+  const inset=systemKeyboardInset();
+  document.documentElement.style.setProperty('--system-keyboard-inset',inset+'px');
+  document.body.classList.toggle('system-kb-open',inset>120);
+}
+function keepActiveCrosswordVisible({smooth=true}={}){
+  if(state.mode!=='crossword'||!Number.isFinite(state.activeCrossword))return;
+  const p=state.placements[state.activeCrossword];
+  if(!p)return;
+  const coord=p.coords[Math.min(state.crosswordCursor,p.coords.length-1)];
+  const cell=coord?crosswordCell(...coord):null;
+  if(!cell)return;
+
+  const vv=window.visualViewport;
+  const viewTop=(vv?.offsetTop||0)+90;
+  const viewHeight=vv?.height||window.innerHeight;
+  const targetY=(vv?.offsetTop||0)+Math.max(130,viewHeight*.38);
+  const rect=cell.getBoundingClientRect();
+  const cellCenter=rect.top+rect.height/2;
+  const delta=cellCenter-targetY;
+
+  if(Math.abs(delta)>24){
+    window.scrollBy({top:delta,behavior:smooth?'smooth':'auto'});
+  }
+}
+function onViewportKeyboardChange(){
+  updateSystemKeyboardSpace();
+  if(document.activeElement===crosswordEntry&&systemKeyboardInset()>120){
+    requestAnimationFrame(()=>keepActiveCrosswordVisible({smooth:false}));
+  }
+}
+
 function focusCrosswordKeyboard(){
   if(state.mode!=='crossword'||!crosswordEntry)return;
   try{
@@ -694,6 +731,11 @@ function focusCrosswordKeyboard(){
   }catch(_){
     try{crosswordEntry.focus()}catch(__){}
   }
+  setTimeout(()=>{
+    updateSystemKeyboardSpace();
+    keepActiveCrosswordVisible({smooth:true});
+  },120);
+  setTimeout(()=>keepActiveCrosswordVisible({smooth:false}),320);
 }
 function activateCrosswordWord(index,{focus=true}={}){
   if(!state.placements[index])return;
@@ -719,6 +761,9 @@ function moveCrosswordCursor(delta){
   crosswordGridEl.querySelectorAll('.cw-cell.cursor').forEach(x=>x.classList.remove('cursor'));
   const coord=p.coords[state.crosswordCursor];
   if(coord)crosswordCell(...coord)?.classList.add('cursor');
+  if(document.activeElement===crosswordEntry&&systemKeyboardInset()>120){
+    requestAnimationFrame(()=>keepActiveCrosswordVisible({smooth:false}));
+  }
 }
 async function checkCrosswordWord(index,origin){
   if(state.found.has(index))return;
@@ -967,5 +1012,20 @@ completeCard?.addEventListener('click',e=>{
 });
 wireGrid();
 wireCrossword();
+if(window.visualViewport){
+  window.visualViewport.addEventListener('resize',onViewportKeyboardChange);
+  window.visualViewport.addEventListener('scroll',onViewportKeyboardChange);
+}
+crosswordEntry?.addEventListener('focus',()=>{
+  updateSystemKeyboardSpace();
+  setTimeout(()=>keepActiveCrosswordVisible({smooth:true}),140);
+});
+crosswordEntry?.addEventListener('blur',()=>{
+  setTimeout(()=>{
+    updateSystemKeyboardSpace();
+    if(systemKeyboardInset()<120)document.body.classList.remove('system-kb-open');
+  },120);
+});
+updateSystemKeyboardSpace();
 setModeUI();
 boot();
