@@ -409,7 +409,9 @@ async function loadMotivation(bookId=state.book?.book_id){
     return null;
   }
   try{
-    const data=await api('/.netlify/functions/progress_summary?section=vocab_motivation&book_id='+encodeURIComponent(bookId)+'&_='+Date.now());
+    // Motivation is student-wide. Golden units are permanent achievements and
+    // should not reset when the selected book changes.
+    const data=await api('/.netlify/functions/progress_summary?section=vocab_motivation&_='+Date.now());
     if(String(bookId)!==String(state.book?.book_id))return data;
     state.motivation=data||null;
     renderMotivation();
