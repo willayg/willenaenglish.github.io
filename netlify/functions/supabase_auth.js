@@ -693,7 +693,7 @@ exports.handler = async (event) => {
     }
 
     // Refresh session (rotate tokens)
-    if (action === 'refresh' && event.httpMethod === 'GET') {
+    if (action === 'refresh' && (event.httpMethod === 'GET' || event.httpMethod === 'POST')) {
       // Extract refresh token from cookie
       const hdrs = event.headers || {};
       const cookieHeader = hdrs.cookie || hdrs.Cookie || '';
