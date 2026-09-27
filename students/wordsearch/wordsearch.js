@@ -25,6 +25,7 @@ const errorMessage=$('errorMessage');
 const gameArea=$('gameArea');
 const completeCard=$('completeCard');
 const completePoints=$('completePoints');
+const rewardCelebration=$('rewardCelebration');
 
 const state={
   auth:null,books:[],book:null,words:[],pool:[],grid:[],size:GRID_TARGET,placements:[],
@@ -86,11 +87,16 @@ async function assignedBooks(className){
   return list;
 }
 
+function closeWinModal(){
+  if(completeCard?.open)completeCard.close();
+}
 function showLoading(){
-  loadingCard.hidden=false;errorCard.hidden=true;gameArea.hidden=true;completeCard.hidden=true;
+  closeWinModal();
+  loadingCard.hidden=false;errorCard.hidden=true;gameArea.hidden=true;
 }
 function showError(error){
-  loadingCard.hidden=true;gameArea.hidden=true;completeCard.hidden=true;errorCard.hidden=false;
+  closeWinModal();
+  loadingCard.hidden=true;gameArea.hidden=true;errorCard.hidden=false;
   errorMessage.textContent=error?.message||String(error||'Unknown error');
 }
 function showGame(){loadingCard.hidden=true;errorCard.hidden=true;gameArea.hidden=false}
@@ -286,9 +292,12 @@ async function markFound(index,originEl){
 }
 async function finishPuzzle(){
   playStudentSfx('complete');
-  completePoints.textContent='You earned '+(state.found.size*POINTS_PER_WORD)+' points.';
-  completeCard.hidden=false;
-  completeCard.scrollIntoView({behavior:'smooth',block:'center'});
+  const points=state.found.size*POINTS_PER_WORD;
+  completePoints.textContent=(state.mode==='crossword'?'Crossword complete!':'Word search complete!')+' You earned 5 stars.';
+  rewardCelebration.innerHTML=
+    '<student-reward-celebration percent="100" stars="5" star-max="5" points="'+points+'" label="PUZZLE REWARD"></student-reward-celebration>';
+  if(typeof completeCard.showModal==='function')completeCard.showModal();
+  else completeCard.setAttribute('open','');
   await saveReward();
 }
 async function saveReward(){
@@ -310,17 +319,19 @@ async function saveReward(){
       reward_list_size:state.placements.length,
       reward_started_at:state.startedAt,
       reward_summary:{
-        completed:true,stars:0,accuracy:1,percent:100,
+        completed:true,stars:5,accuracy:1,percent:100,
         score:state.placements.length,total:state.placements.length,
         points_earned:points,book_id:null,unit_id:null,
         assignment_id:null,session_source:'student',vocab_mode:state.mode,
-        reward_scheme:(state.mode||'wordsearch')+'-v1',star_cap:0
+        reward_scheme:(state.mode||'wordsearch')+'-v1',star_cap:5
       }
     };
     await apiJson('/.netlify/functions/progress_summary?section=study_attempt&_='+Date.now(),{
       method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({payload})
     });
     window.dispatchEvent(new CustomEvent('session:ended',{detail:{session_id:state.sessionId,mode:state.mode,list_size:state.placements.length}}));
+    window.dispatchEvent(new CustomEvent('stars:refresh',{detail:{earned:5}}));
+    try{localStorage.setItem('stars:refresh',String(Date.now()))}catch(_){}
   }catch(error){
     console.warn('[Word Search] reward save failed',error);
   }finally{state.saving=false}
@@ -588,7 +599,7 @@ async function buildPuzzle(){
   showLoading();
   try{
     if(!state.books.length)throw new Error('No assigned books were found.');
-    completeCard.hidden=true;
+    closeWinModal();
     if(!state.pool.length){
       loadingCard.querySelector('strong').textContent='Loading puzzle words…';
       const results=await Promise.allSettled(state.books.map(book=>loadBookWords(book)));
@@ -654,7 +665,10 @@ document.querySelectorAll('.puzzle-tab').forEach(btn=>btn.addEventListener('clic
 }));
 $('newPuzzleBtn').addEventListener('click',()=>buildPuzzle());
 $('retryBtn').addEventListener('click',()=>buildPuzzle());
-$('playAgainBtn').addEventListener('click',()=>buildPuzzle());
+$('playAgainBtn').addEventListener('click',()=>{closeWinModal();buildPuzzle()});
+completeCard?.addEventListener('click',e=>{
+  if(e.target===completeCard)closeWinModal();
+});
 wireGrid();
 wireCrossword();
 setModeUI();
