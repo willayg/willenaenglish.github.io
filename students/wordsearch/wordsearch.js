@@ -606,6 +606,52 @@ function pointToCell(clientX,clientY){
   });
   return best;
 }
+function pickBoggleNeighbor(clientX,clientY){
+  const coords=state.drag?.coords;
+  if(!coords?.length)return nearestBoggleCell(clientX,clientY);
+
+  const [lr,lc]=coords[coords.length-1];
+  const lastCell=cellAt(lr,lc);
+  if(!lastCell)return nearestBoggleCell(clientX,clientY);
+
+  const lastRect=lastCell.getBoundingClientRect();
+  const lx=lastRect.left+lastRect.width/2;
+  const ly=lastRect.top+lastRect.height/2;
+  const mvx=clientX-lx,mvy=clientY-ly;
+  const mag=Math.hypot(mvx,mvy);
+  if(mag<Math.min(lastRect.width,lastRect.height)*0.22)return {row:lr,col:lc,el:lastCell};
+
+  let best=null,bestScore=-Infinity;
+  const used=new Set(coords.map(([r,c])=>r+','+c));
+
+  for(const [nr,nc] of boggleNeighbors(lr,lc,state.size)){
+    const key=nr+','+nc;
+    // allow immediate one-step backtracking, but not reusing older cells
+    const prev=coords.length>1?coords[coords.length-2]:null;
+    const isBack=prev&&prev[0]===nr&&prev[1]===nc;
+    if(used.has(key)&&!isBack)continue;
+
+    const el=cellAt(nr,nc);
+    if(!el)continue;
+    const rect=el.getBoundingClientRect();
+    const cx=rect.left+rect.width/2,cy=rect.top+rect.height/2;
+    const vx=cx-lx,vy=cy-ly;
+    const vmag=Math.hypot(vx,vy)||1;
+    const dir=(mvx*vx+mvy*vy)/(mag*vmag); // -1..1
+    const dist=Math.hypot(clientX-cx,clientY-cy);
+    const hitRadius=Math.max(rect.width,rect.height)*0.92;
+
+    // Wide hit zone plus direction bias. Diagonals no longer require hitting the tile corner.
+    if(dist>hitRadius&&dir<0.78)continue;
+    const score=dir*2-(dist/hitRadius);
+    if(score>bestScore){
+      bestScore=score;
+      best={row:nr,col:nc,el};
+    }
+  }
+
+  return best||{row:lr,col:lc,el:lastCell};
+}
 
 function beginDrag(point){
   state.drag={start:{row:point.row,col:point.col},end:{row:point.row,col:point.col}};
@@ -1170,7 +1216,7 @@ function wireGrid(){
   gridEl.addEventListener('pointermove',e=>{
     if(!state.drag)return;
     const point=state.mode==='boggle'
-      ?nearestBoggleCell(e.clientX,e.clientY)
+      ?pickBoggleNeighbor(e.clientX,e.clientY)
       :pointToCell(e.clientX,e.clientY);
     if(!point)return;
     if(state.mode==='boggle')boggleMove(point,e);
@@ -1178,7 +1224,7 @@ function wireGrid(){
   });
   gridEl.addEventListener('pointerup',e=>{
     const point=state.mode==='boggle'
-      ?nearestBoggleCell(e.clientX,e.clientY)
+      ?pickBoggleNeighbor(e.clientX,e.clientY)
       :pointToCell(e.clientX,e.clientY);
     if(point){
       if(state.mode==='boggle')boggleMove(point,e);
