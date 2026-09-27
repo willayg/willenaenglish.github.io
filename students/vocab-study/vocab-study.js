@@ -1,4 +1,4 @@
-import {QuestionRenderer} from '/shared/questions/question-renderer.js?v=20260925-speaking2';
+import {QuestionRenderer} from '/shared/questions/question-renderer.js?v=20260927-dependency1';
 import {capturePointOrigin,showPointAward} from '/students/components/student-point-feedback.js?v=20260926-v0003';
 import {getSpellingTarget} from './spelling-targets.js?v=20260925-v0019';
 import {isSpeakableTarget,matchSpeakingTarget} from './speaking-match.js?v=20260926-v0025';
@@ -2476,7 +2476,7 @@ async function boot(){
     reportStartupPerf();
     preloadStudentSfx();
 
-window.WillenaVocabStudy={version:'0.099',getState:()=>state,start:startSession,openSpellingMenu,openSpellingPreview,openSpellingTest,openSpeakingSession,close:closeSession};
+window.WillenaVocabStudy={version:'0.100',getState:()=>state,start:startSession,openSpellingMenu,openSpellingPreview,openSpellingTest,openSpeakingSession,close:closeSession};
   }catch(error){
     console.error('[Vocab Study] boot',error);
     if(frontWordTestCardEl)frontWordTestCardEl.hidden=true;
