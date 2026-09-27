@@ -30,6 +30,15 @@
 /* Homepage cards */
 .tp-task-shelf{display:flex;gap:14px;overflow-x:auto;padding:2px 1px 18px;scrollbar-width:none}.tp-task-shelf::-webkit-scrollbar{display:none}
 .tp-task-chip,.tp-wrong-card,.tp-lesson-card,.tp-subway,.tp-review-panel,.tp-review-result,.tp-stats-modal,.tp-mock-card,.tp-mock-all-card{background:var(--tp-card);border:1.5px solid var(--tp-line);box-shadow:var(--tp-shadow);color:var(--tp-ink)}
+body[data-tp-theme="pink"] .tp-task-chip,
+body[data-tp-theme="pink"] .tp-wrong-card,
+body[data-tp-theme="pink"] .tp-lesson-card,
+body[data-tp-theme="pink"] .tp-subway,
+body[data-tp-theme="pink"] .tp-review-panel,
+body[data-tp-theme="pink"] .tp-review-result,
+body[data-tp-theme="pink"] .tp-stats-modal,
+body[data-tp-theme="pink"] .tp-mock-card,
+body[data-tp-theme="pink"] .tp-mock-all-card{background:#fffdfd}
 .tp-task-chip{flex:0 0 auto;min-width:360px;border-radius:24px;padding:22px 26px;text-align:left;cursor:pointer;min-height:132px}.tp-task-chip .k{display:block;font-size:12px;font-weight:800;color:var(--tp-cyan-dark)}.tp-task-chip b{display:block;font-size:20px;margin-top:8px;letter-spacing:-.025em}.tp-task-chip small{display:block;color:var(--tp-muted);font-size:12px;margin-top:7px}.tp-task-chip .arrow{float:right;color:var(--tp-cyan-dark);font-size:24px;font-weight:700}
 .tp-wrong-card{width:100%;border-radius:26px;padding:28px 30px;display:grid;grid-template-columns:70px 1fr auto;gap:22px;align-items:center;text-align:left;cursor:pointer;margin:8px 0 34px;min-height:150px}.tp-wrong-card.no-wrong{cursor:default;opacity:.66}.tp-wrong-icon{width:70px;height:70px;border-radius:20px;background:color-mix(in srgb,var(--tp-pink) 12%,white);color:var(--tp-pink);display:grid;place-items:center;font-size:29px;font-weight:800}.tp-wrong-copy b{font-size:22px}.tp-wrong-copy small{display:block;color:var(--tp-muted);font-size:12px;margin-top:6px}.tp-wrong-count{font-size:46px;font-weight:800;color:var(--tp-pink);text-align:right;line-height:1}.tp-wrong-count small{display:block;font-size:10px;color:var(--tp-muted);margin-top:7px}
 .tp-exam-section{margin-bottom:34px}.tp-lessons{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}.tp-lesson-card{border-radius:24px;padding:20px;display:grid;grid-template-columns:1fr 76px;gap:12px;align-items:center;text-align:left;cursor:pointer;min-height:140px}.tp-lesson-card h3{font-size:18px;margin:0}.tp-lesson-card p{font-size:10px;color:var(--tp-muted);margin:5px 0 0}.tp-task-badge{display:inline-block;margin-top:7px;background:color-mix(in srgb,var(--tp-header-b) 22%,white);color:var(--tp-heading);border-radius:999px;padding:5px 8px;font-size:9px;font-weight:800}
