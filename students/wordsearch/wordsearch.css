@@ -498,3 +498,7 @@ body.system-kb-open .crossword-stage{
   width:100%;
   max-width:100%;
 }
+
+.puzzle-tab:disabled,.new-btn:disabled,#retryBtn:disabled{
+  opacity:.48;cursor:default;pointer-events:none
+}
