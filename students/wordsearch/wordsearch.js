@@ -5,7 +5,6 @@ const CONTENT_URL='https://gxwfsqxyuufqtitspfqg.supabase.co';
 const CONTENT_KEY=['sb_publishable_','G-FYhHfDL4OGdL892gY1Zg_','epdbEeqO'].join('');
 const OP_URL='https://fiieuiktlsivwfgyivai.supabase.co';
 const OP_KEY='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
-const ACTIVE_BOOK_KEY='willena-study-v2-active-book';
 const GRID_TARGET=12;
 const WORD_TARGET=10;
 const POINTS_PER_WORD=1;
@@ -13,8 +12,6 @@ const POINTS_PER_WORD=1;
 const $=id=>document.getElementById(id);
 const gridEl=$('grid');
 const wordListEl=$('wordList');
-const bookSelect=$('bookSelect');
-const bookLabel=$('bookLabel');
 const progressEl=$('puzzleProgress');
 const sessionPointsEl=$('sessionPoints');
 const loadingCard=$('loadingCard');
@@ -289,7 +286,7 @@ async function finishPuzzle(){
   await saveReward();
 }
 async function saveReward(){
-  if(state.saving||!state.book||!state.sessionId)return;
+  if(state.saving||!state.sessionId)return;
   state.saving=true;
   const points=state.found.size*POINTS_PER_WORD;
   try{
@@ -297,19 +294,19 @@ async function saveReward(){
       reward_only:true,
       session_id:state.sessionId,
       client_attempt_id:crypto.randomUUID?.()||('wordsearch-reward-'+Date.now()),
-      book_id:state.book.book_id,
+      book_id:null,
       unit_id:null,
       skill:'vocabulary',
       response_type:'reward',
       activity_id:'wordsearch',
       reward_mode:'wordsearch',
-      reward_list_name:'Word Search · '+txt(state.book.book_title||state.book.title||'Book'),
+      reward_list_name:'Word Search',
       reward_list_size:state.placements.length,
       reward_started_at:state.startedAt,
       reward_summary:{
         completed:true,stars:0,accuracy:1,percent:100,
         score:state.placements.length,total:state.placements.length,
-        points_earned:points,book_id:state.book.book_id,unit_id:null,
+        points_earned:points,book_id:null,unit_id:null,
         assignment_id:null,session_source:'student',vocab_mode:'wordsearch',
         reward_scheme:'wordsearch-v1',star_cap:0
       }
@@ -340,24 +337,43 @@ function wireGrid(){
   gridEl.addEventListener('pointercancel',()=>{state.drag=null;clearPreview()});
 }
 
-async function buildForBook(bookId){
+async function buildPuzzle(){
   showLoading();
   try{
-    state.book=state.books.find(b=>String(b.book_id)===String(bookId))||state.books[0];
-    if(!state.book)throw new Error('No book selected.');
-    try{localStorage.setItem(ACTIVE_BOOK_KEY,state.book.book_id)}catch(_){}
-    const pool=await loadBookWords(state.book);
-    if(pool.length<6)throw new Error('This book does not have enough puzzle words yet.');
-    const puzzle=generatePuzzle(pool);
-    state.words=pool;state.grid=puzzle.grid;state.size=puzzle.size;state.placements=puzzle.placements;
-    bookLabel.textContent=txt(state.book.book_title||state.book.title||'YOUR BOOK').toUpperCase();
-    renderPuzzle();showGame();
-  }catch(error){console.error('[Word Search]',error);showError(error)}
-}
-function renderBooks(){
-  bookSelect.innerHTML=state.books.map(b=>'<option value="'+escapeHtml(b.book_id)+'">'+escapeHtml(b.book_title||b.title||'Vocabulary')+'</option>').join('');
-  let wanted='';try{wanted=localStorage.getItem(ACTIVE_BOOK_KEY)||''}catch(_){}
-  if(state.books.some(b=>String(b.book_id)===String(wanted)))bookSelect.value=wanted;
+    if(!state.books.length)throw new Error('No assigned books were found.');
+    loadingCard.querySelector('strong').textContent='Loading puzzle words…';
+
+    const results=await Promise.allSettled(state.books.map(book=>loadBookWords(book)));
+    const merged=[];
+    const seen=new Set();
+    results.forEach(result=>{
+      if(result.status!=='fulfilled')return;
+      result.value.forEach(item=>{
+        const key=item.clean;
+        if(!key||seen.has(key))return;
+        seen.add(key);
+        merged.push(item);
+      });
+    });
+
+    if(merged.length<6){
+      const failed=results.filter(r=>r.status==='rejected');
+      if(failed.length===results.length)throw failed[0].reason;
+      throw new Error('Your assigned books do not have enough puzzle words yet.');
+    }
+
+    const puzzle=generatePuzzle(merged);
+    state.book=null;
+    state.words=merged;
+    state.grid=puzzle.grid;
+    state.size=puzzle.size;
+    state.placements=puzzle.placements;
+    renderPuzzle();
+    showGame();
+  }catch(error){
+    console.error('[Word Search]',error);
+    showError(error);
+  }
 }
 async function boot(){
   preloadStudentSfx();showLoading();
@@ -371,20 +387,17 @@ async function boot(){
     }
     state.auth=who;
     if(!who?.success||!who?.class)throw new Error('No active student class was found.');
-    loadingCard.querySelector('strong').textContent='Finding your book…';
+    loadingCard.querySelector('strong').textContent='Finding your books…';
     state.books=await assignedBooks(who.class);
-    renderBooks();
-    loadingCard.querySelector('strong').textContent='Loading puzzle words…';
-    await buildForBook(bookSelect.value||state.books[0].book_id);
+    await buildPuzzle();
   }catch(error){
     console.error('[Word Search boot]',error);
     showError(error);
   }
 }
 
-bookSelect.addEventListener('change',()=>buildForBook(bookSelect.value));
-$('newPuzzleBtn').addEventListener('click',()=>buildForBook(bookSelect.value));
-$('retryBtn').addEventListener('click',()=>buildForBook(bookSelect.value));
-$('playAgainBtn').addEventListener('click',()=>buildForBook(bookSelect.value));
+$('newPuzzleBtn').addEventListener('click',()=>buildPuzzle());
+$('retryBtn').addEventListener('click',()=>buildPuzzle());
+$('playAgainBtn').addEventListener('click',()=>buildPuzzle());
 wireGrid();
 boot();
