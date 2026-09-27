@@ -1,4 +1,4 @@
-import {QuestionRenderer} from '/shared/questions/question-renderer.js?v=20260927-dependency1';
+import {QuestionRenderer} from '/shared/questions/question-renderer.js?v=20260927-icons1';
 import {capturePointOrigin,showPointAward} from '/students/components/student-point-feedback.js?v=20260926-v0003';
 import {getSpellingTarget} from './spelling-targets.js?v=20260925-v0019';
 import {isSpeakableTarget,matchSpeakingTarget} from './speaking-match.js?v=20260926-v0025';
@@ -460,7 +460,7 @@ function goldenAwardHtml(){
   const award=state.pendingGoldenAward;
   if(!award)return'';
   state.pendingGoldenAward=null;
-  return '<div class="vocab-golden-award"><img class="vocab-golden-award-icon" src="/shared/svgs/golden-unit.svg" alt=""><div><strong>Golden Unit earned!</strong><span>Unit '+escapeHtml(award.unitNumber||'')+' is mastered.</span></div></div>';
+  return '<div class="vocab-golden-award"><img class="vocab-golden-award-icon" src="/shared/svgs/golden-unit.svg?v=20260927-icons1" alt=""><div><strong>Golden Unit earned!</strong><span>Unit '+escapeHtml(award.unitNumber||'')+' is mastered.</span></div></div>';
 }
 
 function wireShellNavigation(){
@@ -1338,7 +1338,7 @@ function renderUnits(){
   const units=arr(state.units);
   unitStripEl.innerHTML=units.map(u=>{
     const golden=isGoldenUnit(u.id);
-    return '<button class="study-v2-unit'+(String(state.unit?.id)===String(u.id)?' is-current':'')+(golden?' is-golden':'')+'" type="button" data-unit-id="'+escapeHtml(u.id)+'">Unit '+escapeHtml(u.unit_number)+(golden?'<img class="vocab-unit-gold" src="/shared/svgs/golden-unit.svg" alt="Golden Unit">':'')+'</button>';
+    return '<button class="study-v2-unit'+(String(state.unit?.id)===String(u.id)?' is-current':'')+(golden?' is-golden':'')+'" type="button" data-unit-id="'+escapeHtml(u.id)+'">Unit '+escapeHtml(u.unit_number)+(golden?'<img class="vocab-unit-gold" src="/shared/svgs/golden-unit.svg?v=20260927-icons1" alt="Golden Unit">':'')+'</button>';
   }).join('');
   unitStripEl.querySelectorAll('[data-unit-id]').forEach(btn=>btn.addEventListener('click',()=>selectUnit(btn.dataset.unitId)));
 }
@@ -1547,7 +1547,7 @@ function renderWordModal(words,{meta='',title='단어 목록',opener=null}={}){
     '<div class="vocab-word-row">'+
       '<div class="vocab-word-row-copy"><strong>'+escapeHtml(w.word)+'</strong><span>'+escapeHtml(w.ko)+'</span></div>'+
       '<button class="vocab-word-audio" type="button" data-modal-word="'+index+'" aria-label="'+escapeHtml(w.word)+' 듣기">'+
-        '<img src="/shared/svgs/headphones.svg?v=20260926-v0002" alt="" aria-hidden="true">'+
+        '<img src="/shared/svgs/headphones.svg?v=20260927-icons1" alt="" aria-hidden="true">'+
       '</button>'+
     '</div>'
   ).join('');
@@ -2165,7 +2165,7 @@ async function openSpellingPreview({historyMode='replace'}={}){
         words.map((w,i)=>
           '<div class="lesson-word vocab-coach-word">'+
             '<div class="vocab-coach-word-copy"><strong>'+escapeHtml(w.spellingTarget||w.word)+'</strong><span>'+escapeHtml(w.ko)+'</span></div>'+
-            '<button class="speak-mini vocab-coach-audio" type="button" data-preview-word="'+i+'" aria-label="'+escapeHtml(w.spellingTarget||w.word)+' 듣기"><img src="/shared/svgs/headphones.svg?v=20260926-v0002" alt="" aria-hidden="true"></button>'+
+            '<button class="speak-mini vocab-coach-audio" type="button" data-preview-word="'+i+'" aria-label="'+escapeHtml(w.spellingTarget||w.word)+' 듣기"><img src="/shared/svgs/headphones.svg?v=20260927-icons1" alt="" aria-hidden="true"></button>'+
           '</div>'
         ).join('')+
       '</div>'+
@@ -2476,7 +2476,7 @@ async function boot(){
     reportStartupPerf();
     preloadStudentSfx();
 
-window.WillenaVocabStudy={version:'0.100',getState:()=>state,start:startSession,openSpellingMenu,openSpellingPreview,openSpellingTest,openSpeakingSession,close:closeSession};
+window.WillenaVocabStudy={version:'0.101',getState:()=>state,start:startSession,openSpellingMenu,openSpellingPreview,openSpellingTest,openSpeakingSession,close:closeSession};
   }catch(error){
     console.error('[Vocab Study] boot',error);
     if(frontWordTestCardEl)frontWordTestCardEl.hidden=true;

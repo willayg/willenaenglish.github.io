@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" role="img" aria-labelledby="title">
+<title id="title">Cute open study book</title>
+<path d="M12 25c14-6 25-3 36 5v48c-11-8-22-11-36-5V25Z" fill="#e9fbfc" stroke="#42b8c4" stroke-width="5" stroke-linejoin="round"/>
+<path d="M84 25c-14-6-25-3-36 5v48c11-8 22-11 36-5V25Z" fill="#fff4f9" stroke="#ea77ad" stroke-width="5" stroke-linejoin="round"/>
+<path d="M48 31v47" stroke="#789095" stroke-width="4" stroke-linecap="round"/>
+<path d="M23 40h14M23 51h17M59 40h14M56 51h17" stroke="#789095" stroke-width="4" stroke-linecap="round"/>
+<circle cx="34" cy="65" r="3" fill="#ea77ad"/>
+<circle cx="62" cy="65" r="3" fill="#42b8c4"/>
+</svg>
