@@ -37,7 +37,7 @@ const cheatFinishBtn=$('cheatFinishBtn');
 const CHEAT_MODE=new URLSearchParams(location.search).get('cheat')==='1';
 
 const state={
-  auth:null,books:[],book:null,words:[],pool:[],crosswordPool:[],studentLevel:null,rewardContext:null,grid:[],size:GRID_TARGET,placements:[],
+  auth:null,books:[],book:null,words:[],pool:[],crosswordPool:[],studentLevel:null,rewardContext:null,ready:false,buildToken:0,grid:[],size:GRID_TARGET,placements:[],
   found:new Set(),gimmes:new Set(),bogglePaths:new Map(),drag:null,sessionId:null,startedAt:null,saving:false,mode:'wordsearch',activeCrossword:null,crosswordCursor:0,cheatCompletion:false
 };
 
@@ -159,6 +159,14 @@ async function assignedBooks(className){
     .filter(x=>x&&x.book_id);
   if(!list.length)throw new Error('No active book is assigned.');
   return list;
+}
+
+function setPuzzleControlsEnabled(enabled){
+  document.querySelectorAll('.puzzle-tab').forEach(btn=>{btn.disabled=!enabled});
+  const newBtn=$('newPuzzleBtn');
+  const retry=$('retryBtn');
+  if(newBtn)newBtn.disabled=!enabled;
+  if(retry)retry.disabled=!enabled;
 }
 
 function closeWinModal(){
@@ -1140,10 +1148,11 @@ function wireGrid(){
 }
 
 async function buildPuzzle(){
+  if(!state.ready||!state.books.length)return;
+  const buildToken=++state.buildToken;
   state.cheatCompletion=false;
   showLoading();
   try{
-    if(!state.books.length)throw new Error('No assigned books were found.');
     closeWinModal();
     if(!state.pool.length){
       loadingCard.querySelector('strong').textContent='Loading puzzle words…';
@@ -1165,6 +1174,7 @@ async function buildPuzzle(){
       state.pool=merged;
     }
 
+    if(buildToken!==state.buildToken)return;
     state.book=null;
     state.words=state.pool;
     if(state.mode==='crossword'||state.mode==='boggle'){
@@ -1191,14 +1201,19 @@ async function buildPuzzle(){
       state.grid=puzzle.grid;state.size=puzzle.size;state.placements=puzzle.placements;
       renderPuzzle();setModeUI();
     }
+    if(buildToken!==state.buildToken)return;
     showGame();
   }catch(error){
+    if(buildToken!==state.buildToken)return;
     console.error('[Word Games]',error);
     showError(error);
   }
 }
 async function boot(){
-  preloadStudentSfx();showLoading();
+  preloadStudentSfx();
+  state.ready=false;
+  setPuzzleControlsEnabled(false);
+  showLoading();
   try{
     let who=null;
     if(window.WillenaVocabStudyAuthReady){
@@ -1211,8 +1226,12 @@ async function boot(){
     if(!who?.success||!who?.class)throw new Error('No active student class was found.');
     loadingCard.querySelector('strong').textContent='Finding your books…';
     state.books=await assignedBooks(who.class);
+    state.ready=true;
+    setPuzzleControlsEnabled(true);
     await buildPuzzle();
   }catch(error){
+    state.ready=false;
+    setPuzzleControlsEnabled(false);
     console.error('[Word Search boot]',error);
     showError(error);
   }
@@ -1252,15 +1271,17 @@ if(CHEAT_MODE&&cheatFinishBtn){
 
 
 document.querySelectorAll('.puzzle-tab').forEach(btn=>btn.addEventListener('click',()=>{
-  if(btn.dataset.mode===state.mode)return;
-  state.mode=btn.dataset.mode;setModeUI();buildPuzzle();
+  if(!state.ready||btn.dataset.mode===state.mode)return;
+  state.mode=btn.dataset.mode;
+  setModeUI();
+  buildPuzzle();
 }));
 boggleHelpBtn?.addEventListener('click',()=>openBoggleHelp({markSeen:true}));
 $('boggleHelpCloseBtn')?.addEventListener('click',closeBoggleHelp);
 $('boggleHelpGotItBtn')?.addEventListener('click',closeBoggleHelp);
 boggleHelpDialog?.addEventListener('click',e=>{if(e.target===boggleHelpDialog)closeBoggleHelp()});
-$('newPuzzleBtn').addEventListener('click',()=>buildPuzzle());
-$('retryBtn').addEventListener('click',()=>buildPuzzle());
+$('newPuzzleBtn').addEventListener('click',()=>{if(state.ready)buildPuzzle()});
+$('retryBtn').addEventListener('click',()=>{if(state.ready)buildPuzzle()});
 $('playAgainBtn').addEventListener('click',()=>{closeWinModal();buildPuzzle()});
 completeCard?.addEventListener('click',e=>{
   if(e.target===completeCard)closeWinModal();
@@ -1283,5 +1304,6 @@ crosswordEntry?.addEventListener('blur',()=>{
   },120);
 });
 updateSystemKeyboardSpace();
+setPuzzleControlsEnabled(false);
 setModeUI();
 boot();
