@@ -312,3 +312,83 @@ body.system-kb-open .crossword-stage{
   .word-grid.boggle-grid{gap:6px;padding:8px;border-radius:18px}
   .word-grid.boggle-grid .cell{border-width:2px;border-radius:12px}
 }
+
+.puzzle-nav-row{
+  display:flex;align-items:center;gap:12px;justify-content:space-between
+}
+.puzzle-nav-row .puzzle-tabs{min-width:0;flex:1 1 auto}
+.help-btn{
+  flex:0 0 auto;min-height:46px;padding:0 18px;border:3px solid #bfecef;border-radius:16px;
+  background:#fff;color:#2b7d86;font:900 .82rem Poppins,system-ui,sans-serif;cursor:pointer
+}
+.help-btn:active{transform:translateY(1px)}
+
+.word-grid-stage{position:relative;width:fit-content;max-width:100%;margin-inline:auto}
+.boggle-lines{
+  position:absolute;inset:0;z-index:3;overflow:visible;pointer-events:none
+}
+.boggle-lines path{
+  fill:none;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke
+}
+.boggle-solved-line{
+  stroke:var(--line-color);stroke-width:8;opacity:.54
+}
+.boggle-drag-line{
+  stroke:#ef7fb2;stroke-width:9;opacity:.46;stroke-dasharray:1 14
+}
+.word-grid.boggle-grid{position:relative;z-index:1}
+.word-grid.boggle-grid .cell{position:relative;z-index:2}
+.word-grid.boggle-grid .cell.found{background:rgba(255,255,255,.88)}
+
+.help-modal{
+  width:min(650px,calc(100% - 28px));max-height:calc(100% - 32px);overflow:auto;
+  border:4px solid #bfecef;border-radius:26px;background:#fff;padding:0;
+  box-shadow:0 24px 70px rgba(34,77,84,.2);color:#315e64
+}
+.help-modal::backdrop{background:rgba(27,52,57,.42);backdrop-filter:blur(2px)}
+.help-head{
+  display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding:22px 22px 15px;
+  border-bottom:2px solid #edf6f7
+}
+.help-head .complete-kicker{display:block;color:#d95d98;font-size:.68rem;font-weight:900;letter-spacing:.12em}
+.help-head strong{display:block;margin-top:3px;font-size:1.55rem;line-height:1.1}
+.help-close{
+  width:42px;height:42px;border:2px solid #d9edef;border-radius:14px;background:#fff;color:#6f8b90;
+  font:700 1.7rem/1 system-ui,sans-serif;cursor:pointer
+}
+.help-games{display:grid;gap:10px;padding:16px 20px}
+.help-game{
+  display:grid;grid-template-columns:48px minmax(0,1fr);gap:13px;align-items:start;
+  padding:14px;border:2px solid #e3f2f3;border-radius:18px;background:#fbfefe
+}
+.help-game:nth-child(2){border-color:#f3d5e4;background:#fffafd}
+.help-icon{
+  width:46px;height:46px;border-radius:14px;background:#e9fafa;color:#28818a;
+  display:grid;place-items:center;font-size:1.45rem;font-weight:900
+}
+.help-game:nth-child(2) .help-icon{background:#fff0f7;color:#c04c82}
+.help-game strong{display:block;font-size:1rem}
+.help-game p{margin:4px 0 0;color:#69858a;font-size:.78rem;line-height:1.55;font-weight:650}
+.help-game b{color:#b84479}
+.help-reward{
+  margin:0 20px 16px;padding:13px 15px;border-radius:16px;background:#fff9e9;border:2px solid #f1df9e;
+  display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap
+}
+.help-reward strong{color:#987112;font-size:.84rem}
+.help-reward span{color:#877b5a;font-size:.7rem;font-weight:700}
+.help-got-it{
+  width:calc(100% - 40px);min-height:50px;margin:0 20px 20px;border:3px solid #efafd0;border-radius:16px;
+  background:#fff7fb;color:#b84479;font:900 .9rem Poppins,system-ui,sans-serif;cursor:pointer
+}
+@media(max-width:560px){
+  .puzzle-nav-row{align-items:stretch;gap:8px}
+  .help-btn{padding:0 12px;min-height:44px}
+  .boggle-solved-line{stroke-width:7}
+  .help-modal{border-width:3px;border-radius:20px}
+  .help-head{padding:18px 17px 13px}
+  .help-games{padding:13px 14px}
+  .help-game{grid-template-columns:40px minmax(0,1fr);padding:12px;gap:10px}
+  .help-icon{width:40px;height:40px;border-radius:12px;font-size:1.2rem}
+  .help-reward{margin:0 14px 14px}
+  .help-got-it{width:calc(100% - 28px);margin:0 14px 16px}
+}
