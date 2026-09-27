@@ -267,16 +267,9 @@ export class QuestionRenderer{
     }
     if(q.form===FORMS.spellingCoach){
       const input=this.host.querySelector('[data-spelling-input]');
-      this.host.querySelectorAll('[data-spelling-audio]').forEach(btn=>btn.addEventListener('click',async e=>{
+      this.host.querySelectorAll('[data-spelling-audio]').forEach(btn=>btn.addEventListener('click',e=>{
         const word=String(e.currentTarget?.dataset?.audioText||'').trim();
-        if(!word)return;
-        if(typeof window.WillenaPlayWordAudio==='function'){
-          try{
-            const played=await window.WillenaPlayWordAudio(word);
-            if(played)return;
-          }catch{}
-        }
-        if(!('speechSynthesis' in window))return;
+        if(!word||!('speechSynthesis' in window))return;
         try{speechSynthesis.cancel();const utterance=new SpeechSynthesisUtterance(word);utterance.lang='en-US';speechSynthesis.speak(utterance)}catch{}
       }));
       const modal=this.host.querySelector('[data-spelling-study-modal]');
