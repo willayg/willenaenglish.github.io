@@ -14,7 +14,7 @@ const BOGGLE_TARGET=8;
 const $=id=>document.getElementById(id);
 const gridEl=$('grid');
 const wordGridStage=$('wordGridStage');
-const boggleLines=$('boggleLines');
+const boggleCanvas=$('boggleCanvas');
 const boggleHelpBtn=$('boggleHelpBtn');
 const boggleHelpDialog=$('boggleHelpDialog');
 const crosswordGridEl=$('crosswordGrid');
@@ -364,59 +364,71 @@ function bogglePlaceWord(board,entry){
 
 const BOGGLE_LINE_COLORS=['#e75e9f','#31bccc','#7e67d8','#ef9b3e','#55a86c','#d56060','#3f82c4','#b4772f'];
 
-function clearBoggleLines(){
+function clearBoggleCanvas(){
   state.bogglePaths.clear();
-  if(boggleLines)boggleLines.innerHTML='';
+  if(!boggleCanvas)return;
+  const ctx=boggleCanvas.getContext('2d');
+  ctx?.clearRect(0,0,boggleCanvas.width,boggleCanvas.height);
 }
-function bogglePointForCell(row,col){
-  const cell=cellAt(row,col);
-  if(!cell||!wordGridStage)return null;
-  const stageRect=wordGridStage.getBoundingClientRect();
-  const rect=cell.getBoundingClientRect();
-  return{
-    x:rect.left-stageRect.left+rect.width/2,
-    y:rect.top-stageRect.top+rect.height/2
-  };
-}
-function bogglePointFromPointer(clientX,clientY){
-  if(!wordGridStage)return null;
+function sizeBoggleCanvas(){
+  if(!boggleCanvas||!wordGridStage)return;
   const rect=wordGridStage.getBoundingClientRect();
+  const dpr=Math.max(1,window.devicePixelRatio||1);
+  const w=Math.max(1,Math.round(rect.width));
+  const h=Math.max(1,Math.round(rect.height));
+  const rw=Math.max(1,Math.round(w*dpr));
+  const rh=Math.max(1,Math.round(h*dpr));
+  if(boggleCanvas.width!==rw||boggleCanvas.height!==rh){
+    boggleCanvas.width=rw;
+    boggleCanvas.height=rh;
+    boggleCanvas.style.width=w+'px';
+    boggleCanvas.style.height=h+'px';
+  }
+  const ctx=boggleCanvas.getContext('2d');
+  if(ctx)ctx.setTransform(dpr,0,0,dpr,0,0);
+}
+function pointInBoggleStage(clientX,clientY){
+  const rect=wordGridStage?.getBoundingClientRect();
+  if(!rect)return null;
   return{x:clientX-rect.left,y:clientY-rect.top};
 }
-function bogglePathDFromPoints(points){
-  const clean=(points||[]).filter(p=>Number.isFinite(p?.x)&&Number.isFinite(p?.y));
-  if(!clean.length)return'';
-  if(clean.length===1)return'M '+clean[0].x+' '+clean[0].y;
-  return clean.map((p,i)=>(i?'L ':'M ')+p.x+' '+p.y).join(' ');
+function drawCanvasPath(ctx,points,color,width,alpha=1){
+  if(!ctx||!points?.length)return;
+  ctx.save();
+  ctx.globalAlpha=alpha;
+  ctx.strokeStyle=color;
+  ctx.lineWidth=width;
+  ctx.lineCap='round';
+  ctx.lineJoin='round';
+  ctx.beginPath();
+  ctx.moveTo(points[0].x,points[0].y);
+  for(let i=1;i<points.length;i++)ctx.lineTo(points[i].x,points[i].y);
+  ctx.stroke();
+  ctx.restore();
 }
-function sizeBoggleOverlay(){
-  if(!boggleLines||!wordGridStage)return;
+function renderBoggleCanvas(){
+  if(!boggleCanvas||state.mode!=='boggle')return;
+  sizeBoggleCanvas();
   const rect=wordGridStage.getBoundingClientRect();
-  boggleLines.setAttribute('viewBox','0 0 '+Math.max(1,rect.width)+' '+Math.max(1,rect.height));
-  boggleLines.setAttribute('width',String(rect.width));
-  boggleLines.setAttribute('height',String(rect.height));
-}
-function renderBoggleLines(){
-  if(!boggleLines)return;
-  sizeBoggleOverlay();
-  const pieces=[];
+  const ctx=boggleCanvas.getContext('2d');
+  if(!ctx)return;
+  ctx.clearRect(0,0,rect.width,rect.height);
+
   [...state.bogglePaths.entries()].forEach(([index,path])=>{
-    const color=BOGGLE_LINE_COLORS[index%BOGGLE_LINE_COLORS.length];
-    const d=bogglePathDFromPoints(path.points);
-    if(d)pieces.push('<path class="boggle-solved-line" d="'+d+'" style="--line-color:'+color+'"></path>');
+    drawCanvasPath(ctx,path.points,BOGGLE_LINE_COLORS[index%BOGGLE_LINE_COLORS.length],11,.72);
   });
-  if(state.mode==='boggle'&&state.drag?.trail?.length){
-    const d=bogglePathDFromPoints(state.drag.trail);
-    if(d)pieces.push('<path class="boggle-drag-line" d="'+d+'"></path>');
+  if(state.drag?.trail?.length){
+    drawCanvasPath(ctx,state.drag.trail,'#e75e9f',12,.86);
   }
-  boggleLines.innerHTML=pieces.join('');
 }
 function rememberBogglePath(index,coords,trail){
-  const points=(trail&&trail.length?trail:coords.map(([r,c])=>bogglePointForCell(r,c)).filter(Boolean))
-    .map(p=>({x:p.x,y:p.y}));
-  state.bogglePaths.set(index,{coords:coords.map(([r,c])=>[r,c]),points});
-  renderBoggleLines();
+  state.bogglePaths.set(index,{
+    coords:coords.map(([r,c])=>[r,c]),
+    points:(trail||[]).map(p=>({x:p.x,y:p.y}))
+  });
+  renderBoggleCanvas();
 }
+
 function generateBoggle(pool){
   const candidates=shuffle(pool.filter(x=>{
     const raw=txt(x.display);
@@ -443,13 +455,13 @@ function generateBoggle(pool){
 function renderBoggle(){
   state.found.clear();
   state.gimmes.clear();
-  clearBoggleLines();
+  clearBoggleCanvas();
   state.drag=null;
   state.sessionId=crypto.randomUUID?.()||('boggle-'+Date.now());
   state.startedAt=new Date().toISOString();
 
   gridEl.classList.add('boggle-grid');
-  if(boggleLines)boggleLines.hidden=false;
+  if(boggleCanvas)boggleCanvas.hidden=false;
   gridEl.style.setProperty('--size',state.size);
   gridEl.innerHTML='';
   for(let r=0;r<state.size;r++)for(let c=0;c<state.size;c++){
@@ -466,7 +478,7 @@ function renderBoggle(){
     '</div>'
   ).join('');
   updateProgress();
-  requestAnimationFrame(renderBoggleLines);
+  requestAnimationFrame(renderBoggleCanvas);
 }
 function isAdjacentCoord(a,b){
   if(!a||!b)return false;
@@ -474,52 +486,54 @@ function isAdjacentCoord(a,b){
   return dr<=1&&dc<=1&&(dr+dc)>0;
 }
 function boggleBegin(point,pointer){
-  const coords=[[point.row,point.col]];
-  const first=bogglePointFromPointer(pointer.clientX,pointer.clientY)||bogglePointForCell(point.row,point.col);
-  state.drag={coords,trail:first?[first]:[]};
-  preview(coords);
-  renderBoggleLines();
+  const first=pointInBoggleStage(pointer.clientX,pointer.clientY);
+  state.drag={coords:[[point.row,point.col]],trail:first?[first]:[]};
+  preview(state.drag.coords);
+  renderBoggleCanvas();
 }
 function boggleMove(point,pointer){
-  if(!state.drag?.coords)return;
-  const coords=state.drag.coords;
-  const next=[point.row,point.col];
-  const last=coords[coords.length-1];
+  if(!state.drag)return;
 
-  const freePoint=bogglePointFromPointer(pointer.clientX,pointer.clientY);
-  if(freePoint){
-    const trail=state.drag.trail||(state.drag.trail=[]);
+  const free=pointInBoggleStage(pointer.clientX,pointer.clientY);
+  if(free){
+    const trail=state.drag.trail;
     const prev=trail[trail.length-1];
-    if(!prev||Math.hypot(freePoint.x-prev.x,freePoint.y-prev.y)>=4)trail.push(freePoint);
+    if(!prev||Math.hypot(free.x-prev.x,free.y-prev.y)>2)trail.push(free);
   }
 
-  if(last&&last[0]===next[0]&&last[1]===next[1]){
-    renderBoggleLines();
+  const coords=state.drag.coords;
+  const last=coords[coords.length-1];
+  if(!last){renderBoggleCanvas();return}
+
+  const next=[point.row,point.col];
+  if(next[0]===last[0]&&next[1]===last[1]){
+    renderBoggleCanvas();return;
+  }
+
+  const prev=coords.length>1?coords[coords.length-2]:null;
+  if(prev&&next[0]===prev[0]&&next[1]===prev[1]){
+    coords.pop();
+    preview(coords);
+    renderBoggleCanvas();
     return;
   }
 
-  const existing=coords.findIndex(([r,c])=>r===next[0]&&c===next[1]);
-  if(existing>=0){
-    if(existing===coords.length-2){
-      coords.pop();
-      preview(coords);
-    }
-    renderBoggleLines();
-    return;
+  if(coords.some(([r,c])=>r===next[0]&&c===next[1])){
+    renderBoggleCanvas();return;
   }
   if(!isAdjacentCoord(last,next)){
-    renderBoggleLines();
-    return;
+    renderBoggleCanvas();return;
   }
+
   coords.push(next);
   preview(coords);
-  renderBoggleLines();
+  renderBoggleCanvas();
 }
 async function boggleEnd(originEl){
   const coords=(state.drag?.coords||[]).map(([r,c])=>[r,c]);
   const trail=(state.drag?.trail||[]).map(p=>({x:p.x,y:p.y}));
   state.drag=null;clearPreview();
-  renderBoggleLines();
+  renderBoggleCanvas();
   if(coords.length<3)return;
   const letters=coords.map(([r,c])=>txt(cellAt(r,c)?.textContent).toUpperCase()).join('');
   const index=state.placements.findIndex((p,i)=>!state.found.has(i)&&p.clean===letters);
@@ -533,8 +547,8 @@ async function boggleEnd(originEl){
 
 function renderPuzzle(){
   gridEl.classList.remove('boggle-grid');
-  clearBoggleLines();
-  if(boggleLines)boggleLines.hidden=true;
+  clearBoggleCanvas();
+  if(boggleCanvas)boggleCanvas.hidden=true;
   state.found.clear();
   state.gimmes.clear();
   state.drag=null;
@@ -590,68 +604,26 @@ function pointToCell(clientX,clientY){
   const hit=document.elementFromPoint(clientX,clientY)?.closest?.('.cell');
   if(!hit||!gridEl.contains(hit))return null;
   return{row:Number(hit.dataset.row),col:Number(hit.dataset.col),el:hit};
-}function nearestBoggleCell(clientX,clientY){
-  const direct=pointToCell(clientX,clientY);
-  if(direct)return direct;
-  if(!gridEl)return null;
+}function boggleCellFromPointer(clientX,clientY){
+  const cells=[...gridEl.querySelectorAll('.cell')];
+  if(!cells.length)return null;
+
+  // Choose the nearest tile center. This effectively removes the dead gaps
+  // between tiles and makes diagonals forgiving.
   let best=null,bestDist=Infinity;
-  gridEl.querySelectorAll('.cell').forEach(el=>{
+  for(const el of cells){
     const rect=el.getBoundingClientRect();
-    const cx=rect.left+rect.width/2,cy=rect.top+rect.height/2;
-    const d=Math.hypot(clientX-cx,clientY-cy);
+    const cx=rect.left+rect.width/2;
+    const cy=rect.top+rect.height/2;
+    const d=(clientX-cx)*(clientX-cx)+(clientY-cy)*(clientY-cy);
     if(d<bestDist){
       bestDist=d;
       best={row:Number(el.dataset.row),col:Number(el.dataset.col),el};
     }
-  });
+  }
   return best;
 }
-function pickBoggleNeighbor(clientX,clientY){
-  const coords=state.drag?.coords;
-  if(!coords?.length)return nearestBoggleCell(clientX,clientY);
 
-  const [lr,lc]=coords[coords.length-1];
-  const lastCell=cellAt(lr,lc);
-  if(!lastCell)return nearestBoggleCell(clientX,clientY);
-
-  const lastRect=lastCell.getBoundingClientRect();
-  const lx=lastRect.left+lastRect.width/2;
-  const ly=lastRect.top+lastRect.height/2;
-  const mvx=clientX-lx,mvy=clientY-ly;
-  const mag=Math.hypot(mvx,mvy);
-  if(mag<Math.min(lastRect.width,lastRect.height)*0.22)return {row:lr,col:lc,el:lastCell};
-
-  let best=null,bestScore=-Infinity;
-  const used=new Set(coords.map(([r,c])=>r+','+c));
-
-  for(const [nr,nc] of boggleNeighbors(lr,lc,state.size)){
-    const key=nr+','+nc;
-    // allow immediate one-step backtracking, but not reusing older cells
-    const prev=coords.length>1?coords[coords.length-2]:null;
-    const isBack=prev&&prev[0]===nr&&prev[1]===nc;
-    if(used.has(key)&&!isBack)continue;
-
-    const el=cellAt(nr,nc);
-    if(!el)continue;
-    const rect=el.getBoundingClientRect();
-    const cx=rect.left+rect.width/2,cy=rect.top+rect.height/2;
-    const vx=cx-lx,vy=cy-ly;
-    const vmag=Math.hypot(vx,vy)||1;
-    const dir=(mvx*vx+mvy*vy)/(mag*vmag); // -1..1
-    const dist=Math.hypot(clientX-cx,clientY-cy);
-    const hitRadius=Math.max(rect.width,rect.height)*0.92;
-
-    // Wide hit zone plus direction bias. Diagonals no longer require hitting the tile corner.
-    if(dist>hitRadius&&dir<0.78)continue;
-    const score=dir*2-(dist/hitRadius);
-    if(score>bestScore){
-      bestScore=score;
-      best={row:nr,col:nc,el};
-    }
-  }
-
-  return best||{row:lr,col:lc,el:lastCell};
-}
 
 function beginDrag(point){
   state.drag={start:{row:point.row,col:point.col},end:{row:point.row,col:point.col}};
@@ -934,7 +906,7 @@ document.querySelectorAll('.puzzle-tab').forEach(btn=>{
 
   gridEl.hidden=isCrossword;
   crosswordGridEl.hidden=!isCrossword;
-  if(boggleLines)boggleLines.hidden=!isBoggle;
+  if(boggleCanvas)boggleCanvas.hidden=!isBoggle;
   if(crosswordEntry)crosswordEntry.disabled=!isCrossword;
   if(boggleHelpBtn)boggleHelpBtn.hidden=!isBoggle;
 
@@ -1216,7 +1188,7 @@ function wireGrid(){
   gridEl.addEventListener('pointermove',e=>{
     if(!state.drag)return;
     const point=state.mode==='boggle'
-      ?pickBoggleNeighbor(e.clientX,e.clientY)
+      ?boggleCellFromPointer(e.clientX,e.clientY)
       :pointToCell(e.clientX,e.clientY);
     if(!point)return;
     if(state.mode==='boggle')boggleMove(point,e);
@@ -1224,7 +1196,7 @@ function wireGrid(){
   });
   gridEl.addEventListener('pointerup',e=>{
     const point=state.mode==='boggle'
-      ?pickBoggleNeighbor(e.clientX,e.clientY)
+      ?boggleCellFromPointer(e.clientX,e.clientY)
       :pointToCell(e.clientX,e.clientY);
     if(point){
       if(state.mode==='boggle')boggleMove(point,e);
@@ -1344,12 +1316,17 @@ async function cheatFinishPuzzle(){
     state.placements.forEach((p,index)=>{
       p.coords.forEach(([r,c])=>cellAt(r,c)?.classList.add('found'));
       if(state.mode==='boggle'){
-        const points=p.coords.map(([r,c])=>bogglePointForCell(r,c)).filter(Boolean);
+        const points=p.coords.map(([r,c])=>{
+          const el=cellAt(r,c);
+          const stageRect=wordGridStage.getBoundingClientRect();
+          const rect=el?.getBoundingClientRect();
+          return rect?{x:rect.left-stageRect.left+rect.width/2,y:rect.top-stageRect.top+rect.height/2}:null;
+        }).filter(Boolean);
         state.bogglePaths.set(index,{coords:p.coords.map(([r,c])=>[r,c]),points});
       }
       wordListEl.querySelector('[data-word-index="'+index+'"]')?.classList.add('found');
     });
-    if(state.mode==='boggle')renderBoggleLines();
+    if(state.mode==='boggle')renderBoggleCanvas();
   }
 
   updateProgress();
@@ -1380,7 +1357,7 @@ completeCard?.addEventListener('click',e=>{
 });
 wireGrid();
 wireCrossword();
-window.addEventListener('resize',()=>{if(state.mode==='boggle')requestAnimationFrame(renderBoggleLines)});
+window.addEventListener('resize',()=>{if(state.mode==='boggle')requestAnimationFrame(renderBoggleCanvas)});
 if(window.visualViewport){
   window.visualViewport.addEventListener('resize',onViewportKeyboardChange);
   window.visualViewport.addEventListener('scroll',onViewportKeyboardChange);
