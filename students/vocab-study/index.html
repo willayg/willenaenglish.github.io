@@ -170,7 +170,7 @@
       </section>
     </section>
 
-    <div class="vocab-version">v0.099</div>
+    <div class="vocab-version">v0.104-prod-diagnostic</div>
   </main>
 
   <section id="vocabLoading" class="vocab-loading" hidden aria-hidden="true" aria-live="polite">
@@ -225,6 +225,15 @@
 </div>
 
 <script src="/students/study/study-question-bank.js?v=20260822-conversationfix1"></script>
-<script type="module" src="./vocab-study.js?v=20260927-classlookup1"></script>
+<script type="module">
+  import('./vocab-study.js?v=20260927-prod-diagnostic1').catch((error) => {
+    console.error('[Vocab Study import failed]', error);
+    const list = document.getElementById('vocabFrontBookList');
+    const status = document.getElementById('vocabStudyStatus');
+    const message = 'MODULE LOAD ERROR: ' + (error && error.message ? error.message : String(error));
+    if (list) list.innerHTML = '<div class="vocab-front-empty" style="white-space:pre-wrap;color:#b42318">' + message.replace(/[&<>"]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch])) + '</div>';
+    if (status) status.textContent = message;
+  });
+</script>
 </body>
 </html>
