@@ -392,3 +392,88 @@ body.system-kb-open .crossword-stage{
   .help-reward{margin:0 14px 14px}
   .help-got-it{width:calc(100% - 28px);margin:0 14px 16px}
 }
+
+.puzzle-nav-row{display:contents}
+.help-btn,.help-modal{display:none!important}
+
+.clue-strip-head{
+  display:flex;align-items:end;justify-content:space-between;gap:12px
+}
+.clue-strip-title{min-width:0}
+.boggle-help-btn{
+  flex:0 0 auto;min-height:34px;padding:0 11px;border:2px solid #c7ecef;border-radius:12px;
+  background:#fff;color:#2d7d86;font:900 .68rem Poppins,system-ui,sans-serif;cursor:pointer
+}
+.boggle-help-btn[hidden]{display:none!important}
+
+.boggle-help-modal{
+  width:min(620px,calc(100% - 24px));max-height:calc(100% - 28px);overflow:auto;
+  border:4px solid #bfecef;border-radius:26px;background:#fff;padding:0;
+  color:#315e64;box-shadow:0 24px 70px rgba(34,77,84,.2)
+}
+.boggle-help-modal::backdrop{background:rgba(27,52,57,.42);backdrop-filter:blur(2px)}
+.boggle-help-head{
+  display:flex;align-items:flex-start;justify-content:space-between;gap:14px;
+  padding:20px 20px 14px;border-bottom:2px solid #edf6f7
+}
+.boggle-help-kicker{
+  display:block;color:#d95d98;font-size:.65rem;font-weight:900;letter-spacing:.12em
+}
+.boggle-help-head strong{display:block;margin-top:3px;font-size:1.45rem}
+.boggle-help-close{
+  width:40px;height:40px;border:2px solid #d9edef;border-radius:13px;background:#fff;color:#6f8b90;
+  font:700 1.6rem/1 system-ui,sans-serif;cursor:pointer
+}
+.boggle-help-steps{display:grid;gap:12px;padding:16px 18px}
+.boggle-help-step{
+  padding:14px;border:2px solid #e1f1f2;border-radius:18px;background:#fbfefe
+}
+.boggle-help-copy{
+  display:grid;grid-template-columns:34px minmax(0,1fr);gap:10px;align-items:start;margin-bottom:12px
+}
+.boggle-step-num{
+  width:32px;height:32px;border-radius:50%;display:grid;place-items:center;
+  background:#e9fafa;color:#2d7d86;font-weight:900
+}
+.boggle-help-copy strong{display:block;font-size:.94rem}
+.boggle-help-copy p{
+  margin:3px 0 0;color:#71898e;font-size:.76rem;line-height:1.55;font-weight:650
+}
+.boggle-demo-card{
+  display:flex;align-items:center;justify-content:center;gap:10px;min-height:54px;
+  border:3px solid #f0bfd7;border-radius:16px;background:#fff8fb
+}
+.demo-meaning{color:#b84479;font-size:1rem;font-weight:900}
+.demo-length{
+  padding:5px 9px;border-radius:999px;background:#eefafa;color:#2d7d86;font-size:.7rem;font-weight:900
+}
+.boggle-mini-board{
+  position:relative;width:210px;max-width:100%;margin:0 auto;display:grid;
+  grid-template-columns:repeat(3,1fr);gap:6px;padding:6px;border-radius:18px;background:#eefafa
+}
+.boggle-mini-board span{
+  aspect-ratio:1;border:2px solid #c7ecef;border-radius:12px;background:#fff;display:grid;place-items:center;
+  color:#315e64;font-weight:900;font-size:1.05rem
+}
+.boggle-mini-board svg{position:absolute;inset:6px;width:calc(100% - 12px);height:calc(100% - 12px);pointer-events:none}
+.boggle-mini-board path{
+  fill:none;stroke:#e75e9f;stroke-width:14;stroke-linecap:round;stroke-linejoin:round;opacity:.5
+}
+.diagonal-demo path{stroke:#31bccc}
+.boggle-help-note{
+  margin:0 18px 14px;padding:12px 14px;border-radius:15px;background:#fff8e8;border:2px solid #f0dda0;
+  color:#7c6a39;font-size:.75rem;font-weight:800;text-align:center
+}
+.boggle-help-got-it{
+  width:calc(100% - 36px);min-height:48px;margin:0 18px 18px;border:3px solid #efafd0;border-radius:15px;
+  background:#fff7fb;color:#b84479;font:900 .86rem Poppins,system-ui,sans-serif;cursor:pointer
+}
+@media(max-width:560px){
+  .boggle-help-modal{border-width:3px;border-radius:20px}
+  .boggle-help-head{padding:17px 15px 12px}
+  .boggle-help-steps{padding:13px 13px}
+  .boggle-help-step{padding:12px}
+  .boggle-mini-board{width:180px}
+  .boggle-help-note{margin:0 13px 12px}
+  .boggle-help-got-it{width:calc(100% - 26px);margin:0 13px 15px}
+}
