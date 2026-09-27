@@ -6,6 +6,26 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Teacher Dashboard V2</title>
 <script src="/js/api-config.js"></script>
+<script>
+try{history.scrollRestoration='manual'}catch(_){}
+(function(){
+  const resetX=()=>{
+    const y=window.scrollY||document.documentElement.scrollTop||0;
+    if(window.scrollX)window.scrollTo(0,y);
+    if(document.documentElement)document.documentElement.scrollLeft=0;
+    if(document.body)document.body.scrollLeft=0;
+  };
+  resetX();
+  window.addEventListener('pageshow',resetX,{passive:true});
+  document.addEventListener('DOMContentLoaded',()=>{
+    resetX();
+    requestAnimationFrame(()=>{resetX();requestAnimationFrame(resetX)});
+    setTimeout(resetX,120);
+    setTimeout(resetX,400);
+  },{once:true});
+  window.addEventListener('load',resetX,{once:true,passive:true});
+})();
+</script>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="./dashboard-v2.css?v=20260927-overflow1">
 <link rel="stylesheet" href="./assignments-v1.css?v=20260926-p4d-main1">
