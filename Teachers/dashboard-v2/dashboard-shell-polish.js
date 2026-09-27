@@ -77,7 +77,6 @@ function normalizeNavOrder(){
     if(buttons.length&&buttons.some((b,i)=>current[i]!==b))buttons.forEach(b=>mobile.appendChild(b));
   }
 }
-function openDefaultApps(){const view=$('#view-apps');if(!view)return;$$('.workspace>.view').forEach(x=>x.classList.toggle('active',x===view));$$('[data-view]').forEach(x=>x.classList.toggle('active',x.dataset.view==='apps'))}
 function utilitiesUnlocked(){try{return sessionStorage.getItem(UTILITIES_SESSION_KEY)==='1'}catch{return false}}
 function markUtilitiesUnlocked(){try{sessionStorage.setItem(UTILITIES_SESSION_KEY,'1')}catch{}}
 async function hashPin(value){const bytes=new TextEncoder().encode(String(value||''));const digest=await crypto.subtle.digest('SHA-256',bytes);return[...new Uint8Array(digest)].map(b=>b.toString(16).padStart(2,'0')).join('')}
