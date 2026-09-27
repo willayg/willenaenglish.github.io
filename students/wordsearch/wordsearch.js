@@ -13,6 +13,10 @@ const BOGGLE_TARGET=8;
 
 const $=id=>document.getElementById(id);
 const gridEl=$('grid');
+const wordGridStage=$('wordGridStage');
+const boggleLines=$('boggleLines');
+const helpBtn=$('helpBtn');
+const helpDialog=$('helpDialog');
 const crosswordGridEl=$('crosswordGrid');
 const crosswordEntry=$('crosswordEntry');
 const wordListEl=$('wordList');
@@ -34,7 +38,7 @@ const CHEAT_MODE=new URLSearchParams(location.search).get('cheat')==='1';
 
 const state={
   auth:null,books:[],book:null,words:[],pool:[],crosswordPool:[],studentLevel:null,rewardContext:null,grid:[],size:GRID_TARGET,placements:[],
-  found:new Set(),gimmes:new Set(),drag:null,sessionId:null,startedAt:null,saving:false,mode:'wordsearch',activeCrossword:null,crosswordCursor:0,cheatCompletion:false
+  found:new Set(),gimmes:new Set(),bogglePaths:new Map(),drag:null,sessionId:null,startedAt:null,saving:false,mode:'wordsearch',activeCrossword:null,crosswordCursor:0,cheatCompletion:false
 };
 
 function txt(v){return String(v??'').trim()}
@@ -349,6 +353,55 @@ function bogglePlaceWord(board,entry){
   }
   return null;
 }
+
+const BOGGLE_LINE_COLORS=['#e75e9f','#31bccc','#7e67d8','#ef9b3e','#55a86c','#d56060','#3f82c4','#b4772f'];
+
+function clearBoggleLines(){
+  state.bogglePaths.clear();
+  if(boggleLines)boggleLines.innerHTML='';
+}
+function bogglePointForCell(row,col){
+  const cell=cellAt(row,col);
+  if(!cell||!wordGridStage)return null;
+  const stageRect=wordGridStage.getBoundingClientRect();
+  const rect=cell.getBoundingClientRect();
+  return{
+    x:rect.left-stageRect.left+rect.width/2,
+    y:rect.top-stageRect.top+rect.height/2
+  };
+}
+function bogglePathD(coords){
+  const points=coords.map(([r,c])=>bogglePointForCell(r,c)).filter(Boolean);
+  if(!points.length)return'';
+  if(points.length===1)return'M '+points[0].x+' '+points[0].y;
+  return points.map((p,i)=>(i?'L ':'M ')+p.x+' '+p.y).join(' ');
+}
+function sizeBoggleOverlay(){
+  if(!boggleLines||!wordGridStage)return;
+  const rect=wordGridStage.getBoundingClientRect();
+  boggleLines.setAttribute('viewBox','0 0 '+Math.max(1,rect.width)+' '+Math.max(1,rect.height));
+  boggleLines.setAttribute('width',String(rect.width));
+  boggleLines.setAttribute('height',String(rect.height));
+}
+function renderBoggleLines(){
+  if(!boggleLines)return;
+  sizeBoggleOverlay();
+  const pieces=[];
+  [...state.bogglePaths.entries()].forEach(([index,coords])=>{
+    const color=BOGGLE_LINE_COLORS[index%BOGGLE_LINE_COLORS.length];
+    const d=bogglePathD(coords);
+    if(d)pieces.push('<path class="boggle-solved-line" d="'+d+'" style="--line-color:'+color+'"></path>');
+  });
+  if(state.mode==='boggle'&&state.drag?.coords?.length){
+    const d=bogglePathD(state.drag.coords);
+    if(d)pieces.push('<path class="boggle-drag-line" d="'+d+'"></path>');
+  }
+  boggleLines.innerHTML=pieces.join('');
+}
+function rememberBogglePath(index,coords){
+  state.bogglePaths.set(index,coords.map(([r,c])=>[r,c]));
+  renderBoggleLines();
+}
 function generateBoggle(pool){
   const candidates=shuffle(pool.filter(x=>{
     const raw=txt(x.display);
@@ -375,11 +428,13 @@ function generateBoggle(pool){
 function renderBoggle(){
   state.found.clear();
   state.gimmes.clear();
+  clearBoggleLines();
   state.drag=null;
   state.sessionId=crypto.randomUUID?.()||('boggle-'+Date.now());
   state.startedAt=new Date().toISOString();
 
   gridEl.classList.add('boggle-grid');
+  if(boggleLines)boggleLines.hidden=false;
   gridEl.style.setProperty('--size',state.size);
   gridEl.innerHTML='';
   for(let r=0;r<state.size;r++)for(let c=0;c<state.size;c++){
@@ -396,6 +451,7 @@ function renderBoggle(){
     '</div>'
   ).join('');
   updateProgress();
+  requestAnimationFrame(renderBoggleLines);
 }
 function isAdjacentCoord(a,b){
   if(!a||!b)return false;
@@ -406,6 +462,7 @@ function boggleBegin(point){
   const coords=[[point.row,point.col]];
   state.drag={coords};
   preview(coords);
+  renderBoggleLines();
 }
 function boggleMove(point){
   if(!state.drag?.coords)return;
@@ -420,16 +477,19 @@ function boggleMove(point){
     if(existing===coords.length-2){
       coords.pop();
       preview(coords);
+      renderBoggleLines();
     }
     return;
   }
   if(!isAdjacentCoord(last,next))return;
   coords.push(next);
   preview(coords);
+  renderBoggleLines();
 }
 async function boggleEnd(originEl){
-  const coords=state.drag?.coords||[];
+  const coords=(state.drag?.coords||[]).map(([r,c])=>[r,c]);
   state.drag=null;clearPreview();
+  renderBoggleLines();
   if(coords.length<3)return;
   const letters=coords.map(([r,c])=>txt(cellAt(r,c)?.textContent).toUpperCase()).join('');
   const index=state.placements.findIndex((p,i)=>!state.found.has(i)&&p.clean===letters);
@@ -437,11 +497,14 @@ async function boggleEnd(originEl){
     playStudentSfx('wrong');
     return;
   }
+  rememberBogglePath(index,coords);
   await markFound(index,originEl,coords);
 }
 
 function renderPuzzle(){
   gridEl.classList.remove('boggle-grid');
+  clearBoggleLines();
+  if(boggleLines)boggleLines.hidden=true;
   state.found.clear();
   state.gimmes.clear();
   state.drag=null;
@@ -752,6 +815,7 @@ function setModeUI(){
 
   gridEl.hidden=isCrossword;
   crosswordGridEl.hidden=!isCrossword;
+  if(boggleLines)boggleLines.hidden=!isBoggle;
   if(crosswordEntry)crosswordEntry.disabled=!isCrossword;
 
   dragHint.textContent=isCrossword
@@ -1120,6 +1184,7 @@ async function boot(){
     loadingCard.querySelector('strong').textContent='Finding your books…';
     state.books=await assignedBooks(who.class);
     await buildPuzzle();
+    maybeShowFirstHelp();
   }catch(error){
     console.error('[Word Search boot]',error);
     showError(error);
@@ -1143,8 +1208,10 @@ async function cheatFinishPuzzle(){
   }else{
     state.placements.forEach((p,index)=>{
       p.coords.forEach(([r,c])=>cellAt(r,c)?.classList.add('found'));
+      if(state.mode==='boggle')state.bogglePaths.set(index,p.coords.map(([r,c])=>[r,c]));
       wordListEl.querySelector('[data-word-index="'+index+'"]')?.classList.add('found');
     });
+    if(state.mode==='boggle')renderBoggleLines();
   }
 
   updateProgress();
@@ -1157,10 +1224,40 @@ if(CHEAT_MODE&&cheatFinishBtn){
 }
 
 
+function helpSeenKey(){
+  const id=txt(state.auth?.user_id||state.auth?.id||state.auth?.student_id||'browser');
+  return 'word-games-help-seen:'+id;
+}
+function markHelpSeen(){
+  try{localStorage.setItem(helpSeenKey(),'1')}catch(_){}
+}
+function openHelp({markSeen=true}={}){
+  if(!helpDialog)return;
+  if(markSeen)markHelpSeen();
+  if(typeof helpDialog.showModal==='function'){
+    if(!helpDialog.open)helpDialog.showModal();
+  }else helpDialog.setAttribute('open','');
+}
+function closeHelp(){
+  if(!helpDialog)return;
+  if(typeof helpDialog.close==='function'&&helpDialog.open)helpDialog.close();
+  else helpDialog.removeAttribute('open');
+}
+function maybeShowFirstHelp(){
+  let seen=false;
+  try{seen=localStorage.getItem(helpSeenKey())==='1'}catch(_){}
+  if(!seen)setTimeout(()=>openHelp({markSeen:true}),180);
+}
+
+
 document.querySelectorAll('.puzzle-tab').forEach(btn=>btn.addEventListener('click',()=>{
   if(btn.dataset.mode===state.mode)return;
   state.mode=btn.dataset.mode;setModeUI();buildPuzzle();
 }));
+helpBtn?.addEventListener('click',()=>openHelp({markSeen:true}));
+$('helpCloseBtn')?.addEventListener('click',closeHelp);
+$('helpGotItBtn')?.addEventListener('click',closeHelp);
+helpDialog?.addEventListener('click',e=>{if(e.target===helpDialog)closeHelp()});
 $('newPuzzleBtn').addEventListener('click',()=>buildPuzzle());
 $('retryBtn').addEventListener('click',()=>buildPuzzle());
 $('playAgainBtn').addEventListener('click',()=>{closeWinModal();buildPuzzle()});
@@ -1169,6 +1266,7 @@ completeCard?.addEventListener('click',e=>{
 });
 wireGrid();
 wireCrossword();
+window.addEventListener('resize',()=>{if(state.mode==='boggle')requestAnimationFrame(renderBoggleLines)});
 if(window.visualViewport){
   window.visualViewport.addEventListener('resize',onViewportKeyboardChange);
   window.visualViewport.addEventListener('scroll',onViewportKeyboardChange);
