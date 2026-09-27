@@ -1291,7 +1291,16 @@ async function hydrateSecondaryBooks(list,activeBookId){
   },'secondary books');
 }
 async function resolveAssignedBooks(authData){
-  const className=txt(authData?.class);if(!className)throw new Error('No active class is assigned.');
+  let className=txt(authData?.class);
+  if(!className){
+    try{
+      const profileData=await api('/.netlify/functions/supabase_auth?action=get_profile_name&_='+Date.now());
+      className=txt(profileData?.class);
+    }catch(error){
+      console.warn('[Vocab Study] profile class lookup failed',error);
+    }
+  }
+  if(!className)throw new Error('No active class is assigned.');
   const a=await assignments(className);
   const list=(Array.isArray(a.assignments)&&a.assignments.length?a.assignments:(a.assignment?[a.assignment]:[])).filter(x=>x&&x.book_id);
   if(!list.length)throw new Error('No active book is assigned.');
