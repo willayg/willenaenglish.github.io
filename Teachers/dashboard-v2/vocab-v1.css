@@ -52,3 +52,43 @@
   .vocab-progress-row>.vocab-student{grid-column:1/-1}
   .vocab-progress-row>.vocab-skill-metric:nth-of-type(4){grid-column:1/-1}
 }
+
+
+/* Naesin-style calm matrix */
+.vocab-progress-summary{margin-bottom:14px}
+.vocab-summary-card{min-width:132px}
+.vocab-progress-head{
+  grid-template-columns:minmax(190px,1.35fr) repeat(5,minmax(92px,.72fr));
+  background:#fbfdfd;
+}
+.vocab-progress-row{
+  grid-template-columns:minmax(190px,1.35fr) repeat(5,minmax(92px,.72fr));
+}
+.vocab-student-open{
+  width:100%;display:flex;align-items:center;justify-content:space-between;gap:10px;
+  border:2px solid #d7e7e9;background:#fff;border-radius:13px;padding:10px 12px;
+  color:#24373d;cursor:pointer;text-align:left;
+}
+.vocab-student-open:hover{border-color:#74cbd3}
+.vocab-student-open span{display:block;min-width:0}
+.vocab-student-open b{display:block;font-size:.83rem}
+.vocab-student-open small{display:block;margin-top:2px;color:var(--muted);font-size:.64rem}
+.vocab-student-open i{font-style:normal;color:#35aebb;font-size:20px;line-height:1}
+.vocab-matrix-stat{text-align:center}
+.vocab-matrix-stat strong{display:block;font-size:1rem;color:#293c42}
+.vocab-matrix-stat small{display:block;margin-top:4px;color:#93a0a5;font-size:.61rem;font-weight:700}
+.vocab-matrix-stat.empty strong{color:#aeb8bc}
+.vocab-matrix-stat.overall{background:#fcf9ff;border-radius:11px;padding:8px 5px}
+.vocab-matrix-stat.spelling strong{color:#d95c8a}
+.vocab-matrix-stat.speaking strong{color:#7565c9}
+.vocab-matrix-stat.today.is-today strong{color:#24937f}
+.vocab-matrix-stat.today.is-today{background:#f0faf6;border-radius:11px;padding:8px 5px}
+
+@media(max-width:980px){
+  .vocab-progress-row{grid-template-columns:minmax(160px,1.2fr) repeat(4,minmax(80px,.7fr))}
+  .vocab-progress-row>.vocab-matrix-stat.today{display:none}
+}
+@media(max-width:700px){
+  .vocab-progress-row{grid-template-columns:1fr 1fr}
+  .vocab-progress-row>.vocab-student{grid-column:1/-1}
+}
