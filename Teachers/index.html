@@ -23,7 +23,7 @@
 <body>
 <div id="teacher-header"></div>
 <script type="module">
-import { mountTeacherHeader } from '/components/teacher-header/teacher-header.js?v=20260927-persistent-p2';
+import { mountTeacherHeader } from '/components/teacher-header/teacher-header.js?v=20260927-persistent-p3';
 mountTeacherHeader({ target:'#teacher-header', mode:'dashboard', activeApp:'teacher' })
   .catch((e)=>console.error('Teacher header init failed', e));
 </script>
@@ -89,7 +89,7 @@ mountTeacherHeader({ target:'#teacher-header', mode:'dashboard', activeApp:'teac
 </main></div>
 <nav class="mobile-tabs"><button class="mobile-tab active" data-view="students"><b>◎</b>Students</button><button class="mobile-tab" data-view="classes"><b>▦</b>Classes</button><button class="mobile-tab" data-view="vocab"><b>Aa</b>Vocab</button><button class="mobile-tab" data-view="apps"><b>＋</b>Apps</button></nav>
 <div class="drawer-bg" id="drawerBg"><aside class="drawer"><div class="drawer-head"><div class="drawer-head-main"><div class="drawer-name" id="drawerName">Student</div><div class="drawer-meta" id="drawerMeta"></div></div><button class="close" id="closeDrawer">×</button></div><div class="drawer-body" id="drawerBody"><div class="empty">Loading…</div></div></aside></div>
-<div id="naesinV2Rev" style="position:fixed;right:12px;bottom:8px;z-index:2147483647;color:#7b8c93;font:700 9px/1.2 Poppins,sans-serif;letter-spacing:.04em;pointer-events:none">v14.35</div>
+<div id="naesinV2Rev" style="position:fixed;right:12px;bottom:8px;z-index:2147483647;color:#7b8c93;font:700 9px/1.2 Poppins,sans-serif;letter-spacing:.04em;pointer-events:none">v14.36</div>
 <script>
 const $=(s,r=document)=>r.querySelector(s),$$=(s,r=document)=>[...r.querySelectorAll(s)];
 const FN=n=>`/.netlify/functions/${n}`;
