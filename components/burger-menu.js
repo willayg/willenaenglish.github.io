@@ -285,6 +285,7 @@ export function insertBurgerMenu(targetSelector = 'body') {
         localStorage.removeItem('username');
         localStorage.removeItem('userEmail');
       } catch {}
+      try { window.WillenaAPI?.clearLocalTokens?.(); } catch {}
       try { await window.WillenaAPI?.fetch?.('/.netlify/functions/supabase_auth?action=logout', { method: 'POST' }); } catch {}
       const redirect = encodeURIComponent(location.pathname + location.search);
       window.location.href = '/Teachers/login.html?redirect=' + redirect;
