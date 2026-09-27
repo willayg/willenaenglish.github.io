@@ -17,7 +17,7 @@ button{cursor:pointer}
 [hidden]{display:none!important}
 .app-shell{min-height:100vh}
 .page{width:min(1120px,100%);margin:0 auto;padding:24px 18px 48px}
-.puzzle-card,.words-card,.message-card{
+.puzzle-card,.message-card{
   background:rgba(255,255,255,.94);border:3px solid var(--cyan);border-radius:28px;box-shadow:var(--shadow)
 }
 .eyebrow{font-size:11px;font-weight:900;letter-spacing:.14em;color:#5c9ca5}
@@ -33,7 +33,6 @@ h1{font-size:clamp(26px,5vw,42px);line-height:1.05;margin:5px 0 8px;letter-spaci
   border:0;background:var(--ink);color:white;box-shadow:0 6px 0 rgba(10,43,49,.12)
 }
 .message-card button:active,.win-modal button:active{transform:translateY(2px);box-shadow:0 4px 0 rgba(10,43,49,.12)}
-.game-layout{display:grid;grid-template-columns:minmax(0,1fr) 260px;gap:20px;align-items:start}
 .puzzle-card{padding:20px}
 .puzzle-head{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:14px;margin-bottom:14px}
 .puzzle-status{display:grid;gap:3px;justify-self:start}
@@ -55,13 +54,19 @@ h1{font-size:clamp(26px,5vw,42px);line-height:1.05;margin:5px 0 8px;letter-spaci
 .cell.preview{background:var(--cyan);box-shadow:inset 0 0 0 2px var(--cyan-strong)}
 .cell.found{background:var(--pink);box-shadow:inset 0 0 0 2px var(--pink-strong);color:#8e3d66}
 .drag-hint{text-align:center;color:var(--muted);font-size:12px;font-weight:700;margin-top:12px}
-.words-card{padding:20px;border-color:var(--pink)}
-.words-head{display:grid;gap:3px;margin-bottom:14px}
-.words-head strong{font-size:20px}
-.word-list{display:grid;gap:8px}
+.clue-strip-wrap{margin:0 0 14px}
+.clue-strip-head{display:flex;align-items:baseline;gap:8px;margin:0 2px 8px}
+.clue-strip-head strong{font-size:14px}
+.word-list.horizontal-strip{
+  display:flex;gap:8px;overflow-x:auto;overflow-y:hidden;padding:2px 2px 8px;
+  scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch;scrollbar-width:thin
+}
+.word-list.horizontal-strip::-webkit-scrollbar{height:6px}
+.word-list.horizontal-strip::-webkit-scrollbar-thumb{background:#d6ecef;border-radius:999px}
 .word-chip{
-  display:flex;align-items:center;justify-content:space-between;gap:10px;
-  min-height:42px;border:2px solid #e5f0f1;border-radius:13px;padding:8px 10px;background:white
+  flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;gap:10px;
+  min-height:44px;border:2px solid #e5f0f1;border-radius:14px;padding:8px 12px;background:white;
+  scroll-snap-align:start;white-space:nowrap
 }
 .word-chip strong{font-size:14px;overflow-wrap:anywhere}
 .word-chip small{display:none;color:var(--muted);font-size:10px;text-align:right}
@@ -75,10 +80,7 @@ h1{font-size:clamp(26px,5vw,42px);line-height:1.05;margin:5px 0 8px;letter-spaci
 @keyframes pop{0%{transform:scale(.88)}60%{transform:scale(1.06)}100%{transform:scale(1)}}
 .word-chip.just-found{animation:pop .36s ease-out}
 @media(max-width:820px){
-  .page{padding:14px 10px 36px}  .game-layout{grid-template-columns:1fr;gap:14px}
-  .puzzle-card,.words-card{padding:13px;border-radius:22px}
-  .words-card{order:2}
-  .word-list{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+  .page{padding:14px 10px 36px}    .puzzle-card,    .word-list{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
   .word-chip{min-height:38px;padding:7px 9px}
   .word-chip strong{font-size:12px}
   .word-grid{gap:2px;padding:5px;border-radius:16px}
@@ -112,8 +114,9 @@ h1{font-size:clamp(26px,5vw,42px);line-height:1.05;margin:5px 0 8px;letter-spaci
 }
 .cw-number{position:absolute;z-index:2;left:3px;top:2px;font-size:8px;line-height:1;color:#6f8c91;font-weight:900;pointer-events:none}
 .crossword-clue{
-  width:100%;text-align:left;display:grid;grid-template-columns:auto 1fr;gap:8px;align-items:start;
-  min-height:44px;border:2px solid #e5f0f1;border-radius:13px;padding:8px 10px;background:white;color:var(--ink)
+  flex:0 0 auto;min-width:180px;max-width:280px;text-align:left;display:grid;grid-template-columns:auto 1fr;
+  gap:8px;align-items:start;min-height:48px;border:2px solid #e5f0f1;border-radius:14px;
+  padding:9px 12px;background:white;color:var(--ink);scroll-snap-align:start
 }
 .crossword-clue strong{font-size:12px}
 .crossword-clue span{font-size:12px;color:var(--muted)}
