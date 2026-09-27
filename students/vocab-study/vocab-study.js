@@ -1878,15 +1878,59 @@ function spellingWords(items){
 function spellingPreviewWords(items){
   return spellingWords(items);
 }
-function playPreviewWord(word){
-  if(!('speechSynthesis' in window))return;
+let vocabWordAudio=null;
+const vocabWordAudioCache=new Map();
+
+function browserTtsWord(text){
+  if(!('speechSynthesis' in window))return false;
   try{
     speechSynthesis.cancel();
-    const utterance=new SpeechSynthesisUtterance(word);
+    const utterance=new SpeechSynthesisUtterance(text);
     utterance.lang='en-US';
     speechSynthesis.speak(utterance);
-  }catch(_){}
+    return true;
+  }catch(_){
+    return false;
+  }
 }
+
+async function playPreviewWord(word){
+  const text=txt(word);
+  if(!text)return false;
+
+  try{
+    speechSynthesis?.cancel?.();
+  }catch(_){}
+
+  try{
+    if(vocabWordAudio){
+      try{vocabWordAudio.pause()}catch(_){}
+      vocabWordAudio=null;
+    }
+
+    let objectUrl=vocabWordAudioCache.get(text.toLowerCase())||'';
+    if(!objectUrl){
+      const endpoint='https://get-audio-urls.willena.workers.dev/word-audio?word='+encodeURIComponent(text);
+      const response=await fetch(endpoint,{cache:'force-cache'});
+      if(!response.ok)throw new Error('R2 audio '+response.status);
+      const blob=await response.blob();
+      if(!blob.size)throw new Error('Empty R2 audio');
+      objectUrl=URL.createObjectURL(blob);
+      vocabWordAudioCache.set(text.toLowerCase(),objectUrl);
+    }
+
+    const audio=new Audio(objectUrl);
+    vocabWordAudio=audio;
+    await audio.play();
+    audio.addEventListener('ended',()=>{if(vocabWordAudio===audio)vocabWordAudio=null},{once:true});
+    return true;
+  }catch(error){
+    console.debug('[Vocab Study] R2 word audio unavailable; using browser TTS',text,error);
+    return browserTtsWord(text);
+  }
+}
+
+window.WillenaPlayWordAudio=playPreviewWord;
 function createSpellingPractice(words){
   return{words,index:0,currentAttemptCount:0,attempts:[],results:[],initialTotal:words.length};
 }
