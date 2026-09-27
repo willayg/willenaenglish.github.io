@@ -2,7 +2,7 @@ import {QuestionRenderer} from '/shared/questions/question-renderer.js?v=2026092
 import {capturePointOrigin,showPointAward} from '/students/components/student-point-feedback.js?v=20260926-v0003';
 import {getSpellingTarget} from './spelling-targets.js?v=20260925-v0019';
 import {isSpeakableTarget,matchSpeakingTarget} from './speaking-match.js?v=20260926-v0025';
-import {getAssignment,setAssignment,getBookMeta,setBookMeta,getVocabulary,setVocabulary,background} from './vocab-startup-cache.js?v=20260927-v0002';
+import {getAssignment,setAssignment,getBookMeta,setBookMeta,getVocabulary,setVocabulary,background} from './vocab-startup-cache.js?v=20260925-v0001';
 import {snapshotPercent,snapshotStars,loadVocabSnapshot,nextSkillTargets} from './vocab-progress-snapshot.js?v=20260925-v0005';
 import {coachAttempt,repeatUntilCorrect,appendRetry,uniquePassedCount,wrongAttemptCount} from './vocab-pass-flow.js?v=20260925-v0002';
 import {createVocabHistoryNavigation} from './navigation-history.js?v=20260926-v0002';
@@ -2481,9 +2481,7 @@ window.WillenaVocabStudy={version:'0.099',getState:()=>state,start:startSession,
     console.error('[Vocab Study] boot',error);
     if(frontWordTestCardEl)frontWordTestCardEl.hidden=true;
     setMainScreen('home');
-    const bootMessage=error?.message||'불러오지 못했습니다. 새로고침해 주세요.';
-    setStatus(bootMessage);
-    if(frontBookListEl)frontBookListEl.innerHTML='<div class="vocab-front-empty">'+escapeHtml(bootMessage)+'</div>';
+    setStatus(error?.message||'불러오지 못했습니다. 새로고침해 주세요.');
     if(unitTitleEl)unitTitleEl.textContent='Please try again.';startBtn.disabled=true;if(spellingPreviewBtn)spellingPreviewBtn.disabled=true;
   }finally{
     if(!bootLoaderReleased)endVocabLoading();
