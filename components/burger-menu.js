@@ -3,7 +3,8 @@
 if (typeof window !== 'undefined' && window.location.hostname === 'teachers.willenaenglish.com') {
   const teacherPath = window.location.pathname || '';
   const isPublicTeacherAuthPage = /^\/Teachers\/(?:login|signup)(?:\.html)?\/?$/i.test(teacherPath);
-  if (!isPublicTeacherAuthPage && !window.__willenaTeacherRoleGuardPromise) {
+  const isMainTeacherDashboard = /^\/Teachers\/(?:index\.html)?\/?$/i.test(teacherPath);
+  if (!isPublicTeacherAuthPage && !isMainTeacherDashboard && !window.__willenaTeacherRoleGuardPromise) {
     window.__willenaTeacherRoleGuardPromise = (async () => {
       const studentMismatch = '/Teachers/access-student.html?next=' + encodeURIComponent(window.location.pathname + window.location.search);
       try {
