@@ -1,0 +1,69 @@
+.vocab-theme-dock{
+  width:max-content;max-width:calc(100vw - 28px);margin:12px auto 0;
+  display:flex;align-items:center;gap:8px;padding:7px 10px;
+  border:1.5px solid rgba(255,255,255,.82);border-radius:999px;
+  background:rgba(255,255,255,.72);box-shadow:0 8px 22px rgba(20,70,80,.12);
+  backdrop-filter:blur(10px);position:relative;z-index:35
+}
+.vocab-theme-pip{
+  width:20px;height:20px;border-radius:50%;border:2px solid rgba(255,255,255,.96);
+  padding:0;box-shadow:0 0 0 1px rgba(40,70,75,.16);cursor:pointer;
+  transition:transform .15s ease,box-shadow .15s ease
+}
+.vocab-theme-pip[data-theme="cyan"]{background:#39c9d6}
+.vocab-theme-pip[data-theme="sunbeam"]{background:#ffc24c}
+.vocab-theme-pip[data-theme="pink"]{background:#f775ad}
+.vocab-theme-pip[data-theme="paper"]{background:#e6dccb}
+.vocab-theme-pip[data-theme="dark"]{background:#182126}
+.vocab-theme-pip[data-theme="cyberpunk"]{background:#260b3d}
+.vocab-theme-pip:hover{transform:scale(1.1)}
+.vocab-theme-pip[aria-pressed="true"]{box-shadow:0 0 0 2px var(--vocab-heading,#244f56),0 0 0 4px rgba(255,255,255,.92);transform:scale(1.08)}
+.vocab-theme-pip:focus-visible{outline:3px solid rgba(255,255,255,.95);outline-offset:3px}
+
+html[data-vocab-theme] body{background:linear-gradient(180deg,var(--vocab-page-top) 0,var(--vocab-page) 42%,var(--vocab-page) 100%)}
+html[data-vocab-theme] .vocab-front-menu,
+html[data-vocab-theme] .vocab-home-card,
+html[data-vocab-theme] .vocab-front-wordtest,
+html[data-vocab-theme] .vocab-front-book-card,
+html[data-vocab-theme] .vocab-old-tests-card,
+html[data-vocab-theme] .vocab-teacher-card,
+html[data-vocab-theme] .vocab-skill-card,
+html[data-vocab-theme] .vocab-word-card,
+html[data-vocab-theme] .vocab-finish,
+html[data-vocab-theme] .spelling-mode-card,
+html[data-vocab-theme] .vocab-word-modal-card{background:var(--vocab-card);color:var(--ink)}
+html[data-vocab-theme] .vocab-front-menu,
+html[data-vocab-theme] .vocab-front-book-card,
+html[data-vocab-theme] .vocab-old-tests-card,
+html[data-vocab-theme] .vocab-home-card,
+html[data-vocab-theme] .vocab-skill-card{border-color:var(--vocab-border)}
+html[data-vocab-theme] .vocab-front-card-copy strong,
+html[data-vocab-theme] .vocab-front-book-card strong,
+html[data-vocab-theme] .vocab-old-tests-card strong,
+html[data-vocab-theme] .vocab-front-section-head strong,
+html[data-vocab-theme] .vocab-home-card h2,
+html[data-vocab-theme] .vocab-teacher-card-title strong,
+html[data-vocab-theme] .vocab-word-row-copy strong{color:var(--vocab-heading)}
+html[data-vocab-theme] .vocab-front-divider{background:var(--line)}
+html[data-vocab-theme] .vocab-front-progress-ring{background:conic-gradient(var(--pink) calc(var(--progress,0)*1%),var(--vocab-track) 0)}
+html[data-vocab-theme] .vocab-front-progress-ring::before{background:var(--vocab-card)}
+html[data-vocab-theme] .vocab-wordtest-empty,
+html[data-vocab-theme] .vocab-old-test-row,
+html[data-vocab-theme] .vocab-question-wrap .question-card,
+html[data-vocab-theme] .vocab-answer-note{background:var(--vocab-card);border-color:var(--line);color:var(--ink)}
+html[data-vocab-theme="dark"] .vocab-front-wordtest,
+html[data-vocab-theme="cyberpunk"] .vocab-front-wordtest{background:var(--vocab-card)}
+html[data-vocab-theme="dark"] .vocab-session-top,
+html[data-vocab-theme="dark"] .vocab-session-bottom,
+html[data-vocab-theme="cyberpunk"] .vocab-session-top,
+html[data-vocab-theme="cyberpunk"] .vocab-session-bottom{background:color-mix(in srgb,var(--vocab-card) 94%,transparent)}
+html[data-vocab-theme="dark"] .vocab-question-wrap .choice,
+html[data-vocab-theme="dark"] .vocab-action,
+html[data-vocab-theme="dark"] .vocab-back,
+html[data-vocab-theme="cyberpunk"] .vocab-question-wrap .choice,
+html[data-vocab-theme="cyberpunk"] .vocab-action,
+html[data-vocab-theme="cyberpunk"] .vocab-back{background:var(--vocab-card);color:var(--ink)}
+html[data-vocab-theme="dark"] .vocab-theme-dock,
+html[data-vocab-theme="cyberpunk"] .vocab-theme-dock{background:rgba(20,20,28,.72);border-color:rgba(255,255,255,.22)}
+
+@media(max-width:680px){.vocab-theme-dock{margin-top:10px;gap:7px;padding:6px 9px}.vocab-theme-pip{width:18px;height:18px}}
