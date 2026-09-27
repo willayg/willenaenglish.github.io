@@ -38,22 +38,37 @@
     const rows=filteredStudents();
     const withEvidence=rows.filter(s=>vocabAccuracy(s)!=null);
     const avg=withEvidence.length?Math.round(withEvidence.reduce((n,s)=>n+vocabAccuracy(s),0)/withEvidence.length):null;
-    const active=rows.filter(s=>Number(s?.habits?.active_days_7||0)>0).length;
+    const activeToday=rows.filter(s=>{
+      const last=s?.last_activity?new Date(s.last_activity):null;
+      if(!last||Number.isNaN(last.getTime()))return false;
+      const now=new Date();
+      return last.getFullYear()===now.getFullYear()&&last.getMonth()===now.getMonth()&&last.getDate()===now.getDate();
+    }).length;
     if(summary)summary.innerHTML=
-      '<div class="vocab-summary-card"><b>'+rows.length+'</b><span>students</span></div>'+
-      '<div class="vocab-summary-card"><b>'+(avg==null?'—':avg+'%')+'</b><span>vocab average</span></div>'+
-      '<div class="vocab-summary-card"><b>'+active+'</b><span>active this week</span></div>'+
-      '<div class="vocab-summary-card"><b>'+withEvidence.length+'</b><span>with vocab evidence</span></div>';
+      '<div class="vocab-summary-card"><b>'+(avg==null?'—':avg+'%')+'</b><span>class vocab</span></div>'+
+      '<div class="vocab-summary-card"><b>'+activeToday+'</b><span>studied today</span></div>'+
+      '<div class="vocab-summary-card"><b>'+withEvidence.length+' / '+rows.length+'</b><span>with evidence</span></div>';
     if(!rows.length){list.innerHTML='<div class="empty">No students found.</div>';return}
     list.innerHTML=rows.map(s=>{
       const h=s.habits||{},acc=vocabAccuracy(s);
+      const vocab=skillRow(s,'vocabulary'),spell=skillRow(s,'spelling'),speak=skillRow(s,'speaking');
+      const todayCount=Number(s?.today?.questions||s?.today_attempts||0);
+      const last=s?.last_activity?new Date(s.last_activity):null;
+      const today=last&&!Number.isNaN(last.getTime())&&(()=>{
+        const now=new Date();
+        return last.getFullYear()===now.getFullYear()&&last.getMonth()===now.getMonth()&&last.getDate()===now.getDate();
+      })();
+      const cell=(row,label,klass='')=>{
+        if(!row||typeof row.accuracy!=='number')return '<div class="vocab-matrix-stat empty"><strong>—</strong><small>'+label+'</small></div>';
+        return '<div class="vocab-matrix-stat '+klass+'"><strong>'+Math.round(Number(row.accuracy))+'%</strong><small>'+esc(row.attempts||0)+' attempts</small></div>';
+      };
       return '<div class="vocab-progress-row" data-student-id="'+esc(s.user_id)+'">'+
-        '<div class="vocab-student"><div class="vocab-student-name">'+esc(s.name||'Student')+'</div><div class="vocab-student-ko">'+esc(s.korean_name||'')+'</div></div>'+
-        skillMetric(s,'vocabulary','Quiz')+
-        skillMetric(s,'spelling','Spelling','spelling')+
-        skillMetric(s,'speaking','Speaking','speaking')+
-        '<div class="vocab-progress-stat"><strong>'+(acc==null?'—':acc+'%')+'</strong><span>combined vocab</span></div>'+
-        '<div class="vocab-progress-stat"><strong>'+esc(h.current_streak??0)+'</strong><span>day streak · '+esc(h.active_days_7??0)+'/7 active</span></div>'+
+        '<div class="vocab-student"><button type="button" class="vocab-student-open"><span><b>'+esc(s.name||'Student')+'</b><small>'+esc(s.korean_name||'')+'</small></span><i>›</i></button></div>'+
+        '<div class="vocab-matrix-stat overall '+(acc==null?'empty':'')+'"><strong>'+(acc==null?'—':acc+'%')+'</strong><small>recent vocab</small></div>'+
+        cell(vocab,'Quiz')+
+        cell(spell,'Spelling','spelling')+
+        cell(speak,'Speaking','speaking')+
+        '<div class="vocab-matrix-stat today '+(today?'is-today':'')+'"><strong>'+(today?(todayCount||'✓'):'—')+'</strong><small>'+(today?'today':'no activity')+'</small></div>'+
       '</div>';
     }).join('');
     $$('.vocab-progress-row',list).forEach(row=>row.addEventListener('click',()=>{if(typeof window.openStudent==='function')window.openStudent(row.dataset.studentId)}));
