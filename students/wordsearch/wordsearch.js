@@ -26,10 +26,12 @@ const gameArea=$('gameArea');
 const completeCard=$('completeCard');
 const completePoints=$('completePoints');
 const rewardCelebration=$('rewardCelebration');
+const cheatFinishBtn=$('cheatFinishBtn');
+const CHEAT_MODE=new URLSearchParams(location.search).get('cheat')==='1';
 
 const state={
   auth:null,books:[],book:null,words:[],pool:[],grid:[],size:GRID_TARGET,placements:[],
-  found:new Set(),drag:null,sessionId:null,startedAt:null,saving:false,mode:'wordsearch',activeCrossword:null
+  found:new Set(),drag:null,sessionId:null,startedAt:null,saving:false,mode:'wordsearch',activeCrossword:null,cheatCompletion:false
 };
 
 function txt(v){return String(v??'').trim()}
@@ -294,7 +296,7 @@ async function markFound(index,originEl){
 async function finishPuzzle(){
   playStudentSfx('complete');
   const points=state.found.size*POINTS_PER_WORD;
-  completePoints.textContent=(state.mode==='crossword'?'Crossword complete!':'Word search complete!')+' You earned 5 stars.';
+  completePoints.textContent=(state.mode==='crossword'?'Crossword complete!':'Word search complete!')+(state.cheatCompletion?' Test celebration.':' You earned 5 stars.');
   rewardCelebration.innerHTML=
     '<student-reward-celebration percent="100" stars="5" star-max="5" points="'+points+'" label="PUZZLE REWARD"></student-reward-celebration>';
   if(typeof completeCard.showModal==='function')completeCard.showModal();
@@ -302,6 +304,7 @@ async function finishPuzzle(){
   await saveReward();
 }
 async function saveReward(){
+  if(state.cheatCompletion)return;
   if(state.saving||!state.sessionId)return;
   state.saving=true;
   const points=state.found.size*POINTS_PER_WORD;
@@ -459,7 +462,35 @@ function makeCrossword(pool){
 }
 
 function setModeUI(){
-  document.querySelectorAll('.puzzle-tab').forEach(btn=>{
+  
+async function cheatFinishPuzzle(){
+  if(!CHEAT_MODE||!state.placements.length)return;
+  state.cheatCompletion=true;
+  state.found=new Set(state.placements.map((_,i)=>i));
+
+  if(state.mode==='crossword'){
+    state.placements.forEach((p,index)=>{
+      p.coords.forEach(([r,c],i)=>{
+        const input=crosswordCell(r,c)?.querySelector('input');
+        if(input)input.value=p.clean[i];
+        crosswordCell(r,c)?.classList.add('solved');
+      });
+      wordListEl.querySelector('[data-word-index="'+index+'"]')?.classList.add('found');
+    });
+  }else{
+    state.placements.forEach((p,index)=>{
+      p.coords.forEach(([r,c])=>cellAt(r,c)?.classList.add('found'));
+      wordListEl.querySelector('[data-word-index="'+index+'"]')?.classList.add('found');
+    });
+  }
+  updateProgress();
+  await finishPuzzle();
+}
+
+if(CHEAT_MODE)cheatFinishBtn.hidden=false;
+cheatFinishBtn?.addEventListener('click',cheatFinishPuzzle);
+
+document.querySelectorAll('.puzzle-tab').forEach(btn=>{
     const active=btn.dataset.mode===state.mode;
     btn.classList.toggle('active',active);
     btn.setAttribute('aria-selected',active?'true':'false');
@@ -599,6 +630,7 @@ function wireGrid(){
 }
 
 async function buildPuzzle(){
+  state.cheatCompletion=false;
   showLoading();
   try{
     if(!state.books.length)throw new Error('No assigned books were found.');
