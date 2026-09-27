@@ -389,3 +389,19 @@ html[data-vocab-theme] .vocab-book-picker{
 html[data-vocab-theme] .vocab-picker-label{
   color:var(--muted)!important;
 }
+
+
+/* v0.112 shared student header follows vocab theme */
+html[data-vocab-theme] student-header{
+  --student-header-bg:var(--vocab-card);
+  --student-header-border:var(--vocab-border);
+  --student-header-title:var(--vocab-heading);
+  --student-header-points-bg:color-mix(in srgb,var(--cyan-strong) 8%,var(--vocab-card));
+  --student-header-points-border:var(--cyan);
+  --student-header-points-text:var(--cyan-strong);
+  --student-header-stars-bg:color-mix(in srgb,#e8c86c 10%,var(--vocab-card));
+  --student-header-stars-border:#e8c86c;
+  --student-header-stars-text:#d7a91c;
+  --student-header-avatar-bg:var(--vocab-card);
+  --student-header-avatar-border:var(--cyan-strong);
+}
