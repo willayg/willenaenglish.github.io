@@ -2,7 +2,7 @@ import {QuestionRenderer} from '/shared/questions/question-renderer.js?v=2026092
 import {capturePointOrigin,showPointAward} from '/students/components/student-point-feedback.js?v=20260926-v0003';
 import {getSpellingTarget} from './spelling-targets.js?v=20260925-v0019';
 import {isSpeakableTarget,matchSpeakingTarget} from './speaking-match.js?v=20260926-v0025';
-import {getAssignment,setAssignment,getBookMeta,setBookMeta,getVocabulary,setVocabulary,background} from './vocab-startup-cache.js?v=20260927-v0003';
+import {getAssignment,setAssignment,getBookMeta,setBookMeta,getVocabulary,setVocabulary,background} from './vocab-startup-cache.js?v=20260925-v0001';
 import {snapshotPercent,snapshotStars,loadVocabSnapshot,nextSkillTargets} from './vocab-progress-snapshot.js?v=20260925-v0005';
 import {coachAttempt,repeatUntilCorrect,appendRetry,uniquePassedCount,wrongAttemptCount} from './vocab-pass-flow.js?v=20260925-v0002';
 import {createVocabHistoryNavigation} from './navigation-history.js?v=20260926-v0002';
@@ -1160,11 +1160,7 @@ async function fetchAssignmentsNetwork(className){
 }
 async function assignments(className){
   const cached=getAssignment(className);
-  const cachedList=(cached&&Array.isArray(cached.assignments)&&cached.assignments.length)
-    ?cached.assignments
-    :(cached&&cached.assignment?[cached.assignment]:[]);
-  const cachedUsable=cached&&cached.success!==false&&cachedList.some(row=>row&&row.book_id);
-  if(cachedUsable){
+  if(cached){
     markPerf('assignment cache',0);
     background(async()=>{
       const fresh=await fetchAssignmentsNetwork(className);
@@ -1250,8 +1246,7 @@ async function fetchBookMetaNetwork(id){
 }
 async function loadBookMeta(id){
   const cached=getBookMeta(id);
-  const cachedUsable=cached&&Array.isArray(cached.books)&&cached.books.length&&Array.isArray(cached.units)&&cached.units.length;
-  if(cachedUsable){
+  if(cached){
     markPerf('book/unit metadata cache '+id,0);
     background(async()=>setBookMeta(id,await fetchBookMetaNetwork(id)),'book metadata revalidate');
     return cached;
@@ -1296,16 +1291,7 @@ async function hydrateSecondaryBooks(list,activeBookId){
   },'secondary books');
 }
 async function resolveAssignedBooks(authData){
-  let className=txt(authData?.class);
-  if(!className){
-    try{
-      const profileData=await api('/.netlify/functions/supabase_auth?action=get_profile_name&_='+Date.now());
-      className=txt(profileData?.class);
-    }catch(error){
-      console.warn('[Vocab Study] profile class lookup failed',error);
-    }
-  }
-  if(!className)throw new Error('No active class is assigned.');
+  const className=txt(authData?.class);if(!className)throw new Error('No active class is assigned.');
   const a=await assignments(className);
   const list=(Array.isArray(a.assignments)&&a.assignments.length?a.assignments:(a.assignment?[a.assignment]:[])).filter(x=>x&&x.book_id);
   if(!list.length)throw new Error('No active book is assigned.');
