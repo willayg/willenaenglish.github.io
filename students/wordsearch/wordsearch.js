@@ -474,7 +474,6 @@ document.querySelectorAll('.puzzle-tab').forEach(btn=>{
   crosswordGridEl.hidden=state.mode!=='crossword';
   dragHint.textContent=state.mode==='crossword'?'Tap a clue, then type the English word.':'Drag in a straight line ↔ ↕ ↗ ↘';
 }
-}
 
 function renderCrossword(cw){
   state.found.clear();
