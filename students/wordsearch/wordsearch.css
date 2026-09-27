@@ -260,3 +260,16 @@ h1{font-size:clamp(26px,5vw,42px);line-height:1.05;margin:5px 0 8px;letter-spaci
   .crossword-clue-main span{font-size:16px}
   .gimme-btn{padding:0 8px;font-size:10px}
 }
+
+:root{--system-keyboard-inset:0px}
+body.system-kb-open .page{
+  padding-bottom:calc(34px + var(--system-keyboard-inset))!important;
+}
+body.system-kb-open{
+  scroll-padding-top:90px;
+  scroll-padding-bottom:calc(var(--system-keyboard-inset) + 40px);
+}
+body.system-kb-open .crossword-stage{
+  scroll-margin-top:110px;
+  scroll-margin-bottom:calc(var(--system-keyboard-inset) + 30px);
+}
