@@ -477,3 +477,17 @@ body.system-kb-open .crossword-stage{
   .boggle-help-note{margin:0 13px 12px}
   .boggle-help-got-it{width:calc(100% - 26px);margin:0 13px 15px}
 }
+
+.boggle-mini-board .guide-path{
+  fill:none;stroke-width:14;stroke-linecap:round;stroke-linejoin:round;opacity:.62
+}
+.boggle-mini-board .guide-pink{stroke:#e75e9f}
+.boggle-mini-board .guide-cyan{stroke:#31bccc}
+.boggle-mini-board .arrow-head{fill:currentColor}
+.boggle-mini-board marker#boggleArrowPink .arrow-head{fill:#e75e9f}
+.boggle-mini-board marker#boggleArrowCyan .arrow-head{fill:#31bccc}
+.boggle-mini-board circle{
+  fill:#fff;stroke-width:7;vector-effect:non-scaling-stroke
+}
+.boggle-mini-board:not(.diagonal-demo) circle{stroke:#e75e9f}
+.boggle-mini-board.diagonal-demo circle{stroke:#31bccc}
