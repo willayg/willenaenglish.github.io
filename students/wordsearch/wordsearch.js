@@ -30,7 +30,7 @@ const cheatFinishBtn=$('cheatFinishBtn');
 const CHEAT_MODE=new URLSearchParams(location.search).get('cheat')==='1';
 
 const state={
-  auth:null,books:[],book:null,words:[],pool:[],grid:[],size:GRID_TARGET,placements:[],
+  auth:null,books:[],book:null,words:[],pool:[],crosswordPool:[],studentLevel:null,grid:[],size:GRID_TARGET,placements:[],
   found:new Set(),drag:null,sessionId:null,startedAt:null,saving:false,mode:'wordsearch',activeCrossword:null,cheatCompletion:false
 };
 
@@ -42,6 +42,25 @@ function shuffle(items){
   return a;
 }
 function normalizeWord(word){return txt(word).toUpperCase().replace(/[^A-Z]/g,'')}
+function scrambleLetters(word){
+  const chars=word.split('');
+  if(chars.length<2)return word;
+  for(let tries=0;tries<8;tries++){
+    const mixed=shuffle(chars).join('');
+    if(mixed!==word)return mixed;
+  }
+  return chars.slice(1).concat(chars[0]).join('');
+}
+function speakHintWord(word){
+  if(!('speechSynthesis' in window)||!window.SpeechSynthesisUtterance)return;
+  try{
+    window.speechSynthesis.cancel();
+    const utterance=new SpeechSynthesisUtterance(String(word||''));
+    utterance.lang='en-US';
+    utterance.rate=.88;
+    window.speechSynthesis.speak(utterance);
+  }catch(_){}
+}
 function withTimeout(promise,ms=12000,label='Request'){
   let timer;
   return Promise.race([
@@ -148,6 +167,39 @@ async function loadBookWords(book){
     seen.add(key);
     return true;
   }));
+}
+
+
+async function resolveStudentLevel(books){
+  const ids=unique(books.map(b=>b.book_id));
+  if(!ids.length)return null;
+  const rows=await content('content_books?select=id,internal_level_id,public_level&id=in.'+
+    encodeURIComponent('('+ids.join(',')+')')+'&status=in.(review,published)').catch(()=>[]);
+  const levels=rows.map(r=>Number(r.internal_level_id)||Number(r.public_level)||0).filter(n=>n>0);
+  return levels.length?Math.max(...levels):null;
+}
+async function loadLevelCrosswordWords(level){
+  if(!Number.isFinite(Number(level))||Number(level)<=0)return[];
+  const rows=await content(
+    'lexical_entries?select=id,canonical_text,translation_ko,definition_en,level_id'+
+    '&level_id=lte.'+encodeURIComponent(level)+
+    '&status=in.(review,published)&order=canonical_text.asc'
+  ).catch(()=>[]);
+  const seen=new Set();
+  return rows.map(row=>{
+    const display=txt(row.canonical_text);
+    const clean=normalizeWord(display);
+    return{
+      id:row.id,display,clean,ko:txt(row.translation_ko),
+      definition:txt(row.definition_en),level:Number(row.level_id)||null
+    };
+  }).filter(item=>{
+    if(!item.ko||!/^[A-Za-z]+$/.test(item.display))return false;
+    if(item.clean.length<3||item.clean.length>11)return false;
+    if(seen.has(item.clean))return false;
+    seen.add(item.clean);
+    return true;
+  });
 }
 
 const DIRECTIONS=[
@@ -458,7 +510,14 @@ function makeCrossword(pool){
       .map(k=>k.split(',').map(Number))
       .sort((a,b)=>a[0]-b[0]||a[1]-b[1]);
     const numberFor=new Map(starts.map((rc,i)=>[rc.join(','),i+1]));
-    placed.forEach(p=>p.number=numberFor.get(p.row+','+p.col));
+    placed.forEach(p=>{
+      p.number=numberFor.get(p.row+','+p.col);
+      const types=['scramble','audio','korean'];
+      p.hintType=types[Math.floor(Math.random()*types.length)];
+      if(p.hintType==='scramble')p.hintText=scrambleLetters(p.clean);
+      else if(p.hintType==='korean')p.hintText=p.ko;
+      else p.hintText='▶ Play word';
+    });
 
     return{placed,cells,minR,maxR,minC,maxC};
   }
@@ -515,9 +574,13 @@ function renderCrossword(cw){
   }
 
   const ordered=state.placements.map((p,i)=>({...p,index:i})).sort((a,b)=>a.number-b.number||a.direction.localeCompare(b.direction));
-  wordListEl.innerHTML=ordered.map(p=>
-    '<button type="button" class="crossword-clue" data-word-index="'+p.index+'"><strong>'+p.number+' '+p.direction+'</strong><span>'+escapeHtml(p.ko)+'</span></button>'
-  ).join('');
+  wordListEl.innerHTML=ordered.map(p=>{
+    const arrow=p.direction==='Across'?'→':'↓';
+    return '<button type="button" class="crossword-clue hint-'+p.hintType+'" data-word-index="'+p.index+'" data-hint-type="'+p.hintType+'">'+
+      '<strong>'+p.number+' '+arrow+'</strong>'+
+      '<span>'+escapeHtml(p.hintText)+'</span>'+
+    '</button>';
+  }).join('');
   updateProgress();
   setModeUI();
   activateCrosswordWord(ordered[0]?.index??0);
@@ -558,6 +621,7 @@ function wireCrossword(){
     const index=Number(clue.dataset.wordIndex);
     activateCrosswordWord(index);
     const p=state.placements[index];
+    if(clue.dataset.hintType==='audio'&&p)speakHintWord(p.display);
     const first=p?.coords.find(([r,c])=>!crosswordCell(r,c)?.querySelector('input')?.value)||p?.coords[0];
     if(first)crosswordCell(...first)?.querySelector('input')?.focus();
   });
@@ -635,8 +699,14 @@ async function buildPuzzle(){
     state.book=null;
     state.words=state.pool;
     if(state.mode==='crossword'){
+      loadingCard.querySelector('strong').textContent='Finding level vocabulary…';
+      if(!state.studentLevel)state.studentLevel=await resolveStudentLevel(state.books);
+      if(!state.crosswordPool.length&&state.studentLevel){
+        state.crosswordPool=await loadLevelCrosswordWords(state.studentLevel);
+      }
+      const crosswordSource=state.crosswordPool.length>=12?state.crosswordPool:state.pool;
       loadingCard.querySelector('strong').textContent='Building your crossword…';
-      const cw=makeCrossword(state.pool);
+      const cw=makeCrossword(crosswordSource);
       renderCrossword(cw);
     }else{
       loadingCard.querySelector('strong').textContent='Building your word search…';
