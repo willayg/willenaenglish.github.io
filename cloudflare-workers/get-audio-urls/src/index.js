@@ -245,6 +245,24 @@ async function handleShimmerBatch(request, env) {
 
 
 
+async function serveWordAudio(env, word) {
+  const key = toKey(word);
+  if (!key || key === '.mp3') {
+    return new Response('Missing word', { status:400, headers:{'Content-Type':'text/plain','Cache-Control':'no-store'} });
+  }
+  const object = await env.AUDIO_BUCKET.get(key);
+  if (!object) {
+    return new Response('Audio not found', { status:404, headers:{'Content-Type':'text/plain','Cache-Control':'no-store'} });
+  }
+  return new Response(object.body, {
+    status:200,
+    headers:{
+      'Content-Type':'audio/mpeg',
+      'Cache-Control':'public, max-age=3600, must-revalidate'
+    }
+  });
+}
+
 async function serveBatchAudio(env, word) {
   const key = toKey(word);
   const object = await env.AUDIO_BUCKET.get(key);
@@ -412,6 +430,11 @@ export default {
       const word = url.searchParams.get('word') || '';
       const info = await inspectAudioObject(env, word);
       return new Response(JSON.stringify(info), { status: 200, headers: { 'Content-Type':'application/json', 'Cache-Control':'no-store' } });
+    }
+
+    if (url.pathname === '/word-audio') {
+      const word = url.searchParams.get('word') || '';
+      return serveWordAudio(env, word);
     }
 
     if (url.pathname === '/admin/batch-audio') {
