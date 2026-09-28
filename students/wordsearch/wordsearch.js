@@ -42,7 +42,7 @@ const CHEAT_MODE=new URLSearchParams(location.search).get('cheat')==='1';
 
 const state={
   auth:null,books:[],book:null,words:[],pool:[],crosswordPool:[],studentLevel:null,rewardContext:null,ready:false,buildToken:0,grid:[],size:GRID_TARGET,placements:[],
-  found:new Set(),gimmes:new Set(),bogglePaths:new Map(),drag:null,sessionId:null,startedAt:null,saving:false,mode:'boggle',gridSize:12,activeCrossword:null,crosswordCursor:0,cheatCompletion:false,matchFirst:null,matchLocked:false,
+  found:new Set(),gimmes:new Set(),bogglePaths:new Map(),drag:null,sessionId:null,startedAt:null,saving:false,mode:'boggle',gridSize:8,activeCrossword:null,crosswordCursor:0,cheatCompletion:false,matchFirst:null,matchLocked:false,
   modeSnapshots:new Map()
 };
 
