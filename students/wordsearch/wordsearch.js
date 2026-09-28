@@ -579,6 +579,12 @@ async function boggleEnd(originEl){
   await markFound(index,originEl,coords);
 }
 
+function mixDeckBackMarkup(style){
+  if(style==='puzzle-block')return '<span class="mix-back-icon mix-puzzle-icon"><i></i><i></i><i></i><i></i></span>';
+  if(style==='maze-tile')return '<span class="mix-back-icon mix-maze-icon"><i></i><i></i><i></i><i></i></span>';
+  return '<span class="mix-back-icon mix-pixel-icon"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>';
+}
+
 function renderMixMatch(pool){
   const candidates=shuffle(pool.filter(x=>x.ko&&x.clean.length>=2)).slice(0,Math.min(MIX_MATCH_TARGET,pool.length));
   if(candidates.length<4)throw new Error('Not enough vocabulary for Mix & Match yet.');
