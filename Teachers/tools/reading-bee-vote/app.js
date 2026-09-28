@@ -65,7 +65,13 @@ async function load() {
       const next = encodeURIComponent(location.pathname + location.search);
       location.href = '/Teachers/login.html?redirect=' + next; return;
     }
-    const data = await res.json();
+    const raw = await res.text();
+    let data;
+    try { data = JSON.parse(raw); }
+    catch {
+      const type = res.headers.get('content-type') || 'unknown';
+      throw new Error(`API error: HTTP ${res.status} · ${type} · ${raw.slice(0,80).replace(/\\s+/g,' ')}`);
+    }
     if (!res.ok || !data.success) throw new Error(data.error || 'Could not load voting');
     setVotes(data.votes);
     if (data.is_admin) {
@@ -88,13 +94,21 @@ saveBtn.addEventListener('click', async () => {
     const res = await api('/.netlify/functions/reading_bee_votes', {
       method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({votes:getVotes()})
     });
-    const data = await res.json();
+    const raw = await res.text();
+    let data;
+    try { data = JSON.parse(raw); }
+    catch {
+      const type = res.headers.get('content-type') || 'unknown';
+      throw new Error(`Save API error: HTTP ${res.status} · ${type} · ${raw.slice(0,80).replace(/\\s+/g,' ')}`);
+    }
     if (res.status === 401) { location.href='/Teachers/login.html'; return; }
     if (!res.ok || !data.success) throw new Error(data.error || 'Could not save votes');
     statusEl.textContent = '✓ Votes saved';
     setTimeout(()=>{ if(statusEl.textContent.includes('saved')) statusEl.textContent='You can change your votes anytime.'; }, 2200);
     const refresh = await api('/.netlify/functions/reading_bee_votes');
-    const fresh = await refresh.json();
+    const refreshRaw = await refresh.text();
+    let fresh = {};
+    try { fresh = JSON.parse(refreshRaw); } catch {}
     if (fresh.is_admin) {
       $('#voterCount').textContent = `${fresh.total_voters || 0} teacher${fresh.total_voters === 1 ? '' : 's'} voted`;
       renderResults(fresh.results);
