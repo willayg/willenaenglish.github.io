@@ -7,6 +7,7 @@ const NETLIFY_BASE = 'https://willenaenglish.netlify.app';
 const COOKIE_DOMAIN = '.willenaenglish.com';
 const TEST_PREP_EDGE = 'https://fiieuiktlsivwfgyivai.supabase.co/functions/v1/test-prep-teacher';
 const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
+const SUPABASE_REST_BASE = 'https://fiieuiktlsivwfgyivai.supabase.co/rest/v1';
 
 const FUNCTION_TO_BINDING = {
   supabase_auth: 'SUPABASE_AUTH',
@@ -143,6 +144,173 @@ async function routeToCFWorker(request, binding, functionName, url) {
   });
 }
 
+async function routeReadingBeeVotes(request, env) {
+  const userId = await authenticatedUserId(request, env);
+  if (!userId) {
+    return new Response(JSON.stringify({ success:false, error:'Not signed in' }), {
+      status:401,
+      headers:{'content-type':'application/json; charset=utf-8'}
+    });
+  }
+
+  const incomingHeaders = new Headers(request.headers);
+  let token = bearerToken(incomingHeaders);
+  if (!token) token = accessTokenFromCookie(incomingHeaders.get('Cookie'));
+  if (!token) {
+    return new Response(JSON.stringify({ success:false, error:'Missing auth token' }), {
+      status:401,
+      headers:{'content-type':'application/json; charset=utf-8'}
+    });
+  }
+
+  const baseHeaders = {
+    'apikey': SUPABASE_PUBLISHABLE_KEY,
+    'Authorization': `Bearer ${token}`,
+    'Content-Type': 'application/json',
+  };
+
+  async function sb(path, options = {}) {
+    const headers = { ...baseHeaders, ...(options.headers || {}) };
+    return fetch(SUPABASE_REST_BASE + path, {
+      ...options,
+      headers,
+    });
+  }
+
+  const profileRes = await sb(`/profiles?id=eq.${encodeURIComponent(userId)}&select=id,role,approved&limit=1`);
+  const profileRows = await profileRes.json().catch(() => []);
+  const profile = Array.isArray(profileRows) ? profileRows[0] : null;
+  const role = String(profile?.role || '').toLowerCase();
+  if (!profileRes.ok || !profile || profile.approved === false || !['teacher','admin'].includes(role)) {
+    return new Response(JSON.stringify({ success:false, error:'Teacher access required' }), {
+      status:403,
+      headers:{'content-type':'application/json; charset=utf-8'}
+    });
+  }
+
+  if (request.method === 'GET') {
+    const path = role === 'admin'
+      ? '/reading_bee_votes?select=teacher_id,award_key,student_name,updated_at'
+      : `/reading_bee_votes?teacher_id=eq.${encodeURIComponent(userId)}&select=teacher_id,award_key,student_name,updated_at`;
+    const voteRes = await sb(path);
+    const rows = await voteRes.json().catch(() => []);
+    if (!voteRes.ok) {
+      return new Response(JSON.stringify({ success:false, error:rows?.message || 'Could not load votes' }), {
+        status:voteRes.status,
+        headers:{'content-type':'application/json; charset=utf-8'}
+      });
+    }
+
+    const mine = (Array.isArray(rows) ? rows : []).filter(r => String(r.teacher_id) === String(userId));
+    const payload = {
+      success:true,
+      is_admin: role === 'admin',
+      votes:Object.fromEntries(mine.map(r => [r.award_key, r.student_name]))
+    };
+
+    if (role === 'admin') {
+      const AWARDS = [
+        'champion','second_place','third_place','best_fluency','best_expression',
+        'best_pronunciation','best_comprehension','most_improved','most_confident',
+        'best_storyteller','best_character_voice'
+      ];
+      const grouped = Object.fromEntries(AWARDS.map(k => [k, new Map()]));
+      for (const row of rows || []) {
+        if (!grouped[row.award_key]) continue;
+        const display = String(row.student_name || '').trim();
+        if (!display) continue;
+        const norm = display.toLocaleLowerCase('en-US');
+        const cur = grouped[row.award_key].get(norm) || { name:display, count:0 };
+        cur.count += 1;
+        grouped[row.award_key].set(norm, cur);
+      }
+      payload.total_voters = new Set((rows || []).map(r => r.teacher_id)).size;
+      payload.results = {};
+      for (const key of AWARDS) {
+        payload.results[key] = Array.from(grouped[key].values())
+          .sort((a,b) => b.count - a.count || a.name.localeCompare(b.name))
+          .slice(0,20);
+      }
+    }
+
+    return new Response(JSON.stringify(payload), {
+      status:200,
+      headers:{'content-type':'application/json; charset=utf-8'}
+    });
+  }
+
+  if (request.method === 'POST') {
+    let body;
+    try { body = await request.json(); }
+    catch {
+      return new Response(JSON.stringify({ success:false, error:'Invalid JSON' }), {
+        status:400,
+        headers:{'content-type':'application/json; charset=utf-8'}
+      });
+    }
+
+    const allowed = new Set([
+      'champion','second_place','third_place','best_fluency','best_expression',
+      'best_pronunciation','best_comprehension','most_improved','most_confident',
+      'best_storyteller','best_character_voice'
+    ]);
+    const votes = body && typeof body.votes === 'object' && body.votes ? body.votes : {};
+    const upserts = [];
+    const clearKeys = [];
+    const now = new Date().toISOString();
+
+    for (const [awardKey, raw] of Object.entries(votes)) {
+      if (!allowed.has(awardKey)) continue;
+      const studentName = String(raw || '').trim().replace(/\s+/g,' ').slice(0,80);
+      if (studentName) {
+        upserts.push({ teacher_id:userId, award_key:awardKey, student_name:studentName, updated_at:now });
+      } else {
+        clearKeys.push(awardKey);
+      }
+    }
+
+    if (upserts.length) {
+      const upsertRes = await sb('/reading_bee_votes?on_conflict=teacher_id,award_key', {
+        method:'POST',
+        headers:{'Prefer':'resolution=merge-duplicates,return=minimal'},
+        body:JSON.stringify(upserts)
+      });
+      if (!upsertRes.ok) {
+        const err = await upsertRes.json().catch(() => ({}));
+        return new Response(JSON.stringify({ success:false, error:err?.message || 'Could not save votes' }), {
+          status:upsertRes.status,
+          headers:{'content-type':'application/json; charset=utf-8'}
+        });
+      }
+    }
+
+    if (clearKeys.length) {
+      const encoded = clearKeys.map(k => '"' + k.replace(/"/g,'') + '"').join(',');
+      const delRes = await sb(`/reading_bee_votes?teacher_id=eq.${encodeURIComponent(userId)}&award_key=in.(${encodeURIComponent(encoded)})`, {
+        method:'DELETE',
+        headers:{'Prefer':'return=minimal'}
+      });
+      if (!delRes.ok) {
+        const err = await delRes.json().catch(() => ({}));
+        return new Response(JSON.stringify({ success:false, error:err?.message || 'Could not clear votes' }), {
+          status:delRes.status,
+          headers:{'content-type':'application/json; charset=utf-8'}
+        });
+      }
+    }
+
+    return new Response(JSON.stringify({ success:true, saved:upserts.length, cleared:clearKeys.length }), {
+      status:200,
+      headers:{'content-type':'application/json; charset=utf-8'}
+    });
+  }
+
+  return new Response(JSON.stringify({ success:false, error:'Method not allowed' }), {
+    status:405,
+    headers:{'content-type':'application/json; charset=utf-8'}
+  });
+}
+
 async function routeTestPrepTeacher(request, url) {
   const headers = new Headers(request.headers);
   let token = bearerToken(headers);
@@ -250,7 +418,9 @@ async function handleRequest(request, env) {
     const functionName = extractFunctionName(url.pathname);
     let response;
 
-    if (functionName === 'test_prep_api') {
+    if (functionName === 'reading_bee_votes') {
+      response = await routeReadingBeeVotes(request, env);
+    } else if (functionName === 'test_prep_api') {
       response = await routeTestPrepTeacher(request, url);
     } else if (functionName && PREFER_CF_WORKER.has(functionName)) {
       const bindingName = FUNCTION_TO_BINDING[functionName];
