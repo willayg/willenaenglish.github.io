@@ -159,7 +159,7 @@ h1{font-size:clamp(26px,5vw,42px);line-height:1.05;margin:5px 0 8px;letter-spaci
 @media(max-width:430px){
   .win-modal{padding:24px 16px 20px;border-radius:24px}
 }
-@media(prefers-reduced-motion:reduce){.win-modal[open]{animation:none}}
+@media(prefers-reduced-motion:reduce){.win-modal[open]{animation:none}.mix-card-inner{transition:none}.mix-card.wrong .mix-card-inner{animation:none}}
 
 .word-list.horizontal-strip{
   display:flex!important;
@@ -675,20 +675,49 @@ body.system-kb-open .crossword-stage{
   grid-template-columns:repeat(3,minmax(0,1fr));gap:10px
 }
 .mix-card{
-  min-height:92px;padding:12px;border:3px solid #c7ecef;border-radius:18px;background:#fff;
+  min-height:104px;padding:0;border:0;background:transparent;
   color:#315e64;font:900 clamp(.82rem,2.2vw,1.08rem)/1.25 Poppins,system-ui,sans-serif;
-  box-shadow:0 6px 16px rgba(34,106,116,.08);transition:transform .14s ease,border-color .14s ease,background .14s ease
+  perspective:900px;touch-action:manipulation
 }
-.mix-card.ko{border-color:#f0bfd7;background:#fffafd;color:#a94474}
-.mix-card.selected{transform:translateY(-2px) scale(1.02);border-color:#7dd8df;background:#f3ffff}
-.mix-card.ko.selected{border-color:#ee8dbb;background:#fff3f9}
-.mix-card.wrong{animation:mix-wrong .32s ease 1}
-.mix-card.matched{opacity:.2;pointer-events:none;transform:scale(.96)}
-@keyframes mix-wrong{0%,100%{transform:translateX(0)}35%{transform:translateX(-5px)}70%{transform:translateX(5px)}}
+.mix-card-inner{
+  position:relative;display:block;width:100%;min-height:104px;transform-style:preserve-3d;
+  transition:transform .46s cubic-bezier(.2,.72,.25,1.08)
+}
+.mix-card.flipped .mix-card-inner{transform:rotateY(180deg)}
+.mix-card-face{
+  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:12px;
+  border:3px solid #c7ecef;border-radius:18px;backface-visibility:hidden;-webkit-backface-visibility:hidden;
+  box-shadow:0 6px 16px rgba(34,106,116,.08)
+}
+.mix-card-back{
+  background:linear-gradient(145deg,#f4feff,#e7f9fb);color:#2d7d86;
+  border-color:#bfecef
+}
+.mix-card-back::after{
+  content:'';position:absolute;inset:7px;border:2px dashed rgba(45,125,134,.18);border-radius:12px
+}
+.mix-card-mark{
+  position:relative;z-index:1;width:42px;height:42px;border-radius:50%;display:grid;place-items:center;
+  background:#fff;border:3px solid #efafd0;color:#b84479;font-size:1.35rem;font-weight:900
+}
+.mix-card-front{transform:rotateY(180deg);background:#fff;color:#315e64}
+.mix-card.ko .mix-card-front{border-color:#f0bfd7;background:#fffafd;color:#a94474}
+.mix-card.selected .mix-card-front{border-color:#7dd8df;background:#f3ffff}
+.mix-card.ko.selected .mix-card-front{border-color:#ee8dbb;background:#fff3f9}
+.mix-card.wrong .mix-card-inner{animation:mix-wrong .34s ease 1}
+.mix-card.matched{pointer-events:none}
+.mix-card.matched .mix-card-front{box-shadow:0 0 0 4px rgba(120,205,154,.18),0 6px 16px rgba(34,106,116,.08)}
+.mix-card.matched .mix-card-inner{opacity:.7;transform:rotateY(180deg) scale(.97)}
+@keyframes mix-wrong{
+  0%,100%{transform:rotateY(180deg) translateX(0)}
+  35%{transform:rotateY(180deg) translateX(-5px)}
+  70%{transform:rotateY(180deg) translateX(5px)}
+}
 @media(max-width:620px){
   .puzzle-tabs{grid-template-columns:repeat(2,minmax(0,1fr))}
   .mix-match-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
-  .mix-card{min-height:82px;padding:10px;border-radius:15px}
+  .mix-card,.mix-card-inner{min-height:90px}
+  .mix-card-face{padding:10px;border-radius:15px}
   .grid-size-control{justify-content:space-between}
 }
 
