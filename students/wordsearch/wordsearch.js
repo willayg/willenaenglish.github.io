@@ -42,7 +42,8 @@ const CHEAT_MODE=new URLSearchParams(location.search).get('cheat')==='1';
 
 const state={
   auth:null,books:[],book:null,words:[],pool:[],crosswordPool:[],studentLevel:null,rewardContext:null,ready:false,buildToken:0,grid:[],size:GRID_TARGET,placements:[],
-  found:new Set(),gimmes:new Set(),bogglePaths:new Map(),drag:null,sessionId:null,startedAt:null,saving:false,mode:'boggle',gridSize:12,activeCrossword:null,crosswordCursor:0,cheatCompletion:false,matchFirst:null,matchLocked:false
+  found:new Set(),gimmes:new Set(),bogglePaths:new Map(),drag:null,sessionId:null,startedAt:null,saving:false,mode:'boggle',gridSize:12,activeCrossword:null,crosswordCursor:0,cheatCompletion:false,matchFirst:null,matchLocked:false,
+  modeSnapshots:new Map()
 };
 
 function txt(v){return String(v??'').trim()}
@@ -656,8 +657,12 @@ function escapeHtml(v){return txt(v).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&l
 function earnedPuzzlePoints(){
   return Math.max(0,(state.found.size-state.gimmes.size)*POINTS_PER_WORD);
 }
+function puzzleStarCap(){
+  if(state.mode!=='wordsearch')return 5;
+  return state.gridSize===8?3:(state.gridSize===10?4:5);
+}
 function earnedPuzzleStars(){
-  return Math.max(0,5-state.gimmes.size);
+  return Math.max(0,puzzleStarCap()-state.gimmes.size);
 }
 function updateProgress(){
   const verb=state.mode==='crossword'?'solved':(state.mode==='mixmatch'?'matched':'found');
@@ -817,7 +822,7 @@ async function saveReward(){
         score:state.placements.length-state.gimmes.size,total:state.placements.length,
         points_earned:points,book_id:ctx.book_id,unit_id:ctx.unit_id,
         assignment_id:null,session_source:'student',vocab_mode:state.mode,
-        reward_scheme:(state.mode||'wordsearch')+'-v2',star_cap:5,
+        reward_scheme:(state.mode||'wordsearch')+'-v2',star_cap:puzzleStarCap(),
         gimmes_used:state.gimmes.size
       }
     };
@@ -996,6 +1001,77 @@ function maybeShowFirstGameHelp(mode=state.mode){
   if(!seen)setTimeout(()=>openGameHelp({mode,markSeen:true}),180);
 }
 
+
+function snapshotCurrentMode(){
+  if(!state.mode||!state.sessionId)return;
+  if(state.drag){
+    state.drag=null;
+    clearPreview();
+  }
+  const snap={
+    mode:state.mode,
+    gridSize:state.gridSize,
+    grid:state.grid.map(row=>row.slice()),
+    size:state.size,
+    placements:state.placements,
+    found:[...state.found],
+    gimmes:[...state.gimmes],
+    bogglePaths:[...state.bogglePaths.entries()].map(([k,v])=>[k,{coords:v.coords.map(rc=>rc.slice())}]),
+    sessionId:state.sessionId,
+    startedAt:state.startedAt,
+    activeCrossword:state.activeCrossword,
+    crosswordCursor:state.crosswordCursor,
+    gridHtml:gridEl.innerHTML,
+    gridClass:gridEl.className,
+    gridSizeStyle:gridEl.style.getPropertyValue('--size'),
+    wordListHtml:wordListEl.innerHTML,
+    crosswordHtml:crosswordGridEl.innerHTML,
+    crosswordCols:crosswordGridEl.style.getPropertyValue('--cw-cols'),
+    mixHtml:mixMatchGrid?.innerHTML||''
+  };
+  state.modeSnapshots.set(state.mode,snap);
+}
+
+function restoreModeSnapshot(mode){
+  const snap=state.modeSnapshots.get(mode);
+  if(!snap)return false;
+  state.mode=mode;
+  state.gridSize=snap.gridSize||state.gridSize;
+  state.grid=(snap.grid||[]).map(row=>row.slice());
+  state.size=snap.size;
+  state.placements=snap.placements||[];
+  state.found=new Set(snap.found||[]);
+  state.gimmes=new Set(snap.gimmes||[]);
+  state.bogglePaths=new Map((snap.bogglePaths||[]).map(([k,v])=>[k,{coords:(v.coords||[]).map(rc=>rc.slice())}]));
+  state.sessionId=snap.sessionId;
+  state.startedAt=snap.startedAt;
+  state.activeCrossword=snap.activeCrossword;
+  state.crosswordCursor=snap.crosswordCursor||0;
+  state.drag=null;
+  state.matchLocked=false;
+
+  gridEl.className=snap.gridClass||'word-grid';
+  gridEl.innerHTML=snap.gridHtml||'';
+  gridEl.style.setProperty('--size',snap.gridSizeStyle||state.size||GRID_TARGET);
+  wordListEl.innerHTML=snap.wordListHtml||'';
+  crosswordGridEl.innerHTML=snap.crosswordHtml||'';
+  if(snap.crosswordCols)crosswordGridEl.style.setProperty('--cw-cols',snap.crosswordCols);
+  if(mixMatchGrid)mixMatchGrid.innerHTML=snap.mixHtml||'';
+
+  state.matchFirst=state.mode==='mixmatch'?mixMatchGrid?.querySelector('.mix-card.selected')||null:null;
+  document.querySelectorAll('[data-grid-size]').forEach(btn=>{
+    btn.classList.toggle('active',Number(btn.dataset.gridSize)===state.gridSize);
+  });
+  setModeUI();
+  updateProgress();
+  showGame();
+  if(state.mode==='boggle')requestAnimationFrame(renderBoggleCanvas);
+  return true;
+}
+
+function clearModeSnapshot(mode=state.mode){
+  state.modeSnapshots.delete(mode);
+}
 
 function setModeUI(){
 document.querySelectorAll('.puzzle-tab').forEach(btn=>{
@@ -1460,15 +1536,20 @@ mixMatchGrid?.addEventListener('click',e=>{
 document.querySelectorAll('[data-grid-size]').forEach(btn=>btn.addEventListener('click',()=>{
   const size=Number(btn.dataset.gridSize);
   if(!state.ready||state.mode!=='wordsearch'||size===state.gridSize)return;
+  clearModeSnapshot('wordsearch');
   state.gridSize=size;
   document.querySelectorAll('[data-grid-size]').forEach(b=>b.classList.toggle('active',Number(b.dataset.gridSize)===size));
   buildPuzzle();
 }));
 document.querySelectorAll('.puzzle-tab').forEach(btn=>btn.addEventListener('click',()=>{
   if(!state.ready||btn.dataset.mode===state.mode)return;
-  state.mode=btn.dataset.mode;
-  setModeUI();
-  buildPuzzle();
+  snapshotCurrentMode();
+  const nextMode=btn.dataset.mode;
+  state.mode=nextMode;
+  if(!restoreModeSnapshot(nextMode)){
+    setModeUI();
+    buildPuzzle();
+  }
 }));
 document.addEventListener('click',e=>{
   const help=e.target.closest?.('#gameHelpBtn');
@@ -1484,9 +1565,21 @@ document.addEventListener('click',e=>{
   }
 });
 gameHelpDialog?.addEventListener('click',e=>{if(e.target===gameHelpDialog)closeGameHelp()});
-$('newPuzzleBtn').addEventListener('click',()=>{if(state.ready)buildPuzzle()});
-$('retryBtn').addEventListener('click',()=>{if(state.ready)buildPuzzle()});
-$('playAgainBtn').addEventListener('click',()=>{closeWinModal();buildPuzzle()});
+$('newPuzzleBtn').addEventListener('click',()=>{
+  if(!state.ready)return;
+  clearModeSnapshot();
+  buildPuzzle();
+});
+$('retryBtn').addEventListener('click',()=>{
+  if(!state.ready)return;
+  clearModeSnapshot();
+  buildPuzzle();
+});
+$('playAgainBtn').addEventListener('click',()=>{
+  closeWinModal();
+  clearModeSnapshot();
+  buildPuzzle();
+});
 completeCard?.addEventListener('click',e=>{
   if(e.target===completeCard)closeWinModal();
 });
