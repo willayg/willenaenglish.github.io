@@ -101,5 +101,12 @@ function answerKeyHtml(entries){const groups=[];const vocab=entries.filter(x=>is
 function ensurePrintExtras(){document.querySelectorAll('.print-only').forEach(x=>x.remove());const entries=printableEntries(),showMeta=$('#showMeta').checked,head=document.createElement('header');head.className='print-only print-head';head.innerHTML=`<div class="print-brand"><img src="/Assets/Images/color-logo.png" alt="Willena"><div><h1>오답 다시 풀기</h1><p>Willena English · Test Prep Review</p></div></div><div class="print-student"><b>${esc(state.student)}</b><span>${esc(state.exam)}</span><span>${esc(new Date().toLocaleDateString('ko-KR'))}</span></div>`;$('.workspace').prepend(head);document.querySelectorAll('.question-card .tag').forEach(x=>{x.style.display=showMeta?'':'none'});if($('#answerKey').checked){const key=document.createElement('section');key.className='print-only answer-key';key.innerHTML=`<h2>정답지</h2>${answerKeyHtml(entries)}`;$('.workspace').appendChild(key)}}
 function doPrint(){if(!printableEntries().length)return;ensurePrintExtras();window.print();setTimeout(()=>{document.querySelectorAll('.print-only').forEach(x=>x.remove());document.querySelectorAll('.question-card .tag').forEach(x=>x.style.display='')},300)}
 
-$('#studentMeta').textContent=[state.student,state.exam,state.wrongFilter==='today'?'오늘 오답':null].filter(Boolean).join(' · ')||'오답 프린트 편집';$('#reloadBtn').onclick=load;$('#restoreAll').onclick=()=>{state.removed.clear();state.hiddenSkills.clear();state.lessonFilter='all';state.grammarPointFilter='all';render()};$('#printBtn').onclick=doPrint;load();
+$('#studentMeta').textContent=[state.student,state.exam,state.wrongFilter==='today'?'오늘 오답':null].filter(Boolean).join(' · ')||'오답 프린트 편집';
+$('#reloadBtn').onclick=load;
+$('#restoreAll').onclick=()=>{state.removed.clear();state.hiddenSkills.clear();state.lessonFilter='all';state.grammarPointFilter='all';render()};
+$('#lessonFilter').addEventListener('change',e=>{state.lessonFilter=e.target.value||'all';render()});
+$('#grammarPointFilter').addEventListener('change',e=>{state.grammarPointFilter=e.target.value||'all';render()});
+$('#clearDetailFilters').onclick=()=>{state.lessonFilter='all';state.grammarPointFilter='all';render()};
+$('#printBtn').onclick=doPrint;
+load();
 })();
