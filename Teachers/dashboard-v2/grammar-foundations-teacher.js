@@ -97,7 +97,7 @@ function renderDetail(data,modules,qmap=new Map()){
     const run=runMap.get(String(ch.module_id));
     const title=mod?koTitle(mod):ch.module_id;
     const subtitle=mod?enTitle(mod):'';
-    const step=mod?groupNumber(mod):'';
+    const step=mod?(Number(mod.groupNumber)||1):'';
     const hasDetail=Boolean(run&&Array.isArray(run.results)&&run.results.length);
     return `<article class="gf-challenge-card ${ch.passed?'passed':'working'}">
       <button class="gf-challenge-card-head" type="button" data-gf-challenge-card="${esc(ch.module_id)}" aria-expanded="false">
@@ -165,6 +165,6 @@ async function openStudentDetail(id){const base=rows.find(s=>String(s.user_id)==
 
 async function loadStudents({force=false}={}){if(loading&&!force)return loading;if(!force&&rows.length&&Date.now()-loadedAt<CACHE_MS){render();return rows}if(!force){const cached=cacheRead();if(cached&&Date.now()-cached.at<CACHE_MS){rows=cached.rows;loadedAt=cached.at;render();return rows}}if(force){cacheClear();rows=[];loadedAt=0;detailCache.clear()}const list=$('#gfTeacherList'),status=$('#gfTeacherStatus');if(list)list.innerHTML='<div class="gf-teacher-loading">Loading Grammar Foundations activity…</div>';if(status)status.textContent='Loading…';loading=authedJson(`${EDGE}?action=students&_=${Date.now()}`).then(payload=>{rows=Array.isArray(payload.students)?payload.students:[];rows.sort((a,b)=>new Date(b.last_activity||0)-new Date(a.last_activity||0));loadedAt=Date.now();cacheWrite(rows);render();return rows}).catch(error=>{console.error('[gf teacher]',error);if(list)list.innerHTML=`<div class="gf-teacher-error">${esc(error.message||error)}</div>`;if(status)status.textContent='Could not load Grammar Foundations activity.';throw error}).finally(()=>{loading=null});return loading}
 function openView(){setActive();void loadStudents()}
-function boot(){ensureCss();mountView();mountDrawer();mountNav();const rev=$('#teacherDashboardRev');if(rev)rev.textContent='REV r13.13'}
+function boot(){ensureCss();mountView();mountDrawer();mountNav();const rev=$('#teacherDashboardRev');if(rev)rev.textContent='REV r13.14'}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
