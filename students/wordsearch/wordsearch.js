@@ -593,6 +593,9 @@ function renderMixMatch(pool){
   state.gimmes.clear();
   state.matchFirst=null;
   state.matchLocked=false;
+  const deckStyles=['puzzle-block','maze-tile','pixel-badge'];
+  state.matchDeckStyle=deckStyles[Date.now()%deckStyles.length];
+  mixMatchGrid.dataset.deckStyle=state.matchDeckStyle;
   state.sessionId=crypto.randomUUID?.()||('mixmatch-'+Date.now());
   state.startedAt=new Date().toISOString();
 
