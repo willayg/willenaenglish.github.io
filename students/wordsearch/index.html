@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="./wordsearch.css?v=20260928-17">
+<link rel="stylesheet" href="./wordsearch.css?v=20260929-01">
 <script src="/students/api-gateway.js?v=20260926-progress-summary-cf1"></script>
 <script src="/js/api-config.js?v=20260926-reverted-auth1"></script>
 <script src="/students/vocab-study/auth-guard.js?v=20260925-v0004"></script>
@@ -23,9 +23,10 @@
 
   <main class="page">
     <nav class="puzzle-tabs" aria-label="Puzzle type">
-      <button class="puzzle-tab active" type="button" data-mode="wordsearch">Word Search</button>
+      <button class="puzzle-tab active" type="button" data-mode="boggle">Boggle</button>
+      <button class="puzzle-tab" type="button" data-mode="wordsearch">Word Search</button>
       <button class="puzzle-tab" type="button" data-mode="crossword">Crossword</button>
-      <button class="puzzle-tab" type="button" data-mode="boggle">Boggle</button>
+      <button class="puzzle-tab" type="button" data-mode="mixmatch">Mix &amp; Match</button>
     </nav>
 
     <section id="loadingCard" class="message-card">
@@ -53,7 +54,16 @@
           </div>
         </div>
 
-        <div class="clue-strip-wrap">
+        <div id="wordSearchSizeControl" class="grid-size-control" hidden>
+          <span>Grid size</span>
+          <div class="grid-size-buttons" role="group" aria-label="Word search grid size">
+            <button type="button" data-grid-size="8">8×8</button>
+            <button type="button" data-grid-size="10">10×10</button>
+            <button type="button" data-grid-size="12" class="active">12×12</button>
+          </div>
+        </div>
+
+        <div id="clueStripWrap" class="clue-strip-wrap">
           <div class="clue-strip-head">
             <div class="clue-strip-title">
               <span id="listEyebrow" class="eyebrow">FIND THESE</span>
@@ -68,6 +78,7 @@
           <div id="grid" class="word-grid" role="grid" aria-label="Word search puzzle"></div>
           <canvas id="boggleCanvas" class="boggle-canvas" aria-hidden="true" hidden></canvas>
         </div>
+        <div id="mixMatchGrid" class="mix-match-grid" role="grid" aria-label="Mix and Match puzzle" hidden></div>
         <div class="crossword-stage">
           <div id="crosswordGrid" class="crossword-grid" role="grid" aria-label="Crossword puzzle" hidden></div>
           <input id="crosswordEntry" class="crossword-entry" type="text" inputmode="text" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Crossword answer input">
@@ -231,6 +242,23 @@
         <div class="boggle-help-note">단어를 찾으면 선이 남고, 찾은 단어마다 다른 색으로 표시돼요.</div>
       </div>
 
+      <div class="game-help-panel" data-help-mode="mixmatch" hidden>
+        <div class="boggle-help-steps">
+          <section class="boggle-help-step">
+            <div class="boggle-help-copy">
+              <span class="boggle-step-num">1</span>
+              <div><strong>영어와 뜻을 짝지어요</strong><p>영어 단어 카드와 알맞은 한국어 뜻 카드를 하나씩 선택하세요.</p></div>
+            </div>
+          </section>
+          <section class="boggle-help-step">
+            <div class="boggle-help-copy">
+              <span class="boggle-step-num">2</span>
+              <div><strong>맞으면 카드가 사라져요</strong><p>틀리면 잠깐 확인한 뒤 다시 뒤집혀요. 모든 짝을 찾으면 완료!</p></div>
+            </div>
+          </section>
+        </div>
+      </div>
+
       <button id="gameHelpGotItBtn" class="boggle-help-got-it" type="button">시작하기</button>
     </dialog>
 
@@ -248,6 +276,6 @@
     </dialog>
   </main>
 </div>
-<script type="module" src="./wordsearch.js?v=20260928-16"></script>
+<script type="module" src="./wordsearch.js?v=20260929-01"></script>
 </body>
 </html>
