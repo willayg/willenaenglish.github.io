@@ -8,7 +8,7 @@ function addScript(src,dataKey){if(document.querySelector(`script[${dataKey}]`))
 addScript('./tracking-phase1.js?v=20260827-phase10','data-testprep-phase1-tracking');
 addScript('./vocab-practice.js?v=20260827-vocab9','data-testprep-vocab-practice');
 addScript('./vocab-test-practice.js?v=20260827-vocabtest3','data-testprep-vocab-test-practice');
-addScript('./sentence-practice.js?v=20260928-assessment1','data-testprep-sentence-practice');
+// sentence-practice.js is loaded directly by index.html to avoid launch races.
 
 const esc=s=>String(s??'').replace(/[&<>\"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot',"'":'&#39;'}[c]));
 
