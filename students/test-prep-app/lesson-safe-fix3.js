@@ -5,6 +5,7 @@ const STATIONS=[
  {k:'vocab_test',label:'어휘 시험',desc:'정의 · 시험형 어휘 문제'},
  {k:'communication',label:'의사소통',desc:'핵심 대화 표현'},
  {k:'grammar',label:'문법',desc:'핵심 문법'},
+ {k:'performance',label:'수행평가',desc:'문장 배열 · 암기 연습'},
  {k:'sentences',label:'본문외우기',desc:'본문 문장 완성'},
  {k:'reading',label:'독해',desc:'본문 이해'},
  {k:'constructed_response',label:'서술형',desc:'영작 · 배열 · 대화 · 본문 해석'}
@@ -98,7 +99,7 @@ function renderSafeLesson(planId,lesson,opts){
  const q=document.getElementById('assignedQuizPane');if(q)q.style.display='none';h.style.display='block';
  ensureLiteStyles();
  const skills=skillsFor(plan,l);
- h.innerHTML='<button class="tp-back" type="button">← 시험 대비</button><div class="tp-lesson-head"><div><h1>'+esc(l.lesson)+'</h1><p>'+esc(plan.book_label||'')+' · 학습 지도</p><span id="tpLessonDataDiagnostic" class="tp-lesson-data-diagnostic">Totals: SUPABASE RPC · waiting</span></div></div><div class="tp-subway">'+skills.map((s,i)=>'<div class="tp-stop" data-safe-skill="'+esc(s.k)+'"><div class="tp-station">'+(i+1)+'</div><div class="tp-stop-copy"><b>'+esc(s.label)+'</b><small>'+esc(s.desc)+'</small></div><div class="tp-fix4-metrics"><span class="tp-fix4-metric tp-fix4-completion"><b data-fix4-completion>—</b><small>완료</small></span><span class="tp-fix4-metric tp-fix4-average"><b data-fix4-average>—</b><small>평균</small></span></div></div>').join('')+'</div>';
+ h.innerHTML='<button class="tp-back" type="button">← 시험 대비</button><div class="tp-lesson-head"><div><h1>'+esc(l.lesson)+'</h1><p>'+esc(plan.book_label||'')+' · 학습 지도</p><span id="tpLessonDataDiagnostic" class="tp-lesson-data-diagnostic">Totals: SUPABASE RPC · waiting</span></div></div><div class="tp-subway">'+skills.map((s,i)=>'<div class="tp-stop" data-safe-skill="'+esc(s.k)+'" data-skill="'+esc(s.k)+'"><div class="tp-station">'+(i+1)+'</div><div class="tp-stop-copy"><b>'+esc(s.label)+'</b><small>'+esc(s.desc)+'</small></div><div class="tp-fix4-metrics"><span class="tp-fix4-metric tp-fix4-completion"><b data-fix4-completion>—</b><small>완료</small></span><span class="tp-fix4-metric tp-fix4-average"><b data-fix4-average>—</b><small>평균</small></span></div></div>').join('')+'</div>';
  const back=h.querySelector('.tp-back');if(back)back.onclick=()=>window.WillenaTestPrepNavigation?.toHome?.({replaceEntry:true});
  h.querySelectorAll('[data-safe-skill]').forEach(row=>{row.onclick=()=>window.WillenaTestPrepUX?.openPractice?.(plan.id,l.lesson,row.dataset.safeSkill,'lesson');});
  try{
