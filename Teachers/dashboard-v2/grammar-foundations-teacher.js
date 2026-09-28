@@ -80,11 +80,91 @@ function moduleProgress(mod,pmap){const stages=Array.isArray(mod.stages)?mod.sta
 function stageStatus(row){if(!row)return{cls:'not-started',label:'Not started',score:'—'};const total=Number(row.total||0),latest=Number(row.latest_score||0),best=Number(row.best_score||0);return{cls:row.passed?'passed':'working',label:row.passed?'Passed':'In progress',score:total?`Latest ${latest}/${total} · Best ${best}/${total}`:'No score'}}
 function renderModule(mod,pmap,cmap,runMap,qmap){const mp=moduleProgress(mod,pmap);const isActive=mp.started>0&&mp.passed<mp.total;const isComplete=mp.total>0&&mp.passed===mp.total;const rows=(mod.stages||[]).map(stage=>{const row=pmap.get(`${mod.id}:${stage.id}`),st=stageStatus(row);return `<div class="gf-detail-level ${st.cls}"><div class="gf-detail-level-marker">${row?.passed?'✓':row?'●':'○'}</div><div class="gf-detail-level-copy"><div><b>Level ${esc(stage.number??'')}</b><span>${esc(koTitle(stage))}</span></div><small>${esc(enTitle(stage))}</small>${row?`<small class="gf-detail-level-score">${esc(st.score)} · ${esc(row.attempt_count||0)} attempt${Number(row.attempt_count)===1?'':'s'} · ${esc(fmtRelative(row.last_attempt_at))}</small>`:'<small class="gf-detail-level-score">Not attempted yet</small>'}</div><span class="gf-detail-state ${st.cls}">${esc(st.label)}</span></div>`}).join('');const ch=cmap.get(String(mod.id));const run=runMap.get(String(mod.id));const moduleClass=isActive?' active-module':isComplete?' complete-module':'';const flag=isActive?'<span class="gf-detail-module-flag">ACTIVE</span>':isComplete?'<span class="gf-detail-module-flag complete">COMPLETE</span>':'';const challengeBadge=ch?`<span class="gf-detail-challenge-badge ${ch.passed?'passed':'working'}">실전문제 ${esc(ch.latest_score)}/${esc(ch.total)}</span>`:'';return `<details class="gf-detail-module${moduleClass}"><summary><div><div class="gf-detail-module-title">${esc(koTitle(mod))}</div><div class="gf-detail-module-en">${esc(enTitle(mod))}</div></div><div class="gf-detail-module-progress">${flag}<b>${mp.passed}/${mp.total}</b><span>levels passed</span>${challengeBadge}</div></summary><div class="gf-detail-levels">${rows}${ch?`<details class="gf-detail-challenge-wrap ${ch.passed?'passed':'working'}"><summary class="gf-detail-challenge"><div><b>실전문제</b><span>${ch.passed?'Passed':'Attempted'} · Latest ${esc(ch.latest_score)}/${esc(ch.total)} · Best ${esc(ch.best_score)}/${esc(ch.total)}</span></div><small>${esc(ch.attempt_count||0)} attempt${Number(ch.attempt_count)===1?'':'s'} · ${esc(fmtRelative(ch.last_attempt_at))}</small></summary><div class="gf-detail-challenge-questions">${renderChallengeQuestions(run,qmap)}</div></details>`:''}</div></details>`}
 
-function renderDetail(data,modules,qmap=new Map()){const body=$('#gfTeacherDrawerBody');if(!body)return;const sum=data.summary||{},pmap=stageMap(data.stage_progress),cmap=challengeMap(data.challenge_progress),runMap=challengeRunMap(data.challenge_runs),groups=groupCatalog(modules);const activeModules=new Set((data.stage_progress||[]).map(r=>String(r.module_id)));const steps=groups.map(g=>{const touched=g.items.some(m=>activeModules.has(String(m.id))||cmap.has(String(m.id)));const mods=g.items.map(m=>renderModule(m,pmap,cmap,runMap,qmap)).join('');return `<section class="gf-detail-step ${touched?'has-activity':''}"><div class="gf-detail-step-head"><div><span>GRAMMAR FOUNDATIONS</span><h3>Step ${g.number}</h3></div><small>${g.items.length} grammar set${g.items.length===1?'':'s'}</small></div>${mods}</section>`}).join('');const runs=(data.recent_runs||[]).slice(0,8).map(r=>`<div class="gf-detail-run"><div><b>${esc(r.kind==='challenge'?'Challenge':r.stage_id||'Level')}</b><span>${esc(r.module_id)}</span></div><div>${esc(r.score)}/${esc(r.total)}</div><small>${esc(fmtDateTime(r.completed_at))}</small></div>`).join('');body.innerHTML=`<div class="gf-detail-summary"><div><strong>${esc(fmtAccuracy(sum.recent_accuracy))}</strong><span>recent accuracy</span><small>${esc(sum.recent_count??0)} answers</small></div><div><strong>${esc(sum.levels_passed??0)}/${esc(sum.levels_started??0)}</strong><span>levels passed / started</span><small>${esc(sum.stage_attempts??0)} attempts</small></div><div><strong>${esc(fmtRelative(sum.last_activity))}</strong><span>last activity</span><small>${esc(fmtDateTime(sum.last_activity))}</small></div></div><div class="gf-detail-section-title"><h2>Progress by Step</h2><p>Same lesson and level structure as the student app.</p></div><div class="gf-detail-steps">${steps}</div>${runs?`<div class="gf-detail-section-title gf-detail-recent-title"><h2>Recent completed activities</h2></div><div class="gf-detail-runs">${runs}</div>`:''}`}
+function renderDetail(data,modules,qmap=new Map()){
+  const body=$('#gfTeacherDrawerBody');if(!body)return;
+  const sum=data.summary||{},pmap=stageMap(data.stage_progress),cmap=challengeMap(data.challenge_progress),runMap=challengeRunMap(data.challenge_runs),groups=groupCatalog(modules);
+  const activeModules=new Set((data.stage_progress||[]).map(r=>String(r.module_id)));
+
+  const steps=groups.map(g=>{
+    const touched=g.items.some(m=>activeModules.has(String(m.id))||cmap.has(String(m.id)));
+    const mods=g.items.map(m=>renderModule(m,pmap,new Map(),new Map(),qmap)).join('');
+    return `<section class="gf-detail-step ${touched?'has-activity':''}"><div class="gf-detail-step-head"><div><span>GRAMMAR FOUNDATIONS</span><h3>Step ${g.number}</h3></div><small>${g.items.length} grammar set${g.items.length===1?'':'s'}</small></div>${mods}</section>`;
+  }).join('');
+
+  const moduleById=new Map(modules.map(m=>[String(m.id),m]));
+  const challengeCards=(data.challenge_progress||[]).map(ch=>{
+    const mod=moduleById.get(String(ch.module_id));
+    const run=runMap.get(String(ch.module_id));
+    const title=mod?koTitle(mod):ch.module_id;
+    const subtitle=mod?enTitle(mod):'';
+    const step=mod?groupNumber(mod):'';
+    const hasDetail=Boolean(run&&Array.isArray(run.results)&&run.results.length);
+    return `<article class="gf-challenge-card ${ch.passed?'passed':'working'}">
+      <button class="gf-challenge-card-head" type="button" data-gf-challenge-card="${esc(ch.module_id)}" aria-expanded="false">
+        <div class="gf-challenge-card-copy">
+          <span class="gf-challenge-step">STEP ${esc(step)}</span>
+          <b>${esc(title)}</b>
+          <small>${esc(subtitle)}</small>
+        </div>
+        <div class="gf-challenge-card-score">
+          <strong>${esc(ch.latest_score)}/${esc(ch.total)}</strong>
+          <span>${ch.passed?'Passed':'Attempted'}</span>
+          <small>${esc(ch.attempt_count||0)} attempt${Number(ch.attempt_count)===1?'':'s'}</small>
+        </div>
+        <span class="gf-challenge-card-chevron" aria-hidden="true">›</span>
+      </button>
+      <div class="gf-challenge-card-detail" data-gf-challenge-detail="${esc(ch.module_id)}" hidden>
+        ${hasDetail?renderChallengeQuestions(run,qmap):'<div class="gf-challenge-no-detail">No saved question-level attempt for this challenge.</div>'}
+      </div>
+    </article>`;
+  }).join('');
+
+  const runs=(data.recent_runs||[]).slice(0,8).map(r=>`<div class="gf-detail-run"><div><b>${esc(r.kind==='challenge'?'Challenge':r.stage_id||'Level')}</b><span>${esc(r.module_id)}</span></div><div>${esc(r.score)}/${esc(r.total)}</div><small>${esc(fmtDateTime(r.completed_at))}</small></div>`).join('');
+
+  body.innerHTML=`
+    <div class="gf-detail-summary">
+      <div><strong>${esc(fmtAccuracy(sum.recent_accuracy))}</strong><span>recent accuracy</span><small>${esc(sum.recent_count??0)} answers</small></div>
+      <div><strong>${esc(sum.levels_passed??0)}/${esc(sum.levels_started??0)}</strong><span>levels passed / started</span><small>${esc(sum.stage_attempts??0)} attempts</small></div>
+      <div><strong>${esc(fmtRelative(sum.last_activity))}</strong><span>last activity</span><small>${esc(fmtDateTime(sum.last_activity))}</small></div>
+    </div>
+
+    <div class="gf-detail-tabs" role="tablist" aria-label="Grammar Foundations detail">
+      <button class="gf-detail-tab active" type="button" role="tab" aria-selected="true" data-gf-detail-tab="steps">Steps</button>
+      <button class="gf-detail-tab" type="button" role="tab" aria-selected="false" data-gf-detail-tab="challenges">실전문제</button>
+    </div>
+
+    <div class="gf-detail-tabpanel" data-gf-detail-panel="steps">
+      <div class="gf-detail-section-title"><h2>Progress by Step</h2><p>Same lesson and level structure as the student app.</p></div>
+      <div class="gf-detail-steps">${steps}</div>
+      ${runs?`<div class="gf-detail-section-title gf-detail-recent-title"><h2>Recent completed activities</h2></div><div class="gf-detail-runs">${runs}</div>`:''}
+    </div>
+
+    <div class="gf-detail-tabpanel" data-gf-detail-panel="challenges" hidden>
+      <div class="gf-detail-section-title"><h2>실전문제</h2><p>Tap a challenge to see exactly what the student answered.</p></div>
+      <div class="gf-challenge-cards">${challengeCards||'<div class="gf-teacher-empty">No challenge attempts yet.</div>'}</div>
+    </div>`;
+
+  $$('[data-gf-detail-tab]',body).forEach(btn=>btn.addEventListener('click',()=>{
+    const target=btn.dataset.gfDetailTab;
+    $$('[data-gf-detail-tab]',body).forEach(x=>{const on=x===btn;x.classList.toggle('active',on);x.setAttribute('aria-selected',String(on))});
+    $$('[data-gf-detail-panel]',body).forEach(p=>p.hidden=p.dataset.gfDetailPanel!==target);
+  }));
+
+  $$('[data-gf-challenge-card]',body).forEach(btn=>btn.addEventListener('click',()=>{
+    const id=btn.dataset.gfChallengeCard;
+    const detail=body.querySelector(`[data-gf-challenge-detail="${CSS.escape(id)}"]`);
+    if(!detail)return;
+    const open=detail.hidden;
+    detail.hidden=!open;
+    btn.setAttribute('aria-expanded',String(open));
+    btn.closest('.gf-challenge-card')?.classList.toggle('open',open);
+  }));
+}
+
 async function openStudentDetail(id){const base=rows.find(s=>String(s.user_id)===String(id));$('#gfTeacherDrawerName').textContent=base?.name||'Student';$('#gfTeacherDrawerMeta').textContent=[base?.korean_name,base?.class,base?.grade].filter(Boolean).join(' · ');$('#gfTeacherDrawerBody').innerHTML='<div class="gf-teacher-loading">Loading Grammar Foundations progress…</div>';openDrawer();try{const cached=detailCache.get(String(id));let detail;if(cached&&Date.now()-cached.at<DETAIL_CACHE_MS)detail=cached.data;else{detail=await authedJson(`${EDGE}?action=student_detail&student_id=${encodeURIComponent(id)}&_=${Date.now()}`);detailCache.set(String(id),{at:Date.now(),data:detail})}const modules=await loadCatalog();const qmap=await loadChallengeQuestions(detail.challenge_runs||[]);renderDetail(detail,modules,qmap)}catch(error){console.error('[gf teacher detail]',error);$('#gfTeacherDrawerBody').innerHTML=`<div class="gf-teacher-error">${esc(error.message||error)}</div>`}}
 
 async function loadStudents({force=false}={}){if(loading&&!force)return loading;if(!force&&rows.length&&Date.now()-loadedAt<CACHE_MS){render();return rows}if(!force){const cached=cacheRead();if(cached&&Date.now()-cached.at<CACHE_MS){rows=cached.rows;loadedAt=cached.at;render();return rows}}if(force){cacheClear();rows=[];loadedAt=0;detailCache.clear()}const list=$('#gfTeacherList'),status=$('#gfTeacherStatus');if(list)list.innerHTML='<div class="gf-teacher-loading">Loading Grammar Foundations activity…</div>';if(status)status.textContent='Loading…';loading=authedJson(`${EDGE}?action=students&_=${Date.now()}`).then(payload=>{rows=Array.isArray(payload.students)?payload.students:[];rows.sort((a,b)=>new Date(b.last_activity||0)-new Date(a.last_activity||0));loadedAt=Date.now();cacheWrite(rows);render();return rows}).catch(error=>{console.error('[gf teacher]',error);if(list)list.innerHTML=`<div class="gf-teacher-error">${esc(error.message||error)}</div>`;if(status)status.textContent='Could not load Grammar Foundations activity.';throw error}).finally(()=>{loading=null});return loading}
 function openView(){setActive();void loadStudents()}
-function boot(){ensureCss();mountView();mountDrawer();mountNav();const rev=$('#teacherDashboardRev');if(rev)rev.textContent='REV r13.12'}
+function boot(){ensureCss();mountView();mountDrawer();mountNav();const rev=$('#teacherDashboardRev');if(rev)rev.textContent='REV r13.13'}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
