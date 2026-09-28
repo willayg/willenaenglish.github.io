@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="./wordsearch.css?v=20260928-16">
+<link rel="stylesheet" href="./wordsearch.css?v=20260928-17">
 <script src="/students/api-gateway.js?v=20260926-progress-summary-cf1"></script>
 <script src="/js/api-config.js?v=20260926-reverted-auth1"></script>
 <script src="/students/vocab-study/auth-guard.js?v=20260925-v0004"></script>
@@ -204,6 +204,26 @@
                 <defs><marker id="boggleArrowCyan" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L10,5 L0,10 z" class="arrow-head"></path></marker></defs>
                 <path class="guide-path guide-cyan" d="M50 50 L150 150 L244 244" marker-end="url(#boggleArrowCyan)"></path>
                 <circle cx="50" cy="50" r="9"></circle><circle cx="150" cy="150" r="9"></circle>
+              </svg>
+            </div>
+          </section>
+
+          <section class="boggle-help-step">
+            <div class="boggle-help-copy">
+              <span class="boggle-step-num">4</span>
+              <div><strong>중간에 방향을 바꿔도 돼요</strong><p>한 방향으로만 갈 필요는 없어요. 서로 붙어 있는 글자라면 꺾어서 지그재그로 이어도 됩니다.</p></div>
+            </div>
+            <div class="boggle-mini-board zigzag-demo" aria-hidden="true">
+              <span>C</span><span>A</span><span>R</span>
+              <span>O</span><span>T</span><span>E</span>
+              <span>N</span><span>D</span><span>S</span>
+              <svg viewBox="0 0 300 300" preserveAspectRatio="none">
+                <defs><marker id="boggleArrowZigzag" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L10,5 L0,10 z" class="arrow-head"></path></marker></defs>
+                <path class="guide-path guide-zigzag" d="M50 50 L150 50 L150 150 L250 150 L250 250" marker-end="url(#boggleArrowZigzag)"></path>
+                <circle cx="50" cy="50" r="9"></circle>
+                <circle cx="150" cy="50" r="9"></circle>
+                <circle cx="150" cy="150" r="9"></circle>
+                <circle cx="250" cy="150" r="9"></circle>
               </svg>
             </div>
           </section>
