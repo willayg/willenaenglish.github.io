@@ -141,6 +141,9 @@ function renderWrite(item,box,fb,stage,isFinal){
 
 async function startPerformance(planId,lesson){
  const a=assignmentFor(planId,lesson);if(!a){alert('이 Lesson에 지정된 수행평가가 없습니다.');return}
+ if(String(a?.metadata?.launch_mode||'').toLowerCase()==='sentence_unscramble'&&window.WillenaAssignedTestPrep?.startAssessment){
+   return window.WillenaAssignedTestPrep.startAssessment(a.content_assessment_id,{planId,lesson,returnTo:'lesson'});
+ }
  addStyles();showPane();shell().innerHTML='<div class="tp-pa-shell"><div class="tp-pa-panel">수행평가를 불러오는 중...</div></div>';
  try{const data=await loadAssessment(a);current={planId:String(planId),lesson:String(lesson),data};window.WillenaTestPrepAuth?.setActivePlan?.(window.WillenaTestPrepAuth.state.plans.find(p=>String(p.id)===String(planId)),lesson);overview()}catch(e){console.error('[performance] load failed',e);shell().innerHTML=`<div class="tp-pa-shell"><div class="tp-pa-panel">${esc(e.message||'수행평가를 불러오지 못했습니다.')}<div class="tp-pa-actions"><button class="tp-pa-btn primary" id="tpPaClose">돌아가기</button></div></div></div>`;document.getElementById('tpPaClose').onclick=leave}
 }
