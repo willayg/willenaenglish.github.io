@@ -47,9 +47,21 @@ function addStyles(){
 }
 
 async function primaryGet(path){
- const t=token();if(!t)throw new Error('로그인이 필요합니다.');
- const r=await fetch(PRIMARY+path,{headers:{apikey:PRIMARY_KEY,Authorization:`Bearer ${t}`},cache:'no-store'});
- if(!r.ok)throw new Error(await r.text());return r.json();
+ try{await window.WillenaTestPrepAuth?.ready}catch(_){}
+ let t=token();
+ if(!t){
+   try{await window.WillenaTestPrepAuth?.refreshStats?.()}catch(_){}
+   t=token();
+ }
+ if(!t)throw new Error('로그인이 필요합니다.');
+ let r=await fetch(PRIMARY+path,{headers:{apikey:PRIMARY_KEY,Authorization:`Bearer ${t}`},cache:'no-store'});
+ if(r.status===401){
+   try{await window.WillenaTestPrepAuth?.refreshStats?.()}catch(_){}
+   t=token();
+   if(t)r=await fetch(PRIMARY+path,{headers:{apikey:PRIMARY_KEY,Authorization:`Bearer ${t}`},cache:'no-store'});
+ }
+ if(!r.ok)throw new Error(await r.text());
+ return r.json();
 }
 async function contentGet(path){
  const r=await fetch(CONTENT+path,{headers:{apikey:CONTENT_KEY,Authorization:`Bearer ${CONTENT_KEY}`},cache:'no-store'});
@@ -58,10 +70,16 @@ async function contentGet(path){
 
 async function loadAssignments(){
  try{
+  await window.WillenaTestPrepAuth?.ready;
   const rows=await primaryGet('/rest/v1/student_performance_assessments?select=id,student_id,plan_id,content_assessment_id,book_key,unit_key,title,due_date,status,metadata&status=eq.active&order=due_date.asc.nullslast');
   assignments=Array.isArray(rows)?rows:[];
   if(lastLessonArgs)decorateLesson(...lastLessonArgs);
- }catch(e){console.warn('[performance] assignment load failed',e);assignments=[]}
+  return assignments;
+ }catch(e){
+  console.warn('[performance] assignment load failed',e);
+  assignments=[];
+  return assignments;
+ }
 }
 function assignmentFor(planId,lesson){return assignments.find(a=>String(a.plan_id)===String(planId)&&String(a.unit_key||'')===String(lesson||''))||null}
 function masteredCount(assessmentId,items){return items.reduce((n,it)=>n+(getProgress(assessmentId,it.id).mastered?1:0),0)}
