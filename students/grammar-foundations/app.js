@@ -24,7 +24,7 @@ let challengeProgressMap=new Map();
 const challengeAvailability=new Map();
 let state={group:null,module:null,stage:null,index:0,score:0,renderer:null,checked:false,results:[],resultSaved:false};
 let challengeState={module:null,questions:[],index:0,score:0,renderer:null,checked:false,results:[],resultSaved:false,poolMeta:null};
-const reviewerUnlock=new URLSearchParams(window.location.search).get('unlock')==='all';
+const reviewerUnlock=(()=>{const p=new URLSearchParams(window.location.search);const h=new URLSearchParams(String(window.location.hash||'').replace(/^#/,''));return p.get('unlock')==='all'||h.get('unlock')==='all'||/\/unlock-all\/?$/i.test(window.location.pathname)})();
 let nav=null;
 const sessionStore=createStudentSessionResume({appId:'grammar-foundations'});
 sessionStore.installBeforeUnload();
