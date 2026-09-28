@@ -5,7 +5,17 @@ const KEY=['sb_publishable_','G-FYhHfDL4OGdL892gY1Zg_','epdbEeqO'].join('');
 const HEAD={apikey:KEY,Authorization:`Bearer ${KEY}`};
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let host=null,restore=[],items=[],queue=[],index=0,score=0,attempted=false,startedAt=0,lesson='',reviewMode=false,assessmentMode=false,roundWrong=new Set();
-async function get(path){const r=await fetch(CONTENT+path,{headers:HEAD,cache:'no-store'});if(!r.ok)throw new Error(await r.text());return r.json()}
+async function get(path){
+  const ctl=new AbortController(),timer=setTimeout(()=>ctl.abort(),8000);
+  try{
+    const r=await fetch(CONTENT+path,{headers:HEAD,cache:'no-store',signal:ctl.signal});
+    if(!r.ok)throw new Error(await r.text());
+    return await r.json();
+  }catch(e){
+    if(e?.name==='AbortError')throw new Error('수행평가 데이터를 불러오는 시간이 너무 오래 걸립니다.');
+    throw e;
+  }finally{clearTimeout(timer)}
+}
 function hideLegacy(quiz){restore=[];[...quiz.children].forEach(el=>{if(el.id==='assignedBackRow')return;restore.push([el,el.hidden]);el.hidden=true})}
 function restoreLegacy(){restore.forEach(([el,h])=>{if(el?.isConnected)el.hidden=h});restore=[];host?.remove();host=null;reviewMode=false}
 const DOT='\uE000';
@@ -14,10 +24,12 @@ function restoreSentenceDots(value){return String(value||'').split(DOT).join('.'
 function splitSentences(body,title,passageId,translations=[]){const out=[];let sentenceIndex=0;for(let line of String(body||'').split(/\n+/).map(x=>x.trim()).filter(Boolean)){if(/^(Situation\s+\d+|D-?\d+|D-Day)$/i.test(line)||/^What will happen next\?/i.test(line)||/^(Dear\s+.+,|Hi\s+.+,|Love,?|Best,?|Your friend,?|Uncle Jay|Amy|Minji)$/i.test(line))continue;line=line.replace(/^(D-?\d+|D-Day)\s+/i,'');let speaker='';const m=line.match(/^([A-Za-z][A-Za-z .'-]{0,24}):\s*(.+)$/);if(m){speaker=m[1];line=m[2]}const safe=protectSentenceDots(line),parts=safe.match(/[^.!?]+[.!?]+(?:["'”’])?|[^.!?]+$/g)||[];parts.map(x=>restoreSentenceDots(x.trim())).filter(x=>x&&/[A-Za-z]/.test(x)).forEach((text,i)=>{out.push({text,ko:String(translations[sentenceIndex]||''),speaker,passageTitle:title,passageId,partIndex:i,sentenceIndex});sentenceIndex++})}return out}
 async function loadItems(unitId){const rows=await get(`/rest/v1/passages?select=id,title,body,source_key,metadata&status=eq.published&metadata-%3E%3Eunit_id=eq.${encodeURIComponent(unitId)}&order=source_key.asc`);return(rows||[]).flatMap(p=>splitSentences(p.body,p.title,p.id,Array.isArray(p.metadata?.sentence_translations_ko)?p.metadata.sentence_translations_ko:[]))}
 async function loadAssessmentItems(assessmentId){
-  const sets=await get(`/rest/v1/performance_assessment_sets?select=id,title,metadata,status&id=eq.${encodeURIComponent(assessmentId)}&status=eq.active&limit=1`);
+  const [sets,rows]=await Promise.all([
+    get(`/rest/v1/performance_assessment_sets?select=id,title,status&id=eq.${encodeURIComponent(assessmentId)}&status=eq.active&limit=1`),
+    get(`/rest/v1/performance_assessment_items?select=id,assessment_id,item_number,prompt_ko,target_en&assessment_id=eq.${encodeURIComponent(assessmentId)}&order=item_number.asc`)
+  ]);
   const set=sets?.[0];
   if(!set)throw new Error('수행평가를 찾지 못했습니다.');
-  const rows=await get(`/rest/v1/performance_assessment_items?select=id,assessment_id,item_number,prompt_ko,target_en,exact_required,no_partial_credit,metadata&assessment_id=eq.${encodeURIComponent(assessmentId)}&order=item_number.asc`);
   return {title:set.title||'수행평가',items:(rows||[]).map(r=>({
     assessmentItemId:r.id,
     text:String(r.target_en||'').trim(),
@@ -46,11 +58,17 @@ async function start(opts){
   lesson=opts.lesson||'Lesson';reviewMode=!!opts.reviewMode;assessmentMode=!!assessmentId;
   hideLegacy(quiz);host=document.createElement('div');host.id='testPrepSentencePractice';quiz.appendChild(host);
   host.innerHTML=`<div class="sp-wrap sp-state-message">${assessmentMode?'수행평가 문장을':'본문 문장을'} 불러오는 중...</div>`;
-  if(assessmentMode){
-    const loaded=await loadAssessmentItems(assessmentId);
-    lesson=opts.lesson||loaded.title||'수행평가';
-    items=loaded.items;
-  }else items=await loadItems(opts.unitId);
+  try{
+    if(assessmentMode){
+      const loaded=await loadAssessmentItems(assessmentId);
+      lesson=opts.lesson||loaded.title||'수행평가';
+      items=loaded.items;
+    }else items=await loadItems(opts.unitId);
+  }catch(e){
+    console.error('[sentence-practice] load failed',e);
+    host.innerHTML=`<div class="sp-wrap sp-state-message"><b>불러오지 못했습니다.</b><br><small>${esc(e?.message||'데이터 로드 실패')}</small></div>`;
+    return;
+  }
   if(Array.isArray(opts.onlyIds)&&opts.onlyIds.length){const wanted=new Set(opts.onlyIds.map(String));items=items.filter(q=>wanted.has(uid(q)))}
   if(!items.length){host.innerHTML=`<div class="sp-wrap sp-state-message">${assessmentMode?'연습할 수행평가 문장이':'복습할 본문 문장이'} 없습니다.</div>`;return}
   startRound(await sessionItems(opts))
