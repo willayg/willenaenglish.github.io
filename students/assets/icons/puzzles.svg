@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 300" role="img" aria-labelledby="title">
+  <title id="title">Puzzles</title>
+  <g fill="none" stroke-linejoin="round">
+    <g transform="translate(34 70) rotate(-13 74 78)" stroke="#244f58" stroke-width="12">
+      <path d="M58 0h58v38h40v58h-40v58H58v-40H0V56h58z" fill="#fff"/>
+      <rect x="6" y="62" width="46" height="46" rx="7" fill="#ff4f9b" stroke="none"/>
+    </g>
+    <g transform="translate(198 54) rotate(10 60 72)">
+      <rect x="0" y="0" width="126" height="150" rx="24" fill="#f8ffff" stroke="#55d9e5" stroke-width="13"/>
+      <g fill="#a9e2ef">
+        <circle cx="31" cy="34" r="10"/><circle cx="74" cy="34" r="10"/>
+        <circle cx="31" cy="76" r="10"/><circle cx="74" cy="76" r="10"/>
+        <circle cx="31" cy="118" r="10"/><circle cx="74" cy="118" r="10"/>
+      </g>
+      <path d="M31 34 94 34 64 76 104 118" stroke="#ff3f92" stroke-width="12" stroke-linecap="round"/>
+      <g fill="#fff" stroke="#ff3f92" stroke-width="8">
+        <circle cx="31" cy="34" r="13"/><circle cx="94" cy="34" r="13"/>
+        <circle cx="64" cy="76" r="13"/><circle cx="104" cy="118" r="13"/>
+      </g>
+    </g>
+    <g transform="translate(78 78) rotate(-5 105 78)">
+      <rect width="210" height="156" rx="28" fill="#244f58" stroke="#fff" stroke-width="9"/>
+      <g font-family="Poppins,Arial,sans-serif" font-size="28" font-weight="900" text-anchor="middle" fill="#244f58">
+        <g transform="translate(17 16)">
+          <rect width="40" height="40" rx="9" fill="#ff77b2"/><text x="20" y="29">W</text>
+          <rect x="46" width="40" height="40" rx="9" fill="#fff"/><text x="66" y="29">O</text>
+          <rect x="92" width="40" height="40" rx="9" fill="#fff"/><text x="112" y="29">R</text>
+          <rect x="138" width="40" height="40" rx="9" fill="#fff"/><text x="158" y="29">D</text>
+          <rect y="48" width="40" height="40" rx="9" fill="#fff"/><text x="20" y="77">P</text>
+          <rect x="46" y="48" width="40" height="40" rx="9" fill="#fff"/><text x="66" y="77">U</text>
+          <rect x="92" y="48" width="40" height="40" rx="9" fill="#55d9e5"/><text x="112" y="77">Z</text>
+          <rect x="138" y="48" width="40" height="40" rx="9" fill="#fff"/><text x="158" y="77">Z</text>
+          <rect y="96" width="40" height="40" rx="9" fill="#fff"/><text x="20" y="125">L</text>
+          <rect x="46" y="96" width="40" height="40" rx="9" fill="#fff"/><text x="66" y="125">E</text>
+          <rect x="92" y="96" width="40" height="40" rx="9" fill="#fff"/><text x="112" y="125">S</text>
+          <rect x="138" y="96" width="40" height="40" rx="9" fill="#ff77b2"/><text x="158" y="125">S</text>
+        </g>
+      </g>
+    </g>
+  </g>
+  <text x="180" y="286" text-anchor="middle" font-family="Poppins,Arial,sans-serif" font-size="44" font-weight="900" letter-spacing="2" fill="#244f58">PUZZLES</text>
+</svg>
