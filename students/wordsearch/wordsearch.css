@@ -691,3 +691,9 @@ body.system-kb-open .crossword-stage{
   .mix-card{min-height:82px;padding:10px;border-radius:15px}
   .grid-size-control{justify-content:space-between}
 }
+
+.app-rev{
+  position:fixed;right:8px;bottom:6px;z-index:5;
+  font-size:9px;line-height:1;color:#9bb0b4;font-weight:700;letter-spacing:.04em;
+  opacity:.72;pointer-events:none;user-select:none
+}
