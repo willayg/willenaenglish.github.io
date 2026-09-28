@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="./styles.css?v=1.3.3-teachers">
+<link rel="stylesheet" href="./styles.css?v=1.3.4-teachers">
 <link rel="stylesheet" href="./print-fixes.css?v=1.0.6-teachers">
 </head>
 <body>
@@ -24,6 +24,18 @@
     <section class="panel filter-panel">
       <div class="panel-title-row"><h2>영역 선택</h2><small>클릭해서 포함 / 제외</small></div>
       <div id="skillFilters" class="skill-filters"><div class="empty-small">영역을 불러오는 중…</div></div>
+    </section>
+    <section class="panel detail-filter-panel">
+      <div class="panel-title-row"><h2>세부 필터</h2><button id="clearDetailFilters" class="filter-reset" type="button">초기화</button></div>
+      <label class="filter-field">
+        <span>Lesson</span>
+        <select id="lessonFilter"><option value="all">전체 Lesson</option></select>
+      </label>
+      <label class="filter-field">
+        <span>Grammar Point</span>
+        <select id="grammarPointFilter"><option value="all">전체 Grammar Point</option></select>
+      </label>
+      <p class="filter-help">Lesson은 모든 영역에 적용되고, Grammar Point를 고르면 해당 문법 문제만 표시합니다.</p>
     </section>
     <section class="panel settings">
       <h2>프린트 설정</h2>
@@ -45,7 +57,7 @@
 </main>
 <script src="/students/api-gateway.js?v=2.13b"></script>
 <script src="/js/api-config.js?v=2.13b"></script>
-<script src="./app.js?v=1.4.6-teachers"></script>
+<script src="./app.js?v=1.4.7-teachers"></script>
 <script src="./pdf-download.js?v=1.1.8-teachers"></script>
 </body>
 </html>
