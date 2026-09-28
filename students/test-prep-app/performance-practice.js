@@ -47,21 +47,9 @@ function addStyles(){
 }
 
 async function primaryGet(path){
- try{await window.WillenaTestPrepAuth?.ready}catch(_){}
- let t=token();
- if(!t){
-   try{await window.WillenaTestPrepAuth?.refreshStats?.()}catch(_){}
-   t=token();
- }
- if(!t)throw new Error('로그인이 필요합니다.');
- let r=await fetch(PRIMARY+path,{headers:{apikey:PRIMARY_KEY,Authorization:`Bearer ${t}`},cache:'no-store'});
- if(r.status===401){
-   try{await window.WillenaTestPrepAuth?.refreshStats?.()}catch(_){}
-   t=token();
-   if(t)r=await fetch(PRIMARY+path,{headers:{apikey:PRIMARY_KEY,Authorization:`Bearer ${t}`},cache:'no-store'});
- }
- if(!r.ok)throw new Error(await r.text());
- return r.json();
+ const t=token();if(!t)throw new Error('로그인이 필요합니다.');
+ const r=await fetch(PRIMARY+path,{headers:{apikey:PRIMARY_KEY,Authorization:`Bearer ${t}`},cache:'no-store'});
+ if(!r.ok)throw new Error(await r.text());return r.json();
 }
 async function contentGet(path){
  const r=await fetch(CONTENT+path,{headers:{apikey:CONTENT_KEY,Authorization:`Bearer ${CONTENT_KEY}`},cache:'no-store'});
@@ -70,16 +58,10 @@ async function contentGet(path){
 
 async function loadAssignments(){
  try{
-  await window.WillenaTestPrepAuth?.ready;
   const rows=await primaryGet('/rest/v1/student_performance_assessments?select=id,student_id,plan_id,content_assessment_id,book_key,unit_key,title,due_date,status,metadata&status=eq.active&order=due_date.asc.nullslast');
   assignments=Array.isArray(rows)?rows:[];
   if(lastLessonArgs)decorateLesson(...lastLessonArgs);
-  return assignments;
- }catch(e){
-  console.warn('[performance] assignment load failed',e);
-  assignments=[];
-  return assignments;
- }
+ }catch(e){console.warn('[performance] assignment load failed',e);assignments=[]}
 }
 function assignmentFor(planId,lesson){return assignments.find(a=>String(a.plan_id)===String(planId)&&String(a.unit_key||'')===String(lesson||''))||null}
 function masteredCount(assessmentId,items){return items.reduce((n,it)=>n+(getProgress(assessmentId,it.id).mastered?1:0),0)}
@@ -158,12 +140,7 @@ function renderWrite(item,box,fb,stage,isFinal){
 }
 
 async function startPerformance(planId,lesson){
- let a=assignmentFor(planId,lesson);
- if(!a){await loadAssignments();a=assignmentFor(planId,lesson)}
- if(!a){alert('이 Lesson에 지정된 수행평가가 없습니다.');return}
- if(String(a?.metadata?.launch_mode||'').toLowerCase()==='sentence_unscramble'&&window.WillenaAssignedTestPrep?.startAssessment){
-   return window.WillenaAssignedTestPrep.startAssessment(a.content_assessment_id,{planId,lesson,returnTo:'lesson'});
- }
+ const a=assignmentFor(planId,lesson);if(!a){alert('이 Lesson에 지정된 수행평가가 없습니다.');return}
  addStyles();showPane();shell().innerHTML='<div class="tp-pa-shell"><div class="tp-pa-panel">수행평가를 불러오는 중...</div></div>';
  try{const data=await loadAssessment(a);current={planId:String(planId),lesson:String(lesson),data};window.WillenaTestPrepAuth?.setActivePlan?.(window.WillenaTestPrepAuth.state.plans.find(p=>String(p.id)===String(planId)),lesson);overview()}catch(e){console.error('[performance] load failed',e);shell().innerHTML=`<div class="tp-pa-shell"><div class="tp-pa-panel">${esc(e.message||'수행평가를 불러오지 못했습니다.')}<div class="tp-pa-actions"><button class="tp-pa-btn primary" id="tpPaClose">돌아가기</button></div></div></div>`;document.getElementById('tpPaClose').onclick=leave}
 }
