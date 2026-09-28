@@ -96,3 +96,14 @@
 .gf-challenge-choices{margin:7px 0 0;padding-left:22px;font-size:.62rem;line-height:1.5}
 .gf-challenge-answer{display:flex;gap:12px;flex-wrap:wrap;margin-top:7px;padding-top:7px;border-top:1px solid #eef1f2;font-size:.6rem;color:#65737a}
 .gf-challenge-no-detail{margin:8px 0 2px;padding:9px 10px;border-radius:10px;background:#f5f6f7;color:#7f898e;font-size:.61rem}
+
+.gf-challenge-results{display:grid;gap:8px}
+.gf-challenge-result{background:#fff;border:1.5px solid #d6e7ea;border-radius:14px;overflow:hidden}
+.gf-challenge-result>summary{list-style:none;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 12px;cursor:pointer}
+.gf-challenge-result>summary::-webkit-details-marker{display:none}
+.gf-challenge-result>summary div{display:flex;flex-direction:column;gap:2px}
+.gf-challenge-result>summary b{font-size:.72rem}
+.gf-challenge-result>summary span{font-size:.58rem;color:var(--muted)}
+.gf-challenge-result>summary strong{font-size:.76rem;color:#287b85}
+.gf-challenge-result[open]>summary{background:#f8fcfd;border-bottom:1px solid #edf2f4}
+.gf-challenge-result-body{padding:9px 10px 11px}
