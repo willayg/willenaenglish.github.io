@@ -595,8 +595,11 @@ function renderMixMatch(pool){
     {pair:i,type:'ko',text:p.ko}
   ]));
   mixMatchGrid.innerHTML=cards.map(card=>
-    '<button type="button" class="mix-card '+card.type+'" data-pair="'+card.pair+'" data-side="'+card.type+'" role="gridcell">'+
-      '<span>'+escapeHtml(card.text)+'</span>'+
+    '<button type="button" class="mix-card '+card.type+'" data-pair="'+card.pair+'" data-side="'+card.type+'" role="gridcell" aria-label="Hidden match card" aria-pressed="false">'+
+      '<span class="mix-card-inner">'+
+        '<span class="mix-card-face mix-card-back" aria-hidden="true"><span class="mix-card-mark">?</span></span>'+
+        '<span class="mix-card-face mix-card-front"><span>'+escapeHtml(card.text)+'</span></span>'+
+      '</span>'+
     '</button>'
   ).join('');
   updateProgress();
@@ -604,7 +607,9 @@ function renderMixMatch(pool){
 
 async function chooseMatchCard(card){
   if(state.mode!=='mixmatch'||state.matchLocked||card.classList.contains('matched')||card===state.matchFirst)return;
-  card.classList.add('selected');
+  card.classList.add('selected','flipped');
+  card.setAttribute('aria-pressed','true');
+  card.setAttribute('aria-label',txt(card.querySelector('.mix-card-front')?.textContent)||'Revealed match card');
   if(!state.matchFirst){state.matchFirst=card;return}
 
   const first=state.matchFirst;
@@ -612,7 +617,8 @@ async function chooseMatchCard(card){
   if(first.dataset.pair===card.dataset.pair&&first.dataset.side!==card.dataset.side){
     const index=Number(card.dataset.pair);
     first.classList.remove('selected');card.classList.remove('selected');
-    first.classList.add('matched');card.classList.add('matched');
+    first.classList.add('matched','flipped');card.classList.add('matched','flipped');
+    first.setAttribute('aria-pressed','true');card.setAttribute('aria-pressed','true');
     state.found.add(index);
     updateProgress();
     playStudentSfx('correct');
@@ -625,10 +631,14 @@ async function chooseMatchCard(card){
   playStudentSfx('wrong');
   first.classList.add('wrong');card.classList.add('wrong');
   setTimeout(()=>{
-    first.classList.remove('selected','wrong');
-    card.classList.remove('selected','wrong');
+    first.classList.remove('selected','wrong','flipped');
+    card.classList.remove('selected','wrong','flipped');
+    first.setAttribute('aria-pressed','false');
+    card.setAttribute('aria-pressed','false');
+    first.setAttribute('aria-label','Hidden match card');
+    card.setAttribute('aria-label','Hidden match card');
     state.matchLocked=false;
-  },650);
+  },850);
 }
 
 function renderPuzzle(){
@@ -1058,7 +1068,7 @@ function restoreModeSnapshot(mode){
   if(snap.crosswordCols)crosswordGridEl.style.setProperty('--cw-cols',snap.crosswordCols);
   if(mixMatchGrid)mixMatchGrid.innerHTML=snap.mixHtml||'';
 
-  state.matchFirst=state.mode==='mixmatch'?mixMatchGrid?.querySelector('.mix-card.selected')||null:null;
+  state.matchFirst=state.mode==='mixmatch'?mixMatchGrid?.querySelector('.mix-card.selected.flipped')||null:null;
   document.querySelectorAll('[data-grid-size]').forEach(btn=>{
     btn.classList.toggle('active',Number(btn.dataset.gridSize)===state.gridSize);
   });
