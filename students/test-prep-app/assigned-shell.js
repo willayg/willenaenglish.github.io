@@ -8,7 +8,7 @@ function addScript(src,dataKey){if(document.querySelector(`script[${dataKey}]`))
 addScript('./tracking-phase1.js?v=20260827-phase10','data-testprep-phase1-tracking');
 addScript('./vocab-practice.js?v=20260827-vocab9','data-testprep-vocab-practice');
 addScript('./vocab-test-practice.js?v=20260827-vocabtest3','data-testprep-vocab-test-practice');
-// sentence-practice.js is loaded directly by index.html to avoid launch races.
+addScript('./sentence-practice.js?v=20260827-sentence8','data-testprep-sentence-practice');
 
 const esc=s=>String(s??'').replace(/[&<>\"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot',"'":'&#39;'}[c]));
 
@@ -169,36 +169,8 @@ function showBack(plan){let back=document.getElementById('assignedBackRow');if(!
 function leavePractice(){const old=selection;restorePractice();quiz.style.display='none';home.style.display='block';if(old?.reviewMode&&window.WillenaTestPrepUX?.showWrongCenter){window.WillenaTestPrepUX.showWrongCenter();return}if(old?.plan&&old?.lesson&&window.WillenaTestPrepUX?.returnFromPractice){window.WillenaTestPrepUX.returnFromPractice(old);return}if(old?.plan&&old?.lesson&&window.WillenaTestPrepUX?.renderLesson){window.WillenaTestPrepUX.renderLesson(old.plan.id,old.lesson,old.section);return}window.WillenaTestPrepUX?.renderHome?.()}
 async function start(btn){const state=window.WillenaTestPrepAuth.state,plan=state.plans.find(p=>String(p.id)===String(btn.dataset.plan));if(!plan)return;btn.classList.add('loading');try{const ids=await resolveIds(plan,btn.dataset.lesson),opts=btn.__reviewOptions||{};selection={plan,lesson:btn.dataset.lesson,section:String(btn.dataset.section||'communication').toLowerCase(),...ids,reviewMode:!!opts.reviewMode,reviewIds:Array.isArray(opts.reviewIds)?opts.reviewIds.map(String):[]};home.style.display='none';quiz.style.display='block';window.WillenaTestPrepAuth.setActivePlan(plan,selection.lesson);const back=showBack(plan);if(selection.section==='vocabulary'){window.WillenaVocabTestPractice?.restore?.();window.WillenaSentencePractice?.restore?.();back.querySelector('button').onclick=leavePractice;const mod=await waitFor('WillenaVocabPractice');await mod.start({quiz,unitId:selection.unitId,lesson:selection.lesson,bookLabel:plan.book_label,onlyIds:selection.reviewIds,reviewMode:selection.reviewMode});return}if(selection.section==='vocab_test'){window.WillenaVocabPractice?.restore?.();window.WillenaSentencePractice?.restore?.();back.querySelector('button').onclick=leavePractice;const mod=await waitFor('WillenaVocabTestPractice');await mod.start({quiz,unitId:selection.unitId,lesson:selection.lesson,bookLabel:plan.book_label,onlyIds:selection.reviewIds,reviewMode:selection.reviewMode});return}if(selection.section==='sentences'){window.WillenaVocabPractice?.restore?.();window.WillenaVocabTestPractice?.restore?.();back.querySelector('button').onclick=leavePractice;const mod=await waitFor('WillenaSentencePractice');await mod.start({quiz,unitId:selection.unitId,lesson:selection.lesson,bookLabel:plan.book_label,onlyIds:selection.reviewIds,reviewMode:selection.reviewMode});return}restorePractice();window.WillenaTestPrepAuth.beginStudyActivity?.();back.querySelector('button').onclick=async()=>{try{await window.WillenaTestPrepAuth.completeSession(0,0,[])}catch(_){}leavePractice()};const engine=window.WillenaTestPrepQuestionEngine;if(!engine?.loadSection)throw new Error('Question engine did not load.');await engine.loadSection(selection.section)}catch(e){console.error('[test-prep] activity start failed',e);alert(e.message||'시험 범위를 불러오지 못했습니다.');quiz.style.display='none';home.style.display='block';if(selection?.reviewMode&&window.WillenaTestPrepUX?.showWrongCenter)window.WillenaTestPrepUX.showWrongCenter();else if(window.WillenaTestPrepUX?.renderHome)window.WillenaTestPrepUX.renderHome()}finally{btn.classList.remove('loading')}}
 async function startSelection(planId,lesson,section,opts={}){const b=document.createElement('button');b.dataset.plan=String(planId);b.dataset.lesson=String(lesson);b.dataset.section=String(section);b.__reviewOptions=opts;return start(b)}
-async function startAssessment(assessmentId,opts={}){
-  const id=String(assessmentId||'').trim();if(!id)return;
-  const sets=await contentGet(`/rest/v1/performance_assessment_sets?select=id,title,book_id,unit_id,status&id=eq.${encodeURIComponent(id)}&status=eq.active&limit=1`);
-  const set=sets?.[0];if(!set)throw new Error('수행평가를 찾지 못했습니다.');
-  const plan=(window.WillenaTestPrepAuth?.state?.plans||[]).find(p=>String(p.id)===String(opts.planId))||null;
-  const lesson=opts.lesson||set.title||'수행평가';
-  selection={plan,lesson,section:'sentences',assessmentId:id,bookId:set.book_id||'',unitId:set.unit_id||'',reviewMode:false,reviewIds:[],assessmentMode:true,returnTo:opts.returnTo||'home'};
-  home.style.display='none';quiz.style.display='block';
-  if(plan)window.WillenaTestPrepAuth?.setActivePlan?.(plan,lesson);
-  try{history.pushState({tp:'practice',planId:plan?.id||'',lesson,skill:'assessment',returnTo:selection.returnTo,assessmentId:id},'',location.href)}catch(_){}
-  const back=showBack({book_label:plan?.book_label||'수행평가'});
-  back.querySelector('button').onclick=()=>{
-    restorePractice();quiz.style.display='none';home.style.display='block';
-    if(selection.returnTo==='lesson'&&plan?.id&&lesson)window.WillenaTestPrepUX?.renderLesson?.(plan.id,lesson,'assessment');
-    else window.WillenaTestPrepUX?.renderHome?.();
-  };
-  const mod=await waitFor('WillenaSentencePractice');
-  await mod.start({quiz,assessmentId:id,lesson,bookLabel:plan?.book_label||'수행평가'});
-}
 function questionQuery(){if(!selection)return'';let q=`&book_id=eq.${encodeURIComponent(selection.bookId)}&unit_id=eq.${encodeURIComponent(selection.unitId)}`;if(selection.reviewIds?.length&&!['vocabulary','vocab_test','sentences'].includes(selection.section))q+=`&id=in.${encodeURIComponent('('+selection.reviewIds.join(',')+')')}`;return q}
-function init(){
-  installDebugPanel();
-  const qs=new URLSearchParams(location.search),assessmentId=qs.get('assessment'),mode=String(qs.get('mode')||'').toLowerCase();
-  if(assessmentId&&(!mode||mode==='unscramble'||mode==='sentence'||mode==='sentences')){
-    renderHome();
-    startAssessment(assessmentId).catch(e=>{console.error('[test-prep] assessment start failed',e);alert(e.message||'수행평가를 열지 못했습니다.');renderHome()});
-    return;
-  }
-  const s=history.state||{};if(window.__WillenaLessonColdBoot||s.tp==='lesson'||s.tpLessonRecovery)return;renderHome()
-}
+function init(){installDebugPanel();const s=history.state||{};if(window.__WillenaLessonColdBoot||s.tp==='lesson'||s.tpLessonRecovery)return;renderHome()}
 window.addEventListener('testprep:review-group-complete',()=>{restorePractice()});
-window.WillenaAssignedTestPrep={init,renderHome,startSelection,startAssessment,questionQuery,showHomeSurface,get selection(){return selection}};
+window.WillenaAssignedTestPrep={init,renderHome,startSelection,questionQuery,showHomeSurface,get selection(){return selection}};
 })();
