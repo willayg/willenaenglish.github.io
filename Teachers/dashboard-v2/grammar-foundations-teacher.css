@@ -107,3 +107,10 @@
 .gf-challenge-result>summary strong{font-size:.76rem;color:#287b85}
 .gf-challenge-result[open]>summary{background:#f8fcfd;border-bottom:1px solid #edf2f4}
 .gf-challenge-result-body{padding:9px 10px 11px}
+
+.gf-detail-challenge-wrap{margin-top:8px;border:1px dashed #d7dfe2;border-radius:12px;background:#fff;overflow:hidden}
+.gf-detail-challenge-wrap.passed{border-color:#a8d9bb;background:#f7fcf8}
+.gf-detail-challenge-wrap>summary{list-style:none;cursor:pointer}
+.gf-detail-challenge-wrap>summary::-webkit-details-marker{display:none}
+.gf-detail-challenge-wrap[open]>.gf-detail-challenge{border-bottom:1px solid #e7eeea;border-radius:0}
+.gf-detail-challenge-questions{padding:8px 10px 10px}
