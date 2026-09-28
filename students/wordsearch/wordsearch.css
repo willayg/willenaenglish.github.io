@@ -650,3 +650,7 @@ body.system-kb-open .crossword-stage{
   position:relative;
   z-index:60;
 }
+
+.boggle-mini-board.zigzag-demo circle{stroke:#7e67d8}
+.boggle-mini-board .guide-zigzag{stroke:#7e67d8}
+.boggle-mini-board marker#boggleArrowZigzag .arrow-head{fill:#7e67d8}
