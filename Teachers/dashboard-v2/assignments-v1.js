@@ -373,7 +373,7 @@
 
     const workloadSummary=$('#assignmentWorkloadSummary',panel);
     const reshuffle=$('#assignmentReshuffleBtn',panel);
-    const editModes=()=>$('.assignment-edit-modes input:checked',panel).map(input=>input.value);
+    const editModes=()=>$$('.assignment-edit-modes input:checked',panel).map(input=>input.value);
     const editWorkload=()=>$('input[name="assignmentWorkload"]:checked',panel)?.value||'all';
     const renderWorkload=({reshuffleSplit=false}={})=>{
       const modes=editModes();
@@ -396,8 +396,8 @@
         return '<span><b>'+esc(labels[mode]||mode)+'</b> '+count+' words'+(mode==='quiz'?' · '+(count*2)+' questions':'')+'</span>';
       }).join('');
     };
-    $('.assignment-edit-modes input',panel).forEach(input=>input.addEventListener('change',()=>renderWorkload({reshuffleSplit:true})));
-    $('input[name="assignmentWorkload"]',panel).forEach(input=>input.addEventListener('change',()=>renderWorkload({reshuffleSplit:input.value==='split'})));
+    $$('.assignment-edit-modes input',panel).forEach(input=>input.addEventListener('change',()=>renderWorkload({reshuffleSplit:true})));
+    $$('input[name="assignmentWorkload"]',panel).forEach(input=>input.addEventListener('change',()=>renderWorkload({reshuffleSplit:input.value==='split'})));
     reshuffle?.addEventListener('click',()=>{
       const anyStarted=Array.isArray(state.progress?.students)&&state.progress.students.some(student=>
         Object.values(student?.modes||{}).some(mode=>Number(mode?.attempts)>0||Number(mode?.clean)>0)
@@ -407,7 +407,7 @@
     });
     renderWorkload();
 
-    $('input[name="assignmentTargetScope"]',panel).forEach(input=>input.addEventListener('change',()=>{
+    $$('input[name="assignmentTargetScope"]',panel).forEach(input=>input.addEventListener('change',()=>{
       const studentMode=$('input[name="assignmentTargetScope"]:checked',panel)?.value==='students';
       picker.hidden=!studentMode;
     }));
@@ -416,7 +416,7 @@
       e.preventDefault();
       const title=$('#assignmentEditTitle',panel)?.value.trim()||'';
       const dueAt=dueAtFromDate($('#assignmentEditDue',panel)?.value||'');
-      const modes=$('.assignment-edit-modes input:checked',panel).map(input=>input.value);
+      const modes=$$('.assignment-edit-modes input:checked',panel).map(input=>input.value);
       const workload=editWorkload();
       if(workload==='split')renderWorkload();
       const scope=$('input[name="assignmentTargetScope"]:checked',panel)?.value||'class';
