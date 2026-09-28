@@ -593,8 +593,7 @@ function renderMixMatch(pool){
   state.gimmes.clear();
   state.matchFirst=null;
   state.matchLocked=false;
-  const deckStyles=['puzzle-block','maze-tile','pixel-badge'];
-  state.matchDeckStyle=deckStyles[Date.now()%deckStyles.length];
+  state.matchDeckStyle='diamond-block';
   mixMatchGrid.dataset.deckStyle=state.matchDeckStyle;
   state.sessionId=crypto.randomUUID?.()||('mixmatch-'+Date.now());
   state.startedAt=new Date().toISOString();
@@ -606,7 +605,7 @@ function renderMixMatch(pool){
   mixMatchGrid.innerHTML=cards.map(card=>
     '<button type="button" class="mix-card '+card.type+'" data-pair="'+card.pair+'" data-side="'+card.type+'" role="gridcell" aria-label="Hidden match card" aria-pressed="false">'+
       '<span class="mix-card-inner">'+
-        '<span class="mix-card-face mix-card-back" aria-hidden="true"><span class="mix-card-mark">?</span></span>'+
+        '<span class="mix-card-face mix-card-back" aria-hidden="true"><span class="mix-card-mark"><i></i><i></i><i></i><i></i></span></span>'+
         '<span class="mix-card-face mix-card-front"><span>'+escapeHtml(card.text)+'</span></span>'+
       '</span>'+
     '</button>'
