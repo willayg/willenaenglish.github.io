@@ -902,23 +902,36 @@ function markGameHelpSeen(mode=state.mode){
   try{localStorage.setItem(gameHelpSeenKey(mode),'1')}catch(_){}
 }
 function openGameHelp({mode=state.mode,markSeen=true}={}){
-  if(!gameHelpDialog)return;
+  const dialog=$('gameHelpDialog');
+  if(!dialog)return;
   if(markSeen)markGameHelpSeen(mode);
 
-  gameHelpDialog.querySelectorAll('[data-help-mode]').forEach(panel=>{
+  dialog.querySelectorAll('[data-help-mode]').forEach(panel=>{
     panel.hidden=panel.dataset.helpMode!==mode;
   });
   const kicker=$('gameHelpKicker');
   if(kicker)kicker.textContent=mode==='crossword'?'CROSSWORD':(mode==='boggle'?'BOGGLE':'WORD SEARCH');
 
-  if(typeof gameHelpDialog.showModal==='function'){
-    if(!gameHelpDialog.open)gameHelpDialog.showModal();
-  }else gameHelpDialog.setAttribute('open','');
+  try{
+    if(typeof dialog.showModal==='function'){
+      if(!dialog.open)dialog.showModal();
+    }else{
+      dialog.setAttribute('open','');
+    }
+  }catch(error){
+    console.warn('[Word Games] help dialog fallback',error);
+    dialog.setAttribute('open','');
+  }
 }
 function closeGameHelp(){
-  if(!gameHelpDialog)return;
-  if(typeof gameHelpDialog.close==='function'&&gameHelpDialog.open)gameHelpDialog.close();
-  else gameHelpDialog.removeAttribute('open');
+  const dialog=$('gameHelpDialog');
+  if(!dialog)return;
+  try{
+    if(typeof dialog.close==='function'&&dialog.open)dialog.close();
+    else dialog.removeAttribute('open');
+  }catch(_){
+    dialog.removeAttribute('open');
+  }
 }
 function maybeShowFirstGameHelp(mode=state.mode){
   let seen=false;
@@ -1380,9 +1393,19 @@ document.querySelectorAll('.puzzle-tab').forEach(btn=>btn.addEventListener('clic
   setModeUI();
   buildPuzzle();
 }));
-gameHelpBtn?.addEventListener('click',()=>openGameHelp({mode:state.mode,markSeen:true}));
-$('gameHelpCloseBtn')?.addEventListener('click',closeGameHelp);
-$('gameHelpGotItBtn')?.addEventListener('click',closeGameHelp);
+document.addEventListener('click',e=>{
+  const help=e.target.closest?.('#gameHelpBtn');
+  if(help){
+    e.preventDefault();
+    e.stopPropagation();
+    openGameHelp({mode:state.mode,markSeen:true});
+    return;
+  }
+  if(e.target.closest?.('#gameHelpCloseBtn,#gameHelpGotItBtn')){
+    e.preventDefault();
+    closeGameHelp();
+  }
+});
 gameHelpDialog?.addEventListener('click',e=>{if(e.target===gameHelpDialog)closeGameHelp()});
 $('newPuzzleBtn').addEventListener('click',()=>{if(state.ready)buildPuzzle()});
 $('retryBtn').addEventListener('click',()=>{if(state.ready)buildPuzzle()});
