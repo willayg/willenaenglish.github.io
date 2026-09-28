@@ -24,7 +24,7 @@ let challengeProgressMap=new Map();
 const challengeAvailability=new Map();
 let state={group:null,module:null,stage:null,index:0,score:0,renderer:null,checked:false,results:[],resultSaved:false};
 let challengeState={module:null,questions:[],index:0,score:0,renderer:null,checked:false,results:[],resultSaved:false,poolMeta:null};
-let reviewerUnlock=false;
+const reviewerUnlock=new URLSearchParams(window.location.search).get('unlock')==='all';
 let nav=null;
 const sessionStore=createStudentSessionResume({appId:'grammar-foundations'});
 sessionStore.installBeforeUnload();
@@ -397,7 +397,7 @@ function renderRoute(route,meta={}){
 installWillenaKeyboard({submitSelector:'#bottom button'});
 startStudentHeaderData();
 subscribeStudentHeaderData(data=>{
-  const name=data.name||'Student';reviewerUnlock=String(data.username||name).trim().toLowerCase()==='c';if(nameEl)nameEl.textContent=name;
+  const name=data.name||'Student';if(nameEl)nameEl.textContent=name;
   if(pointsEl)pointsEl.textContent=typeof data.points==='number'?data.points.toLocaleString():'—';
   if(starsEl)starsEl.textContent=typeof data.stars==='number'?data.stars.toLocaleString():'—';
   if(avatarEl)avatarEl.textContent=data.avatar||name.charAt(0).toUpperCase()||'S';
