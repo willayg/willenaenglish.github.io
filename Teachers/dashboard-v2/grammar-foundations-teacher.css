@@ -84,3 +84,15 @@
 @media(max-width:700px){#view-grammar-foundations .gf-teacher-copy p{font-size:.7rem}#view-grammar-foundations .gf-teacher-list{max-height:none}#view-grammar-foundations .gf-teacher-row{grid-template-columns:minmax(120px,1.35fr) .9fr .78fr 18px;gap:8px;padding:12px}#view-grammar-foundations .gf-teacher-name{font-size:.86rem}#view-grammar-foundations .gf-teacher-stat strong{font-size:.9rem}#view-grammar-foundations .gf-teacher-stat span{font-size:.59rem}.mobile-tab[data-view="grammar-foundations"] b{color:#f58db3}.gf-teacher-drawer{width:100vw}.gf-teacher-drawer-body{padding:10px}.gf-detail-summary{grid-template-columns:1fr}.gf-detail-section-title{align-items:flex-start;flex-direction:column;gap:3px}.gf-detail-level{grid-template-columns:26px 1fr}.gf-detail-state{grid-column:2;justify-self:start}.gf-detail-run{grid-template-columns:1fr 55px}.gf-detail-run small{grid-column:1 / -1;text-align:left}.gf-detail-challenge{align-items:flex-start;flex-direction:column}}
 
 .gf-detail-challenge-badge{display:inline-flex!important;margin-top:5px;padding:3px 7px;border-radius:999px;font-size:.54rem!important;font-weight:800;background:#fff4df;color:#9a611e!important;white-space:nowrap}.gf-detail-challenge-badge.passed{background:#eaf8ef;color:#2d8052!important}
+
+.gf-challenge-question-list{margin:8px 0 2px;display:grid;gap:8px}
+.gf-challenge-question{background:#fff;border:1px solid #e3e8eb;border-radius:12px;padding:10px 11px}
+.gf-challenge-question.correct{border-left:4px solid #72bc8c}
+.gf-challenge-question.wrong{border-left:4px solid #e18a93}
+.gf-challenge-question-head{display:flex;justify-content:space-between;gap:10px;margin-bottom:6px;font-size:.64rem}
+.gf-challenge-question-head span{font-weight:800;color:#647177}
+.gf-challenge-prompt{font-size:.72rem;font-weight:800;line-height:1.45}
+.gf-challenge-context{margin-top:6px;padding:7px 8px;background:#f7f9fa;border-radius:8px;font-size:.64rem;line-height:1.45;white-space:pre-wrap}
+.gf-challenge-choices{margin:7px 0 0;padding-left:22px;font-size:.62rem;line-height:1.5}
+.gf-challenge-answer{display:flex;gap:12px;flex-wrap:wrap;margin-top:7px;padding-top:7px;border-top:1px solid #eef1f2;font-size:.6rem;color:#65737a}
+.gf-challenge-no-detail{margin:8px 0 2px;padding:9px 10px;border-radius:10px;background:#f5f6f7;color:#7f898e;font-size:.61rem}
