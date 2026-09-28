@@ -114,3 +114,24 @@
 .gf-detail-challenge-wrap>summary::-webkit-details-marker{display:none}
 .gf-detail-challenge-wrap[open]>.gf-detail-challenge{border-bottom:1px solid #e7eeea;border-radius:0}
 .gf-detail-challenge-questions{padding:8px 10px 10px}
+
+.gf-detail-tabs{display:flex;gap:8px;margin:4px 0 14px;padding:4px;background:#eef4f5;border:1px solid #d7e8ea;border-radius:14px}
+.gf-detail-tab{flex:1;min-height:40px;border:0;border-radius:10px;background:transparent;color:#617178;font:800 .72rem/1 Poppins,sans-serif;cursor:pointer}
+.gf-detail-tab.active{background:#fff;color:#2f5960;box-shadow:0 1px 4px rgba(40,80,90,.08)}
+.gf-detail-tabpanel[hidden]{display:none!important}
+.gf-challenge-cards{display:grid;gap:10px}
+.gf-challenge-card{background:#fff;border:1.5px solid #d8e5e7;border-radius:15px;overflow:hidden}
+.gf-challenge-card.passed{border-color:#b9dfc6}
+.gf-challenge-card-head{width:100%;border:0;background:#fff;display:grid;grid-template-columns:1fr auto 20px;align-items:center;gap:12px;padding:13px 14px;text-align:left;color:inherit;cursor:pointer}
+.gf-challenge-card.open .gf-challenge-card-head{background:#f8fcf9;border-bottom:1px solid #e6eeea}
+.gf-challenge-card-copy{min-width:0}
+.gf-challenge-card-copy .gf-challenge-step{display:block;font-size:.52rem;font-weight:900;letter-spacing:.08em;color:#8ba0a5}
+.gf-challenge-card-copy b{display:block;margin-top:3px;font-size:.8rem}
+.gf-challenge-card-copy small{display:block;margin-top:2px;font-size:.59rem;color:var(--muted)}
+.gf-challenge-card-score{text-align:right}
+.gf-challenge-card-score strong{display:block;font-size:.9rem;color:#2f7e87}
+.gf-challenge-card-score span{display:block;margin-top:2px;font-size:.56rem;font-weight:800;color:#45825d}
+.gf-challenge-card-score small{display:block;margin-top:2px;font-size:.53rem;color:#8a969a}
+.gf-challenge-card-chevron{font-size:1.25rem;color:#87a3a9;transition:transform .15s ease}
+.gf-challenge-card.open .gf-challenge-card-chevron{transform:rotate(90deg)}
+.gf-challenge-card-detail{padding:10px 12px 12px;background:#fbfcfd}
