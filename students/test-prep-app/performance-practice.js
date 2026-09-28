@@ -140,7 +140,9 @@ function renderWrite(item,box,fb,stage,isFinal){
 }
 
 async function startPerformance(planId,lesson){
- const a=assignmentFor(planId,lesson);if(!a){alert('이 Lesson에 지정된 수행평가가 없습니다.');return}
+ let a=assignmentFor(planId,lesson);
+ if(!a){await loadAssignments();a=assignmentFor(planId,lesson)}
+ if(!a){alert('이 Lesson에 지정된 수행평가가 없습니다.');return}
  if(String(a?.metadata?.launch_mode||'').toLowerCase()==='sentence_unscramble'&&window.WillenaAssignedTestPrep?.startAssessment){
    return window.WillenaAssignedTestPrep.startAssessment(a.content_assessment_id,{planId,lesson,returnTo:'lesson'});
  }
