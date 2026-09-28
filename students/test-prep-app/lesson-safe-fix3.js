@@ -19,6 +19,29 @@ const clamp=n=>Math.max(0,Math.min(100,Math.round(Number(n)||0)));
 const summaryCache=new Map();
 function state(){return window.WillenaTestPrepAuth&&window.WillenaTestPrepAuth.state}
 function findPlan(id){return ((state()&&state().plans)||[]).find(p=>String(p.id)===String(id))||null}
+function currentStudentName(){
+ const u=state()?.user||{};
+ return String(u.name||u.english_name||u.username||'').trim();
+}
+async function lessonAssessment(plan,l){
+ const student=currentStudentName(),unitId=String(l?.unit_id||'').trim();
+ if(!student||!unitId)return null;
+ const q=CONTENT+'/rest/v1/performance_assessment_sets?select=id,title,item_count,unit_id,metadata&status=eq.active&unit_id=eq.'+encodeURIComponent(unitId)+'&metadata-%3E%3Estudent_name=eq.'+encodeURIComponent(student)+'&limit=1';
+ const r=await fetch(q,{headers:{apikey:CONTENT_KEY,Authorization:'Bearer '+CONTENT_KEY},cache:'no-store'});
+ if(!r.ok)return null;
+ const rows=await r.json();return rows?.[0]||null;
+}
+async function addAssessmentStation(plan,l){
+ const assessment=await lessonAssessment(plan,l);if(!assessment)return;
+ const subway=document.querySelector('.tp-subway');if(!subway||subway.querySelector('[data-assessment-id]'))return;
+ const row=document.createElement('div');
+ row.className='tp-stop';
+ row.dataset.assessmentId=assessment.id;
+ const stationCount=subway.querySelectorAll('.tp-stop').length+1;
+ row.innerHTML='<div class="tp-station">'+stationCount+'</div><div class="tp-stop-copy"><b>수행평가</b><small>문장 배열 · 암기 연습</small></div><div class="tp-fix4-metrics"><span class="tp-fix4-metric tp-fix4-completion"><b>'+esc(assessment.item_count||10)+'</b><small>문장</small></span><span class="tp-fix4-metric tp-fix4-average"><b>→</b><small>연습</small></span></div>';
+ row.onclick=()=>window.WillenaAssignedTestPrep?.startAssessment?.(assessment.id,{planId:plan.id,lesson:l.lesson,returnTo:'lesson'});
+ subway.appendChild(row);
+}
 function scopeFor(plan){const ls=plan&&plan.group&&plan.group.scope&&plan.group.scope.lessons;if(Array.isArray(ls)&&ls.length)return ls.filter(x=>x&&x.lesson);return ((plan&&plan.units)||[]).map(lesson=>({lesson:lesson,sections:plan.practice_types||[]}));}
 function skillsFor(plan,l){
  const sections=new Set(((l&&l.sections)||[]).map(norm));
@@ -106,6 +129,7 @@ function renderSafeLesson(planId,lesson,opts){
    if(opts.replace)history.replaceState(route,'',location.href);else if(!history.state||history.state.tp!=='lesson'||String(history.state.planId)!==String(plan.id)||String(history.state.lesson)!==String(l.lesson))history.pushState(route,'',location.href);else history.replaceState(route,'',location.href);
  }catch(_){}
  hydrateLiteStats(plan,l,skills);
+ addAssessmentStation(plan,l).catch(e=>console.warn('[Test Prep] assessment station',e));
  return true;
 }
 window.WillenaLessonSafeFix4={renderSafeLesson};
