@@ -519,7 +519,9 @@ async function listWordBuilders(env, actor, params) {
   const rows = await supabaseFetchAll(env.CONTENT_SUPABASE_URL, env.CONTENT_SUPABASE_SERVICE_ROLE_KEY,
     '/rest/v1/collections?collection_type=eq.word_builder&select=id,name,created_by,creator_username,created_at,updated_at,book_id,unit_id,metadata&order=updated_at.desc');
   const allRequested = params.get('all') === '1';
-  let filtered = (rows || []).filter(row => (allRequested && String(actor.profile.role).toLowerCase() === 'admin') || wbCanAccess(row, actor));
+  // Any approved teacher may browse the shared Word Builder library when all=1.
+  // Write/delete permissions remain creator/admin-only in the mutation handlers.
+  let filtered = allRequested ? (rows || []) : (rows || []).filter(row => wbCanAccess(row, actor));
   const maps = await wbBookUnitMaps(env, filtered);
   filtered = filtered.map(row => wbLegacyRow(row, maps));
   const creatorId = String(params.get('creator_id') || '').trim();
@@ -552,7 +554,8 @@ async function getWordBuilder(env, actor, id) {
     `/rest/v1/collections?id=eq.${encodeURIComponent(id)}&collection_type=eq.word_builder&select=id,name,created_by,creator_username,created_at,updated_at,book_id,unit_id,metadata&limit=1`);
   const row = collections?.[0];
   if (!row) throw Object.assign(new Error('Word Builder file not found'), { status: 404 });
-  if (!wbCanAccess(row, actor)) throw Object.assign(new Error('Not allowed'), { status: 403 });
+  // Reading is shared across approved teachers. Saving/deleting still enforces
+  // creator/admin ownership separately.
   const items = await supabaseFetch(env.CONTENT_SUPABASE_URL, env.CONTENT_SUPABASE_SERVICE_ROLE_KEY,
     `/rest/v1/collection_items?collection_id=eq.${encodeURIComponent(id)}&select=id,content_id,position,settings&order=position.asc,created_at.asc`);
   const lexIds = [...new Set((items || []).map(i => i.content_id).filter(Boolean))];
