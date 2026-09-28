@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="./wordsearch.css?v=20260928-14">
+<link rel="stylesheet" href="./wordsearch.css?v=20260928-15">
 <script src="/students/api-gateway.js?v=20260926-progress-summary-cf1"></script>
 <script src="/js/api-config.js?v=20260926-reverted-auth1"></script>
 <script src="/students/vocab-study/auth-guard.js?v=20260925-v0004"></script>
@@ -59,7 +59,7 @@
               <span id="listEyebrow" class="eyebrow">FIND THESE</span>
               <strong id="listTitle">Words</strong>
             </div>
-            <button id="boggleHelpBtn" class="boggle-help-btn" type="button" aria-haspopup="dialog" hidden>설명</button>
+            <button id="gameHelpBtn" class="boggle-help-btn" type="button" aria-haspopup="dialog">설명</button>
           </div>
           <div id="wordList" class="word-list horizontal-strip" aria-label="Puzzle clues"></div>
         </div>
@@ -76,74 +76,142 @@
       </div>
     </section>
 
-    <dialog id="boggleHelpDialog" class="boggle-help-modal" aria-labelledby="boggleHelpTitle">
+    <dialog id="gameHelpDialog" class="boggle-help-modal" aria-labelledby="gameHelpTitle">
       <div class="boggle-help-head">
         <div>
-          <span class="boggle-help-kicker">BOGGLE</span>
-          <strong id="boggleHelpTitle">게임 방법</strong>
+          <span id="gameHelpKicker" class="boggle-help-kicker">WORD GAMES</span>
+          <strong id="gameHelpTitle">게임 방법</strong>
         </div>
-        <button id="boggleHelpCloseBtn" class="boggle-help-close" type="button" aria-label="설명 닫기">×</button>
+        <button id="gameHelpCloseBtn" class="boggle-help-close" type="button" aria-label="설명 닫기">×</button>
       </div>
 
-      <div class="boggle-help-steps">
-        <section class="boggle-help-step">
-          <div class="boggle-help-copy">
-            <span class="boggle-step-num">1</span>
-            <div><strong>뜻과 글자 수를 확인해요</strong><p>힌트의 한국어 뜻과 영어 단어의 글자 수를 보고 어떤 단어인지 생각해 보세요.</p></div>
-          </div>
-          <div class="boggle-demo-card">
-            <span class="demo-meaning">고양이</span>
-            <span class="demo-length">3 letters</span>
-          </div>
-        </section>
+      <div class="game-help-panel" data-help-mode="wordsearch" hidden>
+        <div class="boggle-help-steps">
+          <section class="boggle-help-step">
+            <div class="boggle-help-copy">
+              <span class="boggle-step-num">1</span>
+              <div><strong>찾을 단어를 확인해요</strong><p>위에 있는 영어 단어 목록을 보고 퍼즐 안에서 같은 단어를 찾아요.</p></div>
+            </div>
+            <div class="ws-demo-target">RAINY</div>
+          </section>
 
-        <section class="boggle-help-step">
-          <div class="boggle-help-copy">
-            <span class="boggle-step-num">2</span>
-            <div><strong>붙어 있는 글자를 이어요</strong><p>가로, 세로, 대각선으로 바로 붙어 있는 칸을 이어서 영어 단어를 만들어요.</p></div>
-          </div>
-          <div class="boggle-mini-board" aria-hidden="true">
-            <span>C</span><span>A</span><span>T</span>
-            <span>R</span><span>O</span><span>N</span>
-            <span>S</span><span>E</span><span>D</span>
-            <svg viewBox="0 0 300 300" preserveAspectRatio="none">
-              <defs>
-                <marker id="boggleArrowPink" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto" markerUnits="strokeWidth">
-                  <path d="M0,0 L10,5 L0,10 z" class="arrow-head"></path>
-                </marker>
-              </defs>
-              <path class="guide-path guide-pink" d="M50 50 L150 50 L244 50" marker-end="url(#boggleArrowPink)"></path>
-              <circle cx="50" cy="50" r="9"></circle>
-              <circle cx="150" cy="50" r="9"></circle>
-            </svg>
-          </div>
-        </section>
+          <section class="boggle-help-step">
+            <div class="boggle-help-copy">
+              <span class="boggle-step-num">2</span>
+              <div><strong>첫 글자부터 끝 글자까지 드래그해요</strong><p>단어는 한 줄로 이어져 있어요. 글자 위를 따라 손가락으로 쭉 드래그하세요.</p></div>
+            </div>
+            <div class="ws-mini-grid" aria-hidden="true">
+              <span>R</span><span>A</span><span>I</span><span>N</span><span>Y</span>
+              <span>K</span><span>O</span><span>D</span><span>E</span><span>S</span>
+              <svg viewBox="0 0 500 200" preserveAspectRatio="none">
+                <defs><marker id="wsArrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z"></path></marker></defs>
+                <path d="M48 50 L452 50" marker-end="url(#wsArrow)"></path>
+              </svg>
+            </div>
+          </section>
 
-        <section class="boggle-help-step">
-          <div class="boggle-help-copy">
-            <span class="boggle-step-num">3</span>
-            <div><strong>대각선도 가능해요</strong><p>하지만 한 단어를 만들 때 같은 칸을 두 번 사용할 수는 없어요.</p></div>
-          </div>
-          <div class="boggle-mini-board diagonal-demo" aria-hidden="true">
-            <span>D</span><span>O</span><span>G</span>
-            <span>A</span><span>O</span><span>T</span>
-            <span>N</span><span>E</span><span>R</span>
-            <svg viewBox="0 0 300 300" preserveAspectRatio="none">
-              <defs>
-                <marker id="boggleArrowCyan" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto" markerUnits="strokeWidth">
-                  <path d="M0,0 L10,5 L0,10 z" class="arrow-head"></path>
-                </marker>
-              </defs>
-              <path class="guide-path guide-cyan" d="M50 50 L150 150 L244 244" marker-end="url(#boggleArrowCyan)"></path>
-              <circle cx="50" cy="50" r="9"></circle>
-              <circle cx="150" cy="150" r="9"></circle>
-            </svg>
-          </div>
-        </section>
+          <section class="boggle-help-step">
+            <div class="boggle-help-copy">
+              <span class="boggle-step-num">3</span>
+              <div><strong>여러 방향으로 숨어 있어요</strong><p>가로, 세로, 대각선으로 찾을 수 있고 거꾸로 된 단어도 있어요.</p></div>
+            </div>
+            <div class="direction-demo"><span>↔</span><span>↕</span><span>↗</span><span>↘</span></div>
+          </section>
+        </div>
       </div>
 
-      <div class="boggle-help-note">단어를 찾으면 선이 남고, 찾은 단어마다 다른 색으로 표시돼요.</div>
-      <button id="boggleHelpGotItBtn" class="boggle-help-got-it" type="button">시작하기</button>
+      <div class="game-help-panel" data-help-mode="crossword" hidden>
+        <div class="boggle-help-steps">
+          <section class="boggle-help-step">
+            <div class="boggle-help-copy">
+              <span class="boggle-step-num">1</span>
+              <div><strong>힌트를 보고 영어 단어를 생각해요</strong><p>힌트는 매번 하나씩 나와요. 한국어 뜻, 섞인 글자, 소리 듣기 중 하나예요.</p></div>
+            </div>
+            <div class="cw-hint-demo">
+              <span>고양이</span><span>TAC</span><span>▶ 단어 듣기</span>
+            </div>
+          </section>
+
+          <section class="boggle-help-step">
+            <div class="boggle-help-copy">
+              <span class="boggle-step-num">2</span>
+              <div><strong>→ 또는 ↓ 방향으로 단어를 써요</strong><p>힌트를 누른 뒤 영어 단어를 입력하세요. 다른 단어와 만나는 글자는 같이 사용돼요.</p></div>
+            </div>
+            <div class="cw-mini-demo" aria-hidden="true">
+              <div class="cw-demo-cell num" data-num="1"><span>C</span></div><div class="cw-demo-cell"><span>A</span></div><div class="cw-demo-cell"><span>T</span></div>
+              <div class="cw-demo-cell block"></div><div class="cw-demo-cell num" data-num="2"><span>R</span></div><div class="cw-demo-cell block"></div>
+              <div class="cw-demo-cell block"></div><div class="cw-demo-cell"><span>E</span></div><div class="cw-demo-cell block"></div>
+              <div class="cw-demo-label cw-across">1 →</div>
+              <div class="cw-demo-label cw-down">2 ↓</div>
+            </div>
+          </section>
+
+          <section class="boggle-help-step">
+            <div class="boggle-help-copy">
+              <span class="boggle-step-num">3</span>
+              <div><strong>모르겠으면 Gimme을 사용할 수 있어요</strong><p><b>Gimme</b>은 그 단어의 정답을 바로 채워 줘요. 대신 그 단어는 <b>0점</b>이고, 마지막 별 보상에서 <b>별 1개가 줄어요.</b></p></div>
+            </div>
+            <div class="gimme-demo">
+              <div class="gimme-before"><span>Gimme</span><strong>?</strong></div>
+              <span class="gimme-arrow">→</span>
+              <div class="gimme-after"><strong>CAT</strong><small>0 pts</small></div>
+            </div>
+            <div class="gimme-stars"><span>★★★★★</span><strong>→</strong><span>★★★★☆</span></div>
+          </section>
+        </div>
+      </div>
+
+      <div class="game-help-panel" data-help-mode="boggle" hidden>
+        <div class="boggle-help-steps">
+          <section class="boggle-help-step">
+            <div class="boggle-help-copy">
+              <span class="boggle-step-num">1</span>
+              <div><strong>뜻과 글자 수를 확인해요</strong><p>힌트의 한국어 뜻과 영어 단어의 글자 수를 보고 어떤 단어인지 생각해 보세요.</p></div>
+            </div>
+            <div class="boggle-demo-card">
+              <span class="demo-meaning">고양이</span>
+              <span class="demo-length">3 letters</span>
+            </div>
+          </section>
+
+          <section class="boggle-help-step">
+            <div class="boggle-help-copy">
+              <span class="boggle-step-num">2</span>
+              <div><strong>붙어 있는 글자를 이어요</strong><p>가로, 세로, 대각선으로 바로 붙어 있는 칸을 이어서 영어 단어를 만들어요.</p></div>
+            </div>
+            <div class="boggle-mini-board" aria-hidden="true">
+              <span>C</span><span>A</span><span>T</span>
+              <span>R</span><span>O</span><span>N</span>
+              <span>S</span><span>E</span><span>D</span>
+              <svg viewBox="0 0 300 300" preserveAspectRatio="none">
+                <defs><marker id="boggleArrowPink" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L10,5 L0,10 z" class="arrow-head"></path></marker></defs>
+                <path class="guide-path guide-pink" d="M50 50 L150 50 L244 50" marker-end="url(#boggleArrowPink)"></path>
+                <circle cx="50" cy="50" r="9"></circle><circle cx="150" cy="50" r="9"></circle>
+              </svg>
+            </div>
+          </section>
+
+          <section class="boggle-help-step">
+            <div class="boggle-help-copy">
+              <span class="boggle-step-num">3</span>
+              <div><strong>대각선도 가능해요</strong><p>하지만 한 단어를 만들 때 같은 칸을 두 번 사용할 수는 없어요.</p></div>
+            </div>
+            <div class="boggle-mini-board diagonal-demo" aria-hidden="true">
+              <span>D</span><span>O</span><span>G</span>
+              <span>A</span><span>O</span><span>T</span>
+              <span>N</span><span>E</span><span>R</span>
+              <svg viewBox="0 0 300 300" preserveAspectRatio="none">
+                <defs><marker id="boggleArrowCyan" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L10,5 L0,10 z" class="arrow-head"></path></marker></defs>
+                <path class="guide-path guide-cyan" d="M50 50 L150 150 L244 244" marker-end="url(#boggleArrowCyan)"></path>
+                <circle cx="50" cy="50" r="9"></circle><circle cx="150" cy="150" r="9"></circle>
+              </svg>
+            </div>
+          </section>
+        </div>
+        <div class="boggle-help-note">단어를 찾으면 선이 남고, 찾은 단어마다 다른 색으로 표시돼요.</div>
+      </div>
+
+      <button id="gameHelpGotItBtn" class="boggle-help-got-it" type="button">시작하기</button>
     </dialog>
 
     <dialog id="completeCard" class="win-modal" aria-labelledby="winTitle">
@@ -160,6 +228,6 @@
     </dialog>
   </main>
 </div>
-<script type="module" src="./wordsearch.js?v=20260928-14"></script>
+<script type="module" src="./wordsearch.js?v=20260928-15"></script>
 </body>
 </html>
