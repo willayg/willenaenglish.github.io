@@ -174,7 +174,7 @@ mountTeacherHeader({ target:'#teacher-header', mode:'dashboard', activeApp:'teac
 </main></div>
 <nav class="mobile-tabs"><button class="mobile-tab active" data-view="students"><b>◎</b>Students</button><button class="mobile-tab" data-view="classes"><b>▦</b>Classes</button><button class="mobile-tab" data-view="leaderboard"><b>★</b>Board</button><button class="mobile-tab" data-view="vocab"><b>Aa</b>Vocab</button><button class="mobile-tab" data-view="apps"><b>＋</b>Apps</button><button class="mobile-tab" data-view="puzzles"><b>◇</b>Puzzles</button><button class="mobile-tab" data-view="english-arcade"><b>EA</b>Arcade</button></nav>
 <div class="drawer-bg" id="drawerBg"><aside class="drawer"><div class="drawer-head"><div class="drawer-head-main"><div class="drawer-name" id="drawerName">Student</div><div class="drawer-meta" id="drawerMeta"></div></div><button class="close" id="closeDrawer">×</button></div><div class="drawer-body" id="drawerBody"><div class="empty">Loading…</div></div></aside></div>
-<div id="naesinV2Rev" style="position:fixed;right:12px;bottom:8px;z-index:2147483647;color:#7b8c93;font:700 9px/1.2 Poppins,sans-serif;letter-spacing:.04em;pointer-events:none">v14.59</div>
+<div id="naesinV2Rev" style="position:fixed;right:12px;bottom:8px;z-index:2147483647;color:#7b8c93;font:700 9px/1.2 Poppins,sans-serif;letter-spacing:.04em;pointer-events:none">v14.60</div>
 <script>
 const $=(s,r=document)=>r.querySelector(s),$$=(s,r=document)=>[...r.querySelectorAll(s)];
 const FN=n=>`/.netlify/functions/${n}`;
@@ -302,7 +302,10 @@ async function loadTeacherLeaderboard(force=false){
   try{
     const section=scope==='class'?'leaderboard_stars_class':'leaderboard_stars_global';
     const params=new URLSearchParams({section,timeframe:'month'});
-    const j=await api(`${FN('progress_summary')}?${params}`);
+    const url=`${FN('progress_summary')}?${params}`;
+    const r=window.WillenaAPI?.fetch?await window.WillenaAPI.fetch(url,{credentials:'include',cache:'no-store'}):await fetch(url,{credentials:'include',cache:'no-store'});
+    const j=await r.json().catch(()=>({}));
+    if(!r.ok||j.success===false)throw Error(j.error||`Request failed (${r.status})`);
     state.leaderboardLoadedKey=key;
     state.leaderboardData=j;
     renderTeacherLeaderboard(j,scope,metric);
