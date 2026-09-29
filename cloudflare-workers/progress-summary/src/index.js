@@ -175,31 +175,20 @@ function deriveStars(summary) {
 
 // Calculate total stars for users from sessions
 function buildStarsByUserMap(sessions) {
-  const bestKey = new Map();
-  
+  const totals = new Map();
+
   (sessions || []).forEach(sess => {
     if (!sess || !sess.user_id) return;
-    const list = (sess.list_name || '').trim();
-    const mode = (sess.mode || '').trim();
-    if (!list || !mode) return;
-    
+
     const parsed = safeParseSummary(sess.summary);
     if (parsed && parsed.completed === false) return;
-    
+
     const stars = deriveStars(parsed);
     if (stars <= 0) return;
-    
-    const composite = `${sess.user_id}||${list}||${mode}`;
-    const prev = bestKey.get(composite) || 0;
-    if (stars > prev) bestKey.set(composite, stars);
+
+    totals.set(sess.user_id, (totals.get(sess.user_id) || 0) + stars);
   });
-  
-  const totals = new Map();
-  bestKey.forEach((value, composite) => {
-    const [uid] = composite.split('||');
-    totals.set(uid, (totals.get(uid) || 0) + value);
-  });
-  
+
   return totals;
 }
 
@@ -400,6 +389,17 @@ async function setToCache(env, key, data, ttlSeconds) {
     console.error('[progress-summary] Cache write error:', e.message);
   }
 }
+async function invalidateLeaderboardCaches(env) {
+  if (!env.LEADERBOARD_CACHE) return;
+  try {
+    const listed = await env.LEADERBOARD_CACHE.list({ prefix: 'lb:' });
+    const keys = listed?.keys || [];
+    await Promise.all(keys.map(k => env.LEADERBOARD_CACHE.delete(k.name)));
+    await env.LEADERBOARD_CACHE.put('invalidate_ts', Date.now().toString());
+  } catch (e) {
+    console.error('[progress-summary] Cache invalidation error:', e.message);
+  }
+}
 
 export default {
   async fetch(request, env, ctx) {
@@ -457,6 +457,9 @@ export default {
         const payload = body && body.payload;
         if (!payload || typeof payload !== 'object') return jsonResponse({ success:false, error:'Missing study attempt payload' }, 400, origin);
         const result = await supabaseRpc(env, 'record_study_attempt_v1', { p_student_id: userId, p_payload: payload });
+        if (payload.reward_only || Number(payload?.metadata?.points_override || 0) > 0) {
+          ctx.waitUntil(invalidateLeaderboardCaches(env));
+        }
         return jsonResponse(result, 200, origin);
       }
 
