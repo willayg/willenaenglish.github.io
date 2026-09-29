@@ -31,3 +31,50 @@ button,input,select{font:inherit}
 @media(max-width:980px){.student-row{grid-template-columns:minmax(140px,1.4fr) 1fr 1fr .7fr}.hide-mid{display:none}.class-grid{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:700px){.topbar{height:62px;padding:0 10px}.brand{min-width:auto}.brand img{height:32px}.brand div{display:none}.top-actions{min-width:auto}.teacher-app-switch{padding:3px}.teacher-app-switch a{padding:6px 8px;font-size:.62rem}.layout{display:block;min-height:calc(100vh - 62px)}.rail{display:none}.workspace{padding:14px 10px 75px}.page-head{align-items:flex-start;flex-direction:column}.filters{width:100%}.control{flex:1;min-width:0}.search{flex-basis:100%}.student-list{max-height:none}.student-row{grid-template-columns:minmax(120px,1.3fr) 1fr 1fr;padding:12px}.hide-mobile{display:none}.mobile-tabs{display:flex;position:fixed;bottom:0;left:0;right:0;height:64px;background:var(--shell);z-index:50;justify-content:space-around}.mobile-tab{border:0;background:transparent;color:#c8cad3;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:.64rem}.mobile-tab.active{color:#fff;font-weight:700}.rating-grid{grid-template-columns:1fr}.drawer{width:100vw}.skill{grid-template-columns:1fr 70px}.skill .rating{display:none}.proof-row{grid-template-columns:80px 1fr 70px}.proof-row .proof-session{display:none}.app-grid,.class-grid{grid-template-columns:1fr}}
 
+
+
+/* Puzzles analytics */
+.puzzle-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:14px}
+.puzzle-kpi{background:#fff;border:1px solid var(--line);border-radius:18px;padding:16px;box-shadow:var(--shadow)}
+.puzzle-kpi span{display:block;color:var(--muted);font-size:.68rem;font-weight:600}
+.puzzle-kpi strong{display:block;margin-top:5px;font-size:1.35rem;line-height:1.2}
+.puzzle-popularity{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:14px}
+.puzzle-game-card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:15px;box-shadow:var(--shadow)}
+.puzzle-game-top{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+.puzzle-game-top strong{font-size:.9rem}
+.puzzle-game-top span{display:block;color:var(--muted);font-size:.64rem;margin-top:3px}
+.puzzle-game-top b{font-size:1.25rem}
+.puzzle-game-bar{height:7px;border-radius:999px;background:#edf0f3;overflow:hidden;margin-top:13px}
+.puzzle-game-bar i{display:block;height:100%;border-radius:999px;background:var(--cyan);min-width:3px}
+.puzzle-two-col{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+.puzzle-panel{background:#fff;border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow);overflow:hidden}
+.puzzle-panel-head{padding:14px 16px;border-bottom:1px solid var(--line)}
+.puzzle-panel-head strong{display:block;font-size:.88rem}
+.puzzle-panel-head span{display:block;font-size:.65rem;color:var(--muted);margin-top:2px}
+.puzzle-rank-list{padding:4px 14px 10px}
+.puzzle-rank-row{display:grid;grid-template-columns:28px 1fr auto;gap:9px;align-items:center;padding:10px 0;border-bottom:1px solid #f0f1f4}
+.puzzle-rank-row:last-child{border-bottom:0}
+.puzzle-rank-num{width:24px;height:24px;border-radius:8px;display:grid;place-items:center;background:#f0f3f5;color:var(--muted);font-size:.65rem;font-weight:700}
+.puzzle-rank-row b{font-size:.76rem}
+.puzzle-rank-row small{display:block;color:var(--muted);font-size:.61rem;margin-top:1px}
+.puzzle-rank-row>strong{font-size:.82rem}
+.puzzle-trend-panel{margin-bottom:14px}
+.puzzle-trend{display:flex;gap:8px;align-items:flex-end;min-height:190px;padding:18px 16px 14px;overflow-x:auto}
+.puzzle-trend-day{flex:1 0 42px;min-width:42px;text-align:center}
+.puzzle-trend-bar{height:115px;background:#f3f5f7;border-radius:10px;padding:4px;display:flex;align-items:flex-end}
+.puzzle-trend-bar i{display:block;width:100%;background:var(--pink);border-radius:7px;min-height:6px}
+.puzzle-trend-day b{display:block;font-size:.7rem;margin-top:5px}
+.puzzle-trend-day span{display:block;font-size:.58rem;color:var(--muted);margin-top:1px}
+.puzzle-student-detail h3{display:flex;align-items:center;justify-content:space-between}
+.puzzle-student-summary{display:grid;gap:10px}
+.puzzle-student-total{display:flex;align-items:baseline;gap:7px}
+.puzzle-student-total strong{font-size:1.5rem}
+.puzzle-student-total span{font-size:.7rem;color:var(--muted)}
+.puzzle-mini-chips{display:flex;flex-wrap:wrap;gap:7px}
+.puzzle-mini-chip{background:#f2f7f8;border:1px solid #dcecef;border-radius:999px;padding:6px 9px;font-size:.67rem}
+.puzzle-mini-chip b{font-weight:700}
+.puzzle-student-last{font-size:.67rem;color:var(--muted)}
+.puzzle-student-empty{font-size:.72rem;color:var(--muted);padding:2px 0 4px}
+
+@media(max-width:1100px){.puzzle-kpis,.puzzle-popularity{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:700px){.puzzle-kpis,.puzzle-popularity,.puzzle-two-col{grid-template-columns:1fr}.puzzle-trend{min-height:165px}.puzzle-trend-bar{height:95px}.mobile-tabs{overflow-x:auto;justify-content:flex-start}.mobile-tab{min-width:20%;flex:0 0 20%}}
