@@ -7,7 +7,7 @@
 <title>Teacher Dashboard V2</title>
 <script src="/js/api-config.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="./dashboard-v2.css?v=20260929-puzzles1">
+<link rel="stylesheet" href="./dashboard-v2.css?v=20260929-puzzles2">
 <link rel="stylesheet" href="./assignments-v1.css?v=20260926-p4d-main1">
 <link rel="stylesheet" href="./vocab-v1.css?v=20260927-r1427">
 <link id="dashboardV2Polish" rel="stylesheet" href="./dashboard-v2-polish.css?v=20260927-r1427">
@@ -18,7 +18,7 @@
 <link rel="stylesheet" href="./naesin-v2/naesin-v2-editor.css?v=20260924-r14-25">
 <link rel="stylesheet" href="./naesin-v2/naesin-v2-assignment.css?v=20260912-r12-2">
 <link rel="stylesheet" href="./naesin-v2/naesin-v2-r12-2.css?v=20260912-r12-2">
-<script src="./dashboard-shell-polish.js?v=20260929-navrestore1" defer></script>
+<script src="./dashboard-shell-polish.js?v=20260929-puzzleorder1" defer></script>
 </head>
 <body>
 <div id="teacher-header"></div>
@@ -28,7 +28,7 @@ mountTeacherHeader({ target:'#teacher-header', mode:'dashboard', activeApp:'teac
   .catch((e)=>console.error('Teacher header init failed', e));
 </script>
 <div class="layout">
-<aside class="rail"><button class="nav active" data-view="students"><span class="nav-icon">◎</span><span>Students</span></button><button class="nav" data-view="classes"><span class="nav-icon">▦</span><span>Classes</span></button><button class="nav" data-view="vocab"><span class="nav-icon">Aa</span><span>Vocab</span></button><button class="nav" data-view="puzzles"><span class="nav-icon">◇</span><span>Puzzles</span></button><button class="nav" data-view="apps"><span class="nav-icon">＋</span><span>Apps</span></button><div class="rail-spacer"></div></aside>
+<aside class="rail"><button class="nav active" data-view="students"><span class="nav-icon">◎</span><span>Students</span></button><button class="nav" data-view="classes"><span class="nav-icon">▦</span><span>Classes</span></button><button class="nav" data-view="vocab"><span class="nav-icon">Aa</span><span>Vocab</span></button><button class="nav" data-view="apps"><span class="nav-icon">＋</span><span>Apps</span></button><button class="nav" data-view="puzzles"><span class="nav-icon">◇</span><span>Puzzles</span></button><div class="rail-spacer"></div></aside>
 <main class="workspace">
 <section class="view active" id="view-students">
 <div class="page-head"><div><h1>Student tracking</h1></div><div class="filters"><select class="control" id="classSelect"><option>Loading classes…</option></select><select class="control" id="daysSelect"><option value="30">Last 30 days</option><option value="14">Last 14 days</option><option value="60">Last 60 days</option><option value="90">Last 90 days</option></select><input class="control search" id="searchInput" type="search" placeholder="Search student…"><button class="control" id="refreshBtn">Refresh</button></div></div>
@@ -124,9 +124,9 @@ mountTeacherHeader({ target:'#teacher-header', mode:'dashboard', activeApp:'teac
 </section>
 <section class="view" id="view-apps"><div class="page-head"><div><h1>Teacher apps</h1></div></div><div class="app-grid"><div class="app-card"><span class="chip">LIVE</span><h3>Student tracking</h3><p>Study habits, learning evidence, mistakes, skill performance and proof of work.</p></div><div class="app-card"><span class="chip">LIVE</span><h3>Class overview</h3><p>Class-level learning and study-habit signals that link directly back to students.</p></div><div class="app-card"><span class="chip">READY</span><h3>More teacher tools</h3><p>Homework, assessments and classroom tools can be added here.</p></div><div style="margin-top:14px;font-size:12px;opacity:.68"><a href="/Teachers/dashboard-v1-archived/" style="color:inherit;text-decoration:underline;text-underline-offset:2px">Dashboard V1 (ARCHIVED)</a></div></div></section>
 </main></div>
-<nav class="mobile-tabs"><button class="mobile-tab active" data-view="students"><b>◎</b>Students</button><button class="mobile-tab" data-view="classes"><b>▦</b>Classes</button><button class="mobile-tab" data-view="vocab"><b>Aa</b>Vocab</button><button class="mobile-tab" data-view="puzzles"><b>◇</b>Puzzles</button><button class="mobile-tab" data-view="apps"><b>＋</b>Apps</button></nav>
+<nav class="mobile-tabs"><button class="mobile-tab active" data-view="students"><b>◎</b>Students</button><button class="mobile-tab" data-view="classes"><b>▦</b>Classes</button><button class="mobile-tab" data-view="vocab"><b>Aa</b>Vocab</button><button class="mobile-tab" data-view="apps"><b>＋</b>Apps</button><button class="mobile-tab" data-view="puzzles"><b>◇</b>Puzzles</button></nav>
 <div class="drawer-bg" id="drawerBg"><aside class="drawer"><div class="drawer-head"><div class="drawer-head-main"><div class="drawer-name" id="drawerName">Student</div><div class="drawer-meta" id="drawerMeta"></div></div><button class="close" id="closeDrawer">×</button></div><div class="drawer-body" id="drawerBody"><div class="empty">Loading…</div></div></aside></div>
-<div id="naesinV2Rev" style="position:fixed;right:12px;bottom:8px;z-index:2147483647;color:#7b8c93;font:700 9px/1.2 Poppins,sans-serif;letter-spacing:.04em;pointer-events:none">v14.49</div>
+<div id="naesinV2Rev" style="position:fixed;right:12px;bottom:8px;z-index:2147483647;color:#7b8c93;font:700 9px/1.2 Poppins,sans-serif;letter-spacing:.04em;pointer-events:none">v14.50</div>
 <script>
 const $=(s,r=document)=>r.querySelector(s),$$=(s,r=document)=>[...r.querySelectorAll(s)];
 const FN=n=>`/.netlify/functions/${n}`;
@@ -175,8 +175,20 @@ function renderPuzzleRank(rows,type){
 }
 function renderPuzzleTrend(rows){
   if(!rows?.length)return'<div class="empty">No puzzle activity in this period.</div>';
-  const recent=rows.slice(-14),max=Math.max(1,...recent.map(r=>Number(r.count)||0));
-  return recent.map(r=>`<div class="puzzle-trend-day" title="${esc(r.date)} · ${esc(r.count)} plays"><div class="puzzle-trend-bar"><i style="height:${Math.max(6,Math.round((Number(r.count)||0)/max*100))}%"></i></div><b>${esc(r.count)}</b><span>${esc(String(r.date).slice(5))}</span></div>`).join('');
+  const recent=rows.slice(-30),max=Math.max(1,...recent.map(r=>Number(r.count)||0)),w=760,h=220,padX=34,padY=28;
+  const x=i=>recent.length===1?w/2:padX+i*((w-padX*2)/(recent.length-1));
+  const y=v=>h-padY-(Number(v)||0)/max*(h-padY*2);
+  const pts=recent.map((r,i)=>`${x(i).toFixed(1)},${y(r.count).toFixed(1)}`).join(' ');
+  const dots=recent.map((r,i)=>`<circle cx="${x(i).toFixed(1)}" cy="${y(r.count).toFixed(1)}" r="4"><title>${esc(r.date)} · ${esc(r.count)} plays</title></circle>`).join('');
+  const labels=recent.filter((_,i)=>i===0||i===recent.length-1||i%Math.max(1,Math.ceil(recent.length/6))===0).map((r,i,arr)=>{
+    const idx=recent.indexOf(r); return `<text x="${x(idx).toFixed(1)}" y="${h-6}" text-anchor="middle">${esc(String(r.date).slice(5))}</text>`;
+  }).join('');
+  return `<svg class="puzzle-line-chart" viewBox="0 0 ${w} ${h}" role="img" aria-label="Puzzle plays over time">
+    <line x1="${padX}" y1="${h-padY}" x2="${w-padX}" y2="${h-padY}" class="puzzle-axis"/>
+    <polyline points="${pts}" class="puzzle-line"/>
+    <g class="puzzle-dots">${dots}</g>
+    <g class="puzzle-line-labels">${labels}</g>
+  </svg>`;
 }
 function renderPuzzleInsights(j){
   const breakdown=j.breakdown||[],top=breakdown[0],total=Number(j.total_plays)||0,unique=Number(j.unique_students)||0;
@@ -214,7 +226,24 @@ async function loadPuzzleInsights(force=false){
 function habitReason(h){if(!h)return'No evidence';const parts=[`${h.active_days_7} active day${h.active_days_7===1?'':'s'} in the last 7`,`${h.current_streak}-day streak`,`${h.attempts} attempts`];if(h.days_since_last_study!=null)parts.push(h.days_since_last_study===0?'studied today':`last studied ${h.days_since_last_study} day${h.days_since_last_study===1?'':'s'} ago`);return parts.join(' · ')}
 function learningReason(l){if(!l||l.all_time_accuracy==null)return'Not enough learning evidence';const recent=l.recent_accuracy==null?'—':`${l.recent_accuracy}%`;let t=`Recent ${recent} from ${l.recent_count??0} current questions · All time ${l.all_time_accuracy}% across ${l.all_time_attempts??0} attempts`;if(l.priority_weaknesses?.length)t+=` · ${l.priority_weaknesses.length} priority weakness${l.priority_weaknesses.length===1?'':'es'}`;if(typeof l.trend==='number')t+=` · ${l.trend>0?'+':''}${l.trend} pts vs previous 14 days`;return t}
 async function openStudent(id){const base=state.students.find(s=>String(s.user_id)===String(id));$('#drawerName').textContent=base?.name||'Student';$('#drawerMeta').textContent=`${state.className} · Last ${state.days} days`;$('#drawerBody').innerHTML='<div class="empty">Loading student evidence…</div>';$('#drawerBg').classList.add('open');try{const j=await api(endpoint('teacher_student_insights',{student_id:id,days:String(state.days)}));const s=j.student,h=s.habits||{},l=s.learning||{};$('#drawerBody').innerHTML=`<div class="rating-grid"><div class="big-card"><h3>Study habits</h3><div class="big-rating">${esc(h.label)}</div><div class="reason">${esc(habitReason(h))}</div><div class="statline"><span>${esc(h.active_days_30)} active days / ${state.days}</span><span>${esc(h.completed_sessions)} sessions</span><span>${esc(h.spread_score)}% spread score</span></div></div><div class="big-card"><h3>Learning</h3><div class="big-rating">${esc(l.label)}</div><div class="reason">${esc(learningReason(l))}</div><div class="statline"><span>${l.recent_accuracy==null?'—':esc(l.recent_accuracy)+'%'} recent</span><span>${l.all_time_accuracy==null?'—':esc(l.all_time_accuracy)+'%'} all time</span><span>${esc(l.all_time_attempts??0)} attempts</span></div></div></div><div class="detail"><h3>Skills</h3>${renderSkills(l.skills)}</div><div class="detail puzzle-student-detail"><h3>Puzzles</h3>${renderStudentPuzzles(s.puzzles)}</div><div class="detail"><h3>Recent mistakes</h3>${renderMistakes(s.recent_mistakes)}</div><div class="detail"><h3>Proof of work</h3>${renderProof(s.proof)}</div>`}catch(e){$('#drawerBody').innerHTML=`<div class="empty">${esc(e.message)}</div>`}}
-async function loadClassOverview(force=false){const days=Number($('#classDaysSelect').value)||30;const key=String(days);if(!force&&state.classOverviewLoadedFor===key)return;state.classOverviewLoadedFor=key;$('#classGrid').innerHTML=state.classes.map(c=>`<div class="class-card" data-class="${esc(c.name)}"><div class="class-top"><div class="class-name">${esc(c.name)}</div><span class="class-count">${esc(c.student_count)} students</span></div><div class="empty">Loading breakdown…</div></div>`).join('');const results=await Promise.all(state.classes.map(async c=>{try{return {c,j:await api(endpoint('teacher_class_insights',{class:c.name,days:String(days)}))}}catch(e){return {c,error:e}}}));results.forEach(({c,j,error})=>{const card=$(`.class-card[data-class="${CSS.escape(c.name)}"]`);if(!card)return;if(error){card.innerHTML=`<div class="class-top"><div class="class-name">${esc(c.name)}</div><span class="class-count">${esc(c.student_count)} students</span></div><div class="empty">Could not load breakdown.</div><div class="class-link">Open students →</div>`;return}const s=j.summary||{};card.innerHTML=`<div class="class-top"><div class="class-name">${esc(c.name)}</div><span class="class-count">${esc(s.students??c.student_count)} students</span></div><div class="class-stats"><div class="class-stat"><b>${s.accuracy==null?'—':esc(s.accuracy)+'%'}</b><span>class accuracy</span></div><div class="class-stat"><b>${esc(s.active_students??0)}</b><span>active students</span></div><div class="class-stat"><b>${esc(s.needs_learning_attention??0)}</b><span>learning attention</span></div><div class="class-stat"><b>${esc(s.needs_habit_attention??0)}</b><span>habit attention</span></div></div><div class="class-link">Open students →</div>`});$$('.class-card').forEach(card=>card.onclick=()=>openClassFromOverview(card.dataset.class,days))}
+async function loadClassOverview(force=false){
+  const days=Number($('#classDaysSelect').value)||30,key=String(days);
+  if(!force&&state.classOverviewLoadedFor===key)return;
+  state.classOverviewLoadedFor=key;
+  $('#classGrid').innerHTML='<div class="empty">Loading class breakdowns…</div>';
+  try{
+    const j=await api(endpoint('teacher_classes_overview',{days:String(days)}));
+    const rows=j.classes||[];
+    $('#classGrid').innerHTML=rows.map(c=>{
+      const x=c.summary||{};
+      return `<div class="class-card" data-class="${esc(c.name)}"><div class="class-top"><div class="class-name">${esc(c.name)}</div><span class="class-count">${esc(x.students??c.student_count??0)} students</span></div><div class="class-stats"><div class="class-stat"><b>${x.accuracy==null?'—':esc(x.accuracy)+'%'}</b><span>class accuracy</span></div><div class="class-stat"><b>${esc(x.active_students??0)}</b><span>active students</span></div><div class="class-stat"><b>${esc(x.needs_learning_attention??0)}</b><span>learning attention</span></div><div class="class-stat"><b>${esc(x.needs_habit_attention??0)}</b><span>habit attention</span></div></div><div class="class-link">Open students →</div></div>`;
+    }).join('')||'<div class="empty">No class data.</div>';
+    $$('.class-card').forEach(card=>card.onclick=()=>openClassFromOverview(card.dataset.class,days));
+  }catch(error){
+    state.classOverviewLoadedFor=null;
+    $('#classGrid').innerHTML=`<div class="empty">Could not load class data: ${esc(error.message)}</div>`;
+  }
+}
 async function openClassFromOverview(name,days){$('#classSelect').value=name;$('#daysSelect').value=String(days);state.className=name;state.days=days;switchView('students');await loadClass()}
 function switchView(v){$$('.view').forEach(x=>x.classList.toggle('active',x.id===`view-${v}`));$$('[data-view]').forEach(x=>x.classList.toggle('active',x.dataset.view===v));if(v==='classes')loadClassOverview();if(v==='puzzles')loadPuzzleInsights()}
 $('#classSelect').onchange=loadClass;$('#daysSelect').onchange=loadClass;$('#refreshBtn').onclick=loadClass;$('#searchInput').oninput=renderStudents;$('#classDaysSelect').onchange=()=>loadClassOverview(true);$('#classRefreshBtn').onclick=()=>loadClassOverview(true);$('#puzzleClass').onchange=()=>loadPuzzleInsights(true);$('#puzzleDays').onchange=()=>loadPuzzleInsights(true);$('#puzzleRefreshBtn').onclick=()=>loadPuzzleInsights(true);$('#closeDrawer').onclick=()=>$('#drawerBg').classList.remove('open');$('#drawerBg').onclick=e=>{if(e.target===$('#drawerBg'))$('#drawerBg').classList.remove('open')};$$('[data-view]').forEach(b=>b.onclick=()=>switchView(b.dataset.view));
