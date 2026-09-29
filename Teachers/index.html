@@ -7,7 +7,7 @@
 <title>Teacher Dashboard V2</title>
 <script src="/js/api-config.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="./dashboard-v2.css?v=20260929-menugroups1">
+<link rel="stylesheet" href="./dashboard-v2.css?v=20260929-puzzles2">
 <link rel="stylesheet" href="./assignments-v1.css?v=20260926-p4d-main1">
 <link rel="stylesheet" href="./vocab-v1.css?v=20260927-r1427">
 <link id="dashboardV2Polish" rel="stylesheet" href="./dashboard-v2-polish.css?v=20260927-r1427">
@@ -18,7 +18,7 @@
 <link rel="stylesheet" href="./naesin-v2/naesin-v2-editor.css?v=20260924-r14-25">
 <link rel="stylesheet" href="./naesin-v2/naesin-v2-assignment.css?v=20260912-r12-2">
 <link rel="stylesheet" href="./naesin-v2/naesin-v2-r12-2.css?v=20260912-r12-2">
-<script src="./dashboard-shell-polish.js?v=20260929-menugroups1" defer></script>
+<script src="./dashboard-shell-polish.js?v=20260929-puzzleorder1" defer></script>
 </head>
 <body>
 <div id="teacher-header"></div>
@@ -28,17 +28,7 @@ mountTeacherHeader({ target:'#teacher-header', mode:'dashboard', activeApp:'teac
   .catch((e)=>console.error('Teacher header init failed', e));
 </script>
 <div class="layout">
-<aside class="rail">
-  <div class="nav-group-label" data-nav-group="student">Student Information</div>
-  <button class="nav active" data-view="students"><span class="nav-icon">◎</span><span>Students</span></button>
-  <button class="nav" data-view="classes"><span class="nav-icon">▦</span><span>Classes</span></button>
-  <div class="nav-group-label" data-nav-group="tracking">Data and Tracking</div>
-  <button class="nav" data-view="vocab"><span class="nav-icon">Aa</span><span>Vocab</span></button>
-  <button class="nav" data-view="english-arcade"><span class="nav-icon">EA</span><span>English Arcade</span></button>
-  <div class="nav-group-label" data-nav-group="tools">Tools</div>
-  <button class="nav" data-view="apps"><span class="nav-icon">＋</span><span>Apps</span></button>
-  <div class="rail-spacer"></div>
-</aside>
+<aside class="rail"><button class="nav active" data-view="students"><span class="nav-icon">◎</span><span>Students</span></button><button class="nav" data-view="classes"><span class="nav-icon">▦</span><span>Classes</span></button><button class="nav" data-view="vocab"><span class="nav-icon">Aa</span><span>Vocab</span></button><button class="nav" data-view="apps"><span class="nav-icon">＋</span><span>Apps</span></button><button class="nav" data-view="puzzles"><span class="nav-icon">◇</span><span>Puzzles</span></button><div class="rail-spacer"></div></aside>
 <main class="workspace">
 <section class="view active" id="view-students">
 <div class="page-head"><div><h1>Student tracking</h1></div><div class="filters"><select class="control" id="classSelect"><option>Loading classes…</option></select><select class="control" id="daysSelect"><option value="30">Last 30 days</option><option value="14">Last 14 days</option><option value="60">Last 60 days</option><option value="90">Last 90 days</option></select><input class="control search" id="searchInput" type="search" placeholder="Search student…"><button class="control" id="refreshBtn">Refresh</button></div></div>
@@ -132,56 +122,15 @@ mountTeacherHeader({ target:'#teacher-header', mode:'dashboard', activeApp:'teac
     <div id="puzzleTrend" class="puzzle-trend"><div class="empty">No data loaded.</div></div>
   </section>
 </section>
-<section class="view" id="view-english-arcade">
-  <div class="page-head">
-    <div><h1>English Arcade</h1><div class="panel-sub">Student play activity across English Arcade modes.</div></div>
-    <div class="filters">
-      <select class="control" id="arcadeDays">
-        <option value="7">Last 7 days</option>
-        <option value="14">Last 14 days</option>
-        <option value="30" selected>Last 30 days</option>
-        <option value="60">Last 60 days</option>
-        <option value="90">Last 90 days</option>
-      </select>
-      <button class="control" id="arcadeRefreshBtn" type="button">Refresh</button>
-    </div>
-  </div>
-  <div class="puzzle-kpis" id="arcadeKpis">
-    <div class="puzzle-kpi"><span>Total plays</span><strong>—</strong></div>
-    <div class="puzzle-kpi"><span>Students playing</span><strong>—</strong></div>
-    <div class="puzzle-kpi"><span>Most popular mode</span><strong>—</strong></div>
-    <div class="puzzle-kpi"><span>Plays / player</span><strong>—</strong></div>
-  </div>
-  <div class="puzzle-two-col">
-    <section class="puzzle-panel">
-      <div class="puzzle-panel-head"><div><strong>Most played modes</strong><span>Completed English Arcade sessions</span></div></div>
-      <div id="arcadeModes" class="puzzle-rank-list"><div class="empty">Open English Arcade to load activity.</div></div>
-    </section>
-    <section class="puzzle-panel">
-      <div class="puzzle-panel-head"><div><strong>Most active students</strong><span>Arcade sessions completed</span></div></div>
-      <div id="arcadeStudents" class="puzzle-rank-list"><div class="empty">No data loaded.</div></div>
-    </section>
-  </div>
-  <section class="puzzle-panel puzzle-trend-panel">
-    <div class="puzzle-panel-head"><div><strong>Arcade activity</strong><span>Completed sessions by day</span></div></div>
-    <div id="arcadeTrend" class="puzzle-trend"><div class="empty">No data loaded.</div></div>
-  </section>
-</section>
 <section class="view" id="view-apps"><div class="page-head"><div><h1>Teacher apps</h1></div></div><div class="app-grid"><div class="app-card"><span class="chip">LIVE</span><h3>Student tracking</h3><p>Study habits, learning evidence, mistakes, skill performance and proof of work.</p></div><div class="app-card"><span class="chip">LIVE</span><h3>Class overview</h3><p>Class-level learning and study-habit signals that link directly back to students.</p></div><div class="app-card"><span class="chip">READY</span><h3>More teacher tools</h3><p>Homework, assessments and classroom tools can be added here.</p></div><div style="margin-top:14px;font-size:12px;opacity:.68"><a href="/Teachers/dashboard-v1-archived/" style="color:inherit;text-decoration:underline;text-underline-offset:2px">Dashboard V1 (ARCHIVED)</a></div></div></section>
 </main></div>
-<nav class="mobile-tabs">
-  <button class="mobile-tab active" data-view="students"><b>◎</b>Students</button>
-  <button class="mobile-tab" data-view="classes"><b>▦</b>Classes</button>
-  <button class="mobile-tab" data-view="vocab"><b>Aa</b>Vocab</button>
-  <button class="mobile-tab" data-view="english-arcade"><b>EA</b>Arcade</button>
-  <button class="mobile-tab" data-view="apps"><b>＋</b>Apps</button>
-</nav>
+<nav class="mobile-tabs"><button class="mobile-tab active" data-view="students"><b>◎</b>Students</button><button class="mobile-tab" data-view="classes"><b>▦</b>Classes</button><button class="mobile-tab" data-view="vocab"><b>Aa</b>Vocab</button><button class="mobile-tab" data-view="apps"><b>＋</b>Apps</button><button class="mobile-tab" data-view="puzzles"><b>◇</b>Puzzles</button></nav>
 <div class="drawer-bg" id="drawerBg"><aside class="drawer"><div class="drawer-head"><div class="drawer-head-main"><div class="drawer-name" id="drawerName">Student</div><div class="drawer-meta" id="drawerMeta"></div></div><button class="close" id="closeDrawer">×</button></div><div class="drawer-body" id="drawerBody"><div class="empty">Loading…</div></div></aside></div>
-<div id="naesinV2Rev" style="position:fixed;right:12px;bottom:8px;z-index:2147483647;color:#7b8c93;font:700 9px/1.2 Poppins,sans-serif;letter-spacing:.04em;pointer-events:none">v14.54</div>
+<div id="naesinV2Rev" style="position:fixed;right:12px;bottom:8px;z-index:2147483647;color:#7b8c93;font:700 9px/1.2 Poppins,sans-serif;letter-spacing:.04em;pointer-events:none">v14.53</div>
 <script>
 const $=(s,r=document)=>r.querySelector(s),$$=(s,r=document)=>[...r.querySelectorAll(s)];
 const FN=n=>`/.netlify/functions/${n}`;
-const state={classes:[],students:[],className:'',days:30,classOverviewLoadedFor:null,puzzleLoadedKey:null,arcadeLoadedKey:null};
+const state={classes:[],students:[],className:'',days:30,classOverviewLoadedFor:null,puzzleLoadedKey:null};
 function esc(v){return String(v??'').replace(/[&<>'\"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt',"'":'&#39;','\"':'&quot;'}[c]))}
 function slug(v){return String(v||'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'not-enough-data'}
 function fmtDate(v){if(!v)return'—';const d=new Date(v);return Number.isNaN(d.getTime())?'—':d.toLocaleDateString(undefined,{month:'short',day:'numeric'})}
@@ -274,32 +223,6 @@ async function loadPuzzleInsights(force=false){
     $('#puzzleTrend').innerHTML='<div class="empty">Could not load puzzle activity.</div>';
   }
 }
-function renderArcadeInsights(j){
-  const modes=j.modes||[],top=modes[0],total=Number(j.total_plays)||0,unique=Number(j.unique_students)||0;
-  $('#arcadeKpis').innerHTML=`
-    <div class="puzzle-kpi"><span>Total plays</span><strong>${esc(total)}</strong></div>
-    <div class="puzzle-kpi"><span>Students playing</span><strong>${esc(unique)}</strong></div>
-    <div class="puzzle-kpi"><span>Most popular mode</span><strong>${top?esc(top.name):'—'}</strong></div>
-    <div class="puzzle-kpi"><span>Plays / player</span><strong>${unique?(total/unique).toFixed(1):'—'}</strong></div>`;
-  $('#arcadeModes').innerHTML=renderPuzzleRank(modes,'mode');
-  $('#arcadeStudents').innerHTML=renderPuzzleRank(j.students,'student');
-  $('#arcadeTrend').innerHTML=renderPuzzleTrend(j.trend);
-}
-async function loadArcadeInsights(force=false){
-  const days=Number($('#arcadeDays')?.value)||30,key=String(days);
-  if(!force&&state.arcadeLoadedKey===key)return;
-  state.arcadeLoadedKey=key;
-  $('#arcadeModes').innerHTML='<div class="empty">Loading English Arcade activity…</div>';
-  try{
-    const j=await api(endpoint('teacher_arcade_insights',{days:String(days)}));
-    renderArcadeInsights(j);
-  }catch(e){
-    state.arcadeLoadedKey=null;
-    $('#arcadeModes').innerHTML=`<div class="empty">${esc(e.message)}</div>`;
-    $('#arcadeStudents').innerHTML='<div class="empty">Could not load English Arcade activity.</div>';
-    $('#arcadeTrend').innerHTML='<div class="empty">Could not load English Arcade activity.</div>';
-  }
-}
 function habitReason(h){if(!h)return'No evidence';const parts=[`${h.active_days_7} active day${h.active_days_7===1?'':'s'} in the last 7`,`${h.current_streak}-day streak`,`${h.attempts} attempts`];if(h.days_since_last_study!=null)parts.push(h.days_since_last_study===0?'studied today':`last studied ${h.days_since_last_study} day${h.days_since_last_study===1?'':'s'} ago`);return parts.join(' · ')}
 function learningReason(l){if(!l||l.all_time_accuracy==null)return'Not enough learning evidence';const recent=l.recent_accuracy==null?'—':`${l.recent_accuracy}%`;let t=`Recent ${recent} from ${l.recent_count??0} current questions · All time ${l.all_time_accuracy}% across ${l.all_time_attempts??0} attempts`;if(l.priority_weaknesses?.length)t+=` · ${l.priority_weaknesses.length} priority weakness${l.priority_weaknesses.length===1?'':'es'}`;if(typeof l.trend==='number')t+=` · ${l.trend>0?'+':''}${l.trend} pts vs previous 14 days`;return t}
 function closeStudentDrawerDirect(){$('#drawerBg').classList.remove('open')}
@@ -323,8 +246,8 @@ async function loadClassOverview(force=false){
   }
 }
 async function openClassFromOverview(name,days){$('#classSelect').value=name;$('#daysSelect').value=String(days);state.className=name;state.days=days;switchView('students');await loadClass()}
-function switchView(v){$('.view').forEach(x=>x.classList.toggle('active',x.id===`view-${v}`));$('[data-view]').forEach(x=>x.classList.toggle('active',x.dataset.view===v));if(v==='classes')loadClassOverview();if(v==='puzzles')loadPuzzleInsights();if(v==='english-arcade')loadArcadeInsights()}
-$('#classSelect').onchange=loadClass;$('#daysSelect').onchange=loadClass;$('#refreshBtn').onclick=loadClass;$('#searchInput').oninput=renderStudents;$('#classDaysSelect').onchange=()=>loadClassOverview(true);$('#classRefreshBtn').onclick=()=>loadClassOverview(true);$('#puzzleClass').onchange=()=>loadPuzzleInsights(true);$('#puzzleDays').onchange=()=>loadPuzzleInsights(true);$('#puzzleRefreshBtn').onclick=()=>loadPuzzleInsights(true);$('#arcadeDays').onchange=()=>loadArcadeInsights(true);$('#arcadeRefreshBtn').onclick=()=>loadArcadeInsights(true);$('#closeDrawer').onclick=()=>window.TeacherHistory?.requestClose?.('student')||closeStudentDrawerDirect();$('#drawerBg').onclick=e=>{if(e.target===$('#drawerBg')){if(window.TeacherHistory?.requestClose)window.TeacherHistory.requestClose('student');else closeStudentDrawerDirect()}};$$('[data-view]').forEach(b=>b.onclick=()=>switchView(b.dataset.view));
+function switchView(v){$$('.view').forEach(x=>x.classList.toggle('active',x.id===`view-${v}`));$$('[data-view]').forEach(x=>x.classList.toggle('active',x.dataset.view===v));if(v==='classes')loadClassOverview();if(v==='puzzles')loadPuzzleInsights()}
+$('#classSelect').onchange=loadClass;$('#daysSelect').onchange=loadClass;$('#refreshBtn').onclick=loadClass;$('#searchInput').oninput=renderStudents;$('#classDaysSelect').onchange=()=>loadClassOverview(true);$('#classRefreshBtn').onclick=()=>loadClassOverview(true);$('#puzzleClass').onchange=()=>loadPuzzleInsights(true);$('#puzzleDays').onchange=()=>loadPuzzleInsights(true);$('#puzzleRefreshBtn').onclick=()=>loadPuzzleInsights(true);$('#closeDrawer').onclick=()=>window.TeacherHistory?.requestClose?.('student')||closeStudentDrawerDirect();$('#drawerBg').onclick=e=>{if(e.target===$('#drawerBg')){if(window.TeacherHistory?.requestClose)window.TeacherHistory.requestClose('student');else closeStudentDrawerDirect()}};$$('[data-view]').forEach(b=>b.onclick=()=>switchView(b.dataset.view));
 window.TeacherStudentDrawer={open:openStudent,close:closeStudentDrawerDirect};
 (async()=>{if(await auth()){loadClasses()}})();
 </script>
