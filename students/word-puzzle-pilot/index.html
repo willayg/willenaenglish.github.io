@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Word Puzzle Pilot</title>
+<style>
+:root{--ink:#18212f;--cyan:#8feaf2;--cyan2:#e3fbff;--pink:#ff9bc6;--pink2:#ffe6f1;--yellow:#ffe58a;--bg:#f7fbff}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:
+radial-gradient(circle at 10% 0%,rgba(143,234,242,.35),transparent 27%),
+radial-gradient(circle at 92% 5%,rgba(255,155,198,.28),transparent 25%),
+linear-gradient(#fff,#f5f9ff);color:var(--ink);padding:20px}
+.app{width:min(940px,100%);margin:0 auto;display:grid;gap:16px}
+header{display:flex;justify-content:space-between;gap:16px;align-items:flex-start}
+h1{margin:0;font-size:clamp(30px,5vw,48px);letter-spacing:-.04em}
+.meta{color:#667085;font-weight:750;margin-top:6px}
+.badges{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.badge{background:#fff;border:2px solid var(--ink);border-radius:999px;padding:8px 12px;font-weight:900;font-size:13px;box-shadow:2px 3px 0 var(--ink)}
+.card{background:#fff;border:3px solid var(--ink);border-radius:28px;box-shadow:8px 10px 0 var(--ink),0 20px 50px rgba(24,33,47,.12);overflow:hidden}
+.cardTop{padding:15px 20px;background:linear-gradient(90deg,var(--cyan2),#fff,var(--pink2));border-bottom:3px solid var(--ink);display:flex;justify-content:space-between;font-weight:950;text-transform:uppercase;letter-spacing:.06em}
+.clues{padding:34px clamp(24px,6vw,66px);display:grid;gap:18px;min-height:380px;align-content:center}
+.clue{display:flex;gap:14px;align-items:flex-start;font-size:clamp(23px,3.7vw,34px);font-weight:850;line-height:1.22;letter-spacing:-.02em}
+.num{flex:0 0 38px;width:38px;height:38px;border:2px solid var(--ink);border-radius:12px;background:var(--yellow);display:grid;place-items:center;box-shadow:2px 3px 0 var(--ink);font-size:17px}
+.answer{border-top:3px dashed #cbd5e1;text-align:center;padding:24px;cursor:pointer;user-select:none}
+.answerLabel{font-size:12px;text-transform:uppercase;letter-spacing:.12em;font-weight:900;color:#667085}
+.answerText{font-size:clamp(38px,7vw,68px);font-weight:950;letter-spacing:-.04em;margin-top:4px;min-height:1.1em}
+.hidden{color:transparent;position:relative}
+.hidden:after{content:"Tap to reveal";position:absolute;inset:0;color:var(--ink);display:grid;place-items:center;font-size:clamp(24px,4vw,36px)}
+.controls{display:grid;grid-template-columns:1fr 1.2fr;gap:12px}
+button,input{font:inherit}
+button{border:3px solid var(--ink);border-radius:18px;padding:17px;font-weight:950;color:var(--ink);box-shadow:4px 5px 0 var(--ink);cursor:pointer}
+button:active{transform:translate(3px,4px);box-shadow:1px 1px 0 var(--ink)}
+#toggle{background:var(--pink2)} #next{background:var(--cyan)}
+.panel{background:#fff;border:2px solid #d8e1ea;border-radius:18px;padding:14px 16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.panel label{font-size:13px;font-weight:900}
+.panel input{flex:1;min-width:170px;border:2px solid #cbd5e1;border-radius:12px;padding:10px 12px;font-weight:800}
+.panel button{padding:10px 14px;font-size:14px;box-shadow:2px 3px 0 var(--ink)}
+.small{font-size:12px;color:#667085;font-weight:700}
+.error{background:#fff0f4;border:2px solid #ffabc7;border-radius:16px;padding:13px 15px;font-weight:800;display:none}
+@media(max-width:650px){header{display:grid}.badges{justify-content:flex-start}.controls{grid-template-columns:1fr}.clues{padding:26px 20px;min-height:360px}}
+</style>
+</head>
+<body>
+<main class="app">
+<header>
+<div><h1>Word Puzzle Pilot</h1><div class="meta" id="classMeta">Loading class…</div></div>
+<div class="badges"><span class="badge" id="tierBadge">Tier —</span><span class="badge" id="bookBadge">Book —</span></div>
+</header>
+
+<div class="panel">
+<label for="classInput">Pilot class</label>
+<input id="classInput" placeholder="Brown, Chicago, Test…">
+<button id="loadClass">Load class</button>
+<span class="small">URL: <b>?class=Chicago</b></span>
+</div>
+<div class="error" id="error"></div>
+
+<section class="card">
+<div class="cardTop"><span>What am I?</span><span id="progress">1 / 20</span></div>
+<div class="clues" id="clues"></div>
+<div class="answer" id="answerZone" tabindex="0" role="button">
+<div class="answerLabel">Answer</div>
+<div class="answerText hidden" id="answerText"></div>
+</div>
+</section>
+
+<div class="controls">
+<button id="toggle">Show Answer</button>
+<button id="next">Next Puzzle →</button>
+</div>
+<div class="small" style="text-align:center">Pilot only — class-aware difficulty, no student tracking yet.</div>
+</main>
+
+<script>
+const API="https://fiieuiktlsivwfgyivai.supabase.co/functions/v1/word-puzzle-class-context";
+
+const pools={
+lower:[
+["Elephant",["It can stomp.","It is big and gray.","It has big ears."]],
+["Cat",["It has whiskers.","It can meow.","It likes to sleep."]],
+["Dog",["It can bark.","It has four legs.","It can wag its tail."]],
+["Lion",["It is a big cat.","It can roar.","It has sharp teeth."]],
+["Monkey",["It can climb trees.","It has a long tail.","It likes fruit."]],
+["Bird",["It has feathers.","It can fly.","It can sing."]],
+["Fish",["It lives in water.","It has fins.","It can swim."]],
+["Rabbit",["It has long ears.","It can hop.","It likes vegetables."]],
+["Frog",["It can jump.","It is often green.","It says croak."]],
+["Apple",["It grows on a tree.","It can be red or green.","You can eat it."]],
+["Banana",["It is yellow.","You peel it before eating.","Monkeys like it."]],
+["Cake",["It is sweet.","We eat it at birthdays.","It can have candles."]],
+["Book",["It has pages.","You can read it.","It can tell a story."]],
+["Pencil",["You hold it in your hand.","You can write with it.","It has an eraser."]],
+["Chair",["You can sit on it.","It has legs.","You find it in a classroom."]],
+["Bus",["It is big.","Many people can ride it.","It stops at bus stops."]],
+["Car",["It has four wheels.","People drive it.","It goes on roads."]],
+["Sun",["It is in the sky.","It is very hot.","It gives us light."]],
+["Moon",["You can see it at night.","It is in the sky.","It is not a star."]],
+["Ball",["It is round.","You can throw it.","You can play games with it."]]
+],
+middle:[
+["Giraffe",["It is very tall.","It has a long neck.","It eats leaves from trees."]],
+["Crocodile",["It has a long mouth.","It has many sharp teeth.","It lives near water."]],
+["Dolphin",["It lives in the ocean.","It is a mammal.","It can jump out of the water."]],
+["Penguin",["It is a bird that cannot fly.","It is black and white.","It is a very good swimmer."]],
+["Octopus",["It lives in the ocean.","It has eight arms.","It can hide very well."]],
+["Rainbow",["You can see it after rain.","It has many colors.","It appears in the sky."]],
+["Volcano",["It is a mountain.","It can erupt.","Hot lava can come out of it."]],
+["Guitar",["It is a musical instrument.","It has strings.","You play it with your hands."]],
+["Xylophone",["It is a musical instrument.","You hit its bars with sticks.","Its bars can be different colors."]],
+["Pillow",["You put your head on it.","It is soft.","You use it in bed."]],
+["Blanket",["It can keep you warm.","It is soft.","You use it on a bed."]],
+["Lemon",["It is yellow.","It tastes sour.","It is a fruit."]],
+["Popcorn",["It is light and crunchy.","People often eat it at the movies.","It is made from corn."]],
+["Chocolate",["It is usually brown.","It tastes sweet.","It can melt when it gets warm."]],
+["Ocean",["It is very large and full of water.","Its water is salty.","Whales and dolphins live there."]],
+["Shell",["You can find it at the beach.","It is hard.","Some sea animals live inside one."]],
+["Wood",["It comes from trees.","It can be hard and rough.","People use it to make furniture."]],
+["Bottle",["It can hold water or juice.","It has a narrow top.","It can be made of glass or plastic."]],
+["Drum",["It is a musical instrument.","You hit it to play it.","It can make a loud sound."]],
+["Bell",["It can ring.","It is often made of metal.","You may hear one at school."]]
+],
+upper:[
+["Thermometer",["It is used to measure temperature.","Doctors often use one.","It can tell you if something is hot or cold."]],
+["Telescope",["It helps you see things far away.","People use it to look at stars.","It has a long tube."]],
+["Compass",["It helps you find direction.","It points north.","People use it when traveling or hiking."]],
+["Microscope",["It makes tiny things look bigger.","Scientists use it.","You may use one in science class."]],
+["Astronaut",["This person travels into space.","This person wears a special suit.","This person may work on a spacecraft."]],
+["Architect",["This person designs buildings.","This person makes plans and drawings.","This job mixes art and engineering."]],
+["Mechanic",["This person repairs machines or cars.","This person uses tools.","You may find this person in a repair shop."]],
+["Librarian",["This person works with books.","This person can help you find information.","This person often works in a library."]],
+["Firefighter",["This person helps in emergencies.","This person puts out fires.","This person may drive a fire engine."]],
+["Detective",["This person looks for clues.","This person tries to solve mysteries.","This person investigates what happened."]],
+["Marathon",["It is a very long race.","People run it.","It is much longer than a normal school race."]],
+["Hermit crab",["It is a small sea animal.","It uses an empty shell as a home.","It can move to a bigger shell as it grows."]],
+["Sea water",["It is found in oceans.","It tastes salty.","Fish and other sea animals live in it."]],
+["Arrow",["It is long and thin.","An archer shoots it.","It has a pointed end."]],
+["Net",["It is made from many connected strings.","People can use it to catch things.","You see one in some sports and fishing."]],
+["Chef",["This person cooks food professionally.","This person often works in a restaurant.","This person prepares dishes."]],
+["Journalist",["This person reports news.","This person may interview people.","This person writes or speaks about events."]],
+["Engineer",["This person designs or builds things.","This job uses science and math.","This person solves practical problems."]],
+["Ocean",["It covers much of Earth.","Its water is salty.","It is home to many kinds of life."]],
+["Xylophone",["It is a percussion instrument.","Its bars make different notes.","You play it with mallets."]]
+]};
+
+let ctx=null,current=-1,shown=false,seen=0;
+
+const $=id=>document.getElementById(id);
+function pick(){
+ const pool=pools[ctx?.tier]||pools.middle;
+ let n=0; do{n=Math.floor(Math.random()*pool.length)}while(pool.length>1&&n===current);
+ current=n; shown=false; seen++;
+ const [answer,clues]=pool[n];
+ $("clues").innerHTML=clues.map((x,i)=>'<div class="clue"><span class="num">'+(i+1)+'</span><span>'+x+'</span></div>').join("");
+ $("answerText").textContent=answer;
+ $("answerText").classList.add("hidden");
+ $("toggle").textContent="Show Answer";
+ $("progress").textContent=((seen-1)%pool.length+1)+" / "+pool.length;
+}
+function toggle(){
+ shown=!shown;
+ $("answerText").classList.toggle("hidden",!shown);
+ $("toggle").textContent=shown?"Hide Answer":"Show Answer";
+}
+function inferTierFallback(name){
+ const s=(name||"").toLowerCase();
+ if(/brown|stanford|manchester/.test(s))return"lower";
+ if(/new york|hawaii|boston|sydney|berkeley|test/.test(s))return"middle";
+ return"upper";
+}
+async function loadClass(name){
+ const clean=(name||"").trim();
+ if(!clean)return;
+ $("error").style.display="none";
+ $("classMeta").textContent="Loading "+clean+"…";
+ try{
+   const r=await fetch(API+"?class="+encodeURIComponent(clean),{headers:{Accept:"application/json"}});
+   const data=await r.json();
+   if(!r.ok||!data.success)throw new Error(data.error||"Could not load class");
+   ctx=data;
+   ctx.tier=ctx.tier||inferTierFallback(clean);
+   const books=(ctx.books||[]).map(b=>b.book_title).filter(Boolean);
+   $("classMeta").textContent=ctx.class.name+" · "+(books.length?books.join(" + "):"No active book");
+   $("tierBadge").textContent=ctx.tier.toUpperCase()+" · L"+ctx.inferred_level;
+   $("bookBadge").textContent=books[0]||"No book";
+   $("classInput").value=ctx.class.name;
+   history.replaceState(null,"",location.pathname+"?class="+encodeURIComponent(ctx.class.name));
+   current=-1;seen=0;pick();
+ }catch(e){
+   $("classMeta").textContent="Class not loaded";
+   $("error").textContent=e.message||String(e);
+   $("error").style.display="block";
+ }
+}
+$("toggle").addEventListener("click",toggle);
+$("answerZone").addEventListener("click",toggle);
+$("answerZone").addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();toggle()}});
+$("next").addEventListener("click",pick);
+$("loadClass").addEventListener("click",()=>loadClass($("classInput").value));
+$("classInput").addEventListener("keydown",e=>{if(e.key==="Enter")loadClass($("classInput").value)});
+window.addEventListener("keydown",e=>{if(e.code==="Space"&&!["INPUT","BUTTON"].includes(document.activeElement.tagName)){e.preventDefault();toggle()}if(e.key==="ArrowRight")pick()});
+
+const initial=new URLSearchParams(location.search).get("class")||"Test";
+loadClass(initial);
+</script>
+</body>
+</html>
