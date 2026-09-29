@@ -96,7 +96,7 @@
       <button id="revealBtn" type="button">Show Answer</button>
       <button id="nextBtn" type="button">Next Random Card →</button>
     </div>
-    <div class="hint">Keyboard: Space = reveal · Right arrow = next</div>
+    <div class="hint">Keyboard: Space = show/hide answer · Right arrow = next</div>
   </main>
 
   <script>
@@ -170,26 +170,26 @@
       counter.textContent = `${seen} / ${cards.length}`;
     }
 
-    function reveal(){
-      shown = true;
-      answerEl.classList.remove("hidden-answer");
-      revealBtn.textContent = "Answer Shown";
-      answerZone.setAttribute("aria-label","Answer: "+answerEl.textContent);
+    function toggleAnswer(){
+      shown = !shown;
+      answerEl.classList.toggle("hidden-answer", !shown);
+      revealBtn.textContent = shown ? "Hide Answer" : "Show Answer";
+      answerZone.setAttribute("aria-label", shown ? "Hide answer" : "Reveal answer");
     }
 
     function next(){
       renderCard(pickRandom());
     }
 
-    revealBtn.addEventListener("click",reveal);
+    revealBtn.addEventListener("click",toggleAnswer);
     nextBtn.addEventListener("click",next);
-    answerZone.addEventListener("click",()=> shown ? next() : reveal());
+    answerZone.addEventListener("click",toggleAnswer);
     answerZone.addEventListener("keydown",e=>{
-      if(e.key==="Enter" || e.key===" "){e.preventDefault(); shown ? next() : reveal();}
+      if(e.key==="Enter" || e.key===" "){e.preventDefault(); toggleAnswer();}
     });
     window.addEventListener("keydown",e=>{
       if(e.code==="Space" && !["INPUT","TEXTAREA","BUTTON"].includes(document.activeElement.tagName)){
-        e.preventDefault(); reveal();
+        e.preventDefault(); toggleAnswer();
       }
       if(e.key==="ArrowRight") next();
     });
