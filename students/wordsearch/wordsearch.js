@@ -1,5 +1,34 @@
 import {capturePointOrigin,showPointAward} from '/students/components/student-point-feedback.js?v=20260927-startup2';
-import {playStudentSfx,preloadStudentSfx} from '/students/shared/student-sfx.js?v=20260927-startup2';
+
+const PUZZLE_SFX={
+  correct:'/Games/english_arcade/assets/audio/right-answer.mp3',
+  wrong:'/Games/english_arcade/assets/audio/wrong-answer.mp3',
+  complete:'/Games/english_arcade/assets/audio/game-end.mp3'
+};
+const puzzleSfxCache=new Map();
+function getPuzzleSfx(name){
+  const src=PUZZLE_SFX[name];
+  if(!src)return null;
+  if(!puzzleSfxCache.has(name)){
+    const audio=new Audio(src);
+    audio.preload='auto';
+    puzzleSfxCache.set(name,audio);
+  }
+  return puzzleSfxCache.get(name);
+}
+function playPuzzleSfx(name){
+  try{
+    const base=getPuzzleSfx(name);
+    if(!base)return;
+    const audio=base.cloneNode();
+    audio.volume=.7;
+    audio.currentTime=0;
+    audio.play().catch(()=>{});
+  }catch(_){}
+}
+function preloadPuzzleSfx(){
+  Object.keys(PUZZLE_SFX).forEach(name=>{try{getPuzzleSfx(name)?.load?.()}catch(_){}});
+}
 
 const CONTENT_URL='https://gxwfsqxyuufqtitspfqg.supabase.co';
 const CONTENT_KEY=['sb_publishable_','G-FYhHfDL4OGdL892gY1Zg_','epdbEeqO'].join('');
@@ -573,7 +602,7 @@ async function boggleEnd(originEl){
   const letters=coords.map(([r,c])=>txt(cellAt(r,c)?.textContent).toUpperCase()).join('');
   const index=state.placements.findIndex((p,i)=>!state.found.has(i)&&p.clean===letters);
   if(index<0){
-    playStudentSfx('wrong');
+    playPuzzleSfx('wrong');
     return;
   }
   rememberBogglePath(index,coords);
@@ -630,14 +659,14 @@ async function chooseMatchCard(card){
     first.setAttribute('aria-pressed','true');card.setAttribute('aria-pressed','true');
     state.found.add(index);
     updateProgress();
-    playStudentSfx('correct');
+    playPuzzleSfx('correct');
     showPointAward({amount:POINTS_PER_WORD,origin:capturePointOrigin(card)});
     if(state.found.size===state.placements.length)await finishPuzzle();
     return;
   }
 
   state.matchLocked=true;
-  playStudentSfx('wrong');
+  playPuzzleSfx('wrong');
   first.classList.add('wrong');card.classList.add('wrong');
   setTimeout(()=>{
     first.classList.remove('selected','wrong','flipped');
@@ -766,14 +795,14 @@ async function markFound(index,originEl,selectedCoords=null){
   chip?.scrollIntoView?.({behavior:'smooth',block:'nearest',inline:'center'});
   setTimeout(()=>chip?.classList.remove('just-found'),450);
   updateProgress();
-  playStudentSfx('correct');
+  playPuzzleSfx('correct');
   showPointAward({amount:POINTS_PER_WORD,origin:capturePointOrigin(originEl||cellAt(...placement.coords[placement.coords.length-1]))});
   if(state.found.size===state.placements.length){
     await finishPuzzle();
   }
 }
 async function finishPuzzle(){
-  playStudentSfx('complete');
+  playPuzzleSfx('complete');
   const points=earnedPuzzlePoints();
   const stars=earnedPuzzleStars();
   const completeLabel=state.mode==='crossword'?'Crossword complete!':(state.mode==='boggle'?'Boggle complete!':(state.mode==='mixmatch'?'Mix & Match complete!':'Word search complete!'));
@@ -1304,7 +1333,7 @@ async function checkCrosswordWord(index,origin){
   const clue=wordListEl.querySelector('.crossword-clue[data-word-index="'+index+'"]');
   clue?.classList.add('found');
   updateProgress();
-  playStudentSfx('correct');
+  playPuzzleSfx('correct');
   showPointAward({amount:POINTS_PER_WORD,origin:capturePointOrigin(origin||clue)});
   if(state.found.size===state.placements.length)await finishPuzzle();
 }
@@ -1345,7 +1374,7 @@ async function useCrosswordGimme(index,origin){
   const clue=wordListEl.querySelector('.crossword-clue[data-word-index="'+index+'"]');
   clue?.classList.add('found','used-gimme');
   updateProgress();
-  playStudentSfx('correct');
+  playPuzzleSfx('correct');
   if(state.found.size===state.placements.length)await finishPuzzle();
 }
 function wireCrossword(){
@@ -1509,7 +1538,7 @@ async function buildPuzzle(){
   }
 }
 async function boot(){
-  preloadStudentSfx();
+  preloadPuzzleSfx();
   state.ready=false;
   setPuzzleControlsEnabled(false);
   showLoading();
