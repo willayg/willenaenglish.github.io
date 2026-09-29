@@ -227,7 +227,7 @@ async function requireTeacher(env,userId,select){
 }
 
 async function canonicalClasses(env,select){
-  const rows=await select(env,'classes','status=eq.active&select=id,name,display_name,legacy_class_name,status&order=name.asc');
+  const rows=await select(env,'classes','status=eq.active&name=neq.Test&select=id,name,display_name,legacy_class_name,status&order=name.asc');
   return Array.isArray(rows)?rows:[];
 }
 
@@ -327,6 +327,47 @@ export async function handleTeacherInsights({request,env,userId,section,origin,j
     return jsonResponse({success:true,classes},200,origin,30);
   }
 
+  if(section==='teacher_classes_overview'){
+    const canonical=await canonicalClasses(env,supabaseSelect);
+    const classIds=canonical.map(x=>x.id).filter(Boolean);
+    let enrollments=[];
+    if(classIds.length)enrollments=await supabaseSelect(env,'class_enrollments',`class_id=in.(${classIds.join(',')})&status=eq.active&select=class_id,student_id`);
+    const studentToClass=new Map(),classToStudents=new Map();
+    (enrollments||[]).forEach(r=>{
+      if(!r.student_id||!r.class_id)return;
+      studentToClass.set(r.student_id,r.class_id);
+      if(!classToStudents.has(r.class_id))classToStudents.set(r.class_id,[]);
+      classToStudents.get(r.class_id).push(r.student_id);
+    });
+    const ids=[...new Set((enrollments||[]).map(r=>r.student_id).filter(Boolean))];
+    let profiles=[];
+    if(ids.length)profiles=await supabaseSelect(env,'profiles',`id=in.(${ids.join(',')})&role=eq.student&approved=eq.true&select=id,name,username,korean_name,class`);
+    const attempts=await fetchAttempts(env,supabaseSelect,ids,days);
+    const byStudent=new Map();
+    attempts.forEach(a=>{if(!byStudent.has(a.student_id))byStudent.set(a.student_id,[]);byStudent.get(a.student_id).push(a);});
+    const profileMap=new Map((profiles||[]).map(p=>[p.id,p]));
+    const classes=canonical.map(cls=>{
+      const sids=[...new Set(classToStudents.get(cls.id)||[])];
+      const students=sids.map(id=>profileMap.get(id)).filter(Boolean).map(p=>studentInsight({...p,class:cls.display_name||cls.name},byStudent.get(p.id)||[],false,byStudent.get(p.id)||[]));
+      const classAttempts=sids.flatMap(id=>byStudent.get(id)||[]);
+      const correct=classAttempts.filter(a=>a.is_correct).length;
+      return {
+        id:cls.id,
+        name:cls.display_name||cls.name,
+        student_count:students.length,
+        summary:{
+          students:students.length,
+          active_students:students.filter(s=>s.habits.active_days_period>0).length,
+          needs_learning_attention:students.filter(s=>s.learning.label==='Needs attention').length,
+          needs_habit_attention:students.filter(s=>s.habits.label==='Needs attention').length,
+          attempts:classAttempts.length,
+          accuracy:pct(correct,classAttempts.length)
+        }
+      };
+    });
+    return jsonResponse({success:true,days,classes},200,origin,20);
+  }
+
   if(section==='teacher_class_insights'){
     const className=String(url.searchParams.get('class')||'').trim();
     if(!className)return jsonResponse({success:false,error:'Missing class'},400,origin,0);
@@ -370,7 +411,7 @@ export async function handleTeacherInsights({request,env,userId,section,origin,j
       profiles=resolved.students;
     }else{
       profiles=await supabaseSelect(env,'profiles','role=eq.student&approved=eq.true&select=id,name,username,korean_name,class');
-      profiles=(profiles||[]).filter(p=>!p.username||String(p.username).length>1);
+      profiles=(profiles||[]).filter(p=>(!p.username||String(p.username).length>1)&&String(p.class||'').toLowerCase()!=='test');
     }
     const ids=profiles.map(p=>p.id).filter(Boolean);
     const sessions=await fetchPuzzleSessions(env,supabaseSelect,ids,days);
