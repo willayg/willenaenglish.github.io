@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#f7fbff" />
+  <title>Five Senses Quiz</title>
+  <style>
+    :root{
+      --ink:#18212f; --muted:#667085; --bg:#f7fbff; --card:#ffffff;
+      --cyan:#87e8f3; --cyan2:#dffbff; --pink:#ff8fbd; --pink2:#ffe2ef;
+      --yellow:#ffe58a; --shadow:0 18px 45px rgba(44,62,80,.14);
+      --radius:28px;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;min-height:100%;font-family:Inter,ui-rounded,"Arial Rounded MT Bold",system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:var(--ink);background:
+      radial-gradient(circle at 12% 8%,rgba(135,232,243,.34),transparent 25%),
+      radial-gradient(circle at 88% 10%,rgba(255,143,189,.25),transparent 26%),
+      linear-gradient(180deg,#fbfdff 0%,#f4f9ff 100%)}
+    body{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
+    .app{width:min(920px,100%);display:grid;gap:18px}
+    .topbar{display:flex;align-items:center;justify-content:space-between;gap:16px}
+    .title-wrap{display:flex;align-items:center;gap:13px}
+    .logo{width:52px;height:52px;border:3px solid var(--ink);border-radius:16px;background:linear-gradient(145deg,var(--cyan2),var(--pink2));display:grid;place-items:center;box-shadow:4px 5px 0 var(--ink)}
+    .logo svg{width:31px;height:31px}
+    h1{font-size:clamp(26px,4vw,42px);line-height:1;margin:0;font-weight:900;letter-spacing:-.03em}
+    .subtitle{margin:5px 0 0;color:var(--muted);font-size:14px;font-weight:700}
+    .count{font-weight:900;background:#fff;border:2px solid #d7e0e8;border-radius:999px;padding:10px 14px;white-space:nowrap}
+    .quiz-card{position:relative;background:var(--card);border:3px solid var(--ink);border-radius:var(--radius);box-shadow:8px 10px 0 var(--ink),var(--shadow);overflow:hidden;min-height:520px;display:grid;grid-template-rows:auto 1fr auto}
+    .ribbon{padding:15px 22px;background:linear-gradient(90deg,var(--cyan2),#fff 45%,var(--pink2));border-bottom:3px solid var(--ink);display:flex;align-items:center;justify-content:space-between;gap:12px}
+    .ribbon strong{font-size:15px;letter-spacing:.06em;text-transform:uppercase}
+    .sense-icons{display:flex;gap:7px}
+    .sense-dot{width:30px;height:30px;border:2px solid var(--ink);border-radius:10px;background:#fff;display:grid;place-items:center;font-size:16px}
+    .clues{display:grid;align-content:center;gap:14px;padding:30px clamp(24px,6vw,66px)}
+    .clue{display:flex;align-items:flex-start;gap:14px;font-size:clamp(20px,3vw,31px);line-height:1.25;font-weight:850;letter-spacing:-.02em}
+    .n{flex:0 0 auto;width:36px;height:36px;border:2px solid var(--ink);border-radius:12px;display:grid;place-items:center;background:var(--yellow);font-size:17px;box-shadow:2px 3px 0 var(--ink)}
+    .answer-zone{border-top:3px dashed #cbd5e1;padding:20px 24px 25px;text-align:center;cursor:pointer;user-select:none;outline:none}
+    .answer-zone:focus-visible{box-shadow:inset 0 0 0 5px var(--cyan)}
+    .answer-label{font-size:13px;text-transform:uppercase;letter-spacing:.12em;font-weight:900;color:var(--muted);margin-bottom:6px}
+    .answer{font-size:clamp(34px,7vw,64px);line-height:1;font-weight:950;letter-spacing:-.04em;min-height:1em}
+    .hidden-answer{color:transparent;position:relative}
+    .hidden-answer::after{content:"Tap to reveal";color:var(--ink);position:absolute;inset:0;display:grid;place-items:center;font-size:clamp(22px,4vw,34px);letter-spacing:-.02em}
+    .controls{display:grid;grid-template-columns:1fr 1.25fr;gap:14px}
+    button{appearance:none;border:3px solid var(--ink);border-radius:20px;padding:17px 22px;font:900 18px/1 inherit;color:var(--ink);cursor:pointer;box-shadow:4px 5px 0 var(--ink);transition:transform .12s ease,box-shadow .12s ease,filter .12s ease}
+    button:active{transform:translate(3px,4px);box-shadow:1px 1px 0 var(--ink)}
+    #revealBtn{background:var(--pink2)}
+    #nextBtn{background:var(--cyan)}
+    .hint{font-size:12px;color:var(--muted);text-align:center;font-weight:700}
+    @media(max-width:600px){
+      body{padding:14px}
+      .topbar{align-items:flex-start}
+      .count{font-size:13px;padding:8px 11px}
+      .quiz-card{min-height:510px;border-radius:22px}
+      .clues{padding:24px 20px;gap:13px}
+      .clue{gap:10px}
+      .n{width:31px;height:31px;border-radius:10px}
+      .controls{grid-template-columns:1fr}
+      button{padding:15px}
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <div class="topbar">
+      <div class="title-wrap">
+        <div class="logo" aria-hidden="true">
+          <svg viewBox="0 0 64 64" fill="none">
+            <path d="M14 25c5-9 13-14 18-14s13 5 18 14c-5 9-13 14-18 14S19 34 14 25Z" fill="#fff" stroke="#18212f" stroke-width="4"/>
+            <circle cx="32" cy="25" r="7" fill="#87e8f3" stroke="#18212f" stroke-width="4"/>
+            <path d="M22 49c4 3 8 4 10 4s6-1 10-4" stroke="#18212f" stroke-width="4" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div>
+          <h1>Five Senses Quiz</h1>
+          <p class="subtitle">Read the clues. Guess the answer.</p>
+        </div>
+      </div>
+      <div class="count" id="counter">1 / 36</div>
+    </div>
+
+    <section class="quiz-card" aria-live="polite">
+      <div class="ribbon">
+        <strong>What am I?</strong>
+        <div class="sense-icons" aria-hidden="true">
+          <span class="sense-dot">👀</span><span class="sense-dot">👃</span><span class="sense-dot">👅</span><span class="sense-dot">✋</span><span class="sense-dot">👂</span>
+        </div>
+      </div>
+      <div class="clues" id="clues"></div>
+      <div class="answer-zone" id="answerZone" role="button" tabindex="0" aria-label="Reveal answer">
+        <div class="answer-label">Answer</div>
+        <div class="answer hidden-answer" id="answer"></div>
+      </div>
+    </section>
+
+    <div class="controls">
+      <button id="revealBtn" type="button">Show Answer</button>
+      <button id="nextBtn" type="button">Next Random Card →</button>
+    </div>
+    <div class="hint">Keyboard: Space = reveal · Right arrow = next</div>
+  </main>
+
+  <script>
+    const cards = [
+      ["Rose",["It looks beautiful.","It smells wonderful.","It tastes awful.","It feels soft.","It doesn't have a sound."]],
+      ["Strawberry",["It looks red.","It smells sweet.","It tastes delicious.","It feels soft.","It doesn't have a sound."]],
+      ["Sunset",["It looks beautiful.","It doesn't have a smell.","You can't taste it.","You can't touch it.","It doesn't have a sound."]],
+      ["Pillow",["It looks soft.","It doesn't have much of a smell.","You shouldn't taste it.","It feels very soft.","It doesn't have a sound."]],
+      ["Bird",["It looks beautiful.","It doesn't have much of a smell.","You shouldn't taste it.","It feels soft.","It sounds wonderful."]],
+      ["Lemon",["It looks yellow.","It smells fresh.","It tastes sour.","It feels smooth.","It doesn't have a sound."]],
+      ["Ice cream",["It looks delicious.","It smells sweet.","It tastes sweet.","It feels cold and smooth.","It doesn't have a sound."]],
+      ["Cookie",["It looks delicious.","It smells wonderful.","It tastes sweet.","It feels hard.","It makes a crunchy sound when you eat it."]],
+      ["Chili pepper",["It looks red or green.","It has a strong smell.","It tastes spicy.","It feels smooth.","It doesn't have a sound."]],
+      ["Salt",["It looks white.","It doesn't have much of a smell.","It tastes salty.","It feels rough.","It doesn't have a sound."]],
+      ["Apple",["It looks red or green.","It smells fresh.","It tastes sweet.","It feels smooth and hard.","It makes a crunchy sound when you bite it."]],
+      ["Bread",["It looks soft.","It smells wonderful.","It tastes delicious.","It feels soft and warm.","It doesn't make much sound."]],
+      ["Rock",["It can look gray or brown.","It doesn't have much of a smell.","You shouldn't taste it.","It feels hard and rough.","It makes a loud sound when you drop it."]],
+      ["Water",["It looks clear.","It doesn't have a smell.","It doesn't have much taste.","It feels wet.","It makes a splashing sound."]],
+      ["Cake",["It looks beautiful.","It smells sweet.","It tastes delicious.","It feels soft.","It doesn't have much sound."]],
+      ["Popcorn",["It looks small and white.","It smells wonderful.","It tastes salty.","It feels light and rough.","It makes a crunchy sound."]],
+      ["Chocolate",["It looks brown.","It smells sweet.","It tastes sweet and delicious.","It feels smooth and hard.","It makes a small sound when you break it."]],
+      ["Pizza",["It looks delicious.","It smells wonderful.","It tastes salty and delicious.","It feels soft and warm.","It doesn't make much sound."]],
+      ["Soap",["It can look colorful.","It smells wonderful.","You shouldn't taste it.","It feels smooth and slippery.","It doesn't have a sound."]],
+      ["Bell",["It looks shiny.","It doesn't have much of a smell.","You shouldn't taste it.","It feels hard and smooth.","It makes a loud ringing sound."]],
+      ["Drum",["It looks round.","It doesn't have much of a smell.","You shouldn't taste it.","It feels smooth and hard.","It makes a loud sound."]],
+      ["Blanket",["It can look colorful.","It doesn't have much of a smell.","You shouldn't taste it.","It feels warm and soft.","It doesn't have a sound."]],
+      ["Ice",["It looks clear.","It doesn't have a smell.","It doesn't have much taste.","It feels cold, hard, and smooth.","It makes a sound when it breaks."]],
+      ["Cotton",["It looks white.","It doesn't have much of a smell.","You shouldn't taste it.","It feels very soft.","It doesn't have a sound."]],
+      ["Wood",["It looks brown.","It has a natural smell.","You shouldn't taste it.","It feels hard and sometimes rough.","It makes a loud sound when you knock on it."]],
+      ["Shell",["It looks beautiful.","It doesn't have much of a smell.","You shouldn't taste it.","It feels hard and smooth.","It makes a small sound when you tap it."]],
+      ["Snail shell",["It looks small and round.","It doesn't smell very strong.","You shouldn't taste it.","It feels hard and smooth.","It doesn't have much sound."]],
+      ["Xylophone",["It looks colorful.","It doesn't have much of a smell.","You shouldn't taste it.","It feels hard and smooth.","It makes musical sounds."]],
+      ["Bottle",["It can look clear or colorful.","It doesn't have much of a smell.","You shouldn't taste the bottle.","It feels hard and smooth.","It makes a sound when you tap it."]],
+      ["Book",["It can look colorful.","It smells like paper.","You shouldn't taste it.","It feels smooth or rough.","It makes a soft sound when you turn the pages."]],
+      ["Noodles",["They look long and thin.","They smell wonderful when they're cooked.","They taste delicious.","They feel soft and slippery.","They don't make much sound."]],
+      ["Vegetable",["It can look green, red, or orange.","It smells fresh.","It can taste sweet or bitter.","It can feel hard and smooth.","It can make a crunchy sound when you eat it."]],
+      ["Ocean",["It looks blue and beautiful.","It smells salty.","You shouldn't drink it.","It feels cold and wet.","It makes a loud sound."]],
+      ["Baseball bat",["It looks long.","It can smell like wood.","You shouldn't taste it.","It feels hard and smooth.","It makes a loud sound when it hits a ball."]],
+      ["Gift",["It looks beautiful and colorful.","It might smell wonderful.","You usually don't taste it.","It can feel hard or soft.","It makes a rustling sound when you open it."]],
+      ["Clothes",["They can look colorful.","They can smell clean.","You shouldn't taste them.","They can feel soft and warm.","They make a soft sound when you move."]]
+    ];
+
+    const cluesEl = document.getElementById("clues");
+    const answerEl = document.getElementById("answer");
+    const answerZone = document.getElementById("answerZone");
+    const revealBtn = document.getElementById("revealBtn");
+    const nextBtn = document.getElementById("nextBtn");
+    const counter = document.getElementById("counter");
+
+    let current = -1;
+    let shown = false;
+    let seen = 0;
+
+    function pickRandom(){
+      if(cards.length < 2) return 0;
+      let n;
+      do n = Math.floor(Math.random()*cards.length); while(n === current);
+      return n;
+    }
+
+    function renderCard(index){
+      current = index;
+      shown = false;
+      seen++;
+      const [answer, clues] = cards[index];
+      cluesEl.innerHTML = clues.map((clue,i)=>`<div class="clue"><span class="n">${i+1}</span><span>${clue}</span></div>`).join("");
+      answerEl.textContent = answer;
+      answerEl.classList.add("hidden-answer");
+      revealBtn.textContent = "Show Answer";
+      answerZone.setAttribute("aria-label","Reveal answer");
+      counter.textContent = `${seen} / ${cards.length}`;
+    }
+
+    function reveal(){
+      shown = true;
+      answerEl.classList.remove("hidden-answer");
+      revealBtn.textContent = "Answer Shown";
+      answerZone.setAttribute("aria-label","Answer: "+answerEl.textContent);
+    }
+
+    function next(){
+      renderCard(pickRandom());
+    }
+
+    revealBtn.addEventListener("click",reveal);
+    nextBtn.addEventListener("click",next);
+    answerZone.addEventListener("click",()=> shown ? next() : reveal());
+    answerZone.addEventListener("keydown",e=>{
+      if(e.key==="Enter" || e.key===" "){e.preventDefault(); shown ? next() : reveal();}
+    });
+    window.addEventListener("keydown",e=>{
+      if(e.code==="Space" && !["INPUT","TEXTAREA","BUTTON"].includes(document.activeElement.tagName)){
+        e.preventDefault(); reveal();
+      }
+      if(e.key==="ArrowRight") next();
+    });
+
+    renderCard(pickRandom());
+  </script>
+</body>
+</html>
