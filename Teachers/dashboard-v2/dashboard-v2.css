@@ -86,7 +86,3 @@ button,input,select{font:inherit}
 .puzzle-line{fill:none;stroke:var(--pink);stroke-width:4;stroke-linecap:round;stroke-linejoin:round}
 .puzzle-dots circle{fill:#fff;stroke:var(--pink);stroke-width:3}
 .puzzle-line-labels text{fill:var(--muted);font-size:12px;font-family:Poppins,Arial,sans-serif}
-
-/* Teacher sidebar information architecture */
-.nav-group-label{font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#97a2aa;padding:12px 8px 5px;white-space:nowrap;overflow:hidden;transition:opacity .18s ease}
-.layout:not(.sidebar-expanded) .nav-group-label{opacity:0;height:8px;padding:4px 0 0}
