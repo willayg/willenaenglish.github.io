@@ -256,6 +256,23 @@ async function fetchAttempts(env,select,userIds,days){
   return out;
 }
 
+const ARCADE_MODES=['memory_match','matching','listening','multi_choice','listen_and_spell','missing_letter','level_up','word_sentence_mode','full_sentence_mode','phonics_listening','grammar_mode','grammar_fill_gap','grammar_sentence_unscramble','grammar_find_mistake','grammar_sorting','grammar_translation_choice'];
+
+function arcadeName(mode){
+  return String(mode||'Arcade').replace(/^grammar_/,'').replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
+}
+
+async function fetchArcadeSessions(env,select,userIds,days){
+  if(!userIds.length)return[];
+  const since=daysAgoIso(days),out=[];
+  for(let i=0;i<userIds.length;i+=80){
+    const ids=userIds.slice(i,i+80).join(',');
+    const q=`user_id=in.(${ids})&mode=in.(${ARCADE_MODES.join(',')})&ended_at=gte.${encodeURIComponent(since)}&ended_at=not.is.null&select=user_id,session_id,mode,list_name,started_at,ended_at,summary&order=ended_at.desc`;
+    out.push(...await fetchPaged(select,env,'progress_sessions',q));
+  }
+  return out;
+}
+
 const PUZZLE_MODES=['wordsearch','boggle','crossword','mixmatch'];
 
 function puzzleName(mode){
@@ -400,6 +417,24 @@ export async function handleTeacherInsights({request,env,userId,section,origin,j
     const student=studentInsight(profile,attempts,true,allTimeAttempts);
     student.puzzles=puzzleSummary(puzzleRows);
     return jsonResponse({success:true,days,student},200,origin,10);
+  }
+
+  if(section==='teacher_arcade_insights'){
+    const profiles=await supabaseSelect(env,'profiles','role=eq.student&approved=eq.true&select=id,name,username,korean_name,class');
+    const filtered=(profiles||[]).filter(p=>(!p.username||String(p.username).length>1)&&String(p.class||'').trim().toLowerCase()!=='test');
+    const ids=filtered.map(p=>p.id).filter(Boolean);
+    const sessions=await fetchArcadeSessions(env,supabaseSelect,ids,days);
+    const byMode=new Map(),byStudent=new Map(),byDate=new Map();
+    sessions.forEach(s=>{
+      byMode.set(s.mode,(byMode.get(s.mode)||0)+1);
+      byStudent.set(s.user_id,(byStudent.get(s.user_id)||0)+1);
+      const dk=dateKey(s.ended_at);if(dk)byDate.set(dk,(byDate.get(dk)||0)+1);
+    });
+    const profileMap=new Map(filtered.map(p=>[p.id,p]));
+    const modes=[...byMode.entries()].map(([mode,count])=>({mode,name:arcadeName(mode),count})).sort((a,b)=>b.count-a.count||a.name.localeCompare(b.name));
+    const students=[...byStudent.entries()].map(([id,count])=>{const p=profileMap.get(id)||{};return{student_id:id,name:p.name||p.username||'Student',class:p.class||null,count};}).sort((a,b)=>b.count-a.count||a.name.localeCompare(b.name)).slice(0,15);
+    const trend=[...byDate.entries()].map(([date,count])=>({date,count})).sort((a,b)=>a.date.localeCompare(b.date));
+    return jsonResponse({success:true,days,total_plays:sessions.length,unique_students:byStudent.size,modes,students,trend},200,origin,20);
   }
 
   if(section==='teacher_puzzle_insights'){
