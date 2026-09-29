@@ -6,7 +6,7 @@ const UTILITIES_PIN_HASH='1a6ff8f796ed193a72c5d8a3f8a4e173ced67372fd4a282f6f5c38
 const UTILITIES_SESSION_KEY='willena_utilities_unlocked';
 const TRACKING_URL='https://fiieuiktlsivwfgyivai.supabase.co';
 const TRACKING_KEY='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
-const NAV_ORDER=['students','classes','naesin-v2','vocab','grammar-foundations','english-arcade','apps','utilities'];
+const NAV_ORDER=['students','classes','vocab','apps','naesin-v2','grammar-foundations','utilities','puzzles'];
 function installTestPrepRecentAccuracyBridge(){
   if(window.__WillenaTeacherRecentAccuracyBridge)return;
   window.__WillenaTeacherRecentAccuracyBridge=true;
@@ -59,30 +59,22 @@ async function warmAdmin(){prefetchPage('/Teachers/admin/','prefetchAdminDashboa
 async function getRole(){try{const f=window.WillenaAPI?.fetch||fetch;const who=await f(AUTH+'?action=whoami',{credentials:'include',cache:'no-store'});const w=await who.json().catch(()=>({}));if(!who.ok||!w.user_id)return'';const rr=await f(AUTH+'?action=get_role&user_id='+encodeURIComponent(w.user_id),{credentials:'include',cache:'no-store'});const r=await rr.json().catch(()=>({}));return String(r.role||'').toLowerCase()}catch{return''}}
 async function mountSwitch(){const host=$('.topbar>.title');if(!host||$('#teacherAppSwitch'))return;const role=await getRole();if(role!=='admin')return;const sw=document.createElement('div');sw.className='teacher-app-switch';sw.id='teacherAppSwitch';sw.setAttribute('aria-label','Teacher and admin apps');sw.innerHTML='<a class="active" href="/Teachers/dashboard-v2/">Teacher</a><a id="adminSwitchLink" href="/Teachers/admin/">Admin</a>';host.replaceChildren(sw);const admin=$('#adminSwitchLink');admin?.addEventListener('pointerenter',warmAdmin,{once:true});admin?.addEventListener('touchstart',warmAdmin,{once:true,passive:true});setTimeout(warmAdmin,250)}
 function mountRailToggle(){const rail=$('.rail'),layout=$('.layout');if(!rail||!layout||$('#railCollapseToggle'))return;const b=document.createElement('button');b.type='button';b.className='rail-collapse-toggle';b.id='railCollapseToggle';b.setAttribute('aria-label','Expand sidebar');b.setAttribute('aria-expanded','false');b.innerHTML='<span>›</span>';b.onclick=()=>{const open=layout.classList.toggle('sidebar-expanded');b.setAttribute('aria-expanded',String(open));b.setAttribute('aria-label',open?'Collapse sidebar':'Expand sidebar')};rail.prepend(b)}
-const icons={students:'<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2.4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2"/></svg>',classes:'<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 4v16M16 4v16M4 9h16M4 15h16"/></svg>',naesin:'<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 18.5 5.2 14 15.7 3.5a2.1 2.1 0 0 1 3 3L8.2 17 4 18.5Z"/><path d="m13.9 5.3 4.8 4.8M6.1 13.1l4.8 4.8"/></svg>',english-arcade:'<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 7h14v10H5z"/><path d="M8 10h3M9.5 8.5v3M15 10h.01M17 12h.01"/></svg>',apps:'<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>',puzzles:'<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M7 5h4v4H7zM13 5h4v4h-4zM7 11h4v4H7zM13 11h4v4h-4z"/><path d="M9 18h6"/></svg>',utilities:'<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 7h16M7 4v6M4 17h16M17 14v6"/></svg>'};
+const icons={students:'<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2.4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2"/></svg>',classes:'<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 4v16M16 4v16M4 9h16M4 15h16"/></svg>',naesin:'<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 18.5 5.2 14 15.7 3.5a2.1 2.1 0 0 1 3 3L8.2 17 4 18.5Z"/><path d="m13.9 5.3 4.8 4.8M6.1 13.1l4.8 4.8"/></svg>',apps:'<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>',puzzles:'<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M7 5h4v4H7zM13 5h4v4h-4zM7 11h4v4H7zM13 11h4v4h-4z"/><path d="M9 18h6"/></svg>',utilities:'<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 7h16M7 4v6M4 17h16M17 14v6"/></svg>'};
 function refreshRailIcons(){$$('.rail .nav').forEach(btn=>{const icon=$('.nav-icon',btn),svg=icons[btn.dataset.view];if(icon&&svg&&icon.dataset.svgReady!=='1'){icon.innerHTML=svg;icon.dataset.svgReady='1'}})}
 function normalizeNavOrder(){
   const rail=$('.rail');
   if(rail){
     const spacer=$('.rail-spacer',rail);
-    const studentLabel=rail.querySelector('[data-nav-group="student"]');
-    const trackingLabel=rail.querySelector('[data-nav-group="tracking"]');
-    const toolsLabel=rail.querySelector('[data-nav-group="tools"]');
-    const insertAfter=(anchor,nodes)=>{
-      let ref=anchor?.nextSibling;
-      nodes.forEach(node=>{if(!node)return;rail.insertBefore(node,ref);ref=node.nextSibling;});
-    };
-    insertAfter(studentLabel,['students','classes'].map(v=>rail.querySelector(`.nav[data-view="${v}"]`)));
-    insertAfter(trackingLabel,['naesin-v2','vocab','grammar-foundations','english-arcade'].map(v=>rail.querySelector(`.nav[data-view="${v}"]`)));
-    insertAfter(toolsLabel,['apps','utilities'].map(v=>rail.querySelector(`.nav[data-view="${v}"]`)));
-    const puzzle=rail.querySelector('.nav[data-view="puzzles"]');if(puzzle)puzzle.remove();
+    const buttons=NAV_ORDER.map(v=>rail.querySelector(`.nav[data-view="${v}"]`)).filter(Boolean);
+    const current=$$('.nav',rail).filter(b=>NAV_ORDER.includes(b.dataset.view));
+    if(buttons.length&&buttons.some((b,i)=>current[i]!==b))buttons.forEach(b=>rail.insertBefore(b,spacer||null));
   }
   const mobile=$('.mobile-tabs');
   if(mobile){
     const order=NAV_ORDER.filter(v=>v!=='utilities');
     const buttons=order.map(v=>mobile.querySelector(`.mobile-tab[data-view="${v}"]`)).filter(Boolean);
-    buttons.forEach(b=>mobile.appendChild(b));
-    const puzzle=mobile.querySelector('.mobile-tab[data-view="puzzles"]');if(puzzle)puzzle.remove();
+    const current=$$('.mobile-tab',mobile).filter(b=>order.includes(b.dataset.view));
+    if(buttons.length&&buttons.some((b,i)=>current[i]!==b))buttons.forEach(b=>mobile.appendChild(b));
   }
 }
 function utilitiesUnlocked(){try{return sessionStorage.getItem(UTILITIES_SESSION_KEY)==='1'}catch{return false}}
