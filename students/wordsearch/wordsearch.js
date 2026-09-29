@@ -42,7 +42,7 @@ const CHEAT_MODE=new URLSearchParams(location.search).get('cheat')==='1';
 
 const state={
   auth:null,books:[],book:null,words:[],pool:[],crosswordPool:[],studentLevel:null,rewardContext:null,ready:false,buildToken:0,grid:[],size:GRID_TARGET,placements:[],
-  found:new Set(),gimmes:new Set(),bogglePaths:new Map(),drag:null,sessionId:null,startedAt:null,saving:false,mode:'boggle',gridSize:8,activeCrossword:null,crosswordCursor:0,cheatCompletion:false,matchFirst:null,matchLocked:false,matchDeckStyle:null,
+  found:new Set(),gimmes:new Set(),bogglePaths:new Map(),boggleReveals:new Set(),drag:null,sessionId:null,startedAt:null,saving:false,mode:'boggle',gridSize:8,activeCrossword:null,crosswordCursor:0,cheatCompletion:false,matchFirst:null,matchLocked:false,matchDeckStyle:null,
   modeSnapshots:new Map()
 };
 
@@ -455,10 +455,10 @@ function renderBoggleCanvas(){
   ctx.clearRect(0,0,rect.width,rect.height);
 
   [...state.bogglePaths.entries()].forEach(([index,path])=>{
-    drawCanvasPath(ctx,snappedBogglePoints(path.coords),BOGGLE_LINE_COLORS[index%BOGGLE_LINE_COLORS.length],11,.72);
+    drawCanvasPath(ctx,snappedBogglePoints(path.coords),BOGGLE_LINE_COLORS[index%BOGGLE_LINE_COLORS.length],11,.42);
   });
   if(state.drag?.coords?.length){
-    drawCanvasPath(ctx,snappedBogglePoints(state.drag.coords,state.drag.pointer),'#e75e9f',12,.86);
+    drawCanvasPath(ctx,snappedBogglePoints(state.drag.coords,state.drag.pointer),'#e75e9f',12,.58);
   }
 }
 function rememberBogglePath(index,coords){
@@ -492,6 +492,7 @@ function generateBoggle(pool){
 function renderBoggle(){
   state.found.clear();
   state.gimmes.clear();
+  state.boggleReveals.clear();
   clearBoggleCanvas();
   state.drag=null;
   state.sessionId=crypto.randomUUID?.()||('boggle-'+Date.now());
@@ -513,8 +514,8 @@ function renderBoggle(){
   }
 
   wordListEl.innerHTML=state.placements.map((p,i)=>
-    '<div class="word-chip boggle-target" data-word-index="'+i+'">'+
-      '<strong>'+escapeHtml(p.ko||'단어')+'</strong>'+
+    '<div class="word-chip boggle-target" data-word-index="'+i+'" data-boggle-hint="'+i+'" role="button" tabindex="0" aria-label="Reveal English word">'+
+      '<strong data-boggle-label>'+escapeHtml(p.ko||'단어')+'</strong>'+
       '<small>'+p.clean.length+' letters</small>'+
     '</div>'
   ).join('');
@@ -680,7 +681,8 @@ function puzzleStarCap(){
   return state.gridSize===8?3:(state.gridSize===10?4:5);
 }
 function earnedPuzzleStars(){
-  return Math.max(0,puzzleStarCap()-state.gimmes.size);
+  const bogglePenalty=state.mode==='boggle'?Math.min(2,state.boggleReveals.size):0;
+  return Math.max(0,puzzleStarCap()-state.gimmes.size-bogglePenalty);
 }
 function updateProgress(){
   const verb=state.mode==='crossword'?'solved':(state.mode==='mixmatch'?'matched':'found');
@@ -1034,6 +1036,7 @@ function snapshotCurrentMode(){
     placements:state.placements,
     found:[...state.found],
     gimmes:[...state.gimmes],
+    boggleReveals:[...state.boggleReveals],
     bogglePaths:[...state.bogglePaths.entries()].map(([k,v])=>[k,{coords:v.coords.map(rc=>rc.slice())}]),
     sessionId:state.sessionId,
     startedAt:state.startedAt,
@@ -1060,6 +1063,7 @@ function restoreModeSnapshot(mode){
   state.placements=snap.placements||[];
   state.found=new Set(snap.found||[]);
   state.gimmes=new Set(snap.gimmes||[]);
+  state.boggleReveals=new Set(snap.boggleReveals||[]);
   state.bogglePaths=new Map((snap.bogglePaths||[]).map(([k,v])=>[k,{coords:(v.coords||[]).map(rc=>rc.slice())}]));
   state.sessionId=snap.sessionId;
   state.startedAt=snap.startedAt;
@@ -1546,6 +1550,35 @@ if(CHEAT_MODE&&cheatFinishBtn){
   cheatFinishBtn.addEventListener('click',cheatFinishPuzzle);
 }
 
+
+function toggleBoggleHint(chip){
+  if(state.mode!=='boggle'||!chip)return;
+  const index=Number(chip.dataset.boggleHint);
+  const placement=state.placements[index];
+  const label=chip.querySelector('[data-boggle-label]');
+  if(!placement||!label)return;
+
+  const revealing=!chip.classList.contains('english-revealed');
+  chip.classList.toggle('english-revealed',revealing);
+  label.textContent=revealing?placement.display:(placement.ko||'단어');
+  chip.setAttribute('aria-label',revealing?'Hide English word':'Reveal English word');
+
+  if(revealing&&!state.boggleReveals.has(index)){
+    state.boggleReveals.add(index);
+    updateProgress();
+  }
+}
+wordListEl.addEventListener('click',e=>{
+  const chip=e.target.closest?.('[data-boggle-hint]');
+  if(chip)toggleBoggleHint(chip);
+});
+wordListEl.addEventListener('keydown',e=>{
+  const chip=e.target.closest?.('[data-boggle-hint]');
+  if(chip&&(e.key==='Enter'||e.key===' ')){
+    e.preventDefault();
+    toggleBoggleHint(chip);
+  }
+});
 
 mixMatchGrid?.addEventListener('click',e=>{
   const card=e.target.closest('.mix-card');
