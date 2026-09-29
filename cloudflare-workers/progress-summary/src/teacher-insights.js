@@ -227,7 +227,7 @@ async function requireTeacher(env,userId,select){
 }
 
 async function canonicalClasses(env,select){
-  const rows=await select(env,'classes','status=eq.active&name=neq.Test&select=id,name,display_name,legacy_class_name,status&order=name.asc');
+  const rows=await select(env,'classes','status=eq.active&name=neq.Test&select=id,name,display_name,legacy_class_name,status,sort_order&order=sort_order.asc.nullslast,name.asc');
   return Array.isArray(rows)?rows:[];
 }
 
