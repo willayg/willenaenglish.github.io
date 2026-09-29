@@ -87,7 +87,8 @@ button,input,select{font:inherit}
 .puzzle-dots circle{fill:#fff;stroke:var(--pink);stroke-width:3}
 .puzzle-line-labels text{fill:var(--muted);font-size:12px;font-family:Poppins,Arial,sans-serif}
 
-/* Embedded student leaderboard */
-.leaderboard-embed-wrap{background:#fff;border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow);overflow:hidden;min-height:680px}
-.leaderboard-embed{display:block;width:100%;height:680px;border:0;background:#fff}
-@media(max-width:700px){.leaderboard-embed-wrap{min-height:620px}.leaderboard-embed{height:620px}}
+
+/* Native teacher leaderboard */
+.leaderboard-row{display:grid;grid-template-columns:56px minmax(0,1fr) auto;gap:12px;align-items:center}
+.leader-rank{font-size:1rem;font-weight:800;text-align:center;color:var(--muted)}
+.leader-score{font-size:.88rem;font-weight:800;white-space:nowrap}
