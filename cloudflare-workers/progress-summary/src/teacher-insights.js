@@ -256,6 +256,36 @@ async function fetchAttempts(env,select,userIds,days){
   return out;
 }
 
+const PUZZLE_MODES=['wordsearch','boggle','crossword','mixmatch'];
+
+function puzzleName(mode){
+  return mode==='wordsearch'?'Word Search':mode==='boggle'?'Boggle':mode==='crossword'?'Crossword':mode==='mixmatch'?'Mix & Match':String(mode||'Puzzle');
+}
+
+async function fetchPuzzleSessions(env,select,userIds,days){
+  if(!userIds.length)return[];
+  const since=daysAgoIso(days),out=[];
+  for(let i=0;i<userIds.length;i+=80){
+    const ids=userIds.slice(i,i+80).join(',');
+    const q=`user_id=in.(${ids})&mode=in.(${PUZZLE_MODES.join(',')})&ended_at=gte.${encodeURIComponent(since)}&ended_at=not.is.null&select=user_id,session_id,mode,list_name,list_size,started_at,ended_at,summary&order=ended_at.desc`;
+    out.push(...await fetchPaged(select,env,'progress_sessions',q));
+  }
+  return out;
+}
+
+function puzzleSummary(rows){
+  const counts=Object.fromEntries(PUZZLE_MODES.map(mode=>[mode,0]));
+  (rows||[]).forEach(r=>{if(counts[r.mode]!=null)counts[r.mode]++;});
+  const breakdown=PUZZLE_MODES.map(mode=>({mode,name:puzzleName(mode),count:counts[mode]}))
+    .sort((a,b)=>b.count-a.count||a.name.localeCompare(b.name));
+  const last=(rows||[])[0]||null;
+  return {
+    total:(rows||[]).length,
+    breakdown,
+    last_puzzle:last?{mode:last.mode,name:puzzleName(last.mode),ended_at:last.ended_at}:null
+  };
+}
+
 async function fetchLearningAttempts(env,select,userIds){
   if(!userIds.length)return[];
   const out=[];
@@ -321,11 +351,46 @@ export async function handleTeacherInsights({request,env,userId,section,origin,j
     if(!studentId)return jsonResponse({success:false,error:'Missing student_id'},400,origin,0);
     const rows=await supabaseSelect(env,'profiles',`id=eq.${encodeURIComponent(studentId)}&role=eq.student&select=id,name,username,korean_name,class`),profile=rows&&rows[0];
     if(!profile)return jsonResponse({success:false,error:'Student not found'},404,origin,0);
-    const [attempts,allTimeAttempts]=await Promise.all([
+    const [attempts,allTimeAttempts,puzzleRows]=await Promise.all([
       fetchAttempts(env,supabaseSelect,[studentId],days),
-      fetchLearningAttempts(env,supabaseSelect,[studentId])
+      fetchLearningAttempts(env,supabaseSelect,[studentId]),
+      fetchPuzzleSessions(env,supabaseSelect,[studentId],days)
     ]);
-    return jsonResponse({success:true,days,student:studentInsight(profile,attempts,true,allTimeAttempts)},200,origin,10);
+    const student=studentInsight(profile,attempts,true,allTimeAttempts);
+    student.puzzles=puzzleSummary(puzzleRows);
+    return jsonResponse({success:true,days,student},200,origin,10);
+  }
+
+  if(section==='teacher_puzzle_insights'){
+    const className=String(url.searchParams.get('class')||'').trim();
+    let profiles=[];
+    if(className){
+      const resolved=await studentsForCanonicalClass(env,supabaseSelect,className);
+      if(!resolved.classRow)return jsonResponse({success:false,error:'Class not found'},404,origin,0);
+      profiles=resolved.students;
+    }else{
+      profiles=await supabaseSelect(env,'profiles','role=eq.student&approved=eq.true&select=id,name,username,korean_name,class');
+      profiles=(profiles||[]).filter(p=>!p.username||String(p.username).length>1);
+    }
+    const ids=profiles.map(p=>p.id).filter(Boolean);
+    const sessions=await fetchPuzzleSessions(env,supabaseSelect,ids,days);
+    const profileMap=new Map(profiles.map(p=>[p.id,p]));
+    const byMode=Object.fromEntries(PUZZLE_MODES.map(mode=>[mode,0]));
+    const byStudent=new Map(),byClass=new Map(),byDate=new Map();
+    sessions.forEach(s=>{
+      if(byMode[s.mode]!=null)byMode[s.mode]++;
+      byStudent.set(s.user_id,(byStudent.get(s.user_id)||0)+1);
+      const p=profileMap.get(s.user_id),cls=p?.class||'Unknown';
+      byClass.set(cls,(byClass.get(cls)||0)+1);
+      const dk=dateKey(s.ended_at);if(dk)byDate.set(dk,(byDate.get(dk)||0)+1);
+    });
+    const breakdown=PUZZLE_MODES.map(mode=>({mode,name:puzzleName(mode),count:byMode[mode]}))
+      .sort((a,b)=>b.count-a.count||a.name.localeCompare(b.name));
+    const students=[...byStudent.entries()].map(([id,count])=>{const p=profileMap.get(id)||{};return{student_id:id,name:p.name||p.username||'Student',class:p.class||null,count};})
+      .sort((a,b)=>b.count-a.count||a.name.localeCompare(b.name));
+    const classes=[...byClass.entries()].map(([name,count])=>({name,count})).sort((a,b)=>b.count-a.count||a.name.localeCompare(b.name));
+    const trend=[...byDate.entries()].map(([date,count])=>({date,count})).sort((a,b)=>a.date.localeCompare(b.date));
+    return jsonResponse({success:true,days,class:className||null,total_plays:sessions.length,unique_students:byStudent.size,breakdown,students,classes,trend},200,origin,15);
   }
 
   return jsonResponse({success:false,error:'Unknown teacher insights section'},400,origin,0);
