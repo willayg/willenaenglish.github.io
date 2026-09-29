@@ -7,7 +7,7 @@
 <title>Teacher Dashboard V2</title>
 <script src="/js/api-config.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="./dashboard-v2.css?v=20260929-leaderboard1">
+<link rel="stylesheet" href="./dashboard-v2.css?v=20260929-leaderboard2">
 <link rel="stylesheet" href="./assignments-v1.css?v=20260926-p4d-main1">
 <link rel="stylesheet" href="./vocab-v1.css?v=20260927-r1427">
 <link id="dashboardV2Polish" rel="stylesheet" href="./dashboard-v2-polish.css?v=20260927-r1427">
@@ -36,9 +36,20 @@ mountTeacherHeader({ target:'#teacher-header', mode:'dashboard', activeApp:'teac
 </section>
 <section class="view" id="view-classes"><div class="page-head"><div><h1>Classes</h1></div><div class="filters"><select class="control" id="classDaysSelect"><option value="30">Last 30 days</option><option value="14">Last 14 days</option><option value="60">Last 60 days</option><option value="90">Last 90 days</option></select><button class="control" id="classRefreshBtn">Refresh</button></div></div><div class="class-grid" id="classGrid"><div class="empty">Open Classes to load class breakdowns.</div></div></section>
 <section class="view" id="view-leaderboard">
-  <div class="page-head"><div><h1>Leaderboard</h1><div class="panel-sub">The same leaderboard used on the student dashboard.</div></div></div>
-  <div class="leaderboard-embed-wrap">
-    <iframe class="leaderboard-embed" src="https://students.willenaenglish.com/students/dashboard?leaderboard_only=1" title="Student leaderboard"></iframe>
+  <div class="page-head">
+    <div><h1>Leaderboard</h1><div class="panel-sub">Same leaderboard data as the student dashboard.</div></div>
+    <div class="filters">
+      <select class="control" id="leaderScope"><option value="global">Everybody</option><option value="class">My Class</option></select>
+      <select class="control" id="leaderMetric"><option value="super">Super Points</option><option value="points">Points</option><option value="stars">Stars</option></select>
+      <button class="control" id="leaderRefreshBtn" type="button">Refresh</button>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="panel-head">
+      <div><div class="panel-title" id="leaderTitle">Everybody</div><div class="panel-sub">This month</div></div>
+      <span class="count-pill" id="leaderCount">0 students</span>
+    </div>
+    <div class="student-list" id="teacherLeaderboard"><div class="empty">Open Leaderboard to load rankings.</div></div>
   </div>
 </section>
 <section class="view" id="view-vocab">
@@ -163,11 +174,11 @@ mountTeacherHeader({ target:'#teacher-header', mode:'dashboard', activeApp:'teac
 </main></div>
 <nav class="mobile-tabs"><button class="mobile-tab active" data-view="students"><b>◎</b>Students</button><button class="mobile-tab" data-view="classes"><b>▦</b>Classes</button><button class="mobile-tab" data-view="leaderboard"><b>★</b>Board</button><button class="mobile-tab" data-view="vocab"><b>Aa</b>Vocab</button><button class="mobile-tab" data-view="apps"><b>＋</b>Apps</button><button class="mobile-tab" data-view="puzzles"><b>◇</b>Puzzles</button><button class="mobile-tab" data-view="english-arcade"><b>EA</b>Arcade</button></nav>
 <div class="drawer-bg" id="drawerBg"><aside class="drawer"><div class="drawer-head"><div class="drawer-head-main"><div class="drawer-name" id="drawerName">Student</div><div class="drawer-meta" id="drawerMeta"></div></div><button class="close" id="closeDrawer">×</button></div><div class="drawer-body" id="drawerBody"><div class="empty">Loading…</div></div></aside></div>
-<div id="naesinV2Rev" style="position:fixed;right:12px;bottom:8px;z-index:2147483647;color:#7b8c93;font:700 9px/1.2 Poppins,sans-serif;letter-spacing:.04em;pointer-events:none">v14.58</div>
+<div id="naesinV2Rev" style="position:fixed;right:12px;bottom:8px;z-index:2147483647;color:#7b8c93;font:700 9px/1.2 Poppins,sans-serif;letter-spacing:.04em;pointer-events:none">v14.59</div>
 <script>
 const $=(s,r=document)=>r.querySelector(s),$$=(s,r=document)=>[...r.querySelectorAll(s)];
 const FN=n=>`/.netlify/functions/${n}`;
-const state={classes:[],students:[],className:'',days:30,classOverviewLoadedFor:null,puzzleLoadedKey:null,arcadeLoadedKey:null};
+const state={classes:[],students:[],className:'',days:30,classOverviewLoadedFor:null,puzzleLoadedKey:null,arcadeLoadedKey:null,leaderboardLoadedKey:null,leaderboardData:null};
 function esc(v){return String(v??'').replace(/[&<>'\"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt',"'":'&#39;','\"':'&quot;'}[c]))}
 function slug(v){return String(v||'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'not-enough-data'}
 function fmtDate(v){if(!v)return'—';const d=new Date(v);return Number.isNaN(d.getTime())?'—':d.toLocaleDateString(undefined,{month:'short',day:'numeric'})}
@@ -260,6 +271,46 @@ async function loadPuzzleInsights(force=false){
     $('#puzzleTrend').innerHTML='<div class="empty">Could not load puzzle activity.</div>';
   }
 }
+function normalizeLeaderboardEntries(raw){
+  return (Array.isArray(raw)?raw:[]).map(e=>({...e,name:e.name||'Student',stars:Number(e.stars)||0,points:Number(e.points)||0,superScore:Number.isFinite(Number(e.superScore))?Number(e.superScore):Math.round(((Number(e.stars)||0)*(Number(e.points)||0))/1000)}));
+}
+function leaderboardSorted(data,metric){
+  const list=normalizeLeaderboardEntries(data?.leaderboard);
+  return list.sort((a,b)=>{
+    if(metric==='points')return b.points-a.points||b.stars-a.stars||String(a.name).localeCompare(String(b.name));
+    if(metric==='stars')return b.stars-a.stars||b.points-a.points||String(a.name).localeCompare(String(b.name));
+    return b.superScore-a.superScore||b.stars-a.stars||b.points-a.points||String(a.name).localeCompare(String(b.name));
+  });
+}
+function leaderboardScore(e,metric){
+  if(metric==='points')return `${e.points.toLocaleString()} pts`;
+  if(metric==='stars')return `${e.stars.toLocaleString()} ★`;
+  return `${e.superScore.toLocaleString()} ⚡`;
+}
+function renderTeacherLeaderboard(data,scope,metric){
+  const rows=leaderboardSorted(data,metric);
+  $('#leaderTitle').textContent=scope==='class'?(data?.class||'My Class'):'Everybody';
+  $('#leaderCount').textContent=`${rows.length} student${rows.length===1?'':'s'}`;
+  if(!rows.length){$('#teacherLeaderboard').innerHTML='<div class="empty">No leaderboard data yet.</div>';return}
+  $('#teacherLeaderboard').innerHTML=rows.map((e,i)=>`<div class="student-row leaderboard-row"><div class="leader-rank">${i+1}</div><div class="student-main"><div class="student-name">${esc(e.name)}${e.self?' · You':''}</div><div class="student-meta">${e.class?esc(e.class):''}</div></div><div class="leader-score">${esc(leaderboardScore(e,metric))}</div></div>`).join('');
+}
+async function loadTeacherLeaderboard(force=false){
+  const scope=$('#leaderScope')?.value||'global',metric=$('#leaderMetric')?.value||'super';
+  const key=`${scope}|${metric}`;
+  if(!force&&state.leaderboardLoadedKey===key&&state.leaderboardData){renderTeacherLeaderboard(state.leaderboardData,scope,metric);return}
+  $('#teacherLeaderboard').innerHTML='<div class="empty">Loading leaderboard…</div>';
+  try{
+    const section=scope==='class'?'leaderboard_stars_class':'leaderboard_stars_global';
+    const params=new URLSearchParams({section,timeframe:'month'});
+    const j=await api(`${FN('progress_summary')}?${params}`);
+    state.leaderboardLoadedKey=key;
+    state.leaderboardData=j;
+    renderTeacherLeaderboard(j,scope,metric);
+  }catch(e){
+    state.leaderboardLoadedKey=null;state.leaderboardData=null;
+    $('#teacherLeaderboard').innerHTML=`<div class="empty">${esc(e.message)}</div>`;
+  }
+}
 function renderArcadeRecent(rows){
   if(!rows?.length)return'<div class="empty">No English Arcade activity in this period.</div>';
   return rows.slice(0,12).map((r,i)=>`<div class="puzzle-rank-row"><span class="puzzle-rank-num">${i+1}</span><div><b>${esc(r.name||'Student')}</b><small>${esc(r.mode_name||'Arcade')}${r.list_name?' · '+esc(r.list_name):''}${r.class?' · '+esc(r.class):''}</small></div><strong>${esc(fmtDate(r.ended_at))}</strong></div>`).join('');
@@ -311,8 +362,8 @@ async function loadClassOverview(force=false){
   }
 }
 async function openClassFromOverview(name,days){$('#classSelect').value=name;$('#daysSelect').value=String(days);state.className=name;state.days=days;switchView('students');await loadClass()}
-function switchView(v){$$('.view').forEach(x=>x.classList.toggle('active',x.id===`view-${v}`));$$('[data-view]').forEach(x=>x.classList.toggle('active',x.dataset.view===v));if(v==='classes')loadClassOverview();if(v==='puzzles')loadPuzzleInsights();if(v==='english-arcade')loadArcadeInsights()}
-$('#classSelect').onchange=loadClass;$('#daysSelect').onchange=loadClass;$('#refreshBtn').onclick=loadClass;$('#searchInput').oninput=renderStudents;$('#classDaysSelect').onchange=()=>loadClassOverview(true);$('#classRefreshBtn').onclick=()=>loadClassOverview(true);$('#puzzleClass').onchange=()=>loadPuzzleInsights(true);$('#puzzleDays').onchange=()=>loadPuzzleInsights(true);$('#puzzleRefreshBtn').onclick=()=>loadPuzzleInsights(true);$('#arcadeDays').onchange=()=>loadArcadeInsights(true);$('#arcadeRefreshBtn').onclick=()=>loadArcadeInsights(true);$('#closeDrawer').onclick=()=>window.TeacherHistory?.requestClose?.('student')||closeStudentDrawerDirect();$('#drawerBg').onclick=e=>{if(e.target===$('#drawerBg')){if(window.TeacherHistory?.requestClose)window.TeacherHistory.requestClose('student');else closeStudentDrawerDirect()}};$$('[data-view]').forEach(b=>b.onclick=()=>switchView(b.dataset.view));
+function switchView(v){$$('.view').forEach(x=>x.classList.toggle('active',x.id===`view-${v}`));$$('[data-view]').forEach(x=>x.classList.toggle('active',x.dataset.view===v));if(v==='classes')loadClassOverview();if(v==='leaderboard')loadTeacherLeaderboard();if(v==='puzzles')loadPuzzleInsights();if(v==='english-arcade')loadArcadeInsights()}
+$('#classSelect').onchange=loadClass;$('#daysSelect').onchange=loadClass;$('#refreshBtn').onclick=loadClass;$('#searchInput').oninput=renderStudents;$('#classDaysSelect').onchange=()=>loadClassOverview(true);$('#classRefreshBtn').onclick=()=>loadClassOverview(true);$('#puzzleClass').onchange=()=>loadPuzzleInsights(true);$('#puzzleDays').onchange=()=>loadPuzzleInsights(true);$('#puzzleRefreshBtn').onclick=()=>loadPuzzleInsights(true);$('#arcadeDays').onchange=()=>loadArcadeInsights(true);$('#arcadeRefreshBtn').onclick=()=>loadArcadeInsights(true);$('#leaderScope').onchange=()=>loadTeacherLeaderboard(true);$('#leaderMetric').onchange=()=>loadTeacherLeaderboard(true);$('#leaderRefreshBtn').onclick=()=>loadTeacherLeaderboard(true);$('#closeDrawer').onclick=()=>window.TeacherHistory?.requestClose?.('student')||closeStudentDrawerDirect();$('#drawerBg').onclick=e=>{if(e.target===$('#drawerBg')){if(window.TeacherHistory?.requestClose)window.TeacherHistory.requestClose('student');else closeStudentDrawerDirect()}};$$('[data-view]').forEach(b=>b.onclick=()=>switchView(b.dataset.view));
 window.TeacherStudentDrawer={open:openStudent,close:closeStudentDrawerDirect};
 (async()=>{if(await auth()){loadClasses()}})();
 </script>
