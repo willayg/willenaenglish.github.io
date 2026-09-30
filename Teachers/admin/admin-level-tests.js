@@ -337,8 +337,9 @@ byId('levelTestArchive').onclick=function(){if(activeRow)setArchived(activeRow,a
 byId('levelTestManualOverride').onclick=function(){
  if(!activeDetail||!activeRow)return;
  if(typeof window.WillenaOpenManualLevelReport==='function'){
+   var ref={source:activeRow.source,attempt_id:activeRow.id};
    close();
-   window.WillenaOpenManualLevelReport({source:activeRow.source,attempt_id:activeRow.id});
+   window.WillenaOpenManualLevelReport(ref);
  }
 };
 byId('levelTestFullResults').onclick=renderFullResults;
