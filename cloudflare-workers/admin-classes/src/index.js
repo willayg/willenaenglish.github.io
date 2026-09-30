@@ -566,6 +566,7 @@ async function getWordBuilder(env, actor, id) {
   const base = wbLegacyRow(row, maps);
   const meta = row.metadata || {};
   const words = [];
+  const targets = [];
   const images = {};
   (items || []).forEach((item, index) => {
     const lex = lexMap.get(String(item.content_id)) || {};
@@ -573,12 +574,20 @@ async function getWordBuilder(env, actor, id) {
     const eng = st.display_english || lex.canonical_text || '';
     const kor = st.display_korean || lex.translation_ko || '';
     words.push(`${eng}, ${kor}`);
+    targets.push({
+      lexical_entry_id: item.content_id || null,
+      lexical_sense_id: item.lexical_sense_id || null,
+      position: Number.isFinite(Number(item.position)) ? Number(item.position) : index + 1,
+      english: eng,
+      korean: kor,
+    });
     if (st.image) images[`${String(eng).toLowerCase()}_${index}`] = { ...st.image, word: eng, index };
   });
   const fallbackImages = meta.legacy_images_snapshot && typeof meta.legacy_images_snapshot === 'object' ? meta.legacy_images_snapshot : {};
   return {
     ...base,
     words,
+    targets,
     settings: JSON.stringify(meta.worksheet_settings || {}),
     images: JSON.stringify(Object.keys(images).length ? images : fallbackImages),
     passage_text: meta.passage_text || '',
@@ -759,7 +768,20 @@ async function saveWordBuilder(env, actor, body) {
       method: 'POST', headers: { Prefer: 'return=minimal' }, body: JSON.stringify(itemRows),
     });
   }
-  return { id: collectionId };
+  const targets = itemRows.map((item, index) => ({
+    lexical_entry_id: item.content_id || null,
+    lexical_sense_id: item.lexical_sense_id || null,
+    position: Number.isFinite(Number(item.position)) ? Number(item.position) : index + 1,
+    english: parsed[index]?.eng || '',
+    korean: parsed[index]?.kor || '',
+  }));
+  return {
+    id: collectionId,
+    title: body.title || 'Untitled Word Builder',
+    book_id: bookId || null,
+    unit_id: unitId || null,
+    targets,
+  };
 }
 async function deleteWordBuilder(env, actor, id) {
   const rows = await supabaseFetch(env.CONTENT_SUPABASE_URL, env.CONTENT_SUPABASE_SERVICE_ROLE_KEY,
