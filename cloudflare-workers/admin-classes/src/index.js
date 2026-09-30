@@ -557,7 +557,7 @@ async function getWordBuilder(env, actor, id) {
   // Reading is shared across approved teachers. Saving/deleting still enforces
   // creator/admin ownership separately.
   const items = await supabaseFetch(env.CONTENT_SUPABASE_URL, env.CONTENT_SUPABASE_SERVICE_ROLE_KEY,
-    `/rest/v1/collection_items?collection_id=eq.${encodeURIComponent(id)}&select=id,content_id,position,settings&order=position.asc,created_at.asc`);
+    `/rest/v1/collection_items?collection_id=eq.${encodeURIComponent(id)}&select=id,content_id,lexical_sense_id,position,settings&order=position.asc,created_at.asc`);
   const lexIds = [...new Set((items || []).map(i => i.content_id).filter(Boolean))];
   const lexical = lexIds.length ? await supabaseFetch(env.CONTENT_SUPABASE_URL, env.CONTENT_SUPABASE_SERVICE_ROLE_KEY,
     `/rest/v1/lexical_entries?id=in.(${lexIds.map(encodeURIComponent).join(',')})&select=id,canonical_text,translation_ko`) : [];
