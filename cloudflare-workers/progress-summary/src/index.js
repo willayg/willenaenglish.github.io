@@ -708,9 +708,7 @@ export default {
             ...entry,
             self: entry.user_id === userId,
           }));
-          const top = withSelf.slice(0, 5);
-          const me = withSelf.find(e => e.user_id === userId);
-          const shaped = me && !top.some(e => e.user_id === me.user_id) ? [...top, me] : top;
+          const shaped = withSelf;
           
           return jsonResponse({
             success: true,
