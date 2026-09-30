@@ -619,20 +619,7 @@ export default {
             self: entry.user_id === userId,
           }));
 
-          let shaped;
-          if (classFilter) {
-            const top = lb.slice(0, 5);
-            const me = lb.find(e => e.user_id === userId);
-            shaped = top;
-            if (me && !top.some(e => e.user_id === me.user_id)) shaped = [...top, me];
-          } else {
-            const topLimit = 15;
-            shaped = lb.slice(0, topLimit);
-            if (userId) {
-              const me = lb.find(e => e.user_id === userId);
-              if (me && !shaped.some(e => e.user_id === me.user_id)) shaped = [...shaped, me];
-            }
-          }
+          const shaped = lb;
           
           return jsonResponse({
             success: true,
@@ -673,20 +660,7 @@ export default {
           self: entry.user_id === userId,
         }));
 
-        let shaped;
-        if (classFilter) {
-          const top = withSelf.slice(0, 5);
-          const me = withSelf.find(e => e.user_id === userId);
-          shaped = top;
-          if (me && !top.some(e => e.user_id === me.user_id)) shaped = [...top, me];
-        } else {
-          const topLimit = 15;
-          shaped = withSelf.slice(0, topLimit);
-          if (userId) {
-            const me = withSelf.find(e => e.user_id === userId);
-            if (me && !shaped.some(e => e.user_id === me.user_id)) shaped = [...shaped, me];
-          }
-        }
+        const shaped = withSelf;
         
         return jsonResponse({
           success: true,
@@ -773,9 +747,7 @@ export default {
           ...entry,
           self: entry.user_id === userId,
         }));
-        const top = withSelf.slice(0, 5);
-        const me = withSelf.find(e => e.user_id === userId);
-        const shaped = me && !top.some(e => e.user_id === me.user_id) ? [...top, me] : top;
+        const shaped = withSelf;
         
         return jsonResponse({
           success: true,
