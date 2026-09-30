@@ -154,3 +154,14 @@
     margin:0 0 4px auto!important;
   }
 }
+
+/* Keep dynamically-mounted Naesin icon identical to the shared rail icon language. */
+.rail .nav[data-view="naesin-v2"] .nav-icon{
+  color:#2b7f89!important;
+  background:transparent!important;
+}
+.rail .nav[data-view="naesin-v2"].active .nav-icon{
+  color:#1f7480!important;
+  background:transparent!important;
+}
+.rail .nav[data-view="naesin-v2"] .nav-icon img{display:none!important}
