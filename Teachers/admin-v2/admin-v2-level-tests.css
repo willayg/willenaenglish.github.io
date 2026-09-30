@@ -97,3 +97,29 @@
   .visitor-qr-foot{display:grid;grid-template-columns:1fr 1fr}
   .visitor-qr-foot>*{width:100%}
 }
+
+
+/* Level Tests: auto/manual input switch. */
+#view-level-tests .level-test-mode-tabs{
+  display:inline-flex;gap:4px;padding:4px;margin:0 0 14px;
+  border:1.5px solid #b9e1e5;border-radius:14px;background:#f5fbfc;
+}
+#view-level-tests .level-test-mode-tabs button{
+  min-height:38px;padding:8px 18px;border:0;border-radius:10px;background:transparent;
+  color:#698087;font:800 .72rem/1 Poppins,system-ui,sans-serif;cursor:pointer;
+}
+#view-level-tests .level-test-mode-tabs button.active{
+  background:#fff;color:#267985;box-shadow:0 3px 10px rgba(39,103,111,.12);
+}
+#view-level-tests .level-test-mode-pane[hidden]{display:none!important}
+#view-level-tests .level-test-mode-pane.active{display:block}
+#view-level-tests .manual-level-report-frame{
+  display:block;width:100%;height:calc(100vh - 235px);min-height:760px;
+  border:1px solid #dbeaec;border-radius:18px;background:#edf7f8;
+  box-shadow:0 8px 24px rgba(30,30,42,.05);
+}
+@media(max-width:900px){
+  #view-level-tests .level-test-mode-tabs{display:flex;width:100%}
+  #view-level-tests .level-test-mode-tabs button{flex:1}
+  #view-level-tests .manual-level-report-frame{height:calc(100vh - 205px);min-height:720px;border-radius:14px}
+}
