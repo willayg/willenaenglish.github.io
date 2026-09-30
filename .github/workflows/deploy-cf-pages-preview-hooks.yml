@@ -41,12 +41,18 @@ jobs:
         if: steps.branch.outputs.value == 'students'
         env:
           CF_PAGES_STUDENTS_HOOK: ${{ secrets.CF_PAGES_STUDENTS_HOOK }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
-          if [ -z "$CF_PAGES_STUDENTS_HOOK" ]; then
-            echo "::warning::Missing secret CF_PAGES_STUDENTS_HOOK - skipping students deploy hook"
+          if [ -n "$CF_PAGES_STUDENTS_HOOK" ]; then
+            curl -fsS -X POST "$CF_PAGES_STUDENTS_HOOK"
             exit 0
           fi
-          curl -fsS -X POST "$CF_PAGES_STUDENTS_HOOK"
+          echo "Students hook missing; deploying Pages directly."
+          test -n "$CLOUDFLARE_API_TOKEN"
+          test -n "$CLOUDFLARE_ACCOUNT_ID"
+          git archive HEAD | tar -x -C "$RUNNER_TEMP"
+          npx --yes wrangler@4 pages deploy "$RUNNER_TEMP" --project-name students --branch students --commit-hash "$GITHUB_SHA"
 
       - name: Trigger deploy hook (staging)
         if: steps.branch.outputs.value == 'staging'
