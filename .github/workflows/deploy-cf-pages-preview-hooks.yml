@@ -45,6 +45,7 @@ jobs:
         env:
           CF_PAGES_STUDENTS_HOOK: ${{ secrets.CF_PAGES_STUDENTS_HOOK }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
           if [ -n "$CF_PAGES_STUDENTS_HOOK" ]; then
@@ -52,6 +53,9 @@ jobs:
             exit 0
           fi
           echo "Students hook missing; deploying Pages directly."
+          if [ -n "$CF_API_TOKEN" ]; then
+            export CLOUDFLARE_API_TOKEN="$CF_API_TOKEN"
+          fi
           test -n "$CLOUDFLARE_API_TOKEN"
           test -n "$CLOUDFLARE_ACCOUNT_ID"
           git archive HEAD | tar -x -C "$RUNNER_TEMP"
