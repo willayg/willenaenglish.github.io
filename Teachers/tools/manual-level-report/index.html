@@ -6,6 +6,9 @@
 <meta name="robots" content="noindex,nofollow">
 <script>if(new URLSearchParams(location.search).get('embed')==='1')document.documentElement.classList.add('embed')</script>
 <meta http-equiv="Cache-Control" content="no-cache,no-store,must-revalidate">
+<script src="/students/api-gateway.js?v=20260930-manual1"></script>
+<script src="/js/api-config.js?v=20260930-manual1"></script>
+<script src="/free-level-test/js/report-calculation.js?v=1.19"></script>
 <title>Manual Level Report · Willena English</title>
 <link rel="icon" href="/Assets/Images/Logo.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -62,6 +65,7 @@ html.embed,html.embed body{background:#f8fcfd}html.embed .brand{display:none}htm
     <div class="actions">
       <button class="btn secondary" id="resetBtn">Reset</button>
       <button class="btn primary" id="previewBtn">Update preview</button>
+      <button class="btn primary full" id="saveBtn">Save report</button>
       <button class="btn pdf full" id="pdfBtn">Generate exact PDF</button>
     </div>
     <div id="status" class="status"></div>
@@ -86,6 +90,8 @@ const labels={
  speaking:{ko:'말하기',en:'Speaking'},writing:{ko:'쓰기',en:'Writing'}
 };
 let profiles=new Map();
+let currentSource=null,currentAttemptId=null,currentDetail=null;
+const params=new URLSearchParams(location.search);
 const $=s=>document.querySelector(s);
 const clean=s=>String(s??'').replace(/\s+/g,' ').trim();
 const esc=s=>clean(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
@@ -146,6 +152,83 @@ function state(){
  const skillNotes={};skills.forEach(s=>skillNotes[s]=clean(document.querySelector('[data-note="'+s+'"]').value));
  return {student_name:clean($('#studentName').value)||'Student',school_name:clean($('#school').value),school_grade:clean($('#grade').value),language:$('#language').value,overall:calculatedOverall(skillLevels),overallNote:clean($('#overallNote').value),skillLevels,skillNotes};
 }
+
+async function adminApi(body){
+ const fn=window.WillenaAPI?.fetch||window.fetch.bind(window);
+ const response=await fn('/.netlify/functions/admin_classes',{method:'POST',credentials:'include',cache:'no-store',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+ const data=await response.json().catch(()=>({}));
+ if(!response.ok||data?.success===false)throw new Error(data?.error||('Request failed ('+response.status+')'));
+ return data;
+}
+function applyReport(report){
+ if(!report)return;
+ $('#studentName').value=report.student_name||'';
+ $('#school').value=report.school_name||'';
+ $('#grade').value=report.school_grade||'';
+ $('#language').value=report.language==='en'?'en':'ko';
+ $('#overallNote').value=report.overallNote||'';
+ skills.forEach(s=>{
+   const value=report.skillLevels?.[s];
+   const input=document.querySelector('[data-skill="'+s+'"]');
+   input.value=value==null?'':String(Math.round(Number(value)));
+   document.querySelector('[data-note="'+s+'"]').value=report.skillNotes?.[s]||'';
+   syncDisplay(s);
+ });
+ syncOverall();updatePreview();
+}
+function automaticReportFromDetail(data){
+ const candidate=data.candidate||{},attempt=data.attempt||{},responses=Array.isArray(data.responses)?data.responses:[];
+ const manual=attempt?.metadata?.manual_report;
+ if(manual)return manual;
+ const skillLevels={},skillNotes={};
+ try{
+   const calc=window.WillenaLevelReportCalculation.create({attempt,responses});
+   skills.forEach(s=>{
+     const result=calc.estimate(s);
+     skillLevels[s]=result?.assessed?Math.max(1,Math.min(MAX_LEVEL,Math.round(Number(result.level)||1))):null;
+     skillNotes[s]='';
+   });
+ }catch(_){skills.forEach(s=>{skillLevels[s]=null;skillNotes[s]=''})}
+ return {
+   student_name:candidate.student_name||'',
+   school_name:candidate.school_name||'',
+   school_grade:candidate.school_grade||'',
+   language:'ko',
+   overallNote:'',
+   skillLevels,skillNotes
+ };
+}
+async function loadExisting(){
+ currentSource=params.get('source');currentAttemptId=params.get('attempt_id');
+ if(!currentSource||!currentAttemptId)return;
+ $('#status').textContent='Loading saved test…';
+ try{
+   const data=await adminApi({action:'level_test_detail',source:currentSource,attempt_id:currentAttemptId});
+   currentDetail=data;
+   applyReport(automaticReportFromDetail(data));
+   $('#status').textContent=data.attempt?.metadata?.manual_report?'Saved manual override loaded.':'Automatic scores loaded. Adjust any skill, then save.';
+ }catch(err){$('#status').textContent='Could not load test: '+err.message}
+}
+async function saveReport(){
+ const btn=$('#saveBtn'),old=btn.textContent,report=state();
+ btn.disabled=true;btn.textContent='Saving…';$('#status').textContent='Saving report…';
+ try{
+   let data;
+   if(currentSource&&currentAttemptId){
+     data=await adminApi({action:'save_manual_level_test',source:currentSource,attempt_id:currentAttemptId,report});
+   }else{
+     data=await adminApi({action:'create_manual_level_test',report});
+     currentSource=data.source||'visitor';currentAttemptId=data.attempt?.id||null;
+     currentDetail=data;
+     if(currentAttemptId){
+       const url=new URL(location.href);url.searchParams.delete('new');url.searchParams.set('source',currentSource);url.searchParams.set('attempt_id',currentAttemptId);history.replaceState(null,'',url);
+     }
+   }
+   $('#status').textContent='Saved. This is now the official level-test report.';
+   if(window.parent&&window.parent!==window)window.parent.postMessage({type:'willena-manual-level-saved',source:currentSource,attempt_id:currentAttemptId},'*');
+ }catch(err){$('#status').textContent='Could not save: '+err.message}
+ finally{btn.disabled=false;btn.textContent=old}
+}
 function skillPips(level){
  const current=Math.max(1,Math.min(MAX_LEVEL,Number(level)||1)),floor=Math.floor(current);
  const starter='<i class="willena-pdf-segment starter '+(current<=2?'current':'done')+'"></i>';
@@ -187,10 +270,10 @@ async function generatePdf(){
  }catch(err){console.error(err);$('#status').textContent='Could not create PDF: '+(err.message||err)}
  finally{stage?.remove();btn.disabled=false;btn.textContent=old}
 }
-$('#previewBtn').onclick=updatePreview;$('#pdfBtn').onclick=generatePdf;$('#resetBtn').onclick=()=>{if(confirm('Reset all manual report fields?'))location.reload()};
+$('#previewBtn').onclick=updatePreview;$('#saveBtn').onclick=saveReport;$('#pdfBtn').onclick=generatePdf;$('#resetBtn').onclick=()=>{if(confirm('Reset all manual report fields?'))location.reload()};
 $('#language').addEventListener('change',updatePreview);
 syncOverall();
-loadProfiles();
+loadProfiles().then(loadExisting);
 })();
 </script>
 </body>
