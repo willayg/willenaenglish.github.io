@@ -42,7 +42,7 @@ async function ensureLevelTests(){
   if(levelTestsPromise)return levelTestsPromise;
   levelTestsPromise=new Promise((resolve,reject)=>{
     if(window.__adminV2LevelTestsLoaded){$('#levelTestRefresh')?.click();resolve();return}
-    const script=document.createElement('script');script.src='/Teachers/admin/admin-level-tests.js?v=20260917-adminv2-p4';script.async=true;
+    const script=document.createElement('script');script.src='/Teachers/admin/admin-level-tests.js?v=20260930-adminv2-p5';script.async=true;
     script.onload=()=>{window.__adminV2LevelTestsLoaded=true;$('#levelTestRefresh')?.click();resolve()};
     script.onerror=()=>reject(new Error('Could not load Level Tests'));
     document.head.appendChild(script);
