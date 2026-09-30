@@ -46,11 +46,47 @@ mountTeacherHeader({ target:'#teacher-header', mode:'dashboard', activeApp:'admi
 <div class="admin-class-backdrop" id="classDrawerBgV2"></div><aside class="admin-class-drawer" id="classDrawerV2"><div class="admin-class-head"><div><h2 id="classDrawerTitleV2">Class</h2><p id="classDrawerMetaV2"></p></div><button id="classDrawerCloseV2" type="button">×</button></div><div class="admin-class-body" id="classDrawerBodyV2"></div></aside>
 <div class="level-test-drawer" id="levelTestDrawer" aria-hidden="true"><button class="level-test-drawer-backdrop" data-close-level-test aria-label="Close"></button><aside><div class="level-test-drawer-head"><div><span class="level-test-source" id="levelTestDetailSource"></span><h2 id="levelTestDetailName">Level test</h2><p id="levelTestDetailMeta"></p></div><button class="close" data-close-level-test>×</button></div><div class="level-test-drawer-body" id="levelTestDetailBody"></div><div class="level-test-drawer-actions"><button class="btn level-test-archive-action" id="levelTestArchive" disabled>Archive</button><button class="btn" id="levelTestFullReport" disabled>Full report</button><button class="btn primary" id="levelTestFullResults" disabled>Full test results</button></div><section class="level-test-results" id="levelTestResults" aria-hidden="true"><div class="level-test-results-head"><button class="btn" id="levelTestResultsBack">← Mini report</button><div><h2>Full test results</h2><p id="levelTestResultsMeta"></p></div></div><div id="levelTestResultsBody"></div></section></aside></div>
 <div class="admin-v2-boot hidden" id="adminV2Boot" aria-live="polite"><img src="/Assets/Images/Logo.png" alt="Willena"><span>Checking admin access…</span></div>
-<div class="admin-v2-rev">Admin V2 · 1.29</div>
+<div class="admin-v2-rev">Admin V2 · 1.30</div>
 
 <script src="/free-level-test/js/report-calculation.js?v=1.27"></script>
 <script src="./admin-v2-visitor-qr.js?v=1.28"></script>
 <script type="module" src="./admin-v2.js?v=1.29"></script>
+<script>
+(function(){
+  function bindManualLevelTabs(){
+    var tabs=Array.prototype.slice.call(document.querySelectorAll('[data-level-test-mode]'));
+    var autoPane=document.getElementById('levelTestAutoPane');
+    var manualPane=document.getElementById('levelTestManualPane');
+    var frame=document.getElementById('manualLevelReportFrame');
+    if(!tabs.length||!autoPane||!manualPane)return;
+    function setMode(mode){
+      var manual=mode==='manual';
+      tabs.forEach(function(tab){
+        var active=tab.getAttribute('data-level-test-mode')===mode;
+        tab.classList.toggle('active',active);
+        tab.setAttribute('aria-selected',active?'true':'false');
+      });
+      autoPane.hidden=manual;
+      manualPane.hidden=!manual;
+      autoPane.classList.toggle('active',!manual);
+      manualPane.classList.toggle('active',manual);
+      if(manual&&frame&&!frame.getAttribute('src')){
+        frame.setAttribute('src',frame.getAttribute('data-src')||'/Teachers/tools/manual-level-report/?embed=1');
+      }
+    }
+    tabs.forEach(function(tab){
+      tab.addEventListener('click',function(e){
+        e.preventDefault();
+        e.stopPropagation();
+        setMode(tab.getAttribute('data-level-test-mode'));
+      });
+    });
+    setMode('auto');
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bindManualLevelTabs);
+  else bindManualLevelTabs();
+})();
+</script>
 
 </body>
 </html>
