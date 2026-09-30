@@ -123,3 +123,35 @@
   #view-level-tests .level-test-mode-tabs button{flex:1}
   #view-level-tests .manual-level-report-frame{height:calc(100vh - 205px);min-height:720px;border-radius:14px}
 }
+
+
+/* Manual scoring override inside the level-test drawer. */
+.level-test-drawer-actions{grid-template-columns:auto auto minmax(0,1fr) minmax(0,1fr)!important}
+.level-test-override{background:#f7fbfc!important}
+.level-test-override-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;padding:12px 14px}
+.level-test-override-summary>div{padding:12px;border:1px solid #d8e9eb;border-radius:12px;background:#fff}
+.level-test-override-summary small{display:block;color:#7b9096;font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.03em}
+.level-test-override-summary strong{display:block;margin-top:2px;color:#284f58;font-size:1rem}
+.level-test-override-question{display:grid;grid-template-columns:34px minmax(0,1fr) auto;gap:12px;align-items:start;padding:14px;border:1px solid #e0ebed;border-radius:14px;background:#fff}
+.level-test-override-question+.level-test-override-question{margin-top:9px}
+.level-test-override-question.correct{border-left:4px solid #58b985}
+.level-test-override-question.wrong{border-left:4px solid #e97b9f}
+.level-test-override-copy h4{margin:0 0 9px;color:#273d45;font-size:.8rem;line-height:1.45}
+.level-test-override-copy dl{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0}
+.level-test-override-copy dl>div{padding:8px 9px;border-radius:9px;background:#f6fafb}
+.level-test-override-copy dt{font-size:.56rem;color:#81949a;font-weight:700;text-transform:uppercase}
+.level-test-override-copy dd{margin:2px 0 0;font-size:.7rem;color:#344f57;overflow-wrap:anywhere}
+.level-test-override-choice{display:grid;gap:6px;min-width:104px}
+.level-test-override-choice button{border:1.5px solid #d5e5e7;border-radius:9px;background:#fff;padding:8px 10px;color:#71868c;font:800 .62rem Poppins,sans-serif;cursor:pointer}
+.level-test-override-choice button[data-mark="true"].active{background:#e8f8ef;border-color:#7ac79d;color:#247348}
+.level-test-override-choice button[data-mark="false"].active{background:#fff0f5;border-color:#efa4bd;color:#a63b61}
+.level-test-override-savebar{position:sticky;bottom:0;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;background:rgba(255,255,255,.97);border-top:1px solid #dce9eb}
+.level-test-override-savebar span{font-size:.66rem;color:#71868c}
+.level-test-override-savebar .btn{min-width:150px}
+@media(max-width:700px){
+ .level-test-drawer-actions{grid-template-columns:1fr 1fr!important}
+ .level-test-drawer-actions>*{width:100%}
+ .level-test-override-question{grid-template-columns:30px minmax(0,1fr)}
+ .level-test-override-choice{grid-column:2;grid-template-columns:1fr 1fr;min-width:0}
+ .level-test-override-copy dl{grid-template-columns:1fr}
+}
