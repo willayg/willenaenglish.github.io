@@ -67,3 +67,90 @@
   #studentList>.empty::before,#drawerBody>.empty::before,.na2-tests>.na2-empty::before,.na2-matrix-loading td::before{width:160px;height:62px}
 }
 @media(prefers-reduced-motion:reduce){#studentList>.empty::after,#drawerBody>.empty::after,.na2-tests>.na2-empty::after,.na2-matrix-loading td::after{animation:none;background:#bfe8ed}}
+
+
+/* 2026-09-30 compact, scrollable, collapsible teacher rail */
+@media(min-width:701px){
+  .layout{grid-template-columns:58px minmax(0,1fr)!important}
+  .layout.sidebar-expanded{grid-template-columns:176px minmax(0,1fr)!important}
+
+  .rail{
+    padding:6px 5px 10px!important;
+    gap:2px!important;
+    overflow-y:auto!important;
+    overflow-x:hidden!important;
+    overscroll-behavior:contain;
+    scrollbar-width:thin;
+    scrollbar-color:rgba(89,97,113,.22) transparent;
+  }
+  .rail::-webkit-scrollbar{width:5px}
+  .rail::-webkit-scrollbar-track{background:transparent}
+  .rail::-webkit-scrollbar-thumb{background:rgba(89,97,113,.22);border-radius:999px}
+
+  .rail .nav{
+    min-height:46px!important;
+    padding:5px 2px!important;
+    gap:2px!important;
+    border-radius:9px!important;
+  }
+  .layout:not(.sidebar-expanded) .rail .nav{
+    min-height:50px!important;
+    padding:4px 1px!important;
+    gap:1px!important;
+  }
+  .layout.sidebar-expanded .rail .nav{
+    min-height:42px!important;
+    padding:5px 8px!important;
+    gap:8px!important;
+  }
+
+  /* Icons stand on their own: no white/cyan icon tiles. */
+  .rail .nav-icon,
+  .rail .nav.active .nav-icon{
+    width:27px!important;
+    height:27px!important;
+    flex-basis:27px!important;
+    border-radius:0!important;
+    background:transparent!important;
+    box-shadow:none!important;
+  }
+  .rail .nav-icon svg{
+    width:21px!important;
+    height:21px!important;
+  }
+
+  /* Keep the active state on the whole row rather than boxing the SVG. */
+  .rail .nav.active{
+    background:rgba(255,255,255,.78)!important;
+    box-shadow:none!important;
+  }
+
+  .layout:not(.sidebar-expanded) .rail .nav>span:last-child{
+    max-width:48px!important;
+    font-size:8px!important;
+    line-height:1.05!important;
+  }
+  .layout.sidebar-expanded .rail .nav>span:last-child{
+    font-size:12px!important;
+  }
+
+  .rail-spacer{min-height:4px;flex:1 0 4px!important}
+
+  .rail-collapse-toggle{
+    position:sticky!important;
+    top:0!important;
+    z-index:4!important;
+    flex:0 0 auto!important;
+    width:32px!important;
+    height:28px!important;
+    min-height:28px!important;
+    margin:0 auto 4px!important;
+    border:1px solid rgba(43,127,137,.20)!important;
+    border-radius:8px!important;
+    background:#fff!important;
+    box-shadow:0 2px 6px rgba(24,32,48,.06)!important;
+  }
+  .layout.sidebar-expanded .rail-collapse-toggle{
+    margin:0 0 4px auto!important;
+  }
+}
