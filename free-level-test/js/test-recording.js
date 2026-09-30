@@ -8,6 +8,7 @@ var STATE_SUFFIX='_offline_state';
 var answers=[],answerIds=new Set(),bankMap=new Map(),attempt=null,attemptPromise=null,newAttemptPromise=null,startAt=0,finalized=false,lastQuestionAt=0,finishPromise=null,finishRequested=false,recoveredFinishedTest=false;
 function context(){return window.WillenaLevelTestContext||{}}
 function internal(){return context().mode==='student'}
+function visitor(){return context().mode==='visitor'}
 function attemptKey(){return internal()?INTERNAL_ATTEMPT_KEY:PUBLIC_ATTEMPT_KEY}
 function stateKey(){return attemptKey()+STATE_SUFFIX}
 function candidate(){return window.WillenaProspectiveCandidate||null}
@@ -65,6 +66,15 @@ function ensureAttempt(){
  attemptPromise=post(body).then(function(j){saveAttempt(j.attempt||{id:j.attempt_id});return attempt}).finally(function(){attemptPromise=null});
  return attemptPromise;
 }
+function syncSetup(){
+ if(internal())return ensureAttempt();
+ var c=candidate();
+ if(!c||!c.id||!c.registration_token)return Promise.reject(new Error('Candidate session missing'));
+ var setup=setupGuess(),body={action:'start',candidate_id:c.id,registration_token:c.registration_token,setup:setup,language:document.documentElement.lang||'ko'};
+ var startLevel=Number(setup.teacher_start_level);
+ if(Number.isFinite(startLevel)&&startLevel>0)body.starting_ability=startLevel;
+ return post(body).then(function(j){var fresh=j.attempt||{id:j.attempt_id};saveAttempt(Object.assign({},attempt||{},fresh));return attempt});
+}
 function beginNewAttempt(){
  if(newAttemptPromise)return newAttemptPromise;
  answers=[];answerIds.clear();finalized=false;finishPromise=null;finishRequested=false;recoveredFinishedTest=false;clearAttempt();startAt=Date.now();persistState();
@@ -93,6 +103,18 @@ function parseInternalLevel(){
  var text=document.body.innerText||'',m=text.match(/(?:Level|레벨|단계)\s*(\d{1,2})/i);
  return m?Math.max(1,Math.min(12,Number(m[1])+2)):null;
 }
+function canonicalPlacement(){
+ if(!visitor())return null;
+ var ctx=context(),setup=ctx.setup&&typeof ctx.setup==='object'?ctx.setup:{};
+ if(Number(setup.length)!==50)return null;
+ var calculator=window.WillenaAssessmentCalculation;
+ if(!calculator||typeof calculator.calculate!=='function')return null;
+ try{
+  var result=calculator.calculate({responses:answers,attempt:{setup:setup},minimumComputerSkills:5});
+  if(!result||!result.ready||Number(result.computer_skills_assessed)!==5)return null;
+  return result;
+ }catch(error){console.warn('[level-test-recording] canonical placement failed',error);return null}
+}
 function emit(name,detail){window.dispatchEvent(new CustomEvent(name,{detail:detail||{}}))}
 function syncCapturedAnswers(){
  if(!answers.length)return Promise.resolve();
@@ -102,8 +124,20 @@ function finishPayload(a,completedFrom,totalQuestions){
  if(internal()&&totalQuestions>0&&answers.length!==totalQuestions){
   return Promise.reject(new Error('Recorder state mismatch: '+answers.length+' answers for '+totalQuestions+' questions.'));
  }
- var level=parseInternalLevel();
- return post({action:'finish',attempt_id:a.id,session_token:a.session_token,answers:answers,recommended_level:level,display_level:level,duration_seconds:startAt?Math.round((Date.now()-startAt)/1000):null,total_questions:totalQuestions,metadata:{completed_from:completedFrom,page_language:document.documentElement.lang||'ko'}});
+ var placement=canonicalPlacement(),level=placement?placement.final_level:parseInternalLevel();
+ if(placement&&level){
+  window.WillenaInternalResultLevel=level;
+  window.WillenaStoredInternalLevel=level;
+  try{sessionStorage.setItem('willena_internal_result_level',String(level))}catch(_){}
+ }
+ var metadata={completed_from:completedFrom,page_language:document.documentElement.lang||'ko'};
+ var payload={action:'finish',attempt_id:a.id,session_token:a.session_token,answers:answers,recommended_level:level,display_level:level,duration_seconds:startAt?Math.round((Date.now()-startAt)/1000):null,total_questions:totalQuestions,metadata:metadata};
+ if(placement){
+  metadata.calculation_version=placement.calculation_version;
+  metadata.placement_calculation=placement;
+  payload.final_ability=placement.final_ability;
+ }
+ return post(payload);
 }
 function finishWithStaleRecovery(completedFrom,totalQuestions){
  return ensureAttempt().then(function(a){return finishPayload(a,completedFrom,totalQuestions)}).catch(function(error){
@@ -139,14 +173,17 @@ document.addEventListener('click',function(e){
 },true);
 var observer=new MutationObserver(function(){var card=document.querySelector('.question-card');if(card)lastQuestionAt=Date.now();finishIfReady()});
 observer.observe(document.documentElement,{subtree:true,childList:true});
-window.addEventListener('willena:candidate-ready',function(){ensureBank()});
+window.addEventListener('willena:candidate-ready',function(){
+ ensureBank();
+ beginNewAttempt().catch(function(error){console.warn('[level-test-recording] attempt start failed',error)});
+});
 window.addEventListener('online',function(){
  if(recoveredFinishedTest){recoverFinishedTest().catch(function(){})}
  else if(finishRequested){finishIfReady().catch(function(){})}
  else{syncCapturedAnswers().catch(function(error){console.warn('[level-test-recording] reconnect sync failed',error)})}
 });
 window.addEventListener('willena:student-ready',function(){recoverFinishedTest().catch(function(error){console.warn('[level-test-recording] saved test recovery failed',error)})});
-window.WillenaLevelTestRecorder={start:ensureAttempt,begin:beginNewAttempt,finish:finishIfReady,recover:recoverFinishedTest,getAnswers:function(){return answers.slice()}};
+window.WillenaLevelTestRecorder={start:ensureAttempt,begin:beginNewAttempt,syncSetup:syncSetup,finish:finishIfReady,recover:recoverFinishedTest,getAnswers:function(){return answers.slice()},calculatePlacement:canonicalPlacement};
 restoreState();
 ensureBank();
 if(internal())setTimeout(function(){recoverFinishedTest().catch(function(error){console.warn('[level-test-recording] saved test recovery failed',error)})},0);

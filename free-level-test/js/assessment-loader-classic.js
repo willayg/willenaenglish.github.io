@@ -38,7 +38,9 @@ function fetchAllAssessmentRows(select){
 }
 function loadQuestionBank(){
  var adapter=window.WillenaAssessmentAdapter;
+ var model=window.WillenaAssessmentQuestionModel;
  if(!adapter||typeof adapter.fromAssessmentItem!=="function")return Promise.reject(new Error('Shared assessment adapter is not loaded.'));
+ if(!model||typeof model.fromActivity!=="function")return Promise.reject(new Error('Canonical assessment question model is not loaded.'));
  var select="id,source_key,level_id,difficulty_rating,item_type,prompt_text,context_text,correct_answer,metadata,choices,assessment_item_options(option_text,is_correct,display_order)";
  return fetchAllAssessmentRows(select).then(function(rows){
   if(!rows.length)throw new Error("No published authored assessment questions are available yet.");
@@ -47,13 +49,19 @@ function loadQuestionBank(){
   var excluded=0;
   rows.forEach(function(row){
    if(isExcludedFromLevelTest(row)){excluded++;return;}
-   try{adapted.push(normalizeSentenceTokens(adapter.fromAssessmentItem(row)));}
+   try{
+    var activity=normalizeSentenceTokens(adapter.fromAssessmentItem(row));
+    var question=model.fromActivity(activity);
+    var errors=model.validate(question);
+    if(errors.length)throw new Error(errors.join('; '));
+    adapted.push(question);
+   }
    catch(error){rejected++;console.warn('[LevelTest] Skipping invalid assessment item',row&&row.source_key||row&&row.id,error);}
   });
   if(!adapted.length)throw new Error("No usable authored assessment questions are available yet.");
   var levels={};
   adapted.forEach(function(item){levels[item.level]=(levels[item.level]||0)+1;});
-  console.info('[LevelTest] Loaded complete assessment bank',{rows:rows.length,usable:adapted.length,excluded:excluded,rejected:rejected,levels:levels});
+  console.info('[LevelTest] Loaded canonical assessment bank',{rows:rows.length,usable:adapted.length,excluded:excluded,rejected:rejected,levels:levels});
   return shuffle(adapted);
  });
 }
