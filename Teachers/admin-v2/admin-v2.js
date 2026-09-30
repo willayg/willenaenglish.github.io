@@ -115,8 +115,25 @@ async function loadStudents(force=false){
   try{const roster=await loadStudentRoster({force,repairSession:true,onRefresh:fresh=>{state.students=fresh.students||[];buildFilters();applyFilters();populateAddClass()}});state.students=roster.students||[];buildFilters();applyFilters();populateAddClass()}
   catch(error){console.error('[Admin V2] roster/authorization failed',error);if(Number(error.status)===403){location.replace('/Teachers/dashboard-v2/');return}if(Number(error.status)===401){location.replace(loginUrl());return}$('#studentStatus').textContent='Could not load students';$('#studentList').innerHTML=`<div class="empty">${esc(error.message)}</div>`}
 }
+function bindLevelTestModes(){
+  const tabs=$('[data-level-test-mode]');
+  if(!tabs.length)return;
+  const autoPane=$('#levelTestAutoPane'),manualPane=$('#levelTestManualPane'),frame=$('#manualLevelReportFrame');
+  const setMode=(mode)=>{
+    const manual=mode==='manual';
+    tabs.forEach(tab=>{const active=tab.dataset.levelTestMode===mode;tab.classList.toggle('active',active);tab.setAttribute('aria-selected',String(active))});
+    autoPane?.classList.toggle('active',!manual);manualPane?.classList.toggle('active',manual);
+    if(autoPane)autoPane.hidden=manual;
+    if(manualPane)manualPane.hidden=!manual;
+    if(manual&&frame&&!frame.src)frame.src=frame.dataset.src||'/Teachers/tools/manual-level-report/?embed=1';
+    if(!manual)ensureLevelTests().catch(error=>{$('#levelTestRows').innerHTML=`<tr><td colspan="5" class="empty">${esc(error.message)}</td></tr>`});
+  };
+  tabs.forEach(tab=>tab.addEventListener('click',()=>setMode(tab.dataset.levelTestMode)));
+  setMode('auto');
+}
+
 function bindStudents(){
   $('#studentSearch').addEventListener('input',applyFilters);$('#classFilter').addEventListener('change',applyFilters);$('#gradeFilter').addEventListener('change',applyFilters);$('#studentRefresh').addEventListener('click',()=>loadStudents(true));$('#addStudent').addEventListener('click',openAdd);$('#closeStudentDrawer').addEventListener('click',closeStudent);$('#studentDrawerBg').addEventListener('click',e=>{if(e.target===$('#studentDrawerBg'))closeStudent()});$('#closeAddStudentDrawer').addEventListener('click',closeAdd);$('#cancelAddStudent').addEventListener('click',closeAdd);$('#addStudentDrawerBg').addEventListener('click',e=>{if(e.target===$('#addStudentDrawerBg'))closeAdd()});$('#addStudentForm').addEventListener('submit',createStudentFromDrawer);document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeModal();closeStudent();closeAdd()}})
 }
-function boot(){bindNavigation();bindStudents();$('#adminV2Boot')?.classList.add('hidden');loadStudents(false)}
+function boot(){bindNavigation();bindStudents();bindLevelTestModes();$('#adminV2Boot')?.classList.add('hidden');loadStudents(false)}
 boot();
