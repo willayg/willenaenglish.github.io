@@ -9,7 +9,6 @@ var loading=false;
 var activeFilter='all';
 var activeDetail=null;
 var activeRow=null;
-var overrideOriginal=new Map();
 var suppressClickUntil=0;
 var selected=new Set();
 var endpoint='/.netlify/functions/admin_classes';
@@ -205,12 +204,15 @@ function levelSegments(level){
 }
 function renderMini(data){
  var responses=Array.isArray(data.responses)?data.responses:[],candidate=data.candidate||{},attempt=data.attempt||{};
- var calculator=window.WillenaLevelReportCalculation.create({attempt:attempt,responses:responses}),overall=calculator.overall(),parts=levelParts(overall);
+ var manual=attempt?.metadata?.manual_report||null;
+ var calculator=window.WillenaLevelReportCalculation.create({attempt:attempt,responses:responses});
+ var overall=Number(manual?.overall)||calculator.overall(),parts=levelParts(overall);
  data.responses=responses;
  var order=['vocabulary','grammar','listening','reading','sentence_building','writing','speaking'];
  var skills=order.map(function(key){
-  var result=calculator.estimate(key),level=result.level,label,note;
-  if(result.assessed){label=fullLevel(level)+(result.plus?'+':'');note=skillSummary(key,level)}
+  var manualLevel=manual?.skillLevels?.[key],result=calculator.estimate(key),level=manualLevel==null?result.level:Number(manualLevel),label,note;
+  if(manualLevel!=null){label=fullLevel(level);note=manual?.skillNotes?.[key]||skillSummary(key,level)}
+  else if(result.assessed){label=fullLevel(level)+(result.plus?'+':'');note=skillSummary(key,level)}
   else if(key==='writing'){label=tr('teacherAssessment');note=tr('teacherNote')}
   else if(key==='speaking'){label=tr('notAssessed');note=tr('speakingPendingNote')}
   else{label=tr('notAssessed');note=tr('evidenceNote')}
@@ -232,68 +234,6 @@ function renderFullResults(){
  byId('levelTestResults').setAttribute('aria-hidden','false');
 }
 
-function cloneResponses(rows){return (rows||[]).map(function(row){return Object.assign({},row)})}
-function overrideOverall(rows){
- try{return window.WillenaLevelReportCalculation.create({attempt:activeDetail?.attempt||{},responses:rows||[]}).overall()}catch(_){return activeDetail?.attempt?.recommended_level||activeDetail?.attempt?.display_level||1}
-}
-function renderOverrideSummary(){
- var rows=activeDetail?.responses||[],changed=0;
- rows.forEach(function(row){if(overrideOriginal.has(Number(row.answer_index))&&overrideOriginal.get(Number(row.answer_index))!==row.is_correct)changed++});
- var overall=overrideOverall(rows);
- var correct=rows.filter(function(row){return row.is_correct===true}).length;
- byId('levelTestOverrideSummary').innerHTML='<div><small>Live result</small><strong>'+esc(fullLevel(overall))+'</strong></div><div><small>Correct</small><strong>'+correct+' / '+rows.length+'</strong></div><div><small>Changed</small><strong>'+changed+'</strong></div>';
- byId('levelTestOverrideStatus').textContent=changed?changed+' unsaved change'+(changed===1?'':'s'):'No changes';
- byId('levelTestOverrideSave').disabled=!changed;
-}
-function renderManualOverride(){
- if(!activeDetail)return;
- closeResults();
- var rows=activeDetail.responses||[];
- overrideOriginal=new Map(rows.map(function(row){return[Number(row.answer_index),row.is_correct===true]}));
- byId('levelTestOverrideMeta').textContent=name(activeDetail.candidate||{})+' · '+rows.length+' answers';
- var groups={};rows.forEach(function(row){var key=row.skill||skillFor(row.item_type||row.question_type);(groups[key]||(groups[key]=[])).push(row)});
- var order=['vocabulary','grammar','listening','reading','sentence_building','writing','speaking','other'];
- byId('levelTestOverrideBody').innerHTML=order.filter(function(key){return groups[key]&&groups[key].length}).map(function(key){
-   return'<section class="level-test-result-category"><div class="level-test-result-category-head"><h3>'+skillName(key)+'</h3><span>'+groups[key].length+' questions</span></div>'+
-   groups[key].map(function(row){
-     var idx=Number(row.answer_index),correct=row.is_correct===true;
-     return'<article class="level-test-override-question '+(correct?'correct':'wrong')+'" data-override-index="'+idx+'"><div class="level-test-answer-number">'+esc(row.answer_index)+'</div><div class="level-test-override-copy"><h4>'+esc(row.prompt_snapshot||'Question')+'</h4><dl><div><dt>Student answer</dt><dd>'+esc(answer(row.selected_answer))+'</dd></div><div><dt>Correct answer</dt><dd>'+esc(answer(row.correct_answer))+'</dd></div></dl></div><div class="level-test-override-choice"><button type="button" data-mark="true" class="'+(correct?'active':'')+'">Correct</button><button type="button" data-mark="false" class="'+(!correct?'active':'')+'">Needs work</button></div></article>'
-   }).join('')+'</section>'
- }).join('')||'<p class="level-test-empty">No responses were recorded.</p>';
- byId('levelTestOverrideBody').querySelectorAll('[data-override-index]').forEach(function(card){
-   card.querySelectorAll('[data-mark]').forEach(function(button){
-     button.addEventListener('click',function(){
-       var index=Number(card.dataset.overrideIndex),row=rows.find(function(item){return Number(item.answer_index)===index});if(!row)return;
-       row.is_correct=button.dataset.mark==='true';
-       card.classList.toggle('correct',row.is_correct);card.classList.toggle('wrong',!row.is_correct);
-       card.querySelectorAll('[data-mark]').forEach(function(x){x.classList.toggle('active',(x.dataset.mark==='true')===row.is_correct)});
-       renderOverrideSummary();
-     });
-   });
- });
- renderOverrideSummary();
- byId('levelTestOverride').classList.add('show');byId('levelTestOverride').setAttribute('aria-hidden','false');
-}
-function closeOverride(){
- byId('levelTestOverride').classList.remove('show');byId('levelTestOverride').setAttribute('aria-hidden','true');
-}
-async function saveManualOverrides(){
- if(!activeDetail||!activeRow)return;
- var button=byId('levelTestOverrideSave'),rows=activeDetail.responses||[],changes=[];
- rows.forEach(function(row){var idx=Number(row.answer_index);if(overrideOriginal.has(idx)&&overrideOriginal.get(idx)!==row.is_correct)changes.push({answer_index:idx,assessment_item_id:row.assessment_item_id||row.question_id||null,is_correct:row.is_correct===true})});
- if(!changes.length)return;
- button.disabled=true;button.textContent='Saving…';byId('levelTestOverrideStatus').textContent='Saving manual judgment…';
- try{
-   var overall=overrideOverall(rows);
-   var data=await api(endpoint,{method:'POST',body:JSON.stringify({action:'override_level_test_responses',source:activeRow.source,attempt_id:activeRow.id,recommended_level:overall,overrides:changes})});
-   activeDetail=repairPayload(data);
-   activeRow.recommended_level=Number(activeDetail.attempt?.recommended_level||activeDetail.attempt?.display_level||overall)||overall;
-   render();renderMini(activeDetail);closeOverride();toast('Manual override saved');
- }catch(error){
-   byId('levelTestOverrideStatus').textContent=error.message;
-   button.disabled=false;
- }finally{button.textContent='Save overrides'}
-}
 function setArchiveButton(archived){var button=byId('levelTestArchive');button.textContent=archived?tr('restore'):tr('archive');button.classList.toggle('is-restore',archived);button.disabled=false}
 function open(id){
  var row=findRow(id);if(!row)return;
@@ -313,7 +253,7 @@ function open(id){
  }).catch(function(error){byId('levelTestDetailBody').innerHTML='<p class="level-test-empty">'+esc(error.message)+'</p>'});
 }
 function closeResults(){byId('levelTestResults').classList.remove('show');byId('levelTestResults').setAttribute('aria-hidden','true')}
-function close(){closeResults();closeOverride();var drawer=byId('levelTestDrawer');drawer.classList.remove('show');drawer.setAttribute('aria-hidden','true');activeDetail=null;activeRow=null}
+function close(){closeResults();var drawer=byId('levelTestDrawer');drawer.classList.remove('show');drawer.setAttribute('aria-hidden','true');activeDetail=null;activeRow=null}
 function toast(text,action,onAction,duration){if(typeof window.showToast==='function')window.showToast(text,{action:action||'',onAction:onAction||null,duration:duration||5000});else window.alert(text)}
 
 async function setArchived(row,archived,options){
@@ -385,15 +325,26 @@ document.querySelectorAll('[data-page="levelTests"]').forEach(function(button){b
 byId('levelTestSearch').addEventListener('input',render);
 byId('levelTestRefresh').addEventListener('click',function(){if(activeFilter==='archived')loadArchived(true);else load(true)});
 byId('levelTestFilters').querySelectorAll('[data-test-filter]').forEach(function(button){button.onclick=function(){activeFilter=button.dataset.testFilter;selected.clear();byId('levelTestFilters').querySelectorAll('button').forEach(function(x){x.classList.toggle('active',x===button)});if(activeFilter==='archived')loadArchived(false);else render()}});
-byId('levelTestFullReport').onclick=function(){if(!activeDetail)return;window.open('/free-level-test/admin-report-v2/?teacher=1&admin=1&source='+encodeURIComponent(activeDetail.source)+'&attempt_id='+encodeURIComponent(activeDetail.attempt.id),'_blank','noopener')};
+byId('levelTestFullReport').onclick=function(){
+ if(!activeDetail)return;
+ if(activeDetail.attempt?.metadata?.manual_report){
+   window.open('/Teachers/tools/manual-level-report/?source='+encodeURIComponent(activeDetail.source)+'&attempt_id='+encodeURIComponent(activeDetail.attempt.id),'_blank','noopener');
+ }else{
+   window.open('/free-level-test/admin-report-v2/?teacher=1&admin=1&source='+encodeURIComponent(activeDetail.source)+'&attempt_id='+encodeURIComponent(activeDetail.attempt.id),'_blank','noopener');
+ }
+};
 byId('levelTestArchive').onclick=function(){if(activeRow)setArchived(activeRow,activeFilter!=='archived',{closeDrawer:true})};
-byId('levelTestManualOverride').onclick=renderManualOverride;
-byId('levelTestOverrideBack').onclick=closeOverride;
-byId('levelTestOverrideSave').onclick=saveManualOverrides;
+byId('levelTestManualOverride').onclick=function(){
+ if(!activeDetail||!activeRow)return;
+ if(typeof window.WillenaOpenManualLevelReport==='function'){
+   close();
+   window.WillenaOpenManualLevelReport({source:activeRow.source,attempt_id:activeRow.id});
+ }
+};
 byId('levelTestFullResults').onclick=renderFullResults;
 byId('levelTestResultsBack').onclick=closeResults;
 document.querySelectorAll('[data-close-level-test]').forEach(function(button){button.addEventListener('click',close)});
-document.addEventListener('keydown',function(event){if(event.key==='Escape'){if(byId('levelTestOverride').classList.contains('show'))closeOverride();else if(byId('levelTestResults').classList.contains('show'))closeResults();else close()}});
+document.addEventListener('keydown',function(event){if(event.key==='Escape'){if(byId('levelTestResults').classList.contains('show'))closeResults();else close()}});
 document.addEventListener('willena-language-change',localizeStatic);
 ensureBulkUi();
 localizeStatic();
