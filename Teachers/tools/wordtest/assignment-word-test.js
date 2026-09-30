@@ -151,6 +151,22 @@
       throw new Error(result.error||('Could not save Word Test ('+response.status+')'));
     }
 
+    let hydratedTargets=Array.isArray(result.targets)?result.targets.filter(target=>target&&target.lexical_entry_id):[];
+    if(!hydratedTargets.length){
+      try{
+        const detailsResponse=await wordBuilderApiFetch('/.netlify/functions/admin_classes?action=word_builder_get&id='+encodeURIComponent(result.id));
+        const details=await detailsResponse.json().catch(()=>({}));
+        if(detailsResponse.ok&&details.success!==false&&Array.isArray(details.worksheet?.targets)){
+          hydratedTargets=details.worksheet.targets.filter(target=>target&&target.lexical_entry_id);
+        }
+      }catch(error){
+        console.warn('[Word Builder] could not hydrate assignment targets after save',error);
+      }
+    }
+    if(!hydratedTargets.length){
+      throw new Error('The Word Test was saved, but its vocabulary targets could not be loaded. Please try again.');
+    }
+
     window._currentWorksheetId=result.id;
     window._loadedWorksheetMeta={
       ...(window._loadedWorksheetMeta||{}),
@@ -164,13 +180,15 @@
 
     return {
       ...result,
+      targets:hydratedTargets,
       success:true,
       worksheet:{
         id:result.id,
         title:worksheet.title||result.title||'',
         book:worksheet.book||'',
         book_id:worksheet.book_id||null,
-        unit:worksheet.unit||''
+        unit:worksheet.unit||'',
+        targets:hydratedTargets
       }
     };
   }
