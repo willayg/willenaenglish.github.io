@@ -420,6 +420,125 @@ async function levelTestDetail(env, body) {
   };
 }
 
+
+async function overrideLevelTestResponses(env, body, actor) {
+  const source = String(body?.source || '');
+  const attemptId = String(body?.attempt_id || '').trim();
+  const overrides = Array.isArray(body?.overrides) ? body.overrides.slice(0, 300) : [];
+  if (!['internal', 'prospective', 'visitor'].includes(source) || !attemptId || !overrides.length) {
+    throw Object.assign(new Error('Invalid manual override request'), { status: 400 });
+  }
+
+  const internal = source === 'internal';
+  const attemptTable = internal ? 'student_assessment_attempts' : 'prospective_level_test_attempts';
+  const responseTable = internal ? 'student_assessment_responses' : 'prospective_level_test_responses';
+  const skillTable = internal ? 'student_assessment_skill_results' : 'prospective_level_test_skill_results';
+
+  const currentRows = await supabaseFetchAll(
+    env.SCORES_SUPABASE_URL,
+    env.SCORES_SUPABASE_SERVICE_ROLE_KEY,
+    `/rest/v1/${responseTable}?attempt_id=eq.${encodeURIComponent(attemptId)}&select=answer_index,assessment_item_id,item_type,is_correct,metadata&order=answer_index.asc`
+  );
+  const byIndex = new Map((currentRows || []).map(row => [Number(row.answer_index), row]));
+  const now = new Date().toISOString();
+
+  for (const item of overrides) {
+    const answerIndex = Number(item?.answer_index);
+    if (!Number.isFinite(answerIndex) || !byIndex.has(answerIndex) || typeof item?.is_correct !== 'boolean') continue;
+    const current = byIndex.get(answerIndex);
+    const metadata = current?.metadata && typeof current.metadata === 'object' ? current.metadata : {};
+    await supabaseFetch(
+      env.SCORES_SUPABASE_URL,
+      env.SCORES_SUPABASE_SERVICE_ROLE_KEY,
+      `/rest/v1/${responseTable}?attempt_id=eq.${encodeURIComponent(attemptId)}&answer_index=eq.${encodeURIComponent(answerIndex)}`,
+      {
+        method: 'PATCH',
+        body: JSON.stringify({
+          is_correct: item.is_correct,
+          metadata: {
+            ...metadata,
+            admin_override: {
+              is_correct: item.is_correct,
+              overridden_at: now,
+              overridden_by: actor?.id || null,
+            },
+          },
+        }),
+      }
+    );
+  }
+
+  const responses = await supabaseFetchAll(
+    env.SCORES_SUPABASE_URL,
+    env.SCORES_SUPABASE_SERVICE_ROLE_KEY,
+    `/rest/v1/${responseTable}?attempt_id=eq.${encodeURIComponent(attemptId)}&select=answer_index,item_type,is_correct,metadata&order=answer_index.asc`
+  );
+  const stats = new Map();
+  for (const row of responses || []) {
+    const skill = responseSkill(row.item_type, row.metadata);
+    if (!stats.has(skill)) stats.set(skill, { seen: 0, correct: 0 });
+    const value = stats.get(skill);
+    value.seen += 1;
+    if (row.is_correct === true) value.correct += 1;
+  }
+
+  const existingSkills = await supabaseFetchAll(
+    env.SCORES_SUPABASE_URL,
+    env.SCORES_SUPABASE_SERVICE_ROLE_KEY,
+    `/rest/v1/${skillTable}?attempt_id=eq.${encodeURIComponent(attemptId)}&select=skill_key`
+  );
+  const existingSkillKeys = new Set((existingSkills || []).map(row => String(row.skill_key)));
+  for (const [skill, value] of stats.entries()) {
+    if (!existingSkillKeys.has(skill)) continue;
+    await supabaseFetch(
+      env.SCORES_SUPABASE_URL,
+      env.SCORES_SUPABASE_SERVICE_ROLE_KEY,
+      `/rest/v1/${skillTable}?attempt_id=eq.${encodeURIComponent(attemptId)}&skill_key=eq.${encodeURIComponent(skill)}`,
+      {
+        method: 'PATCH',
+        body: JSON.stringify({
+          questions_seen: value.seen,
+          questions_correct: value.correct,
+          score_percent: value.seen ? Math.round((value.correct / value.seen) * 10000) / 100 : 0,
+        }),
+      }
+    );
+  }
+
+  const attemptRows = await supabaseFetch(
+    env.SCORES_SUPABASE_URL,
+    env.SCORES_SUPABASE_SERVICE_ROLE_KEY,
+    `/rest/v1/${attemptTable}?id=eq.${encodeURIComponent(attemptId)}&select=metadata&limit=1`
+  );
+  const oldMetadata = attemptRows?.[0]?.metadata && typeof attemptRows[0].metadata === 'object' ? attemptRows[0].metadata : {};
+  const correctCount = (responses || []).filter(row => row.is_correct === true).length;
+  const requestedLevel = Number(body?.recommended_level);
+  const patch = {
+    correct_count: correctCount,
+    metadata: {
+      ...oldMetadata,
+      manual_override: {
+        applied_at: now,
+        applied_by: actor?.id || null,
+        changed_questions: overrides.length,
+      },
+    },
+  };
+  if (Number.isFinite(requestedLevel) && requestedLevel >= 1 && requestedLevel <= 14) {
+    patch.recommended_level = requestedLevel;
+    if (!internal) patch.display_level = requestedLevel;
+  }
+
+  await supabaseFetch(
+    env.SCORES_SUPABASE_URL,
+    env.SCORES_SUPABASE_SERVICE_ROLE_KEY,
+    `/rest/v1/${attemptTable}?id=eq.${encodeURIComponent(attemptId)}`,
+    { method: 'PATCH', body: JSON.stringify(patch) }
+  );
+
+  return levelTestDetail(env, { source, attempt_id: attemptId });
+}
+
 async function createClass(env, body) {
   const name = String(body.name || '').trim().replace(/\s+/g, ' ');
   if (name.length < 2 || name.length > 80) throw Object.assign(new Error('Class name must be 2–80 characters'), { status: 400 });
@@ -557,7 +676,7 @@ async function getWordBuilder(env, actor, id) {
   // Reading is shared across approved teachers. Saving/deleting still enforces
   // creator/admin ownership separately.
   const items = await supabaseFetch(env.CONTENT_SUPABASE_URL, env.CONTENT_SUPABASE_SERVICE_ROLE_KEY,
-    `/rest/v1/collection_items?collection_id=eq.${encodeURIComponent(id)}&select=id,content_id,position,settings&order=position.asc,created_at.asc`);
+    `/rest/v1/collection_items?collection_id=eq.${encodeURIComponent(id)}&select=id,content_id,lexical_sense_id,position,settings&order=position.asc,created_at.asc`);
   const lexIds = [...new Set((items || []).map(i => i.content_id).filter(Boolean))];
   const lexical = lexIds.length ? await supabaseFetch(env.CONTENT_SUPABASE_URL, env.CONTENT_SUPABASE_SERVICE_ROLE_KEY,
     `/rest/v1/lexical_entries?id=in.(${lexIds.map(encodeURIComponent).join(',')})&select=id,canonical_text,translation_ko`) : [];
@@ -825,7 +944,7 @@ export default {
         }
         return json(origin, 405, { success: false, error: 'Method not allowed' });
       }
-      await requireAdmin(req, env);
+      const adminActor = await requireAdmin(req, env);
       if (req.method === 'GET' && action === 'search_books') return json(origin, 200, { success: true, books: await searchBooks(env, url.searchParams.get('q')) });
       if (req.method === 'GET' && action === 'list_level_tests') return json(origin, 200, { success: true, tests: await listLevelTests(env) });
       if (req.method === 'GET' && action === 'list_archived_level_tests') return json(origin, 200, { success: true, tests: await listLevelTests(env, true) });
@@ -834,6 +953,7 @@ export default {
       const body = await req.json().catch(() => null);
       if (!body) return json(origin, 400, { success: false, error: 'Invalid JSON' });
       if (body.action === 'level_test_detail') return json(origin, 200, { success: true, ...await levelTestDetail(env, body) });
+      if (body.action === 'override_level_test_responses') return json(origin, 200, { success: true, ...await overrideLevelTestResponses(env, body, adminActor) });
       if (body.action === 'set_level_test_archived') return json(origin, 200, { success: true, archived_at: await setLevelTestArchived(env, body) });
       if (action === 'update_class') return json(origin, 200, { success: true, class: await updateClass(env, body) });
       return json(origin, 201, { success: true, class: await createClass(env, body) });
