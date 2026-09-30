@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<meta http-equiv="Cache-Control" content="no-cache,no-store,must-revalidate">
+<title>Manual Level Report · Willena English</title>
+<link rel="icon" href="/Assets/Images/Logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./exact-pdf-report.css">
+<link rel="stylesheet" href="./exact-pdf-polish.css">
+<link rel="stylesheet" href="./exact-pdf-pips.css">
+<style>
+:root{--ink:#214f59;--muted:#758a91;--line:#dcebed;--cyan:#2fb6c1;--pink:#f20a87;--soft:#f5fbfc}
+*{box-sizing:border-box}html,body{margin:0;font-family:Poppins,"Noto Sans KR",sans-serif;color:var(--ink);background:#edf7f8}
+button,input,select,textarea{font:inherit}.shell{display:grid;grid-template-columns:430px minmax(0,1fr);min-height:100vh}.panel{background:#fff;border-right:1px solid var(--line);padding:20px;height:100vh;overflow:auto;position:sticky;top:0}.workspace{padding:24px;overflow:auto}
+.brand{display:flex;align-items:center;gap:12px;margin-bottom:18px}.brand img{width:48px;height:48px;object-fit:contain}.brand h1{font-size:19px;margin:0}.brand p{font-size:11px;color:var(--muted);margin:2px 0 0}
+.section{border:1px solid var(--line);border-radius:18px;padding:15px;margin:0 0 14px}.section h2{font-size:13px;margin:0 0 12px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.full{grid-column:1/-1}label{display:grid;gap:5px;font-size:11px;font-weight:700;color:#506a72}input,select,textarea{width:100%;border:1.5px solid #d9e8ea;border-radius:11px;background:#fff;color:var(--ink);padding:9px 10px;outline:0}textarea{min-height:72px;resize:vertical}input:focus,select:focus,textarea:focus{border-color:var(--cyan);box-shadow:0 0 0 3px rgba(47,182,193,.12)}
+.skill-grid{display:grid;grid-template-columns:1fr 120px;gap:8px;align-items:end}.skill-grid+.skill-grid{margin-top:8px}.actions{display:grid;grid-template-columns:1fr 1fr;gap:9px;position:sticky;bottom:-20px;background:#fff;padding:12px 0 4px}.btn{border:0;border-radius:13px;min-height:48px;font-weight:800;cursor:pointer}.btn.primary{background:linear-gradient(135deg,#67d8df,#2fb6c1);color:#fff}.btn.pdf{background:linear-gradient(135deg,#ff9cbd,#f20a87);color:#fff}.btn.secondary{background:#eef8f9;color:var(--ink)}.status{font-size:11px;color:var(--muted);margin-top:8px;min-height:17px}
+.preview-title{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}.preview-title h2{margin:0;font-size:16px}.preview-pages{display:grid;gap:22px;justify-content:center}.preview-sheet{width:595.5px;height:842.25px;background:#fff;box-shadow:0 16px 45px rgba(39,103,111,.14);overflow:hidden}.preview-sheet .willena-pdf-page{transform:scale(.75);transform-origin:top left}.manual-note{font-size:10px;color:var(--muted);line-height:1.5;margin-top:8px}
+@media(max-width:900px){.shell{display:block}.panel{position:relative;height:auto;border-right:0;border-bottom:1px solid var(--line)}.workspace{padding:14px}.preview-sheet{width:100%;height:auto;aspect-ratio:210/297}.preview-sheet .willena-pdf-page{transform:scale(var(--preview-scale,.5));transform-origin:top left}}
+@media print{.shell{display:none!important}}
+</style>
+</head>
+<body>
+<div class="shell">
+  <aside class="panel">
+    <div class="brand"><img src="/Assets/Images/Logo.png" alt=""><div><h1>Manual Level Report</h1><p>Emergency / paper-test override</p></div></div>
+
+    <section class="section">
+      <h2>Student</h2>
+      <div class="grid">
+        <label class="full">Student name<input id="studentName" placeholder="Student name"></label>
+        <label>School<input id="school" placeholder="School"></label>
+        <label>Grade<input id="grade" placeholder="Grade"></label>
+        <label>Report language<select id="language"><option value="ko">한국어</option><option value="en">English</option></select></label>
+        <label>Overall level<select id="overall"></select></label>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>Skill levels</h2>
+      <div id="skills"></div>
+      <p class="manual-note">Every skill is manual. Half levels are allowed. Use “Not assessed” if you do not want a level displayed.</p>
+    </section>
+
+    <section class="section">
+      <h2>Optional wording overrides</h2>
+      <label>Current-level summary<textarea id="overallNote" placeholder="Leave blank to use the standard report wording for this level."></textarea></label>
+      <div id="skillNotes" style="margin-top:10px"></div>
+    </section>
+
+    <div class="actions">
+      <button class="btn secondary" id="resetBtn">Reset</button>
+      <button class="btn primary" id="previewBtn">Update preview</button>
+      <button class="btn pdf full" id="pdfBtn">Generate exact PDF</button>
+    </div>
+    <div id="status" class="status"></div>
+  </aside>
+
+  <main class="workspace">
+    <div class="preview-title"><h2>Exact report preview</h2><span style="font-size:11px;color:var(--muted)">Same A4 PDF renderer</span></div>
+    <div id="previewPages" class="preview-pages"></div>
+  </main>
+</div>
+
+<script>
+(function(){
+'use strict';
+const CURRICULUM_URL='https://gxwfsqxyuufqtitspfqg.supabase.co';
+const CURRICULUM_KEY=['sb_publishable_','G-FYhHfDL4OGdL892gY1Zg_','epdbEeqO'].join('');
+const MAX_LEVEL=14;
+const skills=['vocabulary','grammar','listening','reading','sentence_building','speaking','writing'];
+const labels={
+ vocabulary:{ko:'어휘',en:'Vocabulary'},grammar:{ko:'문법',en:'Grammar'},listening:{ko:'듣기',en:'Listening'},
+ reading:{ko:'읽기',en:'Reading'},sentence_building:{ko:'문장 구조 파악 능력',en:'Sentence building'},
+ speaking:{ko:'말하기',en:'Speaking'},writing:{ko:'쓰기',en:'Writing'}
+};
+let profiles=new Map();
+const $=s=>document.querySelector(s);
+const clean=s=>String(s??'').replace(/\s+/g,' ').trim();
+const esc=s=>clean(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+const roundProfileLevel=l=>Math.max(1,Math.min(MAX_LEVEL,Math.round(Number(l)||1)));
+const display=l=>Number(l)<=2?Number(l):Number(l)-2;
+const short=l=>Number(l)===1?'S1':Number(l)===2?'S2':String(Math.max(1,Math.round(Number(l)-2)));
+const name=(l,ko)=>{
+  l=Number(l); if(l<=2)return ko?'스타터 '+l:'Starter '+l;
+  const d=+(l-2).toFixed(1); return ko?'레벨 '+d:'Level '+d;
+};
+const profile=(l,s)=>profiles.get(roundProfileLevel(l)+':'+s)||null;
+const ptext=(r,f,ko,fb='')=>clean(r?.[f+'_'+(ko?'ko':'en')])||fb;
+function fallback(l,s,ko){return ko?name(l,true)+'에서 익숙한 '+(labels[s]?.ko||'영어')+'를 이해하고 사용할 수 있습니다.':'Can understand and use familiar '+(labels[s]?.en.toLowerCase()||'English')+' at '+name(l,false)+'.'}
+function standardSummary(l,ko){const pl=roundProfileLevel(l);if(pl===13)return ko?'영어로 수업하는 국제학교나 해외 고등학교에서 학업을 수행하며 학술적인 글, 수업 토론과 장문 과제를 다룰 수 있습니다.':'Can study successfully in an English-medium international or overseas high school, handling academic texts, class discussions and extended assignments.';if(pl===14)return ko?'미국 대학교에서 강의를 이해하고 학술 자료를 읽으며 세미나에 참여하고 대학 수준의 과제를 작성할 수 있습니다.':'Can study at an American university, following lectures, reading academic texts, participating in seminars and producing university-level assignments.';return ptext(profile(pl,'overall'),'summary',ko,fallback(l,'grammar',ko))}
+function levelOptions(includeNA=false){
+ let out=includeNA?'<option value="">Not assessed</option>':'';
+ out+='<option value="1">Starter 1</option><option value="2">Starter 2</option>';
+ for(let p=1;p<=12;p+=.5){const internal=p+2;out+='<option value="'+internal+'">Level '+p+'</option>'}
+ return out;
+}
+$('#overall').innerHTML=levelOptions(false);$('#overall').value='6';
+const skillHost=$('#skills'),noteHost=$('#skillNotes');
+skills.forEach((s,i)=>{
+ const row=document.createElement('div');row.className='skill-grid';row.innerHTML='<label>'+labels[s].en+'<select data-skill="'+s+'">'+levelOptions(true)+'</select></label><label>Level<input type="text" readonly value="" data-level-display="'+s+'"></label>';skillHost.appendChild(row);
+ const n=document.createElement('label');n.style.marginTop='8px';n.innerHTML=labels[s].en+' note<textarea data-note="'+s+'" placeholder="Leave blank for standard wording."></textarea>';noteHost.appendChild(n);
+ const sel=row.querySelector('select');sel.value=String(6);sel.addEventListener('change',()=>syncDisplay(s));
+ syncDisplay(s);
+});
+function syncDisplay(s){const v=document.querySelector('[data-skill="'+s+'"]').value;document.querySelector('[data-level-display="'+s+'"]').value=v?name(Number(v),false):'—'}
+function state(){
+ const skillLevels={};skills.forEach(s=>{const v=document.querySelector('[data-skill="'+s+'"]').value;skillLevels[s]=v?Number(v):null});
+ const skillNotes={};skills.forEach(s=>skillNotes[s]=clean(document.querySelector('[data-note="'+s+'"]').value));
+ return {student_name:clean($('#studentName').value)||'Student',school_name:clean($('#school').value),school_grade:clean($('#grade').value),language:$('#language').value,overall:Number($('#overall').value)||6,overallNote:clean($('#overallNote').value),skillLevels,skillNotes};
+}
+function skillPips(level){
+ const current=Math.max(1,Math.min(MAX_LEVEL,Number(level)||1)),floor=Math.floor(current);
+ const starter='<i class="willena-pdf-segment starter '+(current<=2?'current':'done')+'"></i>';
+ const numbered=Array.from({length:12},(_,i)=>{const internal=i+3;return '<i class="willena-pdf-segment '+(internal<floor?'done':internal===floor?'current':'')+'"></i>'}).join('');
+ return starter+numbered;
+}
+function frame(n,title,c){return '<div class="willena-pdf-frame"></div><div class="willena-pdf-header"><div class="willena-pdf-brand-logo-wrap"><img class="willena-pdf-brand-logo" src="/Assets/Images/color-logo1.png" alt="Willena English"></div><div class="willena-pdf-subbrand">STUDENT LEVEL REPORT</div><div class="willena-pdf-student"><strong>'+esc(c.student_name||'Student')+'</strong><span>'+esc([c.school_name,c.school_grade].filter(Boolean).join(' · '))+'</span></div></div><div class="willena-pdf-title-line"><div class="willena-pdf-pill">'+title+'</div></div><div class="willena-pdf-footer"><span>WILLENA ENGLISH · PLACEMENT REPORT</span><b>'+String(n).padStart(2,'0')+'</b></div>'}
+function hJourney(best,ko){const label=ko?name(best,true)+' 배치 결과':name(best,false)+' placement result',stages=ko?['스타터','기초','초급','중급','고급','숙련']:['Starter','Foundation','Elementary','Intermediate','Advanced','Proficient'];return '<div class="willena-pdf-placement-scale"><div class="willena-pdf-placement-pips" role="img" aria-label="'+esc(label)+'">'+skillPips(best)+'</div><div class="willena-pdf-placement-stages">'+stages.map(x=>'<span>'+x+'</span>').join('')+'</div></div>'}
+function summary(l,ko,s){if(Number(l)===Number(s.overall)&&s.overallNote)return s.overallNote;return standardSummary(l,ko)}
+function skillBlock(skill,ko,s){const l=s.skillLevels[skill],lab=labels[skill][ko?'ko':'en'];if(l==null)return '<div class="willena-pdf-skill unassessed"><div class="willena-pdf-skill-head"><strong>'+lab+'</strong><span>'+(ko?'평가되지 않음':'Not assessed')+'</span></div><p>'+(ko?'수동 보고서에서 이 영역은 평가되지 않았습니다.':'This skill was not assessed in the manual report.')+'</p></div>';const note=s.skillNotes[skill]||ptext(profile(l,skill),'summary',ko,fallback(l,skill,ko));return '<div class="willena-pdf-skill"><div class="willena-pdf-skill-head"><strong>'+lab+'</strong><span>'+name(l,ko)+'</span></div><div class="willena-pdf-segments">'+skillPips(l)+'</div><p>'+esc(note)+'</p></div>'}
+function pathwayFor(best){const b=roundProfileLevel(best),start=Math.max(1,Math.min(MAX_LEVEL-2,b-1));return Array.from({length:3},(_,i)=>start+i)}
+function pathwaySummary(l,ko,s){const raw=summary(l,ko,s),parts=raw.split(/(?=【|\[)/).map(clean).filter(Boolean);if(parts.length<2)return esc(raw);return parts.map(part=>{const m=part.match(/^(【[^】]+】|\[[^\]]+\])\s*/);return m?'<span class="willena-pdf-summary-section"><strong>'+esc(m[1])+'</strong>'+esc(part.slice(m[0].length))+'</span>':'<span class="willena-pdf-summary-section">'+esc(part)+'</span>'}).join('')}
+function buildStage(){
+ const s=state(),ko=s.language!=='en',best=s.overall,stage=document.createElement('div');stage.className='willena-pdf-stage';
+ stage.innerHTML='<section class="willena-pdf-page">'+frame(1,'PLACEMENT SUMMARY',s)+'<div class="willena-pdf-hero-label">'+(ko?'추천 시작 레벨':'Recommended starting level')+'</div><div class="willena-pdf-orbit"><span>'+(best<=2?(ko?'스타터':'STARTER'):(ko?'레벨':'LEVEL'))+'</span><strong>'+display(best)+'</strong></div>'+hJourney(best,ko)+'<div class="willena-pdf-one-card"><article class="willena-pdf-card willena-pdf-card-full"><div class="willena-pdf-bisect">'+(ko?'현재 레벨':'Current level')+'</div><p>'+pathwaySummary(best,ko,s)+'</p></article></div></section>'+
+ '<section class="willena-pdf-page">'+frame(2,'SKILL PROFILE',s)+'<h2 class="willena-pdf-heading">'+(ko?'영역별 레벨':'Skill levels')+'</h2><div class="willena-pdf-skills">'+skills.map(x=>skillBlock(x,ko,s)).join('')+'</div></section>';
+ document.body.appendChild(stage);return stage;
+}
+function updatePreview(){
+ document.querySelectorAll('.willena-pdf-stage').forEach(x=>x.remove());
+ const stage=buildStage(),host=$('#previewPages');host.innerHTML='';
+ [...stage.querySelectorAll('.willena-pdf-page')].forEach(page=>{const w=document.createElement('div');w.className='preview-sheet';w.appendChild(page.cloneNode(true));host.appendChild(w)});
+ stage.remove();$('#status').textContent='Preview updated.';
+}
+async function loadProfiles(){
+ try{const r=await fetch(CURRICULUM_URL+'/rest/v1/assessment_report_profiles?select=level_id,skill,summary_en,summary_ko,next_step_en,next_step_ko&status=eq.published&order=level_id.asc,sort_order.asc',{headers:{apikey:CURRICULUM_KEY,Authorization:'Bearer '+CURRICULUM_KEY},cache:'no-store'});if(r.ok){const rows=await r.json();profiles=new Map(rows.map(x=>[x.level_id+':'+x.skill,x]))}}catch(_){}
+ updatePreview();
+}
+function loadScript(src,globalName){if(window[globalName])return Promise.resolve();return new Promise((resolve,reject)=>{const s=document.createElement('script');s.src=src;s.onload=resolve;s.onerror=reject;document.head.appendChild(s)})}
+async function generatePdf(){
+ const btn=$('#pdfBtn'),old=btn.textContent;btn.disabled=true;btn.textContent='Building PDF…';$('#status').textContent='Building the exact A4 PDF…';let stage=null;
+ try{
+   await Promise.all([loadScript('https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js','html2canvas'),loadScript('https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js','jspdf')]);
+   await document.fonts.ready;stage=buildStage();
+   await Promise.all([...stage.querySelectorAll('img')].map(img=>img.complete?Promise.resolve():new Promise(res=>{img.onload=res;img.onerror=res})));
+   const pages=[...stage.querySelectorAll('.willena-pdf-page')],pdf=new window.jspdf.jsPDF({orientation:'portrait',unit:'mm',format:'a4',compress:true});
+   for(let i=0;i<pages.length;i++){const canvas=await window.html2canvas(pages[i],{scale:3,backgroundColor:'#fff',logging:false,useCORS:true,width:794,height:1123});if(i)pdf.addPage('a4','portrait');pdf.addImage(canvas.toDataURL('image/jpeg',.99),'JPEG',0,0,210,297,undefined,'NONE');canvas.width=1;canvas.height=1}
+   const blobUrl=URL.createObjectURL(pdf.output('blob'));window.open(blobUrl,'_blank');setTimeout(()=>URL.revokeObjectURL(blobUrl),300000);$('#status').textContent='PDF opened in a new tab.';
+ }catch(err){console.error(err);$('#status').textContent='Could not create PDF: '+(err.message||err)}
+ finally{stage?.remove();btn.disabled=false;btn.textContent=old}
+}
+$('#previewBtn').onclick=updatePreview;$('#pdfBtn').onclick=generatePdf;$('#resetBtn').onclick=()=>{if(confirm('Reset all manual report fields?'))location.reload()};
+$('#language').addEventListener('change',updatePreview);$('#overall').addEventListener('change',updatePreview);
+loadProfiles();
+})();
+</script>
+</body>
+</html>
