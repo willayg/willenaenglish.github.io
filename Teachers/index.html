@@ -19,6 +19,19 @@
 <link rel="stylesheet" href="./naesin-v2/naesin-v2-assignment.css?v=20260912-r12-2">
 <link rel="stylesheet" href="./naesin-v2/naesin-v2-r12-2.css?v=20260912-r12-2">
 <script src="./dashboard-shell-polish.js?v=20261001-iconfix1" defer></script>
+<style>
+/* Concrete student activity and current homework overview. */
+#view-students .filters{flex-wrap:wrap;justify-content:flex-end}
+.roster-summary{display:flex;gap:12px 28px;flex-wrap:wrap;padding:18px 20px;color:#596b73;border-bottom:1px solid #e4eef0;font-size:12px}.roster-summary b{color:#267f89;font-size:17px;margin-right:5px}
+#view-students .roster-columns,#view-students .roster-row{display:grid!important;grid-template-columns:minmax(130px,.7fr) minmax(260px,1.5fr) minmax(200px,1.2fr) minmax(130px,.7fr);gap:22px;align-items:center}
+.roster-columns{padding:13px 34px 5px;font-size:11px;font-weight:700;color:#596b73}
+#view-students .roster-row{padding:18px 20px;min-height:100px}.roster-row:focus-visible{outline:2px solid #267f89;outline-offset:2px}
+.roster-homework strong{font-size:12px;color:#315b63}.roster-homework small,.roster-activity small{display:block;font-size:11px;color:#6e7b87;margin-top:5px}.roster-results{display:flex;flex-direction:column;gap:5px;font-size:11px;color:#596b73}.roster-results small{font-size:10px}.roster-activity strong{font-size:13px}
+.roster-progress{height:6px;background:#e6eff0;border-radius:6px;overflow:hidden;margin:9px 0;max-width:340px}.roster-progress i{display:block;height:100%;background:#2b9ba8;border-radius:inherit}
+.roster-assignment-detail{padding:16px;border:1px solid #c9e7eb;border-radius:12px;margin-top:10px}.roster-assignment-head{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;font-size:13px}.roster-assignment-head span{color:#267f89;font-weight:700}.roster-assignment-detail>small{display:block;color:#6e7b87;margin-top:6px}.drawer .skill{grid-template-columns:1fr auto}.roster-sections{display:flex;flex-direction:column;gap:6px;font-size:12px;color:#596b73}
+@media(max-width:1100px){#view-students .roster-columns{display:none!important}#view-students .roster-row{grid-template-columns:140px 1fr!important;gap:14px 22px}.roster-results{grid-column:2}.roster-activity{grid-column:1;grid-row:2}}
+@media(max-width:600px){#view-students .roster-row{grid-template-columns:1fr!important;gap:12px}.roster-results,.roster-activity{grid-column:1;grid-row:auto}.roster-summary{gap:12px}.roster-columns{display:none}.roster-homework{padding-top:10px;border-top:1px solid #e4eef0}}
+</style>
 </head>
 <body>
 <div id="teacher-header"></div>
@@ -31,8 +44,8 @@ mountTeacherHeader({ target:'#teacher-header', mode:'dashboard', activeApp:'teac
 <aside class="rail"><button class="nav active" data-view="students"><span class="nav-icon">◎</span><span>Students</span></button><button class="nav" data-view="classes"><span class="nav-icon">▦</span><span>Classes</span></button><button class="nav" data-view="leaderboard"><span class="nav-icon">★</span><span>Leaderboard</span></button><button class="nav" data-view="vocab"><span class="nav-icon">Aa</span><span>Vocab</span></button><button class="nav" data-view="apps"><span class="nav-icon">＋</span><span>Apps</span></button><button class="nav" data-view="puzzles"><span class="nav-icon">◇</span><span>Puzzles</span></button><button class="nav" data-view="english-arcade"><span class="nav-icon">EA</span><span>English Arcade</span></button><div class="rail-spacer"></div></aside>
 <main class="workspace">
 <section class="view active" id="view-students">
-<div class="page-head"><div><h1>Student tracking</h1></div><div class="filters"><select class="control" id="classSelect"><option>Loading classes…</option></select><select class="control" id="daysSelect"><option value="30">Last 30 days</option><option value="14">Last 14 days</option><option value="60">Last 60 days</option><option value="90">Last 90 days</option></select><input class="control search" id="searchInput" type="search" placeholder="Search student…"><button class="control" id="refreshBtn">Refresh</button></div></div>
-<div class="panel"><div class="panel-head"><div><div class="panel-title" id="panelTitle">Students</div><div class="panel-sub" id="statusText"></div></div><span class="count-pill" id="studentCount">0 students</span></div><div class="student-list" id="studentList"><div class="empty">Loading…</div></div></div>
+<div class="page-head"><div><h1>Student tracking</h1></div><div class="filters"><select class="control" id="classSelect"><option>Loading classes…</option></select><select class="control" id="daysSelect"><option value="30">Last 30 days</option><option value="14">Last 14 days</option><option value="60">Last 60 days</option><option value="90">Last 90 days</option></select><input class="control search" id="searchInput" type="search" placeholder="Search student…"><select class="control" id="rosterAssignmentFilter" aria-label="Filter by assignment progress"><option value="all">All students</option><option value="assigned">Has assignments</option><option value="not_started">Not started</option><option value="in_progress">In progress</option><option value="complete">All assignments complete</option><option value="none">No assignments</option></select><button class="control" id="refreshBtn">Refresh</button></div></div>
+<div class="panel"><div class="panel-head"><div><div class="panel-title" id="panelTitle">Students</div><div class="panel-sub" id="statusText"></div></div><span class="count-pill" id="studentCount">0 students</span></div><div id="rosterSummary" class="roster-summary"></div><div class="roster-columns"><span>Student</span><span>Current assignments</span><span>Recorded results</span><span>Activity</span></div><div class="student-list" id="studentList"><div class="empty">Loading…</div></div></div>
 </section>
 <section class="view" id="view-classes"><div class="page-head"><div><h1>Classes</h1></div><div class="filters"><select class="control" id="classDaysSelect"><option value="30">Last 30 days</option><option value="14">Last 14 days</option><option value="60">Last 60 days</option><option value="90">Last 90 days</option></select><button class="control" id="classRefreshBtn">Refresh</button></div></div><div class="class-grid" id="classGrid"><div class="empty">Open Classes to load class breakdowns.</div></div></section>
 <section class="view" id="view-leaderboard">
@@ -174,7 +187,7 @@ mountTeacherHeader({ target:'#teacher-header', mode:'dashboard', activeApp:'teac
 </main></div>
 <nav class="mobile-tabs"><button class="mobile-tab active" data-view="students"><b>◎</b>Students</button><button class="mobile-tab" data-view="classes"><b>▦</b>Classes</button><button class="mobile-tab" data-view="leaderboard"><b>★</b>Board</button><button class="mobile-tab" data-view="vocab"><b>Aa</b>Vocab</button><button class="mobile-tab" data-view="apps"><b>＋</b>Apps</button><button class="mobile-tab" data-view="puzzles"><b>◇</b>Puzzles</button><button class="mobile-tab" data-view="english-arcade"><b>EA</b>Arcade</button></nav>
 <div class="drawer-bg" id="drawerBg"><aside class="drawer"><div class="drawer-head"><div class="drawer-head-main"><div class="drawer-name" id="drawerName">Student</div><div class="drawer-meta" id="drawerMeta"></div></div><button class="close" id="closeDrawer">×</button></div><div class="drawer-body" id="drawerBody"><div class="empty">Loading…</div></div></aside></div>
-<div id="naesinV2Rev" style="position:fixed;right:12px;bottom:8px;z-index:2147483647;color:#7b8c93;font:700 9px/1.2 Poppins,sans-serif;letter-spacing:.04em;pointer-events:none">v14.61</div>
+<div id="naesinV2Rev" style="position:fixed;right:12px;bottom:8px;z-index:2147483647;color:#7b8c93;font:700 9px/1.2 Poppins,sans-serif;letter-spacing:.04em;pointer-events:none">v14.62</div>
 <script>
 const $=(s,r=document)=>r.querySelector(s),$$=(s,r=document)=>[...r.querySelectorAll(s)];
 const FN=n=>`/.netlify/functions/${n}`;
@@ -201,13 +214,125 @@ function normalizeAnswer(value,skill=''){
   }
   return String(parsed);
 }
-async function api(url){const resolved=window.WillenaAPI?window.WillenaAPI.getApiUrl(url):url;const r=await fetch(resolved,{credentials:'include'});let j={};try{j=await r.json()}catch{}if(!r.ok||j.success===false)throw Error(j.error||`Request failed (${r.status})`);return j}
+async function api(url){const resolved=window.WillenaAPI?window.WillenaAPI.getApiUrl(url):url;const r=await fetch(resolved,{credentials:'include',cache:'no-store'});let j={};try{j=await r.json()}catch{}if(!r.ok||j.success===false)throw Error(j.error||`Request failed (${r.status})`);return j}
 async function auth(){try{const mod=await import('/Teachers/auth-refresh.js?v=20260927-persistent-p1');const session=await mod.ensureTeacherSession();if(!session?.success||!session.user_id)throw Error('No session');const role=await api(`${FN('supabase_auth')}?action=get_role&user_id=${encodeURIComponent(session.user_id)}`);if(!['teacher','admin'].includes(String(role.role||'').toLowerCase())){location.href='/Teachers/access-student.html?next='+encodeURIComponent(location.pathname+location.search);return false}try{const p=await api(`${FN('supabase_auth')}?action=get_profile&user_id=${encodeURIComponent(session.user_id)}`);$('#teacherName').textContent=p.name||p.username||'Teacher'}catch{}mod.ensureAuthRefresh();return true}catch{location.href=`/Teachers/login.html?redirect=${encodeURIComponent(location.pathname+location.search)}`;return false}}
 function endpoint(section,params={}){const q=new URLSearchParams({section,...params});return `${FN('progress_summary')}?${q}`}
 async function loadClasses(){try{const j=await api(endpoint('teacher_classes'));state.classes=j.classes||[];$('#classSelect').innerHTML='<option value="">Select class</option>'+state.classes.map(c=>`<option value="${esc(c.name)}">${esc(c.name)} (${c.student_count})</option>`).join('');const puzzleClass=$('#puzzleClass');if(puzzleClass)puzzleClass.innerHTML='<option value="">All classes</option>'+state.classes.map(c=>`<option value="${esc(c.name)}">${esc(c.name)}</option>`).join('');if(state.classes.length){state.className=state.classes[0].name;$('#classSelect').value=state.className;await loadClass()}}catch(e){$('#classSelect').innerHTML='<option>Could not load classes</option>';$('#studentList').innerHTML=`<div class="empty">${esc(e.message)}</div>`;$('#statusText').textContent='Could not load students.'}}
-async function loadClass(){const name=$('#classSelect').value;if(!name)return;state.className=name;state.days=Number($('#daysSelect').value)||30;$('#studentList').innerHTML='<div class="empty">Loading…</div>';$('#statusText').textContent='';try{const j=await api(endpoint('teacher_class_insights',{class:name,days:String(state.days)}));state.students=j.students||[];renderStudents()}catch(e){$('#studentList').innerHTML=`<div class="empty">${esc(e.message)}</div>`;$('#statusText').textContent='Could not load student data.'}}
-function renderStudents(){const q=($('#searchInput').value||'').trim().toLowerCase();const list=state.students.filter(s=>!q||String(s.name||'').toLowerCase().includes(q)||String(s.korean_name||'').toLowerCase().includes(q));$('#panelTitle').textContent=`${state.className} students`;$('#studentCount').textContent=`${list.length} student${list.length===1?'':'s'}`;$('#statusText').textContent=`Last ${state.days} days`;if(!list.length){$('#studentList').innerHTML='<div class="empty">No students found.</div>';return}$('#studentList').innerHTML=list.map(s=>{const h=s.habits||{},l=s.learning||{};const att=s.attention==='learning'?'Learning':s.attention==='habits'?'Study habits':s.attention==='habits_watch'?'Habits watch':'No urgent flag';const recent=l.recent_accuracy==null?'—':`${esc(l.recent_accuracy)}%`;const all=l.all_time_accuracy==null?'—':`${esc(l.all_time_accuracy)}%`;return `<div class="student-row" data-id="${esc(s.user_id)}"><div><div class="student-name">${esc(s.name)}</div><div class="student-ko">${esc(s.korean_name||'')}</div></div><div class="habit-cell"><span class="rating ${slug(h.label)}">${esc(h.label||'—')}</span><small>${esc(h.active_days_7??0)} days / 7 · ${esc(h.current_streak??0)} streak</small></div><div class="learn-cell"><span class="rating ${slug(l.label)}">${esc(l.label||'—')}</span><small>Recent ${recent} · All ${all} · ${esc(l.all_time_attempts??l.attempts??0)} attempts</small></div><div class="metric hide-mobile"><strong>${esc(h.active_days_30??0)}</strong><span>active days</span></div><div class="metric hide-mid hide-mobile"><strong>${esc(fmtDate(s.last_activity))}</strong><span>last activity</span></div><div class="attention ${s.attention||'none'} hide-mid hide-mobile">${esc(att)}</div></div>`}).join('');$$('.student-row').forEach(r=>r.onclick=()=>openStudent(r.dataset.id))}
-function renderSkills(skills){if(!skills?.length)return'<div class="empty">No skill-level evidence yet.</div>';return skills.map(s=>`<div class="skill"><div><div class="skill-name">${esc(friendly(s.skill))}</div><div class="skill-meta">${esc(s.correct)}/${esc(s.attempts)} correct${typeof s.trend==='number'?` · ${s.trend>0?'+':''}${esc(s.trend)} pts trend`:''}</div></div><div class="skill-acc">${s.accuracy==null?'—':esc(s.accuracy)+'%'}</div><span class="rating ${slug(s.label)}">${esc(s.label)}</span></div>`).join('')}
+
+const rosterAssignments={className:'',loading:false,error:'',items:[],request:0};
+const assignmentModeLabels={quiz:'Quiz',spelling_test:'Spelling',speaking:'Speaking'};
+function homeworkRoute(action,params={}){return `${FN('homework_api')}?${new URLSearchParams({action,...params})}`}
+function currentHomework(a){return a.active!==false&&!a.ended_at&&!['ended','cancelled','completed','expired'].includes(String(a.status||'').toLowerCase())}
+function homeworkForStudent(a,id){const meta=a.list_meta||{};const ids=Array.isArray(meta.target_student_ids)?meta.target_student_ids:(Array.isArray(meta.target_students)?meta.target_students.map(s=>s.id||s.student_id):[]);return !ids.length||ids.map(String).includes(String(id))}
+function homeworkStudentProgress(item,id){
+  const a=item.assignment,p=item.progress;
+  if(item.error)return {unknown:true,error:item.error};
+  if(!p)return {unknown:true};
+  if(String(a.source_type||'').toLowerCase()==='vocab_study'){
+    const row=(p.students||[]).find(s=>String(s.student_id||s.user_id)===String(id));
+    if(!row)return {unknown:true};
+    const meta=a.list_meta||{};
+    const modes=Array.isArray(meta.required_modes)&&meta.required_modes.length?meta.required_modes:(p.required_modes||p.assignment?.required_modes||p.assignment?.list_meta?.required_modes||[]);
+    if(!modes.length)return {unknown:true};
+    const sections=modes.map(mode=>{
+      const raw=row.modes?.[mode]||{};
+      const split=meta.workload_mode==='split';
+      const ids=meta.mode_target_ids?.[mode];
+      const total=split&&Array.isArray(ids)?ids.length:Number(raw.total??p.target_count);
+      const done=Math.min(total,Math.max(0,Number(raw.clean)||0));
+      return {label:assignmentModeLabels[mode]||mode,total,done,attempts:Number(raw.attempts)||0};
+    });
+    if(sections.some(s=>!Number.isFinite(s.total)||s.total<0))return {unknown:true};
+    const total=sections.reduce((n,s)=>n+s.total,0),done=sections.reduce((n,s)=>n+s.done,0);
+    if(!total)return {unknown:true};
+    const complete=done===total,started=sections.some(s=>s.done>0||s.attempts>0);
+    return {percent:Math.round(done/total*100),complete,started,sections,done,total,unit:'word sections'};
+  }
+  const row=(p.progress||[]).find(s=>String(s.user_id||s.student_id)===String(id));
+  if(!row)return {unknown:true};
+  const value=Number(row.completion);
+  if(!Number.isFinite(value))return {unknown:true};
+  const percent=Math.max(0,Math.min(100,value));
+  const started=percent>0||(row.modes||[]).some(m=>Number(m.sessions)>0);
+  const detail=row.wrong_words_total!=null?`${row.wrong_words_fixed||0}/${row.wrong_words_total} words corrected`: `${row.modes_attempted||0}/${row.modes_total||p.total_modes||0} sections completed`;
+  return {percent,complete:percent===100,started,detail,sections:[]};
+}
+function studentHomework(id){return rosterAssignments.items.filter(x=>homeworkForStudent(x.assignment,id)).map(item=>({...item,result:homeworkStudentProgress(item,id)}))}
+function homeworkSummary(id){
+  const rows=studentHomework(id),known=rows.filter(x=>!x.result.unknown),complete=known.filter(x=>x.result.complete).length;
+  return {rows,known,complete,unknown:rows.length-known.length,remaining:known.length-complete,percent:known.length?Math.round(known.reduce((n,x)=>n+x.result.percent,0)/known.length):null};
+}
+async function loadRosterAssignments(className){
+  const request=++rosterAssignments.request;
+  Object.assign(rosterAssignments,{className,loading:true,error:'',items:[]});renderStudents();
+  try{
+    const data=await api(homeworkRoute('list_assignments',{class:className}));
+    if(request!==rosterAssignments.request)return;
+    const now=Date.now();
+    const assignments=(data.assignments||[]).filter(a=>String(a.class||'')===className&&currentHomework(a)&&(!a.start_at||Date.parse(a.start_at)<=now));
+    rosterAssignments.items=assignments.map(assignment=>({assignment,progress:null,error:''}));renderStudents();
+    let cursor=0;
+    await Promise.all(Array.from({length:Math.min(4,assignments.length)},async()=>{
+      while(cursor<assignments.length){const index=cursor++,item=rosterAssignments.items[index];
+        if(request!==rosterAssignments.request)return;
+        try{const progress=await api(homeworkRoute('assignment_progress',{assignment_id:item.assignment.id,class:className}));if(request!==rosterAssignments.request)return;item.progress=progress}catch(e){if(request!==rosterAssignments.request)return;item.error=e.message}
+      }
+    }));
+  }catch(e){if(request!==rosterAssignments.request)return;rosterAssignments.error=e.message}
+  if(request!==rosterAssignments.request)return;
+  rosterAssignments.loading=false;renderStudents();const box=$('#rosterDrawerAssignments');if(box)box.innerHTML=renderHomeworkDetails(window.rosterDrawerStudent);
+}
+function renderHomeworkCell(id){
+  if(rosterAssignments.loading)return '<strong>Loading assignments…</strong>';
+  if(rosterAssignments.error)return '<strong>Assignments unavailable</strong><small>Refresh to try again</small>';
+  const s=homeworkSummary(id);
+  if(!s.rows.length)return '<strong>No current assignment</strong>';
+  const next=s.rows.filter(x=>!x.result.complete).sort((a,b)=>(Date.parse(a.assignment.due_at)||Infinity)-(Date.parse(b.assignment.due_at)||Infinity))[0];
+  const title=next?next.assignment.title:'All current work completed';
+  const due=next?.assignment.due_at?` · Due ${fmtDate(next.assignment.due_at)}`:'';
+  return `<strong>${s.complete}/${s.rows.length} assignments complete${s.percent==null?'':` · ${s.percent}% average${s.unknown?' of loaded work':''}`}</strong>${s.percent==null?'':`<div class="roster-progress" role="progressbar" aria-label="Average assignment completion" aria-valuenow="${s.percent}" aria-valuemin="0" aria-valuemax="100"><i style="width:${s.percent}%"></i></div>`}<small>${esc(title+due)}</small>${s.unknown?`<small>${s.unknown} progress record${s.unknown===1?'':'s'} unavailable</small>`:''}`;
+}
+function renderHomeworkDetails(id){
+  if(rosterAssignments.loading)return '<div class="empty">Loading assignments…</div>';
+  if(rosterAssignments.error)return '<div class="empty">Could not load assignments: '+esc(rosterAssignments.error)+'</div>';
+  const rows=studentHomework(id);
+  if(!rows.length)return '<div class="empty">No current assignment for this student.</div>';
+  return rows.map(({assignment:a,result:r})=>{
+    const overdue=a.due_at&&Date.parse(a.due_at)<Date.now()&&!r.complete;
+    const status=r.unknown?'Progress unavailable':r.complete?'Complete':r.started?'In progress':'Not started';
+    return `<div class="roster-assignment-detail"><div class="roster-assignment-head"><strong>${esc(a.title||a.list_title||'Assignment')}</strong><span>${status}${r.unknown?'':` · ${r.percent}%`}</span></div><small>${String(a.source_type||'').toLowerCase()==='vocab_study'?'Word Genius':'Homework'}${a.due_at?` · Due ${esc(fmtDate(a.due_at))}${overdue?' · Past due':''}`:''}</small>${r.unknown?'':`<div class="roster-progress"><i style="width:${r.percent}%"></i></div><div class="roster-sections">${r.sections.length?r.sections.map(s=>`<span><b>${esc(s.label)}</b> ${s.done}/${s.total} words completed · ${Math.max(0,s.total-s.done)} remaining</span>`).join(''):`<span>${esc(r.detail)}</span>`}</div>`}</div>`;
+  }).join('');
+}
+function renderStudents(){
+  const query=($('#searchInput').value||'').trim().toLowerCase(),filter=$('#rosterAssignmentFilter')?.value||'all';
+  const list=state.students.filter(s=>{
+    if(query&&!String(s.name||'').toLowerCase().includes(query)&&!String(s.korean_name||'').toLowerCase().includes(query))return false;
+    if(filter==='all'||rosterAssignments.loading||rosterAssignments.error)return true;
+    const h=homeworkSummary(s.user_id);
+    return filter==='assigned'?h.rows.length>0:filter==='none'?h.rows.length===0:filter==='complete'?h.rows.length>0&&!h.unknown&&h.complete===h.rows.length:filter==='not_started'?h.known.some(x=>!x.result.started&&!x.result.complete):h.known.some(x=>x.result.started&&!x.result.complete);
+  });
+  $('#panelTitle').textContent=`${state.className} students`;$('#studentCount').textContent=`${list.length} students`;
+  $('#statusText').textContent=`Activity: last ${state.days} days · Assignments: current work`;
+  const summary=$('#rosterSummary');
+  if(summary){const assigned=state.students.filter(s=>studentHomework(s.user_id).length>0).length;const done=state.students.filter(s=>{const h=homeworkSummary(s.user_id);return h.rows.length&&!h.unknown&&h.complete===h.rows.length}).length;summary.innerHTML=`<span><b>${state.students.length}</b> students</span><span><b>${rosterAssignments.loading?'…':rosterAssignments.error?'—':assigned}</b> with assignments</span><span><b>${rosterAssignments.loading?'…':rosterAssignments.error?'—':done}</b> completed all assigned work</span><span><b>${rosterAssignments.loading?'…':rosterAssignments.error?'—':rosterAssignments.items.length}</b> current assignments</span>`}
+  if(!list.length){$('#studentList').innerHTML='<div class="empty">No students match these filters.</div>';return}
+  $('#studentList').innerHTML=list.map(s=>{
+    const h=s.habits||{},l=s.learning||{},skills=l.skills||[];
+    const results=skills.filter(x=>Number(x.attempts)>0).slice(0,4).map(x=>`<span><b>${esc(friendly(x.skill))}</b> ${x.accuracy==null?'—':esc(x.accuracy)+'%'} <small>(${esc(x.attempts)} attempts)</small></span>`).join('');
+    return `<div class="student-row roster-row" data-id="${esc(s.user_id)}" role="button" tabindex="0" aria-label="View ${esc(s.name)}"><div><div class="student-name">${esc(s.name)}</div><div class="student-ko">${esc(s.korean_name||'')}</div></div><div class="roster-homework">${renderHomeworkCell(s.user_id)}</div><div class="roster-results">${results||'<span>No recorded question results in this period</span>'}${s.puzzles?.total?`<span>${esc(s.puzzles.total)} puzzles completed</span>`:''}</div><div class="roster-activity"><strong>${esc(fmtDate(s.last_activity))}</strong><small>Last activity</small><small>${esc(h.active_days_7??0)} active days in last 7</small></div></div>`;
+  }).join('');
+  $$('.roster-row').forEach(row=>{row.onclick=()=>openStudent(row.dataset.id);row.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openStudent(row.dataset.id)}}});
+}
+async function loadClass(){
+  const name=$('#classSelect').value;if(!name)return;
+  const request=(state.rosterRequest||0)+1;state.rosterRequest=request;
+  state.className=name;state.days=Number($('#daysSelect').value)||30;state.students=[];
+  ++rosterAssignments.request;Object.assign(rosterAssignments,{className:name,loading:true,error:'',items:[]});
+  $('#studentList').innerHTML='<div class="empty">Loading students…</div>';$('#statusText').textContent='';
+  try{const j=await api(endpoint('teacher_class_insights',{class:name,days:String(state.days)}));if(state.rosterRequest!==request)return;state.students=j.students||[];renderStudents();await loadRosterAssignments(name)}catch(e){if(state.rosterRequest!==request)return;$('#studentList').innerHTML=`<div class="empty">${esc(e.message)}</div>`;$('#statusText').textContent='Could not load student data.'}
+}
+
+function renderSkills(skills){if(!skills?.length)return'<div class="empty">No skill-level evidence yet.</div>';return skills.map(s=>`<div class="skill"><div><div class="skill-name">${esc(friendly(s.skill))}</div><div class="skill-meta">${esc(s.correct)}/${esc(s.attempts)} correct${typeof s.trend==='number'?` · ${s.trend>0?'+':''}${esc(s.trend)} pts trend`:''}</div></div><div class="skill-acc">${s.accuracy==null?'—':esc(s.accuracy)+'%'}</div></div>`).join('')}
 function renderMistakeItem(m){const answer=normalizeAnswer(m.student_answer,m.skill),correct=normalizeAnswer(m.correct_answer,m.skill);return `<div class="mistake"><div class="mistake-prompt">${esc(m.prompt||'Recorded question')}</div><div class="mistake-date">${esc(fmtDate(m.created_at))}</div><div class="mistake-answers">Wrote: <span class="mistake-answer">${esc(answer)}</span> · Correct: <span class="mistake-answer">${esc(correct)}</span></div></div>`}
 function renderMistakes(rows){if(!rows?.length)return'<div class="empty">No recent wrong-answer evidence.</div>';const groups=new Map();rows.forEach(m=>{const k=m.skill||'practice';if(!groups.has(k))groups.set(k,[]);groups.get(k).push(m)});const preferred=['spelling','grammar','listening','vocabulary','sentence_building','conversation','reading','speaking','writing'];const keys=[...groups.keys()].sort((a,b)=>{const ai=preferred.indexOf(a),bi=preferred.indexOf(b);if(ai===-1&&bi===-1)return a.localeCompare(b);if(ai===-1)return 1;if(bi===-1)return-1;return ai-bi});return keys.map((k,i)=>{const items=groups.get(k);return `<details class="mistake-group" ${i===0?'open':''}><summary><span class="mistake-group-title">${esc(friendly(k))}<span class="mistake-group-count">${items.length}</span></span></summary><div class="mistake-group-body">${items.map(renderMistakeItem).join('')}</div></details>`}).join('')}
 function renderProof(rows){if(!rows?.length)return'<div class="empty">No proof of work in this period.</div>';return rows.slice(0,20).map(d=>`<div class="proof-row"><b>${esc(d.date)}</b><span>${esc(d.attempts)} attempts</span><span>${d.accuracy==null?'—':esc(d.accuracy)+'%'}</span><span class="proof-session">${esc(d.sessions)} sessions</span></div>`).join('')}
@@ -342,10 +467,10 @@ async function loadArcadeInsights(force=false){
     $('#arcadeRecent').innerHTML='<div class="empty">Could not load English Arcade activity.</div>';
   }
 }
-function habitReason(h){if(!h)return'No evidence';const parts=[`${h.active_days_7} active day${h.active_days_7===1?'':'s'} in the last 7`,`${h.current_streak}-day streak`,`${h.attempts} attempts`];if(h.days_since_last_study!=null)parts.push(h.days_since_last_study===0?'studied today':`last studied ${h.days_since_last_study} day${h.days_since_last_study===1?'':'s'} ago`);return parts.join(' · ')}
-function learningReason(l){if(!l||l.all_time_accuracy==null)return'Not enough learning evidence';const recent=l.recent_accuracy==null?'—':`${l.recent_accuracy}%`;let t=`Recent ${recent} from ${l.recent_count??0} current questions · All time ${l.all_time_accuracy}% across ${l.all_time_attempts??0} attempts`;if(l.priority_weaknesses?.length)t+=` · ${l.priority_weaknesses.length} priority weakness${l.priority_weaknesses.length===1?'':'es'}`;if(typeof l.trend==='number')t+=` · ${l.trend>0?'+':''}${l.trend} pts vs previous 14 days`;return t}
+function habitReason(h){if(!h)return'No evidence';const parts=[`${h.active_days_7??0} active day${h.active_days_7===1?'':'s'} in the last 7`,`${h.current_streak??0}-day streak`,`${h.attempts??0} attempts`];if(h.days_since_last_study!=null)parts.push(h.days_since_last_study===0?'studied today':`last studied ${h.days_since_last_study} day${h.days_since_last_study===1?'':'s'} ago`);return parts.join(' · ')}
+function learningReason(l){if(!l||l.all_time_accuracy==null)return'No recorded question results';const recent=l.recent_accuracy==null?'—':`${l.recent_accuracy}%`;let t=`Recent ${recent} from ${l.recent_count??0} current questions · All time ${l.all_time_accuracy}% across ${l.all_time_attempts??0} attempts`;if(typeof l.trend==='number')t+=` · ${l.trend>0?'+':''}${l.trend} pts vs previous 14 days`;return t}
 function closeStudentDrawerDirect(){$('#drawerBg').classList.remove('open')}
-async function openStudent(id){const base=state.students.find(s=>String(s.user_id)===String(id));$('#drawerName').textContent=base?.name||'Student';$('#drawerMeta').textContent=`${state.className} · Last ${state.days} days`;$('#drawerBody').innerHTML='<div class="empty">Loading student evidence…</div>';$('#drawerBg').classList.add('open');window.TeacherHistory?.pushDrawer?.('student',{studentId:id});try{const j=await api(endpoint('teacher_student_insights',{student_id:id,days:String(state.days)}));const s=j.student,h=s.habits||{},l=s.learning||{};$('#drawerBody').innerHTML=`<div class="rating-grid"><div class="big-card"><h3>Study habits</h3><div class="big-rating">${esc(h.label)}</div><div class="reason">${esc(habitReason(h))}</div><div class="statline"><span>${esc(h.active_days_30)} active days / ${state.days}</span><span>${esc(h.completed_sessions)} sessions</span><span>${esc(h.spread_score)}% spread score</span></div></div><div class="big-card"><h3>Learning</h3><div class="big-rating">${esc(l.label)}</div><div class="reason">${esc(learningReason(l))}</div><div class="statline"><span>${l.recent_accuracy==null?'—':esc(l.recent_accuracy)+'%'} recent</span><span>${l.all_time_accuracy==null?'—':esc(l.all_time_accuracy)+'%'} all time</span><span>${esc(l.all_time_attempts??0)} attempts</span></div></div></div><div class="detail"><h3>Skills</h3>${renderSkills(l.skills)}</div><div class="detail puzzle-student-detail"><h3>Puzzles</h3>${renderStudentPuzzles(s.puzzles)}</div><div class="detail"><h3>Recent mistakes</h3>${renderMistakes(s.recent_mistakes)}</div><div class="detail"><h3>Proof of work</h3>${renderProof(s.proof)}</div>`}catch(e){$('#drawerBody').innerHTML=`<div class="empty">${esc(e.message)}</div>`}}
+async function openStudent(id){window.rosterDrawerStudent=String(id);const base=state.students.find(s=>String(s.user_id)===String(id));$('#drawerName').textContent=base?.name||'Student';$('#drawerMeta').textContent=`${state.className} · Last ${state.days} days`;$('#drawerBody').innerHTML='<div class="empty">Loading student evidence…</div>';$('#drawerBg').classList.add('open');window.TeacherHistory?.pushDrawer?.('student',{studentId:id});try{const j=await api(endpoint('teacher_student_insights',{student_id:id,days:String(state.days)}));const s=j.student,h=s.habits||{},l=s.learning||{};if(!$('#drawerBg').classList.contains('open')||window.rosterDrawerStudent!==String(id))return;$('#drawerBody').innerHTML=`<div class="detail"><h3>Current assignments</h3><div id="rosterDrawerAssignments">${renderHomeworkDetails(id)}</div></div><div class="rating-grid"><div class="big-card"><h3>Recorded activity</h3><div class="big-rating">${esc(h.active_days_7??0)} active days / 7</div><div class="reason">${esc(habitReason(h))}</div><div class="statline"><span>${esc(h.active_days_30??0)} active days in last 30</span><span>${esc(h.completed_sessions??0)} sessions</span></div></div><div class="big-card"><h3>Recorded results</h3><div class="big-rating">${l.recent_accuracy==null?'—':esc(l.recent_accuracy)+'%'} recent accuracy</div><div class="reason">${esc(learningReason(l))}</div><div class="statline"><span>${l.recent_accuracy==null?'—':esc(l.recent_accuracy)+'%'} recent</span><span>${l.all_time_accuracy==null?'—':esc(l.all_time_accuracy)+'%'} all time</span><span>${esc(l.all_time_attempts??0)} attempts</span></div></div></div><div class="detail"><h3>Skills</h3>${renderSkills(l.skills)}</div><div class="detail puzzle-student-detail"><h3>Puzzles</h3>${renderStudentPuzzles(s.puzzles)}</div><div class="detail"><h3>Recent mistakes</h3>${renderMistakes(s.recent_mistakes)}</div><div class="detail"><h3>Proof of work</h3>${renderProof(s.proof)}</div>`}catch(e){$('#drawerBody').innerHTML=`<div class="empty">${esc(e.message)}</div>`}}
 async function loadClassOverview(force=false){
   const days=Number($('#classDaysSelect').value)||30,key=String(days);
   if(!force&&state.classOverviewLoadedFor===key)return;
@@ -356,7 +481,7 @@ async function loadClassOverview(force=false){
     const rows=j.classes||[];
     $('#classGrid').innerHTML=rows.map(c=>{
       const x=c.summary||{};
-      return `<div class="class-card" data-class="${esc(c.name)}"><div class="class-top"><div class="class-name">${esc(c.name)}</div><span class="class-count">${esc(x.students??c.student_count??0)} students</span></div><div class="class-stats"><div class="class-stat"><b>${x.accuracy==null?'—':esc(x.accuracy)+'%'}</b><span>class accuracy</span></div><div class="class-stat"><b>${esc(x.active_students??0)}</b><span>active students</span></div><div class="class-stat"><b>${esc(x.needs_learning_attention??0)}</b><span>learning attention</span></div><div class="class-stat"><b>${esc(x.needs_habit_attention??0)}</b><span>habit attention</span></div></div><div class="class-link">Open students →</div></div>`;
+      return `<div class="class-card" data-class="${esc(c.name)}"><div class="class-top"><div class="class-name">${esc(c.name)}</div><span class="class-count">${esc(x.students??c.student_count??0)} students</span></div><div class="class-stats"><div class="class-stat"><b>${x.accuracy==null?'—':esc(x.accuracy)+'%'}</b><span>recorded accuracy</span></div><div class="class-stat"><b>${esc(x.active_students??0)}</b><span>active students</span></div><div class="class-stat"><b>${esc(x.students??c.student_count??0)}</b><span>students</span></div><div class="class-stat"><b>${Math.max(0,Number(x.students??c.student_count??0)-Number(x.active_students??0))}</b><span>without recorded activity</span></div></div><div class="class-link">Open students →</div></div>`;
     }).join('')||'<div class="empty">No class data.</div>';
     $$('.class-card').forEach(card=>card.onclick=()=>openClassFromOverview(card.dataset.class,days));
   }catch(error){
@@ -366,7 +491,7 @@ async function loadClassOverview(force=false){
 }
 async function openClassFromOverview(name,days){$('#classSelect').value=name;$('#daysSelect').value=String(days);state.className=name;state.days=days;switchView('students');await loadClass()}
 function switchView(v){$$('.view').forEach(x=>x.classList.toggle('active',x.id===`view-${v}`));$$('[data-view]').forEach(x=>x.classList.toggle('active',x.dataset.view===v));if(v==='classes')loadClassOverview();if(v==='leaderboard')loadTeacherLeaderboard();if(v==='puzzles')loadPuzzleInsights();if(v==='english-arcade')loadArcadeInsights()}
-$('#classSelect').onchange=loadClass;$('#daysSelect').onchange=loadClass;$('#refreshBtn').onclick=loadClass;$('#searchInput').oninput=renderStudents;$('#classDaysSelect').onchange=()=>loadClassOverview(true);$('#classRefreshBtn').onclick=()=>loadClassOverview(true);$('#puzzleClass').onchange=()=>loadPuzzleInsights(true);$('#puzzleDays').onchange=()=>loadPuzzleInsights(true);$('#puzzleRefreshBtn').onclick=()=>loadPuzzleInsights(true);$('#arcadeDays').onchange=()=>loadArcadeInsights(true);$('#arcadeRefreshBtn').onclick=()=>loadArcadeInsights(true);$('#leaderScope').onchange=()=>loadTeacherLeaderboard(true);$('#leaderMetric').onchange=()=>loadTeacherLeaderboard(true);$('#leaderRefreshBtn').onclick=()=>loadTeacherLeaderboard(true);$('#closeDrawer').onclick=()=>window.TeacherHistory?.requestClose?.('student')||closeStudentDrawerDirect();$('#drawerBg').onclick=e=>{if(e.target===$('#drawerBg')){if(window.TeacherHistory?.requestClose)window.TeacherHistory.requestClose('student');else closeStudentDrawerDirect()}};$$('[data-view]').forEach(b=>b.onclick=()=>switchView(b.dataset.view));
+$('#classSelect').onchange=loadClass;$('#daysSelect').onchange=loadClass;$('#refreshBtn').onclick=loadClass;$('#searchInput').oninput=renderStudents;$('#rosterAssignmentFilter').onchange=renderStudents;$('#classDaysSelect').onchange=()=>loadClassOverview(true);$('#classRefreshBtn').onclick=()=>loadClassOverview(true);$('#puzzleClass').onchange=()=>loadPuzzleInsights(true);$('#puzzleDays').onchange=()=>loadPuzzleInsights(true);$('#puzzleRefreshBtn').onclick=()=>loadPuzzleInsights(true);$('#arcadeDays').onchange=()=>loadArcadeInsights(true);$('#arcadeRefreshBtn').onclick=()=>loadArcadeInsights(true);$('#leaderScope').onchange=()=>loadTeacherLeaderboard(true);$('#leaderMetric').onchange=()=>loadTeacherLeaderboard(true);$('#leaderRefreshBtn').onclick=()=>loadTeacherLeaderboard(true);$('#closeDrawer').onclick=()=>window.TeacherHistory?.requestClose?.('student')||closeStudentDrawerDirect();$('#drawerBg').onclick=e=>{if(e.target===$('#drawerBg')){if(window.TeacherHistory?.requestClose)window.TeacherHistory.requestClose('student');else closeStudentDrawerDirect()}};$$('[data-view]').forEach(b=>b.onclick=()=>switchView(b.dataset.view));
 window.TeacherStudentDrawer={open:openStudent,close:closeStudentDrawerDirect};
 (async()=>{if(await auth()){loadClasses()}})();
 </script>
