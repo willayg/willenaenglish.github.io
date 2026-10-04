@@ -888,7 +888,7 @@ function renderWordle(){
     '<div class="wordle-rule-chip"><span class="wordle-mini exact">A</span> right letter + spot</div>'+
     '<div class="wordle-rule-chip"><span class="wordle-mini present">E</span> right letter</div>'+
     '<div class="wordle-rule-chip"><span class="wordle-mini absent">R</span> not in word</div>';
-  setWordleMessage('Type a five-letter word.');
+  setWordleMessage('Type any five letters.');
   refreshWordle();
 }
 function wordleInputLetter(letter){
@@ -896,7 +896,7 @@ function wordleInputLetter(letter){
   const clean=normalizeWord(letter);
   if(clean.length!==1||state.wordleCurrent.length>=WORDLE_LENGTH)return;
   state.wordleCurrent+=clean;
-  setWordleMessage('Type a five-letter word.');
+  setWordleMessage('Type any five letters.');
   renderWordleBoard();
 }
 function wordleDelete(){
@@ -1502,7 +1502,7 @@ function restoreModeSnapshot(mode){
   state.wordleHintLetter=snap.wordleHintLetter||'';
   state.wordleHintScramble=snap.wordleHintScramble||'';
   if(wordleMessage){
-    wordleMessage.textContent=snap.wordleMessage||'Type a five-letter word.';
+    wordleMessage.textContent=snap.wordleMessage||'Type any five letters.';
     wordleMessage.dataset.tone=snap.wordleMessageTone||'';
   }
   if(state.mode==='wordle')refreshWordle();
@@ -1553,7 +1553,7 @@ document.querySelectorAll('.puzzle-tab').forEach(btn=>{
 
   dragHint.textContent=isCrossword
     ?'Tap a clue, then type the English word.'
-    :(isBoggle?'Drag through touching letters. Diagonals are allowed.':(isMixMatch?'Match each English word with its Korean meaning.':(isWordle?'Type a five-letter word, then press Enter.':'Drag in a straight line ↔ ↕ ↗ ↘')));
+    :(isBoggle?'Drag through touching letters. Diagonals are allowed.':(isMixMatch?'Match each English word with its Korean meaning.':(isWordle?'Type any five letters, then press Enter.':'Drag in a straight line ↔ ↕ ↗ ↘')));
 }
 
 function renderCrossword(cw){
