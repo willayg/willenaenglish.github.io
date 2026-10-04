@@ -1,3 +1,10 @@
+// Student session repair bootstrap.
+if (typeof window !== 'undefined' && window.location.hostname === 'students.willenaenglish.com') {
+  import('/students/auth-refresh.js?v=20260726a')
+    .then((mod) => mod.ensureStudentAuthRefresh())
+    .catch((error) => console.debug('[student-session] bootstrap failed', error));
+}
+
 // Reusable Student Header Web Component
 // Usage: <student-header home-href="/index.html" home-label="Home"></student-header>
 const WA_AUDIO_SOUND_KEY = 'wa.audio.sound.enabled';
@@ -558,13 +565,13 @@ class StudentHeader extends HTMLElement {
       <style>
   @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap');
         :host { display:block; }
-  header { position:sticky; top:0; left:0; right:0; background:#fff; border-bottom:1px solid #e6eaef; padding:10px 12px 8px; z-index:10; min-width:0; width:100%; box-sizing:border-box; margin:0; }
+  header { position:sticky; top:0; left:0; right:0; background:var(--student-header-bg,#fff); border-bottom:1px solid var(--student-header-border,#e6eaef); padding:10px 12px 8px; z-index:10; min-width:0; width:100%; box-sizing:border-box; margin:0; }
   .top { display:flex; flex-direction:row; align-items:center; gap:10px; font-family: 'Poppins', system-ui, Segoe UI, Arial, sans-serif; justify-content: center; min-width:0; }
-  .title { font-weight:800; color: var(--pri, #19777e); text-align:center; }
+  .title { font-weight:800; color:var(--student-header-title,var(--pri,#19777e)); text-align:center; }
   .info { display:flex; flex-direction:column; gap:2px; align-items:center; }
-  .points-pill { display:inline-flex; align-items:center; gap:6px; padding:3px 8px; border-radius:999px; background:#f7fcfd; border:1px solid #a9d6e9; color:#19777e; font-weight:700; font-size:12px; line-height:1; width:max-content; }
+  .points-pill { display:inline-flex; align-items:center; gap:6px; padding:3px 8px; border-radius:999px; background:var(--student-header-points-bg,#f7fcfd); border:1px solid var(--student-header-points-border,#a9d6e9); color:var(--student-header-points-text,#19777e); font-weight:700; font-size:12px; line-height:1; width:max-content; }
   .points-pill svg { width:14px; height:14px; display:block; }
-  .stars-pill { display:inline-flex; align-items:center; gap:6px; padding:3px 8px; border-radius:999px; background:#fffaf0; border:1px solid #e8d28a; color:#b8860b; font-weight:700; font-size:12px; line-height:1; width:max-content; }
+  .stars-pill { display:inline-flex; align-items:center; gap:6px; padding:3px 8px; border-radius:999px; background:var(--student-header-stars-bg,#fffaf0); border:1px solid var(--student-header-stars-border,#e8d28a); color:var(--student-header-stars-text,#b8860b); font-weight:700; font-size:12px; line-height:1; width:max-content; }
   .stars-pill svg { width:14px; height:14px; display:block; }
   .stars-pill.bounce { animation: starBounce .5s cubic-bezier(.36,1.2,.5,1); }
   @keyframes starBounce {
@@ -574,11 +581,11 @@ class StudentHeader extends HTMLElement {
     70% { transform: scale(1.1); }
     100% { transform: scale(1); }
   }
-  .page-title { display:flex; align-items:center; gap:8px; font-weight:800; color: var(--pri, #19777e); margin:0 auto; justify-content:center; text-align:center; min-width:0; }
+  .page-title { display:flex; align-items:center; gap:8px; font-weight:800; color:var(--student-header-title,var(--pri,#19777e)); margin:0 auto; justify-content:center; text-align:center; min-width:0; }
   .page-title ::slotted(img), .page-title ::slotted(svg) { height: 4em; max-height: 4em; display:block; margin-left:auto; margin-right:auto; }
   .spacer { flex:1; }
   .btn { border:1px solid var(--acc, #93cbcf); background: var(--acc, #93cbcf); color:#fff; padding:8px 12px; border-radius:10px; cursor:pointer; font-weight:700; }
-  .avatar { width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; background:#fff; border:2px solid var(--pri, #19777e); font-size:22px; }
+  .avatar { width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; background:var(--student-header-avatar-bg,#fff); border:2px solid var(--student-header-avatar-border,var(--pri,#19777e)); font-size:22px; }
   .avatar-btn { cursor:pointer; }
         .mut { color: var(--mut, #666); font-size:12px; text-align:center; }
         button.btn:focus { outline: 2px solid var(--pri, #30b5beff); outline-offset:2px; }
@@ -703,7 +710,7 @@ class StudentHeader extends HTMLElement {
       :host-context(html.dark) .menu-row { border-top-color:#28323c; }
       
       </style>
-      <header>
+      <header part="bar">
         <div class="top">
           <div class="info">
             <div class="title" id="name" part="name">${name || "Profile"}</div>
@@ -727,7 +734,7 @@ class StudentHeader extends HTMLElement {
           <div class="menu-anchor">
             <button class="avatar avatar-btn" id="avatarBtn" part="avatar" aria-haspopup="menu" aria-expanded="false" title="Account">${avatar}</button>
             <div class="dropdown" id="avatarMenu" role="menu" aria-label="Account menu">
-              <a class="dd-item" role="menuitem" href="/students/dashboard.html" data-i18n="Dashboard">
+              <a class="dd-item" role="menuitem" href="/students/dashboard/" data-i18n="Dashboard">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right:4px"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8v-10h-8v10zm0-18v6h8V3h-8z" fill="#19777e"/></svg>
                 Dashboard
               </a>

@@ -1,0 +1,407 @@
+.vocab-theme-dock{
+  width:max-content;max-width:calc(100vw - 28px);margin:12px auto 0;
+  display:flex;align-items:center;gap:8px;padding:7px 10px;
+  border:1.5px solid rgba(255,255,255,.82);border-radius:999px;
+  background:rgba(255,255,255,.72);box-shadow:0 8px 22px rgba(20,70,80,.12);
+  backdrop-filter:blur(10px);position:relative;z-index:35
+}
+.vocab-theme-pip{
+  width:20px;height:20px;border-radius:50%;border:2px solid rgba(255,255,255,.96);
+  padding:0;box-shadow:0 0 0 1px rgba(40,70,75,.16);cursor:pointer;
+  transition:transform .15s ease,box-shadow .15s ease
+}
+.vocab-theme-pip[data-theme="cyan"]{background:#39c9d6}
+.vocab-theme-pip[data-theme="sunbeam"]{background:#ffc24c}
+.vocab-theme-pip[data-theme="pink"]{background:#f775ad}
+.vocab-theme-pip[data-theme="paper"]{background:#e6dccb}
+.vocab-theme-pip[data-theme="dark"]{background:#182126}
+.vocab-theme-pip[data-theme="cyberpunk"]{background:#260b3d}
+.vocab-theme-pip:hover{transform:scale(1.1)}
+.vocab-theme-pip[aria-pressed="true"]{box-shadow:0 0 0 2px var(--vocab-heading,#244f56),0 0 0 4px rgba(255,255,255,.92);transform:scale(1.08)}
+.vocab-theme-pip:focus-visible{outline:3px solid rgba(255,255,255,.95);outline-offset:3px}
+
+html[data-vocab-theme] body{background:linear-gradient(180deg,var(--vocab-page-top) 0,var(--vocab-page) 42%,var(--vocab-page) 100%)}
+html[data-vocab-theme] .vocab-front-menu,
+html[data-vocab-theme] .vocab-home-card,
+html[data-vocab-theme] .vocab-front-wordtest,
+html[data-vocab-theme] .vocab-front-book-card,
+html[data-vocab-theme] .vocab-old-tests-card,
+html[data-vocab-theme] .vocab-teacher-card,
+html[data-vocab-theme] .vocab-skill-card,
+html[data-vocab-theme] .vocab-word-card,
+html[data-vocab-theme] .vocab-finish,
+html[data-vocab-theme] .spelling-mode-card,
+html[data-vocab-theme] .vocab-word-modal-card{background:var(--vocab-card);color:var(--ink)}
+html[data-vocab-theme] .vocab-front-menu,
+html[data-vocab-theme] .vocab-front-book-card,
+html[data-vocab-theme] .vocab-old-tests-card,
+html[data-vocab-theme] .vocab-home-card,
+html[data-vocab-theme] .vocab-skill-card{border-color:var(--vocab-border)}
+html[data-vocab-theme] .vocab-front-card-copy strong,
+html[data-vocab-theme] .vocab-front-book-card strong,
+html[data-vocab-theme] .vocab-old-tests-card strong,
+html[data-vocab-theme] .vocab-front-section-head strong,
+html[data-vocab-theme] .vocab-home-card h2,
+html[data-vocab-theme] .vocab-teacher-card-title strong,
+html[data-vocab-theme] .vocab-word-row-copy strong{color:var(--vocab-heading)}
+html[data-vocab-theme] .vocab-front-divider{background:var(--line)}
+html[data-vocab-theme] .vocab-front-progress-ring{background:conic-gradient(var(--pink) calc(var(--progress,0)*1%),var(--vocab-track) 0)}
+html[data-vocab-theme] .vocab-front-progress-ring::before{background:var(--vocab-card)}
+html[data-vocab-theme] .vocab-wordtest-empty,
+html[data-vocab-theme] .vocab-old-test-row,
+html[data-vocab-theme] .vocab-question-wrap .question-card,
+html[data-vocab-theme] .vocab-answer-note{background:var(--vocab-card);border-color:var(--line);color:var(--ink)}
+html[data-vocab-theme="dark"] .vocab-front-wordtest,
+html[data-vocab-theme="cyberpunk"] .vocab-front-wordtest{background:var(--vocab-card)}
+html[data-vocab-theme="dark"] .vocab-session-top,
+html[data-vocab-theme="dark"] .vocab-session-bottom,
+html[data-vocab-theme="cyberpunk"] .vocab-session-top,
+html[data-vocab-theme="cyberpunk"] .vocab-session-bottom{background:color-mix(in srgb,var(--vocab-card) 94%,transparent)}
+html[data-vocab-theme="dark"] .vocab-question-wrap .choice,
+html[data-vocab-theme="dark"] .vocab-action,
+html[data-vocab-theme="dark"] .vocab-back,
+html[data-vocab-theme="cyberpunk"] .vocab-question-wrap .choice,
+html[data-vocab-theme="cyberpunk"] .vocab-action,
+html[data-vocab-theme="cyberpunk"] .vocab-back{background:var(--vocab-card);color:var(--ink)}
+html[data-vocab-theme="dark"] .vocab-theme-dock,
+html[data-vocab-theme="cyberpunk"] .vocab-theme-dock{background:rgba(20,20,28,.72);border-color:rgba(255,255,255,.22)}
+
+@media(max-width:680px){.vocab-theme-dock{margin-top:10px;gap:7px;padding:6px 9px}.vocab-theme-pip{width:18px;height:18px}}
+
+
+/* v0.109 complete theme coverage for mode surfaces + shared keyboard */
+html[data-vocab-theme] .vocab-session{
+  background:linear-gradient(180deg,var(--vocab-page-top) 0,var(--vocab-page) 38%,var(--vocab-page) 100%)!important;
+}
+html[data-vocab-theme] .vocab-session-top,
+html[data-vocab-theme] .vocab-session-bottom{
+  background:color-mix(in srgb,var(--vocab-card) 94%,transparent)!important;
+  border-color:var(--line)!important;
+}
+html[data-vocab-theme] .vocab-question-wrap .question-card,
+html[data-vocab-theme] .speaking-card,
+html[data-vocab-theme] .spelling-mode-panel,
+html[data-vocab-theme] .spelling-mode-card,
+html[data-vocab-theme] .spelling-test-card,
+html[data-vocab-theme] .vocab-coach-preview,
+html[data-vocab-theme] .vocab-coach-word,
+html[data-vocab-theme] .vocab-word-modal-card,
+html[data-vocab-theme] .vocab-word-modal-list,
+html[data-vocab-theme] .vocab-word-row,
+html[data-vocab-theme] #vocabBookScreen,
+html[data-vocab-theme] #vocabWordTestScreen{
+  background:var(--vocab-card)!important;
+  color:var(--ink)!important;
+  border-color:var(--vocab-border)!important;
+}
+html[data-vocab-theme] .vocab-question-wrap .prompt,
+html[data-vocab-theme] .spelling-mode-head h2,
+html[data-vocab-theme] .vocab-coach-heading h2,
+html[data-vocab-theme] .vocab-coach-word-copy strong,
+html[data-vocab-theme] .vocab-word-row strong,
+html[data-vocab-theme] .vocab-unit-summary h2,
+html[data-vocab-theme] .vocab-progress-copy strong,
+html[data-vocab-theme] .speaking-card .prompt{
+  color:var(--vocab-heading)!important;
+}
+html[data-vocab-theme] .vocab-book-choice,
+html[data-vocab-theme] .study-v2-unit,
+html[data-vocab-theme] .vocab-teacher-words,
+html[data-vocab-theme] .vocab-coach-start,
+html[data-vocab-theme] .vocab-coach-audio,
+html[data-vocab-theme] .vocab-skip-action,
+html[data-vocab-theme] .vocab-question-wrap .choice,
+html[data-vocab-theme] .spelling-test-card .answer,
+html[data-vocab-theme] .vocab-action,
+html[data-vocab-theme] .vocab-back{
+  background:var(--vocab-card)!important;
+  color:var(--ink)!important;
+  border-color:var(--vocab-border)!important;
+}
+html[data-vocab-theme] .vocab-book-choice.is-active,
+html[data-vocab-theme] .study-v2-unit.is-current{
+  background:color-mix(in srgb,var(--pink) 10%,var(--vocab-card))!important;
+  border-color:var(--pink)!important;
+  color:var(--pink-dark)!important;
+}
+html[data-vocab-theme] .spelling-mode-card.is-disabled{
+  background:color-mix(in srgb,var(--vocab-card) 88%,var(--vocab-page))!important;
+}
+html[data-vocab-theme] .vocab-front-progress-ring::before,
+html[data-vocab-theme] .spelling-mode-ring::before{
+  background:var(--vocab-card)!important;
+}
+html[data-vocab-theme] .vocab-front-progress-ring,
+html[data-vocab-theme] .spelling-mode-ring{
+  background:conic-gradient(var(--ring-color,var(--pink)) calc(var(--progress,0)*1%),var(--vocab-track) 0)!important;
+}
+html[data-vocab-theme] .vocab-word-modal-head{
+  background:var(--vocab-card)!important;
+  border-color:var(--line)!important;
+}
+html[data-vocab-theme] .vocab-answer-note{
+  background:color-mix(in srgb,var(--vocab-card) 92%,var(--vocab-page))!important;
+  color:var(--ink)!important;
+}
+html[data-vocab-theme] .vocab-question-wrap .choice.selected{
+  background:color-mix(in srgb,var(--pink) 12%,var(--vocab-card))!important;
+  color:var(--pink-dark)!important;
+}
+html[data-vocab-theme] .spelling-test-card .answer{
+  caret-color:var(--cyan-strong)!important;
+}
+html[data-vocab-theme] .vocab-unit-summary,
+html[data-vocab-theme] .vocab-book-choices,
+html[data-vocab-theme] .vocab-front-achievements{
+  border-color:var(--line)!important;
+}
+html[data-vocab-theme="dark"] .vocab-front-achievement,
+html[data-vocab-theme="cyberpunk"] .vocab-front-achievement{
+  background:color-mix(in srgb,var(--vocab-card) 90%,var(--vocab-page))!important;
+  color:var(--ink)!important;
+}
+
+/* Shared Willena keyboard is injected after this stylesheet, so use explicit
+   high-specificity !important theme overrides. */
+html[data-vocab-theme="dark"] body #willenaSharedKeyboard,
+html[data-vocab-theme="cyberpunk"] body #willenaSharedKeyboard{
+  background:var(--vocab-card)!important;
+  border-color:var(--vocab-border)!important;
+  box-shadow:0 -10px 30px rgba(0,0,0,.38)!important;
+}
+html[data-vocab-theme="dark"] body #willenaSharedKeyboard .wkb-key,
+html[data-vocab-theme="dark"] body #willenaSharedKeyboard .wkb-hide,
+html[data-vocab-theme="dark"] body #willenaSharedKeyboard .wkb-symbol-panel,
+html[data-vocab-theme="dark"] body #willenaSharedKeyboard .wkb-symbol-panel button,
+html[data-vocab-theme="cyberpunk"] body #willenaSharedKeyboard .wkb-key,
+html[data-vocab-theme="cyberpunk"] body #willenaSharedKeyboard .wkb-hide,
+html[data-vocab-theme="cyberpunk"] body #willenaSharedKeyboard .wkb-symbol-panel,
+html[data-vocab-theme="cyberpunk"] body #willenaSharedKeyboard .wkb-symbol-panel button{
+  background:var(--vocab-page-top)!important;
+  color:var(--ink)!important;
+  border-color:var(--vocab-border)!important;
+  box-shadow:0 2px 6px rgba(0,0,0,.24)!important;
+}
+html[data-vocab-theme="dark"] body #willenaSharedKeyboard .wkb-key:active,
+html[data-vocab-theme="dark"] body #willenaSharedKeyboard .wkb-key.is-pressed,
+html[data-vocab-theme="cyberpunk"] body #willenaSharedKeyboard .wkb-key:active,
+html[data-vocab-theme="cyberpunk"] body #willenaSharedKeyboard .wkb-key.is-pressed{
+  background:var(--soft)!important;
+  border-color:var(--cyan-strong)!important;
+}
+html[data-vocab-theme="dark"] body #willenaSharedKeyboard .wkb-key.shift,
+html[data-vocab-theme="cyberpunk"] body #willenaSharedKeyboard .wkb-key.shift{
+  background:var(--vocab-page)!important;
+  color:var(--muted)!important;
+}
+html[data-vocab-theme="dark"] body #willenaSharedKeyboard .wkb-key.shift.on,
+html[data-vocab-theme="cyberpunk"] body #willenaSharedKeyboard .wkb-key.shift.on{
+  background:var(--soft)!important;
+  border-color:var(--cyan-strong)!important;
+  color:var(--cyan-strong)!important;
+}
+html[data-vocab-theme="dark"] body #willenaSharedKeyboard .wkb-row.bottom .enter,
+html[data-vocab-theme="cyberpunk"] body #willenaSharedKeyboard .wkb-row.bottom .enter{
+  background:color-mix(in srgb,var(--pink) 12%,var(--vocab-card))!important;
+  border-color:var(--cyan-strong)!important;
+  color:var(--pink)!important;
+}
+html[data-vocab-theme="dark"] [data-willena-keyboard="app"],
+html[data-vocab-theme="cyberpunk"] [data-willena-keyboard="app"]{
+  caret-color:var(--cyan-strong)!important;
+}
+
+
+/* v0.110 remaining theme coverage */
+html[data-vocab-theme] .vocab-instruction{
+  background:color-mix(in srgb,var(--vocab-card) 92%,var(--vocab-page))!important;
+  color:var(--muted)!important;
+  border-color:var(--line)!important;
+  box-shadow:none!important;
+}
+
+html[data-vocab-theme] .speaking-mic{
+  background:var(--vocab-card)!important;
+  color:var(--cyan-strong)!important;
+  border-color:var(--cyan)!important;
+  box-shadow:0 10px 28px color-mix(in srgb,var(--cyan-strong) 18%,transparent)!important;
+}
+html[data-vocab-theme] .speaking-mic.is-listening{
+  background:color-mix(in srgb,var(--pink) 12%,var(--vocab-card))!important;
+  color:var(--pink-dark)!important;
+  border-color:var(--pink)!important;
+}
+html[data-vocab-theme] .speaking-status{color:var(--muted)!important}
+html[data-vocab-theme] .speaking-transcript{
+  background:color-mix(in srgb,var(--vocab-card) 90%,var(--vocab-page))!important;
+  color:var(--ink)!important;
+  border-color:var(--line)!important;
+}
+
+html[data-vocab-theme] .vocab-skill-ring,
+html[data-vocab-theme] .spelling-mode-ring,
+html[data-vocab-theme] .vocab-front-progress-ring{
+  background:conic-gradient(var(--skill-color,var(--ring-color,var(--pink))) calc(var(--progress,0)*1%),var(--vocab-track) 0)!important;
+}
+html[data-vocab-theme] .vocab-skill-ring::before,
+html[data-vocab-theme] .spelling-mode-ring::before,
+html[data-vocab-theme] .vocab-front-progress-ring::before{
+  background:var(--vocab-card)!important;
+}
+html[data-vocab-theme] .vocab-skill-ring span,
+html[data-vocab-theme] .spelling-mode-ring span,
+html[data-vocab-theme] .vocab-front-progress-ring span{
+  color:var(--vocab-heading)!important;
+}
+
+html[data-vocab-theme] .vocab-book-choices{
+  background:color-mix(in srgb,var(--vocab-card) 90%,var(--vocab-page))!important;
+  border-color:var(--vocab-border)!important;
+}
+html[data-vocab-theme] .vocab-front-achievements,
+html[data-vocab-theme] .vocab-achievements{
+  background:color-mix(in srgb,var(--vocab-card) 90%,var(--vocab-page))!important;
+  border-color:var(--vocab-border)!important;
+}
+html[data-vocab-theme] .vocab-front-achievement,
+html[data-vocab-theme] .vocab-motivation-stat{
+  background:var(--vocab-card)!important;
+  color:var(--ink)!important;
+}
+html[data-vocab-theme] .vocab-front-achievement strong,
+html[data-vocab-theme] .vocab-motivation-stat strong{
+  color:var(--vocab-heading)!important;
+}
+html[data-vocab-theme] .vocab-front-achievement small,
+html[data-vocab-theme] .vocab-motivation-stat small{
+  color:var(--muted)!important;
+}
+html[data-vocab-theme] .vocab-front-achievement-gold,
+html[data-vocab-theme] .vocab-motivation-gold{
+  background:color-mix(in srgb,#e8c86c 10%,var(--vocab-card))!important;
+  border-color:#e8c86c!important;
+}
+html[data-vocab-theme] .study-v2-unit.is-golden{
+  background:color-mix(in srgb,#e8c86c 12%,var(--vocab-card))!important;
+  color:var(--ink)!important;
+  border-color:#e8c86c!important;
+}
+html[data-vocab-theme] .vocab-golden-award{
+  background:color-mix(in srgb,#e8c86c 10%,var(--vocab-card))!important;
+  color:var(--ink)!important;
+  border-color:#e8c86c!important;
+}
+html[data-vocab-theme] .vocab-golden-award strong{color:#d7a91c!important}
+
+html[data-vocab-theme] .vocab-old-review-modes{
+  border-color:var(--line)!important;
+}
+html[data-vocab-theme] .vocab-old-review-modes>span{
+  color:var(--muted)!important;
+}
+html[data-vocab-theme] .vocab-old-review-mode{
+  background:var(--vocab-card)!important;
+  color:var(--vocab-heading)!important;
+  border-color:var(--vocab-border)!important;
+}
+html[data-vocab-theme] .vocab-old-review-mode:active{
+  border-color:var(--pink)!important;
+  color:var(--pink)!important;
+}
+html[data-vocab-theme] .vocab-old-test-row{
+  background:var(--vocab-card)!important;
+  border-color:var(--vocab-border)!important;
+}
+html[data-vocab-theme] .vocab-old-test-row strong{color:var(--vocab-heading)!important}
+html[data-vocab-theme] .vocab-old-test-row small{color:var(--muted)!important}
+
+html[data-vocab-theme] .vocab-loading{
+  background:color-mix(in srgb,var(--vocab-page) 92%,transparent)!important;
+}
+html[data-vocab-theme] .vocab-loading-card{
+  color:var(--muted)!important;
+}
+html[data-vocab-theme] .vocab-loading-sweep{
+  background:linear-gradient(90deg,
+    color-mix(in srgb,var(--cyan-strong) 12%,transparent) 0 25%,
+    var(--cyan-strong) 45% 55%,
+    color-mix(in srgb,var(--cyan-strong) 12%,transparent) 75% 100%)!important;
+  background-size:220% 100%!important;
+}
+html[data-vocab-theme] .vocab-wordtest-loader-ring{
+  border-color:color-mix(in srgb,var(--cyan-strong) 18%,transparent)!important;
+  border-top-color:var(--cyan-strong)!important;
+}
+
+html[data-vocab-theme] .vocab-front-divider,
+html[data-vocab-theme] .vocab-old-review-modes,
+html[data-vocab-theme] .vocab-word-modal-head{
+  border-color:var(--line)!important;
+}
+html[data-vocab-theme] .vocab-progress-track{
+  background:var(--vocab-track)!important;
+}
+html[data-vocab-theme] .vocab-teacher-modes::before{
+  background:color-mix(in srgb,var(--pink) 28%,var(--vocab-track))!important;
+}
+html[data-vocab-theme] .vocab-teacher-mode.vocab-skill-card{
+  background:var(--vocab-card)!important;
+  border-color:var(--vocab-border)!important;
+}
+
+html[data-vocab-theme] .vocab-skill-copy strong,
+html[data-vocab-theme] .vocab-teacher-card-title strong{
+  color:var(--vocab-heading)!important;
+}
+html[data-vocab-theme] .vocab-skill-copy small,
+html[data-vocab-theme] .vocab-teacher-card-title small,
+html[data-vocab-theme] .vocab-progress-copy small{
+  color:var(--muted)!important;
+}
+html[data-vocab-theme] .vocab-skill-copy b{
+  color:var(--cyan-strong)!important;
+}
+html[data-vocab-theme] .vocab-skill-pronunciation .vocab-skill-copy b{
+  color:#a996ff!important;
+}
+
+html[data-vocab-theme="dark"] .vocab-skill-step,
+html[data-vocab-theme="cyberpunk"] .vocab-skill-step{
+  color:var(--pink)!important;
+}
+html[data-vocab-theme="dark"] .vocab-front-achievements,
+html[data-vocab-theme="cyberpunk"] .vocab-front-achievements{
+  background:var(--vocab-card)!important;
+}
+html[data-vocab-theme="dark"] .vocab-front-achievement,
+html[data-vocab-theme="cyberpunk"] .vocab-front-achievement,
+html[data-vocab-theme="dark"] .vocab-motivation-stat,
+html[data-vocab-theme="cyberpunk"] .vocab-motivation-stat{
+  background:color-mix(in srgb,var(--vocab-card) 86%,var(--vocab-page))!important;
+}
+
+
+/* v0.111 book picker shell */
+html[data-vocab-theme] .vocab-book-picker{
+  background:color-mix(in srgb,var(--vocab-card) 88%,var(--vocab-page))!important;
+  border-color:var(--vocab-border)!important;
+}
+html[data-vocab-theme] .vocab-picker-label{
+  color:var(--muted)!important;
+}
+
+
+/* v0.112 shared student header follows vocab theme */
+html[data-vocab-theme] student-header{
+  --student-header-bg:var(--vocab-card);
+  --student-header-border:var(--vocab-border);
+  --student-header-title:var(--vocab-heading);
+  --student-header-points-bg:color-mix(in srgb,var(--cyan-strong) 8%,var(--vocab-card));
+  --student-header-points-border:var(--cyan);
+  --student-header-points-text:var(--cyan-strong);
+  --student-header-stars-bg:color-mix(in srgb,#e8c86c 10%,var(--vocab-card));
+  --student-header-stars-border:#e8c86c;
+  --student-header-stars-text:#d7a91c;
+  --student-header-avatar-bg:var(--vocab-card);
+  --student-header-avatar-border:var(--cyan-strong);
+}

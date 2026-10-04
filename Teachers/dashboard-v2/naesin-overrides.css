@@ -1,0 +1,176 @@
+/* Naesin visual overrides. JavaScript owns behavior only. */
+
+#view-naesin .na-groups{grid-template-columns:1fr!important;gap:20px!important}
+#view-naesin .na-exam{border:2px solid #58c3d2!important;border-radius:26px!important;box-shadow:none!important;background:#fff!important}
+#view-naesin .na-exam-head{padding:24px 28px 8px!important;align-items:flex-start!important}
+#view-naesin .na-exam-title{font-size:1.18rem!important;font-weight:700!important;letter-spacing:-.02em!important}
+#view-naesin .na-exam-book{font-size:.76rem!important;margin-top:5px!important;color:#7d8390!important}
+#view-naesin .na-exam-head>.na-dday{display:none!important}
+#view-naesin .na-exam-meta{display:none!important}
+#view-naesin .na-actions{padding:14px 28px 22px!important;gap:10px!important;align-items:center!important}
+#view-naesin .na-actions .na-dday{display:grid!important;min-width:72px!important;width:auto!important;height:40px!important;padding:0 14px!important;font-size:.78rem!important;background:#fff!important}
+#view-naesin .na-actions .na-btn{padding:9px 14px!important;font-size:.74rem!important;border-radius:11px!important}
+#view-naesin .na-actions .na-btn.dark{background:#37434d!important;border-color:#37434d!important;color:#fff!important}
+#view-naesin [data-open]{display:none!important}
+#view-naesin .na-signed-summary{display:flex;gap:26px;align-items:center;padding:12px 28px;border-top:1.5px solid #e4e8eb;border-bottom:1.5px solid #e4e8eb;background:#fbfcfd;font-size:.72rem;color:#4f5260}
+#view-naesin .na-signed-summary b{color:#343343}
+#view-naesin .na-signed-summary .attention{color:#a66a2d}
+#view-naesin .na-members{display:block!important;border-top:0!important}
+#view-naesin .na-signed-students-label{padding:13px 28px 8px;font-size:.62rem;font-weight:700;letter-spacing:.04em;color:#7d8390;text-transform:uppercase}
+#view-naesin .na-member{grid-template-columns:1fr auto 36px!important;padding:15px 28px!important;border-top:1px solid #e8ecef!important;min-height:72px!important}
+#view-naesin .na-member:first-child{border-top:0!important}
+#view-naesin .na-member-name{font-size:.94rem!important}
+#view-naesin .na-member-sub{font-size:.68rem!important;margin-top:3px!important}
+#view-naesin .na-member-status{font-size:.62rem!important;padding:6px 9px!important;border-radius:10px!important}
+#view-naesin .na-arrow{width:34px!important;height:34px!important;border-radius:10px!important}
+
+#naFreshDiagBg{--na-cyan:#58c3d2;--na-pink:#ec719b;--na-orange:#efa85f;--na-ink:#343343;--na-muted:#7d8390;--na-line:#dfe4e8}
+#naFreshDiagBg .na-modal.diag{width:min(1080px,97vw)!important;background:#f6f7f9!important;border:2.5px solid #58c3d2!important;border-radius:25px!important}
+#naFreshDiagBg .na-modal-head{padding:20px 22px!important}
+#naFreshDiagBg .na-modal-head h2{font-size:1.45rem!important}
+#naFreshDiagBg .na-modal-head p{font-size:.8rem!important}
+#naFreshDiagBg .na-diag-dday{min-width:106px!important;height:52px!important;font-size:1rem!important;background:#effafb!important}
+#naFreshDiagBg .na-x{width:46px!important;height:46px!important;border-radius:12px!important;font-size:1.25rem!important}
+#naFreshDiagBg .na-modal-body{padding:22px!important}
+#naFreshDiagBg .na-kpis.na-signed-three{grid-template-columns:1.15fr .85fr 1.15fr!important;gap:12px!important}
+#naFreshDiagBg .na-kpis.na-signed-three .na-kpi{min-height:156px!important;padding:18px!important;border-radius:18px!important;background:#fff!important;box-shadow:none!important}
+#naFreshDiagBg .na-kpis.na-signed-three .na-kpi.accuracy{border:2px solid #e7a5bb!important}
+#naFreshDiagBg .na-kpis.na-signed-three .na-kpi.wrong{border:2px solid #ecc58f!important}
+#naFreshDiagBg .na-kpis.na-signed-three .na-kpi.activity{border:2px solid #58c3d2!important}
+#naFreshDiagBg .na-kpi-label{font-size:.72rem!important;color:#7d8390!important}
+#naFreshDiagBg .na-kpi-open{font-size:.62rem!important;color:#278793!important}
+#naFreshDiagBg .na-dual-accuracy{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:7px}
+#naFreshDiagBg .na-dual-accuracy .metric strong{display:block;font-size:2rem;line-height:1.05;color:#343343}
+#naFreshDiagBg .na-dual-accuracy .metric span{display:block;margin-top:4px;font-size:.62rem;color:#7d8390}
+#naFreshDiagBg .na-activity-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+#naFreshDiagBg .na-activity-stat{border:1.5px solid #dfe4e8;border-radius:11px;padding:9px;background:#fbfcfd}
+#naFreshDiagBg .na-activity-stat strong{display:block;font-size:1.18rem;line-height:1.05;color:#343343}
+#naFreshDiagBg .na-activity-stat span{display:block;margin-top:3px;font-size:.56rem;color:#7d8390}
+#naFreshDiagBg .na-track{display:block!important;background:#e9edf0!important;height:10px!important;border-radius:999px!important;overflow:hidden!important}
+#naFreshDiagBg .na-track span{display:block!important;height:100%!important;background:#58c3d2!important;border-radius:999px!important;min-width:2px}
+#naFreshDiagBg .na-track span.mid{background:#efa85f!important}
+#naFreshDiagBg .na-track span.bad{background:#ec719b!important}
+#naFreshDiagBg .na-subhead{padding-bottom:12px!important;border-bottom:2px solid #d4e7ea!important}
+#naFreshDiagBg .na-subhead h3{font-size:1.18rem!important}
+#naFreshDiagBg .na-back{font-size:.82rem!important;padding:9px 12px!important}
+#naFreshDiagBg .na-summary{gap:12px!important}
+#naFreshDiagBg .na-stat{border:2px solid #d5e2e6!important;box-shadow:0 2px 7px rgba(40,80,90,.035)!important}
+#naFreshDiagBg .na-stat b{font-size:1.28rem!important}
+#naFreshDiagBg .na-stat span{font-size:.72rem!important;line-height:1.35!important}
+#naFreshDiagBg .na-panel{border:2px solid #cfe1e5!important;box-shadow:0 2px 8px rgba(40,80,90,.035)!important}
+#naFreshDiagBg .na-panel.cyan{border-color:#58c3d2!important}
+#naFreshDiagBg .na-panel h3{font-size:1rem!important;padding-bottom:9px!important;border-bottom:1.5px solid #e1e9ec!important}
+#naFreshDiagBg .na-analysis-grid{gap:14px!important}
+#naFreshDiagBg .na-bar-row{font-size:.82rem!important;grid-template-columns:145px 1fr 58px!important;padding:12px 0!important;gap:10px!important}
+#naFreshDiagBg .na-bar-row b,#naFreshDiagBg .na-bar-row strong{font-size:.82rem!important;line-height:1.3!important}
+#naFreshDiagBg .na-insight{font-size:.78rem!important;line-height:1.5!important;padding:13px!important;border:2px solid #ecc58f!important}
+
+#naExactWrongList{margin-top:12px;border:2px solid #cfe1e5!important}
+#naExactWrongList .na-panel-title{font-size:1.08rem!important;font-weight:700;margin-bottom:4px;padding-bottom:9px!important;border-bottom:1.5px solid #e1e9ec!important}
+#naExactWrongList .na-panel-note{font-size:.76rem!important;color:#7d8390;line-height:1.45!important;margin:8px 0 10px!important}
+#naExactWrongList .na-wrong-card{margin-top:10px;padding:16px!important;border-width:2px!important;border-color:#d5e2e6!important;border-radius:16px!important}
+#naExactWrongList .na-wrong-card.repeat{border-color:#edabc1!important}
+#naExactWrongList .na-tag{font-size:.68rem!important;padding:5px 8px!important}
+#naExactWrongList .na-question{font-size:.92rem!important;line-height:1.55!important;margin-top:11px!important}
+#naExactWrongList .na-wrong-context{margin-top:8px;padding:11px 12px!important;background:#f7f9fa;border:1.5px solid #dfe8eb!important;border-radius:9px;font-size:.82rem!important;line-height:1.6!important;white-space:pre-wrap}
+#naExactWrongList .na-choice-list{margin-top:8px;padding:10px 12px!important;background:#fbfcfd;border:1.5px solid #e1e9ec!important;border-radius:9px;font-size:.76rem!important;line-height:1.7!important}
+#naExactWrongList .na-answer{font-size:.82rem!important;line-height:1.55!important;padding:11px!important;border-width:1.5px!important}
+#naExactWrongList .na-answer small{font-size:.64rem!important;margin-bottom:5px!important}
+#naExactWrongList .na-wrong-time{font-size:.68rem!important;color:#7d8390;margin-top:9px!important}
+
+#naFreshEditBg .na-modal{width:min(900px,96vw)!important;border:2px solid #58c3d2!important}
+#naFreshEditBg .na-modal-head{align-items:center!important;border-bottom:2px solid #58c3d2!important;padding:20px 24px!important}
+#naFreshEditBg .na-modal-head h2{font-size:1.42rem!important}
+#naFreshEditBg .na-modal-head p{font-size:.82rem!important;line-height:1.5!important}
+#naFreshEditBg .na-modal-body{padding:22px 24px!important;scroll-behavior:smooth}
+#naFreshEditBg .na-field{padding:14px 0!important;margin:0!important;border-bottom:1.5px solid #e4e9ec!important}
+#naFreshEditBg .na-form-grid{gap:18px!important}
+#naFreshEditBg .na-field label{font-size:.82rem!important;margin-bottom:10px!important}
+#naFreshEditBg .na-input{font-size:1rem!important;min-height:48px!important;padding:12px 14px!important;border:1.5px solid #d8e0e4!important}
+#naFreshEditBg .na-choice{font-size:1rem!important;min-height:52px!important;border:1.5px solid #d8e0e4!important}
+#naFreshEditBg .na-choice.on{border:2px solid #58c3d2!important}
+#naFreshEditBg .na-student-pick{border:1.5px solid #d8e0e4!important;margin-top:8px!important}
+#naFreshEditBg .na-pick-row{padding:12px 10px!important;border-bottom:1px solid #edf0f2!important}
+#naFreshEditBg .na-pick-row:last-child{border-bottom:0!important}
+#naFreshEditBg .na-pick-row b{font-size:.95rem!important}
+#naFreshEditBg .na-pick-row small{font-size:.75rem!important}
+#naFreshEditBg .na-modal-foot{position:sticky;bottom:0;z-index:3;align-items:center;border-top:2px solid #58c3d2!important;padding:15px 22px!important}
+#naFreshEditBg .na-modal-foot .na-btn{font-size:.9rem!important;min-height:44px!important}
+#naFreshEditBg .na-wizard-progress{display:flex;gap:6px;margin-top:8px}
+#naFreshEditBg .na-wizard-dot{height:5px;width:34px;border-radius:99px;background:#e2e6e9}
+#naFreshEditBg .na-wizard-dot.on{background:#58c3d2}
+#naFreshEditBg .na-wizard-step{display:none}
+#naFreshEditBg .na-wizard-step.active{display:block}
+#naFreshEditBg .na-step-heading{margin:0 0 16px}
+#naFreshEditBg .na-step-heading h3{margin:0;font-size:1rem;color:#343343}
+#naFreshEditBg .na-step-heading p{margin:4px 0 0;font-size:.7rem;color:#7d8390}
+#naFreshEditBg .na-field:has(#naBook){border:1.5px solid #dfe4e8;border-radius:14px;padding:13px;background:#fff;margin-bottom:14px}
+#naFreshEditBg .na-field:has(#naBook)>label,#naFreshEditBg .na-field:has(#naScope)>label{font-size:.78rem!important;color:#343343!important;margin-bottom:8px!important}
+#naFreshEditBg #naBook{border:2px solid #cfd7dc!important;min-height:46px;font-weight:600}
+#naFreshEditBg .na-lesson-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+#naFreshEditBg .na-lesson-tile{min-height:88px;border:2px solid #d9e0e4;border-radius:16px;background:#fff;padding:15px;text-align:left;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:12px;color:#343343;transition:.14s ease}
+#naFreshEditBg .na-lesson-tile:hover{border-color:#a9dce3}
+#naFreshEditBg .na-lesson-tile.on{border-color:#58c3d2;background:#effafb;box-shadow:0 0 0 2px rgba(88,195,210,.13)}
+#naFreshEditBg .na-lesson-name{font-size:.95rem;font-weight:800}
+#naFreshEditBg .na-lesson-meta{font-size:.62rem;color:#8a929b;margin-top:4px}
+#naFreshEditBg .na-lesson-check{width:28px;height:28px;border-radius:999px;border:2px solid #d9e0e4;display:grid;place-items:center;font-size:.75rem;font-weight:900;color:transparent;background:#fff;flex:0 0 auto}
+#naFreshEditBg .na-lesson-tile.on .na-lesson-check{border-color:#58c3d2;background:#58c3d2;color:#fff}
+#naFreshEditBg .na-selected-count{margin-top:12px;padding:10px 12px;border-radius:11px;background:#f5f7f8;color:#69717b;font-size:.68rem;font-weight:700}
+#naFreshEditBg .na-field:has(#naScope){border-top:0;padding-top:0;margin-top:0}
+#naFreshEditBg #naScope{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px}
+#naFreshEditBg .na-scope{display:none;margin:0!important;border:2px solid #d9e0e4!important;border-radius:15px!important;background:#fff!important;overflow:hidden;transition:border-color .14s ease,background .14s ease,box-shadow .14s ease}
+#naFreshEditBg .na-scope.wizard-selected{display:block}
+#naFreshEditBg .na-scope:hover{border-color:#a9dce3!important}
+#naFreshEditBg .na-scope.has-selected{border-color:#58c3d2!important;background:#f0fbfc!important;box-shadow:0 0 0 2px rgba(88,195,210,.15)}
+#naFreshEditBg .na-scope-head{padding:13px 14px!important;min-height:49px;background:#f8fafb!important;font-size:.84rem!important;cursor:pointer;border-bottom:1px solid #edf0f2}
+#naFreshEditBg .na-scope.has-selected .na-scope-head{background:#dff6f8!important;color:#176f78!important;border-bottom-color:#c7edf1}
+#naFreshEditBg .na-scope-head span{font-weight:800;font-size:.88rem}
+#naFreshEditBg .na-scope-head small{font-size:.62rem;color:#8a929b;font-weight:700}
+#naFreshEditBg .na-scope.has-selected .na-scope-head small{color:#287b85}
+#naFreshEditBg .na-scope-body{padding:11px 12px 12px!important;gap:6px!important;background:transparent!important}
+#naFreshEditBg .na-scope-chip{border:1.5px solid #dce2e6!important;background:#fff!important;color:#68717c!important;border-radius:9px!important;padding:7px 9px!important;font-size:.64rem!important;font-weight:700!important;transition:.12s ease}
+#naFreshEditBg .na-scope-chip.on{border-color:#58c3d2!important;background:#58c3d2!important;color:#fff!important;box-shadow:0 2px 6px rgba(52,164,178,.18)}
+#naFreshEditBg .na-scope-chip.on:before{content:'✓ ';font-weight:900}
+#naFreshEditBg .na-foot-spacer{flex:1}
+#naFreshEditBg #naWizardNext{min-width:110px}
+#naFreshEditBg #naWizardBack:not([hidden]),#naFreshEditBg #naEditSave:not([hidden]),#naFreshEditBg #naWizardNext:not([hidden]){display:inline-flex}
+#naFreshEditBg [hidden]{display:none!important}
+
+@media(max-width:700px){
+#view-naesin .na-exam-head{padding:20px 20px 8px!important}
+#view-naesin .na-actions{padding:12px 20px 18px!important}
+#view-naesin .na-signed-summary{padding:11px 20px!important;gap:16px!important;flex-wrap:wrap}
+#view-naesin .na-signed-students-label,#view-naesin .na-member{padding-left:20px!important;padding-right:20px!important}
+#naFreshDiagBg .na-kpis.na-signed-three{grid-template-columns:1fr!important}
+#naFreshEditBg{padding:8px!important;align-items:flex-start!important}
+#naFreshEditBg .na-modal{width:100%!important;max-height:96vh!important;border-radius:22px!important}
+#naFreshEditBg .na-modal-head{padding:18px 20px!important}
+#naFreshEditBg .na-modal-body{padding:18px 20px!important}
+#naFreshEditBg .na-form-grid{grid-template-columns:1fr!important;gap:0!important}
+#naFreshEditBg .na-field{padding:13px 0!important}
+#naFreshEditBg .na-modal-head h2{font-size:1.5rem!important}
+#naFreshEditBg .na-modal-head p{font-size:.85rem!important}
+#naFreshEditBg .na-field label{font-size:.88rem!important}
+#naFreshEditBg .na-input,#naFreshEditBg .na-choice{font-size:1.05rem!important}
+#naFreshEditBg .na-pick-row b{font-size:1rem!important}
+#naFreshEditBg .na-pick-row small{font-size:.78rem!important}
+#naFreshDiagBg .na-modal-body{padding:18px!important}
+#naFreshDiagBg .na-summary{gap:10px!important}
+#naFreshDiagBg .na-stat{padding:14px!important;border-width:2px!important}
+#naFreshDiagBg .na-stat b{font-size:1.38rem!important}
+#naFreshDiagBg .na-stat span{font-size:.76rem!important}
+#naFreshDiagBg .na-panel{padding:16px!important;border-width:2px!important}
+#naFreshDiagBg .na-panel h3{font-size:1.08rem!important}
+#naFreshDiagBg .na-bar-row{grid-template-columns:150px 1fr 52px!important;font-size:.86rem!important;padding:13px 0!important}
+#naFreshDiagBg .na-bar-row b,#naFreshDiagBg .na-bar-row strong{font-size:.86rem!important}
+#naExactWrongList .na-panel-title{font-size:1.15rem!important}
+#naExactWrongList .na-panel-note{font-size:.82rem!important}
+#naExactWrongList .na-question{font-size:1rem!important}
+#naExactWrongList .na-wrong-context{font-size:.9rem!important}
+#naExactWrongList .na-answer{font-size:.9rem!important}
+#naExactWrongList .na-answer small{font-size:.68rem!important}
+#naExactWrongList .na-wrong-time{font-size:.72rem!important}
+#naFreshEditBg .na-lesson-grid,#naFreshEditBg #naScope{grid-template-columns:1fr;gap:9px}
+#naFreshEditBg .na-lesson-tile{min-height:74px;padding:13px}
+#naFreshEditBg .na-scope-head{min-height:46px;padding:12px 13px!important}
+}

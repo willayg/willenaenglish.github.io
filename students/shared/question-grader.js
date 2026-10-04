@@ -1,5 +1,8 @@
 import {resolveQuestionGradingPolicy} from './question-grading-policy.js?v=2.0.1';
-import {gradeWithAiWilli,aiWilliMessage} from './ai-willi.js?v=1.0.2';
+import {gradeWithAiWilli,aiWilliMessage,classifyVocabSemanticNearMatch} from './ai-willi.js?v=1.0.3';
+
+export const GRADER_VERSION='2.4.1';
+const stamp=result=>({...result,graderVersion:GRADER_VERSION});
 
 const FORMS={choice:'choice',multi:'multi',write:'write',multipart:'multipart',correction:'correction',identifiedCorrection:'identified_correction',order:'order',chunks:'chunks',blanks:'blanks',learn:'learn',unsupported:'unsupported'};
 const CIRCLED_NUM=['①','②','③','④','⑤','⑥','⑦','⑧','⑨','⑩','⑪','⑫','⑬','⑭','⑮','⑯','⑰','⑱','⑲','⑳'];
@@ -27,7 +30,205 @@ function expandContractions(v){
   return s.replace(/\s+/g,' ').trim();
 }
 function normExact(v){return expandContractions(v)}
+function isTypedVocabWrite(question){
+  if(String(question?.form||'').toLowerCase()!==FORMS.write)return false;
+  const practice=String(question?.tracking?.practiceType||question?.metadata?.practice_type||'').toLowerCase();
+  const type=String(question?.tracking?.questionType||question?.questionType||question?.metadata?.question_type||'').toLowerCase();
+  return practice==='vocabulary'||practice==='vocab_test'||type.startsWith('vocab');
+}
+function spaceBoundaries(value){
+  const s=normExact(value),out=new Set();let pos=0;
+  for(const ch of s){if(ch===' ')out.add(pos);else pos++}
+  return{flat:s.replace(/ /g,''),boundaries:out,count:out.size};
+}
+function missingTargetSpacesEquivalent(question,response){
+  if(!isTypedVocabWrite(question))return false;
+  const mine=spaceBoundaries(response);
+  if(!mine.flat)return false;
+  for(const raw of question.answer||[]){
+    const target=spaceBoundaries(raw);
+    if(target.flat!==mine.flat||mine.count>=target.count)continue;
+    let valid=true;
+    for(const boundary of mine.boundaries){if(!target.boundaries.has(boundary)){valid=false;break}}
+    if(valid)return true;
+  }
+  return false;
+}
+
+function slashVariants(value){
+  const base=normExact(value);
+  if(!base.includes('/'))return[base];
+  const tokens=base.split(' ');let variants=[''];
+  for(const token of tokens){
+    const options=token.includes('/')?token.split('/').map(x=>x.trim()).filter(Boolean):[token];
+    if(!options.length)return[base];
+    const next=[];
+    for(const prefix of variants)for(const option of options){
+      next.push((prefix+' '+option).trim());
+      if(next.length>=16)break;
+    }
+    variants=next.slice(0,16);
+  }
+  return variants;
+}
+function slashAlternativeEquivalent(question,response){
+  if(!isTypedVocabWrite(question))return false;
+  const mine=normExact(response);
+  return (question.answer||[]).some(raw=>slashVariants(raw).some(v=>v===mine));
+}
+function possessivePlaceholderEquivalent(question,response){
+  if(!isTypedVocabWrite(question))return false;
+  const mine=normExact(response);
+  const possessives=["my","your","his","her","our","their","one's"];
+  for(const raw of question.answer||[]){
+    const target=normExact(raw);
+    if(!/\bone's\b/.test(target))continue;
+    for(const p of possessives)if(target.replace(/\bone's\b/g,p)===mine)return true;
+  }
+  return false;
+}
+function vocabMarkerNorm(value){
+  return normExact(value).replace(/\s*~\s*/g,' ').replace(/\s+/g,' ').trim();
+}
+function harmlessVocabSymbolEquivalent(question,response){
+  if(!isTypedVocabWrite(question))return false;
+  const mine=vocabMarkerNorm(response);
+  return (question.answer||[]).some(raw=>{
+    const target=vocabMarkerNorm(raw);
+    return target!==normExact(raw)&&target===mine;
+  });
+}
+function vocabPartOfSpeech(question){
+  const meta=String(question?.metadata?.part_of_speech||question?.metadata?.entry_type||'').toLowerCase();
+  const targets=(question?.tracking?.targets||[]).map(x=>String(x||'').toLowerCase()).join(' ');
+  return(meta+' '+targets).trim();
+}
+function isNounLikeVocab(question){
+  if(!isTypedVocabWrite(question))return false;
+  return /(^|[^a-z])noun([^a-z]|$)/.test(vocabPartOfSpeech(question));
+}
+function stripLeadingArticle(value){
+  return normExact(value).replace(/^(?:a|an|the)\s+/,'').trim();
+}
+function articleEquivalent(question,response){
+  if(!isNounLikeVocab(question))return false;
+  const mine=normExact(response),mineBare=stripLeadingArticle(mine);
+  for(const raw of question.answer||[]){
+    const target=normExact(raw),targetBare=stripLeadingArticle(target);
+    if(target===targetBare&&mine===mineBare)continue;
+    if(targetBare&&targetBare===mineBare&&target!==mine)return true;
+  }
+  return false;
+}
+function regularPlural(word){
+  const w=String(word||'').toLowerCase();
+  if(!/^[a-z]+$/.test(w)||w.length<2)return null;
+  if(/[^aeiou]y$/.test(w))return w.slice(0,-1)+'ies';
+  if(/(?:s|x|z|ch|sh)$/.test(w))return w+'es';
+  return w+'s';
+}
+function regularPluralEquivalent(question,response){
+  if(!isNounLikeVocab(question))return false;
+  const mine=normExact(response);
+  if(!/^[a-z]+$/.test(mine))return false;
+  for(const raw of question.answer||[]){
+    const target=normExact(raw);
+    if(!/^[a-z]+$/.test(target))continue;
+    if(regularPlural(target)===mine||regularPlural(mine)===target)return true;
+  }
+  return false;
+}
 function searchable(v){return normBasic(v).replace(/[^a-z0-9가-힣'\-]+/gi,' ').replace(/\s+/g,' ').trim()}
+function typoWord(v){return normExact(v).replace(/[^a-z]/g,'')}
+function isSubsequence(shorter,longer){
+  let i=0;for(const ch of longer){if(ch===shorter[i])i++;if(i===shorter.length)return true}return i===shorter.length;
+}
+function omittedSuffix(shorter,longer){
+  if(!longer.startsWith(shorter))return'';
+  return longer.slice(shorter.length);
+}
+function adjacentTransposition(a,b){
+  if(a.length!==b.length)return false;
+  const diff=[];for(let i=0;i<a.length;i++)if(a[i]!==b[i])diff.push(i);
+  return diff.length===2&&diff[1]===diff[0]+1&&a[diff[0]]===b[diff[1]]&&a[diff[1]]===b[diff[0]];
+}
+function introducedDouble(response,target){
+  if(response.length!==target.length)return false;
+  const diff=[];for(let i=0;i<response.length;i++)if(response[i]!==target[i])diff.push(i);
+  if(diff.length!==1)return false;
+  const i=diff[0];
+  const doubled=(i>0&&response[i]===response[i-1]&&target[i]!==target[i-1])||(i<response.length-1&&response[i]===response[i+1]&&target[i]!==target[i+1]);
+  return doubled&&!/[aeiou]/.test(response[i]);
+}
+function insertedSpaceNearMiss(question,response){
+  if(!isTypedVocabWrite(question))return false;
+  const mine=normExact(response);
+  if((mine.match(/ /g)||[]).length!==1)return false;
+  const parts=mine.split(' ');
+  if(parts.some(x=>x.length<2))return false;
+  for(const raw of question.answer||[]){
+    const target=normExact(raw);
+    if(target.includes(' '))continue;
+    if(parts.join('')===target)return true;
+  }
+  return false;
+}
+function maskedTargetHint(question){
+  const raw=String(question?.metadata?.canonical_text||question?.answer?.[0]||'').trim();
+  if(!raw)return'';
+  return raw.split(/(\s+)/).map(token=>{
+    if(/^\s+$/.test(token))return token;
+    let revealed=false;
+    return token.replace(/[A-Za-z]/g,ch=>{
+      if(!revealed){revealed=true;return ch}
+      return'_';
+    });
+  }).join('');
+}
+function obviousSemanticJunk(response){
+  const raw=normExact(response);
+  if(!raw)return true;
+  if(/[^a-z\s'\-]/i.test(raw))return true;
+  const compact=raw.replace(/[^a-z]/gi,'').toLowerCase();
+  if(!compact)return true;
+  if(compact.length===1)return true;
+  if(/^(.)\1{2,}$/.test(compact))return true;
+  if(compact.length>=4&&!/[aeiouy]/.test(compact))return true;
+  const keyboardRuns=['qwerty','asdf','zxcv','poiuy','lkjh','mnbv','qwer','asdf','zxcv','hjkl'];
+  if(keyboardRuns.some(run=>run.includes(compact)||compact.includes(run)))return true;
+  const tokens=raw.split(/\s+/).filter(Boolean);
+  if(tokens.length&&tokens.every(t=>t.replace(/[^a-z]/gi,'').length<=1))return true;
+  return false;
+}
+function semanticWarningEligible(question){
+  if(!isTypedVocabWrite(question))return false;
+  const practice=String(question?.tracking?.practiceType||'').toLowerCase();
+  const type=String(question?.tracking?.questionType||'').toLowerCase();
+  if(practice==='vocabulary')return type==='vocabulary_spelling';
+  if(practice!=='vocab_test')return false;
+  return type==='vocab_ko_en_write'||type==='vocab_definition_write';
+}
+function safeTypoNearMiss(question,response){
+  if(!isTypedVocabWrite(question))return false;
+  if(insertedSpaceNearMiss(question,response))return true;
+  const mine=typoWord(response);
+  if(!mine||mine.includes(' ')||mine.length<3)return false;
+  for(const raw of question.answer||[]){
+    const target=typoWord(raw);
+    if(!target||target===mine||target.length<4)continue;
+    const gap=target.length-mine.length;
+    if(gap===1&&isSubsequence(mine,target)){
+      const suffix=omittedSuffix(mine,target);
+      if(!['s','d'].includes(suffix))return true;
+    }
+    if(gap===2&&target.length>=7&&isSubsequence(mine,target)){
+      const suffix=omittedSuffix(mine,target);
+      if(!['ly','ed','es','er'].includes(suffix))return true;
+    }
+    if(gap===0&&(adjacentTransposition(mine,target)||introducedDouble(mine,target)))return true;
+  }
+  return false;
+}
 function containsPhrase(text,phrase){const t=` ${searchable(text)} `,p=searchable(phrase);if(!p)return true;return t.includes(` ${p} `)}
 function correctionLabel(v){const s=String(v||'').trim().replace(/:$/,'');const n=CIRCLED_NUM.indexOf(s);if(n>=0)return String(n+1);const m=s.match(/^\d+$/);return m?String(Number(s)):s.toLowerCase()}
 function correctionNorm(v){const p=parseCorrection(v);return p?`${correctionLabel(p.label||p.prefix)}|${normExact(p.wrong)}|${normExact(p.right)}`:normExact(v)}
@@ -91,21 +292,43 @@ function exact(question,response,policy){
   return target.some(a=>a===String(mine));
 }
 
-export async function gradeQuestion(question,response){
+export async function gradeQuestion(question,response,options={}){
   const policy=resolveQuestionGradingPolicy(question);
   const constraint=checkConstraints(question,response,policy);
-  if(!constraint.ok)return{correct:false,message:constraint.message,correctAnswer:question.answer,method:'constraint',gradingPolicy:policy};
-  if(exact(question,response,policy))return{correct:true,message:'',correctAnswer:question.answer,method:'exact',gradingPolicy:policy};
+  if(!constraint.ok)return stamp({correct:false,message:constraint.message,correctAnswer:question.answer,method:'constraint',gradingPolicy:policy});
+  if(exact(question,response,policy))return stamp({correct:true,message:'',correctAnswer:question.answer,method:'exact',gradingPolicy:policy});
+  if(missingTargetSpacesEquivalent(question,response))return stamp({correct:true,message:'',correctAnswer:question.answer,method:'vocab_missing_space',gradingPolicy:policy});
+  if(slashAlternativeEquivalent(question,response))return stamp({correct:true,message:'',correctAnswer:question.answer,method:'vocab_slash_alternative',gradingPolicy:policy});
+  if(possessivePlaceholderEquivalent(question,response))return stamp({correct:true,message:'',correctAnswer:question.answer,method:'vocab_possessive_placeholder',gradingPolicy:policy});
+  if(harmlessVocabSymbolEquivalent(question,response))return stamp({correct:true,message:'',correctAnswer:question.answer,method:'vocab_symbol_marker',gradingPolicy:policy});
+  if(articleEquivalent(question,response))return stamp({correct:true,message:'',correctAnswer:question.answer,method:'vocab_article_variant',gradingPolicy:policy});
+  if(regularPluralEquivalent(question,response))return stamp({correct:true,message:'',correctAnswer:question.answer,method:'vocab_regular_plural',gradingPolicy:policy});
+  if(!options.suppressWarnings&&safeTypoNearMiss(question,response))return stamp({correct:false,warning:true,warningType:'vocab_typo',message:'⚠️ 거의 맞았어요! 철자나 띄어쓰기를 한 번 더 확인해 보세요.',correctAnswer:question.answer,method:'vocab_typo_warning',gradingPolicy:policy});
+  if(!options.suppressWarnings&&semanticWarningEligible(question)&&!obviousSemanticJunk(response)){
+    try{
+      options.onSemanticCheck?.(true);
+      const verdict=await classifyVocabSemanticNearMatch(question,response);
+      if(verdict.nearMatch){
+        const hint=maskedTargetHint(question);
+        const message=hint?`뜻은 비슷하지만, 이 문제는 정확한 목표 표현을 써야 해요.\n\n목표 표현 힌트: ${hint}\n\n위 힌트에 맞는 영어 표현으로 다시 입력하세요.`:'뜻은 비슷하지만, 이 문제는 정확한 목표 표현을 써야 해요. 목표 표현을 다시 생각해서 입력하세요.';
+        return stamp({correct:false,warning:true,warningType:'vocab_semantic_target',message,maskedTargetHint:hint||null,correctAnswer:question.answer,method:'vocab_semantic_target_warning',semanticReasonCode:verdict.reasonCode||null,gradingPolicy:policy});
+      }
+    }catch(e){
+      console.warn('[shared grader] vocab semantic warning classifier failed closed',{questionId:question?.id||null,error:e?.message||String(e)});
+    }finally{
+      options.onSemanticCheck?.(false);
+    }
+  }
   if(policy.aiAllowed){
     try{
       const verdict=await gradeWithAiWilli(question,response,policy),correct=verdict.correct===true;
-      return{correct,message:correct?'':(verdict.explanationKo||verdict.reason||'정답을 확인해 보세요.'),correctAnswer:question.answer,method:'ai_willi',aiReason:verdict.reason||null,aiReasonCode:verdict.reasonCode||null,gradingPolicy:policy};
+      return stamp({correct,message:correct?'':(verdict.explanationKo||verdict.reason||'정답을 확인해 보세요.'),correctAnswer:question.answer,method:'ai_willi',aiReason:verdict.reason||null,aiReasonCode:verdict.reasonCode||null,gradingPolicy:policy});
     }catch(e){
       console.warn('[shared grader] AI Willi failed closed',{questionId:question?.id||null,type:question?.tracking?.questionType||null,error:e?.message||String(e)});
-      return{correct:false,message:aiWilliMessage('grader','failed'),correctAnswer:question.answer,method:'ai_willi_failed',gradingPolicy:policy};
+      return stamp({correct:false,message:aiWilliMessage('grader','failed'),correctAnswer:question.answer,method:'ai_willi_failed',gradingPolicy:policy});
     }
   }
-  return{correct:false,message:'정답을 확인해 보세요.',correctAnswer:question.answer,method:'exact',gradingPolicy:policy};
+  return stamp({correct:false,message:'정답을 확인해 보세요.',correctAnswer:question.answer,method:'exact',gradingPolicy:policy});
 }
 
 export {resolveQuestionGradingPolicy};

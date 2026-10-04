@@ -1,4 +1,4 @@
-/* Dashboard V2 targeted polish: sidebar icons and shared outlined UI. */
+/* Dashboard V2 targeted polish: sidebar icons, top command pill, and shared outlined UI. */
 
 /* Sidebar icons: larger, darker, more vivid */
 .rail .nav{min-height:52px!important}
@@ -8,12 +8,15 @@
 .rail .nav:not(.active) .nav-icon svg{opacity:.92!important}
 .rail-collapse-toggle{width:40px!important;height:36px!important;color:#2b7f89!important;font-weight:900!important}
 
-/* Collapsed sidebar: keep a tiny label under every icon. */
-.layout:not(.sidebar-expanded) .rail .nav{flex-direction:column!important;justify-content:center!important;gap:3px!important;padding:7px 3px!important;min-height:66px!important;height:auto!important;overflow:visible!important}
-.layout:not(.sidebar-expanded) .rail .nav>span:last-child{display:block!important;visibility:visible!important;opacity:1!important;position:static!important;width:100%!important;max-width:58px!important;height:auto!important;overflow:hidden!important;text-overflow:ellipsis!important;font-size:9px!important;line-height:1.1!important;font-weight:700!important;letter-spacing:-.02em!important;text-align:center!important;color:#596b73!important}
-.layout:not(.sidebar-expanded) .rail .nav.active>span:last-child{color:#315b63!important}
-.layout.sidebar-expanded .rail .nav{flex-direction:row!important;overflow:hidden!important}
-.layout.sidebar-expanded .rail .nav>span:last-child{font-size:inherit!important;line-height:inherit!important;text-align:left!important;width:auto!important;max-width:none!important}
+/* Header user + bell + burger as one attached pill, anchored in the topbar */
+.top-actions #burger-menu-mount .burger-menu{position:relative!important;display:flex!important;align-items:stretch!important;gap:0!important;border-radius:14px!important;background:#fff!important;box-shadow:none!important;border:1px solid rgba(255,255,255,.16)!important;overflow:visible!important}
+.top-actions #burger-menu-mount .burger-user-label{display:flex!important;height:40px!important;padding:0 13px!important;border:0!important;border-radius:14px 0 0 14px!important;background:#fff!important;color:#37434d!important;box-shadow:none!important;font-size:.72rem!important}
+.top-actions #burger-menu-mount .hw-notif-wrap,.top-actions #burger-menu-mount .burger-dropdown-wrap{display:flex!important;margin:0!important}
+.top-actions #burger-menu-mount .hw-notif-btn,.top-actions #burger-menu-mount .burger-btn{width:40px!important;height:40px!important;margin:0!important;border-radius:0!important;background:#4fb9c8!important;color:#fff!important;box-shadow:none!important;border:0!important}
+.top-actions #burger-menu-mount .hw-notif-btn{border-left:1px solid rgba(255,255,255,.28)!important}
+.top-actions #burger-menu-mount .burger-btn{border-left:1px solid rgba(255,255,255,.28)!important;border-radius:0 14px 14px 0!important}
+.top-actions #burger-menu-mount .hw-notif-btn:hover,.top-actions #burger-menu-mount .burger-btn:hover{background:#3aa9b8!important}
+.top-actions #burger-menu-mount .burger-dropdown{top:calc(100% + 7px)!important;right:0!important}
 
 /* Naesin: white-fill / cyan-outline button language */
 #view-naesin .na-add{background:#fff!important;color:#267985!important;border:1.7px solid #83cfda!important;border-radius:14px!important;padding:12px 17px!important;min-height:46px!important;font-weight:800!important;box-shadow:0 3px 9px rgba(79,185,200,.08)!important}
@@ -54,16 +57,9 @@
 .drawer .statline span{background:#fff!important;border:1.2px solid #d2e9ed!important;color:#52666a!important}
 .drawer .rating{border:1px solid rgba(79,185,200,.14)!important}
 
-/* Branded teacher/admin loading treatment, based on Test Prep V2. */
-#studentList>.empty,#drawerBody>.empty,.na2-tests>.na2-empty,.na2-matrix-loading td{min-height:220px!important;padding:48px 18px 38px!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;text-align:center!important;color:#6f7d84!important;font-size:12px!important;font-weight:700!important}
-#studentList>.empty::before,#drawerBody>.empty::before,.na2-tests>.na2-empty::before,.na2-matrix-loading td::before{content:'';width:190px;height:72px;margin-bottom:18px;display:block;background:#4fb9c8;-webkit-mask:url('/Assets/Images/Logo.png') center/contain no-repeat;mask:url('/Assets/Images/Logo.png') center/contain no-repeat;filter:drop-shadow(0 8px 18px rgba(79,185,200,.20))}
-#studentList>.empty::after,#drawerBody>.empty::after,.na2-tests>.na2-empty::after,.na2-matrix-loading td::after{content:'';width:110px;height:5px;margin-top:16px;border-radius:999px;background:linear-gradient(90deg,rgba(79,185,200,.14) 0 25%,#4fb9c8 45% 55%,rgba(79,185,200,.14) 75% 100%);background-size:220% 100%;animation:teacherLoadSweep 1.15s ease-in-out infinite}
-@keyframes teacherLoadSweep{0%{background-position:100% 0}100%{background-position:-100% 0}}
-
 @media(max-width:700px){
+  .top-actions #burger-menu-mount .burger-user-label{display:none!important}
+  .top-actions #burger-menu-mount .hw-notif-btn{border-radius:14px 0 0 14px!important}
   #view-naesin .na-actions .na-btn{padding:9px 11px!important}
   #view-students .student-list{padding:7px!important}
-  #studentList>.empty,#drawerBody>.empty,.na2-tests>.na2-empty,.na2-matrix-loading td{min-height:180px!important;padding-top:34px!important}
-  #studentList>.empty::before,#drawerBody>.empty::before,.na2-tests>.na2-empty::before,.na2-matrix-loading td::before{width:160px;height:62px}
 }
-@media(prefers-reduced-motion:reduce){#studentList>.empty::after,#drawerBody>.empty::after,.na2-tests>.na2-empty::after,.na2-matrix-loading td::after{animation:none;background:#bfe8ed}}

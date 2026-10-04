@@ -1,13 +1,13 @@
-import {QuestionRenderer} from '/shared/questions/question-renderer.js?v=20260925-speaking2';
-import {capturePointOrigin,showPointAward} from '/students/components/student-point-feedback.js?v=20260926-v0003';
-import {getSpellingTarget} from './spelling-targets.js?v=20260925-v0019';
-import {isSpeakableTarget,matchSpeakingTarget} from './speaking-match.js?v=20260926-v0025';
-import {getAssignment,setAssignment,getBookMeta,setBookMeta,getVocabulary,setVocabulary,background} from './vocab-startup-cache.js?v=20260925-v0001';
-import {snapshotPercent,snapshotStars,loadVocabSnapshot,nextSkillTargets} from './vocab-progress-snapshot.js?v=20260925-v0005';
-import {coachAttempt,repeatUntilCorrect,appendRetry,uniquePassedCount,wrongAttemptCount} from './vocab-pass-flow.js?v=20260925-v0002';
-import {createVocabHistoryNavigation} from './navigation-history.js?v=20260926-v0002';
-import {installWillenaKeyboard} from '../shared/willena-keyboard.js?v=1.5.1';
-import {playStudentSfx,preloadStudentSfx} from '../shared/student-sfx.js?v=20260926-v0001';
+import {QuestionRenderer} from '/shared/questions/question-renderer.js?v=20260927-startup2';
+import {capturePointOrigin,showPointAward} from '/students/components/student-point-feedback.js?v=20260927-startup2';
+import {getSpellingTarget} from './spelling-targets.js?v=20260927-startup2';
+import {isSpeakableTarget,matchSpeakingTarget} from './speaking-match.js?v=20260927-spacing1';
+import {getAssignment,setAssignment,getBookMeta,setBookMeta,getVocabulary,setVocabulary,background} from './vocab-startup-cache.js?v=20260927-startup2';
+import {snapshotPercent,snapshotStars,loadVocabSnapshot,nextSkillTargets} from './vocab-progress-snapshot.js?v=20260927-startup2';
+import {coachAttempt,repeatUntilCorrect,appendRetry,uniquePassedCount,wrongAttemptCount} from './vocab-pass-flow.js?v=20260927-startup2';
+import {createVocabHistoryNavigation} from './navigation-history.js?v=20260927-startup2';
+import {installWillenaKeyboard} from '../shared/willena-keyboard.js?v=20260927-startup2';
+import {playStudentSfx,preloadStudentSfx} from '../shared/student-sfx.js?v=20260927-startup2';
 
 const CONTENT_URL='https://gxwfsqxyuufqtitspfqg.supabase.co';
 const CONTENT_KEY=['sb_publishable_','G-FYhHfDL4OGdL892gY1Zg_','epdbEeqO'].join('');
@@ -276,9 +276,7 @@ async function completeRewardSession(){
       :('Vocabulary · '+txt(state.book?.book_title||state.book?.book_id||'Book')+' · Unit '+txt(state.unit?.unit_number||state.unit?.id||''))
   );
   try{
-    if(teacher&&state.pendingTeacherRecords.size){
-      await Promise.allSettled([...state.pendingTeacherRecords]);
-    }
+    const pendingTeacherSaves=teacher?[...state.pendingTeacherRecords]:[];
     const payload={
       reward_only:true,
       session_id:reward.rewardSessionId,
@@ -315,6 +313,9 @@ async function completeRewardSession(){
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({payload})
     });
+    if(pendingTeacherSaves.length){
+      await Promise.allSettled(pendingTeacherSaves);
+    }
     try{
       window.dispatchEvent(new CustomEvent('session:ended',{detail:{session_id:reward.rewardSessionId,mode:'vocab_'+reward.mode,list_name:listName,list_size:reward.firstTotal}}));
       window.dispatchEvent(new CustomEvent('stars:refresh',{detail:{earned:reward.stars}}));
@@ -408,7 +409,9 @@ async function loadMotivation(bookId=state.book?.book_id){
     return null;
   }
   try{
-    const data=await api('/.netlify/functions/progress_summary?section=vocab_motivation&book_id='+encodeURIComponent(bookId)+'&_='+Date.now());
+    // Motivation is student-wide. Golden units are permanent achievements and
+    // should not reset when the selected book changes.
+    const data=await api('/.netlify/functions/progress_summary?section=vocab_motivation&_='+Date.now());
     if(String(bookId)!==String(state.book?.book_id))return data;
     state.motivation=data||null;
     renderMotivation();
@@ -460,7 +463,7 @@ function goldenAwardHtml(){
   const award=state.pendingGoldenAward;
   if(!award)return'';
   state.pendingGoldenAward=null;
-  return '<div class="vocab-golden-award"><img class="vocab-golden-award-icon" src="/shared/svgs/golden-unit.svg" alt=""><div><strong>Golden Unit earned!</strong><span>Unit '+escapeHtml(award.unitNumber||'')+' is mastered.</span></div></div>';
+  return '<div class="vocab-golden-award"><img class="vocab-golden-award-icon" src="/shared/svgs/golden-unit.svg?v=20260927-icons1" alt=""><div><strong>Golden Unit earned!</strong><span>Unit '+escapeHtml(award.unitNumber||'')+' is mastered.</span></div></div>';
 }
 
 function wireShellNavigation(){
@@ -1338,7 +1341,7 @@ function renderUnits(){
   const units=arr(state.units);
   unitStripEl.innerHTML=units.map(u=>{
     const golden=isGoldenUnit(u.id);
-    return '<button class="study-v2-unit'+(String(state.unit?.id)===String(u.id)?' is-current':'')+(golden?' is-golden':'')+'" type="button" data-unit-id="'+escapeHtml(u.id)+'">Unit '+escapeHtml(u.unit_number)+(golden?'<img class="vocab-unit-gold" src="/shared/svgs/golden-unit.svg" alt="Golden Unit">':'')+'</button>';
+    return '<button class="study-v2-unit'+(String(state.unit?.id)===String(u.id)?' is-current':'')+(golden?' is-golden':'')+'" type="button" data-unit-id="'+escapeHtml(u.id)+'">Unit '+escapeHtml(u.unit_number)+(golden?'<img class="vocab-unit-gold" src="/shared/svgs/golden-unit.svg?v=20260927-icons1" alt="Golden Unit">':'')+'</button>';
   }).join('');
   unitStripEl.querySelectorAll('[data-unit-id]').forEach(btn=>btn.addEventListener('click',()=>selectUnit(btn.dataset.unitId)));
 }
@@ -1547,7 +1550,7 @@ function renderWordModal(words,{meta='',title='단어 목록',opener=null}={}){
     '<div class="vocab-word-row">'+
       '<div class="vocab-word-row-copy"><strong>'+escapeHtml(w.word)+'</strong><span>'+escapeHtml(w.ko)+'</span></div>'+
       '<button class="vocab-word-audio" type="button" data-modal-word="'+index+'" aria-label="'+escapeHtml(w.word)+' 듣기">'+
-        '<img src="/shared/svgs/headphones.svg?v=20260926-v0002" alt="" aria-hidden="true">'+
+        '<img src="/shared/svgs/headphones.svg?v=20260927-icons1" alt="" aria-hidden="true">'+
       '</button>'+
     '</div>'
   ).join('');
@@ -1878,15 +1881,73 @@ function spellingWords(items){
 function spellingPreviewWords(items){
   return spellingWords(items);
 }
-function playPreviewWord(word){
-  if(!('speechSynthesis' in window))return;
+let vocabWordAudio=null;
+const vocabWordAudioCache=new Map();
+
+function cleanBrowserTtsText(text){
+  return txt(text)
+    .replace(/_+/g,' ')
+    .replace(/[~～]+/g,' ')
+    .replace(/[\\/|]+/g,' ')
+    .replace(/[()[\]{}<>]+/g,' ')
+    .replace(/[•·…]+/g,' ')
+    .replace(/[-–—]{2,}/g,' ')
+    .replace(/\s+/g,' ')
+    .trim();
+}
+
+function browserTtsWord(text){
+  if(!('speechSynthesis' in window))return false;
   try{
+    const spoken=cleanBrowserTtsText(text);
+    if(!spoken)return false;
     speechSynthesis.cancel();
-    const utterance=new SpeechSynthesisUtterance(word);
+    const utterance=new SpeechSynthesisUtterance(spoken);
     utterance.lang='en-US';
     speechSynthesis.speak(utterance);
-  }catch(_){}
+    return true;
+  }catch(_){
+    return false;
+  }
 }
+
+async function playPreviewWord(word){
+  const text=txt(word);
+  if(!text)return false;
+
+  try{
+    speechSynthesis?.cancel?.();
+  }catch(_){}
+
+  try{
+    if(vocabWordAudio){
+      try{vocabWordAudio.pause()}catch(_){}
+      vocabWordAudio=null;
+    }
+
+    let objectUrl=vocabWordAudioCache.get(text.toLowerCase())||'';
+    if(!objectUrl){
+      const endpoint='https://get-audio-urls.willena.workers.dev/word-audio?word='+encodeURIComponent(text);
+      const response=await fetch(endpoint,{cache:'force-cache'});
+      if(!response.ok)throw new Error('R2 audio '+response.status);
+      const blob=await response.blob();
+      if(!blob.size)throw new Error('Empty R2 audio');
+      objectUrl=URL.createObjectURL(blob);
+      vocabWordAudioCache.set(text.toLowerCase(),objectUrl);
+    }
+
+    const audio=new Audio(objectUrl);
+    vocabWordAudio=audio;
+    await audio.play();
+    audio.addEventListener('ended',()=>{if(vocabWordAudio===audio)vocabWordAudio=null},{once:true});
+    return true;
+  }catch(error){
+    console.debug('[Vocab Study] R2 word audio unavailable; using browser TTS',text,error);
+    return browserTtsWord(text);
+  }
+}
+
+window.WillenaPlayWordAudio=playPreviewWord;
 function createSpellingPractice(words){
   return{words,index:0,currentAttemptCount:0,attempts:[],results:[],initialTotal:words.length};
 }
@@ -2165,7 +2226,7 @@ async function openSpellingPreview({historyMode='replace'}={}){
         words.map((w,i)=>
           '<div class="lesson-word vocab-coach-word">'+
             '<div class="vocab-coach-word-copy"><strong>'+escapeHtml(w.spellingTarget||w.word)+'</strong><span>'+escapeHtml(w.ko)+'</span></div>'+
-            '<button class="speak-mini vocab-coach-audio" type="button" data-preview-word="'+i+'" aria-label="'+escapeHtml(w.spellingTarget||w.word)+' 듣기"><img src="/shared/svgs/headphones.svg?v=20260926-v0002" alt="" aria-hidden="true"></button>'+
+            '<button class="speak-mini vocab-coach-audio" type="button" data-preview-word="'+i+'" aria-label="'+escapeHtml(w.spellingTarget||w.word)+' 듣기"><img src="/shared/svgs/headphones.svg?v=20260927-icons1" alt="" aria-hidden="true"></button>'+
           '</div>'
         ).join('')+
       '</div>'+
@@ -2476,9 +2537,11 @@ async function boot(){
     reportStartupPerf();
     preloadStudentSfx();
 
-window.WillenaVocabStudy={version:'0.099',getState:()=>state,start:startSession,openSpellingMenu,openSpellingPreview,openSpellingTest,openSpeakingSession,close:closeSession};
+window.WillenaVocabStudy={version:'0.102',getState:()=>state,start:startSession,openSpellingMenu,openSpellingPreview,openSpellingTest,openSpeakingSession,close:closeSession};
   }catch(error){
     console.error('[Vocab Study] boot',error);
+    const startupError=el('vocabStartupError');
+    if(startupError){startupError.hidden=false;startupError.querySelector('[data-startup-message]').textContent=error?.message||'Please refresh and try again.';}
     if(frontWordTestCardEl)frontWordTestCardEl.hidden=true;
     setMainScreen('home');
     setStatus(error?.message||'불러오지 못했습니다. 새로고침해 주세요.');

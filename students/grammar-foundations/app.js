@@ -24,6 +24,7 @@ let challengeProgressMap=new Map();
 const challengeAvailability=new Map();
 let state={group:null,module:null,stage:null,index:0,score:0,renderer:null,checked:false,results:[],resultSaved:false};
 let challengeState={module:null,questions:[],index:0,score:0,renderer:null,checked:false,results:[],resultSaved:false,poolMeta:null};
+const reviewerUnlock=(()=>{const p=new URLSearchParams(window.location.search);const h=new URLSearchParams(String(window.location.hash||'').replace(/^#/,''));return p.get('unlock')==='all'||h.get('unlock')==='all'||/\/unlock-all\/?$/i.test(window.location.pathname)})();
 let nav=null;
 const sessionStore=createStudentSessionResume({appId:'grammar-foundations'});
 sessionStore.installBeforeUnload();
@@ -38,11 +39,11 @@ function currentChallengeQuestion(){return challengeState.questions?.[challengeS
 function progressKey(moduleId,stageId){return `${moduleId}:${stageId}`}
 function stageProgress(moduleId,stageId){return progressMap.get(progressKey(moduleId,stageId))||null}
 function challengeProgress(moduleId){return challengeProgressMap.get(String(moduleId))||null}
-function stageUnlocked(mod,index){return index===0||Boolean(stageProgress(mod.id,mod.stages[index-1]?.id)?.passed)}
+function stageUnlocked(mod,index){return reviewerUnlock||index===0||Boolean(stageProgress(mod.id,mod.stages[index-1]?.id)?.passed)}
 function stagePct(row){return row?.total?Math.round((Number(row.best_score||0)/Number(row.total))*100):0}
 function modulePct(mod){if(!mod.stages.length)return 0;const passed=mod.stages.filter(s=>stageProgress(mod.id,s.id)?.passed).length;return Math.round((passed/mod.stages.length)*100)}
 function passedCount(mod){return mod.stages.filter(s=>stageProgress(mod.id,s.id)?.passed).length}
-function moduleComplete(mod){return Boolean(mod?.stages?.length)&&passedCount(mod)===mod.stages.length}
+function moduleComplete(mod){return reviewerUnlock||(Boolean(mod?.stages?.length)&&passedCount(mod)===mod.stages.length)}
 function currentStage(mod){for(let i=0;i<mod.stages.length;i++){if(!stageProgress(mod.id,mod.stages[i].id)?.passed&&stageUnlocked(mod,i))return mod.stages[i]}return mod.stages[mod.stages.length-1]||null}
 function findModule(id){return modules.find(m=>m.id===id)||null}
 function findStage(mod,id){return mod?.stages?.find(s=>s.id===id)||null}

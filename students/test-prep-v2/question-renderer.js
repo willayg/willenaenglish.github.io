@@ -189,10 +189,107 @@ export class QuestionRenderer{
     if(q.form===FORMS.learn)return answerParts(q)[0]||'';
     return null;
   }
+  removeGraderOverlay(){
+    const overlay=document.querySelector('.grader-blocking-overlay');
+    if(!overlay)return;
+    const bodyOverflow=overlay.dataset.bodyOverflow??'';
+    const htmlOverflow=overlay.dataset.htmlOverflow??'';
+    overlay.remove();
+    document.body.style.overflow=bodyOverflow;
+    document.documentElement.style.overflow=htmlOverflow;
+  }
+  ensureGraderOverlayStyles(){
+    if(document.getElementById('graderBlockingOverlayStyles'))return;
+    const style=document.createElement('style');
+    style.id='graderBlockingOverlayStyles';
+    style.textContent=`
+      @keyframes graderOverlaySpin{to{transform:rotate(360deg)}}
+      @keyframes graderOverlayPulse{0%,100%{opacity:.55}50%{opacity:1}}
+      .grader-blocking-overlay{position:fixed;inset:0;z-index:2147483000;display:flex;align-items:center;justify-content:center;padding:22px;background:
+        linear-gradient(rgba(5,10,18,.94),rgba(5,10,18,.94)),
+        repeating-linear-gradient(0deg,rgba(49,226,255,.035) 0,rgba(49,226,255,.035) 1px,transparent 1px,transparent 4px);
+        backdrop-filter:blur(10px);overscroll-behavior:none;touch-action:none}
+      .grader-blocking-card{position:relative;overflow:hidden;width:min(92vw,520px);padding:30px 24px 26px;border-radius:22px;background:#08111d;color:#e8fbff;border:1px solid rgba(61,224,255,.62);box-shadow:0 0 0 1px rgba(255,63,190,.12),0 0 32px rgba(28,215,255,.18),0 24px 70px rgba(0,0,0,.55);text-align:center;font-family:Poppins,system-ui,sans-serif}
+      .grader-blocking-card:before{content:'';position:absolute;inset:0;pointer-events:none;background:linear-gradient(120deg,transparent 0 42%,rgba(47,231,255,.06) 50%,transparent 58%)}
+      .grader-blocking-mark{display:flex;align-items:center;justify-content:center;width:60px;height:60px;margin:0 auto 18px;border-radius:14px;background:rgba(255,61,190,.08);color:#ff65c3;border:1px solid rgba(255,101,195,.58);box-shadow:0 0 24px rgba(255,61,190,.22);font-size:30px;font-weight:900}
+      .grader-blocking-spinner{width:62px;height:62px;margin:0 auto 20px;border:5px solid rgba(43,222,255,.14);border-top-color:#35e3ff;border-right-color:#ff5bc1;border-radius:50%;box-shadow:0 0 24px rgba(53,227,255,.18);animation:graderOverlaySpin .75s linear infinite}
+      .grader-blocking-title{position:relative;margin:0;font-size:26px;line-height:1.3;font-weight:900;color:#f4fdff;text-shadow:0 0 18px rgba(53,227,255,.18)}
+      .grader-blocking-message{position:relative;margin:15px 0 0;font-size:20px;line-height:1.7;font-weight:700;color:#b9d7df;white-space:pre-wrap}
+      .grader-blocking-wait{position:relative;margin-top:15px;font-size:15px;font-weight:800;letter-spacing:.04em;color:#57eaff;animation:graderOverlayPulse 1.15s ease-in-out infinite}
+      .grader-blocking-action{position:relative;width:100%;min-height:52px;margin-top:24px;padding:0 18px;border:1px solid #3ce6ff;border-radius:13px;background:linear-gradient(90deg,#0b2531,#161c3a);color:#eaffff;box-shadow:0 0 18px rgba(60,230,255,.14);font:800 16px Poppins,system-ui,sans-serif;cursor:pointer}
+      .grader-blocking-action:active{transform:translateY(1px)}
+      .grader-blocking-action:focus-visible{outline:3px solid rgba(60,230,255,.28);outline-offset:3px}
+      @media(prefers-reduced-motion:reduce){.grader-blocking-spinner,.grader-blocking-wait{animation:none}}
+    `;
+    document.head.appendChild(style);
+  }
+  mountGraderOverlay({mode='thinking',title='',message='',onDismiss=null}={}){
+    this.removeGraderOverlay();
+    this.ensureGraderOverlayStyles();
+    const overlay=document.createElement('div');
+    overlay.className='grader-blocking-overlay';
+    overlay.dataset.bodyOverflow=document.body.style.overflow||'';
+    overlay.dataset.htmlOverflow=document.documentElement.style.overflow||'';
+    overlay.setAttribute('role',mode==='thinking'?'status':'dialog');
+    overlay.setAttribute('aria-modal','true');
+    overlay.setAttribute('aria-live','polite');
+    const card=document.createElement('div');
+    card.className='grader-blocking-card';
+    if(mode==='thinking'){
+      card.innerHTML='<div class="grader-blocking-spinner" aria-hidden="true"></div><h2 class="grader-blocking-title"></h2><div class="grader-blocking-message"></div><div class="grader-blocking-wait">잠시만 기다려 주세요…</div>';
+    }else{
+      card.innerHTML='<div class="grader-blocking-mark" aria-hidden="true">✦</div><h2 class="grader-blocking-title"></h2><div class="grader-blocking-message"></div><button class="grader-blocking-action" type="button">다시 써보기</button>';
+    }
+    card.querySelector('.grader-blocking-title').textContent=String(title||'');
+    card.querySelector('.grader-blocking-message').textContent=String(message||'');
+    overlay.appendChild(card);
+    document.body.style.overflow='hidden';
+    document.documentElement.style.overflow='hidden';
+    document.body.appendChild(overlay);
+    if(mode!=='thinking'){
+      const btn=card.querySelector('.grader-blocking-action');
+      btn.addEventListener('click',()=>{
+        this.removeGraderOverlay();
+        onDismiss?.();
+      });
+      requestAnimationFrame(()=>btn.focus());
+    }
+    return overlay;
+  }
+  showWarningToast(message,result={}){
+    const semantic=result?.warningType==='vocab_semantic_target';
+    const typo=result?.warningType==='vocab_typo';
+    const title=semantic?'AI Willi 힌트':typo?'거의 맞았어요!':'한 번 더 확인해 보세요';
+    this.mountGraderOverlay({
+      mode:'hint',
+      title,
+      message:String(message||'한 번 더 확인해 보세요.'),
+      onDismiss:()=>{
+        const input=this.host.querySelector('input,textarea');
+        input?.focus?.();
+        if(input&&typeof input.setSelectionRange==='function'){
+          const n=String(input.value||'').length;
+          try{input.setSelectionRange(n,n)}catch{}
+        }
+      }
+    });
+  }
+  showThinking(message='AI Willi가 답을 확인하고 있어요…'){
+    this.mountGraderOverlay({
+      mode:'thinking',
+      title:'AI Willi가 답을 확인하고 있어요…',
+      message:'입력한 답이 목표 표현과 뜻이 비슷한지 확인하는 중이에요.'
+    });
+  }
+  clearThinking(){
+    this.removeGraderOverlay();
+  }
   showFeedback(result){
     const f=this.host.querySelector('[data-feedback]');if(!f)return;
-    f.className=`feedback show ${result.correct?'ok':'bad'}`;
+    this.removeGraderOverlay();
+    f.className=`feedback show ${result.warning?'warn':(result.correct?'ok':'bad')}`;
     const answers=Array.isArray(result.correctAnswer)?result.correctAnswer:[result.correctAnswer].filter(x=>x!=null);
+    if(result.warning){const msg=result.message||'한 번 더 확인해 보세요.';f.innerHTML=textHtml(msg);this.showWarningToast(msg,result);return}
     f.innerHTML=result.correct?'정답입니다!':`${textHtml(result.message||'정답을 확인해 보세요.')}${answers.length?`<div class="model"><b>모범 답안</b>${modelAnswerHtml(this.question,answers)}</div>`:''}`;
     if([FORMS.choice,FORMS.multi].includes(this.question?.form)){
       const right=new Set((Array.isArray(this.question.answer)?this.question.answer:[]).map(String)),selected=this.state.selected;

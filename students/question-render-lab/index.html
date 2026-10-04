@@ -5,55 +5,31 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <title>Question Renderer Lab</title>
-<link rel="stylesheet" href="./lab.css?v=rev12">
-<script type="importmap">{"imports":{"../test-prep-v2/question-model.js":"../test-prep-v2/question-model.js?v=2.24.0","../test-prep-v2/question-renderer.js":"../test-prep-v2/question-renderer.js?v=2.20.4-r1","../shared/question-grader.js?v=2.0.0":"../shared/question-grader.js?v=2.0.1"}}</script>
+<link rel="stylesheet" href="./lab.css?v=rev7">
 </head>
 <body>
-<div style="position:fixed;top:10px;right:12px;z-index:2147483647;padding:7px 11px;border:1px solid #263238;border-radius:999px;background:rgba(255,255,255,.96);color:#263238;font:800 12px/1 system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;box-shadow:0 2px 8px rgba(0,0,0,.12);pointer-events:none;">RENDER LAB · REV 40</div>
 <div class="shell">
   <div class="toolbar">
     <div class="field"><label>Skill</label><select id="skill"></select></div>
     <div class="field"><label>Textbook</label><select id="book"></select></div>
     <div class="field"><label>Question form</label><select id="form"></select></div>
     <div class="field"><label>Feature</label><select id="feature"><option value="all">All questions</option><option value="underline">Underlined</option><option value="blank">Fill in the blank</option></select></div>
-    <div class="field"><label>Flag status</label><select id="flagged"><option value="all">All questions</option><option value="flagged">Flagged only</option></select></div>
-    <div class="field"><label>Student availability</label><select id="availability"><option value="all">All</option><option value="usable">Usable</option><option value="unusable">Unusable</option></select></div>
-    <div class="field"><label>Underline audit type</label><select id="underlineIssue"><option value="all">All issue types</option><option value="answer_choices_stored_as_passage_target">Passage target missing</option><option value="malformed_missing_source_target">Malformed / source target missing</option><option value="whole_choice_spans">Whole-choice underline</option><option value="single_target">Single target</option><option value="per_choice_targets">Per-choice targets</option><option value="missing_underline_metadata">Missing underline data</option><option value="multi_target_other">Multiple-target oddity</option><option value="underlined_by_choice">Explicit per-choice targets</option></select></div>
-    <div class="field"><label>Date added / modified</label><select id="dateAdded"><option value="all">All dates</option><optgroup label="Date added"><option value="created:today">Added today</option><option value="created:24h">Added in last 24 hours</option><option value="created:3d">Added in last 3 days</option><option value="created:7d">Added in last 7 days</option><option value="created:30d">Added in last 30 days</option></optgroup><optgroup label="Date modified"><option value="modified:1h">Modified in last hour</option><option value="modified:2h">Modified in last 2 hours</option><option value="modified:today">Modified today</option><option value="modified:24h">Modified in last 24 hours</option><option value="modified:3d">Modified in last 3 days</option><option value="modified:7d">Modified in last 7 days</option><option value="modified:30d">Modified in last 30 days</option></optgroup></select></div>
-    <div class="field"><label>Audit status</label><select id="auditStatus"><option value="all">All audit results</option><option value="fail">Fail</option><option value="warning">Warning</option><option value="pass">Pass</option></select></div>
-    <div class="field"><label>Auto audit</label><button id="auditAll" type="button">Audit All DB</button></div>
   </div>
   <div class="meta">
-    <span class="rev-badge">REV 40</span>
-    <span class="rev-badge">CANONICAL RENDERER · V2.20.4</span>
-    <span class="rev-badge">SHARED GRADING POLICY · V2</span>
-    <span class="rev-badge">SHARED GRADER · LUNA</span>
-    <span class="rev-badge">SHARED KEYBOARD</span>
-    <span id="auditSummary" class="rev-badge">AUDIT · loading…</span>
+    <span class="rev-badge">REV 7</span>
+    <span class="rev-badge">SHARED RENDERER</span>
     <span id="sourceBadge" class="source-badge" hidden></span>
     <span id="bookTitle" class="book-title"></span>
     <span id="count">0 questions</span>
   </div>
-  <div id="auditResults" hidden></div>
   <main class="card" id="card"><div class="empty">Loading…</div></main>
 </div>
 <div class="nav">
   <span class="status" id="position">Question —</span>
   <button id="prev">← Previous</button>
   <button class="check" id="check">Check Answer</button>
-  <button id="next">Next Question →</button>
+  <button class="next" id="next">Next Question →</button>
 </div>
-<script src="./keyboard-submit-guard.js?v=1"></script>
-<script type="module">
-import {installWillenaKeyboard} from '../shared/willena-keyboard.js?v=1.0.0';
-installWillenaKeyboard({submitSelector:'#check'});
-</script>
-<script src="./flag-rpc-bridge.js?v=4"></script>
-<script src="./audit-direct.js?v=1"></script>
-<script type="module" src="./render-lab-flagger.js?v=1"></script>
-<script type="module" src="./underline-choice-preview-fix.js?v=4"></script>
-<script type="module" src="./render-lab-availability.js?v=5"></script>
-<script type="module" src="./grammar-foundations-source.js?v=1.0.2"></script>
-<script type="module" src="./lab.js?v=rev21"></script>
+<script type="module" src="./lab.js?v=rev7"></script>
 </body>
 </html>

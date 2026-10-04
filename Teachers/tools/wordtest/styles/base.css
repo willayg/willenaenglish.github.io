@@ -9,18 +9,12 @@
 
 /* Worksheet Title Styles (1-10) */
 /* Worksheet Title Styles (0-10) */
-html,
-body {
-  width: 100%;
-  min-height: 100%;
-  margin: 0;
-  padding: 0;
-}
-
 body {
   font-family: 'Poppins', sans-serif;
-  background: #ffffff;
+  background: linear-gradient(135deg, #6b6b6b 0%, #696969 100%);
   min-height: 100vh;
+  margin: 0;
+  padding: 0;
 }
 
 /* Layout variables for sticky bars */
@@ -31,11 +25,9 @@ body {
 }
 
 .container {
-  width: 100%;
-  max-width: none;
-  min-height: 100vh;
-  margin: 0;
-  padding: 0;
+  max-width: 97vw;
+  margin: 0 auto;
+  padding: 20px;
 }
 
 .planner-card {
@@ -46,11 +38,9 @@ body {
 }
 
 .app-card {
-  width: 100%;
-  min-height: 100vh;
   background: white;
-  border-radius: 0;
-  box-shadow: none;
-  overflow: visible;
-  border: 0;
+  border-radius: 16px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  overflow: hidden;
+  border: 1px solid #e1e8ed;
 }

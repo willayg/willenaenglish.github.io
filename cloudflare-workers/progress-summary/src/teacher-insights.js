@@ -40,30 +40,6 @@ function normalizedSkill(a) {
   return raw.replace(/[^a-z0-9]+/g,'_');
 }
 
-function questionKey(a) {
-  const meta=a?.metadata&&typeof a.metadata==='object'?a.metadata:{};
-  const raw=a?.activity_id||meta.question_id||meta.source_question_id||meta.daily_origin_id||meta.daily_key||meta.occurrence_id||meta.lexical_entry_id||null;
-  if(raw!=null&&String(raw).trim())return String(raw).trim();
-  const fallback=[normalizedSkill(a),a?.response_type||'',a?.session_id||'',a?.created_at||''].join('|');
-  return fallback;
-}
-
-function latestUniqueAccuracy(attempts, limit=50) {
-  const latest=new Map();
-  (attempts||[]).forEach(a=>{
-    const key=questionKey(a);
-    const prev=latest.get(key);
-    const ts=new Date(a?.created_at||0).getTime();
-    const prevTs=prev?new Date(prev.created_at||0).getTime():-Infinity;
-    if(!prev||ts>prevTs)latest.set(key,a);
-  });
-  const recent=[...latest.values()]
-    .sort((a,b)=>new Date(b.created_at||0).getTime()-new Date(a.created_at||0).getTime())
-    .slice(0,limit);
-  const correct=recent.filter(a=>a.is_correct).length;
-  return {accuracy:pct(correct,recent.length),count:recent.length,correct};
-}
-
 function currentStreak(dateKeys) {
   const keys=[...new Set(dateKeys)].sort().reverse();
   if(!keys.length)return 0;
@@ -128,11 +104,8 @@ function habitRating(attempts) {
   };
 }
 
-function learningRating(attempts, allTimeAttempts=attempts) {
+function learningRating(attempts) {
   const total=attempts.length,correct=attempts.filter(a=>a.is_correct).length,overall=pct(correct,total);
-  const allTotal=allTimeAttempts.length,allCorrect=allTimeAttempts.filter(a=>a.is_correct).length;
-  const allTimeAccuracy=pct(allCorrect,allTotal);
-  const current=latestUniqueAccuracy(allTimeAttempts,50);
   const bySkill=new Map();
   attempts.forEach(a=>{
     const skill=normalizedSkill(a);
@@ -148,7 +121,7 @@ function learningRating(attempts, allTimeAttempts=attempts) {
     const previousAccuracy=pct(s.previous.filter(a=>a.is_correct).length,s.previous.length);
     const trend=recentAccuracy==null||previousAccuracy==null?null:recentAccuracy-previousAccuracy;
     const label=s.attempts<3?'Limited evidence':accuracy>=85?'Strong':accuracy>=75?'Secure':accuracy>=60?'Building':'Needs attention';
-    return {skill:s.skill,attempts:s.attempts,correct:s.correct,accuracy,label,window_recent_accuracy:recentAccuracy,previous_accuracy:previousAccuracy,trend};
+    return {skill:s.skill,attempts:s.attempts,correct:s.correct,accuracy,label,recent_accuracy:recentAccuracy,previous_accuracy:previousAccuracy,trend};
   }).sort((a,b)=>(a.accuracy??101)-(b.accuracy??101));
   const priorityWeaknesses=skills.filter(s=>s.attempts>=4&&s.accuracy!=null&&s.accuracy<60);
   let label='Not enough data';
@@ -160,25 +133,9 @@ function learningRating(attempts, allTimeAttempts=attempts) {
   }
   const recent=attempts.filter(a=>Date.now()-new Date(a.created_at).getTime()<=14*DAY_MS);
   const previous=attempts.filter(a=>{const age=Date.now()-new Date(a.created_at).getTime();return age>14*DAY_MS&&age<=28*DAY_MS;});
-  const windowRecentAccuracy=pct(recent.filter(a=>a.is_correct).length,recent.length);
+  const recentAccuracy=pct(recent.filter(a=>a.is_correct).length,recent.length);
   const previousAccuracy=pct(previous.filter(a=>a.is_correct).length,previous.length);
-  return {
-    label,
-    accuracy:overall,
-    period_accuracy:overall,
-    attempts:total,
-    correct,
-    skills,
-    priority_weaknesses:priorityWeaknesses,
-    recent_accuracy:current.accuracy,
-    recent_count:current.count,
-    all_time_accuracy:allTimeAccuracy,
-    all_time_attempts:allTotal,
-    all_time_correct:allCorrect,
-    window_recent_accuracy:windowRecentAccuracy,
-    previous_accuracy:previousAccuracy,
-    trend:windowRecentAccuracy==null||previousAccuracy==null?null:windowRecentAccuracy-previousAccuracy
-  };
+  return {label,accuracy:overall,attempts:total,correct,skills,priority_weaknesses:priorityWeaknesses,recent_accuracy:recentAccuracy,previous_accuracy:previousAccuracy,trend:recentAccuracy==null||previousAccuracy==null?null:recentAccuracy-previousAccuracy};
 }
 
 function dailyProof(attempts) {
@@ -227,7 +184,7 @@ async function requireTeacher(env,userId,select){
 }
 
 async function canonicalClasses(env,select){
-  const rows=await select(env,'classes','status=eq.active&name=neq.Test&select=id,name,display_name,legacy_class_name,status,sort_order&order=sort_order.asc.nullslast,name.asc');
+  const rows=await select(env,'classes','status=eq.active&select=id,name,display_name,legacy_class_name,status&order=name.asc');
   return Array.isArray(rows)?rows:[];
 }
 
@@ -245,84 +202,17 @@ async function studentsForCanonicalClass(env,select,className){
 
 async function fetchAttempts(env,select,userIds,days){
   if(!userIds.length)return[];
-  const out=[];
-  const since=Number.isFinite(Number(days))?daysAgoIso(Number(days)):null;
+  const since=daysAgoIso(days),out=[];
   for(let i=0;i<userIds.length;i+=60){
     const ids=userIds.slice(i,i+60).join(',');
-    const dateFilter=since?`&created_at=gte.${encodeURIComponent(since)}`:'';
-    const q=`student_id=in.(${ids})${dateFilter}&select=student_id,session_id,book_id,unit_id,skill,response_type,activity_id,stimulus_snapshot,student_answer,correct_answer,is_correct,response_time_ms,hints_used,retry_count,metadata,study_context,created_at&order=created_at.desc`;
+    const q=`student_id=in.(${ids})&created_at=gte.${encodeURIComponent(since)}&select=student_id,session_id,book_id,unit_id,skill,response_type,activity_id,stimulus_snapshot,student_answer,correct_answer,is_correct,response_time_ms,hints_used,retry_count,metadata,study_context,created_at&order=created_at.desc`;
     out.push(...await fetchPaged(select,env,'study_attempts',q));
   }
   return out;
 }
 
-const ARCADE_MODES=['memory_match','matching','listening','multi_choice','listen_and_spell','missing_letter','level_up','word_sentence_mode','full_sentence_mode','phonics_listening','grammar_mode','grammar_fill_gap','grammar_sentence_unscramble','grammar_find_mistake','grammar_sorting','grammar_translation_choice'];
-
-function arcadeName(mode){
-  const map={
-    memory_match:'Memory Match',matching:'Matching',listening:'Listening',multi_choice:'Multiple Choice',
-    listen_and_spell:'Listen & Spell',missing_letter:'Missing Letter',level_up:'Level Up',
-    word_sentence_mode:'Word Sentence',full_sentence_mode:'Full Sentence',phonics_listening:'Phonics Listening',
-    grammar_mode:'Grammar',grammar_fill_gap:'Grammar Fill Gap',grammar_sentence_unscramble:'Grammar Unscramble',
-    grammar_find_mistake:'Find the Mistake',grammar_sorting:'Grammar Sorting',grammar_translation_choice:'Translation Choice'
-  };
-  return map[mode]||String(mode||'Arcade').replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
-}
-
-async function fetchArcadeSessions(env,select,userIds,days){
-  if(!userIds.length)return[];
-  const since=daysAgoIso(days),out=[];
-  for(let i=0;i<userIds.length;i+=80){
-    const ids=userIds.slice(i,i+80).join(',');
-    const q=`user_id=in.(${ids})&mode=in.(${ARCADE_MODES.join(',')})&ended_at=gte.${encodeURIComponent(since)}&ended_at=not.is.null&select=user_id,session_id,mode,list_name,started_at,ended_at,summary&order=ended_at.desc`;
-    out.push(...await fetchPaged(select,env,'progress_sessions',q));
-  }
-  return out;
-}
-
-const PUZZLE_MODES=['wordsearch','boggle','crossword','mixmatch'];
-
-function puzzleName(mode){
-  return mode==='wordsearch'?'Word Search':mode==='boggle'?'Boggle':mode==='crossword'?'Crossword':mode==='mixmatch'?'Mix & Match':String(mode||'Puzzle');
-}
-
-async function fetchPuzzleSessions(env,select,userIds,days){
-  if(!userIds.length)return[];
-  const since=daysAgoIso(days),out=[];
-  for(let i=0;i<userIds.length;i+=80){
-    const ids=userIds.slice(i,i+80).join(',');
-    const q=`user_id=in.(${ids})&mode=in.(${PUZZLE_MODES.join(',')})&ended_at=gte.${encodeURIComponent(since)}&ended_at=not.is.null&select=user_id,session_id,mode,list_name,list_size,started_at,ended_at,summary&order=ended_at.desc`;
-    out.push(...await fetchPaged(select,env,'progress_sessions',q));
-  }
-  return out;
-}
-
-function puzzleSummary(rows){
-  const counts=Object.fromEntries(PUZZLE_MODES.map(mode=>[mode,0]));
-  (rows||[]).forEach(r=>{if(counts[r.mode]!=null)counts[r.mode]++;});
-  const breakdown=PUZZLE_MODES.map(mode=>({mode,name:puzzleName(mode),count:counts[mode]}))
-    .sort((a,b)=>b.count-a.count||a.name.localeCompare(b.name));
-  const last=(rows||[])[0]||null;
-  return {
-    total:(rows||[]).length,
-    breakdown,
-    last_puzzle:last?{mode:last.mode,name:puzzleName(last.mode),ended_at:last.ended_at}:null
-  };
-}
-
-async function fetchLearningAttempts(env,select,userIds){
-  if(!userIds.length)return[];
-  const out=[];
-  for(let i=0;i<userIds.length;i+=60){
-    const ids=userIds.slice(i,i+60).join(',');
-    const q=`student_id=in.(${ids})&select=student_id,session_id,skill,response_type,activity_id,is_correct,metadata,created_at&order=created_at.desc`;
-    out.push(...await fetchPaged(select,env,'study_attempts',q,1000,60));
-  }
-  return out;
-}
-
-function studentInsight(profile,attempts,includeDetail=false,allTimeAttempts=attempts){
-  const habits=habitRating(attempts),learning=learningRating(attempts,allTimeAttempts),proof=dailyProof(attempts);
+function studentInsight(profile,attempts,includeDetail=false){
+  const habits=habitRating(attempts),learning=learningRating(attempts),proof=dailyProof(attempts);
   const wrong=attempts.filter(a=>!a.is_correct).slice(0,includeDetail?24:6).map(mistakeEvidence);
   return {
     user_id:profile.id,name:profile.name||profile.username||'Student',korean_name:profile.korean_name||null,class:profile.class||null,
@@ -351,61 +241,14 @@ export async function handleTeacherInsights({request,env,userId,section,origin,j
     return jsonResponse({success:true,classes},200,origin,30);
   }
 
-  if(section==='teacher_classes_overview'){
-    const canonical=await canonicalClasses(env,supabaseSelect);
-    const classIds=canonical.map(x=>x.id).filter(Boolean);
-    let enrollments=[];
-    if(classIds.length)enrollments=await supabaseSelect(env,'class_enrollments',`class_id=in.(${classIds.join(',')})&status=eq.active&select=class_id,student_id`);
-    const studentToClass=new Map(),classToStudents=new Map();
-    (enrollments||[]).forEach(r=>{
-      if(!r.student_id||!r.class_id)return;
-      studentToClass.set(r.student_id,r.class_id);
-      if(!classToStudents.has(r.class_id))classToStudents.set(r.class_id,[]);
-      classToStudents.get(r.class_id).push(r.student_id);
-    });
-    const ids=[...new Set((enrollments||[]).map(r=>r.student_id).filter(Boolean))];
-    let profiles=[];
-    if(ids.length)profiles=await supabaseSelect(env,'profiles',`id=in.(${ids.join(',')})&role=eq.student&approved=eq.true&select=id,name,username,korean_name,class`);
-    const attempts=await fetchAttempts(env,supabaseSelect,ids,days);
-    const byStudent=new Map();
-    attempts.forEach(a=>{if(!byStudent.has(a.student_id))byStudent.set(a.student_id,[]);byStudent.get(a.student_id).push(a);});
-    const profileMap=new Map((profiles||[]).map(p=>[p.id,p]));
-    const classes=canonical.map(cls=>{
-      const sids=[...new Set(classToStudents.get(cls.id)||[])];
-      const students=sids.map(id=>profileMap.get(id)).filter(Boolean).map(p=>studentInsight({...p,class:cls.display_name||cls.name},byStudent.get(p.id)||[],false,byStudent.get(p.id)||[]));
-      const classAttempts=sids.flatMap(id=>byStudent.get(id)||[]);
-      const correct=classAttempts.filter(a=>a.is_correct).length;
-      return {
-        id:cls.id,
-        name:cls.display_name||cls.name,
-        student_count:students.length,
-        summary:{
-          students:students.length,
-          active_students:students.filter(s=>s.habits.active_days_period>0).length,
-          needs_learning_attention:students.filter(s=>s.learning.label==='Needs attention').length,
-          needs_habit_attention:students.filter(s=>s.habits.label==='Needs attention').length,
-          attempts:classAttempts.length,
-          accuracy:pct(correct,classAttempts.length)
-        }
-      };
-    });
-    return jsonResponse({success:true,days,classes},200,origin,20);
-  }
-
   if(section==='teacher_class_insights'){
     const className=String(url.searchParams.get('class')||'').trim();
     if(!className)return jsonResponse({success:false,error:'Missing class'},400,origin,0);
     const resolved=await studentsForCanonicalClass(env,supabaseSelect,className);
     if(!resolved.classRow)return jsonResponse({success:false,error:'Class not found'},404,origin,0);
-    const profiles=resolved.students,ids=profiles.map(p=>p.id);
-    const [attempts,allTimeAttempts]=await Promise.all([
-      fetchAttempts(env,supabaseSelect,ids,days),
-      fetchLearningAttempts(env,supabaseSelect,ids)
-    ]);
-    const byStudent=new Map(),allByStudent=new Map();
-    attempts.forEach(a=>{if(!byStudent.has(a.student_id))byStudent.set(a.student_id,[]);byStudent.get(a.student_id).push(a);});
-    allTimeAttempts.forEach(a=>{if(!allByStudent.has(a.student_id))allByStudent.set(a.student_id,[]);allByStudent.get(a.student_id).push(a);});
-    const students=profiles.map(p=>studentInsight(p,byStudent.get(p.id)||[],false,allByStudent.get(p.id)||[]));
+    const profiles=resolved.students,ids=profiles.map(p=>p.id),attempts=await fetchAttempts(env,supabaseSelect,ids,days);
+    const byStudent=new Map();attempts.forEach(a=>{if(!byStudent.has(a.student_id))byStudent.set(a.student_id,[]);byStudent.get(a.student_id).push(a);});
+    const students=profiles.map(p=>studentInsight(p,byStudent.get(p.id)||[],false));
     const total=attempts.length,correct=attempts.filter(a=>a.is_correct).length;
     const canonicalName=resolved.classRow.display_name||resolved.classRow.name;
     return jsonResponse({success:true,class:canonicalName,days,summary:{students:students.length,active_students:students.filter(s=>s.habits.active_days_period>0).length,needs_learning_attention:students.filter(s=>s.learning.label==='Needs attention').length,needs_habit_attention:students.filter(s=>s.habits.label==='Needs attention').length,attempts:total,accuracy:pct(correct,total)},students},200,origin,20);
@@ -416,61 +259,8 @@ export async function handleTeacherInsights({request,env,userId,section,origin,j
     if(!studentId)return jsonResponse({success:false,error:'Missing student_id'},400,origin,0);
     const rows=await supabaseSelect(env,'profiles',`id=eq.${encodeURIComponent(studentId)}&role=eq.student&select=id,name,username,korean_name,class`),profile=rows&&rows[0];
     if(!profile)return jsonResponse({success:false,error:'Student not found'},404,origin,0);
-    const [attempts,allTimeAttempts,puzzleRows]=await Promise.all([
-      fetchAttempts(env,supabaseSelect,[studentId],days),
-      fetchLearningAttempts(env,supabaseSelect,[studentId]),
-      fetchPuzzleSessions(env,supabaseSelect,[studentId],days)
-    ]);
-    const student=studentInsight(profile,attempts,true,allTimeAttempts);
-    student.puzzles=puzzleSummary(puzzleRows);
-    return jsonResponse({success:true,days,student},200,origin,10);
-  }
-
-  if(section==='teacher_arcade_insights'){
-    const profiles=await supabaseSelect(env,'profiles','role=eq.student&approved=eq.true&select=id,name,username,korean_name,class');
-    const filtered=(profiles||[]).filter(p=>(!p.username||String(p.username).length>1)&&String(p.class||'').trim().toLowerCase()!=='test');
-    const ids=filtered.map(p=>p.id).filter(Boolean);
-    const sessions=await fetchArcadeSessions(env,supabaseSelect,ids,days);
-    const profileMap=new Map(filtered.map(p=>[p.id,p]));
-    const byMode=new Map(),students=new Set();
-    sessions.forEach(s=>{byMode.set(s.mode,(byMode.get(s.mode)||0)+1);students.add(s.user_id);});
-    const modes=[...byMode.entries()].map(([mode,count])=>({mode,name:arcadeName(mode),count})).sort((a,b)=>b.count-a.count||a.name.localeCompare(b.name));
-    const recent=sessions.slice(0,30).map(s=>{const p=profileMap.get(s.user_id)||{};return{student_id:s.user_id,name:p.name||p.username||'Student',class:p.class||null,mode:s.mode,mode_name:arcadeName(s.mode),list_name:s.list_name||null,ended_at:s.ended_at};});
-    const today=todayKey();
-    const todayPlays=sessions.filter(s=>dateKey(s.ended_at)===today).length;
-    return jsonResponse({success:true,days,total_plays:sessions.length,unique_students:students.size,today_plays:todayPlays,modes,recent},200,origin,20);
-  }
-
-  if(section==='teacher_puzzle_insights'){
-    const className=String(url.searchParams.get('class')||'').trim();
-    let profiles=[];
-    if(className){
-      const resolved=await studentsForCanonicalClass(env,supabaseSelect,className);
-      if(!resolved.classRow)return jsonResponse({success:false,error:'Class not found'},404,origin,0);
-      profiles=resolved.students;
-    }else{
-      profiles=await supabaseSelect(env,'profiles','role=eq.student&approved=eq.true&select=id,name,username,korean_name,class');
-      profiles=(profiles||[]).filter(p=>(!p.username||String(p.username).length>1)&&String(p.class||'').toLowerCase()!=='test');
-    }
-    const ids=profiles.map(p=>p.id).filter(Boolean);
-    const sessions=await fetchPuzzleSessions(env,supabaseSelect,ids,days);
-    const profileMap=new Map(profiles.map(p=>[p.id,p]));
-    const byMode=Object.fromEntries(PUZZLE_MODES.map(mode=>[mode,0]));
-    const byStudent=new Map(),byClass=new Map(),byDate=new Map();
-    sessions.forEach(s=>{
-      if(byMode[s.mode]!=null)byMode[s.mode]++;
-      byStudent.set(s.user_id,(byStudent.get(s.user_id)||0)+1);
-      const p=profileMap.get(s.user_id),cls=p?.class||'Unknown';
-      byClass.set(cls,(byClass.get(cls)||0)+1);
-      const dk=dateKey(s.ended_at);if(dk)byDate.set(dk,(byDate.get(dk)||0)+1);
-    });
-    const breakdown=PUZZLE_MODES.map(mode=>({mode,name:puzzleName(mode),count:byMode[mode]}))
-      .sort((a,b)=>b.count-a.count||a.name.localeCompare(b.name));
-    const students=[...byStudent.entries()].map(([id,count])=>{const p=profileMap.get(id)||{};return{student_id:id,name:p.name||p.username||'Student',class:p.class||null,count};})
-      .sort((a,b)=>b.count-a.count||a.name.localeCompare(b.name));
-    const classes=[...byClass.entries()].map(([name,count])=>({name,count})).sort((a,b)=>b.count-a.count||a.name.localeCompare(b.name));
-    const trend=[...byDate.entries()].map(([date,count])=>({date,count})).sort((a,b)=>a.date.localeCompare(b.date));
-    return jsonResponse({success:true,days,class:className||null,total_plays:sessions.length,unique_students:byStudent.size,breakdown,students,classes,trend},200,origin,15);
+    const attempts=await fetchAttempts(env,supabaseSelect,[studentId],days);
+    return jsonResponse({success:true,days,student:studentInsight(profile,attempts,true)},200,origin,10);
   }
 
   return jsonResponse({success:false,error:'Unknown teacher insights section'},400,origin,0);

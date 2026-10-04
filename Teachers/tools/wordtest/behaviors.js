@@ -1,4 +1,4 @@
-import { maskWordPairs as fallbackMaskWordPairs, hideRandomLetters as fallbackHideRandomLetters } from './fallbacks.js?v=20260923-imgstate2';
+import { maskWordPairs as fallbackMaskWordPairs, hideRandomLetters as fallbackHideRandomLetters } from './fallbacks.js';
 
 // Overridable behaviors used across modules
 let _maskWordPairs = fallbackMaskWordPairs;

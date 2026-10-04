@@ -57,3 +57,26 @@
   color:var(--card-accent-dark,#b52e68);
 }
 .stop-stat{color:var(--card-accent-dark,#b52e68)}
+
+
+/* Paper theme: warm off-white cards and muted maroon progress accents. */
+html[data-test-prep-theme="paper"] .exam-card,
+html[data-test-prep-theme="paper"] .exam-card:nth-of-type(even),
+html[data-test-prep-theme="paper"] .tile,
+html[data-test-prep-theme="paper"] .tile:nth-child(3n+2),
+html[data-test-prep-theme="paper"] .tile:nth-child(3n),
+html[data-test-prep-theme="paper"] .journey,
+html[data-test-prep-theme="paper"] .review-panel,
+html[data-test-prep-theme="paper"] .screen>.question-card,
+html[data-test-prep-theme="paper"] .screen>.card{
+  background:var(--card)!important;
+}
+html[data-test-prep-theme="paper"] .exam-meta .pill,
+html[data-test-prep-theme="paper"] .stat-pill,
+html[data-test-prep-theme="paper"] .station{
+  background:color-mix(in srgb,var(--card) 94%,white 6%)!important;
+}
+html[data-test-prep-theme="paper"] .exam-card .ring,
+html[data-test-prep-theme="paper"] .tile .ring{
+  background:conic-gradient(var(--card-accent,#b85f78) var(--p),var(--track) 0)!important;
+}

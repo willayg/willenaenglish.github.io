@@ -1,7 +1,7 @@
 // Canonical 본문외우기 workflow for Test Prep V2.
 // Loads sentence-level items from the content DB, shows the Korean target,
 // and tracks the exact canonical sentence id used by shared stats.
-import {startSession,recordAttempt,completeSession} from './tracking-client.js?v=2.17a';
+import {startSession,recordAttempt,completeSession} from './tracking-client.js?v=2.17t';
 
 const CONTENT='https://gxwfsqxyuufqtitspfqg.supabase.co';
 const KEY=['sb_publishable_','G-FYhHfDL4OGdL892gY1Zg_','epdbEeqO'].join('');

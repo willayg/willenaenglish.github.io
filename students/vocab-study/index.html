@@ -14,19 +14,33 @@
 <link rel="stylesheet" href="/students/study/study-overrides.css?v=20260808-1">
 <link rel="stylesheet" href="/students/study-v2/v2.css?v=20260814-daily1">
 <link rel="stylesheet" href="/students/shared/willena-keyboard-safe.css?v=1.0.0">
-<link rel="stylesheet" href="./vocab-study.css?v=20260926-v0099">
+<link rel="stylesheet" href="./vocab-study.css?v=20260927-v0100">
+<link rel="stylesheet" href="./theme-pips.css?v=20260927-v0005">
 <script src="/students/api-gateway.js?v=20260926-progress-summary-cf1"></script>
 <script src="/students/study/study-progress.js?v=20260926-assignment-canonical1"></script>
 <script src="/js/api-config.js?v=20260926-reverted-auth1"></script>
 <script src="./auth-guard.js?v=20260925-v0004"></script>
-<script type="module" src="/students/components/student-header.js?v=20260926-pointfeedback1"></script>
+<script type="module" src="/students/components/student-header.js?v=20260927-vocabtheme1"></script>
 <script type="module" src="/students/components/student-reward-celebration.js?v=20260926-v0005"></script>
 </head>
 <body>
 <div class="study-app">
   <student-header title="단어 지니어스" show-id="false" show-home="false" show-points="true" show-logout="true"></student-header>
+  <div id="vocabThemeDock" class="vocab-theme-dock" role="group" aria-label="색상 테마">
+    <button type="button" class="vocab-theme-pip" data-theme="cyan" aria-label="Cyan 테마" title="Cyan" aria-pressed="false"></button>
+    <button type="button" class="vocab-theme-pip" data-theme="sunbeam" aria-label="Sunbeam 테마" title="Sunbeam" aria-pressed="false"></button>
+    <button type="button" class="vocab-theme-pip" data-theme="pink" aria-label="Pink 테마" title="Pink" aria-pressed="false"></button>
+    <button type="button" class="vocab-theme-pip" data-theme="paper" aria-label="Paper 테마" title="Paper" aria-pressed="false"></button>
+    <button type="button" class="vocab-theme-pip" data-theme="dark" aria-label="Dark 테마" title="Dark" aria-pressed="false"></button>
+    <button type="button" class="vocab-theme-pip" data-theme="cyberpunk" aria-label="Cyberpunk 테마" title="Cyberpunk" aria-pressed="false"></button>
+  </div>
 
   <main class="vocab-page">
+    <section id="vocabStartupError" hidden role="alert" style="padding:20px;margin-bottom:16px;border:3px solid #efb7d4;border-radius:20px;background:#fff;color:#214951">
+      <strong>앱을 불러오지 못했어요.</strong>
+      <p data-startup-message style="overflow-wrap:anywhere"></p>
+      <button type="button" onclick="location.reload()">다시 불러오기</button>
+    </section>
     <section id="vocabFrontMenu" class="vocab-front-menu">
       <section id="vocabAdminPicker" class="vocab-admin" hidden>
         <span class="eyebrow">ADMIN PREVIEW</span>
@@ -58,15 +72,15 @@
 
       <section id="vocabFrontAchievements" class="vocab-front-achievements" hidden aria-label="Vocabulary achievements">
         <div class="vocab-front-achievement">
-          <img src="/shared/svgs/streak.svg" alt="" aria-hidden="true">
-          <div><strong id="vocabFrontStreakCurrent">0</strong><small>day streak</small></div>
+          <img src="/shared/svgs/streak.svg?v=20260927-icons1" alt="" aria-hidden="true">
+          <div><strong id="vocabFrontStreakCurrent">0</strong><small>연속 학습</small></div>
         </div>
         <div class="vocab-front-achievement">
-          <img src="/shared/svgs/best-streak.svg" alt="" aria-hidden="true">
-          <div><strong id="vocabFrontStreakBest">0</strong><small>best streak</small></div>
+          <img src="/shared/svgs/best-streak.svg?v=20260927-icons1" alt="" aria-hidden="true">
+          <div><strong id="vocabFrontStreakBest">0</strong><small>최고 연속</small></div>
         </div>
         <div class="vocab-front-achievement vocab-front-achievement-gold">
-          <img src="/shared/svgs/golden-unit.svg" alt="" aria-hidden="true">
+          <img src="/shared/svgs/golden-unit.svg?v=20260927-icons1" alt="" aria-hidden="true">
           <div><strong id="vocabFrontGoldenCount">0</strong><small>gold units</small></div>
         </div>
       </section>
@@ -124,15 +138,15 @@
 
       <section id="vocabMotivation" class="vocab-motivation vocab-achievements" hidden aria-label="Vocabulary achievements">
         <div class="vocab-motivation-stat">
-          <img class="vocab-motivation-icon" src="/shared/svgs/streak.svg" alt="" aria-hidden="true">
-          <div><strong id="vocabStreakCurrent">0</strong><small>day streak</small></div>
+          <img class="vocab-motivation-icon" src="/shared/svgs/streak.svg?v=20260927-icons1" alt="" aria-hidden="true">
+          <div><strong id="vocabStreakCurrent">0</strong><small>연속 학습</small></div>
         </div>
         <div class="vocab-motivation-stat">
-          <img class="vocab-motivation-icon" src="/shared/svgs/best-streak.svg" alt="" aria-hidden="true">
-          <div><strong id="vocabStreakBest">0</strong><small>best streak</small></div>
+          <img class="vocab-motivation-icon" src="/shared/svgs/best-streak.svg?v=20260927-icons1" alt="" aria-hidden="true">
+          <div><strong id="vocabStreakBest">0</strong><small>최고 연속</small></div>
         </div>
         <div class="vocab-motivation-stat vocab-motivation-gold">
-          <img class="vocab-motivation-icon" src="/shared/svgs/golden-unit.svg" alt="" aria-hidden="true">
+          <img class="vocab-motivation-icon" src="/shared/svgs/golden-unit.svg?v=20260927-icons1" alt="" aria-hidden="true">
           <div><strong id="vocabGoldenCount">0</strong><small>gold units</small></div>
         </div>
       </section>
@@ -170,7 +184,7 @@
       </section>
     </section>
 
-    <div class="vocab-version">v0.099</div>
+    <div class="vocab-version">v1.00</div>
   </main>
 
   <section id="vocabLoading" class="vocab-loading" hidden aria-hidden="true" aria-live="polite">
@@ -225,6 +239,15 @@
 </div>
 
 <script src="/students/study/study-question-bank.js?v=20260822-conversationfix1"></script>
-<script type="module" src="./vocab-study.js?v=20260926-v0099"></script>
+<script type="module" src="./theme-pips.js?v=20260927-v0001"></script>
+<script type="module">
+import('./vocab-study.js?v=20260927-v0108').catch(error=>{
+  console.error('[Vocab Study] module load',error);
+  const panel=document.getElementById('vocabStartupError');
+  if(panel){panel.hidden=false;panel.querySelector('[data-startup-message]').textContent=error?.message||'Please refresh and try again.';}
+  const loader=document.getElementById('vocabLoading');
+  if(loader){loader.hidden=true;loader.setAttribute('aria-hidden','true');}
+});
+</script>
 </body>
 </html>

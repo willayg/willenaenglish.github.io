@@ -322,6 +322,27 @@ function normalizeGlobalCachePayload(payload) {
   return null;
 }
 
+async function fetchCompactLeaderboard(adminClient, { className = null, timeframe = 'all', userId = null, topN = 15 } = {}) {
+  const { data, error } = await adminClient.rpc('progress_leaderboard_compact_v1', {
+    p_class: className,
+    p_timeframe: timeframe,
+    p_user_id: userId,
+    p_top_n: topN
+  });
+  if (error) throw error;
+  return (Array.isArray(data) ? data : []).map(row => ({
+    user_id: row.user_id,
+    name: row.name || row.username || 'Student',
+    avatar: row.avatar || null,
+    class: row.class_name || className || null,
+    points: Number(row.total_points) || 0,
+    stars: Number(row.total_stars) || 0,
+    superScore: Number(row.super_score) || 0,
+    rank: Number(row.rank) || null,
+    self: row.user_id === userId
+  }));
+}
+
 function formatClassLeaderboardResponse(payload, userId) {
   const leaderboard = Array.isArray(payload?.leaderboard) ? payload.leaderboard : [];
   const condensed = leaderboard.slice(0, 5).map(entry => ({ ...entry, self: entry.user_id === userId }));
@@ -470,6 +491,21 @@ exports.handler = async (event) => {
         // Exclude single-letter class names (test profiles)
         if (className.length === 1) return json(200, { success: true, leaderboard: [], class: null });
 
+        const forceLegacyLeaderboard = !!(event.queryStringParameters && event.queryStringParameters.legacy_leaderboard === '1');
+        if (!forceLegacyLeaderboard) {
+          try {
+            const leaderboard = await fetchCompactLeaderboard(adminClient, {
+              className,
+              timeframe: 'all',
+              userId,
+              topN: 5
+            });
+            return json(200, { success: true, class: className, leaderboard });
+          } catch (e) {
+            console.warn('[progress_summary] leaderboard_class compact RPC failed; using legacy fallback:', e && e.message);
+          }
+        }
+
         const { data: classmates, error: clsErr } = await adminClient
           .from('profiles')
           .select('id, name, username, avatar')
@@ -544,6 +580,27 @@ exports.handler = async (event) => {
         const className = meProf.class || null;
         if (!className) return timedJsonNoCache(200, { success: true, leaderboard: [], class: null }, startMs);
         if (className.length === 1) return timedJsonNoCache(200, { success: true, leaderboard: [], class: null }, startMs);
+
+        const forceLegacyLeaderboard = !!(event.queryStringParameters && event.queryStringParameters.legacy_leaderboard === '1');
+        if (!forceLegacyLeaderboard) {
+          try {
+            const leaderboard = await fetchCompactLeaderboard(adminClient, {
+              className,
+              timeframe,
+              userId,
+              topN: 5
+            });
+            return timedJsonNoCache(200, {
+              success: true,
+              class: className,
+              timeframe,
+              cached_at: new Date().toISOString(),
+              leaderboard
+            }, startMs);
+          } catch (e) {
+            console.warn('[progress_summary] leaderboard_stars_class compact RPC failed; using legacy fallback:', e && e.message);
+          }
+        }
 
         const cacheKey = classLeaderboardCacheKey(className, timeframe);
         // Skip cache if bypass_cache=1 is passed (admin/testing use)
@@ -657,6 +714,26 @@ exports.handler = async (event) => {
         const bypassCache = event.queryStringParameters && (event.queryStringParameters.bypass_cache === '1' || event.queryStringParameters.bypass_cache === 'true');
         const firstOfMonthIso = timeframe === 'month' ? getMonthStartIso() : null;
         const cacheKey = globalLeaderboardCacheKey(timeframe);
+        const forceLegacyLeaderboard = !!(event.queryStringParameters && event.queryStringParameters.legacy_leaderboard === '1');
+
+        if (!forceLegacyLeaderboard) {
+          try {
+            const leaderboard = await fetchCompactLeaderboard(adminClient, {
+              className: null,
+              timeframe,
+              userId,
+              topN: 15
+            });
+            return json(200, {
+              success: true,
+              timeframe,
+              cached_at: new Date().toISOString(),
+              leaderboard
+            });
+          } catch (e) {
+            console.warn('[progress_summary] leaderboard_stars_global compact RPC failed; using legacy fallback:', e && e.message);
+          }
+        }
 
         // Skip cache if bypass_cache=1 is passed (admin/testing use)
         if (!bypassCache) {
@@ -830,6 +907,21 @@ exports.handler = async (event) => {
     // ---------- GLOBAL LEADERBOARD ----------
     if (section === 'leaderboard_global') {
       try {
+        const forceLegacyLeaderboard = !!(event.queryStringParameters && event.queryStringParameters.legacy_leaderboard === '1');
+        if (!forceLegacyLeaderboard) {
+          try {
+            const leaderboard = await fetchCompactLeaderboard(adminClient, {
+              className: null,
+              timeframe: 'all',
+              userId,
+              topN: 5
+            });
+            return json(200, { success: true, leaderboard });
+          } catch (e) {
+            console.warn('[progress_summary] leaderboard_global compact RPC failed; using legacy fallback:', e && e.message);
+          }
+        }
+
         // Prefer DB cache for global leaderboard points (fast path in production)
         try {
           const { data: dbCache, error: dbErr } = await adminClient
@@ -897,6 +989,27 @@ exports.handler = async (event) => {
 
     // ---------- KPI ----------
     if (section === 'kpi') {
+      const forceLegacyKpi = !!(event.queryStringParameters && event.queryStringParameters.legacy_kpi === '1');
+      if (!forceLegacyKpi) {
+        try {
+          const { data: snapshot, error: snapshotErr } = await adminClient
+            .from('student_progress_snapshot_v1')
+            .select('attempts, accuracy, best_streak')
+            .eq('user_id', userId)
+            .maybeSingle();
+          if (snapshotErr) throw snapshotErr;
+          if (snapshot) {
+            return json(200, {
+              attempts: Number(snapshot.attempts) || 0,
+              accuracy: snapshot.accuracy == null ? null : Number(snapshot.accuracy),
+              best_streak: Number(snapshot.best_streak) || 0
+            });
+          }
+        } catch (e) {
+          console.warn('[progress_summary] kpi snapshot path failed; using legacy fallback:', e && e.message);
+        }
+      }
+
       const { data: attempts, error: e1 } = await scope(
         supabase
           .from('progress_attempts')
@@ -905,8 +1018,8 @@ exports.handler = async (event) => {
 
       if (e1) return json(400, { error: e1.message });
 
-  const attemptsCount = attempts?.length || 0;
-  const correct = attempts?.filter(a => a.is_correct)?.length || 0;
+      const attemptsCount = attempts?.length || 0;
+      const correct = attempts?.filter(a => a.is_correct)?.length || 0;
 
       const { data: ordered, error: e2 } = await scope(
         supabase
@@ -929,6 +1042,27 @@ exports.handler = async (event) => {
 
     // ---------- MODES ----------
     if (section === 'modes') {
+      const forceLegacyModes = !!(event.queryStringParameters && event.queryStringParameters.legacy_modes === '1');
+      if (!forceLegacyModes) {
+        try {
+          const { data: snapshot, error: snapshotErr } = await adminClient
+            .from('student_progress_snapshot_v1')
+            .select('mode_stats')
+            .eq('user_id', userId)
+            .maybeSingle();
+          if (snapshotErr) throw snapshotErr;
+          if (snapshot && Array.isArray(snapshot.mode_stats)) {
+            return json(200, snapshot.mode_stats.map(row => ({
+              mode: row.mode || 'unknown',
+              correct: Number(row.correct) || 0,
+              total: Number(row.total) || 0
+            })));
+          }
+        } catch (e) {
+          console.warn('[progress_summary] modes snapshot path failed; using legacy fallback:', e && e.message);
+        }
+      }
+
       const { data, error } = await scope(
         supabase
           .from('progress_attempts')
@@ -950,6 +1084,21 @@ exports.handler = async (event) => {
     // ---------- SESSIONS ----------
     if (section === 'sessions') {
       const list_name = (event.queryStringParameters && event.queryStringParameters.list_name) || null;
+      const forceLegacySessions = !!(event.queryStringParameters && event.queryStringParameters.legacy_sessions === '1');
+
+      if (!forceLegacySessions) {
+        try {
+          const { data: sessionRows, error: sessionRpcErr } = await adminClient.rpc(
+            'progress_summary_sessions_v1',
+            { p_user_id: userId, p_list_name: list_name }
+          );
+          if (sessionRpcErr) throw sessionRpcErr;
+          if (Array.isArray(sessionRows)) return json(200, sessionRows);
+        } catch (e) {
+          console.warn('[progress_summary] sessions RPC path failed; using legacy fallback:', e && e.message);
+        }
+      }
+
       let query = scope(
         supabase
           .from('progress_sessions')
@@ -1055,6 +1204,29 @@ exports.handler = async (event) => {
 
     // ---------- BADGES ----------
     if (section === 'badges') {
+      const forceLegacyBadges = !!(event.queryStringParameters && event.queryStringParameters.legacy_badges === '1');
+      if (!forceLegacyBadges) {
+        try {
+          const { data: snapshot, error: snapshotErr } = await adminClient
+            .from('student_progress_snapshot_v1')
+            .select('badge_ids')
+            .eq('user_id', userId)
+            .maybeSingle();
+          if (snapshotErr) throw snapshotErr;
+          if (snapshot && Array.isArray(snapshot.badge_ids)) {
+            const catalog = {
+              first_correct: { id: 'first_correct', name: 'First Steps', emoji: '🥇' },
+              streak_5: { id: 'streak_5', name: 'Hot Streak', emoji: '🔥' },
+              hundred_correct: { id: 'hundred_correct', name: 'Century', emoji: '💯' },
+              perfect_round: { id: 'perfect_round', name: 'Perfectionist', emoji: '🌟' }
+            };
+            return json(200, snapshot.badge_ids.map(id => catalog[id]).filter(Boolean));
+          }
+        } catch (e) {
+          console.warn('[progress_summary] badges snapshot path failed; using legacy fallback:', e && e.message);
+        }
+      }
+
       const [{ data: attempts, error: eA }, { data: sessions, error: eS }] = await Promise.all([
         scope(supabase.from('progress_attempts').select('is_correct, created_at')),
         scope(supabase.from('progress_sessions').select('summary'))
@@ -1099,6 +1271,105 @@ exports.handler = async (event) => {
     // ---------- OVERVIEW ----------
     if (section === 'overview') {
       const debugFlag = (event.queryStringParameters && event.queryStringParameters.debug) ? true : false;
+      const forceLegacyOverview = !!(event.queryStringParameters && (
+        event.queryStringParameters.legacy_overview === '1' ||
+        event.queryStringParameters.raw_overview === '1'
+      ));
+
+      // P2: snapshot-first overview. Preserve the legacy implementation below as an
+      // automatic fallback and as an explicit rollback path via ?legacy_overview=1.
+      if (!forceLegacyOverview) {
+        try {
+          const snapshotSelect = 'attempts, correct, accuracy, points, best_streak, lists_explored, perfect_runs, mastered, mastered_lists, words_discovered, words_mastered, sessions_played, stars, badges_count, favorite_list, hardest_word, last_activity, source_attempt_rows, source_session_rows, snapshot_version, updated_at';
+          let { data: snapshot, error: snapshotErr } = await adminClient
+            .from('student_progress_snapshot_v1')
+            .select(snapshotSelect)
+            .eq('user_id', userId)
+            .maybeSingle();
+
+          if (snapshotErr) throw snapshotErr;
+
+          // Cheap freshness check: only fetch the newest timestamps, never history.
+          const [{ data: latestAttempt, error: latestAttemptErr }, { data: latestSession, error: latestSessionErr }] = await Promise.all([
+            adminClient
+              .from('progress_attempts')
+              .select('created_at')
+              .eq('user_id', userId)
+              .order('created_at', { ascending: false })
+              .limit(1)
+              .maybeSingle(),
+            adminClient
+              .from('progress_sessions')
+              .select('started_at, ended_at')
+              .eq('user_id', userId)
+              .order('started_at', { ascending: false })
+              .limit(1)
+              .maybeSingle()
+          ]);
+
+          if (latestAttemptErr) throw latestAttemptErr;
+          if (latestSessionErr) throw latestSessionErr;
+
+          const latestAttemptTs = latestAttempt?.created_at ? new Date(latestAttempt.created_at).getTime() : 0;
+          const latestSessionTs = Math.max(
+            latestSession?.started_at ? new Date(latestSession.started_at).getTime() : 0,
+            latestSession?.ended_at ? new Date(latestSession.ended_at).getTime() : 0
+          );
+          const latestRawTs = Math.max(latestAttemptTs, latestSessionTs);
+          const snapshotActivityTs = snapshot?.last_activity ? new Date(snapshot.last_activity).getTime() : 0;
+          const needsRefresh = !snapshot || (latestRawTs > snapshotActivityTs);
+
+          if (needsRefresh) {
+            const { data: refreshed, error: refreshErr } = await adminClient.rpc(
+              'refresh_student_progress_snapshot_v1',
+              { p_user_id: userId }
+            );
+            if (refreshErr) throw refreshErr;
+            snapshot = Array.isArray(refreshed) ? refreshed[0] : refreshed;
+          }
+
+          if (snapshot) {
+            // Global points include legacy Arcade points plus Test Prep point events.
+            // Keep this server-side so only one number leaves Supabase.
+            let authoritativePoints = Number(snapshot.points) || 0;
+            try {
+              const { data: pointTotal, error: pointErr } = await adminClient.rpc('sum_points_for_user', { uid: userId });
+              if (!pointErr && Number.isFinite(Number(pointTotal))) authoritativePoints = Number(pointTotal);
+            } catch {}
+            const overviewPayload = {
+              stars: Number(snapshot.stars) || 0,
+              lists_explored: Number(snapshot.lists_explored) || 0,
+              perfect_runs: Number(snapshot.perfect_runs) || 0,
+              mastered: Number(snapshot.mastered) || 0,
+              mastered_lists: Number(snapshot.mastered_lists) || 0,
+              best_streak: Number(snapshot.best_streak) || 0,
+              words_discovered: Number(snapshot.words_discovered) || 0,
+              words_mastered: Number(snapshot.words_mastered) || 0,
+              sessions_played: Number(snapshot.sessions_played) || 0,
+              badges_count: Number(snapshot.badges_count) || 0,
+              favorite_list: snapshot.favorite_list || null,
+              hardest_word: snapshot.hardest_word || null,
+              points: authoritativePoints
+            };
+            if (debugFlag) {
+              overviewPayload.meta = {
+                source: 'student_progress_snapshot_v1',
+                snapshot_version: Number(snapshot.snapshot_version) || 1,
+                snapshot_updated_at: snapshot.updated_at || null,
+                snapshot_last_activity: snapshot.last_activity || null,
+                raw_latest_activity: latestRawTs ? new Date(latestRawTs).toISOString() : null,
+                refreshed: needsRefresh,
+                source_attempt_rows: Number(snapshot.source_attempt_rows) || 0,
+                source_session_rows: Number(snapshot.source_session_rows) || 0
+              };
+            }
+            return json(200, overviewPayload);
+          }
+        } catch (snapshotOverviewErr) {
+          console.warn('[progress_summary] overview snapshot path failed; using legacy fallback:', snapshotOverviewErr && snapshotOverviewErr.message);
+        }
+      }
+
       // First get counts to know how many pages to fetch
       const PAGE = 1000;
       const [{ count: sessCount, error: sessCntErr }, { count: attCount, error: attCntErr }] = await Promise.all([

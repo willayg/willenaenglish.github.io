@@ -41,6 +41,10 @@ function normalize(value){
     .join(' ');
 }
 
+function compact(value){
+  return normalize(value).replace(/\s+/g,'');
+}
+
 function homophoneVariant(a,b){
   const left=normalize(a),right=normalize(b);
   if(!left||!right)return false;
@@ -139,6 +143,10 @@ export function matchSpeakingTarget(target,transcripts){
 
   const exact=heard.find(item=>item.normalized===wanted);
   if(exact)return{correct:true,matchedBy:'exact',transcript:exact.raw};
+
+  const wantedCompact=compact(wanted);
+  const spacing=heard.find(item=>compact(item.normalized)===wantedCompact);
+  if(spacing)return{correct:true,matchedBy:'spacing',transcript:spacing.raw};
 
   const homophone=heard.find(item=>homophoneVariant(item.normalized,wanted));
   if(homophone)return{correct:true,matchedBy:'homophone',transcript:homophone.raw};

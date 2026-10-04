@@ -1,4 +1,4 @@
-import {FORMS,parseCorrection} from './question-types.js?v=20260925-speaking1';
+import {FORMS,parseCorrection} from './question-types.js?v=20260927-startup2';
 
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const display=v=>String(v??'')
@@ -353,8 +353,8 @@ export class QuestionRenderer{
       }
       .speaking-mic-icon{
         width:42px;height:42px;display:block;background:currentColor;
-        -webkit-mask:url('/shared/svgs/mic.svg?v=20260925-1') center/contain no-repeat;
-        mask:url('/shared/svgs/mic.svg?v=20260925-1') center/contain no-repeat
+        -webkit-mask:url('/shared/svgs/mic.svg?v=20260927-icons1') center/contain no-repeat;
+        mask:url('/shared/svgs/mic.svg?v=20260927-icons1') center/contain no-repeat
       }
       .speaking-mic:hover:not(:disabled):not(.is-listening){transform:translateY(-2px);box-shadow:0 14px 32px rgba(37,184,196,.15)}
       .speaking-mic.is-listening{

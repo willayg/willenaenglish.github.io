@@ -1,5 +1,5 @@
-import { state } from './state.js?v=20260923-imgstate2';
-import { waitForPreviewImagesToLoad } from './renderer.js?v=20260923-imgstate2';
+import { state } from './state.js';
+import { waitForPreviewImagesToLoad } from './renderer.js';
 
 const currentSettings = state.currentSettings;
 

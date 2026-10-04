@@ -139,28 +139,19 @@ function safeParseSummary(input) {
 // Derive stars from session summary
 function deriveStars(summary) {
   const s = summary || {};
-  const isWordTestStudy = !!s.assignment_id || s.reward_scheme === 'word-test-study-v1' || Number(s.star_cap) === 10;
+  // Explicit reward stars are authoritative. This is required for activities
+  // such as puzzle gimmes where completion can still be 100% but the star
+  // reward is intentionally reduced.
+  if (typeof s.stars === 'number') return s.stars;
   let acc = null;
-
+  
   if (typeof s.accuracy === 'number') acc = s.accuracy;
-  else if (typeof s.percent === 'number') acc = s.percent / 100;
   else if (typeof s.score === 'number' && typeof s.total === 'number' && s.total > 0) {
     acc = s.score / s.total;
   } else if (typeof s.score === 'number' && typeof s.max === 'number' && s.max > 0) {
     acc = s.score / s.max;
   }
-
-  // Assigned Word Test Study sections are worth up to 10 stars.
-  // Recalculate from saved accuracy so older assignment sessions are upgraded
-  // without backfilling or duplicating reward rows.
-  if (isWordTestStudy) {
-    if (acc !== null) return Math.max(0, Math.min(10, Math.floor(Math.max(0, Math.min(1, acc)) * 10 + 1e-9)));
-    if (typeof s.stars === 'number') return Math.max(0, Math.min(10, Math.floor(s.stars)));
-    return 0;
-  }
-
-  if (typeof s.stars === 'number') return Math.max(0, Math.min(5, Math.floor(s.stars)));
-
+  
   if (acc !== null) {
     if (acc >= 1) return 5;
     if (acc >= 0.95) return 4;
@@ -169,26 +160,36 @@ function deriveStars(summary) {
     if (acc >= 0.60) return 1;
     return 0;
   }
-
   return 0;
 }
 
 // Calculate total stars for users from sessions
 function buildStarsByUserMap(sessions) {
-  const totals = new Map();
-
+  const bestKey = new Map();
+  
   (sessions || []).forEach(sess => {
     if (!sess || !sess.user_id) return;
-
+    const list = (sess.list_name || '').trim();
+    const mode = (sess.mode || '').trim();
+    if (!list || !mode) return;
+    
     const parsed = safeParseSummary(sess.summary);
     if (parsed && parsed.completed === false) return;
-
+    
     const stars = deriveStars(parsed);
     if (stars <= 0) return;
-
-    totals.set(sess.user_id, (totals.get(sess.user_id) || 0) + stars);
+    
+    const composite = `${sess.user_id}||${list}||${mode}`;
+    const prev = bestKey.get(composite) || 0;
+    if (stars > prev) bestKey.set(composite, stars);
   });
-
+  
+  const totals = new Map();
+  bestKey.forEach((value, composite) => {
+    const [uid] = composite.split('||');
+    totals.set(uid, (totals.get(uid) || 0) + value);
+  });
+  
   return totals;
 }
 
@@ -389,17 +390,6 @@ async function setToCache(env, key, data, ttlSeconds) {
     console.error('[progress-summary] Cache write error:', e.message);
   }
 }
-async function invalidateLeaderboardCaches(env) {
-  if (!env.LEADERBOARD_CACHE) return;
-  try {
-    const listed = await env.LEADERBOARD_CACHE.list({ prefix: 'lb:' });
-    const keys = listed?.keys || [];
-    await Promise.all(keys.map(k => env.LEADERBOARD_CACHE.delete(k.name)));
-    await env.LEADERBOARD_CACHE.put('invalidate_ts', Date.now().toString());
-  } catch (e) {
-    console.error('[progress-summary] Cache invalidation error:', e.message);
-  }
-}
 
 export default {
   async fetch(request, env, ctx) {
@@ -457,43 +447,10 @@ export default {
         const payload = body && body.payload;
         if (!payload || typeof payload !== 'object') return jsonResponse({ success:false, error:'Missing study attempt payload' }, 400, origin);
         const result = await supabaseRpc(env, 'record_study_attempt_v1', { p_student_id: userId, p_payload: payload });
-        if (payload.reward_only || Number(payload?.metadata?.points_override || 0) > 0) {
-          ctx.waitUntil(invalidateLeaderboardCaches(env));
-        }
-        return jsonResponse(result, 200, origin);
-      }
-
-      if (section === 'vocab_golden_unit') {
-        if (request.method !== 'POST') return jsonResponse({ error: 'Method Not Allowed' }, 405, origin);
-        const body = await request.json().catch(() => null);
-        const bookId = body && body.book_id;
-        const unitId = body && body.unit_id;
-        const quizTotal = Number(body && body.quiz_total);
-        const spellingTotal = Number(body && body.spelling_total);
-        const speakingTotal = Number(body && body.speaking_total);
-        if (!bookId || !unitId || !Number.isInteger(quizTotal) || !Number.isInteger(spellingTotal) || !Number.isInteger(speakingTotal)) {
-          return jsonResponse({ success:false, error:'book_id, unit_id and eligible totals are required' }, 400, origin);
-        }
-        const result = await supabaseRpc(env, 'award_vocab_golden_unit_v1', {
-          p_student_id: userId,
-          p_book_id: bookId,
-          p_unit_id: unitId,
-          p_quiz_total: quizTotal,
-          p_spelling_total: spellingTotal,
-          p_speaking_total: speakingTotal,
-        });
         return jsonResponse(result, 200, origin);
       }
 
       if (request.method !== 'GET') return jsonResponse({ error: 'Method Not Allowed' }, 405, origin);
-
-      if (section === 'vocab_motivation') {
-        const result = await supabaseRpc(env, 'get_vocab_motivation_snapshot_v1', {
-          p_student_id: userId,
-          p_book_id: url.searchParams.get('book_id') || null,
-        });
-        return jsonResponse(result, 200, origin);
-      }
 
       if (section === 'study_progress') {
         const result = await supabaseRpc(env, 'get_study_progress_v1', {
@@ -509,18 +466,6 @@ export default {
           p_student_id: userId,
           p_book_id: url.searchParams.get('book_id') || null,
           p_unit_id: url.searchParams.get('unit_id') || null,
-        });
-        return jsonResponse(result, 200, origin);
-      }
-
-      if (section === 'study_vocab_snapshot') {
-        const bookId = url.searchParams.get('book_id');
-        const unitId = url.searchParams.get('unit_id');
-        if (!bookId || !unitId) return jsonResponse({ success:false, error:'book_id and unit_id are required' }, 400, origin);
-        const result = await supabaseRpc(env, 'get_student_vocab_unit_snapshot_v1', {
-          p_student_id: userId,
-          p_book_id: bookId,
-          p_unit_id: unitId,
         });
         return jsonResponse(result, 200, origin);
       }
@@ -619,7 +564,20 @@ export default {
             self: entry.user_id === userId,
           }));
 
-          const shaped = lb;
+          let shaped;
+          if (classFilter) {
+            const top = lb.slice(0, 5);
+            const me = lb.find(e => e.user_id === userId);
+            shaped = top;
+            if (me && !top.some(e => e.user_id === me.user_id)) shaped = [...top, me];
+          } else {
+            const topLimit = 15;
+            shaped = lb.slice(0, topLimit);
+            if (userId) {
+              const me = lb.find(e => e.user_id === userId);
+              if (me && !shaped.some(e => e.user_id === me.user_id)) shaped = [...shaped, me];
+            }
+          }
           
           return jsonResponse({
             success: true,
@@ -660,7 +618,20 @@ export default {
           self: entry.user_id === userId,
         }));
 
-        const shaped = withSelf;
+        let shaped;
+        if (classFilter) {
+          const top = withSelf.slice(0, 5);
+          const me = withSelf.find(e => e.user_id === userId);
+          shaped = top;
+          if (me && !top.some(e => e.user_id === me.user_id)) shaped = [...top, me];
+        } else {
+          const topLimit = 15;
+          shaped = withSelf.slice(0, topLimit);
+          if (userId) {
+            const me = withSelf.find(e => e.user_id === userId);
+            if (me && !shaped.some(e => e.user_id === me.user_id)) shaped = [...shaped, me];
+          }
+        }
         
         return jsonResponse({
           success: true,
@@ -708,7 +679,9 @@ export default {
             ...entry,
             self: entry.user_id === userId,
           }));
-          const shaped = withSelf;
+          const top = withSelf.slice(0, 5);
+          const me = withSelf.find(e => e.user_id === userId);
+          const shaped = me && !top.some(e => e.user_id === me.user_id) ? [...top, me] : top;
           
           return jsonResponse({
             success: true,
@@ -745,7 +718,9 @@ export default {
           ...entry,
           self: entry.user_id === userId,
         }));
-        const shaped = withSelf;
+        const top = withSelf.slice(0, 5);
+        const me = withSelf.find(e => e.user_id === userId);
+        const shaped = me && !top.some(e => e.user_id === me.user_id) ? [...top, me] : top;
         
         return jsonResponse({
           success: true,

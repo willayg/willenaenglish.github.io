@@ -1,11 +1,11 @@
-import { loadModules } from './loader.js?v=20260923-imgstate2';
-import { setupEventListeners, setupAIEventListeners } from './events.js?v=20260923-imgstate2';
-import { extractWords } from './word_ops.js?v=20260923-imgstate2';
-import { updatePreview, updatePreviewStyles } from './preview.js?v=20260923-imgstate2';
-import { clearAll } from './worksheet_integration.js?v=20260923-imgstate2';
-import { updateFont, updateFontSize, increaseFontSize, decreaseFontSize, updateImageGap, updateImageSize, updateLayout } from './controls.js?v=20260923-imgstate2';
-import { state } from './state.js?v=20260923-imgstate2';
-import { printFile, generatePDF } from './print.js?v=20260923-imgstate2';
+import { loadModules } from './loader.js';
+import { setupEventListeners, setupAIEventListeners } from './events.js';
+import { extractWords } from './word_ops.js';
+import { updatePreview, updatePreviewStyles } from './preview.js';
+import { clearAll } from './worksheet_integration.js';
+import { updateFont, updateFontSize, increaseFontSize, decreaseFontSize, updateImageGap, updateImageSize, updateLayout } from './controls.js';
+import { state } from './state.js';
+import { printFile, generatePDF } from './print.js';
 
 function makeDraggable() {
     const toolbar = document.getElementById('floatingToolbar');
@@ -134,13 +134,10 @@ export function initWordtest() {
 
         // Top action buttons (use absolute paths for reliability)
         document.getElementById('saveBtn')?.addEventListener('click', () => {
-            window.open('/Teachers/worksheet_manager.html?mode=save&type=wordtest', 'WorksheetManager', 'width=1200,height=700,resizable=yes,scrollbars=yes');
+            window.open('/Teachers/worksheet_manager.html?mode=save', 'WorksheetManager', 'width=1200,height=700,resizable=yes,scrollbars=yes');
         });
         document.getElementById('loadBtn')?.addEventListener('click', () => {
-            window.open('/Teachers/worksheet_manager.html?mode=load&type=wordtest', 'WorksheetManager', 'width=1200,height=700,resizable=yes,scrollbars=yes');
-        });
-        document.getElementById('assignWordTestBtn')?.addEventListener('click', () => {
-            window.open('/Teachers/worksheet_manager.html?mode=save&type=wordtest&after=assign', 'WorksheetManager', 'width=1200,height=760,resizable=yes,scrollbars=yes');
+            window.open('/Teachers/worksheet_manager.html?mode=load', 'WorksheetManager', 'width=1200,height=700,resizable=yes,scrollbars=yes');
         });
         document.getElementById('printBtn')?.addEventListener('click', () => printFile());
         document.getElementById('pdfBtn')?.addEventListener('click', () => generatePDF());

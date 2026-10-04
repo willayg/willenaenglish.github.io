@@ -34,7 +34,7 @@
 .vocab-front-wordtest[hidden],.vocab-front-book-card[hidden],.vocab-old-tests-card[hidden]{display:none!important}
 /* Vocabulary Study front menu + screen navigation */
 .vocab-front-menu{
-  margin-top:18px;background:#fff;border:4px solid #c9f1f4;border-radius:28px;
+  margin-top:18px;background:#f2f8f9;border:4px solid #c9f1f4;border-radius:28px;
   padding:clamp(24px,5vw,42px);box-shadow:var(--shadow)
 }
 .vocab-front-menu[hidden],.vocab-subscreen[hidden]{display:none!important}
@@ -43,7 +43,7 @@
   width:100%;display:flex;align-items:center;justify-content:space-between;gap:18px;
   border:4px solid #c9f1f4;border-radius:22px;background:#fff;color:var(--ink);
   text-align:left;padding:20px 22px;cursor:pointer;
-  box-shadow:0 8px 24px rgba(34,106,116,.06);
+  box-shadow:0 12px 30px rgba(34,106,116,.13),0 3px 8px rgba(34,106,116,.07);
   transition:transform .14s ease,border-color .14s ease,box-shadow .14s ease
 }
 .vocab-front-wordtest{
@@ -52,7 +52,7 @@
 }
 .vocab-front-wordtest:hover,.vocab-front-book-card:hover,.vocab-old-tests-card:hover{
   transform:translateY(-2px);border-color:var(--front-accent,var(--cyan-strong));
-  box-shadow:0 12px 28px rgba(34,106,116,.10)
+  box-shadow:0 16px 34px rgba(34,106,116,.17),0 4px 10px rgba(34,106,116,.08)
 }
 .vocab-front-card-copy,.vocab-front-book-card .vocab-front-card-copy,.vocab-old-tests-card .vocab-front-card-copy{
   min-width:0;display:block

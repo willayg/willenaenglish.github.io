@@ -1,14 +1,8 @@
 const { createClient } = require('@supabase/supabase-js');
 const redisCache = require('../../lib/redis_cache');
 
-// Known class names to invalidate (add new classes here as they're created)
-const KNOWN_CLASSES = [
-  'new york', 'chicago', 'boston', 'brown', 'berkeley', 'yale', 
-  'washington', 'manchester', 'los angeles', 'san francisco'
-];
-
 // Helper: invalidate leaderboard caches (Redis + DB) after writes that affect points/stars
-// Uses a short "recompute lock" to avoid a storm of recomputes if many writes happen at once
+// Uses a 5-minute invalidation lock and only clears the affected class + global keys.
 async function invalidateLeaderboardCache(supabase, userClass = null) {
   const lockKey = 'lb:invalidate_lock';
   try {
@@ -18,8 +12,8 @@ async function invalidateLeaderboardCache(supabase, userClass = null) {
       // Skip invalidation — another write recently cleared the cache
       return;
     }
-    // Set lock for 30 seconds to prevent storm
-    await redisCache.setJson(lockKey, { ts: Date.now() }, 30);
+    // A leaderboard does not need to be rebuilt after every answer.
+    await redisCache.setJson(lockKey, { ts: Date.now() }, 300);
     
     // Build list of cache keys to delete
     const keysToDelete = [
@@ -34,13 +28,9 @@ async function invalidateLeaderboardCache(supabase, userClass = null) {
       keysToDelete.push(`lb:class:${normalizedClass}:month`);
     }
     
-    // Also clear all known class caches to ensure consistency
-    for (const cls of KNOWN_CLASSES) {
-      keysToDelete.push(`lb:class:${cls}:all`);
-      keysToDelete.push(`lb:class:${cls}:month`);
-    }
+    // Do not clear unrelated classes. The scheduled refresh covers global caches.
     
-    // Dedupe and delete all keys
+    // Dedupe and delete only the affected keys
     const uniqueKeys = [...new Set(keysToDelete)];
     await Promise.all(uniqueKeys.map(k => redisCache.del(k)));
     

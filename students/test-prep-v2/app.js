@@ -1,11 +1,11 @@
-import {QuestionRenderer} from './question-renderer.js?v=2.20.6';
-import {gradeQuestion} from '../shared/question-grader.js?v=2.1.2';
-import {createQuestionSession} from './question-session.js?v=2.0.1';
-import {loadPracticeContent,questionAllowedForStudent} from './practice-loader.js?v=2.0.4';
+import {QuestionRenderer} from './question-renderer-accessible.js?v=2.25.94';
+import {gradeQuestion} from '../shared/question-grader.js?v=2.4.1';
+import {createQuestionSession} from './question-session.js?v=2.0.10';
+import {loadPracticeContent,questionAllowedForStudent} from './practice-loader.js?v=2.0.5';
 import {createPerfDebug} from './perf-debug.js?v=1.0.0';
 import {resolveContentIds,reviewQuestionFromItem} from './content-source.js?v=2.24.4';
-import {initTracking,refreshTrackingState,setTrackingContext,startSession,recordAttempt,completeSession,trackingState} from './tracking-client.js?v=2.17a';
-import {startVocabularyLearning} from './vocab-learning.js?v=2.14.1';
+import {initTracking,refreshTrackingState,refreshPlanSnapshot,setTrackingContext,startSession,recordAttempt,completeSession,trackingState} from './tracking-client.js?v=2.17t';
+import {startVocabularyLearning} from './vocab-learning.js?v=2.15.1';
 import {startSentencePracticeV1,stopSentencePracticeV1} from './sentence-practice-v1.js?v=1.2.0';
 import {loadCardStats,invalidateCardStats,getStatsDiagnostics,formatCardMetric,formatAccuracy,reviewCounts} from './stats-client.js?v=2.16a';
 import {loadReviewQueue,refreshReviewQueue} from '../shared/student-review.js?v=1.0.0';
@@ -29,7 +29,7 @@ const PRACTICES={
 };
 
 function scopeFor(plan){const scope=plan?.group?.scope||{},lessons=Array.isArray(scope.lessons)?scope.lessons.filter(x=>x?.lesson).map(x=>({...x,external:false})):[],external=Array.isArray(scope.external_passages)?scope.external_passages.map(x=>({...x,lesson:x?.lesson||x?.label||x?.unit_label||'',external:true})).filter(x=>x.lesson&&x.unit_id):[];if(lessons.length||external.length)return[...lessons,...external];return(plan?.units||[]).map(lesson=>({lesson,sections:plan?.practice_types||[],external:false}))}
-function sectionsFor(plan,lesson){const row=scopeFor(plan).find(x=>String(x.lesson)===String(lesson)),sections=new Set((row?.sections||[]).map(x=>String(x).toLowerCase()));if(sections.has('vocabulary'))sections.add('vocab_test');if(!row?.external)sections.add('sentences');return sections}
+function sectionsFor(plan,lesson){const row=scopeFor(plan).find(x=>String(x.lesson)===String(lesson)),sections=new Set((row?.sections||[]).map(x=>String(x).toLowerCase()));if(sections.has('vocabulary'))sections.add('vocab_test');sections.add('sentences');return sections}
 function planById(id){return(trackingState().plans||[]).find(p=>String(p.id)===String(id))||null}
 function taskById(plan,id){return (plan?.tasks||[]).find(t=>String(t.id)===String(id))||null}
 function taskIsExternal(plan,task){return scopeFor(plan).some(x=>x.external&&String(x.unit_id||'')===String(task?.unit_id||''))}
@@ -65,6 +65,7 @@ async function renderLesson(plan,lesson){state.plan=plan;state.lesson=lesson;sta
 
 async function refreshAfterSentencePractice(){
   try{
+    if(state.plan?.id)await refreshPlanSnapshot(state.plan.id);
     await refreshTrackingState();
     const fresh=planById(state.plan?.id);
     if(fresh)state.plan=fresh;
@@ -73,16 +74,40 @@ async function refreshAfterSentencePractice(){
   back();
 }
 
-async function startPracticeRoute(plan,lesson,practice,taskId=null){const config=PRACTICES[practice];if(!config){return replaceRoute({view:'lesson',planId:plan.id,lesson})}const task=taskId?taskById(plan,taskId):null;state.plan=plan;state.lesson=lesson;state.practice=practice;state.queue=[];state.index=0;state.score=0;state.wrongIds=[];state.checked=false;state.renderer=null;root.innerHTML='<div class="loading">문제를 불러오는 중...</div>';setBottom('');try{const ids=await resolveContentIds(plan,lesson,task?.unit_id||null);if(!practiceRouteMatches(practice,plan.id,lesson))return;state.ids=ids;setTrackingContext(plan,lesson);if(practice==='sentences'){root.innerHTML='<div id="sentencePracticeHost"></div>';const host=$('#sentencePracticeHost');await startSentencePracticeV1({host,plan,lesson,unitId:ids.unitId,onExit:refreshAfterSentencePractice});return}const loaded=await loadPracticeContent({kind:config.kind,practice,unitId:ids.unitId,studentId:trackingState().user?.id||null,planId:plan.id,lesson,count:task?Math.max(1,Number(task.target_count)||10):20});if(!practiceRouteMatches(practice,plan.id,lesson))return;if(loaded.mode==='workflow'&&loaded.kind==='vocab-learning'){root.innerHTML='<div id="vocabActivityHost"></div>';const host=$('#vocabActivityHost');await startVocabularyLearning({host,plan,lesson,unitId:ids.unitId,onExit:back});return}if(!loaded.rawCount){root.innerHTML=`<button class="back" id="emptyBack">← ${esc(lesson)}</button><div class="empty">이 영역에 사용할 문제가 없습니다.</div>`;$('#emptyBack').onclick=back;return}if(!loaded.pool.length){root.innerHTML=`<button class="back" id="emptyBack">← ${esc(lesson)}</button><div class="empty">선택할 수 있는 문제가 없습니다.</div>`;$('#emptyBack').onclick=back;return}state.queue=loaded.pool;await startSession(practice);if(!practiceRouteMatches(practice,plan.id,lesson))return;renderQuestion()}catch(e){if(!practiceRouteMatches(state.practice))return;console.error('[test-prep-v2] start failed',e);error(e.message||'문제를 불러오지 못했습니다.')}}
+async function refreshAfterPracticeExit({sessionClosed=false}={}){
+  const planId=state.plan?.id;
+  try{
+    if(!sessionClosed)await completeSession({correct:state.score,total:state.index+(state.checked?1:0),wrongIds:state.wrongIds});
+    if(planId)await refreshPlanSnapshot(planId);
+    await refreshTrackingState();
+    const fresh=planById(planId);
+    if(fresh)state.plan=fresh;
+    if(state.plan)await refreshPlanCardStats(state.plan);
+  }catch(e){console.warn('[test-prep-v2] practice-exit stats refresh failed',e)}
+  back();
+}
+
+async function startPracticeRoute(plan,lesson,practice,taskId=null){const config=PRACTICES[practice];if(!config){return replaceRoute({view:'lesson',planId:plan.id,lesson})}const task=taskId?taskById(plan,taskId):null;state.plan=plan;state.lesson=lesson;state.practice=practice;state.queue=[];state.index=0;state.score=0;state.wrongIds=[];state.checked=false;state.renderer=null;root.innerHTML='<div class="loading">문제를 불러오는 중...</div>';setBottom('');try{const ids=await resolveContentIds(plan,lesson,task?.unit_id||null);if(!practiceRouteMatches(practice,plan.id,lesson))return;state.ids=ids;setTrackingContext(plan,lesson);if(practice==='sentences'){root.innerHTML='<div id="sentencePracticeHost"></div>';const host=$('#sentencePracticeHost');await startSentencePracticeV1({host,plan,lesson,unitId:ids.unitId,onExit:refreshAfterSentencePractice});return}const loaded=await loadPracticeContent({kind:config.kind,practice,unitId:ids.unitId,studentId:trackingState().user?.id||null,planId:plan.id,lesson,count:task?Math.max(1,Number(task.target_count)||10):20});if(!practiceRouteMatches(practice,plan.id,lesson))return;if(loaded.mode==='workflow'&&loaded.kind==='vocab-learning'){root.innerHTML='<div id="vocabActivityHost"></div>';const host=$('#vocabActivityHost');await startVocabularyLearning({host,plan,lesson,unitId:ids.unitId,onExit:()=>refreshAfterPracticeExit({sessionClosed:true})});return}if(!loaded.rawCount){root.innerHTML=`<button class="back" id="emptyBack">← ${esc(lesson)}</button><div class="empty">이 영역에 사용할 문제가 없습니다.</div>`;$('#emptyBack').onclick=back;return}if(!loaded.pool.length){root.innerHTML=`<button class="back" id="emptyBack">← ${esc(lesson)}</button><div class="empty">선택할 수 있는 문제가 없습니다.</div>`;$('#emptyBack').onclick=back;return}state.queue=loaded.pool;await startSession(practice);if(!practiceRouteMatches(practice,plan.id,lesson))return;renderQuestion()}catch(e){if(!practiceRouteMatches(state.practice))return;console.error('[test-prep-v2] start failed',e);error(e.message||'문제를 불러오지 못했습니다.')}}
 function current(){return state.queue[state.index]||null}
 function headerFor(q){const code=q.source?.code||'',source=code?`<span class="badge ${code.toLowerCase()}" title="${code==='Z'?'Zocbo':code==='W'?'Willena authored':'Book reference'}">${code}</span>`:'';return `<div class="practice-head"><div><button class="back" id="practiceBack" data-session-back>← ${esc(state.lesson)}</button><div class="practice-meta">${source}<span>${esc(state.plan.book_label||'')}</span><span>·</span><span>${esc(PRACTICES[state.practice]?.label||state.practice)}</span></div></div><strong>${state.index+1} / ${state.queue.length}</strong></div><div class="progress"><i style="width:${Math.round(state.index/Math.max(1,state.queue.length)*100)}%"></i></div>`}
 let practiceQuestionSession=null;
-function getPracticeQuestionSession(){if(practiceQuestionSession)return practiceQuestionSession;practiceQuestionSession=createQuestionSession({root,bottom,Renderer:QuestionRenderer,gradeQuestion,recordAttempt,isActive:()=>practiceRouteMatches(state.practice),getEntry:current,getQuestion:q=>q,renderHeader:(_,q)=>headerFor(q),getPracticeType:()=>state.practice,onCorrect:()=>{state.score++},onWrong:(_,q)=>{state.wrongIds.push(trackingId(q))},onFinished:finishPractice,onBack:back,checkedState:fieldState('checked'),indexState:fieldState('index'),startedAtState:fieldState('startedAt'),rendererState:fieldState('renderer'),queueLength:()=>state.queue.length,buttonIds:{skip:'skipQuestion',check:'checkAnswer'},logLabel:'practice'});return practiceQuestionSession}
+function getPracticeQuestionSession(){if(practiceQuestionSession)return practiceQuestionSession;practiceQuestionSession=createQuestionSession({root,bottom,Renderer:QuestionRenderer,gradeQuestion,recordAttempt,isActive:()=>practiceRouteMatches(state.practice),getEntry:current,getQuestion:q=>q,renderHeader:(_,q)=>headerFor(q),getPracticeType:()=>state.practice,onCorrect:()=>{state.score++},onWrong:(_,q)=>{state.wrongIds.push(trackingId(q))},onFinished:finishPractice,onBack:()=>refreshAfterPracticeExit(),checkedState:fieldState('checked'),indexState:fieldState('index'),startedAtState:fieldState('startedAt'),rendererState:fieldState('renderer'),queueLength:()=>state.queue.length,buttonIds:{skip:'skipQuestion',check:'checkAnswer'},logLabel:'practice'});return practiceQuestionSession}
 function renderQuestion(){return getPracticeQuestionSession().render()}
 async function checkAnswer(){return getPracticeQuestionSession().check()}
 async function skipQuestion(){return getPracticeQuestionSession().skip()}
-async function finishPractice(){const route=currentRoute();if(route.view!=='practice')return;setBottom('');try{await completeSession({correct:state.score,total:state.queue.length,wrongIds:state.wrongIds});await refreshTrackingState();const fresh=planById(state.plan.id);if(fresh)state.plan=fresh;await refreshPlanCardStats(state.plan)}catch(e){console.warn('[test-prep-v2] finish/refresh failed',e)}if(!practiceRouteMatches(state.practice,route.planId,route.lesson))return;const pct=state.queue.length?Math.round(state.score/state.queue.length*100):0;state.lastResult={planId:route.planId,lesson:route.lesson,practice:route.practice,score:state.score,total:state.queue.length,wrong:state.wrongIds.length,pct};await replaceRoute({view:'result',planId:route.planId,lesson:route.lesson,practice:route.practice})}
-function renderResult(plan,route){const r=state.lastResult;if(!r||String(r.planId)!==String(route.planId)||String(r.lesson)!==String(route.lesson)||String(r.practice)!==String(route.practice)){replaceRoute({view:'lesson',planId:route.planId,lesson:route.lesson});return}state.plan=plan;state.lesson=route.lesson;state.practice=null;setBottom('');root.innerHTML=`<div class="card result"><div class="score">${r.score}/${r.total}</div><h2>${r.pct>=80?'좋아요!':'한 번 더 확인해 보세요.'}</h2><div class="statline">정답률 ${r.pct}% · 틀린/건너뛴 문제 ${r.wrong}개</div><div style="margin-top:22px"><button class="tile" id="resultBack" style="text-align:center;min-height:auto">${esc(route.lesson)}로 돌아가기</button></div></div>`;$('#resultBack').onclick=back}
+async function finishPractice(){const route=currentRoute();if(route.view!=='practice')return;setBottom('');try{await completeSession({correct:state.score,total:state.queue.length,wrongIds:state.wrongIds});if(state.plan?.id)await refreshPlanSnapshot(state.plan.id);await refreshTrackingState();const fresh=planById(state.plan.id);if(fresh)state.plan=fresh;await refreshPlanCardStats(state.plan)}catch(e){console.warn('[test-prep-v2] finish/refresh failed',e)}if(!practiceRouteMatches(state.practice,route.planId,route.lesson))return;const pct=state.queue.length?Math.round(state.score/state.queue.length*100):0;state.lastResult={planId:route.planId,lesson:route.lesson,practice:route.practice,score:state.score,total:state.queue.length,wrong:state.wrongIds.length,pct};await replaceRoute({view:'result',planId:route.planId,lesson:route.lesson,practice:route.practice})}
+async function returnToLessonFresh(plan,route){
+  const btn=$('#resultBack');if(btn){btn.disabled=true;btn.textContent='업데이트 중...'}
+  try{
+    if(plan?.id)await refreshPlanSnapshot(plan.id);
+    await refreshTrackingState();
+    const fresh=planById(plan?.id);
+    if(fresh)state.plan=fresh;
+    if(state.plan)await refreshPlanCardStats(state.plan);
+  }catch(e){console.warn('[test-prep-v2] result-back refresh failed',e)}
+  await replaceRoute({view:'lesson',planId:route.planId,lesson:route.lesson});
+}
+function renderResult(plan,route){const r=state.lastResult;if(!r||String(r.planId)!==String(route.planId)||String(r.lesson)!==String(route.lesson)||String(r.practice)!==String(route.practice)){replaceRoute({view:'lesson',planId:route.planId,lesson:route.lesson});return}state.plan=plan;state.lesson=route.lesson;state.practice=null;setBottom('');root.innerHTML=`<div class="card result"><div class="score">${r.score}/${r.total}</div><h2>${r.pct>=80?'좋아요!':'한 번 더 확인해 보세요.'}</h2><div class="statline">정답률 ${r.pct}% · 틀린/건너뛴 문제 ${r.wrong}개</div><div style="margin-top:22px"><button class="tile" id="resultBack" style="text-align:center;min-height:auto">${esc(route.lesson)}로 돌아가기</button></div></div>`;$('#resultBack').onclick=()=>returnToLessonFresh(plan,route)}
 
 function reviewWaitText(iso){if(!iso)return'';const ms=new Date(iso).getTime()-Date.now();if(!Number.isFinite(ms)||ms<=0)return'곧 다시 복습할 수 있어요.';const mins=Math.max(1,Math.ceil(ms/60000));return mins>=60?`약 ${Math.ceil(mins/60)}시간 후 다시 복습할 수 있어요.`:`약 ${mins}분 후 다시 복습할 수 있어요.`}
 function reviewOverview(data){const s=data?.summary||{};return `<div class="review-overview"><div><b>${s.now||0}</b><span>지금</span></div><div><b>${s.later||0}</b><span>나중</span></div><div><b>${s.cleared||0}</b><span>완료</span></div></div>`}
@@ -95,10 +120,36 @@ function getReviewQuestionSession(){if(reviewQuestionSession)return reviewQuesti
 function renderReviewQuestion(){return getReviewQuestionSession().render()}
 async function checkReviewAnswer(){return getReviewQuestionSession().check()}
 async function skipReviewQuestion(){return getReviewQuestionSession().skip()}
-async function finishReview(){const route=currentRoute();if(route.view!=='review')return;const answered=state.queue.length,correct=state.score;setBottom('');root.innerHTML='<div class="loading">오답 결과를 정리하는 중...</div>';let data=state.reviewData;try{await completeSession({correct,total:answered,wrongIds:state.wrongIds});await refreshTrackingState();const fresh=planById(state.plan.id);if(fresh)state.plan=fresh;await refreshPlanCardStats(state.plan);data=await refreshReviewQueue(state.plan,{limit:20});state.reviewData=data}catch(e){console.warn('[test-prep-v2] review finish refresh failed',e)}if(!reviewRouteMatches(route.planId))return;renderReviewDone(state.plan,data,answered,correct)}
+async function finishReview(){const route=currentRoute();if(route.view!=='review')return;const answered=state.queue.length,correct=state.score;setBottom('');root.innerHTML='<div class="loading">오답 결과를 정리하는 중...</div>';let data=state.reviewData;try{await completeSession({correct,total:answered,wrongIds:state.wrongIds});if(state.plan?.id)await refreshPlanSnapshot(state.plan.id);await refreshTrackingState();const fresh=planById(state.plan.id);if(fresh)state.plan=fresh;await refreshPlanCardStats(state.plan);data=await refreshReviewQueue(state.plan,{limit:20});state.reviewData=data}catch(e){console.warn('[test-prep-v2] review finish refresh failed',e)}if(!reviewRouteMatches(route.planId))return;renderReviewDone(state.plan,data,answered,correct)}
 function renderReviewDone(plan,data,answered,correct){const s=data?.summary||{},canContinue=(s.now||0)>0;setBottom('');root.innerHTML=`<button class="back" id="reviewDoneBack">← ${esc(plan.book_label||'시험 범위')}</button><div class="card result review-result"><div class="score">${correct}/${answered}</div><h2>${canContinue?'이번 묶음 복습 완료':'지금 할 오답 완료'}</h2><div class="statline">${canContinue?`지금 ${s.now}개 · 나중 ${s.later||0}개`:(s.later?`${s.later}개는 1시간 후 다시 복습해요.`:'모든 오답을 정리했어요.')}</div>${reviewOverview(data)}<div class="review-actions">${canContinue?'<button class="review-primary" id="reviewContinue">다음 오답 계속하기 →</button>':''}<button class="review-secondary" id="reviewReturn">시험 범위로 돌아가기</button></div></div>`;$('#reviewDoneBack').onclick=back;$('#reviewReturn').onclick=back;$('#reviewContinue')?.addEventListener('click',()=>replaceRoute({view:'review',planId:plan.id}))}
 
-function beforeRouteChange(previous,next){if(previous?.view==='performance'&&next?.view!=='performance'){stopPerformanceLearning().catch(e=>console.warn('[test-prep-v2] performance leave close failed',e));setBottom('');return}if(previous?.view==='practice'&&next?.view!=='practice'){try{window.speechSynthesis?.cancel?.()}catch(_){ }if(previous.practice==='sentences')stopSentencePracticeV1().catch(e=>console.warn('[test-prep-v2] sentences leave close failed',e));else if(previous.practice==='vocabulary')completeSession({correct:0,total:0,wrongIds:[]}).catch(e=>console.warn('[test-prep-v2] vocab leave close failed',e));else completeSession({correct:state.score,total:state.index+(state.checked?1:0),wrongIds:state.wrongIds}).catch(e=>console.warn('[test-prep-v2] practice leave close failed',e));state.renderer=null;setBottom('');return}if(previous?.view==='review'&&next?.view!=='review'){completeSession({correct:state.score,total:state.index+(state.checked?1:0),wrongIds:state.wrongIds}).catch(e=>console.warn('[test-prep-v2] review leave close failed',e));state.renderer=null;setBottom('');return}if(previous?.view==='mock'&&next?.view!=='mock'){stopMockTest();state.renderer=null;setBottom('')}}
+function beforeRouteChange(previous,next){
+  if(previous?.view==='performance'&&next?.view!=='performance'){stopPerformanceLearning().catch(e=>console.warn('[test-prep-v2] performance leave close failed',e));setBottom('');return}
+  if(previous?.view==='practice'&&next?.view!=='practice'){
+    try{window.speechSynthesis?.cancel?.()}catch(_){ }
+    // finishPractice already closed + refreshed before moving practice -> result.
+    if(next?.view==='result'){state.renderer=null;setBottom('');return}
+    const planId=previous.planId||state.plan?.id||null;
+    const closeAndRefresh=async()=>{
+      try{
+        if(previous.practice==='sentences')await stopSentencePracticeV1();
+        else if(previous.practice==='vocabulary')await completeSession({correct:0,total:0,wrongIds:[]});
+        else await completeSession({correct:state.score,total:state.index+(state.checked?1:0),wrongIds:state.wrongIds});
+        if(planId)await refreshPlanSnapshot(planId);
+        await refreshTrackingState();
+        const fresh=planById(planId);
+        if(fresh)state.plan=fresh;
+        if(state.plan)await refreshPlanCardStats(state.plan);
+        const route=currentRoute();
+        if(route&&['home','plan','lesson'].includes(route.view))await renderRoute(route);
+      }catch(e){console.warn('[test-prep-v2] practice leave refresh failed',e)}
+    };
+    closeAndRefresh();
+    state.renderer=null;setBottom('');return;
+  }
+  if(previous?.view==='review'&&next?.view!=='review'){completeSession({correct:state.score,total:state.index+(state.checked?1:0),wrongIds:state.wrongIds}).catch(e=>console.warn('[test-prep-v2] review leave close failed',e));state.renderer=null;setBottom('');return}
+  if(previous?.view==='mock'&&next?.view!=='mock'){stopMockTest();state.renderer=null;setBottom('')}
+}
 async function renderRoute(route){if(route.view==='home'){renderHome();return}const plan=planById(route.planId);if(!plan){await replaceRoute({view:'home'});return}if(route.view==='plan'){renderLessons(plan);return}if(route.view==='performance'){const assignment=performanceAssignmentById(route.assignmentId);if(!assignment||String(assignment.plan_id)!==String(plan.id)){await replaceRoute({view:'plan',planId:plan.id});return}state.plan=plan;state.lesson=assignment.unit_key||null;state.practice='performance';state.renderer=null;setBottom('');await startPerformanceLearning({host:root,bottom,plan,assignment,studentId:trackingState().user?.id||null,onExit:back});return}if(route.view==='mock'){state.plan=plan;state.lesson=null;state.practice=null;state.renderer=null;setBottom('');await renderMockTestPreflight({host:root,plan,studentId:trackingState().user?.id||null,onBack:back});return}if(route.view==='lesson'){await renderLesson(plan,route.lesson);return}if(route.view==='practice'){await startPracticeRoute(plan,route.lesson,route.practice,route.taskId||null);return}if(route.view==='review'){await startReviewRoute(plan);return}if(route.view==='result'){renderResult(plan,route)}}
 async function refreshVisibleStats(){const route=currentRoute();if(route&&['home','plan','lesson'].includes(route.view))await renderRoute(route)}
 

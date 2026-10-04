@@ -76,7 +76,7 @@ function generatedQuestion({id,item,questionType,prompt,context={},choices=[],an
     prompt:String(prompt||''),context:{...context},choices:[...choices],answer:(Array.isArray(answer)?answer:[answer]).map(String),
     grading:{mode:'exact_normalized',aiAllowed:false,constraints:{}},
     tracking:{practiceType:'vocab_test',questionType,targets:[...targets],questionId:item?mastery:String(id)},
-    metadata:{...metadata,lexical_entry_id:item?.id||metadata.lexical_entry_id||null,canonical_text:item?.canonical_text||metadata.canonical_text||null,translation_ko:item?.translation_ko||metadata.translation_ko||null,definition_en:item?.definition_en||metadata.definition_en||null,vocab_test_variant_id:String(id)}
+    metadata:{...metadata,lexical_entry_id:item?.id||metadata.lexical_entry_id||null,canonical_text:item?.canonical_text||metadata.canonical_text||null,translation_ko:item?.translation_ko||metadata.translation_ko||null,definition_en:item?.definition_en||metadata.definition_en||null,part_of_speech:item?.part_of_speech||metadata.part_of_speech||null,entry_type:item?.entry_type||metadata.entry_type||null,vocab_test_variant_id:String(id)}
   };
 }
 function indexOfChoice(choices,correct){return String(choices.findIndex(x=>x===correct)+1)}

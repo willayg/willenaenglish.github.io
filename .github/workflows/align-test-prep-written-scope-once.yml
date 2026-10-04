@@ -1,0 +1,139 @@
+name: Align Test Prep written scope once
+on:
+  push:
+    branches: [students]
+    paths:
+      - '.github/workflows/align-test-prep-written-scope-once.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: students
+      - name: Align written-response and assignment scope
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          def replace_once(path, old, new):
+              p=Path(path)
+              s=p.read_text()
+              n=s.count(old)
+              if n != 1:
+                  raise SystemExit(f'{path}: expected 1 exact match, found {n}')
+              p.write_text(s.replace(old,new,1))
+
+          # Student: assigned scope is authoritative. Do not force 本文외우기 into every textbook lesson.
+          app='students/test-prep-v2/app.js'
+          replace_once(
+              app,
+              "function sectionsFor(plan,lesson){const row=scopeFor(plan).find(x=>String(x.lesson)===String(lesson)),sections=new Set((row?.sections||[]).map(x=>String(x).toLowerCase()));if(sections.has('vocabulary'))sections.add('vocab_test');if(!row?.external)sections.add('sentences');return sections}",
+              "function sectionsFor(plan,lesson){const row=scopeFor(plan).find(x=>String(x.lesson)===String(lesson)),sections=new Set((row?.sections||[]).map(x=>String(x).toLowerCase()));if(sections.has('vocabulary'))sections.add('vocab_test');return sections}"
+          )
+          replace_once(
+              app,
+              "async function startPracticeRoute(plan,lesson,practice,taskId=null){const config=PRACTICES[practice];if(!config){return replaceRoute({view:'lesson',planId:plan.id,lesson})}const task=taskId?taskById(plan,taskId):null;",
+              "async function startPracticeRoute(plan,lesson,practice,taskId=null){const config=PRACTICES[practice];if(!config){return replaceRoute({view:'lesson',planId:plan.id,lesson})}if(!taskId&&!sectionsFor(plan,lesson).has(practice)){return replaceRoute({view:'lesson',planId:plan.id,lesson})}const task=taskId?taskById(plan,taskId):null;"
+          )
+
+          # Teacher catalog: use the canonical content snapshot, not raw source sections.
+          core=Path('Teachers/dashboard-v2/naesin-core-fresh.js')
+          s=core.read_text()
+          old_label="const practiceLabel=v=>({vocabulary:'Vocabulary',vocab_test:'Vocabulary Test',sentences:'Sentences',communication:'Communication',grammar:'Grammar',reading:'Reading',mock_test:'Mock Test'}[v]||nice(v));"
+          new_label="const practiceLabel=v=>({vocabulary:'Vocabulary',vocab_test:'Vocabulary Test',sentences:'본문외우기',communication:'Communication',grammar:'Grammar',reading:'Reading',constructed_response:'서술형',mock_test:'Mock Test'}[v]||nice(v));"
+          if s.count(old_label)!=1: raise SystemExit('naesin-core-fresh.js: practiceLabel match failed')
+          s=s.replace(old_label,new_label,1)
+          pattern=r"async function loadCatalog\(\)\{.*?\}\nasync function loadStudents\(\)"
+          replacement="""async function loadCatalog(){
+if(catalog.length)return catalog;
+const [books,units,snapshots]=await Promise.all([
+  contentRows('content_books?select=id,title,source_key,status&order=title.asc'),
+  contentRows('content_units?select=id,book_id,unit_number,title,status&order=book_id.asc,unit_number.asc'),
+  contentAll('test_prep_content_snapshot_v1?select=unit_id,practice_ids,totals')
+]);
+const map=new Map();
+for(const row of snapshots){
+  const ids=row?.practice_ids&&typeof row.practice_ids==='object'?row.practice_ids:{};
+  const totals=row?.totals&&typeof row.totals==='object'?row.totals:{};
+  const practices=Object.keys(ids).filter(p=>Array.isArray(ids[p])&&ids[p].length>0&&Number(totals[p]??ids[p].length)>0);
+  map.set(String(row.unit_id),new Set(practices));
+}
+const order=['vocabulary','vocab_test','sentences','communication','grammar','reading','constructed_response'];
+const rank=v=>{const i=order.indexOf(v);return i<0?99:i};
+catalog=books.map(b=>({id:b.id,key:b.source_key||b.id,label:b.title||b.source_key,lessons:units.filter(u=>u.book_id===b.id).sort((a,b)=>(a.unit_number||0)-(b.unit_number||0)).map(u=>({id:u.id,title:u.title||`Lesson ${u.unit_number}`,number:u.unit_number,sections:[...(map.get(String(u.id))||new Set())].sort((a,b)=>rank(a)-rank(b)||a.localeCompare(b))}))})).filter(b=>b.lessons.some(l=>l.sections.length));
+return catalog
+}
+async function loadStudents()"""
+          s,n=re.subn(pattern,replacement,s,count=1,flags=re.S)
+          if n!=1: raise SystemExit(f'naesin-core-fresh.js: loadCatalog replacement count {n}')
+          old_task='<option value="vocabulary">Vocabulary</option><option value="sentences">Sentences</option><option value="communication">Communication</option><option value="grammar">Grammar</option><option value="reading">Reading</option>'
+          new_task='<option value="vocabulary">Vocabulary</option><option value="sentences">본문외우기</option><option value="communication">Communication</option><option value="grammar">Grammar</option><option value="reading">Reading</option><option value="constructed_response">서술형</option>'
+          if s.count(old_task)!=1: raise SystemExit('naesin-core-fresh.js: task options match failed')
+          s=s.replace(old_task,new_task,1)
+          core.write_text(s)
+
+          # Teacher scope V2: stop manufacturing 서술형/Vocabulary chips for units that lack that content.
+          scopev2=Path('Teachers/dashboard-v2/naesin-scope-v2.js')
+          s=scopev2.read_text()
+          forced="$$('#naScope .na-scope').forEach(row=>{if(!$$('.na-scope-chip',row).length)return;addChip(row,'vocabulary','Vocabulary',true);addChip(row,'constructed_response','서술형',false)});"
+          if s.count(forced)!=1: raise SystemExit('naesin-scope-v2.js: forced-chip block match failed')
+          scopev2.write_text(s.replace(forced,'',1))
+
+          # Teacher lesson progress: totals come from the same canonical snapshot as student stats.
+          progress=Path('Teachers/dashboard-v2/naesin-lesson-progress.js')
+          s=progress.read_text()
+          authored="function isAuthoredSeosul(q){const m=q?.metadata||{};return norm(q?.section)==='constructed_response'||m.constructed_response_authored===true||m.constructed_response_authored==='true'||m.authored_constructed_response===true||m.authored_constructed_response==='true'}\n"
+          if s.count(authored)!=1: raise SystemExit('naesin-lesson-progress.js: authored helper match failed')
+          s=s.replace(authored,'',1)
+          pattern=r"async function totalsFor\(g\)\{.*?\}\nfunction available\(g,l,p\)\{.*?\}\nfunction lessonPracticeMap"
+          replacement="""async function totalsFor(g){const resolved=[];for(const l of scope(g)){const unitId=await unitIdFor(g,l);if(unitId)resolved.push({lesson:String(l.lesson),unitId})}const key=resolved.map(x=>`${x.lesson}:${x.unitId}`).join('|');if(!key)return new Map();if(totalsCache.has(key))return totalsCache.get(key);const ids=[...new Set(resolved.map(x=>x.unitId))],inIds='('+ids.join(',')+')';const rows=await content(`/rest/v1/test_prep_content_snapshot_v1?select=unit_id,totals&unit_id=in.${encodeURIComponent(inIds)}`);const byUnit=new Map((rows||[]).map(r=>[String(r.unit_id),r?.totals&&typeof r.totals==='object'?r.totals:{}]));const out=new Map();for(const l of resolved)out.set(l.lesson,byUnit.get(l.unitId)||{});totalsCache.set(key,out);return out}
+function available(g,l,p){const sections=new Set((l?.sections||[]).map(norm));if(p==='vocab_test')return sections.has('vocab_test')||sections.has('vocabulary');return sections.has(p)}
+function lessonPracticeMap"""
+          s,n=re.subn(pattern,replacement,s,count=1,flags=re.S)
+          if n!=1: raise SystemExit(f'naesin-lesson-progress.js: totals/availability replacement count {n}')
+          progress.write_text(s)
+
+          # One cache bump per surface.
+          student_index=Path('students/test-prep-v2/index.html')
+          s=student_index.read_text()
+          if '2.25.108' not in s: raise SystemExit('student index: old version not found')
+          student_index.write_text(s.replace('2.25.108','2.25.109'))
+
+          teacher_index=Path('Teachers/dashboard-v2/index.html')
+          s=teacher_index.read_text()
+          old='./naesin.js?v=20260829-clean1'
+          new='./naesin.js?v=20260913-scope1'
+          if s.count(old)!=1: raise SystemExit('teacher index: naesin cache key match failed')
+          teacher_index.write_text(s.replace(old,new,1))
+
+          # Sanity assertions.
+          checks={
+            app:["if(!row?.external)sections.add('sentences')"],
+            str(scopev2):["addChip(row,'constructed_response','서술형',false)"],
+            str(progress):['isAuthoredSeosul(q)']
+          }
+          for path,bad in checks.items():
+              text=Path(path).read_text()
+              for needle in bad:
+                  if needle in text: raise SystemExit(f'{path}: stale logic remains: {needle}')
+          if 'test_prep_content_snapshot_v1?select=unit_id,practice_ids,totals' not in core.read_text(): raise SystemExit('teacher catalog is not snapshot-backed')
+          if "constructed_response:'서술형'" not in core.read_text(): raise SystemExit('teacher constructed_response label missing')
+          if 'v2.25.109' not in student_index.read_text(): raise SystemExit('student cache bump failed')
+          PY
+      - name: Syntax check
+        run: |
+          node --check students/test-prep-v2/app.js
+          node --check Teachers/dashboard-v2/naesin-core-fresh.js
+          node --check Teachers/dashboard-v2/naesin-scope-v2.js
+          node --check Teachers/dashboard-v2/naesin-lesson-progress.js
+      - name: Commit
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add students/test-prep-v2/app.js students/test-prep-v2/index.html Teachers/dashboard-v2/naesin-core-fresh.js Teachers/dashboard-v2/naesin-scope-v2.js Teachers/dashboard-v2/naesin-lesson-progress.js Teachers/dashboard-v2/index.html
+          git commit -m 'Align Test Prep written-response scope and totals'
+          git push origin HEAD:students

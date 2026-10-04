@@ -1,5 +1,5 @@
-import {currentRoute} from './navigation.js?v=2.21.3';
-import {trackingState} from './tracking-client.js?v=2.17a';
+import {currentRoute} from './navigation.js?v=2.21.0';
+import {trackingState} from './tracking-client.js?v=2.17t';
 import {resolveContentIds} from './content-source.js?v=2.24.4';
 import {contentDbGet} from '../shared/content-db.js?v=1.0.0';
 
@@ -186,7 +186,6 @@ async function lessonTargets(){
   const stated=Array.isArray(rows?.[0]?.metadata?.main_grammar_points)?rows[0].metadata.main_grammar_points:[];
   return {route,plan,ids,targets:[...new Set(stated.map(String))]};
 }
-
 function renderLauncher(panel,keys,rawTargets){
   const available=keys.filter(key=>GUIDES[key]);
   const pending=keys.filter(key=>!GUIDES[key]);
@@ -209,7 +208,6 @@ async function hydratePanel(stop,panel,token){
     if(token===installToken&&panel.isConnected)panel.innerHTML='<div class="gg-launch-empty"><b>문법 설명</b><small>문법 정보를 불러오지 못했습니다.</small></div>';
   }
 }
-
 function installGuidePanel(){
   const stop=document.querySelector('.journey-stop[data-practice="grammar"]');
   if(!stop||stop.dataset.grammarGuideInstalled==='1')return;

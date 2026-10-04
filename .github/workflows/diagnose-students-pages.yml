@@ -1,0 +1,50 @@
+name: Diagnose students Pages routing
+# audit-run-20260930
+
+on:
+  push:
+    branches: [students]
+    paths:
+      - '.github/workflows/diagnose-students-pages.yml'
+  workflow_dispatch:
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Query Cloudflare Pages project
+        env:
+          CF_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json, os, urllib.request, urllib.error
+          token=os.environ.get('CF_API_TOKEN','')
+          account=os.environ.get('CF_ACCOUNT_ID','')
+          project='willenaenglish-github-io'
+          if not token or not account:
+              print(json.dumps({'error':'missing_cloudflare_credentials'}))
+              raise SystemExit(0)
+          url=f'https://api.cloudflare.com/client/v4/accounts/{account}/pages/projects/{project}'
+          req=urllib.request.Request(url,headers={'Authorization':f'Bearer {token}','Content-Type':'application/json'})
+          try:
+              with urllib.request.urlopen(req,timeout=20) as r:
+                  data=json.load(r)
+          except urllib.error.HTTPError as e:
+              body=e.read().decode('utf-8','replace')
+              print(json.dumps({'http_status':e.code,'body':body}))
+              raise SystemExit(0)
+          result=data.get('result') or {}
+          safe={
+            'success':data.get('success'),
+            'name':result.get('name'),
+            'subdomain':result.get('subdomain'),
+            'production_branch':result.get('production_branch'),
+            'domains':result.get('domains'),
+            'build_config':result.get('build_config'),
+            'deployment_configs':result.get('deployment_configs'),
+            'source':result.get('source'),
+          }
+          print(json.dumps(safe,indent=2))
+          PY

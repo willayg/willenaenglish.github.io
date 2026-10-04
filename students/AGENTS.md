@@ -1,50 +1,6 @@
-# STOP — STUDENT APP SINGLE-SOURCE RULES
+# STOP — TEST PREP V2 SINGLE-SOURCE RULES
 
-Read the repository-root `AGENTS.md` before changing student apps.
-
-## SHARED STUDENT PLATFORM LAYER
-
-`students/shared/` is the cross-app student platform layer.
-
-It is NOT specific to 내신/Test Prep. It exists for responsibilities that must behave the same across multiple student-facing apps, and it may expand over time as more truly shared student concerns are identified.
-
-Before adding app-local logic for a cross-app concern, check `students/shared/` first.
-
-### ALL STUDENT STATS GO THROUGH ONE OWNER
-
-The canonical browser-side owner for student statistics is:
-
-`students/shared/student-stats.js`
-
-All student-facing apps must use that shared module for stats instead of calculating their own competing version of the truth.
-
-This includes, where applicable:
-
-- Test Prep / 내신
-- student dashboard
-- 오답 / review
-- Daily Study
-- progress screens
-- lesson completion
-- accuracy
-- attempts/completion summaries
-- future student apps that need the same statistics
-
-The backend/database remains the authoritative source of the numbers. `student-stats.js` is the one canonical frontend gateway that calls, caches, normalizes, and exposes those numbers to student apps.
-
-Do NOT create a second app-specific stats engine, denominator calculation, accuracy calculation, completion calculation, or review-count calculation.
-
-If a new student stats domain is needed, extend the shared stats service/API in `students/shared/` rather than creating `dashboard-stats.js`, `daily-study-stats.js`, `review-stats.js`, another `stats-client.js`, or equivalent duplicated logic inside an app.
-
-Compatibility shims are allowed temporarily while migrating an older app, but they must delegate to `students/shared/student-stats.js` and must not become a second implementation.
-
-If a stats rule is wrong, fix the shared owner/backend once so every app receives the same result.
-
-Read `students/shared/AGENTS.md` before changing anything inside `students/shared/`.
-
----
-
-# TEST PREP V2 SINGLE-SOURCE RULES
+Read the repository-root `AGENTS.md` before changing Test Prep v2 or the renderer lab.
 
 For these paths:
 
@@ -69,14 +25,10 @@ Only that file may call `history.pushState`, `history.replaceState`, or listen t
 
 Do not add workflow-specific Back handlers, history stacks, `navigation-fix.js`, `back-fix.js`, or another `popstate` listener. UI Back controls must request the canonical navigator's `back()` behavior. If device/browser Back is wrong, fix `navigation.js` or the single route renderer in `app.js`.
 
-## TEST PREP V2 PRIMARY ACTION STYLE
+## TEST PREP V2 STATS
 
-Important/confirm/continue actions must not use white text on a teal fill.
+Do not make browser code read `test_prep_attempts` directly for Test Prep cards or graphs.
 
-The canonical V2 action treatment is:
+Student attempt history for Test Prep v2 comes from the existing authenticated Test Prep student backend (`test-prep-student-rev47e`, currently through its `me` response). `stats-client.js` may combine that backend history with the public curriculum/content pool to calculate current coverage and accuracy, but it must not create a second student-history access path.
 
-- white background
-- light cyan border
-- pink text
-
-The canonical action colors live in `students/test-prep-v2/styles.css` as `--action-bg`, `--action-border`, and `--action-text`. Workflow CSS should consume those variables instead of inventing its own primary-button colors.
+Do not add a new stats endpoint, RLS workaround, direct raw-attempt query, Netlify function, or stats patch file to fix a card. Fix the existing Test Prep student backend or `stats-client.js`, whichever owns the broken responsibility.

@@ -1,5 +1,5 @@
 import './grammar-guide-lessons.js?v=1.0.0';
-import {startStudentHeaderData,subscribeStudentHeaderData} from '../shared/student-header-data.js?v=1.0.0';
+import {startStudentHeaderData,subscribeStudentHeaderData} from '../shared/student-header-data.js?v=1.0.1';
 import {logoutStudent,openStudentProfile} from '../shared/student-header-actions.js?v=1.0.1';
 
 const BIG_TEXT_KEY='willena-testprep-big-text';
@@ -58,7 +58,7 @@ menu?.addEventListener('click',event=>event.stopPropagation());
 document.addEventListener('click',()=>setMenu(false));
 document.addEventListener('keydown',event=>{if(event.key==='Escape')setMenu(false)});
 profileButton?.addEventListener('click',()=>openStudentProfile());
-dashboardButton?.addEventListener('click',()=>{window.location.href='/students/dashboard-v2/'});
+dashboardButton?.addEventListener('click',()=>{window.location.href='/students/dashboard/'});
 bigTextButton?.addEventListener('click',()=>{setBigText(!bigTextEnabled());setMenu(false)});
 testPrepAButton?.addEventListener('click',()=>{window.location.href='../test-prep-app/'});
 testPrepBButton?.addEventListener('click',()=>setMenu(false));

@@ -1,6 +1,6 @@
 // Drag-and-drop utilities extracted from images.js to reduce size without changing behavior
 
-export function createEnableImageDragAndDrop({ showImageLoadingSpinner, hideImageLoadingSpinner, imageAlternatives, currentImageIndex, setSavedImage }) {
+export function createEnableImageDragAndDrop({ showImageLoadingSpinner, hideImageLoadingSpinner, imageAlternatives, currentImageIndex }) {
   return function enableImageDragAndDrop(updatePreviewCallback) {
     // Remove existing listeners first
     document.querySelectorAll('.image-drop-zone').forEach(zone => {
@@ -96,7 +96,6 @@ export function createEnableImageDragAndDrop({ showImageLoadingSpinner, hideImag
             // Insert the new image at the front of alternatives
             imageAlternatives[wordKey].unshift(imageDataUrl);
             currentImageIndex[wordKey] = 0;
-            if (typeof setSavedImage === 'function') setSavedImage(word, index, imageDataUrl);
 
             // Update only this specific image instead of full preview refresh
             const currentImg = zone.querySelector('img');

@@ -38,22 +38,22 @@ function addDock(){
   syncDock();
 }
 
-function addStagingSwitcher(){
-  if(document.getElementById('tpStagingSwitcher'))return;
+function addVersionSwitch(){
+  if(document.getElementById('tpVersionSwitch'))return;
   const style=document.createElement('style');
-  style.textContent='.tp-staging-switcher{position:fixed;left:12px;bottom:12px;z-index:2147483646;display:flex;align-items:center;gap:6px;padding:5px;border:1px solid rgba(32,48,57,.14);border-radius:999px;background:rgba(255,255,255,.94);box-shadow:0 4px 18px rgba(32,48,57,.12);font:800 11px/1 Poppins,sans-serif;backdrop-filter:blur(10px)}.tp-staging-switcher a,.tp-staging-switcher span{display:inline-flex;align-items:center;justify-content:center;min-width:28px;height:28px;padding:0 9px;border-radius:999px;text-decoration:none;color:#526168;background:#eef4f5;box-sizing:border-box}.tp-staging-switcher .active{color:#fff;background:#07888d}@media(max-width:620px){.tp-staging-switcher{left:8px;bottom:8px}.tp-staging-switcher a,.tp-staging-switcher span{height:26px;min-width:26px;padding:0 8px;font-size:10px}}';
+  style.textContent='.tp-version-switch{position:fixed;top:16px;right:18px;z-index:2147483000;display:flex;gap:3px;padding:4px;background:rgba(255,255,255,.9);border:1.5px solid var(--tp-line,#9de2e7);border-radius:999px;box-shadow:0 5px 18px rgba(20,90,100,.12);font:800 12px/1 Poppins,sans-serif}.tp-version-switch a,.tp-version-switch span{display:grid;place-items:center;width:30px;height:30px;border-radius:999px;text-decoration:none}.tp-version-switch .active{background:var(--tp-cyan-dark,#07888d);color:#fff}.tp-version-switch a{color:var(--tp-cyan-dark,#07888d)}.tp-version-switch a:hover{background:var(--tp-soft,#e9fbfc)}';
   document.head.appendChild(style);
-  const nav=document.createElement('div');
-  nav.id='tpStagingSwitcher';
-  nav.className='tp-staging-switcher';
-  nav.setAttribute('aria-label','Staging test prep switcher');
-  nav.innerHTML='<span class="active" aria-current="page" title="Test Prep A">A</span><a href="../test-prep-v2/" title="Test Prep V2">B</a>';
+  const nav=document.createElement('nav');
+  nav.id='tpVersionSwitch';
+  nav.className='tp-version-switch';
+  nav.setAttribute('aria-label','Test Prep version');
+  nav.innerHTML='<span class="active" aria-current="page" title="Test Prep A">A</span><a href="../test-prep-v2/" title="Test Prep B" aria-label="Open Test Prep B">B</a>';
   document.body.appendChild(nav);
 }
 
 function boot(){
   addDock();
-  addStagingSwitcher();
+  addVersionSwitch();
   let saved='cyan';
   try{saved=localStorage.getItem(STORAGE_KEY)||'cyan'}catch(_){}
   applyTheme(saved,false);

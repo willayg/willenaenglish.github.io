@@ -1,5 +1,5 @@
-import { getPlaceholderImage, getPixabaySearchUrl, renderImage, showImageLoadingSpinner, hideImageLoadingSpinner } from './images-utils.js?v=20260923-imgstate2';
-import { createEnableImageDragAndDrop } from './images-dnd.js?v=20260923-imgstate2';
+import { emojiMap, getPlaceholderImage, getPixabaySearchUrl, renderImage, showImageLoadingSpinner, hideImageLoadingSpinner } from './images-utils.js';
+import { createEnableImageDragAndDrop } from './images-dnd.js';
 // Preserve global used by inline handlers (no behavior change)
 if (!window.getPixabaySearchUrl) {
     window.getPixabaySearchUrl = getPixabaySearchUrl;
@@ -17,60 +17,36 @@ let currentImageIndex = {}; // Track current image index for each word
 // Retry counts to avoid infinite loops on broken images
 const imageRetryCount = {};
 
-function getSavedImage(wordKey) {
-    const saved = window.savedImageData && window.savedImageData[wordKey];
-    if (!saved || saved.src === 'emoji' || saved.emoji || typeof saved.src !== 'string' || !saved.src) return null;
-    return saved;
-}
-
-function setSavedImage(word, index, image) {
-    if (!word || image == null) return;
-    const wordKey = `${String(word).toLowerCase()}_${index}`;
-    const next = typeof image === 'string'
-        ? { src: image, word: String(word), index: Number(index) }
-        : { ...image, word: image.word || String(word), index: Number(index) };
-    if (!next.src || next.src === 'emoji' || next.emoji) return;
-    window.savedImageData = window.savedImageData || {};
-    window.savedImageData[wordKey] = next;
-}
-
+// Helper function to get image URL with fallback
 async function getImageUrl(word, index, refresh = false, currentSettings = { imageSize: 50 }) {
     if (!word) return getPlaceholderImage(index, null, currentSettings);
-
+    
     const wordKey = `${word.toLowerCase()}_${index}`;
-
-    // Single source of truth: a loaded/saved image always wins.
-    if (!refresh) {
-        const saved = getSavedImage(wordKey);
-        if (saved) {
-            if (!imageAlternatives[wordKey]) imageAlternatives[wordKey] = [saved.src];
-            currentImageIndex[wordKey] = 0;
-            return saved.src;
-        }
-    }
-
+    
+    // Initialize image alternatives if not exists
     if (!imageAlternatives[wordKey]) {
         imageAlternatives[wordKey] = [];
         currentImageIndex[wordKey] = 0;
-        if (window.savedImageData) delete window.savedImageData[wordKey];
     }
-
+    
+    // If we need to refresh or don't have alternatives yet, load them
     if (refresh || imageAlternatives[wordKey].length === 0) {
         await loadImageAlternatives(word, wordKey, null, currentSettings);
     }
-
+    
+    // Return current image
     const currentIndex = currentImageIndex[wordKey] || 0;
-    const choice = imageAlternatives[wordKey][currentIndex];
-    if (typeof choice === 'string' && (choice.startsWith('http') || choice.startsWith('data:image/'))) {
-        setSavedImage(word, index, choice);
-        return choice;
-    }
-    return getPlaceholderImage(index, null, currentSettings);
+    return imageAlternatives[wordKey][currentIndex] || getPlaceholderImage(index, null, currentSettings);
 }
 
-// Load image alternatives for a word (provider image + blank fallback)
+// Load multiple image alternatives for a word (emoji first, 6 English, blank last)
 async function loadImageAlternatives(word, wordKey, kor = null, currentSettings = { imageSize: 50 }) {
     const alternatives = [];
+    // Only add emoji if available
+    const emoji = emojiMap[word.toLowerCase()];
+    if (emoji) {
+        alternatives.push(`<div style="font-size: ${currentSettings.imageSize * 0.8}px; line-height: 1;">${emoji}</div>`);
+    }
     // Try to get ONE image from provider or Netlify fallback
     try {
         let imageUrl = null;
@@ -95,13 +71,15 @@ async function loadImageAlternatives(word, wordKey, kor = null, currentSettings 
         }
         if (imageUrl && imageUrl.startsWith('http')) {
             alternatives.push(imageUrl);
+        } else if (imageUrl && imageUrl.length === 1) {
+            alternatives.push(`<div style="font-size: ${currentSettings.imageSize * 0.8}px; line-height: 1;">${imageUrl}</div>`);
         }
     } catch (error) {
         console.warn('Error getting image for:', word, error);
     }
     // Add blank option last - just a white empty box
     alternatives.push('<div style="width:' + currentSettings.imageSize + 'px;height:' + currentSettings.imageSize + 'px;background:#fff;border-radius:8px;border:2px solid #ddd;"></div>');
-    imageAlternatives[wordKey] = alternatives.slice(0, 2); // Provider image and blank fallback
+    imageAlternatives[wordKey] = alternatives.slice(0, 2); // Only emoji (if any) and first image
 }
 
 // Cycle to next image for a specific word
@@ -123,9 +101,6 @@ function cycleImage(word, index, updatePreviewCallback) {
                 // Update the image source
                 const newImageUrl = imageAlternatives[wordKey][currentImageIndex[wordKey]];
                 currentImg.src = newImageUrl;
-                if (typeof newImageUrl === 'string' && (newImageUrl.startsWith('http') || newImageUrl.startsWith('data:image/'))) {
-                    setSavedImage(word, index, newImageUrl);
-                }
                 
                 // Preserve the current size
                 if (currentWidth && currentHeight) {
@@ -146,9 +121,18 @@ function cycleImage(word, index, updatePreviewCallback) {
 function setSelectedImage(word, index, imageUrl) {
     if (!word || typeof imageUrl !== 'string' || !imageUrl) return;
     const wordKey = `${String(word).toLowerCase()}_${index}`;
-    imageAlternatives[wordKey] = [imageUrl];
+    if (!imageAlternatives[wordKey]) imageAlternatives[wordKey] = [];
+    // Put the chosen image first (keep any existing alternatives after it)
+    imageAlternatives[wordKey] = [
+        imageUrl,
+        ...imageAlternatives[wordKey].filter(a => a !== imageUrl)
+    ];
     currentImageIndex[wordKey] = 0;
-    setSavedImage(word, index, imageUrl);
+    // Mirror for save/restore logic
+    try {
+        window.savedImageData = window.savedImageData || {};
+        window.savedImageData[wordKey] = { src: imageUrl, word: word, index: Number(index) };
+    } catch (_) {}
 }
 
 // renderImage is imported from images-utils.js to avoid duplicate declarations
@@ -223,6 +207,8 @@ async function addMoreImageAlternatives(word, wordKey, kor = null, currentSettin
                 }
                 if (imageUrl && imageUrl.startsWith('http')) {
                     newAlternatives.push(imageUrl);
+                } else if (imageUrl && imageUrl.length === 1) {
+                    newAlternatives.push(`<div style="font-size: ${currentSettings.imageSize * 0.8}px; line-height: 1;">${imageUrl}</div>`);
                 }
             } catch (error) {
                 console.warn('Error getting new image for:', newSearchTerms[i], error);
@@ -257,13 +243,24 @@ async function refreshImageForWord(word, index, forceNewKey = false, kor = null,
     showImageLoadingSpinner(word, index);
     
     if (forceNewKey) {
+        // When refreshing images on right-click, preserve the emoji if it exists
+        const existingEmoji = imageAlternatives[wordKey] && imageAlternatives[wordKey][0] && 
+                              imageAlternatives[wordKey][0].includes('<div') && 
+                              imageAlternatives[wordKey][0].includes('font-size') ? 
+                              imageAlternatives[wordKey][0] : null;
+        
         // Reset imageAlternatives and currentImageIndex for this slot
         imageAlternatives[wordKey] = [];
         currentImageIndex[wordKey] = 0;
+        
+        // If we had an emoji, preserve it
+        if (existingEmoji) {
+            imageAlternatives[wordKey].push(existingEmoji);
+        }
     }
 
     try {
-        // Fetch a new provider image plus blank fallback
+        // Fetch new images (6 English + emoji + blank)
         await loadImageAlternatives(word, wordKey, kor, currentSettings);
     } finally {
         // Hide loading spinner
@@ -277,8 +274,7 @@ const enableImageDragAndDrop = createEnableImageDragAndDrop({
   showImageLoadingSpinner,
   hideImageLoadingSpinner,
   imageAlternatives,
-  currentImageIndex,
-  setSavedImage
+  currentImageIndex
 });
 
 // Initialize image module functions
@@ -360,7 +356,6 @@ async function clearAllImages(updatePreviewCallback) {
     // Clear image alternatives to force reload
     imageAlternatives = {};
     currentImageIndex = {};
-    window.savedImageData = {};
     
     // Small delay to show loading message
     await new Promise(resolve => setTimeout(resolve, 100));
@@ -371,6 +366,7 @@ async function clearAllImages(updatePreviewCallback) {
 
 // Export all functions
 export {
+  emojiMap,
   imageAlternatives,
   currentImageIndex,
   getPlaceholderImage,
@@ -379,7 +375,6 @@ export {
   addMoreImageAlternatives,
   cycleImage,
     setSelectedImage,
-  setSavedImage,
   renderImage,
   refreshImages,
   refreshImageForWord,

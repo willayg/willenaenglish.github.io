@@ -116,6 +116,7 @@ export function startStudentHeaderData(){
   window.addEventListener('points:optimistic-bump',onPointsBump);
   window.addEventListener('stars:optimistic-bump',onStarsBump);
   window.addEventListener('stars:refresh',scheduleRefresh);
+  window.addEventListener('points:refresh',scheduleRefresh);
   window.addEventListener('session:ended',scheduleRefresh);
   window.addEventListener('auth:changed',onAuthChanged);
   window.addEventListener('storage',onStorage);
