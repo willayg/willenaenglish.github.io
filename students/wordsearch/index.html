@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="./wordsearch.css?v=20261004-wordle1">
+<link rel="stylesheet" href="./wordsearch.css?v=20261005-eflhints1">
 <script src="/students/api-gateway.js?v=20260926-progress-summary-cf1"></script>
 <script src="/js/api-config.js?v=20260926-reverted-auth1"></script>
 <script src="/students/vocab-study/auth-guard.js?v=20260925-v0004"></script>
@@ -82,7 +82,27 @@
 
         <div id="wordleStage" class="wordle-stage" hidden>
           <div id="wordleBoard" class="wordle-board" role="grid" aria-label="Wordle guesses"></div>
-          <div id="wordleMessage" class="wordle-message" aria-live="polite">Type a five-letter word.</div>
+
+          <div class="wordle-hints" aria-label="Wordle hints">
+            <div class="wordle-hint-buttons">
+              <button id="wordleHintMeaningBtn" class="wordle-hint-btn" type="button">
+                <span>뜻 보기</span><strong>−1★</strong>
+              </button>
+              <button id="wordleHintLetterBtn" class="wordle-hint-btn" type="button">
+                <span>글자 1개</span><strong>−1★</strong>
+              </button>
+              <button id="wordleHintScrambleBtn" class="wordle-hint-btn" type="button">
+                <span>섞인 글자</span><strong>−1★</strong>
+              </button>
+            </div>
+            <div class="wordle-hint-reveals" aria-live="polite">
+              <div id="wordleHintMeaning" class="wordle-hint-reveal" hidden></div>
+              <div id="wordleHintLetter" class="wordle-hint-reveal" hidden></div>
+              <div id="wordleHintScramble" class="wordle-hint-reveal scramble" hidden></div>
+            </div>
+          </div>
+
+          <div id="wordleMessage" class="wordle-message" aria-live="polite">Type any five letters.</div>
           <div id="wordleKeyboard" class="wordle-keyboard" aria-label="Wordle keyboard"></div>
           <div id="wordleResult" class="wordle-result" hidden>
             <span class="wordle-result-kicker">ANSWER</span>
@@ -275,7 +295,7 @@
           <section class="boggle-help-step">
             <div class="boggle-help-copy">
               <span class="boggle-step-num">1</span>
-              <div><strong>5글자 영어 단어를 맞혀요</strong><p>여섯 번 안에 정답을 맞히세요. 키보드나 화면의 글자를 사용할 수 있어요.</p></div>
+              <div><strong>5글자 영어 단어를 맞혀요</strong><p>여섯 번 안에 정답을 맞히세요. 추측은 진짜 단어가 아니어도 괜찮아요. 원하는 다섯 글자를 자유롭게 넣을 수 있어요.</p></div>
             </div>
             <div class="wordle-help-row" aria-hidden="true">
               <span class="wordle-help-tile exact">S</span><span class="wordle-help-tile">T</span><span class="wordle-help-tile">A</span><span class="wordle-help-tile">R</span><span class="wordle-help-tile">E</span>
@@ -295,13 +315,22 @@
           <section class="boggle-help-step">
             <div class="boggle-help-copy">
               <span class="boggle-step-num">3</span>
-              <div><strong>끝나면 뜻과 발음을 확인해요</strong><p>정답을 맞히거나 여섯 번을 모두 사용하면 한국어 뜻과 영어 발음을 확인할 수 있어요.</p></div>
+              <div><strong>필요하면 힌트를 써요</strong><p>뜻 보기, 정답 글자 1개, 정답의 다섯 글자를 섞어서 보기 힌트가 있어요. 힌트 하나를 사용할 때마다 별 1개가 줄어요.</p></div>
+            </div>
+            <div class="wordle-help-hints" aria-hidden="true">
+              <span>뜻 −1★</span><span>글자 −1★</span><span>섞인 글자 −1★</span>
             </div>
           </section>
           <section class="boggle-help-step">
             <div class="boggle-help-copy">
               <span class="boggle-step-num">4</span>
-              <div><strong>적은 횟수로 맞힐수록 별을 더 받아요</strong><p>1~2번 5★ · 3번 4★ · 4번 3★ · 5번 2★ · 6번 1★. 맞히지 못하면 0★예요.</p></div>
+              <div><strong>끝나면 뜻과 발음을 확인해요</strong><p>정답을 맞히거나 여섯 번을 모두 사용하면 한국어 뜻과 영어 발음을 확인할 수 있어요.</p></div>
+            </div>
+          </section>
+          <section class="boggle-help-step">
+            <div class="boggle-help-copy">
+              <span class="boggle-step-num">5</span>
+              <div><strong>적은 횟수로 맞힐수록 별을 더 받아요</strong><p>1~2번 5★ · 3번 4★ · 4번 3★ · 5번 2★ · 6번 1★. 사용한 힌트마다 −1★, 맞히지 못하면 0★예요.</p></div>
             </div>
           </section>
         </div>
@@ -340,9 +369,9 @@
       <button id="playAgainBtn" type="button">Play Again</button>
     </dialog>
   </main>
-  <div class="app-rev" aria-label="Revision">Rev 1.013</div>
+  <div class="app-rev" aria-label="Revision">Rev 1.014</div>
 </div>
 <script src="./mix-deck-skins.js?v=20260929-02"></script>
-<script type="module" src="./wordsearch.js?v=20261005-sessionfreeze"></script>
+<script type="module" src="./wordsearch.js?v=20261005-eflhints1"></script>
 </body>
 </html>
