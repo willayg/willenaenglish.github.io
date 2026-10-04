@@ -1074,104 +1074,132 @@ async function resolvePuzzleRewardContext(){
   state.rewardContext={book_id:book.book_id,unit_id:unit.id};
   return state.rewardContext;
 }
-async function saveReward(){
-  if(state.saving||!state.sessionId)return;
+function captureRewardSnapshot(){
+  if(!state.sessionId)return null;
+  const mode=state.mode;
+  const isWordle=mode==='wordle';
+  const wordleWin=isWordle?wordleWon():null;
+  return{
+    sessionId:state.sessionId,
+    startedAt:state.startedAt,
+    mode,
+    listSize:state.placements.length,
+    gimmesUsed:state.gimmes.size,
+    gridSize:state.gridSize,
+    points:earnedPuzzlePoints(),
+    stars:earnedPuzzleStars(),
+    starCap:puzzleStarCap(),
+    wordleWin,
+    wordleGuessCount:isWordle?state.wordleRows.length:null,
+    wordleAnswer:isWordle?(state.wordleAnswer?.clean||null):null
+  };
+}
+async function saveReward(reward=captureRewardSnapshot()){
+  if(state.saving||!reward?.sessionId)return;
   state.saving=true;
-  const points=earnedPuzzlePoints();
-  const stars=earnedPuzzleStars();
   let ctx=null;
 
   try{
-    ctx=await resolvePuzzleRewardContext();
-  }catch(error){
-    console.warn('[Word Games] reward context failed',error);
-    state.saving=false;
-    return;
-  }
-
-  const listBase=state.mode==='crossword'?'Crossword':(state.mode==='boggle'?'Boggle':(state.mode==='mixmatch'?'Mix & Match':(state.mode==='wordle'?'Wordle':'Word Search')));
-  const isWordle=state.mode==='wordle';
-  const wordleWin=isWordle?wordleWon():null;
-  const wordleGuessCount=isWordle?state.wordleRows.length:null;
-  const sessionPayload={
-    reward_only:true,
-    session_id:state.sessionId,
-    client_attempt_id:crypto.randomUUID?.()||((state.mode||'wordsearch')+'-reward-'+Date.now()),
-    book_id:ctx.book_id,
-    unit_id:ctx.unit_id,
-    skill:'puzzle',
-    response_type:'reward',
-    activity_id:state.mode,
-    reward_mode:state.mode,
-    reward_list_name:listBase+' · '+state.sessionId,
-    reward_list_size:state.placements.length,
-    reward_started_at:state.startedAt,
-    reward_summary:{
-      completed:true,stars,
-      accuracy:isWordle?(wordleWin?1:0):1,
-      percent:isWordle?(wordleWin?100:0):100,
-      score:isWordle?(wordleWin?1:0):(state.placements.length-state.gimmes.size),
-      total:isWordle?1:state.placements.length,
-      points_earned:points,book_id:ctx.book_id,unit_id:ctx.unit_id,
-      assignment_id:null,session_source:'student',vocab_mode:state.mode,
-      reward_scheme:isWordle?'wordle-v1':((state.mode||'wordsearch')+'-v3'),star_cap:puzzleStarCap(),
-      gimmes_used:state.gimmes.size,
-      grid_size:state.mode==='wordsearch'?state.gridSize:null,
-      won:isWordle?wordleWin:null,
-      guesses_used:isWordle?wordleGuessCount:null,
-      guess_limit:isWordle?WORDLE_GUESSES:null,
-      answer_word:isWordle?(state.wordleAnswer?.clean||null):null
-    }
-  };
-
-  let sessionSaved=false;
-  try{
-    const result=await apiJson('/.netlify/functions/progress_summary?section=study_attempt&_='+Date.now(),{
-      method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({payload:sessionPayload})
-    });
-    sessionSaved=!!(result?.success??true);
-  }catch(error){
-    console.warn('[Word Games] session tracking save failed',state.mode,error);
-  }
-
-  if(points>0){
     try{
-      const pointPayload={
-        session_id:state.sessionId,
-        client_attempt_id:crypto.randomUUID?.()||('puzzle-points-'+Date.now()),
+      ctx=await resolvePuzzleRewardContext();
+    }catch(error){
+      console.warn('[Word Games] reward context failed',error);
+      return;
+    }
+
+    const isWordle=reward.mode==='wordle';
+    const listBase=reward.mode==='crossword'?'Crossword':(reward.mode==='boggle'?'Boggle':(reward.mode==='mixmatch'?'Mix & Match':(isWordle?'Wordle':'Word Search')));
+    const sessionPayload={
+      reward_only:true,
+      session_id:reward.sessionId,
+      client_attempt_id:crypto.randomUUID?.()||((reward.mode||'wordsearch')+'-reward-'+Date.now()),
+      book_id:ctx.book_id,
+      unit_id:ctx.unit_id,
+      skill:'puzzle',
+      response_type:'reward',
+      activity_id:reward.mode,
+      reward_mode:reward.mode,
+      reward_list_name:listBase+' · '+reward.sessionId,
+      reward_list_size:reward.listSize,
+      reward_started_at:reward.startedAt,
+      reward_summary:{
+        completed:true,
+        stars:reward.stars,
+        accuracy:isWordle?(reward.wordleWin?1:0):1,
+        percent:isWordle?(reward.wordleWin?100:0):100,
+        score:isWordle?(reward.wordleWin?1:0):(reward.listSize-reward.gimmesUsed),
+        total:isWordle?1:reward.listSize,
+        points_earned:reward.points,
         book_id:ctx.book_id,
         unit_id:ctx.unit_id,
-        skill:'puzzle',
-        response_type:'completion',
-        activity_id:state.mode+'-completion',
-        content_type:'puzzle',
-        is_correct:true,
-        score:1,
-        study_context:'independent',
-        metadata:{
-          points_override:points,
-          puzzle_mode:state.mode,
-          gimmes_used:state.gimmes.size,
-          grid_size:state.mode==='wordsearch'?state.gridSize:null,
-          won:isWordle?wordleWin:null,
-          guesses_used:isWordle?wordleGuessCount:null
-        }
-      };
-      await apiJson('/.netlify/functions/progress_summary?section=study_attempt&_='+Date.now(),{
-        method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({payload:pointPayload})
-      });
-    }catch(error){
-      console.warn('[Word Games] point save failed',state.mode,error);
-    }
-  }
+        assignment_id:null,
+        session_source:'student',
+        vocab_mode:reward.mode,
+        reward_scheme:isWordle?'wordle-v1':((reward.mode||'wordsearch')+'-v3'),
+        star_cap:reward.starCap,
+        gimmes_used:reward.gimmesUsed,
+        grid_size:reward.mode==='wordsearch'?reward.gridSize:null,
+        won:isWordle?reward.wordleWin:null,
+        guesses_used:isWordle?reward.wordleGuessCount:null,
+        guess_limit:isWordle?WORDLE_GUESSES:null,
+        answer_word:isWordle?reward.wordleAnswer:null
+      }
+    };
 
-  if(sessionSaved){
-    window.dispatchEvent(new CustomEvent('session:ended',{detail:{session_id:state.sessionId,mode:state.mode,list_size:state.placements.length}}));
-    window.dispatchEvent(new CustomEvent('stars:refresh',{detail:{earned:stars}}));
-    window.dispatchEvent(new CustomEvent('points:refresh',{detail:{earned:points}}));
-    try{localStorage.setItem('stars:refresh',String(Date.now()))}catch(_){}
+    let sessionSaved=false;
+    try{
+      const result=await apiJson('/.netlify/functions/progress_summary?section=study_attempt&_='+Date.now(),{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({payload:sessionPayload})
+      });
+      sessionSaved=!!(result?.success??true);
+    }catch(error){
+      console.warn('[Word Games] session tracking save failed',reward.mode,error);
+    }
+
+    if(reward.points>0){
+      try{
+        const pointPayload={
+          session_id:reward.sessionId,
+          client_attempt_id:crypto.randomUUID?.()||('puzzle-points-'+Date.now()),
+          book_id:ctx.book_id,
+          unit_id:ctx.unit_id,
+          skill:'puzzle',
+          response_type:'completion',
+          activity_id:reward.mode+'-completion',
+          content_type:'puzzle',
+          is_correct:true,
+          score:1,
+          study_context:'independent',
+          metadata:{
+            points_override:reward.points,
+            puzzle_mode:reward.mode,
+            gimmes_used:reward.gimmesUsed,
+            grid_size:reward.mode==='wordsearch'?reward.gridSize:null,
+            won:isWordle?reward.wordleWin:null,
+            guesses_used:isWordle?reward.wordleGuessCount:null
+          }
+        };
+        await apiJson('/.netlify/functions/progress_summary?section=study_attempt&_='+Date.now(),{
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({payload:pointPayload})
+        });
+      }catch(error){
+        console.warn('[Word Games] point save failed',reward.mode,error);
+      }
+    }
+
+    if(sessionSaved){
+      window.dispatchEvent(new CustomEvent('session:ended',{detail:{session_id:reward.sessionId,mode:reward.mode,list_size:reward.listSize}}));
+      window.dispatchEvent(new CustomEvent('stars:refresh',{detail:{earned:reward.stars}}));
+      window.dispatchEvent(new CustomEvent('points:refresh',{detail:{earned:reward.points}}));
+      try{localStorage.setItem('stars:refresh',String(Date.now()))}catch(_){}
+    }
+  }finally{
+    state.saving=false;
   }
-  state.saving=false;
 }
 
 function makeCrossword(pool){
