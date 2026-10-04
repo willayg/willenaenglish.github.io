@@ -209,28 +209,6 @@ export default {
         }, 200, origin);
       }
       
-      // ===== WHOAMI (verify cookie session and return user basics) =====
-      if (action === 'whoami' && request.method === 'GET') {
-        const cookieHeader = request.headers.get('Cookie') || '';
-        const cookies = parseCookies(cookieHeader);
-        const token = cookies['sb_access'];
-        
-        if (!token) {
-          return jsonResponse({ success: false, error: 'Not signed in' }, 401, origin);
-        }
-        
-        const user = await verifyToken(env, token);
-        if (!user) {
-          return jsonResponse({ success: false, error: 'Not signed in' }, 401, origin);
-        }
-        
-        return jsonResponse({
-          success: true,
-          user_id: user.id,
-          email: user.email,
-        }, 200, origin);
-      }
-      
       // ===== GET EMAIL BY USERNAME =====
       if (action === 'get_email_by_username') {
         const username = url.searchParams.get('username');
@@ -378,10 +356,13 @@ export default {
           return jsonResponse({ success: false, error: 'Not signed in' }, 401, origin);
         }
         
+        const profile = await fetchProfile(env, user.id, 'class');
+        
         return jsonResponse({
           success: true,
           user_id: user.id,
           email: user.email,
+          class: profile?.class || null,
         }, 200, origin);
       }
       
