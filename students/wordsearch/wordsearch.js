@@ -80,7 +80,7 @@ const cheatFinishBtn=$('cheatFinishBtn');
 const CHEAT_MODE=new URLSearchParams(location.search).get('cheat')==='1';
 
 const state={
-  auth:null,books:[],book:null,words:[],pool:[],crosswordPool:[],wordlePool:[],wordleAnswerPool:[],studentLevel:null,rewardContext:null,ready:false,buildToken:0,grid:[],size:GRID_TARGET,placements:[],
+  auth:null,books:[],book:null,words:[],pool:[],crosswordPool:[],wordlePool:[],wordleAnswerPool:[],wordleGuessSet:new Set(),studentLevel:null,rewardContext:null,ready:false,buildToken:0,grid:[],size:GRID_TARGET,placements:[],
   found:new Set(),gimmes:new Set(),bogglePaths:new Map(),boggleReveals:new Set(),drag:null,sessionId:null,startedAt:null,saving:false,mode:'boggle',gridSize:8,activeCrossword:null,crosswordCursor:0,cheatCompletion:false,matchFirst:null,matchLocked:false,matchDeckStyle:null,
   wordleAnswer:null,wordleRows:[],wordleCurrent:'',wordleDone:false,wordleKeyStates:{},
   modeSnapshots:new Map()
@@ -309,10 +309,23 @@ async function loadLevelCrosswordWords(level){
 }
 
 async function loadWordleWords(){
-  const rows=await content(
-    'lexical_entries?select=id,canonical_text,translation_ko,definition_en,status'+
-    '&canonical_text=like._____&status=in.(review,published)&order=canonical_text.asc'
-  );
+  const [rows,dictionaryText]=await Promise.all([
+    content(
+      'lexical_entries?select=id,canonical_text,translation_ko,definition_en,status'+
+      '&canonical_text=like._____&status=in.(review,published)&order=canonical_text.asc'
+    ),
+    withTimeout(
+      fetch('./wordle-valid-words.txt?v=20261004-p2',{cache:'force-cache'}).then(async response=>{
+        if(!response.ok)throw new Error('Wordle dictionary '+response.status);
+        return response.text();
+      }),
+      12000,
+      'Wordle dictionary'
+    ).catch(error=>{
+      console.warn('[Word Games] Wordle dictionary unavailable; using Willena vocabulary only',error);
+      return '';
+    })
+  ]);
   const seen=new Set();
   const all=rows.map(row=>{
     const display=txt(row.canonical_text);
@@ -329,8 +342,14 @@ async function loadWordleWords(){
   });
   const answers=all.filter(item=>item.status==='published'&&item.ko);
   if(answers.length<50)throw new Error('The Wordle answer pool is not ready yet.');
+  const guessSet=new Set(
+    dictionaryText.split(/\r?\n/).map(normalizeWord).filter(word=>word.length===WORDLE_LENGTH)
+  );
+  all.forEach(item=>guessSet.add(item.clean));
+  answers.forEach(item=>guessSet.add(item.clean));
   state.wordlePool=all;
   state.wordleAnswerPool=answers;
+  state.wordleGuessSet=guessSet;
   return all;
 }
 
@@ -822,7 +841,23 @@ function wordleDelete(){
   state.wordleCurrent=state.wordleCurrent.slice(0,-1);
   renderWordleBoard();
 }
-function finishWordle(won){
+function wordleWon(){
+  return !!(state.wordleDone&&state.wordleAnswer&&state.wordleRows.some(row=>row.guess===state.wordleAnswer.clean));
+}
+function wordleStars(){
+  if(!wordleWon())return 0;
+  const guesses=state.wordleRows.length;
+  if(guesses<=2)return 5;
+  if(guesses===3)return 4;
+  if(guesses===4)return 3;
+  if(guesses===5)return 2;
+  return 1;
+}
+function wordlePoints(){
+  if(!wordleWon())return 0;
+  return Math.max(1,WORDLE_GUESSES-state.wordleRows.length+1);
+}
+async function finishWordle(won){
   state.wordleDone=true;
   state.found=won?new Set([0]):new Set();
   if(won){
@@ -833,6 +868,17 @@ function finishWordle(won){
     setWordleMessage('Good try. The word was '+state.wordleAnswer.clean+'.','loss');
   }
   refreshWordle();
+
+  const stars=wordleStars();
+  const points=wordlePoints();
+  if(won){
+    completePoints.textContent='Solved in '+state.wordleRows.length+' '+(state.wordleRows.length===1?'guess':'guesses')+'. You earned '+stars+' star'+(stars===1?'':'s')+'.';
+    rewardCelebration.innerHTML=
+      '<student-reward-celebration percent="100" stars="'+stars+'" star-max="5" points="'+points+'" label="WORDLE REWARD"></student-reward-celebration>';
+    if(typeof completeCard.showModal==='function')completeCard.showModal();
+    else completeCard.setAttribute('open','');
+  }
+  await saveReward();
 }
 function submitWordle(){
   if(state.mode!=='wordle'||state.wordleDone)return;
@@ -843,6 +889,11 @@ function submitWordle(){
   }
   const answer=state.wordleAnswer?.clean||'';
   if(answer.length!==WORDLE_LENGTH)return;
+  if(state.wordleGuessSet.size&& !state.wordleGuessSet.has(guess)){
+    playPuzzleSfx('wrong');
+    setWordleMessage('Not in the word list. Try another word.','warn');
+    return;
+  }
   const result=scoreWordleGuess(guess,answer);
   state.wordleRows.push({guess,result});
   state.wordleCurrent='';
@@ -892,7 +943,7 @@ function renderPuzzle(){
 }
 function escapeHtml(v){return txt(v).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
 function earnedPuzzlePoints(){
-  if(state.mode==='wordle')return 0;
+  if(state.mode==='wordle')return wordlePoints();
   return Math.max(0,(state.found.size-state.gimmes.size)*POINTS_PER_WORD);
 }
 function puzzleStarCap(){
@@ -900,6 +951,7 @@ function puzzleStarCap(){
   return state.gridSize===8?3:(state.gridSize===10?4:5);
 }
 function earnedPuzzleStars(){
+  if(state.mode==='wordle')return wordleStars();
   const bogglePenalty=state.mode==='boggle'?Math.min(2,state.boggleReveals.size):0;
   return Math.max(0,puzzleStarCap()-state.gimmes.size-bogglePenalty);
 }
@@ -909,7 +961,7 @@ function updateProgress(){
     progressEl.textContent=state.wordleDone
       ?(state.wordleRows.some(row=>row.guess===state.wordleAnswer?.clean)?'Solved in '+used+' / '+WORDLE_GUESSES:'Answer revealed')
       :used+' / '+WORDLE_GUESSES+' guesses';
-    sessionPointsEl.textContent='STAGING';
+    sessionPointsEl.textContent=state.wordleDone?('+'+earnedPuzzlePoints()+' pts'):'WORDLE';
     return;
   }
   const verb=state.mode==='crossword'?'solved':(state.mode==='mixmatch'?'matched':'found');
@@ -1037,7 +1089,10 @@ async function saveReward(){
     return;
   }
 
-  const listBase=state.mode==='crossword'?'Crossword':(state.mode==='boggle'?'Boggle':(state.mode==='mixmatch'?'Mix & Match':'Word Search'));
+  const listBase=state.mode==='crossword'?'Crossword':(state.mode==='boggle'?'Boggle':(state.mode==='mixmatch'?'Mix & Match':(state.mode==='wordle'?'Wordle':'Word Search')));
+  const isWordle=state.mode==='wordle';
+  const wordleWin=isWordle?wordleWon():null;
+  const wordleGuessCount=isWordle?state.wordleRows.length:null;
   const sessionPayload={
     reward_only:true,
     session_id:state.sessionId,
@@ -1052,13 +1107,20 @@ async function saveReward(){
     reward_list_size:state.placements.length,
     reward_started_at:state.startedAt,
     reward_summary:{
-      completed:true,stars,accuracy:1,percent:100,
-      score:state.placements.length-state.gimmes.size,total:state.placements.length,
+      completed:true,stars,
+      accuracy:isWordle?(wordleWin?1:0):1,
+      percent:isWordle?(wordleWin?100:0):100,
+      score:isWordle?(wordleWin?1:0):(state.placements.length-state.gimmes.size),
+      total:isWordle?1:state.placements.length,
       points_earned:points,book_id:ctx.book_id,unit_id:ctx.unit_id,
       assignment_id:null,session_source:'student',vocab_mode:state.mode,
-      reward_scheme:(state.mode||'wordsearch')+'-v3',star_cap:puzzleStarCap(),
+      reward_scheme:isWordle?'wordle-v1':((state.mode||'wordsearch')+'-v3'),star_cap:puzzleStarCap(),
       gimmes_used:state.gimmes.size,
-      grid_size:state.mode==='wordsearch'?state.gridSize:null
+      grid_size:state.mode==='wordsearch'?state.gridSize:null,
+      won:isWordle?wordleWin:null,
+      guesses_used:isWordle?wordleGuessCount:null,
+      guess_limit:isWordle?WORDLE_GUESSES:null,
+      answer_word:isWordle?(state.wordleAnswer?.clean||null):null
     }
   };
 
@@ -1086,7 +1148,14 @@ async function saveReward(){
         is_correct:true,
         score:1,
         study_context:'independent',
-        metadata:{points_override:points,puzzle_mode:state.mode,gimmes_used:state.gimmes.size,grid_size:state.mode==='wordsearch'?state.gridSize:null}
+        metadata:{
+          points_override:points,
+          puzzle_mode:state.mode,
+          gimmes_used:state.gimmes.size,
+          grid_size:state.mode==='wordsearch'?state.gridSize:null,
+          won:isWordle?wordleWin:null,
+          guesses_used:isWordle?wordleGuessCount:null
+        }
       };
       await apiJson('/.netlify/functions/progress_summary?section=study_attempt&_='+Date.now(),{
         method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({payload:pointPayload})
