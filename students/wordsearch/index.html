@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700;800;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="./wordsearch.css?v=20260929-04">
+<link rel="stylesheet" href="./wordsearch.css?v=20261004-wordle1">
 <script src="/students/api-gateway.js?v=20260926-progress-summary-cf1"></script>
 <script src="/js/api-config.js?v=20260926-reverted-auth1"></script>
 <script src="/students/vocab-study/auth-guard.js?v=20260925-v0004"></script>
@@ -24,6 +24,7 @@
   <main class="page">
     <nav class="puzzle-tabs" aria-label="Puzzle type">
       <button class="puzzle-tab active" type="button" data-mode="boggle">Boggle</button>
+      <button class="puzzle-tab" type="button" data-mode="wordle">Wordle</button>
       <button class="puzzle-tab" type="button" data-mode="wordsearch">Word Search</button>
       <button class="puzzle-tab" type="button" data-mode="crossword">Crossword</button>
       <button class="puzzle-tab" type="button" data-mode="mixmatch">Mix &amp; Match</button>
@@ -78,6 +79,19 @@
           <div id="grid" class="word-grid" role="grid" aria-label="Word search puzzle"></div>
           <canvas id="boggleCanvas" class="boggle-canvas" aria-hidden="true" hidden></canvas>
         </div>
+
+        <div id="wordleStage" class="wordle-stage" hidden>
+          <div id="wordleBoard" class="wordle-board" role="grid" aria-label="Wordle guesses"></div>
+          <div id="wordleMessage" class="wordle-message" aria-live="polite">Type a five-letter word.</div>
+          <div id="wordleKeyboard" class="wordle-keyboard" aria-label="Wordle keyboard"></div>
+          <div id="wordleResult" class="wordle-result" hidden>
+            <span class="wordle-result-kicker">TODAY'S WORD</span>
+            <strong id="wordleResultWord">APPLE</strong>
+            <span id="wordleResultMeaning"></span>
+            <button id="wordleAudioBtn" class="wordle-audio-btn" type="button">▶ Listen</button>
+          </div>
+        </div>
+
         <div id="mixMatchGrid" class="mix-match-grid" role="grid" aria-label="Mix and Match puzzle" hidden></div>
         <div class="crossword-stage">
           <div id="crosswordGrid" class="crossword-grid" role="grid" aria-label="Crossword puzzle" hidden></div>
@@ -256,6 +270,37 @@
         <div class="boggle-help-note">단어를 찾으면 선이 남고, 찾은 단어마다 다른 색으로 표시돼요.</div>
       </div>
 
+      <div class="game-help-panel" data-help-mode="wordle" hidden>
+        <div class="boggle-help-steps">
+          <section class="boggle-help-step">
+            <div class="boggle-help-copy">
+              <span class="boggle-step-num">1</span>
+              <div><strong>5글자 영어 단어를 맞혀요</strong><p>여섯 번 안에 정답을 맞히세요. 키보드나 화면의 글자를 사용할 수 있어요.</p></div>
+            </div>
+            <div class="wordle-help-row" aria-hidden="true">
+              <span class="wordle-help-tile exact">S</span><span class="wordle-help-tile">T</span><span class="wordle-help-tile">A</span><span class="wordle-help-tile">R</span><span class="wordle-help-tile">E</span>
+            </div>
+          </section>
+          <section class="boggle-help-step">
+            <div class="boggle-help-copy">
+              <span class="boggle-step-num">2</span>
+              <div><strong>색을 보고 다음 단어를 생각해요</strong><p><b>초록</b>은 글자와 자리가 모두 맞고, <b>노랑</b>은 글자는 맞지만 자리가 달라요. 회색은 정답에 없는 글자예요.</p></div>
+            </div>
+            <div class="wordle-help-legend" aria-hidden="true">
+              <span><i class="wordle-help-tile exact">A</i> 자리까지 맞음</span>
+              <span><i class="wordle-help-tile present">E</i> 다른 자리에 있음</span>
+              <span><i class="wordle-help-tile absent">R</i> 정답에 없음</span>
+            </div>
+          </section>
+          <section class="boggle-help-step">
+            <div class="boggle-help-copy">
+              <span class="boggle-step-num">3</span>
+              <div><strong>끝나면 뜻과 발음을 확인해요</strong><p>정답을 맞히거나 여섯 번을 모두 사용하면 한국어 뜻과 영어 발음을 확인할 수 있어요.</p></div>
+            </div>
+          </section>
+        </div>
+      </div>
+
       <div class="game-help-panel" data-help-mode="mixmatch" hidden>
         <div class="boggle-help-steps">
           <section class="boggle-help-step">
@@ -289,9 +334,9 @@
       <button id="playAgainBtn" type="button">Play Again</button>
     </dialog>
   </main>
-  <div class="app-rev" aria-label="Revision">Rev 1.010</div>
+  <div class="app-rev" aria-label="Revision">Rev 1.011</div>
 </div>
 <script src="./mix-deck-skins.js?v=20260929-02"></script>
-<script type="module" src="./wordsearch.js?v=20260930-sfx1"></script>
+<script type="module" src="./wordsearch.js?v=20261004-wordle1"></script>
 </body>
 </html>
