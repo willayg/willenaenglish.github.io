@@ -2462,6 +2462,9 @@ async function closeSession({historyMode='back'}={}){
 }
 async function boot(){
   let bootLoaderReleased=false;
+  const openWordTestRequested=(()=>{
+    try{return new URLSearchParams(location.search).get('open')==='wordtest'}catch(_){return false}
+  })();
   beginVocabLoading('단어 지니어스를 준비하는 중...');
   try{
     wireShellNavigation();
@@ -2506,6 +2509,9 @@ async function boot(){
       background(async()=>{
         await loadTeacherAssignments({showLoader:false});
         renderFrontMenu();
+        if(openWordTestRequested&&state.activeScreen==='home'){
+          openWordTestScreen({historyMode:'replace'});
+        }
       },'teacher word tests');
     }
     startBtn.addEventListener('click',()=>startSession());
