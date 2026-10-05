@@ -12,7 +12,21 @@ function boot(){
   modal.addEventListener('click',e=>{if(e.target===modal)hide()});
   document.addEventListener('keydown',e=>{if(e.key==='Escape')hide()});
   $('#profileEditBtn')?.addEventListener('click',()=>{location.href='/students/profile.html'});
-  $('#logoutBig')?.addEventListener('click',async()=>{try{window.WillenaAPI?.clearLocalTokens?.();await window.WillenaAPI?.fetch('/.netlify/functions/supabase_auth?action=logout',{method:'POST'})}catch{}location.href='/students/login.html'});
+  $('#logoutBig')?.addEventListener('click',async()=>{
+    try{
+      sessionStorage.removeItem('missionModalShownV3');
+      window.WillenaAPI?.clearLocalTokens?.();
+      await window.WillenaAPI?.fetch('/.netlify/functions/supabase_auth?action=logout',{method:'POST'});
+    }catch{}
+    location.href='/students/login.html?next=%2Fstudents%2Fdashboard';
+  });
+  // Dashboard/Profile use this shared menu instead of <student-header>, so start the
+  // same homework mission router here as well.
+  setTimeout(()=>{
+    import('/students/components/homework-mission.js?v=20261005-shared1')
+      .then(mod=>mod.showHomeworkMission())
+      .catch(err=>console.debug('[shared-header-menu] homework mission unavailable',err));
+  },0);
   const lang=$('#languageSelect');
   if(lang&&window.StudentLang){lang.value=StudentLang.getLang()==='ko'?'ko':'en';lang.addEventListener('change',()=>StudentLang.setLang(lang.value))}
   const dark=$('#darkToggle');
