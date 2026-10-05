@@ -413,57 +413,12 @@ class StudentHeader extends HTMLElement {
     }
   }
 
-  async _vocabHomeworkComplete(assignment, uid) {
-    try {
-      const res = await WillenaAPI.fetch(`/.netlify/functions/homework_api?action=vocab_assignment_progress&assignment_id=${encodeURIComponent(assignment.id)}&_=${Date.now()}`);
-      if (!res.ok) return null;
-      const data = await res.json().catch(() => ({}));
-      if (!data?.success) return null;
-
-      const students = Array.isArray(data.students) ? data.students : [];
-      let student = uid ? students.find((row) => String(row?.user_id || row?.id || '') === String(uid)) : null;
-      if (!student && students.length === 1) student = students[0];
-      if (!student) return false;
-
-      const returnedAssignment = data.assignment && typeof data.assignment === 'object' ? data.assignment : {};
-      const meta = {
-        ...this._homeworkMeta(assignment),
-        ...this._homeworkMeta(returnedAssignment)
-      };
-      const requiredModes = Array.isArray(returnedAssignment.required_modes) && returnedAssignment.required_modes.length
-        ? returnedAssignment.required_modes
-        : (Array.isArray(meta.required_modes) ? meta.required_modes : Object.keys(student.modes || {}));
-      if (!requiredModes.length) return false;
-
-      const workloadMode = String(meta.workload_mode || 'all').toLowerCase();
-      const modeTargetCounts = meta.mode_target_counts && typeof meta.mode_target_counts === 'object' ? meta.mode_target_counts : {};
-      const modeTargetIds = meta.mode_target_ids && typeof meta.mode_target_ids === 'object' ? meta.mode_target_ids : {};
-
-      return requiredModes.every((mode) => {
-        const raw = student?.modes?.[mode] || {};
-        if (raw.complete === true || Number(raw.percent) >= 100) return true;
-
-        let total = Number(raw.total);
-        if (workloadMode === 'split') {
-          const explicitCount = Number(modeTargetCounts?.[mode]);
-          const ids = Array.isArray(modeTargetIds?.[mode]) ? modeTargetIds[mode] : [];
-          if (Number.isFinite(explicitCount) && explicitCount > 0) total = explicitCount;
-          else if (ids.length) total = ids.length;
-        }
-        const clean = Math.max(0, Number(raw.clean) || 0);
-        return Number.isFinite(total) && total > 0 && clean >= total;
-      });
-    } catch {
-      // A transient progress error should not create a phantom mission popup.
-      return null;
-    }
-  }
-
   async _homeworkComplete(assignment, uid) {
-    const source = this._homeworkSourceType(assignment);
-    if (source === 'vocab_study') return this._vocabHomeworkComplete(assignment, uid);
-    if (this._isEnglishArcadeHomework(assignment)) return this._englishArcadeHomeworkComplete(assignment, uid);
-    return null;
+    const destination = this._homeworkDestination(assignment);
+    if (!destination) return null;
+    // Use the established homework progress endpoint for mission eligibility.
+    // source_type controls routing; progress lookup should not decide app ownership.
+    return this._englishArcadeHomeworkComplete(assignment, uid);
   }
 
   _shouldSuppressGameInterrupt() {
@@ -499,7 +454,7 @@ class StudentHeader extends HTMLElement {
     try {
       if (this._missionChecked) return;
       this._missionChecked = true;
-      if (sessionStorage.getItem('missionModalShown') === '1') return;
+      if (sessionStorage.getItem('missionModalShownRouter2') === '1') return;
       if (/\/students\/login\.html$/i.test(location.pathname)) return;
 
       const existingModal = document.querySelector('[aria-modal="true"], .modal[role="dialog"]');
@@ -571,12 +526,12 @@ class StudentHeader extends HTMLElement {
 
       const finish = () => {
         try { overlay.remove(); } catch {}
-        sessionStorage.setItem('missionModalShown', '1');
+        sessionStorage.setItem('missionModalShownRouter2', '1');
       };
       panel.querySelector('#missionDismissBtn')?.addEventListener('click', finish);
       doNowBtn?.addEventListener('click', (e) => {
         e.preventDefault();
-        sessionStorage.setItem('missionModalShown', '1');
+        sessionStorage.setItem('missionModalShownRouter2', '1');
         window.location.href = destination.href;
       });
     } catch {}
@@ -1045,7 +1000,7 @@ class StudentHeader extends HTMLElement {
         }
       } catch {}
   // Ensure mission modal will show again after logout
-  try { sessionStorage.removeItem('missionModalShown'); sessionStorage.removeItem('wa_hw_tap_hint_shown'); } catch {}
+  try { sessionStorage.removeItem('missionModalShownRouter2'); sessionStorage.removeItem('wa_hw_tap_hint_shown'); } catch {}
       try { await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=logout', { method:'POST' }); } catch {}
       // Let other parts of the app know auth changed before redirecting
       try { window.dispatchEvent(new Event('auth:changed')); } catch {}
