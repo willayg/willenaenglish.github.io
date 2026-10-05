@@ -329,6 +329,13 @@
         return '';
       }
 
+      function isEnglishArcadeAssignment(assignment) {
+        const source = String(assignment?.source_type || '').trim().toLowerCase();
+        // Legacy English Arcade homework uses the homework_assignments default "wordlist".
+        // Keep known Arcade categories, but never absorb another app's assignment.
+        return !source || ['wordlist', 'english_arcade', 'arcade', 'saved_game', 'grammar', 'phonics'].includes(source);
+      }
+
       async function fetchHomeworkCompletionPct(assignmentId) {
         if (!assignmentId) return null;
         try {
@@ -480,80 +487,79 @@
       if (tabGrammarArcade) {
         tabGrammarArcade.addEventListener('click', async (e) => {
           e.preventDefault();
-          loadHomeworkTab();
+          await loadHomeworkTab();
+          setTimeout(updateHomeworkBadge, 250);
         });
       }
 
-      // Homework badge updater: show count of incomplete homeworks on the tab
+      // Homework badge updater: only English Arcade assignments belong on this tab.
       async function updateHomeworkBadge() {
         const badge = document.getElementById('hwTabBadge');
         if (!badge) return;
         try {
           const resp = await WillenaAPI.fetch('/.netlify/functions/homework_api?action=list_assignments&mode=student');
-          if (!resp.ok) { badge.style.display='none'; return; }
-          const data = await resp.json().catch(()=>({}));
-          if (!data || !data.success || !Array.isArray(data.assignments)) { badge.style.display='none'; return; }
-          // For each assignment, try to get student's progress row to determine completeness
-          let incomplete = 0;
-          // Fetch progress for assignments in parallel but limit concurrency to avoid spikes
-          const assignments = data.assignments || [];
-          await Promise.all(assignments.map(async (a) => {
+          if (!resp.ok) { badge.style.display = 'none'; return; }
+          const data = await resp.json().catch(() => ({}));
+          if (!data?.success || !Array.isArray(data.assignments)) { badge.style.display = 'none'; return; }
+
+          const assignments = data.assignments.filter(isEnglishArcadeAssignment);
+          if (!assignments.length) { badge.style.display = 'none'; return; }
+
+          let uid = null;
+          try {
+            const who = await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=whoami');
+            if (who.ok) {
+              const whoJson = await who.json().catch(() => ({}));
+              if (whoJson?.success && whoJson?.user_id) uid = whoJson.user_id;
+            }
+          } catch {}
+
+          const incompleteStates = await Promise.all(assignments.map(async (a) => {
             try {
-              // Detect spelling-only from local metadata to pass as a hint to the backend
-              let listMetaForBadge = a?.list_meta;
-              if (typeof listMetaForBadge === 'string') {
-                try { listMetaForBadge = JSON.parse(listMetaForBadge); } catch { listMetaForBadge = {}; }
+              let listMeta = a?.list_meta;
+              if (typeof listMeta === 'string') {
+                try { listMeta = JSON.parse(listMeta); } catch { listMeta = {}; }
               }
-              if (!listMetaForBadge || typeof listMetaForBadge !== 'object') listMetaForBadge = {};
-              const badgeForcedMode = resolveHomeworkForcedMode(listMetaForBadge);
-              const badgeModesTotal = Number(listMetaForBadge.modes_total ?? listMetaForBadge.total_modes ?? listMetaForBadge.mode_count ?? 0);
-              const localSpellingOnly = badgeForcedMode === 'spelling';
-              const spHint = localSpellingOnly ? '&spelling_only=1' : '';
+              if (!listMeta || typeof listMeta !== 'object') listMeta = {};
+              const forcedMode = resolveHomeworkForcedMode(listMeta);
+              const spHint = forcedMode === 'spelling' ? '&spelling_only=1' : '';
 
               const pr = await WillenaAPI.fetch(`/.netlify/functions/homework_api?action=assignment_progress&assignment_id=${encodeURIComponent(a.id)}${spHint}`);
-              const pj = await pr.json().catch(()=>({}));
-              console.log(`[HW Badge] assignment ${a.id} (${a.title}):`, { _v: pj._v, is_spelling_only: pj.is_spelling_only, _debug_meta: pj._debug_meta, localSpellingOnly, badgeForcedMode, badgeModesTotal });
-              if (pr.ok && pj && pj.success && Array.isArray(pj.progress)) {
-                // find current user row if present
-                const who = await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=whoami').then(r=>r.ok?r.json():{}).catch(()=>({}));
-                const uid = who && who.user_id ? who.user_id : null;
-                let myRow = null;
-                if (uid) myRow = pj.progress.find(p => String(p.user_id) === String(uid));
-                if (!myRow && pj.progress.length === 1) myRow = pj.progress[0];
-                let completionPct = myRow ? (typeof myRow.completion === 'number' ? myRow.completion : (myRow.completion_pct || 0)) : 0;
-                const isSpellingOnlyAssignment = !!pj.is_spelling_only || localSpellingOnly;
-                // If stars_required is set, override completion % to be star-based (except spelling-only assignments)
-                if (!isSpellingOnlyAssignment && pj.stars_required && myRow && typeof myRow.stars === 'number') {
-                  completionPct = Math.round((myRow.stars / pj.stars_required) * 100);
-                }
-                console.log(`[HW Badge] assignment ${a.id} final: completionPct=${completionPct}, myRow=`, myRow);
-                const completed = completionPct >= 100;
-                if (!completed) incomplete++;
-              } else {
-                // If progress unavailable, assume incomplete
-                incomplete++;
+              if (!pr.ok) return null;
+              const pj = await pr.json().catch(() => ({}));
+              if (!pj?.success || !Array.isArray(pj.progress)) return null;
+
+              let myRow = uid ? pj.progress.find((p) => String(p.user_id) === String(uid)) : null;
+              if (!myRow && pj.progress.length === 1) myRow = pj.progress[0];
+              if (!myRow) return true;
+
+              let completionPct = typeof myRow.completion === 'number'
+                ? myRow.completion
+                : (typeof myRow.completion_pct === 'number' ? myRow.completion_pct : 0);
+              const isSpellingOnly = !!pj.is_spelling_only || forcedMode === 'spelling';
+              if (!isSpellingOnly && pj.stars_required && typeof myRow.stars === 'number') {
+                completionPct = Math.round((myRow.stars / pj.stars_required) * 100);
               }
-            } catch (e) { incomplete++; }
+              return completionPct < 100;
+            } catch {
+              // Don't show a phantom badge because a progress lookup failed.
+              return null;
+            }
           }));
+
+          const incomplete = incompleteStates.filter((state) => state === true).length;
           if (incomplete > 0) {
             badge.textContent = String(incomplete);
             badge.style.display = 'inline-block';
           } else {
             badge.style.display = 'none';
           }
-        } catch (e) {
-          // silent fail
+        } catch {
+          badge.style.display = 'none';
         }
       }
 
-      // Update badge on load and when the homework tab is opened
       updateHomeworkBadge();
-      const originalLoadHomeworkTab = window.loadHomeworkTab || null;
-      window.loadHomeworkTab = async function(){
-        if (typeof originalLoadHomeworkTab === 'function') await originalLoadHomeworkTab();
-        // refresh badge after loading
-        setTimeout(updateHomeworkBadge, 400);
-      };
 
       async function loadHomeworkTab() {
         // Tab visual state
@@ -602,7 +608,7 @@
             gameArea.innerHTML = `<div style="padding:22px;text-align:center;color:#c62828;font-weight:600;">${(data && data.error) || t('Error loading homework.')}</div>`;
             return;
           }
-          const assignments = data.assignments || [];
+          const assignments = (data.assignments || []).filter(isEnglishArcadeAssignment);
           if (!assignments.length) {
             gameArea.innerHTML = `<div style="padding:32px;text-align:center;color:#777;font-size:1.05rem;">${t('No homework assigned.')}</div>`;
             return;
@@ -618,17 +624,11 @@
               }
               if (!listMetaForProgress || typeof listMetaForProgress !== 'object') listMetaForProgress = {};
               const progressForcedMode = resolveHomeworkForcedMode(listMetaForProgress);
-              const progressModesTotal = Number(listMetaForProgress.modes_total ?? listMetaForProgress.total_modes ?? listMetaForProgress.mode_count ?? 0);
               const localSpellingOnly = progressForcedMode === 'spelling';
               const spHint = localSpellingOnly ? '&spelling_only=1' : '';
 
               const prRes = await WillenaAPI.fetch(`/.netlify/functions/homework_api?action=assignment_progress&assignment_id=${encodeURIComponent(a.id)}${spHint}`);
               const prJson = await prRes.json().catch(()=>({}));
-              console.log(`[HW Cards] assignment ${a.id} (${a.title}):`, {
-                _v: prJson._v, is_spelling_only: prJson.is_spelling_only, _debug_meta: prJson._debug_meta,
-                localSpellingOnly, progressForcedMode, progressModesTotal, goal_value: prJson.goal_value,
-                raw_list_meta: listMetaForProgress,
-              });
               if (prRes.ok && prJson.success && Array.isArray(prJson.progress)) {
                 let studentProgress = null;
                 // Use String() for safe comparison - user_id may be UUID string or other type
@@ -647,7 +647,6 @@
                   if (!isSpellingOnlyAssignment && prJson.stars_required && typeof studentProgress.stars === 'number') {
                     completionPct = Math.round((studentProgress.stars / prJson.stars_required) * 100);
                   }
-                  console.log(`[HW Cards] assignment ${a.id} final: completionPct=${completionPct}, modes_attempted=${studentProgress.modes_attempted}, modes_total=${studentProgress.modes_total}, completion=${studentProgress.completion}, isSpellingOnly=${isSpellingOnlyAssignment}`);
                   return { ...a, completion_pct: completionPct, stars: studentProgress.stars || 0, accuracy: studentProgress.accuracy_best || 0, teacher_name: a.teacher_name || data.teacher_name || null, stars_required: prJson.stars_required || null };
                 }
               }
@@ -808,12 +807,12 @@
               if (!listMeta || typeof listMeta !== 'object') listMeta = {};
 
               const listKey = a.list_key || a.list || a.wordlist_key || listMeta.list_key || listMeta.filename || a.list_title || '';
-              const sourceType = String(listMeta.source_type || '').toLowerCase();
+              const metaSourceType = String(listMeta.source_type || '').toLowerCase();
               const metaType = String(listMeta.type || '').toLowerCase();
               const listKeySavedMatch = String(listKey || '').match(/^saved_game:(.+)$/i);
               const explicitGameId = a?.game_id || listMeta.game_id || listMeta.id || '';
               const gameId = String(explicitGameId || (listKeySavedMatch && listKeySavedMatch[1]) || '').trim();
-              const isSavedGameHomework = sourceType === 'saved_game' || metaType === 'saved_game' || !!listKeySavedMatch;
+              const isSavedGameHomework = metaSourceType === 'saved_game' || metaType === 'saved_game' || !!listKeySavedMatch;
               const hwId = a.id;
               const forcedMode = resolveHomeworkForcedMode(listMeta);
 
