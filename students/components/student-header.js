@@ -330,24 +330,163 @@ class StudentHeader extends HTMLElement {
   }
 
   // --- Mission Modal (homework alert) ---
+  _homeworkMeta(assignment) {
+    const raw = assignment?.list_meta;
+    if (raw && typeof raw === 'object') return raw;
+    if (typeof raw === 'string') {
+      try {
+        const parsed = JSON.parse(raw);
+        return parsed && typeof parsed === 'object' ? parsed : {};
+      } catch {}
+    }
+    return {};
+  }
+
+  _homeworkSourceType(assignment) {
+    const source = String(assignment?.source_type || '').trim().toLowerCase();
+    return source || 'wordlist';
+  }
+
+  _isEnglishArcadeHomework(assignment) {
+    const source = this._homeworkSourceType(assignment);
+    return ['wordlist', 'english_arcade', 'arcade', 'saved_game', 'grammar', 'phonics'].includes(source);
+  }
+
+  _homeworkDestination(assignment) {
+    const source = this._homeworkSourceType(assignment);
+    if (source === 'vocab_study') {
+      return {
+        app: 'Word Genius',
+        href: '/students/vocab-study/?open=wordtest',
+        buttonLabel: 'Word Genius에서 숙제 시작하기'
+      };
+    }
+    if (this._isEnglishArcadeHomework(assignment)) {
+      return {
+        app: 'English Arcade',
+        href: '/Games/english_arcade/index.html?openHomework=1',
+        buttonLabel: 'English Arcade에서 숙제 시작하기'
+      };
+    }
+    return null;
+  }
+
+  async _currentStudentId() {
+    if (this._uid) return this._uid;
+    try {
+      const who = await WillenaAPI.fetch(`/.netlify/functions/supabase_auth?action=whoami&_=${Date.now()}`);
+      if (!who.ok) return null;
+      const data = await who.json().catch(() => ({}));
+      if (data?.success && data?.user_id) {
+        this._uid = data.user_id;
+        return this._uid;
+      }
+    } catch {}
+    return null;
+  }
+
+  async _englishArcadeHomeworkComplete(assignment, uid) {
+    try {
+      const res = await WillenaAPI.fetch(`/.netlify/functions/homework_api?action=assignment_progress&assignment_id=${encodeURIComponent(assignment.id)}&_=${Date.now()}`);
+      if (!res.ok) return null;
+      const data = await res.json().catch(() => ({}));
+      if (!data?.success || !Array.isArray(data.progress)) return null;
+
+      let progress = uid ? data.progress.find((row) => String(row.user_id) === String(uid)) : null;
+      if (!progress && data.progress.length === 1) progress = data.progress[0];
+      if (!progress) return false;
+
+      let completionPct = 0;
+      if (typeof progress.completion === 'number') completionPct = progress.completion;
+      else if (typeof progress.completion_pct === 'number') completionPct = progress.completion_pct;
+      else if (typeof progress.modes_attempted === 'number' && typeof progress.modes_total === 'number' && progress.modes_total > 0) {
+        completionPct = Math.round((progress.modes_attempted / progress.modes_total) * 100);
+      }
+
+      if (data.stars_required && typeof progress.stars === 'number') {
+        completionPct = Math.round((progress.stars / data.stars_required) * 100);
+      }
+      return Math.max(0, Math.min(100, completionPct)) >= 100;
+    } catch {
+      // A transient progress error should not create a phantom mission popup.
+      return null;
+    }
+  }
+
+  async _vocabHomeworkComplete(assignment, uid) {
+    try {
+      const res = await WillenaAPI.fetch(`/.netlify/functions/homework_api?action=vocab_assignment_progress&assignment_id=${encodeURIComponent(assignment.id)}&_=${Date.now()}`);
+      if (!res.ok) return null;
+      const data = await res.json().catch(() => ({}));
+      if (!data?.success) return null;
+
+      const students = Array.isArray(data.students) ? data.students : [];
+      let student = uid ? students.find((row) => String(row?.user_id || row?.id || '') === String(uid)) : null;
+      if (!student && students.length === 1) student = students[0];
+      if (!student) return false;
+
+      const returnedAssignment = data.assignment && typeof data.assignment === 'object' ? data.assignment : {};
+      const meta = {
+        ...this._homeworkMeta(assignment),
+        ...this._homeworkMeta(returnedAssignment)
+      };
+      const requiredModes = Array.isArray(returnedAssignment.required_modes) && returnedAssignment.required_modes.length
+        ? returnedAssignment.required_modes
+        : (Array.isArray(meta.required_modes) ? meta.required_modes : Object.keys(student.modes || {}));
+      if (!requiredModes.length) return false;
+
+      const workloadMode = String(meta.workload_mode || 'all').toLowerCase();
+      const modeTargetCounts = meta.mode_target_counts && typeof meta.mode_target_counts === 'object' ? meta.mode_target_counts : {};
+      const modeTargetIds = meta.mode_target_ids && typeof meta.mode_target_ids === 'object' ? meta.mode_target_ids : {};
+
+      return requiredModes.every((mode) => {
+        const raw = student?.modes?.[mode] || {};
+        if (raw.complete === true || Number(raw.percent) >= 100) return true;
+
+        let total = Number(raw.total);
+        if (workloadMode === 'split') {
+          const explicitCount = Number(modeTargetCounts?.[mode]);
+          const ids = Array.isArray(modeTargetIds?.[mode]) ? modeTargetIds[mode] : [];
+          if (Number.isFinite(explicitCount) && explicitCount > 0) total = explicitCount;
+          else if (ids.length) total = ids.length;
+        }
+        const clean = Math.max(0, Number(raw.clean) || 0);
+        return Number.isFinite(total) && total > 0 && clean >= total;
+      });
+    } catch {
+      // A transient progress error should not create a phantom mission popup.
+      return null;
+    }
+  }
+
+  async _homeworkComplete(assignment, uid) {
+    const source = this._homeworkSourceType(assignment);
+    if (source === 'vocab_study') return this._vocabHomeworkComplete(assignment, uid);
+    if (this._isEnglishArcadeHomework(assignment)) return this._englishArcadeHomeworkComplete(assignment, uid);
+    return null;
+  }
+
   _shouldSuppressGameInterrupt() {
     try {
-      // Never interrupt active gameplay. Heuristics for the English Arcade page.
+      // Never cover an active Word Genius session.
+      if (/\/students\/vocab-study\//i.test(location.pathname) && document.body?.classList?.contains('vocab-session-open')) {
+        return true;
+      }
+
+      // Never interrupt active English Arcade gameplay.
       const isArcade = /\/Games\/english_arcade\//i.test(location.pathname);
       if (!isArcade) return false;
       const qs = new URLSearchParams(location.search);
-      // Don't suppress if just landing via openHomework (that's intended entry point)
+      // Don't suppress if just landing via openHomework (that's intended entry point).
       if (qs.get('openHomework') === '1') return false;
-      // If autostart is active, allow modal first (it won't re-show once dismissed)
+      // If autostart is active, allow modal first (it won't re-show once dismissed).
       if (qs.get('autostart') === '1') return false;
-      // Known game runtime flags if exposed
       if (window.WordArcade) {
         try {
           if (typeof window.WordArcade.isInGame === 'function' && window.WordArcade.isInGame()) return true;
           if (window.WordArcade.isPlaying === true) return true;
         } catch {}
       }
-      // DOM heuristic: if opening menu is hidden and gameArea populated, assume a game is active
       const opening = document.getElementById('openingButtons');
       const gameArea = document.getElementById('gameArea');
       const openingHidden = opening ? (getComputedStyle(opening).display === 'none') : false;
@@ -358,99 +497,55 @@ class StudentHeader extends HTMLElement {
 
   async _maybeShowMissionModal() {
     try {
-      if (this._missionChecked) return; this._missionChecked = true;
-      // Once per session
+      if (this._missionChecked) return;
+      this._missionChecked = true;
       if (sessionStorage.getItem('missionModalShown') === '1') return;
-      // Skip login page entirely
       if (/\/students\/login\.html$/i.test(location.pathname)) return;
-      // If another aria-modal is present, delay briefly and try once more
+
       const existingModal = document.querySelector('[aria-modal="true"], .modal[role="dialog"]');
       if (existingModal) {
-        // Wait briefly for other modals to dismiss, then give up for this session if still present
         setTimeout(() => {
           if (!document.querySelector('[aria-modal="true"], .modal[role="dialog"]') && !document.getElementById('missionModalGlobal')) {
-            this._missionChecked = false; // allow retry
+            this._missionChecked = false;
             this._maybeShowMissionModal();
           }
         }, 1000);
         return;
       }
-      // Never interrupt games (but allow on opening screen even if on Arcade page)
       if (this._shouldSuppressGameInterrupt()) return;
 
-      // Small shared cache to avoid duplicate fetches across pages
-      const cacheKey = '__HAS_HW_CACHE';
-      let hasHw = null;
-      const now = Date.now();
-      // Skip cache entirely - always check fresh to ensure accurate incomplete status
-      if (hasHw == null) {
-        // Defer to idle if available to minimize main thread contention
-        await new Promise((res) => {
-          try { (window.requestIdleCallback || window.requestAnimationFrame)(() => res()); }
-          catch { setTimeout(res, 0); }
-        });
-          const resp = await WillenaAPI.fetch(`/.netlify/functions/homework_api?action=list_assignments&mode=student&_=${Date.now()}`);
-          if (!resp.ok) return;
-          const data = await resp.json().catch(() => ({}));
-          // If assignments exist, check per-assignment progress for this user to determine incompletes.
-          if (data && data.success && Array.isArray(data.assignments) && data.assignments.length) {
-            const assignments = data.assignments || [];
-            // Ensure we have a user id to match progress rows. Try hydrated uid then whoami fallback.
-            let uid = this._uid || null;
-            if (!uid) {
-              try {
-                const who = await WillenaAPI.fetch(`/.netlify/functions/supabase_auth?action=whoami&_=${Date.now()}`);
-                if (who.ok) {
-                  const wj = await who.json().catch(() => ({}));
-                  if (wj && wj.success && wj.user_id) uid = wj.user_id;
-                }
-              } catch {}
-            }
-            // Check progress for each assignment. Conservative approach: if any assignment appears incomplete, treat as hasHw.
-            let incomplete = 0;
-            try {
-              await Promise.all(assignments.map(async (a) => {
-                try {
-                  const pr = await WillenaAPI.fetch(`/.netlify/functions/homework_api?action=assignment_progress&assignment_id=${encodeURIComponent(a.id)}&_=${Date.now()}`);
-                  if (!pr.ok) { incomplete++; return; }
-                  const pj = await pr.json().catch(() => ({}));
-                  if (pr.ok && pj && pj.success && Array.isArray(pj.progress)) {
-                    let studentProgress = null;
-                    if (uid) studentProgress = pj.progress.find(p => String(p.user_id) === String(uid)) || null;
-                    if (!studentProgress && pj.progress.length === 1) studentProgress = pj.progress[0];
-                    if (studentProgress) {
-                      let completionPct = 0;
-                      if (typeof studentProgress.completion === 'number') completionPct = studentProgress.completion;
-                      else if (typeof studentProgress.completion_pct === 'number') completionPct = studentProgress.completion_pct;
-                      else if (typeof studentProgress.modes_attempted === 'number' && typeof studentProgress.modes_total === 'number' && studentProgress.modes_total > 0) {
-                        completionPct = Math.round((studentProgress.modes_attempted / studentProgress.modes_total) * 100);
-                      }
-                      completionPct = Math.max(0, Math.min(100, completionPct));
-                      // If stars_required is set, override completion % to be star-based
-                      if (pj.stars_required && typeof studentProgress.stars === 'number') {
-                        completionPct = Math.round((studentProgress.stars / pj.stars_required) * 100);
-                      }
-                      if (completionPct < 100) incomplete++;
-                    } else {
-                      // No student row => treat as incomplete
-                      incomplete++;
-                    }
-                  } else {
-                    incomplete++;
-                  }
-                } catch (e) { incomplete++; }
-              }));
-            } catch (e) { incomplete = assignments.length; }
-            hasHw = incomplete > 0;
-          } else {
-            hasHw = false;
-          }
-          try { window[cacheKey] = { t: now, v: hasHw }; } catch {}
-      }
-      if (!hasHw) return;
+      await new Promise((resolve) => {
+        try { (window.requestIdleCallback || window.requestAnimationFrame)(() => resolve()); }
+        catch { setTimeout(resolve, 0); }
+      });
 
-      // Build fullscreen modal
-      if (document.getElementById('missionModalGlobal')) return; // already present
+      const resp = await WillenaAPI.fetch(`/.netlify/functions/homework_api?action=list_assignments&mode=student&_=${Date.now()}`);
+      if (!resp.ok) return;
+      const data = await resp.json().catch(() => ({}));
+      if (!data?.success || !Array.isArray(data.assignments) || !data.assignments.length) return;
+
+      const assignments = [...data.assignments].sort((a, b) => {
+        const aDue = new Date(a?.due_at || 0).getTime();
+        const bDue = new Date(b?.due_at || 0).getTime();
+        return aDue - bDue;
+      });
+      const uid = await this._currentStudentId();
+
+      let missionAssignment = null;
+      let destination = null;
+      for (const assignment of assignments) {
+        const target = this._homeworkDestination(assignment);
+        if (!target) continue;
+        const complete = await this._homeworkComplete(assignment, uid);
+        if (complete === false) {
+          missionAssignment = assignment;
+          destination = target;
+          break;
+        }
+      }
+      if (!missionAssignment || !destination) return;
+
+      if (document.getElementById('missionModalGlobal')) return;
       const overlay = document.createElement('div');
       overlay.id = 'missionModalGlobal';
       overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.65);backdrop-filter:blur(3px);z-index:2147483646;display:flex;align-items:center;justify-content:center;padding:26px;';
@@ -459,21 +554,30 @@ class StudentHeader extends HTMLElement {
       panel.innerHTML = `
         <h2 style="margin:0 0 12px;font-size:2.2rem;font-weight:800;color:#ff6fa9;letter-spacing:.4px;font-family:'Poppins',system-ui,Arial,sans-serif;">You Have A Mission</h2>
         <img src="/Games/english_arcade/assets/Images/icons/rocket.svg" alt="rocket" style="width:72px;height:72px;margin:0 auto 14px;display:block;" />
+        <div id="missionAssignmentLabel" style="margin:0 auto 14px;max-width:390px;color:#475569;font-weight:700;line-height:1.35;"></div>
         <div style="display:flex;gap:18px;align-items:center;justify-content:center;margin-top:12px;flex-wrap:wrap;">
-          <a id="missionDoNowBtn" href="#" style="display:inline-block;font-size:1.05rem;font-weight:800;color:#555;background:#fff;border:2px solid #ff6fa9;padding:14px 26px;border-radius:16px;text-decoration:none;min-width:260px;font-family:'Poppins',system-ui,Arial,sans-serif;box-shadow:0 6px 16px rgba(255,111,169,0.12);transition:transform .16s ease, box-shadow .16s ease;">숙제 시작하기</a>
+          <a id="missionDoNowBtn" href="#" style="display:inline-block;font-size:1.05rem;font-weight:800;color:#555;background:#fff;border:2px solid #ff6fa9;padding:14px 26px;border-radius:16px;text-decoration:none;min-width:260px;font-family:'Poppins',system-ui,Arial,sans-serif;box-shadow:0 6px 16px rgba(255,111,169,0.12);transition:transform .16s ease, box-shadow .16s ease;"></a>
           <button id="missionDismissBtn" type="button" style="background:#fff;border:2px solid #e2e8f0;color:#334155;font-weight:700;padding:10px 16px;border-radius:12px;cursor:pointer;font-family:'Poppins',system-ui,Arial,sans-serif;margin-top:18px;">Not Now</button>
         </div>`;
+      const assignmentLabel = panel.querySelector('#missionAssignmentLabel');
+      if (assignmentLabel) {
+        assignmentLabel.textContent = `${destination.app} · ${missionAssignment.title || missionAssignment.list_title || 'Homework'}`;
+      }
+      const doNowBtn = panel.querySelector('#missionDoNowBtn');
+      if (doNowBtn) doNowBtn.textContent = destination.buttonLabel;
+
       overlay.appendChild(panel);
       document.body.appendChild(overlay);
 
-      const finish = () => { try { overlay.remove(); } catch {} sessionStorage.setItem('missionModalShown','1'); };
-      // Do NOT close modal when clicking the backdrop; require explicit button action
-      // overlay.addEventListener('click', (e) => { if (e.target === overlay) finish(); });
+      const finish = () => {
+        try { overlay.remove(); } catch {}
+        sessionStorage.setItem('missionModalShown', '1');
+      };
       panel.querySelector('#missionDismissBtn')?.addEventListener('click', finish);
-      panel.querySelector('#missionDoNowBtn')?.addEventListener('click', (e) => {
+      doNowBtn?.addEventListener('click', (e) => {
         e.preventDefault();
-        sessionStorage.setItem('missionModalShown','1');
-        window.location.href = '/Games/english_arcade/index.html?openHomework=1';
+        sessionStorage.setItem('missionModalShown', '1');
+        window.location.href = destination.href;
       });
     } catch {}
   }
