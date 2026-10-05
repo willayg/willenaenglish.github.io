@@ -333,7 +333,7 @@
         const nxt = params.get('next');
         if (nxt && /^\//.test(nxt)) return nxt; // only allow same-site absolute path
       } catch {}
-      return '/students/profile.html';
+      return '/students/dashboard';
     }
 
     document.getElementById('loginBtn').addEventListener('click', async () => {
