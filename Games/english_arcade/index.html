@@ -347,7 +347,6 @@
           } catch {}
           const prRes = await WillenaAPI.fetch(`/.netlify/functions/homework_api?action=assignment_progress&assignment_id=${encodeURIComponent(assignmentId)}${spHint}`);
           const prJson = await prRes.json().catch(() => ({}));
-          console.log('[HW Progress] API response:', JSON.stringify(prJson._debug || {}), 'progress:', JSON.stringify((prJson.progress || []).map(p => ({uid: p.user_id, completion: p.completion, modes: p.modes_attempted + '/' + p.modes_total, modes_list: p.modes}))));
           if (!prRes.ok || !prJson.success || !Array.isArray(prJson.progress)) return null;
 
           const uid = await getCurrentUserIdCached();
@@ -728,14 +727,14 @@
 
             // Goal message (for incomplete only, will add later)
             let goalMsg = null;
+            let listMetaForGoal = {};
             if (progress < 100) {
-              let listMetaForGoal = a?.list_meta;
+              listMetaForGoal = a?.list_meta;
               if (typeof listMetaForGoal === 'string') {
                 try { listMetaForGoal = JSON.parse(listMetaForGoal); } catch { listMetaForGoal = {}; }
               }
               if (!listMetaForGoal || typeof listMetaForGoal !== 'object') listMetaForGoal = {};
               const goalForcedMode = resolveHomeworkForcedMode(listMetaForGoal);
-              const goalModesTotal = Number(listMetaForGoal.modes_total ?? listMetaForGoal.total_modes ?? listMetaForGoal.mode_count ?? 0);
               const isSpellingOnlyGoal = goalForcedMode === 'spelling';
 
               goalMsg = document.createElement('div');
@@ -755,7 +754,7 @@
               }
             }
 
-            // Debug overlay (visible via ?hwdebug=1 in URL, or always in console)
+            // Optional debug overlay, enabled only with ?hwdebug=1.
             const showDebug = new URLSearchParams(window.location.search).has('hwdebug');
             if (showDebug) {
               const dbg = document.createElement('div');
