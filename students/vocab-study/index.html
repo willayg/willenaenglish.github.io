@@ -241,7 +241,7 @@
 <script src="/students/study/study-question-bank.js?v=20260822-conversationfix1"></script>
 <script type="module" src="./theme-pips.js?v=20260927-v0001"></script>
 <script type="module">
-import('./vocab-study.js?v=20260927-v0108').catch(error=>{
+import('./vocab-study.js?v=20261005-homework-router1').catch(error=>{
   console.error('[Vocab Study] module load',error);
   const panel=document.getElementById('vocabStartupError');
   if(panel){panel.hidden=false;panel.querySelector('[data-startup-message]').textContent=error?.message||'Please refresh and try again.';}
