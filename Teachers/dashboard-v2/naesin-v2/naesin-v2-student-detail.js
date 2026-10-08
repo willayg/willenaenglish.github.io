@@ -51,42 +51,84 @@ function renderProgress(){
  const body=q('#na2DetailBody');
  if(!current.progressRows){
    body.innerHTML='<div class="na2-detail-loading">레슨별 학습 기록을 불러오는 중…</div>';
-   const planId=current.planId;
+   if(current.progressLoading)return;
+   const opened=current,planId=current.planId;
+   current.progressLoading=true;
    window.NaesinV2Data.loadSessionHistory(planId).then(rows=>{
-     if(String(current.planId)!==String(planId))return;
+     if(current!==opened)return;
      current.progressRows=Array.isArray(rows)?rows:[];
      if(current.tab==='progress')renderProgress();
-   }).catch(e=>{if(current.tab==='progress')body.innerHTML='<div class="na2-detail-error">'+esc(e.message||'기록을 불러오지 못했습니다.')+' <button type="button" id="na2ProgressRetry">다시 시도</button></div>';q('#na2ProgressRetry')?.addEventListener('click',()=>{current.progressRows=null;renderProgress()})});
+   }).catch(e=>{
+     if(current!==opened||current.tab!=='progress')return;
+     body.innerHTML='<div class="na2-detail-error">'+esc(e.message||'기록을 불러오지 못했습니다.')+' <button type="button" id="na2ProgressRetry">다시 시도</button></div>';
+     q('#na2ProgressRetry')?.addEventListener('click',()=>{current.progressRows=null;renderProgress()});
+   }).finally(()=>{if(current===opened)current.progressLoading=false});
    return;
  }
- const rows=current.progressRows.filter(r=>n(r.total)>0);
+ const ALL='__all__';
+ const rows=current.progressRows.filter(r=>n(r.total)>0&&r.completed_at);
+ const fixedBook=String(current.data?.group?.book_key||current.data?.stats?.book_key||'');
+ const book=rows.some(r=>String(r.book_key||'')===fixedBook)?fixedBook:String(rows[0]?.book_key||'');
+ const scoped=rows.filter(r=>String(r.book_key||'')===book);
  const uniq=xs=>[...new Set(xs.filter(Boolean))];
- const books=uniq(rows.map(r=>r.book_key)), book=books.includes(current.progressFilters.book)?current.progressFilters.book:(books[0]||'');
- const matchingBook=rows.filter(r=>r.book_key===book);
- const lessons=uniq(matchingBook.map(r=>r.unit_key)).sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));
- const lesson=lessons.includes(current.progressFilters.lesson)?current.progressFilters.lesson:(lessons[0]||'');
- const matchingLesson=matchingBook.filter(r=>r.unit_key===lesson);
- const skills=uniq(matchingLesson.map(r=>r.practice_type));
- const skill=skills.includes(current.progressFilters.skill)?current.progressFilters.skill:(skills[0]||'');
- current.progressFilters={book,lesson,skill};
- const items=matchingLesson.filter(r=>r.practice_type===skill).sort((a,b)=>new Date(a.completed_at)-new Date(b.completed_at));
+ const lessons=uniq(scoped.map(r=>String(r.unit_key||''))).sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));
+ const lesson=lessons.includes(current.progressFilters.lesson)?current.progressFilters.lesson:ALL;
+ const byLesson=lesson===ALL?scoped:scoped.filter(r=>r.unit_key===lesson);
+ const skills=uniq(byLesson.map(r=>String(r.practice_type||''))).sort((a,b)=>(ORDER.indexOf(a)===-1?99:ORDER.indexOf(a))-(ORDER.indexOf(b)===-1?99:ORDER.indexOf(b))||a.localeCompare(b));
+ const skill=skills.includes(current.progressFilters.skill)?current.progressFilters.skill:ALL;
+ current.progressFilters={lesson,skill};
+ const items=(skill===ALL?byLesson:byLesson.filter(r=>r.practice_type===skill)).sort((a,b)=>new Date(a.completed_at)-new Date(b.completed_at));
+ const daily=lesson===ALL||skill===ALL;
+ const byDay=new Map();
+ items.forEach(r=>{
+   const key=koreaDateKey(r.completed_at);
+   if(!key)return;
+   const entry=byDay.get(key)||{date:key,total:0,correct:0,retries:0,sessions:0};
+   entry.total+=n(r.total);entry.correct+=n(r.correct);entry.retries+=n(r.retries);entry.sessions++;
+   byDay.set(key,entry);
+ });
+ const days=[...byDay.values()].sort((a,b)=>a.date.localeCompare(b.date));
+ const series=daily?days:items;
+ const pct=r=>r&&n(r.total)>0?100*n(r.correct)/n(r.total):null;
+ const fmt=v=>v==null?'—':Math.round(v)+'%';
  const option=(value,label,selected)=>'<option value="'+esc(value)+'"'+(value===selected?' selected':'')+'>'+esc(label)+'</option>';
  const select=(key,values,selected,show)=>'<select data-progress-filter="'+key+'" style="width:100%;min-width:0;padding:10px;border:1px solid #d0e2e7;border-radius:9px;background:var(--surface,#fff);color:inherit">'+values.map(v=>option(v,show(v),selected)).join('')+'</select>';
- const first=items[0],last=items[items.length-1];
- const pct=r=>r?100*n(r.correct)/Math.max(1,n(r.total)):null;
- const fmt=v=>v==null?'—':Math.round(v)+'%';
- const delta=first&&last?pct(last)-pct(first):null;
- const pts=items.map((r,i)=>({x:42+(items.length===1?0:i*660/(items.length-1)),y:170-1.4*pct(r),p:pct(r)}));
- const svg=items.length?'<svg viewBox="0 0 750 215" role="img" aria-label="회차별 정답률 그래프" style="width:100%;height:auto;display:block"><line x1="42" y1="30" x2="42" y2="170" stroke="#b9cbd0"/><line x1="42" y1="170" x2="708" y2="170" stroke="#b9cbd0"/><text x="9" y="35" font-size="12" fill="#677">100%</text><text x="20" y="172" font-size="12" fill="#677">0%</text><polyline fill="none" stroke="#13a4ac" stroke-width="3" points="'+pts.map(p=>p.x+','+p.y).join(' ')+'"/>'+pts.map((p,i)=>'<circle cx="'+p.x+'" cy="'+p.y+'" r="5" fill="#13a4ac"><title>Session '+(i+1)+': '+Math.round(p.p)+'%</title></circle>').join('')+'</svg>':'';
- body.innerHTML='<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-bottom:20px">'+
- '<label>교재'+select('book',books,book,v=>v)+'</label><label>레슨'+select('lesson',lessons,lesson,v=>v)+'</label><label>영역'+select('skill',skills,skill,v=>LABELS[v]||v)+'</label></div>'+
- (items.length?'<div class="na2-kpi-grid">'+metricCard(fmt(pct(first)),'첫 회차',n(first.correct)+' / '+n(first.total))+metricCard(fmt(pct(last)),'최근 회차',n(last.correct)+' / '+n(last.total))+metricCard((delta>=0?'+':'')+Math.round(delta)+'pp','첫 회차 대비','총 '+items.length+'회')+'</div><section class="na2-detail-section"><div class="na2-section-head"><h3>회차별 정확도</h3><span>재시도 제외 · 최초 응답 기준</span></div>'+svg+'<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;text-align:left;font-size:13px"><thead><tr><th>일시</th><th>정답</th><th>정답률</th><th>전회 대비</th><th>재시도</th></tr></thead><tbody>'+items.map((r,i)=>{const diff=i?pct(r)-pct(items[i-1]):null;return '<tr style="border-top:1px solid #e0ebee"><td style="padding:9px 5px">'+esc(fmtDate(r.completed_at))+'</td><td>'+n(r.correct)+' / '+n(r.total)+'</td><td>'+fmt(pct(r))+'</td><td>'+(diff==null?'—':(diff>=0?'+':'')+Math.round(diff)+'pp')+'</td><td>'+n(r.retries)+'</td></tr>'}).join('')+'</tbody></table></div></section>':'<div class="na2-detail-empty">해당 레슨과 영역의 완료된 학습 기록이 없습니다.</div>');
+ const lessonChoices=[ALL,...lessons],skillChoices=[ALL,...skills];
+ const filters='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:12px;margin-bottom:20px">'+
+   '<label>레슨'+select('lesson',lessonChoices,lesson,v=>v===ALL?'전체 레슨':v)+'</label>'+
+   '<label>영역'+select('skill',skillChoices,skill,v=>v===ALL?'전체 영역':LABELS[v]||v)+'</label></div>';
+ if(!items.length){
+   body.innerHTML=filters+'<div class="na2-detail-empty">선택한 레슨과 영역의 완료된 학습 기록이 없습니다.</div>';
+ }else{
+   const first=items[0],last=items[items.length-1];
+   const correct=items.reduce((sum,r)=>sum+n(r.correct),0),total=items.reduce((sum,r)=>sum+n(r.total),0);
+   const cards=daily
+     ?metricCard(fmt(100*correct/total),'선택 범위 정확도',correct+' / '+total)+metricCard(items.length,'완료한 연습','학습일 '+days.length+'일')
+     :metricCard(fmt(pct(first)),'첫 회차',n(first.correct)+' / '+n(first.total))+metricCard(fmt(pct(last)),'최근 회차',n(last.correct)+' / '+n(last.total));
+   const width=750,left=50,right=22,top=22,bottom=178,plotWidth=width-left-right,plotHeight=bottom-top;
+   const points=series.map((r,i)=>({x:left+(series.length===1?plotWidth/2:i*plotWidth/(series.length-1)),y:bottom-(pct(r)||0)*plotHeight/100,value:pct(r),row:r}));
+   const line=points.map(p=>p.x.toFixed(1)+','+p.y.toFixed(1)).join(' ');
+   const pointLabel=p=>daily?p.row.date:(fmtDate(p.row.completed_at));
+   const dots=points.length<=70?points.map((p,i)=>'<circle cx="'+p.x+'" cy="'+p.y+'" r="'+(points.length>35?'3':'4')+'" fill="#13a4ac"><title>'+esc(pointLabel(p)+': '+fmt(p.value)+(daily?' · '+p.row.sessions+'회':''))+'</title></circle>').join(''):'';
+   const firstLabel=daily?series[0]?.date?.slice(5):'1회';
+   const lastLabel=daily?series[series.length-1]?.date?.slice(5):series.length+'회';
+   const labels=points.length>1?'<text x="'+left+'" y="208" text-anchor="start">'+esc(firstLabel)+'</text><text x="'+(width-right)+'" y="208" text-anchor="end">'+esc(lastLabel)+'</text>':'';
+   const svg='<svg viewBox="0 0 750 220" role="img" aria-label="'+(daily?'일별 정답률 그래프':'회차별 정답률 그래프')+'" style="width:100%;height:auto;display:block">'+
+     '<g font-size="12" fill="#677"><text x="7" y="27">100%</text><text x="15" y="104">50%</text><text x="24" y="182">0%</text>'+labels+'</g>'+
+     '<path d="M '+left+' '+top+' V '+bottom+' H '+(width-right)+'" fill="none" stroke="#b9cbd0"/>'+
+     '<line x1="'+left+'" x2="'+(width-right)+'" y1="'+((top+bottom)/2)+'" y2="'+((top+bottom)/2)+'" stroke="#e8eff0" stroke-dasharray="3 5"/>'+
+     '<polyline fill="none" stroke="#13a4ac" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" points="'+line+'"/>'+dots+'</svg>';
+   const head=daily?'<th>날짜</th><th>정답</th><th>정답률</th><th>연습 횟수</th><th>재시도</th>':'<th>일시</th><th>정답</th><th>정답률</th><th>재시도</th>';
+   const table=series.map(r=>'<tr style="border-top:1px solid #e0ebee"><td style="padding:9px 5px">'+esc(daily?r.date:fmtDate(r.completed_at))+'</td><td>'+n(r.correct)+' / '+n(r.total)+'</td><td>'+fmt(pct(r))+'</td>'+(daily?'<td>'+n(r.sessions)+'</td>':'')+'<td>'+n(r.retries)+'</td></tr>').join('');
+   body.innerHTML=filters+'<div class="na2-kpi-grid">'+cards+'</div>'+
+     '<section class="na2-detail-section"><div class="na2-section-head"><h3>'+(daily?'일별 정확도':'회차별 정확도')+'</h3><span>재시도 제외 · 최초 응답 기준 · 총 '+items.length+'회</span></div>'+
+     svg+'<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;text-align:left;font-size:13px"><thead><tr>'+head+'</tr></thead><tbody>'+table+'</tbody></table></div></section>';
+ }
  qa('[data-progress-filter]',body).forEach(el=>el.addEventListener('change',()=>{
-  const key=el.dataset.progressFilter;
-  current.progressFilters[key]=el.value;
-  if(key==='book'){delete current.progressFilters.lesson;delete current.progressFilters.skill}
-  if(key==='lesson')delete current.progressFilters.skill;
-  renderProgress();
+   const key=el.dataset.progressFilter;
+   current.progressFilters[key]=el.value;
+   if(key==='lesson')current.progressFilters.skill=ALL;
+   renderProgress();
  }));
 }
 
