@@ -3,7 +3,7 @@
 const LABELS={vocabulary:'단어 학습',vocab_test:'어휘 문제',grammar:'문법',sentences:'본문',communication:'의사소통',reading:'독해',constructed_response:'서술형'};
 const ORDER=['vocabulary','vocab_test','grammar','sentences','communication','reading','constructed_response'];
 const GRAMMAR_KO={be_present:'be동사 현재형',simple_present:'일반동사 현재형',questions:'의문문',imperatives:'명령문',modal_can_will:'조동사 can / will',present_progressive:'현재진행형',simple_past:'과거시제',gerund:'동명사',be_going_to:'be going to 미래 표현',there_is_are:'There is / There are 구문',comparison:'비교 표현',to_infinitives:'to부정사',that_clauses:'that절',time_clauses:'시간 부사절',ditransitive_verbs:'수여동사 (4형식)',dummy_it:'비인칭·가주어 it',to_infinitive_object:'to부정사의 목적어 역할',sensory_linking_verbs:'감각동사 + 형용사',comparatives:'비교급',when_clause:'when절',that_clause:'that절',to_infinitive_nominal:'to부정사의 명사적 용법',reflexive_pronouns:'재귀대명사',should:'조동사 should',when_time_clause:'접속사 when의 시간 부사절',superlatives:'최상급',to_infinitive_purpose:'to부정사의 부사적 용법 (목적)',dummy_it_to_infinitive:'가주어 it + to부정사',comparative_correlative:'the 비교급, the 비교급',subject_verb_agreement:'주어와 동사의 수일치',perception_verbs:'지각동사',present_participle:'현재분사',as_as_comparison:'원급 비교 as ~ as',noun_modifier:'명사를 수식하는 표현',passive_voice:'수동태',have_to:'have to',infinitive_to:'to부정사',irregular_verbs:'불규칙 동사'};
-let current={studentId:null,planId:null,groupId:null,data:null,wrongData:null,wrongLoading:false,wrongFilter:'all',grammarOpen:null,tab:'progress',progressRows:null,progressFilters:{},progressMode:'rolling',progressAttempts:null,progressAttemptLoading:false};
+let current={studentId:null,planId:null,groupId:null,data:null,wrongData:null,wrongLoading:false,wrongFilter:'all',grammarOpen:null,tab:'progress',progressRows:null,progressFilters:{},progressMode:'rolling',progressAttemptHistory:null,progressShowRetries:true};
 let refreshPromise=null;
 const q=(s,r=document)=>r.querySelector(s),qa=(s,r=document)=>[...r.querySelectorAll(s)];
 const esc=v=>String(v??'').replace(/[&<>\"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[c])),n=v=>Number.isFinite(Number(v))?Number(v):0,maybePct=v=>v==null?'—':`${Math.round(Number(v)||0)}%`,scoreClass=v=>v==null?'':Number(v)>=80?'score-good':Number(v)>=50?'score-mid':'score-low',examType=v=>v==='final'?'기말고사':'중간고사',nameOf=s=>s?.korean_name||s?.name||s?.username||'Student';
@@ -42,7 +42,7 @@ function moveStudent(direction){
   const {students,index}=navPosition();
   const next=students[index+direction];
   if(!next)return;
-  const options={tab:current.tab,progressFilters:{...(current.progressFilters||{})},progressMode:current.progressMode,replaceHistory:true};
+  const options={tab:current.tab,progressFilters:{...(current.progressFilters||{})},progressMode:current.progressMode,progressShowRetries:current.progressShowRetries,replaceHistory:true};
   void open(next.studentId,next.planId,current.groupId,options);
 }
 function setHeader(data){const student=data?.student||{},group=data?.group||{},stats=data?.stats||{};q('#na2DetailName').textContent=nameOf(student);q('#na2DetailMeta').textContent=[group.school,group.term?`${group.term}학기 ${examType(group.exam_type)}`:null,group.book_label||stats.book_label].filter(Boolean).join(' · ')}
@@ -91,151 +91,13 @@ const openPanel=async i=>{const r=rows[i],panel=q(`[data-grammar-expand="${i}"]`
 qa('[data-grammar-index]',body).forEach(btn=>btn.addEventListener('click',()=>{const i=Number(btn.dataset.grammarIndex),r=rows[i],panel=q(`[data-grammar-expand="${i}"]`,body);if(!r||!panel)return;const opening=panel.hidden;qa('.na2-grammar-expand',body).forEach(x=>x.hidden=true);qa('.na2-grammar-row',body).forEach(x=>x.classList.remove('open'));current.grammarOpen=opening?grammarKey(r):null;if(opening){btn.classList.add('open');void openPanel(i)}}));if(current.grammarOpen){const i=rows.findIndex(r=>grammarKey(r)===current.grammarOpen);if(i>=0){q(`[data-grammar-index="${i}"]`,body)?.classList.add('open');void openPanel(i)}else current.grammarOpen=null}}
 function renderGrammar(){paintGrammar()}
 
-function calculateRollingHistory(series,items,rawAttempts,windowSize,daily){
- const attemptMap=new Map();
- for(const a of Array.isArray(rawAttempts)?rawAttempts:[]){
-   if(a?.is_correct==null||!a.session_id)continue;
-   const id=String(a.session_id);
-   if(!attemptMap.has(id))attemptMap.set(id,[]);
-   attemptMap.get(id).push(a);
- }
- for(const arr of attemptMap.values())arr.sort((a,b)=>new Date(a.attempted_at)-new Date(b.attempted_at));
- let lastAnswers=[];
- return series.map(point=>{
-   const sessions=daily?items.filter(r=>koreaDateKey(r.completed_at)===point.date):[point];
-   for(const session of sessions){
-     for(const a of attemptMap.get(String(session.session_id))||[])lastAnswers.push(a.is_correct===true?1:0);
-     if(lastAnswers.length>windowSize)lastAnswers=lastAnswers.slice(-windowSize);
-   }
-   const total=lastAnswers.length,correct=lastAnswers.reduce((sum,x)=>sum+x,0);
-   return {correct,total,percentage:total?100*correct/total:null};
- });
-}
 function renderProgress(){
- const body=q('#na2DetailBody');
- if(!current.progressRows){
-   body.innerHTML='<div class="na2-detail-loading">레슨별 학습 기록을 불러오는 중…</div>';
-   if(current.progressLoading)return;
-   const opened=current,planId=current.planId;
-   current.progressLoading=true;
-   window.NaesinV2Data.loadSessionHistory(planId).then(rows=>{
-     if(current!==opened)return;
-     current.progressRows=Array.isArray(rows)?rows:[];
-     if(current.tab==='progress')renderProgress();
-   }).catch(e=>{
-     if(current!==opened||current.tab!=='progress')return;
-     body.innerHTML='<div class="na2-detail-error">'+esc(e.message||'기록을 불러오지 못했습니다.')+' <button type="button" id="na2ProgressRetry">다시 시도</button></div>';
-     q('#na2ProgressRetry')?.addEventListener('click',()=>{current.progressRows=null;renderProgress()});
-   }).finally(()=>{if(current===opened)current.progressLoading=false});
-   return;
- }
- const useRolling=current.progressMode!=='raw';
- if(useRolling&&!current.progressAttempts){
-   const target=current;
-   body.innerHTML='<div class="na2-detail-loading">최근 문항 이동 평균을 불러오는 중…</div>';
-   if(target.progressAttemptLoading)return;
-   target.progressAttemptLoading=true;
-   window.NaesinV2Data.loadFirstAttemptSequence(target.planId).then(attempts=>{
-     if(current!==target)return;
-     target.progressAttempts=Array.isArray(attempts)?attempts:[];
-     if(target.tab==='progress'&&target.progressMode!=='raw')renderProgress();
-   }).catch(e=>{
-     if(current!==target||target.tab!=='progress'||target.progressMode==='raw')return;
-     body.innerHTML='<div class="na2-detail-error"><b>이동 평균을 불러올 수 없습니다.</b><span>'+esc(e.message||'Unknown error')+'</span><button type="button" data-retry-rolling>다시 시도</button><button type="button" data-show-raw>기존 정확도 보기</button></div>';
-     q('[data-retry-rolling]',body)?.addEventListener('click',()=>renderProgress());
-     q('[data-show-raw]',body)?.addEventListener('click',()=>{target.progressMode='raw';renderProgress()});
-   }).finally(()=>{target.progressAttemptLoading=false});
-   return;
- }
- const ALL='__all__';
- const rows=current.progressRows.filter(r=>n(r.total)>0&&r.completed_at);
- const fixedBook=String(current.data?.group?.book_key||current.data?.stats?.book_key||'');
- const book=rows.some(r=>String(r.book_key||'')===fixedBook)?fixedBook:String(rows[0]?.book_key||'');
- const scoped=rows.filter(r=>String(r.book_key||'')===book);
- const uniq=xs=>[...new Set(xs.filter(Boolean))];
- const lessons=uniq(scoped.map(r=>String(r.unit_key||''))).sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));
- const lesson=lessons.includes(current.progressFilters.lesson)?current.progressFilters.lesson:ALL;
- const byLesson=lesson===ALL?scoped:scoped.filter(r=>r.unit_key===lesson);
- const skills=uniq(byLesson.map(r=>String(r.practice_type||''))).sort((a,b)=>(ORDER.indexOf(a)===-1?99:ORDER.indexOf(a))-(ORDER.indexOf(b)===-1?99:ORDER.indexOf(b))||a.localeCompare(b));
- const skill=skills.includes(current.progressFilters.skill)?current.progressFilters.skill:ALL;
- current.progressFilters={lesson,skill};
- const items=(skill===ALL?byLesson:byLesson.filter(r=>r.practice_type===skill)).sort((a,b)=>new Date(a.completed_at)-new Date(b.completed_at));
- const daily=lesson===ALL||skill===ALL;
- const windowSize=lesson===ALL&&skill===ALL?50:20;
- const byDay=new Map();
- items.forEach(r=>{
-   const key=koreaDateKey(r.completed_at);
-   if(!key)return;
-   const entry=byDay.get(key)||{date:key,total:0,correct:0,retries:0,sessions:0};
-   entry.total+=n(r.total);entry.correct+=n(r.correct);entry.retries+=n(r.retries);entry.sessions++;
-   byDay.set(key,entry);
- });
- const days=[...byDay.values()].sort((a,b)=>a.date.localeCompare(b.date));
- const series=daily?days:items;
- const rolling=useRolling?calculateRollingHistory(series,items,current.progressAttempts,windowSize,daily):[];
- const pct=r=>r&&n(r.total)>0?100*n(r.correct)/n(r.total):null;
- const fmt=v=>v==null?'—':Math.round(v)+'%';
- const option=(value,label,selected)=>'<option value="'+esc(value)+'"'+(value===selected?' selected':'')+'>'+esc(label)+'</option>';
- const select=(key,values,selected,show)=>'<select data-progress-filter="'+key+'" style="width:100%;min-width:0;padding:10px;border:1px solid #d0e2e7;border-radius:9px;background:var(--surface,#fff);color:inherit">'+values.map(v=>option(v,show(v),selected)).join('')+'</select>';
- const lessonChoices=[ALL,...lessons],skillChoices=[ALL,...skills];
- const filters='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:12px;margin-bottom:20px">'+
-   '<label>레슨'+select('lesson',lessonChoices,lesson,v=>v===ALL?'전체 레슨':v)+'</label>'+
-   '<label>영역'+select('skill',skillChoices,skill,v=>v===ALL?'전체 영역':LABELS[v]||v)+'</label></div>';
- const modeButtons='<div class="na2-progress-modes" role="group" aria-label="정확도 표시 방식">'+
-    '<button type="button" data-progress-mode="rolling" class="'+(useRolling?'active':'')+'" aria-pressed="'+useRolling+'">최근 '+windowSize+'문항 이동 평균</button>'+
-    '<button type="button" data-progress-mode="raw" class="'+(!useRolling?'active':'')+'" aria-pressed="'+(!useRolling)+'">기존 정확도</button></div>';
- if(!items.length){
-   body.innerHTML=filters+modeButtons+'<div class="na2-detail-empty">선택한 레슨과 영역의 완료된 학습 기록이 없습니다.</div>';
- }else{
-   const first=items[0],last=items[items.length-1];
-   const correct=items.reduce((sum,r)=>sum+n(r.correct),0),total=items.reduce((sum,r)=>sum+n(r.total),0);
-   const lastRolling=rolling[rolling.length-1];
-   const cards=useRolling
-     ?metricCard(fmt(lastRolling?.percentage),'최근 '+windowSize+'문항 정답률',n(lastRolling?.correct)+' / '+n(lastRolling?.total))
-       +metricCard(fmt(100*correct/total),'선택 범위 정확도',correct+' / '+total)
-     :daily
-     ?metricCard(fmt(100*correct/total),'선택 범위 정확도',correct+' / '+total)+metricCard(items.length,'완료한 연습','학습일 '+days.length+'일')
-     :metricCard(fmt(pct(first)),'첫 회차',n(first.correct)+' / '+n(first.total))+metricCard(fmt(pct(last)),'최근 회차',n(last.correct)+' / '+n(last.total));
-   const width=750,left=50,right=22,top=22,bottom=178,plotWidth=width-left-right,plotHeight=bottom-top;
-   const points=series.map((r,i)=>({
-      x:left+(series.length===1?plotWidth/2:i*plotWidth/(series.length-1)),
-      y:bottom-((useRolling?rolling[i]?.percentage:pct(r))||0)*plotHeight/100,
-      value:useRolling?rolling[i]?.percentage:pct(r), raw:pct(r), rolling:rolling[i],row:r
-   }));
-   const line=points.filter(p=>p.value!=null).map(p=>p.x.toFixed(1)+','+p.y.toFixed(1)).join(' ');
-   const pointLabel=p=>daily?p.row.date:(fmtDate(p.row.completed_at));
-   const rawDots=useRolling&&points.length<=70?points.map(p=>
-     '<circle cx="'+p.x+'" cy="'+(bottom-(p.raw||0)*plotHeight/100)+'" r="'+Math.min(7,2.5+Math.sqrt(n(p.row.total))*0.58).toFixed(1)+'" fill="#fff" stroke="#91a4a9" stroke-width="1.7"><title>'+
-     esc(pointLabel(p)+': 실제 '+fmt(p.raw)+' ('+n(p.row.correct)+'/'+n(p.row.total)+')')+'</title></circle>'
-   ).join(''):'';
-   const dots=points.length<=70?points.filter(p=>p.value!=null).map(p=>
-      '<circle cx="'+p.x+'" cy="'+p.y+'" r="'+(points.length>35?'3':'4')+'" fill="#13a4ac"><title>'+
-      esc(pointLabel(p)+': '+(useRolling?'이동 평균 ':'')+fmt(p.value))+'</title></circle>'
-   ).join(''):'';
-   const firstLabel=daily?series[0]?.date?.slice(5):'1회';
-   const lastLabel=daily?series[series.length-1]?.date?.slice(5):series.length+'회';
-   const labels=points.length>1?'<text x="'+left+'" y="208" text-anchor="start">'+esc(firstLabel)+'</text><text x="'+(width-right)+'" y="208" text-anchor="end">'+esc(lastLabel)+'</text>':'';
-   const svg='<svg viewBox="0 0 750 220" role="img" aria-label="'+(useRolling?'최근 '+windowSize+'문항 이동 평균':daily?'일별 정답률 그래프':'회차별 정답률 그래프')+'" style="width:100%;height:auto;display:block">'+
-     '<g font-size="12" fill="#677"><text x="7" y="27">100%</text><text x="15" y="104">50%</text><text x="24" y="182">0%</text>'+labels+'</g>'+
-     '<path d="M '+left+' '+top+' V '+bottom+' H '+(width-right)+'" fill="none" stroke="#b9cbd0"/>'+
-     '<line x1="'+left+'" x2="'+(width-right)+'" y1="'+((top+bottom)/2)+'" y2="'+((top+bottom)/2)+'" stroke="#e8eff0" stroke-dasharray="3 5"/>'+
-     rawDots+(line?'<polyline fill="none" stroke="#13a4ac" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" points="'+line+'"/>':'')+dots+'</svg>';
-   const head=daily?'<th>날짜</th><th>정답</th><th>정답률</th><th>연습 횟수</th><th>재시도</th>':'<th>일시</th><th>정답</th><th>정답률</th><th>재시도</th>';
-   const table=series.map((r,i)=>'<tr style="border-top:1px solid #e0ebee"><td style="padding:9px 5px">'+esc(daily?r.date:fmtDate(r.completed_at))+'</td><td>'+n(r.correct)+' / '+n(r.total)+'</td><td>'+fmt(pct(r))+'</td>'+(useRolling?'<td>'+fmt(rolling[i]?.percentage)+' <small>('+n(rolling[i]?.total)+'/'+windowSize+')</small></td>':'')+(daily?'<td>'+n(r.sessions)+'</td>':'')+'<td>'+n(r.retries)+'</td></tr>').join('');
-   body.innerHTML=filters+modeButtons+'<div class="na2-kpi-grid">'+cards+'</div>'+
-     '<section class="na2-detail-section"><div class="na2-section-head"><h3>'+(useRolling?'최근 '+windowSize+'문항 이동 평균':daily?'일별 정확도':'회차별 정확도')+'</h3><span>재시도 제외 · 최초 응답 기준 · 총 '+items.length+'회</span></div>'+
-     svg+(useRolling?'<p class="na2-progress-chart-note">청록 선: 이동 평균 · 회색 점: 개별 정확도 (크기 = 문항 수). '+windowSize+'문항 미만은 실제 문항 수로 표시.</p>':'')+'<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;text-align:left;font-size:13px"><thead><tr>'+head.replace('<th>정답률</th>','<th>정답률</th>'+(useRolling?'<th>최근 '+windowSize+'문항</th>':''))+'</tr></thead><tbody>'+table+'</tbody></table></div></section>';
- }
- qa('[data-progress-filter]',body).forEach(el=>el.addEventListener('change',()=>{
-   const key=el.dataset.progressFilter;
-   current.progressFilters[key]=el.value;
-   if(key==='lesson')current.progressFilters.skill=ALL;
-   renderProgress();
- }));
- qa('[data-progress-mode]',body).forEach(btn=>btn.addEventListener('click',()=>{
-   current.progressMode=btn.dataset.progressMode==='raw'?'raw':'rolling';
-   renderProgress();
- }));
+  const body=q('#na2DetailBody');
+  if(!window.NaesinV2Progress){
+    body.innerHTML='<div class="na2-detail-error">학습 성장 모듈을 불러오지 못했습니다.</div>';
+    return;
+  }
+  window.NaesinV2Progress.render({state:current,body});
 }
 
 function renderCurrentTab(){if(!current.data)return;if(current.tab==='lessons')renderLessons();else if(current.tab==='summary')renderSummary();else if(current.tab==='wrong')renderWrong();else if(current.tab==='activity')renderActivity();else if(current.tab==='grammar')renderGrammar();else if(current.tab==='progress')renderProgress()}
@@ -243,7 +105,7 @@ function setTab(tab){current.tab=tab||'progress';qa('#na2DetailTabs [data-tab]')
 async function refreshCurrent(){if(!isOpen()||!current.planId)return{skipped:true};if(refreshPromise)return refreshPromise;const snapshot={planId:current.planId};const body=q('#na2DetailBody'),scrollTop=body?.scrollTop||0;refreshPromise=(async()=>{const data=await window.NaesinV2Data?.refreshStudentOverview?.(snapshot.planId);if(!isOpen()||String(current.planId)!==String(snapshot.planId))return{stale:true};if(data){current.data=data;setHeader(data)}renderCurrentTab();requestAnimationFrame(()=>{const fresh=q('#na2DetailBody');if(fresh)fresh.scrollTop=scrollTop});return{updated:true,tab:current.tab}})().catch(error=>{console.warn('[Naesin V2 Student Detail] silent refresh failed',error);return{error:true}}).finally(()=>{refreshPromise=null});return refreshPromise}
 async function open(studentId,planId,groupId,options={}){
   const previousTab=options.tab||'progress';
-  const nextState={studentId,planId,groupId,data:null,wrongData:null,wrongLoading:false,wrongFilter:'all',grammarOpen:null,tab:previousTab,progressRows:null,progressFilters:{...(options.progressFilters||{})},progressMode:options.progressMode||'rolling',progressAttempts:null,progressAttemptLoading:false};
+  const nextState={studentId,planId,groupId,data:null,wrongData:null,wrongLoading:false,wrongFilter:'all',grammarOpen:null,tab:previousTab,progressRows:null,progressFilters:{...(options.progressFilters||{})},progressMode:options.progressMode||'rolling',progressAttemptHistory:null,progressShowRetries:options.progressShowRetries!==false};
   current=nextState;
   openBg();
   const payload={studentId,planId,groupId};
@@ -266,9 +128,9 @@ async function open(studentId,planId,groupId,options={}){
     q('#na2DetailBody').innerHTML=`<div class="na2-detail-error"><b>학생 정보를 불러오지 못했습니다.</b><span>${esc(e.message||'Unknown error')}</span><button type="button" id="na2DetailRetry">다시 시도</button></div>`;
     q('#na2DetailRetry')?.addEventListener('click',()=>{
       window.NaesinV2Data?.invalidateStudentOverview?.(planId);
-      open(studentId,planId,groupId,{tab:current.tab,progressFilters:current.progressFilters,progressMode:current.progressMode,replaceHistory:true});
+      open(studentId,planId,groupId,{tab:current.tab,progressFilters:current.progressFilters,progressMode:current.progressMode,progressShowRetries:current.progressShowRetries,replaceHistory:true});
     });
   }
 }
-window.NaesinV2StudentDetail={open,close,closeImmediate:closeDirect,refreshCurrent,isOpen,getCurrentData:()=>current.data,getContext:()=>({studentId:current.studentId,planId:current.planId,groupId:current.groupId,tab:current.tab}),version:'r14.68-rolling20-50'};
+window.NaesinV2StudentDetail={open,close,closeImmediate:closeDirect,refreshCurrent,isOpen,getCurrentData:()=>current.data,getContext:()=>({studentId:current.studentId,planId:current.planId,groupId:current.groupId,tab:current.tab}),version:'r14.69-progress-extracted'};
 })();
