@@ -3,7 +3,7 @@
 const LABELS={vocabulary:'단어 학습',vocab_test:'어휘 문제',grammar:'문법',sentences:'본문',communication:'의사소통',reading:'독해',constructed_response:'서술형'};
 const ORDER=['vocabulary','vocab_test','grammar','sentences','communication','reading','constructed_response'];
 const GRAMMAR_KO={be_present:'be동사 현재형',simple_present:'일반동사 현재형',questions:'의문문',imperatives:'명령문',modal_can_will:'조동사 can / will',present_progressive:'현재진행형',simple_past:'과거시제',gerund:'동명사',be_going_to:'be going to 미래 표현',there_is_are:'There is / There are 구문',comparison:'비교 표현',to_infinitives:'to부정사',that_clauses:'that절',time_clauses:'시간 부사절',ditransitive_verbs:'수여동사 (4형식)',dummy_it:'비인칭·가주어 it',to_infinitive_object:'to부정사의 목적어 역할',sensory_linking_verbs:'감각동사 + 형용사',comparatives:'비교급',when_clause:'when절',that_clause:'that절',to_infinitive_nominal:'to부정사의 명사적 용법',reflexive_pronouns:'재귀대명사',should:'조동사 should',when_time_clause:'접속사 when의 시간 부사절',superlatives:'최상급',to_infinitive_purpose:'to부정사의 부사적 용법 (목적)',dummy_it_to_infinitive:'가주어 it + to부정사',comparative_correlative:'the 비교급, the 비교급',subject_verb_agreement:'주어와 동사의 수일치',perception_verbs:'지각동사',present_participle:'현재분사',as_as_comparison:'원급 비교 as ~ as',noun_modifier:'명사를 수식하는 표현',passive_voice:'수동태',have_to:'have to',infinitive_to:'to부정사',irregular_verbs:'불규칙 동사'};
-let current={studentId:null,planId:null,groupId:null,data:null,wrongData:null,wrongLoading:false,wrongFilter:'all',grammarOpen:null,tab:'progress',progressRows:null,progressFilters:{}};
+let current={studentId:null,planId:null,groupId:null,data:null,wrongData:null,wrongLoading:false,wrongFilter:'all',grammarOpen:null,tab:'progress',progressRows:null,progressFilters:{},progressMode:'rolling',progressAttempts:null,progressAttemptLoading:false};
 let refreshPromise=null;
 const q=(s,r=document)=>r.querySelector(s),qa=(s,r=document)=>[...r.querySelectorAll(s)];
 const esc=v=>String(v??'').replace(/[&<>\"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[c])),n=v=>Number.isFinite(Number(v))?Number(v):0,maybePct=v=>v==null?'—':`${Math.round(Number(v)||0)}%`,scoreClass=v=>v==null?'':Number(v)>=80?'score-good':Number(v)>=50?'score-mid':'score-low',examType=v=>v==='final'?'기말고사':'중간고사',nameOf=s=>s?.korean_name||s?.name||s?.username||'Student';
@@ -42,7 +42,7 @@ function moveStudent(direction){
   const {students,index}=navPosition();
   const next=students[index+direction];
   if(!next)return;
-  const options={tab:current.tab,progressFilters:{...(current.progressFilters||{})},replaceHistory:true};
+  const options={tab:current.tab,progressFilters:{...(current.progressFilters||{})},progressMode:current.progressMode,replaceHistory:true};
   void open(next.studentId,next.planId,current.groupId,options);
 }
 function setHeader(data){const student=data?.student||{},group=data?.group||{},stats=data?.stats||{};q('#na2DetailName').textContent=nameOf(student);q('#na2DetailMeta').textContent=[group.school,group.term?`${group.term}학기 ${examType(group.exam_type)}`:null,group.book_label||stats.book_label].filter(Boolean).join(' · ')}
@@ -109,6 +109,24 @@ function renderProgress(){
    }).finally(()=>{if(current===opened)current.progressLoading=false});
    return;
  }
+ const useRolling=current.progressMode!=='raw';
+ if(useRolling&&!current.progressAttempts){
+   const target=current;
+   body.innerHTML='<div class="na2-detail-loading">최근 문항 이동 평균을 불러오는 중…</div>';
+   if(target.progressAttemptLoading)return;
+   target.progressAttemptLoading=true;
+   window.NaesinV2Data.loadFirstAttemptSequence(target.planId).then(attempts=>{
+     if(current!==target)return;
+     target.progressAttempts=Array.isArray(attempts)?attempts:[];
+     if(target.tab==='progress'&&target.progressMode!=='raw')renderProgress();
+   }).catch(e=>{
+     if(current!==target||target.tab!=='progress'||target.progressMode==='raw')return;
+     body.innerHTML='<div class="na2-detail-error"><b>이동 평균을 불러올 수 없습니다.</b><span>'+esc(e.message||'Unknown error')+'</span><button type="button" data-retry-rolling>다시 시도</button><button type="button" data-show-raw>기존 정확도 보기</button></div>';
+     q('[data-retry-rolling]',body)?.addEventListener('click',()=>renderProgress());
+     q('[data-show-raw]',body)?.addEventListener('click',()=>{target.progressMode='raw';renderProgress()});
+   }).finally(()=>{target.progressAttemptLoading=false});
+   return;
+ }
  const ALL='__all__';
  const rows=current.progressRows.filter(r=>n(r.total)>0&&r.completed_at);
  const fixedBook=String(current.data?.group?.book_key||current.data?.stats?.book_key||'');
@@ -123,6 +141,7 @@ function renderProgress(){
  current.progressFilters={lesson,skill};
  const items=(skill===ALL?byLesson:byLesson.filter(r=>r.practice_type===skill)).sort((a,b)=>new Date(a.completed_at)-new Date(b.completed_at));
  const daily=lesson===ALL||skill===ALL;
+ const windowSize=lesson===ALL&&skill===ALL?50:20;
  const byDay=new Map();
  items.forEach(r=>{
    const key=koreaDateKey(r.completed_at);
@@ -181,7 +200,7 @@ function setTab(tab){current.tab=tab||'progress';qa('#na2DetailTabs [data-tab]')
 async function refreshCurrent(){if(!isOpen()||!current.planId)return{skipped:true};if(refreshPromise)return refreshPromise;const snapshot={planId:current.planId};const body=q('#na2DetailBody'),scrollTop=body?.scrollTop||0;refreshPromise=(async()=>{const data=await window.NaesinV2Data?.refreshStudentOverview?.(snapshot.planId);if(!isOpen()||String(current.planId)!==String(snapshot.planId))return{stale:true};if(data){current.data=data;setHeader(data)}renderCurrentTab();requestAnimationFrame(()=>{const fresh=q('#na2DetailBody');if(fresh)fresh.scrollTop=scrollTop});return{updated:true,tab:current.tab}})().catch(error=>{console.warn('[Naesin V2 Student Detail] silent refresh failed',error);return{error:true}}).finally(()=>{refreshPromise=null});return refreshPromise}
 async function open(studentId,planId,groupId,options={}){
   const previousTab=options.tab||'progress';
-  const nextState={studentId,planId,groupId,data:null,wrongData:null,wrongLoading:false,wrongFilter:'all',grammarOpen:null,tab:previousTab,progressRows:null,progressFilters:{...(options.progressFilters||{})}};
+  const nextState={studentId,planId,groupId,data:null,wrongData:null,wrongLoading:false,wrongFilter:'all',grammarOpen:null,tab:previousTab,progressRows:null,progressFilters:{...(options.progressFilters||{})},progressMode:options.progressMode||'rolling',progressAttempts:null,progressAttemptLoading:false};
   current=nextState;
   openBg();
   const payload={studentId,planId,groupId};
@@ -204,7 +223,7 @@ async function open(studentId,planId,groupId,options={}){
     q('#na2DetailBody').innerHTML=`<div class="na2-detail-error"><b>학생 정보를 불러오지 못했습니다.</b><span>${esc(e.message||'Unknown error')}</span><button type="button" id="na2DetailRetry">다시 시도</button></div>`;
     q('#na2DetailRetry')?.addEventListener('click',()=>{
       window.NaesinV2Data?.invalidateStudentOverview?.(planId);
-      open(studentId,planId,groupId,{tab:current.tab,progressFilters:current.progressFilters,replaceHistory:true});
+      open(studentId,planId,groupId,{tab:current.tab,progressFilters:current.progressFilters,progressMode:current.progressMode,replaceHistory:true});
     });
   }
 }
