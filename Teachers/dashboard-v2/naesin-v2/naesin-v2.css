@@ -64,3 +64,12 @@ body.na2-modal-open{overflow:hidden}.na2-detail-bg{position:fixed;inset:0;z-inde
 @media(max-width:900px){.na2-progress-summary{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:600px){.na2-progress-summary{grid-template-columns:1fr}.na2-progress-analysis>summary{padding:13px 14px}.na2-progress-analysis-body{padding:14px 10px}}
 @media(prefers-reduced-motion:reduce){.na2-progress-analysis-chevron{transition:none}}
+
+/* Individual answered-attempt history: first tries and retries remain separate rows. */
+.na2-progress-attempt-log{margin-top:16px}
+.na2-progress-attempt-body{padding:10px 14px 16px;border-top:1px solid #e8f0f1}
+.na2-attempt-log-table{width:100%;min-width:560px;border-collapse:collapse;text-align:left;font-size:12px;color:#526a72}
+.na2-attempt-log-table th,.na2-attempt-log-table td{padding:9px 10px;border-bottom:1px solid #edf3f4}
+.na2-attempt-log-table th{font-weight:800;white-space:nowrap;background:#f7fbfc;color:#48646c}
+.na2-attempt-correct{color:#198574;font-weight:800}
+.na2-attempt-incorrect{color:#bd557d;font-weight:800}
