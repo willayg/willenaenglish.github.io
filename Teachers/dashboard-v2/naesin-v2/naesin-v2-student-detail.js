@@ -70,8 +70,8 @@ function renderProgress(){
  const skill=skills.includes(current.progressFilters.skill)?current.progressFilters.skill:(skills[0]||'');
  current.progressFilters={book,lesson,skill};
  const items=matchingLesson.filter(r=>r.practice_type===skill).sort((a,b)=>new Date(a.completed_at)-new Date(b.completed_at));
- const option=(value,label)=>'<option value="'+esc(value)+'">'+esc(label)+'</option>';
- const select=(key,values,selected,show)=>'<select data-progress-filter="'+key+'" style="width:100%;min-width:0;padding:10px;border:1px solid #d0e2e7;border-radius:9px;background:var(--surface,#fff);color:inherit">'+values.map(v=>option(v,show(v))).join('')+'</select>';
+ const option=(value,label,selected)=>'<option value="'+esc(value)+'"'+(value===selected?' selected':'')+'>'+esc(label)+'</option>';
+ const select=(key,values,selected,show)=>'<select data-progress-filter="'+key+'" style="width:100%;min-width:0;padding:10px;border:1px solid #d0e2e7;border-radius:9px;background:var(--surface,#fff);color:inherit">'+values.map(v=>option(v,show(v),selected)).join('')+'</select>';
  const first=items[0],last=items[items.length-1];
  const pct=r=>r?100*n(r.correct)/Math.max(1,n(r.total)):null;
  const fmt=v=>v==null?'—':Math.round(v)+'%';
