@@ -32,12 +32,12 @@ function answerEvents(attempts,book,lesson,skill){
      const original={key,correct:a.is_correct===true,lesson:String(a.unit_key||''),skill:String(a.practice_type||''),corrected:false,retried:false};
      latest.set(key,original);
      if((lesson===ALL||original.lesson===lesson)&&(skill===ALL||original.skill===skill))
-       result.push({type:'first',original,sessionId:String(a.session_id||''),time:a.completed_at});
+       result.push({type:'first',original,sessionId:String(a.session_id||''),time:a.attempted_at});
    }else if(a.is_retry===true){
      const original=latest.get(key);
      if(!original){counted.unmatched++;continue}
      if((lesson===ALL||original.lesson===lesson)&&(skill===ALL||original.skill===skill))
-       result.push({type:'retry',original,correct:a.is_correct===true,sessionId:String(a.session_id||''),time:a.completed_at});
+       result.push({type:'retry',original,correct:a.is_correct===true,sessionId:String(a.session_id||''),time:a.attempted_at});
    }
  }
  return{events:result,unmatched:counted.unmatched};
@@ -269,6 +269,25 @@ function render({state,body}){
   '<div class="na2-progress-correction">'+card(correctionRate,'오답 수정률',fixed+' / '+wrong+'개 수정 · 최초 질문 기준')+
   '<p>수정 완료 <strong>'+fixed+'</strong> · 재시도했지만 오답 <strong>'+still+'</strong> · 아직 재시도 안 함 <strong>'+missing+'</strong></p></div>'+
   '</div></details>';
+
+ const attemptLogOpen=state.progressAttemptLogOpen===true;
+ const log='<details class="na2-progress-analysis na2-progress-attempt-log" data-attempt-log'+(attemptLogOpen?' open':'')+'>'+
+   '<summary><span><strong>개별 시도 기록</strong><small>최초 응답과 재시도를 각각 기록 · 총 '+attemptRows.length+'회</small></span>'+
+   '<span class="na2-progress-analysis-chevron" aria-hidden="true">⌄</span></summary>'+
+   '<div class="na2-progress-attempt-body" data-attempt-log-body></div></details>';
+ function paintAttemptLog(){
+   const box=body.querySelector('[data-attempt-log-body]');
+   if(!box)return;
+   const columns='<thead><tr><th>시각</th><th>레슨 / 영역</th><th>문항</th><th>유형</th><th>결과</th></tr></thead>';
+   const attemptTable=attemptRows.slice().reverse().map(a=>{
+     const qid=a.questionId||'—';
+     const shortId=qid.length>26?qid.slice(0,23)+'…':qid;
+     return '<tr><td>'+esc(dateLabel(a.time))+'</td><td>'+esc(a.lesson||'—')+' / '+esc(SKILL_NAMES[a.skill]||a.skill||'—')+'</td>'+
+       '<td title="'+esc(qid)+'">'+esc(shortId)+'</td><td>'+esc(a.isRetry?'재시도':'최초')+'</td>'+
+       '<td class="'+(a.isCorrect?'na2-attempt-correct':'na2-attempt-incorrect')+'">'+(a.isCorrect?'정답':'오답')+'</td></tr>';
+   }).join('');
+   box.innerHTML='<div style="overflow-x:auto"><table class="na2-attempt-log-table">'+columns+'<tbody>'+attemptTable+'</tbody></table></div>';
+ }
  const title=rolling?'최근 '+windowSize+'회 시도 학습 정확도':daily?'일별 정확도':'회차별 정확도';
  const caption=rolling?'최초 응답과 재시도를 각각 1회로 계산합니다. 최근 '+windowSize+'회 미만이면 실제 시도 수로 계산합니다.'
   :'기존 방식: 해당 날짜나 회차의 첫 응답 정답률입니다. 오답 수정은 위 요약과 아래 오답 분석에서 확인할 수 있습니다.';
@@ -281,7 +300,8 @@ function render({state,body}){
   '<section class="na2-detail-section na2-progress-records"><div class="na2-section-head"><h3>학습 기록</h3><span>최초 응답 · 재시도 횟수</span></div>'+
   '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;text-align:left;font-size:13px"><thead><tr>'+
   heads.map(h=>'<th>'+esc(h)+'</th>').join('')+'</tr></thead><tbody>'+dataRows+'</tbody></table></div></section>'+
-  (unmatched?'<p class="na2-progress-chart-note">원래 질문과 연결되지 않은 과거 재시도 '+unmatched+'개는 제외했습니다.</p>':'')
+  log+
+  (unmatched?'<p class="na2-progress-chart-note">과거 재시도 '+unmatched+'개는 최초 질문과 연결되지 않아 오답 수정률에서만 제외했습니다. 전체 시도 정확도에는 포함됩니다.</p>':'')
   :'<div class="na2-detail-empty">선택한 레슨과 영역의 학습 기록이 없습니다.</div>');
  body.querySelectorAll('[data-progress-filter]').forEach(el=>el.addEventListener('change',()=>{
    state.progressFilters[el.dataset.progressFilter]=el.value;
@@ -295,6 +315,12 @@ function render({state,body}){
  body.querySelector('[data-progress-analysis]')?.addEventListener('toggle',e=>{
    if(isCurrent(state))state.progressAnalysisOpen=e.target.open;
  });
+ body.querySelector('[data-attempt-log]')?.addEventListener('toggle',e=>{
+   if(!isCurrent(state))return;
+   state.progressAttemptLogOpen=e.target.open;
+   if(e.target.open)paintAttemptLog();
+ });
+ if(state.progressAttemptLogOpen)paintAttemptLog();
 }
 let currentState=null;
 function isCurrent(state){return currentState===state}
