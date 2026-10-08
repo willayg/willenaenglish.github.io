@@ -47,18 +47,18 @@ function buildTimeline(events,daily,windowSize){
  for(const e of events){
    const id=daily?dayKey(e.time):e.sessionId;
    if(!id)continue;
-   const group=groups.get(id)||{key:id,date:dayKey(e.time),timestamp:new Date(e.time).getTime(),events:[]};
-   group.events.push(e);
+   const group=groups.get(id)||{key:id,date:dayKey(e.time),timestamp:new Date(e.time).getTime(),events:[],sessions:new Set()};
+   group.events.push(e);group.sessions.add(e.sessionId);
    if(new Date(e.time).getTime()>group.timestamp)group.timestamp=new Date(e.time).getTime();
    groups.set(id,group);
  }
  const ordered=[...groups.values()].sort((a,b)=>a.timestamp-b.timestamp||a.key.localeCompare(b.key));
  let window=[],rowIndex=0;
  return ordered.map(group=>{
-   let groupTotal=0,groupCorrect=0,retries=0;
+   let groupTotal=0,groupCorrect=0,retries=0;const groupFirsts=[];
    for(const e of group.events){
      if(e.type==='first'){
-       window.push(e.original);groupTotal++;
+       window.push(e.original);groupFirsts.push(e.original);groupTotal++;
        if(e.original.correct)groupCorrect++;
        if(window.length>windowSize)window=window.slice(-windowSize);
      }else{
@@ -74,12 +74,13 @@ function buildTimeline(events,daily,windowSize){
    const retriedWrong=window.filter(a=>!a.correct&&a.retried&&!a.corrected).length;
    const notRetried=window.filter(a=>!a.correct&&!a.retried).length;
    const total=window.length;
+   const groupFixed=groupFirsts.filter(a=>!a.correct&&a.corrected).length;
    return {
      key:group.key,date:group.date,time:group.timestamp,index:++rowIndex,
-     correct:groupCorrect,total:groupTotal,retries,
+     correct:groupCorrect,total:groupTotal,retries,sessions:group.sessions.size,groupFixed,
      first:pct(firstCorrect,total),after:pct(firstCorrect+fixed,total),
      windowCorrect:firstCorrect,windowTotal:total,fixed,retriedWrong,notRetried,
-     raw:pct(groupCorrect,groupTotal)
+     raw:pct(groupCorrect,groupTotal),groupAfter:pct(groupCorrect+groupFixed,groupTotal)
    };
  });
 }
@@ -179,7 +180,7 @@ function render({state,body}){
  })):rawSeries.map(row=>{
    const event=byKey.get(row.key);
    return{...row,first:pct(row.correct,row.total),
-     after:event&&row.total?Math.max(pct(row.correct,row.total)||0,pct(row.correct+Math.min(row.total-row.correct,event.fixed||0),row.total)):null,
+     after:event&&row.total?pct(row.correct+Math.min(Math.max(0,row.total-row.correct),event.groupFixed||0),row.total):null,
      raw:pct(row.correct,row.total)};
  });
  const option=(value,label,active)=>'<option value="'+esc(value)+'"'+(value===active?' selected':'')+'>'+esc(label)+'</option>';
@@ -214,7 +215,7 @@ function render({state,body}){
    const cols=[daily?base.date:(rolling?dateLabel(base.time):base.label),
       base.correct+' / '+base.total,showPct(pct(base.correct,base.total))];
    if(rolling){cols.push(showPct(row.first)+' ('+row.windowTotal+'/'+windowSize+')');if(showRetries)cols.push(showPct(row.after));}
-   if(daily)cols.push(String(rolling?'—':base.sessions));
+   if(daily)cols.push(String(base.sessions||0));
    cols.push(String(base.retries));
    return '<tr style="border-top:1px solid #e0ebee">'+cols.map((v,j)=>'<td style="'+(j===0?'padding:9px 5px;':'')+'">'+esc(v)+'</td>').join('')+'</tr>';
  }).join('');
