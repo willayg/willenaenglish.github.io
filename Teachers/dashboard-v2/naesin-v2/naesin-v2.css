@@ -3,3 +3,24 @@ body.na2-modal-open{overflow:hidden}.na2-detail-bg{position:fixed;inset:0;z-inde
 .na2-stat strong.score-good,.na2-kpi strong.score-good,.na2-skill-metric strong.score-good,.na2-lesson-summary b.score-good,.na2-guide-jm b.score-good,.na2-guide-pm b.score-good{color:#24937f!important}.na2-stat strong.score-mid,.na2-kpi strong.score-mid,.na2-skill-metric strong.score-mid,.na2-lesson-summary b.score-mid,.na2-guide-jm b.score-mid,.na2-guide-pm b.score-mid{color:#d49a2b!important}.na2-stat strong.score-low,.na2-kpi strong.score-low,.na2-skill-metric strong.score-low,.na2-lesson-summary b.score-low,.na2-guide-jm b.score-low,.na2-guide-pm b.score-low{color:#d65382!important}
 @media(max-width:900px){.na2-head{align-items:center}.na2-head h1{font-size:28px}.na2-add{padding:10px 13px;font-size:12px}.na2-test-head{padding:16px}.na2-title-row h2{font-size:20px}.na2-matrix{min-width:980px}.na2-matrix th:first-child,.na2-matrix td:first-child{width:165px;padding-left:12px}.na2-student-btn{font-size:14px;padding:10px 11px}.na2-detail-bg{padding:10px}.na2-detail-modal{width:95vw;height:88vh;min-height:88vh;max-height:88vh;border-radius:20px}.na2-detail-head{padding:16px}.na2-detail-title h2{font-size:23px}.na2-detail-body{padding:16px}.na2-kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.na2-skill-row{grid-template-columns:1fr 90px 90px}.na2-skill-progress{grid-column:1/-1;margin:1px 0 7px}.na2-lesson-summary{grid-template-columns:1fr 90px 80px}.na2-activity-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
 #view-naesin-v2,.na2-shell,.na2-tests,.na2-test{min-width:0;max-width:100%}.na2-test{overflow:hidden}.na2-matrix-wrap{display:block;width:100%;max-width:100%;min-width:0;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain;touch-action:pan-x pan-y}.na2-matrix{width:max-content;min-width:1050px;max-width:none}.na2-matrix th:first-child,.na2-matrix td:first-child{position:sticky;left:0;z-index:2;background:#fff}.na2-matrix th:first-child{z-index:3;background:#fbfdfd}.na2-matrix tbody tr:hover td:first-child{background:#fbfefe}@media(max-width:700px){#view-naesin-v2{width:100%;overflow-x:hidden}.na2-shell{width:100%;overflow-x:hidden}.na2-test{width:100%}.na2-matrix-wrap{scrollbar-width:thin}.na2-matrix{min-width:980px}}
+
+/* Student drawer previous/next navigation (r14.66). */
+.na2-detail-title{min-width:0;flex:1}
+.na2-detail-title h2,.na2-detail-title p{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.na2-detail-actions{display:flex;align-items:center;gap:10px;flex:none}
+.na2-detail-nav{display:flex;align-items:center;gap:5px}
+.na2-detail-nav-btn{display:grid;place-items:center;width:42px;height:42px;border:1px solid #c5e0e3;border-radius:12px;background:#fff;color:#277e88;font-size:29px;font-weight:600;line-height:1;cursor:pointer}
+.na2-detail-nav-btn:hover:not(:disabled){background:#eaf8fa;border-color:#63bfca}
+.na2-detail-nav-btn:disabled{opacity:.32;cursor:default}
+.na2-detail-nav-btn:focus-visible{outline:3px solid #49b8c6;outline-offset:2px}
+.na2-detail-nav-count{min-width:47px;text-align:center;color:#728a91;font-size:12px;font-weight:800;white-space:nowrap}
+@media(max-width:600px){
+ .na2-detail-head{gap:8px;padding:13px 12px}
+ .na2-detail-actions{gap:5px}
+ .na2-detail-nav{gap:2px}
+ .na2-detail-nav-btn{width:36px;height:40px;font-size:27px}
+ .na2-detail-nav-count{min-width:32px;font-size:10px}
+ .na2-detail-close{width:40px;height:40px}
+ .na2-detail-title h2{font-size:20px}
+ .na2-detail-title p{font-size:11px}
+}
