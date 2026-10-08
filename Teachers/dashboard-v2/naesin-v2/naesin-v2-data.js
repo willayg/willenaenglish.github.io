@@ -116,6 +116,12 @@ async function loadSessionHistory(planId){
   });
 }
 
+async function loadAttemptHistory(planId){
+  return authedJson('https://fiieuiktlsivwfgyivai.supabase.co/rest/v1/rpc/test_prep_teacher_attempt_history_v1',{
+    method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({p_plan_id:planId})
+  });
+}
+
 async function loadFirstAttemptSequence(planId){
   return authedJson('https://fiieuiktlsivwfgyivai.supabase.co/rest/v1/rpc/test_prep_teacher_first_attempt_sequence_v1',{
     method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({p_plan_id:planId})
@@ -136,5 +142,5 @@ function invalidateGroups(){invalidateDashboard()}
 function invalidateAll(){invalidateDashboard();invalidateWrongDetail();invalidateGrammarTracking()}
 function getDiagnostics(){return{...diag,source:'naesin-snapshot-fast-v1',dashboardCached:!!latestDashboard,wrongCacheEntries:wrongCache.size,grammarCacheEntries:grammarCache.size,groupCount:groupsOf(latestDashboard).length,version:latestDashboard?.version||null,dirtyCount:latestDashboard?.dirty_count??null}}
 
-window.NaesinV2Data={version:'snapshot-fast-v1',loadSessionHistory,loadFirstAttemptSequence,loadGroups,refreshGroups:()=>loadGroups({force:true}),getCachedGroups,loadGroupMatrix,refreshGroupMatrix:(groupId)=>loadGroupMatrix(groupId,{force:true}),getCachedGroupMatrix,invalidateGroupMatrix,loadStudentOverview,refreshStudentOverview:(planId)=>loadStudentOverview(planId,{force:true}),getCachedStudentOverview,invalidateStudentOverview,loadWrongDetail,refreshWrongDetail:(studentId,planId)=>loadWrongDetail(studentId,planId,{force:true}),getCachedWrongDetail,invalidateWrongDetail,loadGrammarTracking,refreshGrammarTracking:(groupId,studentId)=>loadGrammarTracking(groupId,studentId,{force:true}),getCachedGrammarTracking,invalidateGrammarTracking,invalidateGroups,invalidateAll,getDiagnostics};
+window.NaesinV2Data={version:'snapshot-fast-v1',loadSessionHistory,loadAttemptHistory,loadFirstAttemptSequence,loadGroups,refreshGroups:()=>loadGroups({force:true}),getCachedGroups,loadGroupMatrix,refreshGroupMatrix:(groupId)=>loadGroupMatrix(groupId,{force:true}),getCachedGroupMatrix,invalidateGroupMatrix,loadStudentOverview,refreshStudentOverview:(planId)=>loadStudentOverview(planId,{force:true}),getCachedStudentOverview,invalidateStudentOverview,loadWrongDetail,refreshWrongDetail:(studentId,planId)=>loadWrongDetail(studentId,planId,{force:true}),getCachedWrongDetail,invalidateWrongDetail,loadGrammarTracking,refreshGrammarTracking:(groupId,studentId)=>loadGrammarTracking(groupId,studentId,{force:true}),getCachedGrammarTracking,invalidateGrammarTracking,invalidateGroups,invalidateAll,getDiagnostics};
 })();
