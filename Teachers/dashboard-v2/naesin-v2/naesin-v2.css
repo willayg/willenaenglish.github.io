@@ -42,3 +42,25 @@ body.na2-modal-open{overflow:hidden}.na2-detail-bg{position:fixed;inset:0;z-inde
 .na2-progress-correction p{margin:0;font-size:13px;font-weight:700;line-height:1.8;color:#627981}
 .na2-progress-correction strong{color:#c45380}
 @media(max-width:620px){.na2-progress-correction{grid-template-columns:1fr}.na2-progress-retry-toggle{width:100%}}
+
+/* v14.70 — concise main progress chart; mistake comparison only when expanded. */
+.na2-progress-summary{grid-template-columns:repeat(3,minmax(0,1fr))}
+.na2-progress-analysis{margin-top:18px;border:2px solid #d9e9eb;border-radius:18px;background:#fff;overflow:hidden}
+.na2-progress-analysis>summary{display:flex;align-items:center;justify-content:space-between;gap:12px;cursor:pointer;list-style:none;padding:16px 18px;color:#293d43}
+.na2-progress-analysis>summary::-webkit-details-marker{display:none}
+.na2-progress-analysis>summary span:first-child{display:flex;flex-direction:column;gap:5px;min-width:0}
+.na2-progress-analysis>summary strong{font-size:17px;font-weight:800}
+.na2-progress-analysis>summary small{font-size:12px;font-weight:700;color:#7e9499}
+.na2-progress-analysis>summary:focus-visible{outline:3px solid #4fc0cb;outline-offset:-3px}
+.na2-progress-analysis-chevron{font-size:22px;font-weight:700;line-height:1;transition:transform .16s;color:#738a91}
+.na2-progress-analysis[open] .na2-progress-analysis-chevron{transform:rotate(180deg)}
+.na2-progress-analysis-body{border-top:1px solid #e8f0f1;padding:16px 18px}
+.na2-progress-analysis-legend{display:flex;flex-wrap:wrap;gap:14px;margin:0 0 6px;color:#5f7780;font-size:12px;font-weight:800}
+.na2-progress-analysis-legend span{display:inline-flex;align-items:center;gap:7px}
+.na2-progress-analysis-legend span:before{content:"";display:inline-block;width:20px;border-top:3px solid #13a4ac;border-radius:4px}
+.na2-progress-analysis-legend .after:before{border-color:#de6999}
+.na2-progress-analysis .na2-progress-correction{margin:12px 0 0}
+.na2-progress-records{margin-top:18px}
+@media(max-width:900px){.na2-progress-summary{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:600px){.na2-progress-summary{grid-template-columns:1fr}.na2-progress-analysis>summary{padding:13px 14px}.na2-progress-analysis-body{padding:14px 10px}}
+@media(prefers-reduced-motion:reduce){.na2-progress-analysis-chevron{transition:none}}
