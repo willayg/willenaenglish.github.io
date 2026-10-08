@@ -177,13 +177,13 @@ function chartMarkup(points,{daily,compare=false,metric='after'}){
  const first=points[0],last=points[points.length-1];
  const firstText=daily?first.date?.slice(5):'1회',lastText=daily?last.date?.slice(5):points.length+'회';
  const labels=points.length>1?'<text x="'+left+'" y="208" text-anchor="start">'+esc(firstText)+'</text><text x="'+(W-right)+'" y="208" text-anchor="end">'+esc(lastText)+'</text>':'';
- const title=compare?'최초 정답률 및 수정 후 정답률 비교':metric==='after'?'재시도 반영 정확도':'최초 정확도';
+ const title=compare?'최초 응답과 전체 시도 정답률 비교':metric==='after'?'재시도 포함 정확도':'최초 정확도';
  return '<svg viewBox="0 0 750 220" role="img" aria-label="'+esc(title)+'" style="width:100%;height:auto;display:block">'+
   '<g font-size="12" fill="#677"><text x="7" y="27">100%</text><text x="15" y="104">50%</text><text x="24" y="182">0%</text>'+labels+'</g>'+
   '<path d="M '+left+' '+top+' V '+bottom+' H '+(W-right)+'" stroke="#b9cbd0" fill="none"/>'+
   '<line x1="'+left+'" x2="'+(W-right)+'" y1="'+((top+bottom)/2)+'" y2="'+((top+bottom)/2)+'" stroke="#e8eff0" stroke-dasharray="3 5"/>'+
-  (compare?plot('first','#13a4ac','최초 정답률')+plot('after','#de6999','수정 후 정답률')
-          :plot(metric,'#13a4ac',metric==='after'?'수정 후 정답률':'기존 정확도'))+'</svg>';
+  (compare?plot('first','#13a4ac','최초 정답률')+plot('after','#de6999','전체 시도 정답률')
+          :plot(metric,'#13a4ac',metric==='after'?'전체 시도 정답률':'기존 정확도'))+'</svg>';
 }
 function render({state,body}){
  const data=window.NaesinV2Data;
@@ -238,20 +238,22 @@ function render({state,body}){
    '<label>레슨'+select('lesson',[ALL,...lessons],lesson,v=>v===ALL?'전체 레슨':v)+'</label>'+
    '<label>영역'+select('skill',[ALL,...skills],skill,v=>v===ALL?'전체 영역':SKILL_NAMES[v]||v)+'</label></div>';
  const modes='<div class="na2-progress-modes" role="group" aria-label="정확도 표시 방식">'+
-  '<button type="button" data-progress-mode="rolling" class="'+(rolling?'active':'')+'" aria-pressed="'+rolling+'">최근 '+windowSize+'문항 이동 평균</button>'+
+  '<button type="button" data-progress-mode="rolling" class="'+(rolling?'active':'')+'" aria-pressed="'+rolling+'">최근 '+windowSize+'회 이동 평균</button>'+
   '<button type="button" data-progress-mode="raw" class="'+(!rolling?'active':'')+'" aria-pressed="'+(!rolling)+'">기존 정확도</button></div>';
- const firstCorrect=num(lastRolling?.windowCorrect),sample=num(lastRolling?.windowTotal),fixed=num(lastRolling?.fixed);
- const wrong=sample-firstCorrect,still=num(lastRolling?.retriedWrong),missing=num(lastRolling?.notRetried);
- const cards=card(showPct(lastRolling?.after),'현재 정답률','최근 '+windowSize+'문항 · '+(firstCorrect+fixed)+' / '+sample)+
-   card(showPct(lastRolling?.first),'최초 정답률','최근 '+windowSize+'문항 · '+firstCorrect+' / '+sample)+
-   card(fixed+' / '+wrong,'수정한 오답','최근 '+windowSize+'문항 중 틀린 문제');
+ const attemptsCorrect=num(lastRolling?.rollingCorrect),sample=num(lastRolling?.windowTotal);
+ const firstCorrect=num(lastRolling?.firstCorrect),firstTotal=num(lastRolling?.firstTotal);
+ const fixed=num(lastCorrection?.fixed),wrong=num(lastCorrection?.windowTotal)-num(lastCorrection?.windowCorrect);
+ const still=num(lastCorrection?.retriedWrong),missing=num(lastCorrection?.notRetried);
+ const cards=card(showPct(lastRolling?.after),'현재 정답률','최근 '+windowSize+'회 시도 · '+attemptsCorrect+' / '+sample)+
+   card(showPct(lastRolling?.first),'최초 정답률','최근 '+windowSize+'회 중 최초 응답 · '+firstCorrect+' / '+firstTotal)+
+   card(fixed+' / '+wrong,'수정한 오답','최근 '+windowSize+'개 최초 문제 기준');
  const displayed=rolling?rollingSeries:rawSeries;
  const heads=daily?['날짜','정답','정답률','연습 횟수','재시도']:['일시','정답','정답률','재시도'];
- if(rolling){heads.splice(3,0,'최근 '+windowSize+'문항');heads.splice(4,0,'수정 후');}
+ if(rolling){heads.splice(3,0,'최근 '+windowSize+'회 전체');heads.splice(4,0,'최초 응답');}
  const dataRows=displayed.map((row,i)=>{
    const base=rolling?row:rawSeries[i];
    const cols=[daily?base.date:(rolling?dateLabel(base.time):base.label),base.correct+' / '+base.total,showPct(pct(base.correct,base.total))];
-   if(rolling){cols.push(showPct(row.first)+' ('+row.windowTotal+'/'+windowSize+')');cols.push(showPct(row.after));}
+   if(rolling){cols.push(showPct(row.after)+' ('+row.windowTotal+'/'+windowSize+')');cols.push(showPct(row.first)+' ('+row.firstTotal+'회)');}
    if(daily)cols.push(String(base.sessions||0));
    cols.push(String(base.retries));
    return '<tr style="border-top:1px solid #e0ebee">'+cols.map((value,j)=>'<td style="'+(j===0?'padding:9px 5px;':'')+'">'+esc(value)+'</td>').join('')+'</tr>';
@@ -259,20 +261,20 @@ function render({state,body}){
  const analysisOpen=state.progressAnalysisOpen===true;
  const correctionRate=wrong?showPct(pct(fixed,wrong)):'—';
  const analysis='<details class="na2-progress-analysis" data-progress-analysis'+(analysisOpen?' open':'')+'>'+
-  '<summary><span><strong>오답 분석</strong><small>최초 정답률과 오답 수정 후 정답률 비교</small></span><span class="na2-progress-analysis-chevron" aria-hidden="true">⌄</span></summary>'+
+  '<summary><span><strong>오답 분석</strong><small>최초 응답과 재시도 포함 전체 응답 비교</small></span><span class="na2-progress-analysis-chevron" aria-hidden="true">⌄</span></summary>'+
   '<div class="na2-progress-analysis-body">'+
-  '<div class="na2-progress-analysis-legend"><span class="first">최초 정답률</span><span class="after">오답 수정 후</span></div>'+
+  '<div class="na2-progress-analysis-legend"><span class="first">최초 응답만</span><span class="after">전체 시도 (재시도 포함)</span></div>'+
   chartMarkup(comparisonPoints,{daily,compare:true})+
-  '<p class="na2-progress-chart-note">최근 '+windowSize+'문항을 같은 기준으로 비교합니다. 오답은 수정한 날짜부터 반영됩니다.</p>'+
-  '<div class="na2-progress-correction">'+card(correctionRate,'오답 수정률',fixed+' / '+wrong+'개 수정')+
+  '<p class="na2-progress-chart-note">청록: 최근 '+windowSize+'회 중 최초 응답만 · 분홍: 재시도 포함 전체 시도. 각각의 응답은 독립된 시도로 계산합니다.</p>'+
+  '<div class="na2-progress-correction">'+card(correctionRate,'오답 수정률',fixed+' / '+wrong+'개 수정 · 최초 질문 기준')+
   '<p>수정 완료 <strong>'+fixed+'</strong> · 재시도했지만 오답 <strong>'+still+'</strong> · 아직 재시도 안 함 <strong>'+missing+'</strong></p></div>'+
   '</div></details>';
- const title=rolling?'최근 '+windowSize+'문항 학습 정확도':daily?'일별 정확도':'회차별 정확도';
- const caption=rolling?'오답을 수정한 날짜부터 정확도에 반영됩니다. 각 문제는 한 번만 계산합니다. 문항 수가 '+windowSize+'개 미만이면 실제 문항 수를 사용합니다.'
+ const title=rolling?'최근 '+windowSize+'회 시도 학습 정확도':daily?'일별 정확도':'회차별 정확도';
+ const caption=rolling?'최초 응답과 재시도를 각각 1회로 계산합니다. 최근 '+windowSize+'회 미만이면 실제 시도 수로 계산합니다.'
   :'기존 방식: 해당 날짜나 회차의 첫 응답 정답률입니다. 오답 수정은 위 요약과 아래 오답 분석에서 확인할 수 있습니다.';
  body.innerHTML=filters+modes+
  (mainPoints.length?'<div class="na2-kpi-grid na2-progress-summary">'+cards+'</div>'+
-  '<section class="na2-detail-section"><div class="na2-section-head"><h3>'+title+'</h3><span>'+(rolling?'재시도 반영 · ':'첫 응답 기준 · ')+items.length+'회</span></div>'+
+  '<section class="na2-detail-section"><div class="na2-section-head"><h3>'+title+'</h3><span>'+(rolling?'재시도 별도 집계 · ':'첫 응답 기준 · ')+items.length+'회</span></div>'+
   chartMarkup(mainPoints,{daily,metric:rolling?'after':'first'})+
   '<p class="na2-progress-chart-note">'+esc(caption)+'</p></section>'+
   analysis+
@@ -300,5 +302,5 @@ function show({state,body}){
  currentState=state;
  render({state,body});
 }
-window.NaesinV2Progress={render:show,version:'r14.70-separate-mistake-analysis'};
+window.NaesinV2Progress={render:show,version:'r14.71-distinct-attempts'};
 })();
