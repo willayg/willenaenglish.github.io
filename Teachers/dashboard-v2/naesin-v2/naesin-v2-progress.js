@@ -164,22 +164,12 @@ function render({state,body}){
  const daily=lesson===ALL||skill===ALL;
  const windowSize=lesson===ALL&&skill===ALL?50:20;
  const rolling=state.progressMode!=='raw';
- const showRetries=state.progressShowRetries!==false;
  const rawSeries=originalSeries(items,daily);
  const {events,unmatched}=answerEvents(state.progressAttemptHistory,book,lesson,skill);
  const rollingSeries=buildTimeline(events,daily,windowSize);
  const lastRolling=rollingSeries[rollingSeries.length-1]||null;
- const byKey=new Map(rollingSeries.map(r=>[r.key,r]));
- const points=rolling?rollingSeries.map(row=>({
-   ...row,label:daily?row.date:dateLabel(row.time),
-   // Correct/total of each period for size-weighted grey markers.
-   raw:row.raw
- })):rawSeries.map(row=>{
-   const event=byKey.get(row.key);
-   return{...row,first:pct(row.correct,row.total),
-     after:event&&row.total?pct(row.correct+Math.min(Math.max(0,row.total-row.correct),event.groupFixed||0),row.total):null,
-     raw:pct(row.correct,row.total)};
- });
+ const comparisonPoints=rollingSeries.map(row=>({...row,label:daily?row.date:dateLabel(row.time)}));
+ const mainPoints=rolling?comparisonPoints:rawSeries.map(row=>({...row,first:pct(row.correct,row.total)}));
  const option=(value,label,active)=>'<option value="'+esc(value)+'"'+(value===active?' selected':'')+'>'+esc(label)+'</option>';
  const select=(key,values,active,formatter)=>'<select data-progress-filter="'+key+'" style="width:100%;min-width:0;padding:10px;border:1px solid #d0e2e7;border-radius:9px;background:var(--surface,#fff);color:inherit">'+values.map(v=>option(v,formatter(v),active)).join('')+'</select>';
  const filters='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:12px;margin-bottom:14px">'+
@@ -235,9 +225,8 @@ function render({state,body}){
    state.progressMode=el.dataset.progressMode==='raw'?'raw':'rolling';
    render({state,body});
  }));
- body.querySelector('[data-progress-retries]')?.addEventListener('change',e=>{
-   state.progressShowRetries=e.target.checked;
-   render({state,body});
+ body.querySelector('[data-progress-analysis]')?.addEventListener('toggle',e=>{
+   if(isCurrent(state))state.progressAnalysisOpen=e.target.open;
  });
 }
 let currentState=null;
@@ -246,5 +235,5 @@ function show({state,body}){
  currentState=state;
  render({state,body});
 }
-window.NaesinV2Progress={render:show,version:'r14.69-retry-graph'};
+window.NaesinV2Progress={render:show,version:'r14.70-separate-mistake-analysis'};
 })();
