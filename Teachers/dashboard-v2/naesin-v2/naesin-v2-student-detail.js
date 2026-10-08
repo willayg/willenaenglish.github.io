@@ -91,6 +91,26 @@ const openPanel=async i=>{const r=rows[i],panel=q(`[data-grammar-expand="${i}"]`
 qa('[data-grammar-index]',body).forEach(btn=>btn.addEventListener('click',()=>{const i=Number(btn.dataset.grammarIndex),r=rows[i],panel=q(`[data-grammar-expand="${i}"]`,body);if(!r||!panel)return;const opening=panel.hidden;qa('.na2-grammar-expand',body).forEach(x=>x.hidden=true);qa('.na2-grammar-row',body).forEach(x=>x.classList.remove('open'));current.grammarOpen=opening?grammarKey(r):null;if(opening){btn.classList.add('open');void openPanel(i)}}));if(current.grammarOpen){const i=rows.findIndex(r=>grammarKey(r)===current.grammarOpen);if(i>=0){q(`[data-grammar-index="${i}"]`,body)?.classList.add('open');void openPanel(i)}else current.grammarOpen=null}}
 function renderGrammar(){paintGrammar()}
 
+function calculateRollingHistory(series,items,rawAttempts,windowSize,daily){
+ const attemptMap=new Map();
+ for(const a of Array.isArray(rawAttempts)?rawAttempts:[]){
+   if(a?.is_correct==null||!a.session_id)continue;
+   const id=String(a.session_id);
+   if(!attemptMap.has(id))attemptMap.set(id,[]);
+   attemptMap.get(id).push(a);
+ }
+ for(const arr of attemptMap.values())arr.sort((a,b)=>new Date(a.attempted_at)-new Date(b.attempted_at));
+ let lastAnswers=[];
+ return series.map(point=>{
+   const sessions=daily?items.filter(r=>koreaDateKey(r.completed_at)===point.date):[point];
+   for(const session of sessions){
+     for(const a of attemptMap.get(String(session.session_id))||[])lastAnswers.push(a.is_correct===true?1:0);
+     if(lastAnswers.length>windowSize)lastAnswers=lastAnswers.slice(-windowSize);
+   }
+   const total=lastAnswers.length,correct=lastAnswers.reduce((sum,x)=>sum+x,0);
+   return {correct,total,percentage:total?100*correct/total:null};
+ });
+}
 function renderProgress(){
  const body=q('#na2DetailBody');
  if(!current.progressRows){
@@ -152,6 +172,7 @@ function renderProgress(){
  });
  const days=[...byDay.values()].sort((a,b)=>a.date.localeCompare(b.date));
  const series=daily?days:items;
+ const rolling=useRolling?calculateRollingHistory(series,items,current.progressAttempts,windowSize,daily):[];
  const pct=r=>r&&n(r.total)>0?100*n(r.correct)/n(r.total):null;
  const fmt=v=>v==null?'—':Math.round(v)+'%';
  const option=(value,label,selected)=>'<option value="'+esc(value)+'"'+(value===selected?' selected':'')+'>'+esc(label)+'</option>';
