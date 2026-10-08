@@ -24,3 +24,11 @@ body.na2-modal-open{overflow:hidden}.na2-detail-bg{position:fixed;inset:0;z-inde
  .na2-detail-title h2{font-size:20px}
  .na2-detail-title p{font-size:11px}
 }
+
+/* Learning growth accuracy mode toggle. */
+.na2-progress-modes{display:flex;flex-wrap:wrap;align-items:center;gap:7px;margin:0 0 16px}
+.na2-progress-modes button{border:1px solid #bfdde2;background:#fff;color:#53717a;border-radius:11px;padding:10px 14px;min-height:42px;font-size:13px;font-weight:800;cursor:pointer}
+.na2-progress-modes button.active{background:#e7f8fa;border:2px solid #4fb8c4;color:#176b77;padding:9px 13px}
+.na2-progress-modes button:focus-visible{outline:3px solid #2d9fae;outline-offset:2px}
+.na2-progress-chart-note{margin:0;padding:0 16px 12px;color:#71878c;font-size:11px;font-weight:700;line-height:1.6}
+@media(max-width:480px){.na2-progress-modes button{flex:1 1 130px;font-size:12px;padding-inline:9px}}
