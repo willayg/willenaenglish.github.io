@@ -209,7 +209,7 @@ function render({state,body}){
  const caption=rolling?'오답을 수정한 날짜부터 정확도에 반영됩니다. 각 문제는 한 번만 계산합니다. 문항 수가 '+windowSize+'개 미만이면 실제 문항 수를 사용합니다.'
   :'기존 방식: 해당 날짜나 회차의 첫 응답 정답률입니다. 오답 수정은 위 요약과 아래 오답 분석에서 확인할 수 있습니다.';
  body.innerHTML=filters+modes+
- (mainPoints.length?'<div class="na2-kpi-grid">'+cards+'</div>'+
+ (mainPoints.length?'<div class="na2-kpi-grid na2-progress-summary">'+cards+'</div>'+
   '<section class="na2-detail-section"><div class="na2-section-head"><h3>'+title+'</h3><span>'+(rolling?'재시도 반영 · ':'첫 응답 기준 · ')+items.length+'회</span></div>'+
   chartMarkup(mainPoints,{daily,metric:rolling?'after':'first'})+
   '<p class="na2-progress-chart-note">'+esc(caption)+'</p></section>'+
