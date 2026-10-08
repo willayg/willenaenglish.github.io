@@ -97,37 +97,34 @@ function originalSeries(rows,daily){
  }
  return [...map.values()].sort((a,b)=>a.date.localeCompare(b.date));
 }
-function chartMarkup(points,{rolling,showRetries,windowSize,daily}){
+function chartMarkup(points,{daily,compare=false,metric='after'}){
  if(!points.length)return '<div class="na2-detail-empty">그래프에 표시할 기록이 없습니다.</div>';
  const W=750,left=50,right=22,top=22,bottom=178,height=bottom-top;
- const locate=(i)=>left+(points.length===1?(W-left-right)/2:i*(W-left-right)/(points.length-1));
+ const locate=i=>left+(points.length===1?(W-left-right)/2:i*(W-left-right)/(points.length-1));
+ const label=p=>daily?p.date:(p.label||dateLabel(p.time));
  const xy=(val,i)=>locate(i).toFixed(1)+','+(bottom-num(val)*height/100).toFixed(1);
- const segments=field=>{
-   let segments=[],ongoing=[];
-   points.forEach((p,i)=>{
-     if(p[field]==null){if(ongoing.length)segments.push(ongoing);ongoing=[]}
-     else ongoing.push(xy(p[field],i));
-   });
-   if(ongoing.length)segments.push(ongoing);
-   return segments.map(arr=>'<polyline fill="none" stroke="'+(field==='after'?'#de6999':'#13a4ac')+'" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" points="'+arr.join(' ')+'"/>').join('');
- };
- const dots=(field,color,open=false)=>points.length>75?'':points.map((p,i)=>{
-   if(p[field]==null)return '';
-   const y=bottom-num(p[field])*height/100;
-   const radius=open?Math.min(7,2.5+Math.sqrt(p.total)*.58):3.7;
-   const label=(daily?p.date:p.label)+': '+(field==='after'?'수정 후 ':field==='first'?'최초 ':field==='raw'?'해당 회차 ':'')+showPct(p[field]);
-   return '<circle cx="'+locate(i).toFixed(1)+'" cy="'+y.toFixed(1)+'" r="'+radius.toFixed(1)+'" fill="'+(open?'#fff':color)+'" stroke="'+(open?color:'none')+'" stroke-width="1.7"><title>'+esc(label)+'</title></circle>';
- }).join('');
+ function plot(field,color,title){
+   const sections=[];let part=[];
+   for(let i=0;i<points.length;i++){
+     const value=points[i][field];
+     if(value==null){if(part.length)sections.push(part);part=[]}
+     else part.push(xy(value,i));
+   }
+   if(part.length)sections.push(part);
+   const lines=sections.map(arr=>arr.length>1?'<polyline fill="none" stroke="'+color+'" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" points="'+arr.join(' ')+'"/>':'').join('');
+   const dots=points.length>70?'':points.map((p,i)=>p[field]==null?'':'<circle cx="'+locate(i).toFixed(1)+'" cy="'+(bottom-num(p[field])*height/100).toFixed(1)+'" r="3.7" fill="'+color+'"><title>'+esc(label(p)+': '+title+' '+showPct(p[field]))+'</title></circle>').join('');
+   return lines+dots;
+ }
  const first=points[0],last=points[points.length-1];
- const label1=daily?first.date.slice(5):'1회',label2=daily?last.date.slice(5):points.length+'회';
- const labels=points.length>1?'<text x="'+left+'" y="208" text-anchor="start">'+esc(label1)+'</text><text x="'+(W-right)+'" y="208" text-anchor="end">'+esc(label2)+'</text>':'';
- const rawDots=rolling?dots('raw','#92a6ab',true):'';
- return '<svg viewBox="0 0 750 220" role="img" aria-label="'+esc(rolling?'이동 평균 정확도와 오답 수정 그래프':'날짜별 정확도와 오답 수정 그래프')+'" style="width:100%;height:auto;display:block">'+
+ const firstText=daily?first.date?.slice(5):'1회',lastText=daily?last.date?.slice(5):points.length+'회';
+ const labels=points.length>1?'<text x="'+left+'" y="208" text-anchor="start">'+esc(firstText)+'</text><text x="'+(W-right)+'" y="208" text-anchor="end">'+esc(lastText)+'</text>':'';
+ const title=compare?'최초 정답률 및 수정 후 정답률 비교':metric==='after'?'재시도 반영 정확도':'최초 정확도';
+ return '<svg viewBox="0 0 750 220" role="img" aria-label="'+esc(title)+'" style="width:100%;height:auto;display:block">'+
   '<g font-size="12" fill="#677"><text x="7" y="27">100%</text><text x="15" y="104">50%</text><text x="24" y="182">0%</text>'+labels+'</g>'+
   '<path d="M '+left+' '+top+' V '+bottom+' H '+(W-right)+'" stroke="#b9cbd0" fill="none"/>'+
   '<line x1="'+left+'" x2="'+(W-right)+'" y1="'+((top+bottom)/2)+'" y2="'+((top+bottom)/2)+'" stroke="#e8eff0" stroke-dasharray="3 5"/>'+
-  rawDots+segments('first')+dots('first','#13a4ac')+
-  (showRetries?segments('after')+dots('after','#de6999'):'')+'</svg>';
+  (compare?plot('first','#13a4ac','최초 정답률')+plot('after','#de6999','수정 후 정답률')
+          :plot(metric,'#13a4ac',metric==='after'?'수정 후 정답률':'기존 정확도'))+'</svg>';
 }
 function render({state,body}){
  const data=window.NaesinV2Data;
