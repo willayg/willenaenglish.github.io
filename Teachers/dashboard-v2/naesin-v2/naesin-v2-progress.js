@@ -42,6 +42,65 @@ function answerEvents(attempts,book,lesson,skill){
  }
  return{events:result,unmatched:counted.unmatched};
 }
+/* Attempt-based timeline: every submitted first answer and retry contributes one result.
+   The original-question association is used for filter classification only. */
+function attemptSequence(attempts,book,lesson,skill){
+ const firstByQuestion=new Map(),included=[];
+ const all=(Array.isArray(attempts)?attempts:[])
+   .filter(a=>String(a.book_key||'')===book&&a.attempted_at&&(a.is_correct===true||a.is_correct===false))
+   .sort((a,b)=>new Date(a.attempted_at)-new Date(b.attempted_at));
+ for(const a of all){
+   const question=String(a.question_id||'');
+   const key=book+'\u0001'+question;
+   const first=!a.is_retry;
+   const own={lesson:String(a.unit_key||''),skill:String(a.practice_type||'')};
+   if(first&&question)firstByQuestion.set(key,own);
+   const scope=first?own:firstByQuestion.get(key)||own;
+   if((lesson!==ALL&&scope.lesson!==lesson)||(skill!==ALL&&scope.skill!==skill))continue;
+   included.push({
+     sessionId:String(a.session_id||''),time:a.attempted_at,
+     isRetry:!first,isCorrect:a.is_correct===true,
+     questionId:question,lesson:scope.lesson,skill:scope.skill
+   });
+ }
+ return included;
+}
+function buildAttemptRolling(attempts,daily,windowSize){
+ const groups=new Map();
+ for(const a of attempts){
+   const id=daily?dayKey(a.time):a.sessionId;
+   if(!id)continue;
+   const when=new Date(a.time).getTime();
+   const group=groups.get(id)||{key:id,date:dayKey(a.time),time:when,events:[],sessions:new Set()};
+   group.events.push(a);group.sessions.add(a.sessionId);
+   group.time=Math.max(group.time,when);
+   groups.set(id,group);
+ }
+ const ordered=[...groups.values()].sort((a,b)=>a.time-b.time||a.key.localeCompare(b.key));
+ const recent=[];
+ return ordered.map(group=>{
+   let correct=0,retries=0;
+   for(const a of group.events){
+     recent.push(a);
+     if(recent.length>windowSize)recent.shift();
+     if(a.isCorrect)correct++;
+     if(a.isRetry)retries++;
+   }
+   const rollingCorrect=recent.filter(a=>a.isCorrect).length;
+   const firsts=recent.filter(a=>!a.isRetry);
+   const retryRows=recent.filter(a=>a.isRetry);
+   const firstCorrect=firsts.filter(a=>a.isCorrect).length;
+   const retryCorrect=retryRows.filter(a=>a.isCorrect).length;
+   return{
+     key:group.key,date:group.date,time:group.time,label:daily?group.date:dateLabel(group.time),
+     correct,total:group.events.length,retries,sessions:group.sessions.size,
+     first:pct(firstCorrect,firsts.length),after:pct(rollingCorrect,recent.length),
+     rollingCorrect,windowTotal:recent.length,
+     firstCorrect,firstTotal:firsts.length,retryCorrect,retryTotal:retryRows.length,
+     raw:pct(correct,group.events.length)
+   };
+ });
+}
 function buildTimeline(events,daily,windowSize){
  const groups=new Map();
  for(const e of events){
@@ -166,8 +225,11 @@ function render({state,body}){
  const rolling=state.progressMode!=='raw';
  const rawSeries=originalSeries(items,daily);
  const {events,unmatched}=answerEvents(state.progressAttemptHistory,book,lesson,skill);
- const rollingSeries=buildTimeline(events,daily,windowSize);
+ const attemptRows=attemptSequence(state.progressAttemptHistory,book,lesson,skill);
+ const rollingSeries=buildAttemptRolling(attemptRows,daily,windowSize);
  const lastRolling=rollingSeries[rollingSeries.length-1]||null;
+ const correctionSeries=buildTimeline(events,daily,windowSize);
+ const lastCorrection=correctionSeries[correctionSeries.length-1]||null;
  const comparisonPoints=rollingSeries.map(row=>({...row,label:daily?row.date:dateLabel(row.time)}));
  const mainPoints=rolling?comparisonPoints:rawSeries.map(row=>({...row,first:pct(row.correct,row.total)}));
  const option=(value,label,active)=>'<option value="'+esc(value)+'"'+(value===active?' selected':'')+'>'+esc(label)+'</option>';
