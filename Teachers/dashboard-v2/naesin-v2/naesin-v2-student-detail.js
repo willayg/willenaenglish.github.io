@@ -181,37 +181,59 @@ function renderProgress(){
  const filters='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:12px;margin-bottom:20px">'+
    '<label>레슨'+select('lesson',lessonChoices,lesson,v=>v===ALL?'전체 레슨':v)+'</label>'+
    '<label>영역'+select('skill',skillChoices,skill,v=>v===ALL?'전체 영역':LABELS[v]||v)+'</label></div>';
+ const modeButtons='<div class="na2-progress-modes" role="group" aria-label="정확도 표시 방식">'+
+    '<button type="button" data-progress-mode="rolling" class="'+(useRolling?'active':'')+'" aria-pressed="'+useRolling+'">최근 '+windowSize+'문항 이동 평균</button>'+
+    '<button type="button" data-progress-mode="raw" class="'+(!useRolling?'active':'')+'" aria-pressed="'+(!useRolling)+'">기존 정확도</button></div>';
  if(!items.length){
-   body.innerHTML=filters+'<div class="na2-detail-empty">선택한 레슨과 영역의 완료된 학습 기록이 없습니다.</div>';
+   body.innerHTML=filters+modeButtons+'<div class="na2-detail-empty">선택한 레슨과 영역의 완료된 학습 기록이 없습니다.</div>';
  }else{
    const first=items[0],last=items[items.length-1];
    const correct=items.reduce((sum,r)=>sum+n(r.correct),0),total=items.reduce((sum,r)=>sum+n(r.total),0);
-   const cards=daily
+   const lastRolling=rolling[rolling.length-1];
+   const cards=useRolling
+     ?metricCard(fmt(lastRolling?.percentage),'최근 '+windowSize+'문항 정답률',n(lastRolling?.correct)+' / '+n(lastRolling?.total))
+       +metricCard(fmt(100*correct/total),'선택 범위 정확도',correct+' / '+total)
+     :daily
      ?metricCard(fmt(100*correct/total),'선택 범위 정확도',correct+' / '+total)+metricCard(items.length,'완료한 연습','학습일 '+days.length+'일')
      :metricCard(fmt(pct(first)),'첫 회차',n(first.correct)+' / '+n(first.total))+metricCard(fmt(pct(last)),'최근 회차',n(last.correct)+' / '+n(last.total));
    const width=750,left=50,right=22,top=22,bottom=178,plotWidth=width-left-right,plotHeight=bottom-top;
-   const points=series.map((r,i)=>({x:left+(series.length===1?plotWidth/2:i*plotWidth/(series.length-1)),y:bottom-(pct(r)||0)*plotHeight/100,value:pct(r),row:r}));
-   const line=points.map(p=>p.x.toFixed(1)+','+p.y.toFixed(1)).join(' ');
+   const points=series.map((r,i)=>({
+      x:left+(series.length===1?plotWidth/2:i*plotWidth/(series.length-1)),
+      y:bottom-((useRolling?rolling[i]?.percentage:pct(r))||0)*plotHeight/100,
+      value:useRolling?rolling[i]?.percentage:pct(r), raw:pct(r), rolling:rolling[i],row:r
+   }));
+   const line=points.filter(p=>p.value!=null).map(p=>p.x.toFixed(1)+','+p.y.toFixed(1)).join(' ');
    const pointLabel=p=>daily?p.row.date:(fmtDate(p.row.completed_at));
-   const dots=points.length<=70?points.map((p,i)=>'<circle cx="'+p.x+'" cy="'+p.y+'" r="'+(points.length>35?'3':'4')+'" fill="#13a4ac"><title>'+esc(pointLabel(p)+': '+fmt(p.value)+(daily?' · '+p.row.sessions+'회':''))+'</title></circle>').join(''):'';
+   const rawDots=useRolling&&points.length<=70?points.map(p=>
+     '<circle cx="'+p.x+'" cy="'+(bottom-(p.raw||0)*plotHeight/100)+'" r="'+Math.min(7,2.5+Math.sqrt(n(p.row.total))*0.58).toFixed(1)+'" fill="#fff" stroke="#91a4a9" stroke-width="1.7"><title>'+
+     esc(pointLabel(p)+': 실제 '+fmt(p.raw)+' ('+n(p.row.correct)+'/'+n(p.row.total)+')')+'</title></circle>'
+   ).join(''):'';
+   const dots=points.length<=70?points.filter(p=>p.value!=null).map(p=>
+      '<circle cx="'+p.x+'" cy="'+p.y+'" r="'+(points.length>35?'3':'4')+'" fill="#13a4ac"><title>'+
+      esc(pointLabel(p)+': '+(useRolling?'이동 평균 ':'')+fmt(p.value))+'</title></circle>'
+   ).join(''):'';
    const firstLabel=daily?series[0]?.date?.slice(5):'1회';
    const lastLabel=daily?series[series.length-1]?.date?.slice(5):series.length+'회';
    const labels=points.length>1?'<text x="'+left+'" y="208" text-anchor="start">'+esc(firstLabel)+'</text><text x="'+(width-right)+'" y="208" text-anchor="end">'+esc(lastLabel)+'</text>':'';
-   const svg='<svg viewBox="0 0 750 220" role="img" aria-label="'+(daily?'일별 정답률 그래프':'회차별 정답률 그래프')+'" style="width:100%;height:auto;display:block">'+
+   const svg='<svg viewBox="0 0 750 220" role="img" aria-label="'+(useRolling?'최근 '+windowSize+'문항 이동 평균':daily?'일별 정답률 그래프':'회차별 정답률 그래프')+'" style="width:100%;height:auto;display:block">'+
      '<g font-size="12" fill="#677"><text x="7" y="27">100%</text><text x="15" y="104">50%</text><text x="24" y="182">0%</text>'+labels+'</g>'+
      '<path d="M '+left+' '+top+' V '+bottom+' H '+(width-right)+'" fill="none" stroke="#b9cbd0"/>'+
      '<line x1="'+left+'" x2="'+(width-right)+'" y1="'+((top+bottom)/2)+'" y2="'+((top+bottom)/2)+'" stroke="#e8eff0" stroke-dasharray="3 5"/>'+
-     '<polyline fill="none" stroke="#13a4ac" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" points="'+line+'"/>'+dots+'</svg>';
+     rawDots+(line?'<polyline fill="none" stroke="#13a4ac" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" points="'+line+'"/>':'')+dots+'</svg>';
    const head=daily?'<th>날짜</th><th>정답</th><th>정답률</th><th>연습 횟수</th><th>재시도</th>':'<th>일시</th><th>정답</th><th>정답률</th><th>재시도</th>';
-   const table=series.map(r=>'<tr style="border-top:1px solid #e0ebee"><td style="padding:9px 5px">'+esc(daily?r.date:fmtDate(r.completed_at))+'</td><td>'+n(r.correct)+' / '+n(r.total)+'</td><td>'+fmt(pct(r))+'</td>'+(daily?'<td>'+n(r.sessions)+'</td>':'')+'<td>'+n(r.retries)+'</td></tr>').join('');
-   body.innerHTML=filters+'<div class="na2-kpi-grid">'+cards+'</div>'+
-     '<section class="na2-detail-section"><div class="na2-section-head"><h3>'+(daily?'일별 정확도':'회차별 정확도')+'</h3><span>재시도 제외 · 최초 응답 기준 · 총 '+items.length+'회</span></div>'+
-     svg+'<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;text-align:left;font-size:13px"><thead><tr>'+head+'</tr></thead><tbody>'+table+'</tbody></table></div></section>';
+   const table=series.map((r,i)=>'<tr style="border-top:1px solid #e0ebee"><td style="padding:9px 5px">'+esc(daily?r.date:fmtDate(r.completed_at))+'</td><td>'+n(r.correct)+' / '+n(r.total)+'</td><td>'+fmt(pct(r))+'</td>'+(useRolling?'<td>'+fmt(rolling[i]?.percentage)+' <small>('+n(rolling[i]?.total)+'/'+windowSize+')</small></td>':'')+(daily?'<td>'+n(r.sessions)+'</td>':'')+'<td>'+n(r.retries)+'</td></tr>').join('');
+   body.innerHTML=filters+modeButtons+'<div class="na2-kpi-grid">'+cards+'</div>'+
+     '<section class="na2-detail-section"><div class="na2-section-head"><h3>'+(useRolling?'최근 '+windowSize+'문항 이동 평균':daily?'일별 정확도':'회차별 정확도')+'</h3><span>재시도 제외 · 최초 응답 기준 · 총 '+items.length+'회</span></div>'+
+     svg+(useRolling?'<p class="na2-progress-chart-note">청록 선: 이동 평균 · 회색 점: 개별 정확도 (크기 = 문항 수). '+windowSize+'문항 미만은 실제 문항 수로 표시.</p>':'')+'<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;text-align:left;font-size:13px"><thead><tr>'+head.replace('<th>정답률</th>','<th>정답률</th>'+(useRolling?'<th>최근 '+windowSize+'문항</th>':''))+'</tr></thead><tbody>'+table+'</tbody></table></div></section>';
  }
  qa('[data-progress-filter]',body).forEach(el=>el.addEventListener('change',()=>{
    const key=el.dataset.progressFilter;
    current.progressFilters[key]=el.value;
    if(key==='lesson')current.progressFilters.skill=ALL;
+   renderProgress();
+ }));
+ qa('[data-progress-mode]',body).forEach(btn=>btn.addEventListener('click',()=>{
+   current.progressMode=btn.dataset.progressMode==='raw'?'raw':'rolling';
    renderProgress();
  }));
 }
@@ -248,5 +270,5 @@ async function open(studentId,planId,groupId,options={}){
     });
   }
 }
-window.NaesinV2StudentDetail={open,close,closeImmediate:closeDirect,refreshCurrent,isOpen,getCurrentData:()=>current.data,getContext:()=>({studentId:current.studentId,planId:current.planId,groupId:current.groupId,tab:current.tab}),version:'r14.67-progress-default'};
+window.NaesinV2StudentDetail={open,close,closeImmediate:closeDirect,refreshCurrent,isOpen,getCurrentData:()=>current.data,getContext:()=>({studentId:current.studentId,planId:current.planId,groupId:current.groupId,tab:current.tab}),version:'r14.68-rolling20-50'};
 })();
