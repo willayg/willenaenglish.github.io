@@ -8,11 +8,43 @@ let refreshPromise=null;
 const q=(s,r=document)=>r.querySelector(s),qa=(s,r=document)=>[...r.querySelectorAll(s)];
 const esc=v=>String(v??'').replace(/[&<>\"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[c])),n=v=>Number.isFinite(Number(v))?Number(v):0,maybePct=v=>v==null?'—':`${Math.round(Number(v)||0)}%`,scoreClass=v=>v==null?'':Number(v)>=80?'score-good':Number(v)>=50?'score-mid':'score-low',examType=v=>v==='final'?'기말고사':'중간고사',nameOf=s=>s?.korean_name||s?.name||s?.username||'Student';
 function fmtDate(v){if(!v)return'—';const d=new Date(v);return Number.isNaN(d.getTime())?'—':d.toLocaleString('ko-KR',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'})}
-function mount(){if(q('#na2DetailBg'))return;const bg=document.createElement('div');bg.className='na2-detail-bg';bg.id='na2DetailBg';bg.innerHTML=`<section class="na2-detail-modal" role="dialog" aria-modal="true" aria-labelledby="na2DetailName"><header class="na2-detail-head"><div class="na2-detail-title"><h2 id="na2DetailName">학생</h2><p id="na2DetailMeta"></p></div><button class="na2-detail-close" id="na2DetailClose" type="button" aria-label="닫기">×</button></header><nav class="na2-detail-tabs" id="na2DetailTabs"><button type="button" data-tab="lessons" class="active">레슨 진도</button><button type="button" data-tab="summary">요약</button><button type="button" data-tab="wrong">오답</button><button type="button" data-tab="activity">활동</button><button type="button" data-tab="progress">학습 성장</button><button type="button" data-tab="grammar">문법 패턴</button></nav><div class="na2-detail-body" id="na2DetailBody"><div class="na2-detail-loading">불러오는 중…</div></div></section>`;document.body.appendChild(bg);q('#na2DetailClose').onclick=close;bg.addEventListener('click',e=>{if(e.target===bg)close()});q('#na2DetailTabs').addEventListener('click',e=>{const b=e.target.closest('[data-tab]');if(b)setTab(b.dataset.tab)});document.addEventListener('keydown',e=>{if(e.key==='Escape'&&bg.classList.contains('open'))close()})}
+function mount(){if(q('#na2DetailBg'))return;const bg=document.createElement('div');bg.className='na2-detail-bg';bg.id='na2DetailBg';bg.innerHTML=`<section class="na2-detail-modal" role="dialog" aria-modal="true" aria-labelledby="na2DetailName"><header class="na2-detail-head"><div class="na2-detail-title"><h2 id="na2DetailName">학생</h2><p id="na2DetailMeta"></p></div><div class="na2-detail-actions"><div class="na2-detail-nav" aria-label="학생 이동"><button class="na2-detail-nav-btn" id="na2DetailPrev" type="button" aria-label="이전 학생" title="이전 학생" disabled>‹</button><span class="na2-detail-nav-count" id="na2DetailPosition" aria-live="polite"></span><button class="na2-detail-nav-btn" id="na2DetailNext" type="button" aria-label="다음 학생" title="다음 학생" disabled>›</button></div><button class="na2-detail-close" id="na2DetailClose" type="button" aria-label="닫기">×</button></div></header><nav class="na2-detail-tabs" id="na2DetailTabs"><button type="button" data-tab="lessons" class="active">레슨 진도</button><button type="button" data-tab="summary">요약</button><button type="button" data-tab="wrong">오답</button><button type="button" data-tab="activity">활동</button><button type="button" data-tab="progress">학습 성장</button><button type="button" data-tab="grammar">문법 패턴</button></nav><div class="na2-detail-body" id="na2DetailBody"><div class="na2-detail-loading">불러오는 중…</div></div></section>`;document.body.appendChild(bg);q('#na2DetailClose').onclick=close;q('#na2DetailPrev').addEventListener('click',()=>moveStudent(-1));q('#na2DetailNext').addEventListener('click',()=>moveStudent(1));bg.addEventListener('click',e=>{if(e.target===bg)close()});q('#na2DetailTabs').addEventListener('click',e=>{const b=e.target.closest('[data-tab]');if(b)setTab(b.dataset.tab)});document.addEventListener('keydown',e=>{if(e.key==='Escape'&&bg.classList.contains('open'))close()})}
 function openBg(){mount();q('#na2DetailBg').classList.add('open');document.body.classList.add('na2-modal-open')}
 function isOpen(){return !!q('#na2DetailBg')?.classList.contains('open')}
 function closeDirect(){q('#na2DetailBg')?.classList.remove('open');document.body.classList.remove('na2-modal-open')}
 function close(){if(window.TeacherHistory&&!window.TeacherHistory.isRestoring?.()){window.TeacherHistory.requestClose?.('naesin');return}closeDirect()}
+function navigableStudents(){
+  const groupId=String(current.groupId||'');
+  const test=qa('.na2-test[data-group-id]').find(el=>String(el.dataset.groupId||'')===groupId);
+  const visible=test?qa('tbody tr[data-student-id][data-plan-id]',test).map(row=>({
+    studentId:row.dataset.studentId,planId:row.dataset.planId
+  })).filter(row=>row.studentId&&row.planId):[];
+  if(visible.length)return visible;
+  const cached=window.NaesinV2Data?.getCachedGroupMatrix?.(groupId);
+  return (Array.isArray(cached?.members)?cached.members:[]).map(member=>({
+    studentId:member.student_id||member.student?.id,planId:member.plan_id
+  })).filter(row=>row.studentId&&row.planId);
+}
+function navPosition(){
+  const students=navigableStudents();
+  const index=students.findIndex(student=>String(student.planId)===String(current.planId)&&String(student.studentId)===String(current.studentId));
+  return{students,index};
+}
+function updateStudentNavigation(){
+  const {students,index}=navPosition();
+  const prev=q('#na2DetailPrev'),next=q('#na2DetailNext'),label=q('#na2DetailPosition');
+  if(prev)prev.disabled=index<=0;
+  if(next)next.disabled=index<0||index>=students.length-1;
+  if(label)label.textContent=index<0?'':(index+1)+' / '+students.length;
+}
+function moveStudent(direction){
+  if(!isOpen())return;
+  const {students,index}=navPosition();
+  const next=students[index+direction];
+  if(!next)return;
+  const options={tab:current.tab,progressFilters:{...(current.progressFilters||{})},replaceHistory:true};
+  void open(next.studentId,next.planId,current.groupId,options);
+}
 function setHeader(data){const student=data?.student||{},group=data?.group||{},stats=data?.stats||{};q('#na2DetailName').textContent=nameOf(student);q('#na2DetailMeta').textContent=[group.school,group.term?`${group.term}학기 ${examType(group.exam_type)}`:null,group.book_label||stats.book_label].filter(Boolean).join(' · ')}
 function metricCard(value,label,sub='',cls=''){return `<div class="na2-kpi"><strong class="${esc(cls)}">${esc(value)}</strong><span>${esc(label)}</span>${sub?`<small>${esc(sub)}</small>`:''}</div>`}
 function skillRows(skills){const map=new Map((Array.isArray(skills)?skills:[]).map(x=>[x.practice_type,x]));return ORDER.map(key=>{const s=map.get(key)||{},coverage=Math.max(0,Math.min(100,s.total?Math.round(n(s.completed)/n(s.total)*100):0));return `<div class="na2-skill-row"><div class="na2-skill-name">${esc(LABELS[key]||key)}</div><div class="na2-skill-metric"><strong class="${scoreClass(s.recent_accuracy)}">${esc(maybePct(s.recent_accuracy))}</strong><small>최근 ${n(s.recent_count)}문항</small></div><div class="na2-skill-metric all"><strong class="${scoreClass(s.unique_accuracy)}">${esc(maybePct(s.unique_accuracy))}</strong><small>전체 ${n(s.unique_count)}문항</small></div><div class="na2-skill-progress"><progress class="na2-skill-progressbar" max="100" value="${coverage}">${coverage}%</progress><small>${n(s.completed)} / ${n(s.total)}</small></div></div>`}).join('')}
@@ -135,6 +167,34 @@ function renderProgress(){
 function renderCurrentTab(){if(!current.data)return;if(current.tab==='lessons')renderLessons();else if(current.tab==='summary')renderSummary();else if(current.tab==='wrong')renderWrong();else if(current.tab==='activity')renderActivity();else if(current.tab==='grammar')renderGrammar();else if(current.tab==='progress')renderProgress()}
 function setTab(tab){current.tab=tab||'lessons';qa('#na2DetailTabs [data-tab]').forEach(b=>b.classList.toggle('active',b.dataset.tab===current.tab));renderCurrentTab()}
 async function refreshCurrent(){if(!isOpen()||!current.planId)return{skipped:true};if(refreshPromise)return refreshPromise;const snapshot={planId:current.planId};const body=q('#na2DetailBody'),scrollTop=body?.scrollTop||0;refreshPromise=(async()=>{const data=await window.NaesinV2Data?.refreshStudentOverview?.(snapshot.planId);if(!isOpen()||String(current.planId)!==String(snapshot.planId))return{stale:true};if(data){current.data=data;setHeader(data)}renderCurrentTab();requestAnimationFrame(()=>{const fresh=q('#na2DetailBody');if(fresh)fresh.scrollTop=scrollTop});return{updated:true,tab:current.tab}})().catch(error=>{console.warn('[Naesin V2 Student Detail] silent refresh failed',error);return{error:true}}).finally(()=>{refreshPromise=null});return refreshPromise}
-async function open(studentId,planId,groupId){current={studentId,planId,groupId,data:null,wrongData:null,wrongLoading:false,wrongFilter:'all',grammarOpen:null,tab:'lessons',progressRows:null,progressFilters:{}};openBg();window.TeacherHistory?.pushDrawer?.('naesin',{studentId,planId,groupId});q('#na2DetailName').textContent='학생';q('#na2DetailMeta').textContent='불러오는 중…';qa('#na2DetailTabs [data-tab]').forEach(b=>b.classList.toggle('active',b.dataset.tab==='lessons'));q('#na2DetailBody').innerHTML='<div class="na2-detail-loading">학생 통계를 불러오는 중…</div>';try{const data=await window.NaesinV2Data?.loadStudentOverview?.(planId);if(String(current.planId)!==String(planId))return;current.data=data;setHeader(data);renderLessons()}catch(e){if(String(current.planId)!==String(planId))return;q('#na2DetailBody').innerHTML=`<div class="na2-detail-error"><b>학생 정보를 불러오지 못했습니다.</b><span>${esc(e.message||'Unknown error')}</span><button type="button" id="na2DetailRetry">다시 시도</button></div>`;q('#na2DetailRetry')?.addEventListener('click',()=>{window.NaesinV2Data?.invalidateStudentOverview?.(planId);open(studentId,planId,groupId)})}}
-window.NaesinV2StudentDetail={open,close,closeImmediate:closeDirect,refreshCurrent,isOpen,getCurrentData:()=>current.data,getContext:()=>({studentId:current.studentId,planId:current.planId,groupId:current.groupId,tab:current.tab}),version:'r14.12-history'};
+async function open(studentId,planId,groupId,options={}){
+  const previousTab=options.tab||'lessons';
+  const nextState={studentId,planId,groupId,data:null,wrongData:null,wrongLoading:false,wrongFilter:'all',grammarOpen:null,tab:previousTab,progressRows:null,progressFilters:{...(options.progressFilters||{})}};
+  current=nextState;
+  openBg();
+  const payload={studentId,planId,groupId};
+  if(options.replaceHistory&&window.TeacherHistory?.replaceDrawer)window.TeacherHistory.replaceDrawer('naesin',payload);
+  else window.TeacherHistory?.pushDrawer?.('naesin',payload);
+  q('#na2DetailName').textContent='학생';
+  q('#na2DetailMeta').textContent='불러오는 중…';
+  qa('#na2DetailTabs [data-tab]').forEach(b=>b.classList.toggle('active',b.dataset.tab===previousTab));
+  q('#na2DetailBody').innerHTML='<div class="na2-detail-loading">학생 통계를 불러오는 중…</div>';
+  updateStudentNavigation();
+  try{
+    const data=await window.NaesinV2Data?.loadStudentOverview?.(planId);
+    if(current!==nextState||!isOpen())return;
+    current.data=data;
+    setHeader(data);
+    updateStudentNavigation();
+    renderCurrentTab();
+  }catch(e){
+    if(current!==nextState||!isOpen())return;
+    q('#na2DetailBody').innerHTML=`<div class="na2-detail-error"><b>학생 정보를 불러오지 못했습니다.</b><span>${esc(e.message||'Unknown error')}</span><button type="button" id="na2DetailRetry">다시 시도</button></div>`;
+    q('#na2DetailRetry')?.addEventListener('click',()=>{
+      window.NaesinV2Data?.invalidateStudentOverview?.(planId);
+      open(studentId,planId,groupId,{tab:current.tab,progressFilters:current.progressFilters,replaceHistory:true});
+    });
+  }
+}
+window.NaesinV2StudentDetail={open,close,closeImmediate:closeDirect,refreshCurrent,isOpen,getCurrentData:()=>current.data,getContext:()=>({studentId:current.studentId,planId:current.planId,groupId:current.groupId,tab:current.tab}),version:'r14.66-student-nav'};
 })();
