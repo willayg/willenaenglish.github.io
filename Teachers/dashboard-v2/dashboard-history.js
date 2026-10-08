@@ -33,6 +33,14 @@ function pushDrawer(type,payload={}){
   if(restoring||!type)return;
   pushState({teacherDashboard:true,view:activeView(),drawer:{type,...payload}});
 }
+function replaceDrawer(type,payload={}){
+  if(restoring||!type)return;
+  const cur=history.state&&history.state.teacherDashboard?history.state:baseState();
+  const next={teacherDashboard:true,view:activeView(),drawer:{type,...payload}};
+  if(cur.view===next.view&&sameDrawer(cur.drawer,next.drawer))return;
+  if(cur.drawer?.type===type)history.replaceState(next,'',location.href);
+  else pushState(next);
+}
 function closeStudentDirect(){window.TeacherStudentDrawer?.close?.()}
 function closeGrammarDirect(){window.GrammarFoundationTeacher?.close?.()}
 function closeNaesinDirect(){window.NaesinV2StudentDetail?.closeImmediate?.()}
@@ -90,6 +98,6 @@ function init(){
   });
   window.addEventListener('popstate',e=>{void restore(e.state)});
 }
-window.TeacherHistory={pushDrawer,requestClose,isRestoring:()=>restoring,restore};
+window.TeacherHistory={pushDrawer,replaceDrawer,requestClose,isRestoring:()=>restoring,restore};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init,{once:true});else init();
 })();
