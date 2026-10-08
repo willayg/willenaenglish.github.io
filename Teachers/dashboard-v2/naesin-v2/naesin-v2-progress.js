@@ -177,45 +177,48 @@ function render({state,body}){
    '<label>영역'+select('skill',[ALL,...skills],skill,v=>v===ALL?'전체 영역':SKILL_NAMES[v]||v)+'</label></div>';
  const modes='<div class="na2-progress-modes" role="group" aria-label="정확도 표시 방식">'+
   '<button type="button" data-progress-mode="rolling" class="'+(rolling?'active':'')+'" aria-pressed="'+rolling+'">최근 '+windowSize+'문항 이동 평균</button>'+
-  '<button type="button" data-progress-mode="raw" class="'+(!rolling?'active':'')+'" aria-pressed="'+(!rolling)+'">기존 정확도</button>'+
-  '<label class="na2-progress-retry-toggle"><input type="checkbox" data-progress-retries '+(showRetries?'checked':'')+'> 오답 수정 표시</label></div>';
- const itemCorrect=items.reduce((sum,r)=>sum+num(r.correct),0);
- const itemTotal=items.reduce((sum,r)=>sum+num(r.total),0);
- const cards=rolling?
-   card(showPct(lastRolling?.first),'최초 정답률',lastRolling?lastRolling.windowCorrect+' / '+lastRolling.windowTotal:'기록 없음')+
-   (showRetries?card(showPct(lastRolling?.after),'수정 후 정답률',lastRolling?(lastRolling.windowCorrect+lastRolling.fixed)+' / '+lastRolling.windowTotal:'기록 없음'):'')
-   :daily?card(showPct(pct(itemCorrect,itemTotal)),'선택 범위 정확도',itemCorrect+' / '+itemTotal)+card(items.length,'완료한 연습','')
-   :card(showPct(pct(items[0]?.correct,items[0]?.total)),'첫 회차',items[0]?items[0].correct+' / '+items[0].total:'')+card(showPct(pct(items[items.length-1]?.correct,items[items.length-1]?.total)),'최근 회차',items.length?items[items.length-1].correct+' / '+items[items.length-1].total:'');
- let correction='';
- if(showRetries){
-   const fixed=lastRolling?.fixed||0,still=lastRolling?.retriedWrong||0,missing=lastRolling?.notRetried||0;
-   const wrong=fixed+still+missing;
-   correction='<div class="na2-progress-correction">'+card(wrong?showPct(pct(fixed,wrong)):'—','오답 수정률',fixed+' / '+wrong+'개 수정')+
-     '<p>수정 완료 <strong>'+fixed+'</strong> · 재시도했지만 오답 <strong>'+still+'</strong> · 아직 재시도 안 함 <strong>'+missing+'</strong></p></div>';
- }
+  '<button type="button" data-progress-mode="raw" class="'+(!rolling?'active':'')+'" aria-pressed="'+(!rolling)+'">기존 정확도</button></div>';
+ const firstCorrect=num(lastRolling?.windowCorrect),sample=num(lastRolling?.windowTotal),fixed=num(lastRolling?.fixed);
+ const wrong=sample-firstCorrect,still=num(lastRolling?.retriedWrong),missing=num(lastRolling?.notRetried);
+ const cards=card(showPct(lastRolling?.after),'현재 정답률','최근 '+windowSize+'문항 · '+(firstCorrect+fixed)+' / '+sample)+
+   card(showPct(lastRolling?.first),'최초 정답률','최근 '+windowSize+'문항 · '+firstCorrect+' / '+sample)+
+   card(fixed+' / '+wrong,'수정한 오답','최근 '+windowSize+'문항 중 틀린 문제');
  const displayed=rolling?rollingSeries:rawSeries;
- const heads=(daily?['날짜','정답','정답률','연습 횟수','재시도']:['일시','정답','정답률','재시도']);
- if(rolling){heads.splice(3,0,'최근 '+windowSize+'문항');if(showRetries)heads.splice(4,0,'수정 후');}
+ const heads=daily?['날짜','정답','정답률','연습 횟수','재시도']:['일시','정답','정답률','재시도'];
+ if(rolling){heads.splice(3,0,'최근 '+windowSize+'문항');heads.splice(4,0,'수정 후');}
  const dataRows=displayed.map((row,i)=>{
    const base=rolling?row:rawSeries[i];
-   const cell=(v)=>'<td>'+esc(v)+'</td>';
-   const cols=[daily?base.date:(rolling?dateLabel(base.time):base.label),
-      base.correct+' / '+base.total,showPct(pct(base.correct,base.total))];
-   if(rolling){cols.push(showPct(row.first)+' ('+row.windowTotal+'/'+windowSize+')');if(showRetries)cols.push(showPct(row.after));}
+   const cols=[daily?base.date:(rolling?dateLabel(base.time):base.label),base.correct+' / '+base.total,showPct(pct(base.correct,base.total))];
+   if(rolling){cols.push(showPct(row.first)+' ('+row.windowTotal+'/'+windowSize+')');cols.push(showPct(row.after));}
    if(daily)cols.push(String(base.sessions||0));
    cols.push(String(base.retries));
-   return '<tr style="border-top:1px solid #e0ebee">'+cols.map((v,j)=>'<td style="'+(j===0?'padding:9px 5px;':'')+'">'+esc(v)+'</td>').join('')+'</tr>';
+   return '<tr style="border-top:1px solid #e0ebee">'+cols.map((value,j)=>'<td style="'+(j===0?'padding:9px 5px;':'')+'">'+esc(value)+'</td>').join('')+'</tr>';
  }).join('');
- const title=rolling?'최근 '+windowSize+'문항 이동 평균':daily?'일별 정확도':'회차별 정확도';
- const note=rolling?'청록: 최초 정답률 · 분홍: 수정 후 정답률 · 회색 점: 해당 날짜의 실제 정답률. ': '청록: 기존 정답률 · 분홍: 해당 기간 내 확인된 수정 후 정확도. ';
- const caption=note+(rolling?'문항 수가 '+windowSize+'개 미만이면 실제 풀이 수로 계산. ':'')+'재시도는 새로운 질문으로 계산하지 않습니다.';
+ const analysisOpen=state.progressAnalysisOpen===true;
+ const correctionRate=wrong?showPct(pct(fixed,wrong)):'—';
+ const analysis='<details class="na2-progress-analysis" data-progress-analysis'+(analysisOpen?' open':'')+'>'+
+  '<summary><span><strong>오답 분석</strong><small>최초 정답률과 오답 수정 후 정답률 비교</small></span><span class="na2-progress-analysis-chevron" aria-hidden="true">⌄</span></summary>'+
+  '<div class="na2-progress-analysis-body">'+
+  '<div class="na2-progress-analysis-legend"><span class="first">최초 정답률</span><span class="after">오답 수정 후</span></div>'+
+  chartMarkup(comparisonPoints,{daily,compare:true})+
+  '<p class="na2-progress-chart-note">최근 '+windowSize+'문항을 같은 기준으로 비교합니다. 오답은 수정한 날짜부터 반영됩니다.</p>'+
+  '<div class="na2-progress-correction">'+card(correctionRate,'오답 수정률',fixed+' / '+wrong+'개 수정')+
+  '<p>수정 완료 <strong>'+fixed+'</strong> · 재시도했지만 오답 <strong>'+still+'</strong> · 아직 재시도 안 함 <strong>'+missing+'</strong></p></div>'+
+  '</div></details>';
+ const title=rolling?'최근 '+windowSize+'문항 학습 정확도':daily?'일별 정확도':'회차별 정확도';
+ const caption=rolling?'오답을 수정한 날짜부터 정확도에 반영됩니다. 각 문제는 한 번만 계산합니다. 문항 수가 '+windowSize+'개 미만이면 실제 문항 수를 사용합니다.'
+  :'기존 방식: 해당 날짜나 회차의 첫 응답 정답률입니다. 오답 수정은 위 요약과 아래 오답 분석에서 확인할 수 있습니다.';
  body.innerHTML=filters+modes+
- (displayed.length?'<div class="na2-kpi-grid">'+cards+'</div>'+correction+
- '<section class="na2-detail-section"><div class="na2-section-head"><h3>'+title+'</h3><span>최초 응답 기준 · '+items.length+'회</span></div>'+
- chartMarkup(points,{rolling,showRetries,windowSize,daily})+
- '<p class="na2-progress-chart-note">'+esc(caption)+(unmatched?' · 연결되지 않은 과거 재시도 '+unmatched+'개 제외':'')+'</p>'+
- '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;text-align:left;font-size:13px"><thead><tr>'+heads.map(h=>'<th>'+esc(h)+'</th>').join('')+'</tr></thead><tbody>'+dataRows+'</tbody></table></div></section>'
- :'<div class="na2-detail-empty">선택한 레슨과 영역의 학습 기록이 없습니다.</div>');
+ (mainPoints.length?'<div class="na2-kpi-grid">'+cards+'</div>'+
+  '<section class="na2-detail-section"><div class="na2-section-head"><h3>'+title+'</h3><span>'+(rolling?'재시도 반영 · ':'첫 응답 기준 · ')+items.length+'회</span></div>'+
+  chartMarkup(mainPoints,{daily,metric:rolling?'after':'first'})+
+  '<p class="na2-progress-chart-note">'+esc(caption)+'</p></section>'+
+  analysis+
+  '<section class="na2-detail-section na2-progress-records"><div class="na2-section-head"><h3>학습 기록</h3><span>최초 응답 · 재시도 횟수</span></div>'+
+  '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;text-align:left;font-size:13px"><thead><tr>'+
+  heads.map(h=>'<th>'+esc(h)+'</th>').join('')+'</tr></thead><tbody>'+dataRows+'</tbody></table></div></section>'+
+  (unmatched?'<p class="na2-progress-chart-note">원래 질문과 연결되지 않은 과거 재시도 '+unmatched+'개는 제외했습니다.</p>':'')
+  :'<div class="na2-detail-empty">선택한 레슨과 영역의 학습 기록이 없습니다.</div>');
  body.querySelectorAll('[data-progress-filter]').forEach(el=>el.addEventListener('change',()=>{
    state.progressFilters[el.dataset.progressFilter]=el.value;
    if(el.dataset.progressFilter==='lesson')state.progressFilters.skill=ALL;
