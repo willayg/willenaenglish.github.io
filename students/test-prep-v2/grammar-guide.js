@@ -36,6 +36,8 @@ const CATALOG=[
   {key:'adjective-adverb',title:'형용사와 부사',aliases:['adverbs','adjective_adverb','adjectives_adverbs','adverb','adverb_position']},
   {key:'prepositions',title:'전치사',aliases:['prepositions','by train','by_bicycle','for']},
   {key:'conjunctions',title:'접속사',aliases:['conjunctions','conjunction_but','although','although_but','contrast']},
+  {key:'object-relative-pronouns',title:'목적격 관계대명사',aliases:['object_relative_pronouns','object_relative_pronoun','objective_relative_pronoun','relative_pronoun_object','relative_pronoun','relative_pronoun_omission','who_whom_which_that','object_relative_that','whom','preposition_whom','what_vs_that','that_after_superlative','that_after_every','that_after_all','that_mixed_antecedent','that_mixed_antecedents']},
+  {key:'although-concession',title:'접속사 although',aliases:['although_concession','concessive_conjunction','although_vs_but','although_not_but','concessive_clause','although_vs_despite','despite_vs_although','despite_gerund','in_spite_of','even_though']},
   {key:'indirect-questions',title:'간접의문문',aliases:['indirect_questions']},
   {key:'countability',title:'셀 수 있는·없는 명사',aliases:['countability','countable_nouns','countable_uncountable','advice_uncountable']},
   {key:'sentence-patterns',title:'문장 형식과 어순',aliases:['word_order','sentence_roles','3형식','4형식','base_verb']},
@@ -143,6 +145,91 @@ const GUIDES={
     ],
     exam:{prompt:'다음 두 문장이 같은 뜻이 되도록 고르세요. Dad bought me a bike. = Dad bought a bike ___ me.',choices:['① to','② for','③ at'],answer:'② for',explanation:'buy는 4형식을 3형식으로 바꿀 때 보통 for를 사용해요.'},
     memory:[['4형식','동사 + 사람 + 사물'],['give/show/send','사물 + to + 사람'],['buy/make','사물 + for + 사람']]
+  },
+
+  'object-relative-pronouns':{
+    title:'목적격 관계대명사',
+    summary:'앞의 사람·사물을 뒤에서 자세히 설명할 때 쓰는 관계대명사예요. 뒤의 절에서 목적어가 빠졌다면 목적격 관계대명사를 생각하세요.',
+    formula:'사람 + who / whom / that + 주어 + 동사   |   사물 + which / that + 주어 + 동사',
+    sections:[
+      {title:'1. 목적격 관계대명사는 무엇인가요?',pattern:'선행사 + 관계대명사 + 주어 + 동사',
+       examples:[
+         ['사람','The teacher whom I respect is very kind.','내가 존경하는 선생님은 매우 친절하시다.'],
+         ['사물','She likes the bike which her father bought for her.','그녀는 아버지가 사 주신 자전거를 좋아한다.'],
+         ['사람','I have a friend whom everyone trusts.','나는 모두가 믿는 친구가 있다.']
+       ],
+       note:'I respect the teacher에서 teacher는 respect의 목적어예요. 관계대명사 뒤에 I respect처럼 목적어가 없는 절이 오면 목적격입니다.'},
+      {title:'2. 사람과 사물에 따라 선택하기',table:[
+        ['사람','who / whom / that (목적격에서는 who도 가능)'],
+        ['사물·동물','which / that'],
+        ['사람과 동물이 함께','보통 that (The girl and her dog that ...)'],
+        ['all, every, the only, 최상급 등','학교 시험에서는 that을 우선 확인']
+      ],note:'who와 whom은 둘 다 사람을 목적어로 받을 수 있어요. whom은 특히 격식을 갖춘 표현이나 전치사 바로 뒤에서 자주 씁니다.'},
+      {title:'3. 목적격은 생략할 수 있어요',examples:[
+        ['생략 가능','The book (which / that) I read yesterday was fun.','내가 어제 읽은 책은 재미있었다.'],
+        ['생략 가능','The girl (whom / who / that) we met is kind.','우리가 만난 소녀는 친절하다.'],
+        ['생략 불가','The woman who is talking to Mr. Simpson is my aunt.','심슨 씨와 이야기하는 여자는 내 이모다.']
+      ],note:'관계대명사 뒤에 주어 + 동사가 이어지면 목적격일 가능성이 높아요. who is talking처럼 관계대명사 자체가 주어이면 보통 생략할 수 없어요.'},
+      {title:'4. 전치사와 함께 쓰는 경우',examples:[
+        ['전치사 뒤','I have a friend with whom I play soccer.','나는 함께 축구를 하는 친구가 있다.'],
+        ['전치사 뒤로','I have a friend (whom / who / that) I play soccer with.','나는 함께 축구를 하는 친구가 있다.']
+      ],note:'with whom은 가능하지만 with who, with that은 틀려요. 전치사를 뒤로 보내면 목적격 관계대명사를 생략할 수도 있습니다.'},
+      {title:'5. 내신 함정',table:[
+        ['❌ The sandwich what I ate ...','✅ The sandwich that / which I ate ...'],
+        ['❌ The book which I read it ...','✅ The book which I read ...'],
+        ['❌ The woman who is talking ... (who 생략)','✅ 주격 관계대명사 who는 생략하지 않기']
+      ],note:'what은 앞에 선행사가 없는 “~하는 것”이라는 뜻이에요. 앞에 the book, the sandwich처럼 선행사가 이미 있다면 what을 쓰지 않아요.'}
+    ],
+    exam:{prompt:'다음 중 어법상 옳은 것은?',choices:[
+      '① The sandwich what I ate for lunch was delicious.',
+      '② The sandwich that I ate for lunch was delicious.',
+      '③ The sandwich whom I ate for lunch was delicious.'
+    ],answer:'② The sandwich that I ate for lunch was delicious.',
+    explanation:'sandwich는 사물이고 ate의 목적어가 빠졌으므로 목적격 관계대명사 that 또는 which가 필요해요. what과 whom은 맞지 않아요.'},
+    memory:[
+      ['사람','who / whom / that'],['사물·동물','which / that'],['목적격','생략 가능'],['전치사 앞','with whom (with that X)'],
+      ['내신 실수','what + 선행사 X / 목적어 it 중복 X']
+    ]
+  },
+  'although-concession':{
+    title:'접속사 although',
+    summary:'“비록 ~이지만”이라는 반대·양보의 의미를 나타내요. although 뒤에는 주어와 동사가 있는 완전한 절이 옵니다.',
+    formula:'Although + 주어 + 동사, 주어 + 동사   |   주어 + 동사 + although + 주어 + 동사',
+    sections:[
+      {title:'1. although의 의미와 위치',examples:[
+        ['문장 앞','Although it was raining, we played soccer.','비가 오고 있었지만 우리는 축구를 했다.'],
+        ['문장 뒤','We enjoyed the movie although it was very long.','그 영화가 아주 길었지만 우리는 재미있게 봤다.'],
+        ['문장 앞','Although Sarah was disappointed, she understood Emily.','Sarah는 실망했지만 Emily를 이해했다.']
+      ],note:'although절을 앞에 쓰면 두 절 사이에 쉼표(,)를 쓰는 것이 일반적이에요. 뒤에 쓰면 보통 쉼표를 쓰지 않아요.'},
+      {title:'2. although와 but을 함께 쓰지 않아요',table:[
+        ['❌ Although it was raining, but we went outside.','두 접속사를 중복 사용'],
+        ['✅ Although it was raining, we went outside.','although로 시작'],
+        ['✅ It was raining, but we went outside.','but으로 두 절 연결']
+      ],note:'두 문장은 뜻이 비슷해요. although를 쓰면 같은 연결 위치에 but을 또 넣지 마세요.'},
+      {title:'3. although vs. despite / in spite of',table:[
+        ['although + 주어 + 동사','Although it was raining, ...'],
+        ['despite + 명사 / 동명사','Despite the rain, ... / Despite running fast, ...'],
+        ['in spite of + 명사 / 동명사','In spite of the rain, ...']
+      ],note:'❌ Despite it was raining, ... / ❌ Despite of the rain, ... 는 틀려요. despite 바로 뒤에는 절이 아니라 명사(구) 또는 동명사가 옵니다.'},
+      {title:'4. even though와 문장 바꾸기',examples:[
+        ['although','Although she was nervous, she sang perfectly.','그녀는 긴장했지만 노래를 완벽하게 불렀다.'],
+        ['even though','Even though she was nervous, she sang perfectly.','그녀는 비록 긴장했지만 노래를 완벽하게 불렀다.'],
+        ['but','She was nervous, but she sang perfectly.','그녀는 긴장했지만 노래를 완벽하게 불렀다.']
+      ],note:'even though는 although보다 대조를 더 강하게 느끼게 할 수 있어요. 시험에서 although 문장을 but으로 바꿀 때는 두 절의 순서와 의미를 유지하세요.'},
+      {title:'5. 빈출 오답 체크',table:[
+        ['❌ Although the movie long, we enjoyed it.','although 뒤에 주어 + 동사가 필요'],
+        ['✅ Although the movie was long, we enjoyed it.','완전한 절'],
+        ['❌ In spite of she was tired, she finished.','in spite of 뒤에 절 X'],
+        ['✅ In spite of being tired, she finished.','동명사 가능']
+      ],note:'문장의 뜻만 보지 말고 접속사 뒤가 “주어+동사”인지 “명사/동명사”인지 먼저 확인하세요.'}
+    ],
+    exam:{prompt:'빈칸에 알맞은 표현은? ___ the weather was cold, we went outside.',choices:[
+      '① Despite','② Although','③ But'
+    ],answer:'② Although',explanation:'빈칸 뒤에 the weather was cold라는 완전한 절이 오고 “비록 추웠지만”이라는 뜻이므로 Although가 맞아요.'},
+    memory:[
+      ['뜻','비록 ~이지만'],['형태','although + 주어 + 동사'],['주의','although와 but 함께 X'],
+      ['despite','명사 / 동명사'],['in spite of','명사 / 동명사']
+    ]
   }
 };
 
