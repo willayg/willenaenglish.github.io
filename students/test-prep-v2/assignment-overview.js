@@ -1,4 +1,4 @@
-import {assignmentMetrics} from './assignment-results.js?v=1';
+import {assignmentMetrics} from './assignment-results.js?v=2';
 // Student assignment list: completion is NOT a test score.
 export function assignmentOverview(plans,esc){
  const tasks=(plans||[]).flatMap(p=>(p.tasks||[]).filter(t=>t.active!==false).map(t=>({plan:p,task:t})));
