@@ -1,23 +1,64 @@
-/* Standalone Naesin assignment progress reader. No worker/proxy changes. */
+/* Live, read-only Naesin homework outcomes. Distinguishes completion from accuracy. */
 (()=>{'use strict';
 const ROOT='https://fiieuiktlsivwfgyivai.supabase.co/rest/v1/';
 const KEY='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
-const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
 const fmt=x=>x?new Date(x).toLocaleDateString('ko-KR'):'—';
-let loading=false,selected='',all=[];
-async function access(){return window.WillenaAPI?.getLocalAccessToken?.()||localStorage.getItem('sb_access_token')||''}
-async function get(path,options={}){const token=await access();if(!token)throw Error('Teacher login required');let response=await fetch(ROOT+path,{...options,headers:{apikey:KEY,Authorization:'Bearer '+token,...(options.headers||{})},cache:'no-store'});if(response.status===401&&window.WillenaAPI?.fetch){const refresh=await window.WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=refresh',{credentials:'include'});const data=await refresh.json();if(data.access_token){window.WillenaAPI?.setLocalTokens?.(data.access_token,data.refresh_token||'');response=await fetch(ROOT+path,{...options,headers:{apikey:KEY,Authorization:'Bearer '+data.access_token,...(options.headers||{})},cache:'no-store'})}}const body=await response.json().catch(()=>null);if(!response.ok)throw Error(body?.message||body?.error||'Request failed '+response.status);return body}
 const id=x=>String(x||'');
-async function load(){if(loading)return;const host=document.querySelector('#uaProgress');if(!host)return;loading=true;host.textContent='Loading assignment progress…';try{
- let groups=window.NaesinV2Data?.getCachedGroups?.()||[];if(!groups.length){await window.NaesinV2Data?.loadGroups?.();groups=window.NaesinV2Data?.getCachedGroups?.()||[]}const ids=groups.map(x=>id((x.group||x).id)).filter(Boolean);
- if(!ids.length){host.textContent='No exam groups available. Refresh the exam groups first.';return}
- const tasks=await get('test_prep_tasks?select=id,created_at,group_id,plan_id,student_id,lesson,practice_type,title,target_count,due_at,active,completed_at&group_id=in.('+ids.join(',')+')&order=created_at.desc&limit=1000');
- const profiles=new Map();groups.forEach(item=>(item.members||[]).forEach(m=>{const p=m.student||{};profiles.set(id(p.id||m.student_id),p.korean_name||p.name||p.username||'Student')}));
- const uniquePlans=[...new Set(tasks.map(t=>id(t.plan_id)).filter(Boolean))];const histories=new Map();
- await Promise.all(Array.from({length:Math.min(4,uniquePlans.length)},async(_,i)=>{for(let j=i;j<uniquePlans.length;j+=4){const plan=uniquePlans[j];try{histories.set(plan,await get('rpc/test_prep_teacher_attempt_history_v1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({p_plan_id:plan})}))}catch(e){histories.set(plan,{error:e.message})}}}));
- all=tasks.map(t=>{const history=histories.get(id(t.plan_id));const attempts=Array.isArray(history)?history.filter(a=>a.unit_key===t.lesson&&a.practice_type===t.practice_type&&Date.parse(a.attempted_at)>=Date.parse(t.created_at)):[];const first=new Map();for(const a of attempts){if(!first.has(id(a.question_id)))first.set(id(a.question_id),a)}const done=first.size,correct=[...first.values()].filter(a=>a.is_correct).length;return {...t,name:profiles.get(id(t.student_id))||id(t.student_id).slice(0,8),done,correct,wrong:done-correct,retries:attempts.filter(a=>a.is_retry).length,historyError:history?.error||null}});
- render();
- }catch(e){host.innerHTML='<p class="empty">Could not load assignments: '+esc(e.message)+'</p>'}finally{loading=false}}
-function render(){const host=document.querySelector('#uaProgress');if(!host)return;const groups=window.NaesinV2Data?.getCachedGroups?.()||[];const options=groups.map(x=>x.group||x);host.innerHTML='<div class="ua-toolbar"><strong>내신 homework tracking</strong><select class="control" id="uaGroupFilter"><option value="">All exams</option>'+options.map(g=>'<option value="'+esc(g.id)+'" '+(id(g.id)===selected?'selected':'')+'>'+esc(g.school||'')+' · '+esc(g.book_label||'')+'</option>').join('')+'</select><button class="control" id="uaProgressRefresh">Refresh progress</button></div><div class="ua-progress-table-wrap"><table class="ua-progress-table"><thead><tr><th>Student</th><th>Lesson / skill</th><th>Completed</th><th>1st correct</th><th>Wrong</th><th>Retries</th><th>Due</th></tr></thead><tbody>'+all.filter(t=>!selected||id(t.group_id)===selected).map(t=>'<tr><td>'+esc(t.name)+'</td><td>'+esc(t.lesson)+'<small>'+esc(t.practice_type)+'</small></td><td><b>'+t.done+'/'+t.target_count+'</b><div class="ua-track"><i style="width:'+Math.min(100,Math.round(t.done/Math.max(1,t.target_count)*100))+'%"></i></div></td><td>'+t.correct+'</td><td>'+t.wrong+'</td><td>'+t.retries+'</td><td>'+esc(fmt(t.due_at))+(t.historyError?' ⚠':'')+'</td></tr>').join('')+'</tbody></table></div>'+(all.length?'':'<p class="empty">No assignments found.</p>')+'<p class="ua-note">Progress is counted from distinct questions in completed sessions after assignment creation. Wrong = incorrect on first attempt; retries are counted separately. Unfinished sessions may not yet appear.</p>';host.querySelector('#uaGroupFilter').onchange=e=>{selected=e.target.value;render()};host.querySelector('#uaProgressRefresh').onclick=load}
+let loading=false,selected='',all=[];
+const access=()=>window.WillenaAPI?.getLocalAccessToken?.()||localStorage.getItem('sb_access_token')||'';
+async function get(path,options={}){
+ let token=access();if(!token)throw Error('Teacher login required');
+ const send=t=>fetch(ROOT+path,{...options,headers:{apikey:KEY,Authorization:'Bearer '+t,...(options.headers||{})},cache:'no-store',credentials:'omit'});
+ let response=await send(token);
+ if(response.status===401){
+   try{const r=await (window.WillenaAPI?.fetch?window.WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=refresh',{credentials:'include',cache:'no-store'}):fetch('/.netlify/functions/supabase_auth?action=refresh',{credentials:'include',cache:'no-store'}));const d=await r.json();if(d?.access_token){window.WillenaAPI?.setLocalTokens?.(d.access_token,d.refresh_token||'');response=await send(d.access_token)}}catch(_){}
+ }
+ const body=await response.json().catch(()=>null);
+ if(!response.ok)throw Error(body?.message||body?.error||'Request failed '+response.status);
+ return body;
+}
+async function load(){
+ if(loading)return;const host=document.querySelector('#uaProgress');if(!host)return;
+ loading=true;host.textContent='Loading homework results…';
+ try{
+  let groups=window.NaesinV2Data?.getCachedGroups?.()||[];
+  if(!groups.length){await window.NaesinV2Data?.loadGroups?.();groups=window.NaesinV2Data?.getCachedGroups?.()||[]}
+  const ids=groups.map(x=>id((x.group||x).id)).filter(Boolean);
+  if(!ids.length){host.textContent='No exam groups loaded. Refresh exams first.';return}
+  const tasks=await get('test_prep_tasks?select=id,created_at,group_id,plan_id,student_id,lesson,practice_type,title,target_count,due_at,active,completed_at&active=eq.true&group_id=in.('+ids.join(',')+')&order=created_at.desc&limit=1000');
+  const data=await get('rpc/test_prep_assignment_results_v1',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({p_group_id:null})});
+  if(!Array.isArray(data))throw Error('Invalid assignment results response');
+  const resultMap=new Map(data.map(r=>[id(r.task_id),r]));
+  const names=new Map();
+  groups.forEach(item=>(item.members||[]).forEach(m=>{const p=m.student||{};names.set(id(p.id||m.student_id),p.korean_name||p.name||p.username||'Student')}));
+  all=tasks.map(t=>{
+   const result=resultMap.get(id(t.id));
+   const done=result?Number(result.done)||0:0,target=Math.max(1,Number(t.target_count)||10);
+   return {...t,name:names.get(id(t.student_id))||id(t.student_id).slice(0,8),done,target,
+    correct:result?Number(result.correct)||0:0,wrong:result?Number(result.wrong)||0:0,
+    unresolved:result?Number(result.unresolved)||0:0,retries:result?Number(result.retries)||0:0,
+    accuracy:result?.accuracy_percent??null,verified:!!result,complete:done>=target};
+  });
+  render();
+ }catch(e){host.innerHTML='<p class="empty">Could not load assignment results: '+esc(e.message)+'</p>'}
+ finally{loading=false}
+}
+function render(){
+ const host=document.querySelector('#uaProgress');if(!host)return;
+ const groups=window.NaesinV2Data?.getCachedGroups?.()||[],options=groups.map(x=>x.group||x);
+ const rows=all.filter(t=>!selected||id(t.group_id)===selected);
+ const completed=rows.filter(t=>t.complete).length;
+ host.innerHTML='<div class="ua-toolbar"><strong>내신 homework results</strong><select class="control" id="uaGroupFilter"><option value="">All exams</option>'+
+ options.map(g=>'<option value="'+esc(g.id)+'" '+(id(g.id)===selected?'selected':'')+'>'+esc(g.school||'')+' · '+esc(g.book_label||'')+'</option>').join('')+
+ '</select><button class="control" id="uaProgressRefresh">Refresh results</button></div>'+
+ '<p class="ua-tracker-summary">'+rows.length+' assignments · '+completed+' completed · Completion is not a score</p>'+
+ '<div class="ua-progress-table-wrap"><table class="ua-progress-table"><thead><tr><th>Student</th><th>Lesson / Skill</th><th>Work completed</th><th>Accuracy</th><th>Correct</th><th>Wrong</th><th>오답 remaining</th><th>Retries</th><th>Due</th></tr></thead><tbody>'+
+ rows.map(t=>'<tr><td>'+esc(t.name)+'</td><td>'+esc(t.lesson)+'<small>'+esc(t.practice_type)+'</small></td><td><b>'+t.done+'/'+t.target+' questions</b><small>'+(t.complete?'완료':'진행 중')+'</small><div class="ua-track"><i style="width:'+Math.min(100,Math.round(t.done/t.target*100))+'%"></i></div></td><td class="ua-accuracy">'+(t.verified&&t.done?esc(t.accuracy)+'%':'—')+'</td><td>'+t.correct+'/'+t.done+'</td><td>'+t.wrong+'</td><td>'+t.unresolved+'</td><td>'+t.retries+'</td><td>'+esc(fmt(t.due_at))+'</td></tr>').join('')+
+ '</tbody></table></div>'+(rows.length?'':'<p class="empty">No assignments found.</p>')+
+ '<p class="ua-note">Work completed = distinct questions attempted after assignment creation. Accuracy = correct on the first answer to each question in this assignment (not completion %). Wrong = incorrect first answers; 오답 remaining = still unresolved. Reattempts are shown separately.</p>';
+ host.querySelector('#uaGroupFilter').onchange=e=>{selected=e.target.value;render()};
+ host.querySelector('#uaProgressRefresh').onclick=load;
+}
 window.UniversalAssignmentTracker={load};
 })();
