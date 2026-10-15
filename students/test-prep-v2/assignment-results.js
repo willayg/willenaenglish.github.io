@@ -27,7 +27,8 @@ export function assignmentMetrics(task){
  const wrong=verified?Number(saved.wrong)||0:null;
  const unresolved=verified?Number(saved.unresolved)||0:null;
  const accuracy=verified&&done>0?Number(saved.accuracy_percent):null;
- return{done,target,complete,verified,correct,wrong,unresolved,accuracy,
+ const due=task?.due_at?new Date(task.due_at).toLocaleDateString('ko-KR',{month:'numeric',day:'numeric'}):'';
+ return{done,target,complete,verified,correct,wrong,unresolved,accuracy,due,
    statusLabel:complete?'완료':'진행 중',
    resultLabel:verified?(done?('정답 '+correct+'/'+done+' · 정확도 '+accuracy+'% · 오답 '+wrong+' (미해결 '+unresolved+')'):'아직 풀이 없음'):(status==='unavailable'?'정확도 불러오기 실패':'정확도 확인 중')};
 }
