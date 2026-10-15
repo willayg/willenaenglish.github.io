@@ -33,6 +33,7 @@
 @media(max-width:1100px){#view-students .roster-columns{display:none!important}#view-students .roster-row{grid-template-columns:140px 1fr!important;gap:14px 22px}.roster-results{grid-column:2}.roster-activity{grid-column:1;grid-row:2}}
 @media(max-width:600px){#view-students .roster-row{grid-template-columns:1fr!important;gap:12px}.roster-results,.roster-activity{grid-column:1;grid-row:auto}.roster-summary{gap:12px}.roster-columns{display:none}.roster-homework{padding-top:10px;border-top:1px solid #e4eef0}}
 </style>
+<link rel="stylesheet" href="./universal-assignments.css?v=1">
 </head>
 <body>
 <div id="teacher-header"></div>
@@ -48,7 +49,7 @@ try{
   }
 }catch{}
 </script>
-<aside class="rail"><button class="nav active" data-view="students"><span class="nav-icon">◎</span><span>Students</span></button><button class="nav" data-view="classes"><span class="nav-icon">▦</span><span>Classes</span></button><button class="nav" data-view="leaderboard"><span class="nav-icon">★</span><span>Leaderboard</span></button><button class="nav" data-view="vocab"><span class="nav-icon">Aa</span><span>Vocab</span></button><button class="nav" data-view="apps"><span class="nav-icon">＋</span><span>Apps</span></button><button class="nav" data-view="puzzles"><span class="nav-icon">◇</span><span>Puzzles</span></button><button class="nav" data-view="english-arcade"><span class="nav-icon">EA</span><span>English Arcade</span></button><div class="rail-spacer"></div></aside>
+<aside class="rail"><button class="nav active" data-view="students"><span class="nav-icon">◎</span><span>Students</span></button><button class="nav" data-view="classes"><span class="nav-icon">▦</span><span>Classes</span></button><button class="nav" data-view="leaderboard"><span class="nav-icon">★</span><span>Leaderboard</span></button><button class="nav" data-view="assignments"><span class="nav-icon">☑</span><span>Assignments</span></button><button class="nav" data-view="vocab"><span class="nav-icon">Aa</span><span>Vocab</span></button><button class="nav" data-view="apps"><span class="nav-icon">＋</span><span>Apps</span></button><button class="nav" data-view="puzzles"><span class="nav-icon">◇</span><span>Puzzles</span></button><button class="nav" data-view="english-arcade"><span class="nav-icon">EA</span><span>English Arcade</span></button><div class="rail-spacer"></div></aside>
 <main class="workspace">
 <section class="view active" id="view-students">
 <div class="page-head"><div><h1>Student tracking</h1></div><div class="filters"><select class="control" id="classSelect"><option>Loading classes…</option></select><select class="control" id="daysSelect"><option value="30">Last 30 days</option><option value="14">Last 14 days</option><option value="60">Last 60 days</option><option value="90">Last 90 days</option></select><input class="control search" id="searchInput" type="search" placeholder="Search student…"><select class="control" id="rosterAssignmentFilter" aria-label="Filter by assignment progress"><option value="all">All students</option><option value="assigned">Has assignments</option><option value="not_started">Not started</option><option value="in_progress">In progress</option><option value="complete">All assignments complete</option><option value="none">No assignments</option></select><button class="control" id="refreshBtn">Refresh</button></div></div>
@@ -190,9 +191,10 @@ try{
     </section>
   </div>
 </section>
+<section class="view" id="view-assignments"><div class="page-head"><div><h1>Assignments</h1><div class="panel-sub">Assign and manage homework across student apps</div></div></div><div class="panel" id="universalAssignments"><div class="empty">Loading…</div></div></section>
 <section class="view" id="view-apps"><div class="page-head"><div><h1>Teacher apps</h1></div></div><div class="app-grid"><div class="app-card"><span class="chip">LIVE</span><h3>Student tracking</h3><p>Study habits, learning evidence, mistakes, skill performance and proof of work.</p></div><div class="app-card"><span class="chip">LIVE</span><h3>Class overview</h3><p>Class-level learning and study-habit signals that link directly back to students.</p></div><div class="app-card"><span class="chip">READY</span><h3>More teacher tools</h3><p>Homework, assessments and classroom tools can be added here.</p></div><div style="margin-top:14px;font-size:12px;opacity:.68"><a href="/Teachers/dashboard-v1-archived/" style="color:inherit;text-decoration:underline;text-underline-offset:2px">Dashboard V1 (ARCHIVED)</a></div></div></section>
 </main></div>
-<nav class="mobile-tabs"><button class="mobile-tab active" data-view="students"><b>◎</b>Students</button><button class="mobile-tab" data-view="classes"><b>▦</b>Classes</button><button class="mobile-tab" data-view="leaderboard"><b>★</b>Board</button><button class="mobile-tab" data-view="vocab"><b>Aa</b>Vocab</button><button class="mobile-tab" data-view="apps"><b>＋</b>Apps</button><button class="mobile-tab" data-view="puzzles"><b>◇</b>Puzzles</button><button class="mobile-tab" data-view="english-arcade"><b>EA</b>Arcade</button></nav>
+<nav class="mobile-tabs"><button class="mobile-tab active" data-view="students"><b>◎</b>Students</button><button class="mobile-tab" data-view="classes"><b>▦</b>Classes</button><button class="mobile-tab" data-view="leaderboard"><b>★</b>Board</button><button class="mobile-tab" data-view="assignments"><b>☑</b>Work</button><button class="mobile-tab" data-view="vocab"><b>Aa</b>Vocab</button><button class="mobile-tab" data-view="apps"><b>＋</b>Apps</button><button class="mobile-tab" data-view="puzzles"><b>◇</b>Puzzles</button><button class="mobile-tab" data-view="english-arcade"><b>EA</b>Arcade</button></nav>
 <div class="drawer-bg" id="drawerBg"><aside class="drawer"><div class="drawer-head"><div class="drawer-head-main"><div class="drawer-name" id="drawerName">Student</div><div class="drawer-meta" id="drawerMeta"></div></div><button class="close" id="closeDrawer">×</button></div><div class="drawer-body" id="drawerBody"><div class="empty">Loading…</div></div></aside></div>
 <div id="naesinV2Rev" style="position:fixed;right:12px;bottom:8px;z-index:2147483647;color:#7b8c93;font:700 9px/1.2 Poppins,sans-serif;letter-spacing:.04em;pointer-events:none">v14.71</div>
 <script>
@@ -497,7 +499,7 @@ async function loadClassOverview(force=false){
   }
 }
 async function openClassFromOverview(name,days){$('#classSelect').value=name;$('#daysSelect').value=String(days);state.className=name;state.days=days;switchView('students');await loadClass()}
-function switchView(v){$$('.view').forEach(x=>x.classList.toggle('active',x.id===`view-${v}`));$$('[data-view]').forEach(x=>x.classList.toggle('active',x.dataset.view===v));if(v==='classes')loadClassOverview();if(v==='leaderboard')loadTeacherLeaderboard();if(v==='puzzles')loadPuzzleInsights();if(v==='english-arcade')loadArcadeInsights()}
+function switchView(v){$$('.view').forEach(x=>x.classList.toggle('active',x.id===`view-${v}`));$$('[data-view]').forEach(x=>x.classList.toggle('active',x.dataset.view===v));if(v==='assignments')window.UniversalAssignments?.refresh?.();if(v==='classes')loadClassOverview();if(v==='leaderboard')loadTeacherLeaderboard();if(v==='puzzles')loadPuzzleInsights();if(v==='english-arcade')loadArcadeInsights()}
 $('#classSelect').onchange=loadClass;$('#daysSelect').onchange=loadClass;$('#refreshBtn').onclick=loadClass;$('#searchInput').oninput=renderStudents;$('#rosterAssignmentFilter').onchange=renderStudents;$('#classDaysSelect').onchange=()=>loadClassOverview(true);$('#classRefreshBtn').onclick=()=>loadClassOverview(true);$('#puzzleClass').onchange=()=>loadPuzzleInsights(true);$('#puzzleDays').onchange=()=>loadPuzzleInsights(true);$('#puzzleRefreshBtn').onclick=()=>loadPuzzleInsights(true);$('#arcadeDays').onchange=()=>loadArcadeInsights(true);$('#arcadeRefreshBtn').onclick=()=>loadArcadeInsights(true);$('#leaderScope').onchange=()=>loadTeacherLeaderboard(true);$('#leaderMetric').onchange=()=>loadTeacherLeaderboard(true);$('#leaderRefreshBtn').onclick=()=>loadTeacherLeaderboard(true);$('#closeDrawer').onclick=()=>window.TeacherHistory?.requestClose?.('student')||closeStudentDrawerDirect();$('#drawerBg').onclick=e=>{if(e.target===$('#drawerBg')){if(window.TeacherHistory?.requestClose)window.TeacherHistory.requestClose('student');else closeStudentDrawerDirect()}};$$('[data-view]').forEach(b=>b.onclick=()=>switchView(b.dataset.view));
 window.TeacherStudentDrawer={open:openStudent,close:closeStudentDrawerDirect};
 (async()=>{if(await auth()){loadClasses()}})();
@@ -517,6 +519,7 @@ window.TeacherStudentDrawer={open:openStudent,close:closeStudentDrawerDirect};
 <script src="./naesin-v2/naesin-v2.js?v=20260917-r14-05"></script>
 <script data-na2-auto-refresh src="./naesin-v2/naesin-v2-auto-refresh.js?v=20260917-r14-03"></script>
 
+<script src="./universal-assignments.js?v=1"></script>
 <script src="./grammar-foundations-teacher.js?v=20260929-history1"></script>
 <script src="./dashboard-history.js?v=20261008-student-nav1"></script>
 </body>
