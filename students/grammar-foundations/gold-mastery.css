@@ -1,0 +1,12 @@
+/* Gold mastery is earned from saved best scores, never reset by later attempts. */
+.gf-stage-card.tile.gf-gold,
+.gf-lesson-card.exam-card.gf-gold,
+.gf-module-overview.exam-card.gf-gold{
+  border:2px solid #c89b2c !important;
+  background:linear-gradient(145deg,#fff9e4,#ffe4a0) !important;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.65),0 3px 12px rgba(151,106,10,.13);
+}
+.gf-gold .gf-stage-label,.gf-gold .metric,.gf-gold .gf-open-hint,.gf-gold .exam-school{color:#885d0c !important}
+.gf-gold .gf-stage-ring b,.gf-gold .gf-ring b{color:#885d0c}
+.gf-gold .pill:first-child{background:#f4d37f;color:#654306}
+.gf-gold h3,.gf-gold .exam-title{color:#3b2b0b !important}
