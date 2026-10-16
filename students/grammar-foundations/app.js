@@ -41,6 +41,8 @@ function stageProgress(moduleId,stageId){return progressMap.get(progressKey(modu
 function challengeProgress(moduleId){return challengeProgressMap.get(String(moduleId))||null}
 function stageUnlocked(mod,index){return reviewerUnlock||index===0||Boolean(stageProgress(mod.id,mod.stages[index-1]?.id)?.passed)}
 function stagePct(row){return row?.total?Math.round((Number(row.best_score||0)/Number(row.total))*100):0}
+function goldStage(m,s){const r=stageProgress(m.id,s.id);return !!(r&&Number(r.total)>0&&Number(r.best_score)>=Number(r.total))}
+function goldModule(m){return !!(m?.stages?.length)&&m.stages.every(s=>goldStage(m,s))}
 function modulePct(mod){if(!mod.stages.length)return 0;const passed=mod.stages.filter(s=>stageProgress(mod.id,s.id)?.passed).length;return Math.round((passed/mod.stages.length)*100)}
 function passedCount(mod){return mod.stages.filter(s=>stageProgress(mod.id,s.id)?.passed).length}
 function moduleComplete(mod){return reviewerUnlock||(Boolean(mod?.stages?.length)&&passedCount(mod)===mod.stages.length)}
@@ -184,13 +186,13 @@ function stepCard(group){
 }
 function lessonCard(mod){
   const pct=modulePct(mod),done=passedCount(mod),next=currentStage(mod),required=passScore(mod),challenge=challengeProgress(mod.id);
-  return `<button class="gf-lesson-card exam-card" data-open-module="${esc(mod.id)}"><div class="gf-target-head exam-head"><div class="gf-target-copy"><div class="exam-school">${esc(mod.lesson||`Step ${groupNumber(mod)}`)}</div><h2 class="exam-title">${esc(koTitle(mod))}</h2><div class="exam-book">${esc(enTitle(mod))} · ${done}/${mod.stages.length} levels complete</div><div class="exam-meta"><span class="pill">${done===mod.stages.length?'Complete':next?`Next: Level ${next.number}`:'No levels'}</span><span class="pill">${challenge?.passed?'실전 통과':`${required}/10 to pass`}</span></div></div><div class="ring gf-ring" style="--p:${pct}%"><b>${pct}%</b></div></div><span class="gf-open-hint">Open lesson →</span></button>`;
+  return `<button class="gf-lesson-card exam-card${goldModule(mod)?" gf-gold":""}" data-open-module="${esc(mod.id)}"><div class="gf-target-head exam-head"><div class="gf-target-copy"><div class="exam-school">${esc(mod.lesson||`Step ${groupNumber(mod)}`)}</div><h2 class="exam-title">${esc(koTitle(mod))}</h2><div class="exam-book">${esc(enTitle(mod))} · ${done}/${mod.stages.length} levels complete</div><div class="exam-meta"><span class="pill">${done===mod.stages.length?'Complete':next?`Next: Level ${next.number}`:'No levels'}</span><span class="pill">${challenge?.passed?'실전 통과':`${required}/10 to pass`}</span></div></div><div class="ring gf-ring" style="--p:${pct}%"><b>${pct}%</b></div></div><span class="gf-open-hint">Open lesson →</span></button>`;
 }
 function stageCard(mod,s,index){
   const row=stageProgress(mod.id,s.id),unlocked=stageUnlocked(mod,index),passed=Boolean(row?.passed),pct=stagePct(row);
-  const saved=sessionStore.load(),inProgress=Boolean(saved&&saved.kind!=='challenge'&&String(saved.moduleId)===String(mod.id)&&String(saved.stageId)===String(s.id));
-  const status=inProgress?`In progress · ${Math.min(Number(saved.index)||0,s.questions.length)}/${s.questions.length}`:passed?`Passed · ${row.best_score}/${row.total}`:row?`Best ${row.best_score}/${row.total}`:unlocked?'Ready':'Locked';
-  const cls=passed?' passed':unlocked?' active':' locked';
+  const gold=goldStage(mod,s);const saved=sessionStore.load(),inProgress=Boolean(saved&&saved.kind!=='challenge'&&String(saved.moduleId)===String(mod.id)&&String(saved.stageId)===String(s.id));
+  const status=gold?'★ Gold · 100%':inProgress?`In progress · ${Math.min(Number(saved.index)||0,s.questions.length)}/${s.questions.length}`:passed?`Passed · ${row.best_score}/${row.total}`:row?`Best ${row.best_score}/${row.total}`:unlocked?'Ready':'Locked';
+  const cls=gold?' passed gf-gold':passed?' passed':unlocked?' active':' locked';
   return `<button class="gf-stage-card tile${cls}" data-module="${esc(mod.id)}" data-stage="${esc(s.id)}" ${unlocked?'':'disabled'}><div class="gf-stage-card-copy"><div class="gf-stage-label">LEVEL ${s.number}</div><h3>${esc(koTitle(s))}</h3><small>${esc(enTitle(s))}</small><span class="metric">${esc(status)}</span>${row?`<small>${row.attempt_count} attempt${row.attempt_count===1?'':'s'}</small>`:''}</div><div class="ring gf-stage-ring" style="--p:${pct}%"><b>${pct}%</b></div></button>`;
 }
 function challengeCard(mod,info){
@@ -227,7 +229,7 @@ function renderModule(mod){
   if(!mod)return nav.replace({view:'home'});const group=groupNumber(mod);
   state={group,module:mod,stage:null,index:0,score:0,renderer:null,checked:false,results:[],resultSaved:false};setBottom('');
   const pct=modulePct(mod),done=passedCount(mod),required=passScore(mod),next=currentStage(mod),complete=moduleComplete(mod);
-  root.innerHTML=`<button class="back" id="moduleBack">← Step ${group}</button><section class="gf-module-overview exam-card"><div class="gf-target-head exam-head"><div class="gf-target-copy"><div class="exam-school">Step ${group}</div><h2 class="exam-title">${esc(koTitle(mod))}</h2><div class="exam-book">${esc(enTitle(mod))} · ${done}/${mod.stages.length} levels complete</div><div class="exam-meta"><span class="pill">${complete?'Complete':next?`Next: Level ${next.number}`:'No levels'}</span><span class="pill">${required}/10 to pass</span></div></div><div class="ring gf-ring" style="--p:${pct}%"><b>${pct}%</b></div></div></section><div class="gf-level-heading"><div><div class="gf-kicker">Lesson levels</div><h2>Choose a level</h2></div><span>${done}/${mod.stages.length} complete</span></div><div class="gf-stage-grid">${mod.stages.map((s,i)=>stageCard(mod,s,i)).join('')}</div>${complete?`<div id="challengeSlot" data-module="${esc(mod.id)}"><div class="loading">실전 문제 확인 중…</div></div>`:''}`;
+  root.innerHTML=`<button class="back" id="moduleBack">← Step ${group}</button><section class="gf-module-overview exam-card${goldModule(mod)?" gf-gold":""}"><div class="gf-target-head exam-head"><div class="gf-target-copy"><div class="exam-school">Step ${group}</div><h2 class="exam-title">${esc(koTitle(mod))}</h2><div class="exam-book">${esc(enTitle(mod))} · ${done}/${mod.stages.length} levels complete</div><div class="exam-meta"><span class="pill">${goldModule(mod)?'★ Gold':complete?'Complete':next?`Next: Level ${next.number}`:'No levels'}</span><span class="pill">${required}/10 to pass</span></div></div><div class="ring gf-ring" style="--p:${pct}%"><b>${pct}%</b></div></div></section><div class="gf-level-heading"><div><div class="gf-kicker">Lesson levels</div><h2>Choose a level</h2></div><span>${done}/${mod.stages.length} complete</span></div><div class="gf-stage-grid">${mod.stages.map((s,i)=>stageCard(mod,s,i)).join('')}</div>${complete?`<div id="challengeSlot" data-module="${esc(mod.id)}"><div class="loading">실전 문제 확인 중…</div></div>`:''}`;
   document.getElementById('moduleBack').onclick=()=>nav.back();
   root.querySelectorAll('[data-stage]:not([disabled])').forEach(btn=>btn.onclick=()=>nav.navigate({view:'guide',moduleId:btn.dataset.module,stageId:btn.dataset.stage}));
   if(complete)void hydrateChallengeCard(mod);
