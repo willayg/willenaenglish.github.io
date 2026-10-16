@@ -1,8 +1,44 @@
-.ua-app-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px;border-bottom:1px solid #dce5ed;padding-bottom:12px}
-.ua-app-tab{cursor:pointer;border:1px solid #d5dfe7;background:var(--panel,#fff);border-radius:12px;padding:11px 16px;font:inherit;font-weight:700;color:inherit}
-.ua-app-tab.active{border-color:#df669c;background:#fce8f1;color:#952e60}
-.ua-app-tab:focus-visible{outline:3px solid #3285ca;outline-offset:2px}
-.ua-app-body{min-height:100px}
-.ua-app-body>h3{margin:4px 0 8px;font-size:20px}
-.ua-app-body>p{margin:0 0 16px;line-height:1.55}
-@media(max-width:600px){.ua-app-tab{flex:1 1 42%;padding:12px 8px}}
+/* Assignment manager — matches dashboard panels and Naesin controls. */
+#view-assignments .page-head{margin-bottom:18px}
+#universalAssignments{padding:26px 28px;border-radius:22px}
+.ua-topline,.ua-section-heading,.ua-actions{display:flex;justify-content:space-between;align-items:center;gap:16px}
+.ua-topline{margin-bottom:22px;align-items:flex-start}
+.ua-eyebrow,.ua-card-kicker{font-size:11px;font-weight:800;letter-spacing:.12em;color:var(--cyan,#4fb9c8)}
+.ua-topline h2{margin:5px 0;font-size:24px;color:var(--ink,#343343);line-height:1.2}
+.ua-topline p,.ua-actions p{margin:0;color:var(--muted,#7d8390);font-size:13px}
+.ua-workspace-status,.ua-section-count{white-space:nowrap;font-size:12px;font-weight:700;color:var(--muted,#7d8390);background:#f4f7fa;border-radius:40px;padding:7px 12px}
+.ua-app-tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:24px}
+.ua-app-tab{display:flex;align-items:center;gap:12px;min-width:0;text-align:left;padding:16px 14px;cursor:pointer;border:2px solid var(--line,#e7e9ef);background:#fff;border-radius:18px;color:var(--ink,#343343);font:inherit;transition:border-color .15s,background .15s}
+.ua-app-tab:hover{border-color:var(--cyan,#4fb9c8)}
+.ua-app-tab.active{border-color:var(--cyan,#4fb9c8);background:#edfafd;box-shadow:0 3px 14px rgba(79,185,200,.08)}
+.ua-app-tab:focus-visible,.ua-assign:focus-visible{outline:3px solid var(--blue,#667fe0);outline-offset:3px}
+.ua-app-icon{display:grid;place-items:center;flex:0 0 42px;height:42px;border-radius:13px;background:#f2f5f8;color:var(--cyan,#4fb9c8);font-weight:800;font-size:19px}
+.ua-app-tab.active .ua-app-icon{background:#d8f3f6}
+.ua-app-label{display:grid;gap:4px;min-width:0}
+.ua-app-label b{font-size:13px;line-height:1.25}
+.ua-app-label small{font-size:11px;color:var(--muted,#7d8390)}
+.ua-workspace{border:1px solid var(--line,#e7e9ef);border-radius:20px;padding:24px;background:#fbfcfd}
+.ua-section-heading{margin-bottom:20px}
+.ua-section-heading h3{margin:4px 0 0;font-size:21px;color:var(--ink,#343343)}
+.ua-actions{margin-bottom:18px}
+.ua-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+.ua-card{display:flex;flex-direction:column;gap:8px;min-width:0;border:1px solid #e5eaf0;border-radius:18px;padding:19px;background:#fff;box-shadow:0 3px 12px rgba(40,40,60,.035)}
+.ua-card-top{display:flex;justify-content:space-between;align-items:center}
+.ua-card-dot{width:9px;height:9px;border-radius:50%;background:var(--cyan,#4fb9c8)}
+.ua-card strong{font-size:18px;color:var(--ink,#343343)}
+.ua-card-sub{font-size:13px;font-weight:600}
+.ua-card small{color:var(--muted,#7d8390);line-height:1.4;min-height:34px}
+.ua-assign,.ua-primary{display:flex;align-items:center;justify-content:space-between;gap:14px;background:#eafafa!important;border:2px solid var(--cyan,#4fb9c8)!important;color:#297c87!important;font-weight:800!important;border-radius:12px!important;padding:11px 14px!important}
+.ua-assign{margin-top:auto;width:100%}
+.ua-feature{display:flex;align-items:flex-start;gap:24px;background:#fff;border:1px solid #e6eaf0;border-radius:18px;padding:26px}
+.ua-feature-symbol{display:grid;place-items:center;width:72px;height:72px;flex:0 0 72px;border-radius:19px;background:#e8f8fb;color:#3996a4;font-size:30px;font-weight:800}
+.ua-feature-copy h4{font-size:20px;margin:0 0 8px;color:var(--ink,#343343)}
+.ua-feature-copy p{font-size:14px;line-height:1.65;color:var(--muted,#7d8390);max-width:560px;margin:0 0 20px}
+.ua-coming-label{display:inline-block;font-size:11px;font-weight:800;color:#806926;background:#fff4d8;border-radius:20px;padding:5px 10px;margin-bottom:12px}
+.ua-unavailable .ua-feature-symbol{background:#f3f4f7;color:#86919b}
+.ua-empty{text-align:center;padding:36px 12px;color:var(--muted,#7d8390)}
+.ua-empty-icon{font-size:32px;margin-bottom:8px}
+.ua-empty b{display:block;color:var(--ink,#343343)}
+.ua-empty p{margin:6px 0;font-size:13px}
+@media(max-width:980px){.ua-app-tabs{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:600px){#universalAssignments{padding:16px}.ua-workspace{padding:15px}.ua-topline{display:block}.ua-workspace-status{display:none}.ua-app-tabs{gap:8px}.ua-app-tab{padding:12px 9px;gap:8px}.ua-app-icon{width:34px;height:34px;flex-basis:34px;font-size:16px}.ua-app-label b{font-size:12px}.ua-app-label small{font-size:10px}.ua-feature{gap:14px;padding:17px}.ua-feature-symbol{width:45px;height:45px;flex-basis:45px;font-size:21px}.ua-actions{align-items:flex-start;flex-wrap:wrap}.ua-section-count{white-space:normal}}
