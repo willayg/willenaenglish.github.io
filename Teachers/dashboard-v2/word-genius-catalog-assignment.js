@@ -17,11 +17,11 @@ async function homework(payload){
 function root(){return document.querySelector('#uaAppBody')}
 function panel(){return document.querySelector('#uaCatalog')}
 async function mount(){
- if(!root()||!document.querySelector('#uaAppBody .ua-mounted-word'))return;
+ if(!root()||!document.querySelector('#uaAppBody .ua-catalog-host'))return;
  if(panel())return;
  const div=document.createElement('section');div.id='uaCatalog';div.className='ua-catalog';
  div.innerHTML='<div class="ua-section-heading"><div><div class="ua-eyebrow">CONTENT DATABASE</div><h3>Assign from a book</h3></div><button type="button" class="control" id="uaReloadBooks">↻ Refresh books</button></div><form id="uaCatalogForm"><div class="ua-catalog-fields"><label>Book<select id="uaBook" class="control" required><option value="">Loading books…</option></select></label><label>Class<select id="uaClass" class="control" required><option value="">Choose class…</option></select></label><label>Due date<input id="uaDue" class="control" type="date" required></label></div><div class="ua-catalog-units"><strong>Units</strong><div id="uaUnitList">Select a book first.</div></div><div class="ua-catalog-modes"><strong>Practice modes</strong><label><input type="checkbox" name="uaMode" value="quiz" checked> Quiz</label><label><input type="checkbox" name="uaMode" value="spelling_test" checked> Spelling</label><label><input type="checkbox" name="uaMode" value="speaking" checked> Speaking</label></div><div class="ua-catalog-footer"><span id="uaCount">Choose units to preview vocabulary.</span><button type="submit" class="control ua-primary" id="uaCreate" disabled>Assign selected words →</button></div><p id="uaCatalogMessage" role="status" aria-live="polite"></p></form>';
- root().prepend(div);
+ root().querySelector('.ua-catalog-host').appendChild(div);
  const due=div.querySelector('#uaDue');const d=new Date(Date.now()+7*86400000);due.value=[d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-');
  div.querySelector('#uaReloadBooks').onclick=loadBooks;
  div.querySelector('#uaBook').onchange=loadUnits;
