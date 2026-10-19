@@ -34,3 +34,24 @@
 .gf-hw-student>strong.gf-hw-done{color:#278d5b}
 .gf-hw-group-actions{display:flex;justify-content:flex-end;margin-top:12px}
 @media(max-width:640px){.gf-hw-form-grid{grid-template-columns:1fr}.gf-hw-student{grid-template-columns:1fr auto}.gf-hw-student>span:nth-child(2){display:none}}
+
+/* Keep assignment controls visible while teachers scroll a long grammar catalog. */
+#uaGrammarHomework .gf-hw-form{min-width:0}
+#uaGrammarHomework .gf-hw-footer{
+ position:sticky;top:80px;z-index:15;display:flex;align-items:center;
+ gap:12px;flex-wrap:wrap;min-width:0;padding:13px 16px;
+ border:1.5px solid #b4dee6;border-radius:15px;background:rgba(255,255,255,.98);
+ box-shadow:0 5px 18px rgba(34,64,81,.12);
+}
+#uaGrammarHomework .gf-hw-footer #gfHwSubmit{flex-shrink:0;min-width:190px}
+#uaGrammarHomework .gf-hw-footer #gfHwMessage{flex:1;min-width:190px;font-size:12px;font-weight:600;line-height:1.45;color:#3b6874}
+#uaGrammarHomework .gf-hw-footer #gfHwMessage.gf-hw-error{color:#bb3c54;padding:0}
+#uaGrammarHomework .gf-hw-footer .gf-hw-view{flex-shrink:0}
+#uaGrammarHomework .gf-hw-footer [hidden]{display:none!important}
+#uaGrammarHomework .gf-hw-modules{min-height:0;max-height:min(56vh,590px);overflow:auto;overscroll-behavior:contain;scrollbar-gutter:stable}
+@media(max-width:640px){
+ #uaGrammarHomework .gf-hw-footer{top:70px;padding:10px;gap:9px}
+ #uaGrammarHomework .gf-hw-footer #gfHwSubmit{flex:1;min-width:0}
+ #uaGrammarHomework .gf-hw-footer #gfHwMessage{min-width:100%;flex-basis:100%}
+ #uaGrammarHomework .gf-hw-modules{max-height:58vh}
+}
