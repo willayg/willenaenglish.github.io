@@ -273,7 +273,7 @@ function renderGuide(mod,stage){
 function renderPractice(mod,stage,{source}={}){
   if(!mod||!stage)return nav.replace({view:'home'});
   const same=state.module?.id===mod.id&&state.stage?.id===stage.id;
-  if(!same||source==='push'||source==='init'){
+  if(!same||source==='push'||source==='init'||source==='replace'){
     if(!restoreRound(mod,stage)){resetRound(mod,stage);saveRoundSnapshot(0)}
   }
   state.group=groupNumber(mod);state.module=mod;state.stage=stage;
@@ -314,9 +314,9 @@ async function renderResult(mod,stage){
   if(current?.view!=='result'||current.moduleId!==mod.id||current.stageId!==stage.id)return;
   const row=stageProgress(mod.id,stage.id),next=nextStage();
   root.innerHTML=`<div class="gf-result"><div class="gf-kicker">Step ${state.group} · ${esc(koTitle(mod))} · Level ${stage.number}</div><h2>${esc(koTitle(stage))}</h2><p>${esc(enTitle(stage))}</p><div class="gf-score">${state.score}/${total}</div><div class="gf-pass">${passed?'Passed ✓':'Redo this level'}</div><p>${passed?'좋아요. 다음 단계로 넘어갈 준비가 됐어요.':`통과하려면 ${required}/${total} 이상이 필요해요.`}</p>${row?`<div class="gf-result-best">Best ${row.best_score}/${row.total} · ${row.attempt_count} attempts</div>`:''}${saved?'':'<div class="gf-save-warning">Progress could not be saved. You can retry this round.</div>'}<div class="gf-result-actions"><button class="gf-btn secondary" id="resultModule">레벨 목록</button>${passed&&next?'<button class="gf-btn secondary" id="nextGuide">다음 레벨 보기</button>':''}<button class="gf-btn primary" id="redoStage">${passed?'다시 풀기':'Redo →'}</button></div></div>`;
-  document.getElementById('resultModule').onclick=()=>nav.navigate({view:'module',moduleId:mod.id});
-  document.getElementById('redoStage').onclick=()=>nav.navigate({view:'practice',moduleId:mod.id,stageId:stage.id});
-  if(passed&&next)document.getElementById('nextGuide').onclick=()=>nav.navigate({view:'guide',moduleId:mod.id,stageId:next.id});
+  document.getElementById('resultModule').onclick=()=>nav.navigate({view:'module',moduleId:mod.id},{replace:true});
+  document.getElementById('redoStage').onclick=()=>nav.navigate({view:'practice',moduleId:mod.id,stageId:stage.id},{replace:true});
+  if(passed&&next)document.getElementById('nextGuide').onclick=()=>nav.navigate({view:'guide',moduleId:mod.id,stageId:next.id},{replace:true});
 }
 function nextStage(){const i=state.module?.stages?.findIndex(s=>s.id===state.stage?.id)??-1;return i>=0?state.module.stages[i+1]||null:null}
 
@@ -386,8 +386,8 @@ async function renderChallengeResult(mod){
   if(current?.view!=='challenge-result'||current.moduleId!==mod.id)return;
   const row=challengeProgress(mod.id);
   root.innerHTML=`<div class="gf-result"><div class="gf-kicker">Step ${groupNumber(mod)} · ${esc(koTitle(mod))}</div><h2>실전 문제</h2><p>Exam Challenge</p><div class="gf-score">${challengeState.score}/${total}</div><div class="gf-pass">${passed?'Passed ✓':'Try again'}</div><p>${passed?'실전 문제까지 통과했어요.':`통과하려면 ${save.required}/${total} 이상이 필요해요.`}</p>${row?`<div class="gf-result-best">Best ${row.best_score}/${row.total} · ${row.attempt_count} attempts</div>`:''}${save.ok?'':'<div class="gf-save-warning">Challenge result could not be saved.</div>'}<div class="gf-result-actions"><button class="gf-btn secondary" id="challengeResultModule">레벨 목록</button><button class="gf-btn primary" id="redoChallenge">새 실전 문제 풀기</button></div></div>`;
-  document.getElementById('challengeResultModule').onclick=()=>nav.navigate({view:'module',moduleId:mod.id});
-  document.getElementById('redoChallenge').onclick=()=>{resetChallenge();sessionStore.clear();nav.navigate({view:'challenge',moduleId:mod.id})};
+  document.getElementById('challengeResultModule').onclick=()=>nav.navigate({view:'module',moduleId:mod.id},{replace:true});
+  document.getElementById('redoChallenge').onclick=()=>{resetChallenge();sessionStore.clear();void nav.navigate({view:'challenge',moduleId:mod.id},{replace:true})};
 }
 
 function normalizeRoute(route={}){
