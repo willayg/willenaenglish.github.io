@@ -48,7 +48,7 @@ async function submit(e){
  state.loading=true;$('#gfHwSubmit',el).disabled=true;message('Creating '+chosen.length+' level assignments…');
  try{
   const batch=crypto.randomUUID(),due_at=new Date(date+'T23:59:59').toISOString();
-  const user=await api('profiles?select=id&role=in.(admin,teacher)&id=eq.'+encodeURIComponent(jwtUserId(token())));const creator=user[0]?.id||jwtUserId(token());if(!creator)throw Error('Teacher session is unavailable');
+  const creator=jwtUserId(token());if(!creator)throw Error('Teacher session is unavailable');
   const rows=chosen.map(({m,s})=>({batch_id:batch,class_name:klass,module_id:String(m.id),stage_id:String(s.id),module_title:title(m),stage_title:stitle(s),completion_percent:goal,due_at,created_by:creator}));
   const saved=await table('',{method:'POST',headers:{'Content-Type':'application/json','Prefer':'return=representation'},body:JSON.stringify(rows)});
   message('Created '+saved.length+' separate homework items for '+klass+'.');
