@@ -38,11 +38,11 @@ async function loadClasses(){
  const sel=panel()?.querySelector('#uaClass');if(!sel)return;
  try{
  const url=window.WillenaAPI?.getApiUrl?.('/.netlify/functions/admin_classes?action=list')||'/.netlify/functions/admin_classes?action=list';
- const res=await fetch(url,{credentials:'include'});const data=await res.json();
+ const res=await (window.WillenaAPI?.fetch?window.WillenaAPI.fetch('/.netlify/functions/admin_classes?action=list'):fetch(url,{credentials:'include'}));const data=await res.json();
  let classes=Array.isArray(data.classes)?data.classes:[];
- if(!classes.length){const old=document.querySelector('#assignmentClassFilter');classes=[...old?.options||[]].map(o=>({name:o.value})).filter(o=>o.name)}
+ if(!classes.length){const old=document.querySelector('#assignmentClassFilter');classes=[...(old?.options||[])].map(o=>({name:o.value})).filter(o=>o.name)}
  sel.innerHTML='<option value="">Choose class…</option>'+classes.map(c=>'<option value="'+esc(c.name||c.display_name)+'">'+esc(c.display_name||c.name)+'</option>').join('');
- }catch(e){message('Class list unavailable: '+e.message)}
+ }catch(e){const old=document.querySelector('#assignmentClassFilter');const classes=[...(old?.options||[])].map(o=>({name:o.value})).filter(o=>o.name);sel.innerHTML='<option value="">Choose class…</option>'+classes.map(c=>'<option value="'+esc(c.name)+'">'+esc(c.name)+'</option>').join('');if(!classes.length)message('Class list unavailable: '+e.message)}
 }
 async function loadUnits(){
  const bookId=panel()?.querySelector('#uaBook')?.value;selected=[];units=[];renderUnits();if(!bookId)return;
