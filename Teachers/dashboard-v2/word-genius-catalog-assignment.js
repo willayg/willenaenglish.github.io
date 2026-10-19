@@ -54,28 +54,32 @@ function renderUnits(){
  box.querySelectorAll('input').forEach(i=>i.addEventListener('change',()=>{selected=[...box.querySelectorAll('input:checked')].map(n=>n.value);panel().querySelector('#uaCreate').disabled=!selected.length;panel().querySelector('#uaCount').textContent=selected.length+' unit(s) selected'}));
  const create=panel()?.querySelector('#uaCreate');if(create)create.disabled=true;
 }
-async function getTargets(){
- const all=[];for(const unitId of selected){
-  const targets=await content('unit_vocab_targets?select=lexical_entry_id&unit_id=eq.'+encodeURIComponent(unitId)+'&active=eq.true&order=priority.desc&limit=1000');
-  const ids=[...new Set(targets.map(t=>t.lexical_entry_id))];if(!ids.length)continue;
-  const entries=await content('lexical_entries?select=id,canonical_text,translation_ko&id=in.'+encodeURIComponent('('+ids.join(',')+')')+'&status=in.(review,published)&limit=1000');
-  const by=new Map(entries.map(x=>[x.id,x]));
-  ids.forEach(id=>{const e=by.get(id);if(e?.canonical_text&&e?.translation_ko&&!all.some(x=>x.lexical_entry_id===id))all.push({lexical_entry_id:id,english:e.canonical_text,korean:e.translation_ko,position:all.length})});
- }return all;
+async function getTargets(unitId){
+ const rows=await content('unit_vocab_targets?select=lexical_entry_id&unit_id=eq.'+encodeURIComponent(unitId)+'&active=eq.true&order=priority.desc&limit=1000');
+ const ids=[...new Set(rows.map(t=>t.lexical_entry_id))];if(!ids.length)return[];
+ const entries=await content('lexical_entries?select=id,canonical_text,translation_ko&id=in.'+encodeURIComponent('('+ids.join(',')+')')+'&status=in.(review,published)&limit=1000');
+ const by=new Map(entries.map(x=>[x.id,x]));
+ return ids.map((id,index)=>{const e=by.get(id);return e?.canonical_text&&e?.translation_ko?{lexical_entry_id:id,english:e.canonical_text,korean:e.translation_ko,position:index}:null}).filter(Boolean);
 }
 async function submit(ev){
  ev.preventDefault();if(busy)return;
  const p=panel(),bookId=p.querySelector('#uaBook').value,className=p.querySelector('#uaClass').value,day=p.querySelector('#uaDue').value,modes=[...p.querySelectorAll('input[name="uaMode"]:checked')].map(x=>x.value);
  if(!bookId||!className||!day||!selected.length||!modes.length){message('Choose a book, units, class, due date and at least one mode.');return}
- busy=true;p.querySelector('#uaCreate').disabled=true;message('Loading words and creating assignment…');
+ busy=true;p.querySelector('#uaCreate').disabled=true;message('Checking selected units…');
  try{
- const targets=await getTargets();if(!targets.length)throw Error('Those units have no active vocabulary targets.');
- const book=books.find(b=>b.id===bookId);const names=units.filter(u=>selected.includes(u.id)).map(u=>'Unit '+u.unit_number);
- const title=book.title+' · '+names.join(', ');
- const due_at=new Date(day+'T23:59:59').toISOString();
- const payload={class:className,title,list_title:title,description:'Word Genius textbook vocabulary',source_type:'vocab_study',list_key:'vocab_catalog:'+bookId+':'+selected.join(','),list_meta:{source_app:'vocab_catalog',source_book_id:bookId,source_unit_ids:selected,required_modes:modes,workload_mode:'all'},due_at,goal_type:'clean_pass',goal_value:100,targets};
- const result=await homework(payload);message('Assigned '+result.target_count+' words to '+className+'.');window.WillenaAssignmentsV1?.reload?.();
- }catch(e){message('Could not assign: '+e.message)}finally{busy=false;p.querySelector('#uaCreate').disabled=false}
+  const book=books.find(b=>b.id===bookId),chosen=units.filter(u=>selected.includes(u.id));
+  const prepared=[];
+  for(const unit of chosen){const targets=await getTargets(unit.id);if(!targets.length)throw Error('Unit '+unit.unit_number+' has no available words. Nothing has been assigned.');prepared.push({unit,targets})}
+  const groupId='wg-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,8);
+  const due_at=new Date(day+'T23:59:59').toISOString(),created=[];
+  for(const {unit,targets} of prepared){
+   const title=book.title+' · Unit '+unit.unit_number+(unit.title?' — '+unit.title:'');
+   const payload={class:className,title,list_title:title,description:'Word Genius textbook vocabulary',source_type:'vocab_study',list_key:'vocab_catalog:'+bookId+':'+unit.id,list_meta:{source_app:'vocab_catalog',source_book_id:bookId,source_unit_ids:[unit.id],unit_id:unit.id,source_unit_id:unit.id,assignment_group_id:groupId,assignment_group_title:book.title+' · '+chosen.map(u=>'Unit '+u.unit_number).join(', '),required_modes:modes,workload_mode:'all'},due_at,goal_type:'clean_pass',goal_value:100,targets};
+   try{const result=await homework(payload);created.push(result.assignment?.id)}catch(e){throw Error('Saved '+created.length+' of '+prepared.length+' unit assignments. Remaining units were not saved: '+e.message)}
+  }
+  message('Assigned '+created.length+' separate units to '+className+'. Each unit has its own progress.');window.WillenaAssignmentsV1?.reload?.();
+ }catch(e){message('Assignment issue: '+e.message)}finally{busy=false;p.querySelector('#uaCreate').disabled=false}
 }
+
 window.addEventListener('ua:word-mounted',()=>{void mount()});
 })();
