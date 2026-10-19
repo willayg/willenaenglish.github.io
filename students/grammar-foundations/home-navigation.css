@@ -1,0 +1,36 @@
+/* Grammar Genius student navigation: reachable even within full-screen lesson guides. */
+.gf-home-button{
+ position:fixed;
+ bottom:calc(92px + env(safe-area-inset-bottom,0px));
+ left:max(14px,env(safe-area-inset-left,0px));
+ z-index:10050;
+ display:inline-flex;align-items:center;gap:8px;
+ min-height:47px;padding:10px 16px;
+ border:2px solid #5bcdd2;border-radius:999px;
+ background:#fff;color:#174d56;box-shadow:0 5px 19px rgba(24,55,70,.2);
+ font:800 13px/1.2 Poppins,sans-serif;cursor:pointer;
+ touch-action:manipulation;
+}
+.gf-home-button-icon{font-size:23px;line-height:1}
+.gf-home-button:hover{border-color:#119ba5;background:#ecfdff}
+.gf-home-button:focus-visible{outline:3px solid #3779d6;outline-offset:3px}
+.gf-resume-card{
+ width:100%;display:flex;align-items:center;gap:13px;text-align:left;
+ margin:18px 0 4px;padding:16px 18px;background:linear-gradient(110deg,#ecfcfd,#fff);
+ border:2px solid #7ad3d8;border-radius:18px;color:#183d49;
+ font:inherit;cursor:pointer;box-shadow:0 5px 15px rgba(38,100,107,.08)
+}
+.gf-resume-card:hover{background:#e0fbfd}
+.gf-resume-card:focus-visible{outline:3px solid #367fe0;outline-offset:3px}
+.gf-resume-icon{flex:none;font-size:26px;color:#168e9b}
+.gf-resume-card>span:nth-child(2){flex:1;min-width:0}
+.gf-resume-card strong,.gf-resume-card small{display:block}
+.gf-resume-card strong{font-size:14px}
+.gf-resume-card small{margin-top:5px;font-size:12px;color:#667d87}
+.gf-resume-arrow{font-size:21px;color:#168e9b}
+@media(max-width:520px){
+ .gf-home-button{min-height:44px;padding:9px 13px;bottom:calc(88px + env(safe-area-inset-bottom,0px))}
+ .gf-home-button-label{font-size:12px}
+ .gf-resume-card{padding:14px}
+}
+@media(prefers-reduced-motion:reduce){.gf-home-button,.gf-resume-card{transition:none!important}}
