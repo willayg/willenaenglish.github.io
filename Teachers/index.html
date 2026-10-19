@@ -12,6 +12,7 @@
 <link rel="stylesheet" href="./universal-assignment-tabs.css?v=1.05">
 <link rel="stylesheet" href="./grammar-homework.css?v=1.00">
 <link rel="stylesheet" href="./vocab-v1.css?v=20260927-r1427">
+<link rel="stylesheet" href="./word-genius-mastery.css?v=20261019-goldunits1">
 <link id="grammarFoundationsTeacherCss" rel="stylesheet" href="./grammar-foundations-teacher.css?v=20260928-challenge-data1">
 <link id="dashboardV2Polish" rel="stylesheet" href="./dashboard-v2-polish.css?v=20260930-railcompact2">
 <link rel="stylesheet" href="/components/teacher-header/teacher-header.css?v=20260919-p2-3">
@@ -52,7 +53,7 @@ try{
   }
 }catch{}
 </script>
-<aside class="rail"><button class="nav active" data-view="students"><span class="nav-icon">◎</span><span>Students</span></button><button class="nav" data-view="classes"><span class="nav-icon">▦</span><span>Classes</span></button><button class="nav" data-view="leaderboard"><span class="nav-icon">★</span><span>Leaderboard</span></button><button class="nav" data-view="assignments"><span class="nav-icon">☑</span><span>Assignments</span></button><button class="nav" data-view="vocab"><span class="nav-icon">Aa</span><span>Vocab</span></button><button class="nav" data-view="apps"><span class="nav-icon">＋</span><span>Apps</span></button><button class="nav" data-view="puzzles"><span class="nav-icon">◇</span><span>Puzzles</span></button><button class="nav" data-view="english-arcade"><span class="nav-icon">EA</span><span>English Arcade</span></button><div class="rail-spacer"></div></aside>
+<aside class="rail"><button class="nav active" data-view="students"><span class="nav-icon">◎</span><span>Students</span></button><button class="nav" data-view="classes"><span class="nav-icon">▦</span><span>Classes</span></button><button class="nav" data-view="leaderboard"><span class="nav-icon">★</span><span>Leaderboard</span></button><button class="nav" data-view="assignments"><span class="nav-icon">☑</span><span>Assignments</span></button><button class="nav" data-view="vocab"><span class="nav-icon">Aa</span><span>Word Genius</span></button><button class="nav" data-view="apps"><span class="nav-icon">＋</span><span>Apps</span></button><button class="nav" data-view="puzzles"><span class="nav-icon">◇</span><span>Puzzles</span></button><button class="nav" data-view="english-arcade"><span class="nav-icon">EA</span><span>English Arcade</span></button><div class="rail-spacer"></div></aside>
 <main class="workspace">
 <section class="view active" id="view-students">
 <div class="page-head"><div><h1>Student tracking</h1></div><div class="filters"><select class="control" id="classSelect"><option>Loading classes…</option></select><select class="control" id="daysSelect"><option value="30">Last 30 days</option><option value="14">Last 14 days</option><option value="60">Last 60 days</option><option value="90">Last 90 days</option></select><input class="control search" id="searchInput" type="search" placeholder="Search student…"><select class="control" id="rosterAssignmentFilter" aria-label="Filter by assignment progress"><option value="all">All students</option><option value="assigned">Has assignments</option><option value="not_started">Not started</option><option value="in_progress">In progress</option><option value="complete">All assignments complete</option><option value="none">No assignments</option></select><button class="control" id="refreshBtn">Refresh</button></div></div>
@@ -78,17 +79,17 @@ try{
 </section>
 <section class="view" id="view-vocab">
   <div class="page-head">
-    <div><h1>Vocabulary</h1><div class="panel-sub">Vocabulary Study progress and homework</div></div>
+    <div><h1>Word Genius</h1><div class="panel-sub">Word Genius progress and homework</div></div>
   </div>
 
-  <div class="vocab-hub-tabs" role="tablist" aria-label="Vocabulary views">
+  <div class="vocab-hub-tabs" role="tablist" aria-label="Word Genius views">
     <button type="button" class="vocab-hub-tab active" data-vocab-tab="general" role="tab" aria-selected="true">General Progress</button>
     <button type="button" class="vocab-hub-tab" data-vocab-tab="assignments" role="tab" aria-selected="false">Assignments</button>
   </div>
 
   <div class="vocab-subview active" data-vocab-subview="general">
     <div class="page-head">
-      <div><div class="panel-title">General Progress</div><div class="panel-sub">Quiz, spelling and speaking evidence from Vocabulary Study</div></div>
+      <div><div class="panel-title">General Progress</div><div class="panel-sub">Quiz, spelling and speaking evidence from Word Genius</div></div>
       <div class="vocab-progress-toolbar">
         <select class="control" id="vocabProgressClass"><option value="">All classes</option></select>
         <select class="control" id="vocabProgressDays">
@@ -104,13 +105,13 @@ try{
     <div class="vocab-progress-summary" id="vocabProgressSummary"></div>
     <div class="vocab-progress-panel">
       <div class="vocab-progress-head"><span>Student</span><span>Overall</span><span>Quiz</span><span>Spelling</span><span>Speaking</span><span>Today</span></div>
-      <div class="vocab-progress-list" id="vocabProgressList"><div class="empty">Open Vocab to load progress.</div></div>
+      <div class="vocab-progress-list" id="vocabProgressList"><div class="empty">Open Word Genius to load progress.</div></div>
     </div>
   </div>
 
   <div class="vocab-subview" data-vocab-subview="assignments">
     <div class="page-head">
-      <div><div class="panel-title">Assignments</div><div class="panel-sub">Vocabulary Study homework progress</div></div>
+      <div><div class="panel-title">Assignments</div><div class="panel-sub">Word Genius homework progress</div></div>
       <div class="filters">
         <select class="control" id="assignmentClassFilter"><option value="">All classes</option></select>
         <div class="assignment-status-tabs" role="group" aria-label="Assignment status">
@@ -197,7 +198,7 @@ try{
 <section class="view" id="view-assignments"><div class="page-head"><div><h1>Assignments</h1><div class="panel-sub">Assign and manage homework across student apps</div></div></div><div class="panel" id="universalAssignments"><div class="empty">Loading…</div></div><div class="panel" id="uaProgress" hidden>Open Assignments to load homework progress.</div></section>
 <section class="view" id="view-apps"><div class="page-head"><div><h1>Teacher apps</h1></div></div><div class="app-grid"><div class="app-card"><span class="chip">LIVE</span><h3>Student tracking</h3><p>Study habits, learning evidence, mistakes, skill performance and proof of work.</p></div><div class="app-card"><span class="chip">LIVE</span><h3>Class overview</h3><p>Class-level learning and study-habit signals that link directly back to students.</p></div><div class="app-card"><span class="chip">READY</span><h3>More teacher tools</h3><p>Homework, assessments and classroom tools can be added here.</p></div><div style="margin-top:14px;font-size:12px;opacity:.68"><a href="/Teachers/dashboard-v1-archived/" style="color:inherit;text-decoration:underline;text-underline-offset:2px">Dashboard V1 (ARCHIVED)</a></div></div></section>
 </main></div>
-<nav class="mobile-tabs"><button class="mobile-tab active" data-view="students"><b>◎</b>Students</button><button class="mobile-tab" data-view="classes"><b>▦</b>Classes</button><button class="mobile-tab" data-view="leaderboard"><b>★</b>Board</button><button class="mobile-tab" data-view="assignments"><b>☑</b>Work</button><button class="mobile-tab" data-view="vocab"><b>Aa</b>Vocab</button><button class="mobile-tab" data-view="apps"><b>＋</b>Apps</button><button class="mobile-tab" data-view="puzzles"><b>◇</b>Puzzles</button><button class="mobile-tab" data-view="english-arcade"><b>EA</b>Arcade</button></nav>
+<nav class="mobile-tabs"><button class="mobile-tab active" data-view="students"><b>◎</b>Students</button><button class="mobile-tab" data-view="classes"><b>▦</b>Classes</button><button class="mobile-tab" data-view="leaderboard"><b>★</b>Board</button><button class="mobile-tab" data-view="assignments"><b>☑</b>Work</button><button class="mobile-tab" data-view="vocab"><b>Aa</b>Word Genius</button><button class="mobile-tab" data-view="apps"><b>＋</b>Apps</button><button class="mobile-tab" data-view="puzzles"><b>◇</b>Puzzles</button><button class="mobile-tab" data-view="english-arcade"><b>EA</b>Arcade</button></nav>
 <div class="drawer-bg" id="drawerBg"><aside class="drawer"><div class="drawer-head"><div class="drawer-head-main"><div class="drawer-name" id="drawerName">Student</div><div class="drawer-meta" id="drawerMeta"></div></div><button class="close" id="closeDrawer">×</button></div><div class="drawer-body" id="drawerBody"><div class="empty">Loading…</div></div></aside></div>
 <div id="naesinV2Rev" style="position:fixed;right:12px;bottom:8px;z-index:2147483647;color:#7b8c93;font:700 9px/1.2 Poppins,sans-serif;letter-spacing:.04em;pointer-events:none">v14.73</div>
 <script>
@@ -482,7 +483,7 @@ async function loadArcadeInsights(force=false){
 function habitReason(h){if(!h)return'No evidence';const parts=[`${h.active_days_7??0} active day${h.active_days_7===1?'':'s'} in the last 7`,`${h.current_streak??0}-day streak`,`${h.attempts??0} attempts`];if(h.days_since_last_study!=null)parts.push(h.days_since_last_study===0?'studied today':`last studied ${h.days_since_last_study} day${h.days_since_last_study===1?'':'s'} ago`);return parts.join(' · ')}
 function learningReason(l){if(!l||l.all_time_accuracy==null)return'No recorded question results';const recent=l.recent_accuracy==null?'—':`${l.recent_accuracy}%`;let t=`Recent ${recent} from ${l.recent_count??0} current questions · All time ${l.all_time_accuracy}% across ${l.all_time_attempts??0} attempts`;if(typeof l.trend==='number')t+=` · ${l.trend>0?'+':''}${l.trend} pts vs previous 14 days`;return t}
 function closeStudentDrawerDirect(){$('#drawerBg').classList.remove('open')}
-async function openStudent(id){window.rosterDrawerStudent=String(id);const base=state.students.find(s=>String(s.user_id)===String(id));$('#drawerName').textContent=base?.name||'Student';$('#drawerMeta').textContent=`${state.className} · Last ${state.days} days`;$('#drawerBody').innerHTML='<div class="empty">Loading student evidence…</div>';$('#drawerBg').classList.add('open');window.TeacherHistory?.pushDrawer?.('student',{studentId:id});try{const j=await api(endpoint('teacher_student_insights',{student_id:id,days:String(state.days)}));const s=j.student,h=s.habits||{},l=s.learning||{};if(!$('#drawerBg').classList.contains('open')||window.rosterDrawerStudent!==String(id))return;$('#drawerBody').innerHTML=`<div class="detail"><h3>Current assignments</h3><div id="rosterDrawerAssignments">${renderHomeworkDetails(id)}</div></div><div class="rating-grid"><div class="big-card"><h3>Recorded activity</h3><div class="big-rating">${esc(h.active_days_7??0)} active days / 7</div><div class="reason">${esc(habitReason(h))}</div><div class="statline"><span>${esc(h.active_days_30??0)} active days in last 30</span><span>${esc(h.completed_sessions??0)} sessions</span></div></div><div class="big-card"><h3>Recorded results</h3><div class="big-rating">${l.recent_accuracy==null?'—':esc(l.recent_accuracy)+'%'} recent accuracy</div><div class="reason">${esc(learningReason(l))}</div><div class="statline"><span>${l.recent_accuracy==null?'—':esc(l.recent_accuracy)+'%'} recent</span><span>${l.all_time_accuracy==null?'—':esc(l.all_time_accuracy)+'%'} all time</span><span>${esc(l.all_time_attempts??0)} attempts</span></div></div></div><div class="detail"><h3>Skills</h3>${renderSkills(l.skills)}</div><div class="detail puzzle-student-detail"><h3>Puzzles</h3>${renderStudentPuzzles(s.puzzles)}</div><div class="detail"><h3>Recent mistakes</h3>${renderMistakes(s.recent_mistakes)}</div><div class="detail"><h3>Proof of work</h3>${renderProof(s.proof)}</div>`}catch(e){$('#drawerBody').innerHTML=`<div class="empty">${esc(e.message)}</div>`}}
+async function openStudent(id){window.rosterDrawerStudent=String(id);const base=state.students.find(s=>String(s.user_id)===String(id));$('#drawerName').textContent=base?.name||'Student';$('#drawerMeta').textContent=`${state.className} · Last ${state.days} days`;$('#drawerBody').innerHTML='<div class="empty">Loading student evidence…</div>';$('#drawerBg').classList.add('open');window.TeacherHistory?.pushDrawer?.('student',{studentId:id});try{const j=await api(endpoint('teacher_student_insights',{student_id:id,days:String(state.days)}));const s=j.student,h=s.habits||{},l=s.learning||{};if(!$('#drawerBg').classList.contains('open')||window.rosterDrawerStudent!==String(id))return;$('#drawerBody').innerHTML=`<div class="detail"><h3>Current assignments</h3><div id="rosterDrawerAssignments">${renderHomeworkDetails(id)}</div></div><div class="rating-grid"><div class="big-card"><h3>Recorded activity</h3><div class="big-rating">${esc(h.active_days_7??0)} active days / 7</div><div class="reason">${esc(habitReason(h))}</div><div class="statline"><span>${esc(h.active_days_30??0)} active days in last 30</span><span>${esc(h.completed_sessions??0)} sessions</span></div></div><div class="big-card"><h3>Recorded results</h3><div class="big-rating">${l.recent_accuracy==null?'—':esc(l.recent_accuracy)+'%'} recent accuracy</div><div class="reason">${esc(learningReason(l))}</div><div class="statline"><span>${l.recent_accuracy==null?'—':esc(l.recent_accuracy)+'%'} recent</span><span>${l.all_time_accuracy==null?'—':esc(l.all_time_accuracy)+'%'} all time</span><span>${esc(l.all_time_attempts??0)} attempts</span></div></div></div><div class="detail"><h3>Word Genius · Books &amp; Golden Units</h3><div id="wordGeniusStudentMastery" aria-live="polite">Loading unit mastery…</div></div><div class="detail"><h3>Skills</h3>${renderSkills(l.skills)}</div><div class="detail puzzle-student-detail"><h3>Puzzles</h3>${renderStudentPuzzles(s.puzzles)}</div><div class="detail"><h3>Recent mistakes</h3>${renderMistakes(s.recent_mistakes)}</div><div class="detail"><h3>Proof of work</h3>${renderProof(s.proof)}</div>`;window.dispatchEvent(new CustomEvent("teacher:student-insights-ready",{detail:{studentId:id}}))}catch(e){$('#drawerBody').innerHTML=`<div class="empty">${esc(e.message)}</div>`}}
 async function loadClassOverview(force=false){
   const days=Number($('#classDaysSelect').value)||30,key=String(days);
   if(!force&&state.classOverviewLoadedFor===key)return;
@@ -507,7 +508,8 @@ $('#classSelect').onchange=loadClass;$('#daysSelect').onchange=loadClass;$('#ref
 window.TeacherStudentDrawer={open:openStudent,close:closeStudentDrawerDirect};
 (async()=>{if(await auth()){loadClasses()}})();
 </script>
-<script src="./vocab-v1.js?v=20260927-listeners1"></script>
+<script src="./vocab-v1.js?v=20261019-wordgenius1"></script>
+<script src="./word-genius-mastery.js?v=20261019-goldunits1"></script>
 <script src="./assignments-v1.js?v=20261019-unitgroups1"></script>
 <script src="./naesin.js?v=20260917-r14-03"></script>
 <script src="./naesin-v2/naesin-v2-data.js?v=20261009-retry69"></script>
