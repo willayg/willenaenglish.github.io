@@ -281,8 +281,8 @@ async function completeRewardSession(){
       reward_only:true,
       session_id:reward.rewardSessionId,
       client_attempt_id:(window.crypto?.randomUUID?.()||('reward-'+Date.now()+'-'+Math.random().toString(16).slice(2))),
-      book_id:teacher?(teacher?.assignment?.book_id||null):(state.book?.book_id||null),
-      unit_id:teacher?(teacher?.assignment?.unit_id||null):(state.unit?.id||null),
+      book_id:teacher?(teacher?.assignment?.list_meta?.source_book_id||teacher?.assignment?.book_id||null):(state.book?.book_id||null),
+      unit_id:teacher?(teacher?.assignment?.list_meta?.source_unit_id||teacher?.assignment?.list_meta?.unit_id||teacher?.assignment?.unit_id||null):(state.unit?.id||null),
       skill:'vocabulary',
       response_type:'reward',
       activity_id:'vocab-reward',
@@ -298,8 +298,8 @@ async function completeRewardSession(){
         score:reward.firstCorrect,
         total:reward.firstTotal,
         points_earned:reward.points,
-        book_id:teacher?(teacher?.assignment?.book_id||null):(state.book?.book_id||null),
-        unit_id:teacher?(teacher?.assignment?.unit_id||null):(state.unit?.id||null),
+        book_id:teacher?(teacher?.assignment?.list_meta?.source_book_id||teacher?.assignment?.book_id||null):(state.book?.book_id||null),
+        unit_id:teacher?(teacher?.assignment?.list_meta?.source_unit_id||teacher?.assignment?.list_meta?.unit_id||teacher?.assignment?.unit_id||null):(state.unit?.id||null),
         assignment_id:teacher?.assignment?.id||null,
         session_source:teacher?'teacher':'student',
         vocab_mode:reward.mode,
@@ -321,7 +321,7 @@ async function completeRewardSession(){
       window.dispatchEvent(new CustomEvent('stars:refresh',{detail:{earned:reward.stars}}));
       localStorage.setItem('stars:refresh',String(Date.now()));
     }catch(_){}
-    if(teacher)await loadTeacherAssignments();
+    if(teacher){await loadTeacherAssignments();await checkTeacherGoldenUnit(teacher)}
     else await checkGoldenUnit();
   }catch(error){
     console.warn('[Vocab Study] reward session save failed',error);
@@ -458,6 +458,27 @@ async function checkGoldenUnit(){
     console.warn('[Vocab Study] golden unit check unavailable',error);
     return null;
   }
+}
+async function checkTeacherGoldenUnit(teacher){
+ const a=teacher?.assignment||{},meta=a.list_meta||{};
+ const bookId=txt(meta.source_book_id||a.book_id);
+ const unitId=txt(meta.source_unit_id||meta.unit_id||a.unit_id||(arr(meta.source_unit_ids).length===1?meta.source_unit_ids[0]:''));
+ if(state.adminMode||!isUuid(bookId)||!isUuid(unitId))return null;
+ try{
+  const matching=String(state.book?.book_id)===bookId&&String(state.unit?.id)===unitId;
+  let items=matching?state.items:null;
+  if(!items){
+   const units=await content('content_units?select=id,unit_number,title&book_id=eq.'+encodeURIComponent(bookId)+'&id=eq.'+encodeURIComponent(unitId));
+   const unit=arr(units)[0];if(!unit)return null;
+   items=await loadVocabularyItems({book_id:bookId,book_title:txt(a.title)},unit);
+  }
+  const totals={quiz:unitVocabularyWords(items).map(w=>w.id).filter(isUuid).length,spelling:spellingWords(items).map(w=>w.id).filter(isUuid).length,speaking:speakingWords(items).map(w=>w.id).filter(isUuid).length};
+  if(totals.quiz<=0||totals.spelling<=0)return null;
+  const result=await api('/.netlify/functions/progress_summary?section=vocab_golden_unit&_='+Date.now(),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({book_id:bookId,unit_id:unitId,quiz_total:totals.quiz,spelling_total:totals.spelling,speaking_total:totals.speaking})});
+  if(result?.earned_now)state.pendingGoldenAward={unitId,unitNumber:'',earnedAt:result?.achievement?.earned_at||new Date().toISOString()};
+  if(matching)await loadMotivation(bookId);
+  return result;
+ }catch(error){console.warn('[Vocab Study] homework Golden Unit check unavailable',error);return null}
 }
 function goldenAwardHtml(){
   const award=state.pendingGoldenAward;
@@ -1101,8 +1122,8 @@ function recordVocabAttempt({skill,responseType,lexicalEntryId,activityId,prompt
   const teacher=teacherContext?._reviewOnly?null:teacherContext;
   if(reviewOnly)return;
   const baseMeta=Object.assign({
-    book_id:teacher?(teacher?.assignment?.book_id||null):(state.book?.book_id||null),
-    unit_id:teacher?(teacher?.assignment?.unit_id||null):(state.unit?.id||null),
+    book_id:teacher?(teacher?.assignment?.list_meta?.source_book_id||teacher?.assignment?.book_id||null):(state.book?.book_id||null),
+    unit_id:teacher?(teacher?.assignment?.list_meta?.source_unit_id||teacher?.assignment?.list_meta?.unit_id||teacher?.assignment?.unit_id||null):(state.unit?.id||null),
     lexical_entry_id:lexicalId,
     mastery_content_type:'lexical_entry',
     mastery_content_id:lexicalId,
