@@ -146,7 +146,7 @@ async function loadCatalog(){
   if(!res.ok)throw new Error(`catalog ${res.status}`);
   const data=await res.json();
   modules=Array.isArray(data.sets)?data.sets:[];
-  if(!modules.length)throw new Error('No published Grammar Foundations sets');
+  if(!modules.length)throw new Error('No published Grammar Genius sets');
 }
 async function loadProgress(){
   try{
@@ -185,7 +185,7 @@ async function fetchChallenge(mod,{countOnly=false}={}){
 
 function stepCard(group){
   const stats=groupStats(group),names=group.items.map(koTitle).filter(Boolean).join(' · ');
-  return `<button class="gf-step-card exam-card" data-open-group="${group.number}"><div class="gf-target-head exam-head"><div class="gf-target-copy"><div class="exam-school">GRAMMAR FOUNDATIONS</div><h2 class="exam-title">Step ${group.number}</h2><div class="exam-book">${esc(names)}</div><div class="exam-meta"><span class="pill">${stats.sets} grammar sets</span><span class="pill">${stats.passed}/${stats.total} levels complete</span></div></div><div class="ring gf-ring" style="--p:${stats.pct}%"><b>${stats.pct}%</b></div></div><span class="gf-open-hint">Open Step ${group.number} →</span></button>`;
+  return `<button class="gf-step-card exam-card" data-open-group="${group.number}"><div class="gf-target-head exam-head"><div class="gf-target-copy"><div class="exam-school">GRAMMAR GENIUS</div><h2 class="exam-title">Step ${group.number}</h2><div class="exam-book">${esc(names)}</div><div class="exam-meta"><span class="pill">${stats.sets} grammar sets</span><span class="pill">${stats.passed}/${stats.total} levels complete</span></div></div><div class="ring gf-ring" style="--p:${stats.pct}%"><b>${stats.pct}%</b></div></div><span class="gf-open-hint">Open Step ${group.number} →</span></button>`;
 }
 function lessonCard(mod){
   const pct=modulePct(mod),done=passedCount(mod),next=currentStage(mod),required=passScore(mod),challenge=challengeProgress(mod.id);
@@ -206,11 +206,11 @@ function challengeCard(mod,info){
 
 async function loadHomework(){
  try{grammarHomework=await fetchGrammarHomework(token,refreshToken);homeworkAccess.clear();grammarHomework.forEach(h=>homeworkAccess.add(progressKey(h.module_id,h.stage_id)))}
- catch(error){console.warn('[Grammar Foundations] homework feed unavailable',error);grammarHomework=[];homeworkAccess.clear()}
+ catch(error){console.warn('[Grammar Genius] homework feed unavailable',error);grammarHomework=[];homeworkAccess.clear()}
 }
 function renderHome(){
   state={group:null,module:null,stage:null,index:0,score:0,renderer:null,checked:false,results:[],resultSaved:false};setBottom('');
-  root.innerHTML=`<h1 class="gf-title">중학교 문법 기초</h1><div class="gf-kicker gf-title-en">Middle School Grammar Foundations</div><p class="gf-subtitle">Step을 골라 문법을 차근차근 완성하세요.</p>${homeworkCards(grammarHomework,progressMap)}<div class="gf-targets gf-step-grid">${groups().map(stepCard).join('')}</div>`;
+  root.innerHTML=`<h1 class="gf-title">Grammar Genius</h1><div class="gf-kicker gf-title-en">중학교 문법 기초 학습</div><p class="gf-subtitle">Step을 골라 문법을 차근차근 완성하세요.</p>${homeworkCards(grammarHomework,progressMap)}<div class="gf-targets gf-step-grid">${groups().map(stepCard).join('')}</div>`;
   root.querySelectorAll('[data-open-group]').forEach(btn=>btn.onclick=()=>nav.navigate({view:'group',group:Number(btn.dataset.openGroup)}));
   root.querySelectorAll('[data-homework-stage]').forEach(btn=>btn.onclick=()=>nav.navigate({view:'guide',moduleId:btn.dataset.homeworkModule,stageId:btn.dataset.homeworkStage}));
 }
@@ -218,7 +218,7 @@ function renderGroup(number){
   const group=groups().find(g=>g.number===Number(number));if(!group)return nav.replace({view:'home'});
   state={group:group.number,module:null,stage:null,index:0,score:0,renderer:null,checked:false,results:[],resultSaved:false};setBottom('');
   const stats=groupStats(group);
-  root.innerHTML=`<button class="back" id="groupBack">← Grammar Foundations</button><div class="gf-step-heading"><div><div class="gf-kicker">GRAMMAR FOUNDATIONS</div><h1 class="gf-title">Step ${group.number}</h1><p class="gf-subtitle">${stats.sets}개 문법 항목 · ${stats.passed}/${stats.total} levels complete</p></div><div class="ring gf-ring" style="--p:${stats.pct}%"><b>${stats.pct}%</b></div></div><div class="gf-targets">${group.items.map(lessonCard).join('')}</div>`;
+  root.innerHTML=`<button class="back" id="groupBack">← Grammar Genius</button><div class="gf-step-heading"><div><div class="gf-kicker">GRAMMAR GENIUS</div><h1 class="gf-title">Step ${group.number}</h1><p class="gf-subtitle">${stats.sets}개 문법 항목 · ${stats.passed}/${stats.total} levels complete</p></div><div class="ring gf-ring" style="--p:${stats.pct}%"><b>${stats.pct}%</b></div></div><div class="gf-targets">${group.items.map(lessonCard).join('')}</div>`;
   document.getElementById('groupBack').onclick=()=>nav.back();
   root.querySelectorAll('[data-open-module]').forEach(btn=>btn.onclick=()=>nav.navigate({view:'module',moduleId:btn.dataset.openModule}));
 }
@@ -414,7 +414,7 @@ subscribeStudentHeaderData(data=>{
 });
 
 async function boot(){
-  root.innerHTML='<div class="loading">Loading Grammar Foundations…</div>';
+  root.innerHTML='<div class="loading">Loading Grammar Genius…</div>';
   try{
     await Promise.all([loadCatalog(),loadProgress()]);
     await loadHomework();
