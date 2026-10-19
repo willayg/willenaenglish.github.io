@@ -1,0 +1,14 @@
+.gf-homework{margin:24px 0 30px;padding:20px;border:2px solid #bfe6e9;border-radius:24px;background:linear-gradient(155deg,#fff,#f0fcfd)}
+.gf-homework-head{display:flex;justify-content:space-between;align-items:center;gap:14px;margin-bottom:15px}
+.gf-homework-head h2{margin:4px 0 0;font-size:23px;color:#203039}
+.gf-homework-head>span{font-size:12px;font-weight:800;color:#548b91}
+.gf-homework-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px}
+.gf-homework-card{display:flex;align-items:center;justify-content:space-between;gap:13px;text-align:left;width:100%;min-height:86px;padding:16px;background:#fff;border:1.5px solid #dbe8ec;border-radius:16px;cursor:pointer;font:inherit;color:#243843}
+.gf-homework-card strong,.gf-homework-card small{display:block}
+.gf-homework-card strong{font-size:14px}
+.gf-homework-card small{font-size:11px;margin-top:5px;color:#73858e;line-height:1.4}
+.gf-homework-result{flex-shrink:0;white-space:nowrap;font-size:12px;font-weight:800;color:#357b86}
+.gf-homework-done{border-color:#d9b34a;background:linear-gradient(145deg,#fffef9,#fff3cd)}
+.gf-homework-done .gf-homework-result{color:#96640c}
+.gf-homework-card:focus-visible{outline:3px solid #4fb9c8;outline-offset:2px}
+@media(max-width:550px){.gf-homework{padding:14px}.gf-homework-list{grid-template-columns:1fr}}
