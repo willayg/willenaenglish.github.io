@@ -212,7 +212,7 @@ function renderHome(){
   state={group:null,module:null,stage:null,index:0,score:0,renderer:null,checked:false,results:[],resultSaved:false};setBottom('');
   root.innerHTML=`<h1 class="gf-title">Grammar Genius</h1><div class="gf-kicker gf-title-en">중학교 문법 기초 학습</div><p class="gf-subtitle">Step을 골라 문법을 차근차근 완성하세요.</p>${homeworkCards(grammarHomework,progressMap)}<div class="gf-targets gf-step-grid">${groups().map(stepCard).join('')}</div>`;
   root.querySelectorAll('[data-open-group]').forEach(btn=>btn.onclick=()=>nav.navigate({view:'group',group:Number(btn.dataset.openGroup)}));
-  root.querySelectorAll('[data-homework-stage]').forEach(btn=>btn.onclick=()=>nav.navigate({view:'guide',moduleId:btn.dataset.homeworkModule,stageId:btn.dataset.homeworkStage}));
+  root.querySelectorAll('[data-homework-stage]').forEach(btn=>btn.onclick=()=>nav.navigate({view:'practice',moduleId:btn.dataset.homeworkModule,stageId:btn.dataset.homeworkStage}));
 }
 function renderGroup(number){
   const group=groups().find(g=>g.number===Number(number));if(!group)return nav.replace({view:'home'});
