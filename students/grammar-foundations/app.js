@@ -416,7 +416,8 @@ subscribeStudentHeaderData(data=>{
 async function boot(){
   root.innerHTML='<div class="loading">Loading Grammar Foundations…</div>';
   try{
-    await Promise.all([loadCatalog(),loadProgress(),loadHomework()]);
+    await Promise.all([loadCatalog(),loadProgress()]);
+    await loadHomework();
     const resume=resumeRoute();
     nav=createStudentHistoryNavigation({appId:'willena-grammar-foundations',views:['home','group','module','guide','practice','result','challenge','challenge-result'],normalize:normalizeRoute,validate:validateRoute,render:renderRoute,guard:navigationGuard,onBeforeChange:()=>hideWillenaKeyboard()});
     const initial=nav.init(resume||{view:'home'});renderRoute(initial,{source:'init'});
