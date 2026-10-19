@@ -25,7 +25,7 @@ function render(){
  }
  if(active==='word'){
  body.innerHTML='<div class="ua-word-actions"><div><h4>Word Genius homework</h4><p>Create assignments in Word Builder, or inspect current and past Word Genius homework below.</p></div><a class="control ua-primary" href="/Teachers/tools/wordtest/wordtest2.html">Open Word Builder →</a></div>';
- showWordPanel(body);return;
+ showWordPanel(body);window.dispatchEvent(new CustomEvent('ua:word-mounted'));return;
  }
  const desc=active==='grammar'?'Assign individual grammar steps and track students’ progress.':'Assign word games and review completion by activity.';
  body.innerHTML='<div class="ua-feature ua-unavailable"><div class="ua-feature-symbol">'+(active==='grammar'?'G':'◇')+'</div><div class="ua-feature-copy"><span class="ua-coming-label">Assignment integration pending</span><h4>'+selected.label+' assignments</h4><p>'+desc+' The assignment connection is not built yet; existing student progress is unaffected.</p></div></div>';
