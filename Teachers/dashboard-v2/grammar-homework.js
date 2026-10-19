@@ -4,7 +4,7 @@ const OP='https://fiieuiktlsivwfgyivai.supabase.co',KEY='sb_publishable_e-K50Pqu
 const CATALOG='https://gxwfsqxyuufqtitspfqg.supabase.co/functions/v1/grammar-foundations-catalog';
 const EDGE=OP+'/functions/v1/grammar-foundations-teacher-v1';
 const $=(s,r=document)=>r.querySelector(s),esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const state={catalog:null,classes:null,items:[],mode:'manage',filter:'current',loading:false,details:new Map()};
+const state={catalog:null,classes:null,items:[],mode:'manage',filter:'current',manageView:'students',studentRows:[],studentSearch:'',studentClass:'',expandedStudentId:'',loading:false,details:new Map()};
 const token=()=>window.WillenaAPI?.getLocalAccessToken?.()||localStorage.getItem('sb_access_token')||'';
 async function refreshToken(){const r=await (window.WillenaAPI?.fetch?window.WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=refresh'):fetch('/.netlify/functions/supabase_auth?action=refresh',{credentials:'include'}));const d=await r.json();if(!r.ok||!d.access_token)throw Error('Please sign in again');window.WillenaAPI?.setLocalTokens?.(d.access_token,d.refresh_token||'');return d.access_token}
 async function request(url,options={}){
@@ -61,21 +61,60 @@ async function submit(e){
  }catch(error){message('Could not assign: '+error.message,true)}finally{state.loading=false;const selected=el.querySelectorAll('[data-stage]:checked').length;$('#gfHwSubmit',el).disabled=!selected;$('#gfHwSubmit',el).textContent=selected?'Assign '+selected+' selected level'+(selected===1?'':'s')+' →':'Select levels to assign'}
 }
 function jwtUserId(t){try{const part=t.split('.')[1].replace(/-/g,'+').replace(/_/g,'/');return JSON.parse(atob(part)).sub||''}catch{return''}}
+
 async function renderManage(){
  const el=root();if(!el)return;
- state.items=await table('?select=*&order=created_at.desc&limit=1000');
- if(!root()||state.mode!=='manage')return;
+ const history=state.filter==='history';
+ const [assignments,overview]=await Promise.all([
+   table('?select=*&order=created_at.desc&limit=1000'),
+   request(OP+'/rest/v1/rpc/gf_hw_student_overview',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({p_history:history})})
+ ]);
+ if(!root()||state.mode!=='manage'||history!==(state.filter==='history'))return;
+ if(!Array.isArray(overview?.rows))throw Error('Student homework summary unavailable');
+ state.items=Array.isArray(assignments)?assignments:[];
+ state.studentRows=overview.rows;
  paintManage();
 }
 function paintManage(){
  const el=root();if(!el)return;
+ const history=state.filter==='history';
+ const status='<div class="assignment-status-tabs"><button type="button" class="assignment-status-tab'+(!history?' active':'')+'" data-gf-filter="current">Current</button><button type="button" class="assignment-status-tab'+(history?' active':'')+'" data-gf-filter="history">History</button></div>';
+ const view='<div class="gf-hw-view-tabs" role="group" aria-label="Homework display"><button type="button" class="gf-hw-view-tab'+(state.manageView==='students'?' active':'')+'" data-gf-view="students">By student</button><button type="button" class="gf-hw-view-tab'+(state.manageView==='batches'?' active':'')+'" data-gf-view="batches">By assignment</button></div>';
+ el.innerHTML='<div class="gf-hw-toolbar">'+status+view+'<button class="control" id="gfHwRefresh" type="button">Refresh</button></div><div id="gfHwManageBody"></div>';
+ el.querySelectorAll('[data-gf-filter]').forEach(b=>b.onclick=()=>{if(state.filter===b.dataset.gfFilter)return;state.filter=b.dataset.gfFilter;state.expandedStudentId='';void mount('manage')});
+ el.querySelectorAll('[data-gf-view]').forEach(b=>b.onclick=()=>{if(state.manageView===b.dataset.gfView)return;state.manageView=b.dataset.gfView;paintManage()});
+ $('#gfHwRefresh',el).onclick=()=>mount('manage');
+ if(state.manageView==='students'){paintStudentView();return}
+ paintBatchView();
+}
+function paintStudentView(){
+ const el=$('#gfHwManageBody');if(!el)return;
+ const studentRenderer=window.WillenaGrammarHomeworkStudentCards;
+ if(!studentRenderer){el.innerHTML='<div class="gf-hw-error">Student homework view is unavailable. Please refresh the dashboard.</div>';return}
+ el.innerHTML=studentRenderer.render(state.studentRows,{history:state.filter==='history',expandedId:state.expandedStudentId,search:state.studentSearch,className:state.studentClass});
+ const classSelect=$('#gfHwStudentClass',el),search=$('#gfHwStudentSearch',el);
+ if(classSelect)classSelect.onchange=()=>{state.studentClass=classSelect.value;state.expandedStudentId='';paintStudentView()};
+ if(search)search.oninput=()=>{const pos=search.selectionStart;state.studentSearch=search.value;paintStudentView();const again=$('#gfHwStudentSearch',el);if(again){again.focus();try{again.setSelectionRange(pos,pos)}catch{}}};
+ el.querySelectorAll('[data-gf-student]').forEach(btn=>btn.onclick=()=>{
+   const id=btn.dataset.gfStudent;
+   state.expandedStudentId=state.expandedStudentId===id?'':id;
+   paintStudentView();
+   el.querySelectorAll('[data-gf-student]').forEach(next=>{if(next.dataset.gfStudent===id)next.focus({preventScroll:true})});
+ });
+}
+function paintBatchView(){
+ const el=$('#gfHwManageBody');if(!el)return;
  const entries=state.items.filter(a=>state.filter==='history'?!a.active:a.active);
  const groups=new Map();entries.forEach(a=>{const id=a.batch_id||a.id;if(!groups.has(id))groups.set(id,[]);groups.get(id).push(a)});
- el.innerHTML='<div class="gf-hw-toolbar"><div class="assignment-status-tabs"><button type="button" class="assignment-status-tab'+(state.filter==='current'?' active':'')+'" data-gf-filter="current">Current</button><button type="button" class="assignment-status-tab'+(state.filter==='history'?' active':'')+'" data-gf-filter="history">History</button></div><button class="control" id="gfHwRefresh" type="button">Refresh</button></div><div class="gf-hw-groups">'+([...groups.values()].map(rows=>{const first=rows[0];return '<section class="gf-hw-group"><header><div><strong>'+esc(first.class_name)+' · '+esc(rows.length===1?first.module_title:'Grammar Genius')+'</strong><small>Due '+esc(new Date(first.due_at).toLocaleDateString())+' · '+esc(first.completion_percent)+'% required · '+rows.length+' level(s)</small></div></header><div class="gf-hw-group-items">'+rows.map(a=>'<div class="gf-hw-assignment"><button type="button" class="gf-hw-row" data-progress="'+esc(a.id)+'"><span><b>'+esc(a.module_title)+'</b><small>'+esc(a.stage_title)+'</small></span><span>View progress →</span></button><div id="gfHwDetail-'+esc(a.id)+'"></div></div>').join('')+'</div><div class="gf-hw-group-actions"><button type="button" class="control" data-toggle-batch="'+esc(first.batch_id)+'" data-active="'+(!first.active)+'">'+(first.active?'Close homework':'Reopen homework')+'</button></div></section>'}).join('')||'<div class="ua-empty">No '+(state.filter==='current'?'current':'past')+' Grammar Genius assignments.</div>')+'</div>';
- el.querySelectorAll('[data-gf-filter]').forEach(b=>b.onclick=()=>{state.filter=b.dataset.gfFilter;paintManage()});
- $('#gfHwRefresh',el).onclick=()=>mount('manage');
+ el.innerHTML='<div class="gf-hw-groups">'+([...groups.values()].map(rows=>{const first=rows[0];return '<section class="gf-hw-group"><header><div><strong>'+esc(first.class_name)+' · '+esc(rows.length===1?first.module_title:'Grammar Genius')+'</strong><small>Due '+esc(new Date(first.due_at).toLocaleDateString())+' · '+esc(first.completion_percent)+'% required · '+rows.length+' level(s)</small></div></header><div class="gf-hw-group-items">'+rows.map(a=>'<div class="gf-hw-assignment"><button type="button" class="gf-hw-row" data-progress="'+esc(a.id)+'"><span><b>'+esc(a.module_title)+'</b><small>'+esc(a.stage_title)+'</small></span><span>View progress →</span></button><div id="gfHwDetail-'+esc(a.id)+'"></div></div>').join('')+'</div><div class="gf-hw-group-actions"><button type="button" class="control" data-toggle-batch="'+esc(first.batch_id)+'" data-active="'+(!first.active)+'">'+(first.active?'Close homework':'Reopen homework')+'</button></div></section>'}).join('')||'<div class="ua-empty">No '+(state.filter==='current'?'current':'past')+' Grammar Genius assignments.</div>')+'</div>';
  el.querySelectorAll('[data-progress]').forEach(b=>b.onclick=()=>showProgress(b.dataset.progress));
- el.querySelectorAll('[data-toggle-batch]').forEach(b=>b.onclick=async()=>{b.disabled=true;try{await table('?batch_id=eq.'+encodeURIComponent(b.dataset.toggleBatch),{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({active:b.dataset.active==='true',closed_at:b.dataset.active==='true'?null:new Date().toISOString()})});await renderManage()}catch(e){alert('Unable to update homework: '+e.message);b.disabled=false}});
+ el.querySelectorAll('[data-toggle-batch]').forEach(b=>b.onclick=async()=>{
+   b.disabled=true;
+   try{
+     await table('?batch_id=eq.'+encodeURIComponent(b.dataset.toggleBatch),{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({active:b.dataset.active==='true',closed_at:b.dataset.active==='true'?null:new Date().toISOString()})});
+     await renderManage();
+   }catch(e){alert('Unable to update homework: '+e.message);b.disabled=false}
+ });
 }
 async function showProgress(id){
  const el=document.getElementById('gfHwDetail-'+id);if(!el)return;
