@@ -1,3 +1,4 @@
+import {fetchGrammarHomework,homeworkCards} from './homework.js?v=1.00';
 import {QuestionRenderer} from '../shared/student-question-renderer.js?v=1.0.1';
 import {gradeQuestion} from '../shared/question-grader.js?v=2.1.2';
 import {mountAiWilliHelper,decorateAiWilliFeedback} from '../shared/ai-willi.js?v=1.1.0';
@@ -19,6 +20,8 @@ const PROGRESS_API_KEY='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
 const CATALOG_URL='https://gxwfsqxyuufqtitspfqg.supabase.co/functions/v1/grammar-foundations-catalog';
 const CHALLENGE_URL='https://gxwfsqxyuufqtitspfqg.supabase.co/functions/v1/grammar-foundations-challenge';
 let modules=[];
+let grammarHomework=[];
+const homeworkAccess=new Set();
 let progressMap=new Map();
 let challengeProgressMap=new Map();
 const challengeAvailability=new Map();
@@ -39,7 +42,7 @@ function currentChallengeQuestion(){return challengeState.questions?.[challengeS
 function progressKey(moduleId,stageId){return `${moduleId}:${stageId}`}
 function stageProgress(moduleId,stageId){return progressMap.get(progressKey(moduleId,stageId))||null}
 function challengeProgress(moduleId){return challengeProgressMap.get(String(moduleId))||null}
-function stageUnlocked(mod,index){return reviewerUnlock||index===0||Boolean(stageProgress(mod.id,mod.stages[index-1]?.id)?.passed)}
+function stageUnlocked(mod,index){return reviewerUnlock||homeworkAccess.has(progressKey(mod.id,mod.stages[index]?.id))||index===0||Boolean(stageProgress(mod.id,mod.stages[index-1]?.id)?.passed)}
 function stagePct(row){return row?.total?Math.round((Number(row.best_score||0)/Number(row.total))*100):0}
 function goldStage(m,s){const r=stageProgress(m.id,s.id);return !!(r&&Number(r.total)>0&&Number(r.best_score)>=Number(r.total))}
 function goldModule(m){return !!(m?.stages?.length)&&m.stages.every(s=>goldStage(m,s))}
@@ -201,10 +204,15 @@ function challengeCard(mod,info){
   return `<button class="gf-stage-card tile active gf-challenge-card" id="startChallenge"><div class="gf-stage-card-copy"><div class="gf-stage-label">CHALLENGE</div><h3>실전 문제</h3><small>Exam Challenge · ${Number(info.count)||10} questions</small><span class="metric">${esc(status)}</span><small>${Number(info.zPoolSize)||0} Z-style · ${Number(info.poolSize)||0} matched in pool</small></div><div class="ring gf-stage-ring" style="--p:${row?.passed?100:0}%"><b>${row?.passed?'✓':'GO'}</b></div></button>`;
 }
 
+async function loadHomework(){
+ try{grammarHomework=await fetchGrammarHomework(token,refreshToken);homeworkAccess.clear();grammarHomework.forEach(h=>homeworkAccess.add(progressKey(h.module_id,h.stage_id)))}
+ catch(error){console.warn('[Grammar Foundations] homework feed unavailable',error);grammarHomework=[];homeworkAccess.clear()}
+}
 function renderHome(){
   state={group:null,module:null,stage:null,index:0,score:0,renderer:null,checked:false,results:[],resultSaved:false};setBottom('');
-  root.innerHTML=`<h1 class="gf-title">중학교 문법 기초</h1><div class="gf-kicker gf-title-en">Middle School Grammar Foundations</div><p class="gf-subtitle">Step을 골라 문법을 차근차근 완성하세요.</p><div class="gf-targets gf-step-grid">${groups().map(stepCard).join('')}</div>`;
+  root.innerHTML=`<h1 class="gf-title">중학교 문법 기초</h1><div class="gf-kicker gf-title-en">Middle School Grammar Foundations</div><p class="gf-subtitle">Step을 골라 문법을 차근차근 완성하세요.</p>${homeworkCards(grammarHomework,progressMap)}<div class="gf-targets gf-step-grid">${groups().map(stepCard).join('')}</div>`;
   root.querySelectorAll('[data-open-group]').forEach(btn=>btn.onclick=()=>nav.navigate({view:'group',group:Number(btn.dataset.openGroup)}));
+  root.querySelectorAll('[data-homework-stage]').forEach(btn=>btn.onclick=()=>nav.navigate({view:'guide',moduleId:btn.dataset.homeworkModule,stageId:btn.dataset.homeworkStage}));
 }
 function renderGroup(number){
   const group=groups().find(g=>g.number===Number(number));if(!group)return nav.replace({view:'home'});
@@ -408,7 +416,7 @@ subscribeStudentHeaderData(data=>{
 async function boot(){
   root.innerHTML='<div class="loading">Loading Grammar Foundations…</div>';
   try{
-    await Promise.all([loadCatalog(),loadProgress()]);
+    await Promise.all([loadCatalog(),loadProgress(),loadHomework()]);
     const resume=resumeRoute();
     nav=createStudentHistoryNavigation({appId:'willena-grammar-foundations',views:['home','group','module','guide','practice','result','challenge','challenge-result'],normalize:normalizeRoute,validate:validateRoute,render:renderRoute,guard:navigationGuard,onBeforeChange:()=>hideWillenaKeyboard()});
     const initial=nav.init(resume||{view:'home'});renderRoute(initial,{source:'init'});
