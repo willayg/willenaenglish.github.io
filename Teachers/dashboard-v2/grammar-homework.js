@@ -13,7 +13,7 @@ async function request(url,options={}){
  let r=await run(access);if(r.status===401){access=await refreshToken();r=await run(access)}
  const body=await r.json().catch(()=>({}));if(!r.ok)throw Error(body?.message||body?.error||'Request failed ('+r.status+')');return body;
 }
-const table=(q='')=>request(OP+'/rest/v1/grammar_foundation_homework'+q);
+const table=(q='',options={})=>request(OP+'/rest/v1/grammar_foundation_homework'+q,options);
 const api=(path,opts)=>request(OP+'/rest/v1/'+path,opts);
 const title=m=>m.koreanTitle||m.title||m.englishTitle||m.id;
 const stitle=s=>s.koreanTitle||s.title||s.englishTitle||'Level '+s.number;
@@ -33,9 +33,10 @@ async function mount(sub){
 }
 async function renderCreate(){
  const [mods,names]=await Promise.all([catalog(),classes()]);const el=root();if(!el||state.mode!=='create')return;
- el.innerHTML='<form id="gfHwForm" class="gf-hw-form"><div class="gf-hw-form-grid"><label>Class<select required id="gfHwClass" class="control"><option value="">Choose class</option>'+names.map(n=>'<option value="'+esc(n)+'">'+esc(n)+'</option>').join('')+'</select></label><label>Completion requirement<select id="gfHwGoal" class="control"><option value="80">Pass · 80%</option><option value="100">Gold · 100%</option></select></label><label>Due date<input required type="date" id="gfHwDue" class="control"></label></div><div class="gf-hw-picker-top"><div><strong>Select grammar points and levels</strong><small>Each selected level becomes a separate student homework item.</small></div><span id="gfHwSelected">0 selected</span></div><div class="gf-hw-modules">'+mods.map(m=>'<fieldset class="gf-hw-module"><legend>'+esc(title(m))+' <small>'+esc(m.englishTitle||'')+'</small></legend><label class="gf-hw-all"><input type="checkbox" data-all="'+esc(m.id)+'"> All levels</label><div class="gf-hw-levels">'+(m.stages||[]).map(s=>'<label><input type="checkbox" data-stage="'+esc(s.id)+'" data-module="'+esc(m.id)+'"><span>Level '+esc(s.number)+' · '+esc(stitle(s))+'</span></label>').join('')+'</div></fieldset>').join('')+'</div><div class="gf-hw-footer"><button type="submit" id="gfHwSubmit" class="control ua-primary">Assign selected levels →</button><span id="gfHwMessage" role="status"></span></div></form>';
+ el.innerHTML='<form id="gfHwForm" class="gf-hw-form"><div class="gf-hw-form-grid"><label>Class<select required id="gfHwClass" class="control"><option value="">Choose class</option>'+names.map(n=>'<option value="'+esc(n)+'">'+esc(n)+'</option>').join('')+'</select></label><label>Completion requirement<select id="gfHwGoal" class="control"><option value="80">Pass · 80%</option><option value="100">Gold · 100%</option></select></label><label>Due date<input required type="date" id="gfHwDue" class="control"></label></div><div class="gf-hw-picker-top"><div><strong>Select grammar points and levels</strong><small>Each selected level becomes a separate student homework item.</small></div><span id="gfHwSelected">0 selected</span></div><div class="gf-hw-footer"><button type="submit" id="gfHwSubmit" class="control ua-primary">Assign selected levels →</button><button type="button" class="control gf-hw-view" id="gfHwView" hidden>View assignments →</button><span id="gfHwMessage" role="status" aria-live="polite"></span></div><div class="gf-hw-modules">'+mods.map(m=>'<fieldset class="gf-hw-module"><legend>'+esc(title(m))+' <small>'+esc(m.englishTitle||'')+'</small></legend><label class="gf-hw-all"><input type="checkbox" data-all="'+esc(m.id)+'"> All levels</label><div class="gf-hw-levels">'+(m.stages||[]).map(s=>'<label><input type="checkbox" data-stage="'+esc(s.id)+'" data-module="'+esc(m.id)+'"><span>Level '+esc(s.number)+' · '+esc(stitle(s))+'</span></label>').join('')+'</div></fieldset>').join('')+'</div></form>';
  const d=new Date(Date.now()+7*864e5);$('#gfHwDue',el).value=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
- const count=()=>{$('#gfHwSelected',el).textContent=el.querySelectorAll('[data-stage]:checked').length+' selected'};
+ const count=()=>{const n=el.querySelectorAll('[data-stage]:checked').length;$('#gfHwSelected',el).textContent=n+' selected';const button=$('#gfHwSubmit',el);button.textContent=n?'Assign '+n+' selected level'+(n===1?'':'s')+' →':'Select levels to assign';button.disabled=!n||state.loading;if(n)$('#gfHwView',el).hidden=true};count();
+ $('#gfHwView',el).onclick=()=>document.querySelector('#universalAssignments [data-ua-sub="manage"]')?.click();
  el.querySelectorAll('[data-all]').forEach(x=>x.onchange=()=>{el.querySelectorAll('[data-module="'+CSS.escape(x.dataset.all)+'"]').forEach(y=>y.checked=x.checked);count()});
  el.querySelectorAll('[data-stage]').forEach(x=>x.onchange=()=>{const all=el.querySelector('[data-all="'+CSS.escape(x.dataset.module)+'"]');const children=[...el.querySelectorAll('[data-module="'+CSS.escape(x.dataset.module)+'"]')];if(all)all.checked=children.every(c=>c.checked);count()});
  $('#gfHwForm',el).onsubmit=submit;
@@ -50,10 +51,14 @@ async function submit(e){
   const batch=crypto.randomUUID(),due_at=new Date(date+'T23:59:59').toISOString();
   const creator=jwtUserId(token());if(!creator)throw Error('Teacher session is unavailable');
   const rows=chosen.map(({m,s})=>({batch_id:batch,class_name:klass,module_id:String(m.id),stage_id:String(s.id),module_title:title(m),stage_title:stitle(s),completion_percent:goal,due_at,created_by:creator}));
-  const saved=await table('',{method:'POST',headers:{'Content-Type':'application/json','Prefer':'return=representation'},body:JSON.stringify(rows)});
-  message('Created '+saved.length+' separate homework items for '+klass+'.');
-  el.querySelectorAll('[data-stage],[data-all]').forEach(x=>x.checked=false);$('#gfHwSelected',el).textContent='0 selected';
- }catch(error){message('Could not assign: '+error.message,true)}finally{state.loading=false;$('#gfHwSubmit',el).disabled=false}
+  await table('',{method:'POST',headers:{'Content-Type':'application/json','Prefer':'return=representation'},body:JSON.stringify(rows)});
+  const confirmed=await table('?select=id&batch_id=eq.'+encodeURIComponent(batch)+'&limit='+rows.length);
+  if(!Array.isArray(confirmed)||confirmed.length!==rows.length)throw Error('The server did not confirm all '+rows.length+' items. Please check Manage Homework before retrying.');
+  message('Assigned '+confirmed.length+' separate homework item'+(confirmed.length===1?'':'s')+' to '+klass+'.');
+  el.querySelectorAll('[data-stage],[data-all]').forEach(x=>x.checked=false);
+  $('#gfHwSelected',el).textContent='0 selected';
+  $('#gfHwView',el).hidden=false;
+ }catch(error){message('Could not assign: '+error.message,true)}finally{state.loading=false;const selected=el.querySelectorAll('[data-stage]:checked').length;$('#gfHwSubmit',el).disabled=!selected;$('#gfHwSubmit',el).textContent=selected?'Assign '+selected+' selected level'+(selected===1?'':'s')+' →':'Select levels to assign'}
 }
 function jwtUserId(t){try{const part=t.split('.')[1].replace(/-/g,'+').replace(/_/g,'/');return JSON.parse(atob(part)).sub||''}catch{return''}}
 async function renderManage(){
