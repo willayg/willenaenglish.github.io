@@ -2,7 +2,7 @@
 (()=>{'use strict';
 const root=document.getElementById('universalAssignments');if(!root)return;
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const apps=[{id:'naesin',label:'내신',sub:'Exam practice',icon:'文'},{id:'word',label:'Word Genius',sub:'Vocabulary',icon:'Aa'},{id:'grammar',label:'Grammar Foundations',sub:'Grammar mastery',icon:'G'},{id:'puzzles',label:'Puzzles',sub:'Word games',icon:'◇'}];
+const apps=[{id:'naesin',label:'내신',sub:'Exam practice',icon:'文'},{id:'word',label:'Word Genius',sub:'Vocabulary',icon:'Aa'},{id:'grammar',label:'Grammar Genius',sub:'Grammar mastery',icon:'G'},{id:'puzzles',label:'Puzzles',sub:'Word games',icon:'◇'}];
 let active='naesin',loading=false,groups=[];
 const subviews={naesin:'manage',word:'manage',grammar:'manage',puzzles:'manage'};
 let wordPanel=null,wordHome=null;
