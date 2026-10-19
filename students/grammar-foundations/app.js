@@ -208,18 +208,37 @@ async function loadHomework(){
  try{grammarHomework=await fetchGrammarHomework(token,refreshToken);homeworkAccess.clear();grammarHomework.forEach(h=>homeworkAccess.add(progressKey(h.module_id,h.stage_id)))}
  catch(error){console.warn('[Grammar Genius] homework feed unavailable',error);grammarHomework=[];homeworkAccess.clear()}
 }
+function savedSessionHomeCard(){
+  const saved=sessionStore.load();
+  const mod=findModule(saved?.moduleId);
+  if(!saved||!mod)return '';
+  if(saved.kind==='challenge'){
+    if(!moduleComplete(mod))return '';
+    return '<button type="button" class="gf-resume-card" id="gfResumeSession"><span class="gf-resume-icon" aria-hidden="true">↪</span><span><strong>이어서 학습하기 · Continue</strong><small>'+esc(koTitle(mod))+' · 실전 문제</small></span><span class="gf-resume-arrow" aria-hidden="true">→</span></button>';
+  }
+  const stage=findStage(mod,saved.stageId);
+  const index=mod.stages.findIndex(row=>row.id===stage?.id);
+  if(!stage||index<0||!stageUnlocked(mod,index))return '';
+  const position=Math.min(Math.max(0,Number(saved.index)||0)+1,stage.questions.length);
+  return '<button type="button" class="gf-resume-card" id="gfResumeSession"><span class="gf-resume-icon" aria-hidden="true">↪</span><span><strong>이어서 학습하기 · Continue</strong><small>'+esc(koTitle(mod))+' · Level '+esc(stage.number)+' · '+position+'/'+stage.questions.length+'</small></span><span class="gf-resume-arrow" aria-hidden="true">→</span></button>';
+}
 function renderHome(){
   state={group:null,module:null,stage:null,index:0,score:0,renderer:null,checked:false,results:[],resultSaved:false};setBottom('');
-  root.innerHTML=`<h1 class="gf-title">Grammar Genius</h1><div class="gf-kicker gf-title-en">중학교 문법 기초 학습</div><p class="gf-subtitle">Step을 골라 문법을 차근차근 완성하세요.</p>${homeworkCards(grammarHomework,progressMap)}<div class="gf-targets gf-step-grid">${groups().map(stepCard).join('')}</div>`;
+  root.innerHTML=`<h1 class="gf-title">Grammar Genius</h1><div class="gf-kicker gf-title-en">중학교 문법 기초 학습</div><p class="gf-subtitle">Step을 골라 문법을 차근차근 완성하세요.</p>${savedSessionHomeCard()}${homeworkCards(grammarHomework,progressMap)}<div class="gf-targets gf-step-grid">${groups().map(stepCard).join('')}</div>`;
   root.querySelectorAll('[data-open-group]').forEach(btn=>btn.onclick=()=>nav.navigate({view:'group',group:Number(btn.dataset.openGroup)}));
   root.querySelectorAll('[data-homework-stage]').forEach(btn=>btn.onclick=()=>nav.navigate({view:'practice',moduleId:btn.dataset.homeworkModule,stageId:btn.dataset.homeworkStage}));
+  document.getElementById('gfResumeSession')?.addEventListener('click',()=>{
+    const route=resumeRoute();
+    if(route)void nav.navigate(route);
+    else renderHome();
+  });
 }
 function renderGroup(number){
   const group=groups().find(g=>g.number===Number(number));if(!group)return nav.replace({view:'home'});
   state={group:group.number,module:null,stage:null,index:0,score:0,renderer:null,checked:false,results:[],resultSaved:false};setBottom('');
   const stats=groupStats(group);
   root.innerHTML=`<button class="back" id="groupBack">← Grammar Genius</button><div class="gf-step-heading"><div><div class="gf-kicker">GRAMMAR GENIUS</div><h1 class="gf-title">Step ${group.number}</h1><p class="gf-subtitle">${stats.sets}개 문법 항목 · ${stats.passed}/${stats.total} levels complete</p></div><div class="ring gf-ring" style="--p:${stats.pct}%"><b>${stats.pct}%</b></div></div><div class="gf-targets">${group.items.map(lessonCard).join('')}</div>`;
-  document.getElementById('groupBack').onclick=()=>nav.back();
+  document.getElementById('groupBack').onclick=()=>nav.navigate({view:'home'},{replace:true});
   root.querySelectorAll('[data-open-module]').forEach(btn=>btn.onclick=()=>nav.navigate({view:'module',moduleId:btn.dataset.openModule}));
 }
 async function hydrateChallengeCard(mod){
@@ -238,7 +257,7 @@ function renderModule(mod){
   state={group,module:mod,stage:null,index:0,score:0,renderer:null,checked:false,results:[],resultSaved:false};setBottom('');
   const pct=modulePct(mod),done=passedCount(mod),required=passScore(mod),next=currentStage(mod),complete=moduleComplete(mod);
   root.innerHTML=`<button class="back" id="moduleBack">← Step ${group}</button><section class="gf-module-overview exam-card${goldModule(mod)?" gf-gold":""}"><div class="gf-target-head exam-head"><div class="gf-target-copy"><div class="exam-school">Step ${group}</div><h2 class="exam-title">${esc(koTitle(mod))}</h2><div class="exam-book">${esc(enTitle(mod))} · ${done}/${mod.stages.length} levels complete</div><div class="exam-meta"><span class="pill">${goldModule(mod)?'★ Gold':complete?'Complete':next?`Next: Level ${next.number}`:'No levels'}</span><span class="pill">${required}/10 to pass</span></div></div><div class="ring gf-ring" style="--p:${pct}%"><b>${pct}%</b></div></div></section><div class="gf-level-heading"><div><div class="gf-kicker">Lesson levels</div><h2>Choose a level</h2></div><span>${done}/${mod.stages.length} complete</span></div><div class="gf-stage-grid">${mod.stages.map((s,i)=>stageCard(mod,s,i)).join('')}</div>${complete?`<div id="challengeSlot" data-module="${esc(mod.id)}"><div class="loading">실전 문제 확인 중…</div></div>`:''}`;
-  document.getElementById('moduleBack').onclick=()=>nav.back();
+  document.getElementById('moduleBack').onclick=()=>nav.navigate({view:'group',group},{replace:true});
   root.querySelectorAll('[data-stage]:not([disabled])').forEach(btn=>btn.onclick=()=>nav.navigate({view:'guide',moduleId:btn.dataset.module,stageId:btn.dataset.stage}));
   if(complete)void hydrateChallengeCard(mod);
 }
@@ -247,7 +266,7 @@ function renderGuide(mod,stage){
   resetRound(mod,stage);setBottom('');const row=stageProgress(mod.id,stage.id),hasResume=sessionStore.matches(mod.id,stage.id)&&sessionStore.load()?.kind!=='challenge',saved=sessionStore.load();
   const startLabel=hasResume?`이어하기 · ${Math.min(Number(saved?.index)||0,stage.questions.length)}/${stage.questions.length}`:`${stage.questions.length}문제 시작 →`;
   root.innerHTML=`<button class="back" id="guideBack">← ${esc(koTitle(mod))}</button><div class="gf-guide"><div class="gf-kicker">Step ${state.group} · Level ${stage.number}</div><h2>${esc(koTitle(stage))}</h2><p>${esc(enTitle(stage))}</p>${stage.subtitle?`<p>${esc(stage.subtitle)}</p>`:''}${row?`<div class="gf-guide-score">Best ${row.best_score}/${row.total} · ${row.attempt_count} attempt${row.attempt_count===1?'':'s'}</div>`:''}${hasResume?'<div class="gf-guide-score">진행 중인 학습이 저장되어 있어요.</div>':''}<div class="gf-rule">${esc(stage.guide?.rule||'')}</div><div class="gf-example-list">${(stage.guide?.examples||[]).map(x=>`<div class="gf-example">${esc(x)}</div>`).join('')}</div><div class="gf-actions"><button class="gf-btn secondary" id="backModule">목록</button><button class="gf-btn primary" id="startStage">${startLabel}</button></div></div>`;
-  document.getElementById('guideBack').onclick=()=>nav.back();
+  document.getElementById('guideBack').onclick=()=>nav.navigate({view:'module',moduleId:mod.id},{replace:true});
   document.getElementById('backModule').onclick=()=>nav.navigate({view:'module',moduleId:mod.id});
   document.getElementById('startStage').onclick=()=>nav.navigate({view:'practice',moduleId:mod.id,stageId:stage.id});
 }
@@ -265,7 +284,7 @@ function renderQuestion(){
   const q=currentQuestion();if(!q){nav.navigate({view:'result',moduleId:state.module.id,stageId:state.stage.id});return}
   state.checked=false;const pct=Math.round((state.index/state.stage.questions.length)*100);
   root.innerHTML=`<button class="back" id="questionBack">← Level ${state.stage.number}</button><div class="gf-question-head"><div><div class="gf-kicker">Step ${state.group} · ${esc(koTitle(state.module))} · Level ${state.stage.number}</div><b>${esc(koTitle(state.stage))}</b><small>${esc(enTitle(state.stage))}</small></div><span class="gf-progress">${state.index+1} / ${state.stage.questions.length}</span></div><div class="progress gf-round-progress"><i style="width:${pct}%"></i></div><div class="gf-question-card" id="questionHost"></div>`;
-  document.getElementById('questionBack').onclick=()=>nav.back();
+  document.getElementById('questionBack').onclick=()=>nav.navigate({view:'module',moduleId:state.module.id},{replace:true});
   const host=document.getElementById('questionHost');
   state.renderer=new QuestionRenderer(host).render(q,{onChange:(_,has)=>{const btn=document.getElementById('checkAnswer');if(btn&&!state.checked)btn.disabled=!has}});
   setBottom('<button id="checkAnswer" disabled>Check Answer</button>');document.getElementById('checkAnswer').onclick=checkAnswer;
@@ -291,10 +310,12 @@ async function renderResult(mod,stage){
   const required=passScore(mod),passed=state.score>=required,total=stage.questions.length;
   root.innerHTML=`<div class="gf-result"><div class="gf-kicker">Step ${state.group} · ${esc(koTitle(mod))} · ${esc(koTitle(stage))}</div><div class="gf-score">${state.score}/${total}</div><div class="gf-pass">${passed?'Passed ✓':'Redo this level'}</div><p id="saveStatus">${state.resultSaved?'Progress saved':'Saving progress…'}</p></div>`;
   let saved=state.resultSaved;if(!saved){saved=await saveStageResult();state.resultSaved=saved}
+  const current=nav?.currentRoute();
+  if(current?.view!=='result'||current.moduleId!==mod.id||current.stageId!==stage.id)return;
   const row=stageProgress(mod.id,stage.id),next=nextStage();
   root.innerHTML=`<div class="gf-result"><div class="gf-kicker">Step ${state.group} · ${esc(koTitle(mod))} · Level ${stage.number}</div><h2>${esc(koTitle(stage))}</h2><p>${esc(enTitle(stage))}</p><div class="gf-score">${state.score}/${total}</div><div class="gf-pass">${passed?'Passed ✓':'Redo this level'}</div><p>${passed?'좋아요. 다음 단계로 넘어갈 준비가 됐어요.':`통과하려면 ${required}/${total} 이상이 필요해요.`}</p>${row?`<div class="gf-result-best">Best ${row.best_score}/${row.total} · ${row.attempt_count} attempts</div>`:''}${saved?'':'<div class="gf-save-warning">Progress could not be saved. You can retry this round.</div>'}<div class="gf-result-actions"><button class="gf-btn secondary" id="resultModule">레벨 목록</button>${passed&&next?'<button class="gf-btn secondary" id="nextGuide">다음 레벨 보기</button>':''}<button class="gf-btn primary" id="redoStage">${passed?'다시 풀기':'Redo →'}</button></div></div>`;
   document.getElementById('resultModule').onclick=()=>nav.navigate({view:'module',moduleId:mod.id});
-  document.getElementById('redoStage').onclick=()=>nav.navigate({view:'guide',moduleId:mod.id,stageId:stage.id});
+  document.getElementById('redoStage').onclick=()=>nav.navigate({view:'practice',moduleId:mod.id,stageId:stage.id});
   if(passed&&next)document.getElementById('nextGuide').onclick=()=>nav.navigate({view:'guide',moduleId:mod.id,stageId:next.id});
 }
 function nextStage(){const i=state.module?.stages?.findIndex(s=>s.id===state.stage?.id)??-1;return i>=0?state.module.stages[i+1]||null:null}
@@ -304,35 +325,36 @@ async function renderChallenge(mod,{source}={}){
   setBottom('');
   if(!restoreChallenge(mod)){
     root.innerHTML=`<button class="back" id="challengeLoadBack">← ${esc(koTitle(mod))}</button><div class="loading">실전 문제 불러오는 중…</div>`;
-    document.getElementById('challengeLoadBack').onclick=()=>nav.back();
+    document.getElementById('challengeLoadBack').onclick=()=>nav.navigate({view:'module',moduleId:mod.id},{replace:true});
     try{
       const data=await fetchChallenge(mod);
+      if(nav?.currentRoute()?.view!=='challenge'||nav.currentRoute().moduleId!==mod.id)return;
       if(!data.available||!Array.isArray(data.questions)){challengeAvailability.set(mod.id,data);return renderChallengeUnavailable(mod)}
       const questions=data.questions.map(adaptStored).filter(q=>q&&q.form!==FORMS.unsupported);
       if(questions.length<5)return renderChallengeUnavailable(mod);
       resetChallenge(mod,questions,{poolSize:data.poolSize,zPoolSize:data.zPoolSize,count:questions.length});
       saveChallengeSnapshot(0);
-    }catch(e){console.error('[grammar-foundations] challenge load failed',e);return renderChallengeError(mod,e)}
+    }catch(e){console.error('[grammar-foundations] challenge load failed',e);if(nav?.currentRoute()?.view!=='challenge'||nav.currentRoute().moduleId!==mod.id)return;return renderChallengeError(mod,e)}
   }
   setSessionProtection(true);renderChallengeQuestion();
 }
 function renderChallengeUnavailable(mod){
   setSessionProtection(false);setBottom('');
   root.innerHTML=`<button class="back" id="challengeUnavailableBack">← ${esc(koTitle(mod))}</button><div class="gf-result"><div class="gf-kicker">EXAM CHALLENGE</div><h2>실전 문제 준비 중</h2><p>이 문법에 정확히 맞는 실전 문제가 아직 5개 미만이에요.</p><div class="gf-result-actions"><button class="gf-btn primary" id="challengeUnavailableModule">레벨 목록</button></div></div>`;
-  document.getElementById('challengeUnavailableBack').onclick=()=>nav.back();
+  document.getElementById('challengeUnavailableBack').onclick=()=>nav.navigate({view:'module',moduleId:mod.id},{replace:true});
   document.getElementById('challengeUnavailableModule').onclick=()=>nav.navigate({view:'module',moduleId:mod.id});
 }
 function renderChallengeError(mod,error){
   setSessionProtection(false);setBottom('');
   root.innerHTML=`<button class="back" id="challengeErrorBack">← ${esc(koTitle(mod))}</button><div class="gf-result"><div class="gf-kicker">EXAM CHALLENGE</div><h2>실전 문제를 불러오지 못했어요</h2><p>${esc(error?.message||error||'Unknown error')}</p><div class="gf-result-actions"><button class="gf-btn primary" id="challengeRetry">다시 시도</button></div></div>`;
-  document.getElementById('challengeErrorBack').onclick=()=>nav.back();
+  document.getElementById('challengeErrorBack').onclick=()=>nav.navigate({view:'module',moduleId:mod.id},{replace:true});
   document.getElementById('challengeRetry').onclick=()=>{sessionStore.clear();renderChallenge(mod,{source:'retry'})};
 }
 function renderChallengeQuestion(){
   const q=currentChallengeQuestion();if(!q){nav.navigate({view:'challenge-result',moduleId:challengeState.module.id});return}
   challengeState.checked=false;const total=challengeState.questions.length,pct=Math.round((challengeState.index/total)*100),source=q.source?.label||q.source?.code||'Exam';
   root.innerHTML=`<button class="back" id="challengeBack">← ${esc(koTitle(challengeState.module))}</button><div class="gf-question-head"><div><div class="gf-kicker">Step ${groupNumber(challengeState.module)} · ${esc(source)}</div><b>실전 문제</b><small>Exam Challenge · ${esc(enTitle(challengeState.module))}</small></div><span class="gf-progress">${challengeState.index+1} / ${total}</span></div><div class="progress gf-round-progress"><i style="width:${pct}%"></i></div><div class="gf-question-card" id="challengeQuestionHost"></div>`;
-  document.getElementById('challengeBack').onclick=()=>nav.back();
+  document.getElementById('challengeBack').onclick=()=>nav.navigate({view:'module',moduleId:mod.id},{replace:true});
   const host=document.getElementById('challengeQuestionHost');
   challengeState.renderer=new QuestionRenderer(host).render(q,{onChange:(_,has)=>{const btn=document.getElementById('checkChallenge');if(btn&&!challengeState.checked)btn.disabled=!has}});
   setBottom('<button id="checkChallenge" disabled>Check Answer</button>');document.getElementById('checkChallenge').onclick=checkChallengeAnswer;
@@ -360,6 +382,8 @@ async function renderChallengeResult(mod){
   root.innerHTML=`<div class="gf-result"><div class="gf-kicker">Step ${groupNumber(mod)} · ${esc(koTitle(mod))}</div><h2>실전 문제</h2><p>Exam Challenge</p><div class="gf-score">${snapshot.score}/${total}</div><div class="gf-pass">${passed?'Passed ✓':'Try again'}</div><p>Saving challenge result…</p></div>`;
   challengeState=snapshot;
   let save={ok:challengeState.resultSaved,required};if(!challengeState.resultSaved){save=await saveChallengeResult();challengeState.resultSaved=save.ok}
+  const current=nav?.currentRoute();
+  if(current?.view!=='challenge-result'||current.moduleId!==mod.id)return;
   const row=challengeProgress(mod.id);
   root.innerHTML=`<div class="gf-result"><div class="gf-kicker">Step ${groupNumber(mod)} · ${esc(koTitle(mod))}</div><h2>실전 문제</h2><p>Exam Challenge</p><div class="gf-score">${challengeState.score}/${total}</div><div class="gf-pass">${passed?'Passed ✓':'Try again'}</div><p>${passed?'실전 문제까지 통과했어요.':`통과하려면 ${save.required}/${total} 이상이 필요해요.`}</p>${row?`<div class="gf-result-best">Best ${row.best_score}/${row.total} · ${row.attempt_count} attempts</div>`:''}${save.ok?'':'<div class="gf-save-warning">Challenge result could not be saved.</div>'}<div class="gf-result-actions"><button class="gf-btn secondary" id="challengeResultModule">레벨 목록</button><button class="gf-btn primary" id="redoChallenge">새 실전 문제 풀기</button></div></div>`;
   document.getElementById('challengeResultModule').onclick=()=>nav.navigate({view:'module',moduleId:mod.id});
@@ -390,6 +414,7 @@ async function navigationGuard(prev,next){
 }
 function renderRoute(route,meta={}){
   hideWillenaKeyboard();
+  window.dispatchEvent(new CustomEvent('grammar-genius:route-change',{detail:{view:route.view}}));
   if(!['practice','challenge'].includes(route.view))setSessionProtection(false);
   window.scrollTo({top:0,behavior:'auto'});
   if(route.view==='home')return renderHome();
@@ -403,6 +428,15 @@ function renderRoute(route,meta={}){
   if(route.view==='practice')return renderPractice(mod,stage,meta);
   if(route.view==='result')return renderResult(mod,stage);
 }
+
+document.getElementById('gfHomeButton')?.addEventListener('click',()=>{
+  if(!nav)return;
+  if(nav.currentRoute()?.view==='home'){
+    window.scrollTo({top:0,behavior:'smooth'});
+    return;
+  }
+  void nav.navigate({view:'home'},{replace:true}).catch(error=>console.warn('[Grammar Genius] home navigation failed',error));
+});
 
 installWillenaKeyboard({submitSelector:'#bottom button'});
 startStudentHeaderData();
