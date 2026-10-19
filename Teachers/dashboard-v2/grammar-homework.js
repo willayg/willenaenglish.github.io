@@ -1,4 +1,4 @@
-/* Grammar Foundations homework. Existing stage progress remains the sole scoring source. */
+/* Grammar Genius homework. Existing stage progress remains the sole scoring source. */
 (()=>{'use strict';
 const OP='https://fiieuiktlsivwfgyivai.supabase.co',KEY='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
 const CATALOG='https://gxwfsqxyuufqtitspfqg.supabase.co/functions/v1/grammar-foundations-catalog';
@@ -28,7 +28,7 @@ async function classes(){
 function root(){return $('#uaGrammarHomework')}
 async function mount(sub){
  state.mode=sub;state.details.clear();const el=root();if(!el)return;
- el.innerHTML='<div class="gf-hw-loading">Loading Grammar Foundations homework…</div>';
+ el.innerHTML='<div class="gf-hw-loading">Loading Grammar Genius homework…</div>';
  try{if(sub==='create')await renderCreate();else await renderManage()}catch(e){if(root())root().innerHTML='<div class="gf-hw-error">Could not load assignments: '+esc(e.message)+'</div>'}
 }
 async function renderCreate(){
@@ -66,7 +66,7 @@ function paintManage(){
  const el=root();if(!el)return;
  const entries=state.items.filter(a=>state.filter==='history'?!a.active:a.active);
  const groups=new Map();entries.forEach(a=>{const id=a.batch_id||a.id;if(!groups.has(id))groups.set(id,[]);groups.get(id).push(a)});
- el.innerHTML='<div class="gf-hw-toolbar"><div class="assignment-status-tabs"><button type="button" class="assignment-status-tab'+(state.filter==='current'?' active':'')+'" data-gf-filter="current">Current</button><button type="button" class="assignment-status-tab'+(state.filter==='history'?' active':'')+'" data-gf-filter="history">History</button></div><button class="control" id="gfHwRefresh" type="button">Refresh</button></div><div class="gf-hw-groups">'+([...groups.values()].map(rows=>{const first=rows[0];return '<section class="gf-hw-group"><header><div><strong>'+esc(first.class_name)+' · '+esc(rows.length===1?first.module_title:'Grammar Foundations')+'</strong><small>Due '+esc(new Date(first.due_at).toLocaleDateString())+' · '+esc(first.completion_percent)+'% required · '+rows.length+' level(s)</small></div></header><div class="gf-hw-group-items">'+rows.map(a=>'<div class="gf-hw-assignment"><button type="button" class="gf-hw-row" data-progress="'+esc(a.id)+'"><span><b>'+esc(a.module_title)+'</b><small>'+esc(a.stage_title)+'</small></span><span>View progress →</span></button><div id="gfHwDetail-'+esc(a.id)+'"></div></div>').join('')+'</div><div class="gf-hw-group-actions"><button type="button" class="control" data-toggle-batch="'+esc(first.batch_id)+'" data-active="'+(!first.active)+'">'+(first.active?'Close homework':'Reopen homework')+'</button></div></section>'}).join('')||'<div class="ua-empty">No '+(state.filter==='current'?'current':'past')+' Grammar Foundations assignments.</div>')+'</div>';
+ el.innerHTML='<div class="gf-hw-toolbar"><div class="assignment-status-tabs"><button type="button" class="assignment-status-tab'+(state.filter==='current'?' active':'')+'" data-gf-filter="current">Current</button><button type="button" class="assignment-status-tab'+(state.filter==='history'?' active':'')+'" data-gf-filter="history">History</button></div><button class="control" id="gfHwRefresh" type="button">Refresh</button></div><div class="gf-hw-groups">'+([...groups.values()].map(rows=>{const first=rows[0];return '<section class="gf-hw-group"><header><div><strong>'+esc(first.class_name)+' · '+esc(rows.length===1?first.module_title:'Grammar Genius')+'</strong><small>Due '+esc(new Date(first.due_at).toLocaleDateString())+' · '+esc(first.completion_percent)+'% required · '+rows.length+' level(s)</small></div></header><div class="gf-hw-group-items">'+rows.map(a=>'<div class="gf-hw-assignment"><button type="button" class="gf-hw-row" data-progress="'+esc(a.id)+'"><span><b>'+esc(a.module_title)+'</b><small>'+esc(a.stage_title)+'</small></span><span>View progress →</span></button><div id="gfHwDetail-'+esc(a.id)+'"></div></div>').join('')+'</div><div class="gf-hw-group-actions"><button type="button" class="control" data-toggle-batch="'+esc(first.batch_id)+'" data-active="'+(!first.active)+'">'+(first.active?'Close homework':'Reopen homework')+'</button></div></section>'}).join('')||'<div class="ua-empty">No '+(state.filter==='current'?'current':'past')+' Grammar Genius assignments.</div>')+'</div>';
  el.querySelectorAll('[data-gf-filter]').forEach(b=>b.onclick=()=>{state.filter=b.dataset.gfFilter;paintManage()});
  $('#gfHwRefresh',el).onclick=()=>mount('manage');
  el.querySelectorAll('[data-progress]').forEach(b=>b.onclick=()=>showProgress(b.dataset.progress));
