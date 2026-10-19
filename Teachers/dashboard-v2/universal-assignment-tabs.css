@@ -42,3 +42,13 @@
 .ua-empty p{margin:6px 0;font-size:13px}
 @media(max-width:980px){.ua-app-tabs{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:600px){#universalAssignments{padding:16px}.ua-workspace{padding:15px}.ua-topline{display:block}.ua-workspace-status{display:none}.ua-app-tabs{gap:8px}.ua-app-tab{padding:12px 9px;gap:8px}.ua-app-icon{width:34px;height:34px;flex-basis:34px;font-size:16px}.ua-app-label b{font-size:12px}.ua-app-label small{font-size:10px}.ua-feature{gap:14px;padding:17px}.ua-feature-symbol{width:45px;height:45px;flex-basis:45px;font-size:21px}.ua-actions{align-items:flex-start;flex-wrap:wrap}.ua-section-count{white-space:normal}}
+
+/* Preserve the existing Word Genius tracker inside the unified workspace. */
+.ua-word-actions{display:flex;justify-content:space-between;align-items:center;gap:20px;flex-wrap:wrap;margin-bottom:20px;padding:18px 20px;border:1px solid #e5eaf0;border-radius:16px;background:#fff}
+.ua-word-actions h4{margin:0 0 5px;font-size:18px;color:var(--ink,#343343)}
+.ua-word-actions p{margin:0;color:var(--muted,#7d8390);font-size:13px;line-height:1.55}
+.ua-word-actions .ua-primary{white-space:nowrap;text-decoration:none}
+#universalAssignments .ua-mounted-word{display:block!important}
+#universalAssignments .ua-mounted-word>.page-head{margin-bottom:18px}
+#universalAssignments #assignmentWorkspace{width:100%}
+@media(max-width:600px){.ua-word-actions .ua-primary{width:100%}}
