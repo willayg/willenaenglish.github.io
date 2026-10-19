@@ -4,6 +4,7 @@ const root=document.getElementById('universalAssignments');if(!root)return;
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const apps=[{id:'naesin',label:'내신',sub:'Exam practice',icon:'文'},{id:'word',label:'Word Genius',sub:'Vocabulary',icon:'Aa'},{id:'grammar',label:'Grammar Foundations',sub:'Grammar mastery',icon:'G'},{id:'puzzles',label:'Puzzles',sub:'Word games',icon:'◇'}];
 let active='naesin',loading=false,groups=[];
+const subviews={naesin:'manage',word:'manage',grammar:'manage',puzzles:'manage'};
 let wordPanel=null,wordHome=null;
 function restoreWordPanel(){if(wordPanel&&wordHome&&wordPanel.parentElement!==wordHome)wordHome.appendChild(wordPanel)}
 function showWordPanel(body){const panel=document.querySelector('[data-vocab-subview="assignments"]');if(!panel){body.innerHTML='<div class="ua-empty">Word Genius tracking unavailable.</div>';return}if(!wordPanel){wordPanel=panel;wordHome=panel.parentElement}panel.classList.add('ua-mounted-word');panel.classList.add('active');body.appendChild(panel);window.dispatchEvent(new CustomEvent('vocab:assignments-open'))}
@@ -11,12 +12,14 @@ function showWordPanel(body){const panel=document.querySelector('[data-vocab-sub
 function groupRows(){return window.NaesinV2Data?.getCachedGroups?.()||[]}
 function render(){
  restoreWordPanel();
- const selected=apps.find(a=>a.id===active);
+ const selected=apps.find(a=>a.id===active),sub=subviews[active];
  root.innerHTML='<div class="ua-topline"><div><div class="ua-eyebrow">ASSIGNMENT MANAGER</div><h2>Choose an activity</h2><p>Select an app to assign practice or manage its homework.</p></div><span class="ua-workspace-status">Teacher workspace</span></div>'+
  '<div class="ua-app-tabs" role="tablist" aria-label="Assignment app">'+apps.map(a=>'<button type="button" role="tab" aria-selected="'+(active===a.id)+'" class="ua-app-tab'+(active===a.id?' active':'')+'" data-ua-tab="'+a.id+'"><span class="ua-app-icon" aria-hidden="true">'+a.icon+'</span><span class="ua-app-label"><b>'+a.label+'</b><small>'+a.sub+'</small></span></button>').join('')+'</div>'+
- '<section class="ua-workspace" aria-label="'+selected.label+' assignments"><div class="ua-section-heading"><div><div class="ua-eyebrow">CREATE & MANAGE</div><h3>'+selected.label+'</h3></div><span class="ua-section-count" id="uaStatus">'+(active==='naesin'?groups.length+' exam groups':active==='word'?'Available in Vocab':'Not yet connected')+'</span></div><div class="ua-app-body" id="uaAppBody"></div></section>';
+ '<section class="ua-workspace" aria-label="'+selected.label+' assignments"><div class="ua-section-heading"><div><div class="ua-eyebrow">CREATE & MANAGE</div><h3>'+selected.label+'</h3></div><span class="ua-section-count" id="uaStatus">'+(active==='naesin'?groups.length+' exam groups':active==='word'?'Available in Vocab':'Not yet connected')+'</span></div><div class="ua-subtabs" role="tablist" aria-label="Homework workflow"><button type="button" role="tab" data-ua-sub="manage" class="ua-subtab${sub==='manage'?' active':''}" aria-selected="${sub==='manage'}">Manage Homework</button><button type="button" role="tab" data-ua-sub="create" class="ua-subtab${sub==='create'?' active':''}" aria-selected="${sub==='create'}">Assign Homework</button></div><div class="ua-app-body" id="uaAppBody"></div></section>';
  root.querySelectorAll('[data-ua-tab]').forEach(b=>b.addEventListener('click',()=>{active=b.dataset.uaTab;render()}));
+ root.querySelectorAll('[data-ua-sub]').forEach(b=>b.addEventListener('click',()=>{subviews[active]=b.dataset.uaSub;render()}));
  const body=root.querySelector('#uaAppBody');
+ if(active==='naesin'&&sub==='manage'){body.innerHTML='<div class="ua-feature ua-unavailable"><div class="ua-feature-copy"><h4>내신 homework</h4><p>Existing 내신 tracking remains in its own workspace. Choose Assign Homework to create new assignments.</p></div></div>';return}
  if(active==='naesin'){
   body.innerHTML='<div class="ua-actions"><p>Choose an exam group to open its assignment settings.</p><button type="button" class="control ua-outline" id="uaRefresh">'+(loading?'Refreshing…':'↻ Refresh groups')+'</button></div>'+
   (groups.length?'<div class="ua-grid">'+groups.map(item=>{const g=item.group||item;const lessons=(g.scope?.lessons||[]).map(l=>l.lesson).filter(Boolean).join(', ');return '<article class="ua-card"><div class="ua-card-top"><span class="ua-card-kicker">EXAM GROUP</span><span class="ua-card-dot" aria-hidden="true"></span></div><strong>'+esc(g.school||'내신')+'</strong><div class="ua-card-sub">'+esc(g.book_label||g.title||'Exam practice')+'</div><small>'+esc(lessons||'Choose questions and assign practice')+'</small><button type="button" class="control ua-assign" data-ua-group="'+esc(g.id)+'">Assign practice <span aria-hidden="true">→</span></button></article>'}).join('')+'</div>':'<div class="ua-empty"><div class="ua-empty-icon">▤</div><b>No exam groups loaded</b><p>Refresh to load your existing 내신 groups.</p></div>');
@@ -24,10 +27,11 @@ function render(){
   body.querySelectorAll('[data-ua-group]').forEach(b=>b.addEventListener('click',()=>{if(!window.NaesinV2Assignment?.open){alert('내신 assignment module is unavailable.');return}window.NaesinV2Assignment.open(b.dataset.uaGroup)}));return;
  }
  if(active==='word'){
- body.innerHTML='<div class="ua-word-actions"><div><h4>Word Genius homework</h4><p>Create assignments in Word Builder, or inspect current and past Word Genius homework below.</p></div><a class="control ua-primary" href="/Teachers/tools/wordtest/wordtest2.html">Open Word Builder →</a></div>';
- showWordPanel(body);window.dispatchEvent(new CustomEvent('ua:word-mounted'));return;
+ if(sub==='manage'){body.innerHTML='<div class="ua-word-actions"><div><h4>Manage Word Genius homework</h4><p>Current assignments, history and student progress.</p></div></div>';showWordPanel(body)}
+ else{body.innerHTML='<div class="ua-word-actions"><div><h4>Assign Word Genius homework</h4><p>Choose database books and units or use Word Builder.</p></div><a class="control ua-primary" href="/Teachers/tools/wordtest/wordtest2.html">Open Word Builder →</a></div><div class="ua-catalog-host"></div>';window.dispatchEvent(new CustomEvent('ua:word-mounted'))}
+ return;
  }
- const desc=active==='grammar'?'Assign individual grammar steps and track students’ progress.':'Assign word games and review completion by activity.';
+ const desc=sub==='manage'?'Homework tracking is not connected for this app yet.':active==='grammar'?'Grammar step assignment creation is not connected yet.':'Puzzle assignment creation is not connected yet.';
  body.innerHTML='<div class="ua-feature ua-unavailable"><div class="ua-feature-symbol">'+(active==='grammar'?'G':'◇')+'</div><div class="ua-feature-copy"><span class="ua-coming-label">Assignment integration pending</span><h4>'+selected.label+' assignments</h4><p>'+desc+' The assignment connection is not built yet; existing student progress is unaffected.</p></div></div>';
 }
 async function refresh(){
