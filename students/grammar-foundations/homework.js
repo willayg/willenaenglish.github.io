@@ -1,4 +1,4 @@
-/* Student Grammar Foundations homework feed; uses existing stage progress for completion. */
+/* Student Grammar Genius homework feed; uses existing stage progress for completion. */
 const URL='https://fiieuiktlsivwfgyivai.supabase.co/rest/v1/grammar_foundation_homework';
 const KEY='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
 export async function fetchGrammarHomework(getToken,refreshToken){
