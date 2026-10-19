@@ -45,7 +45,7 @@
       return last.getFullYear()===now.getFullYear()&&last.getMonth()===now.getMonth()&&last.getDate()===now.getDate();
     }).length;
     if(summary)summary.innerHTML=
-      '<div class="vocab-summary-card"><b>'+(avg==null?'—':avg+'%')+'</b><span>class vocab</span></div>'+
+      '<div class="vocab-summary-card"><b>'+(avg==null?'—':avg+'%')+'</b><span>Word Genius avg.</span></div>'+
       '<div class="vocab-summary-card"><b>'+activeToday+'</b><span>studied today</span></div>'+
       '<div class="vocab-summary-card"><b>'+withEvidence.length+' / '+rows.length+'</b><span>with evidence</span></div>';
     if(!rows.length){list.innerHTML='<div class="empty">No students found.</div>';return}
@@ -64,7 +64,7 @@
       };
       return '<div class="vocab-progress-row" data-student-id="'+esc(s.user_id)+'">'+
         '<div class="vocab-student"><button type="button" class="vocab-student-open"><span><b>'+esc(s.name||'Student')+'</b><small>'+esc(s.korean_name||'')+'</small></span><i>›</i></button></div>'+
-        '<div class="vocab-matrix-stat overall '+(acc==null?'empty':'')+'"><strong>'+(acc==null?'—':acc+'%')+'</strong><small>recent vocab</small></div>'+
+        '<div class="vocab-matrix-stat overall '+(acc==null?'empty':'')+'"><strong>'+(acc==null?'—':acc+'%')+'</strong><small>recent Word Genius</small></div>'+
         cell(vocab,'Quiz')+
         cell(spell,'Spelling','spelling')+
         cell(speak,'Speaking','speaking')+
@@ -91,7 +91,7 @@
       state.days=Number($('#vocabProgressDays')?.value)||30;
       const key=state.className+'|'+state.days;
       if(!force&&state.loadedKey===key){render();return}
-      list.innerHTML='<div class="empty">Loading vocabulary progress…</div>';
+      list.innerHTML='<div class="empty">Loading Word Genius progress…</div>';
       if(state.className){
         const data=await api(apiPath('teacher_class_insights',{class:state.className,days:String(state.days)}));
         state.students=Array.isArray(data.students)?data.students:[];
@@ -103,7 +103,7 @@
         state.students=[...map.values()];
       }
       state.loadedKey=key;render();
-    }catch(e){list.innerHTML='<div class="empty">Could not load vocabulary progress: '+esc(e.message)+'</div>'}
+    }catch(e){list.innerHTML='<div class="empty">Could not load Word Genius progress: '+esc(e.message)+'</div>'}
   }
   function openTab(tab){
     $$('.vocab-hub-tab').forEach(b=>b.classList.toggle('active',b.dataset.vocabTab===tab));
