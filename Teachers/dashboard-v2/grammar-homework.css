@@ -55,3 +55,6 @@
  #uaGrammarHomework .gf-hw-footer #gfHwMessage{min-width:100%;flex-basis:100%}
  #uaGrammarHomework .gf-hw-modules{max-height:58vh}
 }
+
+/* Dashboard .panel normally clips overflow; allow this workspace's sticky controls to follow the page scroll. */
+#view-assignments #universalAssignments{overflow:visible}
