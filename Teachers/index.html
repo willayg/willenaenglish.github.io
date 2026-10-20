@@ -35,6 +35,16 @@
 .roster-assignment-detail{padding:16px;border:1px solid #c9e7eb;border-radius:12px;margin-top:10px}.roster-assignment-head{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;font-size:13px}.roster-assignment-head span{color:#267f89;font-weight:700}.roster-assignment-detail>small{display:block;color:#6e7b87;margin-top:6px}.drawer .skill{grid-template-columns:1fr auto}.roster-sections{display:flex;flex-direction:column;gap:6px;font-size:12px;color:#596b73}
 @media(max-width:1100px){#view-students .roster-columns{display:none!important}#view-students .roster-row{grid-template-columns:140px 1fr!important;gap:14px 22px}.roster-results{grid-column:2}.roster-activity{grid-column:1;grid-row:2}}
 @media(max-width:600px){#view-students .roster-row{grid-template-columns:1fr!important;gap:12px}.roster-results,.roster-activity{grid-column:1;grid-row:auto}.roster-summary{gap:12px}.roster-columns{display:none}.roster-homework{padding-top:10px;border-top:1px solid #e4eef0}}
+
+/* All current assignments are visible directly on each student roster card. */
+.roster-assignment-items{display:grid;gap:8px;margin-top:10px;min-width:0}
+.roster-assignment-item{padding:9px 10px;border:1px solid #deebed;border-radius:10px;background:#f8fbfb;min-width:0}
+.roster-assignment-item-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:9px;font-size:13px;line-height:1.35}
+.roster-assignment-item-title{font-weight:650;overflow-wrap:anywhere;min-width:0}
+.roster-assignment-item-heading b{flex-shrink:0;color:#277f88;font-variant-numeric:tabular-nums}
+.roster-assignment-item-meta{display:flex;flex-wrap:wrap;gap:3px 10px;color:#697682;font-size:11px;margin:4px 0}
+.roster-assignment-overdue{color:#ac493f;font-weight:650}
+.roster-assignment-item .roster-progress{margin-top:6px;height:5px}
 </style>
 <link rel="stylesheet" href="./universal-assignments.css?v=1">
 <link rel="stylesheet" href="./universal-assignment-tracker.css?v=20261015-r3">
@@ -299,11 +309,20 @@ function renderHomeworkCell(id){
   if(rosterAssignments.loading)return '<strong>Loading assignments…</strong>';
   if(rosterAssignments.error)return '<strong>Assignments unavailable</strong><small>Refresh to try again</small>';
   const s=homeworkSummary(id);
-  if(!s.rows.length)return '<strong>No current assignment</strong>';
-  const next=s.rows.filter(x=>!x.result.complete).sort((a,b)=>(Date.parse(a.assignment.due_at)||Infinity)-(Date.parse(b.assignment.due_at)||Infinity))[0];
-  const title=next?next.assignment.title:'All current work completed';
-  const due=next?.assignment.due_at?` · Due ${fmtDate(next.assignment.due_at)}`:'';
-  return `<strong>${s.complete}/${s.rows.length} assignments complete${s.percent==null?'':` · ${s.percent}% average${s.unknown?' of loaded work':''}`}</strong>${s.percent==null?'':`<div class="roster-progress" role="progressbar" aria-label="Average assignment completion" aria-valuenow="${s.percent}" aria-valuemin="0" aria-valuemax="100"><i style="width:${s.percent}%"></i></div>`}<small>${esc(title+due)}</small>${s.unknown?`<small>${s.unknown} progress record${s.unknown===1?'':'s'} unavailable</small>`:''}`;
+  if(!s.rows.length)return '<strong>No current assignments</strong>';
+  const sorted=[...s.rows].sort((a,b)=>{
+    if(!!a.result.complete!==!!b.result.complete)return a.result.complete?1:-1;
+    return (Date.parse(a.assignment.due_at)||Infinity)-(Date.parse(b.assignment.due_at)||Infinity);
+  });
+  const overview=`<strong>${s.complete}/${s.rows.length} assignments complete${s.percent==null?'':` · ${s.percent}% average${s.unknown?' of loaded work':''}`}</strong>${s.percent==null?'':`<div class="roster-progress" role="progressbar" aria-label="Average assignment completion" aria-valuenow="${s.percent}" aria-valuemin="0" aria-valuemax="100"><i style="width:${s.percent}%"></i></div>`}`;
+  const items=sorted.map(({assignment:a,result:r})=>{
+    const title=a.title||a.list_title||'Assignment';
+    const overdue=a.due_at&&Date.parse(a.due_at)<Date.now()&&!r.complete;
+    const status=r.unknown?'Progress unavailable':r.complete?'Complete':r.started?'In progress':'Not started';
+    const percent=r.unknown?'—':Math.max(0,Math.min(100,Number(r.percent)||0))+'%';
+    return `<div class="roster-assignment-item"><div class="roster-assignment-item-heading"><span class="roster-assignment-item-title">${esc(title)}</span><b>${percent}</b></div><div class="roster-assignment-item-meta"><span>${esc(status)}</span>${a.due_at?`<span${overdue?' class="roster-assignment-overdue"':''}>Due ${esc(fmtDate(a.due_at))}${overdue?' · Past due':''}</span>`:''}</div>${r.unknown?'':`<div class="roster-progress" role="progressbar" aria-label="${esc(title)} completion" aria-valuenow="${Math.round(Number(r.percent)||0)}" aria-valuemin="0" aria-valuemax="100"><i style="width:${Math.max(0,Math.min(100,Number(r.percent)||0))}%"></i></div>`}</div>`;
+  }).join('');
+  return overview+`<div class="roster-assignment-items">${items}</div>`;
 }
 function renderHomeworkDetails(id){
   if(rosterAssignments.loading)return '<div class="empty">Loading assignments…</div>';
