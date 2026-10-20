@@ -118,6 +118,7 @@ const state={
   activeTeacherAssignment:null,
   activeTeacherItems:[],
   assignedSpellingRecovery:null,
+  optionalTeacherCoach:false,
   pendingTeacherRecords:new Set()
 };
 let navController=null;
@@ -333,7 +334,7 @@ function rewardSummaryHtml(reward=state.rewardSession,{pointsOnly=false}={}){
   const starMax=state.activeTeacherAssignment?10:5;
   const stars=Math.max(0,Math.min(starMax,Number(reward.stars)||0));
   const points=Math.max(0,Number(reward.points)||0);
-  return '<student-reward-celebration '+(pointsOnly?'points-only ':'')+'percent="'+rewardPercent(reward)+'" stars="'+stars+'" star-max="'+starMax+'" points="'+points+'" label="'+(state.activeTeacherAssignment?'WORD TEST STUDY':'SESSION REWARD')+'"></student-reward-celebration>';
+  return '<student-reward-celebration '+(pointsOnly?'points-only ':'')+'percent="'+rewardPercent(reward)+'" stars="'+stars+'" star-max="'+starMax+'" points="'+points+'" label="'+(state.optionalTeacherCoach?'OPTIONAL PRACTICE':state.activeTeacherAssignment?'WORD TEST STUDY':'SESSION REWARD')+'"></student-reward-celebration>';
 }
 
 function perfNow(){return window.performance?.now?.()||Date.now()}
@@ -587,7 +588,7 @@ async function reopenActivityRoute(route){
   if(teacherId){
     const row=arr(state.teacherAssignments).find(item=>String(item?.assignment?.id)===String(teacherId));
     if(row){
-      const mode=kind==='quiz'?'quiz':kind==='spelling_test'?'spelling_test':kind==='speaking'?'speaking':'';
+      const mode=kind==='quiz'?'quiz':kind==='spelling_test'?'spelling_test':kind==='spelling_coach'?'spelling_coach':kind==='speaking'?'speaking':'';
       if(mode){startTeacherAssignment(row,mode,{historyMode:'none'});return}
     }
   }
@@ -804,6 +805,15 @@ function teacherAssignmentWords(row,mode=''){
 function teacherModeWordCount(row,mode){
   return teacherAssignmentWords(row,mode).length;
 }
+function teacherCoachWords(row){
+  // Use the spelling allocation in split assignments; otherwise all assigned words.
+  const required=arr(row?.assignment?.required_modes);
+  const assignedSpelling=!required.length||required.includes('spelling_test');
+  return teacherAssignmentWords(row,assignedSpelling?'spelling_test':'').map(word=>{
+    const spellingTarget=getSpellingTarget(word.word);
+    return spellingTarget?Object.assign({},word,{spellingTarget}):null;
+  }).filter(Boolean);
+}
 function teacherModeProgress(row,student,mode){
   const raw=student?.modes?.[mode]||{};
   const split=teacherWorkloadMode(row)==='split';
@@ -913,17 +923,28 @@ function renderTeacherAssignments(){
       '</button>';
     }).join('');
     const wordCount=teacherAssignmentWords(row).length;
+    const coachCount=teacherCoachWords(row).length;
+    const coachHtml=coachCount
+      ?'<button type="button" class="vocab-teacher-optional-coach" data-teacher-coach="'+index+'">'+
+        '<span><strong>철자 코치 <small>선택 연습</small></strong><span>'+coachCount+' words · 힌트와 재도전 · 숙제 완료율에 미반영</span></span>'+
+        '<span class="vocab-teacher-optional-arrow">연습하기 →</span>'+
+      '</button>'
+      :'';
     return '<article class="vocab-teacher-card">'+
       '<div class="vocab-teacher-card-title">'+
         '<div><strong>'+escapeHtml(a.title||'Vocabulary Practice')+'</strong><small>'+wordCount+' words'+(a.due_at?' · '+escapeHtml(formatTeacherDue(a.due_at)):'')+'</small></div>'+
         '<button class="vocab-teacher-words" type="button" data-teacher-words="'+index+'">'+wordCount+' 단어 보기</button>'+
       '</div>'+
-      '<div class="vocab-teacher-modes">'+modeHtml+'</div>'+
+      '<div class="vocab-teacher-modes">'+modeHtml+'</div>'+coachHtml+
     '</article>';
   }).join('');
   teacherPracticeListEl.querySelectorAll('[data-teacher-assignment]').forEach(btn=>btn.addEventListener('click',()=>{
     const row=state.teacherAssignments[Number(btn.dataset.teacherAssignment)];
     if(row)startTeacherAssignment(row,btn.dataset.teacherMode);
+  }));
+  teacherPracticeListEl.querySelectorAll('[data-teacher-coach]').forEach(btn=>btn.addEventListener('click',()=>{
+    const row=state.teacherAssignments[Number(btn.dataset.teacherCoach)];
+    if(row)startTeacherAssignment(row,'spelling_coach');
   }));
   teacherPracticeListEl.querySelectorAll('[data-teacher-words]').forEach(btn=>btn.addEventListener('click',()=>{
     const row=state.teacherAssignments[Number(btn.dataset.teacherWords)];
@@ -978,7 +999,7 @@ async function loadTeacherAssignments({showLoader=true}={}){
 }
 function teacherTitle(mode){
   const title=txt(state.activeTeacherAssignment?.assignment?.title||'Word Test Study');
-  const suffix={quiz:'Quiz',spelling_test:'Spelling Test',speaking:'Speaking'}[mode]||'Practice';
+  const suffix={quiz:'Quiz',spelling_test:'Spelling Test',spelling_coach:'Spelling Coach (Optional)',speaking:'Speaking'}[mode]||'Practice';
   return title+' · '+suffix;
 }
 function startTeacherAssignment(row,mode,{historyMode='push'}={}){
@@ -995,6 +1016,7 @@ function startTeacherAssignment(row,mode,{historyMode='push'}={}){
   state.rewardSession=null;
   state.activeTeacherItems=[];
   state.assignedSpellingRecovery=null;
+  state.optionalTeacherCoach=mode==='spelling_coach';
   state.activeTeacherAssignment=row;
   state.progressSnapshot=null;
 
@@ -1006,9 +1028,10 @@ function startTeacherAssignment(row,mode,{historyMode='push'}={}){
     return;
   }
 
-  const words=teacherRemainingWords(row,mode);
+  const words=mode==='spelling_coach'?teacherCoachWords(row):teacherRemainingWords(row,mode);
   if(!words.length)return;
   if(mode==='spelling_test')openSpellingTest({teacherWords:words,historyMode});
+  else if(mode==='spelling_coach')openSpellingPreview({teacherWords:teacherCoachWords(row),historyMode});
   else if(mode==='speaking')openSpeakingSession({teacherWords:words,historyMode});
 }
 
@@ -1024,6 +1047,7 @@ function startPastTestReview(row,mode,{historyMode='push'}={}){
   state.rewardSession=null;
   state.activeTeacherItems=[];
   state.assignedSpellingRecovery=null;
+  state.optionalTeacherCoach=false;
   state.activeTeacherAssignment=Object.assign({},row,{_reviewOnly:true});
   state.progressSnapshot=null;
 
@@ -1119,17 +1143,21 @@ function recordVocabAttempt({skill,responseType,lexicalEntryId,activityId,prompt
 
   const lexicalId=isUuid(lexicalEntryId)?txt(lexicalEntryId):null;
   const teacherContext=state.activeTeacherAssignment;
-  const teacher=teacherContext?._reviewOnly?null:teacherContext;
+  // Optional Coach is a student practice attempt, NOT an assigned Spelling Test attempt.
+  const optionalCoach=!!state.optionalTeacherCoach&&txt(metadata?.vocab_mode)==='spelling_coach';
+  const teacher=teacherContext?._reviewOnly||optionalCoach?null:teacherContext;
+  const sourceContext=teacher||(optionalCoach?teacherContext:null);
   if(reviewOnly)return;
   const baseMeta=Object.assign({
-    book_id:teacher?(teacher?.assignment?.list_meta?.source_book_id||teacher?.assignment?.book_id||null):(state.book?.book_id||null),
-    unit_id:teacher?(teacher?.assignment?.list_meta?.source_unit_id||teacher?.assignment?.list_meta?.unit_id||teacher?.assignment?.unit_id||null):(state.unit?.id||null),
+    book_id:sourceContext?(sourceContext?.assignment?.list_meta?.source_book_id||sourceContext?.assignment?.book_id||null):(state.book?.book_id||null),
+    unit_id:sourceContext?(sourceContext?.assignment?.list_meta?.source_unit_id||sourceContext?.assignment?.list_meta?.unit_id||sourceContext?.assignment?.unit_id||null):(state.unit?.id||null),
     lexical_entry_id:lexicalId,
     mastery_content_type:'lexical_entry',
     mastery_content_id:lexicalId,
     vocab_study:true,
     points_override:pointValue,
-    assignment_id:teacher?.assignment?.id||null
+    assignment_id:teacher?.assignment?.id||null,
+    optional_assigned_coach:optionalCoach
   },metadata||{});
 
   const recorder=window.WillenaStudyProgress;
@@ -2226,11 +2254,20 @@ async function finishSpellingTest(){
   sessionMain.scrollTop=0;
 }
 
-async function openSpellingPreview({historyMode='replace'}={}){
-  await ensureProgressSnapshot();
-  const words=nextSkillTargets(state.progressSnapshot,'spelling',spellingPreviewWords(state.items),item=>item?.id,'spelling_coach');if(!words.length)return;
+async function openSpellingPreview({teacherWords=null,historyMode='replace'}={}){
+  let words;
+  if(Array.isArray(teacherWords)){
+    words=shuffle(teacherWords.map(word=>{
+      const spellingTarget=getSpellingTarget(word.word);
+      return spellingTarget?Object.assign({},word,{spellingTarget}):null;
+    }).filter(Boolean));
+  }else{
+    await ensureProgressSnapshot();
+    words=nextSkillTargets(state.progressSnapshot,'spelling',spellingPreviewWords(state.items),item=>item?.id,'spelling_coach');
+  }
+  if(!words.length)return;
   state.spellingPractice=createSpellingPractice(words);
-  titleEl.textContent=state.book.book_title+' · Unit '+state.unit.unit_number+' · Spelling';
+  titleEl.textContent=state.optionalTeacherCoach?teacherTitle('spelling_coach'):(state.book.book_title+' · Unit '+state.unit.unit_number+' · Spelling');
   progressEl.textContent='Practice';
   progressFill.style.width='0%';
   instructionEl.hidden=true;
@@ -2466,7 +2503,7 @@ async function closeSession({historyMode='back'}={}){
     navController.back(activityParentFromRoute(navController.current()));
     return;
   }
-  const wasTeacher=!!state.activeTeacherAssignment&&!state.activeTeacherAssignment?._reviewOnly;
+  const wasTeacher=!!state.activeTeacherAssignment&&!state.activeTeacherAssignment?._reviewOnly&&!state.optionalTeacherCoach;
   document.body.classList.remove('vocab-session-open');
   sessionEl.hidden=true;root.innerHTML='';answerNote.hidden=true;bottomEl.hidden=false;instructionEl.hidden=false;
   if(state.renderer?.setDisabled)state.renderer.setDisabled(true);
@@ -2478,7 +2515,7 @@ async function closeSession({historyMode='back'}={}){
     try{await loadTeacherAssignments()}catch(error){console.warn('[Vocab Study] partial homework refresh failed',error)}
   }
 
-  state.queue=[];state.index=0;state.checked=false;state.renderer=null;state.spellingPractice=null;state.spellingTest=null;state.speakingSession=null;state.rewardSession=null;state.pendingGoldenAward=null;state.activeTeacherAssignment=null;state.activeTeacherItems=[];state.assignedSpellingRecovery=null;
+  state.queue=[];state.index=0;state.checked=false;state.renderer=null;state.spellingPractice=null;state.spellingTest=null;state.speakingSession=null;state.rewardSession=null;state.pendingGoldenAward=null;state.activeTeacherAssignment=null;state.activeTeacherItems=[];state.assignedSpellingRecovery=null;state.optionalTeacherCoach=false;
   try{window.scrollTo({top:0,behavior:'auto'})}catch(_){}
 }
 async function boot(){
