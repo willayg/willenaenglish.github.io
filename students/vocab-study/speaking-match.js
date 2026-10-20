@@ -10,6 +10,19 @@ const ORDINAL_WORDS={
   '11':'eleventh','12':'twelfth','13':'thirteenth','14':'fourteenth','15':'fifteenth','16':'sixteenth','17':'seventeenth','18':'eighteenth','19':'nineteenth','20':'twentieth'
 };
 const HOMOPHONE_GROUPS=[
+  // Target-aware STT corrections for words and phrases actually in Word Genius.
+  // These are only used for speaking recognition, never for spelling.
+  ['by','bye','buy'],
+  ['blue','blew'],
+  ['flower','flour'],
+  ['night','knight'],
+  ['wear','where'],
+  ['our','hour'],
+  ['pear','pair'],
+  ['plane','plain'],
+  ['there','their',"they're"],
+  ['be','bee'],
+  ['break','brake'],
   ['new','knew'],
   ['one','won'],
   ['two','to','too'],
