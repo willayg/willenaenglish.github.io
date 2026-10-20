@@ -810,3 +810,22 @@ body.willena-kb-open .vocab-session-main{
 .vocab-old-review-modes>span{margin-right:2px;color:#789095;font-size:.68rem;font-weight:900}
 .vocab-old-review-mode{min-height:36px;padding:7px 12px;border:2px solid #c9f1f4;border-radius:12px;background:#fff;color:#315e64;font:900 .72rem Poppins,system-ui,sans-serif;cursor:pointer}
 .vocab-old-review-mode:active{border-color:var(--pink);color:var(--pink);transform:scale(.98)}
+
+
+/* Optional Spelling Coach on assigned Word Tests (not a required mode). */
+.vocab-teacher-optional-coach{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  width:100%;min-height:70px;margin-top:14px;padding:13px 17px;
+  border:2px solid #bfecef;border-radius:16px;background:#f5fcfd;
+  color:#244f56;font:inherit;text-align:left;cursor:pointer;
+}
+.vocab-teacher-optional-coach>span:first-child{display:flex;flex-direction:column;gap:4px;min-width:0}
+.vocab-teacher-optional-coach strong{font-size:.97rem;font-weight:900;line-height:1.3}
+.vocab-teacher-optional-coach strong small{font-size:.7rem;font-weight:800;color:#b35b85;margin-left:6px}
+.vocab-teacher-optional-coach>span:first-child>span{font-size:.71rem;font-weight:700;color:#637e85;line-height:1.4}
+.vocab-teacher-optional-arrow{flex:0 0 auto;color:#c64e83;font-size:.82rem;font-weight:900;white-space:nowrap}
+.vocab-teacher-optional-coach:hover,.vocab-teacher-optional-coach:focus-visible{border-color:#eea2c4;outline-offset:2px}
+@media(max-width:560px){
+  .vocab-teacher-optional-coach{padding:12px 13px;min-height:64px;gap:8px}
+  .vocab-teacher-optional-arrow{font-size:.73rem}
+}
