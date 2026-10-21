@@ -30,13 +30,13 @@ async function refreshRequest() {
 
   if (window.WillenaAPI && typeof window.WillenaAPI.fetch === 'function') {
     return window.WillenaAPI.fetch(path, {
-      method: 'POST',
+      method: 'GET',
       cache: 'no-store',
     });
   }
 
   return fetch(path, {
-    method: 'POST',
+    method: 'GET',
     credentials: 'include',
     cache: 'no-store',
   });
@@ -55,32 +55,45 @@ function redirectAuthenticatedLogin(data) {
   window.location.replace(target);
 }
 
-export async function ensureTeacherSession() {
-  try {
-    let response = await sessionRequest();
-    let data = await response.json().catch(() => ({}));
+let sessionCheckInFlight = null;
 
-    if (response.ok && data.success) {
-      lastRefreshAt = Date.now();
-      return data;
+// Return null only for an explicitly rejected session. Temporary outages remain distinguishable.
+export function ensureTeacherSession() {
+  if (sessionCheckInFlight) return sessionCheckInFlight;
+  sessionCheckInFlight = (async () => {
+    try {
+      let response = await sessionRequest();
+      let data = await response.json().catch(() => ({}));
+      if (response.ok && data.success && data.user_id) {
+        lastRefreshAt = Date.now();
+        return data;
+      }
+      if (response.status !== 401 && response.status !== 403) {
+        return { success: false, temporary: true, reason: 'whoami_unavailable' };
+      }
+
+      const refreshed = await refreshRequest();
+      const refreshData = await refreshed.json().catch(() => ({}));
+      if (!refreshed.ok || !refreshData.success) {
+        // The auth service returns HTTP 200 with success:false for rejected refresh tokens.
+        if (refreshed.ok && refreshData.success === false) return null;
+        return { success: false, temporary: true, reason: 'refresh_unavailable' };
+      }
+
+      response = await sessionRequest();
+      data = await response.json().catch(() => ({}));
+      if (response.ok && data.success && data.user_id) {
+        lastRefreshAt = Date.now();
+        return data;
+      }
+      if (response.status === 401 || response.status === 403) return null;
+      return { success: false, temporary: true, reason: 'verification_unavailable' };
+    } catch (error) {
+      console.debug('[auth-refresh] teacher session check temporarily unavailable', error);
+      return { success: false, temporary: true, reason: 'network_error' };
     }
-
-    const refreshed = await refreshRequest();
-    if (!refreshed.ok) {
-      lastRefreshAt = Date.now();
-      return null;
-    }
-
-    response = await sessionRequest();
-    data = await response.json().catch(() => ({}));
-    lastRefreshAt = Date.now();
-
-    return response.ok && data.success ? data : null;
-  } catch (error) {
-    lastRefreshAt = Date.now();
-    console.debug('[auth-refresh] persistent teacher session recovery failed', error);
-    return null;
-  }
+  })().finally(() => { sessionCheckInFlight = null; });
+  return sessionCheckInFlight;
 }
 
 async function repairSession() {
