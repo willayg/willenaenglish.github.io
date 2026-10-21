@@ -14,9 +14,9 @@ async function getIdentity() {
   let role = '';
   let name = '';
   try {
-    const whoRes = await apiFetch(AUTH_URL + '?action=whoami');
-    const who = await whoRes.json().catch(() => ({}));
-    if (!whoRes.ok || !who?.user_id) return { role, name };
+    const { ensureTeacherSession } = await import('/Teachers/auth-refresh.js?v=20261021-sessionfix1');
+    const who = await ensureTeacherSession();
+    if (!who?.success || !who?.user_id) return { role, name };
 
     const [roleRes, profileRes] = await Promise.all([
       apiFetch(AUTH_URL + '?action=get_role&user_id=' + encodeURIComponent(who.user_id)),
