@@ -238,7 +238,51 @@ function normalizeAnswer(value,skill=''){
   return String(parsed);
 }
 async function api(url){const resolved=window.WillenaAPI?window.WillenaAPI.getApiUrl(url):url;const r=await fetch(resolved,{credentials:'include',cache:'no-store'});let j={};try{j=await r.json()}catch{}if(!r.ok||j.success===false)throw Error(j.error||`Request failed (${r.status})`);return j}
-async function auth(){try{const mod=await import('/Teachers/auth-refresh.js?v=20260927-persistent-p1');const session=await mod.ensureTeacherSession();if(!session?.success||!session.user_id)throw Error('No session');const role=await api(`${FN('supabase_auth')}?action=get_role&user_id=${encodeURIComponent(session.user_id)}`);if(!['teacher','admin'].includes(String(role.role||'').toLowerCase())){location.href='/Teachers/access-student.html?next='+encodeURIComponent(location.pathname+location.search);return false}try{const p=await api(`${FN('supabase_auth')}?action=get_profile&user_id=${encodeURIComponent(session.user_id)}`);$('#teacherName').textContent=p.name||p.username||'Teacher'}catch{}mod.ensureAuthRefresh();return true}catch{location.href=`/Teachers/login.html?redirect=${encodeURIComponent(location.pathname+location.search)}`;return false}}
+async function auth(){
+  const mod=await import('/Teachers/auth-refresh.js?v=20261021-sessionfix1');
+  const status=$('#statusText');
+  const wait=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+  let session=null;
+  for(let attempt=0;attempt<3;attempt++){
+    session=await mod.ensureTeacherSession();
+    if(session?.success || !session?.temporary)break;
+    if(status)status.textContent='Connection interrupted. Restoring teacher session…';
+    await wait(700*(attempt+1));
+  }
+  if(!session?.success || !session.user_id){
+    if(session?.temporary){
+      if(status)status.textContent='Unable to verify your session. Check your connection and press Refresh.';
+      $('#studentList').innerHTML='<div class="empty">Connection problem — your login has not been cleared. <button id="retryTeacherAuth" type="button">Retry connection</button></div>';
+      $('#retryTeacherAuth').onclick=()=>auth().then(ok=>{if(ok)loadClasses()});
+      return false;
+    }
+    location.replace('/Teachers/login.html?redirect='+encodeURIComponent(location.pathname+location.search));
+    return false;
+  }
+  let role;
+  for(let attempt=0;attempt<3;attempt++){
+    try{
+      role=await api(`${FN('supabase_auth')}?action=get_role&user_id=${encodeURIComponent(session.user_id)}`);
+      break;
+    }catch(e){
+      if(attempt===2){
+        if(status)status.textContent='Could not load teacher permissions. Your login is still saved.';
+        $('#studentList').innerHTML='<div class="empty">Connection problem — <button id="retryTeacherAuth" type="button">Retry connection</button></div>';
+        $('#retryTeacherAuth').onclick=()=>auth().then(ok=>{if(ok)loadClasses()});
+        return false;
+      }
+      await wait(700*(attempt+1));
+    }
+  }
+  if(!['teacher','admin'].includes(String(role.role||'').toLowerCase())){
+    location.href='/Teachers/access-student.html?next='+encodeURIComponent(location.pathname+location.search);
+    return false;
+  }
+  try{const p=await api(`${FN('supabase_auth')}?action=get_profile&user_id=${encodeURIComponent(session.user_id)}`);$('#teacherName').textContent=p.name||p.username||'Teacher'}catch{}
+  if(status)status.textContent='';
+  mod.ensureAuthRefresh();
+  return true;
+}
 function endpoint(section,params={}){const q=new URLSearchParams({section,...params});return `${FN('progress_summary')}?${q}`}
 async function loadClasses(){try{const j=await api(endpoint('teacher_classes'));state.classes=j.classes||[];$('#classSelect').innerHTML='<option value="">Select class</option>'+state.classes.map(c=>`<option value="${esc(c.name)}">${esc(c.name)} (${c.student_count})</option>`).join('');const puzzleClass=$('#puzzleClass');if(puzzleClass)puzzleClass.innerHTML='<option value="">All classes</option>'+state.classes.map(c=>`<option value="${esc(c.name)}">${esc(c.name)}</option>`).join('');if(state.classes.length){state.className=state.classes[0].name;$('#classSelect').value=state.className;await loadClass()}}catch(e){$('#classSelect').innerHTML='<option>Could not load classes</option>';$('#studentList').innerHTML=`<div class="empty">${esc(e.message)}</div>`;$('#statusText').textContent='Could not load students.'}}
 
