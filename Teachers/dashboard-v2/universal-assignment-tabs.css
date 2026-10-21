@@ -97,10 +97,10 @@
 .ua-preview-unit-head{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:11px 13px;background:#edf8fa;border-bottom:1px solid #dce8ed}
 .ua-preview-unit-head strong{font-size:12px;line-height:1.4;color:#265b64}
 .ua-preview-unit-head span{flex:0 0 auto;font-size:11px;font-weight:800;color:#398a96;white-space:nowrap}
-.ua-preview-word-list{margin:0;padding:5px 12px 5px 37px;list-style:decimal;list-style-position:outside}
-.ua-preview-word-list li{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;align-items:start;padding:8px 0;border-bottom:1px solid #e8edf1;font-size:12px;line-height:1.5}
+.ua-preview-word-list{margin:0;padding:5px 12px 5px 39px;list-style:none;counter-reset:wordnum}
+.ua-preview-word-list li{counter-increment:wordnum;display:grid;position:relative;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;align-items:start;padding:8px 0;border-bottom:1px solid #e8edf1;font-size:12px;line-height:1.5}
 .ua-preview-word-list li:last-child{border-bottom:0}
-.ua-preview-word-list li::marker{color:#7d929a;font-size:11px;font-weight:700}
+.ua-preview-word-list li::before{content:counter(wordnum) '.';position:absolute;left:-27px;color:#7d929a;font-size:11px;font-weight:700}
 .ua-preview-en{font-weight:800;color:#264e59;overflow-wrap:anywhere}
 .ua-preview-ko{font-weight:600;color:#536a73;overflow-wrap:anywhere}
 .ua-preview-empty,.ua-preview-error{grid-column:1/-1;margin:0;padding:15px;border:1px dashed #d3e1e6;border-radius:12px;background:#f8fbfc;color:#6c7c86;font-size:13px;line-height:1.55}
