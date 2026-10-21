@@ -82,3 +82,33 @@
 .ua-subtab:focus-visible{outline:3px solid #667fe0;outline-offset:2px}
 .ua-catalog-host .ua-catalog{margin-bottom:0}
 @media(max-width:600px){.ua-subtab{font-size:12px;padding:12px 8px}}
+
+
+/* Word Genius: live, read-only vocabulary preview for selected assignment units. */
+.ua-catalog-preview{padding:17px 0 19px;border-bottom:1px solid #e7e9ef}
+.ua-preview-heading{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:12px}
+.ua-preview-heading>div{display:grid;gap:4px}
+.ua-preview-heading strong{font-size:15px;color:var(--ink,#343343)}
+.ua-preview-heading small{font-size:12px;font-weight:700;color:#71858e}
+.ua-preview-toggle.control{flex:0 0 auto;padding:8px 12px;font-size:12px;cursor:pointer}
+.ua-preview-body{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:12px;max-height:390px;overflow:auto;padding:2px 3px 3px 1px;overscroll-behavior:contain}
+.ua-preview-body[hidden]{display:none}
+.ua-preview-unit{min-width:0;border:1px solid #dce8ed;border-radius:13px;background:#fafcfd;overflow:hidden}
+.ua-preview-unit-head{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:11px 13px;background:#edf8fa;border-bottom:1px solid #dce8ed}
+.ua-preview-unit-head strong{font-size:12px;line-height:1.4;color:#265b64}
+.ua-preview-unit-head span{flex:0 0 auto;font-size:11px;font-weight:800;color:#398a96;white-space:nowrap}
+.ua-preview-word-list{margin:0;padding:5px 12px 5px 37px;list-style:decimal;list-style-position:outside}
+.ua-preview-word-list li{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;align-items:start;padding:8px 0;border-bottom:1px solid #e8edf1;font-size:12px;line-height:1.5}
+.ua-preview-word-list li:last-child{border-bottom:0}
+.ua-preview-word-list li::marker{color:#7d929a;font-size:11px;font-weight:700}
+.ua-preview-en{font-weight:800;color:#264e59;overflow-wrap:anywhere}
+.ua-preview-ko{font-weight:600;color:#536a73;overflow-wrap:anywhere}
+.ua-preview-empty,.ua-preview-error{grid-column:1/-1;margin:0;padding:15px;border:1px dashed #d3e1e6;border-radius:12px;background:#f8fbfc;color:#6c7c86;font-size:13px;line-height:1.55}
+.ua-preview-error{border-color:#e5b4b4;color:#a24c4c;background:#fff9f9}
+.ua-preview-error .control{margin-left:8px}
+@media(max-width:600px){
+ .ua-preview-body{grid-template-columns:minmax(0,1fr);max-height:360px}
+ .ua-preview-heading{align-items:flex-start}
+ .ua-preview-heading strong{font-size:14px}
+ .ua-preview-word-list li{gap:8px}
+}
