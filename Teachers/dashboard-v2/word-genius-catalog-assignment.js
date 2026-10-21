@@ -104,7 +104,7 @@ async function renderPreview(){
   return;
  }
  summary.textContent='Loading words from the content database…';
- count.textContent=chosen.length+' unit(s) selected · loading vocabulary…';
+ count.textContent=chosen.length+' unit'+(chosen.length===1?'':'s')+' selected · loading vocabulary…';
  body.innerHTML='<p class="ua-preview-empty">Loading selected unit vocabulary…</p>';
  try{
   const groups=await Promise.all(chosen.map(async unit=>({unit,targets:await getTargets(unit.id)})));
@@ -112,11 +112,11 @@ async function renderPreview(){
   const missing=groups.filter(group=>!group.targets.length);
   if(missing.length)throw Error('No assignable words in '+missing.map(g=>'Unit '+g.unit.unit_number).join(', ')+'. Check the content database.');
   const total=groups.reduce((sum,g)=>sum+g.targets.length,0);
-  summary.textContent=total+' words in '+groups.length+' selected unit'+(groups.length===1?'':'s');
-  count.textContent=groups.length+' unit(s) · '+total+' words ready to assign';
+  summary.textContent=total+' word'+(total===1?'':'s')+' in '+groups.length+' selected unit'+(groups.length===1?'':'s');
+  count.textContent=groups.length+' unit'+(groups.length===1?'':'s')+' · '+total+' word'+(total===1?'':'s')+' ready to assign';
   body.innerHTML=groups.map(({unit,targets})=>
    '<section class="ua-preview-unit">'+
-    '<div class="ua-preview-unit-head"><strong>Unit '+esc(unit.unit_number)+' · '+esc(unit.title||'')+'</strong><span>'+targets.length+' words</span></div>'+
+    '<div class="ua-preview-unit-head"><strong>Unit '+esc(unit.unit_number)+' · '+esc(unit.title||'')+'</strong><span>'+targets.length+' word'+(targets.length===1?'':'s')+'</span></div>'+
     '<ol class="ua-preview-word-list">'+targets.map(word=>
      '<li><span class="ua-preview-en">'+esc(word.english)+'</span><span class="ua-preview-ko">'+esc(word.korean)+'</span></li>'
     ).join('')+'</ol>'+
