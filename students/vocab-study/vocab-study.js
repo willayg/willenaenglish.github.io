@@ -234,6 +234,9 @@ function wordTestStarsForPercent(percent){
   return Math.max(0,Math.min(10,Math.floor(p/10)));
 }
 function startRewardSession(mode){
+  // Review of an already-golden unit is practice only, without a new reward.
+  if(state.goldPracticeMode&&!state.activeTeacherAssignment){state.rewardSession=null;return;}
+
   const rewardSessionId=(window.crypto?.randomUUID?.()||('vocab-'+Date.now()+'-'+Math.random().toString(16).slice(2)));
   const listName=state.activeTeacherAssignment
     ?('Word Test Study · '+txt(state.activeTeacherAssignment?.assignment?.title||'Vocabulary'))
@@ -387,6 +390,15 @@ function goldenUnits(){
 }
 function isGoldenUnit(unitId){
   return goldenUnits().some(row=>String(row?.unit_id)===String(unitId));
+}
+function confirmGoldenPractice(){
+  if(state.adminMode||state.activeTeacherAssignment||!isGoldenUnit(state.unit?.id)){
+    state.goldPracticeMode=false;
+    return true;
+  }
+  const yes=window.confirm('축하합니다! 이 단원은 골드 유닛입니다. 다시 연습하시겠어요?\\n\\nYou earned Gold for this unit! Would you like to practice it again?\\n\\n다시 연습 / Practice Again');
+  state.goldPracticeMode=yes;
+  return yes;
 }
 function renderMotivation(){
   const unavailable=state.adminMode||!state.motivation;
@@ -1761,7 +1773,7 @@ async function openSpeakingSession({teacherWords=null,historyMode='push'}={}){
     }).filter(Boolean));
   }else{
     await ensureProgressSnapshot();
-    words=shuffle(nextSkillTargets(state.progressSnapshot,'speaking',speakingWords(state.items),item=>item?.id,'speaking'));
+    words=state.goldPracticeMode?shuffle(speakingWords(state.items)):shuffle(nextSkillTargets(state.progressSnapshot,'speaking',speakingWords(state.items),item=>item?.id,'speaking'));
   }
   if(!words.length){disableSpellingKeyboard();return}
   state.spellingPractice=null;
@@ -2083,7 +2095,7 @@ async function openSpellingTest({teacherWords=null,historyMode=null}={}){
     }).filter(Boolean));
   }else{
     await ensureProgressSnapshot();
-    words=shuffle(nextSkillTargets(state.progressSnapshot,'spelling',spellingTestWords(state.items),item=>item?.id,'spelling_test'));
+    words=state.goldPracticeMode?spellingTestWords(state.items):shuffle(nextSkillTargets(state.progressSnapshot,'spelling',spellingTestWords(state.items),item=>item?.id,'spelling_test'));
   }
   if(!words.length)return;
   state.speakingSession=null;
@@ -2266,7 +2278,7 @@ async function openSpellingPreview({teacherWords=null,historyMode='replace'}={})
     }).filter(Boolean));
   }else{
     await ensureProgressSnapshot();
-    words=nextSkillTargets(state.progressSnapshot,'spelling',spellingPreviewWords(state.items),item=>item?.id,'spelling_coach');
+    words=state.goldPracticeMode?spellingPreviewWords(state.items):nextSkillTargets(state.progressSnapshot,'spelling',spellingPreviewWords(state.items),item=>item?.id,'spelling_coach');
   }
   if(!words.length)return;
   state.spellingPractice=createSpellingPractice(words);
@@ -2442,7 +2454,7 @@ async function startSession(items=null,{teacher=false,historyMode='push'}={}){
   let source=items&&items.length?items:null;
   if(!source){
     await ensureProgressSnapshot();
-    source=nextSkillTargets(state.progressSnapshot,'vocabulary',state.items,activityKey,'quiz');
+    source=state.goldPracticeMode?state.items:nextSkillTargets(state.progressSnapshot,'vocabulary',state.items,activityKey,'quiz');
   }
   if(!source.length)return;
   state.queue=buildSession(source);
@@ -2518,7 +2530,7 @@ async function closeSession({historyMode='back'}={}){
     try{await loadTeacherAssignments()}catch(error){console.warn('[Vocab Study] partial homework refresh failed',error)}
   }
 
-  state.queue=[];state.index=0;state.checked=false;state.renderer=null;state.spellingPractice=null;state.spellingTest=null;state.speakingSession=null;state.rewardSession=null;state.pendingGoldenAward=null;state.activeTeacherAssignment=null;state.activeTeacherItems=[];state.assignedSpellingRecovery=null;state.optionalTeacherCoach=false;
+  state.queue=[];state.index=0;state.checked=false;state.renderer=null;state.spellingPractice=null;state.spellingTest=null;state.speakingSession=null;state.rewardSession=null;state.pendingGoldenAward=null;state.activeTeacherAssignment=null;state.activeTeacherItems=[];state.assignedSpellingRecovery=null;state.optionalTeacherCoach=false;state.goldPracticeMode=false;
   try{window.scrollTo({top:0,behavior:'auto'})}catch(_){}
 }
 async function boot(){
@@ -2575,9 +2587,9 @@ async function boot(){
         }
       },'teacher word tests');
     }
-    startBtn.addEventListener('click',()=>startSession());
-    spellingPreviewBtn?.addEventListener('click',openSpellingMenu);
-    pronunciationStartBtn?.addEventListener('click',openSpeakingSession);
+    startBtn.addEventListener('click',()=>{if(confirmGoldenPractice())startSession()});
+    spellingPreviewBtn?.addEventListener('click',()=>{if(confirmGoldenPractice())openSpellingMenu()});
+    pronunciationStartBtn?.addEventListener('click',()=>{if(confirmGoldenPractice())openSpeakingSession()});
     wordListOpenBtn?.addEventListener('click',openWordList);
     wordModalCloseBtn?.addEventListener('click',closeWordList);
     wordModalEl?.addEventListener('click',e=>{if(e.target===wordModalEl)closeWordList()});
