@@ -2263,7 +2263,10 @@ function checkSpellingTest(skipped=false){
   }
 }
 function assignedSpellingWrongWords(test){
-  const wrongIds=new Set(arr(test?.results).filter(result=>result&&!result.correct).map(result=>txt(result.lexicalEntryId)).filter(Boolean));
+  // A successful independent retry in this session clears recovery status.
+  const latestById=new Map();
+  arr(test?.results).forEach(result=>{const id=txt(result?.lexicalEntryId);if(id)latestById.set(id,!!result.correct)});
+  const wrongIds=new Set([...latestById].filter(([,correct])=>!correct).map(([id])=>id));
   if(!wrongIds.size)return[];
   const seen=new Set();
   return arr(test?.words).filter(word=>{
