@@ -2481,9 +2481,14 @@ async function finishSession(){
   const studied=[...state.outcomes.keys()];
   const review=[...state.reviewKeys];
   const solid=Math.max(0,studied.length-review.length);
+  // Assigned quizzes use their own question set, not the current book unit.
+  // Otherwise a lexical UUID appears as the review label when the unit differs.
+  const reviewSource=state.activeTeacherAssignment?state.activeTeacherItems:state.items;
   const reviewWords=review.map(key=>{
-    const item=state.items.find(x=>activityKey(x)===key);
-    return item?activityWord(item):key;
+    const item=reviewSource.find(x=>activityKey(x)===key)||state.queue.find(x=>activityKey(x)===key);
+    if(item)return activityWord(item);
+    const target=arr(state.activeTeacherAssignment?.targets).find(x=>String(x?.lexical_entry_id)===String(key));
+    return txt(target?.english)||'Review word';
   }).filter(Boolean);
   questionStage.hidden=false;
   instructionEl.hidden=true;
