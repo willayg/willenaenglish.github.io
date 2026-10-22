@@ -2100,7 +2100,7 @@ async function openSpellingTest({teacherWords=null,historyMode=null}={}){
   if(!words.length)return;
   state.speakingSession=null;
   state.spellingPractice=null;
-  state.spellingTest={words,index:0,results:[],checked:false,initialTotal:words.length};
+  state.spellingTest={words,index:0,results:[],checked:false,initialTotal:words.length,recoveryRetry:state.assignedSpellingRecovery?.phase==='retry'};
   startRewardSession('spelling_test');
   titleEl.textContent=state.activeTeacherAssignment?teacherTitle('spelling_test'):(state.book.book_title+' · Unit '+state.unit.unit_number+' · Spelling Test');
   instructionEl.hidden=false;
@@ -2147,9 +2147,14 @@ function renderSpellingTestQuestion(){
   state.questionStartedAt=Date.now();
   const spellingInput=host.querySelector('[data-write]');
   wireSpellingField(spellingInput,{focus:true});
+  if(state.activeTeacherAssignment&&!test.recoveryRetry){
+    const skip=document.createElement('button');
+    skip.type='button';skip.className='vocab-review-btn';skip.textContent='건너뛰기 / Skip';
+    skip.addEventListener('click',()=>checkSpellingTest(true));host.appendChild(skip);
+  }
   sessionMain.scrollTop=0;
 }
-function checkSpellingTest(){
+function checkSpellingTest(skipped=false){
   const test=state.spellingTest,renderer=state.renderer;
   if(!test||!renderer)return;
   if(test.checked){
@@ -2159,9 +2164,9 @@ function checkSpellingTest(){
   }
   const word=test.words[test.index];
   const response=txt(renderer.getResponse());
-  if(!response)return;
+  if(!response&&!skipped)return;
   const target=word.spellingTarget||word.word;
-  const correct=response.toLowerCase()===target.toLowerCase();
+  const correct=!skipped&&response.toLowerCase()===target.toLowerCase();
   const retryCount=Math.max(0,Number(word.__vocabRetryCount)||0);
   test.results.push({lexicalEntryId:word.id||null,word:target,ko:word.ko,response,correct});
   recordVocabAttempt({
@@ -2182,7 +2187,7 @@ function checkSpellingTest(){
     attemptNumber:retryCount+1,
     sessionSource:'student'
   });
-  if(repeatUntilCorrect(correct))appendRetry(test.words,word);
+  if(!test.recoveryRetry&&repeatUntilCorrect(correct))appendRetry(test.words,word);
   playStudentSfx(correct?'correct':'wrong');
   renderer.setDisabled(true);
   renderer.showFeedback({
@@ -2209,7 +2214,7 @@ function assignedSpellingWrongWords(test){
 function startAssignedSpellingCoachReview(words){
   const review=arr(words).filter(Boolean);
   if(!review.length)return;
-  state.assignedSpellingRecovery={words:review.map(word=>Object.assign({},word))};
+  state.assignedSpellingRecovery={words:review.map(word=>Object.assign({},word)),phase:'coach'};
   state.spellingTest=null;
   state.speakingSession=null;
   state.spellingPractice=createSpellingPractice(review.map(word=>{
@@ -2226,7 +2231,7 @@ function startAssignedSpellingCoachReview(words){
 function retryAssignedSpellingReview(){
   const words=arr(state.assignedSpellingRecovery?.words).map(word=>Object.assign({},word));
   if(!words.length)return;
-  state.assignedSpellingRecovery=null;
+  state.assignedSpellingRecovery.phase='retry';
   state.spellingPractice=null;
   openSpellingTest({teacherWords:words,historyMode:'none'});
 }
@@ -2239,7 +2244,13 @@ async function finishSpellingTest(){
   const total=test?.initialTotal||0;
   const retries=wrongAttemptCount(test?.results);
   const assignedWrongWords=state.activeTeacherAssignment?assignedSpellingWrongWords(test):[];
-  const reward=await completeRewardSession();
+  const recoveryRetry=!!test?.recoveryRetry;
+  const reward=recoveryRetry?null:await completeRewardSession();
+  if(state.activeTeacherAssignment&&!recoveryRetry&&assignedWrongWords.length){
+    startAssignedSpellingCoachReview(assignedWrongWords);
+    return;
+  }
+  if(recoveryRetry)state.assignedSpellingRecovery=null;
   progressEl.textContent='완료';
   progressFill.style.width='100%';
   instructionEl.hidden=true;
@@ -2441,8 +2452,7 @@ async function finishSpellingPractice(){
       '</div>'+
       rewardSummaryHtml(reward,{pointsOnly:true})+
       '<div class="vocab-finish-actions">'+
-        (state.assignedSpellingRecovery?'<button id="vocabAssignedSpellRetry" class="vocab-review-btn" type="button">틀린 단어 다시 시험</button>':'')+
-        '<button id="vocabSpellingDone" class="vocab-done-btn" type="button">Finish</button>'+
+        (state.assignedSpellingRecovery?'<button id="vocabAssignedSpellRetry" class="vocab-review-btn" type="button">틀린 단어 다시 시험 / Retry Test</button>':'<button id="vocabSpellingDone" class="vocab-done-btn" type="button">Finish</button>')+
       '</div>'+
     '</section>';
   el('vocabAssignedSpellRetry')?.addEventListener('click',retryAssignedSpellingReview);
