@@ -944,7 +944,7 @@ function renderTeacherAssignments(){
       :'';
     return '<article class="vocab-teacher-card">'+
       '<div class="vocab-teacher-card-title">'+
-        '<div><strong>'+escapeHtml(a.title||'Vocabulary Practice')+'</strong><small>'+wordCount+' words'+(a.due_at?' · '+escapeHtml(formatTeacherDue(a.due_at)):'')+'</small></div>'+
+        '<div><strong>숙제 / Homework</strong><small>'+wordCount+' words'+(a.due_at?' · '+escapeHtml(formatTeacherDue(a.due_at)):'')+'</small></div>'+
         '<button class="vocab-teacher-words" type="button" data-teacher-words="'+index+'">'+wordCount+' 단어 보기</button>'+
       '</div>'+
       '<div class="vocab-teacher-modes">'+modeHtml+'</div>'+coachHtml+
@@ -971,23 +971,33 @@ async function loadTeacherAssignments({showLoader=true}={}){
   try{
     const list=await api('/.netlify/functions/homework_api?action=list_assignments&mode=student&include_history=1&_='+Date.now());
     const envelopes=await resolveAssignmentBookIds(arr(list.assignments).filter(a=>txt(a?.source_type)==='vocab_study'));
+    // Fetch progress in bounded parallel batches rather than serially.
+    // Preserve original assignment order, and display results as each batch lands.
     const hydrated=[];
-    for(const assignment of envelopes){
+    const fetchProgress=async assignment=>{
       try{
         const row=await api('/.netlify/functions/homework_api?action=vocab_assignment_progress&assignment_id='+encodeURIComponent(assignment.id)+'&_='+Date.now());
-        if(row?.success){
-          row.assignment=Object.assign({},row.assignment||{},{
-            list_meta:assignment.list_meta||{},
-            list_key:assignment.list_key||null,
-            active:assignment.active,
-            ended_at:assignment.ended_at||null,
-            status:assignment.status||row.assignment?.status
-          });
-          hydrated.push(row);
-        }
+        if(!row?.success)return null;
+        row.assignment=Object.assign({},row.assignment||{},{
+          list_meta:assignment.list_meta||{},
+          list_key:assignment.list_key||null,
+          active:assignment.active,
+          ended_at:assignment.ended_at||null,
+          status:assignment.status||row.assignment?.status
+        });
+        return row;
       }catch(error){
-        console.warn('[Vocab Study] word test assignment unavailable',assignment?.id,error);
+        console.warn('[Vocab Study] homework assignment unavailable',assignment?.id,error);
+        return null;
       }
+    };
+    for(let index=0;index<envelopes.length;index+=4){
+      const batch=await Promise.all(envelopes.slice(index,index+4).map(fetchProgress));
+      hydrated.push(...batch.filter(Boolean));
+      state.teacherAssignments=hydrated.filter(row=>row?.assignment?.active!==false&&!row?.assignment?.ended_at);
+      state.teacherAssignmentHistory=hydrated.filter(row=>row?.assignment?.active===false||!!row?.assignment?.ended_at);
+      state.teacherAssignmentsLoading=false;
+      renderTeacherAssignments();
     }
     state.teacherAssignments=hydrated.filter(row=>row?.assignment?.active!==false&&!row?.assignment?.ended_at);
     state.teacherAssignmentHistory=hydrated.filter(row=>row?.assignment?.active===false||!!row?.assignment?.ended_at);
