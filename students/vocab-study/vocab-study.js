@@ -396,7 +396,7 @@ function confirmGoldenPractice(){
     state.goldPracticeMode=false;
     return true;
   }
-  const yes=window.confirm('축하합니다! 이 단원은 골드 유닛입니다. 다시 연습하시겠어요?\\n\\nYou earned Gold for this unit! Would you like to practice it again?\\n\\n다시 연습 / Practice Again');
+  const yes=window.confirm('축하합니다! 이 단원은 골드 유닛입니다. 다시 연습하시겠어요?\n\nYou earned Gold for this unit! Would you like to practice it again?\n\n다시 연습 / Practice Again');
   state.goldPracticeMode=yes;
   return yes;
 }
