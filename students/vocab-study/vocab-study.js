@@ -963,7 +963,7 @@ function renderTeacherAssignments(){
     if(row)openTeacherWordList(row,btn);
   }));
 }
-async function loadTeacherAssignments({showLoader=true}={}){
+async function loadTeacherAssignments({showLoader=false}={}){
   if(state.adminMode)return[];
   state.teacherAssignmentsLoading=true;
   renderTeacherAssignments();
@@ -2600,7 +2600,7 @@ async function closeSession({historyMode='back'}={}){
     try{await Promise.allSettled([...state.pendingTeacherRecords])}catch(_){}
   }
   if(wasTeacher){
-    try{await loadTeacherAssignments()}catch(error){console.warn('[Vocab Study] partial homework refresh failed',error)}
+    try{await loadTeacherAssignments({showLoader:false})}catch(error){console.warn('[Vocab Study] partial homework refresh failed',error)}
   }
 
   state.queue=[];state.index=0;state.checked=false;state.renderer=null;state.inlineCoach=null;state.spellingPractice=null;state.spellingTest=null;state.speakingSession=null;state.rewardSession=null;state.pendingGoldenAward=null;state.activeTeacherAssignment=null;state.activeTeacherItems=[];state.assignedSpellingRecovery=null;state.optionalTeacherCoach=false;state.goldPracticeMode=false;state.inlineCoach=null;
