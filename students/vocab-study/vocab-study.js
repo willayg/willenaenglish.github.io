@@ -1795,10 +1795,14 @@ function checkCurrent(){
   actionBtn.textContent=state.index>=state.queue.length-1?'Finish':'Next';
   updateProgress();
   if(!correct){
+    const currentIndex=state.index;
     const source=state.activeTeacherAssignment?state.activeTeacherItems:state.items;
     const lexical=source.find(x=>activityKey(x)===key);
     const word={id:item?.metadata?.lexical_entry_id||item?.sourceId,word:activityWord(lexical||item),ko:item?.metadata?.translation_ko||''};
-    if(word.ko&&word.word)setTimeout(()=>startInlineCoach(word,()=>{state.index++;renderQuestion()}),300);
+    if(word.ko&&word.word)setTimeout(()=>{
+      if(state.index!==currentIndex||sessionEl.hidden||!state.checked)return;
+      startInlineCoach(word,()=>{state.index++;renderQuestion()});
+    },300);
   }
 }
 function speakingWords(items){
@@ -2190,9 +2194,12 @@ function renderSpellingTestQuestion(){
   state.questionStartedAt=Date.now();
   const spellingInput=host.querySelector('[data-write]');
   wireSpellingField(spellingInput,{focus:true});
+  const skip=document.createElement('button');skip.type='button';skip.className='vocab-review-btn';
+  skip.textContent='건너뛰기 / Skip';skip.style.marginTop='12px';
+  skip.addEventListener('click',()=>checkSpellingTest(true));host.appendChild(skip);
   sessionMain.scrollTop=0;
 }
-function checkSpellingTest(){
+function checkSpellingTest(skipped=false){
   const test=state.spellingTest,renderer=state.renderer;
   if(!test||!renderer)return;
   if(test.checked){
@@ -2202,9 +2209,9 @@ function checkSpellingTest(){
   }
   const word=test.words[test.index];
   const response=txt(renderer.getResponse());
-  if(!response)return;
+  if(!response&&!skipped)return;
   const target=word.spellingTarget||word.word;
-  const correct=response.toLowerCase()===target.toLowerCase();
+  const correct=!skipped&&response.toLowerCase()===target.toLowerCase();
   const retryCount=Math.max(0,Number(word.__vocabRetryCount)||0);
   test.results.push({lexicalEntryId:word.id||null,word:target,ko:word.ko,response,correct});
   recordVocabAttempt({
@@ -2237,7 +2244,13 @@ function checkSpellingTest(){
   actionBtn.disabled=false;
   actionBtn.classList.add('is-next');
   actionBtn.textContent=test.index>=test.words.length-1?'Finish':'Next';
-  if(!correct)setTimeout(()=>startInlineCoach(word,()=>{test.index++;renderSpellingTestQuestion()}),300);
+  if(!correct){
+    const currentIndex=test.index;
+    setTimeout(()=>{
+      if(state.spellingTest!==test||test.index!==currentIndex||sessionEl.hidden)return;
+      startInlineCoach(word,()=>{test.index++;renderSpellingTestQuestion()});
+    },300);
+  }
 }
 function assignedSpellingWrongWords(test){
   const wrongIds=new Set(arr(test?.results).filter(result=>result&&!result.correct).map(result=>txt(result.lexicalEntryId)).filter(Boolean));
@@ -2580,7 +2593,7 @@ async function closeSession({historyMode='back'}={}){
     try{await loadTeacherAssignments()}catch(error){console.warn('[Vocab Study] partial homework refresh failed',error)}
   }
 
-  state.queue=[];state.index=0;state.checked=false;state.renderer=null;state.spellingPractice=null;state.spellingTest=null;state.speakingSession=null;state.rewardSession=null;state.pendingGoldenAward=null;state.activeTeacherAssignment=null;state.activeTeacherItems=[];state.assignedSpellingRecovery=null;state.optionalTeacherCoach=false;state.goldPracticeMode=false;state.inlineCoach=null;
+  state.queue=[];state.index=0;state.checked=false;state.renderer=null;state.inlineCoach=null;state.spellingPractice=null;state.spellingTest=null;state.speakingSession=null;state.rewardSession=null;state.pendingGoldenAward=null;state.activeTeacherAssignment=null;state.activeTeacherItems=[];state.assignedSpellingRecovery=null;state.optionalTeacherCoach=false;state.goldPracticeMode=false;state.inlineCoach=null;
   try{window.scrollTo({top:0,behavior:'auto'})}catch(_){}
 }
 async function boot(){
