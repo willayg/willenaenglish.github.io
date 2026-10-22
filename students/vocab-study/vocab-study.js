@@ -1378,6 +1378,9 @@ async function selectUnit(id,{updateHistory=true}={}){
     if(loaded){loaded.unit=unit;loaded.items=items}
     try{localStorage.setItem('willena-study-v2-unit:'+state.book.book_id,unit.id)}catch(_){}
     renderHome();
+    // Reconcile 100%-mastered units when revisiting them, in case the
+    // award request was missed during the last session.
+    void checkGoldenUnit();
     if(updateHistory&&state.activeScreen==='book')writeNavigation(currentBookRoute(),'replace');
   }catch(error){
     console.error('[Vocab Study] unit switch',error);
