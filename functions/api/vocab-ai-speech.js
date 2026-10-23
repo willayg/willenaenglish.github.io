@@ -120,5 +120,9 @@ export async function onRequestPost({request,env}){
     return error(503,'AI service connection failed');
   }
 }
-export async function onRequestGet(){return error(405,'POST required')}
+// Minimal health check helps distinguish a missing Pages deployment (404)
+// from a deployed route with missing AI credentials (configured:false).
+export async function onRequestGet({env}){
+  return json(200,{success:true,service:'vocab-ai-speech',configured:!!(env.OPENAI_API_KEY||env.OPENAI_API||env.OPENAI_KEY)});
+}
 export async function onRequestOptions(){return new Response(null,{status:204,headers:{'Allow':'POST,OPTIONS','Cache-Control':'no-store'}})}
