@@ -14,7 +14,7 @@
 <link rel="stylesheet" href="/students/study/study-overrides.css?v=20260808-1">
 <link rel="stylesheet" href="/students/study-v2/v2.css?v=20260814-daily1">
 <link rel="stylesheet" href="/students/shared/willena-keyboard-safe.css?v=1.0.0">
-<link rel="stylesheet" href="./vocab-study.css?v=20261024-ai-willi-modal1">
+<link rel="stylesheet" href="./vocab-study.css?v=20261024-round-mic2">
 <link rel="stylesheet" href="./theme-pips.css?v=20260927-v0005">
 <script src="/students/api-gateway.js?v=20260926-progress-summary-cf1"></script>
 <script src="/students/study/study-progress.js?v=20260926-assignment-canonical1"></script>
@@ -184,7 +184,7 @@
       </section>
     </section>
 
-    <div class="vocab-version">v1.14</div>
+    <div class="vocab-version">v1.15</div>
   </main>
 
   <section id="vocabLoading" class="vocab-loading" hidden aria-hidden="true" aria-live="polite">
@@ -241,7 +241,7 @@
 <script src="/students/study/study-question-bank.js?v=20260822-conversationfix1"></script>
 <script type="module" src="./theme-pips.js?v=20260927-v0001"></script>
 <script type="module">
-import('./vocab-study.js?v=20261024-accepted-target5').catch(error=>{
+import('./vocab-study.js?v=20261024-round-mic6').catch(error=>{
   console.error('[Vocab Study] module load',error);
   const panel=document.getElementById('vocabStartupError');
   if(panel){panel.hidden=false;panel.querySelector('[data-startup-message]').textContent=error?.message||'Please refresh and try again.';}
