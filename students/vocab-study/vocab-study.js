@@ -1,5 +1,5 @@
 import {QuestionRenderer} from '/shared/questions/question-renderer.js?v=20261023-speaking-ai1';
-import {attachAISpeakingFallback} from './vocab-ai-speech-ui.js?v=20261023-speaking-api-fix1';
+import {attachAISpeakingFallback} from './vocab-ai-speech-ui.js?v=20261024-modal-ai1';
 import {capturePointOrigin,showPointAward} from '/students/components/student-point-feedback.js?v=20260927-startup2';
 import {getSpellingTarget} from './spelling-targets.js?v=20260927-startup2';
 import {isSpeakableTarget,matchSpeakingTarget} from './speaking-match.js?v=20261020-homophones1';
@@ -1886,10 +1886,12 @@ function renderSpeakingQuestion(){
     listenButton.className='vocab-speaking-listen';
     listenButton.textContent='🔊 Listen · 발음 듣기';
     listenButton.setAttribute('aria-label','영어 발음 듣기 · Listen to the English word');
+    listenButton.hidden=true;
     speakingControl.insertBefore(listenButton,speakingControl.firstChild);
     const voiceNotice=document.createElement('small');
     voiceNotice.className='vocab-speaking-ai-voice-notice';
     voiceNotice.textContent='AI-generated pronunciation · AI 생성 음성';
+    voiceNotice.hidden=true;
     speakingControl.insertBefore(voiceNotice,listenButton.nextSibling);
     listenButton.addEventListener('click',async()=>{
       if(listenButton.disabled)return;
@@ -1906,8 +1908,20 @@ function renderSpeakingQuestion(){
       try{vocabWordAudio?.pause?.()}catch(_){}
       try{window.speechSynthesis?.cancel?.()}catch(_){}
     },{capture:true});
-    // All three browser recognition retries remain ungraded.
+    // Listen becomes available only after two genuine browser-microphone starts.
+    // Count even if recognition cannot decipher a short word, but not a cancelled recording before it starts.
     const renderer=state.renderer;
+    let speakingAttempts=0;
+    const recognition=renderer.speechRecognition;
+    if(recognition?.addEventListener){
+      recognition.addEventListener('start',()=>{speakingAttempts++});
+      recognition.addEventListener('end',()=>{
+        if(speakingAttempts>=2&&state.speakingSession===session&&!session.checked&&session.words[session.index]===word){
+          listenButton.hidden=false;
+          voiceNotice.hidden=false;
+        }
+      });
+    }
     const expected=word.speakingTarget||word.word;
     state.aiSpeechUi=attachAISpeakingFallback({
       host,target:expected,
