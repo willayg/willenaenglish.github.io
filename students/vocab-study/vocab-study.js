@@ -2146,17 +2146,35 @@ async function playPreviewWord(word,{rate=1}={}){
 const speakingModelAudioCache=new Map();
 let speakingAudioRequestId=0;
 async function callVocabSpeechAI(body){
-  // Same-origin Cloudflare Pages function. Do not route through the legacy Netlify API gateway.
-  const headers={'Content-Type':'application/json'};
-  const accessToken=window.WillenaAPI?.getLocalAccessToken?.();
-  if(accessToken&&accessToken.length>40)headers.Authorization='Bearer '+accessToken;
-  const response=await fetch('/api/vocab-ai-speech',{
-    method:'POST',headers,credentials:'include',cache:'no-store',
-    body:JSON.stringify(body)
-  });
+  // On the student Pages origin, cookies and an optional local access token
+  // can represent different stages of the same session. Retry once after the
+  // shared auth gateway refreshes its HttpOnly cookies.
+  const send=()=>{
+    const headers={'Content-Type':'application/json'};
+    const accessToken=window.WillenaAPI?.getLocalAccessToken?.();
+    if(accessToken&&accessToken.length>40)headers.Authorization='Bearer '+accessToken;
+    return fetch('/api/vocab-ai-speech',{
+      method:'POST',headers,credentials:'include',cache:'no-store',
+      body:JSON.stringify(body)
+    });
+  };
+  let response=await send();
+  if(response.status===401){
+    try{
+      const refresh=await (window.WillenaAPI?.fetch
+        ?window.WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=refresh&_='+Date.now(),{credentials:'include',cache:'no-store'})
+        :fetch('/.netlify/functions/supabase_auth?action=refresh&_='+Date.now(),{credentials:'include',cache:'no-store'}));
+      const data=await refresh.json().catch(()=>null);
+      if(refresh.ok&&data?.success){
+        if(data?.access_token)window.WillenaAPI?.setLocalTokens?.(data.access_token,data.refresh_token||'');
+        response=await send();
+      }
+    }catch(error){console.warn('[Word Genius] AI session refresh unavailable',error?.message||error)}
+  }
   const result=await response.json().catch(()=>null);
   if(!response.ok||result?.success!==true){
-    throw new Error((result?.error||'AI speech server unavailable')+' (HTTP '+response.status+')');
+    const code=result?.error_code?' ['+String(result.error_code).slice(0,60)+']':'';
+    throw new Error((result?.error||'AI speech server unavailable')+' (HTTP '+response.status+')'+code);
   }
   return result;
 }
