@@ -829,3 +829,17 @@ body.willena-kb-open .vocab-session-main{
   .vocab-teacher-optional-coach{padding:12px 13px;min-height:64px;gap:8px}
   .vocab-teacher-optional-arrow{font-size:.73rem}
 }
+
+/* Audio model playback during Word Genius speaking practice. */
+.vocab-speaking-listen{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  width:min(100%,280px);min-height:46px;padding:10px 16px;
+  border:2px solid #8adbe3;border-radius:14px;
+  background:#f0fcfd;color:#24656e;
+  font:800 .91rem Poppins,system-ui,sans-serif;
+  cursor:pointer;touch-action:manipulation;
+}
+.vocab-speaking-listen:hover,.vocab-speaking-listen:focus-visible{
+  border-color:#27b7c5;background:#e0f8fa;outline-offset:3px;
+}
+.vocab-speaking-listen:active{transform:scale(.98)}
