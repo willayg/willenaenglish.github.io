@@ -923,3 +923,32 @@ body.willena-kb-open .vocab-session-main{
 .vocab-ai-debug code{display:block;overflow-wrap:anywhere;white-space:pre-wrap;font-size:.76rem;margin-top:8px}
 .vocab-ai-modal button:focus-visible{outline:4px solid #ffbc54;outline-offset:3px}
 @media(max-width:390px){.vocab-ai-modal{padding:22px 16px;gap:14px}}
+
+/* v1.15: the AI fallback uses the very same round mic icon and recording ring
+   as the ordinary speaking renderer instead of a large rectangular button. */
+.vocab-ai-modal .vocab-ai-record-button.speaking-mic{
+  box-sizing:border-box;width:96px;height:96px;min-height:0;max-width:none;
+  padding:0;border:3px solid #66d6df;border-radius:50%;background:#fff;color:#25b8c4;
+  display:grid;place-items:center;justify-self:center;
+  box-shadow:0 10px 28px rgba(37,184,196,.10);
+  transition:border-color .22s ease,border-width .22s ease,color .22s ease,
+    transform .22s ease,box-shadow .22s ease,background .22s ease;
+}
+.vocab-ai-modal .vocab-ai-record-button.speaking-mic .speaking-mic-icon{
+  width:42px;height:42px;display:block;background:currentColor;
+  -webkit-mask:url('/shared/svgs/mic.svg?v=20260927-icons1') center/contain no-repeat;
+  mask:url('/shared/svgs/mic.svg?v=20260927-icons1') center/contain no-repeat;
+}
+.vocab-ai-modal .vocab-ai-record-button.speaking-mic:hover:not(:disabled):not(.is-listening){
+  transform:translateY(-2px);box-shadow:0 14px 32px rgba(37,184,196,.15);
+}
+.vocab-ai-modal .vocab-ai-record-button.speaking-mic.is-listening{
+  border-width:6px;border-color:#ff0a8a;background:#fff7fb;color:#e60076;
+  animation:speakingMicPulse .72s ease-in-out infinite alternate;
+}
+.vocab-ai-modal .vocab-ai-record-button.speaking-mic:disabled{
+  opacity:.45;cursor:default;
+}
+@media(max-width:560px){
+  .vocab-ai-modal .vocab-ai-record-button.speaking-mic{width:88px;height:88px}
+}
