@@ -869,3 +869,8 @@ body.willena-kb-open .vocab-session-main{
 .vocab-ai-record-button:disabled{opacity:.55;cursor:wait}
 .vocab-ai-check-note{font:700 .77rem/1.55 Poppins,system-ui,sans-serif;color:#5d5867;max-width:340px}
 .vocab-ai-close{border:0;background:transparent;color:#687580;font:700 .73rem Poppins,system-ui,sans-serif;cursor:pointer}
+
+.vocab-speaking-ai-voice-notice{
+  color:#72818d;font:700 .63rem Poppins,system-ui,sans-serif;
+  text-align:center;margin-top:-9px;
+}
