@@ -978,3 +978,16 @@ body.willena-kb-open .vocab-session-main{
  .vocab-speaking-listen.is-loading::before,.vocab-speaking-listen.is-loading::after{animation:none}
  .vocab-speaking-listen.is-loading::before{width:100%;opacity:.35}
 }
+
+/* Separate Back from one-tap Home; do not require repeated history.back(). */
+.vocab-session-topline{grid-template-columns:44px minmax(0,1fr) 60px}
+.vocab-session-home{
+  box-sizing:border-box;min-width:60px;min-height:44px;padding:5px 7px;
+  border:2px solid var(--line);border-radius:14px;
+  background:#fff;color:#b72c76;
+  font:900 .76rem/1.2 Poppins,system-ui,sans-serif;
+  white-space:nowrap;cursor:pointer;touch-action:manipulation;
+}
+.vocab-session-home:hover,.vocab-session-home:focus-visible{
+  border-color:#e984b7;background:#fff4fa;outline-offset:3px;
+}
