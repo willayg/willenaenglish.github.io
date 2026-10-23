@@ -1,7 +1,6 @@
 // Word Genius optional speech assessment, hosted on the student Cloudflare Pages site.
 // Audio is never persisted here. Never place API credentials in client scripts.
 const BASE='https://api.openai.com/v1/audio/';
-const AUTH='https://api.willenaenglish.com/.netlify/functions/supabase_auth';
 const limits=new Map();
 const json=(status,body)=>new Response(JSON.stringify(body),{
   status,headers:{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store',
@@ -17,30 +16,43 @@ const allow=(id,kind)=>{
   if(limits.size>500)for(const [k,v] of limits)if(!v.length||now-v[v.length-1]>3600000)limits.delete(k);
   return true;
 };
-function authCookie(request){
-  const cookie=request.headers.get('Cookie')||'';
-  if(/(?:^|;\s*)sb_access=/.test(cookie))return cookie;
+// Validate the token itself against Supabase Auth. This does not depend on
+// forwarding a browser cookie through the external API gateway.
+const SUPABASE_URL='https://fiieuiktlsivwfgyivai.supabase.co';
+const PUBLISHABLE_KEY='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
+function authTokens(request){
   const header=request.headers.get('Authorization')||'';
-  if(/^Bearer\s+/i.test(header))return 'sb_access='+encodeURIComponent(header.replace(/^Bearer\s+/i,'').trim());
-  return '';
+  const cookie=request.headers.get('Cookie')||'';
+  const values=[];
+  const m=/(?:^|;\\s*)sb_access=([^;]+)/.exec(cookie);
+  if(m){try{values.push(decodeURIComponent(m[1]))}catch(_){}}
+  if(/^Bearer\\s+/i.test(header))values.push(header.replace(/^Bearer\\s+/i,'').trim());
+  return [...new Set(values.filter(value=>value&&value.length>40))];
 }
 async function requireStudent(request){
-  const cookie=authCookie(request);
-  if(!cookie)return null;
-  const headers={Cookie:cookie};
-  const check=await fetch(AUTH+'?action=whoami',{
-    headers,redirect:'manual',signal:AbortSignal.timeout(10000),cache:'no-store'
-  });
-  if(!check.ok)return null;
-  const user=await check.json().catch(()=>null);
-  if(!user?.success||!user?.user_id)return null;
-  const roleRequest=await fetch(AUTH+'?action=get_role&user_id='+encodeURIComponent(user.user_id),{
-    headers,redirect:'manual',signal:AbortSignal.timeout(10000),cache:'no-store'
-  });
-  if(!roleRequest.ok)return null;
-  const role=await roleRequest.json().catch(()=>null);
-  if(role?.success!==true||role?.role!=='student')return null;
-  return String(user.user_id);
+  const tokens=authTokens(request);
+  if(!tokens.length)return {userId:null,reason:'missing_session'};
+  for(const token of tokens){
+    const headers={apikey:PUBLISHABLE_KEY,Authorization:'Bearer '+token};
+    const check=await fetch(SUPABASE_URL+'/auth/v1/user',{
+      headers,redirect:'manual',signal:AbortSignal.timeout(10000),cache:'no-store'
+    });
+    if(check.status===401||check.status===403)continue; // Try a newer bearer/cookie token.
+    if(!check.ok)throw new Error('Supabase Auth validation failed: '+check.status);
+    const user=await check.json().catch(()=>null);
+    if(!user?.id)continue;
+    // Lookup is scoped to the identity verified by Supabase, never a client-supplied ID.
+    const roleRequest=await fetch(SUPABASE_URL+'/rest/v1/profiles?select=id,role,approved&id=eq.'+encodeURIComponent(user.id)+'&limit=1',{
+      headers,redirect:'manual',signal:AbortSignal.timeout(10000),cache:'no-store'
+    });
+    if(!roleRequest.ok)throw new Error('Profile validation failed: '+roleRequest.status);
+    const rows=await roleRequest.json().catch(()=>[]);
+    const profile=Array.isArray(rows)?rows[0]:null;
+    if(profile?.id!==user.id||profile.role!=='student'||profile.approved!==true)
+      return {userId:null,reason:'student_role_required'};
+    return {userId:String(user.id),reason:null};
+  }
+  return {userId:null,reason:'session_invalid'};
 }
 function fromBase64(value){
   const binary=atob(value);
@@ -61,13 +73,17 @@ export async function onRequestPost({request,env}){
   try{body=await request.json()}catch(_){return error(400,'Invalid JSON')}
   const action=body?.action;
   if(!['listen','transcribe'].includes(action))return error(400,'Invalid action');
-  let userId;
-  try{userId=await requireStudent(request)}
+  let identity;
+  try{identity=await requireStudent(request)}
   catch(e){
-    console.warn('[vocab-ai-speech] auth service unavailable',e?.name||'error');
-    return error(503,'Authentication service unavailable');
+    console.warn('[vocab-ai-speech] auth validation unavailable',e?.message||e?.name||'error');
+    return json(503,{success:false,error:'AI sign-in verification unavailable',error_code:'auth_service'});
   }
-  if(!userId)return error(401,'Student sign-in required');
+  if(!identity?.userId){
+    if(identity?.reason==='student_role_required')return json(403,{success:false,error:'Student account required',error_code:'student_role'});
+    return json(401,{success:false,error:'AI session could not be verified',error_code:identity?.reason||'session_invalid'});
+  }
+  const userId=identity.userId;
   if(!allow(userId,action))return error(429,'AI service limit reached');
   const apiKey=env.OPENAI_API_KEY||env.OPENAI_API||env.OPENAI_KEY;
   if(!apiKey)return error(503,'AI audio service not configured in student Pages');
