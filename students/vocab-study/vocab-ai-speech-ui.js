@@ -12,7 +12,7 @@ function toBase64(blob){
     reader.readAsDataURL(blob);
   });
 }
-export function attachAISpeakingFallback({host,target,isCurrent,onAccepted,match,callApi}){
+export function attachAISpeakingFallback({host,target,isCurrent,onAccepted,match,callApi,stopBrowserSpeech}){
   const control=host?.querySelector('.speaking-control');
   if(!control)return{observe(){},dispose(){}};
   const btn=document.createElement('button');
@@ -57,6 +57,7 @@ export function attachAISpeakingFallback({host,target,isCurrent,onAccepted,match
     busy=true;btn.hidden=true;record.disabled=true;
     note.textContent='마이크 연결 중…';
     try{
+      stopBrowserSpeech?.();
       stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,channelCount:1}});
       if(!alive()){cleanup();return}
       const mime=chooseMime();
@@ -84,7 +85,8 @@ export function attachAISpeakingFallback({host,target,isCurrent,onAccepted,match
       const reply=await callApi({action:'transcribe',audio_base64,mime_type:mime});
       if(!alive())return;
       const transcript=String(reply?.transcript||'').trim();
-      if(transcript && match(target,[transcript]).correct){
+      const assessment=transcript?match(target,[transcript]):{correct:false};
+      if(assessment.correct&&['exact','spacing','homophone'].includes(assessment.matchedBy)){
         note.textContent='AI가 발음을 확인했어요! ✅';
         dispose();onAccepted(transcript);
         return;
