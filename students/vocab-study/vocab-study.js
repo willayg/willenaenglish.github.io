@@ -2146,19 +2146,43 @@ async function playPreviewWord(word,{rate=1}={}){
 const speakingModelAudioCache=new Map();
 let speakingAudioRequestId=0;
 async function callVocabSpeechAI(body){
-  // On the student Pages origin, cookies and an optional local access token
-  // can represent different stages of the same session. Retry once after the
-  // shared auth gateway refreshes its HttpOnly cookies.
-  const send=()=>{
+  const endpoint='/api/vocab-ai-speech';
+  // All calls stay on the student Pages origin. Browser STT needs no AI request.
+  const postOnce=()=>{
     const headers={'Content-Type':'application/json'};
     const accessToken=window.WillenaAPI?.getLocalAccessToken?.();
     if(accessToken&&accessToken.length>40)headers.Authorization='Bearer '+accessToken;
-    return fetch('/api/vocab-ai-speech',{
+    return fetch(endpoint,{
       method:'POST',headers,credentials:'include',cache:'no-store',
-      body:JSON.stringify(body)
+      body:JSON.stringify(body),signal:AbortSignal.timeout(35000)
     });
   };
-  let response=await send();
+  async function diagnoseNetwork(error){
+    let route='probe_not_reached';
+    try{
+      // The existing unauthenticated health check has no audio or user data.
+      const check=await fetch(endpoint,{method:'GET',credentials:'same-origin',cache:'no-store',
+        signal:AbortSignal.timeout(6500)});
+      const info=await check.json().catch(()=>null);
+      route=check.status+'_'+(info?.service==='vocab-ai-speech'?'ai_route':'unexpected_route');
+      if(info?.service==='vocab-ai-speech'&&!info?.configured)route+='_unconfigured';
+    }catch(probeError){route='probe_failed_'+String(probeError?.name||'network')}
+    const detail=(error?.name||'TypeError')+': '+(error?.message||'Failed to fetch');
+    const online=navigator.onLine===false?'offline':'online_unknown';
+    const issue=new Error('AI POST connection failed ('+online+', '+route+') · '+detail);
+    console.warn('[Word Genius] AI endpoint transport failure',{route,online,error:String(error?.message||error)});
+    return issue;
+  }
+  async function postWithRetry(){
+    try{return await postOnce()}
+    catch(firstError){
+      // A short mobile-network interruption should not consume an AI chance.
+      await new Promise(resolve=>setTimeout(resolve,650));
+      try{return await postOnce()}
+      catch(secondError){throw await diagnoseNetwork(secondError)}
+    }
+  }
+  let response=await postWithRetry();
   if(response.status===401){
     try{
       const refresh=await (window.WillenaAPI?.fetch
@@ -2167,9 +2191,9 @@ async function callVocabSpeechAI(body){
       const data=await refresh.json().catch(()=>null);
       if(refresh.ok&&data?.success){
         if(data?.access_token)window.WillenaAPI?.setLocalTokens?.(data.access_token,data.refresh_token||'');
-        response=await send();
+        response=await postWithRetry();
       }
-    }catch(error){console.warn('[Word Genius] AI session refresh unavailable',error?.message||error)}
+    }catch(error){console.warn('[Word Genius] AI session refresh unavailable',error?.message||error);throw error}
   }
   const result=await response.json().catch(()=>null);
   if(!response.ok||result?.success!==true){
