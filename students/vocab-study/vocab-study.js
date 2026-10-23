@@ -1,5 +1,5 @@
 import {QuestionRenderer} from '/shared/questions/question-renderer.js?v=20261023-speaking-ai1';
-import {attachAISpeakingFallback} from './vocab-ai-speech-ui.js?v=20261024-modal-ai1';
+import {attachAISpeakingFallback} from './vocab-ai-speech-ui.js?v=20261024-auth-fix2';
 import {capturePointOrigin,showPointAward} from '/students/components/student-point-feedback.js?v=20260927-startup2';
 import {getSpellingTarget} from './spelling-targets.js?v=20260927-startup2';
 import {isSpeakableTarget,matchSpeakingTarget} from './speaking-match.js?v=20261024-sew-so-homophones2';
