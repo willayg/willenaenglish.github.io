@@ -1,4 +1,5 @@
-import {QuestionRenderer} from '/shared/questions/question-renderer.js?v=20260927-startup2';
+import {QuestionRenderer} from '/shared/questions/question-renderer.js?v=20261023-speaking-ai1';
+import {attachAISpeakingFallback} from './vocab-ai-speech-ui.js?v=20261023-speaking-ai1';
 import {capturePointOrigin,showPointAward} from '/students/components/student-point-feedback.js?v=20260927-startup2';
 import {getSpellingTarget} from './spelling-targets.js?v=20260927-startup2';
 import {isSpeakableTarget,matchSpeakingTarget} from './speaking-match.js?v=20261020-homophones1';
@@ -1855,6 +1856,7 @@ function speakingQuestion(word,index){
   };
 }
 function renderSpeakingQuestion(){
+  state.aiSpeechUi?.dispose?.();state.aiSpeechUi=null;
   const session=state.speakingSession;
   if(!session||session.index>=session.words.length)return finishSpeakingSession();
   if(speakingSkipBtn)speakingSkipBtn.hidden=false;
@@ -1886,13 +1888,38 @@ function renderSpeakingQuestion(){
     speakingControl.insertBefore(listenButton,speakingControl.firstChild);
     listenButton.addEventListener('click',()=>{
       try{state.renderer?.speechRecognition?.stop?.()}catch(_){}
-      playPreviewWord(word.speakingTarget||word.word).catch(error=>console.warn('[Vocab Study] speaking audio failed',error));
+      playSpeakingModelAudio(word.speakingTarget||word.word).catch(error=>console.warn('[Vocab Study] speaking audio failed',error));
     });
     // Prevent the microphone from transcribing our own model playback.
     host.querySelector('[data-speaking-mic]')?.addEventListener('click',()=>{
+      speakingAudioRequestId++;
       try{vocabWordAudio?.pause?.()}catch(_){}
       try{window.speechSynthesis?.cancel?.()}catch(_){}
     },{capture:true});
+    // All three browser recognition retries remain ungraded.
+    const renderer=state.renderer;
+    const expected=word.speakingTarget||word.word;
+    state.aiSpeechUi=attachAISpeakingFallback({
+      host,target:expected,
+      isCurrent:()=>state.speakingSession===session&&!session.checked&&session.words[session.index]===word&&!sessionEl.hidden,
+      match:(target,alternatives)=>{
+        const result=matchSpeakingTarget(target,alternatives);
+        // AI fallback accepts only exact, spacing and true homophone matches.
+        return result;
+      },
+      callApi:callVocabSpeechAI,
+      stopBrowserSpeech:()=>{try{renderer.speechRecognition?.stop?.()}catch(_){}},
+      onAccepted:transcript=>{
+        if(state.renderer!==renderer||session.checked)return;
+        // Preserve the normal recording and reward logic, including teacher assignments.
+        session.aiAcceptedTranscript=transcript;
+        renderer.state.speakingTranscript=transcript;
+        renderer.state.speakingAlternatives=[transcript];
+        renderer.emit();
+        checkSpeaking();
+      }
+    });
+    renderer.onSpeechResult=alternatives=>state.aiSpeechUi?.observe(alternatives);
   }
   state.questionStartedAt=Date.now();
   sessionMain.scrollTop=0;
@@ -1910,7 +1937,8 @@ function checkSpeaking(){
   const target=word.speakingTarget||word.word;
   const alternatives=renderer.getSpeechAlternatives?.()||[response];
   const match=matchSpeakingTarget(target,alternatives);
-  const correct=!!match.correct;
+  const aiFallback=!!session.aiAcceptedTranscript&&session.aiAcceptedTranscript===response;
+  const correct=!!match.correct&&(!aiFallback||['exact','spacing','homophone'].includes(match.matchedBy));
   const retryCount=Math.max(0,Number(word.__vocabRetryCount)||0);
   session.results.push({
     lexicalEntryId:word.id||null,
@@ -1933,6 +1961,7 @@ function checkSpeaking(){
     metadata:{
       stt_alternatives:alternatives,
       stt_match:match.matchedBy||null,
+      stt_source:aiFallback?'openai_ai_fallback':'browser',
       vocab_mode:'speaking',
       recorded_from:'vocab-study-speaking'
     },
@@ -2052,7 +2081,7 @@ function browserTtsWord(text){
   }
 }
 
-async function playPreviewWord(word){
+async function playPreviewWord(word,{rate=1}={}){
   const text=txt(word);
   if(!text)return false;
 
@@ -2078,6 +2107,7 @@ async function playPreviewWord(word){
     }
 
     const audio=new Audio(objectUrl);
+    audio.playbackRate=Math.max(.65,Math.min(1.25,rate));
     vocabWordAudio=audio;
     await audio.play();
     audio.addEventListener('ended',()=>{if(vocabWordAudio===audio)vocabWordAudio=null},{once:true});
@@ -2088,6 +2118,56 @@ async function playPreviewWord(word){
   }
 }
 
+// Dedicated slower American masculine-sounding AI model voice for speaking Listen.
+const speakingModelAudioCache=new Map();
+let speakingAudioRequestId=0;
+async function callVocabSpeechAI(body){
+  return api('/.netlify/functions/vocab_ai_speech',{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify(body)
+  });
+}
+function slowMaleBrowserVoice(text){
+  if(!window.speechSynthesis||!window.SpeechSynthesisUtterance)return false;
+  const voices=speechSynthesis.getVoices();
+  const male=/\\b(david|guy|matthew|aaron|daniel|james|andrew|joey|ryan|chris|fred|tom|eric|robert|brian|alex|male|onyx)\\b/i;
+  const voice=voices.find(v=>/^en[-_]US$/i.test(v.lang)&&male.test(v.name));
+  if(!voice)return false;
+  try{
+    speechSynthesis.cancel();
+    const utterance=new SpeechSynthesisUtterance(cleanBrowserTtsText(text));
+    utterance.lang='en-US';utterance.voice=voice;utterance.rate=.79;
+    speechSynthesis.speak(utterance);return true;
+  }catch(_){return false}
+}
+async function playSpeakingModelAudio(word){
+  const text=txt(word);
+  if(!text)return false;
+  const requestId=++speakingAudioRequestId;
+  try{vocabWordAudio?.pause?.();window.speechSynthesis?.cancel?.()}catch(_){}
+  try{
+    let objectUrl=speakingModelAudioCache.get(text.toLowerCase());
+    if(!objectUrl){
+      const result=await callVocabSpeechAI({action:'listen',text});
+      if(!result?.audio)throw new Error('No model audio');
+      const bytes=Uint8Array.from(atob(result.audio),ch=>ch.charCodeAt(0));
+      objectUrl=URL.createObjectURL(new Blob([bytes],{type:'audio/mpeg'}));
+      speakingModelAudioCache.set(text.toLowerCase(),objectUrl);
+    }
+    if(requestId!==speakingAudioRequestId)return false;
+    const audio=new Audio(objectUrl);audio.playbackRate=.90;
+    vocabWordAudio=audio;
+    await audio.play();
+    audio.addEventListener('ended',()=>{if(vocabWordAudio===audio)vocabWordAudio=null},{once:true});
+    return true;
+  }catch(error){
+    if(requestId!==speakingAudioRequestId)return false;
+    console.warn('[Vocab Study] male AI listening unavailable; fallback',error?.message||error);
+    if(slowMaleBrowserVoice(text))return true;
+    // Final fallback uses an existing recording rather than a robotic default voice.
+    return playPreviewWord(text,{rate:.82});
+  }
+}
 window.WillenaPlayWordAudio=playPreviewWord;
 function createSpellingPractice(words){
   return{words,index:0,currentAttemptCount:0,attempts:[],results:[],initialTotal:words.length};
@@ -2608,6 +2688,7 @@ async function finishSession(){
   sessionMain.scrollTop=0;
 }
 async function closeSession({historyMode='back'}={}){
+  state.aiSpeechUi?.dispose?.();state.aiSpeechUi=null;
   disableSpellingKeyboard();
   if(speakingSkipBtn)speakingSkipBtn.hidden=true;
   if(historyMode==='back'&&navController?.current?.().screen==='activity'){
