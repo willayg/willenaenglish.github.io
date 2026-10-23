@@ -1861,6 +1861,7 @@ function renderSpeakingQuestion(){
   if(!session||session.index>=session.words.length)return finishSpeakingSession();
   if(speakingSkipBtn)speakingSkipBtn.hidden=false;
   const word=session.words[session.index],current=session.index+1,total=session.words.length;
+  session.aiAcceptedTranscript=null;
   session.checked=false;
   progressEl.textContent=current+' / '+total;
   progressFill.style.width=((current-1)/Math.max(1,total)*100)+'%';
@@ -2130,7 +2131,7 @@ async function callVocabSpeechAI(body){
 function slowMaleBrowserVoice(text){
   if(!window.speechSynthesis||!window.SpeechSynthesisUtterance)return false;
   const voices=speechSynthesis.getVoices();
-  const male=/\\b(david|guy|matthew|aaron|daniel|james|andrew|joey|ryan|chris|fred|tom|eric|robert|brian|alex|male|onyx)\\b/i;
+  const male=/\b(david|guy|matthew|aaron|daniel|james|andrew|joey|ryan|chris|fred|tom|eric|robert|brian|alex|male|onyx)\b/i;
   const voice=voices.find(v=>/^en[-_]US$/i.test(v.lang)&&male.test(v.name));
   if(!voice)return false;
   try{
