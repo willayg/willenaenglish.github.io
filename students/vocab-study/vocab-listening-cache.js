@@ -36,7 +36,12 @@ export function createSpeakingAudioCache(load){
   // Two concurrent requests start immediately; the third follows the first
   // two, to avoid launching a large unit's worth of generation requests.
   function prefetch(words){
-    const text=[...new Set((words||[]).map(keyOf).filter(Boolean))].slice(0,3);
+    const unique=new Map();
+    for(const word of words||[]){
+      const key=keyOf(word);
+      if(key&&!unique.has(key))unique.set(key,String(word).trim());
+    }
+    const text=[...unique.values()].slice(0,3);
     const first=text.slice(0,2).map(value=>get(value).catch(()=>null));
     if(text.length>2){
       void Promise.allSettled(first).then(()=>get(text[2]).catch(()=>null));
