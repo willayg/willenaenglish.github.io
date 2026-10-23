@@ -85,15 +85,23 @@ exports.handler=async event=>{
     const ctype=ext==='webm'?'audio/webm':ext==='ogg'?'audio/ogg':'audio/mp4';
     form.append('file',new Blob([audio],{type:ctype}),'speaking-check.'+ext);
     form.append('model','gpt-transcribe');
-    form.append('language','en');
+    // GPT-Transcribe uses languages[]; the legacy language field can cause HTTP 400.
+    form.append('languages[]','en');
     form.append('response_format','json');
     // Do not supply the expected target word to the model; avoid answer bias.
     const response=await fetch(ENDPOINT+'transcriptions',{
       method:'POST',headers:{Authorization:'Bearer '+apiKey},body:form,signal:AbortSignal.timeout(20000)
     });
-    if(!response.ok)return fail(event,502,'AI transcription unavailable');
+    if(!response.ok){
+      // Log only HTTP status and short machine error code, never audio or transcript.
+      const rejected=await response.json().catch(()=>null);
+      const code=String(rejected?.error?.code||rejected?.error?.type||'unknown').slice(0,64);
+      console.warn('[vocab_ai_speech] transcription upstream',response.status,code);
+      return fail(event,502,'AI transcription service rejected request ('+response.status+')');
+    }
     const result=await response.json().catch(()=>null);
-    const transcript=String(result?.text||'').trim().slice(0,250);
+    if(typeof result?.text!=='string')return fail(event,502,'AI transcription response invalid');
+    const transcript=String(result.text).trim().slice(0,250);
     return corsJsonResponse(event,200,{success:true,transcript},{'Cache-Control':'private, no-store'});
   }catch(error){
     console.warn('[vocab_ai_speech] request failed',error?.name||'unknown');
