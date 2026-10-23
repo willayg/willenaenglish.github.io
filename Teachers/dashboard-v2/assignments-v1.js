@@ -8,7 +8,9 @@
     loaded:false,
     selectedAssignment:null,
     progress:null,
-    studentDetail:null
+    studentDetail:null,
+    cardProgress:new Map(),
+    listGeneration:0
   };
 
   const $=(s,r=document)=>r.querySelector(s);
@@ -89,6 +91,53 @@
     select.value=current;
   }
 
+  function cardSummaryMarkup(a){
+    const record=state.cardProgress.get(String(a.id));
+    if(!record)return '<div class="assignment-card-summary" data-card-progress="'+esc(a.id)+'"><small>Loading progress…</small></div>';
+    if(record.error)return '<div class="assignment-card-summary" data-card-progress="'+esc(a.id)+'"><small>Progress unavailable</small></div>';
+    const data=record.data, view={...a,...(data.assignment||{}),list_meta:assignmentMeta(a)};
+    const ids=new Set((Array.isArray(a?.list_meta?.target_student_ids)?a.list_meta.target_student_ids:[]).map(String));
+    const all=Array.isArray(data.students)?data.students:[];
+    const students=ids.size?all.filter(x=>ids.has(String(x.student_id||''))):all;
+    const modes=Array.isArray(a?.list_meta?.required_modes)&&a.list_meta.required_modes.length?a.list_meta.required_modes:(data.assignment?.required_modes||[]);
+    if(!students.length||!modes.length)return '<div class="assignment-card-summary" data-card-progress="'+esc(a.id)+'"><small>No progress data yet</small></div>';
+    const rows=students.map(x=>({student:x,...adjustedStudentSummary(view,x,modes)}));
+    const avg=Math.round(rows.reduce((n,x)=>n+x.overall,0)/rows.length);
+    const done=rows.filter(x=>x.status==='complete').length;
+    const notStarted=rows.filter(x=>x.status==='not_started').length;
+    return '<div class="assignment-card-summary" data-card-progress="'+esc(a.id)+'">'+
+      '<div class="assignment-card-summary-top"><span>Class progress <strong>'+avg+'%</strong></span><span>'+done+'/'+rows.length+' complete · '+notStarted+' not started</span></div>'+
+      '<div class="assignment-card-track"><span style="width:'+avg+'%"></span></div>'+
+      '<details class="assignment-students-dropdown"><summary>Student progress ('+rows.length+')</summary>'+
+      '<div class="assignment-students-list">'+rows.map(x=>'<div class="assignment-students-line"><span>'+esc(x.student.name||x.student.korean_name||'Student')+'</span><div class="assignment-card-track"><span style="width:'+x.overall+'%"></span></div><strong>'+x.overall+'%</strong></div>').join('')+'</div></details></div>';
+  }
+
+  async function loadVisibleCardProgress(rows,generation){
+    const pending=rows.filter(a=>!state.cardProgress.has(String(a.id)));
+    let cursor=0;
+    async function worker(){
+      while(cursor<pending.length){
+        if(generation!==state.listGeneration)return;
+        const a=pending[cursor++];
+        let entry;
+        try{entry={data:await api(route('assignment_progress',{assignment_id:a.id,class:a.class||''}))}}
+        catch(error){entry={error:String(error.message||error)}}
+        if(generation!==state.listGeneration)return;
+        state.cardProgress.set(String(a.id),entry);
+        const host=$('[data-card-progress="'+CSS.escape(String(a.id))+'"]');
+        if(host){const temp=document.createElement('div');temp.innerHTML=cardSummaryMarkup(a);host.replaceWith(temp.firstElementChild)}
+      }
+    }
+    await Promise.all(Array.from({length:Math.min(3,pending.length)},worker));
+  }
+
+  function ensureCardSummaryStyles(){
+    if(document.getElementById('assignment-card-summary-styles'))return;
+    const style=document.createElement('style');style.id='assignment-card-summary-styles';
+    style.textContent='.assignment-card-with-summary{border:1px solid #dce9ed;border-radius:16px;overflow:hidden;margin-bottom:12px;background:#fff}.assignment-card-with-summary>.assignment-card{margin:0;border:0;border-radius:0;width:100%}.assignment-card-summary{padding:0 18px 14px}.assignment-card-summary>small{color:#74838a}.assignment-card-summary-top{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;color:#617780;font-size:12px;margin:4px 0 7px}.assignment-card-summary-top strong{color:#166d77}.assignment-card-track{height:7px;border-radius:99px;background:#e7eff1;overflow:hidden}.assignment-card-track>span{display:block;height:100%;background:#279e9e;border-radius:99px}.assignment-students-dropdown{margin-top:10px;border-top:1px solid #edf2f3;padding-top:8px}.assignment-students-dropdown>summary{cursor:pointer;color:#286e79;font-size:12px;font-weight:650;list-style-position:inside}.assignment-students-list{display:grid;gap:9px;padding:12px 2px 3px}.assignment-students-line{display:grid;grid-template-columns:minmax(80px,1fr) minmax(80px,2fr) 42px;align-items:center;gap:10px;font-size:12px}.assignment-students-line strong{text-align:right;font-variant-numeric:tabular-nums}.assignment-unit-group-items .assignment-card-with-summary{margin-bottom:8px}';
+    document.head.appendChild(style);
+  }
+
   function assignmentCard(a){
     const required=Array.isArray(a?.list_meta?.required_modes)?a.list_meta.required_modes:[];
     const labels={quiz:'Quiz',spelling_test:'Spelling',speaking:'Speaking'};
@@ -103,13 +152,13 @@
       required.map(x=>labels[x]||x).join(' · ')||'Vocabulary Study',
       assignmentWorkloadMode(a)==='split'?'Split workload':''
     ].filter(Boolean);
-    return '<button type="button" class="assignment-card" data-assignment-id="'+esc(a.id)+'">'+
+    return '<div class="assignment-card-with-summary"><button type="button" class="assignment-card" data-assignment-id="'+esc(a.id)+'">'+
       '<div class="assignment-card-head">'+
         '<div><strong>'+esc(className)+'</strong><span>'+esc(detailBits.join(' · '))+'</span></div>'+
         '<span class="assignment-state '+(isCurrent(a)?'is-current':'is-history')+'">'+(isCurrent(a)?'Current':(a.ended_at?'Cancelled':'History'))+'</span>'+
       '</div>'+
       '<div class="assignment-card-meta"><span>Due <b>'+esc(fmtDate(a.due_at))+'</b></span><span>Created <b>'+esc(fmtDate(a.created_at))+'</b></span></div>'+
-    '</button>';
+    '</button>'+cardSummaryMarkup(a)+'</div>';
   }
 
   function renderList(){
@@ -117,6 +166,8 @@
     const detail=$('#assignmentDetail');
     if(!list)return;
     const rows=visibleAssignments();
+    const generation=++state.listGeneration;
+    ensureCardSummaryStyles();
     if(detail){
       detail.hidden=true;
       detail.innerHTML='';
@@ -138,7 +189,8 @@
       const members=groups.get(id)||[];
       return '<section class="assignment-unit-group"><div class="assignment-unit-group-header"><strong>'+esc(a?.list_meta?.assignment_group_title||a.title)+'</strong><small>'+esc(a.class||'')+' · '+members.length+' units · Due '+esc(fmtDate(a.due_at))+'</small></div><div class="assignment-unit-group-items">'+members.map(assignmentCard).join('')+'</div></section>';
     }).join('');
-    $$('.assignment-card',list).forEach(card=>card.addEventListener('click',()=>openAssignment(card.dataset.assignmentId)));
+    $('.assignment-card',list).forEach(card=>card.addEventListener('click',()=>openAssignment(card.dataset.assignmentId)));
+    void loadVisibleCardProgress(rows,generation);
   }
 
   async function loadAssignments(force=false){
@@ -149,6 +201,7 @@
       const data=await api(route('list_assignments'));
       state.assignments=(Array.isArray(data.assignments)?data.assignments:[])
         .filter(a=>String(a?.source_type||'').toLowerCase()==='vocab_study');
+      if(force)state.cardProgress.clear();
       state.loaded=true;
       populateClassFilter();
       renderList();
