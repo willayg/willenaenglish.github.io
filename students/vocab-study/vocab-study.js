@@ -1887,6 +1887,10 @@ function renderSpeakingQuestion(){
     listenButton.textContent='🔊 Listen · 발음 듣기';
     listenButton.setAttribute('aria-label','영어 발음 듣기 · Listen to the English word');
     speakingControl.insertBefore(listenButton,speakingControl.firstChild);
+    const voiceNotice=document.createElement('small');
+    voiceNotice.className='vocab-speaking-ai-voice-notice';
+    voiceNotice.textContent='AI-generated pronunciation · AI 생성 음성';
+    speakingControl.insertBefore(voiceNotice,listenButton.nextSibling);
     listenButton.addEventListener('click',()=>{
       try{state.renderer?.speechRecognition?.stop?.()}catch(_){}
       playSpeakingModelAudio(word.speakingTarget||word.word).catch(error=>console.warn('[Vocab Study] speaking audio failed',error));
