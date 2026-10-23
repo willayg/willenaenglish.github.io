@@ -63,8 +63,8 @@ async function requireStudent(request){
 const R2_AUDIO_API='https://api.willenaenglish.com/.netlify/functions/';
 const TTS_VOICE='shimmer';
 const TTS_MODEL='gpt-4o-mini-tts';
-const TTS_SPEED=.9;
-const TTS_VERSION='wg_shimmer_v1';
+const TTS_SPEED=1;
+const TTS_VERSION='wg_shimmer_v2';
 async function listeningCacheKey(input){
   const source=[TTS_VERSION,TTS_MODEL,TTS_VOICE,String(TTS_SPEED),input.trim()].join('|');
   const digest=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(source));
@@ -76,7 +76,7 @@ async function lookupListeningMp3(key){
     const r=await fetch(R2_AUDIO_API+'get_audio_urls',{
       method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({words:[key]}),
-      signal:AbortSignal.timeout(7000),cache:'no-store'
+      signal:AbortSignal.timeout(2500),cache:'no-store'
     });
     if(!r.ok){console.warn('[vocab-ai-speech] R2 lookup HTTP',r.status);return null}
     const data=await r.json().catch(()=>null);
@@ -110,7 +110,7 @@ function toBase64(buffer){
   for(let i=0;i<bytes.length;i+=8192)binary+=String.fromCharCode(...bytes.subarray(i,i+8192));
   return btoa(binary);
 }
-export async function onRequestPost({request,env}){
+export async function onRequestPost({request,env,context}){
   const contentLength=Number(request.headers.get('Content-Length')||0);
   if(contentLength>1600000)return error(413,'Audio too large');
   let body;
@@ -144,7 +144,7 @@ export async function onRequestPost({request,env}){
         headers:{Authorization:'Bearer '+apiKey,'Content-Type':'application/json'},
         body:JSON.stringify({
           model:TTS_MODEL,voice:TTS_VOICE,input,speed:TTS_SPEED,
-          instructions:'Say only the English word or phrase in a clear, natural adult female American voice. Speak slightly slowly, with neutral US pronunciation and no additional words.',
+          instructions:'Say only the English word or phrase in a clear, natural adult female American voice with neutral US pronunciation, normal speaking speed and no additional words.',
           response_format:'mp3'
         }),signal:AbortSignal.timeout(20000)
       });
@@ -152,9 +152,16 @@ export async function onRequestPost({request,env}){
       const bytes=await response.arrayBuffer();
       if(!bytes.byteLength||bytes.byteLength>650000)return error(502,'Invalid AI listening audio');
       const audio=toBase64(bytes);
-      const stored=await saveListeningMp3(cacheKey,audio);
+      // Deliver the sound to the student immediately. Cloudflare Pages keeps
+      // the upload alive after this response through context.waitUntil().
+      // A failed R2 upload must never delay or prevent playback.
+      const backgroundSave=()=>saveListeningMp3(cacheKey,audio).catch(e=>{
+        console.warn('[vocab-ai-speech] background R2 upload failed',e?.name||'error');
+      });
+      if(context?.waitUntil)context.waitUntil(backgroundSave());
+      else void backgroundSave();
       return json(200,{success:true,audio,content_type:'audio/mpeg',ai_generated:true,
-        voice:TTS_VOICE,source:'openai',stored});
+        voice:TTS_VOICE,source:'openai',stored:false,saving:true});
     }
     const encoded=String(body.audio_base64||'');
     const mime=String(body.mime_type||'').toLowerCase();
