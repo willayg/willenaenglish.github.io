@@ -1,5 +1,6 @@
 // Word Genius optional speech assessment, hosted on the student Cloudflare Pages site.
-// Audio is never persisted here. Never place API credentials in client scripts.
+// Student mic recordings are never stored. Generated Shimmer MP3 listening
+// audio is stored in R2 via the existing Study V2 audio pipeline.
 const BASE='https://api.openai.com/v1/audio/';
 const limits=new Map();
 const json=(status,body)=>new Response(JSON.stringify(body),{
