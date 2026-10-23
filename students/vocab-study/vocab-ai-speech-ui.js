@@ -25,6 +25,7 @@ function errorMessage(error){
   if(/401|unauthorized|sign.in|session_invalid|missing_session/i.test(m))return 'AI 연결 인증 오류예요. 선생님에게 알려 주세요.';
   if(/404|not found|non-JSON/i.test(m))return 'AI 서버에 연결할 수 없어요.';
   if(/429|rate limit/i.test(m))return 'AI 요청이 너무 많아요. 잠시 후 다시 해 주세요.';
+  if(/AI POST connection failed|probe_failed|offline/i.test(m))return 'AI 연결이 끊겼어요. 다시 눌러 주세요.';
   if(/502|503|500|server|network|fetch/i.test(m))return 'AI 서버 연결에 문제가 있어요.';
   if(/No audio|empty|recording failed/i.test(m))return '소리가 녹음되지 않았어요.';
   return 'AI 확인 중 문제가 생겼어요.';
