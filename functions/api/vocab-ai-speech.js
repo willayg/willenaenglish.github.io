@@ -56,6 +56,47 @@ async function requireStudent(request){
   }
   return {userId:null,reason:'session_invalid'};
 }
+// Reuse the same R2 lookup/upload endpoints Study V2 uses.
+// A versioned, hashed key keeps Shimmer audio distinct from the legacy
+// word.mp3 files (often ElevenLabs) and from other voice/model versions.
+const R2_AUDIO_API='https://api.willenaenglish.com/.netlify/functions/';
+const TTS_VOICE='shimmer';
+const TTS_MODEL='gpt-4o-mini-tts';
+const TTS_SPEED=.9;
+const TTS_VERSION='wg_shimmer_v1';
+async function listeningCacheKey(input){
+  const source=[TTS_VERSION,TTS_MODEL,TTS_VOICE,String(TTS_SPEED),input.trim()].join('|');
+  const digest=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(source));
+  const hash=Array.from(new Uint8Array(digest),byte=>byte.toString(16).padStart(2,'0')).join('');
+  return TTS_VERSION+'_'+hash.slice(0,32);
+}
+async function lookupListeningMp3(key){
+  try{
+    const r=await fetch(R2_AUDIO_API+'get_audio_urls',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({words:[key]}),
+      signal:AbortSignal.timeout(7000),cache:'no-store'
+    });
+    if(!r.ok){console.warn('[vocab-ai-speech] R2 lookup HTTP',r.status);return null}
+    const data=await r.json().catch(()=>null);
+    const row=data?.results?.[key];
+    const url=String(row?.url||'');
+    // The lookup endpoint returns an eight-hour presigned R2 URL.
+    return row?.exists&&url.startsWith('https://')?url:null;
+  }catch(e){console.warn('[vocab-ai-speech] R2 lookup unavailable',e?.name||'error');return null}
+}
+async function saveListeningMp3(key,audioBase64){
+  try{
+    const r=await fetch(R2_AUDIO_API+'upload_audio',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({word:key,fileDataBase64:audioBase64}),
+      signal:AbortSignal.timeout(12000),cache:'no-store'
+    });
+    if(!r.ok){console.warn('[vocab-ai-speech] R2 MP3 upload HTTP',r.status);return false}
+    const data=await r.json().catch(()=>null);
+    return data?.success===true&&data?.path===key+'.mp3';
+  }catch(e){console.warn('[vocab-ai-speech] R2 MP3 upload unavailable',e?.name||'error');return false}
+}
 function fromBase64(value){
   const binary=atob(value);
   const out=new Uint8Array(binary.length);
@@ -93,19 +134,26 @@ export async function onRequestPost({request,env}){
     if(action==='listen'){
       const input=String(body.text||'').trim();
       if(!input||input.length>100||!/[a-z]/i.test(input))return error(400,'Invalid pronunciation text');
+      const cacheKey=await listeningCacheKey(input);
+      const previous=await lookupListeningMp3(cacheKey);
+      if(previous)return json(200,{success:true,audio_url:previous,content_type:'audio/mpeg',
+        ai_generated:true,voice:TTS_VOICE,source:'r2',stored:true});
       const response=await fetch(BASE+'speech',{
         method:'POST',
         headers:{Authorization:'Bearer '+apiKey,'Content-Type':'application/json'},
         body:JSON.stringify({
-          model:'gpt-4o-mini-tts',voice:'onyx',input,speed:.9,
-          instructions:'Say only the English word or phrase in a natural adult American masculine-sounding voice. Speak clearly and slightly slowly with a neutral US accent. Do not add other words.',
+          model:TTS_MODEL,voice:TTS_VOICE,input,speed:TTS_SPEED,
+          instructions:'Say only the English word or phrase in a clear, natural adult female American voice. Speak slightly slowly, with neutral US pronunciation and no additional words.',
           response_format:'mp3'
         }),signal:AbortSignal.timeout(20000)
       });
       if(!response.ok){console.warn('[vocab-ai-speech] TTS upstream',response.status);return error(502,'AI listening unavailable ('+response.status+')')}
       const bytes=await response.arrayBuffer();
       if(!bytes.byteLength||bytes.byteLength>650000)return error(502,'Invalid AI listening audio');
-      return json(200,{success:true,audio:toBase64(bytes),content_type:'audio/mpeg',ai_generated:true});
+      const audio=toBase64(bytes);
+      const stored=await saveListeningMp3(cacheKey,audio);
+      return json(200,{success:true,audio,content_type:'audio/mpeg',ai_generated:true,
+        voice:TTS_VOICE,source:'openai',stored});
     }
     const encoded=String(body.audio_base64||'');
     const mime=String(body.mime_type||'').toLowerCase();
