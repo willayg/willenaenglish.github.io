@@ -30,6 +30,9 @@ const HOMOPHONE_GROUPS=[
   ['eight','ate'],
   ['see','sea'],
   ['sun','son'],
+  // /soʊ/: AI transcription can choose 'so' for spoken 'sew'.
+  // Deliberately exclude 'sow': as a noun it is also pronounced /saʊ/.
+  ['sew','so'],
   ['no','know'],
   ['here','hear'],
   ['right','write','rite']
