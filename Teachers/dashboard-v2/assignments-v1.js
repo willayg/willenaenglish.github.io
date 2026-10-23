@@ -189,7 +189,7 @@
       const members=groups.get(id)||[];
       return '<section class="assignment-unit-group"><div class="assignment-unit-group-header"><strong>'+esc(a?.list_meta?.assignment_group_title||a.title)+'</strong><small>'+esc(a.class||'')+' · '+members.length+' units · Due '+esc(fmtDate(a.due_at))+'</small></div><div class="assignment-unit-group-items">'+members.map(assignmentCard).join('')+'</div></section>';
     }).join('');
-    $('.assignment-card',list).forEach(card=>card.addEventListener('click',()=>openAssignment(card.dataset.assignmentId)));
+    document.querySelectorAll('#assignmentList .assignment-card').forEach(card=>card.addEventListener('click',()=>openAssignment(card.dataset.assignmentId)));
     void loadVisibleCardProgress(rows,generation);
   }
 
