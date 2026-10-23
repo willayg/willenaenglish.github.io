@@ -79,23 +79,40 @@ export function attachAISpeakingFallback({host,target,isCurrent,onAccepted,match
       record.disabled=true;
       record.textContent='AI 확인 중…';
       note.textContent='음성을 분석하고 있어요…';
-      remaining-=1;
+      // Do not count a try until AI actually returns a usable assessment.
       const audio_base64=await toBase64(blob);
       if(!audio_base64||blob.size<400)throw new Error('No audio detected');
       const reply=await callApi({action:'transcribe',audio_base64,mime_type:mime});
       if(!alive())return;
-      const transcript=String(reply?.transcript||'').trim();
-      const assessment=transcript?match(target,[transcript]):{correct:false};
+      if(reply?.success!==true||typeof reply?.transcript!=='string')throw new Error('Invalid AI response');
+      const transcript=reply.transcript.trim();
+      if(!transcript){
+        note.textContent='AI가 소리를 인식하지 못했어요. 횟수 차감 없이 다시 녹음할 수 있어요.';
+        record.textContent='🎙️ Record again · 다시 녹음';
+        return;
+      }
+      // Spend an AI check only after a transcription is actually returned.
+      remaining-=1;
+      const assessment=match(target,[transcript]);
       if(assessment.correct&&['exact','spacing','homophone'].includes(assessment.matchedBy)){
         note.textContent='AI가 발음을 확인했어요! ✅';
         dispose();onAccepted(transcript);
         return;
       }
-      const heard=transcript?'AI가 들은 말: “'+transcript+'”':'AI가 음성을 정확히 듣지 못했어요.';
-      note.textContent=heard+' 다시 연습하거나 녹음해 보세요.';
+      note.textContent='AI가 들은 말: “'+transcript+'” · 다시 연습하거나 녹음해 보세요.';
       record.textContent='🎙️ Record again · 다시 녹음';
     }catch(error){
-      if(alive())note.textContent='AI 확인을 사용할 수 없어요. 일반 말하기를 계속하세요.';
+      if(alive()){
+        const message=String(error?.message||'');
+        let guidance='AI 서비스 연결 오류';
+        if(/401|sign.in|required|unauthorized/i.test(message))guidance='로그인이 만료되었습니다. 다시 로그인해 주세요';
+        else if(/404|not found|non-JSON/i.test(message))guidance='AI 서버가 아직 배포되지 않았거나 주소가 잘못되었습니다 (404)';
+        else if(/not configured|configuration|503/i.test(message))guidance='AI 서버 설정 또는 연결 문제 (503)';
+        else if(/429|too many|rate limit/i.test(message))guidance='AI 서비스 요청 한도에 도달했습니다';
+        else if(/transcription|502|rejected/i.test(message))guidance='AI 음성인식 서버 오류 (502)';
+        else if(/No audio detected/i.test(message))guidance='음성이 녹음되지 않았어요';
+        note.textContent=guidance+' · 횟수는 차감되지 않았어요. 다시 시도하거나 일반 말하기를 계속하세요.';
+      }
       console.warn('[Vocab Study] optional AI speaking check failed',error?.message||error);
     }finally{
       cleanup();busy=false;
