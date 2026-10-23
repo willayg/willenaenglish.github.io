@@ -26,7 +26,7 @@ function authTokens(request){
   const values=[];
   const m=/(?:^|;\s*)sb_access=([^;]+)/.exec(cookie);
   if(m){try{values.push(decodeURIComponent(m[1]))}catch(_){}}
-  if(/^Bearer\\s+/i.test(header))values.push(header.replace(/^Bearer\\s+/i,'').trim());
+  if(/^Bearer\s+/i.test(header))values.push(header.replace(/^Bearer\s+/i,'').trim());
   return [...new Set(values.filter(value=>value&&value.length>40))];
 }
 async function requireStudent(request){
