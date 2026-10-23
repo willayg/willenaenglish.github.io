@@ -24,7 +24,7 @@ function authTokens(request){
   const header=request.headers.get('Authorization')||'';
   const cookie=request.headers.get('Cookie')||'';
   const values=[];
-  const m=/(?:^|;\\s*)sb_access=([^;]+)/.exec(cookie);
+  const m=/(?:^|;\s*)sb_access=([^;]+)/.exec(cookie);
   if(m){try{values.push(decodeURIComponent(m[1]))}catch(_){}}
   if(/^Bearer\\s+/i.test(header))values.push(header.replace(/^Bearer\\s+/i,'').trim());
   return [...new Set(values.filter(value=>value&&value.length>40))];
@@ -48,8 +48,10 @@ async function requireStudent(request){
     if(!roleRequest.ok)throw new Error('Profile validation failed: '+roleRequest.status);
     const rows=await roleRequest.json().catch(()=>[]);
     const profile=Array.isArray(rows)?rows[0]:null;
-    if(profile?.id!==user.id||profile.role!=='student'||profile.approved!==true)
-      return {userId:null,reason:'student_role_required'};
+    // Teachers and admins can use Word Genius in approved preview sessions.
+    const allowed=['student','teacher','admin'].includes(String(profile?.role||'').toLowerCase());
+    if(profile?.id!==user.id||!allowed||profile.approved!==true)
+      return {userId:null,reason:'approved_account_required'};
     return {userId:String(user.id),reason:null};
   }
   return {userId:null,reason:'session_invalid'};
@@ -80,7 +82,7 @@ export async function onRequestPost({request,env}){
     return json(503,{success:false,error:'AI sign-in verification unavailable',error_code:'auth_service'});
   }
   if(!identity?.userId){
-    if(identity?.reason==='student_role_required')return json(403,{success:false,error:'Student account required',error_code:'student_role'});
+    if(identity?.reason==='approved_account_required')return json(403,{success:false,error:'Approved student or staff account required',error_code:'account_role'});
     return json(401,{success:false,error:'AI session could not be verified',error_code:identity?.reason||'session_invalid'});
   }
   const userId=identity.userId;
