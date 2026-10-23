@@ -2001,6 +2001,16 @@ function checkSpeaking(){
     correctAnswer:[target],
     message:correct?'정답입니다!':'다시 확인해 보세요.'
   });
+  // Once speaking is accepted, display the textbook's target phrase rather than
+  // the speech recognizer's spelling (e.g. "so a button" → "sew a button").
+  // The raw transcript is already stored above for tracking/debugging.
+  if(correct){
+    const transcriptEl=renderer.host?.querySelector('[data-speaking-transcript]');
+    if(transcriptEl){
+      transcriptEl.hidden=false;
+      transcriptEl.textContent='“'+target+'”';
+    }
+  }
   session.checked=true;
   actionBtn.disabled=false;
   actionBtn.classList.add('is-next');
