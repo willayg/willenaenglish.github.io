@@ -250,6 +250,7 @@ export class QuestionRenderer{
         }
         if(status)status.textContent=value?'이렇게 들었어요.':'잘 듣지 못했어요. 다시 말해 보세요.';
         this.emit();
+        if(value&&typeof this.onSpeechResult==='function')this.onSpeechResult(alternatives);
       };
       mic?.addEventListener('click',()=>{
         if(this.disabled)return;
