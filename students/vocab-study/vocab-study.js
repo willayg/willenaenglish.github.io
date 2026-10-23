@@ -1891,9 +1891,14 @@ function renderSpeakingQuestion(){
     voiceNotice.className='vocab-speaking-ai-voice-notice';
     voiceNotice.textContent='AI-generated pronunciation · AI 생성 음성';
     speakingControl.insertBefore(voiceNotice,listenButton.nextSibling);
-    listenButton.addEventListener('click',()=>{
+    listenButton.addEventListener('click',async()=>{
+      if(listenButton.disabled)return;
       try{state.renderer?.speechRecognition?.stop?.()}catch(_){}
-      playSpeakingModelAudio(word.speakingTarget||word.word).catch(error=>console.warn('[Vocab Study] speaking audio failed',error));
+      listenButton.disabled=true;
+      listenButton.textContent='🔊 Preparing voice… · 준비 중';
+      try{await playSpeakingModelAudio(word.speakingTarget||word.word)}
+      catch(error){console.warn('[Vocab Study] speaking audio failed',error)}
+      finally{listenButton.disabled=false;listenButton.textContent='🔊 Listen · 발음 듣기'}
     });
     // Prevent the microphone from transcribing our own model playback.
     host.querySelector('[data-speaking-mic]')?.addEventListener('click',()=>{
