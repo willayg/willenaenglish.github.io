@@ -2212,11 +2212,11 @@ async function callVocabSpeechAI(body){
   }
   return result;
 }
-function slowMaleBrowserVoice(text){
+function slowFemaleBrowserVoice(text){
   if(!window.speechSynthesis||!window.SpeechSynthesisUtterance)return false;
   const voices=speechSynthesis.getVoices();
-  const male=/\b(david|guy|matthew|aaron|daniel|james|andrew|joey|ryan|chris|fred|tom|eric|robert|brian|alex|male|onyx)\b/i;
-  const voice=voices.find(v=>/^en[-_]US$/i.test(v.lang)&&male.test(v.name));
+  const female=/\\b(samantha|zira|ava|jenny|aria|susan|victoria|allison|joanna|kendra|female|shimmer|nova)\\b/i;
+  const voice=voices.find(v=>/^en[-_]US$/i.test(v.lang)&&female.test(v.name));
   if(!voice)return false;
   try{
     speechSynthesis.cancel();
@@ -2231,25 +2231,38 @@ async function playSpeakingModelAudio(word){
   const requestId=++speakingAudioRequestId;
   try{vocabWordAudio?.pause?.();window.speechSynthesis?.cancel?.()}catch(_){}
   try{
-    let objectUrl=speakingModelAudioCache.get(text.toLowerCase());
-    if(!objectUrl){
+    const cacheKey=text.toLowerCase();
+    let cached=speakingModelAudioCache.get(cacheKey);
+    // Stored R2 links expire after eight hours; fetch a fresh link after six.
+    if(cached?.expiresAt&&cached.expiresAt<Date.now()){
+      speakingModelAudioCache.delete(cacheKey);cached=null;
+    }
+    if(!cached){
       const result=await callVocabSpeechAI({action:'listen',text});
-      if(!result?.audio)throw new Error('No model audio');
-      const bytes=Uint8Array.from(atob(result.audio),ch=>ch.charCodeAt(0));
-      objectUrl=URL.createObjectURL(new Blob([bytes],{type:'audio/mpeg'}));
-      speakingModelAudioCache.set(text.toLowerCase(),objectUrl);
+      let url='',expiresAt=null;
+      if(result?.audio_url){
+        const storedUrl=String(result.audio_url);
+        if(!storedUrl.startsWith('https://'))throw new Error('Invalid saved audio URL');
+        url=storedUrl;
+        expiresAt=Date.now()+6*60*60*1000;
+      }else if(result?.audio){
+        const bytes=Uint8Array.from(atob(result.audio),ch=>ch.charCodeAt(0));
+        url=URL.createObjectURL(new Blob([bytes],{type:'audio/mpeg'}));
+      }else throw new Error('No AI listening audio');
+      cached={url,expiresAt};
+      speakingModelAudioCache.set(cacheKey,cached);
     }
     if(requestId!==speakingAudioRequestId)return false;
-    const audio=new Audio(objectUrl);audio.playbackRate=.90;
+    const audio=new Audio(cached.url);audio.playbackRate=.90;
     vocabWordAudio=audio;
     await audio.play();
     audio.addEventListener('ended',()=>{if(vocabWordAudio===audio)vocabWordAudio=null},{once:true});
     return true;
   }catch(error){
     if(requestId!==speakingAudioRequestId)return false;
-    console.warn('[Vocab Study] male AI listening unavailable; fallback',error?.message||error);
-    if(slowMaleBrowserVoice(text))return true;
-    // Final fallback uses an existing recording rather than a robotic default voice.
+    console.warn('[Vocab Study] Shimmer AI listening unavailable; fallback',error?.message||error);
+    if(slowFemaleBrowserVoice(text))return true;
+    // Last resort: existing saved audio or local browser TTS.
     return playPreviewWord(text,{rate:.82});
   }
 }
