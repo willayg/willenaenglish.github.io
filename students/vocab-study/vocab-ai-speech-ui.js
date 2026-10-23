@@ -1,8 +1,10 @@
-// Optional AI check for difficult speaking words. Never uploads during ordinary browser STT.
+// Word Genius optional AI speaking check. Browser STT remains the default.
+// A failed network/microphone attempt never consumes one of the two AI checks.
 const MAX_SECONDS=5;
+const MAX_AI_CHECKS=2;
 function chooseMime(){
-  if(!window.MediaRecorder)return'';
-  return ['audio/webm;codecs=opus','audio/webm','audio/mp4','audio/ogg;codecs=opus','audio/ogg'].find(t=>MediaRecorder.isTypeSupported(t))||'';
+  if(!window.MediaRecorder)return '';
+  return ['audio/webm;codecs=opus','audio/webm','audio/mp4','audio/ogg;codecs=opus','audio/ogg'].find(type=>MediaRecorder.isTypeSupported(type))||'';
 }
 function toBase64(blob){
   return new Promise((resolve,reject)=>{
@@ -12,117 +14,177 @@ function toBase64(blob){
     reader.readAsDataURL(blob);
   });
 }
+function el(tag,className,content){
+  const node=document.createElement(tag);if(className)node.className=className;
+  if(content!=null)node.textContent=content;return node;
+}
+function errorMessage(error){
+  const m=String(error?.message||error||'Unknown error');
+  if(/notallowed|not-allowed|permission|denied/i.test(m))return '마이크 권한을 확인해 주세요.';
+  if(/notfound|not-found|device/i.test(m))return '마이크를 찾을 수 없어요.';
+  if(/401|unauthorized|sign.in/i.test(m))return '로그인을 다시 확인해 주세요.';
+  if(/404|not found|non-JSON/i.test(m))return 'AI 서버에 연결할 수 없어요.';
+  if(/429|rate limit/i.test(m))return 'AI 요청이 너무 많아요. 잠시 후 다시 해 주세요.';
+  if(/502|503|500|server|network|fetch/i.test(m))return 'AI 서버 연결에 문제가 있어요.';
+  if(/No audio|empty|recording failed/i.test(m))return '소리가 녹음되지 않았어요.';
+  return 'AI 확인 중 문제가 생겼어요.';
+}
 export function attachAISpeakingFallback({host,target,isCurrent,onAccepted,match,callApi,stopBrowserSpeech}){
-  const control=host?.querySelector('.speaking-control');
-  if(!control)return{observe(){},dispose(){}};
-  const btn=document.createElement('button');
-  btn.type='button';btn.className='vocab-ai-check-button';btn.hidden=true;
-  btn.textContent='✨ AI Check · AI 발음 확인';
-  const panel=document.createElement('div');panel.className='vocab-ai-check-panel';panel.hidden=true;
-  const info=document.createElement('div');info.className='vocab-ai-check-text';
-  info.textContent='짧게 녹음해 AI로 확인해요. 선택 사항이며 학원 서버에 녹음 파일을 저장하지 않습니다.';
-  const record=document.createElement('button');record.type='button';
-  record.className='vocab-ai-record-button';record.textContent='🎙️ Record · 녹음 시작';
-  const note=document.createElement('div');note.className='vocab-ai-check-note';note.setAttribute('role','status');
-  const close=document.createElement('button');close.type='button';close.className='vocab-ai-close';close.textContent='취소 / Cancel';
-  panel.append(info,record,note,close);
-  control.append(btn,panel);
-  let misses=0,recorder=null,stream=null,timer=null,busy=false,disposed=false,remaining=2;
+  if(!host?.querySelector('.speaking-control'))return{observe(){},dispose(){}};
+  let misses=0,remaining=MAX_AI_CHECKS,disposed=false,declined=false,busy=false;
+  let stream=null,recorder=null,timer=null,modal=null,recordButton=null,remainingLabel=null,status=null,errorDetails=null;
+  let lastFocus=null;
   const alive=()=>!disposed&&isCurrent();
   function cleanup(){
     if(timer){clearTimeout(timer);timer=null}
-    if(recorder&&recorder.state==='recording'){try{recorder.stop()}catch(_){}}
+    if(recorder?.state==='recording'){try{recorder.stop()}catch(_){}}
     recorder=null;
-    if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}
+    if(stream){stream.getTracks().forEach(track=>track.stop());stream=null}
   }
-  function dispose(){disposed=true;cleanup();panel.hidden=true;btn.hidden=true}
-  function observe(alternatives){
-    if(!alive())return;
-    if(match(target,alternatives).correct){misses=0;btn.hidden=true;panel.hidden=true;return}
-    misses+=1;
-    if(misses>=3&&!busy&&remaining>0)btn.hidden=false;
+  function dismiss(){
+    cleanup();
+    modal?.remove();modal=null;recordButton=null;remainingLabel=null;status=null;errorDetails=null;
+    if(lastFocus?.isConnected)lastFocus.focus({preventScroll:true});
+    lastFocus=null;
   }
-  btn.addEventListener('click',()=>{
-    if(!alive()||busy)return;
-    panel.hidden=!panel.hidden;
-    btn.setAttribute('aria-expanded',String(!panel.hidden));
-    if(!panel.hidden)note.textContent='마이크를 누르고 단어를 말해 주세요. 최대 5초.';
-  });
-  close.addEventListener('click',()=>{if(!busy){panel.hidden=true;btn.setAttribute('aria-expanded','false')}});
-  record.addEventListener('click',async()=>{
-    if(!alive()||remaining<=0)return;
-    if(recorder?.state==='recording'){recorder.stop();return}
-    if(busy||!navigator.mediaDevices?.getUserMedia)return;
-    if(!chooseMime()){note.textContent='이 브라우저에서는 녹음을 지원하지 않습니다.';return}
-    busy=true;btn.hidden=true;record.disabled=true;
-    note.textContent='마이크 연결 중…';
+  function dispose(){disposed=true;declined=true;dismiss()}
+  function showError(error){
+    const technical=String(error?.message||error||'Unknown error');
+    if(status)status.textContent=errorMessage(error)+' 횟수는 줄어들지 않아요.';
+    if(errorDetails){
+      errorDetails.hidden=false;
+      const code=/HTTP\s*\d+/i.exec(technical)?.[0]||error?.name||'AI check error';
+      errorDetails.querySelector('summary').textContent='오류 정보 보기 · '+code;
+      errorDetails.querySelector('code').textContent=technical.slice(0,480);
+    }
+    console.warn('[Word Genius] AI speaking error',technical);
+  }
+  function clearError(){if(errorDetails){errorDetails.hidden=true;errorDetails.open=false;errorDetails.querySelector('code').textContent=''}}
+  function baseModal(){
+    lastFocus=document.activeElement;
+    const overlay=el('div','vocab-ai-modal-backdrop');
+    overlay.setAttribute('role','presentation');
+    const dialog=el('section','vocab-ai-modal');
+    dialog.setAttribute('role','dialog');
+    dialog.setAttribute('aria-modal','true');
+    dialog.setAttribute('aria-label','AI 윌리 발음 확인');
+    const header=el('div','vocab-ai-modal-head');
+    const title=el('h2','vocab-ai-modal-title','AI 윌리가 네 답을 확인해 줄까요?');
+    header.append(title);dialog.append(header);
+    overlay.append(dialog);document.body.append(overlay);
+    modal=overlay;
+    const onKey=e=>{
+      if(e.key==='Escape'&&!busy){declined=true;dismiss()}
+      // Keep focus inside the modal while it is visible.
+      if(e.key==='Tab'&&modal){
+        const focusable=[...dialog.querySelectorAll('button:not([disabled]),summary')].filter(x=>!x.hidden&&!x.closest('[hidden]'));
+        if(!focusable.length)return;
+        const first=focusable[0],last=focusable[focusable.length-1];
+        if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus()}
+        else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}
+      }
+    };
+    overlay.addEventListener('keydown',onKey);
+    return dialog;
+  }
+  function showRecording(){
+    if(!alive()||!modal)return;
+    const dialog=modal.querySelector('.vocab-ai-modal');
+    dialog.replaceChildren();
+    const title=el('h2','vocab-ai-modal-title','영어로 말해 보세요!');
+    remainingLabel=el('p','vocab-ai-modal-remaining','AI 확인 기회 '+remaining+'번');
+    recordButton=el('button','vocab-ai-record-button','🎙️ 녹음 시작');
+    recordButton.type='button';
+    status=el('p','vocab-ai-modal-status','녹음은 최대 5초예요.');
+    errorDetails=el('details','vocab-ai-debug');
+    errorDetails.hidden=true;
+    errorDetails.append(el('summary','','오류 정보 보기'),el('code','',''));
+    const close=el('button','vocab-ai-modal-secondary','일반 말하기로 돌아가기');
+    close.type='button';
+    close.addEventListener('click',()=>{if(!busy){declined=true;dismiss()}});
+    recordButton.addEventListener('click',handleRecording);
+    dialog.append(title,remainingLabel,recordButton,status,errorDetails,close);
+    recordButton.focus();
+  }
+  function prompt(){
+    if(!alive()||declined||modal||busy||remaining<=0)return;
+    const dialog=baseModal();
+    const actions=el('div','vocab-ai-modal-actions');
+    const yes=el('button','vocab-ai-modal-yes','네!');
+    const no=el('button','vocab-ai-modal-secondary','아니요');
+    yes.type=no.type='button';
+    yes.addEventListener('click',showRecording);
+    no.addEventListener('click',()=>{declined=true;dismiss()});
+    actions.append(yes,no);dialog.append(actions);
+    yes.focus();
+  }
+  async function handleRecording(){
+    if(!alive()||remaining<=0||!recordButton)return;
+    if(recorder?.state==='recording'){try{recorder.stop()}catch(e){showError(e)}return}
+    if(busy)return;
+    if(!navigator.mediaDevices?.getUserMedia){showError(new Error('MediaDevices getUserMedia not supported'));return}
+    const mime=chooseMime();
+    if(!mime){showError(new Error('MediaRecorder MIME type not supported'));return}
+    busy=true;recordButton.disabled=true;clearError();
+    if(status)status.textContent='마이크 연결 중…';
     try{
       stopBrowserSpeech?.();
       stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,channelCount:1}});
-      if(!alive()){cleanup();return}
-      const mime=chooseMime();
+      if(!alive()||!modal){cleanup();return}
       recorder=new MediaRecorder(stream,{mimeType:mime,audioBitsPerSecond:32000});
       const parts=[];
       const finished=new Promise((resolve,reject)=>{
-        recorder.onerror=()=>reject(new Error('Recording failed'));
+        recorder.onerror=e=>reject(new Error(e?.error?.message||'Recording failed'));
         recorder.ondataavailable=e=>{if(e.data?.size)parts.push(e.data)};
         recorder.onstop=()=>resolve(new Blob(parts,{type:mime}));
       });
       recorder.start(200);
-      record.textContent='■ Stop & check · 녹음 완료';
-      record.disabled=false;
-      note.textContent='말하세요! 녹음 후 AI로 확인합니다.';
+      recordButton.textContent='■ 녹음 완료';
+      recordButton.disabled=false;
+      if(status)status.textContent='지금 말하세요!';
       timer=setTimeout(()=>{if(recorder?.state==='recording')recorder.stop()},MAX_SECONDS*1000);
       const blob=await finished;
       cleanup();
-      if(!alive())return;
-      record.disabled=true;
-      record.textContent='AI 확인 중…';
-      note.textContent='음성을 분석하고 있어요…';
-      // Do not count a try until AI actually returns a usable assessment.
+      if(!alive()||!modal)return;
+      recordButton.disabled=true;recordButton.textContent='AI 확인 중…';
+      if(status)status.textContent='확인하고 있어요…';
+      if(blob.size<400)throw new Error('No audio detected');
       const audio_base64=await toBase64(blob);
-      if(!audio_base64||blob.size<400)throw new Error('No audio detected');
+      if(!audio_base64)throw new Error('No audio detected');
       const reply=await callApi({action:'transcribe',audio_base64,mime_type:mime});
-      if(!alive())return;
+      if(!alive()||!modal)return;
       if(reply?.success!==true||typeof reply?.transcript!=='string')throw new Error('Invalid AI response');
       const transcript=reply.transcript.trim();
-      if(!transcript){
-        note.textContent='AI가 소리를 인식하지 못했어요. 횟수 차감 없이 다시 녹음할 수 있어요.';
-        record.textContent='🎙️ Record again · 다시 녹음';
-        return;
-      }
-      // Spend an AI check only after a transcription is actually returned.
+      if(!transcript){if(status)status.textContent='잘 듣지 못했어요. 다시 녹음해 주세요.';return}
+      // Only usable AI transcriptions consume a check.
       remaining-=1;
       const assessment=match(target,[transcript]);
       if(assessment.correct&&['exact','spacing','homophone'].includes(assessment.matchedBy)){
-        note.textContent='AI가 발음을 확인했어요! ✅';
-        dispose();onAccepted(transcript);
+        if(status)status.textContent='잘했어요! ✅';
+        dispose();
+        onAccepted(transcript);
         return;
       }
-      note.textContent='AI가 들은 말: “'+transcript+'” · 다시 연습하거나 녹음해 보세요.';
-      record.textContent='🎙️ Record again · 다시 녹음';
-    }catch(error){
-      if(alive()){
-        const message=String(error?.message||'');
-        let guidance='AI 서비스 연결 오류';
-        if(/401|sign.in|required|unauthorized/i.test(message))guidance='로그인이 만료되었습니다. 다시 로그인해 주세요';
-        else if(/404|not found|non-JSON/i.test(message))guidance='AI 서버가 아직 배포되지 않았거나 주소가 잘못되었습니다 (404)';
-        else if(/not configured|configuration|503/i.test(message))guidance='AI 서버 설정 또는 연결 문제 (503)';
-        else if(/429|too many|rate limit/i.test(message))guidance='AI 서비스 요청 한도에 도달했습니다';
-        else if(/transcription|502|rejected/i.test(message))guidance='AI 음성인식 서버 오류 (502)';
-        else if(/No audio detected/i.test(message))guidance='음성이 녹음되지 않았어요';
-        note.textContent=guidance+' · 횟수는 차감되지 않았어요. 다시 시도하거나 일반 말하기를 계속하세요.';
+      if(remainingLabel)remainingLabel.textContent='AI 확인 기회 '+remaining+'번';
+      if(remaining>0){
+        if(status)status.textContent='AI가 들은 말: “'+transcript+'” · 한 번 더!';
+      }else{
+        if(status)status.textContent='AI 확인 2번을 마쳤어요. 일반 말하기로 계속하세요.';
+        if(recordButton){recordButton.disabled=true;recordButton.textContent='확인 완료'}
       }
-      console.warn('[Vocab Study] optional AI speaking check failed',error?.message||error);
-    }finally{
+    }catch(error){if(alive()&&modal)showError(error)}
+    finally{
       cleanup();busy=false;
-      if(alive()){
-        record.disabled=remaining<=0;
-        if(record.textContent==='AI 확인 중…'||record.textContent==='■ Stop & check · 녹음 완료')record.textContent='🎙️ Record again · 다시 녹음';
-        if(remaining<=0){record.textContent='AI 재확인 횟수 완료';btn.hidden=true}
-        else if(misses>=3)btn.hidden=false;
+      if(alive()&&modal&&recordButton&&remaining>0){
+        recordButton.disabled=false;recordButton.textContent='🎙️ 다시 녹음';
       }
     }
-  });
-  return{observe,dispose};
+  }
+  function observe(alternatives){
+    if(!alive()||declined||remaining<=0)return;
+    if(match(target,alternatives).correct){misses=0;dismiss();return}
+    misses++;
+    if(misses>=3)prompt();
+  }
+  return {observe,dispose};
 }
