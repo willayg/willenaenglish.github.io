@@ -22,7 +22,7 @@ function errorMessage(error){
   const m=String(error?.message||error||'Unknown error');
   if(/notallowed|not-allowed|permission|denied/i.test(m))return '마이크 권한을 확인해 주세요.';
   if(/notfound|not-found|device/i.test(m))return '마이크를 찾을 수 없어요.';
-  if(/401|unauthorized|sign.in/i.test(m))return '로그인을 다시 확인해 주세요.';
+  if(/401|unauthorized|sign.in|session_invalid|missing_session/i.test(m))return 'AI 연결 인증 오류예요. 선생님에게 알려 주세요.';
   if(/404|not found|non-JSON/i.test(m))return 'AI 서버에 연결할 수 없어요.';
   if(/429|rate limit/i.test(m))return 'AI 요청이 너무 많아요. 잠시 후 다시 해 주세요.';
   if(/502|503|500|server|network|fetch/i.test(m))return 'AI 서버 연결에 문제가 있어요.';
