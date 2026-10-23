@@ -2215,7 +2215,7 @@ async function callVocabSpeechAI(body){
 function slowFemaleBrowserVoice(text){
   if(!window.speechSynthesis||!window.SpeechSynthesisUtterance)return false;
   const voices=speechSynthesis.getVoices();
-  const female=/\\b(samantha|zira|ava|jenny|aria|susan|victoria|allison|joanna|kendra|female|shimmer|nova)\\b/i;
+  const female=/\b(samantha|zira|ava|jenny|aria|susan|victoria|allison|joanna|kendra|female|shimmer|nova)\b/i;
   const voice=voices.find(v=>/^en[-_]US$/i.test(v.lang)&&female.test(v.name));
   if(!voice)return false;
   try{
