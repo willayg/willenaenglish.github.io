@@ -843,3 +843,29 @@ body.willena-kb-open .vocab-session-main{
   border-color:#27b7c5;background:#e0f8fa;outline-offset:3px;
 }
 .vocab-speaking-listen:active{transform:scale(.98)}
+
+/* Student-controlled second-pass AI speech check, shown after three STT misses. */
+.vocab-ai-check-button{
+  min-height:43px;width:min(100%,295px);border:2px solid #e7b0d1;
+  border-radius:13px;background:#fff4fb;color:#9d2d71;
+  padding:10px 16px;font:800 .85rem Poppins,system-ui,sans-serif;
+  cursor:pointer;touch-action:manipulation;
+}
+.vocab-ai-check-button[hidden],.vocab-ai-check-panel[hidden]{display:none!important}
+.vocab-ai-check-button:focus-visible,.vocab-ai-record-button:focus-visible,.vocab-ai-close:focus-visible{
+  outline:3px solid #64cdd9;outline-offset:3px;
+}
+.vocab-ai-check-panel{
+  box-sizing:border-box;width:min(100%,375px);border:2px solid #e2d7f6;
+  border-radius:17px;padding:16px;background:#fbfaff;
+  display:grid;justify-items:center;gap:10px;text-align:center;
+}
+.vocab-ai-check-text{font:700 .76rem/1.6 Poppins,system-ui,sans-serif;color:#687580}
+.vocab-ai-record-button{
+  min-height:45px;border:2px solid #82d8df;border-radius:13px;
+  padding:9px 15px;background:#f1fdfd;color:#176776;
+  font:850 .83rem Poppins,system-ui,sans-serif;cursor:pointer;
+}
+.vocab-ai-record-button:disabled{opacity:.55;cursor:wait}
+.vocab-ai-check-note{font:700 .77rem/1.55 Poppins,system-ui,sans-serif;color:#5d5867;max-width:340px}
+.vocab-ai-close{border:0;background:transparent;color:#687580;font:700 .73rem Poppins,system-ui,sans-serif;cursor:pointer}
