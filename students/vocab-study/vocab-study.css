@@ -952,3 +952,29 @@ body.willena-kb-open .vocab-session-main{
 @media(max-width:560px){
   .vocab-ai-modal .vocab-ai-record-button.speaking-mic{width:88px;height:88px}
 }
+
+/* Listen is an indeterminate loading bar while the server/R2 prepares audio.
+   No fake completion percentage: generation time is not knowable in advance. */
+.vocab-speaking-listen{position:relative;isolation:isolate;overflow:hidden}
+.vocab-speaking-listen-label{position:relative;z-index:1;pointer-events:none}
+.vocab-speaking-listen.is-loading{
+  cursor:progress;opacity:1;background:#e4f7fa;border-color:#45bfcb;
+  box-shadow:0 0 0 1px rgba(37,184,196,.1) inset;
+}
+.vocab-speaking-listen.is-loading::before{
+  content:'';position:absolute;inset:0;z-index:0;
+  background:linear-gradient(90deg,rgba(66,211,216,.26),rgba(14,164,185,.5));
+  width:43%;border-radius:10px;
+  animation:vocabListenLoading 1.2s ease-in-out infinite alternate;
+}
+.vocab-speaking-listen.is-loading::after{
+  content:'';position:absolute;bottom:0;left:0;right:0;height:5px;
+  background:repeating-linear-gradient(105deg,#10a9b9 0 18px,#8ddde5 18px 36px);
+  animation:vocabListenTrack 1s linear infinite;
+}
+@keyframes vocabListenLoading{from{transform:translateX(-110%)}to{transform:translateX(240%)}}
+@keyframes vocabListenTrack{from{background-position:0 0}to{background-position:36px 0}}
+@media(prefers-reduced-motion:reduce){
+ .vocab-speaking-listen.is-loading::before,.vocab-speaking-listen.is-loading::after{animation:none}
+ .vocab-speaking-listen.is-loading::before{width:100%;opacity:.35}
+}
