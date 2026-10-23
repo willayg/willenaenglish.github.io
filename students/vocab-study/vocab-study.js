@@ -7,7 +7,7 @@ import {isSpeakableTarget,matchSpeakingTarget} from './speaking-match.js?v=20261
 import {getAssignment,setAssignment,getBookMeta,setBookMeta,getVocabulary,setVocabulary,background} from './vocab-startup-cache.js?v=20260927-startup2';
 import {snapshotPercent,snapshotStars,loadVocabSnapshot,nextSkillTargets} from './vocab-progress-snapshot.js?v=20260927-startup2';
 import {coachAttempt,repeatUntilCorrect,appendRetry,uniquePassedCount,wrongAttemptCount} from './vocab-pass-flow.js?v=20260927-startup2';
-import {createVocabHistoryNavigation} from './navigation-history.js?v=20260927-startup2';
+import {createVocabHistoryNavigation} from './navigation-history.js?v=20261024-home-depth1';
 import {installWillenaKeyboard} from '../shared/willena-keyboard.js?v=20260927-startup2';
 import {playStudentSfx,preloadStudentSfx} from '../shared/student-sfx.js?v=20260927-startup2';
 
@@ -542,8 +542,9 @@ function writeNavigation(route,mode='replace'){
   else navController.replace(route);
 }
 function navigateBackHome(){
-  if(navController)navController.back({screen:'home'});
-  else setMainScreen('home');
+  // Home always jumps to the front menu, regardless of previous activities.
+  if(navController)navController.home();
+  else {void applyNavigationRoute({screen:'home'})}
 }
 async function applyNavigationRoute(route){
   const screen=route?.screen||'home';
@@ -2874,6 +2875,7 @@ async function boot(){
     wordModalEl?.addEventListener('click',e=>{if(e.target===wordModalEl)closeWordList()});
     document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!wordModalEl?.hidden)closeWordList()});
     closeBtn.addEventListener('click',closeSession);
+    el('vocabSessionHome')?.addEventListener('click',navigateBackHome);
     speakingSkipBtn?.addEventListener('click',skipSpeaking);
     actionBtn.addEventListener('pointerdown',event=>{
       if(Number.isFinite(event.clientX)&&Number.isFinite(event.clientY)){
