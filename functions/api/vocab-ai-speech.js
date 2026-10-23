@@ -14,7 +14,7 @@ const allow=(id,kind)=>{
   const max=kind==='listen'?90:24;
   if(stamps.length>=max){limits.set(key,stamps);return false}
   stamps.push(now);limits.set(key,stamps);
-  if(limits.size>500)for(const [k,v] of limits)if(!v.length||now-v[v.length-1]<-3600000)limits.delete(k);
+  if(limits.size>500)for(const [k,v] of limits)if(!v.length||now-v[v.length-1]>3600000)limits.delete(k);
   return true;
 };
 function authCookie(request){
