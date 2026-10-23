@@ -1874,6 +1874,26 @@ function renderSpeakingQuestion(){
   state.renderer=new QuestionRenderer(host).render(speakingQuestion(word,session.index),{
     onChange:(_,has)=>{if(!session.checked)actionBtn.disabled=!has}
   });
+  // Let students hear the target as often as they need without changing
+  // scores, speech transcripts, or their unlimited microphone retries.
+  const speakingControl=host.querySelector('.speaking-control');
+  if(speakingControl){
+    const listenButton=document.createElement('button');
+    listenButton.type='button';
+    listenButton.className='vocab-speaking-listen';
+    listenButton.textContent='🔊 Listen · 발음 듣기';
+    listenButton.setAttribute('aria-label','영어 발음 듣기 · Listen to the English word');
+    speakingControl.insertBefore(listenButton,speakingControl.firstChild);
+    listenButton.addEventListener('click',()=>{
+      try{state.renderer?.speechRecognition?.stop?.()}catch(_){}
+      playPreviewWord(word.speakingTarget||word.word).catch(error=>console.warn('[Vocab Study] speaking audio failed',error));
+    });
+    // Prevent the microphone from transcribing our own model playback.
+    host.querySelector('[data-speaking-mic]')?.addEventListener('click',()=>{
+      try{vocabWordAudio?.pause?.()}catch(_){}
+      try{window.speechSynthesis?.cancel?.()}catch(_){}
+    },{capture:true});
+  }
   state.questionStartedAt=Date.now();
   sessionMain.scrollTop=0;
 }
