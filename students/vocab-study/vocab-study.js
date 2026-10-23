@@ -2132,10 +2132,19 @@ async function playPreviewWord(word,{rate=1}={}){
 const speakingModelAudioCache=new Map();
 let speakingAudioRequestId=0;
 async function callVocabSpeechAI(body){
-  return api('/.netlify/functions/vocab_ai_speech',{
-    method:'POST',headers:{'Content-Type':'application/json'},
+  // Same-origin Cloudflare Pages function. Do not route through the legacy Netlify API gateway.
+  const headers={'Content-Type':'application/json'};
+  const accessToken=window.WillenaAPI?.getLocalAccessToken?.();
+  if(accessToken&&accessToken.length>40)headers.Authorization='Bearer '+accessToken;
+  const response=await fetch('/api/vocab-ai-speech',{
+    method:'POST',headers,credentials:'include',cache:'no-store',
     body:JSON.stringify(body)
   });
+  const result=await response.json().catch(()=>null);
+  if(!response.ok||result?.success!==true){
+    throw new Error((result?.error||'AI speech server unavailable')+' (HTTP '+response.status+')');
+  }
+  return result;
 }
 function slowMaleBrowserVoice(text){
   if(!window.speechSynthesis||!window.SpeechSynthesisUtterance)return false;
