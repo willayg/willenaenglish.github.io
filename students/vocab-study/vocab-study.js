@@ -1,5 +1,6 @@
 import {QuestionRenderer} from '/shared/questions/question-renderer.js?v=20261023-speaking-ai1';
 import {attachAISpeakingFallback} from './vocab-ai-speech-ui.js?v=20261024-round-mic2';
+import {createSpeakingAudioCache} from './vocab-listening-cache.js?v=20261024-audio-prefetch1';
 import {capturePointOrigin,showPointAward} from '/students/components/student-point-feedback.js?v=20260927-startup2';
 import {getSpellingTarget} from './spelling-targets.js?v=20260927-startup2';
 import {isSpeakableTarget,matchSpeakingTarget} from './speaking-match.js?v=20261024-sew-so-homophones2';
@@ -1884,7 +1885,10 @@ function renderSpeakingQuestion(){
     const listenButton=document.createElement('button');
     listenButton.type='button';
     listenButton.className='vocab-speaking-listen';
-    listenButton.textContent='🔊 Listen · 발음 듣기';
+    const listenLabel=document.createElement('span');
+    listenLabel.className='vocab-speaking-listen-label';
+    listenLabel.textContent='🔊 Listen · 발음 듣기';
+    listenButton.append(listenLabel);
     listenButton.setAttribute('aria-label','영어 발음 듣기 · Listen to the English word');
     listenButton.hidden=true;
     speakingControl.insertBefore(listenButton,speakingControl.firstChild);
@@ -1897,10 +1901,17 @@ function renderSpeakingQuestion(){
       if(listenButton.disabled)return;
       try{state.renderer?.speechRecognition?.stop?.()}catch(_){}
       listenButton.disabled=true;
-      listenButton.textContent='🔊 Preparing voice… · 준비 중';
+      listenButton.classList.add('is-loading');
+      listenButton.setAttribute('aria-busy','true');
+      listenLabel.textContent='🔊 음성 준비 중…';
       try{await playSpeakingModelAudio(word.speakingTarget||word.word)}
       catch(error){console.warn('[Vocab Study] speaking audio failed',error)}
-      finally{listenButton.disabled=false;listenButton.textContent='🔊 Listen · 발음 듣기'}
+      finally{
+        listenButton.disabled=false;
+        listenButton.classList.remove('is-loading');
+        listenButton.removeAttribute('aria-busy');
+        listenLabel.textContent='🔊 Listen · 발음 듣기';
+      }
     });
     // Prevent the microphone from transcribing our own model playback.
     host.querySelector('[data-speaking-mic]')?.addEventListener('click',()=>{
@@ -1945,6 +1956,9 @@ function renderSpeakingQuestion(){
     });
     renderer.onSpeechResult=alternatives=>state.aiSpeechUi?.observe(alternatives);
   }
+  // Prepare a small window in the background while students try the normal mic.
+  // Silent preload does not show the target or play anything.
+  scheduleSpeakingAudioPrefetch(session);
   state.questionStartedAt=Date.now();
   sessionMain.scrollTop=0;
 }
@@ -2152,8 +2166,8 @@ async function playPreviewWord(word,{rate=1}={}){
   }
 }
 
-// Dedicated slower American masculine-sounding AI model voice for speaking Listen.
-const speakingModelAudioCache=new Map();
+// OpenAI Shimmer listening, played at the source's normal speed.
+const speakingModelAudioCache=createSpeakingAudioCache(text=>callVocabSpeechAI({action:'listen',text}));
 let speakingAudioRequestId=0;
 async function callVocabSpeechAI(body){
   const endpoint='/api/vocab-ai-speech';
@@ -2212,7 +2226,7 @@ async function callVocabSpeechAI(body){
   }
   return result;
 }
-function slowFemaleBrowserVoice(text){
+function femaleBrowserVoice(text){
   if(!window.speechSynthesis||!window.SpeechSynthesisUtterance)return false;
   const voices=speechSynthesis.getVoices();
   const female=/\b(samantha|zira|ava|jenny|aria|susan|victoria|allison|joanna|kendra|female|shimmer|nova)\b/i;
@@ -2221,9 +2235,18 @@ function slowFemaleBrowserVoice(text){
   try{
     speechSynthesis.cancel();
     const utterance=new SpeechSynthesisUtterance(cleanBrowserTtsText(text));
-    utterance.lang='en-US';utterance.voice=voice;utterance.rate=.79;
+    utterance.lang='en-US';utterance.voice=voice;utterance.rate=1;
     speechSynthesis.speak(utterance);return true;
   }catch(_){return false}
+}
+function scheduleSpeakingAudioPrefetch(session){
+  const index=session.index;
+  setTimeout(()=>{
+    if(state.speakingSession!==session||sessionEl.hidden||session.index!==index)return;
+    const windowOfWords=session.words.slice(index,index+3)
+      .map(word=>word.speakingTarget||word.word).filter(Boolean);
+    speakingModelAudioCache.prefetch(windowOfWords);
+  },250);
 }
 async function playSpeakingModelAudio(word){
   const text=txt(word);
@@ -2231,39 +2254,20 @@ async function playSpeakingModelAudio(word){
   const requestId=++speakingAudioRequestId;
   try{vocabWordAudio?.pause?.();window.speechSynthesis?.cancel?.()}catch(_){}
   try{
-    const cacheKey=text.toLowerCase();
-    let cached=speakingModelAudioCache.get(cacheKey);
-    // Stored R2 links expire after eight hours; fetch a fresh link after six.
-    if(cached?.expiresAt&&cached.expiresAt<Date.now()){
-      speakingModelAudioCache.delete(cacheKey);cached=null;
-    }
-    if(!cached){
-      const result=await callVocabSpeechAI({action:'listen',text});
-      let url='',expiresAt=null;
-      if(result?.audio_url){
-        const storedUrl=String(result.audio_url);
-        if(!storedUrl.startsWith('https://'))throw new Error('Invalid saved audio URL');
-        url=storedUrl;
-        expiresAt=Date.now()+6*60*60*1000;
-      }else if(result?.audio){
-        const bytes=Uint8Array.from(atob(result.audio),ch=>ch.charCodeAt(0));
-        url=URL.createObjectURL(new Blob([bytes],{type:'audio/mpeg'}));
-      }else throw new Error('No AI listening audio');
-      cached={url,expiresAt};
-      speakingModelAudioCache.set(cacheKey,cached);
-    }
+    // A background prefetch and a click share exactly the same in-flight request.
+    const cached=await speakingModelAudioCache.get(text);
     if(requestId!==speakingAudioRequestId)return false;
-    const audio=new Audio(cached.url);audio.playbackRate=.90;
+    const audio=new Audio(cached.url);
+    audio.playbackRate=1;
     vocabWordAudio=audio;
     await audio.play();
     audio.addEventListener('ended',()=>{if(vocabWordAudio===audio)vocabWordAudio=null},{once:true});
     return true;
   }catch(error){
     if(requestId!==speakingAudioRequestId)return false;
-    console.warn('[Vocab Study] Shimmer AI listening unavailable; fallback',error?.message||error);
-    if(slowFemaleBrowserVoice(text))return true;
-    // Last resort: existing saved audio or local browser TTS.
-    return playPreviewWord(text,{rate:.82});
+    console.warn('[Vocab Study] Shimmer listening unavailable; fallback',error?.message||error);
+    if(femaleBrowserVoice(text))return true;
+    return playPreviewWord(text,{rate:1});
   }
 }
 window.WillenaPlayWordAudio=playPreviewWord;
