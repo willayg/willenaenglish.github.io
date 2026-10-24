@@ -8,6 +8,7 @@ import {playStudentSfx} from '/students/shared/student-sfx.js';
 import {capturePointOrigin,showPointAward} from '/students/components/student-point-feedback.js';
 import {checkOrder} from './scoring.js?v=sg-phase2b';
 import {grammarClueFor} from './grammar-clues.js?v=sg-clues-v1b';
+import {gradeUnfamiliarSentence,usableAlternatives} from './ai-grading.js?v=sg-phase3a';
 
 const $=id=>document.getElementById(id);
 const titles={coach:'코치',unscramble:'문장 배열',speaking:'말하기'};
@@ -38,7 +39,7 @@ function questionFor(mode,item){
 }
 export function createSession({onFinish,onProgress,onHome,onBack,onMessage}){
   let ctx=null,queue=[],index=0,renderer=null,speech=null,answered=false,
-    since=0,epoch=0,mode='coach',reward=null,saving=new Set(),listenUsed=false;
+    since=0,epoch=0,mode='coach',reward=null,saving=new Set(),listenUsed=false,grading=false;
   function dispose(){
     ++epoch;
     speech?.dispose();speech=null;
@@ -61,7 +62,7 @@ export function createSession({onFinish,onProgress,onHome,onBack,onMessage}){
     render();return true;
   }
   function render(){
-    dispose();answered=false;listenUsed=false;
+    dispose();answered=false;listenUsed=false;grading=false;
     const item=current();
     if(!item){void finish();return}
     const token=epoch;since=Date.now();
@@ -80,7 +81,7 @@ export function createSession({onFinish,onProgress,onHome,onBack,onMessage}){
     root.innerHTML='<div class="question-card" id="sentenceQuestionHost"></div>';
     const host=$('sentenceQuestionHost');
     renderer=new QuestionRenderer(host).render(questionFor(mode,item),{
-      onChange:(_answer,has)=>{if(!answered&&token===epoch)$('action').disabled=!has}
+      onChange:(_answer,has)=>{if(!answered&&!grading&&token===epoch)$('action').disabled=!has}
     });
     if(mode==='speaking'){
       const grammarClue=grammarClueFor(item);
@@ -119,14 +120,49 @@ export function createSession({onFinish,onProgress,onHome,onBack,onMessage}){
   }
   async function submit(){
     const item=current();
-    if(!item||!renderer)return;
+    if(!item||!renderer||grading)return;
     if(answered){index++;render();return}
     const response=renderer.getResponse();
     if(!String(response??'').trim())return;
     const alternatives=renderer.getSpeechAlternatives?.();
-    const result=mode==='unscramble'
+    const candidates=alternatives?.length?alternatives:[response];
+    const usable=mode==='unscramble'?candidates:usableAlternatives(candidates,item.en);
+    if(mode!=='unscramble'&&!usable.length){
+      onMessage('음성을 잘 인식하지 못했어요. 다시 말해 보세요.');
+      renderer.state.speakingTranscript='';
+      renderer.state.speakingAlternatives=[];
+      renderer.emit();
+      return;
+    }
+    let result=mode==='unscramble'
       ?{correct:checkOrder(response,item.en),matchedBy:'order'}
-      :matchSentence(item.en,alternatives?.length?alternatives:[response],item.gradingContext);
+      :matchSentence(item.en,usable,item.gradingContext);
+    // Exact and known alternatives are free. AI Willi only handles unknown,
+    // plausible full speaking responses; Coach stays target-repetition practice.
+    if(mode==='speaking'&&!result.correct&&!result.almostRight){
+      const token=epoch;
+      grading=true;
+      $('action').disabled=true;
+      $('action').textContent='AI Willi 확인 중…';
+      try{
+        const opinion=await gradeUnfamiliarSentence(item,usable[0],{
+          subjectClue:grammarClueFor(item)
+        });
+        if(token!==epoch||answered)return;
+        if(opinion.unavailable){
+          onMessage(opinion.reasonCode==='ai_budget_exhausted'?
+            'AI 확인 횟수에 도달했어요. 다른 문장을 연습하거나 나중에 다시 시도하세요.':
+            'AI 확인이 지금 어려워요. 답을 다시 시도해 주세요.');
+          return;
+        }
+        result=opinion;
+      }finally{
+        if(token===epoch&&!answered){
+          grading=false;$('action').disabled=false;
+          $('action').textContent='Check Answer';
+        }
+      }
+    }
     const correct=!!result.correct;
     const assisted=mode==='speaking'&&listenUsed;
     const almostRight=!correct&&!!result.almostRight&&!assisted;
@@ -139,14 +175,15 @@ export function createSession({onFinish,onProgress,onHome,onBack,onMessage}){
     rec.setDisabled(true);
     const acceptedAlternative=correct&&[
       'approved_alternative','equivalent_quantifier','equivalent_possession_question',
-      'equivalent_permission','equivalent_request'
+      'equivalent_permission','equivalent_request','ai','ai_cached'
     ].includes(result.matchedBy);
     rec.showFeedback({
       correct,correctAnswer:[item.en],
       message:correct&&assisted?'잘했어요! 듣기 사용 +2점 · 나중에 다시 연습해요.':
         almostRight?'거의 맞았어요! +2점 · 다시 연습해요.':
         acceptedAlternative?'다른 표현도 정답이에요!':
-        correct?'잘했어요!':'다음에 한 번 더 연습해요.'
+        correct?'잘했어요!':
+        result.explanationKo||'다음에 한 번 더 연습해요.'
     });
     $('answerNote').textContent=correct&&assisted?
       'Listen used · +2 points. Try again independently for 4 points.':
@@ -165,7 +202,7 @@ export function createSession({onFinish,onProgress,onHome,onBack,onMessage}){
       book:ctx.book,unit:ctx.unit,item,mode,response,correct:verdict.mastered,
       assisted,almostRight,retryCount:item.retry,points:verdict.points,
       matchedBy:result.matchedBy||'unmatched',
-      source:result.matchedBy==='ai'?'ai':'browser',
+      source:['ai','ai_cached'].includes(result.matchedBy)?'ai':'browser',
       elapsedMs:Date.now()-since
     })).catch(e=>{console.warn('[Sentence Genius] progress queued or unavailable',e);onMessage('Progress could not be confirmed online.')});
     saving.add(recorded);recorded.finally(()=>saving.delete(recorded));
