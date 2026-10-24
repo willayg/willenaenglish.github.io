@@ -139,7 +139,7 @@ export function createSession({onFinish,onProgress,onHome,onBack,onMessage}){
       :matchSentence(item.en,usable,item.gradingContext);
     // Exact and known alternatives are free. AI Willi only handles unknown,
     // plausible full speaking responses; Coach stays target-repetition practice.
-    if(mode==='speaking'&&!result.correct&&!result.almostRight){
+    if(mode==='speaking'&&!result.correct&&!result.almostRight&&!result.decisionFinal){
       const token=epoch;
       grading=true;
       $('action').disabled=true;
@@ -189,6 +189,7 @@ export function createSession({onFinish,onProgress,onHome,onBack,onMessage}){
         almostRight?'거의 맞았어요! +2점 · 다시 연습해요.':
         acceptedAlternative?'다른 표현도 정답이에요!':
         correct?'잘했어요!':
+        result.matchedBy==='teacher_rejected'?'이 표현은 선생님이 확인했어요. 다른 표현으로 연습해 보세요.':
         result.explanationKo||'다음에 한 번 더 연습해요.'
     });
     $('answerNote').textContent=correct&&assisted?
