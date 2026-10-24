@@ -56,8 +56,8 @@ export function matchSentence(target,alternatives){
   const match=matchSpeakingTarget(target,alternatives);
   return {...match,correct:match.correct&&['exact','spacing','homophone'].includes(match.matchedBy)};
 }
-export function connectSpeechSupport({host,renderer,item,isCurrent,onAccepted}){
-  let resultCount=0;
+export function connectSpeechSupport({host,renderer,item,isCurrent,onAccepted,onListeningAvailable}){
+  let micStarts=0;
   const fallback=attachAISpeakingFallback({
     host,target:item.en,isCurrent,match:matchSentence,
     callApi:api,
@@ -74,5 +74,12 @@ export function connectSpeechSupport({host,renderer,item,isCurrent,onAccepted}){
   // Do not reveal the correct answer on the first attempted spoken response.
   const mic=host.querySelector('[data-speaking-mic]');
   mic?.addEventListener('click',()=>{stopAudio()},{capture:true});
+  // Same deliberate Word Genius rule: model listening appears after two
+  // genuine microphone starts, not before the student first tries speaking.
+  const recognition=renderer.speechRecognition;
+  recognition?.addEventListener?.('start',()=>{micStarts++});
+  recognition?.addEventListener?.('end',()=>{
+    if(micStarts>=2&&isCurrent())onListeningAvailable?.();
+  });
   return {dispose:()=>{fallback.dispose();try{renderer.speechRecognition?.stop()}catch{}},stopAudio};
 }
