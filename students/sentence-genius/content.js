@@ -65,13 +65,22 @@ export async function loadSentences(bookId,unitId){
     const list=ids.slice(i,i+50);
     sentences.push(...await content('sentences?select=id,text,canonical_text,translation_ko,status&status='+available+'&id=in.'+encodeURIComponent('('+list.join(',')+')')));
   }
-  const lookup=new Map(sentences.map(row=>[row.id,row]));
+  // Sentence Genius teaches textbook patterns, not arbitrary book sentences.
+  // Keep only examples already connected to an explicit grammar/sentence pattern.
+  const patternIds=new Set();
+  for(let i=0;i<ids.length;i+=50){
+    const group=ids.slice(i,i+50);
+    const linked=await content('sentence_patterns?select=sentence_id&sentence_id=in.'+
+      encodeURIComponent('('+group.join(',')+')'));
+    linked.forEach(row=>patternIds.add(row.sentence_id));
+  }
+  const lookup=new Map(sentences.filter(row=>patternIds.has(row.id)).map(row=>[row.id,row]));
   const seen=new Set();
   return rows.flatMap(occurrence=>{
     const s=lookup.get(occurrence.sentence_id),en=str(s?.canonical_text||s?.text),ko=str(s?.translation_ko);
     if(!s||!en||!ko||seen.has(s.id))return [];
     // Single words and punctuation-only fragments are not sentences for this app.
-    if(en.split(/\s+/).length<3||!/[a-z]/i.test(en))return [];
+    if(en.split(/\s+/).length<2||!/[a-z]/i.test(en))return [];
     seen.add(s.id);
     return [{id:s.id,occurrenceId:occurrence.id,en,ko,source:occurrence.source_text||'',page:occurrence.page_number}];
   });
