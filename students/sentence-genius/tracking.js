@@ -38,6 +38,7 @@ export function recordSentenceAttempt({book,unit,item,mode,response,correct,retr
       listen_used:!!assisted,
       almost_right:!!almostRight,
       grading_match_method:String(matchedBy||'unmatched').slice(0,80),
+      sentence_genius_policy_version:Number(item.gradingContext?.policyVersion)||0,
       stt_source:mode==='unscramble'?null:source,
       recorded_from:'sentence-genius'
     }
