@@ -23,14 +23,33 @@ export function openUnit(user,unit,{preview=false}={}){
       }
       write();
     },
-    attempt(mode,id,{correct,hintsUsed=0}={}){
+    attempt(mode,id,{correct,hintsUsed=0,assisted=false,almostRight=false}={}){
       if(!states[mode])throw Error('Unknown skill');
       const previous=states[mode][id]||{attempts:0,passed:false,firstCorrect:null};
-      const firstCorrect=previous.firstCorrect===null?!!correct:previous.firstCorrect;
-      const updated={attempts:previous.attempts+1,passed:previous.passed||!!correct,firstCorrect};
+      // Listening does not consume mastery. A correct assisted answer earns
+      // two points EVERY time; the next independent correct answer earns four.
+      // Almost Right is separate: award two once, then the remaining two
+      // when the sentence is independently corrected.
+      const listened=mode==='speaking'&&!!assisted;
+      const mastered=!!correct&&!listened;
+      const nearMiss=!correct&&!!almostRight&&!listened;
+      const partialAwarded=!!previous.partialAwarded;
+      let points=0;
+      if(!previous.passed){
+        if(listened)points=correct?2:0;
+        else if(nearMiss)points=partialAwarded?0:2;
+        else if(mastered)points=mode==='coach'?
+          Math.max(1,3-Math.min(2,Number(hintsUsed)||0)):
+          partialAwarded?2:4;
+      }
+      const firstCorrect=previous.firstCorrect==null?mastered:previous.firstCorrect;
+      const updated={attempts:(Number(previous.attempts)||0)+1,
+        passed:previous.passed||mastered,firstCorrect,
+        partialAwarded:partialAwarded||(nearMiss&&points>0)};
       states[mode][id]=updated;write();
-      return {retryCount:previous.attempts,firstCorrect:previous.firstCorrect===null,previouslyPassed:previous.passed,
-        points:!correct||previous.passed?0:(mode==='coach'?Math.max(1,3-Math.min(2,Number(hintsUsed)||0)):4),repeat:repeatUntilCorrect(correct)};
+      return {retryCount:Number(previous.attempts)||0,firstCorrect:previous.firstCorrect==null,
+        previouslyPassed:!!previous.passed,mastered,assisted:listened,almostRight:nearMiss,
+        points,repeat:repeatUntilCorrect(mastered)};
     },
     passed(mode,id){return !!states[mode]?.[id]?.passed},
     percent(mode,items){
