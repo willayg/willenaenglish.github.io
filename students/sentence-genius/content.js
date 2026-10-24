@@ -76,9 +76,13 @@ export async function loadSentences(bookId,unitId){
   }
   const lookup=new Map(sentences.map(row=>[row.id,row]));
   const seen=new Set();
-  // Published pattern links are preferred, while genuine textbook sentences
-  // still remain playable if their pattern link is awaiting publication.
-  const ordered=rows.slice().sort((a,b)=>Number(patternIds.has(b.sentence_id))-Number(patternIds.has(a.sentence_id)));
+  // A unit's linked pattern examples are the core Sentence Genius content.
+  // For older books without enough published mappings, use only genuine
+  // translated sentences from their actual source occurrences as fallback.
+  const linkedRows=rows.filter(row=>patternIds.has(row.sentence_id));
+  const ordered=(linkedRows.length>=3?linkedRows:rows).slice().sort(
+    (a,b)=>Number(patternIds.has(b.sentence_id))-Number(patternIds.has(a.sentence_id))
+  );
   return ordered.flatMap(occurrence=>{
     const s=lookup.get(occurrence.sentence_id),en=str(s?.canonical_text||s?.text),ko=str(s?.translation_ko);
     if(!s||!en||!ko||seen.has(s.id))return [];
