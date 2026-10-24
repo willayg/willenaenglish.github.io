@@ -2,12 +2,12 @@
 // in their existing Word Genius / student-platform canonical modules.
 import {QuestionRenderer} from '/shared/questions/question-renderer.js';
 import {recordSentenceAttempt} from './tracking.js?v=sg-phase2b';
-import {connectSpeechSupport,playModel,prefetchAudio,stopAudio,matchSentence} from './speech.js?v=sg-phase2b';
+import {connectSpeechSupport,playModel,prefetchAudio,stopAudio,matchSentence} from './speech.js?v=sg-context-v2c';
 import {rewardSession} from './rewards.js';
 import {playStudentSfx} from '/students/shared/student-sfx.js';
 import {capturePointOrigin,showPointAward} from '/students/components/student-point-feedback.js';
 import {checkOrder} from './scoring.js?v=sg-phase2b';
-import {grammarClueFor} from './grammar-clues.js?v=sg-clues-v1';
+import {grammarClueFor} from './grammar-clues.js?v=sg-clues-v1b';
 
 const $=id=>document.getElementById(id);
 const titles={coach:'Practice Coach · 연습',unscramble:'문장 배열',speaking:'말하기'};
@@ -90,7 +90,7 @@ export function createSession({onFinish,onProgress,onHome,onBack,onMessage}){
         hint.setAttribute('aria-label','Required English grammar');
         const title=document.createElement('span');
         title.className='sg-grammar-clue-label';
-        title.textContent='필수 문법 · Use';
+        title.textContent=grammarClue.label||'필수 문법 · Use';
         const word=document.createElement('strong');
         word.textContent=grammarClue.word;
         const detail=document.createElement('span');
@@ -138,7 +138,7 @@ export function createSession({onFinish,onProgress,onHome,onBack,onMessage}){
     speech?.dispose();speech=null;
     rec.setDisabled(true);
     const acceptedAlternative=correct&&[
-      'approved_alternative','equivalent_quantifier',
+      'approved_alternative','equivalent_quantifier','equivalent_possession_question',
       'equivalent_permission','equivalent_request'
     ].includes(result.matchedBy);
     rec.showFeedback({
