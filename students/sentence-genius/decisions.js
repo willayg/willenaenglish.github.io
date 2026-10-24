@@ -1,6 +1,6 @@
 // Sentence Genius Phase 4: one operational DB source for staff decisions.
 // Operational Supabase authenticates teachers; students get read-only decisions.
-import {staffAccessToken} from './content.js?v=sg-decisions-v4';
+import {staffAccessToken} from './content.js?v=sg-decisions-v4a';
 const REST='https://fiieuiktlsivwfgyivai.supabase.co/rest/v1/rpc/';
 const KEY='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
 const MAX_IDS=80;
