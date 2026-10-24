@@ -1,7 +1,7 @@
 // Reuse Word Genius's canonical star thresholds and repeat-until-correct policy.
 // This store is an optimistic per-student cache; every submitted attempt is also
 // sent to the existing authenticated study recorder (tracking.js).
-import {snapshotStars} from '/students/vocab-study/vocab-progress-snapshot.js';
+import {snapshotPercent,snapshotStars} from '/students/vocab-study/vocab-progress-snapshot.js';
 import {repeatUntilCorrect} from '/students/vocab-study/vocab-pass-flow.js';
 export const MODES=Object.freeze({coach:'coach',unscramble:'unscramble',speaking:'speaking'});
 export const REQUIRED=['unscramble','speaking'];
@@ -33,7 +33,10 @@ export function openUnit(user,unit){
         points:!correct||previous.passed?0:(mode==='coach'?Math.max(1,3-Math.min(2,Number(hintsUsed)||0)):4),repeat:repeatUntilCorrect(correct)};
     },
     passed(mode,id){return !!states[mode]?.[id]?.passed},
-    percent(mode,items){if(!items.length)return 0;return Math.round(100*items.filter(i=>states[mode]?.[i.id]?.passed).length/items.length)},
+    percent(mode,items){
+      const passed=items.filter(i=>states[mode]?.[i.id]?.passed).length;
+      return Math.round(snapshotPercent({[mode]:{passed_count:passed}},mode,items.map(i=>i.id)));
+    },
     stars(mode,items){
       const count=items.filter(i=>states[mode]?.[i.id]?.passed).length;
       return snapshotStars({[mode]:{passed_count:count}},mode,items.map(i=>i.id));
