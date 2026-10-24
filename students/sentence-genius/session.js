@@ -1,7 +1,7 @@
 // One exercise session. QuestionRenderer, speech, stars and recording stay
 // in their existing Word Genius / student-platform canonical modules.
 import {QuestionRenderer} from '/shared/questions/question-renderer.js';
-import {recordSentenceAttempt} from './tracking.js?v=sg-phase2b';
+import {recordSentenceAttempt} from './tracking.js?v=sg-decisions-v4a';
 import {connectSpeechSupport,playModel,prefetchAudio,stopAudio,matchSentence} from './speech.js?v=sg-no-ai-audio-v4a';
 import {rewardSession} from './rewards.js?v=sg-coach-gold-v3';
 import {playStudentSfx} from '/students/shared/student-sfx.js';
