@@ -8,7 +8,7 @@ import {playStudentSfx} from '/students/shared/student-sfx.js';
 import {capturePointOrigin,showPointAward} from '/students/components/student-point-feedback.js';
 import {checkOrder} from './scoring.js?v=sg-phase2b';
 import {grammarClueFor} from './grammar-clues.js?v=sg-clues-v1b';
-import {gradeUnfamiliarSentence,usableAlternatives} from './ai-grading.js?v=sg-phase3a';
+import {gradeUnfamiliarSentence,usableAlternatives,resetAiSessionBudget} from './ai-grading.js?v=sg-phase3b';
 
 const $=id=>document.getElementById(id);
 const titles={coach:'코치',unscramble:'문장 배열',speaking:'말하기'};
@@ -51,7 +51,7 @@ export function createSession({onFinish,onProgress,onHome,onBack,onMessage}){
     if(!['coach','unscramble','speaking'].includes(next)||!items.length)return false;
     dispose();
     ctx={book,unit,items,store,preview};
-    mode=next;index=0;answered=false;
+    mode=next;index=0;answered=false;resetAiSessionBudget();
     const pending=store.pending(mode,items);
     const isReview=!pending.length;
     queue=shuffle((isReview?items:pending).map(row=>({...row,retry:0})));
@@ -145,9 +145,15 @@ export function createSession({onFinish,onProgress,onHome,onBack,onMessage}){
       $('action').disabled=true;
       $('action').textContent='AI Willi 확인 중…';
       try{
-        const opinion=await gradeUnfamiliarSentence(item,usable[0],{
-          subjectClue:grammarClueFor(item)
-        });
+        let opinion;
+        try{
+          opinion=await gradeUnfamiliarSentence(item,usable[0],{
+            subjectClue:grammarClueFor(item)
+          });
+        }catch(error){
+          console.warn('[Sentence Genius] AI check failed',error);
+          opinion={unavailable:true,reasonCode:'ai_service_unavailable'};
+        }
         if(token!==epoch||answered)return;
         if(opinion.unavailable){
           onMessage(opinion.reasonCode==='ai_budget_exhausted'?
