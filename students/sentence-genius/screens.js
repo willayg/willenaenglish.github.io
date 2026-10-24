@@ -8,12 +8,15 @@ export function createScreens(actions){
   function visible(screen){
     for(const [id,on] of [['front',screen==='home'],['bookScreen',screen==='book'],['session',screen==='activity']])$(id).hidden=!on;
     if(screen!=='home')notice('');
+    if(!$('teacherSimulator').dataset.enabled)return;
+    $('teacherSimulator').hidden=screen==='activity';
   }
   function notice(value){$('message').textContent=value||''}
   function home(list){
     books=list||books;
     const root=$('bookList');root.replaceChildren();
-    if(!books.length){root.append(el('div','vocab-front-empty','No assigned books found.'));return}
+    if(!books.length){root.append(el('div','vocab-front-empty',
+      $('teacherSimulator').dataset.enabled?'Select a class or book above.':'No assigned books found.'));return}
     for(const row of books){
       const b=el('button','vocab-front-book-card');b.type='button';
       const main=el('span','vocab-front-card-main'),copy=el('span','vocab-front-card-copy');
@@ -74,6 +77,68 @@ export function createScreens(actions){
   function closeList(){
     $('vocabWordModal').hidden=true;$('vocabWordModal').setAttribute('aria-hidden','true');
   }
+
+  const simMode=$('teacherSimMode'),classSelect=$('teacherClassSelect'),bookSelect=$('teacherBookSelect');
+  simMode.addEventListener('change',()=>actions.simMode(simMode.value));
+  classSelect.addEventListener('change',()=>actions.simClass(classSelect.value));
+  bookSelect.addEventListener('change',()=>actions.simBook(bookSelect.value));
+  function teacherSetup(classes,catalog){
+    const sim=$('teacherSimulator');
+    sim.dataset.enabled='true';sim.hidden=false;
+    const fill=(select,rows,label)=>{
+      select.replaceChildren();
+      select.append(new Option(label,''));
+      for(const x of rows)select.append(new Option(x.display_name||x.title||x.name,x.id));
+    };
+    fill(classSelect,classes,'Choose a class…');
+    fill(bookSelect,catalog,'Choose a book…');
+    teacherMode('class');
+  }
+  function teacherMode(mode){
+    simMode.value=mode;
+    $('teacherClassWrap').hidden=mode!=='class';
+    $('teacherBookWrap').hidden=mode!=='book';
+    $('teacherClassOverview').hidden=true;
+    $('teacherSimStatus').textContent=mode==='class'
+      ?'Choose a class to preview its textbooks and current homework.'
+      :'Choose any textbook. This preview does not save progress.';
+  }
+  function teacherStatus(message){
+    $('teacherSimStatus').textContent=message||'';
+  }
+  function teacherOverview({name,books:assigned=[],homework=[],homeworkError='' }){
+    $('teacherClassOverview').hidden=false;
+    $('teacherClassHeading').textContent=(name||'Class')+' · Assigned textbooks';
+    const booksRoot=$('teacherClassBooks'),hwRoot=$('teacherHomeworkList');
+    booksRoot.replaceChildren();hwRoot.replaceChildren();
+    if(!assigned.length)booksRoot.append(el('div','sg-sim-empty','No textbooks assigned to this class.'));
+    for(const book of assigned){
+      const btn=el('button','sg-sim-entry');btn.type='button';
+      const main=el('span','');
+      main.append(el('strong','',book.title||'Book'));
+      const part=book.currentUnit?'Current unit: '+book.currentUnit:
+        book.startingUnit?'Starting unit: '+book.startingUnit:'Assigned textbook';
+      main.append(el('small','',part));
+      btn.append(main,el('span','sg-sim-arrow','›'));
+      btn.addEventListener('click',()=>actions.simOpenBook(book.id,book.unitId||null));
+      booksRoot.append(btn);
+    }
+    if(homeworkError)hwRoot.append(el('div','sg-sim-empty',homeworkError));
+    else if(!homework.length)hwRoot.append(el('div','sg-sim-empty','No active homework for this class.'));
+    for(const task of homework){
+      const available=!!task.bookId&&assigned.some(b=>b.id===task.bookId);
+      const node=el(available?'button':'div','sg-sim-entry');
+      if(available){node.type='button';node.addEventListener('click',()=>actions.simOpenBook(task.bookId,task.unitId||null))}
+      const main=el('span','');
+      main.append(el('strong','',task.title));
+      const due=task.dueAt?'Due '+new Date(task.dueAt).toLocaleDateString('ko-KR'):'Current assignment';
+      main.append(el('small','',due+(available?' · Open textbook':' · Preview details only')));
+      node.append(main);
+      if(available)node.append(el('span','sg-sim-arrow','›'));
+      hwRoot.append(node);
+    }
+  }
+
   $('itemCountOpen').addEventListener('click',sentenceList);
   $('vocabWordModalClose').addEventListener('click',closeList);
   $('vocabWordModal').addEventListener('click',e=>{if(e.target===$('vocabWordModal'))closeList()});
@@ -82,5 +147,6 @@ export function createScreens(actions){
   $('unscrambleCard').addEventListener('click',()=>actions.start('unscramble'));
   $('speakingCard').addEventListener('click',()=>actions.start('speaking'));
   $('bookBack').addEventListener('click',actions.home);
-  return {visible,notice,home,showBook,progress,sentenceList};
+  return {visible,notice,home,showBook,progress,sentenceList,
+    teacherSetup,teacherMode,teacherStatus,teacherOverview};
 }
