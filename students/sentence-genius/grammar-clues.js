@@ -51,7 +51,7 @@ export function grammarClueFor(item){
   // subject is supplied, speaking an "I" or "we" textbook line is a guess.
   // Supply only that word, not the rest of the answer. Do not run for short
   // yes/no answers, which already have their auxiliary hint above.
-  const firstPerson=english.match(/^(I|We)\s+(?:am|have|had|will|can|could|do|don't|like|love|want|need|go|went|play|played|eat|ate|study|studied|read|saw|see|live|work|enjoy|think|know|feel|should|would)\b/i);
+  const firstPerson=english.match(/^(I|We)(?=\s|')/i);
   const explicitFirstPerson=/(?:저희|우리|우린|우리가|우리는|저는|제가|저도|나도|나는|내가|난|전|나는요)/.test(korean);
   if(firstPerson&&!explicitFirstPerson){
     return {word:firstPerson[1].toLowerCase(),detail:'주어가 생략된 문장',label:'주어 · Subject',source:'omitted_first_person_subject'};
