@@ -6,12 +6,12 @@ import {repeatUntilCorrect} from '/students/vocab-study/vocab-pass-flow.js';
 export const MODES=Object.freeze({coach:'coach',unscramble:'unscramble',speaking:'speaking'});
 export const REQUIRED=['unscramble','speaking'];
 const pref=(user,unit)=>'willena-sentence-genius-v1:'+user+':'+unit;
-export function openUnit(user,unit){
+export function openUnit(user,unit,{preview=false}={}){
   const key=pref(user,unit);let saved={};
-  try{saved=JSON.parse(localStorage.getItem(key)||'{}')}catch{}
+  if(!preview){try{saved=JSON.parse(localStorage.getItem(key)||'{}')}catch{}}
   if(!saved||typeof saved!=='object')saved={};
   const states={unscramble:saved.unscramble||{},speaking:saved.speaking||{},coach:saved.coach||{}};
-  const write=()=>{try{localStorage.setItem(key,JSON.stringify(states))}catch(error){console.warn('[Sentence Genius] local cache unavailable',error)}};
+  const write=()=>{if(preview)return;try{localStorage.setItem(key,JSON.stringify(states))}catch(error){console.warn('[Sentence Genius] local cache unavailable',error)}};
   return {
     states,
     hydrateServer(rows){
