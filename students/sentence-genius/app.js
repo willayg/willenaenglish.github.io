@@ -6,7 +6,7 @@ import {openUnit} from './scoring.js?v=sg-coach-gold-v3';
 import {getSentenceMastery} from './tracking.js';
 import {createNavigation} from './navigation.js';
 import {createScreens} from './screens.js?v=sg-decisions-v4a';
-import {createSession} from './session.js?v=sg-phase3b';
+import {createSession} from './session.js?v=sg-decisions-v4a';
 import {loadReviewCandidates,reviewSentenceResponse} from './decisions.js?v=sg-decisions-v4';
 
 const state={student:null,books:[],book:null,units:[],unit:null,items:[],store:null,
