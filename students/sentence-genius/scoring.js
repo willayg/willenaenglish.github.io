@@ -1,0 +1,37 @@
+// Reuse Word Genius's canonical star thresholds and repeat-until-correct policy.
+// This store is an optimistic per-student cache; every submitted attempt is also
+// sent to the existing authenticated study recorder (tracking.js).
+import {snapshotStars} from '/students/vocab-study/vocab-progress-snapshot.js';
+import {repeatUntilCorrect} from '/students/vocab-study/vocab-pass-flow.js';
+export const MODES=Object.freeze({coach:'coach',unscramble:'unscramble',speaking:'speaking'});
+export const REQUIRED=['unscramble','speaking'];
+const pref=(user,unit)=>'willena-sentence-genius-v1:'+user+':'+unit;
+export function openUnit(user,unit){
+  const key=pref(user,unit);let saved={};
+  try{saved=JSON.parse(localStorage.getItem(key)||'{}')}catch{}
+  if(!saved||typeof saved!=='object')saved={};
+  const states={unscramble:saved.unscramble||{},speaking:saved.speaking||{},coach:saved.coach||{}};
+  const write=()=>{try{localStorage.setItem(key,JSON.stringify(states))}catch(error){console.warn('[Sentence Genius] local cache unavailable',error)}};
+  return {
+    states,
+    attempt(mode,id,{correct,hintsUsed=0}={}){
+      if(!states[mode])throw Error('Unknown skill');
+      const previous=states[mode][id]||{attempts:0,passed:false,firstCorrect:null};
+      const firstCorrect=previous.firstCorrect===null?!!correct:previous.firstCorrect;
+      const updated={attempts:previous.attempts+1,passed:previous.passed||!!correct,firstCorrect};
+      states[mode][id]=updated;write();
+      return {retryCount:previous.attempts,firstCorrect:previous.firstCorrect===null,previouslyPassed:previous.passed,
+        points:!correct||previous.passed?0:(mode==='coach'?Math.max(1,3-Math.min(2,Number(hintsUsed)||0)):4),repeat:repeatUntilCorrect(correct)};
+    },
+    passed(mode,id){return !!states[mode]?.[id]?.passed},
+    percent(mode,items){if(!items.length)return 0;return Math.round(100*items.filter(i=>states[mode]?.[i.id]?.passed).length/items.length)},
+    stars(mode,items){
+      const count=items.filter(i=>states[mode]?.[i.id]?.passed).length;
+      return snapshotStars({[mode]:{passed_count:count}},mode,items.map(i=>i.id));
+    },
+    gold(items){return items.length>0&&REQUIRED.every(mode=>items.every(i=>states[mode]?.[i.id]?.passed))},
+    pending(mode,items){return items.filter(item=>!states[mode]?.[item.id]?.passed)}
+  };
+}
+export function normalizeAnswer(s){return String(s??'').toLowerCase().replace(/[’‘]/g,"'").replace(/[^a-z0-9' ]/g,' ').replace(/\s+/g,' ').trim()}
+export function checkOrder(response,target){return normalizeAnswer(response)===normalizeAnswer(target)}
