@@ -3,7 +3,7 @@
 import {createSpeakingAudioCache} from '/students/vocab-study/vocab-listening-cache.js';
 import {attachAISpeakingFallback} from '/students/vocab-study/vocab-ai-speech-ui.js';
 import {matchSpeakingTarget} from '/students/vocab-study/speaking-match.js';
-import {matchFlexibleSentence} from './flexibility.js?v=sg-flex-v2a';
+import {matchFlexibleSentence,detectAlmostRight} from './flexibility.js?v=sg-flex-v2b';
 const endpoint='/api/vocab-ai-speech';
 async function api(body){
   const headers={'Content-Type':'application/json'};
@@ -40,15 +40,15 @@ export async function playModel(text){
   try{
     const ready=await cache.get(text);if(id!==request)return;
     const audio=new Audio(ready.url);currentAudio=audio;audio.playbackRate=1;
-    await audio.play();
+    await audio.play();return true;
   }catch(error){
     console.warn('[Sentence Genius] Model audio unavailable; using browser TTS',error);
-    if(id!==request||!window.speechSynthesis)return;
+    if(id!==request||!window.speechSynthesis)return false;
     const voice=new SpeechSynthesisUtterance(text);
     voice.lang='en-US';voice.rate=1;voice.pitch=1;
     const voices=speechSynthesis.getVoices();
     voice.voice=voices.find(v=>/en-US/i.test(v.lang)&&/david|guy|matthew|justin|male/i.test(v.name))||null;
-    speechSynthesis.speak(voice);
+    speechSynthesis.speak(voice);return true;
   }
 }
 // No approximate phonetic/loose plural matching for whole sentences: that
@@ -57,7 +57,9 @@ export function matchSentence(target,alternatives,gradingContext={}){
   const match=matchSpeakingTarget(target,alternatives);
   if(match.correct&&['exact','spacing','homophone'].includes(match.matchedBy))return match;
   const equivalent=matchFlexibleSentence(target,alternatives,gradingContext);
-  return equivalent||{...match,correct:false};
+  if(equivalent)return equivalent;
+  const partial=detectAlmostRight(target,alternatives,gradingContext);
+  return partial||{...match,correct:false};
 }
 export function connectSpeechSupport({host,renderer,item,isCurrent,onAccepted,onListeningAvailable}){
   let micStarts=0;
