@@ -56,5 +56,14 @@ export function grammarClueFor(item){
   if(firstPerson&&!explicitFirstPerson){
     return {word:firstPerson[1].toLowerCase(),detail:'주어가 생략된 문장',label:'주어 · Subject',source:'omitted_first_person_subject'};
   }
+  // Korean naturally omits subjects. For a first-person textbook target,
+  // show the REQUIRED subject when the Korean line does not specify one.
+  // Do not treat "I" and "we" as synonymous: they change meaning.
+  const firstPerson=english.match(/^(I|We)\b(?=\s|[’']|$)/i);
+  const koreanHasSubject=/(?:저는|제가|저희|우리는|우리가|우리|나는|내가|나의|저의)/.test(korean);
+  if(firstPerson&&!koreanHasSubject){
+    return {word:firstPerson[1].toLowerCase(),detail:'주어 · subject',
+      label:'주어 힌트 · Use',source:'omitted_subject'};
+  }
   return null;
 }
