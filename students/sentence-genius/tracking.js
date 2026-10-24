@@ -16,7 +16,7 @@ export async function getSentenceMastery(bookId,unitId){
     .map(item=>({mode:Object.keys(SKILL_NAMES).find(mode=>SKILL_NAMES[mode]===item.skill),
       id:String(item.content_id),passed:Number(item.accuracy)>0,attempts:Number(item.attempts)||0}));
 }
-export function recordSentenceAttempt({book,unit,item,mode,response,correct,retryCount,points,source='browser',elapsedMs=0}){
+export function recordSentenceAttempt({book,unit,item,mode,response,correct,retryCount,points,assisted=false,almostRight=false,matchedBy='unmatched',source='browser',elapsedMs=0}){
   const recorder=window.WillenaStudyProgress;
   if(typeof recorder?.record!=='function')throw Error('Canonical study recorder did not load');
   const activity={
@@ -33,6 +33,11 @@ export function recordSentenceAttempt({book,unit,item,mode,response,correct,retr
       occurrence_id:item.occurrenceId,
       mastery_content_type:'sentence',mastery_content_id:item.id,
       points_override:points,
+      sentence_genius_verdict:assisted?'assisted_correct':
+        almostRight?'almost_right':correct?'mastered':'incorrect',
+      listen_used:!!assisted,
+      almost_right:!!almostRight,
+      grading_match_method:String(matchedBy||'unmatched').slice(0,80),
       stt_source:mode==='unscramble'?null:source,
       recorded_from:'sentence-genius'
     }
@@ -42,6 +47,7 @@ export function recordSentenceAttempt({book,unit,item,mode,response,correct,retr
     result:{selected:response,answer:item.en,correct:!!correct,score:correct?1:0},
     responseTimeMs:Math.max(0,elapsedMs),
     retryCount:Math.max(0,retryCount),
+    hintsUsed:assisted?1:0,
     attemptNumber:Math.max(1,retryCount+1),
     sessionSource:'student'
   });
