@@ -64,23 +64,34 @@ export async function signedInProfile(userId){
   return {role:confirmedRole,approved:profile.approved!==false,
     className:str(profile.class),name:str(profile.name)};
 }
-async function staffAccessToken(){
-  let token=window.WillenaAPI?.getLocalAccessToken?.();
-  if(token&&token.split('.').length===3)return token;
-  // Same existing auth refresh as Word Genius; no new credentials or cookies.
-  const result=await authenticated('/.netlify/functions/supabase_auth?action=refresh&_='+Date.now());
-  token=result?.access_token||'';
-  if(token&&token.split('.').length===3){
-    window.WillenaAPI?.setLocalTokens?.(token,'');
-    return token;
+function validJwt(token){
+  if(!token||token.split('.').length!==3)return false;
+  try{
+    const raw=token.split('.')[1].replace(/-/g,'+').replace(/_/g,'/');
+    const claims=JSON.parse(atob(raw));
+    return Number(claims.exp)*1000>Date.now()+30000;
+  }catch{return false}
+}
+async function staffAccessToken(forceRefresh=false){
+  const token=window.WillenaAPI?.getLocalAccessToken?.();
+  if(!forceRefresh&&validJwt(token))return token;
+  // Respect the current signed-in user: do not open a guest or student
+  // session to bypass permission checks.
+  const data=await authenticated('/.netlify/functions/supabase_auth?action=refresh&_='+Date.now());
+  const refreshed=data?.access_token||'';
+  if(!validJwt(refreshed)){
+    if(validJwt(token)&&!forceRefresh)return token;
+    throw Error('Teacher session could not be refreshed. Sign in again.');
   }
-  throw Error('Teacher session could not be refreshed. Sign in again.');
+  window.WillenaAPI?.setLocalTokens?.(refreshed,'');
+  return refreshed;
 }
 export async function loadTeacherClasses(){
-  const token=await staffAccessToken();
   const endpoint='https://fiieuiktlsivwfgyivai.supabase.co/rest/v1/rpc/get_sentence_genius_teacher_classes';
-  const response=await fetch(endpoint,{method:'POST',cache:'no-store',
+  const request=token=>fetch(endpoint,{method:'POST',cache:'no-store',
     headers:{apikey:OP_KEY,Authorization:'Bearer '+token,'Content-Type':'application/json'},body:'{}'});
+  let response=await request(await staffAccessToken());
+  if(response.status===401)response=await request(await staffAccessToken(true));
   const data=await response.json().catch(()=>({}));
   if(!response.ok||data?.success!==true)throw Error(data?.message||data?.error||
     'Could not load teacher classes ('+response.status+')');
