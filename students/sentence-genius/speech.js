@@ -1,7 +1,6 @@
 // Reuse Word Genius's mic renderer (in app), recognition matcher, optional
 // AI second opinion and the identical audio prefetch/cache implementation.
 import {createSpeakingAudioCache} from '/students/vocab-study/vocab-listening-cache.js';
-import {attachAISpeakingFallback} from '/students/vocab-study/vocab-ai-speech-ui.js';
 import {matchSpeakingTarget} from '/students/vocab-study/speaking-match.js';
 import {matchFlexibleSentence,detectAlmostRight} from './flexibility.js?v=sg-flex-v2c';
 const endpoint='/api/vocab-ai-speech';
@@ -65,38 +64,17 @@ export function matchSentence(target,alternatives,gradingContext={}){
   const partial=detectAlmostRight(target,alternatives,gradingContext);
   return partial||{...match,correct:false};
 }
-export function connectSpeechSupport({host,renderer,item,isCurrent,onAccepted,onListeningAvailable}){
+// Keep native browser recognition and the existing Listen (R2/TTS) pipeline.
+ // Word Genius's MP3-recording AI transcription fallback is intentionally
+ // not mounted for Sentence Genius. AI Willi grades the browser transcript.
+export function connectSpeechSupport({host,renderer,isCurrent,onListeningAvailable}){
   let micStarts=0;
-  const fallback=attachAISpeakingFallback({
-    host,target:item.en,isCurrent,
-    // Word Genius's shared fallback only accepts exact/spacing/homophone
-    // verdict names. Adapt an accepted Sentence Genius equivalent locally;
-    // never change Word Genius's global speaking match behavior.
-    match:(target,transcripts)=>{
-      const result=matchSentence(target,transcripts,item.gradingContext);
-      return result.correct&&!['exact','spacing','homophone'].includes(result.matchedBy)
-        ?{...result,matchedBy:'exact'}:result;
-    },
-    callApi:api,
-    stopBrowserSpeech:()=>{try{renderer.speechRecognition?.stop()}catch{}},
-    onAccepted:transcript=>{
-      if(!isCurrent())return;
-      renderer.state.speakingTranscript=transcript;
-      renderer.state.speakingAlternatives=[transcript];
-      renderer.emit();
-      onAccepted(transcript);
-    }
-  });
-  renderer.onSpeechResult=alternatives=>fallback.observe(alternatives);
-  // Do not reveal the correct answer on the first attempted spoken response.
   const mic=host.querySelector('[data-speaking-mic]');
-  mic?.addEventListener('click',()=>{stopAudio()},{capture:true});
-  // Same deliberate Word Genius rule: model listening appears after two
-  // genuine microphone starts, not before the student first tries speaking.
+  mic?.addEventListener('click',stopAudio,{capture:true});
   const recognition=renderer.speechRecognition;
   recognition?.addEventListener?.('start',()=>{micStarts++});
   recognition?.addEventListener?.('end',()=>{
     if(micStarts>=2&&isCurrent())onListeningAvailable?.();
   });
-  return {dispose:()=>{fallback.dispose();try{renderer.speechRecognition?.stop()}catch{}},stopAudio};
+  return{dispose:()=>{try{recognition?.stop()}catch{}},stopAudio};
 }
