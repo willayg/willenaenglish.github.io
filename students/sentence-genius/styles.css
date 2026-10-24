@@ -1,30 +1,39 @@
-/* Sentence Genius only: all Word Genius structural classes, theme variables,
-   and 6 theme implementations are imported from the original students branch. */
-#front[hidden],#bookScreen[hidden],#session[hidden],[hidden]{display:none!important}
-.sg-message{max-width:720px;margin:12px auto 16px;font-weight:750;color:var(--vocab-heading,#315e64);text-align:center}
+/* Word Genius owns the page layout, theme, mode cards, unit strip, 
+   word-list modal and full-screen activity. Only sentence-specific extras live here. */
+[hidden]{display:none!important}
+.sg-message{
+  max-width:760px;margin:12px auto 0;text-align:center;color:var(--vocab-heading,#315e64);
+  font:750 .86rem/1.5 Poppins,system-ui,sans-serif
+}
 .sg-message:empty{display:none}
-.sg-gold{display:flex;align-items:center;justify-content:center;gap:12px;margin:22px auto 0;color:var(--vocab-heading,#315e64);font-weight:850;font-size:.87rem}
-.sg-gold img{width:36px;height:36px}
-.sg-gold.is-gold{color:#b88612}
-.vocab-skill-grid .vocab-skill-card{text-align:left}
-.vocab-skill-grid .vocab-skill-card[disabled]{opacity:.48}
-.vocab-skill-grid .vocab-skill-card:focus-visible,.sg-unit:focus-visible{outline:3px solid var(--pink,#ff0a8a);outline-offset:3px}
-.sg-unit{flex:0 0 auto;padding:11px 17px;border-radius:14px;border:2px solid var(--vocab-border,#c9f1f4);background:var(--vocab-card,#fff);font:800 .85rem Poppins,sans-serif;color:var(--vocab-heading,#244f56);cursor:pointer}
-.sg-unit.active{border-color:var(--pink,#ff0a8a);color:var(--pink-dark,#e60076)}
-.sg-unit.gold{border-color:#dfbb61}
-.sg-model{margin:0 0 14px;background:var(--vocab-card,#fff);border:2px solid var(--vocab-border,#c9f1f4);border-radius:20px;padding:20px;text-align:center;font:900 clamp(1.35rem,4.7vw,2.25rem)/1.4 Poppins,sans-serif;color:var(--cyan-strong,#25b8c4)}
-.sg-listening{display:flex;justify-content:center;margin:18px auto}
-.sg-listening button{display:flex;align-items:center;justify-content:center;gap:9px;border-radius:16px;padding:12px 18px;cursor:pointer}
-#questionRoot .prompt{font-size:clamp(1.5rem,5.5vw,2.8rem);line-height:1.32;letter-spacing:0}
-#questionRoot .build{min-height:62px;border:2px dashed var(--vocab-border,#b6e4e9);background:var(--vocab-card,#fff);border-radius:16px;padding:12px;display:flex;gap:8px;flex-wrap:wrap}
-#questionRoot .chips{display:flex;gap:10px;flex-wrap:wrap;margin:16px 0}
-#questionRoot .chip{background:var(--vocab-card,#fff);border:2px solid var(--cyan,#66d6df);border-radius:12px;padding:12px 15px;font:800 1rem Poppins,sans-serif;color:var(--ink,#173f46);cursor:pointer}
+.sg-gold{display:flex;justify-content:center;align-items:center;gap:12px;margin-top:18px;
+  color:var(--vocab-heading,#315e64);font-weight:850}
+.sg-gold img{width:40px;height:40px;object-fit:contain}
+.sg-gold.is-gold{color:#bb8b14}
+.sg-model{margin:0 0 15px;padding:clamp(16px,4vw,25px);border:2px solid var(--vocab-border,#c9f1f4);
+  border-radius:20px;background:var(--vocab-card,#fff);color:var(--cyan-strong,#25b8c4);
+  text-align:center;font-weight:900;font-size:clamp(1.25rem,4.5vw,2.1rem);line-height:1.4}
+.sg-listening{display:flex;justify-content:center;margin:16px auto}
+.sg-listening button{display:flex;align-items:center;justify-content:center;gap:9px;
+  padding:13px 17px;border-radius:15px;cursor:pointer}
+#questionRoot .prompt{font-size:clamp(1.4rem,5.4vw,2.8rem);line-height:1.32;letter-spacing:-.02em}
+#questionRoot .build{min-height:70px;display:flex;flex-wrap:wrap;gap:9px;
+  padding:12px;margin-bottom:20px;background:var(--vocab-card,#fff);border:2px dashed var(--vocab-border,#c9f1f4);
+  border-radius:16px}
+#questionRoot .chips{display:flex;flex-wrap:wrap;justify-content:center;gap:10px}
+#questionRoot .chip{font:800 clamp(.85rem,3vw,1.06rem) Poppins,system-ui,sans-serif;
+  padding:12px 15px;border:2px solid var(--cyan,#66d6df);border-radius:14px;
+  background:var(--vocab-card,#fff);color:var(--ink,#173f46);cursor:pointer}
 #questionRoot .chip.used{visibility:hidden}
 #questionRoot .build .chip{border-color:var(--pink,#ff0a8a)}
-#questionRoot .speaking-control{padding:18px 0}
-#sessionHome{display:flex;align-items:center;justify-content:center;gap:4px;white-space:nowrap}
-.vocab-session-topline{grid-template-columns:44px minmax(0,1fr) 90px}
-#questionRoot .feedback{margin-top:12px}
-html[data-vocab-theme] #questionRoot,html[data-vocab-theme] .sg-model,html[data-vocab-theme] #questionRoot .build,html[data-vocab-theme] #questionRoot .chip{background:var(--vocab-card);border-color:var(--vocab-border);color:var(--ink)}
+#questionRoot .chip:focus-visible{outline:3px solid var(--pink,#ff0a8a);outline-offset:2px}
+#questionRoot .speaking-control{padding:12px 0}
+#sessionHome{white-space:nowrap}
+.vocab-session-topline{grid-template-columns:44px minmax(0,1fr) 70px}
+html[data-vocab-theme] #questionRoot .build,
+html[data-vocab-theme] #questionRoot .chip,html[data-vocab-theme] .sg-model{
+  background:var(--vocab-card);color:var(--ink);border-color:var(--vocab-border)}
 html[data-vocab-theme] #questionRoot .prompt{color:var(--vocab-heading)}
-@media(max-width:560px){.sg-gold{font-size:.75rem}.sg-model{padding:14px}.vocab-skill-grid .vocab-skill-card{min-height:104px}#questionRoot .chip{padding:10px 12px}}
+.vocab-skill-card:disabled{opacity:.5}
+@media(max-width:560px){.sg-gold{font-size:.76rem}.sg-model{padding:13px}
+  #questionRoot .chip{padding:10px 11px}.vocab-skill-copy strong{overflow-wrap:anywhere}}
