@@ -133,7 +133,7 @@ function renderQuestion(){
     state.mode==='unscramble'?'우리말을 보고 영어 문장을 만드세요.':'우리말을 보고 영어로 말하세요.';
   show('englishCoach',state.mode==='coach');
   $('englishCoach').textContent=state.mode==='coach'?item.en:'';
-  show('listenTools',state.mode!=='unscramble');
+  show('listenTools',state.mode==='coach');
   show('skip',state.mode==='speaking');
   show('answerNote',false);
   $('action').textContent='Check Answer';$('action').disabled=true;$('action').classList.remove('is-next');
@@ -148,7 +148,8 @@ function renderQuestion(){
     state.speech=connectSpeechSupport({
       host:$('questionRoot'),renderer,item,
       isCurrent:()=>state.index===myIndex&&state.mode===myMode&&state.renderer===renderer&&!state.answered&&state.screen==='activity',
-      onAccepted:()=>{if(!state.answered)void submit()}
+      onAccepted:()=>{if(!state.answered)void submit()},
+      onListeningAvailable:()=>{if(state.mode==='speaking'&&!state.answered)show('listenTools',true)}
     });
     prefetchAudio(state.queue.slice(state.index,state.index+3));
   }
