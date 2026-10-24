@@ -47,10 +47,22 @@ export async function studentIdentity(){
  */
 export async function signedInProfile(userId){
   if(!userId)throw Error('Sign in first');
-  const data=await authenticated('/.netlify/functions/supabase_auth?action=get_profile&user_id='+
-    encodeURIComponent(userId)+'&_='+Date.now());
-  return {role:str(data.role).toLowerCase(),approved:data.approved!==false,
-    className:str(data.class),name:str(data.name)};
+  // Student WHOAMI has no role or class. Verify the signed-in user's actual
+  // role through the existing role endpoint, instead of guessing from class.
+  const resource='&user_id='+encodeURIComponent(userId)+'&_='+Date.now();
+  const [profileResult,roleResult]=await Promise.allSettled([
+    authenticated('/.netlify/functions/supabase_auth?action=get_profile'+resource),
+    authenticated('/.netlify/functions/supabase_auth?action=get_role'+resource)
+  ]);
+  if(profileResult.status==='rejected'&&roleResult.status==='rejected'){
+    throw Error('Could not verify account permissions. Please sign in again.');
+  }
+  const profile=profileResult.status==='fulfilled'?profileResult.value:{};
+  const roleData=roleResult.status==='fulfilled'?roleResult.value:{};
+  const confirmedRole=str(roleData.role||profile.role).toLowerCase();
+  if(!confirmedRole)throw Error('Your account role could not be verified.');
+  return {role:confirmedRole,approved:profile.approved!==false,
+    className:str(profile.class),name:str(profile.name)};
 }
 async function staffAccessToken(){
   let token=window.WillenaAPI?.getLocalAccessToken?.();
