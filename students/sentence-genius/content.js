@@ -40,6 +40,62 @@ export async function studentIdentity(){
   }
   return {id:str(data.user_id||data.id),className:str(data.class),data};
 }
+
+/**
+ * Staff simulation is read-only. Identity comes from the existing authenticated
+ * cookie session. Never infer the user's role from a URL or a class selection.
+ */
+export async function signedInProfile(userId){
+  if(!userId)throw Error('Sign in first');
+  const data=await authenticated('/.netlify/functions/supabase_auth?action=get_profile&user_id='+
+    encodeURIComponent(userId)+'&_='+Date.now());
+  return {role:str(data.role).toLowerCase(),approved:data.approved!==false,
+    className:str(data.class),name:str(data.name)};
+}
+async function staffAccessToken(){
+  let token=window.WillenaAPI?.getLocalAccessToken?.();
+  if(token&&token.split('.').length===3)return token;
+  // Same existing auth refresh as Word Genius; no new credentials or cookies.
+  const result=await authenticated('/.netlify/functions/supabase_auth?action=refresh&_='+Date.now());
+  token=result?.access_token||'';
+  if(token&&token.split('.').length===3){
+    window.WillenaAPI?.setLocalTokens?.(token,'');
+    return token;
+  }
+  throw Error('Teacher session could not be refreshed. Sign in again.');
+}
+export async function loadTeacherClasses(){
+  const token=await staffAccessToken();
+  const endpoint='https://fiieuiktlsivwfgyivai.supabase.co/rest/v1/rpc/get_sentence_genius_teacher_classes';
+  const response=await fetch(endpoint,{method:'POST',cache:'no-store',
+    headers:{apikey:OP_KEY,Authorization:'Bearer '+token,'Content-Type':'application/json'},body:'{}'});
+  const data=await response.json().catch(()=>({}));
+  if(!response.ok||data?.success!==true)throw Error(data?.message||data?.error||
+    'Could not load teacher classes ('+response.status+')');
+  return Array.isArray(data.classes)?data.classes:[];
+}
+export async function loadTeacherBookCatalog(){
+  const rows=await content('content_books?select=id,title,status&status='+available+'&order=title.asc');
+  return rows.map(row=>({id:str(row.id),title:str(row.title)||'Untitled book'})).filter(row=>row.id);
+}
+export async function loadTeacherClassHomework(className){
+  if(!className)return [];
+  // This is a read-only list; viewing homework never creates a student run.
+  const result=await authenticated('/.netlify/functions/homework_api?action=list_assignments&class='+
+    encodeURIComponent(className)+'&_='+Date.now());
+  const rows=Array.isArray(result.assignments)?result.assignments:[];
+  return rows.filter(row=>row.active!==false&&!row.ended_at).map(row=>{
+    let meta=row.list_meta||{};
+    if(typeof meta==='string'){try{meta=JSON.parse(meta)}catch{meta={}}}
+    if(!meta||typeof meta!=='object')meta={};
+    return{id:str(row.id),title:str(row.title||row.list_title||'Homework'),
+      dueAt:row.due_at||null,
+      bookId:str(meta.source_book_id||meta.book_id||meta.bookId||''),
+      unitId:str(meta.source_unit_id||meta.unit_id||meta.unitId||''),
+      listKey:str(row.list_key),type:str(meta.app||meta.app_key||row.list_title||'')};
+  });
+}
+
 export async function assignedBooks(className){
   if(!className)throw Error('No class assigned to this student.');
   const response=await fetch(OP_URL,{
