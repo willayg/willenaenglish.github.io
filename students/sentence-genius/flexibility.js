@@ -80,29 +80,6 @@ function possessionQuestionEquivalent(target,heard){
   return check(target,heard)||check(heard,target);
 }
 
-// Equivalent existential-possession question, without changing whether the
-// speaker is asking for one or more items. Applies only to affirmative
-// "Do/Does/Did ... have ..." questions with the same subject and verb tense.
-// Example: "Do you have any markers?" ↔ "Do you have a marker?"
-function indefiniteQuantityQuestion(target,spoken){
-  const question=/^((?:do|does|did) (?:you|we|i|they|he|she|it) have )(?:(any) ([a-z]+)|(a|an) ([a-z]+))$/;
-  const a=target.match(question),b=spoken.match(question);
-  if(!a||!b||a[1]!==b[1])return false;
-  const plural=a[2]?a:b[2]?b:null;
-  const singular=a[4]?a:b[4]?b:null;
-  if(!plural||!singular||plural===singular)return false;
-  const noun=singular[5],pluralNoun=plural[3],article=singular[4];
-  if(!noun||noun.length<3||!pluralNoun||!article)return false;
-  // Restrict the automatic rule to ordinary regular plurals.
-  const expectedPlural=/(?:s|x|z|ch|sh)$/.test(noun)?noun+'es':
-    /[^aeiou]y$/.test(noun)?noun.slice(0,-1)+'ies':noun+'s';
-  if(expectedPlural!==pluralNoun)return false;
-  // Only validate clearly predictable a/an cases; unknown cases go to AI.
-  const takesAn=/^[aeiou]/.test(noun)&&!/^(?:uni(?:vers|form)|use|user|euro|one)/.test(noun);
-  const silentH=/^(?:hour|honest|honor|heir)/.test(noun);
-  return article===(takesAn||silentH?'an':'a');
-}
-
 export function matchFlexibleSentence(target,transcripts,policy={}){
   const candidates=(Array.isArray(transcripts)?transcripts:[transcripts])
     .map(v=>String(v??'').trim()).filter(Boolean);
@@ -124,8 +101,6 @@ export function matchFlexibleSentence(target,transcripts,policy={}){
     if(policy.mode==='exact_text'||policy.mode==='require_pattern')continue;
     if(quantifierEquivalent(reference,value))
       return {correct:true,matchedBy:'equivalent_quantifier',transcript};
-    if(indefiniteQuantityQuestion(reference,value))
-      return {correct:true,matchedBy:'equivalent_quantity_question',transcript};
     if(possessionQuestionEquivalent(reference,value))
       return {correct:true,matchedBy:'equivalent_possession_question',transcript};
     if(toPermissionKey(reference)===toPermissionKey(value)&&
