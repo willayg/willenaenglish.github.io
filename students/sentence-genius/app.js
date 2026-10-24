@@ -187,6 +187,10 @@ async function boot(){
     if(!state.student.id)throw Error('Student login is required');
     const profile=await signedInProfile(state.student.id);
     state.teacher=profile.approved&&['teacher','admin'].includes(profile.role);
+    if(!state.teacher&&profile.className.toLowerCase()==='teacher'){
+      // Staff users must never fall through into a fake "Teacher" student class.
+      throw Error('Staff login detected, but teacher/admin role verification failed. Please sign in again.');
+    }
     if(state.teacher){
       // Load teacher-only class catalog. The class RPC checks the signed-in
       // JWT's role server-side; students cannot call it.
