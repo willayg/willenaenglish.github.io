@@ -25,6 +25,24 @@ jobs:
           if not token or not account:
               print(json.dumps({'error':'missing_cloudflare_credentials'}))
               raise SystemExit(0)
+          tests=[('token-verify','https://api.cloudflare.com/client/v4/user/tokens/verify'),
+                 ('account-list','https://api.cloudflare.com/client/v4/accounts?per_page=100')]
+          for label,url in tests:
+              req=urllib.request.Request(url,headers={'Authorization':f'Bearer {token}','Content-Type':'application/json'})
+              try:
+                  with urllib.request.urlopen(req,timeout=20) as r: obj=json.load(r)
+                  if label=='token-verify':
+                      print(json.dumps({'test':label,'success':obj.get('success'),
+                        'status':(obj.get('result') or {}).get('status')}))
+                  else:
+                      found=obj.get('result') or []
+                      print(json.dumps({'test':label,'success':obj.get('success'),
+                        'accounts':len(found),'configured_account_accessible':any(str(x.get('id'))==account for x in found)}))
+              except urllib.error.HTTPError as e:
+                  raw=e.read().decode('utf-8','replace')
+                  try: errors=[{'code':x.get('code'),'message':x.get('message')} for x in json.loads(raw).get('errors',[])]
+                  except Exception: errors=[{'message':'Non-JSON HTTP error'}]
+                  print(json.dumps({'test':label,'http_status':e.code,'errors':errors}))
           for project in ('students','willenaenglish-github-io'):
               url=f'https://api.cloudflare.com/client/v4/accounts/{account}/pages/projects/{project}'
               req=urllib.request.Request(url,headers={'Authorization':f'Bearer {token}','Content-Type':'application/json'})
