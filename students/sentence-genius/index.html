@@ -15,7 +15,7 @@
 <link rel="stylesheet" href="/students/study-v2/v2.css?v=20260814-daily1">
 <link rel="stylesheet" href="/students/shared/willena-keyboard-safe.css?v=1.0.0">
 <link rel="stylesheet" href="/students/vocab-study/vocab-study.css?v=20261024-home-navigation4">
-<link rel="stylesheet" href="./styles.css?v=20261024-rebuild1">
+<link rel="stylesheet" href="./styles.css?v=20261024-teacher-simulator2">
 <link rel="stylesheet" href="/students/vocab-study/theme-pips.css?v=20260927-v0005">
 <script src="/students/api-gateway.js?v=20260926-progress-summary-cf1"></script>
 <script src="/students/study/study-progress.js?v=20260926-assignment-canonical1"></script>
@@ -43,7 +43,40 @@
       <button type="button" onclick="location.reload()">다시 불러오기</button>
     </section>
     <div id="message" class="sg-message" role="status" aria-live="polite">교재를 불러오는 중…</div>
-<section id="front" class="vocab-front-menu" hidden>
+<section id="teacherSimulator" class="sg-simulator" aria-label="Teacher simulation" hidden>
+      <div class="sg-sim-top">
+        <div><span class="eyebrow">TEACHER ONLY · 읽기 전용</span>
+          <strong>Class / Book Simulator</strong></div>
+        <span class="sg-preview-tag">PREVIEW · No student progress saved</span>
+      </div>
+      <div class="sg-sim-controls">
+        <label class="sg-sim-field">Simulation
+          <select id="teacherSimMode" aria-label="Simulation mode">
+            <option value="class">Simulate a class</option>
+            <option value="book">Choose any book</option>
+          </select>
+        </label>
+        <label id="teacherClassWrap" class="sg-sim-field">Class
+          <select id="teacherClassSelect" aria-label="Select a class">
+            <option value="">Choose a class…</option>
+          </select>
+        </label>
+        <label id="teacherBookWrap" class="sg-sim-field" hidden>Book
+          <select id="teacherBookSelect" aria-label="Select any textbook">
+            <option value="">Choose a book…</option>
+          </select>
+        </label>
+      </div>
+      <div id="teacherSimStatus" class="sg-sim-status" role="status" aria-live="polite"></div>
+      <section id="teacherClassOverview" class="sg-class-overview" hidden>
+        <strong id="teacherClassHeading">Class assignments</strong>
+        <div id="teacherClassBooks" class="sg-sim-book-list"></div>
+        <strong class="sg-sim-subheading">Current homework · 숙제</strong>
+        <div id="teacherHomeworkList" class="sg-sim-homework-list"></div>
+      </section>
+    </section>
+
+    <section id="front" class="vocab-front-menu" hidden>
       <section id="vocabAdminPicker" class="vocab-admin" hidden>
         <span class="eyebrow">ADMIN PREVIEW</span>
         <select id="vocabAdminBookSelect" aria-label="Choose book">
@@ -244,5 +277,5 @@
 </div>
 
 <script type="module" src="/students/vocab-study/theme-pips.js?v=20260927-v0001"></script>
-<script type="module" src="./app.js?v=20261024-rebuild1"></script>
+<script type="module" src="./app.js?v=20261024-teacher-simulator2"></script>
 </body></html>
