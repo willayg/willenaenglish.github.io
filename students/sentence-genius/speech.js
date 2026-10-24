@@ -2,7 +2,7 @@
 // AI second opinion and the identical audio prefetch/cache implementation.
 import {createSpeakingAudioCache} from '/students/vocab-study/vocab-listening-cache.js';
 import {matchSpeakingTarget} from '/students/vocab-study/speaking-match.js';
-import {matchFlexibleSentence,detectAlmostRight} from './flexibility.js?v=sg-flex-v2c';
+import {matchFlexibleSentence,detectAlmostRight,normalizeFlexibleText} from './flexibility.js?v=sg-flex-v2c';
 const endpoint='/api/vocab-ai-speech';
 async function api(body){
   const headers={'Content-Type':'application/json'};
@@ -59,7 +59,22 @@ export async function playModel(text){
 export function matchSentence(target,alternatives,gradingContext={}){
   const match=matchSpeakingTarget(target,alternatives);
   if(match.correct&&['exact','spacing','homophone'].includes(match.matchedBy))return match;
-  const equivalent=matchFlexibleSentence(target,alternatives,gradingContext);
+  const candidates=Array.isArray(alternatives)?alternatives:[alternatives];
+  const normalize=v=>normalizeFlexibleText(v,{
+    contractions:gradingContext.contractionPolicy!=='exact_only'
+  });
+  const rejected=new Set((gradingContext.sharedRejected||[]).map(normalize));
+  const rejectedTranscript=candidates.find(v=>rejected.has(normalize(v)));
+  if(rejectedTranscript)return{
+    correct:false,decisionFinal:true,matchedBy:'teacher_rejected',
+    transcript:rejectedTranscript
+  };
+  const extended={...gradingContext,
+    approvedAlternatives:[
+      ...(Array.isArray(gradingContext.approvedAlternatives)?gradingContext.approvedAlternatives:[]),
+      ...(Array.isArray(gradingContext.sharedApproved)?gradingContext.sharedApproved:[])
+    ]};
+  const equivalent=matchFlexibleSentence(target,alternatives,extended);
   if(equivalent)return equivalent;
   const partial=detectAlmostRight(target,alternatives,gradingContext);
   return partial||{...match,correct:false};
