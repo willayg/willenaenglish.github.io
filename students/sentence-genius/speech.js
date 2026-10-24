@@ -46,7 +46,7 @@ export async function playModel(text){
     const voice=new SpeechSynthesisUtterance(text);
     voice.lang='en-US';voice.rate=1;voice.pitch=1;
     const voices=speechSynthesis.getVoices();
-    voice.voice=voices.find(v=>/en-US/i.test(v.lang)&&/female|samantha|zira|ava|jenny|aria|shimmer|nova/i.test(v.name))||null;
+    voice.voice=voices.find(v=>/en-US/i.test(v.lang)&&/david|guy|matthew|justin|male/i.test(v.name))||null;
     speechSynthesis.speak(voice);
   }
 }
