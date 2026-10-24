@@ -124,7 +124,7 @@ export function createSession({onFinish,onProgress,onHome,onBack,onMessage}){
     $('action').textContent='Next →';$('action').disabled=false;$('action').classList.add('is-next');
     playStudentSfx(correct?'correct':'wrong');
     if(verdict.points>0){
-      try{showPointAward({amount:verdict.points,origin:capturePointOrigin($('action'))})}catch{}
+      try{Promise.resolve(showPointAward({amount:verdict.points,origin:capturePointOrigin($('action'))})).catch(()=>{})}catch{}
     }
     onProgress(ctx);
     const recorded=Promise.resolve().then(()=>recordSentenceAttempt({
@@ -138,7 +138,8 @@ export function createSession({onFinish,onProgress,onHome,onBack,onMessage}){
   function skip(){
     if(answered||!current()||mode==='unscramble')return;
     // Skips never award points or gold, and are always revisited.
-    queueRetry(current());index++;render();
+    if(mode==='speaking')queueRetry(current());
+    index++;render();
   }
   async function finish(){
     dispose();$('sessionFooter').hidden=true;
