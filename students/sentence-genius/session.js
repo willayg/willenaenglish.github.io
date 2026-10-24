@@ -6,7 +6,7 @@ import {connectSpeechSupport,playModel,prefetchAudio,stopAudio,matchSentence} fr
 import {rewardSession} from './rewards.js?v=sg-coach-gold-v3';
 import {playStudentSfx} from '/students/shared/student-sfx.js';
 import {capturePointOrigin,showPointAward} from '/students/components/student-point-feedback.js';
-import {checkOrder} from './scoring.js?v=sg-phase2b';
+import {checkOrder} from './scoring.js?v=sg-coach-gold-v3';
 import {grammarClueFor} from './grammar-clues.js?v=sg-clues-v1b';
 import {gradeUnfamiliarSentence,usableAlternatives,resetAiSessionBudget} from './ai-grading.js?v=sg-phase3b';
 
