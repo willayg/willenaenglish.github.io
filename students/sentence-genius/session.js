@@ -45,15 +45,15 @@ export function createSession({onFinish,onProgress,onHome,onBack,onMessage}){
     renderer=null;stopAudio();
   }
   function current(){return queue[index]||null}
-  function changeMode(next,{book,unit,items,store}){
+  function changeMode(next,{book,unit,items,store,preview=false}){
     if(!['coach','unscramble','speaking'].includes(next)||!items.length)return false;
     dispose();
-    ctx={book,unit,items,store};
+    ctx={book,unit,items,store,preview};
     mode=next;index=0;answered=false;
     const pending=store.pending(mode,items);
     const isReview=!pending.length;
     queue=shuffle((isReview?items:pending).map(row=>({...row,retry:0})));
-    reward=isReview||store.gold(items)?null:rewardSession(book,unit,mode);
+    reward=preview||isReview||store.gold(items)?null:rewardSession(book,unit,mode);
     $('sessionTitle').textContent=titles[mode];
     $('sessionFooter').hidden=false;
     $('sessionContent').hidden=false;
@@ -123,10 +123,11 @@ export function createSession({onFinish,onProgress,onHome,onBack,onMessage}){
     $('answerNote').hidden=false;
     $('action').textContent='Next →';$('action').disabled=false;$('action').classList.add('is-next');
     playStudentSfx(correct?'correct':'wrong');
-    if(verdict.points>0){
+    if(verdict.points>0&&!ctx.preview){
       try{Promise.resolve(showPointAward({amount:verdict.points,origin:capturePointOrigin($('action'))})).catch(()=>{})}catch{}
     }
     onProgress(ctx);
+    if(!ctx.preview){
     const recorded=Promise.resolve().then(()=>recordSentenceAttempt({
       book:ctx.book,unit:ctx.unit,item,mode,response,correct,
       retryCount:item.retry,points:verdict.points,
@@ -134,6 +135,7 @@ export function createSession({onFinish,onProgress,onHome,onBack,onMessage}){
       elapsedMs:Date.now()-since
     })).catch(e=>{console.warn('[Sentence Genius] progress queued or unavailable',e);onMessage('Progress could not be confirmed online.')});
     saving.add(recorded);recorded.finally(()=>saving.delete(recorded));
+    }
   }
   function skip(){
     if(answered||!current()||mode==='unscramble')return;
@@ -150,7 +152,8 @@ export function createSession({onFinish,onProgress,onHome,onBack,onMessage}){
     $('questionRoot').replaceChildren();
     const panel=document.createElement('div');panel.className='vocab-finish';
     const h=document.createElement('h2');h.textContent='Session complete!';
-    const p=document.createElement('p');p.textContent='다음 단계도 도전해 보세요.';
+    const p=document.createElement('p');p.textContent=ctx.preview?
+      'Teacher preview · No scores or rewards were saved.':'다음 단계도 도전해 보세요.';
     const detail=document.createElement('div');detail.className='vocab-finish-stats';
     for(const [label,value] of [['Unit mastery',ctx.store.percent(mode,ctx.items)+'%'],
       ['Stars',ctx.store.stars(mode,ctx.items)+'/5'],['Golden Unit',ctx.store.gold(ctx.items)?'Gold':'—']]){
