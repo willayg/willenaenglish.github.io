@@ -51,11 +51,11 @@ export function createScreens(actions){
       const percent=store&&items.length?store.percent(mode,items):0;
       btn.querySelector('.vocab-skill-ring')?.style.setProperty('--progress',percent);
       const ring=btn.querySelector('.vocab-skill-ring span');if(ring)ring.textContent=percent+'%';
-      if(mode!=='coach')$(mode+'Stars').textContent='★ '+(store?.stars(mode,items)||0)+'/5';
+      $(mode+'Stars').textContent='★ '+(store?.stars(mode,items)||0)+'/5';
     }
     const gold=!!store?.gold(items);
     $('goldStatus').classList.toggle('is-gold',gold);
-    $('goldLabel').textContent=gold?'Golden Unit · 완성!':'Unscramble + Speaking: complete both for Gold';
+    $('goldLabel').textContent=gold?'Golden Unit · 완성!':'코치 + 문장 배열 + 말하기: 모두 완료하면 Gold';
     const tab=$('unitStrip').querySelector('.is-current');
     if(tab){
       if(gold&&!tab.querySelector('img'))goldIcon(tab);
