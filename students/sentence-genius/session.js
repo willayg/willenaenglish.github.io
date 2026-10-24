@@ -2,7 +2,7 @@
 // in their existing Word Genius / student-platform canonical modules.
 import {QuestionRenderer} from '/shared/questions/question-renderer.js';
 import {recordSentenceAttempt,getSentenceMastery} from './tracking.js';
-import {connectSpeechSupport,playModel,prefetchAudio,stopAudio,matchSentence} from './speech.js';
+import {connectSpeechSupport,playModel,prefetchAudio,stopAudio,matchSentence} from './speech.js?v=sg-flex-v2a';
 import {rewardSession} from './rewards.js';
 import {playStudentSfx} from '/students/shared/student-sfx.js';
 import {capturePointOrigin,showPointAward} from '/students/components/student-point-feedback.js';
@@ -106,7 +106,7 @@ export function createSession({onFinish,onProgress,onHome,onBack,onMessage}){
     const alternatives=renderer.getSpeechAlternatives?.();
     const result=mode==='unscramble'
       ?{correct:checkOrder(response,item.en),matchedBy:'order'}
-      :matchSentence(item.en,alternatives?.length?alternatives:[response]);
+      :matchSentence(item.en,alternatives?.length?alternatives:[response],item.gradingContext);
     const correct=!!result.correct;
     const verdict=ctx.store.attempt(mode,item.id,{correct});
     reward?.note(correct,item.retry,verdict.points);
@@ -115,11 +115,18 @@ export function createSession({onFinish,onProgress,onHome,onBack,onMessage}){
     const rec=renderer;
     speech?.dispose();speech=null;
     rec.setDisabled(true);
+    const acceptedAlternative=correct&&[
+      'approved_alternative','equivalent_quantifier',
+      'equivalent_permission','equivalent_request'
+    ].includes(result.matchedBy);
     rec.showFeedback({
       correct,correctAnswer:[item.en],
-      message:correct?'잘했어요!':'다음에 한 번 더 연습해요.'
+      message:acceptedAlternative?'다른 표현도 정답이에요!':
+        correct?'잘했어요!':'다음에 한 번 더 연습해요.'
     });
-    $('answerNote').textContent=correct?'Good job!':'Correct sentence: '+item.en;
+    $('answerNote').textContent=acceptedAlternative?
+      'Another correct way: '+item.en:
+      correct?'Good job!':'Correct sentence: '+item.en;
     $('answerNote').hidden=false;
     $('action').textContent='Next →';$('action').disabled=false;$('action').classList.add('is-next');
     playStudentSfx(correct?'correct':'wrong');
