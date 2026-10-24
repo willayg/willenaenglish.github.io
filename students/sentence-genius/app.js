@@ -6,7 +6,7 @@ import {openUnit} from './scoring.js?v=teacher-sim2';
 import {getSentenceMastery} from './tracking.js';
 import {createNavigation} from './navigation.js';
 import {createScreens} from './screens.js?v=sg-policy-phase1a';
-import {createSession} from './session.js?v=teacher-sim2';
+import {createSession} from './session.js?v=sg-flex-v2a';
 
 const state={student:null,books:[],book:null,units:[],unit:null,items:[],store:null,
   loadToken:0,loading:null,teacher:false,simMode:'class',simClasses:[],simCatalog:[],
