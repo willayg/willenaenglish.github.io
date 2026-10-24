@@ -72,3 +72,13 @@ button.sg-sim-entry:disabled{cursor:default;opacity:.65}
 .sg-sim-entry .sg-sim-arrow{font-size:1.4rem;font-weight:800;color:var(--pink,#ff0a8a)}
 @media(max-width:560px){.sg-simulator{margin:8px 8px 17px}
 .sg-preview-tag{font-size:.65rem}.sg-sim-entry{padding:10px}.sg-sim-controls{gap:9px}}
+
+/* Staff-only Sentence Genius grading diagnostics; student cards are unchanged. */
+.sg-policy-context{
+  display:block;
+  margin-top:5px;
+  line-height:1.45;
+  font-size:.72rem;
+  color:var(--muted,#627980);
+  overflow-wrap:anywhere;
+}
