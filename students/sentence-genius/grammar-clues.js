@@ -1,7 +1,7 @@
 // Sentence Genius sentence-level grammar clues.
 // Show only genuinely useful structural information before the first attempt.
 // Don't guess a target from shared pattern links or expose the whole sentence.
-export const GRAMMAR_CLUE_REVISION='1.0.0';
+export const GRAMMAR_CLUE_REVISION='1.1.0';
 
 const koShortReply=/^(?:네|예|응|아니요|아뇨|아니)(?=[\s,，.!?]|$)/;
 const auxiliaries=new Set(['is','are','am','was','were','do','does','did',
@@ -46,6 +46,15 @@ export function grammarClueFor(item){
   if(existential){
     const word=existential[1].toLowerCase();
     return {word,detail:numberInfo[word],source:'there_be'};
+  }
+  // Korean naturally drops a first-person subject. When no first-person
+  // subject is supplied, speaking an "I" or "we" textbook line is a guess.
+  // Supply only that word, not the rest of the answer. Do not run for short
+  // yes/no answers, which already have their auxiliary hint above.
+  const firstPerson=english.match(/^(I|We)\s+(?:am|have|had|will|can|could|do|don't|like|love|want|need|go|went|play|played|eat|ate|study|studied|read|saw|see|live|work|enjoy|think|know|feel|should|would)\b/i);
+  const explicitFirstPerson=/(?:저희|우리|우린|우리가|우리는|저는|제가|저도|나도|나는|내가|난|전|나는요)/.test(korean);
+  if(firstPerson&&!explicitFirstPerson){
+    return {word:firstPerson[1].toLowerCase(),detail:'주어가 생략된 문장',label:'주어 · Subject',source:'omitted_first_person_subject'};
   }
   return null;
 }
