@@ -37,3 +37,38 @@ html[data-vocab-theme] #questionRoot .prompt{color:var(--vocab-heading)}
 .vocab-skill-card:disabled{opacity:.5}
 @media(max-width:560px){.sg-gold{font-size:.76rem}.sg-model{padding:13px}
   #questionRoot .chip{padding:10px 11px}.vocab-skill-copy strong{overflow-wrap:anywhere}}
+
+/* Staff-only class/book simulator. Keep Word Genius tokens and card language. */
+.sg-simulator{max-width:900px;margin:18px auto 24px;padding:clamp(14px,3vw,22px);
+  border:2px solid var(--vocab-border,#b6e8ec);border-radius:22px;
+  background:var(--vocab-card,#fff);box-shadow:0 9px 32px rgba(32,91,98,.07)}
+.sg-sim-top{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap}
+.sg-sim-top>div{display:flex;flex-direction:column;gap:5px}
+.sg-sim-top strong{font-size:clamp(1.05rem,3vw,1.4rem);color:var(--vocab-heading,#174c55)}
+.sg-preview-tag{border-radius:999px;padding:7px 11px;border:1px solid var(--pink,#ff0a8a);
+  color:var(--vocab-heading,#174c55);font-weight:800;font-size:.72rem}
+.sg-sim-controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,195px),1fr));
+  gap:12px;margin-top:17px}
+.sg-sim-field{display:flex;flex-direction:column;gap:6px;color:var(--vocab-heading,#174c55);
+  font-size:.83rem;font-weight:800}
+.sg-sim-field select{width:100%;min-height:45px;padding:9px 36px 9px 12px;border-radius:12px;
+  border:2px solid var(--vocab-border,#b6e8ec);background:var(--vocab-card,#fff);
+  color:var(--vocab-heading,#174c55);font:700 .94rem Poppins,system-ui,sans-serif}
+.sg-sim-field select:focus-visible{outline:3px solid var(--pink,#ff0a8a);outline-offset:2px}
+.sg-sim-status{margin-top:12px;font-size:.82rem;font-weight:700;color:var(--vocab-heading,#43626b)}
+.sg-sim-status:empty{display:none}
+.sg-class-overview{margin-top:16px;padding-top:16px;border-top:1px solid var(--vocab-border,#c9f1f4)}
+.sg-class-overview>strong{display:block;margin:0 0 10px;font-size:1rem;color:var(--vocab-heading,#174c55)}
+.sg-sim-subheading{margin-top:18px!important}
+.sg-sim-book-list,.sg-sim-homework-list{display:grid;gap:8px}
+.sg-sim-entry{display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:12px 14px;border:1px solid var(--vocab-border,#c9f1f4);border-radius:14px;
+  background:var(--vocab-page,#f3fbfc);color:var(--vocab-heading,#174c55)}
+button.sg-sim-entry{width:100%;cursor:pointer;text-align:left;font:inherit}
+button.sg-sim-entry:disabled{cursor:default;opacity:.65}
+.sg-sim-entry strong{font-size:.88rem;line-height:1.4}
+.sg-sim-entry small{display:block;margin-top:3px;opacity:.7;font-size:.75rem}
+.sg-sim-empty{font-size:.82rem;color:var(--vocab-heading,#587981);padding:9px 2px}
+.sg-sim-entry .sg-sim-arrow{font-size:1.4rem;font-weight:800;color:var(--pink,#ff0a8a)}
+@media(max-width:560px){.sg-simulator{margin:8px 8px 17px}
+.sg-preview-tag{font-size:.65rem}.sg-sim-entry{padding:10px}.sg-sim-controls{gap:9px}}
