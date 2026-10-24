@@ -99,3 +99,26 @@ button.sg-sim-entry:disabled{cursor:default;opacity:.65}
   .sg-grammar-clue{margin:9px auto 14px;padding:8px 11px;gap:5px 8px;font-size:.77rem}
   .sg-grammar-clue strong{font-size:.94rem}
 }
+
+/* Phase 4 staff review controls - never visible to student accounts. */
+.sg-review-panel{margin:12px 0 3px;border:1px solid #c7e5e6;border-radius:16px;padding:12px 14px;background:#fbffff}
+.sg-review-panel>summary,.sg-review-editor>summary{cursor:pointer;font-weight:800;color:#19525b}
+.sg-review-note{font-size:.81rem;color:#697f86;line-height:1.45;margin:8px 0}
+.sg-review-refresh,.sg-review-action{font:700 .8rem/1.2 inherit;cursor:pointer;border:1px solid #b2dadd;border-radius:12px;padding:9px 13px;background:#fff;color:#20525a;margin:5px 4px 5px 0}
+.sg-review-action:first-of-type{border-color:#8ad6b9}
+.sg-review-action:disabled{opacity:.55;cursor:wait}
+.sg-review-list{display:grid;gap:9px;margin-top:9px;max-height:380px;overflow-y:auto}
+.sg-review-candidate{display:grid;gap:4px;border:1px solid #d9edee;background:#fff;padding:12px;border-radius:12px}
+.sg-review-candidate p{margin:3px 0;font-size:.9rem}
+.sg-review-candidate small,.sg-review-status,.sg-review-result{font-size:.79rem;color:#687d86}
+.sg-review-editor{margin-top:9px;border-top:1px dashed #c9dddd;padding-top:8px}
+.sg-review-editor>summary{font-size:.79rem}
+.sg-review-entry{display:flex;align-items:center;flex-wrap:wrap;gap:4px;margin-top:8px}
+.sg-review-entry input{min-width:180px;flex:1;border:1px solid #bddddd;border-radius:11px;padding:9px 10px;font-size:.9rem}
+.sg-review-existing{display:grid;gap:3px;font-size:.79rem;color:#457a78}
+.sg-review-buttons{display:flex;flex-wrap:wrap;gap:6px}
+@media(max-width:540px){
+ .sg-review-panel{padding:10px}
+ .sg-review-entry input{width:100%;flex-basis:100%}
+ .sg-review-list{max-height:290px}
+}
