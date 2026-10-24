@@ -14,6 +14,15 @@ export function openUnit(user,unit){
   const write=()=>{try{localStorage.setItem(key,JSON.stringify(states))}catch(error){console.warn('[Sentence Genius] local cache unavailable',error)}};
   return {
     states,
+    hydrateServer(rows){
+      for(const row of rows||[]){
+        if(!states[row.mode]||!row.id)continue;
+        const before=states[row.mode][row.id]||{attempts:0,passed:false,firstCorrect:null};
+        states[row.mode][row.id]={...before,attempts:Math.max(before.attempts||0,row.attempts||0),
+          passed:!!(before.passed||row.passed)};
+      }
+      write();
+    },
     attempt(mode,id,{correct,hintsUsed=0}={}){
       if(!states[mode])throw Error('Unknown skill');
       const previous=states[mode][id]||{attempts:0,passed:false,firstCorrect:null};
