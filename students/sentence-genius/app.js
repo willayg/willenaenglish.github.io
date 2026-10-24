@@ -111,6 +111,27 @@ function updateCards(){
     else if(!gold&&badge)badge.remove();
   }
 }
+function openSentenceList(){
+  if(!state.items.length)return;
+  const root=$('vocabWordModal'),list=$('vocabWordModalList');
+  if(!root||!list)return;
+  $('vocabWordModalTitle').textContent='문장 목록';
+  $('vocabWordModalMeta').textContent=state.book.title+' · Unit '+state.unit.unit_number;
+  list.replaceChildren();
+  state.items.forEach(item=>{
+    const row=document.createElement('div');row.className='vocab-word-row';
+    const en=document.createElement('strong');en.textContent=item.en;
+    const ko=document.createElement('span');ko.textContent=item.ko;
+    row.append(en,ko);list.append(row);
+  });
+  root.hidden=false;root.setAttribute('aria-hidden','false');
+  $('vocabWordModalClose').focus();
+}
+function closeSentenceList(){
+  const root=$('vocabWordModal');if(!root)return;
+  root.hidden=true;root.setAttribute('aria-hidden','true');
+  $('itemCountOpen').focus();
+}
 function shuffle(items){
   const a=items.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a;
 }
@@ -273,6 +294,14 @@ async function boot(){
   }
 }
 $('bookBack').onclick=()=>nav.home();
+$('itemCountOpen').onclick=openSentenceList;
+$('vocabWordModalClose').onclick=closeSentenceList;
+$('vocabWordModal').addEventListener('click',event=>{
+  if(event.target===$('vocabWordModal'))closeSentenceList();
+});
+document.addEventListener('keydown',event=>{
+  if(event.key==='Escape'&&!$('vocabWordModal').hidden)closeSentenceList();
+});
 $('sessionHome').onclick=()=>nav.home();
 $('sessionBack').onclick=()=>nav.back({screen:'book',bookId:state.book?.id,unitId:state.unit?.id});
 $('coachCard').onclick=()=>begin('coach');
