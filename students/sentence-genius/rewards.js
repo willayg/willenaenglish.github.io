@@ -20,8 +20,8 @@ export function rewardSession(book,unit,mode){
       if(record.completed)return {...record};
       record.completed=true;
       record.percent=record.firstTotal?Math.round(100*record.firstCorrect/record.firstTotal):0;
-      // Coach is an optional skill, so it earns practice points but no golden stars.
-      record.stars=mode==='coach'?0:starsForPercent(record.percent);
+      // Coach is now required for Golden Unit and awards the same star scale.
+      record.stars=starsForPercent(record.percent);
       const payload={
         reward_only:true,session_id:sessionId,client_attempt_id:id(),
         book_id:book.id,unit_id:unit.id,
