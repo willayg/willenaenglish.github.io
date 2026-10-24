@@ -7,11 +7,13 @@ import {recordSentenceAttempt,getSentenceMastery} from './tracking.js';
 import {connectSpeechSupport,playModel,prefetchAudio,stopAudio,matchSentence} from './speech.js';
 import {createVocabHistoryNavigation} from '/students/vocab-study/navigation-history.js';
 import {playStudentSfx} from '/students/shared/student-sfx.js';
+import {capturePointOrigin,showPointAward} from '/students/components/student-point-feedback.js';
+import {rewardSession} from './rewards.js';
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[ch]));
 const state={student:null,books:[],book:null,units:[],unit:null,items:[],store:null,
   screen:'home',mode:null,queue:[],index:0,answered:false,renderer:null,speech:null,
-  startedAt:0,generation:0,attemptNumbers:new Map(),loading:false};
+  startedAt:0,generation:0,attemptNumbers:new Map(),loading:false,reward:null};
 const nav=createVocabHistoryNavigation({applyRoute:applyRoute});
 const labels={coach:'Practice Coach · 연습',unscramble:'문장 배열',speaking:'말하기'};
 const show=(id,visible)=>{$(id).hidden=!visible};
@@ -105,6 +107,8 @@ function queueFor(mode){
 function begin(mode,{historyMode='push'}={}){
   if(!state.items.length||!MODES[mode])return;
   clearQuestion();state.mode=mode;state.queue=queueFor(mode);state.index=0;state.answered=false;
+  // Revisiting a completed Golden Unit is review-only, like Word Genius.
+  state.reward=state.store.gold(state.items)?null:rewardSession(state.book,state.unit,mode);
   $('sessionTitle').textContent=labels[mode];$('sessionFooter').hidden=false;
   showScreen('activity');
   if(historyMode!=='none')nav[historyMode]({screen:'activity',bookId:state.book.id,unitId:state.unit.id,activityKind:mode,parentScreen:'book'});
@@ -168,6 +172,8 @@ async function submit(){
   const itemUnitId=state.unit.id;
   // Coach retries do not hurt a unit; they are deliberate practice.
   const result=state.store.attempt(state.mode,item.id,{correct});
+  state.reward?.note(correct,item.retryCount,result.points);
+  if(result.points>0)showPointAward({amount:result.points,origin:capturePointOrigin($('action'))}).catch(()=>{});
   if(result.repeat){state.queue.push({...item,retryCount:item.retryCount+1})}
   try{
     void recordSentenceAttempt({
@@ -208,9 +214,20 @@ function finish(){
     state.store.percent(state.mode,state.items)+'%</strong><span>Unit mastery</span></div><div><strong>'+
     state.store.stars(state.mode,state.items)+'/5</strong><span>Stars</span></div><div><strong>'+
     (state.store.gold(state.items)?'Gold':'—')+'</strong><span>Golden Unit</span></div></div>'+
-    '<div class="vocab-finish-actions"><button type="button" class="vocab-done-btn" id="finishBook">Back to unit</button><button type="button" class="vocab-review-btn" id="finishAgain">Practice again</button></div></div>';
+    '<div id="rewardCelebration"></div><div class="vocab-finish-actions"><button type="button" class="vocab-done-btn" id="finishBook">Back to unit</button><button type="button" class="vocab-review-btn" id="finishAgain">Practice again</button></div></div>';
   $('finishBook').onclick=()=>void returnBook();
   $('finishAgain').onclick=()=>begin(state.mode,{historyMode:'replace'});
+  const thisReward=state.reward;
+  if(thisReward)void thisReward.finish().then(summary=>{
+    if(state.reward!==thisReward||!$('rewardCelebration'))return;
+    const celebration=document.createElement('student-reward-celebration');
+    celebration.setAttribute('percent',String(summary.percent));
+    celebration.setAttribute('stars',String(summary.stars));
+    celebration.setAttribute('star-max','5');
+    celebration.setAttribute('points',String(summary.points));
+    celebration.setAttribute('label','SENTENCE GENIUS');
+    $('rewardCelebration').append(celebration);
+  }).catch(error=>console.warn('[Sentence Genius] reward session could not be saved',error));
 }
 async function returnBook(){
   clearQuestion();showScreen('book');renderUnits();updateCards();
