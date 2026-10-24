@@ -1,12 +1,12 @@
 // One exercise session. QuestionRenderer, speech, stars and recording stay
 // in their existing Word Genius / student-platform canonical modules.
 import {QuestionRenderer} from '/shared/questions/question-renderer.js';
-import {recordSentenceAttempt,getSentenceMastery} from './tracking.js';
-import {connectSpeechSupport,playModel,prefetchAudio,stopAudio,matchSentence} from './speech.js?v=sg-flex-v2a';
+import {recordSentenceAttempt} from './tracking.js?v=sg-phase2b';
+import {connectSpeechSupport,playModel,prefetchAudio,stopAudio,matchSentence} from './speech.js?v=sg-phase2b';
 import {rewardSession} from './rewards.js';
 import {playStudentSfx} from '/students/shared/student-sfx.js';
 import {capturePointOrigin,showPointAward} from '/students/components/student-point-feedback.js';
-import {checkOrder} from './scoring.js';
+import {checkOrder} from './scoring.js?v=sg-phase2b';
 import {grammarClueFor} from './grammar-clues.js?v=sg-clues-v1';
 
 const $=id=>document.getElementById(id);
@@ -38,7 +38,7 @@ function questionFor(mode,item){
 }
 export function createSession({onFinish,onProgress,onHome,onBack,onMessage}){
   let ctx=null,queue=[],index=0,renderer=null,speech=null,answered=false,
-    since=0,epoch=0,mode='coach',reward=null,saving=new Set();
+    since=0,epoch=0,mode='coach',reward=null,saving=new Set(),listenUsed=false;
   function dispose(){
     ++epoch;
     speech?.dispose();speech=null;
@@ -61,7 +61,7 @@ export function createSession({onFinish,onProgress,onHome,onBack,onMessage}){
     render();return true;
   }
   function render(){
-    dispose();answered=false;
+    dispose();answered=false;listenUsed=false;
     const item=current();
     if(!item){void finish();return}
     const token=epoch;since=Date.now();
@@ -72,6 +72,7 @@ export function createSession({onFinish,onProgress,onHome,onBack,onMessage}){
     $('englishCoach').hidden=mode!=='coach';
     $('englishCoach').textContent=mode==='coach'?item.en:'';
     $('listenTools').hidden=mode!=='coach';
+    $('listenLabel').textContent='Listen · 발음 듣기';
     $('answerNote').hidden=true;
     $('action').textContent='Check Answer';$('action').disabled=true;$('action').classList.remove('is-next');
     $('skip').hidden=mode==='unscramble';
@@ -127,8 +128,10 @@ export function createSession({onFinish,onProgress,onHome,onBack,onMessage}){
       ?{correct:checkOrder(response,item.en),matchedBy:'order'}
       :matchSentence(item.en,alternatives?.length?alternatives:[response],item.gradingContext);
     const correct=!!result.correct;
-    const verdict=ctx.store.attempt(mode,item.id,{correct});
-    reward?.note(correct,item.retry,verdict.points);
+    const assisted=mode==='speaking'&&listenUsed;
+    const almostRight=!correct&&!!result.almostRight&&!assisted;
+    const verdict=ctx.store.attempt(mode,item.id,{correct,assisted,almostRight});
+    reward?.note(verdict.mastered,item.retry,verdict.points);
     if(verdict.repeat)queueRetry(item);
     answered=true;
     const rec=renderer;
@@ -140,23 +143,28 @@ export function createSession({onFinish,onProgress,onHome,onBack,onMessage}){
     ].includes(result.matchedBy);
     rec.showFeedback({
       correct,correctAnswer:[item.en],
-      message:acceptedAlternative?'다른 표현도 정답이에요!':
+      message:correct&&assisted?'잘했어요! 듣기 사용 +2점 · 나중에 다시 연습해요.':
+        almostRight?'거의 맞았어요! +2점 · 다시 연습해요.':
+        acceptedAlternative?'다른 표현도 정답이에요!':
         correct?'잘했어요!':'다음에 한 번 더 연습해요.'
     });
-    $('answerNote').textContent=acceptedAlternative?
-      'Another correct way: '+item.en:
+    $('answerNote').textContent=correct&&assisted?
+      'Listen used · +2 points. Try again independently for 4 points.':
+      almostRight?'Almost right · +2 points. Model: '+item.en:
+      acceptedAlternative?'Another correct way: '+item.en:
       correct?'Good job!':'Correct sentence: '+item.en;
     $('answerNote').hidden=false;
     $('action').textContent='Next →';$('action').disabled=false;$('action').classList.add('is-next');
-    playStudentSfx(correct?'correct':'wrong');
+    playStudentSfx(correct||almostRight?'correct':'wrong');
     if(verdict.points>0&&!ctx.preview){
       try{Promise.resolve(showPointAward({amount:verdict.points,origin:capturePointOrigin($('action'))})).catch(()=>{})}catch{}
     }
     onProgress(ctx);
     if(!ctx.preview){
     const recorded=Promise.resolve().then(()=>recordSentenceAttempt({
-      book:ctx.book,unit:ctx.unit,item,mode,response,correct,
-      retryCount:item.retry,points:verdict.points,
+      book:ctx.book,unit:ctx.unit,item,mode,response,correct:verdict.mastered,
+      assisted,almostRight,retryCount:item.retry,points:verdict.points,
+      matchedBy:result.matchedBy||'unmatched',
       source:result.matchedBy==='ai'?'ai':'browser',
       elapsedMs:Date.now()-since
     })).catch(e=>{console.warn('[Sentence Genius] progress queued or unavailable',e);onMessage('Progress could not be confirmed online.')});
@@ -217,10 +225,19 @@ export function createSession({onFinish,onProgress,onHome,onBack,onMessage}){
   $('action').addEventListener('click',()=>void submit());
   $('skip').addEventListener('click',skip);
   $('listen').addEventListener('click',async()=>{
-    const item=current();if(!item)return;
-    const btn=$('listen');btn.disabled=true;
-    try{renderer?.speechRecognition?.stop();await playModel(item.en)}
-    finally{btn.disabled=false}
+    const item=current();if(!item||answered)return;
+    const btn=$('listen'),token=epoch;btn.disabled=true;
+    // Listening assistance is counted only on this question's current
+    // attempt; a queued retry starts clean and can earn four points.
+    if(mode==='speaking')listenUsed=true;
+    try{
+      renderer?.speechRecognition?.stop();
+      const played=await playModel(item.en);
+      if(token!==epoch||answered)return;
+      if(!played){if(mode==='speaking')listenUsed=false;onMessage('Listening audio unavailable. No assistance counted.')}
+      $('listenLabel').textContent=mode==='speaking'&&listenUsed?
+        'Listened · +2 points':'Listen · 발음 듣기';
+    }finally{btn.disabled=false}
   });
   $('sessionBack').addEventListener('click',onBack);
   $('sessionHome').addEventListener('click',onHome);
