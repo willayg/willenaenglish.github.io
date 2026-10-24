@@ -36,24 +36,15 @@ function toRequestKey(sentence){
 
 function quantifierEquivalent(target,spoken){
   if(target===spoken)return false;
-  // "There are many peaches" / "There are a lot of peaches".
-  // Plural there-be controls the countability and number of the subject.
-  const pluralExistential=/^(there (?:are|were) )(?:(?:many)|(?:a lot of)|(?:lots of)) (.+)$/;
-  const left=target.match(pluralExistential),right=spoken.match(pluralExistential);
+  // Deterministic plural/countable frames. This intentionally does not
+  // rewrite "how many", "too many", or pronoun uses like "many are ready".
+  const countFrame=/^((?:there (?:are|were)|(?:i|we|you|they|he|she) (?:have|had|has)) )(?:(?:many)|(?:a lot of)|(?:lots of)) (.+)$/;
+  const left=target.match(countFrame),right=spoken.match(countFrame);
   if(left&&right&&left[1]===right[1]&&left[2]===right[2])return true;
 
-  // "lots of" and "a lot of" are interchangeable as quantity determiners.
+  // "lots of" and "a lot of" work with countable and uncountable nouns.
   if(target.includes('a lot of ')&&target.replace(/\ba lot of\b/g,'lots of')===spoken)return true;
   if(target.includes('lots of ')&&target.replace(/\blots of\b/g,'a lot of')===spoken)return true;
-
-  // From a grammatical target with "many + noun", "a lot of" preserves
-  // countability; never rewrite "how many", "too many", etc.
-  if(/\bmany [a-z]/.test(target)&&
-      !/\b(?:how|too|so|as|very) many\b/.test(target)&&
-      !/\bmany of\b/.test(target)){
-    if(target.replace(/\bmany\b/g,'a lot of')===spoken)return true;
-    if(target.replace(/\bmany\b/g,'lots of')===spoken)return true;
-  }
   return false;
 }
 
