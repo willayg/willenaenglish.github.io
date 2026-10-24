@@ -74,9 +74,12 @@ export async function loadSentences(bookId,unitId){
       encodeURIComponent('('+group.join(',')+')'));
     linked.forEach(row=>patternIds.add(row.sentence_id));
   }
-  const lookup=new Map(sentences.filter(row=>patternIds.has(row.id)).map(row=>[row.id,row]));
+  const lookup=new Map(sentences.map(row=>[row.id,row]));
   const seen=new Set();
-  return rows.flatMap(occurrence=>{
+  // Published pattern links are preferred, while genuine textbook sentences
+  // still remain playable if their pattern link is awaiting publication.
+  const ordered=rows.slice().sort((a,b)=>Number(patternIds.has(b.sentence_id))-Number(patternIds.has(a.sentence_id)));
+  return ordered.flatMap(occurrence=>{
     const s=lookup.get(occurrence.sentence_id),en=str(s?.canonical_text||s?.text),ko=str(s?.translation_ko);
     if(!s||!en||!ko||seen.has(s.id))return [];
     // Single words and punctuation-only fragments are not sentences for this app.
