@@ -1,7 +1,7 @@
 // Sentence Genius deterministic answer equivalence, revision 2.0.
 // Conservative by design: no phonetic/plural guessing; unknown answers
 // remain incorrect here until the later semantic AI grader is connected.
-export const FLEXIBILITY_REVISION='2.1.0';
+export const FLEXIBILITY_REVISION='2.2.0';
 
 export function normalizeFlexibleText(value,{contractions=true}={}){
   let text=String(value??'').normalize('NFKC').toLowerCase()
@@ -48,6 +48,38 @@ function quantifierEquivalent(target,spoken){
   return false;
 }
 
+// In ordinary classroom possession questions, "Do you have a marker?"
+// and "Do you have any markers?" ask essentially the same yes/no question.
+// Only a/an + a safely inflected count noun; never for mass nouns, pronouns,
+// plural-only nouns, or questions that require a specific textbook structure.
+const pluralOnlyNouns=new Set([
+  'glasses','scissors','shorts','trousers','pants','clothes','jeans',
+  'pliers','tongs','binoculars','spectacles','news','series','species'
+]);
+function ordinaryPlural(singular,plural){
+  if(!/^[a-z]{3,}$/.test(singular)||pluralOnlyNouns.has(plural))return false;
+  if(singular.endsWith('s')||singular.endsWith('ss'))return false;
+  if(singular+'s'===plural)return true;
+  if(/(?:s|x|z|ch|sh)$/.test(singular)&&singular+'es'===plural)return true;
+  if(/[^aeiou]y$/.test(singular)&&singular.slice(0,-1)+'ies'===plural)return true;
+  return false;
+}
+function articleMatches(article,noun){
+  // Don't automatically validate ambiguous sound/spelling combinations.
+  if(!/^[a-z]{3,}$/.test(noun)||/^(?:honest|hour|heir|one|university|unicorn|unique|european)/.test(noun))return false;
+  const vowel=/^[aeio]/.test(noun);
+  return article===(vowel?'an':'a');
+}
+function possessionQuestionEquivalent(target,heard){
+  const any=/^((?:do|does) (?:i|you|we|they|he|she|it) have )any ([a-z]+)$/;
+  const article=/^((?:do|does) (?:i|you|we|they|he|she|it) have )(a|an) ([a-z]+)$/;
+  const check=(pluralSentence,singularSentence)=>{
+    const p=pluralSentence.match(any),s=singularSentence.match(article);
+    return !!(p&&s&&p[1]===s[1]&&articleMatches(s[2],s[3])&&ordinaryPlural(s[3],p[2]));
+  };
+  return check(target,heard)||check(heard,target);
+}
+
 export function matchFlexibleSentence(target,transcripts,policy={}){
   const candidates=(Array.isArray(transcripts)?transcripts:[transcripts])
     .map(v=>String(v??'').trim()).filter(Boolean);
@@ -69,6 +101,8 @@ export function matchFlexibleSentence(target,transcripts,policy={}){
     if(policy.mode==='exact_text'||policy.mode==='require_pattern')continue;
     if(quantifierEquivalent(reference,value))
       return {correct:true,matchedBy:'equivalent_quantifier',transcript};
+    if(possessionQuestionEquivalent(reference,value))
+      return {correct:true,matchedBy:'equivalent_possession_question',transcript};
     if(toPermissionKey(reference)===toPermissionKey(value)&&
         toPermissionKey(reference)!==reference)
       return {correct:true,matchedBy:'equivalent_permission',transcript};
