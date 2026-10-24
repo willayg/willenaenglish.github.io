@@ -4,7 +4,7 @@
 import {snapshotPercent,snapshotStars} from '/students/vocab-study/vocab-progress-snapshot.js';
 import {repeatUntilCorrect} from '/students/vocab-study/vocab-pass-flow.js';
 export const MODES=Object.freeze({coach:'coach',unscramble:'unscramble',speaking:'speaking'});
-export const REQUIRED=['unscramble','speaking'];
+export const REQUIRED=['coach','unscramble','speaking'];
 const pref=(user,unit)=>'willena-sentence-genius-v1:'+user+':'+unit;
 export function openUnit(user,unit,{preview=false}={}){
   const key=pref(user,unit);let saved={};
