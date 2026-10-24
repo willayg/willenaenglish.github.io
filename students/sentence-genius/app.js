@@ -1,7 +1,7 @@
 // Sentence Genius composition root. No exam rules, presentation markup, or
 // attempt calculations belong here: those are owned by dedicated modules.
 import {studentIdentity,signedInProfile,assignedBooks,loadUnits,loadSentences,
-  loadTeacherClasses,loadTeacherBookCatalog,loadTeacherClassHomework} from './content.js?v=teacher-admin3';
+  loadTeacherClasses,loadTeacherBookCatalog,loadTeacherClassHomework} from './content.js?v=teacher-admin4';
 import {openUnit} from './scoring.js?v=teacher-sim2';
 import {getSentenceMastery} from './tracking.js';
 import {createNavigation} from './navigation.js';
