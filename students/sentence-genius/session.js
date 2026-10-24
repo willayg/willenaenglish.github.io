@@ -7,6 +7,7 @@ import {rewardSession} from './rewards.js';
 import {playStudentSfx} from '/students/shared/student-sfx.js';
 import {capturePointOrigin,showPointAward} from '/students/components/student-point-feedback.js';
 import {checkOrder} from './scoring.js';
+import {grammarClueFor} from './grammar-clues.js?v=sg-clues-v1';
 
 const $=id=>document.getElementById(id);
 const titles={coach:'Practice Coach · 연습',unscramble:'문장 배열',speaking:'말하기'};
@@ -80,6 +81,24 @@ export function createSession({onFinish,onProgress,onHome,onBack,onMessage}){
     renderer=new QuestionRenderer(host).render(questionFor(mode,item),{
       onChange:(_answer,has)=>{if(!answered&&token===epoch)$('action').disabled=!has}
     });
+    if(mode==='speaking'){
+      const grammarClue=grammarClueFor(item);
+      if(grammarClue){
+        const hint=document.createElement('div');
+        hint.className='sg-grammar-clue';
+        hint.setAttribute('aria-label','Required English grammar');
+        const title=document.createElement('span');
+        title.className='sg-grammar-clue-label';
+        title.textContent='필수 문법 · Use';
+        const word=document.createElement('strong');
+        word.textContent=grammarClue.word;
+        const detail=document.createElement('span');
+        detail.className='sg-grammar-clue-detail';
+        detail.textContent=grammarClue.detail;
+        hint.append(title,word,detail);
+        host.querySelector('.prompt')?.insertAdjacentElement('afterend',hint);
+      }
+    }
     if(mode!=='unscramble'){
       const instance=renderer;
       speech=connectSpeechSupport({
