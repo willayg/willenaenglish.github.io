@@ -70,6 +70,20 @@ export function createScreens(actions){
     for(const item of items){
       const card=el('div','vocab-word-row');
       card.append(el('strong','',item.en),el('span','',item.ko));
+      if($('teacherSimulator').dataset.enabled==='true'){
+        const grading=item.gradingContext||{};
+        const mode=grading.mode==='require_pattern'
+          ?'Required: '+(grading.requiredPatternName||'specific pattern')
+          :grading.mode==='exact_text'?'Exact textbook wording':'Flexible meaning (default)';
+        const grammar=(grading.unitGrammar||[]).join(', ');
+        const details=[
+          mode,
+          (grading.linkedPatterns||[]).length+' pattern links',
+          grammar?'Unit grammar: '+grammar:'Unit grammar: not specified',
+          'Approved alternatives: '+(grading.approvedAlternatives||[]).length
+        ];
+        card.append(el('small','sg-policy-context',details.join(' · ')));
+      }
       list.append(card);
     }
     $('vocabWordModal').hidden=false;$('vocabWordModal').setAttribute('aria-hidden','false');
