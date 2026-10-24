@@ -5,7 +5,7 @@ import {studentIdentity,signedInProfile,assignedBooks,loadUnits,loadSentences,
 import {openUnit} from './scoring.js?v=sg-coach-gold-v3';
 import {getSentenceMastery} from './tracking.js';
 import {createNavigation} from './navigation.js';
-import {createScreens} from './screens.js?v=sg-policy-phase1a';
+import {createScreens} from './screens.js?v=sg-coach-gold-v3';
 import {createSession} from './session.js?v=sg-context-v2c';
 
 const state={student:null,books:[],book:null,units:[],unit:null,items:[],store:null,
