@@ -10,7 +10,7 @@ import {checkOrder} from './scoring.js?v=sg-phase2b';
 import {grammarClueFor} from './grammar-clues.js?v=sg-clues-v1b';
 
 const $=id=>document.getElementById(id);
-const titles={coach:'Practice Coach · 연습',unscramble:'문장 배열',speaking:'말하기'};
+const titles={coach:'코치',unscramble:'문장 배열',speaking:'말하기'};
 const instructions={coach:'영어 문장을 듣고 따라 말하세요.',unscramble:'우리말을 보고 문장을 만드세요.',speaking:'우리말을 보고 영어로 말하세요.'};
 function shuffle(input){
   const a=input.slice();
