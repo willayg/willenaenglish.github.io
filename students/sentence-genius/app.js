@@ -7,6 +7,7 @@ import {getSentenceMastery} from './tracking.js';
 import {createNavigation} from './navigation.js';
 import {createScreens} from './screens.js?v=sg-coach-gold-v3';
 import {createSession} from './session.js?v=sg-phase3b';
+import {loadReviewCandidates,reviewSentenceResponse} from './decisions.js?v=sg-decisions-v4';
 
 const state={student:null,books:[],book:null,units:[],unit:null,items:[],store:null,
   loadToken:0,loading:null,teacher:false,simMode:'class',simClasses:[],simCatalog:[],
@@ -20,7 +21,10 @@ const screens=createScreens({
   simMode:mode=>void changeSimulationMode(mode),
   simClass:id=>void simulateClass(id),
   simBook:id=>void simulateBook(id),
-  simOpenBook:(id,unit)=>void openBook(id,{unitId:unit})
+  simOpenBook:(id,unit)=>void openBook(id,{unitId:unit}),
+  refreshReviews:()=>refreshReviews(),
+  reviewCandidate:(candidate,decision)=>reviewCandidate(candidate,decision),
+  reviewItem:(item,response,decision)=>reviewItem(item,response,decision)
 });
 const session=createSession({
   onBack:()=>navigation.back(),
@@ -116,6 +120,55 @@ async function applyRoute(route){
   if(route.screen==='activity'&&state.items.length){
     openSession(route.mode,{routeUpdate:false});
   }
+}
+
+// The operational Supabase RPC authorizes all writes using the signed-in
+// teacher's JWT. Class/book preview remains read-only for student progress.
+async function refreshReviews(){
+  if(!state.teacher)return;
+  screens.showReviewStatus('Loading AI answers…');
+  try{
+    const rows=await loadReviewCandidates();
+    screens.showReviewCandidates(rows);
+    screens.showReviewStatus(rows.length?rows.length+' AI answers awaiting review':'No pending AI answers');
+  }catch(error){screens.showReviewStatus('Review list unavailable: '+error.message)}
+}
+function applyDecisionLocally(item,answer,decision){
+  const p=item?.gradingContext;if(!p)return;
+  const norm=v=>String(v||'').toLowerCase().replace(/[^a-z0-9' ]/g,' ').replace(/\s+/g,' ').trim();
+  const clean=arr=>(arr||[]).filter(value=>norm(value)!==norm(answer));
+  p.sharedApproved=clean(p.sharedApproved);
+  p.sharedRejected=clean(p.sharedRejected);
+  if(decision==='approved')p.sharedApproved.push(answer);
+  else p.sharedRejected.push(answer);
+}
+async function reviewItem(item,response,decision){
+  if(!state.teacher)throw Error('Teacher access required');
+  const p=item?.gradingContext;
+  if(!p||!response.trim())throw Error('No sentence selected');
+  const result=await reviewSentenceResponse({
+    occurrenceId:item.occurrenceId,sentenceId:item.id,
+    bookId:p.bookId,unitId:p.unitId,canonicalText:item.en,
+    responseText:response.trim(),policyVersion:p.policyVersion||0,decision
+  });
+  applyDecisionLocally(item,response,decision);
+  // Keep the current sentence-list preview in sync without resetting the unit.
+  screens.sentenceList();
+  return result;
+}
+async function reviewCandidate(candidate,decision){
+  if(!state.teacher)throw Error('Teacher access required');
+  const result=await reviewSentenceResponse({
+    occurrenceId:candidate.occurrence_id,sentenceId:candidate.sentence_id,
+    bookId:candidate.book_id,unitId:candidate.unit_id,
+    canonicalText:candidate.canonical_text,responseText:candidate.response_text,
+    policyVersion:candidate.policy_version||0,decision
+  });
+  const row=state.items.find(item=>
+    String(item.occurrenceId)===String(candidate.occurrence_id)&&
+    item.en===candidate.canonical_text);
+  if(row)applyDecisionLocally(row,candidate.response_text,decision);
+  return result;
 }
 
 // A teacher can preview textbook content, not impersonate a real student.
