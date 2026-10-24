@@ -83,6 +83,35 @@ export function createScreens(actions){
           'Approved alternatives: '+(grading.approvedAlternatives||[]).length
         ];
         card.append(el('small','sg-policy-context',details.join(' · ')));
+        const reviewed=el('div','sg-review-existing');
+        if(grading.sharedApproved?.length)reviewed.append(el('small','',
+          'Approved: '+grading.sharedApproved.join(' · ')));
+        if(grading.sharedRejected?.length)reviewed.append(el('small','',
+          'Rejected: '+grading.sharedRejected.join(' · ')));
+        card.append(reviewed);
+        const editor=el('details','sg-review-editor');
+        const summary=el('summary','','답안 승인 / 거절');
+        const form=el('div','sg-review-entry');
+        const input=document.createElement('input');input.type='text';
+        input.maxLength=350;input.placeholder='Student alternative in English';
+        input.setAttribute('aria-label','Student answer to approve or reject');
+        const status=el('small','sg-review-result','');
+        for(const [decision,label] of [['approved','Approve ✓'],['rejected','Reject ✕']]){
+          const btn=el('button','sg-review-action',label);btn.type='button';
+          btn.addEventListener('click',async()=>{
+            const value=input.value.trim();if(!value)return;
+            form.querySelectorAll('button').forEach(x=>x.disabled=true);
+            status.textContent='Saving…';
+            try{
+              await actions.reviewItem(item,value,decision);
+              status.textContent=decision==='approved'?'Approved ✓':'Rejected ✓';
+            }catch(error){status.textContent='Could not save: '+error.message}
+            finally{form.querySelectorAll('button').forEach(x=>x.disabled=false)}
+          });
+          form.append(btn);
+        }
+        form.prepend(input);form.append(status);
+        editor.append(summary,form);card.append(editor);
       }
       list.append(card);
     }
@@ -153,6 +182,41 @@ export function createScreens(actions){
     }
   }
 
+  const reviewPanel=$('sgReviewPanel'),reviewRefresh=$('sgReviewRefresh');
+  reviewRefresh.addEventListener('click',()=>void actions.refreshReviews());
+  reviewPanel.addEventListener('toggle',()=>{if(reviewPanel.open)void actions.refreshReviews()});
+  function showReviewStatus(message){$('sgReviewStatus').textContent=message||''}
+  function showReviewCandidates(rows){
+    const root=$('sgReviewCandidates');root.replaceChildren();
+    if(!Array.isArray(rows)||!rows.length){
+      root.append(el('p','sg-review-note','No AI answers awaiting teacher review.'));return
+    }
+    for(const candidate of rows){
+      const card=el('article','sg-review-candidate');
+      const target=el('strong','',candidate.canonical_text||'');
+      const answer=el('p','','Student: '+String(candidate.response_text||''));
+      const info=el('small','',candidate.ai_accepted?'AI: accepted':'AI: rejected');
+      const status=el('small','sg-review-result','');
+      const controls=el('div','sg-review-buttons');
+      for(const [decision,label] of [['approved','Approve ✓'],['rejected','Reject ✕']]){
+        const button=el('button','sg-review-action',label);button.type='button';
+        button.addEventListener('click',async()=>{
+          controls.querySelectorAll('button').forEach(b=>b.disabled=true);
+          status.textContent='Saving…';
+          try{
+            await actions.reviewCandidate(candidate,decision);
+            card.remove();
+            if(!root.querySelector('.sg-review-candidate'))showReviewCandidates([]);
+          }catch(error){
+            status.textContent='Could not save: '+error.message;
+            controls.querySelectorAll('button').forEach(b=>b.disabled=false);
+          }
+        });
+        controls.append(button);
+      }
+      card.append(target,answer,info,controls,status);root.append(card);
+    }
+  }
   $('itemCountOpen').addEventListener('click',sentenceList);
   $('vocabWordModalClose').addEventListener('click',closeList);
   $('vocabWordModal').addEventListener('click',e=>{if(e.target===$('vocabWordModal'))closeList()});
@@ -162,5 +226,6 @@ export function createScreens(actions){
   $('speakingCard').addEventListener('click',()=>actions.start('speaking'));
   $('bookBack').addEventListener('click',actions.home);
   return {visible,notice,home,showBook,progress,sentenceList,
-    teacherSetup,teacherMode,teacherStatus,teacherOverview};
+    teacherSetup,teacherMode,teacherStatus,teacherOverview,
+    showReviewCandidates,showReviewStatus};
 }
