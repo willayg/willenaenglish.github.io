@@ -1,7 +1,7 @@
 // Sentence Genius composition root. No exam rules, presentation markup, or
 // attempt calculations belong here: those are owned by dedicated modules.
 import {studentIdentity,signedInProfile,assignedBooks,loadUnits,loadSentences,
-  loadTeacherClasses,loadTeacherBookCatalog,loadTeacherClassHomework} from './content.js?v=teacher-admin4';
+  loadTeacherClasses,loadTeacherBookCatalog,loadTeacherClassHomework} from './content.js?v=sg-policy-phase1a';
 import {openUnit} from './scoring.js?v=teacher-sim2';
 import {getSentenceMastery} from './tracking.js';
 import {createNavigation} from './navigation.js';
@@ -41,7 +41,7 @@ async function selectUnit(id,{routeUpdate=true}={}){
   screens.showBook({newBook:state.book,newUnits:state.units,newUnit:unit,newItems:[],newStore:null});
   screens.notice('교재 문장을 불러오는 중…');
   try{
-    const items=await loadSentences(state.book.id,unit.id);
+    const items=await loadSentences(state.book.id,unit.id,unit);
     if(token!==state.loadToken)return;
     state.items=items;
     state.store=openUnit(state.student.id,unit.id,{preview:state.teacher});
