@@ -26,14 +26,15 @@ function showScreen(screen){
   if(screen!=='home')message('');
 }
 function front(){
+  // Same book card markup as Word Genius. Styles come from its CSS.
   const list=$('bookList');list.replaceChildren();
-  if(!state.books.length){list.textContent='현재 배정된 교재가 없습니다.';return}
+  if(!state.books.length){list.innerHTML='<div class="vocab-front-empty">No assigned books found.</div>';return}
   state.books.forEach(book=>{
     const btn=document.createElement('button');
-    btn.type='button';btn.className='vocab-front-book-card';btn.innerHTML=
-      '<span class="vocab-front-card-main"><span class="vocab-front-card-copy"><span class="eyebrow">SENTENCE GENIUS</span><strong>'+esc(book.title)+'</strong><small>문장을 연습해 보세요</small></span></span>'+
-      '<span class="vocab-front-arrow" aria-hidden="true">›</span>';
-    btn.onclick=()=>void openBook(book.id);
+    btn.type='button';btn.className='vocab-front-book-card';
+    btn.innerHTML='<span class="vocab-front-card-main"><span class="vocab-front-card-copy"><strong>'+
+      esc(book.title)+'</strong></span></span><span class="vocab-front-arrow" aria-hidden="true">›</span>';
+    btn.addEventListener('click',()=>void openBook(book.id));
     list.append(btn);
   });
 }
@@ -73,28 +74,42 @@ async function selectUnit(id,{historyMode='replace'}={}){
   }catch(error){if(state.generation===generation){message(error.message);console.warn('[Sentence Genius] unit',error)}}
 }
 function renderUnits(){
+  // Word Genius unit strip and golden-unit icon, verbatim class names.
   const root=$('unitStrip');root.replaceChildren();
   state.units.forEach(unit=>{
-    const btn=document.createElement('button');btn.type='button';btn.className='sg-unit'+(unit.id===state.unit?.id?' active':'');
-    btn.textContent='Unit '+(unit.unit_number||'');
-    btn.setAttribute('aria-pressed',String(unit.id===state.unit?.id));
-    btn.onclick=()=>void selectUnit(unit.id);root.append(btn);
+    const btn=document.createElement('button');
+    btn.type='button';
+    let gold=false;
+    if(unit.id===state.unit?.id)gold=!!state.store?.gold(state.items);
+    btn.className='study-v2-unit'+(unit.id===state.unit?.id?' is-current':'')+(gold?' is-golden':'');
+    btn.innerHTML='Unit '+esc(unit.unit_number||'')+
+      (gold?'<img class="vocab-unit-gold" src="/shared/svgs/golden-unit.svg?v=20260927-icons1" alt="Golden Unit">':'');
+    btn.addEventListener('click',()=>void selectUnit(unit.id));
+    root.append(btn);
   });
 }
 function updateCards(){
   const items=state.items,store=state.store;
   $('bookName').textContent=state.book?.title||'Sentence Genius';
-  $('itemCount').textContent=items.length+' sentences';
+  $('itemCount').textContent=items.length+' 문장 보기';
+  $('itemCountOpen').disabled=!items.length;
   for(const [id,mode] of [['coachCard','coach'],['unscrambleCard','unscramble'],['speakingCard','speaking']]){
     const btn=$(id);btn.disabled=!items.length;
     const percent=store&&items.length?store.percent(mode,items):0;
     btn.querySelector('.vocab-skill-ring').style.setProperty('--progress',percent);
     btn.querySelector('.vocab-skill-ring span').textContent=percent+'%';
-    if(mode!=='coach')$(mode+'Stars').textContent=(store?store.stars(mode,items):0)+'/5 stars';
+    if(mode!=='coach')$(mode+'Stars').textContent='★ '+(store?store.stars(mode,items):0)+'/5';
   }
   const gold=!!(store&&store.gold(items));
   $('goldStatus').classList.toggle('is-gold',gold);
-  $('goldStatus').lastChild.textContent=gold?'Golden Unit · 완성!':' Complete Unscramble + Speaking for gold.';
+  $('goldLabel').textContent=gold?'Golden Unit · 완성!':'Complete Unscramble + Speaking for gold.';
+  const activeUnit=$('unitStrip').querySelector('.study-v2-unit.is-current');
+  if(activeUnit){
+    activeUnit.classList.toggle('is-golden',gold);
+    const badge=activeUnit.querySelector('.vocab-unit-gold');
+    if(gold&&!badge)activeUnit.insertAdjacentHTML('beforeend','<img class="vocab-unit-gold" src="/shared/svgs/golden-unit.svg?v=20260927-icons1" alt="Golden Unit">');
+    else if(!gold&&badge)badge.remove();
+  }
 }
 function shuffle(items){
   const a=items.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a;
