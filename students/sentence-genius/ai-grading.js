@@ -8,10 +8,11 @@ const CACHE_KEY='willena-sentence-genius-ai-decisions-v3';
 const BUDGET_KEY='willena-sentence-genius-ai-budget-v3';
 const CACHE_TTL=30*24*60*60*1000;
 const MAX_CACHE=200;
-const MAX_CALLS_PER_HOUR=25;
-const MAX_CALLS_PER_SESSION=10;
+const MAX_CALLS_PER_HOUR=45;
+const MAX_CALLS_PER_SESSION=20;
 let sessionCalls=0;
-const pending=new Map();
+const pending=new Map(),memoryCache=new Map();
+export function resetAiSessionBudget(){sessionCalls=0}
 
 function safeLocalGet(key){
   try{return JSON.parse(localStorage.getItem(key)||'null')}catch{return null}
@@ -29,7 +30,7 @@ function isRepetitive(phrase,target){
 // A real short or wrong English sentence must still reach the grader.
 export function unusableTranscript(transcript,target=''){
   const text=normalize(transcript);
-  if(!text||text.length>240||!/[a-z]/.test(text))return true;
+  if(!text||text.length>240||!/[a-z]/.test(text)||text.length<2)return true;
   if(/^(?:um|uh|er|erm|hmm|blah|la|ah|eh|okay|noise)(?:\s+(?:um|uh|er|erm|hmm|blah|la|ah|eh|okay|noise))*$/.test(text))return true;
   if(isRepetitive(text,target))return true;
   return false;
@@ -57,7 +58,8 @@ async function fingerprint(value){
 function cached(key){
   if(!key)return null;
   const rows=safeLocalGet(CACHE_KEY);
-  const row=rows&&typeof rows==='object'&&!Array.isArray(rows)?rows[key]:null;
+  const row=memoryCache.get(key)||
+    (rows&&typeof rows==='object'&&!Array.isArray(rows)?rows[key]:null);
   if(!row||typeof row.correct!=='boolean'||!Number.isFinite(row.at)||Date.now()-row.at>CACHE_TTL)return null;
   return {correct:row.correct,matchedBy:'ai_cached',reason:row.reason||'',reasonCode:row.reasonCode||'',
     explanationKo:row.explanationKo||'',aiSource:'cached'};
@@ -69,6 +71,8 @@ function putCache(key,result){
   rows[key]={correct:!!result.correct,reason:String(result.reason||'').slice(0,160),
     reasonCode:String(result.reasonCode||'').slice(0,80),
     explanationKo:String(result.explanationKo||'').slice(0,240),at:Date.now()};
+  memoryCache.set(key,rows[key]);
+  if(memoryCache.size>MAX_CACHE)memoryCache.delete(memoryCache.keys().next().value);
   const valid=Object.entries(rows).filter(([,row])=>row&&Number.isFinite(row.at)
     &&Date.now()-row.at<CACHE_TTL).sort((a,b)=>b[1].at-a[1].at).slice(0,MAX_CACHE);
   safeLocalSet(CACHE_KEY,Object.fromEntries(valid));
