@@ -194,7 +194,7 @@ export async function loadSentences(bookId,unitId,unit={}){
     const s=sentenceMap.get(occurrence.sentence_id);
     const en=str(s?.canonical_text||s?.text),ko=str(s?.translation_ko);
     if(!s||!en||!ko||seen.has(s.id))return [];
-    if(en.split(/\\s+/).length<2||!/[a-z]/i.test(en))return [];
+    if(en.split(/\s+/).length<2||!/[a-z]/i.test(en))return [];
     seen.add(s.id);
     const override=policyByOccurrence.get(occurrence.id);
     const linkedPatterns=(linksBySentence.get(s.id)||[]).flatMap(link=>{
