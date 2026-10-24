@@ -3,7 +3,7 @@
 import {QuestionRenderer} from '/shared/questions/question-renderer.js';
 import {studentIdentity,assignedBooks,loadUnits,loadSentences} from './content.js';
 import {openUnit,checkOrder,MODES} from './scoring.js';
-import {recordSentenceAttempt} from './tracking.js';
+import {recordSentenceAttempt,getSentenceMastery} from './tracking.js';
 import {connectSpeechSupport,playModel,prefetchAudio,stopAudio,matchSentence} from './speech.js';
 import {createVocabHistoryNavigation} from '/students/vocab-study/navigation-history.js';
 import {playStudentSfx} from '/students/shared/student-sfx.js';
@@ -60,7 +60,13 @@ async function selectUnit(id,{historyMode='replace'}={}){
     const items=await loadSentences(state.book.id,unit.id);
     if(state.generation!==generation)return;
     state.items=items;state.store=openUnit(state.student.id,unit.id);
-    renderUnits();updateCards();message(items.length?'':'이 단원에는 영어·한국어 문장 쌍이 아직 없습니다.');
+    renderUnits();updateCards();
+    // Rehydrate from the operational DB on every unit visit; local data is
+    // only an optimistic cache if a write is still queued or network is down.
+    try{state.store.hydrateServer(await getSentenceMastery(state.book.id,unit.id))}
+    catch(error){console.warn('[Sentence Genius] server snapshot unavailable',error)}
+    if(state.generation!==generation)return;
+    updateCards();message(items.length?'':'이 단원에는 영어·한국어 문장 쌍이 아직 없습니다.');
     if(historyMode!=='none')nav[historyMode]({screen:'book',bookId:state.book.id,unitId:unit.id});
   }catch(error){if(state.generation===generation){message(error.message);console.warn('[Sentence Genius] unit',error)}}
 }
@@ -158,6 +164,7 @@ async function submit(){
     ?{correct:checkOrder(response,item.en),matchedBy:'order'}
     :matchSentence(item.en,renderer.getSpeechAlternatives?.().length?renderer.getSpeechAlternatives():[response]);
   const correct=!!assessment.correct;
+  const itemUnitId=state.unit.id;
   // Coach retries do not hurt a unit; they are deliberate practice.
   const result=state.store.attempt(state.mode,item.id,{correct});
   if(result.repeat){state.queue.push({...item,retryCount:item.retryCount+1})}
@@ -167,6 +174,12 @@ async function submit(){
       retryCount:item.retryCount,points:result.points,
       source:assessment.matchedBy==='ai'?'openai_ai_fallback':'browser',
       elapsedMs:Date.now()-state.startedAt
+    }).then(async()=>{
+      // The canonical recorder stores the attempt before this resolves.
+      if(state.unit?.id===itemUnitId&&state.store){
+        try{state.store.hydrateServer(await getSentenceMastery(state.book.id,itemUnitId));updateCards()}
+        catch(error){console.warn('[Sentence Genius] snapshot refresh',error)}
+      }
     }).catch(error=>console.warn('[Sentence Genius] study record',error));
   }catch(error){console.error('[Sentence Genius] missing study recorder',error);message('Progress recorder unavailable');}
   state.answered=true;state.speech?.dispose();state.speech=null;
