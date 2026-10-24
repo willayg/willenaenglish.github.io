@@ -1,7 +1,7 @@
 // Sentence Genius deterministic answer equivalence, revision 2.0.
 // Conservative by design: no phonetic/plural guessing; unknown answers
 // remain incorrect here until the later semantic AI grader is connected.
-export const FLEXIBILITY_REVISION='2.0.0';
+export const FLEXIBILITY_REVISION='2.1.0';
 
 export function normalizeFlexibleText(value,{contractions=true}={}){
   let text=String(value??'').normalize('NFKC').toLowerCase()
@@ -75,6 +75,54 @@ export function matchFlexibleSentence(target,transcripts,policy={}){
     if(toRequestKey(reference)===toRequestKey(value)&&
         toRequestKey(reference)!==reference)
       return {correct:true,matchedBy:'equivalent_request',transcript};
+  }
+  return null;
+}
+
+
+// Minor, mechanically verifiable mistakes only. Different meaning, missing
+// negation, wrong auxiliaries and unknown paraphrases must NOT receive credit.
+// The semantic AI phase can adjudicate less obvious cases later.
+function minorEnding(expected,heard){
+  if(!/^[a-z]+$/.test(expected)||!/^[a-z]+$/.test(heard))return false;
+  if(heard.length<3||expected.length<4)return false;
+  if(expected===heard+'s')return true;
+  if(expected===heard+'es'&&/(?:s|x|z|ch|sh|o)$/.test(heard))return true;
+  if(expected.endsWith('ies')&&heard.endsWith('y')&&expected.slice(0,-3)===heard.slice(0,-1))return true;
+  // Do not equate opposite directions (e.g. plural target vs plural student
+  // expression) without a reliable grammatical target.
+  return false;
+}
+function nearMissReason(target,response){
+  const expected=target.split(' ').filter(Boolean),heard=response.split(' ').filter(Boolean);
+  if(!expected.length||!heard.length)return '';
+  // A single missing indefinite article: "I want apple".
+  if(expected.length===heard.length+1){
+    for(let index=0;index<expected.length;index++){
+      if(!['a','an'].includes(expected[index]))continue;
+      if(expected.filter((_,i)=>i!==index).join(' ')===response)return'missing_article';
+    }
+  }
+  if(expected.length!==heard.length)return '';
+  const changed=[];
+  for(let i=0;i<expected.length;i++)if(expected[i]!==heard[i])changed.push(i);
+  if(changed.length!==1)return '';
+  const i=changed[0],a=expected[i],b=heard[i];
+  if((a==='a'&&b==='an')||(a==='an'&&b==='a'))return'wrong_article';
+  if(minorEnding(a,b))return'missing_word_ending';
+  return '';
+}
+export function detectAlmostRight(target,transcripts,policy={}){
+  const candidates=(Array.isArray(transcripts)?transcripts:[transcripts])
+    .map(v=>String(v??'').trim()).filter(Boolean);
+  const contractions=policy.contractionPolicy!=='exact_only';
+  const reference=normalizeFlexibleText(target,{contractions});
+  if(!reference)return null;
+  for(const transcript of candidates){
+    const value=normalizeFlexibleText(transcript,{contractions});
+    const reason=nearMissReason(reference,value);
+    if(reason)return{correct:false,almostRight:true,matchedBy:'almost_'+reason,
+      transcript,reason};
   }
   return null;
 }
