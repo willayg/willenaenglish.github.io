@@ -3,6 +3,7 @@
 import {createSpeakingAudioCache} from '/students/vocab-study/vocab-listening-cache.js';
 import {attachAISpeakingFallback} from '/students/vocab-study/vocab-ai-speech-ui.js';
 import {matchSpeakingTarget} from '/students/vocab-study/speaking-match.js';
+import {matchFlexibleSentence} from './flexibility.js?v=sg-flex-v2a';
 const endpoint='/api/vocab-ai-speech';
 async function api(body){
   const headers={'Content-Type':'application/json'};
@@ -52,14 +53,24 @@ export async function playModel(text){
 }
 // No approximate phonetic/loose plural matching for whole sentences: that
 // could mark a grammatically wrong verb form correct.
-export function matchSentence(target,alternatives){
+export function matchSentence(target,alternatives,gradingContext={}){
   const match=matchSpeakingTarget(target,alternatives);
-  return {...match,correct:match.correct&&['exact','spacing','homophone'].includes(match.matchedBy)};
+  if(match.correct&&['exact','spacing','homophone'].includes(match.matchedBy))return match;
+  const equivalent=matchFlexibleSentence(target,alternatives,gradingContext);
+  return equivalent||{...match,correct:false};
 }
 export function connectSpeechSupport({host,renderer,item,isCurrent,onAccepted,onListeningAvailable}){
   let micStarts=0;
   const fallback=attachAISpeakingFallback({
-    host,target:item.en,isCurrent,match:matchSentence,
+    host,target:item.en,isCurrent,
+    // Word Genius's shared fallback only accepts exact/spacing/homophone
+    // verdict names. Adapt an accepted Sentence Genius equivalent locally;
+    // never change Word Genius's global speaking match behavior.
+    match:(target,transcripts)=>{
+      const result=matchSentence(target,transcripts,item.gradingContext);
+      return result.correct&&!['exact','spacing','homophone'].includes(result.matchedBy)
+        ?{...result,matchedBy:'exact'}:result;
+    },
     callApi:api,
     stopBrowserSpeech:()=>{try{renderer.speechRecognition?.stop()}catch{}},
     onAccepted:transcript=>{
