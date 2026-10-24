@@ -131,43 +131,101 @@ export async function assignedBooks(className){
   const unique=new Map(rows.filter(x=>x?.book_id).map(x=>[x.book_id,{id:x.book_id,title:str(x.book_title||x.title)||'Textbook'}]));
   return [...unique.values()];
 }
+// Grading context is sourced dynamically from the current textbook and unit.
+// Links to grammar patterns are informative, not automatically strict targets.
+// Only a published per-occurrence override can require a specific structure.
 export async function loadUnits(bookId){
-  return content('content_units?select=id,title,unit_number,book_id&book_id=eq.'+encodeURIComponent(bookId)+'&status='+available+'&order=unit_number.asc');
+  return content('content_units?select=id,title,unit_number,book_id,metadata&book_id=eq.'+
+    encodeURIComponent(bookId)+'&status='+available+'&order=unit_number.asc');
 }
-export async function loadSentences(bookId,unitId){
-  // Restrict rows to this book AND unit. Only sourced sentence links are eligible.
-  const rows=await content('source_content_occurrences?select=id,sentence_id,source_text,page_number&book_id=eq.'+encodeURIComponent(bookId)+'&unit_id=eq.'+encodeURIComponent(unitId)+'&sentence_id=not.is.null&status='+available+'&order=page_number.asc');
+const chunks=(items,size=50)=>Array.from({length:Math.ceil(items.length/size)},
+  (_,i)=>items.slice(i*size,(i+1)*size));
+const idList=ids=>encodeURIComponent('('+ids.join(',')+')');
+const topics=value=>{
+  if(Array.isArray(value))return value.map(str).filter(Boolean);
+  const text=str(value);return text?[text]:[];
+};
+export async function loadSentences(bookId,unitId,unit={}){
+  const rows=await content('source_content_occurrences?select=id,sentence_id,source_text,page_number'+
+    '&book_id=eq.'+encodeURIComponent(bookId)+'&unit_id=eq.'+encodeURIComponent(unitId)+
+    '&sentence_id=not.is.null&status='+available+'&order=page_number.asc');
   const ids=[...new Set(rows.map(row=>str(row.sentence_id)).filter(Boolean))];
   if(!ids.length)return [];
-  const sentences=[];
-  for(let i=0;i<ids.length;i+=50){
-    const list=ids.slice(i,i+50);
-    sentences.push(...await content('sentences?select=id,text,canonical_text,translation_ko,status&status='+available+'&id=in.'+encodeURIComponent('('+list.join(',')+')')));
-  }
-  // Sentence Genius teaches textbook patterns, not arbitrary book sentences.
-  // Keep only examples already connected to an explicit grammar/sentence pattern.
+
+  // These requests are parallel; there are no per-book hardcoded cases.
+  const [sentenceChunks,linkChunks,policyChunks]=await Promise.all([
+    Promise.all(chunks(ids).map(part=>content('sentences?select=id,text,canonical_text,'+
+      'translation_ko,contraction_policy,grammar_notes,metadata,status&status='+available+
+      '&id=in.'+idList(part)))),
+    Promise.all(chunks(ids).map(part=>content('sentence_patterns?select=sentence_id,'+
+      'pattern_id,relationship,is_primary&sentence_id=in.'+idList(part)))),
+    Promise.all(chunks(rows.map(row=>row.id)).map(part=>content(
+      'sentence_genius_policies?select=occurrence_id,grading_mode,required_pattern_id,'+
+      'accepted_alternatives,policy_version,status&status=eq.published&occurrence_id=in.'+
+      idList(part))))
+  ]);
+  const sentenceMap=new Map(sentenceChunks.flat().map(row=>[row.id,row]));
+  const linksBySentence=new Map();
+  const linkedIds=new Set();
   const patternIds=new Set();
-  for(let i=0;i<ids.length;i+=50){
-    const group=ids.slice(i,i+50);
-    const linked=await content('sentence_patterns?select=sentence_id&sentence_id=in.'+
-      encodeURIComponent('('+group.join(',')+')'));
-    linked.forEach(row=>patternIds.add(row.sentence_id));
+  for(const link of linkChunks.flat()){
+    linkedIds.add(link.sentence_id);
+    if(!linksBySentence.has(link.sentence_id))linksBySentence.set(link.sentence_id,[]);
+    linksBySentence.get(link.sentence_id).push(link);
+    if(link.pattern_id)patternIds.add(link.pattern_id);
   }
-  const lookup=new Map(sentences.map(row=>[row.id,row]));
+  const policyByOccurrence=new Map(policyChunks.flat().map(row=>[row.occurrence_id,row]));
+  for(const row of policyByOccurrence.values())if(row.required_pattern_id)patternIds.add(row.required_pattern_id);
+  const patternChunks=await Promise.all(chunks([...patternIds]).map(part=>content(
+    'patterns?select=id,code,name,grammar_category,language_function,response_pattern,'+
+    'accepted_patterns,status&status='+available+'&id=in.'+idList(part))));
+  const patterns=new Map(patternChunks.flat().map(row=>[row.id,row]));
+  const metadata=unit?.metadata&&typeof unit.metadata==='object'?unit.metadata:{};
+  const unitGrammar=[...new Set([
+    ...topics(metadata.main_grammar_points),...topics(metadata.grammar)
+  ])];
+  // For older books, prioritize linked examples but retain real sourced
+  // sentence occurrences as fallback. This does not enforce a grammar target.
+  const linked=rows.filter(row=>linkedIds.has(row.sentence_id));
+  const ordered=(linked.length>=3?linked:rows).slice().sort(
+    (a,b)=>Number(linkedIds.has(b.sentence_id))-Number(linkedIds.has(a.sentence_id)));
   const seen=new Set();
-  // A unit's linked pattern examples are the core Sentence Genius content.
-  // For older books without enough published mappings, use only genuine
-  // translated sentences from their actual source occurrences as fallback.
-  const linkedRows=rows.filter(row=>patternIds.has(row.sentence_id));
-  const ordered=(linkedRows.length>=3?linkedRows:rows).slice().sort(
-    (a,b)=>Number(patternIds.has(b.sentence_id))-Number(patternIds.has(a.sentence_id))
-  );
   return ordered.flatMap(occurrence=>{
-    const s=lookup.get(occurrence.sentence_id),en=str(s?.canonical_text||s?.text),ko=str(s?.translation_ko);
+    const s=sentenceMap.get(occurrence.sentence_id);
+    const en=str(s?.canonical_text||s?.text),ko=str(s?.translation_ko);
     if(!s||!en||!ko||seen.has(s.id))return [];
-    // Single words and punctuation-only fragments are not sentences for this app.
-    if(en.split(/\s+/).length<2||!/[a-z]/i.test(en))return [];
+    if(en.split(/\\s+/).length<2||!/[a-z]/i.test(en))return [];
     seen.add(s.id);
-    return [{id:s.id,occurrenceId:occurrence.id,en,ko,source:occurrence.source_text||'',page:occurrence.page_number}];
+    const override=policyByOccurrence.get(occurrence.id);
+    const linkedPatterns=(linksBySentence.get(s.id)||[]).flatMap(link=>{
+      const pattern=patterns.get(link.pattern_id);
+      if(!pattern)return [];
+      return [{id:pattern.id,code:str(pattern.code),name:str(pattern.name),
+        category:str(pattern.grammar_category),function:str(pattern.language_function),
+        relationship:str(link.relationship),responsePattern:str(pattern.response_pattern),
+        // Reference templates may mix questions and answers. Never auto-accept.
+        exampleTemplates:Array.isArray(pattern.accepted_patterns)?pattern.accepted_patterns:[]}];
+    });
+    const requiredPattern=override?.required_pattern_id?
+      patterns.get(override.required_pattern_id):null;
+    const sentenceMetadata=s.metadata&&typeof s.metadata==='object'?s.metadata:{};
+    return [{
+      id:s.id,occurrenceId:occurrence.id,en,ko,source:occurrence.source_text||'',
+      page:occurrence.page_number,
+      gradingContext:{
+        bookId,unitId,occurrenceId:occurrence.id,sentenceId:s.id,
+        mode:override?.grading_mode||'flexible',
+        policySource:override?'published_override':'default_flexible',
+        policyVersion:Number(override?.policy_version)||0,
+        requiredPatternId:override?.required_pattern_id||null,
+        requiredPatternName:str(requiredPattern?.name),
+        approvedAlternatives:Array.isArray(override?.accepted_alternatives)?
+          override.accepted_alternatives:[],
+        contractionPolicy:str(s.contraction_policy)||'allow_equivalent',
+        grammarNotes:str(s.grammar_notes),
+        patternCode:str(sentenceMetadata.pattern_code),
+        unitGrammar,linkedPatterns
+      }
+    }];
   });
 }
