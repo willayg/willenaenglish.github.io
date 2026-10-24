@@ -68,6 +68,13 @@
         </label>
       </div>
       <div id="teacherSimStatus" class="sg-sim-status" role="status" aria-live="polite"></div>
+      <details id="sgReviewPanel" class="sg-review-panel">
+        <summary>AI 답안 검토 · Review AI answers</summary>
+        <p class="sg-review-note">Staff-only approvals. These change grading for future attempts, never student progress already recorded.</p>
+        <button id="sgReviewRefresh" type="button" class="sg-review-refresh">새 답안 불러오기 · Refresh</button>
+        <div id="sgReviewStatus" class="sg-review-status" role="status"></div>
+        <div id="sgReviewCandidates" class="sg-review-list"></div>
+      </details>
       <section id="teacherClassOverview" class="sg-class-overview" hidden>
         <strong id="teacherClassHeading">Class assignments</strong>
         <div id="teacherClassBooks" class="sg-sim-book-list"></div>
