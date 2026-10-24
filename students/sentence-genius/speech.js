@@ -48,7 +48,11 @@ export async function playModel(text){
     voice.lang='en-US';voice.rate=1;voice.pitch=1;
     const voices=speechSynthesis.getVoices();
     voice.voice=voices.find(v=>/en-US/i.test(v.lang)&&/david|guy|matthew|justin|male/i.test(v.name))||null;
-    speechSynthesis.speak(voice);return true;
+    try{speechSynthesis.speak(voice);return true}
+    catch(error){
+      console.warn('[Sentence Genius] Browser speech unavailable',error);
+      return false;
+    }
   }
 }
 // No approximate phonetic/loose plural matching for whole sentences: that
