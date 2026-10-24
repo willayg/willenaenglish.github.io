@@ -179,14 +179,17 @@ function renderQuestion(){
   $('action').textContent='Check Answer';$('action').disabled=true;$('action').classList.remove('is-next');
   const question=state.mode==='unscramble'?orderQuestion(item):speakingQuestion(item);
   if(!question){state.index++;renderQuestion();return}
-  const renderer=new QuestionRenderer($('questionRoot')).render(question,{
+  // Exactly the same question-card wrapper used by Word Genius.
+  $('questionRoot').innerHTML='<div class="question-card" id="sentenceQuestionHost"></div>';
+  const host=$('sentenceQuestionHost');
+  const renderer=new QuestionRenderer(host).render(question,{
     onChange:(_value,has)=>{if(!state.answered)$('action').disabled=!has}
   });
   state.renderer=renderer;
   if(state.mode!=='unscramble'){
     const myIndex=state.index, myMode=state.mode;
     state.speech=connectSpeechSupport({
-      host:$('questionRoot'),renderer,item,
+      host,renderer,item,
       isCurrent:()=>state.index===myIndex&&state.mode===myMode&&state.renderer===renderer&&!state.answered&&state.screen==='activity',
       onAccepted:()=>{if(!state.answered)void submit()},
       onListeningAvailable:()=>{if(state.mode==='speaking'&&!state.answered)show('listenTools',true)}
