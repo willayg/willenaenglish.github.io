@@ -2,7 +2,7 @@
 // attempt calculations belong here: those are owned by dedicated modules.
 import {studentIdentity,signedInProfile,assignedBooks,loadUnits,loadSentences,
   loadTeacherClasses,loadTeacherBookCatalog,loadTeacherClassHomework} from './content.js?v=sg-policy-phase1b';
-import {openUnit} from './scoring.js?v=teacher-sim2';
+import {openUnit} from './scoring.js?v=sg-coach-gold-v3';
 import {getSentenceMastery} from './tracking.js';
 import {createNavigation} from './navigation.js';
 import {createScreens} from './screens.js?v=sg-policy-phase1a';
