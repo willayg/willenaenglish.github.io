@@ -3,7 +3,7 @@
 import {createSpeakingAudioCache} from '/students/vocab-study/vocab-listening-cache.js';
 import {attachAISpeakingFallback} from '/students/vocab-study/vocab-ai-speech-ui.js';
 import {matchSpeakingTarget} from '/students/vocab-study/speaking-match.js';
-import {matchFlexibleSentence,detectAlmostRight} from './flexibility.js?v=sg-flex-v2b';
+import {matchFlexibleSentence,detectAlmostRight} from './flexibility.js?v=sg-flex-v2c';
 const endpoint='/api/vocab-ai-speech';
 async function api(body){
   const headers={'Content-Type':'application/json'};
