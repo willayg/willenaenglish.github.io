@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex,nofollow"><title>Sentence Genius · 문장 지니어스</title>
+<link rel="icon" href="/Assets/Images/Logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/students/study/study.css">
+<link rel="stylesheet" href="/students/study/study-overrides.css">
+<link rel="stylesheet" href="/students/study-v2/v2.css">
+<link rel="stylesheet" href="/students/vocab-study/vocab-study.css">
+<link rel="stylesheet" href="/students/vocab-study/theme-pips.css">
+<link rel="stylesheet" href="./styles.css?v=1">
+<script src="/students/api-gateway.js"></script><script src="/students/study/study-progress.js"></script><script src="/js/api-config.js"></script>
+<script type="module" src="/students/components/student-header.js"></script>
+</head><body><div class="study-app">
+<student-header title="문장 지니어스" show-id="false" show-home="false" show-points="true" show-logout="true"></student-header>
+<div id="vocabThemeDock" class="vocab-theme-dock" role="group" aria-label="Color theme">
+<button class="vocab-theme-pip" data-theme="cyan" aria-label="Cyan" title="Cyan"></button><button class="vocab-theme-pip" data-theme="sunbeam" aria-label="Sunbeam" title="Sunbeam"></button><button class="vocab-theme-pip" data-theme="pink" aria-label="Pink" title="Pink"></button><button class="vocab-theme-pip" data-theme="paper" aria-label="Paper" title="Paper"></button><button class="vocab-theme-pip" data-theme="dark" aria-label="Dark" title="Dark"></button><button class="vocab-theme-pip" data-theme="cyberpunk" aria-label="Cyberpunk" title="Cyberpunk"></button>
+</div>
+<main class="vocab-page">
+<div id="message" class="sg-message" role="status" aria-live="polite">교재를 불러오는 중…</div>
+<section id="front" class="vocab-front-menu" hidden>
+<div class="vocab-front-section-head"><div><span class="eyebrow">내 교재</span><strong>교재를 선택하세요</strong></div></div>
+<div id="bookList" class="vocab-front-book-list"></div>
+</section>
+<section id="bookScreen" class="vocab-home-card vocab-subscreen" hidden>
+<div class="vocab-subscreen-head"><button id="bookBack" class="vocab-screen-back" type="button">← 홈</button><span id="bookName">Sentence Genius</span></div>
+<div class="study-v2-units vocab-unit-selector"><div id="unitStrip" class="study-v2-unit-strip" aria-label="Units"></div></div>
+<div class="vocab-unit-summary"><h2 id="unitTitle">Unit</h2><button id="itemCount" type="button" class="vocab-word-card" title="Sentences">0 sentences</button></div>
+<section class="vocab-skill-grid" aria-label="Sentence skills">
+<button id="coachCard" class="vocab-skill-card vocab-skill-quiz" type="button" disabled><span class="vocab-skill-ring" style="--progress:0"><span>—</span></span><span class="vocab-skill-copy"><small class="vocab-skill-step">OPTIONAL</small><strong>Practice Coach</strong><span class="vocab-card-stars">연습 · Gold 제외</span></span></button>
+<button id="unscrambleCard" class="vocab-skill-card vocab-skill-spelling" type="button" disabled><span class="vocab-skill-ring" style="--progress:0"><span>—</span></span><span class="vocab-skill-copy"><small class="vocab-skill-step">STEP 2</small><strong>문장 배열</strong><span id="unscrambleStars" class="vocab-card-stars">0/5 stars</span></span></button>
+<button id="speakingCard" class="vocab-skill-card vocab-skill-pronunciation" type="button" disabled><span class="vocab-skill-ring" style="--progress:0"><span>—</span></span><span class="vocab-skill-copy"><small class="vocab-skill-step">STEP 3</small><strong>말하기</strong><span id="speakingStars" class="vocab-card-stars">0/5 stars</span></span></button>
+</section>
+<div class="sg-gold" id="goldStatus" role="status"><img src="/shared/svgs/golden-unit.svg" alt="" aria-hidden="true"> Complete Unscramble + Speaking for gold.</div>
+</section>
+</main>
+<section id="session" class="vocab-session" hidden>
+<header class="vocab-session-top"><div class="vocab-session-topline"><button id="sessionBack" class="vocab-back" type="button" aria-label="Back">←</button><div class="vocab-progress-copy"><strong id="sessionTitle">문장 연습</strong><small id="sessionIndex"></small></div><button id="sessionHome" class="vocab-session-home" type="button" aria-label="Home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="21" height="21" aria-hidden="true"><path d="m3 10 9-7 9 7v10h-6v-7H9v7H3z"/></svg> 홈</button></div><div class="vocab-progress-track"><div id="sessionBar" class="vocab-progress-fill"></div></div></header>
+<main id="sessionMain" class="vocab-session-main"><div id="sessionContent" class="vocab-question-wrap"><div id="instruction" class="vocab-instruction"></div><div id="englishCoach" class="sg-model" hidden></div><div id="questionRoot" class="question-card"></div><div id="listenTools" class="sg-listening" hidden><button id="listen" type="button" class="vocab-speaking-listen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="23" height="23" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4V5zm4 4a4 4 0 0 1 0 6m3-9a8 8 0 0 1 0 12"/></svg><span id="listenLabel">Listen · 발음 듣기</span></button></div><div id="answerNote" class="vocab-answer-note" hidden></div></div></main>
+<footer id="sessionFooter" class="vocab-session-bottom"><div class="vocab-action-row"><button id="skip" class="vocab-skip-action" type="button">Skip</button><button id="action" class="vocab-action" type="button" disabled>Check Answer</button></div></footer>
+</section>
+</div>
+<script type="module" src="/students/vocab-study/theme-pips.js"></script>
+<script type="module" src="./app.js?v=1"></script></body></html>
