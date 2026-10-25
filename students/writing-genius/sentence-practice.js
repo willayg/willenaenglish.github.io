@@ -6,6 +6,8 @@ import {sessionSummary,masteredAnswer,publishGeniusStars} from './sentence-pract
 // Same canonical renderer as Sentence Genius. Writing Genius owns grading and stars,
 // but does not duplicate the question prompt, context or typed-English control.
 import {QuestionRenderer} from '/shared/questions/question-renderer.js?v=20261025-wg-v1.11.0';
+import {playStudentSfx,preloadStudentSfx} from '/students/shared/student-sfx.js';
+import {capturePointOrigin,showPointAward} from '/students/components/student-point-feedback.js';
 const $=id=>document.getElementById(id);
 const txt=(id,value)=>{$(id).textContent=String(value??'')};
 const field=id=>$(id).value;
@@ -140,9 +142,7 @@ export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,q
   $('spRetryBtn').hidden=!result||correct||exhausted;
   $('spNextBtn').hidden=!result;
   const isLast=state.session.current_index===state.session.questions.length-1;
-  txt('spNextBtn',correct
-   ?(isLast?'완료하기 ✓':'다음 문장 →')
-   :(isLast?'이대로 마치기 →':'다음 문장으로 넘어가기 →'));
+  txt('spNextBtn',isLast?'완료':'다음');
   if(!result){txt('spCompareBtn','AI Willi 확인하기');txt('spMasteryNote','');return}
   txt('spCompareBtn','다시 확인하기 ('+(resp.attempts||1)+'/10)');
   $('spGrade').textContent=gradeTitle(result.grade);
@@ -163,10 +163,10 @@ export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,q
   $('spProgressBar').style.width=(i/s.questions.length*100)+'%';
   txt('spUnitName',s.book_title+' · '+(card.unitName||'Unit'));
   mountQuestion(card,resp);
-  txt('spTaskDetail','힌트 단어를 참고해 나만의 영어 문장을 만들어 보세요. 이 단원의 문장을 모두 숙달하면 골드 유닛을 받아요.');
+  txt('spTaskDetail','');
   $('spCompareBtn').disabled=!answerValue().trim();
-  txt('spCompareBtn','Check Answer · 확인하기');
-  txt('spNextBtn',i===s.questions.length-1?'완료하기 ✓':'다음 문장 →');
+  txt('spCompareBtn','확인');
+  txt('spNextBtn',i===s.questions.length-1?'완료':'다음');
   displayGrade(card,resp);
   saveLabel('저장됨');
   $('spSessionMain').scrollTop=0;
@@ -244,7 +244,7 @@ export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,q
    txt('spSourceNote','완료하지 않은 연습을 이어서 할 수 있어요.');return;
   }
   btn.disabled=state.loading||state.catalogError||!field('spBook')||!field('spUnit');
-  txt('spStart',state.recent.length?'새로운 문장 연습하기 →':'문장 연습 시작하기 →');
+  txt('spStart','시작');
   const selected=field('spBook')+'|'+field('spUnit');
   if(state.previewKey===selected&&Number.isInteger(state.previewCount)){
    txt('spSourceNote',state.previewCount>0
@@ -315,16 +315,49 @@ export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,q
   }
   refreshStartButton();void previewUnit();
  }
+ function renderBookTabs(){
+  const value=field('spBook');
+  [...$('spBookTabs').children].forEach((b,i)=>{
+   const active=state.books[i]?.id===value;
+   b.classList.toggle('is-current',active);
+   b.setAttribute('aria-pressed',String(active));
+  });
+ }
  async function loadBooks(){
   state.books=await bounded(getAssignedPracticeBooks(state.student.className));
   const select=$('spBook');select.replaceChildren();
+  const tabs=$('spBookTabs');tabs.replaceChildren();
   if(!state.books.length){
    state.catalogError=true;
    select.append(Object.assign(node('option','수업 교재가 없어요'),{value:''}));
    notify('학생에게 배정된 교재가 없어요.',true);
    refreshStartButton();return;
   }
-  for(const b of state.books)select.append(Object.assign(node('option',b.title),{value:b.id}));
+  const available=[];
+  await Promise.all(state.books.map(async book=>{
+   try{
+    const units=await bounded(getPracticeUnits(book.id),10000);
+    if(!units.length)return;
+    for(const unit of units){
+     const items=await bounded(getTextbookSentences(book.id,unit.id,units),12000);
+     if(generatePracticeQuestions('make',items,1).length){available.push(book);break}
+    }
+   }catch(error){console.warn('[Writing Genius] book preview unavailable',book.title,error)}
+  }));
+  // Retain original assignment order after asynchronous checks.
+  state.books=state.books.filter(book=>available.some(ok=>ok.id===book.id));
+  for(const b of state.books){
+   select.append(Object.assign(node('option',b.title),{value:b.id}));
+   const btn=node('button',b.title);btn.type='button';
+   btn.className='vocab-front-book-card sp-book-tab';
+   btn.addEventListener('click',()=>{
+    select.value=b.id;renderBookTabs();void loadUnits();
+   });tabs.append(btn);
+  }
+  if(!state.books.length){
+   state.catalogError=true;notify('연습할 문장이 없어요.',true);refreshStartButton();return;
+  }
+  renderBookTabs();
   await loadUnits();
  }
  async function loadChecks(session){
@@ -428,12 +461,21 @@ export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,q
    state.renderer?.clearThinking?.();
    if(!result?.feedback)throw Error('확인 결과를 받지 못했어요.');
    if(result.quota)showQuota(result.quota);
+   playStudentSfx(result.feedback.grade==='correct'||result.feedback.grade==='almost'?'correct':'wrong');
+   if(Number(result.feedback.points)>0){
+    try{Promise.resolve(showPointAward({amount:result.feedback.points,
+     origin:capturePointOrigin($('spCompareBtn'))})).catch(()=>{})}catch{}
+   }
    resp.initial ||= answer;resp.draft=answer;resp.revised=answer;
    resp.compared=true;resp.attempts=Number(result.attempt_no||resp.attempts+1);
    if(!resp.firstFeedback)resp.firstFeedback=result.feedback;
    resp.feedback=result.feedback;
    const saved=await persist();
    displayGrade(state.session.questions[i],resp);
+   requestAnimationFrame(()=>setTimeout(()=>{
+    const el=$('spFeedback');
+    if(!el.hidden)el.scrollIntoView({behavior:'smooth',block:'center'});
+   },120));
    if(!saved)notify('확인 결과는 저장됐지만 임시 저장을 다시 시도해야 해요.',true);
    else if(result.feedback.grade!=='correct'){
     notify('다시 써 보거나 다음 문장으로 넘어갈 수 있어요. ('+resp.attempts+'/10)');
@@ -518,6 +560,7 @@ export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,q
  });
  $('spNextBtn').addEventListener('click',()=>{void next()});
  $('spFinished').addEventListener('click',()=>{state.session=null;state.active=false;void onExit()});
+ preloadStudentSfx();
  singleton={open,closeForNavigation,get active(){return state.active}};
  return singleton;
 }
