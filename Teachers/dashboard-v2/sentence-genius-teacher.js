@@ -107,20 +107,16 @@ function setTeacherTab(root,name){
  }
 }
 function statsShell(){
- return '<div class="sgt-stats-intro">'+wrapper('Sentence Genius · Statistics',
-  'Recorded student activity and homework mastery. These are real saved results, not grading simulations.')+
-  '<button type="button" class="control ua-primary" id="sgtStatsGoHomework">Manage Assignments</button></div>'+
- '<div class="sgt-stats-filter"><label for="sgtProgressClass">Class</label>'+
- '<select id="sgtProgressClass" class="control" aria-label="Select class"><option value="">Loading classes…</option></select>'+
- '<button type="button" class="control" id="sgtClassRefresh">↻ Refresh stats</button></div>'+
- '<section class="sgt-class-dashboard" id="sgtIndependentDashboard">'+
- '<div class="sgt-head"><h3>Learning activity</h3><p>Saved practice across all three skills, including work completed without homework. The figures below count real attempts and independently mastered sentences.</p></div>'+
- '<div class="sgt-actions"><label for="sgtPracticeDays">Period</label>'+
- '<select id="sgtPracticeDays" class="control"><option value="30">Last 30 days</option><option value="7">Last 7 days</option><option value="90">Last 90 days</option></select></div>'+
- '<div id="sgtIndependentProgress" class="sgt-progress-overview" aria-live="polite">Choose a class to view student activity.</div></section>'+
- '<section class="sgt-class-dashboard" id="sgtClassDashboard">'+
- '<div class="sgt-head"><h3>Assigned homework progress</h3><p>Completion of the selected sentences and required skills since homework was assigned. Students do not need teacher approval.</p></div>'+
- '<div id="sgtClassProgress" class="sgt-progress-overview" aria-live="polite">Choose a class to view homework progress.</div></section>';
+ return '<div class="sgt-stats-intro">'+wrapper('Sentence Genius · General Progress',
+   'Real student results for 코치, 문장 배열 and 말하기. Recent accuracy includes retry attempts; unit mastery is verified separately.')+
+   '<button type="button" class="control ua-primary" id="sgtStatsGoHomework">Manage Assignments</button></div>'+
+   '<section id="sgtGeneralStats" aria-label="Sentence Genius student progress"></section>'+
+   '<section class="sgt-class-dashboard" id="sgtClassDashboard">'+
+   '<div class="sgt-head"><h3>Homework completion</h3><p>Assigned sentences and selected steps only; tracked separately from general practice.</p></div>'+
+   '<div class="sgt-stats-filter"><label for="sgtProgressClass">Homework class</label>'+
+   '<select id="sgtProgressClass" class="control"><option value="">Loading classes…</option></select>'+
+   '<button type="button" class="control" id="sgtClassRefresh">↻ Refresh homework</button></div>'+
+   '<div id="sgtClassProgress" class="sgt-progress-overview" aria-live="polite">Loading homework classes…</div></section>';
 }
 function gradingShell(){
  return wrapper('Grading Lab · Preview only',
@@ -160,29 +156,23 @@ async function teacherOpen(){
  });
  setTeacherTab(root,'stats');
  $('#sgtStatsGoHomework',root).onclick=openSentenceAssignments;
+ void mountSentenceStatistics(root);
  const classEl=$('#sgtProgressClass',root);
- const reload=()=>{void loadClassSentencePractice(root,classEl.value);void loadClassSentenceProgress(root,classEl.value)};
- classEl.onchange=reload;
- $('#sgtClassRefresh',root).onclick=reload;
- $('#sgtPracticeDays',root).onchange=()=>void loadClassSentencePractice(root,classEl.value);
+ const loadHomework=()=>void loadClassSentenceProgress(root,classEl.value);
+ classEl.onchange=loadHomework;
+ $('#sgtClassRefresh',root).onclick=loadHomework;
  try{
   const list=await classes();
   if(!root.isConnected||!classEl.isConnected)return;
   classEl.innerHTML='<option value="">Select class</option>'+
-   list.map(row=>'<option value="'+escapeHtml(row.name)+'">'+
-     escapeHtml(row.display_name||row.name)+'</option>').join('');
+   list.map(row=>'<option value="'+escapeHtml(row.name)+'">'+escapeHtml(row.display_name||row.name)+'</option>').join('');
   const current=document.querySelector('#classSelect')?.value||'';
   const initial=list.find(c=>c.name===current)?.name||list[0]?.name||'';
   classEl.value=initial;
-  if(initial)reload();
-  else{
-   $('#sgtIndependentProgress',root).textContent='No active classes were returned.';
-   $('#sgtClassProgress',root).textContent='No active classes were returned.';
-  }
+  if(initial)loadHomework();
+  else $('#sgtClassProgress',root).textContent='No active classes found.';
  }catch(error){
-  if(!root.isConnected)return;
-  $('#sgtIndependentProgress',root).textContent='Class list unavailable: '+error.message;
-  $('#sgtClassProgress',root).textContent='Class list unavailable: '+error.message;
+  if(root.isConnected)$('#sgtClassProgress',root).textContent='Homework classes unavailable: '+error.message;
  }
 }
 async function mountGradingLab(root){
