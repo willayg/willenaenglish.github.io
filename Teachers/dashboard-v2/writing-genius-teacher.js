@@ -113,13 +113,13 @@ function render(){
   const title=make('strong','',e.title||kindName[e.kind]||'Writing');
   const meta=make('span','wg-t-item-meta',(e.class_name||'')+' · '+(kindName[e.kind]||e.kind)+' · '+formatDate(e.submitted_at));
   const excerpt=make('small','',String(e.body||'').replace(/\s+/g,' ').slice(0,120));
-  b.append(top,title,meta,excerpt);b.onclick=()=>{state.activeId=e.id;render()};
+  b.dataset.entryId=e.id;b.append(top,title,meta,excerpt);b.onclick=()=>{state.activeId=e.id;render()};
   container.append(b);
  }
  if(!rows.some(e=>e.id===state.activeId))state.activeId=rows[0].id;
  const chosen=rows.find(e=>e.id===state.activeId);
  detail(chosen);
- for(const b of container.children)b.classList.toggle('is-selected',b.querySelector('strong')?.textContent===(chosen?.title||kindName[chosen?.kind]||'Writing')&&b.querySelector('.wg-t-item-name')?.textContent===(chosen?.korean_name||chosen?.name||'Student'));
+ for(const b of container.children)b.classList.toggle('is-selected',b.dataset.entryId===chosen?.id);
 }
 function detail(entry){
  const host=$('#wgTeacherDetail');if(!host)return;host.replaceChildren();
