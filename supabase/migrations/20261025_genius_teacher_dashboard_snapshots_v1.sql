@@ -297,6 +297,8 @@ BEGIN
   LEFT JOIN public.genius_teacher_dashboard_snapshots_v1 s ON s.student_id=p.id AND s.app=p_app
   LEFT JOIN public.genius_teacher_dashboard_dirty_v1 d ON d.student_id=p.id AND d.app=p_app
   WHERE p.role='student' AND p.approved IS DISTINCT FROM false
+   AND lower(coalesce(trim(p.class),'')) <> 'test'
+   AND EXISTS(SELECT 1 FROM public.classes c WHERE c.name=p.class AND c.status='active')
     AND (nullif(trim(p_class),'') IS NULL OR p.class=trim(p_class))
     AND (d.student_id IS NOT NULL OR s.student_id IS NULL OR s.snapshot_version<>'genius-v1'
       OR (s.updated_at AT TIME ZONE 'Asia/Seoul')::date < (now() AT TIME ZONE 'Asia/Seoul')::date)
@@ -338,6 +340,8 @@ BEGIN
   LEFT JOIN public.genius_teacher_dashboard_snapshots_v1 s ON s.student_id=p.id AND s.app=p_app
   LEFT JOIN public.genius_teacher_dashboard_dirty_v1 d ON d.student_id=p.id AND d.app=p_app
  WHERE p.role='student' AND p.approved IS DISTINCT FROM false
+   AND lower(coalesce(trim(p.class),'')) <> 'test'
+   AND EXISTS(SELECT 1 FROM public.classes c WHERE c.name=p.class AND c.status='active')
    AND (v_class IS NULL OR p.class=v_class)
    AND (d.student_id IS NOT NULL OR s.student_id IS NULL
     OR (s.updated_at AT TIME ZONE 'Asia/Seoul')::date < (now() AT TIME ZONE 'Asia/Seoul')::date);
@@ -369,6 +373,8 @@ BEGIN
  LEFT JOIN public.genius_teacher_dashboard_snapshots_v1 s
    ON s.student_id=p.id AND s.app=p_app
  WHERE p.role='student' AND p.approved IS DISTINCT FROM false
+   AND lower(coalesce(trim(p.class),'')) <> 'test'
+   AND EXISTS(SELECT 1 FROM public.classes c WHERE c.name=p.class AND c.status='active')
    AND (v_class IS NULL OR p.class=v_class);
  RETURN jsonb_build_object('success',true,'app',p_app,'days',v_days,
    'students',v_students,'refreshed',v_refresh,'pending',v_pending);
