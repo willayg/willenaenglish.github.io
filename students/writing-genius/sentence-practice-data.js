@@ -180,7 +180,7 @@ function connectCards(items){
  return result;
 }
 export const EXERCISE_LABELS={make:'문장 만들기',expand:'문장 늘리기',answer:'질문에 답하기',connect:'생각 연결하기'};
-export function generatePracticeQuestions(kind,items){
+export function generatePracticeQuestions(kind,items,count=10){
  const pool=({make:makeCards,expand:expandCards,answer:answerCards,connect:connectCards}[kind]);
  if(!pool)throw Error('Unknown exercise type');
  const cards=randomize(pool(items));
@@ -190,7 +190,7 @@ export function generatePracticeQuestions(kind,items){
   const key=card.kind+'|'+card.display;
   if(used.has(key))continue;used.add(key);
   result.push(card);
-  if(result.length===5)break;
+  if(result.length===count)break;
  }
- return result.length===5?result:[];
+ return result.length===count?result:[];
 }
