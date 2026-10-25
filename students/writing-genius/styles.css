@@ -180,3 +180,38 @@ html[data-vocab-theme="dark"] .wg-status-pill.is-submitted,html[data-vocab-theme
  .sp-inline-actions .wg-button{min-width:0;padding:11px}
 }
 @media(prefers-reduced-motion:reduce){.sp-progress>div{transition:none}}
+
+/* One daily Make a Sentence activity. Unit strip matches Word/Sentence Genius. */
+.wg-practice .sp-picker{max-width:730px;margin:auto}
+.wg-practice .sp-book-field{margin:0 0 10px}
+.wg-practice .sp-units{margin:9px 0 14px}
+.wg-practice .sp-units .study-v2-unit-strip{gap:8px;padding:3px 1px 7px}
+.wg-practice .sp-units .study-v2-unit{font:800 .83rem Poppins,system-ui,sans-serif;cursor:pointer;
+ border:2px solid var(--vocab-border,#c9f1f4);color:var(--vocab-heading,#244f56);
+ background:var(--vocab-card,#fff);border-radius:13px;padding:10px 14px;min-height:42px}
+.wg-practice .sp-units .study-v2-unit.is-current{
+ border-color:var(--pink,#ff0a8a);color:var(--pink-dark,#cc0066);background:#fff3fa}
+.wg-practice .sp-units .study-v2-unit:focus-visible{
+ outline:3px solid var(--cyan-strong,#25b8c4);outline-offset:2px}
+.wg-practice .sp-hint{
+ display:block;margin:12px 0 16px;padding:11px 15px;
+ border:1.5px solid #f0d7a1;background:#fff9e9;color:#705126;
+ border-radius:14px;font-weight:850;font-size:.84rem;line-height:1.55;overflow-wrap:anywhere}
+.wg-practice .sp-feedback{margin:14px 0;border:2px solid #a4e3dc;border-radius:17px;
+ background:var(--vocab-card,#fff);padding:16px;color:var(--vocab-heading,#244f56)}
+.wg-practice .sp-feedback[data-grade="correct"]{border-color:#8cddbb}
+.wg-practice .sp-feedback[data-grade="almost"]{border-color:#f2ce79}
+.wg-practice .sp-feedback[data-grade="needs_work"]{border-color:#e8aab8}
+.wg-practice .sp-feedback strong{font-size:1.02rem;font-weight:900}
+.wg-practice .sp-feedback p{font-size:.83rem;line-height:1.65;margin:10px 0 0;overflow-wrap:anywhere}
+.wg-practice .sp-feedback #spSuggestion{font-weight:800}
+.wg-practice .sp-next-row .wg-button{width:100%}
+.wg-practice .sp-start[disabled]{opacity:.65;cursor:default}
+.wg-practice #spSaved{display:none!important}
+.wg-practice #spTaskDetail{margin-bottom:0}
+@media(max-width:540px){
+ .wg-practice .sp-book-field{font-size:.82rem}
+ .wg-practice .sp-units .study-v2-unit{padding:9px 12px}
+ .wg-practice .sp-task{margin-bottom:11px}
+ .wg-practice .sp-input{min-height:105px}
+}
