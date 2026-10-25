@@ -235,55 +235,218 @@ async function mountGradingLab(root){
  }catch(error){bookEl.innerHTML='<option value="">Books unavailable</option>';out.textContent=error.message}
 }
 
-// Independent practice is intentionally separate from assigned homework progress.
-let independentPracticeRequest=0;
-async function loadClassSentencePractice(root,className){
- const host=$('#sgtIndependentProgress',root),request=++independentPracticeRequest;
- if(!host)return;
- if(!className){host.textContent='Choose a class above to view student activity.';return}
- const days=Number($('#sgtPracticeDays',root)?.value)||30;
- host.textContent='Loading recorded Sentence Genius activity…';
- try{
-  const result=await rpc('sg_teacher_practice_v1',{p_class:className,p_days:days});
-  if(request!==independentPracticeRequest||!host.isConnected)return;
-  const people=(result.students||[]),active=people.filter(p=>Number(p.attempts)>0);
-  const ids=[...new Set(active.flatMap(p=>(p.units||[]).map(u=>String(u.book_id||''))))]
-    .filter(id=>uuidPattern.test(id));
-  const bookTitles=new Map((await books()).map(b=>[String(b.id),b.title]));
-  const unitLabels=new Map();
-  if(ids.length){
-   for(let start=0;start<ids.length;start+=25){
-    try{
-     const rows=await catalog('content_units?select=id,book_id,unit_number,title&status=in.(review,published)&book_id=in.('+ids.slice(start,start+25).join(',')+')&limit=900');
-     for(const unit of rows)unitLabels.set(String(unit.id),'Unit '+unit.unit_number+(unit.title?' · '+unit.title:''));
-    }catch(error){console.warn('[Sentence Genius] unit labels unavailable',error)}
-   }
-  }
-  if(request!==independentPracticeRequest||!host.isConnected)return;
-  const attempts=people.reduce((sum,p)=>sum+(Number(p.attempts)||0),0);
-  const summary='<div class="sgt-class-summary"><strong>'+active.length+'/'+people.length+
-    ' active students</strong><strong>'+attempts+' recorded attempts</strong>'+
-    '<strong>Last '+days+' days</strong></div>';
-  const cards=active.map(p=>{
-    const units=(p.units||[]).map(u=>{
-      const title=(bookTitles.get(String(u.book_id))||'Textbook')+' · '+
-        (unitLabels.get(String(u.unit_id))||'Unit');
-      return '<div><span>'+escapeHtml(title)+'</span><small>'+
-        (Number(u.attempts)||0)+' attempts · 코치 '+(Number(u.coach)||0)+
-        ' · 배열 '+(Number(u.unscramble)||0)+' · 말하기 '+(Number(u.speaking)||0)+
-        ' distinct mastered sentences</small></div>';
-    }).join('');
-    const last=p.last_activity?new Date(p.last_activity).toLocaleDateString():'—';
-    return '<details class="sgt-progress-student"><summary><span><strong>'+
-      escapeHtml(p.korean_name||p.name||'Student')+'</strong><small>'+
-      (Number(p.attempts)||0)+' attempts · Last active '+escapeHtml(last)+'</small></span>'+
-      '<span class="sgt-progress-percent">'+(p.units||[]).length+' units</span></summary>'+
-      '<div class="sgt-progress-units">'+units+'</div></details>';
+// General Progress mirrors Word Genius's performance matrix.
+// Percentages here represent recent recorded answer accuracy, including retries.
+// Drill-down mastery is calculated from independent correct saved sentence IDs.
+async function mountSentenceStatistics(root){
+ const host=$('#sgtGeneralStats',root);if(!host)return;
+ host.innerHTML='<div class="sgt-stats-filter" aria-label="Statistics filters">'+
+  '<label class="sgt-filter-field"><span>Class</span><select id="sgtStatsClass" class="control"><option value="">All classes</option></select></label>'+
+  '<label class="sgt-filter-field"><span>Period</span><select id="sgtStatsDays" class="control">'+
+    '<option value="30">Last 30 days</option><option value="14">Last 14 days</option>'+
+    '<option value="60">Last 60 days</option><option value="90">Last 90 days</option></select></label>'+
+  '<label class="sgt-filter-field sgt-filter-search"><span>Student</span><input id="sgtStatsSearch" class="control" type="search" placeholder="Search name…"></label>'+
+  '<button type="button" class="control" id="sgtStatsRefresh">↻ Refresh</button></div>'+
+  '<div class="sgt-matrix-summary" id="sgtStatsSummary" aria-live="polite"></div>'+
+  '<div class="sgt-matrix"><div class="sgt-matrix-head" aria-hidden="true">'+
+  '<span>Student</span><span>Overall</span><span>코치</span><span>문장 배열</span><span>말하기</span><span>Today</span></div>'+
+  '<div id="sgtStatsRows" class="sgt-matrix-body"><div class="sgt-result">Loading student statistics…</div></div></div>'+
+  '<p class="sgt-stats-footnote">Accuracy counts recorded answers, including retries, within the selected period. Unit mastery uses all-time independently correct sentences. Gold is confirmed only against the complete textbook unit.</p>';
+ const classInput=$('#sgtStatsClass',host),daysInput=$('#sgtStatsDays',host),
+  searchInput=$('#sgtStatsSearch',host),rowsHost=$('#sgtStatsRows',host),
+  summary=$('#sgtStatsSummary',host);
+ const view={students:[],expanded:'',generation:0,request:0,loading:false};
+ const names=new Map(),unitInfo=new Map(),unitPromises=new Map(),eligiblePromises=new Map();
+ const metric=(correct,attempts,kind,label)=>{
+  const a=Number(attempts)||0,c=Number(correct)||0;
+  return '<span class="sgt-matrix-metric '+kind+(a?'':' no-evidence')+'"><strong>'+
+    (a?Math.round(100*c/a)+'%':'—')+'</strong><small>'+
+    (a?a+' attempts':label)+'</small></span>';
+ };
+ const formatLast=value=>{
+  if(!value)return 'Never';
+  const d=new Date(value);return Number.isNaN(d.getTime())?'Unknown':
+    d.toLocaleDateString('en-US',{timeZone:'Asia/Seoul',year:'numeric',month:'short',day:'numeric'});
+ };
+ const matched=()=>{const q=searchInput.value.trim().toLowerCase();
+  return view.students.filter(p=>!q||[p.name,p.korean_name,p.class_name]
+    .some(t=>String(t||'').toLowerCase().includes(q)));
+ };
+ function paint(){
+  const people=matched(),active=people.filter(p=>Number(p.attempts)>0);
+  const avg=active.length?Math.round(active.reduce((acc,p)=>acc+100*
+    (Number(p.correct)||0)/Number(p.attempts),0)/active.length):null;
+  const today=people.filter(p=>Number(p.today_attempts)>0).length;
+  const units=people.reduce((n,p)=>n+(Number(p.units)||0),0);
+  summary.innerHTML='<div class="sgt-summary-card"><b>'+(avg===null?'—':avg+'%')+
+   '</b><span>Avg. answer accuracy</span></div>'+
+   '<div class="sgt-summary-card"><b>'+today+'</b><span>Studied today</span></div>'+
+   '<div class="sgt-summary-card"><b>'+active.length+' / '+people.length+
+   '</b><span>Active in period</span></div>'+
+   '<div class="sgt-summary-card"><b>'+units+'</b><span>Units with saved activity</span></div>';
+  if(!people.length){rowsHost.innerHTML='<div class="sgt-matrix-empty">No students match this selection.</div>';return}
+  rowsHost.innerHTML=people.map(p=>{
+   const id=escapeHtml(String(p.id)),opened=view.expanded===String(p.id);
+   return '<article class="sgt-matrix-entry">'+
+    '<button type="button" class="sgt-matrix-row'+(opened?' is-selected':'')+
+      '" data-sgt-student="'+id+'" aria-expanded="'+opened+'" aria-controls="sgtDetail-'+id+'">'+
+     '<span class="sgt-matrix-student"><strong>'+escapeHtml(p.korean_name||p.name||'Student')+
+      '</strong><small>'+escapeHtml(p.korean_name&&p.name?p.name+' · '+p.class_name:p.class_name||'')+'</small></span>'+
+     metric(p.correct,p.attempts,'sgt-overall','No evidence')+
+     metric(p.coach_correct,p.coach_attempts,'sgt-coach','No evidence')+
+     metric(p.unscramble_correct,p.unscramble_attempts,'sgt-unscramble','No evidence')+
+     metric(p.speaking_correct,p.speaking_attempts,'sgt-speaking','No evidence')+
+     '<span class="sgt-matrix-today"><strong>'+(Number(p.today_attempts)||'—')+
+     '</strong><small>'+(Number(p.today_attempts)?'attempts':'no activity')+'</small></span>'+
+     '</button>'+
+     '<div class="sgt-matrix-detail" id="sgtDetail-'+id+'"'+(opened?'':' hidden')+'>'+
+      (opened?'<div class="sgt-matrix-empty">Loading textbook and unit mastery…</div>':'')+
+     '</div></article>';
   }).join('');
-  host.innerHTML=summary+(cards||'<p class="sgt-empty">No recorded Sentence Genius activity in this period.</p>');
+  rowsHost.querySelectorAll('[data-sgt-student]').forEach(btn=>btn.onclick=()=>{
+    const id=btn.dataset.sgtStudent;
+    view.expanded=view.expanded===id?'':id;
+    ++view.generation;paint();
+    if(view.expanded){
+     const selected=view.students.find(p=>String(p.id)===id);
+     if(selected)void showStudentUnits(selected,view.generation);
+    }
+  });
+ }
+ async function unitCatalog(bookId){
+  if(!unitPromises.has(bookId)){
+   unitPromises.set(bookId,units(bookId).then(rows=>{
+    for(const u of rows)unitInfo.set(String(u.id),u);
+    return rows;
+   }).catch(e=>{unitPromises.delete(bookId);throw e}));
+  }
+  return unitPromises.get(bookId);
+ }
+ async function eligibleFor(bookId,unitId){
+  const k=bookId+'|'+unitId;
+  if(!eligiblePromises.has(k)){
+   eligiblePromises.set(k,sentences(bookId,unitId).catch(e=>{
+    eligiblePromises.delete(k);throw e;
+   }));
+  }
+  return eligiblePromises.get(k);
+ }
+ async function showStudentUnits(p,generation){
+  const detail=$('#sgtDetail-'+String(p.id),host);
+  if(!detail)return;
+  const rows=Array.isArray(p.unit_list)?p.unit_list:[];
+  if(!rows.length){
+   detail.innerHTML='<p class="sgt-matrix-empty">No Sentence Genius units with saved activity yet.</p>';
+   return;
+  }
+  const booksList=[...new Set(rows.map(r=>String(r.book_id)))];
+  // Metadata does not affect the saved progress and must not block its display.
+  try{
+   const catalogBooks=await books();
+   for(const b of catalogBooks)names.set(String(b.id),b.title);
+  }catch(error){console.warn('[Sentence Genius] Book titles unavailable',error)}
+  if(!detail.isConnected||generation!==view.generation)return;
+  const bookGroups=new Map();
+  rows.forEach((row,i)=>{
+   const bookId=String(row.book_id);
+   if(!bookGroups.has(bookId))bookGroups.set(bookId,[]);
+   bookGroups.get(bookId).push({row,index:i});
+  });
+  detail.innerHTML='<div class="sgt-student-detail-head"><div><strong>'+
+   escapeHtml(p.korean_name||p.name||'Student')+' · Unit mastery</strong>'+
+   '<small>Saved independent passes · Across all time · Last recent activity '+escapeHtml(formatLast(p.last_activity))+
+   '</small></div><span>'+rows.length+' units with activity</span></div>'+
+   [...bookGroups.entries()].map(([bookId,entries])=>'<section class="sgt-book-detail">'+
+   '<h4>'+escapeHtml(names.get(bookId)||'Book '+bookId.slice(0,8))+
+   ' <small>'+entries.length+' units</small></h4>'+
+   '<div class="sgt-unit-stack">'+entries.map(({row,index})=>'<div class="sgt-unit-item" data-sgt-unit-index="'+index+'">'+
+    '<div class="sgt-unit-title"><strong>Unit · '+escapeHtml(String(row.unit_id).slice(0,8))+
+    '</strong><span>Checking verified mastery…</span></div>'+
+    '<div class="sgt-unit-quick">Saved passes: 코치 '+(Number(row.coach_passed)||0)+
+    ' · 배열 '+(Number(row.unscramble_passed)||0)+' · 말하기 '+(Number(row.speaking_passed)||0)+'</div></div>').join('')+
+    '</div></section>').join('');
+  let cursor=0;
+  const working=Array.from({length:Math.min(3,rows.length)},async()=>{
+   while(cursor<rows.length){
+    const idx=cursor++,row=rows[idx],bookId=String(row.book_id),unitId=String(row.unit_id);
+    const holder=detail.querySelector('[data-sgt-unit-index="'+idx+'"]');
+    if(!holder)return;
+    try{
+     const [source,mastery]=await Promise.all([
+      eligibleFor(bookId,unitId),
+      rpc('sg_teacher_unit_mastery_v1',{p_student_id:p.id,p_book_id:bookId,p_unit_id:unitId})
+     ]);
+     if(!detail.isConnected||generation!==view.generation)return;
+     const eligibleIds=new Set(source.map(item=>String(item.id)));
+     const total=eligibleIds.size,m=mastery.mastered||{};
+     const counts={};
+     for(const mode of ['coach','unscramble','speaking']){
+      const records=Array.isArray(m[mode])?m[mode]:[];
+      counts[mode]=new Set(records.map(String).filter(id=>eligibleIds.has(id))).size;
+     }
+     const all=['coach','unscramble','speaking'];
+     const gold=total>0&&all.every(mode=>counts[mode]===total);
+     const pct=total?Math.round(100*all.reduce((v,mode)=>v+counts[mode],0)/(total*3)):0;
+     const unit=unitInfo.get(unitId);
+     const unitTitle=unit?'Unit '+unit.unit_number+(unit.title?' · '+unit.title:''):'Unit '+unitId.slice(0,8);
+     holder.innerHTML='<div class="sgt-unit-title"><strong>'+escapeHtml(unitTitle)+'</strong>'+
+      '<span class="sgt-unit-status '+(gold?'is-gold':total&&pct?'is-working':'')+'">'+
+       (gold?'★ Golden Unit':total?pct+'% mastered':'No eligible sentences')+'</span></div>'+
+      (total?'<div class="sgt-unit-skills">'+
+       all.map(mode=>{
+        const label=types[mode],done=counts[mode];
+        return '<div class="sgt-unit-skill"><span>'+label+'</span><b>'+done+' / '+total+'</b>'+
+         '<div class="sgt-bar"><i style="width:'+Math.min(100,Math.round(done*100/total))+'%"></i></div></div>';
+       }).join('')+'</div>':
+       '<div class="sgt-unit-quick">No eligible translated sentences found for this unit.</div>');
+    }catch(error){
+     if(holder.isConnected&&generation===view.generation)
+      holder.innerHTML='<strong>Unit '+escapeHtml(unitId.slice(0,8))+'</strong>'+
+       '<div class="sgt-error">Could not verify Gold status: '+escapeHtml(error.message)+'</div>';
+    }
+   }
+  });
+  // Fetch unit labels once per book, independently of mastery calls.
+  void Promise.allSettled(booksList.map(bookId=>unitCatalog(bookId))).then(()=>{
+   if(!detail.isConnected||generation!==view.generation)return;
+   rows.forEach((row,index)=>{
+    const unit=unitInfo.get(String(row.unit_id)),slot=detail.querySelector('[data-sgt-unit-index="'+index+'"] .sgt-unit-title strong');
+    if(unit&&slot)slot.textContent='Unit '+unit.unit_number+(unit.title?' · '+unit.title:'');
+   });
+  });
+  await Promise.allSettled(working);
+ }
+ async function load(){
+  const request=++view.request;view.expanded='';++view.generation;
+  rowsHost.innerHTML='<div class="sgt-matrix-empty">Loading Sentence Genius performance…</div>';
+  summary.innerHTML='';
+  try{
+   const result=await rpc('sg_teacher_statistics_v1',{
+    p_class:classInput.value||null,p_days:Number(daysInput.value)||30
+   });
+   if(request!==view.request||!host.isConnected)return;
+   view.students=Array.isArray(result.students)?result.students:[];
+   paint();
+  }catch(error){
+   if(request!==view.request||!host.isConnected)return;
+   rowsHost.innerHTML='<div class="sgt-error">Cannot load Sentence Genius statistics: '+escapeHtml(error.message)+'</div>';
+  }
+ }
+ classInput.onchange=()=>void load();
+ daysInput.onchange=()=>void load();
+ searchInput.oninput=paint;
+ $('#sgtStatsRefresh',host).onclick=()=>{
+  unitPromises.clear();eligiblePromises.clear();names.clear();unitInfo.clear();
+  void load();
+ };
+ try{
+  const list=await classes();
+  if(!host.isConnected)return;
+  classInput.innerHTML='<option value="">All classes</option>'+list.map(c=>
+   '<option value="'+escapeHtml(c.name)+'">'+escapeHtml(c.display_name||c.name)+'</option>').join('');
+  await load();
  }catch(error){
-  if(request===independentPracticeRequest&&host.isConnected)
-   host.textContent='Practice activity unavailable: '+error.message;
+  if(host.isConnected)rowsHost.innerHTML='<div class="sgt-error">Class list unavailable: '+escapeHtml(error.message)+'</div>';
  }
 }
 
