@@ -22,7 +22,15 @@ export function createScreens(actions){
       const copy=el('span','');
       copy.append(el('strong','',a.title||a.book_title||'Sentence Genius'));
       const modes=(a.required_modes||[]).map(x=>({coach:'코치',unscramble:'문장 배열',speaking:'말하기'}[x]||x));
+      const done=Math.max(0,Number(a.done)||0),total=Math.max(0,Number(a.total)||0);
+      const percent=total?Math.min(100,Math.round(100*done/total)):0;
+      const complete=total>0&&done>=total;
       copy.append(el('small','',modes.join(' · ')+' · 제출 '+String(a.due_at||'').slice(0,10)));
+      copy.append(el('small','sg-assigned-progress-label',
+        (complete?'완료 ✓ · ':'진행 중 · ')+done+'/'+total+' · '+percent+'%'));
+      const bar=el('span','sg-assigned-bar');
+      const fill=el('i','');fill.style.width=percent+'%';bar.append(fill);copy.append(bar);
+      button.classList.toggle('is-complete',complete);
       button.append(copy,el('span','sg-assigned-arrow','›'));
       button.addEventListener('click',()=>actions.homework(a.book_id,a.unit_id));
       root.append(button);
