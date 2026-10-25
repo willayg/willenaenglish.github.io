@@ -198,8 +198,7 @@ export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,q
  function renderGoldenCount(){
   const book=field('spBook');
   const count=state.units.filter(u=>state.rewards.get(book+'|'+u.id)?.golden).length;
-  $('spGoldCount').hidden=!count;
-  txt('spGoldCount','Golden Units '+count+' / '+state.units.length);
+  txt('spGoldCount',count);
  }
  async function fetchUnitRewards(){
   try{
@@ -240,11 +239,11 @@ export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,q
  function refreshStartButton(){
   const btn=$('spStart'),last=state.today;
   if(last?.status==='in_progress'){
-   btn.disabled=false;txt('spStart','이어서 연습하기 →');
+   btn.disabled=false;btn.title='이어서 연습';
    txt('spSourceNote','완료하지 않은 연습을 이어서 할 수 있어요.');return;
   }
   btn.disabled=state.loading||state.catalogError||!field('spBook')||!field('spUnit');
-  txt('spStart','시작');
+  btn.title='문장 만들기';
   const selected=field('spBook')+'|'+field('spUnit');
   if(state.previewKey===selected&&Number.isInteger(state.previewCount)){
    txt('spSourceNote',state.previewCount>0
@@ -262,6 +261,7 @@ export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,q
    if(serial!==state.previewReq||book!==field('spBook')||unit!==field('spUnit'))return;
    state.previewKey=book+'|'+unit;
    state.previewCount=count;
+   txt('spSentenceCount',count+' 문장 보기');$('spSentenceListOpen').disabled=count===0;
    refreshStartButton();
   }catch(error){
    if(serial!==state.previewReq)return;
@@ -270,6 +270,13 @@ export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,q
  }
  function renderUnitButtons(){
   const strip=$('spUnitStrip');strip.replaceChildren();
+  const selectedUnit=state.units.find(u=>u.id===field('spUnit'));
+  txt('spUnitTitle',selectedUnit?'Unit '+selectedUnit.number+' · '+selectedUnit.title:'Unit');
+  const achievement=state.rewards.get(field('spBook')+'|'+field('spUnit'));
+  const stars=Math.max(0,Math.min(5,Number(achievement?.best_stars)||0));
+  txt('spSkillStars','★ '+stars+'/5');
+  const ring=$('spSkillRing');ring.style.setProperty('--progress',String(stars*20));
+  ring.querySelector('span').textContent=stars*20+'%';
   for(const unit of state.units){
    const selected=unit.id===field('spUnit');
    const b=node('button','Unit '+unit.number);
@@ -292,7 +299,7 @@ export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,q
    b.title=unit.title;
    b.addEventListener('click',()=>{
     $('spUnit').value=unit.id;
-    renderUnitButtons();refreshStartButton();void previewUnit();
+    renderUnitButtons();renderGoldenCount();refreshStartButton();void previewUnit();
    });strip.append(b);
   }
  }
@@ -319,7 +326,7 @@ export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,q
   const value=field('spBook');
   [...$('spBookTabs').children].forEach((b,i)=>{
    const active=state.books[i]?.id===value;
-   b.classList.toggle('is-current',active);
+   b.classList.toggle('is-active',active);
    b.setAttribute('aria-pressed',String(active));
   });
  }
@@ -347,7 +354,7 @@ export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,q
   for(const b of state.books){
    select.append(Object.assign(node('option',b.title),{value:b.id}));
    const btn=node('button',b.title);btn.type='button';
-   btn.className='vocab-front-book-card sp-book-tab';
+   btn.className='vocab-book-choice';
    btn.addEventListener('click',()=>{
     select.value=b.id;renderBookTabs();void loadUnits();
    });tabs.append(btn);
@@ -534,6 +541,17 @@ export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,q
   state.active=false;state.session=null;setScreen('picker');return true;
  }
  $('spBook').addEventListener('change',()=>{void loadUnits()});
+ $('spBookBack').addEventListener('click',()=>{void goBack()});
+ $('spSentenceListOpen').addEventListener('click',async()=>{
+  const book=field('spBook'),unit=field('spUnit');if(!book||!unit)return;
+  const modal=$('spSentenceModal'),list=$('spSentenceModalList');
+  list.replaceChildren(node('p','불러오는 중…'));txt('spSentenceModalTitle',$('spUnitTitle').textContent);modal.showModal();
+  try{
+   const items=await bounded(getTextbookSentences(book,unit,state.units),18000);
+   list.replaceChildren(...items.slice(0,10).map(item=>{const div=node('div');div.className='sp-sentence-modal-row';div.append(node('strong',item.en),node('span',item.ko));return div}));
+  }catch{list.replaceChildren(node('p','문장을 불러오지 못했어요.'))}
+ });
+ $('spSentenceModalClose').addEventListener('click',()=>$('spSentenceModal').close());
  $('spStart').addEventListener('click',()=>{void startSession()});
  $('spRoundBack').addEventListener('click',()=>{void goBack()});
  $('spRoundHome').addEventListener('click',async()=>{

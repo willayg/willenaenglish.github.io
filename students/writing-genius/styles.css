@@ -427,3 +427,25 @@ html[data-vocab-theme="dark"] .wg-status-pill.is-submitted,html[data-vocab-theme
 .writing-genius .wg-shared-session .sp-feedback{scroll-margin-top:22px}
 .writing-genius .wg-shared-session #spFeedback{font-size:.9rem;line-height:1.5}
 @media(max-width:540px){.writing-genius .sp-book-tabs{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.writing-genius .sp-book-tab{min-height:65px;padding:11px 9px;font-size:.84rem}}
+
+/* Word Genius is the source of truth for the Writing Genius unit selector. */
+.writing-genius #spPicker.vocab-home-card{width:100%;max-width:none;margin:18px auto 0;border:4px solid #bfecef}
+.writing-genius #spPicker .vocab-book-picker{margin:8px 0 0;padding:14px;border:3px solid #c9f1f4;border-radius:18px;background:#f8fcfc}
+.writing-genius #spPicker .vocab-book-choices{display:flex;gap:9px;flex-wrap:wrap}
+.writing-genius #spPicker .vocab-book-choice{flex:1 1 180px;min-height:46px;border:3px solid #c9f1f4;border-radius:14px;background:#fff;color:var(--ink);padding:10px 13px;font:800 .88rem Poppins,sans-serif;cursor:pointer}
+.writing-genius #spPicker .vocab-book-choice.is-active{border-color:var(--pink);background:#fff3f9;color:var(--pink-dark)}
+.writing-genius #spPicker .sp-units{margin-top:24px}
+.writing-genius #spPicker .vocab-unit-summary{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-top:26px}
+.writing-genius #spPicker .vocab-unit-summary h2{min-width:0;flex:1 1 auto;margin:0!important;color:#244f56!important;font-size:clamp(1.05rem,2.7vw,1.35rem)!important}
+.writing-genius #spPicker .vocab-unit-summary .vocab-word-card{flex:0 0 auto;min-width:210px;margin:0}
+.writing-genius #spPicker .sp-writing-skills{grid-template-columns:minmax(0,1fr);max-width:350px}
+.writing-genius #spPicker .sp-writing-skills::before{display:none}
+.writing-genius #spPicker .sp-writing-skills .vocab-skill-card{width:100%}
+.writing-genius #spPicker .vocab-achievements{margin-top:30px!important;padding-top:24px;border-top:2px solid #e7f2f3}
+.writing-genius #spPicker #spAiQuotaPicker{margin-top:15px;text-align:center}
+.writing-genius #spPicker .sp-sentence-modal{width:min(600px,calc(100% - 24px));max-height:80vh;border:3px solid #c9f1f4;border-radius:23px;padding:22px;background:#fff;color:#315e64}
+.writing-genius #spPicker .sp-sentence-modal::backdrop{background:#132d3588}
+.writing-genius .sp-sentence-modal-row{padding:10px 0;border-bottom:1px solid #dff2f4}
+.writing-genius .sp-sentence-modal-row strong,.writing-genius .sp-sentence-modal-row span{display:block;line-height:1.5}
+.writing-genius .sp-sentence-modal-row span{color:#789095;font-size:.85rem}
+@media(max-width:560px){.writing-genius #spPicker .vocab-unit-summary{flex-direction:column;align-items:stretch;gap:12px}.writing-genius #spPicker .vocab-unit-summary .vocab-word-card{width:100%}.writing-genius #spPicker .sp-writing-skills{max-width:none}.writing-genius #spPicker .vocab-book-choice{flex-basis:120px}}
