@@ -1,5 +1,5 @@
 // Sentence Genius live unit homework. JWT-scoped RPC; no client-side grading writes.
-const OP='https://fiieuiktlsivwfgyivai.supabase.co/rest/v1/rpc/sg_homework_student_v1';
+const OP='https://fiieuiktlsivwfgyivai.supabase.co/rest/v1/rpc/sg_homework_student_v2';
 const KEY='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
 async function token(refresh=false){
   const current=window.WillenaAPI?.getLocalAccessToken?.();
