@@ -418,3 +418,12 @@ html[data-vocab-theme="dark"] .wg-status-pill.is-submitted,html[data-vocab-theme
  .writing-genius .wg-shared-session .question-card .prompt{font-size:clamp(1.35rem,5.3vw,2rem)}
  .writing-genius .wg-shared-session textarea.answer[data-write]{min-height:115px}
 }
+
+/* v1.12: textbook selection uses the same card assets as the other Genius apps. */
+.writing-genius .sp-book-tabs{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:10px;margin:13px 0 18px}
+.writing-genius .sp-book-tab{display:flex;align-items:center;justify-content:center;min-height:70px;padding:13px 15px;text-align:center;border:2px solid var(--vocab-border,#c9f1f4);border-radius:17px;background:var(--vocab-card,#fff);font:900 clamp(.9rem,2.7vw,1.06rem)/1.35 Poppins,system-ui,sans-serif;color:var(--vocab-heading,#244f56);cursor:pointer;overflow-wrap:anywhere}
+.writing-genius .sp-book-tab.is-current{border-color:var(--pink,#ff0a8a);background:var(--vocab-track,#e9fbfc);color:var(--vocab-heading,#244f56);box-shadow:0 0 0 2px color-mix(in srgb,var(--pink,#ff0a8a) 14%,transparent)}
+.writing-genius #spBook[hidden],.writing-genius #spTaskDetail[hidden],.writing-genius #spSourceNote[hidden],.writing-genius .wg-home-practice-info[hidden]{display:none!important}
+.writing-genius .wg-shared-session .sp-feedback{scroll-margin-top:22px}
+.writing-genius .wg-shared-session #spFeedback{font-size:.9rem;line-height:1.5}
+@media(max-width:540px){.writing-genius .sp-book-tabs{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.writing-genius .sp-book-tab{min-height:65px;padding:11px 9px;font-size:.84rem}}
