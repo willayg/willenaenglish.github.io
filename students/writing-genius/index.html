@@ -15,7 +15,7 @@
 <link rel="stylesheet" href="/students/shared/willena-keyboard-safe.css?v=1.0.0">
 <link rel="stylesheet" href="/students/vocab-study/vocab-study.css?v=20261024-home-navigation4">
 <link rel="stylesheet" href="/students/vocab-study/theme-pips.css?v=20260927-v0005">
-<link rel="stylesheet" href="./styles.css?v=20261025-make-only-v2">
+<link rel="stylesheet" href="./styles.css?v=20261025-writing-rewards-v1">
 <script src="/students/api-gateway.js?v=20260926-progress-summary-cf1"></script>
 <script src="/js/api-config.js?v=20260926-reverted-auth1"></script>
 <script type="module" src="/students/components/student-header.js?v=20261025-sg-mission-v5b"></script>
@@ -116,6 +116,7 @@
           <input type="hidden" id="spUnit" value="">
         </div>
         <p id="spSourceNote" class="sp-subtle">단원을 고르고 오늘의 문장 5개를 만들어 보세요.</p>
+        <div id="spGoldCount" class="sp-gold-count" hidden aria-live="polite"></div>
         <button type="button" id="spStart" class="wg-button wg-primary sp-start">오늘의 문장 시작하기 →</button>
         <div id="spSaved" class="sp-saved" hidden>
           <strong>지난 연습 · My practice</strong><div id="spSessionList"></div>
@@ -140,6 +141,7 @@
           <strong id="spGrade"></strong>
           <p id="spGradeNote"></p>
           <p id="spSuggestion"></p>
+          <p id="spMasteryNote" class="sp-mastery-note"></p>
         </div>
         <div id="spCompare" class="sp-compare" hidden>
           <strong>교재 예문 · 또 다른 표현</strong>
@@ -153,8 +155,14 @@
       </div>
       <div id="spDone" class="sp-done" hidden>
         <div class="sp-done-star">✓</div>
+        <div id="spStarsEarned" class="sp-stars-earned" aria-label="Session stars">☆☆☆☆☆</div>
         <h2>5문제 완료!</h2>
         <p id="spScoreSummary">내 문장을 직접 만들고 고쳤어요.</p>
+        <div id="spGoldAward" class="sp-gold-award" hidden>
+          <img src="/shared/svgs/golden-unit.svg?v=20260927-icons1" alt="">
+          <strong>GOLDEN UNIT!</strong>
+        </div>
+        <p id="spSyncStatus" class="sp-sync-status" aria-live="polite"></p>
         <div class="sp-inline-actions">
           <button id="spFinished" class="wg-button wg-primary" type="button">글쓰기 메뉴</button>
         </div>
@@ -164,5 +172,5 @@
   </main>
 </div>
 <script src="/students/vocab-study/theme-pips.js?v=20260927-v0005"></script>
-<script type="module" src="./app.js?v=20261025-make-only-v2"></script>
+<script type="module" src="./app.js?v=20261025-writing-rewards-v1"></script>
 </body></html>
