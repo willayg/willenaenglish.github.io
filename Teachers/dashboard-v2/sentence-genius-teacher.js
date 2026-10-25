@@ -55,10 +55,29 @@ async function sentences(bookId,unitId){
   sentences.push(...await catalog('sentences?select=id,canonical_text,text,translation_ko,contraction_policy,status&status=in.(review,published)&id=in.('+ids.slice(start,start+65).join(',')+')&limit=100'));
  }
  const byId=new Map(sentences.map(x=>[x.id,x])),seen=new Set();
- return occ.flatMap(o=>{
-  const s=byId.get(o.sentence_id);const en=String(s?.canonical_text||s?.text||'').trim(),ko=String(s?.translation_ko||'').trim();
-  if(!en||!ko||en.split(/\s+/).length<2||seen.has(s.id))return[];
-  seen.add(s.id);return[{id:s.id,occurrenceId:o.id,en,ko,contractionPolicy:s.contraction_policy||'allow_equivalent'}];
+ // Match the student Sentence Genius eligible-sentence selection exactly.
+ const linkedIds=new Set();
+ for(let start=0;start<ids.length;start+=65){
+  const links=await catalog('sentence_patterns?select=sentence_id&sentence_id=in.('+ids.slice(start,start+65).join(',')+')&limit=900');
+  for(const link of links)linkedIds.add(link.sentence_id);
+ }
+ const linked=occ.filter(row=>linkedIds.has(row.sentence_id));
+ const ordered=(linked.length>=3?linked:occ).slice().sort((a,b)=>
+   Number(linkedIds.has(b.sentence_id))-Number(linkedIds.has(a.sentence_id)));
+ const policies=await catalog('sentence_genius_policies?select=occurrence_id,grading_mode,required_pattern_id,policy_version,accepted_alternatives&status=eq.published&occurrence_id=in.('+occ.map(x=>x.id).join(',')+')&limit=900');
+ const overrides=new Map(policies.map(p=>[p.occurrence_id,p]));
+ return ordered.flatMap(o=>{
+  const row=byId.get(o.sentence_id);
+  const en=String(row?.canonical_text||row?.text||'').trim(),ko=String(row?.translation_ko||'').trim();
+  if(!row||!en||!ko||en.split(/\s+/).length<2||seen.has(row.id))return[];
+  seen.add(row.id);
+  const policy=overrides.get(o.id);
+  return[{id:row.id,occurrenceId:o.id,en,ko,
+   gradingContext:{mode:policy?.grading_mode||'flexible',
+     policyVersion:policy?.policy_version||0,
+     requiredPatternId:policy?.required_pattern_id||null,
+     approvedAlternatives:policy?.accepted_alternatives||[],
+     contractionPolicy:row.contraction_policy||'allow_equivalent'}}];
  });
 }
 const options=(rows,placeholder,field='title')=>'<option value="">'+escapeHtml(placeholder)+'</option>'+
@@ -106,44 +125,48 @@ async function teacherOpen(){
   };
  }catch(e){$('#sgtTestResult',root).textContent=e.message}
 }
-function almostRight(target,response){
- const a=norm(target).split(' '),b=norm(response).split(' ');
- if(a.length===b.length+1&&a.some((w,i)=>['a','an'].includes(w)&&a.filter((_,j)=>j!==i).join(' ')===b.join(' ')))return true;
- if(a.length!==b.length)return false;
- const changed=a.map((w,i)=>w===b[i]?null:i).filter(x=>x!==null);
- const i=changed[0];return changed.length===1&&(
-  (a[i]===b[i]+'s'&&b[i].length>=3)||
-  (a[i]===b[i]+'es'&&b[i].length>=3)||
-  (a[i]==='a'&&b[i]==='an')||(a[i]==='an'&&b[i]==='a'));
+let sharedGrader=null;
+async function graderRules(){
+ if(!sharedGrader){
+  sharedGrader=Promise.all([
+   import('./sentence-genius-flexibility.js?v=20261025-sg-mirror1'),
+   import('./sentence-genius-speech-match.js?v=20261025-sg-mirror1')
+  ]).then(([flex,match])=>({flex,match}));
+ }
+ return sharedGrader;
 }
-const equivalences=(target,response)=>{
- const t=norm(target),s=norm(response);
- if(t===s)return true;
- const contractions=[["don't","do not"],["isn't","is not"],["aren't","are not"],["can't","cannot"]];
- for(const [a,b] of contractions)if(t.replaceAll(a,b)===s.replaceAll(a,b))return true;
- const quantify=/(there (?:are|were) )((?:many|a lot of|lots of)) (.+)/;
- const tm=t.match(quantify),sm=s.match(quantify);
- if(tm&&sm&&tm[1]===sm[1]&&tm[3]===sm[3])return true;
- return false;
-};
 async function gradeTest(item,response){
- if(equivalences(item.en,response))return{label:'Correct · 4/4',method:'Local flexibility',message:'Equivalent textbook answer'};
- if(almostRight(item.en,response))return{label:'Almost Right · 2/4',method:'Local grammar rules',message:'Small grammar mistake; retry for mastery'};
- if(!/[a-z]/i.test(response)||/(?:^|\s)(blah|um)(?:\s+\1){2,}/.test(response))return{label:'Unusable transcript',method:'Speech filter',message:'Try recording again'};
- // AI Willi uses the existing authenticated teacher API. Strictly read-only:
- // this tool creates no study sessions, points or mastery records.
- const res=await (window.WillenaAPI?.fetch||fetch)('/.netlify/functions/openai_proxy',{
-  method:'POST',headers:{'Content-Type':'application/json'},
-  body:JSON.stringify({endpoint:'chat/completions',payload:{model:'gpt-5.6-luna',reasoning_effort:'low',
-   max_completion_tokens:320,response_format:{type:'json_object'},
-   messages:[{role:'system',content:'You are AI Willi, a Korean ESL sentence equivalence grader. Compare the Korean prompt and reference English with the student English. Accept naturally grammatical statements preserving tense, subject, polarity, intent and meaning even if wording differs. Reject wrong article, number, verb forms or changed subjects. Return JSON only with correct boolean, explanation_ko string, reason_code string.'},
-   {role:'user',content:JSON.stringify({korean:item.ko,reference:item.en,student:response})}]}})});
- if(!res.ok)throw Error('AI HTTP '+res.status);
- const body=await res.json(),value=body?.data?.choices?.[0]?.message?.content||body?.result;
- if(!value)throw Error('Empty AI verdict');
- const data=JSON.parse(String(value).replace(/^```(?:json)?\s*/i,'').replace(/\s*```$/,'').trim());
- if(typeof data.correct!=='boolean')throw Error('Malformed AI response');
- return{label:data.correct?'Correct · 4/4':'Incorrect · retry',method:'AI Willi',message:data.explanation_ko||data.reason_code||''};
+ const {flex,match}=await graderRules();
+ const context=item.gradingContext||{};
+ const known=match.matchSpeakingTarget(item.en,[response]);
+ if(known.correct&&['exact','spacing','homophone'].includes(known.matchedBy))
+   return{label:'Correct · 4/4',method:known.matchedBy,message:'Textbook answer'};
+ const equivalence=flex.matchFlexibleSentence(item.en,[response],context);
+ if(equivalence?.correct)return{label:'Correct · 4/4',method:equivalence.matchedBy,message:'Accepted alternative'};
+ const partial=flex.detectAlmostRight(item.en,[response],context);
+ if(partial)return{label:'Almost Right · 2/4',method:partial.matchedBy,message:'Small grammar mistake; retry for mastery'};
+ if(!/[a-z]/i.test(response)||(/^(?:blah|um|uh)(?:\s+(?:blah|um|uh)){2,}$/i).test(response))
+   return{label:'Unusable transcript',method:'Speech filter',message:'Try recording again'};
+ if(context.mode==='exact_text')return{label:'Incorrect · retry',method:'Strict textbook policy',message:'Exact wording required'};
+ const payload={model:'gpt-5.6-luna',reasoning_effort:'low',max_completion_tokens:320,
+  response_format:{type:'json_object'},
+  messages:[
+   {role:'system',content:'You are AI Willi, a Korean ESL sentence grading adjudicator. Return valid JSON only: correct boolean, explanation_ko string, reason_code string. Accept natural English alternatives conveying the same intent, tense, polarity and who acts. Reject incomplete grammar, missing articles and wrong plural/verb forms. If a textbook grammar target is required, enforce it.'},
+   {role:'user',content:JSON.stringify({question_type:'translation',prompt:item.ko,
+      reference:item.en,response,grading_policy:context})}
+  ]};
+ const request=window.WillenaAPI?.fetch?window.WillenaAPI.fetch.bind(window.WillenaAPI):fetch;
+ const result=await request('/.netlify/functions/openai_proxy',{method:'POST',
+  headers:{'Content-Type':'application/json'},
+  body:JSON.stringify({endpoint:'chat/completions',payload})});
+ if(!result.ok)throw Error('AI HTTP '+result.status);
+ const body=await result.json();
+ const text=body?.data?.choices?.[0]?.message?.content||body?.result;
+ if(!text)throw Error('Empty AI verdict');
+ const data=JSON.parse(String(text).trim().replace(/^\x60{3}(?:json)?\s*/i,'').replace(/\s*\x60{3}$/,''));
+ if(typeof data.correct!=='boolean')throw Error('Malformed AI verdict');
+ return{label:data.correct?'Correct · 4/4':'Incorrect · retry',method:'AI Willi',
+  message:data.explanation_ko||data.reason_code||''};
 }
 async function openAssignment(mode){
  state.managerMode=mode;
