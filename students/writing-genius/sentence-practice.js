@@ -1,7 +1,7 @@
 // Writing Genius: five source-based Make a Sentence prompts, one KST session/day.
 // One bounded AI Willi (Luna) check per question; revision is free. All save to Supabase.
 import {getAssignedPracticeBooks,getPracticeUnits,
- getTextbookSentences,generatePracticeQuestions} from './sentence-practice-data.js?v=20261025-make-only-v1';
+ getTextbookSentences,generatePracticeQuestions} from './sentence-practice-data.js?v=20261025-make-only-v2';
 const $=id=>document.getElementById(id);
 const txt=(id,value)=>{$(id).textContent=String(value??'')};
 const field=id=>$(id).value;
