@@ -246,11 +246,12 @@ export function createSession({onFinish,onProgress,onHome,onBack,onMessage}){
     buttons.append(back,again);panel.append(h,p,detail,celebration,buttons);
     $('questionRoot').append(panel);
     playStudentSfx('complete');
+    // Assignment progress uses the server's recorded attempts. Always wait
+    // for this session's writes before refreshing homework completion, even
+    // when the student is reviewing an already-golden unit (no reward write).
+    await Promise.allSettled([...saving]);
     const endedReward=reward;
     if(endedReward){
-      // Flush normal attempts first, then the reward summary, so server state
-      // is consistent and a brief connection loss cannot duplicate a reward.
-      await Promise.allSettled([...saving]);
       try{
         const outcome=await endedReward.finish();
         if(reward!==endedReward||!celebration.isConnected)return;
