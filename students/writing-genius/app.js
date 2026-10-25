@@ -1,7 +1,7 @@
 // Writing Genius: flexible writing. Student-owned drafts, teacher-visible submissions.
 // Reuses the existing auth gateway, student header, Word Genius theme and visual tokens.
 import {studentIdentity,signedInProfile} from '/students/sentence-genius/content.js?v=20261024-wg-auth1';
-import {createSentencePractice} from './sentence-practice.js?v=20261025-make-only-v2';
+import {createSentencePractice} from './sentence-practice.js?v=20261025-writing-rewards-v2';
 const API_BASE='https://fiieuiktlsivwfgyivai.supabase.co/rest/v1/';
 const KEY='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
 const NAV='willenaWritingGeniusNav';
@@ -312,6 +312,7 @@ async function writingGrade(sessionId,questionIndex,answer){
 const practice=createSentencePractice({
   api:(method,path='',body=null)=>databaseApi('writing_genius_sentence_sessions',method,path,body),
   checksApi:(method,path='',body=null)=>databaseApi('writing_genius_sentence_checks',method,path,body),
+  rewardsApi:()=>databaseApi('rpc/wg_sentence_unit_rewards_v1','POST','',{}),
   gradeSentence:writingGrade,
   onExit:()=>backHome()
 });
