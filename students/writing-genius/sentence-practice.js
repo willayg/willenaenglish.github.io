@@ -96,7 +96,9 @@ export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,o
   txt('spUnitName',s.book_title+' · '+(card.unitName||'Unit'));
   txt('spTaskPrompt',card.prompt);
   txt('spTaskDisplay',card.display);
-  txt('spTaskDetail','한국어를 읽고 영어 문장을 만들어 보세요.');
+  txt('spTaskDetail',s.questions.some(q=>q.sourceUnitId!==s.unit_id)?
+    '같은 교재의 다른 단원도 포함된 연습입니다. 이 세션에서는 골드 유닛을 획득하지 않습니다.':
+    '한국어를 읽고 영어 문장을 만들어 보세요.');
   txt('spHint',card.hint||'');
   $('spHint').hidden=false;
   $('spAnswer').value=resp.draft||resp.revised||resp.initial||'';
@@ -115,7 +117,8 @@ export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,o
   const summary=sessionSummary(session);
   const award=state.rewards.get(session.book_id+'|'+session.unit_id);
   txt('spStarsEarned','★'.repeat(summary.stars)+'☆'.repeat(5-summary.stars));
-  txt('spScoreSummary',summary.percent+'% · '+summary.stars+'/5 stars · 숙달 '+summary.mastered+'/5');
+  txt('spScoreSummary',summary.percent+'% · '+summary.stars+'/5 stars · 숙달 '+summary.mastered+'/5'+
+   (!summary.eligible?' · 단원 혼합 연습(골드 제외)':''));
   $('spGoldAward').hidden=!award?.golden;
   txt('spSyncStatus','');
   refreshStartButton();
