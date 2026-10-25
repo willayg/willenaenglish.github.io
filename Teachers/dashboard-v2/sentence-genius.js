@@ -25,6 +25,7 @@ async function grading(){const sentence=sentences.find(s=>s.id===by('sgtSentence
 }
 async function assign(){const cls=by('sgtClass').value,book=state.book,unit=state.unit,due=by('sgtDue').value;
  if(!cls||!book||!unit||!due)return notice('Choose class, book, unit and due date.');
+ if(!sentences.length)return notice('Wait for the unit sentences to load before assigning.');
  const date=new Date(due+'T23:59:00');if(!Number.isFinite(date.getTime())||date<=new Date())return notice('Choose a future due date.');
  const btn=by('sgtAssign');btn.disabled=true;notice('Creating homework…');
  try{
@@ -33,7 +34,7 @@ async function assign(){const cls=by('sgtClass').value,book=state.book,unit=stat
   list_key:'sentence-genius:'+book.id+':'+unit.id,
   list_title:'Sentence Genius',
   list_meta:{app:'sentence_genius',source_type:'sentence_genius',source_book_id:book.id,source_unit_id:unit.id,
-  book_title:book.title,unit_number:unit.unit_number,required_skills:['sentence_coach','sentence_unscramble','sentence_speaking']},
+  book_title:book.title,unit_number:unit.unit_number,sentence_count:sentences.length,required_skills:['sentence_coach','sentence_unscramble','sentence_speaking']},
   due_at:date.toISOString(),goal_type:'completion',goal_value:1};
  const result=await request('/.netlify/functions/homework_api?action=create_assignment',body);
  notice('Assignment created for '+cls+' · '+(result.assignment?.id||'saved'));
