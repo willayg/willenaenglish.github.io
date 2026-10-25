@@ -133,7 +133,7 @@ function showEditor(entry){
   setPromptOptions(a.kind,a.prompt_key);
   setReadOnly(a.status==='submitted');
   $('wgIdeas').hidden=true;$('wgIdeasToggle').setAttribute('aria-expanded','false');
-  $('wgIdeasToggle span').textContent='보기';
+  $('wgIdeasToggle').querySelector('span').textContent='보기';
   document.querySelectorAll('.wg-checklist input').forEach(x=>x.checked=false);
   updateCounts();saveState(a.persisted?'저장됨':'새 글');
   show('editor');window.scrollTo({top:0,behavior:'auto'});
@@ -296,7 +296,7 @@ $('wgPromptSelect').addEventListener('change',()=>{
 $('wgIdeasToggle').addEventListener('click',()=>{
   const open=$('wgIdeas').hidden;$('wgIdeas').hidden=!open;
   $('wgIdeasToggle').setAttribute('aria-expanded',String(open));
-  $('wgIdeasToggle span').textContent=open?'닫기':'보기';
+  $('wgIdeasToggle').querySelector('span').textContent=open?'닫기':'보기';
 });
 window.addEventListener('popstate',()=>void popRoute());
 window.addEventListener('beforeunload',event=>{
