@@ -83,8 +83,9 @@ export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,o
   const wasChecked=typed===String(result?.checked_text||'').trim();
   $('spCompareBtn').hidden=correct||exhausted;
   $('spCompareBtn').disabled=!typed||wasChecked;
-  // A checked answer must never trap the student on this question.
-  // Retrying is optional; moving on preserves the first-attempt score.
+  // Show both choices close to feedback, before the model answer.
+  $('spNextActions').hidden=!result;
+  $('spRetryBtn').hidden=!result||correct||exhausted;
   $('spNextBtn').hidden=!result;
   const isLast=state.session.current_index===state.session.questions.length-1;
   txt('spNextBtn',correct
@@ -367,7 +368,7 @@ export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,o
    displayGrade(state.session.questions[i],resp);
    if(!saved)notify('확인 결과는 저장됐지만 임시 저장을 다시 시도해야 해요.',true);
    else if(result.feedback.grade!=='correct'){
-    notify('틀린 문장을 다시 고쳐서 확인할 수 있어요. ('+resp.attempts+'/10)');
+    notify('다시 써 보거나 다음 문장으로 넘어갈 수 있어요. ('+resp.attempts+'/10)');
    }else if(result.cached){
     notify('✓ 교재 문장 또는 저장된 정답에서 바로 확인했어요.');
    }else notify('✓ AI Willi가 정답으로 인정했어요.');
@@ -421,6 +422,14 @@ export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,o
  $('spBack').addEventListener('click',()=>{void goBack()});
  $('spAnswer').addEventListener('input',changed);
  $('spCompareBtn').addEventListener('click',()=>{void grade()});
+ $('spRetryBtn').addEventListener('click',()=>{
+  if(state.loading||state.screen!=='round')return;
+  const response=current();
+  if(!response?.feedback||response.feedback.grade==='correct')return;
+  const input=$('spAnswer');
+  input.focus();input.select();
+  notify('문장을 고치면 다시 확인할 수 있어요. 첫 번째 점수는 유지돼요.');
+ });
  $('spNextBtn').addEventListener('click',()=>{void next()});
  $('spFinished').addEventListener('click',()=>{state.session=null;state.active=false;void onExit()});
  singleton={open,closeForNavigation,get active(){return state.active}};
