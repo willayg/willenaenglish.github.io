@@ -4,7 +4,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<title>Writing Genius v1.10.0 · 쓰기 지니어스</title>
+<title>Writing Genius v1.11.0 · 쓰기 지니어스</title>
 <link rel="icon" href="/Assets/Images/Logo.png?v=20260730-3">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -15,7 +15,7 @@
 <link rel="stylesheet" href="/students/shared/willena-keyboard-safe.css?v=1.0.0">
 <link rel="stylesheet" href="/students/vocab-study/vocab-study.css?v=20261024-home-navigation4">
 <link rel="stylesheet" href="/students/vocab-study/theme-pips.css?v=20260927-v0005">
-<link rel="stylesheet" href="./styles.css?v=20261025-wg-v1.10.0">
+<link rel="stylesheet" href="./styles.css?v=20261025-wg-v1.11.0">
 <script src="/students/api-gateway.js?v=20260926-progress-summary-cf1"></script>
 <script src="/js/api-config.js?v=20260926-reverted-auth1"></script>
 <script type="module" src="/students/components/student-header.js?v=20261025-sg-mission-v5b"></script>
@@ -32,7 +32,7 @@
   </div>
   <main class="vocab-page wg-page">
     <div class="wg-version-row" aria-label="Writing Genius version">
-      <span>Writing Genius</span><strong>v1.10.0</strong>
+      <span>Writing Genius</span><strong>v1.11.0</strong>
     </div>
     <div id="wgNotice" class="wg-notice" role="status" aria-live="polite"></div>
     <section id="wgHome" aria-label="Writing home" hidden>
@@ -130,34 +130,50 @@
           <strong>지난 연습 · My practice</strong><div id="spSessionList"></div>
         </div>
       </div>
-      <div id="spRound" class="sp-round" hidden>
-        <div class="sp-topline"><span id="spModeLabel" class="wg-kind"></span><span id="spQuestionCount" class="sp-step">1 / —</span></div>
-        <div class="sp-progress"><div id="spProgressBar"></div></div><p id="spAiQuotaRound" class="sp-subtle" aria-live="polite">AI Willi 하루 20회 · 교재 정답은 무료</p>
-        <div class="sp-task">
-          <small id="spUnitName" class="sp-unit-name"></small>
-          <div id="spQuestionHost" class="sp-shared-question question-card" aria-label="문장 만들기"></div>
-          <p id="spTaskDetail" class="sp-subtle"></p>
-        </div>
-        <div class="sp-inline-actions">
-          <button id="spCompareBtn" class="wg-button wg-primary" type="button">AI Willi 확인하기</button>
-        </div>
-        <div id="spFeedback" class="sp-feedback" hidden aria-live="polite">
-          <strong id="spGrade"></strong>
-          <p id="spGradeNote"></p>
-          <p id="spSuggestion"></p>
-          <p id="spMasteryNote" class="sp-mastery-note"></p>
-        </div>
-        <div id="spNextActions" class="sp-inline-actions sp-next-row" hidden aria-label="확인 후 선택">
-          <button id="spRetryBtn" class="wg-button wg-secondary" type="button" hidden>다시 써 보기</button>
-          <button id="spNextBtn" class="wg-button wg-primary" type="button">다음 문장 →</button>
-        </div>
-        <div id="spCompare" class="sp-compare" hidden>
-          <strong>교재 예문 · 또 다른 표현</strong>
-          <p id="spModel"></p>
-          <p id="spComparisonNote"></p>
-          <div class="sp-compare-caption">다른 표현도 맞을 수 있어요. AI 설명을 보고 고쳐 보세요.</div>
-        </div>
-      </div>
+      <section id="spRound" class="vocab-session wg-shared-session" aria-label="Writing Genius sentence lesson" hidden>
+        <header class="vocab-session-top">
+          <div class="vocab-session-topline">
+            <button id="spRoundBack" class="vocab-back" type="button" aria-label="단원 선택으로 돌아가기">←</button>
+            <div class="vocab-progress-copy">
+              <strong id="spModeLabel">문장 만들기</strong>
+              <small id="spQuestionCount">1 / —</small>
+            </div>
+            <button id="spRoundHome" class="vocab-session-home" type="button" aria-label="Writing Genius 메인 메뉴로 돌아가기">⌂ 홈</button>
+          </div>
+          <div class="vocab-progress-track"><div id="spProgressBar" class="vocab-progress-fill"></div></div>
+        </header>
+        <main id="spSessionMain" class="vocab-session-main" data-willena-keyboard-safe>
+          <div class="vocab-question-wrap">
+            <p id="spAiQuotaRound" class="sp-subtle wg-round-quota" aria-live="polite">AI Willi 하루 20회 · 교재 정답은 무료</p>
+            <div id="spUnitName" class="vocab-instruction sp-unit-name"></div>
+            <div id="spQuestionHost" class="question-card" aria-label="영어 문장 만들기"></div>
+            <p id="spTaskDetail" class="sp-subtle wg-question-detail"></p>
+            <div id="spFeedback" class="sp-feedback vocab-answer-note" hidden aria-live="polite">
+              <strong id="spGrade"></strong>
+              <p id="spGradeNote"></p>
+              <p id="spSuggestion"></p>
+              <p id="spMasteryNote" class="sp-mastery-note"></p>
+            </div>
+            <div id="spCompare" class="sp-compare" hidden>
+              <strong>교재 예문 · 또 다른 표현</strong>
+              <p id="spModel"></p>
+              <p id="spComparisonNote"></p>
+              <div class="sp-compare-caption">다른 표현도 맞을 수 있어요. AI 설명을 보고 고쳐 보세요.</div>
+            </div>
+            <div id="spRoundMessage" class="wg-notice" role="status" aria-live="polite"></div>
+            <div id="spRoundSave" class="wg-save-state" aria-live="polite"></div>
+          </div>
+        </main>
+        <footer class="vocab-session-bottom">
+          <div class="vocab-action-row wg-shared-actions">
+            <button id="spCompareBtn" class="vocab-action" type="button">Check Answer · 확인하기</button>
+            <div id="spNextActions" class="wg-next-actions" hidden aria-label="답 확인 후 다음 행동">
+              <button id="spRetryBtn" class="vocab-action" type="button" hidden>다시 써 보기</button>
+              <button id="spNextBtn" class="vocab-action is-next" type="button">Next →</button>
+            </div>
+          </div>
+        </footer>
+      </section>
       <div id="spDone" class="sp-done" hidden>
         <div class="sp-done-star">✓</div>
         <div id="spStarsEarned" class="sp-stars-earned" aria-label="Session stars">☆☆☆☆☆</div>
@@ -177,5 +193,5 @@
   </main>
 </div>
 <script src="/students/vocab-study/theme-pips.js?v=20260927-v0005"></script>
-<script type="module" src="./app.js?v=20261025-wg-v1.10.0"></script>
+<script type="module" src="./app.js?v=20261025-wg-v1.11.0"></script>
 </body></html>
