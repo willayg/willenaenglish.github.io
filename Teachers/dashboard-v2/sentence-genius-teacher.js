@@ -1,0 +1,250 @@
+/* Sentence Genius - teacher-grade simulator + unit homework, shared workspace. */
+(()=>{'use strict';
+const OP='https://fiieuiktlsivwfgyivai.supabase.co/rest/v1/';
+const OPKEY='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
+const DB='https://gxwfsqxyuufqtitspfqg.supabase.co/rest/v1/';
+const DBKEY=['sb_publishable_','G-FYhHfDL4OGdL892gY1Zg_','epdbEeqO'].join('');
+const $=(selector,root=document)=>root.querySelector(selector);
+const escapeHtml=s=>String(s??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+const state={books:null,classes:null,units:[],items:[],selected:[],bookId:'',unitId:'',managerMode:'manage',assignmentFilter:'current',assignments:[],progress:new Map(),revision:0};
+const types={coach:'코치',unscramble:'문장 배열',speaking:'말하기'};
+const uuidPattern=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const norm=s=>String(s??'').normalize('NFKC').toLowerCase().replace(/[’‘]/g,"'").replace(/[^a-z0-9' ]/g,' ').replace(/\s+/g,' ').trim();
+const dateDefault=()=>{const d=new Date(Date.now()+7*86400000);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
+function status(host,message){const node=$('[data-sg-status]',host);if(node)node.textContent=message||''}
+async function catalog(path){const r=await fetch(DB+path,{headers:{apikey:DBKEY,Authorization:'Bearer '+DBKEY},cache:'no-store'});if(!r.ok)throw Error('Textbook data unavailable ('+r.status+')');return r.json()}
+async function jwt(refresh=false){
+ let token=window.WillenaAPI?.getLocalAccessToken?.()||'';
+ if(token&&!refresh)return token;
+ const url='/.netlify/functions/supabase_auth?action=refresh';
+ const response=await (window.WillenaAPI?.fetch?window.WillenaAPI.fetch(url):fetch(url,{credentials:'include'}));
+ const data=await response.json().catch(()=>({}));
+ if(!response.ok||!data.access_token)throw Error('Teacher login expired');
+ window.WillenaAPI?.setLocalTokens?.(data.access_token,data.refresh_token||'');
+ return data.access_token;
+}
+async function rpc(action,args={}){
+ const call=token=>fetch(OP+'rpc/'+action,{method:'POST',cache:'no-store',
+  headers:{apikey:OPKEY,Authorization:'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify(args)});
+ let res=await call(await jwt());if(res.status===401)res=await call(await jwt(true));
+ const data=await res.json().catch(()=>({}));
+ if(!res.ok||data.success!==true)throw Error(data.message||data.error||'Homework service failed ('+res.status+')');
+ return data;
+}
+async function books(){
+ if(state.books)return state.books;
+ state.books=await catalog('content_books?select=id,title&status=in.(review,published)&order=title.asc&limit=900');
+ return state.books;
+}
+async function classes(){
+ if(state.classes)return state.classes;
+ const result=await rpc('get_sentence_genius_teacher_classes',{});
+ state.classes=Array.isArray(result.classes)?result.classes:[];return state.classes;
+}
+async function units(bookId){
+ if(!bookId)return[];
+ return catalog('content_units?select=id,unit_number,title,metadata&status=in.(review,published)&book_id=eq.'+encodeURIComponent(bookId)+'&order=unit_number.asc&limit=300');
+}
+async function sentences(bookId,unitId){
+ if(!bookId||!unitId)return[];
+ const occ=await catalog('source_content_occurrences?select=id,sentence_id,page_number&status=in.(review,published)&sentence_id=not.is.null&book_id=eq.'+encodeURIComponent(bookId)+'&unit_id=eq.'+encodeURIComponent(unitId)+'&order=page_number.asc&limit=900');
+ const ids=[...new Set(occ.map(x=>x.sentence_id).filter(x=>uuidPattern.test(x)))];
+ if(!ids.length)return[];
+ const sentences=[];
+ for(let start=0;start<ids.length;start+=65){
+  sentences.push(...await catalog('sentences?select=id,canonical_text,text,translation_ko,contraction_policy,status&status=in.(review,published)&id=in.('+ids.slice(start,start+65).join(',')+')&limit=100'));
+ }
+ const byId=new Map(sentences.map(x=>[x.id,x])),seen=new Set();
+ return occ.flatMap(o=>{
+  const s=byId.get(o.sentence_id);const en=String(s?.canonical_text||s?.text||'').trim(),ko=String(s?.translation_ko||'').trim();
+  if(!en||!ko||en.split(/\s+/).length<2||seen.has(s.id))return[];
+  seen.add(s.id);return[{id:s.id,occurrenceId:o.id,en,ko,contractionPolicy:s.contraction_policy||'allow_equivalent'}];
+ });
+}
+const options=(rows,placeholder,field='title')=>'<option value="">'+escapeHtml(placeholder)+'</option>'+
+ rows.map(r=>'<option value="'+escapeHtml(r.id)+'">'+escapeHtml(r[field]||r.name||'Untitled')+'</option>').join('');
+const wrapper=(title,subtitle)=>'<div class="sgt-head"><h3>'+escapeHtml(title)+'</h3><p>'+escapeHtml(subtitle)+'</p></div>';
+function teacherRoot(){return $('#sgTeacherWorkspace')}
+function assignmentRoot(){return $('#uaSentenceHomework')}
+async function teacherOpen(){
+ const root=teacherRoot();if(!root)return;
+ root.innerHTML=wrapper('Sentence Genius · Grading Lab','Check real textbook sentences and proposed responses. This preview never writes student progress.')+
+ '<div class="sgt-fields"><label>Book<select id="sgtTestBook" class="control"></select></label><label>Unit<select id="sgtTestUnit" class="control"><option>Select book first</option></select></label><label>Sentence<select id="sgtTestSentence" class="control"><option>Select unit first</option></select></label></div>'+
+ '<div class="sgt-target" id="sgtTestPrompt"></div>'+
+ '<div class="sgt-fields"><label class="sgt-wide">Student answer (type a transcript)<input id="sgtTestAnswer" type="text" class="control" placeholder="Type what the student says"></label></div>'+
+ '<div class="sgt-actions"><button class="control ua-primary" id="sgtTestCheck" disabled>Test Answer</button><button class="control" id="sgtGoHomework">Open Sentence Genius Assignments</button></div>'+
+ '<div class="sgt-result" id="sgtTestResult" role="status"></div>';
+ const bookEl=$('#sgtTestBook',root),unitEl=$('#sgtTestUnit',root),sentenceEl=$('#sgtTestSentence',root),test=$('#sgtTestCheck',root);
+ $('#sgtGoHomework',root).onclick=()=>{document.querySelector('[data-view="assignments"]')?.click();window.UniversalAssignments?.openTab?.('sentence')};
+ const update=()=>{const item=state.items.find(x=>x.id===sentenceEl.value);
+  $('#sgtTestPrompt',root).textContent=item?item.ko+' · '+item.en:'Choose a sentence to test.';
+  test.disabled=!item};
+ try{
+  bookEl.innerHTML=options(await books(),'Choose a textbook');
+  bookEl.onchange=async()=>{
+   unitEl.innerHTML='<option>Loading units…</option>';sentenceEl.innerHTML='<option>Select unit first</option>';test.disabled=true;
+   const list=await units(bookEl.value).catch(e=>{throw e});
+   state.units=list;unitEl.innerHTML=options(list,'Choose unit','unit_number');update();
+  };
+  unitEl.onchange=async()=>{
+   const revision=++state.revision;sentenceEl.innerHTML='<option>Loading sentences…</option>';test.disabled=true;
+   try{
+    const rows=await sentences(bookEl.value,unitEl.value);if(revision!==state.revision)return;
+    state.items=rows;sentenceEl.innerHTML=options(rows,'Choose sentence','en');update();
+   }catch(e){$('#sgtTestResult',root).textContent=e.message}
+  };
+  sentenceEl.onchange=update;
+  test.onclick=async()=>{
+   const item=state.items.find(x=>x.id===sentenceEl.value),answer=$('#sgtTestAnswer',root).value.trim(),out=$('#sgtTestResult',root);
+   if(!item||!answer)return;
+   out.textContent='Checking with the Sentence Genius rules…';test.disabled=true;
+   try{const result=await gradeTest(item,answer);
+    out.innerHTML='<strong>'+escapeHtml(result.label)+'</strong><p>'+escapeHtml(result.message||result.method||'')+'</p>'+
+      '<small>Preview only · '+escapeHtml(result.method||'')+' · No student points or progress saved</small>';
+   }catch(e){out.textContent='Grading service unavailable: '+e.message}
+   finally{test.disabled=false}
+  };
+ }catch(e){$('#sgtTestResult',root).textContent=e.message}
+}
+function almostRight(target,response){
+ const a=norm(target).split(' '),b=norm(response).split(' ');
+ if(a.length===b.length+1&&a.some((w,i)=>['a','an'].includes(w)&&a.filter((_,j)=>j!==i).join(' ')===b.join(' ')))return true;
+ if(a.length!==b.length)return false;
+ const changed=a.map((w,i)=>w===b[i]?null:i).filter(x=>x!==null);
+ const i=changed[0];return changed.length===1&&(
+  (a[i]===b[i]+'s'&&b[i].length>=3)||
+  (a[i]===b[i]+'es'&&b[i].length>=3)||
+  (a[i]==='a'&&b[i]==='an')||(a[i]==='an'&&b[i]==='a'));
+}
+const equivalences=(target,response)=>{
+ const t=norm(target),s=norm(response);
+ if(t===s)return true;
+ const contractions=[["don't","do not"],["isn't","is not"],["aren't","are not"],["can't","cannot"]];
+ for(const [a,b] of contractions)if(t.replaceAll(a,b)===s.replaceAll(a,b))return true;
+ const quantify=/(there (?:are|were) )((?:many|a lot of|lots of)) (.+)/;
+ const tm=t.match(quantify),sm=s.match(quantify);
+ if(tm&&sm&&tm[1]===sm[1]&&tm[3]===sm[3])return true;
+ return false;
+};
+async function gradeTest(item,response){
+ if(equivalences(item.en,response))return{label:'Correct · 4/4',method:'Local flexibility',message:'Equivalent textbook answer'};
+ if(almostRight(item.en,response))return{label:'Almost Right · 2/4',method:'Local grammar rules',message:'Small grammar mistake; retry for mastery'};
+ if(!/[a-z]/i.test(response)||/(?:^|\s)(blah|um)(?:\s+\1){2,}/.test(response))return{label:'Unusable transcript',method:'Speech filter',message:'Try recording again'};
+ // AI Willi uses the existing authenticated teacher API. Strictly read-only:
+ // this tool creates no study sessions, points or mastery records.
+ const res=await (window.WillenaAPI?.fetch||fetch)('/.netlify/functions/openai_proxy',{
+  method:'POST',headers:{'Content-Type':'application/json'},
+  body:JSON.stringify({endpoint:'chat/completions',payload:{model:'gpt-5.6-luna',reasoning_effort:'low',
+   max_completion_tokens:320,response_format:{type:'json_object'},
+   messages:[{role:'system',content:'You are AI Willi, a Korean ESL sentence equivalence grader. Compare the Korean prompt and reference English with the student English. Accept naturally grammatical statements preserving tense, subject, polarity, intent and meaning even if wording differs. Reject wrong article, number, verb forms or changed subjects. Return JSON only with correct boolean, explanation_ko string, reason_code string.'},
+   {role:'user',content:JSON.stringify({korean:item.ko,reference:item.en,student:response})}]}})}});
+ if(!res.ok)throw Error('AI HTTP '+res.status);
+ const body=await res.json(),value=body?.data?.choices?.[0]?.message?.content||body?.result;
+ if(!value)throw Error('Empty AI verdict');
+ const data=JSON.parse(String(value).replace(/^+`jsons*/i,'').replace(/`++$/g,'').trim());
+ if(typeof data.correct!=='boolean')throw Error('Malformed AI response');
+ return{label:data.correct?'Correct · 4/4':'Incorrect · retry',method:'AI Willi',message:data.explanation_ko||data.reason_code||''};
+}
+async function openAssignment(mode){
+ state.managerMode=mode;
+ const root=assignmentRoot();if(!root)return;
+ root.innerHTML=mode==='create'?createShell():manageShell();
+ if(mode==='create')await mountCreate(root);else await mountManage(root);
+}
+function createShell(){
+ return wrapper('Assign Sentence Genius','Select a class, textbook and units. Every unit becomes its own homework item.')+
+ '<form id="sgtAssignForm"><div class="sgt-fields"><label>Class<select class="control" id="sgtClass" required></select></label><label>Textbook<select class="control" id="sgtBook" required></select></label><label>Due date<input class="control" type="date" id="sgtDue" required></label></div>'+
+ '<div class="sgt-target"><strong>Units</strong><div id="sgtUnits">Choose a textbook.</div></div>'+
+ '<fieldset class="sgt-modes"><legend>Required steps</legend>'+
+ Object.entries(types).map(([key,label])=>'<label><input type="checkbox" name="sgtMode" value="'+key+'" checked> '+label+'</label>').join('')+'</fieldset>'+
+ '<div class="sgt-actions"><button type="submit" id="sgtCreate" class="control ua-primary">Assign selected units</button></div><div data-sg-status role="status"></div></form>';
+}
+async function mountCreate(root){
+ const classEl=$('#sgtClass',root),bookEl=$('#sgtBook',root),unitHost=$('#sgtUnits',root);
+ try{
+  const [cls,b]=await Promise.all([classes(),books()]);
+  classEl.innerHTML='<option value="">Choose a class</option>'+cls.map(c=>'<option value="'+escapeHtml(c.name)+'">'+escapeHtml(c.display_name||c.name)+'</option>').join('');
+  bookEl.innerHTML=options(b,'Choose a textbook');$('#sgtDue',root).value=dateDefault();
+  bookEl.onchange=async()=>{
+   unitHost.textContent='Loading units…';
+   try{
+    const all=await units(bookEl.value);state.units=all;
+    unitHost.innerHTML=all.length?all.map(u=>'<label class="sgt-unit"><input type="checkbox" data-sg-unit="'+escapeHtml(u.id)+'"><span>Unit '+escapeHtml(u.unit_number)+' · '+escapeHtml(u.title||'')+'</span></label>').join(''):'No published units for this textbook.';
+   }catch(e){status(root,e.message)}
+  };
+  $('#sgtAssignForm',root).onsubmit=async ev=>{
+   ev.preventDefault();const btn=$('#sgtCreate',root);
+   const className=classEl.value,book=state.books.find(x=>x.id===bookEl.value),
+    ids=[...root.querySelectorAll('[data-sg-unit]:checked')].map(x=>x.dataset.sgUnit),
+    modes=[...root.querySelectorAll('[name="sgtMode"]:checked')].map(x=>x.value),
+    day=$('#sgtDue',root).value;
+   if(!className||!book||!ids.length||!modes.length||!day){status(root,'Choose a class, book, units, steps and due date.');return}
+   btn.disabled=true;let saved=0;
+   try{
+    // Validate each unit against current published sentence content first.
+    const payloads=[];
+    for(const id of ids){
+     const u=state.units.find(x=>x.id===id),rows=await sentences(book.id,id);
+     const targets=rows.map(x=>x.id).filter(x=>uuidPattern.test(x));
+     if(!targets.length)throw Error('Unit '+u.unit_number+' has no eligible translated sentences');
+     payloads.push({p_class:className,p_book_id:book.id,p_book_title:book.title,p_unit_id:id,
+      p_unit_label:'Unit '+u.unit_number,p_title:book.title+' · Unit '+u.unit_number,
+      p_targets:targets,p_modes:modes,p_due_at:new Date(day+'T23:59:59+09:00').toISOString()});
+    }
+    for(const payload of payloads){await rpc('sg_homework_create_v1',payload);saved++}
+    status(root,'Assigned '+saved+' unit'+(saved===1?'':'s')+' to '+className+'.');
+   }catch(e){status(root,'Saved '+saved+' units. '+e.message)}
+   finally{btn.disabled=false}
+  };
+ }catch(e){status(root,e.message)}
+}
+function manageShell(){
+ return wrapper('Manage Sentence Genius','Student completion is based on saved independent full-credit mastery, not merely attempts.')+
+ '<div class="sgt-actions"><button type="button" id="sgtRefresh" class="control">↻ Refresh</button>'+
+ '<select id="sgtHistory" class="control"><option value="current">Current</option><option value="history">All / history</option></select></div>'+
+ '<div data-sg-status role="status"></div><div id="sgtAssignments" class="sgt-assignment-list"></div>';
+}
+async function mountManage(root){
+ $('#sgtRefresh',root).onclick=()=>void fetchManage(root);
+ $('#sgtHistory',root).value=state.assignmentFilter;
+ $('#sgtHistory',root).onchange=()=>{state.assignmentFilter=$('#sgtHistory',root).value;void fetchManage(root)};
+ await fetchManage(root);
+}
+async function fetchManage(root){
+ status(root,'Loading assignments…');
+ try{
+  const data=await rpc('sg_homework_list_v1',{p_history:state.assignmentFilter==='history'});
+  if(!root.isConnected||state.managerMode!=='manage')return;
+  state.assignments=data.assignments||[];renderManage(root);status(root,state.assignments.length+' assignments');
+ }catch(e){status(root,e.message)}
+}
+function renderManage(root){
+ const holder=$('#sgtAssignments',root);if(!holder)return;
+ holder.innerHTML=state.assignments.length?state.assignments.map(a=>{
+  const count=(a.target_sentence_ids||[]).length,modes=(a.required_modes||[]).map(m=>types[m]||m).join(' · ');
+  return '<article class="sgt-assignment-card"><div><strong>'+escapeHtml(a.title)+'</strong><small>'+escapeHtml(a.class_name)+' · '+count+' sentences · '+escapeHtml(modes)+' · Due '+escapeHtml(String(a.due_at).slice(0,10))+'</small></div>'+
+    '<div class="sgt-actions"><button class="control" type="button" data-sg-progress="'+escapeHtml(a.id)+'">Student progress</button>'+
+    '<button class="control" type="button" data-sg-toggle="'+escapeHtml(a.id)+'" data-active="'+a.active+'">'+(a.active?'Cancel':'Reactivate')+'</button></div><div class="sgt-progress" id="sgtProgress-'+escapeHtml(a.id)+'" hidden></div></article>';
+ }).join(''):'<div class="sgt-result">No Sentence Genius assignments found.</div>';
+ holder.querySelectorAll('[data-sg-toggle]').forEach(b=>b.onclick=async()=>{
+  b.disabled=true;try{
+   await rpc('sg_homework_set_active_v1',{p_id:b.dataset.sgToggle,p_active:b.dataset.active!=='true'});
+   await fetchManage(root);
+  }catch(e){status(root,e.message);b.disabled=false}
+ });
+ holder.querySelectorAll('[data-sg-progress]').forEach(b=>b.onclick=async()=>{
+  const box=document.getElementById('sgtProgress-'+b.dataset.sgProgress);
+  if(!box)return;box.hidden=!box.hidden;if(box.hidden)return;
+  box.textContent='Loading recorded completion…';
+  try{const data=await rpc('sg_homework_progress_v1',{p_id:b.dataset.sgProgress});
+   const rows=data.students||[];
+   box.innerHTML=rows.length?rows.map(s=>'<div class="sgt-student"><div><strong>'+escapeHtml(s.korean_name||s.name||'Student')+'</strong><small>'+escapeHtml(s.done)+' / '+escapeHtml(s.total)+' mastered</small></div><div class="sgt-bar"><i style="width:'+Math.max(0,Math.min(100,Number(s.percent)||0))+'%"></i></div><b>'+Math.round(Number(s.percent)||0)+'%</b></div>').join(''):'No students enrolled in this class.';
+  }catch(e){box.textContent=e.message}
+ });
+}
+window.SentenceGeniusTeacher={
+ openTeacher:teacherOpen,
+ mountHomework:mode=>void openAssignment(mode)
+};
+window.addEventListener('ua:sentence-mounted',event=>{void openAssignment(event.detail?.sub||'manage')});
+})();
