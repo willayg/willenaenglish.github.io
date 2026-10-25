@@ -12,6 +12,22 @@ export function createScreens(actions){
     $('teacherSimulator').hidden=screen==='activity';
   }
   function notice(value){$('message').textContent=value||''}
+  function homework(assignments=[]){
+    const section=$('sgAssignedHomework'),root=$('sgAssignedHomeworkList');
+    root.replaceChildren();
+    section.hidden=!assignments.length||$('teacherSimulator').dataset.enabled==='true';
+    if(section.hidden)return;
+    for(const a of assignments){
+      const button=el('button','sg-assigned-card');button.type='button';
+      const copy=el('span','');
+      copy.append(el('strong','',a.title||a.book_title||'Sentence Genius'));
+      const modes=(a.required_modes||[]).map(x=>({coach:'코치',unscramble:'문장 배열',speaking:'말하기'}[x]||x));
+      copy.append(el('small','',modes.join(' · ')+' · 제출 '+String(a.due_at||'').slice(0,10)));
+      button.append(copy,el('span','sg-assigned-arrow','›'));
+      button.addEventListener('click',()=>actions.homework(a.book_id,a.unit_id));
+      root.append(button);
+    }
+  }
   function home(list){
     books=list||books;
     const root=$('bookList');root.replaceChildren();
@@ -161,6 +177,6 @@ export function createScreens(actions){
   $('unscrambleCard').addEventListener('click',()=>actions.start('unscramble'));
   $('speakingCard').addEventListener('click',()=>actions.start('speaking'));
   $('bookBack').addEventListener('click',actions.home);
-  return {visible,notice,home,showBook,progress,sentenceList,
+  return {visible,notice,home,homework,showBook,progress,sentenceList,
     teacherSetup,teacherMode,teacherStatus,teacherOverview};
 }
