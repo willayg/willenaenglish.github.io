@@ -392,6 +392,25 @@ export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,q
   if(!Array.isArray(list))throw Error('연습 기록을 불러오지 못했어요.');
   state.recent=list.filter(x=>x.student_id===state.student.id&&x.exercise_type==='make');
   state.today=state.recent.find(x=>x.status==='in_progress')||null;
+  // Real session streaks: unique completed practice days in Korea.
+  const days=new Set(state.recent.filter(x=>x.status==='completed').map(x=>{
+   const date=x.practice_day||x.created_at;
+   return date?new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'})
+    .format(new Date(date)):null;
+  }).filter(Boolean));
+  const koreaDay=new Date(new Date().toLocaleString('en-US',{timeZone:'Asia/Seoul'}));
+  const iso=date=>[date.getFullYear(),String(date.getMonth()+1).padStart(2,'0'),String(date.getDate()).padStart(2,'0')].join('-');
+  let current=0,best=0;
+  const cursor=new Date(koreaDay.getFullYear(),koreaDay.getMonth(),koreaDay.getDate());
+  if(!days.has(iso(cursor)))cursor.setDate(cursor.getDate()-1);
+  for(let i=0;i<365&&days.has(iso(cursor));i++,cursor.setDate(cursor.getDate()-1))current++;
+  const ordered=[...days].sort();let run=0,prior=null;
+  for(const day of ordered){
+   const date=new Date(day+'T12:00:00');
+   run=prior&&Math.round((date-prior)/86400000)===1?run+1:1;
+   best=Math.max(best,run);prior=date;
+  }
+  txt('spStreakCurrent',current);txt('spStreakBest',best);
   if(state.today&&state.today.status!=='completed')await loadChecks(state.today);
   refreshStartButton();
  }

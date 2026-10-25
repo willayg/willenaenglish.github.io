@@ -186,13 +186,6 @@ html[data-vocab-theme="dark"] .wg-status-pill.is-submitted,html[data-vocab-theme
 .wg-practice .sp-book-field{margin:0 0 10px}
 .wg-practice .sp-units{margin:9px 0 14px}
 .wg-practice .sp-units .study-v2-unit-strip{gap:8px;padding:3px 1px 7px}
-.wg-practice .sp-units .study-v2-unit{font:800 .83rem Poppins,system-ui,sans-serif;cursor:pointer;
- border:2px solid var(--vocab-border,#c9f1f4);color:var(--vocab-heading,#244f56);
- background:var(--vocab-card,#fff);border-radius:13px;padding:10px 14px;min-height:42px}
-.wg-practice .sp-units .study-v2-unit.is-current{
- border-color:var(--pink,#ff0a8a);color:var(--pink-dark,#cc0066);background:#fff3fa}
-.wg-practice .sp-units .study-v2-unit:focus-visible{
- outline:3px solid var(--cyan-strong,#25b8c4);outline-offset:2px}
 .wg-practice .sp-hint{
  display:block;margin:12px 0 16px;padding:11px 15px;
  border:1.5px solid #f0d7a1;background:#fff9e9;color:#705126;
@@ -211,18 +204,13 @@ html[data-vocab-theme="dark"] .wg-status-pill.is-submitted,html[data-vocab-theme
 .wg-practice #spTaskDetail{margin-bottom:0}
 @media(max-width:540px){
  .wg-practice .sp-book-field{font-size:.82rem}
- .wg-practice .sp-units .study-v2-unit{padding:9px 12px}
+
  .wg-practice .sp-task{margin-bottom:11px}
  .wg-practice .sp-input{min-height:105px}
 }
 
 /* Writing Genius rewards: match Word Genius star levels and Golden Unit icons. */
 .wg-practice .sp-unit-stars{font-size:.72rem;font-weight:900;color:#b67d0f;margin-left:5px;white-space:nowrap}
-.wg-practice .sp-units .study-v2-unit.is-golden{
- border-color:#e9b83d;background:#fff9df;color:#8d6313;
- box-shadow:0 0 0 1px rgba(217,173,50,.35) inset}
-.wg-practice .sp-units .study-v2-unit.is-golden.is-current{
- border-color:#e0ab2d;box-shadow:0 0 0 2px #f3d77c;background:#fffae5}
 .wg-practice .sp-units .vocab-unit-gold{width:18px;height:18px;vertical-align:-4px;margin-left:5px}
 .wg-practice .sp-gold-count{font-size:.78rem;font-weight:800;color:#a66b12;
  margin:4px 0 12px;padding:8px 11px;border:1.5px solid #edd18a;border-radius:12px;
@@ -449,3 +437,7 @@ html[data-vocab-theme="dark"] .wg-status-pill.is-submitted,html[data-vocab-theme
 .writing-genius .sp-sentence-modal-row strong,.writing-genius .sp-sentence-modal-row span{display:block;line-height:1.5}
 .writing-genius .sp-sentence-modal-row span{color:#789095;font-size:.85rem}
 @media(max-width:560px){.writing-genius #spPicker .vocab-unit-summary{flex-direction:column;align-items:stretch;gap:12px}.writing-genius #spPicker .vocab-unit-summary .vocab-word-card{width:100%}.writing-genius #spPicker .sp-writing-skills{max-width:none}.writing-genius #spPicker .vocab-book-choice{flex-basis:120px}}
+
+/* Do not override Word Genius's shared unit button and golden-unit design. */
+.writing-genius .wg-page{width:min(920px,100%)}
+.writing-genius #spPicker .vocab-unit-selector{margin-top:24px}
