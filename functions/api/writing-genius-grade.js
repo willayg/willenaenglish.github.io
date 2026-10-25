@@ -48,7 +48,7 @@ async function aiGrade(apiKey,{korean,model,answer}){
  const response=await fetch('https://api.openai.com/v1/chat/completions',{
   method:'POST',headers:{Authorization:'Bearer '+apiKey,'Content-Type':'application/json'},
   body:JSON.stringify({
-   model:MODEL,reasoning_effort:'none',max_completion_tokens:190,
+   model:MODEL,reasoning_effort:'low',max_completion_tokens:360,
    response_format:{type:'json_object'},
    messages:[
     {role:'system',content:
@@ -94,18 +94,23 @@ export async function onRequestPost({request,env}){
  const endpoint='writing_genius_sentence_checks';
  // A unique (session_id, question_index) constraint prevents retry calls and
  // duplicate billing even from different devices.
- const reserved=await db(endpoint,auth.token,{method:'POST',body:{
-  session_id:sessionId,student_id:auth.userId,question_index:index,answer_text:answer
- }});
- if(!reserved.ok){
-  if(reserved.status===409){
-   const prev=await db(endpoint+'?select=feedback&session_id=eq.'+sessionId+'&question_index=eq.'+index+'&limit=1',auth.token);
-   const found=prev.value?.[0];
-   if(found?.feedback)return reply(200,{success:true,feedback:found.feedback,cached:true});
-   return fail(409,'AI Willi가 이미 확인 중이에요.');
+ const reservationBody={session_id:sessionId,student_id:auth.userId,
+  question_index:index,answer_text:answer};
+ let reserved=await db(endpoint,auth.token,{method:'POST',body:reservationBody});
+ if(!reserved.ok&&reserved.status===409){
+  const prev=await db(endpoint+'?select=id,feedback,created_at&session_id=eq.'+sessionId+
+   '&question_index=eq.'+index+'&limit=1',auth.token);
+  const found=prev.value?.[0];
+  if(found?.feedback)return reply(200,{success:true,feedback:found.feedback,cached:true});
+  // A timed-out reservation cannot be cleared until 45 seconds have passed.
+  // This prevents a student deleting an in-flight check to trigger extra calls.
+  if(found?.id&&Date.now()-new Date(found.created_at).getTime()>48000){
+   const cleared=await db(endpoint+'?id=eq.'+found.id,auth.token,{method:'DELETE'});
+   if(cleared.ok)reserved=await db(endpoint,auth.token,{method:'POST',body:reservationBody});
   }
-  return fail(reserved.status===403?403:503,'AI 확인 횟수를 예약하지 못했어요.');
+  if(!reserved.ok)return fail(409,'AI 확인이 진행 중이거나 잠시 실패했어요. 1분 후 다시 확인해 주세요.');
  }
+ if(!reserved.ok)return fail(reserved.status===403?403:503,'AI 확인을 시작하지 못했어요.');
  const reservation=reserved.value?.[0];
  if(!reservation?.id)return fail(503,'AI 확인을 준비하지 못했어요.');
  try{
@@ -119,7 +124,8 @@ export async function onRequestPost({request,env}){
   return reply(200,{success:true,feedback:result,cached:false});
  }catch(err){
   // A network/model failure must not consume a student's only check.
-  await db(endpoint+'?id=eq.'+reservation.id,auth.token,{method:'DELETE'}).catch(()=>null);
+  // The 45-second lease expires shortly after any AI/network timeout. A
+  // second request may then release this pending reservation and retry.
   return fail(503,'AI Willi가 확인하지 못했어요. 다시 시도할 수 있어요.');
  }
 }
