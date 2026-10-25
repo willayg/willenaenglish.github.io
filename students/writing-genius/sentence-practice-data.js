@@ -63,72 +63,116 @@ function makeCards(items){
   hint:'핵심 단어 · '+sentence(item.en).split(' ').filter(w=>w.length>=4).slice(0,3).join(' / '),
   help:'한국어 뜻을 표현해 보세요. 교재 예문은 여러 가능한 표현 중 하나예요.'}));
 }
-const expansion=/^(.+?)\s+(with|at|in|on|after|before|because|during|every)\s+(.+)[.!?]$/i;
+// A source-backed prompt can be open-ended. Samples generated from source
+// sentences are labelled as examples, not verbatim quotations.
+const declarative=item=>!/[?]$/.test(item.en)&&!/^\s*(yes|no|okay|ok|hi|hello|thanks|thank you)\b/i.test(item.en)
+ &&!/^\s*(please|let's|let us|don't)\b/i.test(item.en) && wc(item.en)>=4;
+const fullStop=str=>sentence(str).replace(/\s+$/,'')+'.';
+const bareEnglish=eng=>sentence(eng).replace(/^([a-z])/,x=>x.toLowerCase());
+const phrase=/^(.+?)\s+(with|at|in|on|after|before|because|during|every|next to|in front of)\s+(.+)[.!]$/i;
+const extensionRules=[
+ {re:/^I (can|could)\s+[a-z]+.*[.!]$/i,extra:'after school',hint:'when · 언제'},
+ {re:/^I (like|love|enjoy)\b.+[.!]$/i,extra:'very much',hint:'how much · 얼마나'},
+ {re:/^(?:She|He|They|We|I)\s+(?:is|are|am|was|were|\x27s|\x27re)\b.*[.!]$/i,extra:'today',hint:'when · 언제'},
+ {re:/^(?:She|He|They|We|I)\s+\w+s\b.+[.!]$/i,extra:'every day',hint:'when · 언제'}
+];
 function expandCards(items){
- const results=[];
+ const result=[];
  for(const item of items){
-  const m=item.en.match(expansion);if(!m)continue;
-  const stem=m[1],extra=m[3],prep=m[2].toLowerCase();
-  if(wc(stem)<4||wc(extra)<2||/\b(?:is|are|am|was|were|to|of|the|a|an|will|can|have|has|had)$/.test(stem.toLowerCase()))continue;
-  const prompt=prep==='because'?'왜 그런지 이유를 더해 보세요.':
-   prep==='with'?'누구와 또는 무엇과 함께인지 더해 보세요.':
-   prep==='during'||prep==='after'||prep==='before'||prep==='every'?'언제인지 더해 보세요.':
-   '언제, 어디서, 무엇을 하는지 자세히 덧붙여 보세요.';
-  results.push({...base(item),kind:'expand',prompt,display:stem+'.',detail:'원래 문장을 더 길고 자세하게 만들어 보세요.',
-   model:item.en,hint:'예문에서 추가된 정보: '+prep+' …',help:'추가할 정보는 자유롭게 골라도 좋아요. 예문과 달라도 괜찮아요.'});
+  if(!declarative(item)||wc(item.en)>15)continue;
+  const m=item.en.match(phrase);
+  if(m&&wc(m[1])>=2&&wc(m[3])>=1&&!/^(?:what|where|when|who|why|how|is|are|do|does|did|can|could|will|would|was|were)\b/i.test(m[1])){
+   result.push({...base(item),kind:'expand',
+    prompt:'짧은 문장에 더 자세한 정보를 넣어 보세요.',
+    display:fullStop(m[1]),detail:'언제, 어디서, 누구와, 왜를 추가해 보세요.',
+    model:item.en,hint:'교재 속 표현: '+m[2]+' …',
+    help:'원래 교재 예문에는 '+m[2]+' 뒤에 설명이 더 있어요. 내 정보를 넣어도 좋아요.'});
+  }else{
+   const rule=extensionRules.find(x=>x.re.test(item.en));
+   if(!rule)continue;
+   const model=fullStop(sentence(item.en)+' '+rule.extra);
+   result.push({...base(item),kind:'expand',prompt:'문장에 새로운 정보를 더해 보세요.',
+    display:item.en,detail:'시간, 장소, 사람, 이유를 추가해 더 긴 문장으로 써 보세요.',
+    model,hint:rule.hint,help:'이 예시는 교재 문장에 정보를 새로 더해 만든 문장이에요. 내 아이디어를 써도 좋아요.'});
+  }
  }
- return results;
+ return result;
 }
 const answerRules=[
  [/^I like (.+)[.!]$/i,'What do you like?'],
  [/^I can (.+)[.!]$/i,'What can you do?'],
  [/^I want (.+)[.!]$/i,'What do you want?'],
- [/^My favorite (\w+(?:\s\w+)?) is (.+)[.!]$/i,match=>'What is your favorite '+match[1]+'?'],
- [/^I live in (.+)[.!]$/i,'Where do you live?'],
+ [/^My favorite (\w+(?:\s\w+)?) is (.+)[.!]$/i,m=>'What is your favorite '+m[1]+'?'],
+ [/^I (?:live|am living) in (.+)[.!]$/i,'Where do you live?'],
  [/^I went to (.+)[.!]$/i,'Where did you go?'],
- [/^I am (?:very )?(happy|sad|tired|hungry|excited|angry)[.!]$/i,'How do you feel?']
+ [/^I am (?:very )?(happy|sad|tired|hungry|excited|angry)[.!]$/i,'How do you feel?'],
+ [/^(?:She|He|They|I|We) (?:is|are|am|was|were|\x27s|\x27re) in (.+)[.!]$/i,'Where is this person?'],
+ [/^(?:She|He|They|I|We) (?:is|are|am|was|were|\x27s|\x27re) at (.+)[.!]$/i,'Where is this person?'],
+ [/^She (?:likes|loves|wants) (.+)[.!]$/i,'What does she like or want?'],
+ [/^He (?:likes|loves|wants) (.+)[.!]$/i,'What does he like or want?'],
+ [/^They (?:like|love|want) (.+)[.!]$/i,'What do they like or want?'],
+ [/^(?:She|He|They|We) (?:is|are|am|was|were|\x27s|\x27re) going to (.+)[.!]$/i,'Where are they going?'],
+ [/^I have (.+)[.!]$/i,'What do you have?'],
+ [/^He has (.+)[.!]$/i,'What does he have?'],
+ [/^She has (.+)[.!]$/i,'What does she have?']
 ];
 function answerCards(items){
- const rows=[];
+ const result=[];
  for(const item of items){
-  const found=answerRules.map(([re,q])=>{const m=item.en.match(re);return m?typeof q==='function'?q(m):q:null}).find(Boolean);
-  if(!found)continue;
-  rows.push({...base(item),kind:'answer',prompt:'영어 질문에 완전한 문장으로 답해 보세요.',
-   display:found,detail:'나의 생각을 영어로 써 보세요.',model:item.en,
-   hint:'예시에서 사용할 수 있는 표현: '+sentence(item.en).split(' ').slice(0,2).join(' ')+' …',
-   help:'이 예시는 교재의 한 가지 답이에요. 내 답이 다르더라도 괜찮아요.'});
+  if(!declarative(item)||wc(item.en)>14)continue;
+  const found=answerRules.map(([re,q])=>{const m=item.en.match(re);return m?(typeof q==='function'?q(m):q):null}).find(Boolean);
+  const question=found||
+   (/^I\b/i.test(item.en)?'What would you like to tell us about yourself?':
+    /^(?:He|She)\b/i.test(item.en)?'What can you tell us about this person?':
+    /^(?:We|They)\b/i.test(item.en)?'What can you tell us about this group?':
+    /^There (?:is|are)\b/i.test(item.en)?'What is in this place?':
+    /^It\b/i.test(item.en)?'What can you tell us about it?':null);
+  if(!question)continue;
+  result.push({...base(item),kind:'answer',
+   prompt:'영어 질문에 완전한 문장으로 답해 보세요.',display:question,
+   detail:'나의 생각을 영어로 써 보세요.',model:item.en,
+   hint:'교재 표현: '+sentence(item.en).split(' ').slice(0,2).join(' ')+' …',
+   help:'예문은 한 가지 답이에요. 질문에 맞는 내 답을 자유롭게 써 보세요.'});
  }
- return rows;
+ return result;
 }
-const commonStarts=['I can ','I like ','I have ','I want ','She is ','He is ','They are ','We are ','I am ','It is ','I was ','We can ','They can '];
+const pronounOf=s=>{
+ const m=s.match(/^(I|you|he|she|we|they|it|there|my\s+[a-z]+)\b/i);
+ return m?.[1]?.toLowerCase()||'';
+};
 function connectCards(items){
- const results=[],seen=new Set();
- const byUnit=new Map();
+ const result=[],seen=new Set();
+ const groups=new Map();
  for(const item of items){
-  if(!byUnit.has(item.unitId))byUnit.set(item.unitId,[]);
-  byUnit.get(item.unitId).push(item);
+  if(!declarative(item)||wc(item.en)>11||!/\.$/.test(item.en))continue;
+  const key=pronounOf(item.en);
+  if(!key)continue;
+  if(!groups.has(key))groups.set(key,[]);
+  groups.get(key).push(item);
  }
- for(const group of byUnit.values()){
-  for(const first of group){
-   if(wc(first.en)<3||wc(first.en)>10||!/[.]$/.test(first.en))continue;
-   const prefix=commonStarts.find(x=>first.en.startsWith(x));
-   if(!prefix)continue;
-   for(const second of group){
-    if(second.id===first.id||!second.en.startsWith(prefix)||!/[.]$/.test(second.en)||wc(second.en)>10)continue;
-    const tail=sentence(second.en).slice(prefix.length).trim();
-    const front=sentence(first.en);
-    if(!tail||tail.toLowerCase()===front.slice(prefix.length).toLowerCase())continue;
-    const key=[first.id,second.id].sort().join('|');if(seen.has(key))continue;seen.add(key);
-    const output=front+' and '+tail+'.';
-    if(wc(output)>20)continue;
-    results.push({...base(first),sourceIds:[first.id,second.id],kind:'connect',
-     prompt:'두 생각을 and로 연결해 한 문장으로 만들어 보세요.',
-     display:first.en+'\n'+second.en,detail:'반복되는 말을 줄여 더 자연스럽게 쓸 수 있어요.',
-     model:output,hint:'연결어: and',help:'두 문장 모두 같은 주어로 시작해요. 교재 예문의 단어들을 이어 보세요.'});
+ for(const group of groups.values()){
+  for(const a of group){
+   const neighbors=group.filter(b=>b.id!==a.id &&
+    (b.unitId===a.unitId||group.length<6) && wc(b.en)<=11);
+   for(const b of neighbors){
+    const key=[a.id,b.id].sort().join('|');if(seen.has(key))continue;
+    seen.add(key);
+    const second=bareEnglish(b.en);
+    const negative=/\b(?:not|don't|doesn't|isn't|aren't|can't|won't)\b/i;
+    const connector=negative.test(a.en)!==negative.test(b.en)?'but':'and';
+    const model=sentence(a.en)+', '+connector+' '+second+'.';
+    if(wc(model)>22)continue;
+    result.push({...base(a),kind:'connect',sourceIds:[a.id,b.id],
+     unitName:a.unitName===b.unitName?a.unitName:'My textbook',
+     prompt:'두 문장을 연결어로 한 문장으로 만들어 보세요.',
+     display:a.en+'\n'+b.en,
+     detail:'and 또는 but을 사용해 보세요.',
+     model,hint:'and (그리고) / but (하지만)',
+     help:'교재 문장 두 개를 연결해 만든 예시예요. 연결어를 바꾸거나 다른 자연스러운 표현을 써도 좋아요.'});
    }
   }
  }
- return results;
+ return result;
 }
 export const EXERCISE_LABELS={make:'문장 만들기',expand:'문장 늘리기',answer:'질문에 답하기',connect:'생각 연결하기'};
 export function generatePracticeQuestions(kind,items){
