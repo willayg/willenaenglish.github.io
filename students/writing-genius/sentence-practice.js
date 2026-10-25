@@ -2,6 +2,7 @@
 // One bounded AI Willi (Luna) check per question; revision is free. All save to Supabase.
 import {getAssignedPracticeBooks,getPracticeUnits,
  getTextbookSentences,generatePracticeQuestions} from './sentence-practice-data.js?v=20261025-make-only-v2';
+import {sessionSummary,masteredAnswer,publishGeniusStars} from './sentence-practice-rewards.js?v=20261025-writing-rewards-v1';
 const $=id=>document.getElementById(id);
 const txt=(id,value)=>{$(id).textContent=String(value??'')};
 const field=id=>$(id).value;
@@ -10,10 +11,11 @@ const seoulDate=()=>{const parts=Object.fromEntries(new Intl.DateTimeFormat('en-
  {timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'})
  .formatToParts(new Date()).map(x=>[x.type,x.value]));return [parts.year,parts.month,parts.day].join('-')};
 let singleton=null;
-export function createSentencePractice({api,checksApi,gradeSentence,onExit}){
+export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,onExit}){
  if(singleton)return singleton;
  const state={student:null,books:[],units:[],session:null,recent:[],today:null,bookReq:0,
-  queue:Promise.resolve(),timer:null,loading:false,active:false,screen:'picker',catalogError:false};
+  queue:Promise.resolve(),timer:null,loading:false,active:false,screen:'picker',catalogError:false,
+  rewards:new Map(),rewardInflight:new Set()};
  const notify=(message='',error=false)=>{
   txt('spMessage',message);$('spMessage').classList.toggle('is-error',error);
  };
@@ -64,6 +66,7 @@ export function createSentencePractice({api,checksApi,gradeSentence,onExit}){
   clearTimeout(state.timer);
   state.timer=setTimeout(()=>{void persist()},850);
   saveLabel('저장 중…');
+  refreshMasteryNote();
  }
  const gradeTitle=grade=>grade==='correct'?'정확해요! · 4점':
   grade==='almost'?'거의 맞았어요! · 2점':'다시 살펴봐요 · 0점';
@@ -78,6 +81,7 @@ export function createSentencePractice({api,checksApi,gradeSentence,onExit}){
   $('spFeedback').dataset.grade=result.grade;
   txt('spGradeNote',result.explanation_ko||'');
   txt('spSuggestion',result.suggestion?'추천 표현: '+result.suggestion:'');
+  refreshMasteryNote();
   txt('spModel',card.model);
   txt('spComparisonNote',card.help||'교재 예문은 다른 올바른 표현 중 하나일 수 있어요.');
  }
@@ -106,11 +110,66 @@ export function createSentencePractice({api,checksApi,gradeSentence,onExit}){
  }
  function showDone(){
   setScreen('done');
-  const answers=state.session?.responses||[];
-  const n=answers.filter(a=>a?.feedback).length;
-  const points=answers.reduce((sum,a)=>sum+(Number(a?.feedback?.points)||0),0);
-  txt('spScoreSummary',n?'AI Willi '+n+'문장 확인 · '+points+'/'+(5*4)+'점':'5문장 연습을 완료했어요.');
+  const session=state.session;
+  if(!session)return;
+  const summary=sessionSummary(session);
+  const award=state.rewards.get(session.book_id+'|'+session.unit_id);
+  txt('spStarsEarned','★'.repeat(summary.stars)+'☆'.repeat(5-summary.stars));
+  txt('spScoreSummary',summary.percent+'% · '+summary.stars+'/5 stars · 숙달 '+summary.mastered+'/5');
+  $('spGoldAward').hidden=!award?.golden;
+  txt('spSyncStatus','');
   refreshStartButton();
+  void synchronizeRewards(session,summary);
+ }
+ function refreshMasteryNote(){
+  const session=state.session,resp=current();
+  if(!session||!resp?.feedback){txt('spMasteryNote','');return}
+  const card=session.questions[session.current_index];
+  txt('spMasteryNote',masteredAnswer(resp,card)?
+   '✓ 골드 숙달 완료 · 첫 번째 AI 점수는 그대로 유지돼요.':
+   '추천 표현이나 교재 예문처럼 자연스럽게 문장을 고쳐 보세요.');
+ }
+ function renderGoldenCount(){
+  const book=field('spBook');
+  const count=state.units.filter(u=>state.rewards.get(book+'|'+u.id)?.golden).length;
+  $('spGoldCount').hidden=!count;
+  txt('spGoldCount','Golden Units '+count+' / '+state.units.length);
+ }
+ async function fetchUnitRewards(){
+  try{
+   const data=await rewardsApi();
+   state.rewards=new Map((Array.isArray(data)?data:[]).map(row=>[
+    String(row.book_id)+'|'+String(row.unit_id),row]));
+   renderUnitButtons();renderGoldenCount();
+  }catch(error){console.warn('[Writing Genius] Gold units unavailable',error)}
+ }
+ async function synchronizeRewards(session,summary){
+  const id=session.id;
+  if(state.rewardInflight.has(id))return;
+  state.rewardInflight.add(id);
+  try{
+   const key='writing-genius-reward-synced:'+id;
+   let synced=false;
+   try{synced=localStorage.getItem(key)==='1'}catch{}
+   if(!synced){
+    await publishGeniusStars(session,summary,
+     state.units.find(u=>u.id===session.unit_id)?.number||'Unit');
+    try{localStorage.setItem(key,'1')}catch{}
+   }
+   if(state.session?.id===id)txt('spSyncStatus','★ 별이 저장되었어요.');
+  }catch(error){
+   console.warn('[Writing Genius] Star sync unavailable',error);
+   if(state.session?.id===id)txt('spSyncStatus',
+    '연습 점수는 저장됐어요. 전체 별 동기화는 다음 접속에 다시 시도해요.');
+  }finally{
+   await fetchUnitRewards();
+   if(state.session?.id===id){
+    const award=state.rewards.get(session.book_id+'|'+session.unit_id);
+    $('spGoldAward').hidden=!award?.golden;
+    if(award?.golden)txt('spSyncStatus','골드 유닛 달성! ★');
+   }
+   state.rewardInflight.delete(id);
+  }
  }
  function refreshStartButton(){
   const btn=$('spStart');
