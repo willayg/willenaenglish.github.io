@@ -117,6 +117,8 @@ class StudentHeader extends HTMLElement {
   }
 
   disconnectedCallback() {
+    this._cleanupDocClick?.();
+    this._cleanupDocClick = null;
     window.removeEventListener("storage", this._onStorage);
   window.removeEventListener('auth:changed', this._onAuthChanged);
   window.removeEventListener('points:update', this._onPointsUpdate);
@@ -390,6 +392,10 @@ class StudentHeader extends HTMLElement {
   }
 
   render() {
+    // The header is re-rendered after points/stars/profile refreshes.
+    // Remove the old document listener before replacing the shadow DOM.
+    this._cleanupDocClick?.();
+    this._cleanupDocClick = null;
     // Try established identity sources; if none, fall back to guest cookie
     let cookieGuestName = null;
     try {
