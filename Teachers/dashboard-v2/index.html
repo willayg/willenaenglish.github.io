@@ -92,7 +92,7 @@ async function loadClassOverview(force=false){const days=Number($('#classDaysSel
 async function openClassFromOverview(name,days){$('#classSelect').value=name;$('#daysSelect').value=String(days);state.className=name;state.days=days;switchView('students');await loadClass()}
 function switchView(v){$$('.view').forEach(x=>x.classList.toggle('active',x.id===`view-${v}`));$$('[data-view]').forEach(x=>x.classList.toggle('active',x.dataset.view===v));if(v==='classes')loadClassOverview()}
 $('#classSelect').onchange=loadClass;$('#daysSelect').onchange=loadClass;$('#refreshBtn').onclick=loadClass;$('#searchInput').oninput=renderStudents;$('#classDaysSelect').onchange=()=>loadClassOverview(true);$('#classRefreshBtn').onclick=()=>loadClassOverview(true);$('#closeDrawer').onclick=()=>$('#drawerBg').classList.remove('open');$('#drawerBg').onclick=e=>{if(e.target===$('#drawerBg'))$('#drawerBg').classList.remove('open')};$$('[data-view]').forEach(b=>b.onclick=()=>switchView(b.dataset.view));
-(async()=>{if(await auth()){mountBurger();loadClasses()}})();
+(async()=>{if(await auth()){mountBurger();loadClasses();if(new URLSearchParams(location.search).get('view')==='sentence-genius')switchView('sentence-genius')}})();
 </script>
 <script src="./naesin.js?v=20260829-clean1"></script>
 <script type="module" src="./sentence-genius.js?v=20261025-sg-teachers-v1"></script>
