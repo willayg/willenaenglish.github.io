@@ -69,7 +69,7 @@ async function sentences(bookId,unitId){
  return ordered.flatMap(o=>{
   const row=byId.get(o.sentence_id);
   const en=String(row?.canonical_text||row?.text||'').trim(),ko=String(row?.translation_ko||'').trim();
-  if(!row||!en||!ko||en.split(/\s+/).length<2||seen.has(row.id))return[];
+  if(!row||!en||!ko||en.split(/\s+/).length<2||!/[a-z]/i.test(en)||seen.has(row.id))return[];
   seen.add(row.id);
   const policy=overrides.get(o.id);
   return[{id:row.id,occurrenceId:o.id,en,ko,
@@ -434,7 +434,7 @@ async function mountSentenceStatistics(root){
  }
  classInput.onchange=()=>void load();
  daysInput.onchange=()=>void load();
- searchInput.oninput=paint;
+ searchInput.oninput=()=>{view.expanded='';++view.generation;paint()};
  $('#sgtStatsRefresh',host).onclick=()=>{
   unitPromises.clear();eligiblePromises.clear();names.clear();unitInfo.clear();
   void load();
@@ -482,7 +482,7 @@ async function loadClassSentenceProgress(root,className){
     row.coach+=Number(student.coach)||0;
     row.unscramble+=Number(student.unscramble)||0;
     row.speaking+=Number(student.speaking)||0;
-    row.assignments.push({title:a.title,done,total,gold:total>0&&done===total&&['coach','unscramble','speaking'].every(mode=>(a.required_modes||[]).includes(mode))});
+    row.assignments.push({title:a.title,done,total,complete:total>0&&done===total});
    }
   });
   const students=[...people.values()].sort((a,b)=>
@@ -490,10 +490,10 @@ async function loadClassSentenceProgress(root,className){
   const activeCount=assignments.length-failures.length;
   const totalDone=students.reduce((sum,s)=>sum+s.done,0);
   const totalPossible=students.reduce((sum,s)=>sum+s.total,0);
-  const goldUnits=students.reduce((count,s)=>count+s.assignments.filter(a=>a.gold).length,0);
+  const completedHomework=students.reduce((count,s)=>count+s.assignments.filter(a=>a.complete).length,0);
   const summary='<div class="sgt-class-summary"><strong>'+activeCount+' assignments</strong>'+
    '<strong>'+students.length+' students</strong>'+ 
-   '<strong>'+goldUnits+' Golden Units</strong>'+ 
+   '<strong>'+completedHomework+' homework items completed</strong>'+  
    '<strong>'+ (totalPossible?Math.round(100*totalDone/totalPossible):0)+'% overall completion</strong></div>';
   const cards=students.map(s=>{
    const percent=s.total?Math.min(100,Math.round(100*s.done/s.total)):0;
@@ -503,7 +503,7 @@ async function loadClassSentenceProgress(root,className){
     '<span class="sgt-progress-percent">'+percent+'%</span></summary>'+
     '<div class="sgt-bar"><i style="width:'+percent+'%"></i></div>'+
     '<div class="sgt-progress-units">'+s.assignments.map(a=>'<div><span>'+escapeHtml(a.title)+
-    '</span><b>'+a.done+'/'+a.total+(a.gold?' · 🏅 Gold':'')+'</b></div>').join('')+'</div></details>';
+    '</span><b>'+a.done+'/'+a.total+(a.complete?' · ✓ Complete':'')+'</b></div>').join('')+'</div></details>';
   }).join('');
   host.innerHTML=summary+(cards||'<p class="sgt-empty">No students in this class.</p>')+
    (failures.length?'<p class="sgt-error">'+failures.length+' assignments could not load.</p>':'')+
