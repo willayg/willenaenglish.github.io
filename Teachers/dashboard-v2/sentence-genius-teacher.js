@@ -85,67 +85,166 @@ const options=(rows,placeholder,field='title')=>'<option value="">'+escapeHtml(p
 const wrapper=(title,subtitle)=>'<div class="sgt-head"><h3>'+escapeHtml(title)+'</h3><p>'+escapeHtml(subtitle)+'</p></div>';
 function teacherRoot(){return $('#sgTeacherWorkspace')}
 function assignmentRoot(){return $('#uaSentenceHomework')}
+// Keep statistics the entry screen. The grading lab mounts only when opened.
+const teacherTabs=['stats','lab'];
+function setTeacherTab(root,name){
+ const tab=teacherTabs.includes(name)?name:'stats';
+ root.querySelectorAll('[data-sgt-tab]').forEach(button=>{
+  const selected=button.dataset.sgtTab===tab;
+  button.classList.toggle('active',selected);
+  button.setAttribute('aria-selected',String(selected));
+  button.tabIndex=selected?0:-1;
+ });
+ root.querySelectorAll('[data-sgt-panel]').forEach(panel=>{
+  panel.hidden=panel.dataset.sgtPanel!==tab;
+ });
+ if(tab==='lab'){
+  const lab=$('#sgtLabPanel',root);
+  if(lab&&!lab.dataset.initialized){
+   lab.dataset.initialized='true';
+   void mountGradingLab(root);
+  }
+ }
+}
+function statsShell(){
+ return '<div class="sgt-stats-intro">'+wrapper('Sentence Genius · Statistics',
+  'Recorded student activity and homework mastery. These are real saved results, not grading simulations.')+
+  '<button type="button" class="control ua-primary" id="sgtStatsGoHomework">Manage Assignments</button></div>'+
+ '<div class="sgt-stats-filter"><label for="sgtProgressClass">Class</label>'+
+ '<select id="sgtProgressClass" class="control" aria-label="Select class"><option value="">Loading classes…</option></select>'+
+ '<button type="button" class="control" id="sgtClassRefresh">↻ Refresh stats</button></div>'+
+ '<section class="sgt-class-dashboard" id="sgtIndependentDashboard">'+
+ '<div class="sgt-head"><h3>Learning activity</h3><p>Saved practice across all three skills, including work completed without homework. The figures below count real attempts and independently mastered sentences.</p></div>'+
+ '<div class="sgt-actions"><label for="sgtPracticeDays">Period</label>'+
+ '<select id="sgtPracticeDays" class="control"><option value="30">Last 30 days</option><option value="7">Last 7 days</option><option value="90">Last 90 days</option></select></div>'+
+ '<div id="sgtIndependentProgress" class="sgt-progress-overview" aria-live="polite">Choose a class to view student activity.</div></section>'+
+ '<section class="sgt-class-dashboard" id="sgtClassDashboard">'+
+ '<div class="sgt-head"><h3>Assigned homework progress</h3><p>Completion of the selected sentences and required skills since homework was assigned. Students do not need teacher approval.</p></div>'+
+ '<div id="sgtClassProgress" class="sgt-progress-overview" aria-live="polite">Choose a class to view homework progress.</div></section>';
+}
+function gradingShell(){
+ return wrapper('Grading Lab · Preview only',
+   'Test the treatment of a textbook sentence. No student attempts, points, stars or progress are saved.')+
+ '<div class="sgt-lab-note" role="note">A typed transcript tests answer grading, not microphone recognition or audio playback. Check real student behavior in the student app.</div>'+
+ '<div class="sgt-fields"><label>Book<select id="sgtTestBook" class="control"></select></label>'+
+ '<label>Unit<select id="sgtTestUnit" class="control"><option value="">Select book first</option></select></label>'+
+ '<label>Sentence<select id="sgtTestSentence" class="control"><option value="">Select unit first</option></select></label></div>'+
+ '<div class="sgt-target" id="sgtTestPrompt">Choose a textbook sentence to test.</div>'+
+ '<div class="sgt-fields"><label class="sgt-wide">Student answer (typed transcript)'+
+ '<input id="sgtTestAnswer" type="text" class="control" placeholder="Type a possible student answer"></label></div>'+
+ '<div class="sgt-actions"><button type="button" class="control ua-primary" id="sgtTestCheck" disabled>Test Answer</button>'+
+ '<button type="button" class="control" id="sgtLabGoHomework">Open Assignments</button></div>'+
+ '<div class="sgt-result" id="sgtTestResult" role="status" aria-live="polite">Preview ready.</div>';
+}
+function openSentenceAssignments(){
+ document.querySelector('[data-view="assignments"]')?.click();
+ window.UniversalAssignments?.openTab?.('sentence');
+}
 async function teacherOpen(){
  const root=teacherRoot();if(!root)return;
- root.innerHTML=wrapper('Sentence Genius · Grading Lab','Check real textbook sentences and proposed responses. This preview never writes student progress.')+
- '<div class="sgt-fields"><label>Book<select id="sgtTestBook" class="control"></select></label><label>Unit<select id="sgtTestUnit" class="control"><option>Select book first</option></select></label><label>Sentence<select id="sgtTestSentence" class="control"><option>Select unit first</option></select></label></div>'+
- '<div class="sgt-target" id="sgtTestPrompt"></div>'+
- '<div class="sgt-fields"><label class="sgt-wide">Student answer (type a transcript)<input id="sgtTestAnswer" type="text" class="control" placeholder="Type what the student says"></label></div>'+
- '<div class="sgt-actions"><button class="control ua-primary" id="sgtTestCheck" disabled>Test Answer</button><button class="control" id="sgtGoHomework">Open Sentence Genius Assignments</button></div>'+
- '<div class="sgt-result" id="sgtTestResult" role="status"></div>'+
- '<section class="sgt-class-dashboard" id="sgtClassDashboard">'+
- '<div class="sgt-head"><h3>Class & student progress</h3><p>Recorded Sentence Genius homework mastery by class, including Coach, Unscramble and Speaking. No simulated activity is saved.</p></div>'+
- '<div class="sgt-actions"><label class="sgt-class-label">Class <select id="sgtProgressClass" class="control"><option value="">Choose a class</option></select></label>'+
- '<button type="button" class="control" id="sgtClassRefresh">↻ Refresh progress</button></div>'+
- '<div id="sgtClassProgress" class="sgt-progress-overview" aria-live="polite">Choose a class to view assigned unit progress.</div></section>'+
- '<section class="sgt-class-dashboard" id="sgtIndependentDashboard">'+
- '<div class="sgt-head"><h3>Independent practice activity</h3><p>Actual saved Sentence Genius attempts, even without assigned homework. Mastery counts show unique correct sentences per skill, not Gold status.</p></div>'+
- '<div class="sgt-actions"><label>Period <select id="sgtPracticeDays" class="control"><option value="30">Last 30 days</option><option value="7">Last 7 days</option><option value="90">Last 90 days</option></select></label></div>'+
- '<div id="sgtIndependentProgress" class="sgt-progress-overview" aria-live="polite">Choose a class above to view student activity.</div></section>';
- const bookEl=$('#sgtTestBook',root),unitEl=$('#sgtTestUnit',root),sentenceEl=$('#sgtTestSentence',root),test=$('#sgtTestCheck',root);
- $('#sgtGoHomework',root).onclick=()=>{document.querySelector('[data-view="assignments"]')?.click();window.UniversalAssignments?.openTab?.('sentence')};
- const progressClass=$('#sgtProgressClass',root),progressRefresh=$('#sgtClassRefresh',root);
- const reload=()=>{void loadClassSentenceProgress(root,progressClass.value);void loadClassSentencePractice(root,progressClass.value)};
- progressClass.onchange=reload;
- progressRefresh.onclick=reload;
- $('#sgtPracticeDays',root).onchange=()=>void loadClassSentencePractice(root,progressClass.value);
- void classes().then(list=>{
-  if(!root.isConnected||!progressClass.isConnected)return;
-  progressClass.innerHTML='<option value="">Choose a class</option>'+
-    list.map(row=>'<option value="'+escapeHtml(row.name)+'">'+escapeHtml(row.display_name||row.name)+'</option>').join('');
- }).catch(error=>{
-  const host=$('#sgtClassProgress',root);if(host)host.textContent='Class list unavailable: '+error.message;
+ // Reopening Sentence Genius always leads with statistics instead of the lab.
+ root.innerHTML='<div class="sgt-tab-list" role="tablist" aria-label="Sentence Genius sections">'+
+ '<button type="button" class="sgt-tab active" data-sgt-tab="stats" role="tab" id="sgtTabStats" aria-controls="sgtStatsPanel" aria-selected="true">Statistics</button>'+
+ '<button type="button" class="sgt-tab" data-sgt-tab="lab" role="tab" id="sgtTabLab" aria-controls="sgtLabPanel" aria-selected="false">Grading Lab</button></div>'+
+ '<section id="sgtStatsPanel" role="tabpanel" aria-labelledby="sgtTabStats" data-sgt-panel="stats">'+statsShell()+'</section>'+
+ '<section id="sgtLabPanel" role="tabpanel" aria-labelledby="sgtTabLab" data-sgt-panel="lab" hidden></section>';
+ root.querySelectorAll('[data-sgt-tab]').forEach(button=>{
+  button.onclick=()=>setTeacherTab(root,button.dataset.sgtTab);
+  button.onkeydown=event=>{
+   if(event.key!=='ArrowLeft'&&event.key!=='ArrowRight')return;
+   event.preventDefault();
+   const target=button.dataset.sgtTab==='stats'?'lab':'stats';
+   setTeacherTab(root,target);
+   root.querySelector('[data-sgt-tab="'+target+'"]')?.focus();
+  };
  });
- const update=()=>{const item=state.items.find(x=>x.id===sentenceEl.value);
-  $('#sgtTestPrompt',root).textContent=item?item.ko+' · '+item.en:'Choose a sentence to test.';
-  test.disabled=!item};
+ setTeacherTab(root,'stats');
+ $('#sgtStatsGoHomework',root).onclick=openSentenceAssignments;
+ const classEl=$('#sgtProgressClass',root);
+ const reload=()=>{void loadClassSentencePractice(root,classEl.value);void loadClassSentenceProgress(root,classEl.value)};
+ classEl.onchange=reload;
+ $('#sgtClassRefresh',root).onclick=reload;
+ $('#sgtPracticeDays',root).onchange=()=>void loadClassSentencePractice(root,classEl.value);
  try{
-  bookEl.innerHTML=options(await books(),'Choose a textbook');
-  bookEl.onchange=async()=>{
-   unitEl.innerHTML='<option>Loading units…</option>';sentenceEl.innerHTML='<option>Select unit first</option>';test.disabled=true;
-   const list=await units(bookEl.value).catch(e=>{throw e});
-   state.units=list;unitEl.innerHTML=options(list,'Choose unit','unit_number');update();
-  };
-  unitEl.onchange=async()=>{
-   const revision=++state.revision;sentenceEl.innerHTML='<option>Loading sentences…</option>';test.disabled=true;
-   try{
-    const rows=await sentences(bookEl.value,unitEl.value);if(revision!==state.revision)return;
-    state.items=rows;sentenceEl.innerHTML=options(rows,'Choose sentence','en');update();
-   }catch(e){$('#sgtTestResult',root).textContent=e.message}
-  };
-  sentenceEl.onchange=update;
-  test.onclick=async()=>{
-   const item=state.items.find(x=>x.id===sentenceEl.value),answer=$('#sgtTestAnswer',root).value.trim(),out=$('#sgtTestResult',root);
-   if(!item||!answer)return;
-   out.textContent='Checking with the Sentence Genius rules…';test.disabled=true;
-   try{const result=await gradeTest(item,answer);
-    out.innerHTML='<strong>'+escapeHtml(result.label)+'</strong><p>'+escapeHtml(result.message||result.method||'')+'</p>'+
-      '<small>Preview only · '+escapeHtml(result.method||'')+' · No student points or progress saved</small>';
-   }catch(e){out.textContent='Grading service unavailable: '+e.message}
-   finally{test.disabled=false}
-  };
- }catch(e){$('#sgtTestResult',root).textContent=e.message}
+  const list=await classes();
+  if(!root.isConnected||!classEl.isConnected)return;
+  classEl.innerHTML='<option value="">Select class</option>'+
+   list.map(row=>'<option value="'+escapeHtml(row.name)+'">'+
+     escapeHtml(row.display_name||row.name)+'</option>').join('');
+  const current=document.querySelector('#classSelect')?.value||'';
+  const initial=list.find(c=>c.name===current)?.name||list[0]?.name||'';
+  classEl.value=initial;
+  if(initial)reload();
+  else{
+   $('#sgtIndependentProgress',root).textContent='No active classes were returned.';
+   $('#sgtClassProgress',root).textContent='No active classes were returned.';
+  }
+ }catch(error){
+  if(!root.isConnected)return;
+  $('#sgtIndependentProgress',root).textContent='Class list unavailable: '+error.message;
+  $('#sgtClassProgress',root).textContent='Class list unavailable: '+error.message;
+ }
 }
+async function mountGradingLab(root){
+ const lab=$('#sgtLabPanel',root);if(!lab||!lab.isConnected)return;
+ lab.innerHTML=gradingShell();
+ const bookEl=$('#sgtTestBook',lab),unitEl=$('#sgtTestUnit',lab),sentenceEl=$('#sgtTestSentence',lab),
+  test=$('#sgtTestCheck',lab),prompt=$('#sgtTestPrompt',lab),out=$('#sgtTestResult',lab);
+ $('#sgtLabGoHomework',lab).onclick=openSentenceAssignments;
+ let items=[],bookRevision=0,sentenceRevision=0;
+ const update=()=>{
+  const item=items.find(row=>row.id===sentenceEl.value);
+  prompt.textContent=item?item.ko+' · '+item.en:'Choose a textbook sentence to test.';
+  test.disabled=!item;
+ };
+ const clearSentence=()=>{
+  items=[];sentenceEl.innerHTML='<option value="">Select unit first</option>';
+  $('#sgtTestAnswer',lab).value='';test.disabled=true;update();
+ };
+ bookEl.onchange=async()=>{
+  const revision=++bookRevision;++sentenceRevision;clearSentence();
+  unitEl.innerHTML='<option value="">Loading units…</option>';out.textContent='';
+  if(!bookEl.value){unitEl.innerHTML='<option value="">Select book first</option>';return}
+  try{
+   const list=await units(bookEl.value);
+   if(revision!==bookRevision||!bookEl.isConnected)return;
+   unitEl.innerHTML=options(list,'Choose unit','unit_number');
+  }catch(error){if(revision===bookRevision){unitEl.innerHTML='<option value="">Units unavailable</option>';out.textContent=error.message}}
+ };
+ unitEl.onchange=async()=>{
+  const revision=++sentenceRevision;items=[];test.disabled=true;
+  sentenceEl.innerHTML='<option value="">Loading sentences…</option>';
+  out.textContent='';prompt.textContent='Loading textbook sentences…';
+  if(!unitEl.value){clearSentence();return}
+  try{
+   const rows=await sentences(bookEl.value,unitEl.value);
+   if(revision!==sentenceRevision||!sentenceEl.isConnected)return;
+   items=rows;
+   sentenceEl.innerHTML=options(rows,'Choose sentence','en');
+   update();
+   if(!rows.length)out.textContent='No eligible translated sentences in this unit.';
+  }catch(error){if(revision===sentenceRevision){clearSentence();out.textContent=error.message}}
+ };
+ sentenceEl.onchange=()=>{out.textContent='';update()};
+ test.onclick=async()=>{
+  const item=items.find(row=>row.id===sentenceEl.value),answer=$('#sgtTestAnswer',lab).value.trim();
+  if(!item||!answer){out.textContent='Choose a sentence and type an answer.';return}
+  out.textContent='Checking with the Sentence Genius rules…';test.disabled=true;
+  try{
+   const result=await gradeTest(item,answer);
+   if(!lab.isConnected)return;
+   out.innerHTML='<strong>'+escapeHtml(result.label)+'</strong><p>'+
+     escapeHtml(result.message||result.method||'')+'</p>'+
+     '<small>Preview only · '+escapeHtml(result.method||'')+' · No student results saved</small>';
+  }catch(error){out.textContent='Grading service unavailable: '+error.message}
+  finally{if(test.isConnected)test.disabled=false}
+ };
+ try{
+  bookEl.innerHTML='<option value="">Loading books…</option>';
+  bookEl.innerHTML=options(await books(),'Choose textbook');
+ }catch(error){bookEl.innerHTML='<option value="">Books unavailable</option>';out.textContent=error.message}
+}
+
 // Independent practice is intentionally separate from assigned homework progress.
 let independentPracticeRequest=0;
 async function loadClassSentencePractice(root,className){
