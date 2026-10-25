@@ -5,9 +5,9 @@ import {studentIdentity,signedInProfile,assignedBooks,loadUnits,loadSentences,
 import {openUnit} from './scoring.js?v=sg-coach-gold-v3';
 import {getSentenceMastery} from './tracking.js';
 import {createNavigation} from './navigation.js';
-import {createScreens} from './screens.js?v=sg-homework-v5a';
+import {createScreens} from './screens.js?v=sg-homework-progress-v5b';
 import {createSession} from './session.js?v=sg-no-approval-v4.1';
-import {loadSentenceHomework} from './homework.js?v=sg-homework-v5a';
+import {loadSentenceHomework} from './homework.js?v=sg-homework-progress-v5b';
 
 const state={student:null,books:[],book:null,units:[],unit:null,items:[],store:null,
   loadToken:0,loading:null,teacher:false,homework:[],simMode:'class',simClasses:[],simCatalog:[],
