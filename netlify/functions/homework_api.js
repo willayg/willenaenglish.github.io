@@ -655,6 +655,68 @@ function evaluateHomeworkCompletion(assignment, sessions = []) {
   };
 }
 
+// Sentence Genius: count only distinct independently mastered assigned sentences,
+ // after assignment creation, for the skills the teacher actually selected.
+async function sentenceGeniusAssignmentProgress(assignment,event){
+  const viewer=await getProfileForEvent(event);
+  if(!viewer)return _json(401,{success:false,error:'Not signed in'});
+  const role=String(viewer.role||'').toLowerCase();
+  const staff=['teacher','admin'].includes(role)&&viewer.approved!==false;
+  if(!staff&&!(role==='student'&&viewer.class===assignment.class))
+    return _json(403,{success:false,error:'This homework does not belong to you'});
+  const requested=event.queryStringParameters?.class;
+  if(requested&&requested!==assignment.class)
+    return _json(403,{success:false,error:'Assignment class mismatch'});
+  const meta=parseAssignmentMeta(assignment.list_meta);
+  const book=meta.source_book_id,unit=meta.source_unit_id;
+  const targets=[...new Set((Array.isArray(meta.target_sentence_ids)?meta.target_sentence_ids:[]).map(String))];
+  const modes=[...new Set((Array.isArray(meta.required_modes)?meta.required_modes:[]).map(String))]
+    .filter(m=>['coach','unscramble','speaking'].includes(m));
+  if(!book||!unit||!targets.length||!modes.length)
+    return _json(422,{success:false,error:'Sentence Genius homework has no valid target sentences or steps'});
+  const total=targets.length*modes.length,allowed=modes.map(m=>'sentence_'+m);
+  const {data:students,error:studentError}=await supabase.from('profiles')
+    .select('id,name,korean_name').eq('class',assignment.class).eq('role','student');
+  if(studentError)return _json(500,{success:false,error:'Student roster unavailable'});
+  const eligible=Array.isArray(meta.target_student_ids)&&meta.target_student_ids.length
+    ?(students||[]).filter(s=>meta.target_student_ids.map(String).includes(String(s.id)))
+    :(students||[]);
+  if(!eligible.length)return _json(200,{success:true,assignment_id:assignment.id,
+    class:assignment.class,category:'sentence_genius',total_modes:modes.length,progress:[],students:[]});
+  const ids=eligible.map(s=>s.id),mastery=new Map(ids.map(id=>[id,new Map(modes.map(m=>[m,new Set()]))]));
+  const validTargets=new Set(targets);
+  for(let offset=0;offset<80000;offset+=800){
+    const {data:rows,error}=await supabase.from('study_attempts')
+      .select('student_id,content_id,skill,metadata')
+      .in('student_id',ids).eq('book_id',book).eq('unit_id',unit)
+      .in('content_id',targets).in('skill',allowed)
+      .eq('is_correct',true).gte('created_at',assignment.created_at)
+      .order('created_at',{ascending:true}).range(offset,offset+799);
+    if(error)return _json(500,{success:false,error:'Sentence mastery progress unavailable'});
+    for(const row of rows||[]){
+      if(String(row.metadata?.sentence_genius)!=='true')continue;
+      const mode=String(row.skill||'').replace(/^sentence_/,'');
+      if(validTargets.has(String(row.content_id)))mastery.get(row.student_id)?.get(mode)?.add(String(row.content_id));
+    }
+    if(!rows||rows.length<800)break;
+  }
+  const progress=eligible.map(s=>{
+    const skillSets=mastery.get(s.id);
+    const counts=Object.fromEntries(modes.map(m=>[m,skillSets?.get(m)?.size||0]));
+    const done=Object.values(counts).reduce((x,y)=>x+y,0);
+    const completion=Math.min(100,Math.round(100*done/total));
+    return {user_id:s.id,id:s.id,name:s.name,korean_name:s.korean_name,
+      done,total,percent:completion,completion,
+      coach:counts.coach||0,unscramble:counts.unscramble||0,speaking:counts.speaking||0,
+      modes_total:modes.length,modes_attempted:modes.filter(m=>counts[m]===targets.length).length,
+      modes:modes.map(m=>({mode:m,passed:counts[m],total:targets.length})),
+      status:!assignment.active?'Ended':done===total?'Completed':done?'In Progress':'Not Started'};
+  });
+  return _json(200,{success:true,assignment_id:assignment.id,class:assignment.class,
+    total_modes:modes.length,category:'sentence_genius',
+    goal_type:'completion',goal_value:1,progress,students:progress});
+}
+
 async function assignmentProgress(event) {
   // Returns per-student progress for a given assignment id
   const assignmentId = event.queryStringParameters?.assignment_id || event.queryStringParameters?.id || null;
@@ -664,6 +726,8 @@ async function assignmentProgress(event) {
   let { data: assignment, error: aErr } = await supabase.from('homework_assignments').select('*').eq('id', assignmentId).single();
   if (aErr || !assignment) return _json(404,{ success:false, error:'Assignment not found' });
   assignment.list_meta = parseAssignmentMeta(assignment.list_meta);
+  if(assignment.list_meta?.app==='sentence_genius'||assignment.source_type==='sentence_genius')
+    return sentenceGeniusAssignmentProgress(assignment,event);
 
   // Auto-create run token if assignment has none (backfill for older assignments)
   let assignmentRunTokens = Array.isArray(assignment.list_meta?.run_tokens)
