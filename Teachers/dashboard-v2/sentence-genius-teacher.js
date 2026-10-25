@@ -342,9 +342,40 @@ function renderManage(root){
   }catch(e){box.textContent=e.message}
  });
 }
+// Expose read-only assignment summaries for the existing student roster.
+// One authoritative completion source: sg_homework_progress_v1.
+async function rosterHomework(className){
+ if(!className)return[];
+ const response=await rpc('sg_homework_list_v1',{p_history:false});
+ const selected=(response.assignments||[]).filter(a=>a.active===true&&a.class_name===className);
+ let index=0;const collected=new Array(selected.length);
+ await Promise.all(Array.from({length:Math.min(4,selected.length)},async()=>{
+  while(index<selected.length){
+   const i=index++,a=selected[i];
+   try{
+    const progress=await rpc('sg_homework_progress_v1',{p_id:a.id});
+    collected[i]={
+      assignment:{id:'sg-'+a.id,title:a.title,source_type:'sentence_genius',
+        class:a.class_name,active:true,due_at:a.due_at,
+        list_meta:{required_modes:a.required_modes||[],target_count:(a.target_sentence_ids||[]).length}},
+      progress:{students:progress.students||[]},error:''
+    };
+   }catch(error){
+    collected[i]={
+      assignment:{id:'sg-'+a.id,title:a.title,source_type:'sentence_genius',
+        class:a.class_name,active:true,due_at:a.due_at,
+        list_meta:{required_modes:a.required_modes||[],target_count:(a.target_sentence_ids||[]).length}},
+      progress:null,error:error.message
+    };
+   }
+  }
+ }));
+ return collected.filter(Boolean);
+}
 window.SentenceGeniusTeacher={
  openTeacher:teacherOpen,
- mountHomework:mode=>void openAssignment(mode)
+ mountHomework:mode=>void openAssignment(mode),
+ rosterHomework
 };
 window.addEventListener('ua:sentence-mounted',event=>{void openAssignment(event.detail?.sub||'manage')});
 })();
