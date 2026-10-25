@@ -36,6 +36,12 @@
   <p style="margin:0">Assign a textbook unit to a class. Gold requires Coach, Unscramble and Speaking.</p>
   <div class="filters" style="flex-wrap:wrap"><select class="control" id="sgtClass" aria-label="Assign to class"><option value="">Select a class</option></select><input class="control" id="sgtDue" type="date" aria-label="Homework due date"><button class="control" id="sgtAssign">Assign Sentence Genius</button></div>
   <div id="sgtStatus" role="status"></div>
+  <hr style="width:100%;border:0;border-top:1px solid #dce4e7">
+  <h2 style="margin:0;font-size:1.15rem">Manage Sentence Genius Homework</h2>
+  <div class="filters" style="flex-wrap:wrap">
+    <button class="control" id="sgtAssignmentsRefresh">Refresh assignments &amp; progress</button>
+  </div>
+  <div id="sgtAssignments" style="display:grid;gap:12px"></div>
 </div></section>
 <section class="view" id="view-apps"><div class="page-head"><div><h1>Teacher apps</h1></div></div><div class="app-grid"><div class="app-card"><span class="chip">LIVE</span><h3>Student tracking</h3><p>Study habits, learning evidence, mistakes, skill performance and proof of work.</p></div><div class="app-card"><span class="chip">LIVE</span><h3>Class overview</h3><p>Class-level learning and study-habit signals that link directly back to students.</p></div><div class="app-card"><span class="chip">READY</span><h3>More teacher tools</h3><p>Homework, assessments and classroom tools can be added here.</p></div></div></section>
 </main></div>
