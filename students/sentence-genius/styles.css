@@ -113,3 +113,9 @@ button.sg-sim-entry:disabled{cursor:default;opacity:.65}
 .sg-assigned-card strong{font-size:.88rem;overflow-wrap:anywhere}
 .sg-assigned-card small{font-size:.72rem;color:var(--muted,#73828a)}
 .sg-assigned-arrow{font-size:1.4rem;font-weight:700;color:#368791}
+
+.sg-assigned-progress-label{display:block;font-weight:750;color:#2c7580;margin-top:4px}
+.sg-assigned-bar{height:7px;display:block;width:100%;background:#e5eef1;border-radius:30px;overflow:hidden;margin-top:7px}
+.sg-assigned-bar i{display:block;height:100%;background:#34a5b1;border-radius:30px;transition:width .18s ease}
+.sg-assigned-card.is-complete{border-color:#99dabb;background:#f6fff9}
+.sg-assigned-card.is-complete .sg-assigned-progress-label{color:#218055}
