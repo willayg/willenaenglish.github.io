@@ -689,7 +689,7 @@ async function sentenceGeniusAssignmentProgress(assignment,event){
     const {data:rows,error}=await supabase.from('study_attempts')
       .select('student_id,content_id,skill,metadata')
       .in('student_id',ids).eq('book_id',book).eq('unit_id',unit)
-      .in('content_id',targets).in('skill',allowed)
+      .in('skill',allowed)
       .eq('is_correct',true).gte('created_at',assignment.created_at)
       .order('created_at',{ascending:true}).range(offset,offset+799);
     if(error)return _json(500,{success:false,error:'Sentence mastery progress unavailable'});
