@@ -317,3 +317,104 @@ html[data-vocab-theme="dark"] .wg-status-pill.is-submitted,html[data-vocab-theme
 .wg-home-practice-info strong{font-size:.69rem;letter-spacing:.05em;flex:0 0 auto;color:var(--cyan-strong,#259aa3);font-weight:900}
 .wg-home-practice-info span{font-size:.73rem;font-weight:700;line-height:1.45;overflow-wrap:anywhere}
 @media(max-width:560px){.wg-home-practice-info{grid-template-columns:1fr;margin-top:-13px}}
+
+/* v1.11.0: reuse the live Word/Sentence Genius fullscreen lesson components.
+   The shared QuestionRenderer now renders the Korean as the central prompt. */
+.writing-genius .wg-shared-session{
+ position:fixed;inset:0;z-index:10000;overflow:hidden;
+ display:grid;grid-template-rows:auto minmax(0,1fr) auto;
+ background:var(--vocab-page,#effafb);color:var(--vocab-heading,#244f56)
+}
+.writing-genius .wg-shared-session[hidden]{display:none!important}
+.writing-genius .wg-shared-session .vocab-session-topline{
+ grid-template-columns:44px minmax(0,1fr) 76px
+}
+.writing-genius .wg-shared-session .vocab-session-home{
+ min-height:44px;padding:8px 10px;border-radius:14px;white-space:nowrap;
+ border:2px solid var(--vocab-border,#c9f1f4);background:var(--vocab-card,#fff);
+ color:var(--vocab-heading,#244f56);
+ font:900 .79rem Poppins,system-ui,sans-serif;cursor:pointer
+}
+.writing-genius .wg-shared-session .vocab-session-main{
+ min-height:0;overflow:auto;overscroll-behavior:contain;
+ padding:clamp(18px,4vw,34px) 16px 30px
+}
+.writing-genius .wg-shared-session .vocab-question-wrap{width:min(720px,100%);margin:0 auto}
+.writing-genius .wg-shared-session .wg-round-quota{
+ text-align:right;font-size:.73rem;margin:0 0 12px;font-weight:750;color:var(--vocab-muted,#627e86)
+}
+.writing-genius .wg-shared-session .sp-unit-name{margin-bottom:12px}
+.writing-genius .wg-shared-session .question-card{
+ background:var(--vocab-card,#fff);border:2px solid var(--vocab-border,#c9f1f4);
+ border-radius:23px;padding:clamp(17px,4vw,27px);box-shadow:0 8px 23px rgba(34,106,116,.09)
+}
+.writing-genius .wg-shared-session .question-card .prompt{
+ text-align:center;font-size:clamp(1.5rem,5.6vw,2.35rem);
+ line-height:1.45;letter-spacing:-.025em;font-weight:900;
+ margin:0 0 17px;color:var(--vocab-heading,#244f56);white-space:pre-wrap
+}
+/* Word Genius hides context in its quick vocabulary questions; writing needs its
+   original textbook vocabulary hints, which the shared renderer owns. */
+.writing-genius .wg-shared-session .vocab-question-wrap .context{
+ display:grid;gap:10px;margin:0 0 18px
+}
+.writing-genius .wg-shared-session .context-block{border:0;padding:0;background:transparent}
+.writing-genius .wg-shared-session .context-label{
+ color:var(--cyan-strong,#25b8c4);font-size:.74rem;font-weight:900;margin:0 0 8px
+}
+.writing-genius .wg-shared-session .context-list.compact{
+ display:flex;justify-content:center;flex-wrap:wrap;gap:8px
+}
+.writing-genius .wg-shared-session .context-item{
+ background:var(--vocab-track,#e9fbfc);border:1px solid var(--vocab-border,#c9f1f4);
+ border-radius:12px;padding:9px 13px;color:var(--vocab-heading,#244f56);font-weight:800
+}
+.writing-genius .wg-shared-session .question-card [data-answer]::before{
+ content:'내 문장 · My sentence';display:block;font-weight:850;font-size:.82rem;
+ margin:0 0 8px;color:var(--vocab-heading,#244f56)
+}
+.writing-genius .wg-shared-session textarea.answer[data-write]{
+ width:100%;min-height:136px;max-height:35vh;resize:vertical;
+ border:2px solid var(--vocab-border,#c9f1f4);border-radius:17px;
+ padding:15px 16px;background:var(--vocab-card,#fff);color:var(--ink,#173f46);
+ font:700 clamp(1rem,3.4vw,1.14rem)/1.7 Poppins,system-ui,sans-serif
+}
+.writing-genius .wg-shared-session textarea.answer[data-write]:focus{
+ outline:3px solid var(--cyan-strong,#25b8c4);outline-offset:2px
+}
+.writing-genius .wg-shared-session .feedback[data-feedback]{
+ margin-top:13px;border-radius:13px;padding:13px 15px;font-size:.87rem;
+ font-weight:800;line-height:1.6
+}
+.writing-genius .wg-shared-session .feedback[data-feedback].show{display:block}
+.writing-genius .wg-shared-session .feedback.ok{background:#e9f9ef;color:#276a47}
+.writing-genius .wg-shared-session .feedback.bad{background:#fff0f0;color:#943e46}
+.writing-genius .wg-shared-session .wg-question-detail{
+ margin:10px 3px 13px;font-size:.78rem;text-align:center
+}
+.writing-genius .wg-shared-session .vocab-answer-note{
+ margin:14px 0;padding:14px 16px;border-radius:16px;
+ background:var(--vocab-card,#fff);border:1px solid var(--vocab-border,#c9f1f4)
+}
+.writing-genius .wg-shared-session .sp-feedback[hidden]{display:none!important}
+.writing-genius .wg-shared-session .sp-compare{
+ background:var(--vocab-card,#fff);border-color:var(--vocab-border,#c9f1f4)
+}
+.writing-genius .wg-shared-session .wg-next-actions{flex:1;display:flex;gap:10px}
+.writing-genius .wg-shared-session .wg-next-actions[hidden],
+.writing-genius .wg-shared-session #spCompareBtn[hidden],
+.writing-genius .wg-shared-session #spRetryBtn[hidden]{display:none!important}
+.writing-genius .wg-shared-session .wg-next-actions .vocab-action{min-width:0}
+.writing-genius .wg-shared-session .vocab-action:focus-visible{
+ outline:3px solid var(--cyan-strong,#25b8c4);outline-offset:2px
+}
+.writing-genius .wg-shared-session #spRoundMessage{margin:10px auto;font-size:.81rem}
+.writing-genius .wg-shared-session #spRoundSave{text-align:center;font-size:.72rem}
+@media(max-width:540px){
+ .writing-genius .wg-shared-session .vocab-session-main{padding:15px 12px 25px}
+ .writing-genius .wg-shared-session .wg-next-actions{gap:7px}
+ .writing-genius .wg-shared-session .vocab-action-row{gap:7px}
+ .writing-genius .wg-shared-session .vocab-action{font-size:.78rem}
+ .writing-genius .wg-shared-session .question-card .prompt{font-size:clamp(1.35rem,5.3vw,2rem)}
+ .writing-genius .wg-shared-session textarea.answer[data-write]{min-height:115px}
+}
