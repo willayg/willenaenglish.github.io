@@ -99,3 +99,17 @@ button.sg-sim-entry:disabled{cursor:default;opacity:.65}
   .sg-grammar-clue{margin:9px auto 14px;padding:8px 11px;gap:5px 8px;font-size:.77rem}
   .sg-grammar-clue strong{font-size:.94rem}
 }
+
+/* Assigned Sentence Genius textbook units. */
+.sg-assigned-homework{margin:12px 0 20px;padding:16px;border:1px solid #cbe8ea;border-radius:18px;background:var(--vocab-card,#fff)}
+.sg-assigned-title{display:grid;gap:4px;margin:0 0 12px}
+.sg-assigned-title strong{font-size:1.02rem;color:var(--vocab-heading,#275765)}
+.sg-assigned-title small{font-size:.76rem;color:var(--muted,#71828a)}
+.sg-assigned-list{display:grid;gap:9px}
+.sg-assigned-card{display:flex;align-items:center;justify-content:space-between;gap:16px;
+  padding:12px 14px;border:1px solid #cfe8ea;border-radius:14px;background:var(--vocab-card,#fff);
+  color:inherit;text-align:left;cursor:pointer;width:100%;font:inherit}
+.sg-assigned-card span:first-child{display:grid;gap:5px;min-width:0}
+.sg-assigned-card strong{font-size:.88rem;overflow-wrap:anywhere}
+.sg-assigned-card small{font-size:.72rem;color:var(--muted,#73828a)}
+.sg-assigned-arrow{font-size:1.4rem;font-weight:700;color:#368791}
