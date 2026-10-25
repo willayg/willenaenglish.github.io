@@ -23,7 +23,7 @@ function boot(){
   // Dashboard/Profile use this shared menu instead of <student-header>, so start the
   // same homework mission router here as well.
   setTimeout(()=>{
-    import('/students/components/homework-mission.js?v=20261005-shared1')
+    import('/students/components/homework-mission.js?v=20261025-sentence-homework1')
       .then(mod=>mod.showHomeworkMission())
       .catch(err=>console.debug('[shared-header-menu] homework mission unavailable',err));
   },0);
