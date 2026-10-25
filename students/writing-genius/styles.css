@@ -1,0 +1,91 @@
+/* Writing Genius reuses Word Genius' study, theme, buttons and student header.
+   This file only styles the new free-writing surfaces. */
+.writing-genius .wg-page{width:min(960px,100%);margin:0 auto;padding:16px clamp(14px,3vw,25px) 55px;color:var(--ink,#173f46)}
+.writing-genius [hidden]{display:none!important}
+.wg-brand{display:flex;align-items:center;gap:14px;max-width:760px;margin:12px auto 26px}
+.wg-brand>img{width:66px;height:66px;object-fit:contain;border-radius:20px;background:#fff;box-shadow:0 8px 25px #17465215}
+.wg-brand h1{font-size:clamp(1.65rem,5vw,2.25rem);line-height:1.08;margin:3px 0;color:var(--vocab-heading,#244f56);letter-spacing:-.04em}
+.wg-brand p{font-size:.91rem;margin:3px 0;color:var(--vocab-muted,#6f8190);font-weight:650}
+.wg-brand .eyebrow{font-size:.72rem;font-weight:900;letter-spacing:.12em;color:var(--cyan-strong,#25b8c4)}
+.wg-notice{font-size:.88rem;line-height:1.5;text-align:center;color:var(--vocab-heading,#244f56);margin:8px auto;max-width:740px;overflow-wrap:anywhere}
+.wg-notice:empty{display:none}
+.wg-notice.is-error{padding:14px;background:#fff3f5;border:1px solid #e9a4b4;border-radius:14px;color:#ae2754}
+.wg-section-title{font-size:clamp(1rem,3vw,1.3rem);font-weight:900;color:var(--vocab-heading,#244f56);margin:0 0 12px}
+.wg-mode-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px;margin:0 0 30px}
+.writing-genius .wg-mode{display:flex;flex-direction:column;align-items:flex-start;text-align:left;gap:12px;border:2px solid var(--vocab-border,#c9f1f4);border-radius:23px;min-width:0;min-height:190px;background:var(--vocab-card,#fff);box-shadow:0 8px 23px rgba(34,106,116,.09);padding:20px 16px;position:relative;cursor:pointer;color:var(--ink,#173f46);transition:transform .16s ease,border-color .16s ease}
+.wg-mode:hover,.wg-mode:focus-visible{transform:translateY(-3px);border-color:var(--cyan-strong,#25b8c4);outline:none}
+.wg-mode:active{transform:translateY(0)}
+.wg-mode:nth-child(2){border-color:color-mix(in srgb,var(--pink,#ff0a8a) 38%,var(--vocab-border,#c9f1f4))}
+.wg-mode-icon{display:grid;place-items:center;width:55px;height:55px;border-radius:18px;background:var(--vocab-track,#e9fbfc);color:var(--cyan-strong,#25b8c4)}
+.wg-mode:nth-child(2) .wg-mode-icon{background:#fff0f7;color:#e85198}
+.wg-mode:nth-child(3) .wg-mode-icon{background:#fff5d9;color:#ba821b}
+.wg-mode-icon svg{width:34px;height:34px;fill:none;stroke:currentColor;stroke-width:3.5;stroke-linecap:round;stroke-linejoin:round}
+.wg-mode-copy{display:flex;flex-direction:column;gap:3px;min-width:0}
+.wg-mode-copy strong{font-size:1.1rem;font-weight:900;line-height:1.23}
+.wg-mode-copy small{font-size:.75rem;color:var(--vocab-muted,#6f8190);font-weight:600}
+.wg-mode-copy em{font-size:.73rem;font-style:normal;color:var(--cyan-strong,#25b8c4);font-weight:800;margin-top:5px}
+.wg-mode .vocab-front-arrow{position:absolute;right:15px;top:15px;font-size:1.55rem;color:var(--cyan-strong,#25b8c4)}
+.wg-library-head{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;margin-top:4px}
+.wg-library-head p{margin:0;color:var(--vocab-muted,#6f8190);font-size:.82rem;font-weight:600}
+.wg-library-head .wg-section-title{margin:0 0 3px}
+.wg-library-head select,.wg-field select,.wg-field input{width:100%;appearance:auto;border:2px solid var(--vocab-border,#c9f1f4);border-radius:14px;background:var(--vocab-card,#fff);color:var(--ink,#173f46);padding:12px 13px;font:700 .92rem/1.3 Poppins,system-ui,sans-serif}
+.wg-library-head select{width:auto;min-width:130px}
+.wg-library{display:grid;gap:10px;margin:17px 0 8px}
+.wg-library-item{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:16px;width:100%;border:2px solid var(--vocab-border,#c9f1f4);border-radius:17px;padding:15px;background:var(--vocab-card,#fff);text-align:left;color:var(--ink,#173f46);cursor:pointer}
+.wg-library-item:hover,.wg-library-item:focus-visible{outline:2px solid var(--cyan-strong,#25b8c4);outline-offset:1px}
+.wg-library-item strong{display:block;font-size:.94rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wg-library-item small{display:block;color:var(--vocab-muted,#6f8190);margin:5px 0;font-size:.76rem}
+.wg-library-item .wg-excerpt{display:block;font-size:.79rem;white-space:nowrap;text-overflow:ellipsis;overflow:hidden;max-width:100%;color:var(--ink,#173f46)}
+.wg-library-meta{display:flex;flex-direction:column;align-items:flex-end;gap:7px}
+.wg-status-pill{font-size:.67rem;font-weight:850;border-radius:999px;padding:5px 9px;background:var(--vocab-track,#e7f4f7);white-space:nowrap}
+.wg-status-pill.is-submitted{background:#e2f8e9;color:#20774b}
+.wg-library-arrow{font-size:1.5rem;color:var(--cyan-strong,#25b8c4)}
+.wg-empty{padding:38px 18px;text-align:center;border:2px dashed var(--vocab-border,#c9f1f4);border-radius:19px;color:var(--vocab-muted,#6f8190);background:var(--vocab-card,#fff);font-size:.87rem}
+.wg-editor{max-width:800px;margin:auto}
+.wg-editor-nav{display:flex;align-items:center;justify-content:space-between;gap:15px;margin-bottom:16px}
+.wg-editor-nav .vocab-screen-back{font:800 .9rem Poppins,system-ui,sans-serif;cursor:pointer}
+.wg-save-state{font-size:.77rem;font-weight:750;color:var(--vocab-muted,#6f8190);text-align:right}
+.wg-save-state.is-error{color:#bd3752}
+.wg-editor-top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px}
+.wg-editor-top h2{color:var(--vocab-heading,#244f56);font-size:clamp(1.25rem,4vw,1.9rem);font-weight:900;margin:4px 0 0;line-height:1.3}
+.wg-kind{font-size:.71rem;letter-spacing:.09em;color:var(--cyan-strong,#25b8c4);font-weight:900;text-transform:uppercase}
+.wg-date{white-space:nowrap;font-size:.76rem;font-weight:800;padding:8px 12px;border-radius:12px;background:var(--vocab-card,#fff);color:var(--vocab-heading,#244f56);border:1px solid var(--vocab-border,#c9f1f4)}
+.wg-field{display:flex;flex-direction:column;gap:7px;margin:11px 0;font-weight:850;color:var(--vocab-heading,#244f56)}
+.wg-field span{font-size:.82rem}
+.wg-field input:focus,.wg-field select:focus,#wgBody:focus{outline:3px solid var(--cyan-strong,#25b8c4);outline-offset:1px}
+.wg-prompt-row{margin-bottom:16px}
+.wg-prompt-help{font-size:.79rem;font-weight:650;line-height:1.65;margin:8px 3px;color:var(--vocab-muted,#6f8190)}
+.wg-paper{border:2px solid var(--vocab-border,#c9f1f4);background:var(--vocab-card,#fff);border-radius:23px;box-shadow:0 10px 28px rgba(38,98,107,.09);overflow:hidden}
+.wg-paper-head{display:flex;justify-content:space-between;gap:12px;padding:14px 18px 10px;font-size:.74rem;font-weight:900;color:var(--cyan-strong,#25b8c4);letter-spacing:.06em}
+.wg-paper-head #wgCounts{letter-spacing:0;color:var(--vocab-muted,#6f8190);font-size:.72rem}
+#wgBody{width:100%;min-height:clamp(265px,42vh,480px);max-width:100%;resize:vertical;border:0;outline:0;background:transparent;color:var(--ink,#173f46);padding:10px 19px 24px;font:600 clamp(.95rem,3vw,1.12rem)/2 Poppins,system-ui,sans-serif;tab-size:2;overflow-wrap:break-word}
+#wgBody:focus{outline:0}
+#wgBody::placeholder{color:var(--vocab-muted,#8a9da4);opacity:.72}
+.wg-help{border:2px solid var(--vocab-border,#c9f1f4);border-radius:17px;background:var(--vocab-card,#fff);margin-top:17px;overflow:hidden}
+.wg-help-toggle{background:transparent;border:0;width:100%;text-align:left;color:var(--vocab-heading,#244f56);display:flex;align-items:center;justify-content:space-between;gap:10px;padding:13px 17px;font:900 .86rem Poppins,system-ui,sans-serif;cursor:pointer}
+.wg-help-toggle span{font-size:.74rem;color:var(--cyan-strong,#25b8c4)}
+#wgIdeas{padding:0 18px 17px}
+#wgIdeas p{color:var(--vocab-muted,#6f8190);font-size:.81rem}
+.wg-starters{display:flex;gap:8px;flex-wrap:wrap}
+.wg-starters button{border:1.5px solid var(--vocab-border,#c9f1f4);background:var(--vocab-track,#e7f4f7);color:var(--vocab-heading,#244f56);font:800 .81rem Poppins,system-ui,sans-serif;border-radius:11px;padding:9px 11px;cursor:pointer}
+.wg-starters button:hover{border-color:var(--cyan-strong,#25b8c4)}
+.wg-checklist{display:flex;flex-wrap:wrap;gap:13px;margin-top:16px}
+.wg-checklist label{display:flex;align-items:center;gap:7px;font-size:.76rem;font-weight:700;color:var(--vocab-heading,#244f56)}
+.wg-checklist input{accent-color:var(--cyan-strong,#25b8c4);width:16px;height:16px}
+.wg-submit-note{font-size:.77rem;color:var(--vocab-muted,#6f8190);margin:17px 3px 8px}
+.wg-actions{display:flex;gap:12px;justify-content:flex-end}
+.wg-button{font:900 .92rem Poppins,system-ui,sans-serif;border:2px solid transparent;border-radius:14px;padding:13px 21px;cursor:pointer;min-height:48px}
+.wg-button:disabled{cursor:wait;opacity:.6}
+.wg-primary{background:var(--cyan-strong,#25b8c4);color:white}
+.wg-secondary{background:var(--vocab-card,#fff);border-color:var(--vocab-border,#c9f1f4);color:var(--vocab-heading,#244f56)}
+.wg-button:focus-visible{outline:3px solid var(--pink,#ff0a8a);outline-offset:3px}
+.wg-complete{display:flex;align-items:center;flex-direction:column;gap:7px;text-align:center;background:var(--vocab-card,#fff);border:2px solid #b2e8c7;border-radius:21px;padding:24px;margin-top:14px;color:var(--vocab-heading,#244f56)}
+.wg-complete strong{font-size:1.05rem}
+.wg-complete span{font-size:.8rem}
+.wg-complete .wg-button{margin-top:10px}
+.wg-visually-hidden{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}
+.wg-editor.is-submitted #wgTitle,.wg-editor.is-submitted #wgPromptSelect,.wg-editor.is-submitted #wgBody{opacity:.76}
+html[data-vocab-theme="dark"] .wg-status-pill.is-submitted,html[data-vocab-theme="cyberpunk"] .wg-status-pill.is-submitted{background:#204d3d;color:#baf4d7}
+@media(max-width:680px){.wg-mode-grid{grid-template-columns:1fr;gap:10px}.writing-genius .wg-mode{min-height:92px;flex-direction:row;align-items:center;padding:14px}.wg-mode-icon{flex:0 0 55px}.wg-mode .vocab-front-arrow{position:static;margin-left:auto}.wg-brand{margin:9px auto 20px}.wg-brand>img{width:53px;height:53px}.wg-actions .wg-button{flex:1}.wg-checklist{flex-direction:column;gap:9px}}
+@media(max-width:360px){.wg-brand h1{font-size:1.45rem}.wg-brand>img{width:47px;height:47px}.wg-library-head select{min-width:104px}.wg-paper-head{padding:12px}.wg-paper-head #wgCounts{font-size:.66rem}.wg-actions{gap:8px}.wg-button{padding:10px 12px}}
+@media(prefers-reduced-motion:reduce){.writing-genius .wg-mode{transition:none}}
