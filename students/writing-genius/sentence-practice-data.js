@@ -192,5 +192,5 @@ export function generatePracticeQuestions(kind,items,count=10){
   result.push(card);
   if(result.length===count)break;
  }
- return result.length===count?result:[];
+ return result; // If textbook examples repeat, practise the distinct available sentences.
 }

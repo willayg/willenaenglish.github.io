@@ -406,6 +406,8 @@ export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,q
    }else if(result.cached){
     notify('✓ 교재 문장 또는 저장된 정답에서 바로 확인했어요.');
    }else notify('✓ AI Willi가 정답으로 인정했어요.');
+   if(result.quota?.remaining===0)
+    notify('오늘 AI Willi 확인 20회를 모두 사용했어요. 다른 Genius 앱을 연습하고 내일 다시 와요!');
   }catch(error){
    if(error.quota)showQuota(error.quota);
    notify(error.code==='DAILY_AI_LIMIT'
