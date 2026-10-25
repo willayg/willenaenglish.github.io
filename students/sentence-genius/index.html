@@ -15,7 +15,7 @@
 <link rel="stylesheet" href="/students/study-v2/v2.css?v=20260814-daily1">
 <link rel="stylesheet" href="/students/shared/willena-keyboard-safe.css?v=1.0.0">
 <link rel="stylesheet" href="/students/vocab-study/vocab-study.css?v=20261024-home-navigation4">
-<link rel="stylesheet" href="./styles.css?v=20261025-sg-no-approval-v4.1">
+<link rel="stylesheet" href="./styles.css?v=20261025-sg-homework-v5a">
 <link rel="stylesheet" href="/students/vocab-study/theme-pips.css?v=20260927-v0005">
 <script src="/students/api-gateway.js?v=20260926-progress-summary-cf1"></script>
 <script src="/students/study/study-progress.js?v=20260926-assignment-canonical1"></script>
@@ -77,6 +77,10 @@
     </section>
 
     <section id="front" class="vocab-front-menu" hidden>
+      <section id="sgAssignedHomework" class="sg-assigned-homework" hidden>
+        <div class="sg-assigned-title"><strong>내 숙제 · Sentence Genius</strong><small>완료하려면 지정된 문장을 연습하세요.</small></div>
+        <div id="sgAssignedHomeworkList" class="sg-assigned-list"></div>
+      </section>
       <section id="vocabAdminPicker" class="vocab-admin" hidden>
         <span class="eyebrow">ADMIN PREVIEW</span>
         <select id="vocabAdminBookSelect" aria-label="Choose book">
@@ -277,5 +281,5 @@
 </div>
 
 <script type="module" src="/students/vocab-study/theme-pips.js?v=20260927-v0001"></script>
-<script type="module" src="./app.js?v=20261025-sg-no-approval-v4.1"></script>
+<script type="module" src="./app.js?v=20261025-sg-homework-v5a"></script>
 </body></html>
