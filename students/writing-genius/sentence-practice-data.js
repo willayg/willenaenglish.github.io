@@ -68,11 +68,11 @@ function makeCards(items){
 const declarative=item=>!/[?]$/.test(item.en)&&!/^\s*(yes|no|okay|ok|hi|hello|thanks|thank you)\b/i.test(item.en)
  &&!/^\s*(please|let's|let us|don't)\b/i.test(item.en) && wc(item.en)>=4;
 const fullStop=str=>sentence(str).replace(/\s+$/,'')+'.';
-const bareEnglish=eng=>sentence(eng).replace(/^([A-Za-z])/,x=>x.toLowerCase());
+const bareEnglish=eng=>{const text=sentence(eng);return /^I(?:\b|['’])/.test(text)?text:text.replace(/^([A-Za-z])/,x=>x.toLowerCase())};
 const phrase=/^(.+?)\s+(with|at|in|on|after|before|because|during|every|next to|in front of)\s+(.+)[.!]$/i;
 const extensionRules=[
  {re:/^(?:I|we|they|he|she) (?:can|could)\s+[a-z]+.*[.!]$/i,extra:'after school',hint:'when · 언제'},
- {re:/^(?:I|we|they|he|she) (?:like|likes|love|loves|enjoy|enjoys)\b.+[.!]$/i,extra:'very much',hint:'how much · 얼마나'},
+ {re:/^(?:I|we|they|he|she) (?:like|likes|love|loves|enjoy|enjoys)\b(?!.*\b(?:too|much|very much)\s*[.!]$).+[.!]$/i,extra:'very much',hint:'how much · 얼마나'},
  {re:/^(?:I|we|they|he|she) (?:have|has)\s+(?:an?\s+)?(?:dog|cat|rabbit|hamster|pet|fish|bird|lizard|book|pencil|ball|toy)\b.*[.!]$/i,extra:'at home',hint:'where · 어디'},
  {re:/^(?:I|we|they|he|she) (?:play|plays|study|studies|practice|practices)\b.+[.!]$/i,extra:'after school',hint:'when · 언제'},
  {re:/^(?:I|we|they|he|she) (?:am|is|are|'m|'s|'re)\s+(?:in|at|on|under|behind|next to)\b.+[.!]$/i,extra:'now',hint:'when · 언제'},
@@ -91,11 +91,14 @@ function expandCards(items){
     help:'원래 교재 예문에는 '+m[2]+' 뒤에 설명이 더 있어요. 내 정보를 넣어도 좋아요.'});
   }else{
    const rule=extensionRules.find(x=>x.re.test(item.en));
-   if(!rule)continue;
-   const model=fullStop(sentence(item.en)+' '+rule.extra);
+   // When an example cannot safely be extended mechanically, show the real
+   // textbook sentence as a reference, rather than an invented ungrammatical
+   // "model" extension.
+   const model=rule?fullStop(sentence(item.en)+' '+rule.extra):item.en;
    result.push({...base(item),kind:'expand',prompt:'문장에 새로운 정보를 더해 보세요.',
     display:item.en,detail:'시간, 장소, 사람, 이유를 추가해 더 긴 문장으로 써 보세요.',
-    model,hint:rule.hint,help:'이 예시는 교재 문장에 정보를 새로 더해 만든 문장이에요. 내 아이디어를 써도 좋아요.'});
+    model,hint:rule?rule.hint:'언제? 어디서? 누구와? 왜? 중 하나를 더해 보세요.',
+    help:rule?'이 예시는 교재 문장에 정보를 새로 더해 만든 문장이에요. 내 아이디어를 써도 좋아요.':'위 문장은 교재 원문이에요. 원문보다 길게 만들어 보세요. 자유롭게 정보를 추가할 수 있어요.'});
   }
  }
  return result;
@@ -131,7 +134,7 @@ function answerCards(items){
     /^It\b/i.test(item.en)?'What can you tell us about it?':null);
   if(!question)continue;
   result.push({...base(item),kind:'answer',
-   prompt:'영어 질문에 완전한 문장으로 답해 보세요.',display:question,
+   prompt:'영어 질문에 완전한 문장으로 답해 보세요.',display:item.ko+'\n'+question,
    detail:'나의 생각을 영어로 써 보세요.',model:item.en,
    hint:'교재 표현: '+sentence(item.en).split(' ').slice(0,2).join(' ')+' …',
    help:'예문은 한 가지 답이에요. 질문에 맞는 내 답을 자유롭게 써 보세요.'});
