@@ -137,11 +137,11 @@ async function gradeTest(item,response){
   body:JSON.stringify({endpoint:'chat/completions',payload:{model:'gpt-5.6-luna',reasoning_effort:'low',
    max_completion_tokens:320,response_format:{type:'json_object'},
    messages:[{role:'system',content:'You are AI Willi, a Korean ESL sentence equivalence grader. Compare the Korean prompt and reference English with the student English. Accept naturally grammatical statements preserving tense, subject, polarity, intent and meaning even if wording differs. Reject wrong article, number, verb forms or changed subjects. Return JSON only with correct boolean, explanation_ko string, reason_code string.'},
-   {role:'user',content:JSON.stringify({korean:item.ko,reference:item.en,student:response})}]}})}});
+   {role:'user',content:JSON.stringify({korean:item.ko,reference:item.en,student:response})}]}})});
  if(!res.ok)throw Error('AI HTTP '+res.status);
  const body=await res.json(),value=body?.data?.choices?.[0]?.message?.content||body?.result;
  if(!value)throw Error('Empty AI verdict');
- const data=JSON.parse(String(value).replace(/^+`jsons*/i,'').replace(/`++$/g,'').trim());
+ const data=JSON.parse(String(value).replace(/^```(?:json)?\s*/i,'').replace(/\s*```$/,'').trim());
  if(typeof data.correct!=='boolean')throw Error('Malformed AI response');
  return{label:data.correct?'Correct · 4/4':'Incorrect · retry',method:'AI Willi',message:data.explanation_ko||data.reason_code||''};
 }
