@@ -83,7 +83,13 @@ export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,o
   const wasChecked=typed===String(result?.checked_text||'').trim();
   $('spCompareBtn').hidden=correct||exhausted;
   $('spCompareBtn').disabled=!typed||wasChecked;
-  $('spNextBtn').hidden=!correct&&!exhausted;
+  // A checked answer must never trap the student on this question.
+  // Retrying is optional; moving on preserves the first-attempt score.
+  $('spNextBtn').hidden=!result;
+  const isLast=state.session.current_index===state.session.questions.length-1;
+  txt('spNextBtn',correct
+   ?(isLast?'완료하기 ✓':'다음 문장 →')
+   :(isLast?'이대로 마치기 →':'다음 문장으로 넘어가기 →'));
   if(!result){txt('spCompareBtn','AI Willi 확인하기');txt('spMasteryNote','');return}
   txt('spCompareBtn','다시 확인하기 ('+(resp.attempts||1)+'/10)');
   $('spGrade').textContent=gradeTitle(result.grade);
@@ -139,8 +145,9 @@ export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,o
   const card=session.questions[session.current_index];
   txt('spMasteryNote',masteredAnswer(resp,card)?
    '✓ 정답! 첫 번째 점수는 그대로 유지돼요.':
-   (Number(resp.attempts||0)>=10?'확인 횟수를 모두 사용했어요. 다음 문제로 넘어갈 수 있어요.':
-    '문장을 고친 후 다시 확인해 보세요. 정답이 될 때까지 시도할 수 있어요.'));
+   (Number(resp.attempts||0)>=10
+    ?'확인 횟수를 모두 사용했어요. 다음 문장으로 넘어가세요.'
+    :'다시 고쳐서 확인하거나 다음 문장으로 넘어갈 수 있어요. 정답이 아닌 문장은 골드 숙달에 포함되지 않아요.'));
  }
  function renderGoldenCount(){
   const book=field('spBook');
@@ -374,11 +381,11 @@ export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,o
   if(state.loading||!state.session)return;
   const session=state.session,resp=current();
   if(!resp?.feedback)return;
-  resp.draft=field('spAnswer').trim();resp.revised=resp.draft;
-  if(resp.revised.length<3){notify('문장을 지우지 말고 남겨 주세요.',true);return}
-  if(!masteredAnswer(resp)&&Number(resp.attempts||0)<10){
-   notify('문장을 다시 고친 후 확인해 보세요.',true);return;
-  }
+  // After one check, the student may retry or move on with no hard block.
+  // Preserve the last checked answer if they cleared the editor.
+  const value=field('spAnswer').trim()||resp.feedback.checked_text||resp.initial;
+  resp.draft=value;resp.revised=value;
+  resp.skipped=!masteredAnswer(resp);
   state.loading=true;$('spNextBtn').disabled=true;
   const prev=session.current_index;
   session.current_index=prev+1;
