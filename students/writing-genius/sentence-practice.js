@@ -17,13 +17,21 @@ const seoulDate=()=>{const parts=Object.fromEntries(new Intl.DateTimeFormat('en-
  {timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'})
  .formatToParts(new Date()).map(x=>[x.type,x.value]));return [parts.year,parts.month,parts.day].join('-')};
 let singleton=null;
-export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,onExit}){
+export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,quotaApi,onExit}){
  if(singleton)return singleton;
  const state={student:null,books:[],units:[],session:null,recent:[],today:null,bookReq:0,
   queue:Promise.resolve(),timer:null,loading:false,active:false,screen:'picker',catalogError:false,
-  rewards:new Map(),rewardInflight:new Set(),renderer:null,hydrating:false};
+  rewards:new Map(),rewardInflight:new Set(),renderer:null,hydrating:false,quota:null};
  const answerInput=()=>state.renderer?.host?.querySelector('[data-write]')||null;
  const answerValue=()=>answerInput()?.value||'';
+ function showQuota(quota){
+  if(!quota||typeof quota.remaining!=='number')return;
+  state.quota=quota;
+  const label=quota.remaining>0
+   ?'AI Willi 오늘 남은 확인 '+quota.remaining+'/20'
+   :'AI Willi 오늘 20회 완료 · 다른 앱을 연습하고 내일 다시 와요!';
+  txt('spAiQuotaPicker',label);txt('spAiQuotaRound',label);
+ }
  const hintWords=hint=>{
   const parts=String(hint||'').split('·');
   const content=(parts.length>1?parts.slice(1).join('·'):parts[0]).trim();
@@ -145,9 +153,7 @@ export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,o
   $('spProgressBar').style.width=(i/s.questions.length*100)+'%';
   txt('spUnitName',s.book_title+' · '+(card.unitName||'Unit'));
   mountQuestion(card,resp);
-  txt('spTaskDetail',s.questions.some(q=>q.sourceUnitId!==s.unit_id)?
-    '같은 교재의 다른 단원도 포함된 연습입니다. 이 세션에서는 골드 유닛을 획득하지 않습니다.':
-    '힌트 단어를 참고해 나만의 영어 문장을 만들어 보세요.');
+  txt('spTaskDetail','힌트 단어를 참고해 나만의 영어 문장을 만들어 보세요. 이 단원의 문장을 모두 숙달하면 골드 유닛을 받아요.');
   $('spCompareBtn').disabled=false;
   txt('spCompareBtn','AI Willi 확인하기');
   txt('spNextBtn',i===s.questions.length-1?'완료하기 ✓':'다음 문장 →');
@@ -228,7 +234,7 @@ export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,o
    txt('spSourceNote','완료하지 않은 연습을 이어서 할 수 있어요.');return;
   }
   btn.disabled=state.loading||state.catalogError||!field('spBook')||!field('spUnit');
-  txt('spStart',state.recent.length?'새로운 문장 10개 연습하기 →':'문장 10개 시작하기 →');
+  txt('spStart',state.recent.length?'새로운 문장 연습하기 →':'문장 연습 시작하기 →');
   txt('spSourceNote','마음껏 다시 연습할 수 있어요. 틀린 문장은 다시 확인해 보세요.');
  }
  function renderUnitButtons(){
@@ -326,8 +332,9 @@ export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,o
   $('spStart').disabled=true;notify('오늘의 연습을 불러오는 중…');
   const outcomes=await Promise.allSettled([
    bounded(loadBooks(),15000),bounded(loadSessions(),15000),
-   bounded(fetchUnitRewards(),15000)
+   bounded(fetchUnitRewards(),15000),bounded(quotaApi(),15000)
   ]);
+  if(outcomes[3].status==='fulfilled')showQuota(outcomes[3].value);
   state.loading=false;
   if(outcomes[0].status==='rejected'){
    state.catalogError=true;notify('교재를 불러오지 못했어요. '+outcomes[0].reason?.message,true);
@@ -350,16 +357,13 @@ export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,o
   const book=state.books.find(b=>b.id===field('spBook')),unit=field('spUnit');
   if(!book||!unit||state.catalogError)return;
   state.loading=true;$('spStart').disabled=true;
-  notify('교재에서 문장 10개를 가져오는 중…');
+  notify('선택한 단원의 문장을 가져오는 중…');
   try{
-   let items=await bounded(getTextbookSentences(book.id,unit,state.units),18000);
-   let cards=generatePracticeQuestions('make',items,10);
-   if(cards.length!==10){
-    items=await bounded(getTextbookSentences(book.id,'',state.units),18000);
-    cards=generatePracticeQuestions('make',items,10);
-   }
-   if(cards.length!==10){
-    notify('이 교재에는 문장이 10개 미만이에요. 다른 교재를 선택해 주세요.',true);return;
+   const items=await bounded(getTextbookSentences(book.id,unit,state.units),18000);
+   const count=Math.min(10,items.length);
+   const cards=count?generatePracticeQuestions('make',items,count):[];
+   if(!cards.length){
+    notify('이 단원에는 연습할 수 있는 문장이 없어요. 다른 단원을 선택해 주세요.',true);return;
    }
    const made=await api('POST','',{
     student_id:state.student.id,exercise_type:'make',book_id:book.id,
@@ -389,6 +393,7 @@ export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,o
    const i=state.session.current_index;
    const result=await gradeSentence(state.session.id,i,answer);
    if(!result?.feedback)throw Error('확인 결과를 받지 못했어요.');
+   if(result.quota)showQuota(result.quota);
    resp.initial ||= answer;resp.draft=answer;resp.revised=answer;
    resp.compared=true;resp.attempts=Number(result.attempt_no||resp.attempts+1);
    if(!resp.firstFeedback)resp.firstFeedback=result.feedback;
@@ -401,7 +406,12 @@ export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,o
    }else if(result.cached){
     notify('✓ 교재 문장 또는 저장된 정답에서 바로 확인했어요.');
    }else notify('✓ AI Willi가 정답으로 인정했어요.');
-  }catch(error){notify('다시 확인해 주세요. '+error.message,true)}
+  }catch(error){
+   if(error.quota)showQuota(error.quota);
+   notify(error.code==='DAILY_AI_LIMIT'
+     ?'오늘 AI Willi 확인 20회를 모두 사용했어요. 다른 Genius 앱을 연습하고 내일 다시 와요!'
+     :'다시 확인해 주세요. '+error.message,true);
+  }
   finally{
    state.loading=false;
    if(resp)displayGrade(state.session.questions[state.session.current_index],resp);

@@ -26,7 +26,7 @@ export function sessionSummary(session){
  const percent=firstCheckPercent(responses,total);
  const stars=starsForPercent(percent);
  const mastered=questions.filter((q,i)=>masteredAnswer(responses[i])).length;
- const eligible=total===10&&questions.every(q=>q.sourceUnitId===session?.unit_id);
+ const eligible=total>0&&total<=10&&questions.every(q=>q.sourceUnitId===session?.unit_id);
  const checked=questions.filter((q,i)=>!!responses[i]?.firstFeedback||!!responses[i]?.feedback).length;
  return {percent,stars,mastered,eligible,checked,total,
   gold:eligible&&checked===total&&mastered===total};

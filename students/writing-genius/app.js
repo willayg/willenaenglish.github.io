@@ -1,7 +1,7 @@
 // Writing Genius: flexible writing. Student-owned drafts, teacher-visible submissions.
 // Reuses the existing auth gateway, student header, Word Genius theme and visual tokens.
 import {studentIdentity,signedInProfile} from '/students/sentence-genius/content.js?v=20261024-wg-auth1';
-import {createSentencePractice} from './sentence-practice.js?v=20261025-shared-renderer-v1';
+import {createSentencePractice} from './sentence-practice.js?v=20261025-quota-gold-v2';
 const API_BASE='https://fiieuiktlsivwfgyivai.supabase.co/rest/v1/';
 const KEY='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
 const NAV='willenaWritingGeniusNav';
@@ -315,14 +315,31 @@ async function writingGrade(sessionId,questionIndex,answer){
   let response=await call(await authToken());
   if(response.status===401)response=await call(await authToken(true));
   const data=await response.json().catch(()=>null);
-  if(!response.ok||data?.success!==true)throw Error(data?.error||'AI Willi를 사용할 수 없어요.');
+  if(!response.ok||data?.success!==true){
+    const error=new Error(data?.error||'AI Willi를 사용할 수 없어요.');
+    error.code=data?.code||'';
+    error.quota=data?.quota||null;
+    throw error;
+  }
   return data;
+}
+async function writingQuota(){
+  const call=async token=>fetch('/api/writing-genius-grade?usage=1',{
+    method:'GET',headers:{Authorization:'Bearer '+token},
+    credentials:'include',cache:'no-store',signal:AbortSignal.timeout(12000)
+  });
+  let response=await call(await authToken());
+  if(response.status===401)response=await call(await authToken(true));
+  const data=await response.json().catch(()=>null);
+  if(!response.ok||data?.success!==true||!data.quota)throw Error('Quota unavailable');
+  return data.quota;
 }
 const practice=createSentencePractice({
   api:(method,path='',body=null)=>databaseApi('writing_genius_sentence_sessions',method,path,body),
   checksApi:(method,path='',body=null)=>databaseApi('writing_genius_sentence_checks',method,path,body),
   rewardsApi:()=>databaseApi('rpc/wg_sentence_unit_rewards_v1','POST','',{}),
   gradeSentence:writingGrade,
+  quotaApi:writingQuota,
   onExit:()=>backHome()
 });
 document.querySelectorAll('[data-start]').forEach(button=>button.addEventListener('click',()=>{if(state.student)start(button.dataset.start)}));

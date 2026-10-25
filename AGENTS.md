@@ -34,9 +34,11 @@ This rule is non-negotiable.
 
 ## SINGLE SOURCE OF TRUTH
 
-The only question rendering implementation for Test Prep v2 is:
+The only question rendering implementation across the student apps is:
 
-`students/test-prep-v2/question-renderer.js`
+`shared/questions/question-renderer.js`
+
+`students/test-prep-v2/question-renderer.js` is a compatibility re-export only.
 
 The canonical question adapter/model is:
 
@@ -60,7 +62,7 @@ Do NOT:
 - add `*-render-fix.js`, `*-layout-fix.js`, MutationObserver renderer patches, or equivalent workaround files
 - fork the renderer because one screen needs a slightly different layout
 
-If a question renders incorrectly, fix `students/test-prep-v2/question-renderer.js`.
+If a question renders incorrectly, fix `shared/questions/question-renderer.js`.
 
 If source data cannot be converted into the canonical question shape, fix the source adapter/model. Do NOT fix the renderer by teaching it random database schemas.
 
@@ -123,7 +125,7 @@ If yes, stop and use the existing owner.
 ## TEST PREP V2 MODULE OWNERSHIP
 
 - `question-model.js` — canonical question shape / adaptation
-- `question-renderer.js` — ALL question answer UI / DOM
+- `shared/questions/question-renderer.js` — ALL question answer UI / DOM
 - `question-grader.js` — grading only
 - `navigation.js` — ALL browser/device history ownership and route transitions
 - `app.js` — the single route-to-screen renderer/controller; it requests navigation but does not own browser history

@@ -15,7 +15,7 @@
 <link rel="stylesheet" href="/students/shared/willena-keyboard-safe.css?v=1.0.0">
 <link rel="stylesheet" href="/students/vocab-study/vocab-study.css?v=20261024-home-navigation4">
 <link rel="stylesheet" href="/students/vocab-study/theme-pips.css?v=20260927-v0005">
-<link rel="stylesheet" href="./styles.css?v=20261025-shared-renderer-v1">
+<link rel="stylesheet" href="./styles.css?v=20261025-quota-gold-v2">
 <script src="/students/api-gateway.js?v=20260926-progress-summary-cf1"></script>
 <script src="/js/api-config.js?v=20260926-reverted-auth1"></script>
 <script type="module" src="/students/components/student-header.js?v=20261025-sg-mission-v5b"></script>
@@ -107,7 +107,7 @@
         <span id="spSaveState" class="wg-save-state" role="status" aria-live="polite"></span>
       </div>
       <div id="spPicker" class="sp-picker">
-        <div class="sp-mini-head"><strong>문장 만들기</strong><small>10문장 · 다시 도전 가능</small></div>
+        <div class="sp-mini-head"><strong>문장 만들기</strong><small>단원별 최대 10문장 · 다시 도전 가능</small></div>
         <label class="wg-field sp-book-field">내 교재
           <select id="spBook"><option value="">교재 불러오는 중…</option></select>
         </label>
@@ -115,16 +115,16 @@
           <div id="spUnitStrip" class="study-v2-unit-strip" aria-label="교재 단원 선택"></div>
           <input type="hidden" id="spUnit" value="">
         </div>
-        <p id="spSourceNote" class="sp-subtle">단원을 고르고 문장 10개를 만들어 보세요.</p>
+        <p id="spSourceNote" class="sp-subtle">단원의 문장을 직접 만들어 보세요 (최대 10개).</p><p id="spAiQuotaPicker" class="sp-subtle" aria-live="polite"></p>
         <div id="spGoldCount" class="sp-gold-count" hidden aria-live="polite"></div>
-        <button type="button" id="spStart" class="wg-button wg-primary sp-start">10문장 시작하기 →</button>
+        <button type="button" id="spStart" class="wg-button wg-primary sp-start">문장 연습 시작하기 →</button>
         <div id="spSaved" class="sp-saved" hidden>
           <strong>지난 연습 · My practice</strong><div id="spSessionList"></div>
         </div>
       </div>
       <div id="spRound" class="sp-round" hidden>
         <div class="sp-topline"><span id="spModeLabel" class="wg-kind"></span><span id="spQuestionCount" class="sp-step">1 / 10</span></div>
-        <div class="sp-progress"><div id="spProgressBar"></div></div>
+        <div class="sp-progress"><div id="spProgressBar"></div></div><p id="spAiQuotaRound" class="sp-subtle" aria-live="polite"></p>
         <div class="sp-task">
           <small id="spUnitName" class="sp-unit-name"></small>
           <div id="spQuestionHost" class="sp-shared-question question-card" aria-label="문장 만들기"></div>
@@ -153,7 +153,7 @@
       <div id="spDone" class="sp-done" hidden>
         <div class="sp-done-star">✓</div>
         <div id="spStarsEarned" class="sp-stars-earned" aria-label="Session stars">☆☆☆☆☆</div>
-        <h2>10문장 완료!</h2>
+        <h2>문장 연습 완료!</h2>
         <p id="spScoreSummary">내 문장을 직접 만들고 고쳤어요.</p>
         <div id="spGoldAward" class="sp-gold-award" hidden>
           <img src="/shared/svgs/golden-unit.svg?v=20260927-icons1" alt="">
@@ -169,5 +169,5 @@
   </main>
 </div>
 <script src="/students/vocab-study/theme-pips.js?v=20260927-v0005"></script>
-<script type="module" src="./app.js?v=20261025-shared-renderer-v1"></script>
+<script type="module" src="./app.js?v=20261025-quota-gold-v2"></script>
 </body></html>
