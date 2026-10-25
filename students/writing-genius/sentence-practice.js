@@ -1,11 +1,11 @@
-// Writing Genius: ten sentence prompts per unit, repeat wrong answers.
+// Writing Genius v1.10.0: use available unit sentences (up to ten), repeat wrong answers.
 // First attempt fixes stars; DB model and approved variations are checked before AI.
 import {getAssignedPracticeBooks,getPracticeUnits,
- getTextbookSentences,generatePracticeQuestions} from './sentence-practice-data.js?v=20261025-ten-v1';
-import {sessionSummary,masteredAnswer,publishGeniusStars} from './sentence-practice-rewards.js?v=20261025-ten-v2';
+ getTextbookSentences,generatePracticeQuestions} from './sentence-practice-data.js?v=20261025-wg-v1.10.0';
+import {sessionSummary,masteredAnswer,publishGeniusStars} from './sentence-practice-rewards.js?v=20261025-wg-v1.10.0';
 // Same canonical renderer as Sentence Genius. Writing Genius owns grading and stars,
 // but does not duplicate the question prompt, context or typed-English control.
-import {QuestionRenderer} from '/shared/questions/question-renderer.js';
+import {QuestionRenderer} from '/shared/questions/question-renderer.js?v=20261025-wg-v1.10.0';
 const $=id=>document.getElementById(id);
 const txt=(id,value)=>{$(id).textContent=String(value??'')};
 const field=id=>$(id).value;
@@ -21,7 +21,8 @@ export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,q
  if(singleton)return singleton;
  const state={student:null,books:[],units:[],session:null,recent:[],today:null,bookReq:0,
   queue:Promise.resolve(),timer:null,loading:false,active:false,screen:'picker',catalogError:false,
-  rewards:new Map(),rewardInflight:new Set(),renderer:null,hydrating:false,quota:null};
+  rewards:new Map(),rewardInflight:new Set(),renderer:null,hydrating:false,quota:null,
+  previewReq:0,previewKey:'',previewCount:null};
  const answerInput=()=>state.renderer?.host?.querySelector('[data-write]')||null;
  const answerValue=()=>answerInput()?.value||'';
  function showQuota(quota){
@@ -235,7 +236,28 @@ export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,q
   }
   btn.disabled=state.loading||state.catalogError||!field('spBook')||!field('spUnit');
   txt('spStart',state.recent.length?'새로운 문장 연습하기 →':'문장 연습 시작하기 →');
-  txt('spSourceNote','마음껏 다시 연습할 수 있어요. 틀린 문장은 다시 확인해 보세요.');
+  const selected=field('spBook')+'|'+field('spUnit');
+  if(state.previewKey===selected&&Number.isInteger(state.previewCount)){
+   txt('spSourceNote',state.previewCount>0
+    ?'이 단원 '+state.previewCount+'문장 · 전부 맞히면 골드 유닛! (5문장이어도 가능)'
+    :'이 단원에는 연습할 문장이 없어요. 다른 단원을 선택하세요.');
+  }else txt('spSourceNote','선택한 단원에서 문장을 연습해요. 5문장만 있어도 모두 맞히면 골드!');
+ }
+ async function previewUnit(){
+  const book=field('spBook'),unit=field('spUnit'),serial=++state.previewReq;
+  if(!book||!unit)return;
+  txt('spSourceNote','단원 문장 수를 확인하는 중…');
+  try{
+   const items=await bounded(getTextbookSentences(book,unit,state.units),18000);
+   const count=generatePracticeQuestions('make',items,10).length;
+   if(serial!==state.previewReq||book!==field('spBook')||unit!==field('spUnit'))return;
+   state.previewKey=book+'|'+unit;
+   state.previewCount=count;
+   refreshStartButton();
+  }catch(error){
+   if(serial!==state.previewReq)return;
+   txt('spSourceNote','단원 문장 전체를 맞히면 골드! 문장 수는 시작할 때 확인해요.');
+  }
  }
  function renderUnitButtons(){
   const strip=$('spUnitStrip');strip.replaceChildren();
@@ -261,7 +283,7 @@ export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,q
    b.title=unit.title;
    b.addEventListener('click',()=>{
     $('spUnit').value=unit.id;
-    renderUnitButtons();refreshStartButton();
+    renderUnitButtons();refreshStartButton();void previewUnit();
    });strip.append(b);
   }
  }
@@ -282,7 +304,7 @@ export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,q
    state.catalogError=true;
    notify('교재 단원을 불러오지 못했어요. '+err.message,true);
   }
-  refreshStartButton();
+  refreshStartButton();void previewUnit();
  }
  async function loadBooks(){
   state.books=await bounded(getAssignedPracticeBooks(state.student.className));
@@ -335,6 +357,7 @@ export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,q
    bounded(fetchUnitRewards(),15000),bounded(quotaApi(),15000)
   ]);
   if(outcomes[3].status==='fulfilled')showQuota(outcomes[3].value);
+  else txt('spAiQuotaPicker','AI Willi 하루 20회 · 사용량을 불러오지 못했어요.');
   state.loading=false;
   if(outcomes[0].status==='rejected'){
    state.catalogError=true;notify('교재를 불러오지 못했어요. '+outcomes[0].reason?.message,true);
