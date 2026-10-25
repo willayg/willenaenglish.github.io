@@ -2,7 +2,7 @@
 // First attempt fixes stars; DB model and approved variations are checked before AI.
 import {getAssignedPracticeBooks,getPracticeUnits,
  getTextbookSentences,generatePracticeQuestions} from './sentence-practice-data.js?v=20261025-ten-v1';
-import {sessionSummary,masteredAnswer,publishGeniusStars} from './sentence-practice-rewards.js?v=20261025-ten-v1';
+import {sessionSummary,masteredAnswer,publishGeniusStars} from './sentence-practice-rewards.js?v=20261025-ten-v2';
 const $=id=>document.getElementById(id);
 const txt=(id,value)=>{$(id).textContent=String(value??'')};
 const field=id=>$(id).value;
