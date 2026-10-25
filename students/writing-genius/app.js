@@ -1,7 +1,7 @@
 // Writing Genius: flexible writing. Student-owned drafts, teacher-visible submissions.
 // Reuses the existing auth gateway, student header, Word Genius theme and visual tokens.
 import {studentIdentity,signedInProfile} from '/students/sentence-genius/content.js?v=20261024-wg-auth1';
-import {createSentencePractice} from './sentence-practice.js?v=20261025-sp-v3';
+import {createSentencePractice} from './sentence-practice.js?v=20261025-make-only-v1';
 const API_BASE='https://fiieuiktlsivwfgyivai.supabase.co/rest/v1/';
 const KEY='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
 const NAV='willenaWritingGeniusNav';
@@ -297,8 +297,22 @@ async function bootstrap(){
     show('home');notice(error.message+' 로그인 페이지에서 다시 시도해 주세요.',true);
   }
 }
+async function writingGrade(sessionId,questionIndex,answer){
+  const call=async token=>fetch('/api/writing-genius-grade',{method:'POST',
+    headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},
+    credentials:'include',cache:'no-store',
+    body:JSON.stringify({session_id:sessionId,question_index:questionIndex,answer}),
+    signal:AbortSignal.timeout(28000)});
+  let response=await call(await authToken());
+  if(response.status===401)response=await call(await authToken(true));
+  const data=await response.json().catch(()=>null);
+  if(!response.ok||data?.success!==true)throw Error(data?.error||'AI Willi를 사용할 수 없어요.');
+  return data;
+}
 const practice=createSentencePractice({
   api:(method,path='',body=null)=>databaseApi('writing_genius_sentence_sessions',method,path,body),
+  checksApi:(method,path='',body=null)=>databaseApi('writing_genius_sentence_checks',method,path,body),
+  gradeSentence:writingGrade,
   onExit:()=>backHome()
 });
 document.querySelectorAll('[data-start]').forEach(button=>button.addEventListener('click',()=>{if(state.student)start(button.dataset.start)}));
