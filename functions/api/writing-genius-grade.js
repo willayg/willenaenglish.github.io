@@ -11,6 +11,56 @@ const json=(status,payload)=>new Response(JSON.stringify(payload),{status,header
 const fail=(status,error)=>json(status,{success:false,error});
 const isUUID=s=>/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(s);
 const normalize=s=>String(s||'').toLowerCase().replace(/[’‘]/g,"'").replace(/[^a-z0-9']+/g,' ').trim().slice(0,200);
+// Expand only unambiguous contractions for safe local textbook matches.
+// Never guess 's (is/has), 'd (had/would), or 'll-less informal spellings.
+function canonicalContractions(value){
+ const tokens=normalize(value).split(/\s+/).filter(Boolean);
+ const out=[];
+ for(const token of tokens){
+  let expansion=null;
+  if(token==="can't")expansion='cannot';
+  else if(token==="won't")expansion='will not';
+  else if(token==="shan't")expansion='shall not';
+  else if(token==="ain't")expansion=null;
+  else if(token==="let's")expansion='let us';
+  else if(token==="i'm")expansion='i am';
+  else if(token==="you're")expansion='you are';
+  else if(token==="we're")expansion='we are';
+  else if(token==="they're")expansion='they are';
+  else if(token==="it's")expansion=null;
+  else if(token==="that's")expansion=null;
+  else if(token==="what's")expansion=null;
+  else if(token==="who's")expansion=null;
+  else if(token==="there's")expansion=null;
+  else if(token==="here's")expansion=null;
+  else if(token==="he's"||token==="she's")expansion=null;
+  else if(token==="how's")expansion='how is';
+  else if(token==="where's")expansion='where is';
+  else if(token==="when's")expansion='when is';
+  else if(token==="why's")expansion='why is';
+  else if(token==="i've")expansion='i have';
+  else if(token==="you've")expansion='you have';
+  else if(token==="we've")expansion='we have';
+  else if(token==="they've")expansion='they have';
+  else if(token==="i'll")expansion='i will';
+  else if(token==="you'll")expansion='you will';
+  else if(token==="we'll")expansion='we will';
+  else if(token==="they'll")expansion='they will';
+  else if(token==="he'll")expansion='he will';
+  else if(token==="she'll")expansion='she will';
+  else if(token==="it'll")expansion='it will';
+  else if(token==="i'd"||token==="you'd"||token==="we'd"||token==="they'd"||token==="he'd"||token==="she'd")expansion=null;
+  else if(token.endsWith("n't")&&token.length>3){
+   const stem=token.slice(0,-3);
+   if(['is','are','was','were','do','does','did','have','has','had','could','should','would','must','need','might'].includes(stem))
+    expansion=stem+' not';
+  }
+  else if(token==="cannot")expansion='can not';
+  if(expansion)out.push(...expansion.split(' '));
+  else out.push(token);
+ }
+ return out.join(' ');
+}
 async function db(path,token,{method='GET',body}={}){
  const headers={apikey:KEY,Authorization:'Bearer '+token};
  if(body!==undefined){headers['Content-Type']='application/json';headers.Prefer='return=representation'}
@@ -72,7 +122,7 @@ async function luna(apiKey,korean,model,answer){
 }
 async function localCheck(auth,question,answer){
  const model=String(question.model||'');
- if(normalize(answer)===normalize(model)){
+ if(normalize(answer)===normalize(model)||canonicalContractions(answer)===canonicalContractions(model)){
   return feedback('model','correct',answer,model,'좋아요! 교재 문장과 맞아요.');
  }
  const sentenceId=String(question.sourceIds?.[0]||'');
