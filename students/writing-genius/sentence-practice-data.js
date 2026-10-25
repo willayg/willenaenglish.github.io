@@ -68,13 +68,15 @@ function makeCards(items){
 const declarative=item=>!/[?]$/.test(item.en)&&!/^\s*(yes|no|okay|ok|hi|hello|thanks|thank you)\b/i.test(item.en)
  &&!/^\s*(please|let's|let us|don't)\b/i.test(item.en) && wc(item.en)>=4;
 const fullStop=str=>sentence(str).replace(/\s+$/,'')+'.';
-const bareEnglish=eng=>sentence(eng).replace(/^([a-z])/,x=>x.toLowerCase());
+const bareEnglish=eng=>sentence(eng).replace(/^([A-Za-z])/,x=>x.toLowerCase());
 const phrase=/^(.+?)\s+(with|at|in|on|after|before|because|during|every|next to|in front of)\s+(.+)[.!]$/i;
 const extensionRules=[
- {re:/^I (can|could)\s+[a-z]+.*[.!]$/i,extra:'after school',hint:'when · 언제'},
- {re:/^I (like|love|enjoy)\b.+[.!]$/i,extra:'very much',hint:'how much · 얼마나'},
- {re:/^(?:She|He|They|We|I)\s+(?:is|are|am|was|were|\x27s|\x27re)\b.*[.!]$/i,extra:'today',hint:'when · 언제'},
- {re:/^(?:She|He|They|We|I)\s+\w+s\b.+[.!]$/i,extra:'every day',hint:'when · 언제'}
+ {re:/^(?:I|we|they|he|she) (?:can|could)\s+[a-z]+.*[.!]$/i,extra:'after school',hint:'when · 언제'},
+ {re:/^(?:I|we|they|he|she) (?:like|likes|love|loves|enjoy|enjoys)\b.+[.!]$/i,extra:'very much',hint:'how much · 얼마나'},
+ {re:/^(?:I|we|they|he|she) (?:have|has)\s+(?:an?\s+)?(?:dog|cat|rabbit|hamster|pet|fish|bird|lizard|book|pencil|ball|toy)\b.*[.!]$/i,extra:'at home',hint:'where · 어디'},
+ {re:/^(?:I|we|they|he|she) (?:play|plays|study|studies|practice|practices)\b.+[.!]$/i,extra:'after school',hint:'when · 언제'},
+ {re:/^(?:I|we|they|he|she) (?:am|is|are|'m|'s|'re)\s+(?:in|at|on|under|behind|next to)\b.+[.!]$/i,extra:'now',hint:'when · 언제'},
+ {re:/^(?:I|we|they|he|she) (?:was|were)\b.+[.!]$/i,extra:'yesterday',hint:'when · 언제'}
 ];
 function expandCards(items){
  const result=[];
