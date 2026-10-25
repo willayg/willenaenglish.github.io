@@ -61,7 +61,11 @@ profileButton?.addEventListener('click',()=>openStudentProfile());
 dashboardButton?.addEventListener('click',()=>{window.location.href='/students/dashboard/'});
 bigTextButton?.addEventListener('click',()=>{setBigText(!bigTextEnabled());setMenu(false)});
 testPrepAButton?.addEventListener('click',()=>{window.location.href='../test-prep-app/'});
-testPrepBButton?.addEventListener('click',()=>setMenu(false));
+testPrepBButton?.addEventListener('click',()=>{
+  if(!window.location.pathname.startsWith('/students/test-prep-v2/'))
+    window.location.href='/students/test-prep-v2/';
+  else setMenu(false);
+});
 logoutButton?.addEventListener('click',()=>logoutStudent());
 
 renderBigTextSetting();
