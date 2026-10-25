@@ -215,3 +215,25 @@ html[data-vocab-theme="dark"] .wg-status-pill.is-submitted,html[data-vocab-theme
  .wg-practice .sp-task{margin-bottom:11px}
  .wg-practice .sp-input{min-height:105px}
 }
+
+/* Writing Genius rewards: match Word Genius star levels and Golden Unit icons. */
+.wg-practice .sp-unit-stars{font-size:.72rem;font-weight:900;color:#b67d0f;margin-left:5px;white-space:nowrap}
+.wg-practice .sp-units .study-v2-unit.is-golden{
+ border-color:#e9b83d;background:#fff9df;color:#8d6313;
+ box-shadow:0 0 0 1px rgba(217,173,50,.35) inset}
+.wg-practice .sp-units .study-v2-unit.is-golden.is-current{
+ border-color:#e0ab2d;box-shadow:0 0 0 2px #f3d77c;background:#fffae5}
+.wg-practice .sp-units .vocab-unit-gold{width:18px;height:18px;vertical-align:-4px;margin-left:5px}
+.wg-practice .sp-gold-count{font-size:.78rem;font-weight:800;color:#a66b12;
+ margin:4px 0 12px;padding:8px 11px;border:1.5px solid #edd18a;border-radius:12px;
+ background:#fff8e5}
+.wg-practice .sp-stars-earned{font-size:clamp(1.55rem,6vw,2.15rem);letter-spacing:.13em;
+ color:#e5aa24;font-weight:900;margin:8px auto 4px}
+.wg-practice .sp-gold-award{display:flex;align-items:center;justify-content:center;gap:10px;
+ padding:12px;margin:14px auto 0;border:2px solid #e7b742;border-radius:15px;
+ background:#fff8dd;color:#8f660a;max-width:280px;font-size:1rem}
+.wg-practice .sp-gold-award img{width:37px;height:37px}
+.wg-practice .sp-mastery-note{font-size:.77rem;font-weight:800;color:var(--vocab-heading,#244f56);
+ line-height:1.55;margin:10px 0 0}
+.wg-practice .sp-sync-status{font-size:.73rem;color:var(--vocab-muted,#6f8190);
+ font-weight:700;margin:11px 0 0}
