@@ -3,6 +3,9 @@
 import {getAssignedPracticeBooks,getPracticeUnits,
  getTextbookSentences,generatePracticeQuestions} from './sentence-practice-data.js?v=20261025-ten-v1';
 import {sessionSummary,masteredAnswer,publishGeniusStars} from './sentence-practice-rewards.js?v=20261025-ten-v2';
+// Same canonical renderer as Sentence Genius. Writing Genius owns grading and stars,
+// but does not duplicate the question prompt, context or typed-English control.
+import {QuestionRenderer} from '/shared/questions/question-renderer.js';
 const $=id=>document.getElementById(id);
 const txt=(id,value)=>{$(id).textContent=String(value??'')};
 const field=id=>$(id).value;
@@ -18,7 +21,38 @@ export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,o
  if(singleton)return singleton;
  const state={student:null,books:[],units:[],session:null,recent:[],today:null,bookReq:0,
   queue:Promise.resolve(),timer:null,loading:false,active:false,screen:'picker',catalogError:false,
-  rewards:new Map(),rewardInflight:new Set()};
+  rewards:new Map(),rewardInflight:new Set(),renderer:null,hydrating:false};
+ const answerInput=()=>state.renderer?.host?.querySelector('[data-write]')||null;
+ const answerValue=()=>answerInput()?.value||'';
+ const hintWords=hint=>{
+  const parts=String(hint||'').split('·');
+  const content=(parts.length>1?parts.slice(1).join('·'):parts[0]).trim();
+  return content.split(/\s*\/\s*/).map(x=>x.trim()).filter(Boolean);
+ };
+ const questionFor=card=>({
+  id:'wg-make-'+(card.sourceIds?.[0]||card.id||'text'),
+  form:'write',prompt:card.prompt||'한국어를 읽고 영어 문장을 만들어 보세요.',
+  context:{korean:card.display,words:hintWords(card.hint)},
+  answer:[card.model],input:{language:'en'},grading:{constraints:{}}
+ });
+ function mountQuestion(card,resp){
+  const host=$('spQuestionHost');
+  state.hydrating=true;
+  try{
+   // QuestionRenderer provides the canonical safely-rendered Korean prompt,
+   // visible vocabulary bank and typed answer input.
+   state.renderer=new QuestionRenderer(host).render(questionFor(card),{
+    onChange:()=>{if(!state.hydrating)changed()}
+   });
+   const input=answerInput();
+   if(!input)throw Error('공용 문장 입력창을 불러오지 못했어요.');
+   input.maxLength=600;
+   input.setAttribute('aria-label','내 문장 · My sentence');
+   input.setAttribute('autocapitalize','sentences');
+   input.setAttribute('spellcheck','true');
+   input.value=resp.draft||resp.revised||resp.initial||'';
+  }finally{state.hydrating=false}
+ }
  const notify=(message='',error=false)=>{
   txt('spMessage',message);$('spMessage').classList.toggle('is-error',error);
  };
@@ -64,7 +98,7 @@ export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,o
   if(state.screen!=='round'||!state.session||state.session.status==='completed')return;
   const resp=current();
   if(!resp)return;
-  resp.draft=field('spAnswer');
+  resp.draft=answerValue();
   if(resp.feedback)resp.revised=resp.draft;
   clearTimeout(state.timer);
   state.timer=setTimeout(()=>{void persist()},850);
@@ -79,7 +113,7 @@ export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,o
   $('spCompare').hidden=!result;
   const correct=result?.grade==='correct';
   const exhausted=Number(resp.attempts||0)>=10;
-  const typed=field('spAnswer').trim();
+  const typed=answerValue().trim();
   const wasChecked=typed===String(result?.checked_text||'').trim();
   $('spCompareBtn').hidden=correct||exhausted;
   $('spCompareBtn').disabled=!typed||wasChecked;
@@ -110,15 +144,10 @@ export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,o
   txt('spQuestionCount',(i+1)+' / '+s.questions.length);
   $('spProgressBar').style.width=(i/s.questions.length*100)+'%';
   txt('spUnitName',s.book_title+' · '+(card.unitName||'Unit'));
-  txt('spTaskPrompt',card.prompt);
-  txt('spTaskDisplay',card.display);
+  mountQuestion(card,resp);
   txt('spTaskDetail',s.questions.some(q=>q.sourceUnitId!==s.unit_id)?
     '같은 교재의 다른 단원도 포함된 연습입니다. 이 세션에서는 골드 유닛을 획득하지 않습니다.':
-    '한국어를 읽고 영어 문장을 만들어 보세요.');
-  txt('spHint',card.hint||'');
-  $('spHint').hidden=false;
-  $('spAnswer').value=resp.draft||resp.revised||resp.initial||'';
-  $('spAnswer').disabled=false;
+    '힌트 단어를 참고해 나만의 영어 문장을 만들어 보세요.');
   $('spCompareBtn').disabled=false;
   txt('spCompareBtn','AI Willi 확인하기');
   txt('spNextBtn',i===s.questions.length-1?'완료하기 ✓':'다음 문장 →');
@@ -344,9 +373,9 @@ export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,o
  }
  async function grade(){
   if(state.loading||!state.session)return;
-  const answer=field('spAnswer').trim();
+  const answer=state.renderer?.getResponse()?.trim()||'';
   if(answer.length<3||!/[A-Za-z]/.test(answer)){
-   notify('영어 문장을 먼저 써 보세요.',true);$('spAnswer').focus();return;
+   notify('영어 문장을 먼저 써 보세요.',true);answerInput()?.focus();return;
   }
   const resp=current();
   if(resp?.feedback?.grade==='correct')return;
@@ -384,7 +413,7 @@ export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,o
   if(!resp?.feedback)return;
   // After one check, the student may retry or move on with no hard block.
   // Preserve the last checked answer if they cleared the editor.
-  const value=field('spAnswer').trim()||resp.feedback.checked_text||resp.initial;
+  const value=state.renderer?.getResponse()?.trim()||resp.feedback.checked_text||resp.initial;
   resp.draft=value;resp.revised=value;
   resp.skipped=!masteredAnswer(resp);
   state.loading=true;$('spNextBtn').disabled=true;
@@ -402,7 +431,7 @@ export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,o
  async function goBack(){
   clearTimeout(state.timer);state.timer=null;
   if(state.screen==='round'){
-   const resp=current();if(resp)resp.draft=field('spAnswer');
+   const resp=current();if(resp)resp.draft=answerValue();
    if(!(await persist()))return;
   }
   if(state.screen!=='picker'){
@@ -412,7 +441,7 @@ export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,o
  async function closeForNavigation(){
   clearTimeout(state.timer);state.timer=null;
   if(state.session&&state.screen==='round'){
-   const resp=current();if(resp)resp.draft=field('spAnswer');
+   const resp=current();if(resp)resp.draft=answerValue();
    if(!(await persist()))return false;
   }
   state.active=false;state.session=null;setScreen('picker');return true;
@@ -420,14 +449,13 @@ export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,o
  $('spBook').addEventListener('change',()=>{void loadUnits()});
  $('spStart').addEventListener('click',()=>{void startSession()});
  $('spBack').addEventListener('click',()=>{void goBack()});
- $('spAnswer').addEventListener('input',changed);
  $('spCompareBtn').addEventListener('click',()=>{void grade()});
  $('spRetryBtn').addEventListener('click',()=>{
   if(state.loading||state.screen!=='round')return;
   const response=current();
   if(!response?.feedback||response.feedback.grade==='correct')return;
-  const input=$('spAnswer');
-  input.focus();input.select();
+  const input=answerInput();
+  input?.focus();input?.select?.();
   notify('문장을 고치면 다시 확인할 수 있어요. 첫 번째 점수는 유지돼요.');
  });
  $('spNextBtn').addEventListener('click',()=>{void next()});
