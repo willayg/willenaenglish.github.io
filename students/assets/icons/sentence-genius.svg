@@ -1,13 +1,12 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title">
-<title id="title">Sentence Genius open book and speech bubble</title>
-<rect width="512" height="512" rx="36" fill="#fff"/>
-<g fill="none" stroke-linecap="round" stroke-linejoin="round">
-<path d="M256 150c-45-34-106-47-174-33v220c69-15 130-3 174 34 44-37 105-49 174-34V117c-68-14-129-1-174 33Z" fill="#f1fdfe" stroke="#0f4d63" stroke-width="22"/>
-<path d="M256 153v215" stroke="#0f4d63" stroke-width="18"/>
-<path d="M118 170c35-3 68 4 101 21M118 215c35-3 68 4 101 21M295 193c33-17 66-24 101-21M295 238c33-17 66-24 101-21" stroke="#42d3db" stroke-width="15"/>
-<path d="M163 69 147 42M257 79V43M349 68l16-27" stroke="#ff4fa0" stroke-width="18"/>
-<path d="M310 318h117c26 0 45-19 45-45v-24c0-26-19-45-45-45h-85c-27 0-45 19-45 45v35c0 13 4 24 13 34Z" fill="#fff" stroke="#ff4fa0" stroke-width="18"/>
-<path d="M337 253h94M337 280h60" stroke="#ffc62e" stroke-width="14"/>
-<path d="M164 423h184" stroke="#0f4d63" stroke-width="20"/>
-<path d="m130 412-15 15 15 15M382 412l15 15-15 15" stroke="#48bdf0" stroke-width="17"/>
-</g></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-labelledby="title">
+<title id="title">Sentence Genius — sentence path</title>
+<rect width="120" height="120" rx="23" fill="#fff"/>
+<g stroke-linecap="round" stroke-linejoin="round">
+<rect x="12" y="29" width="32" height="31" rx="8" fill="#42D3DB" stroke="#0F4D63" stroke-width="4"/>
+<rect x="72" y="29" width="36" height="31" rx="8" fill="#FFC62E" stroke="#0F4D63" stroke-width="4"/>
+<rect x="39" y="74" width="43" height="31" rx="8" fill="#FF4FA0" stroke="#0F4D63" stroke-width="4"/>
+<path d="M21 44h14M81 44h18M49 89h23" stroke="#0F4D63" stroke-width="4.5"/>
+<path d="M48 44h17m-6-6 6 6-6 6M90 64v12m-6-6 6 6 6-6M35 89H24V67m-6 6 6-6 6 6" fill="none" stroke="#0F4D63" stroke-width="4"/>
+<path d="M56 19l4-9 4 9 9 4-9 4-4 8-4-8-9-4Z" fill="#FFC62E"/>
+</g>
+</svg>
