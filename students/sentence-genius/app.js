@@ -7,7 +7,7 @@ import {getSentenceMastery} from './tracking.js';
 import {createNavigation} from './navigation.js';
 import {createScreens} from './screens.js?v=sg-homework-progress-v5b';
 import {createSession} from './session.js?v=sg-homework-progress-v5c';
-import {loadSentenceHomework} from './homework.js?v=sg-homework-progress-v5b';
+import {loadSentenceHomework} from './homework.js?v=sg-homework-unified-v6';
 
 const state={student:null,books:[],book:null,units:[],unit:null,items:[],store:null,
   loadToken:0,loading:null,teacher:false,homework:[],simMode:'class',simClasses:[],simCatalog:[],
