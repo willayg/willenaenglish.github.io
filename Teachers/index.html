@@ -352,7 +352,7 @@ async function loadRosterAssignments(className){
     const data=await api(homeworkRoute('list_assignments',{class:className}));
     if(request!==rosterAssignments.request)return;
     const now=Date.now();
-    const assignments=(data.assignments||[]).filter(a=>String(a.class||'')===className&&currentHomework(a)&&(!a.start_at||Date.parse(a.start_at)<=now));
+    const assignments=(data.assignments||[]).filter(a=>String(a.class||'')===className&&currentHomework(a)&&(!a.start_at||Date.parse(a.start_at)<=now)&&String(a.list_meta?.app||a.source_type||'').toLowerCase()!=='sentence_genius');
     rosterAssignments.items=assignments.map(assignment=>({assignment,progress:null,error:''}));renderStudents();
     let cursor=0;
     await Promise.all(Array.from({length:Math.min(4,assignments.length)},async()=>{
