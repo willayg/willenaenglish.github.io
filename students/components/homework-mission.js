@@ -7,6 +7,37 @@ function apiFetch(url, options) {
   return fetch(url, { credentials: 'include', ...(options || {}) });
 }
 
+// Sentence Genius assignments live in the authenticated operational homework
+// table, not the older wordlist homework API. Read only this student's rows.
+async function sentenceGeniusMissions() {
+  const key='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
+  const endpoint='https://fiieuiktlsivwfgyivai.supabase.co/rest/v1/rpc/sg_homework_student_v2';
+  const getToken=async refresh=>{
+    const current=window.WillenaAPI?.getLocalAccessToken?.();
+    if(current&&!refresh)return current;
+    const response=await apiFetch('/.netlify/functions/supabase_auth?action=refresh',{cache:'no-store'});
+    if(!response.ok)throw Error('Student session expired');
+    const body=await response.json().catch(()=>({}));
+    if(!body.access_token)throw Error('No student access token');
+    window.WillenaAPI?.setLocalTokens?.(body.access_token,body.refresh_token||'');
+    return body.access_token;
+  };
+  const query=token=>fetch(endpoint,{
+    method:'POST',cache:'no-store',credentials:'omit',
+    headers:{apikey:key,Authorization:'Bearer '+token,'Content-Type':'application/json'},
+    body:'{}'
+  });
+  let response=await query(await getToken(false));
+  if(response.status===401)response=await query(await getToken(true));
+  if(!response.ok)throw Error('Sentence Genius homework unavailable: '+response.status);
+  const data=await response.json().catch(()=>({}));
+  if(data.success!==true||!Array.isArray(data.assignments))return [];
+  return data.assignments.map(row=>({
+    ...row,source_type:'sentence_genius',
+    list_meta:{source_book_id:row.book_id,source_unit_id:row.unit_id}
+  }));
+}
+
 function sourceType(assignment) {
   return String(assignment?.source_type || assignment?.list_meta?.source_type || assignment?.list_meta?.app || '').trim().toLowerCase() || 'wordlist';
 }
@@ -60,6 +91,9 @@ function shouldSuppressForActivity() {
   try {
     const path = location.pathname;
 
+    // Sentence Genius displays its own assignment cards; never interrupt exercises.
+    if (/\/students\/sentence-genius\//i.test(path)) return true;
+
     if (/\/students\/vocab-study\//i.test(path) && document.body?.classList?.contains('vocab-session-open')) {
       return true;
     }
@@ -99,6 +133,10 @@ async function currentStudentId() {
 }
 
 async function assignmentIsComplete(assignment, uid) {
+  if(sourceType(assignment)==='sentence_genius'){
+    const total=Number(assignment.total)||0;
+    return total>0&&Number(assignment.done)>=total;
+  }
   try {
     const response = await apiFetch(
       '/.netlify/functions/homework_api?action=assignment_progress&assignment_id=' +
@@ -196,20 +234,25 @@ export async function showHomeworkMission() {
         catch { setTimeout(resolve, 0); }
       });
 
-      const response = await apiFetch(
-        '/.netlify/functions/homework_api?action=list_assignments&mode=student&_=' + Date.now(),
-        { cache: 'no-store' }
-      );
-      if (!response.ok) return;
-
-      const data = await response.json().catch(() => ({}));
-      if (!data?.success || !Array.isArray(data.assignments) || !data.assignments.length) return;
-
-      const assignments = [...data.assignments]
-        .filter((assignment) => !!destinationFor(assignment))
-        .sort((a, b) => new Date(a?.due_at || 0).getTime() - new Date(b?.due_at || 0).getTime());
-
-      if (!assignments.length) return;
+      // Failure in one homework service must not hide assignments from the other.
+      const sources=await Promise.allSettled([
+        apiFetch('/.netlify/functions/homework_api?action=list_assignments&mode=student&_='+Date.now(),
+          {cache:'no-store'}).then(async response=>{
+          if(!response.ok)return [];
+          const data=await response.json().catch(()=>({}));
+          return data?.success&&Array.isArray(data.assignments)?data.assignments:[];
+        }),
+        sentenceGeniusMissions()
+      ]);
+      const legacy=sources[0].status==='fulfilled'?sources[0].value:[];
+      const sentence=sources[1].status==='fulfilled'?sources[1].value:[];
+      const byId=new Map();
+      for(const assignment of [...legacy,...sentence]){
+        if(destinationFor(assignment))byId.set(sourceType(assignment)+':'+assignment.id,assignment);
+      }
+      const assignments=[...byId.values()].sort((a,b)=>
+        new Date(a?.due_at||0).getTime()-new Date(b?.due_at||0).getTime());
+      if(!assignments.length)return;
 
       const uid = await currentStudentId();
 
