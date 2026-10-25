@@ -296,6 +296,21 @@ function homeworkStudentProgress(item,id){
   const a=item.assignment,p=item.progress;
   if(item.error)return {unknown:true,error:item.error};
   if(!p)return {unknown:true};
+  if(String(a.source_type||'').toLowerCase()==='sentence_genius'){
+    const row=(p.students||[]).find(s=>String(s.id||s.student_id||s.user_id)===String(id));
+    if(!row)return {unknown:true};
+    const done=Math.max(0,Number(row.done)||0),total=Math.max(0,Number(row.total)||0);
+    if(!total)return {unknown:true};
+    const percent=Math.max(0,Math.min(100,Math.round(100*done/total)));
+    const modes=a.list_meta?.required_modes||[];
+    const sentenceCount=Math.max(0,Number(a.list_meta?.target_count)||0);
+    const labels={coach:'Coach',unscramble:'Unscramble',speaking:'Speaking'};
+    const sections=modes.map(mode=>({label:labels[mode]||mode,
+      done:Math.min(sentenceCount,Math.max(0,Number(row[mode])||0)),
+      total:sentenceCount,attempts:0}));
+    return {percent,complete:done>=total,started:done>0,done,total,
+      sections,detail:done+'/'+total+' sentence steps mastered'};
+  }
   if(String(a.source_type||'').toLowerCase()==='vocab_study'){
     const row=(p.students||[]).find(s=>String(s.student_id||s.user_id)===String(id));
     if(!row)return {unknown:true};
@@ -346,6 +361,12 @@ async function loadRosterAssignments(className){
         try{const progress=await api(homeworkRoute('assignment_progress',{assignment_id:item.assignment.id,class:className}));if(request!==rosterAssignments.request)return;item.progress=progress}catch(e){if(request!==rosterAssignments.request)return;item.error=e.message}
       }
     }));
+    // Merge Sentence Genius homework into the canonical student roster view.
+    try{
+      const extra=await window.SentenceGeniusTeacher?.rosterHomework?.(className);
+      if(request!==rosterAssignments.request)return;
+      if(Array.isArray(extra)&&extra.length)rosterAssignments.items.push(...extra);
+    }catch(error){console.warn('[Teachers] Sentence Genius roster homework unavailable',error)}
   }catch(e){if(request!==rosterAssignments.request)return;rosterAssignments.error=e.message}
   if(request!==rosterAssignments.request)return;
   rosterAssignments.loading=false;renderStudents();const box=$('#rosterDrawerAssignments');if(box)box.innerHTML=renderHomeworkDetails(window.rosterDrawerStudent);
@@ -377,7 +398,7 @@ function renderHomeworkDetails(id){
   return rows.map(({assignment:a,result:r})=>{
     const overdue=a.due_at&&Date.parse(a.due_at)<Date.now()&&!r.complete;
     const status=r.unknown?'Progress unavailable':r.complete?'Complete':r.started?'In progress':'Not started';
-    return `<div class="roster-assignment-detail"><div class="roster-assignment-head"><strong>${esc(a.title||a.list_title||'Assignment')}</strong><span>${status}${r.unknown?'':` · ${r.percent}%`}</span></div><small>${String(a.source_type||'').toLowerCase()==='vocab_study'?'Word Genius':'Homework'}${a.due_at?` · Due ${esc(fmtDate(a.due_at))}${overdue?' · Past due':''}`:''}</small>${r.unknown?'':`<div class="roster-progress"><i style="width:${r.percent}%"></i></div><div class="roster-sections">${r.sections.length?r.sections.map(s=>`<span><b>${esc(s.label)}</b> ${s.done}/${s.total} words completed · ${Math.max(0,s.total-s.done)} remaining</span>`).join(''):`<span>${esc(r.detail)}</span>`}</div>`}</div>`;
+    return `<div class="roster-assignment-detail"><div class="roster-assignment-head"><strong>${esc(a.title||a.list_title||'Assignment')}</strong><span>${status}${r.unknown?'':` · ${r.percent}%`}</span></div><small>${String(a.source_type||'').toLowerCase()==='vocab_study'?'Word Genius':String(a.source_type||'').toLowerCase()==='sentence_genius'?'Sentence Genius':'Homework'}${a.due_at?` · Due ${esc(fmtDate(a.due_at))}${overdue?' · Past due':''}`:''}</small>${r.unknown?'':`<div class="roster-progress"><i style="width:${r.percent}%"></i></div><div class="roster-sections">${r.sections.length?r.sections.map(s=>`<span><b>${esc(s.label)}</b> ${s.done}/${s.total} ${String(a.source_type||'').toLowerCase()==='sentence_genius'?'sentence steps mastered':'words completed'} · ${Math.max(0,s.total-s.done)} remaining</span>`).join(''):`<span>${esc(r.detail)}</span>`}</div>`}</div>`;
   }).join('');
 }
 function renderStudents(){
