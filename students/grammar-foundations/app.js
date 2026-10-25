@@ -1,5 +1,5 @@
 import {fetchGrammarHomework,homeworkCards} from './homework.js?v=1.00';
-import {QuestionRenderer} from '../shared/student-question-renderer.js?v=1.0.1';
+import {QuestionRenderer} from '../shared/student-question-renderer.js?v=20261025-shared-unified-v1';
 import {gradeQuestion} from '../shared/question-grader.js?v=2.1.2';
 import {mountAiWilliHelper,decorateAiWilliFeedback} from '../shared/ai-willi.js?v=1.1.0';
 import {installWillenaKeyboard,hideWillenaKeyboard} from '../shared/willena-keyboard.js?v=1.5.1';

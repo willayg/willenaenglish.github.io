@@ -1,6 +1,6 @@
 import {assignmentOverview} from './assignment-overview.js?v=2';
 import {assignmentMetrics,loadAssignmentResults} from './assignment-results.js?v=2';
-import {QuestionRenderer} from './question-renderer-accessible.js?v=2.25.94';
+import {QuestionRenderer} from './question-renderer-accessible.js?v=20261025-shared-unified-v1';
 import {gradeQuestion} from '../shared/question-grader.js?v=2.4.1';
 import {createQuestionSession} from './question-session.js?v=2.0.10';
 import {loadPracticeContent,questionAllowedForStudent} from './practice-loader.js?v=2.0.5';
