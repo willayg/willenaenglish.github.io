@@ -124,6 +124,19 @@ export async function onRequestPost({request,env}){
  }
  if(prior.length>=10)return fail(429,'이 문장의 확인 횟수를 모두 사용했어요. 다음으로 넘어가세요.');
  const attemptNo=(last?.attempt_no||0)+1;
+ let prechecked,budget;
+ try{
+  // Check DB matches and claim AI quota before making a pending reservation.
+  // At the daily limit, no pending check should block the student's next try.
+  prechecked=await localCheck(auth,card,answer);
+  budget=await aiQuota(auth,!prechecked);
+  if(!prechecked&&!budget.allowed){
+   return json(429,{
+    success:false,code:'DAILY_AI_LIMIT',quota:budget,
+    error:'오늘 AI Willi 확인 20회를 모두 사용했어요. 다른 Genius 앱을 연습하고 내일 다시 와요!'
+   });
+  }
+ }catch{return fail(503,'AI 사용량을 확인하지 못했어요. 다시 시도해 주세요.')}
  const reserved=await db(endpoint,auth.token,{method:'POST',body:{
   session_id:sessionId,student_id:auth.userId,question_index:index,
   attempt_no:attemptNo,answer_text:answer
@@ -133,16 +146,8 @@ export async function onRequestPost({request,env}){
  const reservation=reserved.value?.[0];if(!reservation?.id)return fail(503,'AI 확인을 준비하지 못했어요.');
  try{
   // Database-first! Only unknown variations reach Luna.
-  let grade=await localCheck(auth,card,answer);
-   const budget=await aiQuota(auth,!grade);
-   if(!grade&&!budget.allowed){
-     await db(endpoint+'?id=eq.'+reservation.id,auth.token,{method:'DELETE'});
-     return json(429,{
-       success:false,code:'DAILY_AI_LIMIT',quota:budget,
-       error:'오늘 AI Willi 확인 20회를 모두 사용했어요. 다른 Genius 앱을 연습하고 내일 다시 와요!'
-     });
-   }
-   if(!grade){
+  let grade=prechecked;
+  if(!grade){
      const key=env.OPENAI_API_KEY||env.OPENAI_API||env.OPENAI_KEY;
      if(!key)throw Error('Luna API key missing');
      grade=await luna(key,card.display,card.model,answer);
