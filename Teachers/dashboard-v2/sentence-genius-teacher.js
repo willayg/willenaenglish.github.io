@@ -97,12 +97,18 @@ async function teacherOpen(){
  '<div class="sgt-head"><h3>Class & student progress</h3><p>Recorded Sentence Genius homework mastery by class, including Coach, Unscramble and Speaking. No simulated activity is saved.</p></div>'+
  '<div class="sgt-actions"><label class="sgt-class-label">Class <select id="sgtProgressClass" class="control"><option value="">Choose a class</option></select></label>'+
  '<button type="button" class="control" id="sgtClassRefresh">↻ Refresh progress</button></div>'+
- '<div id="sgtClassProgress" class="sgt-progress-overview" aria-live="polite">Choose a class to view assigned unit progress.</div></section>';
+ '<div id="sgtClassProgress" class="sgt-progress-overview" aria-live="polite">Choose a class to view assigned unit progress.</div></section>'+
+ '<section class="sgt-class-dashboard" id="sgtIndependentDashboard">'+
+ '<div class="sgt-head"><h3>Independent practice activity</h3><p>Actual saved Sentence Genius attempts, even without assigned homework. Mastery counts show unique correct sentences per skill, not Gold status.</p></div>'+
+ '<div class="sgt-actions"><label>Period <select id="sgtPracticeDays" class="control"><option value="30">Last 30 days</option><option value="7">Last 7 days</option><option value="90">Last 90 days</option></select></label></div>'+
+ '<div id="sgtIndependentProgress" class="sgt-progress-overview" aria-live="polite">Choose a class above to view student activity.</div></section>';
  const bookEl=$('#sgtTestBook',root),unitEl=$('#sgtTestUnit',root),sentenceEl=$('#sgtTestSentence',root),test=$('#sgtTestCheck',root);
  $('#sgtGoHomework',root).onclick=()=>{document.querySelector('[data-view="assignments"]')?.click();window.UniversalAssignments?.openTab?.('sentence')};
  const progressClass=$('#sgtProgressClass',root),progressRefresh=$('#sgtClassRefresh',root);
- progressClass.onchange=()=>void loadClassSentenceProgress(root,progressClass.value);
- progressRefresh.onclick=()=>void loadClassSentenceProgress(root,progressClass.value);
+ const reload=()=>{void loadClassSentenceProgress(root,progressClass.value);void loadClassSentencePractice(root,progressClass.value)};
+ progressClass.onchange=reload;
+ progressRefresh.onclick=reload;
+ $('#sgtPracticeDays',root).onchange=()=>void loadClassSentencePractice(root,progressClass.value);
  void classes().then(list=>{
   if(!root.isConnected||!progressClass.isConnected)return;
   progressClass.innerHTML='<option value="">Choose a class</option>'+
@@ -140,6 +146,58 @@ async function teacherOpen(){
   };
  }catch(e){$('#sgtTestResult',root).textContent=e.message}
 }
+// Independent practice is intentionally separate from assigned homework progress.
+let independentPracticeRequest=0;
+async function loadClassSentencePractice(root,className){
+ const host=$('#sgtIndependentProgress',root),request=++independentPracticeRequest;
+ if(!host)return;
+ if(!className){host.textContent='Choose a class above to view student activity.';return}
+ const days=Number($('#sgtPracticeDays',root)?.value)||30;
+ host.textContent='Loading recorded Sentence Genius activity…';
+ try{
+  const result=await rpc('sg_teacher_practice_v1',{p_class:className,p_days:days});
+  if(request!==independentPracticeRequest||!host.isConnected)return;
+  const people=(result.students||[]),active=people.filter(p=>Number(p.attempts)>0);
+  const ids=[...new Set(active.flatMap(p=>(p.units||[]).map(u=>String(u.book_id||''))))]
+    .filter(id=>uuidPattern.test(id));
+  const bookTitles=new Map((await books()).map(b=>[String(b.id),b.title]));
+  const unitLabels=new Map();
+  if(ids.length){
+   for(let start=0;start<ids.length;start+=25){
+    try{
+     const rows=await catalog('content_units?select=id,book_id,unit_number,title&status=in.(review,published)&book_id=in.('+ids.slice(start,start+25).join(',')+')&limit=900');
+     for(const unit of rows)unitLabels.set(String(unit.id),'Unit '+unit.unit_number+(unit.title?' · '+unit.title:''));
+    }catch(error){console.warn('[Sentence Genius] unit labels unavailable',error)}
+   }
+  }
+  if(request!==independentPracticeRequest||!host.isConnected)return;
+  const attempts=people.reduce((sum,p)=>sum+(Number(p.attempts)||0),0);
+  const summary='<div class="sgt-class-summary"><strong>'+active.length+'/'+people.length+
+    ' active students</strong><strong>'+attempts+' recorded attempts</strong>'+
+    '<strong>Last '+days+' days</strong></div>';
+  const cards=active.map(p=>{
+    const units=(p.units||[]).map(u=>{
+      const title=(bookTitles.get(String(u.book_id))||'Textbook')+' · '+
+        (unitLabels.get(String(u.unit_id))||'Unit');
+      return '<div><span>'+escapeHtml(title)+'</span><small>'+
+        (Number(u.attempts)||0)+' attempts · 코치 '+(Number(u.coach)||0)+
+        ' · 배열 '+(Number(u.unscramble)||0)+' · 말하기 '+(Number(u.speaking)||0)+
+        ' distinct mastered sentences</small></div>';
+    }).join('');
+    const last=p.last_activity?new Date(p.last_activity).toLocaleDateString():'—';
+    return '<details class="sgt-progress-student"><summary><span><strong>'+
+      escapeHtml(p.korean_name||p.name||'Student')+'</strong><small>'+
+      (Number(p.attempts)||0)+' attempts · Last active '+escapeHtml(last)+'</small></span>'+
+      '<span class="sgt-progress-percent">'+(p.units||[]).length+' units</span></summary>'+
+      '<div class="sgt-progress-units">'+units+'</div></details>';
+  }).join('');
+  host.innerHTML=summary+(cards||'<p class="sgt-empty">No recorded Sentence Genius activity in this period.</p>');
+ }catch(error){
+  if(request===independentPracticeRequest&&host.isConnected)
+   host.textContent='Practice activity unavailable: '+error.message;
+ }
+}
+
 // Teacher overview uses the same secured homework progress RPC as Manage Homework.
 let classProgressRequest=0;
 async function loadClassSentenceProgress(root,className){
