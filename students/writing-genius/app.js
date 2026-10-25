@@ -1,7 +1,8 @@
 // Writing Genius: flexible writing. Student-owned drafts, teacher-visible submissions.
 // Reuses the existing auth gateway, student header, Word Genius theme and visual tokens.
 import {studentIdentity} from '/students/sentence-genius/content.js?v=20261024-wg-auth1';
-const API='https://fiieuiktlsivwfgyivai.supabase.co/rest/v1/writing_genius_entries';
+import {createSentencePractice} from './sentence-practice.js?v=20261025-sp-v1';
+const API_BASE='https://fiieuiktlsivwfgyivai.supabase.co/rest/v1/';
 const KEY='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
 const NAV='willenaWritingGeniusNav';
 const $=id=>document.getElementById(id);
@@ -38,7 +39,7 @@ const validKind=kind=>Object.hasOwn(modeNames,kind)?kind:'sentence';
 function notice(message='',error=false){const node=$('wgNotice');node.textContent=message;node.classList.toggle('is-error',error)}
 function saveState(message='',error=false){const node=$('wgSaveState');node.textContent=message;node.classList.toggle('is-error',error)}
 function navState(screen,id){return {[NAV]:true,screen,id:id||null,depth:screen==='editor'?1:0}}
-function show(name){$('wgHome').hidden=name!=='home';$('wgEditor').hidden=name!=='editor';notice('')}
+function show(name){$('wgHome').hidden=name!=='home';$('wgEditor').hidden=name!=='editor';$('wgPractice').hidden=name!=='practice';notice('')}
 function renderLibrary(){
   const root=$('wgLibrary');root.replaceChildren();
   const published=state.entries.filter(e=>e.status==='submitted').length;
@@ -71,8 +72,8 @@ async function authToken(force=false){
   window.WillenaAPI?.setLocalTokens?.(body.access_token,body.refresh_token||'');
   return body.access_token;
 }
-async function api(method,path='',body=null){
-  const call=async token=>fetch(API+path,{method,cache:'no-store',
+async function databaseApi(table,method,path='',body=null){
+  const call=async token=>fetch(API_BASE+table+path,{method,cache:'no-store',
     headers:{apikey:KEY,Authorization:'Bearer '+token,
       ...(body?{'Content-Type':'application/json',Prefer:'return=representation'}:{})},
     ...(body?{body:JSON.stringify(body)}:{})});
@@ -85,6 +86,7 @@ async function api(method,path='',body=null){
   }
   return result;
 }
+const api=(method,path='',body=null)=>databaseApi('writing_genius_entries',method,path,body);
 async function reloadEntries(){
   const list=await api('GET','?select=id,student_id,kind,title,prompt_key,prompt_text,body,writing_date,status,created_at,updated_at,submitted_at&order=updated_at.desc&limit=160');
   if(!Array.isArray(list))throw new Error('글 목록을 불러오지 못했어요.');
@@ -158,6 +160,12 @@ function openEditor(entry,fromPop=false){
 }
 function start(kind){
   kind=validKind(kind);
+  if(kind==='sentence'){
+    state.active=null;show('practice');
+    if(!(history.state?.[NAV]&&history.state.screen==='practice'))history.pushState(navState('practice'),'');
+    void practice.open(state.student).catch(error=>notice('문장 연습을 불러오지 못했어요. '+error.message,true));
+    return;
+  }
   if(kind==='diary'){
     const existing=state.entries.find(e=>e.kind==='diary'&&e.writing_date===seoulDate());
     if(existing){openEditor(existing);return}
@@ -251,6 +259,15 @@ async function backHome(fromPop=false){
 }
 async function popRoute(){
   const nav=history.state;
+  if(nav?.[NAV]&&nav.screen==='practice'){
+    show('practice');
+    if(!practice.active)await practice.open(state.student).catch(error=>notice(error.message,true));
+    return;
+  }
+  if(practice.active){
+    const safe=await practice.closeForNavigation();
+    if(!safe){history.pushState(navState('practice'),'');return}
+  }
   if(nav?.[NAV]&&nav.screen==='editor'&&nav.id){
     const match=state.entries.find(e=>e.id===nav.id);
     if(match){openEditor(match,true);return}
@@ -268,12 +285,17 @@ async function bootstrap(){
     await reloadEntries();
     if(!history.state?.[NAV])history.replaceState(navState('home'),'');
     const route=history.state;
+    if(route?.screen==='practice'){show('practice');await practice.open(state.student);return}
     const match=route?.screen==='editor'?state.entries.find(e=>e.id===route.id):null;
     if(match)openEditor(match,true);else show('home');
   }catch(error){
     show('home');notice(error.message+' 로그인 페이지에서 다시 시도해 주세요.',true);
   }
 }
+const practice=createSentencePractice({
+  api:(method,path='',body=null)=>databaseApi('writing_genius_sentence_sessions',method,path,body),
+  onExit:()=>backHome()
+});
 document.querySelectorAll('[data-start]').forEach(button=>button.addEventListener('click',()=>{if(state.student)start(button.dataset.start)}));
 $('wgHistoryFilter').addEventListener('change',e=>{state.filter=e.target.value;renderLibrary()});
 $('wgBack').addEventListener('click',()=>void backHome());
