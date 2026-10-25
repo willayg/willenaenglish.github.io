@@ -1,11 +1,11 @@
-// Writing Genius v1.10.0: use available unit sentences (up to ten), repeat wrong answers.
+// Writing Genius v1.11.0: use available unit sentences (up to ten), repeat wrong answers.
 // First attempt fixes stars; DB model and approved variations are checked before AI.
 import {getAssignedPracticeBooks,getPracticeUnits,
- getTextbookSentences,generatePracticeQuestions} from './sentence-practice-data.js?v=20261025-wg-v1.10.0';
-import {sessionSummary,masteredAnswer,publishGeniusStars} from './sentence-practice-rewards.js?v=20261025-wg-v1.10.0';
+ getTextbookSentences,generatePracticeQuestions} from './sentence-practice-data.js?v=20261025-wg-v1.11.0';
+import {sessionSummary,masteredAnswer,publishGeniusStars} from './sentence-practice-rewards.js?v=20261025-wg-v1.11.0';
 // Same canonical renderer as Sentence Genius. Writing Genius owns grading and stars,
 // but does not duplicate the question prompt, context or typed-English control.
-import {QuestionRenderer} from '/shared/questions/question-renderer.js?v=20261025-wg-v1.10.0';
+import {QuestionRenderer} from '/shared/questions/question-renderer.js?v=20261025-wg-v1.11.0';
 const $=id=>document.getElementById(id);
 const txt=(id,value)=>{$(id).textContent=String(value??'')};
 const field=id=>$(id).value;
@@ -40,8 +40,8 @@ export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,q
  };
  const questionFor=card=>({
   id:'wg-make-'+(card.sourceIds?.[0]||card.id||'text'),
-  form:'write',prompt:card.prompt||'한국어를 읽고 영어 문장을 만들어 보세요.',
-  context:{korean:card.display,words:hintWords(card.hint)},
+  form:'write',prompt:card.display||'한국어를 읽고 영어 문장을 만들어 보세요.',
+  context:{words:hintWords(card.hint)},
   answer:[card.model],input:{language:'en'},grading:{constraints:{}}
  });
  function mountQuestion(card,resp){
@@ -63,9 +63,14 @@ export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,q
   }finally{state.hydrating=false}
  }
  const notify=(message='',error=false)=>{
-  txt('spMessage',message);$('spMessage').classList.toggle('is-error',error);
+  for(const id of ['spMessage','spRoundMessage']){
+   txt(id,message);$(id).classList.toggle('is-error',error);
+  }
  };
- const saveLabel=message=>txt('spSaveState',message||'');
+ const saveLabel=message=>{
+  txt('spSaveState',message||'');
+  txt('spRoundSave',message||'');
+ };
  const setScreen=name=>{
   state.screen=name;
   $('spPicker').hidden=name!=='picker';
@@ -118,6 +123,10 @@ export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,q
   grade==='almost'?'거의 맞았어요! · 2점':'다시 살펴봐요 · 0점';
  function displayGrade(card,resp){
   const result=resp.feedback;
+  if(result)state.renderer?.showFeedback({
+   correct:result.grade==='correct',
+   message:result.explanation_ko||'한 번 더 확인해 보세요.'
+  });
   $('spFeedback').hidden=!result;
   $('spCompare').hidden=!result;
   const correct=result?.grade==='correct';
@@ -155,12 +164,12 @@ export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,q
   txt('spUnitName',s.book_title+' · '+(card.unitName||'Unit'));
   mountQuestion(card,resp);
   txt('spTaskDetail','힌트 단어를 참고해 나만의 영어 문장을 만들어 보세요. 이 단원의 문장을 모두 숙달하면 골드 유닛을 받아요.');
-  $('spCompareBtn').disabled=false;
-  txt('spCompareBtn','AI Willi 확인하기');
+  $('spCompareBtn').disabled=!answerValue().trim();
+  txt('spCompareBtn','Check Answer · 확인하기');
   txt('spNextBtn',i===s.questions.length-1?'완료하기 ✓':'다음 문장 →');
   displayGrade(card,resp);
   saveLabel('저장됨');
-  window.scrollTo({top:0,behavior:'auto'});
+  $('spSessionMain').scrollTop=0;
  }
  function showDone(){
   setScreen('done');
@@ -411,10 +420,12 @@ export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,q
   }
   if(Number(resp.attempts||0)>=10){notify('이 문장의 확인 횟수를 모두 사용했어요.',true);return}
   state.loading=true;$('spCompareBtn').disabled=true;
-  txt('spCompareBtn','답을 확인하는 중…');notify('');
+  txt('spCompareBtn','AI Willi 확인 중…');notify('');
+  state.renderer?.showThinking?.();
   try{
    const i=state.session.current_index;
    const result=await gradeSentence(state.session.id,i,answer);
+   state.renderer?.clearThinking?.();
    if(!result?.feedback)throw Error('확인 결과를 받지 못했어요.');
    if(result.quota)showQuota(result.quota);
    resp.initial ||= answer;resp.draft=answer;resp.revised=answer;
@@ -432,6 +443,7 @@ export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,q
    if(result.quota?.remaining===0)
     notify('오늘 AI Willi 확인 20회를 모두 사용했어요. 다른 Genius 앱을 연습하고 내일 다시 와요!');
   }catch(error){
+   state.renderer?.clearThinking?.();
    if(error.quota)showQuota(error.quota);
    notify(error.code==='DAILY_AI_LIMIT'
      ?'오늘 AI Willi 확인 20회를 모두 사용했어요. 다른 Genius 앱을 연습하고 내일 다시 와요!'
@@ -483,6 +495,17 @@ export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,q
  }
  $('spBook').addEventListener('change',()=>{void loadUnits()});
  $('spStart').addEventListener('click',()=>{void startSession()});
+ $('spRoundBack').addEventListener('click',()=>{void goBack()});
+ $('spRoundHome').addEventListener('click',async()=>{
+  if(state.loading)return;
+  clearTimeout(state.timer);state.timer=null;
+  if(state.screen==='round'){
+   const resp=current();if(resp)resp.draft=answerValue();
+   if(!(await persist()))return;
+  }
+  state.session=null;state.active=false;setScreen('picker');
+  await onExit();
+ });
  $('spBack').addEventListener('click',()=>{void goBack()});
  $('spCompareBtn').addEventListener('click',()=>{void grade()});
  $('spRetryBtn').addEventListener('click',()=>{
