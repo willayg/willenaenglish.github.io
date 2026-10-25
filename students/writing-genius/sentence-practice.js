@@ -338,10 +338,8 @@ export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,q
    try{
     const units=await bounded(getPracticeUnits(book.id),10000);
     if(!units.length)return;
-    for(const unit of units){
-     const items=await bounded(getTextbookSentences(book.id,unit.id,units),12000);
-     if(generatePracticeQuestions('make',items,1).length){available.push(book);break}
-    }
+    const items=await bounded(getTextbookSentences(book.id,'',units),12000);
+    if(generatePracticeQuestions('make',items,1).length)available.push(book);
    }catch(error){console.warn('[Writing Genius] book preview unavailable',book.title,error)}
   }));
   // Retain original assignment order after asynchronous checks.
