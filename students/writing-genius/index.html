@@ -15,7 +15,7 @@
 <link rel="stylesheet" href="/students/shared/willena-keyboard-safe.css?v=1.0.0">
 <link rel="stylesheet" href="/students/vocab-study/vocab-study.css?v=20261024-home-navigation4">
 <link rel="stylesheet" href="/students/vocab-study/theme-pips.css?v=20260927-v0005">
-<link rel="stylesheet" href="./styles.css?v=20261025-writing-compact-v2">
+<link rel="stylesheet" href="./styles.css?v=20261025-sentence-practice-v1">
 <script src="/students/api-gateway.js?v=20260926-progress-summary-cf1"></script>
 <script src="/js/api-config.js?v=20260926-reverted-auth1"></script>
 <script type="module" src="/students/components/student-header.js?v=20261025-sg-mission-v5b"></script>
@@ -100,8 +100,69 @@
         <button type="button" id="wgRevise" class="wg-button wg-secondary">다시 고쳐 쓰기</button>
       </div>
     </section>
+
+    <section id="wgPractice" class="wg-practice" aria-label="Sentence Practice" hidden>
+      <div class="wg-editor-nav">
+        <button id="spBack" class="vocab-screen-back" type="button">← 글쓰기 메뉴</button>
+        <span id="spSaveState" class="wg-save-state" role="status" aria-live="polite"></span>
+      </div>
+      <div id="spPicker" class="sp-picker">
+        <div class="sp-mini-head"><strong>문장 연습</strong><small>5 questions · Unlimited practice</small></div>
+        <div class="sp-type-grid" role="group" aria-label="Sentence practice type">
+          <button type="button" data-practice-kind="make" aria-pressed="true"><strong>문장 만들기</strong><small>Make a Sentence</small></button>
+          <button type="button" data-practice-kind="expand" aria-pressed="false"><strong>문장 늘리기</strong><small>Make It Longer</small></button>
+          <button type="button" data-practice-kind="answer" aria-pressed="false"><strong>질문에 답하기</strong><small>Answer a Question</small></button>
+          <button type="button" data-practice-kind="connect" aria-pressed="false"><strong>생각 연결하기</strong><small>Connect Ideas</small></button>
+        </div>
+        <div class="sp-select-row">
+          <label class="wg-field">내 교재 · My textbook<select id="spBook"><option value="">교재 불러오는 중…</option></select></label>
+          <label class="wg-field">Unit<select id="spUnit"><option value="">전체 단원 · All units</option></select></label>
+        </div>
+        <p id="spSourceNote" class="sp-subtle">교재 문장을 사용해 나만의 영어를 만들어 보세요.</p>
+        <button type="button" id="spStart" class="wg-button wg-primary sp-start">5문제 시작하기 →</button>
+        <div id="spSaved" class="sp-saved" hidden>
+          <strong>지난 연습 · My practice</strong><div id="spSessionList"></div>
+        </div>
+      </div>
+      <div id="spRound" class="sp-round" hidden>
+        <div class="sp-topline"><span id="spModeLabel" class="wg-kind"></span><span id="spQuestionCount" class="sp-step">1 / 5</span></div>
+        <div class="sp-progress"><div id="spProgressBar"></div></div>
+        <div class="sp-task">
+          <small id="spUnitName" class="sp-unit-name"></small>
+          <h2 id="spTaskPrompt"></h2>
+          <div id="spTaskDisplay" class="sp-display"></div>
+          <p id="spTaskDetail" class="sp-subtle"></p>
+        </div>
+        <label class="wg-field sp-answer-label" for="spAnswer">내 문장 · My sentence</label>
+        <textarea id="spAnswer" class="sp-input" maxlength="600" spellcheck="true" autocapitalize="sentences" placeholder="Write your sentence here…"></textarea>
+        <div class="sp-inline-actions">
+          <button id="spHintBtn" class="wg-button wg-secondary" type="button">힌트 보기</button>
+          <button id="spCompareBtn" class="wg-button wg-primary" type="button">예문 비교하기</button>
+        </div>
+        <div id="spHint" class="sp-hint" hidden></div>
+        <div id="spCompare" class="sp-compare" hidden>
+          <strong>교재 예문 · One possible answer</strong>
+          <p id="spModel"></p>
+          <p id="spComparisonNote"></p>
+          <div class="sp-compare-caption">틀렸다고 표시하지 않아요. 내 문장을 더 자연스럽게 고쳐 보세요.</div>
+        </div>
+        <div class="sp-inline-actions sp-next-row">
+          <button id="spNextBtn" class="wg-button wg-primary" type="button" hidden>다음 문제 →</button>
+        </div>
+      </div>
+      <div id="spDone" class="sp-done" hidden>
+        <div class="sp-done-star">✓</div>
+        <h2>5문제 완료!</h2>
+        <p>내 문장을 직접 만들고 고쳤어요.</p>
+        <div class="sp-inline-actions">
+          <button id="spAgain" class="wg-button wg-primary" type="button">다시 연습하기</button>
+          <button id="spFinished" class="wg-button wg-secondary" type="button">글쓰기 메뉴</button>
+        </div>
+      </div>
+      <div id="spMessage" class="wg-notice" role="status" aria-live="polite"></div>
+    </section>
   </main>
 </div>
 <script src="/students/vocab-study/theme-pips.js?v=20260927-v0005"></script>
-<script type="module" src="./app.js?v=20261025-writing-editor-fix-v2"></script>
+<script type="module" src="./app.js?v=20261025-sentence-practice-v1"></script>
 </body></html>
