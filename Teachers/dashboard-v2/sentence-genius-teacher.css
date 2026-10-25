@@ -28,3 +28,25 @@
 .sgt-bar{height:8px;background:#e8f1f2;border-radius:20px;overflow:hidden}.sgt-bar i{height:100%;background:#2d9da9;display:block;border-radius:20px}
 #uaSentenceHomework [data-sg-status]{color:#247987;font-size:.8rem;min-height:18px}
 @media(max-width:700px){#view-sentence-genius .sgt-dashboard{padding:14px}.sgt-fields{grid-template-columns:1fr}.sgt-actions .control{flex:1}.sgt-student{grid-template-columns:1fr 1fr 46px;gap:7px}}
+
+/* Class progress lives in the main Sentence Genius teacher view, not only the
+   assignment detail drawers. */
+.sgt-class-dashboard{border-top:1px solid #e1edf0;margin-top:28px;padding-top:22px}
+.sgt-class-label{display:flex;align-items:center;gap:9px;font-size:.8rem;font-weight:700;color:#566873}
+.sgt-class-label .control{min-width:190px}
+.sgt-progress-overview{display:grid;gap:10px;margin-top:10px}
+.sgt-class-summary{display:flex;gap:10px;flex-wrap:wrap}
+.sgt-class-summary strong{flex:1;min-width:120px;padding:14px 15px;border-radius:13px;background:#f2fafa;border:1px solid #d5eaed;font-size:.83rem;color:#24666c}
+.sgt-progress-student{border:1px solid #d7e8eb;border-radius:14px;padding:12px 15px;background:#fff}
+.sgt-progress-student summary{display:flex;justify-content:space-between;align-items:center;gap:10px;cursor:pointer;list-style:none}
+.sgt-progress-student summary::-webkit-details-marker{display:none}
+.sgt-progress-student summary strong{font-size:.86rem;color:#23565e}
+.sgt-progress-student summary small{display:block;color:#6a8186;margin-top:5px;line-height:1.4;font-size:.72rem}
+.sgt-progress-percent{font-size:.92rem;font-weight:800;color:#276d75}
+.sgt-progress-student .sgt-bar{margin-top:12px}
+.sgt-progress-units{display:grid;gap:7px;margin-top:12px}
+.sgt-progress-units>div{display:flex;justify-content:space-between;gap:12px;padding-top:7px;border-top:1px solid #edf3f4;font-size:.78rem}
+.sgt-progress-units b{white-space:nowrap;color:#246b74}
+.sgt-empty,.sgt-error{font-size:.82rem;color:#667d85;margin:8px 0}
+.sgt-error{color:#b45309}
+@media(max-width:700px){.sgt-class-label{width:100%}.sgt-class-label .control{flex:1;min-width:0}.sgt-class-summary strong{min-width:95px}}
