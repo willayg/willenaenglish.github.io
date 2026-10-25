@@ -237,3 +237,12 @@ html[data-vocab-theme="dark"] .wg-status-pill.is-submitted,html[data-vocab-theme
  line-height:1.55;margin:10px 0 0}
 .wg-practice .sp-sync-status{font-size:.73rem;color:var(--vocab-muted,#6f8190);
  font-weight:700;margin:11px 0 0}
+
+/* Writing Practice: put recovery actions directly below feedback, not below examples. */
+.wg-practice .sp-next-row{display:flex;gap:10px;align-items:stretch;margin:10px 0 14px}
+.wg-practice .sp-next-row[hidden]{display:none!important}
+.wg-practice .sp-next-row .wg-button{flex:1 1 0;min-width:0;min-height:48px;
+ font-weight:850;font-size:.87rem;white-space:normal;line-height:1.35}
+.wg-practice .sp-next-row .wg-button[hidden]{display:none!important}
+@media(max-width:400px){.wg-practice .sp-next-row{gap:7px}
+ .wg-practice .sp-next-row .wg-button{padding:11px 7px;font-size:.82rem}}
