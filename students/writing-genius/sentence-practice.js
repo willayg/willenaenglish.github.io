@@ -1,266 +1,314 @@
-// Writing Genius sentence practice: no AI calls, no exact-answer grading.
-// Exercises draw only from assigned textbook content, with optional hints and
-// one possible model sentence. Five-question sessions are saved to Supabase.
-import {EXERCISE_LABELS,getAssignedPracticeBooks,getPracticeUnits,
- getTextbookSentences,generatePracticeQuestions} from './sentence-practice-data.js?v=20261025-sp-v3';
-
+// Writing Genius: five source-based Make a Sentence prompts, one KST session/day.
+// One bounded AI Willi (Luna) check per question; revision is free. All save to Supabase.
+import {getAssignedPracticeBooks,getPracticeUnits,
+ getTextbookSentences,generatePracticeQuestions} from './sentence-practice-data.js?v=20261025-make-only-v1';
 const $=id=>document.getElementById(id);
 const txt=(id,value)=>{$(id).textContent=String(value??'')};
-const kinds=new Set(Object.keys(EXERCISE_LABELS));
 const field=id=>$(id).value;
-const el=(name,cls,value)=>{const n=document.createElement(name);if(cls)n.className=cls;if(value!==undefined)n.textContent=value;return n};
-const rows=val=>Array.isArray(val)?val:[];
-const LABEL_SAVE='저장됨';
+const node=(tag,text)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;return n};
+const seoulDate=()=>{const parts=Object.fromEntries(new Intl.DateTimeFormat('en-CA',
+ {timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'})
+ .formatToParts(new Date()).map(x=>[x.type,x.value]));return [parts.year,parts.month,parts.day].join('-')};
 let singleton=null;
-export function createSentencePractice({api,onExit}){
+export function createSentencePractice({api,checksApi,gradeSentence,onExit}){
  if(singleton)return singleton;
- const state={student:null,bookList:[],units:[],kind:'make',session:null,
-  recent:[],timer:null,queue:Promise.resolve(),revision:0,loading:false,saving:false,
-  active:false,screen:'picker'};
- const msg=(value='',error=false)=>{txt('spMessage',value);$('spMessage').classList.toggle('is-error',error)};
- const saveLabel=(value='')=>txt('spSaveState',value);
+ const state={student:null,books:[],units:[],session:null,recent:[],today:null,bookReq:0,
+  queue:Promise.resolve(),timer:null,loading:false,active:false,screen:'picker',catalogError:false};
+ const notify=(message='',error=false)=>{
+  txt('spMessage',message);$('spMessage').classList.toggle('is-error',error);
+ };
+ const saveLabel=message=>txt('spSaveState',message||'');
  const setScreen=name=>{
   state.screen=name;
   $('spPicker').hidden=name!=='picker';
   $('spRound').hidden=name!=='round';
   $('spDone').hidden=name!=='done';
-  $('spBack').textContent=name==='picker'?'← 글쓰기 메뉴':'← 연습 선택';
-  msg('');
+  txt('spBack',name==='picker'?'← 글쓰기 메뉴':'← 단원 선택');
+  notify();
  };
- function selectKind(kind){
-  if(!kinds.has(kind))return;
-  state.kind=kind;
-  document.querySelectorAll('[data-practice-kind]').forEach(b=>{
-   const active=b.dataset.practiceKind===kind;b.setAttribute('aria-pressed',String(active));
-   b.classList.toggle('is-selected',active);
-  });
- }
+ const current=()=>{
+  const session=state.session;
+  if(!session||session.current_index>=5)return null;
+  const i=session.current_index;
+  if(!Array.isArray(session.responses))session.responses=[];
+  if(!session.responses[i])session.responses[i]={
+   initial:'',draft:'',revised:'',compared:false,hintUsed:true};
+  return session.responses[i];
+ };
  async function persist(){
-  const session=state.session;if(!session)return true;
   clearTimeout(state.timer);state.timer=null;
+  const session=state.session;if(!session)return true;
   const snapshot={responses:structuredClone(session.responses||[]),
    current_index:session.current_index,status:session.status};
   const id=session.id;
-  const run=async()=>api('PATCH','?id=eq.'+encodeURIComponent(id),snapshot);
+  const run=()=>api('PATCH','?id=eq.'+encodeURIComponent(id),snapshot);
   state.queue=state.queue.catch(()=>{}).then(run);
   saveLabel('저장 중…');
   try{
-   const updated=await state.queue;
-   if(!Array.isArray(updated)||!updated.length)throw Error('저장된 연습을 확인할 수 없어요.');
-   if(state.session?.id===id)saveLabel(LABEL_SAVE);
+   const rows=await state.queue;
+   if(!Array.isArray(rows)||!rows.length)throw Error('연습 저장 응답이 없어요.');
+   if(state.session?.id===id)saveLabel('저장됨');
    return true;
-  }catch(error){
-   if(state.session?.id===id){saveLabel('저장 안 됨');msg('연습 저장에 실패했어요. 다시 눌러 주세요. '+error.message,true)}
+  }catch(err){
+   saveLabel('저장 안 됨');
+   notify('저장하지 못했어요. 다시 시도해 주세요. '+err.message,true);
    return false;
   }
  }
- function currentResponse(){
-  if(!state.session)return null;
-  const index=state.session.current_index,all=state.session.responses;
-  if(!all[index])all[index]={initial:'',draft:'',revised:'',compared:false,hintUsed:false};
-  return all[index];
- }
- function queueDraftSave(){
-  if(!state.session||state.session.status==='completed'||state.screen!=='round')return;
-  const answer=currentResponse();
-  answer.draft=field('spAnswer');
-  if(answer.compared)answer.revised=answer.draft;
+ function changed(){
+  if(state.screen!=='round'||!state.session||state.session.status==='completed')return;
+  const resp=current();
+  if(!resp)return;
+  resp.draft=field('spAnswer');
+  if(resp.feedback)resp.revised=resp.draft;
   clearTimeout(state.timer);
-  state.timer=setTimeout(()=>{void persist()},900);
-  saveLabel('저장 전…');
+  state.timer=setTimeout(()=>{void persist()},850);
+  saveLabel('저장 중…');
  }
- function revealReference(card,response){
-  $('spCompare').hidden=!response.compared;
+ const gradeTitle=grade=>grade==='correct'?'정확해요! · 4점':
+  grade==='almost'?'거의 맞았어요! · 2점':'다시 살펴봐요 · 0점';
+ function displayGrade(card,resp){
+  const result=resp.feedback;
+  $('spFeedback').hidden=!result;
+  $('spCompare').hidden=!result;
+  $('spCompareBtn').hidden=!!result;
+  $('spNextBtn').hidden=!result;
+  if(!result)return;
+  $('spGrade').textContent=gradeTitle(result.grade);
+  $('spFeedback').dataset.grade=result.grade;
+  txt('spGradeNote',result.explanation_ko||'');
+  txt('spSuggestion',result.suggestion?'추천 표현: '+result.suggestion:'');
   txt('spModel',card.model);
-  txt('spComparisonNote',card.help||'교재 예문과 내 문장을 비교해 보세요.');
-  $('spNextBtn').hidden=!response.compared;
-  $('spCompareBtn').hidden=response.compared;
+  txt('spComparisonNote',card.help||'교재 예문은 다른 올바른 표현 중 하나일 수 있어요.');
  }
  function showRound(){
-  const session=state.session;
-  if(!session)return;
-  if(session.status==='completed'||session.current_index>=5){setScreen('done');return}
+  const s=state.session;if(!s)return;
+  if(s.status==='completed'||s.current_index>=5){showDone();return}
   setScreen('round');
-  const index=session.current_index,card=session.questions[index],resp=currentResponse();
-  txt('spModeLabel',EXERCISE_LABELS[session.exercise_type]);
-  txt('spQuestionCount',(index+1)+' / 5');
-  $('spProgressBar').style.width=(index/5*100)+'%';
-  txt('spUnitName',session.book_title+' · '+card.unitName);
+  const i=s.current_index,card=s.questions[i],resp=current();
+  txt('spModeLabel','문장 만들기');
+  txt('spQuestionCount',(i+1)+' / 5');
+  $('spProgressBar').style.width=(i/5*100)+'%';
+  txt('spUnitName',s.book_title+' · '+(card.unitName||'Unit'));
   txt('spTaskPrompt',card.prompt);
   txt('spTaskDisplay',card.display);
-  txt('spTaskDetail',card.detail);
+  txt('spTaskDetail','한국어를 읽고 영어 문장을 만들어 보세요.');
+  txt('spHint',card.hint||'');
+  $('spHint').hidden=false;
   $('spAnswer').value=resp.draft||resp.revised||resp.initial||'';
   $('spAnswer').disabled=false;
-  $('spHint').hidden=!resp.hintUsed;
-  txt('spHint',card.hint);
-  revealReference(card,resp);
-  txt('spNextBtn',index===4?'연습 끝내기 ✓':'다음 문제 →');
+  $('spCompareBtn').disabled=false;
+  txt('spCompareBtn','AI Willi 확인하기');
+  txt('spNextBtn',i===4?'완료하기 ✓':'다음 문장 →');
+  displayGrade(card,resp);
   saveLabel('저장됨');
   window.scrollTo({top:0,behavior:'auto'});
  }
- function showSessions(){
-  const box=$('spSaved'),list=$('spSessionList');
-  list.replaceChildren();
-  box.hidden=state.recent.length===0;
-  for(const session of state.recent){
-   const b=el('button','sp-history');b.type='button';
-   const left=el('span','');
-   left.append(el('strong','',EXERCISE_LABELS[session.exercise_type]||'문장 연습'),
-    el('small','',session.book_title||'Textbook'));
-   const right=el('span','sp-history-tag',session.status==='completed'?'완료 ✓':'이어하기 · '+(Math.min(5,session.current_index+1))+'/5');
-   b.append(left,right);
-   b.addEventListener('click',()=>{state.session=structuredClone(session);showRound()});
-   list.append(b);
+ function showDone(){
+  setScreen('done');
+  const answers=state.session?.responses||[];
+  const n=answers.filter(a=>a?.feedback).length;
+  const points=answers.reduce((sum,a)=>sum+(Number(a?.feedback?.points)||0),0);
+  txt('spScoreSummary',n?'AI Willi '+n+'문장 확인 · '+points+'/'+(5*4)+'점':'5문장 연습을 완료했어요.');
+  refreshStartButton();
+ }
+ function refreshStartButton(){
+  const btn=$('spStart');
+  if(state.today){
+   if(state.today.status==='completed'){
+    btn.disabled=true;txt('spStart','오늘은 완료했어요 ✓');
+    txt('spSourceNote','내일 새 문장 5개를 연습할 수 있어요.');return;
+   }
+   btn.disabled=false;txt('spStart','오늘의 연습 이어하기 →');
+   txt('spSourceNote','오늘 시작한 문장 연습을 이어서 할 수 있어요.');return;
+  }
+  btn.disabled=state.loading||state.catalogError||!field('spBook')||!field('spUnit');
+  txt('spStart','오늘의 문장 5개 시작하기 →');
+ }
+ function renderUnitButtons(){
+  const strip=$('spUnitStrip');strip.replaceChildren();
+  for(const unit of state.units){
+   const selected=unit.id===field('spUnit');
+   const b=node('button','Unit '+unit.number);
+   b.type='button';b.className='study-v2-unit'+(selected?' is-current':'');
+   b.setAttribute('aria-pressed',String(selected));
+   b.title=unit.title;
+   b.addEventListener('click',()=>{
+    $('spUnit').value=unit.id;
+    renderUnitButtons();refreshStartButton();
+   });strip.append(b);
   }
  }
- async function loadSessions(){
-  const data=await api('GET','?select=id,student_id,exercise_type,book_id,book_title,unit_id,questions,responses,current_index,status,created_at,updated_at&order=updated_at.desc&limit=12');
-  state.recent=rows(data).filter(s=>s.student_id===state.student.id);
-  showSessions();
- }
- async function setBooks(){
-  const books=await getAssignedPracticeBooks(state.student.className);
-  state.bookList=books;
-  const select=$('spBook');select.replaceChildren();
-  if(!books.length){
-   const option=el('option','','등록된 교재가 없어요');option.value='';select.append(option);
-   $('spStart').disabled=true;
-   msg('수업 교재를 찾지 못했어요. 선생님에게 교재 등록을 요청해 주세요.',true);
-   return;
-  }
-  for(const b of books){const option=el('option','',b.title);option.value=b.id;select.append(option)}
-  await setUnits();
- }
- async function setUnits(){
-  const bookId=field('spBook');
-  const select=$('spUnit');select.replaceChildren();
-  const option=el('option','','전체 단원 · All units');option.value='';select.append(option);
-  if(!bookId){state.units=[];$('spStart').disabled=true;return}
+ async function loadUnits(){
+  const bookId=field('spBook'),serial=++state.bookReq;
+  $('spUnit').value='';state.units=[];$('spUnitStrip').replaceChildren();
+  refreshStartButton();
+  if(!bookId)return;
   try{
    const units=await getPracticeUnits(bookId);
-   if(state.bookList.some(b=>b.id===bookId)){
-    state.units=units;
-    for(const u of units){const o=el('option','',u.number+' · '+u.title);o.value=u.id;select.append(o)}
-    $('spStart').disabled=false;
-    txt('spSourceNote','교재 문장을 사용해 나만의 영어를 만들어 보세요.');
+   if(serial!==state.bookReq)return;
+   state.units=units;
+   if(units.length)$('spUnit').value=units[0].id;
+   renderUnitButtons();
+   state.catalogError=false;
+  }catch(err){
+   if(serial!==state.bookReq)return;
+   state.catalogError=true;
+   notify('교재 단원을 불러오지 못했어요. '+err.message,true);
+  }
+  refreshStartButton();
+ }
+ async function loadBooks(){
+  state.books=await getAssignedPracticeBooks(state.student.className);
+  const select=$('spBook');select.replaceChildren();
+  if(!state.books.length){
+   state.catalogError=true;
+   select.append(Object.assign(node('option','수업 교재가 없어요'),{value:''}));
+   notify('학생에게 배정된 교재가 없어요.',true);
+   refreshStartButton();return;
+  }
+  for(const b of state.books)select.append(Object.assign(node('option',b.title),{value:b.id}));
+  await loadUnits();
+ }
+ async function loadChecks(session){
+  if(!session||session.status==='completed')return;
+  try{
+   const list=await checksApi('GET','?select=question_index,feedback,answer_text&session_id=eq.'+session.id);
+   if(!Array.isArray(list))return;
+   if(!Array.isArray(session.responses))session.responses=[];
+   for(const record of list){
+    if(!record?.feedback||record.question_index<0||record.question_index>4)continue;
+    if(!session.responses[record.question_index])session.responses[record.question_index]={
+      initial:record.answer_text,draft:record.answer_text,revised:record.answer_text};
+    session.responses[record.question_index].feedback=record.feedback;
    }
-  }catch(err){state.units=[];$('spStart').disabled=true;msg('단원을 불러오지 못했어요: '+err.message,true)}
+  }catch(error){console.warn('[Writing Genius] Could not refresh AI checks',error)}
+ }
+ async function loadSessions(){
+  const list=await api('GET','?select=id,student_id,exercise_type,book_id,book_title,unit_id,questions,responses,current_index,status,practice_day,created_at,updated_at&order=created_at.desc&limit=25');
+  if(!Array.isArray(list))throw Error('연습 기록을 불러오지 못했어요.');
+  state.recent=list.filter(x=>x.student_id===state.student.id&&x.exercise_type==='make');
+  state.today=state.recent.find(x=>x.practice_day===seoulDate())||null;
+  if(state.today&&state.today.status!=='completed')await loadChecks(state.today);
+  refreshStartButton();
  }
  async function open(student){
-  state.student=student;state.active=true;state.session=null;state.loading=true;
-  setScreen('picker');
-  $('spStart').disabled=true;saveLabel('');
-  msg('교재와 연습 기록을 불러오는 중…');
-  const results=await Promise.allSettled([setBooks(),loadSessions()]);
-  if(results[0].status==='rejected'){
-   $('spStart').disabled=true;
-   msg('교재를 불러오지 못했어요. '+results[0].reason?.message,true);
-  }else if(results[1].status==='rejected'){
-   msg('지난 연습을 불러오지 못했어요. '+results[1].reason?.message,true);
-  }else msg('');
+  state.student=student;state.active=true;state.loading=true;state.session=null;
+  state.catalogError=false;setScreen('picker');saveLabel('');
+  $('spStart').disabled=true;notify('오늘의 연습을 불러오는 중…');
+  const outcomes=await Promise.allSettled([loadBooks(),loadSessions()]);
   state.loading=false;
+  if(outcomes[0].status==='rejected'){
+   state.catalogError=true;notify('교재를 불러오지 못했어요. '+outcomes[0].reason?.message,true);
+  }else if(outcomes[1].status==='rejected'){
+   state.catalogError=true;notify('연습 기록을 불러오지 못했어요. '+outcomes[1].reason?.message,true);
+  }
+  refreshStartButton();
+  if(!state.catalogError&&state.today?.status==='in_progress'){
+   state.session=structuredClone(state.today);showRound();
+  }
  }
  async function startSession(){
-  if(state.loading||!state.student||!field('spBook'))return;
-  const book=state.bookList.find(b=>b.id===field('spBook'));if(!book)return;
-  state.loading=true;$('spStart').disabled=true;saveLabel('');
-  msg('교재에서 문장 5개를 고르는 중…');
+  if(state.loading)return;
+  if(state.today){
+   if(state.today.status==='completed')return;
+   state.session=structuredClone(state.today);showRound();return;
+  }
+  const book=state.books.find(b=>b.id===field('spBook')),unit=field('spUnit');
+  if(!book||!unit||state.catalogError)return;
+  state.loading=true;$('spStart').disabled=true;
+  notify('교재에서 문장 5개를 가져오는 중…');
   try{
-   const candidates=await getTextbookSentences(book.id,field('spUnit'),state.units);
-   let cards=generatePracticeQuestions(state.kind,candidates);
-   // If a unit cannot supply five distinct prompts, fill the session from
-   // other units of the SAME assigned textbook rather than from unrelated
-   // books. The on-screen source label always identifies the actual unit.
-   if(cards.length!==5&&field('spUnit')){
-    const all=await getTextbookSentences(book.id,'',state.units);
-    cards=generatePracticeQuestions(state.kind,all);
-    if(cards.length===5)txt('spSourceNote','이 단원에는 예문이 적어 같은 교재의 다른 단원도 포함했어요.');
+   let items=await getTextbookSentences(book.id,unit,state.units);
+   let cards=generatePracticeQuestions('make',items);
+   if(cards.length!==5){
+    items=await getTextbookSentences(book.id,'',state.units);
+    cards=generatePracticeQuestions('make',items);
    }
    if(cards.length!==5){
-    msg('이 교재/단원에는 이 유형에 적합한 문장이 5개 미만이에요. 전체 단원이나 다른 유형을 선택해 주세요.',true);
-    return;
+    notify('이 교재에 적합한 문장이 5개 미만이에요. 다른 교재를 골라 주세요.',true);return;
    }
-   const payload={id:crypto.randomUUID(),student_id:state.student.id,
-    exercise_type:state.kind,book_id:book.id,book_title:book.title,
-    unit_id:field('spUnit')||null,questions:cards,responses:[],current_index:0,status:'in_progress'};
-   const created=await api('POST','',payload);
-   if(!Array.isArray(created)||!created[0])throw Error('연습 저장에 실패했어요.');
-   state.session=created[0];
-   state.recent=[state.session,...state.recent].slice(0,12);
+   const payload={student_id:state.student.id,exercise_type:'make',
+    book_id:book.id,book_title:book.title,unit_id:unit,
+    questions:cards,responses:[],current_index:0,status:'in_progress'};
+   const made=await api('POST','',payload);
+   if(!Array.isArray(made)||!made[0])throw Error('새 연습을 저장하지 못했어요.');
+   state.session=made[0];state.today=made[0];state.recent.unshift(made[0]);
    showRound();
-  }catch(err){msg('연습을 시작하지 못했어요. '+err.message,true)}
-  finally{state.loading=false;$('spStart').disabled=!field('spBook')}
+  }catch(error){
+   if(error.code==='23505'){
+    await loadSessions();
+    if(state.today?.status==='in_progress'){state.session=structuredClone(state.today);showRound();return}
+    notify('오늘은 이미 연습을 완료했어요.',true);
+   }else notify('연습을 시작하지 못했어요. '+error.message,true);
+  }finally{state.loading=false;refreshStartButton()}
  }
- async function compare(){
-  const response=currentResponse();if(!response||state.loading)return;
+ async function grade(){
+  if(state.loading||!state.session)return;
   const answer=field('spAnswer').trim();
-  if(answer.length<3||!/[A-Za-z]/.test(answer)){msg('영어 문장을 먼저 써 보세요.',true);$('spAnswer').focus();return}
-  if(!response.initial)response.initial=answer;
-  response.draft=answer;response.revised=answer;response.compared=true;
-  revealReference(state.session.questions[state.session.current_index],response);
-  msg('교재 예문은 한 가지 답이에요. 내 문장을 고친 뒤 다음 문제로 넘어가세요.');
-  void persist();
+  if(answer.length<3||!/[A-Za-z]/.test(answer)){
+   notify('영어 문장을 먼저 써 보세요.',true);$('spAnswer').focus();return;
+  }
+  const resp=current();if(resp?.feedback){displayGrade(state.session.questions[state.session.current_index],resp);return}
+  state.loading=true;$('spCompareBtn').disabled=true;
+  txt('spCompareBtn','AI Willi 확인 중…');notify('');
+  try{
+   const index=state.session.current_index;
+   const data=await gradeSentence(state.session.id,index,answer);
+   if(!data?.feedback)throw Error('AI 결과가 없어요.');
+   if(!resp.initial)resp.initial=answer;
+   resp.draft=answer;resp.revised=answer;resp.compared=true;resp.feedback=data.feedback;
+   const saved=await persist();
+   if(!saved)notify('AI 확인은 완료됐어요. 다음으로 넘어가기 전에 저장을 다시 확인해 주세요.',true);
+   displayGrade(state.session.questions[index],resp);
+  }catch(error){
+   notify('AI Willi 확인에 실패했어요. 다시 눌러 주세요. '+error.message,true);
+  }finally{
+   state.loading=false;$('spCompareBtn').disabled=false;txt('spCompareBtn','AI Willi 확인하기');
+  }
  }
  async function next(){
-  const session=state.session;if(!session||state.loading)return;
-  const response=currentResponse();
-  if(!response?.compared)return;
-  response.revised=field('spAnswer').trim();
-  response.draft=response.revised;
-  if(!response.revised){msg('고친 문장을 남겨 주세요.',true);return}
+  if(state.loading||!state.session)return;
+  const session=state.session,resp=current();
+  if(!resp?.feedback)return;
+  resp.draft=field('spAnswer').trim();resp.revised=resp.draft;
+  if(resp.revised.length<3){notify('문장을 지우지 말고 고쳐 써 주세요.',true);return}
   state.loading=true;$('spNextBtn').disabled=true;
-  const old=session.current_index;
-  session.current_index=old+1;
-  session.status=session.current_index===5?'completed':'in_progress';
-  const okay=await persist();
-  if(okay){
-   const recent=state.recent.find(r=>r.id===session.id);
-   if(recent)Object.assign(recent,structuredClone(session));
-   if(session.status==='completed')showSessions();
+  const prev=session.current_index;
+  session.current_index=prev+1;
+  if(session.current_index===5)session.status='completed';
+  const saved=await persist();
+  if(saved){
+   if(state.today?.id===session.id)Object.assign(state.today,structuredClone(session));
    showRound();
-  }else{session.current_index=old;session.status='in_progress'}
+  }else{session.current_index=prev;session.status='in_progress'}
   state.loading=false;$('spNextBtn').disabled=false;
  }
  async function goBack(){
   clearTimeout(state.timer);state.timer=null;
   if(state.screen==='round'){
-   const current=currentResponse();if(current)current.draft=field('spAnswer');
-   const okay=await persist();if(!okay)return;
+   const resp=current();if(resp)resp.draft=field('spAnswer');
+   if(!(await persist()))return;
   }
   if(state.screen!=='picker'){
-   setScreen('picker');
-   try{await loadSessions()}catch(err){msg(err.message,true)}
-  }else{
-   state.active=false;state.session=null;await onExit();
-  }
+   state.session=null;setScreen('picker');refreshStartButton();
+  }else{state.active=false;await onExit()}
  }
  async function closeForNavigation(){
   clearTimeout(state.timer);state.timer=null;
   if(state.session&&state.screen==='round'){
-   currentResponse().draft=field('spAnswer');
-   const okay=await persist();if(!okay)return false;
+   const resp=current();if(resp)resp.draft=field('spAnswer');
+   if(!(await persist()))return false;
   }
-  state.active=false;state.session=null;setScreen('picker');
-  return true;
+  state.active=false;state.session=null;setScreen('picker');return true;
  }
- // Do not let a delayed editor save clobber another session.
- document.querySelectorAll('[data-practice-kind]').forEach(button=>
-  button.addEventListener('click',()=>selectKind(button.dataset.practiceKind)));
- $('spBook').addEventListener('change',()=>{void setUnits()});
- $('spStart').addEventListener('click',()=>void startSession());
- $('spBack').addEventListener('click',()=>void goBack());
- $('spAnswer').addEventListener('input',queueDraftSave);
- $('spHintBtn').addEventListener('click',()=>{
-  const resp=currentResponse();if(!resp)return;
-  resp.hintUsed=true;$('spHint').hidden=false;
-  txt('spHint',state.session.questions[state.session.current_index].hint);
-  queueDraftSave();
- });
- $('spCompareBtn').addEventListener('click',()=>void compare());
- $('spNextBtn').addEventListener('click',()=>void next());
- $('spAgain').addEventListener('click',()=>{state.session=null;setScreen('picker');void loadSessions()});
+ $('spBook').addEventListener('change',()=>{void loadUnits()});
+ $('spStart').addEventListener('click',()=>{void startSession()});
+ $('spBack').addEventListener('click',()=>{void goBack()});
+ $('spAnswer').addEventListener('input',changed);
+ $('spCompareBtn').addEventListener('click',()=>{void grade()});
+ $('spNextBtn').addEventListener('click',()=>{void next()});
  $('spFinished').addEventListener('click',()=>{state.session=null;state.active=false;void onExit()});
- selectKind('make');
- singleton={open,closeForNavigation,get active(){return state.active},get student(){return state.student}};
+ singleton={open,closeForNavigation,get active(){return state.active}};
  return singleton;
 }
