@@ -10,6 +10,44 @@
     const r=await fetch(resolved,{credentials:'include',cache:'no-store'});let j={};try{j=await r.json()}catch{}
     if(!r.ok||j?.success===false)throw new Error(j?.error||('Request failed ('+r.status+')'));return j;
   }
+  // General Progress is read from the shared 내신-style Genius snapshot.
+  // Existing Word Genius unit snapshots and Gold awards stay authoritative.
+  const OPERATIONS='https://fiieuiktlsivwfgyivai.supabase.co/rest/v1/';
+  const PUBLISHABLE='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
+  async function snapshot(className,days){
+    async function call(access){
+      return fetch(OPERATIONS+'rpc/genius_teacher_snapshot_read_v1',{
+        method:'POST',cache:'no-store',headers:{
+          apikey:PUBLISHABLE,Authorization:'Bearer '+access,'Content-Type':'application/json'
+        },
+        body:JSON.stringify({p_app:'word',p_class:className||null,p_days:days,p_refresh_limit:60})
+      });
+    }
+    let token=window.WillenaAPI?.getLocalAccessToken?.()||'';
+    let response=await call(token);
+    if(response.status===401||response.status===403){
+      const refresh=await (window.WillenaAPI?.fetch
+        ?window.WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=refresh')
+        :fetch('/.netlify/functions/supabase_auth?action=refresh',{credentials:'include'}));
+      const data=await refresh.json().catch(()=>({}));
+      if(refresh.ok&&data.access_token){
+        window.WillenaAPI?.setLocalTokens?.(data.access_token,data.refresh_token||'');
+        token=data.access_token;response=await call(token);
+      }
+    }
+    const result=await response.json().catch(()=>({}));
+    if(!response.ok||result.success!==true)throw Error(result.message||result.error||'Word Genius stats unavailable');
+    return (result.students||[]).map(item=>{
+      const skills=item.skills||{};
+      const entries=['vocabulary','spelling','speaking'].map(skill=>{
+        const count=Number(skills[skill]?.attempts)||0;
+        const correct=Number(skills[skill]?.correct)||0;
+        return {skill,attempts:count,correct,accuracy:count?100*correct/count:null};
+      });
+      return {...item,user_id:item.id,learning:{skills:entries},
+        today:{questions:Number(item.today_attempts)||0}};
+    });
+  }
   function skillRow(student,name){
     const skills=student?.learning?.skills||[];
     const key=String(name).toLowerCase();
@@ -92,16 +130,7 @@
       const key=state.className+'|'+state.days;
       if(!force&&state.loadedKey===key){render();return}
       list.innerHTML='<div class="empty">Loading Word Genius progress…</div>';
-      if(state.className){
-        const data=await api(apiPath('teacher_class_insights',{class:state.className,days:String(state.days)}));
-        state.students=Array.isArray(data.students)?data.students:[];
-      }else{
-        const results=await Promise.all(state.classes.map(async c=>{
-          try{const d=await api(apiPath('teacher_class_insights',{class:c.name,days:String(state.days)}));return d.students||[]}catch{return[]}
-        }));
-        const map=new Map();results.flat().forEach(s=>{if(s?.user_id&&!map.has(String(s.user_id)))map.set(String(s.user_id),s)});
-        state.students=[...map.values()];
-      }
+      state.students=await snapshot(state.className,state.days);
       state.loadedKey=key;render();
     }catch(e){list.innerHTML='<div class="empty">Could not load Word Genius progress: '+esc(e.message)+'</div>'}
   }
