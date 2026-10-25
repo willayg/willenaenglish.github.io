@@ -15,7 +15,7 @@
 <link rel="stylesheet" href="/students/shared/willena-keyboard-safe.css?v=1.0.0">
 <link rel="stylesheet" href="/students/vocab-study/vocab-study.css?v=20261024-home-navigation4">
 <link rel="stylesheet" href="/students/vocab-study/theme-pips.css?v=20260927-v0005">
-<link rel="stylesheet" href="./styles.css?v=20261025-retry-actions-v2">
+<link rel="stylesheet" href="./styles.css?v=20261025-shared-renderer-v1">
 <script src="/students/api-gateway.js?v=20260926-progress-summary-cf1"></script>
 <script src="/js/api-config.js?v=20260926-reverted-auth1"></script>
 <script type="module" src="/students/components/student-header.js?v=20261025-sg-mission-v5b"></script>
@@ -127,13 +127,9 @@
         <div class="sp-progress"><div id="spProgressBar"></div></div>
         <div class="sp-task">
           <small id="spUnitName" class="sp-unit-name"></small>
-          <h2 id="spTaskPrompt"></h2>
-          <div id="spTaskDisplay" class="sp-display"></div>
+          <div id="spQuestionHost" class="sp-shared-question question-card" aria-label="문장 만들기"></div>
           <p id="spTaskDetail" class="sp-subtle"></p>
         </div>
-        <label class="wg-field sp-answer-label" for="spAnswer">내 문장 · My sentence</label>
-        <textarea id="spAnswer" class="sp-input" maxlength="600" spellcheck="true" autocapitalize="sentences" placeholder="Write your sentence here…"></textarea>
-        <div id="spHint" class="sp-hint" aria-label="핵심 단어 힌트"></div>
         <div class="sp-inline-actions">
           <button id="spCompareBtn" class="wg-button wg-primary" type="button">AI Willi 확인하기</button>
         </div>
