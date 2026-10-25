@@ -655,54 +655,66 @@ function evaluateHomeworkCompletion(assignment, sessions = []) {
   };
 }
 
-// Sentence Genius homework completion is based on distinct mastered textbook
-// sentences per skill, never generic Arcade progress sessions. All three modes
-// must reach the assigned unit's sentence count to mark homework complete.
+// Sentence Genius: count only distinct independently mastered assigned sentences,
+ // after assignment creation, for the skills the teacher actually selected.
 async function sentenceGeniusAssignmentProgress(assignment,event){
-  const meta=parseAssignmentMeta(assignment.list_meta);
-  const bookId=meta.source_book_id,unitId=meta.source_unit_id;
-  const targetIds=Array.isArray(meta.sentence_ids)?
-    [...new Set(meta.sentence_ids.map(String).filter(id=>/^[0-9a-f-]{36}$/i.test(id)))]:[];
-  const total=targetIds.length||Math.max(0,Math.floor(Number(meta.sentence_count)||0));
-  if(!bookId||!unitId||!total)return _json(422,{success:false,error:'Sentence Genius assignment has no valid unit/size'});
+  const viewer=await getProfileForEvent(event);
+  if(!viewer)return _json(401,{success:false,error:'Not signed in'});
+  const role=String(viewer.role||'').toLowerCase();
+  const staff=['teacher','admin'].includes(role)&&viewer.approved!==false;
+  if(!staff&&!(role==='student'&&viewer.class===assignment.class))
+    return _json(403,{success:false,error:'This homework does not belong to you'});
   const requested=event.queryStringParameters?.class;
-  // Progress always belongs to the assignment's class, regardless of query.
-  if(requested&&requested!==assignment.class)return _json(403,{success:false,error:'Assignment class mismatch'});
+  if(requested&&requested!==assignment.class)
+    return _json(403,{success:false,error:'Assignment class mismatch'});
+  const meta=parseAssignmentMeta(assignment.list_meta);
+  const book=meta.source_book_id,unit=meta.source_unit_id;
+  const targets=[...new Set((Array.isArray(meta.target_sentence_ids)?meta.target_sentence_ids:[]).map(String))];
+  const modes=[...new Set((Array.isArray(meta.required_modes)?meta.required_modes:[]).map(String))]
+    .filter(m=>['coach','unscramble','speaking'].includes(m));
+  if(!book||!unit||!targets.length||!modes.length)
+    return _json(422,{success:false,error:'Sentence Genius homework has no valid target sentences or steps'});
+  const total=targets.length*modes.length,allowed=modes.map(m=>'sentence_'+m);
   const {data:students,error:studentError}=await supabase.from('profiles')
     .select('id,name,korean_name').eq('class',assignment.class).eq('role','student');
   if(studentError)return _json(500,{success:false,error:'Student roster unavailable'});
-  if(!students?.length)return _json(200,{success:true,assignment_id:assignment.id,
-    class:assignment.class,total_modes:3,category:'sentence_genius',progress:[]});
-  const ids=students.map(s=>s.id),progressMap=new Map(ids.map(id=>[id,{coach:new Set(),unscramble:new Set(),speaking:new Set()}]));
-  const allowed={sentence_coach:'coach',sentence_unscramble:'unscramble',sentence_speaking:'speaking'};
-  for(let offset=0;offset<20000;offset+=800){
-    let query=supabase.from('study_attempts')
-      .select('student_id,content_id,skill').in('student_id',ids)
-      .eq('book_id',bookId).eq('unit_id',unitId).eq('is_correct',true)
-      .in('skill',Object.keys(allowed));
-    if(targetIds.length)query=query.in('content_id',targetIds);
-    const {data:rows,error}=await query.range(offset,offset+799);
+  const eligible=Array.isArray(meta.target_student_ids)&&meta.target_student_ids.length
+    ?(students||[]).filter(s=>meta.target_student_ids.map(String).includes(String(s.id)))
+    :(students||[]);
+  if(!eligible.length)return _json(200,{success:true,assignment_id:assignment.id,
+    class:assignment.class,category:'sentence_genius',total_modes:modes.length,progress:[],students:[]});
+  const ids=eligible.map(s=>s.id),mastery=new Map(ids.map(id=>[id,new Map(modes.map(m=>[m,new Set()]))]));
+  const validTargets=new Set(targets);
+  for(let offset=0;offset<80000;offset+=800){
+    const {data:rows,error}=await supabase.from('study_attempts')
+      .select('student_id,content_id,skill,metadata')
+      .in('student_id',ids).eq('book_id',book).eq('unit_id',unit)
+      .in('content_id',targets).in('skill',allowed)
+      .eq('is_correct',true).gte('created_at',assignment.created_at)
+      .order('created_at',{ascending:true}).range(offset,offset+799);
     if(error)return _json(500,{success:false,error:'Sentence mastery progress unavailable'});
     for(const row of rows||[]){
-      const set=progressMap.get(row.student_id)?.[allowed[row.skill]];
-      if(set&&row.content_id)set.add(row.content_id);
+      if(String(row.metadata?.sentence_genius)!=='true')continue;
+      const mode=String(row.skill||'').replace(/^sentence_/,'');
+      if(validTargets.has(String(row.content_id)))mastery.get(row.student_id)?.get(mode)?.add(String(row.content_id));
     }
     if(!rows||rows.length<800)break;
   }
-  const progress=students.map(student=>{
-    const map=progressMap.get(student.id);
-    const counts={coach:Math.min(total,map.coach.size),
-      unscramble:Math.min(total,map.unscramble.size),
-      speaking:Math.min(total,map.speaking.size)};
-    const completed=Object.values(counts).every(n=>n>=total);
-    const completion=Math.min(100,Math.round((counts.coach+counts.unscramble+counts.speaking)/(total*3)*100));
-    return {user_id:student.id,name:student.name,korean_name:student.korean_name,
-      completion,modes_attempted:Object.values(counts).filter(n=>n>=total).length,
-      modes_total:3,modes:Object.entries(counts).map(([mode,passed])=>({mode,passed,total})),
-      status:assignment.active?(completed?'Completed':'In Progress'):'Ended'};
+  const progress=eligible.map(s=>{
+    const skillSets=mastery.get(s.id);
+    const counts=Object.fromEntries(modes.map(m=>[m,skillSets?.get(m)?.size||0]));
+    const done=Object.values(counts).reduce((x,y)=>x+y,0);
+    const completion=Math.min(100,Math.round(100*done/total));
+    return {user_id:s.id,id:s.id,name:s.name,korean_name:s.korean_name,
+      done,total,percent:completion,completion,
+      coach:counts.coach||0,unscramble:counts.unscramble||0,speaking:counts.speaking||0,
+      modes_total:modes.length,modes_attempted:modes.filter(m=>counts[m]===targets.length).length,
+      modes:modes.map(m=>({mode:m,passed:counts[m],total:targets.length})),
+      status:!assignment.active?'Ended':done===total?'Completed':done?'In Progress':'Not Started'};
   });
   return _json(200,{success:true,assignment_id:assignment.id,class:assignment.class,
-    total_modes:3,category:'sentence_genius',goal_type:'completion',goal_value:1,progress});
+    total_modes:modes.length,category:'sentence_genius',
+    goal_type:'completion',goal_value:1,progress,students:progress});
 }
 
 async function assignmentProgress(event) {
@@ -714,7 +726,7 @@ async function assignmentProgress(event) {
   let { data: assignment, error: aErr } = await supabase.from('homework_assignments').select('*').eq('id', assignmentId).single();
   if (aErr || !assignment) return _json(404,{ success:false, error:'Assignment not found' });
   assignment.list_meta = parseAssignmentMeta(assignment.list_meta);
-  if(assignment.list_meta?.app==='sentence_genius'){
+  if(assignment.list_meta?.app==='sentence_genius'||assignment.source_type==='sentence_genius'){
     // Sentence Genius exposes named student mastery. Teacher/admin JWT is
     // mandatory even when the assignment ID is known.
     const requester=await getUserIdFromCookie(event);
