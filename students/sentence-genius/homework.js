@@ -21,5 +21,7 @@ export async function loadSentenceHomework(){
   const body=await response.json().catch(()=>({}));
   if(!response.ok||body.success!==true)throw Error(body.message||body.error||
     'Sentence Genius homework unavailable ('+response.status+')');
-  return (Array.isArray(body.assignments)?body.assignments:[]).filter(row=>row.active);
+  // The student RPC already filters active homework and omits the `active` field.
+  // Do not drop valid rows just because that optional field is absent.
+  return (Array.isArray(body.assignments)?body.assignments:[]).filter(row=>row.active!==false);
 }
