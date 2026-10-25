@@ -190,6 +190,20 @@ export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,o
    const selected=unit.id===field('spUnit');
    const b=node('button','Unit '+unit.number);
    b.type='button';b.className='study-v2-unit'+(selected?' is-current':'');
+   const achievement=state.rewards.get(field('spBook')+'|'+unit.id);
+   if(achievement?.golden){
+    b.classList.add('is-golden');
+    const icon=document.createElement('img');
+    icon.className='vocab-unit-gold';
+    icon.src='/shared/svgs/golden-unit.svg?v=20260927-icons1';
+    icon.alt='Golden Unit';
+    b.append(icon);
+   }else if(Number(achievement?.best_stars)>0){
+    const badge=document.createElement('span');
+    badge.className='sp-unit-stars';
+    badge.textContent=' ★'+achievement.best_stars;
+    b.append(badge);
+   }
    b.setAttribute('aria-pressed',String(selected));
    b.title=unit.title;
    b.addEventListener('click',()=>{
@@ -208,7 +222,7 @@ export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,o
    if(serial!==state.bookReq)return;
    state.units=units;
    if(units.length)$('spUnit').value=units[0].id;
-   renderUnitButtons();
+   renderUnitButtons();renderGoldenCount();
    state.catalogError=false;
   }catch(err){
    if(serial!==state.bookReq)return;
@@ -255,7 +269,7 @@ export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,o
   state.student=student;state.active=true;state.loading=true;state.session=null;
   state.catalogError=false;setScreen('picker');saveLabel('');
   $('spStart').disabled=true;notify('오늘의 연습을 불러오는 중…');
-  const outcomes=await Promise.allSettled([loadBooks(),loadSessions()]);
+  const outcomes=await Promise.allSettled([loadBooks(),loadSessions(),fetchUnitRewards()]);
   state.loading=false;
   if(outcomes[0].status==='rejected'){
    state.catalogError=true;notify('교재를 불러오지 못했어요. '+outcomes[0].reason?.message,true);
@@ -263,6 +277,9 @@ export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,o
    state.catalogError=true;notify('연습 기록을 불러오지 못했어요. '+outcomes[1].reason?.message,true);
   }
   refreshStartButton();
+  if(!state.catalogError&&state.today?.status==='completed'){
+   state.session=structuredClone(state.today);showDone();return;
+  }
   if(!state.catalogError&&state.today?.status==='in_progress'){
    state.session=structuredClone(state.today);showRound();
   }
@@ -332,6 +349,10 @@ export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,o
   if(!resp?.feedback)return;
   resp.draft=field('spAnswer').trim();resp.revised=resp.draft;
   if(resp.revised.length<3){notify('문장을 지우지 말고 고쳐 써 주세요.',true);return}
+  if(!masteredAnswer(resp,session.questions[session.current_index])){
+   notify('AI 제안 또는 교재 예문을 참고해서 문장을 완성해 주세요.',true);
+   $('spAnswer').focus();return;
+  }
   state.loading=true;$('spNextBtn').disabled=true;
   const prev=session.current_index;
   session.current_index=prev+1;
