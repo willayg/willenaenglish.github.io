@@ -18,7 +18,7 @@ function canonicalContractions(value){
  const out=[];
  for(const token of tokens){
   let expansion=null;
-  if(token==="can't")expansion='cannot';
+  if(token==="can't")expansion='can not';
   else if(token==="won't")expansion='will not';
   else if(token==="shan't")expansion='shall not';
   else if(token==="ain't")expansion=null;
