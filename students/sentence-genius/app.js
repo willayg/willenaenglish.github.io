@@ -228,6 +228,13 @@ async function boot(){
     screens.homework(state.homework);
     screens.notice(state.books.length?'':'현재 배정된 교재가 없습니다.');
     await navigation.start();
+    // A homework mission may deep-link to an assigned book and unit. Verify
+    // the book belongs to this student's real assignment before opening.
+    const params=new URLSearchParams(location.search);
+    const homeworkBook=params.get('book'),homeworkUnit=params.get('unit');
+    if(homeworkBook&&homeworkUnit&&state.books.some(b=>String(b.id)===homeworkBook)){
+      await openBook(homeworkBook,{unitId:homeworkUnit});
+    }
   }catch(error){
     console.warn('[Sentence Genius] startup failed',error);
     if(/session|expired|401|auth|unauthor/i.test(String(error.message))){
