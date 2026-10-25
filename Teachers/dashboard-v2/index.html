@@ -6,13 +6,13 @@
 <title>Teacher Dashboard V2</title>
 <script src="/js/api-config.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="./dashboard-v2.css?v=20260829-clean1">
+<link rel="stylesheet" href="./dashboard-v2.css?v=20261025-sg-assign-v2">
 <script src="./dashboard-shell-polish.js?v=20260829-clean1" defer></script>
 </head>
 <body>
 <header class="topbar"><div class="brand"><img src="/Assets/Images/Logo.png" alt="Willena"><div><b>Willena</b><small>Teacher workspace</small></div></div><div class="title">Teacher Dashboard V2</div><div class="top-actions"><span class="teacher-name" id="teacherName">Teacher</span><div id="burger-menu-mount"></div></div></header>
 <div class="layout">
-<aside class="rail"><button class="nav active" data-view="students"><span class="nav-icon">◎</span><span>Students</span></button><button class="nav" data-view="classes"><span class="nav-icon">▦</span><span>Classes</span></button><button class="nav" data-view="sentence-genius"><span class="nav-icon">✎</span><span>Sentence Genius</span></button><button class="nav" data-view="apps"><span class="nav-icon">＋</span><span>Apps</span></button><div class="rail-spacer"></div></aside>
+<aside class="rail"><button class="nav active" data-view="students"><span class="nav-icon">◎</span><span>Students</span></button><button class="nav" data-view="classes"><span class="nav-icon">▦</span><span>Classes</span></button><button class="nav" data-view="sentence-genius"><span class="nav-icon">✎</span><span>Sentence Genius</span></button><button class="nav" data-view="assignments"><span class="nav-icon">▤</span><span>Assignments</span></button><button class="nav" data-view="apps"><span class="nav-icon">＋</span><span>Apps</span></button><div class="rail-spacer"></div></aside>
 <main class="workspace">
 <section class="view active" id="view-students">
 <div class="page-head"><div><h1>Student tracking</h1></div><div class="filters"><select class="control" id="classSelect"><option>Loading classes…</option></select><select class="control" id="daysSelect"><option value="30">Last 30 days</option><option value="14">Last 14 days</option><option value="60">Last 60 days</option><option value="90">Last 90 days</option></select><input class="control search" id="searchInput" type="search" placeholder="Search student…"><button class="control" id="refreshBtn">Refresh</button></div></div>
@@ -31,21 +31,36 @@
   <select class="control" id="sgtSentence" aria-label="Sentence to test"><option value="">Select a sentence</option></select>
   <div class="filters" style="flex-wrap:wrap"><input class="control" style="flex:1;min-width:220px" id="sgtAnswer" type="text" placeholder="Type a student's possible spoken answer"><button class="control" id="sgtGrade">Check with grader</button></div>
   <div id="sgtVerdict" role="status" style="font-weight:700"></div>
-  <hr style="width:100%;border:0;border-top:1px solid #dce4e7">
-  <h2 style="margin:0;font-size:1.15rem">Assignments · 숙제 배정</h2>
-  <p style="margin:0">Assign a textbook unit to a class. Gold requires Coach, Unscramble and Speaking.</p>
-  <div class="filters" style="flex-wrap:wrap"><select class="control" id="sgtClass" aria-label="Assign to class"><option value="">Select a class</option></select><input class="control" id="sgtDue" type="date" aria-label="Homework due date"><button class="control" id="sgtAssign">Assign Sentence Genius</button></div>
-  <div id="sgtStatus" role="status"></div>
-  <hr style="width:100%;border:0;border-top:1px solid #dce4e7">
-  <h2 style="margin:0;font-size:1.15rem">Manage Sentence Genius Homework</h2>
-  <div class="filters" style="flex-wrap:wrap">
-    <button class="control" id="sgtAssignmentsRefresh">Refresh assignments &amp; progress</button>
-  </div>
-  <div id="sgtAssignments" style="display:grid;gap:12px"></div>
+  <div id="sgtStatus" role="status" aria-live="polite"></div>
 </div></section>
+<section class="view" id="view-assignments">
+  <div class="page-head"><div><h1>Assignments</h1><p>Assign student app homework and track real completion.</p></div></div>
+  <div class="sg-assign-layout">
+    <section class="panel sg-panel">
+      <div class="sg-panel-heading"><h2>Sentence Genius · Assign</h2><span class="sg-mini-tag">3 required skills</span></div>
+      <p class="sg-help">Choose a textbook unit and one or more classes. Students complete Coach, Unscramble and Speaking to finish the assignment.</p>
+      <div class="sg-assign-grid">
+        <label>Textbook<select class="control" id="sgaBook"><option value="">Loading textbooks…</option></select></label>
+        <label>Unit<select class="control" id="sgaUnit"><option value="">Choose a book first</option></select></label>
+        <label class="sg-span">Classes <small>(select more than one with Ctrl / Cmd, or tap on mobile)</small>
+          <select class="control sg-multiselect" id="sgaClasses" multiple size="5" aria-label="Classes to assign"></select>
+        </label>
+        <label>Due date<input class="control" id="sgaDue" type="date"></label>
+        <div class="sg-unit-preview" id="sgaUnitPreview">Choose a textbook and unit to preview the assignment.</div>
+      </div>
+      <button class="control sg-primary" id="sgaAssign" type="button">Assign Sentence Genius</button>
+      <div id="sgaStatus" role="status" aria-live="polite"></div>
+    </section>
+    <section class="panel sg-panel">
+      <div class="sg-panel-heading"><h2>Manage Homework</h2><button class="control" id="sgaRefresh" type="button">Refresh</button></div>
+      <label class="sg-manage-filter">Class<select class="control" id="sgaManageClass"><option value="">Choose a class</option></select></label>
+      <div id="sgaAssignments" class="sg-assignment-cards" role="region" aria-label="Sentence Genius assignment progress"></div>
+    </section>
+  </div>
+</section>
 <section class="view" id="view-apps"><div class="page-head"><div><h1>Teacher apps</h1></div></div><div class="app-grid"><div class="app-card"><span class="chip">LIVE</span><h3>Student tracking</h3><p>Study habits, learning evidence, mistakes, skill performance and proof of work.</p></div><div class="app-card"><span class="chip">LIVE</span><h3>Class overview</h3><p>Class-level learning and study-habit signals that link directly back to students.</p></div><div class="app-card"><span class="chip">READY</span><h3>More teacher tools</h3><p>Homework, assessments and classroom tools can be added here.</p></div></div></section>
 </main></div>
-<nav class="mobile-tabs"><button class="mobile-tab active" data-view="students"><b>◎</b>Students</button><button class="mobile-tab" data-view="classes"><b>▦</b>Classes</button><button class="mobile-tab" data-view="sentence-genius"><b>✎</b>Sentences</button><button class="mobile-tab" data-view="apps"><b>＋</b>Apps</button></nav>
+<nav class="mobile-tabs"><button class="mobile-tab active" data-view="students"><b>◎</b>Students</button><button class="mobile-tab" data-view="classes"><b>▦</b>Classes</button><button class="mobile-tab" data-view="sentence-genius"><b>✎</b>Sentences</button><button class="mobile-tab" data-view="assignments"><b>▤</b>Homework</button><button class="mobile-tab" data-view="apps"><b>＋</b>Apps</button></nav>
 <div class="drawer-bg" id="drawerBg"><aside class="drawer"><div class="drawer-head"><div class="drawer-head-main"><div class="drawer-name" id="drawerName">Student</div><div class="drawer-meta" id="drawerMeta"></div></div><button class="close" id="closeDrawer">×</button></div><div class="drawer-body" id="drawerBody"><div class="empty">Loading…</div></div></aside></div>
 <script type="module" src="/components/burger-menu.js"></script>
 <script>
@@ -92,10 +107,10 @@ async function loadClassOverview(force=false){const days=Number($('#classDaysSel
 async function openClassFromOverview(name,days){$('#classSelect').value=name;$('#daysSelect').value=String(days);state.className=name;state.days=days;switchView('students');await loadClass()}
 function switchView(v){$$('.view').forEach(x=>x.classList.toggle('active',x.id===`view-${v}`));$$('[data-view]').forEach(x=>x.classList.toggle('active',x.dataset.view===v));if(v==='classes')loadClassOverview()}
 $('#classSelect').onchange=loadClass;$('#daysSelect').onchange=loadClass;$('#refreshBtn').onclick=loadClass;$('#searchInput').oninput=renderStudents;$('#classDaysSelect').onchange=()=>loadClassOverview(true);$('#classRefreshBtn').onclick=()=>loadClassOverview(true);$('#closeDrawer').onclick=()=>$('#drawerBg').classList.remove('open');$('#drawerBg').onclick=e=>{if(e.target===$('#drawerBg'))$('#drawerBg').classList.remove('open')};$$('[data-view]').forEach(b=>b.onclick=()=>switchView(b.dataset.view));
-(async()=>{if(await auth()){mountBurger();loadClasses();if(new URLSearchParams(location.search).get('view')==='sentence-genius')switchView('sentence-genius')}})();
+(async()=>{if(await auth()){mountBurger();loadClasses();if(['sentence-genius','assignments'].includes(new URLSearchParams(location.search).get('view')))switchView(new URLSearchParams(location.search).get('view'))}})();
 </script>
 <script src="./naesin.js?v=20260829-clean1"></script>
-<script type="module" src="./sentence-genius.js?v=20261025-sg-teachers-v1"></script>
-<script type="module" src="./sentence-genius-progress.js?v=20261025-sg-progress-v1"></script>
+<script type="module" src="./sentence-genius.js?v=20261025-sg-teachers-v2"></script>
+<script type="module" src="./sentence-genius-assignments.js?v=20261025-sg-assign-v2"></script>
 </body>
 </html>
