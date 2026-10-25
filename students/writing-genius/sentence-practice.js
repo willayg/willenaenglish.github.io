@@ -1,8 +1,8 @@
-// Writing Genius: five source-based Make a Sentence prompts, one KST session/day.
-// One bounded AI Willi (Luna) check per question; revision is free. All save to Supabase.
+// Writing Genius: ten sentence prompts per unit, repeat wrong answers.
+// First attempt fixes stars; DB model and approved variations are checked before AI.
 import {getAssignedPracticeBooks,getPracticeUnits,
- getTextbookSentences,generatePracticeQuestions} from './sentence-practice-data.js?v=20261025-make-only-v2';
-import {sessionSummary,masteredAnswer,publishGeniusStars} from './sentence-practice-rewards.js?v=20261025-writing-rewards-v1';
+ getTextbookSentences,generatePracticeQuestions} from './sentence-practice-data.js?v=20261025-ten-v1';
+import {sessionSummary,masteredAnswer,publishGeniusStars} from './sentence-practice-rewards.js?v=20261025-ten-v1';
 const $=id=>document.getElementById(id);
 const txt=(id,value)=>{$(id).textContent=String(value??'')};
 const field=id=>$(id).value;
@@ -30,11 +30,11 @@ export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,o
  };
  const current=()=>{
   const session=state.session;
-  if(!session||session.current_index>=5)return null;
+  if(!session||session.current_index>=session.questions.length)return null;
   const i=session.current_index;
   if(!Array.isArray(session.responses))session.responses=[];
   if(!session.responses[i])session.responses[i]={
-   initial:'',draft:'',revised:'',compared:false,hintUsed:true};
+   initial:'',draft:'',revised:'',compared:false,hintUsed:true,attempts:0,firstFeedback:null};
   return session.responses[i];
  };
  async function persist(){
@@ -66,7 +66,7 @@ export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,o
   clearTimeout(state.timer);
   state.timer=setTimeout(()=>{void persist()},850);
   saveLabel('저장 중…');
-  refreshMasteryNote();
+  if(resp.feedback?.grade!=='correct')displayGrade(state.session.questions[state.session.current_index],resp);
  }
  const gradeTitle=grade=>grade==='correct'?'정확해요! · 4점':
   grade==='almost'?'거의 맞았어요! · 2점':'다시 살펴봐요 · 0점';
@@ -74,9 +74,15 @@ export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,o
   const result=resp.feedback;
   $('spFeedback').hidden=!result;
   $('spCompare').hidden=!result;
-  $('spCompareBtn').hidden=!!result;
-  $('spNextBtn').hidden=!result;
-  if(!result)return;
+  const correct=result?.grade==='correct';
+  const exhausted=Number(resp.attempts||0)>=10;
+  const typed=field('spAnswer').trim();
+  const wasChecked=typed===String(result?.checked_text||'').trim();
+  $('spCompareBtn').hidden=correct||exhausted;
+  $('spCompareBtn').disabled=!typed||wasChecked;
+  $('spNextBtn').hidden=!correct&&!exhausted;
+  if(!result){txt('spMasteryNote','');return}
+  txt('spCompareBtn','다시 확인하기 ('+(resp.attempts||1)+'/10)');
   $('spGrade').textContent=gradeTitle(result.grade);
   $('spFeedback').dataset.grade=result.grade;
   txt('spGradeNote',result.explanation_ko||'');
@@ -87,12 +93,12 @@ export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,o
  }
  function showRound(){
   const s=state.session;if(!s)return;
-  if(s.status==='completed'||s.current_index>=5){showDone();return}
+  if(s.status==='completed'||s.current_index>=s.questions.length){showDone();return}
   setScreen('round');
   const i=s.current_index,card=s.questions[i],resp=current();
   txt('spModeLabel','문장 만들기');
-  txt('spQuestionCount',(i+1)+' / 5');
-  $('spProgressBar').style.width=(i/5*100)+'%';
+  txt('spQuestionCount',(i+1)+' / '+s.questions.length);
+  $('spProgressBar').style.width=(i/s.questions.length*100)+'%';
   txt('spUnitName',s.book_title+' · '+(card.unitName||'Unit'));
   txt('spTaskPrompt',card.prompt);
   txt('spTaskDisplay',card.display);
@@ -105,7 +111,7 @@ export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,o
   $('spAnswer').disabled=false;
   $('spCompareBtn').disabled=false;
   txt('spCompareBtn','AI Willi 확인하기');
-  txt('spNextBtn',i===4?'완료하기 ✓':'다음 문장 →');
+  txt('spNextBtn',i===s.questions.length-1?'완료하기 ✓':'다음 문장 →');
   displayGrade(card,resp);
   saveLabel('저장됨');
   window.scrollTo({top:0,behavior:'auto'});
@@ -117,7 +123,7 @@ export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,o
   const summary=sessionSummary(session);
   const award=state.rewards.get(session.book_id+'|'+session.unit_id);
   txt('spStarsEarned','★'.repeat(summary.stars)+'☆'.repeat(5-summary.stars));
-  txt('spScoreSummary',summary.percent+'% · '+summary.stars+'/5 stars · 숙달 '+summary.mastered+'/5'+
+  txt('spScoreSummary',summary.percent+'% · '+summary.stars+'/5 stars · 숙달 '+summary.mastered+'/'+summary.total+
    (!summary.eligible?' · 단원 혼합 연습(골드 제외)':''));
   $('spGoldAward').hidden=!award?.golden;
   txt('spSyncStatus','');
@@ -129,8 +135,9 @@ export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,o
   if(!session||!resp?.feedback){txt('spMasteryNote','');return}
   const card=session.questions[session.current_index];
   txt('spMasteryNote',masteredAnswer(resp,card)?
-   '✓ 골드 숙달 완료 · 첫 번째 AI 점수는 그대로 유지돼요.':
-   '추천 표현이나 교재 예문처럼 자연스럽게 문장을 고쳐 보세요.');
+   '✓ 정답! 첫 번째 점수는 그대로 유지돼요.':
+   (Number(resp.attempts||0)>=10?'확인 횟수를 모두 사용했어요. 다음 문제로 넘어갈 수 있어요.':
+    '문장을 고친 후 다시 확인해 보세요. 정답이 될 때까지 시도할 수 있어요.'));
  }
  function renderGoldenCount(){
   const book=field('spBook');
@@ -175,17 +182,14 @@ export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,o
   }
  }
  function refreshStartButton(){
-  const btn=$('spStart');
-  if(state.today){
-   if(state.today.status==='completed'){
-    btn.disabled=true;txt('spStart','오늘은 완료했어요 ✓');
-    txt('spSourceNote','내일 새 문장 5개를 연습할 수 있어요.');return;
-   }
-   btn.disabled=false;txt('spStart','오늘의 연습 이어하기 →');
-   txt('spSourceNote','오늘 시작한 문장 연습을 이어서 할 수 있어요.');return;
+  const btn=$('spStart'),last=state.today;
+  if(last?.status==='in_progress'){
+   btn.disabled=false;txt('spStart','이어서 연습하기 →');
+   txt('spSourceNote','완료하지 않은 연습을 이어서 할 수 있어요.');return;
   }
   btn.disabled=state.loading||state.catalogError||!field('spBook')||!field('spUnit');
-  txt('spStart','오늘의 문장 5개 시작하기 →');
+  txt('spStart',state.recent.length?'새로운 문장 10개 연습하기 →':'문장 10개 시작하기 →');
+  txt('spSourceNote','마음껏 다시 연습할 수 있어요. 틀린 문장은 다시 확인해 보세요.');
  }
  function renderUnitButtons(){
   const strip=$('spUnitStrip');strip.replaceChildren();
@@ -249,14 +253,22 @@ export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,o
  async function loadChecks(session){
   if(!session||session.status==='completed')return;
   try{
-   const list=await checksApi('GET','?select=question_index,feedback,answer_text&session_id=eq.'+session.id);
+   const list=await checksApi('GET','?select=question_index,attempt_no,feedback,answer_text'+
+    '&session_id=eq.'+session.id+'&order=question_index.asc,attempt_no.asc');
    if(!Array.isArray(list))return;
    if(!Array.isArray(session.responses))session.responses=[];
-   for(const record of list){
-    if(!record?.feedback||record.question_index<0||record.question_index>4)continue;
-    if(!session.responses[record.question_index])session.responses[record.question_index]={
-      initial:record.answer_text,draft:record.answer_text,revised:record.answer_text};
-    session.responses[record.question_index].feedback=record.feedback;
+   for(const entry of list){
+    if(entry.question_index<0||entry.question_index>=session.questions.length)continue;
+    const i=entry.question_index;
+    if(!session.responses[i])session.responses[i]={
+      initial:entry.answer_text,draft:entry.answer_text,revised:entry.answer_text,attempts:0};
+    const record=session.responses[i];
+    if(!entry.feedback)continue;
+    if(!record.firstFeedback)record.firstFeedback=entry.feedback;
+    if(Number(entry.attempt_no||1)>=Number(record.attempts||0)){
+     record.feedback=entry.feedback;
+     record.attempts=Number(entry.attempt_no||1);
+    }
    }
   }catch(error){console.warn('[Writing Genius] Could not refresh AI checks',error)}
  }
@@ -264,7 +276,7 @@ export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,o
   const list=await api('GET','?select=id,student_id,exercise_type,book_id,book_title,unit_id,questions,responses,current_index,status,practice_day,created_at,updated_at&order=created_at.desc&limit=25');
   if(!Array.isArray(list))throw Error('연습 기록을 불러오지 못했어요.');
   state.recent=list.filter(x=>x.student_id===state.student.id&&x.exercise_type==='make');
-  state.today=state.recent.find(x=>x.practice_day===seoulDate())||null;
+  state.today=state.recent.find(x=>x.status==='in_progress')||null;
   if(state.today&&state.today.status!=='completed')await loadChecks(state.today);
   refreshStartButton();
  }
@@ -280,47 +292,38 @@ export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,o
    state.catalogError=true;notify('연습 기록을 불러오지 못했어요. '+outcomes[1].reason?.message,true);
   }
   refreshStartButton();
-  if(!state.catalogError&&state.today?.status==='completed'){
-   state.session=structuredClone(state.today);showDone();return;
-  }
   if(!state.catalogError&&state.today?.status==='in_progress'){
    state.session=structuredClone(state.today);showRound();
   }
  }
  async function startSession(){
   if(state.loading)return;
-  if(state.today){
-   if(state.today.status==='completed')return;
+  if(state.today?.status==='in_progress'){
    state.session=structuredClone(state.today);showRound();return;
   }
   const book=state.books.find(b=>b.id===field('spBook')),unit=field('spUnit');
   if(!book||!unit||state.catalogError)return;
   state.loading=true;$('spStart').disabled=true;
-  notify('교재에서 문장 5개를 가져오는 중…');
+  notify('교재에서 문장 10개를 가져오는 중…');
   try{
    let items=await getTextbookSentences(book.id,unit,state.units);
-   let cards=generatePracticeQuestions('make',items);
-   if(cards.length!==5){
+   let cards=generatePracticeQuestions('make',items,10);
+   if(cards.length!==10){
     items=await getTextbookSentences(book.id,'',state.units);
-    cards=generatePracticeQuestions('make',items);
+    cards=generatePracticeQuestions('make',items,10);
    }
-   if(cards.length!==5){
-    notify('이 교재에 적합한 문장이 5개 미만이에요. 다른 교재를 골라 주세요.',true);return;
+   if(cards.length!==10){
+    notify('이 교재에는 문장이 10개 미만이에요. 다른 교재를 선택해 주세요.',true);return;
    }
-   const payload={student_id:state.student.id,exercise_type:'make',
-    book_id:book.id,book_title:book.title,unit_id:unit,
-    questions:cards,responses:[],current_index:0,status:'in_progress'};
-   const made=await api('POST','',payload);
-   if(!Array.isArray(made)||!made[0])throw Error('새 연습을 저장하지 못했어요.');
+   const made=await api('POST','',{
+    student_id:state.student.id,exercise_type:'make',book_id:book.id,
+    book_title:book.title,unit_id:unit,questions:cards,
+    responses:[],current_index:0,status:'in_progress'});
+   if(!Array.isArray(made)||!made[0])throw Error('연습 시작 기록을 저장하지 못했어요.');
    state.session=made[0];state.today=made[0];state.recent.unshift(made[0]);
    showRound();
-  }catch(error){
-   if(error.code==='23505'){
-    await loadSessions();
-    if(state.today?.status==='in_progress'){state.session=structuredClone(state.today);showRound();return}
-    notify('오늘은 이미 연습을 완료했어요.',true);
-   }else notify('연습을 시작하지 못했어요. '+error.message,true);
-  }finally{state.loading=false;refreshStartButton()}
+  }catch(error){notify('연습을 시작하지 못했어요. '+error.message,true)}
+  finally{state.loading=false;refreshStartButton()}
  }
  async function grade(){
   if(state.loading||!state.session)return;
@@ -328,22 +331,34 @@ export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,o
   if(answer.length<3||!/[A-Za-z]/.test(answer)){
    notify('영어 문장을 먼저 써 보세요.',true);$('spAnswer').focus();return;
   }
-  const resp=current();if(resp?.feedback){displayGrade(state.session.questions[state.session.current_index],resp);return}
+  const resp=current();
+  if(resp?.feedback?.grade==='correct')return;
+  if(resp.feedback&&answer===resp.feedback.checked_text){
+   notify('답을 고친 후 다시 확인해 보세요.',true);return;
+  }
+  if(Number(resp.attempts||0)>=10){notify('이 문장의 확인 횟수를 모두 사용했어요.',true);return}
   state.loading=true;$('spCompareBtn').disabled=true;
-  txt('spCompareBtn','AI Willi 확인 중…');notify('');
+  txt('spCompareBtn','답을 확인하는 중…');notify('');
   try{
-   const index=state.session.current_index;
-   const data=await gradeSentence(state.session.id,index,answer);
-   if(!data?.feedback)throw Error('AI 결과가 없어요.');
-   if(!resp.initial)resp.initial=answer;
-   resp.draft=answer;resp.revised=answer;resp.compared=true;resp.feedback=data.feedback;
+   const i=state.session.current_index;
+   const result=await gradeSentence(state.session.id,i,answer);
+   if(!result?.feedback)throw Error('확인 결과를 받지 못했어요.');
+   resp.initial ||= answer;resp.draft=answer;resp.revised=answer;
+   resp.compared=true;resp.attempts=Number(result.attempt_no||resp.attempts+1);
+   if(!resp.firstFeedback)resp.firstFeedback=result.feedback;
+   resp.feedback=result.feedback;
    const saved=await persist();
-   if(!saved)notify('AI 확인은 완료됐어요. 다음으로 넘어가기 전에 저장을 다시 확인해 주세요.',true);
-   displayGrade(state.session.questions[index],resp);
-  }catch(error){
-   notify('AI Willi 확인에 실패했어요. 다시 눌러 주세요. '+error.message,true);
-  }finally{
-   state.loading=false;$('spCompareBtn').disabled=false;txt('spCompareBtn','AI Willi 확인하기');
+   displayGrade(state.session.questions[i],resp);
+   if(!saved)notify('확인 결과는 저장됐지만 임시 저장을 다시 시도해야 해요.',true);
+   else if(result.feedback.grade!=='correct'){
+    notify('틀린 문장을 다시 고쳐서 확인할 수 있어요. ('+resp.attempts+'/10)');
+   }else if(result.cached){
+    notify('✓ 교재 문장 또는 저장된 정답에서 바로 확인했어요.');
+   }else notify('✓ AI Willi가 정답으로 인정했어요.');
+  }catch(error){notify('다시 확인해 주세요. '+error.message,true)}
+  finally{
+   state.loading=false;
+   if(resp)displayGrade(state.session.questions[state.session.current_index],resp);
   }
  }
  async function next(){
@@ -351,18 +366,18 @@ export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,o
   const session=state.session,resp=current();
   if(!resp?.feedback)return;
   resp.draft=field('spAnswer').trim();resp.revised=resp.draft;
-  if(resp.revised.length<3){notify('문장을 지우지 말고 고쳐 써 주세요.',true);return}
-  if(!masteredAnswer(resp,session.questions[session.current_index])){
-   notify('AI 제안 또는 교재 예문을 참고해서 문장을 완성해 주세요.',true);
-   $('spAnswer').focus();return;
+  if(resp.revised.length<3){notify('문장을 지우지 말고 남겨 주세요.',true);return}
+  if(!masteredAnswer(resp)&&Number(resp.attempts||0)<10){
+   notify('문장을 다시 고친 후 확인해 보세요.',true);return;
   }
   state.loading=true;$('spNextBtn').disabled=true;
   const prev=session.current_index;
   session.current_index=prev+1;
-  if(session.current_index===5)session.status='completed';
+  if(session.current_index===session.questions.length)session.status='completed';
   const saved=await persist();
   if(saved){
    if(state.today?.id===session.id)Object.assign(state.today,structuredClone(session));
+   if(session.status==='completed')state.today=null;
    showRound();
   }else{session.current_index=prev;session.status='in_progress'}
   state.loading=false;$('spNextBtn').disabled=false;
