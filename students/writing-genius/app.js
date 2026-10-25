@@ -1,7 +1,7 @@
 // Writing Genius: flexible writing. Student-owned drafts, teacher-visible submissions.
 // Reuses the existing auth gateway, student header, Word Genius theme and visual tokens.
-import {studentIdentity} from '/students/sentence-genius/content.js?v=20261024-wg-auth1';
-import {createSentencePractice} from './sentence-practice.js?v=20261025-sp-v1';
+import {studentIdentity,signedInProfile} from '/students/sentence-genius/content.js?v=20261024-wg-auth1';
+import {createSentencePractice} from './sentence-practice.js?v=20261025-sp-v2';
 const API_BASE='https://fiieuiktlsivwfgyivai.supabase.co/rest/v1/';
 const KEY='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
 const NAV='willenaWritingGeniusNav';
@@ -281,6 +281,11 @@ async function bootstrap(){
     const identity=await studentIdentity();
     if(!identity.id)throw new Error('로그인 정보를 찾을 수 없어요.');
     state.student=identity;
+    // The cookie-backed whoami response is not guaranteed to include class.
+    // Resolve the same profile used by Sentence Genius before listing books.
+    const profile=await signedInProfile(identity.id);
+    if(!['student','teacher','admin'].includes(profile.role))throw Error('학생 계정으로 로그인해 주세요.');
+    if(!state.student.className)state.student.className=profile.className;
     await authToken();
     await reloadEntries();
     if(!history.state?.[NAV])history.replaceState(navState('home'),'');
