@@ -5,7 +5,7 @@ import {studentIdentity,signedInProfile,assignedBooks,loadUnits,loadSentences,
 import {openUnit} from './scoring.js?v=sg-coach-gold-v3';
 import {getSentenceMastery} from './tracking.js';
 import {createNavigation} from './navigation.js';
-import {createScreens} from './screens.js?v=sg-no-approval-v4.1';
+import {createScreens} from './screens.js?v=sg-homework-v5a';
 import {createSession} from './session.js?v=sg-no-approval-v4.1';
 import {loadSentenceHomework} from './homework.js?v=sg-homework-v5a';
 
