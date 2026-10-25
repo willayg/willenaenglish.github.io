@@ -14,9 +14,15 @@ function sourceType(assignment) {
 function destinationFor(assignment) {
   const source = sourceType(assignment);
   if (source === 'sentence_genius') {
+    const meta=assignment?.list_meta||{};
+    const book=meta.source_book_id||'';
+    const unit=meta.source_unit_id||'';
+    const q=new URLSearchParams();
+    if(book)q.set('book',book);
+    if(unit)q.set('unit',unit);
     return {
       app: 'Sentence Genius',
-      href: '/students/sentence-genius/',
+      href: '/students/sentence-genius/'+(q.toString()?'?'+q.toString():''),
       buttonLabel: 'Sentence Genius에서 숙제 시작하기'
     };
   }
