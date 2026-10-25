@@ -7,13 +7,15 @@ import {getSentenceMastery} from './tracking.js';
 import {createNavigation} from './navigation.js';
 import {createScreens} from './screens.js?v=sg-no-approval-v4.1';
 import {createSession} from './session.js?v=sg-no-approval-v4.1';
+import {loadSentenceHomework} from './homework.js?v=sg-homework-v5a';
 
 const state={student:null,books:[],book:null,units:[],unit:null,items:[],store:null,
-  loadToken:0,loading:null,teacher:false,simMode:'class',simClasses:[],simCatalog:[],
+  loadToken:0,loading:null,teacher:false,homework:[],simMode:'class',simClasses:[],simCatalog:[],
   simClass:null,simToken:0};
 let navigation;
 const screens=createScreens({
   book:id=>void openBook(id),
+  homework:(bookId,unitId)=>void openBook(bookId,{unitId}),
   unit:id=>void selectUnit(id),
   start:mode=>openSession(mode),
   home:()=>navigation.home(),
@@ -98,7 +100,7 @@ function openSession(mode,{routeUpdate=true}={}){
 async function applyRoute(route){
   if(route.screen==='home'){
     session.dispose();
-    screens.home(state.books);screens.visible('home');return;
+    screens.home(state.books);screens.homework(state.homework);screens.visible('home');return;
   }
   if(!state.books.length){screens.visible('home');return}
   if(state.book?.id!==route.bookId){
@@ -210,8 +212,20 @@ async function boot(){
     }
     if(!state.student.className)state.student.className=profile.className;
     if(!state.student.className)throw Error('Student class is missing');
-    state.books=await assignedBooks(state.student.className);
+    const [bookResult,homeworkResult]=await Promise.allSettled([
+      assignedBooks(state.student.className),loadSentenceHomework()
+    ]);
+    const base=bookResult.status==='fulfilled'?bookResult.value:[];
+    state.homework=homeworkResult.status==='fulfilled'?homeworkResult.value:[];
+    if(bookResult.status==='rejected')console.warn('[Sentence Genius] regular books unavailable',bookResult.reason);
+    if(homeworkResult.status==='rejected')console.warn('[Sentence Genius] homework list unavailable',homeworkResult.reason);
+    const books=new Map(base.map(b=>[String(b.id),b]));
+    for(const a of state.homework)if(!books.has(String(a.book_id))){
+      books.set(String(a.book_id),{id:String(a.book_id),title:a.book_title||'Sentence Genius'});
+    }
+    state.books=[...books.values()];
     screens.home(state.books);
+    screens.homework(state.homework);
     screens.notice(state.books.length?'':'현재 배정된 교재가 없습니다.');
     await navigation.start();
   }catch(error){
