@@ -89,3 +89,20 @@ html[data-vocab-theme="dark"] .wg-status-pill.is-submitted,html[data-vocab-theme
 @media(max-width:680px){.wg-mode-grid{grid-template-columns:1fr;gap:10px}.writing-genius .wg-mode{min-height:92px;flex-direction:row;align-items:center;padding:14px}.wg-mode-icon{flex:0 0 55px}.wg-mode .vocab-front-arrow{position:static;margin-left:auto}.wg-brand{margin:9px auto 20px}.wg-brand>img{width:53px;height:53px}.wg-actions .wg-button{flex:1}.wg-checklist{flex-direction:column;gap:9px}}
 @media(max-width:360px){.wg-brand h1{font-size:1.45rem}.wg-brand>img{width:47px;height:47px}.wg-library-head select{min-width:104px}.wg-paper-head{padding:12px}.wg-paper-head #wgCounts{font-size:.66rem}.wg-actions{gap:8px}.wg-button{padding:10px 12px}}
 @media(prefers-reduced-motion:reduce){.writing-genius .wg-mode{transition:none}}
+
+/* Writing Genius compact home — no duplicate masthead. Keep the mode choices first. */
+.writing-genius .wg-page{padding-top:6px}
+.writing-genius #wgHome .wg-mode-grid{margin-top:4px;margin-bottom:20px;gap:10px}
+.writing-genius .wg-mode{min-height:125px;padding:15px 14px;gap:6px;border-radius:18px}
+.writing-genius .wg-mode-icon{width:42px;height:42px;border-radius:13px}
+.writing-genius .wg-mode-icon svg{width:27px;height:27px}
+.writing-genius .wg-mode-copy strong{font-size:1rem;line-height:1.2}
+.writing-genius .wg-mode-copy small{font-size:.74rem;margin:0}
+.writing-genius .wg-mode .vocab-front-arrow{top:11px;right:12px;font-size:1.3rem}
+@media(max-width:680px){
+ .writing-genius .wg-page{padding-top:0}
+ .writing-genius #wgHome .wg-mode-grid{gap:8px}
+ .writing-genius .wg-mode{min-height:73px;padding:11px 13px;gap:11px}
+ .writing-genius .wg-mode-icon{width:42px;height:42px;flex-basis:42px}
+ .writing-genius .wg-mode .vocab-front-arrow{position:static;margin-left:auto}
+}
