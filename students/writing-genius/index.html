@@ -15,13 +15,13 @@
 <link rel="stylesheet" href="/students/shared/willena-keyboard-safe.css?v=1.0.0">
 <link rel="stylesheet" href="/students/vocab-study/vocab-study.css?v=20261024-home-navigation4">
 <link rel="stylesheet" href="/students/vocab-study/theme-pips.css?v=20260927-v0005">
-<link rel="stylesheet" href="./styles.css?v=20261025-writing-v1">
+<link rel="stylesheet" href="./styles.css?v=20261025-writing-compact-v2">
 <script src="/students/api-gateway.js?v=20260926-progress-summary-cf1"></script>
 <script src="/js/api-config.js?v=20260926-reverted-auth1"></script>
 <script type="module" src="/students/components/student-header.js?v=20261025-sg-mission-v5b"></script>
 </head><body>
 <div class="study-app writing-genius">
-  <student-header title="쓰기 지니어스" show-id="false" home-href="/students/dashboard" home-label="Home" show-home="true" show-points="true" show-logout="true"></student-header>
+  <student-header title="쓰기 지니어스" show-id="false" show-home="false" show-points="true" show-logout="true"></student-header>
   <div id="vocabThemeDock" class="vocab-theme-dock" role="group" aria-label="색상 테마">
     <button class="vocab-theme-pip" type="button" data-theme="cyan" aria-label="Cyan 테마"></button>
     <button class="vocab-theme-pip" type="button" data-theme="sunbeam" aria-label="Sunbeam 테마"></button>
@@ -31,24 +31,20 @@
     <button class="vocab-theme-pip" type="button" data-theme="cyberpunk" aria-label="Cyberpunk 테마"></button>
   </div>
   <main class="vocab-page wg-page">
-    <div class="wg-brand"><img src="/students/assets/icons/writing-genius.svg?v=20261025-1" width="56" height="56" alt="">
-      <div><span class="eyebrow">WRITE YOUR OWN WORDS</span><h1>Writing Genius</h1><p>내 생각을 영어로 써 봐요!</p></div>
-    </div>
     <div id="wgNotice" class="wg-notice" role="status" aria-live="polite"></div>
     <section id="wgHome" aria-label="Writing home" hidden>
-      <h2 class="wg-section-title">무엇을 쓰고 싶나요?</h2>
       <div class="wg-mode-grid">
         <button class="wg-mode vocab-front-book-card" type="button" data-start="sentence">
           <span class="wg-mode-icon" aria-hidden="true"><svg viewBox="0 0 48 48"><rect x="7" y="9" width="34" height="30" rx="7"/><path d="M14 20h20M14 28h14"/></svg></span>
-          <span class="wg-mode-copy"><strong>문장 쓰기</strong><small>자유롭게 문장을 만들어요</small><em>Free sentences</em></span><span class="vocab-front-arrow" aria-hidden="true">›</span>
+          <span class="wg-mode-copy"><strong>문장 연습</strong><small>문장 만들기 · 늘리기</small></span><span class="vocab-front-arrow" aria-hidden="true">›</span>
         </button>
         <button class="wg-mode vocab-front-book-card" type="button" data-start="diary">
           <span class="wg-mode-icon" aria-hidden="true"><svg viewBox="0 0 48 48"><rect x="8" y="10" width="32" height="30" rx="6"/><path d="M8 20h32M17 7v7M31 7v7M17 28h14"/></svg></span>
-          <span class="wg-mode-copy"><strong>오늘의 일기</strong><small>하루를 영어로 기록해요</small><em>Daily diary</em></span><span class="vocab-front-arrow" aria-hidden="true">›</span>
+          <span class="wg-mode-copy"><strong>오늘의 일기</strong><small>나의 하루</small></span><span class="vocab-front-arrow" aria-hidden="true">›</span>
         </button>
         <button class="wg-mode vocab-front-book-card" type="button" data-start="topic">
           <span class="wg-mode-icon" aria-hidden="true"><svg viewBox="0 0 48 48"><path d="M13 36h22M18 29v-3a12 12 0 1 1 12 0v3Z"/><path d="M19 34h10M23 5v-2"/></svg></span>
-          <span class="wg-mode-copy"><strong>주제 글쓰기</strong><small>좋아하는 주제로 길게 써요</small><em>Topic writing</em></span><span class="vocab-front-arrow" aria-hidden="true">›</span>
+          <span class="wg-mode-copy"><strong>주제 글쓰기</strong><small>내 생각 표현하기</small></span><span class="vocab-front-arrow" aria-hidden="true">›</span>
         </button>
       </div>
       <div class="wg-library-head">
