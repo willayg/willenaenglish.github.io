@@ -1,5 +1,5 @@
 // Sentence Genius live unit homework. JWT-scoped RPC; no client-side grading writes.
-const OP='https://fiieuiktlsivwfgyivai.supabase.co/rest/v1/rpc/sg_homework_list_v1';
+const OP='https://fiieuiktlsivwfgyivai.supabase.co/rest/v1/rpc/sg_homework_student_v1';
 const KEY='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
 async function token(refresh=false){
   const current=window.WillenaAPI?.getLocalAccessToken?.();
@@ -15,7 +15,7 @@ async function token(refresh=false){
 export async function loadSentenceHomework(){
   const call=jwt=>fetch(OP,{method:'POST',cache:'no-store',
     headers:{apikey:KEY,Authorization:'Bearer '+jwt,'Content-Type':'application/json'},
-    body:JSON.stringify({p_history:false})});
+    body:'{}'});
   let response=await call(await token());
   if(response.status===401)response=await call(await token(true));
   const body=await response.json().catch(()=>({}));
