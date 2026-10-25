@@ -13,6 +13,17 @@ const state={student:null,books:[],book:null,units:[],unit:null,items:[],store:n
   loadToken:0,loading:null,teacher:false,homework:[],simMode:'class',simClasses:[],simCatalog:[],
   simClass:null,simToken:0};
 let navigation;
+let homeworkRefresh=0;
+async function refreshStudentHomework(){
+  if(state.teacher||!state.student?.id)return;
+  const current=++homeworkRefresh;
+  try{
+    const assignments=await loadSentenceHomework();
+    if(current!==homeworkRefresh)return;
+    state.homework=assignments;
+    screens.homework(assignments);
+  }catch(error){console.warn('[Sentence Genius] homework refresh unavailable',error)}
+}
 const screens=createScreens({
   book:id=>void openBook(id),
   homework:(bookId,unitId)=>void openBook(bookId,{unitId}),
@@ -28,7 +39,7 @@ const session=createSession({
   onBack:()=>navigation.back(),
   onHome:()=>navigation.home(),
   onProgress:()=>screens.progress(),
-  onFinish:()=>screens.progress(),
+  onFinish:()=>{screens.progress();void refreshStudentHomework()},
   onMessage:message=>screens.notice(message)
 });
 function currentContext(){
