@@ -167,7 +167,15 @@ export function createSentencePractice({api,onExit}){
   msg('교재에서 문장 5개를 고르는 중…');
   try{
    const candidates=await getTextbookSentences(book.id,field('spUnit'),state.units);
-   const cards=generatePracticeQuestions(state.kind,candidates);
+   let cards=generatePracticeQuestions(state.kind,candidates);
+   // If a unit cannot supply five distinct prompts, fill the session from
+   // other units of the SAME assigned textbook rather than from unrelated
+   // books. The on-screen source label always identifies the actual unit.
+   if(cards.length!==5&&field('spUnit')){
+    const all=await getTextbookSentences(book.id,'',state.units);
+    cards=generatePracticeQuestions(state.kind,all);
+    if(cards.length===5)txt('spSourceNote','이 단원에는 예문이 적어 같은 교재의 다른 단원도 포함했어요.');
+   }
    if(cards.length!==5){
     msg('이 교재/단원에는 이 유형에 적합한 문장이 5개 미만이에요. 전체 단원이나 다른 유형을 선택해 주세요.',true);
     return;
@@ -251,7 +259,7 @@ export function createSentencePractice({api,onExit}){
  $('spCompareBtn').addEventListener('click',()=>void compare());
  $('spNextBtn').addEventListener('click',()=>void next());
  $('spAgain').addEventListener('click',()=>{state.session=null;setScreen('picker');void loadSessions()});
- $('spFinished').addEventListener('click',()=>{state.session=null;void goBack()});
+ $('spFinished').addEventListener('click',()=>{state.session=null;state.active=false;void onExit()});
  selectKind('make');
  singleton={open,closeForNavigation,get active(){return state.active},get student(){return state.student}};
  return singleton;
