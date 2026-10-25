@@ -48,7 +48,7 @@
 </style>
 <link rel="stylesheet" href="./universal-assignments.css?v=1">
 <link rel="stylesheet" href="./universal-assignment-tracker.css?v=20261015-r3">
-<link rel="stylesheet" href="./sentence-genius-teacher.css?v=20261025-sgt-progress-v2">
+<link rel="stylesheet" href="./sentence-genius-teacher.css?v=20261025-general-progress-v9">
 </head>
 <body>
 <div id="teacher-header"></div>
@@ -65,7 +65,7 @@ try{
 }catch{}
 </script>
 <aside class="rail"><button class="nav active" data-view="students"><span class="nav-icon">◎</span><span>Students</span></button><button class="nav" data-view="classes"><span class="nav-icon">▦</span><span>Classes</span></button><button class="nav" data-view="leaderboard"><span class="nav-icon">★</span><span>Leaderboard</span></button><button class="nav" data-view="assignments"><span class="nav-icon">☑</span><span>Assignments</span></button><button class="nav" data-view="vocab"><span class="nav-icon">Aa</span><span>Word Genius</span></button><button class="nav" data-view="sentence-genius"><span class="nav-icon">S</span><span>Sentence Genius</span></button><button class="nav" data-view="apps"><span class="nav-icon">＋</span><span>Apps</span></button><button class="nav" data-view="puzzles"><span class="nav-icon">◇</span><span>Puzzles</span></button><button class="nav" data-view="english-arcade"><span class="nav-icon">EA</span><span>English Arcade</span></button><div class="rail-spacer"></div></aside>
-<main class="workspace"><section class="view" id="view-sentence-genius"><div class="page-head"><div><h1>Sentence Genius</h1><div class="panel-sub">Book-based grading lab and sentence practice overview</div></div></div><div class="panel sgt-dashboard" id="sgTeacherWorkspace"></div></section>
+<main class="workspace"><section class="view" id="view-sentence-genius"><div class="page-head"><div><h1>Sentence Genius</h1><div class="panel-sub">Student statistics, textbook mastery, and grading tools</div></div></div><div class="panel sgt-dashboard" id="sgTeacherWorkspace"></div></section>
 <section class="view active" id="view-students">
 <div class="page-head"><div><h1>Student tracking</h1></div><div class="filters"><select class="control" id="classSelect"><option>Loading classes…</option></select><select class="control" id="daysSelect"><option value="30">Last 30 days</option><option value="14">Last 14 days</option><option value="60">Last 60 days</option><option value="90">Last 90 days</option></select><input class="control search" id="searchInput" type="search" placeholder="Search student…"><select class="control" id="rosterAssignmentFilter" aria-label="Filter by assignment progress"><option value="all">All students</option><option value="assigned">Has assignments</option><option value="not_started">Not started</option><option value="in_progress">In progress</option><option value="complete">All assignments complete</option><option value="none">No assignments</option></select><button class="control" id="refreshBtn">Refresh</button></div></div>
 <div class="panel"><div class="panel-head"><div><div class="panel-title" id="panelTitle">Students</div><div class="panel-sub" id="statusText"></div></div><span class="count-pill" id="studentCount">0 students</span></div><div id="rosterSummary" class="roster-summary"></div><div class="roster-columns"><span>Student</span><span>Current assignments</span><span>Recorded results</span><span>Activity</span></div><div class="student-list" id="studentList"><div class="empty">Loading…</div></div></div>
@@ -610,7 +610,7 @@ window.TeacherStudentDrawer={open:openStudent,close:closeStudentDrawerDirect};
 <script data-na2-auto-refresh src="./naesin-v2/naesin-v2-auto-refresh.js?v=20260917-r14-03"></script>
 
 <script src="./universal-assignments.js?v=20261025-sentence1"></script>
-<script src="./sentence-genius-teacher.js?v=20261025-unified-practice-v6"></script>
+<script src="./sentence-genius-teacher.js?v=20261025-general-progress-v9"></script>
 <script src="./grammar-homework.js?v=20261019-studentcards1"></script>
 <script src="./grammar-homework-students.js?v=20261019-studentcards1"></script>
 <script src="./word-genius-catalog-assignment.js?v=20261021-word-preview2"></script>
