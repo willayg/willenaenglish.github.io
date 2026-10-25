@@ -7,6 +7,9 @@ const $=id=>document.getElementById(id);
 const txt=(id,value)=>{$(id).textContent=String(value??'')};
 const field=id=>$(id).value;
 const node=(tag,text)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;return n};
+const bounded=(promise,ms=12000)=>Promise.race([
+ promise,new Promise((_,reject)=>setTimeout(()=>reject(new Error('요청 시간이 초과됐어요. 다시 시도해 주세요.')),ms))
+]);
 const seoulDate=()=>{const parts=Object.fromEntries(new Intl.DateTimeFormat('en-CA',
  {timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'})
  .formatToParts(new Date()).map(x=>[x.type,x.value]));return [parts.year,parts.month,parts.day].join('-')};
@@ -225,7 +228,7 @@ export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,o
   refreshStartButton();
   if(!bookId)return;
   try{
-   const units=await getPracticeUnits(bookId);
+   const units=await bounded(getPracticeUnits(bookId));
    if(serial!==state.bookReq)return;
    state.units=units;
    if(units.length)$('spUnit').value=units[0].id;
@@ -239,7 +242,7 @@ export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,o
   refreshStartButton();
  }
  async function loadBooks(){
-  state.books=await getAssignedPracticeBooks(state.student.className);
+  state.books=await bounded(getAssignedPracticeBooks(state.student.className));
   const select=$('spBook');select.replaceChildren();
   if(!state.books.length){
    state.catalogError=true;
@@ -284,7 +287,10 @@ export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,o
   state.student=student;state.active=true;state.loading=true;state.session=null;
   state.catalogError=false;setScreen('picker');saveLabel('');
   $('spStart').disabled=true;notify('오늘의 연습을 불러오는 중…');
-  const outcomes=await Promise.allSettled([loadBooks(),loadSessions(),fetchUnitRewards()]);
+  const outcomes=await Promise.allSettled([
+   bounded(loadBooks(),15000),bounded(loadSessions(),15000),
+   bounded(fetchUnitRewards(),15000)
+  ]);
   state.loading=false;
   if(outcomes[0].status==='rejected'){
    state.catalogError=true;notify('교재를 불러오지 못했어요. '+outcomes[0].reason?.message,true);
@@ -292,7 +298,10 @@ export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,o
    state.catalogError=true;notify('연습 기록을 불러오지 못했어요. '+outcomes[1].reason?.message,true);
   }
   refreshStartButton();
-  if(!state.catalogError&&state.today?.status==='in_progress'){
+  // A successful request previously left the initial "loading" message
+  // onscreen indefinitely, even though the textbook buttons were ready.
+  if(!state.catalogError)notify('');
+  if(state.today?.status==='in_progress'){
    state.session=structuredClone(state.today);showRound();
   }
  }
@@ -306,10 +315,10 @@ export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,o
   state.loading=true;$('spStart').disabled=true;
   notify('교재에서 문장 10개를 가져오는 중…');
   try{
-   let items=await getTextbookSentences(book.id,unit,state.units);
+   let items=await bounded(getTextbookSentences(book.id,unit,state.units),18000);
    let cards=generatePracticeQuestions('make',items,10);
    if(cards.length!==10){
-    items=await getTextbookSentences(book.id,'',state.units);
+    items=await bounded(getTextbookSentences(book.id,'',state.units),18000);
     cards=generatePracticeQuestions('make',items,10);
    }
    if(cards.length!==10){
