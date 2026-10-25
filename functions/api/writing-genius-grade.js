@@ -9,9 +9,8 @@ const json=(status,payload)=>new Response(JSON.stringify(payload),{status,header
  'X-Content-Type-Options':'nosniff'
 }});
 const fail=(status,error)=>json(status,{success:false,error});
-const uuid=s=>/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(s);
 const isUUID=s=>/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(s);
-const normalize=s=>String(s||'').toLowerCase().replace(/[’‘]/g,"'").replace(/[^a-z0-9']/g,'').slice(0,200);
+const normalize=s=>String(s||'').toLowerCase().replace(/[’‘]/g,"'").replace(/[^a-z0-9']+/g,' ').trim().slice(0,200);
 async function db(path,token,{method='GET',body}={}){
  const headers={apikey:KEY,Authorization:'Bearer '+token};
  if(body!==undefined){headers['Content-Type']='application/json';headers.Prefer='return=representation'}
