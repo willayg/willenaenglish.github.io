@@ -81,7 +81,7 @@ export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,o
   $('spCompareBtn').hidden=correct||exhausted;
   $('spCompareBtn').disabled=!typed||wasChecked;
   $('spNextBtn').hidden=!correct&&!exhausted;
-  if(!result){txt('spMasteryNote','');return}
+  if(!result){txt('spCompareBtn','AI Willi 확인하기');txt('spMasteryNote','');return}
   txt('spCompareBtn','다시 확인하기 ('+(resp.attempts||1)+'/10)');
   $('spGrade').textContent=gradeTitle(result.grade);
   $('spFeedback').dataset.grade=result.grade;
