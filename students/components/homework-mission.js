@@ -8,7 +8,7 @@ function apiFetch(url, options) {
 }
 
 function sourceType(assignment) {
-  return String(assignment?.source_type || '').trim().toLowerCase() || 'wordlist';
+  return String(assignment?.source_type || assignment?.list_meta?.source_type || assignment?.list_meta?.app || '').trim().toLowerCase() || 'wordlist';
 }
 
 function destinationFor(assignment) {
