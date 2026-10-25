@@ -2,7 +2,7 @@
 // Exercises draw only from assigned textbook content, with optional hints and
 // one possible model sentence. Five-question sessions are saved to Supabase.
 import {EXERCISE_LABELS,getAssignedPracticeBooks,getPracticeUnits,
- getTextbookSentences,generatePracticeQuestions} from './sentence-practice-data.js?v=20261025-sp-v1';
+ getTextbookSentences,generatePracticeQuestions} from './sentence-practice-data.js?v=20261025-sp-v3';
 
 const $=id=>document.getElementById(id);
 const txt=(id,value)=>{$(id).textContent=String(value??'')};
