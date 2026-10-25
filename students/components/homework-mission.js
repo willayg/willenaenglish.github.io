@@ -13,6 +13,13 @@ function sourceType(assignment) {
 
 function destinationFor(assignment) {
   const source = sourceType(assignment);
+  if (source === 'sentence_genius') {
+    return {
+      app: 'Sentence Genius',
+      href: '/students/sentence-genius/',
+      buttonLabel: 'Sentence Genius에서 숙제 시작하기'
+    };
+  }
   if (source === 'vocab_study') {
     return {
       app: 'Word Genius',
