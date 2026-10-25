@@ -29,7 +29,7 @@ const prompts={
 };
 const state={student:null,entries:[],active:null,filter:'all',timer:0,loading:false};
 const fmtDate=s=>{if(!s)return'';const d=new Date(s);return Number.isNaN(d.getTime())?String(s).slice(0,10):d.toLocaleDateString('ko-KR',{month:'short',day:'numeric',year:'numeric'})};
-const seoulDate=()=>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
+const seoulDate=()=>{const parts=Object.fromEntries(new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date()).map(x=>[x.type,x.value]));return parts.year+'-'+parts.month+'-'+parts.day};
 const wordCount=s=>String(s||'').trim().match(/\b[\p{L}\p{N}][\p{L}\p{N}'’-]*\b/gu)?.length||0;
 const sentenceCount=s=>String(s||'').split(/[.!?]+(?:\s|$)/).map(x=>x.trim()).filter(Boolean).length;
 const el=(tag,cls,text)=>{const node=document.createElement(tag);if(cls)node.className=cls;if(text!==undefined)node.textContent=text;return node};
@@ -136,7 +136,7 @@ function showEditor(entry){
   $('wgIdeasToggle span').textContent='보기';
   document.querySelectorAll('.wg-checklist input').forEach(x=>x.checked=false);
   updateCounts();saveState(a.persisted?'저장됨':'새 글');
-  show('editor');window.scrollTo({top:0,behavior:'instant'});
+  show('editor');window.scrollTo({top:0,behavior:'auto'});
 }
 function createEntry(kind){
   const prompt=prompts[kind][0],date=seoulDate();
@@ -247,7 +247,7 @@ async function backHome(fromPop=false){
     if(history.state?.[NAV]&&history.state.screen==='editor')history.replaceState(navState('home'),'');
     else history.replaceState(navState('home'),'');
   }
-  window.scrollTo({top:0,behavior:'instant'});
+  window.scrollTo({top:0,behavior:'auto'});
 }
 async function popRoute(){
   const nav=history.state;
