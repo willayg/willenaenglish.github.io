@@ -92,9 +92,24 @@ async function teacherOpen(){
  '<div class="sgt-target" id="sgtTestPrompt"></div>'+
  '<div class="sgt-fields"><label class="sgt-wide">Student answer (type a transcript)<input id="sgtTestAnswer" type="text" class="control" placeholder="Type what the student says"></label></div>'+
  '<div class="sgt-actions"><button class="control ua-primary" id="sgtTestCheck" disabled>Test Answer</button><button class="control" id="sgtGoHomework">Open Sentence Genius Assignments</button></div>'+
- '<div class="sgt-result" id="sgtTestResult" role="status"></div>';
+ '<div class="sgt-result" id="sgtTestResult" role="status"></div>'+
+ '<section class="sgt-class-dashboard" id="sgtClassDashboard">'+
+ '<div class="sgt-head"><h3>Class & student progress</h3><p>Recorded Sentence Genius homework mastery by class, including Coach, Unscramble and Speaking. No simulated activity is saved.</p></div>'+
+ '<div class="sgt-actions"><label class="sgt-class-label">Class <select id="sgtProgressClass" class="control"><option value="">Choose a class</option></select></label>'+
+ '<button type="button" class="control" id="sgtClassRefresh">↻ Refresh progress</button></div>'+
+ '<div id="sgtClassProgress" class="sgt-progress-overview" aria-live="polite">Choose a class to view assigned unit progress.</div></section>';
  const bookEl=$('#sgtTestBook',root),unitEl=$('#sgtTestUnit',root),sentenceEl=$('#sgtTestSentence',root),test=$('#sgtTestCheck',root);
  $('#sgtGoHomework',root).onclick=()=>{document.querySelector('[data-view="assignments"]')?.click();window.UniversalAssignments?.openTab?.('sentence')};
+ const progressClass=$('#sgtProgressClass',root),progressRefresh=$('#sgtClassRefresh',root);
+ progressClass.onchange=()=>void loadClassSentenceProgress(root,progressClass.value);
+ progressRefresh.onclick=()=>void loadClassSentenceProgress(root,progressClass.value);
+ void classes().then(list=>{
+  if(!root.isConnected||!progressClass.isConnected)return;
+  progressClass.innerHTML='<option value="">Choose a class</option>'+
+    list.map(row=>'<option value="'+escapeHtml(row.name)+'">'+escapeHtml(row.display_name||row.name)+'</option>').join('');
+ }).catch(error=>{
+  const host=$('#sgtClassProgress',root);if(host)host.textContent='Class list unavailable: '+error.message;
+ });
  const update=()=>{const item=state.items.find(x=>x.id===sentenceEl.value);
   $('#sgtTestPrompt',root).textContent=item?item.ko+' · '+item.en:'Choose a sentence to test.';
   test.disabled=!item};
@@ -125,6 +140,68 @@ async function teacherOpen(){
   };
  }catch(e){$('#sgtTestResult',root).textContent=e.message}
 }
+// Teacher overview uses the same secured homework progress RPC as Manage Homework.
+let classProgressRequest=0;
+async function loadClassSentenceProgress(root,className){
+ const host=$('#sgtClassProgress',root),request=++classProgressRequest;
+ if(!host)return;
+ if(!className){host.textContent='Choose a class to view assigned unit progress.';return}
+ host.textContent='Loading current Sentence Genius homework…';
+ try{
+  const response=await rpc('sg_homework_list_v1',{p_history:false});
+  if(request!==classProgressRequest||!host.isConnected)return;
+  const assignments=(response.assignments||[]).filter(a=>a.class_name===className&&a.active===true);
+  if(!assignments.length){
+   host.innerHTML='<p class="sgt-empty">No active Sentence Genius assignments for this class yet.</p>';
+   return;
+  }
+  const results=await Promise.allSettled(assignments.map(a=>rpc('sg_homework_progress_v1',{p_id:a.id})));
+  if(request!==classProgressRequest||!host.isConnected)return;
+  const people=new Map(),failures=[];
+  results.forEach((out,index)=>{
+   const a=assignments[index];
+   if(out.status==='rejected'){failures.push(a.title);return}
+   for(const student of out.value.students||[]){
+    const key=String(student.id);
+    if(!people.has(key))people.set(key,{
+      id:key,name:student.korean_name||student.name||'Student',done:0,total:0,
+      coach:0,unscramble:0,speaking:0,assignments:[]
+    });
+    const row=people.get(key),done=Number(student.done)||0,total=Number(student.total)||0;
+    row.done+=done;row.total+=total;
+    row.coach+=Number(student.coach)||0;
+    row.unscramble+=Number(student.unscramble)||0;
+    row.speaking+=Number(student.speaking)||0;
+    row.assignments.push({title:a.title,done,total});
+   }
+  });
+  const students=[...people.values()].sort((a,b)=>
+   (a.total?100*a.done/a.total:0)-(b.total?100*b.done/b.total:0));
+  const activeCount=assignments.length-failures.length;
+  const totalDone=students.reduce((sum,s)=>sum+s.done,0);
+  const totalPossible=students.reduce((sum,s)=>sum+s.total,0);
+  const summary='<div class="sgt-class-summary"><strong>'+activeCount+' assignments</strong>'+
+   '<strong>'+students.length+' students</strong>'+
+   '<strong>'+ (totalPossible?Math.round(100*totalDone/totalPossible):0)+'% overall completion</strong></div>';
+  const cards=students.map(s=>{
+   const percent=s.total?Math.min(100,Math.round(100*s.done/s.total)):0;
+   return '<details class="sgt-progress-student"><summary><span><strong>'+escapeHtml(s.name)+'</strong>'+
+    '<small>'+s.done+'/'+s.total+' steps completed · Coach '+s.coach+
+    ' · Unscramble '+s.unscramble+' · Speaking '+s.speaking+'</small></span>'+
+    '<span class="sgt-progress-percent">'+percent+'%</span></summary>'+
+    '<div class="sgt-bar"><i style="width:'+percent+'%"></i></div>'+
+    '<div class="sgt-progress-units">'+s.assignments.map(a=>'<div><span>'+escapeHtml(a.title)+
+    '</span><b>'+a.done+'/'+a.total+'</b></div>').join('')+'</div></details>';
+  }).join('');
+  host.innerHTML=summary+(cards||'<p class="sgt-empty">No students in this class.</p>')+
+   (failures.length?'<p class="sgt-error">'+failures.length+' assignments could not load.</p>':'')+
+   '<div class="sgt-actions"><button type="button" class="control ua-primary" id="sgtOpenManage">Manage Sentence Genius homework</button></div>';
+  const manage=$('#sgtOpenManage',host);
+  if(manage)manage.onclick=()=>{document.querySelector('[data-view="assignments"]')?.click();
+    window.UniversalAssignments?.openTab?.('sentence')};
+ }catch(error){if(request===classProgressRequest&&host.isConnected)host.textContent='Progress unavailable: '+error.message}
+}
+
 let sharedGrader=null;
 async function graderRules(){
  if(!sharedGrader){
