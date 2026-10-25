@@ -661,7 +661,9 @@ function evaluateHomeworkCompletion(assignment, sessions = []) {
 async function sentenceGeniusAssignmentProgress(assignment,event){
   const meta=parseAssignmentMeta(assignment.list_meta);
   const bookId=meta.source_book_id,unitId=meta.source_unit_id;
-  const total=Math.max(0,Math.floor(Number(meta.sentence_count)||0));
+  const targetIds=Array.isArray(meta.sentence_ids)?
+    [...new Set(meta.sentence_ids.map(String).filter(id=>/^[0-9a-f-]{36}$/i.test(id)))]:[];
+  const total=targetIds.length||Math.max(0,Math.floor(Number(meta.sentence_count)||0));
   if(!bookId||!unitId||!total)return _json(422,{success:false,error:'Sentence Genius assignment has no valid unit/size'});
   const requested=event.queryStringParameters?.class;
   // Progress always belongs to the assignment's class, regardless of query.
@@ -674,10 +676,12 @@ async function sentenceGeniusAssignmentProgress(assignment,event){
   const ids=students.map(s=>s.id),progressMap=new Map(ids.map(id=>[id,{coach:new Set(),unscramble:new Set(),speaking:new Set()}]));
   const allowed={sentence_coach:'coach',sentence_unscramble:'unscramble',sentence_speaking:'speaking'};
   for(let offset=0;offset<20000;offset+=800){
-    const {data:rows,error}=await supabase.from('study_attempts')
+    let query=supabase.from('study_attempts')
       .select('student_id,content_id,skill').in('student_id',ids)
       .eq('book_id',bookId).eq('unit_id',unitId).eq('is_correct',true)
-      .in('skill',Object.keys(allowed)).range(offset,offset+799);
+      .in('skill',Object.keys(allowed));
+    if(targetIds.length)query=query.in('content_id',targetIds);
+    const {data:rows,error}=await query.range(offset,offset+799);
     if(error)return _json(500,{success:false,error:'Sentence mastery progress unavailable'});
     for(const row of rows||[]){
       const set=progressMap.get(row.student_id)?.[allowed[row.skill]];
@@ -710,8 +714,18 @@ async function assignmentProgress(event) {
   let { data: assignment, error: aErr } = await supabase.from('homework_assignments').select('*').eq('id', assignmentId).single();
   if (aErr || !assignment) return _json(404,{ success:false, error:'Assignment not found' });
   assignment.list_meta = parseAssignmentMeta(assignment.list_meta);
-  if(assignment.list_meta?.app==='sentence_genius')
+  if(assignment.list_meta?.app==='sentence_genius'){
+    // Sentence Genius exposes named student mastery. Teacher/admin JWT is
+    // mandatory even when the assignment ID is known.
+    const requester=await getUserIdFromCookie(event);
+    if(!requester)return _json(401,{success:false,error:'Teacher sign-in required'});
+    const {data:staff,error:staffError}=await supabase.from('profiles')
+      .select('role,approved').eq('id',requester).single();
+    if(staffError||!staff||!['teacher','admin'].includes(String(staff.role||'').toLowerCase())
+       ||staff.approved===false)
+      return _json(403,{success:false,error:'Teacher access required'});
     return sentenceGeniusAssignmentProgress(assignment,event);
+  }
 
   // Auto-create run token if assignment has none (backfill for older assignments)
   let assignmentRunTokens = Array.isArray(assignment.list_meta?.run_tokens)
