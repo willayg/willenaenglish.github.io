@@ -107,21 +107,19 @@ function setTeacherTab(root,name){
  }
 }
 function statsShell(){
- return '<div class="sgt-stats-intro">'+wrapper('Sentence Genius · General Progress',
-   'Real student results for 코치, 문장 배열 and 말하기. Recent accuracy includes retry attempts; unit mastery is verified separately.')+
+ return '<div class="sgt-stats-intro">'+wrapper('General Progress', '코치 · 문장 배열 · 말하기')+
    '<button type="button" class="control ua-primary" id="sgtStatsGoHomework">Manage Assignments</button></div>'+
    '<section id="sgtGeneralStats" aria-label="Sentence Genius student progress"></section>'+
    '<section class="sgt-class-dashboard" id="sgtClassDashboard">'+
-   '<div class="sgt-head"><h3>Homework completion</h3><p>Assigned sentences and selected steps only; tracked separately from general practice.</p></div>'+
+   '<div class="sgt-head"><h3>Homework</h3></div>'+
    '<div class="sgt-stats-filter"><label for="sgtProgressClass">Homework class</label>'+
    '<select id="sgtProgressClass" class="control"><option value="">Loading classes…</option></select>'+
    '<button type="button" class="control" id="sgtClassRefresh">↻ Refresh homework</button></div>'+
    '<div id="sgtClassProgress" class="sgt-progress-overview" aria-live="polite">Loading homework classes…</div></section>';
 }
 function gradingShell(){
- return wrapper('Grading Lab · Preview only',
-   'Test the treatment of a textbook sentence. No student attempts, points, stars or progress are saved.')+
- '<div class="sgt-lab-note" role="note">A typed transcript tests answer grading, not microphone recognition or audio playback. Check real student behavior in the student app.</div>'+
+ return wrapper('Grading Lab', 'Preview only · No scores saved')+
+ 
  '<div class="sgt-fields"><label>Book<select id="sgtTestBook" class="control"></select></label>'+
  '<label>Unit<select id="sgtTestUnit" class="control"><option value="">Select book first</option></select></label>'+
  '<label>Sentence<select id="sgtTestSentence" class="control"><option value="">Select unit first</option></select></label></div>'+
@@ -251,7 +249,7 @@ async function mountSentenceStatistics(root){
   '<div class="sgt-matrix"><div class="sgt-matrix-head" aria-hidden="true">'+
   '<span>Student</span><span>Overall</span><span>코치</span><span>문장 배열</span><span>말하기</span><span>Today</span></div>'+
   '<div id="sgtStatsRows" class="sgt-matrix-body"><div class="sgt-result">Loading student statistics…</div></div></div>'+
-  '<p class="sgt-stats-footnote">Accuracy counts recorded answers, including retries, within the selected period. Unit mastery uses all-time independently correct sentences. Gold is confirmed only against the complete textbook unit.</p>';
+  '<p class="sgt-stats-footnote">Accuracy includes retries · Gold requires all three skills.</p>';
  const classInput=$('#sgtStatsClass',host),daysInput=$('#sgtStatsDays',host),
   searchInput=$('#sgtStatsSearch',host),rowsHost=$('#sgtStatsRows',host),
   summary=$('#sgtStatsSummary',host);
@@ -261,7 +259,7 @@ async function mountSentenceStatistics(root){
   const a=Number(attempts)||0,c=Number(correct)||0;
   return '<span class="sgt-matrix-metric '+kind+(a?'':' no-evidence')+'"><strong>'+
     (a?Math.round(100*c/a)+'%':'—')+'</strong><small>'+
-    (a?a+' attempts':label)+'</small></span>';
+    (a?a+' attempts':'')+'</small></span>';
  };
  const formatLast=value=>{
   if(!value)return 'Never';
@@ -279,11 +277,11 @@ async function mountSentenceStatistics(root){
   const today=people.filter(p=>Number(p.today_attempts)>0).length;
   const units=people.reduce((n,p)=>n+(Number(p.units)||0),0);
   summary.innerHTML='<div class="sgt-summary-card"><b>'+(avg===null?'—':avg+'%')+
-   '</b><span>Avg. answer accuracy</span></div>'+
-   '<div class="sgt-summary-card"><b>'+today+'</b><span>Studied today</span></div>'+
+   '</b><span>Avg. accuracy</span></div>'+ 
+   '<div class="sgt-summary-card"><b>'+today+'</b><span>Today</span></div>'+ 
    '<div class="sgt-summary-card"><b>'+active.length+' / '+people.length+
-   '</b><span>Active in period</span></div>'+
-   '<div class="sgt-summary-card"><b>'+units+'</b><span>Units with saved activity</span></div>';
+   '</b><span>Active</span></div>'+ 
+   '<div class="sgt-summary-card"><b>'+units+'</b><span>Units studied</span></div>';
   if(!people.length){rowsHost.innerHTML='<div class="sgt-matrix-empty">No students match this selection.</div>';return}
   rowsHost.innerHTML=people.map(p=>{
    const id=escapeHtml(String(p.id)),opened=view.expanded===String(p.id);
@@ -292,12 +290,12 @@ async function mountSentenceStatistics(root){
       '" data-sgt-student="'+id+'" aria-expanded="'+opened+'" aria-controls="sgtDetail-'+id+'">'+
      '<span class="sgt-matrix-student"><strong>'+escapeHtml(p.korean_name||p.name||'Student')+
       '</strong><small>'+escapeHtml(p.korean_name&&p.name?p.name+' · '+p.class_name:p.class_name||'')+'</small></span>'+
-     metric(p.correct,p.attempts,'sgt-overall','No evidence')+
-     metric(p.coach_correct,p.coach_attempts,'sgt-coach','No evidence')+
-     metric(p.unscramble_correct,p.unscramble_attempts,'sgt-unscramble','No evidence')+
-     metric(p.speaking_correct,p.speaking_attempts,'sgt-speaking','No evidence')+
+     metric(p.correct,p.attempts,'sgt-overall','')+
+     metric(p.coach_correct,p.coach_attempts,'sgt-coach','')+
+     metric(p.unscramble_correct,p.unscramble_attempts,'sgt-unscramble','')+
+     metric(p.speaking_correct,p.speaking_attempts,'sgt-speaking','')+
      '<span class="sgt-matrix-today"><strong>'+(Number(p.today_attempts)||'—')+
-     '</strong><small>'+(Number(p.today_attempts)?'attempts':'no activity')+'</small></span>'+
+     '</strong><small>'+(Number(p.today_attempts)?'attempts':'')+'</small></span>'+ 
      '</button>'+
      '<div class="sgt-matrix-detail" id="sgtDetail-'+id+'"'+(opened?'':' hidden')+'>'+
       (opened?'<div class="sgt-matrix-empty">Loading textbook and unit mastery…</div>':'')+
