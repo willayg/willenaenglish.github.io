@@ -145,22 +145,6 @@ const topics=value=>{
   if(Array.isArray(value))return value.map(str).filter(Boolean);
   const text=str(value);return text?[text]:[];
 };
-// Published operational decisions are read-only for students and verified
-// against the exact textbook target and published policy version below.
-async function sharedDecisions(occurrenceIds){
-  const all=[];
-  for(const part of chunks(occurrenceIds,80)){
-    const response=await fetch('https://fiieuiktlsivwfgyivai.supabase.co/rest/v1/rpc/get_sentence_genius_decisions_v1',{
-      method:'POST',cache:'no-store',
-      headers:{apikey:OP_KEY,Authorization:'Bearer '+OP_KEY,'Content-Type':'application/json'},
-      body:JSON.stringify({p_occurrence_ids:part})
-    });
-    const data=await response.json().catch(()=>({}));
-    if(!response.ok||!data?.success)throw Error('Shared grading decisions unavailable');
-    all.push(...(Array.isArray(data.decisions)?data.decisions:[]));
-  }
-  return all;
-}
 export async function loadSentences(bookId,unitId,unit={}){
   const rows=await content('source_content_occurrences?select=id,sentence_id,source_text,page_number'+
     '&book_id=eq.'+encodeURIComponent(bookId)+'&unit_id=eq.'+encodeURIComponent(unitId)+
@@ -169,7 +153,7 @@ export async function loadSentences(bookId,unitId,unit={}){
   if(!ids.length)return [];
 
   // These requests are parallel; there are no per-book hardcoded cases.
-  const [sentenceChunks,linkChunks,policyChunks,moderated]=await Promise.all([
+  const [sentenceChunks,linkChunks,policyChunks]=await Promise.all([
     Promise.all(chunks(ids).map(part=>content('sentences?select=id,text,canonical_text,'+
       'translation_ko,contraction_policy,grammar_notes,metadata,status&status='+available+
       '&id=in.'+idList(part)))),
@@ -178,11 +162,7 @@ export async function loadSentences(bookId,unitId,unit={}){
     Promise.all(chunks(rows.map(row=>row.id)).map(part=>content(
       'sentence_genius_policies?select=occurrence_id,grading_mode,required_pattern_id,'+
       'accepted_alternatives,policy_version,status&status=eq.published&occurrence_id=in.'+
-      idList(part)))),
-    sharedDecisions(rows.map(row=>row.id)).catch(error=>{
-      console.warn('[Sentence Genius] shared decisions unavailable',error);
-      return [];
-    })
+      idList(part))))
   ]);
   const sentenceMap=new Map(sentenceChunks.flat().map(row=>[row.id,row]));
   const linksBySentence=new Map();
@@ -193,12 +173,6 @@ export async function loadSentences(bookId,unitId,unit={}){
     if(!linksBySentence.has(link.sentence_id))linksBySentence.set(link.sentence_id,[]);
     linksBySentence.get(link.sentence_id).push(link);
     if(link.pattern_id)patternIds.add(link.pattern_id);
-  }
-  const decisionsByOccurrence=new Map();
-  for(const decision of moderated){
-    const key=str(decision.occurrence_id);
-    if(!decisionsByOccurrence.has(key))decisionsByOccurrence.set(key,[]);
-    decisionsByOccurrence.get(key).push(decision);
   }
   const policyByOccurrence=new Map(policyChunks.flat().map(row=>[row.occurrence_id,row]));
   for(const row of policyByOccurrence.values())if(row.required_pattern_id)patternIds.add(row.required_pattern_id);
@@ -224,14 +198,6 @@ export async function loadSentences(bookId,unitId,unit={}){
     seen.add(s.id);
     const override=policyByOccurrence.get(occurrence.id);
     const version=Number(override?.policy_version)||0;
-    const reviewed=(decisionsByOccurrence.get(str(occurrence.id))||[]).filter(row=>
-      String(row.sentence_id)===String(s.id)&&
-      String(row.canonical_text).trim()===en&&
-      Number(row.policy_version)===version);
-    const sharedApproved=reviewed.filter(row=>row.decision==='approved')
-      .map(row=>str(row.response_text));
-    const sharedRejected=reviewed.filter(row=>row.decision==='rejected')
-      .map(row=>str(row.response_text));
     const linkedPatterns=(linksBySentence.get(s.id)||[]).flatMap(link=>{
       const pattern=patterns.get(link.pattern_id);
       if(!pattern)return [];
@@ -256,7 +222,6 @@ export async function loadSentences(bookId,unitId,unit={}){
         requiredPatternName:str(requiredPattern?.name),
         approvedAlternatives:Array.isArray(override?.accepted_alternatives)?
           override.accepted_alternatives:[],
-        sharedApproved,sharedRejected,
         contractionPolicy:str(s.contraction_policy)||'allow_equivalent',
         grammarNotes:str(s.grammar_notes),
         patternCode:str(sentenceMetadata.pattern_code),
