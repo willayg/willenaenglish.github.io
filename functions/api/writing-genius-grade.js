@@ -19,6 +19,14 @@ async function db(path,token,{method='GET',body}={}){
  const value=await response.json().catch(()=>null);
  return {ok:response.ok,status:response.status,value};
 }
+async function aiQuota(auth,claim=false){
+  const result=await db('rpc/wg_sentence_ai_quota_v1',auth.token,{
+    method:'POST',body:{p_claim:!!claim}
+  });
+  if(!result.ok||!result.value||!Number.isInteger(result.value.remaining))
+    throw Error('AI daily quota unavailable');
+  return result.value;
+}
 async function identity(request){
  const token=(request.headers.get('Authorization')||'').replace(/^Bearer\s+/i,'').trim();
  if(token.length<40)return null;
@@ -126,24 +134,39 @@ export async function onRequestPost({request,env}){
  try{
   // Database-first! Only unknown variations reach Luna.
   let grade=await localCheck(auth,card,answer);
-  if(!grade){
-   const key=env.OPENAI_API_KEY||env.OPENAI_API||env.OPENAI_KEY;
-   if(!key)throw Error('Luna API key missing');
-   grade=await luna(key,card.display,card.model,answer);
-  }
+   const budget=await aiQuota(auth,!grade);
+   if(!grade&&!budget.allowed){
+     await db(endpoint+'?id=eq.'+reservation.id,auth.token,{method:'DELETE'});
+     return json(429,{
+       success:false,code:'DAILY_AI_LIMIT',quota:budget,
+       error:'오늘 AI Willi 확인 20회를 모두 사용했어요. 다른 Genius 앱을 연습하고 내일 다시 와요!'
+     });
+   }
+   if(!grade){
+     const key=env.OPENAI_API_KEY||env.OPENAI_API||env.OPENAI_KEY;
+     if(!key)throw Error('Luna API key missing');
+     grade=await luna(key,card.display,card.model,answer);
+   }
   const saved=await db(endpoint+'?id=eq.'+reservation.id,auth.token,{
     method:'PATCH',body:{feedback:grade,completed_at:new Date().toISOString()}});
   if(!saved.ok||!saved.value?.length)throw Error('Could not save AI feedback');
   // The database AFTER UPDATE trigger automatically persists AI-approved
   // variants keyed to the exact textbook sentence. Never save almost-right.
   return json(200,{success:true,feedback:grade,attempt_no:attemptNo,
-   max_attempts:10,cached:grade.source!=='luna',mastered:grade.grade==='correct'});
+   max_attempts:10,cached:grade.source!=='luna',mastered:grade.grade==='correct',
+    quota:budget});
  }catch(error){
   return fail(503,'AI 확인에 문제가 있어요. 잠시 후 다시 시도해 주세요.');
  }
 }
-export async function onRequestGet(){
- return json(200,{success:true,service:'writing-genius-grade',model:MODEL,revision:'ten-retries-v1'});
+export async function onRequestGet({request}){
+  if(new URL(request.url).searchParams.get('usage')!=='1')
+    return json(200,{success:true,service:'writing-genius-grade',model:MODEL,revision:'daily-ai-20-v2'});
+  try{
+    const auth=await identity(request);
+    if(!auth)return fail(401,'학생 로그인을 다시 확인해 주세요.');
+    return json(200,{success:true,quota:await aiQuota(auth,false)});
+  }catch{return fail(503,'오늘 AI 사용량을 불러올 수 없어요.');}
 }
 export async function onRequestOptions(){
  return new Response(null,{status:204,headers:{Allow:'POST,GET,OPTIONS','Cache-Control':'no-store'}});
