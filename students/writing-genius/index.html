@@ -4,7 +4,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<title>Writing Genius · 쓰기 지니어스</title>
+<title>Writing Genius v1.10.0 · 쓰기 지니어스</title>
 <link rel="icon" href="/Assets/Images/Logo.png?v=20260730-3">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -15,7 +15,7 @@
 <link rel="stylesheet" href="/students/shared/willena-keyboard-safe.css?v=1.0.0">
 <link rel="stylesheet" href="/students/vocab-study/vocab-study.css?v=20261024-home-navigation4">
 <link rel="stylesheet" href="/students/vocab-study/theme-pips.css?v=20260927-v0005">
-<link rel="stylesheet" href="./styles.css?v=20261025-quota-gold-v2">
+<link rel="stylesheet" href="./styles.css?v=20261025-wg-v1.10.0">
 <script src="/students/api-gateway.js?v=20260926-progress-summary-cf1"></script>
 <script src="/js/api-config.js?v=20260926-reverted-auth1"></script>
 <script type="module" src="/students/components/student-header.js?v=20261025-sg-mission-v5b"></script>
@@ -31,12 +31,15 @@
     <button class="vocab-theme-pip" type="button" data-theme="cyberpunk" aria-label="Cyberpunk 테마"></button>
   </div>
   <main class="vocab-page wg-page">
+    <div class="wg-version-row" aria-label="Writing Genius version">
+      <span>Writing Genius</span><strong>v1.10.0</strong>
+    </div>
     <div id="wgNotice" class="wg-notice" role="status" aria-live="polite"></div>
     <section id="wgHome" aria-label="Writing home" hidden>
       <div class="wg-mode-grid">
         <button class="wg-mode vocab-front-book-card" type="button" data-start="sentence">
           <span class="wg-mode-icon" aria-hidden="true"><svg viewBox="0 0 48 48"><rect x="7" y="9" width="34" height="30" rx="7"/><path d="M14 20h20M14 28h14"/></svg></span>
-          <span class="wg-mode-copy"><strong>문장 연습</strong><small>문장 만들기 · 늘리기</small></span><span class="vocab-front-arrow" aria-hidden="true">›</span>
+          <span class="wg-mode-copy"><strong>문장 연습</strong><small>단원의 문장을 완성하고 골드 유닛 받기</small></span><span class="vocab-front-arrow" aria-hidden="true">›</span>
         </button>
         <button class="wg-mode vocab-front-book-card" type="button" data-start="diary">
           <span class="wg-mode-icon" aria-hidden="true"><svg viewBox="0 0 48 48"><rect x="8" y="10" width="32" height="30" rx="6"/><path d="M8 20h32M17 7v7M31 7v7M17 28h14"/></svg></span>
@@ -46,6 +49,10 @@
           <span class="wg-mode-icon" aria-hidden="true"><svg viewBox="0 0 48 48"><path d="M13 36h22M18 29v-3a12 12 0 1 1 12 0v3Z"/><path d="M19 34h10M23 5v-2"/></svg></span>
           <span class="wg-mode-copy"><strong>주제 글쓰기</strong><small>내 생각 표현하기</small></span><span class="vocab-front-arrow" aria-hidden="true">›</span>
         </button>
+      </div>
+      <div class="wg-home-practice-info" aria-label="문장 연습 규칙">
+        <div><strong>GOLD</strong><span>5문장만 있는 단원도 모두 맞히면 골드!</span></div>
+        <div><strong>AI 20</strong><span>AI Willi 하루 20회 · 저장된 정답은 차감 없음</span></div>
       </div>
       <div class="wg-library-head">
         <div><h2 class="wg-section-title">내가 쓴 글</h2><p id="wgSummary">나의 글을 불러오는 중…</p></div>
@@ -107,7 +114,7 @@
         <span id="spSaveState" class="wg-save-state" role="status" aria-live="polite"></span>
       </div>
       <div id="spPicker" class="sp-picker">
-        <div class="sp-mini-head"><strong>문장 만들기</strong><small>단원별 최대 10문장 · 다시 도전 가능</small></div>
+        <div class="sp-mini-head"><strong>문장 만들기</strong><small>단원 문장 수만큼 · 틀리면 재도전 · 골드 가능</small></div>
         <label class="wg-field sp-book-field">내 교재
           <select id="spBook"><option value="">교재 불러오는 중…</option></select>
         </label>
@@ -115,7 +122,8 @@
           <div id="spUnitStrip" class="study-v2-unit-strip" aria-label="교재 단원 선택"></div>
           <input type="hidden" id="spUnit" value="">
         </div>
-        <p id="spSourceNote" class="sp-subtle">단원의 문장을 직접 만들어 보세요 (최대 10개).</p><p id="spAiQuotaPicker" class="sp-subtle" aria-live="polite"></p>
+        <p id="spSourceNote" class="sp-subtle">단원을 선택하세요. 문장이 5개뿐이어도 모두 맞히면 골드 유닛!</p>
+        <p id="spAiQuotaPicker" class="sp-subtle" aria-live="polite">AI Willi 하루 20회 · 교재 정답은 무료</p>
         <div id="spGoldCount" class="sp-gold-count" hidden aria-live="polite"></div>
         <button type="button" id="spStart" class="wg-button wg-primary sp-start">문장 연습 시작하기 →</button>
         <div id="spSaved" class="sp-saved" hidden>
@@ -123,8 +131,8 @@
         </div>
       </div>
       <div id="spRound" class="sp-round" hidden>
-        <div class="sp-topline"><span id="spModeLabel" class="wg-kind"></span><span id="spQuestionCount" class="sp-step">1 / 10</span></div>
-        <div class="sp-progress"><div id="spProgressBar"></div></div><p id="spAiQuotaRound" class="sp-subtle" aria-live="polite"></p>
+        <div class="sp-topline"><span id="spModeLabel" class="wg-kind"></span><span id="spQuestionCount" class="sp-step">1 / —</span></div>
+        <div class="sp-progress"><div id="spProgressBar"></div></div><p id="spAiQuotaRound" class="sp-subtle" aria-live="polite">AI Willi 하루 20회 · 교재 정답은 무료</p>
         <div class="sp-task">
           <small id="spUnitName" class="sp-unit-name"></small>
           <div id="spQuestionHost" class="sp-shared-question question-card" aria-label="문장 만들기"></div>
@@ -169,5 +177,5 @@
   </main>
 </div>
 <script src="/students/vocab-study/theme-pips.js?v=20260927-v0005"></script>
-<script type="module" src="./app.js?v=20261025-quota-gold-v2"></script>
+<script type="module" src="./app.js?v=20261025-wg-v1.10.0"></script>
 </body></html>

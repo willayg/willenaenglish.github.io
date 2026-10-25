@@ -308,3 +308,12 @@ html[data-vocab-theme="dark"] .wg-status-pill.is-submitted,html[data-vocab-theme
  .wg-practice .sp-shared-question textarea.answer[data-write]{min-height:112px}
  .wg-practice .sp-shared-question .context{gap:11px}
 }
+
+/* Writing Genius v1.10.0 — build label and compact Gold/AI rules. */
+.wg-version-row{display:flex;justify-content:flex-end;align-items:center;gap:7px;margin:-6px 1px 15px;color:var(--vocab-muted,#647d82);font-size:.69rem;font-weight:700;letter-spacing:.02em}
+.wg-version-row strong{display:inline-flex;padding:3px 9px;min-height:24px;align-items:center;border-radius:999px;background:var(--vocab-track,#e7f7f9);border:1px solid var(--vocab-border,#b7e9ec);color:var(--vocab-heading,#24535b);font-size:.73rem;font-weight:900;font-variant-numeric:tabular-nums}
+.wg-home-practice-info{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:-14px 0 23px}
+.wg-home-practice-info>div{display:flex;align-items:center;gap:9px;min-width:0;padding:11px 13px;border:1px solid var(--vocab-border,#c9f1f4);border-radius:15px;background:var(--vocab-card,#fff);color:var(--vocab-heading,#244f56)}
+.wg-home-practice-info strong{font-size:.69rem;letter-spacing:.05em;flex:0 0 auto;color:var(--cyan-strong,#259aa3);font-weight:900}
+.wg-home-practice-info span{font-size:.73rem;font-weight:700;line-height:1.45;overflow-wrap:anywhere}
+@media(max-width:560px){.wg-home-practice-info{grid-template-columns:1fr;margin-top:-13px}}
