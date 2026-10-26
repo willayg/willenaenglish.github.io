@@ -421,7 +421,7 @@ async function listAssignments(event) {
 
   let query = supabase
     .from('homework_assignments')
-    .select('*')
+    .select('*, profiles!homework_assignments_created_by_fkey(name)')
     .order('created_at', { ascending: false });
 
   if (className) {
@@ -440,7 +440,7 @@ async function listAssignments(event) {
     return _json(500, { success: false, error: `Failed to fetch assignments: ${error.message || error.code || 'unknown error'}` });
   }
 
-  return _json(200, { success: true, assignments: data || [] });
+  return _json(200, { success: true, assignments: (data || []).map(({ profiles, ...assignment }) => ({ ...assignment, teacher_name: profiles?.name || null })) });
 }
 
 async function endAssignment(event) {
