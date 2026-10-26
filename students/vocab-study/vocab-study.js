@@ -947,7 +947,7 @@ function renderTeacherAssignments(){
       :'';
     return '<article class="vocab-teacher-card">'+
       '<div class="vocab-teacher-card-title">'+
-        '<div><strong>숙제 / Homework</strong><small>'+wordCount+' words'+(a.due_at?' · '+escapeHtml(formatTeacherDue(a.due_at)):'')+'</small></div>'+
+        '<div><strong>숙제 / Homework</strong><small>'+wordCount+' words'+(a.due_at?' · '+escapeHtml(formatTeacherDue(a.due_at)):'')+(a.teacher_name?' · 선생님: '+escapeHtml(a.teacher_name):'')+'</small></div>'+
         '<button class="vocab-teacher-words" type="button" data-teacher-words="'+index+'">'+wordCount+' 단어 보기</button>'+
       '</div>'+
       '<div class="vocab-teacher-modes">'+modeHtml+'</div>'+coachHtml+
@@ -983,6 +983,7 @@ async function loadTeacherAssignments({showLoader=false}={}){
         if(!row?.success)return null;
         row.assignment=Object.assign({},row.assignment||{},{
           list_meta:assignment.list_meta||{},
+          teacher_name:assignment.teacher_name||row.assignment?.teacher_name||null,
           list_key:assignment.list_key||null,
           active:assignment.active,
           ended_at:assignment.ended_at||null,
