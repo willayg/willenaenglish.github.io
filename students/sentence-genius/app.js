@@ -14,6 +14,7 @@ const state={student:null,books:[],book:null,units:[],unit:null,items:[],store:n
   simClass:null,simToken:0};
 let navigation;
 let homeworkRefresh=0;
+let goldBookRefresh=0;
 async function refreshStudentHomework(){
   if(state.teacher||!state.student?.id)return;
   const current=++homeworkRefresh;
@@ -88,7 +89,7 @@ async function refreshGoldenUnitButtons(book,units,token){
           loadSentences(book.id,u.id,u),
           getSentenceMastery(book.id,u.id)
         ]);
-        if(token!==state.loadToken||state.book?.id!==book.id)return;
+        if(token!==goldBookRefresh||state.book?.id!==book.id)return;
         const mastery=openUnit(state.student.id,u.id);
         mastery.hydrateServer(rows);
         if(mastery.gold(sentences))earned.add(String(u.id));
@@ -107,6 +108,7 @@ async function openBook(id,{unitId=null,routeUpdate=true}={}){
   if(!book)return;
   const token=++state.loadToken;
   session.dispose();
+  ++goldBookRefresh;
   state.book=book;state.unit=null;state.units=[];state.items=[];state.store=null;
   screens.setGoldenUnits([]);
   screens.visible('book');screens.notice('교재 단원을 불러오는 중…');
@@ -123,7 +125,7 @@ async function openBook(id,{unitId=null,routeUpdate=true}={}){
     // Unit selection owns the book UI and loads mastery from Supabase.
     await selectUnit(found.id,{routeUpdate:false});
     if(token!==state.loadToken&&state.book?.id!==book.id)return;
-    const goldToken=state.loadToken;
+    const goldToken=++goldBookRefresh;
     void refreshGoldenUnitButtons(book,units,goldToken);
     if(routeUpdate)navigation.push({screen:'book',bookId:book.id,unitId:found.id});
   }catch(error){
