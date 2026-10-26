@@ -157,7 +157,7 @@
         '<div><strong>'+esc(className)+'</strong><span>'+esc(detailBits.join(' · '))+'</span></div>'+
         '<span class="assignment-state '+(isCurrent(a)?'is-current':'is-history')+'">'+(isCurrent(a)?'Current':(a.ended_at?'Cancelled':'History'))+'</span>'+
       '</div>'+
-      '<div class="assignment-card-meta"><span>Due <b>'+esc(fmtDate(a.due_at))+'</b></span><span>Created <b>'+esc(fmtDate(a.created_at))+'</b></span></div>'+
+      '<div class="assignment-card-meta">'+(a.teacher_name?'<span>Teacher <b>'+esc(a.teacher_name)+'</b></span>':'')+'<span>Due <b>'+esc(fmtDate(a.due_at))+'</b></span><span>Created <b>'+esc(fmtDate(a.created_at))+'</b></span></div>'+
     '</button>'+cardSummaryMarkup(a)+'</div>';
   }
 
