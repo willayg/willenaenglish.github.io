@@ -5,6 +5,15 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const el=(tag,cls,text)=>{const x=document.createElement(tag);if(cls)x.className=cls;if(text!==undefined)x.textContent=text;return x};
 export function createScreens(actions){
   let books=[],units=[],book=null,unit=null,items=[],store=null;
+  let goldenUnits=new Set();
+  function setGoldenUnits(ids=[]){
+    goldenUnits=new Set(ids.map(String));
+    for(const button of $('unitStrip').querySelectorAll('[data-unit-id]')){
+      const gold=goldenUnits.has(button.dataset.unitId);
+      if(gold&&!button.querySelector('.vocab-unit-gold'))goldIcon(button);
+      if(!gold){button.querySelector('.vocab-unit-gold')?.remove();button.classList.remove('is-golden')}
+    }
+  }
   function visible(screen){
     for(const [id,on] of [['front',screen==='home'],['bookScreen',screen==='book'],['session',screen==='activity']])$(id).hidden=!on;
     if(screen!=='home')notice('');
@@ -58,8 +67,8 @@ export function createScreens(actions){
     const tabs=$('unitStrip');tabs.replaceChildren();
     for(const u of units){
       const btn=el('button','study-v2-unit'+(u.id===unit?.id?' is-current':''));
-      btn.type='button';btn.textContent='Unit '+(u.unit_number||'');
-      if(u.id===unit?.id&&store?.gold(items))goldIcon(btn);
+      btn.type='button';btn.dataset.unitId=String(u.id);btn.textContent='Unit '+(u.unit_number||'');
+      if(goldenUnits.has(String(u.id))||(u.id===unit?.id&&store?.gold(items)))goldIcon(btn);
       btn.addEventListener('click',()=>actions.unit(u.id));tabs.append(btn);
     }
     progress();
@@ -78,12 +87,13 @@ export function createScreens(actions){
       $(mode+'Stars').textContent='★ '+(store?.stars(mode,items)||0)+'/5';
     }
     const gold=!!store?.gold(items);
+    if(gold&&unit?.id)goldenUnits.add(String(unit.id));
     $('goldStatus').classList.toggle('is-gold',gold);
     $('goldLabel').textContent=gold?'Golden Unit · 완성!':'코치 + 문장 배열 + 말하기: 모두 완료하면 Gold';
     const tab=$('unitStrip').querySelector('.is-current');
     if(tab){
       if(gold&&!tab.querySelector('img'))goldIcon(tab);
-      if(!gold){tab.querySelector('img')?.remove();tab.classList.remove('is-golden')}
+      if(!gold&&!goldenUnits.has(String(unit?.id))){tab.querySelector('.vocab-unit-gold')?.remove();tab.classList.remove('is-golden')}
     }
   }
   function sentenceList(){
@@ -185,6 +195,6 @@ export function createScreens(actions){
   $('unscrambleCard').addEventListener('click',()=>actions.start('unscramble'));
   $('speakingCard').addEventListener('click',()=>actions.start('speaking'));
   $('bookBack').addEventListener('click',actions.home);
-  return {visible,notice,home,homework,showBook,progress,sentenceList,
+  return {visible,notice,home,homework,showBook,progress,setGoldenUnits,sentenceList,
     teacherSetup,teacherMode,teacherStatus,teacherOverview};
 }
