@@ -73,12 +73,42 @@ async function selectUnit(id,{routeUpdate=true}={}){
     screens.notice('문장을 불러올 수 없습니다. 다시 선택해 주세요.');
   }
 }
+
+// Check every unit's saved mastery, not only the selected unit.
+// Keep all other unit buttons visible while the checks complete.
+async function refreshGoldenUnitButtons(book,units,token){
+  if(state.teacher||!state.student?.id||!units.length)return;
+  const earned=new Set();
+  let next=0;
+  async function worker(){
+    while(next<units.length){
+      const u=units[next++];
+      try{
+        const [sentences,rows]=await Promise.all([
+          loadSentences(book.id,u.id,u),
+          getSentenceMastery(book.id,u.id)
+        ]);
+        if(token!==state.loadToken||state.book?.id!==book.id)return;
+        const mastery=openUnit(state.student.id,u.id);
+        mastery.hydrateServer(rows);
+        if(mastery.gold(sentences))earned.add(String(u.id));
+        // Refresh progressively to avoid waiting for the slowest unit.
+        screens.setGoldenUnits([...earned]);
+      }catch(error){
+        console.warn('[Sentence Genius] unit gold status unavailable',u.unit_number,error);
+      }
+    }
+  }
+  await Promise.all(Array.from({length:Math.min(3,units.length)},()=>worker()));
+}
+
 async function openBook(id,{unitId=null,routeUpdate=true}={}){
   const book=state.books.find(x=>String(x.id)===String(id));
   if(!book)return;
   const token=++state.loadToken;
   session.dispose();
   state.book=book;state.unit=null;state.units=[];state.items=[];state.store=null;
+  screens.setGoldenUnits([]);
   screens.visible('book');screens.notice('교재 단원을 불러오는 중…');
   try{
     const units=await loadUnits(book.id);
@@ -92,6 +122,9 @@ async function openBook(id,{unitId=null,routeUpdate=true}={}){
       String(x.unit_number)===String(unitId))||units[0];
     // Unit selection owns the book UI and loads mastery from Supabase.
     await selectUnit(found.id,{routeUpdate:false});
+    if(token!==state.loadToken&&state.book?.id!==book.id)return;
+    const goldToken=state.loadToken;
+    void refreshGoldenUnitButtons(book,units,goldToken);
     if(routeUpdate)navigation.push({screen:'book',bookId:book.id,unitId:found.id});
   }catch(error){
     if(token!==state.loadToken)return;
