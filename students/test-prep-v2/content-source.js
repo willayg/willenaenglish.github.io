@@ -1,4 +1,4 @@
-import {adaptStored,isAuthoredWritten,FORMS} from './question-model.js';
+import {adaptStored,isAuthoredWritten,FORMS} from './question-model.js?v=20261026-multi-answer-fix';
 import {contentDbGet} from '../shared/content-db.js?v=1.0.0';
 
 const FIELDS='id,source_id,source_question_number,source_page,section,question_type,prompt_text,context,choices,correct_answer,targets,answer_mode,context_type,difficulty,student_source_label,content_status,metadata,book_id,unit_id,replacement_needed,qa_status';
