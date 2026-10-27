@@ -171,50 +171,6 @@ function buildStarsByUserMap(sessions) {
 async function aggregatePointsForIds(env, ids, firstOfMonthIso) {
   if (!ids || !ids.length) return new Map();
   
-  // Phase 2: aggregate in PostgreSQL instead of downloading every attempt.
-  // Keep the legacy paginated path as a fallback during rollout.
-  try {
-    const aggregated = new Map();
-    for (let i = 0; i < ids.length; i += 100) {
-      const chunk = ids.slice(i, i + 100);
-      const response = await fetch(`${env.SUPABASE_URL}/rest/v1/rpc/get_progress_points_totals_v1`, {
-        method: 'POST',
-        headers: {
-          'apikey': env.SUPABASE_SERVICE_KEY,
-          'Authorization': `Bearer ${env.SUPABASE_SERVICE_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ p_user_ids: chunk, p_since: firstOfMonthIso || null }),
-      });
-      if (!response.ok) throw new Error(`points RPC HTTP ${response.status}`);
-      const rows = await response.json();
-      if (!Array.isArray(rows)) throw new Error('Invalid points RPC response');
-      // A missing student row could silently turn a leaderboard leader into zero.
-      // Verify against the authoritative point snapshots before caching.
-      if (!firstOfMonthIso) {
-        const snapshots = await supabaseSelect(
-          env, 'student_points_snapshot_v1',
-          `user_id=in.(${chunk.join(',')})&select=user_id,total_points`
-        );
-        const snapshotById = new Map((snapshots || []).map(r => [r.user_id, Number(r.total_points) || 0]));
-        const rpcById = new Map(rows.filter(r => r?.user_id).map(r => [r.user_id, Number(r.points) || 0]));
-        for (const userId of chunk) {
-          const snapshotPoints = snapshotById.get(userId);
-          const rpcPoints = rpcById.get(userId);
-          if (snapshotPoints !== undefined && snapshotPoints !== rpcPoints) {
-            throw new Error('Points aggregation disagrees with saved snapshot');
-          }
-        }
-      }
-      rows.forEach(row => {
-        if (row?.user_id) aggregated.set(row.user_id, Number(row.points) || 0);
-      });
-    }
-    return aggregated;
-  } catch (error) {
-    console.warn('[progress-summary] Points RPC unavailable; using legacy pagination:', error.message);
-  }
-
   const totals = new Map();
   const batchSize = 1000; // Supabase default limit
   
@@ -523,8 +479,8 @@ export default {
         const firstOfMonth = timeframe === 'month' ? getMonthStartIso() : null;
         
         const cacheKey = classFilter
-          ? `lb:v2:class:${classFilter.toLowerCase()}:${timeframe}`
-          : `lb:v2:global:${timeframe}`;
+          ? `lb:rollback:class:${classFilter.toLowerCase()}:${timeframe}`
+          : `lb:rollback:global:${timeframe}`;
         
         // Check cache first
         const cached = await getFromCache(env, cacheKey);
@@ -640,7 +596,7 @@ export default {
         
         const timeframe = url.searchParams.get('timeframe') || 'all';
         const firstOfMonth = timeframe === 'month' ? getMonthStartIso() : null;
-        const cacheKey = `lb:v2:class:${classFilter.toLowerCase()}:${timeframe}`;
+        const cacheKey = `lb:rollback:class:${classFilter.toLowerCase()}:${timeframe}`;
         
         // Check cache
         const cached = await getFromCache(env, cacheKey);
