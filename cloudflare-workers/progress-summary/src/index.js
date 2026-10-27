@@ -171,6 +171,33 @@ function buildStarsByUserMap(sessions) {
 async function aggregatePointsForIds(env, ids, firstOfMonthIso) {
   if (!ids || !ids.length) return new Map();
   
+  // Phase 2: aggregate in PostgreSQL instead of downloading every attempt.
+  // Keep the legacy paginated path as a fallback during rollout.
+  try {
+    const aggregated = new Map();
+    for (let i = 0; i < ids.length; i += 100) {
+      const chunk = ids.slice(i, i + 100);
+      const response = await fetch(`${env.SUPABASE_URL}/rest/v1/rpc/get_progress_points_totals_v1`, {
+        method: 'POST',
+        headers: {
+          'apikey': env.SUPABASE_SERVICE_KEY,
+          'Authorization': `Bearer ${env.SUPABASE_SERVICE_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ p_user_ids: chunk, p_since: firstOfMonthIso || null }),
+      });
+      if (!response.ok) throw new Error(`points RPC HTTP ${response.status}`);
+      const rows = await response.json();
+      if (!Array.isArray(rows)) throw new Error('Invalid points RPC response');
+      rows.forEach(row => {
+        if (row?.user_id) aggregated.set(row.user_id, Number(row.points) || 0);
+      });
+    }
+    return aggregated;
+  } catch (error) {
+    console.warn('[progress-summary] Points RPC unavailable; using legacy pagination:', error.message);
+  }
+
   const totals = new Map();
   const batchSize = 1000; // Supabase default limit
   
