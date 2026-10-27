@@ -153,7 +153,7 @@ const DAILY_STATS_TABLE = 'student_daily_stats';
 
 function leaderboardCacheKey(name, timeframe = 'all') {
   const tf = (timeframe || 'all').toLowerCase();
-  return `${CACHE_PREFIX}:leaderboard:${classKey(name) || 'unknown'}:${tf}`;
+  return `${CACHE_PREFIX}:leaderboard:v2:${classKey(name) || 'unknown'}:${tf}`;
 }
 
 function studentDetailsCacheKey(userId, timeframe = 'all') {
@@ -174,8 +174,15 @@ async function loadDailyStats(admin, userIds = [], className = null, timeframe =
       // monthStartISO is last-30-days; cast to date for the daily table
       qb = qb.gte('date', monthStartISO().slice(0, 10));
     }
-    const { data, error } = await qb;
-    if (error || !Array.isArray(data)) return { byUser: new Map(), rows: 0, error };
+    // Paginate: the Supabase Data API caps a single response (commonly 1000 rows).
+    const data = [];
+    for (let offset = 0; ; offset += 500) {
+      const { data: page, error } = await qb.range(offset, offset + 499);
+      if (error) return { byUser: new Map(), rows: 0, error };
+      if (!Array.isArray(page)) return { byUser: new Map(), rows: 0 };
+      data.push(...page);
+      if (page.length < 500) break;
+    }
     const byUser = new Map();
     data.forEach(r => {
       if (!r || !r.user_id) return;
@@ -419,6 +426,32 @@ exports.handler = async (event) => {
       const { byUser: dailyStats, rows: dailyRows } = await loadDailyStats(admin, ids, className, timeframe);
       const dailyMs = Date.now() - dailyStart;
       if (dailyRows > 0) {
+        // Daily stats do not necessarily contain all historical points.
+        // Fetch authoritative totals separately, instead of silently hiding students.
+        const pointsById = new Map();
+        if (timeframe === 'all') {
+          for (let offset = 0; offset < ids.length; offset += 100) {
+            const { data: pointsRows, error: pointsError } = await admin
+              .from('student_points_snapshot_v1')
+              .select('user_id,total_points')
+              .in('user_id', ids.slice(offset, offset + 100));
+            if (pointsError) return json(500, { success: false, error: pointsError.message });
+            for (const pointRow of pointsRows || []) {
+              pointsById.set(pointRow.user_id, Number(pointRow.total_points) || 0);
+            }
+          }
+        } else {
+          for (let offset = 0; offset < ids.length; offset += 100) {
+            const { data: pointsRows, error: pointsError } = await admin.rpc('get_progress_points_totals_v1', {
+              p_user_ids: ids.slice(offset, offset + 100),
+              p_since: monthStartISO(),
+            });
+            if (pointsError) return json(500, { success: false, error: pointsError.message });
+            for (const pointRow of pointsRows || []) {
+              pointsById.set(pointRow.user_id, Number(pointRow.points) || 0);
+            }
+          }
+        }
         const rows = (students || []).map(student => {
           const stats = dailyStats.get(student.id) || { stars: 0, points: 0, attempts: 0, correct: 0, sessions: 0 };
           const accuracy = stats.attempts ? Math.round((stats.correct / stats.attempts) * 100) : 0;
@@ -428,7 +461,7 @@ exports.handler = async (event) => {
             korean_name: student.korean_name || null,
             class: className,
             stars: stats.stars || 0,
-            points: stats.points || 0,
+            points: pointsById.get(student.id) ?? 0,
             accuracy,
             attempts: stats.attempts || 0,
             sessions: stats.sessions || 0
