@@ -189,6 +189,23 @@ async function aggregatePointsForIds(env, ids, firstOfMonthIso) {
       if (!response.ok) throw new Error(`points RPC HTTP ${response.status}`);
       const rows = await response.json();
       if (!Array.isArray(rows)) throw new Error('Invalid points RPC response');
+      // A missing student row could silently turn a leaderboard leader into zero.
+      // Verify against the authoritative point snapshots before caching.
+      if (!firstOfMonthIso) {
+        const snapshots = await supabaseSelect(
+          env, 'student_points_snapshot_v1',
+          `user_id=in.(${chunk.join(',')})&select=user_id,total_points`
+        );
+        const snapshotById = new Map((snapshots || []).map(r => [r.user_id, Number(r.total_points) || 0]));
+        const rpcById = new Map(rows.filter(r => r?.user_id).map(r => [r.user_id, Number(r.points) || 0]));
+        for (const userId of chunk) {
+          const snapshotPoints = snapshotById.get(userId);
+          const rpcPoints = rpcById.get(userId);
+          if (snapshotPoints !== undefined && snapshotPoints !== rpcPoints) {
+            throw new Error('Points aggregation disagrees with saved snapshot');
+          }
+        }
+      }
       rows.forEach(row => {
         if (row?.user_id) aggregated.set(row.user_id, Number(row.points) || 0);
       });
@@ -506,8 +523,8 @@ export default {
         const firstOfMonth = timeframe === 'month' ? getMonthStartIso() : null;
         
         const cacheKey = classFilter
-          ? `lb:class:${classFilter.toLowerCase()}:${timeframe}`
-          : `lb:global:${timeframe}`;
+          ? `lb:v2:class:${classFilter.toLowerCase()}:${timeframe}`
+          : `lb:v2:global:${timeframe}`;
         
         // Check cache first
         const cached = await getFromCache(env, cacheKey);
@@ -623,7 +640,7 @@ export default {
         
         const timeframe = url.searchParams.get('timeframe') || 'all';
         const firstOfMonth = timeframe === 'month' ? getMonthStartIso() : null;
-        const cacheKey = `lb:class:${classFilter.toLowerCase()}:${timeframe}`;
+        const cacheKey = `lb:v2:class:${classFilter.toLowerCase()}:${timeframe}`;
         
         // Check cache
         const cached = await getFromCache(env, cacheKey);
