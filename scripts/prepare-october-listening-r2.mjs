@@ -10,7 +10,9 @@
  */
 import { createHash } from 'node:crypto';
 import { S3Client, HeadObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3';
-import { SCRIPT_LINES } from '../functions/api/listening-tts-manifest.js';
+import { readFile } from 'node:fs/promises';
+const manifestText=await readFile(new URL('../functions/api/listening-tts-manifest.js',import.meta.url),'utf8');
+const SCRIPT_LINES=JSON.parse(manifestText.replace(/^export const SCRIPT_LINES = /,'').trim().replace(/;$/,''));
 
 for (const name of ['R2_ENDPOINT','R2_ACCESS_KEY_ID','R2_SECRET_ACCESS_KEY']) {
   if (!process.env[name]) throw new Error('Missing environment variable '+name);
