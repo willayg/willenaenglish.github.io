@@ -1,6 +1,6 @@
 import { SCRIPT_LINES } from './listening-tts-manifest.js';
 const ORIGINS=new Set(['https://teachers.willenaenglish.com','https://willenaenglish.com','https://www.willenaenglish.com']);
-const VOICES={boy:'onyx',girl:'shimmer',narrator:'shimmer'};
+const VOICES={boy:'onyx',girl:'shimmer',narrator:'shimmer',number:'alloy'};
 const error=(status,msg)=>new Response(JSON.stringify({error:msg}),{status,headers:{'Content-Type':'application/json','Cache-Control':'no-store'}});
 export async function onRequestPost({request,env}){
   const origin=request.headers.get('Origin');
@@ -10,9 +10,12 @@ export async function onRequestPost({request,env}){
   if(Number(request.headers.get('content-length')||0)>2048)return error(413,'Request too large');
   let body;try{body=await request.json()}catch{return error(400,'Invalid request')}
   const indices=[body.book,body.section,body.item,body.segment];
-  if(indices.some(v=>!Number.isInteger(v)||v<0))return error(400,'Invalid index');
+  if(indices.some((v,i)=>!Number.isInteger(v)||(i===3?v< -1:v<0)))return error(400,'Invalid index');
   const [book,section,item,segment]=indices;
-  const line=SCRIPT_LINES[book]?.[section]?.[item]?.[segment];
+  const scriptItem=SCRIPT_LINES[book]?.[section]?.[item];
+  if(!scriptItem)return error(404,'Unknown script item');
+  const number=section===1&&book===5?item+5:item+1;
+  const line=segment===-1?{speaker:'number',text:'Number '+number+'.'}:scriptItem[segment];
   if(!line)return error(404,'Unknown script line');
   const voice=VOICES[line.speaker];
   if(!voice)return error(400,'Unsupported voice');
@@ -28,7 +31,7 @@ export async function onRequestPost({request,env}){
   const today=new Date().toISOString().slice(0,10);
   const rateKey='listening:tts:'+today+':'+ip;
   if(env.LISTENING_RATE_LIMIT){try{const used=Number(await env.LISTENING_RATE_LIMIT.get(rateKey)||0);if(used>=40)return error(429,'Daily audio generation limit reached');await env.LISTENING_RATE_LIMIT.put(rateKey,String(used+1),{expirationTtl:86400})}catch(e){console.warn('[listening-tts] Quota store unavailable',e?.name)}}
-  const instructions=line.speaker==='boy'?'Speak this boy dialogue in a natural, clear adult masculine American English voice. Do not say the speaker label or add words.':line.speaker==='girl'?'Speak this girl dialogue in a natural, clear adult feminine American English voice. Do not say the speaker label or add words.':'Read this listening-test text clearly and naturally for English learners. Do not add words.';
+  const instructions=line.speaker==='number'?'Announce the question number clearly in a calm, neutral American English voice. Speak only the supplied words, with a small pause afterward.':line.speaker==='boy'?'Speak this boy dialogue in a natural, clear adult masculine American English voice. Do not say the speaker label or add words.':line.speaker==='girl'?'Speak this girl dialogue in a natural, clear adult feminine American English voice. Do not say the speaker label or add words.':'Read this listening-test text clearly and naturally for English learners. Do not add words.';
   let result;try{result=await fetch('https://api.openai.com/v1/audio/speech',{method:'POST',headers:{Authorization:'Bearer '+secret,'Content-Type':'application/json'},body:JSON.stringify({model:'gpt-4o-mini-tts',voice,input:line.text,instructions,response_format:'mp3'})})}catch{return error(502,'OpenAI speech unavailable')}
   if(!result.ok)return error(502,'OpenAI speech unavailable');
   const data=await result.arrayBuffer();
