@@ -1,0 +1,39 @@
+name: Prepare October Listening MP3s to R2
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: october-listening-r2-preparation
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Verify R2 credentials
+        env:
+          R2_ENDPOINT: ${{ secrets.R2_ENDPOINT }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+        run: |
+          test -n "$R2_ENDPOINT" || (echo "::error::Missing R2_ENDPOINT Actions secret" && exit 1)
+          test -n "$R2_ACCESS_KEY_ID" || (echo "::error::Missing R2_ACCESS_KEY_ID Actions secret" && exit 1)
+          test -n "$R2_SECRET_ACCESS_KEY" || (echo "::error::Missing R2_SECRET_ACCESS_KEY Actions secret" && exit 1)
+      - run: npm ci
+      - name: Generate and store missing recordings
+        env:
+          R2_ENDPOINT: ${{ secrets.R2_ENDPOINT }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_BUCKET_NAME: tts-audio
+          LISTENING_TTS_URL: https://willenaenglish.com/api/listening-tts
+        run: node scripts/prepare-october-listening-r2.mjs
