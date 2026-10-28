@@ -12,14 +12,7 @@ export async function onRequestPost({request,env}){
   const indices=[body.book,body.section,body.item,body.segment];
   if(indices.some((v,i)=>!Number.isInteger(v)||(i===3?v< -1:v<0)))return error(400,'Invalid index');
   const precache=body.precache===true;
-  // Reuse the existing R2-enabled audio Worker; no Pages R2 binding needed.
-  const workerUrl=env.LISTENING_AUDIO_WORKER_URL||'https://get-audio-urls.willena.workers.dev/listening-tts';
-  try{
-    const upstream=await fetch(workerUrl,{method:'POST',headers:{'Content-Type':'application/json','Origin':new URL(request.url).origin},body:JSON.stringify(body)});
-    if(upstream.ok)return new Response(upstream.body,{status:200,headers:{'Content-Type':precache?'application/json':'audio/mpeg','Cache-Control':precache?'no-store':'public,max-age=86400'}});
-    if(precache)return error(upstream.status,'Existing R2 Worker returned '+upstream.status+'; Worker update may need deployment');
-  }catch(e){if(precache)return error(503,'Existing R2 Worker unavailable')}
-  if(precache)return error(503,'R2 Worker not ready');
+  if(precache)return error(409,'Bulk preparation is handled separately; live playback is unchanged');
   const [book,section,item,segment]=indices;
   const scriptItem=SCRIPT_LINES[book]?.[section]?.[item];
   if(!scriptItem)return error(404,'Unknown script item');
