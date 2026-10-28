@@ -14,7 +14,7 @@ export async function onRequestPost({request,env}){
   const [book,section,item,segment]=indices;
   const scriptItem=SCRIPT_LINES[book]?.[section]?.[item];
   if(!scriptItem)return error(404,'Unknown script item');
-  const number=section===1&&book===5?item+5:item+1;
+  const number=section===1&&book===6?item+5:item+1;
   const line=segment===-1?{speaker:'number',text:'Number '+number+'.'}:scriptItem[segment];
   if(!line)return error(404,'Unknown script line');
   const voice=VOICES[line.speaker];
