@@ -12,7 +12,6 @@ export async function onRequestPost({request,env}){
   const indices=[body.book,body.section,body.item,body.segment];
   if(indices.some((v,i)=>!Number.isInteger(v)||(i===3?v< -1:v<0)))return error(400,'Invalid index');
   const precache=body.precache===true;
-  if(precache)return error(409,'Bulk preparation is handled separately; live playback is unchanged');
   const [book,section,item,segment]=indices;
   const scriptItem=SCRIPT_LINES[book]?.[section]?.[item];
   if(!scriptItem)return error(404,'Unknown script item');
@@ -22,12 +21,27 @@ export async function onRequestPost({request,env}){
   const voice=VOICES[line.speaker];
   if(!voice)return error(400,'Unsupported voice');
   const hash=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode('v2-kidfriendly\n'+voice+'\n'+line.text)))).map(x=>x.toString(16).padStart(2,'0')).join('');
-  const key='listening/2026-10/'+hash+'.mp3';
-  const headers={'Content-Type':'audio/mpeg','Cache-Control':'public,max-age=86400','X-Content-Type-Options':'nosniff'};
-  if(env.AUDIO_BUCKET){try{const cached=await env.AUDIO_BUCKET.get(key);if(cached)return precache?Response.json({status:'stored'}):new Response(cached.body,{headers:{...headers,'X-Audio-Source':'r2'}})}catch(e){console.warn('[listening-tts] R2 read failed',e?.name)}}
+  // Reuse the existing Word Genius / game-builder R2 lookup and upload functions.
+  // The existing upload_audio contract normalizes names to flat <word>.mp3 keys.
+  const word='listening_2026_10_'+hash;
+  const base='https://willenaenglish.netlify.app/.netlify/functions/';
+  const audioHeaders={'Content-Type':'audio/mpeg','Cache-Control':'public,max-age=86400','X-Content-Type-Options':'nosniff'};
+  try{
+    const lookup=await fetch(base+'get_audio_urls',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({words:[word]})});
+    if(lookup.ok){
+      const found=(await lookup.json()).results?.[word];
+      if(found?.exists&&typeof found.url==='string'){
+        if(precache)return Response.json({status:'stored'});
+        const existing=await fetch(found.url);
+        if(existing.ok&&existing.headers.get('content-type')?.includes('audio'))return new Response(existing.body,{headers:{...audioHeaders,'X-Audio-Source':'r2'}});
+        // Some R2 endpoints don't send the content-type header on signed URLs.
+        if(existing.ok)return new Response(existing.body,{headers:{...audioHeaders,'X-Audio-Source':'r2'}});
+      }
+    }else console.warn('[listening-tts] R2 lookup failed',lookup.status);
+  }catch(e){console.warn('[listening-tts] R2 lookup unavailable',String(e))}
   const edgeCache=typeof caches!=='undefined'?caches.default:null;
-  const cacheRequest=new Request(new URL('/_listening_cached_audio/'+hash+'.mp3',request.url).toString(),{method:'GET'});
-  if(edgeCache&&!precache){try{const hit=await edgeCache.match(cacheRequest);if(hit)return hit}catch(e){console.warn('[listening-tts] Cache lookup failed',e?.name)}}
+  const cacheRequest=new Request(new URL('/_listening_cached_audio/'+hash+'.mp3',request.url),{method:'GET'});
+  if(!precache&&edgeCache){try{const cached=await edgeCache.match(cacheRequest);if(cached)return cached}catch(e){}}
   // KV quota is optional; the fixed script allowlist prevents arbitrary input.
   const ip=request.headers.get('CF-Connecting-IP')||'unknown';
   const today=new Date().toISOString().slice(0,10);
@@ -38,9 +52,17 @@ export async function onRequestPost({request,env}){
   if(!result.ok)return error(502,'OpenAI speech unavailable');
   const data=await result.arrayBuffer();
   if(data.byteLength<100||data.byteLength>4000000)return error(502,'Invalid generated audio');
-  if(env.AUDIO_BUCKET){try{await env.AUDIO_BUCKET.put(key,data,{httpMetadata:{contentType:'audio/mpeg',cacheControl:'public,max-age=2592000'}})}catch(e){console.warn('[listening-tts] R2 write failed',e?.name);if(precache)return error(503,'R2 write failed')}}
+  // Upload through the existing R2-backed Netlify function (no Pages bucket binding).
+  let stored=false;
+  try{
+    const bytes=new Uint8Array(data);let binary='';
+    for(let i=0;i<bytes.length;i+=8192)binary+=String.fromCharCode(...bytes.subarray(i,i+8192));
+    const uploaded=await fetch(base+'upload_audio',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({word,fileDataBase64:btoa(binary)})});
+    if(uploaded.ok){const answer=await uploaded.json();stored=answer.success===true}
+    if(!stored)console.warn('[listening-tts] R2 upload unsuccessful',uploaded.status);
+  }catch(e){console.warn('[listening-tts] R2 upload unavailable',String(e))}
+  if(precache)return stored?Response.json({status:'generated'}):error(502,'Audio generated but R2 upload failed');
   if(edgeCache){try{await edgeCache.put(cacheRequest,new Response(data.slice(0),{headers:{'Content-Type':'audio/mpeg','Cache-Control':'public,max-age=2592000'}}))}catch(e){console.warn('[listening-tts] Cache write failed',e?.name)}}
-  if(precache)return Response.json({status:'generated'});
-  return new Response(data,{headers:{...headers,'X-Audio-Source':'generated'}});
+  return new Response(data,{headers:{...audioHeaders,'X-Audio-Source':stored?'generated-and-stored':'generated-not-stored'}});
 }
 export async function onRequestOptions({request}){const origin=request.headers.get('Origin');if(origin&&!ORIGINS.has(origin))return error(403,'Origin not permitted');return new Response(null,{status:204,headers:{Allow:'POST, OPTIONS'}})}
