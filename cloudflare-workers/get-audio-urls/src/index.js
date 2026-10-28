@@ -1,3 +1,4 @@
+import { SCRIPT_LINES as LISTENING_SCRIPT_LINES } from '../../../functions/api/listening-tts-manifest.js';
 import { PUBLISHED_LEXICAL_WORDS } from './published-lexical-words.js';
 /**
  * Cloudflare Worker: get-audio-urls
@@ -421,6 +422,40 @@ go.onclick=run;document.getElementById('stop').onclick=()=>stopRequested=true;do
 </script></body></html>`;
 }
 
+
+// Listening-test audio uses this Worker's EXISTING tts-audio R2 binding.
+// Text is selected from the fixed manifest; callers cannot supply arbitrary prompts.
+async function listeningR2(request,env){
+  const origin=request.headers.get('Origin')||'';
+  const headers={'Content-Type':'application/json','Cache-Control':'no-store',...getCorsHeaders(origin)};
+  if(origin&&!['https://willenaenglish.com','https://www.willenaenglish.com','https://teachers.willenaenglish.com'].includes(origin))return new Response(JSON.stringify({error:'Origin not permitted'}),{status:403,headers});
+  if(request.method!=='POST')return new Response(JSON.stringify({error:'Method not allowed'}),{status:405,headers});
+  if(!env.AUDIO_BUCKET)return new Response(JSON.stringify({error:'Audio bucket unavailable'}),{status:503,headers});
+  let data;try{data=await request.json()}catch{return new Response(JSON.stringify({error:'Invalid JSON'}),{status:400,headers})}
+  const {book,section,item,segment}=data;
+  if(![book,section,item,segment].every(Number.isInteger)||[book,section,item].some(n=>n<0)||segment< -1)return new Response(JSON.stringify({error:'Invalid index'}),{status:400,headers});
+  const lines=LISTENING_SCRIPT_LINES[book]?.[section]?.[item];
+  if(!lines)return new Response(JSON.stringify({error:'Unknown listening item'}),{status:404,headers});
+  const num=(book===6&&section===1)?item+5:item+1;
+  const line=segment===-1?{speaker:'number',text:'Number '+num+'.'}:lines[segment];
+  if(!line)return new Response(JSON.stringify({error:'Unknown line'}),{status:404,headers});
+  const voices={boy:'onyx',girl:'shimmer',narrator:'shimmer',number:'alloy'};
+  const voice=voices[line.speaker];if(!voice)return new Response(JSON.stringify({error:'Invalid voice'}),{status:400,headers});
+  const id=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode('v2-kidfriendly\\n'+voice+'\\n'+line.text)))).map(n=>n.toString(16).padStart(2,'0')).join('');
+  const key='listening/2026-10/'+id+'.mp3';
+  const cached=await env.AUDIO_BUCKET.get(key);
+  if(cached)return data.precache?new Response(JSON.stringify({status:'stored'}),{headers}):new Response(cached.body,{headers:{'Content-Type':'audio/mpeg','Cache-Control':'public,max-age=86400','Access-Control-Allow-Origin':getCorsHeaders(origin)['Access-Control-Allow-Origin']}});
+  // Use the existing student TTS service, which keeps OpenAI credentials server-side.
+  const instructions=line.speaker==='number'?'Read the number calmly and clearly. No extra words.': 'Read naturally, warmly and clearly for elementary English learners. Friendly and lightly cheerful, not theatrical. No extra words.';
+  const resp=await fetch('https://students.willenaenglish.com/api/openai-tts',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:'tts',input:line.text,instructions,voice})});
+  if(!resp.ok)return new Response(JSON.stringify({error:'Existing speech service returned '+resp.status}),{status:502,headers});
+  const bytes=await resp.arrayBuffer();
+  if(bytes.byteLength<100||bytes.byteLength>4000000)return new Response(JSON.stringify({error:'Invalid audio'}),{status:502,headers});
+  await env.AUDIO_BUCKET.put(key,bytes,{httpMetadata:{contentType:'audio/mpeg',cacheControl:'public,max-age=2592000'}});
+  if(data.precache)return new Response(JSON.stringify({status:'generated'}),{headers});
+  return new Response(bytes,{headers:{'Content-Type':'audio/mpeg','Cache-Control':'public,max-age=86400','Access-Control-Allow-Origin':getCorsHeaders(origin)['Access-Control-Allow-Origin']}});
+}
+
 export default {
   async fetch(request, env, ctx) {
     const startTime = Date.now();
@@ -433,6 +468,8 @@ export default {
     if (request.method === 'OPTIONS') {
       return new Response(null, { status: 200, headers: corsHeaders });
     }
+
+    if (url.pathname === '/listening-tts') return listeningR2(request,env);
 
     if (url.pathname === '/admin/audio-debug') {
       const word = url.searchParams.get('word') || '';
