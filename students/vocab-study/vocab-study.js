@@ -1203,7 +1203,90 @@ function recordVocabAttempt({skill,responseType,lexicalEntryId,activityId,prompt
       answer:correctAnswer,
       metadata:baseMeta
     },
-    result:{selected:…961 tokens truncated…iew is restricted to administrators.');
+    result:{selected:studentAnswer,answer:correctAnswer,correct:!!correct,score:correct?1:0},
+    responseTimeMs:state.questionStartedAt?Math.max(0,Date.now()-state.questionStartedAt):0,
+    hintsUsed:Math.max(0,Number(hintsUsed)||0),
+    retryCount:Math.max(0,Number(retryCount)||0),
+    attemptNumber:Math.max(1,Number(attemptNumber)||1),
+    sessionSource:teacher?'teacher':(txt(sessionSource)||'student')
+  };
+
+  const save=recorder.record(detail);
+  if(teacher&&save&&typeof save.then==='function'){
+    state.pendingTeacherRecords.add(save);
+    save.finally(()=>state.pendingTeacherRecords.delete(save));
+  }
+}
+
+
+async function api(url,opts){
+  const fn=window.WillenaAPI&&typeof window.WillenaAPI.fetch==='function'?window.WillenaAPI.fetch.bind(window.WillenaAPI):window.fetch.bind(window);
+  const r=await fn(url,Object.assign({credentials:'include',cache:'no-store'},opts||{}));
+  const d=await r.json().catch(()=>({}));
+  if(!r.ok||(d&&d.success===false))throw new Error(d&&d.error||('Request failed ('+r.status+').'));
+  return d;
+}
+async function whoami(){return api('/.netlify/functions/supabase_auth?action=whoami&_='+Date.now())}
+async function fetchAssignmentsNetwork(className){
+  const r=await fetch(OP_URL+'/rest/v1/rpc/get_study_assignment_for_class',{
+    method:'POST',headers:{apikey:OP_KEY,Authorization:'Bearer '+OP_KEY,'Content-Type':'application/json'},
+    body:JSON.stringify({p_class_name:className}),cache:'no-store'
+  });
+  const d=await r.json().catch(()=>({}));
+  if(!r.ok||!d.success)throw new Error(d.error||'Could not load assigned books.');
+  return d;
+}
+async function assignments(className){
+  const cached=getAssignment(className);
+  if(cached){
+    markPerf('assignment cache',0);
+    background(async()=>{
+      const fresh=await fetchAssignmentsNetwork(className);
+      setAssignment(className,fresh);
+    },'assignment revalidate');
+    return cached;
+  }
+  const fresh=await timed('assignment lookup',()=>fetchAssignmentsNetwork(className));
+  setAssignment(className,fresh);
+  return fresh;
+}
+async function content(path){
+  const out=[];let offset=0;const pageSize=1000;
+  while(true){
+    const sep=path.includes('?')?'&':'?';
+    const r=await fetch(CONTENT_URL+'/rest/v1/'+path+sep+'limit='+pageSize+'&offset='+offset,{
+      headers:{apikey:CONTENT_KEY,Authorization:'Bearer '+CONTENT_KEY},cache:'no-store'
+    });
+    if(!r.ok)throw new Error('Content DB '+r.status);
+    const rows=await r.json();
+    if(!Array.isArray(rows))throw new Error('Content DB returned invalid data.');
+    out.push(...rows);
+    if(rows.length<pageSize)break;
+    offset+=pageSize;
+    if(offset>100000)throw new Error('Content DB pagination safety limit exceeded.');
+  }
+  return out;
+}
+
+function resolveUnit(rows,assignment){
+  if(!rows.length)return null;
+  let saved='';try{saved=localStorage.getItem('willena-study-v2-unit:'+assignment.book_id)||''}catch(_){}
+  const hint=saved||assignment.current_unit||assignment.starting_unit||'';
+  const n=(String(hint).match(/\d+/)||[])[0];
+  return rows.find(u=>String(u.id)===String(hint)||String(u.unit_number)===String(n))||rows[0];
+}
+function adminParams(){
+  const p=new URLSearchParams(location.search);
+  return{enabled:p.get('admin')==='1',bookId:txt(p.get('book_id')),unit:txt(p.get('unit'))};
+}
+async function requireAdminMode(){
+  const params=adminParams();
+  if(adminPickerEl)adminPickerEl.hidden=true;
+  if(!params.enabled)return params;
+  const who=await whoami();
+  if(!who?.success||!who.user_id)throw new Error('Admin preview requires a signed-in administrator.');
+  const roleData=await api('/.netlify/functions/supabase_auth?action=get_role&user_id='+encodeURIComponent(who.user_id)+'&_='+Date.now());
+  if(txt(roleData?.role).toLowerCase()!=='admin')throw new Error('Admin preview is restricted to administrators.');
   state.adminMode=true;
   return params;
 }
