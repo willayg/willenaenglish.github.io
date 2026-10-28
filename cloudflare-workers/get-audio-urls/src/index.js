@@ -441,7 +441,7 @@ async function listeningR2(request,env){
   if(!line)return new Response(JSON.stringify({error:'Unknown line'}),{status:404,headers});
   const voices={boy:'onyx',girl:'shimmer',narrator:'shimmer',number:'alloy'};
   const voice=voices[line.speaker];if(!voice)return new Response(JSON.stringify({error:'Invalid voice'}),{status:400,headers});
-  const id=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode('v2-kidfriendly\\n'+voice+'\\n'+line.text)))).map(n=>n.toString(16).padStart(2,'0')).join('');
+  const id=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode('v2-kidfriendly\n'+voice+'\n'+line.text)))).map(n=>n.toString(16).padStart(2,'0')).join('');
   const key='listening/2026-10/'+id+'.mp3';
   const cached=await env.AUDIO_BUCKET.get(key);
   if(cached)return data.precache?new Response(JSON.stringify({status:'stored'}),{headers}):new Response(cached.body,{headers:{'Content-Type':'audio/mpeg','Cache-Control':'public,max-age=86400','Access-Control-Allow-Origin':getCorsHeaders(origin)['Access-Control-Allow-Origin']}});
