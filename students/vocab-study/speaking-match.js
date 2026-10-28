@@ -47,7 +47,9 @@ function normalizeNumberToken(token){
 
 function normalize(value){
   return String(value??'').toLowerCase()
-    .replace(/[’‘]/g,"'")
+    // STT cannot reliably choose written apostrophes (Tim's / Tims).
+    // Apply symmetrically to target and transcript; spelling stays strict.
+    .replace(/['’‘ʼ＇]/g,'')
     .replace(/[-–—]/g,' ')
     .replace(/[^a-z0-9' ]+/g,' ')
     .replace(/\s+/g,' ')
@@ -66,7 +68,7 @@ function homophoneVariant(a,b){
   if(!left||!right)return false;
   const aw=left.split(' '),bw=right.split(' ');
   if(aw.length!==bw.length)return false;
-  const equivalent=(x,y)=>x===y||HOMOPHONE_GROUPS.some(group=>group.includes(x)&&group.includes(y));
+  const equivalent=(x,y)=>x===y||HOMOPHONE_GROUPS.some(group=>group.some(word=>normalize(word)===x)&&group.some(word=>normalize(word)===y));
   return aw.every((word,index)=>equivalent(word,bw[index]));
 }
 
