@@ -13,6 +13,34 @@ const FIELDS = [
  ['reading','Reading','score'], ['speaking','Speaking','score']
 ];
 const editable = new Set(FIELDS.filter(x=>x[2]!=='fixed').map(x=>x[0]));
+const SKILLS = FIELDS.filter(f=>f[2]==='score').map(f=>f[0]);
+function validScore(v) {
+ if(v===null||v===undefined||String(v).trim()==='')return null;
+ const n=Number(v);return Number.isFinite(n)&&n>=0?n:null;
+}
+function calculatePercentages(row,totals){
+ let earned=0,possible=0,percentSum=0,count=0;
+ for(const skill of SKILLS){
+  const score=validScore(row.data[skill]);
+  const max=validScore(totals[skill]);
+  if(score===null||max===null||max<=0)continue;
+  earned+=score;possible+=max;percentSum+=(100*score/max);count++;
+ }
+ return {total:possible>0?earned/possible*100:null,average:count?percentSum/count:null,earned,possible,count};
+}
+const percentText=v=>v===null?'—':(Math.round(v*10)/10).toFixed(1)+'%';
+function refreshPercentages(){
+ if(!current)return;
+ for(const tr of $('sheet').querySelectorAll('tbody tr[data-row-id]')){
+  const r=current.rows.find(x=>x.id===tr.dataset.rowId);
+  if(!r)continue;
+  const p=calculatePercentages(r,current.totals);
+  const total=tr.querySelector('[data-metric="total"]'),average=tr.querySelector('[data-metric="average"]');
+  if(total)total.textContent=percentText(p.total);
+  if(average)average.textContent=percentText(p.average);
+ }
+}
+
 let tests = new Map(), klass = '', current = null, selected = null;
 let undo = [], redo = [], pending = new Map(), alive = true;
 const classCache=new Map(), inflight=new Map();
@@ -126,7 +154,7 @@ function validate(row,key,v){
  const kind=FIELDS.find(f=>f[0]===key)?.[2];
  if(kind==='grade')return v.length<=12;
  const val=Number(v);if(!Number.isFinite(val)||val<0)return false;
- const max=classCache.get(row.className)?.totals?.[key] ?? current?.totals?.[key];
+ const max=classCache.get(row.className)?.totals?.[key];
  return max===null||max===undefined||!Number.isFinite(Number(max)) ||val<=Number(max);
 }
 function noteChange(row,key,value,track=true){
@@ -139,6 +167,7 @@ function noteChange(row,key,value,track=true){
  row.data[key]=v===''?null:(FIELDS.find(f=>f[0]===key)?.[2]==='score'?Number(v):v);
  row.rev++;row.dirty=true;
  queueSave(row);
+ if(current?.name===row.className)refreshPercentages();
  return true;
 }
 function queueSave(row){
@@ -213,7 +242,7 @@ function render(){
  $('tabs').querySelectorAll('button').forEach(b=>b.classList.toggle('selected',b.dataset.className===klass));
  const head=$('sheet').querySelector('thead'),body=$('sheet').querySelector('tbody');head.replaceChildren();body.replaceChildren();
  const tr=document.createElement('tr');
- for(const text of ['#',...FIELDS.map(f=>f[1])]){const th=document.createElement('th');th.textContent=text;tr.append(th);}
+ for(const text of ['#',...FIELDS.map(f=>f[1]),'Total %','Average %']){const th=document.createElement('th');th.textContent=text;tr.append(th);}
  head.append(tr);
  const visible=current.rows.filter(matchesSearch);
  visible.forEach((r,i)=>{
@@ -225,6 +254,12 @@ function render(){
  else td.append(editInput(r,k));
  tr.append(td);
  }
+ const pct=calculatePercentages(r,current.totals);
+ for(const [key,value,help] of [
+  ['total',pct.total,'Total earned points / total possible points for scored skills'],
+  ['average',pct.average,'Average of each scored skill percentage']
+ ]){const cell=document.createElement('td');cell.className='metric';
+  cell.dataset.metric=key;cell.textContent=percentText(value);cell.title=help;tr.append(cell);}
  if(!r.userId){tr.className='unmatched';tr.title='Not linked to a student account — values shown read-only';}
  body.append(tr);
  });
@@ -236,6 +271,7 @@ function render(){
  else if(kind==='score')td.textContent=display(current.totals[k]);
  total.append(td);
  }
+ for(let j=0;j<2;j++){const td=document.createElement('td');td.className='metric';td.textContent='—';total.append(td);}
  body.append(total);
  $('summary').textContent=visible.length+' of '+current.rows.length+' students · '+current.rows.filter(r=>!r.userId).length+' unmatched (read-only) · '+klass;
 }
@@ -247,6 +283,7 @@ function updateVisibleValues(){
  if(document.activeElement!==input)input.value=display(r.data[input.dataset.key]);
  }
  }
+ refreshPercentages();
 }
 function history(type){
  const from=type==='undo'?undo:redo, dest=type==='undo'?redo:undo;
