@@ -1,0 +1,38 @@
+<!doctype html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Willena Assessment Grid — Pilot</title><link rel="stylesheet" href="./grid.css"></head>
+<body><header><strong>WILLENA <small>Assessment Grid</small></strong><span id="status">Local pilot · not shared</span></header>
+<div id="authStatus" role="status" style="padding:30px;font:16px Arial,sans-serif">Checking teacher login…</div><main hidden><div class="toolbar"><label>Period<select id="period"><option>October 2026</option></select></label><label>Class<select id="klass"></select></label><label>Find student<input id="search" placeholder="Name"></label><button id="undo">Undo</button><button id="redo">Redo</button><button id="reset">Reset pilot</button></div><p class="notice">This pilot demonstrates spreadsheet editing. It saves to this browser only — other teachers cannot see changes yet. No Supabase records are modified.</p>
+<div class="formula"><span id="address">D2</span><b>fx</b><input id="formula" aria-label="Selected cell value" placeholder="Select an editable cell"></div>
+<div class="sheetwrap"><table id="sheet"><thead></thead><tbody></tbody></table></div><nav id="tabs" aria-label="Class tabs"></nav><p id="summary"></p>
+</main><script src="/js/api-config.js?v=20260329d"></script><script>
+(async () => {
+  const status = document.getElementById('authStatus');
+  try {
+    if (!window.WillenaAPI?.fetch) throw Error('Auth gateway unavailable');
+    async function whoami() {
+      const response = await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=whoami');
+      const payload = await response.json().catch(() => ({}));
+      return response.ok && payload.success && payload.user_id ? payload : null;
+    }
+    let who = await whoami();
+    if (!who) {
+      await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=refresh').catch(() => {});
+      who = await whoami();
+    }
+    if (!who) throw Error('Login required');
+    const response = await WillenaAPI.fetch('/.netlify/functions/supabase_auth?action=get_role&user_id=' + encodeURIComponent(who.user_id));
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok || !['teacher','admin'].includes(String(data.role || '').toLowerCase())) throw Error('Teacher access required');
+    status.remove();
+    document.querySelector('main').hidden = false;
+    const script = document.createElement('script');
+    script.src = './grid.js?v=preview1';
+    document.body.appendChild(script);
+  } catch (error) {
+    const link = document.createElement('a');
+    link.href = '/Teachers/login.html?redirect=' + encodeURIComponent(location.pathname);
+    link.textContent = 'Sign in to Teachers';
+    status.textContent = 'Teacher access only. ';
+    status.appendChild(link);
+  }
+})();
+</script></body></html>
