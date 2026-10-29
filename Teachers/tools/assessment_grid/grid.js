@@ -2,7 +2,14 @@
 'use strict';
 const $ = id => document.getElementById(id);
 const API = '/.netlify/functions/test_admin';
-const PREFIX = 'Assessment Grid | October 2026 | ';
+const PERIODS = {
+ '2026-02': 'February 2026',
+ '2026-06': 'June 2026',
+ '2026-10': 'October 2026'
+};
+let period = '2026-10';
+const periodLabel = () => PERIODS[period] || period;
+const periodPrefix = () => 'Assessment Grid | '+periodLabel()+' | ';
 const ORDER = ['Brown','Stanford','Manchester','New York','Hawaii','Boston','Sydney','Berkeley','Chicago','Cambridge','Yale','Princeton','Oxford','MIT'];
 const FIELDS = [
  ['englishName','Name','fixed'], ['koreanName','Korean','fixed'], ['className','Class','fixed'],
@@ -44,7 +51,7 @@ function refreshPercentages(){
 let tests = new Map(), klass = '', current = null, selected = null;
 let undo = [], redo = [], pending = new Map(), alive = true;
 const classCache=new Map(), inflight=new Map();
-let selectionSequence=0;
+let selectionSequence=0, periodSequence=0;
 function status(s, problem=false) { $('status').textContent=s; $('status').style.color=problem?'#ffcbcb':''; }
 async function api(action, args={}, options={}) {
  const query=new URLSearchParams({action,...args});
@@ -63,17 +70,18 @@ function makeRow(record, entry, testId) {
 }
 function findTest(name){return tests.get(name);}
 function getClass(name) {
- if(inflight.has(name))return inflight.get(name);
  const t=findTest(name);
+ const cacheKey=t?.id;
+ if(cacheKey && inflight.has(cacheKey))return inflight.get(cacheKey);
  if(!t)return Promise.reject(Error('Unknown class '+name));
  const p=api('get_test',{test_id:t.id}).then(j=>{
   const columns=j.test?.columns||[];
   const meta=columns.find(c=>c.key==='_source_sheet');
-  if(!Array.isArray(meta?.rows))throw Error('October rows unavailable');
+  if(!Array.isArray(meta?.rows))throw Error('Period rows unavailable');
   const entries=new Map((j.entries||[]).map(x=>[x.user_id,x.data]));
   const rows=meta.rows.map(x=>makeRow(x,x.userId?entries.get(x.userId):null,j.test.id));
   const totals=Object.fromEntries(columns.filter(c=>c.type==='number').map(c=>[c.key,c.max]));
-  const prev=classCache.get(name);let changed=0;
+  const prev=classCache.get(cacheKey);let changed=0;
   if(prev){
    const old=new Map(prev.rows.map(x=>[x.id,x]));
    for(const fresh of rows) {
@@ -88,18 +96,18 @@ function getClass(name) {
    return {model:prev,changed};
   }
   const model={name,rows,totals,testId:j.test.id,loaded:Date.now()};
-  classCache.set(name,model);
+  classCache.set(cacheKey,model);
   return {model,changed};
- }).finally(()=>inflight.delete(name));
- inflight.set(name,p);return p;
+ }).finally(()=>inflight.delete(cacheKey));
+ inflight.set(cacheKey,p);return p;
 }
 async function openClass(name,refresh=false) {
  if(!findTest(name))return;
  if(refresh){
-  if(klass!==name||!current||document.hidden)return;
+  if(klass!==name||!current||document.hidden||current.testId!==findTest(name).id)return;
   try{
    const {changed}=await getClass(name);
-   if(klass!==name||!current||current.name!==name)return;
+   if(klass!==name||!current||current.testId!==findTest(name).id)return;
    if(changed){updateVisibleValues();status('Updated from another teacher · '+changed+' row(s)');}
   }catch(e){status('Refresh failed: '+e.message,true);}
   return;
@@ -107,11 +115,11 @@ async function openClass(name,refresh=false) {
  const sequence=++selectionSequence;
  klass=name;$('klass').value=name;
  $('tabs').querySelectorAll('button').forEach(b=>b.classList.toggle('selected',b.dataset.className===name));
- const cached=classCache.get(name);
+ const cached=classCache.get(findTest(name).id);
  if(cached){
   current=cached;selected=null;render();
   const count=cached.rows.filter(x=>!x.userId).length;
-  status('October 2026 · '+cached.rows.length+' students · '+count+' unmatched · saved to Supabase');
+  status(periodLabel()+' · '+cached.rows.length+' students · '+count+' unmatched · saved to Supabase');
   if(Date.now()-cached.loaded>4000)openClass(name,true);
   return;
  }
@@ -120,34 +128,59 @@ async function openClass(name,refresh=false) {
  $('summary').textContent='Loading '+name+'…';status('Loading '+name+' for the first time…');
  try{
   const {model}=await getClass(name);
-  if(sequence!==selectionSequence||klass!==name)return;
+  if(sequence!==selectionSequence||klass!==name||model.testId!==findTest(name)?.id)return;
   current=model;selected=null;render();
   const count=model.rows.filter(x=>!x.userId).length;
-  status('October 2026 · '+model.rows.length+' students · '+count+' unmatched · saved to Supabase');
+  status(periodLabel()+' · '+model.rows.length+' students · '+count+' unmatched · saved to Supabase');
  }catch(e){if(sequence===selectionSequence)status('Could not load class: '+e.message,true);}
 }
 async function preloadClasses(){
  const names=sortedClasses().filter(x=>x!==klass);let i=0;
- const runner=async()=>{while(alive&&i<names.length){const name=names[i++];if(classCache.has(name))continue;try{await getClass(name);}catch(e){console.warn('Preload '+name+' failed',e);}}};
+ const targetPeriod=period;
+ const runner=async()=>{while(alive&&targetPeriod===period&&i<names.length){const name=names[i++];const test=findTest(name);if(!test||classCache.has(test.id))continue;try{await getClass(name);}catch(e){console.warn('Preload '+name+' failed',e);}}};
  await Promise.all([runner(),runner(),runner(),runner()]);
 }
 function sortedClasses(){return [...tests.keys()].sort((a,b)=>ORDER.indexOf(a)-ORDER.indexOf(b));}
-async function startup(){
- status('Loading October 2026…');
- try{
- const j=window.__assessmentBootstrap || await api('list_tests',{month:'2026-10'});
- window.__assessmentBootstrap = null; // Bootstrap belongs to this page load only.
- for(const t of j.tests||[])if(t.name?.startsWith(PREFIX)) tests.set(t.name.slice(PREFIX.length),t);
- if(!tests.size) throw new Error('No October assessment records found');
+async function loadPeriod(month,initial=false){
+ if(!PERIODS[month])return;
+ const seq=++periodSequence;
+ ++selectionSequence;
+ period=month;
+ current=null;klass='';selected=null;tests=new Map();
+ $('period').value=month;
  $('klass').replaceChildren();$('tabs').replaceChildren();
- for(const name of sortedClasses()){
- $('klass').add(new Option(name,name));
- const btn=document.createElement('button');btn.textContent=name;btn.dataset.className=name;
- btn.addEventListener('click',()=>openClass(name));$('tabs').append(btn);
+ $('sheet').querySelector('thead').replaceChildren();
+ $('sheet').querySelector('tbody').replaceChildren();
+ $('summary').textContent='Loading '+periodLabel()+'…';
+ status('Loading '+periodLabel()+'…');
+ try{
+  const boot=(initial&&month==='2026-10')?window.__assessmentBootstrap:null;
+  window.__assessmentBootstrap=null;
+  const j=boot||await api('list_tests',{month});
+  if(seq!==periodSequence)return;
+  const prefix=periodPrefix();
+  for(const t of j.tests||[])if(t.name?.startsWith(prefix))tests.set(t.name.slice(prefix.length),t);
+  if(!tests.size)throw Error('No assessment records found for '+periodLabel());
+  for(const name of sortedClasses()){
+   $('klass').add(new Option(name,name));
+   const btn=document.createElement('button');btn.textContent=name;btn.dataset.className=name;
+   btn.addEventListener('click',()=>openClass(name));$('tabs').append(btn);
+  }
+  await openClass(tests.has('Brown')?'Brown':sortedClasses()[0]);
+  if(seq===periodSequence)preloadClasses().catch(e=>console.warn('Class preload failed',e));
+ }catch(e){
+  if(seq===periodSequence){
+   status(periodLabel()+' data could not load: '+e.message,true);
+   $('summary').textContent='No student information was loaded.';
+  }
  }
- await openClass(tests.has('Brown')?'Brown':sortedClasses()[0]);
- preloadClasses().catch(e=>console.warn('Class preload failed',e));
- }catch(e){status('October data could not load: '+e.message,true);$('summary').textContent='No student information was loaded.'}
+}
+async function startup(){
+ const select=$('period');
+ select.replaceChildren();
+ for(const [value,label] of Object.entries(PERIODS))select.add(new Option(label,value));
+ select.value=period;
+ await loadPeriod(period,true);
 }
 function validate(row,key,v){
  if(!editable.has(key))return false;
@@ -155,7 +188,7 @@ function validate(row,key,v){
  const kind=FIELDS.find(f=>f[0]===key)?.[2];
  if(kind==='grade')return v.length<=12;
  const val=Number(v);if(!Number.isFinite(val)||val<0)return false;
- const max=classCache.get(row.className)?.totals?.[key];
+ const max=classCache.get(row.testId)?.totals?.[key];
  return max===null||max===undefined||!Number.isFinite(Number(max)) ||val<=Number(max);
 }
 function noteChange(row,key,value,track=true){
@@ -164,11 +197,11 @@ function noteChange(row,key,value,track=true){
  if(!validate(row,key,v))return false;
  const before=display(row.data[key]);
  if(before===v)return true;
- if(track){undo.push({className:klass,id:row.id,key,before,after:v});if(undo.length>120)undo.shift();redo=[];}
+ if(track){undo.push({testId:row.testId,className:row.className,id:row.id,key,before,after:v});if(undo.length>120)undo.shift();redo=[];}
  row.data[key]=v===''?null:(FIELDS.find(f=>f[0]===key)?.[2]==='score'?Number(v):v);
  row.rev++;row.dirty=true;
  queueSave(row);
- if(current?.name===row.className)refreshPercentages();
+ if(current?.testId===row.testId)refreshPercentages();
  return true;
 }
 function queueSave(row){
@@ -189,7 +222,7 @@ async function save(row){
    row.saved=rev;
  }
  row.dirty=false;row.failed=false;pending.delete(row.testId+':'+row.id);
- if(pending.size===0)status('Saved · October 2026 · refreshes every 5 seconds');
+ if(pending.size===0)status('Saved · '+periodLabel()+' · refreshes every 5 seconds');
  }catch(e){row.failed=true;row.dirty=true;status('Save failed: '+e.message+' — edit retained on screen',true)}
  finally{row.saving=false}
 }
@@ -293,7 +326,7 @@ function updateVisibleValues(){
 }
 function history(type){
  const from=type==='undo'?undo:redo, dest=type==='undo'?redo:undo;
- const op=from.pop();if(!op||op.className!==klass)return;
+ const op=from.pop();if(!op||op.testId!==current?.testId)return;
  const r=current?.rows.find(x=>x.id===op.id);if(!r)return;
  const target=type==='undo'?op.before:op.after;
  if(noteChange(r,op.key,target,false)){dest.push(op);updateVisibleValues();}
@@ -303,6 +336,10 @@ $('redo').addEventListener('click',()=>history('redo'));
 $('reset').textContent='Reload class';
 $('reset').onclick=()=>{if(pending.size){status('Finish saving edits before reloading',true);return;}openClass(klass)};
 $('klass').addEventListener('change',e=>openClass(e.target.value));
+$('period').addEventListener('change',e=>{
+ if(!$('rcDialog').hidden){$('rcDialog').hidden=true;$('rcPageMount').replaceChildren();}
+ loadPeriod(e.target.value);
+});
 $('search').addEventListener('input',render);
 $('formula').addEventListener('change',()=>{
  if(!selected||!current)return;
@@ -467,9 +504,9 @@ const reportDrafts = new Map();
 let reportRows=[],reportPosition=0,reportBusy=false;
 const reportStatus=(text,bad=false)=>{const e=$('rcMessage');e.textContent=text;e.style.color=bad?'#bd2936':'#526c7c'};
 function selectedReportRow(){return reportRows[reportPosition]||null;}
-function reportDraftKey(row){return (row?.className||'')+':'+(row?.id||'');}
+function reportDraftKey(row){return row?.testId+':'+(row?.id||'');}
 function reportColumns(row){
- const maxima=classCache.get(row.className)?.totals||current?.totals||{};
+ const maxima=classCache.get(row.testId)?.totals||current?.totals||{};
  return SKILLS.map(key=>({
    key, type:'number', max:maxima[key]??null,
    label:FIELDS.find(f=>f[0]===key)?.[1]||key
@@ -479,7 +516,7 @@ function reportStudent(row){
  return {name:row.englishName,korean_name:row.koreanName,class:row.className,data:{...row.data}};
 }
 function reportTest(row){
- return {name:'October 2026 Report Cards',class:row.className,date:'2026-10-01',term_from:'2026-10',term_to:'2026-10',columns:reportColumns(row)};
+ return {name:periodLabel()+' Report Cards',class:row.className,date:period+'-01',term_from:period,term_to:period,columns:reportColumns(row)};
 }
 function makeCard(row){
  return renderCard({student:reportStudent(row),test:reportTest(row),
@@ -565,7 +602,7 @@ async function exportReports(rows){
   }
   const name=rows.length===1?rows[0].englishName:rows[0].className;
   const safe=String(name).replace(/[^A-Za-z0-9_-]+/g,'_');
-  pdf.save('Willena_Report_Cards_October_2026_'+safe+'.pdf');
+  pdf.save('Willena_Report_Cards_'+periodLabel().replace(/\s+/g,'_')+'_'+safe+'.pdf');
   reportStatus('PDF downloaded: '+rows.length+' report card'+(rows.length===1?'':'s')+'.');
  }catch(e){
   reportStatus('PDF failed: '+e.message,true);
