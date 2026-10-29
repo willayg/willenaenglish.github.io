@@ -105,9 +105,14 @@ exports.handler = async (event) => {
       const month = (qs.month||'').trim(); // YYYY-MM
       let q = db.from('tests').select('id, name, date, class, created_at').order('created_at', { ascending:false }).limit(200);
       if (month && /^\d{4}-\d{2}$/.test(month)) {
+        const [year, mon] = month.split('-').map(Number);
+        if (mon < 1 || mon > 12) return respond(event, 400, { success:false, error:'Invalid month' });
+        // Half-open [start, next month) range works for February, June and leap years.
         const start = month + '-01';
-        const end = month + '-31';
-        q = q.gte('date', start).lte('date', end);
+        const nextYear = mon === 12 ? year + 1 : year;
+        const nextMonth = mon === 12 ? 1 : mon + 1;
+        const endExclusive = nextYear + '-' + String(nextMonth).padStart(2, '0') + '-01';
+        q = q.gte('date', start).lt('date', endExclusive);
       }
       const { data, error } = await q;
       if (error) return respond(event, 400, { success:false, error: error.message });
