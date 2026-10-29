@@ -169,7 +169,7 @@
     await ensureBurgerMenuTemplate();
     insertBurgerMenu('#burger-menu-mount');
   </script>
-  <script type="module" src="./test_input.js?v=20260306d"></script>
+  <script type="module" src="./test_input.js?v=20261029-google-sheet-live1"></script>
   <style>
     /* Selection styling */
     td.cell-selected { outline:2px solid #60a5fa; background:#eff6ff; }
@@ -222,6 +222,7 @@
   <div style="background:#fff; width:min(96vw, 980px); border-radius:16px; box-shadow:0 10px 30px rgba(0,0,0,0.2); padding:16px 16px 12px; display:flex; flex-direction:column; gap:10px; position:relative;">
       <button id="importCloseX" style="position:absolute; top:6px; right:8px; background:none; border:none; font-size:20px; line-height:1; cursor:pointer; color:#475569;" aria-label="Close import">&times;</button>
       <h3 style="margin:4px 24px 6px 0;">Import Scores from Pasted Table</h3>
+      <button id="loadOctoberSheetBtn" type="button" class="layout-btn" style="align-self:flex-start">Load October 2026 Google Sheet · Preview only</button>
       <div class="note">Paste the table exactly as copied from your sheet (with headers). We'll detect classes, columns, and scores automatically. You can adjust the test name and date before import.</div>
       <div style="display:grid; grid-template-columns: 1fr 320px; gap:12px; align-items:stretch;">
         <textarea id="pasteTableInput" class="input-field" placeholder="Paste table here..." style="height:260px; resize:vertical; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;"></textarea>
