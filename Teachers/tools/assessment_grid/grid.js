@@ -135,7 +135,8 @@ function sortedClasses(){return [...tests.keys()].sort((a,b)=>ORDER.indexOf(a)-O
 async function startup(){
  status('Loading October 2026…');
  try{
- const j=await api('list_tests',{month:'2026-10'});
+ const j=window.__assessmentBootstrap || await api('list_tests',{month:'2026-10'});
+ window.__assessmentBootstrap = null; // Bootstrap belongs to this page load only.
  for(const t of j.tests||[])if(t.name?.startsWith(PREFIX)) tests.set(t.name.slice(PREFIX.length),t);
  if(!tests.size) throw new Error('No October assessment records found');
  $('klass').replaceChildren();$('tabs').replaceChildren();
