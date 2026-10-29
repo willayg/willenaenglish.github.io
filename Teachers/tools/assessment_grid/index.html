@@ -1,0 +1,6 @@
+<!doctype html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Willena Assessment Grid — Pilot</title><link rel="stylesheet" href="./grid.css"></head>
+<body><header><strong>WILLENA <small>Assessment Grid</small></strong><span id="status">Local pilot · not shared</span></header>
+<main><div class="toolbar"><label>Period<select id="period"><option>October 2026</option></select></label><label>Class<select id="klass"></select></label><label>Find student<input id="search" placeholder="Name"></label><button id="undo">Undo</button><button id="redo">Redo</button><button id="reset">Reset pilot</button></div><p class="notice">This pilot demonstrates spreadsheet editing. It saves to this browser only — other teachers cannot see changes yet. No Supabase records are modified.</p>
+<div class="formula"><span id="address">D2</span><b>fx</b><input id="formula" aria-label="Selected cell value" placeholder="Select an editable cell"></div>
+<div class="sheetwrap"><table id="sheet"><thead></thead><tbody></tbody></table></div><nav id="tabs" aria-label="Class tabs"></nav><p id="summary"></p>
+</main><script src="./grid.js" defer></script></body></html>
