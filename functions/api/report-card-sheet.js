@@ -9,13 +9,12 @@ export async function onRequestGet({ request, env }) {
   if (url.pathname !== '/api/report-card-sheet') return reply(404, {error:'Not found'});
   const incomingOrigin = request.headers.get('Origin');
   if (incomingOrigin && incomingOrigin !== url.origin) return reply(403, {error:'Origin not allowed'});
-  const headers = new Headers();
-  for (const key of ['cookie','authorization','x-willena-token','x-session-token']) {
-    const value = request.headers.get(key);
-    if (value) headers.set(key, value);
-  }
-  if (!headers.has('cookie') && !headers.has('authorization') && !headers.has('x-willena-token') && !headers.has('x-session-token'))
-    return reply(401, {error:'Teacher login required'});
+  // Existing teacher_admin authenticates sb_access cookies and checks teacher/admin role.
+  // Forward only that session cookie; never pass client-supplied Authorization or custom tokens.
+  const cookies = request.headers.get('Cookie') || '';
+  const match = /(?:^|;\\s*)sb_access=([^;]+)/.exec(cookies);
+  if (!match) return reply(401, {error:'Teacher login required'});
+  const headers = new Headers({Cookie:'sb_access=' + match[1]});
   // Validate using the same teacher API already used by Test Input. Never trust an Origin header as authentication.
   let auth;
   try {
