@@ -497,6 +497,64 @@ function renderImportPreview(parsed) {
 }
 
 let lastParsed = null;
+
+/**
+ * Read-only proof of concept against the actual "Report Card October 2026" Google Sheet.
+ * Does not call handleImportConfirm, create tests, upsert entries or modify PDFs.
+ * Needs a server-side REPORT_CARDS binding and REPORT_CARDS_API_TOKEN.
+ */
+async function previewOctoberGoogleSheet() {
+  const button = document.getElementById('loadOctoberSheetBtn');
+  if (!button || !importMsg || !importPreview || !importPreviewWrap) return;
+  button.disabled = true;
+  importConfirm.disabled = true;
+  lastParsed = null; // Never save a previously parsed table after opening this preview.
+  importMsg.style.color = '#334155';
+  importMsg.textContent = 'Reading October 2026 Google Sheet…';
+  try {
+    const response = await fetch('/api/report-card-sheet', {credentials:'include', cache:'no-store'});
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(result.error || ('HTTP ' + response.status));
+    const students = Array.isArray(result.students) ? result.students : [];
+    const esc = (x) => String(x ?? '').replace(/[&<>"']/g, ch => ({
+      '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'
+    }[ch]));
+    const pick = (s, keys) => keys.map(k => s[k]).find(v => v !== undefined && v !== null && v !== '') ?? '';
+    const scoreKeys = [
+      ['phonics','Phonics'], ['listening','Listening'], ['vocabulary','Vocab'],
+      ['grammar','Grammar'], ['grammarWriting','Grammar Writing'],
+      ['writing','Writing'], ['reading','Reading'], ['speaking','Speaking']
+    ];
+    let cells = students.map(s => {
+      const scores = s.scores || {};
+      const values = [
+        pick(s,['englishName','name','english_name']),
+        pick(s,['koreanName','korean_name','korean']),
+        pick(s,['class','className','klass']),
+        ...scoreKeys.map(([key]) => scores[key] ?? s[key] ?? '')
+      ];
+      return '<tr>' + values.map(v => '<td>' + esc(v) + '</td>').join('') + '</tr>';
+    }).join('');
+    const headings = ['English','Korean','Class',...scoreKeys.map(x=>x[1])];
+    importPreview.innerHTML = '<thead><tr>' + headings.map(h => '<th>' + esc(h) + '</th>').join('') + '</tr></thead><tbody>' + cells + '</tbody>';
+    importPreviewWrap.style.display = 'block';
+    importPreviewWrap.style.maxHeight = '450px';
+    const classes = new Set(students.map(s => pick(s,['class','className','klass'])).filter(Boolean));
+    const withScores = students.filter(s => Object.values(s.scores || {}).some(v => v !== '' && v != null)).length;
+    importSummary.textContent = students.length + ' real student rows · ' + classes.size + ' classes · ' +
+      withScores + ' rows with score fields. Source: Report Card October 2026. No database changes.';
+    importMsg.style.color = '#0369a1';
+    importMsg.textContent = 'Read-only preview. Import & Save remains disabled until student matching and score maxima are verified.';
+  } catch (error) {
+    importPreviewWrap.style.display = 'none';
+    importMsg.style.color = '#b91c1c';
+    importMsg.textContent = 'Google Sheet preview unavailable: ' + error.message;
+  } finally {
+    button.disabled = false;
+  }
+}
+document.getElementById('loadOctoberSheetBtn')?.addEventListener('click', previewOctoberGoogleSheet);
+
 async function handleParseClick() {
   importMsg.style.color = '#334155'; importMsg.textContent = 'Parsing…';
   try {
