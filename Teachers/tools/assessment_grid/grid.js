@@ -251,7 +251,12 @@ function render(){
  const no=document.createElement('td');no.textContent=i+2;tr.append(no);
  for(const [k,,kind] of FIELDS){
  const td=document.createElement('td');td.dataset.field=k;
- if(kind==='fixed'){td.className='locked';td.textContent=r[k];}
+ if(k==='englishName'){
+  td.className='locked';
+  const btn=document.createElement('button');btn.className='rc-student-link';
+  btn.type='button';btn.textContent=r.englishName;btn.title='Preview '+r.englishName+' report card';
+  btn.addEventListener('click',()=>openReport(r));td.append(btn);
+ }else if(kind==='fixed'){td.className='locked';td.textContent=r[k];}
  else td.append(editInput(r,k));
  tr.append(td);
  }
@@ -313,5 +318,283 @@ window.addEventListener('keydown',e=>{
 setInterval(()=>{if(alive&&current&&!document.hidden)openClass(klass,true)},5000);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&current)openClass(klass,true)});
 window.addEventListener('beforeunload',()=>{alive=false});
+
+/* Report-card studio: the HTML/SVG renderer below is reused from Test Input.
+   Score values come from the already authenticated Assessment Grid cache. */
+// Willena report-card renderer reused from the current Teachers Test Input app.
+// The report-card markup, skill bars and gauge styling are kept verbatim.
+const esc=(s='')=>String(s).replace(/[&<>"'`]/g, ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;','`':'&#96;'}[ch]||ch));
+function parseNumber(v){if(v===null||v===undefined||v==='')return null;const n=Number(String(v).replace(/,/g,''));return Number.isFinite(n)?n:null}
+function formatNumber(v,{decimals=0}={}){if(v===null||v===undefined||!Number.isFinite(v))return '—';return v.toLocaleString(undefined,{minimumFractionDigits:decimals,maximumFractionDigits:Math.max(decimals,1)})}
+const formatPercent=(v)=>v===null||v===undefined||!Number.isFinite(v)?'—':formatNumber(v,{decimals:1})+'%';
+function fmtMonthYear(input){if(!input)return '';const m=String(input).match(/^(\d{4})-(\d{2})/);if(!m)return String(input);return new Date(Number(m[1]),Number(m[2])-1,1).toLocaleDateString('en-US',{month:'long',year:'numeric'})}
+function barsPercent(score,max){const s=parseNumber(score),m=parseNumber(max);return s===null||m===null||m<=0?0:Math.max(0,Math.min(100,100*s/m))}
+function computeAveragePercent(data,cols){const percentages=cols.filter(c=>c.type==='number').map(c=>{const s=parseNumber(data[c.key]),m=parseNumber(c.max);return s!==null&&m!==null&&m>0?100*s/m:null}).filter(x=>x!==null);return percentages.length?percentages.reduce((a,b)=>a+b,0)/percentages.length:null}
+const KOREAN_LABELS={phonics:'파닉스',listening:'듣기',vocab:'어휘',grammar:'문법',gw:'문법/쓰기',write:'쓰기',reading:'읽기',speaking:'말하기'};
+const getKoreanLabel=(col)=>KOREAN_LABELS[col.key]||col.label||col.key;
+function renderCard({ student, test, notes='', totalMode='weighted' }) {
+    const cols = Array.isArray(test.columns) ? test.columns : [];
+    const numberCols = cols.filter(c=>c.type==='number');
+
+  const scores = [];
+    let t=0, m=0;
+    for (const c of numberCols) {
+      const val = parseNumber(student.data[c.key]);
+      const max = parseNumber(c.max);
+      if (val===null) continue;
+      t += Number.isFinite(val) ? val : 0;
+      m += Number.isFinite(max) ? max : 0;
+      scores.push({ label: getKoreanLabel(c), score:val, max, pct: barsPercent(val, max) });
+    }
+  const percent = (m>0) ? Math.round((t/m)*1000)/10 : null;
+  const avgPercent = computeAveragePercent(student.data || {}, cols);
+  const totalSum = `${formatNumber(t)}/${formatNumber(m)}`;
+  const useAverageMode = totalMode === 'average';
+  const shownPercent = useAverageMode ? avgPercent : percent;
+  const totalLabel = useAverageMode ? 'Average' : 'Total';
+  const totalSumHtml = useAverageMode ? '' : `<div class="rc-total-sum">${totalSum}</div>`;
+
+    // Library grades (text) if available
+    const libReading = student.data['lib_reading'] || student.data['LIB_READING'] || '';
+    const libRaz = student.data['lib_raz'] || student.data['LIB_RAZ'] || '';
+    const libPunctuality = student.data['lib_punctuality'] || student.data['LIB_PUNCTUALITY'] || '';
+
+    // Grade to radial percent mapping per spec
+    function gradeToPercent(g) {
+      if (!g) return 0;
+      const t = String(g).trim().toUpperCase();
+      const map = { 'A+':100, 'A':90, 'A-':80, 'B+':65, 'B':50, 'B-':35, 'C+':10, 'C':1 };
+      return map[t] ?? 0;
+    }
+    // Semicircle gauge SVG (pathLength=100 for easy stroke-dasharray)
+    function renderGauge(grade) {
+      const pct = Math.max(0, Math.min(100, gradeToPercent(grade)));
+      console.log('[RC] renderGauge called:', grade, '-> pct:', pct);
+      // Path is a half-circle arc from left to right using a 50x50 viewBox centered at (50,50), radius 40
+      // We draw only the top half (y from 50 to 10) and use pathLength=100 so dasharray=pct shows progress.
+      return `
+        <div class="rc-gauge" aria-label="${esc(grade||'')} gauge">
+          <svg viewBox="0 0 100 60" preserveAspectRatio="xMidYMid meet">
+            <path class="arc-track" d="M10,50 A40,40 0 0 1 90,50" pathLength="100"
+              fill="none" stroke="var(--rc-accent-2)" stroke-width="6" stroke-linecap="round"></path>
+            <path class="arc-fill"  d="M10,50 A40,40 0 0 1 90,50" pathLength="100"
+              fill="none" stroke="var(--rc-accent)" stroke-width="6" stroke-linecap="round" stroke-dasharray="${pct} 100"></path>
+          </svg>
+          <div class="grade-text">${esc(grade||'—')}</div>
+        </div>`;
+    }
+
+    const skillRows = scores.map(s=>
+      `<div class="rc-skill">
+        <div class="rc-skill-label">${esc(s.label)}</div>
+        <div class="rc-bar"><span style="width:${s.pct}%"><span class="rc-pct">${Math.round(s.pct)}</span></span></div>
+        <div class="rc-score">${formatNumber(s.score)}${Number.isFinite(s.max)?`/${formatNumber(s.max)}`:''}</div>
+      </div>`
+    ).join('');
+
+  const logo = '/Logo.png';
+  // Prefer explicit student class; fall back to loaded test class
+  const displayClass = student?.class || test?.class || '';
+    // Compute term period display: prefer month range; fallback to test date
+    function normMonth(s){ if(!s) return ''; const str=String(s); return /^\d{4}-\d{2}$/.test(str) ? (str+'-01') : str; }
+    let termText = '';
+    const tf = test.term_from || '';
+    const tt = test.term_to || '';
+    if (tf && tt) {
+      const a = fmtMonthYear(normMonth(tf));
+      const b = fmtMonthYear(normMonth(tt));
+      termText = a && b ? (a===b ? a : `${a} – ${b}`) : (a||b);
+    } else if (tf || tt) {
+      termText = fmtMonthYear(normMonth(tf||tt));
+    } else {
+      termText = fmtMonthYear(test.date);
+    }
+    return `
+      <section class="rc-page">
+        <header class="rc-header">
+          <img class="rc-logo" src="${logo}" alt="Willena" />
+        </header>
+
+        <div class="rc-info">
+          <div class="rc-field"><span class="rc-label">Student Name:</span><div class="rc-line"><div class="rc-value">${esc(student.name||'')}</div></div></div>
+          <div class="rc-field"><span class="rc-label">Korean Name:</span><div class="rc-line"><div class="rc-value">${esc(student.korean_name||'')}</div></div></div>
+          <div class="rc-field"><span class="rc-label">Class:</span><div class="rc-line"><div class="rc-value">${esc(displayClass)}</div></div></div>
+          <div class="rc-field"><span class="rc-label">Term Period:</span><div class="rc-line"><div class="rc-value">${esc(termText||'')}</div></div></div>
+        </div>
+
+        <div class="rc-columns">
+          <div class="rc-titlebar rc-skills rc-col-title">Skills</div>
+          <div class="rc-titlebar rc-library rc-col-title">Library</div>
+
+          <div>
+            ${skillRows}
+            <div class="rc-total-wrap">
+              <div class="rc-total-label">${totalLabel}</div>
+              <div class="rc-total">${formatPercent(shownPercent)}</div>
+              ${totalSumHtml}
+            </div>
+          </div>
+
+          <aside class="rc-library">
+            <div class="rc-lib-item">
+              ${renderGauge(libRaz)}
+              <div class="rc-lib-text">
+                <div class="rc-g-label">RAZ KIDS</div>
+              </div>
+            </div>
+            <div class="rc-lib-item">
+              ${renderGauge(libReading)}
+              <div class="rc-lib-text">
+                <div class="rc-g-label">BOOK READING</div>
+              </div>
+            </div>
+            <div class="rc-lib-item">
+              ${renderGauge(libPunctuality)}
+              <div class="rc-lib-text">
+                <div class="rc-g-label">PUNCTUALITY</div>
+              </div>
+            </div>
+          </aside>
+
+          <div class="rc-comments-head rc-span">Comments</div>
+          <div class="rc-comments rc-span">${notes ? esc(notes) : 'Use this space to add personalised feedback before printing.'}</div>
+        </div>
+      </section>`;
+  }
+
+
+
+const reportDrafts = new Map();
+let reportRows=[],reportPosition=0,reportBusy=false;
+const reportStatus=(text,bad=false)=>{const e=$('rcMessage');e.textContent=text;e.style.color=bad?'#bd2936':'#526c7c'};
+function selectedReportRow(){return reportRows[reportPosition]||null;}
+function reportDraftKey(row){return (row?.className||'')+':'+(row?.id||'');}
+function reportColumns(row){
+ const maxima=classCache.get(row.className)?.totals||current?.totals||{};
+ return SKILLS.map(key=>({
+   key, type:'number', max:maxima[key]??null,
+   label:FIELDS.find(f=>f[0]===key)?.[1]||key
+ }));
+}
+function reportStudent(row){
+ return {name:row.englishName,korean_name:row.koreanName,class:row.className,data:{...row.data}};
+}
+function reportTest(row){
+ return {name:'October 2026 Report Cards',class:row.className,date:'2026-10-01',term_from:'2026-10',term_to:'2026-10',columns:reportColumns(row)};
+}
+function makeCard(row){
+ return renderCard({student:reportStudent(row),test:reportTest(row),
+   notes:reportDrafts.get(reportDraftKey(row))||'',totalMode:$('rcMode').value});
+}
+function fitReport(){
+ const page=$('rcPageMount').querySelector('.rc-page');
+ if(!page)return;
+ const shell=$('rcViewport'),sizer=$('rcPageSizer'),mount=$('rcPageMount');
+ // Scale only the preview, never the output used for PDF rasterization.
+ mount.style.transform='none';
+ const width=page.getBoundingClientRect().width;
+ const height=page.getBoundingClientRect().height;
+ const scale=Math.min(1,Math.max(.2,(shell.clientWidth-16)/width));
+ mount.style.transform='scale('+scale+')';
+ sizer.style.width=Math.ceil(width*scale)+'px';
+ sizer.style.height=Math.ceil(height*scale)+'px';
+}
+function displayReport(){
+ const row=selectedReportRow();
+ if(!row)return;
+ $('rcDialogTitle').textContent=row.englishName+' · '+row.className;
+ $('rcCounter').textContent=(reportPosition+1)+' / '+reportRows.length;
+ $('rcPrev').disabled=reportBusy||reportPosition===0;
+ $('rcNext').disabled=reportBusy||reportPosition>=reportRows.length-1;
+ $('rcComment').value=reportDrafts.get(reportDraftKey(row))||'';
+ $('rcPageMount').innerHTML=makeCard(row);
+ fitReport();
+ reportStatus('Preview uses the current grid scores. Comments are session drafts, not saved to Supabase.');
+}
+function openReport(row){
+ if(!current||!current.rows.length)return;
+ const visible=current.rows.filter(matchesSearch);
+ reportRows=visible.length?visible:current.rows;
+ const found=reportRows.findIndex(s=>s.id===row?.id);
+ reportPosition=found>=0?found:0;
+ $('rcDialog').hidden=false;
+ displayReport();
+ $('rcClose').focus({preventScroll:true});
+}
+function closeReport(){
+ if(reportBusy)return;
+ $('rcDialog').hidden=true;
+ $('rcPageMount').replaceChildren();
+}
+function setReportBusy(value){
+ reportBusy=value;
+ for(const id of ['rcStudentPdf','rcClassPdf','rcClose','rcPrint','rcMode','rcComment'])$(''+id).disabled=value;
+ $('rcPrev').disabled=value||reportPosition===0;
+ $('rcNext').disabled=value||reportPosition>=reportRows.length-1;
+}
+async function ensurePdfLibraries(){
+ async function load(url,test){
+  if(test())return;
+  await new Promise((resolve,reject)=>{
+   const script=document.createElement('script');
+   script.src=url;script.onload=resolve;script.onerror=()=>reject(new Error('PDF library failed to load'));
+   document.head.appendChild(script);
+  });
+  if(!test())throw Error('PDF library unavailable');
+ }
+ await load('https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js',()=>typeof window.html2canvas==='function');
+ await load('https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js',()=>!!window.jspdf?.jsPDF);
+}
+async function exportReports(rows){
+ if(reportBusy||!rows.length)return;
+ setReportBusy(true);
+ const mount=$('rcExportMount');
+ try{
+  await ensurePdfLibraries();
+  if(document.fonts?.ready)await document.fonts.ready;
+  const pdf=new window.jspdf.jsPDF({orientation:'portrait',unit:'mm',format:'a4',compress:true});
+  for(let i=0;i<rows.length;i++){
+   reportStatus('Creating PDF '+(i+1)+' / '+rows.length+'…');
+   mount.innerHTML=makeCard(rows[i]);
+   const page=mount.querySelector('.rc-page');
+   const logo=page.querySelector('img');
+   if(logo && !logo.complete)await new Promise(done=>{logo.onload=done;logo.onerror=done;setTimeout(done,3000);});
+   const canvas=await window.html2canvas(page,{scale:2,backgroundColor:'#fff',useCORS:true,logging:false});
+   const width=210,height=width*canvas.height/canvas.width;
+   if(i)pdf.addPage('a4','portrait');
+   pdf.addImage(canvas.toDataURL('image/jpeg',.94),'JPEG',0,Math.max(0,(297-height)/2),width,Math.min(height,297));
+  }
+  const name=rows.length===1?rows[0].englishName:rows[0].className;
+  const safe=String(name).replace(/[^A-Za-z0-9_-]+/g,'_');
+  pdf.save('Willena_Report_Cards_October_2026_'+safe+'.pdf');
+  reportStatus('PDF downloaded: '+rows.length+' report card'+(rows.length===1?'':'s')+'.');
+ }catch(e){
+  reportStatus('PDF failed: '+e.message,true);
+ }finally{
+  mount.replaceChildren();setReportBusy(false);
+ }
+}
+$('rcOpen').addEventListener('click',()=>{
+ const visible=current?.rows.filter(matchesSearch)||[];
+ openReport(visible[0]||current?.rows[0]);
+});
+$('rcPrev').addEventListener('click',()=>{if(reportPosition>0){reportPosition--;displayReport()}});
+$('rcNext').addEventListener('click',()=>{if(reportPosition<reportRows.length-1){reportPosition++;displayReport()}});
+$('rcClose').addEventListener('click',closeReport);
+$('rcDialog').addEventListener('click',event=>{if(event.target===$('rcDialog'))closeReport()});
+$('rcComment').addEventListener('input',()=>{
+ const row=selectedReportRow();if(!row)return;
+ reportDrafts.set(reportDraftKey(row),$('rcComment').value);
+ $('rcPageMount').innerHTML=makeCard(row);fitReport();
+});
+$('rcMode').addEventListener('change',displayReport);
+$('rcStudentPdf').addEventListener('click',()=>exportReports([selectedReportRow()].filter(Boolean)));
+$('rcClassPdf').addEventListener('click',()=>exportReports(current?.rows||[]));
+$('rcPrint').addEventListener('click',()=>window.print());
+document.addEventListener('keydown',e=>{
+ if(e.key==='Escape'&&!$('rcDialog').hidden){e.stopPropagation();closeReport();}
+});
+window.addEventListener('resize',()=>{if(!$('rcDialog').hidden)fitReport()});
+
 startup();
 })();
