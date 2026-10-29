@@ -369,7 +369,6 @@ function renderCard({ student, test, notes='', totalMode='weighted' }) {
     // Semicircle gauge SVG (pathLength=100 for easy stroke-dasharray)
     function renderGauge(grade) {
       const pct = Math.max(0, Math.min(100, gradeToPercent(grade)));
-      console.log('[RC] renderGauge called:', grade, '-> pct:', pct);
       // Path is a half-circle arc from left to right using a 50x50 viewBox centered at (50,50), radius 40
       // We draw only the top half (y from 50 to 10) and use pathLength=100 so dasharray=pct shows progress.
       return `
