@@ -27,10 +27,15 @@ export async function onRequestGet({ request, env }) {
   } catch {
     return reply(503, {error:'Teacher authentication unavailable'});
   }
-  if (!env.REPORT_CARDS || !env.REPORT_CARDS_API_TOKEN)
-    return reply(503, {error:'Report-card binding or server secret is not configured'});
+  if (!env.REPORT_CARDS_API_TOKEN)
+    return reply(503, {error:'REPORT_CARDS_API_TOKEN is missing from Teachers environment'});
   try {
-    const response = await env.REPORT_CARDS.fetch('https://report-cards-api.willena.workers.dev/v1/report-cards/october-2026', {
+    // Prefer internal service binding; HTTPS fallback still authenticates server-to-server.
+    // The secret is never sent to a browser and is never included in error responses.
+    const reader = env.REPORT_CARDS && typeof env.REPORT_CARDS.fetch === 'function'
+      ? env.REPORT_CARDS
+      : { fetch: (url, opts) => fetch(url, opts) };
+    const response = await reader.fetch('https://report-cards-api.willena.workers.dev/v1/report-cards/october-2026', {
       headers: { Authorization: 'Bearer ' + env.REPORT_CARDS_API_TOKEN }, redirect:'manual'
     });
     if (!response.ok) return reply(502, {error:'Google Sheets reader unavailable',upstreamStatus:response.status});
