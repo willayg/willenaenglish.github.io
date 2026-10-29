@@ -10,7 +10,7 @@ const PERIODS = {
 let period = '2026-10';
 const periodLabel = () => PERIODS[period] || period;
 const periodPrefix = () => 'Assessment Grid | '+periodLabel()+' | ';
-const ORDER = ['Brown','Stanford','Manchester','New York','Hawaii','Boston','Sydney','Berkeley','Chicago','Cambridge','Yale','Princeton','Oxford','MIT'];
+const ORDER = ['Brown','Stanford','Manchester','New York','Hawaii','Boston','Sydney','Berkeley','Chicago','Cambridge','Yale','Washington','Princeton','Oxford','MIT','Dublin','Pre-Harvard'];
 const FIELDS = [
  ['englishName','Name','fixed'], ['koreanName','Korean','fixed'], ['className','Class','fixed'],
  ['nextClass','Next Class','fixed'], ['lib_reading','Book Reading','grade'],
@@ -140,7 +140,7 @@ async function preloadClasses(){
  const runner=async()=>{while(alive&&targetPeriod===period&&i<names.length){const name=names[i++];const test=findTest(name);if(!test||classCache.has(test.id))continue;try{await getClass(name);}catch(e){console.warn('Preload '+name+' failed',e);}}};
  await Promise.all([runner(),runner(),runner(),runner()]);
 }
-function sortedClasses(){return [...tests.keys()].sort((a,b)=>ORDER.indexOf(a)-ORDER.indexOf(b));}
+function sortedClasses(){const position=name=>ORDER.includes(name)?ORDER.indexOf(name):999;return [...tests.keys()].sort((a,b)=>position(a)-position(b)||a.localeCompare(b));}
 async function loadPeriod(month,initial=false){
  if(!PERIODS[month])return;
  const seq=++periodSequence;
