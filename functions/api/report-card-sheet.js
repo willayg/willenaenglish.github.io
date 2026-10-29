@@ -12,7 +12,7 @@ export async function onRequestGet({ request, env }) {
   // Existing teacher_admin authenticates sb_access cookies and checks teacher/admin role.
   // Forward only that session cookie; never pass client-supplied Authorization or custom tokens.
   const cookies = request.headers.get('Cookie') || '';
-  const match = /(?:^|;\\s*)sb_access=([^;]+)/.exec(cookies);
+  const match = /(?:^|;\s*)sb_access=([^;]+)/.exec(cookies);
   if (!match) return reply(401, {error:'Teacher login required'});
   const headers = new Headers({Cookie:'sb_access=' + match[1]});
   // Validate using the same teacher API already used by Test Input. Never trust an Origin header as authentication.
