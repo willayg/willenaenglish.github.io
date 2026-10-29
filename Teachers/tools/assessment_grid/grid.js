@@ -14,7 +14,9 @@ const FIELDS = [
 ];
 const editable = new Set(FIELDS.filter(x=>x[2]!=='fixed').map(x=>x[0]));
 let tests = new Map(), klass = '', current = null, selected = null;
-let undo = [], redo = [], fetching = false, pending = new Map(), alive = true;
+let undo = [], redo = [], pending = new Map(), alive = true;
+const classCache=new Map(), inflight=new Map();
+let selectionSequence=0;
 function status(s, problem=false) { $('status').textContent=s; $('status').style.color=problem?'#ffcbcb':''; }
 async function api(action, args={}, options={}) {
  const query=new URLSearchParams({action,...args});
@@ -32,39 +34,74 @@ function makeRow(record, entry, testId) {
  data,rev:0,saved:0,dirty:false,saving:false,failed:false};
 }
 function findTest(name){return tests.get(name);}
-async function openClass(name,refresh=false){
- if(fetching)return;
- fetching=true;
- const previous=klass; klass=name; $('klass').value=name;
- if(!refresh)status('Loading '+name+'…');
- try{
-  const test=findTest(name);
-  if(!test)throw new Error('Class not found: '+name);
-  const result=await api('get_test',{test_id:test.id});
-  const columns=result.test?.columns||[];
-  const source=columns.find(col=>col.key==='_source_sheet');
-  if(!source||!Array.isArray(source.rows))throw new Error('October source rows unavailable');
-  const entries=new Map((result.entries||[]).map(e=>[e.user_id,e.data]));
-  const latest=source.rows.map(s=>makeRow(s,s.userId?entries.get(s.userId):null,result.test.id));
+function getClass(name) {
+ if(inflight.has(name))return inflight.get(name);
+ const t=findTest(name);
+ if(!t)return Promise.reject(Error('Unknown class '+name));
+ const p=api('get_test',{test_id:t.id}).then(j=>{
+  const columns=j.test?.columns||[];
+  const meta=columns.find(c=>c.key==='_source_sheet');
+  if(!Array.isArray(meta?.rows))throw Error('October rows unavailable');
+  const entries=new Map((j.entries||[]).map(x=>[x.user_id,x.data]));
+  const rows=meta.rows.map(x=>makeRow(x,x.userId?entries.get(x.userId):null,j.test.id));
   const totals=Object.fromEntries(columns.filter(c=>c.type==='number').map(c=>[c.key,c.max]));
-  if(refresh && current?.name===name){
-    const keep=new Map(current.rows.map(r=>[r.id,r]));
-    let changed=0;
-    for(const r of latest){
-      const old=keep.get(r.id);
-      if(!old||old.dirty||old.saving||pending.has(old.id))continue;
-      if(JSON.stringify(old.data)!==JSON.stringify(r.data)){old.data=r.data;changed++;}
+  const prev=classCache.get(name);let changed=0;
+  if(prev){
+   const old=new Map(prev.rows.map(x=>[x.id,x]));
+   for(const fresh of rows) {
+    const row=old.get(fresh.id);
+    if(!row)continue;
+    if(!row.dirty&&!row.saving&&!pending.has(row.testId+':'+row.id) && JSON.stringify(row.data)!==JSON.stringify(fresh.data)){
+     row.data=fresh.data;changed++;
     }
-    if(changed) { updateVisibleValues(); status('Updated from another teacher · '+changed+' row(s)'); }
-  } else {
-   current={name,rows:latest,totals,testId:result.test.id};
-   selected=null;
-   render();
-   const unlinked=latest.filter(r=>!r.userId).length;
-   status('October 2026 · '+latest.length+' students · '+(latest.length-unlinked)+' linked · '+unlinked+' unmatched · saved to Supabase');
+   }
+   prev.rows=rows.map(x=>old.get(x.id)||x);
+   prev.totals=totals;prev.loaded=Date.now();
+   return {model:prev,changed};
   }
- }catch(e){if(!refresh)status('Could not load October data: '+e.message,true);}
- finally{fetching=false}
+  const model={name,rows,totals,testId:j.test.id,loaded:Date.now()};
+  classCache.set(name,model);
+  return {model,changed};
+ }).finally(()=>inflight.delete(name));
+ inflight.set(name,p);return p;
+}
+async function openClass(name,refresh=false) {
+ if(!findTest(name))return;
+ if(refresh){
+  if(klass!==name||!current||document.hidden)return;
+  try{
+   const {changed}=await getClass(name);
+   if(klass!==name||!current||current.name!==name)return;
+   if(changed){updateVisibleValues();status('Updated from another teacher · '+changed+' row(s)');}
+  }catch(e){status('Refresh failed: '+e.message,true);}
+  return;
+ }
+ const sequence=++selectionSequence;
+ klass=name;$('klass').value=name;
+ $('tabs').querySelectorAll('button').forEach(b=>b.classList.toggle('selected',b.dataset.className===name));
+ const cached=classCache.get(name);
+ if(cached){
+  current=cached;selected=null;render();
+  const count=cached.rows.filter(x=>!x.userId).length;
+  status('October 2026 · '+cached.rows.length+' students · '+count+' unmatched · saved to Supabase');
+  if(Date.now()-cached.loaded>4000)openClass(name,true);
+  return;
+ }
+ current=null;
+ $('sheet').querySelector('thead').replaceChildren();$('sheet').querySelector('tbody').replaceChildren();
+ $('summary').textContent='Loading '+name+'…';status('Loading '+name+' for the first time…');
+ try{
+  const {model}=await getClass(name);
+  if(sequence!==selectionSequence||klass!==name)return;
+  current=model;selected=null;render();
+  const count=model.rows.filter(x=>!x.userId).length;
+  status('October 2026 · '+model.rows.length+' students · '+count+' unmatched · saved to Supabase');
+ }catch(e){if(sequence===selectionSequence)status('Could not load class: '+e.message,true);}
+}
+async function preloadClasses(){
+ const names=sortedClasses().filter(x=>x!==klass);let i=0;
+ const runner=async()=>{while(alive&&i<names.length){const name=names[i++];if(classCache.has(name))continue;try{await getClass(name);}catch(e){console.warn('Preload '+name+' failed',e);}}};
+ await Promise.all([runner(),runner(),runner(),runner()]);
 }
 function sortedClasses(){return [...tests.keys()].sort((a,b)=>ORDER.indexOf(a)-ORDER.indexOf(b));}
 async function startup(){
@@ -80,6 +117,7 @@ async function startup(){
  btn.addEventListener('click',()=>openClass(name));$('tabs').append(btn);
  }
  await openClass(tests.has('Brown')?'Brown':sortedClasses()[0]);
+ preloadClasses().catch(e=>console.warn('Class preload failed',e));
  }catch(e){status('October data could not load: '+e.message,true);$('summary').textContent='No student information was loaded.'}
 }
 function validate(row,key,v){
@@ -88,7 +126,7 @@ function validate(row,key,v){
  const kind=FIELDS.find(f=>f[0]===key)?.[2];
  if(kind==='grade')return v.length<=12;
  const val=Number(v);if(!Number.isFinite(val)||val<0)return false;
- const max=current?.totals?.[key];
+ const max=classCache.get(row.className)?.totals?.[key] ?? current?.totals?.[key];
  return max===null||max===undefined||!Number.isFinite(Number(max)) ||val<=Number(max);
 }
 function noteChange(row,key,value,track=true){
@@ -105,7 +143,7 @@ function noteChange(row,key,value,track=true){
 }
 function queueSave(row){
  if(row.timer)clearTimeout(row.timer);
- pending.set(row.id,row);
+ pending.set(row.testId+':'+row.id,row);
  row.timer=setTimeout(()=>save(row),380);
  status('Saving changes…');
 }
@@ -120,7 +158,7 @@ async function save(row){
    if(j.failed || !j.upserted)throw new Error('Save was not confirmed');
    row.saved=rev;
  }
- row.dirty=false;row.failed=false;pending.delete(row.id);
+ row.dirty=false;row.failed=false;pending.delete(row.testId+':'+row.id);
  if(pending.size===0)status('Saved · October 2026 · refreshes every 5 seconds');
  }catch(e){row.failed=true;row.dirty=true;status('Save failed: '+e.message+' — edit retained on screen',true)}
  finally{row.saving=false}
@@ -234,7 +272,8 @@ window.addEventListener('keydown',e=>{
  if(e.target instanceof HTMLInputElement)return;
  e.preventDefault();history(e.key.toLowerCase()==='z'&&!e.shiftKey?'undo':'redo');
 });
-setInterval(()=>{if(alive&&current&&!fetching)openClass(klass,true)},5000);
+setInterval(()=>{if(alive&&current&&!document.hidden)openClass(klass,true)},5000);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&current)openClass(klass,true)});
 window.addEventListener('beforeunload',()=>{alive=false});
 startup();
 })();
