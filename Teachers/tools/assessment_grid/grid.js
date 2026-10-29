@@ -156,7 +156,19 @@ async function loadPeriod(month,initial=false){
  try{
   const boot=(initial&&month==='2026-10')?window.__assessmentBootstrap:null;
   window.__assessmentBootstrap=null;
-  const j=boot||await api('list_tests',{month});
+  let j;
+  try {
+   j=boot||await api('list_tests',{month});
+  } catch (monthError) {
+   // Older test_admin deployments use an invalid -31 end date for February
+   // and June. Fall back to the authorized unfiltered list until the API fix
+   // reaches production. These imported periods currently fall within 200 rows.
+   if (month==='2026-10') throw monthError;
+   j=await api('list_tests');
+   if(!Array.isArray(j.tests) || !j.tests.some(t=>t.name?.startsWith(periodPrefix()))) {
+    throw monthError;
+   }
+  }
   if(seq!==periodSequence)return;
   const prefix=periodPrefix();
   for(const t of j.tests||[])if(t.name?.startsWith(prefix))tests.set(t.name.slice(prefix.length),t);
