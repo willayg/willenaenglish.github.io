@@ -24,9 +24,9 @@ async function api(action, args={}, options={}) {
  return body;
 }
 const display = x => x===null||x===undefined?'':String(x);
-function makeRow(record, entry) {
+function makeRow(record, entry, testId) {
  const data={...(record.data||{}),...(entry||{})};
- return {id:String(record.sheetRow),userId:record.userId||null,
+ return {id:String(record.sheetRow),testId,userId:record.userId||null,
  englishName:display(record.englishName),koreanName:display(record.koreanName),
  className:display(record.className),nextClass:display(record.nextClass),
  data,rev:0,saved:0,dirty:false,saving:false,failed:false};
@@ -45,7 +45,7 @@ async function openClass(name,refresh=false){
   const source=columns.find(col=>col.key==='_source_sheet');
   if(!source||!Array.isArray(source.rows))throw new Error('October source rows unavailable');
   const entries=new Map((result.entries||[]).map(e=>[e.user_id,e.data]));
-  const latest=source.rows.map(s=>makeRow(s,s.userId?entries.get(s.userId):null));
+  const latest=source.rows.map(s=>makeRow(s,s.userId?entries.get(s.userId):null,result.test.id));
   const totals=Object.fromEntries(columns.filter(c=>c.type==='number').map(c=>[c.key,c.max]));
   if(refresh && current?.name===name){
     const keep=new Map(current.rows.map(r=>[r.id,r]));
@@ -116,7 +116,7 @@ async function save(row){
  while(row.saved<row.rev){
    const rev=row.rev, payload={...row.data};
    const j=await api('upsert_entries',{}, {method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({test_id:current.testId,entries:[{user_id:row.userId,data:payload}]})});
+      body:JSON.stringify({test_id:row.testId,entries:[{user_id:row.userId,data:payload}]})});
    if(j.failed || !j.upserted)throw new Error('Save was not confirmed');
    row.saved=rev;
  }
