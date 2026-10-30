@@ -2,7 +2,7 @@
 'use strict';
 const $ = id => document.getElementById(id);
 const API = '/.netlify/functions/test_admin';
-const GRID_REV='2026.10.30.03';
+const GRID_REV='2026.10.30.04';
 const PERIODS = {
  '2026-02': 'February 2026',
  '2026-06': 'June 2026',
@@ -568,6 +568,12 @@ function focusCell(id,key,input){
 }
 function editInput(row,key){
  const input=document.createElement('input');
+ const isScore=FIELDS.find(f=>f[0]===key)?.[2]==='score';
+ // Keep type=text for reliable .select() / cursor behaviour on mobile,
+ // but request the phone's numeric keypad for score cells.
+ input.type='text';
+ input.inputMode=isScore?'decimal':'text';
+ if(isScore)input.setAttribute('pattern','[0-9]*[.,]?[0-9]*');
  input.value=display(row.data[key]);
  input.dataset.rowId=row.id;input.dataset.key=key;input.dataset.editing='false';
  input.setAttribute('aria-label',row.englishName+' '+key);
