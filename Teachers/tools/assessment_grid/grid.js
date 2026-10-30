@@ -335,7 +335,9 @@ function applyBatch(items,options={}){
  for(const item of items){
   const row=item.row||getRowById(item.id),key=item.key;
   if(!row||row.testId!==current?.testId||!editable.has(key)||!row.userId){readonly++;continue;}
-  if(!validate(row,key,item.value)){invalid++;continue;}
+  // Undo/redo must restore exact previously stored values, including historic
+  // scores above a later class maximum. Normal edits still enforce maxima.
+  if(!options.restore && !validate(row,key,item.value)){invalid++;continue;}
   const before=display(row.data[key]),after=display(item.value).trim();
   if(before===after)continue;
   changes.push({id:row.id,key,before,after});
@@ -352,7 +354,7 @@ function applyBatch(items,options={}){
   redo.length=0;
  }
  for(const row of touched)queueSave(row);
- if(changes.length)updateVisibleValues();
+ if(changes.length)updateVisibleValues(options.label!=='Typing');
  updateHistoryButtons();
  return {count:changes.length,invalid,readonly};
 }
@@ -393,7 +395,7 @@ function history(type){
  if(index<0)return;
  const [operation]=source.splice(index,1);
  const result=applyBatch(operation.changes.map(c=>({id:c.id,key:c.key,value:type==='undo'?c.before:c.after})),
-  {record:false,label:'History'});
+  {record:false,label:'History',restore:true});
  if(result.count)dest.push(operation);
  updateHistoryButtons();
 }
@@ -417,7 +419,8 @@ async function copyCells(){
  try{
   if(!navigator.clipboard?.writeText)throw Error('Clipboard not available');
   await navigator.clipboard.writeText(text);
-  status('Copied '+(selectedRect()?.rows.length?'selected range':'cells'));
+  const rect=selectedRect();const cells=rect?(rect.r2-rect.r1+1)*(rect.c2-rect.c1+1):0;
+  status('Copied '+cells+' cell'+(cells===1?'':'s'));
  }catch{status('Use Ctrl+C to copy the selected cells',true);}
 }
 function pasteMatrix(text){
@@ -476,7 +479,8 @@ function fillTo(targetId,targetKey){
  const result=applyBatch(changes,{label:'Fill'});
  rangeSelection={testId:current.testId,anchor:{id:rows[r1].id,key:COLS[c1]},focus:{id:rows[r2].id,key:COLS[c2]}};
  updateSelectionClasses();
- status('Filled '+result.count+' cells'+(result.readonly?' · '+result.readonly+' locked skipped':''));
+ status('Filled '+result.count+' cells'+(result.invalid?' · '+result.invalid+' invalid skipped':'')+
+  (result.readonly?' · '+result.readonly+' locked skipped':''));
 }
 function fillSelected(direction){
  const rect=selectedRect();if(!rect)return;
@@ -638,13 +642,13 @@ function render(){
  updateSelectionClasses();
  updateHistoryButtons();
 }
-function updateVisibleValues(){
+function updateVisibleValues(force=false){
  if(!current)return;
  const trs=$('sheet').querySelectorAll('tbody tr[data-row-id]');
  for(const tr of trs){
   const row=getRowById(tr.dataset.rowId);if(!row)continue;
   for(const input of tr.querySelectorAll('input')){
-   if(document.activeElement!==input)input.value=display(row.data[input.dataset.key]);
+   if(force||document.activeElement!==input)input.value=display(row.data[input.dataset.key]);
   }
   const pct=calculatePercentages(row,current.totals);
   const t=tr.querySelector('[data-metric="total"]'),a=tr.querySelector('[data-metric="average"]');
@@ -733,8 +737,18 @@ document.addEventListener('keydown',e=>{
  }
  if(!current||!selected||!insideGrid)return;
  if(e.key==='F2'&&target instanceof HTMLInputElement){e.preventDefault();target.dataset.editing='true';target.setSelectionRange(target.value.length,target.value.length);return;}
- if(e.key==='Escape'&&editing){e.preventDefault();target.dataset.editing='false';target.select();return;}
- if(editing)return;
+ if(editing){
+  if(e.key==='Escape'){
+   e.preventDefault();target.dataset.editing='false';target.select();return;
+  }
+  if(e.key==='Enter'||e.key==='Tab'){
+   e.preventDefault();target.dataset.editing='false';
+   moveSelection(e.key==='Tab'&&e.shiftKey?'ShiftTab':e.key);
+   return;
+  }
+  // Editing mode: arrows and clipboard shortcuts belong to the text input.
+  return;
+ }
  if(e.key==='Delete'||e.key==='Backspace'){e.preventDefault();clearSelection();return;}
  if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Enter','Tab'].includes(e.key)){
   e.preventDefault();
@@ -750,6 +764,7 @@ document.addEventListener('copy',e=>{
 });
 document.addEventListener('cut',e=>{
  if(!current||!rangeSelection||!$('rcDialog').hidden)return;
+ if(!e.target.closest?.('#sheet'))return;
  if(e.target instanceof HTMLInputElement&&e.target.dataset.editing==='true')return;
  const str=readSelection();if(!str)return;
  e.clipboardData?.setData('text/plain',str);e.preventDefault();clearSelection();
