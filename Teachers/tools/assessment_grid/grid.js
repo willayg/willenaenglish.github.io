@@ -478,6 +478,21 @@ function fillTo(targetId,targetKey){
  updateSelectionClasses();
  status('Filled '+result.count+' cells'+(result.readonly?' · '+result.readonly+' locked skipped':''));
 }
+function fillSelected(direction){
+ const rect=selectedRect();if(!rect)return;
+ const changes=[];
+ if(direction==='down'){
+  for(let r=rect.r1+1;r<=rect.r2;r++)for(let c=rect.c1;c<=rect.c2;c++)
+   changes.push({row:rect.rows[r],key:COLS[c],value:valueAt(rect.rows[rect.r1],COLS[c])});
+ }else if(direction==='right'){
+  for(let r=rect.r1;r<=rect.r2;r++)for(let c=rect.c1+1;c<=rect.c2;c++)
+   changes.push({row:rect.rows[r],key:COLS[c],value:valueAt(rect.rows[r],COLS[rect.c1])});
+ }
+ if(!changes.length){status('Select two or more cells to fill');return;}
+ const result=applyBatch(changes,{label:'Fill'});
+ status('Filled '+result.count+' cells'+(result.invalid?' · '+result.invalid+' invalid skipped':'')+
+  (result.readonly?' · '+result.readonly+' locked skipped':''));
+}
 function moveSelection(direction,extend=false){
  const rect=selectedRect();
  if(!rect)return;
@@ -528,6 +543,8 @@ function resizeColumns(){
  }
  table.style.tableLayout='fixed';
  table.style.width=Math.max(840,keys.reduce((n,k)=>n+colWidth(k),0))+'px';
+ table.style.setProperty('--grid-frozen-name-left',colWidth('num')+'px');
+ table.style.setProperty('--grid-frozen-korean-left',(colWidth('num')+colWidth('englishName'))+'px');
 }
 function headCell(label,key){
  const th=document.createElement('th');th.textContent=label;
@@ -555,6 +572,8 @@ function headCell(label,key){
     const col=$('sheet').querySelectorAll('colgroup col')[idx];
     if(col)col.style.width=widths[key]+'px';
     $('sheet').style.width=cols.reduce((sum,k)=>sum+colWidth(k),0)+'px';
+    $('sheet').style.setProperty('--grid-frozen-korean-left',(colWidth('num')+colWidth('englishName'))+'px');
+    $('sheet').style.setProperty('--grid-frozen-name-left',colWidth('num')+'px');
    };
    const onUp=()=>{
     window.removeEventListener('pointermove',onMove);
@@ -645,6 +664,8 @@ $('redo').addEventListener('click',()=>history('redo'));
 $('copy').addEventListener('click',copyCells);
 $('paste').addEventListener('click',pasteFromButton);
 $('clear').addEventListener('click',clearSelection);
+$('fillDown').addEventListener('click',()=>fillSelected('down'));
+$('fillRight').addEventListener('click',()=>fillSelected('right'));
 $('reset').textContent='Reload class';
 $('reset').onclick=()=>{if(pending.size){status('Finish saving edits before reloading',true);return;}openClass(klass,true)};
 $('klass').addEventListener('change',e=>{resetGridSelection();openClass(e.target.value)});
@@ -703,6 +724,8 @@ document.addEventListener('keydown',e=>{
  if(ctrl&&!editing&&insideGrid){
   if(key==='z'){e.preventDefault();history(e.shiftKey?'redo':'undo');return;}
   if(key==='y'){e.preventDefault();history('redo');return;}
+  if(key==='d'&&current&&selected){e.preventDefault();fillSelected('down');return;}
+  if(key==='r'&&current&&selected){e.preventDefault();fillSelected('right');return;}
   if(key==='a'&&current&&selected){e.preventDefault();const rows=visibleRows();if(!rows.length)return;rangeSelection={testId:current.testId,
     anchor:{id:rows[0].id,key:COLS[0]},focus:{id:rows[rows.length-1].id,key:COLS[COLS.length-1]}};updateSelectionClasses();return;}
  }
