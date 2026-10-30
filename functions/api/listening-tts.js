@@ -26,9 +26,11 @@ export async function onRequestPost({request,env}){
   const word='listening_2026_10_'+hash;
   const base='https://willenaenglish.netlify.app/.netlify/functions/';
   const audioHeaders={'Content-Type':'audio/mpeg','Cache-Control':'public,max-age=86400','X-Content-Type-Options':'nosniff'};
+  let lookupHealthy=false;
   try{
     const lookup=await fetch(base+'get_audio_urls',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({words:[word]})});
     if(lookup.ok){
+      lookupHealthy=true;
       const found=(await lookup.json()).results?.[word];
       if(found?.exists&&typeof found.url==='string'){
         if(precache)return Response.json({status:'stored'});
@@ -36,9 +38,11 @@ export async function onRequestPost({request,env}){
         if(existing.ok&&existing.headers.get('content-type')?.includes('audio'))return new Response(existing.body,{headers:{...audioHeaders,'X-Audio-Source':'r2'}});
         // Some R2 endpoints don't send the content-type header on signed URLs.
         if(existing.ok)return new Response(existing.body,{headers:{...audioHeaders,'X-Audio-Source':'r2'}});
+        return error(502,'R2 audio exists but could not be downloaded');
       }
     }else console.warn('[listening-tts] R2 lookup failed',lookup.status);
   }catch(e){console.warn('[listening-tts] R2 lookup unavailable',String(e))}
+  if(!lookupHealthy)return error(503,'R2 lookup unavailable; no new OpenAI generation attempted');
   const edgeCache=typeof caches!=='undefined'?caches.default:null;
   const cacheRequest=new Request(new URL('/_listening_cached_audio/'+hash+'.mp3',request.url),{method:'GET'});
   if(!precache&&edgeCache){try{const cached=await edgeCache.match(cacheRequest);if(cached)return cached}catch(e){}}
@@ -61,7 +65,8 @@ export async function onRequestPost({request,env}){
     if(uploaded.ok){const answer=await uploaded.json();stored=answer.success===true}
     if(!stored)console.warn('[listening-tts] R2 upload unsuccessful',uploaded.status);
   }catch(e){console.warn('[listening-tts] R2 upload unavailable',String(e))}
-  if(precache)return stored?Response.json({status:'generated'}):error(502,'Audio generated but R2 upload failed');
+  if(!stored)return error(502,'R2 upload failed after generating audio');
+  if(precache)return Response.json({status:'generated'});
   if(edgeCache){try{await edgeCache.put(cacheRequest,new Response(data.slice(0),{headers:{'Content-Type':'audio/mpeg','Cache-Control':'public,max-age=2592000'}}))}catch(e){console.warn('[listening-tts] Cache write failed',e?.name)}}
   return new Response(data,{headers:{...audioHeaders,'X-Audio-Source':stored?'generated-and-stored':'generated-not-stored'}});
 }
