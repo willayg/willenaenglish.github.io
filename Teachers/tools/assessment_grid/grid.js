@@ -2,7 +2,7 @@
 'use strict';
 const $ = id => document.getElementById(id);
 const API = '/.netlify/functions/test_admin';
-const GRID_REV='2026.10.30.04';
+const GRID_REV='2026.10.30.05';
 const PERIODS = {
  '2026-02': 'February 2026',
  '2026-06': 'June 2026',
