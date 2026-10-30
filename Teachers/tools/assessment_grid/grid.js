@@ -225,7 +225,7 @@ let widths={};
 try{widths=JSON.parse(localStorage.getItem(WIDTH_KEY)||'{}')||{}}catch{widths={}}
 let filterKey='',filterText='',sortKey='',sortDir=0;
 let rangeSelection=null,selectionDrag=false,fillDrag=null,suppressFocusSelection=false;
-const colWidth=key=>Math.max(56,Math.min(520,Number(widths[key])||COLUMN_DEFAULTS[key]||105));
+const colWidth=key=>key==='num'?42:Math.max(56,Math.min(520,Number(widths[key])||COLUMN_DEFAULTS[key]||105));
 function getRowById(id){return current?.rows.find(row=>row.id===String(id))}
 function valueAt(row,key){
  if(key==='totalPct'||key==='averagePct'){
@@ -671,6 +671,8 @@ $('reset').onclick=()=>{if(pending.size){status('Finish saving edits before relo
 $('klass').addEventListener('change',e=>{resetGridSelection();openClass(e.target.value)});
 $('period').addEventListener('change',e=>{
  if(!$('rcDialog').hidden){$('rcDialog').hidden=true;$('rcPageMount').replaceChildren();}
+ filterKey='';filterText='';$('search').value='';
+ $('gridFilterColumn').value='';$('gridFilterValue').value='';
  resetGridSelection();loadPeriod(e.target.value);
 });
 $('search').addEventListener('input',()=>{resetGridSelection();render()});
@@ -956,7 +958,7 @@ function displayReport(){
 }
 function openReport(row){
  if(!current||!current.rows.length)return;
- const visible=current.rows.filter(matchesSearch);
+ const visible=visibleRows();
  reportRows=visible.length?visible:current.rows;
  const found=reportRows.findIndex(s=>s.id===row?.id);
  reportPosition=found>=0?found:0;
