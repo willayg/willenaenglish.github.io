@@ -2642,7 +2642,7 @@ if (typeof termTo !== 'undefined' && termTo) {
           </aside>
 
           <div class="rc-comments-head rc-span">Comments</div>
-          <div class="rc-comments rc-span" data-student-id="${esc(studentId||'')}" data-mode="${commentMode}" ${commentMode==='individual' && studentId ? 'contenteditable="true" role="textbox" aria-label="Edit individual comment" spellcheck="true"' : ''}>${notes ? esc(notes) : (commentMode==='individual' ? 'No individual comment available for this student.' : 'No class comment yet.')}</div>
+          <div class="rc-comments rc-span" data-student-id="${esc(studentId||'')}" data-mode="${commentMode}" ${(commentMode==='class' || studentId) ? 'contenteditable="true" role="textbox" aria-label="Edit report card comment" spellcheck="true"' : ''}>${notes ? esc(notes) : (commentMode==='individual' ? 'No individual comment available for this student.' : 'No class comment yet.')}</div>
         </div>
       </section>`;
   }
@@ -2700,6 +2700,18 @@ if (typeof termTo !== 'undefined' && termTo) {
   cardsContainer.addEventListener('focusout',(event)=>{
     const node=event.target.closest('.rc-comments[contenteditable="true"]');
     if(!node)return;
+    if(node.dataset.mode==='class'){
+      const activeClass=(testClassFilter?.value || currentTest?.class || '');
+      const value=node.innerText.trim();
+      classComments.set(activeClass,value);
+      const field=document.getElementById('classComment');
+      if(field)field.value=value;
+      saveTestMeta().catch(err=>{rcStatus.textContent='Class comment NOT saved: '+err.message;});
+      cardsContainer.querySelectorAll('.rc-comments[data-mode="class"]').forEach(other=>{
+        if(other!==node)other.textContent=value;
+      });
+      return;
+    }
     saveIndividualComment(node.dataset.studentId,node.innerText.trim(),node);
   });
   closeBtn?.addEventListener('click', closeModal);
