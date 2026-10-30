@@ -51,6 +51,136 @@ function cookieToken(event) {
   return m ? decodeURIComponent(m[1]) : null;
 }
 
+
+// Assessment Period builder. The server owns matching and persists complete
+// period snapshots; uploaded spreadsheet data never supplies trusted user IDs.
+const ASSESSMENT_SCORE_KEYS=['phonics','listening','vocab','grammar','gw','write','reading','speaking'];
+const ASSESSMENT_GRADE_KEYS=['lib_reading','lib_raz','lib_punctuality'];
+const ASSESSMENT_LABELS={phonics:'Phonics',listening:'Listening',vocab:'Vocab',grammar:'Grammar',
+ gw:'Grammar Writing',write:'Writing',reading:'Reading',speaking:'Speaking'};
+function validAssessmentMonth(v){return /^\d{4}-(0[1-9]|1[0-2])$/.test(String(v||''));}
+function assessmentLabel(v){
+ const [year,month]=v.split('-').map(Number);
+ const names=['January','February','March','April','May','June','July','August','September','October','November','December'];
+ return names[month-1]+' '+year;
+}
+function assessmentMonthEnd(month){
+ const [year,mon]=month.split('-').map(Number);
+ return (mon===12?year+1:year)+'-'+String(mon===12?1:mon+1).padStart(2,'0')+'-01';
+}
+function assessmentKey(s){return String(s||'').normalize('NFC').trim().replace(/\s+/g,' ').toLocaleLowerCase();}
+function cleanAssessmentMaxima(raw){
+ const m={};
+ for(const key of ASSESSMENT_SCORE_KEYS){
+  const n=raw?.[key];
+  if(n===null||n===undefined||String(n).trim()===''){m[key]=null;continue;}
+  const value=Number(n);
+  if(!Number.isFinite(value)||value<=0||value>10000)throw Error('Invalid maximum for '+key);
+  m[key]=value;
+ }
+ return m;
+}
+function cleanAssessmentRow(raw,className,rowIndex,mode){
+ const englishName=String(raw?.englishName||'').trim().slice(0,120);
+ const koreanName=String(raw?.koreanName||'').trim().slice(0,120);
+ if(!englishName||!koreanName)throw Error('Missing student name in '+className+' row '+(rowIndex+1));
+ const data={};
+ for(const key of ASSESSMENT_SCORE_KEYS){
+  const v=mode==='copy'?null:raw?.data?.[key];
+  if(v===null||v===undefined||String(v).trim()===''){data[key]=null;continue;}
+  const value=Number(v);
+  if(!Number.isFinite(value)||value<0||value>10000)throw Error('Invalid '+key+' score for '+englishName);
+  data[key]=value;
+ }
+ for(const key of ASSESSMENT_GRADE_KEYS){
+  const v=mode==='copy'?null:raw?.data?.[key];
+  data[key]=v===null||v===undefined||String(v).trim()===''?null:String(v).trim().slice(0,30);
+ }
+ return {sheetRow:rowIndex+2,englishName,koreanName,className,
+  nextClass:String(raw.nextClass||'').trim().slice(0,100),data,userId:null,matchStatus:'unmatched'};
+}
+async function prepareAssessmentPeriod(db,body){
+ const month=String(body.period||'');
+ if(!validAssessmentMonth(month))throw Error('Choose a valid year and month');
+ const mode=body.mode;
+ if(mode!=='copy'&&mode!=='import')throw Error('Select copy or import');
+ const prefix='Assessment Grid | '+assessmentLabel(month)+' | ';
+ const existing=await db.from('tests').select('id').gte('date',month+'-01')
+  .lt('date',assessmentMonthEnd(month)).like('name',prefix+'%').limit(1);
+ if(existing.error)throw Error('Cannot check existing period: '+existing.error.message);
+ if(existing.data?.length){const err=Error('Assessment period already exists: '+assessmentLabel(month));err.status=409;throw err;}
+ let source;
+ if(mode==='copy'){
+  const from=String(body.fromPeriod||'');
+  if(!validAssessmentMonth(from)||from===month)throw Error('Choose another existing source period');
+  const fetched=await db.from('tests').select('id,name,class,columns,date')
+   .gte('date',from+'-01').lt('date',assessmentMonthEnd(from)).limit(80);
+  if(fetched.error)throw Error('Source period unavailable: '+fetched.error.message);
+  const sourcePrefix='Assessment Grid | '+assessmentLabel(from)+' | ';
+  source=(fetched.data||[]).filter(t=>t.name?.startsWith(sourcePrefix)).map(t=>{
+   const meta=t.columns?.find(c=>c.key==='_source_sheet');
+   if(!Array.isArray(meta?.rows))throw Error('Missing source roster for '+t.class);
+   const maxima=Object.fromEntries(ASSESSMENT_SCORE_KEYS.map(key=>[key,t.columns?.find(c=>c.key===key)?.max??null]));
+   return {className:t.class||t.name.slice(sourcePrefix.length),maxima,rows:meta.rows};
+  });
+  if(!source.length)throw Error('No classes found in source period');
+ }else{
+  source=body.classes;
+  if(!Array.isArray(source)||!source.length)throw Error('Upload or paste a spreadsheet first');
+ }
+ if(source.length>40)throw Error('Too many classes (maximum 40)');
+ const classes=[],seenNames=new Set();let totalRows=0;
+ for(const src of source){
+  const className=String(src?.className||'').trim().slice(0,100);
+  if(!className||className.includes('|'))throw Error('Invalid class name');
+  const classKey=assessmentKey(className);
+  if(seenNames.has(classKey))throw Error('Duplicate class: '+className);
+  seenNames.add(classKey);
+  if(!Array.isArray(src.rows)||src.rows.length<1||src.rows.length>160)throw Error('Invalid roster size in '+className);
+  totalRows+=src.rows.length;
+  if(totalRows>1500)throw Error('Too many students (maximum 1500)');
+  const maxima=cleanAssessmentMaxima(src.maxima);
+  const rows=src.rows.map((raw,i)=>cleanAssessmentRow(raw,className,i,mode));
+  classes.push({className,maxima,rows});
+ }
+ const {data:profiles,error:profileError}=await db.from('profiles')
+  .select('id,name,korean_name,role').eq('role','student').limit(5000);
+ if(profileError)throw Error('Student matching unavailable: '+profileError.message);
+ const byKorean=new Map();
+ for(const profile of profiles||[]){
+  const korean=assessmentKey(profile.korean_name);
+  if(!korean)continue;
+  if(!byKorean.has(korean))byKorean.set(korean,[]);
+  byKorean.get(korean).push(profile);
+ }
+ const used=new Map(),warnings=[];
+ for(const cl of classes)for(const row of cl.rows){
+  const candidates=byKorean.get(assessmentKey(row.koreanName))||[];
+  const exact=candidates.filter(p=>assessmentKey(p.name)===assessmentKey(row.englishName));
+  const match=exact.length===1?exact[0]:candidates.length===1?candidates[0]:null;
+  if(match){
+   row.userId=match.id;row.matchStatus='matched';
+   if(!used.has(match.id))used.set(match.id,[]);
+   used.get(match.id).push(row);
+  }else if(candidates.length>1){row.matchStatus='ambiguous';}
+ }
+ for(const hits of used.values())if(hits.length>1){
+  for(const row of hits){row.userId=null;row.matchStatus='ambiguous';}
+ }
+ let matched=0,unmatched=0;
+ for(const cl of classes)for(const row of cl.rows){
+  if(row.userId)matched++;else unmatched++;
+  for(const key of ASSESSMENT_SCORE_KEYS){
+   if(row.data[key]!==null&&cl.maxima[key]===null){
+    const label=cl.className+' · '+ASSESSMENT_LABELS[key];
+    if(!warnings.includes(label))warnings.push(label);
+   }
+  }
+ }
+ if(warnings.length)throw Error('Missing maximum marks for: '+warnings.slice(0,12).join(', ')+(warnings.length>12?'…':''));
+ return {month,label:assessmentLabel(month),mode,classes,totalRows,matched,unmatched};
+}
+
 exports.handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') return { statusCode: 200, headers: makeCorsHeaders(event), body: '' };
 
@@ -88,6 +218,62 @@ exports.handler = async (event) => {
   function getBody() { try { return JSON.parse(event.body||'{}'); } catch { return {}; } }
 
   try {
+    if (action === 'list_assessment_periods' && event.httpMethod === 'GET') {
+      const {data,error}=await db.from('tests').select('date,name')
+       .like('name','Assessment Grid | %').order('date',{ascending:false}).limit(1000);
+      if(error)return respond(event,400,{success:false,error:error.message});
+      const periods=new Map();
+      for(const t of data||[]){
+        const month=String(t.date||'').slice(0,7);
+        if(!validAssessmentMonth(month)||!t.name?.startsWith('Assessment Grid | '+assessmentLabel(month)+' | '))continue;
+        if(!periods.has(month))periods.set(month,{value:month,label:assessmentLabel(month),classes:0});
+        periods.get(month).classes++;
+      }
+      return respond(event,200,{success:true,periods:[...periods.values()].sort((a,b)=>b.value.localeCompare(a.value))});
+    }
+
+    if ((action === 'preview_assessment_period'||action === 'create_assessment_period') && event.httpMethod === 'POST') {
+      if(!isAdmin)return respond(event,403,{success:false,error:'Only admins can create assessment periods'});
+      const body=getBody();
+      let prepared;
+      try{prepared=await prepareAssessmentPeriod(db,body);}
+      catch(e){return respond(event,e.status||400,{success:false,error:e.message});}
+      if(action==='preview_assessment_period')
+        return respond(event,200,{success:true,preview:prepared});
+      const date=prepared.month+'-01';
+      const records=prepared.classes.map(cl=>({
+       name:'Assessment Grid | '+prepared.label+' | '+cl.className,
+       date,class:cl.className,created_by:actorId,
+       columns:[
+        ...ASSESSMENT_SCORE_KEYS.map(key=>({key,label:ASSESSMENT_LABELS[key],type:'number',max:cl.maxima[key]})),
+        {key:'_source_sheet',label:'Assessment Grid source',type:'internal_metadata',
+         rows:cl.rows.map(({matchStatus,...row})=>row)}
+       ]
+      }));
+      // One multirow INSERT is atomic, backed by a unique (date,name) index.
+      const created=await db.from('tests').insert(records).select('id,name,class');
+      if(created.error){
+        const duplicate=created.error.code==='23505';
+        return respond(event,duplicate?409:400,{success:false,error:duplicate?'That assessment period already exists':created.error.message});
+      }
+      const newTests=created.data||[];
+      if(newTests.length!==records.length)return respond(event,500,{success:false,error:'Could not verify all classes were created'});
+      const byClass=new Map(newTests.map(t=>[t.class,t.id]));
+      const entries=[];
+      for(const cl of prepared.classes)for(const row of cl.rows){
+       if(row.userId)entries.push({test_id:byClass.get(cl.className),user_id:row.userId,data:row.data});
+      }
+      if(entries.length){
+       const persisted=await db.from('test_entries').upsert(entries,{onConflict:'test_id,user_id'});
+       if(persisted.error){
+        const rollback=await db.from('tests').delete().in('id',newTests.map(t=>t.id));
+        return respond(event,500,{success:false,error:'Scores could not be saved; '+(rollback.error?'automatic rollback failed. Contact an administrator.':'the new period was rolled back.')});
+       }
+      }
+      return respond(event,200,{success:true,period:prepared.month,
+       classes:newTests.length,students:prepared.totalRows,matched:prepared.matched,unmatched:prepared.unmatched});
+    }
+
     if (action === 'create_test' && event.httpMethod === 'POST') {
       const body = getBody();
       const name = (body.name||'').trim();
