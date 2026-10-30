@@ -2399,6 +2399,42 @@ if (typeof termTo !== 'undefined' && termTo) {
   const cardsContainer = document.getElementById('rcCardsContainer');
   const rcStatus = document.getElementById('rcStatus');
   const rcTotalMode = document.getElementById('rcTotalMode');
+  const rcCommentMode = document.getElementById('rcCommentMode');
+  let individualComments = new Map();
+  let commentsForTest = '';
+  const pendingSaves = new Set();
+  async function loadIndividualComments(testId) {
+    if (!testId) return new Map();
+    const res = await apiFetch(API+'?action=get_report_card_comments&test_id='+encodeURIComponent(testId),{cache:'no-store'});
+    const payload = await res.json();
+    if (!res.ok || !payload.success) throw new Error(payload.error || 'Could not load comments');
+    return new Map((payload.comments||[]).filter(c=>c.student_id).map(c=>[c.student_id,c]));
+  }
+  function getReportStudentId(s) {
+    const matches=students.filter(x=>x.name===s.name && x.korean_name===s.korean_name &&
+       String(x.class||'').toLowerCase()===String(s.class||'').toLowerCase() && !isManualStudent(x));
+    return matches.length===1 ? matches[0].id : null;
+  }
+  async function saveIndividualComment(id, value, node) {
+    const record=individualComments.get(id);
+    if(!record || !commentsForTest) return;
+    if(record.comment_text===value) return;
+    const task=(async()=>{
+      const res=await apiFetch(API+'?action=save_report_card_comment',{
+        method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({test_id:commentsForTest,student_id:id,revision:record.revision,comment_text:value})
+      });
+      const payload=await res.json();
+      if(!res.ok||!payload.success)throw new Error(payload.error||'Save failed');
+      record.comment_text=payload.comment.comment_text;
+      record.revision=payload.comment.revision;
+      node.dataset.dirty='false';
+      rcStatus.textContent='Individual comment saved.';
+    })();
+    pendingSaves.add(task);
+    try {await task;}catch(err){node.dataset.dirty='true';rcStatus.textContent='Comment NOT saved: '+err.message;}
+    finally{pendingSaves.delete(task);}
+  }
   if (!openBtn || !modalBg) return;
 
   function esc(s=''){ return String(s).replace(/[&<>"'`]/g, m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;","`":"&#96;"}[m]||m)); }
@@ -2481,7 +2517,7 @@ if (typeof termTo !== 'undefined' && termTo) {
     return col.label || col.key;
   }
 
-  function renderCard({ student, test, notes, totalMode }) {
+  function renderCard({ student, test, notes, totalMode, studentId, commentMode }) {
     const cols = Array.isArray(test.columns) ? test.columns : [];
     const numberCols = cols.filter(c=>c.type==='number');
 
@@ -2606,12 +2642,12 @@ if (typeof termTo !== 'undefined' && termTo) {
           </aside>
 
           <div class="rc-comments-head rc-span">Comments</div>
-          <div class="rc-comments rc-span">${notes ? esc(notes) : 'Use this space to add personalised feedback before printing.'}</div>
+          <div class="rc-comments rc-span" data-student-id="${esc(studentId||'')}" data-mode="${commentMode}" ${commentMode==='individual' && studentId ? 'contenteditable="true" role="textbox" aria-label="Edit individual comment" spellcheck="true"' : ''}>${notes ? esc(notes) : (commentMode==='individual' ? 'No individual comment available for this student.' : 'No class comment yet.')}</div>
         </div>
       </section>`;
   }
 
-  function openModal() {
+  async function openModal() {
     console.log('[RC] openModal called - version rc3');
     // Ensure inline styles for gauge layout are present (defensive against other CSS overrides)
     (function ensureInlineGaugeStyles(){
@@ -2630,7 +2666,23 @@ if (typeof termTo !== 'undefined' && termTo) {
     rcStatus.textContent = `Rendering ${students.length} report card${students.length===1?'':'s'}…`;
   const activeClass = (testClassFilter && testClassFilter.value) || (currentTest && currentTest.class) || '';
   const notes = (classComments.get(activeClass) || document.getElementById('classComment')?.value || '').trim();
-    const cards = students.map(s => renderCard({ student:s, test, notes, totalMode }));
+    const commentMode=rcCommentMode?.value==='individual'?'individual':'class';
+    const testId=currentTest?.id||'';
+    if(commentMode==='individual' && (commentsForTest!==testId || !individualComments.size)){
+      try {
+        individualComments=await loadIndividualComments(testId);
+        commentsForTest=testId;
+      } catch(err) {
+        rcStatus.textContent='Individual comments unavailable: '+err.message;
+        return;
+      }
+    }
+    const cards = students.map(s => {
+      const studentId=getReportStudentId(s);
+      const record=studentId?individualComments.get(studentId):null;
+      return renderCard({student:s,test,notes:commentMode==='individual'?(record?.comment_text||''):notes,
+        totalMode,studentId:record?studentId:null,commentMode});
+    });
     cardsContainer.innerHTML = cards.join('');
     modalBg.style.display = 'flex';
     rcStatus.textContent = `Ready. ${students.length} card${students.length===1?'':'s'}.`;
@@ -2640,6 +2692,15 @@ if (typeof termTo !== 'undefined' && termTo) {
   openBtn.addEventListener('click', openModal);
   rcTotalMode?.addEventListener('change', ()=>{
     if (modalBg.style.display === 'flex') openModal();
+  });
+  rcCommentMode?.addEventListener('change',async()=>{
+    await Promise.allSettled([...pendingSaves]);
+    if(modalBg.style.display==='flex')openModal();
+  });
+  cardsContainer.addEventListener('focusout',(event)=>{
+    const node=event.target.closest('.rc-comments[contenteditable="true"]');
+    if(!node)return;
+    saveIndividualComment(node.dataset.studentId,node.innerText.trim(),node);
   });
   closeBtn?.addEventListener('click', closeModal);
   modalBg.addEventListener('click', (e)=>{ if (e.target === modalBg) closeModal(); });
