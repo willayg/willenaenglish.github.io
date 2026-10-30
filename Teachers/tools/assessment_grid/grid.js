@@ -50,6 +50,32 @@ function refreshPercentages(){
 
 let tests = new Map(), klass = '', current = null, selected = null;
 let undo = [], redo = [], pending = new Map(), alive = true;
+let lastTyping = null;
+function historyFor(stack,testId){
+ for(let i=stack.length-1;i>=0;i--)if(stack[i].testId===testId)return i;
+ return -1;
+}
+function pushTransaction(changes,{typing=false}={}){
+ if(!changes.length)return;
+ const testId=changes[0].testId;
+ const now=Date.now();
+ const cell=typing&&changes.length===1?testId+':'+changes[0].id+':'+changes[0].key:null;
+ const latest=undo[undo.length-1];
+ if(cell && lastTyping?.cell===cell && now-lastTyping.when<1800 && latest?.cell===cell){
+  latest.changes[0].after=changes[0].after;
+ }else{
+  undo.push({testId,changes,cell});
+  if(undo.length>240)undo.shift();
+ }
+ lastTyping=cell?{cell,when:now}:null;
+ redo= [];
+ updateHistoryButtons();
+}
+function updateHistoryButtons(){
+ $('undo').disabled=!current || historyFor(undo,current.testId)<0;
+ $('redo').disabled=!current || historyFor(redo,current.testId)<0;
+}
+
 const classCache=new Map(), inflight=new Map();
 let selectionSequence=0, periodSequence=0;
 function status(s, problem=false) { $('status').textContent=s; $('status').style.color=problem?'#ffcbcb':''; }
@@ -209,7 +235,7 @@ function noteChange(row,key,value,track=true){
  if(!validate(row,key,v))return false;
  const before=display(row.data[key]);
  if(before===v)return true;
- if(track){undo.push({testId:row.testId,className:row.className,id:row.id,key,before,after:v});if(undo.length>120)undo.shift();redo=[];}
+ if(track)pushTransaction([{testId:row.testId,id:row.id,key,before,after:v}],{typing:track==='typing'});
  row.data[key]=v===''?null:(FIELDS.find(f=>f[0]===key)?.[2]==='score'?Number(v):v);
  row.rev++;row.dirty=true;
  queueSave(row);
@@ -260,7 +286,7 @@ function editInput(row,k){
  });
  input.addEventListener('input',()=>{
   const v=input.value.trim();
-  if(validate(row,k,v)){input.removeAttribute('aria-invalid');noteChange(row,k,v);}
+  if(validate(row,k,v)){input.removeAttribute('aria-invalid');noteChange(row,k,v,'typing');}
   else input.setAttribute('aria-invalid','true');
  });
  input.addEventListener('blur',()=>{if(!validate(row,k,input.value.trim()))input.value=display(row.data[k])});
@@ -315,7 +341,7 @@ function editInput(row,k){
   const str=e.clipboardData?.getData('text/plain')||'';
   if(!/\t|\r?\n/.test(str))return;
   e.preventDefault();const matrix=str.replace(/\r/g,'').trimEnd().split('\n').map(s=>s.split('\t'));
-  const displayed=current.rows.filter(r=>matchesSearch(r));
+  const displayed=visibleRows();
   const rr=displayed.findIndex(r=>r.id===row.id),cc=FIELDS.findIndex(f=>f[0]===k);
   let updated=0;
   for(let i=0;i<matrix.length;i++)for(let j=0;j<matrix[i].length;j++){
@@ -334,7 +360,7 @@ function render(){
  const tr=document.createElement('tr');
  for(const text of ['#',...FIELDS.map(f=>f[1]),'Total %','Average %']){const th=document.createElement('th');th.textContent=text;tr.append(th);}
  head.append(tr);
- const visible=current.rows.filter(matchesSearch);
+ const visible=visibleRows();
  visible.forEach((r,i)=>{
  const tr=document.createElement('tr');tr.dataset.rowId=r.id;
  const no=document.createElement('td');no.textContent=i+2;tr.append(no);
@@ -381,11 +407,40 @@ function updateVisibleValues(){
  refreshPercentages();
 }
 function history(type){
+ if(!current)return;
  const from=type==='undo'?undo:redo, dest=type==='undo'?redo:undo;
- const op=from.pop();if(!op||op.testId!==current?.testId)return;
- const r=current?.rows.find(x=>x.id===op.id);if(!r)return;
- const target=type==='undo'?op.before:op.after;
- if(noteChange(r,op.key,target,false)){dest.push(op);updateVisibleValues();}
+ const index=historyFor(from,current.testId);
+ if(index<0)return;
+ const transaction=from.splice(index,1)[0];
+ const reverse=type==='undo';
+ lastTyping=null;
+ for(const entry of reverse?[...transaction.changes].reverse():transaction.changes){
+  const row=current.rows.find(r=>r.id===entry.id);
+  if(!row||!row.userId)continue;
+  noteChange(row,entry.key,reverse?entry.before:entry.after,false);
+ }
+ dest.push(transaction);
+ updateVisibleValues();
+ updateHistoryButtons();
+}
+function applyBatch(edits,label='Updated'){
+ if(!current)return 0;
+ const changes=[];
+ for(const edit of edits){
+  const row=current.rows.find(r=>r.id===edit.id);
+  if(!row?.userId||!editable.has(edit.key))continue;
+  const value=display(edit.value).trim();
+  if(!validate(row,edit.key,value))continue;
+  const before=display(row.data[edit.key]);
+  if(before===value)continue;
+  if(noteChange(row,edit.key,value,false))changes.push({testId:row.testId,id:row.id,key:edit.key,before,after:value});
+ }
+ if(changes.length){
+  pushTransaction(changes);
+  updateVisibleValues();
+  status(label+' '+changes.length+' cell'+(changes.length===1?'':'s')+' · saving…');
+ }
+ return changes.length;
 }
 $('undo').addEventListener('click',()=>history('undo'));
 $('redo').addEventListener('click',()=>history('redo'));
@@ -667,7 +722,7 @@ async function exportReports(rows){
  }
 }
 $('rcOpen').addEventListener('click',()=>{
- const visible=current?.rows.filter(matchesSearch)||[];
+ const visible=current?visibleRows():[];
  openReport(visible[0]||current?.rows[0]);
 });
 $('rcPrev').addEventListener('click',()=>{if(reportPosition>0){reportPosition--;displayReport()}});
