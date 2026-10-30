@@ -231,18 +231,32 @@ async function startup(){
  refreshAssessmentPeriods();
 }
 
-/* Spreadsheet engine: selection, clipboard, history, fill, sort and resize.
+/* Spreadsheet engine: selection, clipboard, history, fill and sort.
    Only assessment value cells are writable; names, maxima and calculated
    percentages are copyable but always read-only. All writes use test_admin. */
 const COLS=FIELDS.map(f=>f[0]).concat(['totalPct','averagePct']);
 const METRIC_KEYS=new Set(['totalPct','averagePct']);
 const COLUMN_DEFAULTS={num:42,englishName:172,koreanName:124,nextClass:112,lib_reading:116,lib_raz:103,lib_punctuality:105,phonics:106,listening:112,vocab:105,grammar:112,gw:150,write:105,reading:108,speaking:113,totalPct:108,averagePct:120};
-const WIDTH_KEY='willena-assessment-grid-column-widths-v2';
-let widths={};
-try{widths=JSON.parse(localStorage.getItem(WIDTH_KEY)||'{}')||{}}catch{widths={}}
 let filterKey='',filterText='',sortKey='',sortDir=0;
 let rangeSelection=null,selectionDrag=false,fillDrag=null,suppressFocusSelection=false;
-const colWidth=key=>key==='num'?42:Math.max(56,Math.min(520,Number(widths[key])||COLUMN_DEFAULTS[key]||105));
+let mobileSelectMode=false,mobileSelectStep=0,mobileSelectPointer=null;
+const colWidth=key=>key==='num'?42:(COLUMN_DEFAULTS[key]||105);
+function setMobileSelectMode(enabled){
+ mobileSelectMode=!!enabled;
+ mobileSelectStep=0;mobileSelectPointer=null;selectionDrag=false;
+ const button=$('mobileSelect');
+ button.setAttribute('aria-pressed',String(mobileSelectMode));
+ button.classList.toggle('active',mobileSelectMode);
+ button.textContent=mobileSelectMode?'Selecting ✓':'Select cells';
+ $('sheet').classList.toggle('mobile-select-mode',mobileSelectMode);
+ updateSelectionClasses();
+}
+function mobileSelectionTarget(element){
+ const td=element?.closest?.('td[data-cell-key]');
+ if(!td||!$('sheet').contains(td)||!td.parentElement?.dataset.rowId)return null;
+ if(!COLS.includes(td.dataset.cellKey))return null;
+ return {id:td.parentElement.dataset.rowId,key:td.dataset.cellKey};
+}
 function getRowById(id){return current?.rows.find(row=>row.id===String(id))}
 function valueAt(row,key){
  if(key==='totalPct'||key==='averagePct'){
@@ -304,7 +318,8 @@ function updateSelectionClasses(){
   }
  }
  const count=rect?(rect.r2-rect.r1+1)*(rect.c2-rect.c1+1):0;
- $('selectionInfo').textContent=count>1?count+' cells selected':'';
+ $('selectionInfo').textContent=count>1?count+' cells selected':
+  mobileSelectMode?(count?'Tap last cell or drag to extend':'Tap first cell'):'';
 }
 function setSelection(id,key,extend=false){
  if(!current||!COLS.includes(key)||!getRowById(id))return;
@@ -554,57 +569,33 @@ function editInput(row,key){
  });
  return input;
 }
-function resizeColumns(){
+function setupFixedColumns(){
  const table=$('sheet');
  let group=table.querySelector('colgroup');
  if(!group){group=document.createElement('colgroup');table.insertBefore(group,table.firstChild);}
  group.replaceChildren();
  const keys=['num',...COLS];
  for(const key of keys){
-  const col=document.createElement('col');col.style.width=colWidth(key)+'px';group.append(col);
+  const col=document.createElement('col');
+  col.style.width=colWidth(key)+'px';
+  group.append(col);
  }
  table.style.tableLayout='fixed';
- table.style.width=Math.max(840,keys.reduce((n,k)=>n+colWidth(k),0))+'px';
+ table.style.width=keys.reduce((n,key)=>n+colWidth(key),0)+'px';
  table.style.setProperty('--grid-frozen-name-left',colWidth('num')+'px');
 }
 function headCell(label,key){
  const th=document.createElement('th');th.textContent=label;
  th.dataset.columnKey=key;th.style.width=colWidth(key)+'px';
  if(key!=='num'){
-  th.classList.add('grid-sortable');th.title='Click to sort · drag edge to resize';
+  th.classList.add('grid-sortable');th.title='Click to sort';
   if(sortKey===key&&sortDir)th.textContent=label+(sortDir===1?' ↑':' ↓');
-  th.addEventListener('click',e=>{
-   if(e.target.closest('.grid-col-resize'))return;
+  th.addEventListener('click',()=>{
    if(sortKey===key)sortDir=sortDir===1?-1:sortDir===-1?0:1;
    else{sortKey=key;sortDir=1;}
    if(!sortDir)sortKey='';
    rangeSelection=null;render();
   });
- }
- if(key!=='num'){
-  const handle=document.createElement('span');handle.className='grid-col-resize';
-  handle.title='Drag to resize';
-  handle.addEventListener('pointerdown',event=>{
-   event.stopPropagation();event.preventDefault();
-   const startX=event.clientX,startWidth=colWidth(key);
-   const onMove=e=>{
-    widths[key]=Math.max(56,Math.min(520,startWidth+(e.clientX-startX)));
-    const cols=['num',...COLS],idx=cols.indexOf(key);
-    const col=$('sheet').querySelectorAll('colgroup col')[idx];
-    if(col)col.style.width=widths[key]+'px';
-    $('sheet').style.width=cols.reduce((sum,k)=>sum+colWidth(k),0)+'px';
-    $('sheet').style.setProperty('--grid-frozen-name-left',colWidth('num')+'px');
-   };
-   const onUp=()=>{
-    window.removeEventListener('pointermove',onMove);
-    window.removeEventListener('pointerup',onUp);
-    try{localStorage.setItem(WIDTH_KEY,JSON.stringify(widths));}catch{}
-    render();
-   };
-   window.addEventListener('pointermove',onMove);
-   window.addEventListener('pointerup',onUp,{once:true});
-  });
-  th.append(handle);
  }
  return th;
 }
@@ -613,7 +604,7 @@ function render(){
  $('tabs').querySelectorAll('button').forEach(b=>b.classList.toggle('selected',b.dataset.className===klass));
  const table=$('sheet'),head=table.querySelector('thead'),body=table.querySelector('tbody');
  head.replaceChildren();body.replaceChildren();
- resizeColumns();
+ setupFixedColumns();
  const titles=['#',...FIELDS.map(f=>f[1]),'Total %','Average %'];
  const header=document.createElement('tr');
  for(let i=0;i<titles.length;i++)header.append(headCell(titles[i],i===0?'num':COLS[i-1]));
@@ -686,14 +677,15 @@ $('paste').addEventListener('click',pasteFromButton);
 $('clear').addEventListener('click',clearSelection);
 $('fillDown').addEventListener('click',()=>fillSelected('down'));
 $('fillRight').addEventListener('click',()=>fillSelected('right'));
+$('mobileSelect').addEventListener('click',()=>setMobileSelectMode(!mobileSelectMode));
 $('reset').textContent='Reload class';
 $('reset').onclick=()=>{if(pending.size){status('Finish saving edits before reloading',true);return;}openClass(klass,true)};
-$('klass').addEventListener('change',e=>{resetGridSelection();openClass(e.target.value)});
+$('klass').addEventListener('change',e=>{mobileSelectStep=0;resetGridSelection();openClass(e.target.value)});
 $('period').addEventListener('change',e=>{
  if(!$('rcDialog').hidden){$('rcDialog').hidden=true;$('rcPageMount').replaceChildren();}
  filterKey='';filterText='';$('search').value='';
  $('gridFilterColumn').value='';$('gridFilterValue').value='';
- resetGridSelection();loadPeriod(e.target.value);
+ setMobileSelectMode(false);resetGridSelection();loadPeriod(e.target.value);
 });
 $('search').addEventListener('input',()=>{resetGridSelection();render()});
 $('gridFilterColumn').addEventListener('change',e=>{filterKey=e.target.value;resetGridSelection();render()});
@@ -710,6 +702,46 @@ $('formula').addEventListener('change',()=>{
  if(result.invalid||result.readonly)status('Read-only or invalid value',true);
  updateVisibleValues();
 });
+// Mobile: an explicit selection mode avoids popping up the keyboard and
+// allows a two-tap range or a finger drag. Normal swiping still scrolls when off.
+$('sheet').addEventListener('pointerdown',e=>{
+ if(!mobileSelectMode||!current||e.button!==0)return;
+ const hit=mobileSelectionTarget(e.target);
+ if(!hit)return;
+ e.preventDefault();e.stopPropagation();
+ if(mobileSelectStep===0){
+  setSelection(hit.id,hit.key,false);
+  mobileSelectStep=1;
+ }else setSelection(hit.id,hit.key,true);
+ mobileSelectPointer={id:e.pointerId,dragged:false,last:hit,secondTap:mobileSelectStep===1 && rangeSelection?.anchor.id!==hit.id};
+},true);
+$('sheet').addEventListener('click',e=>{
+ if(!mobileSelectMode||!e.target.closest('td[data-cell-key]'))return;
+ e.preventDefault();e.stopPropagation();
+},true);
+$('sheet').addEventListener('contextmenu',e=>{
+ if(mobileSelectMode&&e.target.closest('td[data-cell-key]'))e.preventDefault();
+});
+document.addEventListener('pointermove',e=>{
+ if(!mobileSelectMode||!mobileSelectPointer||e.pointerId!==mobileSelectPointer.id)return;
+ if(e.cancelable)e.preventDefault();
+ const hit=mobileSelectionTarget(document.elementFromPoint(e.clientX,e.clientY));
+ if(!hit)return;
+ if(hit.id!==mobileSelectPointer.last.id||hit.key!==mobileSelectPointer.last.key){
+  setSelection(hit.id,hit.key,true);
+  mobileSelectPointer.last=hit;
+  mobileSelectPointer.dragged=true;
+ }
+},{passive:false});
+function finishMobileSelection(event){
+ if(!mobileSelectPointer||event.pointerId!==mobileSelectPointer.id)return;
+ // After one tap, the next tap extends the range. After a drag or
+ // second tap, another tap begins a fresh selection.
+ if(mobileSelectPointer.dragged||mobileSelectPointer.secondTap)mobileSelectStep=0;
+ mobileSelectPointer=null;
+}
+document.addEventListener('pointerup',finishMobileSelection);
+document.addEventListener('pointercancel',finishMobileSelection);
 $('sheet').addEventListener('pointerdown',e=>{
  const td=e.target.closest('td[data-cell-key]');
  if(!td||!current||e.target.closest('.grid-fill-handle'))return;
