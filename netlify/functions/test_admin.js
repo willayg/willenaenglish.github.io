@@ -335,6 +335,37 @@ exports.handler = async (event) => {
       return respond(event, 200, { success:true, upserted, failed });
     }
 
+    if (action === 'set_assessment_max' && event.httpMethod === 'POST') {
+      const body=getBody();
+      const id=String(body.test_id||'').trim();
+      const key=String(body.skill||'').trim();
+      const allowed=['phonics','listening','vocab','grammar','gw','write','reading','speaking'];
+      if(!/^[0-9a-f-]{36}$/i.test(id)||!allowed.includes(key))
+        return respond(event,400,{success:false,error:'Invalid assessment class or skill'});
+      function numericOrNull(value){
+        if(value===null)return null;
+        if(typeof value!=='number'||!Number.isFinite(value))throw Error('Maximum must be a number or blank');
+        return value;
+      }
+      let next,expected;
+      try {
+        if(!Object.prototype.hasOwnProperty.call(body,'max')||
+           !Object.prototype.hasOwnProperty.call(body,'expected'))
+          throw Error('Current and new maxima are required');
+        next=numericOrNull(body.max);
+        expected=numericOrNull(body.expected);
+        if(next!==null&&(next<=0||next>10000))throw Error('Maximum must be between 0 and 10000, or blank');
+      }catch(e){return respond(event,400,{success:false,error:e.message});}
+      const {data,error}=await db.rpc('assessment_set_skill_max',{
+        p_test_id:id,p_skill:key,p_max:next,p_expected:expected
+      });
+      if(error){
+        const conflict=/changed by another teacher/i.test(error.message||'');
+        return respond(event,conflict?409:400,{success:false,error:error.message});
+      }
+      return respond(event,200,{success:true,skill:key,max:data?.max??null,test_id:id});
+    }
+
     if (action === 'update_test' && event.httpMethod === 'POST') {
       const body = getBody();
       const id = (body.test_id||'').trim();
