@@ -202,16 +202,33 @@ async function loadPeriod(month,initial=false){
   }
  }
 }
+
+function renderPeriodOptions(){
+ const select=$('period'),keep=PERIODS[select.value]?select.value:period;
+ select.replaceChildren();
+ for(const [value,label] of Object.entries(PERIODS).sort((a,b)=>b[0].localeCompare(a[0])))
+  select.add(new Option(label,value));
+ select.value=PERIODS[keep]?keep:period;
+}
+async function refreshAssessmentPeriods(){
+ try{
+  const result=await api('list_assessment_periods');
+  if(!Array.isArray(result.periods))return;
+  for(const item of result.periods){
+   if(/^\d{4}-(0[1-9]|1[0-2])$/.test(item.value))PERIODS[item.value]=item.label;
+  }
+  renderPeriodOptions();
+  if(typeof fillSourcePeriodOptions==='function')fillSourcePeriodOptions();
+ }catch(e){console.warn('Assessment period list unavailable',e);}
+}
 async function startup(){
  const filter=$('gridFilterColumn');
  filter.replaceChildren();filter.add(new Option('All columns',''));
  for(const [key,label] of FIELDS)filter.add(new Option(label,key));
  filter.add(new Option('Total %','totalPct'));filter.add(new Option('Average %','averagePct'));
- const select=$('period');
- select.replaceChildren();
- for(const [value,label] of Object.entries(PERIODS))select.add(new Option(label,value));
- select.value=period;
+ renderPeriodOptions();
  await loadPeriod(period,true);
+ refreshAssessmentPeriods();
 }
 
 /* Spreadsheet engine: selection, clipboard, history, fill, sort and resize.
@@ -1056,6 +1073,316 @@ document.addEventListener('keydown',e=>{
  if(e.key==='Escape'&&!$('rcDialog').hidden){e.stopPropagation();closeReport();}
 });
 window.addEventListener('resize',()=>{if(!$('rcDialog').hidden)fitReport()});
+
+
+/* New Assessment Period wizard. Excel is parsed locally, with no public sharing
+   required. The authenticated server recomputes student matches and owns saves. */
+let apWorkbook=null,apParsed=null,apConfirmedPreview=null,apBusy=false;
+const AP_SKILLS=['phonics','listening','vocab','grammar','gw','write','reading','speaking'];
+const AP_GRADES=['lib_reading','lib_raz','lib_punctuality'];
+const AP_LABELS={phonics:'Phonics',listening:'Listening',vocab:'Vocab',
+ grammar:'Grammar',gw:'Grammar Writing',write:'Writing',reading:'Reading',speaking:'Speaking'};
+const apEsc=v=>String(v===null||v===undefined?'':v).replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+function apMessage(value,bad=false){
+ const el=$('apMessage');el.textContent=value;el.style.color=bad?'#b32131':'#46677b';
+}
+function apBusyState(value){
+ apBusy=value;
+ for(const id of ['apClose','apPreview','apConfirm','apFile','apTab','apPasteRead','apDate','apMode','apSource'])
+  $(id).disabled=value;
+}
+function fillSourcePeriodOptions(){
+ const select=$('apSource'),old=select.value;
+ select.replaceChildren();
+ for(const [value,label] of Object.entries(PERIODS).sort((a,b)=>b[0].localeCompare(a[0]))){
+  if(value===$('apDate').value)continue;
+  select.add(new Option(label,value));
+ }
+ if(old&&PERIODS[old]&&old!==$('apDate').value)select.value=old;
+}
+function apInvalidate(){
+ apConfirmedPreview=null;$('apConfirm').disabled=true;
+ $('apMatches').replaceChildren();
+}
+function apOpen(){
+ if(apBusy)return;
+ $('apDialog').hidden=false;
+ $('apDate').value='';
+ $('apMode').value='copy';
+ $('apFile').value='';
+ $('apPaste').value='';
+ $('apSourcePane').hidden=false;$('apImportPane').hidden=true;
+ apWorkbook=null;apParsed=null;apInvalidate();
+ $('apInputSummary').textContent='Choose a source period and a new month.';
+ $('apMaxEditor').replaceChildren();
+ fillSourcePeriodOptions();
+ apMessage('No changes will be saved until you confirm.');
+ $('apDate').focus();
+}
+function apClose(){
+ if(apBusy)return;
+ $('apDialog').hidden=true;
+}
+function apReadMode(){
+ const imported=$('apMode').value==='import';
+ $('apSourcePane').hidden=imported;
+ $('apImportPane').hidden=!imported;
+ apInvalidate();
+}
+async function apLoadSheetJS(){
+ if(window.XLSX?.read&&window.XLSX?.utils?.sheet_to_json)return;
+ await new Promise((resolve,reject)=>{
+  const script=document.createElement('script');
+  script.src='https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js';
+  script.onload=resolve;
+  script.onerror=()=>reject(Error('Excel reader unavailable. Try pasting cells from Google Sheets instead.'));
+  document.head.append(script);
+ });
+ if(!window.XLSX?.read)throw Error('Excel reader unavailable');
+}
+function apPlainTable(text){
+ // CSV and TSV parser respecting quoted line breaks and escaped quotes.
+ const sep=(text.split(/\r?\n/,1)[0].includes('\t'))?'\t':',';
+ const rows=[],line=[];let field='',quoted=false;
+ for(let i=0;i<text.length;i++){
+  const ch=text[i];
+  if(ch==='"'){
+   if(quoted&&text[i+1]==='"'){field+='"';i++;}
+   else quoted=!quoted;
+  }else if(ch===sep&&!quoted){line.push(field);field='';}
+  else if((ch==='\n'||ch==='\r')&&!quoted){
+   if(ch==='\r'&&text[i+1]==='\n')i++;
+   line.push(field);rows.push(line.splice(0));field='';
+  }else field+=ch;
+ }
+ if(field!==''||line.length){line.push(field);rows.push(line);}
+ return rows;
+}
+function apHeaderKey(header){
+ const raw=String(header||'').trim().toLowerCase().replace(/\s+/g,' ');
+ const flat=raw.replace(/[\s_\-()./]/g,'');
+ if(['name','englishname','studentname','english','영어이름'].includes(flat))return 'englishName';
+ if(['이름','이릉','한글이름','koreanname','korean','학생이름'].includes(flat))return 'koreanName';
+ if(['반','class','classname','수업반'].includes(flat))return 'className';
+ if(['다음반','nextclass','nextlevel'].includes(flat))return 'nextClass';
+ if(['독서','bookreading','libraryreading'].includes(flat))return 'lib_reading';
+ if(['razkids','raz','razkid'].includes(flat))return 'lib_raz';
+ if(['시간엄수','punctuality','ontime'].includes(flat))return 'lib_punctuality';
+ if(flat.startsWith('phonics'))return 'phonics';
+ if(flat.startsWith('listening'))return 'listening';
+ if(flat.startsWith('vocab')||flat.startsWith('vocabulary'))return 'vocab';
+ if(flat.startsWith('grammarwrite')||flat.startsWith('grammarwriting')||flat==='gw')return 'gw';
+ if(flat.startsWith('grammar'))return 'grammar';
+ if(flat==='write'||flat.startsWith('writing'))return 'write';
+ if(flat.startsWith('reading'))return 'reading';
+ if(flat.startsWith('speaking'))return 'speaking';
+ return '';
+}
+function apParseTable(table){
+ if(!Array.isArray(table)||!table.length)throw Error('The spreadsheet is empty');
+ let headerRow=-1,map={};
+ for(let r=0;r<Math.min(table.length,35);r++){
+  const columns=table[r]||[],look={};
+  columns.forEach((name,i)=>{const key=apHeaderKey(name);if(key&&!Object.hasOwn(look,key))look[key]=i});
+  if('englishName' in look&&'koreanName' in look&&'className' in look){
+   headerRow=r;map=look;break;
+  }
+ }
+ if(headerRow<0)throw Error('Could not find Name / Korean Name / Class headers. Choose the list tab.');
+ if(!AP_SKILLS.some(key=>map[key]!==undefined))throw Error('No assessment skill columns found');
+ const classes=new Map(),issues=[];
+ let lastClass='';
+ function text(row,key){const i=map[key];return i===undefined?'':String(row[i]??'').trim();}
+ for(let n=headerRow+1;n<table.length;n++){
+  const cells=table[n]||[];
+  const en=text(cells,'englishName'),ko=text(cells,'koreanName'),cl=text(cells,'className');
+  if(en&&ko&&(cl||lastClass)){
+   const className=cl||lastClass;lastClass=className;
+   if(!classes.has(className))classes.set(className,{className,rows:[],maxima:Object.fromEntries(AP_SKILLS.map(key=>[key,null]))});
+   const group=classes.get(className),data={};
+   for(const key of AP_SKILLS){
+    const v=text(cells,key);data[key]=v===''?null:v;
+    if(v!==''&&(!Number.isFinite(Number(v))||Number(v)<0))
+     issues.push('Invalid score '+v+' for '+en+' · '+key);
+   }
+   for(const key of AP_GRADES)data[key]=text(cells,key)||null;
+   group.rows.push({englishName:en,koreanName:ko,className,
+    nextClass:text(cells,'nextClass'),data});
+  }else if(lastClass&&!en&&!ko&&!cl){
+   const values=AP_SKILLS.map(key=>text(cells,key));
+   const positives=values.filter(v=>v!==''&&Number.isFinite(Number(v))&&Number(v)>0);
+   if(positives.length>=2){
+    const group=classes.get(lastClass);
+    for(const key of AP_SKILLS){
+     const v=text(cells,key);
+     if(v!==''&&Number.isFinite(Number(v))&&Number(v)>0)group.maxima[key]=Number(v);
+    }
+    lastClass='';
+   }
+  }else if((en||ko||cl)&&!(en&&ko&&(cl||lastClass))){
+   issues.push('Incomplete row '+(n+1));
+  }
+  if([...classes.values()].reduce((sum,g)=>sum+g.rows.length,0)>1500)throw Error('Too many students (maximum 1500)');
+ }
+ const groups=[...classes.values()];
+ if(!groups.length)throw Error('No student rows found');
+ if(issues.length)throw Error(issues.slice(0,6).join(' · '));
+ return groups;
+}
+function apRenderParsed(){
+ const pane=$('apMaxEditor');pane.replaceChildren();
+ if(!apParsed?.classes?.length)return;
+ const count=apParsed.classes.reduce((n,c)=>n+c.rows.length,0);
+ $('apInputSummary').textContent=apParsed.classes.length+' classes · '+count+
+  ' students. Review the class maximum marks, especially if the source has no TOTAL rows.';
+ const scroller=document.createElement('div');scroller.className='ap-max-wrap';
+ const table=document.createElement('table');table.className='ap-max-table';
+ const head=document.createElement('tr');
+ for(const label of ['Class','Students',...AP_SKILLS.map(k=>AP_LABELS[k])]){
+  const th=document.createElement('th');th.textContent=label;head.append(th);
+ }
+ const thead=document.createElement('thead');thead.append(head);table.append(thead);
+ const tbody=document.createElement('tbody');
+ for(const cl of apParsed.classes){
+  const tr=document.createElement('tr');
+  const name=document.createElement('td');name.textContent=cl.className;tr.append(name);
+  const number=document.createElement('td');number.textContent=cl.rows.length;tr.append(number);
+  for(const key of AP_SKILLS){
+   const td=document.createElement('td'),input=document.createElement('input');
+   input.type='number';input.min='0';input.max='10000';input.step='any';
+   input.title=cl.className+' '+AP_LABELS[key]+' maximum';
+   input.value=cl.maxima[key]??'';
+   input.addEventListener('input',()=>{cl.maxima[key]=input.value===''?null:input.value;apInvalidate()});
+   td.append(input);tr.append(td);
+  }
+  tbody.append(tr);
+ }
+ table.append(tbody);scroller.append(table);pane.append(scroller);
+}
+async function apOnFile(event){
+ apInvalidate();apParsed=null;apWorkbook=null;$('apMaxEditor').replaceChildren();
+ const file=event.target.files?.[0];if(!file)return;
+ if(file.size>10*1024*1024){apMessage('Maximum file size is 10 MB',true);return;}
+ apBusyState(true);
+ try{
+  await apLoadSheetJS();
+  const workbook=window.XLSX.read(await file.arrayBuffer(),{type:'array'});
+  apWorkbook=workbook;
+  const select=$('apTab');select.replaceChildren();
+  for(const name of workbook.SheetNames)select.add(new Option(name,name));
+  select.value=workbook.SheetNames.find(n=>n.toLowerCase()==='list')||workbook.SheetNames[0];
+  apSelectWorkbookTab();
+ }catch(e){apMessage(e.message,true);}
+ finally{apBusyState(false);}
+}
+function apSelectWorkbookTab(){
+ if(!apWorkbook)return;
+ try{
+  const name=$('apTab').value;
+  const table=window.XLSX.utils.sheet_to_json(apWorkbook.Sheets[name],
+   {header:1,raw:false,defval:''});
+  apParsed={classes:apParseTable(table)};
+  apInvalidate();apRenderParsed();
+  apMessage('Ready to preview student matches.');
+ }catch(e){apParsed=null;$('apMaxEditor').replaceChildren();apMessage(e.message,true);}
+}
+function apParsePaste(){
+ try{
+  const t=$('apPaste').value.trim();
+  if(!t)throw Error('Copy a rectangular range from Google Sheets and paste it here');
+  apParsed={classes:apParseTable(apPlainTable(t))};
+  apInvalidate();apRenderParsed();apMessage('Pasted cells parsed. Preview student matches next.');
+ }catch(e){apParsed=null;apMessage(e.message,true);}
+}
+function apPayload(){
+ const month=$('apDate').value,mode=$('apMode').value;
+ if(!/^\d{4}-(0[1-9]|1[0-2])$/.test(month))throw Error('Choose the new period month');
+ if(PERIODS[month])throw Error('That period already exists. Choose a new month.');
+ if(mode==='copy'){
+  const fromPeriod=$('apSource').value;
+  if(!fromPeriod||!PERIODS[fromPeriod])throw Error('Choose an existing period');
+  return {period:month,mode,fromPeriod};
+ }
+ if(!apParsed?.classes?.length)throw Error('Upload a spreadsheet or paste cells first');
+ return {period:month,mode,classes:apParsed.classes};
+}
+function apShowPreview(preview){
+ const pane=$('apMatches');pane.replaceChildren();
+ const p=document.createElement('p');p.className='ap-summary';
+ p.textContent=preview.label+': '+preview.totalRows+' students in '+preview.classes.length+
+  ' classes · '+preview.matched+' matched · '+preview.unmatched+' unmatched (read-only).';
+ pane.append(p);
+ const details=document.createElement('details');
+ const summary=document.createElement('summary');
+ summary.textContent='Review classes and unmatched students';details.append(summary);
+ const table=document.createElement('table');table.className='ap-review-table';
+ const head=document.createElement('tr');
+ for(const name of ['Class','Students','Matched','Unmatched']){
+  const cell=document.createElement('th');cell.textContent=name;head.append(cell);
+ }
+ const thead=document.createElement('thead');thead.append(head);table.append(thead);
+ const tbody=document.createElement('tbody');
+ for(const cl of preview.classes){
+  const tr=document.createElement('tr');
+  const unresolved=cl.rows.filter(r=>!r.userId);
+  for(const v of [cl.className,String(cl.rows.length),String(cl.rows.length-unresolved.length),
+   unresolved.map(r=>r.englishName+' ('+r.koreanName+')').join(', ')||'—']){
+   const td=document.createElement('td');td.textContent=v;tr.append(td);
+  }
+  tbody.append(tr);
+ }
+ table.append(tbody);details.append(table);pane.append(details);
+}
+async function apPreviewPeriod(){
+ let payload;
+ try{payload=apPayload();}catch(e){apMessage(e.message,true);return;}
+ apBusyState(true);apInvalidate();
+ try{
+  const response=await api('preview_assessment_period',{},{
+   method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)
+  });
+  apConfirmedPreview=payload;
+  apShowPreview(response.preview);
+  $('apConfirm').disabled=false;
+  apMessage('Review the matches, then click Create period. Nothing has been saved yet.');
+ }catch(e){apMessage('Preview failed: '+e.message,true);}
+ finally{apBusyState(false);$('apConfirm').disabled=!apConfirmedPreview;}
+}
+async function apCreatePeriod(){
+ if(!apConfirmedPreview||apBusy)return;
+ const payload=apConfirmedPreview;
+ apBusyState(true);$('apConfirm').disabled=true;
+ try{
+  const result=await api('create_assessment_period',{},{
+   method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)
+  });
+  PERIODS[result.period]=new Date(result.period+'-01T00:00:00Z')
+   .toLocaleString('en-US',{month:'long',year:'numeric',timeZone:'UTC'});
+  renderPeriodOptions();
+  $('apDialog').hidden=true;
+  apConfirmedPreview=null;
+  await loadPeriod(result.period);
+  refreshAssessmentPeriods();
+  status('Created '+PERIODS[result.period]+' · '+result.students+' students · '+result.matched+' linked');
+ }catch(e){
+  apMessage('Could not create period: '+e.message,true);
+  $('apConfirm').disabled=false;
+ }finally{apBusyState(false);}
+}
+$('apOpen').addEventListener('click',apOpen);
+$('apClose').addEventListener('click',apClose);
+$('apMode').addEventListener('change',apReadMode);
+$('apDate').addEventListener('change',()=>{fillSourcePeriodOptions();apInvalidate()});
+$('apSource').addEventListener('change',apInvalidate);
+$('apFile').addEventListener('change',apOnFile);
+$('apTab').addEventListener('change',apSelectWorkbookTab);
+$('apPasteRead').addEventListener('click',apParsePaste);
+$('apPreview').addEventListener('click',apPreviewPeriod);
+$('apConfirm').addEventListener('click',apCreatePeriod);
+$('apDialog').addEventListener('click',e=>{if(e.target===$('apDialog'))apClose()});
+document.addEventListener('keydown',e=>{
+ if(e.key==='Escape'&&!$('apDialog').hidden&&!apBusy){e.preventDefault();apClose();}
+});
 
 startup();
 })();
