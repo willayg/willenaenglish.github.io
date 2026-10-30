@@ -865,6 +865,8 @@ $('sheet').addEventListener('focusin',e=>{
 document.addEventListener('keydown',e=>{
  if($('rcDialog')&&!$('rcDialog').hidden)return;
  const target=e.target,insideGrid=!!target.closest?.('#sheet');
+ // The bottom TOTAL inputs are real numeric editors, not selectable student cells.
+ if(target instanceof HTMLInputElement&&target.classList.contains('class-total-input'))return;
  const editing=target instanceof HTMLInputElement&&target.dataset.editing==='true';
  const ctrl=e.ctrlKey||e.metaKey,key=e.key.toLowerCase();
  if(ctrl&&!editing&&insideGrid){
@@ -897,12 +899,14 @@ document.addEventListener('keydown',e=>{
  }
 },true);
 document.addEventListener('copy',e=>{
+ if(e.target?.matches?.('.class-total-input'))return;
  if(!current||!rangeSelection||($('rcDialog')&&!$('rcDialog').hidden))return;
  if(!e.target.closest?.('#sheet')||e.target instanceof HTMLInputElement&&e.target.dataset.editing==='true')return;
  const str=readSelection();if(!str)return;
  e.clipboardData?.setData('text/plain',str);e.preventDefault();
 });
 document.addEventListener('cut',e=>{
+ if(e.target?.matches?.('.class-total-input'))return;
  if(!current||!rangeSelection||!$('rcDialog').hidden)return;
  if(!e.target.closest?.('#sheet'))return;
  if(e.target instanceof HTMLInputElement&&e.target.dataset.editing==='true')return;
@@ -910,6 +914,7 @@ document.addEventListener('cut',e=>{
  e.clipboardData?.setData('text/plain',str);e.preventDefault();clearSelection();
 });
 document.addEventListener('paste',e=>{
+ if(e.target?.matches?.('.class-total-input'))return;
  if(!current||!rangeSelection||!$('rcDialog').hidden)return;
  if(!e.target.closest?.('#sheet')||e.target instanceof HTMLInputElement&&e.target.dataset.editing==='true')return;
  const str=e.clipboardData?.getData('text/plain');
