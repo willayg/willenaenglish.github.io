@@ -251,7 +251,13 @@ function editInput(row,k){
  input.dataset.rowId=row.id;input.dataset.key=k;
  input.setAttribute('aria-label',row.englishName+' '+k);
  if(!row.userId){input.disabled=true;input.title='Student account not matched — read only'}
- input.addEventListener('focus',()=>focusCell(row.id,k,input));
+ input.addEventListener('focus',()=>{
+  input.dataset.editing='false';
+  focusCell(row.id,k,input);
+ });
+ input.addEventListener('dblclick',()=>{
+  input.dataset.editing='true';
+ });
  input.addEventListener('input',()=>{
   const v=input.value.trim();
   if(validate(row,k,v)){input.removeAttribute('aria-invalid');noteChange(row,k,v);}
@@ -259,12 +265,50 @@ function editInput(row,k){
  });
  input.addEventListener('blur',()=>{if(!validate(row,k,input.value.trim()))input.value=display(row.data[k])});
  input.addEventListener('keydown',e=>{
-  if(['Enter','Tab','ArrowDown','ArrowUp'].includes(e.key)){
-   if((e.key==='ArrowUp'||e.key==='ArrowDown')&&input.selectionStart!==input.selectionEnd)return;
-   const inputs=Array.from($('sheet').querySelectorAll('tbody input:not([disabled])'));
-   const idx=inputs.indexOf(input);const cols=FIELDS.length-4;
-   const delta=e.key==='ArrowUp'?-cols:e.key==='ArrowDown'||e.key==='Enter'?cols:e.shiftKey?-1:1;
-   const next=inputs[idx+delta];if(next){e.preventDefault();next.focus();}
+  if(e.key==='F2'){
+   e.preventDefault();
+   input.dataset.editing='true';
+   input.setSelectionRange(input.value.length,input.value.length);
+   return;
+  }
+  if(e.key==='Escape' && input.dataset.editing==='true'){
+   e.preventDefault();
+   input.dataset.editing='false';
+   input.select();
+   return;
+  }
+  const arrows=['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'];
+  if(!arrows.includes(e.key) && !['Enter','Tab'].includes(e.key))return;
+  // F2 or double-click opens text-edit mode; arrow keys then move the caret.
+  if(arrows.includes(e.key) && (input.dataset.editing==='true'||e.altKey||e.ctrlKey||e.metaKey||e.shiftKey))return;
+  const sheet=$('sheet');
+  let next=null;
+  if(e.key==='Tab'){
+   const inputs=Array.from(sheet.querySelectorAll('tbody input:not([disabled])'));
+   const index=inputs.indexOf(input);
+   next=inputs[index+(e.shiftKey?-1:1)]||null;
+  } else {
+   const editableKeys=FIELDS.filter(f=>editable.has(f[0])).map(f=>f[0]);
+   const col=editableKeys.indexOf(k);
+   const rows=Array.from(sheet.querySelectorAll('tbody tr[data-row-id]'));
+   const rowIndex=rows.indexOf(input.closest('tr'));
+   if(rowIndex<0||col<0)return;
+   const horizontal=e.key==='ArrowLeft'||e.key==='ArrowRight';
+   const vertical=horizontal?0:(e.key==='ArrowUp'?-1:1);
+   const nextCol=horizontal?col+(e.key==='ArrowLeft'?-1:1):col;
+   if(nextCol<0||nextCol>=editableKeys.length)return;
+   const key=editableKeys[nextCol];
+   // Skip unmatched/read-only rows, keeping the same skill column.
+   for(let i=rowIndex+vertical; i>=0&&i<rows.length; i+=vertical){
+    const candidate=rows[i].querySelector('input[data-key="'+key+'"]:not([disabled])');
+    if(candidate){next=candidate;break;}
+    if(horizontal)break;
+   }
+  }
+  if(next){
+   e.preventDefault();
+   next.focus();
+   next.select();
   }
  });
  input.addEventListener('paste',e=>{
