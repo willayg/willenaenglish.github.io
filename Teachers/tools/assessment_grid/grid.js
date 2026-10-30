@@ -1088,8 +1088,9 @@ function apMessage(value,bad=false){
 }
 function apBusyState(value){
  apBusy=value;
- for(const id of ['apClose','apPreview','apConfirm','apFile','apTab','apPasteRead','apDate','apMode','apSource'])
+ for(const id of ['apClose','apPreview','apFile','apTab','apPasteRead','apDate','apMode','apSource'])
   $(id).disabled=value;
+ $('apConfirm').disabled=value||!apConfirmedPreview;
 }
 function fillSourcePeriodOptions(){
  const select=$('apSource'),old=select.value;
@@ -1110,6 +1111,7 @@ function apOpen(){
  $('apDate').value='';
  $('apMode').value='copy';
  $('apFile').value='';
+ $('apTab').replaceChildren();
  $('apPaste').value='';
  $('apSourcePane').hidden=false;$('apImportPane').hidden=true;
  apWorkbook=null;apParsed=null;apInvalidate();
@@ -1208,7 +1210,7 @@ function apParseTable(table){
    for(const key of AP_GRADES)data[key]=text(cells,key)||null;
    group.rows.push({englishName:en,koreanName:ko,className,
     nextClass:text(cells,'nextClass'),data});
-  }else if(lastClass&&!en&&!ko&&!cl){
+  }else if(lastClass&&!ko&&!cl&&(!en||/^(max|maximum|total|totals|합계|총점)$/i.test(en))){
    const values=AP_SKILLS.map(key=>text(cells,key));
    const positives=values.filter(v=>v!==''&&Number.isFinite(Number(v))&&Number(v)>0);
    if(positives.length>=2){
@@ -1377,6 +1379,7 @@ $('apSource').addEventListener('change',apInvalidate);
 $('apFile').addEventListener('change',apOnFile);
 $('apTab').addEventListener('change',apSelectWorkbookTab);
 $('apPasteRead').addEventListener('click',apParsePaste);
+$('apPaste').addEventListener('input',()=>{apInvalidate();apMessage('Paste updated — click Read pasted cells again.')});
 $('apPreview').addEventListener('click',apPreviewPeriod);
 $('apConfirm').addEventListener('click',apCreatePeriod);
 $('apDialog').addEventListener('click',e=>{if(e.target===$('apDialog'))apClose()});
