@@ -692,7 +692,9 @@ function classTotalInput(key){
    input.dataset.saveState='editing';
    refreshPercentages();
   }catch{
+   if(maximumPreview?.testId===current.testId&&maximumPreview.key===key)maximumPreview=null;
    input.setAttribute('aria-invalid','true');
+   refreshPercentages();
   }
  });
  input.addEventListener('change',()=>setAssessmentMaximum(key,input.value,input));
@@ -717,7 +719,12 @@ async function setAssessmentMaximum(key,rawValue,input=null,options={}){
  const previous=model.totals[key]??null;
  let next;
  try{next=assessmentMaxNumber(rawValue);}
- catch(e){if(input)input.value=display(previous);status(e.message,true);return false;}
+ catch(e){
+  if(maximumPreview?.testId===recordTestId&&maximumPreview.key===key)maximumPreview=null;
+  if(input){input.value=display(previous);input.dataset.saveState='error';input.title=e.message;}
+  if(current?.testId===recordTestId)refreshPercentages();
+  status(e.message,true);return false;
+ }
  if(previous===next){
   if(maximumPreview?.testId===recordTestId&&maximumPreview.key===key)maximumPreview=null;
   if(input){input.value=display(previous);input.dataset.saveState='saved';}
