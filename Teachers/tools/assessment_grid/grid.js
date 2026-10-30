@@ -2,6 +2,7 @@
 'use strict';
 const $ = id => document.getElementById(id);
 const API = '/.netlify/functions/test_admin';
+const GRID_REV='2026.10.30.01';
 const PERIODS = {
  '2026-02': 'February 2026',
  '2026-06': 'June 2026',
@@ -39,6 +40,7 @@ const percentText=v=>v===null?'—':(Math.round(v*10)/10).toFixed(1)+'%';
 
 let tests = new Map(), klass = '', current = null, selected = null;
 let undo = [], redo = [], pending = new Map(), alive = true;
+const pendingMaxima=new Set();
 let lastTyping = null;
 function historyFor(stack,testId){
  for(let i=stack.length-1;i>=0;i--)if(stack[i].testId===testId)return i;
@@ -98,6 +100,11 @@ function getClass(name) {
   const totals=Object.fromEntries(columns.filter(c=>c.type==='number').map(c=>[c.key,c.max]));
   const prev=classCache.get(cacheKey);let changed=0;
   if(prev){
+   // A background refresh must not replace a maximum still being saved.
+   for(const key of SKILLS){
+    if(pendingMaxima.has(cacheKey+':'+key))totals[key]=prev.totals[key];
+   }
+   if(SKILLS.some(key=>String(prev.totals[key]??'')!==String(totals[key]??'')))changed++;
    const old=new Map(prev.rows.map(x=>[x.id,x]));
    for(const fresh of rows) {
     const row=old.get(fresh.id);
@@ -123,7 +130,7 @@ async function openClass(name,refresh=false) {
   try{
    const {changed}=await getClass(name);
    if(klass!==name||!current||current.testId!==findTest(name).id)return;
-   if(changed){updateVisibleValues();status('Updated from another teacher · '+changed+' row(s)');}
+   if(changed){updateVisibleValues();status('Updated from another teacher · scores or maxima refreshed');}
   }catch(e){status('Refresh failed: '+e.message,true);}
   return;
  }
@@ -421,15 +428,23 @@ async function save(row){
   status('Save failed: '+e.message,true);
  }finally{row.saving=false;}
 }
-function history(type){
+async function history(type){
  if(!current)return;
  const source=type==='undo'?undo:redo,dest=type==='undo'?redo:undo;
  const index=source.map(op=>op.testId).lastIndexOf(current.testId);
  if(index<0)return;
  const [operation]=source.splice(index,1);
- const result=applyBatch(operation.changes.map(c=>({id:c.id,key:c.key,value:type==='undo'?c.before:c.after})),
-  {record:false,label:'History',restore:true});
- if(result.count)dest.push(operation);
+ if(operation.maximum){
+  const {key,before,after}=operation.maximum;
+  const input=Array.from($('sheet').querySelectorAll('.totals input[data-max-key]'))
+   .find(el=>el.dataset.maxKey===key);
+  const success=await setAssessmentMaximum(key,type==='undo'?before:after,input,{record:false});
+  if(success)dest.push(operation);else source.splice(index,0,operation);
+ }else{
+  const result=applyBatch(operation.changes.map(c=>({id:c.id,key:c.key,value:type==='undo'?c.before:c.after})),
+   {record:false,label:'History',restore:true});
+  if(result.count)dest.push(operation);
+ }
  updateHistoryButtons();
 }
 function updateHistoryButtons(){
@@ -640,7 +655,9 @@ function render(){
  const totals=document.createElement('tr');totals.className='totals';
  const label=document.createElement('td');label.textContent='Σ';totals.append(label);
  for(const [i,[key,,type]] of FIELDS.entries()){
-  const td=document.createElement('td');td.textContent=i===0?'Class TOTAL':type==='score'?display(current.totals[key]):'';
+  const td=document.createElement('td');
+  if(i===0)td.textContent='Class TOTAL';
+  else if(type==='score')td.append(classTotalInput(key));
   totals.append(td);
  }
  for(let i=0;i<2;i++){const td=document.createElement('td');td.className='metric';td.textContent='—';totals.append(td);}
@@ -649,8 +666,82 @@ function render(){
  updateSelectionClasses();
  updateHistoryButtons();
 }
+
+function assessmentMaxNumber(value){
+ if(value===null||value===undefined||String(value).trim()==='')return null;
+ const number=Number(value);
+ if(!Number.isFinite(number)||number<=0||number>10000)throw Error('Enter a positive maximum (up to 10,000), or leave blank');
+ return number;
+}
+function classTotalInput(key){
+ const input=document.createElement('input');
+ input.className='class-total-input';
+ input.type='number';input.inputMode='decimal';input.step='any';input.min='0.01';input.max='10000';
+ input.dataset.maxKey=key;
+ input.value=display(current.totals[key]);
+ input.setAttribute('aria-label',klass+' maximum '+(FIELDS.find(f=>f[0]===key)?.[1]||key));
+ input.title='Edit the maximum points for '+key+' in '+klass;
+ input.addEventListener('change',()=>setAssessmentMaximum(key,input.value,input));
+ input.addEventListener('keydown',event=>{
+  if(event.key==='Escape'){
+   event.preventDefault();event.stopPropagation();
+   input.value=display(current?.totals[key]);input.blur();
+  }else if(event.key==='Enter'){
+   event.preventDefault();event.stopPropagation();
+   input.blur();
+  }
+ });
+ return input;
+}
+async function setAssessmentMaximum(key,rawValue,input=null,options={}){
+ const model=current,recordTestId=model?.testId;
+ if(!recordTestId||!SKILLS.includes(key))return false;
+ const task=recordTestId+':'+key;
+ if(pendingMaxima.has(task))return false;
+ const previous=model.totals[key]??null;
+ let next;
+ try{next=assessmentMaxNumber(rawValue);}
+ catch(e){if(input)input.value=display(previous);status(e.message,true);return false;}
+ if(previous===next){if(input)input.value=display(previous);return true;}
+ pendingMaxima.add(task);
+ if(input)input.disabled=true;
+ model.totals[key]=next;
+ if(current?.testId===recordTestId)refreshPercentages();
+ status('Saving '+klass+' maximum for '+key+'…');
+ try{
+  await api('set_assessment_max',{},{
+   method:'POST',headers:{'Content-Type':'application/json'},
+   body:JSON.stringify({test_id:recordTestId,skill:key,max:next,expected:previous})
+  });
+  if(options.record!==false){
+   undo.push({label:'Class maximum',testId:recordTestId,
+    maximum:{key,before:previous,after:next},changes:[],at:Date.now()});
+   if(undo.length>250)undo.shift();
+   redo.length=0;
+  }
+  if(current?.testId===recordTestId){
+   status('Saved · '+klass+' '+key+' maximum '+(next??'blank'));
+   updateHistoryButtons();
+  }
+  return true;
+ }catch(e){
+  model.totals[key]=previous;
+  if(current?.testId===recordTestId){
+   refreshPercentages();
+   status('Maximum not saved: '+e.message,true);
+  }
+  return false;
+ }finally{
+  pendingMaxima.delete(task);
+  if(input){input.disabled=false;input.value=display(model.totals[key]);}
+  if(current?.testId===recordTestId)refreshPercentages();
+ }
+}
 function updateVisibleValues(force=false){
  if(!current)return;
+ for(const input of $('sheet').querySelectorAll('.totals input[data-max-key]')){
+  if(force||document.activeElement!==input)input.value=display(current.totals[input.dataset.maxKey]);
+ }
  const trs=$('sheet').querySelectorAll('tbody tr[data-row-id]');
  for(const tr of trs){
   const row=getRowById(tr.dataset.rowId);if(!row)continue;
