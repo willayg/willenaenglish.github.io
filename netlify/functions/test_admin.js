@@ -257,7 +257,10 @@ exports.handler = async (event) => {
         return respond(event,duplicate?409:400,{success:false,error:duplicate?'That assessment period already exists':created.error.message});
       }
       const newTests=created.data||[];
-      if(newTests.length!==records.length)return respond(event,500,{success:false,error:'Could not verify all classes were created'});
+      if(newTests.length!==records.length){
+        if(newTests.length)await db.from('tests').delete().in('id',newTests.map(t=>t.id));
+        return respond(event,500,{success:false,error:'Could not verify all classes were created. No period was confirmed.'});
+      }
       const byClass=new Map(newTests.map(t=>[t.class,t.id]));
       const entries=[];
       for(const cl of prepared.classes)for(const row of cl.rows){
