@@ -12,7 +12,7 @@ const periodLabel = () => PERIODS[period] || period;
 const periodPrefix = () => 'Assessment Grid | '+periodLabel()+' | ';
 const ORDER = ['Brown','Stanford','Manchester','New York','Hawaii','Boston','Sydney','Berkeley','Chicago','Cambridge','Yale','Washington','Princeton','Oxford','MIT','Dublin','Pre-Harvard'];
 const FIELDS = [
- ['englishName','Name','fixed'], ['koreanName','Korean','fixed'], ['className','Class','fixed'],
+ ['englishName','Name','fixed'], ['koreanName','Korean','fixed'],
  ['nextClass','Next Class','fixed'], ['lib_reading','Book Reading','grade'],
  ['lib_raz','RAZ Kids','grade'], ['lib_punctuality','Punctuality','grade'],
  ['phonics','Phonics','score'], ['listening','Listening','score'], ['vocab','Vocab','score'],
@@ -236,7 +236,7 @@ async function startup(){
    percentages are copyable but always read-only. All writes use test_admin. */
 const COLS=FIELDS.map(f=>f[0]).concat(['totalPct','averagePct']);
 const METRIC_KEYS=new Set(['totalPct','averagePct']);
-const COLUMN_DEFAULTS={num:42,englishName:138,koreanName:104,className:112,nextClass:112,lib_reading:116,lib_raz:103,lib_punctuality:105,phonics:106,listening:112,vocab:105,grammar:112,gw:150,write:105,reading:108,speaking:113,totalPct:108,averagePct:120};
+const COLUMN_DEFAULTS={num:42,englishName:172,koreanName:124,nextClass:112,lib_reading:116,lib_raz:103,lib_punctuality:105,phonics:106,listening:112,vocab:105,grammar:112,gw:150,write:105,reading:108,speaking:113,totalPct:108,averagePct:120};
 const WIDTH_KEY='willena-assessment-grid-column-widths-v2';
 let widths={};
 try{widths=JSON.parse(localStorage.getItem(WIDTH_KEY)||'{}')||{}}catch{widths={}}
@@ -566,7 +566,6 @@ function resizeColumns(){
  table.style.tableLayout='fixed';
  table.style.width=Math.max(840,keys.reduce((n,k)=>n+colWidth(k),0))+'px';
  table.style.setProperty('--grid-frozen-name-left',colWidth('num')+'px');
- table.style.setProperty('--grid-frozen-korean-left',(colWidth('num')+colWidth('englishName'))+'px');
 }
 function headCell(label,key){
  const th=document.createElement('th');th.textContent=label;
@@ -594,7 +593,6 @@ function headCell(label,key){
     const col=$('sheet').querySelectorAll('colgroup col')[idx];
     if(col)col.style.width=widths[key]+'px';
     $('sheet').style.width=cols.reduce((sum,k)=>sum+colWidth(k),0)+'px';
-    $('sheet').style.setProperty('--grid-frozen-korean-left',(colWidth('num')+colWidth('englishName'))+'px');
     $('sheet').style.setProperty('--grid-frozen-name-left',colWidth('num')+'px');
    };
    const onUp=()=>{
