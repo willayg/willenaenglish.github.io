@@ -5,14 +5,14 @@ const KEY='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const kstDay=()=>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
 const isoDate=(daysBack)=>{const d=new Date(kstDay()+'T12:00:00+09:00');d.setDate(d.getDate()-daysBack);return d.toISOString().slice(0,10)};
-let period=30,rows=[],members=[],loading=false,lastLoaded=0,tab='overview',requestId=0;
+let period=7,rows=[],members=[],loading=false,lastLoaded=0,tab='overview',requestId=0;
 function mount(){
  const shell=document.querySelector('#view-naesin-v2 .na2-shell');
  if(!shell||shell.querySelector('#na2Overview'))return;
  const tabs=document.createElement('div');tabs.className='na2-ov-tabs';tabs.innerHTML='<button type="button" data-ov-tab="overview" class="active">Overview</button><button type="button" data-ov-tab="exams">시험 현황</button>';
  shell.insertBefore(tabs,shell.firstChild);
  const box=document.createElement('section');box.id='na2Overview';box.className='na2-ov';
- box.innerHTML='<div class="na2-ov-top"><div><h2>일일 활동</h2><p>문제 풀이 수 · 정답률</p></div><div class="na2-ov-actions"><select id="na2OvPeriod" aria-label="기간"><option value="7">7일</option><option value="30" selected>30일</option><option value="60">60일</option><option value="90">90일</option></select><button id="na2OvRefresh" type="button">새로고침</button></div></div><div id="na2OvSummary" class="na2-ov-summary"></div><div id="na2OvChart" class="na2-ov-student-charts" aria-label="Student daily activity charts">데이터 불러오는 중…</div><div class="na2-ov-table-head"><strong>학생별 활동</strong><input type="search" id="na2OvSearch" placeholder="학생 검색" aria-label="학생 검색"></div><div id="na2OvTable" class="na2-ov-table-wrap"></div><p class="na2-ov-note">날짜는 한국 시간 기준 · 정답률은 정답 수 ÷ 시도 수 · 재시도 포함</p>';
+ box.innerHTML='<div class="na2-ov-top"><div><h2>일일 활동</h2><p>문제 풀이 수 · 정답률</p></div><div class="na2-ov-actions"><select id="na2OvPeriod" aria-label="기간"><option value="7" selected>7일</option><option value="30">30일</option><option value="60">60일</option><option value="90">90일</option></select><button id="na2OvRefresh" type="button">새로고침</button></div></div><div id="na2OvSummary" class="na2-ov-summary"></div><div id="na2OvChart" class="na2-ov-student-charts" aria-label="Student daily activity charts">데이터 불러오는 중…</div><div class="na2-ov-table-head"><strong>학생별 활동</strong><input type="search" id="na2OvSearch" placeholder="학생 검색" aria-label="학생 검색"></div><div id="na2OvTable" class="na2-ov-table-wrap"></div><p class="na2-ov-note">날짜는 한국 시간 기준 · 정답률은 정답 수 ÷ 시도 수 · 재시도 포함</p>';
  tabs.after(box);
  tabs.addEventListener('click',e=>{const b=e.target.closest('[data-ov-tab]');if(b)setTab(b.dataset.ovTab)});
  document.getElementById('na2OvPeriod').addEventListener('change',e=>{period=Number(e.target.value)||30;load(true)});
