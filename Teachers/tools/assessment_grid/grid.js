@@ -2,7 +2,7 @@
 'use strict';
 const $ = id => document.getElementById(id);
 const API = '/.netlify/functions/test_admin';
-const GRID_REV='2026.10.30.01';
+const GRID_REV='2026.10.30.02';
 const PERIODS = {
  '2026-02': 'February 2026',
  '2026-06': 'June 2026',
@@ -41,6 +41,7 @@ const percentText=v=>v===null?'—':(Math.round(v*10)/10).toFixed(1)+'%';
 let tests = new Map(), klass = '', current = null, selected = null;
 let undo = [], redo = [], pending = new Map(), alive = true;
 const pendingMaxima=new Set();
+let maximumPreview=null;
 let lastTyping = null;
 function historyFor(stack,testId){
  for(let i=stack.length-1;i>=0;i--)if(stack[i].testId===testId)return i;
@@ -681,11 +682,26 @@ function classTotalInput(key){
  input.value=display(current.totals[key]);
  input.setAttribute('aria-label',klass+' maximum '+(FIELDS.find(f=>f[0]===key)?.[1]||key));
  input.title='Edit the maximum points for '+key+' in '+klass;
+ // Recalculate instantly while typing, without treating uncommitted text as saved.
+ input.addEventListener('input',()=>{
+  if(!current)return;
+  try{
+   const value=assessmentMaxNumber(input.value);
+   maximumPreview={testId:current.testId,key,value};
+   input.removeAttribute('aria-invalid');
+   input.dataset.saveState='editing';
+   refreshPercentages();
+  }catch{
+   input.setAttribute('aria-invalid','true');
+  }
+ });
  input.addEventListener('change',()=>setAssessmentMaximum(key,input.value,input));
  input.addEventListener('keydown',event=>{
   if(event.key==='Escape'){
    event.preventDefault();event.stopPropagation();
-   input.value=display(current?.totals[key]);input.blur();
+   input.value=display(current?.totals[key]);
+   if(maximumPreview?.key===key&&maximumPreview.testId===current?.testId)maximumPreview=null;
+   refreshPercentages();input.blur();
   }else if(event.key==='Enter'){
    event.preventDefault();event.stopPropagation();
    input.blur();
@@ -702,9 +718,15 @@ async function setAssessmentMaximum(key,rawValue,input=null,options={}){
  let next;
  try{next=assessmentMaxNumber(rawValue);}
  catch(e){if(input)input.value=display(previous);status(e.message,true);return false;}
- if(previous===next){if(input)input.value=display(previous);return true;}
+ if(previous===next){
+  if(maximumPreview?.testId===recordTestId&&maximumPreview.key===key)maximumPreview=null;
+  if(input){input.value=display(previous);input.dataset.saveState='saved';}
+  if(current?.testId===recordTestId)refreshPercentages();
+  return true;
+ }
  pendingMaxima.add(task);
- if(input)input.disabled=true;
+ if(input){input.disabled=true;input.dataset.saveState='saving';input.title='Saving maximum…';}
+ if(maximumPreview?.testId===recordTestId&&maximumPreview.key===key)maximumPreview=null;
  model.totals[key]=next;
  if(current?.testId===recordTestId)refreshPercentages();
  status('Saving '+klass+' maximum for '+key+'…');
@@ -719,6 +741,7 @@ async function setAssessmentMaximum(key,rawValue,input=null,options={}){
    if(undo.length>250)undo.shift();
    redo.length=0;
   }
+  if(input){input.dataset.saveState='saved';input.title='Saved to Supabase';}
   if(current?.testId===recordTestId){
    status('Saved · '+klass+' '+key+' maximum '+(next??'blank'));
    updateHistoryButtons();
@@ -726,6 +749,7 @@ async function setAssessmentMaximum(key,rawValue,input=null,options={}){
   return true;
  }catch(e){
   model.totals[key]=previous;
+  if(input){input.dataset.saveState='error';input.title='Save FAILED: '+e.message;}
   if(current?.testId===recordTestId){
    refreshPercentages();
    status('Maximum not saved: '+e.message,true);
@@ -748,7 +772,10 @@ function updateVisibleValues(force=false){
   for(const input of tr.querySelectorAll('input')){
    if(force||document.activeElement!==input)input.value=display(row.data[input.dataset.key]);
   }
-  const pct=calculatePercentages(row,current.totals);
+  const totals=maximumPreview?.testId===current.testId
+   ?{...current.totals,[maximumPreview.key]:maximumPreview.value}
+   :current.totals;
+  const pct=calculatePercentages(row,totals);
   const t=tr.querySelector('[data-metric="total"]'),a=tr.querySelector('[data-metric="average"]');
   if(t)t.textContent=percentText(pct.total);
   if(a)a.textContent=percentText(pct.average);
