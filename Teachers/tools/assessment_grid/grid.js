@@ -2,7 +2,7 @@
 'use strict';
 const $ = id => document.getElementById(id);
 const API = '/.netlify/functions/test_admin';
-const GRID_REV='2026.10.30.05';
+const GRID_REV='2026.10.30.06';
 const PERIODS = {
  '2026-02': 'February 2026',
  '2026-06': 'June 2026',
@@ -99,6 +99,7 @@ function getClass(name) {
   const entries=new Map((j.entries||[]).map(x=>[x.user_id,x.data]));
   const rows=meta.rows.map(x=>makeRow(x,x.userId?entries.get(x.userId):null,j.test.id));
   const totals=Object.fromEntries(columns.filter(c=>c.type==='number').map(c=>[c.key,c.max]));
+  const classComment=String(columns.find(c=>c.key==='_report_comment')?.text||'');
   const prev=classCache.get(cacheKey);let changed=0;
   if(prev){
    // A background refresh must not replace a maximum still being saved.
@@ -114,11 +115,12 @@ function getClass(name) {
      row.data=fresh.data;changed++;
     }
    }
+   if(prev.classComment!==classComment)changed++;
    prev.rows=rows.map(x=>old.get(x.id)||x);
-   prev.totals=totals;prev.loaded=Date.now();
+   prev.totals=totals;prev.classComment=classComment;prev.loaded=Date.now();
    return {model:prev,changed};
   }
-  const model={name,rows,totals,testId:j.test.id,loaded:Date.now()};
+  const model={name,rows,totals,classComment,testId:j.test.id,loaded:Date.now()};
   classCache.set(cacheKey,model);
   return {model,changed};
  }).finally(()=>inflight.delete(cacheKey));
@@ -1170,9 +1172,14 @@ function reportStudent(row){
 function reportTest(row){
  return {name:periodLabel()+' Report Cards',class:row.className,date:period+'-01',term_from:period,term_to:period,columns:reportColumns(row)};
 }
+function reportCommentFor(row){
+ const key=reportDraftKey(row);
+ if(reportDrafts.has(key))return reportDrafts.get(key);
+ return classCache.get(row.testId)?.classComment||'';
+}
 function makeCard(row){
  return renderCard({student:reportStudent(row),test:reportTest(row),
-   notes:reportDrafts.get(reportDraftKey(row))||'',totalMode:$('rcMode').value});
+   notes:reportCommentFor(row),totalMode:$('rcMode').value});
 }
 function fitReport(){
  const page=$('rcPageMount').querySelector('.rc-page');
@@ -1194,10 +1201,10 @@ function displayReport(){
  $('rcCounter').textContent=(reportPosition+1)+' / '+reportRows.length;
  $('rcPrev').disabled=reportBusy||reportPosition===0;
  $('rcNext').disabled=reportBusy||reportPosition>=reportRows.length-1;
- $('rcComment').value=reportDrafts.get(reportDraftKey(row))||'';
+ $('rcComment').value=reportCommentFor(row);
  $('rcPageMount').innerHTML=makeCard(row);
  fitReport();
- reportStatus('Preview uses the current grid scores. Comments are session drafts, not saved to Supabase.');
+ reportStatus('Class learning comment loaded from Supabase. Personal edits remain session-only until saved separately.');
 }
 function openReport(row){
  if(!current||!current.rows.length)return;
