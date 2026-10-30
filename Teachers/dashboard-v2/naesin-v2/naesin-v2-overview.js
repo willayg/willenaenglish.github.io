@@ -50,7 +50,11 @@ async function load(force=false){
   const byPlan=new Map();
   for(const group of groups)for(const m of group.members||[]){
     const plan=String(m.plan_id||'');if(!plan)continue;
-    const s=m.student||{};byPlan.set(plan,{plan,studentId:String(m.student_id||s.id||''),name:s.english_name||s.korean_name||s.name||s.username||m.english_name||m.korean_name||'Student'});
+    const st=m.student||{},g=group.group||{};
+    const label=[g.school, g.term ? g.term+'학기' : '',g.exam_type==='final'?'기말고사':g.exam_type==='midterm'?'중간고사':'',g.book_label||g.book_key].filter(Boolean).join(' · ')||'시험';
+    const current=byPlan.get(plan)||{plan,studentId:String(m.student_id||st.id||''),name:st.english_name||st.korean_name||st.name||st.username||m.english_name||m.korean_name||'Student',tests:[]};
+    if(!current.tests.includes(label))current.tests.push(label);
+    byPlan.set(plan,current);
   }
   members=[...byPlan.values()];lastLoaded=Date.now();render();
  }catch(err){if(id===requestId&&chart)chart.innerHTML='<div class="na2-ov-error">'+esc(err.message)+'</div>';console.warn('[Naesin Overview]',err)}
@@ -79,7 +83,7 @@ function render(){
  const overall=collect(valid,isoDate(period-1));
  document.getElementById('na2OvSummary').innerHTML=[['문제 수',overall.questions.toLocaleString()],['정답률',overall.accuracy],['활동 학생',overall.active+'명']].map(([name,val])=>'<div><span>'+name+'</span><strong>'+val+'</strong></div>').join('');
  const byPlan=new Map();for(const r of valid){const key=String(r.plan_id);if(!byPlan.has(key))byPlan.set(key,[]);byPlan.get(key).push(r)}
- box.innerHTML=visible.length?visible.map(m=>{const planRows=byPlan.get(m.plan)||[],st=collect(planRows,isoDate(period-1));return '<article class="na2-ov-student-card"><div class="na2-ov-student-head"><strong>'+esc(m.name)+'</strong><span>'+st.questions.toLocaleString()+'문제 · '+st.accuracy+' 정답률</span></div><div class="na2-ov-student-graph">'+studentChart(m,planRows)+'</div></article>'}).join(''):'<div class="na2-ov-error">표시할 학생이 없습니다.</div>';
+ box.innerHTML=visible.length?visible.map(m=>{const planRows=byPlan.get(m.plan)||[],st=collect(planRows,isoDate(period-1));return '<article class="na2-ov-student-card"><div class="na2-ov-student-head"><strong>'+esc(m.name)+'</strong><span>'+st.questions.toLocaleString()+'문제 · '+st.accuracy+' 정답률</span></div><div class="na2-ov-student-graph">'+studentChart(m,planRows)+'</div><div class="na2-ov-test-labels">'+(m.tests||[]).map((test,i)=>'<span><b>'+String.fromCharCode(65+i)+'.</b> '+esc(test)+'</span>').join('')+'</div></article>'}).join(''):'<div class="na2-ov-error">표시할 학생이 없습니다.</div>';
  document.getElementById('na2OvTable').innerHTML='<table><thead><tr><th>학생</th><th>오늘 문제</th><th>정답률</th><th>7일 문제</th><th>정답률</th><th>30일 문제</th><th>정답률</th></tr></thead><tbody>'+visible.map(m=>{const t=statsFor(m.plan,1),w=statsFor(m.plan,7),mo=statsFor(m.plan,30);return '<tr><td>'+esc(m.name)+'</td><td>'+t.questions+'</td><td>'+t.accuracy+'</td><td>'+w.questions+'</td><td>'+w.accuracy+'</td><td>'+mo.questions+'</td><td>'+mo.accuracy+'</td></tr>'}).join('')+'</tbody></table>';
 }
 
