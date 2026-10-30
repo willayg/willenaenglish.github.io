@@ -709,11 +709,12 @@ $('sheet').addEventListener('pointerdown',e=>{
  const hit=mobileSelectionTarget(e.target);
  if(!hit)return;
  e.preventDefault();e.stopPropagation();
- if(mobileSelectStep===0){
+ const extending=mobileSelectStep===1;
+ if(!extending){
   setSelection(hit.id,hit.key,false);
   mobileSelectStep=1;
  }else setSelection(hit.id,hit.key,true);
- mobileSelectPointer={id:e.pointerId,dragged:false,last:hit,secondTap:mobileSelectStep===1 && rangeSelection?.anchor.id!==hit.id};
+ mobileSelectPointer={id:e.pointerId,dragged:false,last:hit,secondTap:extending};
 },true);
 $('sheet').addEventListener('click',e=>{
  if(!mobileSelectMode||!e.target.closest('td[data-cell-key]'))return;
