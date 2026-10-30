@@ -237,7 +237,8 @@ function valueAt(row,key){
 function matchesSearch(row){
  const q=$('search').value.trim().toLocaleLowerCase();
  const found=!q||[row.englishName,row.koreanName,row.className].some(v=>v.toLocaleLowerCase().includes(q));
- if(!found||!filterText||!filterKey)return found;
+ if(!found||!filterText)return found;
+ if(!filterKey)return COLS.some(key=>valueAt(row,key).toLocaleLowerCase().includes(filterText));
  return valueAt(row,filterKey).toLocaleLowerCase().includes(filterText);
 }
 function visibleRows(){
