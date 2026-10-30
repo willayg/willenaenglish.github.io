@@ -2,3 +2,5 @@
 .na2-ov-student-charts{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,460px),1fr));gap:14px;margin:16px 0}.na2-ov-student-card{border:1px solid #dbeaed;background:#fff;border-radius:14px;padding:14px;min-width:0}.na2-ov-student-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}.na2-ov-student-head strong{font-size:17px;color:#263f48}.na2-ov-student-head span{font-size:12px;color:#68838a;font-weight:700}.na2-ov-student-graph svg{display:block;width:100%;height:auto;margin-top:10px}.na2-ov-student-graph{overflow:hidden}
 
 .na2-ov-test-labels{display:flex;flex-wrap:wrap;gap:5px 15px;margin-top:9px;color:#627c84;font-size:12px}.na2-ov-test-labels b{color:#71369b}
+
+.na2-ov-student-footer{border-top:1px solid #e4eff1;margin-top:8px;padding-top:10px}.na2-ov-student-footer>strong{font-size:17px;color:#263f48}.na2-ov-student-footer .na2-ov-test-labels{margin-top:4px}
