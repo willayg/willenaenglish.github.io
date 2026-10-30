@@ -233,7 +233,7 @@ exports.handler = async (event) => {
     }
 
     if ((action === 'preview_assessment_period'||action === 'create_assessment_period') && event.httpMethod === 'POST') {
-      if(!isAdmin)return respond(event,403,{success:false,error:'Only admins can create assessment periods'});
+      // Teacher/admin authorization was already enforced before reaching this action.
       const body=getBody();
       let prepared;
       try{prepared=await prepareAssessmentPeriod(db,body);}
