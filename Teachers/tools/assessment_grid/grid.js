@@ -203,6 +203,10 @@ async function loadPeriod(month,initial=false){
  }
 }
 async function startup(){
+ const filter=$('gridFilterColumn');
+ filter.replaceChildren();filter.add(new Option('All columns',''));
+ for(const [key,label] of FIELDS)filter.add(new Option(label,key));
+ filter.add(new Option('Total %','totalPct'));filter.add(new Option('Average %','averagePct'));
  const select=$('period');
  select.replaceChildren();
  for(const [value,label] of Object.entries(PERIODS))select.add(new Option(label,value));
@@ -385,7 +389,7 @@ async function save(row){
 function history(type){
  if(!current)return;
  const source=type==='undo'?undo:redo,dest=type==='undo'?redo:undo;
- const index=source.findLastIndex(op=>op.testId===current.testId);
+ const index=source.map(op=>op.testId).lastIndexOf(current.testId);
  if(index<0)return;
  const [operation]=source.splice(index,1);
  const result=applyBatch(operation.changes.map(c=>({id:c.id,key:c.key,value:type==='undo'?c.before:c.after})),
@@ -491,7 +495,7 @@ function moveSelection(direction,extend=false){
  focusGrid(rows[ri].id,COLS[ci],extend);
 }
 function focusCell(id,key,input){
- if(!suppressFocusSelection)setSelection(id,key,false);
+ if(!suppressFocusSelection&&!selectionDrag)setSelection(id,key,false);
  input?.select();
 }
 function editInput(row,key){
@@ -693,19 +697,16 @@ $('sheet').addEventListener('focusin',e=>{
 });
 document.addEventListener('keydown',e=>{
  if($('rcDialog')&&!$('rcDialog').hidden)return;
- const target=e.target,editing=target instanceof HTMLInputElement&&target.dataset.editing==='true';
+ const target=e.target,insideGrid=!!target.closest?.('#sheet');
+ const editing=target instanceof HTMLInputElement&&target.dataset.editing==='true';
  const ctrl=e.ctrlKey||e.metaKey,key=e.key.toLowerCase();
- if(ctrl&&!editing){
+ if(ctrl&&!editing&&insideGrid){
   if(key==='z'){e.preventDefault();history(e.shiftKey?'redo':'undo');return;}
   if(key==='y'){e.preventDefault();history('redo');return;}
   if(key==='a'&&current&&selected){e.preventDefault();const rows=visibleRows();if(!rows.length)return;rangeSelection={testId:current.testId,
     anchor:{id:rows[0].id,key:COLS[0]},focus:{id:rows[rows.length-1].id,key:COLS[COLS.length-1]}};updateSelectionClasses();return;}
  }
- if(!current||!selected)return;
- if(target instanceof HTMLInputElement && target.id==='search')return;
- if(target instanceof HTMLInputElement && target.id==='gridFilterValue')return;
- if(target instanceof HTMLInputElement && target.id==='formula')return;
- if(target instanceof HTMLSelectElement||target instanceof HTMLTextAreaElement)return;
+ if(!current||!selected||!insideGrid)return;
  if(e.key==='F2'&&target instanceof HTMLInputElement){e.preventDefault();target.dataset.editing='true';target.setSelectionRange(target.value.length,target.value.length);return;}
  if(e.key==='Escape'&&editing){e.preventDefault();target.dataset.editing='false';target.select();return;}
  if(editing)return;
@@ -718,7 +719,7 @@ document.addEventListener('keydown',e=>{
 },true);
 document.addEventListener('copy',e=>{
  if(!current||!rangeSelection||($('rcDialog')&&!$('rcDialog').hidden))return;
- if(e.target instanceof HTMLInputElement&&e.target.dataset.editing==='true')return;
+ if(!e.target.closest?.('#sheet')||e.target instanceof HTMLInputElement&&e.target.dataset.editing==='true')return;
  const str=readSelection();if(!str)return;
  e.clipboardData?.setData('text/plain',str);e.preventDefault();
 });
@@ -730,7 +731,7 @@ document.addEventListener('cut',e=>{
 });
 document.addEventListener('paste',e=>{
  if(!current||!rangeSelection||!$('rcDialog').hidden)return;
- if(e.target instanceof HTMLInputElement&&e.target.dataset.editing==='true')return;
+ if(!e.target.closest?.('#sheet')||e.target instanceof HTMLInputElement&&e.target.dataset.editing==='true')return;
  const str=e.clipboardData?.getData('text/plain');
  if(str===undefined||str===null)return;
  e.preventDefault();pasteMatrix(str);
