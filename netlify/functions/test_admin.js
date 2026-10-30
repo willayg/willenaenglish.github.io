@@ -88,6 +88,41 @@ exports.handler = async (event) => {
   function getBody() { try { return JSON.parse(event.body||'{}'); } catch { return {}; } }
 
   try {
+    // Teacher-only individual report-card drafts. Never modify class comments.
+    if (action === 'get_report_card_comments' && event.httpMethod === 'GET') {
+      const periodId=String(qs.period_id||'');
+      const testId=String(qs.test_id||'');
+      if(!/^\d{4}-\d{2}$/.test(periodId)&&!/^[0-9a-f-]{36}$/i.test(testId))return respond(event,400,{success:false,error:'Invalid period'});
+      const {data,error} = await db.from('report_card_student_comments')
+        .select('period_id,sheet_row,test_id,student_id,english_name,class_name,comment_text,revision,status')
+        .eq(periodId?'period_id':'test_id',periodId||testId).limit(500);
+      if (error) return respond(event,400,{success:false,error:error.message});
+      return respond(event,200,{success:true,comments:data||[]});
+    }
+    if (action === 'save_report_card_comment' && event.httpMethod === 'POST') {
+      const body=getBody();
+      const periodId=String(body.period_id||''), sheetRow=body.sheet_row;
+      const className=String(body.class_name||''), englishName=String(body.english_name||'');
+      const revision=body.revision;
+      if(!/^\d{4}-\d{2}$/.test(periodId)||!Number.isInteger(sheetRow)||sheetRow<1||
+         !className||!englishName||!Number.isInteger(revision)||revision<0||
+         typeof body.comment_text!=='string'||body.comment_text.length>10000)
+        return respond(event,400,{success:false,error:'Invalid comment update'});
+      const {data:existing,error:lookupError}=await db.from('report_card_student_comments')
+        .select('period_id,sheet_row,class_name,english_name')
+        .eq('period_id',periodId).eq('sheet_row',sheetRow).limit(2);
+      if(lookupError)return respond(event,400,{success:false,error:lookupError.message});
+      if(existing?.length!==1||existing[0].class_name!==className||existing[0].english_name!==englishName)
+        return respond(event,409,{success:false,error:'Student mismatch or duplicate. No changes saved.'});
+      const {data,error}=await db.from('report_card_student_comments')
+        .update({comment_text:body.comment_text,revision:revision+1,updated_at:new Date().toISOString()})
+        .eq('period_id',periodId).eq('sheet_row',sheetRow).eq('revision',revision)
+        .select('revision,comment_text').maybeSingle();
+      if(error)return respond(event,400,{success:false,error:error.message});
+      if(!data)return respond(event,409,{success:false,error:'Comment changed elsewhere. Reopen to refresh.'});
+      return respond(event,200,{success:true,comment:data});
+    }
+
     if (action === 'create_test' && event.httpMethod === 'POST') {
       const body = getBody();
       const name = (body.name||'').trim();
