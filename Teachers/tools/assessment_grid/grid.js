@@ -36,17 +36,6 @@ function calculatePercentages(row,totals){
  return {total:possible>0?earned/possible*100:null,average:count?percentSum/count:null,earned,possible,count};
 }
 const percentText=v=>v===null?'—':(Math.round(v*10)/10).toFixed(1)+'%';
-function refreshPercentages(){
- if(!current)return;
- for(const tr of $('sheet').querySelectorAll('tbody tr[data-row-id]')){
-  const r=current.rows.find(x=>x.id===tr.dataset.rowId);
-  if(!r)continue;
-  const p=calculatePercentages(r,current.totals);
-  const total=tr.querySelector('[data-metric="total"]'),average=tr.querySelector('[data-metric="average"]');
-  if(total)total.textContent=percentText(p.total);
-  if(average)average.textContent=percentText(p.average);
- }
-}
 
 let tests = new Map(), klass = '', current = null, selected = null;
 let undo = [], redo = [], pending = new Map(), alive = true;
@@ -220,248 +209,531 @@ async function startup(){
  select.value=period;
  await loadPeriod(period,true);
 }
-function validate(row,key,v){
- if(!editable.has(key))return false;
+
+/* Spreadsheet engine: selection, clipboard, history, fill, sort and resize.
+   Only assessment value cells are writable; names, maxima and calculated
+   percentages are copyable but always read-only. All writes use test_admin. */
+const COLS=FIELDS.map(f=>f[0]).concat(['totalPct','averagePct']);
+const METRIC_KEYS=new Set(['totalPct','averagePct']);
+const COLUMN_DEFAULTS={num:42,englishName:138,koreanName:104,className:112,nextClass:112,lib_reading:116,lib_raz:103,lib_punctuality:105,phonics:106,listening:112,vocab:105,grammar:112,gw:150,write:105,reading:108,speaking:113,totalPct:108,averagePct:120};
+const WIDTH_KEY='willena-assessment-grid-column-widths-v2';
+let widths={};
+try{widths=JSON.parse(localStorage.getItem(WIDTH_KEY)||'{}')||{}}catch{widths={}}
+let filterKey='',filterText='',sortKey='',sortDir=0;
+let rangeSelection=null,selectionDrag=false,fillDrag=null,suppressFocusSelection=false;
+const colWidth=key=>Math.max(56,Math.min(520,Number(widths[key])||COLUMN_DEFAULTS[key]||105));
+function getRowById(id){return current?.rows.find(row=>row.id===String(id))}
+function valueAt(row,key){
+ if(key==='totalPct'||key==='averagePct'){
+  const pct=calculatePercentages(row,current?.totals||{});
+  return percentText(key==='totalPct'?pct.total:pct.average);
+ }
+ return display(editable.has(key)?row.data[key]:row[key]);
+}
+function matchesSearch(row){
+ const q=$('search').value.trim().toLocaleLowerCase();
+ const found=!q||[row.englishName,row.koreanName,row.className].some(v=>v.toLocaleLowerCase().includes(q));
+ if(!found||!filterText||!filterKey)return found;
+ return valueAt(row,filterKey).toLocaleLowerCase().includes(filterText);
+}
+function visibleRows(){
+ if(!current)return [];
+ const rows=current.rows.filter(matchesSearch);
+ if(!sortKey||!sortDir)return rows;
+ const key=sortKey, dir=sortDir, original=new Map(current.rows.map((r,i)=>[r.id,i]));
+ return [...rows].sort((a,b)=>{
+  const av=valueAt(a,key), bv=valueAt(b,key);
+  if(av===''&&bv!=='')return 1;
+  if(bv===''&&av!=='')return -1;
+  const an=Number(av.replace('%','')),bn=Number(bv.replace('%',''));
+  const compare=av!==''&&bv!==''&&Number.isFinite(an)&&Number.isFinite(bn)?an-bn:av.localeCompare(bv,undefined,{numeric:true,sensitivity:'base'});
+  return (compare||0)*dir||(original.get(a.id)-original.get(b.id));
+ });
+}
+function selectedRect(){
+ if(!current||rangeSelection?.testId!==current.testId)return null;
+ const rows=visibleRows();
+ const ai=rows.findIndex(x=>x.id===rangeSelection.anchor.id);
+ const fi=rows.findIndex(x=>x.id===rangeSelection.focus.id);
+ const ac=COLS.indexOf(rangeSelection.anchor.key),fc=COLS.indexOf(rangeSelection.focus.key);
+ if(ai<0||fi<0||ac<0||fc<0)return null;
+ return {rows,r1:Math.min(ai,fi),r2:Math.max(ai,fi),c1:Math.min(ac,fc),c2:Math.max(ac,fc)};
+}
+function updateSelectionClasses(){
+ const rect=selectedRect(), sheet=$('sheet');
+ for(const td of sheet.querySelectorAll('tbody td[data-cell-key]')){
+  const rowIndex=rect?.rows.findIndex(r=>r.id===td.parentElement.dataset.rowId)??-1;
+  const col=COLS.indexOf(td.dataset.cellKey);
+  const inside=!!rect&&rowIndex>=rect.r1&&rowIndex<=rect.r2&&col>=rect.c1&&col<=rect.c2;
+  td.classList.toggle('grid-range-selected',inside);
+  td.classList.toggle('grid-range-edge',inside&&(rowIndex===rect.r1||rowIndex===rect.r2||col===rect.c1||col===rect.c2));
+  td.classList.toggle('grid-active-cell',inside&&td.parentElement.dataset.rowId===rangeSelection.focus.id&&td.dataset.cellKey===rangeSelection.focus.key);
+  td.querySelector('.grid-fill-handle')?.remove();
+  if(inside&&rowIndex===rect.r2&&col===rect.c2){
+   const handle=document.createElement('span');handle.className='grid-fill-handle';
+   handle.title='Drag to fill selected values';
+   handle.addEventListener('pointerdown',e=>{
+    if(!current||!rect)return;
+    e.preventDefault();e.stopPropagation();
+    selectionDrag=false;
+    fillDrag={rect,targetRow:rect.r2,targetCol:rect.c2};
+   });
+   td.append(handle);
+  }
+ }
+ const count=rect?(rect.r2-rect.r1+1)*(rect.c2-rect.c1+1):0;
+ $('selectionInfo').textContent=count>1?count+' cells selected':'';
+}
+function setSelection(id,key,extend=false){
+ if(!current||!COLS.includes(key)||!getRowById(id))return;
+ const point={id:String(id),key};
+ if(!extend||rangeSelection?.testId!==current.testId)rangeSelection={testId:current.testId,anchor:point,focus:point};
+ else rangeSelection.focus=point;
+ selected={id:String(id),k:key};
+ const row=getRowById(id);
+ $('address').textContent=(COLS.indexOf(key)+2)+' · '+row.englishName;
+ $('formula').value=valueAt(row,key);
+ $('formula').readOnly=!editable.has(key)||!row.userId;
+ updateSelectionClasses();
+}
+function cellElement(id,key){
+ const tr=Array.from($('sheet').querySelectorAll('tbody tr[data-row-id]')).find(x=>x.dataset.rowId===String(id));
+ return Array.from(tr?.querySelectorAll('td[data-cell-key]')||[]).find(x=>x.dataset.cellKey===key)||null;
+}
+function focusGrid(id,key,extend=false){
+ const td=cellElement(id,key);
+ if(!td)return false;
+ suppressFocusSelection=true;
+ const input=td.querySelector('input:not([disabled])');
+ (input||td).focus({preventScroll:true});
+ suppressFocusSelection=false;
+ setSelection(id,key,extend);
+ td.scrollIntoView({block:'nearest',inline:'nearest'});
+ return true;
+}
+function validate(row,key,value){
+ if(!editable.has(key)||!row?.userId)return false;
+ const v=display(value).trim();
  if(v==='')return true;
  const kind=FIELDS.find(f=>f[0]===key)?.[2];
  if(kind==='grade')return v.length<=12;
- const val=Number(v);if(!Number.isFinite(val)||val<0)return false;
+ const number=Number(v);
+ if(!Number.isFinite(number)||number<0)return false;
  const max=classCache.get(row.testId)?.totals?.[key];
- return max===null||max===undefined||!Number.isFinite(Number(max)) ||val<=Number(max);
+ return max===null||max===undefined||!Number.isFinite(Number(max))||number<=Number(max);
+}
+function normalizedValue(key,value){
+ const v=display(value).trim();
+ return v===''?null:FIELDS.find(f=>f[0]===key)?.[2]==='score'?Number(v):v;
+}
+function applyBatch(items,options={}){
+ const changes=[],touched=new Set();let invalid=0,readonly=0;
+ for(const item of items){
+  const row=item.row||getRowById(item.id),key=item.key;
+  if(!row||row.testId!==current?.testId||!editable.has(key)||!row.userId){readonly++;continue;}
+  if(!validate(row,key,item.value)){invalid++;continue;}
+  const before=display(row.data[key]),after=display(item.value).trim();
+  if(before===after)continue;
+  changes.push({id:row.id,key,before,after});
+  row.data[key]=normalizedValue(key,after);
+  row.rev++;row.dirty=true;touched.add(row);
+ }
+ if(changes.length&&options.record!==false){
+  const now=Date.now(),last=undo[undo.length-1];
+  const typing=options.label==='Typing'&&changes.length===1;
+  const same=typing&&last?.label==='Typing'&&last.testId===current.testId&&last.changes.length===1&&
+    last.changes[0].id===changes[0].id&&last.changes[0].key===changes[0].key&&now-last.at<1600;
+  if(same){last.changes[0].after=changes[0].after;last.at=now;}
+  else{undo.push({label:options.label||'Edit',testId:current.testId,changes,at:now});if(undo.length>250)undo.shift();}
+  redo.length=0;
+ }
+ for(const row of touched)queueSave(row);
+ if(changes.length)updateVisibleValues();
+ updateHistoryButtons();
+ return {count:changes.length,invalid,readonly};
 }
 function noteChange(row,key,value,track=true){
- const v=display(value).trim();
- if(!row?.userId)return false;
- if(!validate(row,key,v))return false;
- const before=display(row.data[key]);
- if(before===v)return true;
- if(track)pushTransaction([{testId:row.testId,id:row.id,key,before,after:v}],{typing:track==='typing'});
- row.data[key]=v===''?null:(FIELDS.find(f=>f[0]===key)?.[2]==='score'?Number(v):v);
- row.rev++;row.dirty=true;
- queueSave(row);
- if(current?.testId===row.testId)refreshPercentages();
- return true;
+ const result=applyBatch([{row,key,value}],{record:track,label:track?'Typing':'Undo'});
+ return result.count>0||display(row?.data[key])===display(value).trim();
 }
 function queueSave(row){
  if(row.timer)clearTimeout(row.timer);
  pending.set(row.testId+':'+row.id,row);
- row.timer=setTimeout(()=>save(row),380);
- status('Saving changes…');
+ row.timer=setTimeout(()=>save(row),420);
+ status('Saving '+periodLabel()+'…');
 }
 async function save(row){
  if(row.saving)return;
  row.saving=true;
  try{
- while(row.saved<row.rev){
-   const rev=row.rev, payload={...row.data};
-   const j=await api('upsert_entries',{}, {method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({test_id:row.testId,entries:[{user_id:row.userId,data:payload}]})});
-   if(j.failed || !j.upserted)throw new Error('Save was not confirmed');
+  while(row.saved<row.rev){
+   const rev=row.rev,payload={...row.data};
+   const result=await api('upsert_entries',{},{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({test_id:row.testId,entries:[{user_id:row.userId,data:payload}]})
+   });
+   if(result.failed||!result.upserted)throw Error('Save not confirmed');
    row.saved=rev;
- }
- row.dirty=false;row.failed=false;pending.delete(row.testId+':'+row.id);
- if(pending.size===0)status('Saved · '+periodLabel()+' · refreshes every 5 seconds');
- }catch(e){row.failed=true;row.dirty=true;status('Save failed: '+e.message+' — edit retained on screen',true)}
- finally{row.saving=false}
-}
-function focusCell(id,k,input){
- selected={id,k};
- const row=current?.rows.find(r=>r.id===id);
- $('address').textContent=(FIELDS.findIndex(f=>f[0]===k)+2)+' · '+(row?.englishName||'');
- $('formula').value=display(row?.data[k]);
- input?.select();
-}
-function editInput(row,k){
- const input=document.createElement('input');
- input.value=display(row.data[k]);
- input.dataset.rowId=row.id;input.dataset.key=k;
- input.setAttribute('aria-label',row.englishName+' '+k);
- if(!row.userId){input.disabled=true;input.title='Student account not matched — read only'}
- input.addEventListener('focus',()=>{
-  input.dataset.editing='false';
-  focusCell(row.id,k,input);
- });
- input.addEventListener('dblclick',()=>{
-  input.dataset.editing='true';
- });
- input.addEventListener('input',()=>{
-  const v=input.value.trim();
-  if(validate(row,k,v)){input.removeAttribute('aria-invalid');noteChange(row,k,v,'typing');}
-  else input.setAttribute('aria-invalid','true');
- });
- input.addEventListener('blur',()=>{if(!validate(row,k,input.value.trim()))input.value=display(row.data[k])});
- input.addEventListener('keydown',e=>{
-  if(e.key==='F2'){
-   e.preventDefault();
-   input.dataset.editing='true';
-   input.setSelectionRange(input.value.length,input.value.length);
-   return;
   }
-  if(e.key==='Escape' && input.dataset.editing==='true'){
-   e.preventDefault();
-   input.dataset.editing='false';
-   input.select();
-   return;
-  }
-  const arrows=['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'];
-  if(!arrows.includes(e.key) && !['Enter','Tab'].includes(e.key))return;
-  // F2 or double-click opens text-edit mode; arrow keys then move the caret.
-  if(arrows.includes(e.key) && (input.dataset.editing==='true'||e.altKey||e.ctrlKey||e.metaKey||e.shiftKey))return;
-  const sheet=$('sheet');
-  let next=null;
-  if(e.key==='Tab'){
-   const inputs=Array.from(sheet.querySelectorAll('tbody input:not([disabled])'));
-   const index=inputs.indexOf(input);
-   next=inputs[index+(e.shiftKey?-1:1)]||null;
-  } else {
-   const editableKeys=FIELDS.filter(f=>editable.has(f[0])).map(f=>f[0]);
-   const col=editableKeys.indexOf(k);
-   const rows=Array.from(sheet.querySelectorAll('tbody tr[data-row-id]'));
-   const rowIndex=rows.indexOf(input.closest('tr'));
-   if(rowIndex<0||col<0)return;
-   const horizontal=e.key==='ArrowLeft'||e.key==='ArrowRight';
-   const vertical=horizontal?0:(e.key==='ArrowUp'?-1:1);
-   const nextCol=horizontal?col+(e.key==='ArrowLeft'?-1:1):col;
-   if(nextCol<0||nextCol>=editableKeys.length)return;
-   const key=editableKeys[nextCol];
-   // Skip unmatched/read-only rows, keeping the same skill column.
-   for(let i=rowIndex+vertical; i>=0&&i<rows.length; i+=vertical){
-    const candidate=rows[i].querySelector('input[data-key="'+key+'"]:not([disabled])');
-    if(candidate){next=candidate;break;}
-    if(horizontal)break;
-   }
-  }
-  if(next){
-   e.preventDefault();
-   next.focus();
-   next.select();
-  }
- });
- input.addEventListener('paste',e=>{
-  const str=e.clipboardData?.getData('text/plain')||'';
-  if(!/\t|\r?\n/.test(str))return;
-  e.preventDefault();const matrix=str.replace(/\r/g,'').trimEnd().split('\n').map(s=>s.split('\t'));
-  const displayed=visibleRows();
-  const rr=displayed.findIndex(r=>r.id===row.id),cc=FIELDS.findIndex(f=>f[0]===k);
-  let updated=0;
-  for(let i=0;i<matrix.length;i++)for(let j=0;j<matrix[i].length;j++){
-    const target=displayed[rr+i],field=FIELDS[cc+j];if(!target||!field||!editable.has(field[0]))continue;
-    if(noteChange(target,field[0],matrix[i][j]))updated++;
-  }
-  render();status('Pasted '+updated+' cells · saving…');
- });
- return input;
-}
-function matchesSearch(row){const q=$('search').value.toLowerCase().trim();return !q || [row.englishName,row.koreanName,row.className].some(x=>x.toLowerCase().includes(q));}
-function render(){
- if(!current)return;
- $('tabs').querySelectorAll('button').forEach(b=>b.classList.toggle('selected',b.dataset.className===klass));
- const head=$('sheet').querySelector('thead'),body=$('sheet').querySelector('tbody');head.replaceChildren();body.replaceChildren();
- const tr=document.createElement('tr');
- for(const text of ['#',...FIELDS.map(f=>f[1]),'Total %','Average %']){const th=document.createElement('th');th.textContent=text;tr.append(th);}
- head.append(tr);
- const visible=visibleRows();
- visible.forEach((r,i)=>{
- const tr=document.createElement('tr');tr.dataset.rowId=r.id;
- const no=document.createElement('td');no.textContent=i+2;tr.append(no);
- for(const [k,,kind] of FIELDS){
- const td=document.createElement('td');td.dataset.field=k;
- if(k==='englishName'){
-  td.className='locked';
-  const btn=document.createElement('button');btn.className='rc-student-link';
-  btn.type='button';btn.textContent=r.englishName;btn.title='Preview '+r.englishName+' report card';
-  btn.addEventListener('click',()=>openReport(r));td.append(btn);
- }else if(kind==='fixed'){td.className='locked';td.textContent=r[k];}
- else td.append(editInput(r,k));
- tr.append(td);
- }
- const pct=calculatePercentages(r,current.totals);
- for(const [key,value,help] of [
-  ['total',pct.total,'Total earned points / total possible points for scored skills'],
-  ['average',pct.average,'Average of each scored skill percentage']
- ]){const cell=document.createElement('td');cell.className='metric';
-  cell.dataset.metric=key;cell.textContent=percentText(value);cell.title=help;tr.append(cell);}
- if(!r.userId){tr.className='unmatched';tr.title='Not linked to a student account — values shown read-only';}
- body.append(tr);
- });
- const total=document.createElement('tr');total.className='totals';
- for(const [i,[k,,kind]] of FIELDS.entries()){
- if(i===0){const no=document.createElement('td');no.textContent='Σ';total.append(no);}
- const td=document.createElement('td');
- if(i===0)td.textContent='Class TOTAL';
- else if(kind==='score')td.textContent=display(current.totals[k]);
- total.append(td);
- }
- for(let j=0;j<2;j++){const td=document.createElement('td');td.className='metric';td.textContent='—';total.append(td);}
- body.append(total);
- $('summary').textContent=visible.length+' of '+current.rows.length+' students · '+current.rows.filter(r=>!r.userId).length+' unmatched (read-only) · '+klass;
-}
-function updateVisibleValues(){
- if(!current)return;
- for(const tr of $('sheet').querySelectorAll('tbody tr[data-row-id]')){
- const r=current.rows.find(x=>x.id===tr.dataset.rowId);if(!r)continue;
- for(const input of tr.querySelectorAll('input')){
- if(document.activeElement!==input)input.value=display(r.data[input.dataset.key]);
- }
- }
- refreshPercentages();
+  row.dirty=false;row.failed=false;pending.delete(row.testId+':'+row.id);
+  if(!pending.size)status('Saved · '+periodLabel());
+ }catch(e){
+  row.failed=true;row.dirty=true;
+  status('Save failed: '+e.message,true);
+ }finally{row.saving=false;}
 }
 function history(type){
  if(!current)return;
- const from=type==='undo'?undo:redo, dest=type==='undo'?redo:undo;
- const index=historyFor(from,current.testId);
+ const source=type==='undo'?undo:redo,dest=type==='undo'?redo:undo;
+ const index=source.findLastIndex(op=>op.testId===current.testId);
  if(index<0)return;
- const transaction=from.splice(index,1)[0];
- const reverse=type==='undo';
- lastTyping=null;
- for(const entry of reverse?[...transaction.changes].reverse():transaction.changes){
-  const row=current.rows.find(r=>r.id===entry.id);
-  if(!row||!row.userId)continue;
-  noteChange(row,entry.key,reverse?entry.before:entry.after,false);
- }
- dest.push(transaction);
- updateVisibleValues();
+ const [operation]=source.splice(index,1);
+ const result=applyBatch(operation.changes.map(c=>({id:c.id,key:c.key,value:type==='undo'?c.before:c.after})),
+  {record:false,label:'History'});
+ if(result.count)dest.push(operation);
  updateHistoryButtons();
 }
-function applyBatch(edits,label='Updated'){
- if(!current)return 0;
- const changes=[];
- for(const edit of edits){
-  const row=current.rows.find(r=>r.id===edit.id);
-  if(!row?.userId||!editable.has(edit.key))continue;
-  const value=display(edit.value).trim();
-  if(!validate(row,edit.key,value))continue;
-  const before=display(row.data[edit.key]);
-  if(before===value)continue;
-  if(noteChange(row,edit.key,value,false))changes.push({testId:row.testId,id:row.id,key:edit.key,before,after:value});
- }
- if(changes.length){
-  pushTransaction(changes);
-  updateVisibleValues();
-  status(label+' '+changes.length+' cell'+(changes.length===1?'':'s')+' · saving…');
- }
- return changes.length;
+function updateHistoryButtons(){
+ $('undo').disabled=!current||!undo.some(op=>op.testId===current.testId);
+ $('redo').disabled=!current||!redo.some(op=>op.testId===current.testId);
 }
+function readSelection(){
+ const rect=selectedRect();if(!rect)return '';
+ const lines=[];
+ for(let r=rect.r1;r<=rect.r2;r++){
+  const values=[];
+  for(let c=rect.c1;c<=rect.c2;c++)values.push(valueAt(rect.rows[r],COLS[c]));
+  lines.push(values.join('\t'));
+ }
+ return lines.join('\n');
+}
+async function copyCells(){
+ const text=readSelection();
+ if(!text){status('Select cells to copy',true);return;}
+ try{
+  if(!navigator.clipboard?.writeText)throw Error('Clipboard not available');
+  await navigator.clipboard.writeText(text);
+  status('Copied '+(selectedRect()?.rows.length?'selected range':'cells'));
+ }catch{status('Use Ctrl+C to copy the selected cells',true);}
+}
+function pasteMatrix(text){
+ if(!current||!rangeSelection||!text)return;
+ const rect=selectedRect();if(!rect)return;
+ const data=String(text).replace(/\r/g,'').replace(/\n$/,'').split('\n').map(line=>line.split('\t'));
+ const pastedRows=data.length,pastedCols=Math.max(...data.map(r=>r.length));
+ const wholeRange=pastedRows===1&&pastedCols===1&&(rect.r1!==rect.r2||rect.c1!==rect.c2);
+ const changes=[];
+ const rowEnd=wholeRange?rect.r2:Math.min(rect.r1+pastedRows-1,rect.rows.length-1);
+ const colEnd=wholeRange?rect.c2:Math.min(rect.c1+pastedCols-1,COLS.length-1);
+ for(let r=rect.r1;r<=rowEnd;r++)for(let c=rect.c1;c<=colEnd;c++){
+  const key=COLS[c],value=wholeRange?data[0][0]:data[r-rect.r1]?.[c-rect.c1];
+  if(value===undefined)continue;
+  changes.push({row:rect.rows[r],key,value});
+ }
+ const result=applyBatch(changes,{label:'Paste'});
+ const focusRow=rect.rows[rowEnd];
+ if(focusRow)setSelection(focusRow.id,COLS[colEnd],true);
+ status('Pasted '+result.count+' cells'+(result.invalid?' · '+result.invalid+' invalid skipped':'')+
+  (result.readonly?' · '+result.readonly+' locked skipped':''));
+}
+async function pasteFromButton(){
+ try{
+  if(!navigator.clipboard?.readText)throw Error('Permission unavailable');
+  pasteMatrix(await navigator.clipboard.readText());
+ }catch{status('Use Ctrl+V to paste from the clipboard',true);}
+}
+function clearSelection(){
+ const rect=selectedRect();if(!rect)return;
+ const changes=[];
+ for(let r=rect.r1;r<=rect.r2;r++)for(let c=rect.c1;c<=rect.c2;c++)
+  changes.push({row:rect.rows[r],key:COLS[c],value:''});
+ const result=applyBatch(changes,{label:'Clear'});
+ status('Cleared '+result.count+' editable cells');
+}
+function fillTo(targetId,targetKey){
+ if(!fillDrag||!current)return;
+ const source=fillDrag.rect,rows=visibleRows();
+ const ri=rows.findIndex(r=>r.id===String(targetId)),ci=COLS.indexOf(targetKey);
+ if(ri<0||ci<0)return;
+ const r1=Math.min(source.r1,ri),r2=Math.max(source.r2,ri),
+  c1=Math.min(source.c1,ci),c2=Math.max(source.c2,ci);
+ const height=source.r2-source.r1+1,width=source.c2-source.c1+1;
+ const template=[];
+ for(let i=source.r1;i<=source.r2;i++){
+  const line=[];for(let j=source.c1;j<=source.c2;j++)line.push(valueAt(source.rows[i],COLS[j]));
+  template.push(line);
+ }
+ const changes=[];
+ for(let r=r1;r<=r2;r++)for(let c=c1;c<=c2;c++){
+  if(r>=source.r1&&r<=source.r2&&c>=source.c1&&c<=source.c2)continue;
+  const sr=((r-source.r1)%height+height)%height,sc=((c-source.c1)%width+width)%width;
+  changes.push({row:rows[r],key:COLS[c],value:template[sr][sc]});
+ }
+ const result=applyBatch(changes,{label:'Fill'});
+ rangeSelection={testId:current.testId,anchor:{id:rows[r1].id,key:COLS[c1]},focus:{id:rows[r2].id,key:COLS[c2]}};
+ updateSelectionClasses();
+ status('Filled '+result.count+' cells'+(result.readonly?' · '+result.readonly+' locked skipped':''));
+}
+function moveSelection(direction,extend=false){
+ const rect=selectedRect();
+ if(!rect)return;
+ const rows=rect.rows,at=rangeSelection.focus;
+ let ri=rows.findIndex(r=>r.id===at.id),ci=COLS.indexOf(at.key);
+ if(direction==='ArrowLeft')ci--;
+ if(direction==='ArrowRight')ci++;
+ if(direction==='ArrowUp')ri--;
+ if(direction==='ArrowDown'||direction==='Enter')ri++;
+ if(direction==='Tab')ci++;
+ if(direction==='ShiftTab')ci--;
+ if(ci<0){ri--;ci=COLS.length-1;}
+ if(ci>=COLS.length){ri++;ci=0;}
+ if(ri<0||ri>=rows.length)return;
+ focusGrid(rows[ri].id,COLS[ci],extend);
+}
+function focusCell(id,key,input){
+ if(!suppressFocusSelection)setSelection(id,key,false);
+ input?.select();
+}
+function editInput(row,key){
+ const input=document.createElement('input');
+ input.value=display(row.data[key]);
+ input.dataset.rowId=row.id;input.dataset.key=key;input.dataset.editing='false';
+ input.setAttribute('aria-label',row.englishName+' '+key);
+ if(!row.userId){input.disabled=true;input.title='Student account not matched — read only';}
+ input.addEventListener('focus',()=>focusCell(row.id,key,input));
+ input.addEventListener('dblclick',()=>{input.dataset.editing='true';});
+ input.addEventListener('input',()=>{
+  const v=input.value.trim();
+  if(validate(row,key,v)){input.removeAttribute('aria-invalid');noteChange(row,key,v);}
+  else input.setAttribute('aria-invalid','true');
+ });
+ input.addEventListener('blur',()=>{
+  if(!validate(row,key,input.value.trim()))input.value=display(row.data[key]);
+  input.dataset.editing='false';
+ });
+ return input;
+}
+function resizeColumns(){
+ const table=$('sheet');
+ let group=table.querySelector('colgroup');
+ if(!group){group=document.createElement('colgroup');table.insertBefore(group,table.firstChild);}
+ group.replaceChildren();
+ const keys=['num',...COLS];
+ for(const key of keys){
+  const col=document.createElement('col');col.style.width=colWidth(key)+'px';group.append(col);
+ }
+ table.style.tableLayout='fixed';
+ table.style.width=Math.max(840,keys.reduce((n,k)=>n+colWidth(k),0))+'px';
+}
+function headCell(label,key){
+ const th=document.createElement('th');th.textContent=label;
+ th.dataset.columnKey=key;th.style.width=colWidth(key)+'px';
+ if(key!=='num'){
+  th.classList.add('grid-sortable');th.title='Click to sort · drag edge to resize';
+  if(sortKey===key&&sortDir)th.textContent=label+(sortDir===1?' ↑':' ↓');
+  th.addEventListener('click',e=>{
+   if(e.target.closest('.grid-col-resize'))return;
+   if(sortKey===key)sortDir=sortDir===1?-1:sortDir===-1?0:1;
+   else{sortKey=key;sortDir=1;}
+   if(!sortDir)sortKey='';
+   rangeSelection=null;render();
+  });
+ }
+ if(key!=='num'){
+  const handle=document.createElement('span');handle.className='grid-col-resize';
+  handle.title='Drag to resize';
+  handle.addEventListener('pointerdown',event=>{
+   event.stopPropagation();event.preventDefault();
+   const startX=event.clientX,startWidth=colWidth(key);
+   const onMove=e=>{
+    widths[key]=Math.max(56,Math.min(520,startWidth+(e.clientX-startX)));
+    const cols=['num',...COLS],idx=cols.indexOf(key);
+    const col=$('sheet').querySelectorAll('colgroup col')[idx];
+    if(col)col.style.width=widths[key]+'px';
+    $('sheet').style.width=cols.reduce((sum,k)=>sum+colWidth(k),0)+'px';
+   };
+   const onUp=()=>{
+    window.removeEventListener('pointermove',onMove);
+    window.removeEventListener('pointerup',onUp);
+    try{localStorage.setItem(WIDTH_KEY,JSON.stringify(widths));}catch{}
+    render();
+   };
+   window.addEventListener('pointermove',onMove);
+   window.addEventListener('pointerup',onUp,{once:true});
+  });
+  th.append(handle);
+ }
+ return th;
+}
+function render(){
+ if(!current)return;
+ $('tabs').querySelectorAll('button').forEach(b=>b.classList.toggle('selected',b.dataset.className===klass));
+ const table=$('sheet'),head=table.querySelector('thead'),body=table.querySelector('tbody');
+ head.replaceChildren();body.replaceChildren();
+ resizeColumns();
+ const titles=['#',...FIELDS.map(f=>f[1]),'Total %','Average %'];
+ const header=document.createElement('tr');
+ for(let i=0;i<titles.length;i++)header.append(headCell(titles[i],i===0?'num':COLS[i-1]));
+ head.append(header);
+ const rows=visibleRows();
+ rows.forEach((row,i)=>{
+  const tr=document.createElement('tr');tr.dataset.rowId=row.id;
+  const no=document.createElement('td');no.className='grid-row-number';no.textContent=i+2;
+  tr.append(no);
+  for(const [key,label,type] of FIELDS){
+   const td=document.createElement('td');
+   td.dataset.cellKey=key;td.tabIndex=0;
+   if(key==='englishName'){
+    td.className='locked';const btn=document.createElement('button');btn.className='rc-student-link';
+    btn.type='button';btn.textContent=row.englishName;btn.title='Preview '+row.englishName+' report card';
+    btn.addEventListener('click',()=>openReport(row));td.append(btn);
+   }else if(type==='fixed'){td.className='locked';td.textContent=row[key];}
+   else td.append(editInput(row,key));
+   tr.append(td);
+  }
+  const pct=calculatePercentages(row,current.totals);
+  for(const [key,number,help] of [
+   ['totalPct',pct.total,'Total points earned / possible'],
+   ['averagePct',pct.average,'Average of individual skill percentages']
+  ]){
+   const td=document.createElement('td');td.tabIndex=0;td.className='metric';
+   td.dataset.cellKey=key;td.dataset.metric=key==='totalPct'?'total':'average';
+   td.title=help;td.textContent=percentText(number);tr.append(td);
+  }
+  if(!row.userId){tr.classList.add('unmatched');tr.title='Unmatched account: scores are read-only';}
+  body.append(tr);
+ });
+ const totals=document.createElement('tr');totals.className='totals';
+ const label=document.createElement('td');label.textContent='Σ';totals.append(label);
+ for(const [i,[key,,type]] of FIELDS.entries()){
+  const td=document.createElement('td');td.textContent=i===0?'Class TOTAL':type==='score'?display(current.totals[key]):'';
+  totals.append(td);
+ }
+ for(let i=0;i<2;i++){const td=document.createElement('td');td.className='metric';td.textContent='—';totals.append(td);}
+ body.append(totals);
+ $('summary').textContent=rows.length+' of '+current.rows.length+' students · '+current.rows.filter(r=>!r.userId).length+' unmatched · '+klass;
+ updateSelectionClasses();
+ updateHistoryButtons();
+}
+function updateVisibleValues(){
+ if(!current)return;
+ const trs=$('sheet').querySelectorAll('tbody tr[data-row-id]');
+ for(const tr of trs){
+  const row=getRowById(tr.dataset.rowId);if(!row)continue;
+  for(const input of tr.querySelectorAll('input')){
+   if(document.activeElement!==input)input.value=display(row.data[input.dataset.key]);
+  }
+  const pct=calculatePercentages(row,current.totals);
+  const t=tr.querySelector('[data-metric="total"]'),a=tr.querySelector('[data-metric="average"]');
+  if(t)t.textContent=percentText(pct.total);
+  if(a)a.textContent=percentText(pct.average);
+ }
+}
+function refreshPercentages(){updateVisibleValues()}
+function resetGridSelection(){
+ rangeSelection=null;selected=null;
+ $('address').textContent='—';$('formula').value='';$('formula').readOnly=true;
+ $('selectionInfo').textContent='';
+}
+function getCurrentRange(){return selectedRect()}
 $('undo').addEventListener('click',()=>history('undo'));
 $('redo').addEventListener('click',()=>history('redo'));
+$('copy').addEventListener('click',copyCells);
+$('paste').addEventListener('click',pasteFromButton);
+$('clear').addEventListener('click',clearSelection);
 $('reset').textContent='Reload class';
-$('reset').onclick=()=>{if(pending.size){status('Finish saving edits before reloading',true);return;}openClass(klass)};
-$('klass').addEventListener('change',e=>openClass(e.target.value));
+$('reset').onclick=()=>{if(pending.size){status('Finish saving edits before reloading',true);return;}openClass(klass,true)};
+$('klass').addEventListener('change',e=>{resetGridSelection();openClass(e.target.value)});
 $('period').addEventListener('change',e=>{
  if(!$('rcDialog').hidden){$('rcDialog').hidden=true;$('rcPageMount').replaceChildren();}
- loadPeriod(e.target.value);
+ resetGridSelection();loadPeriod(e.target.value);
 });
-$('search').addEventListener('input',render);
+$('search').addEventListener('input',()=>{resetGridSelection();render()});
+$('gridFilterColumn').addEventListener('change',e=>{filterKey=e.target.value;resetGridSelection();render()});
+$('gridFilterValue').addEventListener('input',e=>{filterText=e.target.value.trim().toLocaleLowerCase();resetGridSelection();render()});
+$('gridClearFilters').addEventListener('click',()=>{
+ filterKey='';filterText='';sortDir=0;sortKey='';
+ $('gridFilterColumn').value='';$('gridFilterValue').value='';$('search').value='';
+ resetGridSelection();render();
+});
 $('formula').addEventListener('change',()=>{
  if(!selected||!current)return;
- const row=current.rows.find(r=>r.id===selected.id);
- if(!noteChange(row,selected.k,$('formula').value))status('Invalid value (or unmatched student)',true);
+ const row=getRowById(selected.id),key=selected.k;
+ const result=applyBatch([{row,key,value:$('formula').value}],{label:'Formula bar edit'});
+ if(result.invalid||result.readonly)status('Read-only or invalid value',true);
  updateVisibleValues();
 });
-window.addEventListener('keydown',e=>{
- if(!(e.ctrlKey||e.metaKey)||!['z','y'].includes(e.key.toLowerCase()))return;
- if(e.target instanceof HTMLInputElement)return;
- e.preventDefault();history(e.key.toLowerCase()==='z'&&!e.shiftKey?'undo':'redo');
+$('sheet').addEventListener('pointerdown',e=>{
+ const td=e.target.closest('td[data-cell-key]');
+ if(!td||!current||e.target.closest('.grid-fill-handle'))return;
+ if(e.button!==0)return;
+ selectionDrag=true;setSelection(td.parentElement.dataset.rowId,td.dataset.cellKey,e.shiftKey);
+});
+$('sheet').addEventListener('pointerover',e=>{
+ const td=e.target.closest('td[data-cell-key]');
+ if(!td||!current)return;
+ if(fillDrag){
+  const rowIndex=visibleRows().findIndex(row=>row.id===td.parentElement.dataset.rowId);
+  if(rowIndex>=0){fillDrag.targetRow=rowIndex;fillDrag.targetCol=COLS.indexOf(td.dataset.cellKey);}
+ }else if(selectionDrag)setSelection(td.parentElement.dataset.rowId,td.dataset.cellKey,true);
+});
+document.addEventListener('pointerup',()=>{
+ if(fillDrag){
+  const r=visibleRows()[fillDrag.targetRow],key=COLS[fillDrag.targetCol];
+  if(r&&key)fillTo(r.id,key);
+  fillDrag=null;
+ }
+ selectionDrag=false;
+});
+$('sheet').addEventListener('focusin',e=>{
+ const td=e.target.closest('td[data-cell-key]');
+ if(!td||suppressFocusSelection)return;
+ if(e.target.tagName==='INPUT')return;
+ setSelection(td.parentElement.dataset.rowId,td.dataset.cellKey);
+});
+document.addEventListener('keydown',e=>{
+ if($('rcDialog')&&!$('rcDialog').hidden)return;
+ const target=e.target,editing=target instanceof HTMLInputElement&&target.dataset.editing==='true';
+ const ctrl=e.ctrlKey||e.metaKey,key=e.key.toLowerCase();
+ if(ctrl&&!editing){
+  if(key==='z'){e.preventDefault();history(e.shiftKey?'redo':'undo');return;}
+  if(key==='y'){e.preventDefault();history('redo');return;}
+  if(key==='a'&&current&&selected){e.preventDefault();const rows=visibleRows();if(!rows.length)return;rangeSelection={testId:current.testId,
+    anchor:{id:rows[0].id,key:COLS[0]},focus:{id:rows[rows.length-1].id,key:COLS[COLS.length-1]}};updateSelectionClasses();return;}
+ }
+ if(!current||!selected)return;
+ if(target instanceof HTMLInputElement && target.id==='search')return;
+ if(target instanceof HTMLInputElement && target.id==='gridFilterValue')return;
+ if(target instanceof HTMLInputElement && target.id==='formula')return;
+ if(target instanceof HTMLSelectElement||target instanceof HTMLTextAreaElement)return;
+ if(e.key==='F2'&&target instanceof HTMLInputElement){e.preventDefault();target.dataset.editing='true';target.setSelectionRange(target.value.length,target.value.length);return;}
+ if(e.key==='Escape'&&editing){e.preventDefault();target.dataset.editing='false';target.select();return;}
+ if(editing)return;
+ if(e.key==='Delete'||e.key==='Backspace'){e.preventDefault();clearSelection();return;}
+ if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Enter','Tab'].includes(e.key)){
+  e.preventDefault();
+  moveSelection(e.key==='Tab'&&e.shiftKey?'ShiftTab':e.key,
+   e.shiftKey&&e.key.startsWith('Arrow'));
+ }
+},true);
+document.addEventListener('copy',e=>{
+ if(!current||!rangeSelection||($('rcDialog')&&!$('rcDialog').hidden))return;
+ if(e.target instanceof HTMLInputElement&&e.target.dataset.editing==='true')return;
+ const str=readSelection();if(!str)return;
+ e.clipboardData?.setData('text/plain',str);e.preventDefault();
+});
+document.addEventListener('cut',e=>{
+ if(!current||!rangeSelection||!$('rcDialog').hidden)return;
+ if(e.target instanceof HTMLInputElement&&e.target.dataset.editing==='true')return;
+ const str=readSelection();if(!str)return;
+ e.clipboardData?.setData('text/plain',str);e.preventDefault();clearSelection();
+});
+document.addEventListener('paste',e=>{
+ if(!current||!rangeSelection||!$('rcDialog').hidden)return;
+ if(e.target instanceof HTMLInputElement&&e.target.dataset.editing==='true')return;
+ const str=e.clipboardData?.getData('text/plain');
+ if(str===undefined||str===null)return;
+ e.preventDefault();pasteMatrix(str);
 });
 setInterval(()=>{if(alive&&current&&!document.hidden)openClass(klass,true)},5000);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&current)openClass(klass,true)});
