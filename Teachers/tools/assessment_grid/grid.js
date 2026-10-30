@@ -2,7 +2,7 @@
 'use strict';
 const $ = id => document.getElementById(id);
 const API = '/.netlify/functions/test_admin';
-const GRID_REV='2026.10.30.02';
+const GRID_REV='2026.10.30.03';
 const PERIODS = {
  '2026-02': 'February 2026',
  '2026-06': 'June 2026',
@@ -711,6 +711,51 @@ function classTotalInput(key){
  });
  return input;
 }
+// The teachers preview site proxies the Netlify API, which can lag the
+// preview branch. When set_assessment_max is unavailable, use the existing
+// authenticated get_test/update_test route, retaining ALL other columns.
+// Never claim success until the persisted value has been read back.
+let legacyMaxEndpoint=false;
+const sameMaximum=(a,b)=>{
+ const numeric=x=>x===undefined||x===null||String(x).trim()===''?null:Number(x);
+ return Object.is(numeric(a),numeric(b));
+};
+async function saveMaximumCompat(testId,key,next,expected){
+ if(!legacyMaxEndpoint){
+  try{
+   const saved=await api('set_assessment_max',{},{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({test_id:testId,skill:key,max:next,expected})
+   });
+   if(!sameMaximum(saved.max,next))throw Error('Maximum save response did not match');
+   return {max:next,path:'atomic'};
+  }catch(e){
+   if(!/action not found/i.test(e.message||''))throw e;
+   legacyMaxEndpoint=true;
+  }
+ }
+ // This path is only for older Netlify deployments lacking the atomic RPC
+ // action. Refetch just before writing, refusing out-of-date maxima.
+ const read=await api('get_test',{test_id:testId});
+ const columns=read.test?.columns;
+ if(!Array.isArray(columns))throw Error('Could not reload assessment columns');
+ if(!String(read.test?.name||'').startsWith('Assessment Grid | '))
+  throw Error('Not an assessment grid test');
+ const index=columns.findIndex(c=>c?.key===key&&c?.type==='number');
+ if(index<0)throw Error('Class maximum column missing');
+ if(!sameMaximum(columns[index].max,expected))
+  throw Error('Maximum changed elsewhere. Reload class before editing');
+ const updated=columns.map((c,i)=>i===index?{...c,max:next}:c);
+ await api('update_test',{},{
+  method:'POST',headers:{'Content-Type':'application/json'},
+  body:JSON.stringify({test_id:testId,columns:updated})
+ });
+ const check=await api('get_test',{test_id:testId});
+ const persisted=check.test?.columns?.find(c=>c.key===key&&c.type==='number');
+ if(!persisted||!sameMaximum(persisted.max,next))
+  throw Error('Maximum could not be verified after saving. Reload class');
+ return {max:next,path:'legacy'};
+}
 async function setAssessmentMaximum(key,rawValue,input=null,options={}){
  const model=current,recordTestId=model?.testId;
  if(!recordTestId||!SKILLS.includes(key))return false;
@@ -738,10 +783,8 @@ async function setAssessmentMaximum(key,rawValue,input=null,options={}){
  if(current?.testId===recordTestId)refreshPercentages();
  status('Saving '+klass+' maximum for '+key+'…');
  try{
-  await api('set_assessment_max',{},{
-   method:'POST',headers:{'Content-Type':'application/json'},
-   body:JSON.stringify({test_id:recordTestId,skill:key,max:next,expected:previous})
-  });
+  const saved=await saveMaximumCompat(recordTestId,key,next,previous);
+  if(!sameMaximum(saved.max,next))throw Error('Maximum save not confirmed');
   if(options.record!==false){
    undo.push({label:'Class maximum',testId:recordTestId,
     maximum:{key,before:previous,after:next},changes:[],at:Date.now()});
