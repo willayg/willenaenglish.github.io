@@ -54,7 +54,9 @@ async function edge(action,opts={}){
   if(r.status===401)throw new Error('AUTH_REQUIRED');if(!r.ok||data.success===false)throw new Error(data.error||`Request failed (${r.status})`);return data;
 }
 
-export async function homeworkSet(taskId,questionIds=[]){
+export async function homeworkSet(taskId,questionIds=null){
+ if(!Array.isArray(questionIds)||!questionIds.length)
+   return edge('homework_set&task_id='+encodeURIComponent(String(taskId)),{method:'GET'});
  return edge('homework_set',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({task_id:taskId,question_ids:questionIds})});
 }
 function syncStateFromMe(d){state.user=d.user||null;state.plans=Array.isArray(d.plans)?d.plans:[];return state}
