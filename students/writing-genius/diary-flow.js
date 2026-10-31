@@ -94,6 +94,9 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,onExit}){
    try{await persist();feedback=await review(current);summary()}catch(e){status(e.message,true)}finally{busy=false}
   },true);
  }
+ function choiceKey(){return 'willena-diary-choices:'+current.id+':'+current.body.length+':'+current.body.slice(0,32)}
+ function saveChoices(){try{localStorage.setItem(choiceKey(),JSON.stringify(choices))}catch{}}
+ function loadChoices(){try{const stored=JSON.parse(localStorage.getItem(choiceKey())||'{}');choices=stored&&typeof stored==='object'&&!Array.isArray(stored)?stored:{}}catch{choices={}}}
  function selectedText(change,i){
   const choice=choices[i]||'first';
   return choice==='original'?change.original:choice==='last'&&change.clarified_better?change.clarified_better:change.better;
@@ -157,7 +160,7 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,onExit}){
    for(const [key,label] of options){
     if(key==='last'&&!change.clarified_better)continue;
     const btn=el('button','df-choice-button',label);btn.type='button';
-    btn.addEventListener('click',()=>{choices[i]=key;refresh();construct()});
+    btn.addEventListener('click',()=>{choices[i]=key;saveChoices();refresh();construct()});
     controls.push([key,btn]);row.append(btn);
    }
    card.append(row);
@@ -178,7 +181,7 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,onExit}){
       try{
        const result=await clarify(current,i,input.value.trim());
        change.clarified_better=result.better;change.clarified_translation_ko=result.translation_ko||'';
-       choices[i]='last';construct();
+       choices[i]='last';saveChoices();construct();
        // Refresh cards without losing the student's review decisions.
        const top=window.scrollY;summary();window.scrollTo({top});
       }catch(e){status(e.message||'다시 시도해 주세요.',true);send.disabled=false;send.textContent='다시 제안받기'}
@@ -342,5 +345,5 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,onExit}){
   catch(e){status(e.message,true);button('다시 저장',complete,true)}
   finally{busy=false}
  }
- return {open(entry,saved){clearTimeout(autosaveTimer);current={...entry};feedback=saved?.original_body===entry.body?saved.feedback:null;choices={};spoken=[];index=0;root.hidden=false;if(entry.status==='submitted'){screen('finish','Complete');stage.append(el('h2','df-heading','오늘의 일기 완료'));button('글쓰기 메뉴',close,true)}else if(feedback)summary();else topic()},close};
+ return {open(entry,saved){clearTimeout(autosaveTimer);current={...entry};feedback=saved?.original_body===entry.body?saved.feedback:null;choices={};loadChoices();spoken=[];index=0;root.hidden=false;if(entry.status==='submitted'){screen('finish','Complete');stage.append(el('h2','df-heading','오늘의 일기 완료'));button('글쓰기 메뉴',close,true)}else if(feedback)summary();else topic()},close};
 }
