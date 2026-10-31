@@ -95,3 +95,15 @@ html[data-dashboard-theme=dark] .dashboard-mission-basket .dm-tabs button[aria-p
 .dashboard-mission-basket .dm-teacher{font-size:12px!important;font-weight:800;color:#cc4d8c!important;margin-top:3px}
 .dashboard-mission-basket .dm-medal:focus-visible{outline:3px solid #2abcc6;outline-offset:3px}
 @media(max-width:560px){.dashboard-mission-basket .dm-items:has(.dm-medal){grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.dashboard-mission-basket .dm-medal{padding:15px 8px}.dashboard-mission-basket .dm-medal-svg{width:76px;height:91px}}
+
+/* rev1.23 gold collection and replayable medal touch */
+.dashboard-mission-basket .dm-medal{font-family:inherit;cursor:pointer;width:100%}
+.dashboard-mission-basket .dm-done{cursor:pointer}
+.dashboard-mission-basket .dm-gold-collect{animation:dmCollect .64s cubic-bezier(.2,.8,.2,1) forwards;pointer-events:none}
+.dashboard-mission-basket .dm-medal-shine .dm-medal-svg{animation:dmMedalPop .47s cubic-bezier(.15,.85,.2,1.25)}
+@keyframes dmCollect{0%{transform:scale(1);opacity:1}45%{transform:scale(1.055);opacity:1}100%{transform:scale(.48);opacity:0}}
+@keyframes dmMedalPop{0%{transform:scale(1) rotate(0)}40%{transform:scale(1.14) rotate(-8deg)}75%{transform:scale(1.05) rotate(6deg)}100%{transform:scale(1) rotate(0)}}
+.dm-gold-particles{position:fixed;z-index:2147483000;width:0;height:0;pointer-events:none}
+.dm-gold-particles span{position:absolute;left:0;top:0;color:#edb62d;font-size:23px;text-shadow:0 1px 1px #fff4b8;animation:dmParticle .64s ease-out both}
+@keyframes dmParticle{0%{transform:rotate(var(--a)) translateX(0) scale(.5);opacity:1}100%{transform:rotate(var(--a)) translateX(120px) scale(.95);opacity:0}}
+@media(prefers-reduced-motion:reduce){.dashboard-mission-basket .dm-gold-collect,.dashboard-mission-basket .dm-medal-shine .dm-medal-svg,.dm-gold-particles span{animation:none!important}}
