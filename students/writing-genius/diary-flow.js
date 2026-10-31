@@ -213,7 +213,7 @@ export function createDiaryFlow({draft,review,speech,finish,onExit}){
  function speakingTransition(){
   screen('speak-transition','4 · Speak');
   const splash=el('div','df-speak-splash');
-  splash.append(el('div','df-splash-icon','🎙'),el('h2','','Review complete!'),el('p','','이제 내 글을 소리 내어 읽어 봐요.'),el('small','','Speak each sentence. 85% accuracy moves you forward.'));
+  splash.append(el('div','df-splash-icon','🎙'),el('h2','','Review complete!'),el('p','','이제 내 글을 소리 내어 읽어 봐요.'),el('small','','Speak each sentence to continue.'));
   stage.append(splash);
   let started=false;
   const start=()=>{if(started||step!=='speak-transition')return;started=true;index=0;lineSpeech()};
@@ -231,7 +231,6 @@ export function createDiaryFlow({draft,review,speech,finish,onExit}){
    flow.append(line);
   }
   stage.append(flow);
-  stage.append(el('p','df-speech-hint','마이크를 누르고 분홍색 문장을 말하세요. · 85% 이상 통과'));
   const target=finalLines[index];
   // Use the exact shared QuestionRenderer microphone from the review activity.
   rendererHost({form:'speaking',prompt:'',context:{},input:{language:'en'},answer:[target]});
@@ -243,14 +242,14 @@ export function createDiaryFlow({draft,review,speech,finish,onExit}){
   const judge=answer=>{
    if(accepted||step!=='speech')return;
    const score=spokenAccuracy(target,answer);
-   if(score<.85){
-    status('정확도 '+Math.round(score*100)+'% · 85% 이상이면 통과해요. 다시 말해 보세요.',true);
+   if(score<.75){
+    status('다시 한번 말해 보세요.',true);
     return;
    }
    accepted=true;
    spoken.push(answer);
    mic.disabled=true;
-   status('✓ '+Math.round(score*100)+'% · 통과!');
+   status('✓ 잘했어요!');
    flow.classList.add('df-tele-advance');
    setTimeout(()=>{if(step==='speech'){index++;lineSpeech()}},480);
   };
