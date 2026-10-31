@@ -653,3 +653,11 @@ html[data-vocab-theme="dark"] .wg-status-pill.is-submitted,html[data-vocab-theme
 .writing-genius #wgDiaryFlow .sp-shared-question [data-answer]::before{content:'내 문장 · My sentence';display:block;font-size:.84rem;font-weight:850;color:var(--vocab-heading,#244f56);margin-bottom:8px}
 .writing-genius #wgDiaryFlow .sp-shared-question textarea.answer[data-write]{width:100%;min-height:126px;resize:vertical;border:2px solid #c5eef1;border-radius:18px;background:#fff;color:var(--ink,#173f46);font:650 clamp(1rem,3.4vw,1.12rem)/1.8 Poppins,system-ui,sans-serif;padding:15px 16px;box-sizing:border-box}
 .writing-genius #wgDiaryFlow .sp-shared-question .feedback[data-feedback]{display:none}
+
+/* Diary question: only target, listen, mode controls and canonical renderer answer. */
+.writing-genius #wgDiaryFlow .df-mode-buttons{display:flex;justify-content:center;gap:14px;margin:18px auto 22px;flex-wrap:wrap}
+.writing-genius #wgDiaryFlow .df-mode-button{min-width:138px;min-height:60px;padding:12px 22px;border:3px solid #bcebef;border-radius:19px;background:#fff;color:#e75c9d;font:900 1.13rem Poppins,system-ui,sans-serif;cursor:pointer}
+.writing-genius #wgDiaryFlow .df-mode-button.is-active{background:#fff1f7;border-color:#85d6df}
+.writing-genius #wgDiaryFlow .df-listen{display:block;margin:4px auto 8px;border:2px solid #c5eef1;background:#fff;color:#e75c9d}
+.writing-genius #wgDiaryFlow .df-target{text-align:center;font-size:clamp(1.25rem,4.3vw,1.75rem);line-height:1.5;margin:8px 0 16px}
+.writing-genius #wgDiaryFlow .df-question-host .prompt:empty,.writing-genius #wgDiaryFlow .df-question-host .context:empty{display:none}
