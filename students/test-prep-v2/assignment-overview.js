@@ -10,9 +10,9 @@ export function assignmentOverview(plans,esc,expanded=true,archivedIds=new Set()
  const live=tasks.filter(({task})=>!archivedIds.has(String(task.id)));
  const pending=live.filter(({task})=>!assignmentMetrics(task).complete).length;
  const visible=tab==='archive'?archive:live;
- return '<section class="homework-basket" aria-label="Homework Basket">'+
- '<button type="button" class="homework-basket-head" data-basket-toggle aria-expanded="'+(expanded?'true':'false')+'"><span class="homework-basket-icon" aria-hidden="true">▤</span><div><span class="homework-basket-eyebrow">MY HOMEWORK</span><h2>숙제 바구니 <span>Homework Basket</span></h2><p>골드 카드를 터치하면 보관함으로 이동해요.</p></div><span class="homework-basket-count">'+pending+'개 남음</span><span class="homework-basket-chevron">'+(expanded?'▾':'▸')+'</span></button>'+
- '<div class="homework-basket-content" '+(expanded?'':'hidden')+'><div class="homework-basket-tabs" role="tablist" aria-label="Homework status">'+
+ return '<section class="homework-basket" aria-label="미션함">'+
+ '<button type="button" class="homework-basket-head" data-basket-toggle aria-expanded="'+(expanded?'true':'false')+'"><span class="homework-basket-icon" aria-hidden="true">🎯</span><div><h2>미션함</h2></div><span class="homework-basket-count">'+pending+'개 남음</span><span class="homework-basket-chevron">'+(expanded?'▾':'▸')+'</span></button>'+
+ '<div class="homework-basket-content" '+(expanded?'':'hidden')+'><div class="homework-basket-tabs" role="tablist" aria-label="미션 상태">'+
  '<button type="button" role="tab" data-basket-tab="active" aria-selected="'+(tab==='active')+'">진행 중 <b>'+live.length+'</b></button>'+
  '<button type="button" role="tab" data-basket-tab="archive" aria-selected="'+(tab==='archive')+'">보관함 <b>'+archive.length+'</b></button></div>'+
  '<div class="homework-basket-list">'+(visible.length?visible.map(({plan,task:t})=>{
