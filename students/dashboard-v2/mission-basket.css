@@ -121,3 +121,8 @@ html[data-dashboard-theme] .dashboard-mission-basket .dm-item.dm-done{
 .dashboard-mission-basket .dm-done .dm-progress-copy{color:#9c7416}
 .dashboard-mission-basket .dm-done .dm-progress{background:#f3dfa5}
 .dashboard-mission-basket .dm-done .dm-progress>span{background:#d5a52f}
+
+/* rev1.24: collected medal makes the medal box tab swell briefly */
+.dashboard-mission-basket .dm-tabs .dm-tab-grow{animation:dmTabGrow .6s cubic-bezier(.2,.8,.25,1.2)}
+@keyframes dmTabGrow{0%,100%{transform:scale(1)}40%{transform:scale(1.085);box-shadow:0 0 0 5px rgba(245,171,207,.4)}75%{transform:scale(1.035)}}
+@media(prefers-reduced-motion:reduce){.dashboard-mission-basket .dm-tabs .dm-tab-grow{animation:none}}
