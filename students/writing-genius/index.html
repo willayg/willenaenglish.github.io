@@ -15,7 +15,7 @@
 <link rel="stylesheet" href="/students/shared/willena-keyboard-safe.css?v=1.0.0">
 <link rel="stylesheet" href="/students/vocab-study/vocab-study.css?v=20261024-home-navigation4">
 <link rel="stylesheet" href="/students/vocab-study/theme-pips.css?v=20260927-v0005">
-<link rel="stylesheet" href="./styles.css?v=20261031-diary-container3">
+<link rel="stylesheet" href="./styles.css?v=20261031-diary-new1">
 <script src="/students/api-gateway.js?v=20260926-progress-summary-cf1"></script>
 <script src="/students/study/study-progress.js?v=20260926-assignment-canonical1"></script>
 <script src="/js/api-config.js?v=20260926-reverted-auth1"></script>
@@ -64,6 +64,12 @@
       <div id="wgLibrary" class="wg-library" hidden aria-hidden="true"></div>
     </section>
     <section id="wgEditor" class="wg-editor" aria-label="Writing editor" hidden>
+      <section id="wgDiaryFlow" class="wg-diary-flow" hidden aria-label="Daily Diary">
+        <div class="wg-diary-flow-bar"><button id="dfExit" type="button" class="vocab-screen-back">← 글쓰기 메뉴</button><strong id="dfProgress"></strong></div>
+        <div id="dfStage" class="wg-diary-flow-stage"></div>
+        <div id="dfMessage" class="wg-diary-flow-message" role="status" aria-live="polite"></div>
+        <div id="dfActions" class="wg-diary-flow-actions"></div>
+      </section>
       <div class="wg-editor-nav">
         <button id="wgBack" class="vocab-screen-back" type="button">← 내 글</button>
         <span id="wgSaveState" class="wg-save-state" aria-live="polite"></span>
@@ -231,7 +237,7 @@
 </div>
 <script type="module" src="/students/components/student-reward-celebration.js?v=20260926-v0005"></script>
 <script src="/students/vocab-study/theme-pips.js?v=20260927-v0005"></script>
-<script type="module" src="./app.js?v=20261031-renderer-rebuild2"></script>
+<script type="module" src="./app.js?v=20261031-diary-new1"></script>
 
 <script src="/students/components/mission-basket.js?v=20261031-goldcache4"></script>
 <script src="/students/components/student-achievements.js?v=20261031-goldcache2"></script>
