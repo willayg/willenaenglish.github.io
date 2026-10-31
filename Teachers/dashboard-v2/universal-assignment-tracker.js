@@ -78,5 +78,42 @@ function render(){
  host.querySelector('#uaGroupFilter').onchange=e=>{selected=e.target.value;render()};
  host.querySelector('#uaProgressRefresh').onclick=load;
 }
-window.UniversalAssignmentTracker={load};
+async function loadOverview(scopeName='my'){
+ const host=document.querySelector('#uaOverview');if(!host)return;
+ host.textContent='Loading assignments across apps…';
+ try{
+  const teacher=await teacherIdentity();
+  const sources=[
+   {app:'Word Genius',table:'homework_assignments',select:'id,created_by,class,title,status,active,created_at,due_at',label:r=>r.title||r.class||'Vocabulary homework',isActive:r=>r.active!==false&&r.status!=='closed'&&r.status!=='completed'},
+   {app:'Grammar Genius',table:'grammar_foundation_homework',select:'id,created_by,class_name,module_title,stage_title,active,created_at,due_at',label:r=>[r.module_title,r.stage_title].filter(Boolean).join(' · '),isActive:r=>r.active!==false},
+   {app:'Sentence Genius',table:'sentence_genius_homework',select:'id,created_by,class_name,title,book_title,unit_label,active,created_at,due_at',label:r=>r.title||r.book_title||'Sentence homework',isActive:r=>r.active!==false},
+   {app:'내신',table:'test_prep_tasks',select:'id,created_by,title,lesson,practice_type,active,created_at,due_at,student_id,target_count',label:r=>r.title||[r.lesson,r.practice_type].filter(Boolean).join(' · '),isActive:r=>r.active!==false}
+  ];
+  const fetched=await Promise.allSettled(sources.map(async source=>{
+   const rows=await get(source.table+'?select='+encodeURIComponent(source.select)+'&order=created_at.desc&limit=1000');
+   return rows.map(row=>({...row,app:source.app,label:source.label(row),isActive:source.isActive(row)}));
+  }));
+  const errors=[],rows=[];
+  fetched.forEach((result,index)=>{if(result.status==='fulfilled')rows.push(...result.value);else errors.push(sources[index].app+': '+result.reason.message)});
+  const creators=[...new Set(rows.map(r=>id(r.created_by)).filter(Boolean))];
+  let authors=new Map();
+  if(creators.length)try{
+   const profiles=await get('profiles?select=id,name,username&id=in.('+creators.join(',')+')');
+   authors=new Map(profiles.map(p=>[id(p.id),p.name||p.username||'Unknown']));
+  }catch(e){errors.push('Teacher names: '+e.message)}
+  const visible=rows.filter(r=>scopeName==='all'||(r.isActive&&id(r.created_by)===teacher))
+    .sort((a,b)=>String(b.created_at||'').localeCompare(String(a.created_at||'')));
+  const counts=new Map();
+  for(const row of visible)counts.set(row.app,(counts.get(row.app)||0)+1);
+  host.innerHTML='<div class="ua-toolbar"><strong>'+(scopeName==='my'?'My active homework':'All homework')+'</strong><button type="button" class="control" id="uaOverviewRefresh">Refresh</button></div>'+
+    '<p class="ua-tracker-summary">'+visible.length+' assignments · '+[...counts].map(([app,n])=>esc(app)+' '+n).join(' · ')+'</p>'+
+    (errors.length?'<p class="ua-note" style="color:#b04b40">Some sources unavailable: '+esc(errors.join('; '))+'</p>':'')+
+    '<div class="ua-progress-table-wrap"><table class="ua-progress-table"><thead><tr><th>App</th><th>Assignment</th><th>Class / Student</th><th>Assigned by</th><th>Status</th><th>Due</th></tr></thead><tbody>'+
+    visible.map(row=>'<tr><td>'+esc(row.app)+'</td><td>'+esc(row.label||'Homework')+'</td><td>'+esc(row.class||row.class_name||(row.student_id?'Student assignment':'—'))+'</td><td>'+esc(authors.get(id(row.created_by))||'Unknown')+'</td><td>'+(row.isActive?'Active':'Inactive')+'</td><td>'+esc(fmt(row.due_at))+'</td></tr>').join('')+
+    '</tbody></table></div>'+(visible.length?'':'<p class="ua-empty">No matching assignments.</p>')+
+    '<p class="ua-note">This cross-app list shows assignment ownership and status. Per-student completion and accuracy remain in each app’s tracker until their progress sources are connected here.</p>';
+  host.querySelector('#uaOverviewRefresh').onclick=()=>loadOverview(scopeName);
+ }catch(e){host.innerHTML='<p class="ua-empty">Could not load homework: '+esc(e.message)+'</p>'}
+}
+window.UniversalAssignmentTracker={load,loadOverview};
 })();
