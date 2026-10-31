@@ -729,3 +729,28 @@ html[data-vocab-theme="dark"] .wg-status-pill.is-submitted,html[data-vocab-theme
 
 .writing-genius #wgDiaryFlow .df-count{display:block;text-align:right;margin:10px 2px 0;color:#e75c9d;font-weight:850}
 .writing-genius #wgDiaryFlow .df-count.is-invalid{color:#d72e42}
+
+/* Compact AI diary review — selection is the student's final say. */
+.writing-genius #wgDiaryFlow .df-review-top{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin:10px 0}
+.writing-genius #wgDiaryFlow .df-review-top h3{margin:0;color:#e75c9d;font-size:1.05rem}
+.writing-genius #wgDiaryFlow .df-review-progress{color:#718c94;font-size:.82rem;font-weight:800}
+.writing-genius #wgDiaryFlow .df-review-praise{color:#cb518e;font-size:.92rem;line-height:1.55;margin:0 0 14px}
+.writing-genius #wgDiaryFlow .df-review-compact{padding:12px 15px;margin:9px 0;border-radius:16px}
+.writing-genius #wgDiaryFlow .df-review-card-head{display:flex;justify-content:space-between;gap:8px;align-items:center;color:#75949a;font-size:.7rem;font-weight:850}
+.writing-genius #wgDiaryFlow .df-review-kind{background:#f0fafb;padding:3px 8px;border-radius:99px}
+.writing-genius #wgDiaryFlow .df-review-compact .df-review-original{font-size:.87rem;margin:7px 0 5px;line-height:1.45;color:#7b8a8d}
+.writing-genius #wgDiaryFlow .df-review-compact .df-review-better{font-size:1.03rem;margin:5px 0;line-height:1.5;color:#365d65;font-weight:800}
+.writing-genius #wgDiaryFlow .df-diff{background:#ffe5f1;color:#e75c9d;padding:0 2px;border-radius:4px}
+.writing-genius #wgDiaryFlow .df-inline-note{font-size:.68rem;color:#bf6a94;font-weight:700;white-space:nowrap}
+.writing-genius #wgDiaryFlow .df-review-compact .df-review-korean{font-size:.81rem;color:#839198;margin:4px 0 6px}
+.writing-genius #wgDiaryFlow .df-review-compact .df-review-explanation{font-size:.75rem;margin:4px 0 8px}
+.writing-genius #wgDiaryFlow .df-choice-row{display:flex;gap:7px;flex-wrap:wrap;margin-top:9px}
+.writing-genius #wgDiaryFlow .df-choice-button,.writing-genius #wgDiaryFlow .df-change-button{border:1.5px solid #bde8eb;background:#fff;border-radius:11px;color:#56757c;font-weight:800;padding:8px 11px;cursor:pointer;font-size:.77rem;min-height:39px}
+.writing-genius #wgDiaryFlow .df-choice-button.is-chosen{color:#ba427d;border-color:#e75c9d;background:#fff0f7}
+.writing-genius #wgDiaryFlow .df-change-button{margin-top:8px;color:#ba427d}
+.writing-genius #wgDiaryFlow .df-review-revised{color:#bf477f;font-weight:800;font-size:.88rem;margin:7px 0}
+.writing-genius #wgDiaryFlow .df-clarify-box{display:grid;gap:8px;margin:10px 0}
+.writing-genius #wgDiaryFlow .df-clarify-input{box-sizing:border-box;width:100%;min-height:74px;border:2px solid #c5eef1;border-radius:11px;padding:10px;font:inherit;font-size:.9rem}
+.writing-genius #wgDiaryFlow .df-expression-line{display:flex;flex-wrap:wrap;gap:5px 12px;border-bottom:1px solid #e5f2f3;padding:8px 0;font-size:.85rem}
+.writing-genius #wgDiaryFlow .df-expression-line strong{color:#bd4c86}
+.writing-genius #wgDiaryFlow .df-expression-line span{color:#849196;font-size:.81rem}
