@@ -711,3 +711,16 @@ html[data-vocab-theme="dark"] .wg-status-pill.is-submitted,html[data-vocab-theme
 @keyframes df-line-arrive{from{opacity:.35;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
 @keyframes df-splash-in{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:scale(1)}}
 @media(prefers-reduced-motion:reduce){.writing-genius #wgDiaryFlow .df-tele-line,.writing-genius #wgDiaryFlow .df-speak-splash{animation:none;transition:none}}
+
+/* Keep diary flow action controls in view, like shared question renderer controls. */
+.writing-genius #wgDiaryFlow{padding-bottom:calc(92px + env(safe-area-inset-bottom,0px))}
+.writing-genius #wgDiaryFlow .wg-diary-flow-actions:not(:empty){
+ position:fixed;left:0;right:0;bottom:0;z-index:80;
+ display:flex;align-items:center;justify-content:center;gap:12px;
+ margin:0;padding:12px max(16px,env(safe-area-inset-left,0px)) calc(12px + env(safe-area-inset-bottom,0px));
+ background:rgba(255,255,255,.97);border-top:2px solid #c5eef1;
+ box-shadow:0 -8px 25px rgba(20,70,80,.08);box-sizing:border-box;
+}
+.writing-genius #wgDiaryFlow .wg-diary-flow-actions:empty{display:none}
+.writing-genius #wgDiaryFlow .wg-diary-flow-actions .wg-button{min-height:48px;min-width:110px;max-width:270px;flex:1 1 0;margin:0}
+@media(max-width:560px){.writing-genius #wgDiaryFlow .wg-diary-flow-actions:not(:empty){gap:8px;padding:10px 12px calc(10px + env(safe-area-inset-bottom,0px))}.writing-genius #wgDiaryFlow .wg-diary-flow-actions .wg-button{min-width:0;font-size:.92rem;padding:9px 8px}}
