@@ -1,6 +1,7 @@
 // Writing Genius: flexible writing. Student-owned drafts, teacher-visible submissions.
 // Reuses the existing auth gateway, student header, Word Genius theme and visual tokens.
 import {studentIdentity,signedInProfile} from '/students/sentence-genius/content.js?v=20261024-wg-auth1';
+import {QuestionRenderer} from '/shared/questions/question-renderer.js?v=20261023-speaking-ai1';
 import {createSentencePractice} from './sentence-practice.js?v=20261031-streak-reset-fix3';
 const API_BASE='https://fiieuiktlsivwfgyivai.supabase.co/rest/v1/';
 const KEY='sb_publishable_e-K50PquV9gHdfmefG6tmg_o-vVSl0e';
@@ -160,7 +161,7 @@ function showEditor(entry){
   $('wgDiaryReview').hidden=true;
   $('wgSubmit').textContent=a.kind==='diary'?'AI Willi 확인하기':'글 제출하기';
   diaryTranscript='';diaryInterim='';diaryReviewBody='';
-  $('wgDiaryTranscript').textContent='';
+
   updateCounts();saveState(a.persisted?'저장됨':'새 글');
   if(a.kind==='diary'&&a.persisted&&a.status!=='submitted')void restoreDiaryReview(a);
   show('editor');window.scrollTo({top:0,behavior:'auto'});
@@ -324,7 +325,8 @@ async function bootstrap(){
     show('home');notice(error.message+' 로그인 페이지에서 다시 시도해 주세요.',true);
   }
 }
-let diaryStep=1,correctionIndex=0,corrections=[];
+let diaryStep=1,correctionIndex=0,corrections=[],diaryMode='write';
+let diaryQuestionRenderer=null,diaryFullRenderer=null;
 function setDiaryStep(step){
  if(state.active?.kind!=='diary')return;
  diaryStep=step;
@@ -350,23 +352,38 @@ function setDiaryStep(step){
  $('wgDiaryReviewStatus').hidden=step===1 || step===4;
  window.scrollTo({top:0,behavior:'auto'});
 }
+function normalizeDiarySentence(value){return String(value||'').toLowerCase().replace(/[^a-z0-9']/g,' ').replace(/\s+/g,' ').trim()}
+function diaryQuestion(item,mode){
+ const target=item?.better||item?.english||'';
+ return {form:mode==='speaking'?'speaking':'write',input:{language:'en'},prompt:'',context:{sentence:target},answer:[target]};
+}
 function showCurrentCorrection(){
  const item=corrections[correctionIndex];
- if(!item){setDiaryStep(4);$('wgDiarySpeaking').scrollIntoView({behavior:'smooth',block:'nearest'});return}
- $('wgDiaryCorrectionTarget').textContent=(item.better||item.english||'')+'\n'+(item.why_ko||item.meaning_ko||'');
- $('wgDiaryCorrectionTarget').dataset.answer=item.better||item.english||'';
- $('wgDiaryCorrectionInput').value='';
- $('wgDiaryCorrectionStatus').textContent=(correctionIndex+1)+' / '+corrections.length;
+ if(!item){showWholeDiary();return}
  setDiaryStep(4);
+ $('wgDiaryQuestionCount').textContent=(correctionIndex+1)+' / '+corrections.length;
+ $('wgDiaryQuestionLabel').textContent=item.original?'Sentence Correction':'New Expression';
+ $('wgDiaryCorrectionTarget').textContent=item.why_ko||item.meaning_ko||'';
+ $('wgDiaryCorrectionStatus').textContent='';
+ diaryQuestionRenderer=new QuestionRenderer($('wgDiaryQuestionHost'));
+ diaryQuestionRenderer.render(diaryQuestion(item,diaryMode));
+ $('wgDiaryCorrectionCheck').disabled=false;
 }
-function normalizeDiarySentence(s){return String(s||'').toLowerCase().replace(/[^a-z0-9']/g,' ').replace(/\s+/g,' ').trim()}
-function acceptCorrection(answer){
+function acceptCorrection(){
  const target=corrections[correctionIndex]?.better||corrections[correctionIndex]?.english||'';
+ const answer=diaryQuestionRenderer?.getResponse?.()||'';
  if(normalizeDiarySentence(answer)!==normalizeDiarySentence(target)){
-  $('wgDiaryCorrectionStatus').textContent='문장을 다시 확인해 주세요. / Try the improved sentence again.';return;
+  $('wgDiaryCorrectionStatus').textContent='다시 시도해 주세요.';
+  return;
  }
  correctionIndex++;showCurrentCorrection();
- if(correctionIndex<corrections.length)$('wgDiaryCorrection').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+function showWholeDiary(){
+ setDiaryStep(4);
+ $('wgDiaryFullText').textContent=$('wgBody').value;
+ diaryFullRenderer=new QuestionRenderer($('wgDiaryFullSpeechHost'));
+ diaryFullRenderer.render({form:'speaking',prompt:'',context:{},answer:[$('wgBody').value]});
+ $('wgDiarySpeechStatus').textContent='';
 }
 async function diaryRequest(action,entryId,transcript){
  const call=async access=>fetch('/api/writing-genius-diary',{method:'POST',credentials:'include',cache:'no-store',
@@ -424,7 +441,7 @@ async function reviewDiary(){
   diaryReviewBody=$('wgBody').value;
   showDiaryFeedback(result.feedback);
   $('wgDiarySpeechStatus').textContent='일기 전체를 처음부터 끝까지 읽어 주세요.';
-  $('wgDiaryTranscript').textContent='';
+
   diaryTranscript='';diaryInterim='';
   setDiaryStep(3);
   diaryStatus('AI 피드백을 확인하고 일기 전체를 말해 주세요.');
@@ -459,11 +476,12 @@ async function checkDiarySpeech(){
  diaryRecognition?.stop();
  const entry=state.active;
  if(diaryReviewBody!==$('wgBody').value){notice('일기가 수정됐어요. 다시 AI Willi의 확인을 받아 주세요.',true);return}
- if(!diaryTranscript.trim()){notice('일기 전체를 마이크에 읽어 주세요.',true);return}
+ const fullTranscript=diaryFullRenderer?.getResponse?.()||'';
+ if(!fullTranscript.trim()){$('wgDiarySpeechStatus').textContent='일기를 읽어 주세요.';return}
  diaryBusy=true;
  try{
   $('wgDiarySpeechStatus').textContent='전체 일기를 확인하고 있어요…';
-  const result=await diaryRequest('speech',entry.id,diaryTranscript);
+  const result=await diaryRequest('speech',entry.id,fullTranscript);
   $('wgDiarySpeechStatus').textContent='말하기 완료! 인식률 '+result.coverage+'%. 일기를 제출하고 있어요.';
   const submitted=await saveEntry({submit:true,force:true});
   if(submitted){$('wgDiaryReview').hidden=true;notice('오늘의 일기와 말하기를 완료했어요! ✓')}
@@ -476,13 +494,9 @@ $('wgDiaryNext').addEventListener('click',()=>{
  else if(diaryStep===3)showCurrentCorrection();
 });
 $('wgDiaryPrev').addEventListener('click',()=>{if(diaryStep===2)setDiaryStep(1);else if(diaryStep===3)setDiaryStep(2)});
-$('wgDiaryCorrectionCheck').addEventListener('click',()=>acceptCorrection($('wgDiaryCorrectionInput').value));
-$('wgDiaryCorrectionMic').addEventListener('click',()=>{
- const Speech=window.SpeechRecognition||window.webkitSpeechRecognition;
- if(!Speech){$('wgDiaryCorrectionStatus').textContent='마이크 인식을 지원하는 브라우저가 필요해요.';return}
- const rec=new Speech();rec.lang='en-US';rec.onresult=e=>{const transcript=e.results[0]?.[0]?.transcript||'';$('wgDiaryCorrectionInput').value=transcript;acceptCorrection(transcript)};
- rec.onerror=()=>{$('wgDiaryCorrectionStatus').textContent='음성 인식 오류. 다시 말해 주세요.'};rec.start();
-});
+$('wgDiaryCorrectionCheck').addEventListener('click',acceptCorrection);
+$('wgDiaryModeWrite').addEventListener('click',()=>{diaryMode='write';showCurrentCorrection()});
+$('wgDiaryModeSpeak').addEventListener('click',()=>{diaryMode='speaking';showCurrentCorrection()});
 const examplesRoot=$('wgDiaryExamplesList');
 for(const example of exampleDiaries){
  const card=el('article','wg-diary-example');
