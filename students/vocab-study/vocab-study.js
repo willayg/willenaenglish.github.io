@@ -183,7 +183,7 @@ function wireSpellingField(field,{focus=false}={}){
   field=prepareSharedKeyboardField(field);
   if(!field)return;
   const syncSubmit=()=>{
-    if(!state.spellingTest&&!state.spellingPractice)return;
+    if(!state.spellingTest&&!state.spellingPractice&&!state.inlineCoach)return;
     actionBtn.disabled=!String(field.value||'').trim();
   };
   field.addEventListener('input',syncSubmit);
@@ -1727,6 +1727,7 @@ function startInlineCoach(word, resume){
 }
 function renderInlineCoach(){
   const recovery=state.inlineCoach;if(!recovery)return;
+  enableSpellingKeyboard();
   const word=recovery.word;
   instructionEl.hidden=false;
   instructionEl.textContent='철자 코치 · Spelling Coach — 맞게 쓸 때까지 연습해요.';
