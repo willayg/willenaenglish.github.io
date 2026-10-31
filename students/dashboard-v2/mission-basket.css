@@ -29,3 +29,22 @@ html[data-dashboard-theme=dark] .dashboard-mission-basket .dm-tabs button[aria-p
 
 /* rev1.17: clean white mission basket background */
 .dashboard-mission-basket .dm-head{background:#fff}
+
+/* Rev1.18: pastel basket, white cards across dashboard themes */
+.dashboard-mission-basket .dm-head{background:#fff!important;border:3px solid #8bdde3;border-radius:26px;box-shadow:0 6px 0 #f7afd0,0 12px 22px rgba(21,121,137,.08)}
+.dashboard-mission-basket .dm-toggle strong{color:#e45c9e}
+.dashboard-mission-basket .dm-count{color:#168d9b;border:2px solid #b9eaf0;background:#fff}
+.dashboard-mission-basket .dm-arrow{color:#e45c9e}
+.dashboard-mission-basket .dm-body{background:linear-gradient(145deg,#e8fbfc,#fff1f8);border:2px solid #a0e1e6;border-top:0;border-radius:0 0 24px 24px;padding:18px 12px 14px;margin:4px 8px 0;box-shadow:inset 0 1px 0 white}
+.dashboard-mission-basket .dm-tabs button{background:#fff;border:2px solid #a5e6e9;color:#208a96}
+.dashboard-mission-basket .dm-tabs button[aria-pressed=true]{background:#ffe3f1;border-color:#ee8fbd;color:#b83980}
+.dashboard-mission-basket .dm-item,.dashboard-mission-basket .dm-done{background:#fff!important;border:2px solid #a5e5ea!important;color:#245b66!important;box-shadow:0 4px 0 rgba(94,202,216,.15)}
+.dashboard-mission-basket .dm-item:nth-child(even){border-color:#f1afd0!important;box-shadow:0 4px 0 rgba(238,144,187,.14)}
+.dashboard-mission-basket .dm-app{color:#e45898}
+.dashboard-mission-basket .dm-item strong{color:#225964}
+.dashboard-mission-basket .dm-action{color:#13a0af}
+.dashboard-mission-basket .dm-done .dm-app,.dashboard-mission-basket .dm-done .dm-action{color:#b38c21}
+html[data-dashboard-theme=dark] .dashboard-mission-basket .dm-head,html[data-dashboard-theme=cyberpunk] .dashboard-mission-basket .dm-head{background:#fff!important}
+html[data-dashboard-theme=dark] .dashboard-mission-basket .dm-item,html[data-dashboard-theme=cyberpunk] .dashboard-mission-basket .dm-item{background:#fff!important;color:#225964!important}
+html[data-dashboard-theme=dark] .dashboard-mission-basket .dm-tabs button,html[data-dashboard-theme=cyberpunk] .dashboard-mission-basket .dm-tabs button{background:#fff;color:#208a96}
+html[data-dashboard-theme=dark] .dashboard-mission-basket .dm-tabs button[aria-pressed=true],html[data-dashboard-theme=cyberpunk] .dashboard-mission-basket .dm-tabs button[aria-pressed=true]{background:#ffe3f1;color:#b83980}
