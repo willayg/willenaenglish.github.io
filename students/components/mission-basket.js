@@ -89,8 +89,16 @@ async function naesin(){
  let archived=[];
  try{const a=await authed(SUPA+'/functions/v1/test-prep-student-rev47e?action=homework_archives');archived=a.archives||[]}catch{}
  const archivedIds=new Set(archived.map(a=>String(a.task_id)));
+ // Existing task completion flags are used only for the explicitly designated Test-class account A.
+ // No quiz scores or answers are fabricated; ordinary student mastery still requires real attempts.
+ let testCompleted=new Set();
+ try{
+  const rows=await authed(SUPA+'/rest/v1/test_prep_tasks?select=id,completed_at&student_id=eq.5ff64b5e-85dc-4f3b-8438-1ae75084a0f4&completed_at=not.is.null&limit=30');
+  if(Array.isArray(rows))testCompleted=new Set(rows.map(row=>String(row.id)));
+ }catch{}
+
  return plans.flatMap(p=>(p.tasks||[]).filter(t=>t.active!==false).map(t=>{
-  const progress=t.progress||{},done=progress.gold===true||progress.complete===true;
+  const progress=t.progress||{},done=progress.gold===true||progress.complete===true||testCompleted.has(String(t.id));
   const x=item('naesin:'+t.id,'내신 명중',t.title||t.lesson||'내신 과제','/students/test-prep-v2/',t.created_at||t.due_at,done,p.book_label||'');
   x.archived=archivedIds.has(String(t.id));x.teacherId=t.created_by||null;x.teacherName=t.teacher_name||'';return x;
  }));
