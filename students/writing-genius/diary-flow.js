@@ -57,21 +57,40 @@ export function createDiaryFlow({draft,review,speech,finish,onExit}){
  }
  function summary(){
   construct();screen('review','3 · Review');
-  stage.append(el('h2','df-heading','AI Willi'),el('p','df-praise',feedback?.praise_ko||''),el('p','df-muted',feedback?.tip_ko||''));
+  stage.append(el('h2','df-heading','AI Willi'),el('p','df-praise',feedback?.praise_ko||''));
+  const improvements=Array.isArray(feedback?.improvements)?feedback.improvements:[];
+  const expressions=Array.isArray(feedback?.expressions)?feedback.expressions:[];
+  const section=(heading)=>{const box=el('section','df-review-group');box.append(el('h3','df-review-heading',heading));stage.append(box);return box};
+  const fixes=section('Sentence Review · 문장 확인');
+  if(!improvements.length)fixes.append(el('p','df-muted','잘 쓴 문장은 그대로 유지해요.'));
+  for(const change of improvements){
+   const card=el('article','df-review-item');
+   card.append(el('small','df-review-label','STUDENT · 내가 쓴 문장'),el('p','df-review-original',change.original||''));
+   card.append(el('small','df-review-label','AI WILLI · 더 좋은 문장'),el('p','df-review-better',change.better||''));
+   if(change.translation_ko)card.append(el('p','df-review-korean',change.translation_ko));
+   if(change.why_ko)card.append(el('p','df-review-explanation',change.why_ko));
+   fixes.append(card);
+  }
+  const phrases=section('New Expressions · 새로운 표현');
+  if(!expressions.length)phrases.append(el('p','df-muted','추가 표현이 없어요.'));
+  for(const phrase of expressions){
+   const card=el('article','df-review-item');
+   card.append(el('p','df-review-better',phrase.english||''));
+   card.append(el('p','df-review-korean',phrase.meaning_ko||''));
+   phrases.append(card);
+  }
+  if(feedback?.tip_ko)stage.append(el('p','df-review-tip',feedback.tip_ko));
   stage.append(el('strong','df-summary-count',practice.length+' sentences to practise'));
   button('이전',write);button('연습 시작',()=>{index=0;mode='write';if(practice.length)question();else{index=0;lineSpeech()}},true);
  }
  function rendererHost(q){
-  const host=el('div','df-question-host');stage.append(host);renderer=new QuestionRenderer(host);renderer.render(q);
+  const host=el('div','df-question-host sp-shared-question question-card');stage.append(host);renderer=new QuestionRenderer(host);renderer.render(q);
  }
  function question(){
   const p=practice[index];if(!p){index=0;lineSpeech();return}
   screen('question',(index+1)+' / '+practice.length+' · '+p.kind);
   stage.append(el('h2','df-heading',p.kind==='Correction'?'문장 고치기':'새로운 표현'));
-  if(p.original)stage.append(el('p','df-original',p.original));
-  if(p.meaning)stage.append(el('p','df-hint',p.meaning));
-  stage.append(el('strong','df-target',p.target));
-  rendererHost({form:mode==='speaking'?'speaking':'write',prompt:'',context:{},input:{language:'en'},answer:[p.target]});
+  rendererHost({form:mode==='speaking'?'speaking':'write',prompt:mode==='speaking'?'말하기':'영어로 쓰기',context:{...(p.original?{original:p.original}:{}),...(p.meaning?{korean:p.meaning}:{}) ,sentence:p.target},input:{language:'en'},answer:[p.target]});
   button('쓰기',()=>{mode='write';question()});button('말하기',()=>{mode='speaking';question()});
   button('확인',()=>{
    if(norm(renderer.getResponse())!==norm(p.target)){status('다시 시도해 주세요.',true);return}
