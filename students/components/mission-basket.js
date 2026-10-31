@@ -278,7 +278,7 @@ async function getCompletedActivityDays(){
  const requests=[
   SUPA+'/rest/v1/writing_genius_sentence_sessions?select=completed_at&status=eq.completed&completed_at=not.is.null&order=completed_at.desc&limit=1000',
   SUPA+'/rest/v1/daily_study_sessions?select=completed_at&status=eq.completed&completed_at=not.is.null&order=completed_at.desc&limit=1000',
-  SUPA+'/rest/v1/progress_sessions?select=ended_at&ended_at=not.is.null&order=ended_at.desc&limit=1000',
+  SUPA+'/rest/v1/progress_sessions?select=ended_at,summary&ended_at=not.is.null&summary->>completed=eq.true&order=ended_at.desc&limit=1000',
   SUPA+'/rest/v1/student_completed_activity_events?select=completed_at&order=completed_at.desc&limit=1000'
  ];
  const settled=await Promise.allSettled(requests.map(url=>authed(url)));
