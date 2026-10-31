@@ -353,7 +353,7 @@ function setDiaryStep(step){
 function showCurrentCorrection(){
  const item=corrections[correctionIndex];
  if(!item){setDiaryStep(4);$('wgDiarySpeaking').scrollIntoView({behavior:'smooth',block:'nearest'});return}
- $('wgDiaryCorrectionTarget').textContent=(item.original?item.original+'\n': '')+(item.why_ko||item.meaning_ko||'');
+ $('wgDiaryCorrectionTarget').textContent=(item.better||item.english||'')+'\n'+(item.why_ko||item.meaning_ko||'');
  $('wgDiaryCorrectionTarget').dataset.answer=item.better||item.english||'';
  $('wgDiaryCorrectionInput').value='';
  $('wgDiaryCorrectionStatus').textContent=(correctionIndex+1)+' / '+corrections.length;
