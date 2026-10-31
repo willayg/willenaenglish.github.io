@@ -277,6 +277,7 @@ async function getStreakSnapshot(){
  const rows=await authed(SUPA+'/rest/v1/student_achievement_snapshots?select=current_streak,best_streak,last_completed_day,streak_updated_at&limit=1');
  if(Array.isArray(rows)&&rows[0]){
   const row=rows[0];
+  if(!row.streak_updated_at||Date.now()-Date.parse(row.streak_updated_at)>120000)return null;
   const parts=Object.fromEntries(new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date()).map(p=>[p.type,p.value]));
   const today=parts.year+'-'+parts.month+'-'+parts.day;
   const yesterday=new Date(Date.parse(today+'T12:00:00Z')-86400000).toISOString().slice(0,10);
