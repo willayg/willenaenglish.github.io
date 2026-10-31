@@ -343,15 +343,15 @@ function setDiaryStep(step){
  visible('wgDiaryNavigation',step!==4);
  $('wgDiaryPrev').disabled=step===1;
  $('wgDiaryNext').textContent=step===2?'AI Willi 확인하기':'다음';
- $('wgSubmit').hidden=step!==4;
+ $('wgSubmit').hidden=true;
  $('wgSave').hidden=step!==2;
  $('wgIdeasToggle').closest('.wg-help').hidden=step!==2;
- $('wgDiaryReviewStatus').hidden=step===1;
+ $('wgDiaryReviewStatus').hidden=step===1 || step===4;
  window.scrollTo({top:0,behavior:'auto'});
 }
 function showCurrentCorrection(){
  const item=corrections[correctionIndex];
- if(!item){setDiaryStep(4);return}
+ if(!item){setDiaryStep(4);$('wgDiarySpeaking').scrollIntoView({behavior:'smooth',block:'nearest'});return}
  $('wgDiaryCorrectionTarget').textContent=item.better||'';
  $('wgDiaryCorrectionInput').value='';
  $('wgDiaryCorrectionStatus').textContent=(correctionIndex+1)+' / '+corrections.length;
@@ -364,6 +364,7 @@ function acceptCorrection(answer){
   $('wgDiaryCorrectionStatus').textContent='문장을 다시 확인해 주세요. / Try the improved sentence again.';return;
  }
  correctionIndex++;showCurrentCorrection();
+ $('wgDiaryCorrection').scrollIntoView({behavior:'smooth',block:'nearest'});
 }
 async function diaryRequest(action,entryId,transcript){
  const call=async access=>fetch('/api/writing-genius-diary',{method:'POST',credentials:'include',cache:'no-store',
