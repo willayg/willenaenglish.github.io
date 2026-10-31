@@ -55,6 +55,8 @@ async function edge(action,opts={}){
   if(r.status===401)throw new Error('AUTH_REQUIRED');if(!r.ok||data.success===false)throw new Error(data.error||`Request failed (${r.status})`);return data;
 }
 
+export async function loadHomeworkArchives(){return edge('homework_archives',{method:'GET'});}
+export async function archiveHomework(taskId){return edge('archive_homework',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({task_id:taskId})});}
 export async function homeworkSet(taskId,questionIds=null){
  if(!Array.isArray(questionIds)||!questionIds.length)
    return edge('homework_set&task_id='+encodeURIComponent(String(taskId)),{method:'GET'});
