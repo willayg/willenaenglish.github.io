@@ -631,3 +631,25 @@ html[data-vocab-theme="dark"] .wg-status-pill.is-submitted,html[data-vocab-theme
 .writing-genius #wgDiaryFlow .wg-diary-flow-message{font-size:.95rem;color:#52747b;margin-top:9px}
 .writing-genius #wgDiaryFlow .wg-diary-flow-message.is-error{color:#b13c68}
 @media(max-width:560px){.writing-genius #wgDiaryFlow .wg-diary-flow-stage{padding:14px}.writing-genius #wgDiaryFlow .wg-diary-flow-actions .wg-button{min-height:46px}}
+
+/* Diary Review: complete original → suggested English → Korean cards. */
+.writing-genius #wgDiaryFlow .df-review-group{margin:22px 0}
+.writing-genius #wgDiaryFlow .df-review-heading{font-size:1.03rem;color:#e75c9d;margin:0 0 12px}
+.writing-genius #wgDiaryFlow .df-review-item{border:2px solid #c5eef1;border-radius:18px;padding:15px 17px;margin:10px 0;background:#fff}
+.writing-genius #wgDiaryFlow .df-review-label{display:block;font-size:.72rem;font-weight:850;color:#649099;letter-spacing:.035em}
+.writing-genius #wgDiaryFlow .df-review-original{color:#59727a;margin:5px 0 14px;font-size:1rem}
+.writing-genius #wgDiaryFlow .df-review-better{color:#e75c9d;font-weight:850;font-size:1.1rem;margin:5px 0 10px}
+.writing-genius #wgDiaryFlow .df-review-korean{color:#274f56;margin:8px 0;line-height:1.55}
+.writing-genius #wgDiaryFlow .df-review-explanation{font-size:.83rem;color:#6b7f85;margin:9px 0 0}
+.writing-genius #wgDiaryFlow .df-review-tip{border-radius:14px;padding:12px;background:#f1fbfc;color:#476e74}
+/* Reuse the existing Writing Genius Sentence Practice renderer presentation, not a diary replica. */
+.writing-genius #wgDiaryFlow .sp-shared-question.question-card{background:transparent;border:0;box-shadow:none;padding:0;margin:0;max-width:100%;min-width:0;text-align:left;font-family:inherit}
+.writing-genius #wgDiaryFlow .sp-shared-question .prompt{font-size:clamp(.97rem,3.5vw,1.18rem);line-height:1.55;color:var(--vocab-heading,#244f56);font-weight:900;margin:9px 0 16px}
+.writing-genius #wgDiaryFlow .sp-shared-question .context{display:grid;gap:13px;margin:0 0 18px}
+.writing-genius #wgDiaryFlow .sp-shared-question .context-block{margin:0;min-width:0}
+.writing-genius #wgDiaryFlow .sp-shared-question .context-label{color:var(--cyan-strong,#25b8c4);font-size:.73rem;font-weight:900;margin-bottom:7px}
+.writing-genius #wgDiaryFlow .sp-shared-question .context-value{color:var(--vocab-heading,#244f56);font-size:clamp(1.04rem,3.7vw,1.27rem);font-weight:800;line-height:1.75;overflow-wrap:anywhere;white-space:pre-wrap;background:var(--vocab-track,#e9fbfc);border-radius:14px;padding:12px 14px}
+.writing-genius #wgDiaryFlow .sp-shared-question [data-answer]{display:block;margin:0}
+.writing-genius #wgDiaryFlow .sp-shared-question [data-answer]::before{content:'내 문장 · My sentence';display:block;font-size:.84rem;font-weight:850;color:var(--vocab-heading,#244f56);margin-bottom:8px}
+.writing-genius #wgDiaryFlow .sp-shared-question textarea.answer[data-write]{width:100%;min-height:126px;resize:vertical;border:2px solid #c5eef1;border-radius:18px;background:#fff;color:var(--ink,#173f46);font:650 clamp(1rem,3.4vw,1.12rem)/1.8 Poppins,system-ui,sans-serif;padding:15px 16px;box-sizing:border-box}
+.writing-genius #wgDiaryFlow .sp-shared-question .feedback[data-feedback]{display:none}
