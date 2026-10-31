@@ -115,6 +115,26 @@ async function resolveTeacherNames(){
   for(const entry of state.items)if(!entry.done&&entry.teacherId&&names.has(String(entry.teacherId)))entry.teacherName=names.get(String(entry.teacherId));
  }catch(err){console.warn('[mission basket] Teacher names unavailable',err)}
 }
+function archiveStorageKey(){
+ try{
+  const t=window.WillenaAPI?.getLocalAccessToken?.();
+  if(!t)return null;
+  const payload=JSON.parse(atob(t.split('.')[1].replace(/-/g,'+').replace(/_/g,'/')));
+  return payload?.sub?'willena-mission-medals:'+String(payload.sub):null;
+ }catch{return null}
+}
+function restoreLocalMedals(){
+ const key=archiveStorageKey();if(!key)return;
+ try{const ids=JSON.parse(localStorage.getItem(key)||'[]');if(Array.isArray(ids))state.archives=new Set(ids.filter(v=>typeof v==='string'))}catch{}
+}
+function saveLocalMedal(id){
+ const key=archiveStorageKey();if(!key)return;
+ try{
+  const stored=JSON.parse(localStorage.getItem(key)||'[]');
+  const ids=new Set(Array.isArray(stored)?stored:[]);ids.add(id);
+  localStorage.setItem(key,JSON.stringify([...ids]));
+ }catch(e){console.warn('[mission basket] local medal save unavailable',e)}
+}
 function firstTeacherName(name){const first=String(name||'').trim().split(/\s+/)[0]||'';return first==='Will'?'William':first}
 
 async function celebrate(element,collect){
@@ -160,7 +180,7 @@ function render(){
    }catch(e){delete card.dataset.collecting;console.warn('[mission basket] archive failed',e);alert('보관할 수 없습니다. 다시 시도해 주세요.');return}
   }
   await celebrate(card,true);
-  state.archives.add(x.id);x.archived=true;render();
+  state.archives.add(x.id);x.archived=true;saveLocalMedal(x.id);render();
   const medalTab=state.host?.querySelector('[data-tab="archive"]');
   if(medalTab&&!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches){medalTab.classList.remove('dm-tab-grow');void medalTab.offsetWidth;medalTab.classList.add('dm-tab-grow');medalTab.addEventListener('animationend',()=>medalTab.classList.remove('dm-tab-grow'),{once:true})}
  }));
@@ -172,6 +192,7 @@ async function mount(host){
  if(!document.getElementById('willenaMissionBasketStyles')){const link=document.createElement('link');link.id='willenaMissionBasketStyles';link.rel='stylesheet';link.href='/students/dashboard-v2/mission-basket.css?v=20261031-progress8';document.head.appendChild(link)}
  state.host=host;host.dataset.missionMounted='true';host.classList.add('dashboard-mission-basket');host.setAttribute('aria-label','미션함');
  state.collapsed=true;
+ restoreLocalMedals();
  host.innerHTML='<div class="dm-loading">미션을 확인하고 있어요…</div>';
  const results=await Promise.allSettled([standardHomework(),sentences(),grammar(),naesin()]);
  for(const result of results){if(result.status==='fulfilled')state.items.push(...result.value);else state.errors.push(String(result.reason))}
@@ -194,6 +215,7 @@ async function refresh(){
    state.items.push(...result.value);
   });
   state.items.sort((a,b)=>(Date.parse(b.created)||0)-(Date.parse(a.created)||0));
+  restoreLocalMedals();
   await resolveTeacherNames();render();
  }finally{refreshing=false}
 }
