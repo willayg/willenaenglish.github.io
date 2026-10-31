@@ -353,7 +353,6 @@ function setDiaryStep(step){
  $('wgSave').hidden=step!==2;
  $('wgIdeasToggle').closest('.wg-help').hidden=step!==2;
  $('wgDiaryReviewStatus').hidden=step===1 || step===4;
- window.scrollTo({top:0,behavior:'auto'});
 }
 function normalizeDiarySentence(value){return String(value||'').toLowerCase().replace(/[^a-z0-9']/g,' ').replace(/\s+/g,' ').trim()}
 function diaryQuestion(item,mode){
