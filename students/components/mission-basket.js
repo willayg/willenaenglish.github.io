@@ -273,6 +273,18 @@ async function recordCompletedActivity(id,source='genius'){
   void window.WillenaAchievements?.refresh?.();
  }catch(e){console.warn('[streak] completed activity save failed',e)}
 }
+async function getGoldSnapshot(){
+ const rows=await authed(SUPA+'/rest/v1/student_achievement_snapshots?select=gold_word,gold_sentence,gold_writing,gold_homework,total_gold,gold_updated_at&limit=1');
+ const row=Array.isArray(rows)?rows[0]:null;
+ if(!row?.gold_updated_at||Date.now()-Date.parse(row.gold_updated_at)>600000)return null;
+ return {word:Number(row.gold_word)||0,sentence:Number(row.gold_sentence)||0,writing:Number(row.gold_writing)||0,homework:Number(row.gold_homework)||0,total:Number(row.total_gold)||0};
+}
+async function saveGoldSnapshot(values){
+ return authed(SUPA+'/rest/v1/rpc/cache_student_gold_snapshot',{
+  method:'POST',headers:{'Content-Type':'application/json'},
+  body:JSON.stringify({p_word:values.word,p_sentence:values.sentence,p_writing:values.writing,p_homework:values.homework})
+ });
+}
 async function getStreakSnapshot(){
  const rows=await authed(SUPA+'/rest/v1/student_achievement_snapshots?select=current_streak,best_streak,last_completed_day,streak_updated_at&limit=1');
  if(Array.isArray(rows)&&rows[0]){
@@ -329,7 +341,7 @@ async function getCompletedActivityDays(){
  if(!successful)throw Error('No completed session sources readable');
  return [...dates];
 }
-window.WillenaMissionBasket={mount,refresh,getAchievementMissions,getWritingGoldUnits,getCompletedActivityDays,recordCompletedActivity,getStreakSnapshot,refreshStreakSnapshot};
+window.WillenaMissionBasket={mount,refresh,getAchievementMissions,getWritingGoldUnits,getCompletedActivityDays,recordCompletedActivity,getStreakSnapshot,refreshStreakSnapshot,getGoldSnapshot,saveGoldSnapshot};
 // Any student app may mount this shared widget on a chosen container.
 
 })();
