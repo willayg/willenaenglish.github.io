@@ -48,7 +48,7 @@ export function createDiaryFlow({draft,review,speech,finish,onExit}){
  function construct(){
   const corrections=(feedback?.improvements||[]).filter(x=>x.original&&x.better);
   const expressions=(feedback?.expressions||[]).filter(x=>x.english);
-  practice=[...corrections.map(x=>({target:x.better,meaning:x.why_ko||'',kind:'Correction',original:x.original})),...expressions.map(x=>({target:x.english,meaning:x.meaning_ko||'',kind:'New Expression'}))];
+  practice=[...corrections.map(x=>({target:x.better,meaning:x.translation_ko||x.meaning_ko||'',kind:'Correction',original:x.original})),...expressions.map(x=>({target:x.english,meaning:x.meaning_ko||'',kind:'New Expression'}))];
   const original=split(current.body);
   finalLines=original.map(line=>{
    let result=line;for(const x of corrections){if(norm(line)===norm(x.original)||line.toLowerCase().includes(String(x.original).trim().toLowerCase())){result=x.better;break}}
@@ -111,6 +111,7 @@ export function createDiaryFlow({draft,review,speech,finish,onExit}){
   const p=practice[index];if(!p){index=0;lineSpeech();return}
   screen('question',(index+1)+' / '+practice.length);
   stage.append(el('p','df-target',p.target));
+   if(p.meaning)stage.append(el('p','df-target-korean',p.meaning));
   const listen=el('button','wg-button df-listen');listen.append(el('img','df-headphones'));listen.querySelector('img').src='/shared/svgs/headphones.svg';listen.querySelector('img').alt='';listen.setAttribute('aria-label','듣기');listen.title='듣기';listen.type='button';listen.addEventListener('click',()=>void playTarget(p.target,listen));stage.append(listen);
   const modes=el('div','df-mode-buttons');
   const toggle=el('button','df-mode-toggle');
