@@ -52,10 +52,17 @@ function spokenAccuracy(expected,heard){
  if(coverage<.65)return Math.min(.7,coverage);
  return Math.max(0,1-dp[a.length][b.length]/Math.max(a.length,b.length));
 }
-const examples=[
- ['My School Day','I woke up early today. I ate breakfast with my family. I went to school with my friend. We played a game in English class. I had lunch with my classmates. I felt happy when I came home.'],
- ['A Rainy Day','It rained this morning. I took my umbrella to school. My shoes got a little wet. I read a book at lunchtime. My mother made soup for dinner. I hope tomorrow is sunny.'],
- ['My Weekend','I visited my grandmother on Saturday. We made pancakes together. My sister helped us in the kitchen. Then we went for a walk. We saw a small bird in the garden. I had a wonderful day.']
+const diaryTopics=[
+ {title:'오늘의 일기',en:'My Day',guide:'What happened today? Who were you with? How did you feel?',example:'Today was a busy day. I went to school in the morning. I studied English with my friends. We ate lunch together. After school I played outside. I felt tired but happy.'},
+ {title:'주말 계획',en:'Weekend Plans',guide:'Where will you go? Who will you meet? What do you want to do?',example:'This weekend I want to visit a park. I will go there with my family. We might ride our bikes. I want to have a picnic. I hope the weather is sunny. I think it will be fun.'},
+ {title:'학교 생활',en:'School Life',guide:'What classes did you have? What happened at school? What did you enjoy?',example:'I went to school early today. My first class was math. I asked my teacher a question. At lunch I talked with my friends. We played soccer after class. I had a good day at school.'},
+ {title:'나의 가족',en:'My Family',guide:'Who is in your family? What do you do together? What makes them special?',example:'I live with my family. We like eating dinner together. My sister makes me laugh. My dad helps me with homework. On Sundays we go for a walk. I love spending time with them.'},
+ {title:'내가 좋아하는 음식',en:'My Favorite Food',guide:'What food do you like? What does it taste like? When do you eat it?',example:'My favorite food is pizza. I love cheese and tomatoes. My family orders pizza on Fridays. I usually eat two slices. Sometimes I make pizza at home. I want to try a new topping next time.'},
+ {title:'친구와의 하루',en:'A Day With Friends',guide:'Who did you meet? What did you do together? How did you feel?',example:'I met my friend after school. We went to the playground. First we played basketball. Then we bought a snack. We talked about our favorite games. I had a great time with my friend.'},
+ {title:'나의 취미',en:'My Hobbies',guide:'What do you enjoy doing? When do you do it? Why do you like it?',example:'I like drawing pictures. I usually draw after dinner. My favorite thing to draw is animals. Sometimes I watch drawing videos. I want to get better at coloring. Drawing helps me relax.'},
+ {title:'특별했던 날',en:'A Special Day',guide:'What made the day special? Who was there? What happened first and next?',example:'Yesterday was my birthday. My friends came to my house. We played games together. My mom made a cake. Everyone sang a birthday song. It was a day I will remember.'},
+ {title:'가고 싶은 곳',en:'A Place I Want to Visit',guide:'Where do you want to go? Why? What would you do there?',example:'I want to visit Jeju Island. I would like to see the sea. I want to walk on the beach. I hope to try delicious food. I would take lots of pictures. I think the trip would be exciting.'},
+ {title:'나의 꿈',en:'My Dream',guide:'What do you want to be or do? Why? How can you work toward it?',example:'I want to become a scientist. I enjoy learning about space. I read books about planets. I want to build a robot one day. I will study hard at school. I hope my dream comes true.'}
 ];
 const el=(tag,cls='',value='')=>{const n=document.createElement(tag);if(cls)n.className=cls;n.textContent=value;return n};
 export function createDiaryFlow({draft,review,clarify,speech,finish,onExit}){
@@ -69,16 +76,40 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,onExit}){
  $('dfExit').addEventListener('click',close);
  function topic(){
   screen('topic','1 · Topic');
-  stage.append(el('h2','df-heading','오늘의 일기'));
-  const input=el('input','df-input');input.type='text';input.maxLength=120;input.value=current.title||'';input.placeholder='Diary title';input.setAttribute('aria-label','Diary title');
-  input.addEventListener('input',()=>{current.title=input.value});
-  stage.append(input,el('p','df-muted','What happened today? Who were you with? How did you feel?'));
-  const examplesBtn=el('button','wg-button wg-secondary','예시 일기 보기');examplesBtn.type='button';stage.append(examplesBtn);
-  examplesBtn.addEventListener('click',()=>{
-   let box=stage.querySelector('.df-examples');
-   if(box){box.remove();return}
-   box=el('div','df-examples');for(const [title,body] of examples){const c=el('article','df-example');c.append(el('strong','',title),el('p','',body));box.append(c)}stage.append(box);
+  const heading=el('h2','df-heading','오늘의 일기');stage.append(heading);
+  const selected=diaryTopics.find(t=>t.title===current.title||t.en===current.title);
+  const picker=el('div','df-topic-picker');
+  const choose=el('button','df-topic-trigger');choose.type='button';choose.setAttribute('aria-expanded','false');
+  const menu=el('div','df-topic-menu');menu.hidden=true;
+  const titleInput=el('input','df-input');titleInput.type='text';titleInput.maxLength=120;titleInput.placeholder='My own title';titleInput.setAttribute('aria-label','My own diary title');
+  const guide=el('p','df-muted df-topic-guide');
+  const examplesBtn=el('button','wg-button wg-secondary','예시 일기 보기');examplesBtn.type='button';
+  const exampleBox=el('article','df-example df-topic-example');exampleBox.hidden=true;
+  const exampleTitle=el('strong',''),exampleText=el('p','');exampleBox.append(exampleTitle,exampleText);
+  let active=selected||null;
+  function render(){
+   choose.textContent=active?(active.title+' · '+active.en):'직접 제목 쓰기';
+   titleInput.hidden=!!active;
+   if(active)current.title=active.title;
+   else titleInput.value=current.title||'';
+   guide.textContent=active?active.guide:'Write about anything you like. What happened? How did you feel?';
+   const example=active||diaryTopics[0];
+   exampleTitle.textContent=example.en;exampleText.textContent=example.example;
+   [...menu.querySelectorAll('[data-topic-index]')].forEach(btn=>btn.classList.toggle('is-selected',btn.dataset.topicIndex===String(active?diaryTopics.indexOf(active):-1)));
+  }
+  const closeMenu=()=>{menu.hidden=true;choose.setAttribute('aria-expanded','false')};
+  choose.addEventListener('click',()=>{menu.hidden=!menu.hidden;choose.setAttribute('aria-expanded',String(!menu.hidden))});
+  diaryTopics.forEach((item,i)=>{
+   const option=el('button','df-topic-option',item.title+' · '+item.en);option.type='button';option.dataset.topicIndex=String(i);
+   option.addEventListener('click',()=>{active=item;render();closeMenu()});menu.append(option);
   });
+  const custom=el('button','df-topic-option','✎ 직접 제목 쓰기 · My Own Topic');custom.type='button';custom.dataset.topicIndex='-1';
+  custom.addEventListener('click',()=>{active=null;current.title='';render();closeMenu();titleInput.focus()});menu.append(custom);
+  titleInput.addEventListener('input',()=>{current.title=titleInput.value});
+  picker.append(choose,menu);
+  stage.append(picker,titleInput,guide,examplesBtn,exampleBox);
+  examplesBtn.addEventListener('click',()=>{exampleBox.hidden=!exampleBox.hidden;examplesBtn.setAttribute('aria-expanded',String(!exampleBox.hidden))});
+  render();
   button('다음',async()=>{if(!current.title.trim()){status('제목을 써 주세요.',true);return}try{await persist();write()}catch(e){status(e.message,true)}},true);
  }
  function write(){
