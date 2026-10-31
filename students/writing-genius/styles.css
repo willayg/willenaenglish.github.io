@@ -766,3 +766,23 @@ html[data-vocab-theme="dark"] .wg-status-pill.is-submitted,html[data-vocab-theme
 .writing-genius #wgDiaryFlow .df-topic-guide{margin:13px 0 18px}
 .writing-genius #wgDiaryFlow .df-topic-example{margin-top:12px}
 @media(max-width:450px){.writing-genius #wgDiaryFlow .df-topic-menu:not([hidden]){grid-template-columns:1fr}}
+
+/* AI Willi diary-review transition: brand SVG, no emoji or artificial delay. */
+.writing-genius #wgDiaryFlow .df-ai-loading{min-height:360px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;text-align:center;padding:24px 10px;box-sizing:border-box}
+.writing-genius #wgDiaryFlow .df-ai-orbit{width:180px;max-width:75%;filter:drop-shadow(0 12px 15px rgba(47,172,182,.12))}
+.writing-genius #wgDiaryFlow .df-ai-orbit svg{width:100%;height:auto;overflow:visible}
+.writing-genius #wgDiaryFlow .df-ai-ring{stroke:#dcf3f5;stroke-width:5}
+.writing-genius #wgDiaryFlow .df-ai-ring-active{stroke:#49cad4;stroke-width:5;stroke-linecap:round;stroke-dasharray:75 384;transform-origin:90px 90px;animation:df-ai-spin 2s linear infinite}
+.writing-genius #wgDiaryFlow .df-ai-paper{fill:#fff;stroke:#53c7d0;stroke-width:5;stroke-linejoin:round}
+.writing-genius #wgDiaryFlow .df-ai-lines{stroke:#e75c9d;stroke-width:5;stroke-linecap:round;stroke-linejoin:round;animation:df-ai-read 1.5s ease-in-out infinite alternate}
+.writing-genius #wgDiaryFlow .df-ai-tick{stroke:#53c7d0;stroke-width:5;stroke-linecap:round;stroke-linejoin:round}
+.writing-genius #wgDiaryFlow .df-ai-loading h2{font-weight:900;font-size:clamp(1.6rem,5vw,2.2rem);color:#e75c9d;margin:0}
+.writing-genius #wgDiaryFlow .df-ai-loading p{color:#466c75;font-weight:800;font-size:1.02rem;margin:0}
+.writing-genius #wgDiaryFlow .df-ai-loading-dots{display:flex;gap:8px;margin-top:14px}
+.writing-genius #wgDiaryFlow .df-ai-loading-dots i{width:9px;height:9px;border-radius:50%;background:#53c7d0;animation:df-ai-dot 1s infinite alternate}
+.writing-genius #wgDiaryFlow .df-ai-loading-dots i:nth-child(2){animation-delay:.22s}
+.writing-genius #wgDiaryFlow .df-ai-loading-dots i:nth-child(3){animation-delay:.44s}
+@keyframes df-ai-spin{to{transform:rotate(360deg)}}
+@keyframes df-ai-read{to{stroke:#53c7d0;opacity:.6}}
+@keyframes df-ai-dot{to{transform:translateY(-8px);opacity:.3}}
+@media(prefers-reduced-motion:reduce){.writing-genius #wgDiaryFlow .df-ai-ring-active,.writing-genius #wgDiaryFlow .df-ai-lines,.writing-genius #wgDiaryFlow .df-ai-loading-dots i{animation:none}}
