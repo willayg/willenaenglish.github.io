@@ -10,12 +10,12 @@ const examples=[
 const el=(tag,cls='',value='')=>{const n=document.createElement(tag);if(cls)n.className=cls;n.textContent=value;return n};
 export function createDiaryFlow({draft,review,speech,finish,onExit}){
  const root=$('wgDiaryFlow'),stage=$('dfStage'),actions=$('dfActions'),message=$('dfMessage'),progress=$('dfProgress');
- let current=null,step='topic',feedback=null,practice=[],index=0,mode='write',renderer=null,finalLines=[],spoken=[],busy=false;
+ let current=null,step='topic',feedback=null,practice=[],index=0,mode='write',renderer=null,finalLines=[],spoken=[],busy=false,autosaveTimer=null;
  function button(label,fn,primary=false){const b=el('button','wg-button '+(primary?'wg-primary':'wg-secondary'),label);b.type='button';b.addEventListener('click',fn);actions.append(b);return b}
  function status(text='',error=false){message.textContent=text;message.classList.toggle('is-error',error)}
  function screen(name,label){step=name;stage.replaceChildren();actions.replaceChildren();status();progress.textContent=label;root.hidden=false;window.scrollTo({top:0,behavior:'auto'})}
- async function persist(){await draft(current)}
- function close(){root.hidden=true;current=null;onExit()}
+ async function persist(){clearTimeout(autosaveTimer);await draft(current)}
+ function close(){clearTimeout(autosaveTimer);root.hidden=true;current=null;onExit()}
  $('dfExit').addEventListener('click',close);
  function topic(){
   screen('topic','1 · Topic');
@@ -36,7 +36,7 @@ export function createDiaryFlow({draft,review,speech,finish,onExit}){
   stage.append(el('h2','df-heading','일기 쓰기'));
   const count=el('span','df-count');const area=el('textarea','df-textarea');area.value=current.body||'';area.placeholder='Write 6–30 complete sentences.';area.maxLength=12000;
   function update(){current.body=area.value;count.textContent=split(area.value).length+' / 30 sentences'}
-  area.addEventListener('input',update);update();stage.append(count,area);
+  area.addEventListener('input',()=>{update();clearTimeout(autosaveTimer);autosaveTimer=setTimeout(()=>{void persist().catch(e=>status(e.message,true))},1800)});update();stage.append(count,area);
   button('이전',topic);
   button('저장',async()=>{try{await persist();status('저장됨')}catch(e){status(e.message,true)}});
   button('AI Willi 확인',async()=>{
@@ -96,5 +96,5 @@ export function createDiaryFlow({draft,review,speech,finish,onExit}){
   catch(e){status(e.message,true);button('다시 저장',complete,true)}
   finally{busy=false}
  }
- return {open(entry,saved){current={...entry};feedback=saved?.original_body===entry.body?saved.feedback:null;spoken=[];index=0;root.hidden=false;if(feedback)summary();else topic()},close};
+ return {open(entry,saved){clearTimeout(autosaveTimer);current={...entry};feedback=saved?.original_body===entry.body?saved.feedback:null;spoken=[];index=0;root.hidden=false;if(entry.status==='submitted'){screen('finish','Complete');stage.append(el('h2','df-heading','오늘의 일기 완료'));button('글쓰기 메뉴',close,true)}else if(feedback)summary();else topic()},close};
 }
