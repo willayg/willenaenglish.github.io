@@ -15,7 +15,7 @@
 <link rel="stylesheet" href="/students/shared/willena-keyboard-safe.css?v=1.0.0">
 <link rel="stylesheet" href="/students/vocab-study/vocab-study.css?v=20261024-home-navigation4">
 <link rel="stylesheet" href="/students/vocab-study/theme-pips.css?v=20260927-v0005">
-<link rel="stylesheet" href="./styles.css?v=20261031-diary-compact2">
+<link rel="stylesheet" href="./styles.css?v=20261031-renderer-rebuild1">
 <script src="/students/api-gateway.js?v=20260926-progress-summary-cf1"></script>
 <script src="/students/study/study-progress.js?v=20260926-assignment-canonical1"></script>
 <script src="/js/api-config.js?v=20260926-reverted-auth1"></script>
@@ -117,17 +117,23 @@
       <section id="wgDiaryReview" class="wg-diary-review" hidden aria-live="polite">
         <h3>AI Willi의 일기 피드백</h3>
         <div id="wgDiaryFeedback"></div>
-        <div id="wgDiaryCorrection" class="wg-diary-correction" hidden><h3>문장 다시 연습하기 · Sentence Practice</h3><p id="wgDiaryCorrectionTarget"></p><input id="wgDiaryCorrectionInput" type="text" autocomplete="off" placeholder="수정한 문장을 다시 쓰세요"><div class="wg-diary-correction-actions"><button id="wgDiaryCorrectionMic" class="wg-button wg-secondary" type="button"><img src="/shared/svgs/mic.svg" alt=""> 말하기</button><button id="wgDiaryCorrectionCheck" class="wg-button wg-primary" type="button">확인</button></div><p id="wgDiaryCorrectionStatus" role="status"></p></div>
-        <div id="wgDiarySpeaking" class="wg-diary-speaking">
-          <h3><img class="wg-diary-heading-icon" src="/shared/svgs/mic.svg" alt=""> 일기 전체 말하기</h3>
-          <p>좋은 문장은 그대로 읽어도 좋아요. 쓴 일기를 처음부터 끝까지 소리 내어 읽어 주세요.</p>
-          <div class="wg-diary-speech-buttons">
-            <button id="wgDiarySpeakStart" class="wg-button wg-primary" type="button"><img src="/shared/svgs/mic.svg" alt=""> 말하기 시작 / 이어서</button>
-            <button id="wgDiarySpeakStop" class="wg-button wg-secondary" type="button" disabled>녹음 중지</button>
-            <button id="wgDiarySpeakCheck" class="wg-button wg-secondary" type="button">말하기 확인</button>
+        <div id="wgDiaryCorrection" class="wg-diary-correction" hidden>
+          <div class="wg-diary-question-head"><strong id="wgDiaryQuestionCount"></strong><span id="wgDiaryQuestionLabel"></span></div>
+          <div id="wgDiaryCorrectionTarget" class="wg-diary-question-prompt"></div>
+          <div id="wgDiaryQuestionHost" class="question-card" data-willena-keyboard-safe></div>
+          <div class="wg-diary-question-actions">
+            <button id="wgDiaryModeWrite" class="wg-button wg-secondary" type="button">쓰기</button>
+            <button id="wgDiaryModeSpeak" class="wg-button wg-secondary" type="button">말하기</button>
+            <button id="wgDiaryCorrectionCheck" class="wg-button wg-primary" type="button">확인</button>
           </div>
-          <p id="wgDiarySpeechStatus" role="status">마이크를 켜고 전체 일기를 읽어 주세요.</p>
-          <div id="wgDiaryTranscript" class="wg-diary-transcript" aria-label="인식된 영어"></div>
+          <p id="wgDiaryCorrectionStatus" role="status"></p>
+        </div>
+        <div id="wgDiarySpeaking" class="wg-diary-speaking" hidden>
+          <h3>일기 전체 말하기</h3>
+          <p id="wgDiaryFullText" class="wg-diary-full-text"></p>
+          <div id="wgDiaryFullSpeechHost" class="question-card"></div>
+          <button id="wgDiarySpeakCheck" class="wg-button wg-primary" type="button">완료</button>
+          <p id="wgDiarySpeechStatus" role="status"></p>
         </div>
       </section>
       <p id="wgDiaryReviewStatus" class="wg-diary-review-status" role="status" aria-live="polite" hidden></p>
@@ -227,7 +233,7 @@
 </div>
 <script type="module" src="/students/components/student-reward-celebration.js?v=20260926-v0005"></script>
 <script src="/students/vocab-study/theme-pips.js?v=20260927-v0005"></script>
-<script type="module" src="./app.js?v=20261031-diary-one-by-one2"></script>
+<script type="module" src="./app.js?v=20261031-renderer-rebuild1"></script>
 
 <script src="/students/components/mission-basket.js?v=20261031-goldcache4"></script>
 <script src="/students/components/student-achievements.js?v=20261031-goldcache2"></script>
