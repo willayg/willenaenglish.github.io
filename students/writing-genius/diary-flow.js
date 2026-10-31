@@ -121,9 +121,32 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,onExit}){
   button('저장',async()=>{try{await persist();status('저장됨')}catch(e){status(e.message,true)}});
   button('AI Willi 확인',async()=>{
    const count=split(current.body).length;if(count<6||count>30){status('완성된 영어 문장을 6–30개 작성해 주세요.',true);return}
-   if(busy)return;busy=true;status('AI Willi가 검토 중이에요.');
-   try{await persist();feedback=await review(current);summary()}catch(e){status(e.message,true)}finally{busy=false}
+   if(busy)return;busy=true;
+   reviewLoading();
+   try{await persist();feedback=await review(current);summary()}
+   catch(e){write();status(e.message||'AI Willi 오류가 발생했어요.',true)}
+   finally{busy=false}
   },true);
+ }
+ function reviewLoading(){
+  screen('review-loading','AI Willi');
+  const splash=el('section','df-ai-loading');
+  splash.setAttribute('role','status');splash.setAttribute('aria-live','polite');
+  splash.innerHTML=`
+   <div class="df-ai-orbit" aria-hidden="true">
+    <svg viewBox="0 0 180 180" fill="none" role="presentation">
+      <circle cx="90" cy="90" r="73" class="df-ai-ring"/>
+      <circle cx="90" cy="90" r="73" class="df-ai-ring-active"/>
+      <path d="M52 49h60l19 19v68H52V49Z" class="df-ai-paper"/>
+      <path d="M111 49v20h20M67 85h48M67 101h41M67 117h29" class="df-ai-lines"/>
+      <path d="m112 119 11 11 22-28" class="df-ai-tick"/>
+    </svg>
+   </div>
+   <h2>AI Willi</h2>
+   <p>글을 읽고 있어요</p>
+   <div class="df-ai-loading-dots" aria-hidden="true"><i></i><i></i><i></i></div>
+  `;
+  stage.append(splash);
  }
  function choiceKey(){return 'willena-diary-choices:'+current.id+':'+current.body.length+':'+current.body.slice(0,32)}
  function saveChoices(){try{localStorage.setItem(choiceKey(),JSON.stringify(choices))}catch{}}
