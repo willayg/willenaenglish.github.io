@@ -63,7 +63,7 @@ export function createDiaryFlow({draft,review,speech,finish,onExit}){
  let current=null,step='topic',feedback=null,practice=[],index=0,mode='write',renderer=null,finalLines=[],spoken=[],busy=false,autosaveTimer=null,transitionTimer=null;
  function button(label,fn,primary=false){const b=el('button','wg-button '+(primary?'wg-primary':'wg-secondary'),label);b.type='button';b.addEventListener('click',fn);actions.append(b);return b}
  function status(text='',error=false){message.textContent=text;message.classList.toggle('is-error',error)}
- function screen(name,label){clearTimeout(transitionTimer);step=name;stage.replaceChildren();actions.replaceChildren();status();progress.textContent=label;root.hidden=false;window.scrollTo({top:0,behavior:'auto'})}
+ function screen(name,label){clearTimeout(transitionTimer);step=name;stage.replaceChildren();actions.replaceChildren();status();progress.textContent=label;root.hidden=false}
  async function persist(){clearTimeout(autosaveTimer);await draft(current)}
  function close(){clearTimeout(transitionTimer);clearTimeout(autosaveTimer);root.hidden=true;current=null;onExit()}
  $('dfExit').addEventListener('click',close);
