@@ -13,20 +13,44 @@ function speechWords(value){
  s=s.replace(/\b(zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)\b/g,word=>numbers[word]);
  return s.replace(/\b([ap])\s+m\b/g,'$1m').replace(/\b(\d{1,2})(am|pm)\b/g,'$1 $2').replace(/[^a-z0-9']/g,' ').replace(/\s+/g,' ').trim().split(' ').filter(Boolean);
 }
-// Word error rate: only actual spoken differences count, not punctuation or time formatting.
+// Classroom speaking judge, not a verbatim spelling test.
+// Soft costs allow minor grammar/STT differences while preserving word order and meaning.
 function spokenAccuracy(expected,heard){
  const a=speechWords(expected),b=speechWords(heard);
  if(!a.length||!b.length)return 0;
- const row=Array.from({length:b.length+1},(_,i)=>i);
- for(let i=1;i<=a.length;i++){
-  let prev=row[0];row[0]=i;
-  for(let j=1;j<=b.length;j++){
-   const old=row[j];
-   row[j]=Math.min(row[j]+1,row[j-1]+1,prev+(a[i-1]===b[j-1]?0:1));
-   prev=old;
+ const critical=w=>/^[0-9]+$/.test(w)||/^(am|pm|not|never|no)$/.test(w);
+ const soft=w=>/^(a|an|the|to|of|at|in|on|and|is|are|was|were|it|i)$/.test(w);
+ const match=(x,y)=>{
+  if(x===y)return 0;
+  if(critical(x)||critical(y))return 1;
+  const stem=w=>w.replace(/(ing|ed|es|s)$/,'');
+  if(x.length>=4&&y.length>=4&&stem(x)===stem(y))return .14;
+  // A single transcription-letter error should not count like a different word.
+  if(x.length>=5&&y.length>=5&&Math.abs(x.length-y.length)<=1){
+   let i=0,j=0,d=0;
+   while(i<x.length&&j<y.length&&d<2){
+    if(x[i]===y[j]){i++;j++;continue}
+    d++;
+    if(x.length>y.length)i++;else if(y.length>x.length)j++;else{i++;j++}
+   }
+   if(d+Math.max(x.length-i,y.length-j)<=1)return .22;
   }
+  return soft(x)||soft(y)?.38:.65;
+ };
+ const dp=Array.from({length:a.length+1},()=>Array(b.length+1).fill(0));
+ for(let i=1;i<=a.length;i++)dp[i][0]=dp[i-1][0]+(critical(a[i-1])?1:soft(a[i-1])?.3:.65);
+ for(let j=1;j<=b.length;j++)dp[0][j]=dp[0][j-1]+(critical(b[j-1])?1:soft(b[j-1])?.25:.45);
+ for(let i=1;i<=a.length;i++)for(let j=1;j<=b.length;j++){
+  dp[i][j]=Math.min(
+   dp[i-1][j]+(critical(a[i-1])?1:soft(a[i-1])?.3:.65),
+   dp[i][j-1]+(critical(b[j-1])?1:soft(b[j-1])?.25:.45),
+   dp[i-1][j-1]+match(a[i-1],b[j-1])
+  );
  }
- return Math.max(0,1-row[b.length]/Math.max(a.length,b.length));
+ // Short or unrelated responses cannot pass through lenient scoring.
+ const coverage=Math.min(1,b.length/a.length);
+ if(coverage<.65)return Math.min(.7,coverage);
+ return Math.max(0,1-dp[a.length][b.length]/Math.max(a.length,b.length));
 }
 const examples=[
  ['My School Day','I woke up early today. I ate breakfast with my family. I went to school with my friend. We played a game in English class. I had lunch with my classmates. I felt happy when I came home.'],
