@@ -166,7 +166,7 @@ function showEditor(entry){
   updateCounts();saveState(a.persisted?'저장됨':'새 글');
   if(a.kind==='diary'&&a.persisted&&a.status!=='submitted')void restoreDiaryReview(a);
   show('editor');window.scrollTo({top:0,behavior:'auto'});
-  if(a.kind==='diary')void diaryFlow.open(a).catch(error=>notice(error.message,true));
+  if(a.kind==='diary')diaryFlow.open(a);
   else $('wgDiaryFlow').hidden=true;
 }
 function createEntry(kind){
