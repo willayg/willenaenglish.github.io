@@ -107,3 +107,17 @@ html[data-dashboard-theme=dark] .dashboard-mission-basket .dm-tabs button[aria-p
 .dm-gold-particles span{position:absolute;left:0;top:0;color:#edb62d;font-size:23px;text-shadow:0 1px 1px #fff4b8;animation:dmParticle .64s ease-out both}
 @keyframes dmParticle{0%{transform:rotate(var(--a)) translateX(0) scale(.5);opacity:1}100%{transform:rotate(var(--a)) translateX(120px) scale(.95);opacity:0}}
 @media(prefers-reduced-motion:reduce){.dashboard-mission-basket .dm-gold-collect,.dashboard-mission-basket .dm-medal-shine .dm-medal-svg,.dm-gold-particles span{animation:none!important}}
+
+/* Completion must override the white-card and alternating-border theme rules. */
+.dashboard-mission-basket .dm-item.dm-done,
+html[data-dashboard-theme] .dashboard-mission-basket .dm-item.dm-done{
+ background:linear-gradient(135deg,#fff9df,#ffedac)!important;
+ border-color:#e3bd50!important;
+ box-shadow:0 4px 0 rgba(190,142,30,.22);
+}
+.dashboard-mission-basket .dm-progress-copy{font-size:12px;font-weight:900;color:#16848c;margin-top:8px}
+.dashboard-mission-basket .dm-progress{display:block;width:100%;height:9px;overflow:hidden;border-radius:999px;background:#e4f3f4}
+.dashboard-mission-basket .dm-progress>span{display:block;height:100%;border-radius:inherit;background:#29b6c2;transition:width .25s ease}
+.dashboard-mission-basket .dm-done .dm-progress-copy{color:#9c7416}
+.dashboard-mission-basket .dm-done .dm-progress{background:#f3dfa5}
+.dashboard-mission-basket .dm-done .dm-progress>span{background:#d5a52f}
