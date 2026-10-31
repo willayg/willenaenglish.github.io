@@ -44,7 +44,8 @@ async function refreshToken(){
 }
 async function requestEdge(action,opts,access){
   const headers={...(opts.headers||{}),Authorization:`Bearer ${access}`,apikey:API_KEY};
-  return fetch(`${EDGE}?action=${encodeURIComponent(action)}`,{...opts,headers,cache:'no-store',credentials:'omit'});
+  const [operation,...params]=String(action).split('&');const query='action='+encodeURIComponent(operation)+(params.length?'&'+params.join('&'):'');
+  return fetch(`${EDGE}?${query}`,{...opts,headers,cache:'no-store',credentials:'omit'});
 }
 async function edge(action,opts={}){
   let access=token()||await refreshToken();if(!access)throw new Error('AUTH_REQUIRED');
