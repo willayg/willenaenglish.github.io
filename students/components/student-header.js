@@ -429,7 +429,8 @@ class StudentHeader extends HTMLElement {
     this.shadowRoot.innerHTML = `
       <style>
   @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap');
-        :host { display:block; }
+        :host { display:block; position:relative; z-index:2147483000; isolation:isolate; }
+/* Keep the complete header (not only its shadow dropdown) above theme controls. */
   header { position:sticky; top:0; left:0; right:0; background:var(--student-header-bg,#fff); border-bottom:1px solid var(--student-header-border,#e6eaef); padding:10px 12px 8px; z-index:10; min-width:0; width:100%; box-sizing:border-box; margin:0; }
   .top { display:flex; flex-direction:row; align-items:center; gap:10px; font-family: 'Poppins', system-ui, Segoe UI, Arial, sans-serif; justify-content: center; min-width:0; }
   .title { font-weight:800; color:var(--student-header-title,var(--pri,#19777e)); text-align:center; }
@@ -468,7 +469,7 @@ class StudentHeader extends HTMLElement {
     max-width: 320px; /* cap width for readability */
     padding: 8px;
     display: block; /* allow animation control via visibility/opacity */
-    z-index: 1000;
+    z-index: 2147483001;
     overflow-x: hidden; /* prevent horizontal scrollbar */
     overflow-y: auto; /* allow vertical scroll if many items */
     /* Animation base state */
