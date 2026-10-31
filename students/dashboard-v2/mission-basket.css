@@ -48,3 +48,38 @@ html[data-dashboard-theme=dark] .dashboard-mission-basket .dm-head,html[data-das
 html[data-dashboard-theme=dark] .dashboard-mission-basket .dm-item,html[data-dashboard-theme=cyberpunk] .dashboard-mission-basket .dm-item{background:#fff!important;color:#225964!important}
 html[data-dashboard-theme=dark] .dashboard-mission-basket .dm-tabs button,html[data-dashboard-theme=cyberpunk] .dashboard-mission-basket .dm-tabs button{background:#fff;color:#208a96}
 html[data-dashboard-theme=dark] .dashboard-mission-basket .dm-tabs button[aria-pressed=true],html[data-dashboard-theme=cyberpunk] .dashboard-mission-basket .dm-tabs button[aria-pressed=true]{background:#ffe3f1;color:#b83980}
+
+/* rev1.19 — a single continuous basket outline enclosing header, tabs and cards */
+.dashboard-mission-basket{
+  box-sizing:border-box;
+  width:calc(100% - 32px);
+  max-width:948px;
+  margin:18px auto 22px;
+  padding:14px;
+  border:3px solid #80d4dc;
+  border-radius:30px;
+  background:#fff;
+  box-shadow:0 9px 24px rgba(27,137,146,.09);
+}
+.dashboard-mission-basket .dm-head{
+  border:0!important;
+  border-radius:20px!important;
+  background:#fff!important;
+  box-shadow:none!important;
+}
+.dashboard-mission-basket .dm-toggle{padding:9px 13px;min-height:67px}
+.dashboard-mission-basket .dm-body{
+  margin:0;
+  padding:14px 1px 1px;
+  border:0;
+  border-radius:0;
+  background:#fff;
+  box-shadow:none;
+}
+.dashboard-mission-basket .dm-tabs{margin:0 0 13px}
+.dashboard-mission-basket .dm-items{gap:12px}
+@media(max-width:560px){
+  .dashboard-mission-basket{width:calc(100% - 20px);margin:12px auto 16px;padding:10px;border-radius:26px}
+  .dashboard-mission-basket .dm-toggle{padding:8px;min-height:62px}
+  .dashboard-mission-basket .dm-body{padding-top:10px}
+}
