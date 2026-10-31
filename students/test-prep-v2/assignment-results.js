@@ -21,12 +21,12 @@ export function assignmentMetrics(task){
  const saved=byId.get(String(task?.id)),basic=task?.progress||{};
  const target=Math.max(1,Number(saved?.target)||Number(basic.target)||Number(task?.target_count)||10);
  const done=Math.max(0,Number(saved?.done??basic.done)||0);
- const complete=done>=target&&(saved?Number(saved.unresolved||0)===0:basic.complete===true);
+ const complete=basic.complete===true||(done>=target&&(saved?Number(saved.unresolved||0)===0:false));
  const verified=!!saved;
  const correct=verified?Number(saved.correct)||0:null;
  const wrong=verified?Number(saved.wrong)||0:null;
  const unresolved=verified?Number(saved.unresolved)||0:null;
- const accuracy=verified&&done>0?Number(saved.accuracy_percent):null;
+ const accuracy=basic.overall_accuracy_percent!=null?Number(basic.overall_accuracy_percent):(verified&&done>0?Number(saved.accuracy_percent):null);
  const due=task?.due_at?new Date(task.due_at).toLocaleDateString('ko-KR',{month:'numeric',day:'numeric'}):'';
  return{done,target,complete,verified,correct,wrong,unresolved,accuracy,due,
    statusLabel:complete?'완료':(done>=target?'오답 복습 필요':'진행 중'),
