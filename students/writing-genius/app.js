@@ -1,6 +1,7 @@
 // Writing Genius: flexible writing. Student-owned drafts, teacher-visible submissions.
 // Reuses the existing auth gateway, student header, Word Genius theme and visual tokens.
 import {studentIdentity,signedInProfile} from '/students/sentence-genius/content.js?v=20261024-wg-auth1';
+import {createDiaryFlow} from './diary-flow.js?v=20261031-new1';
 import {QuestionRenderer} from '/shared/questions/question-renderer.js?v=20261023-speaking-ai1';
 import {createSentencePractice} from './sentence-practice.js?v=20261031-streak-reset-fix3';
 const API_BASE='https://fiieuiktlsivwfgyivai.supabase.co/rest/v1/';
@@ -165,6 +166,8 @@ function showEditor(entry){
   updateCounts();saveState(a.persisted?'저장됨':'새 글');
   if(a.kind==='diary'&&a.persisted&&a.status!=='submitted')void restoreDiaryReview(a);
   show('editor');window.scrollTo({top:0,behavior:'auto'});
+  if(a.kind==='diary')void diaryFlow.open(a).catch(error=>notice(error.message,true));
+  else $('wgDiaryFlow').hidden=true;
 }
 function createEntry(kind){
   const prompt=prompts[kind][0],date=seoulDate();
@@ -473,6 +476,16 @@ $('wgDiaryPrev').addEventListener('click',()=>{if(diaryStep===2)setDiaryStep(1);
 $('wgDiaryCorrectionCheck').addEventListener('click',acceptCorrection);
 $('wgDiaryModeWrite').addEventListener('click',()=>{diaryMode='write';showCurrentCorrection()});
 $('wgDiaryModeSpeak').addEventListener('click',()=>{diaryMode='speaking';showCurrentCorrection()});
+const diaryFlow=createDiaryFlow({
+ draft:async entry=>{
+  $('wgTitle').value=entry.title;$('wgBody').value=entry.body;
+  const saved=await saveEntry({force:true});if(!saved)throw Error('일기를 저장하지 못했어요.');
+ },
+ review:async entry=>{const result=await diaryRequest('review',entry.id);return result.feedback},
+ speech:async(entry,transcript)=>diaryRequest('speech',entry.id,transcript),
+ finish:async entry=>{const result=await saveEntry({submit:true,force:true});if(!result)throw Error('제출에 실패했어요.')},
+ onExit:()=>backHome()
+});
 const examplesRoot=$('wgDiaryExamplesList');
 for(const example of exampleDiaries){
  const card=el('article','wg-diary-example');
