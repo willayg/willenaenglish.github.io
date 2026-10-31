@@ -144,7 +144,7 @@ export function createDiaryFlow({draft,review,clarify,speech,finish,onExit}){
    const header=el('div','df-review-card-head');
    header.append(el('span','df-review-number',(i+1)+' / '+improvements.length),el('span','df-review-kind',correctionType(change)));
    card.append(header);
-   card.append(el('p','df-review-original',change.original||''));
+   if(correctionType(change)!=='Punctuation')card.append(el('p','df-review-original',change.original||''));
    const suggestion=el('p','df-review-better');changedText(change.original,change.better,suggestion);
    if(correctionType(change)==='Punctuation')suggestion.append(el('small','df-inline-note',change.better.includes(',')&&!change.original.includes(',')?' · comma':' · punctuation'));
    card.append(suggestion);
