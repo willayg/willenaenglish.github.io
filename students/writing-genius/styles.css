@@ -530,3 +530,7 @@ html[data-vocab-theme="dark"] .wg-status-pill.is-submitted,html[data-vocab-theme
 .writing-genius .wg-diary-speech-buttons{display:flex;gap:9px;flex-wrap:wrap;margin-top:14px}
 .writing-genius .wg-diary-transcript{min-height:46px;margin-top:10px;padding:12px;background:#f4fafb;border:2px solid #dceef0;border-radius:13px;line-height:1.6;white-space:pre-wrap}
 @media(max-width:560px){.writing-genius .wg-diary-guide,.writing-genius .wg-diary-review{padding:14px}.writing-genius .wg-diary-speech-buttons .wg-button{flex:1 1 100%}}
+
+.writing-genius .wg-diary-review-status{margin:12px 0;padding:13px 16px;border:2px solid #99dbe0;border-radius:14px;background:#effcfc;color:#196d76;font-weight:800;line-height:1.55}
+.writing-genius .wg-diary-review-status.is-error{border-color:#e69aa9;background:#fff1f4;color:#a02f53}
+.writing-genius .wg-diary-review-status[hidden]{display:none!important}
