@@ -2,6 +2,21 @@ import {QuestionRenderer} from '/shared/questions/question-renderer.js?v=2026102
 const $=id=>document.getElementById(id);
 const norm=s=>String(s||'').toLowerCase().replace(/[’‘]/g,"'").replace(/[^a-z0-9']/g,' ').replace(/\s+/g,' ').trim();
 const split=s=>(String(s||'').match(/[^.!?\n]+[.!?]+(?=\s|$)/g)||[]).map(x=>x.trim()).filter(x=>/[a-z]/i.test(x));
+// Compare recognized speech by whole words; punctuation and case are ignored.
+function spokenAccuracy(expected,heard){
+ const a=norm(expected).split(' ').filter(Boolean),b=norm(heard).split(' ').filter(Boolean);
+ if(!a.length||!b.length)return 0;
+ const row=Array.from({length:b.length+1},(_,i)=>i);
+ for(let i=1;i<=a.length;i++){
+  let prev=row[0];row[0]=i;
+  for(let j=1;j<=b.length;j++){
+   const old=row[j];
+   row[j]=Math.min(row[j]+1,row[j-1]+1,prev+(a[i-1]===b[j-1]?0:1));
+   prev=old;
+  }
+ }
+ return Math.max(0,1-row[b.length]/Math.max(a.length,b.length));
+}
 const examples=[
  ['My School Day','I woke up early today. I ate breakfast with my family. I went to school with my friend. We played a game in English class. I had lunch with my classmates. I felt happy when I came home.'],
  ['A Rainy Day','It rained this morning. I took my umbrella to school. My shoes got a little wet. I read a book at lunchtime. My mother made soup for dinner. I hope tomorrow is sunny.'],
@@ -10,12 +25,12 @@ const examples=[
 const el=(tag,cls='',value='')=>{const n=document.createElement(tag);if(cls)n.className=cls;n.textContent=value;return n};
 export function createDiaryFlow({draft,review,speech,finish,onExit}){
  const root=$('wgDiaryFlow'),stage=$('dfStage'),actions=$('dfActions'),message=$('dfMessage'),progress=$('dfProgress');
- let current=null,step='topic',feedback=null,practice=[],index=0,mode='write',renderer=null,finalLines=[],spoken=[],busy=false,autosaveTimer=null;
+ let current=null,step='topic',feedback=null,practice=[],index=0,mode='write',renderer=null,finalLines=[],spoken=[],busy=false,autosaveTimer=null,transitionTimer=null;
  function button(label,fn,primary=false){const b=el('button','wg-button '+(primary?'wg-primary':'wg-secondary'),label);b.type='button';b.addEventListener('click',fn);actions.append(b);return b}
  function status(text='',error=false){message.textContent=text;message.classList.toggle('is-error',error)}
- function screen(name,label){step=name;stage.replaceChildren();actions.replaceChildren();status();progress.textContent=label;root.hidden=false;window.scrollTo({top:0,behavior:'auto'})}
+ function screen(name,label){clearTimeout(transitionTimer);step=name;stage.replaceChildren();actions.replaceChildren();status();progress.textContent=label;root.hidden=false;window.scrollTo({top:0,behavior:'auto'})}
  async function persist(){clearTimeout(autosaveTimer);await draft(current)}
- function close(){clearTimeout(autosaveTimer);root.hidden=true;current=null;onExit()}
+ function close(){clearTimeout(transitionTimer);clearTimeout(autosaveTimer);root.hidden=true;current=null;onExit()}
  $('dfExit').addEventListener('click',close);
  function topic(){
   screen('topic','1 · Topic');
@@ -81,7 +96,7 @@ export function createDiaryFlow({draft,review,speech,finish,onExit}){
   }
   if(feedback?.tip_ko)stage.append(el('p','df-review-tip',feedback.tip_ko));
   stage.append(el('strong','df-summary-count',practice.length+' sentences to practise'));
-  button('이전',write);button('연습 시작',()=>{index=0;mode='speaking';if(practice.length)question();else{index=0;lineSpeech()}},true);
+  button('이전',write);button('연습 시작',()=>{index=0;mode='speaking';if(practice.length)question();else{index=0;speakingTransition()}},true);
  }
  function rendererHost(q){
   const host=el('div','df-question-host sp-shared-question question-card');stage.append(host);renderer=new QuestionRenderer(host);renderer.render(q);
@@ -108,7 +123,7 @@ export function createDiaryFlow({draft,review,speech,finish,onExit}){
   finally{control.disabled=false;control.classList.remove('is-loading');control.removeAttribute('aria-busy')}
  }
  function question(){
-  const p=practice[index];if(!p){index=0;lineSpeech();return}
+  const p=practice[index];if(!p){index=0;speakingTransition();return}
   screen('question',(index+1)+' / '+practice.length);
   stage.append(el('p','df-target',p.target));
    if(p.meaning)stage.append(el('p','df-target-korean',p.meaning));
@@ -155,31 +170,53 @@ export function createDiaryFlow({draft,review,speech,finish,onExit}){
    if(recorder.state==='recording')recorder.stop();await ended;
    control.classList.remove('is-recording');control.textContent='다시 말하기';status('음성을 확인하고 있어요.');
    const transcript=await aiSpeechTranscribe(new Blob(chunks,{type:mime}));
-   if(norm(transcript)!==norm(target)){status('다시 말해 주세요.',true);return}
    status('');onSuccess(transcript);
   }catch(error){status(error.message||'마이크 오류',true)}
   finally{stream?.getTracks().forEach(t=>t.stop());control.classList.remove('is-recording');control.textContent='말하기'}
  }
+ function speakingTransition(){
+  screen('speak-transition','4 · Speak');
+  const splash=el('div','df-speak-splash');
+  splash.append(el('div','df-splash-icon','🎙'),el('h2','','Review complete!'),el('p','','이제 내 글을 소리 내어 읽어 봐요.'),el('small','','Speak each sentence. 85% accuracy moves you forward.'));
+  stage.append(splash);
+  let started=false;
+  const start=()=>{if(started||step!=='speak-transition')return;started=true;index=0;lineSpeech()};
+  button('말하기 시작',start,true);
+  transitionTimer=setTimeout(start,2200);
+ }
  function lineSpeech(){
   if(index>=finalLines.length){complete();return}
   screen('speech','Speak · '+(index+1)+' / '+finalLines.length);
-  stage.append(el('h2','df-heading','한 문장씩 말하기'),el('p','df-target',finalLines[index]));
-  rendererHost({form:'speaking',prompt:'',context:{},input:{language:'en'},answer:[finalLines[index]]});
-  const target=finalLines[index];
-  const success=answer=>{spoken.push(answer);index++;lineSpeech()};
-  if(!(window.SpeechRecognition||window.webkitSpeechRecognition)){
-   const mic=stage.querySelector('[data-speaking-mic]');if(mic)mic.hidden=true;
-   const text=stage.querySelector('[data-speaking-status]');if(text)text.textContent='마이크를 눌러 말해 주세요.';
-   const fallback=el('button','df-record-fallback','말하기');fallback.type='button';
-   stage.querySelector('.speaking-control')?.append(fallback);
-   fallback.addEventListener('click',()=>{if(fallback.classList.contains('is-recording'))return;void fallbackRecord(target,fallback,success)});
-  }else{
-   button('확인',()=>{
-    const answer=String(renderer.getResponse()||'').trim();
-    if(norm(answer)!==norm(target)){status('다시 말해 주세요.',true);return}
-    success(answer);
-   },true);
+  const flow=el('div','df-teleprompter');
+  flow.setAttribute('aria-label','Speaking teleprompter');
+  if(index>0)flow.append(el('p','df-tele-line df-tele-done',finalLines[index-1]));
+  for(let offset=0;offset<5&&index+offset<finalLines.length;offset++){
+   const line=el('p','df-tele-line '+(offset===0?'df-tele-active':'df-tele-next df-tele-next-'+offset),finalLines[index+offset]);
+   flow.append(line);
   }
+  stage.append(flow);
+  stage.append(el('p','df-speech-hint','마이크를 누르고 분홍색 문장을 말하세요. · 85% 이상 통과'));
+  const target=finalLines[index];
+  const mic=el('button','df-record-fallback df-tele-mic','말하기');
+  mic.type='button';mic.setAttribute('aria-label','현재 문장 말하기');
+  stage.append(mic);
+  let processing=false;
+  mic.addEventListener('click',()=>{
+   if(processing||mic.classList.contains('is-recording'))return;
+   processing=true;
+   void fallbackRecord(target,mic,answer=>{
+    const score=spokenAccuracy(target,answer);
+    if(score<.85){
+     status('정확도 '+Math.round(score*100)+'% · 85% 이상이면 통과해요. 다시 말해 보세요.',true);
+     return;
+    }
+    spoken.push(answer);
+    mic.disabled=true;
+    status('✓ '+Math.round(score*100)+'% · 통과!');
+    flow.classList.add('df-tele-advance');
+    setTimeout(()=>{if(step==='speech') {index++;lineSpeech()}},480);
+   }).finally(()=>{processing=false});
+  });
  }
  async function complete(){
   screen('finish','Complete');stage.append(el('h2','df-heading','일기 완료'));
