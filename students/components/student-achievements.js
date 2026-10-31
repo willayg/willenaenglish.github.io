@@ -61,9 +61,13 @@ function streakFromDays(values){
 async function load(){
  if(busy)return busy;
  busy=(async()=>{
-  const response=await api(endpoint+Date.now());
-  if(!response.ok)throw Error('Achievements unavailable');
-  const d=await response.json();
+  let d={};
+  try{
+   const response=await api(endpoint+Date.now());
+   if(response.ok)d=await response.json();
+   else console.warn('[achievements] legacy motivation source unavailable',response.status);
+  }catch(error){console.warn('[achievements] legacy motivation source unavailable',error)}
+
   const units=new Set((d.golden_units||[]).map(x=>'word:'+String(x.unit_id)).filter(x=>!x.endsWith('undefined')));
   const missions=window.WillenaMissionBasket;
   const results=await Promise.allSettled([
