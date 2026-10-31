@@ -2,9 +2,20 @@ import {QuestionRenderer} from '/shared/questions/question-renderer.js?v=2026102
 const $=id=>document.getElementById(id);
 const norm=s=>String(s||'').toLowerCase().replace(/[’‘]/g,"'").replace(/[^a-z0-9']/g,' ').replace(/\s+/g,' ').trim();
 const split=s=>(String(s||'').match(/[^.!?\n]+[.!?]+(?=\s|$)/g)||[]).map(x=>x.trim()).filter(x=>/[a-z]/i.test(x));
-// Compare recognized speech by whole words; punctuation and case are ignored.
+// Speech transcripts write times differently from lesson text (11am vs 11:00 a.m.).
+// Canonicalize common clock readings before word-level edit-distance scoring.
+function speechWords(value){
+ let s=String(value||'').toLowerCase().replace(/[’‘]/g,"'");
+ s=s.replace(/\b(\d{1,2})(?::(00))?\s*(a\s*\.?\s*m\.?|p\s*\.?\s*m\.?)\b/g,(_,hour,_zero,period)=>hour+' '+period.replace(/[^apm]/g,''));
+ s=s.replace(/\b(\d{1,2}):00\b/g,'$1');
+ s=s.replace(/\b(\d{1,2})\s*o['’]?clock\b/g,'$1');
+ const numbers={zero:'0',one:'1',two:'2',three:'3',four:'4',five:'5',six:'6',seven:'7',eight:'8',nine:'9',ten:'10',eleven:'11',twelve:'12'};
+ s=s.replace(/\b(zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)\b/g,word=>numbers[word]);
+ return s.replace(/\b([ap])\s+m\b/g,'$1m').replace(/\b(\d{1,2})(am|pm)\b/g,'$1 $2').replace(/[^a-z0-9']/g,' ').replace(/\s+/g,' ').trim().split(' ').filter(Boolean);
+}
+// Word error rate: only actual spoken differences count, not punctuation or time formatting.
 function spokenAccuracy(expected,heard){
- const a=norm(expected).split(' ').filter(Boolean),b=norm(heard).split(' ').filter(Boolean);
+ const a=speechWords(expected),b=speechWords(heard);
  if(!a.length||!b.length)return 0;
  const row=Array.from({length:b.length+1},(_,i)=>i);
  for(let i=1;i<=a.length;i++){
