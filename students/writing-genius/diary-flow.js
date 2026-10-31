@@ -83,10 +83,9 @@ export function createDiaryFlow({draft,review,speech,finish,onExit}){
  }
  function write(){
   screen('write','2 · Write');
-  stage.append(el('h2','df-heading','일기 쓰기'));
   const count=el('span','df-count');const area=el('textarea','df-textarea');area.value=current.body||'';area.placeholder='Write 6–30 complete sentences.';area.maxLength=12000;
-  function update(){current.body=area.value;count.textContent=split(area.value).length+' / 30 sentences'}
-  area.addEventListener('input',()=>{update();clearTimeout(autosaveTimer);autosaveTimer=setTimeout(()=>{void persist().catch(e=>status(e.message,true))},1800)});update();stage.append(count,area);
+  function update(){current.body=area.value;const n=split(area.value).length;count.textContent=n+' sentences';count.classList.toggle('is-invalid',n<6||n>30)}
+  area.addEventListener('input',()=>{update();clearTimeout(autosaveTimer);autosaveTimer=setTimeout(()=>{void persist().catch(e=>status(e.message,true))},1800)});update();stage.append(area,count);
   button('이전',topic);
   button('저장',async()=>{try{await persist();status('저장됨')}catch(e){status(e.message,true)}});
   button('AI Willi 확인',async()=>{
