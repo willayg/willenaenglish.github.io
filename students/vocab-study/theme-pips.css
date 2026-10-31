@@ -405,3 +405,7 @@ html[data-vocab-theme] student-header{
   --student-header-avatar-bg:var(--vocab-card);
   --student-header-avatar-border:var(--cyan-strong);
 }
+
+/* Shared footer placement for every app using the theme dock. */
+.study-app > .vocab-theme-footer,.app-shell > .vocab-theme-footer{display:flex;justify-content:center;align-items:center;width:100%;padding:20px 12px 28px;margin-top:28px;box-sizing:border-box;position:relative;z-index:1}
+.vocab-theme-footer .vocab-theme-dock{margin:0 auto;position:relative;top:auto;bottom:auto;left:auto;right:auto;transform:none}
