@@ -403,6 +403,8 @@ function confirmGoldenPractice(){
   return yes;
 }
 function renderMotivation(){
+  if(window.WillenaAchievements&&document.querySelector('[data-shared-achievements]')){window.WillenaAchievements.refresh().catch(()=>{});return;}
+
   const unavailable=state.adminMode||!state.motivation;
   if(motivationEl)motivationEl.hidden=unavailable;
   if(frontAchievementsEl)frontAchievementsEl.hidden=unavailable;
