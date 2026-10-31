@@ -411,7 +411,8 @@ export function createSentencePractice({api,checksApi,gradeSentence,rewardsApi,q
    run=prior&&Math.round((date-prior)/86400000)===1?run+1:1;
    best=Math.max(best,run);prior=date;
   }
-  txt('spStreakCurrent',current);txt('spStreakBest',best);
+  if(!window.WillenaAchievements){txt('spStreakCurrent',current);txt('spStreakBest',best);}
+  else void window.WillenaAchievements.refresh();
   if(state.today&&state.today.status!=='completed')await loadChecks(state.today);
   refreshStartButton();
  }
