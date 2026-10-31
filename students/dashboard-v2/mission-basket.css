@@ -142,3 +142,22 @@ html[data-dashboard-theme] .dashboard-mission-basket .dm-item.dm-done{
  82%{transform:translateY(1px) scale(.99)}
 }
 @media(prefers-reduced-motion:reduce){.dashboard-mission-basket .dm-tabs [data-tab="archive"].dm-tab-grow{animation:none}}
+
+/* rev1.27 — compact Word Genius-style circular progress rings */
+.dashboard-mission-basket .dm-item{padding-right:84px;min-height:112px}
+.dashboard-mission-basket .dm-progress-ring{
+ position:absolute;right:15px;top:50%;transform:translateY(-50%);
+ width:56px;height:56px;border-radius:50%;
+ display:grid;place-items:center;flex:none;
+ background:conic-gradient(#ec5d9b calc(var(--dm-pct)*1%),#e0f3f4 0);
+ color:#265661;
+}
+.dashboard-mission-basket .dm-progress-ring::before{
+ content:"";position:absolute;inset:6px;border-radius:50%;background:#fff;
+}
+.dashboard-mission-basket .dm-progress-ring>span{position:relative;z-index:1;font-size:12px;font-weight:900;line-height:1}
+.dashboard-mission-basket .dm-item .dm-action{display:none}
+.dashboard-mission-basket .dm-item.dm-done .dm-progress-ring{
+ background:conic-gradient(#d9ab34 calc(var(--dm-pct)*1%),#f7e8b8 0);color:#946b0a;
+}
+@media(max-width:560px){.dashboard-mission-basket .dm-item{padding-right:68px}.dashboard-mission-basket .dm-progress-ring{width:49px;height:49px;right:10px}.dashboard-mission-basket .dm-progress-ring::before{inset:5px}.dashboard-mission-basket .dm-progress-ring>span{font-size:11px}}
