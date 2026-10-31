@@ -146,6 +146,7 @@ export function createDiaryFlow({draft,review,speech,finish,onExit}){
    if(norm(renderer.getResponse())!==norm(p.target)){status('다시 시도해 주세요.',true);return}
    index++;mode='speaking';question();
   },true);
+  button('건너뛰기 · Skip',()=>{index++;mode='speaking';question()});
  }
  async function aiSpeechTranscribe(blob){
   const base64=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onerror=reject;reader.onload=()=>resolve(String(reader.result).split(',')[1]);reader.readAsDataURL(blob)});
@@ -165,14 +166,14 @@ export function createDiaryFlow({draft,review,speech,finish,onExit}){
    recorder=new MediaRecorder(stream,{mimeType:mime});const chunks=[];
    recorder.ondataavailable=e=>{if(e.data.size)chunks.push(e.data)};
    const ended=new Promise(resolve=>{recorder.onstop=resolve});
-   recorder.start();control.classList.add('is-recording');control.textContent='녹음 중지';status('말해 주세요.');
+   recorder.start();control.classList.add('is-recording');if(!control.querySelector('.speaking-mic-icon'))control.textContent='녹음 중지';status('말해 주세요.');
    await new Promise(resolve=>{const stop=()=>{control.removeEventListener('click',stop);resolve()};control.addEventListener('click',stop,{once:true});setTimeout(()=>{control.removeEventListener('click',stop);resolve()},12000)});
    if(recorder.state==='recording')recorder.stop();await ended;
-   control.classList.remove('is-recording');control.textContent='다시 말하기';status('음성을 확인하고 있어요.');
+   control.classList.remove('is-recording');if(!control.querySelector('.speaking-mic-icon'))control.textContent='다시 말하기';status('음성을 확인하고 있어요.');
    const transcript=await aiSpeechTranscribe(new Blob(chunks,{type:mime}));
    status('');onSuccess(transcript);
   }catch(error){status(error.message||'마이크 오류',true)}
-  finally{stream?.getTracks().forEach(t=>t.stop());control.classList.remove('is-recording');control.textContent='말하기'}
+  finally{stream?.getTracks().forEach(t=>t.stop());control.classList.remove('is-recording');if(!control.querySelector('.speaking-mic-icon'))control.textContent='말하기'}
  }
  function speakingTransition(){
   screen('speak-transition','4 · Speak');
@@ -197,26 +198,43 @@ export function createDiaryFlow({draft,review,speech,finish,onExit}){
   stage.append(flow);
   stage.append(el('p','df-speech-hint','마이크를 누르고 분홍색 문장을 말하세요. · 85% 이상 통과'));
   const target=finalLines[index];
-  const mic=el('button','df-record-fallback df-tele-mic','말하기');
-  mic.type='button';mic.setAttribute('aria-label','현재 문장 말하기');
-  stage.append(mic);
-  let processing=false;
-  mic.addEventListener('click',()=>{
-   if(processing||mic.classList.contains('is-recording'))return;
-   processing=true;
-   void fallbackRecord(target,mic,answer=>{
-    const score=spokenAccuracy(target,answer);
-    if(score<.85){
-     status('정확도 '+Math.round(score*100)+'% · 85% 이상이면 통과해요. 다시 말해 보세요.',true);
-     return;
-    }
-    spoken.push(answer);
-    mic.disabled=true;
-    status('✓ '+Math.round(score*100)+'% · 통과!');
-    flow.classList.add('df-tele-advance');
-    setTimeout(()=>{if(step==='speech') {index++;lineSpeech()}},480);
-   }).finally(()=>{processing=false});
-  });
+  // Use the exact shared QuestionRenderer microphone from the review activity.
+  rendererHost({form:'speaking',prompt:'',context:{},input:{language:'en'},answer:[target]});
+  const mic=stage.querySelector('[data-speaking-mic]');
+  const speechStatus=stage.querySelector('[data-speaking-status]');
+  if(!mic)return;
+  mic.classList.add('df-tele-mic');
+  let accepted=false;
+  const judge=answer=>{
+   if(accepted||step!=='speech')return;
+   const score=spokenAccuracy(target,answer);
+   if(score<.85){
+    status('정확도 '+Math.round(score*100)+'% · 85% 이상이면 통과해요. 다시 말해 보세요.',true);
+    return;
+   }
+   accepted=true;
+   spoken.push(answer);
+   mic.disabled=true;
+   status('✓ '+Math.round(score*100)+'% · 통과!');
+   flow.classList.add('df-tele-advance');
+   setTimeout(()=>{if(step==='speech'){index++;lineSpeech()}},480);
+  };
+  if(window.SpeechRecognition||window.webkitSpeechRecognition){
+   renderer.onSpeechResult=alternatives=>{
+    const candidates=Array.isArray(alternatives)?alternatives:[alternatives];
+    const best=candidates.map(answer=>({answer,score:spokenAccuracy(target,answer)})).sort((a,b)=>b.score-a.score)[0];
+    if(best)judge(best.answer);
+   };
+  }else{
+   mic.disabled=false;
+   if(speechStatus)speechStatus.textContent='마이크를 눌러 말해 보세요.';
+   let processing=false;
+   mic.addEventListener('click',()=>{
+    if(processing||mic.classList.contains('is-recording'))return;
+    processing=true;
+    void fallbackRecord(target,mic,judge).finally(()=>{processing=false});
+   });
+  }
  }
  async function complete(){
   screen('finish','Complete');stage.append(el('h2','df-heading','일기 완료'));
