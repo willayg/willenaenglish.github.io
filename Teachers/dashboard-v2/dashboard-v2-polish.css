@@ -165,3 +165,29 @@
   background:transparent!important;
 }
 .rail .nav[data-view="naesin-v2"] .nav-icon img{display:none!important}
+
+/* 2026-10-31: ensure the full teacher menu is reachable on touch screens. */
+@media (min-width:701px) {
+  .layout > .rail {
+    height: calc(100dvh - 64px) !important;
+    max-height: calc(100dvh - 64px) !important;
+    min-height: 0 !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: contain;
+    touch-action: pan-y;
+    scrollbar-width: thin;
+  }
+  .layout > .rail > .nav { flex-shrink: 0 !important; }
+}
+@media (max-width:700px) {
+  .mobile-tabs {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+    touch-action: pan-x;
+    justify-content: flex-start !important;
+  }
+  .mobile-tabs > .mobile-tab { flex: 0 0 auto !important; }
+}
