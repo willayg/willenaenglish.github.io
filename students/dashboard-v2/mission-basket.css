@@ -1,0 +1,28 @@
+/* Dashboard mission basket — matches theme-selector and card visual language. */
+.dashboard-mission-basket{position:relative;z-index:2;max-width:980px;margin:18px auto 22px;padding:0 16px;font-family:Poppins,system-ui,sans-serif;color:#20535c}
+.dashboard-mission-basket .dm-head{background:linear-gradient(120deg,#f4ffff,#e5f8f7);border:2px solid #9ddcdb;border-radius:23px;box-shadow:0 5px 18px rgba(30,113,120,.09)}
+.dashboard-mission-basket .dm-toggle{width:100%;min-height:78px;display:flex;align-items:center;gap:12px;padding:13px 17px;background:transparent;border:0;color:inherit;text-align:left;cursor:pointer}
+.dashboard-mission-basket .dm-toggle strong{font-size:clamp(20px,4.5vw,27px);font-weight:900;letter-spacing:-.035em}
+.dashboard-mission-basket .dm-count{margin-left:auto;white-space:nowrap;font-weight:800;font-size:13px;background:white;border:1px solid #c9ecec;border-radius:999px;padding:7px 10px}
+.dashboard-mission-basket .dm-arrow{font-size:23px;color:#138a91}
+.dashboard-mission-basket .dm-body{padding:12px 4px 4px}
+.dashboard-mission-basket .dm-tabs{display:flex;gap:8px;margin:0 3px 12px}
+.dashboard-mission-basket .dm-tabs button{flex:1;min-height:45px;border-radius:13px;border:1px solid #bedcde;background:#f8fcfc;color:#527a80;font-weight:800;cursor:pointer}
+.dashboard-mission-basket .dm-tabs button[aria-pressed=true]{background:#dcf5f3;border-color:#51aaa9;color:#116b70}
+.dashboard-mission-basket .dm-tabs span{font-weight:800;margin-left:4px}
+.dashboard-mission-basket .dm-items{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:10px}
+.dashboard-mission-basket .dm-item{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:4px;padding:15px 45px 15px 16px;min-height:104px;background:#fff;border:1.5px solid #c5e5e5;border-radius:17px;text-decoration:none;color:#225964;box-shadow:0 3px 9px rgba(28,101,106,.055)}
+.dashboard-mission-basket .dm-item:focus-visible,.dashboard-mission-basket button:focus-visible{outline:3px solid #e8b644;outline-offset:2px}
+.dashboard-mission-basket .dm-app{font-size:11px;letter-spacing:.02em;font-weight:900;color:#13818a}
+.dashboard-mission-basket .dm-item strong{font-size:16px;font-weight:900;line-height:1.38}
+.dashboard-mission-basket .dm-item small{font-size:11px;color:#607e87;line-height:1.35}
+.dashboard-mission-basket .dm-action{position:absolute;right:14px;top:calc(50% - 14px);font-size:23px;color:#15898d}
+.dashboard-mission-basket .dm-done{background:#fff9e4;border-color:#edce78}
+.dashboard-mission-basket .dm-done .dm-app,.dashboard-mission-basket .dm-done .dm-action{color:#ad8413}
+.dashboard-mission-basket .dm-empty,.dashboard-mission-basket .dm-loading{text-align:center;margin:10px 0;padding:24px;border:1px dashed #b6dadb;border-radius:17px;background:#f5ffff;font-weight:700;color:#64858c}
+html[data-dashboard-theme=dark] .dashboard-mission-basket,html[data-dashboard-theme=cyberpunk] .dashboard-mission-basket{color:#ddfbfb}
+html[data-dashboard-theme=dark] .dashboard-mission-basket .dm-head,html[data-dashboard-theme=cyberpunk] .dashboard-mission-basket .dm-head{background:#1f333e;border-color:#38878a}
+html[data-dashboard-theme=dark] .dashboard-mission-basket .dm-item,html[data-dashboard-theme=cyberpunk] .dashboard-mission-basket .dm-item{background:#233743;color:#f0fafa;border-color:#3d8186}
+html[data-dashboard-theme=dark] .dashboard-mission-basket .dm-tabs button,html[data-dashboard-theme=cyberpunk] .dashboard-mission-basket .dm-tabs button{background:#1e333d;color:#bce8e8;border-color:#3b7179}
+html[data-dashboard-theme=dark] .dashboard-mission-basket .dm-tabs button[aria-pressed=true],html[data-dashboard-theme=cyberpunk] .dashboard-mission-basket .dm-tabs button[aria-pressed=true]{background:#215963}
+@media(max-width:560px){.dashboard-mission-basket{margin:12px auto 16px;padding:0 10px}.dashboard-mission-basket .dm-toggle{min-height:68px;padding:10px 12px}.dashboard-mission-basket .dm-item{min-height:94px}}
