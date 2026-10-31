@@ -223,7 +223,13 @@ async function refresh(){
 window.addEventListener('pageshow',event=>{if(event.persisted)refresh()});
 window.addEventListener('focus',refresh);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)refresh()});
-window.WillenaMissionBasket={mount,refresh};
+async function getAchievementMissions(){
+ const results=await Promise.allSettled([standardHomework(),sentences(),naesin()]);
+ const rows=results.flatMap(r=>r.status==='fulfilled'?r.value:[]);
+ const unique=new Map(rows.map(x=>[x.id,x]));
+ return [...unique.values()].map(x=>({id:x.id,done:x.done===true}));
+}
+window.WillenaMissionBasket={mount,refresh,getAchievementMissions};
 // Any student app may mount this shared widget on a chosen container.
 
 })();
