@@ -15,9 +15,50 @@ function draw(host){
  }
 }
 function update(){if(!current)return;document.querySelectorAll('[data-achievement-index]').forEach(el=>{const n=+el.dataset.achievementIndex;el.textContent=String([current.current,current.best,current.gold][n]);});}
-async function load(){if(busy)return busy;busy=(async()=>{const response=await api(endpoint+Date.now());if(!response.ok)throw Error('Achievements unavailable');const d=await response.json();const units=new Set((d.golden_units||[]).map(x=>'word:'+String(x.unit_id)).filter(x=>!x.endsWith('undefined')));const awarded=new Set();const missions=window.WillenaMissionBasket;try{const rows=await missions?.getAchievementMissions?.();if(Array.isArray(rows))for(const x of rows){if(x.done===true){const key=String(x.id);if(!awarded.has(key))awarded.add(key);}}}catch(e){console.warn('[achievements] homework records unavailable',e)}
-// Student-wide word records and unique completed homework awards. Never count archived copies twice.
-current={current:Math.max(0,+d.current_streak||0),best:Math.max(0,+d.best_streak||0),gold:units.size+awarded.size};update();return current;})().finally(()=>{busy=null});return busy;}
+async function sentenceGoldUnits(){
+ const [{studentIdentity,assignedBooks,loadUnits,loadSentences},{getSentenceMastery},{openUnit}]=await Promise.all([
+ import('/students/sentence-genius/content.js?v=sg-no-approval-v4.1'),
+ import('/students/sentence-genius/tracking.js'),
+ import('/students/sentence-genius/scoring.js?v=sg-coach-gold-v3')
+ ]);
+ const student=await studentIdentity();
+ const books=await assignedBooks(student.id);
+ const keys=new Set();
+ for(const book of books){
+   const units=await loadUnits(book.id);
+   for(const unit of units){
+     try{
+       const [items,rows]=await Promise.all([loadSentences(book.id,unit.id,unit),getSentenceMastery(book.id,unit.id)]);
+       const mastery=openUnit(student.id,unit.id);
+       mastery.hydrateServer(rows);
+       if(items.length&&mastery.gold(items))keys.add('sentence:'+String(book.id)+'|'+String(unit.id));
+     }catch(error){console.warn('[achievements] Sentence unit skipped',unit.id,error);}
+   }
+ }
+ return [...keys];
+}
+async function load(){
+ if(busy)return busy;
+ busy=(async()=>{
+  const response=await api(endpoint+Date.now());
+  if(!response.ok)throw Error('Achievements unavailable');
+  const d=await response.json();
+  const units=new Set((d.golden_units||[]).map(x=>'word:'+String(x.unit_id)).filter(x=>!x.endsWith('undefined')));
+  const missions=window.WillenaMissionBasket;
+  const results=await Promise.allSettled([
+   missions?.getAchievementMissions?.()||Promise.resolve([]),
+   missions?.getWritingGoldUnits?.()||Promise.resolve([]),
+   sentenceGoldUnits()
+  ]);
+  if(results[0].status==='fulfilled')for(const x of results[0].value||[])if(x.done===true)units.add('homework:'+String(x.id));
+  if(results[1].status==='fulfilled')for(const key of results[1].value||[])units.add(key);
+  if(results[2].status==='fulfilled')for(const key of results[2].value||[])units.add(key);
+  results.forEach((result,index)=>{if(result.status==='rejected')console.warn('[achievements] source '+index+' unavailable',result.reason)});
+  current={current:Math.max(0,+d.current_streak||0),best:Math.max(0,+d.best_streak||0),gold:units.size};
+  update();return current;
+ })().finally(()=>{busy=null});
+ return busy;
+}
 function mount(host){if(!host)return;draw(host);load().catch(e=>console.warn('[achievements]',e));}
 function mountAll(){document.querySelectorAll('[data-shared-achievements]').forEach(mount);}
 window.WillenaAchievements={mount,mountAll,refresh:load};
