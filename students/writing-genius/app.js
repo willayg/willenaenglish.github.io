@@ -484,8 +484,10 @@ const diaryFlow=createDiaryFlow({
  clarify:async(entry,i,clarification)=>{const token=await authToken();const response=await fetch('/api/writing-genius-diary',{method:'POST',credentials:'include',cache:'no-store',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify({action:'clarify',entry_id:entry.id,correction_index:i,clarification}),signal:AbortSignal.timeout(45000)});const data=await response.json().catch(()=>({}));if(!response.ok||!data.success)throw Error(data.error||'다시 확인하지 못했어요.');return data},
  speech:async(entry,transcript,chosenLines)=>diaryRequest('speech',entry.id,transcript,chosenLines),
  finish:async entry=>{
-  const submitted=await saveEntry({submit:true,force:true});
-  if(!submitted)throw Error('제출에 실패했어요.');
+  if(state.active?.status!=='submitted'){
+   const submitted=await saveEntry({submit:true,force:true});
+   if(!submitted)throw Error('제출에 실패했어요.');
+  }
   const token=await authToken();
   const response=await fetch('https://fiieuiktlsivwfgyivai.supabase.co/rest/v1/rpc/award_writing_diary_v1',{
    method:'POST',credentials:'include',headers:{'Content-Type':'application/json',apikey:KEY,Authorization:'Bearer '+token},
