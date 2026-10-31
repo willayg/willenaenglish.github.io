@@ -689,3 +689,25 @@ html[data-vocab-theme="dark"] .wg-status-pill.is-submitted,html[data-vocab-theme
   line-height:1.5;
   overflow-wrap:anywhere;
 }
+
+/* Diary review → speaking transition and scrolling teleprompter. */
+.writing-genius #wgDiaryFlow .df-speak-splash{text-align:center;min-height:245px;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:12px;animation:df-splash-in .38s ease-out}
+.writing-genius #wgDiaryFlow .df-splash-icon{font-size:3.6rem}
+.writing-genius #wgDiaryFlow .df-speak-splash h2{font-size:clamp(1.7rem,5vw,2.5rem);color:#e75c9d;margin:0}
+.writing-genius #wgDiaryFlow .df-speak-splash p{font-weight:800;color:#2f6670;margin:0}
+.writing-genius #wgDiaryFlow .df-speak-splash small{color:#76868b;font-size:.84rem}
+.writing-genius #wgDiaryFlow .df-teleprompter{min-height:330px;padding:22px 12px 8px;display:flex;flex-direction:column;gap:12px;overflow:hidden}
+.writing-genius #wgDiaryFlow .df-tele-line{margin:0;text-align:center;line-height:1.46;overflow-wrap:anywhere;transition:opacity .4s,transform .4s,color .4s}
+.writing-genius #wgDiaryFlow .df-tele-active{font-size:clamp(1.3rem,4.4vw,1.95rem);font-weight:900;color:#e75c9d;animation:df-line-arrive .42s ease-out}
+.writing-genius #wgDiaryFlow .df-tele-done{font-size:clamp(.85rem,2.6vw,1.05rem);color:#9ca8ac;opacity:.55;transform:translateY(-4px)}
+.writing-genius #wgDiaryFlow .df-tele-next{font-size:clamp(.96rem,3vw,1.18rem);font-weight:750;color:#8f9da2}
+.writing-genius #wgDiaryFlow .df-tele-next-1{opacity:.72}
+.writing-genius #wgDiaryFlow .df-tele-next-2{opacity:.53}
+.writing-genius #wgDiaryFlow .df-tele-next-3{opacity:.36}
+.writing-genius #wgDiaryFlow .df-tele-next-4{opacity:.22}
+.writing-genius #wgDiaryFlow .df-tele-advance .df-tele-active{color:#9ca8ac;opacity:.45;transform:translateY(-18px)}
+.writing-genius #wgDiaryFlow .df-speech-hint{text-align:center;color:#778c93;font-size:.82rem;font-weight:700;margin:12px 0}
+.writing-genius #wgDiaryFlow .df-tele-mic{margin:22px auto 36px;width:114px;height:114px}
+@keyframes df-line-arrive{from{opacity:.35;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+@keyframes df-splash-in{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:scale(1)}}
+@media(prefers-reduced-motion:reduce){.writing-genius #wgDiaryFlow .df-tele-line,.writing-genius #wgDiaryFlow .df-speak-splash{animation:none;transition:none}}
