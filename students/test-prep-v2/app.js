@@ -1,4 +1,4 @@
-import {assignmentOverview} from './assignment-overview.js?v=2.25.181';
+import {assignmentOverview} from './assignment-overview.js?v=2.25.183';
 import {assignmentMetrics,loadAssignmentResults} from './assignment-results.js?v=2.25.181';
 import {QuestionRenderer} from './question-renderer-accessible.js?v=20261025-shared-unified-v1';
 import {gradeQuestion} from '../shared/question-grader.js?v=2.4.1';
