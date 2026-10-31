@@ -580,3 +580,30 @@ html[data-vocab-theme="dark"] .wg-status-pill.is-submitted,html[data-vocab-theme
 
 /* Version appears below the entire Writing Genius page, not above the cards. */
 .writing-genius .wg-version-row{display:flex;justify-content:center;align-items:center;gap:7px;margin:24px auto 0;text-align:center}
+
+/* Unified diary workspace shell, matching Word Genius' contained white layout. */
+.writing-genius #wgEditor{
+ width:100%;box-sizing:border-box;
+ background:var(--vocab-card,#fff);
+ border:4px solid var(--vocab-border,#c5eef1);
+ border-radius:34px;
+ padding:clamp(18px,4vw,42px);
+ box-shadow:0 14px 38px rgba(31,100,112,.10);
+ margin:12px auto 22px;
+}
+.writing-genius #wgEditor[hidden]{display:none!important}
+.writing-genius #wgEditor .wg-diary-steps{
+ padding:10px;border-radius:19px;background:#f6fcfc;
+ border:1px solid #d1eff0;
+}
+.writing-genius #wgEditor .wg-diary-review{
+ border:0;border-radius:0;padding:4px 0;background:transparent;
+}
+.writing-genius #wgEditor #wgDiaryCorrection,
+.writing-genius #wgEditor #wgDiarySpeaking{
+ background:#fff;border:2px solid #c5eef1;box-shadow:none;
+}
+@media(max-width:680px){
+ .writing-genius #wgEditor{border-radius:26px;padding:17px 13px 23px;border-width:3px}
+ .writing-genius #wgEditor .wg-diary-steps{padding:6px}
+}
