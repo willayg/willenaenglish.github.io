@@ -23,6 +23,9 @@
 
 <script type="module" src="/students/components/student-header.js?v=20261025-sg-mission-v5b"></script>
 <script type="module" src="/students/components/student-reward-celebration.js?v=20260926-v0005"></script>
+
+<link rel="stylesheet" href="/students/dashboard-v2/mission-basket.css?v=20261031-app-uniform12">
+<style>.app-mission-basket-slot .dashboard-mission-basket{width:100%;max-width:none;margin:12px 0 20px}.app-mission-basket-slot:empty{display:none}.sg-assigned-homework{display:none!important}</style>
 </head>
 <body>
 <div class="study-app">
@@ -77,7 +80,8 @@
     </section>
 
     <section id="front" class="vocab-front-menu" hidden>
-      <section id="sgAssignedHomework" class="sg-assigned-homework" hidden>
+      <section id="appMissionBasket" class="app-mission-basket-slot"></section>
+      <section style="display:none!important" id="sgAssignedHomework" class="sg-assigned-homework" hidden>
         <div class="sg-assigned-title"><strong>내 숙제 · Sentence Genius</strong><small>완료하려면 지정된 문장을 연습하세요.</small></div>
         <div id="sgAssignedHomeworkList" class="sg-assigned-list"></div>
       </section>
@@ -88,7 +92,7 @@
         </select>
       </section>
 
-      <button id="vocabFrontWordTestCard" class="vocab-front-wordtest" type="button" hidden>
+      <button style="display:none!important" id="vocabFrontWordTestCard" class="vocab-front-wordtest" type="button" hidden>
         <span class="vocab-front-card-main">          <span class="vocab-front-card-copy">
               <strong>숙제 / Homework</strong>
             <small id="vocabFrontWordTestMeta"></small>
@@ -282,4 +286,7 @@
 
 <script type="module" src="/students/vocab-study/theme-pips.js?v=20260927-v0001"></script>
 <script type="module" src="./app.js?v=20261026-sg-gold-buttons-v1"></script>
+
+<script src="/students/components/mission-basket.js?v=20261031-app-uniform12"></script>
+<script>document.addEventListener('DOMContentLoaded',()=>{const el=document.getElementById('appMissionBasket');if(el)window.WillenaMissionBasket?.mount(el,{app:'Sentence Genius'})});</script>
 </body></html>
