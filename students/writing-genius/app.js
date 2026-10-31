@@ -44,7 +44,7 @@ const exampleDiaries=[
  {title:'A Happy Surprise',text:'Today I had a lovely surprise. My grandmother came to visit us. She brought some fresh strawberries. We made a sweet dessert together. I told her about my day at school. I was happy to spend time with her.'}
 ];
 let diaryRecognition=null,diaryTranscript='',diaryInterim='',diaryBusy=false,diaryReviewBody='';
-const fullDiarySentences=text=>String(text||'').trim().match(/[^.!?\\n]+[.!?]+(?=\\s|$)/g)?.map(x=>x.trim()).filter(x=>/[a-z]/i.test(x))||[];
+const fullDiarySentences=text=>String(text||'').trim().match(/[^.!?\n]+[.!?]+(?=\s|$)/g)?.map(x=>x.trim()).filter(x=>/[a-z]/i.test(x))||[];
 const state={student:null,entries:[],active:null,filter:'all',timer:0,loading:false};
 const fmtDate=s=>{if(!s)return'';const d=new Date(s);return Number.isNaN(d.getTime())?String(s).slice(0,10):d.toLocaleDateString('ko-KR',{month:'short',day:'numeric',year:'numeric'})};
 const seoulDate=()=>{const parts=Object.fromEntries(new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date()).map(x=>[x.type,x.value]));return parts.year+'-'+parts.month+'-'+parts.day};
@@ -478,7 +478,8 @@ $('wgBack').addEventListener('click',()=>void backHome());
 $('wgSave').addEventListener('click',()=>void saveEntry({force:true}));
 $('wgSubmit').addEventListener('click',()=>{if(state.active?.kind==='diary')void reviewDiary();else void saveEntry({submit:true,force:true});});
 $('wgRevise').addEventListener('click',()=>{
-  if(!state.active)return;state.active.status='draft';setReadOnly(false);
+  if(!state.active)return;
+  if(state.active.kind==='diary'){notice('오늘의 일기는 이미 제출했어요. 내일 새 일기를 쓸 수 있어요.');return}state.active.status='draft';setReadOnly(false);
   markDirty();$('wgBody').focus();notice('고쳐 쓴 뒤 다시 제출할 수 있어요.');
 });
 $('wgTitle').addEventListener('input',markDirty);
