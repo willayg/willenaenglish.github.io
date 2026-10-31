@@ -37,6 +37,14 @@ const prompts={
     {key:'own',title:'My Own Topic',help:'Choose any topic. Think of a beginning, details, and an ending.',starters:['I think…','First,…','Also,…','In the end,…']}
   ]
 };
+const exampleDiaries=[
+ {title:'A Fun Saturday',text:'Today was a wonderful Saturday. I woke up early in the morning. I ate pancakes with my family. After breakfast, we went to the park. I rode my bicycle with my sister. We came home feeling tired but happy.'},
+ {title:'My Day at School',text:'I went to school with my friend today. Our first class was English. We learned some new words together. At lunchtime, I ate rice and soup. After school, I played football outside. I had a busy but exciting day.'},
+ {title:'A Rainy Day',text:'It rained a lot this morning. I took my umbrella to school. I saw big puddles on the street. During break time, I read a funny book. When I got home, I drank warm milk. I hope the sun comes out tomorrow.'},
+ {title:'A Happy Surprise',text:'Today I had a lovely surprise. My grandmother came to visit us. She brought some fresh strawberries. We made a sweet dessert together. I told her about my day at school. I was happy to spend time with her.'}
+];
+let diaryRecognition=null,diaryTranscript='',diaryInterim='',diaryBusy=false,diaryReviewBody='';
+const fullDiarySentences=text=>String(text||'').trim().match(/[^.!?\\n]+[.!?]+(?=\\s|$)/g)?.map(x=>x.trim()).filter(x=>/[a-z]/i.test(x))||[];
 const state={student:null,entries:[],active:null,filter:'all',timer:0,loading:false};
 const fmtDate=s=>{if(!s)return'';const d=new Date(s);return Number.isNaN(d.getTime())?String(s).slice(0,10):d.toLocaleDateString('ko-KR',{month:'short',day:'numeric',year:'numeric'})};
 const seoulDate=()=>{const parts=Object.fromEntries(new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date()).map(x=>[x.type,x.value]));return parts.year+'-'+parts.month+'-'+parts.day};
@@ -131,6 +139,7 @@ function setReadOnly(readOnly){
   $('wgSave').hidden=readOnly;$('wgSubmit').hidden=readOnly;
   $('wgIdeasToggle').disabled=readOnly;
   $('wgComplete').hidden=!readOnly;
+  if(state.active?.kind==='diary')$('wgDiaryGuide').hidden=false;
   $('wgEditor').classList.toggle('is-submitted',readOnly);
   $('wgHeading').textContent=readOnly?'제출한 글':modeNames[state.active?.kind]||'글쓰기';
 }
@@ -146,7 +155,13 @@ function showEditor(entry){
   $('wgIdeas').hidden=true;$('wgIdeasToggle').setAttribute('aria-expanded','false');
   $('wgIdeasToggle').querySelector('span').textContent='보기';
   document.querySelectorAll('.wg-checklist input').forEach(x=>x.checked=false);
+  $('wgDiaryGuide').hidden=a.kind!=='diary';
+  $('wgDiaryReview').hidden=true;
+  $('wgSubmit').textContent=a.kind==='diary'?'AI Willi 확인하기':'글 제출하기';
+  diaryTranscript='';diaryInterim='';diaryReviewBody='';
+  $('wgDiaryTranscript').textContent='';
   updateCounts();saveState(a.persisted?'저장됨':'새 글');
+  if(a.kind==='diary'&&a.persisted&&a.status!=='submitted')void restoreDiaryReview(a);
   show('editor');window.scrollTo({top:0,behavior:'auto'});
 }
 function createEntry(kind){
@@ -189,6 +204,7 @@ function readForm(){
 function markDirty(){
   const active=state.active;if(!active||active.status==='submitted')return;
   active.rev++;active.dirty=true;
+  if(active.kind==='diary'){$('wgDiaryReview').hidden=true;diaryReviewBody='';diaryTranscript='';}
   saveState('저장 전…');updateCounts();clearTimeout(state.timer);
   state.timer=setTimeout(()=>{void saveEntry()},1100);
 }
@@ -306,6 +322,120 @@ async function bootstrap(){
     show('home');notice(error.message+' 로그인 페이지에서 다시 시도해 주세요.',true);
   }
 }
+async function diaryRequest(action,entryId,transcript){
+ const call=async access=>fetch('/api/writing-genius-diary',{method:'POST',credentials:'include',cache:'no-store',
+  headers:{Authorization:'Bearer '+access,'Content-Type':'application/json'},
+  body:JSON.stringify({action,entry_id:entryId,...(transcript?{transcript}:{})}),signal:AbortSignal.timeout(action==='review'?50000:20000)});
+ let response=await call(await authToken());
+ if(response.status===401)response=await call(await authToken(true));
+ const data=await response.json().catch(()=>({}));
+ if(!response.ok||!data.success)throw Error(data.error||'AI Willi를 사용할 수 없어요.');
+ return data;
+}
+function showDiaryFeedback(feedback){
+ const root=$('wgDiaryFeedback');root.replaceChildren();
+ const p=el('p','wg-diary-praise',feedback.praise_ko||'좋은 일기예요!');root.append(p);
+ const improvements=Array.isArray(feedback.improvements)?feedback.improvements:[];
+ if(!improvements.length)root.append(el('p','wg-diary-success','잘 쓴 문장은 고칠 필요가 없어요!'));
+ for(const row of improvements){
+  const card=el('div','wg-diary-improvement');
+  card.append(el('strong','',row.original||''),el('p','',row.better||''),el('small','',row.why_ko||''));root.append(card);
+ }
+ const expressions=Array.isArray(feedback.expressions)?feedback.expressions:[];
+ if(expressions.length){
+  root.append(el('h4','','새로운 표현 · Useful Expressions'));
+  for(const row of expressions)root.append(el('p','wg-diary-expression',(row.english||'')+' — '+(row.meaning_ko||'')));
+ }
+ if(feedback.tip_ko)root.append(el('p','wg-diary-tip',feedback.tip_ko));
+ $('wgDiaryReview').hidden=false;
+}
+async function restoreDiaryReview(entry){
+ try{
+  const rows=await databaseApi('writing_genius_diary_reviews','GET','?select=original_body,feedback,spoken_at&entry_id=eq.'+encodeURIComponent(entry.id)+'&limit=1');
+  if(state.active?.id!==entry.id||!Array.isArray(rows)||!rows[0]||rows[0].original_body!==$('wgBody').value)return;
+  diaryReviewBody=rows[0].original_body;showDiaryFeedback(rows[0].feedback);
+  if(rows[0].spoken_at){$('wgDiarySpeechStatus').textContent='말하기를 완료했어요. 제출 버튼을 눌러 주세요.';$('wgSubmit').textContent='일기 제출 완료하기';}
+ }catch(error){console.warn('[Writing Genius] saved diary feedback unavailable',error)}
+}
+async function reviewDiary(){
+ if(diaryBusy||!state.active||state.active.kind!=='diary')return;
+ const lines=fullDiarySentences($('wgBody').value);
+ if(lines.length<6||lines.length>30||lines.some(line=>wordCount(line)<2)){
+  notice('6~30개의 완성된 영어 문장을 써 주세요. 각 문장에 마침표, 물음표 또는 느낌표가 필요해요.',true);
+  $('wgBody').focus();return;
+ }
+ diaryBusy=true;$('wgSubmit').disabled=true;
+ try{
+  const saved=await saveEntry({force:true});
+  if(!saved)return;
+  const current=state.active;
+  const old=await databaseApi('writing_genius_diary_reviews','GET','?select=original_body,feedback,spoken_at&entry_id=eq.'+encodeURIComponent(current.id)+'&limit=1').catch(()=>null);
+  if(Array.isArray(old)&&old[0]?.original_body===$('wgBody').value&&old[0].spoken_at){
+    await saveEntry({submit:true,force:true});return;
+  }
+  notice('AI Willi가 일기를 읽고 있어요…');
+  const result=await diaryRequest('review',current.id);
+  if(state.active?.id!==current.id)return;
+  diaryReviewBody=$('wgBody').value;
+  showDiaryFeedback(result.feedback);
+  $('wgDiarySpeechStatus').textContent='일기 전체를 처음부터 끝까지 읽어 주세요.';
+  $('wgDiaryTranscript').textContent='';
+  diaryTranscript='';diaryInterim='';
+  $('wgDiaryReview').scrollIntoView({behavior:'smooth',block:'start'});
+  notice('AI 피드백을 읽고 말하기까지 완료해 주세요.');
+ }catch(error){notice(error.message,true)}
+ finally{diaryBusy=false;$('wgSubmit').disabled=false}
+}
+function beginDiarySpeech(){
+ const Speech=window.SpeechRecognition||window.webkitSpeechRecognition;
+ if(!Speech){$('wgDiarySpeechStatus').textContent='이 브라우저는 음성 인식을 지원하지 않아요. Chrome 브라우저를 이용해 주세요.';return}
+ if(state.active?.kind!=='diary'||diaryReviewBody!==$('wgBody').value)return;
+ if(diaryRecognition)return;
+ const rec=new Speech();diaryRecognition=rec;
+ rec.lang='en-US';rec.continuous=true;rec.interimResults=true;
+ $('wgDiarySpeakStart').disabled=true;$('wgDiarySpeakStop').disabled=false;
+ $('wgDiarySpeechStatus').textContent='듣고 있어요. 일기를 끝까지 읽어 주세요.';
+ rec.onresult=e=>{
+  const finals=[];const partials=[];
+  for(let i=e.resultIndex;i<e.results.length;i++){
+   const text=e.results[i][0]?.transcript?.trim()||'';
+   if(e.results[i].isFinal)finals.push(text);else partials.push(text);
+  }
+  if(finals.length){diaryTranscript=(diaryTranscript+' '+finals.join(' ')).trim();}
+  diaryInterim=partials.join(' ');
+  $('wgDiaryTranscript').textContent=(diaryTranscript+' '+diaryInterim).trim();
+ };
+ rec.onerror=e=>{$('wgDiarySpeechStatus').textContent='마이크 오류: '+e.error+' · 다시 시도할 수 있어요.'};
+ rec.onend=()=>{diaryRecognition=null;$('wgDiarySpeakStart').disabled=false;$('wgDiarySpeakStop').disabled=true;diaryInterim='';$('wgDiaryTranscript').textContent=diaryTranscript;};
+ try{rec.start()}catch(e){rec.onend();$('wgDiarySpeechStatus').textContent='마이크를 시작할 수 없어요.'}
+}
+async function checkDiarySpeech(){
+ if(diaryBusy||state.active?.kind!=='diary')return;
+ diaryRecognition?.stop();
+ const entry=state.active;
+ if(diaryReviewBody!==$('wgBody').value){notice('일기가 수정됐어요. 다시 AI Willi의 확인을 받아 주세요.',true);return}
+ if(!diaryTranscript.trim()){notice('일기 전체를 마이크에 읽어 주세요.',true);return}
+ diaryBusy=true;
+ try{
+  $('wgDiarySpeechStatus').textContent='전체 일기를 확인하고 있어요…';
+  const result=await diaryRequest('speech',entry.id,diaryTranscript);
+  $('wgDiarySpeechStatus').textContent='말하기 완료! 인식률 '+result.coverage+'%. 일기를 제출하고 있어요.';
+  const submitted=await saveEntry({submit:true,force:true});
+  if(submitted){$('wgDiaryReview').hidden=true;notice('오늘의 일기와 말하기를 완료했어요! ✓')}
+ }catch(error){$('wgDiarySpeechStatus').textContent=error.message}
+ finally{diaryBusy=false}
+}
+const examplesRoot=$('wgDiaryExamplesList');
+for(const example of exampleDiaries){
+ const card=el('article','wg-diary-example');
+ card.append(el('h3','',example.title),el('p','',example.text));
+ examplesRoot.append(card);
+}
+$('wgDiaryExamplesOpen').addEventListener('click',()=>$('wgDiaryExamples').showModal());
+$('wgDiaryExamplesClose').addEventListener('click',()=>$('wgDiaryExamples').close());
+$('wgDiarySpeakStart').addEventListener('click',beginDiarySpeech);
+$('wgDiarySpeakStop').addEventListener('click',()=>diaryRecognition?.stop());
+$('wgDiarySpeakCheck').addEventListener('click',()=>void checkDiarySpeech());
 async function writingGrade(sessionId,questionIndex,answer){
   const call=async token=>fetch('/api/writing-genius-grade',{method:'POST',
     headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},
@@ -346,7 +476,7 @@ document.querySelectorAll('[data-start]').forEach(button=>button.addEventListene
 $('wgHistoryFilter').addEventListener('change',e=>{state.filter=e.target.value;renderLibrary()});
 $('wgBack').addEventListener('click',()=>void backHome());
 $('wgSave').addEventListener('click',()=>void saveEntry({force:true}));
-$('wgSubmit').addEventListener('click',()=>void saveEntry({submit:true,force:true}));
+$('wgSubmit').addEventListener('click',()=>{if(state.active?.kind==='diary')void reviewDiary();else void saveEntry({submit:true,force:true});});
 $('wgRevise').addEventListener('click',()=>{
   if(!state.active)return;state.active.status='draft';setReadOnly(false);
   markDirty();$('wgBody').focus();notice('고쳐 쓴 뒤 다시 제출할 수 있어요.');
