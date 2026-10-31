@@ -113,8 +113,8 @@ if(task){
  if(!hw.initialized){
    const chosen=[...new Map(loaded.pool.map(q=>[trackingId(q),q])).values()];
    const target=Math.max(1,Number(task.target_count)||10);
-   if(chosen.length<target)throw Error('숙제 문제 수가 부족합니다 ('+chosen.length+'/'+target+')');
-   hw=await homeworkSet(task.id,chosen.slice(0,target).map(trackingId));
+   if(!chosen.length)throw Error('이 숙제에 사용할 문제가 없습니다.');
+   hw=await homeworkSet(task.id,chosen.slice(0,Math.min(target,chosen.length)).map(trackingId));
  }
  if(hw.complete){await refreshTrackingState();await loadAssignmentResults().catch(()=>{});return homeworkCompleteScreen(hw)}
  const ids=hw.next_question_ids||[];
