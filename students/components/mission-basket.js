@@ -88,6 +88,7 @@ async function resolveTeacherNames(){
   for(const entry of state.items)if(!entry.done&&entry.teacherId&&names.has(String(entry.teacherId)))entry.teacherName=names.get(String(entry.teacherId));
  }catch(err){console.warn('[mission basket] Teacher names unavailable',err)}
 }
+function firstTeacherName(name){const first=String(name||'').trim().split(/\s+/)[0]||'';return first==='Will'?'William':first}
 function render(){
  const host=state.host;if(!host)return;
  const open=state.items.filter(x=>!state.archives.has(x.id)&&!x.archived);
@@ -97,7 +98,7 @@ function render(){
  host.innerHTML='<div class="dm-head"><button class="dm-toggle" aria-expanded="'+(!state.collapsed)+'" type="button"><svg viewBox="0 0 48 48" width="35" height="35" aria-hidden="true"><path d="M8 19h32v20a4 4 0 0 1-4 4H12a4 4 0 0 1-4-4V19Z" fill="#DBF6F3" stroke="#16848C" stroke-width="2.5"/><path d="M6 14h36v7H6v-7Z" fill="#8BDFD7" stroke="#16848C" stroke-width="2.5"/><path d="m24 25 2.1 4.3 4.7.7-3.4 3.3.8 4.7-4.2-2.2-4.2 2.2.8-4.7-3.4-3.3 4.7-.7L24 25Z" fill="#EAB84B" stroke="#BA8D2D" stroke-width="1.2"/></svg><strong>미션함</strong><span class="dm-count">'+pending+'개 남음</span><span class="dm-arrow">'+(state.collapsed?'▸':'▾')+'</span></button></div>'+
  (state.collapsed?'':'<div class="dm-body"><div class="dm-tabs"><button type="button" data-tab="active" aria-pressed="'+(state.tab==='active')+'">진행 중 <span>'+open.length+'</span></button><button type="button" data-tab="archive" aria-pressed="'+(state.tab==='archive')+'">보관함 <span>'+archive.length+'</span></button></div><div class="dm-items">'+(displayed.length?displayed.map(x=>state.tab==='archive'?
  '<a class="dm-medal" href="'+esc(x.link)+'" aria-label="'+esc(x.app+' '+x.title)+'"><span class="dm-medal-svg">'+medalSvg+'</span><strong>'+esc(x.title)+'</strong><small>'+esc(x.app)+'</small></a>':
- '<a class="dm-item '+(x.done?'dm-done':'')+'" href="'+esc(x.link)+'"><span class="dm-app">'+esc(x.app)+(x.done?' · ★ GOLD':'')+'</span><strong>'+esc(x.title)+'</strong>'+(x.detail?'<small>'+esc(x.detail)+'</small>':'')+(!x.done&&x.teacherName?'<small class="dm-teacher">담당 '+esc(x.teacherName)+'</small>':'')+'<span class="dm-action">'+(x.done?'✓':'→')+'</span></a>').join(''):'<p class="dm-empty">'+(state.tab==='archive'?'보관한 미션이 없어요.':'현재 미션이 없어요.')+'</p>')+'</div></div>');
+ '<a class="dm-item '+(x.done?'dm-done':'')+'" href="'+esc(x.link)+'"><span class="dm-app">'+esc(x.app)+(x.done?' · ★ GOLD':'')+'</span><strong>'+esc(x.title)+'</strong>'+(x.detail?'<small>'+esc(x.detail)+'</small>':'')+(!x.done&&x.teacherName?'<small class="dm-teacher">'+esc(firstTeacherName(x.teacherName))+' Teacher</small>':'')+'<span class="dm-action">'+(x.done?'✓':'→')+'</span></a>').join(''):'<p class="dm-empty">'+(state.tab==='archive'?'보관한 미션이 없어요.':'현재 미션이 없어요.')+'</p>')+'</div></div>');
  host.querySelector('.dm-toggle')?.addEventListener('click',()=>{state.collapsed=!state.collapsed;try{sessionStorage.setItem('dashboard-mission-collapsed',state.collapsed?'1':'0')}catch{}render()});
  host.querySelectorAll('[data-tab]').forEach(b=>b.addEventListener('click',()=>{state.tab=b.dataset.tab;render()}));
 }
