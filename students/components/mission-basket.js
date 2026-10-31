@@ -246,7 +246,33 @@ async function getWritingGoldUnits(){
  const rows=await authed(SUPA+'/rest/v1/rpc/wg_sentence_unit_rewards_v1',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
  return (Array.isArray(rows)?rows:[]).filter(row=>row.golden===true).map(row=>'writing:'+String(row.book_id)+'|'+String(row.unit_id));
 }
-window.WillenaMissionBasket={mount,refresh,getAchievementMissions,getWritingGoldUnits};
+async function getCompletedActivityDays(){
+ // Read only the authenticated student's completed sessions. No attempts,
+ // started sessions or uncollected assignments may count as completed work.
+ const requests=[
+  SUPA+'/rest/v1/writing_genius_sentence_sessions?select=completed_at&status=eq.completed&completed_at=not.is.null&order=completed_at.desc&limit=1000',
+  SUPA+'/rest/v1/daily_study_sessions?select=completed_at&status=eq.completed&completed_at=not.is.null&order=completed_at.desc&limit=1000',
+  SUPA+'/rest/v1/progress_sessions?select=ended_at&ended_at=not.is.null&order=ended_at.desc&limit=1000'
+ ];
+ const settled=await Promise.allSettled(requests.map(url=>authed(url)));
+ const dates=new Set();
+ let successful=0;
+ settled.forEach((r,i)=>{
+  if(r.status!=='fulfilled'){console.warn('[streak] completed activity source unavailable',i,r.reason);return;}
+  successful++;
+  for(const x of Array.isArray(r.value)?r.value:[]){
+   const timestamp=x.completed_at||x.ended_at;
+   if(!timestamp)continue;
+   const date=new Date(timestamp);
+   if(Number.isNaN(+date))continue;
+   const parts=Object.fromEntries(new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(date).map(p=>[p.type,p.value]));
+   dates.add(parts.year+'-'+parts.month+'-'+parts.day);
+  }
+ });
+ if(!successful)throw Error('No completed session sources readable');
+ return [...dates];
+}
+window.WillenaMissionBasket={mount,refresh,getAchievementMissions,getWritingGoldUnits,getCompletedActivityDays};
 // Any student app may mount this shared widget on a chosen container.
 
 })();
