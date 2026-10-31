@@ -726,3 +726,6 @@ html[data-vocab-theme="dark"] .wg-status-pill.is-submitted,html[data-vocab-theme
 @media(max-width:560px){.writing-genius #wgDiaryFlow .wg-diary-flow-actions:not(:empty){gap:8px;padding:10px 12px calc(10px + env(safe-area-inset-bottom,0px))}.writing-genius #wgDiaryFlow .wg-diary-flow-actions .wg-button{min-width:0;font-size:.92rem;padding:9px 8px}}
 
 .writing-genius #wgDiaryFlow .df-splash-mic{display:block;width:68px;height:68px;object-fit:contain;margin:auto;filter:invert(40%) sepia(82%) saturate(1480%) hue-rotate(295deg) brightness(99%) contrast(89%)}
+
+.writing-genius #wgDiaryFlow .df-count{display:block;text-align:right;margin:10px 2px 0;color:#e75c9d;font-weight:850}
+.writing-genius #wgDiaryFlow .df-count.is-invalid{color:#d72e42}
