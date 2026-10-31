@@ -677,3 +677,15 @@ html[data-vocab-theme="dark"] .wg-status-pill.is-submitted,html[data-vocab-theme
 .writing-genius #wgDiaryFlow .df-mode-toggle span{display:grid;place-items:center;border-radius:13px;transition:background .12s ease}
 .writing-genius #wgDiaryFlow .df-mode-toggle.is-speaking .df-toggle-speak,.writing-genius #wgDiaryFlow .df-mode-toggle.is-writing .df-toggle-write{background:#fff0f7;box-shadow:inset 0 0 0 2px #e75c9d}
 .writing-genius #wgDiaryFlow .df-mode-toggle:focus-visible{outline:3px solid #e75c9d;outline-offset:3px}
+
+/* Review speaking/writing prompt: Korean meaning is secondary to the English target. */
+.writing-genius #wgDiaryFlow .df-target-korean{
+  margin:-10px auto 18px;
+  max-width:90%;
+  text-align:center;
+  color:#819096;
+  font-size:clamp(.78rem,2.5vw,.93rem);
+  font-weight:600;
+  line-height:1.5;
+  overflow-wrap:anywhere;
+}
