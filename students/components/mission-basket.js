@@ -30,23 +30,41 @@ async function standardHomework(){
  const r=await api('/.netlify/functions/homework_api?action=list_assignments&mode=student&_='+Date.now());
  if(!r.ok)throw Error('Shared homework unavailable');
  const d=await r.json();if(!d.success)throw Error('Shared homework unavailable');
- return (d.assignments||[]).flatMap(a=>{
+ const entries=await Promise.all((d.assignments||[]).map(async a=>{
   const source=String(a.source_type||a.list_meta?.source_type||a.list_meta?.app||'').toLowerCase().trim();
   // Sentence Genius has its own live feed below. Never misroute its rows to Arcade.
-  if(source==='sentence_genius')return [];
+  if(source==='sentence_genius')return null;
   let app,url;
   if(source==='vocab_study'){app='Word Genius';url='/students/vocab-study/?open=wordtest'}
   else if(['wordlist','english_arcade','arcade','saved_game','grammar','phonics'].includes(source)){
     app='English Arcade';url='/Games/english_arcade/index.html?openHomework=1';
   }else{
     console.warn('[mission basket] Unrecognised homework source, omitting unsafe link:',source,a.id);
-    return [];
+    return null;
   }
   const entry=item('standard:'+a.id,app,a.title||a.list_title||'숙제',url,a.created_at||a.assigned_at||a.due_at,false,a.due_at?'기한 '+new Date(a.due_at).toLocaleDateString('ko-KR'):'');
   entry.teacherId=a.created_by||null;
   entry.teacherName=a.teacher_name||'';
-  return [entry];
- });
+  if(app==='Word Genius'){
+   try{
+    const response=await api('/.netlify/functions/homework_api?action=vocab_assignment_progress&assignment_id='+encodeURIComponent(a.id)+'&_='+Date.now());
+    if(!response.ok)throw Error('Word progress unavailable');
+    const row=await response.json();if(!row.success)throw Error('Word progress unavailable');
+    const student=(row.students||[])[0]||{},assignment=row.assignment||{},modes=assignment.required_modes||a.required_modes||[];
+    const meta=a.list_meta||{},split=meta.workload_mode==='split';
+    let clean=0,total=0,allComplete=modes.length>0;
+    for(const mode of modes){
+     const raw=student.modes?.[mode]||{};
+     const expected=split?(meta.mode_target_ids?.[mode]||[]).length:Number(raw.total)||0;
+     const passed=Math.min(expected,Math.max(0,Number(raw.clean)||0));
+     clean+=passed;total+=expected;allComplete=allComplete&&expected>0&&passed>=expected;
+    }
+    entry.progress=total>0?Math.round(100*clean/total):0;entry.done=allComplete;
+   }catch(error){console.warn('[mission basket] Word progress unavailable',a.id,error)}
+  }
+  return entry;
+ }));
+ return entries.filter(Boolean);
 }
 async function sentences(){
  const d=await authed(SUPA+'/rest/v1/rpc/sg_homework_student_v2',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
@@ -54,6 +72,7 @@ async function sentences(){
   const query=new URLSearchParams();if(a.book_id)query.set('book',a.book_id);if(a.unit_id)query.set('unit',a.unit_id);
   const entry=item('sentence:'+a.id,'Sentence Genius',a.title||a.unit_title||'문장 숙제','/students/sentence-genius/'+(query.size?'?'+query:''),a.created_at||a.assigned_at||a.due_at,Number(a.total)>0&&Number(a.done)>=Number(a.total));
   entry.teacherId=a.created_by||null;entry.teacherName=a.teacher_name||'';
+  entry.progress=Number(a.total)>0?Math.min(100,Math.round(100*(Number(a.done)||0)/Number(a.total))):0;
   return entry;
  });
 }
@@ -101,6 +120,11 @@ async function celebrate(element,collect){
  await new Promise(resolve=>setTimeout(resolve,collect?640:470));
  burst.remove();element.classList.remove('dm-gold-collect','dm-medal-shine');
 }
+function progressMeter(entry){
+ const percent=entry.done?100:Number.isFinite(entry.progress)?Math.max(0,Math.min(100,entry.progress)):null;
+ if(percent===null)return '';
+ return '<span class="dm-progress-copy">'+percent+'%</span><span class="dm-progress" role="progressbar" aria-label="숙제 진행률" aria-valuemin="0" aria-valuemax="100" aria-valuenow="'+percent+'"><span style="width:'+percent+'%"></span></span>';
+}
 function render(){
  const host=state.host;if(!host)return;
  const open=state.items.filter(x=>!state.archives.has(x.id)&&!x.archived);
@@ -109,8 +133,8 @@ function render(){
  const pending=open.filter(x=>!x.done).length;
  host.innerHTML='<div class="dm-head"><button class="dm-toggle" aria-expanded="'+(!state.collapsed)+'" type="button"><svg viewBox="0 0 48 48" width="35" height="35" aria-hidden="true"><path d="M8 19h32v20a4 4 0 0 1-4 4H12a4 4 0 0 1-4-4V19Z" fill="#DBF6F3" stroke="#16848C" stroke-width="2.5"/><path d="M6 14h36v7H6v-7Z" fill="#8BDFD7" stroke="#16848C" stroke-width="2.5"/><path d="m24 25 2.1 4.3 4.7.7-3.4 3.3.8 4.7-4.2-2.2-4.2 2.2.8-4.7-3.4-3.3 4.7-.7L24 25Z" fill="#EAB84B" stroke="#BA8D2D" stroke-width="1.2"/></svg><strong>미션함</strong><span class="dm-count">'+pending+'개 남음</span><span class="dm-arrow">'+(state.collapsed?'▸':'▾')+'</span></button></div>'+
  (state.collapsed?'':'<div class="dm-body"><div class="dm-tabs"><button type="button" data-tab="active" aria-pressed="'+(state.tab==='active')+'">진행 중 <span>'+open.length+'</span></button><button type="button" data-tab="archive" aria-pressed="'+(state.tab==='archive')+'">보관함 <span>'+archive.length+'</span></button></div><div class="dm-items">'+(displayed.length?displayed.map(x=>state.tab==='archive'?
- '<a class="dm-medal" href="'+esc(x.link)+'" aria-label="'+esc(x.app+' '+x.title)+'"><span class="dm-medal-svg">'+medalSvg+'</span><strong>'+esc(x.title)+'</strong><small>'+esc(x.app)+'</small></a>':
- '<a class="dm-item '+(x.done?'dm-done':'')+'" href="'+esc(x.link)+'"><span class="dm-app">'+esc(x.app)+(x.done?' · ★ GOLD':'')+'</span><strong>'+esc(x.title)+'</strong>'+(x.detail?'<small>'+esc(x.detail)+'</small>':'')+(!x.done&&x.teacherName?'<small class="dm-teacher">'+esc(firstTeacherName(x.teacherName))+' Teacher</small>':'')+'<span class="dm-action">'+(x.done?'✓':'→')+'</span></a>').join(''):'<p class="dm-empty">'+(state.tab==='archive'?'보관한 미션이 없어요.':'현재 미션이 없어요.')+'</p>')+'</div></div>');
+ '<a class="dm-medal" data-medal-id="'+esc(x.id)+'" href="'+esc(x.link)+'" aria-label="'+esc(x.app+' '+x.title)+'"><span class="dm-medal-svg">'+medalSvg+'</span><strong>'+esc(x.title)+'</strong><small>'+esc(x.app)+'</small></a>':
+ '<a class="dm-item '+(x.done?'dm-done':'')+'" data-mission-id="'+esc(x.id)+'" href="'+esc(x.link)+'"><span class="dm-app">'+esc(x.app)+(x.done?' · ★ GOLD':'')+'</span><strong>'+esc(x.title)+'</strong>'+(x.detail?'<small>'+esc(x.detail)+'</small>':'')+(!x.done&&x.teacherName?'<small class="dm-teacher">'+esc(firstTeacherName(x.teacherName))+' Teacher</small>':'')+progressMeter(x)+'<span class="dm-action">'+(x.done?'✓':'→')+'</span></a>').join(''):'<p class="dm-empty">'+(state.tab==='archive'?'보관한 미션이 없어요.':'현재 미션이 없어요.')+'</p>')+'</div></div>');
  host.querySelector('.dm-toggle')?.addEventListener('click',()=>{state.collapsed=!state.collapsed;try{sessionStorage.setItem('dashboard-mission-collapsed',state.collapsed?'1':'0')}catch{}render()});
  host.querySelectorAll('[data-tab]').forEach(b=>b.addEventListener('click',()=>{state.tab=b.dataset.tab;render()}));
  host.querySelectorAll('[data-mission-id]').forEach(card=>card.addEventListener('click',async event=>{
@@ -135,7 +159,7 @@ function render(){
 }
 async function mount(host){
  if(!host||host.dataset.missionMounted==='true')return;
- if(!document.getElementById('willenaMissionBasketStyles')){const link=document.createElement('link');link.id='willenaMissionBasketStyles';link.rel='stylesheet';link.href='/students/dashboard-v2/mission-basket.css?v=20261031-goldtouch7';document.head.appendChild(link)}
+ if(!document.getElementById('willenaMissionBasketStyles')){const link=document.createElement('link');link.id='willenaMissionBasketStyles';link.rel='stylesheet';link.href='/students/dashboard-v2/mission-basket.css?v=20261031-progress8';document.head.appendChild(link)}
  state.host=host;host.dataset.missionMounted='true';host.classList.add('dashboard-mission-basket');host.setAttribute('aria-label','미션함');
  state.collapsed=true;
  host.innerHTML='<div class="dm-loading">미션을 확인하고 있어요…</div>';
@@ -147,7 +171,26 @@ async function mount(host){
  render();
  if(state.errors.length)console.warn('[dashboard missions] Some feeds unavailable:',state.errors);
 }
-window.WillenaMissionBasket={mount};
+let refreshing=false;
+async function refresh(){
+ if(refreshing||!state.host)return;
+ refreshing=true;
+ try{
+  const results=await Promise.allSettled([standardHomework(),sentences(),grammar(),naesin()]);
+  const prefixes=['standard:','sentence:','grammar:','naesin:'];
+  results.forEach((result,index)=>{
+   if(result.status!=='fulfilled')return;
+   state.items=state.items.filter(x=>!x.id.startsWith(prefixes[index]));
+   state.items.push(...result.value);
+  });
+  state.items.sort((a,b)=>(Date.parse(b.created)||0)-(Date.parse(a.created)||0));
+  await resolveTeacherNames();render();
+ }finally{refreshing=false}
+}
+window.addEventListener('pageshow',event=>{if(event.persisted)refresh()});
+window.addEventListener('focus',refresh);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)refresh()});
+window.WillenaMissionBasket={mount,refresh};
 // Any student app may mount this shared widget on a chosen container.
 
 })();
