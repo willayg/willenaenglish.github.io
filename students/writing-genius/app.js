@@ -387,10 +387,10 @@ function showWholeDiary(){
  diaryFullRenderer.render({form:'speaking',prompt:'',context:{},answer:[$('wgBody').value]});
  $('wgDiarySpeechStatus').textContent='';
 }
-async function diaryRequest(action,entryId,transcript){
+async function diaryRequest(action,entryId,transcript,chosenLines){
  const call=async access=>fetch('/api/writing-genius-diary',{method:'POST',credentials:'include',cache:'no-store',
   headers:{Authorization:'Bearer '+access,'Content-Type':'application/json'},
-  body:JSON.stringify({action,entry_id:entryId,...(transcript?{transcript}:{})}),signal:AbortSignal.timeout(action==='review'?50000:20000)});
+  body:JSON.stringify({action,entry_id:entryId,...(transcript?{transcript}:{}),...(chosenLines?{chosen_lines:chosenLines}:{})}),signal:AbortSignal.timeout(action==='review'?50000:20000)});
  let response=await call(await authToken());
  if(response.status===401)response=await call(await authToken(true));
  const data=await response.json().catch(()=>({}));
@@ -482,7 +482,7 @@ const diaryFlow=createDiaryFlow({
  },
  review:async entry=>{const result=await diaryRequest('review',entry.id);return result.feedback},
  clarify:async(entry,i,clarification)=>{const token=await authToken();const response=await fetch('/api/writing-genius-diary',{method:'POST',credentials:'include',cache:'no-store',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify({action:'clarify',entry_id:entry.id,correction_index:i,clarification}),signal:AbortSignal.timeout(45000)});const data=await response.json().catch(()=>({}));if(!response.ok||!data.success)throw Error(data.error||'다시 확인하지 못했어요.');return data},
- speech:async(entry,transcript)=>diaryRequest('speech',entry.id,transcript),
+ speech:async(entry,transcript,chosenLines)=>diaryRequest('speech',entry.id,transcript,chosenLines),
  finish:async entry=>{const result=await saveEntry({submit:true,force:true});if(!result)throw Error('제출에 실패했어요.')},
  onExit:()=>backHome()
 });
