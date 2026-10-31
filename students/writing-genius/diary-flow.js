@@ -213,7 +213,8 @@ export function createDiaryFlow({draft,review,speech,finish,onExit}){
  function speakingTransition(){
   screen('speak-transition','4 · Speak');
   const splash=el('div','df-speak-splash');
-  splash.append(el('div','df-splash-icon','🎙'),el('h2','','Review complete!'),el('p','','이제 내 글을 소리 내어 읽어 봐요.'),el('small','','Speak each sentence to continue.'));
+  const icon=el('div','df-splash-icon');const iconImg=el('img','df-splash-mic');iconImg.src='/shared/svgs/mic.svg';iconImg.alt='';icon.append(iconImg);
+  splash.append(icon,el('h2','','Review complete!'),el('p','','이제 내 글을 소리 내어 읽어 봐요.'),el('small','','Speak each sentence to continue.'));
   stage.append(splash);
   let started=false;
   const start=()=>{if(started||step!=='speak-transition')return;started=true;index=0;lineSpeech()};
