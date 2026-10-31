@@ -15,7 +15,7 @@
 <link rel="stylesheet" href="/students/shared/willena-keyboard-safe.css?v=1.0.0">
 <link rel="stylesheet" href="/students/vocab-study/vocab-study.css?v=20261024-home-navigation4">
 <link rel="stylesheet" href="/students/vocab-study/theme-pips.css?v=20260927-v0005">
-<link rel="stylesheet" href="./styles.css?v=20261031-diary-fix2">
+<link rel="stylesheet" href="./styles.css?v=20261031-diary-screens1">
 <script src="/students/api-gateway.js?v=20260926-progress-summary-cf1"></script>
 <script src="/students/study/study-progress.js?v=20260926-assignment-canonical1"></script>
 <script src="/js/api-config.js?v=20260926-reverted-auth1"></script>
@@ -94,12 +94,14 @@
         <div id="wgDiaryExamplesList" class="wg-diary-example-list"></div>
         <p class="wg-diary-example-hint">예시를 참고하되, 오늘 있었던 일을 자신의 영어로 써 보세요.</p>
       </dialog>
+      <div id="wgPaperScreen">
       <section class="wg-paper" aria-label="Write in English">
         <div class="wg-paper-head"><span>MY WRITING</span><span id="wgCounts">0 words · 0 sentences</span></div>
         <label for="wgBody" class="wg-visually-hidden">Write your English sentences</label>
         <textarea id="wgBody" maxlength="12000" spellcheck="true" autocapitalize="sentences" autocomplete="off"
           placeholder="Write your own English here…&#10;&#10;I like…"></textarea>
       </section>
+      </div>
       <section class="wg-help" aria-label="Writing help">
         <button id="wgIdeasToggle" class="wg-help-toggle" type="button" aria-expanded="false">✦ 글쓰기 도움말 <span>보기</span></button>
         <div id="wgIdeas" hidden>
@@ -225,7 +227,7 @@
 </div>
 <script type="module" src="/students/components/student-reward-celebration.js?v=20260926-v0005"></script>
 <script src="/students/vocab-study/theme-pips.js?v=20260927-v0005"></script>
-<script type="module" src="./app.js?v=20261031-diary-fix3"></script>
+<script type="module" src="./app.js?v=20261031-diary-screens1"></script>
 
 <script src="/students/components/mission-basket.js?v=20261031-goldcache4"></script>
 <script src="/students/components/student-achievements.js?v=20261031-goldcache2"></script>
