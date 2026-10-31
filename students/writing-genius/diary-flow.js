@@ -58,9 +58,9 @@ const examples=[
  ['My Weekend','I visited my grandmother on Saturday. We made pancakes together. My sister helped us in the kitchen. Then we went for a walk. We saw a small bird in the garden. I had a wonderful day.']
 ];
 const el=(tag,cls='',value='')=>{const n=document.createElement(tag);if(cls)n.className=cls;n.textContent=value;return n};
-export function createDiaryFlow({draft,review,speech,finish,onExit}){
+export function createDiaryFlow({draft,review,clarify,speech,finish,onExit}){
  const root=$('wgDiaryFlow'),stage=$('dfStage'),actions=$('dfActions'),message=$('dfMessage'),progress=$('dfProgress');
- let current=null,step='topic',feedback=null,practice=[],index=0,mode='write',renderer=null,finalLines=[],spoken=[],busy=false,autosaveTimer=null,transitionTimer=null;
+ let current=null,step='topic',feedback=null,practice=[],index=0,mode='write',renderer=null,finalLines=[],spoken=[],busy=false,autosaveTimer=null,transitionTimer=null,choices={};
  function button(label,fn,primary=false){const b=el('button','wg-button '+(primary?'wg-primary':'wg-secondary'),label);b.type='button';b.addEventListener('click',fn);actions.append(b);return b}
  function status(text='',error=false){message.textContent=text;message.classList.toggle('is-error',error)}
  function screen(name,label){clearTimeout(transitionTimer);step=name;stage.replaceChildren();actions.replaceChildren();status();progress.textContent=label;root.hidden=false}
@@ -94,43 +94,108 @@ export function createDiaryFlow({draft,review,speech,finish,onExit}){
    try{await persist();feedback=await review(current);summary()}catch(e){status(e.message,true)}finally{busy=false}
   },true);
  }
+ function selectedText(change,i){
+  const choice=choices[i]||'first';
+  return choice==='original'?change.original:choice==='last'&&change.clarified_better?change.clarified_better:change.better;
+ }
  function construct(){
   const corrections=(feedback?.improvements||[]).filter(x=>x.original&&x.better);
   const expressions=(feedback?.expressions||[]).filter(x=>x.english);
-  practice=[...corrections.map(x=>({target:x.better,meaning:x.translation_ko||x.meaning_ko||'',kind:'Correction',original:x.original})),...expressions.map(x=>({target:x.english,meaning:x.meaning_ko||'',kind:'New Expression'}))];
+  practice=[...corrections.map((x,i)=>({target:selectedText(x,i),meaning:(choices[i]==='last'?x.clarified_translation_ko:x.translation_ko)||'',kind:'Correction',original:x.original})),...expressions.map(x=>({target:x.english,meaning:x.meaning_ko||'',kind:'New Expression'}))];
   const original=split(current.body);
   finalLines=original.map(line=>{
-   let result=line;for(const x of corrections){if(norm(line)===norm(x.original)||line.toLowerCase().includes(String(x.original).trim().toLowerCase())){result=x.better;break}}
-   return result;
+   for(let i=0;i<corrections.length;i++){
+    const x=corrections[i];
+    if(norm(line)===norm(x.original)||line.toLowerCase().includes(String(x.original).trim().toLowerCase()))return selectedText(x,i);
+   }
+   return line;
   });
+ }
+ function correctionType(change){
+  const a=norm(change.original),b=norm(change.better);
+  if(a===b)return 'Punctuation';
+  const x=a.split(' '),y=b.split(' ');
+  if(Math.abs(x.length-y.length)<=1&&x.filter(w=>!y.includes(w)).length<=1)return 'Grammar';
+  return 'Better Expression';
+ }
+ function changedText(original,better,container){
+  const a=String(original).split(/(\s+)/),b=String(better).split(/(\s+)/);
+  let i=0,j=0;
+  while(i<a.length&&j<b.length&&a[i]===b[j]){container.append(document.createTextNode(b[j]));i++;j++}
+  let ai=a.length-1,bj=b.length-1;
+  while(ai>=i&&bj>=j&&a[ai]===b[bj]){ai--;bj--}
+  const changed=b.slice(j,bj+1).join('');
+  if(changed)container.append(el('mark','df-diff',changed));
+  container.append(document.createTextNode(b.slice(bj+1).join('')));
  }
  function summary(){
   construct();screen('review','3 · Review');
-  stage.append(el('h2','df-heading','AI Willi'),el('p','df-praise',feedback?.praise_ko||''));
+  if(feedback?.praise_ko)stage.append(el('p','df-review-praise',feedback.praise_ko));
   const improvements=Array.isArray(feedback?.improvements)?feedback.improvements:[];
   const expressions=Array.isArray(feedback?.expressions)?feedback.expressions:[];
-  const section=(heading)=>{const box=el('section','df-review-group');box.append(el('h3','df-review-heading',heading));stage.append(box);return box};
-  const fixes=section('Sentence Review · 문장 확인');
-  if(!improvements.length)fixes.append(el('p','df-muted','잘 쓴 문장은 그대로 유지해요.'));
-  for(const change of improvements){
-   const card=el('article','df-review-item');
-   card.append(el('small','df-review-label','STUDENT · 내가 쓴 문장'),el('p','df-review-original',change.original||''));
-   card.append(el('small','df-review-label','AI WILLI · 더 좋은 문장'),el('p','df-review-better',change.better||''));
-   card.append(el('p','df-review-korean',change.translation_ko||change.why_ko||''));
-   if(change.why_ko)card.append(el('p','df-review-explanation',change.why_ko));
-   fixes.append(card);
+  const heading=el('div','df-review-top');
+  heading.append(el('h3','','Sentence Review'),el('span','df-review-progress'));
+  stage.append(heading);
+  const progressLabel=heading.querySelector('.df-review-progress');
+  const refreshProgress=()=>{const n=improvements.filter((_,i)=>choices[i]).length;progressLabel.textContent=n+' / '+improvements.length+' reviewed'};
+  if(!improvements.length)stage.append(el('p','df-muted','수정할 문장이 없어요.'));
+  improvements.forEach((change,i)=>{
+   const card=el('article','df-review-item df-review-compact');
+   const header=el('div','df-review-card-head');
+   header.append(el('span','df-review-number',(i+1)+' / '+improvements.length),el('span','df-review-kind',correctionType(change)));
+   card.append(header);
+   card.append(el('p','df-review-original',change.original||''));
+   const suggestion=el('p','df-review-better');changedText(change.original,change.better,suggestion);
+   if(correctionType(change)==='Punctuation')suggestion.append(el('small','df-inline-note',' · comma / punctuation'));
+   card.append(suggestion);
+   if(change.translation_ko)card.append(el('p','df-review-korean',change.translation_ko));
+   if(change.why_ko&&correctionType(change)!=='Punctuation')card.append(el('p','df-review-explanation',change.why_ko));
+   const row=el('div','df-choice-row');
+   const options=[['original','Original'],['first','AI correction'],['last','Revised']];
+   const controls=[];
+   const refresh=()=>{controls.forEach(([key,btn])=>{btn.classList.toggle('is-chosen',(choices[i]||'first')===key);btn.setAttribute('aria-pressed',String((choices[i]||'first')===key))});refreshProgress()};
+   for(const [key,label] of options){
+    if(key==='last'&&!change.clarified_better)continue;
+    const btn=el('button','df-choice-button',label);btn.type='button';
+    btn.addEventListener('click',()=>{choices[i]=key;refresh();construct()});
+    controls.push([key,btn]);row.append(btn);
+   }
+   card.append(row);
+   if(change.clarified_better){
+    const revised=el('p','df-review-revised',change.clarified_better);
+    card.append(revised);
+   }else{
+    const changeBtn=el('button','df-change-button','Change · 뜻 설명하기');changeBtn.type='button';card.append(changeBtn);
+    changeBtn.addEventListener('click',()=>{
+     if(card.querySelector('.df-clarify-box'))return;
+     const box=el('div','df-clarify-box');
+     const input=el('textarea','df-clarify-input');input.placeholder='What did you mean? 영어 또는 한국어';input.maxLength=600;input.setAttribute('aria-label','Clarify your meaning in Korean or English');
+     const send=el('button','wg-button wg-primary','다시 제안받기');send.type='button';
+     box.append(input,send);card.append(box);input.focus();
+     send.addEventListener('click',async()=>{
+      if(input.value.trim().length<2){status('뜻을 설명해 주세요.',true);return}
+      send.disabled=true;send.textContent='확인 중…';
+      try{
+       const result=await clarify(current,i,input.value.trim());
+       change.clarified_better=result.better;change.clarified_translation_ko=result.translation_ko||'';
+       choices[i]='last';construct();
+       // Refresh cards without losing the student's review decisions.
+       const top=window.scrollY;summary();window.scrollTo({top});
+      }catch(e){status(e.message||'다시 시도해 주세요.',true);send.disabled=false;send.textContent='다시 제안받기'}
+     });
+    });
+   }
+   stage.append(card);refresh();
+  });
+  if(expressions.length){
+   const section=el('section','df-review-group');
+   section.append(el('h3','df-review-heading','New Expressions'));
+   expressions.forEach(x=>{const line=el('div','df-expression-line');line.append(el('strong','',x.english||''),el('span','',x.meaning_ko||''));section.append(line)});
+   stage.append(section);
   }
-  const phrases=section('New Expressions · 새로운 표현');
-  if(!expressions.length)phrases.append(el('p','df-muted','추가 표현이 없어요.'));
-  for(const phrase of expressions){
-   const card=el('article','df-review-item');
-   card.append(el('p','df-review-better',phrase.english||''));
-   card.append(el('p','df-review-korean',phrase.meaning_ko||''));
-   phrases.append(card);
-  }
-  if(feedback?.tip_ko)stage.append(el('p','df-review-tip',feedback.tip_ko));
-  stage.append(el('strong','df-summary-count',practice.length+' sentences to practise'));
-  button('이전',write);button('연습 시작',()=>{index=0;mode='speaking';if(practice.length)question();else{index=0;speakingTransition()}},true);
+  refreshProgress();
+  button('이전',write);
+  button('Finish Review · 연습 시작',()=>{construct();index=0;mode='speaking';if(practice.length)question();else speakingTransition()},true);
  }
  function rendererHost(q){
   const host=el('div','df-question-host sp-shared-question question-card');stage.append(host);renderer=new QuestionRenderer(host);renderer.render(q);
@@ -277,5 +342,5 @@ export function createDiaryFlow({draft,review,speech,finish,onExit}){
   catch(e){status(e.message,true);button('다시 저장',complete,true)}
   finally{busy=false}
  }
- return {open(entry,saved){clearTimeout(autosaveTimer);current={...entry};feedback=saved?.original_body===entry.body?saved.feedback:null;spoken=[];index=0;root.hidden=false;if(entry.status==='submitted'){screen('finish','Complete');stage.append(el('h2','df-heading','오늘의 일기 완료'));button('글쓰기 메뉴',close,true)}else if(feedback)summary();else topic()},close};
+ return {open(entry,saved){clearTimeout(autosaveTimer);current={...entry};feedback=saved?.original_body===entry.body?saved.feedback:null;choices={};spoken=[];index=0;root.hidden=false;if(entry.status==='submitted'){screen('finish','Complete');stage.append(el('h2','df-heading','오늘의 일기 완료'));button('글쓰기 메뉴',close,true)}else if(feedback)summary();else topic()},close};
 }
